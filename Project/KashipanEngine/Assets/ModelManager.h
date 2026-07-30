@@ -202,7 +202,8 @@ private:
     ///          アセットパスで個別登録する（Unityのモデル内サブアセットに相当）。
     ///          さらにエディタービルドでは、モデルのノード階層（アーマチュア・メッシュオブジェクト）を
     ///          そのまま再現するプレハブファイルをモデルの隣（"モデルファイル名.prefab"）へ生成する
-    ///          （既にプレハブが存在する場合はユーザーの編集を保護するため上書きしない）
+    ///          （既存プレハブはユーザー編集を維持し、通常Prefabとの互換性に必要な
+    ///          prefabID・prefabNodeID・Transform親参照だけを補完する）
     void RegisterNodeDecompositionAndPrefab(const aiScene *scene,
         const std::string &modelFullPath, const std::string &baseAssetPath,
         const std::string &baseFileName, const std::vector<ModelData::MaterialData> &materials);

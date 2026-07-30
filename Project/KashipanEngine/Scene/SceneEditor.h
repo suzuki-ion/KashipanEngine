@@ -81,6 +81,8 @@ private:
     // シーン新規作成の確認モーダル用
     bool isNewSceneRequested_ = false;
     std::string newSceneName_;
+    /// @brief 新規作成したシーンを、作成と同時にAssets/Scenes/へ保存してシーンリストへ登録するか
+    bool newSceneRegisterToList_ = false;
 
     /// @brief 前フレームの再生状態（コマンド履歴の再生セッション切り替えの検知用）
     bool wasPlaying_ = false;

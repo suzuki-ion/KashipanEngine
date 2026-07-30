@@ -1,0 +1,470 @@
+{
+    "name": "living_room",
+    "objects": [
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "living_room",
+                "objectID": "a141ea2a-6c55-43ad-a14f-6f938b400463",
+                "prefabNodeID": "b45d312e-7dbb-4aef-a833-9061404606a7",
+                "tag": ""
+            },
+            "parentIndex": -1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "a141ea2a-6c55-43ad-a14f-6f938b400463",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Lights",
+                "objectID": "deb18c99-b14a-4391-84c6-d2f7c09c196c",
+                "prefabNodeID": "9f8d06e2-bae1-41af-a752-729fdecf71ee",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "a141ea2a-6c55-43ad-a14f-6f938b400463",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Model/TestModels/living_room/living_room.obj:Default"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "living_room_LeftLight",
+                                "materialNames": [
+                                    "living_room_LeftLight",
+                                    "living_room_LeftLight",
+                                    "living_room_LeftLight"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Default",
+                "objectID": "3705eda7-b2ea-4fae-bfbe-c41116660ac4",
+                "prefabNodeID": "03dfa41d-693f-458f-b4be-d7903b4aaea3",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "a141ea2a-6c55-43ad-a14f-6f938b400463",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Model/TestModels/living_room/living_room.obj:Mesh"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "living_room_BlindMaterial",
+                                "materialNames": [
+                                    "living_room_BlindMaterial",
+                                    "living_room_RadioPlastic",
+                                    "living_room_Books",
+                                    "living_room_DullSteel",
+                                    "living_room_LampshaderOuter",
+                                    "living_room_LargePicture",
+                                    "living_room_RadiatorPanelsEnamel",
+                                    "living_room_SofaLeather",
+                                    "living_room_Apple",
+                                    "living_room_Walls",
+                                    "living_room_RadiatorPanelsEnamel",
+                                    "living_room_RadioPlastic",
+                                    "living_room_Cushion",
+                                    "living_room_Books",
+                                    "living_room_TableGlossy",
+                                    "living_room_Books",
+                                    "living_room_LoveLettersBack",
+                                    "living_room_DullSteel",
+                                    "living_room_Books",
+                                    "living_room_TvScreen",
+                                    "living_room_Books",
+                                    "living_room_RadiatorPanelsEnamel",
+                                    "living_room_SofaLeather",
+                                    "living_room_BlindMaterial",
+                                    "living_room_DullSteel",
+                                    "living_room_Books",
+                                    "living_room_LampStand",
+                                    "living_room_Default",
+                                    "living_room_Books",
+                                    "living_room_SofaLeather",
+                                    "living_room_DullSteel",
+                                    "living_room_Books",
+                                    "living_room_SmallPictureFrame",
+                                    "living_room_RadiatorPanelsEnamel",
+                                    "living_room_Picture2",
+                                    "living_room_Magazine",
+                                    "living_room_SmallPictureFrame",
+                                    "living_room_TvBevel",
+                                    "living_room_BlindMaterial",
+                                    "living_room_RadioPlastic",
+                                    "living_room_CeilingLampshade",
+                                    "living_room_BlackMarble",
+                                    "living_room_Trim",
+                                    "living_room_Cushion1",
+                                    "living_room_BlindMaterial",
+                                    "living_room_Default",
+                                    "living_room_Cushion1",
+                                    "living_room_CandleHolders",
+                                    "living_room_Books",
+                                    "living_room_Apple",
+                                    "living_room_DullSteel",
+                                    "living_room_Picture",
+                                    "living_room_Cushion3",
+                                    "living_room_LoveLettersBack",
+                                    "living_room_BlindMaterial",
+                                    "living_room_Default",
+                                    "living_room_LoveLettersBack",
+                                    "living_room_SmallPictureFrame",
+                                    "living_room_BlackWroughtIron",
+                                    "living_room_RadioSurround",
+                                    "living_room_SofaLeather",
+                                    "living_room_BlackWroughtIron",
+                                    "living_room_Ceramic",
+                                    "living_room_CandleHolders",
+                                    "living_room_SofaLeather",
+                                    "living_room_Default",
+                                    "living_room_DullSteel",
+                                    "living_room_Books",
+                                    "living_room_SofaLeather",
+                                    "living_room_Apple",
+                                    "living_room_TableGlossy",
+                                    "living_room_Books",
+                                    "living_room_Picture1",
+                                    "living_room_Apple",
+                                    "living_room_RadiatorPanelsEnamel",
+                                    "living_room_DullSteel",
+                                    "living_room_LoveLettersBack",
+                                    "living_room_BlindMaterial",
+                                    "living_room_Books",
+                                    "living_room_BlindMaterial",
+                                    "living_room_Picture4",
+                                    "living_room_LoveLettersBack",
+                                    "living_room_DullSteel",
+                                    "living_room_RadioPlastic",
+                                    "living_room_LoveLettersBack",
+                                    "living_room_BlindMaterial",
+                                    "living_room_SofaLeather",
+                                    "living_room_Picture5",
+                                    "living_room_SmallPictureFrame",
+                                    "living_room_TableGlossy",
+                                    "living_room_Walls",
+                                    "living_room_Ceramic",
+                                    "living_room_RadiatorPanelsEnamel",
+                                    "living_room_RadioInside",
+                                    "living_room_BlindMaterial",
+                                    "living_room_RadiatorPanelsEnamel",
+                                    "living_room_BlindMaterial",
+                                    "living_room_RadiatorPanelsEnamel",
+                                    "living_room_BlindMaterial",
+                                    "living_room_BlackWroughtIron",
+                                    "living_room_BlindMaterial",
+                                    "living_room_RadiatorKnobOuter",
+                                    "living_room_BlindMaterial",
+                                    "living_room_DullSteel",
+                                    "living_room_RadioSurround",
+                                    "living_room_BlackWroughtIron",
+                                    "living_room_DullSteel",
+                                    "living_room_RadiatorPanelsEnamel",
+                                    "living_room_BlackWroughtIron",
+                                    "living_room_Walls",
+                                    "living_room_Floor",
+                                    "living_room_DullSteel",
+                                    "living_room_Trim",
+                                    "living_room_Walls",
+                                    "living_room_DullSteel",
+                                    "living_room_Walls",
+                                    "living_room_SofaLeather",
+                                    "living_room_RadioPlastic",
+                                    "living_room_Carpet",
+                                    "living_room_TableGlossy",
+                                    "living_room_RadiatorPanelsEnamel",
+                                    "living_room_Ceramic",
+                                    "living_room_DullSteel"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Mesh",
+                "objectID": "37a6b080-79eb-4c74-9b04-d3b22f8c850b",
+                "prefabNodeID": "11a73fa3-10d6-4be3-970b-563a3a660413",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "a141ea2a-6c55-43ad-a14f-6f938b400463",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Model/TestModels/living_room/living_room.obj:Back"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "living_room_BackLight",
+                                "materialNames": [
+                                    "living_room_BackLight"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Back",
+                "objectID": "1554a5c8-203b-4a16-8f95-034931d262e6",
+                "prefabNodeID": "2786c169-3366-45b2-ab44-fe2b7a5cff46",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "a141ea2a-6c55-43ad-a14f-6f938b400463",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Model/TestModels/living_room/living_room.obj:WhitePaint"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "living_room_BackLight",
+                                "materialNames": [
+                                    "living_room_BackLight"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "WhitePaint",
+                "objectID": "032931d8-4a5c-4079-a75c-92e7968a9a90",
+                "prefabNodeID": "f566a02a-f10e-4a5e-83a6-a81aba0eb866",
+                "tag": ""
+            },
+            "parentIndex": 0
+        }
+    ],
+    "prefab": true,
+    "prefabID": "778faaf5-2a8c-468e-9fd1-badf09aa0745"
+}

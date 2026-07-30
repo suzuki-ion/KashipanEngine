@@ -28,6 +28,8 @@
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Scene/Components/Script/EditorToolManager.h"
 #include "Scene/SceneBackupPath.h"
+#include "Scene/SceneFileIO.h"
+#include "Scene/SceneManager.h"
 #include "Utilities/FileIO.h"
 #include "Utilities/TemplateLiteral.h"
 #include "Utilities/TimeUtils.h"
@@ -367,13 +369,26 @@ bool SceneEditor::ShowNewSceneModal() {
     if (ImGui::BeginPopupModal("New Scene", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.3f, 1.0f), "Current scene will be discarded (unsaved changes will be lost).");
         ImGui::InputText("Scene Name", &newSceneName_);
+        ImGui::Checkbox("Register to Scene List", &newSceneRegisterToList_);
+        ImGui::SetItemTooltip("Also save this scene to Assets/Scenes/<name>.scene and register it\nin the Scene List (switchable via SceneManager afterward).");
         if (ImGui::Button("Create", ImVec2(120, 0))) {
+            const std::string sceneName = newSceneName_.empty() ? "New Scene" : newSceneName_;
             context_->ClearSceneObjects();
             context_->ClearSceneComponents();
             // 空のシーンでもシーンビューの背景とグリッドを毎フレーム描画できるよう、
             // 描画を担当する標準コンポーネントは作り直す。
             context_->AddComponent<SceneRenderer>();
-            context_->SetName(newSceneName_.empty() ? "New Scene" : newSceneName_);
+            context_->SetName(sceneName);
+            if (newSceneRegisterToList_) {
+                auto *sceneManager = context_->GetSceneManager();
+                if (sceneManager) {
+                    const std::string filePath = "Assets/Scenes/" + sceneName + ".scene";
+                    SaveSceneToPath(context_->SaveSceneToJSON(), filePath);
+                    if (sceneManager->RegisterSceneFile(sceneName, filePath)) {
+                        sceneManager->SaveSceneList();
+                    }
+                }
+            }
             created = true;
             ImGui::CloseCurrentPopup();
         }

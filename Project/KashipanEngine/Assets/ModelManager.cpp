@@ -16,6 +16,7 @@
 #if defined(USE_IMGUI)
 #include <imgui.h>
 #include <imgui_internal.h>
+#include "Scene/Editor/PrefabAssetManager.h"
 #endif
 
 #include <assimp/Importer.hpp>
@@ -68,6 +69,68 @@ std::string ExtractFileNameOnly(const std::string &path) {
     const auto pos = path.find_last_of("/\\");
     return (pos == std::string::npos) ? path : path.substr(pos + 1);
 }
+
+#if defined(USE_IMGUI)
+/// @brief モデル自動生成Prefabを通常Prefabと同じID・親参照スキーマへ補完する
+/// @details 既存のコンポーネントやユーザー編集値は変更せず、Prefab同期に必要なメタデータだけを追加する。
+/// @return JSONを変更した場合はtrue
+bool EnsureModelPrefabSchema(JSON &prefab, UUID128 &prefabID) {
+    if (!prefab.is_object() || !prefab.contains("objects") || !prefab["objects"].is_array()) return false;
+
+    bool changed = false;
+    prefabID = UUID128(prefab.value("prefabID", std::string{}));
+    if (!prefabID.IsValid()) {
+        prefabID = UUID128(true);
+        prefab["prefabID"] = prefabID.ToString();
+        changed = true;
+    }
+    if (prefab.value("prefab", false) != true) {
+        prefab["prefab"] = true;
+        changed = true;
+    }
+
+    JSON &entries = prefab["objects"];
+    for (size_t i = 0; i < entries.size(); ++i) {
+        JSON &entry = entries[i];
+        if (!entry.contains("object") || !entry["object"].is_object()) continue;
+        JSON &object = entry["object"];
+
+        const UUID128 nodeID(object.value("prefabNodeID", std::string{}));
+        if (!nodeID.IsValid()) {
+            object["prefabNodeID"] = UUID128(true).ToString();
+            changed = true;
+        }
+
+        std::string expectedParentObjectID;
+        const int parentIndex = entry.value("parentIndex", -1);
+        if (parentIndex >= 0 && static_cast<size_t>(parentIndex) < entries.size()) {
+            const JSON &parentEntry = entries[static_cast<size_t>(parentIndex)];
+            if (parentEntry.contains("object")) {
+                expectedParentObjectID = parentEntry["object"].value("objectID", std::string{});
+            }
+        }
+
+        if (!object.contains("components") || !object["components"].is_array()) continue;
+        for (auto &component : object["components"]) {
+            if (component.value("type", std::string{}) != "Transform" || !component.contains("data")) continue;
+            JSON &data = component["data"];
+            if (!data.contains("customData") || !data["customData"].is_object()) {
+                data["customData"] = JSON::object();
+            }
+            JSON &customData = data["customData"];
+            const std::string currentParent = customData.value("parent", std::string{});
+            if (expectedParentObjectID.empty()) {
+                if (customData.erase("parent") != 0) changed = true;
+            } else if (currentParent != expectedParentObjectID) {
+                customData["parent"] = expectedParentObjectID;
+                changed = true;
+            }
+            break;
+        }
+    }
+    return changed;
+}
+#endif
 
 bool HasSupportedModelExtension(const std::filesystem::path& p) {
     const std::string ext = ToLower(p.extension().string());
@@ -592,13 +655,26 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
 
     // エディタービルドでは、ノード階層（アーマチュア・メッシュオブジェクト）を再現するプレハブを
     // モデルの隣（"モデルファイル名.prefab"）へ自動生成する。
-    // 既にプレハブが存在する場合はユーザーの編集を保護するため上書きしない
+    // 既にプレハブが存在する場合はユーザーの編集を保護し、同期に必要なID・親参照だけを補完する
     const std::string prefabPath = modelFullPath + ".prefab";
     std::error_code ec;
-    if (std::filesystem::exists(prefabPath, ec)) return;
+    if (std::filesystem::exists(prefabPath, ec)) {
+        JSON existingPrefab = LoadJSON(prefabPath);
+        UUID128 existingPrefabID;
+        if (EnsureModelPrefabSchema(existingPrefab, existingPrefabID)) {
+            if (PrefabAssetManager::CreatePrefabFile(existingPrefabID, existingPrefab, prefabPath)) {
+                Log("ModelManager: Upgraded model prefab metadata: " + prefabPath, LogSeverity::Info);
+            } else {
+                Log("ModelManager: Failed to upgrade model prefab metadata: " + prefabPath, LogSeverity::Warning);
+            }
+        }
+        return;
+    }
 
+    const UUID128 prefabID(true);
     JSON prefab;
     prefab["prefab"] = true;
+    prefab["prefabID"] = prefabID.ToString();
     prefab["name"] = modelName;
     prefab["objects"] = JSON::array();
 
@@ -615,8 +691,9 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
         return comp;
     };
 
-    std::function<void(const aiNode *, int, const std::string &)> addNode =
-        [&](const aiNode *node, int parentIndex, const std::string &nameOverride) {
+    std::function<void(const aiNode *, int, const std::string &, const std::string &)> addNode =
+        [&](const aiNode *node, int parentIndex, const std::string &parentObjectID,
+            const std::string &nameOverride) {
         if (!node) return;
         const int myIndex = static_cast<int>(prefab["objects"].size());
 
@@ -629,6 +706,7 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
         transformData["translate"] = ToJSON(Vector3(translation.x, translation.y, translation.z));
         transformData["rotate"] = ToJSON(Quaternion(rotation.x, rotation.y, rotation.z, rotation.w));
         transformData["scale"] = ToJSON(Vector3(scaling.x, scaling.y, scaling.z));
+        if (!parentObjectID.empty()) transformData["parent"] = parentObjectID;
 
         JSON object;
         object["name"] = nameOverride.empty()
@@ -637,7 +715,9 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
         object["tag"] = "";
         object["isActive"] = true;
         object["editorOnly"] = false;
-        object["objectID"] = UUID128(true).ToString();
+        const std::string objectID = UUID128(true).ToString();
+        object["objectID"] = objectID;
+        object["prefabNodeID"] = UUID128(true).ToString();
         object["components"] = JSON::array();
         object["components"].push_back(makeComponentJson("Transform", 1, std::move(transformData)));
 
@@ -670,14 +750,16 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
         prefab["objects"].push_back(std::move(entryJson));
 
         for (unsigned int c = 0; c < node->mNumChildren; ++c) {
-            addNode(node->mChildren[c], myIndex, std::string());
+            addNode(node->mChildren[c], myIndex, objectID, std::string());
         }
     };
     // ルートノードはモデル名のオブジェクトとして生成する（Unityのモデルプレハブと同様）
-    addNode(scene->mRootNode, -1, modelName);
+    addNode(scene->mRootNode, -1, std::string(), modelName);
 
-    if (SaveJSON(prefab, prefabPath)) {
+    if (PrefabAssetManager::CreatePrefabFile(prefabID, prefab, prefabPath)) {
         Log("ModelManager: Generated model prefab: " + prefabPath, LogSeverity::Info);
+    } else {
+        Log("ModelManager: Failed to generate model prefab: " + prefabPath, LogSeverity::Warning);
     }
 #endif // USE_IMGUI
 }

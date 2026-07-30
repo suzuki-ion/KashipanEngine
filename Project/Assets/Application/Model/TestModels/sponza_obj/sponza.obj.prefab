@@ -1,0 +1,145 @@
+{
+    "name": "sponza",
+    "objects": [
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "sponza",
+                "objectID": "6889ee3c-493b-4301-9f34-9698b438c96e",
+                "prefabNodeID": "cf642915-7928-4cef-8548-be1813e0643d",
+                "tag": ""
+            },
+            "parentIndex": -1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "6889ee3c-493b-4301-9f34-9698b438c96e",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Model/TestModels/sponza_obj/sponza.obj"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "sponza_sp_00_luk_mali",
+                                "materialNames": [
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali",
+                                    "sponza_sp_00_luk_mali"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "sponza.lwo",
+                "objectID": "57f78750-face-4058-ae7a-4919b27f7521",
+                "prefabNodeID": "5191ab44-67f3-4ff9-aca8-3245fb715840",
+                "tag": ""
+            },
+            "parentIndex": 0
+        }
+    ],
+    "prefab": true,
+    "prefabID": "f019bcae-379d-428f-8da6-14e1f9a420f9"
+}

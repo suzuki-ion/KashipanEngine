@@ -1,0 +1,2711 @@
+{
+    "name": "sneakWalk",
+    "objects": [
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "rotate": {
+                                    "w": 0.7071067094802856,
+                                    "x": -0.7071068286895752,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 0.009999999776482582,
+                                    "y": 0.010000000707805157,
+                                    "z": 0.010000000707805157
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "sneakWalk",
+                "objectID": "63502337-a6a0-4d6a-b771-9bdf3fff675f",
+                "prefabNodeID": "4051fc72-2298-4478-a582-f7957f8a6eb1",
+                "tag": ""
+            },
+            "parentIndex": -1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "63502337-a6a0-4d6a-b771-9bdf3fff675f",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Model/TestModels/human/sneakWalk.gltf"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "sneakWalk_None",
+                                "materialNames": [
+                                    "sneakWalk_None"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Retopology_hp_Plane.002",
+                "objectID": "8058afc4-9ace-4ee1-abc3-5e7587e86c3a",
+                "prefabNodeID": "f908dc7a-67a5-45a3-bdb0-1711c85a029f",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "63502337-a6a0-4d6a-b771-9bdf3fff675f",
+                                "rotate": {
+                                    "w": 0.7071068286895752,
+                                    "x": 0.7071067094802856,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 0.9999999403953552,
+                                    "z": 0.9999999403953552
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 5.1266350746154785,
+                                    "z": 54.21790313720703
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:Hips",
+                "objectID": "b74d8de4-1f1c-4170-815b-eedbfa1c85bf",
+                "prefabNodeID": "ce482be6-5dbb-4b86-94d2-06df47770f2c",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b74d8de4-1f1c-4170-815b-eedbfa1c85bf",
+                                "rotate": {
+                                    "w": 0.9970863461494446,
+                                    "x": 0.07628127187490463,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 0.9999998211860657,
+                                    "z": 0.9999998211860657
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 6.376658916473389,
+                                    "z": 0.9814264178276062
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:Spine",
+                "objectID": "9c9e7bc6-2066-41ef-be5c-f889d078aa0f",
+                "prefabNodeID": "dbc597a2-6ba6-45c8-a229-872c3a38e421",
+                "tag": ""
+            },
+            "parentIndex": 2
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "9c9e7bc6-2066-41ef-be5c-f889d078aa0f",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 1.937150670983101e-07,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0000001192092896,
+                                    "z": 1.0000001192092896
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 7.527047157287598,
+                                    "z": 2.384185791015625e-07
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:Spine1",
+                "objectID": "e49aa224-2eb1-4bd0-955a-0a28b744be8d",
+                "prefabNodeID": "5d9b6cf0-bb13-4ea9-981b-13151d5cb856",
+                "tag": ""
+            },
+            "parentIndex": 3
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "e49aa224-2eb1-4bd0-955a-0a28b744be8d",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": -1.117587302701395e-07,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 0.9999999403953552,
+                                    "z": 0.9999999403953552
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 8.60230541229248,
+                                    "z": -2.384185791015625e-07
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:Spine2",
+                "objectID": "8f996226-5f88-4215-adf4-784a009ddf44",
+                "prefabNodeID": "cc470b9f-2d77-4f21-87a2-07f4290f4739",
+                "tag": ""
+            },
+            "parentIndex": 4
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "8f996226-5f88-4215-adf4-784a009ddf44",
+                                "rotate": {
+                                    "w": 0.9970863461494446,
+                                    "x": -0.0762813538312912,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 9.67760944366455,
+                                    "z": -6.556510925292969e-07
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:Neck",
+                "objectID": "64106ac7-2376-45a6-ac2f-6fc5c472af01",
+                "prefabNodeID": "e8cfa223-98fd-458b-a7a5-bee7a5c51da5",
+                "tag": ""
+            },
+            "parentIndex": 5
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "64106ac7-2376-45a6-ac2f-6fc5c472af01",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 5.9189453125,
+                                    "z": 0.19551458954811096
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:Head",
+                "objectID": "ca1c8f2a-8f4e-4150-9b52-9569628c07dd",
+                "prefabNodeID": "6a75c300-1cda-4830-b6e3-8472069413a4",
+                "tag": ""
+            },
+            "parentIndex": 6
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "ca1c8f2a-8f4e-4150-9b52-9569628c07dd",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 73.62801361083984,
+                                    "z": 2.432067394256592
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:HeadTop_End",
+                "objectID": "66275d11-a46c-4beb-9ec7-f925417ba516",
+                "prefabNodeID": "2c79ec8d-fdc7-48cd-9f11-52ece6fea7d2",
+                "tag": ""
+            },
+            "parentIndex": 7
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "8f996226-5f88-4215-adf4-784a009ddf44",
+                                "rotate": {
+                                    "w": -0.403717577457428,
+                                    "x": 0.5685650110244751,
+                                    "y": 0.413811594247818,
+                                    "z": 0.5852400660514832
+                                },
+                                "scale": {
+                                    "x": 0.9999998807907104,
+                                    "y": 0.9999998807907104,
+                                    "z": 0.9999998807907104
+                                },
+                                "translate": {
+                                    "x": 4.4200639724731445,
+                                    "y": 7.988485336303711,
+                                    "z": 0.1374305784702301
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftShoulder",
+                "objectID": "67aab4f8-c004-4715-a6e7-7f9430bea77c",
+                "prefabNodeID": "62fbf772-d21d-46b3-9076-eddc17ec5cfd",
+                "tag": ""
+            },
+            "parentIndex": 5
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "67aab4f8-c004-4715-a6e7-7f9430bea77c",
+                                "rotate": {
+                                    "w": 0.9900246858596802,
+                                    "x": 0.1298397332429886,
+                                    "y": -0.007113729137927294,
+                                    "z": -0.05424211174249649
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 0.9999999403953552,
+                                    "z": 0.9999997615814209
+                                },
+                                "translate": {
+                                    "x": 2.384185791015625e-07,
+                                    "y": 9.518152236938477,
+                                    "z": -6.705522537231445e-08
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftArm",
+                "objectID": "3a4faf58-214b-4f39-9175-b1ad160caab7",
+                "prefabNodeID": "e365ff4d-1cd3-43a4-b262-080dc24c1bfb",
+                "tag": ""
+            },
+            "parentIndex": 9
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "3a4faf58-214b-4f39-9175-b1ad160caab7",
+                                "rotate": {
+                                    "w": 0.9971839189529419,
+                                    "x": -0.0006004547467455268,
+                                    "y": -4.5168373617343605e-05,
+                                    "z": 0.07499194145202637
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 5.960464477539063e-07,
+                                    "y": 15.12264633178711,
+                                    "z": -7.152557373046875e-07
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftForeArm",
+                "objectID": "4a753dfa-3ebe-478b-99ef-c609f0260bf4",
+                "prefabNodeID": "49e0d4b0-317a-44d0-80e1-e81372c6f355",
+                "tag": ""
+            },
+            "parentIndex": 10
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "4a753dfa-3ebe-478b-99ef-c609f0260bf4",
+                                "rotate": {
+                                    "w": 0.986884355545044,
+                                    "x": 0.08810178935527802,
+                                    "y": 0.11604714393615723,
+                                    "z": -0.06950125843286514
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0000001192092896,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 1.6689300537109375e-06,
+                                    "y": 16.613374710083008,
+                                    "z": -1.4372169971466064e-05
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHand",
+                "objectID": "349b1d2f-ef36-482f-8358-a387735cab47",
+                "prefabNodeID": "a18d49e3-d07d-4b90-a830-1492265d9d4e",
+                "tag": ""
+            },
+            "parentIndex": 11
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "349b1d2f-ef36-482f-8358-a387735cab47",
+                                "rotate": {
+                                    "w": 0.9054000377655029,
+                                    "x": -0.3375871777534485,
+                                    "y": -0.08994738012552261,
+                                    "z": 0.2412368506193161
+                                },
+                                "scale": {
+                                    "x": 0.9999998211860657,
+                                    "y": 0.9999999403953552,
+                                    "z": 0.9999997019767761
+                                },
+                                "translate": {
+                                    "x": -1.35392165184021,
+                                    "y": 2.0712504386901855,
+                                    "z": -2.1396374702453613
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandThumb1",
+                "objectID": "5efa0974-9ddb-4171-b264-1bfd824e07e7",
+                "prefabNodeID": "cece64f6-012d-4398-848a-d2bfe406de62",
+                "tag": ""
+            },
+            "parentIndex": 12
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "5efa0974-9ddb-4171-b264-1bfd824e07e7",
+                                "rotate": {
+                                    "w": 0.9995068907737732,
+                                    "x": -0.031401075422763824,
+                                    "y": -2.1291222651598218e-07,
+                                    "z": 1.2299523177716765e-07
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 0.9999999403953552
+                                },
+                                "translate": {
+                                    "x": -0.11508846282958984,
+                                    "y": 2.6144771575927734,
+                                    "z": -7.227063179016113e-07
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandThumb2",
+                "objectID": "e5ec2758-500e-45a4-987f-10a6c52bb36e",
+                "prefabNodeID": "09f23033-7b14-4850-b358-e1618c64a2e4",
+                "tag": ""
+            },
+            "parentIndex": 13
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "e5ec2758-500e-45a4-987f-10a6c52bb36e",
+                                "rotate": {
+                                    "w": 0.9927539825439453,
+                                    "x": 0.12016502022743225,
+                                    "y": -1.376691471932645e-07,
+                                    "z": 1.688616890760386e-08
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 0.9999998807907104,
+                                    "z": 0.9999999403953552
+                                },
+                                "translate": {
+                                    "x": 0.04565143585205078,
+                                    "y": 3.0269951820373535,
+                                    "z": 4.064291715621948e-06
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandThumb3",
+                "objectID": "1164f5b1-f6b9-4fcb-8ddf-78946ed5b3ef",
+                "prefabNodeID": "67da1ea5-cc58-451c-8c01-3f8c84f0b6e4",
+                "tag": ""
+            },
+            "parentIndex": 14
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "1164f5b1-f6b9-4fcb-8ddf-78946ed5b3ef",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 2.1420422768869685e-08,
+                                    "y": -4.097820038850841e-08,
+                                    "z": -1.4901162970204496e-08
+                                },
+                                "scale": {
+                                    "x": 0.9999998807907104,
+                                    "y": 0.9999999403953552,
+                                    "z": 0.9999998211860657
+                                },
+                                "translate": {
+                                    "x": 0.06944108009338379,
+                                    "y": 2.7411844730377197,
+                                    "z": -2.682209014892578e-06
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandThumb4",
+                "objectID": "119b5ed7-59b6-439b-a779-aa4a5bb09c64",
+                "prefabNodeID": "3058316b-a9b6-4f41-8333-66ada4f0b840",
+                "tag": ""
+            },
+            "parentIndex": 15
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "349b1d2f-ef36-482f-8358-a387735cab47",
+                                "rotate": {
+                                    "w": 0.986767053604126,
+                                    "x": 0.010342065244913101,
+                                    "y": 0.001695846556685865,
+                                    "z": 0.16180546581745148
+                                },
+                                "scale": {
+                                    "x": 0.9999999403953552,
+                                    "y": 1.0,
+                                    "z": 0.9999997615814209
+                                },
+                                "translate": {
+                                    "x": -3.1673011779785156,
+                                    "y": 7.749436855316162,
+                                    "z": -0.05706825852394104
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandIndex1",
+                "objectID": "778f8520-6fff-48c7-a370-103caf46ce05",
+                "prefabNodeID": "d94e6dcc-8f79-4d5c-a628-fd977d2e2746",
+                "tag": ""
+            },
+            "parentIndex": 12
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "778f8520-6fff-48c7-a370-103caf46ce05",
+                                "rotate": {
+                                    "w": 0.9999955892562866,
+                                    "x": -0.002973190974444151,
+                                    "y": 2.3748832234105066e-08,
+                                    "z": -2.4121359842865786e-07
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 0.9999999403953552,
+                                    "z": 0.9999999403953552
+                                },
+                                "translate": {
+                                    "x": 0.0020891427993774414,
+                                    "y": 1.9035406112670898,
+                                    "z": 2.115964889526367e-06
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandIndex2",
+                "objectID": "d6ecef34-f310-4a6d-a527-035ac8f0fcc1",
+                "prefabNodeID": "aa4f2261-234d-47bb-a637-7ed30d107f0c",
+                "tag": ""
+            },
+            "parentIndex": 17
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "d6ecef34-f310-4a6d-a527-035ac8f0fcc1",
+                                "rotate": {
+                                    "w": 0.9997634887695313,
+                                    "x": -0.021750038489699364,
+                                    "y": 1.397313487139229e-09,
+                                    "z": 4.508667643676745e-07
+                                },
+                                "scale": {
+                                    "x": 1.0000001192092896,
+                                    "y": 0.9999999403953552,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0019795894622802734,
+                                    "y": 1.7959309816360474,
+                                    "z": 1.0371208190917969e-05
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandIndex3",
+                "objectID": "a402da5d-750f-4c84-a5a2-43e2c84faa70",
+                "prefabNodeID": "c1d9f17e-83c7-47ef-9565-296265b52eec",
+                "tag": ""
+            },
+            "parentIndex": 18
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "a402da5d-750f-4c84-a5a2-43e2c84faa70",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 6.519259354575979e-09,
+                                    "y": 6.984920020158825e-08,
+                                    "z": -6.519259354575979e-09
+                                },
+                                "scale": {
+                                    "x": 0.9999999403953552,
+                                    "y": 0.9999999403953552,
+                                    "z": 0.9999999403953552
+                                },
+                                "translate": {
+                                    "x": -0.004069328308105469,
+                                    "y": 1.6241430044174194,
+                                    "z": 1.2278556823730469e-05
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandIndex4",
+                "objectID": "e07bc6ef-f83f-468b-a9c8-5fddb7113bb5",
+                "prefabNodeID": "a9dfa728-b062-474e-bcfd-c2bbd3d60a7e",
+                "tag": ""
+            },
+            "parentIndex": 19
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "349b1d2f-ef36-482f-8358-a387735cab47",
+                                "rotate": {
+                                    "w": 0.9984591603279114,
+                                    "x": -0.0018039010465145111,
+                                    "y": -0.00010024974471889436,
+                                    "z": 0.05546260625123978
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 0.9999999403953552,
+                                    "z": 0.9999996423721313
+                                },
+                                "translate": {
+                                    "x": -1.0452669858932495,
+                                    "y": 8.114174842834473,
+                                    "z": 0.0816388726234436
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandMiddle1",
+                "objectID": "dce9af93-cd1d-46e5-be52-62df09683231",
+                "prefabNodeID": "2cb4fb08-1594-46e7-a2f5-36f0fe68097e",
+                "tag": ""
+            },
+            "parentIndex": 12
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "dce9af93-cd1d-46e5-be52-62df09683231",
+                                "rotate": {
+                                    "w": 0.9983462691307068,
+                                    "x": -0.057486433535814285,
+                                    "y": 1.1947236089326907e-07,
+                                    "z": 2.918119150763232e-07
+                                },
+                                "scale": {
+                                    "x": 0.9999999403953552,
+                                    "y": 1.0,
+                                    "z": 0.9999999403953552
+                                },
+                                "translate": {
+                                    "x": 0.022170156240463257,
+                                    "y": 1.9706532955169678,
+                                    "z": 1.3113021850585938e-06
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandMiddle2",
+                "objectID": "0c8d5dd2-8590-47c9-8789-2de77ed0ae53",
+                "prefabNodeID": "a98c3485-0602-4422-ab5f-3b5ab802fff2",
+                "tag": ""
+            },
+            "parentIndex": 21
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "0c8d5dd2-8590-47c9-8789-2de77ed0ae53",
+                                "rotate": {
+                                    "w": 0.9921309947967529,
+                                    "x": -0.1252041757106781,
+                                    "y": -1.4714453300257446e-07,
+                                    "z": -3.462077131644037e-07
+                                },
+                                "scale": {
+                                    "x": 0.9999998807907104,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.004841983318328857,
+                                    "y": 1.94435715675354,
+                                    "z": -1.7315149307250977e-05
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandMiddle3",
+                "objectID": "c1b06717-5ae5-463c-beaf-cd0cc63fa72e",
+                "prefabNodeID": "c057da98-472d-46dd-bb03-8e1098edcf23",
+                "tag": ""
+            },
+            "parentIndex": 22
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "c1b06717-5ae5-463c-beaf-cd0cc63fa72e",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 4.656613761255812e-09,
+                                    "y": -2.162414958206682e-08,
+                                    "z": 1.2223611456363415e-08
+                                },
+                                "scale": {
+                                    "x": 0.9999999403953552,
+                                    "y": 0.9999999403953552,
+                                    "z": 0.9999999403953552
+                                },
+                                "translate": {
+                                    "x": -0.027008503675460815,
+                                    "y": 1.60381281375885,
+                                    "z": 3.3855438232421875e-05
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandMiddle4",
+                "objectID": "ec3c0c81-8f8e-471b-b9f1-cc0385160e6f",
+                "prefabNodeID": "dd9b53f2-e12e-4df6-b649-c4585ad892d0",
+                "tag": ""
+            },
+            "parentIndex": 23
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "349b1d2f-ef36-482f-8358-a387735cab47",
+                                "rotate": {
+                                    "w": 0.9968946576118469,
+                                    "x": -0.06855897605419159,
+                                    "y": 0.002657833741977811,
+                                    "z": -0.03864750638604164
+                                },
+                                "scale": {
+                                    "x": 0.9999998807907104,
+                                    "y": 0.9999998807907104,
+                                    "z": 0.9999997615814209
+                                },
+                                "translate": {
+                                    "x": 1.2374391555786133,
+                                    "y": 8.285815238952637,
+                                    "z": 0.07148349285125732
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandRing1",
+                "objectID": "244f5f53-21ff-4930-a62a-59aadfaa785d",
+                "prefabNodeID": "f4b81792-f5e9-4366-b212-ec48a7ef8d28",
+                "tag": ""
+            },
+            "parentIndex": 12
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "244f5f53-21ff-4930-a62a-59aadfaa785d",
+                                "rotate": {
+                                    "w": 0.9981417655944824,
+                                    "x": -0.060934267938137054,
+                                    "y": -6.752996029035785e-08,
+                                    "z": -3.7322255508343005e-08
+                                },
+                                "scale": {
+                                    "x": 1.0000001192092896,
+                                    "y": 0.9999998807907104,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.012132406234741211,
+                                    "y": 1.8160557746887207,
+                                    "z": 1.4662742614746094e-05
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandRing2",
+                "objectID": "83276962-f6f0-4f16-9cef-0e358beca7aa",
+                "prefabNodeID": "d1f4ebde-7a69-41fe-95ab-b107354280c2",
+                "tag": ""
+            },
+            "parentIndex": 25
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "83276962-f6f0-4f16-9cef-0e358beca7aa",
+                                "rotate": {
+                                    "w": 0.9973514080047607,
+                                    "x": -0.07273361086845398,
+                                    "y": -6.863399448775453e-08,
+                                    "z": 6.994130785642483e-07
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": -0.0006508827209472656,
+                                    "y": 1.6687864065170288,
+                                    "z": 1.7881393432617188e-05
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandRing3",
+                "objectID": "9f4c3d79-b83f-48f5-9647-9b99521acef2",
+                "prefabNodeID": "55b12247-f7ba-4f76-ab89-7d371815bbfb",
+                "tag": ""
+            },
+            "parentIndex": 26
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "9f4c3d79-b83f-48f5-9647-9b99521acef2",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 2.793966835668016e-09,
+                                    "y": 1.955777229056821e-08,
+                                    "z": 9.313223969797946e-09
+                                },
+                                "scale": {
+                                    "x": 1.0000001192092896,
+                                    "y": 1.0,
+                                    "z": 1.0000001192092896
+                                },
+                                "translate": {
+                                    "x": -0.011491775512695313,
+                                    "y": 1.4519761800765991,
+                                    "z": -4.410743713378906e-06
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandRing4",
+                "objectID": "9f651939-dd29-4dd7-841d-ed08c20f2e67",
+                "prefabNodeID": "af218040-7ca5-42fe-b9c7-a740eb1b3005",
+                "tag": ""
+            },
+            "parentIndex": 27
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "349b1d2f-ef36-482f-8358-a387735cab47",
+                                "rotate": {
+                                    "w": 0.9895000457763672,
+                                    "x": -0.06763474643230438,
+                                    "y": 0.00871049053966999,
+                                    "z": -0.1274336576461792
+                                },
+                                "scale": {
+                                    "x": 0.9999999403953552,
+                                    "y": 0.9999999403953552,
+                                    "z": 0.9999997615814209
+                                },
+                                "translate": {
+                                    "x": 2.9751358032226563,
+                                    "y": 7.284572124481201,
+                                    "z": 0.11014151573181152
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandPinky1",
+                "objectID": "11b16552-9632-4949-bbc9-8807b6773358",
+                "prefabNodeID": "6e734f8a-c07e-4491-98d3-3eb35b721508",
+                "tag": ""
+            },
+            "parentIndex": 12
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "11b16552-9632-4949-bbc9-8807b6773358",
+                                "rotate": {
+                                    "w": 0.9975497126579285,
+                                    "x": -0.06996140629053116,
+                                    "y": -1.307054304788835e-07,
+                                    "z": -8.589214672838352e-08
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 0.9999998807907104,
+                                    "z": 0.9999998807907104
+                                },
+                                "translate": {
+                                    "x": 0.015524864196777344,
+                                    "y": 1.9706895351409912,
+                                    "z": 6.973743438720703e-06
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandPinky2",
+                "objectID": "e6d1aec8-6940-4146-9591-c632e3ca6671",
+                "prefabNodeID": "16448eb5-81b0-41d7-aa93-67481504bb36",
+                "tag": ""
+            },
+            "parentIndex": 29
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "e6d1aec8-6940-4146-9591-c632e3ca6671",
+                                "rotate": {
+                                    "w": 0.9986534714698792,
+                                    "x": -0.05187765881419182,
+                                    "y": 5.2224386593024974e-08,
+                                    "z": 6.621306170018215e-07
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 0.9999999403953552,
+                                    "z": 0.9999998807907104
+                                },
+                                "translate": {
+                                    "x": -0.003135204315185547,
+                                    "y": 1.5029317140579224,
+                                    "z": 6.198883056640625e-06
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandPinky3",
+                "objectID": "55147c24-b8c1-4972-aced-812939ddc4c3",
+                "prefabNodeID": "97019505-3852-4fec-9fbd-283a92fe71ab",
+                "tag": ""
+            },
+            "parentIndex": 30
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "55147c24-b8c1-4972-aced-812939ddc4c3",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": -1.8626460374093767e-09,
+                                    "y": -1.1175870895385742e-08,
+                                    "z": 1.1175870895385742e-08
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0000001192092896
+                                },
+                                "translate": {
+                                    "x": -0.012394905090332031,
+                                    "y": 1.395605206489563,
+                                    "z": -8.821487426757813e-06
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftHandPinky4",
+                "objectID": "d056805e-bc3b-435d-9543-33e11026b6a9",
+                "prefabNodeID": "0ab3fb4a-8dbd-4d37-beba-23f218a475b8",
+                "tag": ""
+            },
+            "parentIndex": 31
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "8f996226-5f88-4215-adf4-784a009ddf44",
+                                "rotate": {
+                                    "w": 0.39492368698120117,
+                                    "x": -0.5510792136192322,
+                                    "y": 0.42677223682403564,
+                                    "z": 0.5985085368156433
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": -4.4200639724731445,
+                                    "y": 8.025333404541016,
+                                    "z": 0.3768424391746521
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightShoulder",
+                "objectID": "b343a40c-c65a-4006-af49-79a7630c2790",
+                "prefabNodeID": "1110cf9a-5738-42dc-8df4-4aa7abdc757e",
+                "tag": ""
+            },
+            "parentIndex": 5
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b343a40c-c65a-4006-af49-79a7630c2790",
+                                "rotate": {
+                                    "w": 0.9924546480178833,
+                                    "x": 0.122611865401268,
+                                    "y": 3.48891262547113e-05,
+                                    "z": 0.0002826477284543216
+                                },
+                                "scale": {
+                                    "x": 0.9999999403953552,
+                                    "y": 0.9999998807907104,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 4.470348358154297e-08,
+                                    "y": 9.518153190612793,
+                                    "z": -5.716457962989807e-06
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightArm",
+                "objectID": "7793b422-f3c9-404f-a6e1-82ea723331b9",
+                "prefabNodeID": "768325d6-b602-448b-a79a-5536fd1e8ff4",
+                "tag": ""
+            },
+            "parentIndex": 33
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "7793b422-f3c9-404f-a6e1-82ea723331b9",
+                                "rotate": {
+                                    "w": 0.9989473819732666,
+                                    "x": 0.0016908630495890975,
+                                    "y": -7.76077140471898e-05,
+                                    "z": -0.045840051025152206
+                                },
+                                "scale": {
+                                    "x": 0.9999998807907104,
+                                    "y": 0.9999999403953552,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 5.960464477539063e-07,
+                                    "y": 15.047953605651855,
+                                    "z": -1.043081283569336e-06
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightForeArm",
+                "objectID": "980434c2-a0cd-4ae4-8e8f-8736c9bc1c98",
+                "prefabNodeID": "a6ba54d2-d31a-4304-8a92-7d31e670b6e8",
+                "tag": ""
+            },
+            "parentIndex": 34
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "980434c2-a0cd-4ae4-8e8f-8736c9bc1c98",
+                                "rotate": {
+                                    "w": 0.9890944361686707,
+                                    "x": 0.09216516464948654,
+                                    "y": -0.09687592834234238,
+                                    "z": 0.06174848973751068
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0000001192092896,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": -2.086162567138672e-06,
+                                    "y": 16.61066436767578,
+                                    "z": -1.1242926120758057e-05
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHand",
+                "objectID": "c8467d52-5c61-4bfe-8944-d29a0f7ee40f",
+                "prefabNodeID": "afe8c7d1-314f-4358-8d92-e593bb3de4ea",
+                "tag": ""
+            },
+            "parentIndex": 35
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "c8467d52-5c61-4bfe-8944-d29a0f7ee40f",
+                                "rotate": {
+                                    "w": 0.9028235673904419,
+                                    "x": -0.3565603494644165,
+                                    "y": 0.08829230815172195,
+                                    "z": -0.2235594540834427
+                                },
+                                "scale": {
+                                    "x": 0.9999998211860657,
+                                    "y": 0.9999999403953552,
+                                    "z": 0.9999999403953552
+                                },
+                                "translate": {
+                                    "x": 1.3609938621520996,
+                                    "y": 2.0962960720062256,
+                                    "z": -2.32948899269104
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandThumb1",
+                "objectID": "5f56ef50-accc-4a12-a882-9c698a9bb11a",
+                "prefabNodeID": "3cc2d449-a051-4123-a017-f863ea2316af",
+                "tag": ""
+            },
+            "parentIndex": 36
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "5f56ef50-accc-4a12-a882-9c698a9bb11a",
+                                "rotate": {
+                                    "w": 0.9998171925544739,
+                                    "x": 0.01912209577858448,
+                                    "y": 1.6766871624440682e-07,
+                                    "z": -2.6081804094246763e-07
+                                },
+                                "scale": {
+                                    "x": 0.9999999403953552,
+                                    "y": 0.9999999403953552,
+                                    "z": 1.0000001192092896
+                                },
+                                "translate": {
+                                    "x": 0.1804213523864746,
+                                    "y": 2.7273244857788086,
+                                    "z": 1.6614794731140137e-06
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandThumb2",
+                "objectID": "71848f32-5891-4008-8df5-1519df935555",
+                "prefabNodeID": "91494b5e-b3af-4b71-9221-5ccff3b0f4e3",
+                "tag": ""
+            },
+            "parentIndex": 37
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "71848f32-5891-4008-8df5-1519df935555",
+                                "rotate": {
+                                    "w": 0.99667888879776,
+                                    "x": 0.08143189549446106,
+                                    "y": -1.2240978719546547e-07,
+                                    "z": 6.727866974642893e-08
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 0.9999998211860657,
+                                    "z": 0.9999998211860657
+                                },
+                                "translate": {
+                                    "x": 0.059287309646606445,
+                                    "y": 2.969757318496704,
+                                    "z": 1.3723969459533691e-05
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandThumb3",
+                "objectID": "36fbc0ef-699d-4ac5-8eed-be06bcf0649b",
+                "prefabNodeID": "56a7e680-67c2-4864-9883-cba82474118f",
+                "tag": ""
+            },
+            "parentIndex": 38
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "36fbc0ef-699d-4ac5-8eed-be06bcf0649b",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": -1.1175870895385742e-08,
+                                    "y": -6.332993507385254e-08,
+                                    "z": -7.450580596923828e-09
+                                },
+                                "scale": {
+                                    "x": 1.0000001192092896,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": -0.23970699310302734,
+                                    "y": 2.5947093963623047,
+                                    "z": 7.748603820800781e-07
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandThumb4",
+                "objectID": "88b87446-9490-4afe-9097-95565601b2e6",
+                "prefabNodeID": "53adc306-8f79-45ad-9787-7fadda6a81ae",
+                "tag": ""
+            },
+            "parentIndex": 39
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "c8467d52-5c61-4bfe-8944-d29a0f7ee40f",
+                                "rotate": {
+                                    "w": 0.9873526692390442,
+                                    "x": 0.00027163588674739003,
+                                    "y": -4.361032188171521e-05,
+                                    "z": -0.1585390865802765
+                                },
+                                "scale": {
+                                    "x": 0.9999999403953552,
+                                    "y": 0.9999998807907104,
+                                    "z": 0.9999998807907104
+                                },
+                                "translate": {
+                                    "x": 3.1967029571533203,
+                                    "y": 7.980120658874512,
+                                    "z": -0.070040762424469
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandIndex1",
+                "objectID": "2e29643c-4261-4771-9382-182e056af417",
+                "prefabNodeID": "08b2cc51-ad74-41b2-8dfb-c35ac3bb6fd6",
+                "tag": ""
+            },
+            "parentIndex": 36
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "2e29643c-4261-4771-9382-182e056af417",
+                                "rotate": {
+                                    "w": 0.9999619722366333,
+                                    "x": 0.008722434751689434,
+                                    "y": -6.100394500663242e-08,
+                                    "z": -4.097975292438605e-08
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0000001192092896,
+                                    "z": 0.9999998807907104
+                                },
+                                "translate": {
+                                    "x": 0.0010303258895874023,
+                                    "y": 1.8441755771636963,
+                                    "z": 1.1056661605834961e-05
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandIndex2",
+                "objectID": "88b2d6c4-067e-448a-82de-26ed213f8e67",
+                "prefabNodeID": "051c1853-e3fa-482f-b124-dfd19da781a5",
+                "tag": ""
+            },
+            "parentIndex": 41
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "88b2d6c4-067e-448a-82de-26ed213f8e67",
+                                "rotate": {
+                                    "w": 0.9996014833450317,
+                                    "x": -0.02822951041162014,
+                                    "y": 1.0015708795663159e-07,
+                                    "z": 2.48762262344826e-07
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 0.9999999403953552,
+                                    "z": 0.9999999403953552
+                                },
+                                "translate": {
+                                    "x": -0.004430413246154785,
+                                    "y": 1.7251147031784058,
+                                    "z": -1.0848045349121094e-05
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandIndex3",
+                "objectID": "c5df20ce-6575-4c62-b4e1-f61b1e4068cd",
+                "prefabNodeID": "47b53f3a-7a0e-4ada-9500-60a659fb3c68",
+                "tag": ""
+            },
+            "parentIndex": 42
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "c5df20ce-6575-4c62-b4e1-f61b1e4068cd",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 1.3969842171945857e-08,
+                                    "y": -3.632158396271734e-08,
+                                    "z": 3.166497108963995e-08
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 0.9999998211860657,
+                                    "z": 0.9999999403953552
+                                },
+                                "translate": {
+                                    "x": 0.0033991336822509766,
+                                    "y": 1.5359398126602173,
+                                    "z": -4.827976226806641e-06
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandIndex4",
+                "objectID": "b4068fa3-9e84-4a65-b448-d185846b7cbc",
+                "prefabNodeID": "e5af2798-fd3e-4ab7-826f-bdf073dc712c",
+                "tag": ""
+            },
+            "parentIndex": 43
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "c8467d52-5c61-4bfe-8944-d29a0f7ee40f",
+                                "rotate": {
+                                    "w": 0.9980506896972656,
+                                    "x": -0.04317270219326019,
+                                    "y": 0.0019475864246487617,
+                                    "z": -0.04502435773611069
+                                },
+                                "scale": {
+                                    "x": 0.9999998807907104,
+                                    "y": 0.9999999403953552,
+                                    "z": 0.9999999403953552
+                                },
+                                "translate": {
+                                    "x": 1.0306217670440674,
+                                    "y": 8.156135559082031,
+                                    "z": 0.18779122829437256
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandMiddle1",
+                "objectID": "6d945421-4da7-474e-b4c8-e19ab2376ca3",
+                "prefabNodeID": "a34b59c5-af3a-4f12-8203-cb92bc12cafb",
+                "tag": ""
+            },
+            "parentIndex": 36
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "6d945421-4da7-474e-b4c8-e19ab2376ca3",
+                                "rotate": {
+                                    "w": 0.9996743202209473,
+                                    "x": -0.0255202054977417,
+                                    "y": -1.6708858652236813e-07,
+                                    "z": 1.7642669547512924e-07
+                                },
+                                "scale": {
+                                    "x": 0.9999998807907104,
+                                    "y": 0.9999999403953552,
+                                    "z": 0.9999999403953552
+                                },
+                                "translate": {
+                                    "x": -0.008483648300170898,
+                                    "y": 1.9985731840133667,
+                                    "z": -3.904104232788086e-06
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandMiddle2",
+                "objectID": "d462a824-6780-4ba4-a9f7-6d552b07591f",
+                "prefabNodeID": "0d568aa8-9a62-4803-9745-d17dfce0d2d7",
+                "tag": ""
+            },
+            "parentIndex": 45
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "d462a824-6780-4ba4-a9f7-6d552b07591f",
+                                "rotate": {
+                                    "w": 0.9997474551200867,
+                                    "x": -0.022474031895399094,
+                                    "y": 1.0562993679741339e-07,
+                                    "z": -1.8974670012994466e-07
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 0.9999999403953552,
+                                    "z": 0.9999997615814209
+                                },
+                                "translate": {
+                                    "x": 0.0006628036499023438,
+                                    "y": 1.9279561042785645,
+                                    "z": -1.615285873413086e-05
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandMiddle3",
+                "objectID": "e3821e6e-585d-47e8-a023-d7e1f810287f",
+                "prefabNodeID": "3a148ee1-8630-4d76-9f19-dbb9bb27360f",
+                "tag": ""
+            },
+            "parentIndex": 46
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "e3821e6e-585d-47e8-a023-d7e1f810287f",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 3.02679903363412e-09,
+                                    "y": -1.5075785952944898e-08,
+                                    "z": 2.9103833232291265e-10
+                                },
+                                "scale": {
+                                    "x": 0.9999999403953552,
+                                    "y": 0.9999999403953552,
+                                    "z": 0.9999999403953552
+                                },
+                                "translate": {
+                                    "x": 0.007823824882507324,
+                                    "y": 1.7854113578796387,
+                                    "z": 1.677870750427246e-05
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandMiddle4",
+                "objectID": "634e5f5f-fb3c-4d38-a1da-165efe92d3cb",
+                "prefabNodeID": "ea33d775-7ce3-4ee0-a7bd-7eae00ec3be0",
+                "tag": ""
+            },
+            "parentIndex": 47
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "c8467d52-5c61-4bfe-8944-d29a0f7ee40f",
+                                "rotate": {
+                                    "w": 0.9950988292694092,
+                                    "x": -0.09476464241743088,
+                                    "y": -0.0026782036293298006,
+                                    "z": 0.02812214009463787
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 0.9999999403953552,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": -1.2828483581542969,
+                                    "y": 8.167824745178223,
+                                    "z": 0.10316908359527588
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandRing1",
+                "objectID": "152dae1e-17bc-46b0-94fe-e87c80787878",
+                "prefabNodeID": "2b242520-4c89-4d2e-a8a8-10b7b8a75f46",
+                "tag": ""
+            },
+            "parentIndex": 36
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "152dae1e-17bc-46b0-94fe-e87c80787878",
+                                "rotate": {
+                                    "w": 0.999354362487793,
+                                    "x": -0.035929713398218155,
+                                    "y": -7.85146312409779e-08,
+                                    "z": 9.692013946960287e-08
+                                },
+                                "scale": {
+                                    "x": 0.9999999403953552,
+                                    "y": 0.9999998807907104,
+                                    "z": 0.9999999403953552
+                                },
+                                "translate": {
+                                    "x": -0.007554531097412109,
+                                    "y": 1.8436492681503296,
+                                    "z": -3.2186508178710938e-06
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandRing2",
+                "objectID": "c777abf8-996d-4959-b716-f676204c7b51",
+                "prefabNodeID": "1d6a426f-e42e-4b9b-bc73-e1f3449b6053",
+                "tag": ""
+            },
+            "parentIndex": 49
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "c777abf8-996d-4959-b716-f676204c7b51",
+                                "rotate": {
+                                    "w": 0.9999396800994873,
+                                    "x": -0.01098290178924799,
+                                    "y": -7.031909632360112e-08,
+                                    "z": 5.923569119659078e-07
+                                },
+                                "scale": {
+                                    "x": 1.0000001192092896,
+                                    "y": 1.0,
+                                    "z": 0.9999999403953552
+                                },
+                                "translate": {
+                                    "x": 0.0016896724700927734,
+                                    "y": 1.7608391046524048,
+                                    "z": -1.4066696166992188e-05
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandRing3",
+                "objectID": "cee5bc04-15d9-4dc2-9919-cb56efd46720",
+                "prefabNodeID": "70dd185d-ae97-4aa6-a47e-f97dadcdb403",
+                "tag": ""
+            },
+            "parentIndex": 50
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "cee5bc04-15d9-4dc2-9919-cb56efd46720",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": -4.656613761255812e-09,
+                                    "y": 1.2060628762355918e-07,
+                                    "z": 1.862645149230957e-09
+                                },
+                                "scale": {
+                                    "x": 0.9999999403953552,
+                                    "y": 1.0,
+                                    "z": 0.9999999403953552
+                                },
+                                "translate": {
+                                    "x": 0.005852699279785156,
+                                    "y": 1.6165236234664917,
+                                    "z": 2.2649765014648438e-06
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandRing4",
+                "objectID": "4de5ca0c-6b94-4c60-aea9-0b81858683b9",
+                "prefabNodeID": "d0f9f666-f48d-4f30-a690-955989baa070",
+                "tag": ""
+            },
+            "parentIndex": 51
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "c8467d52-5c61-4bfe-8944-d29a0f7ee40f",
+                                "rotate": {
+                                    "w": 0.9851259589195251,
+                                    "x": -0.08554182946681976,
+                                    "y": -0.012892053462564945,
+                                    "z": 0.14846989512443542
+                                },
+                                "scale": {
+                                    "x": 0.9999998807907104,
+                                    "y": 1.0,
+                                    "z": 0.9999999403953552
+                                },
+                                "translate": {
+                                    "x": -2.944455146789551,
+                                    "y": 7.1969122886657715,
+                                    "z": 0.11912000179290771
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandPinky1",
+                "objectID": "a0e4dcf9-15c5-4006-86a5-1d246426d323",
+                "prefabNodeID": "26f3de1b-f025-4cc6-a8c0-f9a07a2c1c1e",
+                "tag": ""
+            },
+            "parentIndex": 36
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "a0e4dcf9-15c5-4006-86a5-1d246426d323",
+                                "rotate": {
+                                    "w": 0.9990211725234985,
+                                    "x": -0.04423442482948303,
+                                    "y": -2.3445711860858864e-07,
+                                    "z": -2.0322724481047771e-07
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 0.9999998807907104
+                                },
+                                "translate": {
+                                    "x": -0.003983497619628906,
+                                    "y": 1.859755516052246,
+                                    "z": 5.245208740234375e-06
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandPinky2",
+                "objectID": "0cdb2c74-65a2-4011-af16-4b23de67cdbc",
+                "prefabNodeID": "5b0ff066-e404-409d-8c0e-ecc5518ba673",
+                "tag": ""
+            },
+            "parentIndex": 53
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "0cdb2c74-65a2-4011-af16-4b23de67cdbc",
+                                "rotate": {
+                                    "w": 0.9999048709869385,
+                                    "x": -0.013792674988508224,
+                                    "y": 3.222683062631404e-07,
+                                    "z": -3.166798023812589e-07
+                                },
+                                "scale": {
+                                    "x": 0.9999999403953552,
+                                    "y": 1.0,
+                                    "z": 0.9999998807907104
+                                },
+                                "translate": {
+                                    "x": 0.0015459060668945313,
+                                    "y": 1.5564532279968262,
+                                    "z": 3.337860107421875e-06
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandPinky3",
+                "objectID": "542849bf-26d1-4ef0-b657-c7a897eaba90",
+                "prefabNodeID": "ba071b7c-200a-4240-a5be-3e32f5c7200f",
+                "tag": ""
+            },
+            "parentIndex": 54
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "542849bf-26d1-4ef0-b657-c7a897eaba90",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": -1.1175872671742582e-08,
+                                    "y": -9.5926239396249e-08,
+                                    "z": 2.7939677238464355e-08
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 0.9999999403953552,
+                                    "z": 0.9999999403953552
+                                },
+                                "translate": {
+                                    "x": 0.002438068389892578,
+                                    "y": 1.398263692855835,
+                                    "z": 7.152557373046875e-06
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightHandPinky4",
+                "objectID": "62811b21-93e6-43b5-adb8-10984847fec0",
+                "prefabNodeID": "56538e1c-8613-47c4-acb1-6d2793fff586",
+                "tag": ""
+            },
+            "parentIndex": 55
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b74d8de4-1f1c-4170-815b-eedbfa1c85bf",
+                                "rotate": {
+                                    "w": -0.059221189469099045,
+                                    "x": 0.0012958047445863485,
+                                    "y": 0.021847348660230637,
+                                    "z": 0.9980049729347229
+                                },
+                                "scale": {
+                                    "x": 1.0000115633010864,
+                                    "y": 1.0000001192092896,
+                                    "z": 1.0000015497207642
+                                },
+                                "translate": {
+                                    "x": 9.211947441101074,
+                                    "y": -3.5299267768859863,
+                                    "z": 0.23046348989009857
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftUpLeg",
+                "objectID": "9d33aede-9246-4e81-8357-d15cf263e689",
+                "prefabNodeID": "d0355f84-0faa-4896-9f2e-103fbc889af3",
+                "tag": ""
+            },
+            "parentIndex": 2
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "9d33aede-9246-4e81-8357-d15cf263e689",
+                                "rotate": {
+                                    "w": 0.9997913241386414,
+                                    "x": 0.019924936816096306,
+                                    "y": 8.592411177232862e-05,
+                                    "z": 0.004511281847953796
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0000001192092896,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": -4.284083843231201e-08,
+                                    "y": 23.753273010253906,
+                                    "z": -1.1295924196019769e-07
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftLeg",
+                "objectID": "bf95d930-c766-4a14-8331-3be11f546561",
+                "prefabNodeID": "514baaca-d488-4505-8465-96e277be65b8",
+                "tag": ""
+            },
+            "parentIndex": 57
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "bf95d930-c766-4a14-8331-3be11f546561",
+                                "rotate": {
+                                    "w": 0.8906174302101135,
+                                    "x": -0.45396873354911804,
+                                    "y": -0.023790419101715088,
+                                    "z": -0.012126315385103226
+                                },
+                                "scale": {
+                                    "x": 0.9999999403953552,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 5.85801899433136e-07,
+                                    "y": 20.183101654052734,
+                                    "z": -2.2351741790771484e-08
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftFoot",
+                "objectID": "8cf82dcd-d866-4bb8-bba4-9bcd22899402",
+                "prefabNodeID": "3d391491-34e7-4e19-ba1a-efbed5fcdbf6",
+                "tag": ""
+            },
+            "parentIndex": 58
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "8cf82dcd-d866-4bb8-bba4-9bcd22899402",
+                                "rotate": {
+                                    "w": 0.9435308575630188,
+                                    "x": -0.327640175819397,
+                                    "y": 0.04629329964518547,
+                                    "z": 0.016074832528829575
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": -3.2782554626464844e-07,
+                                    "y": 8.507137298583984,
+                                    "z": 2.7418136596679688e-06
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftToeBase",
+                "objectID": "1fe451b6-bac7-4eb4-a638-e950370cc405",
+                "prefabNodeID": "9454bdfc-531d-4507-b9fe-3bda901736ca",
+                "tag": ""
+            },
+            "parentIndex": 59
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "1fe451b6-bac7-4eb4-a638-e950370cc405",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": -7.912603905424476e-08,
+                                    "y": -4.0782100541036925e-07,
+                                    "z": 1.4825491234660149e-07
+                                },
+                                "scale": {
+                                    "x": 1.0000001192092896,
+                                    "y": 1.0,
+                                    "z": 1.0000001192092896
+                                },
+                                "translate": {
+                                    "x": -1.4826655387878418e-06,
+                                    "y": 3.260737657546997,
+                                    "z": -2.980232238769531e-07
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:LeftToe_End",
+                "objectID": "3deae37c-a6fc-4c51-9091-a8ae3afb2e98",
+                "prefabNodeID": "b76d905c-fad9-4bea-b597-c7d3bc2d2e12",
+                "tag": ""
+            },
+            "parentIndex": 60
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b74d8de4-1f1c-4170-815b-eedbfa1c85bf",
+                                "rotate": {
+                                    "w": 0.059217143803834915,
+                                    "x": -0.0013378298608586192,
+                                    "y": 0.022544272243976593,
+                                    "z": 0.9979896545410156
+                                },
+                                "scale": {
+                                    "x": 0.9999973177909851,
+                                    "y": 1.0,
+                                    "z": 0.9999994039535522
+                                },
+                                "translate": {
+                                    "x": -9.211947441101074,
+                                    "y": -3.5299267768859863,
+                                    "z": 0.1729888767004013
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightUpLeg",
+                "objectID": "47db5284-862f-4ec1-a7ee-ac201fad4ff4",
+                "prefabNodeID": "eee2896a-4a98-4e5e-b3b3-0aee8df263b1",
+                "tag": ""
+            },
+            "parentIndex": 2
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "47db5284-862f-4ec1-a7ee-ac201fad4ff4",
+                                "rotate": {
+                                    "w": 0.9998747110366821,
+                                    "x": 0.015164649114012718,
+                                    "y": -6.957098958082497e-05,
+                                    "z": -0.004535019397735596
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 0.9999998211860657
+                                },
+                                "translate": {
+                                    "x": 1.4901161193847656e-08,
+                                    "y": 23.754743576049805,
+                                    "z": 5.883521225769073e-09
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightLeg",
+                "objectID": "db9fb0a8-e8de-4262-a320-2f7df6326516",
+                "prefabNodeID": "1441d1b6-22c0-4024-9af8-6ed097b2154f",
+                "tag": ""
+            },
+            "parentIndex": 62
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "db9fb0a8-e8de-4262-a320-2f7df6326516",
+                                "rotate": {
+                                    "w": 0.8915303349494934,
+                                    "x": -0.4521813988685608,
+                                    "y": 0.023690473288297653,
+                                    "z": 0.012015876360237598
+                                },
+                                "scale": {
+                                    "x": 0.9999998807907104,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": -1.1166557669639587e-06,
+                                    "y": 20.170217514038086,
+                                    "z": 3.650784492492676e-07
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightFoot",
+                "objectID": "50426231-2a88-4a9b-aa2e-f35ead4dde16",
+                "prefabNodeID": "a3abdfce-4779-4024-9a65-ac058003dda6",
+                "tag": ""
+            },
+            "parentIndex": 63
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "50426231-2a88-4a9b-aa2e-f35ead4dde16",
+                                "rotate": {
+                                    "w": 0.9444636702537537,
+                                    "x": -0.32488828897476196,
+                                    "y": -0.04667185619473457,
+                                    "z": -0.016054728999733925
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": -2.8312206268310547e-07,
+                                    "y": 8.547308921813965,
+                                    "z": -2.384185791015625e-07
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightToeBase",
+                "objectID": "9849460f-d28c-4e90-86a6-840d6efca38e",
+                "prefabNodeID": "bfbea16b-c491-40a8-b461-1726894e1774",
+                "tag": ""
+            },
+            "parentIndex": 64
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "9849460f-d28c-4e90-86a6-840d6efca38e",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": -2.68046260742949e-08,
+                                    "y": 1.8369608767443424e-07,
+                                    "z": 3.0314549803733826e-07
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0000001192092896
+                                },
+                                "translate": {
+                                    "x": -4.991888999938965e-07,
+                                    "y": 3.137279748916626,
+                                    "z": -1.1920928955078125e-07
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "mixamorig:RightToe_End",
+                "objectID": "748e891d-587a-45a4-84b6-ba51e8e26898",
+                "prefabNodeID": "1bac61f5-b730-4dae-9249-a0421e191fec",
+                "tag": ""
+            },
+            "parentIndex": 65
+        }
+    ],
+    "prefab": true,
+    "prefabID": "cb817a17-f785-40b1-bf39-9cf0cf9fb705"
+}

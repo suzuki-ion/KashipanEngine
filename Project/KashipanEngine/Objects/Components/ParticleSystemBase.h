@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstring>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <string>
 #include <unordered_set>
@@ -27,7 +28,6 @@
 #include "Graphics/Resources/RWStructuredBufferResource.h"
 #include "Graphics/Resources/StructuredBufferResource.h"
 #include "Math/Matrix4x4.h"
-#include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Utilities/MathUtils.h"
 #include "Utilities/Passkeys.h"
@@ -120,6 +120,57 @@ struct GPUParticleFreeListInitConstants final {
     std::uint32_t _pad2 = 0;
 };
 
+/// @brief パーティクルのスポーン範囲を構成する1つの形状の種類
+/// @details 2D（ParticleSystem2D）では Box は Rect、Sphere は Circle として扱われ（Z軸は無視）、Capsuleは選択できない
+enum class SpawnShape {
+    Point,
+    Box,
+    Sphere,
+    Capsule,
+};
+
+/// @brief スポーン範囲を構成する1つの形状のパラメータ
+/// @details 「含める形状」「除外する形状」のどちらとしても使う共通の1エントリ。
+///          種類ごとに使うフィールドが異なる（Point: centerのみ、Box: center+boxSize、
+///          Sphere: center+sphereRadius、Capsule: center+capsuleRadius+capsuleHeight）
+struct SpawnShapeEntry final {
+    SpawnShape type = SpawnShape::Point;
+    Vector3 center{ 0.0f, 0.0f, 0.0f };
+    /// @brief Box/Rect用。全辺のサイズ（中心から±size/2の範囲）
+    Vector3 boxSize{ 1.0f, 1.0f, 1.0f };
+    /// @brief Sphere/Circle用の半径
+    float sphereRadius = 1.0f;
+    /// @brief Capsule用の半径
+    float capsuleRadius = 0.5f;
+    /// @brief Capsule用の高さ（円柱部分の長さ。Y軸方向固定）
+    float capsuleHeight = 1.0f;
+};
+
+inline JSON ToJSON(const SpawnShapeEntry &shape) {
+    return JSON({
+        { "type", static_cast<int>(shape.type) },
+        { "center", ToJSON(shape.center) },
+        { "boxSize", ToJSON(shape.boxSize) },
+        { "sphereRadius", shape.sphereRadius },
+        { "capsuleRadius", shape.capsuleRadius },
+        { "capsuleHeight", shape.capsuleHeight },
+    });
+}
+
+template <>
+struct FromJSONImpl<SpawnShapeEntry> {
+    static SpawnShapeEntry invoke(const JSON &json) {
+        SpawnShapeEntry shape;
+        shape.type = static_cast<SpawnShape>(json.value("type", 0));
+        if (json.contains("center")) shape.center = FromJSON<Vector3>(json["center"]);
+        if (json.contains("boxSize")) shape.boxSize = FromJSON<Vector3>(json["boxSize"]);
+        shape.sphereRadius = json.value("sphereRadius", 1.0f);
+        shape.capsuleRadius = json.value("capsuleRadius", 0.5f);
+        shape.capsuleHeight = json.value("capsuleHeight", 1.0f);
+        return shape;
+    }
+};
+
 /// @brief ParticleSystem2D / ParticleSystem3D 共通のパーティクル生成・寿命管理ロジックを持つ基底クラス
 /// @details このクラス自体はコンポーネントとして登録されない（登録・COMPONENT_CATEGORYの実体は
 ///          このクラスで宣言し、Add Componentメニュー等では派生クラス名で表示される）。
@@ -138,17 +189,6 @@ struct GPUParticleFreeListInitConstants final {
 class ParticleSystemBase : public IObjectComponent {
 public:
     COMPONENT_CATEGORY("Effect")
-
-    /// @brief パーティクルのスポーン範囲の形状
-    /// @details Min/Maxの2つの同形状（同じ中心・向き）の間の領域（内側の形状の外側かつ外側の形状の内側）にスポーンする。
-    ///          Min側のサイズ・半径を0にすれば、内側が空洞化しない通常の塗りつぶし範囲になる。
-    ///          2D（ParticleSystem2D）では Box は Rect、Sphere は Circle として扱われ（Z軸は無視）、Capsuleは選択できない
-    enum class SpawnShape {
-        Point,
-        Box,
-        Sphere,
-        Capsule,
-    };
 
     /// @brief パーティクルオブジェクトの生成方法
     enum class SpawnOrigin {
@@ -333,15 +373,9 @@ protected:
         ADD_MEMBER_VARIABLE(totalSpawnCount_);
         ADD_MEMBER_VARIABLE(billboard_);
         ADD_MEMBER_VARIABLE(castShadows_);
-        ADD_MEMBER_VARIABLE(spawnCenter_);
-        ADD_MEMBER_VARIABLE(spawnBoxSizeMin_);
-        ADD_MEMBER_VARIABLE(spawnBoxSizeMax_);
-        ADD_MEMBER_VARIABLE(spawnSphereRadiusMin_);
-        ADD_MEMBER_VARIABLE(spawnSphereRadiusMax_);
-        ADD_MEMBER_VARIABLE(spawnCapsuleRadiusMin_);
-        ADD_MEMBER_VARIABLE(spawnCapsuleRadiusMax_);
-        ADD_MEMBER_VARIABLE(spawnCapsuleHeightMin_);
-        ADD_MEMBER_VARIABLE(spawnCapsuleHeightMax_);
+        // includeShapes_/excludeShapes_（可変長のリスト）は、このKey-Value型のメンバー変数リフレクション
+        // （プレハブ同期・キーフレームアニメーション用。安定した固定アドレスの単一値を前提とする）には
+        // 登録できないため対象外（他の可変長コンテナ系メンバーと同様の扱い）
         ADD_MEMBER_VARIABLE(playOnStart_);
         ADD_MEMBER_VARIABLE(loop_);
         ADD_MEMBER_VARIABLE(fixedSpawnPosition_);
@@ -559,16 +593,9 @@ protected:
         billboardTargetObjectID_ = other.billboardTargetObjectID_;
         billboardRotationMode_ = other.billboardRotationMode_;
         castShadows_ = other.castShadows_;
-        spawnShape_ = other.spawnShape_;
-        spawnCenter_ = other.spawnCenter_;
-        spawnBoxSizeMin_ = other.spawnBoxSizeMin_;
-        spawnBoxSizeMax_ = other.spawnBoxSizeMax_;
-        spawnSphereRadiusMin_ = other.spawnSphereRadiusMin_;
-        spawnSphereRadiusMax_ = other.spawnSphereRadiusMax_;
-        spawnCapsuleRadiusMin_ = other.spawnCapsuleRadiusMin_;
-        spawnCapsuleRadiusMax_ = other.spawnCapsuleRadiusMax_;
-        spawnCapsuleHeightMin_ = other.spawnCapsuleHeightMin_;
-        spawnCapsuleHeightMax_ = other.spawnCapsuleHeightMax_;
+        includeShapes_ = other.includeShapes_;
+        excludeShapes_ = other.excludeShapes_;
+        MarkSpawnVoxelGridDirty();
         gpuSimulation_ = other.gpuSimulation_;
     }
 
@@ -599,16 +626,8 @@ protected:
         json["billboardTargetObjectID"] = ToJSON(billboardTargetObjectID_);
         json["billboardRotationMode"] = static_cast<int>(billboardRotationMode_);
         json["castShadows"] = castShadows_;
-        json["spawnShape"] = static_cast<int>(spawnShape_);
-        json["spawnCenter"] = ToJSON(spawnCenter_);
-        json["spawnBoxSizeMin"] = ToJSON(spawnBoxSizeMin_);
-        json["spawnBoxSizeMax"] = ToJSON(spawnBoxSizeMax_);
-        json["spawnSphereRadiusMin"] = spawnSphereRadiusMin_;
-        json["spawnSphereRadiusMax"] = spawnSphereRadiusMax_;
-        json["spawnCapsuleRadiusMin"] = spawnCapsuleRadiusMin_;
-        json["spawnCapsuleRadiusMax"] = spawnCapsuleRadiusMax_;
-        json["spawnCapsuleHeightMin"] = spawnCapsuleHeightMin_;
-        json["spawnCapsuleHeightMax"] = spawnCapsuleHeightMax_;
+        json["includeShapes"] = ToJSON(includeShapes_);
+        json["excludeShapes"] = ToJSON(excludeShapes_);
         json["gpuSimulation"] = gpuSimulation_;
         return json;
     }
@@ -639,16 +658,68 @@ protected:
         if (json.contains("billboardTargetObjectID")) billboardTargetObjectID_ = FromJSON<UUID128>(json["billboardTargetObjectID"]);
         billboardRotationMode_ = static_cast<TargetLookAt::RotationMode>(json.value("billboardRotationMode", 0));
         castShadows_ = json.value("castShadows", true);
-        spawnShape_ = static_cast<SpawnShape>(json.value("spawnShape", 0));
-        if (json.contains("spawnCenter")) spawnCenter_ = FromJSON<Vector3>(json["spawnCenter"]);
-        if (json.contains("spawnBoxSizeMin")) spawnBoxSizeMin_ = FromJSON<Vector3>(json["spawnBoxSizeMin"]);
-        if (json.contains("spawnBoxSizeMax")) spawnBoxSizeMax_ = FromJSON<Vector3>(json["spawnBoxSizeMax"]);
-        spawnSphereRadiusMin_ = json.value("spawnSphereRadiusMin", 0.0f);
-        spawnSphereRadiusMax_ = json.value("spawnSphereRadiusMax", 1.0f);
-        spawnCapsuleRadiusMin_ = json.value("spawnCapsuleRadiusMin", 0.0f);
-        spawnCapsuleRadiusMax_ = json.value("spawnCapsuleRadiusMax", 0.5f);
-        spawnCapsuleHeightMin_ = json.value("spawnCapsuleHeightMin", 0.0f);
-        spawnCapsuleHeightMax_ = json.value("spawnCapsuleHeightMax", 1.0f);
+
+        if (json.contains("includeShapes") || json.contains("excludeShapes")) {
+            // 新形式（複数形状のリスト）
+            includeShapes_.clear();
+            if (json.contains("includeShapes")) includeShapes_ = FromJSON<std::vector<SpawnShapeEntry>>(json["includeShapes"]);
+            excludeShapes_.clear();
+            if (json.contains("excludeShapes")) excludeShapes_ = FromJSON<std::vector<SpawnShapeEntry>>(json["excludeShapes"]);
+        } else {
+            // 旧形式（単一形状＋Min/Maxのシェル）からの移行:
+            // 単一のinclude形状（サイズ=Max）を作り、Minが0でなければ同じ中心・同じ種類でサイズ=Minの
+            // exclude形状を1つ追加する（旧シェル表現を「含める形状＋除外形状」で近似的に再現する）
+            includeShapes_.clear();
+            excludeShapes_.clear();
+            const auto legacyShape = static_cast<SpawnShape>(json.value("spawnShape", 0));
+            const Vector3 legacyCenter = json.contains("spawnCenter") ? FromJSON<Vector3>(json["spawnCenter"]) : Vector3(0.0f, 0.0f, 0.0f);
+            switch (legacyShape) {
+            case SpawnShape::Point: {
+                SpawnShapeEntry point;
+                point.type = SpawnShape::Point;
+                point.center = legacyCenter;
+                includeShapes_.push_back(point);
+                break;
+            }
+            case SpawnShape::Box: {
+                const Vector3 sizeMax = json.contains("spawnBoxSizeMax") ? FromJSON<Vector3>(json["spawnBoxSizeMax"]) : Vector3(1.0f, 1.0f, 1.0f);
+                const Vector3 sizeMin = json.contains("spawnBoxSizeMin") ? FromJSON<Vector3>(json["spawnBoxSizeMin"]) : Vector3(0.0f, 0.0f, 0.0f);
+                SpawnShapeEntry outer; outer.type = SpawnShape::Box; outer.center = legacyCenter; outer.boxSize = sizeMax;
+                includeShapes_.push_back(outer);
+                if (sizeMin.x > 0.0f || sizeMin.y > 0.0f || sizeMin.z > 0.0f) {
+                    SpawnShapeEntry inner; inner.type = SpawnShape::Box; inner.center = legacyCenter; inner.boxSize = sizeMin;
+                    excludeShapes_.push_back(inner);
+                }
+                break;
+            }
+            case SpawnShape::Sphere: {
+                const float rMax = json.value("spawnSphereRadiusMax", 1.0f);
+                const float rMin = json.value("spawnSphereRadiusMin", 0.0f);
+                SpawnShapeEntry outer; outer.type = SpawnShape::Sphere; outer.center = legacyCenter; outer.sphereRadius = rMax;
+                includeShapes_.push_back(outer);
+                if (rMin > 0.0f) {
+                    SpawnShapeEntry inner; inner.type = SpawnShape::Sphere; inner.center = legacyCenter; inner.sphereRadius = rMin;
+                    excludeShapes_.push_back(inner);
+                }
+                break;
+            }
+            case SpawnShape::Capsule: {
+                const float rMax = json.value("spawnCapsuleRadiusMax", 0.5f);
+                const float rMin = json.value("spawnCapsuleRadiusMin", 0.0f);
+                const float hMax = json.value("spawnCapsuleHeightMax", 1.0f);
+                const float hMin = json.value("spawnCapsuleHeightMin", 0.0f);
+                SpawnShapeEntry outer; outer.type = SpawnShape::Capsule; outer.center = legacyCenter; outer.capsuleRadius = rMax; outer.capsuleHeight = hMax;
+                includeShapes_.push_back(outer);
+                if (rMin > 0.0f || hMin > 0.0f) {
+                    SpawnShapeEntry inner; inner.type = SpawnShape::Capsule; inner.center = legacyCenter; inner.capsuleRadius = rMin; inner.capsuleHeight = hMin;
+                    excludeShapes_.push_back(inner);
+                }
+                break;
+            }
+            }
+        }
+        MarkSpawnVoxelGridDirty();
+
         SetGPUSimulation(json.value("gpuSimulation", false));
     }
 
@@ -698,52 +769,73 @@ protected:
         ImGui::PopID();
     }
 
-    /// @brief スポーン範囲（形状・Min/Max）のImGui表示
-    void ShowSpawnShapeImGui() {
-        ImGui::SeparatorText("Spawn Area");
+    /// @brief 形状1個ぶんの種類・パラメータ入力を表示する（Include/Exclude共通）
+    /// @return 値が変更された場合はtrue
+    bool ShowSpawnShapeEntryImGui(SpawnShapeEntry &shape) {
+        bool changed = false;
         if (is2D_) {
             static const char *kShapeLabels[] = { "Point", "Rect", "Circle" };
-            int shapeIndex = static_cast<int>(spawnShape_);
-            if (ImGui::Combo("Spawn Shape", &shapeIndex, kShapeLabels, 3)) {
-                spawnShape_ = static_cast<SpawnShape>(shapeIndex);
-            }
+            int shapeIndex = static_cast<int>(shape.type);
+            if (ImGui::Combo("Type", &shapeIndex, kShapeLabels, 3)) { shape.type = static_cast<SpawnShape>(shapeIndex); changed = true; }
         } else {
             static const char *kShapeLabels[] = { "Point", "Box", "Sphere", "Capsule" };
-            int shapeIndex = static_cast<int>(spawnShape_);
-            if (ImGui::Combo("Spawn Shape", &shapeIndex, kShapeLabels, 4)) {
-                spawnShape_ = static_cast<SpawnShape>(shapeIndex);
-            }
+            int shapeIndex = static_cast<int>(shape.type);
+            if (ImGui::Combo("Type", &shapeIndex, kShapeLabels, 4)) { shape.type = static_cast<SpawnShape>(shapeIndex); changed = true; }
         }
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Min/Max間の範囲（内側の形状の外側かつ外側の形状の内側）にスポーンする。Minを0にすれば通常の塗りつぶし範囲になる");
-        }
-
-        switch (spawnShape_) {
+        // Point（座標そのもの）を含め、常にCenterを編集できるようにする
+        if (ImGui::DragFloat3("Center", &shape.center.x, 0.01f)) changed = true;
+        switch (shape.type) {
         case SpawnShape::Point:
             break;
         case SpawnShape::Box:
-            ImGui::DragFloat3("Spawn Center", &spawnCenter_.x, 0.01f);
-            if (is2D_) {
-                ImGui::DragFloat2("Min Size", &spawnBoxSizeMin_.x, 0.01f, 0.0f);
-                ImGui::DragFloat2("Max Size", &spawnBoxSizeMax_.x, 0.01f, 0.0f);
-            } else {
-                ImGui::DragFloat3("Min Size", &spawnBoxSizeMin_.x, 0.01f, 0.0f);
-                ImGui::DragFloat3("Max Size", &spawnBoxSizeMax_.x, 0.01f, 0.0f);
-            }
+            if (is2D_) { if (ImGui::DragFloat2("Size", &shape.boxSize.x, 0.01f, 0.0f)) changed = true; }
+            else { if (ImGui::DragFloat3("Size", &shape.boxSize.x, 0.01f, 0.0f)) changed = true; }
             break;
         case SpawnShape::Sphere:
-            ImGui::DragFloat3("Spawn Center", &spawnCenter_.x, 0.01f);
-            ImGui::DragFloat("Min Radius", &spawnSphereRadiusMin_, 0.01f, 0.0f);
-            ImGui::DragFloat("Max Radius", &spawnSphereRadiusMax_, 0.01f, 0.0f);
+            if (ImGui::DragFloat("Radius", &shape.sphereRadius, 0.01f, 0.0f)) changed = true;
             break;
         case SpawnShape::Capsule:
-            ImGui::DragFloat3("Spawn Center", &spawnCenter_.x, 0.01f);
-            ImGui::DragFloat("Min Radius", &spawnCapsuleRadiusMin_, 0.01f, 0.0f);
-            ImGui::DragFloat("Max Radius", &spawnCapsuleRadiusMax_, 0.01f, 0.0f);
-            ImGui::DragFloat("Min Height", &spawnCapsuleHeightMin_, 0.01f, 0.0f);
-            ImGui::DragFloat("Max Height", &spawnCapsuleHeightMax_, 0.01f, 0.0f);
+            if (ImGui::DragFloat("Radius", &shape.capsuleRadius, 0.01f, 0.0f)) changed = true;
+            if (ImGui::DragFloat("Height", &shape.capsuleHeight, 0.01f, 0.0f)) changed = true;
             break;
         }
+        return changed;
+    }
+
+    /// @brief 形状のリスト（Include/Excludeどちらか）の追加・削除・編集UIを表示する
+    void ShowSpawnShapeListImGui(const char *label, const char *addButtonLabel, std::vector<SpawnShapeEntry> &shapes) {
+        ImGui::PushID(label);
+        ImGui::TextUnformatted(label);
+        int removeIndex = -1;
+        for (size_t i = 0; i < shapes.size(); ++i) {
+            ImGui::PushID(static_cast<int>(i));
+            ImGui::Indent();
+            if (ShowSpawnShapeEntryImGui(shapes[i])) MarkSpawnVoxelGridDirty();
+            if (ImGui::Button("Remove")) removeIndex = static_cast<int>(i);
+            ImGui::Unindent();
+            ImGui::Separator();
+            ImGui::PopID();
+        }
+        if (removeIndex >= 0) {
+            shapes.erase(shapes.begin() + removeIndex);
+            MarkSpawnVoxelGridDirty();
+        }
+        if (ImGui::Button(addButtonLabel)) {
+            shapes.push_back(SpawnShapeEntry{});
+            MarkSpawnVoxelGridDirty();
+        }
+        ImGui::PopID();
+    }
+
+    /// @brief スポーン範囲（含める形状の和集合から、除外する形状の和集合を除いた領域）のImGui表示
+    void ShowSpawnShapeImGui() {
+        ImGui::SeparatorText("Spawn Area");
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("「含める形状」の和集合から、「除外する形状」の和集合を取り除いた領域にスポーンする。\n"
+                "含める形状が1つも無い、または有効な範囲が無い場合は原点（スポーン基準位置そのもの）にスポーンする");
+        }
+        ShowSpawnShapeListImGui("Include Shapes (spawn inside union)", "Add Include Shape", includeShapes_);
+        ShowSpawnShapeListImGui("Exclude Shapes (never spawn inside)", "Add Exclude Shape", excludeShapes_);
     }
 
     /// @brief パーティクルオブジェクトの生成方法（親付け・生成位置）のImGui表示
@@ -932,20 +1024,10 @@ protected:
     /// @brief シャドウマッピングのシャドウキャスターとして扱うか
     bool castShadows_ = true;
 
-    // スポーン範囲（Point以外はMin/Max間の領域にランダムスポーンする）
-    SpawnShape spawnShape_ = SpawnShape::Point;
-    Vector3 spawnCenter_{ 0.0f, 0.0f, 0.0f };
-    // Box/Rect: 全辺のサイズ（中心から±size/2の範囲）
-    Vector3 spawnBoxSizeMin_{ 0.0f, 0.0f, 0.0f };
-    Vector3 spawnBoxSizeMax_{ 1.0f, 1.0f, 1.0f };
-    // Sphere/Circle: 半径
-    float spawnSphereRadiusMin_ = 0.0f;
-    float spawnSphereRadiusMax_ = 1.0f;
-    // Capsule: 半径・高さ（円柱部分の長さ。Y軸方向固定）
-    float spawnCapsuleRadiusMin_ = 0.0f;
-    float spawnCapsuleRadiusMax_ = 0.5f;
-    float spawnCapsuleHeightMin_ = 0.0f;
-    float spawnCapsuleHeightMax_ = 1.0f;
+    // スポーン範囲: 「含める形状」の和集合から「除外する形状」の和集合を取り除いた領域にスポーンする。
+    // 実際のサンプリングはボクセルグリッド方式（RebuildSpawnVoxelGridIfNeeded/ComputeSpawnOffset）で行う
+    std::vector<SpawnShapeEntry> includeShapes_{ SpawnShapeEntry{} };
+    std::vector<SpawnShapeEntry> excludeShapes_;
 
     /// @brief GPUシミュレーション（コンピュートシェーダーによる移動・寿命計算）が有効か
     bool gpuSimulation_ = false;
@@ -1119,140 +1201,186 @@ private:
     // スポーン位置・親の解決（CPU/GPU共通ロジック）
     //==================================================
 
-    /// @brief 現在のスポーン形状設定に基づき、オーナー位置からのランダムなオフセットを求める
-    Vector3 ComputeSpawnOffset() const {
-        switch (spawnShape_) {
+    /// @brief 点がある1つの形状の内側にあるかを判定する（Pointは体積0のため常にfalseを返す。呼び出し側で別扱いする）
+    static bool IsPointInShape(const Vector3 &point, const SpawnShapeEntry &shape, bool is2D) {
+        const Vector3 local = point - shape.center;
+        switch (shape.type) {
         case SpawnShape::Box: {
-            Vector3 halfMin = spawnBoxSizeMin_ * 0.5f;
-            Vector3 halfMax = spawnBoxSizeMax_ * 0.5f;
-            if (is2D_) {
-                halfMin.z = 0.0f;
-                halfMax.z = 0.0f;
-            }
-            return spawnCenter_ + RandomPointInBoxShell(halfMin, halfMax);
+            const Vector3 half = shape.boxSize * 0.5f;
+            if (is2D) return std::abs(local.x) <= half.x && std::abs(local.y) <= half.y;
+            return std::abs(local.x) <= half.x && std::abs(local.y) <= half.y && std::abs(local.z) <= half.z;
         }
-        case SpawnShape::Sphere:
-            if (is2D_) {
-                const Vector2 p = RandomPointInCircleShell(spawnSphereRadiusMin_, spawnSphereRadiusMax_);
-                return spawnCenter_ + Vector3(p.x, p.y, 0.0f);
-            }
-            return spawnCenter_ + RandomPointInSphereShell(spawnSphereRadiusMin_, spawnSphereRadiusMax_);
-        case SpawnShape::Capsule:
-            return spawnCenter_ + RandomPointInCapsuleShell(spawnCapsuleRadiusMin_, spawnCapsuleRadiusMax_, spawnCapsuleHeightMin_, spawnCapsuleHeightMax_);
+        case SpawnShape::Sphere: {
+            const float r2 = shape.sphereRadius * shape.sphereRadius;
+            if (is2D) return (local.x * local.x + local.y * local.y) <= r2;
+            return local.LengthSquared() <= r2;
+        }
+        case SpawnShape::Capsule: {
+            const float halfHeight = shape.capsuleHeight * 0.5f;
+            const float closestY = std::clamp(local.y, -halfHeight, halfHeight);
+            const Vector3 radial = local - Vector3(0.0f, closestY, 0.0f);
+            return radial.LengthSquared() <= shape.capsuleRadius * shape.capsuleRadius;
+        }
         case SpawnShape::Point:
         default:
-            return spawnCenter_;
+            return false;
         }
     }
 
-    /// @brief 内側のBox（minHalf）の外側かつ外側のBox（maxHalf）の内側にあるランダムな点を返す（各half成分は絶対値化・min<=maxに補正される）
-    static Vector3 RandomPointInBoxShell(Vector3 minHalf, Vector3 maxHalf) {
-        minHalf.x = std::abs(minHalf.x); minHalf.y = std::abs(minHalf.y); minHalf.z = std::abs(minHalf.z);
-        maxHalf.x = std::abs(maxHalf.x); maxHalf.y = std::abs(maxHalf.y); maxHalf.z = std::abs(maxHalf.z);
-        if (minHalf.x > maxHalf.x) std::swap(minHalf.x, maxHalf.x);
-        if (minHalf.y > maxHalf.y) std::swap(minHalf.y, maxHalf.y);
-        if (minHalf.z > maxHalf.z) std::swap(minHalf.z, maxHalf.z);
+    /// @brief 形状1個ぶんの外接AABBを求める
+    static void GetShapeBounds(const SpawnShapeEntry &shape, bool is2D, Vector3 &outMin, Vector3 &outMax) {
+        switch (shape.type) {
+        case SpawnShape::Box: {
+            Vector3 half = shape.boxSize * 0.5f;
+            if (is2D) half.z = 0.0f;
+            outMin = shape.center - half;
+            outMax = shape.center + half;
+            break;
+        }
+        case SpawnShape::Sphere: {
+            const Vector3 r(shape.sphereRadius, shape.sphereRadius, is2D ? 0.0f : shape.sphereRadius);
+            outMin = shape.center - r;
+            outMax = shape.center + r;
+            break;
+        }
+        case SpawnShape::Capsule: {
+            const float halfExtentY = shape.capsuleHeight * 0.5f + shape.capsuleRadius;
+            const Vector3 ext(shape.capsuleRadius, halfExtentY, shape.capsuleRadius);
+            outMin = shape.center - ext;
+            outMax = shape.center + ext;
+            break;
+        }
+        case SpawnShape::Point:
+        default:
+            outMin = outMax = shape.center;
+            break;
+        }
+    }
 
-        auto sampleInMax = [&]() {
-            return Vector3(
-                GetRandomFloat(-maxHalf.x, maxHalf.x),
-                GetRandomFloat(-maxHalf.y, maxHalf.y),
-                GetRandomFloat(-maxHalf.z, maxHalf.z));
-        };
+    static Vector3 ComponentMin(const Vector3 &a, const Vector3 &b) {
+        return Vector3(std::min(a.x, b.x), std::min(a.y, b.y), std::min(a.z, b.z));
+    }
+    static Vector3 ComponentMax(const Vector3 &a, const Vector3 &b) {
+        return Vector3(std::max(a.x, b.x), std::max(a.y, b.y), std::max(a.z, b.z));
+    }
 
-        constexpr int kMaxAttempts = 16;
-        Vector3 p;
-        for (int attempt = 0; attempt < kMaxAttempts; ++attempt) {
-            p = sampleInMax();
-            if (std::abs(p.x) > minHalf.x || std::abs(p.y) > minHalf.y || std::abs(p.z) > minHalf.z) {
-                return p;
+    /// @brief 点がスポーン対象として有効か（含める形状のどれかの内側、かつ除外形状のどれの内側でもない）を判定する
+    /// @details includeShapes_中のPoint形状は体積0のため、ここでの体積ベースの判定対象には含めない
+    ///          （RebuildSpawnVoxelGridIfNeeded側で別途候補セルとして扱う）
+    bool IsPointValidForSpawn(const Vector3 &point) const {
+        bool insideInclude = false;
+        for (const auto &shape : includeShapes_) {
+            if (shape.type == SpawnShape::Point) continue;
+            if (IsPointInShape(point, shape, is2D_)) { insideInclude = true; break; }
+        }
+        if (!insideInclude) return false;
+        for (const auto &shape : excludeShapes_) {
+            if (shape.type == SpawnShape::Point) continue;
+            if (IsPointInShape(point, shape, is2D_)) return false;
+        }
+        return true;
+    }
+
+    /// @brief スポーン範囲のボクセルグリッド上の1候補セル（体積を持つボクセル、または体積0のPoint形状そのもの）
+    struct SpawnVoxelCell {
+        bool isPoint = false;
+        /// @brief isPoint==trueの場合は厳密な位置。falseの場合はボクセルの最小コーナー（spawnVoxelSize_を加えた範囲内でランダムにサンプルする）
+        Vector3 position{ 0.0f, 0.0f, 0.0f };
+    };
+    std::vector<SpawnVoxelCell> spawnVoxelCandidates_;
+    Vector3 spawnVoxelSize_{ 0.0f, 0.0f, 0.0f };
+    bool spawnVoxelGridDirty_ = true;
+    /// @brief ボクセル1辺のサイズ
+    static constexpr float kSpawnVoxelSize = 0.25f;
+    /// @brief 1軸あたりの最大分割数（巨大なAABB×極小ボクセルサイズによるメモリ暴走を防ぐ）
+    static constexpr int kSpawnVoxelGridMaxAxisCount = 48;
+
+    void MarkSpawnVoxelGridDirty() noexcept { spawnVoxelGridDirty_ = true; }
+
+    /// @brief includeShapes_/excludeShapes_からスポーン候補セル一覧を再構築する（形状が変わった時だけ実行する重い処理）
+    void RebuildSpawnVoxelGridIfNeeded() {
+        if (!spawnVoxelGridDirty_) return;
+        spawnVoxelGridDirty_ = false;
+        spawnVoxelCandidates_.clear();
+
+        // Point形状は体積を持たないため、ボクセル化とは別に候補セルとして直接追加する
+        // （除外形状の内側に入っている場合はスポーン対象から外す）
+        for (const auto &shape : includeShapes_) {
+            if (shape.type != SpawnShape::Point) continue;
+            bool excluded = false;
+            for (const auto &ex : excludeShapes_) {
+                if (ex.type == SpawnShape::Point) continue;
+                if (IsPointInShape(shape.center, ex, is2D_)) { excluded = true; break; }
+            }
+            if (!excluded) spawnVoxelCandidates_.push_back(SpawnVoxelCell{ true, shape.center });
+        }
+
+        bool hasVolumeShape = false;
+        for (const auto &shape : includeShapes_) {
+            if (shape.type != SpawnShape::Point) { hasVolumeShape = true; break; }
+        }
+        if (!hasVolumeShape) return;
+
+        constexpr float kFloatMax = std::numeric_limits<float>::max();
+        Vector3 aabbMin(kFloatMax, kFloatMax, kFloatMax);
+        Vector3 aabbMax(-kFloatMax, -kFloatMax, -kFloatMax);
+        for (const auto &shape : includeShapes_) {
+            if (shape.type == SpawnShape::Point) continue;
+            Vector3 shapeMin, shapeMax;
+            GetShapeBounds(shape, is2D_, shapeMin, shapeMax);
+            aabbMin = ComponentMin(aabbMin, shapeMin);
+            aabbMax = ComponentMax(aabbMax, shapeMax);
+        }
+        if (is2D_) { aabbMin.z = 0.0f; aabbMax.z = 0.0f; }
+
+        const Vector3 size = aabbMax - aabbMin;
+        if (size.x <= 0.0f || size.y <= 0.0f || (!is2D_ && size.z <= 0.0f)) return;
+
+        const int nx = std::clamp(static_cast<int>(std::ceil(size.x / kSpawnVoxelSize)), 1, kSpawnVoxelGridMaxAxisCount);
+        const int ny = std::clamp(static_cast<int>(std::ceil(size.y / kSpawnVoxelSize)), 1, kSpawnVoxelGridMaxAxisCount);
+        const int nz = is2D_ ? 1 : std::clamp(static_cast<int>(std::ceil(size.z / kSpawnVoxelSize)), 1, kSpawnVoxelGridMaxAxisCount);
+
+        spawnVoxelSize_ = Vector3(size.x / static_cast<float>(nx), size.y / static_cast<float>(ny), is2D_ ? 0.0f : size.z / static_cast<float>(nz));
+
+        for (int ix = 0; ix < nx; ++ix) {
+            for (int iy = 0; iy < ny; ++iy) {
+                for (int iz = 0; iz < nz; ++iz) {
+                    const Vector3 voxelMin = aabbMin + Vector3(
+                        static_cast<float>(ix) * spawnVoxelSize_.x,
+                        static_cast<float>(iy) * spawnVoxelSize_.y,
+                        is2D_ ? 0.0f : static_cast<float>(iz) * spawnVoxelSize_.z);
+                    const Vector3 voxelCenter = voxelMin + spawnVoxelSize_ * 0.5f;
+                    if (IsPointValidForSpawn(voxelCenter)) {
+                        spawnVoxelCandidates_.push_back(SpawnVoxelCell{ false, voxelMin });
+                    }
+                }
             }
         }
-        // 内箱と外箱がほぼ同サイズ等で外れなかった場合、最も余裕の少ない軸の面へ押し出す
-        const float marginX = minHalf.x - std::abs(p.x);
-        const float marginY = minHalf.y - std::abs(p.y);
-        const float marginZ = minHalf.z - std::abs(p.z);
-        if (marginX <= marginY && marginX <= marginZ) {
-            p.x = (p.x >= 0.0f) ? minHalf.x : -minHalf.x;
-        } else if (marginY <= marginZ) {
-            p.y = (p.y >= 0.0f) ? minHalf.y : -minHalf.y;
-        } else {
-            p.z = (p.z >= 0.0f) ? minHalf.z : -minHalf.z;
-        }
-        return p;
     }
 
-    /// @brief 半径minRadius〜maxRadiusの球殻内にある、体積が一様なランダムな点を返す
-    static Vector3 RandomPointInSphereShell(float minRadius, float maxRadius) {
-        const float minR = std::max(0.0f, std::min(minRadius, maxRadius));
-        const float maxR = std::max(0.0f, std::max(minRadius, maxRadius));
-        if (maxR <= 0.0f) return Vector3(0.0f, 0.0f, 0.0f);
-        const float z = GetRandomFloat(-1.0f, 1.0f);
-        const float theta = GetRandomFloat(0.0f, 2.0f * GetPI<float>());
-        const float rXY = std::sqrt(std::max(0.0f, 1.0f - z * z));
-        const Vector3 dir(rXY * std::cos(theta), rXY * std::sin(theta), z);
-        const float radius = std::cbrt(GetRandomFloat(minR * minR * minR, maxR * maxR * maxR));
-        return dir * radius;
-    }
+    /// @brief 現在のスポーン範囲設定（含める形状の和集合から除外形状の和集合を除いた領域）に基づき、
+    ///        オーナー位置からのランダムなオフセットを求める
+    /// @details 候補セル一覧（ボクセルグリッド）から1つをランダムに選び、その中でランダムな点を打つ方式。
+    ///          有効なスポーン範囲が無い場合（形状未設定・除外形状で全て覆われている等）は原点を返す
+    Vector3 ComputeSpawnOffset() {
+        RebuildSpawnVoxelGridIfNeeded();
+        if (spawnVoxelCandidates_.empty()) return Vector3(0.0f, 0.0f, 0.0f);
 
-    /// @brief 半径minRadius〜maxRadiusの円環内にある、面積が一様なランダムな点を返す
-    static Vector2 RandomPointInCircleShell(float minRadius, float maxRadius) {
-        const float minR = std::max(0.0f, std::min(minRadius, maxRadius));
-        const float maxR = std::max(0.0f, std::max(minRadius, maxRadius));
-        if (maxR <= 0.0f) return Vector2(0.0f, 0.0f);
-        const float theta = GetRandomFloat(0.0f, 2.0f * GetPI<float>());
-        const float radius = std::sqrt(GetRandomFloat(minR * minR, maxR * maxR));
-        return Vector2(std::cos(theta) * radius, std::sin(theta) * radius);
-    }
+        const auto &cell = spawnVoxelCandidates_[GetRandomInt(0, static_cast<int>(spawnVoxelCandidates_.size()) - 1)];
+        if (cell.isPoint) return cell.position;
 
-    /// @brief 内側のカプセル（minRadius/minHeight）の外側かつ外側のカプセル（maxRadius/maxHeight）の
-    ///        内側にあるランダムな点を返す（カプセルはY軸方向固定。heightは円柱部分の長さ）
-    static Vector3 RandomPointInCapsuleShell(float minRadius, float maxRadius, float minHeight, float maxHeight) {
-        const float minR = std::max(0.0f, std::min(minRadius, maxRadius));
-        const float maxR = std::max(0.0f, std::max(minRadius, maxRadius));
-        const float minH = std::max(0.0f, std::min(minHeight, maxHeight));
-        const float maxH = std::max(0.0f, std::max(minHeight, maxHeight));
-        if (maxR <= 0.0f && maxH <= 0.0f) return Vector3(0.0f, 0.0f, 0.0f);
-
-        const float minHalfH = minH * 0.5f;
-        const float maxHalfH = maxH * 0.5f;
-
-        auto sampleInMaxCapsule = [&]() -> Vector3 {
-            const float cylinderVolume = maxH * maxR * maxR;
-            const float sphereVolume = (4.0f / 3.0f) * maxR * maxR * maxR;
-            const float totalWeight = cylinderVolume + sphereVolume;
-            if (totalWeight <= 0.0f) return Vector3(0.0f, 0.0f, 0.0f);
-            if (GetRandomFloat(0.0f, totalWeight) < cylinderVolume) {
-                // 円柱部分
-                const float y = GetRandomFloat(-maxHalfH, maxHalfH);
-                const float theta = GetRandomFloat(0.0f, 2.0f * GetPI<float>());
-                const float r = maxR * std::sqrt(GetRandomFloat(0.0f, 1.0f));
-                return Vector3(r * std::cos(theta), y, r * std::sin(theta));
-            }
-            // 半球キャップ部分（球内の一様な点をどちらかの半球へ振り分ける）
-            const float theta = GetRandomFloat(0.0f, 2.0f * GetPI<float>());
-            const float phi = std::acos(GetRandomFloat(-1.0f, 1.0f));
-            const float r = maxR * std::cbrt(GetRandomFloat(0.0f, 1.0f));
-            const float sy = std::abs(r * std::cos(phi));
-            const float sxy = r * std::sin(phi);
-            const float capSign = GetRandomBool() ? 1.0f : -1.0f;
-            return Vector3(sxy * std::cos(theta), capSign * (maxHalfH + sy), sxy * std::sin(theta));
-        };
-
-        constexpr int kMaxAttempts = 16;
-        Vector3 p;
+        // ボクセル内でランダムな点を打つ。含める形状の境界・除外形状の境界をまたぐボクセルの場合のみ、
+        // 小規模なリジェクション再試行を行う（ボクセルは十分小さいため、有効判定済みの中心付近を
+        // 返せば大きく破綻しない）
+        constexpr int kMaxAttempts = 8;
         for (int attempt = 0; attempt < kMaxAttempts; ++attempt) {
-            p = sampleInMaxCapsule();
-            const float closestY = std::clamp(p.y, -minHalfH, minHalfH);
-            const float dist = (p - Vector3(0.0f, closestY, 0.0f)).Length();
-            if (dist > minR) return p;
+            const Vector3 p = cell.position + Vector3(
+                GetRandomFloat(0.0f, spawnVoxelSize_.x),
+                GetRandomFloat(0.0f, spawnVoxelSize_.y),
+                is2D_ ? 0.0f : GetRandomFloat(0.0f, spawnVoxelSize_.z));
+            if (IsPointValidForSpawn(p)) return p;
         }
-        // 内カプセルとほぼ同サイズ等で外れなかった場合、内カプセルの外側へ押し出す
-        const float closestY = std::clamp(p.y, -minHalfH, minHalfH);
-        const Vector3 radial = p - Vector3(0.0f, closestY, 0.0f);
-        const float len = radial.Length();
-        const Vector3 dir = len > 1e-6f ? radial * (1.0f / len) : Vector3(1.0f, 0.0f, 0.0f);
-        return Vector3(0.0f, closestY, 0.0f) + dir * minR;
+        return cell.position + spawnVoxelSize_ * 0.5f;
     }
 
     /// @brief 自身のオーナーオブジェクトを、子オブジェクトの親付けに使える可変ポインタとして解決する

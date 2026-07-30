@@ -157,6 +157,14 @@ void Renderer::ProcessGpuParticles(SceneContext *sceneContext) {
         }
         return;
     }
+    static bool sLoggedFreeListInitPipelineMissing = false;
+    if (!pipelineManager_->HasPipeline("ParticleFreeListInit") || pipelineManager_->GetPipeline("ParticleFreeListInit").Type() != PipelineType::Compute) {
+        if (!sLoggedFreeListInitPipelineMissing) {
+            sLoggedFreeListInitPipelineMissing = true;
+            Log("[ProcessGpuParticles] \"ParticleFreeListInit\" compute pipeline not found/loaded", LogSeverity::Warning);
+        }
+        return;
+    }
     if (!sLoggedDispatching) {
         sLoggedDispatching = true;
         char buf[128];
@@ -184,12 +192,49 @@ void Renderer::ProcessGpuParticles(SceneContext *sceneContext) {
         auto *spawnRequestBuffer = emitter->GetGpuSpawnRequestBuffer(Passkey<Renderer>{});
         auto *spawnConstantBuffer = emitter->GetGpuSpawnConstantBuffer(Passkey<Renderer>{});
         auto *updateConstantBuffer = emitter->GetGpuUpdateConstantBuffer(Passkey<Renderer>{});
-        if (!particleBuffer || !instanceMatrixBuffer || !spawnRequestBuffer || !spawnConstantBuffer || !updateConstantBuffer) continue;
+        auto *freeListBuffer = emitter->GetGpuFreeListBuffer(Passkey<Renderer>{});
+        auto *freeListCounterBuffer = emitter->GetGpuFreeListCounterBuffer(Passkey<Renderer>{});
+        auto *freeListInitConstantBuffer = emitter->GetGpuFreeListInitConstantBuffer(Passkey<Renderer>{});
+        if (!particleBuffer || !instanceMatrixBuffer || !spawnRequestBuffer || !spawnConstantBuffer || !updateConstantBuffer
+            || !freeListBuffer || !freeListCounterBuffer || !freeListInitConstantBuffer) continue;
 
         particleBuffer->SetCommandList(commandList);
         instanceMatrixBuffer->SetCommandList(commandList);
+        freeListBuffer->SetCommandList(commandList);
+        freeListCounterBuffer->SetCommandList(commandList);
         particleBuffer->TransitionTo(D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         instanceMatrixBuffer->TransitionTo(D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        freeListBuffer->TransitionTo(D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        freeListCounterBuffer->TransitionTo(D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+        const std::uint32_t particleCount = emitter->GetGpuParticleCapacity(Passkey<Renderer>{});
+
+        // バッファが新規生成・容量変更された直後は、フリーリストへ空きスロット 0..capacity-1 を積み直す
+        if (particleCount > 0 && emitter->ConsumeGpuFreeListNeedsInit(Passkey<Renderer>{})) {
+            pipelineBinder.UsePipeline("ParticleFreeListInit");
+            auto &initShaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, "ParticleFreeListInit");
+            initShaderBinder.SetCommandList(commandList);
+
+            GPUParticleFreeListInitConstants initConstants;
+            initConstants.capacity = particleCount;
+            void *mappedInitConstants = freeListInitConstantBuffer->Map();
+            if (mappedInitConstants) std::memcpy(mappedInitConstants, &initConstants, sizeof(initConstants));
+
+            initShaderBinder.Bind("Compute:ParticleFreeListInitConstants", freeListInitConstantBuffer);
+            initShaderBinder.Bind("Compute:gFreeList", freeListBuffer);
+            initShaderBinder.Bind("Compute:gFreeListCounter", freeListCounterBuffer);
+
+            const std::uint32_t initGroupCount = std::max<std::uint32_t>(1, (particleCount + 63) / 64);
+            commandList->Dispatch(initGroupCount, 1, 1);
+
+            // ParticleSpawnが直後にgFreeList/gFreeListCounterを読み書きするため、書き込み完了を待つ
+            D3D12_RESOURCE_BARRIER initBarriers[2]{};
+            initBarriers[0].Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+            initBarriers[0].UAV.pResource = freeListBuffer->GetResource();
+            initBarriers[1].Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+            initBarriers[1].UAV.pResource = freeListCounterBuffer->GetResource();
+            commandList->ResourceBarrier(2, initBarriers);
+        }
 
         const std::uint32_t spawnCount = emitter->GetGpuSpawnCount(Passkey<Renderer>{});
         if (spawnCount > 0) {
@@ -205,18 +250,24 @@ void Renderer::ProcessGpuParticles(SceneContext *sceneContext) {
             spawnShaderBinder.Bind("Compute:ParticleSpawnConstants", spawnConstantBuffer);
             spawnShaderBinder.Bind("Compute:gSpawnRequests", spawnRequestBuffer);
             spawnShaderBinder.Bind("Compute:gParticles", particleBuffer);
+            spawnShaderBinder.Bind("Compute:gFreeList", freeListBuffer);
+            spawnShaderBinder.Bind("Compute:gFreeListCounter", freeListCounterBuffer);
 
             const std::uint32_t spawnGroupCount = std::max<std::uint32_t>(1, (spawnCount + 63) / 64);
             commandList->Dispatch(spawnGroupCount, 1, 1);
 
-            // ParticleUpdateが直後にgParticlesを読み書きするため、書き込み完了を待つUAVバリアを挟む
-            D3D12_RESOURCE_BARRIER uavBarrier{};
-            uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-            uavBarrier.UAV.pResource = particleBuffer->GetResource();
-            commandList->ResourceBarrier(1, &uavBarrier);
+            // ParticleUpdateが直後にgParticles/gFreeList/gFreeListCounterを読み書きするため、
+            // 書き込み完了を待つUAVバリアを挟む
+            D3D12_RESOURCE_BARRIER uavBarriers[3]{};
+            uavBarriers[0].Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+            uavBarriers[0].UAV.pResource = particleBuffer->GetResource();
+            uavBarriers[1].Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+            uavBarriers[1].UAV.pResource = freeListBuffer->GetResource();
+            uavBarriers[2].Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+            uavBarriers[2].UAV.pResource = freeListCounterBuffer->GetResource();
+            commandList->ResourceBarrier(3, uavBarriers);
         }
 
-        const std::uint32_t particleCount = emitter->GetGpuParticleCapacity(Passkey<Renderer>{});
         if (particleCount == 0) continue;
 
         pipelineBinder.UsePipeline("ParticleUpdate");
@@ -246,6 +297,8 @@ void Renderer::ProcessGpuParticles(SceneContext *sceneContext) {
         updateShaderBinder.Bind("Compute:ParticleUpdateConstants", updateConstantBuffer);
         updateShaderBinder.Bind("Compute:gParticles", particleBuffer);
         updateShaderBinder.Bind("Compute:gInstanceMatrices", instanceMatrixBuffer);
+        updateShaderBinder.Bind("Compute:gFreeList", freeListBuffer);
+        updateShaderBinder.Bind("Compute:gFreeListCounter", freeListCounterBuffer);
 
         const std::uint32_t updateGroupCount = std::max<std::uint32_t>(1, (particleCount + 63) / 64);
         commandList->Dispatch(updateGroupCount, 1, 1);

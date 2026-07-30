@@ -64,28 +64,30 @@ struct GPUParticleData final {
 };
 
 /// @brief GPUシミュレーション用の新規スポーンリクエスト（CPUが今フレーム発生分だけ書き込む）
-/// @details HLSL側の同名構造体（ParticleSpawnCS.hlsl）とバイト単位で一致させること
+/// @details HLSL側の同名構造体（ParticleSpawnCS.hlsl）とバイト単位で一致させること。
+///          書き込み先スロットはCPUでは決めず、ParticleSpawnCSがgFreeList（空きスロットの
+///          手動スタック）からpopして決定する
 struct GPUParticleSpawnRequest final {
-    std::uint32_t slotIndex = 0;
     float lifetime = 1.0f;
     float _pad0 = 0.0f;
     float _pad1 = 0.0f;
-    Vector3 position{ 0.0f, 0.0f, 0.0f };
     float _pad2 = 0.0f;
-    Vector3 velocity{ 0.0f, 0.0f, 0.0f };
+    Vector3 position{ 0.0f, 0.0f, 0.0f };
     float _pad3 = 0.0f;
-    Vector3 acceleration{ 0.0f, 0.0f, 0.0f };
+    Vector3 velocity{ 0.0f, 0.0f, 0.0f };
     float _pad4 = 0.0f;
-    Vector3 rotation{ 0.0f, 0.0f, 0.0f };
+    Vector3 acceleration{ 0.0f, 0.0f, 0.0f };
     float _pad5 = 0.0f;
-    Vector3 angularVelocity{ 0.0f, 0.0f, 0.0f };
+    Vector3 rotation{ 0.0f, 0.0f, 0.0f };
     float _pad6 = 0.0f;
-    Vector3 angularAcceleration{ 0.0f, 0.0f, 0.0f };
+    Vector3 angularVelocity{ 0.0f, 0.0f, 0.0f };
     float _pad7 = 0.0f;
-    Vector3 startScale{ 1.0f, 1.0f, 1.0f };
+    Vector3 angularAcceleration{ 0.0f, 0.0f, 0.0f };
     float _pad8 = 0.0f;
-    Vector3 endScale{ 0.0f, 0.0f, 0.0f };
+    Vector3 startScale{ 1.0f, 1.0f, 1.0f };
     float _pad9 = 0.0f;
+    Vector3 endScale{ 0.0f, 0.0f, 0.0f };
+    float _pad10 = 0.0f;
 };
 
 /// @brief "ParticleUpdate"パイプラインの定数バッファ（HLSL側 ParticleUpdateConstants と一致させること）
@@ -104,6 +106,15 @@ struct GPUParticleUpdateConstants final {
 /// @brief "ParticleSpawn"パイプラインの定数バッファ（HLSL側 ParticleSpawnConstants と一致させること）
 struct GPUParticleSpawnConstants final {
     std::uint32_t spawnCount = 0;
+    std::uint32_t _pad0 = 0;
+    std::uint32_t _pad1 = 0;
+    std::uint32_t _pad2 = 0;
+};
+
+/// @brief "ParticleFreeListInit"パイプラインの定数バッファ（HLSL側 ParticleFreeListInitConstants と一致させること）
+/// @details GPUバッファ（再）生成直後に一度だけ実行し、gFreeListへ空きスロット 0..capacity-1 を積み直す
+struct GPUParticleFreeListInitConstants final {
+    std::uint32_t capacity = 0;
     std::uint32_t _pad0 = 0;
     std::uint32_t _pad1 = 0;
     std::uint32_t _pad2 = 0;
@@ -256,7 +267,20 @@ public:
     StructuredBufferResource *GetGpuSpawnRequestBuffer(Passkey<Renderer>) const noexcept { return gpuSpawnRequestBuffer_.get(); }
     ConstantBufferResource *GetGpuSpawnConstantBuffer(Passkey<Renderer>) const noexcept { return gpuSpawnConstantBuffer_.get(); }
     ConstantBufferResource *GetGpuUpdateConstantBuffer(Passkey<Renderer>) const noexcept { return gpuUpdateConstantBuffer_.get(); }
+    /// @brief 空きスロット番号を積んだ手動スタック（フリーリスト本体、要素数=capacity）
+    RWStructuredBufferResource *GetGpuFreeListBuffer(Passkey<Renderer>) const noexcept { return gpuFreeListBuffer_.get(); }
+    /// @brief フリーリストスタックの残数（1要素のint32バッファ。InterlockedAddで増減する）
+    RWStructuredBufferResource *GetGpuFreeListCounterBuffer(Passkey<Renderer>) const noexcept { return gpuFreeListCounterBuffer_.get(); }
+    ConstantBufferResource *GetGpuFreeListInitConstantBuffer(Passkey<Renderer>) const noexcept { return gpuFreeListInitConstantBuffer_.get(); }
     std::uint32_t GetGpuSpawnCount(Passkey<Renderer>) const noexcept { return gpuFrameSpawnCount_; }
+    /// @brief フリーリストの初期化（0..capacity-1を積み直す）がまだ必要かを取得し、フラグをリセットする
+    /// @details GPUバッファの新規生成・容量変更直後にtrueになる。Rendererはこれがtrueの間、
+    ///          Spawn/Updateディスパッチより先に"ParticleFreeListInit"パイプラインを1回実行する
+    bool ConsumeGpuFreeListNeedsInit(Passkey<Renderer>) noexcept {
+        const bool needsInit = gpuFreeListNeedsInit_;
+        gpuFreeListNeedsInit_ = false;
+        return needsInit;
+    }
     /// @brief このフレームにUpdateParticlesGPUが実行されたか（＝シミュレーションを進めてよいか）を取得し、フラグをリセットする
     /// @details シーンのポーズ中・停止中はコンポーネントのUpdateが呼ばれずこのフラグが立たない。
     ///          RendererはRenderFrameのたびにProcessGpuParticlesを呼ぶが、この値がfalseの場合は
@@ -483,9 +507,9 @@ protected:
                     Vector3 basePosition{ 0.0f, 0.0f, 0.0f };
                     ResolveSpawnAnchor(owner, unusedParentObject, basePosition);
 
+                    // 書き込み先スロットはここでは決めない（ParticleSpawnCSがgFreeListから
+                    // 空きスロットをpopして決定する。空きが無ければそのリクエストは破棄される）
                     GPUParticleSpawnRequest request;
-                    request.slotIndex = gpuRingCursor_;
-                    gpuRingCursor_ = (gpuRingCursor_ + 1) % capacity;
                     request.position = basePosition + ComputeSpawnOffset();
                     request.velocity = initialVelocity_.Get();
                     request.acceleration = acceleration_.Get();
@@ -1000,8 +1024,14 @@ private:
     std::unique_ptr<StructuredBufferResource> gpuSpawnRequestBuffer_;
     std::unique_ptr<ConstantBufferResource> gpuSpawnConstantBuffer_;
     std::unique_ptr<ConstantBufferResource> gpuUpdateConstantBuffer_;
-    /// @brief 次に使うスロット（リングバッファ。プール枯渇時は最古の生存パーティクルを上書きする仕様）
-    std::uint32_t gpuRingCursor_ = 0;
+    /// @brief 空きスロット番号を積む手動スタック（要素数=capacity）。ParticleUpdateCSが死亡時にpush、
+    ///        ParticleSpawnCSがスポーン時にpopする（生存中のスロットを誤って上書きしないためのフリーリスト）
+    std::unique_ptr<RWStructuredBufferResource> gpuFreeListBuffer_;
+    /// @brief gpuFreeListBuffer_の残数を持つ1要素のint32バッファ（HLSL側でInterlockedAddにより増減）
+    std::unique_ptr<RWStructuredBufferResource> gpuFreeListCounterBuffer_;
+    std::unique_ptr<ConstantBufferResource> gpuFreeListInitConstantBuffer_;
+    /// @brief フリーリストへ0..capacity-1を積み直す初期化が必要か（バッファ新規生成・容量変更直後にtrueになる）
+    bool gpuFreeListNeedsInit_ = false;
     /// @brief 直近のUpdateParticlesGPUで書き込んだスポーン要求数（Rendererがこの数だけSpawnパイプラインを実行する）
     std::uint32_t gpuFrameSpawnCount_ = 0;
     /// @brief このフレームにUpdateParticlesGPUが実行されたか（ポーズ検出用。RendererがConsumeGpuFrameUpdatedで消費する）
@@ -1014,7 +1044,10 @@ private:
         gpuSpawnRequestBuffer_ = std::make_unique<StructuredBufferResource>(sizeof(GPUParticleSpawnRequest), capacity);
         gpuSpawnConstantBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(GPUParticleSpawnConstants));
         gpuUpdateConstantBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(GPUParticleUpdateConstants));
-        gpuRingCursor_ = 0;
+        gpuFreeListBuffer_ = std::make_unique<RWStructuredBufferResource>(sizeof(std::uint32_t), capacity, false);
+        gpuFreeListCounterBuffer_ = std::make_unique<RWStructuredBufferResource>(sizeof(std::int32_t), 1, false);
+        gpuFreeListInitConstantBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(GPUParticleFreeListInitConstants));
+        gpuFreeListNeedsInit_ = true;
         gpuFrameSpawnCount_ = 0;
     }
 
@@ -1024,7 +1057,10 @@ private:
         gpuSpawnRequestBuffer_.reset();
         gpuSpawnConstantBuffer_.reset();
         gpuUpdateConstantBuffer_.reset();
-        gpuRingCursor_ = 0;
+        gpuFreeListBuffer_.reset();
+        gpuFreeListCounterBuffer_.reset();
+        gpuFreeListInitConstantBuffer_.reset();
+        gpuFreeListNeedsInit_ = false;
         gpuFrameSpawnCount_ = 0;
     }
 

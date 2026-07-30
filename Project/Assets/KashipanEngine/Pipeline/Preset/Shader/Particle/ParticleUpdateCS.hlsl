@@ -44,6 +44,9 @@ struct TransformationMatrix
 
 RWStructuredBuffer<GPUParticleData> gParticles : register(u0);
 RWStructuredBuffer<TransformationMatrix> gInstanceMatrices : register(u1);
+// フリーリスト本体・残数（死亡したスロットをここへ返却する。ParticleSpawnCSと共有）
+RWStructuredBuffer<uint> gFreeList : register(u2);
+RWStructuredBuffer<int> gFreeListCounter : register(u3);
 
 // 以下、行ベクトル規約（v' = mul(v, M)）でMatrix4x4MakeAffine相当を組み立てるヘルパー群
 // （KashipanEngine::MathUtils::Matrix4x4MakeRotateX/Y/Z, MakeScale, MakeTranslateと同じ式）
@@ -141,6 +144,14 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
     {
         particle.alive = 0;
         gParticles[index] = particle;
+
+        // このフレームで初めてalive→deadへ遷移した（＝上のalive==0チェックでは弾かれていない）
+        // スロットだけをフリーリストへ返却する。alive==0のまま毎フレーム早期returnする既存スロットは
+        // ここへは来ないため、二重返却は発生しない
+        int oldCount;
+        InterlockedAdd(gFreeListCounter[0], 1, oldCount);
+        gFreeList[oldCount] = index;
+
         TransformationMatrix hidden;
         hidden.world = MakeScaleMatrix(float3(0.0f, 0.0f, 0.0f));
         gInstanceMatrices[index] = hidden;

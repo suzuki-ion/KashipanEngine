@@ -1,0 +1,506 @@
+{
+    "name": "floor_gimmick",
+    "objects": [
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "floor_gimmick",
+                "objectID": "c365ff79-45c8-417d-86ad-058b58960acf",
+                "prefabNodeID": "a3f2ca6f-1ee6-4939-985b-de3ba3cb9ed4",
+                "tag": ""
+            },
+            "parentIndex": -1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "c365ff79-45c8-417d-86ad-058b58960acf",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "center": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "continuousDetection": false,
+                                "isTrigger": false,
+                                "size": {
+                                    "x": 5.0,
+                                    "y": 1.0,
+                                    "z": 4.0
+                                },
+                                "syncPosition": [
+                                    true,
+                                    true,
+                                    true
+                                ],
+                                "syncRotation": [
+                                    true,
+                                    true,
+                                    true
+                                ],
+                                "syncScale": [
+                                    false,
+                                    false,
+                                    false
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "Ground"
+                        },
+                        "type": "BoxCollider"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Root",
+                "objectID": "4d81bbc5-7d26-48e7-a609-d6517732afe2",
+                "prefabNodeID": "7145a3a0-c00b-48e0-b816-83b37e74c3e1",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "4d81bbc5-7d26-48e7-a609-d6517732afe2",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 6.5,
+                                    "y": 2.200000047683716,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "center": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "continuousDetection": false,
+                                "isTrigger": false,
+                                "size": {
+                                    "x": 5.0,
+                                    "y": 1.0,
+                                    "z": 4.0
+                                },
+                                "syncPosition": [
+                                    true,
+                                    true,
+                                    true
+                                ],
+                                "syncRotation": [
+                                    true,
+                                    true,
+                                    true
+                                ],
+                                "syncScale": [
+                                    false,
+                                    false,
+                                    false
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "Ground"
+                        },
+                        "type": "BoxCollider"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Ring1_A",
+                "objectID": "19a122b5-e4e2-4a12-bbbd-13f074ad7793",
+                "prefabNodeID": "9c99fc3f-6ef9-44fd-8b5a-363d9fdce961",
+                "tag": ""
+            },
+            "parentIndex": 1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "19a122b5-e4e2-4a12-bbbd-13f074ad7793",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 6.5,
+                                    "y": 2.200000047683716,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "center": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "continuousDetection": false,
+                                "isTrigger": false,
+                                "size": {
+                                    "x": 5.0,
+                                    "y": 1.0,
+                                    "z": 4.0
+                                },
+                                "syncPosition": [
+                                    true,
+                                    true,
+                                    true
+                                ],
+                                "syncRotation": [
+                                    true,
+                                    true,
+                                    true
+                                ],
+                                "syncScale": [
+                                    false,
+                                    false,
+                                    false
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "Ground"
+                        },
+                        "type": "BoxCollider"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Ring2_A",
+                "objectID": "2e973037-b429-4b5a-837b-5358b82e989f",
+                "prefabNodeID": "adfb1178-6cba-47fd-9d5b-43ff8369bcd4",
+                "tag": ""
+            },
+            "parentIndex": 2
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "4d81bbc5-7d26-48e7-a609-d6517732afe2",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": -6.5,
+                                    "y": -2.200000047683716,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "center": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "continuousDetection": false,
+                                "isTrigger": false,
+                                "size": {
+                                    "x": 5.0,
+                                    "y": 1.0,
+                                    "z": 4.0
+                                },
+                                "syncPosition": [
+                                    true,
+                                    true,
+                                    true
+                                ],
+                                "syncRotation": [
+                                    true,
+                                    true,
+                                    true
+                                ],
+                                "syncScale": [
+                                    false,
+                                    false,
+                                    false
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "Ground"
+                        },
+                        "type": "BoxCollider"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Ring1_B",
+                "objectID": "d9f9920a-bf89-4e86-a02c-1ae5b5ca2a62",
+                "prefabNodeID": "f033bfe8-bb7f-46c2-80f6-b128ce26495c",
+                "tag": ""
+            },
+            "parentIndex": 1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "d9f9920a-bf89-4e86-a02c-1ae5b5ca2a62",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": -6.5,
+                                    "y": -2.200000047683716,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "center": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "continuousDetection": false,
+                                "isTrigger": false,
+                                "size": {
+                                    "x": 5.0,
+                                    "y": 1.0,
+                                    "z": 4.0
+                                },
+                                "syncPosition": [
+                                    true,
+                                    true,
+                                    true
+                                ],
+                                "syncRotation": [
+                                    true,
+                                    true,
+                                    true
+                                ],
+                                "syncScale": [
+                                    false,
+                                    false,
+                                    false
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "Ground"
+                        },
+                        "type": "BoxCollider"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Ring2_B",
+                "objectID": "5e5ff7e6-dc41-44e4-8dd8-d8e63ccd1579",
+                "prefabNodeID": "d8c69ccc-e1ec-40b0-9b1f-d729bf49401a",
+                "tag": ""
+            },
+            "parentIndex": 4
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "c365ff79-45c8-417d-86ad-058b58960acf",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Model/TestModels/floor_gimmick/floor_gimmick.glb"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationClipName": "Gimmick",
+                                "blendShapes": [],
+                                "castShadows": true,
+                                "loop": true,
+                                "materialName": "floor_gimmick_Material0",
+                                "materialNames": [
+                                    "floor_gimmick_Material0"
+                                ],
+                                "pipelineName": "Object3D.Solid.BlendNormal",
+                                "playOnStart": true,
+                                "playbackSpeed": 0.10000000149011612,
+                                "quality": 0,
+                                "rootBoneObjectID": "",
+                                "targetObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "FloorGimmick",
+                "objectID": "9fe6cbe2-7f03-4254-b46a-5ce1c91c3fbe",
+                "prefabNodeID": "d900aa1f-485c-4a01-9ca8-daf732add754",
+                "tag": ""
+            },
+            "parentIndex": 0
+        }
+    ],
+    "prefab": true,
+    "prefabID": "16d1d7a5-d746-4cfb-83e2-bcc1cb761ed8"
+}

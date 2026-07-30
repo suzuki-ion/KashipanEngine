@@ -56,9 +56,11 @@ void SceneListEditor::ShowImGui() {
         ImGui::TableSetupColumn("Delete", ImGuiTableColumnFlags_WidthFixed);
         ImGui::TableHeadersRow();
 
-        int rowIndex = 0;
         for (const auto &entry : entries) {
-            ImGui::PushID(rowIndex++);
+            // 行のIDは整数(PushID(int))ではなく文字列(PushID(const char*))で積む。
+            // TableHeadersRow側が列インデックスをPushID(int)で積んでおり、行インデックスと列インデックスが
+            // 一致した場合に同じラベル文字列(Switch列/Delete列など)のIDが衝突していたための対策。
+            ImGui::PushID(entry.name.c_str());
             ImGui::TableNextRow();
 
             //--------- シーン名の編集 ---------//

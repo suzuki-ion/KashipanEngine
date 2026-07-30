@@ -58,11 +58,19 @@ private:
     void RegisterEditorTarget();
     void ShowSceneViewWindow(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands, SceneObjectHierarchy *hierarchy);
     void HandleCameraInput();
-    /// @brief シーンビュー画像上の左クリックでオブジェクトを選択する（メッシュ三角形との正確なレイ交差判定）
+    /// @brief シーンビュー画像上の左クリックでオブジェクトを選択する（メッシュ三角形との正確なレイ交差判定
+    ///        ＋ Light/Cameraアイコンとのスクリーン座標判定）
     /// @details クリック位置からエディターカメラのレイを飛ばし、MeshFilterを持つ描画対象オブジェクトの
-    ///          三角形と交差判定して最も手前のオブジェクトを選択する。Ctrlクリックでトグル追加、
-    ///          何もない場所のクリックで選択解除（Unityのシーンビューと同じ挙動）
+    ///          三角形と交差判定して最も手前のオブジェクトを選択する。メッシュを持たないLight/Camera等は
+    ///          PickIconAtScreenPositionでアイコンとの距離判定を行い、そちらを優先する。Ctrlクリックで
+    ///          トグル追加、何もない場所のクリックで選択解除（Unityのシーンビューと同じ挙動）
     void HandleObjectPicking(SceneObjectHierarchy *hierarchy, const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief クリック位置に最も近いLight/Cameraアイコンのオブジェクトを取得する
+    /// @details DrawLightMarkers/DrawCameraMarkersで描画しているアイコンは深度テストせず常に手前に
+    ///          表示されるため、メッシュの三角形ピッキングより先にこちらを優先して判定する。
+    ///          マーカー表示が無効な種別（showLightMarkers_/showCameraMarkers_）は判定対象から除外する
+    /// @return 判定範囲内にアイコンが見つからなければ nullptr
+    EmptyObject *PickIconAtScreenPosition(const ImVec2 &screenPos, const ImVec2 &imagePos, const ImVec2 &imageSize) const;
     /// @brief グリッド表示・当たり判定ワイヤーフレームの描画設定を構築し、SceneRendererへ登録する
     /// @details 実際の描画はGPU側（DebugGrid/DebugLinesパイプライン）でscreenBuffer_へ直接行われる
     void UpdateEditorDebugDraw();

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ScreenBufferObject | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_ScreenBufferObject">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>ScreenBufferObject</h1>
+<p class="page-lead">オフスクリーンレンダリング用のバッファ（<code>ScreenBuffer</code>）を1枚所有し、描画先として扱えるようにするコンポーネントです。ポストエフェクトの適用先やレンダーテクスチャとして使う、画面キャプチャ保存機能、内容確認用のプレビューウィンドウを持ちます。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a>および<a href="../../../Engine/11_Window.html">Engine/11_Window.html</a>を参照してください。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Name</td><td>テキスト入力欄（Enterキーで確定）</td><td>TextureManagerへの登録名。<strong>他のフィールドと違い、Enterキーを押すまでは値が確定しない</strong>（<code>ImGuiInputTextFlags_EnterReturnsTrue</code>）</td></tr>
+<tr><td>Width</td><td>整数のドラッグ入力欄</td><td>バッファの幅（既定1280、下限1にクランプ）。変更すると生成済みバッファが実際にリサイズされる</td></tr>
+<tr><td>Height</td><td>整数のドラッグ入力欄</td><td>バッファの高さ（既定720、下限1にクランプ）</td></tr>
+<tr><td>Open Viewer / Close Viewer</td><td>トグルボタン</td><td>押すたびに開閉する、バッファの描画内容を確認できる別のImGuiウィンドウ（"ScreenBuffer Viewer: 名前"）の表示状態を切り替える。SRVが未準備の間は「SRV not ready.」と表示される</td></tr>
+</table>
+
+<h3>Save to File（折りたたみツリー）</h3>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Directory</td><td>テキスト入力欄</td><td>自動生成される保存先パスのディレクトリ部分（既定 "Screenshots"）</td></tr>
+<tr><td>File Name Prefix</td><td>テキスト入力欄</td><td>保存ファイル名の接頭辞（既定 "Screenshot"）</td></tr>
+<tr><td>Format</td><td>コンボボックス（png / jpg / bmp）</td><td>保存形式（既定 "png"）</td></tr>
+<tr><td>Save Screenshot</td><td>ボタン</td><td>直近で確定した描画結果を、上記Directory/File Name Prefix/タイムスタンプ/Formatから自動生成したパスへ画像ファイルとして保存する。失敗した場合は警告ログが出力される</td></tr>
+</table>
+
+<div class="tip"><strong>Viewerはポーズ中も表示され続ける</strong><br>Viewerウィンドウは<code>ShowPersistentImGui()</code>経由で表示されるため、Inspector自体が閉じていても、またゲームがポーズ中でも表示され続ける（Inspectorの通常のShowImGuiとは別枠の常時表示）。</div>
+<div class="note"><strong>プレビュー画像は前フレームまでの確定結果</strong><br>Viewerが参照するSRVは<code>GetPreviewSrvHandle()</code>による「前フレームまでに描画完了した面」で、現在フレームのポストエフェクト適用途中の中間結果を意図せず表示してしまわないよう配慮されている。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path"><span>Add Component</span><i>›</i><span>Render</span><i>›</i><span>RenderTarget</span><i>›</i><span>ScreenBufferObject</span></span> から追加する。同一オブジェクトに複数付与可能。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="ShadowMapObject.html">Components/Render/ShadowMapObject.html</a> — シャドウマップ専用の描画先コンポーネント（Save to File機能は無い）</li>
+<li><a href="../../../Engine/11_Window.html">Engine/11_Window.html</a> — <code>ScreenBuffer</code>クラス、IRenderTargetインターフェースのAPI</li>
+<li><a href="../../../Engine/10_PostEffects.html">Engine/10_PostEffects.html</a> — ScreenBufferを使ったポストエフェクトの仕組み</li>
+<li><a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a> — 描画先の指定の仕組み</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Object Inspectorの基本操作</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

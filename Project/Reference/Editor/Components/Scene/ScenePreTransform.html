@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ScenePreTransform | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Scene_ScenePreTransform">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>ScenePreTransform <span class="badge final">最大1個</span></h1>
+<p class="page-lead">シーン内の<a href="../Basic/PreTransform.html">PreTransform</a>コンポーネントを収集し、毎フレーム最後に前フレーム値を更新するシーンコンポーネントです。<a href="../../Windows/06_SceneComponentInspector.html">Scene Component Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/02_Scenes.html">Engine/02_Scenes.html</a>を参照してください。</p>
+</div>
+
+<div class="note"><strong>このコンポーネントに編集可能なInspector項目はありません</strong><br>専用の<code>ShowImGui</code>実装を持たないため、コンポーネント一覧を開いても基底クラス既定の <code>None</code> というテキストが表示されるだけです。更新優先度が<code>SceneRenderer</code>（1000）より大きい値（1001）に設定されており、そのフレームの全オブジェクト更新・全シーンコンポーネントの更新（描画を含む）が完了した後に、各<code>PreTransform</code>へ現在のTransform値を「前フレームの値」として書き込みます。</div>
+
+<h2>Add Scene Componentでの位置</h2>
+<p><span class="ui-path">Add Scene Component → Physics → ScenePreTransform</span>。<code>PreTransform</code>コンポーネントを持つオブジェクトが機能するために必要なシーンコンポーネントです。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/02_Scenes.html">Engine/02_Scenes.html</a> — <code>ISceneComponent</code>・代表的なシーンコンポーネント一覧のC++ API</li>
+<li><a href="../Basic/PreTransform.html">コンポーネント: Basic / PreTransform</a> — このコンポーネントが値を書き込むオブジェクト側のコンポーネント</li>
+<li><a href="../../Windows/06_SceneComponentInspector.html">Windows/06_SceneComponentInspector.html</a> — Scene Component Inspectorの基本的な見方</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

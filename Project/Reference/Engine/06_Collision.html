@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>コライダーと物理演算 | KashipanEngine リファレンス</title>
-<link rel="stylesheet" href="assets/style.css">
-<script defer src="assets/nav-data.js"></script>
-<script defer src="assets/nav.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-engine-data.js"></script>
+<script defer src="../assets/nav.js"></script>
 </head>
 <body data-page="06_Collision">
 <div class="layout">
@@ -149,7 +149,7 @@ ModelManager::ModelHandle GetEffectiveMeshHandle() const;</div>
 <div class="api-sig">void SetDirection(const Vector3 &amp;direction); // 既定 (0,-1,0)
 void SetMaxDistance(float maxDistance);        // 既定 10.0
 bool CastRay(HitInfo3D &amp;outHit) const;</div>
-<p>常駐する当たり判定形状を持たないため、<code>OnCollisionEnter</code>等のコールバックは呼ばれません。代わりに <code>CastRay()</code> を呼び出したタイミングでシーンの物理ワールドへレイキャストを行い、結果を直接受け取ります。</p>
+<p>常駐する当たり判定形状を持たないため、他のコライダーのようなシェイプ同士の接触判定システムには乗りません。代わりに、<code>SetOnCollisionEnter3D</code>/<code>SetOnCollisionStay3D</code>/<code>SetOnCollisionExit3D</code>のいずれかが設定されている間だけ、毎フレームのUpdateで内部的にレイキャストを行い、前フレームのヒット対象との比較からEnter/Stay/Exitを自前で判定・発火します（コールバック未設定時はレイキャスト自体を省略します）。Stay中も接触点は常に1点（ヒット面の法線のみ、<code>penetration</code>は常に0）で、経路上の最も近いヒットのみが対象です。ヒット対象がフレームをまたいで別のコライダーへ入れ替わった場合は、同一フレーム内で旧対象のExit→新対象のEnterの順に発火します。<code>CastRay()</code>はこの自動判定とは独立して、任意のタイミングで単発のレイキャストを行い、<code>HitInfo3D</code>（<code>selfObject</code>/<code>otherObject</code>/<code>selfCollider</code>/<code>otherCollider</code>込み）を直接受け取れます。</p>
 </div>
 
 <h2>2Dコライダー</h2>

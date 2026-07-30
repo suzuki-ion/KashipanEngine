@@ -93,15 +93,35 @@ a:hover { text-decoration: underline; }
   margin-bottom: 16px;
   padding: 0 8px;
 }
+.sidebar-switch {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-dim);
+  background: var(--accent-bg);
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin: 0 8px 16px;
+}
+.sidebar-switch:hover { text-decoration: none; opacity: 0.85; }
 
 .nav-group { margin-bottom: 4px; }
 .nav-group-title {
-  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: .04em;
   text-transform: uppercase;
   color: var(--text-dim);
   padding: 10px 8px 4px;
+}
+.nav-group-title::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--border);
 }
 .nav-group ul { list-style: none; margin: 0; padding: 0; }
 .nav-group li { margin: 1px 0; }

@@ -143,7 +143,11 @@ protected:
         if (!isShowViewer_) return;
         if (!buffer_ || !ScreenBuffer::IsExist(buffer_)) return;
 
-        const std::string windowTitle = "ScreenBuffer Viewer: " + name_;
+        // タイトルの表示文字列にnameを含めているが、ImGuiはラベル全体をウィンドウIDとして
+        // 使うため、名前変更のたびに別ウィンドウ扱いとなりフォーカスが奪われてしまう。
+        // "###"以降のみをID化することで、表示名は更新されつつウィンドウの同一性を保つ
+        const std::string windowTitle = "ScreenBuffer Viewer: " + name_ +
+            "###ScreenBufferViewer" + std::to_string(reinterpret_cast<std::uintptr_t>(this));
         if (ImGui::Begin(windowTitle.c_str(), &isShowViewer_)) {
             ImGui::Text("Size: %ux%u", buffer_->GetWidth(), buffer_->GetHeight());
 

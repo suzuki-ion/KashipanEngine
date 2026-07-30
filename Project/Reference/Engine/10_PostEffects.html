@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ポストエフェクト | KashipanEngine リファレンス</title>
-<link rel="stylesheet" href="assets/style.css">
-<script defer src="assets/nav-data.js"></script>
-<script defer src="assets/nav.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-engine-data.js"></script>
+<script defer src="../assets/nav.js"></script>
 </head>
 <body data-page="10_PostEffects">
 <div class="layout">
@@ -101,7 +101,7 @@ const Params &amp;GetParams() const noexcept;</div>
 
 <h2>使用例</h2>
 <p>
-実運用では <a href="12_SceneEditor.html">シーンエディタ</a> の Add Component メニューから付与するのが基本ですが、コードから直接組み立てる場合は次のようになります。
+実運用では <a href="../Editor/Architecture/01_Overview.html">シーンエディタ</a> の Add Component メニューから付与するのが基本ですが、コードから直接組み立てる場合は次のようになります。
 </p>
 <pre><code>#include &lt;KashipanEngine.h&gt;
 using namespace KashipanEngine;
@@ -128,7 +128,7 @@ outline-&gt;SetParams(outlineParams);</code></pre>
 <li><a href="11_Window.html">11_Window.html</a> — <code>ScreenBufferObject</code> と <code>ScreenBuffer</code> の詳細</li>
 <li><a href="05_Rendering.html">05_Rendering.html</a> — <code>MeshRenderer</code> 等の描画先指定</li>
 <li><a href="04_ObjectComponents.html">04_ObjectComponents.html</a> — <code>IObjectComponent</code> / <code>AddComponent&lt;T&gt;()</code> の基礎</li>
-<li><a href="12_SceneEditor.html">12_SceneEditor.html</a> — エディターからのコンポーネント追加操作</li>
+<li><a href="../Editor/Architecture/01_Overview.html">Editor/Architecture/01_Overview.html（シーンエディタ）</a> — エディターからのコンポーネント追加操作</li>
 </ul>
 
 <div id="page-footer" class="page-footer"></div>

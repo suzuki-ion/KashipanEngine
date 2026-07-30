@@ -690,18 +690,11 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         });
 
     RegisterComponentType<InputCommandApplier>(engine, "InputCommandApplier")
-        .method("void SetCommandName(const string &in)", &InputCommandApplier::SetCommandName)
-        .method("const string &GetCommandName() const", &InputCommandApplier::GetCommandName)
-        .method("void SetThreshold(float)", &InputCommandApplier::SetThreshold)
-        .method("float GetThreshold() const", &InputCommandApplier::GetThreshold)
-        .method("void SetFixedValue(float)", &InputCommandApplier::SetFixedValue)
-        .method("float GetFixedValue() const", &InputCommandApplier::GetFixedValue)
-        .method("void SetValueScale(float)", &InputCommandApplier::SetValueScale)
-        .method("float GetValueScale() const", &InputCommandApplier::GetValueScale)
-        .method("void SetValueOffset(float)", &InputCommandApplier::SetValueOffset)
-        .method("float GetValueOffset() const", &InputCommandApplier::GetValueOffset)
-        .method("bool WasApplied() const", &InputCommandApplier::WasApplied)
-        .method("float GetLastValue() const", &InputCommandApplier::GetLastValue);
+        .method("bool WasApplied(const string &in name) const", &InputCommandApplier::WasApplied)
+        .method("bool TryGetLastValue(const string &in name, float &out value) const", &InputCommandApplier::TryGetLastValue)
+        .method("uint GetCommandCount() const", [](const InputCommandApplier &applier) -> std::uint32_t {
+            return static_cast<std::uint32_t>(applier.GetCommandCount());
+        });
 
     RegisterComponentType<SceneVariableApplier>(engine, "SceneVariableApplier")
         .method("void SetVariableName(const string &in)", &SceneVariableApplier::SetVariableName)

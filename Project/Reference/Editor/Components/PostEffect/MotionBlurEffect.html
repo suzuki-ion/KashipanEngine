@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MotionBlurEffect | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_PostEffect_MotionBlurEffect">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>MotionBlurEffect</h1>
+<p class="page-lead">前フレームのView-Projectionへ再投影して求めたスクリーンスペース速度をもとにブラーをかける、カメラ動作由来のモーションブラーです。オブジェクトごとの速度G-bufferは持たないため、<strong>カメラの移動・回転によるブラーのみが対象で、オブジェクト自身の動きには追従しません</strong>。C++側のAPIは<a href="../../../Engine/10_PostEffects.html">Engine/10_PostEffects.html</a>を参照してください。</p>
+</div>
+
+<div class="note">
+<strong>付与の前提</strong><br>
+ポストエフェクトは同一オブジェクトの <code>ScreenBufferObject</code> が持つ <code>ScreenBuffer</code> に対して適用されます。<code>ScreenBufferObject</code> が付与されていないオブジェクトへ <code>MotionBlurEffect</code> を追加しても効果は発生しません。
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Intensity</td><td>ドラッグ入力欄（ステップ0.01、範囲0.0〜5.0）</td><td>ブラー全体の強さ。既定値 1.0</td></tr>
+<tr><td>Velocity Scale</td><td>ドラッグ入力欄（ステップ0.01、範囲0.0〜10.0）</td><td>速度からブラー量への倍率。既定値 1.0</td></tr>
+<tr><td>Max Blur Pixels</td><td>ドラッグ入力欄（ステップ0.5、範囲0.0〜256.0、小数点以下1桁表示）</td><td>ブラー量の上限（ピクセル）。既定値 32.0</td></tr>
+<tr><td>Samples</td><td>整数ドラッグ入力欄（2〜32にクランプ）</td><td>ブラーのサンプル数。既定値 8</td></tr>
+</table>
+<p>各項目にマウスホバーすると、上表の内容と同じ説明がツールチップとして表示されます。</p>
+
+<div class="warn">
+<strong>カメラが未解決の場合の警告表示</strong><br>
+このスクリーンバッファへ実際に描画したカメラが解決できていない場合、Inspector上に <code>No camera resolved for this ScreenBuffer yet: Motion Blur will not be applied.</code>（オレンジ色のテキスト）が表示されます。この状態ではモーションブラーは適用されず、元の描画結果がそのまま残ります。カメラ情報は <code>Renderer</code> が毎フレーム自動で注入するため、ユーザー側でNear/Far等を手動設定する必要はありません。
+</div>
+
+<h2>適用先の除外設定 <span class="badge imgui">USE_IMGUI</span></h2>
+<p>同一オブジェクトに <code>ScreenBufferObject</code> が2つ以上ある場合のみ、パラメータ項目の前に "Apply Target Filter" というツリーノードが表示されます。展開すると各 <code>ScreenBuffer</code> 名のチェックボックスが並び、チェックを外すとそのスクリーンバッファへはこのエフェクトが適用されなくなります（<code>ScreenBufferObject</code> が1つ以下の場合はこの項目自体が表示されません）。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/10_PostEffects.html">Engine/10_PostEffects.html</a> — <code>IPostProcessComponent</code> の仕組みとカメラ情報の自動注入について</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本操作（同一オブジェクトに <code>ScreenBufferObject</code> を付与して使用）</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

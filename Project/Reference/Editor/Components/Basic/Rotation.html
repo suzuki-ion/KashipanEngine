@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rotation | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_Rotation">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Rotation <span class="badge final">最大1個</span></h1>
+<p class="page-lead">同オブジェクトの<code>Transform</code>に対して、毎フレーム角速度・角加速度による回転を適用するコンポーネントです。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Angular Velocity</td><td>XYZのドラッグ入力欄（ステップ0.01）</td><td>角速度（ラジアン/秒）。<strong>Transformのオイラー角欄と異なり、度への変換はされずラジアンのまま表示・入力します</strong></td></tr>
+<tr><td>Angular Acceleration</td><td>XYZのドラッグ入力欄（ステップ0.01）</td><td>角加速度（ラジアン/秒<sup>2</sup>）</td></tr>
+</table>
+
+<div class="warn">数値の単位はラジアンです。度で指定したい場合は、値を入力する前に <code>度 × π / 180</code> で換算してください。</div>
+
+<div class="note">毎フレームのUpdateで、<code>angularVelocity += angularAcceleration * dt</code>、続けて <code>Transform.rotate += angularVelocity * dt</code>（オイラー角への直接加算）が行われます。<code>Transform</code>コンポーネントが同オブジェクトに存在しない場合は何も起こりません。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path">Add Component → Physics → Rotation</span>。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/04_ObjectComponents.html">Engine/04_ObjectComponents.html</a> — <code>Rotation</code>クラスのAPI（<code>SetAngularVelocity</code>/<code>AddAngularVelocity</code>等）</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本的な見方</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

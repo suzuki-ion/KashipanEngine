@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Camera2D | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_Camera2D">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Camera2D <span class="badge final">最大1個</span></h1>
+<p class="page-lead">2Dカメラの射影パラメータ（常に平行投影）だけを保持するコンポーネントです。パラメータの保持のみを行い、実際に描画へ反映するには同一オブジェクトに<a href="CameraRenderer.html">CameraRenderer</a>を併せて付与する必要があります。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a>を参照してください。</p>
+</div>
+
+<div class="warn"><strong>Camera2Dだけでは何も起きない</strong><br>Camera3Dと同様、Camera2Dはパラメータの入れ物でしかない。ビュー射影行列を計算して定数バッファへアップロードするのはCameraRendererの役割で、両方を同一オブジェクトへ付与して初めて描画に反映される。同一オブジェクトにCamera2Dが存在すると、CameraRendererはバインド先の既定値を2D用（<code>gCamera2D</code>）に切り替える。</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Width</td><td>ドラッグ入力欄（ステップ1.0）</td><td>投影の横幅（既定1280.0）</td></tr>
+<tr><td>Height</td><td>ドラッグ入力欄（ステップ1.0）</td><td>投影の縦幅（既定720.0）</td></tr>
+<tr><td>Near</td><td>ドラッグ入力欄（ステップ0.01）</td><td>ニアクリップ距離（既定0.0）</td></tr>
+<tr><td>Far</td><td>ドラッグ入力欄（ステップ1.0）</td><td>ファークリップ距離（既定1000.0）</td></tr>
+</table>
+
+<div class="note"><strong>Camera3Dとの違い</strong><br>Camera2DにはOrthographicの切り替えが無く常に平行投影。またFovYやAspectといった透視投影用のパラメータも存在しない。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path"><span>Add Component</span><i>›</i><span>Render</span><i>›</i><span>Camera2D</span></span> から追加する。1オブジェクトに付与できるのは最大1個。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="CameraRenderer.html">Components/Render/CameraRenderer.html</a> — Camera3D/Camera2Dの情報を実際に描画へ反映させるコンポーネント</li>
+<li><a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a> — <code>Camera2D</code>クラスのAPI</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Object Inspectorの基本操作</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>入力 (Input / InputCommand) | KashipanEngine リファレンス</title>
-<link rel="stylesheet" href="assets/style.css">
-<script defer src="assets/nav-data.js"></script>
-<script defer src="assets/nav.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-engine-data.js"></script>
+<script defer src="../assets/nav.js"></script>
 </head>
 <body data-page="08_Input">
 <div class="layout">
@@ -24,7 +24,7 @@ KashipanEngine の入力機能は大きく2層に分かれています。
 </p>
 <ul>
 <li><strong>デバイス直接アクセス（<code>Keyboard</code> / <code>Mouse</code> / <code>Controller</code>）</strong> … 特定のキーやボタンを直接判定する低レベルAPI。</li>
-<li><strong>アクションマッピング（<code>InputCommand</code>）</strong> … 「ジャンプ」「左移動」のようなアクション名に対して、キー・マウス・コントローラーの入力を1つ以上紐付けて評価する高レベルAPI。デバイスの種類を意識せずに入力を扱えるほか、<a href="12_SceneEditor.html">シーンエディタ</a>や設定ファイルからの再割り当てにも対応しています。</li>
+<li><strong>アクションマッピング（<code>InputCommand</code>）</strong> … 「ジャンプ」「左移動」のようなアクション名に対して、キー・マウス・コントローラーの入力を1つ以上紐付けて評価する高レベルAPI。デバイスの種類を意識せずに入力を扱えるほか、<a href="../Editor/Architecture/01_Overview.html">シーンエディタ</a>や設定ファイルからの再割り当てにも対応しています。</li>
 </ul>
 <div class="tip">
 <strong>推奨</strong><br>
@@ -175,7 +175,7 @@ struct ReturnInfo {
 bool SaveToJSON(const std::string &amp;filepath) const;
 bool LoadFromJSON(const std::string &amp;filepath); // 読み込み前に既存コマンドはクリアされる
 void Clear();</div>
-<p>エンジンは起動時に <code>kDefaultSaveFilePath</code>（<code>Assets/KashipanEngine/InputCommand.json</code>）から自動的に <code>LoadFromJSON</code> を行い、終了時に <code>SaveToJSON</code> で保存します。<a href="12_SceneEditor.html">シーンエディタ</a>上でのキーコンフィグ編集もこのファイルを介して永続化されます。</p>
+<p>エンジンは起動時に <code>kDefaultSaveFilePath</code>（<code>Assets/KashipanEngine/InputCommand.json</code>）から自動的に <code>LoadFromJSON</code> を行い、終了時に <code>SaveToJSON</code> で保存します。<a href="../Editor/Architecture/01_Overview.html">シーンエディタ</a>上でのキーコンフィグ編集もこのファイルを介して永続化されます。</p>
 </div>
 
 <h2>コード側からの登録例: <code>AppInitialize</code></h2>
@@ -202,7 +202,7 @@ inline void AppInitialize(const GameEngine::Context &amp;context) {
 </code></pre>
 <div class="note">
 <strong>ポイント</strong><br>
-実運用では <code>Assets/KashipanEngine/InputCommand.json</code> と<a href="12_SceneEditor.html">シーンエディタ</a>のキーコンフィグ画面で登録・編集するのが基本です。<code>AppInitialize()</code> でのコード登録は、デフォルト設定を保証したい場合や、JSONファイルが存在しない初回起動時のフォールバックとして使うと良いでしょう。
+実運用では <code>Assets/KashipanEngine/InputCommand.json</code> と<a href="../Editor/Architecture/01_Overview.html">シーンエディタ</a>のキーコンフィグ画面で登録・編集するのが基本です。<code>AppInitialize()</code> でのコード登録は、デフォルト設定を保証したい場合や、JSONファイルが存在しない初回起動時のフォールバックとして使うと良いでしょう。
 </div>
 
 <h2>AngelScriptからの利用</h2>
@@ -228,16 +228,10 @@ float GetCommandValue(const string &amp;in action);</code></pre>
 </p>
 <div class="api-card">
 <h4><code>InputCommandApplier</code> <span class="badge final">final</span></h4>
-<div class="api-sig">void SetCommandName(const std::string &amp;name);
-void SetConditionType(ConditionType type); // CommandTrue/CommandFalse/ValueGreaterEqual/ValueLessEqual/ValueEqual
-void SetThreshold(float threshold);
-void SetValueSource(ValueSource source);   // CommandValue/FixedValue
-void SetFixedValue(float value);
-void SetValueScale(float scale);
-void SetValueOffset(float offset);
-bool WasApplied() const noexcept;
-float GetLastValue() const noexcept;</div>
-<p>毎フレーム指定した入力コマンドを評価し、条件を満たしたときだけ「値 × Scale + Offset」を <code>ParameterBinding</code>（<code>KeyframeAnimator</code>と共通の仕組み）で指定した適用先へ書き込みます。1オブジェクトに複数アタッチでき、コマンド・条件ごとに個別の適用が行えます。</p>
+<div class="api-sig">bool WasApplied(const std::string &amp;name) const;
+bool TryGetLastValue(const std::string &amp;name, float &amp;outValue) const;
+size_t GetCommandCount() const noexcept;</div>
+<p>1つのコンポーネントに複数の「入力コマンド設定」（<code>CommandEntry</code>）を名前付きで登録できます（<code>KeyFrameAnimator</code>のアニメーション登録と同様の構造）。各設定は評価するコマンド名・条件（<code>ConditionType</code>: CommandTrue/CommandFalse/ValueGreaterEqual/ValueLessEqual/ValueEqual）・値の種類（<code>ValueSource</code>: CommandValue/FixedValue）・Scale/Offset・複数のバインド先を持ち、毎フレーム条件を満たしたときだけ「値 × Scale + Offset」を <code>ParameterBinding</code>（<code>KeyFrameAnimator</code>と共通の仕組み）で指定した適用先へ書き込みます。設定自体の追加・編集はInspectorから行い、スクリプトからは名前を指定して結果（<code>WasApplied</code>/<code>TryGetLastValue</code>）を参照します。</p>
 </div>
 
 <h2>次に読むページ</h2>

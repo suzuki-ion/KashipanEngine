@@ -3,24 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>シーンエディタ (ImGui) | KashipanEngine リファレンス</title>
-<link rel="stylesheet" href="assets/style.css">
-<script defer src="assets/nav-data.js"></script>
-<script defer src="assets/nav.js"></script>
+<title>エディタ内部アーキテクチャ | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-editor-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
 </head>
-<body data-page="12_SceneEditor">
+<body data-page="A01_Overview">
 <div class="layout">
 <nav id="sidebar"></nav>
 <main>
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
-<h1>シーンエディタ (ImGui)</h1>
-<p class="page-lead"><code>KashipanEngine/Scene/Editor/</code> 配下のImGuiベースのシーンエディタについて、構成クラスと基本操作フローを解説します。</p>
+<h1>エディタ内部アーキテクチャ</h1>
+<p class="page-lead"><code>KashipanEngine/Scene/Editor/</code> 配下のImGuiベースのシーンエディタについて、構成クラスと基本操作フローを解説します。<strong>対象読者はエディタ機能自体を実装・拡張するエンジン開発者</strong>です。エディタの使い方（ボタン操作・メニュー）は<a href="../00_Index.html">ウィンドウ別リファレンス</a>を、コンポーネントのInspector項目は<a href="../00_Index.html">コンポーネントリファレンス</a>を参照してください。</p>
 </div>
 
 <div class="warn">
 <strong>USE_IMGUI 限定機能</strong><br>
-このページで扱うクラスは全て <code>#ifdef USE_IMGUI</code> ブロックの中で定義されており、<code>USE_IMGUI</code> マクロが有効な構成（Debug / Development）でのみコンパイル・動作します。Release構成では丸ごと存在しません。詳しくは <a href="14_BuildMacros.html">14_BuildMacros.html</a> を参照してください。
+このページで扱うクラスは全て <code>#ifdef USE_IMGUI</code> ブロックの中で定義されており、<code>USE_IMGUI</code> マクロが有効な構成（Debug / Development）でのみコンパイル・動作します。Release構成では丸ごと存在しません。詳しくは <a href="../../Engine/14_BuildMacros.html">Engine/14_BuildMacros.html</a> を参照してください。
 </div>
 
 <h2>SceneEditor — 統括クラス</h2>
@@ -142,7 +142,7 @@ Unity の Assets ウィンドウ風のファイルブラウザです。左側に
 
 <h2>シーン変数 — SceneVariablesMenu</h2>
 <p>
-<code>MyAny</code> 型で保持されるシーン変数（<a href="02_Scenes.html">02_Scenes.html</a> 参照）の追加・削除・型別の編集UIを提供します。
+<code>MyAny</code> 型で保持されるシーン変数（<a href="../../Engine/02_Scenes.html">Engine/02_Scenes.html</a> 参照）の追加・削除・型別の編集UIを提供します。
 </p>
 
 <h2>Play / Pause / Stop 制御（Unity風）</h2>
@@ -172,13 +172,15 @@ void RequestStepFrame(); // 一時停止中に1フレームだけ進める</div>
 <li>Playボタンで実際の挙動を確認し、必要なら Pause / Step Frame で1フレームずつ確認する</li>
 <li><code>SceneSaver</code> でシーンをファイルへ保存する（自動バックアップも別途 <code>SceneBackups/</code> 以下へ行われる）</li>
 </ol>
+<p>各手順のボタン・メニュー項目の詳細は <a href="../Windows/02_SceneObjectHierarchy.html">Windows/02_SceneObjectHierarchy.html</a>・<a href="../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a>・<a href="../Windows/04_SceneView.html">Windows/04_SceneView.html</a> を参照してください。</p>
 
 <h2>関連ページ</h2>
 <ul>
-<li><a href="02_Scenes.html">02_Scenes.html</a> — シーン・シーン変数・シーンJSONの基礎</li>
-<li><a href="03_GameObjects.html">03_GameObjects.html</a> — <code>EmptyObject</code> の生成・複製・削除</li>
-<li><a href="04_ObjectComponents.html">04_ObjectComponents.html</a> — <code>IObjectComponent</code> と <code>ShowImGui()</code> の仕組み</li>
-<li><a href="14_BuildMacros.html">14_BuildMacros.html</a> — <code>USE_IMGUI</code> マクロとビルド構成</li>
+<li><a href="../../Engine/02_Scenes.html">Engine/02_Scenes.html</a> — シーン・シーン変数・シーンJSONの基礎</li>
+<li><a href="../../Engine/03_GameObjects.html">Engine/03_GameObjects.html</a> — <code>EmptyObject</code> の生成・複製・削除</li>
+<li><a href="../../Engine/04_ObjectComponents.html">Engine/04_ObjectComponents.html</a> — <code>IObjectComponent</code> と <code>ShowImGui()</code> の仕組み</li>
+<li><a href="../../Engine/14_BuildMacros.html">Engine/14_BuildMacros.html</a> — <code>USE_IMGUI</code> マクロとビルド構成</li>
+<li><a href="../00_Index.html">Editor/00_Index.html</a> — ウィンドウ別・コンポーネント別リファレンスの目次（利用者向け）</li>
 </ul>
 
 <div id="page-footer" class="page-footer"></div>

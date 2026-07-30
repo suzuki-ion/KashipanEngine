@@ -11,16 +11,12 @@ namespace KashipanEngine {
 /// @details 毎フレーム指定した入力コマンドを評価し、条件（コマンドのtrue/false、入力値と閾値の比較）を
 ///          満たしたときだけ、値（固定値または入力コマンドの値）をバインド先へ書き込む。
 ///          書き込む値にはスケールとオフセットをかけられる（適用値 = 元の値 × Scale + Offset）。
-///          1つのオブジェクトへ複数アタッチでき、コマンド・条件ごとに別々の適用が行える。
+///          1つのコンポーネントに複数の入力コマンド設定（コマンド名・条件・バインド先）を登録でき、
+///          KeyFrameAnimatorと同様に名前で識別する（1コンポーネントにつき1つに限定しない）。
 ///          適用先の仕様は ParameterBinding を参照（KeyFrameAnimatorと共通）。
 class InputCommandApplier final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(InputCommandApplier, 0xFF,
-        ADD_MEMBER_VARIABLE(threshold_);
-        ADD_MEMBER_VARIABLE(fixedValue_);
-        ADD_MEMBER_VARIABLE(valueScale_);
-        ADD_MEMBER_VARIABLE(valueOffset_);
-    )
+    OBJECT_COMPONENT_CONSTRUCTOR(InputCommandApplier, 0xFF, )
     COMPONENT_CATEGORY("Input")
     ~InputCommandApplier() override = default;
 
@@ -39,26 +35,36 @@ public:
         FixedValue,        ///< 固定値
     };
 
+    /// @brief 入力コマンド設定1件分（識別名・評価するコマンド・条件・バインド先）
+    struct CommandEntry {
+        std::string name;           ///< 識別名（WasApplied/GetLastValue等で指定する名前）
+        std::string commandName;    ///< 評価する入力コマンド名（InputCommandに登録済みのコマンド）
+        ConditionType conditionType = ConditionType::CommandTrue;
+        /// @brief 入力値と比較する閾値（ValueGreaterEqual/ValueLessEqual/ValueEqualで使用）
+        float threshold = 0.5f;
+        ValueSource valueSource = ValueSource::CommandValue;
+        /// @brief ValueSource::FixedValueのときに書き込む固定値
+        float fixedValue = 1.0f;
+        /// @brief 書き込む値にかけるスケール（オフセット加算より先に適用される）
+        float valueScale = 1.0f;
+        /// @brief 書き込む値へ加算するデフォルト値オフセット
+        float valueOffset = 0.0f;
+        /// @brief 値の適用先（複数可）
+        std::vector<ParameterBinding> bindings;
+
+        // --- 実行時状態（保存されない） ---
+        bool wasApplied = false;
+        float lastValue = 0.0f;
+    };
+
     std::unique_ptr<IObjectComponent> Clone() const override;
 
-    void SetCommandName(const std::string &name) { commandName_ = name; }
-    const std::string &GetCommandName() const noexcept { return commandName_; }
-    void SetConditionType(ConditionType type) noexcept { conditionType_ = type; }
-    ConditionType GetConditionType() const noexcept { return conditionType_; }
-    void SetThreshold(float threshold) noexcept { threshold_ = threshold; }
-    float GetThreshold() const noexcept { return threshold_; }
-    void SetValueSource(ValueSource source) noexcept { valueSource_ = source; }
-    ValueSource GetValueSource() const noexcept { return valueSource_; }
-    void SetFixedValue(float value) noexcept { fixedValue_ = value; }
-    float GetFixedValue() const noexcept { return fixedValue_; }
-    void SetValueScale(float scale) noexcept { valueScale_ = scale; }
-    float GetValueScale() const noexcept { return valueScale_; }
-    void SetValueOffset(float offset) noexcept { valueOffset_ = offset; }
-    float GetValueOffset() const noexcept { return valueOffset_; }
-    /// @brief 前回のUpdateで条件を満たして値を適用したかどうか
-    bool WasApplied() const noexcept { return wasApplied_; }
-    /// @brief 前回適用した値（Scale/Offset適用後。未適用の間は前回値を保持する）
-    float GetLastValue() const noexcept { return lastValue_; }
+    /// @brief 指定した名前のコマンド設定が、前回のUpdateで条件を満たして値を適用したかどうか
+    bool WasApplied(const std::string &name) const;
+    /// @brief 指定した名前のコマンド設定が、前回適用した値を取得する（Scale/Offset適用後。未適用の間は前回値を保持する）
+    /// @return 名前が一致するコマンド設定が見つかった場合は true
+    bool TryGetLastValue(const std::string &name, float &outValue) const;
+    size_t GetCommandCount() const noexcept { return commands_.size(); }
 
 protected:
     void Update() override;
@@ -69,23 +75,16 @@ protected:
     bool LoadFromJson(const JSON &json) override;
 
 private:
-    std::string commandName_;
-    ConditionType conditionType_ = ConditionType::CommandTrue;
-    /// @brief 入力値と比較する閾値（ValueGreaterEqual/ValueLessEqual/ValueEqualで使用）
-    float threshold_ = 0.5f;
-    ValueSource valueSource_ = ValueSource::CommandValue;
-    /// @brief ValueSource::FixedValueのときに書き込む固定値
-    float fixedValue_ = 1.0f;
-    /// @brief 書き込む値にかけるスケール（オフセット加算より先に適用される）
-    float valueScale_ = 1.0f;
-    /// @brief 書き込む値へ加算するデフォルト値オフセット
-    float valueOffset_ = 0.0f;
-    /// @brief 値の適用先（複数可）
-    std::vector<ParameterBinding> bindings_;
+    CommandEntry *FindCommand(const std::string &name);
+    const CommandEntry *FindCommand(const std::string &name) const;
+    /// @brief 評価値をエントリの全バインド先へ書き込む
+    void ApplyValue(const CommandEntry &entry, float value);
 
-    // --- 実行時状態（保存されない） ---
-    bool wasApplied_ = false;
-    float lastValue_ = 0.0f;
+#if defined(USE_IMGUI)
+    void ShowCommandImGui(CommandEntry &entry, const std::vector<ParameterBindingCandidate> &candidates);
+#endif
+
+    std::vector<CommandEntry> commands_;
 };
 
 REGISTER_COMPONENT_OBJECT(InputCommandApplier)

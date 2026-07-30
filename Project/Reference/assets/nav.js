@@ -1,7 +1,17 @@
 // KashipanEngine Reference - shared navigation renderer
+// Loaded together with either nav-engine-data.js or nav-editor-data.js, which each
+// define KE_PAGES (relative to the Reference/ root) plus KE_SITE / KE_SITE_LABEL /
+// KE_OTHER_SITE_LABEL / KE_OTHER_SITE_HREF for the cross-site switcher.
 (function () {
-  function basePrefix() {
-    return location.pathname.includes("/Tutorial/") ? "../" : "";
+  // href の "/" の数から、現在ページを起点に Reference/ ルートへ戻るための "../" の数を求める
+  function prefixForHref(href) {
+    const depth = href.split("/").length - 1;
+    return "../".repeat(depth);
+  }
+
+  function currentPrefix() {
+    const page = KE_PAGES.find((p) => p.id === document.body.getAttribute("data-page"));
+    return page ? prefixForHref(page.href) : "";
   }
 
   function groupsInOrder(pages) {
@@ -17,12 +27,15 @@
   function renderSidebar(currentId) {
     const el = document.getElementById("sidebar");
     if (!el) return;
-    const prefix = basePrefix();
+    const prefix = currentPrefix();
     const groups = groupsInOrder(KE_PAGES);
 
     let html = '';
-    html += '<a class="sidebar-title" href="' + prefix + '00_Index.html">KashipanEngine</a>';
-    html += '<span class="sidebar-sub">使い方リファレンス</span>';
+    html += '<a class="sidebar-title" href="' + prefix + KE_PAGES[0].href + '">KashipanEngine</a>';
+    html += '<span class="sidebar-sub">' + KE_SITE_LABEL + '</span>';
+    if (typeof KE_OTHER_SITE_HREF !== "undefined") {
+      html += '<a class="sidebar-switch" href="' + prefix + KE_OTHER_SITE_HREF + '">&#8646; ' + KE_OTHER_SITE_LABEL + '</a>';
+    }
 
     groups.forEach((g) => {
       html += '<div class="nav-group"><div class="nav-group-title">' + g.group + '</div><ul>';
@@ -39,7 +52,7 @@
   function renderFooter(currentId) {
     const el = document.getElementById("page-footer");
     if (!el) return;
-    const prefix = basePrefix();
+    const prefix = currentPrefix();
     const idx = KE_PAGES.findIndex((p) => p.id === currentId);
     if (idx === -1) return;
     const prev = idx > 0 ? KE_PAGES[idx - 1] : null;
@@ -58,10 +71,10 @@
   function renderBreadcrumb(currentId) {
     const el = document.getElementById("breadcrumb");
     if (!el) return;
-    const prefix = basePrefix();
+    const prefix = currentPrefix();
     const page = KE_PAGES.find((p) => p.id === currentId);
     if (!page) return;
-    el.innerHTML = '<a href="' + prefix + '00_Index.html">リファレンス</a> / ' +
+    el.innerHTML = '<a href="' + prefix + KE_PAGES[0].href + '">' + KE_SITE_LABEL + '</a> / ' +
       (page.group ? page.group + ' / ' : '') + page.title;
   }
 

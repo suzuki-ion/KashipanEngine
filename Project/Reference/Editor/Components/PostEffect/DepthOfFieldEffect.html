@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DepthOfFieldEffect | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_PostEffect_DepthOfFieldEffect">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>DepthOfFieldEffect</h1>
+<p class="page-lead">フォーカス距離から近景・遠景それぞれのCoC（錯乱円）を求め、別々にガザリングブラーしてから合成する被写界深度（DoF）ポストエフェクトです。C++側のAPIは<a href="../../../Engine/10_PostEffects.html">Engine/10_PostEffects.html</a>を参照してください。</p>
+</div>
+
+<div class="note">
+<strong>付与の前提</strong><br>
+ポストエフェクトは同一オブジェクトの <code>ScreenBufferObject</code> が持つ <code>ScreenBuffer</code> に対して適用されます。<code>ScreenBufferObject</code> が付与されていないオブジェクトへ <code>DepthOfFieldEffect</code> を追加しても効果は発生しません。
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Focus Distance</td><td>ドラッグ入力欄（ステップ0.1、範囲0.0〜10000.0、小数点以下2桁表示）</td><td>ピントを合わせるワールド距離。既定値 10.0</td></tr>
+<tr><td>Focus Range</td><td>ドラッグ入力欄（ステップ0.05、範囲0.0〜1000.0、小数点以下2桁表示）</td><td>ピントが合っているとみなす幅。この範囲内はボケない。既定値 2.0</td></tr>
+<tr><td>Near Blur Distance</td><td>ドラッグ入力欄（ステップ0.1、範囲0.01〜1000.0、小数点以下2桁表示）</td><td>手前側、ここまでの距離で近景ボケが最大になる。既定値 5.0</td></tr>
+<tr><td>Far Blur Distance</td><td>ドラッグ入力欄（ステップ0.1、範囲0.01〜1000.0、小数点以下2桁表示）</td><td>奥側、ここまでの距離で遠景ボケが最大になる。既定値 10.0</td></tr>
+<tr><td>Max Blur Radius (px)</td><td>ドラッグ入力欄（ステップ0.5、範囲0.0〜128.0、小数点以下1桁表示）</td><td>最大ぼかし半径（ピクセル）。既定値 16.0</td></tr>
+<tr><td>Sample Count</td><td>整数ドラッグ入力欄（4〜64にクランプ）</td><td>ブラーのサンプル数。既定値 16</td></tr>
+<tr><td>Dilate Radius (px)</td><td>整数ドラッグ入力欄（ステップ1、範囲0〜16）</td><td>近景CoCのダイレーション（膨張）半径。前景ボケが物体本来のシルエットより外側にも自然に広がるようにする。既定値 4</td></tr>
+</table>
+
+<div class="warn">
+<strong>カメラが未解決の場合の警告表示</strong><br>
+このスクリーンバッファへ実際に描画したカメラが解決できていない場合、Inspector上に <code>No camera resolved for this ScreenBuffer yet: DoF will not be applied.</code>（オレンジ色のテキスト）が表示されます。この状態ではDoFは適用されず、元の描画結果がそのまま残ります。カメラ情報は <code>Renderer</code> が毎フレーム自動で注入するため、ユーザー側でNear/Far等を手動設定する必要はありません。
+</div>
+
+<h2>適用先の除外設定 <span class="badge imgui">USE_IMGUI</span></h2>
+<p>同一オブジェクトに <code>ScreenBufferObject</code> が2つ以上ある場合のみ、パラメータ項目の前に "Apply Target Filter" というツリーノードが表示されます。展開すると各 <code>ScreenBuffer</code> 名のチェックボックスが並び、チェックを外すとそのスクリーンバッファへはこのエフェクトが適用されなくなります（<code>ScreenBufferObject</code> が1つ以下の場合はこの項目自体が表示されません）。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/10_PostEffects.html">Engine/10_PostEffects.html</a> — <code>IPostProcessComponent</code> の仕組みとカメラ情報の自動注入について</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本操作（同一オブジェクトに <code>ScreenBufferObject</code> を付与して使用）</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

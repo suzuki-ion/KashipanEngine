@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KashipanEngine リファレンス</title>
-<link rel="stylesheet" href="assets/style.css">
-<script defer src="assets/nav-data.js"></script>
-<script defer src="assets/nav.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-engine-data.js"></script>
+<script defer src="../assets/nav.js"></script>
 </head>
 <body data-page="00_Index">
 <div class="layout">
@@ -14,7 +14,12 @@
 <main>
 <div class="page-header">
 <h1>KashipanEngine 使い方リファレンス</h1>
-<p class="page-lead">DirectX12ベースの独自C++ゲームエンジン「KashipanEngine」のAPIリファレンスです。エンジン本体はC++で実装されていますが、実際のゲームロジックは主に <strong>AngelScript</strong>（<code>.as</code> ファイル）と、JSONで記述する<strong>シーン</strong>によって組み立てます。</p>
+<p class="page-lead">DirectX12ベースの独自C++ゲームエンジン「KashipanEngine」の<strong>エンジン本体（C++ API）リファレンス</strong>です。<code>EmptyObject</code>・各種コンポーネント・シーン管理・アセット管理など、エンジンをC++コードから使う際のクラス・関数・JSON形式を扱います。</p>
+</div>
+
+<div class="warn">
+<strong>エディタの使い方をお探しですか？</strong><br>
+シーンエディタ（ImGuiベースのツール）のウィンドウ操作・メニュー・コンポーネントのInspector表示については、独立した<a href="../Editor/00_Index.html">エディタリファレンス</a>を参照してください。このページ以下はC++側のプログラムそのものの解説です。
 </div>
 
 <h2>このリファレンスについて</h2>
@@ -22,14 +27,14 @@
 KashipanEngine は「オブジェクト（<code>EmptyObject</code>）にコンポーネントを付け足していく」コンポジション方式のエンジンです。Unity のようにシーン内のオブジェクトへ <code>Transform</code>・<code>MeshRenderer</code>・<code>BoxCollider</code>・<code>ScriptComponent</code> といったコンポーネントをアタッチしてゲームを組み立てます。
 </p>
 <ul>
-<li>シーンの内容（オブジェクト・コンポーネント配置）は <strong>JSON</strong>（<code>Assets/Scenes/*.scene</code>）に保存され、専用の <strong>シーンエディタ</strong>（ImGuiベース）で編集します。</li>
+<li>シーンの内容（オブジェクト・コンポーネント配置）は <strong>JSON</strong>（<code>Assets/Scenes/*.scene</code>）に保存され、専用の <strong>シーンエディタ</strong>（ImGuiベース、<a href="../Editor/00_Index.html">エディタリファレンス</a>参照）で編集します。</li>
 <li>ゲームプレイのロジック（移動・当たり判定応答・演出など）は C++ ではなく <strong>AngelScript</strong> で書き、<code>ScriptComponent</code> としてオブジェクトにアタッチします。</li>
 <li>C++ 側のコードは主にエンジン本体の実装と、起動時フックである <code>Application/AppInitialize.h</code> に限られます。</li>
 </ul>
 
 <div class="tip">
 <strong>初めての方へ</strong><br>
-まずは <a href="Tutorial/00_Index.html">チュートリアル</a> に沿って、シーン作成からスクリプトでキャラクターを動かすところまでを一通り体験することをおすすめします。
+まずは <a href="../Editor/Guide/00_Index.html">エディタの使い方ガイド</a> に沿って、シーン作成からスクリプトでキャラクターを動かすところまでを一通り体験することをおすすめします。
 </div>
 
 <h2>目次</h2>
@@ -73,7 +78,6 @@ KashipanEngine は「オブジェクト（<code>EmptyObject</code>）にコン�
 <tr><th>ページ</th><th>内容</th></tr>
 <tr><td><a href="10_PostEffects.html">ポストエフェクト</a></td><td>ブルーム・被写界深度・アウトライン等のポストプロセス</td></tr>
 <tr><td><a href="11_Window.html">ウィンドウ / オフスクリーン</a></td><td>Window、ScreenBuffer、ShadowMapBuffer</td></tr>
-<tr><td><a href="12_SceneEditor.html">シーンエディタ (ImGui)</a></td><td>シーンエディタの機能とワークフロー</td></tr>
 </table>
 
 <h3>ユーティリティ</h3>
@@ -83,11 +87,8 @@ KashipanEngine は「オブジェクト（<code>EmptyObject</code>）にコン�
 <tr><td><a href="14_BuildMacros.html">ビルドマクロ</a></td><td>DEBUG_BUILD / DEVELOPMENT_BUILD / RELEASE_BUILD / USE_IMGUI</td></tr>
 </table>
 
-<h3>チュートリアル</h3>
-<table>
-<tr><th>ページ</th><th>内容</th></tr>
-<tr><td><a href="Tutorial/00_Index.html">チュートリアル目次</a></td><td>シーン作成からスクリプトでの動作実装まで、手順を追って学ぶ全9章</td></tr>
-</table>
+<h3>エディタリファレンス</h3>
+<p>シーンエディタ（ImGui）のウィンドウ操作・コンポーネントのInspector表示・使い方ガイドは、このエンジン本体リファレンスとは別サイトの<a href="../Editor/00_Index.html">エディタリファレンス</a>にまとめています。</p>
 
 <h2>命名規則の早見表</h2>
 <table>

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ScriptComponent | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_ScriptComponent">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>ScriptComponent</h1>
+<p class="page-lead">AngelScriptのスクリプトファイル（<code>.as</code>）をコンパイルして実行するコンポーネントです。スクリプト内で<code>ScriptComponentBehavior</code>を実装したクラスがインスタンス化され、<code>Awake</code>/<code>Start</code>/<code>Update</code>/<code>End</code>等のライフサイクル関数が呼び出されます。</p>
+</div>
+
+<h2>スクリプトの割り当て</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Script Path</td><td>コンボ（(None) + 検出済み<code>.as</code>ファイルのパス一覧）</td><td>実行するスクリプトファイルのパス。<a href="../../Windows/05_AssetsWindow.html">Assets</a>ウィンドウから<code>.as</code>ファイルをこの項目へドラッグ＆ドロップして割り当てることもできる（その場合はReloadまで自動で行われる）</td></tr>
+<tr><td>Refresh List</td><td>ボタン（Script Pathの右）</td><td>プロジェクト内の<code>.as</code>ファイル一覧を再スキャンする。新規作成したスクリプトをScript Pathの候補に出すには、まずこれを押す必要がある</td></tr>
+<tr><td>Reload</td><td>ボタン</td><td>現在のScript Pathでスクリプトを（再）コンパイルする。成功すると <code>Awake()</code> が呼ばれる。スクリプトの内容を編集した後も、変更を反映するにはこれを押す必要がある</td></tr>
+</table>
+
+<h2>状態表示</h2>
+<table>
+<tr><th>表示</th><th>内容</th></tr>
+<tr><td>Behavior: 名前 / (None)</td><td>ビルドに成功し検出された<code>ScriptComponentBehavior</code>実装クラスの名前</td></tr>
+<tr><td>Awake: o/- Start: o/- Update: o/- End: o/-</td><td>各ライフサイクルメソッドが実装（検出）されているか（o）いないか（-）</td></tr>
+<tr><td>OnCollision Enter: o/- Stay: o/- Exit: o/-</td><td>衝突コールバックメソッドが実装されているか</td></tr>
+<tr><td>OnWindowMessage: o/-</td><td>ウィンドウメッセージコールバックが実装されているか</td></tr>
+<tr><td>（エラーメッセージ、赤文字）</td><td>直近のコンパイル/実行時エラー内容。ビルド失敗時はさらにその下へコンパイラの出力メッセージがオレンジ文字でインデント表示される</td></tr>
+</table>
+
+<h2>Serialize Fields（<code>[SerializeField]</code>付き変数）</h2>
+<p>スクリプトのBehaviorクラス（またはグローバル変数）に <code>[SerializeField]</code> を付けた変数は、"Serialize Fields" という区切り線の下に自動で編集UIが生成されます。ウィジェットは変数の型と付与された属性（Unity互換のメタデータ）によって決まります。</p>
+<table>
+<tr><th>変数の型 / 属性</th><th>ウィジェット</th></tr>
+<tr><td>bool</td><td>チェックボックス</td></tr>
+<tr><td>int / uint（<code>[Range(min,max)]</code>なし）</td><td>整数ドラッグ入力欄</td></tr>
+<tr><td>int / uint（<code>[Range(min,max)]</code>あり）</td><td>整数スライダー（min〜max）</td></tr>
+<tr><td>float（Rangeなし）</td><td>ドラッグ入力欄（ステップ0.01）</td></tr>
+<tr><td>float（Rangeあり）</td><td>スライダー（min〜max）</td></tr>
+<tr><td>double</td><td>ドラッグ入力欄（Rangeありならスライダー）</td></tr>
+<tr><td>string（<code>[Multiline]</code>/<code>[TextArea(min,max)]</code>なし）</td><td>1行テキスト入力欄</td></tr>
+<tr><td>string（Multiline/TextAreaあり）</td><td>複数行テキスト入力欄。内容の行数に応じてminLines〜maxLinesの範囲で高さが自動調整される</td></tr>
+<tr><td>Vector2 / Vector3</td><td>XY・XYZのドラッグ入力欄（ステップ0.01）</td></tr>
+<tr><td>Vector4（<code>[ColorPicker]</code>なし）</td><td>XYZWのドラッグ入力欄（ステップ0.01）</td></tr>
+<tr><td>Vector4（ColorPickerあり）</td><td>カラーピッカー（RGBA）</td></tr>
+<tr><td>Quaternion</td><td>XYZWのドラッグ入力欄（ステップ0.01）</td></tr>
+<tr><td>Object@（シーン内オブジェクト参照）</td><td>オブジェクト選択欄（コンボ＋ヒエラルキーからのドラッグ&amp;ドロップ）</td></tr>
+<tr><td><code>[System.Serializable]</code>クラス</td><td>ツリーノードとして展開し、子フィールドを再帰的に同じ規則で表示する</td></tr>
+<tr><td><code>array&lt;T&gt;</code>（Tは上記いずれか対応型）</td><td>ツリーノード。Size入力欄で要素数を変更でき、各要素の右に削除ボタン（-）、末尾に追加ボタン（+）が並ぶ</td></tr>
+</table>
+<p>さらに次の表示系メタデータが利用できます。</p>
+<table>
+<tr><th>属性</th><th>効果</th></tr>
+<tr><td><code>[Header("見出し")]</code></td><td>そのフィールドの直前に区切り線付きの見出しを表示する</td></tr>
+<tr><td><code>[Space(高さpx)]</code></td><td>そのフィールドの直前に指定した高さの空白を挿入する</td></tr>
+<tr><td><code>[Tooltip("説明")]</code></td><td>フィールドにカーソルを合わせたときにツールチップを表示する</td></tr>
+</table>
+
+<div class="warn"><code>array&lt;T&gt;@</code>のようなハンドル構文＋<code>null</code>初期値で宣言する必要があります。値的構文（<code>array&lt;T&gt; 変数名;</code>）で宣言するとAngelScript側のGC追跡が壊れ、Inspector表示時やエンジン終了時にクラッシュする可能性があります。</div>
+
+<div class="tip">スクリプトの書き方・利用可能なAPIの一覧は<a href="../../Guide/09_WriteScript.html">エディターガイド 9. スクリプトを書く</a>と<a href="../../../Engine/07_Scripting.html">Engine/07_Scripting.html</a>を参照してください。ガイドの手順（Script Pathを選ぶ → Refresh List → Reload）はこのページの内容と一致しています。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path">Add Component → Script → ScriptComponent</span>。最大付与数の制限はありません。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/07_Scripting.html">Engine/07_Scripting.html</a> — AngelScriptのライフサイクル・API・<code>ScriptComponent</code>クラス自体のC++側API</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本的な見方</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

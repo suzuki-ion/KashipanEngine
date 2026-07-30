@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ウィンドウ / オフスクリーン | KashipanEngine リファレンス</title>
-<link rel="stylesheet" href="assets/style.css">
-<script defer src="assets/nav-data.js"></script>
-<script defer src="assets/nav.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-engine-data.js"></script>
+<script defer src="../assets/nav.js"></script>
 </head>
 <body data-page="11_Window">
 <div class="layout">
@@ -214,7 +214,7 @@ Window *overlay = Window::CreateOverlay("HUD Overlay", 1280, 720, /*clickThrough
 auto *screenBufferObj = obj-&gt;AddComponent&lt;ScreenBufferObject&gt;();
 screenBufferObj-&gt;SetName("MainView");
 screenBufferObj-&gt;SetSize(1920, 1080);</code></pre>
-<p>実運用では <code>NormalWindowObject</code> / <code>OverlayWindowObject</code> / <code>ScreenBufferObject</code> / <code>ShadowMapObject</code> は <a href="12_SceneEditor.html">シーンエディタ</a> 上でオブジェクトへ追加するのが基本です。</p>
+<p>実運用では <code>NormalWindowObject</code> / <code>OverlayWindowObject</code> / <code>ScreenBufferObject</code> / <code>ShadowMapObject</code> は <a href="../Editor/Architecture/01_Overview.html">シーンエディタ</a> 上でオブジェクトへ追加するのが基本です。</p>
 
 <h2>関連ページ</h2>
 <ul>

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AudioSource | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_AudioSource">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>AudioSource</h1>
+<p class="page-lead">音声を再生するコンポーネントです。使用する音声・ボリューム・ピッチ・ループ・距離減衰に加え、フィルター/リバーブ/エコー/イコライザー/リミッターの各エフェクトを個別に有効化して複数同時にかけられます。</p>
+</div>
+
+<h2>基本設定</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Sound</td><td>コンボ（(None) + 読み込み済みサウンドのアセットパス一覧）</td><td>再生する音声</td></tr>
+<tr><td>Volume</td><td>ドラッグ入力欄（ステップ0.01、範囲0〜1）</td><td>音量</td></tr>
+<tr><td>Pitch(semitones)</td><td>ドラッグ入力欄（ステップ0.1、範囲-24〜24）</td><td>ピッチ（半音単位）</td></tr>
+<tr><td>Loop</td><td>チェックボックス</td><td>ループ再生するか</td></tr>
+<tr><td>Min Distance</td><td>ドラッグ入力欄（ステップ0.1、範囲0〜Max Distance）</td><td>距離減衰が始まる距離</td></tr>
+<tr><td>Max Distance</td><td>ドラッグ入力欄（ステップ0.1、範囲Min Distance〜10000）</td><td>この距離を超えると音量が0になる</td></tr>
+</table>
+
+<h2>Effects（各エフェクトは個別に有効/無効を切り替え、複数同時にかけられる）</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Filter</td><td>チェックボックス</td><td>特定の周波数帯域を削るフィルター。音を籠らせたり、軽くしたりできる</td></tr>
+<tr><td>　Filter Type</td><td>コンボ（LowPass / HighPass / BandPass / Notch）</td><td>LowPass: 高音を削って籠らせる。HighPass: 低音を削って軽くする。BandPass: カットオフ周波数付近のみを通す。Notch: カットオフ周波数付近のみを削る</td></tr>
+<tr><td>　Frequency</td><td>ドラッグ入力欄（ステップ0.005、範囲0.0005〜1.0）</td><td>正規化カットオフ周波数。0に近いほど強くかかり、1.0でほぼ無効</td></tr>
+<tr><td>　Q (Resonance)</td><td>ドラッグ入力欄（ステップ0.01、範囲0.0005〜1.5）</td><td>共鳴の鋭さ(1/Q)。小さいほどカットオフ周波数付近の音が強調される</td></tr>
+<tr><td>Reverb</td><td>チェックボックス</td><td>残響。ホールや洞窟の中で鳴っているような響きを付加する</td></tr>
+<tr><td>　Reverb Mix</td><td>ドラッグ入力欄（ステップ0.005、範囲0〜1）</td><td>残響への送り量。大きいほど響きが強くなる（0.0: 残響無し 〜 1.0: 最大）</td></tr>
+<tr><td>Echo</td><td>チェックボックス</td><td>やまびこ。遅延した音を繰り返し重ねる</td></tr>
+<tr><td>　Wet/Dry Mix</td><td>ドラッグ入力欄（ステップ0.005、範囲0〜1）</td><td>原音とエコー音の混合比（0.0: 原音のみ 〜 1.0: エコー音のみ）</td></tr>
+<tr><td>　Feedback</td><td>ドラッグ入力欄（ステップ0.005、範囲0〜1）</td><td>エコーの繰り返し量。大きいほど長く繰り返される（1.0で減衰しない）</td></tr>
+<tr><td>　Delay (ms)</td><td>ドラッグ入力欄（ステップ1、範囲1〜2000）</td><td>エコーの遅延時間（ミリ秒）</td></tr>
+<tr><td>Equalizer</td><td>チェックボックス</td><td>4バンドイコライザー。周波数帯域ごとに音量を増減できる</td></tr>
+<tr><td>　Band 1〜4: Frequency (Hz)</td><td>ドラッグ入力欄（ステップ10、範囲20〜20000）</td><td>そのバンドの中心周波数</td></tr>
+<tr><td>　Band 1〜4: Gain</td><td>ドラッグ入力欄（ステップ0.01、範囲0.126〜7.94）</td><td>そのバンドの増幅率。1.0で等倍、小さいほど削り、大きいほど持ち上げる</td></tr>
+<tr><td>　Band 1〜4: Bandwidth</td><td>ドラッグ入力欄（ステップ0.01、範囲0.1〜2.0）</td><td>そのバンドの帯域幅（中心周波数を基準としたオクターブ幅）。大きいほど広い範囲に影響する</td></tr>
+<tr><td>Limiter</td><td>チェックボックス</td><td>マスタリングリミッター。音量が大きくなりすぎないよう圧縮し、音割れを防ぐ</td></tr>
+<tr><td>　Release</td><td>整数ドラッグ入力欄（ステップ0.1、範囲1〜20）</td><td>圧縮を解除するまでの時間。大きいほどゆっくり戻る</td></tr>
+<tr><td>　Loudness</td><td>整数ドラッグ入力欄（ステップ1、範囲1〜1800）</td><td>音量の閾値。小さいほど強く圧縮される</td></tr>
+</table>
+<p>各エフェクトの見出し（Filter/Reverb/Echo/Equalizer/Limiter）にカーソルを合わせると説明がツールチップで表示され、有効化した場合のみサブ項目がインデント表示されます。</p>
+
+<h2>その他・再生操作</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Auto Pan / Muffle (Spatial Audio)</td><td>チェックボックス</td><td>有効にすると、使用中の<a href="AudioListener.html">AudioListener</a>との位置関係から左右への振り分け（パン）と音の籠り具合を毎フレーム自動計算する。音源が受聴者の背後にあるほど強く籠る</td></tr>
+<tr><td>Play / Resume / Pause</td><td>ボタン</td><td>状態に応じて表示が切り替わる。未再生時は"Play"、一時停止中は"Resume"、再生中は"Pause"</td></tr>
+<tr><td>Stop</td><td>ボタン</td><td>再生・一時停止のどちらでもない場合は無効化（グレーアウト）される</td></tr>
+</table>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path">Add Component → Audio → AudioSource</span>。最大付与数の制限はありません。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/09_Assets.html">Engine/09_Assets.html</a> — オーディオアセットの読み込み・<code>AudioManager</code>のAPI</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本的な見方</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

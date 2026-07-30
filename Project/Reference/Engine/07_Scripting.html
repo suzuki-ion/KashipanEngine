@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AngelScriptでのゲームロジック | KashipanEngine リファレンス</title>
-<link rel="stylesheet" href="assets/style.css">
-<script defer src="assets/nav-data.js"></script>
-<script defer src="assets/nav.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-engine-data.js"></script>
+<script defer src="../assets/nav.js"></script>
 </head>
 <body data-page="07_Scripting">
 <div class="layout">
@@ -34,7 +34,7 @@
 
 <h2>ScriptComponentの付け方</h2>
 <p>
-スクリプトを実行するには、対象オブジェクトへ <code>ScriptComponent</code> をアタッチし、実行する <code>.as</code> ファイルのパスを指定します。実運用では大半のオブジェクトが<strong>シーンエディタ上でEmptyObjectを作り、インスペクターからScriptComponentを追加してスクリプトファイルを選択する</strong>形で設定されます（詳細は <a href="12_SceneEditor.html">12_SceneEditor.html</a> 参照）。コードから明示的に追加する場合は次のようになります。
+スクリプトを実行するには、対象オブジェクトへ <code>ScriptComponent</code> をアタッチし、実行する <code>.as</code> ファイルのパスを指定します。実運用では大半のオブジェクトが<strong>シーンエディタ上でEmptyObjectを作り、インスペクターからScriptComponentを追加してスクリプトファイルを選択する</strong>形で設定されます（詳細は <a href="../Editor/Architecture/01_Overview.html">Editor/Architecture/01_Overview.html（シーンエディタ）</a> 参照）。コードから明示的に追加する場合は次のようになります。
 </p>
 <pre><code>EmptyObject *obj = scene-&gt;CreateEmptyObject("Player");
 ScriptComponent *script = obj-&gt;AddComponent&lt;ScriptComponent&gt;();
@@ -316,7 +316,7 @@ void RequestExitGameLoop();</div>
 <tr><td><code>TextRenderer</code></td><td><code>SetText</code>/<code>GetText</code> ほか（水平/垂直揃えは <code>TextHorizontalAlign</code>/<code>TextVerticalAlign</code> 列挙）</td></tr>
 <tr><td><code>Camera3D</code> / <code>Camera2D</code> / <code>CameraController</code></td><td><code>SetFovY</code>, <code>SetNearClip</code>/<code>SetFarClip</code>, <code>SetOrthographic</code>/<code>SetOrthoSize</code> 等</td></tr>
 <tr><td><code>RigidBody2D</code> / <code>RigidBody3D</code></td><td><code>SetVelocity</code>/<code>GetVelocity</code>, <code>SetMass</code>, <code>SetUseGravity</code>/<code>IsGravityEnabled</code>（3Dは加えて <code>SetBodyType</code>, <code>SetInterpolate</code>, <code>SyncFromTransform</code>）</td></tr>
-<tr><td><code>InputCommandApplier</code></td><td>入力コマンドの値を自動でオブジェクトへ適用するコンポーネント。<code>WasApplied</code>/<code>GetLastValue</code> で結果を参照できる</td></tr>
+<tr><td><code>InputCommandApplier</code></td><td>入力コマンドの値を自動でオブジェクトへ適用するコンポーネント。複数のコマンド設定を名前で登録でき、<code>WasApplied</code>/<code>TryGetLastValue</code> で名前を指定して結果を参照できる</td></tr>
 <tr><td><code>SceneVariableApplier</code></td><td>シーン変数の値を自動で適用するコンポーネント。<code>WasApplied</code></td></tr>
 <tr><td><code>ScriptComponent</code></td><td><code>SetScriptPath</code>/<code>GetScriptPath</code>, <code>Reload</code>, 他スクリプトの <code>[SerializeField]</code> 変数を読み書きする <code>GetVariable</code>/<code>SetVariable</code></td></tr>
 <tr><td>各種ポストエフェクト（<code>BloomEffect</code>, <code>VignetteEffect</code>, <code>OutlineEffect</code> 等）</td><td>エフェクトごとのパラメータ設定。詳細は <a href="10_PostEffects.html">10_PostEffects.html</a></td></tr>
@@ -567,7 +567,7 @@ void CheckDeath() {
 </p>
 <div class="note">
 <strong>シーンエディタでの実行時リロード</strong><br>
-シーンエディタ（<a href="12_SceneEditor.html">12_SceneEditor.html</a>）上でスクリプトを編集して保存すると、多くの場合インスペクターから <code>Reload()</code> を呼ぶ導線が用意されています。コンパイルエラーがあった場合は再構築が失敗し、直前の状態（あるいは未ビルド状態）のまま残ります。
+シーンエディタ（<a href="../Editor/Architecture/01_Overview.html">Editor/Architecture/01_Overview.html（シーンエディタ）</a>）上でスクリプトを編集して保存すると、多くの場合インスペクターから <code>Reload()</code> を呼ぶ導線が用意されています。コンパイルエラーがあった場合は再構築が失敗し、直前の状態（あるいは未ビルド状態）のまま残ります。
 </div>
 <pre><code>ScriptComponent *script = obj-&gt;GetComponent&lt;ScriptComponent&gt;();
 if (!script-&gt;Reload()) {
@@ -586,8 +586,8 @@ if (!script-&gt;Reload()) {
 <li>コライダーと <code>HitInfo</code>・衝突応答の詳細 → <a href="06_Collision.html">06_Collision.html</a></li>
 <li>入力コマンドの登録と評価 → <a href="08_Input.html">08_Input.html</a></li>
 <li>シーン・シーン変数・シーン遷移 → <a href="02_Scenes.html">02_Scenes.html</a></li>
-<li>シーンエディタでのスクリプトアタッチ・リロード操作 → <a href="12_SceneEditor.html">12_SceneEditor.html</a></li>
-<li>実際に手を動かして書いてみる → <a href="Tutorial/09_WriteScript.html">チュートリアル 9. スクリプトを書く</a></li>
+<li>シーンエディタでのスクリプトアタッチ・リロード操作 → <a href="../Editor/Architecture/01_Overview.html">Editor/Architecture/01_Overview.html（シーンエディタ）</a></li>
+<li>実際に手を動かして書いてみる → <a href="../Editor/Guide/09_WriteScript.html">チュートリアル 9. スクリプトを書く</a></li>
 </ul>
 
 <div id="page-footer" class="page-footer"></div>

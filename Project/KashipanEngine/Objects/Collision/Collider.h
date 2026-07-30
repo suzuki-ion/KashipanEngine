@@ -188,6 +188,12 @@ public:
     bool Check2D(ColliderID a, ColliderID b) const;
     bool Check3D(ColliderID a, ColliderID b) const;
 
+    /// @brief ReactPhysics3DのCollider*から、それを登録した際の情報（ownerObject/sourceCollider）を取得する
+    /// @details RayCollider等、自身は常駐形状を持たないコライダーがレイキャストのヒット結果を
+    ///          衝突相手側のEmptyObject/ICollider（の情報）へ逆引きするために使用する
+    /// @return 見つからない場合はnullptr
+    const ColliderInfo3D *FindInfoByHandle3D(const ColliderHandle *handle) const;
+
     void Update2D();
     void Update3D();
 

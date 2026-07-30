@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scene Object Hierarchy | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-editor-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="W02_Hierarchy">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Scene Object Hierarchy</h1>
+<p class="page-lead">シーン上の全オブジェクトを親子関係を含むツリーとして表示するウィンドウです。オブジェクトの作成・選択・並び替え・複製・削除など、シーン編集の起点になります。<span class="ui-path"><span>Window</span><i>›</i><span>Object Hierarchy</span></span> で表示/非表示を切り替えられます。</p>
+</div>
+
+<h2>ツリー表示</h2>
+<p>各行は1つのオブジェクトです。<code>Objects</code>ヘッダーの開閉・各オブジェクトの開閉状態はエディター設定として保存され、次回起動時も復元されます。</p>
+<table>
+<tr><th>表示色</th><th>意味</th></tr>
+<tr><td>通常（既定の文字色）</td><td>アクティブな通常オブジェクト</td></tr>
+<tr><td>グレー</td><td>非アクティブなオブジェクト（<code>Active</code>チェックが外れている）</td></tr>
+<tr><td>水色</td><td>Editor Onlyオブジェクト（自身または祖先が<code>Editor Only</code>）</td></tr>
+<tr><td>青</td><td>Prefabインスタンスに属するオブジェクト</td></tr>
+<tr><td>オレンジ + 名前の末尾に <code>*</code></td><td>Prefabインスタンスのうち、元のPrefabから変更（オーバーライド）が入っているオブジェクト</td></tr>
+</table>
+<p><code>Comment</code>コンポーネントが付いたオブジェクトへマウスカーソルを重ねると、コメント内容がツールチップとして表示されます。</p>
+
+<h2>選択操作</h2>
+<table>
+<tr><th>操作</th><th>結果</th></tr>
+<tr><td>クリック</td><td>単一選択に置き換える</td></tr>
+<tr><td>Ctrl + クリック</td><td>そのオブジェクトの選択を個別にトグル（追加/解除）する</td></tr>
+<tr><td>Shift + クリック</td><td>直前の操作位置（アンカー）から現在の表示順での範囲選択を行う</td></tr>
+<tr><td>ドラッグ&amp;ドロップ</td><td>並び替え、または別オブジェクトへドロップして親子関係を変更する</td></tr>
+</table>
+<div class="note"><strong>選択の確定タイミング</strong><br>クリックした瞬間ではなく、マウスを離した時点で選択が確定します（実際にドラッグへ発展した場合は選択より並び替え/D&amp;Dが優先されます）。これはヒエラルキーの項目をInspectorの欄までドラッグして値を割り当てる操作（後述）と両立させるための仕様です。</div>
+
+<h2>ドラッグ&amp;ドロップ</h2>
+<ul>
+<li><strong>ヒエラルキー内でのD&amp;D</strong> — 別のオブジェクトへドロップすると、そのオブジェクトの子として並び替えられます。</li>
+<li><strong>Assets Windowからのプレハブドロップ</strong> — <a href="05_AssetsWindow.html">Assets Window</a>の<code>.prefab</code>ファイルをヒエラルキー上へドラッグ&amp;ドロップすると、その位置（またはウィンドウの空きスペースへのドロップならルート直下）へPrefabがインスタンス化されます。</li>
+<li><strong>オブジェクトからフィールドへのD&amp;D</strong> — ヒエラルキーの項目を<a href="03_ObjectInspector.html">Object Inspector</a>のオブジェクト参照欄（例: <code>CameraController</code>のフォロー対象）へドラッグすると、そのオブジェクトを値として設定できます。</li>
+</ul>
+
+<h2>右クリックメニュー（オブジェクト上）</h2>
+<table>
+<tr><th>項目</th><th>ショートカット</th><th>動作</th></tr>
+<tr><td>Create Object</td><td>-</td><td>右クリックしたオブジェクトと同じ階層・次の位置に新規オブジェクトを作成する（サブメニューは下記「Create Objectメニュー」参照）</td></tr>
+<tr><td>Create Child Object</td><td>-</td><td>右クリックしたオブジェクトの子として最後尾に新規オブジェクトを作成する</td></tr>
+<tr><td>Copy Object(s)</td><td><code>Ctrl+C</code></td><td>選択中オブジェクト（複数選択時はまとめて）をクリップボードへコピーする</td></tr>
+<tr><td>Paste Object</td><td><code>Ctrl+V</code></td><td>右クリックしたオブジェクトと同じ階層・次の位置へ貼り付ける</td></tr>
+<tr><td>Paste to Child Object</td><td><code>Ctrl+Shift+V</code></td><td>右クリックしたオブジェクトの子として貼り付ける</td></tr>
+<tr><td>Clone Object(s)</td><td><code>Ctrl+D</code></td><td>選択中オブジェクトを複製する</td></tr>
+<tr><td>Delete Object(s)</td><td><code>Delete</code></td><td>選択中オブジェクトを削除する</td></tr>
+<tr><td>Apply All</td><td>-</td><td>（Prefabインスタンスのルートのみ）このインスタンスへの変更を元のPrefabアセットへ反映する</td></tr>
+<tr><td>Revert All</td><td>-</td><td>（Prefabインスタンスのルートのみ）ローカルの変更を破棄し、元のPrefabの内容に戻す（確認ダイアログあり、1操作でのUndoはできない）</td></tr>
+</table>
+<p>ウィンドウの何もない領域を右クリックすると、<code>Create Object</code> と <code>Paste Object</code>（ルート直下が対象）だけを含む簡略版メニューが表示されます。</p>
+
+<h3>Create Objectメニュー</h3>
+<p>あらかじめコンポーネントが組まれたテンプレートからオブジェクトを作成できます。</p>
+<table>
+<tr><th>項目</th><th>付与されるコンポーネント</th></tr>
+<tr><td>Empty Object</td><td>なし（<code>Transform</code>のみ）</td></tr>
+<tr><td>3D &gt; Mesh Object</td><td><code>MeshFilter</code>, <code>MeshRenderer</code></td></tr>
+<tr><td>3D &gt; Camera Object</td><td><code>Camera3D</code>, <code>CameraRenderer</code></td></tr>
+<tr><td>3D &gt; Light Object</td><td><code>Light</code>, <code>LightRenderer</code></td></tr>
+<tr><td>3D &gt; Skinned Mesh Object</td><td><code>MeshFilter</code>, <code>SkinnedMeshRenderer</code></td></tr>
+<tr><td>2D &gt; Sprite Object</td><td><code>MeshFilter</code>, <code>SpriteRenderer</code></td></tr>
+<tr><td>2D &gt; Text Object</td><td><code>TextRenderer</code></td></tr>
+<tr><td>2D &gt; Camera 2D Object</td><td><code>Camera2D</code>, <code>CameraRenderer</code></td></tr>
+<tr><td>Render Target &gt; Window Object</td><td><code>NormalWindowObject</code></td></tr>
+<tr><td>Render Target &gt; Screen Buffer Object</td><td><code>ScreenBufferObject</code></td></tr>
+</table>
+
+<h2>キーボードショートカット</h2>
+<p>ヒエラルキーウィンドウにフォーカスがある時のみ有効です（テキスト入力中は無効）。</p>
+<table>
+<tr><th>キー</th><th>動作</th></tr>
+<tr><td><code>Delete</code></td><td>選択中オブジェクトを削除する</td></tr>
+<tr><td><code>Ctrl+C</code></td><td>選択中オブジェクトをコピーする</td></tr>
+<tr><td><code>Ctrl+V</code></td><td>選択中オブジェクトの次の位置へ貼り付ける（未選択時はルート直下）</td></tr>
+<tr><td><code>Ctrl+Shift+V</code></td><td>選択中オブジェクトの子として貼り付ける</td></tr>
+<tr><td><code>Ctrl+D</code></td><td>選択中オブジェクトを複製する</td></tr>
+</table>
+
+<div class="tip"><strong>複数選択時のCopy/Clone/Delete</strong><br>複数オブジェクトを選択した状態でCopy/Clone/Deleteを行うと、選択された全オブジェクトのうち「他の選択オブジェクトの子孫でないもの（選択のルート）」だけが対象になります。子も選択されている場合、親を複製すれば子も一緒に複製されるため、二重に処理されることはありません。</div>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — 選択したオブジェクトのコンポーネント編集</li>
+<li><a href="04_SceneView.html">Windows/04_SceneView.html</a> — シーンビュー上でのクリックによる選択（ピッキング）</li>
+<li><a href="../Architecture/01_Overview.html">Architecture/01_Overview.html</a> — <code>SceneObjectHierarchy</code>・<code>PrefabUtility</code>・各種<code>IEditorCommand</code>のC++実装</li>
+<li><a href="../../Engine/03_GameObjects.html">Engine/03_GameObjects.html</a> — <code>EmptyObject</code>の生成・複製・削除API</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

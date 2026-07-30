@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Velocity | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_Velocity">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Velocity <span class="badge final">最大1個</span></h1>
+<p class="page-lead">同オブジェクトの<code>Transform</code>に対して、毎フレーム速度・加速度による移動を適用するコンポーネントです。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Velocity</td><td>XYZのドラッグ入力欄（ステップ0.01）</td><td>速度（単位/秒）。毎フレーム <code>Acceleration × dt</code> が加算され続ける</td></tr>
+<tr><td>Acceleration</td><td>XYZのドラッグ入力欄（ステップ0.01）</td><td>加速度（単位/秒<sup>2</sup>）</td></tr>
+</table>
+
+<div class="note">毎フレームのUpdateで、<code>velocity += acceleration * dt</code>、続けて <code>Transform.translate += velocity * dt</code> が行われます。<code>Transform</code>コンポーネントが同オブジェクトに存在しない場合は何も起こりません。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path">Add Component → Physics → Velocity</span>。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/04_ObjectComponents.html">Engine/04_ObjectComponents.html</a> — <code>Velocity</code>クラスのAPI（<code>SetVelocity</code>/<code>AddVelocity</code>等）</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本的な見方</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

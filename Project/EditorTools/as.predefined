@@ -756,18 +756,9 @@ class InputCommandApplier {
 	void SetTag(const string&in);
 	Tag GetTag() const;
 	const string& GetTagName() const;
-	void SetCommandName(const string&in);
-	const string& GetCommandName() const;
-	void SetThreshold(float);
-	float GetThreshold() const;
-	void SetFixedValue(float);
-	float GetFixedValue() const;
-	void SetValueScale(float);
-	float GetValueScale() const;
-	void SetValueOffset(float);
-	float GetValueOffset() const;
-	bool WasApplied() const;
-	float GetLastValue() const;
+	bool WasApplied(const string&in name) const;
+	bool TryGetLastValue(const string&in name, float&out value) const;
+	uint GetCommandCount() const;
 }
 
 class SceneVariableApplier {

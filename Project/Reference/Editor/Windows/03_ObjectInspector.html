@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scene Object Inspector | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-editor-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="W03_Inspector">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Scene Object Inspector</h1>
+<p class="page-lead"><a href="02_SceneObjectHierarchy.html">Scene Object Hierarchy</a>で選択したオブジェクトの名前・タグ・コンポーネントを編集するウィンドウです。コンポーネントごとの具体的な入力欄は「コンポーネント」カテゴリの各ページを参照してください。</p>
+</div>
+
+<h2>共通プロパティ</h2>
+<table>
+<tr><th>項目</th><th>内容</th></tr>
+<tr><td>Name</td><td>オブジェクト名。編集を終える（フォーカスを外す）とUndo履歴へ積まれる</td></tr>
+<tr><td>Active</td><td>オブジェクトの有効/無効。チェックを外すとコンポーネントの<code>Update</code>が呼ばれなくなる（<a href="02_SceneObjectHierarchy.html">ヒエラルキー</a>上ではグレー表示になる）</td></tr>
+<tr><td>Editor Only</td><td>エディター上でのみ存在するオブジェクトにする。<code>PlayStart()</code>時や非エディタービルドでのシーン読み込み時に子孫ごと削除される</td></tr>
+<tr><td>Tag</td><td>分類・判別用の任意文字列</td></tr>
+</table>
+
+<h2>Prefabセクション</h2>
+<p>選択したオブジェクトがPrefabインスタンスの場合のみ表示されます。</p>
+<table>
+<tr><th>項目</th><th>内容</th></tr>
+<tr><td>Prefabパス（テキスト表示）</td><td>元になっている<code>.prefab</code>ファイルのパス</td></tr>
+<tr><td>Apply All</td><td>このインスタンスへのローカルな変更を、元のPrefabアセットへ反映する（シーンを跨いで他の全インスタンスにも伝播する）</td></tr>
+<tr><td>Revert All</td><td>ローカルな変更（追加した子オブジェクトを含む）を破棄し、元のPrefabの内容に戻す。確認ダイアログが出る、1操作でのUndoはできない操作</td></tr>
+<tr><td>Overrides 一覧</td><td>元のPrefabから変更されているコンポーネントの一覧。各項目に <code>Apply</code>（そのコンポーネントだけ反映）・<code>Revert</code>（そのコンポーネントだけ戻す）ボタンがある</td></tr>
+</table>
+
+<h2>コンポーネント一覧</h2>
+<p>付与されているコンポーネントが、処理優先順位（更新優先度）の順に上から並びます。各コンポーネントの見出しは開閉式（クリックで開閉、状態は種類ごとに保存される）です。</p>
+<table>
+<tr><th>要素</th><th>内容</th></tr>
+<tr><td>左のチェックボックス</td><td>そのコンポーネント単体の有効/無効を切り替える</td></tr>
+<tr><td>見出し（コンポーネント型名）</td><td>クリックで開閉。ドラッグ&amp;ドロップで並び替えると処理優先順位が変わる</td></tr>
+<tr><td>右クリック &gt; Remove Component</td><td>そのコンポーネントを削除する</td></tr>
+<tr><td>Tag欄</td><td>コンポーネント単位のタグ（オブジェクトのタグとは別）</td></tr>
+<tr><td>開いた中身</td><td>コンポーネント固有の編集項目。詳細は「コンポーネント」カテゴリの各ページを参照</td></tr>
+</table>
+<div class="note"><strong>変更は自動的にUndo履歴へ積まれる</strong><br>コンポーネントを開いている間、表示前後のJSON状態を比較しており、値が変わった場合だけ自動的にUndo/Redo可能な操作として記録されます。</div>
+
+<h2>コンポーネントの追加</h2>
+<p>一覧の下にある<code>Add Component</code>ボタンを押すと、コンポーネント種別をカテゴリのツリーメニューから選ぶポップアップが開きます。カテゴリは各コンポーネントが<code>COMPONENT_CATEGORY(...)</code>で宣言している階層に対応します（例: <code>Collision &gt; Collider</code>）。</p>
+
+<h2>複数選択時（Object Inspector (N objects)）</h2>
+<p>2つ以上のオブジェクトを選択している間は、最後に操作したオブジェクト（プライマリ）を基準にした一括編集モードになります。</p>
+<ul>
+<li><strong>共通プロパティ</strong>（Active/Editor Only/Tag）はプライマリの値を表示し、変更すると選択中の全オブジェクトへ同じ値が適用されます。</li>
+<li><strong>共通コンポーネント</strong>（全選択オブジェクトが同じ型を同じ順番目に持っている場合のみ）が一覧に表示されます。1つでも持っていないオブジェクトがあれば、そのコンポーネントは一覧から除外されます。</li>
+<li>共通コンポーネントの値を編集すると、<strong>プライマリで実際に変更された値の差分だけ</strong>が他の選択オブジェクトの対応コンポーネントへ適用されます（値が同一のフィールドは上書きされません）。</li>
+<li><code>Remove Component</code> / <code>Add Component</code> も選択中の全オブジェクトへまとめて適用されます。</li>
+</ul>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="02_SceneObjectHierarchy.html">Windows/02_SceneObjectHierarchy.html</a> — オブジェクトの選択・作成・削除</li>
+<li><a href="../Architecture/01_Overview.html">Architecture/01_Overview.html</a> — <code>SceneObjectInspector</code>・<code>ComponentAddMenu</code>のC++実装</li>
+<li><a href="../../Engine/04_ObjectComponents.html">Engine/04_ObjectComponents.html</a> — <code>IObjectComponent</code>・<code>COMPONENT_CATEGORY</code>などコンポーネント基礎のC++ API</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comment | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_Comment">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Comment <span class="badge final">最大1個</span></h1>
+<p class="page-lead">デバッグ用のコメントを保持するだけのコンポーネントです。実行時の動作には一切関与しません。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Comment</td><td>複数行テキスト入力欄（<code>ImGui::InputTextMultiline</code>）</td><td>自由記述のコメント文字列</td></tr>
+</table>
+
+<div class="tip">ここに保持したコメントの内容は、エディターの<a href="../../Windows/02_SceneObjectHierarchy.html">Scene Object Hierarchy</a>で対象オブジェクトにカーソルを合わせた際、ツールチップとして表示されます。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path">Add Component → Debug → Comment</span>。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/04_ObjectComponents.html">Engine/04_ObjectComponents.html</a> — <code>Comment</code>クラスのAPI</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本的な見方</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

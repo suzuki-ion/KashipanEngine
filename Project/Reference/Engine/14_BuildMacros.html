@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ビルドマクロ | KashipanEngine リファレンス</title>
-<link rel="stylesheet" href="assets/style.css">
-<script defer src="assets/nav-data.js"></script>
-<script defer src="assets/nav.js"></script>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-engine-data.js"></script>
+<script defer src="../assets/nav.js"></script>
 </head>
 <body data-page="14_BuildMacros">
 <div class="layout">
@@ -36,7 +36,7 @@
 
 <h2><code>USE_IMGUI</code> — エディタ機能の有効化</h2>
 <p>
-コードベース全体で最も多くの箇所に登場するマクロです。シーンエディタ(<a href="12_SceneEditor.html">12_SceneEditor.html</a>)、各コンポーネントのインスペクタ表示(<code>ShowImGui()</code>相当の処理)、デバッグログのImGuiウィンドウ表示など、開発中にしか使わないツール機能はすべて<code>#if defined(USE_IMGUI)</code>ブロックで囲まれています。
+コードベース全体で最も多くの箇所に登場するマクロです。シーンエディタ(<a href="../Editor/Architecture/01_Overview.html">Editor/Architecture/01_Overview.html（シーンエディタ）</a>)、各コンポーネントのインスペクタ表示(<code>ShowImGui()</code>相当の処理)、デバッグログのImGuiウィンドウ表示など、開発中にしか使わないツール機能はすべて<code>#if defined(USE_IMGUI)</code>ブロックで囲まれています。
 </p>
 <pre><code>// 例: KashipanEngine/Core/GameEngine.h や GameEngine.cpp、Window.h、Input.h、
 // AudioManager.h/cpp、Debug/ImGuiManager.h/cpp など、非常に多くのファイルで使用されている
@@ -80,7 +80,7 @@ const std::string kBuildTypeString =
 <h2>次に読むページ</h2>
 <ul>
 <li>エンジン全体の設計思想の復習 → <a href="01_Overview.html">01_Overview.html</a></li>
-<li><code>USE_IMGUI</code>下で動くシーンエディタの詳細 → <a href="12_SceneEditor.html">12_SceneEditor.html</a></li>
+<li><code>USE_IMGUI</code>下で動くシーンエディタの詳細 → <a href="../Editor/Architecture/01_Overview.html">Editor/Architecture/01_Overview.html（シーンエディタ）</a></li>
 </ul>
 
 <div id="page-footer" class="page-footer"></div>

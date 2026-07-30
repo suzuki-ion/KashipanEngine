@@ -658,6 +658,14 @@ bool Collider::Check3D(ColliderID a, ColliderID b) const {
     return collector.hit;
 }
 
+const ColliderInfo3D *Collider::FindInfoByHandle3D(const ColliderHandle *handle) const {
+    if (!handle) return nullptr;
+    for (const auto &entry : colliders3D_) {
+        if (entry.runtime.collider == handle) return &entry.info;
+    }
+    return nullptr;
+}
+
 std::uint64_t Collider::MakePairKey(ColliderID a, ColliderID b) {
     if (a > b) std::swap(a, b);
     return (static_cast<std::uint64_t>(a) << 32) | static_cast<std::uint64_t>(b);

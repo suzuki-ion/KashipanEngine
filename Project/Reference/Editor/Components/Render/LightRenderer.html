@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LightRenderer | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_LightRenderer">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>LightRenderer</h1>
+<p class="page-lead">同一オブジェクトの<a href="Light.html">Light</a>と<code>Transform</code>からライト情報を取得し、Rendererが使う構造化バッファへ実際に送るコンポーネントです。Inspector上のUIはMeshRendererやCameraRenderer等と同じ「適用先の描画先／パイプライン」の指定のみで、Light固有のパラメータ編集項目はありません。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a>を参照してください。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Target</td><td>コンボボックス（None選択可）</td><td>適用先の描画先オブジェクトをシーン上から選択。ヒエラルキーからのドラッグ&amp;ドロップにも対応。<strong>未指定（None）の場合は全ての描画先に適用される</strong></td></tr>
+<tr><td>Render Target Filter（折りたたみツリー）</td><td>描画先ごとのチェックボックス</td><td>Targetを指定し、かつそのオブジェクトが複数の描画先コンポーネントを持つ場合のみ表示</td></tr>
+<tr><td>Pipeline</td><td>コンボボックス（None選択可）</td><td>読み込み済みのレンダーパイプライン名から選択。<strong>未指定（None）の場合は全パイプラインに適用される</strong>（既定は未指定）</td></tr>
+</table>
+
+<div class="note"><strong>これ自体にはLightのパラメータ編集項目が無い</strong><br>色・強度・種類・シャドウ設定等はすべて<a href="Light.html">Light</a>コンポーネント側のInspectorで編集する。LightRendererのInspectorは「どの描画先／パイプラインに適用するか」だけを扱う。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path"><span>Add Component</span><i>›</i><span>Render</span><i>›</i><span>LightRenderer</span></span> から追加する。同一オブジェクトに複数付与可能。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="Light.html">Components/Render/Light.html</a> — ライトのパラメータ本体</li>
+<li><a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a> — <code>LightRenderer</code>クラスのAPI</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Object Inspectorの基本操作</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assets Window | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-editor-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="W05_AssetsWindow">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Assets Window</h1>
+<p class="page-lead">Unityの<code>Assets</code>ウィンドウ相当の、<code>Assets/</code>フォルダ以下を閲覧・操作するファイルブラウザです。左側にフォルダツリー、右側に選択中フォルダの内容がサムネイル付きグリッドで表示されます。</p>
+</div>
+
+<h2>フォルダ移動</h2>
+<table>
+<tr><th>操作</th><th>内容</th></tr>
+<tr><td>フォルダのサムネイルをクリック</td><td>そのフォルダへ移動する</td></tr>
+<tr><td>Up One Level ボタン</td><td>1階層上のフォルダへ戻る</td></tr>
+<tr><td>Refresh ボタン</td><td>ファイルシステムを再スキャンして表示を更新する</td></tr>
+</table>
+
+<h2>ファイル一覧</h2>
+<p>各ファイルは拡張子ごとのサムネイル/アイコン付きグリッド表示です。ファイルにマウスを重ねると、フルパスがツールチップで表示されます。</p>
+
+<h3>右クリックメニュー（ファイル上）</h3>
+<table>
+<tr><th>項目</th><th>内容</th></tr>
+<tr><td>Open</td><td>対応する拡張子であれば、専用の編集/プレビューウィンドウを開く（JSON編集、マテリアル編集、画像プレビュー、オーディオプレビュー等）</td></tr>
+<tr><td>Rename</td><td>ファイル名を変更するモーダルを開く</td></tr>
+<tr><td>Delete</td><td>確認モーダルの上でファイルを削除する</td></tr>
+</table>
+
+<h3>右クリックメニュー（空きスペース）</h3>
+<table>
+<tr><th>項目</th><th>内容</th></tr>
+<tr><td>Create Folder</td><td>現在のフォルダ内に新しいフォルダを作成する</td></tr>
+<tr><td>Create JSON File</td><td>空のJSONファイルを作成する</td></tr>
+<tr><td>Create Material File</td><td>新しいマテリアルファイルを作成する</td></tr>
+</table>
+
+<h2>ドラッグ&amp;ドロップでのアサット割り当て</h2>
+<ul>
+<li><strong>Object Inspectorへ</strong> — モデル・テクスチャ・音声・スクリプトなどのファイルを<a href="03_ObjectInspector.html">Scene Object Inspector</a>内の対応するアサット参照欄（<code>MeshFilter</code>のメッシュ、<code>ScriptComponent</code>のScript Pathなど）へドラッグ&amp;ドロップすると、その場で割り当てられます。</li>
+<li><strong>ヒエラルキーへプレハブを配置</strong> — <code>.prefab</code>ファイルを<a href="02_SceneObjectHierarchy.html">Scene Object Hierarchy</a>へドラッグ&amp;ドロップすると、その位置にPrefabがインスタンス化されます。</li>
+<li><strong>ヒエラルキーからプレハブを書き出す</strong> — 逆に、ヒエラルキー上のオブジェクトをAssets Windowへドラッグ&amp;ドロップすると、その場で<code>.prefab</code>ファイルとして書き出せます。</li>
+</ul>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="02_SceneObjectHierarchy.html">Windows/02_SceneObjectHierarchy.html</a> — プレハブのドラッグ&amp;ドロップ配置</li>
+<li><a href="03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — アサット参照欄へのドラッグ&amp;ドロップ</li>
+<li><a href="../../Engine/09_Assets.html">Engine/09_Assets.html</a> — 各種アセットマネージャーのC++ API</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

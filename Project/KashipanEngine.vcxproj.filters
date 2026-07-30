@@ -223,8 +223,44 @@
     <Filter Include="Reference">
       <UniqueIdentifier>{34C2A54B-64A8-5320-9095-508D9F09DFF9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Reference\Tutorial">
-      <UniqueIdentifier>{B5AFA4B0-9383-57FB-943E-46C4B0CDB71D}</UniqueIdentifier>
+    <Filter Include="Reference\Engine">
+      <UniqueIdentifier>{F9B8D9FF-785B-57FE-8C87-716DC03D2502}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Reference\Editor">
+      <UniqueIdentifier>{0222A1F8-7312-5572-B32F-8079C3E2A246}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Reference\Editor\Architecture">
+      <UniqueIdentifier>{3DD379FC-8F35-53D5-B6D4-13162B21AB84}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Reference\Editor\Components">
+      <UniqueIdentifier>{A6E9793E-A18A-5AE3-BC6E-456ACCA38207}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Reference\Editor\Components\Basic">
+      <UniqueIdentifier>{AB545210-330D-5EC9-A9FA-098F9C82411F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Reference\Editor\Components\Collider">
+      <UniqueIdentifier>{967AD251-A8B7-5E97-A77A-E65FDF395FA1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Reference\Editor\Components\Compute">
+      <UniqueIdentifier>{2268AFC0-5FFA-591A-A3F1-0C7840F6B41C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Reference\Editor\Components\PostEffect">
+      <UniqueIdentifier>{28B389C1-9CC2-54C7-8FA5-90A1DA64F9E2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Reference\Editor\Components\Render">
+      <UniqueIdentifier>{75B24DEC-A65A-53E4-AA8B-29DF1D0CD869}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Reference\Editor\Components\Scene">
+      <UniqueIdentifier>{FBC046B7-1918-57C0-9360-72F02D5BE248}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Reference\Editor\Guide">
+      <UniqueIdentifier>{670039E2-CB31-510D-9671-0CE4A1686818}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Reference\Editor\Windows">
+      <UniqueIdentifier>{6531B2EB-6E17-5BF4-ACC9-6F3F62276144}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Reference\assets">
+      <UniqueIdentifier>{2DC88135-EA92-50C2-8681-86ACC42F42CE}</UniqueIdentifier>
     </Filter>
     <Filter Include="Tools">
       <UniqueIdentifier>{47817214-5A36-5F2F-AF3A-5FAD2D1D209B}</UniqueIdentifier>
@@ -2071,154 +2107,334 @@
     <None Include="KashipanEngine\KashipanEngine.vcxproj">
       <Filter>KashipanEngine</Filter>
     </None>
-    <None Include="Reference\00_Index.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\00_Index.html">
+      <Filter>Reference\Editor</Filter>
     </None>
-    <None Include="Reference\01_AppInitialize.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Architecture\01_Overview.html">
+      <Filter>Reference\Editor\Architecture</Filter>
     </None>
-    <None Include="Reference\02_GameObjects.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Basic\Animator.html">
+      <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
-    <None Include="Reference\03_ObjectComponents.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Basic\AudioListener.html">
+      <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
-    <None Include="Reference\04_Scenes.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Basic\AudioSource.html">
+      <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
-    <None Include="Reference\05_SceneComponents.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Basic\Comment.html">
+      <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
-    <None Include="Reference\06_Window.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Basic\InputCommandApplier.html">
+      <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
-    <None Include="Reference\07_Offscreen.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Basic\KeyFrameAnimator.html">
+      <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
-    <None Include="Reference\08_Rendering.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Basic\MeshFilter.html">
+      <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
-    <None Include="Reference\09_Utilities.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Basic\ParticleSystem2D.html">
+      <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
-    <None Include="Reference\09_Utilities_Conversion.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Basic\ParticleSystem3D.html">
+      <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
-    <None Include="Reference\09_Utilities_Dialogs.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Basic\PreTransform.html">
+      <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
-    <None Include="Reference\09_Utilities_FileIO.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Basic\PrefabInstanceComponent.html">
+      <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
-    <None Include="Reference\09_Utilities_Index.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Basic\Rotation.html">
+      <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
-    <None Include="Reference\09_Utilities_Math.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Basic\SceneVariableApplier.html">
+      <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
-    <None Include="Reference\09_Utilities_Passkeys.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Basic\ScriptComponent.html">
+      <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
-    <None Include="Reference\09_Utilities_Random.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Basic\Shake.html">
+      <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
-    <None Include="Reference\09_Utilities_SourceLocation.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Basic\TargetLookAt.html">
+      <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
-    <None Include="Reference\09_Utilities_TemplateLiteral.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Basic\Transform.html">
+      <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
-    <None Include="Reference\09_Utilities_Time.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Basic\Velocity.html">
+      <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
-    <None Include="Reference\09_Utilities_Translation.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Collider\Box2DCollider.html">
+      <Filter>Reference\Editor\Components\Collider</Filter>
     </None>
-    <None Include="Reference\10_Input.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Collider\BoxCollider.html">
+      <Filter>Reference\Editor\Components\Collider</Filter>
     </None>
-    <None Include="Reference\10_Input_Controller.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Collider\Capsule2DCollider.html">
+      <Filter>Reference\Editor\Components\Collider</Filter>
     </None>
-    <None Include="Reference\10_Input_InputCommand.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Collider\CapsuleCollider.html">
+      <Filter>Reference\Editor\Components\Collider</Filter>
     </None>
-    <None Include="Reference\10_Input_Keyboard.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Collider\Circle2DCollider.html">
+      <Filter>Reference\Editor\Components\Collider</Filter>
     </None>
-    <None Include="Reference\10_Input_Mouse.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Collider\MeshCollider.html">
+      <Filter>Reference\Editor\Components\Collider</Filter>
     </None>
-    <None Include="Reference\11_Assets.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Collider\Ray2DCollider.html">
+      <Filter>Reference\Editor\Components\Collider</Filter>
     </None>
-    <None Include="Reference\11_Assets_AudioManager.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Collider\RayCollider.html">
+      <Filter>Reference\Editor\Components\Collider</Filter>
     </None>
-    <None Include="Reference\11_Assets_AudioPlayer.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Collider\RigidBody2D.html">
+      <Filter>Reference\Editor\Components\Collider</Filter>
     </None>
-    <None Include="Reference\11_Assets_Index.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Collider\RigidBody3D.html">
+      <Filter>Reference\Editor\Components\Collider</Filter>
     </None>
-    <None Include="Reference\11_Assets_ModelManager.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Collider\SphereCollider.html">
+      <Filter>Reference\Editor\Components\Collider</Filter>
     </None>
-    <None Include="Reference\11_Assets_SamplerManager.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\Compute\ComputeShaderProcessing.html">
+      <Filter>Reference\Editor\Components\Compute</Filter>
     </None>
-    <None Include="Reference\11_Assets_SoundBeat.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\PostEffect\AmbientOcclusionEffect.html">
+      <Filter>Reference\Editor\Components\PostEffect</Filter>
     </None>
-    <None Include="Reference\11_Assets_TextureManager.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\PostEffect\BloomEffect.html">
+      <Filter>Reference\Editor\Components\PostEffect</Filter>
     </None>
-    <None Include="Reference\12_PostEffects.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\PostEffect\BoxFilterEffect.html">
+      <Filter>Reference\Editor\Components\PostEffect</Filter>
     </None>
-    <None Include="Reference\13_Font.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\PostEffect\ChromaticAberrationEffect.html">
+      <Filter>Reference\Editor\Components\PostEffect</Filter>
     </None>
-    <None Include="Reference\14_BuildMacros.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\PostEffect\ColorAdjustEffect.html">
+      <Filter>Reference\Editor\Components\PostEffect</Filter>
     </None>
-    <None Include="Reference\README.md">
-      <Filter>Reference</Filter>
+    <None Include="Reference\Editor\Components\PostEffect\DepthOfFieldEffect.html">
+      <Filter>Reference\Editor\Components\PostEffect</Filter>
     </None>
-    <None Include="Reference\Tutorial\00_Index.md">
-      <Filter>Reference\Tutorial</Filter>
+    <None Include="Reference\Editor\Components\PostEffect\DissolveEffect.html">
+      <Filter>Reference\Editor\Components\PostEffect</Filter>
     </None>
-    <None Include="Reference\Tutorial\01_CreateScene.md">
-      <Filter>Reference\Tutorial</Filter>
+    <None Include="Reference\Editor\Components\PostEffect\DitherEffect.html">
+      <Filter>Reference\Editor\Components\PostEffect</Filter>
     </None>
-    <None Include="Reference\Tutorial\02_RegisterScene.md">
-      <Filter>Reference\Tutorial</Filter>
+    <None Include="Reference\Editor\Components\PostEffect\DotMatrixEffect.html">
+      <Filter>Reference\Editor\Components\PostEffect</Filter>
     </None>
-    <None Include="Reference\Tutorial\03_CreateObject.md">
-      <Filter>Reference\Tutorial</Filter>
+    <None Include="Reference\Editor\Components\PostEffect\FXAAEffect.html">
+      <Filter>Reference\Editor\Components\PostEffect</Filter>
     </None>
-    <None Include="Reference\Tutorial\04_AddObjectComponent.md">
-      <Filter>Reference\Tutorial</Filter>
+    <None Include="Reference\Editor\Components\PostEffect\GaussianFilterEffect.html">
+      <Filter>Reference\Editor\Components\PostEffect</Filter>
     </None>
-    <None Include="Reference\Tutorial\05_AddSceneComponent.md">
-      <Filter>Reference\Tutorial</Filter>
+    <None Include="Reference\Editor\Components\PostEffect\GrayscaleEffect.html">
+      <Filter>Reference\Editor\Components\PostEffect</Filter>
     </None>
-    <None Include="Reference\Tutorial\06_TextureHandle.md">
-      <Filter>Reference\Tutorial</Filter>
+    <None Include="Reference\Editor\Components\PostEffect\MotionBlurEffect.html">
+      <Filter>Reference\Editor\Components\PostEffect</Filter>
     </None>
-    <None Include="Reference\Tutorial\07_AudioHandle.md">
-      <Filter>Reference\Tutorial</Filter>
+    <None Include="Reference\Editor\Components\PostEffect\OutlineEffect.html">
+      <Filter>Reference\Editor\Components\PostEffect</Filter>
     </None>
-    <None Include="Reference\Tutorial\08_ModelHandle.md">
-      <Filter>Reference\Tutorial</Filter>
+    <None Include="Reference\Editor\Components\PostEffect\RadialBlurEffect.html">
+      <Filter>Reference\Editor\Components\PostEffect</Filter>
     </None>
-    <None Include="Reference\Tutorial\09_ChangeScene.md">
-      <Filter>Reference\Tutorial</Filter>
+    <None Include="Reference\Editor\Components\PostEffect\VignetteEffect.html">
+      <Filter>Reference\Editor\Components\PostEffect</Filter>
     </None>
-    <None Include="Reference\Tutorial\README.md">
-      <Filter>Reference\Tutorial</Filter>
+    <None Include="Reference\Editor\Components\Render\Camera2D.html">
+      <Filter>Reference\Editor\Components\Render</Filter>
     </None>
-    <None Include="Reference\reference.css">
+    <None Include="Reference\Editor\Components\Render\Camera3D.html">
+      <Filter>Reference\Editor\Components\Render</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Render\CameraController.html">
+      <Filter>Reference\Editor\Components\Render</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Render\CameraRenderer.html">
+      <Filter>Reference\Editor\Components\Render</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Render\Light.html">
+      <Filter>Reference\Editor\Components\Render</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Render\LightRenderer.html">
+      <Filter>Reference\Editor\Components\Render</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Render\MeshRenderer.html">
+      <Filter>Reference\Editor\Components\Render</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Render\NormalWindowObject.html">
+      <Filter>Reference\Editor\Components\Render</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Render\OverlayWindowObject.html">
+      <Filter>Reference\Editor\Components\Render</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Render\ScreenBufferObject.html">
+      <Filter>Reference\Editor\Components\Render</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Render\ShadowMapObject.html">
+      <Filter>Reference\Editor\Components\Render</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Render\SkinnedMeshRenderer.html">
+      <Filter>Reference\Editor\Components\Render</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Render\SpriteRenderer.html">
+      <Filter>Reference\Editor\Components\Render</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Render\TextRenderer.html">
+      <Filter>Reference\Editor\Components\Render</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Scene\KeyframeAnimator.html">
+      <Filter>Reference\Editor\Components\Scene</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Scene\SceneAudioPlayer.html">
+      <Filter>Reference\Editor\Components\Scene</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Scene\SceneComputeProcessor.html">
+      <Filter>Reference\Editor\Components\Scene</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Scene\SceneObjectCollider.html">
+      <Filter>Reference\Editor\Components\Scene</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Scene\ScenePreTransform.html">
+      <Filter>Reference\Editor\Components\Scene</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Scene\SceneRenderer.html">
+      <Filter>Reference\Editor\Components\Scene</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Scene\SceneScriptEngine.html">
+      <Filter>Reference\Editor\Components\Scene</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Scene\SceneShakeApplier.html">
+      <Filter>Reference\Editor\Components\Scene</Filter>
+    </None>
+    <None Include="Reference\Editor\Guide\00_Index.html">
+      <Filter>Reference\Editor\Guide</Filter>
+    </None>
+    <None Include="Reference\Editor\Guide\01_CreateScene.html">
+      <Filter>Reference\Editor\Guide</Filter>
+    </None>
+    <None Include="Reference\Editor\Guide\02_RegisterScene.html">
+      <Filter>Reference\Editor\Guide</Filter>
+    </None>
+    <None Include="Reference\Editor\Guide\03_CreateRenderTarget.html">
+      <Filter>Reference\Editor\Guide</Filter>
+    </None>
+    <None Include="Reference\Editor\Guide\04_CreateCamera.html">
+      <Filter>Reference\Editor\Guide</Filter>
+    </None>
+    <None Include="Reference\Editor\Guide\05_CreateLight.html">
+      <Filter>Reference\Editor\Guide</Filter>
+    </None>
+    <None Include="Reference\Editor\Guide\06_CreateObject.html">
+      <Filter>Reference\Editor\Guide</Filter>
+    </None>
+    <None Include="Reference\Editor\Guide\07_AddComponents.html">
+      <Filter>Reference\Editor\Guide</Filter>
+    </None>
+    <None Include="Reference\Editor\Guide\08_AddCollider.html">
+      <Filter>Reference\Editor\Guide</Filter>
+    </None>
+    <None Include="Reference\Editor\Guide\09_WriteScript.html">
+      <Filter>Reference\Editor\Guide</Filter>
+    </None>
+    <None Include="Reference\Editor\Guide\10_SetupInput.html">
+      <Filter>Reference\Editor\Guide</Filter>
+    </None>
+    <None Include="Reference\Editor\Guide\11_LoadAssets.html">
+      <Filter>Reference\Editor\Guide</Filter>
+    </None>
+    <None Include="Reference\Editor\Guide\12_ChangeScene.html">
+      <Filter>Reference\Editor\Guide</Filter>
+    </None>
+    <None Include="Reference\Editor\Windows\01_MainMenuAndPlayback.html">
+      <Filter>Reference\Editor\Windows</Filter>
+    </None>
+    <None Include="Reference\Editor\Windows\02_SceneObjectHierarchy.html">
+      <Filter>Reference\Editor\Windows</Filter>
+    </None>
+    <None Include="Reference\Editor\Windows\03_ObjectInspector.html">
+      <Filter>Reference\Editor\Windows</Filter>
+    </None>
+    <None Include="Reference\Editor\Windows\04_SceneView.html">
+      <Filter>Reference\Editor\Windows</Filter>
+    </None>
+    <None Include="Reference\Editor\Windows\05_AssetsWindow.html">
+      <Filter>Reference\Editor\Windows</Filter>
+    </None>
+    <None Include="Reference\Editor\Windows\06_SceneComponentInspector.html">
+      <Filter>Reference\Editor\Windows</Filter>
+    </None>
+    <None Include="Reference\Editor\Windows\07_SceneVariablesMenu.html">
+      <Filter>Reference\Editor\Windows</Filter>
+    </None>
+    <None Include="Reference\Editor\Windows\08_SceneListAndSaveLoad.html">
+      <Filter>Reference\Editor\Windows</Filter>
+    </None>
+    <None Include="Reference\Engine\00_Index.html">
+      <Filter>Reference\Engine</Filter>
+    </None>
+    <None Include="Reference\Engine\01_Overview.html">
+      <Filter>Reference\Engine</Filter>
+    </None>
+    <None Include="Reference\Engine\02_Scenes.html">
+      <Filter>Reference\Engine</Filter>
+    </None>
+    <None Include="Reference\Engine\03_GameObjects.html">
+      <Filter>Reference\Engine</Filter>
+    </None>
+    <None Include="Reference\Engine\04_ObjectComponents.html">
+      <Filter>Reference\Engine</Filter>
+    </None>
+    <None Include="Reference\Engine\05_Rendering.html">
+      <Filter>Reference\Engine</Filter>
+    </None>
+    <None Include="Reference\Engine\06_Collision.html">
+      <Filter>Reference\Engine</Filter>
+    </None>
+    <None Include="Reference\Engine\07_Scripting.html">
+      <Filter>Reference\Engine</Filter>
+    </None>
+    <None Include="Reference\Engine\08_Input.html">
+      <Filter>Reference\Engine</Filter>
+    </None>
+    <None Include="Reference\Engine\09_Assets.html">
+      <Filter>Reference\Engine</Filter>
+    </None>
+    <None Include="Reference\Engine\10_PostEffects.html">
+      <Filter>Reference\Engine</Filter>
+    </None>
+    <None Include="Reference\Engine\11_Window.html">
+      <Filter>Reference\Engine</Filter>
+    </None>
+    <None Include="Reference\Engine\13_Utilities.html">
+      <Filter>Reference\Engine</Filter>
+    </None>
+    <None Include="Reference\Engine\14_BuildMacros.html">
+      <Filter>Reference\Engine</Filter>
+    </None>
+    <None Include="Reference\assets\nav-editor-data.js">
+      <Filter>Reference\assets</Filter>
+    </None>
+    <None Include="Reference\assets\nav-engine-data.js">
+      <Filter>Reference\assets</Filter>
+    </None>
+    <None Include="Reference\assets\nav.js">
+      <Filter>Reference\assets</Filter>
+    </None>
+    <None Include="Reference\assets\style.css">
+      <Filter>Reference\assets</Filter>
+    </None>
+    <None Include="Reference\index.html">
       <Filter>Reference</Filter>
     </None>
     <None Include="Tools\convert_reference_to_html.py">

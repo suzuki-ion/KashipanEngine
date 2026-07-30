@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NormalWindowObject | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_NormalWindowObject">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>NormalWindowObject</h1>
+<p class="page-lead">通常のOS標準ウィンドウを1枚生成・所有し、描画先として扱えるようにするコンポーネントです。共通のウィンドウ設定UIは基底クラス<code>IWindowObjectComponent</code>が提供します。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a>および<a href="../../../Engine/11_Window.html">Engine/11_Window.html</a>を参照してください。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Title</td><td>テキスト入力欄</td><td>ウィンドウタイトル（既定値 "Normal Window"）。変更すると生成済みウィンドウのタイトルにも即座に反映される</td></tr>
+<tr><td>Width</td><td>整数のドラッグ入力欄</td><td>ウィンドウの幅（既定1280、下限1にクランプ）</td></tr>
+<tr><td>Height</td><td>整数のドラッグ入力欄</td><td>ウィンドウの高さ（既定720、下限1にクランプ）</td></tr>
+<tr><td>Sync With Transform</td><td>チェックボックス</td><td>有効にすると、同一オブジェクトのTransformのワールド座標・スケールをウィンドウの位置・サイズへ毎フレーム反映する（既定true）</td></tr>
+</table>
+
+<h3>Intercepted Messages（折りたたみツリー、基底クラス共通のUI）</h3>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>（説明文）</td><td>グレーの折り返しテキスト</td><td>「横取り対象のメッセージは既定処理が実行されず、スクリプトのOnWindowMessage通知のみ行われます」</td></tr>
+<tr><td>Intercept Close (WM_CLOSE)</td><td>チェックボックス</td><td>有効にするとXボタン・Alt+F4でウィンドウが閉じなくなる（ツールチップで警告表示）。閉じたい場合はスクリプトから<code>CloseWindow()</code>を呼ぶ必要がある</td></tr>
+<tr><td>（横取り中のメッセージ一覧）</td><td>各行「0x%04X (%u)」表示 ＋ Removeボタン</td><td>現在横取り設定されているウィンドウメッセージ番号の一覧</td></tr>
+<tr><td>（メッセージ番号入力）＋ Add</td><td>整数入力欄＋ボタン</td><td>任意のメッセージ番号を横取り対象へ追加する</td></tr>
+</table>
+
+<h3>Respawn Window（NormalWindowObject固有）</h3>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Respawn Window</td><td>ボタン</td><td>所有ウィンドウが存在しない状態（ユーザーがXボタン等で閉じてしまった場合等）のときにのみ表示される。押すとウィンドウを再生成する</td></tr>
+</table>
+
+<div class="note"><strong>OverlayWindowObjectとの違い</strong><br>Respawn Windowボタンは<a href="OverlayWindowObject.html">OverlayWindowObject</a>には無く、NormalWindowObjectだけが持つ項目。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path"><span>Add Component</span><i>›</i><span>Render</span><i>›</i><span>RenderTarget</span><i>›</i><span>NormalWindowObject</span></span> から追加する（基底クラス<code>IWindowObjectComponent</code>の<code>COMPONENT_CATEGORY("Render", "RenderTarget")</code>により Render サブカテゴリの RenderTarget 配下に分類される）。同一オブジェクトに複数付与可能。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="OverlayWindowObject.html">Components/Render/OverlayWindowObject.html</a> — 透過対応のオーバーレイウィンドウ版</li>
+<li><a href="../../../Engine/11_Window.html">Engine/11_Window.html</a> — <code>Window</code>クラス、IRenderTargetインターフェースのAPI</li>
+<li><a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a> — 描画先の指定の仕組み</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Object Inspectorの基本操作</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

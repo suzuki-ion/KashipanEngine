@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CameraController | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_CameraController">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>CameraController <span class="badge final">最大1個</span></h1>
+<p class="page-lead">同一オブジェクトの<a href="Camera3D.html">Camera3D</a>を、複数の追従先オブジェクトへ滑らかに追従させるコンポーネントです。位置・回転はそれぞれ軸ごとに追従するかどうかを選べ、FovYの遷移も扱います。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a>を参照してください。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+
+<h3>状態表示</h3>
+<table>
+<tr><th>表示</th><th>内容</th></tr>
+<tr><td>"Controllable (Camera3D found)"（緑文字）</td><td>同一オブジェクトにCamera3Dコンポーネントがある場合</td></tr>
+<tr><td>"Not controllable (Camera3D component required)"（赤文字）</td><td>Camera3Dが無い場合。この状態でもUI自体は操作できるが、Update()内でCamera3Dが取得できないため実際には何も適用されない</td></tr>
+</table>
+
+<h3>Follow Targets（追従先オブジェクトのリスト）</h3>
+<p>登録済みの追従先ごとに、以下の項目が縦に並んで繰り返し表示される。</p>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Target</td><td>コンボボックス（None選択可）</td><td>追従先オブジェクトを選択。<strong>MeshRenderer等のTargetとは異なり、描画先コンポーネントを持つオブジェクトに限定されない（任意のオブジェクトを選択可能）</strong>。ヒエラルキーからのドラッグ&amp;ドロップにも対応</td></tr>
+<tr><td>Follow Position: X / Y / Z</td><td>チェックボックス3つ（横並び）</td><td>この追従先のワールド座標のうち、どの軸を追従に使うか（既定は全てtrue）。複数の追従先が同じ軸を指定した場合は平均を取る</td></tr>
+<tr><td>Follow Rotation: X / Y / Z</td><td>チェックボックス3つ（横並び）</td><td>この追従先のワールド回転（オイラー角）のうち、どの軸を追従に使うか（既定は全てfalse）</td></tr>
+<tr><td>Remove Target</td><td>ボタン</td><td>このリスト項目を削除する</td></tr>
+</table>
+<p>リストの下に「Add Follow Target」ボタンがあり、押すと空の追従先（未選択・Follow Positionのみ全軸true）がリストへ追加される。追従先が1件も無い場合は「(No target: following own Transform)」というグレー文字が表示される。</p>
+<div class="note"><strong>追従先が空の場合は自身のTransformを追従する</strong><br>Follow Targetsが1件も無いと、Update()はこのコンポーネントが付与されたオブジェクト自身のTransformを唯一の追従先として扱う（＝オフセットだけが効く静止カメラのような挙動になる）。</div>
+
+<h3>オフセット・目標値</h3>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Position Offset</td><td>XYZのドラッグ入力欄（ステップ0.01）</td><td>追従先の座標へ加算するオフセット（寄与する軸にのみ適用される）</td></tr>
+<tr><td>Rotation Offset</td><td>XYZのドラッグ入力欄（ステップ0.1、<strong>度表示</strong>）</td><td>追従先の回転へ加算するオフセット。内部はラジアンで保持するが、Inspector上はTransformの回転同様に度で表示・入力する</td></tr>
+<tr><td>Target FovY</td><td>ドラッグ入力欄（ステップ0.01、0.01～π-0.01）</td><td>目標のFovY。<strong>こちらはラジアンのまま表示・入力する</strong>（Rotation Offsetとは扱いが異なる点に注意）</td></tr>
+</table>
+
+<h3>追従の強さ</h3>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Move: Per-Axis</td><td>チェックボックス</td><td>有効にすると移動の追従強さを軸ごとに個別設定できる</td></tr>
+<tr><td>Move X/Y/Z（Per-Axis有効時） / Move All（無効時）</td><td>XYZまたは単一のドラッグ入力欄（ステップ0.01、0～1）</td><td>値が大きいほど毎フレームの追従（Lerp）が速くなる</td></tr>
+<tr><td>Rotate: Per-Axis</td><td>チェックボックス</td><td>有効にすると回転の追従強さを軸ごとに個別設定できる</td></tr>
+<tr><td>Rotate X/Y/Z（Per-Axis有効時） / Rotate All（無効時）</td><td>XYZまたは単一のドラッグ入力欄（ステップ0.01、0～1）</td><td>回転版の追従強さ</td></tr>
+<tr><td>Fov Transition Strength</td><td>ドラッグ入力欄（ステップ0.01、0～1）</td><td>Target FovYへの遷移速度</td></tr>
+</table>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path"><span>Add Component</span><i>›</i><span>Render</span><i>›</i><span>CameraController</span></span> から追加する。1オブジェクトに付与できるのは最大1個。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="Camera3D.html">Components/Render/Camera3D.html</a> — 制御対象となる3Dカメラのパラメータ本体</li>
+<li><a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a> — <code>CameraController</code>クラスのAPI</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Object Inspectorの基本操作</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

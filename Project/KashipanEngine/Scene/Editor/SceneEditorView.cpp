@@ -414,6 +414,45 @@ bool SegmentIntersectsTriangle(const Vector3 &origin, const Vector3 &dir,
 }
 } // namespace
 
+EmptyObject *SceneEditorView::PickIconAtScreenPosition(const ImVec2 &screenPos, const ImVec2 &imagePos, const ImVec2 &imageSize) const {
+    if (!context_) return nullptr;
+    auto *sceneRenderer = context_->GetComponent<SceneRenderer>();
+    if (!sceneRenderer) return nullptr;
+
+    // アイコンの見た目の大きさ（DrawLightMarkers/DrawCameraMarkersの描画半径）より少し広めに判定する
+    constexpr float kIconPickRadius = 12.0f;
+    EmptyObject *picked = nullptr;
+    float nearestDistSq = kIconPickRadius * kIconPickRadius;
+
+    auto considerIcon = [&](const Vector3 &worldPosition, const EmptyObject *ownerObject) {
+        if (!ownerObject) return;
+        ImVec2 iconScreenPos;
+        if (!ProjectToImage(worldPosition, imagePos, imageSize, iconScreenPos)) return;
+        const float dx = iconScreenPos.x - screenPos.x;
+        const float dy = iconScreenPos.y - screenPos.y;
+        const float distSq = dx * dx + dy * dy;
+        if (distSq > nearestDistSq) return;
+        nearestDistSq = distSq;
+        picked = context_->GetSceneObject(ownerObject->GetObjectID());
+    };
+
+    // マーカー表示が無効な種別は、画面上にアイコンが出ていないためクリック判定からも除外する
+    if (showLightMarkers_) {
+        for (auto *lightRenderer : sceneRenderer->GetLightRenderers()) {
+            if (!lightRenderer || !lightRenderer->IsActive()) continue;
+            considerIcon(lightRenderer->GetWorldPosition(), lightRenderer->GetOwnerObject());
+        }
+    }
+    if (showCameraMarkers_) {
+        for (auto *cameraRenderer : sceneRenderer->GetCameraRenderers()) {
+            if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
+            considerIcon(cameraRenderer->GetWorldPosition(), cameraRenderer->GetOwnerObject());
+        }
+    }
+
+    return picked;
+}
+
 void SceneEditorView::HandleObjectPicking(SceneObjectHierarchy *hierarchy, const ImVec2 &imagePos, const ImVec2 &imageSize) {
     if (!hierarchy || !context_ || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return;
     // シーンビュー画像の上にマウスがある状態での、ドラッグを伴わない左クリック（離した瞬間）で選択する
@@ -425,61 +464,67 @@ void SceneEditorView::HandleObjectPicking(SceneObjectHierarchy *hierarchy, const
     // ギズモを操作している/ギズモの上をクリックした場合は選択を変えない
     if (ImGuizmo::IsUsing() || ImGuizmo::IsOver()) return;
 
-    // クリック位置からカメラの近平面→遠平面を貫く線分を作る（tがそのまま奥行き順の比較に使える）
     const ImVec2 mouse = ImGui::GetMousePos();
-    const float ndcX = ((mouse.x - imagePos.x) / imageSize.x) * 2.0f - 1.0f;
-    const float ndcY = -(((mouse.y - imagePos.y) / imageSize.y) * 2.0f - 1.0f);
-    const Matrix4x4 invViewProjection = (view_ * projection_).Inverse();
-    const Vector3 rayStart = UnprojectNdc(invViewProjection, ndcX, ndcY, 0.0f);
-    const Vector3 rayEnd = UnprojectNdc(invViewProjection, ndcX, ndcY, 1.0f);
 
-    EmptyObject *picked = nullptr;
-    float nearestT = std::numeric_limits<float>::max();
+    // メッシュを持たないLight/Camera等は、深度テストせず常に手前に描画されるアイコンとの
+    // スクリーン座標距離でクリック判定する（メッシュの三角形ピッキングより優先する）
+    EmptyObject *picked = PickIconAtScreenPosition(mouse, imagePos, imageSize);
 
-    for (const auto &objPtr : context_->GetSceneObjects()) {
-        EmptyObject *obj = objPtr.get();
-        if (!obj || !obj->IsActive()) continue;
+    if (!picked) {
+        // クリック位置からカメラの近平面→遠平面を貫く線分を作る（tがそのまま奥行き順の比較に使える）
+        const float ndcX = ((mouse.x - imagePos.x) / imageSize.x) * 2.0f - 1.0f;
+        const float ndcY = -(((mouse.y - imagePos.y) / imageSize.y) * 2.0f - 1.0f);
+        const Matrix4x4 invViewProjection = (view_ * projection_).Inverse();
+        const Vector3 rayStart = UnprojectNdc(invViewProjection, ndcX, ndcY, 0.0f);
+        const Vector3 rayEnd = UnprojectNdc(invViewProjection, ndcX, ndcY, 1.0f);
 
-        // シーンビューに描画される対象（アクティブなMeshRenderer/SkinnedMeshRendererを持つ）だけを選択候補にする
-        auto *meshFilter = obj->GetComponent<MeshFilter>();
-        if (!meshFilter || !meshFilter->HasMesh()) continue;
-        auto *meshRenderer = obj->GetComponent<MeshRenderer>();
-        auto *skinnedMeshRenderer = obj->GetComponent<SkinnedMeshRenderer>();
-        const bool hasVisibleRenderer =
-            (meshRenderer && meshRenderer->IsActive()) ||
-            (skinnedMeshRenderer && skinnedMeshRenderer->IsActive());
-        if (!hasVisibleRenderer) continue;
+        float nearestT = std::numeric_limits<float>::max();
 
-        auto *transform = obj->GetComponent<Transform>();
-        const Matrix4x4 world = transform ? transform->GetWorldMatrix() : Matrix4x4::Identity();
+        for (const auto &objPtr : context_->GetSceneObjects()) {
+            EmptyObject *obj = objPtr.get();
+            if (!obj || !obj->IsActive()) continue;
 
-        // レイをオブジェクトのローカル空間へ変換して三角形と判定する
-        // （アフィン変換では線分上のパラメータtが保存されるため、tはワールド空間の奥行き比較にそのまま使える）
-        const Matrix4x4 invWorld = world.Inverse();
-        const Vector3 localStart = TransformPoint(rayStart, invWorld);
-        const Vector3 localDir = TransformPoint(rayEnd, invWorld) - localStart;
+            // シーンビューに描画される対象（アクティブなMeshRenderer/SkinnedMeshRendererを持つ）だけを選択候補にする
+            auto *meshFilter = obj->GetComponent<MeshFilter>();
+            if (!meshFilter || !meshFilter->HasMesh()) continue;
+            auto *meshRenderer = obj->GetComponent<MeshRenderer>();
+            auto *skinnedMeshRenderer = obj->GetComponent<SkinnedMeshRenderer>();
+            const bool hasVisibleRenderer =
+                (meshRenderer && meshRenderer->IsActive()) ||
+                (skinnedMeshRenderer && skinnedMeshRenderer->IsActive());
+            if (!hasVisibleRenderer) continue;
 
-        const auto &model = ModelManager::GetModelData(meshFilter->GetMeshHandle());
-        const auto &vertices = model.GetVertices();
-        const auto &indices = model.GetIndices();
-        for (size_t i = 0; i + 2 < indices.size(); i += 3) {
-            const size_t indexA = static_cast<size_t>(indices[i]);
-            const size_t indexB = static_cast<size_t>(indices[i + 1]);
-            const size_t indexC = static_cast<size_t>(indices[i + 2]);
-            // インポート失敗や編集中のアセット差し替えで壊れたインデックスが混ざっても、
-            // シーンビューのクリック操作から頂点配列を範囲外参照しない。
-            if (indexA >= vertices.size() || indexB >= vertices.size() || indexC >= vertices.size()) {
-                continue;
-            }
-            const auto &a = vertices[indexA];
-            const auto &b = vertices[indexB];
-            const auto &c = vertices[indexC];
-            float t = 0.0f;
-            if (SegmentIntersectsTriangle(localStart, localDir,
-                    Vector3(a.px, a.py, a.pz), Vector3(b.px, b.py, b.pz), Vector3(c.px, c.py, c.pz), t)) {
-                if (t < nearestT) {
-                    nearestT = t;
-                    picked = obj;
+            auto *transform = obj->GetComponent<Transform>();
+            const Matrix4x4 world = transform ? transform->GetWorldMatrix() : Matrix4x4::Identity();
+
+            // レイをオブジェクトのローカル空間へ変換して三角形と判定する
+            // （アフィン変換では線分上のパラメータtが保存されるため、tはワールド空間の奥行き比較にそのまま使える）
+            const Matrix4x4 invWorld = world.Inverse();
+            const Vector3 localStart = TransformPoint(rayStart, invWorld);
+            const Vector3 localDir = TransformPoint(rayEnd, invWorld) - localStart;
+
+            const auto &model = ModelManager::GetModelData(meshFilter->GetMeshHandle());
+            const auto &vertices = model.GetVertices();
+            const auto &indices = model.GetIndices();
+            for (size_t i = 0; i + 2 < indices.size(); i += 3) {
+                const size_t indexA = static_cast<size_t>(indices[i]);
+                const size_t indexB = static_cast<size_t>(indices[i + 1]);
+                const size_t indexC = static_cast<size_t>(indices[i + 2]);
+                // インポート失敗や編集中のアセット差し替えで壊れたインデックスが混ざっても、
+                // シーンビューのクリック操作から頂点配列を範囲外参照しない。
+                if (indexA >= vertices.size() || indexB >= vertices.size() || indexC >= vertices.size()) {
+                    continue;
+                }
+                const auto &a = vertices[indexA];
+                const auto &b = vertices[indexB];
+                const auto &c = vertices[indexC];
+                float t = 0.0f;
+                if (SegmentIntersectsTriangle(localStart, localDir,
+                        Vector3(a.px, a.py, a.pz), Vector3(b.px, b.py, b.pz), Vector3(c.px, c.py, c.pz), t)) {
+                    if (t < nearestT) {
+                        nearestT = t;
+                        picked = obj;
+                    }
                 }
             }
         }

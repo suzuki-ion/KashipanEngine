@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ParticleSystem3D | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_ParticleSystem3D">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>ParticleSystem3D</h1>
+<p class="page-lead">3D用パーティクルシステムです。付与されたオブジェクトの子オブジェクトとして、<code>MeshFilter</code> + <code>MeshRenderer</code>を持つパーティクルを一定間隔で生成します。共通ロジックは基底クラス<code>ParticleSystemBase</code>にあり、Inspectorの表示内容は<a href="ParticleSystem2D.html">ParticleSystem2D</a>とほぼ同一です（スポーン形状の選択肢のみ異なります）。既定のメッシュは <code>PrimitiveMesh-UVSphere</code>。</p>
+</div>
+
+<h2>再生状態・基本設定</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Playing</td><td>チェックボックス</td><td>オンで<code>Play()</code>、オフで<code>Stop()</code>を呼ぶ</td></tr>
+<tr><td>Clear</td><td>ボタン（Playingの右）</td><td>生存中の全パーティクルを即座に削除する</td></tr>
+<tr><td>（生存数表示）</td><td>読み取り専用テキスト</td><td>GPU Simulation有効時は "GPU Simulation: capacity N"、無効時は "Live Particles: N"（現在生存中のパーティクル数）</td></tr>
+<tr><td>Total Emitted: N（テキスト表示のみ）</td><td>読み取り専用テキスト</td><td>これまでに発生させた総パーティクル数</td></tr>
+<tr><td>GPU Simulation</td><td>チェックボックス</td><td>有効にすると、パーティクルオブジェクトを一切生成せず、コンピュートシェーダーが移動・寿命計算を行う（Max Particlesが多いほど効果が大きい）。切り替え時にシミュレーション方式のリソースを破棄・再初期化する</td></tr>
+<tr><td>Play On Start</td><td>チェックボックス</td><td>ゲームループ開始時に自動で再生を開始するか</td></tr>
+<tr><td>Loop</td><td>チェックボックス</td><td>無効の場合、Total Spawn Countで指定した数だけ発生したら自動的に再生を停止する</td></tr>
+<tr><td>Emission Rate</td><td>ドラッグ入力欄（ステップ0.1、下限0）</td><td>1秒あたりの発生回数</td></tr>
+<tr><td>Max Particles</td><td>整数ドラッグ入力欄（ステップ1、下限0）</td><td>同時に生存できるパーティクルの最大数</td></tr>
+<tr><td>Total Spawn Count</td><td>整数ドラッグ入力欄（ステップ1、範囲0〜1000000）</td><td>Loopが有効な間は編集不可（グレーアウト）。Loop無効時、この数だけスポーンすると自動的に再生を停止する（Max Particlesとは独立した「総発生数」の上限）</td></tr>
+</table>
+
+<h2>発生パラメータ（Randomizable項目）</h2>
+<p>以下はいずれも「ラベル ＋ Randomチェックボックス」の行の下に、Randomオフなら<strong>Value</strong>（固定値）、オンなら<strong>Min</strong>/<strong>Max</strong>（範囲）のドラッグ入力欄が並ぶ共通形式（<code>ShowRandomizableImGui</code>）で表示されます。</p>
+<table>
+<tr><th>ラベル</th><th>型・ステップ</th><th>内容</th></tr>
+<tr><td>Spawn Count</td><td>int、ステップ1、範囲0〜100</td><td>1回のスポーンで生成するオブジェクト数</td></tr>
+<tr><td>Lifetime</td><td>float、ステップ0.01、範囲0〜60</td><td>パーティクルの寿命（秒）</td></tr>
+<tr><td>Initial Velocity</td><td>Vector3、ステップ0.01</td><td>初速（各軸）。生成したパーティクルの<a href="Velocity.html">Velocity</a>コンポーネントへそのまま渡される</td></tr>
+<tr><td>Acceleration</td><td>Vector3、ステップ0.01</td><td>加速度。同じくVelocityコンポーネントへ渡される</td></tr>
+<tr><td>Start Scale</td><td>Vector3、ステップ0.01</td><td>生成直後のスケール</td></tr>
+<tr><td>End Scale</td><td>Vector3、ステップ0.01</td><td>寿命を迎える時点のスケール。Start Scaleから寿命に応じて線形補間される（値はパーティクルごとに1回抽選）</td></tr>
+<tr><td>Initial Rotation (deg)</td><td>Vector3、ステップ0.5</td><td>初期回転。<strong>度単位で入力し、内部でラジアンへ変換</strong>される</td></tr>
+<tr><td>Initial Rotation Speed (deg/s)</td><td>Vector3、ステップ0.5</td><td>初期角速度（度/秒）</td></tr>
+<tr><td>Rotation Acceleration (deg/s^2)</td><td>Vector3、ステップ0.5</td><td>角加速度（度/秒<sup>2</sup>）</td></tr>
+</table>
+
+<h2>Spawn Area（スポーン範囲）</h2>
+<p>「含める形状（Include Shapes）」の和集合から、「除外する形状（Exclude Shapes）」の和集合を取り除いた領域にスポーンします。含める形状が1つも無い、または有効な範囲が無い場合は原点（スポーン基準位置そのもの）にスポーンします。</p>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Include Shapes (spawn inside union) / Add Include Shape</td><td>形状リスト ＋ 追加ボタン</td><td>スポーンを許可する形状の一覧</td></tr>
+<tr><td>Exclude Shapes (never spawn inside) / Add Exclude Shape</td><td>形状リスト ＋ 追加ボタン</td><td>スポーンを禁止する形状の一覧</td></tr>
+<tr><td>　Type</td><td>コンボ（<strong>3D: Point / Box / Sphere / Capsule</strong>）</td><td>形状の種類</td></tr>
+<tr><td>　Center</td><td>XYZのドラッグ入力欄（ステップ0.01）</td><td>形状の中心（Pointの場合はこの座標そのもの）</td></tr>
+<tr><td>　Size（Boxのみ）</td><td>XYZのドラッグ入力欄（ステップ0.01、下限0）</td><td>全辺のサイズ（中心から±size/2の範囲）</td></tr>
+<tr><td>　Radius（Sphere/Capsule）</td><td>ドラッグ入力欄（ステップ0.01、下限0）</td><td>半径</td></tr>
+<tr><td>　Height（Capsuleのみ）</td><td>ドラッグ入力欄（ステップ0.01、下限0）</td><td>円柱部分の高さ（Y軸方向固定）</td></tr>
+<tr><td>　Remove</td><td>ボタン</td><td>この形状エントリを削除する</td></tr>
+</table>
+
+<h2>Spawn Origin（パーティクルオブジェクトの生成方法）</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Origin</td><td>コンボ（Child of Self / Child of Other Object / At Owner Position (Unparented) / At Fixed Position）</td><td>Child of Self: 自身の子として生成。Child of Other Object: 指定した他オブジェクトの子として生成。At Owner Position: 自身の現在のワールド座標を起点に、どの親にも属さず生成（生成後は自身が動いても追従しない）。At Fixed Position: 指定したワールド座標を起点に生成</td></tr>
+<tr><td>Parent Object（Child of Other Object選択時）</td><td>オブジェクト選択欄</td><td>親にする対象オブジェクト。未設定の場合は自身の子として生成される</td></tr>
+<tr><td>Fixed Position（At Fixed Position選択時）</td><td>XYZのドラッグ入力欄（ステップ0.01）</td><td>生成先のワールド座標</td></tr>
+</table>
+<div class="note">GPU Simulation有効時にChild of Self/Child of Other Objectを選ぶと、「親のワールド行列を毎フレーム反映し、位置・回転・スケールとも追従する。ビルボード有効時は見た目を常にカメラへ向けるため、親の回転は追従先の平行移動にのみ反映される」旨の注記がグレー文字で表示されます。</div>
+
+<h2>Rendering（描画設定）</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Target</td><td>オブジェクト選択欄</td><td>描画先とするオブジェクト（生成した<code>MeshRenderer</code>へ渡される）</td></tr>
+<tr><td>Mesh</td><td>コンボ（読み込み済みモデル一覧）</td><td>パーティクルに使うメッシュ（既定 <code>PrimitiveMesh-UVSphere</code>）</td></tr>
+<tr><td>Pipeline</td><td>コンボ（読み込み済みレンダーパイプライン一覧）</td><td>使用する描画パイプライン（既定 <code>Object3D.Solid.BlendNormal</code>）</td></tr>
+<tr><td>Material</td><td>コンボ（読み込み済みマテリアル一覧）</td><td>使用するマテリアル</td></tr>
+<tr><td>Cast Shadows</td><td>チェックボックス</td><td>有効にすると生成したパーティクルがシャドウマッピングのシャドウキャスターとして扱われる（生成した各パーティクルの<code>MeshRenderer</code>へ伝播）</td></tr>
+<tr><td>Billboard</td><td>チェックボックス</td><td>有効にすると、生成した各パーティクルが指定オブジェクトの方を向く（内部で<a href="TargetLookAt.html">TargetLookAt</a>相当のロジックを利用）</td></tr>
+<tr><td>　Billboard Target（Billboard有効時）</td><td>オブジェクト選択欄</td><td>向き先オブジェクト。未設定の場合はシーン内の<code>Camera3D</code>を自動で使用する</td></tr>
+<tr><td>　Rotation Mode（Billboard有効時）</td><td>コンボ（Sync Target Rotation / Look At Target）</td><td>Sync Target Rotation: 向き先のワールド回転と同期する。Look At Target: 自身の+Z軸が常に向き先の方向を向く</td></tr>
+</table>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path">Add Component → Effect → ParticleSystem3D</span>。最大付与数の制限はありません。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/04_ObjectComponents.html">Engine/04_ObjectComponents.html</a> — <code>ParticleSystemBase</code>/<code>ParticleSystem3D</code>クラスのAPI</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本的な見方</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

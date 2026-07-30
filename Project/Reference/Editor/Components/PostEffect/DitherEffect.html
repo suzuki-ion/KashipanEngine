@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DitherEffect | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_PostEffect_DitherEffect">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>DitherEffect</h1>
+<p class="page-lead">バンディングの低減やレトロ表現に使えるディザリングポストエフェクトです。単一パスの宣言的エフェクトとして実装されています。C++側のAPIは<a href="../../../Engine/10_PostEffects.html">Engine/10_PostEffects.html</a>を参照してください。</p>
+</div>
+
+<div class="note">
+<strong>付与の前提</strong><br>
+ポストエフェクトは同一オブジェクトの <code>ScreenBufferObject</code> が持つ <code>ScreenBuffer</code> に対して適用されます。<code>ScreenBufferObject</code> が付与されていないオブジェクトへ <code>DitherEffect</code> を追加しても効果は発生しません。
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Intensity</td><td>ドラッグ入力欄（ステップ0.01、範囲0.0〜1.0）</td><td>ディザリングの合成強度。既定値 1.0</td></tr>
+<tr><td>Color</td><td>チェックボックス</td><td>RGB各チャンネルへ個別にディザをかける（カラーディザ）かどうか。既定値 有効</td></tr>
+</table>
+
+<div class="note">
+<strong>"Color" はブール値</strong><br>
+<code>Params::color</code> という名前ですが、実体は色ではなく <code>bool</code> 型で、チェックボックス1つとしてのみ表示されます。オフにすると輝度のみにディザをかける（RGB共通のパターン）動作に切り替わります。色そのものを指定するColorPickerは表示されません。
+</div>
+
+<h2>適用先の除外設定 <span class="badge imgui">USE_IMGUI</span></h2>
+<p>同一オブジェクトに <code>ScreenBufferObject</code> が2つ以上ある場合のみ、パラメータ項目の前に "Apply Target Filter" というツリーノードが表示されます。展開すると各 <code>ScreenBuffer</code> 名のチェックボックスが並び、チェックを外すとそのスクリーンバッファへはこのエフェクトが適用されなくなります（<code>ScreenBufferObject</code> が1つ以下の場合はこの項目自体が表示されません）。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/10_PostEffects.html">Engine/10_PostEffects.html</a> — <code>IPostProcessComponent</code> の仕組みと宣言的パス定義（<code>BuildPasses()</code>）について</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本操作（同一オブジェクトに <code>ScreenBufferObject</code> を付与して使用）</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

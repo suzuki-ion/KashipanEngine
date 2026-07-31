@@ -4,6 +4,8 @@
 #include "Debug/LogSettings.h"
 #include "Core/DirectX/ResourceLeakChecker.h"
 #include "Core/GameEngine.h"
+#include "Core/ProjectManager.h"
+#include "Core/ProjectPaths.h"
 
 #include "Utilities/Plugin/Plugins.h"
 
@@ -12,17 +14,27 @@ int Execute(PasskeyForWinMain, const std::string &engineSettingsPath) {
     SetUnhandledExceptionFilter(CrashHandler);
     D3DResourceLeakChecker resourceLeakChecker;
 
+    //--------- 開くプロジェクトの決定 ---------//
+
+    // エンジン設定ファイル自体がプロジェクト内にあるため、設定の読み込みより先に行う
+    ProjectPaths::Initialize({});
+    if (!ProjectManager::EnsureActiveProject({})) {
+        assert(false && "Failed to open a project.");
+        return -1;
+    }
+
     //--------- 設定ファイル読み込み ---------//
 
-    JSON engineSettingsJSON = LoadJSON(engineSettingsPath);
+    const std::string resolvedEngineSettingsPath = ProjectPaths::ToPhysical(engineSettingsPath);
+    JSON engineSettingsJSON = LoadJSON(resolvedEngineSettingsPath);
     if (engineSettingsJSON.is_null()) {
         assert(false && "Failed to load engine settings JSON.");
         return -1;
     }
     std::string logSettingsPath = engineSettingsJSON.value("logSettingsPath", "LogSettings.json");
-    LoadLogSettings({}, logSettingsPath);
+    LoadLogSettings({}, ProjectPaths::ToPhysical(logSettingsPath));
     InitializeLogger({});
-    LoadEngineSettings({}, engineSettingsPath);
+    LoadEngineSettings({}, resolvedEngineSettingsPath);
 
 	// --------- プラグインの初期化 ---------//
 	Plugin::ThreadPool threadPool;
@@ -52,6 +64,11 @@ int Execute(PasskeyForWinMain, const std::string &engineSettingsPath) {
     //--------- エンジン終了 ---------//
 
     engine.reset();
+
+    // プロジェクトの切り替えが要求されていた場合は、シーンの自動保存など後始末が
+    // すべて終わったこの時点で新しいプロセスを起動する
+    ProjectManager::LaunchPendingRestart({});
+
     ShutdownLogger({});
     return code;
 }

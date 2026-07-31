@@ -1,5 +1,6 @@
 #include "TextureManager.h"
 #include "Assets/CaseInsensitive.h"
+#include "Core/ProjectPaths.h"
 
 #include "Core/DirectXCommon.h"
 #include "Debug/Logger.h"
@@ -702,7 +703,7 @@ bool TextureManager::RenameTexture(const std::string &oldAssetPath, const std::s
     const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
     entry.assetPath = normalizedNew;
     entry.fileName = PathToUtf8String(Utf8StringToPath(normalizedNew).filename());
-    entry.fullPath = "Assets/" + normalizedNew;
+    entry.fullPath = ProjectPaths::AssetsRoot() + "/" + normalizedNew;
 
     sAssetPathToHandle[normalizedNew] = handle;
     sFileNameToHandle[entry.fileName] = handle;

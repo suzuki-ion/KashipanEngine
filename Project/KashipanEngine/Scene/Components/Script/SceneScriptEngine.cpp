@@ -8,6 +8,7 @@
 
 #include "Debug/Logger.h"
 #include "Scene/Components/Script/AngelScriptDebugServer.h"
+#include "Core/ProjectPaths.h"
 #include "Scene/Components/Script/ScriptBindings.h"
 
 namespace KashipanEngine {
@@ -63,7 +64,7 @@ void SceneScriptEngine::Initialize() {
 #endif
 
     // VSCodeのAngelScript Language Server用の型定義ファイルを生成する
-    if (GenerateScriptPredefinedFile(engine_, "as.predefined")) {
+    if (GenerateScriptPredefinedFile(engine_, ProjectPaths::InProjectRoot("as.predefined"))) {
         Log("AngelScript: as.predefined を生成しました");
     } else {
         Log("AngelScript: as.predefined の生成に失敗しました", LogSeverity::Warning);

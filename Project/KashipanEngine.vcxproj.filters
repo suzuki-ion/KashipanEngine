@@ -369,6 +369,15 @@
     <ClCompile Include="KashipanEngine\Core\GameEngine.cpp">
       <Filter>KashipanEngine\Core</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\ProjectManager.cpp">
+      <Filter>KashipanEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\ProjectPaths.cpp">
+      <Filter>KashipanEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\UserSettings.cpp">
+      <Filter>KashipanEngine\Core</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Core\Window.cpp">
       <Filter>KashipanEngine\Core</Filter>
     </ClCompile>
@@ -734,6 +743,7 @@
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorView.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\PrefabUtility.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\PrefabAssetManager.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\ProjectWindow.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\PrefabSyncUtility.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\PrefabSceneSync.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\PrefabRegisteredSceneSync.cpp" />
@@ -882,6 +892,15 @@
       <Filter>KashipanEngine\Core\DirectX</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Core\GameEngine.h">
+      <Filter>KashipanEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\ProjectManager.h">
+      <Filter>KashipanEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\ProjectPaths.h">
+      <Filter>KashipanEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\UserSettings.h">
       <Filter>KashipanEngine\Core</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Core\Window.h">
@@ -1876,6 +1895,7 @@
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneEditorView.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\PrefabUtility.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\PrefabAssetManager.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\ProjectWindow.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\PrefabSyncUtility.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\PrefabSceneSync.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneListEditor.h" />

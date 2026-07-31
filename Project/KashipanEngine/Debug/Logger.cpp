@@ -1,5 +1,6 @@
 #include "Logger.h"
 #include "LogSettings.h"
+#include "Core/ProjectPaths.h"
 #include "Utilities/TimeUtils.h"
 #include "Utilities/SourceLocation.h"
 #include "Utilities/TemplateLiteral.h"
@@ -540,8 +541,7 @@ void InitializeLogger(PasskeyForGameEngineMain) {
     const auto &cfg = GetLogSettings();
 
     if (cfg.enableFileLogging) {
-        const std::string currentDir = std::filesystem::current_path().string();
-        const std::string logDir = currentDir + "/" + cfg.outputDirectory;
+        const std::string logDir = ProjectPaths::InEngineRoot(cfg.outputDirectory);
         std::filesystem::create_directories(logDir);
         const std::string logFilePath = logDir + "/" + BuildLogFileName();
         sLogFile.open(logFilePath, std::ios::out | std::ios::binary);

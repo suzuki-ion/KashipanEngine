@@ -6,6 +6,7 @@
 
 #include "Assets/AnimationManager.h"
 #include "Assets/SkeletonManager.h"
+#include "Core/ProjectPaths.h"
 #include "Scene/SceneContext.h"
 #include "Objects/Components/Transform.h"
 
@@ -603,14 +604,14 @@ bool KeyframeAnimator::SaveSettings(const std::string &filePath) {
     }
     root["timelines"] = std::move(timelinesJson);
 
-    return SaveJSON(root, normalizedPath, 4);
+    return SaveJSON(root, ProjectPaths::ToPhysical(normalizedPath), 4);
 }
 
 bool KeyframeAnimator::LoadSettings(const std::string &filePath) {
     const std::string normalizedPath = EnsureJsonExtension(filePath);
     if (normalizedPath.empty()) return false;
 
-    JSON root = LoadJSON(normalizedPath);
+    JSON root = LoadJSON(ProjectPaths::ToPhysical(normalizedPath));
     if (root.is_discarded() || !root.is_object()) return false;
 
     timelines_.clear();

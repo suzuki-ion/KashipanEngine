@@ -1,16 +1,10 @@
 #include "PrefabAssetManager.h"
 #ifdef USE_IMGUI
+#include "Core/ProjectPaths.h"
 #include "Scene/Editor/PrefabUtility.h"
 #include "Utilities/FileIO/Directory.h"
 
 namespace KashipanEngine {
-
-namespace {
-void CollectFilesRecursive(const DirectoryData &dir, std::vector<std::string> &out) {
-    for (const auto &file : dir.files) out.push_back(file);
-    for (const auto &subdir : dir.subdirectories) CollectFilesRecursive(subdir, out);
-}
-} // namespace
 
 std::string PrefabAssetManager::GetPrefabPath(const UUID128 &prefabID) {
     EnsureIndexBuilt();
@@ -26,7 +20,7 @@ UUID128 PrefabAssetManager::GetPrefabIDFromPath(const std::string &filePath) {
 
 bool PrefabAssetManager::CreatePrefabFile(const UUID128 &prefabID, const JSON &json, const std::string &filePath) {
     EnsureIndexBuilt();
-    if (!prefabID.IsValid() || !SaveJSON(json, filePath)) return false;
+    if (!prefabID.IsValid() || !SaveJSON(json, ProjectPaths::ToPhysical(filePath))) return false;
     sIDToPath_[prefabID] = filePath;
     sPathToID_[filePath] = prefabID;
     sCache_[prefabID] = json;
@@ -40,7 +34,7 @@ JSON PrefabAssetManager::LoadPrefabJson(const UUID128 &prefabID) {
 
     auto pathIt = sIDToPath_.find(prefabID);
     if (pathIt == sIDToPath_.end()) return JSON();
-    JSON json = LoadJSON(pathIt->second);
+    JSON json = LoadJSON(ProjectPaths::ToPhysical(pathIt->second));
     sCache_[prefabID] = json;
     return json;
 }
@@ -49,7 +43,7 @@ bool PrefabAssetManager::SavePrefabJson(const UUID128 &prefabID, const JSON &new
     EnsureIndexBuilt();
     auto pathIt = sIDToPath_.find(prefabID);
     if (pathIt == sIDToPath_.end()) return false;
-    if (!SaveJSON(newJson, pathIt->second)) return false;
+    if (!SaveJSON(newJson, ProjectPaths::ToPhysical(pathIt->second))) return false;
 
     const JSON oldJson = LoadPrefabJson(prefabID);
     NotifyChanged(prefabID, oldJson, newJson);
@@ -61,7 +55,7 @@ bool PrefabAssetManager::SavePrefabJsonByPath(const std::string &filePath, const
     const UUID128 prefabID(newJson.value("prefabID", std::string{}));
     if (!prefabID.IsValid()) {
         // prefabIDを持たない通常のJSONファイル（.prefabでも未登録・壊れている場合）はそのまま保存するだけ
-        return SaveJSON(newJson, filePath);
+        return SaveJSON(newJson, ProjectPaths::ToPhysical(filePath));
     }
     sIDToPath_[prefabID] = filePath;
     sPathToID_[filePath] = prefabID;
@@ -87,11 +81,10 @@ void PrefabAssetManager::EnsureIndexBuilt() {
     if (sIndexBuilt_) return;
     sIndexBuilt_ = true;
 
-    const DirectoryData dir = GetDirectoryDataByExtension("Assets", { PrefabUtility::kPrefabExtension }, true, true);
-    std::vector<std::string> files;
-    CollectFilesRecursive(dir, files);
+    // インデックスのキーには論理パスを使う（シーンJSONへ保存されるプレハブのパスと揃えるため）
+    const std::vector<std::string> files = ProjectPaths::ListAssetFiles({ PrefabUtility::kPrefabExtension });
     for (const auto &filePath : files) {
-        JSON json = LoadJSON(filePath);
+        JSON json = LoadJSON(ProjectPaths::ToPhysical(filePath));
         const UUID128 prefabID(json.value("prefabID", std::string{}));
         if (!prefabID.IsValid()) continue;
         sIDToPath_[prefabID] = filePath;

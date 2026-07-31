@@ -3,6 +3,8 @@
 #include <Windows.h>
 
 #include "Scene/SceneManager.h"
+#include "Core/ProjectPaths.h"
+#include "Utilities/FileIO/Directory.h"
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/Passkeys.h"
 #include "Utilities/TimeUtils.h"
@@ -21,9 +23,10 @@ void ExportCrashSceneBackup(PasskeyForCrashHandler passkey) {
 
         Log(Translation("engine.crashhandler.crash.export.scene.start"), LogSeverity::Error);
 
-        CreateDirectoryA("Dumps", nullptr);
+        const std::string dumpDirectory = ProjectPaths::InEngineRoot("Dumps");
+        CreateDirectories(dumpDirectory);
         auto time = GetNowTime();
-        std::string filePath = "Dumps/CrashSceneBackup_";
+        std::string filePath = dumpDirectory + "/CrashSceneBackup_";
         filePath += std::to_string(time.year) + "-";
         filePath += std::to_string(time.month) + "-";
         filePath += std::to_string(time.day) + "_";

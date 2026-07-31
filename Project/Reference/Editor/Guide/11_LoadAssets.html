@@ -18,7 +18,7 @@
 <p class="page-lead">Assets ウィンドウを使い、プロジェクトに含まれる画像・マテリアル・スクリプト・プレハブを探して利用します。</p>
 </div>
 
-<div class="tutorial-meta"><span>操作の起点: Window → Assets</span><span>ゲーム用ルート: Assets/Application</span></div>
+<div class="tutorial-meta"><span>操作の起点: Window → Assets</span><span>ゲーム用ルート: Projects/&lt;プロジェクト名&gt;/Assets</span></div>
 
 <figure class="editor-shot">
 <img src="../../assets/tutorial/11-assets.png" alt="エディター下部に表示された Assets ウィンドウ">
@@ -45,8 +45,8 @@
 <table>
 <thead><tr><th>場所</th><th>用途</th></tr></thead>
 <tbody>
-<tr><td><code>Assets/Application/</code></td><td>ゲーム固有の Image、Model、Sound、Scripts など</td></tr>
-<tr><td><code>Assets/KashipanEngine/</code></td><td>エンジンの既定画像、入力設定、パイプライン設定など</td></tr>
+<tr><td><code>Assets/</code>直下</td><td>ゲーム固有の Image、Model、Sound、Scripts など。シーン一覧（<code>SceneList.json</code>）と入力設定（<code>InputCommand.json</code>）もここに置かれます</td></tr>
+<tr><td><code>Assets/KashipanEngine/</code></td><td>エンジンの既定画像、フォント、翻訳、パイプライン設定など。新規プロジェクト作成時に <code>AssetsTemplate/</code> からコピーされます</td></tr>
 </tbody>
 </table>
 

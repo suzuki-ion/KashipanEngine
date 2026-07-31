@@ -1,6 +1,7 @@
 #include "ModelManager.h"
 #include "Assets/AssimpUtf8IOSystem.h"
 #include "Assets/CaseInsensitive.h"
+#include "Core/ProjectPaths.h"
 #include "Assets/PrimitiveMeshGenerator.h"
 #include "Assets/TextureManager.h"
 
@@ -794,7 +795,7 @@ bool ModelManager::RenameModel(const std::string &oldAssetPath, const std::strin
     const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
     entry.assetPath = normalizedNew;
     entry.fileName = std::filesystem::path(normalizedNew).filename().string();
-    entry.fullPath = "Assets/" + normalizedNew;
+    entry.fullPath = ProjectPaths::AssetsRoot() + "/" + normalizedNew;
     entry.data.assetRelativePath_ = normalizedNew;
 
     sAssetPathToHandle[normalizedNew] = handle;

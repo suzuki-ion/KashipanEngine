@@ -1,5 +1,6 @@
 #include "AudioManager.h"
 #include "Assets/CaseInsensitive.h"
+#include "Core/ProjectPaths.h"
 #include "Assets/AudioPlayer.h"
 #include "Assets/SoundBeat.h"
 
@@ -570,7 +571,7 @@ bool AudioManager::RenameSound(const std::string &oldAssetPath, const std::strin
     const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
     entry.assetPath = normalizedNew;
     entry.fileName = PathToUtf8String(Utf8StringToPath(normalizedNew).filename());
-    entry.fullPath = "Assets/" + normalizedNew;
+    entry.fullPath = ProjectPaths::AssetsRoot() + "/" + normalizedNew;
 
     sAssetPathToHandle[normalizedNew] = handle;
     sFileNameToHandle[entry.fileName] = handle;

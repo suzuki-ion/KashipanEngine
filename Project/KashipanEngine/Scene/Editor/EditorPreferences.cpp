@@ -4,8 +4,8 @@
 #include <imgui_stdlib.h>
 #include <vector>
 
-#include "Scene/Editor/EditorSettings.h"
-#include "Utilities/FileIO/Directory.h"
+#include "Core/ProjectPaths.h"
+#include "Core/UserSettings.h"
 #include "Utilities/ImGuiCustom.h"
 
 namespace KashipanEngine {
@@ -19,12 +19,6 @@ JSON ColorsToJSON(const ImVec4 *colors) {
         arr.push_back(JSON::array({ colors[i].x, colors[i].y, colors[i].z, colors[i].w }));
     }
     return arr;
-}
-
-/// @brief DirectoryDataは階層構造のままファイルを保持するため、フォント選択肢用に平坦化する
-void CollectFilesRecursive(const DirectoryData &dir, std::vector<std::string> &out) {
-    for (const auto &file : dir.files) out.push_back(file);
-    for (const auto &subdir : dir.subdirectories) CollectFilesRecursive(subdir, out);
 }
 
 /// @brief Unity Editor（Darkスキン）に近い配色を組み立てる。ピクセル単位の再現ではなく近似
@@ -101,15 +95,14 @@ ImGuiStyle BuildUnityStyle() {
 } // namespace
 
 void EditorPreferences::RefreshFontFileList() {
-    fontFiles_.clear();
-    CollectFilesRecursive(GetDirectoryDataByExtension("Assets", { ".ttf", ".otf" }, true, true), fontFiles_);
+    fontFiles_ = ProjectPaths::ListAssetFiles({ ".ttf", ".otf" });
     hasScannedFontFiles_ = true;
 }
 
 void EditorPreferences::EnsureDefaultPresets() {
     hasEnsuredDefaultPresets_ = true;
 
-    JSON presets = EditorSettings::GetJSON("editorUI.presets", JSON());
+    JSON presets = UserSettings::GetJSON("editorUI.presets", JSON());
     if (!presets.is_object()) presets = JSON::object();
     bool changed = false;
 
@@ -128,14 +121,14 @@ void EditorPreferences::EnsureDefaultPresets() {
 
     // Unityプリセットは既定3種とは別に、1度だけ追加する（editorUI.presets自体が空でも
     // 個別に消されていても、二重追加やユーザー削除後の復活が起きないよう専用フラグで管理する）
-    if (!EditorSettings::GetBool("editorUI.presets.unityAdded", false)) {
+    if (!UserSettings::GetBool("editorUI.presets.unityAdded", false)) {
         presets["Unity"] = ColorsToJSON(BuildUnityStyle().Colors);
-        EditorSettings::SetBool("editorUI.presets.unityAdded", true);
+        UserSettings::SetBool("editorUI.presets.unityAdded", true);
         changed = true;
     }
 
     if (changed) {
-        EditorSettings::SetJSON("editorUI.presets", presets);
+        UserSettings::SetJSON("editorUI.presets", presets);
     }
 }
 
@@ -145,18 +138,18 @@ void EditorPreferences::ShowImGui() {
         return;
     }
 
-    ImGui::TextDisabled("These settings are personal and stored locally (not shared via Git).");
+    ImGui::TextDisabled("These settings are personal, shared across all projects, and stored locally (not shared via Git).");
 
     //--------- 表示倍率 ---------//
     ImGui::SeparatorText("Display Scale");
-    float fontScale = EditorSettings::GetFloat("editorUI.fontScale", 1.0f);
+    float fontScale = UserSettings::GetFloat("editorUI.fontScale", 1.0f);
     if (ImGui::SliderFloat("Text Scale", &fontScale, 0.5f, 3.0f, "%.2f")) {
-        EditorSettings::SetFloat("editorUI.fontScale", fontScale);
+        UserSettings::SetFloat("editorUI.fontScale", fontScale);
     }
     ImGui::SetItemTooltip("Scales rendered text size only.");
-    float uiScale = EditorSettings::GetFloat("editorUI.uiScale", 1.0f);
+    float uiScale = UserSettings::GetFloat("editorUI.uiScale", 1.0f);
     if (ImGui::SliderFloat("UI Scale", &uiScale, 0.5f, 3.0f, "%.2f")) {
-        EditorSettings::SetFloat("editorUI.uiScale", uiScale);
+        UserSettings::SetFloat("editorUI.uiScale", uiScale);
     }
     ImGui::SetItemTooltip("Scales window padding, spacing, rounding, and other layout metrics.");
 
@@ -166,9 +159,9 @@ void EditorPreferences::ShowImGui() {
     if (!hasScannedFontFiles_) {
         RefreshFontFileList();
     }
-    std::string fontPath = EditorSettings::GetString("editorUI.fontPath", "");
+    std::string fontPath = UserSettings::GetString("editorUI.fontPath", "");
     if (ImGuiCustom::SelectString("Font File", fontPath, fontFiles_, true)) {
-        EditorSettings::SetString("editorUI.fontPath", fontPath);
+        UserSettings::SetString("editorUI.fontPath", fontPath);
     }
     ImGui::SetItemTooltip("(None) uses the current language's default font.");
     ImGui::SameLine();
@@ -183,9 +176,9 @@ void EditorPreferences::ShowImGui() {
     if (!hasEnsuredDefaultPresets_) {
         EnsureDefaultPresets();
     }
-    const JSON presets = EditorSettings::GetJSON("editorUI.presets", JSON::object());
+    const JSON presets = UserSettings::GetJSON("editorUI.presets", JSON::object());
 
-    ImGui::TextDisabled("Presets (saved locally as JSON, not shared via Git):");
+    ImGui::TextDisabled("Presets (shared across all projects, saved locally as JSON, not shared via Git):");
     if (ImGui::BeginTable("##ColorPresets", 2, ImGuiTableFlags_SizingFixedFit)) {
         for (auto it = presets.begin(); it != presets.end(); ++it) {
             const bool isValidPreset = it.value().is_array() && it.value().size() == ImGuiCol_COUNT;
@@ -194,14 +187,14 @@ void EditorPreferences::ShowImGui() {
             ImGui::TableNextColumn();
             ImGui::BeginDisabled(!isValidPreset);
             if (ImGui::Button(it.key().c_str())) {
-                EditorSettings::SetJSON("editorUI.colors", it.value());
+                UserSettings::SetJSON("editorUI.colors", it.value());
             }
             ImGui::EndDisabled();
             ImGui::TableNextColumn();
             if (ImGui::SmallButton("Delete")) {
                 JSON updated = presets;
                 updated.erase(it.key());
-                EditorSettings::SetJSON("editorUI.presets", updated);
+                UserSettings::SetJSON("editorUI.presets", updated);
             }
             ImGui::PopID();
         }
@@ -215,7 +208,7 @@ void EditorPreferences::ShowImGui() {
     if (ImGui::Button("Save Current Colors as Preset")) {
         JSON updated = presets;
         updated[newPresetNameBuffer_] = ColorsToJSON(ImGui::GetStyle().Colors);
-        EditorSettings::SetJSON("editorUI.presets", updated);
+        UserSettings::SetJSON("editorUI.presets", updated);
         newPresetNameBuffer_.clear();
     }
     ImGui::EndDisabled();
@@ -240,19 +233,19 @@ void EditorPreferences::ShowImGui() {
         // EditorSettings経由でしか反映されない（ImGuiManagerが次フレームでEditorSettingsから
         // 読み直してスタイルを再構築するため）、ここでliveStyleを直接書き換えても意味がない
         if (changed) {
-            EditorSettings::SetJSON("editorUI.colors", ColorsToJSON(workingColors));
+            UserSettings::SetJSON("editorUI.colors", ColorsToJSON(workingColors));
         }
         ImGui::TreePop();
     }
 
     ImGui::Spacing();
     if (ImGui::Button("Reset All to Default")) {
-        EditorSettings::SetFloat("editorUI.fontScale", 1.0f);
-        EditorSettings::SetFloat("editorUI.uiScale", 1.0f);
-        EditorSettings::SetString("editorUI.fontPath", "");
+        UserSettings::SetFloat("editorUI.fontScale", 1.0f);
+        UserSettings::SetFloat("editorUI.uiScale", 1.0f);
+        UserSettings::SetString("editorUI.fontPath", "");
         ImGuiStyle temp;
         ImGui::StyleColorsDark(&temp);
-        EditorSettings::SetJSON("editorUI.colors", ColorsToJSON(temp.Colors));
+        UserSettings::SetJSON("editorUI.colors", ColorsToJSON(temp.Colors));
     }
 
     ImGui::End();

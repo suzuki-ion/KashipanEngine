@@ -170,12 +170,12 @@ struct ReturnInfo {
 <h3>登録の保存・読み込み</h3>
 <div class="api-card">
 <h4>JSON I/O</h4>
-<div class="api-sig">static constexpr const char* kDefaultSaveFilePath = "Assets/KashipanEngine/InputCommand.json";
+<div class="api-sig">static constexpr const char* kDefaultSaveFilePath = "Assets/InputCommand.json";
 
 bool SaveToJSON(const std::string &amp;filepath) const;
 bool LoadFromJSON(const std::string &amp;filepath); // 読み込み前に既存コマンドはクリアされる
 void Clear();</div>
-<p>エンジンは起動時に <code>kDefaultSaveFilePath</code>（<code>Assets/KashipanEngine/InputCommand.json</code>）から自動的に <code>LoadFromJSON</code> を行い、終了時に <code>SaveToJSON</code> で保存します。<a href="../Editor/Architecture/01_Overview.html">シーンエディタ</a>上でのキーコンフィグ編集もこのファイルを介して永続化されます。</p>
+<p>エンジンは起動時に <code>kDefaultSaveFilePath</code>（<code>Assets/InputCommand.json</code>）から自動的に <code>LoadFromJSON</code> を行い、終了時に <code>SaveToJSON</code> で保存します。<a href="../Editor/Architecture/01_Overview.html">シーンエディタ</a>上でのキーコンフィグ編集もこのファイルを介して永続化されます。</p>
 </div>
 
 <h2>コード側からの登録例: <code>AppInitialize</code></h2>
@@ -202,7 +202,7 @@ inline void AppInitialize(const GameEngine::Context &amp;context) {
 </code></pre>
 <div class="note">
 <strong>ポイント</strong><br>
-実運用では <code>Assets/KashipanEngine/InputCommand.json</code> と<a href="../Editor/Architecture/01_Overview.html">シーンエディタ</a>のキーコンフィグ画面で登録・編集するのが基本です。<code>AppInitialize()</code> でのコード登録は、デフォルト設定を保証したい場合や、JSONファイルが存在しない初回起動時のフォールバックとして使うと良いでしょう。
+実運用では <code>Assets/InputCommand.json</code> と<a href="../Editor/Architecture/01_Overview.html">シーンエディタ</a>のキーコンフィグ画面で登録・編集するのが基本です。<code>AppInitialize()</code> でのコード登録は、デフォルト設定を保証したい場合や、JSONファイルが存在しない初回起動時のフォールバックとして使うと良いでしょう。
 </div>
 
 <h2>AngelScriptからの利用</h2>

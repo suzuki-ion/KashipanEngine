@@ -12,6 +12,7 @@
 #include "Assets/ModelManager.h"
 #include "Assets/TextureManager.h"
 #include "ComponentSerialize/ComponentRegistry.h"
+#include "Core/ProjectPaths.h"
 #include "Objects/Components/PrefabInstanceComponent.h"
 #include "Objects/EmptyObject.h"
 #include "Scene/Editor/PrefabAssetManager.h"
@@ -26,20 +27,14 @@
 namespace KashipanEngine {
 
 namespace {
-/// @brief パス区切り文字をすべて '/' へ統一する
-std::string NormalizePathSlashes(std::string s) {
-    std::replace(s.begin(), s.end(), '\\', '/');
-    return s;
-}
-
-/// @brief 実行ディレクトリ("."）からの相対パスを、TextureManagerが管理する
+/// @brief 論理パス（"Assets/..." 形式）を、TextureManagerなどが管理する
 ///        Assetsルートからの相対パスへ変換する（先頭の "Assets/" を取り除く）
-std::string ToAssetsRelativePath(const std::string &cwdRelativePath) {
+std::string ToAssetsRelativePath(const std::string &logicalPath) {
     constexpr std::string_view kAssetsPrefix = "Assets/";
-    if (cwdRelativePath.rfind(kAssetsPrefix, 0) == 0) {
-        return cwdRelativePath.substr(kAssetsPrefix.size());
+    if (logicalPath.rfind(kAssetsPrefix, 0) == 0) {
+        return logicalPath.substr(kAssetsPrefix.size());
     }
-    return cwdRelativePath;
+    return logicalPath;
 }
 
 bool IsTextureExtension(const std::string &ext) {
@@ -66,6 +61,15 @@ bool IsModelExtension(const std::string &ext) {
 bool PathExistsNoThrow(const std::filesystem::path &path) {
     std::error_code ec;
     return std::filesystem::exists(path, ec) && !ec;
+}
+
+/// @brief このウィンドウが扱うパス（プロジェクトルート基準の論理パス）を、
+///        実際にファイル操作を行える物理パスへ変換する
+/// @details 空文字はプロジェクトルート自身を指す
+std::filesystem::path ToPhysicalPath(const std::string &projectRelativePath) {
+    return Utf8StringToPath(projectRelativePath.empty()
+        ? ProjectPaths::ProjectRoot()
+        : ProjectPaths::ToPhysical(projectRelativePath));
 }
 } // namespace
 
@@ -192,7 +196,7 @@ void AssetsWindow::RefreshFolderTree() {
 
 void AssetsWindow::BuildFolderNode(FolderNode &node) {
     std::error_code ec;
-    const std::filesystem::path base = node.path.empty() ? std::filesystem::path(".") : Utf8StringToPath(node.path);
+    const std::filesystem::path base = ToPhysicalPath(node.path);
     for (const auto &entry : std::filesystem::directory_iterator(
             base, std::filesystem::directory_options::skip_permission_denied, ec)) {
         std::error_code statusError;
@@ -204,7 +208,7 @@ void AssetsWindow::BuildFolderNode(FolderNode &node) {
         if (!name.empty() && name.front() == '.') continue;
         auto child = std::make_unique<FolderNode>();
         child->name = name;
-        child->path = NormalizePathSlashes(PathToUtf8String(entry.path().lexically_relative(".")));
+        child->path = ProjectPaths::ToLogical(PathToUtf8String(entry.path()));
         BuildFolderNode(*child);
         node.children.push_back(std::move(child));
     }
@@ -215,13 +219,13 @@ void AssetsWindow::BuildFolderNode(FolderNode &node) {
 void AssetsWindow::RefreshFileList() {
     files_.clear();
     std::error_code ec;
-    const std::filesystem::path base = currentFolder_.empty() ? std::filesystem::path(".") : Utf8StringToPath(currentFolder_);
+    const std::filesystem::path base = ToPhysicalPath(currentFolder_);
     for (const auto &entry : std::filesystem::directory_iterator(
             base, std::filesystem::directory_options::skip_permission_denied, ec)) {
         FileEntry file;
         file.name = PathToUtf8String(entry.path().filename());
         if (!file.name.empty() && file.name.front() == '.') continue;
-        file.path = NormalizePathSlashes(PathToUtf8String(entry.path().lexically_relative(".")));
+        file.path = ProjectPaths::ToLogical(PathToUtf8String(entry.path()));
         std::error_code statusError;
         const auto status = entry.status(statusError);
         if (statusError) continue;
@@ -315,7 +319,7 @@ void AssetsWindow::ShowFileGrid() {
             ImGui::PopStyleColor();
         } else {
             // 読み込み済みテクスチャの場合はサムネイルを表示する
-            // file.path は実行ディレクトリ（"."）からの相対パス（例: "Assets/Materials/White.png"）だが、
+            // file.path はプロジェクトルートからの論理パス（例: "Assets/Materials/White.png"）だが、
             // TextureManager 側は Assets ルートからの相対パス（例: "Materials/White.png"）で管理しているため、
             // 先頭の "Assets/" を取り除いてから問い合わせる必要がある
             D3D12_GPU_DESCRIPTOR_HANDLE srvHandle{};
@@ -513,7 +517,7 @@ void AssetsWindow::CreatePrefabFromObject(EmptyObject *obj) {
     // 既存ファイルと重複しない名前を付ける（Unityの複製と同様に連番を付与する）
     const std::string folder = currentFolder_.empty() ? "" : (currentFolder_ + "/");
     std::string filePath = folder + baseName + PrefabUtility::kPrefabExtension;
-    for (int suffix = 1; PathExistsNoThrow(Utf8StringToPath(filePath)); ++suffix) {
+    for (int suffix = 1; PathExistsNoThrow(ToPhysicalPath(filePath)); ++suffix) {
         filePath = folder + baseName + "_" + std::to_string(suffix) + PrefabUtility::kPrefabExtension;
     }
 
@@ -543,7 +547,7 @@ bool AssetsWindow::ShowCreateFileModal() {
         ImGui::InputText("File Name", &newFileName_);
         const std::string folder = currentFolder_.empty() ? "" : (currentFolder_ + "/");
         const std::string fullPath = folder + newFileName_ + createFileExtension_;
-        const bool alreadyExists = !newFileName_.empty() && PathExistsNoThrow(Utf8StringToPath(fullPath));
+        const bool alreadyExists = !newFileName_.empty() && PathExistsNoThrow(ToPhysicalPath(fullPath));
         if (alreadyExists) {
             ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "A file with this name already exists.");
         }
@@ -553,10 +557,10 @@ bool AssetsWindow::ShowCreateFileModal() {
             if (createFileExtension_ == ".mat") {
                 MaterialManager::Material material{};
                 material.name = newFileName_;
-                const auto handle = MaterialManager::RegisterMaterial(newFileName_, material, fullPath);
+                const auto handle = MaterialManager::RegisterMaterial(newFileName_, material, ProjectPaths::ToPhysical(fullPath));
                 succeeded = (handle != MaterialManager::kInvalidHandle) && MaterialManager::SaveMaterial(handle);
             } else {
-                succeeded = SaveJSON(JSON::object(), fullPath);
+                succeeded = SaveJSON(JSON::object(), ProjectPaths::ToPhysical(fullPath));
             }
             if (succeeded) {
                 RefreshFileList();
@@ -583,14 +587,14 @@ void AssetsWindow::ShowCreateFolderModal() {
         ImGui::InputText("Folder Name", &newFolderName_);
         const std::string folder = currentFolder_.empty() ? "" : (currentFolder_ + "/");
         const std::string fullPath = folder + newFolderName_;
-        const bool alreadyExists = !newFolderName_.empty() && PathExistsNoThrow(Utf8StringToPath(fullPath));
+        const bool alreadyExists = !newFolderName_.empty() && PathExistsNoThrow(ToPhysicalPath(fullPath));
         if (alreadyExists) {
             ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "A folder with this name already exists.");
         }
         ImGui::BeginDisabled(newFolderName_.empty() || alreadyExists);
         if (ImGui::Button("Create", ImVec2(120, 0))) {
             std::error_code ec;
-            if (std::filesystem::create_directory(Utf8StringToPath(fullPath), ec)) {
+            if (std::filesystem::create_directory(ToPhysicalPath(fullPath), ec)) {
                 RefreshFolderTree();
             }
             ImGui::CloseCurrentPopup();
@@ -614,7 +618,7 @@ void AssetsWindow::ShowRenameModal() {
         ImGui::InputText("New Name", &renameBuffer_);
         ImGui::BeginDisabled(renameBuffer_.empty());
         if (ImGui::Button("Rename", ImVec2(120, 0))) {
-            const std::filesystem::path oldPath = Utf8StringToPath(contextMenuTargetPath_);
+            const std::filesystem::path oldPath = ToPhysicalPath(contextMenuTargetPath_);
             const std::filesystem::path newPath = oldPath.parent_path() / Utf8StringToPath(renameBuffer_);
             std::error_code ec;
             std::filesystem::rename(oldPath, newPath, ec);
@@ -623,16 +627,16 @@ void AssetsWindow::ShowRenameModal() {
                     // フォルダの場合は中身のファイルパスをアセットマネージャーへ個別に
                     // 追従させる仕組みがないため、ツリー自体を再構築するだけに留める
                     if (currentFolder_ == contextMenuTargetPath_) {
-                        currentFolder_ = NormalizePathSlashes(PathToUtf8String(newPath.lexically_relative(".")));
+                        currentFolder_ = ProjectPaths::ToLogical(PathToUtf8String(newPath));
                     }
                     RefreshFolderTree();
                 } else {
                     // 実ファイルのリネームに成功したら、対応するマネージャーの登録名/パスも追従させる
                     // （リネーム前に既に読み込まれていなかった場合は各RenameXxxは何もせずfalseを返すだけ）
-                    const std::string oldCwdPath = NormalizePathSlashes(PathToUtf8String(oldPath.lexically_relative(".")));
-                    const std::string newCwdPath = NormalizePathSlashes(PathToUtf8String(newPath.lexically_relative(".")));
-                    const std::string oldAssetPath = ToAssetsRelativePath(oldCwdPath);
-                    const std::string newAssetPath = ToAssetsRelativePath(newCwdPath);
+                    const std::string oldLogicalPath = ProjectPaths::ToLogical(PathToUtf8String(oldPath));
+                    const std::string newLogicalPath = ProjectPaths::ToLogical(PathToUtf8String(newPath));
+                    const std::string oldAssetPath = ToAssetsRelativePath(oldLogicalPath);
+                    const std::string newAssetPath = ToAssetsRelativePath(newLogicalPath);
                     const std::string ext = ToLowerExtension(newPath);
                     if (IsTextureExtension(ext)) {
                         TextureManager::RenameTexture(oldAssetPath, newAssetPath);
@@ -643,7 +647,7 @@ void AssetsWindow::ShowRenameModal() {
                     } else if (IsModelExtension(ext)) {
                         ModelManager::RenameModel(oldAssetPath, newAssetPath);
                     } else if (ext == PrefabUtility::kPrefabExtension) {
-                        PrefabAssetManager::RenamePrefabFile(oldCwdPath, newCwdPath);
+                        PrefabAssetManager::RenamePrefabFile(oldLogicalPath, newLogicalPath);
                     }
                     // 古いパスを指している開いている編集/プレビューウィンドウは無効になるため閉じる
                     CloseEditorsForPath(contextMenuTargetPath_);
@@ -674,10 +678,10 @@ void AssetsWindow::ShowDeleteConfirmModal() {
         if (ImGui::Button("Delete", ImVec2(120, 0))) {
             std::error_code ec;
             if (contextMenuTargetIsFolder_) {
-                std::filesystem::remove_all(Utf8StringToPath(contextMenuTargetPath_), ec);
+                std::filesystem::remove_all(ToPhysicalPath(contextMenuTargetPath_), ec);
                 RefreshFolderTree();
             } else {
-                std::filesystem::remove(Utf8StringToPath(contextMenuTargetPath_), ec);
+                std::filesystem::remove(ToPhysicalPath(contextMenuTargetPath_), ec);
                 RefreshFileList();
             }
             ImGui::CloseCurrentPopup();

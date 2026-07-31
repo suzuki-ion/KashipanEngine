@@ -15,6 +15,7 @@
 #include "Debug/Logger.h"
 #include "Scene/Components/Script/AngelScriptDebugServer.h"
 #include "Scene/Components/Script/ImGuiScriptBindings.h"
+#include "Core/ProjectPaths.h"
 #include "Scene/Components/Script/ScriptBindings.h"
 #include "Utilities/FileIO/Directory.h"
 
@@ -22,6 +23,9 @@ namespace KashipanEngine {
 
 namespace {
 
+/// @brief エディターツールのフォルダ名（エンジンルート直下）
+/// @details ゲーム固有のデータではなくエンジン共通のエディター拡張のため、
+///          プロジェクトではなくエンジンルート基準で探す
 constexpr const char *kEditorToolsDirectory = "EditorTools";
 constexpr const char *kEditorToolInterfaceName = "EditorTool";
 
@@ -192,7 +196,8 @@ void EditorToolManager::EnsureLoaded() {
 }
 
 void EditorToolManager::LoadTools() {
-    if (!IsDirectoryExist(kEditorToolsDirectory)) {
+    const std::string editorToolsDirectory = ProjectPaths::InEngineRoot(kEditorToolsDirectory);
+    if (!IsDirectoryExist(editorToolsDirectory)) {
         return;
     }
 
@@ -219,7 +224,7 @@ void EditorToolManager::LoadTools() {
 
     // VSCodeのAngelScript Language Server用の型定義ファイルをEditorToolsフォルダ内に生成する
     // （ゲームプレイ用の as.predefined とは登録内容が異なる＝ImGui::を含むため別ファイルにする）
-    if (GenerateScriptPredefinedFile(engine_, std::string(kEditorToolsDirectory) + "/as.predefined")) {
+    if (GenerateScriptPredefinedFile(engine_, editorToolsDirectory + "/as.predefined")) {
         Log("EditorTool: EditorTools/as.predefined を生成しました");
     } else {
         Log("EditorTool: EditorTools/as.predefined の生成に失敗しました", LogSeverity::Warning);
@@ -239,7 +244,7 @@ void EditorToolManager::LoadTools() {
 
     // EditorToolsフォルダ以下の.asを再帰的に列挙する
     std::vector<std::string> scriptPaths;
-    const auto dir = GetDirectoryDataByExtension(kEditorToolsDirectory, { ".as" }, true, true);
+    const auto dir = GetDirectoryDataByExtension(editorToolsDirectory, { ".as" }, true, true);
     std::function<void(const DirectoryData &)> flatten = [&](const DirectoryData &d) {
         for (const auto &file : d.files) scriptPaths.push_back(file);
         for (const auto &subdir : d.subdirectories) flatten(subdir);

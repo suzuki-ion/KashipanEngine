@@ -1,0 +1,16 @@
+{
+	"PipelineType": "Render",
+	"Name": "PostEffect.Outline",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": { "UsePreset": "Outline.Vertex" },
+		"Pixel": { "UsePreset": "Outline.Pixel" }
+	},
+	"RasterizerState": { "UsePreset": "Solid" },
+	"BlendState": { "UsePreset": "Normal" },
+	"DepthStencilState": { "UsePreset": "DepthDisable" },
+	"PipelineState": { "UsePreset": "Triangle" }
+}

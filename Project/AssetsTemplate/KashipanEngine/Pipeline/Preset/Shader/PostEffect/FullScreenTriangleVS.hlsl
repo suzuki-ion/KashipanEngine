@@ -1,0 +1,12 @@
+#include "FullScreenTriangle.hlsli"
+
+VSOutput main(uint vid : SV_VertexID) {
+    float2 pos;
+    pos.x = (vid == 1) ? 3.0 : -1.0;
+    pos.y = (vid == 2) ? -3.0 : 1.0;
+
+    VSOutput o;
+    o.pos = float4(pos, 0.0, 1.0);
+    o.uv = pos * float2(0.5, -0.5) + 0.5;
+    return o;
+}

@@ -19,7 +19,9 @@ class GameEngine;
 class SceneManager {
 public:
     /// @brief シーンリスト定義ファイルのデフォルト保存先
-    static constexpr const char *kDefaultSceneListFilePath = "Assets/KashipanEngine/SceneList.json";
+    /// @details シーンの一覧はエンジンの既定リソースではなくゲーム固有のデータのため、
+    ///          Assets/KashipanEngine/ ではなくAssets直下に置く。値は論理パス。
+    static constexpr const char *kDefaultSceneListFilePath = "Assets/SceneList.json";
 
     /// @brief 登録済みシーン1件分の情報
     struct SceneEntry {

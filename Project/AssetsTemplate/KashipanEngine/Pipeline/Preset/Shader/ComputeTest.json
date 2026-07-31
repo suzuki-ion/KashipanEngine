@@ -1,0 +1,9 @@
+﻿{
+  "BaseName": "ComputeTest",
+  "Compute": {
+    "Name": "CS",
+    "Path": "ComputeTest/Compute.hlsl",
+    "EntryPoint": "main",
+    "TargetProfile": "cs_6_0"
+  }
+}

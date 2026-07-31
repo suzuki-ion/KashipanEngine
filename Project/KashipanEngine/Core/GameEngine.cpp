@@ -1,5 +1,6 @@
 #include "GameEngine.h"
 #include "EngineSettings.h"
+#include "Core/ProjectPaths.h"
 #include "Core/Window.h"
 #include "Scene/SceneContext.h"
 #include "Utilities/FileIO/JSON.h"
@@ -116,14 +117,17 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     ComputeCommandProcessor::Initialize(Passkey<GameEngine>{}, directXCommon_.get());
     graphicsEngine_ = std::make_unique<GraphicsEngine>(Passkey<GameEngine>{}, directXCommon_.get());
 
-    textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), "Assets");
-    fontManager_ = std::make_unique<FontManager>(Passkey<GameEngine>{}, directXCommon_.get(), "Assets");
+    // 各Managerには物理パスのAssetsルートを渡す。Manager内部で扱うアセットパスは
+    // このルートからの相対パスになるため、プロジェクトが変わっても値は変わらない
+    const std::string &assetsRoot = ProjectPaths::AssetsRoot();
+    textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetsRoot);
+    fontManager_ = std::make_unique<FontManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetsRoot);
     samplerManager_ = std::make_unique<SamplerManager>(Passkey<GameEngine>{}, directXCommon_.get());
-    modelManager_ = std::make_unique<ModelManager>(Passkey<GameEngine>{}, "Assets");
-    skeletonManager_ = std::make_unique<SkeletonManager>(Passkey<GameEngine>{}, "Assets");
-    audioManager_ = std::make_unique<AudioManager>(Passkey<GameEngine>{}, "Assets");
-    animationManager_ = std::make_unique<AnimationManager>(Passkey<GameEngine>{}, "Assets");
-    materialManager_ = std::make_unique<MaterialManager>(Passkey<GameEngine>{}, "Assets");
+    modelManager_ = std::make_unique<ModelManager>(Passkey<GameEngine>{}, assetsRoot);
+    skeletonManager_ = std::make_unique<SkeletonManager>(Passkey<GameEngine>{}, assetsRoot);
+    audioManager_ = std::make_unique<AudioManager>(Passkey<GameEngine>{}, assetsRoot);
+    animationManager_ = std::make_unique<AnimationManager>(Passkey<GameEngine>{}, assetsRoot);
+    materialManager_ = std::make_unique<MaterialManager>(Passkey<GameEngine>{}, assetsRoot);
     input_ = std::make_unique<Input>(Passkey<GameEngine>{});
     inputCommand_ = std::make_unique<InputCommand>(Passkey<GameEngine>{}, input_.get());
     inputCommand_->LoadFromJSON(InputCommand::kDefaultSaveFilePath);
@@ -311,6 +315,9 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
     static size_t windowCount = 0;
 
     while (!gameLoopEndConditionFunction_()) {
+        // プロジェクトの切り替えなどによるアプリケーション自体の終了要求
+        // （エディタービルドでも消費されずにここまで届く）
+        if (sIsQuitRequested) break;
 #if !defined(USE_IMGUI)
         // シーンやスクリプトからの終了要求でゲームループを抜ける
         // （エディタービルドでは再生停止要求としてScene側で消費されるため、ここでは見ない）

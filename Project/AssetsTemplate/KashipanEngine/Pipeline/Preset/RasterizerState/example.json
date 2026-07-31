@@ -1,0 +1,100 @@
+﻿{
+	// プリセット名
+	"Name": "Example RasterizerState",
+
+	//==============================================================
+	// RasterizerState 設定サンプル
+	// ParseRasterizerState(Json) が読むキー:
+	//  FillMode, CullMode, FrontCounterClockwise,
+	//  DepthBias, DepthBiasClamp, SlopeScaledDepthBias,
+	//  DepthClipEnable, MultisampleEnable, AntialiasedLineEnable,
+	//  ForcedSampleCount
+	// 未対応(ゼロ初期化のまま): ConservativeRaster
+	//==============================================================
+	"RasterizerState": {
+		// ポリゴン描画モード: D3D12_FILL_MODE_WIREFRAME / D3D12_FILL_MODE_SOLID
+		"FillMode": "D3D12_FILL_MODE_SOLID",
+
+		// カリング: D3D12_CULL_MODE_NONE / D3D12_CULL_MODE_FRONT / D3D12_CULL_MODE_BACK
+		"CullMode": "D3D12_CULL_MODE_BACK",
+
+		// 前面を反時計回り頂点定義とみなすか (true で CCW が Front)
+		"FrontCounterClockwise": false,
+
+		// 固定深度バイアス (シャドウマップ等で使用)。通常 0
+		"DepthBias": 0,
+		// 深度バイアスの最大クランプ値
+		"DepthBiasClamp": 0.0,
+		// スロープスケールド深度バイアス (傾斜依存)。通常 0.0
+		"SlopeScaledDepthBias": 0.0,
+
+		// 深度クリップ有効化 (true 推奨。false で遠近クリップを無効化し、反射用途など特殊ケース)
+		"DepthClipEnable": true,
+
+		// マルチサンプル (MSAA) 有効化。RenderTarget が MSAA の場合 true
+		"MultisampleEnable": false,
+
+		// 線分アンチエイリアス (ライン描画時)。通常 false
+		"AntialiasedLineEnable": false,
+
+		// 強制サンプル数。0 で無効。1 以上でクアッド当たりのサンプルを強制 (特殊ケース)
+		"ForcedSampleCount": 0
+	},
+
+	//==============================================================
+	// 追加プリセット例: デバッグ用ワイヤーフレーム
+	//==============================================================
+	"RasterizerState_WireframeDebug": {
+		"FillMode": "D3D12_FILL_MODE_WIREFRAME",
+		"CullMode": "D3D12_CULL_MODE_NONE",
+		"FrontCounterClockwise": false,
+		"DepthBias": 0,
+		"DepthBiasClamp": 0.0,
+		"SlopeScaledDepthBias": 0.0,
+		"DepthClipEnable": true,
+		"MultisampleEnable": false,
+		"AntialiasedLineEnable": false,
+		"ForcedSampleCount": 0
+	},
+
+	//==============================================================
+	// シャドウマップ用 (ポリゴン・アクネ軽減バイアス例)
+	// 値はライト距離/精度に応じて調整が必要
+	//==============================================================
+	"RasterizerState_ShadowMap": {
+		"FillMode": "D3D12_FILL_MODE_SOLID",
+		"CullMode": "D3D12_CULL_MODE_BACK",
+		"FrontCounterClockwise": false,
+		"DepthBias": 100, // 固定バイアス (例)
+		"DepthBiasClamp": 0.0,
+		"SlopeScaledDepthBias": 1.0, // スロープ依存バイアス
+		"DepthClipEnable": true,
+		"MultisampleEnable": false,
+		"AntialiasedLineEnable": false,
+		"ForcedSampleCount": 0
+	},
+
+	//==============================================================
+	// MSAA 用例 (4x)
+	//==============================================================
+	"RasterizerState_MSAA4x": {
+		"FillMode": "D3D12_FILL_MODE_SOLID",
+		"CullMode": "D3D12_CULL_MODE_BACK",
+		"FrontCounterClockwise": false,
+		"DepthBias": 0,
+		"DepthBiasClamp": 0.0,
+		"SlopeScaledDepthBias": 0.0,
+		"DepthClipEnable": true,
+		"MultisampleEnable": true,
+		"AntialiasedLineEnable": false,
+		"ForcedSampleCount": 0
+	},
+
+	//==============================================================
+	// 注意:
+	// - 未指定フィールドは 0 / false 初期化 (D3D12 の既定と完全一致しない場合がある)
+	// - ConservativeRaster はパーサで設定されないため必要なら拡張実装が必要
+	// - DepthBias 系はフォーマット/投影行列に依存。過剰設定で隙間、低設定でアクネ発生
+	//==============================================================
+	"_Info": "RasterizerState セクションのみのサンプル。必要に応じて UsePreset で参照。"
+}

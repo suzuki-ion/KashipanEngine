@@ -10,8 +10,9 @@ namespace KashipanEngine {
 class SceneEditor;
 
 /// @brief エディターUI（表示倍率・フォント・配色）の個人設定パネル
-/// @details 値はすべてEditorSettings経由で保存される。ImGuiManagerがEditorSettingsを
-///          直接読みに行って適用するため、このクラスからImGuiManagerへ値を渡すことはしない
+/// @details 値はすべてUserSettings経由で保存され、プロジェクトをまたいで共有される。
+///          ImGuiManagerがUserSettingsを直接読みに行って適用するため、
+///          このクラスからImGuiManagerへ値を渡すことはしない
 class EditorPreferences final {
 public:
     EditorPreferences(Passkey<SceneEditor>) {}
@@ -22,7 +23,7 @@ private:
     /// @brief Assets配下のフォントファイル一覧を再スキャンする（毎フレーム呼ばないこと。
     ///        再帰的なディレクトリ走査はコストが高く、フレーム毎に行うとFPSが大きく低下する）
     void RefreshFontFileList();
-    /// @brief 配色プリセット（EditorSettingsの"editorUI.presets"）が未登録の場合、
+    /// @brief 配色プリセット（UserSettingsの"editorUI.presets"）が未登録の場合、
     ///        Dark/Light/Classicの既定プリセットを1度だけ登録する
     void EnsureDefaultPresets();
 

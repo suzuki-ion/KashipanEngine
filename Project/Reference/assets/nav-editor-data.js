@@ -18,6 +18,7 @@ const KE_PAGES = [
   { id: "W06_SceneComponentInspector", title: "Scene Component Inspector", group: "ウィンドウ", href: "Editor/Windows/06_SceneComponentInspector.html" },
   { id: "W07_SceneVariables", title: "Scene Variables", group: "ウィンドウ", href: "Editor/Windows/07_SceneVariablesMenu.html" },
   { id: "W08_SceneList", title: "Scene List / Save & Load", group: "ウィンドウ", href: "Editor/Windows/08_SceneListAndSaveLoad.html" },
+  { id: "W09_ProjectWindow", title: "Project", group: "ウィンドウ", href: "Editor/Windows/09_ProjectWindow.html" },
 
   { id: "C_Basic_Transform", title: "Transform", group: "コンポーネント: Basic", href: "Editor/Components/Basic/Transform.html" },
   { id: "C_Basic_PreTransform", title: "PreTransform", group: "コンポーネント: Basic", href: "Editor/Components/Basic/PreTransform.html" },

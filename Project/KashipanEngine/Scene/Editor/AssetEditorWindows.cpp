@@ -9,6 +9,7 @@
 #include <unordered_map>
 
 #include "Assets/MaterialManager.h"
+#include "Core/ProjectPaths.h"
 #include "Assets/TextureManager.h"
 #include "Graphics/IShaderTexture.h"
 #include "Scene/Editor/PrefabAssetManager.h"
@@ -51,7 +52,7 @@ std::string FileNameFromPath(const std::string &path) {
 JSONFileEditorWindow::JSONFileEditorWindow(const std::string &filePath)
     : filePath_(filePath) {
     windowTitle_ = "JSON: " + FileNameFromPath(filePath_) + "###JSONFileEditor_" + filePath_;
-    data_ = LoadJSON(filePath_);
+    data_ = LoadJSON(ProjectPaths::ToPhysical(filePath_));
     loadFailed_ = data_.is_discarded();
     if (loadFailed_) data_ = JSON::object();
 }
@@ -74,7 +75,7 @@ bool JSONFileEditorWindow::ShowImGui() {
         const bool isPrefab = std::filesystem::path(filePath_).extension() == PrefabUtility::kPrefabExtension;
         const bool saved = isPrefab
             ? PrefabAssetManager::SavePrefabJsonByPath(filePath_, data_)
-            : SaveJSON(data_, filePath_);
+            : SaveJSON(data_, ProjectPaths::ToPhysical(filePath_));
         if (saved) {
             isDirty_ = false;
         }

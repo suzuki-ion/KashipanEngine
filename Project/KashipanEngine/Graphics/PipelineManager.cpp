@@ -10,6 +10,7 @@
 
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/FileIO/Directory.h"
+#include "Core/ProjectPaths.h"
 
 #include "Graphics/Pipeline/JsonParser/BlendState.h"
 #include "Graphics/Pipeline/JsonParser/RasterizerState.h"
@@ -41,10 +42,14 @@ PipelineManager::PipelineManager(Passkey<GraphicsEngine>, ID3D12Device *device, 
     shaderCompiler_ = std::make_unique<ShaderCompiler>(Passkey<PipelineManager>{}, device_);
     pipelineCreator_ = std::make_unique<PipelineCreator>(Passkey<PipelineManager>{}, device_, &components_, shaderCompiler_.get());
 
-    pipelineSettingsPath_ = pipelineSettingsPath;
+    pipelineSettingsPath_ = ProjectPaths::ToPhysical(pipelineSettingsPath);
     Json settings = LoadJSON(pipelineSettingsPath_);
-    pipelineFolderPath_ = settings["PipelineFolder"].get<std::string>();
+    // 設定ファイル内の参照先フォルダも論理パスで書かれているため、まとめて物理パスへ変換しておく
+    pipelineFolderPath_ = ProjectPaths::ToPhysical(settings["PipelineFolder"].get<std::string>());
     presetFolderNames_ = settings["PresetFolders"].get<std::unordered_map<std::string, std::string>>();
+    for (auto &[presetName, presetFolderPath] : presetFolderNames_) {
+        presetFolderPath = ProjectPaths::ToPhysical(presetFolderPath);
+    }
 
     LoadPreset();
     LoadPipelines();

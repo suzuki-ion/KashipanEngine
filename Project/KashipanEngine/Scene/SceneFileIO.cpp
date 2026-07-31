@@ -1,4 +1,5 @@
 #include "SceneFileIO.h"
+#include "Core/ProjectPaths.h"
 #include "Utilities/Conversion/ConvertString.h"
 
 #include <algorithm>
@@ -161,13 +162,17 @@ JSON LoadSceneFolder(const std::string &path) {
 } // namespace
 
 bool SaveSceneToPath(const JSON &sceneJson, const std::string &path) {
-    if (IsFolderFormatPath(path)) return SaveSceneFolder(path, sceneJson);
-    return SaveJSON(sceneJson, path);
+    // 呼び出し元は "Assets/Scenes/..." や "SceneBackups/..." といった論理パスを渡してくるため、
+    // ここで開いているプロジェクト基準の物理パスへ変換する
+    const std::string resolvedPath = ProjectPaths::ToPhysical(path);
+    if (IsFolderFormatPath(resolvedPath)) return SaveSceneFolder(resolvedPath, sceneJson);
+    return SaveJSON(sceneJson, resolvedPath);
 }
 
 JSON LoadSceneFromPath(const std::string &path) {
-    if (IsFolderFormatPath(path)) return LoadSceneFolder(path);
-    return LoadJSON(path);
+    const std::string resolvedPath = ProjectPaths::ToPhysical(path);
+    if (IsFolderFormatPath(resolvedPath)) return LoadSceneFolder(resolvedPath);
+    return LoadJSON(resolvedPath);
 }
 
 } // namespace KashipanEngine

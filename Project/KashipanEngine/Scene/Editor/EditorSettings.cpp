@@ -1,9 +1,14 @@
 #include "EditorSettings.h"
 #ifdef USE_IMGUI
 #include <imgui.h>
+#include "Core/ProjectPaths.h"
 #include "Utilities/FileIO.h"
 
 namespace KashipanEngine {
+
+std::string EditorSettings::GetFilePath() {
+    return ProjectPaths::InProjectRoot(kFileName);
+}
 
 bool EditorSettings::GetBool(const std::string &key, bool defaultValue) {
     EnsureLoaded();
@@ -17,7 +22,7 @@ void EditorSettings::SetBool(const std::string &key, bool value) {
     auto it = sData_.find(key);
     if (it != sData_.end() && it->is_boolean() && it->get<bool>() == value) return;
     sData_[key] = value;
-    SaveJSON(sData_, kFilePath);
+    Save();
 }
 
 float EditorSettings::GetFloat(const std::string &key, float defaultValue) {
@@ -32,7 +37,7 @@ void EditorSettings::SetFloat(const std::string &key, float value) {
     auto it = sData_.find(key);
     if (it != sData_.end() && it->is_number() && it->get<float>() == value) return;
     sData_[key] = value;
-    SaveJSON(sData_, kFilePath);
+    Save();
 }
 
 std::string EditorSettings::GetString(const std::string &key, const std::string &defaultValue) {
@@ -47,7 +52,7 @@ void EditorSettings::SetString(const std::string &key, const std::string &value)
     auto it = sData_.find(key);
     if (it != sData_.end() && it->is_string() && it->get<std::string>() == value) return;
     sData_[key] = value;
-    SaveJSON(sData_, kFilePath);
+    Save();
 }
 
 JSON EditorSettings::GetJSON(const std::string &key, const JSON &defaultValue) {
@@ -62,7 +67,7 @@ void EditorSettings::SetJSON(const std::string &key, const JSON &value) {
     auto it = sData_.find(key);
     if (it != sData_.end() && *it == value) return;
     sData_[key] = value;
-    SaveJSON(sData_, kFilePath);
+    Save();
 }
 
 bool EditorSettings::PersistentTreeNode(const char *label, const std::string &key, bool defaultOpen) {
@@ -83,9 +88,13 @@ bool EditorSettings::PersistentCollapsingHeader(const char *label, const std::st
 
 void EditorSettings::EnsureLoaded() {
     if (sLoaded_) return;
-    sData_ = LoadJSON(kFilePath);
+    sData_ = LoadJSON(GetFilePath());
     if (!sData_.is_object()) sData_ = JSON::object();
     sLoaded_ = true;
+}
+
+void EditorSettings::Save() {
+    SaveJSON(sData_, GetFilePath());
 }
 
 } // namespace KashipanEngine

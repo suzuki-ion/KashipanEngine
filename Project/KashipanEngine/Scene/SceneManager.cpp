@@ -1,4 +1,5 @@
 #include "Scene/SceneManager.h"
+#include "Core/ProjectPaths.h"
 #include "Debug/Logger.h"
 #include "Scene/RenderTargetCarryOverRegistry.h"
 #include "Scene/SceneFileIO.h"
@@ -78,7 +79,7 @@ bool SceneManager::UpdateRegisteredSceneData(const std::string &sceneName, const
 
 bool SceneManager::LoadSceneList(const std::string &filePath) {
     LogScope scope;
-    JSON json = LoadJSON(filePath);
+    JSON json = LoadJSON(ProjectPaths::ToPhysical(filePath));
     if (json.empty() || !json.is_object()) return false;
 
     if (json.contains("scenes") && json["scenes"].is_array()) {
@@ -107,7 +108,7 @@ bool SceneManager::SaveSceneList(const std::string &filePath) const {
         sceneJson["filePath"] = entry.filePath;
         json["scenes"].push_back(sceneJson);
     }
-    return SaveJSON(json, filePath);
+    return SaveJSON(json, ProjectPaths::ToPhysical(filePath));
 }
 
 void SceneManager::Update(Passkey<GameEngine>) {

@@ -15,6 +15,7 @@
 #include "Scene/Editor/EditorPreferences.h"
 #include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/PrefabAssetManager.h"
+#include "Scene/Editor/ProjectWindow.h"
 #include "Scene/Editor/PrefabSyncUtility.h"
 #include "Scene/Editor/SceneComponentInspector.h"
 #include "Scene/Editor/SceneEditorCommands.h"
@@ -75,6 +76,7 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     loader_ = std::make_unique<SceneLoader>(Passkey<SceneEditor>{}, context_);
     sceneListEditor_ = std::make_unique<SceneListEditor>(Passkey<SceneEditor>{}, context_);
     preferences_ = std::make_unique<EditorPreferences>(Passkey<SceneEditor>{});
+    projectWindow_ = std::make_unique<ProjectWindow>(Passkey<SceneEditor>{});
 
     objectHierarchy_->SetCommands(commands_.get());
     objectInspector_->SetCommands(commands_.get());
@@ -98,6 +100,7 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     isShowSceneList_ = EditorSettings::GetBool("sceneEditor.showSceneList", true);
     isShowHistory_ = EditorSettings::GetBool("sceneEditor.showHistory", true);
     isShowPreferences_ = EditorSettings::GetBool("sceneEditor.showPreferences", false);
+    isShowProjectWindow_ = EditorSettings::GetBool("sceneEditor.showProjectWindow", false);
 
     isShowLoadedTexturesWindow_ = EditorSettings::GetBool("sceneEditor.showLoadedTextures", false);
     isShowLoadedModelsWindow_ = EditorSettings::GetBool("sceneEditor.showLoadedModels", false);
@@ -163,6 +166,7 @@ void SceneEditor::ShowImGui() {
     if (isShowAssets_) assetsWindow_->ShowImGui();
     if (isShowSceneList_) sceneListEditor_->ShowImGui();
     if (isShowPreferences_) preferences_->ShowImGui();
+    if (isShowProjectWindow_) projectWindow_->ShowImGui();
 
     //--------- デバッグ用ウィンドウ（旧ImGuiManagerから移設） ---------//
     if (isShowLoadedTexturesWindow_) TextureManager::ShowImGuiLoadedTexturesWindow();
@@ -184,6 +188,11 @@ void SceneEditor::ShowMainWindow() {
     //--------- メインメニューバー（保存・読込・Undo/Redo・ウィンドウ切替・デバッグウィンドウ） ---------//
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
+            if (ImGui::MenuItem("Project...", nullptr, &isShowProjectWindow_)) {
+                EditorSettings::SetBool("sceneEditor.showProjectWindow", isShowProjectWindow_);
+            }
+            ImGui::SetItemTooltip("Create a new project, or choose which project to open on the next launch.");
+            ImGui::Separator();
             if (ImGui::MenuItem("New Scene...")) {
                 isNewSceneRequested_ = true;
                 newSceneName_ = "New Scene";

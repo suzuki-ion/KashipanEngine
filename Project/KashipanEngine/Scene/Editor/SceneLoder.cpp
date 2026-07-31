@@ -2,6 +2,7 @@
 #ifdef USE_IMGUI
 #include <imgui.h>
 #include <filesystem>
+#include "Core/ProjectPaths.h"
 #include "Scene/SceneBackupPath.h"
 #include "Scene/SceneFileIO.h"
 #include "Utilities/Conversion/ConvertString.h"
@@ -60,9 +61,11 @@ void SceneLoader::RefreshFileList() {
     };
     for (const auto *folder : kSearchFolders) {
         std::error_code ec;
-        if (!std::filesystem::exists(folder, ec)) continue;
+        // 検索対象は論理パスで書かれているため、走査する前に物理パスへ変換する
+        const std::string physicalFolder = ProjectPaths::ToPhysical(folder);
+        if (!std::filesystem::exists(physicalFolder, ec)) continue;
         for (const auto &entry : std::filesystem::directory_iterator(
-                folder, std::filesystem::directory_options::skip_permission_denied, ec)) {
+                physicalFolder, std::filesystem::directory_options::skip_permission_denied, ec)) {
             // 単一ファイル形式（.json）とフォルダ形式（.scene）の両方を一覧に含める
             std::error_code statusError;
             const auto status = entry.status(statusError);
@@ -70,8 +73,8 @@ void SceneLoader::RefreshFileList() {
             const bool isJsonFile = std::filesystem::is_regular_file(status) && entry.path().extension() == ".json";
             const bool isSceneFolder = std::filesystem::is_directory(status) && entry.path().extension() == ".scene";
             if (!isJsonFile && !isSceneFolder) continue;
-            std::string path = entry.path().generic_string();
-            sceneFiles_.push_back(std::move(path));
+            // 一覧はシーンの読み込みにそのまま渡すため、論理パスへ戻して保持する
+            sceneFiles_.push_back(ProjectPaths::ToLogical(entry.path().generic_string()));
         }
     }
 }

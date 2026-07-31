@@ -10,6 +10,7 @@
 #include <add_on/scriptbuilder/scriptbuilder.h>
 #include <add_on/scripthelper/scripthelper.h>
 
+#include "Core/ProjectPaths.h"
 #include "Debug/Logger.h"
 #include "Math/Quaternion.h"
 #include "Math/Vector2.h"
@@ -219,17 +220,7 @@ bool gAvailableScriptPathsValid = false;
 
 /// @brief Assetsフォルダ以下の .as ファイル一覧を再取得する
 void RefreshAvailableScriptPaths() {
-    gAvailableScriptPaths.clear();
-
-    const auto dir = GetDirectoryData("Assets", true, true);
-    const auto filtered = GetDirectoryDataByExtension(dir, { ".as" });
-    std::function<void(const DirectoryData &)> flatten = [&](const DirectoryData &d) {
-        for (const auto &file : d.files) gAvailableScriptPaths.push_back(file);
-        for (const auto &subdir : d.subdirectories) flatten(subdir);
-    };
-    flatten(filtered);
-
-    std::sort(gAvailableScriptPaths.begin(), gAvailableScriptPaths.end());
+    gAvailableScriptPaths = ProjectPaths::ListAssetFiles({ ".as" });
     gAvailableScriptPathsValid = true;
 }
 
@@ -357,7 +348,10 @@ bool ScriptComponent::Reload() {
 
     // ビルド中のコンパイルメッセージを収集し、失敗時にインスペクターへ表示できるようにする
     scriptEngine->BeginMessageCapture();
-    const bool isSectionLoaded = builder.AddSectionFromFile(scriptPath_.c_str()) >= 0;
+    // scriptPath_ は "Assets/..." 形式の論理パスで保持しているため、ここで物理パスへ変換する
+    // （以降のincludeはこの物理パスからの相対で解決される）
+    const std::string resolvedScriptPath = ProjectPaths::ToPhysical(scriptPath_);
+    const bool isSectionLoaded = builder.AddSectionFromFile(resolvedScriptPath.c_str()) >= 0;
     const bool isBuilt = isSectionLoaded && builder.BuildModule() >= 0;
     auto buildMessages = scriptEngine->EndMessageCapture();
 

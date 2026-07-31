@@ -4,6 +4,7 @@
 #include "Input/Keyboard.h"
 #include "Input/Mouse.h"
 #include "Input/Controller.h"
+#include "Core/ProjectPaths.h"
 #include "Utilities/FileIO/JSON.h"
 
 #include <algorithm>
@@ -674,13 +675,14 @@ bool InputCommand::SaveToJSON(const std::string& filepath) const {
         root[action] = std::move(arr);
     }
 
-    return SaveJSON(root, filepath);
+    return SaveJSON(root, ProjectPaths::ToPhysical(filepath));
 }
 
 bool InputCommand::LoadFromJSON(const std::string& filepath) {
-    if (!IsJSONFileValid(filepath)) return false;
+    const std::string resolvedPath = ProjectPaths::ToPhysical(filepath);
+    if (!IsJSONFileValid(resolvedPath)) return false;
 
-    JSON root = LoadJSON(filepath);
+    JSON root = LoadJSON(resolvedPath);
     if (root.is_null() || !root.is_object()) return false;
 
     bindings_.clear();

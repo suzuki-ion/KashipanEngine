@@ -6,7 +6,8 @@
 #include "Core/DirectXCommon.h"
 #include "Core/Window.h"
 #include "EngineSettings.h"
-#include "Scene/Editor/EditorSettings.h"
+#include "Core/ProjectPaths.h"
+#include "Core/UserSettings.h"
 #include "Utilities/Conversion/ConvertString.h"
 
 #include <algorithm>
@@ -127,14 +128,15 @@ void ImGuiManager::InitializeInternal() {
         1280, 720
     );
 
-    // エディターUI設定（EditorSettings）を初期適用する（フォント・スケール・配色）
-    // ImGuiManagerがEditorSettingsを直接読みに行く（SceneEditor側からの受け渡しはしない）
-    appliedFontPath_ = EditorSettings::GetString("editorUI.fontPath", "");
+    // エディターUI設定（UserSettings）を初期適用する（フォント・スケール・配色）
+    // これらはプロジェクトごとではなく全プロジェクト共有の個人設定として扱う。
+    // ImGuiManagerがUserSettingsを直接読みに行く（SceneEditor側からの受け渡しはしない）
+    appliedFontPath_ = UserSettings::GetString("editorUI.fontPath", "");
     RebuildFontAtlas(appliedFontPath_);
-    appliedUIScale_ = EditorSettings::GetFloat("editorUI.uiScale", 1.0f);
-    appliedColors_ = EditorSettings::GetJSON("editorUI.colors", JSON());
+    appliedUIScale_ = UserSettings::GetFloat("editorUI.uiScale", 1.0f);
+    appliedColors_ = UserSettings::GetJSON("editorUI.colors", JSON());
     ReapplyStyle(appliedUIScale_, appliedColors_);
-    io.FontGlobalScale = std::max(0.1f, EditorSettings::GetFloat("editorUI.fontScale", 1.0f));
+    io.FontGlobalScale = std::max(0.1f, UserSettings::GetFloat("editorUI.fontScale", 1.0f));
 
     isInitialized_ = true;
 }
@@ -149,8 +151,11 @@ void ImGuiManager::RebuildFontAtlas(const std::string &fontPath) {
     const float fontSizeDefault = 16.0f;
     const float fontSize = fontSizeDefault * (static_cast<float>(dpi) / 96.0f);
 
-    // 空文字の場合は現在の言語のデフォルトフォントを使う
-    const std::string resolvedPath = fontPath.empty() ? GetCurrentLanguageFontPath() : fontPath;
+    // 空文字の場合は現在の言語のデフォルトフォントを使う。
+    // フォントの指定は全プロジェクト共有だが値は論理パスのため、開いているプロジェクト基準で解決する
+    // （他プロジェクトにしか無いフォントを指していた場合は下のフォールバックが効く）
+    const std::string resolvedPath = ProjectPaths::ToPhysical(
+        fontPath.empty() ? GetCurrentLanguageFontPath() : fontPath);
     ImFont *font = nullptr;
     if (!resolvedPath.empty()) {
         font = io.Fonts->AddFontFromFileTTF(resolvedPath.c_str(), fontSize, nullptr, io.Fonts->GetGlyphRangesJapanese());
@@ -192,18 +197,18 @@ void ImGuiManager::ReapplyStyle(float uiScale, const JSON &colorsJson) {
 void ImGuiManager::ApplyEditorPreferencesIfChanged() {
     // 文字サイズ（FontGlobalScale）はアトラスの作り直しが不要なため、変更検知なしで毎フレーム同期する
     ImGuiIO &io = ImGui::GetIO();
-    io.FontGlobalScale = std::max(0.1f, EditorSettings::GetFloat("editorUI.fontScale", 1.0f));
+    io.FontGlobalScale = std::max(0.1f, UserSettings::GetFloat("editorUI.fontScale", 1.0f));
 
     // フォント差し替えはアトラスの作り直しが必要なため、パスが変わった場合のみ行う
-    const std::string fontPath = EditorSettings::GetString("editorUI.fontPath", "");
+    const std::string fontPath = UserSettings::GetString("editorUI.fontPath", "");
     if (fontPath != appliedFontPath_) {
         RebuildFontAtlas(fontPath);
         appliedFontPath_ = fontPath;
     }
 
     // 全体スケール・配色は変化した場合のみスタイルを再構築する
-    const float uiScale = EditorSettings::GetFloat("editorUI.uiScale", 1.0f);
-    const JSON colors = EditorSettings::GetJSON("editorUI.colors", JSON());
+    const float uiScale = UserSettings::GetFloat("editorUI.uiScale", 1.0f);
+    const JSON colors = UserSettings::GetJSON("editorUI.colors", JSON());
     if (uiScale != appliedUIScale_ || colors != appliedColors_) {
         ReapplyStyle(uiScale, colors);
         appliedUIScale_ = uiScale;

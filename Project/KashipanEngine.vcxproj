@@ -119,9 +119,7 @@
     <PostBuildEvent>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
 copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
-robocopy "$(ProjectDir)Assets" "$(OutDir)Assets" /MIR /NFL /NDL /NJH /NJS /NC /NS /NP
-robocopy "$(ProjectDir)EditorTools" "$(OutDir)EditorTools" /MIR /NFL /NDL /NJH /NJS /NC /NS /NP
-if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
+&gt;"$(OutDir)EngineRoot.txt" echo $(ProjectDir)</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>$(ProjectDir)DpiAwarenessPerMonitor.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -156,8 +154,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <PostBuildEvent>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
 copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
-robocopy "$(ProjectDir)Assets" "$(OutDir)Assets" /MIR /NFL /NDL /NJH /NJS /NC /NS /NP
-if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
+&gt;"$(OutDir)EngineRoot.txt" echo $(ProjectDir)</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>$(ProjectDir)DpiAwarenessPerMonitor.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -198,9 +195,7 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <PostBuildEvent>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
 copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
-robocopy "$(ProjectDir)Assets" "$(OutDir)Assets" /MIR /NFL /NDL /NJH /NJS /NC /NS /NP
-robocopy "$(ProjectDir)EditorTools" "$(OutDir)EditorTools" /MIR /NFL /NDL /NJH /NJS /NC /NS /NP
-if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
+&gt;"$(OutDir)EngineRoot.txt" echo $(ProjectDir)</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>$(ProjectDir)DpiAwarenessPerMonitor.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -537,6 +532,9 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClCompile Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DescriptorHeapBase.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\ResourceLeakChecker.cpp" />
     <ClCompile Include="KashipanEngine\Core\GameEngine.cpp" />
+    <ClCompile Include="KashipanEngine\Core\ProjectManager.cpp" />
+    <ClCompile Include="KashipanEngine\Core\ProjectPaths.cpp" />
+    <ClCompile Include="KashipanEngine\Core\UserSettings.cpp" />
     <ClCompile Include="KashipanEngine\Core\Window.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI.cpp" />
     <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents.cpp" />
@@ -641,6 +639,9 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Editor\PrefabAssetManager.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\ProjectWindow.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Editor\PrefabSyncUtility.cpp">
@@ -1006,6 +1007,9 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
     <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\HeapSampler.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\ResourceLeakChecker.h" />
     <ClInclude Include="KashipanEngine\Core\GameEngine.h" />
+    <ClInclude Include="KashipanEngine\Core\ProjectManager.h" />
+    <ClInclude Include="KashipanEngine\Core\ProjectPaths.h" />
+    <ClInclude Include="KashipanEngine\Core\UserSettings.h" />
     <ClInclude Include="KashipanEngine\Core\Window.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI.h" />
     <ClInclude Include="KashipanEngine\Core\WindowsAPI\WindowDescriptor.h" />
@@ -1225,6 +1229,9 @@ if %ERRORLEVEL% LEQ 7 exit /b 0</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Editor\PrefabAssetManager.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\ProjectWindow.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Editor\PrefabSyncUtility.h">

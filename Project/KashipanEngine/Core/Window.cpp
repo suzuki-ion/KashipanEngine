@@ -1,6 +1,7 @@
 #include "Window.h"
 #include "Core/WindowsAPI.h"
 #include "Core/DirectXCommon.h"
+#include "Core/ProjectPaths.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include <cassert>
 #include <algorithm>
@@ -192,7 +193,7 @@ Window *Window::CreateNormal(const std::string &title, int32_t width, int32_t he
     int32_t windowWidth = (width <= 0) ? windowDefaultWidth : width;
     int32_t windowHeight = (height <= 0) ? windowDefaultHeight : height;
     DWORD windowStyle = (style == 0) ? WS_OVERLAPPEDWINDOW : style;
-    std::wstring windowIconPath = iconPath.empty() ? ConvertString(windowDefaultIconPath) : ConvertString(iconPath);
+    std::wstring windowIconPath = ConvertString(ProjectPaths::ToPhysical(iconPath.empty() ? windowDefaultIconPath : iconPath));
 
     auto window = std::make_unique<Window>(Passkey<Window>{}, WindowType::Normal, windowTitle, windowWidth, windowHeight, windowStyle, windowIconPath);
     HWND hwnd = window->GetWindowHandle();
@@ -216,7 +217,7 @@ Window *Window::CreateOverlay(const std::string &title, int32_t width, int32_t h
     std::wstring windowTitle = title.empty() ? ConvertString(windowDefaultTitle) : ConvertString(title);
     int32_t windowWidth = (width <= 0) ? windowDefaultWidth : width;
     int32_t windowHeight = (height <= 0) ? windowDefaultHeight : height;
-    std::wstring windowIconPath = iconPath.empty() ? ConvertString(windowDefaultIconPath) : ConvertString(iconPath);
+    std::wstring windowIconPath = ConvertString(ProjectPaths::ToPhysical(iconPath.empty() ? windowDefaultIconPath : iconPath));
 
     DWORD style = WS_POPUP;
     DWORD exStyle = WS_EX_NOREDIRECTIONBITMAP;

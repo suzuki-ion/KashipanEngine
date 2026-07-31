@@ -7,6 +7,9 @@ namespace KashipanEngine {
 
 /// @brief エディターUIの状態（開閉状況など）をexe再起動をまたいで保存する設定ストア
 /// @details 値の変更時に即座にJSONファイルへ保存される。
+///          保存先はプロジェクトルート直下で、プロジェクトごとに独立している。
+///          Assets外に置くのは、配布用にAssetsをコピーした際にエディターの状態が混入しないようにするため。
+///          配色やフォントなどプロジェクトをまたいで共有したい設定は UserSettings 側で扱う。
 class EditorSettings final {
 public:
     /// @brief bool値の取得
@@ -41,9 +44,14 @@ public:
     static bool PersistentCollapsingHeader(const char *label, const std::string &key, bool defaultOpen = true);
 
 private:
-    static constexpr const char *kFilePath = "Assets/KashipanEngine/EditorSettings.json";
+    /// @brief 保存先ファイル名（プロジェクトルート直下）
+    static constexpr const char *kFileName = "EditorSettings.json";
+
+    /// @brief 保存先の物理パスを取得する
+    static std::string GetFilePath();
 
     static void EnsureLoaded();
+    static void Save();
 
     static inline JSON sData_;
     static inline bool sLoaded_ = false;

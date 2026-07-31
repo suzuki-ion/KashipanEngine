@@ -725,10 +725,19 @@ class Animator {
 	void SetTag(const string&in);
 	Tag GetTag() const;
 	const string& GetTagName() const;
-	void SetAnimationName(const string&in);
-	const string& GetAnimationName() const;
+	void SetClipName(const string&in);
+	const string& GetClipName() const;
+	void SetAnimationSourceAssetPath(const string&in);
+	const string& GetAnimationSourceAssetPath() const;
 	void SetPlayOnStart(bool);
 	bool GetPlayOnStart() const;
+	void SetLoop(bool);
+	bool GetLoop() const;
+	void SetPlaybackSpeed(float);
+	float GetPlaybackSpeed() const;
+	void Play();
+	void Stop();
+	bool IsPlaying() const;
 }
 
 class KeyFrameAnimator {
@@ -925,17 +934,6 @@ class SkinnedMeshRenderer {
 	const string& GetPipelineName() const;
 	void SetMaterialName(const string&in);
 	const string& GetMaterialName() const;
-	void SetAnimationClipName(const string&in);
-	const string& GetAnimationClipName() const;
-	void SetPlayOnStart(bool);
-	bool GetPlayOnStart() const;
-	void SetLoop(bool);
-	bool GetLoop() const;
-	void SetPlaybackSpeed(float);
-	float GetPlaybackSpeed() const;
-	void Play();
-	void Stop();
-	bool IsPlaying() const;
 	void SetBlendShapeWeight(const string&in, float);
 	float GetBlendShapeWeight(const string&in) const;
 }

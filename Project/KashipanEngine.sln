@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTex", "Externals\Dir
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KashipanEngine", "KashipanEngine.vcxproj", "{D1E4EF8D-2F51-44BA-8E14-0BB122CABFA6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KashipanHub", "KashipanHub.vcxproj", "{7A3C9F42-6D18-4B5E-9C07-2E8B41D5A6F3}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "angelscript", "Externals\angelscript\projects\msvc2022\angelscript.vcxproj", "{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}"
 EndProject
 Global
@@ -34,6 +36,12 @@ Global
 		{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}.Development|x64.Build.0 = Release|x64
 		{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}.Release|x64.ActiveCfg = Release|x64
 		{39E6AF97-6BA3-4A72-8C61-BCEBF214EBFD}.Release|x64.Build.0 = Release|x64
+		{7A3C9F42-6D18-4B5E-9C07-2E8B41D5A6F3}.Debug|x64.ActiveCfg = Debug|x64
+		{7A3C9F42-6D18-4B5E-9C07-2E8B41D5A6F3}.Debug|x64.Build.0 = Debug|x64
+		{7A3C9F42-6D18-4B5E-9C07-2E8B41D5A6F3}.Development|x64.ActiveCfg = Development|x64
+		{7A3C9F42-6D18-4B5E-9C07-2E8B41D5A6F3}.Development|x64.Build.0 = Development|x64
+		{7A3C9F42-6D18-4B5E-9C07-2E8B41D5A6F3}.Release|x64.ActiveCfg = Release|x64
+		{7A3C9F42-6D18-4B5E-9C07-2E8B41D5A6F3}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

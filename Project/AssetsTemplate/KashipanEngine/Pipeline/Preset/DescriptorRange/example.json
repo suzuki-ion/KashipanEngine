@@ -1,0 +1,93 @@
+﻿{
+	// プリセット名
+	"Name": "Example DescriptorRange",
+
+	//==============================================================
+	// DescriptorRange 設定サンプル
+	// ParseDescriptorRanges(json) は "Ranges" 配列を読み取る
+	// 各要素: 
+	//   RangeType (必須) : SRV / UAV / CBV / SAMPLER
+	//   NumDescriptors (必須推奨) : 1 以上。0 指定は無効扱いになるため避ける
+	//   BaseShaderRegister : 開始レジスタ番号 (t0, u0, b0, s0 等の数字部分)
+	//   RegisterSpace : レジスタスペース。通常 0
+	//   OffsetInDescriptorsFromTableStart : 数値または "D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND"
+	//==============================================================
+	"DescriptorTable": {
+		"Ranges": [
+			{
+				// SRV(t0～t3) を 4 個まとめてバインド
+				"RangeType": "D3D12_DESCRIPTOR_RANGE_TYPE_SRV",
+				"NumDescriptors": 4,
+				"BaseShaderRegister": 0,
+				"RegisterSpace": 0,
+				// 先頭なので 0 指定（省略可）
+				"OffsetInDescriptorsFromTableStart": 0
+			},
+			{
+				// CBV(b0) 単体
+				"RangeType": "D3D12_DESCRIPTOR_RANGE_TYPE_CBV",
+				"NumDescriptors": 1,
+				"BaseShaderRegister": 0,
+				"RegisterSpace": 0,
+				// 直前の SRV 範囲に続けて自動配置
+				"OffsetInDescriptorsFromTableStart": "D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND"
+			},
+			{
+				// UAV(u0～u1) 2 個
+				"RangeType": "D3D12_DESCRIPTOR_RANGE_TYPE_UAV",
+				"NumDescriptors": 2,
+				"BaseShaderRegister": 0,
+				"RegisterSpace": 0,
+				"OffsetInDescriptorsFromTableStart": "D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND"
+			},
+			{
+				// サンプラー(s0～s3) 4 個
+				"RangeType": "D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER",
+				"NumDescriptors": 4,
+				"BaseShaderRegister": 0,
+				"RegisterSpace": 0,
+				// 別テーブルにしたい場合は RootParameter を分ける (ここでは続けて配置例)
+				"OffsetInDescriptorsFromTableStart": "D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND"
+			}
+		]
+	},
+
+	//==============================================================
+	// RootParameter との統合例（参考。パーサは Parameters[n].DescriptorTable を渡す）
+	//==============================================================
+	"RootParameters": {
+		"Parameters": [
+			{
+				"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE",
+				"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+				"DescriptorTable": {
+					"Ranges": [
+						{
+							"RangeType": "D3D12_DESCRIPTOR_RANGE_TYPE_SRV",
+							"NumDescriptors": 8,
+							"BaseShaderRegister": 0,
+							"RegisterSpace": 0,
+							"OffsetInDescriptorsFromTableStart": 0
+						},
+						{
+							"RangeType": "D3D12_DESCRIPTOR_RANGE_TYPE_UAV",
+							"NumDescriptors": 2,
+							"BaseShaderRegister": 0,
+							"RegisterSpace": 0,
+							"OffsetInDescriptorsFromTableStart": "D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND"
+						}
+					]
+				}
+			}
+		]
+	},
+
+	//==============================================================
+	// 注意:
+	// - "OffsetInDescriptorsFromTableStart" を省略した場合は 0 初期化されるため
+	//   先頭範囲以外は "D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND" を推奨。
+	// - 複数テーブルが必要なら RootParameter を分割する。
+	// - NumDescriptors を大きくし過ぎると不要なヒープ領域を確保するので適切な最小値を指定。
+	//==============================================================
+	"_Info": "このファイルはサンプル。実際のルートシグネチャJSONでは RootSignature.Parameters[].DescriptorTable として使用。"
+}

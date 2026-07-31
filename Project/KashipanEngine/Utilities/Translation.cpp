@@ -1,6 +1,7 @@
 #include "Translation.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/JSON.h"
+#include "Core/ProjectPaths.h"
 #include <Windows.h>
 #include <unordered_map>
 
@@ -48,7 +49,7 @@ private:
 } // namespace
 
 bool LoadTranslationFile(const std::string &filePath) {
-    JSON json = LoadJSON(filePath);
+    JSON json = LoadJSON(ProjectPaths::ToPhysical(filePath));
     if (json.empty()) {
         Log("Failed to load translation file: " + filePath, LogSeverity::Error);
         return false;

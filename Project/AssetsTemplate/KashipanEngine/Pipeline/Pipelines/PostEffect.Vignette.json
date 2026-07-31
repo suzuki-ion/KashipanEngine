@@ -1,0 +1,16 @@
+﻿{
+    "PipelineType": "Render",
+    "Name": "PostEffect.Vignette",
+    "Shader": {
+        "AutoTopologyFromShaders": true,
+        "AutoInputLayoutFromVS": true,
+        "AutoRTCountFromPS": true,
+        "AutoRootDescriptorFromShader": true,
+        "Vertex": { "UsePreset": "Vignette.Vertex" },
+        "Pixel": { "UsePreset": "Vignette.Pixel" }
+    },
+    "RasterizerState": { "UsePreset": "Solid" },
+    "BlendState": { "UsePreset": "Normal" },
+    "DepthStencilState": { "UsePreset": "DepthDisable" },
+    "PipelineState": { "UsePreset": "Triangle" }
+}

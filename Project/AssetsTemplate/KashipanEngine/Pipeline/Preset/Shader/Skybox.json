@@ -1,0 +1,19 @@
+{
+    "BaseName": "Skybox",
+    "Vertex": {
+        "Path": "Skybox/SkyboxVS.hlsl",
+        "EntryPoint": "main",
+        "TargetProfile": "vs_6_0",
+        "Macros": [
+            { "Name": "Skybox" }
+        ]
+    },
+    "Pixel": {
+        "Path": "Skybox/SkyboxPS.hlsl",
+        "EntryPoint": "main",
+        "TargetProfile": "ps_6_0",
+        "Macros": [
+            { "Name": "Skybox" }
+        ]
+    }
+}

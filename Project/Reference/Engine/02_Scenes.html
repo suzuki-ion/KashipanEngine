@@ -145,7 +145,7 @@ bool IsSceneRegistered(const std::string &amp;sceneName) const;</div>
 
 <div class="api-card">
 <h4>シーンリスト定義ファイル（SceneList.json）</h4>
-<div class="api-sig">static constexpr const char *kDefaultSceneListFilePath = "Assets/KashipanEngine/SceneList.json";
+<div class="api-sig">static constexpr const char *kDefaultSceneListFilePath = "Assets/SceneList.json";
 
 bool LoadSceneList(const std::string &amp;filePath = kDefaultSceneListFilePath);
 bool SaveSceneList(const std::string &amp;filePath = kDefaultSceneListFilePath) const;
@@ -154,7 +154,7 @@ const std::string &amp;GetStartupSceneName() const;
 void SetStartupSceneName(const std::string &amp;sceneName);
 bool ChangeToStartupScene();</div>
 <p>
-<code>Assets/KashipanEngine/SceneList.json</code> には登録されているシーンの一覧と起動時に切り替えるシーン名（<code>startupScene</code>）が記載されます。実例:
+<code>Assets/SceneList.json</code> には登録されているシーンの一覧と起動時に切り替えるシーン名（<code>startupScene</code>）が記載されます。実例:
 </p>
 <pre><code>{
     "scenes": [

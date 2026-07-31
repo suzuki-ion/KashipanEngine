@@ -81,9 +81,23 @@ public:
     /// @brief ゲームループの終了要求を取り下げる（エディターが要求を消費する際にも使用する）
     static void ClearExitGameLoopRequest() noexcept { sIsExitGameLoopRequested = false; }
 
+    //==================================================
+    // アプリケーション自体の終了要求
+    //==================================================
+    // RequestExitGameLoop はエディタービルドでは再生停止として消費されるため、
+    // 「エディターごと終了させたい」場合はこちらを使う。
+    // プロジェクトの切り替えのように、後始末を済ませてから終了したい処理から呼ぶ。
+
+    /// @brief アプリケーション自体の終了を要求する（エディタービルドでもエディターが閉じる）
+    static void RequestQuit() noexcept { sIsQuitRequested = true; }
+    /// @brief アプリケーションの終了要求が出ているかを取得する
+    static bool IsQuitRequested() noexcept { return sIsQuitRequested; }
+
 private:
     /// @brief ゲームループの終了要求フラグ
     static inline bool sIsExitGameLoopRequested = false;
+    /// @brief アプリケーション自体の終了要求フラグ
+    static inline bool sIsQuitRequested = false;
 
     /// @brief ゲームループ更新処理
     void GameLoopUpdate();

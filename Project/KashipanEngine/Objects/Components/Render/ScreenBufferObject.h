@@ -6,6 +6,7 @@
 #include <string>
 
 #include "Objects/ObjectComponentHeader.h"
+#include "Core/ProjectPaths.h"
 #include "Graphics/ScreenBuffer.h"
 #include "Scene/RenderTargetCarryOverRegistry.h"
 
@@ -256,7 +257,8 @@ private:
         char timestamp[32]{};
         std::strftime(timestamp, sizeof(timestamp), "%Y%m%d_%H%M%S", &tm);
 
-        std::string directory = saveDirectory_.empty() ? "." : saveDirectory_;
+        // 保存先はプロジェクトルート基準の論理パスで保持しているため、ここで物理パスへ変換する
+        std::string directory = ProjectPaths::ToPhysical(saveDirectory_.empty() ? "Screenshots" : saveDirectory_);
         std::string prefix = saveFileNamePrefix_.empty() ? "Screenshot" : saveFileNamePrefix_;
         std::string ext = saveFormat_.empty() ? "png" : saveFormat_;
         return directory + "/" + prefix + "_" + timestamp + "." + ext;

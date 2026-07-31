@@ -18,6 +18,7 @@ class SceneSaver;
 class SceneLoader;
 class SceneListEditor;
 class EditorPreferences;
+class ProjectWindow;
 
 class SceneEditor final {
 public:
@@ -56,6 +57,7 @@ private:
     std::unique_ptr<SceneLoader> loader_;
     std::unique_ptr<SceneListEditor> sceneListEditor_;
     std::unique_ptr<EditorPreferences> preferences_;
+    std::unique_ptr<ProjectWindow> projectWindow_;
 
     bool isShowSceneView_ = true;
     bool isShowHierarchy_ = true;
@@ -66,6 +68,7 @@ private:
     bool isShowSceneList_ = true;
     bool isShowHistory_ = true;
     bool isShowPreferences_ = false;
+    bool isShowProjectWindow_ = false;
 
     // デバッグ用ウィンドウ表示フラグ（旧ImGuiManagerから移設）
     bool isShowLoadedTexturesWindow_ = false;

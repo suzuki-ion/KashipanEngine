@@ -17,6 +17,20 @@ constexpr const char *kComponentDragDropType = "DND_COMPONENT";
 struct ComponentDragDropPayload {
     IObjectComponent *component = nullptr;
 };
+
+/// @brief 現在のWindowBgより少し暗い色を返す（コンポーネントごとのカード背景用）
+/// @details 乗算ではなく減算で暗くする。Darkテーマ（WindowBgが黒に近い）で乗算すると
+///          ほぼ変化が無く、Lightテーマ（WindowBgが白に近い）では逆に暗くなりすぎるため、
+///          テーマの明暗によらず同じ量だけ暗くなる減算方式にしている
+ImVec4 ComponentCardBackgroundColor() {
+    constexpr float kDarkenAmount = 0.05f;
+    const ImVec4 windowBg = ImGui::GetStyleColorVec4(ImGuiCol_WindowBg);
+    return ImVec4(
+        std::max(0.0f, windowBg.x - kDarkenAmount),
+        std::max(0.0f, windowBg.y - kDarkenAmount),
+        std::max(0.0f, windowBg.z - kDarkenAmount),
+        windowBg.w);
+}
 } // namespace
 
 void SceneObjectInspector::ShowImGui() {
@@ -89,6 +103,8 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
     for (IObjectComponent *comp : GetOrderedComponents(obj)) {
         ImGui::PushID(id);
         ImGui::Separator();
+        ImGui::Spacing();
+
         bool componentActive = comp->IsActive();
         if (ImGui::Checkbox("##Active", &componentActive)) {
             comp->SetActive(componentActive);
@@ -106,18 +122,33 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
                 }
                 ImGui::EndPopup();
             }
+
             // パラメータ変更をUndo履歴へ積むため、表示前後の状態を比較する
             JSON before = obj->SaveComponentToJson(comp);
-            // タグ（分類・判別用の任意文字列。before/afterの間で編集することでUndo対象になる）
+            // タグ（分類・判別用の任意文字列。before/afterの間で編集することでUndo対象になる）。
+            // コンポーネント固有の内容とは異なり、子ウィンドウ（カード）には含めない
             std::string componentTag = comp->GetTagName();
             if (ImGui::InputText(TranslationLabel("editor.component.tag"), &componentTag)) {
                 comp->SetTag(componentTag);
             }
+            // 共通のタグ欄と、コンポーネント固有の内容との境目を分かりやすくする
+            ImGui::Separator();
+
+            // コンポーネントの中身だけを、通常の背景より少し暗いカード状の矩形で囲み、
+            // 選択状態の色（ImGuiCol_Header系）と紛らわしくならないようにしつつ区切りを分かりやすくする。
+            // 角丸は固定値ではなく、環境設定の詳細スタイル（editorUI.style.childRounding）に従う
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, ComponentCardBackgroundColor());
+            ImGui::BeginChild("##ComponentCard", ImVec2(0.0f, 0.0f),
+                ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding);
             obj->ShowComponentImGui(comp);
+            ImGui::EndChild();
+            ImGui::PopStyleColor();
+
             JSON after = obj->SaveComponentToJson(comp);
             if (before != after) {
                 TrackComponentEdit(obj, comp, before, after);
             }
+
             ImGui::TreePop();
         }
         ImGui::PopID();
@@ -293,6 +324,8 @@ void SceneObjectInspector::ShowMultiObjectInspector(EmptyObject *primary, const 
 
         ImGui::PushID(id);
         ImGui::Separator();
+        ImGui::Spacing();
+
         bool componentActive = comp->IsActive();
         if (ImGui::Checkbox("##Active", &componentActive)) {
             comp->SetActive(componentActive);
@@ -314,19 +347,33 @@ void SceneObjectInspector::ShowMultiObjectInspector(EmptyObject *primary, const 
                 }
                 ImGui::EndPopup();
             }
+
             // パラメータ変更をUndo履歴へ積むため、表示前後の状態を比較する
             JSON before = primary->SaveComponentToJson(comp);
+            // タグ（分類・判別用の任意文字列）。コンポーネント固有の内容とは異なり、子ウィンドウ（カード）には含めない
             std::string componentTag = comp->GetTagName();
             if (ImGui::InputText(TranslationLabel("editor.component.tag"), &componentTag)) {
                 comp->SetTag(componentTag);
             }
+            // 共通のタグ欄と、コンポーネント固有の内容との境目を分かりやすくする
+            ImGui::Separator();
+
+            // コンポーネントの中身だけを、通常の背景より少し暗いカード状の矩形で囲む（単一選択時と同じ見た目）。
+            // 角丸は固定値ではなく、環境設定の詳細スタイル（editorUI.style.childRounding）に従う
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, ComponentCardBackgroundColor());
+            ImGui::BeginChild("##ComponentCard", ImVec2(0.0f, 0.0f),
+                ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding);
             primary->ShowComponentImGui(comp);
+            ImGui::EndChild();
+            ImGui::PopStyleColor();
+
             JSON after = primary->SaveComponentToJson(comp);
             if (before != after) {
                 // 先にTrackComponentEditで対象の「変更前」状態を控えてから、差分を適用する
                 TrackComponentEdit(primary, comp, before, after, counterparts);
                 ApplyEditToCounterparts(before, after, counterparts);
             }
+
             ImGui::TreePop();
         }
         ImGui::PopID();

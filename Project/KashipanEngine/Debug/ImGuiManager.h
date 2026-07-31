@@ -37,6 +37,10 @@ public:
     ///          このハンドルのウィンドウ宛のメッセージのみ転送する。
     static HWND GetMainWindowHwnd() noexcept { return sMainHwnd_; }
 
+    /// @brief メインDockSpaceのノードを削除し、次フレームの開始時に既定のドッキング配置を
+    ///        再構築させる（エディター環境設定の「レイアウトを既定に戻す」から呼ばれる）
+    static void ResetDockLayoutToDefault();
+
 private:
     void InitializeInternal();
     void ShutdownInternal();
@@ -54,8 +58,8 @@ private:
     void ApplyEditorPreferencesIfChanged();
     /// @brief フォントアトラスを作り直す（fontPathが空の場合は現在の言語のデフォルトフォントを使う）
     void RebuildFontAtlas(const std::string &fontPath);
-    /// @brief スタイル（配色・全体スケール）を素の状態から再構築する
-    void ReapplyStyle(float uiScale, const JSON &colorsJson);
+    /// @brief スタイル（配色・角丸/余白等の詳細設定・全体スケール）を素の状態から再構築する
+    void ReapplyStyle(float uiScale, const JSON &colorsJson, const JSON &styleJson);
 
     static inline HWND sMainHwnd_ = nullptr;
 
@@ -69,8 +73,10 @@ private:
 
     // 直近で適用済みの値（EditorSettingsとの差分検知用）
     std::string appliedFontPath_;
+    std::string appliedLanguage_;
     float appliedUIScale_ = 1.0f;
     JSON appliedColors_;
+    JSON appliedStyle_;
 };
 
 } // namespace KashipanEngine

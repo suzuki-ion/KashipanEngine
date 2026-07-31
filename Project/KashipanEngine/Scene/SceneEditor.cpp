@@ -12,6 +12,7 @@
 #include "Input/Input.h"
 #include "Input/InputCommand.h"
 #include "Scene/Editor/AssetsWindow.h"
+#include "Scene/Editor/EditorKeyBindings.h"
 #include "Scene/Editor/EditorPreferences.h"
 #include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/PrefabAssetManager.h"
@@ -201,7 +202,8 @@ void SceneEditor::ShowMainWindow() {
                 isNewSceneRequested_ = true;
                 newSceneName_ = "New Scene";
             }
-            if (ImGui::MenuItem(TranslationLabel("editor.menu.file.savescene"), "Ctrl+S")) {
+            const std::string saveSceneShortcut = EditorKeyBindings::ToDisplayString(EditorKeyBindings::Get("SaveScene", ImGuiMod_Ctrl | ImGuiKey_S));
+            if (ImGui::MenuItem(TranslationLabel("editor.menu.file.savescene"), saveSceneShortcut.c_str())) {
                 saver_->Open();
             }
             if (ImGui::MenuItem(TranslationLabel("editor.menu.file.loadscene"))) {
@@ -216,10 +218,12 @@ void SceneEditor::ShowMainWindow() {
         if (ImGui::BeginMenu(TranslationLabel("editor.menu.edit"))) {
             const std::string undoLabel = Translation("editor.menu.edit.undo") + (commands_->CanUndo() ? (" " + commands_->GetUndoName()) : "");
             const std::string redoLabel = Translation("editor.menu.edit.redo") + (commands_->CanRedo() ? (" " + commands_->GetRedoName()) : "");
-            if (ImGui::MenuItem(undoLabel.c_str(), "Ctrl+Z", false, commands_->CanUndo())) {
+            const std::string undoShortcut = EditorKeyBindings::ToDisplayString(EditorKeyBindings::Get("Undo", ImGuiMod_Ctrl | ImGuiKey_Z));
+            const std::string redoShortcut = EditorKeyBindings::ToDisplayString(EditorKeyBindings::Get("Redo", ImGuiMod_Ctrl | ImGuiKey_Y));
+            if (ImGui::MenuItem(undoLabel.c_str(), undoShortcut.c_str(), false, commands_->CanUndo())) {
                 PerformUndo();
             }
-            if (ImGui::MenuItem(redoLabel.c_str(), "Ctrl+Y", false, commands_->CanRedo())) {
+            if (ImGui::MenuItem(redoLabel.c_str(), redoShortcut.c_str(), false, commands_->CanRedo())) {
                 PerformRedo();
             }
             ImGui::Separator();
@@ -420,13 +424,13 @@ bool SceneEditor::ShowNewSceneModal() {
 
 void SceneEditor::HandleShortcuts() {
     if (ImGui::GetIO().WantTextInput) return;
-    if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_Z)) {
+    if (ImGui::IsKeyChordPressed(EditorKeyBindings::Get("Undo", ImGuiMod_Ctrl | ImGuiKey_Z))) {
         PerformUndo();
     }
-    if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_Y)) {
+    if (ImGui::IsKeyChordPressed(EditorKeyBindings::Get("Redo", ImGuiMod_Ctrl | ImGuiKey_Y))) {
         PerformRedo();
     }
-    if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_S)) {
+    if (ImGui::IsKeyChordPressed(EditorKeyBindings::Get("SaveScene", ImGuiMod_Ctrl | ImGuiKey_S))) {
         saver_->Open();
     }
 }

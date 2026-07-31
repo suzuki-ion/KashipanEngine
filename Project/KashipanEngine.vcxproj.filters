@@ -750,6 +750,7 @@
     <ClCompile Include="KashipanEngine\Scene\Editor\PrefabRegisteredSceneSync.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneListEditor.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\EditorPreferences.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\EditorKeyBindings.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneLoder.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectInspector.cpp" />
@@ -1902,6 +1903,7 @@
     <ClInclude Include="KashipanEngine\Scene\Editor\PrefabSceneSync.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneListEditor.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\EditorPreferences.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\EditorKeyBindings.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneLoder.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectHierarchy.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectInspector.h" />

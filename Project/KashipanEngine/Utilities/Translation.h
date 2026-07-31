@@ -13,6 +13,13 @@ constexpr const char *kGlobalLocalesFolderName = "Locales";
 /// @details エディターから新しい言語を保存する際の既定の保存先に使う。
 constexpr const char *kProjectLocalesFolderName = "Locales";
 
+/// @brief キー単位のフォールバック先言語コード
+/// @details 指定した言語自体が未読込の場合、またはその言語にはまだ存在しないキーを
+///          引いた場合に、この言語の翻訳を代わりに使う。エンジンの翻訳は全キーが
+///          英語にも揃っているため、翻訳が追いついていない言語やアプリ側が追加した
+///          ばかりのキーでも、生のキー文字列が画面に出ることを防げる。
+constexpr const char *kFallbackLanguageCode = "en-US";
+
 /// @brief 翻訳がどの層に属するか
 enum class TranslationLayer {
     /// @brief エンジン共通。全プロジェクトで共有され、エディターからは編集できない

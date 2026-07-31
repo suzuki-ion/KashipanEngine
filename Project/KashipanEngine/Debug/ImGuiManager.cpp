@@ -72,6 +72,40 @@ void BuildDefaultDockLayout(ImGuiID dockSpaceId, const ImVec2 &dockSpaceSize) {
     ImGui::DockBuilderFinish(dockSpaceId);
 }
 
+/// @brief ImGuiStyleの数値項目（角丸・境界線太さ・余白等）へJSONの値を適用する
+/// @details キーが存在しない項目はbaseline（引数のstyle自身が持つ値、通常はImGuiStyle()の既定値）を
+///          そのまま維持する。ScaleAllSizesを掛ける前の素の値として扱うこと
+void ApplyStyleOverrides(ImGuiStyle &style, const JSON &styleJson) {
+    if (!styleJson.is_object()) return;
+    auto applyFloat = [&](const char *key, float &target) {
+        auto it = styleJson.find(key);
+        if (it != styleJson.end() && it->is_number()) target = it->get<float>();
+    };
+    applyFloat("windowRounding", style.WindowRounding);
+    applyFloat("childRounding", style.ChildRounding);
+    applyFloat("frameRounding", style.FrameRounding);
+    applyFloat("popupRounding", style.PopupRounding);
+    applyFloat("scrollbarRounding", style.ScrollbarRounding);
+    applyFloat("grabRounding", style.GrabRounding);
+    applyFloat("tabRounding", style.TabRounding);
+    applyFloat("windowBorderSize", style.WindowBorderSize);
+    applyFloat("childBorderSize", style.ChildBorderSize);
+    applyFloat("frameBorderSize", style.FrameBorderSize);
+    applyFloat("popupBorderSize", style.PopupBorderSize);
+    applyFloat("tabBarBorderSize", style.TabBarBorderSize);
+    applyFloat("windowPaddingX", style.WindowPadding.x);
+    applyFloat("windowPaddingY", style.WindowPadding.y);
+    applyFloat("framePaddingX", style.FramePadding.x);
+    applyFloat("framePaddingY", style.FramePadding.y);
+    applyFloat("itemSpacingX", style.ItemSpacing.x);
+    applyFloat("itemSpacingY", style.ItemSpacing.y);
+    applyFloat("itemInnerSpacingX", style.ItemInnerSpacing.x);
+    applyFloat("itemInnerSpacingY", style.ItemInnerSpacing.y);
+    applyFloat("indentSpacing", style.IndentSpacing);
+    applyFloat("scrollbarSize", style.ScrollbarSize);
+    applyFloat("grabMinSize", style.GrabMinSize);
+}
+
 // ImGuiの内部テクスチャ（フォントアトラス等）用SRVディスクリプタの割り当て先ヒープ。
 // Dear ImGui 1.92以降はフォントのグリフを実際に描画された時点で遅延読み込みするため、
 // 未表示だった文字（例: スクロールで初めて見えたログの日本語文字）が新たに描画される度に
@@ -132,11 +166,15 @@ void ImGuiManager::InitializeInternal() {
     // エディターUI設定（UserSettings）を初期適用する（フォント・スケール・配色）
     // これらはプロジェクトごとではなく全プロジェクト共有の個人設定として扱う。
     // ImGuiManagerがUserSettingsを直接読みに行く（SceneEditor側からの受け渡しはしない）
+    // 表示言語はKashipanEngine::Execute()がUserSettingsの保存値をこの時点より前に
+    // 適用済み（未設定ならOS既定のまま）。ここでは現在値をそのまま基準として記録するだけでよい
+    appliedLanguage_ = GetCurrentLanguage();
     appliedFontPath_ = UserSettings::GetString("editorUI.fontPath", "");
     RebuildFontAtlas(appliedFontPath_);
     appliedUIScale_ = UserSettings::GetFloat("editorUI.uiScale", 1.0f);
     appliedColors_ = UserSettings::GetJSON("editorUI.colors", JSON());
-    ReapplyStyle(appliedUIScale_, appliedColors_);
+    appliedStyle_ = UserSettings::GetJSON("editorUI.style", JSON::object());
+    ReapplyStyle(appliedUIScale_, appliedColors_, appliedStyle_);
     io.FontGlobalScale = std::max(0.1f, UserSettings::GetFloat("editorUI.fontScale", 1.0f));
 
     isInitialized_ = true;
@@ -168,7 +206,7 @@ void ImGuiManager::RebuildFontAtlas(const std::string &fontPath) {
     io.FontDefault = font;
 }
 
-void ImGuiManager::ReapplyStyle(float uiScale, const JSON &colorsJson) {
+void ImGuiManager::ReapplyStyle(float uiScale, const JSON &colorsJson, const JSON &styleJson) {
     ImGuiStyle &style = ImGui::GetStyle();
     // サイズ・配色を素の状態（スケール1.0相当）へ戻してから組み立て直す。
     // ScaleAllSizesは呼ぶたびに現在値へ倍率をかける累積処理のため、都度リセットしないと
@@ -186,6 +224,9 @@ void ImGuiManager::ReapplyStyle(float uiScale, const JSON &colorsJson) {
         ImGui::StyleColorsDark(&style);
     }
 
+    // 角丸・境界線太さ・余白等の詳細設定（未指定の項目はImGuiStyle()の既定値のまま）
+    ApplyStyleOverrides(style, styleJson);
+
     const ImGuiIO &io = ImGui::GetIO();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
         style.WindowRounding = 0.0f;
@@ -200,20 +241,33 @@ void ImGuiManager::ApplyEditorPreferencesIfChanged() {
     ImGuiIO &io = ImGui::GetIO();
     io.FontGlobalScale = std::max(0.1f, UserSettings::GetFloat("editorUI.fontScale", 1.0f));
 
-    // フォント差し替えはアトラスの作り直しが必要なため、パスが変わった場合のみ行う
+    // フォント差し替えはアトラスの作り直しが必要なため、パスまたは表示言語が変わった場合のみ行う。
+    // fontPathが空（言語既定フォントを使用中）の場合、表示言語の切り替えだけではfontPath自体は
+    // 変化しないため、言語も別途比較しないとフォントが切り替わらない
     const std::string fontPath = UserSettings::GetString("editorUI.fontPath", "");
-    if (fontPath != appliedFontPath_) {
+    const std::string currentLanguage = GetCurrentLanguage();
+    if (fontPath != appliedFontPath_ || currentLanguage != appliedLanguage_) {
         RebuildFontAtlas(fontPath);
         appliedFontPath_ = fontPath;
+        appliedLanguage_ = currentLanguage;
     }
 
-    // 全体スケール・配色は変化した場合のみスタイルを再構築する
+    // 全体スケール・配色・詳細スタイルは変化した場合のみ再構築する
     const float uiScale = UserSettings::GetFloat("editorUI.uiScale", 1.0f);
     const JSON colors = UserSettings::GetJSON("editorUI.colors", JSON());
-    if (uiScale != appliedUIScale_ || colors != appliedColors_) {
-        ReapplyStyle(uiScale, colors);
+    const JSON styleOverrides = UserSettings::GetJSON("editorUI.style", JSON::object());
+    if (uiScale != appliedUIScale_ || colors != appliedColors_ || styleOverrides != appliedStyle_) {
+        ReapplyStyle(uiScale, colors, styleOverrides);
         appliedUIScale_ = uiScale;
         appliedColors_ = colors;
+        appliedStyle_ = styleOverrides;
+    }
+}
+
+void ImGuiManager::ResetDockLayoutToDefault() {
+    const ImGuiID dockSpaceId = ImHashStr(kMainDockSpaceName);
+    if (ImGui::DockBuilderGetNode(dockSpaceId) != nullptr) {
+        ImGui::DockBuilderRemoveNode(dockSpaceId);
     }
 }
 

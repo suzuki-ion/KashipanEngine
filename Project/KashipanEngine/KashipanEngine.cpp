@@ -6,6 +6,7 @@
 #include "Core/GameEngine.h"
 #include "Core/ProjectManager.h"
 #include "Core/ProjectPaths.h"
+#include "Core/UserSettings.h"
 
 #include "Utilities/Plugin/Plugins.h"
 #include "Utilities/Translation.h"
@@ -29,6 +30,15 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
     if (!ProjectManager::EnsureActiveProject({})) {
         assert(false && "Failed to open a project.");
         return -1;
+    }
+
+    //--------- 表示言語（個人設定）の適用 ---------//
+
+    // UserSettingsはProjectPaths::Initialize以降でないと保存先が正しく解決できないため、
+    // ここが最も早いタイミングになる。未設定（初回起動）の場合はOS既定の言語のままにする
+    const std::string savedLanguage = UserSettings::GetString("editorUI.language", "");
+    if (!savedLanguage.empty()) {
+        SetCurrentLanguage(savedLanguage);
     }
 
     //--------- 設定ファイル読み込み ---------//

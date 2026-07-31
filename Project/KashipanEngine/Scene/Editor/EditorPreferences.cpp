@@ -6,6 +6,8 @@
 
 #include "Core/ProjectPaths.h"
 #include "Core/UserSettings.h"
+#include "Debug/ImGuiManager.h"
+#include "Scene/Editor/EditorKeyBindings.h"
 #include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
 
@@ -133,6 +135,194 @@ void EditorPreferences::EnsureDefaultPresets() {
     }
 }
 
+void EditorPreferences::ShowStyleSection() {
+    if (!ImGui::TreeNode(TranslationLabel("editor.preferences.style"))) return;
+    ImGui::TextDisabled("%s", TranslationC("editor.preferences.style.description"));
+
+    // ScaleAllSizes適用前（uiScale=1.0相当）の素の既定値。UserSettingsに未保存の項目のフォールバックに使う
+    const ImGuiStyle defaultStyle{};
+    JSON styleJson = UserSettings::GetJSON("editorUI.style", JSON::object());
+    if (!styleJson.is_object()) styleJson = JSON::object();
+
+    bool changed = false;
+    auto slider = [&](const char *labelKey, const char *jsonKey, float defaultValue, float minValue, float maxValue) {
+        auto it = styleJson.find(jsonKey);
+        float value = (it != styleJson.end() && it->is_number()) ? it->get<float>() : defaultValue;
+        if (ImGui::SliderFloat(TranslationLabel(labelKey), &value, minValue, maxValue, "%.1f")) {
+            styleJson[jsonKey] = value;
+            changed = true;
+        }
+    };
+
+    ImGui::SeparatorText(TranslationLabel("editor.preferences.style.rounding"));
+    slider("editor.preferences.style.windowrounding", "windowRounding", defaultStyle.WindowRounding, 0.0f, 16.0f);
+    slider("editor.preferences.style.childrounding", "childRounding", defaultStyle.ChildRounding, 0.0f, 16.0f);
+    slider("editor.preferences.style.framerounding", "frameRounding", defaultStyle.FrameRounding, 0.0f, 16.0f);
+    slider("editor.preferences.style.popuprounding", "popupRounding", defaultStyle.PopupRounding, 0.0f, 16.0f);
+    slider("editor.preferences.style.scrollbarrounding", "scrollbarRounding", defaultStyle.ScrollbarRounding, 0.0f, 16.0f);
+    slider("editor.preferences.style.grabrounding", "grabRounding", defaultStyle.GrabRounding, 0.0f, 16.0f);
+    slider("editor.preferences.style.tabrounding", "tabRounding", defaultStyle.TabRounding, 0.0f, 16.0f);
+
+    ImGui::SeparatorText(TranslationLabel("editor.preferences.style.bordersize"));
+    slider("editor.preferences.style.windowbordersize", "windowBorderSize", defaultStyle.WindowBorderSize, 0.0f, 4.0f);
+    slider("editor.preferences.style.childbordersize", "childBorderSize", defaultStyle.ChildBorderSize, 0.0f, 4.0f);
+    slider("editor.preferences.style.framebordersize", "frameBorderSize", defaultStyle.FrameBorderSize, 0.0f, 4.0f);
+    slider("editor.preferences.style.popupbordersize", "popupBorderSize", defaultStyle.PopupBorderSize, 0.0f, 4.0f);
+    slider("editor.preferences.style.tabbarbordersize", "tabBarBorderSize", defaultStyle.TabBarBorderSize, 0.0f, 4.0f);
+
+    ImGui::SeparatorText(TranslationLabel("editor.preferences.style.spacing"));
+    slider("editor.preferences.style.windowpaddingx", "windowPaddingX", defaultStyle.WindowPadding.x, 0.0f, 40.0f);
+    slider("editor.preferences.style.windowpaddingy", "windowPaddingY", defaultStyle.WindowPadding.y, 0.0f, 40.0f);
+    slider("editor.preferences.style.framepaddingx", "framePaddingX", defaultStyle.FramePadding.x, 0.0f, 40.0f);
+    slider("editor.preferences.style.framepaddingy", "framePaddingY", defaultStyle.FramePadding.y, 0.0f, 40.0f);
+    slider("editor.preferences.style.itemspacingx", "itemSpacingX", defaultStyle.ItemSpacing.x, 0.0f, 40.0f);
+    slider("editor.preferences.style.itemspacingy", "itemSpacingY", defaultStyle.ItemSpacing.y, 0.0f, 40.0f);
+    slider("editor.preferences.style.iteminnerspacingx", "itemInnerSpacingX", defaultStyle.ItemInnerSpacing.x, 0.0f, 40.0f);
+    slider("editor.preferences.style.iteminnerspacingy", "itemInnerSpacingY", defaultStyle.ItemInnerSpacing.y, 0.0f, 40.0f);
+    slider("editor.preferences.style.indentspacing", "indentSpacing", defaultStyle.IndentSpacing, 0.0f, 40.0f);
+    slider("editor.preferences.style.scrollbarsize", "scrollbarSize", defaultStyle.ScrollbarSize, 1.0f, 40.0f);
+    slider("editor.preferences.style.grabminsize", "grabMinSize", defaultStyle.GrabMinSize, 1.0f, 40.0f);
+
+    if (changed) {
+        UserSettings::SetJSON("editorUI.style", styleJson);
+    }
+
+    ImGui::Spacing();
+    if (ImGui::Button(TranslationLabel("editor.preferences.style.reset"))) {
+        UserSettings::SetJSON("editorUI.style", JSON::object());
+    }
+
+    ImGui::TreePop();
+}
+
+void EditorPreferences::ShowKeyBindingRow(const char *labelKey, const std::string &action, ImGuiKeyChord defaultChord) {
+    ImGui::PushID(action.c_str());
+
+    ImGui::TextUnformatted(TranslationC(labelKey));
+    ImGui::SameLine(200.0f);
+
+    const bool isListening = (listeningKeyBindingAction_ == action);
+    const ImGuiKeyChord current = EditorKeyBindings::Get(action, defaultChord);
+    const std::string buttonLabel = isListening
+        ? Translation("editor.preferences.keybindings.pressany")
+        : EditorKeyBindings::ToDisplayString(current);
+    if (ImGui::Button(buttonLabel.c_str(), ImVec2(160.0f, 0.0f))) {
+        listeningKeyBindingAction_ = isListening ? std::string() : action;
+    }
+
+    if (isListening) {
+        if (ImGui::IsKeyPressed(ImGuiKey_Escape, false)) {
+            listeningKeyBindingAction_.clear();
+        } else {
+            const ImGuiKeyChord captured = EditorKeyBindings::CaptureChordThisFrame();
+            if (captured != ImGuiKey_None) {
+                EditorKeyBindings::Set(action, captured);
+                listeningKeyBindingAction_.clear();
+            }
+        }
+    }
+
+    ImGui::SameLine();
+    if (ImGui::SmallButton(TranslationLabel("editor.common.reset"))) {
+        EditorKeyBindings::Set(action, defaultChord);
+        if (isListening) listeningKeyBindingAction_.clear();
+    }
+
+    ImGui::PopID();
+}
+
+void EditorPreferences::ShowKeyBindingsSection() {
+    if (!ImGui::TreeNode(TranslationLabel("editor.preferences.keybindings"))) return;
+    ImGui::TextDisabled("%s", TranslationC("editor.preferences.keybindings.description"));
+
+    ShowKeyBindingRow("editor.menu.edit.undo", "Undo", ImGuiMod_Ctrl | ImGuiKey_Z);
+    ShowKeyBindingRow("editor.menu.edit.redo", "Redo", ImGuiMod_Ctrl | ImGuiKey_Y);
+    ShowKeyBindingRow("editor.menu.file.savescene", "SaveScene", ImGuiMod_Ctrl | ImGuiKey_S);
+
+    ImGui::Spacing();
+    if (ImGui::Button(TranslationLabel("editor.preferences.keybindings.resetall"))) {
+        EditorKeyBindings::ResetAll();
+        listeningKeyBindingAction_.clear();
+    }
+
+    ImGui::TreePop();
+}
+
+void EditorPreferences::ShowLayoutSection() {
+    if (!ImGui::TreeNode(TranslationLabel("editor.preferences.layout"))) return;
+    ImGui::TextDisabled("%s", TranslationC("editor.preferences.layout.description"));
+
+    const JSON layoutPresets = UserSettings::GetJSON("editorUI.layoutPresets", JSON::object());
+    if (ImGui::BeginTable("##LayoutPresets", 2, ImGuiTableFlags_SizingFixedFit)) {
+        for (auto it = layoutPresets.begin(); it != layoutPresets.end(); ++it) {
+            const bool isValidPreset = it.value().is_string();
+            ImGui::PushID(it.key().c_str());
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::BeginDisabled(!isValidPreset);
+            if (ImGui::Button(it.key().c_str()) && isValidPreset) {
+                const std::string &ini = it.value().get_ref<const std::string &>();
+                ImGui::LoadIniSettingsFromMemory(ini.c_str(), ini.size());
+            }
+            ImGui::EndDisabled();
+            ImGui::TableNextColumn();
+            if (ImGui::SmallButton(TranslationLabel("editor.common.delete"))) {
+                JSON updated = layoutPresets;
+                updated.erase(it.key());
+                UserSettings::SetJSON("editorUI.layoutPresets", updated);
+            }
+            ImGui::PopID();
+        }
+        ImGui::EndTable();
+    }
+
+    ImGui::SetNextItemWidth(200.0f);
+    ImGui::InputTextWithHint("##NewLayoutPresetName", TranslationC("editor.preferences.layout.name.hint"), &newLayoutPresetNameBuffer_);
+    ImGui::SameLine();
+    ImGui::BeginDisabled(newLayoutPresetNameBuffer_.empty());
+    if (ImGui::Button(TranslationLabel("editor.preferences.layout.save"))) {
+        size_t iniSize = 0;
+        const char *iniData = ImGui::SaveIniSettingsToMemory(&iniSize);
+        JSON updated = layoutPresets;
+        updated[newLayoutPresetNameBuffer_] = std::string(iniData, iniSize);
+        UserSettings::SetJSON("editorUI.layoutPresets", updated);
+        newLayoutPresetNameBuffer_.clear();
+    }
+    ImGui::EndDisabled();
+    ImGui::SetItemTooltip("%s", TranslationC("editor.preferences.layout.save.tooltip"));
+
+    ImGui::Spacing();
+    if (ImGui::Button(TranslationLabel("editor.preferences.layout.resetdefault"))) {
+        ImGuiManager::ResetDockLayoutToDefault();
+    }
+    ImGui::SetItemTooltip("%s", TranslationC("editor.preferences.layout.resetdefault.tooltip"));
+
+    ImGui::TreePop();
+}
+
+void EditorPreferences::ShowLanguageSection() {
+    ImGui::SeparatorText(TranslationLabel("editor.preferences.language"));
+
+    const std::vector<std::string> languages = GetLoadedLanguages();
+    const std::string &currentLanguage = GetCurrentLanguage();
+
+    ImGui::SetNextItemWidth(200.0f);
+    if (ImGui::BeginCombo(TranslationLabel("editor.preferences.language.select"), GetLanguageDisplayName(currentLanguage).c_str())) {
+        for (const auto &lang : languages) {
+            const bool selected = (lang == currentLanguage);
+            ImGui::PushID(lang.c_str());
+            if (ImGui::Selectable(GetLanguageDisplayName(lang).c_str(), selected) && !selected) {
+                SetCurrentLanguage(lang);
+                UserSettings::SetString("editorUI.language", lang);
+            }
+            if (selected) ImGui::SetItemDefaultFocus();
+            ImGui::PopID();
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::SetItemTooltip("%s", TranslationC("editor.preferences.language.tooltip"));
+}
+
 void EditorPreferences::ShowImGui() {
     if (!ImGui::Begin(TranslationLabel("editor.preferences.window"))) {
         ImGui::End();
@@ -140,6 +330,9 @@ void EditorPreferences::ShowImGui() {
     }
 
     ImGui::TextDisabled("%s", TranslationC("editor.preferences.description"));
+
+    //--------- 表示言語 ---------//
+    ShowLanguageSection();
 
     //--------- 表示倍率 ---------//
     ImGui::SeparatorText(TranslationLabel("editor.preferences.displayscale"));
@@ -239,6 +432,15 @@ void EditorPreferences::ShowImGui() {
         ImGui::TreePop();
     }
 
+    //--------- 詳細スタイル（角丸・境界線太さ・余白等） ---------//
+    ShowStyleSection();
+
+    //--------- キーバインド ---------//
+    ShowKeyBindingsSection();
+
+    //--------- ドッキングレイアウト ---------//
+    ShowLayoutSection();
+
     ImGui::Spacing();
     if (ImGui::Button(TranslationLabel("editor.preferences.resetall"))) {
         UserSettings::SetFloat("editorUI.fontScale", 1.0f);
@@ -247,6 +449,7 @@ void EditorPreferences::ShowImGui() {
         ImGuiStyle temp;
         ImGui::StyleColorsDark(&temp);
         UserSettings::SetJSON("editorUI.colors", ColorsToJSON(temp.Colors));
+        UserSettings::SetJSON("editorUI.style", JSON::object());
     }
 
     ImGui::End();

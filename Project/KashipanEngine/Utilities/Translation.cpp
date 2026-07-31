@@ -245,21 +245,29 @@ bool SaveProjectTranslationFile(const std::string &lang) {
 }
 
 const std::string &GetTranslationText(const std::string &lang, const std::string &key) {
-    std::string useLang = lang;
     auto langIt = sLanguageData.find(lang);
-    if (langIt == sLanguageData.end()) {
-        useLang = "en-US";
-        langIt = sLanguageData.find(useLang);
-        if (langIt == sLanguageData.end()) {
-            return key;
+    if (langIt != sLanguageData.end()) {
+        const auto &translations = langIt->second.translations;
+        auto transIt = translations.find(key);
+        if (transIt != translations.end()) {
+            return transIt->second;
         }
     }
-    const auto &translations = langIt->second.translations;
-    auto transIt = translations.find(key);
-    if (transIt == translations.end()) {
-        return key;
+    // 指定言語自体が未読込、またはそのキーがまだ翻訳されていない場合は英語へフォールバックする。
+    // 翻訳が追いついていない言語や、アプリ側が追加したばかりで一部の言語にしか
+    // 存在しないキーでも、生のキー文字列がそのまま画面に出るのを防ぐ。
+    if (lang != kFallbackLanguageCode) {
+        auto fallbackIt = sLanguageData.find(kFallbackLanguageCode);
+        if (fallbackIt != sLanguageData.end()) {
+            const auto &fallbackTranslations = fallbackIt->second.translations;
+            auto fallbackTransIt = fallbackTranslations.find(key);
+            if (fallbackTransIt != fallbackTranslations.end()) {
+                return fallbackTransIt->second;
+            }
+        }
     }
-    return transIt->second;
+    // 英語にも無い場合の最後の手段。呼び出し側でキーの入力ミスなどに気づけるようにする
+    return key;
 }
 
 const std::string &GetTranslationText(const std::string &key) {
@@ -298,18 +306,21 @@ void SetCurrentLanguage(const std::string &lang) {
 }
 
 const std::string &GetCurrentLanguageFontPath() {
+    static const std::string kEmpty;
     const std::string &lang = sLanguage.Get();
     auto langIt = sLanguageData.find(lang);
-    if (langIt == sLanguageData.end()) {
-        auto enIt = sLanguageData.find("en-US");
-        if (enIt != sLanguageData.end()) {
-            return enIt->second.fontPath;
-        } else {
-            static const std::string emptyStr = "";
-            return emptyStr;
+    if (langIt != sLanguageData.end() && !langIt->second.fontPath.empty()) {
+        return langIt->second.fontPath;
+    }
+    // 現在の言語が未読込、またはフォントパス未設定（プロジェクト側のファイルのみ読み込んだ場合）は
+    // 英語のフォント設定へフォールバックする
+    if (lang != kFallbackLanguageCode) {
+        auto fallbackIt = sLanguageData.find(kFallbackLanguageCode);
+        if (fallbackIt != sLanguageData.end()) {
+            return fallbackIt->second.fontPath;
         }
     }
-    return langIt->second.fontPath;
+    return kEmpty;
 }
 
 } // namespace KashipanEngine

@@ -45,7 +45,7 @@ void SceneScriptEngine::Initialize() {
 
     engine_ = asCreateScriptEngine();
     if (!engine_) {
-        Log("AngelScript: asCreateScriptEngine に失敗しました", LogSeverity::Error);
+        Log(Translation("engine.script.failed.createengine"), LogSeverity::Error);
         return;
     }
     engine_->SetMessageCallback(asFUNCTION(MessageCallback), nullptr, asCALL_CDECL);
@@ -65,9 +65,9 @@ void SceneScriptEngine::Initialize() {
 
     // VSCodeのAngelScript Language Server用の型定義ファイルを生成する
     if (GenerateScriptPredefinedFile(engine_, ProjectPaths::InProjectRoot("as.predefined"))) {
-        Log("AngelScript: as.predefined を生成しました");
+        Log(Translation("engine.script.predefined.generated"));
     } else {
-        Log("AngelScript: as.predefined の生成に失敗しました", LogSeverity::Warning);
+        Log(Translation("engine.script.predefined.generate.failed"), LogSeverity::Warning);
     }
 }
 
@@ -100,10 +100,11 @@ void SceneScriptEngine::Finalize() {
 
 #if defined(USE_IMGUI)
 void SceneScriptEngine::ShowImGui() {
-    ImGui::Text("AngelScript Version: %d", ANGELSCRIPT_VERSION);
-    ImGui::Text("Engine: %s", engine_ ? "Initialized" : "Not Initialized");
+    ImGui::Text("%s%d", TranslationC("editor.scriptengine.version"), ANGELSCRIPT_VERSION);
+    ImGui::Text("%s%s", TranslationC("editor.scriptengine.engine"),
+        engine_ ? TranslationC("initialized") : TranslationC("editor.scriptengine.notinitialized"));
     if (engine_) {
-        ImGui::Text("Modules: %d", static_cast<int>(engine_->GetModuleCount()));
+        ImGui::Text("%s%d", TranslationC("editor.scriptengine.modules"), static_cast<int>(engine_->GetModuleCount()));
     }
 }
 #endif

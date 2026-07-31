@@ -8,6 +8,7 @@
 #include <reactphysics3d/reactphysics3d.h>
 #include <memory>
 #include <vector>
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -156,18 +157,18 @@ protected:
 
 #ifdef USE_IMGUI
     void ShowImGui() override {
-        ImGui::Text("RigidBody3D Component");
-        if (ImGui::CollapsingHeader("Settings")) {
-            if (ImGui::Combo("Body Type", reinterpret_cast<int *>(&bodyType_), "Static\0Kinematic\0Dynamic\0")) {
+        ImGui::Text("%s", TranslationC("component.rigidbody3d.rigidbody3d_component"));
+        if (ImGui::CollapsingHeader(TranslationLabel("component.rigidbody3d.settings"))) {
+            if (ImGui::Combo(TranslationLabel("component.rigidbody3d.body_type"), reinterpret_cast<int *>(&bodyType_), "Static\0Kinematic\0Dynamic\0")) {
                 SetBodyType(bodyType_);
             }
-            if (ImGui::SliderFloat("Mass", &mass_, 0.1f, 100.0f)) {
+            if (ImGui::SliderFloat(TranslationLabel("component.rigidbody3d.mass"), &mass_, 0.1f, 100.0f)) {
                 SetMass(mass_);
             }
-            if (ImGui::Checkbox("Use Gravity", &useGravity_)) {
+            if (ImGui::Checkbox(TranslationLabel("component.rigidbody3d.use_gravity"), &useGravity_)) {
                 SetUseGravity(useGravity_);
             }
-            if (ImGui::Checkbox("Interpolate", &interpolate_)) {
+            if (ImGui::Checkbox(TranslationLabel("component.rigidbody3d.interpolate"), &interpolate_)) {
                 SetInterpolate(interpolate_);
             }
         }
@@ -176,8 +177,8 @@ protected:
         const auto colliders = GetOwnerColliders();
         auto *current = GetSelectedCollider();
         const std::string preview = current ? current->GetComponentType() : "(Any)";
-        if (ImGui::BeginCombo("Collider Shape", preview.c_str())) {
-            if (ImGui::Selectable("(Any)", !current)) {
+        if (ImGui::BeginCombo(TranslationLabel("component.rigidbody3d.collider_shape"), preview.c_str())) {
+            if (ImGui::Selectable(TranslationLabel("component.rigidbody3d.any"), !current)) {
                 SetSelectedCollider(nullptr);
             }
             for (auto *collider : colliders) {

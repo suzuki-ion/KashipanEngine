@@ -22,6 +22,7 @@
 #include <algorithm>
 #ifdef USE_IMGUI
 #include <imgui.h>
+#include "Utilities/Translation.h"
 #endif
 
 namespace KashipanEngine {
@@ -685,7 +686,7 @@ void ShowImGuiLoggerWindow(Passkey<SceneEditor>) {
 
     constexpr float kBottomDetectionThreshold = 1.0f;
     const ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse;
-    if (!ImGui::Begin("Logger", nullptr, windowFlags)) {
+    if (!ImGui::Begin(TranslationLabel("editor.logger.window"), nullptr, windowFlags)) {
         ImGui::End();
         return;
     }

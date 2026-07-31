@@ -6,6 +6,7 @@
 #include "Objects/Components/ScriptComponent.h"
 #include "Objects/IObjectComponent.h"
 #include "Objects/ObjectContext.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -331,9 +332,9 @@ std::vector<ParameterBindingCandidate> CollectParameterBindingCandidatesForType(
 }
 
 void ShowParameterBindingListImGui(std::vector<ParameterBinding> &bindings, const std::vector<ParameterBindingCandidate> &candidates) {
-    ImGui::Text("Bindings (%d)", static_cast<int>(bindings.size()));
+    ImGui::Text(TranslationC("component.parameterbinding.bindings_d"), static_cast<int>(bindings.size()));
     ImGui::SameLine();
-    if (ImGui::SmallButton("Add Binding")) {
+    if (ImGui::SmallButton(TranslationLabel("component.parameterbinding.add_binding"))) {
         bindings.push_back(candidates.empty() ? ParameterBinding{} : candidates.front().binding);
     }
     if (ImGui::IsItemHovered()) {

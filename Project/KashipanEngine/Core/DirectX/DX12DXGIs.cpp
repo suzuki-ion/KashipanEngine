@@ -2,6 +2,7 @@
 #include "Utilities/Conversion/ConvertString.h"
 
 #include <stdexcept>
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

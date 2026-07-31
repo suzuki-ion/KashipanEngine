@@ -4,6 +4,7 @@
 
 #include "Graphics/Pipeline/EnumMaps.h"
 #include "Graphics/Pipeline/DefineMaps.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 namespace Pipeline::JsonParser {

@@ -4,6 +4,7 @@
 
 #include "Objects/ObjectComponentHeader.h"
 #include "Math/Vector4.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -139,55 +140,55 @@ protected:
     void ShowImGui() override {
         int t = static_cast<int>(type_);
         const char *items[] = { "Directional", "Point", "Spot", "Rect", "Sphere", "Disc", "Tube", "Box" };
-        if (ImGui::Combo("Type", &t, items, 8)) type_ = static_cast<Type>(t);
-        ImGui::ColorEdit4("Color", &color_.x);
-        ImGui::DragFloat("Intensity", &intensity_, 0.01f, 0.0f);
+        if (ImGui::Combo(TranslationLabel("component.light.type"), &t, items, 8)) type_ = static_cast<Type>(t);
+        ImGui::ColorEdit4(TranslationLabel("component.light.color"), &color_.x);
+        ImGui::DragFloat(TranslationLabel("component.light.intensity"), &intensity_, 0.01f, 0.0f);
         if (type_ == Type::Point) {
-            ImGui::DragFloat("Radius", &radius_, 0.1f, 0.0f, 1000.0f);
-            ImGui::DragFloat("Decay", &decay_, 0.01f, 0.0f, 10.0f);
+            ImGui::DragFloat(TranslationLabel("component.light.radius"), &radius_, 0.1f, 0.0f, 1000.0f);
+            ImGui::DragFloat(TranslationLabel("component.light.decay"), &decay_, 0.01f, 0.0f, 10.0f);
         } else if (type_ == Type::Spot) {
-            ImGui::DragFloat("Distance", &distance_, 0.1f, 0.0f, 1000.0f);
-            ImGui::DragFloat("Decay", &decay_, 0.01f, 0.0f, 10.0f);
-            ImGui::SliderAngle("Inner Angle", &innerAngle_, 0.0f, 90.0f);
-            ImGui::SliderAngle("Outer Angle", &outerAngle_, 0.0f, 90.0f);
+            ImGui::DragFloat(TranslationLabel("component.light.distance"), &distance_, 0.1f, 0.0f, 1000.0f);
+            ImGui::DragFloat(TranslationLabel("component.light.decay"), &decay_, 0.01f, 0.0f, 10.0f);
+            ImGui::SliderAngle(TranslationLabel("component.light.inner_angle"), &innerAngle_, 0.0f, 90.0f);
+            ImGui::SliderAngle(TranslationLabel("component.light.outer_angle"), &outerAngle_, 0.0f, 90.0f);
         } else if (type_ == Type::Sphere) {
-            ImGui::DragFloat("Radius (Range)", &radius_, 0.1f, 0.0f, 1000.0f);
-            ImGui::DragFloat("Source Radius", &sourceRadius_, 0.01f, 0.001f, 100.0f);
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("球の物理的な半径。鏡面ハイライトの広がりと半影のソフトさに影響する");
-            ImGui::DragFloat("Decay", &decay_, 0.01f, 0.0f, 10.0f);
+            ImGui::DragFloat(TranslationLabel("component.light.radius_range"), &radius_, 0.1f, 0.0f, 1000.0f);
+            ImGui::DragFloat(TranslationLabel("component.light.source_radius"), &sourceRadius_, 0.01f, 0.001f, 100.0f);
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("component.light.desc_1"));
+            ImGui::DragFloat(TranslationLabel("component.light.decay"), &decay_, 0.01f, 0.0f, 10.0f);
         } else if (type_ == Type::Tube) {
-            ImGui::DragFloat("Radius (Range)", &radius_, 0.1f, 0.0f, 1000.0f);
-            ImGui::DragFloat("Source Radius", &sourceRadius_, 0.01f, 0.001f, 100.0f);
-            ImGui::DragFloat("Source Length", &sourceLength_, 0.01f, 0.0f, 1000.0f);
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("チューブの長さ（Transformのローカル+X方向）");
-            ImGui::DragFloat("Decay", &decay_, 0.01f, 0.0f, 10.0f);
+            ImGui::DragFloat(TranslationLabel("component.light.radius_range"), &radius_, 0.1f, 0.0f, 1000.0f);
+            ImGui::DragFloat(TranslationLabel("component.light.source_radius"), &sourceRadius_, 0.01f, 0.001f, 100.0f);
+            ImGui::DragFloat(TranslationLabel("component.light.source_length"), &sourceLength_, 0.01f, 0.0f, 1000.0f);
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("component.light.transform_x"));
+            ImGui::DragFloat(TranslationLabel("component.light.decay"), &decay_, 0.01f, 0.0f, 10.0f);
         } else if (type_ == Type::Disc) {
-            ImGui::DragFloat("Distance (Range)", &distance_, 0.1f, 0.0f, 1000.0f);
-            ImGui::DragFloat("Source Radius", &sourceRadius_, 0.01f, 0.001f, 100.0f);
-            ImGui::DragFloat("Decay", &decay_, 0.01f, 0.0f, 10.0f);
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Transformの+Z方向が発光面の法線（片面発光）");
+            ImGui::DragFloat(TranslationLabel("component.light.distance_range"), &distance_, 0.1f, 0.0f, 1000.0f);
+            ImGui::DragFloat(TranslationLabel("component.light.source_radius"), &sourceRadius_, 0.01f, 0.001f, 100.0f);
+            ImGui::DragFloat(TranslationLabel("component.light.decay"), &decay_, 0.01f, 0.0f, 10.0f);
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("component.light.transform_z"));
         } else if (type_ == Type::Rect) {
-            ImGui::DragFloat("Distance (Range)", &distance_, 0.1f, 0.0f, 1000.0f);
-            ImGui::DragFloat("Source Width", &sourceWidth_, 0.01f, 0.001f, 100.0f);
-            ImGui::DragFloat("Source Height", &sourceHeight_, 0.01f, 0.001f, 100.0f);
-            ImGui::DragFloat("Decay", &decay_, 0.01f, 0.0f, 10.0f);
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Transformの+Z方向が発光面の法線（片面発光）。+Xが幅、+Yが高さ方向");
+            ImGui::DragFloat(TranslationLabel("component.light.distance_range"), &distance_, 0.1f, 0.0f, 1000.0f);
+            ImGui::DragFloat(TranslationLabel("component.light.source_width"), &sourceWidth_, 0.01f, 0.001f, 100.0f);
+            ImGui::DragFloat(TranslationLabel("component.light.source_height"), &sourceHeight_, 0.01f, 0.001f, 100.0f);
+            ImGui::DragFloat(TranslationLabel("component.light.decay"), &decay_, 0.01f, 0.0f, 10.0f);
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("component.light.transform_z_x_y"));
         } else if (type_ == Type::Box) {
-            ImGui::DragFloat("Radius (Range)", &radius_, 0.1f, 0.0f, 1000.0f);
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("ボックス表面からさらに届く減衰距離。ボックス内部・表面付近は減衰なし");
-            ImGui::DragFloat("Source Width", &sourceWidth_, 0.01f, 0.001f, 100.0f);
-            ImGui::DragFloat("Source Height", &sourceHeight_, 0.01f, 0.001f, 100.0f);
-            ImGui::DragFloat("Source Depth", &sourceDepth_, 0.01f, 0.001f, 100.0f);
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Transformのローカル+X/+Y/+Z方向の幅・高さ・奥行き（全方位発光する体積光源）");
-            ImGui::DragFloat("Decay", &decay_, 0.01f, 0.0f, 10.0f);
+            ImGui::DragFloat(TranslationLabel("component.light.radius_range"), &radius_, 0.1f, 0.0f, 1000.0f);
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("component.light.desc_2"));
+            ImGui::DragFloat(TranslationLabel("component.light.source_width"), &sourceWidth_, 0.01f, 0.001f, 100.0f);
+            ImGui::DragFloat(TranslationLabel("component.light.source_height"), &sourceHeight_, 0.01f, 0.001f, 100.0f);
+            ImGui::DragFloat(TranslationLabel("component.light.source_depth"), &sourceDepth_, 0.01f, 0.001f, 100.0f);
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("component.light.transform_x_y_z"));
+            ImGui::DragFloat(TranslationLabel("component.light.decay"), &decay_, 0.01f, 0.0f, 10.0f);
         }
 
-        ImGui::SeparatorText("Shadow");
-        ImGui::Checkbox("Cast Shadows", &castShadows_);
+        ImGui::SeparatorText(TranslationLabel("component.light.shadow"));
+        ImGui::Checkbox(TranslationLabel("component.light.cast_shadows"), &castShadows_);
         if (castShadows_) {
             // Shadow DistanceはDirectionalのカスケード適用範囲（Spot/Disc/RectはDistance、Point/Sphere/TubeはRadiusを使用する）
             if (type_ == Type::Directional) {
-                ImGui::DragFloat("Shadow Distance", &shadowDistance_, 1.0f, 1.0f, 10000.0f);
+                ImGui::DragFloat(TranslationLabel("component.light.shadow_distance"), &shadowDistance_, 1.0f, 1.0f, 10000.0f);
             }
             // 解像度は一般的な2のべき乗から選択する
             static const std::uint32_t kResolutions[] = { 512u, 1024u, 2048u, 4096u };
@@ -196,20 +197,20 @@ protected:
             for (int i = 0; i < 4; ++i) {
                 if (kResolutions[i] == shadowMapResolution_) { current = i; break; }
             }
-            if (ImGui::Combo("Shadow Resolution", &current, resolutionItems, 4)) {
+            if (ImGui::Combo(TranslationLabel("component.light.shadow_resolution"), &current, resolutionItems, 4)) {
                 shadowMapResolution_ = kResolutions[current];
             }
-            ImGui::DragFloat("Shadow Bias", &shadowBias_, 0.01f, 0.0f, 5.0f);
+            ImGui::DragFloat(TranslationLabel("component.light.shadow_bias"), &shadowBias_, 0.01f, 0.0f, 5.0f);
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("自動計算されるテクセル基準の深度バイアスへの倍率(既定1.0)。\n下げると影が近づく代わりにシャドウアクネが出やすく、上げると影が浮きやすくなる");
+                ImGui::SetTooltip("%s", TranslationC("component.light.desc_3"));
             }
             if (type_ == Type::Directional || type_ == Type::Point || type_ == Type::Spot) {
-                ImGui::DragFloat("Shadow Softness", &shadowSoftness_, 0.01f, 0.0f, 100.0f);
+                ImGui::DragFloat(TranslationLabel("component.light.shadow_softness"), &shadowSoftness_, 0.01f, 0.0f, 100.0f);
                 if (ImGui::IsItemHovered()) {
-                    ImGui::SetTooltip("光源サイズに応じた半影のソフト化（PCSS）に使うワールド単位の光源サイズ。\n0の場合は従来通りの硬い影になる");
+                    ImGui::SetTooltip("%s", TranslationC("component.light.pcss_n0"));
                 }
             } else {
-                ImGui::Text("Softness: %.3f (Source Radiusから自動算出)", GetEffectiveShadowSoftness());
+                ImGui::Text(TranslationC("component.light.softness_3f_source_radius"), GetEffectiveShadowSoftness());
             }
         }
     }

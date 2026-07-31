@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <d3d12shader.h>
 #include "Utilities/Conversion/ConvertString.h"
+#include "Utilities/Translation.h"
 
 #pragma comment(lib, "dxcompiler.lib")
 

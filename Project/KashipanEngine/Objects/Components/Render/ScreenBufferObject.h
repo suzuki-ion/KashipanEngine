@@ -3,12 +3,14 @@
 #include <chrono>
 #include <cstdint>
 #include <ctime>
+#include <random>
 #include <string>
 
 #include "Objects/ObjectComponentHeader.h"
 #include "Core/ProjectPaths.h"
 #include "Graphics/ScreenBuffer.h"
 #include "Scene/RenderTargetCarryOverRegistry.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -99,14 +101,14 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
-        if (ImGui::InputText("Name", &name_, ImGuiInputTextFlags_EnterReturnsTrue)) {
+        if (ImGui::InputText(TranslationLabel("component.screenbufferobject.name"), &name_, ImGuiInputTextFlags_EnterReturnsTrue)) {
             SetName(name_);
         }
         int w = static_cast<int>(width_);
         int h = static_cast<int>(height_);
         bool sizeChanged = false;
-        if (ImGuiCustom::EditValue("Width", w)) { w = std::max(1, w); sizeChanged = true; }
-        if (ImGuiCustom::EditValue("Height", h)) { h = std::max(1, h); sizeChanged = true; }
+        if (ImGuiCustom::EditValue(TranslationLabel("component.screenbufferobject.width"), w)) { w = std::max(1, w); sizeChanged = true; }
+        if (ImGuiCustom::EditValue(TranslationLabel("component.screenbufferobject.height"), h)) { h = std::max(1, h); sizeChanged = true; }
         if (sizeChanged) SetSize(static_cast<std::uint32_t>(w), static_cast<std::uint32_t>(h));
 
         // 描画内容確認用ビューアウィンドウ
@@ -114,20 +116,20 @@ protected:
             isShowViewer_ = !isShowViewer_;
         }
 
-        if (ImGui::TreeNode("Save to File")) {
-            ImGui::InputText("Directory", &saveDirectory_);
-            ImGui::InputText("File Name Prefix", &saveFileNamePrefix_);
+        if (ImGui::TreeNode(TranslationLabel("component.screenbufferobject.save_to_file"))) {
+            ImGui::InputText(TranslationLabel("component.screenbufferobject.directory"), &saveDirectory_);
+            ImGui::InputText(TranslationLabel("component.screenbufferobject.file_name_prefix"), &saveFileNamePrefix_);
             static const char *kFormats[] = { "png", "jpg", "bmp" };
             int formatIndex = 0;
             for (int i = 0; i < 3; ++i) {
                 if (saveFormat_ == kFormats[i]) { formatIndex = i; break; }
             }
-            if (ImGui::Combo("Format", &formatIndex, kFormats, 3)) {
+            if (ImGui::Combo(TranslationLabel("component.screenbufferobject.format"), &formatIndex, kFormats, 3)) {
                 saveFormat_ = kFormats[formatIndex];
             }
-            if (ImGui::Button("Save Screenshot")) {
+            if (ImGui::Button(TranslationLabel("component.screenbufferobject.save_screenshot"))) {
                 if (!RequestSave()) {
-                    Log("ScreenBufferObject: failed to save screenshot.", LogSeverity::Warning);
+                    Log(Translation("engine.screenbufferobject.screenshot.failed"), LogSeverity::Warning);
                 }
             }
             ImGui::TreePop();
@@ -146,11 +148,15 @@ protected:
 
         // タイトルの表示文字列にnameを含めているが、ImGuiはラベル全体をウィンドウIDとして
         // 使うため、名前変更のたびに別ウィンドウ扱いとなりフォーカスが奪われてしまう。
-        // "###"以降のみをID化することで、表示名は更新されつつウィンドウの同一性を保つ
+        // "###"以降のみをID化することで、表示名は更新されつつウィンドウの同一性を保つ。
+        // ID部分にはthisポインタではなくviewerId_（JSONへ永続化される固定値）を使う。
+        // Play停止時はシーンの全オブジェクトが一度破棄されてスナップショットから再生成され
+        // thisアドレスが変わるため、thisをIDに使うとImGuiに別ウィンドウと認識され
+        // ドッキング位置が失われてしまう
         const std::string windowTitle = "ScreenBuffer Viewer: " + name_ +
-            "###ScreenBufferViewer" + std::to_string(reinterpret_cast<std::uintptr_t>(this));
+            "###ScreenBufferViewer" + std::to_string(viewerId_);
         if (ImGui::Begin(windowTitle.c_str(), &isShowViewer_)) {
-            ImGui::Text("Size: %ux%u", buffer_->GetWidth(), buffer_->GetHeight());
+            ImGui::Text(TranslationC("component.screenbufferobject.size_ux_u"), buffer_->GetWidth(), buffer_->GetHeight());
 
             // GetSrvHandle()はこの呼び出し時点の読み取り面を返すが、このImGui表示は
             // Renderer::RenderFrame（今フレームのポストエフェクト適用）より前に呼ばれるため、
@@ -169,7 +175,7 @@ protected:
                 }
                 ImGui::Image(static_cast<ImTextureID>(srvHandle.ptr), drawSize);
             } else {
-                ImGui::TextUnformatted("SRV not ready.");
+                ImGui::TextUnformatted(TranslationC("component.screenbufferobject.srv_not_ready"));
             }
         }
         ImGui::End();
@@ -185,6 +191,7 @@ protected:
         json["saveDirectory"] = saveDirectory_;
         json["saveFileNamePrefix"] = saveFileNamePrefix_;
         json["saveFormat"] = saveFormat_;
+        json["viewerId"] = viewerId_;
         return json;
     }
 
@@ -196,6 +203,9 @@ protected:
         saveDirectory_ = json.value("saveDirectory", std::string("Screenshots"));
         saveFileNamePrefix_ = json.value("saveFileNamePrefix", std::string("Screenshot"));
         saveFormat_ = json.value("saveFormat", std::string("png"));
+        // Play停止時のスナップショット復元でも同じビューアウィンドウとして認識されるよう、
+        // 保存済みIDがあればそれを引き継ぐ（無ければ構築時に生成された既定値のまま）
+        viewerId_ = json.value("viewerId", viewerId_);
 
         // シーン切り替え中、前のシーンで同名のScreenBufferObjectが使用していたバッファが
         // 引き継ぎプールに残っていれば、新規作成せずそちらを再利用する
@@ -264,12 +274,20 @@ private:
         return directory + "/" + prefix + "_" + timestamp + "." + ext;
     }
 
+    /// @brief ビューアウィンドウのImGui ID用に一意な値を生成する
+    static std::uint64_t GenerateViewerId() {
+        static std::mt19937_64 rng{std::random_device{}()};
+        return rng();
+    }
+
     ScreenBuffer *buffer_ = nullptr;
     std::string name_;
     std::uint32_t width_ = 1280;
     std::uint32_t height_ = 720;
     /// @brief ビューアウィンドウ表示フラグ（シリアライズされ、再起動後も維持される）
     bool isShowViewer_ = false;
+    /// @brief ビューアウィンドウのImGui ID固定用（シリアライズされ、再起動後も維持される）
+    std::uint64_t viewerId_ = GenerateViewerId();
 
     /// @brief RequestSave()の自動生成パスに使う保存先ディレクトリ
     std::string saveDirectory_ = "Screenshots";

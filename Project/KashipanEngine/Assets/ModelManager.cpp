@@ -650,7 +650,7 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
         matJson["enableLighting"] = true;
         matJson["enableShadowMapProjection"] = true;
         if (SaveJSON(matJson, matFilePath)) {
-            Log("ModelManager: Generated material file: " + matFilePath, LogSeverity::Info);
+            Log(Translation("engine.model.material.generated") + matFilePath, LogSeverity::Info);
         }
     }
 
@@ -664,9 +664,9 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
         UUID128 existingPrefabID;
         if (EnsureModelPrefabSchema(existingPrefab, existingPrefabID)) {
             if (PrefabAssetManager::CreatePrefabFile(existingPrefabID, existingPrefab, prefabPath)) {
-                Log("ModelManager: Upgraded model prefab metadata: " + prefabPath, LogSeverity::Info);
+                Log(Translation("engine.model.prefab.metadata.upgraded") + prefabPath, LogSeverity::Info);
             } else {
-                Log("ModelManager: Failed to upgrade model prefab metadata: " + prefabPath, LogSeverity::Warning);
+                Log(Translation("engine.model.prefab.metadata.upgrade.failed") + prefabPath, LogSeverity::Warning);
             }
         }
         return;
@@ -772,9 +772,9 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
     addNode(scene->mRootNode, -1, std::string(), modelName);
 
     if (PrefabAssetManager::CreatePrefabFile(prefabID, prefab, prefabPath)) {
-        Log("ModelManager: Generated model prefab: " + prefabPath, LogSeverity::Info);
+        Log(Translation("engine.model.prefab.generated") + prefabPath, LogSeverity::Info);
     } else {
-        Log("ModelManager: Failed to generate model prefab: " + prefabPath, LogSeverity::Warning);
+        Log(Translation("engine.model.prefab.generate.failed") + prefabPath, LogSeverity::Warning);
     }
 #endif // USE_IMGUI
 }
@@ -843,10 +843,10 @@ std::vector<ModelManager::ModelListEntry> ModelManager::GetLoadedModelListEntrie
 }
 
 void ModelManager::ShowImGuiLoadedModelsWindow() {
-    ImGui::Begin("ModelManager - Loaded Models");
+    ImGui::Begin(TranslationLabel("editor.modelmanager.window"));
 
     const auto entries = ModelManager::GetImGuiModelListEntries();
-    ImGui::Text("Loaded Models: %d", static_cast<int>(entries.size()));
+    ImGui::Text(TranslationC("editor.modelmanager.loaded_models_d"), static_cast<int>(entries.size()));
 
     static ImGuiTextFilter filter;
     filter.Draw("Filter");

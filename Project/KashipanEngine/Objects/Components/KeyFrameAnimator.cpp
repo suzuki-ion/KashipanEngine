@@ -165,7 +165,7 @@ void KeyFrameAnimator::EnsureLoaded(AnimationEntry &entry) {
     const JSON json = LoadJSON(entry.jsonPath);
     if (json.is_discarded() || !entry.animation.LoadFromJson(json)) {
         entry.loadFailed = true;
-        Log("KeyFrameAnimator: キーフレームjsonの読み込みに失敗しました: " + entry.jsonPath, LogSeverity::Warning);
+        Log(Translation("engine.keyframeanimator.load.failed") + entry.jsonPath, LogSeverity::Warning);
         return;
     }
     entry.loaded = true;
@@ -186,7 +186,7 @@ void KeyFrameAnimator::ApplyValue(const AnimationEntry &entry, float value) {
 #if defined(USE_IMGUI)
 
 void KeyFrameAnimator::ShowImGui() {
-    if (ImGui::Button("Add Animation")) {
+    if (ImGui::Button(TranslationLabel("component.keyframeanimator.add_animation"))) {
         AnimationEntry entry;
         int number = 0;
         std::string newName = "Anim0";
@@ -206,7 +206,7 @@ void KeyFrameAnimator::ShowImGui() {
         // 名前変更でヘッダーの開閉状態が変わらないよう、IDは"###"でインデックス固定にする
         if (ImGui::CollapsingHeader((entry.name + "###animEntry").c_str())) {
             ShowAnimationImGui(entry, candidates);
-            if (ImGui::SmallButton("Delete Animation")) {
+            if (ImGui::SmallButton(TranslationLabel("component.keyframeanimator.delete_animation"))) {
                 removeIndex = i;
             }
         }
@@ -218,13 +218,13 @@ void KeyFrameAnimator::ShowImGui() {
 }
 
 void KeyFrameAnimator::ShowAnimationImGui(AnimationEntry &entry, const std::vector<ParameterBindingCandidate> &candidates) {
-    ImGui::InputText("Name", &entry.name);
+    ImGui::InputText(TranslationLabel("component.keyframeanimator.name"), &entry.name);
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("%s", "Play/Stop等で指定する識別名");
     }
-    ImGui::InputText("Json Path", &entry.jsonPath);
+    ImGui::InputText(TranslationLabel("component.keyframeanimator.json_path"), &entry.jsonPath);
     ImGui::SameLine();
-    if (ImGui::Button("Reload")) {
+    if (ImGui::Button(TranslationLabel("component.keyframeanimator.reload"))) {
         entry.loaded = false;
         entry.loadFailed = false;
         entry.animation.Clear();
@@ -237,41 +237,41 @@ void KeyFrameAnimator::ShowAnimationImGui(AnimationEntry &entry, const std::vect
         EnsureLoaded(entry);
     }
     if (entry.loaded) {
-        ImGui::Text("Keys: %d  Duration: %.2fs", static_cast<int>(entry.animation.GetKeyframeCount()), entry.animation.GetDuration());
+        ImGui::Text(TranslationC("component.keyframeanimator.keys_d_duration_2fs"), static_cast<int>(entry.animation.GetKeyframeCount()), entry.animation.GetDuration());
     } else if (entry.loadFailed) {
-        ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "読み込み失敗: パスを確認してReloadしてください");
+        ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "%s", TranslationC("component.keyframeanimator.loadfailed"));
     } else {
-        ImGui::TextDisabled("未読み込み");
+        ImGui::TextDisabled("%s", TranslationC("component.keyframeanimator.desc_1"));
     }
 
-    ImGui::DragFloat("Playback Speed", &entry.playbackSpeed, 0.01f);
+    ImGui::DragFloat(TranslationLabel("component.keyframeanimator.playback_speed"), &entry.playbackSpeed, 0.01f);
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("%s", "再生速度の倍率（負の値で逆再生）");
     }
-    ImGui::DragFloat("Time Offset", &entry.timeOffset, 0.01f);
+    ImGui::DragFloat(TranslationLabel("component.keyframeanimator.time_offset"), &entry.timeOffset, 0.01f);
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("%s", "評価時刻へ加算する再生時オフセット（秒）。同じアニメを複数オブジェクトで位相をずらして再生する用途など");
     }
-    ImGui::DragFloat("Value Scale", &entry.valueScale, 0.01f);
+    ImGui::DragFloat(TranslationLabel("component.keyframeanimator.value_scale"), &entry.valueScale, 0.01f);
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("%s", "評価値にかけるスケール。Value Offsetの加算より先に適用される（適用値 = 評価値 × Scale + Offset）");
     }
-    ImGui::DragFloat("Value Offset", &entry.valueOffset, 0.01f);
+    ImGui::DragFloat(TranslationLabel("component.keyframeanimator.value_offset"), &entry.valueOffset, 0.01f);
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("%s", "評価値へ加算するデフォルト値オフセット。適用先ごとの基準値の違いを吸収する");
     }
-    ImGui::Checkbox("Loop", &entry.loop);
+    ImGui::Checkbox(TranslationLabel("component.keyframeanimator.loop"), &entry.loop);
     ImGui::SameLine();
-    ImGui::Checkbox("Play On Start", &entry.playOnStart);
+    ImGui::Checkbox(TranslationLabel("component.keyframeanimator.play_on_start"), &entry.playOnStart);
 
     if (entry.playing) {
-        if (ImGui::Button("Stop")) {
+        if (ImGui::Button(TranslationLabel("component.keyframeanimator.stop"))) {
             entry.playing = false;
         }
         ImGui::SameLine();
-        ImGui::Text("Time: %.2fs  Value: %.3f", entry.currentTime, entry.lastValue);
+        ImGui::Text(TranslationC("component.keyframeanimator.time_2fs_value_3f"), entry.currentTime, entry.lastValue);
     } else {
-        if (ImGui::Button("Play")) {
+        if (ImGui::Button(TranslationLabel("component.keyframeanimator.play"))) {
             entry.currentTime = 0.0f;
             entry.playing = true;
         }

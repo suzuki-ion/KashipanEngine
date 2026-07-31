@@ -26,6 +26,7 @@
 #include "Scene/Editor/SceneObjectInspector.h"
 #include "Scene/Editor/SceneSaver.h"
 #include "Scene/Editor/SceneVariablesMenu.h"
+#include "Scene/Editor/TranslationEditor.h"
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Scene/Components/Script/EditorToolManager.h"
 #include "Scene/SceneBackupPath.h"
@@ -77,6 +78,7 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     sceneListEditor_ = std::make_unique<SceneListEditor>(Passkey<SceneEditor>{}, context_);
     preferences_ = std::make_unique<EditorPreferences>(Passkey<SceneEditor>{});
     projectWindow_ = std::make_unique<ProjectWindow>(Passkey<SceneEditor>{});
+    translationEditor_ = std::make_unique<TranslationEditor>(Passkey<SceneEditor>{});
 
     objectHierarchy_->SetCommands(commands_.get());
     objectInspector_->SetCommands(commands_.get());
@@ -101,6 +103,7 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     isShowHistory_ = EditorSettings::GetBool("sceneEditor.showHistory", true);
     isShowPreferences_ = EditorSettings::GetBool("sceneEditor.showPreferences", false);
     isShowProjectWindow_ = EditorSettings::GetBool("sceneEditor.showProjectWindow", false);
+    isShowTranslationEditor_ = EditorSettings::GetBool("sceneEditor.showTranslationEditor", false);
 
     isShowLoadedTexturesWindow_ = EditorSettings::GetBool("sceneEditor.showLoadedTextures", false);
     isShowLoadedModelsWindow_ = EditorSettings::GetBool("sceneEditor.showLoadedModels", false);
@@ -167,6 +170,7 @@ void SceneEditor::ShowImGui() {
     if (isShowSceneList_) sceneListEditor_->ShowImGui();
     if (isShowPreferences_) preferences_->ShowImGui();
     if (isShowProjectWindow_) projectWindow_->ShowImGui();
+    if (isShowTranslationEditor_) translationEditor_->ShowImGui();
 
     //--------- デバッグ用ウィンドウ（旧ImGuiManagerから移設） ---------//
     if (isShowLoadedTexturesWindow_) TextureManager::ShowImGuiLoadedTexturesWindow();
@@ -187,31 +191,31 @@ void SceneEditor::ShowImGui() {
 void SceneEditor::ShowMainWindow() {
     //--------- メインメニューバー（保存・読込・Undo/Redo・ウィンドウ切替・デバッグウィンドウ） ---------//
     if (ImGui::BeginMainMenuBar()) {
-        if (ImGui::BeginMenu("File")) {
-            if (ImGui::MenuItem("Project...", nullptr, &isShowProjectWindow_)) {
+        if (ImGui::BeginMenu(TranslationLabel("editor.menu.file"))) {
+            if (ImGui::MenuItem(TranslationLabel("editor.menu.file.project"), nullptr, &isShowProjectWindow_)) {
                 EditorSettings::SetBool("sceneEditor.showProjectWindow", isShowProjectWindow_);
             }
-            ImGui::SetItemTooltip("Create a new project, or choose which project to open on the next launch.");
+            ImGui::SetItemTooltip("%s", TranslationC("editor.menu.file.project.tooltip"));
             ImGui::Separator();
-            if (ImGui::MenuItem("New Scene...")) {
+            if (ImGui::MenuItem(TranslationLabel("editor.menu.file.newscene"))) {
                 isNewSceneRequested_ = true;
                 newSceneName_ = "New Scene";
             }
-            if (ImGui::MenuItem("Save Scene...", "Ctrl+S")) {
+            if (ImGui::MenuItem(TranslationLabel("editor.menu.file.savescene"), "Ctrl+S")) {
                 saver_->Open();
             }
-            if (ImGui::MenuItem("Load Scene...")) {
+            if (ImGui::MenuItem(TranslationLabel("editor.menu.file.loadscene"))) {
                 loader_->Open();
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Auto Save Settings...")) {
+            if (ImGui::MenuItem(TranslationLabel("editor.menu.file.autosavesettings"))) {
                 isAutoSaveSettingsRequested_ = true;
             }
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Edit")) {
-            const std::string undoLabel = commands_->CanUndo() ? ("Undo " + commands_->GetUndoName()) : "Undo";
-            const std::string redoLabel = commands_->CanRedo() ? ("Redo " + commands_->GetRedoName()) : "Redo";
+        if (ImGui::BeginMenu(TranslationLabel("editor.menu.edit"))) {
+            const std::string undoLabel = Translation("editor.menu.edit.undo") + (commands_->CanUndo() ? (" " + commands_->GetUndoName()) : "");
+            const std::string redoLabel = Translation("editor.menu.edit.redo") + (commands_->CanRedo() ? (" " + commands_->GetRedoName()) : "");
             if (ImGui::MenuItem(undoLabel.c_str(), "Ctrl+Z", false, commands_->CanUndo())) {
                 PerformUndo();
             }
@@ -219,66 +223,70 @@ void SceneEditor::ShowMainWindow() {
                 PerformRedo();
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Preferences...", nullptr, &isShowPreferences_)) {
+            if (ImGui::MenuItem(TranslationLabel("editor.menu.edit.preferences"), nullptr, &isShowPreferences_)) {
                 EditorSettings::SetBool("sceneEditor.showPreferences", isShowPreferences_);
             }
+            if (ImGui::MenuItem(TranslationLabel("editor.translationeditor.window"), nullptr, &isShowTranslationEditor_)) {
+                EditorSettings::SetBool("sceneEditor.showTranslationEditor", isShowTranslationEditor_);
+            }
+            ImGui::SetItemTooltip("%s", TranslationC("editor.menu.edit.translationeditor.tooltip"));
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Window")) {
-            if (ImGui::MenuItem("Scene View", nullptr, &isShowSceneView_)) {
+        if (ImGui::BeginMenu(TranslationLabel("editor.menu.window"))) {
+            if (ImGui::MenuItem(TranslationLabel("editor.sceneview.window"), nullptr, &isShowSceneView_)) {
                 EditorSettings::SetBool("sceneEditor.showSceneView", isShowSceneView_);
             }
-            if (ImGui::MenuItem("Object Hierarchy", nullptr, &isShowHierarchy_)) {
+            if (ImGui::MenuItem(TranslationLabel("editor.sceneobjecthierarchy.window"), nullptr, &isShowHierarchy_)) {
                 EditorSettings::SetBool("sceneEditor.showHierarchy", isShowHierarchy_);
             }
-            if (ImGui::MenuItem("Object Inspector", nullptr, &isShowObjectInspector_)) {
+            if (ImGui::MenuItem(TranslationLabel("editor.sceneobjectinspector.window"), nullptr, &isShowObjectInspector_)) {
                 EditorSettings::SetBool("sceneEditor.showObjectInspector", isShowObjectInspector_);
             }
-            if (ImGui::MenuItem("Scene Component Inspector", nullptr, &isShowComponentInspector_)) {
+            if (ImGui::MenuItem(TranslationLabel("editor.scenecomponentinspector.window"), nullptr, &isShowComponentInspector_)) {
                 EditorSettings::SetBool("sceneEditor.showComponentInspector", isShowComponentInspector_);
             }
-            if (ImGui::MenuItem("Scene Variables", nullptr, &isShowVariablesMenu_)) {
+            if (ImGui::MenuItem(TranslationLabel("editor.scenevariables.window"), nullptr, &isShowVariablesMenu_)) {
                 EditorSettings::SetBool("sceneEditor.showVariablesMenu", isShowVariablesMenu_);
             }
-            if (ImGui::MenuItem("Assets", nullptr, &isShowAssets_)) {
+            if (ImGui::MenuItem(TranslationLabel("editor.assets.window"), nullptr, &isShowAssets_)) {
                 EditorSettings::SetBool("sceneEditor.showAssets", isShowAssets_);
             }
-            if (ImGui::MenuItem("Scene List", nullptr, &isShowSceneList_)) {
+            if (ImGui::MenuItem(TranslationLabel("editor.scenelist.window"), nullptr, &isShowSceneList_)) {
                 EditorSettings::SetBool("sceneEditor.showSceneList", isShowSceneList_);
             }
-            if (ImGui::MenuItem("History", nullptr, &isShowHistory_)) {
+            if (ImGui::MenuItem(TranslationLabel("editor.history.window"), nullptr, &isShowHistory_)) {
                 EditorSettings::SetBool("sceneEditor.showHistory", isShowHistory_);
             }
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Debug Windows")) {
-            if (ImGui::MenuItem("Loaded Textures", nullptr, &isShowLoadedTexturesWindow_)) {
+        if (ImGui::BeginMenu(TranslationLabel("editor.menu.debugwindows"))) {
+            if (ImGui::MenuItem(TranslationLabel("editor.texturemanager.window"), nullptr, &isShowLoadedTexturesWindow_)) {
                 EditorSettings::SetBool("sceneEditor.showLoadedTextures", isShowLoadedTexturesWindow_);
             }
-            if (ImGui::MenuItem("Loaded Models", nullptr, &isShowLoadedModelsWindow_)) {
+            if (ImGui::MenuItem(TranslationLabel("editor.modelmanager.window"), nullptr, &isShowLoadedModelsWindow_)) {
                 EditorSettings::SetBool("sceneEditor.showLoadedModels", isShowLoadedModelsWindow_);
             }
-            if (ImGui::MenuItem("Materials", nullptr, &isShowMaterialsWindow_)) {
+            if (ImGui::MenuItem(TranslationLabel("editor.materialmanager.window"), nullptr, &isShowMaterialsWindow_)) {
                 EditorSettings::SetBool("sceneEditor.showMaterials", isShowMaterialsWindow_);
             }
-            if (ImGui::MenuItem("Loaded Sounds", nullptr, &isShowLoadedSoundsWindow_)) {
+            if (ImGui::MenuItem(TranslationLabel("editor.audiomanager.loaded.window"), nullptr, &isShowLoadedSoundsWindow_)) {
                 EditorSettings::SetBool("sceneEditor.showLoadedSounds", isShowLoadedSoundsWindow_);
             }
-            if (ImGui::MenuItem("Playing Sounds", nullptr, &isShowPlayingSoundsWindow_)) {
+            if (ImGui::MenuItem(TranslationLabel("editor.audiomanager.playing.window"), nullptr, &isShowPlayingSoundsWindow_)) {
                 EditorSettings::SetBool("sceneEditor.showPlayingSounds", isShowPlayingSoundsWindow_);
             }
-            if (ImGui::MenuItem("Logger", nullptr, &isShowLoggerWindow_)) {
+            if (ImGui::MenuItem(TranslationLabel("editor.logger.window"), nullptr, &isShowLoggerWindow_)) {
                 EditorSettings::SetBool("sceneEditor.showLogger", isShowLoggerWindow_);
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Input State", nullptr, &isShowInputStateWindow_)) {
+            if (ImGui::MenuItem(TranslationLabel("editor.input.state.window"), nullptr, &isShowInputStateWindow_)) {
                 EditorSettings::SetBool("sceneEditor.showInputState", isShowInputStateWindow_);
             }
-            if (ImGui::MenuItem("Input Command Editor", nullptr, &isShowInputCommandEditorWindow_)) {
+            if (ImGui::MenuItem(TranslationLabel("editor.inputcommand.window"), nullptr, &isShowInputCommandEditorWindow_)) {
                 EditorSettings::SetBool("sceneEditor.showInputCommandEditor", isShowInputCommandEditorWindow_);
             }
             ImGui::Separator();
-            ImGui::MenuItem("ImGui Demo Window", nullptr, &isShowImGuiDemoWindow_);
+            ImGui::MenuItem(TranslationLabel("editor.menu.debugwindows.imguidemo"), nullptr, &isShowImGuiDemoWindow_);
             ImGui::EndMenu();
         }
         // エディターツールスクリプトの[MenuItem("MenuBar/...")]で追加された項目
@@ -286,14 +294,14 @@ void SceneEditor::ShowMainWindow() {
         ImGui::EndMainMenuBar();
     }
 
-    if (!ImGui::Begin("Scene Editor")) {
+    if (!ImGui::Begin(TranslationLabel("editor.sceneeditor.window"))) {
         ImGui::End();
         return;
     }
 
     //--------- シーン名の編集 ---------//
     std::string sceneName = context_->GetName();
-    if (ImGui::InputText("Scene Name", &sceneName, ImGuiInputTextFlags_EnterReturnsTrue)) {
+    if (ImGui::InputText(TranslationLabel("editor.sceneeditor.scenename"), &sceneName, ImGuiInputTextFlags_EnterReturnsTrue)) {
         context_->SetName(sceneName);
     }
 
@@ -319,7 +327,7 @@ void SceneEditor::ShowMainWindow() {
     //--------- 操作履歴 ---------//
     if (isShowHistory_) {
         const bool wasOpen = isShowHistory_;
-        if (ImGui::Begin("History", &isShowHistory_)) {
+        if (ImGui::Begin(TranslationLabel("editor.history.window"), &isShowHistory_)) {
             commands_->ShowHistoryImGui();
         }
         ImGui::End();
@@ -332,7 +340,7 @@ void SceneEditor::ShowMainWindow() {
 void SceneEditor::ShowPlayControls() {
     ImGui::Separator();
     if (!context_->IsPlaying()) {
-        if (ImGui::Button("Play")) {
+        if (ImGui::Button(TranslationLabel("editor.play.play"))) {
             // 再生開始でオブジェクトのポインタ等が変わりうるため、UUIDで選択を控えて復元する
             const auto selectedIDs = objectHierarchy_->GetSelectedObjectIDs();
             // PlayStart()はEditorOnlyオブジェクトを削除してしまうため、それより前の
@@ -344,7 +352,7 @@ void SceneEditor::ShowPlayControls() {
             objectHierarchy_->RestoreSelection(selectedIDs);
         }
     } else {
-        if (ImGui::Button("Stop")) {
+        if (ImGui::Button(TranslationLabel("editor.play.stop"))) {
             // 停止時はスナップショットからシーンが再構築されるため、UUIDで選択を復元する
             const auto selectedIDs = objectHierarchy_->GetSelectedObjectIDs();
             context_->PlayStop();
@@ -352,17 +360,17 @@ void SceneEditor::ShowPlayControls() {
         }
         ImGui::SameLine();
         if (context_->IsPaused()) {
-            if (ImGui::Button("Resume")) {
+            if (ImGui::Button(TranslationLabel("editor.play.resume"))) {
                 context_->PlayResume();
             }
         } else {
-            if (ImGui::Button("Pause")) {
+            if (ImGui::Button(TranslationLabel("editor.play.pause"))) {
                 context_->PlayPause();
             }
         }
         ImGui::SameLine();
         ImGui::BeginDisabled(!context_->IsPaused());
-        if (ImGui::Button("Step Frame")) {
+        if (ImGui::Button(TranslationLabel("editor.play.stepframe"))) {
             context_->RequestStepFrame();
         }
         ImGui::EndDisabled();
@@ -372,15 +380,15 @@ void SceneEditor::ShowPlayControls() {
 bool SceneEditor::ShowNewSceneModal() {
     bool created = false;
     if (isNewSceneRequested_) {
-        ImGui::OpenPopup("New Scene");
+        ImGui::OpenPopup(TranslationLabel("editor.newscene.title"));
         isNewSceneRequested_ = false;
     }
-    if (ImGui::BeginPopupModal("New Scene", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.3f, 1.0f), "Current scene will be discarded (unsaved changes will be lost).");
-        ImGui::InputText("Scene Name", &newSceneName_);
-        ImGui::Checkbox("Register to Scene List", &newSceneRegisterToList_);
-        ImGui::SetItemTooltip("Also save this scene to Assets/Scenes/<name>.scene and register it\nin the Scene List (switchable via SceneManager afterward).");
-        if (ImGui::Button("Create", ImVec2(120, 0))) {
+    if (ImGui::BeginPopupModal(TranslationLabel("editor.newscene.title"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.3f, 1.0f), "%s", TranslationC("editor.newscene.warning"));
+        ImGui::InputText(TranslationLabel("editor.sceneeditor.scenename"), &newSceneName_);
+        ImGui::Checkbox(TranslationLabel("editor.newscene.registertolist"), &newSceneRegisterToList_);
+        ImGui::SetItemTooltip("%s", TranslationC("editor.newscene.registertolist.tooltip"));
+        if (ImGui::Button(TranslationLabel("editor.common.create"), ImVec2(120, 0))) {
             const std::string sceneName = newSceneName_.empty() ? "New Scene" : newSceneName_;
             context_->ClearSceneObjects();
             context_->ClearSceneComponents();
@@ -402,7 +410,7 @@ bool SceneEditor::ShowNewSceneModal() {
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+        if (ImGui::Button(TranslationLabel("editor.common.cancel"), ImVec2(120, 0))) {
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();
@@ -457,22 +465,22 @@ void SceneEditor::TakeSceneBackup(const std::string &prefix) {
 
 void SceneEditor::ShowAutoSaveSettingsModal() {
     if (isAutoSaveSettingsRequested_) {
-        ImGui::OpenPopup("Auto Save Settings");
+        ImGui::OpenPopup(TranslationLabel("editor.autosave.title"));
         isAutoSaveSettingsRequested_ = false;
     }
-    if (ImGui::BeginPopupModal("Auto Save Settings", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-        if (ImGui::DragFloat("Interval (minutes)", &autoSaveIntervalMinutes_, 0.1f, 0.1f, 120.0f, "%.1f")) {
+    if (ImGui::BeginPopupModal(TranslationLabel("editor.autosave.title"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        if (ImGui::DragFloat(TranslationLabel("editor.autosave.interval"), &autoSaveIntervalMinutes_, 0.1f, 0.1f, 120.0f, "%.1f")) {
             EditorSettings::SetFloat("sceneEditor.autoSaveIntervalMinutes", autoSaveIntervalMinutes_);
         }
-        if (ImGui::InputText("Name Format", &autoSaveNameFormat_)) {
+        if (ImGui::InputText(TranslationLabel("editor.autosave.nameformat"), &autoSaveNameFormat_)) {
             EditorSettings::SetString("sceneEditor.autoSaveNameFormat", autoSaveNameFormat_);
         }
-        ImGui::TextDisabled("Placeholders: ${SceneName} ${Year} ${Month} ${Day} ${Hour} ${Minute} ${Second}");
+        ImGui::TextDisabled("%s${SceneName} ${Year} ${Month} ${Day} ${Hour} ${Minute} ${Second}", TranslationC("editor.autosave.placeholders"));
 
         const std::string preview = RenderAutoSaveFileName(autoSaveNameFormat_, context_->GetName());
-        ImGui::Text("Preview: %s%s", kSceneBackupDirectory, preview.c_str());
+        ImGui::Text("%s%s%s", TranslationC("editor.autosave.preview"), kSceneBackupDirectory, preview.c_str());
 
-        if (ImGui::Button("Close", ImVec2(120, 0))) {
+        if (ImGui::Button(TranslationLabel("editor.common.close"), ImVec2(120, 0))) {
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();

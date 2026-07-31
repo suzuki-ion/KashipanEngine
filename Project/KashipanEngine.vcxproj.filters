@@ -744,6 +744,7 @@
     <ClCompile Include="KashipanEngine\Scene\Editor\PrefabUtility.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\PrefabAssetManager.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\ProjectWindow.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\TranslationEditor.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\PrefabSyncUtility.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\PrefabSceneSync.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\PrefabRegisteredSceneSync.cpp" />
@@ -1896,6 +1897,7 @@
     <ClInclude Include="KashipanEngine\Scene\Editor\PrefabUtility.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\PrefabAssetManager.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\ProjectWindow.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\TranslationEditor.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\PrefabSyncUtility.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\PrefabSceneSync.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneListEditor.h" />

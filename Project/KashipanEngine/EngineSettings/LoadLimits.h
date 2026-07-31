@@ -2,6 +2,7 @@
 #include <string>
 #include "EngineSettings.h"
 #include "Utilities/FileIO/JSON.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -16,14 +17,14 @@ inline void LoadLimitsSettings(const JSON &rootJSON, EngineSettings &settings) {
     settings.limits.maxWindows = limitsJSON.value("maxWindows", settings.limits.maxWindows);
 
     LogSeparator();
-    Log("Limits", LogSeverity::Info);
+    Log(Translation("engine.settings.limits.section"), LogSeverity::Info);
     LogSeparator();
-    Log("Max Textures: " + std::to_string(settings.limits.maxTextures), LogSeverity::Info);
-    Log("Max Sounds: " + std::to_string(settings.limits.maxSounds), LogSeverity::Info);
-    Log("Max Models: " + std::to_string(settings.limits.maxModels), LogSeverity::Info);
-    Log("Max Game Objects: " + std::to_string(settings.limits.maxGameObjects), LogSeverity::Info);
-    Log("Max Components Per Game Object: " + std::to_string(settings.limits.maxComponentsPerGameObject), LogSeverity::Info);
-    Log("Max Windows: " + std::to_string(settings.limits.maxWindows), LogSeverity::Info);
+    Log(Translation("engine.settings.limits.maxtextures") + std::to_string(settings.limits.maxTextures), LogSeverity::Info);
+    Log(Translation("engine.settings.limits.maxsounds") + std::to_string(settings.limits.maxSounds), LogSeverity::Info);
+    Log(Translation("engine.settings.limits.maxmodels") + std::to_string(settings.limits.maxModels), LogSeverity::Info);
+    Log(Translation("engine.settings.limits.maxgameobjects") + std::to_string(settings.limits.maxGameObjects), LogSeverity::Info);
+    Log(Translation("engine.settings.limits.maxcomponentspergameobject") + std::to_string(settings.limits.maxComponentsPerGameObject), LogSeverity::Info);
+    Log(Translation("engine.settings.limits.maxwindows") + std::to_string(settings.limits.maxWindows), LogSeverity::Info);
 }
 
 } // namespace KashipanEngine

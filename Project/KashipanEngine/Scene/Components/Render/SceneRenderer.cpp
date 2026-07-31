@@ -4,6 +4,7 @@
 #include <type_traits>
 
 #include "Graphics/IRenderTarget.h"
+#include "Utilities/Translation.h"
 #include "Graphics/PipelineManager.h"
 #include "Objects/EmptyObject.h"
 #include "Objects/Components/Shake.h"
@@ -467,8 +468,9 @@ void SceneRenderer::ShowImGui() {
     ImGui::Text("SkinnedMeshRenderers: %d", static_cast<int>(skinnedMeshRenderers_.size()));
     ImGui::Text("CameraRenderers: %d", static_cast<int>(cameraRenderers_.size()));
     ImGui::Text("LightRenderers: %d", static_cast<int>(lightRenderers_.size()));
-    ImGui::Text("Cached Draw Entries: %d (dirty: %s)",
-        static_cast<int>(cachedEntries_.size()), drawListDirty_ ? "yes" : "no");
+    ImGui::Text("%s%d (%s%s)", TranslationC("editor.scenerenderer.cachedentries"),
+        static_cast<int>(cachedEntries_.size()), TranslationC("editor.scenerenderer.dirty"),
+        drawListDirty_ ? TranslationC("yes") : TranslationC("no"));
 }
 #endif
 

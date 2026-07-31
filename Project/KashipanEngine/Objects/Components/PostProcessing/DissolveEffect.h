@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "Assets/TextureManager.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -44,10 +45,10 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         IPostProcessComponent::ShowImGui();
-        ImGui::DragFloat("Mask Threshold", &params_.maskThreshold, 0.001f, 0.0f, 1.0f, "%.3f");
-        ImGui::DragFloat("Edge Thickness", &params_.edgeThickness, 0.001f, 0.0f, 1.0f, "%.3f");
-        ImGui::ColorEdit4("Base Texture Color", params_.baseTextureColor);
-        ImGui::ColorEdit4("Edge Color", params_.edgeColor);
+        ImGui::DragFloat(TranslationLabel("component.dissolveeffect.mask_threshold"), &params_.maskThreshold, 0.001f, 0.0f, 1.0f, "%.3f");
+        ImGui::DragFloat(TranslationLabel("component.dissolveeffect.edge_thickness"), &params_.edgeThickness, 0.001f, 0.0f, 1.0f, "%.3f");
+        ImGui::ColorEdit4(TranslationLabel("component.dissolveeffect.base_texture_color"), params_.baseTextureColor);
+        ImGui::ColorEdit4(TranslationLabel("component.dissolveeffect.edge_color"), params_.edgeColor);
         // テクスチャは読み込み済みのものから選択する
         // ファイル名単体だと同名ファイルが複数フォルダにある場合にImGuiのID重複警告が出るため、
         // Assetsからの相対パスを表示・選択キーとして使う
@@ -56,11 +57,11 @@ protected:
             textureNames.push_back(entry.assetPath);
         }
         std::string baseTextureName = TextureManager::GetTextureAssetPath(params_.baseTexture);
-        if (ImGuiCustom::SelectString("Base Texture", baseTextureName, textureNames, true)) {
+        if (ImGuiCustom::SelectString(TranslationLabel("component.dissolveeffect.base_texture"), baseTextureName, textureNames, true)) {
             params_.baseTexture = baseTextureName.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(baseTextureName);
         }
         std::string maskTextureName = TextureManager::GetTextureAssetPath(params_.maskTexture);
-        if (ImGuiCustom::SelectString("Mask Texture", maskTextureName, textureNames, true)) {
+        if (ImGuiCustom::SelectString(TranslationLabel("component.dissolveeffect.mask_texture"), maskTextureName, textureNames, true)) {
             params_.maskTexture = maskTextureName.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(maskTextureName);
         }
     }

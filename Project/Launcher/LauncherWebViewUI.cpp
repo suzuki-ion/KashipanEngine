@@ -154,19 +154,31 @@ HRESULT WebViewUI::OnWebMessageReceived(ICoreWebView2WebMessageReceivedEventArgs
 
     const std::string action = message.value("action", std::string{});
     const std::string name = message.value("name", std::string{});
+    std::string errorMessage;
 
     if (action == "refresh") {
         SendProjectList();
     } else if (action == "create") {
-        std::string errorMessage;
-        if (ProjectManager::CreateProject(name, &errorMessage)) {
+        const std::string templateName = message.value("template", std::string{});
+        if (ProjectManager::CreateProject(name, templateName, &errorMessage)) {
             SendProjectList();
             SendStatus("info", "プロジェクトを作成しました。", true);
         } else {
             SendStatus("error", errorMessage);
         }
+    } else if (action == "delete") {
+        // 確認は画面側のダイアログで済ませている
+        if (ProjectManager::DeleteProject(name, &errorMessage)) {
+            SendProjectList();
+            SendStatus("info", "「" + name + "」をごみ箱へ移動しました。");
+        } else {
+            SendStatus("error", errorMessage);
+        }
+    } else if (action == "reveal") {
+        if (!ProjectManager::OpenProjectInExplorer(name, &errorMessage)) {
+            SendStatus("error", errorMessage);
+        }
     } else if (action == "open") {
-        std::string errorMessage;
         if (ProjectManager::LaunchEditor(name, &errorMessage)) {
             // エディターが立ち上がったらランチャーの役目は終わり
             DestroyWindow(window_);
@@ -193,6 +205,16 @@ void WebViewUI::SendProjectList() {
         items.push_back(std::move(item));
     }
     message["items"] = std::move(items);
+
+    JSON templates = JSON::array();
+    for (const auto &projectTemplate : ProjectManager::GetTemplateList()) {
+        JSON item = JSON::object();
+        item["name"] = projectTemplate.name;
+        item["displayName"] = projectTemplate.displayName;
+        item["description"] = projectTemplate.description;
+        templates.push_back(std::move(item));
+    }
+    message["templates"] = std::move(templates);
 
     webView_->PostWebMessageAsJson(ConvertString(message.dump()).c_str());
 }

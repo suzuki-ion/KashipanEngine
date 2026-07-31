@@ -18,15 +18,19 @@ constexpr int kIdRefreshButton = 1003;
 constexpr int kIdNewProjectNameEdit = 1004;
 constexpr int kIdCreateButton = 1005;
 constexpr int kIdStatusLabel = 1006;
+constexpr int kIdRevealButton = 1007;
+constexpr int kIdDeleteButton = 1008;
+constexpr int kIdTemplateCombo = 1009;
 
 /// @brief 96 DPI 基準でのレイアウト
 namespace Metrics {
 constexpr int kMargin = 12;
 constexpr int kListTop = 30;
-constexpr int kListHeight = 190;
-constexpr int kButtonWidth = 104;
+constexpr int kListHeight = 180;
 constexpr int kButtonHeight = 26;
 constexpr int kRowGap = 10;
+/// @brief コンボボックスの高さは「開いたときの一覧を含む高さ」として扱われる
+constexpr int kComboDropHeight = 200;
 }
 
 /// @brief ウィンドウのメッセージフォント（Yu Gothic UI等）を取得する
@@ -74,27 +78,42 @@ bool FallbackUI::Create(HWND window) {
         LBS_NOTIFY | WS_VSCROLL | LBS_HASSTRINGS,
         kMargin, kListTop, contentWidth, kListHeight, kIdProjectList);
 
+    //--------- 選択中のプロジェクトに対する操作 ---------//
     const int buttonRowTop = kListTop + kListHeight + kRowGap;
-    openButton_ = CreateChildControl(L"BUTTON", L"開く", BS_DEFPUSHBUTTON,
-        kMargin, buttonRowTop, kButtonWidth, kButtonHeight, kIdOpenButton);
-    CreateChildControl(L"BUTTON", L"更新", BS_PUSHBUTTON,
-        kMargin + kButtonWidth + kRowGap, buttonRowTop, kButtonWidth, kButtonHeight, kIdRefreshButton);
+    int buttonLeft = kMargin;
+    const auto addButton = [&](const wchar_t *label, int width, int id, DWORD style) {
+        HWND button = CreateChildControl(L"BUTTON", label, style,
+            buttonLeft, buttonRowTop, width, kButtonHeight, id);
+        buttonLeft += width + kRowGap;
+        return button;
+    };
+    openButton_ = addButton(L"開く", 84, kIdOpenButton, BS_DEFPUSHBUTTON);
+    revealButton_ = addButton(L"フォルダを開く", 122, kIdRevealButton, BS_PUSHBUTTON);
+    deleteButton_ = addButton(L"削除", 78, kIdDeleteButton, BS_PUSHBUTTON);
+    addButton(L"更新", 78, kIdRefreshButton, BS_PUSHBUTTON);
 
+    //--------- 新規作成 ---------//
     const int newProjectLabelTop = buttonRowTop + kButtonHeight + kRowGap * 2;
-    CreateChildControl(L"STATIC", L"新規プロジェクト名", 0,
+    CreateChildControl(L"STATIC", L"新規プロジェクト", 0,
         kMargin, newProjectLabelTop, contentWidth, 18, 0);
 
     const int newProjectRowTop = newProjectLabelTop + 22;
-    const int editWidth = contentWidth - kButtonWidth - kRowGap;
+    constexpr int kComboWidth = 140;
+    constexpr int kCreateWidth = 94;
+    const int editWidth = contentWidth - kComboWidth - kCreateWidth - kRowGap * 2;
+    templateCombo_ = CreateChildControl(L"COMBOBOX", nullptr, CBS_DROPDOWNLIST | WS_VSCROLL,
+        kMargin, newProjectRowTop, kComboWidth, kComboDropHeight, kIdTemplateCombo);
     newProjectNameEdit_ = CreateChildControl(L"EDIT", nullptr, ES_AUTOHSCROLL,
-        kMargin, newProjectRowTop, editWidth, kButtonHeight, kIdNewProjectNameEdit);
+        kMargin + kComboWidth + kRowGap, newProjectRowTop, editWidth, kButtonHeight, kIdNewProjectNameEdit);
     CreateChildControl(L"BUTTON", L"作成", BS_PUSHBUTTON,
-        kMargin + editWidth + kRowGap, newProjectRowTop, kButtonWidth, kButtonHeight, kIdCreateButton);
+        kMargin + kComboWidth + editWidth + kRowGap * 2, newProjectRowTop,
+        kCreateWidth, kButtonHeight, kIdCreateButton);
 
     statusLabel_ = CreateChildControl(L"STATIC", L"",
         SS_PATHELLIPSIS, kMargin, newProjectRowTop + kButtonHeight + kRowGap,
         contentWidth, 18, kIdStatusLabel);
 
+    RefreshTemplateList();
     RefreshProjectList();
     return true;
 }
@@ -108,7 +127,14 @@ bool FallbackUI::HandleCommand(WPARAM wparam) {
     case kIdOpenButton:
         OpenSelectedProject();
         return true;
+    case kIdRevealButton:
+        RevealSelectedProject();
+        return true;
+    case kIdDeleteButton:
+        DeleteSelectedProject();
+        return true;
     case kIdRefreshButton:
+        RefreshTemplateList();
         RefreshProjectList();
         return true;
     case kIdCreateButton:
@@ -139,9 +165,13 @@ void FallbackUI::RefreshProjectList() {
         ListBox_AddString(projectList_, ConvertString(project.name).c_str());
     }
 
+    const BOOL hasProjects = projects_.empty() ? FALSE : TRUE;
+    EnableWindow(openButton_, hasProjects);
+    EnableWindow(revealButton_, hasProjects);
+    EnableWindow(deleteButton_, hasProjects);
+
     if (projects_.empty()) {
         SetStatusText(L"プロジェクトがありません。下の欄から新規作成してください。");
-        EnableWindow(openButton_, FALSE);
         return;
     }
 
@@ -155,13 +185,32 @@ void FallbackUI::RefreshProjectList() {
         }
     }
     ListBox_SetCurSel(projectList_, selectedIndex);
-    EnableWindow(openButton_, TRUE);
     SetStatusText(L"");
 }
 
-void FallbackUI::OpenSelectedProject() {
+const ProjectManager::ProjectInfo *FallbackUI::GetSelectedProject() const {
     const int selectedIndex = ListBox_GetCurSel(projectList_);
-    if (selectedIndex == LB_ERR || static_cast<size_t>(selectedIndex) >= projects_.size()) {
+    if (selectedIndex == LB_ERR || static_cast<size_t>(selectedIndex) >= projects_.size()) return nullptr;
+    return &projects_[static_cast<size_t>(selectedIndex)];
+}
+
+void FallbackUI::RefreshTemplateList() {
+    templates_ = ProjectManager::GetTemplateList();
+
+    ComboBox_ResetContent(templateCombo_);
+    int defaultIndex = 0;
+    for (size_t i = 0; i < templates_.size(); ++i) {
+        ComboBox_AddString(templateCombo_, ConvertString(templates_[i].displayName).c_str());
+        if (templates_[i].name == ProjectManager::kDefaultTemplateName) {
+            defaultIndex = static_cast<int>(i);
+        }
+    }
+    if (!templates_.empty()) ComboBox_SetCurSel(templateCombo_, defaultIndex);
+}
+
+void FallbackUI::OpenSelectedProject() {
+    const ProjectManager::ProjectInfo *project = GetSelectedProject();
+    if (!project) {
         SetStatusText(L"開くプロジェクトを選択してください。");
         return;
     }
@@ -169,13 +218,53 @@ void FallbackUI::OpenSelectedProject() {
     SetStatusText(L"エディターを起動しています...");
 
     std::string errorMessage;
-    if (!ProjectManager::LaunchEditor(projects_[selectedIndex].name, &errorMessage)) {
+    if (!ProjectManager::LaunchEditor(project->name, &errorMessage)) {
         SetStatusText(ConvertString(errorMessage));
         return;
     }
 
     // エディターが立ち上がったらランチャーの役目は終わり
     DestroyWindow(window_);
+}
+
+void FallbackUI::RevealSelectedProject() {
+    const ProjectManager::ProjectInfo *project = GetSelectedProject();
+    if (!project) {
+        SetStatusText(L"フォルダを開くプロジェクトを選択してください。");
+        return;
+    }
+
+    std::string errorMessage;
+    if (!ProjectManager::OpenProjectInExplorer(project->name, &errorMessage)) {
+        SetStatusText(ConvertString(errorMessage));
+    }
+}
+
+void FallbackUI::DeleteSelectedProject() {
+    const ProjectManager::ProjectInfo *project = GetSelectedProject();
+    if (!project) {
+        SetStatusText(L"削除するプロジェクトを選択してください。");
+        return;
+    }
+
+    // 取り返しのつかない操作なので、既定の選択は「いいえ」にしておく
+    const std::wstring message =
+        L"「" + ConvertString(project->name) + L"」を削除しますか？\n\n" +
+        ConvertString(project->rootPath) + L"\n\n" +
+        L"フォルダはごみ箱へ移動します。";
+    const int answer = MessageBoxW(window_, message.c_str(), L"プロジェクトの削除",
+        MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
+    if (answer != IDYES) return;
+
+    const std::wstring deletedName = ConvertString(project->name);
+    std::string errorMessage;
+    if (!ProjectManager::DeleteProject(project->name, &errorMessage)) {
+        SetStatusText(ConvertString(errorMessage));
+        return;
+    }
+
+    RefreshProjectList();
+    SetStatusText(L"「" + deletedName + L"」をごみ箱へ移動しました。");
 }
 
 void FallbackUI::CreateNewProject() {
@@ -188,8 +277,15 @@ void FallbackUI::CreateNewProject() {
     std::wstring name(static_cast<size_t>(length), L'\0');
     GetWindowTextW(newProjectNameEdit_, name.data(), length + 1);
 
+    // コンボボックスで選ばれているテンプレートを使う（未選択なら既定のテンプレート）
+    const int templateIndex = ComboBox_GetCurSel(templateCombo_);
+    const std::string templateName =
+        (templateIndex != CB_ERR && static_cast<size_t>(templateIndex) < templates_.size())
+        ? templates_[static_cast<size_t>(templateIndex)].name
+        : std::string{};
+
     std::string errorMessage;
-    if (!ProjectManager::CreateProject(ConvertString(name), &errorMessage)) {
+    if (!ProjectManager::CreateProject(ConvertString(name), templateName, &errorMessage)) {
         SetStatusText(ConvertString(errorMessage));
         return;
     }

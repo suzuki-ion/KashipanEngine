@@ -426,7 +426,7 @@ bool ScriptComponent::CreateBehaviorInstance(asIScriptEngine *engine, CScriptBui
     }
     if (r != asEXECUTION_FINISHED) {
         lastError_ = GetExceptionInfo(context_);
-        Log("AngelScript: " + lastError_, LogSeverity::Error);
+        Log(Translation("engine.script.error") + lastError_, LogSeverity::Error);
         return false;
     }
 
@@ -462,7 +462,7 @@ void ScriptComponent::CallMethod(asIScriptFunction *method) {
     const int r = context_->Execute();
     if (r != asEXECUTION_FINISHED) {
         lastError_ = GetExceptionInfo(context_);
-        Log("AngelScript: " + lastError_, LogSeverity::Error);
+        Log(Translation("engine.script.error") + lastError_, LogSeverity::Error);
     }
 }
 
@@ -486,7 +486,7 @@ void ScriptComponent::CallCollisionMethod(asIScriptFunction *method, const Vecto
     const int r = context_->Execute();
     if (r != asEXECUTION_FINISHED) {
         lastError_ = GetExceptionInfo(context_);
-        Log("AngelScript: " + lastError_, LogSeverity::Error);
+        Log(Translation("engine.script.error") + lastError_, LogSeverity::Error);
     }
 }
 
@@ -507,7 +507,7 @@ void ScriptComponent::CallWindowMessageMethod(asIScriptFunction *method, IWindow
     const int r = context_->Execute();
     if (r != asEXECUTION_FINISHED) {
         lastError_ = GetExceptionInfo(context_);
-        Log("AngelScript: " + lastError_, LogSeverity::Error);
+        Log(Translation("engine.script.error") + lastError_, LogSeverity::Error);
     }
 }
 
@@ -710,7 +710,7 @@ void ScriptComponent::CollectSerializedFields(CScriptBuilder &builder) {
         if (!engine) return;
         asITypeInfo *type = engine->GetTypeInfoById(field.typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST));
         if (!type) return;
-        Log("ScriptComponent: array<T>フィールド '" + field.name + "' のハンドルが不正だったため、新しい空の配列で再生成しました", LogSeverity::Warning);
+        Log(Translation("engine.script.field.array.recreated") + field.name, LogSeverity::Warning);
         *slot = CScriptArray::Create(type);
     };
 
@@ -1074,7 +1074,7 @@ bool ScriptComponent::SetFloatVariable(const std::string &name, float value) {
 
 #if defined(USE_IMGUI)
 void ScriptComponent::ShowImGui() {
-    ImGuiCustom::SelectString("Script Path", scriptPath_, GetAvailableScriptPaths(), true);
+    ImGuiCustom::SelectString(TranslationLabel("component.scriptcomponent.script_path"), scriptPath_, GetAvailableScriptPaths(), true);
     // Assetsウィンドウからのスクリプトファイル（.as）のドラッグ&ドロップも受け付ける
     // （ドロップ時はそのまま適用＝リロードまで行う）
     if (std::string droppedPath; AcceptAssetDragDropTarget(kScriptAssetDragDropType, droppedPath)) {
@@ -1088,11 +1088,11 @@ void ScriptComponent::ShowImGui() {
         }
     }
     ImGui::SameLine();
-    if (ImGui::Button("Refresh List")) {
+    if (ImGui::Button(TranslationLabel("component.scriptcomponent.refresh_list"))) {
         RefreshAvailableScriptPaths();
     }
     // コンボの右に並べると画面外へはみ出して押しづらいため、Reloadは下の行に配置する
-    if (ImGui::Button("Reload")) {
+    if (ImGui::Button(TranslationLabel("component.scriptcomponent.reload"))) {
         if (Reload()) {
             HookColliders();
             HookWindowObjects();
@@ -1100,13 +1100,13 @@ void ScriptComponent::ShowImGui() {
         }
     }
 
-    ImGui::Text("Behavior: %s", behaviorType_ ? behaviorType_->GetName() : "(None)");
+    ImGui::Text(TranslationC("component.scriptcomponent.behavior_s"), behaviorType_ ? behaviorType_->GetName() : "(None)");
     if (behaviorObject_) {
-        ImGui::Text("Awake: %s / Start: %s / Update: %s / End: %s",
+        ImGui::Text(TranslationC("component.scriptcomponent.awake_s_start_s_update_s_end_s"),
             awakeMethod_ ? "o" : "-", startMethod_ ? "o" : "-", updateMethod_ ? "o" : "-", endMethod_ ? "o" : "-");
-        ImGui::Text("OnCollision Enter: %s / Stay: %s / Exit: %s",
+        ImGui::Text(TranslationC("component.scriptcomponent.oncollision_enter_s_stay_s_exit_s"),
             onCollisionEnterMethod_ ? "o" : "-", onCollisionStayMethod_ ? "o" : "-", onCollisionExitMethod_ ? "o" : "-");
-        ImGui::Text("OnWindowMessage: %s", onWindowMessageMethod_ ? "o" : "-");
+        ImGui::Text(TranslationC("component.scriptcomponent.onwindowmessage_s"), onWindowMessageMethod_ ? "o" : "-");
     }
     if (!lastError_.empty()) {
         ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "%s", lastError_.c_str());
@@ -1124,7 +1124,7 @@ void ScriptComponent::ShowImGui() {
 
     if (serializedFields_.empty()) return;
 
-    ImGui::SeparatorText("Serialize Fields");
+    ImGui::SeparatorText(TranslationLabel("component.scriptcomponent.serialize_fields"));
     for (auto &field : serializedFields_) {
         ImGui::PushID(field.name.c_str());
         DrawFieldImGui(field, field.address);
@@ -1145,11 +1145,11 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
     if (field.isArray) {
         CScriptArray *array = *static_cast<CScriptArray **>(address);
         if (!array || field.children.empty()) {
-            ImGui::Text("%s: (null)", label);
+            ImGui::Text(TranslationC("component.scriptcomponent.s_null"), label);
             return;
         }
         if (!IsArrayHandleValid(array, field.typeId)) {
-            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "%s: (invalid array data)", label);
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), TranslationC("component.scriptcomponent.invalid_array_data"), label);
             return;
         }
         const bool isOpen = ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_DefaultOpen);
@@ -1174,7 +1174,7 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
 
         int size = static_cast<int>(array->GetSize());
         ImGui::SetNextItemWidth(ImGui::GetFontSize() * 6.0f);
-        if (ImGui::InputInt("Size", &size)) {
+        if (ImGui::InputInt(TranslationLabel("component.scriptcomponent.size"), &size)) {
             array->Resize(static_cast<asUINT>(std::max(0, size)));
             createHandleElements();
         }
@@ -1190,7 +1190,7 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
             if (at) {
                 DrawFieldImGui(element, wrapElement ? static_cast<void *>(&wrapped) : at);
             } else {
-                ImGui::Text("%s: (null)", element.name.c_str());
+                ImGui::Text(TranslationC("component.scriptcomponent.s_null"), element.name.c_str());
             }
             ImGui::PopID();
         }
@@ -1209,7 +1209,7 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
         // [System.Serializable] クラスはツリーで子フィールドを表示する
         asIScriptObject *object = *static_cast<asIScriptObject **>(address);
         if (!object) {
-            ImGui::Text("%s: (null)", label);
+            ImGui::Text(TranslationC("component.scriptcomponent.s_null"), label);
             return;
         }
         const bool isOpen = ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_DefaultOpen);
@@ -1289,10 +1289,10 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
                 *objectSlot = sceneContext->GetSceneObject(targetId);
             }
         } else {
-            ImGui::Text("%s: (SceneContext未設定)", label);
+            ImGui::Text(TranslationC("component.scriptcomponent.s_scenecontext"), label);
         }
     } else {
-        ImGui::Text("%s: (unsupported type)", label);
+        ImGui::Text(TranslationC("component.scriptcomponent.s_unsupported_type"), label);
     }
 
     if (!attrs.tooltip.empty() && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", attrs.tooltip.c_str());

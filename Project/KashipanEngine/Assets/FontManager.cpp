@@ -211,11 +211,11 @@ FontManager::FontHandle FontManager::LoadFont(const std::string &filePath) {
 
     const std::filesystem::path p = Utf8StringToPath(filePath);
     if (!std::filesystem::exists(p)) {
-        Log("フォントファイルが見つかりません: " + PathToUtf8String(p), LogSeverity::Warning);
+        Log(Translation("engine.font.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
     if (!HasSupportedFontExtension(p)) {
-        Log("未対応のフォント拡張子です: " + PathToUtf8String(p), LogSeverity::Warning);
+        Log(Translation("engine.font.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
 
@@ -230,7 +230,7 @@ FontManager::FontHandle FontManager::LoadFont(const std::string &filePath) {
 
     RawFileData raw = LoadFile(full);
     if (raw.data.empty()) {
-        Log("フォントファイルの読み込みに失敗しました: " + PathToUtf8String(p), LogSeverity::Warning);
+        Log(Translation("engine.font.loading.failed.read") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
 
@@ -240,7 +240,7 @@ FontManager::FontHandle FontManager::LoadFont(const std::string &filePath) {
     auto info = std::make_unique<stbtt_fontinfo>();
     const int offset = stbtt_GetFontOffsetForIndex(entry.fileData.data(), 0);
     if (offset < 0 || !stbtt_InitFont(info.get(), entry.fileData.data(), offset)) {
-        Log("フォントの解析に失敗しました: " + PathToUtf8String(p), LogSeverity::Error);
+        Log(Translation("engine.font.loading.failed.parse") + PathToUtf8String(p), LogSeverity::Error);
         return kInvalidHandle;
     }
 
@@ -258,7 +258,7 @@ FontManager::FontHandle FontManager::LoadFont(const std::string &filePath) {
     sNameToHandle[entry.name] = handle;
     sFonts.emplace(handle, std::move(entry));
 
-    Log("フォントを読み込みました: " + p.string(), LogSeverity::Info);
+    Log(Translation("engine.font.loading.succeeded") + p.string(), LogSeverity::Info);
     return handle;
 }
 
@@ -322,7 +322,7 @@ void FontManager::UploadAtlasToGpu(FontHandle handle) {
         &uploadHeap, D3D12_HEAP_FLAG_NONE, &uploadDesc,
         D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(upload.GetAddressOf()));
     if (FAILED(hr)) {
-        Log("フォントアトラス用アップロードリソースの作成に失敗しました", LogSeverity::Error);
+        Log(Translation("engine.font.atlas.failed.createupload"), LogSeverity::Error);
         return;
     }
 
@@ -331,7 +331,7 @@ void FontManager::UploadAtlasToGpu(FontHandle handle) {
         D3D12_RANGE range{ 0, 0 };
         hr = upload->Map(0, &range, &mapped);
         if (FAILED(hr) || !mapped) {
-            Log("フォントアトラスのMapに失敗しました", LogSeverity::Error);
+            Log(Translation("engine.font.atlas.failed.map"), LogSeverity::Error);
             return;
         }
         auto *dst = static_cast<uint8_t *>(mapped);
@@ -522,7 +522,7 @@ float FontManager::GetLineHeight(FontHandle handle, float pixelHeight) {
 
 #if defined(USE_IMGUI)
 void FontManager::ShowImGuiLoadedFontsWindow() {
-    if (!ImGui::Begin("Loaded Fonts")) {
+    if (!ImGui::Begin(TranslationLabel("editor.fontmanager.window"))) {
         ImGui::End();
         return;
     }
@@ -539,9 +539,9 @@ void FontManager::ShowImGuiLoadedFontsWindow() {
             ImGui::TableSetColumnIndex(1);
             ImGui::TextUnformatted(entry.assetPath.c_str());
             ImGui::TableSetColumnIndex(2);
-            ImGui::Text("%u x %u", entry.atlasSize, entry.atlasSize);
+            ImGui::Text(TranslationC("editor.fontmanager.u_x_u"), entry.atlasSize, entry.atlasSize);
             ImGui::TableSetColumnIndex(3);
-            ImGui::Text("%zu", entry.glyphs.size());
+            ImGui::Text(TranslationC("editor.fontmanager.desc_1"), entry.glyphs.size());
         }
         ImGui::EndTable();
     }

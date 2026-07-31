@@ -2,6 +2,7 @@
 #include <d3d12.h>
 #include <string>
 #include "Utilities/FileIO/JSON.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 namespace Pipeline::JsonParser {

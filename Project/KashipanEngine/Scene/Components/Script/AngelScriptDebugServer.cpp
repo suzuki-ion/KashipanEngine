@@ -116,14 +116,14 @@ struct AngelScriptDebugServer::Impl final {
 
         WSADATA wsaData{};
         if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-            Log("AngelScript DAP: WSAStartupに失敗しました", LogSeverity::Error);
+            Log(Translation("engine.script.dap.failed.wsastartup"), LogSeverity::Error);
             return false;
         }
         winsockInitialized_ = true;
 
         listenSocket_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         if (listenSocket_ == INVALID_SOCKET) {
-            Log("AngelScript DAP: ソケットの作成に失敗しました", LogSeverity::Error);
+            Log(Translation("engine.script.dap.failed.createsocket"), LogSeverity::Error);
             CleanupWinsock();
             return false;
         }
@@ -135,7 +135,7 @@ struct AngelScriptDebugServer::Impl final {
 
         if (bind(listenSocket_, reinterpret_cast<const sockaddr *>(&address), sizeof(address)) == SOCKET_ERROR ||
             listen(listenSocket_, 1) == SOCKET_ERROR) {
-            Log("AngelScript DAP: localhost:" + std::to_string(port) + " の待受開始に失敗しました",
+            Log(Translation("engine.script.dap.failed.listen") + "localhost:" + std::to_string(port),
                 LogSeverity::Error);
             closesocket(listenSocket_);
             listenSocket_ = INVALID_SOCKET;
@@ -147,7 +147,7 @@ struct AngelScriptDebugServer::Impl final {
         serverThread_ = std::jthread([this](const std::stop_token stopToken) {
             ServerLoop(stopToken);
         });
-        Log("AngelScript DAP: localhost:" + std::to_string(port) + " で待受を開始しました");
+        Log(Translation("engine.script.dap.listening") + "localhost:" + std::to_string(port));
         return true;
     }
 
@@ -183,7 +183,7 @@ struct AngelScriptDebugServer::Impl final {
         const int result = context->SetLineCallback(
             asFUNCTION(DebugLineCallback), this, asCALL_CDECL);
         if (result < 0) {
-            Log("AngelScript DAP: ラインコールバックの設定に失敗しました", LogSeverity::Warning);
+            Log(Translation("engine.script.dap.failed.linecallback"), LogSeverity::Warning);
         }
     }
 
@@ -217,7 +217,7 @@ private:
             SOCKET acceptedSocket = accept(listenSocket, nullptr, nullptr);
             if (acceptedSocket == INVALID_SOCKET) {
                 if (running_.load()) {
-                    Log("AngelScript DAP: クライアント接続の待受に失敗しました", LogSeverity::Warning);
+                    Log(Translation("engine.script.dap.failed.accept"), LogSeverity::Warning);
                 }
                 break;
             }
@@ -230,7 +230,7 @@ private:
             clientConfigured_.store(false);
             pauseRequested_.store(false);
             ClearClientState();
-            Log("AngelScript DAP: VS Codeが接続しました");
+            Log(Translation("engine.script.dap.client.connected"));
 
             ClientLoop(stopToken, acceptedSocket);
 
@@ -248,7 +248,7 @@ private:
             }
             ClearClientState();
             if (running_.load()) {
-                Log("AngelScript DAP: VS Codeが切断しました");
+                Log(Translation("engine.script.dap.client.disconnected"));
             }
         }
     }
@@ -286,7 +286,7 @@ private:
         const std::string normalizedHeader = NormalizeSlashesAndCase(header);
         const auto lengthPos = normalizedHeader.find(contentLengthName);
         if (lengthPos == std::string::npos) {
-            Log("AngelScript DAP: Content-Lengthの無いメッセージを受信しました", LogSeverity::Warning);
+            Log(Translation("engine.script.dap.message.nocontentlength"), LogSeverity::Warning);
             buffer.erase(0, headerEnd + headerTerminator.size());
             return !buffer.empty();
         }
@@ -298,7 +298,7 @@ private:
             contentLength = static_cast<std::size_t>(std::stoull(
                 header.substr(valueBegin, valueEnd - valueBegin)));
         } catch (const std::exception &) {
-            Log("AngelScript DAP: Content-Lengthが不正です", LogSeverity::Warning);
+            Log(Translation("engine.script.dap.message.invalidcontentlength"), LogSeverity::Warning);
             buffer.clear();
             return false;
         }
@@ -315,7 +315,7 @@ private:
             const JSON message = JSON::parse(body);
             closeRequested = HandleMessage(message);
         } catch (const std::exception &exception) {
-            Log("AngelScript DAP: JSONメッセージの解析に失敗しました: " + std::string(exception.what()),
+            Log(Translation("engine.script.dap.message.parse.failed") + exception.what(),
                 LogSeverity::Warning);
         }
         return !buffer.empty();

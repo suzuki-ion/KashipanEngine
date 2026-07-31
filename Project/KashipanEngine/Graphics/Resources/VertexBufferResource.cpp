@@ -1,4 +1,5 @@
 #include "VertexBufferResource.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

@@ -1,0 +1,75 @@
+﻿{
+	// プリセット名
+	"Name": "Example RootConstants",
+
+	//==============================================================
+	// RootConstants サンプル
+	// ParseRootConstants(Json) が読むキー:
+	//   ShaderRegister : b0 等の数字部分 (定数バッファレジスタ)
+	//   RegisterSpace  : 通常 0 (空間分離が必要な特殊ケースのみ変更)
+	//   Num32BitValues : 32bit 値スロット数 (uint/float/BOOL 等 1 要素=1スロット)
+	//==============================================================
+	"RootConstants": {
+		// 定数を b0 レジスタへ配置
+		"ShaderRegister": 0,
+		// レジスタ空間 (複数系統の同番号レジスタを分けたい場合に使用)
+		"RegisterSpace": 0,
+		// 例: float4x4(16) + float4(4) + uint(1) = 21 スロット
+		"Num32BitValues": 21
+	},
+
+	//==============================================================
+	// 利用例: RootSignature の Parameters 内で使用
+	//==============================================================
+	"RootSignature_Example": {
+		"RootParameter": {
+			"Parameters": [
+				{
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_VERTEX",
+					"Constants": {
+						"ShaderRegister": 0,
+						"RegisterSpace": 0,
+						"Num32BitValues": 16 // VS 用: ワールド行列 float4x4
+					}
+				},
+				{
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_PIXEL",
+					// PS 用: 色(float4) + 時間(float1) = 合計5
+					"Constants": {
+						"ShaderRegister": 1,
+						"RegisterSpace": 0,
+						"Num32BitValues": 5
+					}
+				}
+			]
+		}
+	},
+
+	//==============================================================
+	// プリセット例: 小さな定数 (float4 1 個)
+	//==============================================================
+	"RootConstants_Float4": {
+		"ShaderRegister": 2,
+		"RegisterSpace": 0,
+		"Num32BitValues": 4
+	},
+
+	//==============================================================
+	// プリセット例: マテリアル (float4x4(16) + float4(4) + uint2(2) = 22)
+	//==============================================================
+	"RootConstants_Material": {
+		"ShaderRegister": 3,
+		"RegisterSpace": 0,
+		"Num32BitValues": 22
+	},
+
+	//==============================================================
+	// 注意:
+	// - Num32BitValues は 32bit スカラー単位。ベクトル/行列は要素数に展開して合計。
+	// - サイズが大きすぎると Root Signature のコスト増。頻繁更新が必要な最小集合に留める。
+	// - 大規模データは通常 CBV を使用し、RootConstants には小容量頻繁更新データを置く。
+	//==============================================================
+	"_Info": "RootConstants 単体および RootParameter 統合例。必要に応じて UsePreset 構造へ転用。"
+}

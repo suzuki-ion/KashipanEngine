@@ -16,6 +16,22 @@ public:
     /// @details 将来プロジェクトの構成を変えた際に、古いプロジェクトを移行するために使う
     static constexpr int kProjectFormatVersion = 1;
 
+    /// @brief プロジェクトテンプレート1件分の情報
+    /// @details AssetsTemplate/<フォルダ名>/ が1つのテンプレートで、その中身がそのまま
+    ///          新規プロジェクトの Assets/ へコピーされる。フォルダを追加するだけで
+    ///          新しいテンプレートとして選べるようになる。
+    struct TemplateInfo {
+        /// @brief テンプレート名（＝AssetsTemplate配下のフォルダ名）
+        std::string name;
+        /// @brief 画面に表示する名前（Template.jsonで指定。無ければフォルダ名）
+        std::string displayName;
+        /// @brief テンプレートの説明（Template.jsonで指定。任意）
+        std::string description;
+    };
+
+    /// @brief テンプレートが指定されなかった場合に使うテンプレート名
+    static constexpr const char *kDefaultTemplateName = "Default";
+
     /// @brief プロジェクト1件分の情報
     struct ProjectInfo {
         /// @brief プロジェクト名（＝プロジェクトフォルダ名）
@@ -38,11 +54,30 @@ public:
     /// @brief 現在開いているプロジェクトの情報を取得する
     static ProjectInfo GetActiveProject();
 
-    /// @brief 新規プロジェクトを作成する（AssetsTemplateをコピーしてProject.jsonを生成）
+    /// @brief 選べるプロジェクトテンプレートの一覧を取得する（表示名順）
+    static std::vector<TemplateInfo> GetTemplateList();
+
+    /// @brief 新規プロジェクトを作成する（テンプレートをコピーしてProject.jsonを生成）
     /// @param name プロジェクト名（フォルダ名として使うため、パス区切りなどは含められない）
+    /// @param templateName 使用するテンプレート名（空の場合は kDefaultTemplateName）
     /// @param outErrorMessage 失敗した場合の理由（不要な場合は nullptr）
     /// @return 作成に成功した場合は true
-    static bool CreateProject(const std::string &name, std::string *outErrorMessage = nullptr);
+    static bool CreateProject(const std::string &name, const std::string &templateName,
+        std::string *outErrorMessage = nullptr);
+
+    /// @brief プロジェクトを削除する
+    /// @details 取り返しがつかない操作にならないよう、フォルダはごみ箱へ送る。
+    ///          Project.json を持たないフォルダは（プロジェクトではないため）削除しない。
+    /// @param name プロジェクト名
+    /// @param outErrorMessage 失敗した場合の理由（不要な場合は nullptr）
+    /// @return 削除に成功した場合は true
+    static bool DeleteProject(const std::string &name, std::string *outErrorMessage = nullptr);
+
+    /// @brief プロジェクトフォルダをエクスプローラーで開く
+    /// @param name プロジェクト名
+    /// @param outErrorMessage 失敗した場合の理由（不要な場合は nullptr）
+    /// @return 開けた場合は true
+    static bool OpenProjectInExplorer(const std::string &name, std::string *outErrorMessage = nullptr);
 
     /// @brief 次回起動時に開くプロジェクトを設定する
     static void SetStartupProject(const std::string &name);

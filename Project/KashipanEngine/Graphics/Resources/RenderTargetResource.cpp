@@ -1,4 +1,5 @@
 #include "RenderTargetResource.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

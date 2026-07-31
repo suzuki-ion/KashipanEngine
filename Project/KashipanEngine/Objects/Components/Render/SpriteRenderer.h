@@ -14,6 +14,7 @@
 #if defined(USE_IMGUI)
 #include "Objects/Components/Render/TargetObjectSelector.h"
 #include "Utilities/AssetDragDropPayload.h"
+#include "Utilities/Translation.h"
 #endif
 
 namespace KashipanEngine {
@@ -192,13 +193,13 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         // 描画先はシーン上のオブジェクトから選択（ヒエラルキーからのD&Dも受け付ける）
-        if (TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), targetObjectID_)) {
+        if (TargetObjectSelector::ShowSelector(TranslationLabel("component.common.target"), GetOwnerSceneContext(), targetObjectID_)) {
             MarkDrawListDirty();
         }
         // 対象オブジェクトが持つ描画先ごとに描画する/しないを選択する
         TargetObjectSelector::ShowRenderTargetFilters(GetOwnerSceneContext(), targetObjectID_, excludedRenderTargetNames_);
         // パイプラインとマテリアルは読み込み済みのものから選択する
-        if (ImGuiCustom::SelectString("Pipeline", pipelineName_, PipelineManager::GetLoadedRenderPipelineNames())) {
+        if (ImGuiCustom::SelectString(TranslationLabel("component.spriterenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames())) {
             MarkDrawListDirty();
         }
         const auto materialEntries = MaterialManager::GetLoadedMaterialListEntries();
@@ -206,7 +207,7 @@ protected:
         for (const auto &entry : materialEntries) {
             materialNames.push_back(entry.material.name);
         }
-        if (ImGuiCustom::SelectString("Material", materialName_, materialNames)) {
+        if (ImGuiCustom::SelectString(TranslationLabel("component.spriterenderer.material"), materialName_, materialNames)) {
             materialHandle_ = MaterialManager::kInvalidHandle;
             MarkDrawListDirty();
         }
@@ -222,8 +223,8 @@ protected:
             }
         }
         // アンカー・ピボット（単位クアッド内の正規化座標。(0,0)=左下 ～ (1,1)=右上）
-        ImGui::DragFloat2("Anchor", &anchor_.x, 0.01f);
-        ImGui::DragFloat2("Pivot", &pivot_.x, 0.01f);
+        ImGui::DragFloat2(TranslationLabel("component.spriterenderer.anchor"), &anchor_.x, 0.01f);
+        ImGui::DragFloat2(TranslationLabel("component.spriterenderer.pivot"), &pivot_.x, 0.01f);
     }
 #endif
 

@@ -8,6 +8,7 @@
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/Passkeys.h"
 #include "Utilities/TimeUtils.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

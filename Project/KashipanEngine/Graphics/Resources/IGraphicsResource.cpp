@@ -1,4 +1,5 @@
 #include "IGraphicsResource.h"
+#include "Utilities/Translation.h"
 
 namespace {
 /// @brief リソース管理用コンテナ

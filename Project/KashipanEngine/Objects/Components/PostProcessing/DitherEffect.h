@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <algorithm>
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -31,8 +32,8 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         IPostProcessComponent::ShowImGui();
-        ImGui::DragFloat("Intensity", &params_.intensity, 0.01f, 0.0f, 1.0f, "%.3f");
-        ImGui::Checkbox("Color", &params_.color);
+        ImGui::DragFloat(TranslationLabel("component.dithereffect.intensity"), &params_.intensity, 0.01f, 0.0f, 1.0f, "%.3f");
+        ImGui::Checkbox(TranslationLabel("component.dithereffect.color"), &params_.color);
     }
 #endif
 

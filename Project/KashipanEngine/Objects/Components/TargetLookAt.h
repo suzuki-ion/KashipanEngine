@@ -11,6 +11,7 @@
 #include "Utilities/UUID128.h"
 #if defined(USE_IMGUI)
 #include "Objects/Components/Render/TargetObjectSelector.h"
+#include "Utilities/Translation.h"
 #endif
 
 namespace KashipanEngine {
@@ -139,24 +140,24 @@ protected:
     void ShowImGui() override {
         TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), targetObjectID_, true, false);
         if (!targetObjectID_.IsValid()) {
-            ImGui::TextDisabled("(No target: rotation is not controlled)");
+            ImGui::TextDisabled("%s", TranslationC("component.targetlookat.no_target_rotation_is_not_controlled"));
         }
 
-        static const char *kModeLabels[] = { "Sync Target Rotation", "Look At Target" };
+        const char *kModeLabels[] = { TranslationC("component.common.mode.synctargetrotation"), TranslationC("component.common.mode.lookattarget") };
         int mode = static_cast<int>(rotationMode_);
-        if (ImGui::Combo("Rotation Mode", &mode, kModeLabels, 2)) {
+        if (ImGui::Combo(TranslationLabel("component.targetlookat.rotation_mode"), &mode, kModeLabels, 2)) {
             rotationMode_ = static_cast<RotationMode>(mode);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Sync Target Rotation: ターゲットのワールド回転と同期する（ビルボード向け）\nLook At Target: 自身の+Z軸が常にターゲットの方向を向く");
+            ImGui::SetTooltip("%s", TranslationC("component.targetlookat.desc_1"));
         }
 
         Vector3 rotationOffsetDeg(ToDegrees(rotationOffset_.x), ToDegrees(rotationOffset_.y), ToDegrees(rotationOffset_.z));
-        if (ImGui::DragFloat3("Rotation Offset", &rotationOffsetDeg.x, 0.1f)) {
+        if (ImGui::DragFloat3(TranslationLabel("component.targetlookat.rotation_offset"), &rotationOffsetDeg.x, 0.1f)) {
             rotationOffset_ = Vector3(ToRadians(rotationOffsetDeg.x), ToRadians(rotationOffsetDeg.y), ToRadians(rotationOffsetDeg.z));
         }
 
-        ImGui::DragFloat("Follow Strength", &followStrength_, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat(TranslationLabel("component.targetlookat.follow_strength"), &followStrength_, 0.01f, 0.0f, 1.0f);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("%s", "目標の回転へ追従する速さ（1フレーム(60fps換算)あたりに近づく割合）\n1.0で即座に追従、小さくするほど遅れて滑らかに追従する");
         }

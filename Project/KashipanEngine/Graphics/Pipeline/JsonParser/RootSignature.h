@@ -6,6 +6,7 @@
 #include "Graphics/Pipeline/EnumMaps.h"
 #include "Graphics/Pipeline/JsonParser/RootParameter.h"
 #include "Graphics/Pipeline/JsonParser/SamplerState.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 namespace Pipeline::JsonParser {

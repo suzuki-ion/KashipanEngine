@@ -1,5 +1,6 @@
 #include "ShaderResourceResource.h"
 #include "Graphics/Resources/RenderTargetResource.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

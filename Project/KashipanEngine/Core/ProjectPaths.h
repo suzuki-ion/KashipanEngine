@@ -22,7 +22,8 @@ public:
     static constexpr const char *kAssetsFolderName = "Assets";
     /// @brief 各プロジェクトが並ぶフォルダ名（エンジンルート直下）
     static constexpr const char *kProjectsFolderName = "Projects";
-    /// @brief 新規プロジェクト作成時にコピー元となるテンプレートフォルダ名（エンジンルート直下）
+    /// @brief プロジェクトテンプレートが並ぶフォルダ名（エンジンルート直下）
+    /// @details 直下のフォルダ1つが1テンプレートで、その中身が新規プロジェクトの Assets/ になる
     static constexpr const char *kAssetsTemplateFolderName = "AssetsTemplate";
     /// @brief プロジェクト定義ファイル名（プロジェクトルート直下）
     static constexpr const char *kProjectFileName = "Project.json";
@@ -39,8 +40,10 @@ public:
     static void Initialize(PasskeyForGameEngineMain);
 
     /// @brief エンジンルートだけを解決する（プロジェクトは開かない）
-    /// @details プロジェクトを一覧・作成するだけでエンジンを動かさないランチャー用。
+    /// @details プロジェクトを一覧・作成するだけでエンジンを動かさないランチャーと、
+    ///          プロジェクト解決より先にエンジン共通の翻訳を読みたいエンジン起動時に使う。
     ///          これだけで ProjectsRoot() / AssetsTemplateRoot() / InEngineRoot() が使えるようになる。
+    ///          この後に Initialize() を呼んでも二重解決にはならない。
     static void InitializeEngineRootOnly(PasskeyForWinMain);
 
     /// @brief exeが置かれているフォルダ
@@ -82,7 +85,8 @@ public:
     /// @brief エンジンルート基準の相対パスを物理パスへ変換する（EditorPreferences.json など）
     static std::string InEngineRoot(const std::string &relativePath);
 
-    /// @brief 新規プロジェクトの生成元テンプレートフォルダ（物理パス）
+    /// @brief プロジェクトテンプレートが並ぶフォルダ（物理パス）
+    /// @details 個々のテンプレートは、この下の <テンプレート名>/ フォルダ
     static std::string AssetsTemplateRoot();
 
     /// @brief 全プロジェクトが並ぶフォルダ（物理パス）
@@ -117,6 +121,9 @@ private:
     static inline std::string sAssetsRoot;
     static inline std::string sProjectName;
     static inline bool sIsStandalone = false;
+    /// @brief エンジンルートを解決済みか（プロジェクトの解決とは独立して先に済ませられる）
+    static inline bool sIsEngineRootResolved = false;
+    /// @brief 開くプロジェクトまで確定済みか
     static inline bool sIsInitialized = false;
 };
 

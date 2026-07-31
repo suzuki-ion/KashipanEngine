@@ -127,7 +127,7 @@ protected:
 #if defined(USE_IMGUI)
     /// @brief ImGui 表示（ウィンドウの Begin/End は呼ばない）
     virtual void ShowImGui() {
-        ImGui::Text("None");
+        ImGui::Text("%s", TranslationC("editor.iscenecomponent.none"));
     }
 #endif
 

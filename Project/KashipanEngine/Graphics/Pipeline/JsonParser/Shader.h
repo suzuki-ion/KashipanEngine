@@ -5,6 +5,7 @@
 #include "Utilities/FileIO/JSON.h"
 #include "Graphics/Pipeline/System/ShaderCompiler.h"
 #include "Graphics/Pipeline/ComponentsPresetContainer.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 namespace Pipeline::JsonParser {

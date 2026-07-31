@@ -289,7 +289,7 @@ bool RevertAll(SceneEditorContext *context, SceneEditorCommands *commands, Empty
     const size_t insertIndex = context->GetObjectIndex(instanceRoot);
     const std::string name = instanceRoot->GetName();
 
-    auto composite = std::make_unique<CompositeCommand>("Revert Prefab Instance: " + name);
+    auto composite = std::make_unique<CompositeCommand>(Translation("editor.command.revertprefabinstance") + name);
     composite->AddCommand(std::make_unique<DeleteObjectCommand>(instanceRoot));
     composite->AddCommand(std::make_unique<PasteObjectCommand>(
         std::move(preparedNodes), attachParent, insertIndex, name, "Revert Prefab Instance"));
@@ -536,7 +536,7 @@ void SyncOtherInstances(SceneEditorContext *context, SceneEditorCommands *comman
         PrefabSceneSync::SyncSceneJson(afterScene, prefabID, oldPrefabJson, newPrefabJson);
     if (!syncResult.IsChanged()) return;
 
-    auto composite = std::make_unique<CompositeCommand>("Sync Prefab Across Current Scene");
+    auto composite = std::make_unique<CompositeCommand>(Translation("editor.command.syncprefab"));
 
     // 新規ノードを先に生成する。既存ノードのTransformがその新規ノードへ親変更される場合、
     // 後続のComponentEditCommand実行時に親objectIDを解決できるようにするため。
@@ -563,12 +563,12 @@ void SyncAllScenes(SceneEditorContext *context, SceneEditorCommands *commands,
         PrefabSceneSync::SyncRegisteredScenes(context, prefabID, oldPrefabJson, newPrefabJson);
 
     LogScope scope;
-    Log("Prefab sync: scanned " + std::to_string(result.scenesScanned) +
-        " registered scene(s), updated " + std::to_string(result.scenesChanged) +
-        ", matched " + std::to_string(result.instancesMatched) + " instance(s).",
+    Log(Translation("engine.prefab.sync.result.scanned") + std::to_string(result.scenesScanned) +
+        Translation("engine.prefab.sync.result.updated") + std::to_string(result.scenesChanged) +
+        Translation("engine.prefab.sync.result.matched") + std::to_string(result.instancesMatched),
         result.failedScenes.empty() ? LogSeverity::Info : LogSeverity::Warning);
     for (const auto &failedScene : result.failedScenes) {
-        Log("Prefab sync: failed to load or save scene " + failedScene, LogSeverity::Warning);
+        Log(Translation("engine.prefab.sync.scene.failed") + failedScene, LogSeverity::Warning);
     }
 }
 

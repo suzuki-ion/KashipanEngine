@@ -43,7 +43,7 @@
 <table>
 <tr><th>場所</th><th>内容</th></tr>
 <tr><td><code>Projects/</code></td><td>すべてのプロジェクトが並ぶフォルダ</td></tr>
-<tr><td><code>AssetsTemplate/</code></td><td>新規プロジェクト作成時に<code>Assets/</code>へコピーされるひな形</td></tr>
+<tr><td><code>AssetsTemplate/</code></td><td>プロジェクトテンプレート置き場。直下のフォルダ1つが1テンプレートで、その中身が新規プロジェクトの<code>Assets/</code>になる</td></tr>
 <tr><td><code>UserSettings.json</code></td><td>プロジェクトをまたいで共有される個人設定（配色・フォント・表示倍率・前回開いたプロジェクト）</td></tr>
 <tr><td><code>EditorTools/</code></td><td>エンジン共通のエディター拡張スクリプト（<code>.as</code>）</td></tr>
 <tr><td><code>EngineRoot.txt</code></td><td>exeと同じフォルダに置かれ、エンジンルートの位置を指すマーカー（ビルド時に自動生成）</td></tr>
@@ -57,9 +57,29 @@
 <tr><th>項目</th><th>内容</th></tr>
 <tr><td>プロジェクト一覧</td><td><code>Projects/</code>配下のプロジェクト。前回開いたプロジェクトが最初から選択された状態になる。項目のダブルクリックはそのまま「開く」として扱われる</td></tr>
 <tr><td>開く</td><td>選択中のプロジェクトでエディターを起動し、ランチャー自身は閉じる</td></tr>
-<tr><td>更新</td><td><code>Projects/</code>を再スキャンする</td></tr>
-<tr><td>新規プロジェクト名 / 作成</td><td><code>AssetsTemplate/</code>から新しいプロジェクトを作る。作成しただけでは開かないので、続けて<code>開く</code>を押す</td></tr>
+<tr><td>フォルダを開く</td><td>選択中のプロジェクトのフォルダをエクスプローラーで開く</td></tr>
+<tr><td>削除</td><td>選択中のプロジェクトを削除する（確認ダイアログあり）</td></tr>
+<tr><td>更新</td><td><code>Projects/</code>とテンプレートを再スキャンする</td></tr>
+<tr><td>テンプレート / 新規プロジェクト名 / 作成</td><td>選んだテンプレートから新しいプロジェクトを作る。作成しただけでは開かないので、続けて<code>開く</code>を押す</td></tr>
 </table>
+
+<h3>プロジェクトテンプレート</h3>
+<p>新規プロジェクトの初期内容は、エンジンルート直下の<code>AssetsTemplate/</code>にあるテンプレートから選びます。既定では次の2つが用意されています。</p>
+<table>
+<tr><th>テンプレート</th><th>内容</th></tr>
+<tr><td>標準（<code>Default</code>）</td><td>カメラとライトを配置した<code>DefaultScene</code>を起動シーンとして登録済み</td></tr>
+<tr><td>空のプロジェクト（<code>Empty</code>）</td><td>エンジンの既定リソースだけの最小構成。シーンは登録されていない</td></tr>
+</table>
+<p>テンプレートを増やしたい場合は、<code>AssetsTemplate/</code>の下にフォルダを作り、新規プロジェクトの<code>Assets/</code>にしたい中身をそのまま置くだけです。フォルダ直下に次の<code>Template.json</code>を置くと、選択欄に表示される名前と説明を指定できます（省略した場合はフォルダ名がそのまま表示されます）。</p>
+<pre><code>{
+    "displayName": "標準",
+    "description": "カメラとライトを配置した DefaultScene を起動シーンとして登録済み。"
+}</code></pre>
+<div class="note"><code>Template.json</code>はテンプレート自身の説明であってゲームのデータではないため、作成されたプロジェクトの<code>Assets/</code>にはコピーされません。</div>
+
+<h3>プロジェクトの削除</h3>
+<p><code>削除</code>を押すと確認ダイアログが表示され、対象のプロジェクト名とフォルダのパスを確かめてから実行できます。</p>
+<div class="tip"><strong>削除したプロジェクトはごみ箱から戻せます</strong><br>フォルダは完全に消されるのではなく、ごみ箱へ移動します。誤って削除した場合はごみ箱から復元してください。<br>また、<code>Project.json</code>を持たないフォルダは（プロジェクトではないため）削除対象になりません。削除したプロジェクトが次回起動時に開く対象だった場合は、その指定も併せて解除されます。</div>
 
 <div class="note"><strong>ランチャーは配布物には含めません</strong><br>ランチャーはプロジェクトを切り替えるためのエディター用ツールです。ゲームを配布する際は<code>KashipanEngine.exe</code>とその隣の<code>Assets/</code>だけを配置します。</div>
 
@@ -87,7 +107,8 @@
 <div class="warn"><strong>切り替えるとエディターが起動し直します</strong><br>エンジンは起動時にテクスチャ・モデル・音声などをGPUリソースごと読み込むため、実行中にプロジェクトを丸ごと差し替えることはできません。<code>Open</code>を押すとエディターは通常どおり終了処理（シーンの自動保存など）を行ったうえで自分自身を閉じ、選んだプロジェクトを開いた状態で自動的に起動し直します。</div>
 
 <h3>New Project</h3>
-<p>名前を入力して<code>Create</code>を押すと、<code>Projects/&lt;名前&gt;/</code>が作られ、<code>AssetsTemplate/</code>の中身がその<code>Assets/</code>へコピーされます。作成しただけでは開いているプロジェクトは変わらないため、切り替えたい場合は続けて一覧の<code>Open</code>を押します。</p>
+<p>名前を入力して<code>Create</code>を押すと、<code>Projects/&lt;名前&gt;/</code>が作られ、テンプレートの中身がその<code>Assets/</code>へコピーされます。作成しただけでは開いているプロジェクトは変わらないため、切り替えたい場合は続けて一覧の<code>Open</code>を押します。</p>
+<div class="note">エディター内のこの画面では常に<code>Default</code>テンプレートが使われます。テンプレートを選んで作成したい場合や、プロジェクトを削除したい場合はプロジェクトランチャーを使ってください。</div>
 <p>名前はフォルダ名としてそのまま使われるため、次の場合は作成できません（理由がウィンドウ内に表示されます）。</p>
 <ul class="checklist">
 <li>空文字の場合</li>

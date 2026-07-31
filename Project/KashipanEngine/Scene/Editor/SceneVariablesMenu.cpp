@@ -2,12 +2,13 @@
 #ifdef USE_IMGUI
 #include <imgui.h>
 #include "Utilities/ImGuiCustom.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
 void SceneVariablesMenu::ShowImGui() {
     if (!context_) return;
-    if (!ImGui::Begin("Scene Variables")) {
+    if (!ImGui::Begin(TranslationLabel("editor.scenevariables.window"))) {
         ImGui::End();
         return;
     }
@@ -19,7 +20,7 @@ void SceneVariablesMenu::ShowImGui() {
     ImGui::SetNextItemWidth(120.0f);
     ImGui::Combo("##NewVariableType", &newVariableType_, kTypeNames, IM_ARRAYSIZE(kTypeNames));
     ImGui::SameLine();
-    if (ImGui::Button("Add") && !newVariableName_.empty() && !context_->GetSceneVariable(newVariableName_)) {
+    if (ImGui::Button(TranslationLabel("editor.common.add")) && !newVariableName_.empty() && !context_->GetSceneVariable(newVariableName_)) {
         AddVariableOfSelectedType(newVariableName_);
         newVariableName_.clear();
     }
@@ -37,7 +38,7 @@ void SceneVariablesMenu::ShowImGui() {
         ImGui::PushID(id++);
         ShowVariableEditor(key, variable);
         ImGui::SameLine();
-        if (ImGui::SmallButton("Remove")) {
+        if (ImGui::SmallButton(TranslationLabel("editor.common.remove"))) {
             pendingRemoveKey = key;
         }
         ImGui::PopID();
@@ -102,7 +103,7 @@ void SceneVariablesMenu::ShowVariableEditor(const std::string &key, MyAny *varia
     default:
         break;
     }
-    ImGui::Text("%s : %s (unsupported)", key.c_str(), variable->GetTypeInfo().ToString().c_str());
+    ImGui::Text("%s : %s %s", key.c_str(), variable->GetTypeInfo().ToString().c_str(), TranslationC("editor.scenevariables.unsupportedtype"));
 }
 
 } // namespace KashipanEngine

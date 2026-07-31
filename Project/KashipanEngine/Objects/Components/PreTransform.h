@@ -3,6 +3,7 @@
 #include "Math/Vector3.h"
 #include "Math/Quaternion.h"
 #include "Math/Matrix4x4.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -65,13 +66,13 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
-        ImGui::Text("Previous Translate: (%.3f, %.3f, %.3f)", previousTranslate_.x, previousTranslate_.y, previousTranslate_.z);
-        ImGui::Text("Previous Rotate (rad): (%.3f, %.3f, %.3f)", previousRotate_.x, previousRotate_.y, previousRotate_.z);
-        ImGui::Text("Previous Scale: (%.3f, %.3f, %.3f)", previousScale_.x, previousScale_.y, previousScale_.z);
+        ImGui::Text(TranslationC("component.pretransform.previous_translate_3f_3f_3f"), previousTranslate_.x, previousTranslate_.y, previousTranslate_.z);
+        ImGui::Text(TranslationC("component.pretransform.previous_rotate_rad_3f_3f_3f"), previousRotate_.x, previousRotate_.y, previousRotate_.z);
+        ImGui::Text(TranslationC("component.pretransform.previous_scale_3f_3f_3f"), previousScale_.x, previousScale_.y, previousScale_.z);
         ImGui::Spacing();
-        ImGui::Text("Previous World Position: (%.3f, %.3f, %.3f)", previousWorldPosition_.x, previousWorldPosition_.y, previousWorldPosition_.z);
-        ImGui::Text("Previous World Rotate (rad): (%.3f, %.3f, %.3f)", previousWorldRotate_.x, previousWorldRotate_.y, previousWorldRotate_.z);
-        ImGui::Text("Previous World Scale: (%.3f, %.3f, %.3f)", previousWorldScale_.x, previousWorldScale_.y, previousWorldScale_.z);
+        ImGui::Text(TranslationC("component.pretransform.previous_world_position_3f_3f_3f"), previousWorldPosition_.x, previousWorldPosition_.y, previousWorldPosition_.z);
+        ImGui::Text(TranslationC("component.pretransform.previous_world_rotate_rad_3f_3f_3f"), previousWorldRotate_.x, previousWorldRotate_.y, previousWorldRotate_.z);
+        ImGui::Text(TranslationC("component.pretransform.previous_world_scale_3f_3f_3f"), previousWorldScale_.x, previousWorldScale_.y, previousWorldScale_.z);
     }
 #endif
 

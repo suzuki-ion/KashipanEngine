@@ -14,6 +14,7 @@
 #include "Graphics/Resources/RenderTargetResource.h"
 #include "Graphics/Resources/ShaderResourceResource.h"
 #include "Graphics/ScreenBuffer.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -73,16 +74,16 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         IPostProcessComponent::ShowImGui();
-        ImGui::DragFloat("Focus Distance", &params_.focusDistance, 0.1f, 0.0f, 10000.0f, "%.2f");
-        ImGui::DragFloat("Focus Range", &params_.focusRange, 0.05f, 0.0f, 1000.0f, "%.2f");
-        ImGui::DragFloat("Near Blur Distance", &params_.nearBlurDistance, 0.1f, 0.01f, 1000.0f, "%.2f");
-        ImGui::DragFloat("Far Blur Distance", &params_.farBlurDistance, 0.1f, 0.01f, 1000.0f, "%.2f");
-        ImGui::DragFloat("Max Blur Radius (px)", &params_.maxBlurRadiusPixels, 0.5f, 0.0f, 128.0f, "%.1f");
+        ImGui::DragFloat(TranslationLabel("component.depthoffieldeffect.focus_distance"), &params_.focusDistance, 0.1f, 0.0f, 10000.0f, "%.2f");
+        ImGui::DragFloat(TranslationLabel("component.depthoffieldeffect.focus_range"), &params_.focusRange, 0.05f, 0.0f, 1000.0f, "%.2f");
+        ImGui::DragFloat(TranslationLabel("component.depthoffieldeffect.near_blur_distance"), &params_.nearBlurDistance, 0.1f, 0.01f, 1000.0f, "%.2f");
+        ImGui::DragFloat(TranslationLabel("component.depthoffieldeffect.far_blur_distance"), &params_.farBlurDistance, 0.1f, 0.01f, 1000.0f, "%.2f");
+        ImGui::DragFloat(TranslationLabel("component.depthoffieldeffect.max_blur_radius_px"), &params_.maxBlurRadiusPixels, 0.5f, 0.0f, 128.0f, "%.1f");
         int sampleCount = static_cast<int>(params_.sampleCount);
-        if (ImGui::DragInt("Sample Count", &sampleCount, 1.0f, 4, 64)) {
+        if (ImGui::DragInt(TranslationLabel("component.depthoffieldeffect.sample_count"), &sampleCount, 1.0f, 4, 64)) {
             params_.sampleCount = static_cast<std::uint32_t>(std::clamp(sampleCount, 4, 64));
         }
-        ImGui::DragInt("Dilate Radius (px)", &params_.dilateRadius, 1.0f, 0, 16);
+        ImGui::DragInt(TranslationLabel("component.depthoffieldeffect.dilate_radius_px"), &params_.dilateRadius, 1.0f, 0, 16);
         if (!GetCameraInfo().valid) {
             ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f),
                 "No camera resolved for this ScreenBuffer yet: DoF will not be applied.");

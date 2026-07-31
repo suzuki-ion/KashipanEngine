@@ -7,6 +7,7 @@
 #include "Objects/Components/Render/IWindowObjectComponent.h"
 #include "Objects/Components/Transform.h"
 #include "Core/Window.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -68,15 +69,15 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
-        if (ImGuiCustom::EditValue("Title", title_)) SetTitle(title_);
+        if (ImGuiCustom::EditValue(TranslationLabel("component.normalwindowobject.title"), title_)) SetTitle(title_);
         int w = static_cast<int>(width_);
         int h = static_cast<int>(height_);
-        if (ImGuiCustom::EditValue("Width", w)) width_ = static_cast<std::uint32_t>(std::max(1, w));
-        if (ImGuiCustom::EditValue("Height", h)) height_ = static_cast<std::uint32_t>(std::max(1, h));
-        ImGui::Checkbox("Sync With Transform", &syncWithTransform_);
+        if (ImGuiCustom::EditValue(TranslationLabel("component.normalwindowobject.width"), w)) width_ = static_cast<std::uint32_t>(std::max(1, w));
+        if (ImGuiCustom::EditValue(TranslationLabel("component.normalwindowobject.height"), h)) height_ = static_cast<std::uint32_t>(std::max(1, h));
+        ImGui::Checkbox(TranslationLabel("component.normalwindowobject.sync_with_transform"), &syncWithTransform_);
         ShowInterceptedMessagesImGui();
         if (!Window::IsExist(window_)) {
-            if (ImGui::Button("Respawn Window")) {
+            if (ImGui::Button(TranslationLabel("component.normalwindowobject.respawn_window"))) {
                 window_ = nullptr;
                 Initialize();
             }

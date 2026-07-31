@@ -1,6 +1,7 @@
 #pragma once
 #include "Objects/ObjectComponentHeader.h"
 #include "Scene/Scene.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

@@ -19,6 +19,7 @@
 #include "Utilities/UUID128.h"
 #if defined(USE_IMGUI)
 #include "Objects/Components/Render/TargetObjectSelector.h"
+#include "Utilities/Translation.h"
 #endif
 
 namespace KashipanEngine {
@@ -243,52 +244,52 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
-        TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), targetObjectID_);
+        TargetObjectSelector::ShowSelector(TranslationLabel("component.common.target"), GetOwnerSceneContext(), targetObjectID_);
         TargetObjectSelector::ShowRenderTargetFilters(GetOwnerSceneContext(), targetObjectID_, excludedRenderTargetNames_);
 
-        if (ImGui::InputTextMultiline("Text", &text_)) {
+        if (ImGui::InputTextMultiline(TranslationLabel("component.textrenderer.text"), &text_)) {
             MarkShapeDirty();
         }
-        ImGui::TextDisabled("Tags: <i> <b> <color=#RRGGBB(AA)> <size=N|N%%> <s> <u> <sub> <sup>");
+        ImGui::TextDisabled(TranslationC("component.textrenderer.desc_1"));
 
         std::vector<std::string> fontNames;
         for (const auto &entry : FontManager::GetLoadedFontListEntries()) {
             fontNames.push_back(entry.name);
         }
-        if (ImGuiCustom::SelectString("Font", fontName_, fontNames, true)) {
+        if (ImGuiCustom::SelectString(TranslationLabel("component.textrenderer.font"), fontName_, fontNames, true)) {
             fontHandle_ = FontManager::kInvalidHandle;
             MarkShapeDirty();
         }
-        if (ImGui::DragFloat("Font Size", &fontSize_, 0.01f, 0.01f, 1000.0f)) MarkShapeDirty();
-        if (ImGui::ColorEdit4("Color", &color_.x)) MarkShapeDirty();
+        if (ImGui::DragFloat(TranslationLabel("component.textrenderer.font_size"), &fontSize_, 0.01f, 0.01f, 1000.0f)) MarkShapeDirty();
+        if (ImGui::ColorEdit4(TranslationLabel("component.textrenderer.color"), &color_.x)) MarkShapeDirty();
 
-        static const char *kHAlignLabels[] = { "Left", "Center", "Right" };
+        const char *kHAlignLabels[] = { TranslationC("component.textrenderer.halign.left"), TranslationC("component.textrenderer.halign.center"), TranslationC("component.textrenderer.halign.right") };
         int hAlign = static_cast<int>(horizontalAlign_);
-        if (ImGui::Combo("Horizontal Align", &hAlign, kHAlignLabels, 3)) {
+        if (ImGui::Combo(TranslationLabel("component.textrenderer.horizontal_align"), &hAlign, kHAlignLabels, 3)) {
             horizontalAlign_ = static_cast<HorizontalAlign>(hAlign);
             MarkInstancesDirty();
         }
-        static const char *kVAlignLabels[] = { "Top", "Middle", "Bottom" };
+        const char *kVAlignLabels[] = { TranslationC("component.textrenderer.valign.top"), TranslationC("component.textrenderer.valign.middle"), TranslationC("component.textrenderer.valign.bottom") };
         int vAlign = static_cast<int>(verticalAlign_);
-        if (ImGui::Combo("Vertical Align", &vAlign, kVAlignLabels, 3)) {
+        if (ImGui::Combo(TranslationLabel("component.textrenderer.vertical_align"), &vAlign, kVAlignLabels, 3)) {
             verticalAlign_ = static_cast<VerticalAlign>(vAlign);
             MarkInstancesDirty();
         }
 
-        if (ImGui::DragFloat2("Default Character Anchor", &defaultCharacterAnchor_.x, 0.01f)) MarkInstancesDirty();
-        if (ImGui::DragFloat2("Default Character Pivot", &defaultCharacterPivot_.x, 0.01f)) MarkInstancesDirty();
+        if (ImGui::DragFloat2(TranslationLabel("component.textrenderer.default_character_anchor"), &defaultCharacterAnchor_.x, 0.01f)) MarkInstancesDirty();
+        if (ImGui::DragFloat2(TranslationLabel("component.textrenderer.default_character_pivot"), &defaultCharacterPivot_.x, 0.01f)) MarkInstancesDirty();
 
-        ImGuiCustom::SelectString("Pipeline", pipelineName_, PipelineManager::GetLoadedRenderPipelineNames());
+        ImGuiCustom::SelectString(TranslationLabel("component.textrenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames());
 
         RebuildShapeIfDirty();
-        if (!characterOverrides_.empty() && ImGui::TreeNode("Character Overrides")) {
+        if (!characterOverrides_.empty() && ImGui::TreeNode(TranslationLabel("component.textrenderer.character_overrides"))) {
             for (size_t i = 0; i < characterOverrides_.size(); ++i) {
                 ImGui::PushID(static_cast<int>(i));
                 ImGui::Text("[%zu]", i);
                 bool changed = false;
-                changed |= ImGui::DragFloat2("Offset", &characterOverrides_[i].offset.x, 0.1f);
-                changed |= ImGui::DragFloat("Rotation", &characterOverrides_[i].rotation, 0.01f);
-                changed |= ImGui::DragFloat2("Scale", &characterOverrides_[i].scale.x, 0.01f);
+                changed |= ImGui::DragFloat2(TranslationLabel("component.textrenderer.offset"), &characterOverrides_[i].offset.x, 0.1f);
+                changed |= ImGui::DragFloat(TranslationLabel("component.textrenderer.rotation"), &characterOverrides_[i].rotation, 0.01f);
+                changed |= ImGui::DragFloat2(TranslationLabel("component.textrenderer.scale"), &characterOverrides_[i].scale.x, 0.01f);
                 if (changed) MarkInstancesDirty();
                 ImGui::PopID();
             }

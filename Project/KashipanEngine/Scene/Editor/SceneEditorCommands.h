@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "Scene/SceneEditorContext.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -38,7 +39,7 @@ public:
 
     bool Execute(SceneEditorContext *context) override;
     bool Undo(SceneEditorContext *context) override;
-    std::string GetName() const override { return "Create Object: " + name_; }
+    std::string GetName() const override { return Translation("editor.command.createobject") + name_; }
 
     const UUID128 &GetObjectID() const noexcept { return objectID_; }
 
@@ -58,7 +59,7 @@ public:
 
     bool Execute(SceneEditorContext *context) override;
     bool Undo(SceneEditorContext *context) override;
-    std::string GetName() const override { return "Create Object: " + name_; }
+    std::string GetName() const override { return Translation("editor.command.createobject") + name_; }
 
     const UUID128 &GetObjectID() const noexcept { return objectID_; }
 
@@ -78,7 +79,7 @@ public:
 
     bool Execute(SceneEditorContext *context) override;
     bool Undo(SceneEditorContext *context) override;
-    std::string GetName() const override { return "Create Child Object: " + name_; }
+    std::string GetName() const override { return Translation("editor.command.createchildobject") + name_; }
 
     const UUID128 &GetObjectID() const noexcept { return objectID_; }
 
@@ -148,7 +149,7 @@ public:
 
     bool Execute(SceneEditorContext *context) override;
     bool Undo(SceneEditorContext *context) override;
-    std::string GetName() const override { return "Delete Object: " + name_; }
+    std::string GetName() const override { return Translation("editor.command.deleteobject") + name_; }
 
 private:
     UUID128 objectID_;
@@ -170,7 +171,7 @@ public:
 
     bool Execute(SceneEditorContext *context) override;
     bool Undo(SceneEditorContext *context) override;
-    std::string GetName() const override { return "Move Object"; }
+    std::string GetName() const override { return Translation("editor.command.moveobject"); }
 
 private:
     UUID128 objectID_;
@@ -190,7 +191,7 @@ public:
 
     bool Execute(SceneEditorContext *context) override;
     bool Undo(SceneEditorContext *context) override;
-    std::string GetName() const override { return "Edit Object: " + newName_; }
+    std::string GetName() const override { return Translation("editor.command.editobject") + newName_; }
 
 private:
     UUID128 objectID_;
@@ -210,7 +211,7 @@ public:
 
     bool Execute(SceneEditorContext *context) override;
     bool Undo(SceneEditorContext *context) override;
-    std::string GetName() const override { return "Sync Object Properties"; }
+    std::string GetName() const override { return Translation("editor.command.syncobjectproperties"); }
 
 private:
     static bool Apply(SceneEditorContext *context, const UUID128 &objectID, const JSON &state);
@@ -240,7 +241,7 @@ public:
 
     bool Execute(SceneEditorContext *context) override;
     bool Undo(SceneEditorContext *context) override;
-    std::string GetName() const override { return "Add Component: " + componentType_; }
+    std::string GetName() const override { return Translation("editor.command.addcomponent") + componentType_; }
 
 private:
     UUID128 objectID_;
@@ -258,7 +259,7 @@ public:
 
     bool Execute(SceneEditorContext *context) override;
     bool Undo(SceneEditorContext *context) override;
-    std::string GetName() const override { return "Remove Component: " + componentType_; }
+    std::string GetName() const override { return Translation("editor.command.removecomponent") + componentType_; }
 
 private:
     UUID128 objectID_;
@@ -278,7 +279,7 @@ public:
 
     bool Execute(SceneEditorContext *context) override;
     bool Undo(SceneEditorContext *context) override;
-    std::string GetName() const override { return "Edit Component: " + componentType_; }
+    std::string GetName() const override { return Translation("editor.command.editcomponent") + componentType_; }
 
 private:
     UUID128 objectID_;

@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <algorithm>
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -36,9 +37,9 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         IPostProcessComponent::ShowImGui();
-        ImGui::DragFloat("Threshold", &params_.threshold, 0.001f, 0.0f, 10.0f, "%.4f");
-        ImGui::DragFloat("Thickness", &params_.thickness, 0.1f, 0.0f, 16.0f, "%.1f");
-        ImGui::ColorEdit4("Color", params_.color);
+        ImGui::DragFloat(TranslationLabel("component.outlineeffect.threshold"), &params_.threshold, 0.001f, 0.0f, 10.0f, "%.4f");
+        ImGui::DragFloat(TranslationLabel("component.outlineeffect.thickness"), &params_.thickness, 0.1f, 0.0f, 16.0f, "%.1f");
+        ImGui::ColorEdit4(TranslationLabel("component.outlineeffect.color"), params_.color);
         if (!GetCameraInfo().valid) {
             ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f),
                 "No camera resolved for this ScreenBuffer yet: depth linearization may be inaccurate.");

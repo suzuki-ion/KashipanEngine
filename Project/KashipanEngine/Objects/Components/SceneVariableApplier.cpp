@@ -2,6 +2,7 @@
 
 #include "Objects/ObjectContext.h"
 #include "Scene/SceneContext.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -37,14 +38,14 @@ void SceneVariableApplier::Update() {
 #if defined(USE_IMGUI)
 
 void SceneVariableApplier::ShowImGui() {
-    ImGui::InputText("Variable Name", &variableName_);
+    ImGui::InputText(TranslationLabel("component.scenevariableapplier.variable_name"), &variableName_);
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("%s", "読み取るシーン変数名（Scene Variablesウィンドウで追加済みのもの）");
     }
 
-    static const char *kScopeLabels[] = { "Scene", "Global" };
+    const char *kScopeLabels[] = { TranslationC("component.scenevariableapplier.scope.scene"), TranslationC("component.scenevariableapplier.scope.global") };
     int scopeIndex = static_cast<int>(variableScope_);
-    if (ImGui::Combo("Scope", &scopeIndex, kScopeLabels, IM_ARRAYSIZE(kScopeLabels))) {
+    if (ImGui::Combo(TranslationLabel("component.scenevariableapplier.scope"), &scopeIndex, kScopeLabels, IM_ARRAYSIZE(kScopeLabels))) {
         variableScope_ = static_cast<VariableScope>(scopeIndex);
     }
     if (ImGui::IsItemHovered()) {
@@ -56,15 +57,15 @@ void SceneVariableApplier::ShowImGui() {
         ? ((variableScope_ == VariableScope::Global) ? sceneContext->GetGlobalSceneVariable(variableName_) : sceneContext->GetSceneVariable(variableName_))
         : nullptr;
     if (variable) {
-        ImGui::Text("Type: %s", variable->GetTypeInfo().ToString().c_str());
+        ImGui::Text(TranslationC("component.scenevariableapplier.type_s"), variable->GetTypeInfo().ToString().c_str());
     } else if (!variableName_.empty()) {
-        ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f), "Variable \"%s\" not found", variableName_.c_str());
+        ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f), TranslationC("component.scenevariableapplier.variable_notfound"), variableName_.c_str());
     }
 
     if (wasApplied_) {
-        ImGui::TextColored(ImVec4(0.4f, 0.9f, 0.4f, 1.0f), "Applied");
+        ImGui::TextColored(ImVec4(0.4f, 0.9f, 0.4f, 1.0f), "%s", TranslationC("component.scenevariableapplier.applied"));
     } else {
-        ImGui::TextDisabled("Not Applied");
+        ImGui::TextDisabled("%s", TranslationC("component.scenevariableapplier.not_applied"));
     }
 
     ImGui::Separator();

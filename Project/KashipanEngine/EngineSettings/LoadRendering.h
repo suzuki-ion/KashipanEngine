@@ -2,6 +2,7 @@
 #include <string>
 #include "EngineSettings.h"
 #include "Utilities/FileIO/JSON.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -28,20 +29,20 @@ inline void LoadRenderingSettings(const JSON &rootJSON, EngineSettings &settings
     settings.rendering.srvDescriptorHeapSize = renderingJSON.value("srvDescriptorHeapSize", settings.rendering.srvDescriptorHeapSize);
 
     LogSeparator();
-    Log("Rendering", LogSeverity::Info);
+    Log(Translation("engine.settings.rendering.section"), LogSeverity::Info);
     LogSeparator();
-    Log("Default Clear Color: (" +
+    Log(Translation("engine.settings.rendering.defaultclearcolor") + "(" +
         std::to_string(settings.rendering.defaultClearColor[0]) + ", " +
         std::to_string(settings.rendering.defaultClearColor[1]) + ", " +
         std::to_string(settings.rendering.defaultClearColor[2]) + ", " +
         std::to_string(settings.rendering.defaultClearColor[3]) + ")",
         LogSeverity::Info);
-    Log("Default Enable VSync: " + std::string(settings.rendering.defaultEnableVSync ? "true" : "false"), LogSeverity::Info);
-    Log("Default Max FPS: " + std::to_string(settings.rendering.defaultMaxFPS), LogSeverity::Info);
-    Log("Pipeline Settings Path: " + settings.rendering.pipelineSettingsPath, LogSeverity::Info);
-    Log("RTV Descriptor Heap Size: " + std::to_string(settings.rendering.rtvDescriptorHeapSize), LogSeverity::Info);
-    Log("DSV Descriptor Heap Size: " + std::to_string(settings.rendering.dsvDescriptorHeapSize), LogSeverity::Info);
-    Log("SRV Descriptor Heap Size: " + std::to_string(settings.rendering.srvDescriptorHeapSize), LogSeverity::Info);
+    Log(Translation("engine.settings.rendering.defaultenablevsync") + std::string(settings.rendering.defaultEnableVSync ? "true" : "false"), LogSeverity::Info);
+    Log(Translation("engine.settings.rendering.defaultmaxfps") + std::to_string(settings.rendering.defaultMaxFPS), LogSeverity::Info);
+    Log(Translation("engine.settings.rendering.pipelinesettingspath") + settings.rendering.pipelineSettingsPath, LogSeverity::Info);
+    Log(Translation("engine.settings.rendering.rtvdescriptorheapsize") + std::to_string(settings.rendering.rtvDescriptorHeapSize), LogSeverity::Info);
+    Log(Translation("engine.settings.rendering.dsvdescriptorheapsize") + std::to_string(settings.rendering.dsvDescriptorHeapSize), LogSeverity::Info);
+    Log(Translation("engine.settings.rendering.srvdescriptorheapsize") + std::to_string(settings.rendering.srvDescriptorHeapSize), LogSeverity::Info);
 }
 
 } // namespace KashipanEngine

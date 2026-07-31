@@ -7,6 +7,7 @@
 #include "Core/ProjectPaths.h"
 #include "Core/UserSettings.h"
 #include "Utilities/ImGuiCustom.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -133,52 +134,52 @@ void EditorPreferences::EnsureDefaultPresets() {
 }
 
 void EditorPreferences::ShowImGui() {
-    if (!ImGui::Begin("Editor Preferences")) {
+    if (!ImGui::Begin(TranslationLabel("editor.preferences.window"))) {
         ImGui::End();
         return;
     }
 
-    ImGui::TextDisabled("These settings are personal, shared across all projects, and stored locally (not shared via Git).");
+    ImGui::TextDisabled("%s", TranslationC("editor.preferences.description"));
 
     //--------- 表示倍率 ---------//
-    ImGui::SeparatorText("Display Scale");
+    ImGui::SeparatorText(TranslationLabel("editor.preferences.displayscale"));
     float fontScale = UserSettings::GetFloat("editorUI.fontScale", 1.0f);
-    if (ImGui::SliderFloat("Text Scale", &fontScale, 0.5f, 3.0f, "%.2f")) {
+    if (ImGui::SliderFloat(TranslationLabel("editor.preferences.textscale"), &fontScale, 0.5f, 3.0f, "%.2f")) {
         UserSettings::SetFloat("editorUI.fontScale", fontScale);
     }
-    ImGui::SetItemTooltip("Scales rendered text size only.");
+    ImGui::SetItemTooltip("%s", TranslationC("editor.preferences.textscale.tooltip"));
     float uiScale = UserSettings::GetFloat("editorUI.uiScale", 1.0f);
-    if (ImGui::SliderFloat("UI Scale", &uiScale, 0.5f, 3.0f, "%.2f")) {
+    if (ImGui::SliderFloat(TranslationLabel("editor.preferences.uiscale"), &uiScale, 0.5f, 3.0f, "%.2f")) {
         UserSettings::SetFloat("editorUI.uiScale", uiScale);
     }
-    ImGui::SetItemTooltip("Scales window padding, spacing, rounding, and other layout metrics.");
+    ImGui::SetItemTooltip("%s", TranslationC("editor.preferences.uiscale.tooltip"));
 
     //--------- フォント ---------//
-    ImGui::SeparatorText("Font");
+    ImGui::SeparatorText(TranslationLabel("editor.preferences.font"));
     // Assetsの再帰スキャンは重いため、パネルを開いた直後の1回だけ行い、以後はキャッシュを使う
     if (!hasScannedFontFiles_) {
         RefreshFontFileList();
     }
     std::string fontPath = UserSettings::GetString("editorUI.fontPath", "");
-    if (ImGuiCustom::SelectString("Font File", fontPath, fontFiles_, true)) {
+    if (ImGuiCustom::SelectString(TranslationLabel("editor.preferences.fontfile"), fontPath, fontFiles_, true)) {
         UserSettings::SetString("editorUI.fontPath", fontPath);
     }
-    ImGui::SetItemTooltip("(None) uses the current language's default font.");
+    ImGui::SetItemTooltip("%s", TranslationC("editor.preferences.fontfile.tooltip"));
     ImGui::SameLine();
-    if (ImGui::SmallButton("Refresh")) {
+    if (ImGui::SmallButton(TranslationLabel("editor.common.refresh"))) {
         RefreshFontFileList();
     }
-    ImGui::SetItemTooltip("Re-scan Assets for font files (e.g. after adding a new .ttf/.otf).");
+    ImGui::SetItemTooltip("%s", TranslationC("editor.preferences.font.refresh.tooltip"));
 
     //--------- 配色プリセット ---------//
-    ImGui::SeparatorText("Colors");
+    ImGui::SeparatorText(TranslationLabel("editor.preferences.colors"));
     // 初回のみDark/Light/Classicの既定プリセットを登録する（ユーザーが削除した場合は復活させない）
     if (!hasEnsuredDefaultPresets_) {
         EnsureDefaultPresets();
     }
     const JSON presets = UserSettings::GetJSON("editorUI.presets", JSON::object());
 
-    ImGui::TextDisabled("Presets (shared across all projects, saved locally as JSON, not shared via Git):");
+    ImGui::TextDisabled("%s", TranslationC("editor.preferences.presets.description"));
     if (ImGui::BeginTable("##ColorPresets", 2, ImGuiTableFlags_SizingFixedFit)) {
         for (auto it = presets.begin(); it != presets.end(); ++it) {
             const bool isValidPreset = it.value().is_array() && it.value().size() == ImGuiCol_COUNT;
@@ -191,7 +192,7 @@ void EditorPreferences::ShowImGui() {
             }
             ImGui::EndDisabled();
             ImGui::TableNextColumn();
-            if (ImGui::SmallButton("Delete")) {
+            if (ImGui::SmallButton(TranslationLabel("editor.common.delete"))) {
                 JSON updated = presets;
                 updated.erase(it.key());
                 UserSettings::SetJSON("editorUI.presets", updated);
@@ -202,19 +203,19 @@ void EditorPreferences::ShowImGui() {
     }
 
     ImGui::SetNextItemWidth(200.0f);
-    ImGui::InputTextWithHint("##NewPresetName", "New preset name", &newPresetNameBuffer_);
+    ImGui::InputTextWithHint("##NewPresetName", TranslationC("editor.preferences.presets.name.hint"), &newPresetNameBuffer_);
     ImGui::SameLine();
     ImGui::BeginDisabled(newPresetNameBuffer_.empty());
-    if (ImGui::Button("Save Current Colors as Preset")) {
+    if (ImGui::Button(TranslationLabel("editor.preferences.presets.save"))) {
         JSON updated = presets;
         updated[newPresetNameBuffer_] = ColorsToJSON(ImGui::GetStyle().Colors);
         UserSettings::SetJSON("editorUI.presets", updated);
         newPresetNameBuffer_.clear();
     }
     ImGui::EndDisabled();
-    ImGui::SetItemTooltip("Save the currently active colors below as a new preset (e.g. a custom Unity-like theme).");
+    ImGui::SetItemTooltip("%s", TranslationC("editor.preferences.presets.save.tooltip"));
 
-    if (ImGui::TreeNode("Custom Colors")) {
+    if (ImGui::TreeNode(TranslationLabel("editor.preferences.customcolors"))) {
         // liveStyleは直前フレームにImGuiManagerが適用済みの現在の配色（初期値として使う）
         const ImGuiStyle &liveStyle = ImGui::GetStyle();
         ImVec4 workingColors[ImGuiCol_COUNT];
@@ -239,7 +240,7 @@ void EditorPreferences::ShowImGui() {
     }
 
     ImGui::Spacing();
-    if (ImGui::Button("Reset All to Default")) {
+    if (ImGui::Button(TranslationLabel("editor.preferences.resetall"))) {
         UserSettings::SetFloat("editorUI.fontScale", 1.0f);
         UserSettings::SetFloat("editorUI.uiScale", 1.0f);
         UserSettings::SetString("editorUI.fontPath", "");

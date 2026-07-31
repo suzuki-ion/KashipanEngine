@@ -12,6 +12,7 @@
 #include <imgui.h>
 #include <imgui_impl_win32.h>
 #include "Debug/ImGuiManager.h"
+#include "Utilities/Translation.h"
 #endif
 
 #pragma comment(lib, "Shcore.lib")
@@ -153,7 +154,7 @@ bool WindowsAPI::RegisterWindow(Passkey<Window>, Window *window) {
     assert(window && "Window instance is null");
     HWND hwnd = window->GetWindowHandle();
     if (sWindowMap.find(hwnd) != sWindowMap.end()) {
-        Log("Window is already registered.", LogSeverity::Warning);
+        Log(Translation("engine.windowsapi.window.already.registered"), LogSeverity::Warning);
         return false;
     }
     sWindowMap[hwnd] = window;
@@ -164,7 +165,7 @@ bool WindowsAPI::UnregisterWindow(Passkey<Window>, HWND hwnd) {
     LogScope scope;
     auto it = sWindowMap.find(hwnd);
     if (it == sWindowMap.end()) {
-        Log("Window not found for unregistration.", LogSeverity::Warning);
+        Log(Translation("engine.windowsapi.window.unregister.notfound"), LogSeverity::Warning);
         return false;
     }
     sWindowMap.erase(it);

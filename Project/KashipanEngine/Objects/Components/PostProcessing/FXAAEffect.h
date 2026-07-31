@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <algorithm>
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -35,21 +36,21 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         IPostProcessComponent::ShowImGui();
-        ImGui::DragFloat("Threshold", &params_.threshold, 0.001f, 0.0f, 0.5f, "%.4f");
+        ImGui::DragFloat(TranslationLabel("component.fxaaeffect.threshold"), &params_.threshold, 0.001f, 0.0f, 0.5f, "%.4f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("エッジ検出の絶対しきい値。実用域はおよそ0.03〜0.16で、\nそれ以上はほぼ全てのエッジが無視されAAが効かなくなる");
+            ImGui::SetTooltip("%s", TranslationC("component.fxaaeffect.0_03_0_16_n_aa"));
         }
-        ImGui::DragFloat("Threshold Min", &params_.thresholdMin, 0.0001f, 0.0f, 0.2f, "%.4f");
+        ImGui::DragFloat(TranslationLabel("component.fxaaeffect.threshold_min"), &params_.thresholdMin, 0.0001f, 0.0f, 0.2f, "%.4f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("周囲の最大輝度に対する相対しきい値。実用域はおよそ0.03〜0.08");
+            ImGui::SetTooltip("%s", TranslationC("component.fxaaeffect.desc_1"));
         }
-        ImGui::DragFloat("Strength", &params_.strength, 0.01f, 0.0f, 1.0f, "%.3f");
+        ImGui::DragFloat(TranslationLabel("component.fxaaeffect.strength"), &params_.strength, 0.01f, 0.0f, 1.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("AA適用後の色への合成比率（0=無効、1=適用後の色をそのまま採用）");
+            ImGui::SetTooltip("%s", TranslationC("component.fxaaeffect.desc_2"));
         }
-        ImGui::DragFloat("Subpixel Blend", &params_.subpixelBlend, 0.01f, 0.0f, 1.0f, "%.3f");
+        ImGui::DragFloat(TranslationLabel("component.fxaaeffect.subpixel_blend"), &params_.subpixelBlend, 0.01f, 0.0f, 1.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("1ピクセル程度の孤立した明暗・細線に対するぼかしの強さ（0=無効、1=最大）。\n上げすぎると細部がぼやけやすくなる");
+            ImGui::SetTooltip("%s", TranslationC("component.fxaaeffect.desc_3"));
         }
     }
 #endif

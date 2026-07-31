@@ -128,7 +128,7 @@ bool LoadMaterialFromJSON(const std::string& filePath, MaterialManager::Material
 
         return true;
     } catch (const std::exception& e) {
-        Log(std::string("Failed to parse material JSON: ") + e.what(), LogSeverity::Warning);
+        Log(Translation("engine.material.parse.failed") + e.what(), LogSeverity::Warning);
         return false;
     }
 }
@@ -403,18 +403,18 @@ const std::string &MaterialManager::GetAssetsRootPath() const noexcept {
 
 #if defined(USE_IMGUI)
 void MaterialManager::ShowImGuiMaterialManagerWindow() {
-    if (!ImGui::Begin("MaterialManager - Materials")) {
+    if (!ImGui::Begin(TranslationLabel("editor.materialmanager.window"))) {
         ImGui::End();
         return;
     }
 
-    ImGui::Text("Materials: %d", static_cast<int>(sMaterials.size()));
+    ImGui::Text(TranslationC("editor.materialmanager.materials_d"), static_cast<int>(sMaterials.size()));
 
     //--------- 新規マテリアルの追加 ---------//
     static char sNewMaterialName[128] = "";
     ImGui::InputText("##NewMaterialName", sNewMaterialName, sizeof(sNewMaterialName));
     ImGui::SameLine();
-    if (ImGui::Button("Add Material")) {
+    if (ImGui::Button(TranslationLabel("editor.materialmanager.add_material"))) {
         const std::string name = sNewMaterialName;
         if (!name.empty() && GetMaterialHandleFromName(name) == kInvalidHandle) {
             Material material{};
@@ -428,7 +428,7 @@ void MaterialManager::ShowImGuiMaterialManagerWindow() {
         }
     }
     ImGui::SameLine();
-    if (ImGui::Button("Save All")) {
+    if (ImGui::Button(TranslationLabel("editor.materialmanager.save_all"))) {
         SaveAllMaterials();
     }
 
@@ -461,7 +461,7 @@ void MaterialManager::ShowImGuiMaterialManagerWindow() {
             ImGui::TextUnformatted(entry.assetPath.c_str());
 
             ImGui::TableSetColumnIndex(2);
-            if (ImGui::SmallButton("Remove")) {
+            if (ImGui::SmallButton(TranslationLabel("editor.materialmanager.remove"))) {
                 pendingRemoveName = entry.material.name;
             }
 
@@ -481,7 +481,7 @@ void MaterialManager::ShowImGuiMaterialManagerWindow() {
     //--------- 選択中マテリアルの編集 ---------//
     auto *material = GetMaterial(sSelectedHandle);
     if (!material) {
-        ImGui::TextUnformatted("No material selected.");
+        ImGui::TextUnformatted(TranslationC("editor.materialmanager.no_material_selected"));
         ImGui::End();
         return;
     }
@@ -493,7 +493,7 @@ void MaterialManager::ShowImGuiMaterialManagerWindow() {
         std::snprintf(sRenameBuffer, sizeof(sRenameBuffer), "%s", material->name.c_str());
         sRenameTarget = sSelectedHandle;
     }
-    if (ImGui::InputText("Name", sRenameBuffer, sizeof(sRenameBuffer), ImGuiInputTextFlags_EnterReturnsTrue)) {
+    if (ImGui::InputText(TranslationLabel("editor.materialmanager.name"), sRenameBuffer, sizeof(sRenameBuffer), ImGuiInputTextFlags_EnterReturnsTrue)) {
         const std::string newName = sRenameBuffer;
         if (!newName.empty() && newName != material->name && GetMaterialHandleFromName(newName) == kInvalidHandle) {
             sNameToHandle.erase(material->name);
@@ -504,7 +504,7 @@ void MaterialManager::ShowImGuiMaterialManagerWindow() {
 
     ShowMaterialEditorFields(*material);
 
-    if (ImGui::Button("Save")) {
+    if (ImGui::Button(TranslationLabel("editor.materialmanager.save"))) {
         SaveMaterial(sSelectedHandle);
     }
 
@@ -512,7 +512,7 @@ void MaterialManager::ShowImGuiMaterialManagerWindow() {
 }
 
 void MaterialManager::ShowMaterialEditorFields(Material &material) {
-    ImGui::ColorEdit4("Color", &material.color.x);
+    ImGui::ColorEdit4(TranslationLabel("editor.materialmanager.color"), &material.color.x);
 
     // テクスチャは読み込み済みのものから選択する
     // ファイル名単体だと同名ファイルが複数フォルダにある場合にImGuiのID重複警告が出るため、
@@ -523,7 +523,7 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
     }
     std::string texturePath = TextureManager::GetTextureAssetPath(material.textureHandle);
     if (texturePath.empty()) texturePath = material.textureFileName; // 未解決の場合は保留中のファイル名を表示
-    if (ImGuiCustom::SelectString("Texture", texturePath, texturePaths, true)) {
+    if (ImGuiCustom::SelectString(TranslationLabel("editor.materialmanager.texture"), texturePath, texturePaths, true)) {
         material.textureHandle = texturePath.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(texturePath);
         material.textureFileName = TextureManager::GetTextureFileName(material.textureHandle);
     }
@@ -534,7 +534,7 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
     }
     std::string environmentPath = TextureManager::GetTextureAssetPath(material.environmentHandle);
     if (environmentPath.empty()) environmentPath = material.environmentFileName;
-    if (ImGuiCustom::SelectString("Environment", environmentPath, texturePaths, true)) {
+    if (ImGuiCustom::SelectString(TranslationLabel("editor.materialmanager.environment"), environmentPath, texturePaths, true)) {
         material.environmentHandle = environmentPath.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(environmentPath);
         material.environmentFileName = TextureManager::GetTextureFileName(material.environmentHandle);
     }
@@ -544,27 +544,27 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
     }
     std::string normalMapPath = TextureManager::GetTextureAssetPath(material.normalMapHandle);
     if (normalMapPath.empty()) normalMapPath = material.normalMapFileName;
-    if (ImGuiCustom::SelectString("Normal Map", normalMapPath, texturePaths, true)) {
+    if (ImGuiCustom::SelectString(TranslationLabel("editor.materialmanager.normal_map"), normalMapPath, texturePaths, true)) {
         material.normalMapHandle = normalMapPath.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(normalMapPath);
         material.normalMapFileName = TextureManager::GetTextureFileName(material.normalMapHandle);
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("接空間の法線をRGB[0,1]にエンコードしたテクスチャ（OpenGL規約、+Yが上）");
+        ImGui::SetTooltip("%s", TranslationC("editor.materialmanager.rgb_0_1_opengl_y"));
     }
     if (std::string droppedPath; AcceptAssetDragDropTarget(kTextureAssetDragDropType, droppedPath)) {
         material.normalMapHandle = TextureManager::GetTextureFromAssetPath(droppedPath);
         material.normalMapFileName = TextureManager::GetTextureFileName(material.normalMapHandle);
     }
 
-    ImGui::DragFloat("Shininess", &material.shininess, 0.1f, 0.0f, 1024.0f);
-    ImGui::ColorEdit4("Specular Color", &material.specularColor.x);
-    ImGui::DragFloat("Environment Coefficient", &material.environmentCoefficient, 0.01f, 0.0f, 1.0f);
-    ImGui::ColorEdit4("Rim Color", &material.rimColor.x);
-    ImGui::DragFloat("Rim Power", &material.rimPower, 0.05f, 0.1f, 16.0f);
-    ImGui::DragFloat("Rim Intensity", &material.rimIntensity, 0.01f, 0.0f, 10.0f);
-    ImGui::Checkbox("Enable Lighting", &material.enableLighting);
-    ImGui::Checkbox("Enable ShadowMap Projection", &material.enableShadowMapProjection);
-    ImGuiCustom::EditValue("UV Transform", material.uvTransform);
+    ImGui::DragFloat(TranslationLabel("editor.materialmanager.shininess"), &material.shininess, 0.1f, 0.0f, 1024.0f);
+    ImGui::ColorEdit4(TranslationLabel("editor.materialmanager.specular_color"), &material.specularColor.x);
+    ImGui::DragFloat(TranslationLabel("editor.materialmanager.environment_coefficient"), &material.environmentCoefficient, 0.01f, 0.0f, 1.0f);
+    ImGui::ColorEdit4(TranslationLabel("editor.materialmanager.rim_color"), &material.rimColor.x);
+    ImGui::DragFloat(TranslationLabel("editor.materialmanager.rim_power"), &material.rimPower, 0.05f, 0.1f, 16.0f);
+    ImGui::DragFloat(TranslationLabel("editor.materialmanager.rim_intensity"), &material.rimIntensity, 0.01f, 0.0f, 10.0f);
+    ImGui::Checkbox(TranslationLabel("editor.materialmanager.enable_lighting"), &material.enableLighting);
+    ImGui::Checkbox(TranslationLabel("editor.materialmanager.enable_shadowmap_projection"), &material.enableShadowMapProjection);
+    ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_transform"), material.uvTransform);
 }
 #endif
 

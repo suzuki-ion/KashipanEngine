@@ -8,6 +8,7 @@
 #include "Objects/ObjectComponentHeader.h"
 #include "Core/Window.h"
 #include "Scene/RenderTargetCarryOverRegistry.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -158,17 +159,17 @@ protected:
 #if defined(USE_IMGUI)
     /// @brief 横取りメッセージの編集UI（派生クラスのShowImGuiから呼ぶ）
     void ShowInterceptedMessagesImGui() {
-        if (!ImGui::TreeNode("Intercepted Messages")) return;
+        if (!ImGui::TreeNode(TranslationLabel("component.iwindowobjectcomponent.intercepted_messages"))) return;
         ImGui::PushTextWrapPos(0.0f);
-        ImGui::TextDisabled("横取り対象のメッセージは既定処理が実行されず、スクリプトのOnWindowMessage通知のみ行われます");
+        ImGui::TextDisabled("%s", TranslationC("component.iwindowobjectcomponent.onwindowmessage"));
         ImGui::PopTextWrapPos();
 
         bool interceptClose = IsMessageIntercepted(WM_CLOSE);
-        if (ImGui::Checkbox("Intercept Close (WM_CLOSE)", &interceptClose)) {
+        if (ImGui::Checkbox(TranslationLabel("component.iwindowobjectcomponent.intercept_close_wm_close"), &interceptClose)) {
             SetMessageIntercepted(WM_CLOSE, interceptClose);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Xボタン・Alt+F4で閉じなくなります。スクリプトからCloseWindow()で閉じてください");
+            ImGui::SetTooltip("%s", TranslationC("component.iwindowobjectcomponent.x_alt_f4_closewindow"));
         }
 
         std::uint32_t removeTarget = 0;
@@ -177,7 +178,7 @@ protected:
             ImGui::PushID(static_cast<int>(msg));
             ImGui::Text("0x%04X (%u)", msg, msg);
             ImGui::SameLine();
-            if (ImGui::SmallButton("Remove")) {
+            if (ImGui::SmallButton(TranslationLabel("component.iwindowobjectcomponent.remove"))) {
                 removeTarget = msg;
                 hasRemoveTarget = true;
             }
@@ -188,7 +189,7 @@ protected:
         ImGui::SetNextItemWidth(120.0f);
         ImGui::InputInt("##InterceptMsgInput", &pendingInterceptMessage_, 0);
         ImGui::SameLine();
-        if (ImGui::Button("Add") && pendingInterceptMessage_ > 0) {
+        if (ImGui::Button(TranslationLabel("component.iwindowobjectcomponent.add")) && pendingInterceptMessage_ > 0) {
             SetMessageIntercepted(static_cast<std::uint32_t>(pendingInterceptMessage_), true);
         }
         ImGui::TreePop();

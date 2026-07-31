@@ -8,26 +8,27 @@
 #include "Scene/SceneFileIO.h"
 #include "Scene/SceneManager.h"
 #include "Utilities/FileIO.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
 void SceneListEditor::ShowImGui() {
-    if (!ImGui::Begin("Scene List")) {
+    if (!ImGui::Begin(TranslationLabel("editor.scenelist.window"))) {
         ImGui::End();
         return;
     }
 
     auto *sceneManager = context_ ? context_->GetSceneManager() : nullptr;
     if (!sceneManager) {
-        ImGui::TextDisabled("SceneManager is not available.");
+        ImGui::TextDisabled("%s", TranslationC("editor.scenelist.nomanager"));
         ImGui::End();
         return;
     }
 
     //--------- スタートアップシーンの指定 ---------//
     const std::string &startupName = sceneManager->GetStartupSceneName();
-    if (ImGui::BeginCombo("Startup Scene", startupName.empty() ? "(None)" : startupName.c_str())) {
-        if (ImGui::Selectable("(None)", startupName.empty())) {
+    if (ImGui::BeginCombo(TranslationLabel("editor.scenelist.startupscene"), startupName.empty() ? TranslationC("editor.common.none") : startupName.c_str())) {
+        if (ImGui::Selectable(TranslationLabel("editor.common.none"), startupName.empty())) {
             sceneManager->SetStartupSceneName("");
             sceneManager->SaveSceneList();
         }
@@ -39,7 +40,7 @@ void SceneListEditor::ShowImGui() {
         }
         ImGui::EndCombo();
     }
-    ImGui::SetItemTooltip("The scene loaded automatically at startup.");
+    ImGui::SetItemTooltip("%s", TranslationC("editor.scenelist.startupscene.tooltip"));
     ImGui::Separator();
 
     //--------- 登録シーンの一覧・編集・切り替え ---------//
@@ -49,11 +50,11 @@ void SceneListEditor::ShowImGui() {
 
     if (ImGui::BeginTable("##SceneListTable", 5,
         ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingStretchProp)) {
-        ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch, 0.3f);
-        ImGui::TableSetupColumn("File Path", ImGuiTableColumnFlags_WidthStretch, 0.5f);
-        ImGui::TableSetupColumn("Switch", ImGuiTableColumnFlags_WidthFixed);
-        ImGui::TableSetupColumn("Convert", ImGuiTableColumnFlags_WidthFixed);
-        ImGui::TableSetupColumn("Delete", ImGuiTableColumnFlags_WidthFixed);
+        ImGui::TableSetupColumn(TranslationLabel("editor.scenelist.column.name"), ImGuiTableColumnFlags_WidthStretch, 0.3f);
+        ImGui::TableSetupColumn(TranslationLabel("editor.scenelist.column.filepath"), ImGuiTableColumnFlags_WidthStretch, 0.5f);
+        ImGui::TableSetupColumn(TranslationLabel("editor.scenelist.column.switch"), ImGuiTableColumnFlags_WidthFixed);
+        ImGui::TableSetupColumn(TranslationLabel("editor.scenelist.column.convert"), ImGuiTableColumnFlags_WidthFixed);
+        ImGui::TableSetupColumn(TranslationLabel("editor.scenelist.column.delete"), ImGuiTableColumnFlags_WidthFixed);
         ImGui::TableHeadersRow();
 
         for (const auto &entry : entries) {
@@ -83,44 +84,44 @@ void SceneListEditor::ShowImGui() {
                 }
             }
             if (entry.filePath.empty()) {
-                ImGui::SetItemTooltip("No file path: switching creates an empty scene\n(or uses the JSON registered from code).");
+                ImGui::SetItemTooltip("%s", TranslationC("editor.scenelist.nofilepath.tooltip"));
             }
 
             //--------- シーン切り替え ---------//
             ImGui::TableNextColumn();
             ImGui::BeginDisabled(isPlaying);
-            if (ImGui::Button("Switch")) {
+            if (ImGui::Button(TranslationLabel("editor.scenelist.switch"))) {
                 sceneManager->ChangeScene(entry.name);
             }
             ImGui::EndDisabled();
             if (isPlaying) {
-                ImGui::SetItemTooltip("Stop playing before switching scenes.");
+                ImGui::SetItemTooltip("%s", TranslationC("editor.scenelist.switch.tooltip.playing"));
             } else {
-                ImGui::SetItemTooltip("Discard the current scene and switch to this scene.\n(Applied at the end of this frame)");
+                ImGui::SetItemTooltip("%s", TranslationC("editor.scenelist.switch.tooltip"));
             }
 
             //--------- フォルダ形式（.scene）への変換 ---------//
             ImGui::TableNextColumn();
             const bool canConvert = entry.filePath.size() > 5 && entry.filePath.substr(entry.filePath.size() - 5) == ".json";
             ImGui::BeginDisabled(!canConvert);
-            if (ImGui::Button("Convert to Folder Format")) {
+            if (ImGui::Button(TranslationLabel("editor.scenelist.convert"))) {
                 ConvertSceneToFolderFormat(entry.name, entry.filePath);
             }
             ImGui::EndDisabled();
             if (canConvert) {
-                ImGui::SetItemTooltip("Convert this scene's storage to 1-object-per-folder format\n(reduces Git conflicts in multi-developer work).");
+                ImGui::SetItemTooltip("%s", TranslationC("editor.scenelist.convert.tooltip"));
             } else {
-                ImGui::SetItemTooltip("Already in folder format, or no file path is set.");
+                ImGui::SetItemTooltip("%s", TranslationC("editor.scenelist.convert.tooltip.disabled"));
             }
 
             //--------- 登録の削除 ---------//
             ImGui::TableNextColumn();
-            if (ImGui::Button("Delete")) {
+            if (ImGui::Button(TranslationLabel("editor.common.delete"))) {
                 if (sceneManager->UnregisterScene(entry.name)) {
                     sceneManager->SaveSceneList();
                 }
             }
-            ImGui::SetItemTooltip("Remove this scene from the list.\n(The scene JSON file itself is not deleted)");
+            ImGui::SetItemTooltip("%s", TranslationC("editor.scenelist.delete.tooltip"));
 
             ImGui::PopID();
         }
@@ -128,11 +129,11 @@ void SceneListEditor::ShowImGui() {
     }
 
     //--------- シーンの新規登録 ---------//
-    ImGui::SeparatorText("Register New Scene");
-    ImGui::InputText("Name##new", &newSceneName_);
-    ImGui::InputText("File Path##new", &newSceneFilePath_);
+    ImGui::SeparatorText(TranslationLabel("editor.scenelist.register"));
+    ImGui::InputText(TranslationLabel("editor.scenelist.register.name"), &newSceneName_);
+    ImGui::InputText(TranslationLabel("editor.scenelist.register.filepath"), &newSceneFilePath_);
     ImGui::BeginDisabled(newSceneName_.empty());
-    if (ImGui::Button("Register")) {
+    if (ImGui::Button(TranslationLabel("editor.scenelist.register.button"))) {
         if (sceneManager->RegisterSceneFile(newSceneName_, newSceneFilePath_)) {
             sceneManager->SaveSceneList();
             newSceneName_.clear();
@@ -172,20 +173,20 @@ void SceneListEditor::ConvertSceneToFolderFormat(const std::string &sceneName, c
 
 void SceneListEditor::ShowConfirmDeleteOldFilePopup() {
     if (isConfirmDeleteOldFileRequested_) {
-        ImGui::OpenPopup("Delete Original File?");
+        ImGui::OpenPopup(TranslationLabel("editor.scenelist.deleteoriginal.title"));
         isConfirmDeleteOldFileRequested_ = false;
     }
-    if (ImGui::BeginPopupModal("Delete Original File?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::Text("Converted to folder format successfully.");
-        ImGui::TextWrapped("Delete the original file?\n%s", pendingDeleteOldFilePath_.c_str());
-        if (ImGui::Button("Delete", ImVec2(120, 0))) {
+    if (ImGui::BeginPopupModal(TranslationLabel("editor.scenelist.deleteoriginal.title"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::TextUnformatted(TranslationC("editor.scenelist.convert.succeeded"));
+        ImGui::TextWrapped("%s\n%s", TranslationC("editor.scenelist.deleteoriginal.message"), pendingDeleteOldFilePath_.c_str());
+        if (ImGui::Button(TranslationLabel("editor.common.delete"), ImVec2(120, 0))) {
             std::error_code ec;
             std::filesystem::remove(pendingDeleteOldFilePath_, ec);
             pendingDeleteOldFilePath_.clear();
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Keep", ImVec2(120, 0))) {
+        if (ImGui::Button(TranslationLabel("editor.scenelist.deleteoriginal.keep"), ImVec2(120, 0))) {
             pendingDeleteOldFilePath_.clear();
             ImGui::CloseCurrentPopup();
         }

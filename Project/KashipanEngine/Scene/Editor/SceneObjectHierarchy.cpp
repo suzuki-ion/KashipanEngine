@@ -9,6 +9,7 @@
 #include "Scene/Editor/PrefabUtility.h"
 #include "Scene/Editor/SceneObjectPayload.h"
 #include "Scene/Editor/SceneEditorCommands.h"
+#include "Utilities/Translation.h"
 #include "Scene/Components/Script/EditorToolManager.h"
 #include "Objects/Components/Comment.h"
 #include "Objects/Components/PrefabInstanceComponent.h"
@@ -105,7 +106,7 @@ void SceneObjectHierarchy::ShowImGui() {
     visibleOrderThisFrame_.clear();
     RebuildObjectItems();
 
-    if (ImGui::Begin("Scene Object Hierarchy")) {
+    if (ImGui::Begin(TranslationLabel("editor.sceneobjecthierarchy.window"))) {
         HandleKeyboardShortcuts();
 
         if (EditorSettings::PersistentCollapsingHeader("Objects", "hierarchy.objects")) {
@@ -338,37 +339,37 @@ void SceneObjectHierarchy::ShowObjectContextMenu(EmptyObject *obj) {
         const std::vector<EmptyObject *> targets =
             (selectedObjects_.size() > 1 && selectedObjects_.contains(obj)) ? GetSelectionRoots() : std::vector<EmptyObject *>{ obj };
 
-        if (ImGui::BeginMenu("Create Object")) {
+        if (ImGui::BeginMenu(TranslationLabel("editor.hierarchy.createobject"))) {
             // 右クリックしたオブジェクトと同じ階層かつ次のインデックス位置に作成する
             ShowCreateObjectMenu(obj, false);
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Create Child Object")) {
+        if (ImGui::BeginMenu(TranslationLabel("editor.hierarchy.createchildobject"))) {
             // 右クリックしたオブジェクトの子オブジェクトとして最後尾に作成する
             ShowCreateObjectMenu(obj, true);
             ImGui::EndMenu();
         }
         ImGui::Separator();
-        const std::string copyLabel = (targets.size() > 1) ? ("Copy " + std::to_string(targets.size()) + " Objects") : "Copy Object";
+        const std::string copyLabel = (targets.size() > 1) ? (Translation("editor.hierarchy.copy.multiple.prefix") + std::to_string(targets.size()) + Translation("editor.hierarchy.copy.multiple.suffix")) : Translation("editor.hierarchy.copy");
         if (ImGui::MenuItem(copyLabel.c_str(), "Ctrl+C")) {
             CopyObjects(targets);
         }
-        if (ImGui::MenuItem("Paste Object", "Ctrl+V", false, !clipboardNodes_.empty())) {
+        if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.paste"), "Ctrl+V", false, !clipboardNodes_.empty())) {
             auto *transform = obj->GetComponent<Transform>();
             EmptyObject *parent = transform ? transform->GetParentObject() : nullptr;
             const size_t index = editorContext_->GetObjectIndex(obj);
             const size_t insertIndex = (index == MAXSIZE_T) ? MAXSIZE_T : index + 1;
             PasteObject(parent, insertIndex);
         }
-        if (ImGui::MenuItem("Paste to Child Object", "Ctrl+Shift+V", false, !clipboardNodes_.empty())) {
+        if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.pastetochild"), "Ctrl+Shift+V", false, !clipboardNodes_.empty())) {
             PasteObject(obj, MAXSIZE_T);
         }
-        const std::string cloneLabel = (targets.size() > 1) ? ("Clone " + std::to_string(targets.size()) + " Objects") : "Clone Object";
+        const std::string cloneLabel = (targets.size() > 1) ? (Translation("editor.hierarchy.clone.multiple.prefix") + std::to_string(targets.size()) + Translation("editor.hierarchy.clone.multiple.suffix")) : Translation("editor.hierarchy.clone");
         if (ImGui::MenuItem(cloneLabel.c_str(), "Ctrl+D")) {
             CloneObjects(targets);
         }
         ImGui::Separator();
-        const std::string deleteLabel = (targets.size() > 1) ? ("Delete " + std::to_string(targets.size()) + " Objects") : "Delete Object";
+        const std::string deleteLabel = (targets.size() > 1) ? (Translation("editor.hierarchy.delete.multiple.prefix") + std::to_string(targets.size()) + Translation("editor.hierarchy.delete.multiple.suffix")) : Translation("editor.hierarchy.delete");
         if (ImGui::MenuItem(deleteLabel.c_str())) {
             DeleteObjects(targets);
         }
@@ -376,10 +377,10 @@ void SceneObjectHierarchy::ShowObjectContextMenu(EmptyObject *obj) {
         // Prefabインスタンスのルート自身に対してのみ、Apply All/Revert Allを出す（Unity同様、途中階層には出さない）
         if (PrefabSyncUtility::FindEnclosingPrefabInstanceRoot(obj) == obj) {
             ImGui::Separator();
-            if (ImGui::MenuItem("Apply All")) {
+            if (ImGui::MenuItem(TranslationLabel("editor.prefab.applyall"))) {
                 PrefabSyncUtility::ApplyAll(editorContext_, obj);
             }
-            if (ImGui::MenuItem("Revert All")) {
+            if (ImGui::MenuItem(TranslationLabel("editor.prefab.revertall"))) {
                 pendingRevertPrefabTarget_ = obj;
                 isRevertPrefabConfirmRequested_ = true;
             }
@@ -390,15 +391,15 @@ void SceneObjectHierarchy::ShowObjectContextMenu(EmptyObject *obj) {
 
 void SceneObjectHierarchy::ShowRevertPrefabConfirmModal() {
     if (isRevertPrefabConfirmRequested_) {
-        ImGui::OpenPopup("Revert Prefab Instance?");
+        ImGui::OpenPopup(TranslationLabel("editor.prefab.revert.title"));
         isRevertPrefabConfirmRequested_ = false;
     }
-    if (ImGui::BeginPopupModal("Revert Prefab Instance?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.3f, 1.0f),
-            "This will discard all local changes (including locally added child objects)");
-        ImGui::TextUnformatted("and revert this instance to match the current Prefab source.");
-        ImGui::TextUnformatted("This action cannot be undone in a single step.");
-        if (ImGui::Button("Revert", ImVec2(120, 0))) {
+    if (ImGui::BeginPopupModal(TranslationLabel("editor.prefab.revert.title"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.3f, 1.0f), "%s",
+            TranslationC("editor.prefab.revert.warning1"));
+        ImGui::TextUnformatted(TranslationC("editor.prefab.revert.warning2"));
+        ImGui::TextUnformatted(TranslationC("editor.prefab.revert.warning3"));
+        if (ImGui::Button(TranslationLabel("editor.prefab.revert"), ImVec2(120, 0))) {
             if (pendingRevertPrefabTarget_) {
                 PrefabSyncUtility::RevertAll(editorContext_, commands_, pendingRevertPrefabTarget_);
             }
@@ -406,7 +407,7 @@ void SceneObjectHierarchy::ShowRevertPrefabConfirmModal() {
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+        if (ImGui::Button(TranslationLabel("editor.common.cancel"), ImVec2(120, 0))) {
             pendingRevertPrefabTarget_ = nullptr;
             ImGui::CloseCurrentPopup();
         }
@@ -419,11 +420,11 @@ void SceneObjectHierarchy::ShowHierarchyContextMenu() {
     // この window レベルのメニューが同一フレームで開いてしまい、
     // オブジェクト自体の ObjectContextMenu を閉じてしまう（表示されないように見える）ため必須。
     if (ImGui::BeginPopupContextWindow("HierarchyContextMenu", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems)) {
-        if (ImGui::BeginMenu("Create Object")) {
+        if (ImGui::BeginMenu(TranslationLabel("editor.hierarchy.createobject"))) {
             ShowCreateObjectMenu(nullptr, false);
             ImGui::EndMenu();
         }
-        if (ImGui::MenuItem("Paste Object", "Ctrl+V", false, !clipboardNodes_.empty())) {
+        if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.paste"), "Ctrl+V", false, !clipboardNodes_.empty())) {
             PasteObject(nullptr, MAXSIZE_T);
         }
         // エディターツールスクリプトの[MenuItem("Hierarchy/...")]で追加された項目
@@ -433,42 +434,42 @@ void SceneObjectHierarchy::ShowHierarchyContextMenu() {
 }
 
 void SceneObjectHierarchy::ShowCreateObjectMenu(EmptyObject *referenceObject, bool asChild) {
-    if (ImGui::MenuItem("Empty Object")) {
+    if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.emptyobject"))) {
         CreateTemplateObject("EmptyObject", {}, referenceObject, asChild);
     }
     ImGui::Separator();
-    if (ImGui::BeginMenu("3D")) {
-        if (ImGui::MenuItem("Mesh Object")) {
+    if (ImGui::BeginMenu(TranslationLabel("editor.hierarchy.create.category.3d"))) {
+        if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.meshobject"))) {
             CreateTemplateObject("Mesh Object", { "MeshFilter", "MeshRenderer" }, referenceObject, asChild);
         }
-        if (ImGui::MenuItem("Camera Object")) {
+        if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.cameraobject"))) {
             CreateTemplateObject("Camera Object", { "Camera3D", "CameraRenderer" }, referenceObject, asChild);
         }
-        if (ImGui::MenuItem("Light Object")) {
+        if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.lightobject"))) {
             CreateTemplateObject("Light Object", { "Light", "LightRenderer" }, referenceObject, asChild);
         }
-        if (ImGui::MenuItem("Skinned Mesh Object")) {
+        if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.skinnedmeshobject"))) {
             CreateTemplateObject("Skinned Mesh Object", { "MeshFilter", "SkinnedMeshRenderer" }, referenceObject, asChild);
         }
         ImGui::EndMenu();
     }
-    if (ImGui::BeginMenu("2D")) {
-        if (ImGui::MenuItem("Sprite Object")) {
+    if (ImGui::BeginMenu(TranslationLabel("editor.hierarchy.create.category.2d"))) {
+        if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.spriteobject"))) {
             CreateTemplateObject("Sprite Object", { "MeshFilter", "SpriteRenderer" }, referenceObject, asChild);
         }
-        if (ImGui::MenuItem("Text Object")) {
+        if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.textobject"))) {
             CreateTemplateObject("Text Object", { "TextRenderer" }, referenceObject, asChild);
         }
-        if (ImGui::MenuItem("Camera 2D Object")) {
+        if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.camera2dobject"))) {
             CreateTemplateObject("Camera 2D Object", { "Camera2D", "CameraRenderer" }, referenceObject, asChild);
         }
         ImGui::EndMenu();
     }
-    if (ImGui::BeginMenu("Render Target")) {
-        if (ImGui::MenuItem("Window Object")) {
+    if (ImGui::BeginMenu(TranslationLabel("editor.hierarchy.create.category.rendertarget"))) {
+        if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.windowobject"))) {
             CreateTemplateObject("Window Object", { "NormalWindowObject" }, referenceObject, asChild);
         }
-        if (ImGui::MenuItem("Screen Buffer Object")) {
+        if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.screenbufferobject"))) {
             CreateTemplateObject("Screen Buffer Object", { "ScreenBufferObject" }, referenceObject, asChild);
         }
         ImGui::EndMenu();
@@ -497,7 +498,7 @@ void SceneObjectHierarchy::CreateTemplateObject(const std::string &objectName, c
     }
 
     if (commands_) {
-        auto composite = std::make_unique<CompositeCommand>("Create " + objectName);
+        auto composite = std::make_unique<CompositeCommand>(Translation("editor.command.create") + objectName);
         composite->AddCommand(std::move(createCommand));
         for (const auto &type : componentTypes) {
             composite->AddCommand(std::make_unique<AddComponentCommand>(newObjectID, type));
@@ -623,7 +624,7 @@ void SceneObjectHierarchy::DeleteObjects(const std::vector<EmptyObject *> &objs)
         if (objs.size() == 1) {
             commands_->Execute(std::make_unique<DeleteObjectCommand>(objs[0]));
         } else {
-            auto composite = std::make_unique<CompositeCommand>("Delete " + std::to_string(objs.size()) + " Objects");
+            auto composite = std::make_unique<CompositeCommand>(Translation("editor.command.deleteobjects.prefix") + std::to_string(objs.size()) + Translation("editor.command.deleteobjects.suffix"));
             for (auto *obj : objs) {
                 if (obj) composite->AddCommand(std::make_unique<DeleteObjectCommand>(obj));
             }
@@ -808,7 +809,7 @@ void SceneObjectHierarchy::ApplyDragAndDrop() {
         // 親変更と並び替えをひとつの操作としてUndo履歴へ積む
         if (isParentSet && commands_) {
             const JSON transformAfter = sourceObject->SaveComponentToJson(sourceTransform);
-            auto composite = std::make_unique<CompositeCommand>("Move Object: " + sourceObject->GetName());
+            auto composite = std::make_unique<CompositeCommand>(Translation("editor.command.moveobject.named") + sourceObject->GetName());
             if (transformBefore != transformAfter) {
                 composite->AddCommand(std::make_unique<ComponentEditCommand>(
                     sourceObject, sourceTransform, transformBefore, transformAfter));

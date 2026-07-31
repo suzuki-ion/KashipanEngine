@@ -30,6 +30,7 @@
 #include "Graphics/Pipeline/System/PipelineCreator.h"
 #include "Graphics/Pipeline/ComponentsPresetContainer.h"
 #include "Graphics/PipelineManager.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

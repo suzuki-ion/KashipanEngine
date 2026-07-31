@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <algorithm>
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -33,8 +34,8 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         IPostProcessComponent::ShowImGui();
-        ImGui::DragFloat("Strength", &params_.strength, 0.0001f, 0.0f, 0.05f, "%.5f");
-        ImGui::DragFloat2("Direction", &params_.directionX, 0.01f, -1.0f, 1.0f);
+        ImGui::DragFloat(TranslationLabel("component.chromaticaberrationeffect.strength"), &params_.strength, 0.0001f, 0.0f, 0.05f, "%.5f");
+        ImGui::DragFloat2(TranslationLabel("component.chromaticaberrationeffect.direction"), &params_.directionX, 0.01f, -1.0f, 1.0f);
     }
 #endif
 

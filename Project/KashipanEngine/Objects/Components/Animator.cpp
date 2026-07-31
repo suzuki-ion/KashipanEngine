@@ -11,6 +11,7 @@
 
 #if defined(USE_IMGUI)
 #include <imgui.h>
+#include "Utilities/Translation.h"
 #endif
 
 namespace KashipanEngine {
@@ -271,10 +272,10 @@ std::vector<std::string> Animator::GetAvailableClipNames() const {
 
 #if defined(USE_IMGUI)
 void Animator::ShowImGui() {
-    TargetObjectSelector::ShowSelector("Root Bone", GetOwnerSceneContext(), rootBoneObjectID_);
+    TargetObjectSelector::ShowSelector(TranslationLabel("component.animator.root_bone"), GetOwnerSceneContext(), rootBoneObjectID_);
 
     const auto clipNames = GetAvailableClipNames();
-    if (ImGuiCustom::SelectString("Animation Clip", clipName_, clipNames, true)) {
+    if (ImGuiCustom::SelectString(TranslationLabel("component.animator.animation_clip"), clipName_, clipNames, true)) {
         elapsedTime_ = 0.0f;
     }
 
@@ -284,21 +285,20 @@ void Animator::ShowImGui() {
         animAssetPaths.push_back(entry.assetPath);
     }
     std::string sourcePath = animationSourceAssetPath_;
-    if (ImGuiCustom::SelectString("Animation Source", sourcePath, animAssetPaths, true)) {
+    if (ImGuiCustom::SelectString(TranslationLabel("component.animator.animation_source"), sourcePath, animAssetPaths, true)) {
         animationSourceAssetPath_ = sourcePath;
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("空の場合はメッシュ自身のファイルからアニメーションを取得する。\n"
-            "別ファイルを指定すると、そのファイルのアニメーションを（ボーン名が一致する範囲で）このスケルトンへ適用できる。");
+        ImGui::SetTooltip(TranslationC("component.animator.desc_1"));
     }
 
-    ImGui::Checkbox("Play On Start", &playOnStart_);
-    ImGui::Checkbox("Loop", &loop_);
-    ImGui::DragFloat("Playback Speed", &playbackSpeed_, 0.01f, 0.0f, 10.0f);
-    if (ImGui::Button(isPlaying_ ? "Stop" : "Play")) {
+    ImGui::Checkbox(TranslationLabel("component.animator.play_on_start"), &playOnStart_);
+    ImGui::Checkbox(TranslationLabel("component.animator.loop"), &loop_);
+    ImGui::DragFloat(TranslationLabel("component.animator.playback_speed"), &playbackSpeed_, 0.01f, 0.0f, 10.0f);
+    if (ImGui::Button(isPlaying_ ? TranslationLabel("component.animator.stop") : TranslationLabel("component.animator.play"))) {
         isPlaying_ = !isPlaying_;
     }
-    ImGui::Text("Joint Count: %d", static_cast<int>(skeletonInstance_.joints.size()));
+    ImGui::Text(TranslationC("component.animator.joint_count_d"), static_cast<int>(skeletonInstance_.joints.size()));
 }
 #endif
 

@@ -161,7 +161,7 @@ protected:
 #if defined(USE_IMGUI)
     /// @brief ImGui 表示（ウィンドウの Begin/End は呼ばない）
     virtual void ShowImGui() {
-        ImGui::Text("None");
+        ImGui::Text("%s", TranslationC("component.iobjectcomponent.none"));
     }
     /// @brief 常時ImGui表示（ビューアウィンドウ等、ポーズ中も表示し続けたいものに使う）
     virtual void ShowPersistentImGui() {}

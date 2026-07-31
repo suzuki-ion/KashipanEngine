@@ -7,6 +7,7 @@
 #include "Scene/SceneFileIO.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -18,10 +19,10 @@ void SceneLoader::Open() {
 bool SceneLoader::ShowImGui() {
     bool loaded = false;
     if (isOpenRequested_) {
-        ImGui::OpenPopup("Load Scene");
+        ImGui::OpenPopup(TranslationLabel("editor.loadscene.title"));
         isOpenRequested_ = false;
     }
-    if (ImGui::BeginPopupModal("Load Scene", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+    if (ImGui::BeginPopupModal(TranslationLabel("editor.loadscene.title"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
         // 検索フォルダ内のシーンファイル一覧から選択できるようにする
         if (ImGui::BeginListBox("##SceneFiles", ImVec2(400, 160))) {
             for (const auto &file : sceneFiles_) {
@@ -32,9 +33,9 @@ bool SceneLoader::ShowImGui() {
             }
             ImGui::EndListBox();
         }
-        ImGui::InputText("Path", &filePath_);
+        ImGui::InputText(TranslationLabel("editor.common.path"), &filePath_);
 
-        if (ImGui::Button("Load", ImVec2(120, 0))) {
+        if (ImGui::Button(TranslationLabel("editor.common.load"), ImVec2(120, 0))) {
             std::error_code ec;
             if (!filePath_.empty() && std::filesystem::exists(Utf8StringToPath(filePath_), ec) && !ec) {
                 JSON sceneJson = LoadSceneFromPath(filePath_);
@@ -45,7 +46,7 @@ bool SceneLoader::ShowImGui() {
             }
         }
         ImGui::SameLine();
-        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+        if (ImGui::Button(TranslationLabel("editor.common.cancel"), ImVec2(120, 0))) {
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();

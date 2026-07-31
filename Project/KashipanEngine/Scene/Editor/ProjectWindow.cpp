@@ -5,6 +5,7 @@
 
 #include "Core/GameEngine.h"
 #include "Core/ProjectPaths.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -14,7 +15,7 @@ void ProjectWindow::RefreshProjectList() {
 }
 
 void ProjectWindow::ShowImGui() {
-    if (!ImGui::Begin("Project")) {
+    if (!ImGui::Begin(TranslationLabel("editor.project.window"))) {
         ImGui::End();
         return;
     }
@@ -25,28 +26,28 @@ void ProjectWindow::ShowImGui() {
     }
 
     //--------- 現在開いているプロジェクト ---------//
-    ImGui::SeparatorText("Current Project");
+    ImGui::SeparatorText(TranslationLabel("editor.project.current"));
     if (ProjectPaths::IsStandalone()) {
-        ImGui::TextUnformatted("Running in standalone mode (assets are next to the executable).");
+        ImGui::TextUnformatted(TranslationC("editor.project.standalone"));
         ImGui::TextDisabled("%s", ProjectPaths::ProjectRoot().c_str());
         ImGui::End();
         return;
     }
-    ImGui::Text("Name: %s", ProjectPaths::ProjectName().c_str());
+    ImGui::Text("%s%s", TranslationC("editor.project.name"), ProjectPaths::ProjectName().c_str());
     ImGui::TextDisabled("%s", ProjectPaths::ProjectRoot().c_str());
 
     if (!pendingProjectName_.empty()) {
         ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.3f, 1.0f),
-            "Reopening with \"%s\"...", pendingProjectName_.c_str());
+            "%s%s", TranslationC("editor.project.reopening"), pendingProjectName_.c_str());
     }
 
     //--------- プロジェクト一覧 ---------//
-    ImGui::SeparatorText("Projects");
+    ImGui::SeparatorText(TranslationLabel("editor.project.list"));
     ImGui::SameLine();
-    if (ImGui::SmallButton("Refresh")) {
+    if (ImGui::SmallButton(TranslationLabel("editor.common.refresh"))) {
         RefreshProjectList();
     }
-    ImGui::SetItemTooltip("Re-scan the Projects folder (e.g. after adding one outside the editor).");
+    ImGui::SetItemTooltip("%s", TranslationC("editor.project.list.refresh.tooltip"));
 
     if (ImGui::BeginTable("##ProjectList", 2, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_RowBg)) {
         for (const auto &project : projects_) {
@@ -60,7 +61,7 @@ void ProjectWindow::ShowImGui() {
             }
             ImGui::TableNextColumn();
             ImGui::BeginDisabled(isActive || !pendingProjectName_.empty());
-            if (ImGui::SmallButton(isActive ? "Open (current)" : "Open")) {
+            if (ImGui::SmallButton(isActive ? TranslationLabel("editor.project.open.current") : TranslationLabel("editor.project.open"))) {
                 if (ProjectManager::RequestRestartWithProject(project.name)) {
                     pendingProjectName_ = project.name;
                     // 後始末（シーンの自動保存など）を通常どおり済ませてから、
@@ -70,7 +71,7 @@ void ProjectWindow::ShowImGui() {
             }
             ImGui::EndDisabled();
             if (!isActive) {
-                ImGui::SetItemTooltip("Closes the editor and reopens it with this project.");
+                ImGui::SetItemTooltip("%s", TranslationC("editor.project.open.tooltip"));
             }
             ImGui::PopID();
         }
@@ -78,22 +79,23 @@ void ProjectWindow::ShowImGui() {
     }
 
     //--------- 新規作成 ---------//
-    ImGui::SeparatorText("New Project");
+    ImGui::SeparatorText(TranslationLabel("editor.project.new"));
     ImGui::SetNextItemWidth(200.0f);
-    ImGui::InputTextWithHint("##NewProjectName", "New project name", &newProjectNameBuffer_);
+    ImGui::InputTextWithHint("##NewProjectName", TranslationC("editor.project.new.name.hint"), &newProjectNameBuffer_);
     ImGui::SameLine();
     ImGui::BeginDisabled(newProjectNameBuffer_.empty());
-    if (ImGui::Button("Create")) {
+    if (ImGui::Button(TranslationLabel("editor.common.create"))) {
         lastErrorMessage_.clear();
         // 作成しただけでは開いているプロジェクトを変えない（次回起動時の対象も変えない）。
         // 切り替えたい場合は上の一覧から Open を押してもらう
-        if (ProjectManager::CreateProject(newProjectNameBuffer_, &lastErrorMessage_)) {
+        if (ProjectManager::CreateProject(newProjectNameBuffer_,
+                ProjectManager::kDefaultTemplateName, &lastErrorMessage_)) {
             newProjectNameBuffer_.clear();
             RefreshProjectList();
         }
     }
     ImGui::EndDisabled();
-    ImGui::SetItemTooltip("Creates Projects/<name>/ with a copy of the AssetsTemplate folder.\nUse Open above to switch to it.");
+    ImGui::SetItemTooltip("%s", TranslationC("editor.project.new.create.tooltip"));
 
     if (!lastErrorMessage_.empty()) {
         ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "%s", lastErrorMessage_.c_str());

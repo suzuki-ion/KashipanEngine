@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <algorithm>
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -31,8 +32,8 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         IPostProcessComponent::ShowImGui();
-        ImGui::DragInt("Radius", &params_.radius, 1.0f, 0, 32);
-        ImGui::DragFloat("Sigma", &params_.sigma, 0.01f, 0.01f, 32.0f, "%.3f");
+        ImGui::DragInt(TranslationLabel("component.gaussianfiltereffect.radius"), &params_.radius, 1.0f, 0, 32);
+        ImGui::DragFloat(TranslationLabel("component.gaussianfiltereffect.sigma"), &params_.sigma, 0.01f, 0.01f, 32.0f, "%.3f");
     }
 #endif
 

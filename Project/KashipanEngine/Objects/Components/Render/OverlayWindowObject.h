@@ -7,6 +7,7 @@
 #include "Objects/Components/Render/IWindowObjectComponent.h"
 #include "Objects/Components/Transform.h"
 #include "Core/Window.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -66,12 +67,12 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
-        ImGuiCustom::EditValue("Title", title_);
+        ImGuiCustom::EditValue(TranslationLabel("component.overlaywindowobject.title"), title_);
         int w = static_cast<int>(width_);
         int h = static_cast<int>(height_);
-        if (ImGuiCustom::EditValue("Width", w)) width_ = static_cast<std::uint32_t>(std::max(1, w));
-        if (ImGuiCustom::EditValue("Height", h)) height_ = static_cast<std::uint32_t>(std::max(1, h));
-        ImGui::Checkbox("Sync With Transform", &syncWithTransform_);
+        if (ImGuiCustom::EditValue(TranslationLabel("component.overlaywindowobject.width"), w)) width_ = static_cast<std::uint32_t>(std::max(1, w));
+        if (ImGuiCustom::EditValue(TranslationLabel("component.overlaywindowobject.height"), h)) height_ = static_cast<std::uint32_t>(std::max(1, h));
+        ImGui::Checkbox(TranslationLabel("component.overlaywindowobject.sync_with_transform"), &syncWithTransform_);
         ShowInterceptedMessagesImGui();
     }
 #endif

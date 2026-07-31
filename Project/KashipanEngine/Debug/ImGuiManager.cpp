@@ -9,6 +9,7 @@
 #include "Core/ProjectPaths.h"
 #include "Core/UserSettings.h"
 #include "Utilities/Conversion/ConvertString.h"
+#include "Utilities/Translation.h"
 
 #include <algorithm>
 
@@ -54,19 +55,19 @@ void BuildDefaultDockLayout(ImGuiID dockSpaceId, const ImVec2 &dockSpaceSize) {
     ImGui::DockBuilderSplitNode(centerId, ImGuiDir_Right, 0.27f, &rightId, &centerId);
     ImGui::DockBuilderSplitNode(centerId, ImGuiDir_Down, 0.28f, &bottomId, &centerId);
 
-    ImGui::DockBuilderDockWindow("Scene Object Hierarchy", leftId);
-    ImGui::DockBuilderDockWindow("History", leftId);
+    ImGui::DockBuilderDockWindow(TranslationLabel("editor.sceneobjecthierarchy.window"), leftId);
+    ImGui::DockBuilderDockWindow(TranslationLabel("editor.history.window"), leftId);
 
-    ImGui::DockBuilderDockWindow("Scene List", centerId);
-    ImGui::DockBuilderDockWindow("Scene Editor", centerId);
-    ImGui::DockBuilderDockWindow("Scene View", centerId);
+    ImGui::DockBuilderDockWindow(TranslationLabel("editor.scenelist.window"), centerId);
+    ImGui::DockBuilderDockWindow(TranslationLabel("editor.sceneeditor.window"), centerId);
+    ImGui::DockBuilderDockWindow(TranslationLabel("editor.sceneview.window"), centerId);
 
-    ImGui::DockBuilderDockWindow("Scene Object Inspector", rightId);
-    ImGui::DockBuilderDockWindow("Scene Component Inspector", rightId);
+    ImGui::DockBuilderDockWindow(TranslationLabel("editor.sceneobjectinspector.window"), rightId);
+    ImGui::DockBuilderDockWindow(TranslationLabel("editor.scenecomponentinspector.window"), rightId);
 
-    ImGui::DockBuilderDockWindow("Assets", bottomId);
-    ImGui::DockBuilderDockWindow("Scene Variables", bottomId);
-    ImGui::DockBuilderDockWindow("Logger", bottomId);
+    ImGui::DockBuilderDockWindow(TranslationLabel("editor.assets.window"), bottomId);
+    ImGui::DockBuilderDockWindow(TranslationLabel("editor.scenevariables.window"), bottomId);
+    ImGui::DockBuilderDockWindow(TranslationLabel("editor.logger.window"), bottomId);
 
     ImGui::DockBuilderFinish(dockSpaceId);
 }

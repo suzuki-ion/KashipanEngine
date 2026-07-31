@@ -11,6 +11,7 @@
 #include "Scene/SceneContext.h"
 #include "Utilities/RandomValue.h"
 #include "Utilities/TimeUtils.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -200,29 +201,29 @@ void Shake::ShowImGui() {
     };
 
     if (isPlaying_) {
-        ImGui::TextColored(ImVec4(0.4f, 0.9f, 0.4f, 1.0f), "Playing");
-        if (ImGui::Button("Stop")) Stop();
+        ImGui::TextColored(ImVec4(0.4f, 0.9f, 0.4f, 1.0f), "%s", TranslationC("component.shake.playing"));
+        if (ImGui::Button(TranslationLabel("component.shake.stop"))) Stop();
     } else {
-        ImGui::TextDisabled("Stopped");
+        ImGui::TextDisabled("%s", TranslationC("component.shake.stopped"));
         ImGui::SameLine();
-        if (ImGui::Button("Play")) Play(duration_);
+        if (ImGui::Button(TranslationLabel("component.shake.play"))) Play(duration_);
     }
 
-    ImGui::Checkbox("Auto Play", &autoPlay_);
-    ImGui::DragFloat("Duration (0=Infinite)", &duration_, 0.01f, 0.0f, 60.0f);
+    ImGui::Checkbox(TranslationLabel("component.shake.auto_play"), &autoPlay_);
+    ImGui::DragFloat(TranslationLabel("component.shake.duration_0_infinite"), &duration_, 0.01f, 0.0f, 60.0f);
 
-    static const char *kTimingLabels[] = { "Immediate", "Deferred (End of Frame)" };
+    const char *kTimingLabels[] = { TranslationC("component.shake.timing.immediate"), TranslationC("component.shake.timing.deferred") };
     int timingIndex = static_cast<int>(processTiming_);
-    if (ImGui::Combo("Process Timing", &timingIndex, kTimingLabels, IM_ARRAYSIZE(kTimingLabels))) {
+    if (ImGui::Combo(TranslationLabel("component.shake.process_timing"), &timingIndex, kTimingLabels, IM_ARRAYSIZE(kTimingLabels))) {
         processTiming_ = static_cast<ProcessTiming>(timingIndex);
     }
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("%s", "Immediate: 自身のUpdate内でその場処理 / Deferred: 全オブジェクト更新後にまとめて処理（他スクリプトと競合しない）");
     }
 
-    static const char *kApplyLabels[] = { "To Transform", "Render Only" };
+    const char *kApplyLabels[] = { TranslationC("component.shake.applytarget.transform"), TranslationC("component.shake.applytarget.renderonly") };
     int applyIndex = static_cast<int>(applyTarget_);
-    if (ImGui::Combo("Apply Target", &applyIndex, kApplyLabels, IM_ARRAYSIZE(kApplyLabels))) {
+    if (ImGui::Combo(TranslationLabel("component.shake.apply_target"), &applyIndex, kApplyLabels, IM_ARRAYSIZE(kApplyLabels))) {
         applyTarget_ = static_cast<ApplyTarget>(applyIndex);
     }
     if (ImGui::IsItemHovered()) {
@@ -230,21 +231,21 @@ void Shake::ShowImGui() {
     }
 
     ImGui::Separator();
-    ImGui::TextUnformatted("Position Shake");
-    ImGui::Checkbox("Pos X", &positionEnableX_); ImGui::SameLine();
-    ImGui::Checkbox("Pos Y", &positionEnableY_); ImGui::SameLine();
-    ImGui::Checkbox("Pos Z", &positionEnableZ_);
-    ImGuiCustom::EditValue("Position Amplitude", positionAmplitude_, { .vSpeed = 0.01f, .vMin = 0.0f });
-    ImGuiCustom::EditValue("Position Speed", positionSpeed_, { .vSpeed = 0.1f, .vMin = 0.0f });
+    ImGui::TextUnformatted(TranslationC("component.shake.position_shake"));
+    ImGui::Checkbox(TranslationLabel("component.shake.pos_x"), &positionEnableX_); ImGui::SameLine();
+    ImGui::Checkbox(TranslationLabel("component.shake.pos_y"), &positionEnableY_); ImGui::SameLine();
+    ImGui::Checkbox(TranslationLabel("component.shake.pos_z"), &positionEnableZ_);
+    ImGuiCustom::EditValue(TranslationLabel("component.shake.position_amplitude"), positionAmplitude_, { .vSpeed = 0.01f, .vMin = 0.0f });
+    ImGuiCustom::EditValue(TranslationLabel("component.shake.position_speed"), positionSpeed_, { .vSpeed = 0.1f, .vMin = 0.0f });
     easeCombo("Position Ease", positionEaseType_);
 
     ImGui::Separator();
-    ImGui::TextUnformatted("Rotation Shake");
-    ImGui::Checkbox("Rot X", &rotationEnableX_); ImGui::SameLine();
-    ImGui::Checkbox("Rot Y", &rotationEnableY_); ImGui::SameLine();
-    ImGui::Checkbox("Rot Z", &rotationEnableZ_);
-    ImGuiCustom::EditValue("Rotation Amplitude (deg)", rotationAmplitudeDeg_, { .vSpeed = 0.1f, .vMin = 0.0f });
-    ImGuiCustom::EditValue("Rotation Speed", rotationSpeed_, { .vSpeed = 0.1f, .vMin = 0.0f });
+    ImGui::TextUnformatted(TranslationC("component.shake.rotation_shake"));
+    ImGui::Checkbox(TranslationLabel("component.shake.rot_x"), &rotationEnableX_); ImGui::SameLine();
+    ImGui::Checkbox(TranslationLabel("component.shake.rot_y"), &rotationEnableY_); ImGui::SameLine();
+    ImGui::Checkbox(TranslationLabel("component.shake.rot_z"), &rotationEnableZ_);
+    ImGuiCustom::EditValue(TranslationLabel("component.shake.rotation_amplitude_deg"), rotationAmplitudeDeg_, { .vSpeed = 0.1f, .vMin = 0.0f });
+    ImGuiCustom::EditValue(TranslationLabel("component.shake.rotation_speed"), rotationSpeed_, { .vSpeed = 0.1f, .vMin = 0.0f });
     easeCombo("Rotation Ease", rotationEaseType_);
 }
 

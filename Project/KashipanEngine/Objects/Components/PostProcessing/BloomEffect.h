@@ -15,6 +15,7 @@
 #include "Graphics/Resources/RenderTargetResource.h"
 #include "Graphics/Resources/ShaderResourceResource.h"
 #include "Graphics/ScreenBuffer.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -61,12 +62,12 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         IPostProcessComponent::ShowImGui();
-        ImGui::DragFloat("Threshold", &params_.threshold, 0.01f, 0.0f, 10.0f, "%.3f");
-        ImGui::DragFloat("SoftKnee", &params_.softKnee, 0.01f, 0.0f, 1.0f, "%.3f");
-        ImGui::DragFloat("Intensity", &params_.intensity, 0.01f, 0.0f, 5.0f, "%.3f");
-        ImGui::DragFloat("BlurRadius", &params_.blurRadius, 0.01f, 0.0f, 10.0f, "%.3f");
+        ImGui::DragFloat(TranslationLabel("component.bloomeffect.threshold"), &params_.threshold, 0.01f, 0.0f, 10.0f, "%.3f");
+        ImGui::DragFloat(TranslationLabel("component.bloomeffect.softknee"), &params_.softKnee, 0.01f, 0.0f, 1.0f, "%.3f");
+        ImGui::DragFloat(TranslationLabel("component.bloomeffect.intensity"), &params_.intensity, 0.01f, 0.0f, 5.0f, "%.3f");
+        ImGui::DragFloat(TranslationLabel("component.bloomeffect.blurradius"), &params_.blurRadius, 0.01f, 0.0f, 10.0f, "%.3f");
         int iterations = static_cast<int>(params_.iterations);
-        if (ImGui::DragInt("Iterations", &iterations, 1.0f, 1, 16)) {
+        if (ImGui::DragInt(TranslationLabel("component.bloomeffect.iterations"), &iterations, 1.0f, 1, 16)) {
             params_.iterations = static_cast<std::uint32_t>(std::clamp(iterations, 1, 16));
         }
     }

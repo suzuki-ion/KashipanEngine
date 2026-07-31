@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <algorithm>
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -37,11 +38,11 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         IPostProcessComponent::ShowImGui();
-        ImGui::DragFloat("Dot Spacing", &params_.dotSpacing, 0.1f, 1.0f, 64.0f, "%.1f");
-        ImGui::DragFloat("Dot Radius", &params_.dotRadius, 0.1f, 0.0f, 64.0f, "%.1f");
-        ImGui::DragFloat("Threshold", &params_.threshold, 0.01f, 0.0f, 1.0f, "%.3f");
-        ImGui::DragFloat("Intensity", &params_.intensity, 0.01f, 0.0f, 4.0f, "%.3f");
-        ImGui::Checkbox("Monochrome", &params_.monochrome);
+        ImGui::DragFloat(TranslationLabel("component.dotmatrixeffect.dot_spacing"), &params_.dotSpacing, 0.1f, 1.0f, 64.0f, "%.1f");
+        ImGui::DragFloat(TranslationLabel("component.dotmatrixeffect.dot_radius"), &params_.dotRadius, 0.1f, 0.0f, 64.0f, "%.1f");
+        ImGui::DragFloat(TranslationLabel("component.dotmatrixeffect.threshold"), &params_.threshold, 0.01f, 0.0f, 1.0f, "%.3f");
+        ImGui::DragFloat(TranslationLabel("component.dotmatrixeffect.intensity"), &params_.intensity, 0.01f, 0.0f, 4.0f, "%.3f");
+        ImGui::Checkbox(TranslationLabel("component.dotmatrixeffect.monochrome"), &params_.monochrome);
     }
 #endif
 

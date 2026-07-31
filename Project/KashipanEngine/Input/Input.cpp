@@ -8,6 +8,7 @@
 #include <imgui.h>
 #include <cctype>
 #include <string>
+#include "Utilities/Translation.h"
 #endif
 
 namespace KashipanEngine {
@@ -135,57 +136,57 @@ float NormalizeTrigger(int v) {
 void Input::ShowImGui() {
     if (!keyboard_ || !mouse_ || !controller_) return;
 
-    if (!ImGui::Begin("Input - 入力状態")) {
+    if (!ImGui::Begin(TranslationLabel("editor.input.state.window"))) {
         ImGui::End();
         return;
     }
 
-    if (ImGui::CollapsingHeader("Keyboard", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::TextUnformatted("主要キー状態");
+    if (ImGui::CollapsingHeader(TranslationLabel("editor.input.keyboard"), ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::TextUnformatted(TranslationC("editor.input.desc_1"));
         for (const auto& e : kKeyEntries) {
             const bool down = keyboard_->IsDown(e.key);
             const bool trig = keyboard_->IsTrigger(e.key);
             const bool rel = keyboard_->IsRelease(e.key);
-            ImGui::Text("%-10s  Down:%s  Trg:%s  Rel:%s", e.label, down ? "1" : "0", trig ? "1" : "0", rel ? "1" : "0");
+            ImGui::Text(TranslationC("editor.input.10s_down_s_trg_s_rel_s"), e.label, down ? "1" : "0", trig ? "1" : "0", rel ? "1" : "0");
         }
     }
 
-    if (ImGui::CollapsingHeader("Mouse", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Text("Delta: (%d, %d)", mouse_->GetDeltaX(), mouse_->GetDeltaY());
-        ImGui::Text("Wheel(Delta): %d", mouse_->GetWheel());
+    if (ImGui::CollapsingHeader(TranslationLabel("editor.input.mouse"), ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Text(TranslationC("editor.input.delta_d_d"), mouse_->GetDeltaX(), mouse_->GetDeltaY());
+        ImGui::Text(TranslationC("editor.input.wheel_delta_d"), mouse_->GetWheel());
 
         ImGui::Separator();
-        ImGui::TextUnformatted("Buttons");
+        ImGui::TextUnformatted(TranslationC("editor.input.buttons"));
         for (int i = 0; i < 8; ++i) {
             ImGui::PushID(i);
             const bool down = mouse_->IsButtonDown(i);
             const bool trig = mouse_->IsButtonTrigger(i);
             const bool rel = mouse_->IsButtonRelease(i);
-            ImGui::Text("Button %d  Down:%s  Trg:%s  Rel:%s", i, down ? "1" : "0", trig ? "1" : "0", rel ? "1" : "0");
+            ImGui::Text(TranslationC("editor.input.button_d_down_s_trg_s_rel_s"), i, down ? "1" : "0", trig ? "1" : "0", rel ? "1" : "0");
             ImGui::PopID();
         }
 
         ImGui::Separator();
-        ImGui::TextUnformatted("Cursor");
+        ImGui::TextUnformatted(TranslationC("editor.input.cursor"));
         const POINT p = mouse_->GetPos(static_cast<HWND>(nullptr));
-        ImGui::Text("Screen Pos: (%ld, %ld)", p.x, p.y);
+        ImGui::Text(TranslationC("editor.input.screen_pos_ld_ld"), p.x, p.y);
     }
 
-    if (ImGui::CollapsingHeader("Controller (Gamepad)", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGui::CollapsingHeader(TranslationLabel("editor.input.controller_gamepad"), ImGuiTreeNodeFlags_DefaultOpen)) {
         const int padCount = controller_->GetPadCount();
-        ImGui::Text("Pads: %d", padCount);
+        ImGui::Text(TranslationC("editor.input.pads_d"), padCount);
 
         const auto showButtonRow = [&](int idx, const char* name, ControllerButton btn) {
             const bool down = controller_->IsButtonDown(btn, idx);
             const bool trig = controller_->IsButtonTrigger(btn, idx);
             const bool rel = controller_->IsButtonRelease(btn, idx);
-            ImGui::Text("%-10s Down:%s Trg:%s Rel:%s", name, down ? "1" : "0", trig ? "1" : "0", rel ? "1" : "0");
+            ImGui::Text(TranslationC("editor.input.10s_down_s_trg_s_rel_s_2"), name, down ? "1" : "0", trig ? "1" : "0", rel ? "1" : "0");
         };
 
         for (int i = 0; i < padCount; ++i) {
             ImGui::PushID(i);
             const bool connected = controller_->IsConnected(i);
-            ImGui::Text("Pad %d: %s", i, connected ? "Connected" : "Disconnected");
+            ImGui::Text(TranslationC("editor.input.pad_d_s"), i, connected ? "Connected" : "Disconnected");
             if (connected) {
                 const int lt = controller_->GetLeftTrigger(i);
                 const int rt = controller_->GetRightTrigger(i);
@@ -193,17 +194,17 @@ void Input::ShowImGui() {
                 const float nlt = NormalizeTrigger(lt);
                 const float nrt = NormalizeTrigger(rt);
 
-                ImGui::Text("Trigger L:%d (%.2f)  R:%d (%.2f)", lt, nlt, rt, nrt);
+                ImGui::Text(TranslationC("editor.input.trigger_l_d_2f_r_d_2f"), lt, nlt, rt, nrt);
 
                 const float lx = NormalizeStick(controller_->GetLeftStickX(i));
                 const float ly = NormalizeStick(controller_->GetLeftStickY(i));
                 const float rx = NormalizeStick(controller_->GetRightStickX(i));
                 const float ry = NormalizeStick(controller_->GetRightStickY(i));
 
-                ImGui::Text("LeftStick : (%.2f, %.2f)", lx, ly);
-                ImGui::Text("RightStick: (%.2f, %.2f)", rx, ry);
+                ImGui::Text(TranslationC("editor.input.leftstick_2f_2f"), lx, ly);
+                ImGui::Text(TranslationC("editor.input.rightstick_2f_2f"), rx, ry);
 
-                ImGui::SeparatorText("Buttons");
+                ImGui::SeparatorText(TranslationLabel("editor.input.buttons"));
                 showButtonRow(i, "A", ControllerButton::A);
                 showButtonRow(i, "B", ControllerButton::B);
                 showButtonRow(i, "X", ControllerButton::X);

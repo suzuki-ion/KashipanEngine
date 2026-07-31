@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <functional>
 #include <stdexcept>
+#include "Utilities/Translation.h"
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")

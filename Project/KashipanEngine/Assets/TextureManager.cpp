@@ -747,10 +747,10 @@ ImTextureID ToImGuiTextureIdFromGpuPtr(UINT64 gpuPtr) {
 } // namespace
 
 void TextureManager::ShowImGuiLoadedTexturesWindow() {
-    ImGui::Begin("TextureManager - Loaded Textures");
+    ImGui::Begin(TranslationLabel("editor.texturemanager.window"));
 
     const auto entries = GetImGuiTextureListEntries();
-    ImGui::Text("Loaded Textures: %d", static_cast<int>(entries.size()));
+    ImGui::Text(TranslationC("editor.texturemanager.loaded_textures_d"), static_cast<int>(entries.size()));
 
     static ImGuiTextFilter filter;
     filter.Draw("Filter");
@@ -789,7 +789,7 @@ void TextureManager::ShowImGuiLoadedTexturesWindow() {
             ImGui::TextUnformatted(e.assetPath.c_str());
 
             ImGui::TableSetColumnIndex(3);
-            ImGui::Text("%ux%u", e.width, e.height);
+            ImGui::Text(TranslationC("editor.texturemanager.ux_u"), e.width, e.height);
 
             ImGui::TableSetColumnIndex(4);
             if (e.srvGpuPtr != 0) {
@@ -811,9 +811,9 @@ void TextureManager::ShowImGuiLoadedTexturesWindow() {
     ImGui::End();
 
     if (sShowTextureViewer) {
-        if (ImGui::Begin("Texture Viewer", &sShowTextureViewer)) {
+        if (ImGui::Begin(TranslationLabel("editor.texturemanager.viewer.window"), &sShowTextureViewer)) {
             if (sSelectedTexture.srvGpuPtr != 0) {
-                ImGui::Text("Handle: %u", sSelectedTexture.handle);
+                ImGui::Text(TranslationC("editor.texturemanager.handle_u"), sSelectedTexture.handle);
                 ImGui::TextUnformatted(sSelectedTexture.assetPath.c_str());
                 ImGui::Separator();
 
@@ -839,7 +839,7 @@ void TextureManager::ShowImGuiLoadedTexturesWindow() {
                         for (const auto &label : labels) {
                             labelPtrs.push_back(label.c_str());
                         }
-                        ImGui::Combo("Frame", &sSelectedFrame, labelPtrs.data(), static_cast<int>(labelPtrs.size()));
+                        ImGui::Combo(TranslationLabel("editor.texturemanager.frame"), &sSelectedFrame, labelPtrs.data(), static_cast<int>(labelPtrs.size()));
                     }
 
                     if (sSelectedFrame < 0) sSelectedFrame = 0;
@@ -878,7 +878,7 @@ void TextureManager::ShowImGuiLoadedTexturesWindow() {
                     ImGui::Image(ToImGuiTextureIdFromGpuPtr(sSelectedTexture.srvGpuPtr), drawSize);
                 }
             } else {
-                ImGui::TextUnformatted("No texture selected.");
+                ImGui::TextUnformatted(TranslationC("editor.texturemanager.no_texture_selected"));
             }
         }
         ImGui::End();

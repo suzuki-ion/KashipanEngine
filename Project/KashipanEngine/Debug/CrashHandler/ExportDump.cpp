@@ -5,6 +5,7 @@
 
 #include <DbgHelp.h>
 #include <strsafe.h>
+#include "Utilities/Translation.h"
 
 #pragma comment(lib, "Dbghelp.lib")
 

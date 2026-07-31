@@ -7,6 +7,7 @@
 #include "Objects/Collision/Collider.h"
 #include "Math/Quaternion.h"
 #include "Math/Vector2.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -137,30 +138,30 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
-        ImGui::Checkbox("IsTrigger", &isTrigger_);
-        ImGui::Checkbox("Continuous Detection", &continuousDetection_);
+        ImGui::Checkbox(TranslationLabel("component.icollider.istrigger"), &isTrigger_);
+        ImGui::Checkbox(TranslationLabel("component.icollider.continuous_detection"), &continuousDetection_);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("%s", "高速移動時のすり抜けでも衝突イベントを発生させる（連続衝突判定）");
         }
         ImGui::Separator();
-        ImGui::TextUnformatted("Sync With Transform");
+        ImGui::TextUnformatted(TranslationC("component.icollider.sync_with_transform"));
         if (is2D_) {
-            ImGui::Checkbox("Pos X", &syncPosition_[0]); ImGui::SameLine();
-            ImGui::Checkbox("Pos Y", &syncPosition_[1]);
-            ImGui::Checkbox("Rotation", &syncRotation_);
-            ImGui::Checkbox("Scale X", &syncScale_[0]); ImGui::SameLine();
-            ImGui::Checkbox("Scale Y", &syncScale_[1]);
+            ImGui::Checkbox(TranslationLabel("component.icollider.pos_x"), &syncPosition_[0]); ImGui::SameLine();
+            ImGui::Checkbox(TranslationLabel("component.icollider.pos_y"), &syncPosition_[1]);
+            ImGui::Checkbox(TranslationLabel("component.icollider.rotation"), &syncRotation_);
+            ImGui::Checkbox(TranslationLabel("component.icollider.scale_x"), &syncScale_[0]); ImGui::SameLine();
+            ImGui::Checkbox(TranslationLabel("component.icollider.scale_y"), &syncScale_[1]);
         } else {
-            ImGui::Checkbox("Pos X", &syncPosition_[0]); ImGui::SameLine();
-            ImGui::Checkbox("Pos Y", &syncPosition_[1]); ImGui::SameLine();
-            ImGui::Checkbox("Pos Z", &syncPosition_[2]);
-            ImGui::Checkbox("Rotation", &syncRotation_);
+            ImGui::Checkbox(TranslationLabel("component.icollider.pos_x"), &syncPosition_[0]); ImGui::SameLine();
+            ImGui::Checkbox(TranslationLabel("component.icollider.pos_y"), &syncPosition_[1]); ImGui::SameLine();
+            ImGui::Checkbox(TranslationLabel("component.icollider.pos_z"), &syncPosition_[2]);
+            ImGui::Checkbox(TranslationLabel("component.icollider.rotation"), &syncRotation_);
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip("%s", "回転は軸ごとの部分同期をサポートしない（数学的に反転・不連続が避けられないため）");
             }
-            ImGui::Checkbox("Scale X", &syncScale_[0]); ImGui::SameLine();
-            ImGui::Checkbox("Scale Y", &syncScale_[1]); ImGui::SameLine();
-            ImGui::Checkbox("Scale Z", &syncScale_[2]);
+            ImGui::Checkbox(TranslationLabel("component.icollider.scale_x"), &syncScale_[0]); ImGui::SameLine();
+            ImGui::Checkbox(TranslationLabel("component.icollider.scale_y"), &syncScale_[1]); ImGui::SameLine();
+            ImGui::Checkbox(TranslationLabel("component.icollider.scale_z"), &syncScale_[2]);
         }
     }
 #endif

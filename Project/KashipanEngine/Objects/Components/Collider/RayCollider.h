@@ -5,6 +5,7 @@
 #include "Scene/Components/SceneObjectCollider.h"
 #include "Scene/SceneContext.h"
 #include "Math/Vector3.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -80,8 +81,8 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         ICollider::ShowImGui();
-        ImGui::DragFloat3("Direction", &direction_.x, 0.01f);
-        ImGui::DragFloat("MaxDistance", &maxDistance_, 0.01f, 0.0f);
+        ImGui::DragFloat3(TranslationLabel("component.raycollider.direction"), &direction_.x, 0.01f);
+        ImGui::DragFloat(TranslationLabel("component.raycollider.maxdistance"), &maxDistance_, 0.01f, 0.0f);
     }
 #endif
     JSON SaveToJson() const override {

@@ -1,0 +1,108 @@
+﻿{
+	// プリセット名
+	"Name": "Example GraphicsPipelineState",
+
+	//==============================================================
+	// GraphicsPipelineState 設定サンプル
+	// ParseGraphicsPipelineState(Json) が読み取るキーのみを記述
+	// 他の要素 (RootSignature / Shader / BlendState / RasterizerState 等) は
+	// 別セクションで定義される前提
+	//==============================================================
+	"GraphicsPipelineState": {
+		// PixelShader の反射結果から自動的に NumRenderTargets を決定するか
+		// true の場合、JSONで NumRenderTargets 未指定なら PS の出力(SV_TargetN)数を使用
+		"AutoRTCountFromPS": true,
+
+		// サンプルマスク (数値または "D3D12_DEFAULT_SAMPLE_MASK")
+		// 既定: D3D12_DEFAULT_SAMPLE_MASK (0xFFFFFFFF)
+		"SampleMask": "D3D12_DEFAULT_SAMPLE_MASK",
+
+		// ストリップのカット値 (プリミティブ再開始用トークン)
+		// 利用可能: D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED / _0xFFFF / _0xFFFFFFFF
+		"IBStripCutValue": "D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED",
+
+		// プリミティブトポロジ種別
+		// 利用可能: POINT / LINE / TRIANGLE / PATCH / UNDEFINED
+		"PrimitiveTopologyType": "D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE",
+
+		// レンダーターゲット数 (AutoRTCountFromPS=false なら必須)
+		// AutoRTCountFromPS=true でも明示指定した場合はその値を優先
+		"NumRenderTargets": 1,
+
+		// RTV 各ターゲットのフォーマット (NumRenderTargets 分だけ解釈)
+		"RTVFormats": [
+			"DXGI_FORMAT_R8G8B8A8_UNORM"
+		],
+
+		// 深度ステンシルビューのフォーマット (使用しない場合は省略可 / UNKNOWN 推奨)
+		"DSVFormat": "DXGI_FORMAT_D24_UNORM_S8_UINT",
+
+		// マルチサンプル設定
+		"SampleDesc": {
+			// サンプル数 (MSAAしない場合 1)
+			"Count": 1,
+			// 品質レベル (通常 0)
+			"Quality": 0
+		},
+
+		// ノードマスク (マルチ GPU 用。単一なら 0 または 1)
+		"NodeMask": 0,
+
+		// PSO フラグ
+		// 利用可能: D3D12_PIPELINE_STATE_FLAG_NONE / D3D12_PIPELINE_STATE_FLAG_TOOL_DEBUG /
+		//            D3D12_PIPELINE_STATE_FLAG_DYNAMIC_DEPTH_BIAS / D3D12_PIPELINE_STATE_FLAG_DYNAMIC_INDEX_BUFFER_STRIP_CUT
+		"Flags": "D3D12_PIPELINE_STATE_FLAG_NONE"
+	},
+
+	//==============================================================
+	// 追加プリセット例: マルチRT + MSAA
+	//==============================================================
+	"GraphicsPipelineState_HighQuality": {
+		"AutoRTCountFromPS": false,
+		"SampleMask": "D3D12_DEFAULT_SAMPLE_MASK",
+		"IBStripCutValue": "D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED",
+		"PrimitiveTopologyType": "D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE",
+		"NumRenderTargets": 2,
+		"RTVFormats": [
+			"DXGI_FORMAT_R16G16B16A16_FLOAT",
+			"DXGI_FORMAT_R8G8B8A8_UNORM"
+		],
+		"DSVFormat": "DXGI_FORMAT_D32_FLOAT",
+		"SampleDesc": {
+			"Count": 4,
+			"Quality": 0
+		},
+		"NodeMask": 0,
+		"Flags": "D3D12_PIPELINE_STATE_FLAG_NONE"
+	},
+
+	//==============================================================
+	// 追加プリセット例: パッチ (テッセレーション用)
+	//==============================================================
+	"GraphicsPipelineState_TessPatch": {
+		"AutoRTCountFromPS": true,
+		"SampleMask": "D3D12_DEFAULT_SAMPLE_MASK",
+		"IBStripCutValue": "D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED",
+		"PrimitiveTopologyType": "D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH",
+		"NumRenderTargets": 1,
+		"RTVFormats": [
+			"DXGI_FORMAT_R16G16B16A16_FLOAT"
+		],
+		"DSVFormat": "DXGI_FORMAT_D24_UNORM_S8_UINT",
+		"SampleDesc": {
+			"Count": 1,
+			"Quality": 0
+		},
+		"NodeMask": 0,
+		"Flags": "D3D12_PIPELINE_STATE_FLAG_NONE"
+	},
+
+	//==============================================================
+	// 注意:
+	// - AutoRTCountFromPS=true かつ NumRenderTargets 未指定の場合のみ PS 出力から決定。
+	// - RTVFormats は NumRenderTargets 数より多く書いても無視され、足りない場合は未初期化(注意)。
+	// - DSVFormat を省略すると 0 (DXGI_FORMAT_UNKNOWN) 初期化。
+	// - ParseGraphicsPipelineState は CachedPSO / StreamOutput / BlendState などは扱わない。
+	//==============================================================
+	"_Info": "このファイルは GraphicsPipelineState セクションのみのサンプル。"
+}

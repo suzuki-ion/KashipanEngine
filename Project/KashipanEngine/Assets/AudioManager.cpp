@@ -1109,10 +1109,10 @@ std::vector<AudioManager::PlayingListEntry> AudioManager::GetImGuiPlayingListEnt
 }
 
 void AudioManager::ShowImGuiLoadedSoundsWindow() {
-    ImGui::Begin("AudioManager - Loaded Sounds");
+    ImGui::Begin(TranslationLabel("editor.audiomanager.loaded.window"));
 
     const auto entries = GetImGuiSoundListEntries();
-    ImGui::Text("Loaded Sounds: %d", static_cast<int>(entries.size()));
+    ImGui::Text(TranslationC("editor.audiomanager.loaded_sounds_d"), static_cast<int>(entries.size()));
 
     static ImGuiTextFilter filter;
     filter.Draw("Filter");
@@ -1122,9 +1122,9 @@ void AudioManager::ShowImGuiLoadedSoundsWindow() {
     static bool sLoop = false;
 
     ImGui::Separator();
-    ImGui::SliderFloat("Volume", &sVolume, 0.0f, 1.0f);
-    ImGui::SliderFloat("Pitch(semitones)", &sPitch, -24.0f, 24.0f);
-    ImGui::Checkbox("Loop", &sLoop);
+    ImGui::SliderFloat(TranslationLabel("editor.audiomanager.volume"), &sVolume, 0.0f, 1.0f);
+    ImGui::SliderFloat(TranslationLabel("editor.audiomanager.pitch_semitones"), &sPitch, -24.0f, 24.0f);
+    ImGui::Checkbox(TranslationLabel("editor.audiomanager.loop"), &sLoop);
     ImGui::Separator();
 
     if (ImGui::BeginTable("##SoundList", 7,
@@ -1158,15 +1158,15 @@ void AudioManager::ShowImGuiLoadedSoundsWindow() {
             ImGui::TextUnformatted(e.assetPath.c_str());
 
             ImGui::TableSetColumnIndex(3);
-            ImGui::Text("%uch %uHz %ubit", e.channels, e.samplesPerSec, e.bitsPerSample);
+            ImGui::Text(TranslationC("editor.audiomanager.uch_uhz_ubit"), e.channels, e.samplesPerSec, e.bitsPerSample);
 
             ImGui::TableSetColumnIndex(4);
-            ImGui::Text("%ums", e.durationMs);
+            ImGui::Text(TranslationC("editor.audiomanager.ums"), e.durationMs);
 
             ImGui::TableSetColumnIndex(5);
             ImGui::PushID(static_cast<int>(e.handle));
             static PlayHandle sLastPlayHandle = kInvalidPlayHandle;
-            if (ImGui::Button("Play")) {
+            if (ImGui::Button(TranslationLabel("editor.audiomanager.play"))) {
                 sLastPlayHandle = Play(e.handle, sVolume, sPitch, sLoop);
             }
             ImGui::PopID();
@@ -1182,10 +1182,10 @@ void AudioManager::ShowImGuiLoadedSoundsWindow() {
 }
 
 void AudioManager::ShowImGuiPlayingSoundsWindow() {
-    ImGui::Begin("AudioManager - Playing Sounds");
+    ImGui::Begin(TranslationLabel("editor.audiomanager.playing.window"));
 
     const auto entries = GetImGuiPlayingListEntries();
-    ImGui::Text("Active Plays: %d", static_cast<int>(entries.size()));
+    ImGui::Text(TranslationC("editor.audiomanager.active_plays_d"), static_cast<int>(entries.size()));
 
     static ImGuiTextFilter filter;
     filter.Draw("Filter");
@@ -1228,27 +1228,27 @@ void AudioManager::ShowImGuiPlayingSoundsWindow() {
 
             ImGui::TableSetColumnIndex(4);
             if (e.isPaused) {
-                ImGui::TextUnformatted("Paused");
+                ImGui::TextUnformatted(TranslationC("editor.audiomanager.paused"));
             } else if (e.isPlaying) {
-                ImGui::TextUnformatted("Playing");
+                ImGui::TextUnformatted(TranslationC("editor.audiomanager.playing"));
             } else {
-                ImGui::TextUnformatted("Ended");
+                ImGui::TextUnformatted(TranslationC("editor.audiomanager.ended"));
             }
 
             ImGui::PushID(static_cast<int>(e.playHandle));
 
             ImGui::TableSetColumnIndex(5);
-            if (ImGui::Button("Stop")) {
+            if (ImGui::Button(TranslationLabel("editor.audiomanager.stop"))) {
                 Stop(e.playHandle);
             }
 
             ImGui::TableSetColumnIndex(6);
-            if (ImGui::Button("Pause")) {
+            if (ImGui::Button(TranslationLabel("editor.audiomanager.pause"))) {
                 Pause(e.playHandle);
             }
 
             ImGui::TableSetColumnIndex(7);
-            if (ImGui::Button("Resume")) {
+            if (ImGui::Button(TranslationLabel("editor.audiomanager.resume"))) {
                 Resume(e.playHandle);
             }
 

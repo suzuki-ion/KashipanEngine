@@ -6,6 +6,7 @@
 
 #include "Assets/TextureManager.h"
 #include "Graphics/PipelineManager.h"
+#include "Utilities/Translation.h"
 #endif
 
 namespace KashipanEngine {
@@ -13,17 +14,17 @@ namespace KashipanEngine {
 #if defined(USE_IMGUI)
 void ComputeShaderProcessing::ShowImGui() {
     // 使用するComputeパイプラインは読み込み済みのものから選択する
-    ImGuiCustom::SelectString("Pipeline", pipelineName_, PipelineManager::GetLoadedComputePipelineNames());
+    ImGuiCustom::SelectString(TranslationLabel("component.computeshaderprocessing.pipeline"), pipelineName_, PipelineManager::GetLoadedComputePipelineNames());
 
     int gx = static_cast<int>(groupCountX_);
     int gy = static_cast<int>(groupCountY_);
     int gz = static_cast<int>(groupCountZ_);
-    if (ImGuiCustom::EditValue("GroupCountX", gx)) groupCountX_ = static_cast<std::uint32_t>(std::max(1, gx));
-    if (ImGuiCustom::EditValue("GroupCountY", gy)) groupCountY_ = static_cast<std::uint32_t>(std::max(1, gy));
-    if (ImGuiCustom::EditValue("GroupCountZ", gz)) groupCountZ_ = static_cast<std::uint32_t>(std::max(1, gz));
+    if (ImGuiCustom::EditValue(TranslationLabel("component.computeshaderprocessing.groupcountx"), gx)) groupCountX_ = static_cast<std::uint32_t>(std::max(1, gx));
+    if (ImGuiCustom::EditValue(TranslationLabel("component.computeshaderprocessing.groupcounty"), gy)) groupCountY_ = static_cast<std::uint32_t>(std::max(1, gy));
+    if (ImGuiCustom::EditValue(TranslationLabel("component.computeshaderprocessing.groupcountz"), gz)) groupCountZ_ = static_cast<std::uint32_t>(std::max(1, gz));
 
     //--------- 読み取り専用テクスチャ ---------//
-    if (ImGui::TreeNode("Textures (SRV)")) {
+    if (ImGui::TreeNode(TranslationLabel("component.computeshaderprocessing.textures_srv"))) {
         std::vector<std::string> texturePaths;
         for (const auto &entry : TextureManager::GetLoadedTextureListEntries()) {
             texturePaths.push_back(entry.assetPath);
@@ -32,54 +33,54 @@ void ComputeShaderProcessing::ShowImGui() {
         for (size_t i = 0; i < textureBindRequirements_.size(); ++i) {
             ImGui::PushID(static_cast<int>(i));
             auto &req = textureBindRequirements_[i];
-            ImGui::InputText("Variable", &req.variableName);
-            ImGuiCustom::SelectString("Texture", req.textureAssetPath, texturePaths, true);
-            if (ImGui::SmallButton("Remove")) removeIndex = static_cast<int>(i);
+            ImGui::InputText(TranslationLabel("component.computeshaderprocessing.variable"), &req.variableName);
+            ImGuiCustom::SelectString(TranslationLabel("component.computeshaderprocessing.texture"), req.textureAssetPath, texturePaths, true);
+            if (ImGui::SmallButton(TranslationLabel("component.computeshaderprocessing.remove"))) removeIndex = static_cast<int>(i);
             ImGui::Separator();
             ImGui::PopID();
         }
         if (removeIndex >= 0) {
             textureBindRequirements_.erase(textureBindRequirements_.begin() + removeIndex);
         }
-        if (ImGui::Button("Add Texture Bind")) {
+        if (ImGui::Button(TranslationLabel("component.computeshaderprocessing.add_texture_bind"))) {
             textureBindRequirements_.push_back({});
         }
         ImGui::TreePop();
     }
 
     //--------- 読み書き可能なUAVテクスチャ ---------//
-    if (ImGui::TreeNode("UAV Textures")) {
+    if (ImGui::TreeNode(TranslationLabel("component.computeshaderprocessing.uav_textures"))) {
         static const char *kFormatNames[] = { "RGBA8_UNORM", "R32_FLOAT", "RGBA32_FLOAT" };
         int removeIndex = -1;
         for (size_t i = 0; i < uavTextureBindRequirements_.size(); ++i) {
             ImGui::PushID(static_cast<int>(i));
             auto &req = uavTextureBindRequirements_[i];
-            ImGui::InputText("Variable", &req.variableName);
+            ImGui::InputText(TranslationLabel("component.computeshaderprocessing.variable"), &req.variableName);
             int w = static_cast<int>(req.width);
             int h = static_cast<int>(req.height);
-            if (ImGuiCustom::EditValue("Width", w)) req.width = static_cast<std::uint32_t>(std::max(1, w));
-            if (ImGuiCustom::EditValue("Height", h)) req.height = static_cast<std::uint32_t>(std::max(1, h));
-            ImGui::Combo("Format", &req.formatKind, kFormatNames, IM_ARRAYSIZE(kFormatNames));
-            if (ImGui::SmallButton("Remove")) removeIndex = static_cast<int>(i);
+            if (ImGuiCustom::EditValue(TranslationLabel("component.computeshaderprocessing.width"), w)) req.width = static_cast<std::uint32_t>(std::max(1, w));
+            if (ImGuiCustom::EditValue(TranslationLabel("component.computeshaderprocessing.height"), h)) req.height = static_cast<std::uint32_t>(std::max(1, h));
+            ImGui::Combo(TranslationLabel("component.computeshaderprocessing.format"), &req.formatKind, kFormatNames, IM_ARRAYSIZE(kFormatNames));
+            if (ImGui::SmallButton(TranslationLabel("component.computeshaderprocessing.remove"))) removeIndex = static_cast<int>(i);
             ImGui::Separator();
             ImGui::PopID();
         }
         if (removeIndex >= 0) {
             uavTextureBindRequirements_.erase(uavTextureBindRequirements_.begin() + removeIndex);
         }
-        if (ImGui::Button("Add UAV Texture Bind")) {
+        if (ImGui::Button(TranslationLabel("component.computeshaderprocessing.add_uav_texture_bind"))) {
             uavTextureBindRequirements_.push_back({});
         }
         ImGui::TreePop();
     }
 
     //--------- 定数バッファ（float配列） ---------//
-    if (ImGui::TreeNode("Constant Buffers")) {
+    if (ImGui::TreeNode(TranslationLabel("component.computeshaderprocessing.constant_buffers"))) {
         int removeIndex = -1;
         for (size_t i = 0; i < constantBufferBindRequirements_.size(); ++i) {
             ImGui::PushID(static_cast<int>(i));
             auto &req = constantBufferBindRequirements_[i];
-            ImGui::InputText("Variable", &req.variableName);
+            ImGui::InputText(TranslationLabel("component.computeshaderprocessing.variable"), &req.variableName);
             int removeValueIndex = -1;
             for (size_t v = 0; v < req.values.size(); ++v) {
                 ImGui::PushID(static_cast<int>(v));
@@ -91,16 +92,16 @@ void ComputeShaderProcessing::ShowImGui() {
             if (removeValueIndex >= 0) {
                 req.values.erase(req.values.begin() + removeValueIndex);
             }
-            if (ImGui::SmallButton("Add Value")) req.values.push_back(0.0f);
+            if (ImGui::SmallButton(TranslationLabel("component.computeshaderprocessing.add_value"))) req.values.push_back(0.0f);
             ImGui::SameLine();
-            if (ImGui::SmallButton("Remove Buffer")) removeIndex = static_cast<int>(i);
+            if (ImGui::SmallButton(TranslationLabel("component.computeshaderprocessing.remove_buffer"))) removeIndex = static_cast<int>(i);
             ImGui::Separator();
             ImGui::PopID();
         }
         if (removeIndex >= 0) {
             constantBufferBindRequirements_.erase(constantBufferBindRequirements_.begin() + removeIndex);
         }
-        if (ImGui::Button("Add Constant Buffer Bind")) {
+        if (ImGui::Button(TranslationLabel("component.computeshaderprocessing.add_constant_buffer_bind"))) {
             constantBufferBindRequirements_.push_back({});
         }
         ImGui::TreePop();

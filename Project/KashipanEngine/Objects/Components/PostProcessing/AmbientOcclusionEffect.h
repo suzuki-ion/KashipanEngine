@@ -14,6 +14,7 @@
 #include "Graphics/Resources/RenderTargetResource.h"
 #include "Graphics/Resources/ShaderResourceResource.h"
 #include "Graphics/ScreenBuffer.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -68,36 +69,36 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         IPostProcessComponent::ShowImGui();
-        ImGui::DragFloat("Radius", &params_.radius, 0.01f, 0.01f, 20.0f, "%.3f");
+        ImGui::DragFloat(TranslationLabel("component.ambientocclusioneffect.radius"), &params_.radius, 0.01f, 0.01f, 20.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("遮蔽を判定するワールド空間の半径");
+            ImGui::SetTooltip("%s", TranslationC("component.ambientocclusioneffect.desc_1"));
         }
-        ImGui::DragFloat("Intensity", &params_.intensity, 0.01f, 0.0f, 5.0f, "%.3f");
+        ImGui::DragFloat(TranslationLabel("component.ambientocclusioneffect.intensity"), &params_.intensity, 0.01f, 0.0f, 5.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("遮蔽の強さ");
+            ImGui::SetTooltip("%s", TranslationC("component.ambientocclusioneffect.desc_2"));
         }
-        ImGui::DragFloat("Power", &params_.power, 0.01f, 0.1f, 8.0f, "%.3f");
+        ImGui::DragFloat(TranslationLabel("component.ambientocclusioneffect.power"), &params_.power, 0.01f, 0.1f, 8.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("AO値のコントラスト（大きいほど暗部が締まる）");
+            ImGui::SetTooltip("%s", TranslationC("component.ambientocclusioneffect.desc_3"));
         }
-        ImGui::DragFloat("Bias", &params_.bias, 0.001f, 0.0f, 1.0f, "%.4f");
+        ImGui::DragFloat(TranslationLabel("component.ambientocclusioneffect.bias"), &params_.bias, 0.001f, 0.0f, 1.0f, "%.4f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("自己遮蔽を避けるためのワールド距離バイアス");
+            ImGui::SetTooltip("%s", TranslationC("component.ambientocclusioneffect.desc_4"));
         }
         int sampleCount = static_cast<int>(params_.sampleCount);
-        if (ImGui::DragInt("Sample Count", &sampleCount, 1.0f, 4, 64)) {
+        if (ImGui::DragInt(TranslationLabel("component.ambientocclusioneffect.sample_count"), &sampleCount, 1.0f, 4, 64)) {
             params_.sampleCount = static_cast<std::uint32_t>(std::clamp(sampleCount, 4, 64));
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("半球サンプル数 (4..64)");
+            ImGui::SetTooltip("%s", TranslationC("component.ambientocclusioneffect.desc_5"));
         }
-        ImGui::DragInt("Blur Radius", &params_.blurRadius, 1.0f, 0, 8);
+        ImGui::DragInt(TranslationLabel("component.ambientocclusioneffect.blur_radius"), &params_.blurRadius, 1.0f, 0, 8);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("ブラーのサンプル半径（ピクセル）");
+            ImGui::SetTooltip("%s", TranslationC("component.ambientocclusioneffect.desc_6"));
         }
-        ImGui::DragFloat("Depth Threshold", &params_.depthThreshold, 0.01f, 0.001f, 100.0f, "%.3f");
+        ImGui::DragFloat(TranslationLabel("component.ambientocclusioneffect.depth_threshold"), &params_.depthThreshold, 0.01f, 0.001f, 100.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("ブラー時、これを超える線形深度差のサンプルは除外する");
+            ImGui::SetTooltip("%s", TranslationC("component.ambientocclusioneffect.desc_7"));
         }
         if (!lastCameraValid_) {
             ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f),

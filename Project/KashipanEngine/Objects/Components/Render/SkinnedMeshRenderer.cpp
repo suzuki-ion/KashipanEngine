@@ -12,6 +12,7 @@
 
 #if defined(USE_IMGUI)
 #include <imgui.h>
+#include "Utilities/Translation.h"
 #endif
 
 namespace KashipanEngine {
@@ -277,12 +278,12 @@ std::vector<SkinnedMeshRenderer::DebugJointInfo> SkinnedMeshRenderer::GetDebugJo
 }
 
 void SkinnedMeshRenderer::ShowImGui() {
-    TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), targetObjectID_);
+    TargetObjectSelector::ShowSelector(TranslationLabel("component.common.target"), GetOwnerSceneContext(), targetObjectID_);
     TargetObjectSelector::ShowRenderTargetFilters(GetOwnerSceneContext(), targetObjectID_, excludedRenderTargetNames_);
-    ImGuiCustom::SelectString("Pipeline", pipelineName_, PipelineManager::GetLoadedRenderPipelineNames());
-    ImGui::Checkbox("Cast Shadows", &castShadows_);
+    ImGuiCustom::SelectString(TranslationLabel("component.skinnedmeshrenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames());
+    ImGui::Checkbox(TranslationLabel("component.skinnedmeshrenderer.cast_shadows"), &castShadows_);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("有効にすると、このメッシュがシャドウマッピングのシャドウキャスターとして扱われる");
+        ImGui::SetTooltip("%s", TranslationC("component.skinnedmeshrenderer.desc_1"));
     }
     const auto materialEntries = MaterialManager::GetLoadedMaterialListEntries();
     std::vector<std::string> materialNames;
@@ -320,21 +321,21 @@ void SkinnedMeshRenderer::ShowImGui() {
     }
 
     ImGui::Separator();
-    ImGui::Text("Skinning");
+    ImGui::Text("%s", TranslationC("component.skinnedmeshrenderer.skinning"));
     static const char *kQualityNames[] = { "Auto", "Bone1", "Bone2", "Bone4" };
     int qualityIndex = static_cast<int>(quality_);
-    if (ImGui::Combo("Quality", &qualityIndex, kQualityNames, IM_ARRAYSIZE(kQualityNames))) {
+    if (ImGui::Combo(TranslationLabel("component.skinnedmeshrenderer.quality"), &qualityIndex, kQualityNames, IM_ARRAYSIZE(kQualityNames))) {
         quality_ = static_cast<SkinQuality>(qualityIndex);
     }
     if (!GetAnimator()) {
-        ImGui::TextDisabled("(No Animator on this object: bind pose only)");
+        ImGui::TextDisabled("%s", TranslationC("component.skinnedmeshrenderer.no_animator_on_this_object_bind_pose_only"));
     }
-    ImGui::Text("Vertex Count: %u", vertexCount_);
-    ImGui::Text("Joint Count: %d", static_cast<int>(jointNames_.size()));
+    ImGui::Text(TranslationC("component.skinnedmeshrenderer.vertex_count_u"), vertexCount_);
+    ImGui::Text(TranslationC("component.skinnedmeshrenderer.joint_count_d"), static_cast<int>(jointNames_.size()));
 
-    if (ImGui::TreeNode("Blend Shapes")) {
+    if (ImGui::TreeNode(TranslationLabel("component.skinnedmeshrenderer.blend_shapes"))) {
         if (blendShapes_.empty()) {
-            ImGui::TextDisabled("(No blend shapes on this mesh)");
+            ImGui::TextDisabled("%s", TranslationC("component.skinnedmeshrenderer.no_blend_shapes_on_this_mesh"));
         }
         // 一覧はメッシュ（インポートされたBlendShape）から自動的に同期されるため、
         // ここではウェイトの編集のみ行う（Unityと同じ挙動）

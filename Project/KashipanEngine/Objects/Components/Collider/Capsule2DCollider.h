@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "Objects/Components/Collider/ICollider.h"
 #include "Math/Vector2.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -49,9 +50,9 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         ICollider::ShowImGui();
-        ImGui::DragFloat2("Start", &start_.x, 0.01f);
-        ImGui::DragFloat2("End", &end_.x, 0.01f);
-        ImGui::DragFloat("Radius", &radius_, 0.01f, 0.0f);
+        ImGui::DragFloat2(TranslationLabel("component.capsule2dcollider.start"), &start_.x, 0.01f);
+        ImGui::DragFloat2(TranslationLabel("component.capsule2dcollider.end"), &end_.x, 0.01f);
+        ImGui::DragFloat(TranslationLabel("component.capsule2dcollider.radius"), &radius_, 0.01f, 0.0f);
     }
 #endif
     JSON SaveToJson() const override {

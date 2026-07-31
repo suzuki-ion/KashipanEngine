@@ -89,7 +89,7 @@ void ProjectPaths::Initialize(PasskeyForGameEngineMain) {
         sProjectRoot = sExecutableDirectory;
         sAssetsRoot = sProjectRoot + "/" + kAssetsFolderName;
         sProjectName = PathToUtf8String(Utf8StringToPath(sProjectRoot).filename());
-        Log("Running in standalone mode. Project root: " + sProjectRoot, LogSeverity::Info);
+        Log(Translation("engine.project.standalone") + sProjectRoot, LogSeverity::Info);
         return;
     }
 
@@ -98,15 +98,17 @@ void ProjectPaths::Initialize(PasskeyForGameEngineMain) {
 }
 
 void ProjectPaths::InitializeEngineRootOnly(PasskeyForWinMain) {
-    if (sIsInitialized) return;
-    sIsInitialized = true;
-
     ResolveEngineRoot();
     // プロジェクトを開かないため、配布形態かどうかの判定も行わない
     sIsStandalone = false;
 }
 
 void ProjectPaths::ResolveEngineRoot() {
+    // Initialize() より先に InitializeEngineRootOnly() が呼ばれることがあるため、
+    // 二重に解決しないようここでガードする（Initialize() 側のガードとは別）
+    if (sIsEngineRootResolved) return;
+    sIsEngineRootResolved = true;
+
     const std::filesystem::path exePath = GetExecutablePath();
     sExecutableDirectory = NormalizeSeparators(PathToUtf8String(exePath.parent_path()));
 
@@ -155,10 +157,10 @@ void ProjectPaths::ResolveActiveProject() {
         const std::filesystem::path candidate =
             specified.is_absolute() ? specified : projectsRoot / specified;
         if (tryOpen(candidate)) {
-            Log("Opened project from command line: " + sProjectRoot, LogSeverity::Info);
+            Log(Translation("engine.project.opened.commandline") + sProjectRoot, LogSeverity::Info);
             return;
         }
-        Log("Project specified on the command line was not found: " + projectArgument, LogSeverity::Warning);
+        Log(Translation("engine.project.opened.commandline.notfound") + projectArgument, LogSeverity::Warning);
     }
 
     //--------- 前回開いたプロジェクト ---------//
@@ -168,7 +170,7 @@ void ProjectPaths::ResolveActiveProject() {
         if (it != userSettings.end() && it->is_string()) {
             const std::string lastOpened = it->get<std::string>();
             if (!lastOpened.empty() && tryOpen(projectsRoot / Utf8StringToPath(lastOpened))) {
-                Log("Opened last used project: " + sProjectRoot, LogSeverity::Info);
+                Log(Translation("engine.project.opened.lastused") + sProjectRoot, LogSeverity::Info);
                 return;
             }
         }
@@ -180,14 +182,14 @@ void ProjectPaths::ResolveActiveProject() {
                  projectsRoot, std::filesystem::directory_options::skip_permission_denied, ec)) {
             if (!entry.is_directory(ec)) continue;
             if (tryOpen(entry.path())) {
-                Log("Opened project: " + sProjectRoot, LogSeverity::Info);
+                Log(Translation("engine.project.opened") + sProjectRoot, LogSeverity::Info);
                 return;
             }
         }
     }
 
     // 1つも見つからなかった場合はProjectManagerが新規作成するため、ここでは空のままにする
-    Log("No project found under " + ProjectsRoot(), LogSeverity::Warning);
+    Log(Translation("engine.project.notfound.any") + ProjectsRoot(), LogSeverity::Warning);
 }
 
 const std::string &ProjectPaths::ExecutableDirectory() { return sExecutableDirectory; }
@@ -273,7 +275,7 @@ void ProjectPaths::SetActiveProject(Passkey<ProjectManager>, const std::string &
     sProjectRoot = NormalizeSeparators(projectRootPath);
     sAssetsRoot = sProjectRoot + "/" + kAssetsFolderName;
     sProjectName = PathToUtf8String(Utf8StringToPath(sProjectRoot).filename());
-    Log("Active project changed to: " + sProjectRoot, LogSeverity::Info);
+    Log(Translation("engine.project.active.changed") + sProjectRoot, LogSeverity::Info);
 }
 
 } // namespace KashipanEngine

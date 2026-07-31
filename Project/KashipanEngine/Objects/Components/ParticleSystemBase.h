@@ -430,12 +430,12 @@ protected:
             if (sceneRenderer) {
                 sceneRenderer->RegisterGpuParticleEmitter(this);
                 char buf[128];
-                std::snprintf(buf, sizeof(buf), "[ParticleSystemBase] InitializeBase: GPU particle emitter registered (this=%p, sceneRenderer=%p)", static_cast<const void *>(this), static_cast<const void *>(sceneRenderer));
-                Log(buf, LogSeverity::Info);
+                std::snprintf(buf, sizeof(buf), "(this=%p, sceneRenderer=%p)", static_cast<const void *>(this), static_cast<const void *>(sceneRenderer));
+                Log(Translation("engine.particlesystem.gpu.emitter.registered") + buf, LogSeverity::Info);
             } else {
                 char buf[128];
-                std::snprintf(buf, sizeof(buf), "[ParticleSystemBase] InitializeBase: GPU simulation is on, but SceneRenderer could not be resolved (this=%p)", static_cast<const void *>(this));
-                Log(buf, LogSeverity::Warning);
+                std::snprintf(buf, sizeof(buf), "(this=%p)", static_cast<const void *>(this));
+                Log(Translation("engine.particlesystem.gpu.scenerenderer.notfound") + buf, LogSeverity::Warning);
             }
         }
     }
@@ -729,12 +729,12 @@ protected:
         ImGui::PushID(label);
         ImGui::TextUnformatted(label);
         ImGui::SameLine();
-        ImGui::Checkbox("Random", &v.randomize);
+        ImGui::Checkbox(TranslationLabel("component.particlesystembase.random"), &v.randomize);
         if (v.randomize) {
-            ImGui::DragFloat("Min", &v.min, speed, vMin, vMax);
-            ImGui::DragFloat("Max", &v.max, speed, vMin, vMax);
+            ImGui::DragFloat(TranslationLabel("component.particlesystembase.min"), &v.min, speed, vMin, vMax);
+            ImGui::DragFloat(TranslationLabel("component.particlesystembase.max"), &v.max, speed, vMin, vMax);
         } else {
-            ImGui::DragFloat("Value", &v.value, speed, vMin, vMax);
+            ImGui::DragFloat(TranslationLabel("component.particlesystembase.value"), &v.value, speed, vMin, vMax);
         }
         ImGui::PopID();
     }
@@ -744,12 +744,12 @@ protected:
         ImGui::PushID(label);
         ImGui::TextUnformatted(label);
         ImGui::SameLine();
-        ImGui::Checkbox("Random", &v.randomize);
+        ImGui::Checkbox(TranslationLabel("component.particlesystembase.random"), &v.randomize);
         if (v.randomize) {
-            ImGui::DragInt("Min", &v.min, 1.0f, vMin, vMax);
-            ImGui::DragInt("Max", &v.max, 1.0f, vMin, vMax);
+            ImGui::DragInt(TranslationLabel("component.particlesystembase.min"), &v.min, 1.0f, vMin, vMax);
+            ImGui::DragInt(TranslationLabel("component.particlesystembase.max"), &v.max, 1.0f, vMin, vMax);
         } else {
-            ImGui::DragInt("Value", &v.value, 1.0f, vMin, vMax);
+            ImGui::DragInt(TranslationLabel("component.particlesystembase.value"), &v.value, 1.0f, vMin, vMax);
         }
         ImGui::PopID();
     }
@@ -759,12 +759,12 @@ protected:
         ImGui::PushID(label);
         ImGui::TextUnformatted(label);
         ImGui::SameLine();
-        ImGui::Checkbox("Random", &v.randomize);
+        ImGui::Checkbox(TranslationLabel("component.particlesystembase.random"), &v.randomize);
         if (v.randomize) {
-            ImGui::DragFloat3("Min", &v.min.x, speed);
-            ImGui::DragFloat3("Max", &v.max.x, speed);
+            ImGui::DragFloat3(TranslationLabel("component.particlesystembase.min"), &v.min.x, speed);
+            ImGui::DragFloat3(TranslationLabel("component.particlesystembase.max"), &v.max.x, speed);
         } else {
-            ImGui::DragFloat3("Value", &v.value.x, speed);
+            ImGui::DragFloat3(TranslationLabel("component.particlesystembase.value"), &v.value.x, speed);
         }
         ImGui::PopID();
     }
@@ -774,29 +774,29 @@ protected:
     bool ShowSpawnShapeEntryImGui(SpawnShapeEntry &shape) {
         bool changed = false;
         if (is2D_) {
-            static const char *kShapeLabels[] = { "Point", "Rect", "Circle" };
+            const char *kShapeLabels[] = { TranslationC("component.particlesystembase.shape.point"), TranslationC("component.particlesystembase.shape.rect"), TranslationC("component.particlesystembase.shape.circle") };
             int shapeIndex = static_cast<int>(shape.type);
-            if (ImGui::Combo("Type", &shapeIndex, kShapeLabels, 3)) { shape.type = static_cast<SpawnShape>(shapeIndex); changed = true; }
+            if (ImGui::Combo(TranslationLabel("component.particlesystembase.type"), &shapeIndex, kShapeLabels, 3)) { shape.type = static_cast<SpawnShape>(shapeIndex); changed = true; }
         } else {
-            static const char *kShapeLabels[] = { "Point", "Box", "Sphere", "Capsule" };
+            const char *kShapeLabels[] = { TranslationC("component.particlesystembase.shape.point"), TranslationC("component.particlesystembase.shape.box"), TranslationC("component.particlesystembase.shape.sphere"), TranslationC("component.particlesystembase.shape.capsule") };
             int shapeIndex = static_cast<int>(shape.type);
-            if (ImGui::Combo("Type", &shapeIndex, kShapeLabels, 4)) { shape.type = static_cast<SpawnShape>(shapeIndex); changed = true; }
+            if (ImGui::Combo(TranslationLabel("component.particlesystembase.type"), &shapeIndex, kShapeLabels, 4)) { shape.type = static_cast<SpawnShape>(shapeIndex); changed = true; }
         }
         // Point（座標そのもの）を含め、常にCenterを編集できるようにする
-        if (ImGui::DragFloat3("Center", &shape.center.x, 0.01f)) changed = true;
+        if (ImGui::DragFloat3(TranslationLabel("component.particlesystembase.center"), &shape.center.x, 0.01f)) changed = true;
         switch (shape.type) {
         case SpawnShape::Point:
             break;
         case SpawnShape::Box:
-            if (is2D_) { if (ImGui::DragFloat2("Size", &shape.boxSize.x, 0.01f, 0.0f)) changed = true; }
-            else { if (ImGui::DragFloat3("Size", &shape.boxSize.x, 0.01f, 0.0f)) changed = true; }
+            if (is2D_) { if (ImGui::DragFloat2(TranslationLabel("component.particlesystembase.size"), &shape.boxSize.x, 0.01f, 0.0f)) changed = true; }
+            else { if (ImGui::DragFloat3(TranslationLabel("component.particlesystembase.size"), &shape.boxSize.x, 0.01f, 0.0f)) changed = true; }
             break;
         case SpawnShape::Sphere:
-            if (ImGui::DragFloat("Radius", &shape.sphereRadius, 0.01f, 0.0f)) changed = true;
+            if (ImGui::DragFloat(TranslationLabel("component.particlesystembase.radius"), &shape.sphereRadius, 0.01f, 0.0f)) changed = true;
             break;
         case SpawnShape::Capsule:
-            if (ImGui::DragFloat("Radius", &shape.capsuleRadius, 0.01f, 0.0f)) changed = true;
-            if (ImGui::DragFloat("Height", &shape.capsuleHeight, 0.01f, 0.0f)) changed = true;
+            if (ImGui::DragFloat(TranslationLabel("component.particlesystembase.radius"), &shape.capsuleRadius, 0.01f, 0.0f)) changed = true;
+            if (ImGui::DragFloat(TranslationLabel("component.particlesystembase.height"), &shape.capsuleHeight, 0.01f, 0.0f)) changed = true;
             break;
         }
         return changed;
@@ -811,7 +811,7 @@ protected:
             ImGui::PushID(static_cast<int>(i));
             ImGui::Indent();
             if (ShowSpawnShapeEntryImGui(shapes[i])) MarkSpawnVoxelGridDirty();
-            if (ImGui::Button("Remove")) removeIndex = static_cast<int>(i);
+            if (ImGui::Button(TranslationLabel("component.particlesystembase.remove"))) removeIndex = static_cast<int>(i);
             ImGui::Unindent();
             ImGui::Separator();
             ImGui::PopID();
@@ -829,38 +829,36 @@ protected:
 
     /// @brief スポーン範囲（含める形状の和集合から、除外する形状の和集合を除いた領域）のImGui表示
     void ShowSpawnShapeImGui() {
-        ImGui::SeparatorText("Spawn Area");
+        ImGui::SeparatorText(TranslationLabel("component.particlesystembase.spawn_area"));
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("「含める形状」の和集合から、「除外する形状」の和集合を取り除いた領域にスポーンする。\n"
-                "含める形状が1つも無い、または有効な範囲が無い場合は原点（スポーン基準位置そのもの）にスポーンする");
+            ImGui::SetTooltip(TranslationC("component.particlesystembase.desc_1"));
         }
-        ShowSpawnShapeListImGui("Include Shapes (spawn inside union)", "Add Include Shape", includeShapes_);
-        ShowSpawnShapeListImGui("Exclude Shapes (never spawn inside)", "Add Exclude Shape", excludeShapes_);
+        ShowSpawnShapeListImGui(TranslationLabel("component.particlesystembase.include_shapes"), TranslationLabel("component.particlesystembase.add_include_shape"), includeShapes_);
+        ShowSpawnShapeListImGui(TranslationLabel("component.particlesystembase.exclude_shapes"), TranslationLabel("component.particlesystembase.add_exclude_shape"), excludeShapes_);
     }
 
     /// @brief パーティクルオブジェクトの生成方法（親付け・生成位置）のImGui表示
     void ShowSpawnOriginImGui() {
-        ImGui::SeparatorText("Spawn Origin");
+        ImGui::SeparatorText(TranslationLabel("component.particlesystembase.spawn_origin"));
         static const char *kOriginLabels[] = {
-            "Child of Self", "Child of Other Object", "At Owner Position (Unparented)", "At Fixed Position",
+            TranslationC("component.particlesystembase.origin.childofself"), TranslationC("component.particlesystembase.origin.childofother"), TranslationC("component.particlesystembase.origin.atownerposition"), TranslationC("component.particlesystembase.origin.atfixedposition"),
         };
         int originIndex = static_cast<int>(spawnOrigin_);
-        if (ImGui::Combo("Origin", &originIndex, kOriginLabels, 4)) {
+        if (ImGui::Combo(TranslationLabel("component.particlesystembase.origin"), &originIndex, kOriginLabels, 4)) {
             spawnOrigin_ = static_cast<SpawnOrigin>(originIndex);
         }
         if (gpuSimulation_ && (spawnOrigin_ == SpawnOrigin::ChildOfSelf || spawnOrigin_ == SpawnOrigin::ChildOfOther)) {
-            ImGui::TextDisabled("(GPUモードでは親のワールド行列を毎フレーム反映し、位置・回転・スケールとも追従します。\n"
-                "ビルボード有効時は見た目を常にカメラへ向けるため、親の回転は追従先の平行移動にのみ反映されます)");
+            ImGui::TextDisabled(TranslationC("component.particlesystembase.gpu_n"));
         }
         switch (spawnOrigin_) {
         case SpawnOrigin::ChildOfOther:
-            TargetObjectSelector::ShowSelector("Parent Object", GetOwnerSceneContext(), spawnParentObjectID_, true, false);
+            TargetObjectSelector::ShowSelector(TranslationLabel("component.particlesystembase.parent_object"), GetOwnerSceneContext(), spawnParentObjectID_, true, false);
             if (!spawnParentObjectID_.IsValid()) {
-                ImGui::TextDisabled("(未設定: 自身の子として生成されます)");
+                ImGui::TextDisabled("%s", TranslationC("component.particlesystembase.desc_2"));
             }
             break;
         case SpawnOrigin::AtFixedPosition:
-            ImGui::DragFloat3("Fixed Position", &fixedSpawnPosition_.x, 0.01f);
+            ImGui::DragFloat3(TranslationLabel("component.particlesystembase.fixed_position"), &fixedSpawnPosition_.x, 0.01f);
             break;
         case SpawnOrigin::ChildOfSelf:
         case SpawnOrigin::AtOwnerPosition:
@@ -871,59 +869,59 @@ protected:
 
     void ShowBaseFieldsImGui() {
         bool isPlayingLocal = isPlaying_;
-        if (ImGui::Checkbox("Playing", &isPlayingLocal)) {
+        if (ImGui::Checkbox(TranslationLabel("component.particlesystembase.playing"), &isPlayingLocal)) {
             isPlayingLocal ? Play() : Stop();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Clear")) Clear();
+        if (ImGui::Button(TranslationLabel("component.particlesystembase.clear"))) Clear();
         if (gpuSimulation_) {
-            ImGui::Text("GPU Simulation: capacity %d", maxParticles_);
+            ImGui::Text(TranslationC("component.particlesystembase.gpu_simulation_capacity_d"), maxParticles_);
         } else {
-            ImGui::Text("Live Particles: %d", maxParticles_ - static_cast<int>(freeIndices_.size()));
+            ImGui::Text(TranslationC("component.particlesystembase.live_particles_d"), maxParticles_ - static_cast<int>(freeIndices_.size()));
         }
-        ImGui::Text("Total Emitted: %d", totalEmittedCount_);
+        ImGui::Text(TranslationC("component.particlesystembase.total_emitted_d"), totalEmittedCount_);
 
         bool gpuSimulationLocal = gpuSimulation_;
-        if (ImGui::Checkbox("GPU Simulation", &gpuSimulationLocal)) {
+        if (ImGui::Checkbox(TranslationLabel("component.particlesystembase.gpu_simulation"), &gpuSimulationLocal)) {
             SetGPUSimulation(gpuSimulationLocal);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("有効にすると、パーティクルオブジェクトを一切生成せず、コンピュートシェーダーが\n移動・寿命計算を行う（Max Particlesが多いほど効果が大きい）");
+            ImGui::SetTooltip("%s", TranslationC("component.particlesystembase.desc_3"));
         }
 
-        ImGui::Checkbox("Play On Start", &playOnStart_);
-        ImGui::Checkbox("Loop", &loop_);
-        ImGui::DragFloat("Emission Rate", &emissionRate_, 0.1f, 0.0f);
+        ImGui::Checkbox(TranslationLabel("component.particlesystembase.play_on_start"), &playOnStart_);
+        ImGui::Checkbox(TranslationLabel("component.particlesystembase.loop"), &loop_);
+        ImGui::DragFloat(TranslationLabel("component.particlesystembase.emission_rate"), &emissionRate_, 0.1f, 0.0f);
         int maxParticlesLocal = maxParticles_;
-        if (ImGui::DragInt("Max Particles", &maxParticlesLocal, 1.0f, 0)) {
+        if (ImGui::DragInt(TranslationLabel("component.particlesystembase.max_particles"), &maxParticlesLocal, 1.0f, 0)) {
             SetMaxParticles(maxParticlesLocal);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("同時に生存できるパーティクルの最大数");
+            ImGui::SetTooltip("%s", TranslationC("component.particlesystembase.desc_4"));
         }
         ImGui::BeginDisabled(loop_);
-        ImGui::DragInt("Total Spawn Count", &totalSpawnCount_, 1.0f, 0, 1000000);
+        ImGui::DragInt(TranslationLabel("component.particlesystembase.total_spawn_count"), &totalSpawnCount_, 1.0f, 0, 1000000);
         ImGui::EndDisabled();
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Loopが無効の場合、この数だけスポーンすると自動的に再生を停止する");
+            ImGui::SetTooltip("%s", TranslationC("component.particlesystembase.loop_2"));
         }
 
-        ShowRandomizableImGui("Spawn Count", spawnCount_, 1, 100);
-        ShowRandomizableImGui("Lifetime", lifetime_, 0.01f, 0.0f, 60.0f);
-        ShowRandomizableImGui("Initial Velocity", initialVelocity_, 0.01f);
-        ShowRandomizableImGui("Acceleration", acceleration_, 0.01f);
-        ShowRandomizableImGui("Start Scale", startScale_, 0.01f);
-        ShowRandomizableImGui("End Scale", endScale_, 0.01f);
-        ShowRandomizableImGui("Initial Rotation (deg)", initialRotation_, 0.5f);
-        ShowRandomizableImGui("Initial Rotation Speed (deg/s)", initialRotationSpeed_, 0.5f);
-        ShowRandomizableImGui("Rotation Acceleration (deg/s^2)", rotationAcceleration_, 0.5f);
+        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.spawn_count"), spawnCount_, 1, 100);
+        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.lifetime"), lifetime_, 0.01f, 0.0f, 60.0f);
+        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.initial_velocity"), initialVelocity_, 0.01f);
+        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.acceleration"), acceleration_, 0.01f);
+        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.start_scale"), startScale_, 0.01f);
+        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.end_scale"), endScale_, 0.01f);
+        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.initial_rotation_deg"), initialRotation_, 0.5f);
+        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.initial_rotation_speed"), initialRotationSpeed_, 0.5f);
+        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.rotation_acceleration"), rotationAcceleration_, 0.5f);
 
         ShowSpawnShapeImGui();
         ShowSpawnOriginImGui();
 
-        ImGui::SeparatorText("Rendering");
+        ImGui::SeparatorText(TranslationLabel("component.particlesystembase.rendering"));
         // 描画先はシーン上のオブジェクトから選択（ヒエラルキーからのD&Dも受け付ける）
-        TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), targetObjectID_);
+        TargetObjectSelector::ShowSelector(TranslationLabel("component.common.target"), GetOwnerSceneContext(), targetObjectID_);
 
         // メッシュ・パイプライン・マテリアルは、素の文字列入力ではなく
         // 読み込み済みのものから選択する（MeshFilter/SpriteRendererと同じ方式）
@@ -931,40 +929,38 @@ protected:
         for (const auto &entry : ModelManager::GetLoadedModelListEntries()) {
             modelPaths.push_back(entry.assetPath);
         }
-        ImGuiCustom::SelectString("Mesh", meshAssetPath_, modelPaths, true);
-        ImGuiCustom::SelectString("Pipeline", pipelineName_, PipelineManager::GetLoadedRenderPipelineNames(), true);
+        ImGuiCustom::SelectString(TranslationLabel("component.particlesystembase.mesh"), meshAssetPath_, modelPaths, true);
+        ImGuiCustom::SelectString(TranslationLabel("component.particlesystembase.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames(), true);
         std::vector<std::string> materialNames;
         for (const auto &entry : MaterialManager::GetLoadedMaterialListEntries()) {
             materialNames.push_back(entry.material.name);
         }
-        ImGuiCustom::SelectString("Material", materialName_, materialNames);
+        ImGuiCustom::SelectString(TranslationLabel("component.particlesystembase.material"), materialName_, materialNames);
 
-        ImGui::Checkbox("Cast Shadows", &castShadows_);
+        ImGui::Checkbox(TranslationLabel("component.particlesystembase.cast_shadows"), &castShadows_);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("有効にすると、生成したパーティクルがシャドウマッピングのシャドウキャスターとして扱われる\n"
-                "（CPUモード: 各パーティクルのMeshRendererへ伝播。プール生成時のみ適用されるため、\n"
-                "生存中のパーティクルには即座に反映されない。GPUモード: 毎フレーム反映される）");
+            ImGui::SetTooltip(TranslationC("component.particlesystembase.desc_5"));
         }
 
-        ImGui::Checkbox("Billboard", &billboard_);
+        ImGui::Checkbox(TranslationLabel("component.particlesystembase.billboard"), &billboard_);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("有効にすると、生成した各パーティクルが指定オブジェクトの方を向く（TargetLookAtを利用）");
+            ImGui::SetTooltip("%s", TranslationC("component.particlesystembase.targetlookat"));
         }
         if (billboard_) {
             ImGui::Indent();
             // 向き先を明示的に指定しない場合は、シーン内のカメラを自動で使う
-            TargetObjectSelector::ShowSelector("Billboard Target", GetOwnerSceneContext(), billboardTargetObjectID_, true, false);
+            TargetObjectSelector::ShowSelector(TranslationLabel("component.particlesystembase.billboard_target"), GetOwnerSceneContext(), billboardTargetObjectID_, true, false);
             if (!billboardTargetObjectID_.IsValid()) {
-                ImGui::TextDisabled("(未設定: シーン内のカメラを自動で使用)");
+                ImGui::TextDisabled("%s", TranslationC("component.particlesystembase.desc_6"));
             }
 
-            static const char *kModeLabels[] = { "Sync Target Rotation", "Look At Target" };
+            const char *kModeLabels[] = { TranslationC("component.common.mode.synctargetrotation"), TranslationC("component.common.mode.lookattarget") };
             int mode = static_cast<int>(billboardRotationMode_);
-            if (ImGui::Combo("Rotation Mode", &mode, kModeLabels, 2)) {
+            if (ImGui::Combo(TranslationLabel("component.particlesystembase.rotation_mode"), &mode, kModeLabels, 2)) {
                 billboardRotationMode_ = static_cast<TargetLookAt::RotationMode>(mode);
             }
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("Sync Target Rotation: 向き先のワールド回転と同期する（カメラ向けのビルボード）\nLook At Target: 自身の+Z軸が常に向き先の方向を向く");
+                ImGui::SetTooltip("%s", TranslationC("component.particlesystembase.desc_7"));
             }
             ImGui::Unindent();
         }
@@ -1175,12 +1171,12 @@ private:
             if (sceneRenderer) {
                 sceneRenderer->RegisterGpuParticleEmitter(this);
                 char buf[128];
-                std::snprintf(buf, sizeof(buf), "[ParticleSystemBase] SwitchSimulationMode: GPU particle emitter registered (this=%p, sceneRenderer=%p)", static_cast<const void *>(this), static_cast<const void *>(sceneRenderer));
-                Log(buf, LogSeverity::Info);
+                std::snprintf(buf, sizeof(buf), "(this=%p, sceneRenderer=%p)", static_cast<const void *>(this), static_cast<const void *>(sceneRenderer));
+                Log(Translation("engine.particlesystem.gpu.emitter.registered") + buf, LogSeverity::Info);
             } else {
                 char buf[128];
-                std::snprintf(buf, sizeof(buf), "[ParticleSystemBase] SwitchSimulationMode: sceneContext=%p, could not resolve/create SceneRenderer (this=%p)", static_cast<const void *>(sceneContext), static_cast<const void *>(this));
-                Log(buf, LogSeverity::Warning);
+                std::snprintf(buf, sizeof(buf), "(sceneContext=%p, this=%p)", static_cast<const void *>(sceneContext), static_cast<const void *>(this));
+                Log(Translation("engine.particlesystem.gpu.scenerenderer.notfound") + buf, LogSeverity::Warning);
             }
         } else {
             if (sceneRenderer) sceneRenderer->UnregisterGpuParticleEmitter(this);

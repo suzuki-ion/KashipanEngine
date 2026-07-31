@@ -5,6 +5,7 @@
 #include "Input/InputCommand.h"
 #include "Objects/ObjectContext.h"
 #include "Scene/SceneContext.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -109,7 +110,7 @@ void InputCommandApplier::ApplyValue(const CommandEntry &entry, float value) {
 #if defined(USE_IMGUI)
 
 void InputCommandApplier::ShowImGui() {
-    if (ImGui::Button("Add Command")) {
+    if (ImGui::Button(TranslationLabel("component.inputcommandapplier.add_command"))) {
         CommandEntry entry;
         int number = 0;
         std::string newName = "Cmd0";
@@ -129,7 +130,7 @@ void InputCommandApplier::ShowImGui() {
         // 名前変更でヘッダーの開閉状態が変わらないよう、IDは"###"でインデックス固定にする
         if (ImGui::CollapsingHeader((entry.name + "###commandEntry").c_str())) {
             ShowCommandImGui(entry, candidates);
-            if (ImGui::SmallButton("Delete Command")) {
+            if (ImGui::SmallButton(TranslationLabel("component.inputcommandapplier.delete_command"))) {
                 removeIndex = i;
             }
         }
@@ -141,11 +142,11 @@ void InputCommandApplier::ShowImGui() {
 }
 
 void InputCommandApplier::ShowCommandImGui(CommandEntry &entry, const std::vector<ParameterBindingCandidate> &candidates) {
-    ImGui::InputText("Name", &entry.name);
+    ImGui::InputText(TranslationLabel("component.inputcommandapplier.name"), &entry.name);
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("%s", "WasApplied/GetLastValue等をコードから呼ぶ際に指定する識別名");
     }
-    ImGui::InputText("Command Name", &entry.commandName);
+    ImGui::InputText(TranslationLabel("component.inputcommandapplier.command_name"), &entry.commandName);
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("%s", "評価する入力コマンド名（InputCommandに登録済みのコマンド）");
     }
@@ -158,7 +159,7 @@ void InputCommandApplier::ShowCommandImGui(CommandEntry &entry, const std::vecto
         "Value == Threshold",
     };
     int conditionIndex = static_cast<int>(entry.conditionType);
-    if (ImGui::Combo("Condition", &conditionIndex, kConditionLabels, IM_ARRAYSIZE(kConditionLabels))) {
+    if (ImGui::Combo(TranslationLabel("component.inputcommandapplier.condition"), &conditionIndex, kConditionLabels, IM_ARRAYSIZE(kConditionLabels))) {
         entry.conditionType = static_cast<ConditionType>(conditionIndex);
     }
     if (ImGui::IsItemHovered()) {
@@ -167,39 +168,39 @@ void InputCommandApplier::ShowCommandImGui(CommandEntry &entry, const std::vecto
     if (entry.conditionType == ConditionType::ValueGreaterEqual ||
         entry.conditionType == ConditionType::ValueLessEqual ||
         entry.conditionType == ConditionType::ValueEqual) {
-        ImGui::DragFloat("Threshold", &entry.threshold, 0.01f);
+        ImGui::DragFloat(TranslationLabel("component.inputcommandapplier.threshold"), &entry.threshold, 0.01f);
         if (ImGui::IsItemHovered() && entry.conditionType == ConditionType::ValueEqual) {
             ImGui::SetTooltip("%s", "比較する閾値（==は誤差1e-6以内で判定する）");
         }
     }
 
-    static const char *kSourceLabels[] = {
-        "Command Value",
-        "Fixed Value",
+    const char *kSourceLabels[] = {
+        TranslationC("component.inputcommandapplier.source.commandvalue"),
+        TranslationC("component.inputcommandapplier.source.fixedvalue"),
     };
     int sourceIndex = static_cast<int>(entry.valueSource);
-    if (ImGui::Combo("Value Source", &sourceIndex, kSourceLabels, IM_ARRAYSIZE(kSourceLabels))) {
+    if (ImGui::Combo(TranslationLabel("component.inputcommandapplier.value_source"), &sourceIndex, kSourceLabels, IM_ARRAYSIZE(kSourceLabels))) {
         entry.valueSource = static_cast<ValueSource>(sourceIndex);
     }
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("%s", "書き込む値の種類（入力コマンドの評価値 / 固定値）");
     }
     if (entry.valueSource == ValueSource::FixedValue) {
-        ImGui::DragFloat("Fixed Value", &entry.fixedValue, 0.01f);
+        ImGui::DragFloat(TranslationLabel("component.inputcommandapplier.fixed_value"), &entry.fixedValue, 0.01f);
     }
-    ImGui::DragFloat("Value Scale", &entry.valueScale, 0.01f);
+    ImGui::DragFloat(TranslationLabel("component.inputcommandapplier.value_scale"), &entry.valueScale, 0.01f);
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("%s", "書き込む値にかけるスケール。Value Offsetの加算より先に適用される（適用値 = 値 × Scale + Offset）");
     }
-    ImGui::DragFloat("Value Offset", &entry.valueOffset, 0.01f);
+    ImGui::DragFloat(TranslationLabel("component.inputcommandapplier.value_offset"), &entry.valueOffset, 0.01f);
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("%s", "書き込む値へ加算するデフォルト値オフセット");
     }
 
     if (entry.wasApplied) {
-        ImGui::Text("Applied: %.3f", entry.lastValue);
+        ImGui::Text(TranslationC("component.inputcommandapplier.applied_3f"), entry.lastValue);
     } else {
-        ImGui::TextDisabled("Not Applied");
+        ImGui::TextDisabled("%s", TranslationC("component.inputcommandapplier.not_applied"));
     }
 
     ImGui::Separator();

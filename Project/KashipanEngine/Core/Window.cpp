@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

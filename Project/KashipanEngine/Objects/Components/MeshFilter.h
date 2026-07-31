@@ -4,6 +4,7 @@
 #include "Objects/ObjectComponentHeader.h"
 #include "Assets/ModelManager.h"
 #include "Scene/Components/Render/SceneRenderer.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -46,7 +47,7 @@ protected:
             modelPaths.push_back(entry.assetPath);
             if (entry.handle == meshHandle_) currentPath = entry.assetPath;
         }
-        if (ImGuiCustom::SelectString("Mesh", currentPath, modelPaths, true)) {
+        if (ImGuiCustom::SelectString(TranslationLabel("component.meshfilter.mesh"), currentPath, modelPaths, true)) {
             SetMeshHandle(currentPath.empty() ? ModelManager::kInvalidHandle : ModelManager::GetModelHandleFromAssetPath(currentPath));
         }
     }

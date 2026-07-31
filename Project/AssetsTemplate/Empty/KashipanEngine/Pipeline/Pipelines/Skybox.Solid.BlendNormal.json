@@ -1,0 +1,16 @@
+{
+    "PipelineType": "Render",
+    "Name": "Skybox.Solid.BlendNormal",
+    "Shader": {
+        "AutoTopologyFromShaders": true,
+        "AutoInputLayoutFromVS": true,
+        "AutoRTCountFromPS": true,
+        "AutoRootDescriptorFromShader": true,
+        "Vertex": { "UsePreset": "Skybox.Vertex" },
+        "Pixel": { "UsePreset": "Skybox.Pixel" }
+    },
+    "RasterizerState": { "UsePreset": "Solid" },
+    "BlendState": { "UsePreset": "Normal" },
+    "DepthStencilState": { "UsePreset": "DepthEnableToMaskZero" },
+    "PipelineState": { "UsePreset": "Triangle" }
+}

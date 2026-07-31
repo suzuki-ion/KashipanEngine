@@ -6,6 +6,7 @@
 #include "Objects/Components/MeshFilter.h"
 #include "Assets/ModelManager.h"
 #include "Math/Vector3.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -83,8 +84,8 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         ICollider::ShowImGui();
-        ImGui::Checkbox("Convex", &convex_);
-        ImGui::TextDisabled("Convexオフの場合、他のMeshColliderとは衝突しません");
+        ImGui::Checkbox(TranslationLabel("component.meshcollider.convex"), &convex_);
+        ImGui::TextDisabled("%s", TranslationC("component.meshcollider.convex_meshcollider"));
 
         // 読み込み済みモデルの中から選択する（未指定の場合はMeshFilterのメッシュを使用）
         std::vector<std::string> modelPaths;
@@ -93,7 +94,7 @@ protected:
             modelPaths.push_back(entry.assetPath);
             if (entry.handle == explicitMeshHandle_) currentPath = entry.assetPath;
         }
-        if (ImGuiCustom::SelectString("Mesh (optional)", currentPath, modelPaths, true)) {
+        if (ImGuiCustom::SelectString(TranslationLabel("component.meshcollider.mesh_optional"), currentPath, modelPaths, true)) {
             explicitMeshHandle_ = currentPath.empty() ? ModelManager::kInvalidHandle : ModelManager::GetModelHandleFromAssetPath(currentPath);
         }
     }

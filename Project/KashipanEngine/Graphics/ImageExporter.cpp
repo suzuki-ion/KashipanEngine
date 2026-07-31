@@ -14,14 +14,14 @@ bool ImageExporter::SaveTextureToFile(ID3D12CommandQueue *commandQueue, ID3D12Re
     D3D12_RESOURCE_STATES state, const std::string &filePath) {
     LogScope scope;
     if (!commandQueue || !resource) {
-        Log("ImageExporter: commandQueue または resource が null です。", LogSeverity::Warning);
+        Log(Translation("engine.imageexporter.failed.nullargument"), LogSeverity::Warning);
         return false;
     }
 
     DirectX::ScratchImage image;
     HRESULT hr = DirectX::CaptureTexture(commandQueue, resource, false, image, state, state);
     if (FAILED(hr)) {
-        Log("ImageExporter: テクスチャのキャプチャに失敗しました。", LogSeverity::Warning);
+        Log(Translation("engine.imageexporter.failed.capture"), LogSeverity::Warning);
         return false;
     }
 
@@ -37,13 +37,13 @@ bool ImageExporter::SaveTextureToFile(ID3D12CommandQueue *commandQueue, ID3D12Re
             }
         }, opaqueImage);
     if (FAILED(hr)) {
-        Log("ImageExporter: alphaの補正に失敗しました。", LogSeverity::Warning);
+        Log(Translation("engine.imageexporter.failed.alpha"), LogSeverity::Warning);
         return false;
     }
 
     const auto *img = opaqueImage.GetImage(0, 0, 0);
     if (!img) {
-        Log("ImageExporter: キャプチャした画像が空です。", LogSeverity::Warning);
+        Log(Translation("engine.imageexporter.failed.empty"), LogSeverity::Warning);
         return false;
     }
 
@@ -61,7 +61,7 @@ bool ImageExporter::SaveTextureToFile(ID3D12CommandQueue *commandQueue, ID3D12Re
 
     hr = DirectX::SaveToWICFile(*img, DirectX::WIC_FLAGS_NONE, containerFormat, path.c_str());
     if (FAILED(hr)) {
-        Log("ImageExporter: 画像ファイルの保存に失敗しました。 path=" + filePath, LogSeverity::Warning);
+        Log(Translation("engine.imageexporter.failed.save") + filePath, LogSeverity::Warning);
         return false;
     }
     return true;

@@ -14,6 +14,7 @@
 #include "Graphics/IShaderTexture.h"
 #include "Scene/Editor/PrefabAssetManager.h"
 #include "Scene/Editor/PrefabUtility.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -51,7 +52,7 @@ std::string FileNameFromPath(const std::string &path) {
 
 JSONFileEditorWindow::JSONFileEditorWindow(const std::string &filePath)
     : filePath_(filePath) {
-    windowTitle_ = "JSON: " + FileNameFromPath(filePath_) + "###JSONFileEditor_" + filePath_;
+    windowTitle_ = Translation("editor.assetwindow.json.title") + FileNameFromPath(filePath_) + "###JSONFileEditor_" + filePath_;
     data_ = LoadJSON(ProjectPaths::ToPhysical(filePath_));
     loadFailed_ = data_.is_discarded();
     if (loadFailed_) data_ = JSON::object();
@@ -65,12 +66,12 @@ bool JSONFileEditorWindow::ShowImGui() {
     }
 
     if (loadFailed_) {
-        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "Failed to parse JSON file.");
+        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "%s", TranslationC("editor.assetwindow.json.parsefailed"));
     }
     ImGui::TextUnformatted(filePath_.c_str());
     ImGui::SameLine();
     ImGui::BeginDisabled(!isDirty_);
-    if (ImGui::Button("Save")) {
+    if (ImGui::Button(TranslationLabel("editor.common.save"))) {
         // .prefabファイルの場合はPrefabAssetManager経由で保存し、他インスタンスへの伝播をトリガーする
         const bool isPrefab = std::filesystem::path(filePath_).extension() == PrefabUtility::kPrefabExtension;
         const bool saved = isPrefab
@@ -83,7 +84,7 @@ bool JSONFileEditorWindow::ShowImGui() {
     ImGui::EndDisabled();
     if (isDirty_) {
         ImGui::SameLine();
-        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.3f, 1.0f), "(unsaved)");
+        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.3f, 1.0f), "%s", TranslationC("editor.assetwindow.unsaved"));
     }
     ImGui::Separator();
 
@@ -219,7 +220,7 @@ void JSONFileEditorWindow::ShowAddMemberRow(JSON &objectNode) {
     ImGui::Combo("##newType", &newType, kJSONTypeNames, IM_ARRAYSIZE(kJSONTypeNames));
     ImGui::SameLine();
     ImGui::BeginDisabled(newKey.empty() || objectNode.contains(newKey));
-    if (ImGui::Button("+ Add")) {
+    if (ImGui::Button(TranslationLabel("editor.assetwindow.json.addmember"))) {
         objectNode[newKey] = MakeDefaultJSONValue(static_cast<JSONNewValueType>(newType));
         newKey.clear();
         isDirty_ = true;
@@ -235,7 +236,7 @@ void JSONFileEditorWindow::ShowAddElementRow(JSON &arrayNode) {
     ImGui::SetNextItemWidth(140.0f);
     ImGui::Combo("##newType", &newType, kJSONTypeNames, IM_ARRAYSIZE(kJSONTypeNames));
     ImGui::SameLine();
-    if (ImGui::Button("+ Add Element")) {
+    if (ImGui::Button(TranslationLabel("editor.assetwindow.json.addelement"))) {
         arrayNode.push_back(MakeDefaultJSONValue(static_cast<JSONNewValueType>(newType)));
         isDirty_ = true;
     }
@@ -247,7 +248,7 @@ void JSONFileEditorWindow::ShowAddElementRow(JSON &arrayNode) {
 
 MaterialFileEditorWindow::MaterialFileEditorWindow(const std::string &assetPath)
     : assetPath_(assetPath) {
-    windowTitle_ = "Material: " + FileNameFromPath(assetPath_) + "###MaterialFileEditor_" + assetPath_;
+    windowTitle_ = Translation("editor.assetwindow.material.title") + FileNameFromPath(assetPath_) + "###MaterialFileEditor_" + assetPath_;
 }
 
 bool MaterialFileEditorWindow::ShowImGui() {
@@ -267,7 +268,7 @@ bool MaterialFileEditorWindow::ShowImGui() {
     }
 
     if (!material) {
-        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "Material is not loaded: %s", assetPath_.c_str());
+        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "%s%s", TranslationC("editor.assetwindow.material.notloaded"), assetPath_.c_str());
         ImGui::End();
         return isOpen_;
     }
@@ -277,7 +278,7 @@ bool MaterialFileEditorWindow::ShowImGui() {
 
     MaterialManager::ShowMaterialEditorFields(*material);
 
-    if (ImGui::Button("Save")) {
+    if (ImGui::Button(TranslationLabel("editor.common.save"))) {
         MaterialManager::SaveMaterial(MaterialManager::GetMaterialHandleFromName(material->name));
     }
 
@@ -291,7 +292,7 @@ bool MaterialFileEditorWindow::ShowImGui() {
 
 ImagePreviewWindow::ImagePreviewWindow(const std::string &assetPath)
     : assetPath_(assetPath) {
-    windowTitle_ = "Image: " + FileNameFromPath(assetPath_) + "###ImagePreview_" + assetPath_;
+    windowTitle_ = Translation("editor.assetwindow.image.title") + FileNameFromPath(assetPath_) + "###ImagePreview_" + assetPath_;
 }
 
 bool ImagePreviewWindow::ShowImGui() {
@@ -303,7 +304,7 @@ bool ImagePreviewWindow::ShowImGui() {
 
     const auto textureHandle = TextureManager::GetTextureFromAssetPath(assetPath_);
     if (textureHandle == TextureManager::kInvalidHandle) {
-        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "Texture is not loaded: %s", assetPath_.c_str());
+        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "%s%s", TranslationC("editor.assetwindow.texture.notloaded"), assetPath_.c_str());
         ImGui::End();
         return isOpen_;
     }
@@ -334,7 +335,7 @@ bool ImagePreviewWindow::ShowImGui() {
 
 AudioPreviewWindow::AudioPreviewWindow(const std::string &assetPath)
     : assetPath_(assetPath) {
-    windowTitle_ = "Audio: " + FileNameFromPath(assetPath_) + "###AudioPreview_" + assetPath_;
+    windowTitle_ = Translation("editor.assetwindow.audio.title") + FileNameFromPath(assetPath_) + "###AudioPreview_" + assetPath_;
     soundHandle_ = AudioManager::GetSoundHandleFromAssetPath(assetPath_);
 }
 
@@ -352,7 +353,7 @@ bool AudioPreviewWindow::ShowImGui() {
     }
 
     if (soundHandle_ == AudioManager::kInvalidSoundHandle) {
-        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "Sound is not loaded: %s", assetPath_.c_str());
+        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "%s%s", TranslationC("editor.assetwindow.sound.notloaded"), assetPath_.c_str());
         ImGui::End();
         return isOpen_;
     }
@@ -364,33 +365,33 @@ bool AudioPreviewWindow::ShowImGui() {
     const bool isPaused = AudioManager::IsPaused(playHandle_);
 
     if (!isPlaying) {
-        if (ImGui::Button("Play")) {
+        if (ImGui::Button(TranslationLabel("editor.audio.play"))) {
             playHandle_ = AudioManager::Play(soundHandle_, volume_, 0.0f, false);
         }
     } else if (isPaused) {
-        if (ImGui::Button("Resume")) {
+        if (ImGui::Button(TranslationLabel("editor.audio.resume"))) {
             AudioManager::Resume(playHandle_);
         }
     } else {
-        if (ImGui::Button("Pause")) {
+        if (ImGui::Button(TranslationLabel("editor.audio.pause"))) {
             AudioManager::Pause(playHandle_);
         }
     }
     ImGui::SameLine();
     ImGui::BeginDisabled(!isPlaying);
-    if (ImGui::Button("Stop")) {
+    if (ImGui::Button(TranslationLabel("editor.audio.stop"))) {
         AudioManager::Stop(playHandle_);
     }
     ImGui::EndDisabled();
 
-    if (ImGui::SliderFloat("Volume", &volume_, 0.0f, 1.0f)) {
+    if (ImGui::SliderFloat(TranslationLabel("editor.audio.volume"), &volume_, 0.0f, 1.0f)) {
         if (isPlaying) AudioManager::SetVolume(playHandle_, volume_);
     }
 
     if (isPlaying) {
         double positionSec = 0.0;
         if (AudioManager::GetPlayPositionSeconds(playHandle_, positionSec)) {
-            ImGui::Text("Position: %.2f sec", positionSec);
+            ImGui::Text("%s%.2f", TranslationC("editor.audio.position"), positionSec);
         }
     }
 

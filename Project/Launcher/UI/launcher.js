@@ -1,25 +1,39 @@
 // KashipanEngine プロジェクトランチャーの画面制御
 //
-// プロジェクトの列挙・作成・起動はすべてC++側（ProjectManager）が行い、
+// プロジェクトの列挙・作成・削除・起動はすべてC++側（ProjectManager）が行い、
 // この画面は表示と入力の受け渡しに徹する。
 //   C++ → JS : { type: "projects" | "status", ... }
-//   JS → C++ : { action: "refresh" | "open" | "create", ... }
+//   JS → C++ : { action: "refresh" | "open" | "create" | "delete" | "reveal", ... }
 
 const host = window.chrome && window.chrome.webview;
 
 const listElement = document.getElementById("project-list");
 const openButton = document.getElementById("open");
+const revealButton = document.getElementById("reveal");
+const deleteButton = document.getElementById("delete");
 const refreshButton = document.getElementById("refresh");
+const templateSelect = document.getElementById("template");
+const templateDescription = document.getElementById("template-description");
 const newNameInput = document.getElementById("new-name");
 const createButton = document.getElementById("create");
 const statusElement = document.getElementById("status");
 
+const confirmOverlay = document.getElementById("confirm-overlay");
+const confirmName = document.getElementById("confirm-name");
+const confirmPath = document.getElementById("confirm-path");
+const confirmCancelButton = document.getElementById("confirm-cancel");
+const confirmDeleteButton = document.getElementById("confirm-delete");
+
 /// 現在表示しているプロジェクト一覧
 let projects = [];
+/// 選択できるテンプレート一覧
+let templates = [];
 /// 選択中のプロジェクト名（未選択なら null）
 let selectedName = null;
 /// エディターの起動中など、操作を受け付けたくない状態か
 let isBusy = false;
+/// 削除の確認ダイアログを表示中か
+let isConfirming = false;
 
 function send(message) {
     if (host) host.postMessage(message);
@@ -30,11 +44,20 @@ function setStatus(text, level) {
     statusElement.className = level || "";
 }
 
+function findProject(name) {
+    return projects.find((project) => project.name === name) || null;
+}
+
 function updateButtons() {
-    openButton.disabled = isBusy || selectedName === null;
-    refreshButton.disabled = isBusy;
-    createButton.disabled = isBusy || newNameInput.value.trim() === "";
-    newNameInput.disabled = isBusy;
+    const hasSelection = selectedName !== null;
+    const locked = isBusy || isConfirming;
+    openButton.disabled = locked || !hasSelection;
+    revealButton.disabled = locked || !hasSelection;
+    deleteButton.disabled = locked || !hasSelection;
+    refreshButton.disabled = locked;
+    createButton.disabled = locked || newNameInput.value.trim() === "";
+    newNameInput.disabled = locked;
+    templateSelect.disabled = locked;
 }
 
 function selectProject(name) {
@@ -97,30 +120,96 @@ function renderProjects() {
     }
 }
 
+function renderTemplates() {
+    templateSelect.textContent = "";
+    for (const template of templates) {
+        const option = document.createElement("option");
+        option.value = template.name;
+        option.textContent = template.displayName;
+        templateSelect.appendChild(option);
+    }
+    updateTemplateDescription();
+}
+
+function updateTemplateDescription() {
+    const selected = templates.find((t) => t.name === templateSelect.value);
+    templateDescription.textContent = selected ? selected.description : "";
+}
+
+//--------- 操作 ---------//
 function requestOpen() {
-    if (isBusy || selectedName === null) return;
+    if (isBusy || isConfirming || selectedName === null) return;
     isBusy = true;
     updateButtons();
     setStatus("エディターを起動しています...", "busy");
     send({ action: "open", name: selectedName });
 }
 
+function requestReveal() {
+    if (isBusy || isConfirming || selectedName === null) return;
+    setStatus("");
+    send({ action: "reveal", name: selectedName });
+}
+
 function requestCreate() {
     const name = newNameInput.value.trim();
-    if (isBusy || name === "") return;
+    if (isBusy || isConfirming || name === "") return;
     setStatus("");
-    send({ action: "create", name: name });
+    send({ action: "create", name: name, template: templateSelect.value });
+}
+
+//--------- 削除の確認 ---------//
+function openConfirmDialog() {
+    const project = findProject(selectedName);
+    if (isBusy || isConfirming || !project) return;
+
+    confirmName.textContent = project.name;
+    confirmPath.textContent = project.path;
+    confirmPath.title = project.path;
+    confirmOverlay.hidden = false;
+    isConfirming = true;
+    updateButtons();
+    confirmCancelButton.focus();
+}
+
+function closeConfirmDialog() {
+    confirmOverlay.hidden = true;
+    isConfirming = false;
+    updateButtons();
+}
+
+function confirmDelete() {
+    const name = selectedName;
+    closeConfirmDialog();
+    if (!name) return;
+    setStatus("");
+    send({ action: "delete", name: name });
 }
 
 //--------- 入力 ---------//
 openButton.addEventListener("click", requestOpen);
+revealButton.addEventListener("click", requestReveal);
+deleteButton.addEventListener("click", openConfirmDialog);
 refreshButton.addEventListener("click", () => send({ action: "refresh" }));
 createButton.addEventListener("click", requestCreate);
+templateSelect.addEventListener("change", updateTemplateDescription);
 newNameInput.addEventListener("input", updateButtons);
 newNameInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") requestCreate();
 });
+
+confirmCancelButton.addEventListener("click", closeConfirmDialog);
+confirmDeleteButton.addEventListener("click", confirmDelete);
+// 背景をクリックした場合もキャンセル扱いにする（誤操作で削除しないよう、既定は常に取り消し側）
+confirmOverlay.addEventListener("click", (event) => {
+    if (event.target === confirmOverlay) closeConfirmDialog();
+});
+
 document.addEventListener("keydown", (event) => {
+    if (isConfirming) {
+        if (event.key === "Escape") closeConfirmDialog();
+        return;
+    }
     // 一覧に触っていなくてもEnterで起動できるようにする
     if (event.key === "Enter" && event.target !== newNameInput) requestOpen();
 });
@@ -131,6 +220,13 @@ if (host) {
         const message = event.data;
         if (message.type === "projects") {
             projects = message.items || [];
+
+            // テンプレート一覧は毎回同じ内容なので、選択を保ったまま初回だけ組み立てる
+            if (templates.length === 0 && Array.isArray(message.templates)) {
+                templates = message.templates;
+                renderTemplates();
+            }
+
             renderProjects();
             // 前回開いたプロジェクトを初期選択にする（無ければ先頭）
             const preferred = projects.some((p) => p.name === message.startup)

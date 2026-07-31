@@ -14,6 +14,7 @@
 #include "Scene/Editor/PrefabUtility.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 #include "Scene/Editor/SceneObjectHierarchy.h"
+#include "Utilities/Translation.h"
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Scene/Components/SceneObjectCollider.h"
 #include "Graphics/ScreenBuffer.h"
@@ -136,7 +137,7 @@ void SceneEditorView::RegisterEditorTarget() {
 }
 
 void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands, SceneObjectHierarchy *hierarchy) {
-    if (!ImGui::Begin("Scene View")) {
+    if (!ImGui::Begin(TranslationLabel("editor.sceneview.window"))) {
         ImGui::End();
         return;
     }
@@ -146,29 +147,29 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     if (hierarchy) hierarchy->HandleKeyboardShortcuts();
 
     //--------- ギズモ操作の切り替えツールバー ---------//
-    if (ImGui::RadioButton("Translate", gizmoOperation_ == ImGuizmo::TRANSLATE)) gizmoOperation_ = ImGuizmo::TRANSLATE;
+    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.translate"), gizmoOperation_ == ImGuizmo::TRANSLATE)) gizmoOperation_ = ImGuizmo::TRANSLATE;
     ImGui::SameLine();
-    if (ImGui::RadioButton("Rotate", gizmoOperation_ == ImGuizmo::ROTATE)) gizmoOperation_ = ImGuizmo::ROTATE;
+    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.rotate"), gizmoOperation_ == ImGuizmo::ROTATE)) gizmoOperation_ = ImGuizmo::ROTATE;
     ImGui::SameLine();
-    if (ImGui::RadioButton("Scale", gizmoOperation_ == ImGuizmo::SCALE)) gizmoOperation_ = ImGuizmo::SCALE;
+    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.scale"), gizmoOperation_ == ImGuizmo::SCALE)) gizmoOperation_ = ImGuizmo::SCALE;
     ImGui::SameLine();
-    if (ImGui::RadioButton("Local", gizmoMode_ == ImGuizmo::LOCAL)) gizmoMode_ = ImGuizmo::LOCAL;
+    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.local"), gizmoMode_ == ImGuizmo::LOCAL)) gizmoMode_ = ImGuizmo::LOCAL;
     ImGui::SameLine();
-    if (ImGui::RadioButton("World", gizmoMode_ == ImGuizmo::WORLD)) gizmoMode_ = ImGuizmo::WORLD;
+    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.world"), gizmoMode_ == ImGuizmo::WORLD)) gizmoMode_ = ImGuizmo::WORLD;
 
     //--------- デバッグ表示の有効/無効切り替え ---------//
-    if (ImGui::Checkbox("Grid", &showGrid_)) EditorSettings::SetBool("sceneView.showGrid", showGrid_);
+    if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.grid"), &showGrid_)) EditorSettings::SetBool("sceneView.showGrid", showGrid_);
     ImGui::SameLine();
-    if (ImGui::Checkbox("Lights", &showLightMarkers_)) EditorSettings::SetBool("sceneView.showLightMarkers", showLightMarkers_);
+    if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.lights"), &showLightMarkers_)) EditorSettings::SetBool("sceneView.showLightMarkers", showLightMarkers_);
     ImGui::SameLine();
-    if (ImGui::Checkbox("Cameras", &showCameraMarkers_)) EditorSettings::SetBool("sceneView.showCameraMarkers", showCameraMarkers_);
+    if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.cameras"), &showCameraMarkers_)) EditorSettings::SetBool("sceneView.showCameraMarkers", showCameraMarkers_);
     ImGui::SameLine();
-    if (ImGui::Checkbox("Colliders", &showColliderGizmos_)) EditorSettings::SetBool("sceneView.showColliderGizmos", showColliderGizmos_);
+    if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.colliders"), &showColliderGizmos_)) EditorSettings::SetBool("sceneView.showColliderGizmos", showColliderGizmos_);
     ImGui::SameLine();
-    if (ImGui::Checkbox("Bones", &showBoneGizmos_)) EditorSettings::SetBool("sceneView.showBoneGizmos", showBoneGizmos_);
+    if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.bones"), &showBoneGizmos_)) EditorSettings::SetBool("sceneView.showBoneGizmos", showBoneGizmos_);
 
     //--------- 背景設定（単色 or テクスチャ） ---------//
-    if (ImGui::ColorEdit4("Background Color", &backgroundColor_.x)) {
+    if (ImGui::ColorEdit4(TranslationLabel("editor.sceneview.backgroundcolor"), &backgroundColor_.x)) {
         EditorSettings::SetFloat("sceneView.backgroundColor.r", backgroundColor_.x);
         EditorSettings::SetFloat("sceneView.backgroundColor.g", backgroundColor_.y);
         EditorSettings::SetFloat("sceneView.backgroundColor.b", backgroundColor_.z);
@@ -179,7 +180,7 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     for (const auto &entry : TextureManager::GetLoadedTextureListEntries()) {
         texturePaths.push_back(entry.assetPath);
     }
-    if (ImGuiCustom::SelectString("Background Texture", backgroundTexturePath_, texturePaths, true)) {
+    if (ImGuiCustom::SelectString(TranslationLabel("editor.sceneview.backgroundtexture"), backgroundTexturePath_, texturePaths, true)) {
         EditorSettings::SetString("sceneView.backgroundTexturePath", backgroundTexturePath_);
     }
     // Assetsウィンドウからのテクスチャファイルドラッグ&ドロップも受け付ける
@@ -190,7 +191,7 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
 
     //--------- シーンビュー画像 ---------//
     if (!screenBuffer_ || screenBuffer_->GetSrvHandle().ptr == 0) {
-        ImGui::TextUnformatted("Scene view is not ready.");
+        ImGui::TextUnformatted(TranslationC("editor.sceneview.notready"));
         ImGui::End();
         return;
     }
@@ -1001,7 +1002,7 @@ void SceneEditorView::ShowGizmo(const std::unordered_set<EmptyObject *> &selecte
         isGizmoEditing_ = false;
         if (commands) {
             auto composite = std::make_unique<CompositeCommand>(
-                (gizmoBeforeStates_.size() > 1) ? ("Transform " + std::to_string(gizmoBeforeStates_.size()) + " Objects") : "Transform Object");
+                (gizmoBeforeStates_.size() > 1) ? (Translation("editor.command.transform.prefix") + std::to_string(gizmoBeforeStates_.size()) + Translation("editor.command.objects.suffix")) : Translation("editor.command.transformobject"));
             bool anyChanged = false;
             for (auto &state : gizmoBeforeStates_) {
                 if (!state.object) continue;

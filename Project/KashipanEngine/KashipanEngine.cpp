@@ -8,11 +8,19 @@
 #include "Core/ProjectPaths.h"
 
 #include "Utilities/Plugin/Plugins.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
-int Execute(PasskeyForWinMain, const std::string &engineSettingsPath) {
+int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsPath) {
     SetUnhandledExceptionFilter(CrashHandler);
     D3DResourceLeakChecker resourceLeakChecker;
+
+    //--------- エンジン共通の翻訳の読み込み ---------//
+
+    // プロジェクトを決める処理自体がログを出すため、それより先に翻訳を読み込む。
+    // エンジンルートはプロジェクトと無関係に決まるので、ここまでは先に済ませられる
+    ProjectPaths::InitializeEngineRootOnly(winMainPasskey);
+    LoadGlobalTranslationFiles();
 
     //--------- 開くプロジェクトの決定 ---------//
 

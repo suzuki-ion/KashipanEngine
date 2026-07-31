@@ -9,6 +9,7 @@
 
 #if defined(USE_IMGUI)
 #include <imgui.h>
+#include "Utilities/Translation.h"
 #endif
 
 namespace KashipanEngine {
@@ -35,12 +36,12 @@ public:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
-        ImGui::ColorEdit4("Noise Color", params_.noiseColor);
-        ImGui::DragInt("Noise Seed", reinterpret_cast<int *>(&params_.noiseSeed), 1, 0, INT_MAX);
-        ImGui::DragFloat("Noise Intensity", &params_.noiseIntensity, 0.01f, 0.0f, 1.0f, "%.3f");
-        ImGui::DragFloat("Noise Scale", &params_.noiseScale, 0.01f, 0.0f, 10.0f, "%.3f");
-        ImGui::DragFloat("Noise Time", &params_.noiseTime, 0.01f, 0.0f, 100.0f, "%.3f");
-        ImGui::Checkbox("Auto Update Time", &params_.isAutoUpdateTime);
+        ImGui::ColorEdit4(TranslationLabel("editor.whitenoiseeffect.noise_color"), params_.noiseColor);
+        ImGui::DragInt(TranslationLabel("editor.whitenoiseeffect.noise_seed"), reinterpret_cast<int *>(&params_.noiseSeed), 1, 0, INT_MAX);
+        ImGui::DragFloat(TranslationLabel("editor.whitenoiseeffect.noise_intensity"), &params_.noiseIntensity, 0.01f, 0.0f, 1.0f, "%.3f");
+        ImGui::DragFloat(TranslationLabel("editor.whitenoiseeffect.noise_scale"), &params_.noiseScale, 0.01f, 0.0f, 10.0f, "%.3f");
+        ImGui::DragFloat(TranslationLabel("editor.whitenoiseeffect.noise_time"), &params_.noiseTime, 0.01f, 0.0f, 100.0f, "%.3f");
+        ImGui::Checkbox(TranslationLabel("editor.whitenoiseeffect.auto_update_time"), &params_.isAutoUpdateTime);
     }
 #endif
 

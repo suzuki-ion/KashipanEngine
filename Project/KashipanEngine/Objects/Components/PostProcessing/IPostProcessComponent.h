@@ -12,6 +12,7 @@
 #include "Math/Vector3.h"
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Scene/SceneContext.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -159,7 +160,7 @@ protected:
         auto screenBufferObjects = objectContext ? objectContext->GetComponents<ScreenBufferObject>() : std::vector<ScreenBufferObject *>{};
         if (screenBufferObjects.size() <= 1) return;
 
-        if (ImGui::TreeNode("Apply Target Filter")) {
+        if (ImGui::TreeNode(TranslationLabel("component.ipostprocesscomponent.apply_target_filter"))) {
             for (auto *screenBufferObject : screenBufferObjects) {
                 auto *buffer = screenBufferObject ? screenBufferObject->GetScreenBuffer() : nullptr;
                 if (!buffer) continue;

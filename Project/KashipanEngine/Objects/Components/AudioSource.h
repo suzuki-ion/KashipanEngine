@@ -6,6 +6,7 @@
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Transform.h"
 #include "Scene/Components/Audio/SceneAudioPlayer.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -266,76 +267,76 @@ protected:
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", text);
         };
 
-        if (ImGuiCustom::SelectString("Sound", soundName_, AudioManager::GetLoadedSoundAssetPaths(), true)) {
+        if (ImGuiCustom::SelectString(TranslationLabel("component.audiosource.sound"), soundName_, AudioManager::GetLoadedSoundAssetPaths(), true)) {
             soundHandle_ = AudioManager::kInvalidSoundHandle;
         }
-        ImGui::DragFloat("Volume", &volume_, 0.01f, 0.0f, 1.0f);
-        ImGui::DragFloat("Pitch(semitones)", &pitch_, 0.1f, -24.0f, 24.0f);
-        ImGui::Checkbox("Loop", &loop_);
-        ImGui::DragFloat("Min Distance", &minDistance_, 0.1f, 0.0f, maxDistance_);
-        ImGui::DragFloat("Max Distance", &maxDistance_, 0.1f, minDistance_, 10000.0f);
+        ImGui::DragFloat(TranslationLabel("component.audiosource.volume"), &volume_, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat(TranslationLabel("component.audiosource.pitch_semitones"), &pitch_, 0.1f, -24.0f, 24.0f);
+        ImGui::Checkbox(TranslationLabel("component.audiosource.loop"), &loop_);
+        ImGui::DragFloat(TranslationLabel("component.audiosource.min_distance"), &minDistance_, 0.1f, 0.0f, maxDistance_);
+        ImGui::DragFloat(TranslationLabel("component.audiosource.max_distance"), &maxDistance_, 0.1f, minDistance_, 10000.0f);
 
         ImGui::Separator();
-        ImGui::Text("Effects");
+        ImGui::Text("%s", TranslationC("component.audiosource.effects"));
         tooltip("各エフェクトは個別に有効/無効を切り替えられ、複数同時にかけられる");
         bool changed = false;
 
         // フィルター
-        changed |= ImGui::Checkbox("Filter", &filter_.enabled);
+        changed |= ImGui::Checkbox(TranslationLabel("component.audiosource.filter"), &filter_.enabled);
         tooltip("特定の周波数帯域を削るフィルター。音を籠らせたり、軽くしたりできる");
         if (filter_.enabled) {
             ImGui::Indent();
             int kind = static_cast<int>(filter_.kind);
             const char *kindItems[] = { "LowPass", "HighPass", "BandPass", "Notch" };
-            if (ImGui::Combo("Filter Type", &kind, kindItems, 4)) {
+            if (ImGui::Combo(TranslationLabel("component.audiosource.filter_type"), &kind, kindItems, 4)) {
                 filter_.kind = static_cast<FilterKind>(kind);
                 changed = true;
             }
             tooltip("LowPass: 高音を削って籠らせる\nHighPass: 低音を削って軽くする\nBandPass: カットオフ周波数付近のみを通す\nNotch: カットオフ周波数付近のみを削る");
-            changed |= ImGui::DragFloat("Frequency", &filter_.frequency, 0.005f, 0.0005f, 1.0f);
+            changed |= ImGui::DragFloat(TranslationLabel("component.audiosource.frequency"), &filter_.frequency, 0.005f, 0.0005f, 1.0f);
             tooltip("正規化カットオフ周波数。0に近いほど強くかかり、1.0でほぼ無効");
-            changed |= ImGui::DragFloat("Q (Resonance)", &filter_.q, 0.01f, 0.0005f, 1.5f);
+            changed |= ImGui::DragFloat(TranslationLabel("component.audiosource.q_resonance"), &filter_.q, 0.01f, 0.0005f, 1.5f);
             tooltip("共鳴の鋭さ(1/Q)。小さいほどカットオフ周波数付近の音が強調される");
             ImGui::Unindent();
         }
 
         // リバーブ
-        changed |= ImGui::Checkbox("Reverb", &reverb_.enabled);
+        changed |= ImGui::Checkbox(TranslationLabel("component.audiosource.reverb"), &reverb_.enabled);
         tooltip("残響。ホールや洞窟の中で鳴っているような響きを付加する");
         if (reverb_.enabled) {
             ImGui::Indent();
-            changed |= ImGui::DragFloat("Reverb Mix", &reverb_.mix, 0.005f, 0.0f, 1.0f);
+            changed |= ImGui::DragFloat(TranslationLabel("component.audiosource.reverb_mix"), &reverb_.mix, 0.005f, 0.0f, 1.0f);
             tooltip("残響への送り量。大きいほど響きが強くなる（0.0: 残響無し ～ 1.0: 最大）");
             ImGui::Unindent();
         }
 
         // エコー
-        changed |= ImGui::Checkbox("Echo", &echo_.enabled);
+        changed |= ImGui::Checkbox(TranslationLabel("component.audiosource.echo"), &echo_.enabled);
         tooltip("やまびこ。遅延した音を繰り返し重ねる");
         if (echo_.enabled) {
             ImGui::Indent();
-            changed |= ImGui::DragFloat("Wet/Dry Mix", &echo_.params.wetDryMix, 0.005f, 0.0f, 1.0f);
+            changed |= ImGui::DragFloat(TranslationLabel("component.audiosource.wet_dry_mix"), &echo_.params.wetDryMix, 0.005f, 0.0f, 1.0f);
             tooltip("原音とエコー音の混合比（0.0: 原音のみ ～ 1.0: エコー音のみ）");
-            changed |= ImGui::DragFloat("Feedback", &echo_.params.feedback, 0.005f, 0.0f, 1.0f);
+            changed |= ImGui::DragFloat(TranslationLabel("component.audiosource.feedback"), &echo_.params.feedback, 0.005f, 0.0f, 1.0f);
             tooltip("エコーの繰り返し量。大きいほど長く繰り返される（1.0で減衰しない）");
-            changed |= ImGui::DragFloat("Delay (ms)", &echo_.params.delayMs, 1.0f, 1.0f, 2000.0f);
+            changed |= ImGui::DragFloat(TranslationLabel("component.audiosource.delay_ms"), &echo_.params.delayMs, 1.0f, 1.0f, 2000.0f);
             tooltip("エコーの遅延時間（ミリ秒）");
             ImGui::Unindent();
         }
 
         // イコライザー
-        changed |= ImGui::Checkbox("Equalizer", &eq_.enabled);
+        changed |= ImGui::Checkbox(TranslationLabel("component.audiosource.equalizer"), &eq_.enabled);
         tooltip("4バンドイコライザー。周波数帯域ごとに音量を増減できる");
         if (eq_.enabled) {
             ImGui::Indent();
             for (int band = 0; band < 4; ++band) {
                 ImGui::PushID(band);
-                ImGui::Text("Band %d", band + 1);
-                changed |= ImGui::DragFloat("Frequency (Hz)", &eq_.params.frequencyCenter[band], 10.0f, 20.0f, 20000.0f);
+                ImGui::Text(TranslationC("component.audiosource.band_d"), band + 1);
+                changed |= ImGui::DragFloat(TranslationLabel("component.audiosource.frequency_hz"), &eq_.params.frequencyCenter[band], 10.0f, 20.0f, 20000.0f);
                 tooltip("このバンドの中心周波数（Hz）");
-                changed |= ImGui::DragFloat("Gain", &eq_.params.gain[band], 0.01f, 0.126f, 7.94f);
+                changed |= ImGui::DragFloat(TranslationLabel("component.audiosource.gain"), &eq_.params.gain[band], 0.01f, 0.126f, 7.94f);
                 tooltip("このバンドの増幅率。1.0で等倍、小さいほど削り、大きいほど持ち上げる");
-                changed |= ImGui::DragFloat("Bandwidth", &eq_.params.bandwidth[band], 0.01f, 0.1f, 2.0f);
+                changed |= ImGui::DragFloat(TranslationLabel("component.audiosource.bandwidth"), &eq_.params.bandwidth[band], 0.01f, 0.1f, 2.0f);
                 tooltip("このバンドの帯域幅（中心周波数を基準としたオクターブ幅）。大きいほど広い範囲に影響する");
                 ImGui::PopID();
             }
@@ -343,18 +344,18 @@ protected:
         }
 
         // リミッター
-        changed |= ImGui::Checkbox("Limiter", &limiter_.enabled);
+        changed |= ImGui::Checkbox(TranslationLabel("component.audiosource.limiter"), &limiter_.enabled);
         tooltip("マスタリングリミッター。音量が大きくなりすぎないよう圧縮し、音割れを防ぐ");
         if (limiter_.enabled) {
             ImGui::Indent();
             int release = static_cast<int>(limiter_.params.release);
-            if (ImGui::DragInt("Release", &release, 0.1f, 1, 20)) {
+            if (ImGui::DragInt(TranslationLabel("component.audiosource.release"), &release, 0.1f, 1, 20)) {
                 limiter_.params.release = static_cast<uint32_t>(release);
                 changed = true;
             }
             tooltip("圧縮を解除するまでの時間。大きいほどゆっくり戻る");
             int loudness = static_cast<int>(limiter_.params.loudness);
-            if (ImGui::DragInt("Loudness", &loudness, 1.0f, 1, 1800)) {
+            if (ImGui::DragInt(TranslationLabel("component.audiosource.loudness"), &loudness, 1.0f, 1, 1800)) {
                 limiter_.params.loudness = static_cast<uint32_t>(loudness);
                 changed = true;
             }
@@ -367,19 +368,19 @@ protected:
             ReapplyEffects();
         }
 
-        ImGui::Checkbox("Auto Pan / Muffle (Spatial Audio)", &enableSpatialAudio_);
+        ImGui::Checkbox(TranslationLabel("component.audiosource.auto_pan_muffle_spatial_audio"), &enableSpatialAudio_);
 
         ImGui::Separator();
         if (!IsPlaying()) {
-            if (ImGui::Button("Play")) Play();
+            if (ImGui::Button(TranslationLabel("component.audiosource.play"))) Play();
         } else if (IsPaused()) {
-            if (ImGui::Button("Resume")) Resume();
+            if (ImGui::Button(TranslationLabel("component.audiosource.resume"))) Resume();
         } else {
-            if (ImGui::Button("Pause")) Pause();
+            if (ImGui::Button(TranslationLabel("component.audiosource.pause"))) Pause();
         }
         ImGui::SameLine();
         ImGui::BeginDisabled(!IsPlaying() && !IsPaused());
-        if (ImGui::Button("Stop")) Stop();
+        if (ImGui::Button(TranslationLabel("component.audiosource.stop"))) Stop();
         ImGui::EndDisabled();
     }
 #endif

@@ -1,6 +1,7 @@
 #include "DX12Device.h"
 
 #include <stdexcept>
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

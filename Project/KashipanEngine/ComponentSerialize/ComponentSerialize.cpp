@@ -1,4 +1,5 @@
 #include "ComponentSerialize.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -56,7 +57,7 @@ void SerializeComponent(const void *component, const std::vector<FieldInfo> &fie
                 outJson[field.parentTypeName][field.name]["w"] = static_cast<const Quaternion *>(fieldPtr)->w;
                 break;
             default:
-                Log("Unsupported field type for serialization: " + std::string(field.name), LogSeverity::Warning);
+                Log(Translation("engine.componentserialize.serialize.failed.unsupportedtype") + field.name, LogSeverity::Warning);
                 break;
         }
     }
@@ -67,7 +68,7 @@ void DeserializeComponent(void *component, const std::vector<FieldInfo> &fields,
     for (const auto &field : fields) {
         void *fieldPtr = base + field.offset;
         if (!inJson.contains(field.name)) {
-            Log("Field not found in JSON during deserialization: " + std::string(field.name), LogSeverity::Warning);
+            Log(Translation("engine.componentserialize.deserialize.field.notfound") + field.name, LogSeverity::Warning);
             continue;
         }
         switch (field.type) {
@@ -130,7 +131,7 @@ void DeserializeComponent(void *component, const std::vector<FieldInfo> &fields,
                 break;
             }
             default:
-                Log("Unsupported field type for deserialization: " + std::string(field.name), LogSeverity::Warning);
+                Log(Translation("engine.componentserialize.deserialize.failed.unsupportedtype") + field.name, LogSeverity::Warning);
                 break;
         }
     }

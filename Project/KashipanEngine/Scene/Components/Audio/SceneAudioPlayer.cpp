@@ -5,6 +5,7 @@
 #include "Math/Vector3.h"
 #include "Objects/Components/AudioListener.h"
 #include "Objects/Components/AudioSource.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -60,8 +61,8 @@ void SceneAudioPlayer::Update() {
 
 #if defined(USE_IMGUI)
 void SceneAudioPlayer::ShowImGui() {
-    ImGui::Text("Listeners: %d", static_cast<int>(listeners_.size()));
-    ImGui::Text("Sources: %d", static_cast<int>(sources_.size()));
+    ImGui::Text("%s%d", TranslationC("editor.sceneaudioplayer.listeners"), static_cast<int>(listeners_.size()));
+    ImGui::Text("%s%d", TranslationC("editor.sceneaudioplayer.sources"), static_cast<int>(sources_.size()));
 }
 #endif
 

@@ -203,7 +203,7 @@ void EditorToolManager::LoadTools() {
 
     engine_ = asCreateScriptEngine();
     if (!engine_) {
-        Log("EditorTool: asCreateScriptEngine に失敗しました", LogSeverity::Error);
+        Log(Translation("engine.editortool.failed.createengine"), LogSeverity::Error);
         return;
     }
     // ImGuiバインディングのCheckbox/DragFloat/InputText等は「現在値を渡して書き換えてもらう」ために
@@ -225,14 +225,14 @@ void EditorToolManager::LoadTools() {
     // VSCodeのAngelScript Language Server用の型定義ファイルをEditorToolsフォルダ内に生成する
     // （ゲームプレイ用の as.predefined とは登録内容が異なる＝ImGui::を含むため別ファイルにする）
     if (GenerateScriptPredefinedFile(engine_, editorToolsDirectory + "/as.predefined")) {
-        Log("EditorTool: EditorTools/as.predefined を生成しました");
+        Log(Translation("engine.editortool.predefined.generated"));
     } else {
-        Log("EditorTool: EditorTools/as.predefined の生成に失敗しました", LogSeverity::Warning);
+        Log(Translation("engine.editortool.predefined.generate.failed"), LogSeverity::Warning);
     }
 
     context_ = engine_->CreateContext();
     if (!context_) {
-        Log("EditorTool: コンテキストの生成に失敗しました", LogSeverity::Error);
+        Log(Translation("engine.editortool.failed.createcontext"), LogSeverity::Error);
         return;
     }
 #if !defined(RELEASE_BUILD)
@@ -253,7 +253,7 @@ void EditorToolManager::LoadTools() {
 
     asITypeInfo *interfaceType = engine_->GetTypeInfoByDecl(kEditorToolInterfaceName);
     if (!interfaceType) {
-        Log("EditorTool: EditorToolインターフェースが登録されていません", LogSeverity::Error);
+        Log(Translation("engine.editortool.interface.notregistered"), LogSeverity::Error);
         return;
     }
 
@@ -263,12 +263,12 @@ void EditorToolManager::LoadTools() {
 
         CScriptBuilder builder;
         if (builder.StartNewModule(engine_, moduleName.c_str()) < 0) {
-            Log("EditorTool: モジュールの作成に失敗しました: " + scriptPath, LogSeverity::Error);
+            Log(Translation("engine.editortool.failed.createmodule") + scriptPath, LogSeverity::Error);
             continue;
         }
         builder.SetIncludeCallback(ResolveEditorToolIncludePath, nullptr);
         if (builder.AddSectionFromFile(scriptPath.c_str()) < 0 || builder.BuildModule() < 0) {
-            Log("EditorTool: スクリプトのビルドに失敗しました: " + scriptPath, LogSeverity::Error);
+            Log(Translation("engine.editortool.failed.build") + scriptPath, LogSeverity::Error);
             engine_->DiscardModule(moduleName.c_str());
             continue;
         }
@@ -285,7 +285,7 @@ void EditorToolManager::LoadTools() {
             const std::string factoryDecl = std::string(type->GetName()) + " @" + type->GetName() + "()";
             asIScriptFunction *factory = type->GetFactoryByDecl(factoryDecl.c_str());
             if (!factory) {
-                Log(std::string("EditorTool: クラス ") + type->GetName() + " のデフォルトコンストラクタが見つかりません", LogSeverity::Error);
+                Log(Translation("engine.editortool.defaultconstructor.notfound") + type->GetName(), LogSeverity::Error);
                 continue;
             }
             if (context_->Prepare(factory) < 0) continue;
@@ -295,7 +295,7 @@ void EditorToolManager::LoadTools() {
                 r = context_->Execute();
             }
             if (r != asEXECUTION_FINISHED) {
-                Log("EditorTool: " + std::string(type->GetName()) + " のインスタンス生成に失敗しました: " + GetExceptionInfo(context_), LogSeverity::Error);
+                Log(Translation("engine.editortool.failed.createinstance") + type->GetName() + " : " + GetExceptionInfo(context_), LogSeverity::Error);
                 continue;
             }
             asIScriptObject *object = *static_cast<asIScriptObject **>(context_->GetAddressOfReturnValue());
@@ -318,7 +318,7 @@ void EditorToolManager::LoadTools() {
             for (const auto &attribute : ParseToolAttributeTokens(metadataList)) {
                 if (attribute.name == "EditorWindow") {
                     if (attribute.args.empty() || attribute.args[0].empty()) {
-                        Log(std::string("EditorTool: ") + type->GetName() + " の [EditorWindow] にウィンドウ名がありません", LogSeverity::Warning);
+                        Log(Translation("engine.editortool.editorwindow.noname") + type->GetName(), LogSeverity::Warning);
                         continue;
                     }
                     WindowEntry window;
@@ -328,7 +328,7 @@ void EditorToolManager::LoadTools() {
                     windows_.push_back(std::move(window));
                 } else if (attribute.name == "MenuItem") {
                     if (attribute.args.empty() || attribute.args[0].empty()) {
-                        Log(std::string("EditorTool: ") + type->GetName() + " の [MenuItem] に表示階層がありません", LogSeverity::Warning);
+                        Log(Translation("engine.editortool.menuitem.nopath") + type->GetName(), LogSeverity::Warning);
                         continue;
                     }
                     // 第二引数（識別タグ）が省略された場合は項目名をタグとして使う
@@ -338,7 +338,7 @@ void EditorToolManager::LoadTools() {
             }
 
             tools_.push_back(std::move(tool));
-            Log(std::string("EditorTool: ") + type->GetName() + " を読み込みました (" + scriptPath + ")");
+            Log(Translation("engine.editortool.loaded") + type->GetName() + " (" + scriptPath + ")");
         }
     }
 
@@ -351,7 +351,7 @@ void EditorToolManager::LoadTools() {
 void EditorToolManager::RegisterMenuItem(const std::string &path, const std::string &tag, size_t toolIndex) {
     auto segments = SplitMenuPath(path);
     if (segments.size() < 2) {
-        Log("EditorTool: [MenuItem] の表示階層は \"MenuBar/項目名\" または \"Hierarchy/項目名\" の形式で指定してください: " + path, LogSeverity::Warning);
+        Log(Translation("engine.editortool.menuitem.invalidpath") + path, LogSeverity::Warning);
         return;
     }
 
@@ -361,7 +361,7 @@ void EditorToolManager::RegisterMenuItem(const std::string &path, const std::str
     } else if (segments[0] == "Hierarchy") {
         root = &hierarchyRoot_;
     } else {
-        Log("EditorTool: [MenuItem] の表示階層の先頭は \"MenuBar/\" または \"Hierarchy/\" のみ対応しています: " + path, LogSeverity::Warning);
+        Log(Translation("engine.editortool.menuitem.invalidroot") + path, LogSeverity::Warning);
         return;
     }
 
@@ -468,7 +468,7 @@ void EditorToolManager::CallToolMethod(ToolInstance &tool, asIScriptFunction *me
     ScriptExecutionScope scope(nullptr, currentSceneContext_);
     const int r = context_->Execute();
     if (r != asEXECUTION_FINISHED) {
-        Log("EditorTool: " + GetExceptionInfo(context_), LogSeverity::Error);
+        Log(Translation("engine.editortool.exception") + GetExceptionInfo(context_), LogSeverity::Error);
     }
 }
 

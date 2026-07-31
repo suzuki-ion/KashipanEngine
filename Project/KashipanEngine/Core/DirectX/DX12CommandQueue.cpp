@@ -1,6 +1,7 @@
 #include "DX12CommandQueue.h"
 #include <stdexcept>
 #include <cassert>
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

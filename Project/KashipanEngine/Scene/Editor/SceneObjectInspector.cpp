@@ -7,6 +7,7 @@
 #include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/PrefabSyncUtility.h"
 #include "Scene/Editor/SceneEditorCommands.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -19,7 +20,7 @@ struct ComponentDragDropPayload {
 } // namespace
 
 void SceneObjectInspector::ShowImGui() {
-    ImGui::Begin("Scene Object Inspector");
+    ImGui::Begin(TranslationLabel("editor.sceneobjectinspector.window"));
     if (objectHierarchy_) {
         EmptyObject *selectedObject = objectHierarchy_->GetSelectedObject();
         const auto &selectedObjects = objectHierarchy_->GetSelectedObjects();
@@ -28,10 +29,10 @@ void SceneObjectInspector::ShowImGui() {
         } else if (selectedObject) {
             ShowObjectInspector(selectedObject);
         } else {
-            ImGui::Text("No object selected.");
+            ImGui::TextUnformatted(TranslationC("editor.objectinspector.noselection"));
         }
     } else {
-        ImGui::Text("No object hierarchy available.");
+        ImGui::TextUnformatted(TranslationC("editor.objectinspector.nohierarchy"));
     }
     ImGui::End();
 
@@ -40,12 +41,12 @@ void SceneObjectInspector::ShowImGui() {
 }
 
 void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
-    ImGui::Text("Object Inspector");
+    ImGui::TextUnformatted(TranslationC("editor.objectinspector.title"));
     ImGui::Separator();
 
     //--------- 名前（編集セッション終了時にUndo履歴へ積む） ---------//
     std::string name = obj->GetName();
-    if (ImGui::InputText("Name", &name)) {
+    if (ImGui::InputText(TranslationLabel("editor.objectinspector.name"), &name)) {
         obj->SetName(name);
     }
     if (ImGui::IsItemActivated()) {
@@ -58,7 +59,7 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
 
     //--------- アクティブ状態 ---------//
     bool active = obj->IsActive();
-    if (ImGui::Checkbox("Active", &active)) {
+    if (ImGui::Checkbox(TranslationLabel("editor.objectinspector.active"), &active)) {
         if (commands_) {
             commands_->Execute(std::make_unique<ObjectPropertyCommand>(
                 obj, obj->GetName(), obj->GetName(), obj->IsActive(), active));
@@ -70,13 +71,13 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
     //--------- EditorOnly（エディター専用。シーンビューにのみ描画され、再生時・ゲーム実行時には存在しない） ---------//
     ImGui::SameLine();
     bool editorOnly = obj->IsEditorOnly();
-    if (ImGui::Checkbox("Editor Only", &editorOnly)) {
+    if (ImGui::Checkbox(TranslationLabel("editor.objectinspector.editoronly"), &editorOnly)) {
         obj->SetEditorOnly(editorOnly);
     }
 
     //--------- タグ（分類・判別用の任意文字列） ---------//
     std::string tagName = obj->GetTagName();
-    if (ImGui::InputText("Tag", &tagName)) {
+    if (ImGui::InputText(TranslationLabel("editor.objectinspector.tag"), &tagName)) {
         obj->SetTag(tagName);
     }
 
@@ -100,7 +101,7 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
         DragAndDropComponent(comp);
         if (headerOpen) {
             if (ImGui::BeginPopupContextItem("ComponentContextMenu")) {
-                if (ImGui::MenuItem("Remove Component")) {
+                if (ImGui::MenuItem(TranslationLabel("editor.component.remove"))) {
                     componentToRemove = comp;
                 }
                 ImGui::EndPopup();
@@ -109,7 +110,7 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
             JSON before = obj->SaveComponentToJson(comp);
             // タグ（分類・判別用の任意文字列。before/afterの間で編集することでUndo対象になる）
             std::string componentTag = comp->GetTagName();
-            if (ImGui::InputText("Tag", &componentTag)) {
+            if (ImGui::InputText(TranslationLabel("editor.component.tag"), &componentTag)) {
                 comp->SetTag(componentTag);
             }
             obj->ShowComponentImGui(comp);
@@ -136,7 +137,7 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
     }
 
     ImGui::Separator();
-    if (ImGui::Button("Add Component")) {
+    if (ImGui::Button(TranslationLabel("editor.component.add"))) {
         ImGui::OpenPopup("AddComponentPopup");
     }
 
@@ -164,30 +165,30 @@ void SceneObjectInspector::ShowPrefabSection(EmptyObject *obj) {
     if (!prefabComp || !prefabComp->GetPrefabID().IsValid()) return;
 
     ImGui::Separator();
-    if (ImGui::CollapsingHeader("Prefab", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGui::CollapsingHeader(TranslationLabel("editor.prefab.section"), ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::TextUnformatted(prefabComp->GetPrefabPath().c_str());
 
-        if (ImGui::Button("Apply All")) {
+        if (ImGui::Button(TranslationLabel("editor.prefab.applyall"))) {
             PrefabSyncUtility::ApplyAll(context_, obj);
         }
         ImGui::SameLine();
-        if (ImGui::Button("Revert All")) {
+        if (ImGui::Button(TranslationLabel("editor.prefab.revertall"))) {
             pendingRevertPrefabTarget_ = obj;
             isRevertPrefabConfirmRequested_ = true;
         }
 
         const auto report = PrefabSyncUtility::Diff(context_, obj);
         if (!report.overrides.empty()) {
-            ImGui::TextUnformatted("Overrides:");
+            ImGui::TextUnformatted(TranslationC("editor.prefab.overrides"));
             for (const auto &ov : report.overrides) {
                 ImGui::PushID(&ov);
                 ImGui::BulletText("%s", ov.componentType.c_str());
                 ImGui::SameLine();
-                if (ImGui::SmallButton("Apply")) {
+                if (ImGui::SmallButton(TranslationLabel("editor.prefab.apply"))) {
                     PrefabSyncUtility::ApplyComponentOverride(context_, ov);
                 }
                 ImGui::SameLine();
-                if (ImGui::SmallButton("Revert")) {
+                if (ImGui::SmallButton(TranslationLabel("editor.prefab.revert"))) {
                     PrefabSyncUtility::RevertComponentOverride(context_, commands_, ov);
                 }
                 ImGui::PopID();
@@ -198,15 +199,15 @@ void SceneObjectInspector::ShowPrefabSection(EmptyObject *obj) {
 
 void SceneObjectInspector::ShowRevertPrefabConfirmModal() {
     if (isRevertPrefabConfirmRequested_) {
-        ImGui::OpenPopup("Revert Prefab Instance?");
+        ImGui::OpenPopup(TranslationLabel("editor.prefab.revert.title"));
         isRevertPrefabConfirmRequested_ = false;
     }
-    if (ImGui::BeginPopupModal("Revert Prefab Instance?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+    if (ImGui::BeginPopupModal(TranslationLabel("editor.prefab.revert.title"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.3f, 1.0f),
             "This will discard all local changes (including locally added child objects)");
-        ImGui::TextUnformatted("and revert this instance to match the current Prefab source.");
-        ImGui::TextUnformatted("This action cannot be undone in a single step.");
-        if (ImGui::Button("Revert", ImVec2(120, 0))) {
+        ImGui::TextUnformatted(TranslationC("editor.prefab.revert.warning2"));
+        ImGui::TextUnformatted(TranslationC("editor.prefab.revert.warning3"));
+        if (ImGui::Button(TranslationLabel("editor.prefab.revert"), ImVec2(120, 0))) {
             if (pendingRevertPrefabTarget_) {
                 PrefabSyncUtility::RevertAll(context_, commands_, pendingRevertPrefabTarget_);
             }
@@ -214,7 +215,7 @@ void SceneObjectInspector::ShowRevertPrefabConfirmModal() {
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+        if (ImGui::Button(TranslationLabel("editor.common.cancel"), ImVec2(120, 0))) {
             pendingRevertPrefabTarget_ = nullptr;
             ImGui::CloseCurrentPopup();
         }
@@ -223,15 +224,15 @@ void SceneObjectInspector::ShowRevertPrefabConfirmModal() {
 }
 
 void SceneObjectInspector::ShowMultiObjectInspector(EmptyObject *primary, const std::unordered_set<EmptyObject *> &selectedObjects) {
-    ImGui::Text("Object Inspector (%d objects)", static_cast<int>(selectedObjects.size()));
+    ImGui::Text("%s (%d)", TranslationC("editor.objectinspector.title"), static_cast<int>(selectedObjects.size()));
     ImGui::Separator();
 
     //--------- 共通プロパティ（プライマリの値を表示し、変更を全選択オブジェクトへ適用する） ---------//
     bool active = primary->IsActive();
-    if (ImGui::Checkbox("Active", &active)) {
+    if (ImGui::Checkbox(TranslationLabel("editor.objectinspector.active"), &active)) {
         if (commands_) {
             auto composite = std::make_unique<CompositeCommand>(
-                "Set Active: " + std::to_string(selectedObjects.size()) + " Objects");
+                Translation("editor.command.setactive.prefix") + std::to_string(selectedObjects.size()) + Translation("editor.command.objects.suffix"));
             for (auto *obj : selectedObjects) {
                 if (!obj) continue;
                 composite->AddCommand(std::make_unique<ObjectPropertyCommand>(
@@ -247,14 +248,14 @@ void SceneObjectInspector::ShowMultiObjectInspector(EmptyObject *primary, const 
 
     ImGui::SameLine();
     bool editorOnly = primary->IsEditorOnly();
-    if (ImGui::Checkbox("Editor Only", &editorOnly)) {
+    if (ImGui::Checkbox(TranslationLabel("editor.objectinspector.editoronly"), &editorOnly)) {
         for (auto *obj : selectedObjects) {
             if (obj) obj->SetEditorOnly(editorOnly);
         }
     }
 
     std::string tagName = primary->GetTagName();
-    if (ImGui::InputText("Tag", &tagName)) {
+    if (ImGui::InputText(TranslationLabel("editor.objectinspector.tag"), &tagName)) {
         for (auto *obj : selectedObjects) {
             if (obj) obj->SetTag(tagName);
         }
@@ -304,7 +305,7 @@ void SceneObjectInspector::ShowMultiObjectInspector(EmptyObject *primary, const 
         bool headerOpen = EditorSettings::PersistentTreeNode(typeName.c_str(), "inspector.component." + typeName);
         if (headerOpen) {
             if (ImGui::BeginPopupContextItem("ComponentContextMenu")) {
-                if (ImGui::MenuItem("Remove Component")) {
+                if (ImGui::MenuItem(TranslationLabel("editor.component.remove"))) {
                     removeTypeName = typeName;
                     pendingRemoves.push_back({ primary, comp });
                     for (auto &[obj, counterpart] : counterparts) {
@@ -316,7 +317,7 @@ void SceneObjectInspector::ShowMultiObjectInspector(EmptyObject *primary, const 
             // パラメータ変更をUndo履歴へ積むため、表示前後の状態を比較する
             JSON before = primary->SaveComponentToJson(comp);
             std::string componentTag = comp->GetTagName();
-            if (ImGui::InputText("Tag", &componentTag)) {
+            if (ImGui::InputText(TranslationLabel("editor.component.tag"), &componentTag)) {
                 comp->SetTag(componentTag);
             }
             primary->ShowComponentImGui(comp);
@@ -337,7 +338,7 @@ void SceneObjectInspector::ShowMultiObjectInspector(EmptyObject *primary, const 
         CommitPendingEdit();
         if (commands_) {
             auto composite = std::make_unique<CompositeCommand>(
-                "Remove Component: " + removeTypeName + " (" + std::to_string(pendingRemoves.size()) + " Objects)");
+                Translation("editor.command.removecomponent") + removeTypeName + " (" + std::to_string(pendingRemoves.size()) + Translation("editor.command.objects.suffix") + ")");
             for (const auto &remove : pendingRemoves) {
                 composite->AddCommand(std::make_unique<RemoveComponentCommand>(remove.object, remove.component));
             }
@@ -351,7 +352,7 @@ void SceneObjectInspector::ShowMultiObjectInspector(EmptyObject *primary, const 
 
     //--------- コンポーネント追加（全選択オブジェクトへ追加する） ---------//
     ImGui::Separator();
-    if (ImGui::Button("Add Component")) {
+    if (ImGui::Button(TranslationLabel("editor.component.add"))) {
         ImGui::OpenPopup("AddComponentPopup");
     }
 
@@ -362,7 +363,7 @@ void SceneObjectInspector::ShowMultiObjectInspector(EmptyObject *primary, const 
                 selectedType)) {
             if (commands_) {
                 auto composite = std::make_unique<CompositeCommand>(
-                    "Add Component: " + selectedType + " (" + std::to_string(selectedObjects.size()) + " Objects)");
+                    Translation("editor.command.addcomponent") + selectedType + " (" + std::to_string(selectedObjects.size()) + Translation("editor.command.objects.suffix") + ")");
                 for (auto *obj : selectedObjects) {
                     if (obj) composite->AddCommand(std::make_unique<AddComponentCommand>(obj, selectedType));
                 }
@@ -469,7 +470,7 @@ void SceneObjectInspector::CommitPendingEdit() {
         } else {
             // 複数選択の一括編集は、全対象の変更をまとめて1つのUndo操作にする
             auto composite = std::make_unique<CompositeCommand>(
-                "Edit Component: " + editComponent->GetComponentType() + " (" + std::to_string(editLinkedTargets_.size() + 1) + " Objects)");
+                Translation("editor.command.editcomponent") + editComponent->GetComponentType() + " (" + std::to_string(editLinkedTargets_.size() + 1) + Translation("editor.command.objects.suffix") + ")");
             composite->AddCommand(std::make_unique<ComponentEditCommand>(editObject, editComponent, editBefore_, editAfter_));
             for (const auto &target : editLinkedTargets_) {
                 EmptyObject *linkedObject = context_->GetSceneObject(target.object);
@@ -578,7 +579,7 @@ void SceneObjectInspector::ApplyComponentDragAndDrop(EmptyObject *obj) {
     ordered.insert(ordered.begin() + insertIndex, source);
 
     // 新しい並び順どおりに更新優先度を振り直す（変更があったものだけUndo履歴へ積む）
-    auto composite = std::make_unique<CompositeCommand>("Reorder Component: " + source->GetComponentType());
+    auto composite = std::make_unique<CompositeCommand>(Translation("editor.command.reordercomponent") + source->GetComponentType());
     bool anyChange = false;
     for (size_t i = 0; i < ordered.size(); ++i) {
         IObjectComponent *comp = ordered[i];

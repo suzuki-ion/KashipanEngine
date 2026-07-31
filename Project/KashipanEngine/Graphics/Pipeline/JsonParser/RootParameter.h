@@ -7,6 +7,7 @@
 #include "Graphics/Pipeline/JsonParser/DescriptorRange.h"
 #include "Graphics/Pipeline/JsonParser/RootConstants.h"
 #include "Graphics/Pipeline/JsonParser/RootDescriptor.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 namespace Pipeline::JsonParser {

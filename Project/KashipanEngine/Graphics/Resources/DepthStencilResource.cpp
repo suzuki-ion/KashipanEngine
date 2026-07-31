@@ -1,4 +1,5 @@
 #include "DepthStencilResource.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

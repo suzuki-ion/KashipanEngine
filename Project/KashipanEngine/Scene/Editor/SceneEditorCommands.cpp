@@ -4,6 +4,7 @@
 
 #include "ComponentSerialize/ComponentRegistry.h"
 #include "Objects/Components/Transform.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -284,9 +285,9 @@ bool SceneEditorCommands::Redo() {
 void SceneEditorCommands::ShowHistoryImGui() {
     const auto &undoStack = GetActiveUndoStack();
     if (isPlaySession_) {
-        ImGui::TextDisabled("(Playing: commands are discarded on stop)");
+        ImGui::TextDisabled("%s", TranslationC("editor.history.playing"));
     }
-    ImGui::Text("Undo Stack: %d", static_cast<int>(undoStack.size()));
+    ImGui::Text("%s%d", TranslationC("editor.history.undostack"), static_cast<int>(undoStack.size()));
     for (auto it = undoStack.rbegin(); it != undoStack.rend(); ++it) {
         ImGui::BulletText("%s", (*it)->GetName().c_str());
     }

@@ -17,6 +17,7 @@
 #if defined(USE_IMGUI)
 #include "Objects/Components/Render/TargetObjectSelector.h"
 #include "Utilities/AssetDragDropPayload.h"
+#include "Utilities/Translation.h"
 #endif
 
 namespace KashipanEngine {
@@ -196,31 +197,31 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         // 描画先はシーン上のオブジェクトから選択（ヒエラルキーからのD&Dも受け付ける）
-        if (TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), targetObjectID_)) {
+        if (TargetObjectSelector::ShowSelector(TranslationLabel("component.common.target"), GetOwnerSceneContext(), targetObjectID_)) {
             MarkDrawListDirty();
         }
         // 対象オブジェクトが持つ描画先ごとに描画する/しないを選択する
         TargetObjectSelector::ShowRenderTargetFilters(GetOwnerSceneContext(), targetObjectID_, excludedRenderTargetNames_);
         // パイプラインとマテリアルは読み込み済みのものから選択する
-        if (ImGuiCustom::SelectString("Pipeline", pipelineName_, PipelineManager::GetLoadedRenderPipelineNames())) {
+        if (ImGuiCustom::SelectString(TranslationLabel("component.meshrenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames())) {
             MarkDrawListDirty();
         }
-        ImGui::Checkbox("Cast Shadows", &castShadows_);
+        ImGui::Checkbox(TranslationLabel("component.meshrenderer.cast_shadows"), &castShadows_);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("有効にすると、このメッシュがシャドウマッピングのシャドウキャスターとして扱われる");
+            ImGui::SetTooltip("%s", TranslationC("component.meshrenderer.desc_1"));
         }
 
-        ImGui::ColorEdit4("Instance Color", &instanceColor_.x);
+        ImGui::ColorEdit4(TranslationLabel("component.meshrenderer.instance_color"), &instanceColor_.x);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("このオブジェクト単体の色。マテリアルは共有したまま、下のBlend Modeで指定した方法で\nマテリアルの色へ適用される（既定の白(1,1,1,1)＋Multiplyでは見た目に影響しない）");
+            ImGui::SetTooltip("%s", TranslationC("component.meshrenderer.desc_2"));
         }
-        static const char *kColorBlendModeLabels[] = { "Override", "Multiply", "Add", "Subtract" };
+        const char *kColorBlendModeLabels[] = { TranslationC("component.common.blendmode.override"), TranslationC("component.common.blendmode.multiply"), TranslationC("component.common.blendmode.add"), TranslationC("component.common.blendmode.subtract") };
         int blendModeIndex = static_cast<int>(instanceColorBlendMode_);
-        if (ImGui::Combo("Instance Color Blend Mode", &blendModeIndex, kColorBlendModeLabels, IM_ARRAYSIZE(kColorBlendModeLabels))) {
+        if (ImGui::Combo(TranslationLabel("component.meshrenderer.instance_color_blend_mode"), &blendModeIndex, kColorBlendModeLabels, IM_ARRAYSIZE(kColorBlendModeLabels))) {
             instanceColorBlendMode_ = static_cast<ColorBlendMode>(blendModeIndex);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Instance Colorをマテリアルの色へ適用する方法\nOverride: 置き換え / Multiply: 乗算 / Add: 加算 / Subtract: 減算");
+            ImGui::SetTooltip("%s", TranslationC("component.meshrenderer.desc_3"));
         }
 
         const auto materialEntries = MaterialManager::GetLoadedMaterialListEntries();

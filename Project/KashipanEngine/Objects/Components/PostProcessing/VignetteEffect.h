@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "Math/Vector4.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -39,11 +40,11 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         IPostProcessComponent::ShowImGui();
-        ImGui::DragFloat2("Center", params_.center, 0.001f, -2.0f, 2.0f, "%.3f");
-        ImGui::ColorEdit4("Color", &params_.color.x);
-        ImGui::DragFloat("Intensity", &params_.intensity, 0.01f, 0.0f, 1.0f, "%.3f");
-        ImGui::DragFloat("Inner Radius", &params_.innerRadius, 0.001f, 0.0f, 1.0f, "%.3f");
-        ImGui::DragFloat("Smoothness", &params_.smoothness, 0.001f, 0.0001f, 2.0f, "%.3f");
+        ImGui::DragFloat2(TranslationLabel("component.vignetteeffect.center"), params_.center, 0.001f, -2.0f, 2.0f, "%.3f");
+        ImGui::ColorEdit4(TranslationLabel("component.vignetteeffect.color"), &params_.color.x);
+        ImGui::DragFloat(TranslationLabel("component.vignetteeffect.intensity"), &params_.intensity, 0.01f, 0.0f, 1.0f, "%.3f");
+        ImGui::DragFloat(TranslationLabel("component.vignetteeffect.inner_radius"), &params_.innerRadius, 0.001f, 0.0f, 1.0f, "%.3f");
+        ImGui::DragFloat(TranslationLabel("component.vignetteeffect.smoothness"), &params_.smoothness, 0.001f, 0.0001f, 2.0f, "%.3f");
     }
 #endif
 

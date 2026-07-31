@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Objects/ObjectComponentHeader.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -35,10 +36,10 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
-        ImGui::DragFloat("Width", &width_, 1.0f);
-        ImGui::DragFloat("Height", &height_, 1.0f);
-        ImGui::DragFloat("Near", &nearClip_, 0.01f);
-        ImGui::DragFloat("Far", &farClip_, 1.0f);
+        ImGui::DragFloat(TranslationLabel("component.camera2d.width"), &width_, 1.0f);
+        ImGui::DragFloat(TranslationLabel("component.camera2d.height"), &height_, 1.0f);
+        ImGui::DragFloat(TranslationLabel("component.camera2d.near"), &nearClip_, 0.01f);
+        ImGui::DragFloat(TranslationLabel("component.camera2d.far"), &farClip_, 1.0f);
     }
 #endif
     JSON SaveToJson() const override {

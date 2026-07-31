@@ -2,6 +2,7 @@
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Transform.h"
 #include "Scene/Components/Audio/SceneAudioPlayer.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -92,7 +93,7 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         bool used = used_;
-        if (ImGui::Checkbox("Used", &used)) {
+        if (ImGui::Checkbox(TranslationLabel("component.audiolistener.used"), &used)) {
             SetUsed(used);
         }
     }

@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "Objects/Components/Compute/ComputeShaderProcessing.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -19,7 +20,7 @@ void SceneComputeProcessor::UnregisterComputeShaderProcessing(const ComputeShade
 
 #if defined(USE_IMGUI)
 void SceneComputeProcessor::ShowImGui() {
-    ImGui::Text("ComputeShaderProcessing: %d", static_cast<int>(components_.size()));
+    ImGui::Text("%s%d", TranslationC("editor.scenecomputeprocessor.count"), static_cast<int>(components_.size()));
 }
 #endif
 

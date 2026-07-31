@@ -1,4 +1,5 @@
 #include "RWStructuredBufferResource.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

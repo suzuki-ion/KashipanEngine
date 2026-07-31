@@ -11,6 +11,7 @@
 #include "Objects/Components/Render/OverlayWindowObject.h"
 #include "Objects/Components/Render/ScreenBufferObject.h"
 #include "Objects/Components/Render/ShadowMapObject.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 namespace TargetObjectSelector {
@@ -44,7 +45,7 @@ bool ShowSelector(const char *label, SceneContext *sceneContext, UUID128 &target
     if (ImGui::BeginCombo(label, preview.c_str())) {
         if (allowNone) {
             const bool selected = !current;
-            if (ImGui::Selectable("(None)", selected) && !selected) {
+            if (ImGui::Selectable(TranslationLabel("component.targetobjectselector.none"), selected) && !selected) {
                 targetObjectID = UUID128();
                 changed = true;
             }
@@ -91,7 +92,7 @@ void ShowRenderTargetFilters(SceneContext *sceneContext, const UUID128 &targetOb
     if (targets.empty()) return;
 
     // 使われなくなった除外設定はそのまま残しておく（一時的にコンポーネントを外しただけの場合を考慮）
-    if (ImGui::TreeNode("Render Target Filter")) {
+    if (ImGui::TreeNode(TranslationLabel("component.targetobjectselector.render_target_filter"))) {
         for (auto *target : targets) {
             if (!target) continue;
             const std::string &name = target->GetRenderTargetName();

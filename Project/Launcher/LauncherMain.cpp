@@ -15,9 +15,13 @@
 #endif
 #include <Windows.h>
 
+#include <filesystem>
 #include <memory>
 
+#include "Core/ProjectManager.h"
 #include "Core/ProjectPaths.h"
+#include "Utilities/Conversion/ConvertString.h"
+#include "Utilities/Translation.h"
 #include "LauncherFallbackUI.h"
 #include "LauncherUI.h"
 #include "LauncherWebViewUI.h"
@@ -107,6 +111,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR, int showCommand) {
     // Projects/ と AssetsTemplate/ の位置を知るためにエンジンルートだけ解決する
     // （プロジェクトを開くのはエディター側の仕事なので、ここでは開かない）
     ProjectPaths::InitializeEngineRootOnly({});
+    // ProjectManager が返すメッセージは翻訳キー経由で組み立てられるため、
+    // 読み込んでおかないとランチャー上に生のキーが表示されてしまう。
+    // エンジン共通の翻訳はプロジェクトに属さないので、ランチャーからもそのまま読める
+    LoadGlobalTranslationFiles();
 
     gDpiScale = static_cast<float>(GetDpiForSystem()) / 96.0f;
 

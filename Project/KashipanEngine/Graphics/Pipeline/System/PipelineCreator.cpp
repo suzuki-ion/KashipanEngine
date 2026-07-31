@@ -10,6 +10,7 @@
 #include "Graphics/PipelineManager.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
 #include <sstream>
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 namespace {

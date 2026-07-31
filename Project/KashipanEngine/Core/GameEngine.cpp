@@ -74,19 +74,19 @@ void GameEngine::DrawProfilingImGui() {
     avgDrawMs_.Add(static_cast<double>(drawMs_));
     avgFps_.Add(static_cast<double>(fps_));
 
-    if (ImGui::Begin("GameEngine Profiling")) {
-        ImGui::Text("FPS: %.2f", fps_);
-        ImGui::Text("Update: %.3f ms", updateMs_);
-        ImGui::Text("Draw: %.3f ms", drawMs_);
+    if (ImGui::Begin(TranslationLabel("editor.gameengine.profiling.window"))) {
+        ImGui::Text(TranslationC("editor.gameengine.fps_2f"), fps_);
+        ImGui::Text(TranslationC("editor.gameengine.update_3f_ms"), updateMs_);
+        ImGui::Text(TranslationC("editor.gameengine.draw_3f_ms"), drawMs_);
         if (graphicsEngine_) {
-            ImGui::Text("Draw Calls: %u", graphicsEngine_->GetLastFrameDrawCallCount());
+            ImGui::Text(TranslationC("editor.gameengine.draw_calls_u"), graphicsEngine_->GetLastFrameDrawCallCount());
         }
         ImGui::Separator();
-        ImGui::SliderInt("Profiling Sample Count", &profilingSampleCount_, 1, 600);
-        ImGui::Text("Averages (%zu samples)", avgUpdateMs_.GetCount());
-        ImGui::Text("Avg FPS: %.2f", static_cast<float>(avgFps_.GetAverage()));
-        ImGui::Text("Avg Update: %.3f ms", static_cast<float>(avgUpdateMs_.GetAverage()));
-        ImGui::Text("Avg Draw: %.3f ms", static_cast<float>(avgDrawMs_.GetAverage()));
+        ImGui::SliderInt(TranslationLabel("editor.gameengine.profiling_sample_count"), &profilingSampleCount_, 1, 600);
+        ImGui::Text(TranslationC("editor.gameengine.averages_zu_samples"), avgUpdateMs_.GetCount());
+        ImGui::Text(TranslationC("editor.gameengine.avg_fps_2f"), static_cast<float>(avgFps_.GetAverage()));
+        ImGui::Text(TranslationC("editor.gameengine.avg_update_3f_ms"), static_cast<float>(avgUpdateMs_.GetAverage()));
+        ImGui::Text(TranslationC("editor.gameengine.avg_draw_3f_ms"), static_cast<float>(avgDrawMs_.GetAverage()));
     }
     ImGui::End();
 }

@@ -19,6 +19,7 @@
 #include "Utilities/UUID128.h"
 #if defined(USE_IMGUI)
 #include "Objects/Components/Render/TargetObjectSelector.h"
+#include "Utilities/Translation.h"
 #endif
 
 namespace KashipanEngine {
@@ -130,11 +131,11 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         // 適用先の描画先オブジェクトをシーン上から選択（D&D対応、未指定は全描画先）
-        TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), targetObjectID_);
+        TargetObjectSelector::ShowSelector(TranslationLabel("component.common.target"), GetOwnerSceneContext(), targetObjectID_);
         // 対象オブジェクトが持つ描画先ごとに適用する/しないを選択する
         TargetObjectSelector::ShowRenderTargetFilters(GetOwnerSceneContext(), targetObjectID_, excludedRenderTargetNames_);
         // パイプラインは読み込み済みのものから選択（未指定は全パイプライン）
-        ImGuiCustom::SelectString("Pipeline", pipelineName_, PipelineManager::GetLoadedRenderPipelineNames(), true);
+        ImGuiCustom::SelectString(TranslationLabel("component.camerarenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames(), true);
         for (const auto &name : bindVariableNames_) {
             ImGui::BulletText("%s", name.c_str());
         }

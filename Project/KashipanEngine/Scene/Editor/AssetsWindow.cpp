@@ -23,6 +23,7 @@
 #include "Utilities/AssetDragDropPayload.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/JSON.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -79,7 +80,7 @@ AssetsWindow::AssetsWindow(Passkey<SceneEditor>, SceneEditorContext *editorConte
 }
 
 void AssetsWindow::ShowImGui() {
-    if (!ImGui::Begin("Assets")) {
+    if (!ImGui::Begin(TranslationLabel("editor.assets.window"))) {
         ImGui::End();
         return;
     }
@@ -91,14 +92,14 @@ void AssetsWindow::ShowImGui() {
     }
     ImGui::EndDisabled();
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("Up One Level");
+        ImGui::SetTooltip("%s", TranslationC("editor.assets.up"));
     }
     ImGui::SameLine();
-    if (ImGui::Button("Refresh")) {
+    if (ImGui::Button(TranslationLabel("editor.common.refresh"))) {
         RefreshFolderTree();
     }
     ImGui::SameLine();
-    ImGui::TextUnformatted(currentFolder_.empty() ? "(root)" : currentFolder_.c_str());
+    ImGui::TextUnformatted(currentFolder_.empty() ? TranslationC("editor.assets.folder.root") : currentFolder_.c_str());
     ImGui::Separator();
 
     //--------- 左：フォルダツリー ---------//
@@ -188,7 +189,7 @@ std::string AssetsWindow::ToLowerExtension(const std::filesystem::path &path) {
 
 void AssetsWindow::RefreshFolderTree() {
     rootFolder_ = FolderNode{};
-    rootFolder_.name = "(root)";
+    rootFolder_.name = Translation("editor.assets.folder.root");
     rootFolder_.path = "";
     BuildFolderNode(rootFolder_);
     RefreshFileList();
@@ -386,7 +387,7 @@ void AssetsWindow::ShowFileGrid() {
     }
 
     if (files_.empty()) {
-        ImGui::TextUnformatted("No supported files in this folder.");
+        ImGui::TextUnformatted(TranslationC("editor.assets.nofiles"));
     }
 
     ShowGridBackgroundContextMenu();
@@ -395,18 +396,18 @@ void AssetsWindow::ShowFileGrid() {
 void AssetsWindow::ShowFileContextMenu(const FileEntry &file) {
     if (ImGui::BeginPopupContextItem("FileContextMenu")) {
         if (!file.isFolder) {
-            if (ImGui::MenuItem("Open")) {
+            if (ImGui::MenuItem(TranslationLabel("editor.common.open"))) {
                 OpenFileEditor(file);
             }
             ImGui::Separator();
         }
-        if (ImGui::MenuItem("Rename")) {
+        if (ImGui::MenuItem(TranslationLabel("editor.common.rename"))) {
             contextMenuTargetPath_ = file.path;
             contextMenuTargetIsFolder_ = file.isFolder;
             renameBuffer_ = file.name;
             isRenameRequested_ = true;
         }
-        if (ImGui::MenuItem("Delete")) {
+        if (ImGui::MenuItem(TranslationLabel("editor.common.delete"))) {
             contextMenuTargetPath_ = file.path;
             contextMenuTargetIsFolder_ = file.isFolder;
             isDeleteRequested_ = true;
@@ -420,17 +421,17 @@ void AssetsWindow::ShowGridBackgroundContextMenu() {
     // この window レベルのメニューが同一フレームで開いてしまい、
     // ファイル自体の FileContextMenu を閉じてしまう（表示されないように見える）ため必須。
     if (ImGui::BeginPopupContextWindow("AssetsGridContextMenu", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems)) {
-        if (ImGui::MenuItem("Create Folder")) {
+        if (ImGui::MenuItem(TranslationLabel("editor.assets.createfolder"))) {
             newFolderName_ = "New Folder";
             isCreateFolderRequested_ = true;
         }
         ImGui::Separator();
-        if (ImGui::MenuItem("Create JSON File")) {
+        if (ImGui::MenuItem(TranslationLabel("editor.assets.createjson"))) {
             createFileExtension_ = ".json";
             newFileName_ = "New File";
             isCreateFileRequested_ = true;
         }
-        if (ImGui::MenuItem("Create Material File")) {
+        if (ImGui::MenuItem(TranslationLabel("editor.assets.creatematerial"))) {
             createFileExtension_ = ".mat";
             newFileName_ = "New Material";
             isCreateFileRequested_ = true;
@@ -539,20 +540,20 @@ void AssetsWindow::CreatePrefabFromObject(EmptyObject *obj) {
 bool AssetsWindow::ShowCreateFileModal() {
     bool created = false;
     if (isCreateFileRequested_) {
-        ImGui::OpenPopup("Create Asset File");
+        ImGui::OpenPopup(TranslationLabel("editor.assets.createfile.title"));
         isCreateFileRequested_ = false;
     }
-    if (ImGui::BeginPopupModal("Create Asset File", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::Text("Extension: %s", createFileExtension_.c_str());
-        ImGui::InputText("File Name", &newFileName_);
+    if (ImGui::BeginPopupModal(TranslationLabel("editor.assets.createfile.title"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("%s%s", TranslationC("editor.assets.createfile.extension"), createFileExtension_.c_str());
+        ImGui::InputText(TranslationLabel("editor.assets.createfile.name"), &newFileName_);
         const std::string folder = currentFolder_.empty() ? "" : (currentFolder_ + "/");
         const std::string fullPath = folder + newFileName_ + createFileExtension_;
         const bool alreadyExists = !newFileName_.empty() && PathExistsNoThrow(ToPhysicalPath(fullPath));
         if (alreadyExists) {
-            ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "A file with this name already exists.");
+            ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "%s", TranslationC("editor.assets.createfile.alreadyexists"));
         }
         ImGui::BeginDisabled(newFileName_.empty() || alreadyExists);
-        if (ImGui::Button("Create", ImVec2(120, 0))) {
+        if (ImGui::Button(TranslationLabel("editor.common.create"), ImVec2(120, 0))) {
             bool succeeded = false;
             if (createFileExtension_ == ".mat") {
                 MaterialManager::Material material{};
@@ -570,7 +571,7 @@ bool AssetsWindow::ShowCreateFileModal() {
         }
         ImGui::EndDisabled();
         ImGui::SameLine();
-        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+        if (ImGui::Button(TranslationLabel("editor.common.cancel"), ImVec2(120, 0))) {
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();
@@ -580,19 +581,19 @@ bool AssetsWindow::ShowCreateFileModal() {
 
 void AssetsWindow::ShowCreateFolderModal() {
     if (isCreateFolderRequested_) {
-        ImGui::OpenPopup("Create Folder");
+        ImGui::OpenPopup(TranslationLabel("editor.assets.createfolder.title"));
         isCreateFolderRequested_ = false;
     }
-    if (ImGui::BeginPopupModal("Create Folder", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::InputText("Folder Name", &newFolderName_);
+    if (ImGui::BeginPopupModal(TranslationLabel("editor.assets.createfolder.title"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::InputText(TranslationLabel("editor.assets.createfolder.name"), &newFolderName_);
         const std::string folder = currentFolder_.empty() ? "" : (currentFolder_ + "/");
         const std::string fullPath = folder + newFolderName_;
         const bool alreadyExists = !newFolderName_.empty() && PathExistsNoThrow(ToPhysicalPath(fullPath));
         if (alreadyExists) {
-            ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "A folder with this name already exists.");
+            ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "%s", TranslationC("editor.assets.createfolder.alreadyexists"));
         }
         ImGui::BeginDisabled(newFolderName_.empty() || alreadyExists);
-        if (ImGui::Button("Create", ImVec2(120, 0))) {
+        if (ImGui::Button(TranslationLabel("editor.common.create"), ImVec2(120, 0))) {
             std::error_code ec;
             if (std::filesystem::create_directory(ToPhysicalPath(fullPath), ec)) {
                 RefreshFolderTree();
@@ -601,7 +602,7 @@ void AssetsWindow::ShowCreateFolderModal() {
         }
         ImGui::EndDisabled();
         ImGui::SameLine();
-        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+        if (ImGui::Button(TranslationLabel("editor.common.cancel"), ImVec2(120, 0))) {
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();
@@ -610,14 +611,14 @@ void AssetsWindow::ShowCreateFolderModal() {
 
 void AssetsWindow::ShowRenameModal() {
     if (isRenameRequested_) {
-        ImGui::OpenPopup("Rename File");
+        ImGui::OpenPopup(TranslationLabel("editor.assets.rename.title"));
         isRenameRequested_ = false;
     }
-    if (ImGui::BeginPopupModal("Rename File", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+    if (ImGui::BeginPopupModal(TranslationLabel("editor.assets.rename.title"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::TextUnformatted(contextMenuTargetPath_.c_str());
-        ImGui::InputText("New Name", &renameBuffer_);
+        ImGui::InputText(TranslationLabel("editor.assets.rename.newname"), &renameBuffer_);
         ImGui::BeginDisabled(renameBuffer_.empty());
-        if (ImGui::Button("Rename", ImVec2(120, 0))) {
+        if (ImGui::Button(TranslationLabel("editor.common.rename"), ImVec2(120, 0))) {
             const std::filesystem::path oldPath = ToPhysicalPath(contextMenuTargetPath_);
             const std::filesystem::path newPath = oldPath.parent_path() / Utf8StringToPath(renameBuffer_);
             std::error_code ec;
@@ -658,7 +659,7 @@ void AssetsWindow::ShowRenameModal() {
         }
         ImGui::EndDisabled();
         ImGui::SameLine();
-        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+        if (ImGui::Button(TranslationLabel("editor.common.cancel"), ImVec2(120, 0))) {
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();
@@ -667,15 +668,15 @@ void AssetsWindow::ShowRenameModal() {
 
 void AssetsWindow::ShowDeleteConfirmModal() {
     if (isDeleteRequested_) {
-        ImGui::OpenPopup("Delete File");
+        ImGui::OpenPopup(TranslationLabel("editor.assets.delete.title"));
         isDeleteRequested_ = false;
     }
-    if (ImGui::BeginPopupModal("Delete File", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.3f, 1.0f),
-            contextMenuTargetIsFolder_ ? "This will permanently delete the folder and everything inside it:" : "This will permanently delete the actual file on disk:");
+    if (ImGui::BeginPopupModal(TranslationLabel("editor.assets.delete.title"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.3f, 1.0f), "%s",
+            contextMenuTargetIsFolder_ ? TranslationC("editor.assets.delete.confirm.folder") : TranslationC("editor.assets.delete.confirm.file"));
         ImGui::TextUnformatted(contextMenuTargetPath_.c_str());
-        ImGui::TextUnformatted("This action cannot be undone.");
-        if (ImGui::Button("Delete", ImVec2(120, 0))) {
+        ImGui::TextUnformatted(TranslationC("editor.assets.delete.cannotundo"));
+        if (ImGui::Button(TranslationLabel("editor.common.delete"), ImVec2(120, 0))) {
             std::error_code ec;
             if (contextMenuTargetIsFolder_) {
                 std::filesystem::remove_all(ToPhysicalPath(contextMenuTargetPath_), ec);
@@ -687,7 +688,7 @@ void AssetsWindow::ShowDeleteConfirmModal() {
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+        if (ImGui::Button(TranslationLabel("editor.common.cancel"), ImVec2(120, 0))) {
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();

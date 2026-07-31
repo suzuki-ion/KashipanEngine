@@ -89,12 +89,12 @@ bool SceneManager::LoadSceneList(const std::string &filePath) {
             const std::string sceneFilePath = sceneJson.value("filePath", std::string());
             if (name.empty()) continue;
             if (!RegisterSceneFile(name, sceneFilePath)) {
-                Log("SceneManager: Scene \"" + name + "\" is already registered. Skipped.", LogSeverity::Warning);
+                Log(Translation("engine.scenemanager.scene.alreadyregistered") + name, LogSeverity::Warning);
             }
         }
     }
     startupSceneName_ = json.value("startupScene", startupSceneName_);
-    Log("SceneManager: Scene list loaded from " + filePath, LogSeverity::Info);
+    Log(Translation("engine.scenemanager.scenelist.loaded") + filePath, LogSeverity::Info);
     return true;
 }
 
@@ -153,7 +153,7 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
             currentScene_ = std::make_unique<Scene>(sceneData);
         } else {
             LogScope scope;
-            Log("SceneManager: Failed to load scene file \"" + entry->filePath + "\". Creating an empty scene.", LogSeverity::Warning);
+            Log(Translation("engine.scenemanager.scene.load.failed") + entry->filePath, LogSeverity::Warning);
             currentScene_ = std::make_unique<Scene>(pendingSceneName_);
         }
     } else if (!entry->factoryData.empty()) {

@@ -2,6 +2,7 @@
 #include <string>
 
 #include "Objects/ObjectComponentHeader.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -28,7 +29,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
-        ImGui::InputTextMultiline("Comment", &comment_);
+        ImGui::InputTextMultiline(TranslationLabel("component.comment.comment"), &comment_);
     }
 #endif
 

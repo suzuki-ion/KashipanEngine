@@ -3,6 +3,7 @@
 #include <cmath>
 #include <algorithm>
 #include <stdexcept>
+#include "Utilities/Translation.h"
 
 #pragma comment(lib, "dcomp.lib")
 

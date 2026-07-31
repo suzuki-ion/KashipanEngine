@@ -1,10 +1,12 @@
 ﻿#pragma once
 #include <algorithm>
 #include <cstdint>
+#include <random>
 #include <string>
 
 #include "Objects/ObjectComponentHeader.h"
 #include "Graphics/ShadowMapBuffer.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -65,14 +67,14 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
-        if (ImGui::InputText("Name", &name_, ImGuiInputTextFlags_EnterReturnsTrue)) {
+        if (ImGui::InputText(TranslationLabel("component.shadowmapobject.name"), &name_, ImGuiInputTextFlags_EnterReturnsTrue)) {
             SetName(name_);
         }
         int w = static_cast<int>(width_);
         int h = static_cast<int>(height_);
         bool sizeChanged = false;
-        if (ImGuiCustom::EditValue("Width", w)) { w = std::max(1, w); sizeChanged = true; }
-        if (ImGuiCustom::EditValue("Height", h)) { h = std::max(1, h); sizeChanged = true; }
+        if (ImGuiCustom::EditValue(TranslationLabel("component.shadowmapobject.width"), w)) { w = std::max(1, w); sizeChanged = true; }
+        if (ImGuiCustom::EditValue(TranslationLabel("component.shadowmapobject.height"), h)) { h = std::max(1, h); sizeChanged = true; }
         if (sizeChanged) SetSize(static_cast<std::uint32_t>(w), static_cast<std::uint32_t>(h));
 
         // 描画内容確認用ビューアウィンドウ
@@ -93,11 +95,15 @@ protected:
 
         // タイトルの表示文字列にnameを含めているが、ImGuiはラベル全体をウィンドウIDとして
         // 使うため、名前変更のたびに別ウィンドウ扱いとなりフォーカスが奪われてしまう。
-        // "###"以降のみをID化することで、表示名は更新されつつウィンドウの同一性を保つ
+        // "###"以降のみをID化することで、表示名は更新されつつウィンドウの同一性を保つ。
+        // ID部分にはthisポインタではなくviewerId_（JSONへ永続化される固定値）を使う。
+        // Play停止時はシーンの全オブジェクトが一度破棄されてスナップショットから再生成され
+        // thisアドレスが変わるため、thisをIDに使うとImGuiに別ウィンドウと認識され
+        // ドッキング位置が失われてしまう
         const std::string windowTitle = "ShadowMapBuffer Viewer: " + name_ +
-            "###ShadowMapBufferViewer" + std::to_string(reinterpret_cast<std::uintptr_t>(this));
+            "###ShadowMapBufferViewer" + std::to_string(viewerId_);
         if (ImGui::Begin(windowTitle.c_str(), &isShowViewer_)) {
-            ImGui::Text("Size: %ux%u", buffer_->GetWidth(), buffer_->GetHeight());
+            ImGui::Text(TranslationC("component.shadowmapobject.size_ux_u"), buffer_->GetWidth(), buffer_->GetHeight());
 
             const auto srvHandle = buffer_->GetSrvHandle();
             if (srvHandle.ptr != 0) {
@@ -112,7 +118,7 @@ protected:
                 }
                 ImGui::Image(static_cast<ImTextureID>(srvHandle.ptr), drawSize);
             } else {
-                ImGui::TextUnformatted("SRV not ready.");
+                ImGui::TextUnformatted(TranslationC("component.shadowmapobject.srv_not_ready"));
             }
         }
         ImGui::End();
@@ -125,6 +131,7 @@ protected:
         json["width"] = width_;
         json["height"] = height_;
         json["isShowViewer"] = isShowViewer_;
+        json["viewerId"] = viewerId_;
         return json;
     }
 
@@ -133,6 +140,9 @@ protected:
         const std::uint32_t loadedWidth = json.value("width", 2048u);
         const std::uint32_t loadedHeight = json.value("height", 2048u);
         isShowViewer_ = json.value("isShowViewer", false);
+        // Play停止時のスナップショット復元でも同じビューアウィンドウとして認識されるよう、
+        // 保存済みIDがあればそれを引き継ぐ（無ければ構築時に生成された既定値のまま）
+        viewerId_ = json.value("viewerId", viewerId_);
 
         // AddComponent() の時点で Initialize() が先に呼ばれ、
         // この関数が読み込むより前にデフォルト値（空の名前・既定サイズ）で
@@ -162,12 +172,20 @@ protected:
     }
 
 private:
+    /// @brief ビューアウィンドウのImGui ID用に一意な値を生成する
+    static std::uint64_t GenerateViewerId() {
+        static std::mt19937_64 rng{std::random_device{}()};
+        return rng();
+    }
+
     ShadowMapBuffer *buffer_ = nullptr;
     std::string name_;
     std::uint32_t width_ = 2048;
     std::uint32_t height_ = 2048;
     /// @brief ビューアウィンドウ表示フラグ（シリアライズされ、再起動後も維持される）
     bool isShowViewer_ = false;
+    /// @brief ビューアウィンドウのImGui ID固定用（シリアライズされ、再起動後も維持される）
+    std::uint64_t viewerId_ = GenerateViewerId();
 };
 
 REGISTER_COMPONENT_OBJECT(ShadowMapObject);

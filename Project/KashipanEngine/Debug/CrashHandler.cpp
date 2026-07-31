@@ -1,6 +1,7 @@
 #include "CrashHandler.h"
 #include "Debug/CrashHandler/ExportCrashSceneBackup.h"
 #include "Debug/CrashHandler/ExportDump.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

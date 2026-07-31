@@ -12,6 +12,7 @@
 #include "Utilities/UUID128.h"
 #if defined(USE_IMGUI)
 #include "Objects/Components/Render/TargetObjectSelector.h"
+#include "Utilities/Translation.h"
 #endif
 
 namespace KashipanEngine {
@@ -202,59 +203,59 @@ protected:
             IsControllable() ? "Controllable (Camera3D found)" : "Not controllable (Camera3D component required)");
         ImGui::Separator();
 
-        ImGui::TextUnformatted("Follow Targets");
+        ImGui::TextUnformatted(TranslationC("component.cameracontroller.follow_targets"));
         int removeIndex = -1;
         for (size_t i = 0; i < followTargets_.size(); ++i) {
             ImGui::PushID(static_cast<int>(i));
             auto &target = followTargets_[i];
-            TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), target.objectID, true, false);
-            ImGui::TextUnformatted("Follow Position");
+            TargetObjectSelector::ShowSelector(TranslationLabel("component.common.target"), GetOwnerSceneContext(), target.objectID, true, false);
+            ImGui::TextUnformatted(TranslationC("component.cameracontroller.follow_position"));
             ImGui::Checkbox("X##Pos", &target.followPositionX); ImGui::SameLine();
             ImGui::Checkbox("Y##Pos", &target.followPositionY); ImGui::SameLine();
             ImGui::Checkbox("Z##Pos", &target.followPositionZ);
-            ImGui::TextUnformatted("Follow Rotation");
+            ImGui::TextUnformatted(TranslationC("component.cameracontroller.follow_rotation"));
             ImGui::Checkbox("X##Rot", &target.followRotationX); ImGui::SameLine();
             ImGui::Checkbox("Y##Rot", &target.followRotationY); ImGui::SameLine();
             ImGui::Checkbox("Z##Rot", &target.followRotationZ);
-            if (ImGui::Button("Remove Target")) removeIndex = static_cast<int>(i);
+            if (ImGui::Button(TranslationLabel("component.cameracontroller.remove_target"))) removeIndex = static_cast<int>(i);
             ImGui::Separator();
             ImGui::PopID();
         }
         if (removeIndex >= 0) RemoveFollowTarget(static_cast<size_t>(removeIndex));
-        if (ImGui::Button("Add Follow Target")) {
+        if (ImGui::Button(TranslationLabel("component.cameracontroller.add_follow_target"))) {
             followTargets_.push_back(FollowTarget{});
         }
         if (followTargets_.empty()) {
-            ImGui::TextDisabled("(No target: following own Transform)");
+            ImGui::TextDisabled("%s", TranslationC("component.cameracontroller.no_target_following_own_transform"));
         }
 
         ImGui::Separator();
-        ImGui::DragFloat3("Position Offset", &positionOffset_.x, 0.01f);
+        ImGui::DragFloat3(TranslationLabel("component.cameracontroller.position_offset"), &positionOffset_.x, 0.01f);
         Vector3 rotationOffsetDeg(ToDegrees(rotationOffset_.x), ToDegrees(rotationOffset_.y), ToDegrees(rotationOffset_.z));
-        if (ImGui::DragFloat3("Rotation Offset", &rotationOffsetDeg.x, 0.1f)) {
+        if (ImGui::DragFloat3(TranslationLabel("component.cameracontroller.rotation_offset"), &rotationOffsetDeg.x, 0.1f)) {
             rotationOffset_ = Vector3(ToRadians(rotationOffsetDeg.x), ToRadians(rotationOffsetDeg.y), ToRadians(rotationOffsetDeg.z));
         }
-        ImGui::DragFloat("Target FovY", &targetFovY_, 0.01f, 0.01f, GetPI<float>() - 0.01f);
+        ImGui::DragFloat(TranslationLabel("component.cameracontroller.target_fovy"), &targetFovY_, 0.01f, 0.01f, GetPI<float>() - 0.01f);
 
         ImGui::Separator();
-        ImGui::TextUnformatted("Move Follow Strength");
-        ImGui::Checkbox("Move: Per-Axis##Move", &moveLerpFactor_.usePerAxis);
+        ImGui::TextUnformatted(TranslationC("component.cameracontroller.move_follow_strength"));
+        ImGui::Checkbox((std::string(TranslationC("component.cameracontroller.move_per_axis")) + "##Move").c_str(), &moveLerpFactor_.usePerAxis);
         if (moveLerpFactor_.usePerAxis) {
-            ImGui::DragFloat3("Move X/Y/Z", &moveLerpFactor_.perAxis.x, 0.01f, 0.0f, 1.0f);
+            ImGui::DragFloat3(TranslationLabel("component.cameracontroller.move_x_y_z"), &moveLerpFactor_.perAxis.x, 0.01f, 0.0f, 1.0f);
         } else {
-            ImGui::DragFloat("Move All", &moveLerpFactor_.all, 0.01f, 0.0f, 1.0f);
+            ImGui::DragFloat(TranslationLabel("component.cameracontroller.move_all"), &moveLerpFactor_.all, 0.01f, 0.0f, 1.0f);
         }
 
-        ImGui::TextUnformatted("Rotate Follow Strength");
-        ImGui::Checkbox("Rotate: Per-Axis##Rotate", &rotateLerpFactor_.usePerAxis);
+        ImGui::TextUnformatted(TranslationC("component.cameracontroller.rotate_follow_strength"));
+        ImGui::Checkbox((std::string(TranslationC("component.cameracontroller.rotate_per_axis")) + "##Rotate").c_str(), &rotateLerpFactor_.usePerAxis);
         if (rotateLerpFactor_.usePerAxis) {
-            ImGui::DragFloat3("Rotate X/Y/Z", &rotateLerpFactor_.perAxis.x, 0.01f, 0.0f, 1.0f);
+            ImGui::DragFloat3(TranslationLabel("component.cameracontroller.rotate_x_y_z"), &rotateLerpFactor_.perAxis.x, 0.01f, 0.0f, 1.0f);
         } else {
-            ImGui::DragFloat("Rotate All", &rotateLerpFactor_.all, 0.01f, 0.0f, 1.0f);
+            ImGui::DragFloat(TranslationLabel("component.cameracontroller.rotate_all"), &rotateLerpFactor_.all, 0.01f, 0.0f, 1.0f);
         }
 
         ImGui::Separator();
-        ImGui::DragFloat("Fov Transition Strength", &fovLerpFactor_, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat(TranslationLabel("component.cameracontroller.fov_transition_strength"), &fovLerpFactor_, 0.01f, 0.0f, 1.0f);
     }
 #endif
 

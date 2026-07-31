@@ -1,4 +1,5 @@
 #include "StructuredBufferResource.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

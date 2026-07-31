@@ -4,6 +4,7 @@
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Collider/ICollider.h"
 #include "Math/Vector2.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -86,16 +87,16 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
-        ImGui::DragFloat2("Velocity", &velocity_.x, 0.01f);
-        ImGui::DragFloat("Mass", &mass_, 0.01f, 0.0f);
-        ImGui::Checkbox("UseGravity", &useGravity_);
+        ImGui::DragFloat2(TranslationLabel("component.rigidbody2d.velocity"), &velocity_.x, 0.01f);
+        ImGui::DragFloat(TranslationLabel("component.rigidbody2d.mass"), &mass_, 0.01f, 0.0f);
+        ImGui::Checkbox(TranslationLabel("component.rigidbody2d.usegravity"), &useGravity_);
 
         // 使用する形状（Colliderコンポーネント）の選択
         const auto colliders = GetOwnerColliders();
         auto *current = GetSelectedCollider();
         const std::string preview = current ? current->GetComponentType() : "(Any)";
-        if (ImGui::BeginCombo("Collider Shape", preview.c_str())) {
-            if (ImGui::Selectable("(Any)", !current)) {
+        if (ImGui::BeginCombo(TranslationLabel("component.rigidbody2d.collider_shape"), preview.c_str())) {
+            if (ImGui::Selectable(TranslationLabel("component.rigidbody2d.any"), !current)) {
                 SetSelectedCollider(nullptr);
             }
             for (auto *collider : colliders) {

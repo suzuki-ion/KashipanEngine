@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cstdint>
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -37,10 +38,10 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         IPostProcessComponent::ShowImGui();
-        ImGui::DragFloat("Intensity", &params_.intensity, 0.01f, 0.0f, 4.0f, "%.3f");
-        ImGui::DragInt("Sample Count", &params_.sampleCount, 1.0f, 1, 64);
-        ImGui::DragFloat2("Center", params_.radialCenter, 0.001f, -1.0f, 2.0f, "%.3f");
-        ImGui::DragFloat("Start Radius", &params_.startRadius, 0.001f, 0.0f, 2.0f, "%.3f");
+        ImGui::DragFloat(TranslationLabel("component.radialblureffect.intensity"), &params_.intensity, 0.01f, 0.0f, 4.0f, "%.3f");
+        ImGui::DragInt(TranslationLabel("component.radialblureffect.sample_count"), &params_.sampleCount, 1.0f, 1, 64);
+        ImGui::DragFloat2(TranslationLabel("component.radialblureffect.center"), params_.radialCenter, 0.001f, -1.0f, 2.0f, "%.3f");
+        ImGui::DragFloat(TranslationLabel("component.radialblureffect.start_radius"), &params_.startRadius, 0.001f, 0.0f, 2.0f, "%.3f");
     }
 #endif
 

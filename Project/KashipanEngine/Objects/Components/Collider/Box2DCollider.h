@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Objects/Components/Collider/ICollider.h"
 #include "Math/Vector2.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -43,8 +44,8 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         ICollider::ShowImGui();
-        ImGui::DragFloat2("Size", &size_.x, 0.01f);
-        ImGui::DragFloat2("Center", &center_.x, 0.01f);
+        ImGui::DragFloat2(TranslationLabel("component.box2dcollider.size"), &size_.x, 0.01f);
+        ImGui::DragFloat2(TranslationLabel("component.box2dcollider.center"), &center_.x, 0.01f);
     }
 #endif
     JSON SaveToJson() const override {

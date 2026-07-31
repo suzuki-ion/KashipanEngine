@@ -3,6 +3,7 @@
 #include "Objects/Components/Transform.h"
 #include "Math/Vector3.h"
 #include "Utilities/TimeUtils.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -46,8 +47,8 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
-        ImGui::DragFloat3("Angular Velocity", &angularVelocity_.x, 0.01f);
-        ImGui::DragFloat3("Angular Acceleration", &angularAcceleration_.x, 0.01f);
+        ImGui::DragFloat3(TranslationLabel("component.rotation.angular_velocity"), &angularVelocity_.x, 0.01f);
+        ImGui::DragFloat3(TranslationLabel("component.rotation.angular_acceleration"), &angularAcceleration_.x, 0.01f);
     }
 #endif
 

@@ -1,4 +1,5 @@
 #include "RendererInternal.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -138,22 +139,22 @@ void Renderer::ProcessGpuParticles(SceneContext *sceneContext) {
         if (!sLoggedEmittersEmpty) {
             sLoggedEmittersEmpty = true;
             char buf[128];
-            std::snprintf(buf, sizeof(buf), "[ProcessGpuParticles] emitters is empty (sceneRenderer=%p)", static_cast<const void *>(sceneRenderer));
-            Log(buf, LogSeverity::Warning);
+            std::snprintf(buf, sizeof(buf), "(sceneRenderer=%p)", static_cast<const void *>(sceneRenderer));
+            Log(Translation("engine.gpuparticle.emitters.empty") + buf, LogSeverity::Warning);
         }
         return;
     }
     if (!pipelineManager_->HasPipeline("ParticleSpawn") || pipelineManager_->GetPipeline("ParticleSpawn").Type() != PipelineType::Compute) {
         if (!sLoggedSpawnPipelineMissing) {
             sLoggedSpawnPipelineMissing = true;
-            Log("[ProcessGpuParticles] \"ParticleSpawn\" compute pipeline not found/loaded", LogSeverity::Warning);
+            Log(Translation("engine.gpuparticle.pipeline.notfound") + "ParticleSpawn", LogSeverity::Warning);
         }
         return;
     }
     if (!pipelineManager_->HasPipeline("ParticleUpdate") || pipelineManager_->GetPipeline("ParticleUpdate").Type() != PipelineType::Compute) {
         if (!sLoggedUpdatePipelineMissing) {
             sLoggedUpdatePipelineMissing = true;
-            Log("[ProcessGpuParticles] \"ParticleUpdate\" compute pipeline not found/loaded", LogSeverity::Warning);
+            Log(Translation("engine.gpuparticle.pipeline.notfound") + "ParticleUpdate", LogSeverity::Warning);
         }
         return;
     }
@@ -161,15 +162,15 @@ void Renderer::ProcessGpuParticles(SceneContext *sceneContext) {
     if (!pipelineManager_->HasPipeline("ParticleFreeListInit") || pipelineManager_->GetPipeline("ParticleFreeListInit").Type() != PipelineType::Compute) {
         if (!sLoggedFreeListInitPipelineMissing) {
             sLoggedFreeListInitPipelineMissing = true;
-            Log("[ProcessGpuParticles] \"ParticleFreeListInit\" compute pipeline not found/loaded", LogSeverity::Warning);
+            Log(Translation("engine.gpuparticle.pipeline.notfound") + "ParticleFreeListInit", LogSeverity::Warning);
         }
         return;
     }
     if (!sLoggedDispatching) {
         sLoggedDispatching = true;
         char buf[128];
-        std::snprintf(buf, sizeof(buf), "[ProcessGpuParticles] dispatching for %zu emitter(s)", emitters.size());
-        Log(buf, LogSeverity::Info);
+        std::snprintf(buf, sizeof(buf), "%zu", emitters.size());
+        Log(Translation("engine.gpuparticle.dispatching") + buf, LogSeverity::Info);
     }
 
     auto *commandList = ComputeCommandProcessor::GetCommandList(Passkey<Renderer>{});

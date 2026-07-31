@@ -6,12 +6,13 @@
 #include "Scene/Editor/ComponentAddMenu.h"
 #include "Scene/Editor/EditorSettings.h"
 #include "ComponentSerialize/ComponentRegistry.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
 void SceneComponentInspector::ShowImGui() {
     if (!context_) return;
-    if (!ImGui::Begin("Scene Component Inspector")) {
+    if (!ImGui::Begin(TranslationLabel("editor.scenecomponentinspector.window"))) {
         ImGui::End();
         return;
     }
@@ -33,14 +34,14 @@ void SceneComponentInspector::ShowImGui() {
         if (EditorSettings::PersistentTreeNode(component->GetComponentType().c_str(),
                 "sceneComponentInspector." + component->GetComponentType())) {
             if (ImGui::BeginPopupContextItem("SceneComponentContextMenu")) {
-                if (ImGui::MenuItem("Remove Component")) {
+                if (ImGui::MenuItem(TranslationLabel("editor.component.remove"))) {
                     componentToRemove = component.get();
                 }
                 ImGui::EndPopup();
             }
             // タグ（分類・判別用の任意文字列）
             std::string tagName = component->GetTagName();
-            if (ImGui::InputText("Tag", &tagName)) {
+            if (ImGui::InputText(TranslationLabel("editor.component.tag"), &tagName)) {
                 component->SetTag(tagName);
             }
             context_->ShowComponentImGui(component.get());
@@ -55,7 +56,7 @@ void SceneComponentInspector::ShowImGui() {
     }
 
     ImGui::Separator();
-    if (ImGui::Button("Add Scene Component")) {
+    if (ImGui::Button(TranslationLabel("editor.scenecomponentinspector.add"))) {
         ImGui::OpenPopup("AddSceneComponentPopup");
     }
 

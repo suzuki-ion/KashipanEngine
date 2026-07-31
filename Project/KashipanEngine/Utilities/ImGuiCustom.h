@@ -15,6 +15,7 @@
 #include "Math/Matrix3x3.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Quaternion.h"
+#include "Utilities/Translation.h"
 
 namespace ImGuiCustom {
 
@@ -60,7 +61,7 @@ inline bool SelectString(const char *label, std::string &value, const std::vecto
     if (ImGui::BeginCombo(label, preview)) {
         if (allowNone) {
             const bool selected = value.empty();
-            if (ImGui::Selectable("(None)", selected) && !selected) {
+            if (ImGui::Selectable(KashipanEngine::TranslationLabel("editor.imguicustom.none"), selected) && !selected) {
                 value.clear();
                 changed = true;
             }
@@ -176,7 +177,7 @@ inline bool EditValue(const char *label, Quaternion &value, const UiOptions &opt
 
 inline bool EditValue(const char *label, Matrix3x3 &value, const UiOptions &opts = {}) {
     bool changed = false;
-    ImGui::Text("%s%s :", label, opts.asSlider ? " (Slider)" : "");
+    ImGui::Text(KashipanEngine::TranslationC("editor.imguicustom.desc_1"), label, opts.asSlider ? " (Slider)" : "");
     ImGui::Indent();
     const char *fmt = opts.format ? opts.format : "%.3f";
     for (int i = 0; i < 3; ++i) {
@@ -197,7 +198,7 @@ inline bool EditValue(const char *label, Matrix3x3 &value, const UiOptions &opts
 
 inline bool EditValue(const char *label, Matrix4x4 &value, const UiOptions &opts = {}) {
     bool changed = false;
-    ImGui::Text("%s%s :", label, opts.asSlider ? " (Slider)" : "");
+    ImGui::Text(KashipanEngine::TranslationC("editor.imguicustom.desc_2"), label, opts.asSlider ? " (Slider)" : "");
     ImGui::Indent();
     const char *fmt = opts.format ? opts.format : "%.3f";
     for (int i = 0; i < 4; ++i) {
@@ -266,7 +267,7 @@ bool EditValue(const char *label, std::unordered_map<K, V> &map, const UiOptions
                 }
             }
             ImGui::SameLine();
-            ImGui::Text(":");
+            ImGui::Text("%s", KashipanEngine::TranslationC("editor.imguicustom.desc_3"));
             ImGui::SameLine();
 
             ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
@@ -298,7 +299,7 @@ bool EditValue(const char *label, std::unordered_map<K, V> &map, const UiOptions
         ImGui::SetNextItemWidth(100.0f);
         EditValue("##new_key", new_key_buffer);
         ImGui::SameLine();
-        ImGui::TextDisabled("(New Key)");
+        ImGui::TextDisabled("%s", KashipanEngine::TranslationC("editor.imguicustom.new_key"));
 
         ImGui::TreePop();
     }
@@ -307,7 +308,7 @@ bool EditValue(const char *label, std::unordered_map<K, V> &map, const UiOptions
 
 // --- 2-4. 動的型 (std::any) ---
 inline bool EditValue(const char *label, std::any &value, const UiOptions &opts = {}) {
-    if (!value.has_value()) { ImGui::Text("%s: [Empty]", label); return false; }
+    if (!value.has_value()) { ImGui::Text(KashipanEngine::TranslationC("editor.imguicustom.s_empty"), label); return false; }
 
     const auto &type = value.type();
     bool changed = false;
@@ -346,7 +347,7 @@ inline bool EditValue(const char *label, std::any &value, const UiOptions &opts 
         auto v = std::any_cast<Matrix4x4>(value);
         if (EditValue(label, v, opts)) { value = v; changed = true; }
     } else {
-        ImGui::Text("%s: [Unsupported Any Type: %s]", label, type.name());
+        ImGui::Text(KashipanEngine::TranslationC("editor.imguicustom.s_unsupported_any_type_s"), label, type.name());
     }
     return changed;
 }
@@ -397,7 +398,7 @@ inline void ShowValue(const char *label, const Quaternion &value, const UiOption
     ImGui::LabelText(q_label.c_str(), (std::string(fmt) + ", " + fmt + ", " + fmt + ", " + fmt).c_str(), value.x, value.y, value.z, value.w);
 }
 inline void ShowValue(const char *label, const Matrix3x3 &value, const UiOptions &opts = {}) {
-    ImGui::Text("%s (ReadOnly) :", label);
+    ImGui::Text(KashipanEngine::TranslationC("editor.imguicustom.s_readonly"), label);
     ImGui::Indent();
     const char *fmt = opts.format ? opts.format : "%.3f";
     std::string composite_fmt = std::string(fmt) + ", " + fmt + ", " + fmt;
@@ -408,7 +409,7 @@ inline void ShowValue(const char *label, const Matrix3x3 &value, const UiOptions
     ImGui::Unindent();
 }
 inline void ShowValue(const char *label, const Matrix4x4 &value, const UiOptions &opts = {}) {
-    ImGui::Text("%s (ReadOnly) :", label);
+    ImGui::Text(KashipanEngine::TranslationC("editor.imguicustom.s_readonly"), label);
     ImGui::Indent();
     const char *fmt = opts.format ? opts.format : "%.3f";
     std::string composite_fmt = std::string(fmt) + ", " + fmt + ", " + fmt + ", " + fmt;

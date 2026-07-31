@@ -1,4 +1,5 @@
 #include "ConstantBufferResource.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

@@ -4,7 +4,7 @@ on:
   push:
     branches: [master, JobHuntingProject]
     paths:
-      - "Reference/**"
+      - "Project/Reference/**"
       - ".github/workflows/deploy-reference.yml"
   workflow_dispatch:
 
@@ -33,7 +33,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: Reference
+          path: Project/Reference
 
       - name: Deploy to GitHub Pages
         id: deployment

@@ -7,6 +7,7 @@
 #include <string>
 
 #include "Objects/ObjectComponentHeader.h"
+#include "Objects/EmptyObject.h"
 #include "Core/ProjectPaths.h"
 #include "Graphics/ScreenBuffer.h"
 #include "Scene/RenderTargetCarryOverRegistry.h"
@@ -149,12 +150,8 @@ protected:
         // タイトルの表示文字列にnameを含めているが、ImGuiはラベル全体をウィンドウIDとして
         // 使うため、名前変更のたびに別ウィンドウ扱いとなりフォーカスが奪われてしまう。
         // "###"以降のみをID化することで、表示名は更新されつつウィンドウの同一性を保つ。
-        // ID部分にはthisポインタではなくviewerId_（JSONへ永続化される固定値）を使う。
-        // Play停止時はシーンの全オブジェクトが一度破棄されてスナップショットから再生成され
-        // thisアドレスが変わるため、thisをIDに使うとImGuiに別ウィンドウと認識され
-        // ドッキング位置が失われてしまう
         const std::string windowTitle = "ScreenBuffer Viewer: " + name_ +
-            "###ScreenBufferViewer" + std::to_string(viewerId_);
+            "###ScreenBufferViewer" + ComputeViewerWindowIdSuffix();
         if (ImGui::Begin(windowTitle.c_str(), &isShowViewer_)) {
             ImGui::Text(TranslationC("component.screenbufferobject.size_ux_u"), buffer_->GetWidth(), buffer_->GetHeight());
 
@@ -274,10 +271,32 @@ private:
         return directory + "/" + prefix + "_" + timestamp + "." + ext;
     }
 
-    /// @brief ビューアウィンドウのImGui ID用に一意な値を生成する
+    /// @brief ビューアウィンドウのImGui ID用に一意な値を生成する（所属オブジェクトが
+    ///        取得できない場合のフォールバック用。詳細はComputeViewerWindowIdSuffix()参照）
     static std::uint64_t GenerateViewerId() {
         static std::mt19937_64 rng{std::random_device{}()};
         return rng();
+    }
+
+    /// @brief ビューアウィンドウのImGui ID（"###"より後）に使う文字列を組み立てる
+    /// @details 所属オブジェクトが取得できる場合は「オブジェクトのUUID＋同じオブジェクト内での
+    ///          ScreenBufferObjectの並び順」から算出する。これらは以前から通常のシーン保存で
+    ///          永続化されているコア情報のため、この方式へ切り替えるための新規保存を必要とせず、
+    ///          exeの再起動をまたいでも安定する。
+    ///          （viewerId_はランダム値で構築のたびに変わるため、シーンを明示的に保存しない限り
+    ///          再起動後は別の値になってしまい、ドッキング位置が復元できなかった）
+    ///          所属オブジェクトが取得できない場合（コンポーネント単体の一時的な利用時など）は、
+    ///          viewerId_をフォールバックとして使う
+    std::string ComputeViewerWindowIdSuffix() const {
+        if (const EmptyObject *owner = GetOwnerObject()) {
+            const auto siblings = owner->GetComponents<ScreenBufferObject>();
+            for (size_t i = 0; i < siblings.size(); ++i) {
+                if (siblings[i] == this) {
+                    return owner->GetObjectID().ToString() + "_" + std::to_string(i);
+                }
+            }
+        }
+        return std::to_string(viewerId_);
     }
 
     ScreenBuffer *buffer_ = nullptr;
@@ -286,7 +305,8 @@ private:
     std::uint32_t height_ = 720;
     /// @brief ビューアウィンドウ表示フラグ（シリアライズされ、再起動後も維持される）
     bool isShowViewer_ = false;
-    /// @brief ビューアウィンドウのImGui ID固定用（シリアライズされ、再起動後も維持される）
+    /// @brief ビューアウィンドウのImGui ID用フォールバック値（所属オブジェクトが
+    ///        取得できない場合のみ使用。詳細はComputeViewerWindowIdSuffix()参照）
     std::uint64_t viewerId_ = GenerateViewerId();
 
     /// @brief RequestSave()の自動生成パスに使う保存先ディレクトリ

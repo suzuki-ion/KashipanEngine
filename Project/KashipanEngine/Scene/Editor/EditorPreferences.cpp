@@ -245,6 +245,83 @@ ImGuiStyle BuildMisskeyMiLightStyle() {
     return style;
 }
 
+/// @brief Discordの既定ダークテーマ「アッシュ（Ash）」に近い配色を組み立てる。
+///        Discord公式クライアントのスタイルシートから採取された値を基にしている
+///        （出典: https://css.gomuks.app/theme/discord-ash.css）
+ImGuiStyle BuildDiscordAshStyle() {
+    ImGuiStyle style;
+    ImGui::StyleColorsDark(&style);
+    ImVec4 *c = style.Colors;
+
+    const ImVec4 bg(0.196f, 0.200f, 0.224f, 1.00f);          // 本家の background-color: #323339
+    const ImVec4 panel(0.173f, 0.176f, 0.196f, 1.00f);       // 本家の room-list-background: #2c2d32
+    const ImVec4 panelHighlight(0.224f, 0.227f, 0.255f, 1.00f); // 本家の composer-background-color: #393a41
+    const ImVec4 buttonBg(0.280f, 0.285f, 0.319f, 1.00f);    // panelHighlightをさらに明るく
+    const ImVec4 buttonHoverBg(0.336f, 0.342f, 0.383f, 1.00f);
+    const ImVec4 accent(0.345f, 0.396f, 0.949f, 1.00f);      // Discordブランドカラー(ブルプル): #5865F2
+    const ImVec4 accentHover(0.494f, 0.533f, 0.961f, 1.00f);
+    const ImVec4 accentActive(0.197f, 0.259f, 0.937f, 1.00f);
+    const ImVec4 accentedBg(0.345f, 0.396f, 0.949f, 0.15f);  // accentをalpha<0.15>
+    const ImVec4 fg(0.855f, 0.867f, 0.855f, 1.00f);          // 本家の text-color: #daddda
+    const ImVec4 divider(0.592f, 0.592f, 0.624f, 0.24f);     // 本家の segment-divider相当
+    const ImVec4 error(0.929f, 0.259f, 0.271f, 1.00f);       // 本家の discord-red: #ed4245
+
+    c[ImGuiCol_Text] = fg;
+    c[ImGuiCol_TextDisabled] = ImVec4(fg.x, fg.y, fg.z, 0.55f);
+    c[ImGuiCol_WindowBg] = bg;
+    c[ImGuiCol_ChildBg] = bg;
+    c[ImGuiCol_PopupBg] = panelHighlight;
+    c[ImGuiCol_Border] = divider;
+    c[ImGuiCol_BorderShadow] = ImVec4(0, 0, 0, 0);
+    c[ImGuiCol_FrameBg] = panelHighlight;
+    c[ImGuiCol_FrameBgHovered] = buttonBg;
+    c[ImGuiCol_FrameBgActive] = buttonHoverBg;
+    c[ImGuiCol_TitleBg] = panel;
+    c[ImGuiCol_TitleBgActive] = panel;
+    c[ImGuiCol_TitleBgCollapsed] = panel;
+    c[ImGuiCol_MenuBarBg] = panel;
+    c[ImGuiCol_ScrollbarBg] = bg;
+    c[ImGuiCol_ScrollbarGrab] = buttonBg;
+    c[ImGuiCol_ScrollbarGrabHovered] = buttonHoverBg;
+    c[ImGuiCol_ScrollbarGrabActive] = accent;
+    c[ImGuiCol_CheckMark] = accent;
+    c[ImGuiCol_SliderGrab] = accent;
+    c[ImGuiCol_SliderGrabActive] = accentActive;
+    c[ImGuiCol_Button] = buttonBg;
+    c[ImGuiCol_ButtonHovered] = buttonHoverBg;
+    c[ImGuiCol_ButtonActive] = accentActive;
+    c[ImGuiCol_Header] = accentedBg;
+    c[ImGuiCol_HeaderHovered] = accentHover;
+    c[ImGuiCol_HeaderActive] = accentActive;
+    c[ImGuiCol_Separator] = divider;
+    c[ImGuiCol_SeparatorHovered] = accentHover;
+    c[ImGuiCol_SeparatorActive] = accentActive;
+    c[ImGuiCol_ResizeGrip] = buttonBg;
+    c[ImGuiCol_ResizeGripHovered] = accentHover;
+    c[ImGuiCol_ResizeGripActive] = accentActive;
+    c[ImGuiCol_Tab] = panel;
+    c[ImGuiCol_TabHovered] = accentHover;
+    c[ImGuiCol_TabSelected] = accent;
+    c[ImGuiCol_TabDimmed] = panel;
+    c[ImGuiCol_TabDimmedSelected] = bg;
+    c[ImGuiCol_DockingPreview] = accentedBg;
+    c[ImGuiCol_DockingEmptyBg] = panel;
+    c[ImGuiCol_TextSelectedBg] = accentedBg;
+    c[ImGuiCol_DragDropTarget] = accentHover;
+    c[ImGuiCol_NavCursor] = accent;
+    c[ImGuiCol_NavWindowingHighlight] = accentHover;
+    c[ImGuiCol_PlotLinesHovered] = error;
+    c[ImGuiCol_PlotHistogramHovered] = error;
+
+    style.WindowRounding = 8.0f;
+    style.FrameRounding = 4.0f;
+    style.GrabRounding = 4.0f;
+    style.TabRounding = 4.0f;
+    style.PopupRounding = 8.0f;
+    style.ChildRounding = 8.0f;
+    return style;
+}
+
 } // namespace
 
 void EditorPreferences::RefreshFontFileList() {
@@ -289,6 +366,13 @@ void EditorPreferences::EnsureDefaultPresets() {
     if (!UserSettings::GetBool("editorUI.presets.misskeyMiLightAdded", false)) {
         presets["Misskey-Mi Light"] = ColorsToJSON(BuildMisskeyMiLightStyle().Colors);
         UserSettings::SetBool("editorUI.presets.misskeyMiLightAdded", true);
+        changed = true;
+    }
+
+    // Discordの既定ダークテーマ「アッシュ」プリセットも同様に、専用フラグで1度だけ追加する
+    if (!UserSettings::GetBool("editorUI.presets.discordAshAdded", false)) {
+        presets["Discord-Ash"] = ColorsToJSON(BuildDiscordAshStyle().Colors);
+        UserSettings::SetBool("editorUI.presets.discordAshAdded", true);
         changed = true;
     }
 

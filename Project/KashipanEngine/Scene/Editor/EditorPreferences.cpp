@@ -332,52 +332,39 @@ void EditorPreferences::RefreshFontFileList() {
 void EditorPreferences::EnsureDefaultPresets() {
     hasEnsuredDefaultPresets_ = true;
 
-    JSON presets = UserSettings::GetJSON("editorUI.presets", JSON());
-    if (!presets.is_object()) presets = JSON::object();
-    bool changed = false;
-
     // Dark/Light/Classicは初回（プリセットが1つも無い場合）のみまとめて登録する。
     // ユーザーが意図的に全削除していた場合、再起動のたびに復活してしまうのを防ぐため
-    if (presets.empty()) {
+    if (UserSettings::GetColorPresetNames().empty()) {
         ImGuiStyle temp;
         ImGui::StyleColorsDark(&temp);
-        presets["Dark"] = ColorsToJSON(temp.Colors);
+        UserSettings::SetColorPreset("Dark", ColorsToJSON(temp.Colors));
         ImGui::StyleColorsLight(&temp);
-        presets["Light"] = ColorsToJSON(temp.Colors);
+        UserSettings::SetColorPreset("Light", ColorsToJSON(temp.Colors));
         ImGui::StyleColorsClassic(&temp);
-        presets["Classic"] = ColorsToJSON(temp.Colors);
-        changed = true;
+        UserSettings::SetColorPreset("Classic", ColorsToJSON(temp.Colors));
     }
 
-    // Unityプリセットは既定3種とは別に、1度だけ追加する（editorUI.presets自体が空でも
+    // Unityプリセットは既定3種とは別に、1度だけ追加する（プリセットが1つも無くても
     // 個別に消されていても、二重追加やユーザー削除後の復活が起きないよう専用フラグで管理する）
     if (!UserSettings::GetBool("editorUI.presets.unityAdded", false)) {
-        presets["Unity"] = ColorsToJSON(BuildUnityStyle().Colors);
+        UserSettings::SetColorPreset("Unity", ColorsToJSON(BuildUnityStyle().Colors));
         UserSettings::SetBool("editorUI.presets.unityAdded", true);
-        changed = true;
     }
 
     // Misskeyプリセット（Mi Dark/Mi Light）も同様に、専用フラグで1度だけ追加する
     if (!UserSettings::GetBool("editorUI.presets.misskeyAdded", false)) {
-        presets["Misskey-Mi Dark"] = ColorsToJSON(BuildMisskeyMiDarkStyle().Colors);
+        UserSettings::SetColorPreset("Misskey-Mi Dark", ColorsToJSON(BuildMisskeyMiDarkStyle().Colors));
         UserSettings::SetBool("editorUI.presets.misskeyAdded", true);
-        changed = true;
     }
     if (!UserSettings::GetBool("editorUI.presets.misskeyMiLightAdded", false)) {
-        presets["Misskey-Mi Light"] = ColorsToJSON(BuildMisskeyMiLightStyle().Colors);
+        UserSettings::SetColorPreset("Misskey-Mi Light", ColorsToJSON(BuildMisskeyMiLightStyle().Colors));
         UserSettings::SetBool("editorUI.presets.misskeyMiLightAdded", true);
-        changed = true;
     }
 
     // Discordの既定ダークテーマ「アッシュ」プリセットも同様に、専用フラグで1度だけ追加する
     if (!UserSettings::GetBool("editorUI.presets.discordAshAdded", false)) {
-        presets["Discord-Ash"] = ColorsToJSON(BuildDiscordAshStyle().Colors);
+        UserSettings::SetColorPreset("Discord-Ash", ColorsToJSON(BuildDiscordAshStyle().Colors));
         UserSettings::SetBool("editorUI.presets.discordAshAdded", true);
-        changed = true;
-    }
-
-    if (changed) {
-        UserSettings::SetJSON("editorUI.presets", presets);
     }
 }
 
@@ -498,29 +485,24 @@ void EditorPreferences::ShowLayoutSection() {
     if (!ImGui::TreeNode(TranslationLabel("editor.preferences.layout"))) return;
     ImGui::TextDisabled("%s", TranslationC("editor.preferences.layout.description"));
 
-    const JSON layoutPresets = UserSettings::GetJSON("editorUI.layoutPresets", JSON::object());
+    const std::vector<std::string> layoutPresetNames = UserSettings::GetLayoutPresetNames();
     if (ImGui::BeginTable("##LayoutPresets", 2, ImGuiTableFlags_SizingFixedFit)) {
-        for (auto it = layoutPresets.begin(); it != layoutPresets.end(); ++it) {
-            const bool isValidPreset = it.value().is_string();
-            ImGui::PushID(it.key().c_str());
+        for (const std::string &name : layoutPresetNames) {
+            ImGui::PushID(name.c_str());
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
-            ImGui::BeginDisabled(!isValidPreset);
-            if (ImGui::Button(it.key().c_str()) && isValidPreset) {
+            if (ImGui::Button(name.c_str())) {
                 // 次フレーム開始時（NewFrame()より前）に適用されるよう予約する。
                 // ここ（フレーム途中、多数のウィンドウが既にBeginされた後）で直接
                 // LoadIniSettingsFromMemoryを呼ぶと、この呼び出しより後に描画される
                 // ウィンドウ（環境設定より後に描画される翻訳キー設定ウィンドウや、
                 // SceneEditor::ShowImGui()全体より後に描画されるビューア系ウィンドウ等）
                 // だけドッキングが解除されてしまう
-                ImGuiManager::RequestLoadIniSettings(it.value().get_ref<const std::string &>());
+                ImGuiManager::RequestLoadIniSettings(UserSettings::GetLayoutPreset(name));
             }
-            ImGui::EndDisabled();
             ImGui::TableNextColumn();
             if (ImGui::SmallButton(TranslationLabel("editor.common.delete"))) {
-                JSON updated = layoutPresets;
-                updated.erase(it.key());
-                UserSettings::SetJSON("editorUI.layoutPresets", updated);
+                UserSettings::DeleteLayoutPreset(name);
             }
             ImGui::PopID();
         }
@@ -534,9 +516,7 @@ void EditorPreferences::ShowLayoutSection() {
     if (ImGui::Button(TranslationLabel("editor.preferences.layout.save"))) {
         size_t iniSize = 0;
         const char *iniData = ImGui::SaveIniSettingsToMemory(&iniSize);
-        JSON updated = layoutPresets;
-        updated[newLayoutPresetNameBuffer_] = std::string(iniData, iniSize);
-        UserSettings::SetJSON("editorUI.layoutPresets", updated);
+        UserSettings::SetLayoutPreset(newLayoutPresetNameBuffer_, std::string(iniData, iniSize));
         newLayoutPresetNameBuffer_.clear();
     }
     ImGui::EndDisabled();
@@ -621,25 +601,24 @@ void EditorPreferences::ShowImGui() {
     if (!hasEnsuredDefaultPresets_) {
         EnsureDefaultPresets();
     }
-    const JSON presets = UserSettings::GetJSON("editorUI.presets", JSON::object());
+    const std::vector<std::string> presetNames = UserSettings::GetColorPresetNames();
 
     ImGui::TextDisabled("%s", TranslationC("editor.preferences.presets.description"));
     if (ImGui::BeginTable("##ColorPresets", 2, ImGuiTableFlags_SizingFixedFit)) {
-        for (auto it = presets.begin(); it != presets.end(); ++it) {
-            const bool isValidPreset = it.value().is_array() && it.value().size() == ImGuiCol_COUNT;
-            ImGui::PushID(it.key().c_str());
+        for (const std::string &name : presetNames) {
+            const JSON colors = UserSettings::GetColorPreset(name, JSON());
+            const bool isValidPreset = colors.is_array() && colors.size() == ImGuiCol_COUNT;
+            ImGui::PushID(name.c_str());
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
             ImGui::BeginDisabled(!isValidPreset);
-            if (ImGui::Button(it.key().c_str())) {
-                UserSettings::SetJSON("editorUI.colors", it.value());
+            if (ImGui::Button(name.c_str())) {
+                UserSettings::SetJSON("editorUI.colors", colors);
             }
             ImGui::EndDisabled();
             ImGui::TableNextColumn();
             if (ImGui::SmallButton(TranslationLabel("editor.common.delete"))) {
-                JSON updated = presets;
-                updated.erase(it.key());
-                UserSettings::SetJSON("editorUI.presets", updated);
+                UserSettings::DeleteColorPreset(name);
             }
             ImGui::PopID();
         }
@@ -651,9 +630,7 @@ void EditorPreferences::ShowImGui() {
     ImGui::SameLine();
     ImGui::BeginDisabled(newPresetNameBuffer_.empty());
     if (ImGui::Button(TranslationLabel("editor.preferences.presets.save"))) {
-        JSON updated = presets;
-        updated[newPresetNameBuffer_] = ColorsToJSON(ImGui::GetStyle().Colors);
-        UserSettings::SetJSON("editorUI.presets", updated);
+        UserSettings::SetColorPreset(newPresetNameBuffer_, ColorsToJSON(ImGui::GetStyle().Colors));
         newPresetNameBuffer_.clear();
     }
     ImGui::EndDisabled();

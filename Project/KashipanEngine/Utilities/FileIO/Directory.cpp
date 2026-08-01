@@ -54,6 +54,13 @@ bool IsDirectoryExist(const std::string &directoryPath) {
     return std::filesystem::exists(dirPath) && std::filesystem::is_directory(dirPath);
 }
 
+bool RemoveFile(const std::string &filePath) {
+    std::error_code ec;
+    const std::filesystem::path path = Utf8StringToPath(filePath);
+    std::filesystem::remove(path, ec);
+    return !ec;
+}
+
 bool CreateDirectories(const std::string &directoryPath) {
     if (directoryPath.empty()) return true;
     std::error_code ec;

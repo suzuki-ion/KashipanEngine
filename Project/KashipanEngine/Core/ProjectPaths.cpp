@@ -17,10 +17,15 @@
 namespace KashipanEngine {
 namespace {
 
-/// @brief 全プロジェクト共有のユーザー設定ファイル名（エンジンルート直下）
+/// @brief 全プロジェクト共有のユーザー設定（新形式：UserSettings/Settings.json、エンジンルート直下）
 /// @details 通常は UserSettings クラスが読み書きするファイル。ここでは前回開いたプロジェクト名
 ///          だけが必要だが、UserSettings 自体が ProjectPaths::EngineRoot() に依存するため直接読む。
-constexpr const char *kUserSettingsFileName = "UserSettings.json";
+constexpr const char *kUserSettingsFileName = "UserSettings/Settings.json";
+
+/// @brief 旧形式（単一ファイル）のユーザー設定ファイル名。UserSettings::EnsureLoaded()による
+///        新形式への移行がまだ行われていないタイミングでも前回開いたプロジェクトを読めるよう、
+///        新形式が見つからない場合のフォールバックとして使う
+constexpr const char *kLegacyUserSettingsFileName = "UserSettings.json";
 
 /// @brief UserSettings.json 内で前回開いたプロジェクト名を保持するキー
 constexpr const char *kLastOpenedProjectKey = "project.lastOpened";
@@ -164,7 +169,11 @@ void ProjectPaths::ResolveActiveProject() {
     }
 
     //--------- 前回開いたプロジェクト ---------//
-    const JSON userSettings = LoadJSON(InEngineRoot(kUserSettingsFileName));
+    JSON userSettings = LoadJSON(InEngineRoot(kUserSettingsFileName));
+    if (!userSettings.is_object()) {
+        // 新形式への移行がまだ行われていない（UserSettingsが一度も使われていない）場合のフォールバック
+        userSettings = LoadJSON(InEngineRoot(kLegacyUserSettingsFileName));
+    }
     if (userSettings.is_object()) {
         const auto it = userSettings.find(kLastOpenedProjectKey);
         if (it != userSettings.end() && it->is_string()) {

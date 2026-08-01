@@ -275,7 +275,7 @@ const std::string &GetTranslationText(const std::string &key) {
 }
 
 namespace {
-// 生成した "翻訳テキスト##キー" を使い回す。unordered_map はリハッシュしても
+// 生成した "翻訳テキスト###キー" を使い回す。unordered_map はリハッシュしても
 // 要素のアドレスが変わらないため、返した const char* はそのまま保持できる。
 std::unordered_map<std::string, std::string> sLabelCache;
 std::string sLabelCacheLang;
@@ -292,7 +292,11 @@ const char *TranslationLabel(const std::string &key) {
     }
     auto it = sLabelCache.find(key);
     if (it == sLabelCache.end()) {
-        it = sLabelCache.emplace(key, GetTranslationText(key) + "##" + key).first;
+        // ImGuiのID計算は、文字列中に連続した"#"が3つ揃った箇所でリセットされ、
+        // それ以降の文字列だけがIDに使われる（"##"では効果がなく、表示文字列も含めて
+        // ハッシュされてしまうため、翻訳テキストが変わるとIDまで変わってしまう）。
+        // そのため区切りは"###"（3つ）である必要がある
+        it = sLabelCache.emplace(key, GetTranslationText(key) + "###" + key).first;
     }
     return it->second.c_str();
 }

@@ -95,6 +95,156 @@ ImGuiStyle BuildUnityStyle() {
     return style;
 }
 
+/// @brief Misskeyの既定ダークテーマ「Mi Dark」に近い配色を組み立てる
+ImGuiStyle BuildMisskeyMiDarkStyle() {
+    ImGuiStyle style;
+    ImGui::StyleColorsDark(&style);
+    ImVec4 *c = style.Colors;
+
+    const ImVec4 bg(0.137f, 0.137f, 0.137f, 1.00f);          // 本家Mi Darkの bg: #232323
+    const ImVec4 panel(0.176f, 0.176f, 0.176f, 1.00f);       // 本家Mi Darkの panel: #2d2d2d
+    const ImVec4 panelHighlight(0.206f, 0.206f, 0.206f, 1.00f); // panelをlighten<3>
+    const ImVec4 buttonBg(0.226f, 0.226f, 0.226f, 1.00f);    // panelをlighten<5>
+    const ImVec4 buttonHoverBg(0.276f, 0.276f, 0.276f, 1.00f); // panelをlighten<10>
+    const ImVec4 accent(0.525f, 0.702f, 0.000f, 1.00f);      // 本家の accent: #86b300
+    const ImVec4 accentHover(0.616f, 0.792f, 0.078f, 1.00f);
+    const ImVec4 accentActive(0.435f, 0.612f, 0.000f, 1.00f);
+    const ImVec4 accentedBg(0.525f, 0.702f, 0.000f, 0.15f);  // 本家の accentedBg: accentをalpha<0.15>
+    const ImVec4 fg(0.780f, 0.820f, 0.847f, 1.00f);          // 本家Mi Darkの fg: rgb(199,209,216)
+    const ImVec4 divider(1.000f, 1.000f, 1.000f, 0.14f);     // 本家Mi Darkの divider: rgba(255,255,255,0.14)
+    const ImVec4 error(0.925f, 0.255f, 0.216f, 1.00f);       // 本家の error: #ec4137
+
+    c[ImGuiCol_Text] = fg;
+    c[ImGuiCol_TextDisabled] = ImVec4(fg.x, fg.y, fg.z, 0.55f);
+    c[ImGuiCol_WindowBg] = bg;
+    c[ImGuiCol_ChildBg] = bg;
+    c[ImGuiCol_PopupBg] = panelHighlight;
+    c[ImGuiCol_Border] = divider;
+    c[ImGuiCol_BorderShadow] = ImVec4(0, 0, 0, 0);
+    c[ImGuiCol_FrameBg] = panel;
+    c[ImGuiCol_FrameBgHovered] = panelHighlight;
+    c[ImGuiCol_FrameBgActive] = buttonHoverBg;
+    c[ImGuiCol_TitleBg] = bg;
+    c[ImGuiCol_TitleBgActive] = panel;
+    c[ImGuiCol_TitleBgCollapsed] = bg;
+    c[ImGuiCol_MenuBarBg] = panel;
+    c[ImGuiCol_ScrollbarBg] = bg;
+    c[ImGuiCol_ScrollbarGrab] = buttonBg;
+    c[ImGuiCol_ScrollbarGrabHovered] = buttonHoverBg;
+    c[ImGuiCol_ScrollbarGrabActive] = accent;
+    c[ImGuiCol_CheckMark] = accent;
+    c[ImGuiCol_SliderGrab] = accent;
+    c[ImGuiCol_SliderGrabActive] = accentActive;
+    c[ImGuiCol_Button] = buttonBg;
+    c[ImGuiCol_ButtonHovered] = buttonHoverBg;
+    c[ImGuiCol_ButtonActive] = accentActive;
+    c[ImGuiCol_Header] = accentedBg;
+    c[ImGuiCol_HeaderHovered] = accentHover;
+    c[ImGuiCol_HeaderActive] = accentActive;
+    c[ImGuiCol_Separator] = divider;
+    c[ImGuiCol_SeparatorHovered] = accentHover;
+    c[ImGuiCol_SeparatorActive] = accentActive;
+    c[ImGuiCol_ResizeGrip] = buttonBg;
+    c[ImGuiCol_ResizeGripHovered] = accentHover;
+    c[ImGuiCol_ResizeGripActive] = accentActive;
+    c[ImGuiCol_Tab] = panel;
+    c[ImGuiCol_TabHovered] = accentHover;
+    c[ImGuiCol_TabSelected] = accent;
+    c[ImGuiCol_TabDimmed] = bg;
+    c[ImGuiCol_TabDimmedSelected] = panel;
+    c[ImGuiCol_DockingPreview] = accentedBg;
+    c[ImGuiCol_DockingEmptyBg] = bg;
+    c[ImGuiCol_TextSelectedBg] = accentedBg;
+    c[ImGuiCol_DragDropTarget] = accentHover;
+    c[ImGuiCol_NavCursor] = accent;
+    c[ImGuiCol_NavWindowingHighlight] = accentHover;
+    c[ImGuiCol_PlotLinesHovered] = error;
+    c[ImGuiCol_PlotHistogramHovered] = error;
+
+    style.WindowRounding = 6.0f;
+    style.FrameRounding = 6.0f;
+    style.GrabRounding = 6.0f;
+    style.TabRounding = 6.0f;
+    style.PopupRounding = 6.0f;
+    style.ChildRounding = 6.0f;
+    return style;
+}
+
+/// @brief Misskeyの既定ライトテーマ「Mi Light」に近い配色を組み立てる
+ImGuiStyle BuildMisskeyMiLightStyle() {
+    ImGuiStyle style;
+    ImGui::StyleColorsLight(&style);
+    ImVec4 *c = style.Colors;
+
+    const ImVec4 bg(0.976f, 0.976f, 0.976f, 1.00f);          // 本家Mi Lightの bg: #f9f9f9
+    const ImVec4 panel(1.000f, 1.000f, 1.000f, 1.00f);       // 本家Mi Lightの panel: #fff
+    const ImVec4 panelHighlight(0.969f, 0.969f, 0.969f, 1.00f); // panelをdarken<3>
+    const ImVec4 buttonBg(0.949f, 0.949f, 0.949f, 1.00f);    // panelをdarken<5>
+    const ImVec4 buttonHoverBg(0.902f, 0.902f, 0.902f, 1.00f); // panelをdarken<10>
+    const ImVec4 accent(0.525f, 0.702f, 0.000f, 1.00f);      // 本家の accent: #86b300
+    const ImVec4 accentHover(0.616f, 0.792f, 0.078f, 1.00f);
+    const ImVec4 accentActive(0.435f, 0.612f, 0.000f, 1.00f);
+    const ImVec4 accentedBg(0.525f, 0.702f, 0.000f, 0.15f);  // 本家の accentedBg: accentをalpha<0.15>
+    const ImVec4 fg(0.404f, 0.404f, 0.404f, 1.00f);          // 本家Mi Lightの fg: #676767
+    const ImVec4 divider(0.910f, 0.910f, 0.910f, 1.00f);     // 本家Mi Lightの divider: #e8e8e8
+    const ImVec4 error(0.925f, 0.255f, 0.216f, 1.00f);       // 本家の error: #ec4137
+
+    c[ImGuiCol_Text] = fg;
+    c[ImGuiCol_TextDisabled] = ImVec4(fg.x, fg.y, fg.z, 0.55f);
+    c[ImGuiCol_WindowBg] = bg;
+    c[ImGuiCol_ChildBg] = bg;
+    c[ImGuiCol_PopupBg] = panelHighlight;
+    c[ImGuiCol_Border] = divider;
+    c[ImGuiCol_BorderShadow] = ImVec4(0, 0, 0, 0);
+    c[ImGuiCol_FrameBg] = panel;
+    c[ImGuiCol_FrameBgHovered] = panelHighlight;
+    c[ImGuiCol_FrameBgActive] = buttonHoverBg;
+    c[ImGuiCol_TitleBg] = bg;
+    c[ImGuiCol_TitleBgActive] = panel;
+    c[ImGuiCol_TitleBgCollapsed] = bg;
+    c[ImGuiCol_MenuBarBg] = panel;
+    c[ImGuiCol_ScrollbarBg] = bg;
+    c[ImGuiCol_ScrollbarGrab] = buttonBg;
+    c[ImGuiCol_ScrollbarGrabHovered] = buttonHoverBg;
+    c[ImGuiCol_ScrollbarGrabActive] = accent;
+    c[ImGuiCol_CheckMark] = accent;
+    c[ImGuiCol_SliderGrab] = accent;
+    c[ImGuiCol_SliderGrabActive] = accentActive;
+    c[ImGuiCol_Button] = buttonBg;
+    c[ImGuiCol_ButtonHovered] = buttonHoverBg;
+    c[ImGuiCol_ButtonActive] = accentActive;
+    c[ImGuiCol_Header] = accentedBg;
+    c[ImGuiCol_HeaderHovered] = accentHover;
+    c[ImGuiCol_HeaderActive] = accentActive;
+    c[ImGuiCol_Separator] = divider;
+    c[ImGuiCol_SeparatorHovered] = accentHover;
+    c[ImGuiCol_SeparatorActive] = accentActive;
+    c[ImGuiCol_ResizeGrip] = buttonBg;
+    c[ImGuiCol_ResizeGripHovered] = accentHover;
+    c[ImGuiCol_ResizeGripActive] = accentActive;
+    c[ImGuiCol_Tab] = panel;
+    c[ImGuiCol_TabHovered] = accentHover;
+    c[ImGuiCol_TabSelected] = accent;
+    c[ImGuiCol_TabDimmed] = bg;
+    c[ImGuiCol_TabDimmedSelected] = panel;
+    c[ImGuiCol_DockingPreview] = accentedBg;
+    c[ImGuiCol_DockingEmptyBg] = bg;
+    c[ImGuiCol_TextSelectedBg] = accentedBg;
+    c[ImGuiCol_DragDropTarget] = accentHover;
+    c[ImGuiCol_NavCursor] = accent;
+    c[ImGuiCol_NavWindowingHighlight] = accentHover;
+    c[ImGuiCol_PlotLinesHovered] = error;
+    c[ImGuiCol_PlotHistogramHovered] = error;
+
+    style.WindowRounding = 6.0f;
+    style.FrameRounding = 6.0f;
+    style.GrabRounding = 6.0f;
+    style.TabRounding = 6.0f;
+    style.PopupRounding = 6.0f;
+    style.ChildRounding = 6.0f;
+    return style;
+}
+
 } // namespace
 
 void EditorPreferences::RefreshFontFileList() {
@@ -127,6 +277,18 @@ void EditorPreferences::EnsureDefaultPresets() {
     if (!UserSettings::GetBool("editorUI.presets.unityAdded", false)) {
         presets["Unity"] = ColorsToJSON(BuildUnityStyle().Colors);
         UserSettings::SetBool("editorUI.presets.unityAdded", true);
+        changed = true;
+    }
+
+    // Misskeyプリセット（Mi Dark/Mi Light）も同様に、専用フラグで1度だけ追加する
+    if (!UserSettings::GetBool("editorUI.presets.misskeyAdded", false)) {
+        presets["Misskey-Mi Dark"] = ColorsToJSON(BuildMisskeyMiDarkStyle().Colors);
+        UserSettings::SetBool("editorUI.presets.misskeyAdded", true);
+        changed = true;
+    }
+    if (!UserSettings::GetBool("editorUI.presets.misskeyMiLightAdded", false)) {
+        presets["Misskey-Mi Light"] = ColorsToJSON(BuildMisskeyMiLightStyle().Colors);
+        UserSettings::SetBool("editorUI.presets.misskeyMiLightAdded", true);
         changed = true;
     }
 
@@ -261,8 +423,13 @@ void EditorPreferences::ShowLayoutSection() {
             ImGui::TableNextColumn();
             ImGui::BeginDisabled(!isValidPreset);
             if (ImGui::Button(it.key().c_str()) && isValidPreset) {
-                const std::string &ini = it.value().get_ref<const std::string &>();
-                ImGui::LoadIniSettingsFromMemory(ini.c_str(), ini.size());
+                // 次フレーム開始時（NewFrame()より前）に適用されるよう予約する。
+                // ここ（フレーム途中、多数のウィンドウが既にBeginされた後）で直接
+                // LoadIniSettingsFromMemoryを呼ぶと、この呼び出しより後に描画される
+                // ウィンドウ（環境設定より後に描画される翻訳キー設定ウィンドウや、
+                // SceneEditor::ShowImGui()全体より後に描画されるビューア系ウィンドウ等）
+                // だけドッキングが解除されてしまう
+                ImGuiManager::RequestLoadIniSettings(it.value().get_ref<const std::string &>());
             }
             ImGui::EndDisabled();
             ImGui::TableNextColumn();

@@ -157,6 +157,15 @@ void ImGuiManager::InitializeInternal() {
     // ImGuiウィンドウを独立したWindowsウィンドウとして表示できるようにする
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
+    // imgui.iniの既定パス（io.IniFilename）は未指定だとカレントディレクトリからの相対パス
+    // "imgui.ini"になる。Visual Studioのデバッガー経由で起動した場合（既定のWorking Directoryは
+    // プロジェクトディレクトリ）と、実行ファイルを直接（またはハブ経由で）起動した場合とで
+    // カレントディレクトリが異なるため、保存先がずれてドッキングレイアウトが復元されなくなる。
+    // 起動方法によらず同じ場所を指すよう、他の個人設定（UserSettings.json等）と同じ
+    // EngineRoot直下への絶対パスを明示する（ポインタが有効であり続けるようstaticで保持する）
+    static std::string sIniFilePath = ProjectPaths::InEngineRoot("imgui.ini");
+    io.IniFilename = sIniFilePath.c_str();
+
     // マルチビューポート有効時も、従来どおりこのウィンドウをメインのドッキング先として使う
     Window::CreateNormal(
         "ImGui Window",
@@ -271,6 +280,11 @@ void ImGuiManager::ResetDockLayoutToDefault() {
     }
 }
 
+void ImGuiManager::RequestLoadIniSettings(std::string iniText) {
+    sPendingIniSettings_ = std::move(iniText);
+    sHasPendingIniSettings_ = true;
+}
+
 void ImGuiManager::ShutdownInternal() {
     if (!isInitialized_) return;
 
@@ -333,6 +347,15 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
         }
 
         isBackendInitialized_ = true;
+    }
+
+    // レイアウトプリセットの適用予約があれば、NewFrame()より前のこのタイミングで読み込む。
+    // フレーム途中（多数のウィンドウが既にBeginされた後）に読み込むと、その時点より後に
+    // 描画されるウィンドウだけドッキングが解除されてしまうため、必ず次フレームの先頭で行う
+    if (sHasPendingIniSettings_) {
+        ImGui::LoadIniSettingsFromMemory(sPendingIniSettings_.c_str(), sPendingIniSettings_.size());
+        sPendingIniSettings_.clear();
+        sHasPendingIniSettings_ = false;
     }
 
     ImGui_ImplDX12_NewFrame();

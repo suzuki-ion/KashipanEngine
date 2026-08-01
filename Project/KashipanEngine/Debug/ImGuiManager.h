@@ -41,6 +41,16 @@ public:
     ///        再構築させる（エディター環境設定の「レイアウトを既定に戻す」から呼ばれる）
     static void ResetDockLayoutToDefault();
 
+    /// @brief 次フレーム開始時（ImGui::NewFrame()の直前）に適用するini設定（ドッキングレイアウト
+    ///        プリセット）を予約する
+    /// @details ImGui::LoadIniSettingsFromMemory()は本来NewFrame()呼び出しより前に行うべき操作。
+    ///          フレームの途中（ボタン押下時など、既に多数のウィンドウがBeginされた後）に直接
+    ///          呼ぶとドッキングツリーの再構築タイミングがずれ、その時点より後の描画順で
+    ///          Beginされるウィンドウ（例: 環境設定パネルより後に描画される翻訳キー設定ウィンドウや、
+    ///          SceneEditor::ShowImGui()全体より後に描画されるScreenBufferObjectのビューアなど）
+    ///          だけドッキングが解除されてしまう。次フレームの先頭で適用することでこれを避ける
+    static void RequestLoadIniSettings(std::string iniText);
+
 private:
     void InitializeInternal();
     void ShutdownInternal();
@@ -62,6 +72,9 @@ private:
     void ReapplyStyle(float uiScale, const JSON &colorsJson, const JSON &styleJson);
 
     static inline HWND sMainHwnd_ = nullptr;
+    /// @brief RequestLoadIniSettings()で予約された、次フレーム開始時に適用するini設定
+    static inline std::string sPendingIniSettings_;
+    static inline bool sHasPendingIniSettings_ = false;
 
     WindowsAPI* windowsAPI_ = nullptr;
     DirectXCommon* directXCommon_ = nullptr;

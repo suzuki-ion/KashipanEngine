@@ -76,12 +76,14 @@ inline const std::string &Translation(const std::string &key) { return GetTransl
 ///       ImGuiのIDに影響する引数（ボタン名やウィンドウ名など）には TranslationLabel を使うこと。
 inline const char *TranslationC(const std::string &key) { return GetTranslationText(key).c_str(); }
 
-/// @brief キーに対応する翻訳テキストへID用サフィックス("##<キー>")を付与して取得する
+/// @brief キーに対応する翻訳テキストへID用サフィックス("###<キー>")を付与して取得する
 /// @param key 翻訳キー
-/// @return "翻訳テキスト##翻訳キー" の形式の文字列
+/// @return "翻訳テキスト###翻訳キー" の形式の文字列
 /// @note ImGui はラベル文字列からウィジェットIDを生成するため、翻訳テキストをそのまま渡すと
 ///       言語を切り替えた際にIDが変わり、ウィンドウ位置やツリーの開閉状態などが失われてしまう。
 ///       言語に依存しない翻訳キーをID部分に埋め込むことでIDを固定する。
+///       区切りは"###"（3つ）であることが重要："##"（2つ）ではImGuiのID計算がリセットされず、
+///       表示文字列（翻訳テキスト）までIDに含まれてしまい、この関数の目的を果たせない。
 ///       表示のみでIDを持たない ImGui::Text 等には TranslationC を使うこと。
 const char *TranslationLabel(const std::string &key);
 

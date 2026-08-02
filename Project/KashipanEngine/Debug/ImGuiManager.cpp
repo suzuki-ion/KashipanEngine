@@ -28,7 +28,7 @@ namespace {
 
 // 既定配置を変更して既存環境にも一度だけ再適用したい場合は、末尾のバージョンを上げる。
 // DockSpaceノードはimgui.iniへ保存されるため、この名前のノードが無い時だけ初期配置を構築できる
-constexpr const char *kMainDockSpaceName = "KashipanEngineMainDockSpace.v2";
+constexpr const char *kMainDockSpaceName = "KashipanEngineMainDockSpace.v3";
 
 DXGI_FORMAT ToDxgiFormat_WindowsSwapChain() {
     return DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -48,22 +48,29 @@ void BuildDefaultDockLayout(ImGuiID dockSpaceId, const ImVec2 &dockSpaceSize) {
     ImGuiID centerId = dockSpaceId;
     ImGuiID leftId = 0;
     ImGuiID rightId = 0;
+    ImGuiID rightBottomId = 0;
     ImGuiID bottomId = 0;
+    ImGuiID topId = 0;
 
-    // 左=階層/履歴、中央=シーン編集、右=インスペクター、下=アセット/変数/ログ
-    ImGui::DockBuilderSplitNode(centerId, ImGuiDir_Left, 0.18f, &leftId, &centerId);
-    ImGui::DockBuilderSplitNode(centerId, ImGuiDir_Right, 0.27f, &rightId, &centerId);
-    ImGui::DockBuilderSplitNode(centerId, ImGuiDir_Down, 0.28f, &bottomId, &centerId);
+    // 左=階層/履歴、右=インスペクター（下段にプロファイリング）、下=アセット/変数/ログ、
+    // 中央上部=シーン編集（ツールバー）、中央=シーンリスト/シーンビュー
+    ImGui::DockBuilderSplitNode(centerId, ImGuiDir_Left, 0.15f, &leftId, &centerId);
+    ImGui::DockBuilderSplitNode(centerId, ImGuiDir_Right, 0.22f, &rightId, &centerId);
+    ImGui::DockBuilderSplitNode(centerId, ImGuiDir_Down, 0.20f, &bottomId, &centerId);
+    ImGui::DockBuilderSplitNode(centerId, ImGuiDir_Up, 0.10f, &topId, &centerId);
+    ImGui::DockBuilderSplitNode(rightId, ImGuiDir_Down, 0.35f, &rightBottomId, &rightId);
 
     ImGui::DockBuilderDockWindow(TranslationLabel("editor.sceneobjecthierarchy.window"), leftId);
     ImGui::DockBuilderDockWindow(TranslationLabel("editor.history.window"), leftId);
 
+    ImGui::DockBuilderDockWindow(TranslationLabel("editor.sceneeditor.window"), topId);
+
     ImGui::DockBuilderDockWindow(TranslationLabel("editor.scenelist.window"), centerId);
-    ImGui::DockBuilderDockWindow(TranslationLabel("editor.sceneeditor.window"), centerId);
     ImGui::DockBuilderDockWindow(TranslationLabel("editor.sceneview.window"), centerId);
 
     ImGui::DockBuilderDockWindow(TranslationLabel("editor.sceneobjectinspector.window"), rightId);
     ImGui::DockBuilderDockWindow(TranslationLabel("editor.scenecomponentinspector.window"), rightId);
+    ImGui::DockBuilderDockWindow(TranslationLabel("editor.gameengine.profiling.window"), rightBottomId);
 
     ImGui::DockBuilderDockWindow(TranslationLabel("editor.assets.window"), bottomId);
     ImGui::DockBuilderDockWindow(TranslationLabel("editor.scenevariables.window"), bottomId);

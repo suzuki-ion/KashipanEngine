@@ -1813,6 +1813,8 @@
 		"engine.particlesystem.gpu.scenerenderer.notfound": "GPUシミュレーションが有効ですが、SceneRendererを取得できませんでした。",
 
 		//--------- engine.prefab ---------//
+		"engine.prefab.instantiate.load.failed": "プレハブの配置に失敗しました。ファイルの読み込みに失敗しました。ファイルパス：",
+		"engine.prefab.instantiate.nodes.empty": "プレハブの配置に失敗しました。プレハブデータが空か不正な形式です。ファイルパス：",
 		"engine.prefab.sync.result.matched": "、一致したインスタンス数 ",
 		"engine.prefab.sync.result.scanned": "プレハブ同期：走査した登録シーン数 ",
 		"engine.prefab.sync.result.updated": "、更新したシーン数 ",

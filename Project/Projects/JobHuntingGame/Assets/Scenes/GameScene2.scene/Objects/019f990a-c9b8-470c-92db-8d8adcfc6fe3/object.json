@@ -4,12 +4,12 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+                        "parent": "98e5f480-c86e-4d3e-90fe-ec3fc13dcc6f",
                         "rotate": {
-                            "w": -4.371138828673793e-08,
-                            "x": -4.371138828673793e-08,
-                            "y": -1.910685465164705e-15,
-                            "z": -1.0
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
                         },
                         "scale": {
                             "x": 1.0,
@@ -38,22 +38,22 @@
                             "y": 1.0,
                             "z": 1.0
                         },
-                        "decay": 4.0,
+                        "decay": 3.0,
                         "distance": 10.0,
                         "innerAngle": 0.3499999940395355,
-                        "intensity": 2.0,
+                        "intensity": 0.5,
                         "outerAngle": 0.6000000238418579,
-                        "radius": 2.0,
+                        "radius": 12.0,
                         "shadowBias": 1.0,
                         "shadowDistance": 100.0,
-                        "shadowMapResolution": 512,
+                        "shadowMapResolution": 2048,
                         "shadowSoftness": 0.0,
                         "sourceDepth": 1.0,
                         "sourceHeight": 1.0,
                         "sourceLength": 1.0,
                         "sourceRadius": 0.5,
                         "sourceWidth": 1.0,
-                        "type": 4
+                        "type": 1
                     },
                     "isActive": true,
                     "priority": 1,
@@ -75,10 +75,11 @@
             }
         ],
         "editorOnly": false,
-        "isActive": false,
-        "name": "SphereLight",
-        "objectID": "d66f1aa6-012b-46f1-9a57-19b05240dc45",
+        "isActive": true,
+        "name": "Light Object",
+        "objectID": "019f990a-c9b8-470c-92db-8d8adcfc6fe3",
+        "prefabNodeID": "b0df68f7-43a4-490f-b82f-c03a797a99b4",
         "tag": ""
     },
-    "siblingIndex": 0
+    "siblingIndex": 2
 }

@@ -19,7 +19,7 @@
                         "translate": {
                             "x": 0.0,
                             "y": 1.0,
-                            "z": 0.0
+                            "z": -2.4532531561760607e-09
                         }
                     },
                     "isActive": true,
@@ -79,7 +79,7 @@
                             },
                             "moveSpeed": 0.5,
                             "movementTargetDistanceMultiplier": 0.5,
-                            "movementTargetObject": "31c18c4e-9190-42f6-8356-7776f5da87e4",
+                            "movementTargetObject": "6fc461b6-6dab-420f-aead-121fc61cf4f6",
                             "movementTargetOffset": {
                                 "x": 0.0,
                                 "y": 0.0,
@@ -105,7 +105,7 @@
                             "y": 0.0,
                             "z": 0.0
                         },
-                        "continuousDetection": true,
+                        "continuousDetection": false,
                         "isTrigger": false,
                         "radius": 0.5,
                         "syncPosition": [
@@ -113,11 +113,7 @@
                             true,
                             true
                         ],
-                        "syncRotation": [
-                            true,
-                            true,
-                            true
-                        ],
+                        "syncRotation": true,
                         "syncScale": [
                             true,
                             true,
@@ -194,7 +190,7 @@
             {
                 "data": {
                     "customData": {
-                        "used": false
+                        "used": true
                     },
                     "isActive": true,
                     "priority": 1,
@@ -266,12 +262,31 @@
                                 "z": 0.0
                             }
                         },
+                        "excludeShapes": [],
                         "fixedSpawnPosition": {
                             "x": 0.0,
                             "y": 0.0,
                             "z": 0.0
                         },
                         "gpuSimulation": false,
+                        "includeShapes": [
+                            {
+                                "boxSize": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "capsuleHeight": 1.0,
+                                "capsuleRadius": 0.5,
+                                "center": {
+                                    "x": 0.0,
+                                    "y": -0.5,
+                                    "z": 0.0
+                                },
+                                "sphereRadius": 0.10000000149011612,
+                                "type": 2
+                            }
+                        ],
                         "initialRotation": {
                             "max": {
                                 "x": 360.0,
@@ -356,25 +371,6 @@
                                 "z": 0.0
                             }
                         },
-                        "spawnBoxSizeMax": {
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
-                        },
-                        "spawnBoxSizeMin": {
-                            "x": 0.0,
-                            "y": 0.0,
-                            "z": 0.0
-                        },
-                        "spawnCapsuleHeightMax": 0.10000000149011612,
-                        "spawnCapsuleHeightMin": 0.0,
-                        "spawnCapsuleRadiusMax": 0.5,
-                        "spawnCapsuleRadiusMin": 0.49000000953674316,
-                        "spawnCenter": {
-                            "x": 0.0,
-                            "y": -0.5,
-                            "z": 0.0
-                        },
                         "spawnCount": {
                             "max": 16,
                             "min": 8,
@@ -383,9 +379,6 @@
                         },
                         "spawnOrigin": 2,
                         "spawnParentObjectID": "450287e5-7742-4091-9abf-809076327207",
-                        "spawnShape": 2,
-                        "spawnSphereRadiusMax": 0.10000000149011612,
-                        "spawnSphereRadiusMin": 0.0,
                         "startScale": {
                             "max": {
                                 "x": 1.0,
@@ -416,6 +409,17 @@
             {
                 "data": {
                     "customData": {
+                        "prefabID": "1d16cf84-bc2b-43d1-85d6-92b6ae9a2c96"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "castShadows": true,
                         "instanceColor": {
                             "w": 1.0,
@@ -441,8 +445,9 @@
         "editorOnly": false,
         "isActive": true,
         "name": "Player",
-        "objectID": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+        "objectID": "98e5f480-c86e-4d3e-90fe-ec3fc13dcc6f",
+        "prefabNodeID": "9c037041-c5ee-4cc4-b429-f1db4a7784a4",
         "tag": ""
     },
-    "siblingIndex": 1
+    "siblingIndex": 2
 }

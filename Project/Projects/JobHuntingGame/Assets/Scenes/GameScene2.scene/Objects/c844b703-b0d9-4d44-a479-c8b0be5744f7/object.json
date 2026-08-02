@@ -59,11 +59,7 @@
                             true,
                             true
                         ],
-                        "syncRotation": [
-                            true,
-                            true,
-                            true
-                        ],
+                        "syncRotation": true,
                         "syncScale": [
                             true,
                             true,
@@ -72,7 +68,7 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": ""
+                    "tag": "GroundBox"
                 },
                 "type": "BoxCollider"
             },

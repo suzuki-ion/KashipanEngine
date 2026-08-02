@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <filesystem>
 #include "ComponentSerialize/ComponentRegistry.h"
+#include "Core/ProjectPaths.h"
+#include "Debug/Logger.h"
 #include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/PrefabAssetManager.h"
 #include "Scene/Editor/PrefabSyncUtility.h"
@@ -652,9 +654,16 @@ void SceneObjectHierarchy::InstantiateNodes(const std::vector<PasteObjectCommand
 
 bool SceneObjectHierarchy::InstantiatePrefabFile(const std::string &filePath, EmptyObject *attachParent) {
     if (filePath.empty() || !editorContext_) return false;
-    const JSON prefabJson = LoadJSON(filePath);
+    const JSON prefabJson = LoadJSON(ProjectPaths::ToPhysical(filePath));
+    if (!prefabJson.is_object()) {
+        Log(Translation("engine.prefab.instantiate.load.failed") + filePath, LogSeverity::Warning);
+        return false;
+    }
     auto nodes = PrefabUtility::LoadPrefabNodes(prefabJson);
-    if (nodes.empty()) return false;
+    if (nodes.empty()) {
+        Log(Translation("engine.prefab.instantiate.nodes.empty") + filePath, LogSeverity::Warning);
+        return false;
+    }
     const std::string prefabName = prefabJson.value("name",
         std::filesystem::path(filePath).stem().string());
     InstantiateNodes(nodes, prefabName, attachParent);

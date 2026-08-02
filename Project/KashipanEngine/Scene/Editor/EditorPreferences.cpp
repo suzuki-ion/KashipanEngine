@@ -322,6 +322,85 @@ ImGuiStyle BuildDiscordAshStyle() {
     return style;
 }
 
+/// @brief Steam（PCゲーム配信プラットフォーム）クライアントのダークテーマに近い配色を組み立てる。
+///        Steamの公式パレットとして広く知られる値を基にしている
+///        （出典: https://colorswall.com/palette/193 ほか。#171a21/#1b2838/#2a475e/#66c0f4/#c7d5e0）
+ImGuiStyle BuildSteamStyle() {
+    ImGuiStyle style;
+    ImGui::StyleColorsDark(&style);
+    ImVec4 *c = style.Colors;
+
+    const ImVec4 bg(0.106f, 0.157f, 0.220f, 1.00f);          // メイン背景: #1b2838
+    const ImVec4 panel(0.090f, 0.102f, 0.129f, 1.00f);       // 最も暗い部分（タイトルバー等）: #171a21
+    const ImVec4 panelHighlight(0.165f, 0.278f, 0.369f, 1.00f); // カード・入力欄の背景: #2a475e
+    const ImVec4 buttonBg(0.202f, 0.341f, 0.452f, 1.00f);    // panelHighlightを明るく
+    const ImVec4 buttonHoverBg(0.239f, 0.404f, 0.535f, 1.00f);
+    const ImVec4 accent(0.400f, 0.753f, 0.957f, 1.00f);      // Steamブルー（リンク・ハイライト）: #66c0f4
+    const ImVec4 accentHover(0.549f, 0.814f, 0.968f, 1.00f);
+    const ImVec4 accentActive(0.251f, 0.691f, 0.946f, 1.00f);
+    const ImVec4 accentedBg(0.400f, 0.753f, 0.957f, 0.15f);  // accentをalpha<0.15>
+    const ImVec4 fg(0.780f, 0.835f, 0.878f, 1.00f);          // 文字色: #c7d5e0
+    const ImVec4 divider(1.000f, 1.000f, 1.000f, 0.10f);
+    // Steamの公式パレットには明確なエラー/警告用の赤が無いため、雰囲気に合わせた近似値を使用
+    const ImVec4 error(0.757f, 0.361f, 0.361f, 1.00f);
+
+    c[ImGuiCol_Text] = fg;
+    c[ImGuiCol_TextDisabled] = ImVec4(fg.x, fg.y, fg.z, 0.55f);
+    c[ImGuiCol_WindowBg] = bg;
+    c[ImGuiCol_ChildBg] = bg;
+    c[ImGuiCol_PopupBg] = panelHighlight;
+    c[ImGuiCol_Border] = divider;
+    c[ImGuiCol_BorderShadow] = ImVec4(0, 0, 0, 0);
+    c[ImGuiCol_FrameBg] = panelHighlight;
+    c[ImGuiCol_FrameBgHovered] = buttonBg;
+    c[ImGuiCol_FrameBgActive] = buttonHoverBg;
+    c[ImGuiCol_TitleBg] = panel;
+    c[ImGuiCol_TitleBgActive] = panel;
+    c[ImGuiCol_TitleBgCollapsed] = panel;
+    c[ImGuiCol_MenuBarBg] = panel;
+    c[ImGuiCol_ScrollbarBg] = bg;
+    c[ImGuiCol_ScrollbarGrab] = buttonBg;
+    c[ImGuiCol_ScrollbarGrabHovered] = buttonHoverBg;
+    c[ImGuiCol_ScrollbarGrabActive] = accent;
+    c[ImGuiCol_CheckMark] = accent;
+    c[ImGuiCol_SliderGrab] = accent;
+    c[ImGuiCol_SliderGrabActive] = accentActive;
+    c[ImGuiCol_Button] = buttonBg;
+    c[ImGuiCol_ButtonHovered] = buttonHoverBg;
+    c[ImGuiCol_ButtonActive] = accentActive;
+    c[ImGuiCol_Header] = accentedBg;
+    c[ImGuiCol_HeaderHovered] = accentHover;
+    c[ImGuiCol_HeaderActive] = accentActive;
+    c[ImGuiCol_Separator] = divider;
+    c[ImGuiCol_SeparatorHovered] = accentHover;
+    c[ImGuiCol_SeparatorActive] = accentActive;
+    c[ImGuiCol_ResizeGrip] = buttonBg;
+    c[ImGuiCol_ResizeGripHovered] = accentHover;
+    c[ImGuiCol_ResizeGripActive] = accentActive;
+    c[ImGuiCol_Tab] = panel;
+    c[ImGuiCol_TabHovered] = accentHover;
+    c[ImGuiCol_TabSelected] = accent;
+    c[ImGuiCol_TabDimmed] = panel;
+    c[ImGuiCol_TabDimmedSelected] = bg;
+    c[ImGuiCol_DockingPreview] = accentedBg;
+    c[ImGuiCol_DockingEmptyBg] = panel;
+    c[ImGuiCol_TextSelectedBg] = accentedBg;
+    c[ImGuiCol_DragDropTarget] = accentHover;
+    c[ImGuiCol_NavCursor] = accent;
+    c[ImGuiCol_NavWindowingHighlight] = accentHover;
+    c[ImGuiCol_PlotLinesHovered] = error;
+    c[ImGuiCol_PlotHistogramHovered] = error;
+
+    // Steamクライアントはあまり丸みを帯びていない、比較的フラットなUIのため角丸は控えめにする
+    style.WindowRounding = 2.0f;
+    style.FrameRounding = 2.0f;
+    style.GrabRounding = 2.0f;
+    style.TabRounding = 2.0f;
+    style.PopupRounding = 2.0f;
+    style.ChildRounding = 2.0f;
+    return style;
+}
+
 } // namespace
 
 void EditorPreferences::RefreshFontFileList() {
@@ -365,6 +444,12 @@ void EditorPreferences::EnsureDefaultPresets() {
     if (!UserSettings::GetBool("editorUI.presets.discordAshAdded", false)) {
         UserSettings::SetColorPreset("Discord-Ash", ColorsToJSON(BuildDiscordAshStyle().Colors));
         UserSettings::SetBool("editorUI.presets.discordAshAdded", true);
+    }
+
+    // Steamクライアント風プリセットも同様に、専用フラグで1度だけ追加する
+    if (!UserSettings::GetBool("editorUI.presets.steamAdded", false)) {
+        UserSettings::SetColorPreset("Steam", ColorsToJSON(BuildSteamStyle().Colors));
+        UserSettings::SetBool("editorUI.presets.steamAdded", true);
     }
 }
 

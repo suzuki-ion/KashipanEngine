@@ -71,12 +71,31 @@
                                 "z": 0.0
                             }
                         },
+                        "excludeShapes": [],
                         "fixedSpawnPosition": {
                             "x": 128.0,
                             "y": 128.0,
                             "z": 0.0
                         },
                         "gpuSimulation": true,
+                        "includeShapes": [
+                            {
+                                "boxSize": {
+                                    "x": 256.0,
+                                    "y": 256.0,
+                                    "z": 32.0
+                                },
+                                "capsuleHeight": 1.0,
+                                "capsuleRadius": 0.5,
+                                "center": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "sphereRadius": 1.0,
+                                "type": 1
+                            }
+                        ],
                         "initialRotation": {
                             "max": {
                                 "x": 360.0,
@@ -161,25 +180,6 @@
                                 "z": 0.0
                             }
                         },
-                        "spawnBoxSizeMax": {
-                            "x": 256.0,
-                            "y": 256.0,
-                            "z": 32.0
-                        },
-                        "spawnBoxSizeMin": {
-                            "x": 0.0,
-                            "y": 0.0,
-                            "z": 0.0
-                        },
-                        "spawnCapsuleHeightMax": 1.0,
-                        "spawnCapsuleHeightMin": 0.0,
-                        "spawnCapsuleRadiusMax": 0.5,
-                        "spawnCapsuleRadiusMin": 0.0,
-                        "spawnCenter": {
-                            "x": 0.0,
-                            "y": 0.0,
-                            "z": 0.0
-                        },
                         "spawnCount": {
                             "max": 1,
                             "min": 1,
@@ -188,9 +188,6 @@
                         },
                         "spawnOrigin": 3,
                         "spawnParentObjectID": "",
-                        "spawnShape": 1,
-                        "spawnSphereRadiusMax": 1.0,
-                        "spawnSphereRadiusMin": 0.0,
                         "startScale": {
                             "max": {
                                 "x": 1.0,

@@ -154,7 +154,8 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
     <PostBuildEvent>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
 copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
-&gt;"$(OutDir)EngineRoot.txt" echo $(ProjectDir)</Command>
+if exist "$(TargetDir)EngineRoot.txt" del "$(TargetDir)EngineRoot.txt"
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyReleaseAssets.ps1" -ProjectDir "$(ProjectDir)." -TargetDir "$(TargetDir)."</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>$(ProjectDir)DpiAwarenessPerMonitor.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -421,6 +422,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
     <None Include="Reference\assets\style.css" />
     <None Include="Reference\index.html" />
     <None Include="Tools\convert_reference_to_html.py" />
+    <None Include="Tools\CopyReleaseAssets.ps1" />
     <None Include="tools\sync_filters.py" />
   </ItemGroup>
   <ItemGroup>

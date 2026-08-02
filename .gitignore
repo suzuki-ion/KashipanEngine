@@ -67,6 +67,12 @@ x86/
 [Ll]ogs/
 [Gg]enerated/
 
+# WebView2ローダー（NuGet由来の成果物。上のx64/ルールに巻き込まれて誤除外されるため個別に除外解除）
+!Project/Externals/WebView2/lib/
+!Project/Externals/WebView2/lib/x64/
+!Project/Externals/WebView2/lib/x64/WebView2Loader.dll
+!Project/Externals/WebView2/lib/x64/WebView2Loader.dll.lib
+
 # Visual Studio 2015/2017 cache/options directory
 .vs/
 # Uncomment if you have tasks that create the project's static files in wwwroot

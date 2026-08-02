@@ -130,6 +130,8 @@ copy /Y "$(ProjectDir)Externals\WebView2\lib\x64\WebView2Loader.dll" "$(OutDir)W
     <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertString.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\FileIO\Directory.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\FileIO\JSON.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\FileIO\RawFile.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\FileIO\TextFile.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\SourceLocation.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\TemplateLiteral.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\TimeUtils.cpp" />

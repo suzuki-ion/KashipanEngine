@@ -381,10 +381,13 @@
     },
     "editorUI.language": "ja-JP",
     "editorUI.presets.discordAshAdded": true,
+    "editorUI.presets.githubAdded": true,
+    "editorUI.presets.googleAdded": true,
     "editorUI.presets.misskeyAdded": true,
     "editorUI.presets.misskeyMiLightAdded": true,
     "editorUI.presets.steamAdded": true,
     "editorUI.presets.unityAdded": true,
+    "editorUI.presets.youtubeAdded": true,
     "editorUI.style": {
         "childBorderSize": 2.0,
         "childRounding": 16.0,

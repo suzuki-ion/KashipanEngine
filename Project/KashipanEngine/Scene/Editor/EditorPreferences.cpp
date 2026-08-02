@@ -401,6 +401,320 @@ ImGuiStyle BuildSteamStyle() {
     return style;
 }
 
+/// @brief GitHubのダークテーマに近い配色を組み立てる。デザインシステム「Primer」の色トークンを基にしている
+///        （出典: https://primer.style/primitives/colors/ ほか。#0d1117/#161b22/#30363d/#e6edf3/#58a6ff）
+ImGuiStyle BuildGitHubStyle() {
+    ImGuiStyle style;
+    ImGui::StyleColorsDark(&style);
+    ImVec4 *c = style.Colors;
+
+    const ImVec4 bg(0.051f, 0.067f, 0.090f, 1.00f);          // canvas.default(dark): #0d1117
+    const ImVec4 panel(0.086f, 0.106f, 0.133f, 1.00f);       // canvas.subtle(dark): #161b22
+    const ImVec4 panelHighlight(0.118f, 0.145f, 0.180f, 1.00f); // panelを少し明るく
+    const ImVec4 buttonBg(0.150f, 0.180f, 0.220f, 1.00f);
+    const ImVec4 buttonHoverBg(0.188f, 0.212f, 0.239f, 1.00f); // border.default(dark): #30363d
+    const ImVec4 accent(0.345f, 0.651f, 1.000f, 1.00f);      // accent.fg(dark): #58a6ff
+    const ImVec4 accentHover(0.505f, 0.736f, 1.000f, 1.00f);
+    const ImVec4 accentActive(0.185f, 0.566f, 1.000f, 1.00f);
+    const ImVec4 accentedBg(0.345f, 0.651f, 1.000f, 0.15f);  // accentをalpha<0.15>
+    const ImVec4 fg(0.902f, 0.929f, 0.953f, 1.00f);          // fg.default(dark): #e6edf3
+    const ImVec4 divider(0.188f, 0.212f, 0.239f, 1.00f);     // border.default(dark): #30363d
+    const ImVec4 error(0.973f, 0.318f, 0.286f, 1.00f);       // danger.fg(dark): #f85149
+
+    c[ImGuiCol_Text] = fg;
+    c[ImGuiCol_TextDisabled] = ImVec4(fg.x, fg.y, fg.z, 0.55f);
+    c[ImGuiCol_WindowBg] = bg;
+    c[ImGuiCol_ChildBg] = bg;
+    c[ImGuiCol_PopupBg] = panelHighlight;
+    c[ImGuiCol_Border] = divider;
+    c[ImGuiCol_BorderShadow] = ImVec4(0, 0, 0, 0);
+    c[ImGuiCol_FrameBg] = panel;
+    c[ImGuiCol_FrameBgHovered] = panelHighlight;
+    c[ImGuiCol_FrameBgActive] = buttonHoverBg;
+    c[ImGuiCol_TitleBg] = bg;
+    c[ImGuiCol_TitleBgActive] = panel;
+    c[ImGuiCol_TitleBgCollapsed] = bg;
+    c[ImGuiCol_MenuBarBg] = panel;
+    c[ImGuiCol_ScrollbarBg] = bg;
+    c[ImGuiCol_ScrollbarGrab] = buttonBg;
+    c[ImGuiCol_ScrollbarGrabHovered] = buttonHoverBg;
+    c[ImGuiCol_ScrollbarGrabActive] = accent;
+    c[ImGuiCol_CheckMark] = accent;
+    c[ImGuiCol_SliderGrab] = accent;
+    c[ImGuiCol_SliderGrabActive] = accentActive;
+    c[ImGuiCol_Button] = buttonBg;
+    c[ImGuiCol_ButtonHovered] = buttonHoverBg;
+    c[ImGuiCol_ButtonActive] = accentActive;
+    c[ImGuiCol_Header] = accentedBg;
+    c[ImGuiCol_HeaderHovered] = accentHover;
+    c[ImGuiCol_HeaderActive] = accentActive;
+    c[ImGuiCol_Separator] = divider;
+    c[ImGuiCol_SeparatorHovered] = accentHover;
+    c[ImGuiCol_SeparatorActive] = accentActive;
+    c[ImGuiCol_ResizeGrip] = buttonBg;
+    c[ImGuiCol_ResizeGripHovered] = accentHover;
+    c[ImGuiCol_ResizeGripActive] = accentActive;
+    c[ImGuiCol_Tab] = panel;
+    c[ImGuiCol_TabHovered] = accentHover;
+    c[ImGuiCol_TabSelected] = accent;
+    c[ImGuiCol_TabDimmed] = bg;
+    c[ImGuiCol_TabDimmedSelected] = panel;
+    c[ImGuiCol_DockingPreview] = accentedBg;
+    c[ImGuiCol_DockingEmptyBg] = bg;
+    c[ImGuiCol_TextSelectedBg] = accentedBg;
+    c[ImGuiCol_DragDropTarget] = accentHover;
+    c[ImGuiCol_NavCursor] = accent;
+    c[ImGuiCol_NavWindowingHighlight] = accentHover;
+    c[ImGuiCol_PlotLinesHovered] = error;
+    c[ImGuiCol_PlotHistogramHovered] = error;
+
+    style.WindowRounding = 6.0f;
+    style.FrameRounding = 6.0f;
+    style.GrabRounding = 6.0f;
+    style.TabRounding = 6.0f;
+    style.PopupRounding = 6.0f;
+    style.ChildRounding = 6.0f;
+    return style;
+}
+
+/// @brief YouTubeのライトテーマに近い配色を組み立てる。ブランドカラーの赤をアクセントに使用
+///        （出典: 各種配色まとめサイトで広く一致する値。#ffffff/#f2f2f2/#0f0f0f/#606060/#ff0000）
+ImGuiStyle BuildYouTubeLightStyle() {
+    ImGuiStyle style;
+    ImGui::StyleColorsLight(&style);
+    ImVec4 *c = style.Colors;
+
+    const ImVec4 bg(1.000f, 1.000f, 1.000f, 1.00f);          // 背景: #ffffff
+    const ImVec4 panel(0.949f, 0.949f, 0.949f, 1.00f);       // チップ・パネル背景: #f2f2f2
+    const ImVec4 panelHighlight(0.898f, 0.898f, 0.898f, 1.00f); // 区切り線と同色: #e5e5e5
+    const ImVec4 buttonBg(0.949f, 0.949f, 0.949f, 1.00f);
+    const ImVec4 buttonHoverBg(0.898f, 0.898f, 0.898f, 1.00f);
+    const ImVec4 accent(1.000f, 0.000f, 0.000f, 1.00f);      // ブランドカラーの赤: #ff0000
+    const ImVec4 accentHover(1.000f, 0.160f, 0.160f, 1.00f);
+    const ImVec4 accentActive(0.840f, 0.000f, 0.000f, 1.00f);
+    const ImVec4 accentedBg(1.000f, 0.000f, 0.000f, 0.12f);  // accentをalpha<0.12>
+    const ImVec4 fg(0.059f, 0.059f, 0.059f, 1.00f);          // 文字色: #0f0f0f
+    const ImVec4 divider(0.898f, 0.898f, 0.898f, 1.00f);     // #e5e5e5
+    // 公式に明確なエラー色の定義は無いため、赤いアクセントとの区別のみを目的とした近似値を使用
+    const ImVec4 error(0.906f, 0.298f, 0.235f, 1.00f);
+
+    c[ImGuiCol_Text] = fg;
+    c[ImGuiCol_TextDisabled] = ImVec4(fg.x, fg.y, fg.z, 0.55f);
+    c[ImGuiCol_WindowBg] = bg;
+    c[ImGuiCol_ChildBg] = bg;
+    c[ImGuiCol_PopupBg] = bg;
+    c[ImGuiCol_Border] = divider;
+    c[ImGuiCol_BorderShadow] = ImVec4(0, 0, 0, 0);
+    c[ImGuiCol_FrameBg] = panel;
+    c[ImGuiCol_FrameBgHovered] = panelHighlight;
+    c[ImGuiCol_FrameBgActive] = buttonHoverBg;
+    c[ImGuiCol_TitleBg] = bg;
+    c[ImGuiCol_TitleBgActive] = panel;
+    c[ImGuiCol_TitleBgCollapsed] = bg;
+    c[ImGuiCol_MenuBarBg] = panel;
+    c[ImGuiCol_ScrollbarBg] = bg;
+    c[ImGuiCol_ScrollbarGrab] = buttonBg;
+    c[ImGuiCol_ScrollbarGrabHovered] = buttonHoverBg;
+    c[ImGuiCol_ScrollbarGrabActive] = accent;
+    c[ImGuiCol_CheckMark] = accent;
+    c[ImGuiCol_SliderGrab] = accent;
+    c[ImGuiCol_SliderGrabActive] = accentActive;
+    c[ImGuiCol_Button] = buttonBg;
+    c[ImGuiCol_ButtonHovered] = buttonHoverBg;
+    c[ImGuiCol_ButtonActive] = accentActive;
+    c[ImGuiCol_Header] = accentedBg;
+    c[ImGuiCol_HeaderHovered] = accentHover;
+    c[ImGuiCol_HeaderActive] = accentActive;
+    c[ImGuiCol_Separator] = divider;
+    c[ImGuiCol_SeparatorHovered] = accentHover;
+    c[ImGuiCol_SeparatorActive] = accentActive;
+    c[ImGuiCol_ResizeGrip] = buttonBg;
+    c[ImGuiCol_ResizeGripHovered] = accentHover;
+    c[ImGuiCol_ResizeGripActive] = accentActive;
+    c[ImGuiCol_Tab] = panel;
+    c[ImGuiCol_TabHovered] = accentHover;
+    c[ImGuiCol_TabSelected] = accent;
+    c[ImGuiCol_TabDimmed] = bg;
+    c[ImGuiCol_TabDimmedSelected] = panel;
+    c[ImGuiCol_DockingPreview] = accentedBg;
+    c[ImGuiCol_DockingEmptyBg] = bg;
+    c[ImGuiCol_TextSelectedBg] = accentedBg;
+    c[ImGuiCol_DragDropTarget] = accentHover;
+    c[ImGuiCol_NavCursor] = accent;
+    c[ImGuiCol_NavWindowingHighlight] = accentHover;
+    c[ImGuiCol_PlotLinesHovered] = error;
+    c[ImGuiCol_PlotHistogramHovered] = error;
+
+    // YouTubeのチップ・サムネイル・ボタンは丸みが強いため角丸を大きめにする
+    style.WindowRounding = 8.0f;
+    style.FrameRounding = 8.0f;
+    style.GrabRounding = 8.0f;
+    style.TabRounding = 8.0f;
+    style.PopupRounding = 8.0f;
+    style.ChildRounding = 8.0f;
+    return style;
+}
+
+/// @brief YouTubeのダークテーマに近い配色を組み立てる（BuildYouTubeLightStyleのダーク版）
+///        （出典: 各種配色まとめサイトで広く一致する値。#0f0f0f/#212121/#272727/#aaaaaa/#ff0000）
+ImGuiStyle BuildYouTubeDarkStyle() {
+    ImGuiStyle style;
+    ImGui::StyleColorsDark(&style);
+    ImVec4 *c = style.Colors;
+
+    const ImVec4 bg(0.059f, 0.059f, 0.059f, 1.00f);          // 背景: #0f0f0f
+    const ImVec4 panel(0.129f, 0.129f, 0.129f, 1.00f);       // メニュー・引き出し背景: #212121
+    const ImVec4 panelHighlight(0.153f, 0.153f, 0.153f, 1.00f); // チップ・ホバー: #272727
+    const ImVec4 buttonBg(0.129f, 0.129f, 0.129f, 1.00f);
+    const ImVec4 buttonHoverBg(0.188f, 0.188f, 0.188f, 1.00f); // 区切り線相当: #303030
+    const ImVec4 accent(1.000f, 0.000f, 0.000f, 1.00f);      // ブランドカラーの赤: #ff0000
+    const ImVec4 accentHover(1.000f, 0.160f, 0.160f, 1.00f);
+    const ImVec4 accentActive(0.840f, 0.000f, 0.000f, 1.00f);
+    const ImVec4 accentedBg(1.000f, 0.000f, 0.000f, 0.15f);  // accentをalpha<0.15>
+    const ImVec4 fg(1.000f, 1.000f, 1.000f, 1.00f);          // 文字色: #ffffff
+    const ImVec4 divider(0.188f, 0.188f, 0.188f, 1.00f);     // #303030
+    // 公式に明確なエラー色の定義は無いため、赤いアクセントとの区別のみを目的とした近似値を使用
+    const ImVec4 error(0.973f, 0.400f, 0.322f, 1.00f);
+
+    c[ImGuiCol_Text] = fg;
+    c[ImGuiCol_TextDisabled] = ImVec4(fg.x, fg.y, fg.z, 0.55f);
+    c[ImGuiCol_WindowBg] = bg;
+    c[ImGuiCol_ChildBg] = bg;
+    c[ImGuiCol_PopupBg] = panelHighlight;
+    c[ImGuiCol_Border] = divider;
+    c[ImGuiCol_BorderShadow] = ImVec4(0, 0, 0, 0);
+    c[ImGuiCol_FrameBg] = panel;
+    c[ImGuiCol_FrameBgHovered] = panelHighlight;
+    c[ImGuiCol_FrameBgActive] = buttonHoverBg;
+    c[ImGuiCol_TitleBg] = bg;
+    c[ImGuiCol_TitleBgActive] = panel;
+    c[ImGuiCol_TitleBgCollapsed] = bg;
+    c[ImGuiCol_MenuBarBg] = panel;
+    c[ImGuiCol_ScrollbarBg] = bg;
+    c[ImGuiCol_ScrollbarGrab] = buttonBg;
+    c[ImGuiCol_ScrollbarGrabHovered] = buttonHoverBg;
+    c[ImGuiCol_ScrollbarGrabActive] = accent;
+    c[ImGuiCol_CheckMark] = accent;
+    c[ImGuiCol_SliderGrab] = accent;
+    c[ImGuiCol_SliderGrabActive] = accentActive;
+    c[ImGuiCol_Button] = buttonBg;
+    c[ImGuiCol_ButtonHovered] = buttonHoverBg;
+    c[ImGuiCol_ButtonActive] = accentActive;
+    c[ImGuiCol_Header] = accentedBg;
+    c[ImGuiCol_HeaderHovered] = accentHover;
+    c[ImGuiCol_HeaderActive] = accentActive;
+    c[ImGuiCol_Separator] = divider;
+    c[ImGuiCol_SeparatorHovered] = accentHover;
+    c[ImGuiCol_SeparatorActive] = accentActive;
+    c[ImGuiCol_ResizeGrip] = buttonBg;
+    c[ImGuiCol_ResizeGripHovered] = accentHover;
+    c[ImGuiCol_ResizeGripActive] = accentActive;
+    c[ImGuiCol_Tab] = panel;
+    c[ImGuiCol_TabHovered] = accentHover;
+    c[ImGuiCol_TabSelected] = accent;
+    c[ImGuiCol_TabDimmed] = bg;
+    c[ImGuiCol_TabDimmedSelected] = panel;
+    c[ImGuiCol_DockingPreview] = accentedBg;
+    c[ImGuiCol_DockingEmptyBg] = bg;
+    c[ImGuiCol_TextSelectedBg] = accentedBg;
+    c[ImGuiCol_DragDropTarget] = accentHover;
+    c[ImGuiCol_NavCursor] = accent;
+    c[ImGuiCol_NavWindowingHighlight] = accentHover;
+    c[ImGuiCol_PlotLinesHovered] = error;
+    c[ImGuiCol_PlotHistogramHovered] = error;
+
+    style.WindowRounding = 8.0f;
+    style.FrameRounding = 8.0f;
+    style.GrabRounding = 8.0f;
+    style.TabRounding = 8.0f;
+    style.PopupRounding = 8.0f;
+    style.ChildRounding = 8.0f;
+    return style;
+}
+
+/// @brief Googleのマテリアルデザイン系UIに近い配色を組み立てる。背景は白をベースに、
+///        Google系アプリのアイコン・ローディングスピナー等で使われる赤・青・黄・緑の4色を
+///        単なる「青がメイン」ではなく、役割ごとに複数の場所へ意図的に散りばめて使用する
+///        （出典: Googleのブランドカラーとして広く知られる値。#4285F4/#EA4335/#FBBC05/#34A853）
+ImGuiStyle BuildGoogleStyle() {
+    ImGuiStyle style;
+    ImGui::StyleColorsLight(&style);
+    ImVec4 *c = style.Colors;
+
+    const ImVec4 bg(1.000f, 1.000f, 1.000f, 1.00f);          // 背景: #ffffff
+    const ImVec4 panel(0.973f, 0.976f, 0.980f, 1.00f);       // パネル背景（Google Grey 50）: #f8f9fa
+    const ImVec4 panelHighlight(0.933f, 0.937f, 0.941f, 1.00f); // panelを少し暗く
+    const ImVec4 buttonBg(0.973f, 0.976f, 0.980f, 1.00f);
+    const ImVec4 buttonHoverBg(0.855f, 0.863f, 0.878f, 1.00f); // 境界線（Google Grey 300）: #dadce0
+    const ImVec4 fg(0.125f, 0.129f, 0.141f, 1.00f);          // 文字色（Google Grey 900）: #202124
+    const ImVec4 divider(0.855f, 0.863f, 0.878f, 1.00f);     // #dadce0
+
+    // Google特有の4色（青をメインの操作色、赤・黄・緑を他の役割に割り当てて随所に使う）
+    const ImVec4 blue(0.259f, 0.522f, 0.957f, 1.00f);        // Googleブルー: #4285F4（主要な操作色）
+    const ImVec4 blueHover(0.410f, 0.619f, 0.966f, 1.00f);
+    const ImVec4 blueActive(0.108f, 0.424f, 0.948f, 1.00f);
+    const ImVec4 blueBg(0.259f, 0.522f, 0.957f, 0.12f);      // blueをalpha<0.12>
+    const ImVec4 red(0.918f, 0.263f, 0.208f, 1.00f);         // Googleレッド: #EA4335（強調・エラー・ドラッグ中）
+    const ImVec4 yellow(0.984f, 0.737f, 0.020f, 1.00f);      // Googleイエロー: #FBBC05（ホバー・注意を引く箇所）
+    const ImVec4 green(0.204f, 0.659f, 0.325f, 1.00f);       // Googleグリーン: #34A853（チェック・確定・ドロップ先）
+
+    c[ImGuiCol_Text] = fg;
+    c[ImGuiCol_TextDisabled] = ImVec4(fg.x, fg.y, fg.z, 0.55f);
+    c[ImGuiCol_WindowBg] = bg;
+    c[ImGuiCol_ChildBg] = bg;
+    c[ImGuiCol_PopupBg] = bg;
+    c[ImGuiCol_Border] = divider;
+    c[ImGuiCol_BorderShadow] = ImVec4(0, 0, 0, 0);
+    c[ImGuiCol_FrameBg] = panel;
+    c[ImGuiCol_FrameBgHovered] = panelHighlight;
+    c[ImGuiCol_FrameBgActive] = buttonHoverBg;
+    c[ImGuiCol_TitleBg] = bg;
+    c[ImGuiCol_TitleBgActive] = panel;
+    c[ImGuiCol_TitleBgCollapsed] = bg;
+    c[ImGuiCol_MenuBarBg] = panel;
+    c[ImGuiCol_ScrollbarBg] = bg;
+    c[ImGuiCol_ScrollbarGrab] = buttonBg;
+    c[ImGuiCol_ScrollbarGrabHovered] = buttonHoverBg;
+    c[ImGuiCol_ScrollbarGrabActive] = red;               // スクロールバーを掴んでいる間は赤
+    c[ImGuiCol_CheckMark] = green;                       // チェックマークは緑（「確定」のイメージ）
+    c[ImGuiCol_SliderGrab] = blue;
+    c[ImGuiCol_SliderGrabActive] = yellow;               // スライダー操作中は黄色
+    c[ImGuiCol_Button] = buttonBg;
+    c[ImGuiCol_ButtonHovered] = buttonHoverBg;
+    c[ImGuiCol_ButtonActive] = blueActive;
+    c[ImGuiCol_Header] = blueBg;
+    c[ImGuiCol_HeaderHovered] = blueHover;
+    c[ImGuiCol_HeaderActive] = blueActive;
+    c[ImGuiCol_Separator] = divider;
+    c[ImGuiCol_SeparatorHovered] = blueHover;
+    c[ImGuiCol_SeparatorActive] = blueActive;
+    c[ImGuiCol_ResizeGrip] = buttonBg;
+    c[ImGuiCol_ResizeGripHovered] = yellow;              // リサイズハンドルはホバーで黄色に
+    c[ImGuiCol_ResizeGripActive] = red;                  // ドラッグ中は赤に
+    c[ImGuiCol_Tab] = panel;
+    c[ImGuiCol_TabHovered] = blueHover;
+    c[ImGuiCol_TabSelected] = blue;
+    c[ImGuiCol_TabDimmed] = bg;
+    c[ImGuiCol_TabDimmedSelected] = panel;
+    c[ImGuiCol_DockingPreview] = green;                  // ドッキング先のプレビューは緑（「ここに置ける」の合図）
+    c[ImGuiCol_DockingEmptyBg] = bg;
+    c[ImGuiCol_TextSelectedBg] = blueBg;
+    c[ImGuiCol_DragDropTarget] = green;                  // ドラッグ&ドロップの受け入れ先も緑
+    c[ImGuiCol_NavCursor] = blue;
+    c[ImGuiCol_NavWindowingHighlight] = yellow;          // Alt+Tab相当のウィンドウ切り替えは黄色でハイライト
+    c[ImGuiCol_PlotLinesHovered] = red;
+    c[ImGuiCol_PlotHistogramHovered] = red;
+
+    // Material Designは角丸が特徴的なため大きめにする
+    style.WindowRounding = 8.0f;
+    style.FrameRounding = 8.0f;
+    style.GrabRounding = 8.0f;
+    style.TabRounding = 8.0f;
+    style.PopupRounding = 8.0f;
+    style.ChildRounding = 8.0f;
+    return style;
+}
+
 } // namespace
 
 void EditorPreferences::RefreshFontFileList() {
@@ -450,6 +764,25 @@ void EditorPreferences::EnsureDefaultPresets() {
     if (!UserSettings::GetBool("editorUI.presets.steamAdded", false)) {
         UserSettings::SetColorPreset("Steam", ColorsToJSON(BuildSteamStyle().Colors));
         UserSettings::SetBool("editorUI.presets.steamAdded", true);
+    }
+
+    // GitHub風プリセットも同様に、専用フラグで1度だけ追加する
+    if (!UserSettings::GetBool("editorUI.presets.githubAdded", false)) {
+        UserSettings::SetColorPreset("GitHub", ColorsToJSON(BuildGitHubStyle().Colors));
+        UserSettings::SetBool("editorUI.presets.githubAdded", true);
+    }
+
+    // YouTube風プリセット（ライト/ダーク）も同様に、専用フラグで1度だけ追加する
+    if (!UserSettings::GetBool("editorUI.presets.youtubeAdded", false)) {
+        UserSettings::SetColorPreset("YouTube-Light", ColorsToJSON(BuildYouTubeLightStyle().Colors));
+        UserSettings::SetColorPreset("YouTube-Dark", ColorsToJSON(BuildYouTubeDarkStyle().Colors));
+        UserSettings::SetBool("editorUI.presets.youtubeAdded", true);
+    }
+
+    // Google風プリセットも同様に、専用フラグで1度だけ追加する
+    if (!UserSettings::GetBool("editorUI.presets.googleAdded", false)) {
+        UserSettings::SetColorPreset("Google", ColorsToJSON(BuildGoogleStyle().Colors));
+        UserSettings::SetBool("editorUI.presets.googleAdded", true);
     }
 }
 

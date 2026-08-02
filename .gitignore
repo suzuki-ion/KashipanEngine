@@ -34,6 +34,15 @@ Project/UserSettings.json
 Project/UserSettings/
 Project/Projects/*/EditorSettings.json
 
+# AngelScript関連の生成物
+# AS_DEBUG/: Debug構成実行時に生成されるAngelScriptのデバッグ情報フォルダ
+# lib/*.lib, projects内の*.obj: AngelScript自体のビルドで生成される中間・成果物
+# as.predefined: エンジン起動時にVSCodeの補完用として自動生成されるファイル
+AS_DEBUG/
+Project/Externals/angelscript/lib/*.lib
+Project/Externals/angelscript/projects/**/*.obj
+as.predefined
+
 # ビルド後イベントが生成するエンジンルートの位置を示すマーカー
 EngineRoot.txt
 

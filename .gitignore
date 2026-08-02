@@ -28,8 +28,10 @@ LastSceneBackup/
 
 # エディターの個人設定。開発者ごとのローカル設定のため共有しない
 # UserSettings.json: 全プロジェクト共有の設定（表示倍率・フォント・配色・前回開いたプロジェクト）
+# UserSettings/: 上記を分割保存する新形式（配色プリセット・レイアウトプリセット等）
 # EditorSettings.json: プロジェクトごとのエディターUIの状態（ツリーの開閉など）
 Project/UserSettings.json
+Project/UserSettings/
 Project/Projects/*/EditorSettings.json
 
 # ビルド後イベントが生成するエンジンルートの位置を示すマーカー

@@ -310,7 +310,6 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
     <None Include="Externals\DirectXTex\Shaders\Compiled\BC7Encode_TryMode137CS_cs40.inc" />
     <None Include="Externals\DirectXTex\Shaders\Compiled\BC7Encode_TryMode456CS.inc" />
     <None Include="Externals\DirectXTex\Shaders\Compiled\BC7Encode_TryMode456CS_cs40.inc" />
-    <None Include="KashipanEngine\KashipanEngine.vcxproj" />
     <None Include="Reference\Editor\00_Index.html" />
     <None Include="Reference\Editor\Architecture\01_Overview.html" />
     <None Include="Reference\Editor\Components\Basic\Animator.html" />

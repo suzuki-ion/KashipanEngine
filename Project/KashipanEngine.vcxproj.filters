@@ -2128,9 +2128,6 @@
     <None Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj">
       <Filter>Externals\DirectXTex</Filter>
     </None>
-    <None Include="KashipanEngine\KashipanEngine.vcxproj">
-      <Filter>KashipanEngine</Filter>
-    </None>
     <None Include="Reference\Editor\00_Index.html">
       <Filter>Reference\Editor</Filter>
     </None>

@@ -93,7 +93,9 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PreBuildEvent>
-      <Command>powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\DownloadAssimpLibs.ps1" -ProjectDir "$(ProjectDir)." -Configuration "$(Configuration)"</Command>
+      <Command>powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\DownloadAssimpLibs.ps1" -ProjectDir "$(ProjectDir)." -Configuration "$(Configuration)"
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\DownloadReactPhysics3DLibs.ps1" -ProjectDir "$(ProjectDir)." -Configuration "$(Configuration)"
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\DownloadTestModels.ps1" -ProjectDir "$(ProjectDir)."</Command>
     </PreBuildEvent>
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
@@ -130,7 +132,9 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <PreBuildEvent>
-      <Command>powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\DownloadAssimpLibs.ps1" -ProjectDir "$(ProjectDir)." -Configuration "$(Configuration)"</Command>
+      <Command>powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\DownloadAssimpLibs.ps1" -ProjectDir "$(ProjectDir)." -Configuration "$(Configuration)"
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\DownloadReactPhysics3DLibs.ps1" -ProjectDir "$(ProjectDir)." -Configuration "$(Configuration)"
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\DownloadTestModels.ps1" -ProjectDir "$(ProjectDir)."</Command>
     </PreBuildEvent>
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
@@ -169,7 +173,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyRele
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'">
     <PreBuildEvent>
-      <Command>powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\DownloadAssimpLibs.ps1" -ProjectDir "$(ProjectDir)." -Configuration "$(Configuration)"</Command>
+      <Command>powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\DownloadAssimpLibs.ps1" -ProjectDir "$(ProjectDir)." -Configuration "$(Configuration)"
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\DownloadReactPhysics3DLibs.ps1" -ProjectDir "$(ProjectDir)." -Configuration "$(Configuration)"
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\DownloadTestModels.ps1" -ProjectDir "$(ProjectDir)."</Command>
     </PreBuildEvent>
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>

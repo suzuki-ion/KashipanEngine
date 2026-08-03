@@ -45,6 +45,15 @@ as.predefined
 Project/Externals/Assimp/lib/Debug/assimp-vc143-mtd.lib
 Project/Externals/Assimp/lib/Release/assimp-vc143-mt.lib
 
+# ReactPhysics3Dの静的ライブラリ（Assimpと同様の理由でリポジトリに含めない。
+# ビルド前イベント(Tools/DownloadReactPhysics3DLibs.ps1)がGitHub Releaseから取得して配置する）
+Project/Externals/ReactPhysics3D/debug/lib/reactphysics3d.lib
+Project/Externals/ReactPhysics3D/lib/reactphysics3d.lib
+
+# テスト用3Dモデル（サイズが大きくリポジトリに含めない。
+# ビルド前イベント(Tools/DownloadTestModels.ps1)がGitHub Releaseから取得して配置する）
+Project/Projects/JobHuntingGame/Assets/Application/Model/TestModels/living_room/living_room.obj
+
 # ビルド後イベントが生成するエンジンルートの位置を示すマーカー
 EngineRoot.txt
 

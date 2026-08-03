@@ -9,6 +9,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Windows PowerShell(5.1)は既定でTLS1.2が無効な場合があり、GitHubへの接続が
+# サイレントに失敗することがあるため明示的に有効化する。
+[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+
 # $(ProjectDir) は末尾が "\" のため、末尾に "." を付けて渡されている。
 # ここで取り除いて実際のフォルダパスに戻す。
 function Remove-TrailingDot {
@@ -56,10 +60,10 @@ $tempPath = "$destPath.download"
 Write-Host "DownloadAssimpLibs: '$url' から '$destPath' へダウンロードします"
 
 try {
-    Invoke-WebRequest -Uri $url -OutFile $tempPath -UseBasicParsing
+    Invoke-WebRequest -Uri $url -OutFile $tempPath -UseBasicParsing -ErrorAction Stop
 } catch {
     if (Test-Path -LiteralPath $tempPath) { Remove-Item -LiteralPath $tempPath -Force }
-    throw "DownloadAssimpLibs: ダウンロードに失敗しました ($url): $_"
+    throw "DownloadAssimpLibs: ダウンロードに失敗しました ($url): $($_.Exception.Message)"
 }
 
 $downloaded = Get-Item -LiteralPath $tempPath

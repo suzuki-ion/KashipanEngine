@@ -57,9 +57,12 @@ Scene::Scene(const JSON &sceneData) : Scene(std::string("Unnamed Scene")) {
 }
 
 Scene::~Scene() {
+#if !defined(RELEASE_BUILD)
+    // Releaseビルドではデバッグ用のバックアップ書き出しを行わない
     json sceneData = SaveToJSON();
     std::string filePath = std::string(kSceneBackupDirectory) + name_ + ".json";
     SaveJSON(sceneData, filePath);
+#endif
     ClearSceneObjects();
     ClearSceneComponents();
 }

@@ -63,12 +63,14 @@ void SceneScriptEngine::Initialize() {
     }
 #endif
 
-    // VSCodeのAngelScript Language Server用の型定義ファイルを生成する
+#if !defined(RELEASE_BUILD)
+    // VSCodeのAngelScript Language Server用の型定義ファイルを生成する（Releaseビルドでは生成しない）
     if (GenerateScriptPredefinedFile(engine_, ProjectPaths::InProjectRoot("as.predefined"))) {
         Log(Translation("engine.script.predefined.generated"));
     } else {
         Log(Translation("engine.script.predefined.generate.failed"), LogSeverity::Warning);
     }
+#endif
 }
 
 void SceneScriptEngine::AttachDebugger(asIScriptContext *context) const {

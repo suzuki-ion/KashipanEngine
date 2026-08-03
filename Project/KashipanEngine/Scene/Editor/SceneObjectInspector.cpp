@@ -115,14 +115,44 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
                 "inspector.component." + comp->GetComponentType());
         // ヒエラルキーと同様に、D&Dでコンポーネント自体の処理優先順位を並び替えられるようにする
         DragAndDropComponent(comp);
-        if (headerOpen) {
-            if (ImGui::BeginPopupContextItem("ComponentContextMenu")) {
-                if (ImGui::MenuItem(TranslationLabel("editor.component.remove"))) {
-                    componentToRemove = comp;
-                }
-                ImGui::EndPopup();
-            }
 
+        // 右クリックメニューはツリーの開閉状態に関わらず表示する（ヘッダー項目自体への右クリックで開く）
+        if (ImGui::BeginPopupContextItem("ComponentContextMenu")) {
+            if (ImGui::MenuItem(TranslationLabel("editor.component.copy"))) {
+                componentClipboard_ = obj->SaveComponentToJson(comp);
+                componentClipboardType_ = comp->GetComponentType();
+            }
+            const bool canPaste = !componentClipboard_.empty() && componentClipboardType_ == comp->GetComponentType();
+            if (ImGui::MenuItem(TranslationLabel("editor.component.paste"), nullptr, false, canPaste)) {
+                // 貼り付け先が変わるため、進行中の編集セッションを先に確定させる
+                CommitPendingEdit();
+                JSON pasteBefore = obj->SaveComponentToJson(comp);
+                obj->LoadComponentFromJson(comp, componentClipboard_);
+                JSON pasteAfter = obj->SaveComponentToJson(comp);
+                if (commands_ && pasteBefore != pasteAfter) {
+                    commands_->PushExecuted(std::make_unique<ComponentEditCommand>(obj, comp, pasteBefore, pasteAfter));
+                }
+            }
+            // 既存コンポーネントの型に関わらず、クリップボードの内容から新規コンポーネントとして追加する
+            if (ImGui::MenuItem(TranslationLabel("editor.component.pastenew"), nullptr, false, !componentClipboard_.empty())) {
+                if (commands_) {
+                    commands_->Execute(std::make_unique<AddComponentCommand>(obj, componentClipboardType_, componentClipboard_));
+                } else {
+                    auto newComp = CreateObjectComponentByType(componentClipboardType_);
+                    if (newComp) {
+                        IObjectComponent *added = obj->AddComponent(std::move(newComp));
+                        if (added) obj->LoadComponentFromJson(added, componentClipboard_);
+                    }
+                }
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem(TranslationLabel("editor.component.remove"))) {
+                componentToRemove = comp;
+            }
+            ImGui::EndPopup();
+        }
+
+        if (headerOpen) {
             // パラメータ変更をUndo履歴へ積むため、表示前後の状態を比較する
             JSON before = obj->SaveComponentToJson(comp);
             // タグ（分類・判別用の任意文字列。before/afterの間で編集することでUndo対象になる）。
@@ -336,18 +366,70 @@ void SceneObjectInspector::ShowMultiObjectInspector(EmptyObject *primary, const 
         ImGui::SameLine();
         // 開閉状態はコンポーネントの種類ごとに保存される（単一選択時と共有）
         bool headerOpen = EditorSettings::PersistentTreeNode(typeName.c_str(), "inspector.component." + typeName);
-        if (headerOpen) {
-            if (ImGui::BeginPopupContextItem("ComponentContextMenu")) {
-                if (ImGui::MenuItem(TranslationLabel("editor.component.remove"))) {
-                    removeTypeName = typeName;
-                    pendingRemoves.push_back({ primary, comp });
-                    for (auto &[obj, counterpart] : counterparts) {
-                        pendingRemoves.push_back({ obj, counterpart });
+
+        // 右クリックメニューはツリーの開閉状態に関わらず表示する（ヘッダー項目自体への右クリックで開く）
+        if (ImGui::BeginPopupContextItem("ComponentContextMenu")) {
+            if (ImGui::MenuItem(TranslationLabel("editor.component.copy"))) {
+                componentClipboard_ = primary->SaveComponentToJson(comp);
+                componentClipboardType_ = typeName;
+            }
+            const bool canPaste = !componentClipboard_.empty() && componentClipboardType_ == typeName;
+            if (ImGui::MenuItem(TranslationLabel("editor.component.paste"), nullptr, false, canPaste)) {
+                // 貼り付け先が変わるため、進行中の編集セッションを先に確定させる
+                CommitPendingEdit();
+                // 選択中の全オブジェクトの対応コンポーネントへまとめて貼り付ける
+                auto composite = std::make_unique<CompositeCommand>(
+                    Translation("editor.command.editcomponent") + typeName + " (" + std::to_string(counterparts.size() + 1) + Translation("editor.command.objects.suffix") + ")");
+                JSON pasteBefore = primary->SaveComponentToJson(comp);
+                primary->LoadComponentFromJson(comp, componentClipboard_);
+                JSON pasteAfter = primary->SaveComponentToJson(comp);
+                if (pasteBefore != pasteAfter) {
+                    composite->AddCommand(std::make_unique<ComponentEditCommand>(primary, comp, pasteBefore, pasteAfter));
+                }
+                for (auto &[obj, counterpart] : counterparts) {
+                    JSON counterpartBefore = obj->SaveComponentToJson(counterpart);
+                    obj->LoadComponentFromJson(counterpart, componentClipboard_);
+                    JSON counterpartAfter = obj->SaveComponentToJson(counterpart);
+                    if (counterpartBefore != counterpartAfter) {
+                        composite->AddCommand(std::make_unique<ComponentEditCommand>(obj, counterpart, counterpartBefore, counterpartAfter));
                     }
                 }
-                ImGui::EndPopup();
+                if (commands_ && !composite->IsEmpty()) {
+                    commands_->PushExecuted(std::move(composite));
+                }
             }
+            // 既存コンポーネントの型に関わらず、クリップボードの内容から選択中の全オブジェクトへ新規追加する
+            if (ImGui::MenuItem(TranslationLabel("editor.component.pastenew"), nullptr, false, !componentClipboard_.empty())) {
+                if (commands_) {
+                    auto composite = std::make_unique<CompositeCommand>(
+                        Translation("editor.command.addcomponent") + componentClipboardType_ + " (" + std::to_string(selectedObjects.size()) + Translation("editor.command.objects.suffix") + ")");
+                    for (auto *selected : selectedObjects) {
+                        if (selected) composite->AddCommand(std::make_unique<AddComponentCommand>(selected, componentClipboardType_, componentClipboard_));
+                    }
+                    commands_->Execute(std::move(composite));
+                } else {
+                    for (auto *selected : selectedObjects) {
+                        if (!selected) continue;
+                        auto newComp = CreateObjectComponentByType(componentClipboardType_);
+                        if (newComp) {
+                            IObjectComponent *added = selected->AddComponent(std::move(newComp));
+                            if (added) selected->LoadComponentFromJson(added, componentClipboard_);
+                        }
+                    }
+                }
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem(TranslationLabel("editor.component.remove"))) {
+                removeTypeName = typeName;
+                pendingRemoves.push_back({ primary, comp });
+                for (auto &[obj, counterpart] : counterparts) {
+                    pendingRemoves.push_back({ obj, counterpart });
+                }
+            }
+            ImGui::EndPopup();
+        }
 
+        if (headerOpen) {
             // パラメータ変更をUndo履歴へ積むため、表示前後の状態を比較する
             JSON before = primary->SaveComponentToJson(comp);
             // タグ（分類・判別用の任意文字列）。コンポーネント固有の内容とは異なり、子ウィンドウ（カード）には含めない

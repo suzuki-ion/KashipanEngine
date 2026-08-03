@@ -32,11 +32,11 @@
                     "customData": {
                         "height": 1080,
                         "interceptedMessages": [],
-                        "syncWithTransform": true,
+                        "syncWithTransform": false,
                         "title": "Normal Window",
                         "width": 1920
                     },
-                    "isActive": false,
+                    "isActive": true,
                     "priority": 1,
                     "tag": ""
                 },
@@ -51,6 +51,7 @@
                         "saveDirectory": "Screenshots",
                         "saveFileNamePrefix": "Screenshot",
                         "saveFormat": "png",
+                        "viewerId": 5194604469818077770,
                         "width": 1920
                     },
                     "isActive": true,

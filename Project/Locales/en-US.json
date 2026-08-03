@@ -1340,6 +1340,9 @@
 
 		//--------- editor.component ---------//
 		"editor.component.add": "Add Component",
+		"editor.component.copy": "Copy Component",
+		"editor.component.paste": "Paste Component",
+		"editor.component.pastenew": "Paste as New Component",
 		"editor.component.remove": "Remove Component",
 		"editor.component.tag": "Tag",
 

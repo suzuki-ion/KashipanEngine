@@ -76,11 +76,7 @@
                             true,
                             true
                         ],
-                        "syncRotation": [
-                            true,
-                            true,
-                            true
-                        ],
+                        "syncRotation": true,
                         "syncScale": [
                             true,
                             true,
@@ -113,11 +109,7 @@
                             true,
                             true
                         ],
-                        "syncRotation": [
-                            true,
-                            true,
-                            true
-                        ],
+                        "syncRotation": true,
                         "syncScale": [
                             true,
                             true,
@@ -150,11 +142,7 @@
                             true,
                             true
                         ],
-                        "syncRotation": [
-                            true,
-                            true,
-                            true
-                        ],
+                        "syncRotation": true,
                         "syncScale": [
                             true,
                             true,

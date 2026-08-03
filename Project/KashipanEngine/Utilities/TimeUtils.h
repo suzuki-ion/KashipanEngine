@@ -5,6 +5,10 @@ namespace KashipanEngine {
 class GameEngine;
 /// @brief デルタタイムの更新（GameEngine専用）
 void UpdateDeltaTime(Passkey<GameEngine>);
+/// @brief 次の1フレームのデルタタイムを強制的に0にする（GameEngine専用）
+/// @details シーン切り替え直後などアセット読み込みで実時間が大きく飛んだ直後に呼び、
+///          その時間を次フレームのデルタタイムへ混入させないようにする
+void ResetDeltaTime(Passkey<GameEngine>);
 
 /// @brief 時間記録構造体
 struct TimeRecord {
@@ -67,7 +71,15 @@ void StartTimeMeasurement(const std::string &label);
 TimeRecord EndTimeMeasurement(const std::string &label);
 
 /// @brief 前フレームからの経過時間（秒）を取得する
+/// @details 戻り値は SetDeltaTimeClamp() で設定した上限値でクランプされる
 float GetDeltaTime();
+
+/// @brief デルタタイムのクランプ値（上限）を設定する
+/// @param clamp 上限値（秒）。デフォルトは0.1f
+void SetDeltaTimeClamp(float clamp);
+/// @brief デルタタイムのクランプ値（上限）を取得する
+/// @return 上限値（秒）
+float GetDeltaTimeClamp();
 
 /// @brief 現在の時間を文字列で取得する
 /// @param format フォーマット（Year: %Y, Month: %m, Day: %d, Hour: %H, Minute: %M, Second: %S）

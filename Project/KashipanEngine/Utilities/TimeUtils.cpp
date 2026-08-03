@@ -17,11 +17,16 @@ std::unordered_map<std::string, std::chrono::high_resolution_clock::time_point> 
 std::chrono::high_resolution_clock::time_point sPreviousTime = std::chrono::high_resolution_clock::now();
 /// @brief デルタタイム
 float sDeltaTime = 0.0f;
-/// @brief デルタタイム計測用初回フラグ
-bool sIsFirstDeltaTimeCall = true;
+/// @brief 次回のUpdateDeltaTime呼び出しでデルタタイムを強制的に0にするフラグ
+/// @details 起動直後の初回呼び出しに加え、シーン切り替え直後などの
+///          ResetDeltaTime()呼び出しでも立てられる
+bool sForceNextDeltaTimeZero = true;
 
 /// @brief ゲームスピード
 float sGameSpeed = 1.0f;
+
+/// @brief デルタタイムのクランプ値（上限）
+float sDeltaTimeClamp = 0.1f;
 
 /// @brief タイムゾーン付き現在時刻の取得
 /// @return タイムゾーン付き現在時刻
@@ -34,13 +39,17 @@ auto GetZonedTime() {
 
 void UpdateDeltaTime(Passkey<GameEngine>) {
     auto currentTime = std::chrono::high_resolution_clock::now();
-    if (sIsFirstDeltaTimeCall) {
+    if (sForceNextDeltaTimeZero) {
         sDeltaTime = 0.0f;
-        sIsFirstDeltaTimeCall = false;
+        sForceNextDeltaTimeZero = false;
     } else {
         sDeltaTime = std::chrono::duration<float>(currentTime - sPreviousTime).count();
     }
     sPreviousTime = currentTime;
+}
+
+void ResetDeltaTime(Passkey<GameEngine>) {
+    sForceNextDeltaTimeZero = true;
 }
 
 void SetGameSpeed(float speed) {
@@ -214,7 +223,15 @@ TimeRecord EndTimeMeasurement(const std::string &label) {
 }
 
 float GetDeltaTime() {
-    return sDeltaTime;
+    return std::min(sDeltaTime, sDeltaTimeClamp);
+}
+
+void SetDeltaTimeClamp(float clamp) {
+    sDeltaTimeClamp = clamp;
+}
+
+float GetDeltaTimeClamp() {
+    return sDeltaTimeClamp;
 }
 
 std::string GetNowTimeString(const std::string &format) {

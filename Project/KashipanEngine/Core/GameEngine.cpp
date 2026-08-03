@@ -328,6 +328,9 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
 
         if (sceneManager_ && sceneManager_->CommitPendingSceneChange({})) {
             graphicsEngine_->ReleaseRendererResources({});
+            // シーン構築中のアセット読み込みで実時間が飛んでいるため、
+            // 次フレームのデルタタイムへその時間が混入しないようにする
+            ResetDeltaTime({});
         }
         Window::CommitDestroy({});
         ScreenBuffer::CommitDestroy({});

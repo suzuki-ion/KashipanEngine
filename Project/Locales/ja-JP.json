@@ -1340,6 +1340,9 @@
 
 		//--------- editor.component ---------//
 		"editor.component.add": "コンポーネントを追加",
+		"editor.component.copy": "コンポーネントをコピー",
+		"editor.component.paste": "コンポーネントを貼り付け",
+		"editor.component.pastenew": "新規コンポーネントとして貼り付け",
 		"editor.component.remove": "コンポーネントを削除",
 		"editor.component.tag": "タグ",
 

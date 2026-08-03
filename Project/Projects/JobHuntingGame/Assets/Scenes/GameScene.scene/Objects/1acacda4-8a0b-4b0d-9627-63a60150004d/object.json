@@ -18,7 +18,7 @@
                         },
                         "translate": {
                             "x": 0.0,
-                            "y": 1.0,
+                            "y": 4.0,
                             "z": -2.4532531561760607e-09
                         }
                     },
@@ -113,11 +113,7 @@
                             true,
                             true
                         ],
-                        "syncRotation": [
-                            true,
-                            true,
-                            true
-                        ],
+                        "syncRotation": true,
                         "syncScale": [
                             true,
                             true,
@@ -266,12 +262,31 @@
                                 "z": 0.0
                             }
                         },
+                        "excludeShapes": [],
                         "fixedSpawnPosition": {
                             "x": 0.0,
                             "y": 0.0,
                             "z": 0.0
                         },
                         "gpuSimulation": false,
+                        "includeShapes": [
+                            {
+                                "boxSize": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "capsuleHeight": 1.0,
+                                "capsuleRadius": 0.5,
+                                "center": {
+                                    "x": 0.0,
+                                    "y": -0.5,
+                                    "z": 0.0
+                                },
+                                "sphereRadius": 0.10000000149011612,
+                                "type": 2
+                            }
+                        ],
                         "initialRotation": {
                             "max": {
                                 "x": 360.0,
@@ -356,25 +371,6 @@
                                 "z": 0.0
                             }
                         },
-                        "spawnBoxSizeMax": {
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
-                        },
-                        "spawnBoxSizeMin": {
-                            "x": 0.0,
-                            "y": 0.0,
-                            "z": 0.0
-                        },
-                        "spawnCapsuleHeightMax": 0.10000000149011612,
-                        "spawnCapsuleHeightMin": 0.0,
-                        "spawnCapsuleRadiusMax": 0.5,
-                        "spawnCapsuleRadiusMin": 0.49000000953674316,
-                        "spawnCenter": {
-                            "x": 0.0,
-                            "y": -0.5,
-                            "z": 0.0
-                        },
                         "spawnCount": {
                             "max": 16,
                             "min": 8,
@@ -383,9 +379,6 @@
                         },
                         "spawnOrigin": 2,
                         "spawnParentObjectID": "450287e5-7742-4091-9abf-809076327207",
-                        "spawnShape": 2,
-                        "spawnSphereRadiusMax": 0.10000000149011612,
-                        "spawnSphereRadiusMin": 0.0,
                         "startScale": {
                             "max": {
                                 "x": 1.0,

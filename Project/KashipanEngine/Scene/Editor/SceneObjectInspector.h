@@ -95,6 +95,10 @@ private:
     // Prefabインスタンスの「Revert All」確認モーダル用
     bool isRevertPrefabConfirmRequested_ = false;
     EmptyObject *pendingRevertPrefabTarget_ = nullptr;
+
+    // コンポーネントのコピー＆ペースト用クリップボード（型が一致するコンポーネントにのみ貼り付け可能）
+    JSON componentClipboard_;
+    std::string componentClipboardType_;
 };
 
 } // namespace KashipanEngine

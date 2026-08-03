@@ -6,9 +6,6 @@
 # imgui.ini fille
 [Ii]mgui.ini
 
-# Tools folder
-Tools/
-
 # vcpkg files
 vcpkg_installed/
 vcpkg.json

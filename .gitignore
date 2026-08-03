@@ -40,6 +40,11 @@ Project/Externals/angelscript/lib/*.lib
 Project/Externals/angelscript/projects/**/*.obj
 as.predefined
 
+# Assimpの静的ライブラリ（サイズが大きくクローン/ブランチ切り替えを不安定にするためリポジトリに含めない。
+# ビルド前イベント(Tools/DownloadAssimpLibs.ps1)がGitHub Releaseから取得して配置する）
+Project/Externals/Assimp/lib/Debug/assimp-vc143-mtd.lib
+Project/Externals/Assimp/lib/Release/assimp-vc143-mt.lib
+
 # ビルド後イベントが生成するエンジンルートの位置を示すマーカー
 EngineRoot.txt
 

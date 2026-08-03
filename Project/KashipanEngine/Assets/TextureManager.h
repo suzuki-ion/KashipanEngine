@@ -127,6 +127,11 @@ public:
 #if defined(USE_IMGUI)
     /// @brief デバッグ用: 読み込まれたテクスチャ一覧の ImGui ウィンドウを描画
     static void ShowImGuiLoadedTexturesWindow();
+
+    /// @brief エディタのD&Dインポート等で、Assets以下に新規追加された1枚のテクスチャファイルを動的に読み込み登録する
+    /// @param filePath Assets ルートからの相対パス（実ファイルが Assets 以下に存在している前提）
+    /// @return 読み込んだテクスチャのハンドル（失敗時は `kInvalidHandle`）
+    static TextureHandle LoadTextureDynamic(const std::string &filePath);
 #endif
 
     const std::string& GetAssetsRootPath() const noexcept { return assetsRootPath_; }

@@ -76,7 +76,16 @@ std::filesystem::path ToPhysicalPath(const std::string &projectRelativePath) {
 
 AssetsWindow::AssetsWindow(Passkey<SceneEditor>, SceneEditorContext *editorContext)
     : editorContext_(editorContext) {
+    sActiveInstance_ = this;
     RefreshFolderTree();
+}
+
+AssetsWindow::~AssetsWindow() {
+    if (sActiveInstance_ == this) sActiveInstance_ = nullptr;
+}
+
+void AssetsWindow::HandleDroppedFiles(const std::vector<std::string> &physicalPaths) {
+    if (sActiveInstance_) sActiveInstance_->ImportDroppedFiles(physicalPaths);
 }
 
 void AssetsWindow::ShowImGui() {
@@ -535,6 +544,51 @@ void AssetsWindow::CreatePrefabFromObject(EmptyObject *obj) {
     }
 
     RefreshFileList();
+}
+
+void AssetsWindow::ImportDroppedFiles(const std::vector<std::string> &physicalPaths) {
+    bool anyImported = false;
+    const std::string folder = currentFolder_.empty() ? "" : (currentFolder_ + "/");
+
+    for (const auto &srcPathStr : physicalPaths) {
+        const std::filesystem::path srcPath = Utf8StringToPath(srcPathStr);
+        std::error_code ec;
+        if (!std::filesystem::is_regular_file(srcPath, ec) || ec) continue; // フォルダ等は無視
+
+        const std::string fileName = PathToUtf8String(srcPath.filename());
+        const std::string stem = PathToUtf8String(srcPath.stem());
+        const std::string extWithDot = PathToUtf8String(srcPath.extension());
+
+        // 既存ファイルと重複しない名前を付ける（Prefab書き出しと同様に連番を付与する）
+        std::string destLogicalPath = folder + fileName;
+        for (int suffix = 1; PathExistsNoThrow(ToPhysicalPath(destLogicalPath)); ++suffix) {
+            destLogicalPath = folder + stem + "_" + std::to_string(suffix) + extWithDot;
+        }
+
+        const std::filesystem::path destPhysicalPath = ToPhysicalPath(destLogicalPath);
+        std::filesystem::copy_file(srcPath, destPhysicalPath, std::filesystem::copy_options::none, ec);
+        if (ec) continue;
+        anyImported = true;
+
+        // Assets以下に取り込まれた場合のみ、拡張子に応じてAssetManagerへ動的登録する
+        // （エンジン起動時にAssetsフォルダをスキャンして読み込む処理と同じ経路を通す）
+        // TextureManager/AudioManager/ModelManagerのLoad系は、AssetsRoot()を基準にした
+        // 物理パス（例: "C:/.../Projects/MyGame/Assets/Foo/bar.png"）をそのまま受け取る設計のため、
+        // 論理パス側で剥がした "Assets/" 以降の断片ではなく物理パスを渡す必要がある
+        if (destLogicalPath.rfind("Assets/", 0) == 0) {
+            const std::string physicalPathStr = PathToUtf8String(destPhysicalPath);
+            const std::string ext = ToLowerExtension(destPhysicalPath);
+            if (IsTextureExtension(ext)) {
+                TextureManager::LoadTextureDynamic(physicalPathStr);
+            } else if (IsAudioExtension(ext)) {
+                AudioManager::LoadDynamic(physicalPathStr);
+            } else if (IsModelExtension(ext)) {
+                ModelManager::LoadModelDynamic(physicalPathStr);
+            }
+        }
+    }
+
+    if (anyImported) RefreshFileList();
 }
 
 bool AssetsWindow::ShowCreateFileModal() {

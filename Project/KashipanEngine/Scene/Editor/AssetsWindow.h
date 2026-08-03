@@ -22,12 +22,18 @@ class SceneEditorCommands;
 class AssetsWindow final {
 public:
     AssetsWindow(Passkey<SceneEditor>, SceneEditorContext *editorContext);
-    ~AssetsWindow() = default;
+    ~AssetsWindow();
 
     /// @brief Undo/Redo用のコマンド管理を設定する（Prefab付与などをUndo対応させるため）
     void SetCommands(SceneEditorCommands *commands) { commands_ = commands; }
 
     void ShowImGui();
+
+    /// @brief OSからウィンドウ全体へD&Dされたファイルを、現在アクティブなAssetsWindowが
+    ///        開いているフォルダへ取り込む（コピー＋対応するAssetManagerでの動的読み込み）
+    /// @details AssetsWindowが1つも生成されていない場合は何もしない
+    /// @param physicalPaths ドロップされたファイルの物理パス（絶対パス）一覧
+    static void HandleDroppedFiles(const std::vector<std::string> &physicalPaths);
 
 private:
     struct FolderNode {
@@ -80,6 +86,12 @@ private:
     void ShowDeleteConfirmModal();
     /// @brief ヒエラルキーからD&Dされたオブジェクトを、現在開いているフォルダへ.prefabファイルとして保存する
     void CreatePrefabFromObject(EmptyObject *obj);
+    /// @brief OSからD&Dされたファイル群を現在開いているフォルダへコピーし、拡張子に応じて
+    ///        対応するAssetManagerで動的に読み込む
+    void ImportDroppedFiles(const std::vector<std::string> &physicalPaths);
+
+    // OSからのファイルD&Dの取り込み先を決めるため、現在アクティブな（最後に生成された）インスタンスを保持する
+    static inline AssetsWindow *sActiveInstance_ = nullptr;
 
     SceneEditorContext *editorContext_ = nullptr;
     SceneEditorCommands *commands_ = nullptr;

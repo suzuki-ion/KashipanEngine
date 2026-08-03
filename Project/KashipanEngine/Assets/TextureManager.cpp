@@ -650,6 +650,21 @@ TextureManager::TextureHandle TextureManager::RegisterTextureFromMemory(const st
     return LoadTexture(registerPath);
 }
 
+#if defined(USE_IMGUI)
+TextureManager::TextureHandle TextureManager::LoadTextureDynamic(const std::string &filePath) {
+    if (!sActiveInstance) return kInvalidHandle;
+
+    const auto existing = GetTextureFromAssetPath(MakeAssetRelativePath(sActiveInstance->assetsRootPath_, filePath));
+    if (existing != kInvalidHandle) return existing;
+
+    DirectX::ScratchImage mipChain = sActiveInstance->LoadTextureFromFile(filePath);
+    if (mipChain.GetImageCount() == 0) return kInvalidHandle;
+
+    sActiveInstance->mipMapContainer_.AddMipMap(filePath, std::move(mipChain));
+    return sActiveInstance->LoadTexture(filePath);
+}
+#endif
+
 TextureManager::TextureHandle TextureManager::GetTexture(TextureHandle handle) {
     LogScope scope;
     if (handle == kInvalidHandle) return kInvalidHandle;

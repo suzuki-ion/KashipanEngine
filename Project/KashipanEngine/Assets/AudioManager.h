@@ -185,6 +185,11 @@ public:
     static void ShowImGuiLoadedSoundsWindow();
     /// @brief デバッグ用: 再生中/保持中の音声一覧の ImGui ウィンドウを描画
     static void ShowImGuiPlayingSoundsWindow();
+
+    /// @brief エディタのD&Dインポート等で、Assets以下に新規追加された1つの音声ファイルを動的に読み込み登録する
+    /// @param filePath Assets ルートからの相対パス（実ファイルが Assets 以下に存在している前提）
+    /// @return 読み込んだ音声のハンドル（失敗時は `kInvalidSoundHandle`）
+    static SoundHandle LoadDynamic(const std::string &filePath);
 #endif
 
     const std::string& GetAssetsRootPath() const noexcept { return assetsRootPath_; }

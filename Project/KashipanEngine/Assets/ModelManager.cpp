@@ -51,6 +51,8 @@ std::unordered_map<Handle, ModelEntry> sModels;
 FileMap<Handle> sFileNameToHandle;
 FileMap<Handle> sAssetPathToHandle;
 
+ModelManager* sActiveInstance = nullptr;
+
 std::string NormalizePathSlashes(std::string s) {
     std::replace(s.begin(), s.end(), '\\', '/');
     while (!s.empty() && s.back() == '/') s.pop_back();
@@ -180,12 +182,14 @@ Handle RegisterEntry(ModelEntry&& entry) {
 ModelManager::ModelManager(Passkey<GameEngine>, const std::string& assetsRootPath)
     : assetsRootPath_(NormalizePathSlashes(assetsRootPath)) {
     LogScope scope;
+    sActiveInstance = this;
     PrimitiveMeshGenerator::RegisterBuiltinPrimitiveMeshes();
     LoadAllFromAssetsFolder();
 }
 
 ModelManager::~ModelManager() {
     LogScope scope;
+    if (sActiveInstance == this) sActiveInstance = nullptr;
     sModels.clear();
     sFileNameToHandle.clear();
     sAssetPathToHandle.clear();
@@ -502,6 +506,13 @@ ModelManager::ModelHandle ModelManager::RegisterProceduralMesh(const std::string
     }
     return handle;
 }
+
+#if defined(USE_IMGUI)
+ModelManager::ModelHandle ModelManager::LoadModelDynamic(const std::string &filePath) {
+    if (!sActiveInstance) return kInvalidHandle;
+    return sActiveInstance->LoadModel(filePath);
+}
+#endif
 
 ModelManager::ModelHandle ModelManager::GetModelHandleFromFileName(const std::string& fileName) {
     LogScope scope;

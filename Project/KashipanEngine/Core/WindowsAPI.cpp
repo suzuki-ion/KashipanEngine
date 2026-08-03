@@ -12,6 +12,7 @@
 #include <imgui.h>
 #include <imgui_impl_win32.h>
 #include "Debug/ImGuiManager.h"
+#include "Scene/Editor/AssetsWindow.h"
 #include "Utilities/Translation.h"
 #endif
 
@@ -116,6 +117,24 @@ LRESULT CALLBACK WindowsAPI::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
     //   独自のウィンドウプロシージャを持つためここには来ない）
     if (hwnd == ImGuiManager::GetMainWindowHwnd()) {
         if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {
+            return 0;
+        }
+
+        // OSのエクスプローラー等からウィンドウ全体へファイルがD&Dされた場合、
+        // Assetsウィンドウが現在開いているフォルダへ取り込む
+        if (msg == WM_DROPFILES) {
+            HDROP hDrop = reinterpret_cast<HDROP>(wparam);
+            const UINT fileCount = DragQueryFileW(hDrop, 0xFFFFFFFF, nullptr, 0);
+            std::vector<std::string> paths;
+            paths.reserve(fileCount);
+            for (UINT i = 0; i < fileCount; ++i) {
+                const UINT len = DragQueryFileW(hDrop, i, nullptr, 0);
+                std::wstring wpath(len, L'\0');
+                DragQueryFileW(hDrop, i, wpath.data(), len + 1);
+                paths.push_back(ConvertString(wpath));
+            }
+            DragFinish(hDrop);
+            AssetsWindow::HandleDroppedFiles(paths);
             return 0;
         }
     }

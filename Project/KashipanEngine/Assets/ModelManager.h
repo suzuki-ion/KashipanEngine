@@ -185,6 +185,13 @@ public:
 
     /// @brief デバッグ用: 読み込まれたモデル一覧の ImGui ウィンドウを描画
     static void ShowImGuiLoadedModelsWindow();
+
+    /// @brief エディタのD&Dインポート等で、Assets以下に新規追加された1つのモデルファイルを動的に読み込み登録する
+    /// @details 起動時のロードと同じ経路（`LoadModel`）を通るため、ノード分解によるサブメッシュ登録と
+    ///          プレハブ（.prefab）自動生成も同時に行われる。
+    /// @param filePath Assets ルートからの相対パス（実ファイルが Assets 以下に存在している前提）
+    /// @return 読み込んだモデルのハンドル（失敗時は `kInvalidHandle`）
+    static ModelHandle LoadModelDynamic(const std::string &filePath);
 #endif
 
     const std::string& GetAssetsRootPath() const noexcept { return assetsRootPath_; }

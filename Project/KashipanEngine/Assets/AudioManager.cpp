@@ -50,6 +50,8 @@ namespace {
 using SoundHandle = AudioManager::SoundHandle;
 using PlayHandle = AudioManager::PlayHandle;
 
+AudioManager* sActiveInstance = nullptr;
+
 struct SoundEntry final {
     std::string fullPath;
     std::string assetPath;
@@ -446,6 +448,7 @@ bool AudioManager::GetPlayPositionSeconds(PlayHandle play, double& outSeconds) {
 AudioManager::AudioManager(Passkey<GameEngine>, const std::string& assetsRootPath)
     : assetsRootPath_(NormalizePathSlashes(assetsRootPath)) {
     LogScope scope;
+    sActiveInstance = this;
     InitializeAudioDevice();
     LoadAllFromAssetsFolder();
 }
@@ -453,6 +456,7 @@ AudioManager::AudioManager(Passkey<GameEngine>, const std::string& assetsRootPat
 AudioManager::~AudioManager() {
     LogScope scope;
 
+    if (sActiveInstance == this) sActiveInstance = nullptr;
     FinalizeAudioDevice();
     sSounds.clear();
     sAssetPathToHandle.clear();
@@ -531,6 +535,13 @@ SoundHandle AudioManager::Load(const std::string& filePath) {
     Log(Translation("engine.audio.loading.succeeded") + PathToUtf8String(p), LogSeverity::Info);
     return handle;
 }
+
+#if defined(USE_IMGUI)
+SoundHandle AudioManager::LoadDynamic(const std::string &filePath) {
+    if (!sActiveInstance) return kInvalidSoundHandle;
+    return sActiveInstance->Load(filePath);
+}
+#endif
 
 SoundHandle AudioManager::GetSoundHandleFromFileName(const std::string &fileName) {
     LogScope scope;

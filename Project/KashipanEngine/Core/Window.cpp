@@ -6,6 +6,10 @@
 #include <cassert>
 #include <algorithm>
 
+#if defined(USE_IMGUI)
+#include <shellapi.h>
+#endif
+
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents.h"
 #include "Utilities/Translation.h"
 
@@ -587,6 +591,14 @@ bool Window::InitializeWindow(WNDPROC windowProc, WindowType windowType, const s
 
     // ウィンドウハンドルにthisポインタを関連付け
     SetWindowLongPtr(descriptor_.hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+
+#if defined(USE_IMGUI)
+    // エディタービルドでは、通常ウィンドウ全体へOSからファイルをD&Dできるようにする
+    // （AssetsウィンドウがWM_DROPFILES経由で取り込む）
+    if (windowType == WindowType::Normal) {
+        DragAcceptFiles(descriptor_.hwnd, TRUE);
+    }
+#endif
 
     // ウィンドウを表示
     ShowWindow(descriptor_.hwnd, SW_SHOW);

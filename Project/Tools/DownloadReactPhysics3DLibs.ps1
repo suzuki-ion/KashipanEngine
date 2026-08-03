@@ -28,14 +28,18 @@ $releaseTag = "reactphysics3d-libs-v1"
 $baseUrl = "https://github.com/suzuki-ion/KashipanEngine/releases/download/$releaseTag"
 
 # 構成ごとに必要なライブラリのみをダウンロードする
+# $assetPrefix はReleaseにアップロードされているアセット名(Debug-/Release-)に
+# 対応させるためのもので、$Configuration(Development等)をそのまま使わない。
 if ($Configuration -eq "Debug") {
     $fileName = "reactphysics3d.lib"
     $subDir = "debug\lib"
     $expectedSize = 57130922
+    $assetPrefix = "Debug"
 } else {
     $fileName = "reactphysics3d.lib"
     $subDir = "lib"
     $expectedSize = 53307384
+    $assetPrefix = "Release"
 }
 
 $destDir = Join-Path $ProjectDir "Externals\ReactPhysics3D\$subDir"
@@ -54,7 +58,7 @@ if (-not (Test-Path -LiteralPath $destDir)) {
     New-Item -ItemType Directory -Path $destDir -Force | Out-Null
 }
 
-$url = "$baseUrl/$Configuration-$fileName"
+$url = "$baseUrl/$assetPrefix-$fileName"
 $tempPath = "$destPath.download"
 Write-Host "DownloadReactPhysics3DLibs: '$url' から '$destPath' へダウンロードします"
 

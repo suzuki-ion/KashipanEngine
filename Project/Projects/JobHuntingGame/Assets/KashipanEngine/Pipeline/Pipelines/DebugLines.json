@@ -1,16 +1,29 @@
 {
 	"PipelineType": "Render",
 	"Name": "DebugLines",
+	"Category": "Debug",
 	"Shader": {
 		"AutoTopologyFromShaders": true,
 		"AutoInputLayoutFromVS": true,
 		"AutoRTCountFromPS": true,
 		"AutoRootDescriptorFromShader": true,
-		"Vertex": { "UsePreset": "DebugLines.Vertex" },
-		"Pixel": { "UsePreset": "DebugLines.Pixel" }
+		"Vertex": {
+			"UsePreset": "DebugLines.Vertex"
+		},
+		"Pixel": {
+			"UsePreset": "DebugLines.Pixel"
+		}
 	},
-	"RasterizerState": { "UsePreset": "DoubleSidedCulling" },
-	"BlendState": { "UsePreset": "Normal" },
-	"DepthStencilState": { "UsePreset": "DepthEnableToMaskZero" },
-	"PipelineState": { "UsePreset": "Line" }
+	"RasterizerState": {
+		"UsePreset": "DoubleSidedCulling"
+	},
+	"BlendState": {
+		"UsePreset": "Normal"
+	},
+	"DepthStencilState": {
+		"UsePreset": "DepthEnableToMaskZero"
+	},
+	"PipelineState": {
+		"UsePreset": "Line"
+	}
 }

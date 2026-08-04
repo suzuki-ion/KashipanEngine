@@ -279,7 +279,7 @@ protected:
         if (ImGui::DragFloat2(TranslationLabel("component.textrenderer.default_character_anchor"), &defaultCharacterAnchor_.x, 0.01f)) MarkInstancesDirty();
         if (ImGui::DragFloat2(TranslationLabel("component.textrenderer.default_character_pivot"), &defaultCharacterPivot_.x, 0.01f)) MarkInstancesDirty();
 
-        ImGuiCustom::SelectString(TranslationLabel("component.textrenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames());
+        ImGuiCustom::SelectString(TranslationLabel("component.textrenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames("Text"));
 
         RebuildShapeIfDirty();
         if (!characterOverrides_.empty() && ImGui::TreeNode(TranslationLabel("component.textrenderer.character_overrides"))) {

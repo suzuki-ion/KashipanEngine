@@ -280,7 +280,7 @@ std::vector<SkinnedMeshRenderer::DebugJointInfo> SkinnedMeshRenderer::GetDebugJo
 void SkinnedMeshRenderer::ShowImGui() {
     TargetObjectSelector::ShowSelector(TranslationLabel("component.common.target"), GetOwnerSceneContext(), targetObjectID_);
     TargetObjectSelector::ShowRenderTargetFilters(GetOwnerSceneContext(), targetObjectID_, excludedRenderTargetNames_);
-    ImGuiCustom::SelectString(TranslationLabel("component.skinnedmeshrenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames());
+    ImGuiCustom::SelectString(TranslationLabel("component.skinnedmeshrenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames("3D"));
     ImGui::Checkbox(TranslationLabel("component.skinnedmeshrenderer.cast_shadows"), &castShadows_);
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("%s", TranslationC("component.skinnedmeshrenderer.desc_1"));

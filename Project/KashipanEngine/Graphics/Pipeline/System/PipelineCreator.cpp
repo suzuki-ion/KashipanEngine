@@ -347,6 +347,7 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
     }
 
     outInfo.name = name;
+    outInfo.category = json.value("Category", std::string{});
     outInfo.type = PipelineType::Render;
     outInfo.renderPriority = json.value("RenderPriority", json.value("Priority", 0));
     outInfo.topologyType = ToD3DTopology(psoDesc.PrimitiveTopologyType);
@@ -454,6 +455,7 @@ bool PipelineCreator::CreateCompute(const Json &json, PipelineInfo &outInfo) {
         }
     }
     outInfo.name = name;
+    outInfo.category = json.value("Category", std::string{});
     outInfo.type = PipelineType::Compute;
     outInfo.renderPriority = json.value("RenderPriority", json.value("Priority", 0));
     outInfo.topologyType = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;

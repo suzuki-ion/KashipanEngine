@@ -1,16 +1,29 @@
 {
 	"PipelineType": "Render",
 	"Name": "PostEffect.MotionBlur.Velocity",
+	"Category": "PostEffect",
 	"Shader": {
 		"AutoTopologyFromShaders": true,
 		"AutoInputLayoutFromVS": true,
 		"AutoRTCountFromPS": true,
 		"AutoRootDescriptorFromShader": true,
-		"Vertex": { "UsePreset": "MotionBlur.Velocity.Vertex" },
-		"Pixel": { "UsePreset": "MotionBlur.Velocity.Pixel" }
+		"Vertex": {
+			"UsePreset": "MotionBlur.Velocity.Vertex"
+		},
+		"Pixel": {
+			"UsePreset": "MotionBlur.Velocity.Pixel"
+		}
 	},
-	"RasterizerState": { "UsePreset": "Solid" },
-	"BlendState": { "UsePreset": "None" },
-	"DepthStencilState": { "UsePreset": "DepthDisable" },
-	"PipelineState": { "UsePreset": "Triangle" }
+	"RasterizerState": {
+		"UsePreset": "Solid"
+	},
+	"BlendState": {
+		"UsePreset": "None"
+	},
+	"DepthStencilState": {
+		"UsePreset": "DepthDisable"
+	},
+	"PipelineState": {
+		"UsePreset": "Triangle"
+	}
 }

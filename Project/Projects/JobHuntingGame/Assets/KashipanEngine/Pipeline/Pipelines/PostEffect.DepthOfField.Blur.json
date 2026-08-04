@@ -1,16 +1,29 @@
 {
 	"PipelineType": "Render",
 	"Name": "PostEffect.DepthOfField.Blur",
+	"Category": "PostEffect",
 	"Shader": {
 		"AutoTopologyFromShaders": true,
 		"AutoInputLayoutFromVS": true,
 		"AutoRTCountFromPS": true,
 		"AutoRootDescriptorFromShader": true,
-		"Vertex": { "UsePreset": "DepthOfFieldBlur.Vertex" },
-		"Pixel": { "UsePreset": "DepthOfFieldBlur.Pixel" }
+		"Vertex": {
+			"UsePreset": "DepthOfFieldBlur.Vertex"
+		},
+		"Pixel": {
+			"UsePreset": "DepthOfFieldBlur.Pixel"
+		}
 	},
-	"RasterizerState": { "UsePreset": "Solid" },
-	"BlendState": { "UsePreset": "Normal" },
-	"DepthStencilState": { "UsePreset": "DepthDisable" },
-	"PipelineState": { "UsePreset": "Triangle" }
+	"RasterizerState": {
+		"UsePreset": "Solid"
+	},
+	"BlendState": {
+		"UsePreset": "Normal"
+	},
+	"DepthStencilState": {
+		"UsePreset": "DepthDisable"
+	},
+	"PipelineState": {
+		"UsePreset": "Triangle"
+	}
 }

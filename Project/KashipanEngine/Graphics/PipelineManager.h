@@ -38,6 +38,12 @@ public:
     static const std::vector<std::string> &GetLoadedRenderPipelineNames();
     /// @brief 読み込み済みのコンピュート用パイプライン名一覧を取得（ImGuiでの選択用）
     static const std::vector<std::string> &GetLoadedComputePipelineNames();
+    /// @brief 指定カテゴリ（PipelineInfo::Category、例: "3D"/"2D"/"Text"）に一致する
+    ///        読み込み済み描画用パイプライン名一覧を取得（ImGuiでの選択用。無関係なパイプラインが
+    ///        混ざらないようフィルタする目的）
+    static std::vector<std::string> GetLoadedRenderPipelineNames(const std::string &category);
+    /// @brief 指定カテゴリに一致する読み込み済みコンピュート用パイプライン名一覧を取得（ImGuiでの選択用）
+    static std::vector<std::string> GetLoadedComputePipelineNames(const std::string &category);
 
     /// @brief 指定のコマンドリストにパイプラインをセット（差分管理は PipelineBinder 側で行う想定）
     void ApplyPipeline(ID3D12GraphicsCommandList* commandList, const std::string &pipelineName);

@@ -19,11 +19,14 @@
 #include "Scene/Components/SceneObjectCollider.h"
 #include "Graphics/ScreenBuffer.h"
 #include "Graphics/Resources/ConstantBufferResource.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/Components/MeshFilter.h"
+#include "Objects/Components/Render/Camera3D.h"
 #include "Objects/Components/Render/CameraRenderer.h"
 #include "Objects/Components/Render/Light.h"
 #include "Objects/Components/Render/LightRenderer.h"
 #include "Objects/Components/Render/MeshRenderer.h"
+#include "Objects/Components/Render/ScreenBufferObject.h"
 #include "Objects/Components/Render/SkinnedMeshRenderer.h"
 #include "Objects/Components/Collider/ICollider.h"
 #include "Objects/Components/Collider/RayCollider.h"
@@ -60,10 +63,11 @@ SceneEditorView::~SceneEditorView() {
             sceneRenderer->SetEditorTarget(nullptr, nullptr);
         }
     }
-    if (screenBuffer_ && ScreenBuffer::IsExist(screenBuffer_)) {
-        screenBuffer_->DestroyNotify();
-    }
+    // screenBuffer_ の実体は sceneViewObject_ の ScreenBufferObject コンポーネントが所有している。
+    // シーン破棄時はそちらの Finalize() が RenderTargetCarryOverRegistry 経由で後始末
+    // （同名コンポーネントへの引き継ぎ、または破棄）を行うため、ここでは何もしない
     screenBuffer_ = nullptr;
+    sceneViewObject_ = nullptr;
 }
 
 void SceneEditorView::ShowImGui(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands, SceneObjectHierarchy *hierarchy) {
@@ -75,16 +79,73 @@ void SceneEditorView::ShowImGui(const std::unordered_set<EmptyObject *> &selecte
 }
 
 void SceneEditorView::EnsureResources() {
-    if (!screenBuffer_ || !ScreenBuffer::IsExist(screenBuffer_)) {
-        screenBuffer_ = ScreenBuffer::Create(1280, 720, "EditorSceneView");
+    EnsureSceneViewObject();
+    if (sceneViewObject_) {
+        if (auto *screenBufferObject = sceneViewObject_->GetComponent<ScreenBufferObject>()) {
+            screenBuffer_ = screenBufferObject->GetScreenBuffer();
+        }
     }
     if (!cameraBuffer_) {
         cameraBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(CameraConstant));
     }
 }
 
+void SceneEditorView::EnsureSceneViewObject() {
+    sceneViewObject_ = nullptr;
+    if (!context_) return;
+
+    // 生ポインタをフレームをまたいでキャッシュせず、毎回UUIDから引き直す
+    // （Play開始時のDeleteEditorOnlyObjectsで対象が削除され得るため、CameraRenderer::GetTargetObject
+    // と同じ方式でダングリングポインタ参照を避ける）
+    if (sceneViewObjectID_.IsValid()) {
+        sceneViewObject_ = context_->GetSceneObject(sceneViewObjectID_);
+        if (sceneViewObject_) return;
+    }
+
+    for (const auto &objPtr : context_->GetSceneObjects()) {
+        EmptyObject *obj = objPtr.get();
+        if (!obj || !obj->IsEditorOnly()) continue;
+        if (obj->GetComponent<Camera3D>() && obj->GetComponent<ScreenBufferObject>()) {
+            sceneViewObject_ = obj;
+            break;
+        }
+    }
+
+    if (sceneViewObject_) {
+        sceneViewObjectID_ = sceneViewObject_->GetObjectID();
+        // 既存オブジェクトが見つかった場合は、そのTransformからオービット操作の起点
+        // （yaw_/pitch_/target_）を逆算する。distance_はTransformに保存されない値のため
+        // 固定値を使うが、target_ = position + forward * distance_ とすることで
+        // カメラの位置・向き自体は完全に再現できる
+        if (auto *transform = sceneViewObject_->GetComponent<Transform>()) {
+            const Vector3 forward = transform->GetRotateQuaternion().RotateVector(Vector3(0.0f, 0.0f, 1.0f));
+            yaw_ = std::atan2(forward.x, forward.z);
+            pitch_ = std::clamp(std::asin(std::clamp(-forward.y, -1.0f, 1.0f)), -1.55f, 1.55f);
+            distance_ = 10.0f;
+            target_ = transform->GetTranslate() + forward * distance_;
+        }
+        return;
+    }
+
+    // シーン上に見つからない場合は新規作成する。ScreenBufferObjectの内部バッファ自動生成と
+    // 同様のブートストラップ処理のため、Undo/Redoコマンドは通さない
+    EmptyObject *newObj = context_->CreateEmptyObject("Scene View");
+    if (!newObj) return;
+    newObj->SetEditorOnly(true);
+    newObj->AddComponent<Camera3D>();
+    if (auto *screenBufferObject = newObj->AddComponent<ScreenBufferObject>()) {
+        screenBufferObject->SetName("EditorSceneView");
+    }
+    sceneViewObject_ = newObj;
+    sceneViewObjectID_ = newObj->GetObjectID();
+    // 新規作成時は既存の既定値（target(0,0,0)・distance 10・yaw 0・pitch 0.3）をそのまま使う
+}
+
 void SceneEditorView::UpdateCameraBuffer() {
-    if (!cameraBuffer_ || !screenBuffer_) return;
+    if (!cameraBuffer_ || !screenBuffer_ || !sceneViewObject_) return;
+    auto *transform = sceneViewObject_->GetComponent<Transform>();
+    auto *camera3d = sceneViewObject_->GetComponent<Camera3D>();
+    if (!transform || !camera3d) return;
 
     // ピッチ→ヨーの順で回転（行ベクトル規約）
     Matrix4x4 rotateX;
@@ -96,24 +157,23 @@ void SceneEditorView::UpdateCameraBuffer() {
     const Vector3 forward(rotation.m[2][0], rotation.m[2][1], rotation.m[2][2]);
     const Vector3 eye = target_ - forward * distance_;
 
-    Matrix4x4 world = rotation;
-    world.m[3][0] = eye.x;
-    world.m[3][1] = eye.y;
-    world.m[3][2] = eye.z;
-    world.m[3][3] = 1.0f;
+    // 算出した位置・向きをTransformへ書き戻す（シーン保存時にそのまま永続化される）
+    transform->SetTranslate(eye);
+    transform->SetRotateQuaternion(Quaternion::MakeFromRotationMatrix(rotation));
 
-    view_ = world.Inverse();
+    view_ = transform->GetWorldMatrix().Inverse();
     const float width = static_cast<float>(screenBuffer_->GetWidth());
     const float height = static_cast<float>(screenBuffer_->GetHeight());
     const float aspect = (height > 0.0f) ? (width / height) : (16.0f / 9.0f);
-    projection_.MakePerspectiveFovMatrix(fovY_, aspect, nearClip_, farClip_);
+    camera3d->SetAspectRatio(aspect);
+    projection_.MakePerspectiveFovMatrix(camera3d->GetFovY(), aspect, camera3d->GetNearClip(), camera3d->GetFarClip());
 
     CameraConstant constant{};
     constant.view = view_;
     constant.projection = projection_;
     constant.viewProjection = view_ * projection_;
     constant.eyePosition = Vector4(eye.x, eye.y, eye.z, 1.0f);
-    constant.fov = fovY_;
+    constant.fov = camera3d->GetFovY();
     cameraEye_ = eye;
 
     if (void *mapped = cameraBuffer_->Map()) {
@@ -125,14 +185,19 @@ void SceneEditorView::RegisterEditorTarget() {
     if (!context_) return;
     auto *sceneRenderer = context_->GetComponent<SceneRenderer>();
     if (sceneRenderer && screenBuffer_) {
+        auto *camera3d = sceneViewObject_ ? sceneViewObject_->GetComponent<Camera3D>() : nullptr;
         // シャドウマップのカスケード計算用にエディターカメラの情報も渡す
         SceneRenderer::EditorCameraInfo cameraInfo;
         cameraInfo.viewProjection = view_ * projection_;
         cameraInfo.position = cameraEye_;
-        cameraInfo.nearClip = nearClip_;
-        cameraInfo.farClip = farClip_;
+        cameraInfo.nearClip = camera3d ? camera3d->GetNearClip() : 0.1f;
+        cameraInfo.farClip = camera3d ? camera3d->GetFarClip() : 1000.0f;
         cameraInfo.valid = true;
-        sceneRenderer->SetEditorTarget(screenBuffer_, cameraBuffer_.get(), cameraInfo);
+        // オーナーオブジェクトも渡しておくことで、GetTargetOwner経由でこのScreenBufferへの
+        // ポストエフェクト適用対象を「Scene View」オブジェクトへ絞り込めるようにする
+        // （未指定のままだとRenderPostProcessがオーナー無しとして処理を打ち切ってしまい、
+        // シーンビュー上でポストエフェクトが一切適用されなくなる）
+        sceneRenderer->SetEditorTarget(screenBuffer_, cameraBuffer_.get(), cameraInfo, sceneViewObject_);
     }
 }
 
@@ -190,7 +255,13 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     }
 
     //--------- シーンビュー画像 ---------//
-    if (!screenBuffer_ || screenBuffer_->GetSrvHandle().ptr == 0) {
+    // GetSrvHandle()（現在の読み取り面）ではなく GetPreviewSrvHandle()（このフレームの描画・
+    // ポストエフェクト適用が完了した時点で確定した面）を使う。ポストエフェクトのNextPass()呼び出しは
+    // 1フレーム中に書き込み面インデックスを複数回進めるため、Update側（このShowImGui）で
+    // GetSrvHandle()を読むと、この後のDraw側の処理でちょうど書き換え・作り直しの対象になる面を
+    // 参照してしまうことがある（詳細はScreenBuffer::GetPreviewSrvHandle参照。
+    // ScreenBufferObject::ShowViewerWindowと同じ理由で同じ対策を行う）
+    if (!screenBuffer_ || screenBuffer_->GetPreviewSrvHandle().ptr == 0) {
         ImGui::TextUnformatted(TranslationC("editor.sceneview.notready"));
         ImGui::End();
         return;
@@ -202,12 +273,14 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
         const auto newWidth = static_cast<std::uint32_t>(avail.x);
         const auto newHeight = static_cast<std::uint32_t>(avail.y);
         if (newWidth != screenBuffer_->GetWidth() || newHeight != screenBuffer_->GetHeight()) {
-            screenBuffer_->Resize(newWidth, newHeight);
+            if (auto *screenBufferObject = sceneViewObject_ ? sceneViewObject_->GetComponent<ScreenBufferObject>() : nullptr) {
+                screenBufferObject->SetSize(newWidth, newHeight);
+            }
         }
     }
     const ImVec2 drawSize = avail;
     const ImVec2 imagePos = ImGui::GetCursorScreenPos();
-    ImGui::Image(static_cast<ImTextureID>(screenBuffer_->GetSrvHandle().ptr), drawSize);
+    ImGui::Image(static_cast<ImTextureID>(screenBuffer_->GetPreviewSrvHandle().ptr), drawSize);
 
     // Assetsウィンドウからのプレハブファイル（.prefab）のD&Dでシーンへ配置する
     if (std::string droppedPath; AcceptAssetDragDropTarget(kPrefabAssetDragDropType, droppedPath)) {

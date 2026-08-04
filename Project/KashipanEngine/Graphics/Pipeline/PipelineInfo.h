@@ -29,6 +29,9 @@ private:
 struct PipelineInfo {
     const std::string &Name() const { return name; }
     PipelineType Type() const { return type; }
+    /// @brief パイプラインの用途カテゴリ（"3D"/"2D"/"Text"等。未設定の場合は空文字）
+    /// @details ImGui上のパイプライン選択で無関係な用途のものが混ざらないようフィルタするために使う
+    const std::string &Category() const { return category; }
     D3D_PRIMITIVE_TOPOLOGY TopologyType() const { return topologyType; }
     std::int32_t RenderPriority() const { return renderPriority; }
     const PipelineSet &GetPipelineSet() const { return pipelineSet; }
@@ -38,6 +41,7 @@ struct PipelineInfo {
 private:
     friend class PipelineCreator;
     std::string name;
+    std::string category;
     PipelineType type = PipelineType::Render;
     std::int32_t renderPriority = 0;
     D3D_PRIMITIVE_TOPOLOGY topologyType = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;

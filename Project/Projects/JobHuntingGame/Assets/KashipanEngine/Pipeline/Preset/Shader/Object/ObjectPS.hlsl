@@ -82,7 +82,20 @@ float Lambert(float3 normal, float3 lightDir) {
 float HalfLambert(float3 normal, float3 lightDir) {
 	float NdotL = dot(normalize(normal), normalize(lightDir));
 	float halfLambert = pow(NdotL * 0.5f + 0.5f, 2.0f);
+#ifdef ObjectToon
+	// なめらかな階調ではなく、影・中間・明部の3段階へ量子化する（トゥーン調）。
+	// 境界はsmoothstepでわずかにぼかし、バンド間のジャギーを抑える
+	const float kShadowLevel = 0.35f;
+	const float kMidLevel = 0.7f;
+	const float kLitLevel = 1.0f;
+	const float kBandSoftness = 0.05f;
+	float toon = kShadowLevel;
+	toon = lerp(toon, kMidLevel, smoothstep(0.45f - kBandSoftness, 0.45f + kBandSoftness, halfLambert));
+	toon = lerp(toon, kLitLevel, smoothstep(0.8f - kBandSoftness, 0.8f + kBandSoftness, halfLambert));
+	return toon;
+#else
 	return halfLambert;
+#endif
 }
 
 float PhongReflection(float3 normal, float3 lightDir, float3 worldPos, float shininess) {
@@ -98,7 +111,12 @@ float BlinnPhongReflection(float3 normal, float3 lightDir, float3 worldPos, floa
 	float3 halfDir = normalize(-lightDir + viewDir);
 	float NdotH = dot(normal, halfDir);
 	float spec = pow(saturate(NdotH), shininess);
+#ifdef ObjectToon
+	// なめらかな減衰ではなく、輪郭のはっきりしたハイライトにする（トゥーン調）
+	return smoothstep(0.45f, 0.55f, spec);
+#else
 	return spec;
+#endif
 }
 
 float Dither4x4(float2 screenPos) {

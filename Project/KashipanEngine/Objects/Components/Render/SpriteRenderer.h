@@ -198,8 +198,8 @@ protected:
         }
         // 対象オブジェクトが持つ描画先ごとに描画する/しないを選択する
         TargetObjectSelector::ShowRenderTargetFilters(GetOwnerSceneContext(), targetObjectID_, excludedRenderTargetNames_);
-        // パイプラインとマテリアルは読み込み済みのものから選択する
-        if (ImGuiCustom::SelectString(TranslationLabel("component.spriterenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames())) {
+        // パイプラインとマテリアルは読み込み済みのものから選択する（2D用途のもののみに絞り込む）
+        if (ImGuiCustom::SelectString(TranslationLabel("component.spriterenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames("2D"))) {
             MarkDrawListDirty();
         }
         const auto materialEntries = MaterialManager::GetLoadedMaterialListEntries();

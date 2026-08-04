@@ -202,8 +202,8 @@ protected:
         }
         // 対象オブジェクトが持つ描画先ごとに描画する/しないを選択する
         TargetObjectSelector::ShowRenderTargetFilters(GetOwnerSceneContext(), targetObjectID_, excludedRenderTargetNames_);
-        // パイプラインとマテリアルは読み込み済みのものから選択する
-        if (ImGuiCustom::SelectString(TranslationLabel("component.meshrenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames())) {
+        // パイプラインとマテリアルは読み込み済みのものから選択する（3D用途のもののみに絞り込む）
+        if (ImGuiCustom::SelectString(TranslationLabel("component.meshrenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames("3D"))) {
             MarkDrawListDirty();
         }
         ImGui::Checkbox(TranslationLabel("component.meshrenderer.cast_shadows"), &castShadows_);

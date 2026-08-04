@@ -12,6 +12,7 @@
 #include "Math/Quaternion.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
+#include "Utilities/UUID128.h"
 
 namespace KashipanEngine {
 
@@ -21,6 +22,8 @@ class SceneObjectHierarchy;
 class ScreenBuffer;
 class ConstantBufferResource;
 class CameraRenderer;
+class Camera3D;
+class ScreenBufferObject;
 class Transform;
 struct ColliderInfo2D;
 
@@ -29,6 +32,10 @@ struct ColliderInfo2D;
 ///          シーン上の全 MeshRenderer をこの ScreenBuffer に描画して ImGui ウィンドウへ表示する。
 ///          選択中オブジェクトには ImGuizmo によるギズモ操作が行える（複数選択時は選択群の
 ///          平均位置をピボットとしたグループ操作になる）。
+///          カメラ・ScreenBufferの実体は、シーンに自動生成される editorOnly な「Scene View」
+///          オブジェクト（Transform + Camera3D + ScreenBufferObject）が保持する。これにより
+///          通常のオブジェクトと同様にHierarchy/Inspectorから編集・コンポーネント追加ができ、
+///          シーンJSONへシーンごとに永続化される（詳細はEnsureSceneViewObject参照）。
 class SceneEditorView final {
 public:
     SceneEditorView(Passkey<SceneEditor>, SceneEditorContext *context);
@@ -52,6 +59,17 @@ private:
     };
 
     void EnsureResources();
+    /// @brief シーンビュー用の editorOnly オブジェクト（Transform + Camera3D + ScreenBufferObject）を
+    ///        毎フレーム sceneViewObjectID_ から解決し直し、見つからなければシーン上を検索、
+    ///        それでも無ければ新規作成して sceneViewObject_/sceneViewObjectID_ へ保持する
+    /// @details 生ポインタをまたがるフレームでキャッシュしない（CameraRenderer::GetTargetObject等と
+    ///          同じ方式）。Play開始時のEditorOnlyオブジェクト削除（Scene::DeleteEditorOnlyObjects）で
+    ///          対象オブジェクトがシーンから取り除かれることがあるため、UUIDから毎回引き直すことで
+    ///          ダングリングポインタ参照を避ける。新規作成時は現状と同じ既定値
+    ///          （target(0,0,0)・distance 10・yaw 0・pitch 0.3）を用いる。
+    ///          既存のオブジェクトが見つかった場合はそのTransformから軌道パラメータ
+    ///          （yaw_/pitch_/target_）を逆算し、保存済みのカメラ位置から操作を再開できるようにする
+    void EnsureSceneViewObject();
     /// @brief デバッグカメラの行列を計算して定数バッファへアップロードする
     void UpdateCameraBuffer();
     /// @brief SceneRenderer へエディター描画先として登録する
@@ -107,17 +125,20 @@ private:
 
     SceneEditorContext *context_ = nullptr;
 
+    /// @brief シーンビュー用の editorOnly オブジェクトのID（無ければ EnsureSceneViewObject で自動生成される）
+    UUID128 sceneViewObjectID_;
+    /// @brief sceneViewObjectID_ から毎フレーム解決し直したオブジェクト（フレームをまたいでキャッシュしない）
+    EmptyObject *sceneViewObject_ = nullptr;
+    /// @brief sceneViewObject_ が持つ ScreenBufferObject の ScreenBuffer（非所有、毎フレーム取得し直す）
     ScreenBuffer *screenBuffer_ = nullptr;
     std::unique_ptr<ConstantBufferResource> cameraBuffer_;
 
-    // デバッグカメラ（注視点周りのオービットカメラ）
+    // デバッグカメラ（注視点周りのオービットカメラ。マウス操作用の一時的なパラメータであり、
+    // 実際のカメラ位置・向きは sceneViewObject_ の Transform に都度書き戻して永続化される）
     Vector3 target_{ 0.0f, 0.0f, 0.0f };
     float distance_ = 10.0f;
     float yaw_ = 0.0f;
     float pitch_ = 0.3f;
-    float fovY_ = 0.45f;
-    float nearClip_ = 0.1f;
-    float farClip_ = 1000.0f;
 
     Matrix4x4 view_ = Matrix4x4::Identity();
     Matrix4x4 projection_ = Matrix4x4::Identity();

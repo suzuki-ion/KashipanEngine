@@ -174,6 +174,24 @@ namespace {
 // ImGuiでの選択用に読み込み済みパイプライン名を保持する
 std::vector<std::string> sRenderPipelineNames;
 std::vector<std::string> sComputePipelineNames;
+// パイプライン名からカテゴリ（PipelineInfo::Category）を引くための索引（カテゴリ絞り込み用）
+std::unordered_map<std::string, std::string> sPipelineCategories;
+
+std::vector<std::string> FilterNamesByCategory(const std::vector<std::string> &names, const std::string &category) {
+    std::vector<std::string> filtered;
+    bool anyCategorized = false;
+    for (const auto &name : names) {
+        auto it = sPipelineCategories.find(name);
+        const std::string &pipelineCategory = (it != sPipelineCategories.end()) ? it->second : std::string{};
+        if (!pipelineCategory.empty()) anyCategorized = true;
+        if (pipelineCategory == category) filtered.push_back(name);
+    }
+    // 1件もCategoryが設定されていない（Categoryフィールド導入前に作られたプロジェクトの
+    // パイプライン定義等）場合、絞り込むと選択肢が0件になり選択自体ができなくなってしまうため、
+    // 絞り込まず全件を返す（後方互換）
+    if (!anyCategorized) return names;
+    return filtered;
+}
 } // namespace
 
 const std::vector<std::string> &PipelineManager::GetLoadedRenderPipelineNames() {
@@ -182,6 +200,14 @@ const std::vector<std::string> &PipelineManager::GetLoadedRenderPipelineNames() 
 
 const std::vector<std::string> &PipelineManager::GetLoadedComputePipelineNames() {
     return sComputePipelineNames;
+}
+
+std::vector<std::string> PipelineManager::GetLoadedRenderPipelineNames(const std::string &category) {
+    return FilterNamesByCategory(sRenderPipelineNames, category);
+}
+
+std::vector<std::string> PipelineManager::GetLoadedComputePipelineNames(const std::string &category) {
+    return FilterNamesByCategory(sComputePipelineNames, category);
 }
 
 void PipelineManager::LoadPipelines() {
@@ -239,7 +265,9 @@ void PipelineManager::LoadPipelines() {
     // ImGuiでの選択用に名前一覧を再構築する
     sRenderPipelineNames.clear();
     sComputePipelineNames.clear();
+    sPipelineCategories.clear();
     for (const auto &kv : pipelineInfos_) {
+        sPipelineCategories[kv.first] = kv.second.Category();
         if (kv.second.Type() == PipelineType::Render) {
             sRenderPipelineNames.push_back(kv.first);
         } else {

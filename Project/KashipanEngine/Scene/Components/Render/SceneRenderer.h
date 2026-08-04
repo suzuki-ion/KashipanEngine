@@ -134,7 +134,17 @@ public:
     void MarkDrawListDirty() noexcept { drawListDirty_ = true; }
 
     /// @brief 描画先からその描画先を所有するオブジェクトを取得（BuildSortedDrawList 後に有効）
+    /// @details エディター用描画先（editorTarget_）はBuildSortedDrawList側で意図的に
+    ///          targetOwners_へ登録されない（全MeshRenderer等が無条件でこの描画先へも
+    ///          描画されるため、単一の「所有者」を一意に決められない）。
+    ///          そのままだとPostProcess側がオーナー未設定として弾いてしまい、シーンビューの
+    ///          ScreenBufferへポストエフェクト（カメラ情報を要するものに限らず）が一切
+    ///          適用できなくなるため、SetEditorTargetで明示的に指定されたオーナー
+    ///          （SceneEditorViewの「Scene View」オブジェクト）を優先して返す
     EmptyObject *GetTargetOwner(const IRenderTarget *target) const {
+        if (editorTarget_ && target == editorTarget_ && editorTargetOwner_) {
+            return editorTargetOwner_;
+        }
         auto it = targetOwners_.find(target);
         return it != targetOwners_.end() ? it->second : nullptr;
     }
@@ -159,8 +169,10 @@ public:
     /// @param target エディター用描画先（nullptrで解除）
     /// @param cameraBuffer この描画先の描画時にバインドされるカメラ定数バッファ
     /// @param cameraInfo エディターカメラの情報（シャドウマップ計算用。未指定の場合は無効扱い）
+    /// @param owner GetTargetOwner()が返すオーナーオブジェクト（ポストエフェクトの適用対象を
+    ///        絞り込むために使われる。通常はSceneEditorViewが自動生成する「Scene View」オブジェクト）
     void SetEditorTarget(IRenderTarget *target, ConstantBufferResource *cameraBuffer,
-        const EditorCameraInfo &cameraInfo = {}) {
+        const EditorCameraInfo &cameraInfo = {}, EmptyObject *owner = nullptr) {
         if (editorTarget_ != target) {
             // キャッシュ済みエントリは全てeditorTarget_を指しているため、対象が変わったら作り直す
             drawListDirty_ = true;
@@ -168,6 +180,7 @@ public:
         editorTarget_ = target;
         editorCameraBuffer_ = cameraBuffer;
         editorCameraInfo_ = cameraInfo;
+        editorTargetOwner_ = owner;
     }
     /// @brief 指定描画先がエディター用描画先の場合、そのカメラ定数バッファを返す
     ConstantBufferResource *GetEditorCameraBuffer(const IRenderTarget *target) const {
@@ -215,6 +228,8 @@ private:
     IRenderTarget *editorTarget_ = nullptr;
     ConstantBufferResource *editorCameraBuffer_ = nullptr;
     EditorCameraInfo editorCameraInfo_;
+    /// @brief editorTarget_のオーナーオブジェクト（GetTargetOwner参照。ポストエフェクトの適用対象の絞り込みに使う）
+    EmptyObject *editorTargetOwner_ = nullptr;
     EditorDebugDrawSettings editorDebugDraw_;
 };
 

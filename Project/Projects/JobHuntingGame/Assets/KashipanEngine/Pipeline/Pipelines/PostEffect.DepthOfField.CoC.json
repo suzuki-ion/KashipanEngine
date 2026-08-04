@@ -1,16 +1,29 @@
 {
 	"PipelineType": "Render",
 	"Name": "PostEffect.DepthOfField.CoC",
+	"Category": "PostEffect",
 	"Shader": {
 		"AutoTopologyFromShaders": true,
 		"AutoInputLayoutFromVS": true,
 		"AutoRTCountFromPS": true,
 		"AutoRootDescriptorFromShader": true,
-		"Vertex": { "UsePreset": "DepthOfFieldCoC.Vertex" },
-		"Pixel": { "UsePreset": "DepthOfFieldCoC.Pixel" }
+		"Vertex": {
+			"UsePreset": "DepthOfFieldCoC.Vertex"
+		},
+		"Pixel": {
+			"UsePreset": "DepthOfFieldCoC.Pixel"
+		}
 	},
-	"RasterizerState": { "UsePreset": "Solid" },
-	"BlendState": { "UsePreset": "Normal" },
-	"DepthStencilState": { "UsePreset": "DepthDisable" },
-	"PipelineState": { "UsePreset": "Triangle" }
+	"RasterizerState": {
+		"UsePreset": "Solid"
+	},
+	"BlendState": {
+		"UsePreset": "Normal"
+	},
+	"DepthStencilState": {
+		"UsePreset": "DepthDisable"
+	},
+	"PipelineState": {
+		"UsePreset": "Triangle"
+	}
 }

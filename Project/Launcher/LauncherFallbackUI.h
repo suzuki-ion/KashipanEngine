@@ -16,7 +16,7 @@ class FallbackUI final : public ILauncherUI {
 public:
     /// @brief この画面に適したクライアント領域のサイズ（96 DPI 基準）
     static constexpr int kClientWidth = 460;
-    static constexpr int kClientHeight = 372;
+    static constexpr int kClientHeight = 400;
 
     explicit FallbackUI(float dpiScale) : dpiScale_(dpiScale) {}
 
@@ -39,6 +39,9 @@ private:
     void CreateNewProject();
     void UpdateStatusForSelection();
     void SetStatusText(const std::wstring &text);
+    void ToggleIncludeInGithubPush();
+    /// @brief GitHubアップロードのチェックボックスを、選択中のプロジェクトの設定値に合わせる
+    void SyncGithubCheckboxToSelection();
 
     /// @brief 選択中のプロジェクトを取得する（未選択の場合は nullptr）
     const KashipanEngine::ProjectManager::ProjectInfo *GetSelectedProject() const;
@@ -49,6 +52,7 @@ private:
     HWND revealButton_ = nullptr;
     HWND deleteButton_ = nullptr;
     HWND templateCombo_ = nullptr;
+    HWND githubCheckbox_ = nullptr;
     HWND newProjectNameEdit_ = nullptr;
     HWND statusLabel_ = nullptr;
     HFONT font_ = nullptr;

@@ -192,6 +192,57 @@ main {
   text-align: left;
 }
 
+/* GitHubアップロード設定のトグルスイッチ */
+.project .github-toggle {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.project .github-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.project .github-toggle .slider {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--border);
+  position: relative;
+  transition: background .12s;
+}
+.project .github-toggle .slider::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  transition: transform .12s;
+}
+.project .github-toggle input:checked + .slider {
+  background: var(--accent);
+}
+.project .github-toggle input:checked + .slider::before {
+  transform: translateX(14px);
+}
+.project .github-toggle-label {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+#project-list.locked .github-toggle {
+  pointer-events: none;
+  opacity: .5;
+}
+
 .empty {
   border: 1px dashed var(--border);
   border-radius: 8px;

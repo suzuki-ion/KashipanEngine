@@ -40,6 +40,11 @@ public:
         std::string rootPath;
         /// @brief プロジェクトの説明（任意）
         std::string description;
+        /// @brief GitHubへのプッシュにこのプロジェクトを含めるか（KashipanHub上で切り替える設定値）
+        /// @details 既定は含める（true）。含めない場合はプロジェクトルート直下に
+        ///          .gitignore（中身は "*"）を配置し、以後このフォルダ内の未追跡ファイルが
+        ///          gitに拾われないようにする。既にコミット済みのファイルの追跡解除は行わない。
+        bool includeInGithubPush = true;
         /// @brief Project.json のフォーマットバージョン
         int formatVersion = kProjectFormatVersion;
     };
@@ -78,6 +83,14 @@ public:
     /// @param outErrorMessage 失敗した場合の理由（不要な場合は nullptr）
     /// @return 開けた場合は true
     static bool OpenProjectInExplorer(const std::string &name, std::string *outErrorMessage = nullptr);
+
+    /// @brief プロジェクトをGitHubへのプッシュに含めるかどうかを変更する
+    /// @param name プロジェクト名
+    /// @param include 含める場合は true
+    /// @param outErrorMessage 失敗した場合の理由（不要な場合は nullptr）
+    /// @return 変更に成功した場合は true
+    static bool SetIncludeInGithubPush(const std::string &name, bool include,
+        std::string *outErrorMessage = nullptr);
 
     /// @brief 次回起動時に開くプロジェクトを設定する
     static void SetStartupProject(const std::string &name);

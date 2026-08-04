@@ -58,6 +58,8 @@ function updateButtons() {
     createButton.disabled = locked || newNameInput.value.trim() === "";
     newNameInput.disabled = locked;
     templateSelect.disabled = locked;
+    // GitHubアップロードのトグルは一覧の各行にあるため、ロック中はCSSでまとめて操作不可にする
+    listElement.classList.toggle("locked", locked);
 }
 
 function selectProject(name) {
@@ -107,7 +109,31 @@ function renderProjects() {
         path.title = project.path;
 
         info.append(name, path);
-        item.append(badge, info);
+
+        const githubToggle = document.createElement("label");
+        githubToggle.className = "github-toggle";
+        githubToggle.title = "GitHubへのプッシュに含める";
+        // トグルの操作が行の選択・起動（クリック/ダブルクリック）に波及しないようにする
+        githubToggle.addEventListener("click", (event) => event.stopPropagation());
+        githubToggle.addEventListener("dblclick", (event) => event.stopPropagation());
+
+        const githubCheckbox = document.createElement("input");
+        githubCheckbox.type = "checkbox";
+        githubCheckbox.checked = Boolean(project.includeInGithubPush);
+        githubCheckbox.addEventListener("change", () => {
+            setStatus("");
+            send({ action: "setIncludeInGithubPush", name: project.name, include: githubCheckbox.checked });
+        });
+
+        const githubSlider = document.createElement("span");
+        githubSlider.className = "slider";
+
+        const githubLabel = document.createElement("span");
+        githubLabel.className = "github-toggle-label";
+        githubLabel.textContent = "GitHub";
+
+        githubToggle.append(githubCheckbox, githubSlider, githubLabel);
+        item.append(badge, info, githubToggle);
 
         item.addEventListener("click", () => selectProject(project.name));
         // ダブルクリックはそのまま起動（Unity Hubと同じ操作感）

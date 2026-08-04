@@ -21,6 +21,7 @@ constexpr int kIdStatusLabel = 1006;
 constexpr int kIdRevealButton = 1007;
 constexpr int kIdDeleteButton = 1008;
 constexpr int kIdTemplateCombo = 1009;
+constexpr int kIdGithubCheckbox = 1010;
 
 /// @brief 96 DPI 基準でのレイアウト
 namespace Metrics {
@@ -29,6 +30,7 @@ constexpr int kListTop = 30;
 constexpr int kListHeight = 180;
 constexpr int kButtonHeight = 26;
 constexpr int kRowGap = 10;
+constexpr int kCheckboxHeight = 20;
 /// @brief コンボボックスの高さは「開いたときの一覧を含む高さ」として扱われる
 constexpr int kComboDropHeight = 200;
 }
@@ -92,8 +94,13 @@ bool FallbackUI::Create(HWND window) {
     deleteButton_ = addButton(L"削除", 78, kIdDeleteButton, BS_PUSHBUTTON);
     addButton(L"更新", 78, kIdRefreshButton, BS_PUSHBUTTON);
 
+    //--------- 選択中のプロジェクトのGitHubプッシュ設定 ---------//
+    const int githubCheckboxTop = buttonRowTop + kButtonHeight + kRowGap;
+    githubCheckbox_ = CreateChildControl(L"BUTTON", L"GitHubへのプッシュに含める", BS_AUTOCHECKBOX,
+        kMargin, githubCheckboxTop, contentWidth, kCheckboxHeight, kIdGithubCheckbox);
+
     //--------- 新規作成 ---------//
-    const int newProjectLabelTop = buttonRowTop + kButtonHeight + kRowGap * 2;
+    const int newProjectLabelTop = githubCheckboxTop + kCheckboxHeight + kRowGap * 2;
     CreateChildControl(L"STATIC", L"新規プロジェクト", 0,
         kMargin, newProjectLabelTop, contentWidth, 18, 0);
 
@@ -140,6 +147,9 @@ bool FallbackUI::HandleCommand(WPARAM wparam) {
     case kIdCreateButton:
         CreateNewProject();
         return true;
+    case kIdGithubCheckbox:
+        if (HIWORD(wparam) == BN_CLICKED) ToggleIncludeInGithubPush();
+        return true;
     case kIdProjectList:
         // ダブルクリックはそのまま「開く」として扱う
         if (HIWORD(wparam) == LBN_DBLCLK) {
@@ -169,9 +179,11 @@ void FallbackUI::RefreshProjectList() {
     EnableWindow(openButton_, hasProjects);
     EnableWindow(revealButton_, hasProjects);
     EnableWindow(deleteButton_, hasProjects);
+    EnableWindow(githubCheckbox_, hasProjects);
 
     if (projects_.empty()) {
         SetStatusText(L"プロジェクトがありません。下の欄から新規作成してください。");
+        Button_SetCheck(githubCheckbox_, BST_UNCHECKED);
         return;
     }
 
@@ -185,6 +197,7 @@ void FallbackUI::RefreshProjectList() {
         }
     }
     ListBox_SetCurSel(projectList_, selectedIndex);
+    SyncGithubCheckboxToSelection();
     SetStatusText(L"");
 }
 
@@ -300,6 +313,7 @@ void FallbackUI::CreateNewProject() {
         ListBox_SetCurSel(projectList_, static_cast<int>(i));
         break;
     }
+    SyncGithubCheckboxToSelection();
     SetStatusText(L"プロジェクトを作成しました。");
 }
 
@@ -307,6 +321,33 @@ void FallbackUI::UpdateStatusForSelection() {
     const int selectedIndex = ListBox_GetCurSel(projectList_);
     if (selectedIndex == LB_ERR || static_cast<size_t>(selectedIndex) >= projects_.size()) return;
     SetStatusText(ConvertString(projects_[selectedIndex].rootPath));
+    SyncGithubCheckboxToSelection();
+}
+
+void FallbackUI::SyncGithubCheckboxToSelection() {
+    const ProjectManager::ProjectInfo *project = GetSelectedProject();
+    Button_SetCheck(githubCheckbox_, (project && project->includeInGithubPush) ? BST_CHECKED : BST_UNCHECKED);
+}
+
+void FallbackUI::ToggleIncludeInGithubPush() {
+    const ProjectManager::ProjectInfo *project = GetSelectedProject();
+    if (!project) return;
+    const std::string name = project->name;
+    const bool include = Button_GetCheck(githubCheckbox_) == BST_CHECKED;
+
+    std::string errorMessage;
+    const bool succeeded = ProjectManager::SetIncludeInGithubPush(name, include, &errorMessage);
+
+    // 失敗時もチェックボックスの表示を実際の保存値へ揃え直すため、常に一覧を読み直す
+    // （RefreshProjectListは末尾でステータス表示も上書きするため、エラー表示はその後に行う）
+    RefreshProjectList();
+    for (size_t i = 0; i < projects_.size(); ++i) {
+        if (projects_[i].name != name) continue;
+        ListBox_SetCurSel(projectList_, static_cast<int>(i));
+        break;
+    }
+    SyncGithubCheckboxToSelection();
+    if (!succeeded) SetStatusText(ConvertString(errorMessage));
 }
 
 } // namespace Launcher

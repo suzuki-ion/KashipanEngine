@@ -11,6 +11,7 @@
 #include "Debug/Logger.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/JSON.h"
+#include "Utilities/FileIO/TextFile.h"
 
 namespace KashipanEngine {
 namespace {
@@ -23,6 +24,9 @@ constexpr const char *kExecutableFileName = "KashipanEngine.exe";
 
 /// @brief テンプレートの表示名と説明を書いておくファイル名（各テンプレートフォルダ直下・任意）
 constexpr const char *kTemplateFileName = "Template.json";
+
+/// @brief GitHubへのプッシュから除外する際にプロジェクトルート直下へ置く .gitignore のファイル名
+constexpr const char *kProjectGitignoreFileName = ".gitignore";
 
 /// @brief プロジェクト名に使えない文字（Windowsのファイル名として無効な文字とパス区切り）
 constexpr const char *kInvalidProjectNameCharacters = "\\/:*?\"<>|";
@@ -54,6 +58,7 @@ bool ProjectManager::ReadProjectFile(const std::string &projectRootPath, Project
     outInfo.rootPath = ProjectPaths::NormalizeSeparators(projectRootPath);
     outInfo.name = PathToUtf8String(Utf8StringToPath(outInfo.rootPath).filename());
     outInfo.description = json.value("description", std::string{});
+    outInfo.includeInGithubPush = json.value("includeInGithubPush", true);
     outInfo.formatVersion = json.value("formatVersion", kProjectFormatVersion);
     return true;
 }
@@ -63,6 +68,7 @@ bool ProjectManager::WriteProjectFile(const ProjectInfo &info) {
     json["formatVersion"] = info.formatVersion;
     json["projectName"] = info.name;
     json["description"] = info.description;
+    json["includeInGithubPush"] = info.includeInGithubPush;
     return SaveJSON(json, info.rootPath + "/" + ProjectPaths::kProjectFileName);
 }
 
@@ -246,6 +252,42 @@ bool ProjectManager::OpenProjectInExplorer(const std::string &name, std::string 
         Log(Translation("engine.project.explorer.open.failed.path") + info.rootPath, LogSeverity::Error);
         return false;
     }
+    return true;
+}
+
+bool ProjectManager::SetIncludeInGithubPush(const std::string &name, bool include, std::string *outErrorMessage) {
+    LogScope scope;
+    const auto fail = [outErrorMessage](const std::string &message) {
+        if (outErrorMessage) *outErrorMessage = message;
+        Log(Translation("engine.project.github.push.failed") + message, LogSeverity::Error);
+        return false;
+    };
+
+    ProjectInfo info;
+    if (!ReadProjectFile(ProjectPaths::ProjectsRoot() + "/" + name, info)) {
+        return fail(Translation("engine.project.notfound") + name);
+    }
+
+    const std::string gitignorePath = info.rootPath + "/" + kProjectGitignoreFileName;
+    std::error_code ec;
+    if (include) {
+        // 除外用の .gitignore を取り除き、通常どおりgitの追跡対象へ戻す
+        std::filesystem::remove(Utf8StringToPath(gitignorePath), ec);
+    } else {
+        // フォルダ内の未追跡ファイルがgitに拾われないようにする
+        // （既にコミット済みのファイルの追跡解除はこれだけでは行われない）
+        SaveTextFile({ gitignorePath, { "*" } });
+        if (!std::filesystem::is_regular_file(Utf8StringToPath(gitignorePath), ec)) {
+            return fail(Translation("engine.project.github.push.failed.write") + kProjectGitignoreFileName);
+        }
+    }
+
+    info.includeInGithubPush = include;
+    if (!WriteProjectFile(info)) {
+        return fail(Translation("engine.project.github.push.failed.write") + ProjectPaths::kProjectFileName);
+    }
+
+    Log(Translation("engine.project.github.push.changed") + name, LogSeverity::Info);
     return true;
 }
 

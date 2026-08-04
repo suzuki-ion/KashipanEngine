@@ -34,9 +34,9 @@ void Renderer::RenderPostProcessOnlyTargets(SceneContext *sceneContext,
             if (!commandList) continue;
             PipelineBinder pipelineBinder(commandList, pipelineManager_);
             RenderPostProcess(buffer, pipelineBinder, object.get(), sceneRenderer);
+            // ビューア用プレビューバッファの更新はEndDraw内部で自動的に行われる
+            // （詳細はScreenBuffer::GetPreviewSrvHandle参照）
             buffer->EndDraw();
-            // 今フレームの最終確定SRVをビューア用に記録する（詳細はScreenBuffer::SetPreviewSrvHandle参照）
-            buffer->SetPreviewSrvHandle(Passkey<Renderer>{}, buffer->GetSrvHandle());
         }
     }
 }

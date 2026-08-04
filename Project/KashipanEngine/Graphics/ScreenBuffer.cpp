@@ -26,9 +26,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetSrvHandle() const noexcept {
 
 bool ScreenBuffer::SaveToFile(const std::string &filePath) const {
     if (!sDirectXCommon_) return false;
-    auto *renderTarget = renderTargets_[previewRtvIndex_].get();
-    if (!renderTarget) return false;
-    auto *resource = renderTarget->GetResource();
+    auto *resource = previewTarget_ ? previewTarget_->GetResource() : nullptr;
     if (!resource) return false;
 
     auto *commandQueue = sDirectXCommon_->GetCommandQueueForScreenBuffer(Passkey<ScreenBuffer>{});
@@ -159,21 +157,30 @@ bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
 
     for (size_t i = 0; i < kBufferCount; ++i) {
         renderTargets_[i] = std::make_unique<RenderTargetResource>(width_, height_, colorFormat_);
+        // プレビュー安定バッファへのコピー元として使うため（CopyToPreviewTarget参照）
+        renderTargets_[i]->AddTransitionState(D3D12_RESOURCE_STATE_COPY_SOURCE);
         depthStencils_[i] = std::make_unique<DepthStencilResource>(width_, height_, depthFormat_, 1.0f, static_cast<UINT8>(0), nullptr, true, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
         shaderResources_[i] = std::make_unique<ShaderResourceResource>(renderTargets_[i].get());
 
         renderTargets_[i]->SetCommandList(cmd->GetCommandList());
         depthStencils_[i]->SetCommandList(cmd->GetCommandList());
-
-        rtBufferWidth_[i] = width_;
-        rtBufferHeight_[i] = height_;
-        dsBufferWidth_[i] = width_;
-        dsBufferHeight_[i] = height_;
     }
+    rtBufferWidth_ = width_;
+    rtBufferHeight_ = height_;
+    dsBufferWidth_ = width_;
+    dsBufferHeight_ = height_;
 
     for (size_t i = 0; i < kBufferCount; ++i) {
         if (!renderTargets_[i] || !depthStencils_[i] || !shaderResources_[i]) return false;
     }
+
+    previewTarget_ = std::make_unique<RenderTargetResource>(width_, height_, colorFormat_);
+    previewTarget_->AddTransitionState(D3D12_RESOURCE_STATE_COPY_DEST);
+    previewShaderResource_ = std::make_unique<ShaderResourceResource>(previewTarget_.get());
+    previewTarget_->SetCommandList(cmd->GetCommandList());
+    previewBufferWidth_ = width_;
+    previewBufferHeight_ = height_;
+    if (!previewTarget_ || !previewShaderResource_) return false;
 
     return true;
 }
@@ -192,33 +199,40 @@ bool ScreenBuffer::Resize(std::uint32_t width, std::uint32_t height) {
     return true;
 }
 
-void ScreenBuffer::EnsureRenderTargetSize(size_t index, ID3D12GraphicsCommandList *cmd) {
-    if (index >= kBufferCount) return;
+void ScreenBuffer::EnsureRenderTargetSize(ID3D12GraphicsCommandList *cmd, bool isMainCall) {
     if (width_ == 0 || height_ == 0) return;
-    if (rtBufferWidth_[index] == width_ && rtBufferHeight_[index] == height_) return;
+    if (rtBufferWidth_ == width_ && rtBufferHeight_ == height_) return;
+    // NextPass経由（isMainCall=false）の作り直しは行わない（EnsureRenderTargetSizeのヘッダーコメント参照）。
+    // BeginDraw経由（isMainCall=true）のみが作り直しを行える
+    if (!isMainCall) return;
 
-    renderTargets_[index] = std::make_unique<RenderTargetResource>(width_, height_, colorFormat_);
-    shaderResources_[index] = std::make_unique<ShaderResourceResource>(renderTargets_[index].get());
-    if (cmd) {
-        renderTargets_[index]->SetCommandList(cmd);
+    for (size_t i = 0; i < kBufferCount; ++i) {
+        renderTargets_[i] = std::make_unique<RenderTargetResource>(width_, height_, colorFormat_);
+        // プレビュー安定バッファへのコピー元として使うため（CopyToPreviewTarget参照）
+        renderTargets_[i]->AddTransitionState(D3D12_RESOURCE_STATE_COPY_SOURCE);
+        shaderResources_[i] = std::make_unique<ShaderResourceResource>(renderTargets_[i].get());
+        if (cmd) {
+            renderTargets_[i]->SetCommandList(cmd);
+        }
     }
 
-    rtBufferWidth_[index] = width_;
-    rtBufferHeight_[index] = height_;
+    rtBufferWidth_ = width_;
+    rtBufferHeight_ = height_;
 }
 
-void ScreenBuffer::EnsureDepthStencilSize(size_t index, ID3D12GraphicsCommandList *cmd) {
-    if (index >= kBufferCount) return;
+void ScreenBuffer::EnsureDepthStencilSize(ID3D12GraphicsCommandList *cmd) {
     if (width_ == 0 || height_ == 0) return;
-    if (dsBufferWidth_[index] == width_ && dsBufferHeight_[index] == height_) return;
+    if (dsBufferWidth_ == width_ && dsBufferHeight_ == height_) return;
 
-    depthStencils_[index] = std::make_unique<DepthStencilResource>(width_, height_, depthFormat_, 1.0f, static_cast<UINT8>(0), nullptr, true, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
-    if (cmd) {
-        depthStencils_[index]->SetCommandList(cmd);
+    for (size_t i = 0; i < kBufferCount; ++i) {
+        depthStencils_[i] = std::make_unique<DepthStencilResource>(width_, height_, depthFormat_, 1.0f, static_cast<UINT8>(0), nullptr, true, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
+        if (cmd) {
+            depthStencils_[i]->SetCommandList(cmd);
+        }
     }
 
-    dsBufferWidth_[index] = width_;
-    dsBufferHeight_[index] = height_;
+    dsBufferWidth_ = width_;
+    dsBufferHeight_ = height_;
 }
 
 void ScreenBuffer::Destroy() {
@@ -226,11 +240,19 @@ void ScreenBuffer::Destroy() {
         shaderResources_[i].reset();
         depthStencils_[i].reset();
         renderTargets_[i].reset();
-        rtBufferWidth_[i] = 0;
-        rtBufferHeight_[i] = 0;
-        dsBufferWidth_[i] = 0;
-        dsBufferHeight_[i] = 0;
     }
+    rtBufferWidth_ = 0;
+    rtBufferHeight_ = 0;
+    dsBufferWidth_ = 0;
+    dsBufferHeight_ = 0;
+
+    previewShaderResource_.reset();
+    previewTarget_.reset();
+    previewShaderResourcePendingDestroy_.reset();
+    previewTargetPendingDestroy_.reset();
+    previewBufferWidth_ = 0;
+    previewBufferHeight_ = 0;
+
     dx12Commands_ = nullptr;
 
     if (sDirectXCommon_ && commandSlotIndex_ >= 0) {
@@ -243,12 +265,12 @@ void ScreenBuffer::Destroy() {
 }
 
 void ScreenBuffer::BeginDraw() {
-    BeginRecord(!isDepthWriteEnabled_);
+    BeginRecord(!isDepthWriteEnabled_, /*isMainCall=*/true);
 }
 
 void ScreenBuffer::NextPass() {
     if (!EndRecord()) return;
-    BeginRecord(true);
+    BeginRecord(true, /*isMainCall=*/false);
 }
 
 void ScreenBuffer::RebindWriteTarget() {
@@ -284,6 +306,12 @@ void ScreenBuffer::RebindWriteTarget() {
 void ScreenBuffer::EndDraw() {
     if (!EndRecord()) return;
 
+    // このフレームの最終結果をプレビュー安定バッファへコピーする（コマンドリストがまだ
+    // 記録中のこの時点で行う必要がある。詳細はCopyToPreviewTargetのヘッダーコメント参照）
+    if (dx12Commands_) {
+        CopyToPreviewTarget(dx12Commands_->GetCommandList());
+    }
+
     // コマンドリストを閉じてフレーム終端実行用に登録する
     if (!dx12Commands_ || !dx12Commands_->EndRecord()) return;
     if (sDirectXCommon_) {
@@ -291,7 +319,7 @@ void ScreenBuffer::EndDraw() {
     }
 }
 
-ID3D12GraphicsCommandList *ScreenBuffer::BeginRecord(bool disableDepthWrite) {
+ID3D12GraphicsCommandList *ScreenBuffer::BeginRecord(bool disableDepthWrite, bool isMainCall) {
     LogScope scope;
     if (!dx12Commands_) return nullptr;
 
@@ -301,12 +329,11 @@ ID3D12GraphicsCommandList *ScreenBuffer::BeginRecord(bool disableDepthWrite) {
 
     isLastBeginDisableDepthWrite_ = disableDepthWrite;
 
-    // Resize()で要求されたサイズに対して、これから書き込みに使うバッファのみを必要に応じて作り直す
-    // （まだ使われていない方のバッファはそのまま残るため、リサイズ直後でも空のフレームが
-    // 表示されることがない。全バッファが新サイズに揃うまでは数フレームかかるが視覚的な破綻は無い）
-    EnsureRenderTargetSize(GetRtvWriteIndex(), cmd);
+    // Resize()で要求されたサイズに対して、ダブルバッファの両方を必要に応じて作り直す
+    // （作り直し可否判定はEnsureRenderTargetSizeのコメント参照）
+    EnsureRenderTargetSize(cmd, isMainCall);
     if (!disableDepthWrite) {
-        EnsureDepthStencilSize(GetDsvWriteIndex(), cmd);
+        EnsureDepthStencilSize(cmd);
     }
 
     auto *rt = renderTargets_[GetRtvWriteIndex()].get();
@@ -344,6 +371,8 @@ ID3D12GraphicsCommandList *ScreenBuffer::BeginRecord(bool disableDepthWrite) {
         ds->ClearDepthStencilView();
     }
 
+    // EnsureRenderTargetSize/EnsureDepthStencilSizeはisMainCall=trueの時点でダブルバッファの
+    // 両方を常にwidth_/height_へ揃えるため、ここでは直接width_/height_を使ってよい
     D3D12_VIEWPORT vp{};
     vp.TopLeftX = 0.0f;
     vp.TopLeftY = 0.0f;
@@ -397,6 +426,44 @@ bool ScreenBuffer::EndRecord(bool discard) {
     AdvanceFrameBufferIndex(updateRtv, updateDsv);
 
     return true;
+}
+
+void ScreenBuffer::CopyToPreviewTarget(ID3D12GraphicsCommandList *cmd) {
+    if (!cmd) return;
+    if (width_ == 0 || height_ == 0) return;
+
+    // EndRecord()の直後のためGetRtvReadIndex()の面は既にPIXEL_SHADER_RESOURCE状態
+    auto *src = renderTargets_[GetRtvReadIndex()].get();
+    if (!src) return;
+
+    // プレビュー用の安定バッファを、現在の要求サイズに合わせて必要なら作り直す。
+    // 古い方は即座に破棄せず1フレーム遅延させて破棄する（previewTargetPendingDestroy_のコメント参照）
+    if (previewBufferWidth_ != width_ || previewBufferHeight_ != height_) {
+        // 前回のリサイズで退避した分は、今回のCopyToPreviewTarget呼び出し時点で
+        // 既に1フレーム分のGPU同期を経ているため、ここで安全に破棄できる
+        // （このstd::moveへの代入により、それまでpreviewTargetPendingDestroy_に入っていた
+        // ものが破棄される）
+        previewTargetPendingDestroy_ = std::move(previewTarget_);
+        previewShaderResourcePendingDestroy_ = std::move(previewShaderResource_);
+
+        previewTarget_ = std::make_unique<RenderTargetResource>(width_, height_, colorFormat_);
+        previewTarget_->AddTransitionState(D3D12_RESOURCE_STATE_COPY_DEST);
+        previewShaderResource_ = std::make_unique<ShaderResourceResource>(previewTarget_.get());
+        previewTarget_->SetCommandList(cmd);
+        previewBufferWidth_ = width_;
+        previewBufferHeight_ = height_;
+    }
+    if (!previewTarget_) return;
+    previewTarget_->SetCommandList(cmd);
+
+    if (!src->TransitionTo(D3D12_RESOURCE_STATE_COPY_SOURCE)) return;
+    if (!previewTarget_->TransitionTo(D3D12_RESOURCE_STATE_COPY_DEST)) return;
+
+    cmd->CopyResource(previewTarget_->GetResource(), src->GetResource());
+
+    // 両方とも通常の読み取り用状態へ戻しておく（GetSrvHandle/GetPreviewSrvHandleでの参照に備える）
+    previewTarget_->TransitionTo(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    src->TransitionTo(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 }
 
 } // namespace KashipanEngine

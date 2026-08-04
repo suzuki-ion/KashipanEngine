@@ -37,7 +37,7 @@ DX12Device::DX12Device(Passkey<DirectXCommon>, IDXGIAdapter4 *adapter) {
         throw std::runtime_error("Failed to create D3D12 Device.");
     }
 
-#if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
+#if defined(DEBUG_BUILD)
     // デバッグ情報の設定
     Microsoft::WRL::ComPtr<ID3D12InfoQueue> infoQueue;
     if (SUCCEEDED(device_->QueryInterface(IID_PPV_ARGS(&infoQueue)))) {

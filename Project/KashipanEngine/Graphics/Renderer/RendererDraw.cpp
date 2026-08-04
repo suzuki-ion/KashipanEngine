@@ -62,13 +62,10 @@ void Renderer::RenderToTarget(IRenderTarget *target,
 
     // ウィンドウのコマンドリストはこの後 ImGui 等の描画にも使われるため、
     // 描画終了処理はスワップチェーン側（DirectXCommon::EndDraw）に任せる
+    // （ScreenBufferの場合、ビューア用プレビューバッファの更新はEndDraw内部で自動的に行われる。
+    // 詳細はScreenBuffer::GetPreviewSrvHandle参照）
     if (target->GetRenderTargetKind() != RenderTargetKind::Window) {
         target->EndDraw();
-        if (target->GetRenderTargetKind() == RenderTargetKind::ScreenBuffer) {
-            // 今フレームの最終確定SRVをビューア用に記録する（詳細はScreenBuffer::SetPreviewSrvHandle参照）
-            auto *screenBuffer = static_cast<ScreenBuffer *>(target);
-            screenBuffer->SetPreviewSrvHandle(Passkey<Renderer>{}, screenBuffer->GetSrvHandle());
-        }
     }
 }
 

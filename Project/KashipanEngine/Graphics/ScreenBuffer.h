@@ -88,29 +88,25 @@ public:
     ///          描画先をこのバッファへ戻すために呼ぶ（クリアは行わない）。
     void RebindWriteTarget();
 
-    /// @brief このフレームの描画（ポストエフェクト適用含む）が完了した時点のSRVハンドルを記録する
-    /// @details ScreenBufferObjectのビューア用ImGuiウィンドウは、Renderer::RenderFrame より前の
-    ///          タイミング（GameLoopUpdate側）で構築されるため、その場で GetSrvHandle() を呼ぶと
-    ///          今フレームのポストエフェクト適用が終わる前の読み取り面インデックスを参照してしまい、
-    ///          適用したポストエフェクトの数（NextPass呼び出し回数の偶奇）によっては
-    ///          エフェクト適用途中の中間結果を表示してしまう。
-    ///          Renderer側がこのフレームの描画完了直後（EndDraw後）に確定した正しいSRVハンドルを
-    ///          ここへ記録し、ビューアはこちらを参照することで常に「完成した最新フレーム」を表示する。
-    void SetPreviewSrvHandle(Passkey<Renderer>, D3D12_GPU_DESCRIPTOR_HANDLE handle) noexcept {
-        previewSrvHandle_ = handle;
-        // この時点の読み取り面インデックスは確定済み（EndDraw後）のため、画像保存用にも記録しておく。
-        // インデックスのみ保持し、実体（renderTargets_[]）はリサイズで作り直されても都度引き直す
-        previewRtvIndex_ = GetRtvReadIndex();
+    /// @brief 直近で描画が完了した時点のSRVハンドルを取得（ビューア表示・他コンポーネントからの
+    ///        フレームをまたいだ参照用）
+    /// @details GetSrvHandle()はポストエフェクトの中間パス同士が同一フレーム内で参照し合うための
+    ///          「直近に完成した書き込み面」を返す（ダブルバッファの一方を指す）。一方、この関数が返す
+    ///          ハンドルは専用の安定バッファ（CopyToPreviewTarget参照）を指しており、
+    ///          このバッファは1フレームにつき「全ポストエフェクト適用後の最終結果」で1回だけ
+    ///          上書きされる以外は変化しないため、Renderer::RenderFrameより前のタイミングで
+    ///          参照しても、中間パスの内容や翌フレームの描画によって書き換えられる心配が無い
+    D3D12_GPU_DESCRIPTOR_HANDLE GetPreviewSrvHandle() const noexcept {
+        return previewShaderResource_ ? previewShaderResource_->GetGPUDescriptorHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
     }
-    /// @brief 直近で描画が完了した時点のSRVハンドルを取得（ビューア表示用）
-    D3D12_GPU_DESCRIPTOR_HANDLE GetPreviewSrvHandle() const noexcept { return previewSrvHandle_; }
 
     /// @brief 直近で描画完了が確定した時点のレンダーターゲットを画像ファイルへ保存する
     /// @details 内部でGPU完了を同期的に待つ（スコールする）ため、毎フレーム呼ぶ用途ではなく
-    ///          スクリーンショット等の単発利用を想定している。SetPreviewSrvHandleと同じ
-    ///          「フレーム描画完了直後に確定した面」を対象にするため、この呼び出しがどのタイミング
-    ///          （エディターのボタン、スクリプトのUpdate等、いずれもRenderer::RenderFrameより前）で
-    ///          行われても、ポストエフェクト適用途中の中間結果を保存してしまうことはない。
+    ///          スクリーンショット等の単発利用を想定している。GetPreviewSrvHandleと同じ
+    ///          専用の安定バッファ（CopyToPreviewTarget参照）を対象にするため、
+    ///          この呼び出しがどのタイミング（エディターのボタン、スクリプトのUpdate等、
+    ///          いずれもRenderer::RenderFrameより前）で行われても、
+    ///          ポストエフェクト適用途中の中間結果を保存してしまうことはない。
     /// @param filePath 保存先パス（拡張子から形式判定。.png/.jpg/.jpeg/.bmp、それ以外はpng扱い）
     /// @return 成功した場合は true
     bool SaveToFile(const std::string &filePath) const;
@@ -132,10 +128,8 @@ public:
 
     /// @brief バッファサイズの変更を通知する（GPUリソースの再生成は即時には行わない）
     /// @details 呼び出した時点では新しいサイズを記憶するだけで、実際のGPUリソース再生成は
-    ///          BeginDraw（内部的にはBeginRecord）でそのリソースが実際に使用される際、
-    ///          そのリソース単体のみを対象に行われる（ダブルバッファの全リソースを一括で
-    ///          作り直すと、まだ使われていない方のバッファまで空の状態になり、その内容が
-    ///          そのまま画面に一瞬表示されてちらつく問題があったため）。
+    ///          次のBeginDraw（内部的にはBeginRecord経由のEnsureRenderTargetSize/
+    ///          EnsureDepthStencilSize）でまとめて行われる。
     ///          TextureManagerへの登録名・ハンドルはそのまま維持される（サイズはこのオブジェクトから
     ///          毎回取得されるため再登録は不要）。BeginDraw/EndDraw の外側から呼ぶこと。
     /// @return 成功した場合はtrue、失敗した場合（未初期化・サイズが0等）はfalseを返す
@@ -148,6 +142,9 @@ private:
     ScreenBuffer() = default;
 
     size_t GetRtvWriteIndex() const noexcept { return rtvWriteIndex_; }
+    /// @brief 直近に完成した（＝直前のBeginRecord/NextPassで書き込みが終わった）RTVインデックスを取得する
+    /// @details ポストエフェクトの中間パス同士が同一フレーム内で「直前のパスの結果」を参照するための
+    ///          もので、フレームをまたいだ参照には使わないこと（GetPreviewSrvHandle参照）
     size_t GetRtvReadIndex() const noexcept { return (rtvWriteIndex_ + 1) % kBufferCount; }
     size_t GetDsvWriteIndex() const noexcept { return dsvWriteIndex_; }
     size_t GetDsvReadIndex() const noexcept { return (dsvWriteIndex_ + 1) % kBufferCount; }
@@ -169,19 +166,35 @@ private:
     void Destroy();
 
     /// @brief コマンド記録開始
-    ID3D12GraphicsCommandList *BeginRecord(bool disableDepthWrite);
+    /// @param isMainCall BeginDraw経由（true）かNextPass経由（false）か。
+    ///        リサイズ待ちバッファの作り直し可否の判定に使う（EnsureRenderTargetSize参照）
+    ID3D12GraphicsCommandList *BeginRecord(bool disableDepthWrite, bool isMainCall);
 
     /// @brief コマンド記録終了
     bool EndRecord(bool discard = false);
 
-    /// @brief 指定インデックスのRenderTarget/ShaderResourceが現在の width_/height_ と異なるサイズの
-    ///        場合のみ、そのインデックスのリソースだけを新しいサイズで作り直す
-    /// @details RenderTarget用とDepthStencil用でインデックスの進み方が異なる場合があるため
-    ///          （深度書き込み無効時はDSVインデックスが進まない）、それぞれ独立して管理する
-    void EnsureRenderTargetSize(size_t index, ID3D12GraphicsCommandList *cmd);
-    /// @brief 指定インデックスのDepthStencilが現在の width_/height_ と異なるサイズの場合のみ、
-    ///        そのインデックスのリソースだけを新しいサイズで作り直す
-    void EnsureDepthStencilSize(size_t index, ID3D12GraphicsCommandList *cmd);
+    /// @brief RenderTarget/ShaderResourceが現在の width_/height_ と異なるサイズの場合のみ、
+    ///        ダブルバッファの両方のインデックスを同時に新しいサイズで作り直す
+    /// @param isMainCall BeginDraw経由の呼び出しか
+    /// @details 作り直しはBeginDraw経由（isMainCall=true）でのみ行い、NextPass経由（ポストエフェクトの
+    ///          中間パス）では絶対に行わない。エンジンは毎フレーム完全にGPU同期する（WaitForFence）ため、
+    ///          新しいフレームのBeginDraw時点では前フレームのGPU処理は必ず完了しており、
+    ///          ダブルバッファの両方を安全に作り直せる。一方、NextPass（同一フレーム内の中間パス）は
+    ///          直前のパスの結果をまだ参照中のため、ここで作り直すとGPUハング
+    ///          （TDR・スワップチェーンPresent失敗）を引き起こすことを確認済み
+    void EnsureRenderTargetSize(ID3D12GraphicsCommandList *cmd, bool isMainCall);
+    /// @brief DepthStencilが現在の width_/height_ と異なるサイズの場合のみ、
+    ///        ダブルバッファの両方のインデックスを同時に新しいサイズで作り直す
+    /// @details EnsureRenderTargetSizeと同じ理由でBeginDraw経由（isMainCall=true）でのみ呼ばれる
+    void EnsureDepthStencilSize(ID3D12GraphicsCommandList *cmd);
+
+    /// @brief このフレームの最終描画結果（GetRtvReadIndex()が指す面）を、
+    ///        プレビュー用の安定バッファへコピーする（GetPreviewSrvHandle参照）
+    /// @details EndDraw()の中、コマンドリストをCloseする直前（＝まだ記録中）に呼ぶこと。
+    ///          一度Closeされたコマンドリストは同一フレーム内で再度開けない
+    ///          （BeginRecordはアロケータをResetするため、GPU実行完了前に呼ぶと不正になる）ため、
+    ///          パイプライン経由の描画ではなく、同じコマンドリスト上でCopyResourceを使う
+    void CopyToPreviewTarget(ID3D12GraphicsCommandList *cmd);
 
     /// @brief TextureManager への登録（名前が空の場合は自動生成）
     void RegisterToTextureManager(const std::string &name);
@@ -190,10 +203,6 @@ private:
 
     std::string name_;
     std::uint32_t textureHandle_ = 0;
-    /// @brief 直近で描画完了が確定した時点のSRVハンドル（ビューア用。SetPreviewSrvHandle参照）
-    D3D12_GPU_DESCRIPTOR_HANDLE previewSrvHandle_{};
-    /// @brief 直近で描画完了が確定した時点の読み取り面インデックス（画像保存用。SetPreviewSrvHandle参照）
-    size_t previewRtvIndex_ = 0;
 
     std::uint32_t width_ = 0;
     std::uint32_t height_ = 0;
@@ -212,14 +221,33 @@ private:
     std::unique_ptr<DepthStencilResource> depthStencils_[kBufferCount];
     std::unique_ptr<ShaderResourceResource> shaderResources_[kBufferCount];
 
-    // 各インデックスのRenderTarget/DepthStencilが実際にGPU上で確保されているサイズ
+    // ダブルバッファ（renderTargets_/depthStencils_）が実際にGPU上で確保されているサイズ
     // （width_/height_とは異なる場合がある。Resize()は即時にはGPUリソースを作り直さず、
-    // このサイズとの差分をEnsureRenderTargetSize/EnsureDepthStencilSizeで検知して
-    // 使用時に1バッファずつ作り直す。RTVとDSVでインデックスの進み方が異なることがあるため別々に持つ）
-    std::uint32_t rtBufferWidth_[kBufferCount]{};
-    std::uint32_t rtBufferHeight_[kBufferCount]{};
-    std::uint32_t dsBufferWidth_[kBufferCount]{};
-    std::uint32_t dsBufferHeight_[kBufferCount]{};
+    // このサイズとの差分をEnsureRenderTargetSize/EnsureDepthStencilSizeで検知して、
+    // BeginDraw経由でのみ両方のインデックスをまとめて作り直す）
+    std::uint32_t rtBufferWidth_ = 0;
+    std::uint32_t rtBufferHeight_ = 0;
+    std::uint32_t dsBufferWidth_ = 0;
+    std::uint32_t dsBufferHeight_ = 0;
+
+    /// @brief ビューア表示・フレームをまたいだ参照専用の安定バッファ（GetPreviewSrvHandle参照）
+    /// @details ダブルバッファ（renderTargets_）とは独立しており、EndDraw()内のCopyToPreviewTarget
+    ///          呼び出しでのみ内容が更新される
+    std::unique_ptr<RenderTargetResource> previewTarget_;
+    std::unique_ptr<ShaderResourceResource> previewShaderResource_;
+    std::uint32_t previewBufferWidth_ = 0;
+    std::uint32_t previewBufferHeight_ = 0;
+    /// @brief リサイズで置き換えられた直前のプレビューバッファ（1フレームだけ延命）
+    /// @details ImGuiのウィンドウ構築（GetPreviewSrvHandle呼び出し）はRenderer::RenderFrameより前に
+    ///          行われるが、その描画コマンド自体はimguiManager_->Render()（RenderFrameより後）まで
+    ///          実行されない。そのため、このフレーム中にCopyToPreviewTargetがprevewTarget_を
+    ///          直接作り直して即座に破棄すると、既にImGuiの描画コマンドに埋め込まれた古い
+    ///          ディスクリプタが破棄済みリソースを指してしまい、GPUハングを引き起こす
+    ///          （ダブルバッファでNextPass経由の作り直しを禁止したのと同種の問題）。
+    ///          そのため古い方はここに1フレームだけ退避し、次にCopyToPreviewTargetが呼ばれた際
+    ///          （＝前フレームのGPU処理が完全に同期済みであることが保証された後）に破棄する
+    std::unique_ptr<RenderTargetResource> previewTargetPendingDestroy_;
+    std::unique_ptr<ShaderResourceResource> previewShaderResourcePendingDestroy_;
 
     int commandSlotIndex_ = -1;
     DX12Commands *dx12Commands_ = nullptr;

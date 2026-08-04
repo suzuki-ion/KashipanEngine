@@ -2,6 +2,7 @@
 #include "Assets/AssimpUtf8IOSystem.h"
 #include "Assets/CaseInsensitive.h"
 #include "Core/ProjectPaths.h"
+#include "Assets/MaterialManager.h"
 #include "Assets/PrimitiveMeshGenerator.h"
 #include "Assets/TextureManager.h"
 
@@ -255,6 +256,11 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
         aiProcess_FindInvalidData |
         aiProcess_TransformUVCoords |
         aiProcess_SortByPType |
+        // 法線を持たない（または元データが不正で aiProcess_FindInvalidData により
+        // 取り除かれた）メッシュが、法線ゼロベクトルのまま描画されてライティング結果が
+        // 常に真っ黒になる問題を防ぐ。法線を既に持つメッシュには影響しない
+        // （Assimpは既存の法線がある場合この処理をスキップする）
+        aiProcess_GenSmoothNormals |
         aiProcess_CalcTangentSpace |
         aiProcess_FlipUVs;
 
@@ -613,9 +619,11 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
     const std::string modelName = PathToUtf8String(Utf8StringToPath(baseFileName).stem());
 
     // モデルが使用するマテリアルを自動生成する（.matファイルをモデルの隣へ書き出す）。
-    // ModelManagerはMaterialManagerより先に初期化されるため、ここではファイルとして書き出すだけにして、
-    // 後から初期化されるMaterialManagerのAssetsフォルダ走査で読み込ませる。
-    // 既に.matファイルが存在する場合はユーザーの編集を保護するため上書きしない
+    // MaterialManagerの起動時Assetsフォルダ走査を待たず、書き出した直後にLoadMaterialDynamicで
+    // 実行中のMaterialManagerへ即時登録する（そうしないとAssetsウィンドウでの
+    // ダブルクリック等、生成直後のセッション内参照が「読み込まれていない」扱いになる）。
+    // 既に.matファイルが存在する場合はユーザーの編集を保護するため上書きしないが、
+    // 登録自体は（未登録なら）行う
     const std::string modelDir = NormalizePathSlashes(PathToUtf8String(Utf8StringToPath(modelFullPath).parent_path()));
     std::unordered_map<unsigned int, std::string> materialIndexToName;
     for (unsigned int mi = 0; mi < scene->mNumMaterials; ++mi) {
@@ -635,7 +643,10 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
 
         const std::string matFilePath = modelDir + "/" + uniqueName + ".mat";
         std::error_code matEc;
-        if (std::filesystem::exists(Utf8StringToPath(matFilePath), matEc)) continue;
+        if (std::filesystem::exists(Utf8StringToPath(matFilePath), matEc)) {
+            MaterialManager::LoadMaterialDynamic(matFilePath);
+            continue;
+        }
 
         // MaterialManager::SaveMaterialと同じスキーマで書き出す
         Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
@@ -662,6 +673,7 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
         matJson["enableShadowMapProjection"] = true;
         if (SaveJSON(matJson, matFilePath)) {
             Log(Translation("engine.model.material.generated") + matFilePath, LogSeverity::Info);
+            MaterialManager::LoadMaterialDynamic(matFilePath);
         }
     }
 
@@ -669,12 +681,18 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
     // モデルの隣（"モデルファイル名.prefab"）へ自動生成する。
     // 既にプレハブが存在する場合はユーザーの編集を保護し、同期に必要なID・親参照だけを補完する
     const std::string prefabPath = modelFullPath + ".prefab";
+    // PrefabAssetManagerの索引・保存APIは論理パス（"Assets/..."）を前提にしている
+    // （EnsureIndexBuildedはProjectPaths::ListAssetFilesの論理パスで索引を構築するため、
+    //   ここで物理パスをそのまま渡すと同じprefabIDのエントリが物理パスキーで上書きされ、
+    //   AssetsウィンドウからのD&D配置（論理パスでGetPrefabIDFromPathを引く）が
+    //   PrefabIDを解決できずPrefabInstanceComponentが付与されない＝同期が機能しなくなる）
+    const std::string prefabLogicalPath = ProjectPaths::ToLogical(prefabPath);
     std::error_code ec;
     if (std::filesystem::exists(prefabPath, ec)) {
         JSON existingPrefab = LoadJSON(prefabPath);
         UUID128 existingPrefabID;
         if (EnsureModelPrefabSchema(existingPrefab, existingPrefabID)) {
-            if (PrefabAssetManager::CreatePrefabFile(existingPrefabID, existingPrefab, prefabPath)) {
+            if (PrefabAssetManager::CreatePrefabFile(existingPrefabID, existingPrefab, prefabLogicalPath)) {
                 Log(Translation("engine.model.prefab.metadata.upgraded") + prefabPath, LogSeverity::Info);
             } else {
                 Log(Translation("engine.model.prefab.metadata.upgrade.failed") + prefabPath, LogSeverity::Warning);
@@ -782,7 +800,7 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
     // ルートノードはモデル名のオブジェクトとして生成する（Unityのモデルプレハブと同様）
     addNode(scene->mRootNode, -1, std::string(), modelName);
 
-    if (PrefabAssetManager::CreatePrefabFile(prefabID, prefab, prefabPath)) {
+    if (PrefabAssetManager::CreatePrefabFile(prefabID, prefab, prefabLogicalPath)) {
         Log(Translation("engine.model.prefab.generated") + prefabPath, LogSeverity::Info);
     } else {
         Log(Translation("engine.model.prefab.generate.failed") + prefabPath, LogSeverity::Warning);

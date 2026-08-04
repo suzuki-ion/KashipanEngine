@@ -4,6 +4,7 @@
 #include <imgui_stdlib.h>
 #include <filesystem>
 
+#include "Core/ProjectPaths.h"
 #include "Scene/SceneEditorContext.h"
 #include "Scene/SceneFileIO.h"
 #include "Scene/SceneManager.h"
@@ -151,7 +152,7 @@ void SceneListEditor::ConvertSceneToFolderFormat(const std::string &sceneName, c
     auto *sceneManager = context_ ? context_->GetSceneManager() : nullptr;
     if (!sceneManager) return;
 
-    JSON sceneJson = LoadJSON(oldFilePath);
+    JSON sceneJson = LoadJSON(ProjectPaths::ToPhysical(oldFilePath));
     if (sceneJson.empty()) return;
 
     // 拡張子(.json)を取り除いた同名フォルダへ .scene 形式で書き出す
@@ -181,7 +182,7 @@ void SceneListEditor::ShowConfirmDeleteOldFilePopup() {
         ImGui::TextWrapped("%s\n%s", TranslationC("editor.scenelist.deleteoriginal.message"), pendingDeleteOldFilePath_.c_str());
         if (ImGui::Button(TranslationLabel("editor.common.delete"), ImVec2(120, 0))) {
             std::error_code ec;
-            std::filesystem::remove(pendingDeleteOldFilePath_, ec);
+            std::filesystem::remove(ProjectPaths::ToPhysical(pendingDeleteOldFilePath_), ec);
             pendingDeleteOldFilePath_.clear();
             ImGui::CloseCurrentPopup();
         }

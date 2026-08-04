@@ -4,6 +4,7 @@
 #include <cmath>
 #include <unordered_map>
 
+#include "Core/ProjectPaths.h"
 #include "Debug/Logger.h"
 #include "Objects/Components/ScriptComponent.h"
 #include "Objects/ObjectContext.h"
@@ -162,7 +163,7 @@ const KeyFrameAnimator::AnimationEntry *KeyFrameAnimator::FindAnimation(const st
 
 void KeyFrameAnimator::EnsureLoaded(AnimationEntry &entry) {
     if (entry.loaded || entry.loadFailed || entry.jsonPath.empty()) return;
-    const JSON json = LoadJSON(entry.jsonPath);
+    const JSON json = LoadJSON(ProjectPaths::ToPhysical(entry.jsonPath));
     if (json.is_discarded() || !entry.animation.LoadFromJson(json)) {
         entry.loadFailed = true;
         Log(Translation("engine.keyframeanimator.load.failed") + entry.jsonPath, LogSeverity::Warning);

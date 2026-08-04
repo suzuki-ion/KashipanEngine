@@ -18,6 +18,7 @@
 #include "Assets/AudioManager.h"
 #include "Assets/ModelManager.h"
 #include "ComponentSerialize/ComponentRegistry.h"
+#include "Core/ProjectPaths.h"
 #include "Core/Window.h"
 #include "Debug/Logger.h"
 #include "Input/InputCommand.h"
@@ -1941,12 +1942,12 @@ void RegisterJsonBindings(asIScriptEngine *engine) {
 
     asbind20::global(engine)
         .function("Json@ LoadJsonFile(const string &in path)", [](const std::string &path) -> ScriptJsonValue * {
-            JSON data = LoadJSON(path);
+            JSON data = LoadJSON(ProjectPaths::ToPhysical(path));
             if (data.is_discarded()) return nullptr;
             return new ScriptJsonValue(std::move(data));
         })
         .function("bool SaveJsonFile(const string &in path, const Json &in data, int indent = 4)", [](const std::string &path, const ScriptJsonValue &data, int indent) -> bool {
-            return SaveJSON(data.data, path, indent);
+            return SaveJSON(data.data, ProjectPaths::ToPhysical(path), indent);
         });
 }
 

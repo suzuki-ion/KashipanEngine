@@ -20,10 +20,23 @@ UUID128 PrefabAssetManager::GetPrefabIDFromPath(const std::string &filePath) {
 
 bool PrefabAssetManager::CreatePrefabFile(const UUID128 &prefabID, const JSON &json, const std::string &filePath) {
     EnsureIndexBuilt();
-    if (!prefabID.IsValid() || !SaveJSON(json, ProjectPaths::ToPhysical(filePath))) return false;
+    if (!prefabID.IsValid()) return false;
+
+    // 既に登録済みのprefabID（モデル再インポート時のスキーマ更新等）を上書きする場合は
+    // 変更前のJSONを控えておき、保存後にリスナーへ通知してシーン上の配置済みインスタンスへ
+    // 反映する（SavePrefabJsonと同じ経路を通さないと「元Prefabが書き変わればシーン上の
+    // インスタンスも書き変わる」同期が一切発生しない）
+    const bool hadExisting = sIDToPath_.contains(prefabID);
+    const JSON oldJson = hadExisting ? LoadPrefabJson(prefabID) : JSON();
+
+    if (!SaveJSON(json, ProjectPaths::ToPhysical(filePath))) return false;
     sIDToPath_[prefabID] = filePath;
     sPathToID_[filePath] = prefabID;
-    sCache_[prefabID] = json;
+    if (hadExisting) {
+        NotifyChanged(prefabID, oldJson, json);
+    } else {
+        sCache_[prefabID] = json;
+    }
     return true;
 }
 

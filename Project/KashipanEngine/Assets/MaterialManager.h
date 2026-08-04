@@ -92,6 +92,12 @@ public:
     /// @brief 指定ファイルパスのマテリアルを読み込む（Assets ルートからの相対 or フルパス）
     /// @return 読み込んだマテリアルのハンドル（失敗時は `kInvalidHandle`）
     MaterialHandle LoadMaterial(const std::string& filePath);
+#if defined(USE_IMGUI)
+    /// @brief 実行中のMaterialManagerインスタンスへマテリアルを動的登録する
+    /// @details Assetsウィンドウへのドラッグ&ドロップ等、起動後に生成/追加された.matファイルを
+    ///          MaterialManagerのAssetsフォルダ走査を待たずに読み込み済み一覧へ反映するために使う。
+    static MaterialHandle LoadMaterialDynamic(const std::string& filePath);
+#endif
     /// @brief 指定マテリアルを保存する
     /// @param handle 保存するマテリアルのハンドル
     /// @param filePath 保存先のファイルパス（空文字の場合は元のパスに上書き保存）

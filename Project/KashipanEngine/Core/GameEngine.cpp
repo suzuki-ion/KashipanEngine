@@ -187,7 +187,18 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     // AppInitializeでシーン切り替えが指定されなかった場合は、
     // シーンリスト定義ファイルのスタートアップシーンへ自動的に切り替える
     if (sceneManager_ && !sceneManager_->HasPendingSceneChange()) {
-        sceneManager_->ChangeToStartupScene();
+        if (!sceneManager_->ChangeToStartupScene()) {
+            // シーンが1つも登録されていない（Emptyテンプレート等でSceneList.jsonが空の）場合、
+            // ここでシーン切り替えを予約しないと currentScene_ が永久にnullのままになる。
+            // SceneEditor等のImGuiウィンドウはほぼ全てScene配下にぶら下がっているため、
+            // これを放置するとエンジンプロファイリング以外の編集用ウィンドウが一切出せなくなり、
+            // シーンを新規作成するためのメニューにすら到達できなくなってしまう。
+            // 最低限編集を始められるよう、空のシーンを登録して切り替えておく
+            constexpr const char *kFallbackSceneName = "New Scene";
+            if (sceneManager_->RegisterScene(kFallbackSceneName)) {
+                sceneManager_->ChangeScene(kFallbackSceneName);
+            }
+        }
     }
 
     LogSeparator();

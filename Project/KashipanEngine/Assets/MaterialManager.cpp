@@ -36,6 +36,10 @@ FileMap<MaterialHandle> sFileNameToHandle;
 /// @brief 次に割り当てるマテリアルハンドル（削除済みハンドルは使い回さず単調増加させる）
 MaterialHandle sNextHandle = 1;
 
+#if defined(USE_IMGUI)
+MaterialManager* sActiveInstance = nullptr;
+#endif
+
 std::string NormalizePathSlashes(std::string s) {
     std::replace(s.begin(), s.end(), '\\', '/');
     while (!s.empty() && s.back() == '/') s.pop_back();
@@ -155,10 +159,16 @@ MaterialManager::MaterialManager(Passkey<GameEngine>, const std::string& assetsR
     sAssetsRootPath = NormalizePathSlashes(assetsRootPath);
     InitializeMaterialManager();
     LoadAllFromAssetsFolder();
+#if defined(USE_IMGUI)
+    sActiveInstance = this;
+#endif
 }
 
 MaterialManager::~MaterialManager() {
     LogScope scope;
+#if defined(USE_IMGUI)
+    if (sActiveInstance == this) sActiveInstance = nullptr;
+#endif
     FinalizeMaterialManager();
 }
 
@@ -212,10 +222,12 @@ MaterialManager::MaterialHandle MaterialManager::LoadMaterial(const std::string&
     const std::string full = NormalizePathSlashes(PathToUtf8String(p));
     const std::string asset = MakeAssetRelativePath(sAssetsRootPath, full);
 
-    // 既に読み込み済みかチェック
+    // 既に読み込み済みかチェック（assetPath -> handle の直接マップは存在しないため走査して探す。
+    // Material::name とは独立した概念のため sNameToHandle では照合できない）
     {
-        auto it = sNameToHandle.find(asset);
-        if (it != sNameToHandle.end()) return it->second;
+        auto it = std::find_if(sMaterials.begin(), sMaterials.end(),
+            [&asset](const auto &kv) { return kv.second.assetPath == asset; });
+        if (it != sMaterials.end()) return it->first;
     }
 
     MaterialEntry entry{};
@@ -238,6 +250,13 @@ MaterialManager::MaterialHandle MaterialManager::LoadMaterial(const std::string&
     Log(Translation("engine.material.loading.succeeded") + PathToUtf8String(p), LogSeverity::Info);
     return handle;
 }
+
+#if defined(USE_IMGUI)
+MaterialManager::MaterialHandle MaterialManager::LoadMaterialDynamic(const std::string &filePath) {
+    if (!sActiveInstance) return kInvalidHandle;
+    return sActiveInstance->LoadMaterial(filePath);
+}
+#endif
 
 bool MaterialManager::SaveMaterial(MaterialHandle handle, const std::string &filePath) {
     if (handle == kInvalidHandle) return false;

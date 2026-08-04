@@ -596,6 +596,10 @@
 		"engine.project.editor.launch.failed.notfound": "同じフォルダに次のファイルが見つかりません：",
 		"engine.project.editor.launch.failed.createprocess": "プロセスの起動に失敗しました。",
 
+		"engine.project.github.push.changed": "GitHubへのプッシュに含めるかどうかの設定を変更しました：",
+		"engine.project.github.push.failed": "GitHubへのプッシュに含めるかどうかの設定変更に失敗しました：",
+		"engine.project.github.push.failed.write": "設定に必要なファイルを書き出せませんでした：",
+
 		//--------- プロジェクト（エディターUI） ---------//
 		"editor.project.window": "Project",
 		"editor.project.current": "現在のプロジェクト",

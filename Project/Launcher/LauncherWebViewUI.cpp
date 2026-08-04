@@ -185,6 +185,13 @@ HRESULT WebViewUI::OnWebMessageReceived(ICoreWebView2WebMessageReceivedEventArgs
         } else {
             SendStatus("error", errorMessage);
         }
+    } else if (action == "setIncludeInGithubPush") {
+        const bool include = message.value("include", true);
+        if (!ProjectManager::SetIncludeInGithubPush(name, include, &errorMessage)) {
+            SendStatus("error", errorMessage);
+        }
+        // 失敗時もトグルの表示を実際の保存値へ揃え直すため、常に一覧を送り直す
+        SendProjectList();
     }
     return S_OK;
 }
@@ -202,6 +209,7 @@ void WebViewUI::SendProjectList() {
         item["name"] = project.name;
         item["path"] = project.rootPath;
         item["description"] = project.description;
+        item["includeInGithubPush"] = project.includeInGithubPush;
         items.push_back(std::move(item));
     }
     message["items"] = std::move(items);

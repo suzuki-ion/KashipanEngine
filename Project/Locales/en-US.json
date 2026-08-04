@@ -596,6 +596,10 @@
 		"engine.project.editor.launch.failed.notfound": "The following file was not found next to it: ",
 		"engine.project.editor.launch.failed.createprocess": "Failed to launch the process.",
 
+		"engine.project.github.push.changed": "Changed whether the project is included in GitHub pushes: ",
+		"engine.project.github.push.failed": "Failed to change whether the project is included in GitHub pushes: ",
+		"engine.project.github.push.failed.write": "Could not write a file required for this setting: ",
+
 		//--------- プロジェクト（エディターUI） ---------//
 		"editor.project.window": "Project",
 		"editor.project.current": "Current Project",

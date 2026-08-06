@@ -8,12 +8,14 @@
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/AssetDragDropPayload.h"
 #include "Assets/TextureRef.h"
+#include "Assets/TextureCubeRef.h"
 
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
 #include <filesystem>
 #include <functional>
+#include <map>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -22,6 +24,7 @@
 #if defined(USE_IMGUI)
 #include <imgui.h>
 #include "Graphics/Pipeline/System/MaterialLayout.h"
+#include "Graphics/Pipeline/System/ShaderModuleComposer.h"
 #include "Graphics/PipelineManager.h"
 #include "Utilities/ImGuiCustom.h"
 #endif
@@ -102,16 +105,6 @@ bool LoadMaterialFromJSON(const std::string& filePath, MaterialManager::Material
             outMaterial.textureHandle = TextureManager::GetTextureFromFileName(outMaterial.textureFileName);
         }
 
-        if (json.contains("environmentFile") && json["environmentFile"].is_string()) {
-            outMaterial.environmentFileName = FromJSON<std::string>(json["environmentFile"]);
-            outMaterial.environmentHandle = TextureManager::GetTextureFromFileName(outMaterial.environmentFileName);
-        }
-
-        if (json.contains("normalMapFile") && json["normalMapFile"].is_string()) {
-            outMaterial.normalMapFileName = FromJSON<std::string>(json["normalMapFile"]);
-            outMaterial.normalMapHandle = TextureManager::GetTextureFromFileName(outMaterial.normalMapFileName);
-        }
-
         // サンプラーハンドル
         if (json.contains("samplerHandle") && json["samplerHandle"].is_number_unsigned()) {
             outMaterial.samplerHandle = FromJSON<SamplerManager::SamplerHandle>(json["samplerHandle"]);
@@ -124,7 +117,6 @@ bool LoadMaterialFromJSON(const std::string& filePath, MaterialManager::Material
             outMaterial.specularColor = FromJSON<Vector4>(json["specularColor"]);
         }
 
-        outMaterial.environmentCoefficient = FromJSON<float>(json["environmentCoefficient"]);
         outMaterial.enableLighting = FromJSON<bool>(json["enableLighting"]);
         outMaterial.enableShadowMapProjection = FromJSON<bool>(json["enableShadowMapProjection"]);
 
@@ -294,17 +286,10 @@ bool MaterialManager::SaveMaterial(MaterialHandle handle, const std::string &fil
     // ハンドルが未解決の場合でも読み込み時のファイル名を保持して保存する
     std::string textureFile = TextureManager::GetTextureFileName(material.textureHandle);
     if (textureFile.empty()) textureFile = material.textureFileName;
-    std::string environmentFile = TextureManager::GetTextureFileName(material.environmentHandle);
-    if (environmentFile.empty()) environmentFile = material.environmentFileName;
-    std::string normalMapFile = TextureManager::GetTextureFileName(material.normalMapHandle);
-    if (normalMapFile.empty()) normalMapFile = material.normalMapFileName;
     json["textureFile"] = textureFile;
-    json["environmentFile"] = environmentFile;
-    json["normalMapFile"] = normalMapFile;
     json["samplerHandle"] = material.samplerHandle;
     json["shininess"] = material.shininess;
     json["specularColor"] = ToJSON(material.specularColor);
-    json["environmentCoefficient"] = material.environmentCoefficient;
     json["enableLighting"] = material.enableLighting;
     json["enableShadowMapProjection"] = material.enableShadowMapProjection;
     json["rimColor"] = ToJSON(material.rimColor);
@@ -577,33 +562,8 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
         material.textureHandle = TextureManager::GetTextureFromAssetPath(droppedPath);
         material.textureFileName = TextureManager::GetTextureFileName(material.textureHandle);
     }
-    std::string environmentPath = TextureManager::GetTextureAssetPath(material.environmentHandle);
-    if (environmentPath.empty()) environmentPath = material.environmentFileName;
-    if (ImGuiCustom::SelectString(TranslationLabel("editor.materialmanager.environment"), environmentPath, texturePaths, true)) {
-        material.environmentHandle = environmentPath.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(environmentPath);
-        material.environmentFileName = TextureManager::GetTextureFileName(material.environmentHandle);
-    }
-    if (std::string droppedPath; AcceptAssetDragDropTarget(kTextureAssetDragDropType, droppedPath)) {
-        material.environmentHandle = TextureManager::GetTextureFromAssetPath(droppedPath);
-        material.environmentFileName = TextureManager::GetTextureFileName(material.environmentHandle);
-    }
-    std::string normalMapPath = TextureManager::GetTextureAssetPath(material.normalMapHandle);
-    if (normalMapPath.empty()) normalMapPath = material.normalMapFileName;
-    if (ImGuiCustom::SelectString(TranslationLabel("editor.materialmanager.normal_map"), normalMapPath, texturePaths, true)) {
-        material.normalMapHandle = normalMapPath.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(normalMapPath);
-        material.normalMapFileName = TextureManager::GetTextureFileName(material.normalMapHandle);
-    }
-    if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", TranslationC("editor.materialmanager.rgb_0_1_opengl_y"));
-    }
-    if (std::string droppedPath; AcceptAssetDragDropTarget(kTextureAssetDragDropType, droppedPath)) {
-        material.normalMapHandle = TextureManager::GetTextureFromAssetPath(droppedPath);
-        material.normalMapFileName = TextureManager::GetTextureFileName(material.normalMapHandle);
-    }
-
     ImGui::DragFloat(TranslationLabel("editor.materialmanager.shininess"), &material.shininess, 0.1f, 0.0f, 1024.0f);
     ImGui::ColorEdit4(TranslationLabel("editor.materialmanager.specular_color"), &material.specularColor.x);
-    ImGui::DragFloat(TranslationLabel("editor.materialmanager.environment_coefficient"), &material.environmentCoefficient, 0.01f, 0.0f, 1.0f);
     ImGui::ColorEdit4(TranslationLabel("editor.materialmanager.rim_color"), &material.rimColor.x);
     ImGui::DragFloat(TranslationLabel("editor.materialmanager.rim_power"), &material.rimPower, 0.05f, 0.1f, 16.0f);
     ImGui::DragFloat(TranslationLabel("editor.materialmanager.rim_intensity"), &material.rimIntensity, 0.01f, 0.0f, 10.0f);
@@ -625,9 +585,9 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
     if (ImGui::Button(TranslationLabel("editor.materialmanager.add_missing_parameters")) && referenceLayout) {
         // 標準の固定フィールド名（Material構造体のメンバ）と一致するものは追加しない
         static const std::unordered_set<std::string> kFixedFieldNames = {
-            "enableLighting", "enableEnvironmentMapping", "enableShadowMapProjection", "useTexture",
-            "color", "uvTransform", "shininess", "specularColor", "environmentCoefficient",
-            "rimColor", "rimPower", "rimIntensity", "useNormalMap", "instanceColor", "instanceColorBlendMode",
+            "enableLighting", "enableShadowMapProjection", "useTexture",
+            "color", "uvTransform", "shininess", "specularColor",
+            "rimColor", "rimPower", "rimIntensity", "instanceColor", "instanceColorBlendMode",
         };
         auto defaultValueForType = [](ValueType type) -> MyAny {
             switch (type) {
@@ -650,19 +610,23 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
         }
         // テクスチャ宣言（struct Materialのメンバーになれないため別枠）。固定スロットの名前は除外する
         static const std::unordered_set<std::string> kFixedTextureFieldNames = {
-            "gTexture", "gEnvironmentMap", "gNormalMap",
+            "gTexture",
         };
         for (const auto &textureName : referenceLayout->textureFields) {
             if (kFixedTextureFieldNames.contains(textureName)) continue;
             if (material.extraParameters.contains(textureName)) continue;
             material.extraParameters[textureName] = MyAny(TextureRef{});
         }
+        for (const auto &textureCubeName : referenceLayout->textureCubeFields) {
+            if (material.extraParameters.contains(textureCubeName)) continue;
+            material.extraParameters[textureCubeName] = MyAny(TextureCubeRef{});
+        }
     }
     ImGui::EndDisabled();
 
     static std::string sNewParameterName;
     static int sNewParameterType = 2; // Float
-    static const char *kTypeNames[] = { "Bool", "Int32", "Float", "Vector2", "Vector3", "Vector4", "Color", "Texture" };
+    static const char *kTypeNames[] = { "Bool", "Int32", "Float", "Vector2", "Vector3", "Vector4", "Color", "Texture", "TextureCube" };
     ImGui::InputText("##NewParameterName", &sNewParameterName);
     ImGui::SameLine();
     ImGui::SetNextItemWidth(100.0f);
@@ -679,14 +643,31 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
         case 5: material.extraParameters[sNewParameterName] = MyAny(Vector4::Zero()); break;
         case 6: material.extraParameters[sNewParameterName] = MyAny(Color::White()); break;
         case 7: material.extraParameters[sNewParameterName] = MyAny(TextureRef{}); break;
+        case 8: material.extraParameters[sNewParameterName] = MyAny(TextureCubeRef{}); break;
         default: break;
         }
         sNewParameterName.clear();
     }
 
+    // フィールド名→モジュールトークンの対応表（登録済み全モジュールのFields.hlsliから抽出、初回アクセス時のみ構築）
+    // オブジェクトインスペクターのコンポーネントのように、モジュール単位でパラメータをグループ表示するために使う
+    static std::unordered_map<std::string, std::string> sFieldToModuleToken;
+    static bool sModuleFieldMapBuilt = false;
+    if (!sModuleFieldMapBuilt) {
+        const std::string shaderBaseDir = PipelineManager::TryGetShaderBaseDir();
+        if (!shaderBaseDir.empty()) {
+            for (const auto &moduleDef : GetShaderModuleRegistry()) {
+                for (const auto &fieldName : GetModuleFieldNames(moduleDef.token, shaderBaseDir)) {
+                    sFieldToModuleToken[fieldName] = moduleDef.token;
+                }
+            }
+            sModuleFieldMapBuilt = true;
+        }
+    }
+
     std::string pendingRemoveParameter;
     int parameterId = 0;
-    for (auto &[key, value] : material.extraParameters) {
+    auto showParameter = [&](const std::string &key, MyAny &value) {
         ImGui::PushID(parameterId++);
         ImGuiCustom::UiOptions opts{};
         if (referenceLayout) {
@@ -702,6 +683,33 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
             pendingRemoveParameter = key;
         }
         ImGui::PopID();
+    };
+
+    // モジュールに属するパラメータをモジュール単位（トークン名の辞書順）でグループ化する。
+    // どのモジュールにも属さないパラメータ（手動追加した独自パラメータ等）は今まで通りフラットに表示する
+    std::map<std::string, std::vector<std::string>> groupedKeys;
+    std::vector<std::string> ungroupedKeys;
+    for (const auto &[key, value] : material.extraParameters) {
+        const auto it = sFieldToModuleToken.find(key);
+        if (it != sFieldToModuleToken.end()) {
+            groupedKeys[it->second].push_back(key);
+        } else {
+            ungroupedKeys.push_back(key);
+        }
+    }
+
+    for (auto &[moduleToken, keys] : groupedKeys) {
+        // モジュールの表示名はPipelineVariantBuilderのモジュール選択チェックボックスと同じ翻訳キーを共有する
+        if (ImGui::CollapsingHeader(TranslationLabel("editor.pipelinevariantbuilder.module_" + moduleToken), ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::Indent();
+            for (const auto &key : keys) {
+                showParameter(key, material.extraParameters.at(key));
+            }
+            ImGui::Unindent();
+        }
+    }
+    for (const auto &key : ungroupedKeys) {
+        showParameter(key, material.extraParameters.at(key));
     }
     if (!pendingRemoveParameter.empty()) {
         material.extraParameters.erase(pendingRemoveParameter);

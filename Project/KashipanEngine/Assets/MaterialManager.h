@@ -27,13 +27,9 @@ public:
         Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
         Matrix4x4 uvTransform = Matrix4x4::Identity();
         TextureManager::TextureHandle textureHandle = TextureManager::kInvalidHandle;
-        TextureManager::TextureHandle environmentHandle = TextureManager::kInvalidHandle;
-        /// @brief 法線マップ（接空間の法線をRGB[0,1]にエンコードしたテクスチャ）。未設定の場合は無効
-        TextureManager::TextureHandle normalMapHandle = TextureManager::kInvalidHandle;
         SamplerManager::SamplerHandle samplerHandle = SamplerManager::kInvalidHandle;
         float shininess = 32.0f;
         Vector4 specularColor{ 1.0f, 1.0f, 1.0f, 1.0f };
-        float environmentCoefficient = 1.0f;
         bool enableLighting = true;
         bool enableShadowMapProjection = true;
         /// @brief リムライト色（ライト方向を考慮した逆光縁取り）
@@ -50,10 +46,6 @@ public:
 
         /// @brief テクスチャファイル名（読み込み時に未解決だった場合の遅延解決用）
         std::string textureFileName;
-        /// @brief 環境マップファイル名（読み込み時に未解決だった場合の遅延解決用）
-        std::string environmentFileName;
-        /// @brief 法線マップファイル名（読み込み時に未解決だった場合の遅延解決用）
-        std::string normalMapFileName;
 
         /// @brief 未解決のテクスチャハンドルをファイル名から解決する
         /// @details 読み込み時に対象テクスチャが存在しなかった場合でも、
@@ -64,17 +56,6 @@ public:
             } else {
                 // すでにハンドルが有効な場合はテクスチャが削除されていないか確認するために再取得する
                 textureHandle = TextureManager::GetTexture(textureHandle);
-            }
-            if (environmentHandle == TextureManager::kInvalidHandle && !environmentFileName.empty()) {
-                environmentHandle = TextureManager::GetTextureFromFileName(environmentFileName);
-            } else {
-                // すでにハンドルが有効な場合はテクスチャが削除されていないか確認するために再取得する
-                environmentHandle = TextureManager::GetTexture(environmentHandle);
-            }
-            if (normalMapHandle == TextureManager::kInvalidHandle && !normalMapFileName.empty()) {
-                normalMapHandle = TextureManager::GetTextureFromFileName(normalMapFileName);
-            } else {
-                normalMapHandle = TextureManager::GetTexture(normalMapHandle);
             }
         }
     };

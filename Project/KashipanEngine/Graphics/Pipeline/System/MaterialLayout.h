@@ -33,8 +33,12 @@ struct MaterialLayout {
     std::vector<MaterialFieldLayout> fields;
     /// @brief シェーダー内で宣言されている任意の `Texture2D <name> : register(tN);` の変数名一覧。
     ///        struct Materialのメンバーにはなり得ない（StructuredBufferの要素型のため）ので別枠で持つ。
-    ///        固定スロット（gTexture/gEnvironmentMap/gNormalMap）も区別せず全て含む
+    ///        固定スロット（gTexture/gNormalMap等）も区別せず全て含む
     std::vector<std::string> textureFields;
+    /// @brief シェーダー内で宣言されている任意の `TextureCube <name> : register(tN);` の変数名一覧。
+    ///        textureFieldsと同じ理由で別枠。マテリアルエディタのTextureCubeRef型パラメータの
+    ///        「一括追加」ボタンで参照する
+    std::vector<std::string> textureCubeFields;
 
     const MaterialFieldLayout *Find(const std::string &name) const {
         for (const auto &field : fields) {

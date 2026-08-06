@@ -53,6 +53,8 @@ struct TextureEntry final {
     UINT srvIndex = 0;
     UINT mipLevels = 1;
     UINT frameCount = 1;
+    /// @brief DDSのキューブマップフラグ由来のキューブマップ判定結果
+    bool isCubemap = false;
 
     /// @brief 外部管理テクスチャ（ScreenBuffer等）。非nullの場合はSRV/サイズをここから毎回取得する
     const IShaderTexture *external = nullptr;
@@ -335,6 +337,7 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
         arraySize = static_cast<UINT>(mmeta.arraySize);
     }
     entry.frameCount = arraySize;
+    entry.isCubemap = isCube;
 
     // GPU側テクスチャ + SRV を Resources 経由で作成（COPY_DEST から開始してこの後のコピーに備える）
     if (isCube) {
@@ -736,6 +739,7 @@ std::vector<TextureManager::TextureListEntry> TextureManager::GetLoadedTextureLi
             e.width = t.width;
             e.height = t.height;
             e.srvGpuPtr = t.srvGpuPtr;
+            e.isCubemap = t.isCubemap;
         }
         out.push_back(std::move(e));
     }

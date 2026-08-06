@@ -32,7 +32,6 @@ StructuredBuffer<DiscLight> gDiscLights : register(t9);
 StructuredBuffer<RectLight> gRectLights : register(t10);
 StructuredBuffer<TubeLight> gTubeLights : register(t11);
 StructuredBuffer<BoxLight> gBoxLights : register(t12);
-Texture2D gNormalMap : register(t13);
 
 cbuffer LightCounts : register(b3) {
 	uint gPointLightCount;
@@ -75,7 +74,6 @@ cbuffer TileCullingConstants : register(b4) {
 #endif
 
 Texture2D gTexture : register(t0);
-TextureCube gEnvironmentMap : register(t1);
 StructuredBuffer<Material> gMaterials : register(t2);
 SamplerState gSampler : register(s0);
 
@@ -193,13 +191,8 @@ PSOutput main(VSOutput input) {
 	// 法線マップ: 接空間（TBN）で摂動した法線をライティング全体で使う。シャドウのバイアス計算
 	// （ShadowSlopeFactor）だけは、細かい凹凸に引きずられて不安定にならないよう幾何法線のまま使う
 	float3 shadingNormal = normalize(input.normal);
-	if (mat.useNormalMap > 0.5f) {
-		float3 t = normalize(input.tangent - shadingNormal * dot(shadingNormal, input.tangent)); // Gram-Schmidtで再直交化
-		float3 b = cross(shadingNormal, t);
-		float3x3 tbn = float3x3(t, b, shadingNormal);
-		float3 sampledNormal = gNormalMap.Sample(gSampler, transformedUV.xy).rgb * 2.0f - 1.0f;
-		shadingNormal = normalize(mul(sampledNormal, tbn));
-	}
+	// 選択されたモジュール（例: NormalMap→SpecularMap、優先度順）のライティング前処理をここで呼び出す
+	/*{{PRELIGHTING_HOOKS}}*/
 
 	// Directional lights
 	if (mat.enableLighting) {
@@ -456,13 +449,8 @@ PSOutput main(VSOutput input) {
 		}
 	}
 
-	// Environment map
-	if (mat.enableEnvironmentMapping) {
-		float3 cameraToPosition = input.worldPosition - gCamera3D.eyePosition.xyz;
-		float3 reflectDir = reflect(cameraToPosition, shadingNormal);
-		envColor = gEnvironmentMap.Sample(gSampler, reflectDir);
-		envColor *= mat.environmentCoefficient;
-	}
+	// 選択されたモジュール（EnvironmentMap）によるenvColor算出をここで呼び出す
+	/*{{ENVIRONMENT_HOOKS}}*/
 
 	output.color = baseColor * lightingColor + envColor;
 

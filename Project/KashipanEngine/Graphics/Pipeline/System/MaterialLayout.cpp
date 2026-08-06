@@ -159,17 +159,27 @@ void ApplyAnnotations(const std::string &annotationText, MaterialFieldLayout &fi
     }
 }
 
-/// @brief 前処理済みソースから `Texture2D <name> : register(tN);` 宣言の変数名を列挙する
-///        （TextureCube等、Texture2D以外のリソースは対象外）
-std::vector<std::string> ScanTextureDeclarations(const std::string &source) {
-    static const std::regex kTextureDeclRe(R"(Texture2D\s+(\w+)\s*:\s*register\(\s*t\d+\s*\))");
+/// @brief 前処理済みソースから、指定した種類のテクスチャ宣言（`<Kind> <name> : register(tN);`）の
+///        変数名を列挙する共通実装
+std::vector<std::string> ScanTextureDeclarationsOfKind(const std::string &source, const char *kind) {
+    const std::regex declRe(std::string(kind) + R"(\s+(\w+)\s*:\s*register\(\s*t\d+\s*\))");
     std::vector<std::string> names;
-    auto it = std::sregex_iterator(source.begin(), source.end(), kTextureDeclRe);
+    auto it = std::sregex_iterator(source.begin(), source.end(), declRe);
     auto end = std::sregex_iterator();
     for (; it != end; ++it) {
         names.push_back((*it)[1].str());
     }
     return names;
+}
+
+/// @brief 前処理済みソースから `Texture2D <name> : register(tN);` 宣言の変数名を列挙する
+std::vector<std::string> ScanTextureDeclarations(const std::string &source) {
+    return ScanTextureDeclarationsOfKind(source, "Texture2D");
+}
+
+/// @brief 前処理済みソースから `TextureCube <name> : register(tN);` 宣言の変数名を列挙する
+std::vector<std::string> ScanTextureCubeDeclarations(const std::string &source) {
+    return ScanTextureDeclarationsOfKind(source, "TextureCube");
 }
 
 } // namespace
@@ -192,6 +202,7 @@ MaterialLayout MaterialLayout::BuildFromHlslSource(const std::string &shaderFile
     source = StripBlockCommentsOnly(source);
 
     layout.textureFields = ScanTextureDeclarations(source);
+    layout.textureCubeFields = ScanTextureCubeDeclarations(source);
 
     static const std::regex kStructRe(R"(struct\s+Material\s*\{([^}]*)\})");
     std::smatch structMatch;

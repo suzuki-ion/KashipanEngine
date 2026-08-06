@@ -177,12 +177,6 @@ void Renderer::DrawBatch(IRenderTarget *target,
                 TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", fallbackHandle);
             }
         }
-        if (material && material->environmentHandle != TextureManager::kInvalidHandle) {
-            TextureManager::BindTexture(&shaderBinder, "Pixel:gEnvironmentMap", material->environmentHandle);
-        }
-        if (material && material->normalMapHandle != TextureManager::kInvalidHandle) {
-            TextureManager::BindTexture(&shaderBinder, "Pixel:gNormalMap", material->normalMapHandle);
-        }
         BindExtraTextureParameters(&shaderBinder, material);
         if (material && material->samplerHandle != SamplerManager::kInvalidHandle) {
             SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", material->samplerHandle);
@@ -401,12 +395,6 @@ void Renderer::RenderGpuParticles(IRenderTarget *target, PipelineBinder &pipelin
                 if (fallbackHandle != TextureManager::kInvalidHandle) {
                     TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", fallbackHandle);
                 }
-            }
-            if (material && material->environmentHandle != TextureManager::kInvalidHandle) {
-                TextureManager::BindTexture(&shaderBinder, "Pixel:gEnvironmentMap", material->environmentHandle);
-            }
-            if (material && material->normalMapHandle != TextureManager::kInvalidHandle) {
-                TextureManager::BindTexture(&shaderBinder, "Pixel:gNormalMap", material->normalMapHandle);
             }
             BindExtraTextureParameters(&shaderBinder, material);
             if (material && material->samplerHandle != SamplerManager::kInvalidHandle) {

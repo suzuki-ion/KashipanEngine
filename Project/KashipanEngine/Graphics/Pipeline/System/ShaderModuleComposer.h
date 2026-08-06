@@ -11,7 +11,10 @@ namespace KashipanEngine {
 enum class ModuleHookSlot {
     Tone,        // HalfLambert内のObjectToon量子化ロジックを差し替える（同時に選べるのは実質1つ）
     RimColor,    // ディレクショナルライトループ内のrimColor算出式を差し替える（同時に選べるのは実質1つ）
+    PreLighting, // shadingNormal算出直後、ディレクショナルライトループの直前へ呼び出しを追加する
+                 // （shadingNormalやmatをライティング計算前に書き換えるモジュール用。例: NormalMap, SpecularMap）
     Directional, // ディレクショナルライトループの末尾へ呼び出しを追加する
+    Environment, // ローカルライトループ直後、output.color合成の直前へ呼び出しを追加する（envColorを計算するモジュール用）
     Composite,   // output.color = baseColor*lightingColor+envColor; の直後へ呼び出しを追加する
     Alpha,       // output.color.a確定直後へ呼び出しを追加する
 };
@@ -39,5 +42,11 @@ const std::vector<ShaderModuleDefinition> &GetShaderModuleRegistry();
 /// @param shaderBaseDir シェーダー資産のベースディレクトリ（PipelineManagerの pipelineFolderPath_ + "/Preset/Shader"）
 /// @return 生成したファイルの絶対パス（selectedTokensが空、または書き込みに失敗した場合は空文字）
 std::string ComposeAndWriteShader(const std::vector<std::string> &selectedTokens, const std::string &shaderBaseDir);
+
+/// @brief 指定モジュールのFields.hlsliからフィールド名だけを抽出する（型・注釈は見ない、名前のみ）
+/// @param token モジュールのトークン名（Modules/<token>/Fields.hlsli を参照する）
+/// @param shaderBaseDir シェーダー資産のベースディレクトリ
+/// @return 抽出したフィールド名一覧（ファイルが無い/読めない場合は空）
+std::vector<std::string> GetModuleFieldNames(const std::string &token, const std::string &shaderBaseDir);
 
 } // namespace KashipanEngine

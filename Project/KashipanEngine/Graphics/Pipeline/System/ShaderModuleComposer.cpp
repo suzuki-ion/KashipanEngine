@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <regex>
 #include <sstream>
 
 #include "Debug/Logger.h"
@@ -33,7 +34,9 @@ constexpr const char *kToneHookBegin = "/*{{TONE_HOOK_BEGIN}}*/";
 constexpr const char *kToneHookEnd = "/*{{TONE_HOOK_END}}*/";
 constexpr const char *kRimColorHookBegin = "/*{{RIM_COLOR_HOOK_BEGIN}}*/";
 constexpr const char *kRimColorHookEnd = "/*{{RIM_COLOR_HOOK_END}}*/";
+constexpr const char *kPreLightingHooksMarker = "/*{{PRELIGHTING_HOOKS}}*/";
 constexpr const char *kDirectionalHooksMarker = "/*{{DIRECTIONAL_HOOKS}}*/";
+constexpr const char *kEnvironmentHooksMarker = "/*{{ENVIRONMENT_HOOKS}}*/";
 constexpr const char *kCompositeHooksMarker = "/*{{COMPOSITE_HOOKS}}*/";
 constexpr const char *kAlphaHooksMarker = "/*{{ALPHA_HOOKS}}*/";
 
@@ -67,11 +70,17 @@ const std::vector<ShaderModuleDefinition> &GetShaderModuleRegistry() {
     static const std::vector<ShaderModuleDefinition> kModules = {
         { "MultiTone",    ModuleHookSlot::Tone,        0,   "return ApplyMultiTone(halfLambert, mat);" },
         { "RimShade",     ModuleHookSlot::RimColor,    0,   "float3 rimColor = ApplyRimShade(mat, lam);" },
+        { "NormalMap",    ModuleHookSlot::PreLighting, 10,  "shadingNormal = ApplyNormalMap(shadingNormal, mat, input.tangent, transformedUV.xy);" },
+        { "SpecularMap",  ModuleHookSlot::PreLighting, 20,  "ApplySpecularMap(mat, transformedUV.xy);" },
         { "Backlight",    ModuleHookSlot::Directional, 10,  "ApplyBacklight(lightingColor, mat, shadingNormal, viewDir, toLightDir, light, shadow);" },
+        { "EnvironmentMap", ModuleHookSlot::Environment, 10, "envColor = ApplyEnvironmentMap(mat, shadingNormal, input.worldPosition);" },
+        { "DetailMap",    ModuleHookSlot::Composite,   2,   "ApplyDetailMap(output.color, mat, transformedUV.xy);" },
+        { "AO",           ModuleHookSlot::Composite,   5,   "ApplyAO(output.color, mat, transformedUV.xy);" },
         { "Matcap",       ModuleHookSlot::Composite,   10,  "ApplyMatcap(output.color, mat, shadingNormal);" },
         { "Gradation",    ModuleHookSlot::Composite,   20,  "ApplyGradation(output.color, mat, toonFactor);" },
         { "Emission",     ModuleHookSlot::Composite,   30,  "ApplyEmission(output.color, mat, transformedUV.xy);" },
         { "ColorGrading", ModuleHookSlot::Composite,   100, "ApplyColorGrading(output.color, mat);" },
+        { "OpacityMap",   ModuleHookSlot::Alpha,       5,   "ApplyOpacityMap(output.color, mat, transformedUV.xy);" },
         { "DistanceFade", ModuleHookSlot::Alpha,       10,  "ApplyDistanceFade(output.color, mat, input.worldPosition);" },
         { "Dissolve",     ModuleHookSlot::Alpha,       20,  "ApplyDissolve(output.color, mat, input.worldPosition);" },
     };
@@ -96,7 +105,9 @@ std::string ComposeAndWriteShader(const std::vector<std::string> &selectedTokens
 
     std::string additionalFields;
     std::string moduleLogic;
+    std::vector<const ShaderModuleDefinition *> preLightingHooks;
     std::vector<const ShaderModuleDefinition *> directionalHooks;
+    std::vector<const ShaderModuleDefinition *> environmentHooks;
     std::vector<const ShaderModuleDefinition *> compositeHooks;
     std::vector<const ShaderModuleDefinition *> alphaHooks;
     const ShaderModuleDefinition *toneModule = nullptr;
@@ -115,7 +126,9 @@ std::string ComposeAndWriteShader(const std::vector<std::string> &selectedTokens
         switch (def->slot) {
         case ModuleHookSlot::Tone: toneModule = def; break;
         case ModuleHookSlot::RimColor: rimColorModule = def; break;
+        case ModuleHookSlot::PreLighting: preLightingHooks.push_back(def); break;
         case ModuleHookSlot::Directional: directionalHooks.push_back(def); break;
+        case ModuleHookSlot::Environment: environmentHooks.push_back(def); break;
         case ModuleHookSlot::Composite: compositeHooks.push_back(def); break;
         case ModuleHookSlot::Alpha: alphaHooks.push_back(def); break;
         }
@@ -124,7 +137,9 @@ std::string ComposeAndWriteShader(const std::vector<std::string> &selectedTokens
     if (combinedName.empty()) return {}; // 有効なモジュールが1つも無かった
 
     auto byPriority = [](const ShaderModuleDefinition *a, const ShaderModuleDefinition *b) { return a->priority < b->priority; };
+    std::sort(preLightingHooks.begin(), preLightingHooks.end(), byPriority);
     std::sort(directionalHooks.begin(), directionalHooks.end(), byPriority);
+    std::sort(environmentHooks.begin(), environmentHooks.end(), byPriority);
     std::sort(compositeHooks.begin(), compositeHooks.end(), byPriority);
     std::sort(alphaHooks.begin(), alphaHooks.end(), byPriority);
 
@@ -138,7 +153,9 @@ std::string ComposeAndWriteShader(const std::vector<std::string> &selectedTokens
     ReplaceMarker(source, kModuleLogicMarker, moduleLogic);
     if (toneModule) ReplaceRegion(source, kToneHookBegin, kToneHookEnd, toneModule->callExpression);
     if (rimColorModule) ReplaceRegion(source, kRimColorHookBegin, kRimColorHookEnd, rimColorModule->callExpression);
+    ReplaceMarker(source, kPreLightingHooksMarker, joinCalls(preLightingHooks));
     ReplaceMarker(source, kDirectionalHooksMarker, joinCalls(directionalHooks));
+    ReplaceMarker(source, kEnvironmentHooksMarker, joinCalls(environmentHooks));
     ReplaceMarker(source, kCompositeHooksMarker, joinCalls(compositeHooks));
     ReplaceMarker(source, kAlphaHooksMarker, joinCalls(alphaHooks));
 
@@ -152,6 +169,21 @@ std::string ComposeAndWriteShader(const std::vector<std::string> &selectedTokens
         return {};
     }
     return outputPath;
+}
+
+std::vector<std::string> GetModuleFieldNames(const std::string &token, const std::string &shaderBaseDir) {
+    const std::string source = ReadFileText(shaderBaseDir + "/Modules/" + token + "/Fields.hlsli");
+    static const std::regex kFieldLineRe(R"(^\s*\w+\s+(\w+)\s*(?:\[\s*\d+\s*\])?\s*;)");
+    std::vector<std::string> names;
+    std::istringstream stream(source);
+    std::string line;
+    while (std::getline(stream, line)) {
+        std::smatch match;
+        if (std::regex_search(line, match, kFieldLineRe)) {
+            names.push_back(match[1].str());
+        }
+    }
+    return names;
 }
 
 } // namespace KashipanEngine

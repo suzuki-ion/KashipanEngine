@@ -44,6 +44,9 @@ public:
         uint32_t width = 0;
         uint32_t height = 0;
         uint64_t srvGpuPtr = 0;
+        /// @brief キューブマップ（DDSのキューブマップフラグ由来）として読み込まれたかどうか。
+        ///        TextureCubeRefのピッカーがTexture2D用の画像を誤って選べないようにする判定に使う
+        bool isCubemap = false;
     };
 
     /// @brief コンストラクタ（GameEngine からのみ生成可能）

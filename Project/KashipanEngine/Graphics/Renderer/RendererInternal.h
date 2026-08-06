@@ -18,6 +18,7 @@
 #include "Assets/SamplerManager.h"
 #include "Assets/TextureManager.h"
 #include "Assets/TextureRef.h"
+#include "Assets/TextureCubeRef.h"
 #include "Core/DirectXCommon.h"
 #include "Graphics/ComputeCommandProcessor.h"
 #include "Graphics/IRenderTarget.h"
@@ -327,18 +328,15 @@ inline std::vector<std::byte> BuildMaterialElementBytes(const PipelineInfo &pipe
     };
 
     writeFloat("enableLighting", material->enableLighting ? 1.0f : 0.0f);
-    writeFloat("enableEnvironmentMapping", (material->environmentHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f);
     writeFloat("enableShadowMapProjection", material->enableShadowMapProjection ? 1.0f : 0.0f);
     writeFloat("useTexture", (material->textureHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f);
     writeVector4("color", material->color);
     writeMatrix4x4("uvTransform", material->uvTransform);
     writeFloat("shininess", material->shininess);
     writeVector4("specularColor", material->specularColor);
-    writeFloat("environmentCoefficient", material->environmentCoefficient);
     writeVector4("rimColor", material->rimColor);
     writeFloat("rimPower", material->rimPower);
     writeFloat("rimIntensity", material->rimIntensity);
-    writeFloat("useNormalMap", (material->normalMapHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f);
 
     // カスタムシェーダー固有の追加パラメータ（レイアウトに同名フィールドが無ければ黙って無視される）
     for (const auto &[name, value] : material->extraParameters) {
@@ -363,19 +361,26 @@ inline std::vector<std::byte> BuildMaterialElementBytes(const PipelineInfo &pipe
     return bytes;
 }
 
-/// @brief extraParametersのTextureRef型エントリを、キー名をそのままシェーダー変数名として毎描画バインドする。
-///        gTexture/gEnvironmentMap/gNormalMap等の固定スロットとは別に、マットキャップ等カスタムシェーダーが
-///        独自に宣言する任意のTexture2Dスロットへ対応するためのもの。該当スロットを持たないパイプラインでは
-///        ShaderVariableBinder::Bindが黙ってfalseを返すだけなので無害。未設定/未解決の場合は
-///        gEnvironmentMap/gNormalMapと同じくバインドをスキップする（フォールバックしない）
+/// @brief extraParametersのTextureRef/TextureCubeRef型エントリを、キー名をそのままシェーダー変数名として
+///        毎描画バインドする。gTexture等ごく一部の固定スロットとは別に、各シェーダーモジュールが独自に宣言する
+///        任意のTexture2D/TextureCubeスロットへ対応するためのもの。該当スロットを持たないパイプラインでは
+///        ShaderVariableBinder::Bindが黙ってfalseを返すだけなので無害。未設定/未解決の場合はバインドを
+///        スキップする（フォールバックしない）
 inline void BindExtraTextureParameters(ShaderVariableBinder *shaderBinder, const MaterialManager::Material *material) {
     if (!material) return;
     for (const auto &[name, value] : material->extraParameters) {
-        const auto *asTextureRef = value.AnyCastPtr<TextureRef>();
-        if (!asTextureRef || asTextureRef->assetPath.empty()) continue;
-        const auto handle = TextureManager::GetTextureFromAssetPath(asTextureRef->assetPath);
-        if (handle != TextureManager::kInvalidHandle) {
-            TextureManager::BindTexture(shaderBinder, "Pixel:" + name, handle);
+        if (const auto *asTextureRef = value.AnyCastPtr<TextureRef>()) {
+            if (asTextureRef->assetPath.empty()) continue;
+            const auto handle = TextureManager::GetTextureFromAssetPath(asTextureRef->assetPath);
+            if (handle != TextureManager::kInvalidHandle) {
+                TextureManager::BindTexture(shaderBinder, "Pixel:" + name, handle);
+            }
+        } else if (const auto *asTextureCubeRef = value.AnyCastPtr<TextureCubeRef>()) {
+            if (asTextureCubeRef->assetPath.empty()) continue;
+            const auto handle = TextureManager::GetTextureFromAssetPath(asTextureCubeRef->assetPath);
+            if (handle != TextureManager::kInvalidHandle) {
+                TextureManager::BindTexture(shaderBinder, "Pixel:" + name, handle);
+            }
         }
     }
 }

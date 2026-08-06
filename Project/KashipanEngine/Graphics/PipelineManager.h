@@ -49,6 +49,11 @@ public:
     ///        （マテリアルエディタのシェーダー選択・未追加パラメータ一括追加UI向け）
     /// @return パイプラインが見つからない場合はnullptr
     static const MaterialLayout *TryGetMaterialLayout(const std::string &pipelineName);
+    /// @brief 実行中のPipelineManagerインスタンスからシェーダー資産のベースディレクトリを取得する
+    ///        （マテリアルエディタのモジュール別パラメータグループ表示等、ShaderModuleComposerの
+    ///        ユーティリティをインスタンスへのアクセス手段を持たない呼び出し元から使うため）
+    /// @return インスタンスが無い場合は空文字
+    static std::string TryGetShaderBaseDir();
 #endif
 
     /// @brief 読み込み済みの描画用パイプライン名一覧を取得（ImGuiでの選択用）

@@ -17,6 +17,7 @@
 #include "Math/Quaternion.h"
 #include "Math/Color.h"
 #include "Assets/TextureRef.h"
+#include "Assets/TextureCubeRef.h"
 #include "Assets/TextureManager.h"
 #include "Utilities/AssetDragDropPayload.h"
 #include "Utilities/MyAny.h"
@@ -189,6 +190,32 @@ inline bool EditValue(const char *label, TextureRef &value, const UiOptions &opt
     if (std::string droppedPath; KashipanEngine::AcceptAssetDragDropTarget(KashipanEngine::kTextureAssetDragDropType, droppedPath)) {
         value.assetPath = droppedPath;
         changed = true;
+    }
+    return changed;
+}
+
+/// @brief キューブマップ参照編集用。EditValue(TextureRef&)と同じ操作感だが、候補を
+///        isCubemapなテクスチャのみに絞り込み、平面画像を誤って選べないようにする
+///        （ドラッグ&ドロップも同様にキューブマップ以外は無視する）
+inline bool EditValue(const char *label, TextureCubeRef &value, const UiOptions &opts = {}) {
+    (void)opts;
+    bool changed = false;
+    std::vector<std::string> texturePaths;
+    for (const auto &entry : KashipanEngine::TextureManager::GetLoadedTextureListEntries()) {
+        if (entry.isCubemap) texturePaths.push_back(entry.assetPath);
+    }
+    if (SelectString(label, value.assetPath, texturePaths, true)) {
+        changed = true;
+    }
+    if (std::string droppedPath; KashipanEngine::AcceptAssetDragDropTarget(KashipanEngine::kTextureAssetDragDropType, droppedPath)) {
+        bool droppedIsCubemap = false;
+        for (const auto &entry : KashipanEngine::TextureManager::GetLoadedTextureListEntries()) {
+            if (entry.assetPath == droppedPath) { droppedIsCubemap = entry.isCubemap; break; }
+        }
+        if (droppedIsCubemap) {
+            value.assetPath = droppedPath;
+            changed = true;
+        }
     }
     return changed;
 }
@@ -417,6 +444,9 @@ inline bool EditValue(const char *label, MyAny &value, const UiOptions &opts = {
         break;
     case ValueType::TextureRef:
         if (auto *v = value.AnyCastPtr<TextureRef>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::TextureCubeRef:
+        if (auto *v = value.AnyCastPtr<TextureCubeRef>()) return EditValue(label, *v, opts);
         break;
     case ValueType::Quaternion:
         if (auto *v = value.AnyCastPtr<Quaternion>()) return EditValue(label, *v, opts);

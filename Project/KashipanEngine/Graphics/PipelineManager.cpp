@@ -83,6 +83,13 @@ const MaterialLayout *PipelineManager::TryGetMaterialLayout(const std::string &p
     if (!sActiveInstance || !sActiveInstance->HasPipeline(pipelineName)) return nullptr;
     return &sActiveInstance->GetPipeline(pipelineName).GetMaterialLayout();
 }
+
+std::string PipelineManager::TryGetShaderBaseDir() {
+    if (!sActiveInstance) return {};
+    const auto shaderFolderIt = sActiveInstance->presetFolderNames_.find("Shader");
+    if (shaderFolderIt == sActiveInstance->presetFolderNames_.end()) return {};
+    return shaderFolderIt->second;
+}
 #endif
 
 void PipelineManager::ReloadPipelines() {

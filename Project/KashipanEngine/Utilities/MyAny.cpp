@@ -26,6 +26,7 @@ JSON SaveAnyToJson(const MyAny &value) {
     else if (typeInfo.GetBaseType() == ValueType::Quaternion) return ToJSON(value.AnyCast<Quaternion>());
     else if (typeInfo.GetBaseType() == ValueType::Color) return ToJSON(value.AnyCast<Color>());
     else if (typeInfo.GetBaseType() == ValueType::TextureRef) return ToJSON(value.AnyCast<TextureRef>());
+    else if (typeInfo.GetBaseType() == ValueType::TextureCubeRef) return ToJSON(value.AnyCast<TextureCubeRef>());
     else if (typeInfo.GetBaseType() == ValueType::Vector) {
         JSON json = JSON::array();
         // std::vector の場合、内部型を取得して再帰的に保存
@@ -82,6 +83,7 @@ MyAny LoadAnyFromJson(const JSON &json, const TypeInfo &typeInfo) {
     else if (typeInfo.GetBaseType() == ValueType::Quaternion) return MyAny(FromJSON<Quaternion>(json));
     else if (typeInfo.GetBaseType() == ValueType::Color) return MyAny(FromJSON<Color>(json));
     else if (typeInfo.GetBaseType() == ValueType::TextureRef) return MyAny(FromJSON<TextureRef>(json));
+    else if (typeInfo.GetBaseType() == ValueType::TextureCubeRef) return MyAny(FromJSON<TextureCubeRef>(json));
     else if (typeInfo.GetBaseType() == ValueType::Vector) {
         const auto &templateArgs = typeInfo.GetTemplateArguments();
         if (!templateArgs.empty()) {

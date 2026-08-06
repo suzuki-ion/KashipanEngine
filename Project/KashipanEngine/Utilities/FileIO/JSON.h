@@ -11,6 +11,7 @@
 #include "Math/Quaternion.h"
 #include "Math/Color.h"
 #include "Assets/TextureRef.h"
+#include "Assets/TextureCubeRef.h"
 #include "Utilities/UUID128.h"
 
 namespace KashipanEngine {
@@ -67,6 +68,7 @@ inline JSON ToJSON(const Vector4 &value) { return JSON({ {"x", value.x}, {"y", v
 inline JSON ToJSON(const Quaternion &value) { return JSON({ {"x", value.x}, {"y", value.y}, {"z", value.z}, {"w", value.w} }); }
 inline JSON ToJSON(const Color &value) { return JSON({ {"r", value.r}, {"g", value.g}, {"b", value.b}, {"a", value.a} }); }
 inline JSON ToJSON(const TextureRef &value) { return JSON({ {"assetPath", value.assetPath} }); }
+inline JSON ToJSON(const TextureCubeRef &value) { return JSON({ {"assetPath", value.assetPath} }); }
 inline JSON ToJSON(const Matrix3x3 &value) {
     return JSON({
         {"m00", value.m[0][0]}, {"m01", value.m[0][1]}, {"m02", value.m[0][2]},
@@ -183,6 +185,12 @@ template <>
 struct FromJSONImpl<TextureRef> {
     static TextureRef invoke(const JSON &json) {
         return TextureRef(json.at("assetPath").get<std::string>());
+    }
+};
+template <>
+struct FromJSONImpl<TextureCubeRef> {
+    static TextureCubeRef invoke(const JSON &json) {
+        return TextureCubeRef(json.at("assetPath").get<std::string>());
     }
 };
 template <>

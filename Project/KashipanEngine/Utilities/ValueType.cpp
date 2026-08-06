@@ -69,6 +69,7 @@ std::string ValueTypeToString(ValueType type) {
         case ValueType::Quaternion:   return "Quaternion";
         case ValueType::Color:        return "Color";
         case ValueType::TextureRef:   return "TextureRef";
+        case ValueType::TextureCubeRef: return "TextureCubeRef";
         case ValueType::Vector:       return "Vector";
         case ValueType::UnorderedMap: return "UnorderedMap";
         case ValueType::Pair:         return "Pair";
@@ -100,6 +101,7 @@ ValueType StringToValueType(const std::string &str) {
     if (str == "Quaternion") return ValueType::Quaternion;
     if (str == "Color") return ValueType::Color;
     if (str == "TextureRef") return ValueType::TextureRef;
+    if (str == "TextureCubeRef") return ValueType::TextureCubeRef;
     if (str.find("Vector") != std::string::npos) return ValueType::Vector;
     if (str.find("UnorderedMap") != std::string::npos) return ValueType::UnorderedMap;
     if (str.find("Pair") != std::string::npos) return ValueType::Pair;

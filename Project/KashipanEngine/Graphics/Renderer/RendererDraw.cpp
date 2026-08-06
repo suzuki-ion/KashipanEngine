@@ -162,6 +162,9 @@ void Renderer::DrawBatch(IRenderTarget *target,
             auto *materialBuffer = resourceContainer_->GetOrUpdateStructuredBuffer(key, stride, instanceCount, allBytes.data());
             if (materialBuffer) {
                 shaderBinder.Bind("Pixel:gMaterials", materialBuffer);
+                // 押し出しアウトライン等、頂点シェーダー側でもマテリアル値を必要とするカスタムシェーダー向け。
+                // 該当バインディングを持たないパイプラインでは何もせず false を返すだけなので無害
+                shaderBinder.Bind("Vertex:gMaterials", materialBuffer);
             }
         }
 
@@ -180,6 +183,7 @@ void Renderer::DrawBatch(IRenderTarget *target,
         if (material && material->normalMapHandle != TextureManager::kInvalidHandle) {
             TextureManager::BindTexture(&shaderBinder, "Pixel:gNormalMap", material->normalMapHandle);
         }
+        BindExtraTextureParameters(&shaderBinder, material);
         if (material && material->samplerHandle != SamplerManager::kInvalidHandle) {
             SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", material->samplerHandle);
         } else {
@@ -404,6 +408,7 @@ void Renderer::RenderGpuParticles(IRenderTarget *target, PipelineBinder &pipelin
             if (material && material->normalMapHandle != TextureManager::kInvalidHandle) {
                 TextureManager::BindTexture(&shaderBinder, "Pixel:gNormalMap", material->normalMapHandle);
             }
+            BindExtraTextureParameters(&shaderBinder, material);
             if (material && material->samplerHandle != SamplerManager::kInvalidHandle) {
                 SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", material->samplerHandle);
             } else {

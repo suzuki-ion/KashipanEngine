@@ -94,8 +94,8 @@ std::string StripConditionals(const std::string &source, const std::unordered_se
     return result;
 }
 
-/// @brief 行コメント(//)とブロックコメント(/* */)を除去する
-std::string StripComments(const std::string &source) {
+/// @brief ブロックコメント(/* */)のみを除去する（行コメント// @Range等の注釈を読み取るために残す）
+std::string StripBlockCommentsOnly(const std::string &source) {
     std::string result;
     result.reserve(source.size());
     bool inBlockComment = false;
@@ -105,11 +105,6 @@ std::string StripComments(const std::string &source) {
                 inBlockComment = false;
                 ++i;
             }
-            continue;
-        }
-        if (source[i] == '/' && i + 1 < source.size() && source[i + 1] == '/') {
-            while (i < source.size() && source[i] != '\n') ++i;
-            if (i < source.size()) result += '\n';
             continue;
         }
         if (source[i] == '/' && i + 1 < source.size() && source[i + 1] == '*') {
@@ -144,6 +139,39 @@ bool ResolveHlslType(const std::string &typeName, HlslTypeInfo &out) {
     return true;
 }
 
+/// @brief フィールド宣言末尾の注釈テキスト（"// " より後ろ）から @Color / @Range(...) を読み取り、
+///        fieldへ反映する。@ColorはvalueTypeをVector4からColorへ差し替える（呼び出し側でfloat4の
+///        場合のみ意味を持つ。それ以外の型に付いていても無視する）
+void ApplyAnnotations(const std::string &annotationText, MaterialFieldLayout &field) {
+    if (annotationText.empty()) return;
+
+    if (annotationText.find("@Color") != std::string::npos && field.valueType == ValueType::Vector4) {
+        field.valueType = ValueType::Color;
+    }
+
+    static const std::regex kRangeRe(R"(@Range\(\s*([+-]?[0-9]*\.?[0-9]+)\s*,\s*([+-]?[0-9]*\.?[0-9]+)\s*(?:,\s*([+-]?[0-9]*\.?[0-9]+)\s*)?\))");
+    std::smatch rangeMatch;
+    if (std::regex_search(annotationText, rangeMatch, kRangeRe)) {
+        field.hasRange = true;
+        field.rangeMin = std::stof(rangeMatch[1].str());
+        field.rangeMax = std::stof(rangeMatch[2].str());
+        field.rangeStep = rangeMatch[3].matched ? std::stof(rangeMatch[3].str()) : (field.rangeMax - field.rangeMin) / 100.0f;
+    }
+}
+
+/// @brief 前処理済みソースから `Texture2D <name> : register(tN);` 宣言の変数名を列挙する
+///        （TextureCube等、Texture2D以外のリソースは対象外）
+std::vector<std::string> ScanTextureDeclarations(const std::string &source) {
+    static const std::regex kTextureDeclRe(R"(Texture2D\s+(\w+)\s*:\s*register\(\s*t\d+\s*\))");
+    std::vector<std::string> names;
+    auto it = std::sregex_iterator(source.begin(), source.end(), kTextureDeclRe);
+    auto end = std::sregex_iterator();
+    for (; it != end; ++it) {
+        names.push_back((*it)[1].str());
+    }
+    return names;
+}
+
 } // namespace
 
 MaterialLayout MaterialLayout::BuildFromHlslSource(const std::string &shaderFilePath, const std::unordered_set<std::string> &definedMacros) {
@@ -160,7 +188,10 @@ MaterialLayout MaterialLayout::BuildFromHlslSource(const std::string &shaderFile
     std::unordered_set<std::string> visited{ filePath.lexically_normal().string() };
     source = ExpandIncludes(source, filePath.parent_path(), visited, 0);
     source = StripConditionals(source, definedMacros);
-    source = StripComments(source);
+    // ブロックコメントのみ除去し、行コメント（// @Range等の注釈）はここでは残す
+    source = StripBlockCommentsOnly(source);
+
+    layout.textureFields = ScanTextureDeclarations(source);
 
     static const std::regex kStructRe(R"(struct\s+Material\s*\{([^}]*)\})");
     std::smatch structMatch;
@@ -171,15 +202,21 @@ MaterialLayout MaterialLayout::BuildFromHlslSource(const std::string &shaderFile
     }
 
     const std::string body = structMatch[1].str();
-    static const std::regex kFieldRe(R"((\w+)\s+(\w+)\s*(?:\[\s*(\d+)\s*\])?\s*;)");
-    auto fieldsBegin = std::sregex_iterator(body.begin(), body.end(), kFieldRe);
-    auto fieldsEnd = std::sregex_iterator();
+    // 1行ずつ走査し、"type name[n]?;" 部分と末尾の "// 注釈" 部分を分けて取り出す
+    // （説明用の独立コメント行はこの正規表現にマッチせずスキップされるだけで無害）
+    static const std::regex kFieldLineRe(R"(^\s*(\w+)\s+(\w+)\s*(?:\[\s*(\d+)\s*\])?\s*;\s*(?://\s*(.*?)\s*)?$)");
 
     std::uint32_t offset = 0;
-    for (auto it = fieldsBegin; it != fieldsEnd; ++it) {
-        const std::string typeName = (*it)[1].str();
-        const std::string fieldName = (*it)[2].str();
-        const std::string arrayCountStr = (*it)[3].str();
+    std::istringstream bodyStream(body);
+    std::string line;
+    while (std::getline(bodyStream, line)) {
+        std::smatch lineMatch;
+        if (!std::regex_match(line, lineMatch, kFieldLineRe)) continue;
+
+        const std::string typeName = lineMatch[1].str();
+        const std::string fieldName = lineMatch[2].str();
+        const std::string arrayCountStr = lineMatch[3].str();
+        const std::string annotationText = lineMatch[4].str();
 
         HlslTypeInfo typeInfo{};
         if (!ResolveHlslType(typeName, typeInfo)) {
@@ -195,6 +232,7 @@ MaterialLayout MaterialLayout::BuildFromHlslSource(const std::string &shaderFile
         field.byteOffset = offset;
         field.byteSize = fieldSize;
         field.valueType = (arrayCount > 1) ? ValueType::None : typeInfo.valueType;
+        if (arrayCount == 1) ApplyAnnotations(annotationText, field);
         layout.fields.push_back(field);
 
         offset += fieldSize;

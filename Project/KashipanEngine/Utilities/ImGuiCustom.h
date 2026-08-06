@@ -15,6 +15,10 @@
 #include "Math/Matrix3x3.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Quaternion.h"
+#include "Math/Color.h"
+#include "Assets/TextureRef.h"
+#include "Assets/TextureManager.h"
+#include "Utilities/AssetDragDropPayload.h"
 #include "Utilities/MyAny.h"
 #include "Utilities/Translation.h"
 
@@ -162,6 +166,31 @@ inline bool EditValue(const char *label, Vector4 &value, const UiOptions &opts =
     } else {
         return ImGui::DragFloat4(label, &value.x, opts.vSpeed, opts.vMin, opts.vMax, fmt, opts.flags);
     }
+}
+
+/// @brief 色編集用（内部データはVector4と同じr,g,b,a）。opts（step/range）はColorEdit4には適用されない
+inline bool EditValue(const char *label, Color &value, const UiOptions &opts = {}) {
+    (void)opts;
+    return ImGui::ColorEdit4(label, &value.r);
+}
+
+/// @brief テクスチャ参照編集用。読み込み済みテクスチャからの選択とAssetsウィンドウからのD&Dの両方を受け付ける
+///        （MaterialManagerの固定テクスチャスロット選択欄と同じ操作感）。optsは使用しない
+inline bool EditValue(const char *label, TextureRef &value, const UiOptions &opts = {}) {
+    (void)opts;
+    bool changed = false;
+    std::vector<std::string> texturePaths;
+    for (const auto &entry : KashipanEngine::TextureManager::GetLoadedTextureListEntries()) {
+        texturePaths.push_back(entry.assetPath);
+    }
+    if (SelectString(label, value.assetPath, texturePaths, true)) {
+        changed = true;
+    }
+    if (std::string droppedPath; KashipanEngine::AcceptAssetDragDropTarget(KashipanEngine::kTextureAssetDragDropType, droppedPath)) {
+        value.assetPath = droppedPath;
+        changed = true;
+    }
+    return changed;
 }
 
 inline bool EditValue(const char *label, Quaternion &value, const UiOptions &opts = {}) {
@@ -382,6 +411,12 @@ inline bool EditValue(const char *label, MyAny &value, const UiOptions &opts = {
         break;
     case ValueType::Vector4:
         if (auto *v = value.AnyCastPtr<Vector4>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Color:
+        if (auto *v = value.AnyCastPtr<Color>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::TextureRef:
+        if (auto *v = value.AnyCastPtr<TextureRef>()) return EditValue(label, *v, opts);
         break;
     case ValueType::Quaternion:
         if (auto *v = value.AnyCastPtr<Quaternion>()) return EditValue(label, *v, opts);

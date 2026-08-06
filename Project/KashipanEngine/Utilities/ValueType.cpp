@@ -67,6 +67,8 @@ std::string ValueTypeToString(ValueType type) {
         case ValueType::Matrix3x3:    return "Matrix3x3";
         case ValueType::Matrix4x4:    return "Matrix4x4";
         case ValueType::Quaternion:   return "Quaternion";
+        case ValueType::Color:        return "Color";
+        case ValueType::TextureRef:   return "TextureRef";
         case ValueType::Vector:       return "Vector";
         case ValueType::UnorderedMap: return "UnorderedMap";
         case ValueType::Pair:         return "Pair";
@@ -96,6 +98,8 @@ ValueType StringToValueType(const std::string &str) {
     if (str == "Matrix3x3") return ValueType::Matrix3x3;
     if (str == "Matrix4x4") return ValueType::Matrix4x4;
     if (str == "Quaternion") return ValueType::Quaternion;
+    if (str == "Color") return ValueType::Color;
+    if (str == "TextureRef") return ValueType::TextureRef;
     if (str.find("Vector") != std::string::npos) return ValueType::Vector;
     if (str.find("UnorderedMap") != std::string::npos) return ValueType::UnorderedMap;
     if (str.find("Pair") != std::string::npos) return ValueType::Pair;

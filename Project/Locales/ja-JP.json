@@ -1478,6 +1478,7 @@
 
 		//--------- editor.materialmanager ---------//
 		"editor.materialmanager.add_material": "マテリアルを追加",
+		"editor.materialmanager.add_missing_parameters": "未追加パラメータを一括追加",
 		"editor.materialmanager.color": "色",
 		"editor.materialmanager.custom_parameters": "カスタムパラメータ（シェーダー固有）",
 		"editor.materialmanager.enable_lighting": "ライティングを有効化",
@@ -1488,6 +1489,7 @@
 		"editor.materialmanager.name": "名前",
 		"editor.materialmanager.no_material_selected": "マテリアルが選択されていません。",
 		"editor.materialmanager.normal_map": "ノーマルマップ",
+		"editor.materialmanager.reference_shader": "対象シェーダー（一括追加・範囲注釈の参照先）",
 		"editor.materialmanager.remove": "削除",
 		"editor.materialmanager.rgb_0_1_opengl_y": "接空間の法線をRGB[0,1]にエンコードしたテクスチャ（OpenGL規約、+Yが上）",
 		"editor.materialmanager.rim_color": "リムライトの色",

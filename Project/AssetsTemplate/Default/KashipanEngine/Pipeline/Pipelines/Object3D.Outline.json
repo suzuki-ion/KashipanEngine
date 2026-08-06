@@ -1,0 +1,18 @@
+{
+	"PipelineType": "Render",
+	"Name": "Object3D.Outline",
+	"Category": "3D",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": { "UsePreset": "Object3D.Outline.Vertex" },
+		"Pixel": { "UsePreset": "Object3D.Outline.Pixel" }
+	},
+	"RasterizerState": { "UsePreset": "CullFront" },
+	"BlendState": { "UsePreset": "Normal" },
+	"DepthStencilState": { "UsePreset": "DepthEnable" },
+	"PipelineState": { "UsePreset": "Triangle" },
+	"RenderPriority": 0
+}

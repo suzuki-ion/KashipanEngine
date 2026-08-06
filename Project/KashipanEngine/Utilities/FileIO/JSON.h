@@ -9,6 +9,8 @@
 #include "Math/Matrix3x3.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Quaternion.h"
+#include "Math/Color.h"
+#include "Assets/TextureRef.h"
 #include "Utilities/UUID128.h"
 
 namespace KashipanEngine {
@@ -63,6 +65,8 @@ inline JSON ToJSON(const Vector2 &value) { return JSON({ {"x", value.x}, {"y", v
 inline JSON ToJSON(const Vector3 &value) { return JSON({ {"x", value.x}, {"y", value.y}, {"z", value.z} }); }
 inline JSON ToJSON(const Vector4 &value) { return JSON({ {"x", value.x}, {"y", value.y}, {"z", value.z}, {"w", value.w} }); }
 inline JSON ToJSON(const Quaternion &value) { return JSON({ {"x", value.x}, {"y", value.y}, {"z", value.z}, {"w", value.w} }); }
+inline JSON ToJSON(const Color &value) { return JSON({ {"r", value.r}, {"g", value.g}, {"b", value.b}, {"a", value.a} }); }
+inline JSON ToJSON(const TextureRef &value) { return JSON({ {"assetPath", value.assetPath} }); }
 inline JSON ToJSON(const Matrix3x3 &value) {
     return JSON({
         {"m00", value.m[0][0]}, {"m01", value.m[0][1]}, {"m02", value.m[0][2]},
@@ -167,6 +171,18 @@ struct FromJSONImpl<Matrix4x4> {
             json.at("m20").get<float>(), json.at("m21").get<float>(), json.at("m22").get<float>(), json.at("m23").get<float>(),
             json.at("m30").get<float>(), json.at("m31").get<float>(), json.at("m32").get<float>(), json.at("m33").get<float>()
         );
+    }
+};
+template <>
+struct FromJSONImpl<Color> {
+    static Color invoke(const JSON &json) {
+        return Color(json.at("r").get<float>(), json.at("g").get<float>(), json.at("b").get<float>(), json.at("a").get<float>());
+    }
+};
+template <>
+struct FromJSONImpl<TextureRef> {
+    static TextureRef invoke(const JSON &json) {
+        return TextureRef(json.at("assetPath").get<std::string>());
     }
 };
 template <>

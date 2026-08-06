@@ -1478,6 +1478,7 @@
 
 		//--------- editor.materialmanager ---------//
 		"editor.materialmanager.add_material": "Add Material",
+		"editor.materialmanager.add_missing_parameters": "Add Missing Parameters",
 		"editor.materialmanager.color": "Color",
 		"editor.materialmanager.custom_parameters": "Custom Parameters (shader-specific)",
 		"editor.materialmanager.enable_lighting": "Enable Lighting",
@@ -1488,6 +1489,7 @@
 		"editor.materialmanager.name": "Name",
 		"editor.materialmanager.no_material_selected": "No material selected.",
 		"editor.materialmanager.normal_map": "Normal Map",
+		"editor.materialmanager.reference_shader": "Reference Shader (used for bulk-add and range annotations)",
 		"editor.materialmanager.remove": "Remove",
 		"editor.materialmanager.rgb_0_1_opengl_y": "接空間の法線をRGB[0,1]にエンコードしたテクスチャ（OpenGL規約、+Yが上）",
 		"editor.materialmanager.rim_color": "Rim Color",

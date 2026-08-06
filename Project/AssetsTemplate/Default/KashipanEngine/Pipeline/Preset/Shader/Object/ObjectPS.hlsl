@@ -13,6 +13,8 @@ struct Material {
 #include "../Common/Material3D.hlsli"
 #include "../Common/ShadowMap.hlsli"
 #include "../Common/AreaLight.hlsli"
+#include "../Common/ColorUtility.hlsli"
+#include "../Common/Noise.hlsli"
 #include "Object3D.hlsli"
 
 StructuredBuffer<PointLight> gPointLights : register(t4);
@@ -24,6 +26,14 @@ StructuredBuffer<RectLight> gRectLights : register(t10);
 StructuredBuffer<TubeLight> gTubeLights : register(t11);
 StructuredBuffer<BoxLight> gBoxLights : register(t12);
 Texture2D gNormalMap : register(t13);
+// マットキャップ用テクスチャ。extraParametersで"gMatcapTex"/"gMatcap2ndTex"というTextureRef型パラメータを
+// 設定すると、描画時に自動でここへバインドされる（RendererInternal::BindExtraTextureParameters参照）
+Texture2D gMatcapTex : register(t14);
+Texture2D gMatcap2ndTex : register(t15);
+// グラデーションカラー用テクスチャ。extraParametersで"gGradationTex"というTextureRef型パラメータを設定する
+Texture2D gGradationTex : register(t16);
+// 発光用テクスチャ。extraParametersで"gEmissionTex"というTextureRef型パラメータを設定する
+Texture2D gEmissionTex : register(t17);
 
 cbuffer LightCounts : register(b3) {
 	uint gPointLightCount;
@@ -80,19 +90,28 @@ float Lambert(float3 normal, float3 lightDir) {
 	return cos;
 }
 
-float HalfLambert(float3 normal, float3 lightDir) {
+float HalfLambert(float3 normal, float3 lightDir, Material mat) {
 	float NdotL = dot(normalize(normal), normalize(lightDir));
 	float halfLambert = pow(NdotL * 0.5f + 0.5f, 2.0f);
 #ifdef ObjectToon
-	// なめらかな階調ではなく、影・中間・明部の3段階へ量子化する（トゥーン調）。
-	// 境界はsmoothstepでわずかにぼかし、バンド間のジャギーを抑える
+	// なめらかな階調ではなく、影・(中間)・明部の段階へ量子化する（トゥーン調）。
+	// 境界はsmoothstepでわずかにぼかし、バンド間のジャギーを抑える。
+	// mat.shadowThreshold/midThreshold/bandSoftnessが0（未設定）のときは既定値を使う。
+	// mat.toneCountが2のときは中間帯を経由せず影/明の2階調にする（既定・それ以外は3階調）
 	const float kShadowLevel = 0.35f;
 	const float kMidLevel = 0.7f;
 	const float kLitLevel = 1.0f;
-	const float kBandSoftness = 0.05f;
+	float shadowThreshold = (mat.shadowThreshold > 0.0001f) ? mat.shadowThreshold : 0.45f;
+	float midThreshold = (mat.midThreshold > 0.0001f) ? mat.midThreshold : 0.8f;
+	float bandSoftness = (mat.bandSoftness > 0.0001f) ? mat.bandSoftness : 0.05f;
+	bool twoTone = (mat.toneCount > 1.5f && mat.toneCount < 2.5f);
 	float toon = kShadowLevel;
-	toon = lerp(toon, kMidLevel, smoothstep(0.45f - kBandSoftness, 0.45f + kBandSoftness, halfLambert));
-	toon = lerp(toon, kLitLevel, smoothstep(0.8f - kBandSoftness, 0.8f + kBandSoftness, halfLambert));
+	if (twoTone) {
+		toon = lerp(kShadowLevel, kLitLevel, smoothstep(shadowThreshold - bandSoftness, shadowThreshold + bandSoftness, halfLambert));
+	} else {
+		toon = lerp(toon, kMidLevel, smoothstep(shadowThreshold - bandSoftness, shadowThreshold + bandSoftness, halfLambert));
+		toon = lerp(toon, kLitLevel, smoothstep(midThreshold - bandSoftness, midThreshold + bandSoftness, halfLambert));
+	}
 	return toon;
 #else
 	return halfLambert;
@@ -171,6 +190,9 @@ PSOutput main(VSOutput input) {
 	// カメラへの方向（リムライトやローカルライトの鏡面反射で共通して使う）
 	float3 viewDir = normalize(gCamera3D.eyePosition.xyz - input.worldPosition);
 
+	// グラデーションカラー用の陰影度（ディレクショナルライトのHalfLambert結果）。ライトが無ければ1.0（明部）のまま
+	float toonFactor = 1.0f;
+
 	// 法線マップ: 接空間（TBN）で摂動した法線をライティング全体で使う。シャドウのバイアス計算
 	// （ShadowSlopeFactor）だけは、細かい凹凸に引きずられて不安定にならないよう幾何法線のまま使う
 	float3 shadingNormal = normalize(input.normal);
@@ -190,7 +212,8 @@ PSOutput main(VSOutput input) {
 				continue;
 			}
 			float3 toLightDir = -light.direction;
-			float lam = HalfLambert(shadingNormal, toLightDir);
+			float lam = HalfLambert(shadingNormal, toLightDir, mat);
+			toonFactor = lam;
 			float spec = BlinnPhongReflection(shadingNormal, light.direction, input.worldPosition, mat.shininess);
 			float4 diffuse = light.color * lam * light.intensity;
 			float4 speculer = light.color * light.intensity * spec * mat.specularColor;
@@ -207,8 +230,22 @@ PSOutput main(VSOutput input) {
 			if (mat.rimIntensity > 0.0f) {
 				float rimFactor = pow(saturate(1.0f - saturate(dot(shadingNormal, viewDir))), mat.rimPower);
 				float backlightMask = saturate(-dot(toLightDir, viewDir));
-				float3 rim = mat.rimColor.rgb * mat.rimIntensity * rimFactor * backlightMask * light.color.rgb * light.intensity * shadow;
+				// リムシェード: 影側（lamが小さいほど）はrimShadeColorへ寄せる。rimShadeBlend=0（既定）で無効
+				float3 rimColor = (mat.rimShadeBlend > 0.0001f)
+					? lerp(mat.rimColor.rgb, mat.rimShadeColor.rgb, saturate(mat.rimShadeBlend * (1.0f - lam)))
+					: mat.rimColor.rgb;
+				float3 rim = rimColor * mat.rimIntensity * rimFactor * backlightMask * light.color.rgb * light.intensity * shadow;
 				lightingColor.rgb += rim;
+			}
+
+			// バックライト: 光がオブジェクトの背後（法線から見て裏面）にあるとき、視線に対する縁を光らせる。
+			// backlightIntensity=0（既定）で無効
+			if (mat.backlightIntensity > 0.0f) {
+				float ndotl = dot(shadingNormal, normalize(toLightDir));
+				float backFacing = saturate(-ndotl);
+				float backlightFactor = pow(saturate(1.0f - saturate(dot(shadingNormal, viewDir))), mat.backlightPower);
+				float3 backlight = mat.backlightColor.rgb * mat.backlightIntensity * backlightFactor * backFacing * light.color.rgb * light.intensity * shadow;
+				lightingColor.rgb += backlight;
 			}
 		}
 	}
@@ -240,7 +277,7 @@ PSOutput main(VSOutput input) {
 				float atten = pow(saturate(-dist / light.radius + 1.0f), light.decay);
 				if (atten <= 0.0f) continue;
 
-				float lam = HalfLambert(shadingNormal, lightDir);
+				float lam = HalfLambert(shadingNormal, lightDir, mat);
 				float spec = BlinnPhongReflection(shadingNormal, lightDir, input.worldPosition, mat.shininess);
 				float4 diffuse = light.color * lam * light.intensity * atten;
 				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
@@ -268,7 +305,7 @@ PSOutput main(VSOutput input) {
 				float atten = pow(saturate(-dist / light.distance + 1.0f), light.decay) * spot;
 				if (atten <= 0.0f) continue;
 
-				float lam = HalfLambert(shadingNormal, lightDir);
+				float lam = HalfLambert(shadingNormal, lightDir, mat);
 				float spec = BlinnPhongReflection(shadingNormal, lightDir, input.worldPosition, mat.shininess);
 				float4 diffuse = light.color * lam * light.intensity * atten;
 				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
@@ -296,7 +333,7 @@ PSOutput main(VSOutput input) {
 				float3 specDir = normalize(input.worldPosition - representativePoint);
 				float adjustedShininess = AreaLightAdjustedShininess(mat.shininess, light.sourceRadius, dist);
 
-				float lam = HalfLambert(shadingNormal, lightDir);
+				float lam = HalfLambert(shadingNormal, lightDir, mat);
 				float spec = BlinnPhongReflection(shadingNormal, specDir, input.worldPosition, adjustedShininess);
 				float4 diffuse = light.color * lam * light.intensity * atten;
 				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
@@ -326,7 +363,7 @@ PSOutput main(VSOutput input) {
 				float3 specDir = normalize(input.worldPosition - representativePoint);
 				float adjustedShininess = AreaLightAdjustedShininess(mat.shininess, light.sourceRadius, dist);
 
-				float lam = HalfLambert(shadingNormal, lightDir);
+				float lam = HalfLambert(shadingNormal, lightDir, mat);
 				float spec = BlinnPhongReflection(shadingNormal, specDir, input.worldPosition, adjustedShininess);
 				float4 diffuse = light.color * lam * light.intensity * atten;
 				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
@@ -358,7 +395,7 @@ PSOutput main(VSOutput input) {
 				float sourceRadius = max(light.width, light.height) * 0.5f;
 				float adjustedShininess = AreaLightAdjustedShininess(mat.shininess, sourceRadius, dist);
 
-				float lam = HalfLambert(shadingNormal, lightDir);
+				float lam = HalfLambert(shadingNormal, lightDir, mat);
 				float spec = BlinnPhongReflection(shadingNormal, specDir, input.worldPosition, adjustedShininess);
 				float4 diffuse = light.color * lam * light.intensity * atten;
 				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
@@ -385,7 +422,7 @@ PSOutput main(VSOutput input) {
 				float3 specDir = normalize(input.worldPosition - representativePoint);
 				float adjustedShininess = AreaLightAdjustedShininess(mat.shininess, light.sourceRadius, dist);
 
-				float lam = HalfLambert(shadingNormal, lightDir);
+				float lam = HalfLambert(shadingNormal, lightDir, mat);
 				float spec = BlinnPhongReflection(shadingNormal, specDir, input.worldPosition, adjustedShininess);
 				float4 diffuse = light.color * lam * light.intensity * atten;
 				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
@@ -416,7 +453,7 @@ PSOutput main(VSOutput input) {
 				float3 specDir = normalize(input.worldPosition - representativePoint);
 				float adjustedShininess = AreaLightAdjustedShininess(mat.shininess, sourceRadius, dist);
 
-				float lam = HalfLambert(shadingNormal, lightDir);
+				float lam = HalfLambert(shadingNormal, lightDir, mat);
 				float spec = BlinnPhongReflection(shadingNormal, specDir, input.worldPosition, adjustedShininess);
 				float4 diffuse = light.color * lam * light.intensity * atten;
 				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
@@ -439,7 +476,83 @@ PSOutput main(VSOutput input) {
 
 	output.color = baseColor * lightingColor + envColor;
 
+	// マットキャップ・2ndマットキャップ: ビュー空間法線からUVを求め、後乗せレイヤーとして合成する。
+	// matcap(2nd)Intensity=0（既定）で無効（未設定時にテクスチャをサンプルしない）
+	{
+		float3 viewNormal = mul(shadingNormal, (float3x3)gCamera3D.view);
+		float2 matcapUV = viewNormal.xy * 0.5f + 0.5f;
+		if (mat.matcapIntensity > 0.0f) {
+			float3 matcapColor = gMatcapTex.Sample(gSampler, matcapUV).rgb * mat.matcapIntensity;
+			if (mat.matcapBlendMode < 0.5f) {
+				output.color.rgb += matcapColor;
+			} else if (mat.matcapBlendMode < 1.5f) {
+				output.color.rgb *= matcapColor;
+			} else if (mat.matcapBlendMode < 2.5f) {
+				output.color.rgb = 1.0f - (1.0f - output.color.rgb) * (1.0f - matcapColor);
+			} else {
+				output.color.rgb = matcapColor;
+			}
+		}
+		if (mat.matcap2ndIntensity > 0.0f) {
+			float3 matcap2ndColor = gMatcap2ndTex.Sample(gSampler, matcapUV).rgb * mat.matcap2ndIntensity;
+			if (mat.matcap2ndBlendMode < 0.5f) {
+				output.color.rgb += matcap2ndColor;
+			} else if (mat.matcap2ndBlendMode < 1.5f) {
+				output.color.rgb *= matcap2ndColor;
+			} else if (mat.matcap2ndBlendMode < 2.5f) {
+				output.color.rgb = 1.0f - (1.0f - output.color.rgb) * (1.0f - matcap2ndColor);
+			} else {
+				output.color.rgb = matcap2ndColor;
+			}
+		}
+	}
+
+	// グラデーションカラー: 陰影度(toonFactor)をU座標としてgGradationTexをサンプルし、乗算で合成する。
+	// gradationBlend=0（既定）で無効（未設定時にテクスチャをサンプルしない）
+	if (mat.gradationBlend > 0.0001f) {
+		float3 gradationColor = gGradationTex.Sample(gSampler, float2(toonFactor, 0.5f)).rgb;
+		output.color.rgb = lerp(output.color.rgb, output.color.rgb * gradationColor, mat.gradationBlend);
+	}
+
+	// 発光: ライティング非依存で常時加算する。emissionIntensity=0（既定）で無効（未設定時にテクスチャをサンプルしない）
+	if (mat.emissionIntensity > 0.0f) {
+		float3 emission = gEmissionTex.Sample(gSampler, transformedUV.xy).rgb * mat.emissionColor.rgb * mat.emissionIntensity;
+		output.color.rgb += emission;
+	}
+
+	// 色調整（Hue/Saturation/Brightness/Gamma）。saturation/brightness/gammaは1.0を基準とした差分値なので、
+	// 各フィールドが既定値0（未設定）のときは無変化になる
+	{
+		float3 hsv = RgbToHsv(output.color.rgb);
+		hsv.x = frac(hsv.x + mat.hueShift / 360.0f + 1.0f);
+		hsv.y = saturate(hsv.y * (1.0f + mat.saturation));
+		float3 adjusted = HsvToRgb(hsv);
+		adjusted *= (1.0f + mat.brightness);
+		float gammaValue = max(1.0f + mat.gamma, 0.01f);
+		adjusted = pow(max(adjusted, 0.0f), 1.0f / gammaValue);
+		output.color.rgb = adjusted;
+	}
+
 	output.color.a = mat.color.a * textureColor.a;
+
+	// 距離フェード: カメラからの距離でアルファを減衰させる。fadeEndDistance<=fadeStartDistance（既定0,0）で無効
+	if (mat.fadeEndDistance > mat.fadeStartDistance) {
+		float distanceToCamera = distance(gCamera3D.eyePosition.xyz, input.worldPosition);
+		float fade = smoothstep(mat.fadeStartDistance, mat.fadeEndDistance, distanceToCamera);
+		output.color.a *= (1.0f - fade);
+	}
+
+	// ディゾルブ: ノイズ値がdissolveThreshold未満のピクセルを消し、境界をdissolveEdgeColorで縁取る。
+	// dissolveThreshold=0（既定）で無効
+	if (mat.dissolveThreshold > 0.0001f) {
+		float noise = Rand2DTo1D(input.worldPosition.xz * mat.dissolveNoiseScale);
+		if (noise < mat.dissolveThreshold) {
+			discard;
+		}
+		float edgeFactor = 1.0f - saturate((noise - mat.dissolveThreshold) / max(mat.dissolveEdgeWidth, 0.0001f));
+		output.color.rgb = lerp(output.color.rgb, mat.dissolveEdgeColor.rgb, edgeFactor);
+	}
+
 	if (output.color.a < 0.01f) {
 		discard;
 	}

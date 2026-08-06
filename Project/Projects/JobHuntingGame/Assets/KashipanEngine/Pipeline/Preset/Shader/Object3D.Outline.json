@@ -1,0 +1,13 @@
+{
+	"BaseName": "Object3D.Outline",
+	"Vertex": {
+		"Path": "Object/ObjectOutlineVS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "vs_6_0"
+	},
+	"Pixel": {
+		"Path": "Object/ObjectOutlinePS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "ps_6_0"
+	}
+}

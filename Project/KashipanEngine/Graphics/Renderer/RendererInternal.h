@@ -17,6 +17,7 @@
 #include "Assets/MaterialManager.h"
 #include "Assets/SamplerManager.h"
 #include "Assets/TextureManager.h"
+#include "Assets/TextureRef.h"
 #include "Core/DirectXCommon.h"
 #include "Graphics/ComputeCommandProcessor.h"
 #include "Graphics/IRenderTarget.h"
@@ -349,6 +350,9 @@ inline std::vector<std::byte> BuildMaterialElementBytes(const PipelineInfo &pipe
             WriteMaterialField(pipelineInfo, bytes.data(), static_cast<std::uint32_t>(bytes.size()), name, *asVec3);
         } else if (const auto *asVec4 = value.AnyCastPtr<Vector4>()) {
             writeVector4(name.c_str(), *asVec4);
+        } else if (const auto *asColor = value.AnyCastPtr<Color>()) {
+            // Colorはr,g,b,aの4 floatでVector4と同一レイアウトのため、そのままGPUへ書き込める
+            WriteMaterialField(pipelineInfo, bytes.data(), static_cast<std::uint32_t>(bytes.size()), name, *asColor);
         } else if (const auto *asBool = value.AnyCastPtr<bool>()) {
             writeFloat(name.c_str(), *asBool ? 1.0f : 0.0f);
         } else if (const auto *asInt = value.AnyCastPtr<std::int32_t>()) {
@@ -357,6 +361,23 @@ inline std::vector<std::byte> BuildMaterialElementBytes(const PipelineInfo &pipe
     }
 
     return bytes;
+}
+
+/// @brief extraParametersのTextureRef型エントリを、キー名をそのままシェーダー変数名として毎描画バインドする。
+///        gTexture/gEnvironmentMap/gNormalMap等の固定スロットとは別に、マットキャップ等カスタムシェーダーが
+///        独自に宣言する任意のTexture2Dスロットへ対応するためのもの。該当スロットを持たないパイプラインでは
+///        ShaderVariableBinder::Bindが黙ってfalseを返すだけなので無害。未設定/未解決の場合は
+///        gEnvironmentMap/gNormalMapと同じくバインドをスキップする（フォールバックしない）
+inline void BindExtraTextureParameters(ShaderVariableBinder *shaderBinder, const MaterialManager::Material *material) {
+    if (!material) return;
+    for (const auto &[name, value] : material->extraParameters) {
+        const auto *asTextureRef = value.AnyCastPtr<TextureRef>();
+        if (!asTextureRef || asTextureRef->assetPath.empty()) continue;
+        const auto handle = TextureManager::GetTextureFromAssetPath(asTextureRef->assetPath);
+        if (handle != TextureManager::kInvalidHandle) {
+            TextureManager::BindTexture(shaderBinder, "Pixel:" + name, handle);
+        }
+    }
 }
 
 /// @brief バッファキャッシュキー生成（描画先＋パイプライン＋メッシュ＋マテリアルでバッチを識別）

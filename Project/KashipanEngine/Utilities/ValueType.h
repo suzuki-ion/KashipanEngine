@@ -12,6 +12,8 @@
 #include "Math/Matrix3x3.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Quaternion.h"
+#include "Math/Color.h"
+#include "Assets/TextureRef.h"
 #include "Utilities/FileIO/JSON.h"
 
 /// @brief 値の型を表す列挙型
@@ -38,6 +40,8 @@ enum class ValueType {
     Matrix3x3,
     Matrix4x4,
     Quaternion,
+    Color,      // 色（内部データはVector4と同じr,g,b,a4 float。編集UIでColorEdit4を使う点のみVector4と異なる）
+    TextureRef, // テクスチャ参照（内部データはAssetsルートからの相対パス文字列）
     Vector,         // 可変長の配列（std::vector）
     UnorderedMap,   // ハッシュマップ（std::unordered_map）
     Pair,           // ペア（std::pair）
@@ -114,6 +118,8 @@ template <> struct TypeExtractor<Vector4> { static TypeInfo Get() { return TypeI
 template <> struct TypeExtractor<Matrix3x3> { static TypeInfo Get() { return TypeInfo(ValueType::Matrix3x3); } };
 template <> struct TypeExtractor<Matrix4x4> { static TypeInfo Get() { return TypeInfo(ValueType::Matrix4x4); } };
 template <> struct TypeExtractor<Quaternion> { static TypeInfo Get() { return TypeInfo(ValueType::Quaternion); } };
+template <> struct TypeExtractor<Color> { static TypeInfo Get() { return TypeInfo(ValueType::Color); } };
+template <> struct TypeExtractor<TextureRef> { static TypeInfo Get() { return TypeInfo(ValueType::TextureRef); } };
 
 // コンテナ系型の部分特殊化（内部の型を再帰的に取得する）
 template <typename T>

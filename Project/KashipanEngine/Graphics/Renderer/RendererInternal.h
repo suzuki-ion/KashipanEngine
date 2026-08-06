@@ -171,6 +171,13 @@ struct BoxLightElement {
 };
 #pragma pack(pop)
 
+/// @brief TimeConstants 定数バッファ（Object2D等の時間ベース演出用）と同レイアウトの構造体
+struct TimeConstantsData {
+    float time = 0.0f;
+    float deltaTime = 0.0f;
+    float padding[2]{};
+};
+
 /// @brief LightCounts 定数バッファと同レイアウトの構造体
 struct LightCountsData {
     std::uint32_t pointLightCount = 0;

@@ -11,10 +11,6 @@ struct Material {
 	float3 padding;
 /*{{ADDITIONAL_MATERIAL_FIELDS_2D}}*/
 };
-
-// 選択されたシェーダーモジュール（Modules/<Name>/Logic.hlsli、フック関数）がここに合成される。
-// モジュール合成なしでこのファイルを直接コンパイルする場合、コメントは無視されるため何も追加されない
-/*{{MODULE_LOGIC_2D}}*/
 #endif
 
 #ifdef Object3D
@@ -88,6 +84,13 @@ SamplerState gSampler : register(s0);
 struct PSOutput {
 	float4 color : SV_TARGET0;
 };
+
+#ifdef Object2D
+// 選択されたシェーダーモジュール（Modules/<Name>/Logic.hlsli、テクスチャ宣言＋フック関数）がここに合成される。
+// gTexture/gMaterials/gSamplerの宣言より後（モジュールがgSampler等を参照できる位置）に置くこと。
+// モジュール合成なしでこのファイルを直接コンパイルする場合、コメントは無視されるため何も追加されない
+/*{{MODULE_LOGIC_2D}}*/
+#endif
 
 #ifdef Object3D
 float Lambert(float3 normal, float3 lightDir) {

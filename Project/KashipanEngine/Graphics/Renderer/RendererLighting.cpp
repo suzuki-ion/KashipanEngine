@@ -201,6 +201,22 @@ void Renderer::BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
         }
     }
 
+    // グローバル時刻定数（Object2D等の時間ベース演出用）。全描画先・全パイプラインで共通の値のため、
+    // targetやpipelineNameに依存しない固定キーでキャッシュする
+    {
+        TimeConstantsData timeData;
+        timeData.time = static_cast<float>(GetGameRuntimeMillisecond()) / 1000.0f;
+        timeData.deltaTime = GetDeltaTime();
+        auto *timeBuffer = resourceContainer_->GetOrCreateConstantBuffer("GlobalTimeConstants", sizeof(TimeConstantsData));
+        if (timeBuffer) {
+            if (auto *mapped = timeBuffer->Map()) {
+                std::memcpy(mapped, &timeData, sizeof(timeData));
+                shaderBinder.Bind("Vertex:TimeConstants", timeBuffer);
+                shaderBinder.Bind("Pixel:TimeConstants", timeBuffer);
+            }
+        }
+    }
+
     // ライトは種類ごとに構造化バッファへまとめてバインドする
     BindLightBuffersAndShadowMap(target, pipelineName, sceneRenderer, shaderBinder);
 }

@@ -92,9 +92,13 @@ const std::vector<ShaderModuleDefinition> &GetShaderModuleRegistry() {
         { "OpacityMap",   ModuleHookSlot::Alpha,       5,   "ApplyOpacityMap(output.color, mat, transformedUV.xy);" },
         { "DistanceFade", ModuleHookSlot::Alpha,       10,  "ApplyDistanceFade(output.color, mat, input.worldPosition);" },
         { "Dissolve",     ModuleHookSlot::Alpha,       20,  "ApplyDissolve(output.color, mat, input.worldPosition);" },
-        { "Vignette2D",     ModuleHookSlot::Composite2D, 10,  "ApplyVignette2D(output.color, mat, transformedUV.xy);" },
-        { "ColorGrading2D", ModuleHookSlot::Composite2D, 100, "ApplyColorGrading2D(output.color, mat);" },
-        { "Dissolve2D",     ModuleHookSlot::Alpha2D,     10,  "ApplyDissolve2D(output.color, mat, transformedUV.xy);" },
+        { "Vignette2D",        ModuleHookSlot::Composite2D, 10,  "ApplyVignette2D(output.color, mat, transformedUV.xy);" },
+        { "GradientOverlay2D", ModuleHookSlot::Composite2D, 5,   "ApplyGradientOverlay2D(output.color, mat, transformedUV.xy);" },
+        { "Pulse2D",           ModuleHookSlot::Composite2D, 50,  "ApplyPulse2D(output.color, mat);" },
+        { "ColorGrading2D",    ModuleHookSlot::Composite2D, 100, "ApplyColorGrading2D(output.color, mat);" },
+        { "FlashColor2D",      ModuleHookSlot::Composite2D, 110, "ApplyFlashColor2D(output.color, mat);" },
+        { "MaskTexture2D",     ModuleHookSlot::Alpha2D,     5,   "ApplyMaskTexture2D(output.color, mat, transformedUV.xy);" },
+        { "Dissolve2D",        ModuleHookSlot::Alpha2D,     10,  "ApplyDissolve2D(output.color, mat, transformedUV.xy);" },
     };
     return kModules;
 }

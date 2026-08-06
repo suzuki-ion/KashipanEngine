@@ -10,12 +10,19 @@ struct Material {
 #endif
 
 #ifdef Object3D
-#include "../Common/Material3D.hlsli"
 #include "../Common/ShadowMap.hlsli"
 #include "../Common/AreaLight.hlsli"
-#include "../Common/ColorUtility.hlsli"
-#include "../Common/Noise.hlsli"
 #include "Object3D.hlsli"
+
+// struct Materialの本体はここで組み立てる。基本フィールドはMaterial3D.hlsliに定義されており、
+// ADDITIONAL_MATERIAL_FIELDSの位置には、Graphics/Pipeline/System/ShaderModuleComposerが実行時に
+// 選択されたシェーダーモジュール（Modules/<Name>/Fields.hlsli）のフィールドを合成して差し込む。
+// このファイルを直接（モジュール合成なしで）コンパイルする場合、コメントは無視されるため
+// 基本フィールドのみのstruct Materialになる（押し出しアウトライン導入以前と同じ最小構成）
+struct Material {
+#include "../Common/Material3D.hlsli"
+/*{{ADDITIONAL_MATERIAL_FIELDS}}*/
+};
 
 StructuredBuffer<PointLight> gPointLights : register(t4);
 StructuredBuffer<SpotLight> gSpotLights : register(t5);
@@ -26,14 +33,6 @@ StructuredBuffer<RectLight> gRectLights : register(t10);
 StructuredBuffer<TubeLight> gTubeLights : register(t11);
 StructuredBuffer<BoxLight> gBoxLights : register(t12);
 Texture2D gNormalMap : register(t13);
-// マットキャップ用テクスチャ。extraParametersで"gMatcapTex"/"gMatcap2ndTex"というTextureRef型パラメータを
-// 設定すると、描画時に自動でここへバインドされる（RendererInternal::BindExtraTextureParameters参照）
-Texture2D gMatcapTex : register(t14);
-Texture2D gMatcap2ndTex : register(t15);
-// グラデーションカラー用テクスチャ。extraParametersで"gGradationTex"というTextureRef型パラメータを設定する
-Texture2D gGradationTex : register(t16);
-// 発光用テクスチャ。extraParametersで"gEmissionTex"というTextureRef型パラメータを設定する
-Texture2D gEmissionTex : register(t17);
 
 cbuffer LightCounts : register(b3) {
 	uint gPointLightCount;
@@ -94,25 +93,19 @@ float HalfLambert(float3 normal, float3 lightDir, Material mat) {
 	float NdotL = dot(normalize(normal), normalize(lightDir));
 	float halfLambert = pow(NdotL * 0.5f + 0.5f, 2.0f);
 #ifdef ObjectToon
-	// なめらかな階調ではなく、影・(中間)・明部の段階へ量子化する（トゥーン調）。
+	// なめらかな階調ではなく、影・中間・明部の3段階へ量子化する（トゥーン調）。
 	// 境界はsmoothstepでわずかにぼかし、バンド間のジャギーを抑える。
-	// mat.shadowThreshold/midThreshold/bandSoftnessが0（未設定）のときは既定値を使う。
-	// mat.toneCountが2のときは中間帯を経由せず影/明の2階調にする（既定・それ以外は3階調）
+	// MultiToneモジュール選択時はTONE_HOOKがここを多段影（2/3階調切替可能）ロジックへ差し替える
+	/*{{TONE_HOOK_BEGIN}}*/
 	const float kShadowLevel = 0.35f;
 	const float kMidLevel = 0.7f;
 	const float kLitLevel = 1.0f;
-	float shadowThreshold = (mat.shadowThreshold > 0.0001f) ? mat.shadowThreshold : 0.45f;
-	float midThreshold = (mat.midThreshold > 0.0001f) ? mat.midThreshold : 0.8f;
-	float bandSoftness = (mat.bandSoftness > 0.0001f) ? mat.bandSoftness : 0.05f;
-	bool twoTone = (mat.toneCount > 1.5f && mat.toneCount < 2.5f);
+	const float kBandSoftness = 0.05f;
 	float toon = kShadowLevel;
-	if (twoTone) {
-		toon = lerp(kShadowLevel, kLitLevel, smoothstep(shadowThreshold - bandSoftness, shadowThreshold + bandSoftness, halfLambert));
-	} else {
-		toon = lerp(toon, kMidLevel, smoothstep(shadowThreshold - bandSoftness, shadowThreshold + bandSoftness, halfLambert));
-		toon = lerp(toon, kLitLevel, smoothstep(midThreshold - bandSoftness, midThreshold + bandSoftness, halfLambert));
-	}
+	toon = lerp(toon, kMidLevel, smoothstep(0.45f - kBandSoftness, 0.45f + kBandSoftness, halfLambert));
+	toon = lerp(toon, kLitLevel, smoothstep(0.8f - kBandSoftness, 0.8f + kBandSoftness, halfLambert));
 	return toon;
+	/*{{TONE_HOOK_END}}*/
 #else
 	return halfLambert;
 #endif
@@ -150,6 +143,10 @@ float Dither4x4(float2 screenPos) {
 	};
 	return (dither[idx] + 0.5f) / 16.0f;
 }
+
+// 選択されたシェーダーモジュール（Modules/<Name>/Logic.hlsli、テクスチャ宣言＋フック関数）がここに合成される。
+// モジュール合成なしでこのファイルを直接コンパイルする場合、コメントは無視されるため何も追加されない
+/*{{MODULE_LOGIC}}*/
 #endif
 
 PSOutput main(VSOutput input) {
@@ -190,7 +187,7 @@ PSOutput main(VSOutput input) {
 	// カメラへの方向（リムライトやローカルライトの鏡面反射で共通して使う）
 	float3 viewDir = normalize(gCamera3D.eyePosition.xyz - input.worldPosition);
 
-	// グラデーションカラー用の陰影度（ディレクショナルライトのHalfLambert結果）。ライトが無ければ1.0（明部）のまま
+	// Gradationモジュール用の陰影度（ディレクショナルライトのHalfLambert結果）。ライトが無ければ1.0（明部）のまま
 	float toonFactor = 1.0f;
 
 	// 法線マップ: 接空間（TBN）で摂動した法線をライティング全体で使う。シャドウのバイアス計算
@@ -230,23 +227,16 @@ PSOutput main(VSOutput input) {
 			if (mat.rimIntensity > 0.0f) {
 				float rimFactor = pow(saturate(1.0f - saturate(dot(shadingNormal, viewDir))), mat.rimPower);
 				float backlightMask = saturate(-dot(toLightDir, viewDir));
-				// リムシェード: 影側（lamが小さいほど）はrimShadeColorへ寄せる。rimShadeBlend=0（既定）で無効
-				float3 rimColor = (mat.rimShadeBlend > 0.0001f)
-					? lerp(mat.rimColor.rgb, mat.rimShadeColor.rgb, saturate(mat.rimShadeBlend * (1.0f - lam)))
-					: mat.rimColor.rgb;
+				// RimShadeモジュール選択時、RIM_COLOR_HOOKがここを影側別色ロジックへ差し替える
+				/*{{RIM_COLOR_HOOK_BEGIN}}*/
+				float3 rimColor = mat.rimColor.rgb;
+				/*{{RIM_COLOR_HOOK_END}}*/
 				float3 rim = rimColor * mat.rimIntensity * rimFactor * backlightMask * light.color.rgb * light.intensity * shadow;
 				lightingColor.rgb += rim;
 			}
 
-			// バックライト: 光がオブジェクトの背後（法線から見て裏面）にあるとき、視線に対する縁を光らせる。
-			// backlightIntensity=0（既定）で無効
-			if (mat.backlightIntensity > 0.0f) {
-				float ndotl = dot(shadingNormal, normalize(toLightDir));
-				float backFacing = saturate(-ndotl);
-				float backlightFactor = pow(saturate(1.0f - saturate(dot(shadingNormal, viewDir))), mat.backlightPower);
-				float3 backlight = mat.backlightColor.rgb * mat.backlightIntensity * backlightFactor * backFacing * light.color.rgb * light.intensity * shadow;
-				lightingColor.rgb += backlight;
-			}
+			// 選択されたモジュール（例: Backlight）の追加ディレクショナルライト処理をここで呼び出す
+			/*{{DIRECTIONAL_HOOKS}}*/
 		}
 	}
 
@@ -476,82 +466,13 @@ PSOutput main(VSOutput input) {
 
 	output.color = baseColor * lightingColor + envColor;
 
-	// マットキャップ・2ndマットキャップ: ビュー空間法線からUVを求め、後乗せレイヤーとして合成する。
-	// matcap(2nd)Intensity=0（既定）で無効（未設定時にテクスチャをサンプルしない）
-	{
-		float3 viewNormal = mul(shadingNormal, (float3x3)gCamera3D.view);
-		float2 matcapUV = viewNormal.xy * 0.5f + 0.5f;
-		if (mat.matcapIntensity > 0.0f) {
-			float3 matcapColor = gMatcapTex.Sample(gSampler, matcapUV).rgb * mat.matcapIntensity;
-			if (mat.matcapBlendMode < 0.5f) {
-				output.color.rgb += matcapColor;
-			} else if (mat.matcapBlendMode < 1.5f) {
-				output.color.rgb *= matcapColor;
-			} else if (mat.matcapBlendMode < 2.5f) {
-				output.color.rgb = 1.0f - (1.0f - output.color.rgb) * (1.0f - matcapColor);
-			} else {
-				output.color.rgb = matcapColor;
-			}
-		}
-		if (mat.matcap2ndIntensity > 0.0f) {
-			float3 matcap2ndColor = gMatcap2ndTex.Sample(gSampler, matcapUV).rgb * mat.matcap2ndIntensity;
-			if (mat.matcap2ndBlendMode < 0.5f) {
-				output.color.rgb += matcap2ndColor;
-			} else if (mat.matcap2ndBlendMode < 1.5f) {
-				output.color.rgb *= matcap2ndColor;
-			} else if (mat.matcap2ndBlendMode < 2.5f) {
-				output.color.rgb = 1.0f - (1.0f - output.color.rgb) * (1.0f - matcap2ndColor);
-			} else {
-				output.color.rgb = matcap2ndColor;
-			}
-		}
-	}
-
-	// グラデーションカラー: 陰影度(toonFactor)をU座標としてgGradationTexをサンプルし、乗算で合成する。
-	// gradationBlend=0（既定）で無効（未設定時にテクスチャをサンプルしない）
-	if (mat.gradationBlend > 0.0001f) {
-		float3 gradationColor = gGradationTex.Sample(gSampler, float2(toonFactor, 0.5f)).rgb;
-		output.color.rgb = lerp(output.color.rgb, output.color.rgb * gradationColor, mat.gradationBlend);
-	}
-
-	// 発光: ライティング非依存で常時加算する。emissionIntensity=0（既定）で無効（未設定時にテクスチャをサンプルしない）
-	if (mat.emissionIntensity > 0.0f) {
-		float3 emission = gEmissionTex.Sample(gSampler, transformedUV.xy).rgb * mat.emissionColor.rgb * mat.emissionIntensity;
-		output.color.rgb += emission;
-	}
-
-	// 色調整（Hue/Saturation/Brightness/Gamma）。saturation/brightness/gammaは1.0を基準とした差分値なので、
-	// 各フィールドが既定値0（未設定）のときは無変化になる
-	{
-		float3 hsv = RgbToHsv(output.color.rgb);
-		hsv.x = frac(hsv.x + mat.hueShift / 360.0f + 1.0f);
-		hsv.y = saturate(hsv.y * (1.0f + mat.saturation));
-		float3 adjusted = HsvToRgb(hsv);
-		adjusted *= (1.0f + mat.brightness);
-		float gammaValue = max(1.0f + mat.gamma, 0.01f);
-		adjusted = pow(max(adjusted, 0.0f), 1.0f / gammaValue);
-		output.color.rgb = adjusted;
-	}
+	// 選択されたモジュール（例: Matcap→Gradation→Emission→ColorGrading、優先度順）の合成後処理をここで呼び出す
+	/*{{COMPOSITE_HOOKS}}*/
 
 	output.color.a = mat.color.a * textureColor.a;
 
-	// 距離フェード: カメラからの距離でアルファを減衰させる。fadeEndDistance<=fadeStartDistance（既定0,0）で無効
-	if (mat.fadeEndDistance > mat.fadeStartDistance) {
-		float distanceToCamera = distance(gCamera3D.eyePosition.xyz, input.worldPosition);
-		float fade = smoothstep(mat.fadeStartDistance, mat.fadeEndDistance, distanceToCamera);
-		output.color.a *= (1.0f - fade);
-	}
-
-	// ディゾルブ: ノイズ値がdissolveThreshold未満のピクセルを消し、境界をdissolveEdgeColorで縁取る。
-	// dissolveThreshold=0（既定）で無効
-	if (mat.dissolveThreshold > 0.0001f) {
-		float noise = Rand2DTo1D(input.worldPosition.xz * mat.dissolveNoiseScale);
-		if (noise < mat.dissolveThreshold) {
-			discard;
-		}
-		float edgeFactor = 1.0f - saturate((noise - mat.dissolveThreshold) / max(mat.dissolveEdgeWidth, 0.0001f));
-		output.color.rgb = lerp(output.color.rgb, mat.dissolveEdgeColor.rgb, edgeFactor);
-	}
+	// 選択されたモジュール（例: DistanceFade→Dissolve、優先度順）のアルファ処理をここで呼び出す
+	/*{{ALPHA_HOOKS}}*/
 
 	if (output.color.a < 0.01f) {
 		discard;

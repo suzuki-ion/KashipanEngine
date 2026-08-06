@@ -313,7 +313,9 @@ bool PipelineManager::GetOrCreatePipeline(const std::string &pipelineName) {
     LogScope scope;
     if (HasPipeline(pipelineName)) return true;
 
-    auto resolution = TryResolvePipelineVariant(pipelineName);
+    const auto shaderFolderIt = presetFolderNames_.find("Shader");
+    const std::string shaderBaseDir = (shaderFolderIt != presetFolderNames_.end()) ? shaderFolderIt->second : std::string{};
+    auto resolution = TryResolvePipelineVariant(pipelineName, shaderBaseDir);
     if (!resolution.matched) return false;
 
     PipelineInfo info;

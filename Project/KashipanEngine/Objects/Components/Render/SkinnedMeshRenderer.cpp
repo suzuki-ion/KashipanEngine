@@ -12,6 +12,7 @@
 
 #if defined(USE_IMGUI)
 #include <imgui.h>
+#include "Objects/Components/Render/PipelineVariantBuilder.h"
 #include "Utilities/Translation.h"
 #endif
 
@@ -281,6 +282,10 @@ void SkinnedMeshRenderer::ShowImGui() {
     TargetObjectSelector::ShowSelector(TranslationLabel("component.common.target"), GetOwnerSceneContext(), targetObjectID_);
     TargetObjectSelector::ShowRenderTargetFilters(GetOwnerSceneContext(), targetObjectID_, excludedRenderTargetNames_);
     ImGuiCustom::SelectString(TranslationLabel("component.skinnedmeshrenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames("3D"));
+    // カスタムバリアントビルダー（MeshRendererと共通のUI。実装はPipelineVariantBuilder参照）。
+    // SkinnedMeshRendererの描画エントリは毎フレーム収集し直されるため、MeshRendererと異なり
+    // 明示的な再構築通知（MarkDrawListDirty相当）は不要
+    PipelineVariantBuilder::Show(pipelineName_);
     ImGui::Checkbox(TranslationLabel("component.skinnedmeshrenderer.cast_shadows"), &castShadows_);
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("%s", TranslationC("component.skinnedmeshrenderer.desc_1"));

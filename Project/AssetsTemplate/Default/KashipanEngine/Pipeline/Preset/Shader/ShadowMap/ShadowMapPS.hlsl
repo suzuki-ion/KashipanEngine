@@ -1,5 +1,8 @@
 #include "../Object/Object3D.hlsli"
+
+struct Material {
 #include "../Common/Material3D.hlsli"
+};
 
 Texture2D gTexture : register(t0);
 StructuredBuffer<Material> gMaterials : register(t1);

@@ -426,6 +426,9 @@
     <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\PipelineVariantResolver.cpp">
       <Filter>KashipanEngine\Graphics\Pipeline\System</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\ShaderModuleComposer.cpp">
+      <Filter>KashipanEngine\Graphics\Pipeline\System</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\ShaderCompiler.cpp">
       <Filter>KashipanEngine\Graphics\Pipeline\System</Filter>
     </ClCompile>
@@ -1049,6 +1052,9 @@
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineVariantResolver.h">
       <Filter>KashipanEngine\Graphics\Pipeline\System</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ShaderModuleComposer.h">
+      <Filter>KashipanEngine\Graphics\Pipeline\System</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ShaderCompiler.h">
       <Filter>KashipanEngine\Graphics\Pipeline\System</Filter>
     </ClInclude>
@@ -1332,6 +1338,12 @@
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
     <ClCompile Include="KashipanEngine\Objects\Components\Render\TargetObjectSelector.cpp">
+      <Filter>KashipanEngine\Objects\Components\Render</Filter>
+    </ClCompile>
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\PipelineVariantBuilder.h">
+      <Filter>KashipanEngine\Objects\Components\Render</Filter>
+    </ClInclude>
+    <ClCompile Include="KashipanEngine\Objects\Components\Render\PipelineVariantBuilder.cpp">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Objects\Components\Render\SkinnedMeshRenderer.cpp">

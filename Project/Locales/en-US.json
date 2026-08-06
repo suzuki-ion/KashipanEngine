@@ -957,12 +957,6 @@
 		"component.meshrenderer.instance_color": "Instance Color",
 		"component.meshrenderer.instance_color_blend_mode": "Instance Color Blend Mode",
 		"component.meshrenderer.pipeline": "Pipeline",
-		"component.meshrenderer.variant_apply": "Apply",
-		"component.meshrenderer.variant_base": "Base",
-		"component.meshrenderer.variant_blend": "Blend",
-		"component.meshrenderer.variant_builder": "Custom Variant Builder",
-		"component.meshrenderer.variant_raster": "Culling",
-		"component.meshrenderer.variant_toon": "Toon",
 
 		//--------- component.motionblureffect ---------//
 		"component.motionblureffect.desc_1": "ブラー全体の強さ",
@@ -1538,6 +1532,24 @@
 		"editor.objectinspector.noselection": "No object selected.",
 		"editor.objectinspector.tag": "Tag",
 		"editor.objectinspector.title": "Object Inspector",
+
+		//--------- editor.pipelinevariantbuilder ---------//
+		"editor.pipelinevariantbuilder.apply": "Apply",
+		"editor.pipelinevariantbuilder.base": "Base",
+		"editor.pipelinevariantbuilder.blend": "Blend",
+		"editor.pipelinevariantbuilder.builder": "Custom Variant Builder",
+		"editor.pipelinevariantbuilder.module_Backlight": "Backlight",
+		"editor.pipelinevariantbuilder.module_ColorGrading": "Color Grading",
+		"editor.pipelinevariantbuilder.module_Dissolve": "Dissolve",
+		"editor.pipelinevariantbuilder.module_DistanceFade": "Distance Fade",
+		"editor.pipelinevariantbuilder.module_Emission": "Emission",
+		"editor.pipelinevariantbuilder.module_Gradation": "Gradation Color",
+		"editor.pipelinevariantbuilder.module_Matcap": "Matcap",
+		"editor.pipelinevariantbuilder.module_MultiTone": "Multi-Tone Shading",
+		"editor.pipelinevariantbuilder.module_RimShade": "Rim Shade",
+		"editor.pipelinevariantbuilder.modules": "Shader Modules",
+		"editor.pipelinevariantbuilder.raster": "Culling",
+		"editor.pipelinevariantbuilder.toon": "Toon",
 
 		//--------- editor.play ---------//
 		"editor.play.pause": "Pause",

@@ -957,12 +957,6 @@
 		"component.meshrenderer.instance_color": "インスタンスカラー",
 		"component.meshrenderer.instance_color_blend_mode": "インスタンスカラーの合成方法",
 		"component.meshrenderer.pipeline": "パイプライン",
-		"component.meshrenderer.variant_apply": "適用",
-		"component.meshrenderer.variant_base": "ベース",
-		"component.meshrenderer.variant_blend": "ブレンド",
-		"component.meshrenderer.variant_builder": "カスタムバリアントビルダー",
-		"component.meshrenderer.variant_raster": "カリング",
-		"component.meshrenderer.variant_toon": "トゥーン",
 
 		//--------- component.motionblureffect ---------//
 		"component.motionblureffect.desc_1": "ブラー全体の強さ",
@@ -1538,6 +1532,24 @@
 		"editor.objectinspector.noselection": "オブジェクトが選択されていません。",
 		"editor.objectinspector.tag": "タグ",
 		"editor.objectinspector.title": "オブジェクトインスペクタ",
+
+		//--------- editor.pipelinevariantbuilder ---------//
+		"editor.pipelinevariantbuilder.apply": "適用",
+		"editor.pipelinevariantbuilder.base": "ベース",
+		"editor.pipelinevariantbuilder.blend": "ブレンド",
+		"editor.pipelinevariantbuilder.builder": "カスタムバリアントビルダー",
+		"editor.pipelinevariantbuilder.module_Backlight": "バックライト",
+		"editor.pipelinevariantbuilder.module_ColorGrading": "色調整",
+		"editor.pipelinevariantbuilder.module_Dissolve": "ディゾルブ",
+		"editor.pipelinevariantbuilder.module_DistanceFade": "距離フェード",
+		"editor.pipelinevariantbuilder.module_Emission": "発光",
+		"editor.pipelinevariantbuilder.module_Gradation": "グラデーションカラー",
+		"editor.pipelinevariantbuilder.module_Matcap": "マットキャップ",
+		"editor.pipelinevariantbuilder.module_MultiTone": "多段影",
+		"editor.pipelinevariantbuilder.module_RimShade": "リムシェード",
+		"editor.pipelinevariantbuilder.modules": "シェーダーモジュール",
+		"editor.pipelinevariantbuilder.raster": "カリング",
+		"editor.pipelinevariantbuilder.toon": "トゥーン",
 
 		//--------- editor.play ---------//
 		"editor.play.pause": "一時停止",

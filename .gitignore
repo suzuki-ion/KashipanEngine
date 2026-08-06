@@ -18,6 +18,9 @@ vcpkg-configuration.json
 
 # exclusion directory
 Dumps/
+
+# ShaderModuleComposerが実行時に生成する合成済みシェーダーのキャッシュ
+**/Pipeline/Preset/Shader/Object/Generated.*.hlsl
 Logs/
 VSTools/
 SceneBackups/

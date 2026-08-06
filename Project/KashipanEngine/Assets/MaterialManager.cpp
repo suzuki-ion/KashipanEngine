@@ -577,8 +577,12 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
     ImGui::TextUnformatted(TranslationC("editor.materialmanager.custom_parameters"));
 
     // 対象シェーダー（一括追加ボタン・注釈によるstep/range適用の参照先。.matには保存しない一時的なUI状態）
+    // MeshRenderer(3D)・SpriteRenderer(2D)どちらのマテリアルもこのUIで編集するため、両カテゴリを候補に含める
     static std::string sReferenceShaderName;
-    ImGuiCustom::SelectString(TranslationLabel("editor.materialmanager.reference_shader"), sReferenceShaderName, PipelineManager::GetLoadedRenderPipelineNames("3D"), true);
+    std::vector<std::string> referenceShaderCandidates = PipelineManager::GetLoadedRenderPipelineNames("3D");
+    const auto pipelines2D = PipelineManager::GetLoadedRenderPipelineNames("2D");
+    referenceShaderCandidates.insert(referenceShaderCandidates.end(), pipelines2D.begin(), pipelines2D.end());
+    ImGuiCustom::SelectString(TranslationLabel("editor.materialmanager.reference_shader"), sReferenceShaderName, referenceShaderCandidates, true);
     const MaterialLayout *referenceLayout = sReferenceShaderName.empty() ? nullptr : PipelineManager::TryGetMaterialLayout(sReferenceShaderName);
 
     ImGui::BeginDisabled(referenceLayout == nullptr);
@@ -588,6 +592,7 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
             "enableLighting", "enableShadowMapProjection", "useTexture",
             "color", "uvTransform", "shininess", "specularColor",
             "rimColor", "rimPower", "rimIntensity", "instanceColor", "instanceColorBlendMode",
+            "padding", // Object2DのMaterial構造体が持つ実体の無い予約フィールド（アラインメント用）
         };
         auto defaultValueForType = [](ValueType type) -> MyAny {
             switch (type) {

@@ -68,7 +68,8 @@ PipelineVariantResolution TryResolvePipelineVariant(const std::string &pipelineN
             if (!BlendSuffixes().count(suffix)) return result;
             if (!blendPreset.empty()) return result; // 重複指定
             blendPreset = suffix;
-        } else if (base == "Object3D" && findModule(token)) {
+        } else if (const auto *def = findModule(token); def && (IsTwoDimensionalSlot(def->slot) == (base == "Object2D"))) {
+            // 3D系モジュールはObject3D、2D系（Composite2D/Alpha2D）モジュールはObject2Dのパイプライン名でのみ受理する
             if (!seenModuleTokens.insert(token).second) return result; // 重複指定
             moduleTokens.push_back(token);
         } else {

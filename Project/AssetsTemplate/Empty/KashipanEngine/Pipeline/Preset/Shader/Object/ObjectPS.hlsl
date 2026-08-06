@@ -1,12 +1,20 @@
 #ifdef Object2D
 #include "Object2D.hlsli"
-// カスタムシェーダー向けの追加パラメータは、この構造体の末尾に自由に追加してよい（Material3D.hlsli参照）。
+// struct Materialの本体はここで組み立てる。ADDITIONAL_MATERIAL_FIELDS_2Dの位置には、
+// Graphics/Pipeline/System/ShaderModuleComposerが実行時に選択されたシェーダーモジュール
+// （Modules/<Name>/Fields.hlsli）のフィールドを合成して差し込む。このファイルを直接
+// （モジュール合成なしで）コンパイルする場合、コメントは無視されるため基本フィールドのみになる
 struct Material {
 	float4 color;
 	float4x4 uvTransform;
     float useTexture;
 	float3 padding;
+/*{{ADDITIONAL_MATERIAL_FIELDS_2D}}*/
 };
+
+// 選択されたシェーダーモジュール（Modules/<Name>/Logic.hlsli、フック関数）がここに合成される。
+// モジュール合成なしでこのファイルを直接コンパイルする場合、コメントは無視されるため何も追加されない
+/*{{MODULE_LOGIC_2D}}*/
 #endif
 
 #ifdef Object3D
@@ -157,6 +165,10 @@ PSOutput main(VSOutput input) {
 		textureColor = gTexture.Sample(gSampler, transformedUV.xy);
 	}
 	output.color = mat.color * textureColor;
+	// 選択されたモジュール（例: Vignette2D→ColorGrading2D、優先度順）の合成後処理をここで呼び出す
+	/*{{COMPOSITE_HOOKS_2D}}*/
+	// 選択されたモジュール（例: Dissolve2D）のアルファ処理をここで呼び出す
+	/*{{ALPHA_HOOKS_2D}}*/
 #endif
 
 #ifdef Object3D

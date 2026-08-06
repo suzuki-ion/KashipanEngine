@@ -1,3 +1,6 @@
+// カスタムシェーダー向けの追加パラメータは、この構造体の末尾に自由に追加してよい。
+// フィールド名が MaterialManager::Material::extraParameters（.matの"parameters"）のキーと一致していれば、
+// C++側の対応コード変更なしに値が自動的にここへ渡る（対応する型は float/float2/float3/float4/float4x4/int/uint/bool）。
 struct Material {
     float enableLighting;
     float enableEnvironmentMapping;

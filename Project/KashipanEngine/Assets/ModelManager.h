@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -17,6 +18,12 @@ namespace KashipanEngine {
 
 class GameEngine;
 class ModelManager;
+
+/// @brief 1ファイル分のパース結果（Assimpの解析結果一式を保持する。実体はModelManager.cppで定義）
+/// @details ワーカースレッドでのパース（ファイルI/O・Assimp解析・メッシュ抽出）と、
+///          メインスレッドでの確定処理（GPUリソースを伴う登録・埋め込みテクスチャアップロード・
+///          プレハブ生成）を分離するための中間データ
+struct ParsedModelResult;
 
 /// @brief モデルのデータ管理用構造体（Model 生成時のみ利用する想定）
 struct ModelData final {
@@ -74,6 +81,8 @@ public:
 private:
     friend class ModelManager;
     friend class Model;
+    /// @brief ワーカースレッドでの解析結果を保持するため、ModelDataをメンバに持つ必要がある
+    friend struct ParsedModelResult;
 
     ModelData() = default;
 
@@ -204,6 +213,19 @@ private:
 
     /// @brief Assimpのメッシュ1つ分（頂点・インデックス・スキンウェイト・BlendShape）をModelDataへ追記する
     static void AppendMeshToModelData(const aiMesh *mesh, ModelData &dst);
+
+    /// @brief ファイルI/O・Assimp解析・メッシュ抽出のみを行う（GPUリソース・グローバル状態には触れない）
+    /// @details 埋め込みテクスチャはこの時点ではデコード・アップロードせず、生バイト列のまま
+    ///          結果に保持する（TextureManagerへの登録はメインスレッドのFinalizeParsedModelで行う）。
+    ///          スレッドプールから並列に呼び出しても安全
+    /// @return 解析結果（失敗時はsuccess=falseの結果を返す）
+    std::unique_ptr<ParsedModelResult> ParseModelFile(const std::string &filePath) const;
+
+    /// @brief ParseModelFileの結果を確定させる（GPUリソース作成・グローバル状態への登録・
+    ///        プレハブ生成を行う）。メインスレッドから呼び出すこと
+    /// @return 読み込んだモデルのハンドル（失敗時は`kInvalidHandle`）
+    ModelHandle FinalizeParsedModel(std::unique_ptr<ParsedModelResult> parsed);
+
     /// @brief ノード分解によるサブメッシュ登録と、モデル階層のプレハブ（.prefab）自動生成を行う
     /// @details メッシュを持つノードが複数ある場合、各ノードのメッシュを "モデルパス:ノード名" の
     ///          アセットパスで個別登録する（Unityのモデル内サブアセットに相当）。

@@ -1,5 +1,6 @@
 #include "ObjectVelocity.hlsli"
 
+// カスタムシェーダー向けの追加パラメータは、この構造体の末尾に自由に追加してよい（Material3D.hlsli参照）。
 struct Material {
 	float enableLighting;
 	float enableShadowMapProjection;

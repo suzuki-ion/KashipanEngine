@@ -23,7 +23,7 @@ public:
     /// @param device D3D12 デバイス
     /// @param pipelineSettingsPath パイプライン設定ファイルパス
     PipelineManager(Passkey<GraphicsEngine>, ID3D12Device *device, const std::string &pipelineSettingsPath = "Resources/PipelineSetting.json");
-    ~PipelineManager() = default;
+    ~PipelineManager();
 
     /// @brief パイプラインの再読み込み
     void ReloadPipelines();
@@ -33,6 +33,19 @@ public:
     const PipelineInfo &GetPipeline(const std::string &pipelineName) const { return pipelineInfos_.at(pipelineName); }
     /// @brief パイプラインの存在確認
     bool HasPipeline(const std::string &pipelineName) const { return pipelineInfos_.find(pipelineName) != pipelineInfos_.end(); }
+
+    /// @brief 指定パイプラインが未読み込みの場合、動的バリアント生成（PipelineVariantResolver）を試みる
+    /// @details Object3D/Object2DのBlend×Culling×Toon(Object3Dのみ)組み合わせ名（例: "Object3D.Toon.Solid.BlendAdd"）
+    ///          を解決できれば、既存の静的Pipelines/*.jsonと同一スキーマのJSONを合成してオンデマンドで
+    ///          PSOを生成しキャッシュする。対応できない名前ではfalseを返す（＝今まで通り「見つからない」扱い）
+    /// @return 生成/取得に成功した場合はtrue（呼び出し後は HasPipeline(pipelineName) がtrueになる）
+    bool GetOrCreatePipeline(const std::string &pipelineName);
+
+#if defined(USE_IMGUI)
+    /// @brief 実行中のPipelineManagerインスタンスへGetOrCreatePipelineを呼び出す（ImGuiの
+    ///        バリアントビルダーUI等、インスタンスへのアクセス手段を持たない呼び出し元向け）
+    static bool TryGetOrCreatePipeline(const std::string &pipelineName);
+#endif
 
     /// @brief 読み込み済みの描画用パイプライン名一覧を取得（ImGuiでの選択用）
     static const std::vector<std::string> &GetLoadedRenderPipelineNames();

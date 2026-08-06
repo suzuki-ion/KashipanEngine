@@ -38,6 +38,8 @@ struct PipelineInfo {
     const std::vector<ShaderCompiler::ShaderCompiledInfo *> &Shaders() const { return shaders; }
     ShaderVariableBinder &GetVariableBinder() { return variableBinder; }
     bool IsAutoRootDescriptorGenerated() const { return autoRootDescriptorGenerated; }
+    /// @brief gMaterials（Pixelシェーダーの struct Material）のバイトレイアウト。Materialを持たないパイプラインでは空
+    const MaterialLayout &GetMaterialLayout() const { return materialLayout; }
 private:
     friend class PipelineCreator;
     std::string name;
@@ -49,6 +51,7 @@ private:
     std::vector<ShaderCompiler::ShaderCompiledInfo *> shaders;
     ShaderVariableBinder variableBinder{ Passkey<PipelineInfo>{} };
     bool autoRootDescriptorGenerated = false; // リフレクションから自動生成されたか
+    MaterialLayout materialLayout;
 };
 
 } // namespace KashipanEngine

@@ -2,6 +2,7 @@
 
 #include "Renderer.h"
 
+#include <cstddef>
 #include <cstdio>
 #include <algorithm>
 #include <array>
@@ -47,37 +48,11 @@
 
 namespace KashipanEngine::RendererInternal {
 
-/// @brief gMaterials 構造化バッファ（Object3D）と同レイアウトの構造体
-#pragma pack(push, 4)
-struct MaterialElement {
-    float enableLighting = 1.0f;
-    float enableEnvironmentMapping = 0.0f;
-    float enableShadowMapProjection = 1.0f;
-    float useTexture = 1.0f;
-    Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
-    Matrix4x4 uvTransform = Matrix4x4::Identity();
-    float shininess = 32.0f;
-    Vector4 specularColor{ 1.0f, 1.0f, 1.0f, 1.0f };
-    float environmentCoefficient = 0.0f;
-    Vector4 rimColor{ 1.0f, 1.0f, 1.0f, 1.0f };
-    float rimPower = 2.0f;
-    float rimIntensity = 0.0f;
-    float useNormalMap = 0.0f;
-    /// @brief オブジェクト単位の色（MeshRenderer::GetInstanceColor()）。既定は白＝見た目に影響しない
-    Vector4 instanceColor{ 1.0f, 1.0f, 1.0f, 1.0f };
-    /// @brief instanceColorの適用方法（MeshRenderer::ColorBlendModeの値）。既定はMultiply(1)
-    float instanceColorBlendMode = 1.0f;
-};
-
-/// @brief gMaterials 構造化バッファ（Object2D）と同レイアウトの構造体
-struct Material2DElement {
-    Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
-    Matrix4x4 uvTransform = Matrix4x4::Identity();
-    float useTexture = 1.0f;
-    float padding[3]{};
-};
+// gMaterials（Object3D/Object2D）はBuildMaterialElementBytes（本ファイル下部）でパイプラインの
+// MaterialLayoutに従って汎用的にパックするため、専用の固定構造体は持たない
 
 /// @brief gMaterials 構造化バッファ（Text2D、TextSDFPS.hlslのTextCharacterElement）と同レイアウトの構造体
+#pragma pack(push, 4)
 struct TextCharacterElement {
     Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
     Vector4 uvRect{ 0.0f, 0.0f, 0.0f, 0.0f };
@@ -308,6 +283,80 @@ inline bool SphereIntersectsFrustum(const std::array<FrustumPlane, 6> &planes, c
         if (dist < -radius) return false;
     }
     return true;
+}
+
+/// @brief 既にパック済みの1要素バイト列へ、名前指定で1フィールドだけ書き込む（値の型がレイアウト上のフィールドより
+///        大きい場合はフィールドのサイズに切り詰める。該当フィールドが無いシェーダーでは何もしない）
+inline void WriteMaterialFieldRaw(const PipelineInfo &pipelineInfo, std::byte *elementBytes, std::uint32_t elementByteSize,
+    const std::string &name, const void *src, std::uint32_t srcSize) {
+    const auto *field = pipelineInfo.GetMaterialLayout().Find(name);
+    if (!field) return;
+    std::uint32_t copySize = std::min(srcSize, field->byteSize);
+    if (static_cast<std::uint64_t>(field->byteOffset) + copySize <= elementByteSize) {
+        std::memcpy(elementBytes + field->byteOffset, src, copySize);
+    }
+}
+
+/// @brief WriteMaterialFieldRaw の型付きラッパー
+template <typename T>
+inline void WriteMaterialField(const PipelineInfo &pipelineInfo, std::byte *elementBytes, std::uint32_t elementByteSize,
+    const std::string &name, const T &value) {
+    WriteMaterialFieldRaw(pipelineInfo, elementBytes, elementByteSize, name, &value, static_cast<std::uint32_t>(sizeof(T)));
+}
+
+/// @brief Materialの固定フィールド・extraParametersを、パイプラインのPixelシェーダーが定義する
+///        struct Material のバイトレイアウト（PipelineInfo::GetMaterialLayout）に従ってパックする（1要素分）。
+/// @details レイアウトに存在しないフィールドは黙ってスキップするため、Object3D(16フィールド)・
+///          Object2D(4フィールド)・Velocity(6フィールド)等、異なるMaterial定義を持つシェーダーを
+///          同一のロジックで扱える。instanceColor等インスタンス単位の値は含まないため、
+///          呼び出し側で WriteMaterialField を使って個別に上書きすること
+inline std::vector<std::byte> BuildMaterialElementBytes(const PipelineInfo &pipelineInfo, const MaterialManager::Material *material) {
+    const auto &layout = pipelineInfo.GetMaterialLayout();
+    std::vector<std::byte> bytes(layout.totalByteSize, std::byte{ 0 });
+    if (bytes.empty() || !material) return bytes;
+
+    auto writeFloat = [&](const char *name, float value) {
+        WriteMaterialField(pipelineInfo, bytes.data(), static_cast<std::uint32_t>(bytes.size()), name, value);
+    };
+    auto writeVector4 = [&](const char *name, const Vector4 &value) {
+        WriteMaterialField(pipelineInfo, bytes.data(), static_cast<std::uint32_t>(bytes.size()), name, value);
+    };
+    auto writeMatrix4x4 = [&](const char *name, const Matrix4x4 &value) {
+        WriteMaterialField(pipelineInfo, bytes.data(), static_cast<std::uint32_t>(bytes.size()), name, value);
+    };
+
+    writeFloat("enableLighting", material->enableLighting ? 1.0f : 0.0f);
+    writeFloat("enableEnvironmentMapping", (material->environmentHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f);
+    writeFloat("enableShadowMapProjection", material->enableShadowMapProjection ? 1.0f : 0.0f);
+    writeFloat("useTexture", (material->textureHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f);
+    writeVector4("color", material->color);
+    writeMatrix4x4("uvTransform", material->uvTransform);
+    writeFloat("shininess", material->shininess);
+    writeVector4("specularColor", material->specularColor);
+    writeFloat("environmentCoefficient", material->environmentCoefficient);
+    writeVector4("rimColor", material->rimColor);
+    writeFloat("rimPower", material->rimPower);
+    writeFloat("rimIntensity", material->rimIntensity);
+    writeFloat("useNormalMap", (material->normalMapHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f);
+
+    // カスタムシェーダー固有の追加パラメータ（レイアウトに同名フィールドが無ければ黙って無視される）
+    for (const auto &[name, value] : material->extraParameters) {
+        if (const auto *asFloat = value.AnyCastPtr<float>()) {
+            writeFloat(name.c_str(), *asFloat);
+        } else if (const auto *asVec2 = value.AnyCastPtr<Vector2>()) {
+            WriteMaterialField(pipelineInfo, bytes.data(), static_cast<std::uint32_t>(bytes.size()), name, *asVec2);
+        } else if (const auto *asVec3 = value.AnyCastPtr<Vector3>()) {
+            WriteMaterialField(pipelineInfo, bytes.data(), static_cast<std::uint32_t>(bytes.size()), name, *asVec3);
+        } else if (const auto *asVec4 = value.AnyCastPtr<Vector4>()) {
+            writeVector4(name.c_str(), *asVec4);
+        } else if (const auto *asBool = value.AnyCastPtr<bool>()) {
+            writeFloat(name.c_str(), *asBool ? 1.0f : 0.0f);
+        } else if (const auto *asInt = value.AnyCastPtr<std::int32_t>()) {
+            WriteMaterialField(pipelineInfo, bytes.data(), static_cast<std::uint32_t>(bytes.size()), name, *asInt);
+        }
+    }
+
+    return bytes;
 }
 
 /// @brief バッファキャッシュキー生成（描画先＋パイプライン＋メッシュ＋マテリアルでバッチを識別）

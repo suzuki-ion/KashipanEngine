@@ -15,6 +15,7 @@
 #include "Math/Matrix3x3.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Quaternion.h"
+#include "Utilities/MyAny.h"
 #include "Utilities/Translation.h"
 
 namespace ImGuiCustom {
@@ -350,6 +351,52 @@ inline bool EditValue(const char *label, std::any &value, const UiOptions &opts 
         ImGui::Text(KashipanEngine::TranslationC("editor.imguicustom.s_unsupported_any_type_s"), label, type.name());
     }
     return changed;
+}
+
+// --- 2-5. 動的型 (MyAny) ---
+// SceneVariablesMenu（シーン変数）とMaterialManager（マテリアルの追加パラメータ）で共通利用する
+inline bool EditValue(const char *label, MyAny &value, const UiOptions &opts = {}) {
+    if (value.IsEmpty()) { ImGui::Text(KashipanEngine::TranslationC("editor.imguicustom.s_empty"), label); return false; }
+
+    switch (value.GetTypeInfo().GetBaseType()) {
+    case ValueType::Bool:
+        if (auto *v = value.AnyCastPtr<bool>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Int32:
+        if (auto *v = value.AnyCastPtr<int>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Float:
+        if (auto *v = value.AnyCastPtr<float>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Double:
+        if (auto *v = value.AnyCastPtr<double>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::String:
+        if (auto *v = value.AnyCastPtr<std::string>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Vector2:
+        if (auto *v = value.AnyCastPtr<Vector2>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Vector3:
+        if (auto *v = value.AnyCastPtr<Vector3>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Vector4:
+        if (auto *v = value.AnyCastPtr<Vector4>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Quaternion:
+        if (auto *v = value.AnyCastPtr<Quaternion>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Matrix3x3:
+        if (auto *v = value.AnyCastPtr<Matrix3x3>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Matrix4x4:
+        if (auto *v = value.AnyCastPtr<Matrix4x4>()) return EditValue(label, *v, opts);
+        break;
+    default:
+        break;
+    }
+    ImGui::Text(KashipanEngine::TranslationC("editor.imguicustom.s_unsupported_any_type_s"), label, value.GetTypeInfo().ToString().c_str());
+    return false;
 }
 
 

@@ -8,6 +8,7 @@
 #include "Utilities/Translation.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/Directory.h"
+#include "Utilities/Plugin/Plugins.h"
 
 #if defined(USE_IMGUI)
 #include <imgui.h>
@@ -398,6 +399,32 @@ bool DecodeToPcm(const std::wstring& wpath, WAVEFORMATEX& outWfex, std::vector<B
     return !outBuffer.empty();
 }
 
+/// @brief ファイルをデコードしてSoundEntryを組み立てる（グローバル状態への登録は行わない）
+/// @details ファイルI/O・Media Foundationによるデコードのみを行うため、スレッドプールから
+///          並列に呼び出しても安全（各呼び出しは自分のIMFSourceReaderを持ち、outEntryも呼び出し元専有）
+bool DecodeAudioFile(const std::string& filePath, const std::string& assetsRootPath, SoundEntry& outEntry) {
+    const std::filesystem::path p = Utf8StringToPath(filePath);
+    if (!std::filesystem::exists(p)) {
+        Log(Translation("engine.audio.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
+        return false;
+    }
+    if (!HasSupportedAudioExtension(p)) {
+        Log(Translation("engine.audio.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
+        return false;
+    }
+
+    outEntry.fullPath = NormalizePathSlashes(PathToUtf8String(p));
+    outEntry.assetPath = MakeAssetRelativePath(assetsRootPath, outEntry.fullPath);
+    outEntry.fileName = PathToUtf8String(p.filename());
+
+    const std::wstring wpath(p.wstring());
+    if (!DecodeToPcm(wpath, outEntry.wfex, outEntry.buffer)) {
+        Log(Translation("engine.audio.loading.failed.decode") + PathToUtf8String(p), LogSeverity::Warning);
+        return false;
+    }
+    return true;
+}
+
 float SemitonesToFrequencyRatio(float semitones) {
     return std::pow(2.0f, semitones / 12.0f);
 }
@@ -485,8 +512,23 @@ void AudioManager::LoadAllFromAssetsFolder() {
     };
     flatten(filtered);
 
-    for (const auto& f : files) {
-        Load(f);
+    // ファイルI/O・デコード(Media Foundation)はCPU処理のみでグローバル状態に触れないため、
+    // スレッドプールで並列実行する。各要素は担当するインデックス以外書き込まないためロック不要
+    std::vector<SoundEntry> decodedEntries(files.size());
+    std::vector<bool> decodedOk(files.size(), false);
+    Plugin::RunParallelAndWait(files.size(), [this, &files, &decodedEntries, &decodedOk](size_t i) {
+        decodedOk[i] = DecodeAudioFile(files[i], assetsRootPath_, decodedEntries[i]);
+        });
+
+    // 全ファイルのデコードが完了したら、メインスレッドでグローバルマップへの登録を順に行う
+    for (size_t i = 0; i < files.size(); ++i) {
+        if (!decodedOk[i]) continue;
+        const auto handle = RegisterEntry(std::move(decodedEntries[i]));
+        if (handle == kInvalidSoundHandle) {
+            Log(Translation("engine.audio.loading.failed.register") + files[i], LogSeverity::Error);
+            continue;
+        }
+        Log(Translation("engine.audio.loading.succeeded") + files[i], LogSeverity::Info);
     }
 }
 
@@ -496,43 +538,24 @@ SoundHandle AudioManager::Load(const std::string& filePath) {
 
     if (!EnsureAudioInitialized()) return kInvalidSoundHandle;
 
-    const std::filesystem::path p = Utf8StringToPath(filePath);
-    if (!std::filesystem::exists(p)) {
-        Log(Translation("engine.audio.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
-        return kInvalidSoundHandle;
-    }
-
-    if (!HasSupportedAudioExtension(p)) {
-        Log(Translation("engine.audio.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
-        return kInvalidSoundHandle;
-    }
-
-    const std::string full = NormalizePathSlashes(PathToUtf8String(p));
-    const std::string asset = MakeAssetRelativePath(assetsRootPath_, full);
-
+    const std::string normalizedAsset = NormalizePathSlashes(MakeAssetRelativePath(assetsRootPath_, NormalizePathSlashes(PathToUtf8String(Utf8StringToPath(filePath)))));
     {
-        auto it = sAssetPathToHandle.find(NormalizePathSlashes(asset));
+        auto it = sAssetPathToHandle.find(normalizedAsset);
         if (it != sAssetPathToHandle.end()) return it->second;
     }
 
     SoundEntry entry{};
-    entry.fullPath = full;
-    entry.assetPath = asset;
-    entry.fileName = PathToUtf8String(p.filename());
-
-    const std::wstring wpath(p.wstring());
-    if (!DecodeToPcm(wpath, entry.wfex, entry.buffer)) {
-        Log(Translation("engine.audio.loading.failed.decode") + PathToUtf8String(p), LogSeverity::Warning);
+    if (!DecodeAudioFile(filePath, assetsRootPath_, entry)) {
         return kInvalidSoundHandle;
     }
 
     const auto handle = RegisterEntry(std::move(entry));
     if (handle == kInvalidSoundHandle) {
-        Log(Translation("engine.audio.loading.failed.register") + PathToUtf8String(p), LogSeverity::Error);
+        Log(Translation("engine.audio.loading.failed.register") + filePath, LogSeverity::Error);
         return kInvalidSoundHandle;
     }
 
-    Log(Translation("engine.audio.loading.succeeded") + PathToUtf8String(p), LogSeverity::Info);
+    Log(Translation("engine.audio.loading.succeeded") + filePath, LogSeverity::Info);
     return handle;
 }
 

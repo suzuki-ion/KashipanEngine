@@ -69,6 +69,19 @@ D3D12_SHADER_VISIBILITY VisibilityFromStage(ShaderStage stage) {
 
 } // namespace
 
+Microsoft::WRL::ComPtr<ID3D12RootSignature> PipelineCreator::GetOrCreateRootSignature(ID3DBlob *signatureBlob) {
+    std::string key(static_cast<const char *>(signatureBlob->GetBufferPointer()), signatureBlob->GetBufferSize());
+    auto it = rootSignatureCache_.find(key);
+    if (it != rootSignatureCache_.end()) return it->second;
+
+    Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
+    HRESULT hr = device_->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+    if (FAILED(hr)) return nullptr;
+
+    rootSignatureCache_.emplace(std::move(key), rootSignature);
+    return rootSignature;
+}
+
 bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
     LogScope scope;
     using namespace Pipeline::JsonParser;
@@ -238,13 +251,10 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
         Log(Translation("engine.graphics.pipeline.rootsignature.serialize.failed") + name, LogSeverity::Error);
         return false;
     }
-    Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
-    {
-        HRESULT hr = device_->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
-        if (FAILED(hr)) {
-            Log(Translation("engine.graphics.pipeline.rootsignature.create.failed") + name + " " + Translation("error.code.label") + HrToHex(hr), LogSeverity::Error);
-            return false;
-        }
+    Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature = GetOrCreateRootSignature(signatureBlob.Get());
+    if (!rootSignature) {
+        Log(Translation("engine.graphics.pipeline.rootsignature.create.failed") + name, LogSeverity::Error);
+        return false;
     }
 
     // Shaders コンパイルは parsedShaders から再利用（上で一部コンパイル済)
@@ -359,6 +369,7 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
     if (gs) outInfo.shaders.push_back(gs);
     if (hs) outInfo.shaders.push_back(hs);
     if (ds) outInfo.shaders.push_back(ds);
+    if (ps) outInfo.materialLayout = ps->GetMaterialLayout();
     BuildShaderVariableBinder(outInfo, shadersWithStages, ownedRootSigParsed);
     return true;
 }
@@ -399,13 +410,10 @@ bool PipelineCreator::CreateCompute(const Json &json, PipelineInfo &outInfo) {
         Log(Translation("engine.graphics.pipeline.rootsignature.serialize.failed") + name, LogSeverity::Error);
         return false;
     }
-    Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
-    {
-        HRESULT hr = device_->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
-        if (FAILED(hr)) {
-            Log(Translation("engine.graphics.pipeline.rootsignature.create.failed") + name + " " + Translation("error.code.label") + HrToHex(hr), LogSeverity::Error);
-            return false;
-        }
+    Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature = GetOrCreateRootSignature(signatureBlob.Get());
+    if (!rootSignature) {
+        Log(Translation("engine.graphics.pipeline.rootsignature.create.failed") + name, LogSeverity::Error);
+        return false;
     }
     ShaderCompiler::ShaderCompiledInfo *cs = nullptr;
     if (json.contains("Shader")) {

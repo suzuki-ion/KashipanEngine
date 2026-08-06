@@ -19,7 +19,10 @@ public:
 
     /// @brief 指定パイプラインを使用（差分がある場合のみバインド）
     void UsePipeline(const std::string &name) {
-        if (!commandList_ || !manager_ || !manager_->HasPipeline(name)) return;
+        if (!commandList_ || !manager_) return;
+        // 未読み込みの場合、Object3D/Object2DのBlend×Culling×Toon組み合わせ名であれば
+        // PipelineManager::GetOrCreatePipeline がオンデマンドでPSOを生成する
+        if (!manager_->HasPipeline(name) && !manager_->GetOrCreatePipeline(name)) return;
         if (invalidated_ || name != currentName_) {
             const auto &info = manager_->GetPipeline(name);
             const auto &set = info.GetPipelineSet();

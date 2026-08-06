@@ -206,6 +206,37 @@ protected:
         if (ImGuiCustom::SelectString(TranslationLabel("component.meshrenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames("3D"))) {
             MarkDrawListDirty();
         }
+        // カスタムバリアントビルダー: 事前列挙されたBlend×Culling×Toonの組み合わせに無いパイプライン名が
+        // 欲しい場合、ここでトークンを組み立てて PipelineManager::TryGetOrCreatePipeline に動的生成させる
+        if (ImGui::TreeNode(TranslationLabel("component.meshrenderer.variant_builder"))) {
+            static int sVariantBase = 0; // 0=Object3D, 1=Object2D
+            static bool sVariantToon = false;
+            static int sVariantRaster = 0; // 0=Solid, 1=DoubleSidedCulling
+            static int sVariantBlend = 4; // 既定はNormal
+            static const char *kVariantBaseNames[] = { "Object3D", "Object2D" };
+            static const char *kVariantRasterNames[] = { "Solid", "DoubleSidedCulling" };
+            static const char *kVariantBlendNames[] = { "Add", "Exclusion", "Multiply", "None", "Normal", "Screen", "Subtract" };
+
+            ImGui::Combo(TranslationLabel("component.meshrenderer.variant_base"), &sVariantBase, kVariantBaseNames, IM_ARRAYSIZE(kVariantBaseNames));
+            if (sVariantBase == 0) {
+                ImGui::Checkbox(TranslationLabel("component.meshrenderer.variant_toon"), &sVariantToon);
+            } else {
+                sVariantToon = false; // Object2D向けのToonプリセットは存在しない
+            }
+            ImGui::Combo(TranslationLabel("component.meshrenderer.variant_raster"), &sVariantRaster, kVariantRasterNames, IM_ARRAYSIZE(kVariantRasterNames));
+            ImGui::Combo(TranslationLabel("component.meshrenderer.variant_blend"), &sVariantBlend, kVariantBlendNames, IM_ARRAYSIZE(kVariantBlendNames));
+
+            const std::string builtName = std::string(kVariantBaseNames[sVariantBase]) + (sVariantToon ? ".Toon" : "") +
+                "." + kVariantRasterNames[sVariantRaster] + ".Blend" + kVariantBlendNames[sVariantBlend];
+            ImGui::TextUnformatted(builtName.c_str());
+            if (ImGui::Button(TranslationLabel("component.meshrenderer.variant_apply"))) {
+                if (PipelineManager::TryGetOrCreatePipeline(builtName)) {
+                    pipelineName_ = builtName;
+                    MarkDrawListDirty();
+                }
+            }
+            ImGui::TreePop();
+        }
         ImGui::Checkbox(TranslationLabel("component.meshrenderer.cast_shadows"), &castShadows_);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("%s", TranslationC("component.meshrenderer.desc_1"));

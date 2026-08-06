@@ -957,6 +957,12 @@
 		"component.meshrenderer.instance_color": "インスタンスカラー",
 		"component.meshrenderer.instance_color_blend_mode": "インスタンスカラーの合成方法",
 		"component.meshrenderer.pipeline": "パイプライン",
+		"component.meshrenderer.variant_apply": "適用",
+		"component.meshrenderer.variant_base": "ベース",
+		"component.meshrenderer.variant_blend": "ブレンド",
+		"component.meshrenderer.variant_builder": "カスタムバリアントビルダー",
+		"component.meshrenderer.variant_raster": "カリング",
+		"component.meshrenderer.variant_toon": "トゥーン",
 
 		//--------- component.motionblureffect ---------//
 		"component.motionblureffect.desc_1": "ブラー全体の強さ",
@@ -1473,6 +1479,7 @@
 		//--------- editor.materialmanager ---------//
 		"editor.materialmanager.add_material": "マテリアルを追加",
 		"editor.materialmanager.color": "色",
+		"editor.materialmanager.custom_parameters": "カスタムパラメータ（シェーダー固有）",
 		"editor.materialmanager.enable_lighting": "ライティングを有効化",
 		"editor.materialmanager.enable_shadowmap_projection": "シャドウマップ投影を有効化",
 		"editor.materialmanager.environment": "環境マップ",

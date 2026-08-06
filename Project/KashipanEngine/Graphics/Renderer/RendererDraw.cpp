@@ -78,8 +78,6 @@ void Renderer::DrawBatch(IRenderTarget *target,
 
     const auto &first = batch.front();
     const std::string &pipelineName = first.pipelineName;
-    // Object2D系パイプラインかどうか（マテリアル構造体のレイアウトが異なる）
-    const bool isObject2D = pipelineName.rfind("Object2D", 0) == 0;
     auto *commandList = target->GetCommandList();
 
     const auto *meshBuffers = resourceContainer_->GetOrCreateMeshBuffers(first.meshHandle);
@@ -144,43 +142,24 @@ void Renderer::DrawBatch(IRenderTarget *target,
             std::snprintf(suffix, sizeof(suffix), "|%p", static_cast<void *>(first.skinnedVertexBuffer));
             key += suffix;
         }
-        if (isObject2D) {
-            Material2DElement element;
-            if (material) {
-                element.color = material->color;
-                element.uvTransform = material->uvTransform;
-                element.useTexture = (material->textureHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
-            }
-            std::vector<Material2DElement> elements(instanceCount, element);
-            auto *materialBuffer = resourceContainer_->GetOrUpdateStructuredBuffer(key, sizeof(Material2DElement), instanceCount, elements.data());
-            if (materialBuffer) {
-                shaderBinder.Bind("Pixel:gMaterials", materialBuffer);
-            }
-        } else {
-            MaterialElement element;
-            if (material) {
-                element.enableLighting = material->enableLighting ? 1.0f : 0.0f;
-                element.enableEnvironmentMapping = (material->environmentHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
-                element.enableShadowMapProjection = material->enableShadowMapProjection ? 1.0f : 0.0f;
-                element.useTexture = (material->textureHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
-                element.color = material->color;
-                element.uvTransform = material->uvTransform;
-                element.shininess = material->shininess;
-                element.specularColor = material->specularColor;
-                element.environmentCoefficient = material->environmentCoefficient;
-                element.rimColor = material->rimColor;
-                element.rimPower = material->rimPower;
-                element.rimIntensity = material->rimIntensity;
-                element.useNormalMap = (material->normalMapHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
-            }
-            // instanceColor/instanceColorBlendModeはインスタンス（MeshRenderer）ごとに異なり得るため、
-            // マテリアル本体の値のみ共有した上で、インスタンスごとに個別の値を書き込む
-            std::vector<MaterialElement> elements(instanceCount, element);
+        // マテリアルの固定フィールドは、パイプラインのPixelシェーダーが定義する struct Material の
+        // バイトレイアウト（PipelineInfo::GetMaterialLayout）に従って汎用的にパックする。これにより
+        // Object3D/Object2D/Velocity等、異なるMaterial定義を持つシェーダーを同一ロジックで扱える
+        const auto &pipelineInfo = pipelineManager_->GetPipeline(pipelineName);
+        auto elementTemplate = BuildMaterialElementBytes(pipelineInfo, material);
+        const std::uint32_t stride = pipelineInfo.GetMaterialLayout().totalByteSize;
+        if (stride > 0) {
+            std::vector<std::byte> allBytes(static_cast<size_t>(stride) * instanceCount);
             for (std::uint32_t i = 0; i < instanceCount; ++i) {
-                elements[i].instanceColor = batch[i].instanceColor;
-                elements[i].instanceColorBlendMode = static_cast<float>(batch[i].instanceColorBlendMode);
+                std::byte *elementBytes = allBytes.data() + static_cast<size_t>(i) * stride;
+                std::memcpy(elementBytes, elementTemplate.data(), stride);
+                // instanceColor/instanceColorBlendModeはインスタンス（MeshRenderer）ごとに異なり得るため、
+                // マテリアル本体の値のみ共有した上で、インスタンスごとに個別の値を書き込む
+                WriteMaterialField(pipelineInfo, elementBytes, stride, "instanceColor", batch[i].instanceColor);
+                float blendMode = static_cast<float>(batch[i].instanceColorBlendMode);
+                WriteMaterialField(pipelineInfo, elementBytes, stride, "instanceColorBlendMode", blendMode);
             }
-            auto *materialBuffer = resourceContainer_->GetOrUpdateStructuredBuffer(key, sizeof(MaterialElement), instanceCount, elements.data());
+            auto *materialBuffer = resourceContainer_->GetOrUpdateStructuredBuffer(key, stride, instanceCount, allBytes.data());
             if (materialBuffer) {
                 shaderBinder.Bind("Pixel:gMaterials", materialBuffer);
             }
@@ -376,8 +355,6 @@ void Renderer::RenderGpuParticles(IRenderTarget *target, PipelineBinder &pipelin
         const std::uint32_t instanceCount = emitter->GetGpuParticleCapacity(Passkey<Renderer>{});
         if (instanceCount == 0) continue;
 
-        const bool isObject2D = pipelineName.rfind("Object2D", 0) == 0;
-
         pipelineBinder.UsePipeline(pipelineName);
         auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, pipelineName);
         shaderBinder.SetCommandList(commandList);
@@ -394,43 +371,20 @@ void Renderer::RenderGpuParticles(IRenderTarget *target, PipelineBinder &pipelin
             if (material) material->ResolveTextureHandles();
 
             auto key = MakeBatchKey(target, pipelineName, meshHandle, materialHandle, "gpu_particle_material");
-            if (isObject2D) {
-                Material2DElement element;
-                if (material) {
-                    element.color = material->color;
-                    element.uvTransform = material->uvTransform;
-                    element.useTexture = (material->textureHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
-                }
-                auto *materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(Material2DElement), instanceCount);
+
+            // マテリアルはDrawBatchと同じくバッチ全体で1つ（パーティクルごとの色は無し）ため、
+            // パックした1要素分のバイト列をそのままインスタンス数分複製する
+            const auto &pipelineInfo = pipelineManager_->GetPipeline(pipelineName);
+            auto elementTemplate = BuildMaterialElementBytes(pipelineInfo, material);
+            const std::uint32_t stride = pipelineInfo.GetMaterialLayout().totalByteSize;
+            if (stride > 0) {
+                auto *materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, stride, instanceCount);
                 if (materialBuffer) {
-                    auto *mapped = static_cast<Material2DElement *>(materialBuffer->Map());
+                    auto *mapped = static_cast<std::byte *>(materialBuffer->Map());
                     if (mapped) {
-                        for (std::uint32_t i = 0; i < instanceCount; ++i) mapped[i] = element;
-                        shaderBinder.Bind("Pixel:gMaterials", materialBuffer);
-                    }
-                }
-            } else {
-                MaterialElement element;
-                if (material) {
-                    element.enableLighting = material->enableLighting ? 1.0f : 0.0f;
-                    element.enableEnvironmentMapping = (material->environmentHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
-                    element.enableShadowMapProjection = material->enableShadowMapProjection ? 1.0f : 0.0f;
-                    element.useTexture = (material->textureHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
-                    element.color = material->color;
-                    element.uvTransform = material->uvTransform;
-                    element.shininess = material->shininess;
-                    element.specularColor = material->specularColor;
-                    element.environmentCoefficient = material->environmentCoefficient;
-                    element.rimColor = material->rimColor;
-                    element.rimPower = material->rimPower;
-                    element.rimIntensity = material->rimIntensity;
-                    element.useNormalMap = (material->normalMapHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
-                }
-                auto *materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(MaterialElement), instanceCount);
-                if (materialBuffer) {
-                    auto *mapped = static_cast<MaterialElement *>(materialBuffer->Map());
-                    if (mapped) {
-                        for (std::uint32_t i = 0; i < instanceCount; ++i) mapped[i] = element;
+                        for (std::uint32_t i = 0; i < instanceCount; ++i) {
+                            std::memcpy(mapped + static_cast<size_t>(i) * stride, elementTemplate.data(), stride);
+                        }
                         shaderBinder.Bind("Pixel:gMaterials", materialBuffer);
                     }
                 }

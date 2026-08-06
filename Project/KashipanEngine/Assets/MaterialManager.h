@@ -9,6 +9,7 @@
 #include "Math/Matrix4x4.h"
 #include "Math/Vector4.h"
 #include "Utilities/FileIO.h"
+#include "Utilities/MyAny.h"
 #include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
@@ -41,6 +42,11 @@ public:
         float rimPower = 2.0f;
         /// @brief リムライトの強さ（0で無効。既定は無効のままにして既存マテリアルの見た目を変えない）
         float rimIntensity = 0.0f;
+
+        /// @brief カスタムシェーダー固有の追加パラメータ（キー名はPixelシェーダーの struct Material の
+        ///        メンバー名と一致させること。標準フィールドに無い名前は PipelineInfo::GetMaterialLayout()
+        ///        経由で名前引きされ、一致するフィールドが無ければ黙って無視される）
+        std::unordered_map<std::string, MyAny> extraParameters;
 
         /// @brief テクスチャファイル名（読み込み時に未解決だった場合の遅延解決用）
         std::string textureFileName;

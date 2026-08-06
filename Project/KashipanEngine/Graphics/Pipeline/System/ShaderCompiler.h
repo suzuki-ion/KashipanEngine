@@ -8,6 +8,8 @@
 #include <vector>
 #include <cstdint>
 
+#include "Graphics/Pipeline/System/MaterialLayout.h"
+
 class ID3D12ShaderReflectionType;
 namespace KashipanEngine {
 
@@ -141,12 +143,15 @@ public:
         size_t GetBytecodeSize() const { return bytecode ? bytecode->GetBufferSize() : 0; }
         /// @brief リフレクション情報
         const ShaderReflectionInfo &GetReflectionInfo() const { return reflectionInfo; }
+        /// @brief struct Material のバイトレイアウト（Material を持たないシェーダーでは空）
+        const MaterialLayout &GetMaterialLayout() const { return materialLayout; }
     private:
         friend class ShaderCompiler;
         const uint32_t id;                          ///< シェーダーID
         std::string name;                           ///< シェーダー名
         Microsoft::WRL::ComPtr<IDxcBlob> bytecode;  ///< シェーダーバイトコード
         ShaderReflectionInfo reflectionInfo;        ///< シェーダーリフレクション情報
+        MaterialLayout materialLayout;              ///< struct Material のバイトレイアウト（HLSLソース走査で取得）
     };
 
     /// @brief シェーダーコンパイル情報構造体

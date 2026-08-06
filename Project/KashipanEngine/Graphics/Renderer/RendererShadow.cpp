@@ -541,31 +541,20 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
             auto *material = MaterialManager::GetMaterial(first.materialHandle);
             if (material) {
                 material->ResolveTextureHandles();
-            }
-            MaterialElement element;
-            if (material) {
-                element.enableLighting = material->enableLighting ? 1.0f : 0.0f;
-                element.enableEnvironmentMapping = 0.0f;
-                element.enableShadowMapProjection = material->enableShadowMapProjection ? 1.0f : 0.0f;
-                element.useTexture = (material->textureHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
-                element.color = material->color;
-                element.uvTransform = material->uvTransform;
-                element.shininess = material->shininess;
-                element.specularColor = material->specularColor;
-                element.environmentCoefficient = material->environmentCoefficient;
-                element.rimColor = material->rimColor;
-                element.rimPower = material->rimPower;
-                element.rimIntensity = material->rimIntensity;
-                element.useNormalMap = 0.0f;
                 batch.textureHandle = material->textureHandle;
                 batch.samplerHandle = material->samplerHandle;
             }
+            const auto &shadowPipelineInfo = pipelineManager_->GetPipeline(kShadowPipelineName);
+            auto elementTemplate = BuildMaterialElementBytes(shadowPipelineInfo, material);
+            const std::uint32_t materialStride = shadowPipelineInfo.GetMaterialLayout().totalByteSize;
             std::snprintf(key, sizeof(key), "ShadowPass|%u|material", batchIndex);
-            batch.materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(MaterialElement), instanceCount);
-            if (batch.materialBuffer) {
-                if (auto *mapped = static_cast<MaterialElement *>(batch.materialBuffer->Map())) {
-                    for (std::uint32_t i = 0; i < instanceCount; ++i) {
-                        mapped[i] = element;
+            if (materialStride > 0) {
+                batch.materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, materialStride, instanceCount);
+                if (batch.materialBuffer) {
+                    if (auto *mapped = static_cast<std::byte *>(batch.materialBuffer->Map())) {
+                        for (std::uint32_t i = 0; i < instanceCount; ++i) {
+                            std::memcpy(mapped + static_cast<size_t>(i) * materialStride, elementTemplate.data(), materialStride);
+                        }
                     }
                 }
             }
@@ -613,32 +602,23 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
             batch.instanceCount = instanceCount;
 
             auto *material = MaterialManager::GetMaterial(emitter->GetMaterialHandle());
-            if (material) material->ResolveTextureHandles();
-            MaterialElement element;
             if (material) {
-                element.enableLighting = material->enableLighting ? 1.0f : 0.0f;
-                element.enableEnvironmentMapping = 0.0f;
-                element.enableShadowMapProjection = material->enableShadowMapProjection ? 1.0f : 0.0f;
-                element.useTexture = (material->textureHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f;
-                element.color = material->color;
-                element.uvTransform = material->uvTransform;
-                element.shininess = material->shininess;
-                element.specularColor = material->specularColor;
-                element.environmentCoefficient = material->environmentCoefficient;
-                element.rimColor = material->rimColor;
-                element.rimPower = material->rimPower;
-                element.rimIntensity = material->rimIntensity;
-                element.useNormalMap = 0.0f;
+                material->ResolveTextureHandles();
                 batch.textureHandle = material->textureHandle;
                 batch.samplerHandle = material->samplerHandle;
             }
+            const auto &shadowPipelineInfo = pipelineManager_->GetPipeline(kShadowPipelineName);
+            auto elementTemplate = BuildMaterialElementBytes(shadowPipelineInfo, material);
+            const std::uint32_t materialStride = shadowPipelineInfo.GetMaterialLayout().totalByteSize;
             char key[64];
             std::snprintf(key, sizeof(key), "ShadowPass|gpuParticle|%u|material", emitterIndex);
-            batch.materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(MaterialElement), instanceCount);
-            if (batch.materialBuffer) {
-                if (auto *mapped = static_cast<MaterialElement *>(batch.materialBuffer->Map())) {
-                    for (std::uint32_t i = 0; i < instanceCount; ++i) {
-                        mapped[i] = element;
+            if (materialStride > 0) {
+                batch.materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, materialStride, instanceCount);
+                if (batch.materialBuffer) {
+                    if (auto *mapped = static_cast<std::byte *>(batch.materialBuffer->Map())) {
+                        for (std::uint32_t i = 0; i < instanceCount; ++i) {
+                            std::memcpy(mapped + static_cast<size_t>(i) * materialStride, elementTemplate.data(), materialStride);
+                        }
                     }
                 }
             }

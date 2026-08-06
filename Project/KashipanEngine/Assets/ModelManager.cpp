@@ -12,6 +12,7 @@
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/Directory.h"
 #include "Utilities/FileIO/JSON.h"
+#include "Utilities/Plugin/Plugins.h"
 #include "Utilities/Translation.h"
 #include "Utilities/UUID128.h"
 
@@ -180,6 +181,31 @@ Handle RegisterEntry(ModelEntry&& entry) {
 
 } // namespace
 
+/// @brief ParseModelFileの結果一式（実体定義。ModelManager.hではopaqueな前方宣言のみ）
+/// @details ワーカースレッドで作成された時点ではGPUリソース・グローバル状態には一切触れておらず、
+///          FinalizeParsedModel（メインスレッド）で初めてそれらに反映される
+struct ParsedModelResult {
+    bool success = false;
+
+    // RegisterEntryへ渡すためのModelEntry相当のデータ
+    std::string fullPath;
+    std::string assetPath;
+    std::string fileName;
+    ModelData data;
+
+    // ノード分解・プレハブ生成（RegisterNodeDecompositionAndPrefab）に必要な情報
+    std::unique_ptr<Assimp::Importer> importer; // scene の所有者。破棄するとsceneも無効になる
+    const aiScene *scene = nullptr;
+    std::vector<ModelData::MaterialData> materialsCopy;
+
+    /// @brief 未アップロードの埋め込みテクスチャ（デコード済み生バイト列）
+    struct PendingEmbeddedTexture {
+        std::string registerPath;
+        std::vector<uint8_t> data;
+    };
+    std::vector<PendingEmbeddedTexture> pendingTextures;
+};
+
 ModelManager::ModelManager(Passkey<GameEngine>, const std::string& assetsRootPath)
     : assetsRootPath_(NormalizePathSlashes(assetsRootPath)) {
     LogScope scope;
@@ -210,42 +236,43 @@ void ModelManager::LoadAllFromAssetsFolder() {
     };
     flatten(filtered);
 
-    for (const auto& f : files) {
-        LoadModel(f);
+    // ファイルI/O・Assimp解析・メッシュ抽出はCPU処理のみでGPUリソース・グローバル状態に触れないため、
+    // スレッドプールで並列実行する（各要素は担当するインデックス以外書き込まないためロック不要）
+    std::vector<std::unique_ptr<ParsedModelResult>> parsedResults(files.size());
+    Plugin::RunParallelAndWait(files.size(), [this, &files, &parsedResults](size_t i) {
+        parsedResults[i] = ParseModelFile(files[i]);
+        });
+
+    // 全ファイルの解析が完了したら、メインスレッドでGPUアップロード・グローバル状態への登録・
+    // プレハブ生成を順に行う
+    for (auto& parsed : parsedResults) {
+        FinalizeParsedModel(std::move(parsed));
     }
 }
 
-ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
+std::unique_ptr<ParsedModelResult> ModelManager::ParseModelFile(const std::string& filePath) const {
     LogScope scope;
-    if (filePath.empty()) return kInvalidHandle;
+    auto result = std::make_unique<ParsedModelResult>();
+    if (filePath.empty()) return result;
 
     Log(Translation("engine.model.loading.start") + filePath, LogSeverity::Info);
-
-    {
-        const std::string normalized = NormalizePathSlashes(filePath);
-        auto it = sAssetPathToHandle.find(normalized);
-        if (it != sAssetPathToHandle.end()) {
-            Log(Translation("engine.model.loading.alreadyloaded") + normalized, LogSeverity::Debug);
-            return it->second;
-        }
-    }
 
     const std::filesystem::path p = Utf8StringToPath(filePath);
 
     if (!std::filesystem::exists(p)) {
         Log(Translation("engine.model.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
-        return kInvalidHandle;
+        return result;
     }
     if (!HasSupportedModelExtension(p)) {
         Log(Translation("engine.model.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
-        return kInvalidHandle;
+        return result;
     }
 
-    Assimp::Importer importer;
+    result->importer = std::make_unique<Assimp::Importer>();
     // Assimpの既定IOSystemはWindows上でfopen（現在のANSIコードページ）を使うため、
     // コードページで表現できない文字を含むパス（多言語のファイル名等）を開けない。
     // _wfopenベースの独自IOSystemに差し替えることで回避する（Importerが所有権を持つ）
-    importer.SetIOHandler(new AssimpUtf8IOSystem());
+    result->importer->SetIOHandler(new AssimpUtf8IOSystem());
     constexpr unsigned int flags =
         aiProcess_MakeLeftHanded |
         aiProcess_FlipWindingOrder |
@@ -264,19 +291,20 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
         aiProcess_CalcTangentSpace |
         aiProcess_FlipUVs;
 
-    const aiScene* scene = importer.ReadFile(PathToUtf8String(p), flags);
+    const aiScene* scene = result->importer->ReadFile(PathToUtf8String(p), flags);
     if (!scene || !scene->mRootNode) {
-        Log(Translation("engine.model.loading.failed.assimp") + PathToUtf8String(p) + " msg=" + importer.GetErrorString(), LogSeverity::Warning);
-        return kInvalidHandle;
+        Log(Translation("engine.model.loading.failed.assimp") + PathToUtf8String(p) + " msg=" + result->importer->GetErrorString(), LogSeverity::Warning);
+        result->importer.reset();
+        return result;
     }
+    result->scene = scene;
 
-    ModelEntry entry{};
-    entry.fullPath = NormalizePathSlashes(PathToUtf8String(p));
-    entry.assetPath = MakeAssetRelativePath(assetsRootPath_, entry.fullPath);
-    entry.fileName = PathToUtf8String(p.filename());
+    result->fullPath = NormalizePathSlashes(PathToUtf8String(p));
+    result->assetPath = MakeAssetRelativePath(assetsRootPath_, result->fullPath);
+    result->fileName = PathToUtf8String(p.filename());
 
     // Set asset relative path in ModelData
-    entry.data.assetRelativePath_ = entry.assetPath;
+    result->data.assetRelativePath_ = result->assetPath;
 
     // Extract materials from the scene and store minimal material data
     for (unsigned int mi = 0; mi < scene->mNumMaterials; ++mi) {
@@ -303,6 +331,8 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
                 // 埋め込みテクスチャ（bufferView経由。PMX→glTF変換等で全テクスチャが
                 // 1つのバイナリにまとめられている場合によく使われる）。
                 // "*N"はscene->mTextures[N]（またはGetEmbeddedTexture）への参照を表す
+                // ここではGPUアップロードは行わず、生バイト列のコピーだけを保持する
+                // （TextureManagerへの登録はメインスレッドのFinalizeParsedModelで行う）
                 if (const aiTexture *embeddedTex = scene->GetEmbeddedTexture(tp.c_str())) {
                     // mHeight==0の場合はpcDataが圧縮画像（PNG/JPEG等）の生バイト列で、
                     // mWidthがそのバイト数（mHeight!=0の生ARGB8888データは非対応）
@@ -311,16 +341,19 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
                             ? std::string(embeddedTex->mFilename.C_Str())
                             : ("EmbeddedTexture" + std::to_string(mi));
                         const std::string registerPath = NormalizePathSlashes(PathToUtf8String(p)) + ":" + embeddedName;
-                        if (auto *textureManager = TextureManager::GetActiveInstance(Passkey<ModelManager>{})) {
-                            textureManager->RegisterTextureFromMemory(registerPath,
-                                reinterpret_cast<const void *>(embeddedTex->pcData), embeddedTex->mWidth);
-                        }
+
+                        ParsedModelResult::PendingEmbeddedTexture pending;
+                        pending.registerPath = registerPath;
+                        const auto *bytes = reinterpret_cast<const uint8_t *>(embeddedTex->pcData);
+                        pending.data.assign(bytes, bytes + embeddedTex->mWidth);
+                        result->pendingTextures.push_back(std::move(pending));
+
                         md.diffuseTexturePath = registerPath;
                     }
                 }
             }
         }
-        entry.data.materials_.push_back(std::move(md));
+        result->data.materials_.push_back(std::move(md));
     }
 
     std::function<void(const aiNode*)> appendNodeMeshes;
@@ -329,7 +362,7 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
         for (unsigned int i = 0; i < node->mNumMeshes; ++i) {
             const unsigned int meshIdx = node->mMeshes[i];
             if (meshIdx >= scene->mNumMeshes) continue;
-            AppendMeshToModelData(scene->mMeshes[meshIdx], entry.data);
+            AppendMeshToModelData(scene->mMeshes[meshIdx], result->data);
         }
         for (unsigned int c = 0; c < node->mNumChildren; ++c) {
             appendNodeMeshes(node->mChildren[c]);
@@ -338,28 +371,70 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
 
     appendNodeMeshes(scene->mRootNode);
 
-    if (entry.data.GetVertexCount() == 0 || entry.data.GetIndexCount() == 0) {
+    if (result->data.GetVertexCount() == 0 || result->data.GetIndexCount() == 0) {
         Log(Translation("engine.model.loading.failed.nomesh") + PathToUtf8String(p), LogSeverity::Warning);
-        return kInvalidHandle;
+        result->importer.reset();
+        result->scene = nullptr;
+        return result;
     }
 
+    result->materialsCopy = result->data.materials_;
+    result->success = true;
+    return result;
+}
+
+ModelManager::ModelHandle ModelManager::FinalizeParsedModel(std::unique_ptr<ParsedModelResult> parsed) {
+    LogScope scope;
+    if (!parsed || !parsed->success) return kInvalidHandle;
+
+    // 埋め込みテクスチャのGPUアップロード（DirectX12リソース確保を伴うためメインスレッドで行う）
+    for (const auto& pending : parsed->pendingTextures) {
+        if (auto *textureManager = TextureManager::GetActiveInstance(Passkey<ModelManager>{})) {
+            textureManager->RegisterTextureFromMemory(pending.registerPath, pending.data.data(), pending.data.size());
+        }
+    }
+
+    ModelEntry entry{};
+    entry.fullPath = parsed->fullPath;
+    entry.assetPath = parsed->assetPath;
+    entry.fileName = parsed->fileName;
+    entry.data = std::move(parsed->data);
+
     // RegisterEntryでentryがムーブされるため、ノード分解・プレハブ生成に使う情報を先に控えておく
-    const std::string modelFullPath = entry.fullPath;
-    const std::string baseAssetPath = entry.assetPath;
-    const std::string baseFileName = entry.fileName;
-    const std::vector<ModelData::MaterialData> materialsCopy = entry.data.materials_;
+    const std::string modelFullPath = parsed->fullPath;
+    const std::string baseAssetPath = parsed->assetPath;
+    const std::string baseFileName = parsed->fileName;
+    const std::vector<ModelData::MaterialData> materialsCopy = std::move(parsed->materialsCopy);
+    const aiScene* scene = parsed->scene;
 
     const auto handle = RegisterEntry(std::move(entry));
     if (handle == kInvalidHandle) {
-        Log(Translation("engine.model.loading.failed.register") + PathToUtf8String(p), LogSeverity::Error);
+        Log(Translation("engine.model.loading.failed.register") + modelFullPath, LogSeverity::Error);
         return kInvalidHandle;
     }
 
     // ノード分解によるサブメッシュ登録と、モデル階層のプレハブ自動生成
+    // （parsed->importerがsceneを所有し続けているため、この時点でもsceneは有効）
     RegisterNodeDecompositionAndPrefab(scene, modelFullPath, baseAssetPath, baseFileName, materialsCopy);
 
-    Log(Translation("engine.model.loading.succeeded") + PathToUtf8String(p), LogSeverity::Info);
+    Log(Translation("engine.model.loading.succeeded") + modelFullPath, LogSeverity::Info);
     return handle;
+}
+
+ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
+    LogScope scope;
+    if (filePath.empty()) return kInvalidHandle;
+
+    {
+        const std::string normalized = NormalizePathSlashes(filePath);
+        auto it = sAssetPathToHandle.find(normalized);
+        if (it != sAssetPathToHandle.end()) {
+            Log(Translation("engine.model.loading.alreadyloaded") + normalized, LogSeverity::Debug);
+            return it->second;
+        }
+    }
+
+    return FinalizeParsedModel(ParseModelFile(filePath));
 }
 
 // ModelData は private メンバを持つため、friend である ModelManager のメンバ関数として実装する

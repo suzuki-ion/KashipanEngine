@@ -957,6 +957,12 @@
 		"component.meshrenderer.instance_color": "Instance Color",
 		"component.meshrenderer.instance_color_blend_mode": "Instance Color Blend Mode",
 		"component.meshrenderer.pipeline": "Pipeline",
+		"component.meshrenderer.variant_apply": "Apply",
+		"component.meshrenderer.variant_base": "Base",
+		"component.meshrenderer.variant_blend": "Blend",
+		"component.meshrenderer.variant_builder": "Custom Variant Builder",
+		"component.meshrenderer.variant_raster": "Culling",
+		"component.meshrenderer.variant_toon": "Toon",
 
 		//--------- component.motionblureffect ---------//
 		"component.motionblureffect.desc_1": "ブラー全体の強さ",
@@ -1473,6 +1479,7 @@
 		//--------- editor.materialmanager ---------//
 		"editor.materialmanager.add_material": "Add Material",
 		"editor.materialmanager.color": "Color",
+		"editor.materialmanager.custom_parameters": "Custom Parameters (shader-specific)",
 		"editor.materialmanager.enable_lighting": "Enable Lighting",
 		"editor.materialmanager.enable_shadowmap_projection": "Enable ShadowMap Projection",
 		"editor.materialmanager.environment": "Environment",

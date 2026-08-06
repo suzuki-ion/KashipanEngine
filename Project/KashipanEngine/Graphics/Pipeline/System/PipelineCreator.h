@@ -2,6 +2,8 @@
 #include <d3d12.h>
 #include <wrl.h>
 #include <optional>
+#include <string>
+#include <unordered_map>
 #include "Utilities/FileIO/JSON.h"
 
 #include "Graphics/Pipeline/PipelineInfo.h"
@@ -27,6 +29,9 @@ public:
     /// @brief コンピュートパイプラインを構築
     bool CreateCompute(const Json &json, PipelineInfo &outInfo);
 
+    /// @brief RootSignatureの再利用キャッシュをクリアする（PipelineManager::ReloadPipelines用）
+    void ClearRootSignatureCache(Passkey<PipelineManager>) { rootSignatureCache_.clear(); }
+
 private:
     /// @brief ShaderVariableBinder を構築
     /// @param isCompute Computeパイプライン用かどうか（ShaderVisibility::ALLの解釈とBind先の切り替えに使用）
@@ -35,9 +40,15 @@ private:
         std::optional<Pipeline::JsonParser::RootSignatureParsed> customRootSig = std::nullopt,
         bool isCompute = false);
 
+    /// @brief シリアライズ済みRootSignature内容が同一なら既存の ID3D12RootSignature を再利用する
+    /// @details パイプラインバリアント動的生成（PipelineVariantResolver由来）で同種のRootSignatureが
+    ///          何度も生成されるのを避け、GPUオブジェクト数の増大を抑える
+    Microsoft::WRL::ComPtr<ID3D12RootSignature> GetOrCreateRootSignature(ID3DBlob *signatureBlob);
+
     ID3D12Device *device_ = nullptr;
     ComponentsPresetContainer *components_ = nullptr;
     ShaderCompiler *shaderCompiler_ = nullptr;
+    std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12RootSignature>> rootSignatureCache_;
 };
 
 } // namespace KashipanEngine

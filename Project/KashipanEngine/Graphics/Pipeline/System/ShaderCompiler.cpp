@@ -4,6 +4,7 @@
 #include <string>
 #include <format>
 #include <filesystem>
+#include <unordered_set>
 #include <d3d12shader.h>
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/Translation.h"
@@ -237,6 +238,11 @@ ShaderCompiler::ShaderCompiledInfo *ShaderCompiler::ShaderCompile(const CompileI
     auto info = std::make_unique<ShaderCompiledInfo>(Passkey<ShaderCompiler>{}, shaderID);
     info->name = compileInfo.name.empty() ? compileInfo.filePath : compileInfo.name;
     info->bytecode = shaderBlob;
+
+    // struct Material のバイトレイアウトをHLSLソースから求める（Materialを持たないシェーダーでは空になるだけで無害）
+    std::unordered_set<std::string> definedMacroNames;
+    for (const auto &m : compileInfo.macros) definedMacroNames.insert(m.first);
+    info->materialLayout = MaterialLayout::BuildFromHlslSource(compileInfo.filePath, definedMacroNames);
 
     // 保存して返す
     ShaderCompiledInfo *ret = info.get();

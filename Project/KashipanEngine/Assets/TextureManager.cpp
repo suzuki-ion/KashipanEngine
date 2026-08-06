@@ -286,24 +286,16 @@ void TextureManager::LoadAllFromAssetsFolder() {
     };
     flatten(filtered);
 
-	// ファイルごとに非同期タスクを追加してミップマップの生成をする
-    for (const auto& f : files) {
-        mipMapContainer_.AddMipMap(f, LoadTextureFromFile(f));
-        /*Plugin::addAsyncTask([this, f] {
-            mipMapContainer_.AddMipMap(f, LoadTextureFromFile(f));
-			}, 0);*/
-    }
-	// 非同期タスクが残っている場合は完了させる
-    while (Plugin::hasAsyncTasks())
-    {
-		Plugin::executeAsyncTasks();
-    }
+    // ファイルI/O・デコード・ミップマップ生成はCPU処理のみでGPUリソースに触れないため、
+    // スレッドプールで並列実行する（mipMapContainer_はshared_mutexで保護済み）
+    Plugin::RunParallelAndWait(files.size(), [this, &files](size_t i) {
+        mipMapContainer_.AddMipMap(files[i], LoadTextureFromFile(files[i]));
+        });
 
-	// ミップマップの生成がすべて完了したら、テクスチャの登録を行う
+    // 全ファイルのデコードが完了したら、メインスレッドでGPUリソース作成・アップロード・登録を順に行う
     for (const auto& f : files) {
-		LoadTexture(f);
+        LoadTexture(f);
     }
-    
 }
 
 TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& filePath) {

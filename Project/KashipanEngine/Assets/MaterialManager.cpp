@@ -130,6 +130,17 @@ bool LoadMaterialFromJSON(const std::string& filePath, MaterialManager::Material
         outMaterial.rimPower = FromJSON<float>(json.value("rimPower", 2.0f));
         outMaterial.rimIntensity = FromJSON<float>(json.value("rimIntensity", 0.0f));
 
+        // カスタムシェーダー用の追加パラメータ（無ければ何もしない＝旧形式の.matと完全互換）
+        outMaterial.extraParameters.clear();
+        if (json.contains("parameters") && json["parameters"].is_object()) {
+            for (auto it = json["parameters"].begin(); it != json["parameters"].end(); ++it) {
+                const JSON &entry = it.value();
+                if (!entry.is_object() || !entry.contains("type") || !entry.contains("value")) continue;
+                const TypeInfo typeInfo = GetValueType(FromJSON<std::string>(entry["type"]));
+                outMaterial.extraParameters[it.key()] = LoadAnyFromJson(entry["value"], typeInfo);
+            }
+        }
+
         return true;
     } catch (const std::exception& e) {
         Log(Translation("engine.material.parse.failed") + e.what(), LogSeverity::Warning);
@@ -295,6 +306,17 @@ bool MaterialManager::SaveMaterial(MaterialHandle handle, const std::string &fil
     json["rimColor"] = ToJSON(material.rimColor);
     json["rimPower"] = material.rimPower;
     json["rimIntensity"] = material.rimIntensity;
+
+    if (!material.extraParameters.empty()) {
+        JSON parameters = JSON::object();
+        for (const auto &[key, value] : material.extraParameters) {
+            parameters[key] = {
+                { "type", ValueTypeToString(value.GetTypeInfo().GetBaseType()) },
+                { "value", SaveAnyToJson(value) },
+            };
+        }
+        json["parameters"] = parameters;
+    }
 
     std::error_code ec;
     std::filesystem::create_directories(Utf8StringToPath(savePath).parent_path(), ec);
@@ -584,6 +606,48 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
     ImGui::Checkbox(TranslationLabel("editor.materialmanager.enable_lighting"), &material.enableLighting);
     ImGui::Checkbox(TranslationLabel("editor.materialmanager.enable_shadowmap_projection"), &material.enableShadowMapProjection);
     ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_transform"), material.uvTransform);
+
+    //--------- カスタムシェーダー用の追加パラメータ ---------//
+    // キー名はPixelシェーダーの struct Material のメンバー名と一致させること
+    ImGui::Separator();
+    ImGui::TextUnformatted(TranslationC("editor.materialmanager.custom_parameters"));
+
+    static std::string sNewParameterName;
+    static int sNewParameterType = 2; // Float
+    static const char *kTypeNames[] = { "Bool", "Int32", "Float", "Vector2", "Vector3", "Vector4" };
+    ImGui::InputText("##NewParameterName", &sNewParameterName);
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(100.0f);
+    ImGui::Combo("##NewParameterType", &sNewParameterType, kTypeNames, IM_ARRAYSIZE(kTypeNames));
+    ImGui::SameLine();
+    if (ImGui::Button(TranslationLabel("editor.common.add")) && !sNewParameterName.empty() &&
+        !material.extraParameters.contains(sNewParameterName)) {
+        switch (sNewParameterType) {
+        case 0: material.extraParameters[sNewParameterName] = MyAny(false); break;
+        case 1: material.extraParameters[sNewParameterName] = MyAny(std::int32_t{ 0 }); break;
+        case 2: material.extraParameters[sNewParameterName] = MyAny(0.0f); break;
+        case 3: material.extraParameters[sNewParameterName] = MyAny(Vector2::Zero()); break;
+        case 4: material.extraParameters[sNewParameterName] = MyAny(Vector3::Zero()); break;
+        case 5: material.extraParameters[sNewParameterName] = MyAny(Vector4::Zero()); break;
+        default: break;
+        }
+        sNewParameterName.clear();
+    }
+
+    std::string pendingRemoveParameter;
+    int parameterId = 0;
+    for (auto &[key, value] : material.extraParameters) {
+        ImGui::PushID(parameterId++);
+        ImGuiCustom::EditValue(key.c_str(), value);
+        ImGui::SameLine();
+        if (ImGui::SmallButton(TranslationLabel("editor.common.remove"))) {
+            pendingRemoveParameter = key;
+        }
+        ImGui::PopID();
+    }
+    if (!pendingRemoveParameter.empty()) {
+        material.extraParameters.erase(pendingRemoveParameter);
+    }
 }
 #endif
 

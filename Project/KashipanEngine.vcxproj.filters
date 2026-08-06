@@ -420,6 +420,12 @@
     <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\PipelineCreator.cpp">
       <Filter>KashipanEngine\Graphics\Pipeline\System</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\MaterialLayout.cpp">
+      <Filter>KashipanEngine\Graphics\Pipeline\System</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\PipelineVariantResolver.cpp">
+      <Filter>KashipanEngine\Graphics\Pipeline\System</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\ShaderCompiler.cpp">
       <Filter>KashipanEngine\Graphics\Pipeline\System</Filter>
     </ClCompile>
@@ -1032,6 +1038,12 @@
       <Filter>KashipanEngine\Graphics\Pipeline\System</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineCreator.h">
+      <Filter>KashipanEngine\Graphics\Pipeline\System</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\MaterialLayout.h">
+      <Filter>KashipanEngine\Graphics\Pipeline\System</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineVariantResolver.h">
       <Filter>KashipanEngine\Graphics\Pipeline\System</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ShaderCompiler.h">

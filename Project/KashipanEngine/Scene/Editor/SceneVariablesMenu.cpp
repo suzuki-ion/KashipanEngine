@@ -67,43 +67,7 @@ void SceneVariablesMenu::AddVariableOfSelectedType(const std::string &key) {
 }
 
 void SceneVariablesMenu::ShowVariableEditor(const std::string &key, MyAny *variable) {
-    const auto baseType = variable->GetTypeInfo().GetBaseType();
-    const char *label = key.c_str();
-    switch (baseType) {
-    case ValueType::Bool:
-        if (auto *value = variable->AnyCastPtr<bool>()) { ImGuiCustom::EditValue(label, *value); return; }
-        break;
-    case ValueType::Int32:
-        if (auto *value = variable->AnyCastPtr<int>()) { ImGuiCustom::EditValue(label, *value); return; }
-        break;
-    case ValueType::Float:
-        if (auto *value = variable->AnyCastPtr<float>()) { ImGuiCustom::EditValue(label, *value); return; }
-        break;
-    case ValueType::Double:
-        if (auto *value = variable->AnyCastPtr<double>()) { ImGuiCustom::EditValue(label, *value); return; }
-        break;
-    case ValueType::String:
-        if (auto *value = variable->AnyCastPtr<std::string>()) { ImGuiCustom::EditValue(label, *value); return; }
-        break;
-    case ValueType::Vector2:
-        if (auto *value = variable->AnyCastPtr<Vector2>()) { ImGuiCustom::EditValue(label, *value); return; }
-        break;
-    case ValueType::Vector3:
-        if (auto *value = variable->AnyCastPtr<Vector3>()) { ImGuiCustom::EditValue(label, *value); return; }
-        break;
-    case ValueType::Vector4:
-        if (auto *value = variable->AnyCastPtr<Vector4>()) { ImGuiCustom::EditValue(label, *value); return; }
-        break;
-    case ValueType::Quaternion:
-        if (auto *value = variable->AnyCastPtr<Quaternion>()) { ImGuiCustom::EditValue(label, *value); return; }
-        break;
-    case ValueType::Matrix4x4:
-        if (auto *value = variable->AnyCastPtr<Matrix4x4>()) { ImGuiCustom::EditValue(label, *value); return; }
-        break;
-    default:
-        break;
-    }
-    ImGui::Text("%s : %s %s", key.c_str(), variable->GetTypeInfo().ToString().c_str(), TranslationC("editor.scenevariables.unsupportedtype"));
+    ImGuiCustom::EditValue(key.c_str(), *variable);
 }
 
 } // namespace KashipanEngine

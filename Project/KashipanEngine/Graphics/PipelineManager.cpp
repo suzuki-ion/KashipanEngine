@@ -28,11 +28,18 @@
 
 #include "Graphics/Pipeline/System/ShaderCompiler.h"
 #include "Graphics/Pipeline/System/PipelineCreator.h"
+#include "Graphics/Pipeline/System/PipelineVariantResolver.h"
 #include "Graphics/Pipeline/ComponentsPresetContainer.h"
 #include "Graphics/PipelineManager.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
+
+#if defined(USE_IMGUI)
+namespace {
+PipelineManager *sActiveInstance = nullptr;
+} // namespace
+#endif
 
 PipelineManager::PipelineManager(Passkey<GraphicsEngine>, ID3D12Device *device, const std::string &pipelineSettingsPath) {
     LogScope scope;
@@ -54,8 +61,24 @@ PipelineManager::PipelineManager(Passkey<GraphicsEngine>, ID3D12Device *device, 
 
     LoadPreset();
     LoadPipelines();
+#if defined(USE_IMGUI)
+    sActiveInstance = this;
+#endif
     Log(Translation("engine.graphics.pipeline.manager.construct.end"), LogSeverity::Info);
 }
+
+PipelineManager::~PipelineManager() {
+#if defined(USE_IMGUI)
+    if (sActiveInstance == this) sActiveInstance = nullptr;
+#endif
+}
+
+#if defined(USE_IMGUI)
+bool PipelineManager::TryGetOrCreatePipeline(const std::string &pipelineName) {
+    if (!sActiveInstance) return false;
+    return sActiveInstance->GetOrCreatePipeline(pipelineName);
+}
+#endif
 
 void PipelineManager::ReloadPipelines() {
     LogScope scope;
@@ -64,6 +87,7 @@ void PipelineManager::ReloadPipelines() {
     pipelineInfos_.clear();
     components_.ClearAll();
     ShaderCompiler::ClearAllCompiledShaders(Passkey<PipelineManager>{});
+    pipelineCreator_->ClearRootSignatureCache(Passkey<PipelineManager>{});
 
     LoadPreset();
     LoadPipelines();
@@ -278,6 +302,33 @@ void PipelineManager::LoadPipelines() {
     std::sort(sComputePipelineNames.begin(), sComputePipelineNames.end());
 
     Log(Translation("engine.graphics.pipeline.load.end"), LogSeverity::Debug);
+}
+
+bool PipelineManager::GetOrCreatePipeline(const std::string &pipelineName) {
+    LogScope scope;
+    if (HasPipeline(pipelineName)) return true;
+
+    auto resolution = TryResolvePipelineVariant(pipelineName);
+    if (!resolution.matched) return false;
+
+    PipelineInfo info;
+    if (!pipelineCreator_->CreateRender(resolution.synthesizedPipelineJson, info)) {
+        Log(Translation("engine.graphics.pipeline.load.render.failed") + pipelineName, LogSeverity::Warning);
+        return false;
+    }
+    pipelineInfos_[info.Name()] = info;
+
+    // ImGuiでの選択用一覧にも反映する（LoadPipelines()末尾と同じ更新内容）
+    sPipelineCategories[info.Name()] = info.Category();
+    if (info.Type() == PipelineType::Render) {
+        auto insertPos = std::lower_bound(sRenderPipelineNames.begin(), sRenderPipelineNames.end(), info.Name());
+        if (insertPos == sRenderPipelineNames.end() || *insertPos != info.Name()) {
+            sRenderPipelineNames.insert(insertPos, info.Name());
+        }
+    }
+
+    Log(Translation("engine.graphics.pipeline.load.render.pso.create.succeeded") + info.Name() + " (dynamic variant)", LogSeverity::Info);
+    return true;
 }
 
 } // namespace KashipanEngine

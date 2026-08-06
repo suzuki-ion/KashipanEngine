@@ -562,6 +562,8 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
     <ClCompile Include="KashipanEngine\Graphics\GraphicsEngine.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\PipelineManager.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\PipelineCreator.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\MaterialLayout.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\PipelineVariantResolver.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\ShaderCompiler.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\ShaderVariableBinder.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Renderer\Renderer.cpp" />
@@ -1072,6 +1074,8 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\PipelineInfo.h" />
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineBinder.h" />
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineCreator.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\MaterialLayout.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineVariantResolver.h" />
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ShaderCompiler.h" />
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ShaderVariableBinder.h" />
     <ClInclude Include="KashipanEngine\Graphics\Renderer\EditorDebugDraw.h" />

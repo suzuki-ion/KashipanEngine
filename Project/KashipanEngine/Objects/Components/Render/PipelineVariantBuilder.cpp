@@ -27,25 +27,37 @@ bool Show(std::string &pipelineName) {
     static const char *kVariantBlendNames[] = { "Add", "Exclusion", "Multiply", "None", "Normal", "Screen", "Subtract" };
 
     ImGui::Combo(TranslationLabel("editor.pipelinevariantbuilder.base"), &sVariantBase, kVariantBaseNames, IM_ARRAYSIZE(kVariantBaseNames));
+
+    // ベースを切り替えた際、対応しないファミリ（3D系/2D系）のモジュール選択が残らないようにする
+    for (auto it = sSelectedModules.begin(); it != sSelectedModules.end(); ) {
+        const ShaderModuleDefinition *def = nullptr;
+        for (const auto &module : GetShaderModuleRegistry()) {
+            if (module.token == *it) { def = &module; break; }
+        }
+        const bool keep = def && (IsTwoDimensionalSlot(def->slot) == (sVariantBase == 1));
+        if (!keep) it = sSelectedModules.erase(it);
+        else ++it;
+    }
+
     if (sVariantBase == 0) {
         ImGui::Checkbox(TranslationLabel("editor.pipelinevariantbuilder.toon"), &sVariantToon);
-
-        // シェーダーモジュール選択（Object3Dのみ。Object2Dでは対応するシェーダーが存在しない）
-        ImGui::TextUnformatted(TranslationC("editor.pipelinevariantbuilder.modules"));
-        ImGui::Indent();
-        for (const auto &module : GetShaderModuleRegistry()) {
-            bool selected = sSelectedModules.contains(module.token);
-            const std::string labelKey = "editor.pipelinevariantbuilder.module_" + module.token;
-            if (ImGui::Checkbox(TranslationLabel(labelKey), &selected)) {
-                if (selected) sSelectedModules.insert(module.token);
-                else sSelectedModules.erase(module.token);
-            }
-        }
-        ImGui::Unindent();
     } else {
         sVariantToon = false; // Object2D向けのToonプリセットは存在しない
-        sSelectedModules.clear();
     }
+
+    // シェーダーモジュール選択（選択中のベースに対応するモジュールのみ表示）
+    ImGui::TextUnformatted(TranslationC("editor.pipelinevariantbuilder.modules"));
+    ImGui::Indent();
+    for (const auto &module : GetShaderModuleRegistry()) {
+        if (IsTwoDimensionalSlot(module.slot) != (sVariantBase == 1)) continue;
+        bool selected = sSelectedModules.contains(module.token);
+        const std::string labelKey = "editor.pipelinevariantbuilder.module_" + module.token;
+        if (ImGui::Checkbox(TranslationLabel(labelKey), &selected)) {
+            if (selected) sSelectedModules.insert(module.token);
+            else sSelectedModules.erase(module.token);
+        }
+    }
+    ImGui::Unindent();
     ImGui::Combo(TranslationLabel("editor.pipelinevariantbuilder.raster"), &sVariantRaster, kVariantRasterNames, IM_ARRAYSIZE(kVariantRasterNames));
     ImGui::Combo(TranslationLabel("editor.pipelinevariantbuilder.blend"), &sVariantBlend, kVariantBlendNames, IM_ARRAYSIZE(kVariantBlendNames));
 

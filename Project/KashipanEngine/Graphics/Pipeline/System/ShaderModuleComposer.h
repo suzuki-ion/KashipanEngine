@@ -17,7 +17,15 @@ enum class ModuleHookSlot {
     Environment, // ローカルライトループ直後、output.color合成の直前へ呼び出しを追加する（envColorを計算するモジュール用）
     Composite,   // output.color = baseColor*lightingColor+envColor; の直後へ呼び出しを追加する
     Alpha,       // output.color.a確定直後へ呼び出しを追加する
+    Composite2D, // Object2D側: output.color = mat.color*textureColor; の直後へ呼び出しを追加する（Object2D専用）
+    Alpha2D,     // Object2D側: Composite2Dフックの直後へ呼び出しを追加する（アルファ処理用。Object2D専用）
 };
+
+/// @brief 指定スロットがObject2D専用（Composite2D/Alpha2D）かどうか
+/// @details Object3D用のトークン受理（PipelineVariantResolver）・UIでの表示フィルタ
+///          （PipelineVariantBuilder）の両方で、選択中のベース（Object3D/Object2D）と
+///          モジュールのスロットが一致するかを判定するために使う
+bool IsTwoDimensionalSlot(ModuleHookSlot slot);
 
 /// @brief 1つのシェーダーモジュールの定義
 struct ShaderModuleDefinition {

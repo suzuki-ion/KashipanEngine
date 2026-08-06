@@ -39,6 +39,11 @@ constexpr const char *kDirectionalHooksMarker = "/*{{DIRECTIONAL_HOOKS}}*/";
 constexpr const char *kEnvironmentHooksMarker = "/*{{ENVIRONMENT_HOOKS}}*/";
 constexpr const char *kCompositeHooksMarker = "/*{{COMPOSITE_HOOKS}}*/";
 constexpr const char *kAlphaHooksMarker = "/*{{ALPHA_HOOKS}}*/";
+// Object2D側のマーカー（struct Material内・main()内のObject2Dブロックに配置）
+constexpr const char *kAdditionalMaterialFieldsMarker2D = "/*{{ADDITIONAL_MATERIAL_FIELDS_2D}}*/";
+constexpr const char *kModuleLogicMarker2D = "/*{{MODULE_LOGIC_2D}}*/";
+constexpr const char *kComposite2DHooksMarker = "/*{{COMPOSITE_HOOKS_2D}}*/";
+constexpr const char *kAlpha2DHooksMarker = "/*{{ALPHA_HOOKS_2D}}*/";
 
 // beginマーカーからendマーカーまで（両端含む）を置換する。見つからなければ何もしない
 void ReplaceRegion(std::string &source, const std::string &beginMarker, const std::string &endMarker, const std::string &replacement) {
@@ -66,6 +71,10 @@ const ShaderModuleDefinition *FindModule(const std::vector<ShaderModuleDefinitio
 
 } // namespace
 
+bool IsTwoDimensionalSlot(ModuleHookSlot slot) {
+    return slot == ModuleHookSlot::Composite2D || slot == ModuleHookSlot::Alpha2D;
+}
+
 const std::vector<ShaderModuleDefinition> &GetShaderModuleRegistry() {
     static const std::vector<ShaderModuleDefinition> kModules = {
         { "MultiTone",    ModuleHookSlot::Tone,        0,   "return ApplyMultiTone(halfLambert, mat);" },
@@ -83,6 +92,9 @@ const std::vector<ShaderModuleDefinition> &GetShaderModuleRegistry() {
         { "OpacityMap",   ModuleHookSlot::Alpha,       5,   "ApplyOpacityMap(output.color, mat, transformedUV.xy);" },
         { "DistanceFade", ModuleHookSlot::Alpha,       10,  "ApplyDistanceFade(output.color, mat, input.worldPosition);" },
         { "Dissolve",     ModuleHookSlot::Alpha,       20,  "ApplyDissolve(output.color, mat, input.worldPosition);" },
+        { "Vignette2D",     ModuleHookSlot::Composite2D, 10,  "ApplyVignette2D(output.color, mat, transformedUV.xy);" },
+        { "ColorGrading2D", ModuleHookSlot::Composite2D, 100, "ApplyColorGrading2D(output.color, mat);" },
+        { "Dissolve2D",     ModuleHookSlot::Alpha2D,     10,  "ApplyDissolve2D(output.color, mat, transformedUV.xy);" },
     };
     return kModules;
 }
@@ -103,13 +115,19 @@ std::string ComposeAndWriteShader(const std::vector<std::string> &selectedTokens
     std::vector<std::string> sortedTokens = selectedTokens;
     std::sort(sortedTokens.begin(), sortedTokens.end());
 
+    // Object3D系フィールド/ロジック（struct Material・ADDITIONAL_MATERIAL_FIELDS/MODULE_LOGICマーカー用）
     std::string additionalFields;
     std::string moduleLogic;
+    // Object2D系フィールド/ロジック（Object2DブロックのADDITIONAL_MATERIAL_FIELDS_2D/MODULE_LOGIC_2Dマーカー用）
+    std::string additionalFields2D;
+    std::string moduleLogic2D;
     std::vector<const ShaderModuleDefinition *> preLightingHooks;
     std::vector<const ShaderModuleDefinition *> directionalHooks;
     std::vector<const ShaderModuleDefinition *> environmentHooks;
     std::vector<const ShaderModuleDefinition *> compositeHooks;
     std::vector<const ShaderModuleDefinition *> alphaHooks;
+    std::vector<const ShaderModuleDefinition *> composite2DHooks;
+    std::vector<const ShaderModuleDefinition *> alpha2DHooks;
     const ShaderModuleDefinition *toneModule = nullptr;
     const ShaderModuleDefinition *rimColorModule = nullptr;
     std::string combinedName;
@@ -118,8 +136,14 @@ std::string ComposeAndWriteShader(const std::vector<std::string> &selectedTokens
         const auto *def = FindModule(registry, token);
         if (!def) continue; // 未登録トークンは無視する
 
-        additionalFields += ReadFileText(shaderBaseDir + "/Modules/" + token + "/Fields.hlsli") + "\n";
-        moduleLogic += ReadFileText(shaderBaseDir + "/Modules/" + token + "/Logic.hlsli") + "\n";
+        const bool is2D = IsTwoDimensionalSlot(def->slot);
+        if (is2D) {
+            additionalFields2D += ReadFileText(shaderBaseDir + "/Modules/" + token + "/Fields.hlsli") + "\n";
+            moduleLogic2D += ReadFileText(shaderBaseDir + "/Modules/" + token + "/Logic.hlsli") + "\n";
+        } else {
+            additionalFields += ReadFileText(shaderBaseDir + "/Modules/" + token + "/Fields.hlsli") + "\n";
+            moduleLogic += ReadFileText(shaderBaseDir + "/Modules/" + token + "/Logic.hlsli") + "\n";
+        }
         if (!combinedName.empty()) combinedName += ".";
         combinedName += token;
 
@@ -131,6 +155,8 @@ std::string ComposeAndWriteShader(const std::vector<std::string> &selectedTokens
         case ModuleHookSlot::Environment: environmentHooks.push_back(def); break;
         case ModuleHookSlot::Composite: compositeHooks.push_back(def); break;
         case ModuleHookSlot::Alpha: alphaHooks.push_back(def); break;
+        case ModuleHookSlot::Composite2D: composite2DHooks.push_back(def); break;
+        case ModuleHookSlot::Alpha2D: alpha2DHooks.push_back(def); break;
         }
     }
 
@@ -142,6 +168,8 @@ std::string ComposeAndWriteShader(const std::vector<std::string> &selectedTokens
     std::sort(environmentHooks.begin(), environmentHooks.end(), byPriority);
     std::sort(compositeHooks.begin(), compositeHooks.end(), byPriority);
     std::sort(alphaHooks.begin(), alphaHooks.end(), byPriority);
+    std::sort(composite2DHooks.begin(), composite2DHooks.end(), byPriority);
+    std::sort(alpha2DHooks.begin(), alpha2DHooks.end(), byPriority);
 
     auto joinCalls = [](const std::vector<const ShaderModuleDefinition *> &hooks) {
         std::string result;
@@ -158,12 +186,16 @@ std::string ComposeAndWriteShader(const std::vector<std::string> &selectedTokens
     ReplaceMarker(source, kEnvironmentHooksMarker, joinCalls(environmentHooks));
     ReplaceMarker(source, kCompositeHooksMarker, joinCalls(compositeHooks));
     ReplaceMarker(source, kAlphaHooksMarker, joinCalls(alphaHooks));
+    ReplaceMarker(source, kAdditionalMaterialFieldsMarker2D, additionalFields2D);
+    ReplaceMarker(source, kModuleLogicMarker2D, moduleLogic2D);
+    ReplaceMarker(source, kComposite2DHooksMarker, joinCalls(composite2DHooks));
+    ReplaceMarker(source, kAlpha2DHooksMarker, joinCalls(alpha2DHooks));
 
     // Object/ObjectPS.hlslと同じディレクトリへ書き出す。DXCの既定のインクルードハンドラは#pragma onceを
     // インクルードパスの文字列一致で判定しており、ディレクトリを分けると相対インクルード（"../Common/..."等）が
     // 経路によって異なる文字列に展開され、同じファイル（例: Camera3D.hlsli）が二重定義されるエラーになる
     // （実際に発生させて確認済み）。同じディレクトリに置けば、コピー元と全く同じ文字列で解決されるため安全
-    const std::string outputPath = shaderBaseDir + "/Object/Generated.Object3D.Compose." + combinedName + ".hlsl";
+    const std::string outputPath = shaderBaseDir + "/Object/Generated.Object.Compose." + combinedName + ".hlsl";
     if (!WriteFileText(outputPath, source)) {
         Log("[ShaderModuleComposer] failed to write generated shader: " + outputPath, LogSeverity::Error);
         return {};

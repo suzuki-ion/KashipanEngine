@@ -78,6 +78,11 @@ bool PipelineManager::TryGetOrCreatePipeline(const std::string &pipelineName) {
     if (!sActiveInstance) return false;
     return sActiveInstance->GetOrCreatePipeline(pipelineName);
 }
+
+const MaterialLayout *PipelineManager::TryGetMaterialLayout(const std::string &pipelineName) {
+    if (!sActiveInstance || !sActiveInstance->HasPipeline(pipelineName)) return nullptr;
+    return &sActiveInstance->GetPipeline(pipelineName).GetMaterialLayout();
+}
 #endif
 
 void PipelineManager::ReloadPipelines() {

@@ -839,6 +839,9 @@
     <ClInclude Include="KashipanEngine\Assets\TextureManager.h">
       <Filter>KashipanEngine\Assets</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\TextureRef.h">
+      <Filter>KashipanEngine\Assets</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\ComponentSerializeHeader.h">
       <Filter>KashipanEngine</Filter>
     </ClInclude>
@@ -1158,6 +1161,9 @@
       <Filter>KashipanEngine\Math</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Math\Vector4.h">
+      <Filter>KashipanEngine\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Math\Color.h">
       <Filter>KashipanEngine\Math</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\ObjectsHeaders.h">

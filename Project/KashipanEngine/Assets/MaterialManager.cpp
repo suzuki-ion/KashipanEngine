@@ -7,6 +7,7 @@
 #include "Utilities/FileIO/Directory.h"
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/AssetDragDropPayload.h"
+#include "Assets/TextureRef.h"
 
 #include <algorithm>
 #include <cctype>
@@ -15,10 +16,13 @@
 #include <functional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #if defined(USE_IMGUI)
 #include <imgui.h>
+#include "Graphics/Pipeline/System/MaterialLayout.h"
+#include "Graphics/PipelineManager.h"
 #include "Utilities/ImGuiCustom.h"
 #endif
 
@@ -612,9 +616,53 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
     ImGui::Separator();
     ImGui::TextUnformatted(TranslationC("editor.materialmanager.custom_parameters"));
 
+    // 対象シェーダー（一括追加ボタン・注釈によるstep/range適用の参照先。.matには保存しない一時的なUI状態）
+    static std::string sReferenceShaderName;
+    ImGuiCustom::SelectString(TranslationLabel("editor.materialmanager.reference_shader"), sReferenceShaderName, PipelineManager::GetLoadedRenderPipelineNames("3D"), true);
+    const MaterialLayout *referenceLayout = sReferenceShaderName.empty() ? nullptr : PipelineManager::TryGetMaterialLayout(sReferenceShaderName);
+
+    ImGui::BeginDisabled(referenceLayout == nullptr);
+    if (ImGui::Button(TranslationLabel("editor.materialmanager.add_missing_parameters")) && referenceLayout) {
+        // 標準の固定フィールド名（Material構造体のメンバ）と一致するものは追加しない
+        static const std::unordered_set<std::string> kFixedFieldNames = {
+            "enableLighting", "enableEnvironmentMapping", "enableShadowMapProjection", "useTexture",
+            "color", "uvTransform", "shininess", "specularColor", "environmentCoefficient",
+            "rimColor", "rimPower", "rimIntensity", "useNormalMap", "instanceColor", "instanceColorBlendMode",
+        };
+        auto defaultValueForType = [](ValueType type) -> MyAny {
+            switch (type) {
+            case ValueType::Bool: return MyAny(false);
+            case ValueType::Int32: case ValueType::UInt32: return MyAny(std::int32_t{ 0 });
+            case ValueType::Float: return MyAny(0.0f);
+            case ValueType::Vector2: return MyAny(Vector2::Zero());
+            case ValueType::Vector3: return MyAny(Vector3::Zero());
+            case ValueType::Vector4: return MyAny(Vector4::Zero());
+            case ValueType::Color: return MyAny(Color::White());
+            case ValueType::Matrix4x4: return MyAny(Matrix4x4::Identity());
+            default: return MyAny();
+            }
+        };
+        for (const auto &field : referenceLayout->fields) {
+            if (kFixedFieldNames.contains(field.name)) continue;
+            if (material.extraParameters.contains(field.name)) continue;
+            MyAny defaultValue = defaultValueForType(field.valueType);
+            if (!defaultValue.IsEmpty()) material.extraParameters[field.name] = defaultValue;
+        }
+        // テクスチャ宣言（struct Materialのメンバーになれないため別枠）。固定スロットの名前は除外する
+        static const std::unordered_set<std::string> kFixedTextureFieldNames = {
+            "gTexture", "gEnvironmentMap", "gNormalMap",
+        };
+        for (const auto &textureName : referenceLayout->textureFields) {
+            if (kFixedTextureFieldNames.contains(textureName)) continue;
+            if (material.extraParameters.contains(textureName)) continue;
+            material.extraParameters[textureName] = MyAny(TextureRef{});
+        }
+    }
+    ImGui::EndDisabled();
+
     static std::string sNewParameterName;
     static int sNewParameterType = 2; // Float
-    static const char *kTypeNames[] = { "Bool", "Int32", "Float", "Vector2", "Vector3", "Vector4" };
+    static const char *kTypeNames[] = { "Bool", "Int32", "Float", "Vector2", "Vector3", "Vector4", "Color", "Texture" };
     ImGui::InputText("##NewParameterName", &sNewParameterName);
     ImGui::SameLine();
     ImGui::SetNextItemWidth(100.0f);
@@ -629,6 +677,8 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
         case 3: material.extraParameters[sNewParameterName] = MyAny(Vector2::Zero()); break;
         case 4: material.extraParameters[sNewParameterName] = MyAny(Vector3::Zero()); break;
         case 5: material.extraParameters[sNewParameterName] = MyAny(Vector4::Zero()); break;
+        case 6: material.extraParameters[sNewParameterName] = MyAny(Color::White()); break;
+        case 7: material.extraParameters[sNewParameterName] = MyAny(TextureRef{}); break;
         default: break;
         }
         sNewParameterName.clear();
@@ -638,7 +688,15 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
     int parameterId = 0;
     for (auto &[key, value] : material.extraParameters) {
         ImGui::PushID(parameterId++);
-        ImGuiCustom::EditValue(key.c_str(), value);
+        ImGuiCustom::UiOptions opts{};
+        if (referenceLayout) {
+            if (const auto *field = referenceLayout->Find(key); field && field->hasRange) {
+                opts.vSpeed = field->rangeStep;
+                opts.vMin = field->rangeMin;
+                opts.vMax = field->rangeMax;
+            }
+        }
+        ImGuiCustom::EditValue(key.c_str(), value, opts);
         ImGui::SameLine();
         if (ImGui::SmallButton(TranslationLabel("editor.common.remove"))) {
             pendingRemoveParameter = key;

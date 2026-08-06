@@ -60,6 +60,21 @@ Vector4 GetInstanceColorFor(const RendererT *renderer) {
         return Vector4(1.0f, 1.0f, 1.0f, 1.0f);
     }
 }
+/// @brief 押し出しアウトライン（Inverted Hull）パイプライン名
+constexpr const char *kOutlinePipelineName = "Object3D.Outline";
+
+/// @brief マテリアルのextraParameters["outlineWidth"]（Float）が正の値の場合のみアウトラインを有効とする
+/// @details rimIntensity=0でリムライト無効、と同じ「0で無効」規約に合わせる。MeshRenderer側には
+///          専用フラグを持たせず、マテリアルの追加パラメータのみで切り替える
+bool MaterialWantsOutline(MaterialManager::MaterialHandle handle) {
+    const auto *material = MaterialManager::GetMaterial(handle);
+    if (!material) return false;
+    auto it = material->extraParameters.find("outlineWidth");
+    if (it == material->extraParameters.end()) return false;
+    const auto *width = it->second.AnyCastPtr<float>();
+    return width && *width > 0.0f;
+}
+
 template <typename RendererT>
 int GetInstanceColorBlendModeFor(const RendererT *renderer) {
     if constexpr (std::is_same_v<RendererT, MeshRenderer>) {
@@ -134,6 +149,17 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
                 sortable.kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
                 sortable.pipelinePriority = pipelinePriority;
                 sortableEntries.push_back(sortable);
+
+                // マテリアルにoutlineWidth（正の値）が設定されている場合、押し出しアウトライン用の
+                // 2つ目のDrawEntryを追加する（SpriteRendererは法線を持たないため対象外）
+                if constexpr (std::is_same_v<RendererT, MeshRenderer>) {
+                    if (pipelineManager->HasPipeline(kOutlinePipelineName) && MaterialWantsOutline(sortable.entry.materialHandle)) {
+                        auto outline = sortable;
+                        outline.entry.pipelineName = kOutlinePipelineName;
+                        outline.pipelinePriority = pipelineManager->GetPipeline(kOutlinePipelineName).RenderPriority();
+                        sortableEntries.push_back(outline);
+                    }
+                }
             }
         }
     }
@@ -187,6 +213,18 @@ void CollectCacheableEntries(const std::vector<RendererT *> &renderers,
             cached.ranked.kindOrder = GetRenderTargetKindOrder(editorTarget->GetRenderTargetKind());
             cached.ranked.pipelinePriority = pipelineManager->GetPipeline(pipelineName).RenderPriority();
             cached.source = renderer;
+
+            // マテリアルにoutlineWidth（正の値）が設定されている場合、押し出しアウトライン用の
+            // 2つ目のキャッシュエントリを追加する（SpriteRendererは法線を持たないため対象外）
+            if constexpr (std::is_same_v<RendererT, MeshRenderer>) {
+                if (pipelineManager->HasPipeline(kOutlinePipelineName) && MaterialWantsOutline(cached.ranked.entry.materialHandle)) {
+                    SceneRenderer::CachedRankedEntry outlineCached = cached;
+                    outlineCached.ranked.entry.pipelineName = kOutlinePipelineName;
+                    outlineCached.ranked.pipelinePriority = pipelineManager->GetPipeline(kOutlinePipelineName).RenderPriority();
+                    out.push_back(std::move(outlineCached));
+                }
+            }
+
             out.push_back(std::move(cached));
         }
     }
@@ -408,6 +446,16 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
                     sortable.kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
                     sortable.pipelinePriority = pipelinePriority;
                     freshEntries.push_back(sortable);
+
+                    // マテリアルにoutlineWidth（正の値）が設定されている場合、押し出しアウトライン用の
+                    // 2つ目のDrawEntryを追加する。skinnedVertexBufferも複製されるため、DrawBatch側の
+                    // 「スキニング結果バッファを使うか」の既存分岐がそのままアウトライン描画にも効く
+                    if (pipelineManager->HasPipeline(kOutlinePipelineName) && MaterialWantsOutline(sortable.entry.materialHandle)) {
+                        auto outline = sortable;
+                        outline.entry.pipelineName = kOutlinePipelineName;
+                        outline.pipelinePriority = pipelineManager->GetPipeline(kOutlinePipelineName).RenderPriority();
+                        freshEntries.push_back(outline);
+                    }
                 }
             }
         }

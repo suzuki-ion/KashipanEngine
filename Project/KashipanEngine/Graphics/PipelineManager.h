@@ -45,6 +45,10 @@ public:
     /// @brief 実行中のPipelineManagerインスタンスへGetOrCreatePipelineを呼び出す（ImGuiの
     ///        バリアントビルダーUI等、インスタンスへのアクセス手段を持たない呼び出し元向け）
     static bool TryGetOrCreatePipeline(const std::string &pipelineName);
+    /// @brief 実行中のPipelineManagerインスタンスから指定パイプラインのMaterialLayoutを取得する
+    ///        （マテリアルエディタのシェーダー選択・未追加パラメータ一括追加UI向け）
+    /// @return パイプラインが見つからない場合はnullptr
+    static const MaterialLayout *TryGetMaterialLayout(const std::string &pipelineName);
 #endif
 
     /// @brief 読み込み済みの描画用パイプライン名一覧を取得（ImGuiでの選択用）

@@ -58,6 +58,13 @@ std::string ToLower(std::string s) {
     return s;
 }
 
+/// @brief "__"で始まる名前は、SceneRenderer::SetEditorSelectedObjects等が生成する
+///        エディター内部専用マテリアル用に予約されている（プロジェクトのアセットではないため、
+///        マテリアル一覧・SaveAllMaterialsからは除外する）
+bool IsInternalMaterialName(const std::string &name) {
+    return name.starts_with("__");
+}
+
 bool HasSupportedMaterialExtension(const std::filesystem::path& p) {
     const std::string ext = ToLower(p.extension().string());
     return (ext == ".mat");
@@ -166,6 +173,7 @@ MaterialManager::MaterialManager(Passkey<GameEngine>, const std::string& assetsR
     sAssetsRootPath = NormalizePathSlashes(assetsRootPath);
     InitializeMaterialManager();
     LoadAllFromAssetsFolder();
+    EnsureDefaultMaterialExists();
 #if defined(USE_IMGUI)
     sActiveInstance = this;
 #endif
@@ -209,6 +217,21 @@ void MaterialManager::LoadAllFromAssetsFolder() {
     for (const auto& f : files) {
         LoadMaterial(f);
     }
+}
+
+void MaterialManager::EnsureDefaultMaterialExists() {
+    if (GetMaterialHandleFromName("Default") != kInvalidHandle) return;
+
+    // ディスク上に.matが存在しなくても、保存先の慣例パス（他マテリアルと同じMaterials/フォルダ）を
+    // 割り当てておく。ファイル自体は書き出さず、ユーザーがマテリアルマネージャで保存した時点で実体化する
+    MaterialEntry entry{};
+    entry.fileName = "Default.mat";
+    entry.assetPath = "Materials/Default.mat";
+    entry.fullPath = sAssetsRootPath + "/Materials/Default.mat";
+    entry.material = Material{}; // 既定値（白色・不透明・ライティング有効）のまま
+
+    RegisterEntry(std::move(entry));
+    Log(Translation("engine.material.default.registered"), LogSeverity::Info);
 }
 
 MaterialManager::MaterialHandle MaterialManager::LoadMaterial(const std::string& filePath) {
@@ -324,6 +347,7 @@ bool MaterialManager::SaveAllMaterials(const std::string &folderPath) {
     for (const auto &pair : sMaterials) {
         const MaterialHandle handle = pair.first;
         const MaterialEntry &entry = pair.second;
+        if (IsInternalMaterialName(entry.material.name)) continue;
         std::string savePath;
         if (!folderPath.empty()) {
             savePath = NormalizePathSlashes(folderPath + "/" + entry.fileName);
@@ -419,6 +443,7 @@ std::vector<MaterialEntry> MaterialManager::GetLoadedMaterialListEntries() {
     std::vector<MaterialEntry> out;
     out.reserve(sMaterials.size());
     for (const auto& pair : sMaterials) {
+        if (IsInternalMaterialName(pair.second.material.name)) continue;
         out.push_back(pair.second);
     }
     std::sort(out.begin(), out.end(), [](const MaterialEntry &a, const MaterialEntry &b) {

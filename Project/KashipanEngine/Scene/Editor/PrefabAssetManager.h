@@ -29,6 +29,12 @@ public:
 
     /// @brief prefabIDからJSONを取得する（キャッシュ優先。未キャッシュなら索引から解決してロードする）
     static JSON LoadPrefabJson(const UUID128 &prefabID);
+    /// @brief LoadPrefabJsonのコピーを避ける参照版。キャッシュ済みJSONへの参照をそのまま返す
+    /// @details nlohmann::jsonは値型のためLoadPrefabJsonは呼ぶたびにPrefab全体をディープコピーする。
+    ///          ヒエラルキーパネルの毎行チェックのように高頻度・読み取り専用で呼ばれる箇所向け。
+    ///          返す参照はSavePrefabJson等でキャッシュが更新されるまでの間のみ有効（同一フレーム内の
+    ///          読み取り専用処理での使用を想定し、結果を長期間保持しないこと）
+    static const JSON &LoadPrefabJsonRef(const UUID128 &prefabID);
 
     /// @brief 登録済みprefabIDのJSONを書き込み、キャッシュ更新後にリスナーへ通知する
     /// @details Apply All・個別コンポーネントApplyから呼ばれるメインの書き込みAPI

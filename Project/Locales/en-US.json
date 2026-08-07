@@ -1176,6 +1176,10 @@
 		"component.skinnedmeshrenderer.blend_shapes": "Blend Shapes",
 		"component.skinnedmeshrenderer.cast_shadows": "Cast Shadows",
 		"component.skinnedmeshrenderer.desc_1": "有効にすると、このメッシュがシャドウマッピングのシャドウキャスターとして扱われる",
+		"component.skinnedmeshrenderer.desc_2": "このオブジェクト単体の色。マテリアルは共有したまま、下のBlend Modeで指定した方法で\\nマテリアルの色へ適用される（既定の白(1,1,1,1)＋Multiplyでは見た目に影響しない）",
+		"component.skinnedmeshrenderer.desc_3": "Instance Colorをマテリアルの色へ適用する方法\\nOverride: 置き換え / Multiply: 乗算 / Add: 加算 / Subtract: 減算",
+		"component.skinnedmeshrenderer.instance_color": "Instance Color",
+		"component.skinnedmeshrenderer.instance_color_blend_mode": "Instance Color Blend Mode",
 		"component.skinnedmeshrenderer.joint_count_d": "Joint Count: %d",
 		"component.skinnedmeshrenderer.no_animator_on_this_object_bind_pose_only": "(No Animator on this object: bind pose only)",
 		"component.skinnedmeshrenderer.no_blend_shapes_on_this_mesh": "(No blend shapes on this mesh)",
@@ -1834,6 +1838,7 @@
 		"engine.keyframeanimator.load.failed": "Failed to load the keyframe JSON. File path: ",
 
 		//--------- engine.material ---------//
+		"engine.material.default.registered": "The default material \"Default\" was not found; auto-registered it with default values.",
 		"engine.material.loading.failed.notfound": "Failed to load the material. File not found. File path: ",
 		"engine.material.loading.failed.parse": "Failed to load the material. Failed to parse it. File path: ",
 		"engine.material.loading.failed.register": "Failed to load the material. Failed to register it. File path: ",

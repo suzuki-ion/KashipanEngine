@@ -290,6 +290,20 @@ void SkinnedMeshRenderer::ShowImGui() {
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("%s", TranslationC("component.skinnedmeshrenderer.desc_1"));
     }
+
+    ImGui::ColorEdit4(TranslationLabel("component.skinnedmeshrenderer.instance_color"), &instanceColor_.x);
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("%s", TranslationC("component.skinnedmeshrenderer.desc_2"));
+    }
+    const char *kColorBlendModeLabels[] = { TranslationC("component.common.blendmode.override"), TranslationC("component.common.blendmode.multiply"), TranslationC("component.common.blendmode.add"), TranslationC("component.common.blendmode.subtract") };
+    int blendModeIndex = static_cast<int>(instanceColorBlendMode_);
+    if (ImGui::Combo(TranslationLabel("component.skinnedmeshrenderer.instance_color_blend_mode"), &blendModeIndex, kColorBlendModeLabels, IM_ARRAYSIZE(kColorBlendModeLabels))) {
+        instanceColorBlendMode_ = static_cast<ColorBlendMode>(blendModeIndex);
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("%s", TranslationC("component.skinnedmeshrenderer.desc_3"));
+    }
+
     const auto materialEntries = MaterialManager::GetLoadedMaterialListEntries();
     std::vector<std::string> materialNames;
     for (const auto &entry : materialEntries) {
@@ -365,6 +379,8 @@ JSON SkinnedMeshRenderer::SaveToJson() const {
         json["excludedRenderTargetNames"].push_back(name);
     }
     json["castShadows"] = castShadows_;
+    json["instanceColor"] = ToJSON(instanceColor_);
+    json["instanceColorBlendMode"] = static_cast<int>(instanceColorBlendMode_);
     json["quality"] = static_cast<int>(quality_);
     JSON blendShapesJson = JSON::array();
     for (const auto &bs : blendShapes_) {
@@ -396,6 +412,8 @@ bool SkinnedMeshRenderer::LoadFromJson(const JSON &json) {
         excludedRenderTargetNames_.insert(name);
     }
     castShadows_ = json.value("castShadows", true);
+    instanceColor_ = json.contains("instanceColor") ? FromJSON<Vector4>(json["instanceColor"]) : Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+    instanceColorBlendMode_ = static_cast<ColorBlendMode>(json.value("instanceColorBlendMode", static_cast<int>(ColorBlendMode::Multiply)));
     quality_ = static_cast<SkinQuality>(json.value("quality", static_cast<int>(SkinQuality::Auto)));
     blendShapes_.clear();
     for (const auto &bsj : json.value("blendShapes", std::vector<JSON>())) {

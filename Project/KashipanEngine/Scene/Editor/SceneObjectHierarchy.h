@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <vector>
 #include "Scene/SceneEditorContext.h"
+#include "Scene/Editor/PrefabSyncUtility.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 #include "Utilities/UUID128.h"
 
@@ -187,6 +188,11 @@ private:
     EmptyObject *pendingRangeTarget_ = nullptr;
     // このフレームで実際に表示された行の順序（Shift範囲選択の範囲計算に使う）
     std::vector<EmptyObject *> visibleOrderThisFrame_;
+
+    // Prefabメンバーの行のOverride色分け判定用キャッシュ（Prefab単位でJSON索引を使い回し、
+    // 子が多いPrefabをヒエラルキーに並べた際の毎行O(Prefab内オブジェクト数)走査を防ぐ）。
+    // 毎フレームShowImGuiの先頭でクリアするため、フレームをまたいで古い情報を参照することはない
+    PrefabSyncUtility::OverrideCheckCache prefabOverrideCache_;
 
     // シーンビュー等の外部選択でスクロール・強制展開する対象（次のヒエラルキー描画で1回だけ消費される）
     EmptyObject *pendingScrollToObject_ = nullptr;

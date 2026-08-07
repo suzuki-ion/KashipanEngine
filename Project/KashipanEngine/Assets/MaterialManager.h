@@ -140,6 +140,11 @@ private:
     void InitializeMaterialManager();
     void FinalizeMaterialManager();
     void LoadAllFromAssetsFolder();
+    /// @brief "Default"という名前のマテリアルが読み込まれていない場合、既定値のマテリアルを登録する
+    /// @details MeshRenderer/SpriteRenderer等はマテリアル未割当時に名前"Default"を参照するが、
+    ///          対応する.matアセットが存在しないプロジェクトではハンドルが解決できず、
+    ///          該当オブジェクトが（アルファ0扱いで）描画されなくなってしまう問題への対策
+    void EnsureDefaultMaterialExists();
 };
 
 } // namespace KashipanEngine

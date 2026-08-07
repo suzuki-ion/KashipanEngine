@@ -181,7 +181,8 @@ PSOutput main(VSOutput input) {
 	}
 	float4 baseColor = mat.color * textureColor;
 	// オブジェクト単位の色（MeshRendererのInstance Color）をマテリアルの色へ適用する。
-	// 0=Override(置き換え), 1=Multiply(乗算), 2=Add(加算), 3=Subtract(減算)。アルファには影響させない
+	// 0=Override(置き換え), 1=Multiply(乗算), 2=Add(加算), 3=Subtract(減算)。アルファも同じ規則で合成する
+	// （baseColor.aとして保持し、下のoutput.color.a算出で使う）
 	if (mat.instanceColorBlendMode < 0.5f) {
 		baseColor = mat.instanceColor;
 	} else if (mat.instanceColorBlendMode < 1.5f) {
@@ -472,7 +473,9 @@ PSOutput main(VSOutput input) {
 	// 選択されたモジュール（例: Matcap→Gradation→Emission→ColorGrading、優先度順）の合成後処理をここで呼び出す
 	/*{{COMPOSITE_HOOKS}}*/
 
-	output.color.a = mat.color.a * textureColor.a;
+	// mat.color.a * textureColor.aで再計算し直すとInstance Colorのアルファ（baseColor.aに反映済み）が
+	// 無視されてしまうため、baseColor.aをそのまま使う
+	output.color.a = baseColor.a;
 
 	// 選択されたモジュール（例: DistanceFade→Dissolve、優先度順）のアルファ処理をここで呼び出す
 	/*{{ALPHA_HOOKS}}*/

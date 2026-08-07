@@ -7,12 +7,16 @@
 
 #include "Debug/Logger.h"
 #include "Utilities/FileIO/Directory.h"
+#include "Utilities/Conversion/ConvertString.h"
 
 namespace KashipanEngine {
 namespace {
 
+// std::ifstream/ofstream(const std::string&)はWindows上で現在のANSIコードページを使ってファイルを
+// 開くため、日本語等の非ASCII文字を含むパスが開けない。Utf8StringToPathでpath版コンストラクタへ
+// 渡して回避する
 std::string ReadFileText(const std::string &path) {
-    std::ifstream file(path, std::ios::binary);
+    std::ifstream file(Utf8StringToPath(path), std::ios::binary);
     if (!file) return {};
     std::ostringstream ss;
     ss << file.rdbuf();
@@ -21,7 +25,7 @@ std::string ReadFileText(const std::string &path) {
 
 bool WriteFileText(const std::string &path, const std::string &content) {
     EnsureParentDirectoryExists(path);
-    std::ofstream file(path, std::ios::binary | std::ios::trunc);
+    std::ofstream file(Utf8StringToPath(path), std::ios::binary | std::ios::trunc);
     if (!file) return false;
     file << content;
     return true;

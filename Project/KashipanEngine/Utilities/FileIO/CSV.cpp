@@ -2,11 +2,15 @@
 #include "Directory.h"
 #include <fstream>
 
+#include "Utilities/Conversion/ConvertString.h"
+
 namespace KashipanEngine {
 
 CSVData LoadCSV(const std::string &filePath, bool hasHeader) {
     CSVData data;
-    std::ifstream file(filePath);
+    // std::ifstream(const std::string&)はWindows上で現在のANSIコードページを使ってファイルを開くため、
+    // 非ASCII文字を含むパスが開けない。path版のコンストラクタへ渡すことで回避する
+    std::ifstream file(Utf8StringToPath(filePath));
     if (!file.is_open()) {
         throw std::runtime_error("Failed to open CSV file: " + filePath);
     }
@@ -42,7 +46,7 @@ CSVData LoadCSV(const std::string &filePath, bool hasHeader) {
 void SaveCSV(const std::string &filePath, const CSVData &data) {
     // 保存先フォルダが存在しない場合は作成する
     EnsureParentDirectoryExists(filePath);
-    std::ofstream file(filePath);
+    std::ofstream file(Utf8StringToPath(filePath));
     if (!file.is_open()) {
         throw std::runtime_error("Failed to open CSV file for writing: " + filePath);
     }

@@ -23,6 +23,7 @@
 #include "Objects/Components/MeshFilter.h"
 #include "Objects/Components/Render/Camera3D.h"
 #include "Objects/Components/Render/CameraRenderer.h"
+#include "Objects/Components/Render/SceneViewOrbitState.h"
 #include "Objects/Components/Render/Light.h"
 #include "Objects/Components/Render/LightRenderer.h"
 #include "Objects/Components/Render/MeshRenderer.h"
@@ -120,13 +121,15 @@ void SceneEditorView::EnsureSceneViewObject() {
         sceneViewObjectID_ = sceneViewObject_->GetObjectID();
         // 既存オブジェクトが見つかった場合は、そのTransformからオービット操作の起点
         // （yaw_/pitch_/target_）を逆算する。distance_はTransformに保存されない値のため
-        // 固定値を使うが、target_ = position + forward * distance_ とすることで
-        // カメラの位置・向き自体は完全に再現できる
+        // SceneViewOrbitStateコンポーネントに保存しておいた値を使う（無ければ付与する）ことで、
+        // target_ = position + forward * distance_ によりカメラの位置・向き・距離を完全に再現できる
         if (auto *transform = sceneViewObject_->GetComponent<Transform>()) {
+            auto *orbitState = sceneViewObject_->GetComponent<SceneViewOrbitState>();
+            if (!orbitState) orbitState = sceneViewObject_->AddComponent<SceneViewOrbitState>();
             const Vector3 forward = transform->GetRotateQuaternion().RotateVector(Vector3(0.0f, 0.0f, 1.0f));
             yaw_ = std::atan2(forward.x, forward.z);
             pitch_ = std::clamp(std::asin(std::clamp(-forward.y, -1.0f, 1.0f)), -1.55f, 1.55f);
-            distance_ = 10.0f;
+            distance_ = orbitState->GetDistance();
             target_ = transform->GetTranslate() + forward * distance_;
         }
         return;
@@ -138,6 +141,7 @@ void SceneEditorView::EnsureSceneViewObject() {
     if (!newObj) return;
     newObj->SetEditorOnly(true);
     newObj->AddComponent<Camera3D>();
+    newObj->AddComponent<SceneViewOrbitState>();
     if (auto *screenBufferObject = newObj->AddComponent<ScreenBufferObject>()) {
         screenBufferObject->SetName("EditorSceneView");
     }
@@ -165,6 +169,10 @@ void SceneEditorView::UpdateCameraBuffer() {
     // 算出した位置・向きをTransformへ書き戻す（シーン保存時にそのまま永続化される）
     transform->SetTranslate(eye);
     transform->SetRotateQuaternion(Quaternion::MakeFromRotationMatrix(rotation));
+    // distance_はTransformに残らないため、SceneViewOrbitStateへ書き戻して永続化する
+    if (auto *orbitState = sceneViewObject_->GetComponent<SceneViewOrbitState>()) {
+        orbitState->SetDistance(distance_);
+    }
 
     view_ = transform->GetWorldMatrix().Inverse();
     const float width = static_cast<float>(screenBuffer_->GetWidth());

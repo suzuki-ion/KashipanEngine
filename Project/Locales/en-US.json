@@ -1112,6 +1112,9 @@
 		"component.scenevariableapplier.variable_name": "Variable Name",
 		"component.scenevariableapplier.variable_notfound": "Variable \\\"%s\\\" not found",
 
+		//--------- component.scenevieworbitstate ---------//
+		"component.scenevieworbitstate.distance": "Distance To Target",
+
 		//--------- component.screenbufferobject ---------//
 		"component.screenbufferobject.directory": "Directory",
 		"component.screenbufferobject.file_name_prefix": "File Name Prefix",

@@ -81,6 +81,7 @@ void SkinnedMeshRenderer::RebuildSkinningResourcesIfNeeded() {
         jointNames_.clear();
         inverseBindPoses_.clear();
         blendShapes_.clear();
+        blendShapeNameToModelIndex_.clear();
         sourceVerticesBuffer_.reset();
         skinWeightsBuffer_.reset();
         boneMatricesBuffer_.reset();
@@ -142,20 +143,34 @@ void SkinnedMeshRenderer::RebuildSkinningResourcesIfNeeded() {
     skinningConstants_ = std::make_unique<ConstantBufferResource>(sizeof(SkinningConstantsCPU));
     skinnedVertexBuffer_ = std::make_unique<RWStructuredBufferResource>(sizeof(SkinCPUVertex), vertexCount_);
 
-    // BlendShape一覧をメッシュの内容に同期する（既存のウェイトは名前が一致すれば引き継ぐ）
+    // BlendShape名からGPUバッファ上のインデックス（=ModelData::GetBlendShapes()の並び順）への対応表を
+    // 作り直す。ウェイトアップロード（UpdateSkinningBuffers）はこの表を使って名前引きするため、
+    // blendShapes_（Inspector表示順）を自由に並べ替えても実際に適用されるBlendShapeはズレない
     const auto &modelBlendShapes = modelData.GetBlendShapes();
+    blendShapeNameToModelIndex_.clear();
+    blendShapeNameToModelIndex_.reserve(modelBlendShapes.size());
+    for (std::size_t i = 0; i < modelBlendShapes.size(); ++i) {
+        blendShapeNameToModelIndex_[modelBlendShapes[i].name] = static_cast<std::uint32_t>(i);
+    }
+
+    // BlendShape一覧をメッシュの内容に同期する。FBX（Blenderのシェイプキー順）とAssimpの
+    // インポート順が一致しないことがあり、ユーザーがInspector上で並べ替えて修正できるようにしているため、
+    // 既存の表示順（blendShapes_。ロード直後ならJSONから復元された順）はモデルに現存する限り保ち、
+    // モデル側に新しく増えたBlendShapeのみ末尾に追加する（ウェイトは名前が一致すれば引き継ぐ）
     {
         std::vector<BlendShapeWeight> newBlendShapes;
         newBlendShapes.reserve(modelBlendShapes.size());
-        for (const auto &shape : modelBlendShapes) {
-            float existingWeight = 0.0f;
-            for (const auto &old : blendShapes_) {
-                if (old.name == shape.name) {
-                    existingWeight = old.weight;
-                    break;
-                }
+        std::unordered_set<std::string> added;
+        added.reserve(modelBlendShapes.size());
+        for (const auto &old : blendShapes_) {
+            if (blendShapeNameToModelIndex_.count(old.name) && added.insert(old.name).second) {
+                newBlendShapes.push_back(old);
             }
-            newBlendShapes.push_back(BlendShapeWeight{ shape.name, existingWeight });
+        }
+        for (const auto &shape : modelBlendShapes) {
+            if (added.insert(shape.name).second) {
+                newBlendShapes.push_back(BlendShapeWeight{ shape.name, 0.0f });
+            }
         }
         blendShapes_ = std::move(newBlendShapes);
     }
@@ -220,12 +235,17 @@ void SkinnedMeshRenderer::UpdateSkinningBuffers() {
         std::memcpy(mapped, &constants, sizeof(constants));
     }
 
-    // BlendShapeのウェイトは毎フレーム最新の値をアップロードする（ImGui等でいつでも変更され得るため）
+    // BlendShapeのウェイトは毎フレーム最新の値をアップロードする（ImGui等でいつでも変更され得るため）。
+    // blendShapes_はInspector上の表示順（並べ替え済みの場合がある）なので、そのまま位置で
+    // 書き込まずblendShapeNameToModelIndex_で名前引きし、GPU側（ModelData順）の正しいスロットへ書く
     if (blendShapeWeightsBuffer_) {
         if (!blendShapes_.empty()) {
-            std::vector<float> weights(blendShapes_.size());
-            for (std::size_t i = 0; i < blendShapes_.size(); ++i) {
-                weights[i] = blendShapes_[i].weight;
+            std::vector<float> weights(blendShapes_.size(), 0.0f);
+            for (const auto &bs : blendShapes_) {
+                auto it = blendShapeNameToModelIndex_.find(bs.name);
+                if (it != blendShapeNameToModelIndex_.end() && it->second < weights.size()) {
+                    weights[it->second] = bs.weight;
+                }
             }
             if (auto *mapped = static_cast<float *>(blendShapeWeightsBuffer_->Map())) {
                 std::memcpy(mapped, weights.data(), sizeof(float) * weights.size());
@@ -356,10 +376,25 @@ void SkinnedMeshRenderer::ShowImGui() {
         if (blendShapes_.empty()) {
             ImGui::TextDisabled("%s", TranslationC("component.skinnedmeshrenderer.no_blend_shapes_on_this_mesh"));
         }
-        // 一覧はメッシュ（インポートされたBlendShape）から自動的に同期されるため、
-        // ここではウェイトの編集のみ行う（Unityと同じ挙動）
+        // 一覧はメッシュ（インポートされたBlendShape）から自動的に同期されるため、追加・削除はできない
+        // （Unityと同じ挙動）。ただしFBX（Blenderのシェイプキー順）とAssimpのインポート順が
+        // 一致しないことがあるため、↑↓ボタンで表示順だけは並べ替えられるようにしている
+        // （実際に適用されるBlendShapeはblendShapeNameToModelIndex_の名前引きで対応付くため、
+        //   並べ替えても挙動は変わらない）
         for (std::size_t i = 0; i < blendShapes_.size(); ++i) {
             ImGui::PushID(static_cast<int>(i));
+            ImGui::BeginDisabled(i == 0);
+            if (ImGui::ArrowButton("##up", ImGuiDir_Up)) {
+                std::swap(blendShapes_[i], blendShapes_[i - 1]);
+            }
+            ImGui::EndDisabled();
+            ImGui::SameLine();
+            ImGui::BeginDisabled(i + 1 >= blendShapes_.size());
+            if (ImGui::ArrowButton("##down", ImGuiDir_Down)) {
+                std::swap(blendShapes_[i], blendShapes_[i + 1]);
+            }
+            ImGui::EndDisabled();
+            ImGui::SameLine();
             ImGui::DragFloat(blendShapes_[i].name.c_str(), &blendShapes_[i].weight, 0.1f, 0.0f, 100.0f);
             ImGui::PopID();
         }

@@ -93,6 +93,12 @@ struct PSOutput {
 #endif
 
 #ifdef Object3D
+// 選択されたシェーダーモジュール（Modules/<Name>/Logic.hlsli、テクスチャ宣言＋フック関数）がここに合成される。
+// HalfLambert内のTONE_HOOK（MultiToneモジュール等）がここで定義される関数を呼び出すため、
+// Lambert/HalfLambertより前に合成しておく必要がある。モジュール合成なしでこのファイルを直接
+// コンパイルする場合、コメントは無視されるため何も追加されない
+/*{{MODULE_LOGIC}}*/
+
 float Lambert(float3 normal, float3 lightDir) {
 	float cos = saturate(dot(normalize(normal), lightDir));
 	return cos;
@@ -152,10 +158,6 @@ float Dither4x4(float2 screenPos) {
 	};
 	return (dither[idx] + 0.5f) / 16.0f;
 }
-
-// 選択されたシェーダーモジュール（Modules/<Name>/Logic.hlsli、テクスチャ宣言＋フック関数）がここに合成される。
-// モジュール合成なしでこのファイルを直接コンパイルする場合、コメントは無視されるため何も追加されない
-/*{{MODULE_LOGIC}}*/
 #endif
 
 PSOutput main(VSOutput input) {

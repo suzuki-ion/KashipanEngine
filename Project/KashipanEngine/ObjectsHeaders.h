@@ -50,6 +50,7 @@
 #include "Objects/Components/Render/MeshRenderer.h"
 #include "Objects/Components/Render/NormalWindowObject.h"
 #include "Objects/Components/Render/OverlayWindowObject.h"
+#include "Objects/Components/Render/SceneViewOrbitState.h"
 #include "Objects/Components/Render/ScreenBufferObject.h"
 #include "Objects/Components/Render/ShadowMapObject.h"
 #include "Objects/Components/Render/SkinnedMeshRenderer.h"

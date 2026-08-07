@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -41,7 +42,11 @@ enum class SkinQuality {
 /// @brief BlendShape（モーフターゲット）1つ分のウェイト設定
 /// @details 一覧はメッシュ（ModelData::GetBlendShapes）から自動的に同期される
 ///          （UnityのSkinnedMeshRendererと同様、コンポーネント側で追加・削除はできない）。
-///          ユーザーが編集できるのはウェイトのみ。
+///          ユーザーが編集できるのはウェイトと表示順（Inspector上でのInspector内並び替え）のみ。
+///          FBXの元データ（Blender等でのShape Key順）とAssimpのインポート順が一致しないことが
+///          あるため、表示順の並び替えを許可している。GPU側の実データはModelData::GetBlendShapes
+///          の順（変更されない）のままで、SkinnedMeshRenderer::blendShapeNameToModelIndex_で
+///          名前引きして対応付けるため、表示順を変えても実際に適用されるBlendShapeは変わらない
 struct BlendShapeWeight final {
     std::string name;
     /// @brief ウェイト（0～100、Unityと同じ表現）
@@ -327,6 +332,10 @@ private:
     std::vector<std::string> jointNames_;
     /// @brief jointNames_と対応するバインドポーズ逆行列
     std::vector<Matrix4x4> inverseBindPoses_;
+    /// @brief BlendShape名からModelData::GetBlendShapes()上のインデックス（=GPUバッファ上の
+    ///        shapeIndex）への対応表。blendShapes_はInspector上で自由に並べ替えられるため、
+    ///        ウェイトアップロード時にこの表で名前引きしてGPU側の正しいスロットへ書き込む
+    std::unordered_map<std::string, std::uint32_t> blendShapeNameToModelIndex_;
 
     // GPUリソース（コンポーネント自身が所有・管理する）
     std::unique_ptr<StructuredBufferResource> sourceVerticesBuffer_;
@@ -336,7 +345,8 @@ private:
     std::unique_ptr<RWStructuredBufferResource> skinnedVertexBuffer_;
     /// @brief BlendShapeの頂点差分バッファ（[shapeIndex * vertexCount_ + vertexIndex]で参照する連結バッファ）
     std::unique_ptr<StructuredBufferResource> blendShapeDeltasBuffer_;
-    /// @brief BlendShapeごとのウェイト（blendShapes_と同じ並び順）。ウェイトは毎フレーム更新する
+    /// @brief BlendShapeごとのウェイト（ModelData::GetBlendShapes()と同じ並び順。blendShapes_の
+    ///        表示順とは独立している）。ウェイトは毎フレーム更新する
     std::unique_ptr<StructuredBufferResource> blendShapeWeightsBuffer_;
 };
 

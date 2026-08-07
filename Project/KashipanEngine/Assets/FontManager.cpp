@@ -258,7 +258,7 @@ FontManager::FontHandle FontManager::LoadFont(const std::string &filePath) {
     sNameToHandle[entry.name] = handle;
     sFonts.emplace(handle, std::move(entry));
 
-    Log(Translation("engine.font.loading.succeeded") + p.string(), LogSeverity::Info);
+    Log(Translation("engine.font.loading.succeeded") + PathToUtf8String(p), LogSeverity::Info);
     return handle;
 }
 

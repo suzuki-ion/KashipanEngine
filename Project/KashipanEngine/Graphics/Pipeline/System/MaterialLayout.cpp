@@ -7,12 +7,15 @@
 #include <unordered_map>
 
 #include "Debug/Logger.h"
+#include "Utilities/Conversion/ConvertString.h"
 
 namespace KashipanEngine {
 namespace {
 
+// std::ifstream(const std::string&)はWindows上で現在のANSIコードページを使ってファイルを開くため、
+// 日本語等の非ASCII文字を含むパスが開けない。Utf8StringToPathでpath版コンストラクタへ渡して回避する
 std::string ReadFileText(const std::string &path) {
-    std::ifstream file(path, std::ios::binary);
+    std::ifstream file(Utf8StringToPath(path), std::ios::binary);
     if (!file) return {};
     std::ostringstream ss;
     ss << file.rdbuf();
@@ -30,8 +33,8 @@ std::string ExpandIncludes(const std::string &source, const std::filesystem::pat
     size_t lastPos = 0;
     for (; it != end; ++it) {
         result.append(source, lastPos, static_cast<size_t>(it->position()) - lastPos);
-        std::filesystem::path includePath = baseDir / it->str(1);
-        std::string canonical = includePath.lexically_normal().string();
+        std::filesystem::path includePath = baseDir / Utf8StringToPath(it->str(1));
+        std::string canonical = PathToUtf8String(includePath.lexically_normal());
         if (visited.find(canonical) == visited.end()) {
             visited.insert(canonical);
             std::string includedText = ReadFileText(canonical);
@@ -188,14 +191,14 @@ MaterialLayout MaterialLayout::BuildFromHlslSource(const std::string &shaderFile
     MaterialLayout layout;
     if (shaderFilePath.empty()) return layout;
 
-    std::filesystem::path filePath(shaderFilePath);
+    std::filesystem::path filePath = Utf8StringToPath(shaderFilePath);
     std::string source = ReadFileText(shaderFilePath);
     if (source.empty()) {
         Log("[MaterialLayout] failed to read shader file: " + shaderFilePath, LogSeverity::Debug);
         return layout;
     }
 
-    std::unordered_set<std::string> visited{ filePath.lexically_normal().string() };
+    std::unordered_set<std::string> visited{ PathToUtf8String(filePath.lexically_normal()) };
     source = ExpandIncludes(source, filePath.parent_path(), visited, 0);
     source = StripConditionals(source, definedMacros);
     // ブロックコメントのみ除去し、行コメント（// @Range等の注釈）はここでは残す

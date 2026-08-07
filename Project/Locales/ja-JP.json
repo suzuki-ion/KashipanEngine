@@ -1112,6 +1112,9 @@
 		"component.scenevariableapplier.variable_name": "変数名",
 		"component.scenevariableapplier.variable_notfound": "変数 \"%s\" が見つかりません",
 
+		//--------- component.scenevieworbitstate ---------//
+		"component.scenevieworbitstate.distance": "注視点までの距離",
+
 		//--------- component.screenbufferobject ---------//
 		"component.screenbufferobject.directory": "保存先フォルダ",
 		"component.screenbufferobject.file_name_prefix": "ファイル名の接頭辞",

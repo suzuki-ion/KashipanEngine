@@ -519,9 +519,12 @@ void ModelManager::AppendMeshToModelData(const aiMesh* mesh, ModelData& dst) {
         for (unsigned int ai = 0; ai < mesh->mNumAnimMeshes; ++ai) {
             const aiAnimMesh* animMesh = mesh->mAnimMeshes[ai];
             if (!animMesh) continue;
+            // 名前無しの場合の連番はメッシュ内ローカル(ai)ではなくdst全体の通し番号にする。
+            // aiのままだと複数サブメッシュそれぞれの1個目が"BlendShape0"のように衝突し、
+            // 下の同名マージ処理で本来別々のBlendShapeが誤って1つに統合されてしまう
             const std::string shapeName = animMesh->mName.length > 0
                 ? std::string(animMesh->mName.C_Str())
-                : ("BlendShape" + std::to_string(ai));
+                : ("BlendShape" + std::to_string(dst.blendShapes_.size()));
 
             // 同名のBlendShapeが既にあれば追記する（複数メッシュに分かれたモデル用）
             ModelData::BlendShapeData* target = nullptr;

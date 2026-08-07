@@ -1,6 +1,7 @@
 #pragma once
 #ifdef USE_IMGUI
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "Utilities/FileIO/JSON.h"
@@ -62,6 +63,21 @@ EmptyObject *FindEnclosingPrefabInstanceRoot(EmptyObject *obj);
 /// @brief 単一オブジェクト単位でのOverride判定（ヒエラルキーの毎フレーム色分け用の軽量版。
 ///        O(そのオブジェクトのコンポーネント数)で完了する）
 bool HasComponentOverride(SceneEditorContext *context, EmptyObject *obj);
+
+/// @brief HasComponentOverrideCached呼び出し間で使い回す、Prefabごとの「prefabNodeID→JSON」索引キャッシュ
+/// @details ヒエラルキーパネルのように同一Prefabのメンバーが多数並ぶ場面で、Prefab JSON全体の
+///          コピー・線形探索を行単位（O(N)回）ではなくPrefab単位（O(1)回、初回アクセス時のみ）に
+///          抑えるために使う。Prefabの内容はフレーム中に変化しない前提のため、呼び出し元は
+///          このキャッシュを1フレームだけ使い回し、次フレームでは新しいインスタンスを使うこと
+struct OverrideCheckCache {
+    std::unordered_map<UUID128, std::unordered_map<std::string, const JSON *>> nodeIndexByPrefab;
+};
+
+/// @brief HasComponentOverrideのキャッシュ版。同一フレーム内で大量のPrefabメンバーを走査する場合、
+///        呼び出し元で用意した同一のcacheを使い回すことで、Prefab JSONのコピー・線形探索を
+///        Prefab単位で1回に抑えられる（HasComponentOverrideを行数分呼ぶとPrefab内オブジェクト数との
+///        積でコストが膨らむ問題への対策）
+bool HasComponentOverrideCached(SceneEditorContext *context, EmptyObject *obj, OverrideCheckCache &cache);
 
 /// @brief サブツリー全体でOverride・構造差分が1件でも存在するか
 bool HasAnyOverride(SceneEditorContext *context, EmptyObject *instanceRoot);

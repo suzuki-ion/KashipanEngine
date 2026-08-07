@@ -41,15 +41,19 @@ bool PrefabAssetManager::CreatePrefabFile(const UUID128 &prefabID, const JSON &j
 }
 
 JSON PrefabAssetManager::LoadPrefabJson(const UUID128 &prefabID) {
+    return LoadPrefabJsonRef(prefabID);
+}
+
+const JSON &PrefabAssetManager::LoadPrefabJsonRef(const UUID128 &prefabID) {
+    static const JSON kEmpty = JSON();
     EnsureIndexBuilt();
     auto cacheIt = sCache_.find(prefabID);
     if (cacheIt != sCache_.end()) return cacheIt->second;
 
     auto pathIt = sIDToPath_.find(prefabID);
-    if (pathIt == sIDToPath_.end()) return JSON();
+    if (pathIt == sIDToPath_.end()) return kEmpty;
     JSON json = LoadJSON(ProjectPaths::ToPhysical(pathIt->second));
-    sCache_[prefabID] = json;
-    return json;
+    return (sCache_[prefabID] = std::move(json));
 }
 
 bool PrefabAssetManager::SavePrefabJson(const UUID128 &prefabID, const JSON &newJson) {

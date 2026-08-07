@@ -193,6 +193,29 @@ bool HasComponentOverride(SceneEditorContext *context, EmptyObject *obj) {
     return !overrides.empty();
 }
 
+bool HasComponentOverrideCached(SceneEditorContext *context, EmptyObject *obj, OverrideCheckCache &cache) {
+    if (!context || !obj || !obj->GetPrefabNodeID().IsValid()) return false;
+    EmptyObject *root = FindEnclosingPrefabInstanceRoot(obj);
+    auto *prefabComp = GetValidPrefabInstanceComponent(root);
+    if (!prefabComp) return false;
+
+    const UUID128 prefabID = prefabComp->GetPrefabID();
+    auto cacheIt = cache.nodeIndexByPrefab.find(prefabID);
+    if (cacheIt == cache.nodeIndexByPrefab.end()) {
+        // ここで初めてPrefab JSONへアクセスする（コピーを避けるため参照版を使う）。
+        // 索引はPrefab単位で1回だけ構築し、以後同じPrefabに属する行はこのキャッシュを再利用する
+        const JSON &prefabJson = PrefabAssetManager::LoadPrefabJsonRef(prefabID);
+        cacheIt = cache.nodeIndexByPrefab.emplace(prefabID, IndexPrefabObjectsByNodeID(prefabJson)).first;
+    }
+    const auto &nodeIndex = cacheIt->second;
+    const auto nodeIt = nodeIndex.find(obj->GetPrefabNodeID().ToString());
+    if (nodeIt == nodeIndex.end()) return false;
+
+    std::vector<ComponentOverride> overrides;
+    CollectOverridesForObject(obj, *nodeIt->second, overrides);
+    return !overrides.empty();
+}
+
 bool HasAnyOverride(SceneEditorContext *context, EmptyObject *instanceRoot) {
     return !Diff(context, instanceRoot).IsEmpty();
 }

@@ -322,7 +322,12 @@ inline void WriteMaterialField(const PipelineInfo &pipelineInfo, std::byte *elem
 inline std::vector<std::byte> BuildMaterialElementBytes(const PipelineInfo &pipelineInfo, const MaterialManager::Material *material) {
     const auto &layout = pipelineInfo.GetMaterialLayout();
     std::vector<std::byte> bytes(layout.totalByteSize, std::byte{ 0 });
-    if (bytes.empty() || !material) return bytes;
+    if (bytes.empty()) return bytes;
+
+    // マテリアルが解決できない場合（無効なマテリアル名の参照等）でも全フィールドがゼロ埋めのまま
+    // 描画されてしまう（color.aが0になり不可視化する）のを避けるため、安全な既定値で代替する
+    static const MaterialManager::Material kFallbackMaterial{};
+    if (!material) material = &kFallbackMaterial;
 
     auto writeFloat = [&](const char *name, float value) {
         WriteMaterialField(pipelineInfo, bytes.data(), static_cast<std::uint32_t>(bytes.size()), name, value);

@@ -60,10 +60,19 @@ struct BlendShapeWeight final {
 ///          存在しない場合はバインドポーズのまま描画される。
 class SkinnedMeshRenderer final : public IObjectComponent {
 public:
+    /// @brief インスタンスカラー（オブジェクト単位の色）をマテリアルの色へ適用する方法（MeshRenderer::ColorBlendModeと同じ規則）
+    enum class ColorBlendMode : int {
+        Override = 0, ///< マテリアルの色を無視してインスタンスカラーで置き換える
+        Multiply,      ///< マテリアルの色に乗算する（既定。白(1,1,1,1)なら見た目に影響しない）
+        Add,           ///< マテリアルの色に加算する
+        Subtract,      ///< マテリアルの色から減算する
+    };
+
     OBJECT_COMPONENT_CONSTRUCTOR(SkinnedMeshRenderer, 0xFF,
         SetUpdatePriority(900);
         ADD_MEMBER_VARIABLE(pipelineName_);
         ADD_MEMBER_VARIABLE(castShadows_);
+        ADD_MEMBER_VARIABLE(instanceColor_);
     )
     COMPONENT_CATEGORY("Render")
     ~SkinnedMeshRenderer() override = default;
@@ -78,8 +87,21 @@ public:
         ptr->quality_ = quality_;
         ptr->blendShapes_ = blendShapes_;
         ptr->castShadows_ = castShadows_;
+        ptr->instanceColor_ = instanceColor_;
+        ptr->instanceColorBlendMode_ = instanceColorBlendMode_;
         return ptr;
     }
+
+    //==================================================
+    // インスタンスカラー（オブジェクト単位の色。MeshRendererと同じ）
+    //==================================================
+
+    /// @brief インスタンスカラーを設定する（マテリアルの色へ適用される色。既定は白(1,1,1,1)＋Multiplyで無効化と同義）
+    void SetInstanceColor(const Vector4 &color) noexcept { instanceColor_ = color; }
+    const Vector4 &GetInstanceColor() const noexcept { return instanceColor_; }
+    /// @brief インスタンスカラーをマテリアルの色へ適用する方法を設定する
+    void SetInstanceColorBlendMode(ColorBlendMode mode) noexcept { instanceColorBlendMode_ = mode; }
+    ColorBlendMode GetInstanceColorBlendMode() const noexcept { return instanceColorBlendMode_; }
 
     //==================================================
     // 描画先指定（MeshRendererと同じ）
@@ -291,6 +313,9 @@ private:
     std::unordered_set<std::string> excludedRenderTargetNames_;
     /// @brief シャドウマッピングのシャドウキャスターとして扱うか
     bool castShadows_ = true;
+    /// @brief オブジェクト単位の色（マテリアルは共有したまま、この色をinstanceColorBlendMode_で適用する）
+    Vector4 instanceColor_{ 1.0f, 1.0f, 1.0f, 1.0f };
+    ColorBlendMode instanceColorBlendMode_ = ColorBlendMode::Multiply;
 
     SkinQuality quality_ = SkinQuality::Auto;
     std::vector<BlendShapeWeight> blendShapes_;

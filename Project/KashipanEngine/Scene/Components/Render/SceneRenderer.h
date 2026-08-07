@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -50,10 +51,11 @@ public:
         ///        非nullの場合、頂点バッファは静的メッシュではなくこのGPUスキニング結果を使用し、
         ///        インスタンス（バッチ）結合の対象にもならない（各インスタンスが専用の出力バッファを持つため）
         RWStructuredBufferResource *skinnedVertexBuffer = nullptr;
-        /// @brief オブジェクト単位の色（MeshRendererのInstance Color）。MeshRenderer以外
-        ///        （SpriteRenderer/SkinnedMeshRenderer）からのエントリは既定値のまま（見た目に影響しない）
+        /// @brief オブジェクト単位の色（MeshRenderer/SkinnedMeshRendererのInstance Color）。
+        ///        持たない型（SpriteRenderer）からのエントリは既定値のまま（見た目に影響しない）
         Vector4 instanceColor{ 1.0f, 1.0f, 1.0f, 1.0f };
-        /// @brief instanceColorの適用方法（MeshRenderer::ColorBlendModeの値。0=Override,1=Multiply,2=Add,3=Subtract）
+        /// @brief instanceColorの適用方法（MeshRenderer::ColorBlendMode/SkinnedMeshRenderer::ColorBlendModeの値。
+        ///        0=Override,1=Multiply,2=Add,3=Subtract）
         int instanceColorBlendMode = 1;
     };
 
@@ -198,6 +200,16 @@ public:
     void SetEditorDebugDraw(EditorDebugDrawSettings settings) { editorDebugDraw_ = std::move(settings); }
     const EditorDebugDrawSettings &GetEditorDebugDraw() const noexcept { return editorDebugDraw_; }
 
+    /// @brief エディターのシーンビューで選択中オブジェクトへ付与する押し出しアウトラインの対象を設定する
+    /// @details 対象オブジェクト自身、またはその子孫が持つ全MeshRendererに、既存の押し出しアウトライン
+    ///          パイプライン（Object3D.Outline）を固定色で流用描画する。対象オブジェクト自身のマテリアルが
+    ///          持つoutlineWidth設定（MaterialWantsOutline）とは完全に独立しており、editorTarget_
+    ///          （シーンビュー用描画先）にのみ適用される。ゲーム画面や他の描画先には一切影響しない
+    /// @param selectedObjects 選択中オブジェクト（空集合を渡すとアウトラインは描画されない）
+    void SetEditorSelectedObjects(std::unordered_set<EmptyObject *> selectedObjects) {
+        editorSelectedObjects_ = std::move(selectedObjects);
+    }
+
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override;
@@ -231,6 +243,14 @@ private:
     /// @brief editorTarget_のオーナーオブジェクト（GetTargetOwner参照。ポストエフェクトの適用対象の絞り込みに使う）
     EmptyObject *editorTargetOwner_ = nullptr;
     EditorDebugDrawSettings editorDebugDraw_;
+
+    /// @brief エディターのシーンビューでアウトライン表示する対象（SetEditorSelectedObjects参照）
+    std::unordered_set<EmptyObject *> editorSelectedObjects_;
+    /// @brief 選択アウトライン専用の内部マテリアル（初回のBuildSortedDrawListで遅延生成する）。
+    ///        名前を"__"で始めることで、マテリアル一覧・保存対象から除外される（IsInternalMaterialName参照）
+    MaterialManager::MaterialHandle editorSelectionOutlineMaterial_ = MaterialManager::kInvalidHandle;
+    /// @brief editorSelectionOutlineMaterial_を必要に応じて生成し、そのハンドルを返す
+    MaterialManager::MaterialHandle EnsureEditorSelectionOutlineMaterial();
 };
 
 REGISTER_COMPONENT_SCENE(SceneRenderer)

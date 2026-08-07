@@ -106,6 +106,9 @@ void SceneObjectHierarchy::ShowImGui() {
     ValidateCachedObjects();
     // このフレームの表示順はShowObjectItemの呼び出し毎に積み直す（Shift範囲選択の計算に使う）
     visibleOrderThisFrame_.clear();
+    // Prefab Override判定用のPrefab単位索引キャッシュも毎フレーム作り直す（Apply/Revert等で
+    // 内容が変わり得るため、フレームをまたいで持ち越さない）
+    prefabOverrideCache_.nodeIndexByPrefab.clear();
     RebuildObjectItems();
 
     if (ImGui::Begin(TranslationLabel("editor.sceneobjecthierarchy.window"))) {
@@ -244,7 +247,7 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
     bool hasPrefabOverride = false;
     if (!isInactive && !isEditorOnly && PrefabSyncUtility::FindEnclosingPrefabInstanceRoot(item.object)) {
         isPrefabMember = true;
-        hasPrefabOverride = PrefabSyncUtility::HasComponentOverride(editorContext_, item.object);
+        hasPrefabOverride = PrefabSyncUtility::HasComponentOverrideCached(editorContext_, item.object, prefabOverrideCache_);
     }
     if (isInactive) {
         ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));

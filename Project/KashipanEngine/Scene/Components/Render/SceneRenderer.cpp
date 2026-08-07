@@ -18,6 +18,7 @@
 #include "Objects/Components/Render/OverlayWindowObject.h"
 #include "Objects/Components/Render/ScreenBufferObject.h"
 #include "Objects/Components/Render/ShadowMapObject.h"
+#include "Objects/Components/Transform.h"
 
 namespace KashipanEngine {
 
@@ -49,11 +50,11 @@ MaterialManager::MaterialHandle GetMaterialHandleForSubMesh(const RendererT *ren
     }
 }
 
-/// @brief インスタンスカラー（オブジェクト単位の色）を持つレンダラー（現状MeshRendererのみ）から取得する。
-///        持たない型（SpriteRenderer/SkinnedMeshRenderer）は既定値（白＋Multiply＝見た目に影響しない）を返す
+/// @brief インスタンスカラー（オブジェクト単位の色）を持つレンダラー（MeshRenderer/SkinnedMeshRenderer）
+///        から取得する。持たない型（SpriteRenderer）は既定値（白＋Multiply＝見た目に影響しない）を返す
 template <typename RendererT>
 Vector4 GetInstanceColorFor(const RendererT *renderer) {
-    if constexpr (std::is_same_v<RendererT, MeshRenderer>) {
+    if constexpr (std::is_same_v<RendererT, MeshRenderer> || std::is_same_v<RendererT, SkinnedMeshRenderer>) {
         return renderer->GetInstanceColor();
     } else {
         (void)renderer;
@@ -75,9 +76,57 @@ bool MaterialWantsOutline(MaterialManager::MaterialHandle handle) {
     return width && *width > 0.0f;
 }
 
+/// @brief objがselectedObjectsに含まれるか、その祖先のいずれかが含まれるかを判定する
+///        （選択した親オブジェクトの子孫にも選択アウトラインを付けるための判定。IsDescendantOfAny
+///        と同じTransform親参照チェーンの辿り方）
+bool IsSelectedOrDescendantOfSelected(EmptyObject *obj, const std::unordered_set<EmptyObject *> &selectedObjects) {
+    EmptyObject *current = obj;
+    while (current) {
+        if (selectedObjects.contains(current)) return true;
+        auto *transform = current->GetComponent<Transform>();
+        current = transform ? transform->GetParentObject() : nullptr;
+    }
+    return false;
+}
+
+/// @brief 選択中オブジェクト（またはその子孫）が持つMeshRendererへ、エディターのシーンビュー用描画先
+///        にのみ適用される選択アウトラインのDrawEntryを追加する（SortableEntryとしてfreshEntriesへ積み、
+///        通常のエントリと同じソート・バッチ化パスに乗せる）
+void AppendEditorSelectionOutlineEntries(const std::vector<MeshRenderer *> &meshRenderers,
+    PipelineManager *pipelineManager, IRenderTarget *editorTarget,
+    const std::unordered_set<EmptyObject *> &selectedObjects,
+    MaterialManager::MaterialHandle outlineMaterialHandle,
+    std::vector<SortableEntry> &out) {
+    if (selectedObjects.empty() || !editorTarget || !editorTarget->IsRenderTargetAvailable()) return;
+    if (outlineMaterialHandle == MaterialManager::kInvalidHandle) return;
+    if (!pipelineManager->HasPipeline(kOutlinePipelineName)) return;
+    const std::int32_t pipelinePriority = pipelineManager->GetPipeline(kOutlinePipelineName).RenderPriority();
+    const int kindOrder = GetRenderTargetKindOrder(editorTarget->GetRenderTargetKind());
+
+    for (auto *renderer : meshRenderers) {
+        if (!renderer || !renderer->IsActive()) continue;
+        if (renderer->GetMeshHandle() == ModelManager::kInvalidHandle) continue;
+        // selectedObjects（SceneObjectHierarchyの選択集合）と比較するため非constへキャストする
+        // （読み取りのみで、他所のGetOwnerObject利用箇所と同じ既存パターン。例: RayCollider.h）
+        EmptyObject *owner = const_cast<EmptyObject *>(renderer->GetOwnerObject());
+        if (!owner || owner->IsEditorOnlyInHierarchy()) continue;
+        if (!IsSelectedOrDescendantOfSelected(owner, selectedObjects)) continue;
+
+        SortableEntry sortable;
+        sortable.entry.target = editorTarget;
+        sortable.entry.pipelineName = kOutlinePipelineName;
+        sortable.entry.meshHandle = renderer->GetMeshHandle();
+        sortable.entry.materialHandle = outlineMaterialHandle;
+        sortable.entry.worldMatrix = Shake::ApplyRenderOnlyOffsets(owner, renderer->GetWorldMatrix());
+        sortable.kindOrder = kindOrder;
+        sortable.pipelinePriority = pipelinePriority;
+        out.push_back(std::move(sortable));
+    }
+}
+
 template <typename RendererT>
 int GetInstanceColorBlendModeFor(const RendererT *renderer) {
-    if constexpr (std::is_same_v<RendererT, MeshRenderer>) {
+    if constexpr (std::is_same_v<RendererT, MeshRenderer> || std::is_same_v<RendererT, SkinnedMeshRenderer>) {
         return static_cast<int>(renderer->GetInstanceColorBlendMode());
     } else {
         (void)renderer;
@@ -377,6 +426,28 @@ void SceneRenderer::RebuildCachedEntries(PipelineManager *pipelineManager) {
         });
 }
 
+MaterialManager::MaterialHandle SceneRenderer::EnsureEditorSelectionOutlineMaterial() {
+    // "__"始まりの名前はマテリアル一覧・SaveAllMaterialsから除外される内部専用マテリアルの規約
+    // （MaterialManager::IsInternalMaterialName参照）。プロジェクトのアセットとしては扱わせない
+    if (editorSelectionOutlineMaterial_ != MaterialManager::kInvalidHandle &&
+        MaterialManager::GetMaterial(editorSelectionOutlineMaterial_)) {
+        return editorSelectionOutlineMaterial_;
+    }
+    // シーン再読み込み等でSceneRendererが作り直された場合、前のインスタンスが既に登録済みのことがある。
+    // 名前で見つかればそれを使い回し、MaterialManager側にエントリが積み上がるのを防ぐ
+    if (const auto existing = MaterialManager::GetMaterialHandleFromName("__EditorSelectionOutline");
+        existing != MaterialManager::kInvalidHandle) {
+        editorSelectionOutlineMaterial_ = existing;
+        return editorSelectionOutlineMaterial_;
+    }
+    MaterialManager::Material material{};
+    material.name = "__EditorSelectionOutline";
+    material.extraParameters["outlineColor"] = MyAny(Vector4(1.0f, 0.55f, 0.0f, 1.0f));
+    material.extraParameters["outlineWidth"] = MyAny(0.04f);
+    editorSelectionOutlineMaterial_ = MaterialManager::RegisterMaterial(material.name, material);
+    return editorSelectionOutlineMaterial_;
+}
+
 const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(Passkey<Renderer>, PipelineManager *pipelineManager) {
     sortedDrawList_.clear();
     targetOwners_.clear();
@@ -443,6 +514,8 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
                     sortable.entry.worldMatrix = Shake::ApplyRenderOnlyOffsets(
                         renderer->GetOwnerObject(), renderer->GetWorldMatrix());
                     sortable.entry.skinnedVertexBuffer = renderer->GetSkinnedVertexBuffer();
+                    sortable.entry.instanceColor = GetInstanceColorFor(renderer);
+                    sortable.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(renderer);
                     sortable.kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
                     sortable.pipelinePriority = pipelinePriority;
                     freshEntries.push_back(sortable);
@@ -459,6 +532,12 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
                 }
             }
         }
+    }
+
+    // エディターのシーンビューで選択中オブジェクトへ付与する選択アウトライン（editorTarget_にのみ適用）
+    if (!editorSelectedObjects_.empty()) {
+        AppendEditorSelectionOutlineEntries(meshRenderers_, pipelineManager, editorTarget_,
+            editorSelectedObjects_, EnsureEditorSelectionOutlineMaterial(), freshEntries);
     }
 
     // 描画先→パイプライン優先度→パイプライン名→メッシュ→マテリアルの順でソート

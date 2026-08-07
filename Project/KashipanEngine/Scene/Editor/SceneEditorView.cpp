@@ -61,6 +61,7 @@ SceneEditorView::~SceneEditorView() {
     if (context_) {
         if (auto *sceneRenderer = context_->GetComponent<SceneRenderer>()) {
             sceneRenderer->SetEditorTarget(nullptr, nullptr);
+            sceneRenderer->SetEditorSelectedObjects({});
         }
     }
     // screenBuffer_ の実体は sceneViewObject_ の ScreenBufferObject コンポーネントが所有している。
@@ -75,6 +76,10 @@ void SceneEditorView::ShowImGui(const std::unordered_set<EmptyObject *> &selecte
     UpdateCameraBuffer();
     RegisterEditorTarget();
     UpdateEditorDebugDraw();
+    // シーンビュー上で選択中オブジェクトへアウトラインを付ける（このシーンビュー用描画先にのみ適用される）
+    if (auto *sceneRenderer = context_->GetComponent<SceneRenderer>()) {
+        sceneRenderer->SetEditorSelectedObjects(selectedObjects);
+    }
     ShowSceneViewWindow(selectedObjects, commands, hierarchy);
 }
 

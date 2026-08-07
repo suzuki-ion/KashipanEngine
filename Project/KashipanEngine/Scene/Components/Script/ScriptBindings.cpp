@@ -823,7 +823,12 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetMaterialName(const string &in)", &SkinnedMeshRenderer::SetMaterialName)
         .method("const string &GetMaterialName() const", &SkinnedMeshRenderer::GetMaterialName)
         .method("void SetBlendShapeWeight(const string &in, float)", &SkinnedMeshRenderer::SetBlendShapeWeight)
-        .method("float GetBlendShapeWeight(const string &in) const", &SkinnedMeshRenderer::GetBlendShapeWeight);
+        .method("float GetBlendShapeWeight(const string &in) const", &SkinnedMeshRenderer::GetBlendShapeWeight)
+        .method("void SetInstanceColor(const Vector4 &in)", &SkinnedMeshRenderer::SetInstanceColor)
+        .method("const Vector4 &GetInstanceColor() const", &SkinnedMeshRenderer::GetInstanceColor)
+        // instanceColorBlendModeは 0=Override, 1=Multiply, 2=Add, 3=Subtract
+        .method("void SetInstanceColorBlendMode(int)", [](SkinnedMeshRenderer &c, int mode) { c.SetInstanceColorBlendMode(static_cast<SkinnedMeshRenderer::ColorBlendMode>(mode)); })
+        .method("int GetInstanceColorBlendMode() const", [](const SkinnedMeshRenderer &c) { return static_cast<int>(c.GetInstanceColorBlendMode()); });
 
     RegisterComponentType<Camera2D>(engine, "Camera2D")
         .method("void SetSize(float, float)", &Camera2D::SetSize)

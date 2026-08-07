@@ -121,7 +121,7 @@ REGISTER_COMPONENT_OBJECT(Rotation)</code></pre>
 
 <h2>Transform コンポーネント</h2>
 <p>
-<code>Objects/Components/Transform.h</code> に定義される、位置・回転・スケールを持つ最も基本的なコンポーネントです。最大付与数は1（<code>OBJECT_COMPONENT_CONSTRUCTOR(Transform, 1, ...)</code>）。回転は内部的にクォータニオンで保持され、オイラー角はクォータニオンから都度変換される互換用のAPIです。
+<code>Objects/Components/Transform.h</code> に定義される、位置・回転・スケールを持つ最も基本的なコンポーネントです。最大付与数は1（<code>OBJECT_COMPONENT_CONSTRUCTOR(Transform, 1, ...)</code>）。回転は内部的にクォータニオンで保持され、オイラー角はクォータニオンから都度変換される互換用のAPIです。<code>EmptyObject</code> は生成時のコンストラクタ内で自動的にこのコンポーネントを1個追加するため、<code>CreateEmptyObject()</code> で作られたオブジェクトには明示的に <code>AddComponent&lt;Transform&gt;()</code> しなくても常に <code>Transform</code> が存在します（詳しくは <a href="03_GameObjects.html">03_GameObjects.html</a> 参照）。
 </p>
 <div class="api-card">
 <h4>親子関係</h4>
@@ -164,17 +164,18 @@ const Matrix4x4 &amp;GetWorldMatrix();</div>
 <tr><td><code>Velocity</code></td><td>1</td><td>Physics</td><td>速度・加速度から毎フレーム Transform の位置を更新</td></tr>
 <tr><td><code>Rotation</code></td><td>1</td><td>Physics</td><td>角速度・角加速度から毎フレーム Transform の回転を更新</td></tr>
 <tr><td><code>Shake</code></td><td>255</td><td>Utility</td><td>位置・回転をランダムに揺らす（Transformへ直接適用/描画時のみ適用の2方式）</td></tr>
-<tr><td><code>TargetLookAt</code></td><td>-</td><td>-</td><td>指定オブジェクトの方向へ向き続ける（ビルボード的な動作）</td></tr>
+<tr><td><code>TargetLookAt</code></td><td>1</td><td>Utility</td><td>指定オブジェクトの方向へ向き続ける（ビルボード的な動作）</td></tr>
 <tr><td><code>Comment</code></td><td>1</td><td>Debug</td><td>実行時の動作に影響しない、エディタ表示用のデバッグコメント</td></tr>
+<tr><td><code>PrefabInstanceComponent</code></td><td>1</td><td>Prefab</td><td>Prefabインスタンスのサブツリー根に自動付与される、Prefabとの対応を示すマーカー（手動削除でリンクが切れる）</td></tr>
 <tr><td><code>Animator</code></td><td>1</td><td>Animation</td><td>スケルタルアニメーションの再生指定</td></tr>
-<tr><td><code>KeyFrameAnimator</code></td><td>-</td><td>-</td><td>キーフレームアニメーション(json)のfloat値を他コンポーネントへ適用</td></tr>
-<tr><td><code>InputCommandApplier</code></td><td>-</td><td>-</td><td>InputCommandの入力値を他コンポーネントのパラメータへ適用</td></tr>
-<tr><td><code>SceneVariableApplier</code></td><td>-</td><td>-</td><td>シーン変数の値を他コンポーネントのパラメータへ適用</td></tr>
+<tr><td><code>KeyFrameAnimator</code></td><td>255</td><td>Animation</td><td>キーフレームアニメーション(json)のfloat値を他コンポーネントへ適用</td></tr>
+<tr><td><code>InputCommandApplier</code></td><td>255</td><td>Input</td><td>InputCommandの入力値を他コンポーネントのパラメータへ適用</td></tr>
+<tr><td><code>SceneVariableApplier</code></td><td>255</td><td>Utility</td><td>シーン変数の値を他コンポーネントのパラメータへ適用</td></tr>
 <tr><td><code>MeshFilter</code></td><td>1</td><td>Render</td><td>描画するメッシュのハンドルを保持</td></tr>
-<tr><td><code>AudioListener</code></td><td>-</td><td>-</td><td>音声の受聴位置（シーン内で同時に使用可能なのは1つ）</td></tr>
-<tr><td><code>AudioSource</code></td><td>-</td><td>-</td><td>音声の再生（ボリューム・ピッチ・空間音響・各種エフェクト）</td></tr>
-<tr><td><code>ParticleSystem2D</code> / <code>ParticleSystem3D</code></td><td>-</td><td>-</td><td>子オブジェクトとしてパーティクル用オブジェクトを一定間隔で生成</td></tr>
-<tr><td><code>ScriptComponent</code></td><td>-</td><td>-</td><td>AngelScriptのスクリプトファイルをコンパイルして実行する（<a href="07_Scripting.html">07_Scripting.html</a>）</td></tr>
+<tr><td><code>AudioListener</code></td><td>1</td><td>Audio</td><td>音声の受聴位置（シーン内で同時に使用可能なのは1つ）</td></tr>
+<tr><td><code>AudioSource</code></td><td>255</td><td>Audio</td><td>音声の再生（ボリューム・ピッチ・空間音響・各種エフェクト）</td></tr>
+<tr><td><code>ParticleSystem2D</code> / <code>ParticleSystem3D</code></td><td>255</td><td>Effect</td><td>子オブジェクトとしてパーティクル用オブジェクトを一定間隔で生成</td></tr>
+<tr><td><code>ScriptComponent</code></td><td>255</td><td>Script</td><td>AngelScriptのスクリプトファイルをコンパイルして実行する（<a href="Script/00_Index.html">Script/00_Index.html</a>）</td></tr>
 </table>
 
 <div class="tip">

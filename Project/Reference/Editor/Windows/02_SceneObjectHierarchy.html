@@ -57,10 +57,11 @@
 <tr><td>Paste to Child Object</td><td><code>Ctrl+Shift+V</code></td><td>右クリックしたオブジェクトの子として貼り付ける</td></tr>
 <tr><td>Clone Object(s)</td><td><code>Ctrl+D</code></td><td>選択中オブジェクトを複製する</td></tr>
 <tr><td>Delete Object(s)</td><td><code>Delete</code></td><td>選択中オブジェクトを削除する</td></tr>
-<tr><td>Apply All</td><td>-</td><td>（Prefabインスタンスのルートのみ）このインスタンスへの変更を元のPrefabアセットへ反映する</td></tr>
+<tr><td>Apply All</td><td>-</td><td>（Prefabインスタンスのルートのみ）このインスタンスへの変更を元のPrefabアセットへ反映する。反映後は開いている他の全インスタンス・<a href="08_SceneListAndSaveLoad.html">Scene List</a>に登録されている他の全シーンファイル（未オープンのものも含む）へ自動的に同期される</td></tr>
 <tr><td>Revert All</td><td>-</td><td>（Prefabインスタンスのルートのみ）ローカルの変更を破棄し、元のPrefabの内容に戻す（確認ダイアログあり、1操作でのUndoはできない）</td></tr>
 </table>
 <p>ウィンドウの何もない領域を右クリックすると、<code>Create Object</code> と <code>Paste Object</code>（ルート直下が対象）だけを含む簡略版メニューが表示されます。</p>
+<div class="warn"><strong>Apply Allは他のシーンファイルも書き換えます</strong><br>同じPrefabを使っている他のシーンが現在開いていなくても、ディスク上のシーンファイルが直接読み込み・同期・保存されます（ローカルなOverrideは維持されたままマージされます）。共同作業でシーンファイルをGit管理している場合は、他の人の未コミットの変更と衝突し得る操作であることに注意してください。</div>
 
 <h3>Create Objectメニュー</h3>
 <p>あらかじめコンポーネントが組まれたテンプレートからオブジェクトを作成できます。</p>

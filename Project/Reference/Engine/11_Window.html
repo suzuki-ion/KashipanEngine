@@ -186,17 +186,20 @@ void SetOnWindowMessage(WindowMessageCallback callback);
 bool SetMessageIntercepted(std::uint32_t msg, bool enabled);
 void CloseWindow();</div>
 <p>
-ウィンドウが受信したメッセージを <code>SetOnWindowMessage</code> のコールバックへ通知する仕組みを持ち、<code>ScriptComponent</code>（<a href="07_Scripting.html">07_Scripting.html</a>）はこれをフックしてスクリプトの <code>OnWindowMessage(const WindowMessageInfo &amp;in)</code> を呼び出します。
+ウィンドウが受信したメッセージを <code>SetOnWindowMessage</code> のコールバックへ通知する仕組みを持ち、<code>ScriptComponent</code>（<a href="Script/00_Index.html">Script/00_Index.html</a>）はこれをフックしてスクリプトの <code>OnWindowMessage(const WindowMessageInfo &amp;in)</code> を呼び出します。
 </p>
 </div>
 
 <table>
 <tr><th>コンポーネント</th><th>役割</th></tr>
-<tr><td><code>NormalWindowObject</code></td><td>通常ウィンドウ（<code>Window::CreateNormal</code>）を所有する。同一オブジェクトの <code>Transform</code> のワールド位置・スケールをウィンドウの位置・サイズへ毎フレーム反映する</td></tr>
+<tr><td><code>NormalWindowObject</code></td><td>通常ウィンドウ（<code>Window::CreateNormal</code>）を所有する。同一オブジェクトの <code>Transform</code> のワールド位置・スケールをウィンドウの位置・サイズへ毎フレーム反映する（<code>SetSyncWithTransform(bool)</code>/<code>IsSyncWithTransformEnabled()</code>で無効化可能。既定は有効）</td></tr>
 <tr><td><code>OverlayWindowObject</code></td><td>オーバーレイウィンドウ（<code>Window::CreateOverlay</code>）を所有する。挙動は <code>NormalWindowObject</code> とほぼ同じ</td></tr>
 <tr><td><code>ScreenBufferObject</code></td><td><code>ScreenBuffer</code> を所有する。名前・サイズの設定（<code>SetName</code>/<code>SetSize</code>）、画像保存（<code>RequestSave</code>、<code>SetSaveDirectory</code>/<code>SetSaveFileNamePrefix</code>/<code>SetSaveFormat</code>）、<span class="badge imgui">USE_IMGUI</span> 環境ではプレビュー用ビューアウィンドウを持つ</td></tr>
 <tr><td><code>ShadowMapObject</code></td><td><code>ShadowMapBuffer</code> を所有する。<code>ScreenBufferObject</code> と同様の名前・サイズ設定APIを持つ</td></tr>
 </table>
+<p>
+<code>SetSyncWithTransform(bool)</code>／<code>IsSyncWithTransformEnabled()</code>・<code>SetMessageIntercepted(std::uint32_t, bool)</code>／<code>IsMessageIntercepted()</code>は<code>IWindowObjectComponent</code>（<code>NormalWindowObject</code>/<code>OverlayWindowObject</code>共通の基底）が提供します。<code>SetMessageIntercepted</code>で横取りしたメッセージはウィンドウの既定処理（エンジン既定イベント・<code>DefWindowProc</code>）を実行しなくなり、<code>SetOnWindowMessage</code>への通知のみが行われます（<code>WM_DESTROY</code>/<code>WM_NCDESTROY</code>/<code>WM_QUIT</code>は横取り不可）。
+</p>
 
 <div class="note">
 <strong>シーン切り替え時の引き継ぎ</strong><br>
@@ -220,7 +223,7 @@ screenBufferObj-&gt;SetSize(1920, 1080);</code></pre>
 <ul>
 <li><a href="10_PostEffects.html">10_PostEffects.html</a> — <code>ScreenBufferObject</code> と組み合わせるポストエフェクト</li>
 <li><a href="05_Rendering.html">05_Rendering.html</a> — 描画コンポーネントからの描画先指定</li>
-<li><a href="07_Scripting.html">07_Scripting.html</a> — <code>OnWindowMessage</code> 等のスクリプト連携</li>
+<li><a href="Script/00_Index.html">Script/00_Index.html</a> — <code>OnWindowMessage</code> 等のスクリプト連携</li>
 </ul>
 
 <div id="page-footer" class="page-footer"></div>

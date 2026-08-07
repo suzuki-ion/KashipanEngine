@@ -47,9 +47,18 @@
 
 <h2>ドラッグ&amp;ドロップでのアサット割り当て</h2>
 <ul>
-<li><strong>Object Inspectorへ</strong> — モデル・テクスチャ・音声・スクリプトなどのファイルを<a href="03_ObjectInspector.html">Scene Object Inspector</a>内の対応するアサット参照欄（<code>MeshFilter</code>のメッシュ、<code>ScriptComponent</code>のScript Pathなど）へドラッグ&amp;ドロップすると、その場で割り当てられます。</li>
+<li><strong>Object Inspectorへ</strong> — <strong>テクスチャ・マテリアル（<code>.mat</code>）・スクリプト（<code>.as</code>）・プレハブ（<code>.prefab</code>）</strong>のファイルを<a href="03_ObjectInspector.html">Scene Object Inspector</a>内の対応するアサット参照欄（<code>MeshRenderer</code>のマテリアル、<code>ScriptComponent</code>のScript Pathなど）へドラッグ&amp;ドロップすると、その場で割り当てられます。</li>
 <li><strong>ヒエラルキーへプレハブを配置</strong> — <code>.prefab</code>ファイルを<a href="02_SceneObjectHierarchy.html">Scene Object Hierarchy</a>へドラッグ&amp;ドロップすると、その位置にPrefabがインスタンス化されます。</li>
 <li><strong>ヒエラルキーからプレハブを書き出す</strong> — 逆に、ヒエラルキー上のオブジェクトをAssets Windowへドラッグ&amp;ドロップすると、その場で<code>.prefab</code>ファイルとして書き出せます。</li>
+</ul>
+<div class="note"><strong>モデル・音声はドラッグ&amp;ドロップで割り当てられません</strong><br><code>MeshFilter</code>のメッシュや音声再生系コンポーネントのクリップは、Assets Windowからのドラッグ&amp;ドロップ対象になっていません。読み込み済みモデル/サウンドの一覧から選ぶドロップダウン欄で割り当てます（下記「OSからのファイル取り込み」で読み込んだ直後から一覧に表示されます）。</div>
+
+<h2>OSからのファイル取り込み（インポート）</h2>
+<p>OSのエクスプローラーなどから、テクスチャ・モデル・音声のファイルをAssets Windowへ直接ドラッグ&amp;ドロップすると、現在開いているフォルダーへコピーされたうえで、拡張子に応じたアセットマネージャー（<code>TextureManager</code>/<code>ModelManager</code>/<code>AudioManager</code>）へ動的に読み込まれます。エンジン起動時に<code>Assets/</code>を走査して読み込む処理と同じ経路のため、取り込んだ直後から通常のアセットと同様に参照できます。</p>
+<ul>
+<li>コピー先で同名ファイルが既に存在する場合は、末尾に連番を付けた名前になります（上書きはされません）。</li>
+<li>フォルダごとのドロップには対応していません（フォルダは無視されます）。</li>
+<li>取り込んだファイルは自動的にAssets Windowの表示が更新されます。</li>
 </ul>
 
 <h2>関連ページ</h2>

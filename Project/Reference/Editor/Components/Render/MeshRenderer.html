@@ -24,6 +24,7 @@
 <tr><td>Target</td><td>コンボボックス（シーン上のオブジェクトから選択）</td><td>描画先コンポーネント（NormalWindowObject / OverlayWindowObject / ScreenBufferObject / ShadowMapObject のいずれか）を持つオブジェクトのみが候補に並ぶ。<a href="../../Windows/02_SceneObjectHierarchy.html">Scene Object Hierarchy</a>からのドラッグ&amp;ドロップでも設定できる</td></tr>
 <tr><td>Render Target Filter（折りたたみツリー）</td><td>描画先ごとのチェックボックス</td><td>Targetに指定したオブジェクトが複数の描画先コンポーネントを持つ場合のみ表示。各描画先の名前の先頭に<code>[Window]</code>/<code>[ScreenBuffer]</code>/<code>[ShadowMapBuffer]</code>の種類が付く。チェックを外すとその描画先への描画から除外される</td></tr>
 <tr><td>Pipeline</td><td>コンボボックス</td><td>読み込み済みのレンダーパイプライン名から選択（既定値 <code>Object3D.Solid.BlendNormal</code>）。None選択肢は無い</td></tr>
+<tr><td>Pipeline Variant Builder（折りたたみツリー）</td><td>Base/Toonチェックボックス/シェーダーモジュールのチェックボックス群/Raster/Blendのコンボボックス＋Applyボタン</td><td>事前列挙された組み合わせに無いパイプライン名が欲しい場合に、トークンを組み立てて動的生成するビルダー。Base（Object3D/Object2D）、Toon（Object3D選択時のみ）、対応するシェーダーモジュール群、Raster（Solid/DoubleSidedCulling）、Blend（Add/Exclusion/Multiply/None/Normal/Screen/Subtract）を選ぶと組み立て後のパイプライン名がプレビュー表示され、Applyボタンを押すと生成/取得に成功した場合のみ上のPipelineへ反映される（失敗時は何も起きない）</td></tr>
 <tr><td>Cast Shadows</td><td>チェックボックス</td><td>有効にすると、このメッシュがシャドウマッピングのシャドウキャスターとして扱われる（既定true）</td></tr>
 <tr><td>Instance Color</td><td>ColorEdit4（RGBA）</td><td>オブジェクト単体の色。マテリアルは共有したまま、下のBlend Modeで指定した方法でマテリアルの色へ適用される。既定の白(1,1,1,1)＋Multiplyでは見た目に影響しない</td></tr>
 <tr><td>Instance Color Blend Mode</td><td>コンボボックス（Override / Multiply / Add / Subtract）</td><td>Instance Colorをマテリアルの色へ適用する方法。既定はMultiply</td></tr>

@@ -213,7 +213,7 @@ C++側では <code>ICollider::SetOnCollisionEnter3D()</code> 等に <code>std::f
 </p>
 <div class="tip">
 <strong>AngelScriptからの利用</strong><br>
-ゲームロジックは通常C++ではなく<code>ScriptComponent</code>（<a href="07_Scripting.html">07_Scripting.html</a> 参照）で書きます。スクリプト側で <code>ScriptComponentBehavior</code> に以下のメソッドを実装すると、同一オブジェクトのコライダーの衝突イベントに応じて自動的に呼び出されます。
+ゲームロジックは通常C++ではなく<code>ScriptComponent</code>（<a href="Script/00_Index.html">Script/00_Index.html</a> 参照）で書きます。スクリプト側で <code>ScriptComponentBehavior</code> に以下のメソッドを実装すると、同一オブジェクトのコライダーの衝突イベントに応じて自動的に呼び出されます。
 <pre><code>void OnCollisionEnter(const HitInfo &amp;in) { /* 衝突開始時 */ }
 void OnCollisionStay(const HitInfo &amp;in)  { /* 衝突継続中、毎フレーム */ }
 void OnCollisionExit(const HitInfo &amp;in)  { /* 衝突終了時 */ }</code></pre>
@@ -231,7 +231,7 @@ void OnCollisionExit(const HitInfo &amp;in)  { /* 衝突終了時 */ }</code></p
 
 <h2>次に読むページ</h2>
 <ul>
-<li>当たり判定に応じたゲームロジックをスクリプトで書く → <a href="07_Scripting.html">07_Scripting.html</a></li>
+<li>当たり判定に応じたゲームロジックをスクリプトで書く → <a href="Script/00_Index.html">Script/00_Index.html</a></li>
 <li>描画コンポーネント（MeshFilter/MeshRenderer等）を確認する → <a href="05_Rendering.html">05_Rendering.html</a></li>
 <li>オブジェクト・タグの基礎に戻る → <a href="03_GameObjects.html">03_GameObjects.html</a></li>
 </ul>

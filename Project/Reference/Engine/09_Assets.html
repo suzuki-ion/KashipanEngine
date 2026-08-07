@@ -27,6 +27,7 @@
 <li><strong>読み込みは軽量な整数ハンドルを返す</strong> … <code>TextureManager::TextureHandle</code> のような <code>uint32_t</code> のエイリアス型で、無効値は <code>kInvalidHandle</code>（<code>0</code>）系の定数です。</li>
 <li><strong>取得は基本的に static メソッド</strong> … 実行中は各マネージャのインスタンスが常に1つだけ存在する前提で、ハンドル・ファイル名・Assetsルートからの相対パスのいずれからでもデータ/ハンドルを引けます（<code>GetXxxFromFileName</code> / <code>GetXxxFromAssetPath</code>)。</li>
 <li><strong>コンポーネントは「名前」を保存し、ハンドルは遅延解決する</strong> … <code>MeshFilter</code> や <code>MeshRenderer</code>、<code>AudioSource</code> のようなコンポーネントは、シリアライズ時にはハンドル値ではなくアセットパス（文字列）を保存し、実行時に初めて使われたタイミングで <code>GetXxxHandleFromAssetPath()</code> 等を呼んでハンドルへ解決します。ハンドル値は読み込み順やアセット数で変わり得るため、保存には向きません。</li>
+<li><strong>リネーム/移動は <code>RenameXxx()</code> で登録側へ反映する</strong> … <code>TextureManager::RenameTexture</code> / <code>ModelManager::RenameModel</code> / <code>MaterialManager::RenameMaterialFile</code> / <code>AudioManager::RenameSound</code> はいずれも「Assetsウィンドウ等で実ファイルをリネーム/移動した後に呼ぶと、登録済みのファイル名/パスを新しい値へ更新する」静的メソッドです（実ファイル自体は操作しません）。</li>
 </ul>
 <pre><code>// MeshFilter::LoadFromJson の例（アセットパスの文字列からハンドルへ遅延解決する典型パターン）
 bool LoadFromJson(const JSON &amp;json) override {
@@ -123,20 +124,26 @@ static bool RemoveMaterial(const std::string &amp;name);</div>
 Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
 Matrix4x4 uvTransform = Matrix4x4::Identity();
 TextureManager::TextureHandle textureHandle;
-TextureManager::TextureHandle environmentHandle;   // 環境マップ
-TextureManager::TextureHandle normalMapHandle;      // 法線マップ
 SamplerManager::SamplerHandle samplerHandle;
 float shininess = 32.0f;
 Vector4 specularColor{ 1.0f, 1.0f, 1.0f, 1.0f };
-float environmentCoefficient = 1.0f;
 bool enableLighting = true;
 bool enableShadowMapProjection = true;
 Vector4 rimColor{ 1.0f, 1.0f, 1.0f, 1.0f };  // リムライト色
 float rimPower = 2.0f;                        // リムの鋭さ
 float rimIntensity = 0.0f;                    // リムライト強さ（0で無効）
 
-void ResolveTextureHandles(); // テクスチャ名からハンドルを遅延解決</div>
-<p>テクスチャ/環境マップ/法線マップは、読み込み時に対象がまだ存在しない場合でも <code>textureFileName</code> 等のファイル名を保持しておき、<code>ResolveTextureHandles()</code> を呼ぶたびに解決を試みます。</p>
+// カスタムシェーダー固有の追加パラメータ（キー名はピクセルシェーダーのMaterial構造体の
+// メンバー名と一致させる。標準フィールドに無い名前は名前引きされ、一致しなければ無視される）
+std::unordered_map&lt;std::string, MyAny&gt; extraParameters;
+
+std::string textureFileName; // 読み込み時に未解決だった場合の遅延解決用
+void ResolveTextureHandles(); // textureFileNameからtextureHandleを遅延解決</div>
+<p>テクスチャは、読み込み時に対象がまだ存在しない場合でも <code>textureFileName</code> を保持しておき、<code>ResolveTextureHandles()</code> を呼ぶたびに解決を試みます。</p>
+<div class="note">
+<strong>環境マップ・法線マップはモジュール化されている</strong><br>
+以前は <code>Material</code> が <code>environmentHandle</code>（環境マップ）・<code>normalMapHandle</code>（法線マップ）・<code>environmentCoefficient</code> を直接持っていましたが、現在はシェーダーモジュール機構（AO・スペキュラー・オパシティ・ディテールマップなども含む）へ再構成されており、これらのフィールドは <code>Material</code> 構造体には存在しません。モジュール単位のパラメータは <code>extraParameters</code> 経由でシェーダーとやり取りされます。詳細は <a href="05_Rendering.html">05_Rendering.html</a> を参照してください。
+</div>
 </div>
 
 <h2>SamplerManager</h2>

@@ -38,6 +38,9 @@ const std::string &amp;GetTagName() const noexcept;
 void SetObjectID(const UUID128 &amp;id);
 const UUID128 &amp;GetObjectID() const;
 
+void SetPrefabNodeID(const UUID128 &amp;id);
+const UUID128 &amp;GetPrefabNodeID() const;
+
 void SetSaveEnabled(bool enabled);
 bool IsSaveEnabled() const;
 
@@ -52,6 +55,9 @@ bool IsEditorOnlyInHierarchy() const;</div>
 </p>
 <p>
 <code>SetEditorOnly(true)</code> を付けたオブジェクトはシーンビュー専用の補助オブジェクト（デバッグ用の目印など）として扱われ、再生開始時・エディター無しビルドでのシーン読み込み時に子孫ごと削除されます。
+</p>
+<p>
+<code>SetPrefabNodeID</code>/<code>GetPrefabNodeID</code> はPrefab内の対応ノードを識別するための安定IDです。<code>GetObjectID()</code>（シーン内で一意なUUID）とは別物で、Prefabに関連しないオブジェクトでは無効なまま、<code>Clone()</code>でも複製されません。Prefabをシーンへ配置した際の各ノードと、元のPrefabファイル内のノードとを突き合わせるためだけに使われます。
 </p>
 </div>
 
@@ -73,8 +79,12 @@ template&lt;typename T&gt; bool RemoveComponent();
 template&lt;typename T&gt; bool RemoveComponents();
 void ClearComponents();</div>
 <p>
-これが「コンポジションによって機能を積む」ための中心的なAPIです。<code>AddComponent&lt;T&gt;(args...)</code> は <code>T</code> のインスタンスを生成してオブジェクトへ追加し、追加されたコンポーネントのポインタを返します（生成に失敗した場合は <code>nullptr</code>）。<code>GetComponents&lt;T&gt;()</code> は追加順にソートされた同型コンポーネントのリストを返します。
+これが「コンポジションによって機能を積む」ための中心的なAPIです。<code>AddComponent&lt;T&gt;(args...)</code> は <code>T</code> のインスタンスを生成してオブジェクトへ追加し、追加されたコンポーネントのポインタを返します（<code>GetMaxComponentCountPerObject()</code> の上限に達している場合など、生成に失敗した場合は <code>nullptr</code>）。<code>GetComponents&lt;T&gt;()</code> は追加順にソートされた同型コンポーネントのリストを返します。
 </p>
+<div class="note">
+<strong>Transform は生成時に自動で1個付与される</strong><br>
+<code>EmptyObject</code> は内部のコンストラクタで <code>AddComponent&lt;Transform&gt;()</code> を自動的に呼ぶため、<code>CreateEmptyObject()</code> で生成した時点で必ず <a href="04_ObjectComponents.html">Transform</a> を1個持っています。<code>Transform</code> の最大付与数は1のため、後から <code>AddComponent&lt;Transform&gt;()</code> を呼んでも（既に1個あるため）<code>nullptr</code> が返るだけです。座標などを扱いたい場合は <code>GetComponent&lt;Transform&gt;()</code> で取得してください。
+</div>
 </div>
 
 <div class="api-card">
@@ -130,8 +140,8 @@ bool IsValid() const;</div>
 <pre><code>// 例: シーンコンポーネントの Initialize 内などで SceneContext 経由で組み立てる場合
 EmptyObject *player = sceneContext-&gt;CreateEmptyObject("Player");
 
-// Transform を積む（座標・回転・スケールを持たせる）
-Transform *transform = player-&gt;AddComponent&lt;Transform&gt;();
+// Transform は生成時に自動で付与されているので GetComponent で取得する（座標・回転・スケールを持たせる）
+Transform *transform = player-&gt;GetComponent&lt;Transform&gt;();
 transform-&gt;SetTranslate({ 0.0f, 0.0f, 0.0f });
 
 // MeshFilter を積む（描画するメッシュを持たせる）
@@ -146,7 +156,7 @@ velocity-&gt;SetVelocity({ 1.0f, 0.0f, 0.0f });</code></pre>
 
 <div class="note">
 <strong>実際の使い方は主にシーンエディタ／AngelScript</strong><br>
-上記のようなC++コードは、エンジン内部のシステムコンポーネント（<code>SceneRenderer</code> や <code>SceneScriptEngine</code> 等）を実装する際には登場しますが、一般的なゲームコンテンツ制作では基本的にオブジェクトの生成とコンポーネントの付与は<strong>シーンエディタ</strong>上で行い、動的な生成（弾を撃つ、敵をスポーンさせる等）は<strong>AngelScriptスクリプト</strong>から行います。<code>01_Overview.html</code> で触れた通り、ゲーム側のC++コードは実質 <code>AppInitialize.h</code> 1ファイルのみに留めるのがこのエンジンの想定する使い方です。詳しくは <a href="07_Scripting.html">07_Scripting.html</a> を参照してください。
+上記のようなC++コードは、エンジン内部のシステムコンポーネント（<code>SceneRenderer</code> や <code>SceneScriptEngine</code> 等）を実装する際には登場しますが、一般的なゲームコンテンツ制作では基本的にオブジェクトの生成とコンポーネントの付与は<strong>シーンエディタ</strong>上で行い、動的な生成（弾を撃つ、敵をスポーンさせる等）は<strong>AngelScriptスクリプト</strong>から行います。<code>01_Overview.html</code> で触れた通り、ゲーム側のC++コードは実質 <code>AppInitialize.h</code> 1ファイルのみに留めるのがこのエンジンの想定する使い方です。詳しくは <a href="Script/00_Index.html">Script/00_Index.html</a> を参照してください。
 </div>
 
 <h2>次に読むページ</h2>

@@ -25,10 +25,13 @@
 <tr><td>Target</td><td>コンボボックス（シーン上のオブジェクトから選択）</td><td>描画先コンポーネントを持つオブジェクトのみが候補。ヒエラルキーからのドラッグ&amp;ドロップにも対応</td></tr>
 <tr><td>Render Target Filter（折りたたみツリー）</td><td>描画先ごとのチェックボックス</td><td>対象オブジェクトが複数の描画先コンポーネントを持つ場合のみ表示</td></tr>
 <tr><td>Pipeline</td><td>コンボボックス</td><td>読み込み済みのレンダーパイプライン名から選択（既定値 <code>Object3D.Solid.BlendNormal</code>）</td></tr>
+<tr><td>Pipeline Variant Builder（折りたたみツリー）</td><td>Base/Toonチェックボックス/シェーダーモジュールのチェックボックス群/Raster/Blendのコンボボックス＋Applyボタン</td><td>事前列挙された組み合わせに無いパイプライン名を動的に組み立てるビルダー。<a href="MeshRenderer.html">MeshRenderer</a>と共通のUI。Applyボタンを押すと生成/取得に成功した場合のみ上のPipelineへ反映される</td></tr>
 <tr><td>Cast Shadows</td><td>チェックボックス</td><td>有効にすると、このメッシュがシャドウマッピングのシャドウキャスターとして扱われる（既定true）</td></tr>
+<tr><td>Instance Color</td><td>ColorEdit4（RGBA）</td><td>オブジェクト単体の色。マテリアルは共有したまま、下のBlend Modeで指定した方法でマテリアルの色へ適用される。既定の白(1,1,1,1)＋Multiplyでは見た目に影響しない</td></tr>
+<tr><td>Instance Color Blend Mode</td><td>コンボボックス（Override / Multiply / Add / Subtract）</td><td>Instance Colorをマテリアルの色へ適用する方法。既定はMultiply</td></tr>
 <tr><td>Material（1スロット時） / Material 0, 1, ...（複数スロット時）</td><td>コンボボックス＋アセットのドラッグ&amp;ドロップ受付</td><td>サブメッシュ数に合わせてスロット数が自動調整される。Assetsウィンドウからのマテリアルファイルのドラッグ&amp;ドロップにも対応</td></tr>
 </table>
-<div class="note"><strong>MeshRendererと異なり Instance Color は無い</strong><br>MeshRendererにある「Instance Color」「Instance Color Blend Mode」の項目はSkinnedMeshRendererには存在しない。</div>
+<div class="tip"><strong>Instance ColorはMeshRendererと共通の機能</strong><br>以前はSkinnedMeshRendererに無かった機能だが、現在はMeshRendererと同じ仕様のInstance Color / Instance Color Blend Modeが追加されている。既定値のままなら見た目に影響しないため、通常は無視して構わない。</div>
 
 <h3>Skinning（区切り線以下、SkinnedMeshRenderer固有）</h3>
 <table>

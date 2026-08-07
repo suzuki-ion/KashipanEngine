@@ -19,14 +19,17 @@
 </div>
 
 <h2>ディレクトリ構成</h2>
-<pre><code>Project/
+<p>
+エンジンはUnityのような<strong>マルチプロジェクト構成</strong>です。ゲームプロジェクトは <code>Projects/</code> 直下に1プロジェクト1フォルダで並び、どのプロジェクトを開くかは起動時（<code>--project</code> 引数や前回開いたプロジェクト）に <code>Core/ProjectPaths</code> が解決します。
+</p>
+<pre><code>Project/                              … エンジンのソースツリー（≒リポジトリ）ルート
 ├── KashipanEngine/          … エンジン本体（C++）
 │   ├── KashipanEngine.h/.cpp        … エンジンの唯一の公開エントリヘッダ
 │   ├── *Headers.h                   … モジュール別の一括includeヘッダ
 │   │                                   (AssetsHeaders.h, CoreHeaders.h, GraphicsHeaders.h,
 │   │                                    InputHeaders.h, MathHeaders.h, ObjectsHeaders.h,
 │   │                                    SceneHeaders.h, UtilitiesHeaders.h, FontHeaders.h)
-│   ├── Core/                        … Window, GameEngine, DirectX12ラッパー
+│   ├── Core/                        … Window, GameEngine, ProjectManager/ProjectPaths, DirectX12ラッパー
 │   ├── Graphics/                    … Renderer, Pipeline(JSON駆動), Resources, ScreenBuffer
 │   ├── Objects/                     … EmptyObject, IObjectComponent, 各種コンポーネント
 │   ├── Scene/                       … Scene, SceneManager, SceneContext, Editor
@@ -36,17 +39,23 @@
 │   └── ComponentSerialize/          … コンポーネントのJSONシリアライズ
 ├── Application/
 │   └── AppInitialize.h              … アプリ側の唯一のC++エントリポイント
-├── Assets/
-│   ├── Application/                 … ゲーム側アセット (Image, Model, Sound, Scripts(.as) 等)
-│   ├── KashipanEngine/              … エンジン既定アセット (Fonts, Pipeline定義, SceneList.json)
-│   └── Scenes/                      … シーンJSON (*.scene)
+├── Projects/                        … ゲームプロジェクト置き場（1プロジェクト1フォルダ）
+│   └── &lt;プロジェクト名&gt;/
+│       ├── Project.json             … プロジェクト定義（プロジェクト名、GitHubプッシュ対象可否 等）
+│       └── Assets/                  … このプロジェクトのAssets本体
+│           ├── Application/         … ゲーム側アセット (Image, Model, Sound, Scripts(.as) 等)
+│           ├── KashipanEngine/      … エンジン既定アセット (Fonts, Pipeline定義, EngineSettings.json)
+│           ├── Scenes/              … シーン (*.scene フォルダ)。SceneList.json はAssets直下
+│           └── Locales/             … このプロジェクト固有の翻訳ファイル
+├── AssetsTemplate/                  … 新規プロジェクト作成時に Assets/ へコピーされるテンプレート集
+├── Locales/                         … エンジン共通の翻訳ファイル（各プロジェクトの Assets/Locales/ と後勝ちでマージされる）
 ├── Reference/                       … このリファレンス
 └── Externals/                       … Assimp, DirectXTex, ReactPhysics3D, AngelScript, ImGui, nlohmann-json 等
 </code></pre>
 
 <div class="note">
 <strong>ポイント</strong><br>
-エンジン本体（<code>KashipanEngine/</code>）とゲーム側（<code>Application/</code>, <code>Assets/</code>）は明確に分離されています。ゲーム側のC++コードは実質 <code>AppInitialize.h</code> 1ファイルのみで、実際のゲームコンテンツは <strong>シーンJSON</strong> と <strong>AngelScriptファイル</strong> に置かれます。
+エンジン本体（<code>KashipanEngine/</code>）とゲーム側（<code>Application/</code>, 各プロジェクトの <code>Assets/</code>）は明確に分離されています。ゲーム側のC++コードは実質 <code>AppInitialize.h</code> 1ファイルのみで、実際のゲームコンテンツは <strong>シーンJSON</strong> と <strong>AngelScriptファイル</strong> に置かれます。シーンJSONやマテリアル等のデータが参照するアセットパスは常に <code>"Assets/..."</code> から始まる<strong>論理パス</strong>（プロジェクト間で持ち運べる表記）で、実際にファイルを開く直前に <code>ProjectPaths::ToPhysical()</code> で現在開いているプロジェクトの物理パスへ変換されます。
 </div>
 
 <h2>唯一の公開ヘッダ</h2>
@@ -98,11 +107,11 @@ inline void AppInitialize(const GameEngine::Context &amp;context) {
 
 <h3>継承よりコンポジション</h3>
 <p>
-<code>EmptyObject</code>、<code>Scene</code>、<code>MeshRenderer</code>、<code>Transform</code> など、エンジンの主要クラスのほとんどが <code>final</code> 指定されています。つまり、ゲーム側で独自のオブジェクト型やシーン型を作るために継承する、という設計にはなっていません。代わりに、既存のオブジェクトへ用途別のコンポーネントを <code>AddComponent&lt;T&gt;()</code> で組み合わせていく Unity 的な<strong>コンポジション方式</strong>を採用しています。
+<code>EmptyObject</code>、<code>Scene</code>、<code>MeshRenderer</code>、<code>MeshFilter</code> など、エンジンの主要クラスのほとんどが <code>final</code> 指定されています（<code>Transform</code> のように <code>final</code> が付いていないコンポーネントも一部ありますが、いずれにせよゲーム側での継承は想定されていません）。つまり、ゲーム側で独自のオブジェクト型やシーン型を作るために継承する、という設計にはなっていません。代わりに、既存のオブジェクトへ用途別のコンポーネントを <code>AddComponent&lt;T&gt;()</code> で組み合わせていく Unity 的な<strong>コンポジション方式</strong>を採用しています。
 </p>
 <div class="warn">
 <strong>注意</strong><br>
-「シーンやオブジェクトをC++で継承して独自クラスを作る」という発想はこのエンジンには通用しません。振る舞いを追加したい場合はコンポーネントを追加するか、<a href="07_Scripting.html">AngelScriptスクリプト</a>を書きます。
+「シーンやオブジェクトをC++で継承して独自クラスを作る」という発想はこのエンジンには通用しません。振る舞いを追加したい場合はコンポーネントを追加するか、<a href="Script/00_Index.html">AngelScriptスクリプト</a>を書きます。
 </div>
 
 <h3>Passkeyイディオムによるアクセス制御</h3>

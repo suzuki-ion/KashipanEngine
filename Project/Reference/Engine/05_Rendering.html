@@ -103,9 +103,16 @@ MaterialManager::MaterialHandle GetMaterialHandleAt(size_t slot) const noexcept;
 <p>マテリアルスロット数はメッシュのサブメッシュ数に合わせて拡張できます。スロット数を超えるサブメッシュは最後のスロットのマテリアルで描画されます。</p>
 </div>
 
+<div class="note">
+<strong>マテリアル・シェーダーモジュール（lilToon風の合成シェーダー）</strong><br>
+<code>MaterialManager::Material</code>は色・テクスチャ・シャドウ等の標準フィールドに加え、<code>extraParameters</code>（<code>std::unordered_map&lt;std::string, MyAny&gt;</code>）でモジュール固有パラメータを保持します。マテリアルエディタ（<span class="badge imgui">USE_IMGUI</span>限定）でモジュールを選択すると、選択の組み合わせごとにHLSLソースとパイプラインバリアントが自動生成され（<code>Graphics/Pipeline/System/ShaderModuleComposer</code>）、生成されたパイプライン名を<code>MeshRenderer::SetPipelineName()</code>／<code>SpriteRenderer::SetPipelineName()</code>へ渡すことで適用されます。<code>extraParameters</code>のキー名はシェーダー側<code>struct Material</code>のフィールド名と一致させる必要があり、対応するフィールドが無いキーは黙って無視されます。<br><br>
+Object3D向けモジュール: <code>NormalMap</code> / <code>SpecularMap</code> / <code>EnvironmentMap</code> / <code>DetailMap</code> / <code>AO</code> / <code>Matcap</code> / <code>Gradation</code> / <code>Emission</code> / <code>ColorGrading</code> / <code>OpacityMap</code> / <code>DistanceFade</code> / <code>Dissolve</code> / <code>MultiTone</code> / <code>RimShade</code> / <code>Backlight</code><br>
+Object2D向けモジュール（<code>SpriteRenderer</code>/<code>TextRenderer</code>用）: <code>ColorGrading2D</code> / <code>Dissolve2D</code> / <code>Vignette2D</code> / <code>GradientOverlay2D</code> / <code>Pulse2D</code>（周期的な明滅） / <code>FlashColor2D</code>（被弾時などのヒットフラッシュ） / <code>MaskTexture2D</code><br><br>
+モジュール構成そのものをコードから動的に組み立てることは想定されておらず、モジュールの選択・シェーダー生成はエディタのマテリアルエディタで行います。ゲーム側は生成済みマテリアルの<code>extraParameters</code>を実行時に書き換えて演出を変化させる使い方が基本です（例: <code>MaterialManager::GetMaterial("Enemy")-&gt;extraParameters["flashIntensity"] = 1.0f;</code>で<code>FlashColor2D</code>モジュールのヒットフラッシュ強度を点灯させる）。なお<code>"Default"</code>という名前のマテリアルアセットが存在しないプロジェクトでは、<code>MaterialManager</code>が起動時に既定マテリアルを自動登録するため、<code>SetMaterialName("Default")</code>指定のオブジェクトが非表示になることはありません。
+</div>
+
 <h3>基本的な使い方</h3>
-<pre><code>EmptyObject *obj = sceneContext-&gt;CreateObject("Cube");
-obj-&gt;AddComponent&lt;Transform&gt;();
+<pre><code>EmptyObject *obj = sceneContext-&gt;CreateEmptyObject("Cube"); // Transformは生成時に自動で付与される
 obj-&gt;AddComponent&lt;MeshFilter&gt;(ModelManager::GetModelHandleFromAssetPath("Model/Cube.gltf"));
 
 auto *renderer = obj-&gt;AddComponent&lt;MeshRenderer&gt;();
@@ -116,32 +123,49 @@ renderer-&gt;SetCastShadows(true);</code></pre>
 
 <h2>SkinnedMeshRenderer — スキンメッシュ描画</h2>
 <p>
-ボーンアニメーションで変形するメッシュを描画するコンポーネントです。描画先・パイプライン・マテリアル指定は <code>MeshRenderer</code> と同じ API を持ちますが、加えて GPU スキニング（Computeシェーダー）とアニメーション再生の制御を行います。
+ボーンアニメーションで変形するメッシュを描画するコンポーネントです。描画先・パイプライン・マテリアル・インスタンスカラー指定は <code>MeshRenderer</code> と同じ API を持ちますが、加えて GPU スキニング（Computeシェーダー）とアニメーション再生の制御を行います。
 </p>
 
 <div class="api-card">
-<h4>アニメーション再生</h4>
-<div class="api-sig">void SetAnimationClipName(const std::string &amp;clipName);
-const std::string &amp;GetAnimationClipName() const noexcept;
-void SetPlayOnStart(bool playOnStart);
-void SetLoop(bool loop);
-void SetPlaybackSpeed(float speed);
-void Play();
-void Stop();
-bool IsPlaying() const noexcept;
-std::vector&lt;std::string&gt; GetAvailableAnimationClipNames() const;</div>
-<p>再生するクリップは <code>MeshFilter</code> のメッシュと同じアセットから読み込まれた <code>AnimationClip</code> の中から選択します。クリップ名が空文字の場合はバインドポーズのまま静止します。</p>
+<h4>インスタンスカラー</h4>
+<div class="api-sig">void SetInstanceColor(const Vector4 &amp;color) noexcept;
+const Vector4 &amp;GetInstanceColor() const noexcept;
+void SetInstanceColorBlendMode(ColorBlendMode mode) noexcept;
+ColorBlendMode GetInstanceColorBlendMode() const noexcept;</div>
+<p><code>MeshRenderer</code>と同じAPI・既定値（白 <code>(1,1,1,1)</code> ＋ <code>Multiply</code>）です。<code>SkinnedMeshRenderer::ColorBlendMode</code>として独立して定義されていますが、値の並びは<code>MeshRenderer::ColorBlendMode</code>と同一です。</p>
 </div>
 
 <div class="api-card">
-<h4>Root Bone / BlendShape / Quality</h4>
-<div class="api-sig">void SetRootBoneObject(const EmptyObject *rootBoneObject);
-EmptyObject *GetRootBoneObject() const;
-void SetQuality(SkinQuality quality);   // Auto / Bone1 / Bone2 / Bone4
+<h4>Quality / BlendShape（SkinnedMeshRenderer自身が持つ設定）</h4>
+<div class="api-sig">void SetQuality(SkinQuality quality);   // Auto / Bone1 / Bone2 / Bone4
 void SetBlendShapeWeight(const std::string &amp;name, float weight);
 float GetBlendShapeWeight(const std::string &amp;name) const;
-const std::vector&lt;BlendShapeWeight&gt; &amp;GetBlendShapes() const noexcept;</div>
-<p>Root Bone を設定すると、そのオブジェクトの Transform に沿ってメッシュ全体が動きます（Unityと同様）。未設定の場合は所有オブジェクト自身の Transform が使われます。BlendShape（モーフターゲット）の一覧はメッシュから自動同期され、ユーザーが編集できるのはウェイト（0～100）のみです。</p>
+const std::vector&lt;BlendShapeWeight&gt; &amp;GetBlendShapes() const noexcept;
+Animator *GetAnimator() const;</div>
+<p>BlendShape（モーフターゲット）の一覧はメッシュから自動同期され、ユーザーが編集できるのはウェイト（0～100）のみです。<code>GetAnimator()</code>は同一オブジェクトの<code>Animator</code>コンポーネントを取得します（無い場合は<code>nullptr</code>で、この場合バインドポーズのまま描画されます）。</p>
+</div>
+
+<div class="warn">
+<strong>アニメーション再生はAnimatorコンポーネントの責務</strong><br>
+クリップの選択・再生状態（Play/Stop/Loop/再生速度）・Root Boneの設定は<code>SkinnedMeshRenderer</code>自身ではなく、同一オブジェクトに付与する<strong><code>Animator</code></strong>コンポーネント（<code>Objects/Components/Animator.h</code>、カテゴリ<code>"Animation"</code>）が担います。<code>SkinnedMeshRenderer</code>は<code>Animator</code>が計算した姿勢（ボーンのワールド行列）を読み取ってGPUスキニングを行うのみで、再生状態そのものは持ちません。
+</div>
+
+<div class="api-card">
+<h4><code>Animator</code> — アニメーション再生</h4>
+<div class="api-sig">void SetClipName(const std::string &amp;clipName); // 空文字ならバインドポーズのまま静止
+const std::string &amp;GetClipName() const noexcept;
+void SetAnimationSourceAssetPath(const std::string &amp;path); // 空文字ならMeshFilterのメッシュ自身から取得
+const std::string &amp;GetAnimationSourceAssetPath() const noexcept;
+void SetPlayOnStart(bool playOnStart);   // 既定 true
+void SetLoop(bool loop);                 // 既定 true
+void SetPlaybackSpeed(float speed);      // 既定 1.0
+void Play();
+void Stop();
+bool IsPlaying() const noexcept;
+void SetRootBoneObject(const EmptyObject *rootBoneObject);
+EmptyObject *GetRootBoneObject() const;
+std::vector&lt;std::string&gt; GetAvailableClipNames() const;</div>
+<p>再生するクリップは、既定では<code>MeshFilter</code>のメッシュと同じアセットから読み込まれます。<code>SetAnimationSourceAssetPath()</code>で別ファイルを指定すると、ボーン名が一致する範囲でそのファイルのアニメーションを適用できます（同一リグでアニメーションのみ別ファイルのMixamo等のケース向け）。Root Bone を設定すると、そのオブジェクトの Transform に沿ってメッシュ全体が動きます（Unityと同様）。未設定の場合は所有オブジェクト自身の最上位の祖先が探索の起点として使われます。</p>
 </div>
 
 <div class="note">
@@ -161,6 +185,11 @@ const Vector2 &amp;GetAnchor() const noexcept;
 void SetPivot(const Vector2 &amp;pivot);     // 既定(0.5, 0.5)
 const Vector2 &amp;GetPivot() const noexcept;</div>
 <p>メッシュはXY平面上の-0.5～0.5の単位クアッドを想定しており、アンカー・ピボットはその単位クアッド内の正規化座標 <code>(0,0)</code>=左下 ～ <code>(1,1)</code>=右上 で指定します。アンカーは「Transformの座標に一致させる点」、ピボットは「回転・拡縮の中心にする点」で、両者に異なる点を指定すると回転・拡縮の中心とTransform座標がずれた挙動になります。</p>
+</div>
+
+<div class="tip">
+<strong>時間ベースの2Dシェーダーモジュール</strong><br>
+Object2D系パイプラインには、<code>Renderer</code>がゲーム内時刻（起動からの経過秒数 <code>gTime</code>、前フレームからの経過秒数 <code>gDeltaTime</code>）を毎フレーム自動的に注入します。<code>Pulse2D</code>（周期的な明滅）や<code>FlashColor2D</code>（ヒットフラッシュ）のような時間・パラメータ駆動の演出モジュールはこれを内部で利用しており、ゲーム側で時刻を渡すコードを書く必要はありません。マテリアルの<code>extraParameters</code>によるモジュールパラメータ制御については、前述の「MeshRenderer」節のマテリアル・シェーダーモジュールの説明を参照してください。
 </div>
 
 <h2>TextRenderer — テキスト描画</h2>
@@ -296,7 +325,7 @@ void SetFovLerpFactor(float factor);</div>
 </p>
 <div class="tip">
 <strong>スクリプトからの利用</strong><br>
-AngelScript側では <code>ScriptComponentBehavior::OnWindowMessage(const WindowMessageInfo &amp;in)</code> として、同一オブジェクトのウィンドウ系コンポーネントが受信したメッセージを受け取れます。詳しくは <a href="07_Scripting.html">07_Scripting.html</a> を参照してください。
+AngelScript側では <code>ScriptComponentBehavior::OnWindowMessage(const WindowMessageInfo &amp;in)</code> として、同一オブジェクトのウィンドウ系コンポーネントが受信したメッセージを受け取れます。詳しくは <a href="Script/00_Index.html">Script/00_Index.html</a> を参照してください。
 </div>
 
 <h2>次に読むページ</h2>

@@ -31,7 +31,7 @@
                 "data": {
                     "customData": {
                         "height": 1080,
-                        "isShowViewer": false,
+                        "isShowViewer": true,
                         "name": "ScreenBuffer_0",
                         "saveDirectory": "Screenshots",
                         "saveFileNamePrefix": "Screenshot",

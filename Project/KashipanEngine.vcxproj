@@ -61,19 +61,19 @@
     <TargetName>$(ProjectName)</TargetName>
     <OutDir>$(SolutionDir)..\Generated\Outputs\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)..\Generated\Obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
-    <ExternalIncludePath>$(ProjectDir)Externals\reactphysics3d/src;$(ProjectDir)Externals\reactphysics3d/include;$(ExternalIncludePath)</ExternalIncludePath>
+    <ExternalIncludePath>$(ProjectDir)Externals\reactphysics3d/src;$(ProjectDir)Externals\reactphysics3d/include;$(ProjectDir)Externals\WebView2\include;$(ExternalIncludePath)</ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetName>$(ProjectName)</TargetName>
     <OutDir>$(SolutionDir)..\Generated\Outputs\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)..\Generated\Obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
-    <ExternalIncludePath>$(ProjectDir)Externals\reactphysics3d/src;$(ProjectDir)Externals\reactphysics3d/include;$(ExternalIncludePath)</ExternalIncludePath>
+    <ExternalIncludePath>$(ProjectDir)Externals\reactphysics3d/src;$(ProjectDir)Externals\reactphysics3d/include;$(ProjectDir)Externals\WebView2\include;$(ExternalIncludePath)</ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'">
     <TargetName>$(ProjectName)</TargetName>
     <OutDir>$(SolutionDir)..\Generated\Outputs\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)..\Generated\Obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
-    <ExternalIncludePath>$(ProjectDir)Externals\reactphysics3d/src;$(ProjectDir)Externals\reactphysics3d/include;$(ExternalIncludePath)</ExternalIncludePath>
+    <ExternalIncludePath>$(ProjectDir)Externals\reactphysics3d/src;$(ProjectDir)Externals\reactphysics3d/include;$(ProjectDir)Externals\WebView2\include;$(ExternalIncludePath)</ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
     <VcpkgEnableManifest>true</VcpkgEnableManifest>
@@ -117,12 +117,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalOptions>/VERBOSE:UNUSEDLIBS /VERBOSE:LIB %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/debug/lib;$(ProjectDir)Externals/Assimp/lib/Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mtd.lib;reactphysics3d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/debug/lib;$(ProjectDir)Externals/Assimp/lib/Debug;$(ProjectDir)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc143-mtd.lib;reactphysics3d.lib;WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
 copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
+copy /Y "$(ProjectDir)Externals\WebView2\lib\x64\WebView2Loader.dll" "$(TargetDir)WebView2Loader.dll"
 &gt;"$(OutDir)EngineRoot.txt" echo $(ProjectDir)</Command>
     </PostBuildEvent>
     <Manifest>
@@ -156,12 +157,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/lib;$(ProjectDir)Externals/Assimp/lib/Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mt.lib;reactphysics3d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/lib;$(ProjectDir)Externals/Assimp/lib/Release;$(ProjectDir)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc143-mt.lib;reactphysics3d.lib;WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
 copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
+copy /Y "$(ProjectDir)Externals\WebView2\lib\x64\WebView2Loader.dll" "$(TargetDir)WebView2Loader.dll"
 if exist "$(TargetDir)EngineRoot.txt" del "$(TargetDir)EngineRoot.txt"
 powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyReleaseAssets.ps1" -ProjectDir "$(ProjectDir)." -TargetDir "$(TargetDir)."</Command>
     </PostBuildEvent>
@@ -200,14 +202,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/lib;$(ProjectDir)Externals/Assimp/lib/Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mt.lib;reactphysics3d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/lib;$(ProjectDir)Externals/Assimp/lib/Release;$(ProjectDir)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc143-mt.lib;reactphysics3d.lib;WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>
       </LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
 copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
+copy /Y "$(ProjectDir)Externals\WebView2\lib\x64\WebView2Loader.dll" "$(TargetDir)WebView2Loader.dll"
 &gt;"$(OutDir)EngineRoot.txt" echo $(ProjectDir)</Command>
     </PostBuildEvent>
     <Manifest>
@@ -559,6 +562,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
     <ClCompile Include="KashipanEngine\Debug\LogSettings.cpp" />
     <ClCompile Include="KashipanEngine\Debug\Logger.cpp" />
     <ClCompile Include="KashipanEngine\EngineSettings.cpp" />
+    <ClCompile Include="KashipanEngine\Splash\SplashScreen.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\GraphicsEngine.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\PipelineManager.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\PipelineCreator.cpp" />
@@ -1048,6 +1052,7 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
     <ClInclude Include="KashipanEngine\Debug\LogSettings.h" />
     <ClInclude Include="KashipanEngine\Debug\Logger.h" />
     <ClInclude Include="KashipanEngine\EngineSettings.h" />
+    <ClInclude Include="KashipanEngine\Splash\SplashScreen.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadLimits.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadRendering.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadTranslations.h" />

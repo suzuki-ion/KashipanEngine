@@ -76,6 +76,14 @@ try {
         Invoke-MirrorCopy -Source $sourceLocales -Destination $destLocales -Label "エンジン共通の Locales"
     }
 
+    # 起動スプラッシュ画面（WebView2）のHTML/CSS/JSも、配布形態ではexeと同じフォルダへ同梱する必要がある
+    $sourceSplashUI = Join-Path $ProjectDir "KashipanEngine\Splash\UI"
+    $destSplashUI = Join-Path $TargetDir "KashipanEngine\Splash\UI"
+
+    if (Test-Path -LiteralPath $sourceSplashUI) {
+        Invoke-MirrorCopy -Source $sourceSplashUI -Destination $destSplashUI -Label "起動スプラッシュ画面のUI"
+    }
+
     exit 0
 } catch {
     Write-Error $_

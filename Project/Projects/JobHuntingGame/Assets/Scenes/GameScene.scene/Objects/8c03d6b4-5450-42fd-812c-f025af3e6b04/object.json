@@ -36,7 +36,7 @@
                         "title": "Normal Window",
                         "width": 1920
                     },
-                    "isActive": true,
+                    "isActive": false,
                     "priority": 1,
                     "tag": ""
                 },
@@ -46,7 +46,7 @@
                 "data": {
                     "customData": {
                         "height": 1080,
-                        "isShowViewer": true,
+                        "isShowViewer": false,
                         "name": "ScreenBuffer_1",
                         "saveDirectory": "Screenshots",
                         "saveFileNamePrefix": "Screenshot",

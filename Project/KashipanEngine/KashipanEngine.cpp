@@ -7,11 +7,27 @@
 #include "Core/ProjectManager.h"
 #include "Core/ProjectPaths.h"
 #include "Core/UserSettings.h"
+#include "Splash/SplashScreen.h"
 
 #include "Utilities/Plugin/Plugins.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
+namespace {
+/// @brief スプラッシュ画面のRAIIガード
+/// @details GameEngineのコンストラクタが例外を投げた場合でも、スコープを抜ける際に
+///          確実にスプラッシュを閉じてスレッドを回収できるようにする
+struct ScopedSplashScreen {
+    explicit ScopedSplashScreen(PasskeyForGameEngineMain passkey) : passkey_(passkey) {
+        SplashScreen::Show(passkey_);
+    }
+    ~ScopedSplashScreen() {
+        SplashScreen::Close(passkey_);
+    }
+    PasskeyForGameEngineMain passkey_;
+};
+} // namespace
+
 int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsPath) {
     SetUnhandledExceptionFilter(CrashHandler);
     D3DResourceLeakChecker resourceLeakChecker;
@@ -76,7 +92,13 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
 
     //--------- エンジン実行 ---------//
 
-    std::unique_ptr<GameEngine> engine = std::make_unique<GameEngine>(PasskeyForGameEngineMain{});
+    // GameEngineのコンストラクタ（Window/DirectX12/各種マネージャ生成）が終わるまでは
+    // 同期的にブロックするため、その間だけスプラッシュ画面を表示してログを流す
+    std::unique_ptr<GameEngine> engine;
+    {
+        ScopedSplashScreen splashScreen{ PasskeyForGameEngineMain{} };
+        engine = std::make_unique<GameEngine>(PasskeyForGameEngineMain{});
+    }
     int code = engine->Execute({});
 
     //--------- エンジン終了 ---------//

@@ -36,6 +36,11 @@ struct LogEntry {
 std::vector<LogEntry> sLogLines;
 // ImGui表示用ログ行の排他制御（ワーカースレッドが追記、メインスレッドが描画で参照するため）
 std::mutex sLogLinesMutex;
+
+// スプラッシュ画面向けログ収集（Show()〜Close()の間だけ有効化される）
+std::atomic<bool> sSplashCaptureEnabled{false};
+std::deque<LogLine> sSplashLogQueue;
+std::mutex sSplashLogMutex;
 const std::string kBuildTypeString =
 #ifdef DEBUG_BUILD
 "[Debug]";
@@ -106,6 +111,10 @@ void WriteToSinks(const LogEntry &entry) {
         sLogLines.push_back(entry);
     }
 #endif
+    if (sSplashCaptureEnabled.load(std::memory_order_relaxed)) {
+        std::lock_guard<std::mutex> splashLock(sSplashLogMutex);
+        sSplashLogQueue.push_back({entry.text, entry.severity});
+    }
 }
 
 void LoggerWorker() {
@@ -630,6 +639,25 @@ void Log(const std::string &logText, LogSeverity severity) {
 
 void LogSeparator() {
     Log("--------------------------------------------------", LogSeverity::Info);
+}
+
+void BeginSplashLogCapture(Passkey<SplashScreen>) {
+    std::lock_guard<std::mutex> lock(sSplashLogMutex);
+    sSplashLogQueue.clear();
+    sSplashCaptureEnabled.store(true, std::memory_order_relaxed);
+}
+
+void EndSplashLogCapture(Passkey<SplashScreen>) {
+    sSplashCaptureEnabled.store(false, std::memory_order_relaxed);
+    std::lock_guard<std::mutex> lock(sSplashLogMutex);
+    sSplashLogQueue.clear();
+}
+
+std::vector<LogLine> FetchNewSplashLogLines(Passkey<SplashScreen>) {
+    std::lock_guard<std::mutex> lock(sSplashLogMutex);
+    std::vector<LogLine> out(sSplashLogQueue.begin(), sSplashLogQueue.end());
+    sSplashLogQueue.clear();
+    return out;
 }
 
 void LogScope::PushPrefix(const std::source_location &location) {

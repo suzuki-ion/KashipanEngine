@@ -1,0 +1,93 @@
+/* KashipanEngine 起動スプラッシュ画面
+ *
+ * 配色はランチャー（Launcher/UI）のダークテーマ側と揃えている。
+ * ロゴは今は文字だけ（logo-text）。画像ロゴを用意したら .logo-area に
+ * <img> を追加して差し替えられる。 */
+
+:root {
+  --bg: #14171c;
+  --text: #e6e9ef;
+  --text-dim: #9aa4b2;
+  --accent: #6d9bff;
+  --border: #2a2f38;
+  --severity-warning: #e8c877;
+  --severity-error: #ff8383;
+  --severity-critical: #ff5c5c;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
+  overflow: hidden;
+  user-select: none;
+}
+
+body {
+  opacity: 1;
+  transition: opacity 200ms ease-out;
+}
+
+/* C++側（SplashScreen::NotifyClosing）から type:"closing" のメッセージが届いたら付与される */
+body.closing {
+  opacity: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.logo-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-text {
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.logo-accent {
+  color: var(--accent);
+}
+
+.log-area {
+  height: 96px;
+  border-top: 1px solid var(--border);
+  padding: 8px 16px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 16px);
+  mask-image: linear-gradient(to bottom, transparent 0, black 16px);
+}
+
+#log-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+#log-list li {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#log-list li.severity-warning { color: var(--severity-warning); }
+#log-list li.severity-error { color: var(--severity-error); }
+#log-list li.severity-critical { color: var(--severity-critical); }

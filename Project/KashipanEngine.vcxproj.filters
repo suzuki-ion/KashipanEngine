@@ -118,6 +118,9 @@
     <Filter Include="KashipanEngine\EngineSettings">
       <UniqueIdentifier>{23E7A4A5-C015-5CB9-8F2A-6416CB4FBDE8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="KashipanEngine\Splash">
+      <UniqueIdentifier>{D1F3A2B4-6E9C-5A3D-8B7F-2C4E9A1D5F60}</UniqueIdentifier>
+    </Filter>
     <Filter Include="KashipanEngine\Graphics">
       <UniqueIdentifier>{8B3D12AC-3E7A-55F4-8F3E-63678771C66B}</UniqueIdentifier>
     </Filter>
@@ -410,6 +413,9 @@
     </ClCompile>
     <ClCompile Include="KashipanEngine\EngineSettings.cpp">
       <Filter>KashipanEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Splash\SplashScreen.cpp">
+      <Filter>KashipanEngine\Splash</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Graphics\GraphicsEngine.cpp">
       <Filter>KashipanEngine\Graphics</Filter>
@@ -958,6 +964,9 @@
     </ClInclude>
     <ClInclude Include="KashipanEngine\EngineSettings.h">
       <Filter>KashipanEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Splash\SplashScreen.h">
+      <Filter>KashipanEngine\Splash</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\EngineSettings\LoadLimits.h">
       <Filter>KashipanEngine\EngineSettings</Filter>

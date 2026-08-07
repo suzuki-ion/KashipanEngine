@@ -1,0 +1,83 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 0.9764145016670227,
+                            "x": 0.20811551809310913,
+                            "y": -0.056206267327070236,
+                            "z": 0.011979949660599232
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 166.05752563476563,
+                            "y": 98.96586608886719,
+                            "z": -70.14131164550781
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "aspectRatio": 1.5771567821502686,
+                        "farClip": 1000.0,
+                        "fovY": 0.44999998807907104,
+                        "nearClip": 0.10000000149011612,
+                        "orthoSize": 10.0,
+                        "orthographic": false
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Camera3D"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "distance": 59.96235656738281
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "SceneViewOrbitState"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "height": 823,
+                        "isShowViewer": false,
+                        "name": "EditorSceneView",
+                        "saveDirectory": "Screenshots",
+                        "saveFileNamePrefix": "Screenshot",
+                        "saveFormat": "png",
+                        "viewerId": 16289254799954061067,
+                        "width": 1298
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScreenBufferObject"
+            }
+        ],
+        "editorOnly": true,
+        "isActive": true,
+        "name": "Scene View",
+        "objectID": "569d818c-d73c-43b5-a647-08a9986fc8b5",
+        "tag": ""
+    },
+    "siblingIndex": 7
+}

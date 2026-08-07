@@ -207,7 +207,7 @@ inline void AppInitialize(const GameEngine::Context &amp;context) {
 
 <h2>AngelScriptからの利用</h2>
 <p>
-AngelScriptスクリプト（<a href="07_Scripting.html">07_Scripting.html</a>）からは、登録済みのアクション名を文字列で指定してグローバル関数から評価します。
+AngelScriptスクリプト（<a href="Script/00_Index.html">Script/00_Index.html</a>）からは、登録済みのアクション名を文字列で指定してグローバル関数から評価します。
 </p>
 <pre><code>bool IsCommandTriggered(const string &amp;in action);
 float GetCommandValue(const string &amp;in action);</code></pre>
@@ -220,7 +220,7 @@ float GetCommandValue(const string &amp;in action);</code></pre>
         moveDirection = GetCommandValue("PlayerMoveLeft");
     }
 }</code></pre>
-<p>内部的には <code>SceneContext::GetInputCommand()</code> で取得した <code>InputCommand</code> の <code>Evaluate()</code> をラップしているだけなので、C++側と同じバインディングをそのまま参照できます。詳しいスクリプトバインディングの一覧は <a href="07_Scripting.html">07_Scripting.html</a> を参照してください。</p>
+<p>内部的には <code>SceneContext::GetInputCommand()</code> で取得した <code>InputCommand</code> の <code>Evaluate()</code> をラップしているだけなので、C++側と同じバインディングをそのまま参照できます。詳しいスクリプトバインディングの一覧は <a href="Script/00_Index.html">Script/00_Index.html</a> を参照してください。</p>
 
 <h2>コンポーネントから入力値を適用する: <code>InputCommandApplier</code></h2>
 <p>
@@ -237,7 +237,7 @@ size_t GetCommandCount() const noexcept;</div>
 <h2>次に読むページ</h2>
 <ul>
 <li>入力で読み書きするアセットの管理方法を知る → <a href="09_Assets.html">09_Assets.html</a></li>
-<li>AngelScriptからの入力利用の全体像 → <a href="07_Scripting.html">07_Scripting.html</a></li>
+<li>AngelScriptからの入力利用の全体像 → <a href="Script/00_Index.html">Script/00_Index.html</a></li>
 <li>コンポーネントの基礎（<code>InputCommandApplier</code>を含む）→ <a href="04_ObjectComponents.html">04_ObjectComponents.html</a></li>
 </ul>
 

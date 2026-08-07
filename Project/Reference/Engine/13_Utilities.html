@@ -42,7 +42,7 @@ bool RemoveFromJSONArray(JSON &amp;json, const std::string &amp;arrayKey, size_t
 std::string JSONToFormattedString(const JSON &amp;json, int indent = 4);
 void PrintJSON(const JSON &amp;json, const std::string &amp;title = "JSON Data");</div>
 <p>
-<code>ToJSON(value)</code> / <code>FromJSON&lt;T&gt;(json)</code> のオーバーロード群も用意されており、<code>bool</code>/整数系/<code>float</code>/<code>double</code>/<code>std::string</code>/<code>Vector2〜4</code>/<code>Quaternion</code>/<code>Matrix3x3</code>/<code>Matrix4x4</code>/<code>UUID128</code>/<code>std::vector&lt;T&gt;</code>/<code>std::optional&lt;T&gt;</code>/<code>std::map</code>/<code>std::unordered_map</code> に対応しています。コンポーネントの <code>SaveToJson()</code>/<code>LoadFromJson()</code> はこの仕組みの上に成り立っています。
+<code>ToJSON(value)</code> / <code>FromJSON&lt;T&gt;(json)</code> のオーバーロード群も用意されており、<code>bool</code>/整数系/<code>float</code>/<code>double</code>/<code>std::string</code>/<code>Vector2〜4</code>/<code>Quaternion</code>/<code>Color</code>/<code>Matrix3x3</code>/<code>Matrix4x4</code>/<code>UUID128</code>/<code>TextureRef</code>/<code>TextureCubeRef</code>/<code>std::vector&lt;T&gt;</code>/<code>std::optional&lt;T&gt;</code>/<code>std::map</code>/<code>std::unordered_map</code> に対応しています。コンポーネントの <code>SaveToJson()</code>/<code>LoadFromJson()</code> はこの仕組みの上に成り立っています。
 </p>
 </div>
 
@@ -65,11 +65,13 @@ void SaveCSV(const std::string &amp;filePath, const CSVData &amp;data);</div>
     std::vector&lt;DirectoryData&gt; subdirectories;
 };
 bool IsDirectoryExist(const std::string &amp;directoryPath);
+bool RemoveFile(const std::string &amp;filePath); // 削除に成功した場合/元々存在しなかった場合にtrue
 bool CreateDirectories(const std::string &amp;directoryPath);
 bool EnsureParentDirectoryExists(const std::string &amp;filePath);
 DirectoryData GetDirectoryData(const std::string &amp;directoryPath, bool isRecursive = false, bool isFullPath = true);
 DirectoryData GetDirectoryDataByExtension(const DirectoryData &amp;directoryData, const std::vector&lt;std::string&gt; &amp;extensions);
 DirectoryData GetDirectoryDataByExtension(const std::string &amp;directoryPath, const std::vector&lt;std::string&gt; &amp;extensions, bool isRecursive = false, bool isFullPath = true);</div>
+<p><code>RemoveFile</code> という名前は、<code>DeleteFile</code>だとWindows APIのマクロ（<code>DeleteFileW</code>/<code>DeleteFileA</code>）と衝突するために付けられています。</p>
 </div>
 
 <div class="api-card">
@@ -144,7 +146,7 @@ T EasedGAB(const T &amp;start, const T &amp;end, float t, EaseType goType, EaseT
 // 個別イージング関数も直接呼べる（float版・Vector2版・Vector3版）
 float EaseInOutBack(float x1, float x2, float t);
 Vector3 EaseOutElastic(Vector3 x1, Vector3 x2, float t);</div>
-<p>AngelScriptからは <code>Easing::</code> 名前空間経由で一部が公開されています(<a href="07_Scripting.html">07_Scripting.html</a> 参照)。</p>
+<p>AngelScriptからは <code>Easing::</code> 名前空間経由で一部が公開されています(<a href="Script/00_Index.html">Script/00_Index.html</a> 参照)。</p>
 </div>
 
 <div class="api-card">
@@ -176,7 +178,9 @@ Vector4 Clamp(const Vector4 &amp;value, const Vector4 &amp;min, const Vector4 &a
 <h4>グローバル時間関数 — <code>Utilities/TimeUtils.h</code></h4>
 <div class="api-sig">void SetGameSpeed(float speed);
 float GetGameSpeed();
-float GetDeltaTime();                 // 前フレームからの経過時間（秒）
+float GetDeltaTime();                 // 前フレームからの経過時間（秒）。SetDeltaTimeClamp()の上限値でクランプ済み
+void SetDeltaTimeClamp(float clamp);  // GetDeltaTime()の上限値（秒）を設定。既定は0.1f
+float GetDeltaTimeClamp();
 
 int GetNowTimeYear() / GetNowTimeMonth() / GetNowTimeDay() / GetNowTimeHour() / GetNowTimeMinute();
 long long GetNowTimeSecond() / GetNowTimeMillisecond();
@@ -218,7 +222,7 @@ float    GetRandomFloat(float min, float max);
 double   GetRandomDouble(double min, double max);
 int64_t  GetRandomInt64(int64_t min, int64_t max);
 bool     GetRandomBool(float trueProbability = 0.5f);</div>
-<p>AngelScript側には <code>Random::</code> 名前空間として一部が公開されています(<a href="07_Scripting.html">07_Scripting.html</a> 参照)。</p>
+<p>AngelScript側には <code>Random::</code> 名前空間として一部が公開されています(<a href="Script/00_Index.html">Script/00_Index.html</a> 参照)。</p>
 </div>
 
 <h2>タグ (Tag)</h2>
@@ -282,7 +286,10 @@ class PasskeyForCrashHandler final { /* friend LONG WINAPI CrashHandler(EXCEPTIO
 <h2>多言語対応 (Translation)</h2>
 <div class="api-card">
 <h4><code>Utilities/Translation.h</code></h4>
-<div class="api-sig">bool LoadTranslationFile(const std::string &amp;filePath); // 翻訳定義(.json)を読み込む
+<div class="api-sig">enum class TranslationLayer { Global, Project }; // Global:エンジン共通(編集不可) / Project:プロジェクト固有(編集可)
+
+bool LoadTranslationFile(const std::string &amp;filePath, TranslationLayer layer = TranslationLayer::Project); // 翻訳定義(.json)を読み込む（既存への「重ね」読み込み）
+std::vector&lt;std::string&gt; LoadGlobalTranslationFiles(); // &lt;EngineRoot&gt;/Locales/ 配下を全て読み込む（読み込んだ物理パス一覧を返す）
 
 const std::string &amp;GetTranslationText(const std::string &amp;lang, const std::string &amp;key);
 const std::string &amp;GetTranslationText(const std::string &amp;key); // 現在の言語設定を使用
@@ -291,7 +298,12 @@ const std::string &amp;GetTranslationText(const std::string &amp;key); // 現在
 const std::string &amp;GetCurrentLanguage();
 void SetCurrentLanguage(const std::string &amp;lang);
 const std::string &amp;GetCurrentLanguageFontPath(); // 言語ごとのフォントパス</div>
-<p>キーに対応する翻訳が見つからない場合は、キー文字列自体がそのまま返るため、未翻訳箇所がUI上で分かりやすくなっています。翻訳ファイルの実体は <code>Assets/KashipanEngine/Locales/</code> 配下にあります。</p>
+<p>
+翻訳ファイルは「エンジン共通」と「プロジェクト固有」の2層構造になっています。<code>&lt;EngineRoot&gt;/Locales/*.json</code>（全プロジェクト共有。<code>engine.*</code>/<code>editor.*</code>/<code>component.*</code>等）は起動時に <code>LoadGlobalTranslationFiles()</code> が自動で全件読み込み、<code>Assets/Locales/*.json</code>（プロジェクト固有。<code>EngineSettings.json</code>の<code>translations</code>セクションで指定）は <code>LoadTranslationFile(path, TranslationLayer::Project)</code> で読み込まれます。同じ言語コードの翻訳は読み込むたびに「置き換え」ではなく「重ね」られ、同名キーはプロジェクト層が優先されるため、アプリケーション側からエンジン共通キーの上書きも可能です。
+</p>
+<p>
+指定した言語自体が未読込の場合、またはその言語にそのキーがまだ存在しない場合は、<code>kFallbackLanguageCode</code>（既定 <code>"en-US"</code>）の翻訳へフォールバックします。フォールバック先にもキーが無い場合は、キー文字列自体がそのまま返るため、未翻訳箇所がUI上で分かりやすくなっています。
+</p>
 </div>
 
 <h2>文字列テンプレート (TemplateLiteral)</h2>
@@ -341,7 +353,7 @@ Vector4 ConvertColor(const Vector4 &amp;color);</div>
 <h2>次に読むページ</h2>
 <ul>
 <li>ビルド構成によるマクロの違い → <a href="14_BuildMacros.html">14_BuildMacros.html</a></li>
-<li>これらのユーティリティをAngelScriptから呼ぶ方法 → <a href="07_Scripting.html">07_Scripting.html</a></li>
+<li>これらのユーティリティをAngelScriptから呼ぶ方法 → <a href="Script/00_Index.html">Script/00_Index.html</a></li>
 </ul>
 
 <div id="page-footer" class="page-footer"></div>

@@ -37,13 +37,13 @@
 <h3>Register New Scene</h3>
 <p>テーブル下部の<code>Name</code>/<code>File Path</code>欄に入力し<code>Register</code>を押すと、新しいシーンとして登録されます（名前が空の場合はボタンが無効化されます）。</p>
 
-<div class="tip"><strong>フォルダ形式への変換について</strong><br><code>Convert to Folder Format</code>は、複数人で同じシーンを編集する際に別々のオブジェクトを触っていればGitのコンフリクトが起きないようにするための機能です。詳しいシーンJSONの保存形式は<a href="../../Engine/02_Scenes.html">Engine/02_Scenes.html</a>を参照してください。</div>
+<div class="tip"><strong>フォルダ形式への変換について</strong><br><code>Convert to Folder Format</code>は、複数人で同じシーンを編集する際に別々のオブジェクトを触っていればGitのコンフリクトが起きないようにするための機能です。詳しいシーンJSONの保存形式は<a href="../../Engine/02_Scenes.html">Engine/02_Scenes.html</a>を参照してください。変換に成功すると、元の<code>.json</code>ファイルを削除するか残すかを選ぶ確認ダイアログが続けて表示されます。</div>
 
 <h2>Save Scene... モーダル</h2>
 <p><span class="ui-path"><span>File</span><i>›</i><span>Save Scene...</span></span>（または<code>Ctrl+S</code>）で開きます。<code>Path</code>欄に保存先パスを入力し<code>Save</code>を押すと、現在のシーンをそのパスへ保存します。<code>Cancel</code>で閉じます。</p>
 
 <h2>Load Scene... モーダル</h2>
-<p><span class="ui-path"><span>File</span><i>›</i><span>Load Scene...</span></span>で開きます。既存の<code>.scene</code>ファイル一覧から選んで読み込むと、現在のシーン（未保存の変更を含む）が破棄され、選択と操作履歴（Undo/Redo）もクリアされます。</p>
+<p><span class="ui-path"><span>File</span><i>›</i><span>Load Scene...</span></span>で開きます。一覧には<code>Assets/Scenes/</code>と<code>SceneBackups/</code>（自動バックアップ先）の両方に含まれる、<code>.scene</code>フォルダー形式・旧来の単一<code>.json</code>形式の両方のシーンファイルが表示されます。一覧から選ぶ、または<code>Path</code>欄へ直接パスを入力して<code>Load</code>を押すと、現在のシーン（未保存の変更を含む）が破棄され、選択と操作履歴（Undo/Redo）もクリアされます。</p>
 
 <h2>関連ページ</h2>
 <ul>

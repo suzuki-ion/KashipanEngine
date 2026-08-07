@@ -31,6 +31,10 @@
 <p>画像上で何も操作していない状態（ギズモをドラッグ中でない）で左クリックを離すと、クリック位置からのレイと各オブジェクトのメッシュ三角形との交差判定でオブジェクトを選択します。<code>Ctrl</code>を押しながらのクリックで複数選択へ追加できます。選択結果は<a href="02_SceneObjectHierarchy.html">Scene Object Hierarchy</a>・<a href="03_ObjectInspector.html">Scene Object Inspector</a>と共有されます。</p>
 <p><code>LightRenderer</code>/<code>CameraRenderer</code>が付いたオブジェクトのように<code>MeshFilter</code>のメッシュを持たないオブジェクトは、下記「Lights」「Cameras」チェックボックスで表示されるアイコン（マーカー）をクリックすることで選択できます。アイコンは深度テストせずメッシュより手前に表示されるため、クリック判定もメッシュの三角形判定より優先されます。マーカー表示を無効にしている種別はアイコンごとクリック判定からも除外されます。</p>
 
+<h2>選択オブジェクトのアウトライン表示</h2>
+<p>選択中のオブジェクト自身、またはその子孫が<code>MeshRenderer</code>/<code>SkinnedMeshRenderer</code>を持つ場合、そのメッシュへ固定色の押し出しアウトラインが自動的に表示されます。複数選択時は選択している全オブジェクトにそれぞれ表示されます。オン/オフを切り替えるチェックボックスはなく、常時有効です。</p>
+<div class="note"><strong>このシーンビューだけの表示です</strong><br>アウトラインはこのシーンビュー用の描画先にのみ適用され、ゲーム画面や<code>ScreenBufferObject</code>/<code>Window Object</code>など他の描画先には一切影響しません。オブジェクト自身のマテリアルが持つアウトライン設定（lilToon風シェーダーの<code>OutlineWidth</code>等）とも独立しており、マテリアル側でアウトラインを無効にしていても選択中はこの表示が出ます。</div>
+
 <h2>ギズモ</h2>
 <p>選択中のオブジェクトには <a href="https://github.com/CedricGuillemet/ImGuizmo">ImGuizmo</a> による操作ハンドルが表示されます。ツールバーの上部で操作の種類と基準座標系を切り替えます。</p>
 <table>

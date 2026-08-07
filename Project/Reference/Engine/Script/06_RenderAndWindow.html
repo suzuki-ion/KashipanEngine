@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>描画・ライト・ウィンドウ系コンポーネント | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-engine-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="Script_06_RenderAndWindow">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>描画・ライト・ウィンドウ系コンポーネント</h1>
+<p class="page-lead">カメラ・描画・ライト系コンポーネントのスクリプトAPIと、ウィンドウ系コンポーネント（<code>WindowObject</code>）の <code>OnWindowMessage</code>・メッセージの横取り・<code>ScreenBufferObject</code>の画像保存機能をまとめます。</p>
+</div>
+
+<h2>MeshRenderer / SkinnedMeshRenderer</h2>
+<table>
+<tr><th>メソッド</th><th>MeshRenderer</th><th>SkinnedMeshRenderer</th><th>説明</th></tr>
+<tr><td><code>void SetPipelineName(const string &amp;in)</code> / <code>const string &amp;GetPipelineName() const</code></td><td>o</td><td>o</td><td>使用パイプライン名</td></tr>
+<tr><td><code>void SetMaterialName(const string &amp;in)</code> / <code>const string &amp;GetMaterialName() const</code></td><td>o</td><td>o</td><td>使用マテリアル名</td></tr>
+<tr><td><code>void SetTargetObject(Object@)</code> / <code>Object@ GetTargetObject() const</code></td><td>o</td><td>-</td><td>描画先オブジェクト</td></tr>
+<tr><td><code>void SetInstanceColor(const Vector4 &amp;in)</code> / <code>const Vector4 &amp;GetInstanceColor() const</code></td><td>o</td><td>o</td><td>インスタンスカラー（RGBA）</td></tr>
+<tr><td><code>void SetInstanceColorBlendMode(int)</code></td><td>o</td><td>o</td><td>インスタンスカラーの合成方法（0=Override, 1=Multiply, 2=Add, 3=Subtract）</td></tr>
+<tr><td><code>void SetAnimationClipName(const string &amp;in)</code> / <code>const string &amp;GetAnimationClipName() const</code></td><td>-</td><td>o</td><td>再生するアニメーションクリップ名</td></tr>
+<tr><td><code>void SetPlayOnStart(bool)</code> / <code>bool GetPlayOnStart() const</code></td><td>-</td><td>o</td><td>開始時に自動再生するかどうか</td></tr>
+<tr><td><code>void SetLoop(bool)</code> / <code>bool GetLoop() const</code></td><td>-</td><td>o</td><td>ループ再生</td></tr>
+<tr><td><code>void SetPlaybackSpeed(float)</code> / <code>float GetPlaybackSpeed() const</code></td><td>-</td><td>o</td><td>再生速度倍率</td></tr>
+<tr><td><code>void Play()</code> / <code>void Stop()</code> / <code>bool IsPlaying() const</code></td><td>-</td><td>o</td><td>再生制御</td></tr>
+<tr><td><code>void SetBlendShapeWeight(const string &amp;in, float)</code> / <code>float GetBlendShapeWeight(const string &amp;in) const</code></td><td>-</td><td>o</td><td>BlendShapeウェイト（0〜100）の設定/取得</td></tr>
+</table>
+<div class="note">
+<strong>InstanceColorはMeshRenderer/SkinnedMeshRendererの両方に対応</strong><br>
+<code>SkinnedMeshRenderer</code> にもインスタンスカラー（アルファ値のブレンドを含む）が実装されています。被ダメージ時の点滅演出など、色を一時的に上書き/合成したい場合に <code>SetInstanceColor</code> と <code>SetInstanceColorBlendMode</code> を組み合わせて使用してください。実例は <a href="11_PlayerExample.html">11_PlayerExample.html</a> の被ダメージ演出を参照してください。
+</div>
+
+<h2>SpriteRenderer / TextRenderer</h2>
+<table>
+<tr><th>型</th><th>メソッド</th><th>説明</th></tr>
+<tr><td rowspan="4"><code>SpriteRenderer</code></td><td><code>void SetAnchor(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetAnchor() const</code></td><td>アンカー</td></tr>
+<tr><td><code>void SetPivot(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetPivot() const</code></td><td>ピボット</td></tr>
+<tr><td><code>void SetPipelineName(const string &amp;in)</code></td><td>使用パイプライン名の設定</td></tr>
+<tr><td><code>void SetMaterialName(const string &amp;in)</code></td><td>使用マテリアル名の設定</td></tr>
+<tr><td rowspan="2"><code>TextRenderer</code>（<code>Text</code>）</td><td><code>void SetText(const string &amp;in)</code> / <code>const string &amp;GetText() const</code></td><td>表示文字列の設定/取得</td></tr>
+<tr><td><code>void SetColor(const Vector4 &amp;in)</code> / <code>const Vector4 &amp;GetColor() const</code></td><td>色の設定/取得（水平/垂直揃えは <code>TextHorizontalAlign</code>/<code>TextVerticalAlign</code> 列挙）</td></tr>
+</table>
+
+<h2>Camera2D / Camera3D / CameraRenderer / CameraController</h2>
+<table>
+<tr><th>型</th><th>メソッド</th><th>説明</th></tr>
+<tr><td rowspan="6"><code>Camera3D</code></td><td><code>void SetFovY(float)</code> / <code>float GetFovY() const</code></td><td>画角Y</td></tr>
+<tr><td><code>void SetNearClip(float)</code> / <code>float GetNearClip() const</code></td><td>近クリップ距離</td></tr>
+<tr><td><code>void SetFarClip(float)</code> / <code>float GetFarClip() const</code></td><td>遠クリップ距離</td></tr>
+<tr><td><code>void SetAspectRatio(float)</code> / <code>float GetAspectRatio() const</code></td><td>アスペクト比</td></tr>
+<tr><td><code>void SetOrthographic(bool)</code> / <code>bool IsOrthographic() const</code></td><td>平行投影かどうか</td></tr>
+<tr><td><code>void SetOrthoSize(float)</code> / <code>float GetOrthoSize() const</code></td><td>平行投影サイズ</td></tr>
+<tr><td rowspan="4"><code>Camera2D</code></td><td><code>void SetSize(float width, float height)</code></td><td>表示範囲サイズを設定する</td></tr>
+<tr><td><code>void SetNearClip(float)</code> / <code>float GetNearClip() const</code></td><td>近クリップ距離</td></tr>
+<tr><td><code>void SetFarClip(float)</code> / <code>float GetFarClip() const</code></td><td>遠クリップ距離</td></tr>
+<tr><td><code>float GetWidth() const</code> / <code>float GetHeight() const</code></td><td>表示範囲サイズを取得する</td></tr>
+<tr><td rowspan="4"><code>CameraRenderer</code></td><td><code>void SetPipelineName(const string &amp;in)</code> / <code>const string &amp;GetPipelineName() const</code></td><td>使用パイプライン名</td></tr>
+<tr><td><code>Vector3 GetWorldPosition() const</code></td><td>カメラのワールド座標を取得する</td></tr>
+<tr><td><code>const Matrix4x4 &amp;GetViewProjectionMatrix() const</code></td><td>直近アップロードしたビュー射影行列を取得する</td></tr>
+<tr><td><code>float GetNearClip() const</code> / <code>float GetFarClip() const</code></td><td>直近使用したニア/ファークリップ距離を取得する</td></tr>
+</table>
+<p>
+<code>CameraController</code> は同一オブジェクトの <code>Camera3D</code> を、複数の追従先オブジェクトへ滑らかに追従させるコンポーネントです。
+</p>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>bool IsControllable() const</code></td><td>同オブジェクトに <code>Camera3D</code> があるかどうか</td></tr>
+<tr><td><code>void AddFollowTarget(Object@)</code></td><td>追従先オブジェクトを追加する</td></tr>
+<tr><td><code>void RemoveFollowTarget(uint index)</code></td><td>追従先オブジェクトをインデックス指定で削除する</td></tr>
+<tr><td><code>void SetPositionOffset(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetPositionOffset() const</code></td><td>位置オフセット</td></tr>
+<tr><td><code>void SetRotationOffset(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetRotationOffset() const</code></td><td>回転オフセット（オイラー角、ラジアン）</td></tr>
+<tr><td><code>void SetTargetFovY(float)</code> / <code>float GetTargetFovY() const</code></td><td>目標画角Y</td></tr>
+<tr><td><code>void SetMoveStrength(float)</code> / <code>float GetMoveStrength() const</code></td><td>移動追従の強さ（0.0〜1.0）</td></tr>
+<tr><td><code>void SetRotateStrength(float)</code> / <code>float GetRotateStrength() const</code></td><td>回転追従の強さ（0.0〜1.0）</td></tr>
+<tr><td><code>void SetFovLerpFactor(float)</code> / <code>float GetFovLerpFactor() const</code></td><td>画角遷移の強さ（0.0〜1.0）</td></tr>
+</table>
+
+<h2>TargetLookAt</h2>
+<p>
+指定オブジェクトへ向き続ける（ビルボードのような動作をする）コンポーネント。回転の決め方は <code>TargetLookAtMode</code> 列挙型で2種類から選択できます。
+</p>
+<ul>
+<li><code>TargetLookAtMode::SyncRotation</code> — ターゲットの<strong>ワールド回転と同期</strong>する。カメラをターゲットにすると常に画面と正対する<strong>ビルボード</strong>になる</li>
+<li><code>TargetLookAtMode::LookAt</code> — 自身の<strong>+Z軸が常にターゲットの方向を向く</strong>よう回転する</li>
+</ul>
+<p>
+どちらのモードでも回転オフセット（オイラー角、ラジアン）を追加で適用できます。ターゲットが未指定・存在しない場合は回転を変更しません。
+</p>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetTargetObject(Object@)</code></td><td>ターゲットオブジェクトを設定する</td></tr>
+<tr><td><code>Object@ GetTargetObject() const</code></td><td>ターゲットオブジェクトを取得する（無い場合は <code>null</code>）</td></tr>
+<tr><td><code>void SetRotationOffset(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetRotationOffset() const</code></td><td>回転オフセット（オイラー角、ラジアン）</td></tr>
+<tr><td><code>void SetRotationMode(TargetLookAtMode)</code> / <code>TargetLookAtMode GetRotationMode() const</code></td><td>回転モード</td></tr>
+</table>
+<pre><code class="language-angelscript">class Billboard : ScriptComponentBehavior {
+    void Start() {
+        TargetLookAt@ lookAt;
+        if (AddComponent(@lookAt)) {
+            lookAt.SetTargetObject(FindObject("MainCamera"));
+            lookAt.SetRotationMode(TargetLookAtMode::SyncRotation); // カメラと正対し続ける
+        }
+    }
+}</code></pre>
+
+<h2>Light / LightRenderer</h2>
+<p>
+<code>LightType</code> 列挙型（<code>Directional</code> / <code>Point</code> / <code>Spot</code> / <code>Rect</code> / <code>Sphere</code> / <code>Disc</code> / <code>Tube</code> / <code>Box</code>）が使用できます。<code>Rect</code>/<code>Sphere</code>/<code>Disc</code>/<code>Tube</code>/<code>Box</code> は面光源・体積光源（形状を持つ光源）です。真のLTC（Linearly Transformed Cosines）等の専用ルックアップテーブルは使わず、<strong>形状上の代表点（representative point）法</strong>で拡散・鏡面を近似します。
+</p>
+<ul>
+<li><code>Sphere</code>/<code>Tube</code>: 全方向に発光（Pointと同様、<code>Radius</code>が減衰範囲）。影はPointと同じキューブ6面（Tubeは中心点からの近似）</li>
+<li><code>Disc</code>/<code>Rect</code>: Transformの<strong>+Z方向を法線とした片面発光</strong>（Spotと同様、<code>Distance</code>が減衰範囲。コーン角の概念は無い）。影はSpotと同じ広角の単一透視投影で近似する</li>
+<li><code>Rect</code>は+X方向が幅、+Y方向が高さ</li>
+<li><code>Box</code>: <strong>全方位（体積）発光</strong>するボックス形状の光源。ボックス表面上の最近接点を代表点として使うため、ボックスの内部・表面付近は減衰せず、そこから<code>Radius</code>だけさらに離れた位置で減衰し切る。影はPoint/Sphere/Tubeと同じキューブ6面（中心点からの近似）。+X方向が幅、+Y方向が高さ、+Z方向が奥行き</li>
+</ul>
+<table>
+<tr><th>メソッド</th><th>Light</th><th>LightRenderer</th><th>説明</th></tr>
+<tr><td><code>void SetPipelineName(const string &amp;in)</code> / <code>const string &amp;GetPipelineName() const</code></td><td>-</td><td>o</td><td>使用パイプライン名</td></tr>
+<tr><td><code>void SetType(LightType)</code> / <code>LightType GetType() const</code></td><td>o</td><td>-</td><td>ライト種別</td></tr>
+<tr><td><code>LightType GetLightType() const</code></td><td>-</td><td>o</td><td>同オブジェクトの <code>Light</code> の種別を取得する</td></tr>
+<tr><td><code>Light@ GetLight() const</code></td><td>-</td><td>o</td><td>同オブジェクトの <code>Light</code> コンポーネントを取得する</td></tr>
+<tr><td><code>void SetColor(const Vector4 &amp;in)</code> / <code>const Vector4 &amp;GetColor() const</code></td><td>o</td><td>-</td><td>色</td></tr>
+<tr><td><code>void SetIntensity(float)</code> / <code>float GetIntensity() const</code></td><td>o</td><td>-</td><td>強度</td></tr>
+<tr><td><code>void SetRadius(float)</code> / <code>float GetRadius() const</code></td><td>o</td><td>-</td><td>減衰範囲（Point/Sphere/Tube用）</td></tr>
+<tr><td><code>void SetDistance(float)</code> / <code>float GetDistance() const</code></td><td>o</td><td>-</td><td>減衰範囲（Spot/Disc/Rect用）</td></tr>
+<tr><td><code>void SetDecay(float)</code> / <code>float GetDecay() const</code></td><td>o</td><td>-</td><td>減衰指数（Point/Spot/Sphere/Disc/Rect/Tube共通）</td></tr>
+<tr><td><code>void SetInnerAngle(float)</code> / <code>float GetInnerAngle() const</code></td><td>o</td><td>-</td><td>内側角度（Spot用、ラジアン）</td></tr>
+<tr><td><code>void SetOuterAngle(float)</code> / <code>float GetOuterAngle() const</code></td><td>o</td><td>-</td><td>外側角度（Spot用、ラジアン）</td></tr>
+<tr><td><code>void SetSourceRadius(float)</code> / <code>float GetSourceRadius() const</code></td><td>o</td><td>-</td><td>面光源の物理的な半径（Sphere/Discの半径、Tubeの円柱半径）</td></tr>
+<tr><td><code>void SetSourceWidth(float)</code> / <code>float GetSourceWidth() const</code></td><td>o</td><td>-</td><td>幅（+X方向。Rect/Box用）</td></tr>
+<tr><td><code>void SetSourceHeight(float)</code> / <code>float GetSourceHeight() const</code></td><td>o</td><td>-</td><td>高さ（+Y方向。Rect/Box用）</td></tr>
+<tr><td><code>void SetSourceLength(float)</code> / <code>float GetSourceLength() const</code></td><td>o</td><td>-</td><td>Tubeの長さ（+X方向）</td></tr>
+<tr><td><code>void SetSourceDepth(float)</code> / <code>float GetSourceDepth() const</code></td><td>o</td><td>-</td><td>Boxの奥行き（+Z方向）</td></tr>
+<tr><td><code>void SetShadowSoftness(float)</code> / <code>float GetShadowSoftness() const</code></td><td>o</td><td>-</td><td>Directional/Point/Spotの半影ソフト化（PCSS）に使うワールド単位の光源サイズ（既定0=硬い影）</td></tr>
+<tr><td><code>float GetEffectiveShadowSoftness() const</code></td><td>o</td><td>-</td><td>実際にPCSSへ使われる光源サイズ。Sphere/Disc/Tubeは<code>SourceRadius</code>、Rectは<code>max(Width,Height)/2</code>、Boxは<code>max(Width,Height,Depth)/2</code>が自動的に返る</td></tr>
+<tr><td><code>Vector3 GetWorldPosition() const</code></td><td>-</td><td>o</td><td>ワールド座標を取得する</td></tr>
+<tr><td><code>Vector3 GetWorldDirection() const</code></td><td>-</td><td>o</td><td>ワールド方向（+Z、発光面の法線。Boxは奥行き軸）を取得する</td></tr>
+<tr><td><code>Vector3 GetWorldRight() const</code></td><td>-</td><td>o</td><td>ワールド右方向（+X、Rect/Boxの幅・Tubeの軸方向）を取得する</td></tr>
+<tr><td><code>Vector3 GetWorldUp() const</code></td><td>-</td><td>o</td><td>ワールド上方向（+Y、Rect/Boxの高さ方向）を取得する</td></tr>
+</table>
+<div class="tip">
+<strong>半影のソフト化（PCSS）</strong><br>
+<code>CastShadows</code>が有効なライトは、光源サイズに応じたソフトシャドウ（PCSS: Percentage-Closer Soft Shadows）が自動的にかかります。Sphere/Disc/Rect/Tubeは形状の物理サイズ（<code>SourceRadius</code>等）がそのまま光源サイズとして使われ、Directional/Point/Spotは既定で硬い影のままです（<code>SetShadowSoftness</code>で明示的にワールド単位の光源サイズを設定すると、そのライトにもソフトシャドウがかかります）。
+</div>
+
+<h2>WindowObject（基底型）</h2>
+<p>
+<code>NormalWindowObject</code> / <code>OverlayWindowObject</code> の基底となる参照型です。<code>WindowMessageInfo</code> の <code>sourceComponent</code> として受け取れます（<a href="01_Lifecycle.html">01_Lifecycle.html</a>）。コンポーネント共通メソッドに加えて以下が使用できます。
+</p>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetTitle(const string &amp;in)</code> / <code>const string &amp;GetTitle() const</code></td><td>ウィンドウタイトル</td></tr>
+<tr><td><code>void SetSize(uint width, uint height)</code></td><td>ウィンドウサイズを設定する</td></tr>
+<tr><td><code>int GetClientWidth() const</code> / <code>int GetClientHeight() const</code></td><td>クライアント領域のサイズを取得する（ウィンドウ未生成時は0）</td></tr>
+<tr><td><code>bool IsWindowFocused() const</code></td><td>ウィンドウにフォーカスがあるかどうか</td></tr>
+<tr><td><code>bool IsWindowMinimized() const</code></td><td>ウィンドウが最小化されているかどうか</td></tr>
+<tr><td><code>bool SetMessageIntercepted(uint msg, bool enabled)</code></td><td>メッセージを横取りするかを設定する（下記参照）</td></tr>
+<tr><td><code>bool IsMessageIntercepted(uint msg) const</code></td><td>メッセージを横取りするかを取得する</td></tr>
+<tr><td><code>void CloseWindow()</code></td><td>ウィンドウを閉じる（<code>WM_CLOSE</code> 横取り時にゲーム側の処理後に閉じるために使う）</td></tr>
+</table>
+<ul>
+<li><code>NormalWindowObject</code> / <code>OverlayWindowObject</code> のハンドルは <code>WindowObject@</code> へ<strong>暗黙的に変換</strong>できます。</li>
+<li><code>cast&lt;NormalWindowObject&gt;(windowObject)</code> のように<strong>具体的な型へダウンキャスト</strong>できます（型が異なる場合は <code>null</code> が返ります）。</li>
+</ul>
+
+<h2>ウィンドウメッセージ（OnWindowMessage）</h2>
+<p>
+WindowObject系コンポーネントが付いているオブジェクトに <code>ScriptComponent</code> を追加すると、ウィンドウが受信したWindowsメッセージ（<code>WM_*</code>）を <code>OnWindowMessage(const WindowMessageInfo &amp;in)</code> メソッドで受け取れます。
+</p>
+<ul>
+<li>通知は毎フレーム、そのフレームにウィンドウが受信したメッセージに対して行われます。<strong>メッセージ種別ごとに最後の1件</strong>が対象で、通知順は不定です。</li>
+<li>同オブジェクトに複数のウィンドウコンポーネントがある場合は全てが通知対象です。どのウィンドウからの通知かは <code>sourceComponent</code> で判別できます。</li>
+<li>通知はウィンドウの既定処理が実行された後の<strong>事後通知</strong>です。既定処理を実行させずゲーム側の処理へ差し替えたい場合は下記「メッセージの横取り」を使用してください。</li>
+<li>主要なメッセージは以下のグローバル定数（<code>const uint</code>）として登録されています。これら以外のメッセージも <code>message</code> の数値で判定できます。
+<ul>
+<li>ウィンドウ状態: <code>WM_ACTIVATE</code> / <code>WM_CLOSE</code> / <code>WM_DESTROY</code> / <code>WM_MOVE</code> / <code>WM_SIZE</code> / <code>WM_SIZING</code> / <code>WM_ENTERSIZEMOVE</code> / <code>WM_EXITSIZEMOVE</code> / <code>WM_SETFOCUS</code> / <code>WM_KILLFOCUS</code> / <code>WM_PAINT</code></li>
+<li>キーボード: <code>WM_KEYDOWN</code> / <code>WM_KEYUP</code> / <code>WM_SYSKEYDOWN</code> / <code>WM_SYSKEYUP</code> / <code>WM_CHAR</code></li>
+<li>マウス: <code>WM_MOUSEMOVE</code> / <code>WM_LBUTTONDOWN</code> / <code>WM_LBUTTONUP</code> / <code>WM_LBUTTONDBLCLK</code> / <code>WM_RBUTTONDOWN</code> / <code>WM_RBUTTONUP</code> / <code>WM_RBUTTONDBLCLK</code> / <code>WM_MBUTTONDOWN</code> / <code>WM_MBUTTONUP</code> / <code>WM_MOUSEWHEEL</code> / <code>WM_MOUSEHWHEEL</code></li>
+<li>その他: <code>WM_DROPFILES</code></li>
+</ul>
+</li>
+</ul>
+<pre><code class="language-angelscript">class WindowWatcher : ScriptComponentBehavior {
+    void OnWindowMessage(const WindowMessageInfo &amp;in info) {
+        if (info.message == WM_SIZE) {
+            Log("リサイズ: " + info.sourceComponent.GetClientWidth() + " x " + info.sourceComponent.GetClientHeight());
+        }
+        if (info.message == WM_KILLFOCUS) {
+            Log("フォーカスを失った: " + info.sourceComponent.GetTitle());
+        }
+
+        // 複数のウィンドウコンポーネントがある場合、
+        // どのコンポーネントからの通知かをハンドル比較で判別できる
+        NormalWindowObject@ mainWindow;
+        GetComponent(@mainWindow);
+        if (info.sourceComponent is mainWindow) {
+            // メインウィンドウのメッセージ
+        }
+    }
+}</code></pre>
+
+<h2>メッセージの横取り（インターセプト）</h2>
+<p>
+<code>SetMessageIntercepted(msg, true)</code> で登録したメッセージは、<strong>ウィンドウの既定処理（エンジン既定のイベント処理・OSの既定処理）が実行されなくなり</strong>、<code>OnWindowMessage</code> への通知だけが行われます。メッセージ種別ごとに「そのままウィンドウの処理を通す」か「ウィンドウの処理を中断してゲーム側の処理に差し替える」かを選択できます。
+</p>
+<ul>
+<li>設定はスクリプトの <code>SetMessageIntercepted(uint msg, bool enabled)</code>、またはインスペクターの「<strong>Intercepted Messages</strong>」セクション（<code>WM_CLOSE</code> 用のチェックボックスと、メッセージ番号指定での追加/削除）から行えます。設定はシーンへ保存され、ウィンドウの再生成時にも引き継がれます。</li>
+</ul>
+<div class="warn">
+<strong>WM_CLOSEを横取りするとXボタンで閉じなくなる</strong><br>
+<code>WM_CLOSE</code> を横取りすると、Xボタン・Alt+F4でウィンドウが閉じなくなります（既定の確認ダイアログも出ません）。代わりにスクリプトへ <code>WM_CLOSE</code> が通知されるため、セーブや確認UIなどゲーム側の処理を行い、閉じてよくなったら <code>CloseWindow()</code> で明示的に閉じてください。
+</div>
+<ul>
+<li><code>WM_KEYDOWN</code> / <code>WM_CHAR</code> / マウス系などの入力メッセージは安全に横取りできます（OSの既定処理を止めたい場合に使用。例: <code>WM_SYSKEYDOWN</code> を横取りしてAltキーのメニュー起動やAlt+Enterのフルスクリーン切替を無効化する）。</li>
+<li><code>WM_DESTROY</code> / <code>WM_NCDESTROY</code> / <code>WM_QUIT</code> は横取りできません（<code>SetMessageIntercepted</code> が <code>false</code> を返します）。</li>
+</ul>
+<div class="warn">
+<strong>ウィンドウの基本動作を壊すメッセージがある</strong><br>
+<code>WM_NCHITTEST</code> / <code>WM_PAINT</code> / <code>WM_SETCURSOR</code> / <code>WM_SYSCOMMAND</code> 全体などを横取りすると、ドラッグ移動・リサイズ・最小化・描画といったウィンドウの基本動作が壊れます（Win32の仕様）。ゲーム側で処理したいメッセージにのみ使用してください。
+</div>
+<pre><code class="language-angelscript">class GameWindow : ScriptComponentBehavior {
+    void Start() {
+        NormalWindowObject@ window;
+        GetComponent(@window);
+        window.SetMessageIntercepted(WM_CLOSE, true); // Xボタンで閉じずにスクリプトへ通知する
+    }
+
+    void OnWindowMessage(const WindowMessageInfo &amp;in info) {
+        if (info.message == WM_CLOSE) {
+            // セーブや終了確認UIなど、ゲーム側の処理をここで行う
+            Log("閉じる操作を検知しました");
+            // 閉じてよければ明示的に閉じる（呼ばなければウィンドウは開いたまま）
+            info.sourceComponent.CloseWindow();
+        }
+    }
+}</code></pre>
+
+<h2>描画先バッファ系（ScreenBufferObject / ShadowMapObject）</h2>
+<table>
+<tr><th>メソッド</th><th>Window系(Normal/Overlay)</th><th>Buffer系(ScreenBuffer/ShadowMap)</th><th>説明</th></tr>
+<tr><td><code>void SetTitle(const string &amp;in)</code> / <code>const string &amp;GetTitle() const</code></td><td>o</td><td>-</td><td>ウィンドウタイトルの設定/取得</td></tr>
+<tr><td><code>void SetName(const string &amp;in)</code> / <code>const string &amp;GetName() const</code></td><td>-</td><td>o</td><td>管理用名前（TextureManagerへの登録名）の設定/取得</td></tr>
+<tr><td><code>void SetSize(uint width, uint height)</code></td><td>o</td><td>o</td><td>サイズの設定（バッファ系は既存バッファを実際にリサイズする）</td></tr>
+</table>
+
+<h2>ScreenBufferObject（画像ファイル保存）</h2>
+<p>
+<code>ScreenBufferObject</code> は、そのスクリーンバッファへ直近で描画が確定した内容（ポストエフェクト適用後の最終フレーム）を画像ファイルへ保存する機能を持ちます。エディターのインスペクター（「Save to File」欄）・アプリケーション実行時・スクリプトのいずれからも同じ仕組みで呼び出せます。
+</p>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>bool RequestSave(const string &amp;in filePath = "")</code></td><td>画像として保存する。<code>filePath</code> を省略した場合は <code>SaveDirectory</code>/<code>SaveFileNamePrefix</code> とタイムスタンプ、<code>SaveFormat</code> から自動生成したパスへ保存する</td></tr>
+<tr><td><code>void SetSaveDirectory(const string &amp;in)</code> / <code>const string &amp;GetSaveDirectory() const</code></td><td>自動生成パスに使う保存先ディレクトリ（既定: <code>"Screenshots"</code>）</td></tr>
+<tr><td><code>void SetSaveFileNamePrefix(const string &amp;in)</code> / <code>const string &amp;GetSaveFileNamePrefix() const</code></td><td>自動生成パスに使うファイル名の接頭辞（既定: <code>"Screenshot"</code>）</td></tr>
+<tr><td><code>void SetSaveFormat(const string &amp;in)</code> / <code>const string &amp;GetSaveFormat() const</code></td><td>保存形式。<code>"png"</code> / <code>"jpg"</code> / <code>"bmp"</code>（既定: <code>"png"</code>）。<code>filePath</code> を明示的に指定した場合はその拡張子が優先される</td></tr>
+</table>
+<ul>
+<li><code>RequestSave</code> はGPU側の完了を同期的に待つ（ストールする）ため、毎フレーム呼ぶような用途ではなくスクリーンショット等の単発利用を想定しています。</li>
+<li>保存対象は常に「そのフレームの描画が完全に確定した後の内容」です。ポストエフェクト適用途中の中間結果が保存されることはありません。</li>
+<li><code>SaveDirectory</code> / <code>SaveFileNamePrefix</code> / <code>SaveFormat</code> はシーンへ保存されますが、<code>RequestSave</code> の呼び出し自体は状態として保持されません（呼ぶたびに即座に保存が実行されます）。</li>
+</ul>
+<pre><code class="language-angelscript">// "Screenshot" という名前の入力コマンドをあらかじめ設定しておく必要があります
+class ScreenshotTaker : ScriptComponentBehavior {
+    void Update() {
+        if (IsCommandTriggered("Screenshot")) {
+            ScreenBufferObject@ screenBuffer;
+            GetComponent(@screenBuffer);
+            if (screenBuffer !is null) {
+                screenBuffer.RequestSave(); // Screenshots/Screenshot_20260101_120000.png のように自動生成
+            }
+        }
+    }
+}</code></pre>
+
+<h2>関連ページ</h2>
+<ul>
+<li>ライフサイクル・HitInfo・WindowMessageInfo → <a href="01_Lifecycle.html">01_Lifecycle.html</a></li>
+<li>コライダー・ポストエフェクト → <a href="07_ColliderAndPostEffect.html">07_ColliderAndPostEffect.html</a></li>
+<li>描画コンポーネント全般（C++側） → <a href="../05_Rendering.html">05_Rendering.html</a></li>
+<li>ウィンドウ/オフスクリーンの仕組み（C++側） → <a href="../11_Window.html">11_Window.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

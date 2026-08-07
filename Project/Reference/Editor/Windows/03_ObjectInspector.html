@@ -32,10 +32,11 @@
 <table>
 <tr><th>項目</th><th>内容</th></tr>
 <tr><td>Prefabパス（テキスト表示）</td><td>元になっている<code>.prefab</code>ファイルのパス</td></tr>
-<tr><td>Apply All</td><td>このインスタンスへのローカルな変更を、元のPrefabアセットへ反映する（シーンを跨いで他の全インスタンスにも伝播する）</td></tr>
+<tr><td>Apply All</td><td>このインスタンスへのローカルな変更を、元のPrefabアセットへ反映する（現在開いているシーン内の他の全インスタンスだけでなく、<a href="08_SceneListAndSaveLoad.html">Scene List</a>に登録されている他の全シーンファイルにも、開いていないものを含めて自動的に伝播する）</td></tr>
 <tr><td>Revert All</td><td>ローカルな変更（追加した子オブジェクトを含む）を破棄し、元のPrefabの内容に戻す。確認ダイアログが出る、1操作でのUndoはできない操作</td></tr>
-<tr><td>Overrides 一覧</td><td>元のPrefabから変更されているコンポーネントの一覧。各項目に <code>Apply</code>（そのコンポーネントだけ反映）・<code>Revert</code>（そのコンポーネントだけ戻す）ボタンがある</td></tr>
+<tr><td>Overrides 一覧</td><td>元のPrefabから変更されているコンポーネントの一覧。各項目に <code>Apply</code>（そのコンポーネントだけ反映。Apply Allと同様に他インスタンス・他シーンへも伝播する）・<code>Revert</code>（そのコンポーネントだけ戻す）ボタンがある</td></tr>
 </table>
+<div class="warn"><strong>Apply Allは他のシーンファイルも書き換えます</strong><br>同じPrefabの他インスタンスを含むシーンが開いていなくても、ディスク上のファイルが直接読み書きされます。Gitでシーンファイルを共有している場合、他の人の未コミットの変更と衝突し得ることに注意してください。</div>
 
 <h2>コンポーネント一覧</h2>
 <p>付与されているコンポーネントが、処理優先順位（更新優先度）の順に上から並びます。各コンポーネントの見出しは開閉式（クリックで開閉、状態は種類ごとに保存される）です。</p>

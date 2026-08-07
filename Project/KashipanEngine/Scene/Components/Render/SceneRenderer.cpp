@@ -64,6 +64,18 @@ Vector4 GetInstanceColorFor(const RendererT *renderer) {
 /// @brief 押し出しアウトライン（Inverted Hull）パイプライン名
 constexpr const char *kOutlinePipelineName = "Object3D.Outline";
 
+/// @brief 指定パイプラインが利用可能か確認する。未読み込みの場合はPipelineManager::GetOrCreatePipeline
+///        による動的バリアント再構築を試みる
+/// @details モジュール合成シェーダー等の動的パイプラインは静的Pipelines/*.jsonとして永続化されず、
+///          プロセス内キャッシュ（pipelineInfos_）にのみ存在する。そのためシーンをロードし直した
+///          直後（エンジン再起動後）は、エディタでInspectorの「Apply」を一度押すまでキャッシュが
+///          空でHasPipelineがfalseを返し続け、描画対象から除外されてしまう。ここで毎回
+///          GetOrCreatePipelineへフォールバックすることで、パイプライン名（トークン文字列）から
+///          Apply操作なしにオンデマンドで再構築できるようにする
+bool EnsurePipelineLoaded(PipelineManager *pipelineManager, const std::string &pipelineName) {
+    return pipelineManager->HasPipeline(pipelineName) || pipelineManager->GetOrCreatePipeline(pipelineName);
+}
+
 /// @brief マテリアルのextraParameters["outlineWidth"]（Float）が正の値の場合のみアウトラインを有効とする
 /// @details rimIntensity=0でリムライト無効、と同じ「0で無効」規約に合わせる。MeshRenderer側には
 ///          専用フラグを持たせず、マテリアルの追加パラメータのみで切り替える
@@ -156,7 +168,7 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
         if (renderer->GetMeshHandle() == ModelManager::kInvalidHandle) continue;
 
         const std::string &pipelineName = renderer->GetPipelineName();
-        if (pipelineName.empty() || !pipelineManager->HasPipeline(pipelineName)) continue;
+        if (pipelineName.empty() || !EnsurePipelineLoaded(pipelineManager, pipelineName)) continue;
         const std::int32_t pipelinePriority = pipelineManager->GetPipeline(pipelineName).RenderPriority();
 
         // EditorOnlyオブジェクト（祖先を含む）はエディター用描画先にのみ描画する
@@ -242,7 +254,7 @@ void CollectCacheableEntries(const std::vector<RendererT *> &renderers,
         if (renderer->GetMeshHandle() == ModelManager::kInvalidHandle) continue;
 
         const std::string &pipelineName = renderer->GetPipelineName();
-        if (pipelineName.empty() || !pipelineManager->HasPipeline(pipelineName)) continue;
+        if (pipelineName.empty() || !EnsurePipelineLoaded(pipelineManager, pipelineName)) continue;
 
         // サブメッシュ（マテリアルごとのインデックス範囲）ごとに1エントリ作る
         const auto &subMeshes = ModelManager::GetModelData(renderer->GetMeshHandle()).GetSubMeshes();
@@ -476,7 +488,7 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
             if (!renderer->HasValidSkinningData()) continue;
 
             const std::string &pipelineName = renderer->GetPipelineName();
-            if (pipelineName.empty() || !pipelineManager->HasPipeline(pipelineName)) continue;
+            if (pipelineName.empty() || !EnsurePipelineLoaded(pipelineManager, pipelineName)) continue;
             const std::int32_t pipelinePriority = pipelineManager->GetPipeline(pipelineName).RenderPriority();
 
             // EditorOnlyオブジェクト（祖先を含む）はエディター用描画先にのみ描画する

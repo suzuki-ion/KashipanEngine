@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ライフサイクルと衝突・ウィンドウイベント | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-engine-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="Script_01_Lifecycle">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>ライフサイクルと衝突・ウィンドウイベント</h1>
+<p class="page-lead"><code>ScriptComponentBehavior</code> を実装したクラスに定義できるライフサイクル関数と、衝突・ウィンドウメッセージのコールバックへ渡される情報型をまとめます。</p>
+</div>
+
+<h2>ScriptComponentBehavior（ライフサイクル）</h2>
+<p>
+スクリプト内で <code>ScriptComponentBehavior</code> インターフェースを実装したクラスを定義すると、モジュール内で最初に見つかったクラスがインスタンス化され、以下のメソッドが呼び出されます。<strong>全てのメソッドは省略可能</strong>で、定義されているものだけが呼ばれます。
+</p>
+<pre><code class="language-angelscript">class Player : ScriptComponentBehavior {
+    void Awake() {}                                   // インスタンス生成時に一度だけ
+    void Start() {}                                    // ゲームループ中、最初のUpdate()の直前に一度だけ
+    void Update() {}                                    // 毎フレーム
+    void End() {}                                       // 終了時
+    void OnCollisionEnter(const HitInfo &amp;in hit) {}  // 衝突開始時
+    void OnCollisionStay(const HitInfo &amp;in hit) {}   // 衝突継続中（毎フレーム）
+    void OnCollisionExit(const HitInfo &amp;in hit) {}   // 衝突終了時
+    void OnWindowMessage(const WindowMessageInfo &amp;in info) {} // ウィンドウメッセージ受信時
+}</code></pre>
+<table>
+<tr><th>関数</th><th>呼ばれるタイミング</th></tr>
+<tr><td><code>void Awake()</code></td><td>コンポーネントの初期化時（スクリプトのコンパイル成功後、インスタンス生成直後）、および <code>Reload()</code> 成功後に一度（UnityのAwake相当）</td></tr>
+<tr><td><code>void Start()</code></td><td>ゲームループ中、そのインスタンスに対して最初に <code>Update()</code> が呼ばれる直前に一度だけ（UnityのStart相当。非アクティブのまま一度も <code>Update()</code> が呼ばれなければ実行されない）</td></tr>
+<tr><td><code>void Update()</code></td><td>毎フレーム</td></tr>
+<tr><td><code>void End()</code></td><td>終了時（コンポーネント削除・非アクティブ化・リロード時）</td></tr>
+<tr><td><code>void OnCollisionEnter(const HitInfo &amp;in hit)</code></td><td>同オブジェクトのコライダーが他コライダーと接触し始めた時</td></tr>
+<tr><td><code>void OnCollisionStay(const HitInfo &amp;in hit)</code></td><td>同オブジェクトのコライダーが他コライダーと接触し続けている間、毎フレーム</td></tr>
+<tr><td><code>void OnCollisionExit(const HitInfo &amp;in hit)</code></td><td>同オブジェクトのコライダーが他コライダーとの接触を終えた時</td></tr>
+<tr><td><code>void OnWindowMessage(const WindowMessageInfo &amp;in info)</code></td><td>同オブジェクトの <code>NormalWindowObject</code>/<code>OverlayWindowObject</code> 等のウィンドウがメッセージを受信した時（通知元コンポーネント情報付き）</td></tr>
+</table>
+<p>
+衝突イベントは同オブジェクトに付いている全ての <code>ICollider</code> 派生コンポーネント（2D/3D両方）が対象です。C++側で既に衝突コールバックが設定されている場合、そのコールバックが先に呼ばれた後にスクリプト側が呼ばれます。高速に移動するオブジェクトが相手をすり抜けて衝突イベントが発生しない場合は、コライダーの連続衝突判定（CCD）を有効にしてください（詳細は <a href="07_ColliderAndPostEffect.html">07_ColliderAndPostEffect.html</a>）。
+</p>
+<div class="warn">
+<strong>OnCollisionEnter/Stay/Exit と OnWindowMessage はコストがある</strong><br>
+これらのコールバックは、内部で同オブジェクトの全コライダー（または全WindowObject系コンポーネント）へフックを張ることで実現されています。実装したメソッドを持つスクリプトだけがこのフック対象になるため、使わないなら定義しないほうが軽量です。
+</div>
+<div class="note">
+<strong>コライダーの追加/削除のタイミング</strong><br>
+衝突コールバックのフックは毎フレームのコライダー数チェックで追従しますが、コライダーの追加とほぼ同時に発生した衝突は最初の1フレームだけ通知されないことがあります。
+</div>
+
+<h2>HitInfo</h2>
+<p>
+衝突メソッド（<code>OnCollisionEnter</code>/<code>OnCollisionStay</code>/<code>OnCollisionExit</code>）へ渡される衝突情報の値型です。
+</p>
+<div class="api-card">
+<h4><code>HitInfo</code>（値型）</h4>
+<div class="api-sig">Vector3 normal;
+float penetration;
+Object@ selfObject;
+Object@ otherObject;
+Collider@ selfCollider;
+Collider@ otherCollider;</div>
+<p>
+<code>normal</code> は「相手→自分」方向を向く押し出し法線です。<code>penetration</code> はめり込み量。<code>selfCollider</code>/<code>otherCollider</code> で「どのコライダーコンポーネント同士の衝突なのか」を特定できます。1つのオブジェクトに複数のコライダーが付いている場合の判別や、相手コライダーのトリガー状態・タグの確認に使用してください。<code>Collider</code> は全コライダー型の基底型で、<code>cast&lt;BoxCollider&gt;(hit.otherCollider)</code> のように具体的な型へダウンキャストできます（詳細は <a href="07_ColliderAndPostEffect.html">07_ColliderAndPostEffect.html</a>）。
+</p>
+</div>
+
+<h2>WindowMessageInfo</h2>
+<p>
+<code>OnWindowMessage</code> へ渡されるウィンドウメッセージ情報の値型です。
+</p>
+<div class="api-card">
+<h4><code>WindowMessageInfo</code>（値型）</h4>
+<div class="api-sig">WindowObject@ sourceComponent;
+uint message;
+uint64 wParam;
+int64 lParam;</div>
+<p>
+<code>sourceComponent</code> で「どのウィンドウコンポーネントからの通知か」を特定できます。<code>message</code> と比較するための <code>WM_KEYDOWN</code>, <code>WM_LBUTTONDOWN</code>, <code>WM_SIZE</code> 等のウィンドウメッセージ定数（<code>const uint</code>）も一通りグローバルへ登録されています。<code>WindowObject</code> はウィンドウ系コンポーネントの基底型です。<code>OnWindowMessage</code> の詳細な仕様（通知の頻度・メッセージの横取り等）は <a href="06_RenderAndWindow.html">06_RenderAndWindow.html</a> を参照してください。
+</p>
+</div>
+
+<h2>実例: 衝突コールバックの使い方</h2>
+<p>
+<code>Assets/Application/Scripts/Player.as</code> は <code>OnCollisionEnter</code>/<code>OnCollisionStay</code>/<code>OnCollisionExit</code> の3つ全てを使い、地面判定・敵接触判定・押し戻しを行っています。
+</p>
+<pre><code class="language-angelscript">void OnCollisionStay(const HitInfo &amp;in hit) {
+    if (hit.otherObject is null) return;
+    if (hit.otherCollider !is null &amp;&amp; hit.otherCollider.IsTrigger()) return;
+    if (hit.otherCollider.GetTag() == groundColliderTag) {
+        bool grounded = hit.normal.y &gt; groundedThreshold;
+        if (!hasGroundContact &amp;&amp; grounded) {
+            hasGroundContact = true;
+            groundHitNormal = hit.normal;
+            isOnSteepSlope = hit.normal.y &lt; slideThreshold;
+        } else if (!grounded) {
+            // 壁・天井：法線方向の速度成分だけを打ち消す
+            Vector3 wallNormal = hit.normal;
+            wallNormal.z = 0.0f;
+            float intoSurface = velocity.Dot(wallNormal);
+            if (intoSurface &lt; 0.0f) {
+                velocity = velocity - wallNormal * intoSurface;
+            }
+        }
+
+        // 押し戻し
+        Transform@ tf = GetTransform();
+        if (tf !is null) {
+            Vector3 pushBack = hit.normal * hit.penetration;
+            pushBack.z = 0.0f;
+            if (grounded) pushBack.x = 0.0f;
+            tf.SetTranslate(tf.GetTranslate() + pushBack);
+        }
+    }
+}</code></pre>
+<p>
+このメソッドから読み取れる実践的なパターンをいくつか挙げます。
+</p>
+<ul>
+<li><code>hit.otherCollider.GetTag()</code> による<strong>タグ比較でコライダーの種別を判定</strong>する（<code>Tag groundColliderTag = Tag("GroundBox");</code> のようにあらかじめ構築しておいたタグと比較する）</li>
+<li><code>hit.otherCollider.IsTrigger()</code> で<strong>トリガー判定のコライダーは押し戻し処理から除外</strong>する</li>
+<li><code>hit.normal * hit.penetration</code> で<strong>押し戻しベクトル</strong>を作り、<code>Transform</code> へ直接加算して位置補正する</li>
+</ul>
+<p>
+より詳しい実例（動く床への追従を含む）は <a href="11_PlayerExample.html">11_PlayerExample.html</a> を参照してください。
+</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li>コンポーネントの取得・追加・削除、グローバル関数 → <a href="03_ComponentAccess.html">03_ComponentAccess.html</a></li>
+<li>コライダー共通API・CCD → <a href="07_ColliderAndPostEffect.html">07_ColliderAndPostEffect.html</a></li>
+<li>WindowObject・OnWindowMessage詳細・メッセージの横取り → <a href="06_RenderAndWindow.html">06_RenderAndWindow.html</a></li>
+<li>コライダーと衝突応答の仕組み（C++側） → <a href="../06_Collision.html">06_Collision.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

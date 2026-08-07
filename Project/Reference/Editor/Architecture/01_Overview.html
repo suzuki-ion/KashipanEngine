@@ -104,14 +104,43 @@ void InstantiateNodes(const std::vector&lt;PasteObjectCommand::Node&gt; &amp;nod
 bool InstantiatePrefabFile(const std::string &amp;filePath, EmptyObject *attachParent = nullptr);</div>
 </div>
 
-<h2>プレハブ — PrefabUtility</h2>
+<h2>プレハブ — PrefabUtility / PrefabAssetManager / PrefabSyncUtility</h2>
 <p>
-<code>Scene/Editor/PrefabUtility.h</code> はプレハブ（<code>.prefab</code>）ファイルの作成・読み込みユーティリティです。中身はシーン保存時のオブジェクトJSONと同じ形式を部分木（pre-order、先頭が根）として並べたただのJSONで、配置時はヒエラルキーのコピー/貼り付けと同じ機構（<code>PasteObjectCommand</code>）で新しいオブジェクトIDを割り当てて生成されます。
+プレハブ関連の実装は役割ごとに3クラスへ分かれています。<code>PrefabUtility</code>はPrefabファイル（静的なJSON）の構築・読み込み、<code>PrefabAssetManager</code>はPrefabアセットの資産管理（ID⇔パスの索引、キャッシュ、変更通知）、<code>PrefabSyncUtility</code>／<code>PrefabSceneSync</code>はライブなシーン上のPrefabインスタンスと元Prefabとの差分検出・同期（Apply/Revert、他インスタンス・他シーンへの伝播）を担当します。
 </p>
-<div class="api-sig">JSON BuildPrefabJson(SceneEditorContext *context, EmptyObject *rootObject);
+<h3>PrefabUtility — Prefabファイルの構築・読み込み</h3>
+<p>
+<code>Scene/Editor/PrefabUtility.h</code>。中身はシーン保存時のオブジェクトJSONと同じ形式を部分木（pre-order、先頭が根）として並べたただのJSONで、配置時はヒエラルキーのコピー/貼り付けと同じ機構（<code>PasteObjectCommand</code>）で新しいオブジェクトIDを割り当てて生成されます。
+</p>
+<div class="api-sig">JSON BuildPrefabJson(SceneEditorContext *context, EmptyObject *rootObject,
+    const UUID128 &amp;prefabID = UUID128(true));
 std::vector&lt;PasteObjectCommand::Node&gt; LoadPrefabNodes(const JSON &amp;prefabJson);
 std::vector&lt;PasteObjectCommand::Node&gt; PrepareNodesForInstantiation(
     const std::vector&lt;PasteObjectCommand::Node&gt; &amp;source, bool preserveRootParent);</div>
+
+<h3>PrefabAssetManager — Prefabアセットの資産管理</h3>
+<p>
+<code>Scene/Editor/PrefabAssetManager.h</code>。prefabID（<code>UUID128</code>）とファイルパスの対応を索引化し、JSONのキャッシュ・保存を一元管理する静的クラスです。「元Prefabが書き変わればシーン上のインスタンスも書き変わる」機能の起点となるハブで、<code>SavePrefabJson</code>系のAPIを経由して保存が行われるたびに<code>SetChangeListener</code>で登録されたリスナー（<code>SceneEditor</code>が<code>PrefabSyncUtility::SyncAllScenes</code>を紐付けている）へ変更を通知します。
+</p>
+<div class="api-sig">static bool CreatePrefabFile(const UUID128 &amp;prefabID, const JSON &amp;json, const std::string &amp;filePath);
+static bool SavePrefabJson(const UUID128 &amp;prefabID, const JSON &amp;newJson);
+static bool SavePrefabJsonByPath(const std::string &amp;filePath, const JSON &amp;newJson);
+static void SetChangeListener(ChangeCallback callback); // (const UUID128&amp;, const JSON&amp; oldJson, const JSON&amp; newJson)</div>
+
+<h3>PrefabSyncUtility / PrefabSceneSync — インスタンスとの差分検出・同期</h3>
+<p>
+<code>Scene/Editor/PrefabSyncUtility.h</code>は「今シーンに置かれているインスタンスが、元のPrefabからどう変化しているか」をコンポーネント単位（フィールド単位ではない）で検出し、Object Inspector/Hierarchyの<code>Apply All</code>・<code>Revert All</code>・個別コンポーネントのApply/Revertから呼ばれます。<code>ApplyComponentOverride</code>/<code>ApplyAll</code>は内部で<code>PrefabAssetManager::SavePrefabJson</code>を呼ぶため、保存直後に<code>SyncAllScenes</code>が自動的に発火します。
+</p>
+<div class="api-sig">bool HasComponentOverride(SceneEditorContext *context, EmptyObject *obj);
+bool HasComponentOverrideCached(SceneEditorContext *context, EmptyObject *obj, OverrideCheckCache &amp;cache);
+SyncReport Diff(SceneEditorContext *context, EmptyObject *instanceRoot);
+bool ApplyAll(SceneEditorContext *context, EmptyObject *instanceRoot);
+bool RevertAll(SceneEditorContext *context, SceneEditorCommands *commands, EmptyObject *instanceRoot);
+void SyncAllScenes(SceneEditorContext *context, SceneEditorCommands *commands,
+    const UUID128 &amp;prefabID, const JSON &amp;oldPrefabJson, const JSON &amp;newPrefabJson);</div>
+<p>
+<code>SyncAllScenes</code>は現在開いているシーン内の他インスタンス（<code>SyncOtherInstances</code>、JSON三者マージでローカルOverrideを維持しつつ反映）と、<code>SceneManager</code>に登録されている他の全シーンファイル（<code>PrefabSceneSync::SyncRegisteredScenes</code>、<strong>開いていないシーンもディスク上で直接読み書きする</strong>）の両方へ同期します。<code>SceneObjectHierarchy</code>の行ごとのOverride色分けは高頻度に呼ばれるため、<code>HasComponentOverrideCached</code>とPrefab単位の索引キャッシュ（<code>OverrideCheckCache</code>、<code>SceneObjectHierarchy::prefabOverrideCache_</code>としてフレーム単位で保持）により、同一Prefabのメンバーが多いヒエラルキーでの毎行O(Prefab内オブジェクト数)走査を避けています。
+</p>
 
 <h2>インスペクター</h2>
 <p>
@@ -126,6 +155,12 @@ bool Show(const std::vector&lt;std::string&gt; &amp;types,
 <p>
 専用の <code>ScreenBuffer</code> とオービット型のデバッグカメラを持ち、シーン上の全 <code>MeshRenderer</code> をこの <code>ScreenBuffer</code> に描画してImGuiウィンドウへ表示します。選択中オブジェクトには ImGuizmo によるギズモ操作（移動/回転/スケール、単一選択はLocal/World切替可、複数選択時は選択群の平均位置を中心としたグループ操作）が行えます。画像上のクリックでは、レイとメッシュ三角形の交差判定によるピッキングでオブジェクトを選択できます（Ctrlクリックでトグル追加）。グリッド・当たり判定ワイヤーフレーム・ライト/カメラのアイコン表示・ボーン表示の有効無効も切り替えられます。
 </p>
+<div class="api-card">
+<h4>選択オブジェクトのアウトライン表示</h4>
+<p>
+<code>SceneEditorView::ShowImGui</code>は毎フレーム、選択中オブジェクト集合を<code>SceneRenderer::SetEditorSelectedObjects</code>へ渡します。<code>SceneRenderer</code>側は対象オブジェクト（とその子孫）が持つ全<code>MeshRenderer</code>に対し、既存の押し出しアウトラインパイプライン（<code>Object3D.Outline</code>）を<code>"__"</code>始まりの内部専用マテリアル（<code>editorSelectionOutlineMaterial_</code>。<code>IsInternalMaterialName</code>によりマテリアル一覧・<code>SaveAllMaterials</code>から除外される）で固定色描画します。<code>editorTarget_</code>（このシーンビュー用の描画先）にのみ適用され、オブジェクト自身のマテリアルが持つ<code>OutlineWidth</code>設定とは独立しています。<code>SceneEditorView</code>のデストラクタでは<code>SetEditorSelectedObjects({})</code>を呼び、シーンビュー破棄後にアウトラインが残らないようにしています。
+</p>
+</div>
 
 <h2>アセットブラウザ — AssetsWindow</h2>
 <p>

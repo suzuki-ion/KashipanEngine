@@ -153,8 +153,12 @@ public:
 namespace std {
 template<>
 struct hash<KashipanEngine::UUID128> {
+    // 文字列化してハッシュすると（36文字の走査が毎回発生し）コストが高いため、
+    // 既に持っている上位/下位64ビットの整数値から直接ハッシュを計算する
     std::size_t operator()(const KashipanEngine::UUID128 &uuid) const noexcept {
-        return std::hash<std::string>()(uuid.ToString());
+        std::size_t h1 = std::hash<std::uint64_t>()(uuid.GetHigh());
+        std::size_t h2 = std::hash<std::uint64_t>()(uuid.GetLow());
+        return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
     }
 };
 } // namespace std

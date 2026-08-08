@@ -37,7 +37,9 @@ bool SceneLoader::ShowImGui() {
 
         if (ImGui::Button(TranslationLabel("editor.common.load"), ImVec2(120, 0))) {
             std::error_code ec;
-            if (!filePath_.empty() && std::filesystem::exists(Utf8StringToPath(filePath_), ec) && !ec) {
+            // filePath_は論理パスのため、存在チェックの前に物理パスへ変換する必要がある
+            const std::string physicalPath = ProjectPaths::ToPhysical(filePath_);
+            if (!filePath_.empty() && std::filesystem::exists(Utf8StringToPath(physicalPath), ec) && !ec) {
                 JSON sceneJson = LoadSceneFromPath(filePath_);
                 if (!sceneJson.empty() && context_->LoadSceneFromJSON(sceneJson)) {
                     loaded = true;

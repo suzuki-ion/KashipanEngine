@@ -26,6 +26,8 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
 
     // Computeシェーダー処理は他の描画パスより先に実行し、結果を後続パスから参照できるようにする
     ProcessComputeShaders(sceneContext);
+    // 動画のYUV→RGB変換も同様に描画リスト構築より先に実行する（シーンに依存しない）
+    ProcessVideoConversions();
     // GPUスキニングも描画リスト構築より先に実行し、スキニング結果を描画パスから参照できるようにする
     ProcessSkinning(sceneContext);
     // GPUパーティクルも同様に描画リスト構築より先に実行する

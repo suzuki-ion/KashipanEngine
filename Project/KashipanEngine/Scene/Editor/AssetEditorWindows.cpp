@@ -399,6 +399,90 @@ bool AudioPreviewWindow::ShowImGui() {
     return isOpen_;
 }
 
+//==================================================
+// VideoPreviewWindow
+//==================================================
+
+VideoPreviewWindow::VideoPreviewWindow(const std::string &assetPath)
+    : assetPath_(assetPath) {
+    windowTitle_ = Translation("editor.assetwindow.video.title") + FileNameFromPath(assetPath_) + "###VideoPreview_" + assetPath_;
+    videoHandle_ = VideoManager::GetVideoHandleFromAssetPath(assetPath_);
+}
+
+VideoPreviewWindow::~VideoPreviewWindow() {
+    if (player_) {
+        VideoManager::DestroyPlayer(player_);
+        player_ = nullptr;
+    }
+}
+
+bool VideoPreviewWindow::ShowImGui() {
+    ImGui::SetNextWindowSize(ImVec2(420.0f, 460.0f), ImGuiCond_FirstUseEver);
+    if (!ImGui::Begin(windowTitle_.c_str(), &isOpen_)) {
+        ImGui::End();
+        return isOpen_;
+    }
+
+    if (videoHandle_ == VideoManager::kInvalidHandle) {
+        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "%s%s", TranslationC("editor.assetwindow.video.notloaded"), assetPath_.c_str());
+        ImGui::End();
+        return isOpen_;
+    }
+
+    ImGui::TextUnformatted(assetPath_.c_str());
+    ImGui::Separator();
+
+    const bool isPlaying = player_ && player_->IsPlaying();
+    const bool isPaused = player_ && player_->IsPaused();
+
+    if (!isPlaying) {
+        if (ImGui::Button(TranslationLabel("editor.video.play"))) {
+            if (!player_) player_ = VideoManager::CreatePlayer(videoHandle_);
+            if (player_) player_->Play(loop_, volume_);
+        }
+    } else if (isPaused) {
+        if (ImGui::Button(TranslationLabel("editor.video.resume"))) {
+            player_->Resume();
+        }
+    } else {
+        if (ImGui::Button(TranslationLabel("editor.video.pause"))) {
+            player_->Pause();
+        }
+    }
+    ImGui::SameLine();
+    ImGui::BeginDisabled(!isPlaying && !isPaused);
+    if (ImGui::Button(TranslationLabel("editor.video.stop"))) {
+        if (player_) {
+            VideoManager::DestroyPlayer(player_);
+            player_ = nullptr;
+        }
+    }
+    ImGui::EndDisabled();
+
+    ImGui::Checkbox(TranslationLabel("editor.video.loop"), &loop_);
+    ImGui::SliderFloat(TranslationLabel("editor.video.volume"), &volume_, 0.0f, 1.0f);
+
+    if (player_) {
+        const auto textureHandle = player_->GetTextureHandle();
+        if (textureHandle != TextureManager::kInvalidHandle) {
+            const auto view = TextureManager::GetTextureView(textureHandle);
+            const D3D12_GPU_DESCRIPTOR_HANDLE srvHandle = view.GetSrvHandle();
+            const std::uint32_t width = view.GetWidth();
+            const std::uint32_t height = view.GetHeight();
+            if (srvHandle.ptr != 0 && width > 0 && height > 0) {
+                const ImVec2 avail = ImGui::GetContentRegionAvail();
+                const float scale = std::min(avail.x / static_cast<float>(width), avail.y / static_cast<float>(height));
+                const ImVec2 drawSize(static_cast<float>(width) * (scale > 0.0f ? scale : 1.0f),
+                    static_cast<float>(height) * (scale > 0.0f ? scale : 1.0f));
+                ImGui::Image(static_cast<ImTextureID>(srvHandle.ptr), drawSize);
+            }
+        }
+    }
+
+    ImGui::End();
+    return isOpen_;
+}
+
 } // namespace KashipanEngine
 
 #endif // USE_IMGUI

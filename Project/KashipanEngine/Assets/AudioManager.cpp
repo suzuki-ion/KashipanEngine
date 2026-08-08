@@ -559,6 +559,46 @@ SoundHandle AudioManager::Load(const std::string& filePath) {
     return handle;
 }
 
+SoundHandle AudioManager::RegisterSoundFromMemory(const std::string &registerName,
+    uint32_t channels, uint32_t samplesPerSec, uint32_t bitsPerSample,
+    const std::vector<uint8_t> &pcmData) {
+    LogScope scope;
+    if (registerName.empty() || channels == 0 || samplesPerSec == 0 || bitsPerSample == 0 || pcmData.empty()) {
+        return kInvalidSoundHandle;
+    }
+    if (!EnsureAudioInitialized()) return kInvalidSoundHandle;
+
+    const std::string normalizedName = NormalizePathSlashes(registerName);
+    {
+        auto it = sAssetPathToHandle.find(normalizedName);
+        if (it != sAssetPathToHandle.end()) return it->second;
+    }
+
+    SoundEntry entry{};
+    entry.fullPath = normalizedName;
+    entry.assetPath = normalizedName;
+    entry.fileName = normalizedName;
+
+    entry.wfex.wFormatTag = WAVE_FORMAT_PCM;
+    entry.wfex.nChannels = static_cast<WORD>(channels);
+    entry.wfex.nSamplesPerSec = samplesPerSec;
+    entry.wfex.wBitsPerSample = static_cast<WORD>(bitsPerSample);
+    entry.wfex.nBlockAlign = static_cast<WORD>(channels * (bitsPerSample / 8));
+    entry.wfex.nAvgBytesPerSec = samplesPerSec * entry.wfex.nBlockAlign;
+    entry.wfex.cbSize = 0;
+
+    entry.buffer.assign(pcmData.begin(), pcmData.end());
+
+    const auto handle = RegisterEntry(std::move(entry));
+    if (handle == kInvalidSoundHandle) {
+        Log(Translation("engine.audio.loading.failed.register") + registerName, LogSeverity::Error);
+        return kInvalidSoundHandle;
+    }
+
+    Log(Translation("engine.audio.loading.succeeded") + registerName, LogSeverity::Info);
+    return handle;
+}
+
 #if defined(USE_IMGUI)
 SoundHandle AudioManager::LoadDynamic(const std::string &filePath) {
     if (!sActiveInstance) return kInvalidSoundHandle;

@@ -1,6 +1,7 @@
 {
 	"PipelineType": "Compute",
 	"Name": "ParticleSpawn",
+	"Category": "Compute",
 	"RootSignature": {
 		"Flags": "D3D12_ROOT_SIGNATURE_FLAG_NONE",
 		"RootParameter": {
@@ -8,27 +9,42 @@
 				{
 					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_CBV",
 					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
-					"Descriptor": { "ShaderRegister": 0, "RegisterSpace": 0 }
+					"Descriptor": {
+						"ShaderRegister": 0,
+						"RegisterSpace": 0
+					}
 				},
 				{
 					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_SRV",
 					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
-					"Descriptor": { "ShaderRegister": 0, "RegisterSpace": 0 }
+					"Descriptor": {
+						"ShaderRegister": 0,
+						"RegisterSpace": 0
+					}
 				},
 				{
 					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_UAV",
 					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
-					"Descriptor": { "ShaderRegister": 0, "RegisterSpace": 0 }
+					"Descriptor": {
+						"ShaderRegister": 0,
+						"RegisterSpace": 0
+					}
 				},
 				{
 					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_UAV",
 					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
-					"Descriptor": { "ShaderRegister": 1, "RegisterSpace": 0 }
+					"Descriptor": {
+						"ShaderRegister": 1,
+						"RegisterSpace": 0
+					}
 				},
 				{
 					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_UAV",
 					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
-					"Descriptor": { "ShaderRegister": 2, "RegisterSpace": 0 }
+					"Descriptor": {
+						"ShaderRegister": 2,
+						"RegisterSpace": 0
+					}
 				}
 			]
 		}

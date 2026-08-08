@@ -1,4 +1,8 @@
 #include "RendererInternal.h"
+#include "Assets/VideoManager.h"
+#include "Graphics/VideoTexture.h"
+#include "Graphics/Resources/ShaderResourceResource.h"
+#include "Graphics/Resources/UnorderedAccessResource.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
@@ -14,6 +18,16 @@ void Renderer::ProcessComputeShaders(SceneContext *sceneContext) {
 
     auto *commandList = ComputeCommandProcessor::GetCommandList(Passkey<Renderer>{});
     if (!commandList) return;
+
+    // このコマンドリストはフレームごとにResetされるため、ヒープとパイプラインの状態を毎回設定する
+    // （RendererShadow.cppの同パターン参照。SRV/UAVをディスクリプタテーブルで束ねるUAVテクスチャを
+    // 使う場合、事前にSetDescriptorHeapsでヒープを束ねておかないと不正なディスクリプタ参照になる）
+    if (auto *srvHeap = IGraphicsResource::GetSRVHeap(Passkey<Renderer>{})) {
+        if (auto *samplerHeap = IGraphicsResource::GetSamplerHeap(Passkey<Renderer>{})) {
+            ID3D12DescriptorHeap *heaps[] = { srvHeap->GetDescriptorHeap(), samplerHeap->GetDescriptorHeap() };
+            commandList->SetDescriptorHeaps(_countof(heaps), heaps);
+        }
+    }
 
     // 共有コマンドリスト上でもフェーズ開始時のパイプライン状態は明示的に作り直す
     PipelineBinder pipelineBinder(commandList, pipelineManager_);
@@ -64,6 +78,60 @@ void Renderer::ProcessComputeShaders(SceneContext *sceneContext) {
         commandList->Dispatch(groupX, groupY, groupZ);
     }
 
+}
+
+void Renderer::ProcessVideoConversions() {
+    if (!pipelineManager_) return;
+    auto pendingConversions = VideoManager::GetPendingConversions(Passkey<Renderer>{});
+    if (pendingConversions.empty()) return;
+    if (!pipelineManager_->HasPipeline("VideoYUVToRGB") || pipelineManager_->GetPipeline("VideoYUVToRGB").Type() != PipelineType::Compute) return;
+
+    auto *commandList = ComputeCommandProcessor::GetCommandList(Passkey<Renderer>{});
+    if (!commandList) return;
+
+    // このコマンドリストはフレームごとにResetされるため、ヒープの状態を毎回設定する
+    // （RendererShadow.cppの同パターン参照）。gTextureY/gTextureUV/gOutputはディスクリプタテーブルで
+    // バインドするため、事前にSetDescriptorHeapsでSRVヒープを束ねておかないと不正なディスクリプタ
+    // 参照になりドライバがクラッシュする（既存のCompute系パイプラインはすべてルートディスクリプタ
+    // 方式で構造化バッファのみを扱っておりディスクリプタヒープを必要としなかったため、
+    // このコマンドリストでSetDescriptorHeapsが一度も呼ばれていなかった）
+    if (auto *srvHeap = IGraphicsResource::GetSRVHeap(Passkey<Renderer>{})) {
+        if (auto *samplerHeap = IGraphicsResource::GetSamplerHeap(Passkey<Renderer>{})) {
+            ID3D12DescriptorHeap *heaps[] = { srvHeap->GetDescriptorHeap(), samplerHeap->GetDescriptorHeap() };
+            commandList->SetDescriptorHeaps(_countof(heaps), heaps);
+        }
+    }
+
+    PipelineBinder pipelineBinder(commandList, pipelineManager_);
+    pipelineBinder.Invalidate();
+    pipelineBinder.UsePipeline("VideoYUVToRGB");
+    auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, "VideoYUVToRGB");
+    shaderBinder.SetCommandList(commandList);
+
+    for (auto *videoTexture : pendingConversions) {
+        if (!videoTexture) continue;
+
+        auto *luma = videoTexture->GetLumaResource(Passkey<Renderer>{});
+        auto *chroma = videoTexture->GetChromaResource(Passkey<Renderer>{});
+        auto *rgbaUav = videoTexture->GetRgbaUavResource(Passkey<Renderer>{});
+        if (!luma || !chroma || !rgbaUav) continue;
+
+        rgbaUav->SetCommandList(commandList);
+        rgbaUav->TransitionTo(D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+        shaderBinder.Bind("Compute:gTextureY", luma);
+        shaderBinder.Bind("Compute:gTextureUV", chroma);
+        shaderBinder.Bind("Compute:gOutput", rgbaUav);
+
+        const std::uint32_t groupX = (videoTexture->GetWidth() + 7) / 8;
+        const std::uint32_t groupY = (videoTexture->GetHeight() + 7) / 8;
+        commandList->Dispatch(groupX, groupY, 1);
+
+        // 後続の描画パスでSRVとして読めるように状態遷移しておく
+        rgbaUav->TransitionTo(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+        videoTexture->ClearPendingConversion(Passkey<Renderer>{});
+    }
 }
 
 void Renderer::ProcessSkinning(SceneContext *sceneContext) {

@@ -333,6 +333,12 @@
     <ClCompile Include="KashipanEngine\Assets\TextureManager.cpp">
       <Filter>KashipanEngine\Assets</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Assets\VideoManager.cpp">
+      <Filter>KashipanEngine\Assets</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Assets\VideoPlayer.cpp">
+      <Filter>KashipanEngine\Assets</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\ComponentSerialize\ComponentRegistry.cpp">
       <Filter>KashipanEngine\ComponentSerialize</Filter>
     </ClCompile>
@@ -499,6 +505,9 @@
       <Filter>KashipanEngine\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Graphics\ShadowMapBuffer.cpp">
+      <Filter>KashipanEngine\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\VideoTexture.cpp">
       <Filter>KashipanEngine\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Input\Controller.cpp">
@@ -851,6 +860,12 @@
     <ClInclude Include="KashipanEngine\Assets\TextureRef.h">
       <Filter>KashipanEngine\Assets</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\VideoManager.h">
+      <Filter>KashipanEngine\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\VideoPlayer.h">
+      <Filter>KashipanEngine\Assets</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\ComponentSerializeHeader.h">
       <Filter>KashipanEngine</Filter>
     </ClInclude>
@@ -1124,6 +1139,9 @@
     <ClInclude Include="KashipanEngine\Graphics\ShadowMapBuffer.h">
       <Filter>KashipanEngine\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\VideoTexture.h">
+      <Filter>KashipanEngine\Graphics</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\InputHeaders.h">
       <Filter>KashipanEngine</Filter>
     </ClInclude>
@@ -1203,6 +1221,9 @@
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\AudioSource.h">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\VideoSource.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\Box2DCollider.h">

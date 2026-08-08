@@ -485,6 +485,37 @@
 		"engine.audio.play.failed.start": "音声再生失敗。再生開始に失敗しました。",
 		"engine.audio.play.failed.setoutputmatrix": "パン設定失敗。出力ミックス行列の設定に失敗しました。",
 
+		//--------- Video ---------//
+		"engine.video.init.failed.mediafoundation": "動画初期化失敗。Media Foundation の初期化に失敗しました。",
+
+		"engine.video.texture.initialize.invalidsize": "動画テクスチャ初期化失敗。サイズが不正です。",
+		"engine.video.texture.initialize.failed": "動画テクスチャ初期化失敗。GPUリソースの作成に失敗しました。",
+		"engine.video.texture.upload.failed.size": "動画フレームのアップロード失敗。データサイズが不足しています（ストライド計算の不整合の可能性）。",
+
+		"engine.video.decode.failed.readsample": "動画デコード失敗。映像サンプルの読み取りに失敗しました。プレイヤー：",
+		"engine.video.decode.failed.seek": "動画デコード失敗。ループ再生のためのシークに失敗しました。プレイヤー：",
+		"engine.video.decode.failed.buffer": "動画デコード警告。サンプルバッファの取得に失敗しました。プレイヤー：",
+		"engine.video.decode.failed.lock": "動画デコード警告。サンプルバッファのロックに失敗しました。プレイヤー：",
+		"engine.video.decode.endofstream": "動画デコード完了（末尾に到達）。プレイヤー：",
+		"engine.video.decode.firstframe": "動画の最初の映像フレームをデコードしました。プレイヤー：",
+		"engine.video.decode.zeroframes": "動画デコード警告。映像フレームが1枚もデコードされませんでした（コーデック非対応の可能性）。プレイヤー：",
+		"engine.video.debug.positionunavailable": "デバッグ：音声の再生位置が取得できずUpdateをスキップしています。プレイヤー：",
+		"engine.video.debug.firstupload": "デバッグ：最初のフレームをGPUへアップロードしました。プレイヤー：",
+
+		"engine.video.loading.failed.notfound": "動画読み込み失敗。ファイルが見つかりません。ファイルパス：",
+		"engine.video.loading.failed.unsupported": "動画読み込み失敗。未対応の拡張子です。ファイルパス：",
+		"engine.video.loading.failed.probe": "動画読み込み失敗。メタデータの取得に失敗しました。ファイルパス：",
+		"engine.video.loading.failed.register": "動画読み込み失敗。登録に失敗しました。ファイルパス：",
+		"engine.video.loading.succeeded": "動画読み込み成功。ファイルパス：",
+
+		"engine.video.play.failed.reader": "動画再生失敗。ファイルを開けませんでした。ファイルパス：",
+		"engine.video.play.failed.videoformat": "動画再生失敗。映像ストリームの形式設定に失敗しました。ファイルパス：",
+		"engine.video.play.failed.audiodecode": "動画再生失敗。音声トラックのデコードに失敗しました。ファイルパス：",
+		"engine.video.play.failed.seek": "動画再生警告。映像ストリームの先頭へのシークに失敗しました。表示開始が遅れる可能性があります。ファイルパス：",
+		"engine.video.play.failed.texture": "動画再生失敗。動画テクスチャの作成に失敗しました。ファイルパス：",
+		"engine.video.play.failed.audioplay": "動画再生失敗。音声の再生開始に失敗しました。ファイルパス：",
+		"engine.video.play.succeeded": "動画再生成功。ファイルパス：",
+
 		//--------- Model ---------//
 		"engine.model.loading.start": "モデル読み込み開始。ファイルパス：",
 		"engine.model.loading.succeeded": "モデル読み込み成功。ファイルパス：",
@@ -686,6 +717,16 @@
 		"component.audiosource.stop": "停止",
 		"component.audiosource.volume": "音量",
 		"component.audiosource.wet_dry_mix": "エフェクト混合比",
+
+		//--------- component.videosource ---------//
+		"component.videosource.video": "動画",
+		"component.videosource.loop": "ループ",
+		"component.videosource.volume": "音量",
+		"component.videosource.play_on_awake": "自動再生",
+		"component.videosource.play": "再生",
+		"component.videosource.resume": "再開",
+		"component.videosource.pause": "一時停止",
+		"component.videosource.stop": "停止",
 
 		//--------- component.bloomeffect ---------//
 		"component.bloomeffect.blurradius": "ブラー半径",
@@ -1279,6 +1320,8 @@
 		"editor.assetwindow.sound.notloaded": "サウンドが読み込まれていません：",
 		"editor.assetwindow.texture.notloaded": "テクスチャが読み込まれていません：",
 		"editor.assetwindow.unsaved": "(未保存)",
+		"editor.assetwindow.video.notloaded": "動画が読み込まれていません：",
+		"editor.assetwindow.video.title": "動画：",
 
 		//--------- editor.audio ---------//
 		"editor.audio.pause": "一時停止",
@@ -1287,6 +1330,14 @@
 		"editor.audio.resume": "再開",
 		"editor.audio.stop": "停止",
 		"editor.audio.volume": "音量",
+
+		//--------- editor.video ---------//
+		"editor.video.loop": "ループ",
+		"editor.video.pause": "一時停止",
+		"editor.video.play": "再生",
+		"editor.video.resume": "再開",
+		"editor.video.stop": "停止",
+		"editor.video.volume": "音量",
 
 		//--------- editor.audiomanager ---------//
 		"editor.audiomanager.active_plays_d": "再生中の音声数：%d",

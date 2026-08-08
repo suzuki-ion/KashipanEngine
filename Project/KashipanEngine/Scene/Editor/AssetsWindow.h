@@ -108,6 +108,7 @@ private:
     std::vector<std::unique_ptr<MaterialFileEditorWindow>> materialEditors_;
     std::vector<std::unique_ptr<ImagePreviewWindow>> imagePreviews_;
     std::vector<std::unique_ptr<AudioPreviewWindow>> audioPreviews_;
+    std::vector<std::unique_ptr<VideoPreviewWindow>> videoPreviews_;
 
     // 新規ファイル作成（空白部の右クリックメニュー）
     bool isCreateFileRequested_ = false;

@@ -11,6 +11,7 @@
 #include "Assets/MaterialManager.h"
 #include "Assets/ModelManager.h"
 #include "Assets/TextureManager.h"
+#include "Assets/VideoManager.h"
 #include "ComponentSerialize/ComponentRegistry.h"
 #include "Core/ProjectPaths.h"
 #include "Objects/Components/PrefabInstanceComponent.h"
@@ -55,6 +56,13 @@ bool IsAudioExtension(const std::string &ext) {
 bool IsModelExtension(const std::string &ext) {
     static const std::array<const char *, 10> kExts = {
         ".fbx", ".obj", ".gltf", ".glb", ".dae", ".3ds", ".blend", ".ply", ".stl", ".x",
+    };
+    return std::find_if(kExts.begin(), kExts.end(), [&ext](const char *s) { return ext == s; }) != kExts.end();
+}
+
+bool IsVideoExtension(const std::string &ext) {
+    static const std::array<const char *, 4> kExts = {
+        ".mp4", ".wmv", ".mov", ".avi",
     };
     return std::find_if(kExts.begin(), kExts.end(), [&ext](const char *s) { return ext == s; }) != kExts.end();
 }
@@ -149,13 +157,15 @@ void AssetsWindow::ShowImGui() {
 }
 
 bool AssetsWindow::IsSupportedExtension(const std::string &ext) {
-    static const std::array<const char *, 38> kSupported = {
+    static const std::array<const char *, 42> kSupported = {
         // テクスチャ（TextureManager対応形式）
         ".png", ".jpg", ".jpeg", ".bmp", ".tga", ".dds", ".hdr", ".tif", ".tiff", ".gif", ".webp",
         // モデル（ModelManager対応形式）
         ".fbx", ".obj", ".gltf", ".glb", ".dae", ".3ds", ".blend", ".ply", ".stl", ".x",
         // サウンド（AudioManager対応形式）
         ".wav", ".mp3", ".ogg", ".flac", ".aac", ".m4a", ".wma",
+        // 動画（VideoManager対応形式）
+        ".mp4", ".wmv", ".mov", ".avi",
         // シーン・パイプライン等の定義ファイル
         ".json",
         // マテリアル
@@ -180,6 +190,7 @@ unsigned int AssetsWindow::ExtensionColor(const std::string &ext) {
     if (in({ ".png", ".jpg", ".jpeg", ".bmp", ".tga", ".dds", ".hdr", ".tif", ".tiff", ".gif", ".webp" })) return IM_COL32(96, 168, 96, 255);   // テクスチャ: 緑
     if (in({ ".fbx", ".obj", ".gltf", ".glb", ".dae", ".3ds", ".blend", ".ply", ".stl", ".x" })) return IM_COL32(96, 128, 192, 255);            // モデル: 青
     if (in({ ".wav", ".mp3", ".ogg", ".flac", ".aac", ".m4a", ".wma" })) return IM_COL32(192, 144, 64, 255);                                    // サウンド: 橙
+    if (in({ ".mp4", ".wmv", ".mov", ".avi" })) return IM_COL32(192, 96, 144, 255);                                                             // 動画: 桃
     if (in({ ".json" })) return IM_COL32(176, 176, 96, 255);                                                                                    // JSON: 黄
     if (in({ ".mat" })) return IM_COL32(96, 176, 176, 255);                                                                                     // マテリアル: 水色
     if (in({ ".prefab" })) return IM_COL32(112, 144, 224, 255);                                                                                 // プレハブ: 青紫
@@ -349,12 +360,15 @@ void AssetsWindow::ShowFileGrid() {
         }
         (void)activated;
 
-        // テクスチャ/マテリアル/スクリプト/プレハブファイルはD&Dでコンポーネントのフィールド指定や
+        // テクスチャ/動画/マテリアル/スクリプト/プレハブファイルはD&Dでコンポーネントのフィールド指定や
         // シーンへの配置ができるようにする
-        if (!file.isFolder && (IsTextureExtension(file.extension) || file.extension == ".mat" || file.extension == ".as" || file.extension == ".prefab")) {
+        if (!file.isFolder && (IsTextureExtension(file.extension) || IsVideoExtension(file.extension) ||
+            file.extension == ".mat" || file.extension == ".as" || file.extension == ".prefab")) {
             if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
                 if (IsTextureExtension(file.extension)) {
                     SetAssetDragDropPayload(kTextureAssetDragDropType, ToAssetsRelativePath(file.path));
+                } else if (IsVideoExtension(file.extension)) {
+                    SetAssetDragDropPayload(kVideoAssetDragDropType, ToAssetsRelativePath(file.path));
                 } else if (file.extension == ".mat") {
                     SetAssetDragDropPayload(kMaterialAssetDragDropType, ToAssetsRelativePath(file.path));
                 } else if (file.extension == ".prefab") {
@@ -475,6 +489,12 @@ void AssetsWindow::OpenFileEditor(const FileEntry &file) {
             if (editor && editor->GetAssetPath() == assetPath) return;
         }
         audioPreviews_.push_back(std::make_unique<AudioPreviewWindow>(assetPath));
+    } else if (IsVideoExtension(file.extension)) {
+        const std::string assetPath = ToAssetsRelativePath(file.path);
+        for (auto &editor : videoPreviews_) {
+            if (editor && editor->GetAssetPath() == assetPath) return;
+        }
+        videoPreviews_.push_back(std::make_unique<VideoPreviewWindow>(assetPath));
     }
 }
 
@@ -492,6 +512,7 @@ void AssetsWindow::ShowOpenEditors() {
     prune(materialEditors_);
     prune(imagePreviews_);
     prune(audioPreviews_);
+    prune(videoPreviews_);
 }
 
 void AssetsWindow::CloseEditorsForPath(const std::string &cwdRelativePath) {
@@ -505,6 +526,8 @@ void AssetsWindow::CloseEditorsForPath(const std::string &cwdRelativePath) {
         [&](const auto &editor) { return editor && editor->GetAssetPath() == assetPath; }), imagePreviews_.end());
     audioPreviews_.erase(std::remove_if(audioPreviews_.begin(), audioPreviews_.end(),
         [&](const auto &editor) { return editor && editor->GetAssetPath() == assetPath; }), audioPreviews_.end());
+    videoPreviews_.erase(std::remove_if(videoPreviews_.begin(), videoPreviews_.end(),
+        [&](const auto &editor) { return editor && editor->GetAssetPath() == assetPath; }), videoPreviews_.end());
 }
 
 void AssetsWindow::CreatePrefabFromObject(EmptyObject *obj) {
@@ -584,6 +607,8 @@ void AssetsWindow::ImportDroppedFiles(const std::vector<std::string> &physicalPa
                 AudioManager::LoadDynamic(physicalPathStr);
             } else if (IsModelExtension(ext)) {
                 ModelManager::LoadModelDynamic(physicalPathStr);
+            } else if (IsVideoExtension(ext)) {
+                VideoManager::LoadDynamic(physicalPathStr);
             }
         }
     }
@@ -701,6 +726,8 @@ void AssetsWindow::ShowRenameModal() {
                         AudioManager::RenameSound(oldAssetPath, newAssetPath);
                     } else if (IsModelExtension(ext)) {
                         ModelManager::RenameModel(oldAssetPath, newAssetPath);
+                    } else if (IsVideoExtension(ext)) {
+                        VideoManager::RenameVideo(oldAssetPath, newAssetPath);
                     } else if (ext == PrefabUtility::kPrefabExtension) {
                         PrefabAssetManager::RenamePrefabFile(oldLogicalPath, newLogicalPath);
                     }

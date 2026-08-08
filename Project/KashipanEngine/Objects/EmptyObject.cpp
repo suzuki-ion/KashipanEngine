@@ -106,6 +106,23 @@ IObjectComponent *EmptyObject::AddComponent(std::unique_ptr<IObjectComponent> co
     return RegisterPlacedComponent(placed, typeIndex);
 }
 
+IObjectComponent *EmptyObject::AddComponentByTypeID(size_t typeIndex) {
+    if (typeIndex >= componentsIndexByType_.size()) {
+        componentsIndexByType_.resize(typeIndex + 1);
+    }
+    IComponentPoolBase *pool = ownerSceneContext_ ? ownerSceneContext_->GetOrCreateComponentPool(typeIndex) : nullptr;
+    if (!pool) return nullptr;
+    // 引数無しの追加なので、一時インスタンスを経由せずプールの最終スロットへ直接デフォルト構築する
+    // （JSON経由の状態転送が不要なため、AddComponent(unique_ptr)より高速）
+    IObjectComponent *placed = pool->EmplaceDefault();
+    if (!placed) return nullptr;
+    if (componentsIndexByType_[typeIndex].size() >= placed->GetMaxComponentCountPerObject()) {
+        pool->Remove(placed); // 同じ型のコンポーネントが最大数に達している場合は追加できない
+        return nullptr;
+    }
+    return RegisterPlacedComponent(placed, typeIndex);
+}
+
 bool EmptyObject::RemoveComponent(const IObjectComponent *component) {
     if (component == nullptr) return false;
     auto it = componentsIndexByPointer_.find(component);
@@ -315,11 +332,14 @@ void EmptyObject::Update() {
 void EmptyObject::RegenerateUpdateComponentsList() {
     updateComponents_.clear();
     updateComponents_.reserve(components_.size());
+    // バッチ処理対象の型が1つも登録されていなければ、型ごとのハッシュ検索そのものを省略する
+    // （現時点ではどの型もマークされていないため、毎フレーム・全コンポーネントに対する
+    //   無駄なハッシュ検索を避けるための早期リターン）
+    const bool hasBatchProcessedTypes = HasAnyBatchProcessedObjectComponentType();
     for (const auto &comp : components_) {
         if (!comp.first || !comp.first->IsActive()) continue;
         // バッチ処理対象としてマークされた型は、個別Updateの対象から除外する
-        // （現時点ではどの型もマークされていないため、実質常に全コンポーネントが対象になる）
-        if (IsObjectComponentTypeIDBatchProcessed(comp.first->GetComponentTypeID())) continue;
+        if (hasBatchProcessedTypes && IsObjectComponentTypeIDBatchProcessed(comp.first->GetComponentTypeID())) continue;
         updateComponents_.push_back({ comp.second, comp.first->GetUpdatePriority(), comp.first });
     }
     // 優先度->追加順の昇順でソート

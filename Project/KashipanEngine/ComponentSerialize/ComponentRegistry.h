@@ -44,6 +44,10 @@ std::unique_ptr<IObjectComponent> CreateObjectComponentByType(const std::string 
 std::unique_ptr<IComponentPoolBase> CreateObjectComponentPoolByTypeID(size_t typeID);
 /// @brief 型IDが指すコンポーネント型がバッチ処理対象としてマークされているか（未登録の場合は false）
 bool IsObjectComponentTypeIDBatchProcessed(size_t typeID);
+/// @brief バッチ処理対象としてマークされた型が1つでも存在するか
+/// @details false の場合、呼び出し側は型ごとの IsObjectComponentTypeIDBatchProcessed 検索を
+///          丸ごと省略できる（毎フレームのホットパスでの無駄なハッシュ検索を避けるためのショートカット）
+bool HasAnyBatchProcessedObjectComponentType();
 
 const std::vector<std::string> &GetRegisteredSceneComponentTypes();
 const std::vector<std::string> &GetRegisteredObjectComponentTypes();

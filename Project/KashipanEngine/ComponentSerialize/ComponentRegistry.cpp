@@ -21,6 +21,13 @@ std::unordered_map<size_t, bool> &GetObjectComponentBatchProcessedMap() {
     static std::unordered_map<size_t, bool> batchProcessedMap;
     return batchProcessedMap;
 }
+/// @brief バッチ処理対象として登録された型の数（0であればRegenerateUpdateComponentsList側で
+///        型ごとのハッシュ検索そのものを丸ごと省略できる。isBatchProcessed=trueの型が
+///        1つも無い今の時点では常に0になる）
+size_t &GetBatchProcessedTypeCount() {
+    static size_t count = 0;
+    return count;
+}
 
 std::vector<std::string> &GetRegisteredSceneComponentTypes() {
     static std::vector<std::string> registeredSceneComponentTypes;
@@ -61,6 +68,7 @@ bool RegisterComponentTypeObject(
     factoryMap[typeName] = createFunc;
     Local::GetObjectComponentPoolFactoryMap()[typeID] = poolFactory;
     Local::GetObjectComponentBatchProcessedMap()[typeID] = isBatchProcessed;
+    if (isBatchProcessed) ++Local::GetBatchProcessedTypeCount();
     Local::GetRegisteredObjectComponentTypes().push_back(typeName);
     Local::GetObjectComponentCategoryMap()[typeName] = category;
     return true;
@@ -92,6 +100,9 @@ bool IsObjectComponentTypeIDBatchProcessed(size_t typeID) {
     auto &map = Local::GetObjectComponentBatchProcessedMap();
     auto it = map.find(typeID);
     return it != map.end() && it->second;
+}
+bool HasAnyBatchProcessedObjectComponentType() {
+    return Local::GetBatchProcessedTypeCount() > 0;
 }
 
 const std::vector<std::string> &GetRegisteredSceneComponentTypes() {

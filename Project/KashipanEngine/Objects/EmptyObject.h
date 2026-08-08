@@ -138,6 +138,10 @@ public:
     /// @param comp 既存コンポーネント（ムーブされる）
     /// @return 追加に成功した場合はコンポーネントのポインタ、失敗した場合は nullptr
     IObjectComponent *AddComponent(std::unique_ptr<IObjectComponent> comp);
+    /// @brief 型IDからプールへ直接デフォルト構築で追加する（JSON経由の状態転送を伴わない高速パス）
+    /// @details AddComponent<T>()（引数無し）専用。定義はSceneContextの完全な型定義が必要なため
+    ///          EmptyObject.cppにある
+    IObjectComponent *AddComponentByTypeID(size_t typeIndex);
     /// @brief 既存コンポーネントの追加
     /// @tparam T コンポーネントの型
     /// @param comp 既存コンポーネント（ムーブされる）
@@ -155,10 +159,18 @@ public:
     template<typename T, typename... Args>
     T *AddComponent(Args&&... args) {
         static_assert(std::is_base_of_v<IObjectComponent, T>, "T must derive from IObjectComponent");
-        try {
-            auto comp = std::make_unique<T>(std::forward<Args>(args)...);
-            return static_cast<T *>(AddComponent(std::unique_ptr<IObjectComponent>(std::move(comp))));
-        } catch (...) { return nullptr; }
+        if constexpr (sizeof...(Args) == 0) {
+            // 引数無し（実質全ての呼び出し箇所がこちら）の場合は、プールへ直接デフォルト構築する
+            // 非テンプレートの高速パスを使う（一時インスタンスの構築やJSON経由の状態転送を避ける）。
+            // SceneContextはこのヘッダ内では前方宣言のみのため、テンプレートから直接
+            // GetOrCreateComponentPool<T>() を呼ぶことはできない（.cpp側でのみ可能）
+            return static_cast<T *>(AddComponentByTypeID(IObjectComponent::GetComponentTypeID<T>()));
+        } else {
+            try {
+                auto comp = std::make_unique<T>(std::forward<Args>(args)...);
+                return static_cast<T *>(AddComponent(std::unique_ptr<IObjectComponent>(std::move(comp))));
+            } catch (...) { return nullptr; }
+        }
     }
 
     //==================================================

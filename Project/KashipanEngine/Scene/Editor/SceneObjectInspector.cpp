@@ -234,7 +234,7 @@ void SceneObjectInspector::ShowPrefabSection(EmptyObject *obj) {
         }
         ImGui::SameLine();
         if (ImGui::Button(TranslationLabel("editor.prefab.revertall"))) {
-            pendingRevertPrefabTarget_ = obj;
+            SetPendingRevertPrefabTarget(obj);
             isRevertPrefabConfirmRequested_ = true;
         }
 
@@ -259,6 +259,9 @@ void SceneObjectInspector::ShowPrefabSection(EmptyObject *obj) {
 }
 
 void SceneObjectInspector::ShowRevertPrefabConfirmModal() {
+    // モーダルは複数フレームにまたがって表示され続けるため、生ポインタは毎フレームUUIDから引き直す
+    // （プールのスロット再利用によるエイリアシング対策）
+    pendingRevertPrefabTarget_ = context_ ? context_->GetSceneObject(pendingRevertPrefabTargetID_) : nullptr;
     if (isRevertPrefabConfirmRequested_) {
         ImGui::OpenPopup(TranslationLabel("editor.prefab.revert.title"));
         isRevertPrefabConfirmRequested_ = false;
@@ -272,12 +275,12 @@ void SceneObjectInspector::ShowRevertPrefabConfirmModal() {
             if (pendingRevertPrefabTarget_) {
                 PrefabSyncUtility::RevertAll(context_, commands_, pendingRevertPrefabTarget_);
             }
-            pendingRevertPrefabTarget_ = nullptr;
+            SetPendingRevertPrefabTarget(nullptr);
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
         if (ImGui::Button(TranslationLabel("editor.common.cancel"), ImVec2(120, 0))) {
-            pendingRevertPrefabTarget_ = nullptr;
+            SetPendingRevertPrefabTarget(nullptr);
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();
@@ -560,22 +563,23 @@ IObjectComponent *SceneObjectInspector::FindComponentByTypeOrdinal(EmptyObject *
 
 void SceneObjectInspector::TrackComponentEdit(EmptyObject *obj, IObjectComponent *component, const JSON &before, const JSON &after,
     const ComponentCounterparts &linkedTargets) {
+    (void)obj;
+    const ComponentRef newRef = component ? component->GetComponentRef() : ComponentRef{};
     // 別のコンポーネントの編集が始まった場合は先に確定させる
-    if (hasPendingEdit_ && (editObject_ != obj || editComponent_ != component)) {
+    if (hasPendingEdit_ && editComponentRef_ != newRef) {
         CommitPendingEdit();
     }
 
     if (!hasPendingEdit_) {
         hasPendingEdit_ = true;
-        editObject_ = obj;
-        editComponent_ = component;
+        editComponentRef_ = newRef;
         editBefore_ = before;
         // 一括編集対象の「変更前」状態は編集セッション開始時点のものを控える
         // （呼び出し元は、このメソッドを呼んだ後に差分を対象へ適用すること）
         editLinkedTargets_.clear();
         for (const auto &[linkedObject, linkedComponent] : linkedTargets) {
             if (!linkedObject || !linkedComponent) continue;
-            editLinkedTargets_.push_back({ linkedObject, linkedComponent, linkedObject->SaveComponentToJson(linkedComponent) });
+            editLinkedTargets_.push_back({ linkedComponent->GetComponentRef(), linkedObject->SaveComponentToJson(linkedComponent) });
         }
     }
     editAfter_ = after;
@@ -584,10 +588,11 @@ void SceneObjectInspector::TrackComponentEdit(EmptyObject *obj, IObjectComponent
 void SceneObjectInspector::CommitPendingEdit() {
     if (!hasPendingEdit_) return;
 
-    // スクリプト、Undo/Redo、再生停止によるシーン復元で、編集開始時のポインターが
-    // UIフレームの途中に無効化される場合がある。所有コンテナとの照合前には参照解除しない。
-    EmptyObject *editObject = context_ ? context_->GetSceneObject(editObject_) : nullptr;
-    IObjectComponent *editComponent = editObject ? editObject->GetComponent(editComponent_) : nullptr;
+    // 編集セッションはスライダードラッグ等で複数フレームにまたがるため、スクリプト、Undo/Redo、
+    // 再生停止によるシーン復元や、プールのスロット再利用で対象が無効化されている場合がある。
+    // ComponentRef（UUID+addedID）経由で毎回解決してから使う
+    EmptyObject *editObject = context_ ? context_->GetSceneObject(editComponentRef_.ownerObjectID) : nullptr;
+    IObjectComponent *editComponent = context_ ? context_->ResolveComponent(editComponentRef_) : nullptr;
     if (!editObject || !editComponent) {
         ResetPendingEdit();
         return;
@@ -602,8 +607,8 @@ void SceneObjectInspector::CommitPendingEdit() {
                 Translation("editor.command.editcomponent") + editComponent->GetComponentType() + " (" + std::to_string(editLinkedTargets_.size() + 1) + Translation("editor.command.objects.suffix") + ")");
             composite->AddCommand(std::make_unique<ComponentEditCommand>(editObject, editComponent, editBefore_, editAfter_));
             for (const auto &target : editLinkedTargets_) {
-                EmptyObject *linkedObject = context_->GetSceneObject(target.object);
-                IObjectComponent *linkedComponent = linkedObject ? linkedObject->GetComponent(target.component) : nullptr;
+                EmptyObject *linkedObject = context_->GetSceneObject(target.componentRef.ownerObjectID);
+                IObjectComponent *linkedComponent = context_->ResolveComponent(target.componentRef);
                 if (!linkedObject || !linkedComponent) continue;
                 JSON after = linkedObject->SaveComponentToJson(linkedComponent);
                 if (after != target.before) {
@@ -618,8 +623,7 @@ void SceneObjectInspector::CommitPendingEdit() {
 
 void SceneObjectInspector::ResetPendingEdit() {
     hasPendingEdit_ = false;
-    editObject_ = nullptr;
-    editComponent_ = nullptr;
+    editComponentRef_ = ComponentRef{};
     editBefore_ = JSON();
     editAfter_ = JSON();
     editLinkedTargets_.clear();

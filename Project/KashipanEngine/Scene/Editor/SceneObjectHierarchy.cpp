@@ -40,30 +40,45 @@ bool IsDescendantOfAny(EmptyObject *obj, const std::unordered_set<EmptyObject *>
 
 std::vector<UUID128> SceneObjectHierarchy::GetSelectedObjectIDs() const {
     std::vector<UUID128> ids;
-    ids.reserve(selectedObjects_.size());
-    const auto isAlive = [this](EmptyObject *obj) {
-        return obj && editorContext_ && editorContext_->GetSceneObject(obj) == obj;
-    };
+    ids.reserve(selectedObjectIDs_.size());
     // 先頭にプライマリ（最後に操作したオブジェクト）を入れ、復元時にプライマリを維持する
-    if (isAlive(selectedObject_)) ids.push_back(selectedObject_->GetObjectID());
-    for (auto *obj : selectedObjects_) {
-        if (isAlive(obj) && obj != selectedObject_) ids.push_back(obj->GetObjectID());
+    if (selectedObjectID_.IsValid()) ids.push_back(selectedObjectID_);
+    for (const auto &id : selectedObjectIDs_) {
+        if (id.IsValid() && id != selectedObjectID_) ids.push_back(id);
     }
     return ids;
 }
 
 void SceneObjectHierarchy::ValidateCachedObjects() {
+    // selectedObject_ 等の生ポインタは「このフレーム用に解決済みのキャッシュ」であり、
+    // 正であるUUID側から毎フレーム引き直す（プールのスロット再利用によるエイリアシング対策）。
     const auto isAlive = [this](EmptyObject *obj) {
         return obj && editorContext_ && editorContext_->GetSceneObject(obj) == obj;
     };
 
-    std::erase_if(selectedObjects_, [&](EmptyObject *obj) { return !isAlive(obj); });
-    if (!isAlive(selectedObject_)) {
-        selectedObject_ = selectedObjects_.empty() ? nullptr : *selectedObjects_.begin();
-    } else {
-        selectedObjects_.insert(selectedObject_);
+    selectedObjects_.clear();
+    if (editorContext_) {
+        for (const auto &id : selectedObjectIDs_) {
+            if (auto *obj = editorContext_->GetSceneObject(id)) selectedObjects_.insert(obj);
+        }
     }
-    if (!isAlive(selectionAnchorObject_)) selectionAnchorObject_ = selectedObject_;
+    std::erase_if(selectedObjectIDs_, [&](const UUID128 &id) {
+        return !editorContext_ || !editorContext_->GetSceneObject(id);
+    });
+    selectedObject_ = editorContext_ ? editorContext_->GetSceneObject(selectedObjectID_) : nullptr;
+    if (!selectedObject_) {
+        SetSelectedObject(selectedObjects_.empty() ? nullptr : *selectedObjects_.begin());
+    }
+    AddToSelectionSet(selectedObject_);
+
+    selectionAnchorObject_ = editorContext_ ? editorContext_->GetSceneObject(selectionAnchorObjectID_) : nullptr;
+    if (!selectionAnchorObject_) SetSelectionAnchor(selectedObject_);
+
+    pendingRevertPrefabTarget_ = editorContext_ ? editorContext_->GetSceneObject(pendingRevertPrefabTargetID_) : nullptr;
+    if (!pendingRevertPrefabTarget_) pendingRevertPrefabTargetID_ = UUID128();
+
+    // 以下は同一フレーム内でのみ設定・消費されるため生ポインタのままで安全
+    // （設定箇所・消費箇所のコメント参照。フレームをまたぐエイリアシングの窓が生じない）
     if (!isAlive(pendingRangeTarget_)) pendingRangeTarget_ = nullptr;
     if (!isAlive(pendingScrollToObject_)) pendingScrollToObject_ = nullptr;
     std::erase_if(forceOpenAncestors_, [&](EmptyObject *obj) { return !isAlive(obj); });
@@ -96,10 +111,10 @@ void SceneObjectHierarchy::RestoreSelection(const std::vector<UUID128> &objectID
     for (const auto &id : objectIDs) {
         EmptyObject *obj = editorContext_->GetSceneObject(id);
         if (!obj) continue; // Undo/Redoで削除されたオブジェクトはスキップ
-        selectedObjects_.insert(obj);
-        if (!selectedObject_) selectedObject_ = obj; // 先頭（プライマリ）を維持する
+        AddToSelectionSet(obj);
+        if (!selectedObject_) SetSelectedObject(obj); // 先頭（プライマリ）を維持する
     }
-    selectionAnchorObject_ = selectedObject_;
+    SetSelectionAnchor(selectedObject_);
 }
 
 void SceneObjectHierarchy::ShowImGui() {
@@ -308,21 +323,21 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
             } else if (ctrlHeld) {
                 // Ctrl+クリック: 個別に選択/選択解除をトグルする
                 if (selectedObjects_.contains(item.object)) {
-                    selectedObjects_.erase(item.object);
+                    RemoveFromSelectionSet(item.object);
                     if (selectedObject_ == item.object) {
-                        selectedObject_ = selectedObjects_.empty() ? nullptr : *selectedObjects_.begin();
+                        SetSelectedObject(selectedObjects_.empty() ? nullptr : *selectedObjects_.begin());
                     }
                 } else {
-                    selectedObjects_.insert(item.object);
-                    selectedObject_ = item.object;
+                    AddToSelectionSet(item.object);
+                    SetSelectedObject(item.object);
                 }
-                selectionAnchorObject_ = item.object;
+                SetSelectionAnchor(item.object);
             } else {
                 // 修飾キー無しのクリックは単一選択に置き換える
-                selectedObjects_.clear();
-                selectedObjects_.insert(item.object);
-                selectedObject_ = item.object;
-                selectionAnchorObject_ = item.object;
+                ClearSelectionSet();
+                AddToSelectionSet(item.object);
+                SetSelectedObject(item.object);
+                SetSelectionAnchor(item.object);
             }
         }
     }
@@ -386,7 +401,7 @@ void SceneObjectHierarchy::ShowObjectContextMenu(EmptyObject *obj) {
                 PrefabSyncUtility::ApplyAll(editorContext_, obj);
             }
             if (ImGui::MenuItem(TranslationLabel("editor.prefab.revertall"))) {
-                pendingRevertPrefabTarget_ = obj;
+                SetPendingRevertPrefabTarget(obj);
                 isRevertPrefabConfirmRequested_ = true;
             }
         }
@@ -408,12 +423,12 @@ void SceneObjectHierarchy::ShowRevertPrefabConfirmModal() {
             if (pendingRevertPrefabTarget_) {
                 PrefabSyncUtility::RevertAll(editorContext_, commands_, pendingRevertPrefabTarget_);
             }
-            pendingRevertPrefabTarget_ = nullptr;
+            SetPendingRevertPrefabTarget(nullptr);
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
         if (ImGui::Button(TranslationLabel("editor.common.cancel"), ImVec2(120, 0))) {
-            pendingRevertPrefabTarget_ = nullptr;
+            SetPendingRevertPrefabTarget(nullptr);
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();
@@ -698,10 +713,10 @@ void SceneObjectHierarchy::ExecutePasteCommand(std::unique_ptr<PasteObjectComman
 
     auto newRoots = rawCommand->GetRootObjects(editorContext_);
     if (!newRoots.empty()) {
-        selectedObjects_.clear();
-        for (auto *obj : newRoots) selectedObjects_.insert(obj);
-        selectedObject_ = newRoots.back();
-        selectionAnchorObject_ = newRoots.back();
+        ClearSelectionSet();
+        for (auto *obj : newRoots) AddToSelectionSet(obj);
+        SetSelectedObject(newRoots.back());
+        SetSelectionAnchor(newRoots.back());
     }
 }
 
@@ -715,10 +730,10 @@ void SceneObjectHierarchy::ApplyPendingRangeSelect() {
     auto targetIt = std::find(visibleOrderThisFrame_.begin(), visibleOrderThisFrame_.end(), target);
     if (anchorIt == visibleOrderThisFrame_.end() || targetIt == visibleOrderThisFrame_.end()) {
         // 起点が非表示（親が折りたたまれている等）で見つからない場合は対象単体を選択する
-        selectedObjects_.clear();
-        selectedObjects_.insert(target);
-        selectedObject_ = target;
-        selectionAnchorObject_ = target;
+        ClearSelectionSet();
+        AddToSelectionSet(target);
+        SetSelectedObject(target);
+        SetSelectionAnchor(target);
         return;
     }
 
@@ -726,11 +741,11 @@ void SceneObjectHierarchy::ApplyPendingRangeSelect() {
     size_t targetIndex = static_cast<size_t>(std::distance(visibleOrderThisFrame_.begin(), targetIt));
     if (anchorIndex > targetIndex) std::swap(anchorIndex, targetIndex);
 
-    selectedObjects_.clear();
+    ClearSelectionSet();
     for (size_t i = anchorIndex; i <= targetIndex; ++i) {
-        selectedObjects_.insert(visibleOrderThisFrame_[i]);
+        AddToSelectionSet(visibleOrderThisFrame_[i]);
     }
-    selectedObject_ = target;
+    SetSelectedObject(target);
     // 起点はそのまま維持する（連続Shiftクリックで同じ起点から範囲を再計算できるようにするため）
 }
 

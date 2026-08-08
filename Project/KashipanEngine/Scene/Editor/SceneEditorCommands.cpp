@@ -183,47 +183,53 @@ bool AddComponentCommand::Execute(SceneEditorContext *context) {
     if (!obj) return false;
     auto newComponent = CreateObjectComponentByType(componentType_);
     if (!newComponent) return false;
-    component_ = obj->AddComponent(std::move(newComponent));
-    if (!component_) return false;
+    IObjectComponent *component = obj->AddComponent(std::move(newComponent));
+    if (!component) return false;
+    componentRef_ = component->GetComponentRef();
     // Redo時は以前の状態を復元する
     if (!state_.empty()) {
-        obj->LoadComponentFromJson(component_, state_);
+        obj->LoadComponentFromJson(component, state_);
     }
     return true;
 }
 bool AddComponentCommand::Undo(SceneEditorContext *context) {
     auto *obj = context->GetSceneObject(objectID_);
-    if (!obj || !component_) return false;
-    state_ = obj->SaveComponentToJson(component_);
-    const bool removed = obj->RemoveComponent(component_);
-    if (removed) component_ = nullptr;
+    IObjectComponent *component = context->ResolveComponent(componentRef_);
+    if (!obj || !component) return false;
+    state_ = obj->SaveComponentToJson(component);
+    const bool removed = obj->RemoveComponent(component);
+    if (removed) componentRef_ = ComponentRef{};
     return removed;
 }
 
 bool RemoveComponentCommand::Execute(SceneEditorContext *context) {
     auto *obj = context->GetSceneObject(objectID_);
-    if (!obj || !component_) return false;
-    snapshot_ = obj->SaveComponentToJson(component_);
-    const bool removed = obj->RemoveComponent(component_);
-    if (removed) component_ = nullptr;
+    IObjectComponent *component = context->ResolveComponent(componentRef_);
+    if (!obj || !component) return false;
+    snapshot_ = obj->SaveComponentToJson(component);
+    const bool removed = obj->RemoveComponent(component);
+    if (removed) componentRef_ = ComponentRef{};
     return removed;
 }
 bool RemoveComponentCommand::Undo(SceneEditorContext *context) {
     auto *obj = context->GetSceneObject(objectID_);
     if (!obj) return false;
-    component_ = obj->AddComponentFromJson(snapshot_);
-    return component_ != nullptr;
+    IObjectComponent *component = obj->AddComponentFromJson(snapshot_);
+    componentRef_ = component ? component->GetComponentRef() : ComponentRef{};
+    return component != nullptr;
 }
 
 bool ComponentEditCommand::Execute(SceneEditorContext *context) {
     auto *obj = context->GetSceneObject(objectID_);
-    if (!obj || !component_) return false;
-    return obj->LoadComponentFromJson(component_, after_);
+    IObjectComponent *component = context->ResolveComponent(componentRef_);
+    if (!obj || !component) return false;
+    return obj->LoadComponentFromJson(component, after_);
 }
 bool ComponentEditCommand::Undo(SceneEditorContext *context) {
     auto *obj = context->GetSceneObject(objectID_);
-    if (!obj || !component_) return false;
-    return obj->LoadComponentFromJson(component_, before_);
+    IObjectComponent *component = context->ResolveComponent(componentRef_);
+    if (!obj || !component) return false;
+    return obj->LoadComponentFromJson(component, before_);
 }
 
 //==================================================

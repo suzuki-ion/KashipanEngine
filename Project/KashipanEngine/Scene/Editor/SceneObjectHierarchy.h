@@ -38,9 +38,9 @@ public:
     void SetCommands(SceneEditorCommands *commands) { commands_ = commands; }
     /// @brief 選択状態をクリアする（Undo/Redoやシーンロードでオブジェクトが変わった場合用）
     void ClearSelection() {
-        selectedObject_ = nullptr;
-        selectedObjects_.clear();
-        selectionAnchorObject_ = nullptr;
+        SetSelectedObject(nullptr);
+        ClearSelectionSet();
+        SetSelectionAnchor(nullptr);
         pendingRangeTarget_ = nullptr;
         pendingScrollToObject_ = nullptr;
         forceOpenAncestors_.clear();
@@ -82,22 +82,22 @@ public:
         }
         if (additive) {
             if (selectedObjects_.contains(obj)) {
-                selectedObjects_.erase(obj);
+                RemoveFromSelectionSet(obj);
                 if (selectedObject_ == obj) {
-                    selectedObject_ = selectedObjects_.empty() ? nullptr : *selectedObjects_.begin();
+                    SetSelectedObject(selectedObjects_.empty() ? nullptr : *selectedObjects_.begin());
                 }
             } else {
-                selectedObjects_.insert(obj);
-                selectedObject_ = obj;
+                AddToSelectionSet(obj);
+                SetSelectedObject(obj);
                 RequestScrollTo(obj);
             }
         } else {
-            selectedObjects_.clear();
-            selectedObjects_.insert(obj);
-            selectedObject_ = obj;
+            ClearSelectionSet();
+            AddToSelectionSet(obj);
+            SetSelectedObject(obj);
             RequestScrollTo(obj);
         }
-        selectionAnchorObject_ = obj;
+        SetSelectionAnchor(obj);
     }
 
 private:
@@ -124,6 +124,38 @@ private:
         EmptyObject *objectTarget = nullptr;
         DropPosition position = DropPosition::Inside;
     };
+
+    // selectedObject_/selectedObjects_/selectionAnchorObject_/pendingRevertPrefabTarget_ は
+    // 複数フレームにまたがって保持される（Undo/Redoスタック相当の生存期間）ため、プールのスロット
+    // 再利用によるエイリアシングを避けるためUUIDを正とし、生ポインタは「このフレーム用に解決済みの
+    // キャッシュ」として扱う（ValidateCachedObjects()で毎フレーム引き直す）。以下のSetXxx/AddXxx系
+    // ヘルパーは、両者を必ずセットで更新するための唯一の書き込み経路とする。
+    void SetSelectedObject(EmptyObject *obj) {
+        selectedObject_ = obj;
+        selectedObjectID_ = obj ? obj->GetObjectID() : UUID128();
+    }
+    void SetSelectionAnchor(EmptyObject *obj) {
+        selectionAnchorObject_ = obj;
+        selectionAnchorObjectID_ = obj ? obj->GetObjectID() : UUID128();
+    }
+    void SetPendingRevertPrefabTarget(EmptyObject *obj) {
+        pendingRevertPrefabTarget_ = obj;
+        pendingRevertPrefabTargetID_ = obj ? obj->GetObjectID() : UUID128();
+    }
+    void AddToSelectionSet(EmptyObject *obj) {
+        if (!obj) return;
+        selectedObjects_.insert(obj);
+        selectedObjectIDs_.insert(obj->GetObjectID());
+    }
+    void RemoveFromSelectionSet(EmptyObject *obj) {
+        if (!obj) return;
+        selectedObjects_.erase(obj);
+        selectedObjectIDs_.erase(obj->GetObjectID());
+    }
+    void ClearSelectionSet() {
+        selectedObjects_.clear();
+        selectedObjectIDs_.clear();
+    }
 
     void RebuildObjectItems();
     void RecursivelyBuildObjectItems(EmptyObject *obj, ObjectItem &item, size_t depth);
@@ -178,10 +210,17 @@ private:
     // 複数選択の状態。selectedObject_ は最後に操作したオブジェクト（インスペクター/ギズモ等、
     // 単一対象を要求する既存の呼び出し元との後方互換用）で、常に selectedObjects_ に含まれる
     // （selectedObjects_ が空の場合のみ nullptr）。
+    // 選択状態は複数フレームにまたがって保持されるため、UUID（*_ID系）を正として持ち、
+    // 生ポインタ側はValidateCachedObjects()で毎フレーム引き直す「このフレーム用の解決済みキャッシュ」
+    // として扱う（プールのスロット再利用によるエイリアシング対策。SetSelectedObject等の
+    // ヘルパー経由でのみ書き込むこと）。
+    std::unordered_set<UUID128> selectedObjectIDs_;
     std::unordered_set<EmptyObject *> selectedObjects_;
+    UUID128 selectedObjectID_;
     EmptyObject *selectedObject_ = nullptr;
     // Shift範囲選択の起点。修飾キー無し/Ctrlクリック時に更新し、Shiftクリックでは維持する
     // （連続Shiftクリックで同じ起点から範囲を再計算できるようにするため）。
+    UUID128 selectionAnchorObjectID_;
     EmptyObject *selectionAnchorObject_ = nullptr;
     // Shiftクリックされた対象。ツリー全体の表示順（visibleOrderThisFrame_）が確定してから
     // ApplyPendingRangeSelect() で範囲を確定するため、クリック時点では要求のみ記録する。
@@ -210,8 +249,10 @@ private:
     std::string pendingPrefabDropPath_;
     EmptyObject *pendingPrefabDropParent_ = nullptr;
 
-    // Prefabインスタンスの「Revert All」確認モーダル用
+    // Prefabインスタンスの「Revert All」確認モーダル用（モーダルはユーザーが選択するまで
+    // 複数フレームにまたがって表示され続けるため、対象はUUIDを正として保持する）
     bool isRevertPrefabConfirmRequested_ = false;
+    UUID128 pendingRevertPrefabTargetID_;
     EmptyObject *pendingRevertPrefabTarget_ = nullptr;
 };
 

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "Scene/SceneEditorContext.h"
+#include "Objects/ComponentRef.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
@@ -246,7 +247,9 @@ public:
 private:
     UUID128 objectID_;
     std::string componentType_;
-    IObjectComponent *component_ = nullptr;
+    // Undo/Redoスタック上で複数フレームにまたがって保持されるため、生ポインタではなく
+    // ComponentRef（UUID+addedID）を正として保持する（プールのスロット再利用対策）
+    ComponentRef componentRef_;
     JSON state_;
 };
 
@@ -254,7 +257,7 @@ private:
 class RemoveComponentCommand final : public IEditorCommand {
 public:
     RemoveComponentCommand(EmptyObject *obj, IObjectComponent *component)
-        : objectID_(obj ? obj->GetObjectID() : UUID128()), component_(component),
+        : objectID_(obj ? obj->GetObjectID() : UUID128()), componentRef_(component ? component->GetComponentRef() : ComponentRef{}),
           componentType_(component ? component->GetComponentType() : "") {}
 
     bool Execute(SceneEditorContext *context) override;
@@ -263,7 +266,9 @@ public:
 
 private:
     UUID128 objectID_;
-    IObjectComponent *component_ = nullptr;
+    // Undo/Redoスタック上で複数フレームにまたがって保持されるため、生ポインタではなく
+    // ComponentRef（UUID+addedID）を正として保持する（プールのスロット再利用対策）
+    ComponentRef componentRef_;
     std::string componentType_;
     JSON snapshot_;
 };
@@ -273,7 +278,7 @@ private:
 class ComponentEditCommand final : public IEditorCommand {
 public:
     ComponentEditCommand(EmptyObject *obj, IObjectComponent *component, JSON before, JSON after)
-        : objectID_(obj ? obj->GetObjectID() : UUID128()), component_(component),
+        : objectID_(obj ? obj->GetObjectID() : UUID128()), componentRef_(component ? component->GetComponentRef() : ComponentRef{}),
           componentType_(component ? component->GetComponentType() : ""),
           before_(std::move(before)), after_(std::move(after)) {}
 
@@ -283,7 +288,9 @@ public:
 
 private:
     UUID128 objectID_;
-    IObjectComponent *component_ = nullptr;
+    // Undo/Redoスタック上で複数フレームにまたがって保持されるため、生ポインタではなく
+    // ComponentRef（UUID+addedID）を正として保持する（プールのスロット再利用対策）
+    ComponentRef componentRef_;
     std::string componentType_;
     JSON before_;
     JSON after_;

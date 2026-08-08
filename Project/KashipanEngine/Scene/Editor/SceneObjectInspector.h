@@ -8,6 +8,7 @@
 #include "Utilities/ImGuiCustom.h"
 #include "Scene/SceneEditorContext.h"
 #include "Scene/Editor/SceneObjectHierarchy.h"
+#include "Objects/ComponentRef.h"
 
 namespace KashipanEngine {
 
@@ -61,6 +62,11 @@ private:
     static std::vector<IObjectComponent *> GetOrderedComponents(EmptyObject *obj);
     /// @brief コンポーネント行に対するD&Dソース/ターゲットの登録（直前に表示した項目が対象になる）
     void DragAndDropComponent(IObjectComponent *comp);
+    /// @brief pendingRevertPrefabTarget_/IDを両方まとめて設定する（複数フレームにまたがるモーダル用）
+    void SetPendingRevertPrefabTarget(EmptyObject *obj) {
+        pendingRevertPrefabTarget_ = obj;
+        pendingRevertPrefabTargetID_ = obj ? obj->GetObjectID() : UUID128();
+    }
     /// @brief 保留中のコンポーネントD&Dを適用し、処理優先順位を並び順どおりに振り直す
     void ApplyComponentDragAndDrop(EmptyObject *obj);
 
@@ -71,29 +77,32 @@ private:
     // 名前編集のUndo用（編集開始時の名前を保持）
     std::string nameBeforeEdit_;
 
-    // コンポーネントパラメータ編集のコアレス用
+    // コンポーネントパラメータ編集のコアレス用。編集セッションはスライダードラッグ等で
+    // 複数フレームにまたがるため、プールのスロット再利用によるエイリアシングを避けるべく
+    // ComponentRef（UUID+addedID）を正として保持する
     bool hasPendingEdit_ = false;
-    EmptyObject *editObject_ = nullptr;
-    IObjectComponent *editComponent_ = nullptr;
+    ComponentRef editComponentRef_;
     JSON editBefore_;
     JSON editAfter_;
 
     /// @brief 複数選択の一括編集セッション中の、プライマリ以外の対象とその変更前スナップショット
     struct LinkedEditTarget {
-        EmptyObject *object = nullptr;
-        IObjectComponent *component = nullptr;
+        ComponentRef componentRef;
         JSON before;
     };
     std::vector<LinkedEditTarget> editLinkedTargets_;
 
-    // コンポーネント並び替えD&D用（Above: ターゲットの上、Below: ターゲットの下）
+    // コンポーネント並び替えD&D用（Above: ターゲットの上、Below: ターゲットの下）。
+    // 設定・消費が同一フレーム内で完結するため生ポインタのままで安全
     enum class ComponentDropPosition { Above, Below };
     IObjectComponent *componentDragSource_ = nullptr;
     IObjectComponent *componentDragTarget_ = nullptr;
     ComponentDropPosition componentDragPosition_ = ComponentDropPosition::Above;
 
-    // Prefabインスタンスの「Revert All」確認モーダル用
+    // Prefabインスタンスの「Revert All」確認モーダル用（モーダルは複数フレームにまたがって
+    // 表示され続けるため、対象はUUIDを正として保持する）
     bool isRevertPrefabConfirmRequested_ = false;
+    UUID128 pendingRevertPrefabTargetID_;
     EmptyObject *pendingRevertPrefabTarget_ = nullptr;
 
     // コンポーネントのコピー＆ペースト用クリップボード（型が一致するコンポーネントにのみ貼り付け可能）

@@ -166,8 +166,9 @@ void EmptyObject::ClearComponents() {
 
 bool EmptyObject::IsActive() const {
     auto *transform = GetComponent<Transform>();
+    // Transform::GetParentObject()（UUID経由）は既に対象オブジェクトの生存確認を済ませて
+    // 返すため、ここで改めて objectsExistingSet_ 経由の再確認をする必要はない
     auto *parentObject = transform ? transform->GetParentObject() : nullptr;
-    parentObject = ownerSceneContext_ ? ownerSceneContext_->GetSceneObject(parentObject) : nullptr;
     bool parentActive = parentObject ? parentObject->IsActive() : true;
     return isActive_ && parentActive;
 }

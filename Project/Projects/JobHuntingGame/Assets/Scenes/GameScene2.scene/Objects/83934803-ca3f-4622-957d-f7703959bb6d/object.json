@@ -4,7 +4,7 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "0decf0a7-f5f9-4cd7-b23e-21bd652b6f2f",
+                        "parent": "b2ade051-8413-4791-99d8-0f0b0e6d8a45",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -12,13 +12,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 24.0,
-                            "y": 0.999968409538269,
-                            "z": 8.0
+                            "x": 5.0,
+                            "y": 0.75,
+                            "z": 6.0
                         },
                         "translate": {
-                            "x": 36.0,
-                            "y": -0.000116343806439545,
+                            "x": 0.0,
+                            "y": 0.0,
                             "z": 0.0
                         }
                     },
@@ -76,6 +76,100 @@
                 "data": {
                     "customData": {
                         "fields": {
+                            "moveRangeMax": {
+                                "x": 0.0,
+                                "y": 7.0,
+                                "z": 0.0
+                            },
+                            "moveRangeMin": {
+                                "x": 0.0,
+                                "y": -8.0,
+                                "z": 0.0
+                            },
+                            "moveSpeed": {
+                                "x": 0.0,
+                                "y": -32.0,
+                                "z": 0.0
+                            },
+                            "moveStopDuration": 2.0,
+                            "rotateRangeMax": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "rotateRangeMin": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "rotateSpeed": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "rotateStopDuration": 0.0
+                        },
+                        "scriptPath": "Assets\\Application\\Scripts\\MoveGround.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "acceleration": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "velocity": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Velocity"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "angularAcceleration": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "angularVelocity": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Rotation"
+            },
+            {
+                "data": {
+                    "customData": {},
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PreTransform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
                             "centerZOffset": 0.0,
                             "excludedTagNames": [
                                 "Ground"
@@ -118,9 +212,9 @@
         ],
         "editorOnly": false,
         "isActive": true,
-        "name": "Ground",
-        "objectID": "889dedfe-fe7e-4263-b91e-75e291dc970e",
+        "name": "MoveGround",
+        "objectID": "83934803-ca3f-4622-957d-f7703959bb6d",
         "tag": "Ground"
     },
-    "siblingIndex": 19
+    "siblingIndex": 0
 }

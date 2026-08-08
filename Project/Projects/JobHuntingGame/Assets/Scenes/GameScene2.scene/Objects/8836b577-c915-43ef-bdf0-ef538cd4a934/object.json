@@ -12,14 +12,14 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 1.0,
-                            "y": 64.0,
+                            "x": 6.400000095367432,
+                            "y": 3.5999999046325684,
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 79.03303527832031,
-                            "y": 0.0,
-                            "z": 14.0
+                            "x": 0.0,
+                            "y": 4.0,
+                            "z": 2.0
                         }
                     },
                     "isActive": true,
@@ -31,7 +31,7 @@
             {
                 "data": {
                     "customData": {
-                        "meshAssetPath": "PrimitiveMesh-Box"
+                        "meshAssetPath": "PrimitiveMesh-Plane-XY"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -50,9 +50,9 @@
                             "z": 1.0
                         },
                         "instanceColorBlendMode": 1,
-                        "materialName": "White",
+                        "materialName": "Default",
                         "materialNames": [
-                            "White"
+                            "Default"
                         ],
                         "pipelineName": "Object3D.Solid.BlendNormal",
                         "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
@@ -66,9 +66,9 @@
         ],
         "editorOnly": false,
         "isActive": true,
-        "name": "Wall",
-        "objectID": "ad843595-ffe8-477f-b4d1-ac87a05a297b",
-        "tag": "Wall"
+        "name": "Mesh Object",
+        "objectID": "8836b577-c915-43ef-bdf0-ef538cd4a934",
+        "tag": ""
     },
-    "siblingIndex": 45
+    "siblingIndex": 61
 }

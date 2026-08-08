@@ -4,22 +4,22 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "0decf0a7-f5f9-4cd7-b23e-21bd652b6f2f",
+                        "parent": "b2ade051-8413-4791-99d8-0f0b0e6d8a45",
                         "rotate": {
-                            "w": 1.0,
-                            "x": 0.0,
+                            "w": 0.7071067094802856,
+                            "x": 0.7071068286895752,
                             "y": 0.0,
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 1.0,
-                            "y": 64.0,
-                            "z": 1.0
+                            "x": 0.5,
+                            "y": 5.0,
+                            "z": 0.49999335408210754
                         },
                         "translate": {
-                            "x": 79.03303527832031,
-                            "y": 0.0,
-                            "z": 14.0
+                            "x": -2.0,
+                            "y": 7.5,
+                            "z": 0.0
                         }
                     },
                     "isActive": true,
@@ -31,7 +31,7 @@
             {
                 "data": {
                     "customData": {
-                        "meshAssetPath": "PrimitiveMesh-Box"
+                        "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -66,9 +66,9 @@
         ],
         "editorOnly": false,
         "isActive": true,
-        "name": "Wall",
-        "objectID": "ad843595-ffe8-477f-b4d1-ac87a05a297b",
-        "tag": "Wall"
+        "name": "Axis",
+        "objectID": "403e127f-6072-4e75-880f-0640aaa57609",
+        "tag": ""
     },
-    "siblingIndex": 45
+    "siblingIndex": 6
 }

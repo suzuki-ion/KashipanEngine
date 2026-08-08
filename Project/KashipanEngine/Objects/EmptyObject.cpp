@@ -15,21 +15,19 @@ EmptyObject::~EmptyObject() {
     ClearComponents();
 }
 
-std::unique_ptr<EmptyObject> EmptyObject::Clone() const {
-    std::unique_ptr<EmptyObject> newObj(new EmptyObject(ownerSceneContext_, name_));
-    newObj->SetTag(tagName_);
-    for (const auto &comp : components_) {
+void EmptyObject::CopyStateFrom(Passkey<Scene>, const EmptyObject &source) {
+    SetTag(source.tagName_);
+    for (const auto &comp : source.components_) {
         if (!comp.first) continue;
         auto clonedComp = comp.first->Clone();
         if (!clonedComp) continue;
         // 派生クラスのCloneは基底クラスのタグを複製しないため、ここで引き継ぐ
         clonedComp->SetTag(comp.first->GetTagName());
-        newObj->AddComponent(std::move(clonedComp));
+        AddComponent(std::move(clonedComp));
     }
-    newObj->SetActive(isActive_);
-    newObj->SetSaveEnabled(isSaveEnabled_);
-    newObj->SetEditorOnly(isEditorOnly_);
-    return newObj;
+    SetActive(source.isActive_);
+    SetSaveEnabled(source.isSaveEnabled_);
+    SetEditorOnly(source.isEditorOnly_);
 }
 
 bool EmptyObject::IsEditorOnlyInHierarchy() const {
@@ -48,7 +46,14 @@ IObjectComponent *EmptyObject::GetComponent(const IObjectComponent *component) c
     if (it == componentsIndexByPointer_.end()) return nullptr;
     size_t index = it->second;
     if (index >= components_.size()) return nullptr;
-    return components_[index].first.get();
+    return components_[index].first;
+}
+
+IObjectComponent *EmptyObject::GetComponentByAddedID(size_t addedID) const {
+    for (const auto &compPair : components_) {
+        if (compPair.first && compPair.second == addedID) return compPair.first;
+    }
+    return nullptr;
 }
 
 size_t EmptyObject::HasComponent(const IObjectComponent *component) const {
@@ -56,6 +61,28 @@ size_t EmptyObject::HasComponent(const IObjectComponent *component) const {
     auto it = componentsIndexByPointer_.find(component);
     if (it == componentsIndexByPointer_.end()) return 0;
     return 1;
+}
+
+IObjectComponent *EmptyObject::RegisterPlacedComponent(IObjectComponent *placed, size_t typeIndex) {
+    if (componentsFreeIndices_.size() > 0) {
+        size_t freeIndex = componentsFreeIndices_.back();
+        componentsFreeIndices_.pop_back();
+        if (freeIndex < components_.size()) {
+            components_[freeIndex].first = placed;
+            components_[freeIndex].second = nextAddedID_++;
+            componentsIndexByType_[typeIndex].push_back(freeIndex);
+            componentsIndexByPointer_[placed] = freeIndex;
+            // オブジェクトが非アクティブの場合は初期化を保留する（有効化時に走る）
+            placed->InitializeInterface(Passkey<EmptyObject>(), objectContext_.get(), ownerSceneContext_, isActive_);
+            return placed;
+        }
+    }
+    components_.push_back({ placed, nextAddedID_++ });
+    componentsIndexByType_[typeIndex].push_back(components_.size() - 1);
+    componentsIndexByPointer_[placed] = components_.size() - 1;
+    // オブジェクトが非アクティブの場合は初期化を保留する（有効化時に走る）
+    placed->InitializeInterface(Passkey<EmptyObject>(), objectContext_.get(), ownerSceneContext_, isActive_);
+    return placed;
 }
 
 IObjectComponent *EmptyObject::AddComponent(std::unique_ptr<IObjectComponent> comp) {
@@ -67,25 +94,16 @@ IObjectComponent *EmptyObject::AddComponent(std::unique_ptr<IObjectComponent> co
     if (componentsIndexByType_[typeIndex].size() >= comp->GetMaxComponentCountPerObject()) {
         return nullptr; // 同じ型のコンポーネントが最大数に達している場合は追加できない
     }
-    if (componentsFreeIndices_.size() > 0) {
-        size_t freeIndex = componentsFreeIndices_.back();
-        componentsFreeIndices_.pop_back();
-        if (freeIndex < components_.size()) {
-            components_[freeIndex].first = std::move(comp);
-            components_[freeIndex].second = nextAddedID_++;
-            componentsIndexByType_[typeIndex].push_back(freeIndex);
-            componentsIndexByPointer_[components_[freeIndex].first.get()] = freeIndex;
-            // オブジェクトが非アクティブの場合は初期化を保留する（有効化時に走る）
-            components_[freeIndex].first->InitializeInterface(Passkey<EmptyObject>(), objectContext_.get(), ownerSceneContext_, isActive_);
-            return components_[freeIndex].first.get();
-        }
-    }
-    components_.push_back({ std::move(comp), nextAddedID_++ });
-    componentsIndexByType_[typeIndex].push_back(components_.size() - 1);
-    componentsIndexByPointer_[components_.back().first.get()] = components_.size() - 1;
-    // オブジェクトが非アクティブの場合は初期化を保留する（有効化時に走る）
-    components_.back().first->InitializeInterface(Passkey<EmptyObject>(), objectContext_.get(), ownerSceneContext_, isActive_);
-    return components_.back().first.get();
+    // comp（渡された一時インスタンス）をそのままプールへムーブすることはしない。
+    // ADD_MEMBER_VARIABLE_WITH_CALLBACK等、コンストラクタで自分自身(this)への生ポインタを
+    // 登録するリフレクション機構があるため、ムーブするとそれらが古いアドレスを指したまま
+    // 破損する。代わりにプールの最終スロットへ直接デフォルト構築し、状態はJSON経由で転送する。
+    IComponentPoolBase *pool = ownerSceneContext_ ? ownerSceneContext_->GetOrCreateComponentPool(typeIndex) : nullptr;
+    if (!pool) return nullptr;
+    IObjectComponent *placed = pool->EmplaceDefault();
+    if (!placed) return nullptr;
+    placed->LoadFromJsonInterface(Passkey<EmptyObject>(), comp->SaveToJsonInterface(Passkey<EmptyObject>()));
+    return RegisterPlacedComponent(placed, typeIndex);
 }
 
 bool EmptyObject::RemoveComponent(const IObjectComponent *component) {
@@ -94,21 +112,33 @@ bool EmptyObject::RemoveComponent(const IObjectComponent *component) {
     if (it == componentsIndexByPointer_.end()) return false;
     size_t index = it->second;
     if (index >= components_.size()) return false;
-    components_[index].first->FinalizeInterface(Passkey<EmptyObject>());
-    size_t typeIndex = components_[index].first->GetComponentTypeID();
+    IObjectComponent *placed = components_[index].first;
+    placed->FinalizeInterface(Passkey<EmptyObject>());
+    size_t typeIndex = placed->GetComponentTypeID();
     auto &indices = componentsIndexByType_[typeIndex];
     auto indexIt = std::find(indices.begin(), indices.end(), index);
     if (indexIt != indices.end()) indices.erase(indexIt);
-    componentsIndexByPointer_.erase(components_[index].first.get());
+    componentsIndexByPointer_.erase(placed);
     componentsFreeIndices_.push_back(index);
-    components_[index].first.reset();
+    components_[index].first = nullptr;
+    if (ownerSceneContext_) {
+        if (IComponentPoolBase *pool = ownerSceneContext_->GetOrCreateComponentPool(typeIndex)) {
+            pool->Remove(placed);
+        }
+    }
     return true;
 }
 
 void EmptyObject::ClearComponents() {
     Finalize();
     for (auto &compPair : components_) {
-        compPair.first.reset();
+        if (!compPair.first) continue;
+        if (ownerSceneContext_) {
+            if (IComponentPoolBase *pool = ownerSceneContext_->GetOrCreateComponentPool(compPair.first->GetComponentTypeID())) {
+                pool->Remove(compPair.first);
+            }
+        }
+        compPair.first = nullptr;
     }
     components_.clear();
     componentsIndexByType_.clear();
@@ -155,8 +185,7 @@ void EmptyObject::SetActive(bool active) {
 
 void EmptyObject::CollectDescendantsActiveState(std::vector<std::pair<EmptyObject *, bool>> &out) const {
     if (!ownerSceneContext_) return;
-    for (const auto &objPtr : ownerSceneContext_->GetSceneObjects()) {
-        EmptyObject *candidate = objPtr.get();
+    for (auto *candidate : ownerSceneContext_->GetSceneObjects()) {
         if (!candidate || candidate == this) continue;
 
         // candidate が this の子孫かどうかを親チェーンをたどって判定する
@@ -190,7 +219,7 @@ JSON EmptyObject::SaveToJson(Passkey<Scene>) {
     // updateComponents_ はUpdateループ用のリストで、オブジェクトが非アクティブだと空になるため
     // 保存には使えない（非アクティブなオブジェクトのコンポーネントが消えてしまう）。
     // 保存は実行時の有効状態に関わらず全コンポーネントを対象にする。
-    std::vector<const std::pair<std::unique_ptr<IObjectComponent>, size_t> *> ordered;
+    std::vector<const std::pair<IObjectComponent *, size_t> *> ordered;
     ordered.reserve(components_.size());
     for (const auto &compPair : components_) {
         if (compPair.first) ordered.push_back(&compPair);
@@ -276,7 +305,7 @@ void EmptyObject::Update() {
         if (it == componentsIndexByPointer_.end() || it->second >= components_.size()) continue;
         auto &[ownedComponent, addedID] = components_[it->second];
         if (!ownedComponent || addedID != info.addedID) continue;
-        IObjectComponent *component = ownedComponent.get();
+        IObjectComponent *component = ownedComponent;
         if (component && component->IsActive()) {
             component->UpdateInterface(Passkey<EmptyObject>());
         }
@@ -287,9 +316,11 @@ void EmptyObject::RegenerateUpdateComponentsList() {
     updateComponents_.clear();
     updateComponents_.reserve(components_.size());
     for (const auto &comp : components_) {
-        if (comp.first && comp.first->IsActive()) {
-            updateComponents_.push_back({ comp.second, comp.first->GetUpdatePriority(), comp.first.get() });
-        }
+        if (!comp.first || !comp.first->IsActive()) continue;
+        // バッチ処理対象としてマークされた型は、個別Updateの対象から除外する
+        // （現時点ではどの型もマークされていないため、実質常に全コンポーネントが対象になる）
+        if (IsObjectComponentTypeIDBatchProcessed(comp.first->GetComponentTypeID())) continue;
+        updateComponents_.push_back({ comp.second, comp.first->GetUpdatePriority(), comp.first });
     }
     // 優先度->追加順の昇順でソート
     std::sort(updateComponents_.begin(), updateComponents_.end(),

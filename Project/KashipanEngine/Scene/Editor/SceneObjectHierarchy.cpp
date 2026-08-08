@@ -172,14 +172,14 @@ void SceneObjectHierarchy::RebuildObjectItems() {
         const auto &obj = objects[i];
         if (!obj) continue;
 
-        objectParentMap_.emplace(obj.get(), std::vector<std::pair<EmptyObject *, size_t>>{});
+        objectParentMap_.emplace(obj, std::vector<std::pair<EmptyObject *, size_t>>{});
         auto *transform = obj->GetComponent<Transform>();
         auto *parent = transform ? transform->GetParentObject() : nullptr;
         if (parent) {
-            objectParentMap_[parent].push_back({ obj.get(), i });
+            objectParentMap_[parent].push_back({ obj, i });
         } else {
             ObjectItem item{};
-            item.object = obj.get();
+            item.object = obj;
             item.name = obj->GetName();
             item.depth = 0;
             item.originalIndex = i;

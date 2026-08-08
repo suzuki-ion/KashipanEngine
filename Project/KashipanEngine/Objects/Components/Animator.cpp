@@ -214,8 +214,7 @@ void Animator::SyncArmatureObjects() {
 
     // 起点の子孫（起点自身を含む）を名前で引けるようにする
     std::unordered_map<std::string, EmptyObject *> nameToObject;
-    for (const auto &objPtr : sceneContext->GetSceneObjects()) {
-        EmptyObject *obj = objPtr.get();
+    for (auto *obj : sceneContext->GetSceneObjects()) {
         if (!obj) continue;
         EmptyObject *cursor = obj;
         bool isInSubtree = false;

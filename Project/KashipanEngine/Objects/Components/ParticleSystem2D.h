@@ -57,8 +57,8 @@ protected:
     EmptyObject *ResolveBillboardCameraObject() const override {
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext) return nullptr;
-        for (const auto &object : sceneContext->GetSceneObjects()) {
-            if (object && object->GetComponent<Camera2D>()) return object.get();
+        for (auto *object : sceneContext->GetSceneObjects()) {
+            if (object && object->GetComponent<Camera2D>()) return object;
         }
         return nullptr;
     }

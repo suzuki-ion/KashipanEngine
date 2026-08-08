@@ -26,7 +26,7 @@ std::vector<IObjectComponent *> GetOrderedComponents(EmptyObject *obj) {
     std::vector<std::pair<IObjectComponent *, size_t>> entries;
     for (const auto &entry : obj->GetAllComponents()) {
         if (!entry.first) continue;
-        entries.emplace_back(entry.first.get(), entry.second);
+        entries.emplace_back(entry.first, entry.second);
     }
     std::sort(entries.begin(), entries.end(), [](const auto &a, const auto &b) {
         if (a.first->GetUpdatePriority() != b.first->GetUpdatePriority()) {
@@ -138,8 +138,7 @@ void CollectOverridesForObject(EmptyObject *obj, const JSON &prefabNodeJson, std
 void CollectSubtreeObjectsRecursive(SceneEditorContext *context, EmptyObject *obj, std::vector<EmptyObject *> &out) {
     if (!obj) return;
     out.push_back(obj);
-    for (const auto &objPtr : context->GetSceneObjects()) {
-        EmptyObject *candidate = objPtr.get();
+    for (auto *candidate : context->GetSceneObjects()) {
         if (!candidate || candidate == obj) continue;
         auto *candidateTransform = candidate->GetComponent<Transform>();
         if (candidateTransform && candidateTransform->GetParentObject() == obj) {

@@ -43,8 +43,7 @@ void CollectSubtreeNodes(SceneEditorContext *context, EmptyObject *obj, int pare
     out.push_back({ context->SaveObjectToJson(obj), parentIndex });
 
     // 子オブジェクトをTransformの親参照から探す
-    for (const auto &objPtr : context->GetSceneObjects()) {
-        EmptyObject *candidate = objPtr.get();
+    for (auto *candidate : context->GetSceneObjects()) {
         if (!candidate || candidate == obj) continue;
         auto *candidateTransform = candidate->GetComponent<Transform>();
         if (candidateTransform && candidateTransform->GetParentObject() == obj) {

@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "Scene/Scene.h"
+#include "Objects/ComponentRef.h"
 
 namespace KashipanEngine {
 
@@ -106,8 +107,8 @@ public:
     bool MoveObject(EmptyObject *obj, size_t newIndex) { return owner_->MoveObject(obj, newIndex); }
 
     /// @brief シーン内のオブジェクト一覧を取得
-    /// @return オブジェクトのリスト
-    const std::vector<std::unique_ptr<EmptyObject>> &GetSceneObjects() const { return owner_->GetSceneObjects(); }
+    /// @return オブジェクトのポインタのリスト
+    const std::vector<EmptyObject *> &GetSceneObjects() const { return owner_->GetSceneObjects(); }
     /// @brief 名前から一致するオブジェクトを取得
     /// @param objectName オブジェクト名
     /// @return 一致するオブジェクトのポインタのリスト（存在しない場合は空のリスト）
@@ -157,6 +158,23 @@ public:
     size_t HasComponent(const ISceneComponent *component) const { return owner_->HasComponent(component); }
     /// @brief 全コンポーネントの取得（コンポーネント本体と追加順のペアのリスト）
     const std::vector<std::pair<std::unique_ptr<ISceneComponent>, size_t>> &GetAllComponents() const { return owner_->GetAllComponents(); }
+
+    //==================================================
+    // オブジェクトコンポーネント（IObjectComponent）用の型別プール
+    //==================================================
+
+    /// @brief 型IDからオブジェクトコンポーネント用プールを取得する（未作成の場合は生成）
+    IComponentPoolBase *GetOrCreateComponentPool(size_t typeID) { return owner_->GetOrCreateComponentPool(typeID); }
+    /// @brief 型Tのオブジェクトコンポーネント用プールを取得する（未作成の場合は生成）
+    template <typename T>
+    ComponentPool<T> &GetOrCreateComponentPool() { return owner_->GetOrCreateComponentPool<T>(); }
+    /// @brief ComponentRef からコンポーネントの生ポインタへ解決する（使う直前に毎回呼ぶこと。結果をフレームをまたいで保持しない）
+    /// @return 解決に成功した場合はコンポーネントへのポインタ、対象オブジェクト・コンポーネントが既に存在しない場合は nullptr
+    IObjectComponent *ResolveComponent(const ComponentRef &ref) const {
+        if (!ref.IsValid()) return nullptr;
+        EmptyObject *obj = GetSceneObject(ref.ownerObjectID);
+        return obj ? obj->GetComponentByAddedID(ref.addedID) : nullptr;
+    }
 
     //==================================================
     // コンポーネント追加系メソッド

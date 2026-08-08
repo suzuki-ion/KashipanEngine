@@ -40,7 +40,7 @@ public:
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す
     bool SetParentObject(EmptyObject *parent) {
         if (!parent) {
-            parentObject_ = nullptr;
+            parentObjectID_ = UUID128();
             isWorldMatrixCalculated_ = false;
             cachedParentVersion_ = 0;
             return true;
@@ -51,10 +51,10 @@ public:
         auto *objectCtx = GetOwnerObjectContext();
         const auto *ownerObject = objectCtx ? objectCtx->GetOwner() : nullptr;
         if (parent == ownerObject) return false;
-        for (auto *p = parent; p != nullptr; p = p->GetComponent<Transform>()->parentObject_) {
+        for (auto *p = parent; p != nullptr; p = p->GetComponent<Transform>()->GetParentObject()) {
             if (p == ownerObject) return false;
         }
-        parentObject_ = parent;
+        parentObjectID_ = parent->GetObjectID();
         // 親が変わったのでキャッシュは無効
         isWorldMatrixCalculated_ = false;
         cachedParentVersion_ = 0;
@@ -65,7 +65,7 @@ public:
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す
     bool SetParentObject(const UUID128 &parentUUID) {
         if (!parentUUID.IsValid()) {
-            parentObject_ = nullptr;
+            parentObjectID_ = UUID128();
             isWorldMatrixCalculated_ = false;
             cachedParentVersion_ = 0;
             return true;
@@ -198,7 +198,8 @@ public:
         // 自分のキャッシュがあること、かつ親がいる場合は親が計算済みで
         // 親のバージョンが子がキャッシュしたものと一致していることを要求する
         if (!isWorldMatrixCalculated_) return false;
-        auto *parentTransform = parentObject_ ? parentObject_->GetComponent<Transform>() : nullptr;
+        auto *parentObj = TryGetParentObject();
+        auto *parentTransform = parentObj ? parentObj->GetComponent<Transform>() : nullptr;
         if (!parentTransform) return true;
         if (!parentTransform->IsWorldMatrixCalculated()) return false;
         return (cachedParentVersion_ == parentTransform->GetWorldMatrixVersion());
@@ -224,7 +225,8 @@ public:
 
         ImGui::Spacing();
         ImGui::TextUnformatted(Translation("engine.imgui.transform.parent").c_str());
-        std::string parentName = parentObject_ ? parentObject_->GetName() : "(None)";
+        auto *parentObj = TryGetParentObject();
+        std::string parentName = parentObj ? parentObj->GetName() : "(None)";
         ImGui::TextUnformatted(parentName.c_str());
 
         SetTranslate(t);
@@ -262,10 +264,13 @@ public:
     }
 
 private:
+    /// @brief 親オブジェクトを毎回UUIDから引き直す（生ポインタをフレームをまたいで保持しない）
+    /// @details スロット再利用によるエイリアシングを避けるため、対応するオブジェクトが
+    ///          既に存在しない場合（削除済み等）は自動的に nullptr を返す
     EmptyObject *TryGetParentObject() const {
-        if (!parentObject_) return nullptr;
+        if (!parentObjectID_.IsValid()) return nullptr;
         auto *sceneCtx = GetOwnerSceneContext();
-        auto *parentObj = sceneCtx ? sceneCtx->GetSceneObject(parentObject_) : nullptr;
+        auto *parentObj = sceneCtx ? sceneCtx->GetSceneObject(parentObjectID_) : nullptr;
         return parentObj;
     }
 
@@ -274,7 +279,8 @@ private:
     Quaternion rotateQuat_ = Quaternion::Identity();
     Vector3 scale_{ 1.0f, 1.0f, 1.0f };
 
-    EmptyObject *parentObject_ = nullptr;
+    /// @brief 親オブジェクトのUUID（生ポインタではなくUUIDで保持し、使う直前に毎回 TryGetParentObject() で引き直す）
+    UUID128 parentObjectID_;
     Matrix4x4 worldMatrix_ = Matrix4x4::Identity();
     bool isWorldMatrixCalculated_ = false;
 

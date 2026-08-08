@@ -244,8 +244,7 @@ const TypeInfo &Scene::GetGlobalSceneVariableTypeInfo(const std::string &key) {
 }
 
 EmptyObject *Scene::CreateEmptyObject(const std::string &name, const UUID128 &objectID, size_t index) {
-    auto newObj = std::make_unique<EmptyObject>(Passkey<Scene>{}, sceneContext_.get(), name);
-    auto newObjPtr = newObj.get();
+    EmptyObject *newObjPtr = objectPool_.Emplace(Passkey<Scene>{}, sceneContext_.get(), name);
     // objectIDが未指定（無効なUUID）の場合、EmptyObjectのコンストラクタで自動生成された
     // 有効なUUIDをそのまま使う。ここで無条件に上書きすると、IDを指定しない全ての呼び出し
     // （スクリプトのCreateObject等）が同じ無効UUIDを共有することになり、UUIDベースの検索・削除
@@ -254,9 +253,9 @@ EmptyObject *Scene::CreateEmptyObject(const std::string &name, const UUID128 &ob
         newObjPtr->SetObjectID(objectID);
     }
     if (index >= objects_.size()) {
-        objects_.push_back(std::move(newObj));
+        objects_.push_back(newObjPtr);
     } else {
-        objects_.insert(objects_.begin() + index, std::move(newObj));
+        objects_.insert(objects_.begin() + index, newObjPtr);
     }
     objectsByUUID_[newObjPtr->GetObjectID()] = newObjPtr;
     objectsExistingSet_.insert(newObjPtr);
@@ -267,32 +266,25 @@ EmptyObject *Scene::CreateEmptyObject(const std::string &name, const UUID128 &ob
 EmptyObject *Scene::CloneObject(EmptyObject *source, const std::string &name) {
     if (!source || !objectsExistingSet_.contains(source)) return nullptr;
 
-    auto cloned = source->Clone();
-    if (!cloned) return nullptr;
-    if (!name.empty()) cloned->SetName(name);
-
-    auto *clonedPtr = cloned.get();
-    objects_.push_back(std::move(cloned));
-    objectsByUUID_[clonedPtr->GetObjectID()] = clonedPtr;
-    objectsExistingSet_.insert(clonedPtr);
-    objectsByName_[clonedPtr->GetName()].insert(clonedPtr);
+    EmptyObject *clonedPtr = CreateEmptyObject(name.empty() ? source->GetName() : name);
+    if (!clonedPtr) return nullptr;
+    clonedPtr->CopyStateFrom(Passkey<Scene>{}, *source);
     return clonedPtr;
 }
 
 bool Scene::DeleteObject(EmptyObject *obj) {
     if (!obj) return false;
-    auto it = std::find_if(objects_.begin(), objects_.end(),
-        [obj](const std::unique_ptr<EmptyObject> &o) { return o.get() == obj; });
+    auto it = std::find(objects_.begin(), objects_.end(), obj);
     if (it == objects_.end()) return false;
 
     // 子オブジェクトも道連れに削除する（削除前に対象を収集してから再帰的に削除する。
     // 削除中に objects_ が変化しイテレータが無効化されるため、先に収集する必要がある）
     std::vector<EmptyObject *> children;
-    for (const auto &candidate : objects_) {
-        if (!candidate || candidate.get() == obj) continue;
+    for (auto *candidate : objects_) {
+        if (!candidate || candidate == obj) continue;
         auto *candidateTransform = candidate->GetComponent<Transform>();
         if (candidateTransform && candidateTransform->GetParentObject() == obj) {
-            children.push_back(candidate.get());
+            children.push_back(candidate);
         }
     }
     for (auto *child : children) {
@@ -300,19 +292,19 @@ bool Scene::DeleteObject(EmptyObject *obj) {
     }
 
     // 子オブジェクトの削除により objects_ が変化しているため、対象オブジェクトを再検索する
-    it = std::find_if(objects_.begin(), objects_.end(),
-        [obj](const std::unique_ptr<EmptyObject> &o) { return o.get() == obj; });
+    it = std::find(objects_.begin(), objects_.end(), obj);
     if (it == objects_.end()) return false;
     RemoveObjectFromMaps(obj);
     objects_.erase(it);
+    objectPool_.Remove(obj);
     return true;
 }
 
 void Scene::DeleteEditorOnlyObjects() {
     // DeleteObjectで子孫が道連れに削除されobjects_が変化するため、先に対象を収集する
     std::vector<EmptyObject *> editorOnlyObjects;
-    for (const auto &object : objects_) {
-        if (object && object->IsEditorOnly()) editorOnlyObjects.push_back(object.get());
+    for (auto *object : objects_) {
+        if (object && object->IsEditorOnly()) editorOnlyObjects.push_back(object);
     }
     for (auto *object : editorOnlyObjects) {
         // 先に削除された親の子孫だった場合、DeleteObjectは再検索に失敗して安全にfalseを返す
@@ -322,25 +314,22 @@ void Scene::DeleteEditorOnlyObjects() {
 
 bool Scene::ReleaseObject(EmptyObject *obj) {
     if (!obj) return false;
-    auto it = std::find_if(objects_.begin(), objects_.end(),
-        [obj](const std::unique_ptr<EmptyObject> &o) { return o.get() == obj; });
+    auto it = std::find(objects_.begin(), objects_.end(), obj);
     if (it == objects_.end()) return false;
     RemoveObjectFromMaps(obj);
-    it->release();
     objects_.erase(it);
+    // 所有権の放棄（シーンからは見えなくなるが、プール内のインスタンス自体は破棄しない）
     return true;
 }
 
 bool Scene::MoveObject(EmptyObject *obj, size_t newIndex) {
     if (!obj) return false;
-    auto it = std::find_if(objects_.begin(), objects_.end(),
-        [obj](const std::unique_ptr<EmptyObject> &o) { return o.get() == obj; });
+    auto it = std::find(objects_.begin(), objects_.end(), obj);
     if (it == objects_.end()) return false;
     if (newIndex >= objects_.size()) newIndex = objects_.size() - 1;
 
-    std::unique_ptr<EmptyObject> moved = std::move(*it);
     objects_.erase(it);
-    objects_.insert(objects_.begin() + newIndex, std::move(moved));
+    objects_.insert(objects_.begin() + newIndex, obj);
     return true;
 }
 
@@ -349,9 +338,9 @@ std::vector<EmptyObject *> Scene::GetSceneObjects(const std::string &objectName)
     auto it = objectsByName_.find(objectName);
     if (it == objectsByName_.end()) return result;
     // 追加順（objects_の並び）で返す
-    for (const auto &obj : objects_) {
-        if (obj && it->second.contains(obj.get())) {
-            result.push_back(obj.get());
+    for (auto *obj : objects_) {
+        if (obj && it->second.contains(obj)) {
+            result.push_back(obj);
         }
     }
     return result;
@@ -360,9 +349,9 @@ std::vector<EmptyObject *> Scene::GetSceneObjects(const std::string &objectName)
 EmptyObject *Scene::GetSceneObject(const std::string &objectName) const {
     auto it = objectsByName_.find(objectName);
     if (it == objectsByName_.end() || it->second.empty()) return nullptr;
-    for (const auto &obj : objects_) {
-        if (obj && it->second.contains(obj.get())) {
-            return obj.get();
+    for (auto *obj : objects_) {
+        if (obj && it->second.contains(obj)) {
+            return obj;
         }
     }
     return nullptr;
@@ -391,14 +380,12 @@ void Scene::RemoveObjectFromMaps(EmptyObject *obj) {
 
 void Scene::ClearSceneObjects() {
     // FinalizeInterface を呼んでからオブジェクトを破棄する
-    for (auto &obj : objects_) {
+    for (auto *obj : objects_) {
         if (obj) {
             obj->FinalizeInterface(Passkey<Scene>());
         }
     }
-    for (auto &obj : objects_) {
-        obj.reset();
-    }
+    objectPool_.Clear();
     objects_.clear();
     objectsByUUID_.clear();
     objectsExistingSet_.clear();
@@ -498,8 +485,8 @@ void Scene::UpdateSceneObjects() {
     // （ParticleSystem等、Update中に子オブジェクトを生成・削除するコンポーネントのため）
     std::vector<EmptyObject *> snapshot;
     snapshot.reserve(objects_.size());
-    for (const auto &obj : objects_) {
-        if (obj) snapshot.push_back(obj.get());
+    for (auto *obj : objects_) {
+        if (obj) snapshot.push_back(obj);
     }
 
     for (EmptyObject *obj : snapshot) {

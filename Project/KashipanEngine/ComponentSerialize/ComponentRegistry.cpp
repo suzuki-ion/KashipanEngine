@@ -13,6 +13,14 @@ std::unordered_map<std::string, std::function<std::unique_ptr<IObjectComponent>(
     static std::unordered_map<std::string, std::function<std::unique_ptr<IObjectComponent>()>> object3DComponentFactoryMap;
     return object3DComponentFactoryMap;
 }
+std::unordered_map<size_t, std::function<std::unique_ptr<IComponentPoolBase>()>> &GetObjectComponentPoolFactoryMap() {
+    static std::unordered_map<size_t, std::function<std::unique_ptr<IComponentPoolBase>()>> poolFactoryMap;
+    return poolFactoryMap;
+}
+std::unordered_map<size_t, bool> &GetObjectComponentBatchProcessedMap() {
+    static std::unordered_map<size_t, bool> batchProcessedMap;
+    return batchProcessedMap;
+}
 
 std::vector<std::string> &GetRegisteredSceneComponentTypes() {
     static std::vector<std::string> registeredSceneComponentTypes;
@@ -41,10 +49,18 @@ bool RegisterComponentTypeScene(const std::string &typeName, std::function<std::
     Local::GetSceneComponentCategoryMap()[typeName] = category;
     return true;
 }
-bool RegisterComponentTypeObject(const std::string &typeName, std::function<std::unique_ptr<IObjectComponent>()> createFunc, const std::vector<std::string> &category) {
+bool RegisterComponentTypeObject(
+    const std::string &typeName,
+    size_t typeID,
+    std::function<std::unique_ptr<IObjectComponent>()> createFunc,
+    std::function<std::unique_ptr<IComponentPoolBase>()> poolFactory,
+    bool isBatchProcessed,
+    const std::vector<std::string> &category) {
     auto &factoryMap = Local::GetObjectComponentFactoryMap();
     if (factoryMap.find(typeName) != factoryMap.end()) return false;
     factoryMap[typeName] = createFunc;
+    Local::GetObjectComponentPoolFactoryMap()[typeID] = poolFactory;
+    Local::GetObjectComponentBatchProcessedMap()[typeID] = isBatchProcessed;
     Local::GetRegisteredObjectComponentTypes().push_back(typeName);
     Local::GetObjectComponentCategoryMap()[typeName] = category;
     return true;
@@ -63,6 +79,19 @@ std::unique_ptr<IObjectComponent> CreateObjectComponentByType(const std::string 
         return it->second();
     }
     return nullptr;
+}
+std::unique_ptr<IComponentPoolBase> CreateObjectComponentPoolByTypeID(size_t typeID) {
+    auto &map = Local::GetObjectComponentPoolFactoryMap();
+    auto it = map.find(typeID);
+    if (it != map.end()) {
+        return it->second();
+    }
+    return nullptr;
+}
+bool IsObjectComponentTypeIDBatchProcessed(size_t typeID) {
+    auto &map = Local::GetObjectComponentBatchProcessedMap();
+    auto it = map.find(typeID);
+    return it != map.end() && it->second;
 }
 
 const std::vector<std::string> &GetRegisteredSceneComponentTypes() {

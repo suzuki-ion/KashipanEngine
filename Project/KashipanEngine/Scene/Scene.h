@@ -12,6 +12,9 @@
 
 #include "Objects/EmptyObject.h"
 #include "Objects/Collision/Collider.h"
+#include "Objects/ChunkedPool.h"
+#include "Objects/ComponentPool.h"
+#include "ComponentSerialize/ComponentRegistry.h"
 #include "Scene/Components/ISceneComponent.h"
 #include "Utilities/Passkeys.h"
 #include "Utilities/UUID128.h"
@@ -226,9 +229,9 @@ protected:
     /// @return 移動に成功した場合は true、失敗した場合は false を返す
     bool MoveObject(EmptyObject *obj, size_t newIndex);
 
-    /// @brief シーン内のオブジェクト一覧を取得
-    /// @return オブジェクトのリスト
-    const std::vector<std::unique_ptr<EmptyObject>> &GetSceneObjects() const { return objects_; }
+    /// @brief シーン内のオブジェクト一覧を取得（表示順。実体はチャンク方式のプールが所有する）
+    /// @return オブジェクトのポインタのリスト
+    const std::vector<EmptyObject *> &GetSceneObjects() const { return objects_; }
     /// @brief 名前から一致するオブジェクトを取得
     /// @param objectName オブジェクト名
     /// @return 一致するオブジェクトのポインタのリスト（存在しない場合は空のリスト）
@@ -275,7 +278,7 @@ protected:
     /// @brief オブジェクトのシーン内インデックスを取得する（存在しない場合は MAXSIZE_T）
     size_t GetObjectIndex(const EmptyObject *obj) const {
         for (size_t i = 0; i < objects_.size(); ++i) {
-            if (objects_[i].get() == obj) return i;
+            if (objects_[i] == obj) return i;
         }
         return MAXSIZE_T;
     }
@@ -410,6 +413,36 @@ protected:
     void ClearSceneComponents();
 
     //==================================================
+    // オブジェクトコンポーネント（IObjectComponent）用の型別プール
+    //==================================================
+
+    /// @brief 型IDからオブジェクトコンポーネント用プールを取得する（未作成の場合はComponentRegistry経由で生成）
+    /// @param typeID IObjectComponent::GetComponentTypeID() が返す型ID
+    /// @return プールへのポインタ（型が未登録の場合は nullptr）
+    IComponentPoolBase *GetOrCreateComponentPool(size_t typeID) {
+        if (typeID >= objectComponentPoolsByType_.size()) {
+            objectComponentPoolsByType_.resize(typeID + 1);
+        }
+        if (!objectComponentPoolsByType_[typeID]) {
+            objectComponentPoolsByType_[typeID] = CreateObjectComponentPoolByTypeID(typeID);
+        }
+        return objectComponentPoolsByType_[typeID].get();
+    }
+    /// @brief 型Tのオブジェクトコンポーネント用プールを取得する（未作成の場合は直接生成）
+    /// @tparam T コンポーネントの型（コンパイル時に既知の場合はComponentRegistryを経由しない）
+    template <typename T>
+    ComponentPool<T> &GetOrCreateComponentPool() {
+        size_t typeID = IObjectComponent::GetComponentTypeID<T>();
+        if (typeID >= objectComponentPoolsByType_.size()) {
+            objectComponentPoolsByType_.resize(typeID + 1);
+        }
+        if (!objectComponentPoolsByType_[typeID]) {
+            objectComponentPoolsByType_[typeID] = std::make_unique<ComponentPool<T>>();
+        }
+        return static_cast<ComponentPool<T> &>(*objectComponentPoolsByType_[typeID]);
+    }
+
+    //==================================================
     // シーン切り替え系メソッド
     //==================================================
 
@@ -461,10 +494,20 @@ private:
     // オブジェクト
     //==================================================
 
-    std::vector<std::unique_ptr<EmptyObject>> objects_;
+    /// @brief オブジェクトの実体を所有するチャンク方式プール（要素は絶対に再配置されない）
+    ChunkedPool<EmptyObject> objectPool_;
+    /// @brief シーン内での表示・保存順を保持する非所有ポインタのリスト（実体は objectPool_ が所有）
+    std::vector<EmptyObject *> objects_;
     std::unordered_map<UUID128, EmptyObject *> objectsByUUID_;
     std::unordered_set<EmptyObject *> objectsExistingSet_;
     std::unordered_map<std::string, std::unordered_set<EmptyObject *>> objectsByName_;
+
+    //==================================================
+    // オブジェクトコンポーネント（IObjectComponent）のプール
+    //==================================================
+
+    /// @brief 型IDでインデックスされたコンポーネントプール（実体はここが所有する）
+    std::vector<std::unique_ptr<IComponentPoolBase>> objectComponentPoolsByType_;
 
     //==================================================
     // シーンコンポーネント

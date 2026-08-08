@@ -17,7 +17,7 @@ IObjectComponent *FindParameterBindingTarget(ObjectContext *objectContext, const
     if (!objectContext) return nullptr;
     int typeIndex = 0;
     for (const auto &componentPair : objectContext->GetAllComponents()) {
-        IObjectComponent *candidate = componentPair.first.get();
+        IObjectComponent *candidate = componentPair.first;
         if (!candidate || candidate->GetComponentType() != binding.componentType) continue;
         if (typeIndex == binding.componentIndex) {
             return (candidate != self) ? candidate : nullptr;
@@ -203,7 +203,7 @@ std::vector<ParameterBindingCandidate> CollectParameterBindingCandidates(ObjectC
 
     std::unordered_map<std::string, int> typeCounts;
     for (const auto &componentPair : objectContext->GetAllComponents()) {
-        IObjectComponent *component = componentPair.first.get();
+        IObjectComponent *component = componentPair.first;
         if (!component) continue;
         const std::string &type = component->GetComponentType();
         const int index = typeCounts[type]++;
@@ -265,7 +265,7 @@ std::vector<ParameterBindingCandidate> CollectParameterBindingCandidatesForType(
 
     std::unordered_map<std::string, int> typeCounts;
     for (const auto &componentPair : objectContext->GetAllComponents()) {
-        IObjectComponent *component = componentPair.first.get();
+        IObjectComponent *component = componentPair.first;
         if (!component) continue;
         const std::string &type = component->GetComponentType();
         const int index = typeCounts[type]++;

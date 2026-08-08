@@ -637,7 +637,7 @@ std::vector<IObjectComponent *> SceneObjectInspector::GetOrderedComponents(Empty
     std::vector<std::pair<IObjectComponent *, size_t>> entries;
     for (const auto &entry : obj->GetAllComponents()) {
         if (!entry.first) continue;
-        entries.emplace_back(entry.first.get(), entry.second);
+        entries.emplace_back(entry.first, entry.second);
     }
     std::sort(entries.begin(), entries.end(), [](const auto &a, const auto &b) {
         if (a.first->GetUpdatePriority() != b.first->GetUpdatePriority()) {

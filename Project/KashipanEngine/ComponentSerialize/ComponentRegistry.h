@@ -4,6 +4,7 @@
 #include <vector>
 #include "ComponentSerialize/ComponentSerialize.h"
 #include "ComponentSerialize/TypeToString.h"
+#include "Objects/ComponentPool.h"
 
 namespace KashipanEngine {
 
@@ -24,10 +25,25 @@ struct ComponentCategoryOf<T, std::void_t<decltype(T::GetComponentCategory())>> 
 };
 
 bool RegisterComponentTypeScene(const std::string &typeName, std::function<std::unique_ptr<ISceneComponent>()> createFunc, const std::vector<std::string> &category = {});
-bool RegisterComponentTypeObject(const std::string &typeName, std::function<std::unique_ptr<IObjectComponent>()> createFunc, const std::vector<std::string> &category = {});
+/// @brief オブジェクトコンポーネント型を登録する
+/// @param typeID コンポーネントの型ID（IObjectComponent::GetComponentTypeID<T>()）
+/// @param createFunc 型名からデタッチされたunique_ptrインスタンスを生成するファクトリ（JSON等からの状態転送元として使用）
+/// @param poolFactory その型専用の空のComponentPool<T>を生成するファクトリ
+/// @param isBatchProcessed ComponentBatchTraits<T>::kIsBatchProcessed の値
+bool RegisterComponentTypeObject(
+    const std::string &typeName,
+    size_t typeID,
+    std::function<std::unique_ptr<IObjectComponent>()> createFunc,
+    std::function<std::unique_ptr<IComponentPoolBase>()> poolFactory,
+    bool isBatchProcessed,
+    const std::vector<std::string> &category = {});
 
 std::unique_ptr<ISceneComponent> CreateSceneComponentByType(const std::string &typeName);
 std::unique_ptr<IObjectComponent> CreateObjectComponentByType(const std::string &typeName);
+/// @brief 型IDから、その型専用の空のコンポーネントプールを生成する（未登録の場合は nullptr）
+std::unique_ptr<IComponentPoolBase> CreateObjectComponentPoolByTypeID(size_t typeID);
+/// @brief 型IDが指すコンポーネント型がバッチ処理対象としてマークされているか（未登録の場合は false）
+bool IsObjectComponentTypeIDBatchProcessed(size_t typeID);
 
 const std::vector<std::string> &GetRegisteredSceneComponentTypes();
 const std::vector<std::string> &GetRegisteredObjectComponentTypes();
@@ -52,7 +68,10 @@ const std::vector<std::string> &GetObjectComponentCategory(const std::string &ty
 #define REGISTER_COMPONENT_OBJECT(ComponentClass) \
     static const bool is##ComponentClass##RegisteredInObject = RegisterComponentTypeObject( \
         #ComponentClass, \
+        IObjectComponent::GetComponentTypeID<ComponentClass>(), \
         []() -> std::unique_ptr<IObjectComponent> { return std::make_unique<ComponentClass>(); }, \
+        []() -> std::unique_ptr<IComponentPoolBase> { return std::make_unique<ComponentPool<ComponentClass>>(); }, \
+        ComponentBatchTraits<ComponentClass>::kIsBatchProcessed, \
         ComponentCategoryOf<ComponentClass>::Get() \
     );
 

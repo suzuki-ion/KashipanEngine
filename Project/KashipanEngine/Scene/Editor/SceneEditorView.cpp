@@ -108,8 +108,7 @@ void SceneEditorView::EnsureSceneViewObject() {
         if (sceneViewObject_) return;
     }
 
-    for (const auto &objPtr : context_->GetSceneObjects()) {
-        EmptyObject *obj = objPtr.get();
+    for (auto *obj : context_->GetSceneObjects()) {
         if (!obj || !obj->IsEditorOnly()) continue;
         if (obj->GetComponent<Camera3D>() && obj->GetComponent<ScreenBufferObject>()) {
             sceneViewObject_ = obj;
@@ -567,8 +566,7 @@ void SceneEditorView::HandleObjectPicking(SceneObjectHierarchy *hierarchy, const
 
         float nearestT = std::numeric_limits<float>::max();
 
-        for (const auto &objPtr : context_->GetSceneObjects()) {
-            EmptyObject *obj = objPtr.get();
+        for (auto *obj : context_->GetSceneObjects()) {
             if (!obj || !obj->IsActive()) continue;
 
             // シーンビューに描画される対象（アクティブなMeshRenderer/SkinnedMeshRendererを持つ）だけを選択候補にする

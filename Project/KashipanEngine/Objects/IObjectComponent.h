@@ -4,8 +4,10 @@
 #include <cassert>
 #include <cstdint>
 #include <functional>
+#include <type_traits>
 #include "Utilities/FileIO.h"
 #include "ComponentSerialize/ComponentRegistry.h"
+#include "Objects/ComponentRef.h"
 #include "Utilities/MyAny.h"
 #include "Utilities/Tag.h"
 #if defined(USE_IMGUI)
@@ -18,6 +20,21 @@ namespace KashipanEngine {
 class EmptyObject;
 class ObjectContext;
 class SceneContext;
+
+/// @brief コンポーネントが型ごとの一括更新（バッチ処理）対象かどうかを判定するトレイト
+/// @details クラスに public static な constexpr bool IsBatchProcessed() が定義されていればそれを使い、
+///          未定義の場合はバッチ処理対象外（オブジェクト単位で個別にUpdateが呼ばれる、今まで通りの動作）として扱う。
+///          バッチ処理対象とマークされた型は EmptyObject::RegenerateUpdateComponentsList() で
+///          個別Update呼び出しの対象から除外される。ただし現時点ではこの仕組みの土台のみで、
+///          Scene側で型ごとに一括更新を回す実装は存在しない（どの型もまだこのフラグをtrueにしていない）。
+template <typename T, typename = void>
+struct ComponentBatchTraits {
+    static constexpr bool kIsBatchProcessed = false;
+};
+template <typename T>
+struct ComponentBatchTraits<T, std::void_t<decltype(T::IsBatchProcessed())>> {
+    static constexpr bool kIsBatchProcessed = T::IsBatchProcessed();
+};
 
 /// @brief オブジェクトコンポーネントインターフェースクラス
 /// @details 派生クラスは COMPONENT_CATEGORY マクロ（または public static な
@@ -87,6 +104,12 @@ public:
     /// @brief 所属オブジェクトを取得する（未所属の場合は nullptr）
     /// @details ObjectContext の完全な型定義が必要なため、定義は IObjectComponent.cpp にある
     const EmptyObject *GetOwnerObject() const;
+    /// @brief このコンポーネント自身を指す ComponentRef を取得する
+    /// @details フレームをまたいで安全に保持するためのハンドル。プールのスロット再利用による
+    ///          エイリアシングを避けるため、生ポインタの代わりにこちらを保持し、使う直前に
+    ///          SceneContext::ResolveComponent() 等で毎回解決すること。
+    ///          定義は EmptyObject の完全な型定義が必要なため IObjectComponent.cpp にある
+    ComponentRef GetComponentRef() const;
 
     /// @brief 初期化処理
     /// @details コンテキストは常に設定されるが、Initialize はコンポーネントが

@@ -8,12 +8,12 @@ void Renderer::RenderPostProcessOnlyTargets(SceneContext *sceneContext,
     const std::unordered_set<const IRenderTarget *> &renderedTargets) {
     auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
     if (!sceneRenderer) return;
-    for (const auto &object : sceneContext->GetSceneObjects()) {
+    for (auto *object : sceneContext->GetSceneObjects()) {
         if (!object || !object->IsActive()) continue;
 
         // アクティブなポストエフェクトコンポーネントを持つオブジェクトのみ対象
         bool hasActivePostProcess = false;
-        for (auto *component : sceneRenderer->GetPostProcessComponentsFor(object.get())) {
+        for (auto *component : sceneRenderer->GetPostProcessComponentsFor(object)) {
             if (component && component->IsActive()) {
                 hasActivePostProcess = true;
                 break;
@@ -33,7 +33,7 @@ void Renderer::RenderPostProcessOnlyTargets(SceneContext *sceneContext,
             auto *commandList = buffer->GetCommandList();
             if (!commandList) continue;
             PipelineBinder pipelineBinder(commandList, pipelineManager_);
-            RenderPostProcess(buffer, pipelineBinder, object.get(), sceneRenderer);
+            RenderPostProcess(buffer, pipelineBinder, object, sceneRenderer);
             // ビューア用プレビューバッファの更新はEndDraw内部で自動的に行われる
             // （詳細はScreenBuffer::GetPreviewSrvHandle参照）
             buffer->EndDraw();

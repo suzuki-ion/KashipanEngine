@@ -94,8 +94,7 @@ void CollectSubtreeSnapshot(SceneEditorContext *context, EmptyObject *obj, int p
     if (!obj || !context) return;
     const int myIndex = static_cast<int>(out.size());
     out.push_back({ context->SaveObjectToJson(obj), parentIndex });
-    for (const auto &objPtr : context->GetSceneObjects()) {
-        EmptyObject *candidate = objPtr.get();
+    for (auto *candidate : context->GetSceneObjects()) {
         if (!candidate || candidate == obj) continue;
         auto *candidateTransform = candidate->GetComponent<Transform>();
         if (candidateTransform && candidateTransform->GetParentObject() == obj) {

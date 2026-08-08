@@ -77,7 +77,7 @@ public:
         auto *ctx = GetOwnerObjectContext();
         if (!ctx) return result;
         for (const auto &pair : ctx->GetAllComponents()) {
-            if (auto *collider = dynamic_cast<ICollider *>(pair.first.get())) {
+            if (auto *collider = dynamic_cast<ICollider *>(pair.first)) {
                 result.push_back(collider);
             }
         }

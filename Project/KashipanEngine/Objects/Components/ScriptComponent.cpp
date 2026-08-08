@@ -516,7 +516,7 @@ size_t ScriptComponent::CountColliders() const {
     if (!objectContext) return 0;
     size_t count = 0;
     for (const auto &pair : objectContext->GetAllComponents()) {
-        if (dynamic_cast<ICollider *>(pair.first.get())) ++count;
+        if (dynamic_cast<ICollider *>(pair.first)) ++count;
     }
     return count;
 }
@@ -552,7 +552,7 @@ void ScriptComponent::HookColliders() {
     };
 
     for (const auto &pair : objectContext->GetAllComponents()) {
-        auto *collider = dynamic_cast<ICollider *>(pair.first.get());
+        auto *collider = dynamic_cast<ICollider *>(pair.first);
         if (!collider) continue;
 
         ColliderHooks::Entry entry;
@@ -596,7 +596,7 @@ size_t ScriptComponent::CountWindowObjects() const {
     if (!objectContext) return 0;
     size_t count = 0;
     for (const auto &pair : objectContext->GetAllComponents()) {
-        if (dynamic_cast<IWindowObjectComponent *>(pair.first.get())) ++count;
+        if (dynamic_cast<IWindowObjectComponent *>(pair.first)) ++count;
     }
     return count;
 }
@@ -612,7 +612,7 @@ void ScriptComponent::HookWindowObjects() {
     const std::weak_ptr<ScriptComponent *> weakSelf(aliveToken_);
 
     for (const auto &pair : objectContext->GetAllComponents()) {
-        auto *windowObject = dynamic_cast<IWindowObjectComponent *>(pair.first.get());
+        auto *windowObject = dynamic_cast<IWindowObjectComponent *>(pair.first);
         if (!windowObject) continue;
 
         WindowObjectHooks::Entry entry;

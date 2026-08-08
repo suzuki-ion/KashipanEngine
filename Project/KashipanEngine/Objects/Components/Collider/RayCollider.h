@@ -55,9 +55,10 @@ protected:
         HitInfo3D hit{};
         const bool isHitNow = CastRayInternal(hit);
         ICollider *newOtherCollider = isHitNow ? hit.otherCollider : nullptr;
+        ComponentRef newOtherColliderRef = newOtherCollider ? newOtherCollider->GetComponentRef() : ComponentRef{};
 
         // ヒット対象が前フレームから入れ替わった場合は、まず古い対象のExitを発火してから新しい対象のEnterへ進む
-        if (wasHit_ && newOtherCollider != lastHitCollider_) {
+        if (wasHit_ && newOtherColliderRef != lastHitColliderRef_) {
             DispatchExit();
         }
 
@@ -65,8 +66,8 @@ protected:
             if (!wasHit_ && GetOnCollisionEnter3D()) GetOnCollisionEnter3D()(hit);
             if (GetOnCollisionStay3D()) GetOnCollisionStay3D()(hit);
             wasHit_ = true;
-            lastHitCollider_ = hit.otherCollider;
-            lastHitObject_ = hit.otherObject;
+            lastHitColliderRef_ = newOtherColliderRef;
+            lastHitObjectID_ = hit.otherObject ? hit.otherObject->GetObjectID() : UUID128();
         } else if (wasHit_) {
             DispatchExit();
         }
@@ -144,19 +145,22 @@ private:
     }
 
     /// @brief 保持中のヒット状態に基づいてOnCollisionExit3Dを発火し、状態をリセットする
+    /// @details lastHitColliderRef_/lastHitObjectID_はフレームをまたいで保持されるため、生ポインタではなく
+    ///          ComponentRef/UUIDで保持し、使う直前にここで解決する（プールのスロット再利用対策）
     void DispatchExit() {
         if (GetOnCollisionExit3D()) {
+            auto *sceneCtx = GetOwnerSceneContext();
             HitInfo3D exitInfo{};
             exitInfo.isHit = false;
             exitInfo.selfObject = const_cast<EmptyObject *>(GetOwnerObject());
-            exitInfo.otherObject = lastHitObject_;
+            exitInfo.otherObject = sceneCtx ? sceneCtx->GetSceneObject(lastHitObjectID_) : nullptr;
             exitInfo.selfCollider = this;
-            exitInfo.otherCollider = lastHitCollider_;
+            exitInfo.otherCollider = sceneCtx ? static_cast<ICollider *>(sceneCtx->ResolveComponent(lastHitColliderRef_)) : nullptr;
             GetOnCollisionExit3D()(exitInfo);
         }
         wasHit_ = false;
-        lastHitCollider_ = nullptr;
-        lastHitObject_ = nullptr;
+        lastHitColliderRef_ = ComponentRef{};
+        lastHitObjectID_ = UUID128();
     }
 
     Vector3 direction_{ 0.0f, -1.0f, 0.0f };
@@ -164,8 +168,8 @@ private:
 
     // --- 実行時状態（保存されない） ---
     bool wasHit_ = false;
-    ICollider *lastHitCollider_ = nullptr;
-    EmptyObject *lastHitObject_ = nullptr;
+    ComponentRef lastHitColliderRef_;
+    UUID128 lastHitObjectID_;
 };
 
 REGISTER_COMPONENT_OBJECT(RayCollider)

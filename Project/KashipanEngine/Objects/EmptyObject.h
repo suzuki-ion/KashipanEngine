@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include "Objects/IObjectComponent.h"
+#include "Objects/ComponentPool.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector4.h"
 #include "Utilities/Tag.h"
@@ -26,7 +27,10 @@ public:
     EmptyObject(EmptyObject &&) = delete;
     EmptyObject &operator=(EmptyObject &&) = delete;
 
-    std::unique_ptr<EmptyObject> Clone() const;
+    /// @brief 別オブジェクトの状態（タグ・全コンポーネント・アクティブ状態等）をこのオブジェクトへ複製する
+    /// @details 複製されるのは source 自身のコンポーネントのみで、親子関係や子オブジェクトは複製されない。
+    ///          objectID・prefabNodeIDは複製されない（このオブジェクト自身のものを維持する）
+    void CopyStateFrom(Passkey<Scene>, const EmptyObject &source);
 
     void InitializeInterface(Passkey<Scene>) { Initialize(); }
     void FinalizeInterface(Passkey<Scene>) { Finalize(); }
@@ -59,7 +63,7 @@ public:
         size_t typeIndex = IObjectComponent::GetComponentTypeID<T>();
         if (typeIndex >= componentsIndexByType_.size()) return result;
         const auto &indices = componentsIndexByType_[typeIndex];
-        std::vector<const std::pair<std::unique_ptr<IObjectComponent>, size_t> *> sortedComponents;
+        std::vector<const std::pair<IObjectComponent *, size_t> *> sortedComponents;
         for (size_t idx : indices) {
             if (idx < components_.size()) {
                 sortedComponents.push_back(&components_[idx]);
@@ -69,7 +73,7 @@ public:
             return a->second < b->second;
         });
         for (const auto *pair : sortedComponents) {
-            result.push_back(static_cast<T *>(pair->first.get()));
+            result.push_back(static_cast<T *>(pair->first));
         }
         return result;
     }
@@ -84,10 +88,24 @@ public:
         const auto &indices = componentsIndexByType_[typeIndex];
         for (size_t idx : indices) {
             if (idx < components_.size()) {
-                return static_cast<T *>(components_[idx].first.get());
+                return static_cast<T *>(components_[idx].first);
             }
         }
         return nullptr;
+    }
+    /// @brief 追加順ID（addedID）から一致するコンポーネントを取得する
+    /// @details ComponentRefの解決に使う。addedIDは削除されても再利用されないため、
+    ///          プールのスロット再利用によるエイリアシングに左右されず安全に対象を一意に特定できる
+    /// @param addedID 対象コンポーネントの追加順ID
+    /// @return 一致するコンポーネント（存在しない場合は nullptr）
+    IObjectComponent *GetComponentByAddedID(size_t addedID) const;
+    /// @brief コンポーネントの追加順ID（addedID）を取得する（ComponentRefの作成に使う）
+    /// @param component 対象コンポーネントのポインタ
+    /// @return 追加順ID（存在しない場合は MAXSIZE_T）
+    size_t GetComponentAddedID(const IObjectComponent *component) const {
+        auto it = componentsIndexByPointer_.find(component);
+        if (it == componentsIndexByPointer_.end() || it->second >= components_.size()) return MAXSIZE_T;
+        return components_[it->second].second;
     }
     /// @brief ポインタからコンポーネントを取得
     /// @param component コンポーネントのポインタ
@@ -109,8 +127,8 @@ public:
     /// @return 一致するコンポーネントの個数
     size_t HasComponent(const IObjectComponent *component) const;
 
-    /// @brief 全コンポーネントの取得（コンポーネント本体と追加順のペアのリスト）
-    const std::vector<std::pair<std::unique_ptr<IObjectComponent>, size_t>> &GetAllComponents() const { return components_; }
+    /// @brief 全コンポーネントの取得（コンポーネント本体と追加順のペアのリスト。本体はSceneのプールが所有する非所有ポインタ）
+    const std::vector<std::pair<IObjectComponent *, size_t>> &GetAllComponents() const { return components_; }
 
     //==================================================
     // コンポーネント追加系メソッド
@@ -285,14 +303,16 @@ private:
     void RegenerateUpdateComponentsList();
     /// @brief シーン内から自身の子孫オブジェクトを探し、変更前の実効アクティブ状態を記録する（SetActive用）
     void CollectDescendantsActiveState(std::vector<std::pair<EmptyObject *, bool>> &out) const;
+    /// @brief プールへ配置済みのコンポーネントを、このオブジェクトのローカルな管理台帳（空きスロット再利用含む）へ登録する
+    IObjectComponent *RegisterPlacedComponent(IObjectComponent *placed, size_t typeIndex);
 
     std::string name_ = "EmptyObject";
     /// @brief タグ（比較用ハッシュ）と表示・保存用のタグ文字列
     Tag tag_;
     std::string tagName_;
 
-    /// @brief コンポーネントのリスト（ペア: コンポーネント本体, コンポーネントが追加された順番）
-    std::vector<std::pair<std::unique_ptr<IObjectComponent>, size_t>> components_;
+    /// @brief コンポーネントのリスト（ペア: コンポーネント本体への非所有ポインタ（実体はSceneのプールが所有）, 追加された順番）
+    std::vector<std::pair<IObjectComponent *, size_t>> components_;
     std::vector<std::vector<size_t>> componentsIndexByType_;
     std::unordered_map<const IObjectComponent *, size_t> componentsIndexByPointer_;
     std::vector<size_t> componentsFreeIndices_;

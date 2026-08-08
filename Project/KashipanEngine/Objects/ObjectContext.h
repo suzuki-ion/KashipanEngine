@@ -55,7 +55,7 @@ public:
     /// @return 一致するコンポーネントの個数
     size_t HasComponent(const IObjectComponent *component) const { return owner_->HasComponent(component); }
     /// @brief 全コンポーネントの取得（コンポーネント本体と追加順のペアのリスト）
-    const std::vector<std::pair<std::unique_ptr<IObjectComponent>, size_t>> &GetAllComponents() const { return owner_->GetAllComponents(); }
+    const std::vector<std::pair<IObjectComponent *, size_t>> &GetAllComponents() const { return owner_->GetAllComponents(); }
 
     //==================================================
     // コンポーネント追加系メソッド

@@ -1,0 +1,18 @@
+﻿{
+	"PipelineType": "Render",
+	"Name": "Object2D.Solid.BlendExclusion",
+	"Category": "2D",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": { "UsePreset": "Object2D.Vertex" },
+		"Pixel": { "UsePreset": "Object2D.Pixel" }
+	},
+	"RasterizerState": { "UsePreset": "Solid" },
+	"BlendState": { "UsePreset": "Exclusion" },
+	"DepthStencilState": { "UsePreset": "DepthDisable" },
+	"PipelineState": { "UsePreset": "Triangle" },
+	"RenderPriority": 2
+}

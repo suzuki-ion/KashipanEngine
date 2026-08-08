@@ -1,0 +1,9 @@
+{
+	"BaseName": "VideoYUVToRGB",
+	"Compute": {
+		"Name": "CS",
+		"Path": "Video/VideoYUVToRGBCS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "cs_6_0"
+	}
+}

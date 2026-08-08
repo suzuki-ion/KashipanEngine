@@ -128,6 +128,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     audioManager_ = std::make_unique<AudioManager>(Passkey<GameEngine>{}, assetsRoot);
     animationManager_ = std::make_unique<AnimationManager>(Passkey<GameEngine>{}, assetsRoot);
     materialManager_ = std::make_unique<MaterialManager>(Passkey<GameEngine>{}, assetsRoot);
+    videoManager_ = std::make_unique<VideoManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetsRoot);
     input_ = std::make_unique<Input>(Passkey<GameEngine>{});
     inputCommand_ = std::make_unique<InputCommand>(Passkey<GameEngine>{}, input_.get());
     inputCommand_->LoadFromJSON(InputCommand::kDefaultSaveFilePath);
@@ -228,6 +229,9 @@ GameEngine::~GameEngine() {
     imguiManager_.reset();
 #endif
 
+    // VideoManagerはAudioManager/TextureManager双方へ登録したハンドルを破棄側で解放するため、
+    // その2つより先に破棄する
+    videoManager_.reset();
     materialManager_.reset();
     audioManager_.reset();
     animationManager_.reset();
@@ -270,6 +274,9 @@ void GameEngine::GameLoopUpdate() {
 
     if (audioManager_) {
         audioManager_->Update();
+    }
+    if (videoManager_) {
+        videoManager_->Update();
     }
 #if defined(USE_IMGUI)
     imguiManager_->BeginFrame({});
@@ -346,6 +353,7 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
         Window::CommitDestroy({});
         ScreenBuffer::CommitDestroy({});
         ShadowMapBuffer::CommitDestroy({});
+        VideoManager::CommitPendingDestroy({});
         directXCommon_->AllDestroyPendingSwapChains({});
 
         if (windowCount > Window::GetWindowCount()) {

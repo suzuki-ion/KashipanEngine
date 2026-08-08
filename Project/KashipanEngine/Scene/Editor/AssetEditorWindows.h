@@ -3,6 +3,8 @@
 #include <string>
 
 #include "Assets/AudioManager.h"
+#include "Assets/VideoManager.h"
+#include "Assets/VideoPlayer.h"
 #include "Utilities/FileIO/JSON.h"
 
 namespace KashipanEngine {
@@ -77,6 +79,25 @@ private:
     bool isOpen_ = true;
     AudioManager::SoundHandle soundHandle_ = AudioManager::kInvalidSoundHandle;
     AudioManager::PlayHandle playHandle_ = AudioManager::kInvalidPlayHandle;
+    float volume_ = 1.0f;
+};
+
+/// @brief 動画ファイルの再生プレビュー用ウィンドウ
+class VideoPreviewWindow final {
+public:
+    explicit VideoPreviewWindow(const std::string &assetPath);
+    ~VideoPreviewWindow();
+
+    bool ShowImGui();
+    const std::string &GetAssetPath() const noexcept { return assetPath_; }
+
+private:
+    std::string assetPath_;
+    std::string windowTitle_;
+    bool isOpen_ = true;
+    VideoManager::VideoHandle videoHandle_ = VideoManager::kInvalidHandle;
+    VideoPlayer *player_ = nullptr;
+    bool loop_ = true;
     float volume_ = 1.0f;
 };
 

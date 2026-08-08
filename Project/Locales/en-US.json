@@ -485,6 +485,37 @@
 		"engine.audio.play.failed.start": "Failed to play the sound. Failed to start playback.",
 		"engine.audio.play.failed.setoutputmatrix": "Failed to set the pan. Failed to set the output mix matrix.",
 
+		//--------- Video ---------//
+		"engine.video.init.failed.mediafoundation": "Failed to initialize video. Failed to initialize Media Foundation.",
+
+		"engine.video.texture.initialize.invalidsize": "Failed to initialize the video texture. Invalid size.",
+		"engine.video.texture.initialize.failed": "Failed to initialize the video texture. Failed to create the GPU resource.",
+		"engine.video.texture.upload.failed.size": "Failed to upload the video frame. Data size is insufficient (possible stride mismatch).",
+
+		"engine.video.decode.failed.readsample": "Failed to decode video. Failed to read a video sample. Player: ",
+		"engine.video.decode.failed.seek": "Failed to decode video. Failed to seek for loop playback. Player: ",
+		"engine.video.decode.failed.buffer": "Video decode warning. Failed to get the sample buffer. Player: ",
+		"engine.video.decode.failed.lock": "Video decode warning. Failed to lock the sample buffer. Player: ",
+		"engine.video.decode.endofstream": "Video decode finished (reached end of stream). Player: ",
+		"engine.video.decode.firstframe": "Decoded the first video frame. Player: ",
+		"engine.video.decode.zeroframes": "Video decode warning. No video frames were decoded (codec may be unsupported). Player: ",
+		"engine.video.debug.positionunavailable": "Debug: audio play position unavailable, skipping Update. Player: ",
+		"engine.video.debug.firstupload": "Debug: first frame uploaded to GPU. Player: ",
+
+		"engine.video.loading.failed.notfound": "Failed to load the video. File not found. File path: ",
+		"engine.video.loading.failed.unsupported": "Failed to load the video. Unsupported extension. File path: ",
+		"engine.video.loading.failed.probe": "Failed to load the video. Failed to retrieve metadata. File path: ",
+		"engine.video.loading.failed.register": "Failed to load the video. Failed to register it. File path: ",
+		"engine.video.loading.succeeded": "Video loaded successfully. File path: ",
+
+		"engine.video.play.failed.reader": "Failed to play the video. Could not open the file. File path: ",
+		"engine.video.play.failed.videoformat": "Failed to play the video. Failed to configure the video stream format. File path: ",
+		"engine.video.play.failed.audiodecode": "Failed to play the video. Failed to decode the audio track. File path: ",
+		"engine.video.play.failed.seek": "Video playback warning. Failed to seek the video stream back to the start; the first frame may appear late. File path: ",
+		"engine.video.play.failed.texture": "Failed to play the video. Failed to create the video texture. File path: ",
+		"engine.video.play.failed.audioplay": "Failed to play the video. Failed to start audio playback. File path: ",
+		"engine.video.play.succeeded": "Video playback started successfully. File path: ",
+
 		//--------- Model ---------//
 		"engine.model.loading.start": "Model loading started. File path: ",
 		"engine.model.loading.succeeded": "Model loaded successfully. File path: ",
@@ -686,6 +717,16 @@
 		"component.audiosource.stop": "Stop",
 		"component.audiosource.volume": "Volume",
 		"component.audiosource.wet_dry_mix": "Wet/Dry Mix",
+
+		//--------- component.videosource ---------//
+		"component.videosource.video": "Video",
+		"component.videosource.loop": "Loop",
+		"component.videosource.volume": "Volume",
+		"component.videosource.play_on_awake": "Play On Awake",
+		"component.videosource.play": "Play",
+		"component.videosource.resume": "Resume",
+		"component.videosource.pause": "Pause",
+		"component.videosource.stop": "Stop",
 
 		//--------- component.bloomeffect ---------//
 		"component.bloomeffect.blurradius": "BlurRadius",
@@ -1279,6 +1320,8 @@
 		"editor.assetwindow.sound.notloaded": "Sound is not loaded: ",
 		"editor.assetwindow.texture.notloaded": "Texture is not loaded: ",
 		"editor.assetwindow.unsaved": "(unsaved)",
+		"editor.assetwindow.video.notloaded": "Video is not loaded: ",
+		"editor.assetwindow.video.title": "Video: ",
 
 		//--------- editor.audio ---------//
 		"editor.audio.pause": "Pause",
@@ -1287,6 +1330,14 @@
 		"editor.audio.resume": "Resume",
 		"editor.audio.stop": "Stop",
 		"editor.audio.volume": "Volume",
+
+		//--------- editor.video ---------//
+		"editor.video.loop": "Loop",
+		"editor.video.pause": "Pause",
+		"editor.video.play": "Play",
+		"editor.video.resume": "Resume",
+		"editor.video.stop": "Stop",
+		"editor.video.volume": "Volume",
 
 		//--------- editor.audiomanager ---------//
 		"editor.audiomanager.active_plays_d": "Active Plays: %d",

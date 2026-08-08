@@ -1,6 +1,7 @@
 ﻿{
 	"PipelineType": "Compute",
 	"Name": "Compute.Test",
+	"Category": "Compute",
 	"RootSignature": {
 		"UsePreset": "Compute.Empty"
 	},

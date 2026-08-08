@@ -90,6 +90,13 @@ private:
     /// @details ComputeCommandProcessorが管理するフレーム共有コマンドリストへ記録する
     void ProcessComputeShaders(SceneContext *sceneContext);
 
+    /// @brief 再生中の動画のうち、GPUへ新しいNV12フレームがアップロードされたものについて
+    ///        コンピュートシェーダー(VideoYUVToRGBパイプライン)でYUV→RGB変換を行う
+    /// @details シーンに依存しない（VideoManagerが管理する全VideoPlayer横断）。
+    ///          描画リスト構築より先に実行し、変換結果を通常のマテリアルテクスチャとして
+    ///          後続の描画パスから参照できるようにする
+    void ProcessVideoConversions();
+
     /// @brief 描画先ごとのシャドウマップ描画パスを実行する
     /// @details 各描画先について「その描画先で使うカメラ」と「その描画先に適用されるライト」から
     ///          影を生成するライトを収集し（多すぎる場合はカメラに近い順に優先）、

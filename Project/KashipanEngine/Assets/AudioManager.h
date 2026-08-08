@@ -83,6 +83,20 @@ public:
     /// @return 読み込んだ音声のハンドル（失敗時は `kInvalidSoundHandle`）
     SoundHandle Load(const std::string& filePath);
 
+    /// @brief デコード済みのPCM(整数リニアPCM)データを直接音声として登録する（ファイルスキャンを経由しない）
+    /// @details 動画ファイルの音声トラックを抽出して登録する用途などに使う。
+    ///          `registerName` はファイル名/Assetsパス双方の代わりとして使われるため、
+    ///          他の登録済み音声と重複しない一意な名前を渡すこと。
+    /// @param registerName 登録名（ファイル名/アセットパスとして扱われる）
+    /// @param channels チャンネル数
+    /// @param samplesPerSec サンプリングレート(Hz)
+    /// @param bitsPerSample 1サンプルあたりビット数（通常16）
+    /// @param pcmData インターリーブ済みのPCMサンプルバイト列
+    /// @return 登録した音声のハンドル（失敗時は `kInvalidSoundHandle`）
+    static SoundHandle RegisterSoundFromMemory(const std::string &registerName,
+        uint32_t channels, uint32_t samplesPerSec, uint32_t bitsPerSample,
+        const std::vector<uint8_t> &pcmData);
+
     /// @brief ファイル名単体から音声ハンドルを取得
     static SoundHandle GetSoundHandleFromFileName(const std::string &fileName);
     /// @brief Assetsルートからの相対パスから音声ハンドルを取得

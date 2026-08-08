@@ -20,6 +20,12 @@ public:
     /// @return 待機に成功したらtrue、タイムアウトやエラーの場合はfalseを返す
     bool Wait(Passkey<DirectXCommon>);
 
+    /// @brief 直近の Signal で設定した目標値を取得する（ノンブロッキング待機の完了判定用）
+    uint64_t GetCurrentValue(Passkey<DirectXCommon>) const noexcept { return currentValue_; }
+    /// @brief 指定の値までGPU側の処理が完了しているかをブロックせずに確認する
+    /// @param value 完了を確認したいフェンスの値
+    bool IsComplete(Passkey<DirectXCommon>, uint64_t value) const noexcept { return fence_->GetCompletedValue() >= value; }
+
 private:
     DX12Fence(const DX12Fence &) = delete;
     DX12Fence &operator=(const DX12Fence &) = delete;

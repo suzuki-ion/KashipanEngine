@@ -374,6 +374,44 @@ void DirectXCommon::ExecuteOneShotCommandsForFontManager(Passkey<FontManager>, c
     dx12Fence_->Wait(Passkey<DirectXCommon>{});
 }
 
+uint64_t DirectXCommon::ExecuteOneShotCommandsForVideoTexture(Passkey<VideoTexture>, const std::function<void(ID3D12GraphicsCommandList*)>& record) {
+    if (!dx12Device_ || !dx12CommandQueue_ || !dx12Fence_) return 0;
+    auto* device = dx12Device_->GetDevice();
+    auto* queue = dx12CommandQueue_->GetCommandQueue();
+    if (!device || !queue) return 0;
+
+    Microsoft::WRL::ComPtr<ID3D12CommandAllocator> allocator;
+    HRESULT hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(allocator.GetAddressOf()));
+    if (FAILED(hr)) return 0;
+
+    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> list;
+    hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, allocator.Get(), nullptr, IID_PPV_ARGS(list.GetAddressOf()));
+    if (FAILED(hr)) return 0;
+
+    if (record) {
+        record(list.Get());
+    }
+
+    hr = list->Close();
+    if (FAILED(hr)) return 0;
+
+    std::vector<ID3D12CommandList*> submit;
+    submit.push_back(list.Get());
+    dx12CommandQueue_->ExecuteCommandLists(Passkey<DirectXCommon>{}, submit);
+
+    // ブロッキングWaitは行わない。同一キューへの投入順序がそのままGPU実行順序になるため、
+    // 呼び出し元は返されたフェンス値をIsVideoUploadFenceCompleteでポーリングし、
+    // アップロード用バッファの再利用が安全になったタイミングだけを判定すればよい
+    dx12Fence_->Signal(Passkey<DirectXCommon>{}, queue);
+    return dx12Fence_->GetCurrentValue(Passkey<DirectXCommon>{});
+}
+
+bool DirectXCommon::IsVideoUploadFenceComplete(Passkey<VideoTexture>, uint64_t fenceValue) const {
+    if (!dx12Fence_) return false;
+    if (fenceValue == 0) return true;
+    return dx12Fence_->IsComplete(Passkey<DirectXCommon>{}, fenceValue);
+}
+
 int DirectXCommon::AcquireCommandObjectsInternal(std::vector<std::unique_ptr<DX12Commands>>& pool, std::vector<int>& freeSlots) {
     if (!dx12Device_) return -1;
     const auto* device = dx12Device_->GetDevice();

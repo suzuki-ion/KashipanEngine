@@ -63,7 +63,7 @@ public:
     /// @brief ライトカリングのタイルサイズ（ピクセル）
     static constexpr std::uint32_t kTileSize = 16;
     /// @brief 1タイルあたりに保持できるライトの最大数
-    static constexpr std::uint32_t kMaxLightsPerTile = 256;
+    static constexpr std::uint32_t kMaxLightsPerTile = 1024;
 
 private:
     /// @brief シャドウマップ描画ジョブ1件分のデータ

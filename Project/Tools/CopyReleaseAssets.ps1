@@ -53,20 +53,22 @@ try {
         $fallback = Get-ChildItem -LiteralPath $projectsRoot -Directory -ErrorAction SilentlyContinue |
             Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName "Project.json") } |
             Select-Object -First 1
-        if (-not $fallback) {
-            throw "コピー対象のプロジェクトが見つかりません: $projectsRoot"
+        $projectName = if ($fallback) { $fallback.Name } else { $null }
+    }
+
+    # Projects配下にプロジェクト実体が無い場合（エンジン単体でのCIビルド等）はコピー対象なしとしてスキップする
+    if (-not $projectName) {
+        Write-Warning "コピー対象のプロジェクトが見つからないため、プロジェクトAssetsのコピーをスキップします: $projectsRoot"
+    } else {
+        $sourceAssets = Join-Path $projectsRoot "$projectName\Assets"
+        $destAssets = Join-Path $TargetDir "Assets"
+
+        if (-not (Test-Path -LiteralPath $sourceAssets)) {
+            Write-Warning "プロジェクトのAssetsフォルダが見つからないため、コピーをスキップします: $sourceAssets"
+        } else {
+            Invoke-MirrorCopy -Source $sourceAssets -Destination $destAssets -Label "$projectName の Assets"
         }
-        $projectName = $fallback.Name
     }
-
-    $sourceAssets = Join-Path $projectsRoot "$projectName\Assets"
-    $destAssets = Join-Path $TargetDir "Assets"
-
-    if (-not (Test-Path -LiteralPath $sourceAssets)) {
-        throw "プロジェクトのAssetsフォルダが見つかりません: $sourceAssets"
-    }
-
-    Invoke-MirrorCopy -Source $sourceAssets -Destination $destAssets -Label "$projectName の Assets"
 
     # エンジン共通の翻訳（エンジンルート直下 Locales/）も配布形態ではexeと同じフォルダへ同梱する必要がある
     $sourceLocales = Join-Path $ProjectDir "Locales"

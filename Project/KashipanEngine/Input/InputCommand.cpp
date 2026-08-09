@@ -4,13 +4,17 @@
 #include "Input/Keyboard.h"
 #include "Input/Mouse.h"
 #include "Input/Controller.h"
+#include "Core/ProjectPaths.h"
 #include "Utilities/FileIO/JSON.h"
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <utility>
 
 #if defined(USE_IMGUI)
 #include <imgui.h>
+#include "Utilities/Translation.h"
 #endif
 
 namespace KashipanEngine {
@@ -53,6 +57,37 @@ float NormalizeStickDeltaInt16(int dv) {
 static bool AxisTriggered(float v, float threshold) {
     return std::abs(v) > threshold;
 }
+
+#if defined(USE_IMGUI)
+// ShowImGui() の追加/編集フォームで使う選択肢一覧
+constexpr const char* kDeviceKindNames[] = { "Keyboard", "MouseButton", "MouseAxis", "ControllerButton", "ControllerAnalog", "ControllerAnalogDelta" };
+constexpr const char* kInputStateNames[] = { "Down", "Trigger", "Release" };
+constexpr const char* kKeyNames[] = {
+    "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+    "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+    "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9",
+    "Left", "Right", "Up", "Down",
+    "LeftShift", "RightShift", "LeftControl", "RightControl", "LeftAlt", "RightAlt",
+    "Shift", "Control", "Alt",
+    "Space", "Enter", "Escape", "Tab", "Backspace",
+    "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
+};
+constexpr const char* kMouseButtonNames[] = { "Left", "Right", "Middle", "Button4", "Button5", "Button6", "Button7", "Button8" };
+constexpr const char* kMouseAxisNames[] = { "X", "Y", "DeltaX", "DeltaY", "Wheel", "DeltaWheel" };
+constexpr const char* kControllerButtonNames[] = {
+    "DPadUp", "DPadDown", "DPadLeft", "DPadRight", "Start", "Back",
+    "LeftThumb", "RightThumb", "LeftShoulder", "RightShoulder", "A", "B", "X", "Y",
+};
+constexpr const char* kControllerAnalogNames[] = { "LeftTrigger", "RightTrigger", "LeftStickX", "LeftStickY", "RightStickX", "RightStickY" };
+
+/// @brief 文字列配列から一致するインデックスを探す（見つからない場合は0）
+int FindIndex(const char* const* names, int count, const std::string& value) {
+    for (int i = 0; i < count; ++i) {
+        if (value == names[i]) return i;
+    }
+    return 0;
+}
+#endif
 } // namespace
 
 InputCommand::InputCommand(Passkey<GameEngine>, const Input* input) : input_(input) {}
@@ -151,68 +186,215 @@ InputCommand::ReturnInfo InputCommand::Evaluate(const std::string& action) const
 
 #if defined(USE_IMGUI)
 void InputCommand::ShowImGui() {
-    if (!ImGui::Begin("InputCommand - Registered Commands")) {
+    if (!ImGui::Begin(TranslationLabel("editor.inputcommand.window"))) {
         ImGui::End();
         return;
     }
 
-    ImGui::Text("Command Count: %d", static_cast<int>(bindings_.size()));
+    //--------- 新規バインドの追加 ---------//
+    if (ImGui::CollapsingHeader(TranslationLabel("editor.inputcommand.new_binding"), ImGuiTreeNodeFlags_DefaultOpen)) {
+        static char actionNameBuffer[128] = "";
+        static int deviceKindIndex = 0;
+        static int keyIndex = 0;
+        static int mouseButtonIndex = 0;
+        static int mouseAxisIndex = 0;
+        static int controllerButtonIndex = 0;
+        static int controllerAnalogIndex = 0;
+        static int stateIndex = 0;
+        static int controllerIndexValue = 0;
+        static float threshold = 0.0f;
+        static bool invertValue = false;
+        static bool useAnalogDelta = false;
 
-    if (bindings_.empty()) {
-        ImGui::TextUnformatted("No registered input commands.");
-        ImGui::End();
-        return;
+        // 既存のコマンドへ簡単に追加できるよう、登録済みのアクション名を選択肢として提示する
+        // （選択すると下のテキスト欄に反映される。新規コマンド名はそのままテキスト欄に入力する）
+        {
+            std::vector<std::string> existingActions;
+            existingActions.reserve(bindings_.size());
+            for (const auto& [existingAction, existingBinds] : bindings_) {
+                existingActions.push_back(existingAction);
+            }
+            std::sort(existingActions.begin(), existingActions.end());
+
+            const std::string preview = (actionNameBuffer[0] != '\0') ? actionNameBuffer : "(New Command)";
+            if (ImGui::BeginCombo(TranslationLabel("editor.inputcommand.existing_command"), preview.c_str())) {
+                if (ImGui::Selectable(TranslationLabel("editor.inputcommand.new_command"), actionNameBuffer[0] == '\0')) {
+                    actionNameBuffer[0] = '\0';
+                }
+                for (const auto& existingAction : existingActions) {
+                    const bool selected = (existingAction == actionNameBuffer);
+                    if (ImGui::Selectable(existingAction.c_str(), selected)) {
+                        std::snprintf(actionNameBuffer, sizeof(actionNameBuffer), "%s", existingAction.c_str());
+                    }
+                }
+                ImGui::EndCombo();
+            }
+        }
+        ImGui::InputText(TranslationLabel("editor.inputcommand.action_name"), actionNameBuffer, sizeof(actionNameBuffer));
+        ImGui::Combo(TranslationLabel("editor.inputcommand.device"), &deviceKindIndex, kDeviceKindNames, IM_ARRAYSIZE(kDeviceKindNames));
+        const DeviceKind kind = static_cast<DeviceKind>(deviceKindIndex);
+
+        switch (kind) {
+        case DeviceKind::Keyboard:
+            ImGui::Combo(TranslationLabel("editor.inputcommand.key"), &keyIndex, kKeyNames, IM_ARRAYSIZE(kKeyNames));
+            ImGui::Combo(TranslationLabel("editor.inputcommand.state"), &stateIndex, kInputStateNames, IM_ARRAYSIZE(kInputStateNames));
+            break;
+        case DeviceKind::MouseButton:
+            ImGui::Combo(TranslationLabel("editor.inputcommand.button"), &mouseButtonIndex, kMouseButtonNames, IM_ARRAYSIZE(kMouseButtonNames));
+            ImGui::Combo(TranslationLabel("editor.inputcommand.state"), &stateIndex, kInputStateNames, IM_ARRAYSIZE(kInputStateNames));
+            break;
+        case DeviceKind::MouseAxis:
+            ImGui::Combo(TranslationLabel("editor.inputcommand.axis"), &mouseAxisIndex, kMouseAxisNames, IM_ARRAYSIZE(kMouseAxisNames));
+            ImGui::DragFloat(TranslationLabel("editor.inputcommand.threshold"), &threshold, 0.01f);
+            break;
+        case DeviceKind::ControllerButton:
+            ImGui::Combo(TranslationLabel("editor.inputcommand.button"), &controllerButtonIndex, kControllerButtonNames, IM_ARRAYSIZE(kControllerButtonNames));
+            ImGui::Combo(TranslationLabel("editor.inputcommand.state"), &stateIndex, kInputStateNames, IM_ARRAYSIZE(kInputStateNames));
+            ImGui::InputInt(TranslationLabel("editor.inputcommand.controller_index"), &controllerIndexValue);
+            break;
+        case DeviceKind::ControllerAnalog:
+        case DeviceKind::ControllerAnalogDelta:
+            ImGui::Combo(TranslationLabel("editor.inputcommand.analog"), &controllerAnalogIndex, kControllerAnalogNames, IM_ARRAYSIZE(kControllerAnalogNames));
+            ImGui::Checkbox(TranslationLabel("editor.inputcommand.delta_mode"), &useAnalogDelta);
+            if (!useAnalogDelta) {
+                ImGui::Combo(TranslationLabel("editor.inputcommand.state"), &stateIndex, kInputStateNames, IM_ARRAYSIZE(kInputStateNames));
+            }
+            ImGui::InputInt(TranslationLabel("editor.inputcommand.controller_index"), &controllerIndexValue);
+            ImGui::DragFloat(TranslationLabel("editor.inputcommand.threshold"), &threshold, 0.01f);
+            break;
+        }
+        ImGui::Checkbox(TranslationLabel("editor.inputcommand.invert_value"), &invertValue);
+
+        ImGui::BeginDisabled(actionNameBuffer[0] == '\0');
+        if (ImGui::Button(TranslationLabel("editor.inputcommand.add_binding"))) {
+            const std::string action = actionNameBuffer;
+            const InputState state = static_cast<InputState>(stateIndex);
+            switch (kind) {
+            case DeviceKind::Keyboard:
+                RegisterCommand(action, StringToKey(kKeyNames[keyIndex]), state, invertValue);
+                break;
+            case DeviceKind::MouseButton:
+                RegisterCommand(action, StringToMouseButton(kMouseButtonNames[mouseButtonIndex]), state, invertValue);
+                break;
+            case DeviceKind::MouseAxis:
+                RegisterCommand(action, StringToMouseAxis(kMouseAxisNames[mouseAxisIndex]), nullptr, threshold, invertValue);
+                break;
+            case DeviceKind::ControllerButton:
+                RegisterCommand(action, StringToControllerButton(kControllerButtonNames[controllerButtonIndex]), state, controllerIndexValue, invertValue);
+                break;
+            case DeviceKind::ControllerAnalog:
+                if (useAnalogDelta) {
+                    RegisterCommand(action, StringToControllerAnalog(kControllerAnalogNames[controllerAnalogIndex]), controllerIndexValue, threshold, invertValue);
+                } else {
+                    RegisterCommand(action, StringToControllerAnalog(kControllerAnalogNames[controllerAnalogIndex]), state, controllerIndexValue, threshold, invertValue);
+                }
+                break;
+            default:
+                break;
+            }
+        }
+        ImGui::EndDisabled();
     }
 
-    for (const auto& [action, binds] : bindings_) {
+    ImGui::Separator();
+    ImGui::Text(TranslationC("editor.inputcommand.command_count_d"), static_cast<int>(bindings_.size()));
+
+    //--------- 登録済みコマンドの一覧・編集・削除 ---------//
+    // ループ中に bindings_ を直接変更するとイテレータが壊れるため、削除・リネーム・複製要求はループ後にまとめて適用する
+    std::string pendingRemoveAction;
+    std::vector<std::pair<std::string, size_t>> pendingRemoveBindings;
+    static std::string renamingAction;
+    static char renameBuffer[128] = "";
+    std::string pendingRenameFrom;
+    std::string pendingRenameTo;
+    std::string pendingDuplicateAction;
+    // OpenPopup/BeginPopupはIDスタックの深さが一致していないと同一ポップアップとして扱われないため、
+    // ループ内(PushID(action)の中)ではOpenPopupを呼ばず、ループ外でまとめて呼び出す
+    bool requestOpenRenamePopup = false;
+
+    for (auto& [action, binds] : bindings_) {
         const ReturnInfo cmdResult = Evaluate(action);
 
         ImGui::PushID(action.c_str());
-        if (ImGui::TreeNode("%s", action.c_str())) {
-            ImGui::Text("Result: Triggered=%s  Value=%.3f", cmdResult.Triggered() ? "true" : "false", cmdResult.Value());
-            ImGui::Text("Binding Count: %d", static_cast<int>(binds.size()));
+        const bool open = ImGui::TreeNode("%s", action.c_str());
+        if (ImGui::BeginPopupContextItem("CommandContextMenu")) {
+            if (ImGui::MenuItem(TranslationLabel("editor.inputcommand.rename"))) {
+                renamingAction = action;
+                std::snprintf(renameBuffer, sizeof(renameBuffer), "%s", action.c_str());
+                requestOpenRenamePopup = true;
+            }
+            if (ImGui::MenuItem(TranslationLabel("editor.inputcommand.duplicate"))) {
+                pendingDuplicateAction = action;
+            }
+            if (ImGui::MenuItem(TranslationLabel("editor.inputcommand.delete_command"))) {
+                pendingRemoveAction = action;
+            }
+            ImGui::EndPopup();
+        }
+        if (open) {
+            ImGui::Text(TranslationC("editor.inputcommand.result_triggered_s_value_3f"), cmdResult.Triggered() ? "true" : "false", cmdResult.Value());
+            ImGui::Text(TranslationC("editor.inputcommand.binding_count_d"), static_cast<int>(binds.size()));
 
             for (size_t i = 0; i < binds.size(); ++i) {
-                const auto& b = binds[i];
+                auto& b = binds[i];
                 const ReturnInfo bindResult = EvaluateBinding(b);
 
                 ImGui::PushID(static_cast<int>(i));
-                if (ImGui::TreeNode("Binding")) {
-                    ImGui::Text("Index: %d", static_cast<int>(i));
-                    ImGui::Text("Device: %s", DeviceKindToString(b.kind).c_str());
-                    ImGui::Text("Result: Triggered=%s  Value=%.3f", bindResult.Triggered() ? "true" : "false", bindResult.Value());
-                    ImGui::Text("InvertValue: %s", b.invertValue ? "true" : "false");
+                if (ImGui::TreeNode(TranslationLabel("editor.inputcommand.binding"))) {
+                    ImGui::Text(TranslationC("editor.inputcommand.device_s"), DeviceKindToString(b.kind).c_str());
+                    ImGui::Text(TranslationC("editor.inputcommand.result_triggered_s_value_3f"), bindResult.Triggered() ? "true" : "false", bindResult.Value());
+                    ImGui::Checkbox(TranslationLabel("editor.inputcommand.invert_value"), &b.invertValue);
 
                     switch (b.kind) {
-                    case DeviceKind::Keyboard:
-                        ImGui::Text("Key: %s", KeyToString(b.key).c_str());
-                        ImGui::Text("State: %s", InputStateToString(b.state).c_str());
+                    case DeviceKind::Keyboard: {
+                        int idx = FindIndex(kKeyNames, IM_ARRAYSIZE(kKeyNames), KeyToString(b.key));
+                        if (ImGui::Combo(TranslationLabel("editor.inputcommand.key"), &idx, kKeyNames, IM_ARRAYSIZE(kKeyNames))) b.key = StringToKey(kKeyNames[idx]);
+                        int stateIdx = static_cast<int>(b.state);
+                        if (ImGui::Combo(TranslationLabel("editor.inputcommand.state"), &stateIdx, kInputStateNames, IM_ARRAYSIZE(kInputStateNames))) b.state = static_cast<InputState>(stateIdx);
                         break;
-                    case DeviceKind::MouseButton:
-                        ImGui::Text("Button: %s", MouseButtonToString(static_cast<MouseButton>(b.code)).c_str());
-                        ImGui::Text("State: %s", InputStateToString(b.state).c_str());
+                    }
+                    case DeviceKind::MouseButton: {
+                        int idx = FindIndex(kMouseButtonNames, IM_ARRAYSIZE(kMouseButtonNames), MouseButtonToString(static_cast<MouseButton>(b.code)));
+                        if (ImGui::Combo(TranslationLabel("editor.inputcommand.button"), &idx, kMouseButtonNames, IM_ARRAYSIZE(kMouseButtonNames))) b.code = static_cast<int>(StringToMouseButton(kMouseButtonNames[idx]));
+                        int stateIdx = static_cast<int>(b.state);
+                        if (ImGui::Combo(TranslationLabel("editor.inputcommand.state"), &stateIdx, kInputStateNames, IM_ARRAYSIZE(kInputStateNames))) b.state = static_cast<InputState>(stateIdx);
                         break;
-                    case DeviceKind::MouseAxis:
-                        ImGui::Text("Axis: %s", MouseAxisToString(b.mouseAxis).c_str());
-                        ImGui::Text("Threshold: %.3f", b.threshold);
-                        ImGui::Text("Space: %s", b.mouseSpace == MouseSpace::Client ? "Client" : "Screen");
+                    }
+                    case DeviceKind::MouseAxis: {
+                        int idx = FindIndex(kMouseAxisNames, IM_ARRAYSIZE(kMouseAxisNames), MouseAxisToString(b.mouseAxis));
+                        if (ImGui::Combo(TranslationLabel("editor.inputcommand.axis"), &idx, kMouseAxisNames, IM_ARRAYSIZE(kMouseAxisNames))) b.mouseAxis = StringToMouseAxis(kMouseAxisNames[idx]);
+                        ImGui::DragFloat(TranslationLabel("editor.inputcommand.threshold"), &b.threshold, 0.01f);
+                        ImGui::Text(TranslationC("editor.inputcommand.space_s"), b.mouseSpace == MouseSpace::Client ? "Client" : "Screen");
                         break;
-                    case DeviceKind::ControllerButton:
-                        ImGui::Text("Button: %s", ControllerButtonToString(b.controllerButton).c_str());
-                        ImGui::Text("State: %s", InputStateToString(b.state).c_str());
-                        ImGui::Text("ControllerIndex: %d", b.controllerIndex);
+                    }
+                    case DeviceKind::ControllerButton: {
+                        int idx = FindIndex(kControllerButtonNames, IM_ARRAYSIZE(kControllerButtonNames), ControllerButtonToString(b.controllerButton));
+                        if (ImGui::Combo(TranslationLabel("editor.inputcommand.button"), &idx, kControllerButtonNames, IM_ARRAYSIZE(kControllerButtonNames))) b.controllerButton = StringToControllerButton(kControllerButtonNames[idx]);
+                        int stateIdx = static_cast<int>(b.state);
+                        if (ImGui::Combo(TranslationLabel("editor.inputcommand.state"), &stateIdx, kInputStateNames, IM_ARRAYSIZE(kInputStateNames))) b.state = static_cast<InputState>(stateIdx);
+                        ImGui::InputInt(TranslationLabel("editor.inputcommand.controller_index"), &b.controllerIndex);
                         break;
-                    case DeviceKind::ControllerAnalog:
-                        ImGui::Text("Analog: %s", ControllerAnalogToString(static_cast<ControllerAnalog>(b.code)).c_str());
-                        ImGui::Text("State: %s", InputStateToString(b.state).c_str());
-                        ImGui::Text("ControllerIndex: %d", b.controllerIndex);
-                        ImGui::Text("Threshold: %.3f", b.threshold);
+                    }
+                    case DeviceKind::ControllerAnalog: {
+                        int idx = FindIndex(kControllerAnalogNames, IM_ARRAYSIZE(kControllerAnalogNames), ControllerAnalogToString(static_cast<ControllerAnalog>(b.code)));
+                        if (ImGui::Combo(TranslationLabel("editor.inputcommand.analog"), &idx, kControllerAnalogNames, IM_ARRAYSIZE(kControllerAnalogNames))) b.code = static_cast<int>(StringToControllerAnalog(kControllerAnalogNames[idx]));
+                        int stateIdx = static_cast<int>(b.state);
+                        if (ImGui::Combo(TranslationLabel("editor.inputcommand.state"), &stateIdx, kInputStateNames, IM_ARRAYSIZE(kInputStateNames))) b.state = static_cast<InputState>(stateIdx);
+                        ImGui::InputInt(TranslationLabel("editor.inputcommand.controller_index"), &b.controllerIndex);
+                        ImGui::DragFloat(TranslationLabel("editor.inputcommand.threshold"), &b.threshold, 0.01f);
                         break;
-                    case DeviceKind::ControllerAnalogDelta:
-                        ImGui::Text("Analog: %s", ControllerAnalogToString(static_cast<ControllerAnalog>(b.code)).c_str());
-                        ImGui::Text("ControllerIndex: %d", b.controllerIndex);
-                        ImGui::Text("Threshold: %.3f", b.threshold);
+                    }
+                    case DeviceKind::ControllerAnalogDelta: {
+                        int idx = FindIndex(kControllerAnalogNames, IM_ARRAYSIZE(kControllerAnalogNames), ControllerAnalogToString(static_cast<ControllerAnalog>(b.code)));
+                        if (ImGui::Combo(TranslationLabel("editor.inputcommand.analog"), &idx, kControllerAnalogNames, IM_ARRAYSIZE(kControllerAnalogNames))) b.code = static_cast<int>(StringToControllerAnalog(kControllerAnalogNames[idx]));
+                        ImGui::InputInt(TranslationLabel("editor.inputcommand.controller_index"), &b.controllerIndex);
+                        ImGui::DragFloat(TranslationLabel("editor.inputcommand.threshold"), &b.threshold, 0.01f);
                         break;
+                    }
+                    }
+
+                    if (ImGui::SmallButton(TranslationLabel("editor.inputcommand.remove_binding"))) {
+                        pendingRemoveBindings.emplace_back(action, i);
                     }
 
                     ImGui::TreePop();
@@ -223,6 +405,62 @@ void InputCommand::ShowImGui() {
             ImGui::TreePop();
         }
         ImGui::PopID();
+    }
+
+    // リネームポップアップ本体（OpenPopupと同じIDスタックの深さ、ループの外で呼び出す）
+    if (requestOpenRenamePopup) {
+        ImGui::OpenPopup("RenameCommandPopup");
+    }
+    if (ImGui::BeginPopup("RenameCommandPopup")) {
+        ImGui::Text(TranslationC("editor.inputcommand.rename_s_to"), renamingAction.c_str());
+        ImGui::InputText("##RenameInput", renameBuffer, sizeof(renameBuffer));
+        if (ImGui::Button(TranslationLabel("editor.inputcommand.rename_2"))) {
+            if (renameBuffer[0] != '\0' && renamingAction != renameBuffer) {
+                pendingRenameFrom = renamingAction;
+                pendingRenameTo = renameBuffer;
+            }
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button(TranslationLabel("editor.inputcommand.cancel"))) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+
+    if (!pendingRemoveAction.empty()) {
+        bindings_.erase(pendingRemoveAction);
+    }
+    for (const auto& [action, index] : pendingRemoveBindings) {
+        auto it = bindings_.find(action);
+        if (it != bindings_.end() && index < it->second.size()) {
+            it->second.erase(it->second.begin() + static_cast<std::ptrdiff_t>(index));
+        }
+    }
+    if (!pendingRenameFrom.empty() && !pendingRenameTo.empty() && pendingRenameFrom != pendingRenameTo) {
+        auto it = bindings_.find(pendingRenameFrom);
+        if (it != bindings_.end()) {
+            std::vector<Binding> moved = std::move(it->second);
+            bindings_.erase(it);
+            auto& target = bindings_[pendingRenameTo];
+            target.insert(target.end(), moved.begin(), moved.end());
+        }
+    }
+    if (!pendingDuplicateAction.empty()) {
+        auto it = bindings_.find(pendingDuplicateAction);
+        if (it != bindings_.end()) {
+            // 複製元のデータを先にコピーしておく（bindings_[candidate]の挿入でrehashが起き、
+            // イテレータitが無効化された後にit->secondへアクセスするのを避けるため）
+            std::vector<Binding> copy = it->second;
+            // 名前が衝突しないよう "(1)", "(2)", ... と番号を振っていく
+            std::string candidate;
+            int suffix = 1;
+            do {
+                candidate = pendingDuplicateAction + " (" + std::to_string(suffix) + ")";
+                ++suffix;
+            } while (bindings_.find(candidate) != bindings_.end());
+            bindings_[candidate] = std::move(copy);
+        }
     }
 
     ImGui::End();
@@ -438,13 +676,14 @@ bool InputCommand::SaveToJSON(const std::string& filepath) const {
         root[action] = std::move(arr);
     }
 
-    return SaveJSON(root, filepath);
+    return SaveJSON(root, ProjectPaths::ToPhysical(filepath));
 }
 
 bool InputCommand::LoadFromJSON(const std::string& filepath) {
-    if (!IsJSONFileValid(filepath)) return false;
+    const std::string resolvedPath = ProjectPaths::ToPhysical(filepath);
+    if (!IsJSONFileValid(resolvedPath)) return false;
 
-    JSON root = LoadJSON(filepath);
+    JSON root = LoadJSON(resolvedPath);
     if (root.is_null() || !root.is_object()) return false;
 
     bindings_.clear();

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-engine-data.js"></script>
+<script defer src="../assets/nav.js"></script>
+</head>
+<body data-page="00_Index">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div class="page-header">
+<h1>KashipanEngine 使い方リファレンス</h1>
+<p class="page-lead">DirectX12ベースの独自C++ゲームエンジン「KashipanEngine」の<strong>エンジン本体（C++ API）リファレンス</strong>です。<code>EmptyObject</code>・各種コンポーネント・シーン管理・アセット管理など、エンジンをC++コードから使う際のクラス・関数・JSON形式を扱います。</p>
+</div>
+
+<div class="warn">
+<strong>エディタの使い方をお探しですか？</strong><br>
+シーンエディタ（ImGuiベースのツール）のウィンドウ操作・メニュー・コンポーネントのInspector表示については、独立した<a href="../Editor/00_Index.html">エディタリファレンス</a>を参照してください。このページ以下はC++側のプログラムそのものの解説です。
+</div>
+
+<h2>このリファレンスについて</h2>
+<p>
+KashipanEngine は「オブジェクト（<code>EmptyObject</code>）にコンポーネントを付け足していく」コンポジション方式のエンジンです。Unity のようにシーン内のオブジェクトへ <code>Transform</code>・<code>MeshRenderer</code>・<code>BoxCollider</code>・<code>ScriptComponent</code> といったコンポーネントをアタッチしてゲームを組み立てます。
+</p>
+<ul>
+<li>シーンの内容（オブジェクト・コンポーネント配置）は <strong>JSON</strong>（<code>Assets/Scenes/*.scene</code>）に保存され、専用の <strong>シーンエディタ</strong>（ImGuiベース、<a href="../Editor/00_Index.html">エディタリファレンス</a>参照）で編集します。</li>
+<li>ゲームプレイのロジック（移動・当たり判定応答・演出など）は C++ ではなく <strong>AngelScript</strong> で書き、<code>ScriptComponent</code> としてオブジェクトにアタッチします。</li>
+<li>C++ 側のコードは主にエンジン本体の実装と、起動時フックである <code>Application/AppInitialize.h</code> に限られます。</li>
+</ul>
+
+<div class="tip">
+<strong>初めての方へ</strong><br>
+まずは <a href="../Editor/Guide/00_Index.html">エディタの使い方ガイド</a> に沿って、シーン作成からスクリプトでキャラクターを動かすところまでを一通り体験することをおすすめします。
+</div>
+
+<h2>目次</h2>
+
+<h3>はじめに</h3>
+<table>
+<tr><th>ページ</th><th>内容</th></tr>
+<tr><td><a href="01_Overview.html">エンジン概要とアーキテクチャ</a></td><td>ディレクトリ構成、エンジンの起動フロー、命名規則、設計思想（Passkey・final・コンポジション）</td></tr>
+</table>
+
+<h3>コアシステム</h3>
+<table>
+<tr><th>ページ</th><th>内容</th></tr>
+<tr><td><a href="02_Scenes.html">シーン (Scene / SceneManager)</a></td><td>シーンの作成・登録・切り替え、シーン変数、SceneList.json</td></tr>
+<tr><td><a href="03_GameObjects.html">ゲームオブジェクト (EmptyObject)</a></td><td>オブジェクトの生成・複製・削除、タグ、UUID</td></tr>
+<tr><td><a href="04_ObjectComponents.html">オブジェクトコンポーネント基礎</a></td><td>IObjectComponent、Transform、コンポーネント定義マクロ</td></tr>
+</table>
+
+<h3>描画・物理</h3>
+<table>
+<tr><th>ページ</th><th>内容</th></tr>
+<tr><td><a href="05_Rendering.html">描画コンポーネント</a></td><td>MeshRenderer、SpriteRenderer、TextRenderer、Camera、Light</td></tr>
+<tr><td><a href="06_Collision.html">コライダーと物理演算</a></td><td>2D/3Dコライダー、RigidBody、衝突コールバック</td></tr>
+</table>
+
+<h3>スクリプティング</h3>
+<table>
+<tr><th>ページ</th><th>内容</th></tr>
+<tr><td><a href="Script/00_Index.html">スクリプティング概要・基本的な使い方</a></td><td>ScriptComponent、ScriptComponentBehavior、#include、as.predefined</td></tr>
+<tr><td><a href="Script/01_Lifecycle.html">ライフサイクルと衝突・ウィンドウイベント</a></td><td>Awake/Start/Update/End、HitInfo、WindowMessageInfo</td></tr>
+<tr><td><a href="Script/02_SerializeField.html">SerializeField属性</a></td><td>インスペクター編集・シーン保存の対象にする属性、Object参照、配列</td></tr>
+<tr><td><a href="Script/03_ComponentAccess.html">コンポーネント操作とグローバル関数</a></td><td>GetComponent/AddComponent/RemoveComponent、ログ・時間・入力・音声</td></tr>
+<tr><td><a href="Script/04_ObjectSceneVariables.html">Object・Scene・Tag・シーン変数</a></td><td>Object/Scene/Tag型、シーン変数、ScriptComponent経由のデータ受け渡し</td></tr>
+<tr><td><a href="Script/05_ComponentTypes.html">コンポーネント型リファレンス（基本）</a></td><td>Transform/Velocity/オーディオ/カメラ/アニメーション等</td></tr>
+<tr><td><a href="Script/06_RenderAndWindow.html">描画・ライト・ウィンドウ系コンポーネント</a></td><td>MeshRenderer/Light/WindowObject/OnWindowMessage</td></tr>
+<tr><td><a href="Script/07_ColliderAndPostEffect.html">コライダーとポストエフェクト</a></td><td>コライダー共通API・CCD、ポストエフェクト各種</td></tr>
+<tr><td><a href="Script/08_MathAndUtility.html">数学型・Math・Easing・Random</a></td><td>Vector2/3/4、Quaternion、Math::/Easing::/Random::</td></tr>
+<tr><td><a href="Script/09_JsonAndDictionary.html">dictionaryとJson</a></td><td>辞書型、JSONファイルの保存・読み込み</td></tr>
+<tr><td><a href="Script/10_ProceduralGeneration.html">手続き生成（WFC・ステージグラフ）</a></td><td>WaveFunctionCollapse、StageGraphGenerator/StageGridBuilder</td></tr>
+<tr><td><a href="Script/11_PlayerExample.html">実例: Player.asを読み解く</a></td><td>移動・坂道判定・ジャンプ・被ダメージ・チェックポイント復帰の実例</td></tr>
+<tr><td><a href="Script/12_EditorToolScripting.html">EditorTool（エディタ拡張スクリプト）</a></td><td>EditorToolのライフサイクル、[EditorWindow]/[MenuItem]、ImGui::名前空間</td></tr>
+<tr><td><a href="Script/13_Debugging.html">VS CodeによるAngelScriptデバッグ</a></td><td>DAPサーバーによるブレークポイントデバッグ</td></tr>
+<tr><td><a href="Script/14_Notes.html">リロード・エラー確認・注意事項</a></td><td>Reload()とエラー取得、実装上の注意点</td></tr>
+</table>
+
+<h3>入力・アセット</h3>
+<table>
+<tr><th>ページ</th><th>内容</th></tr>
+<tr><td><a href="08_Input.html">入力 (Input / InputCommand)</a></td><td>キーボード・マウス・コントローラー、入力アクションのマッピング</td></tr>
+<tr><td><a href="09_Assets.html">アセット管理</a></td><td>テクスチャ・モデル・オーディオ・フォント等の読み込みと管理</td></tr>
+</table>
+
+<h3>その他システム</h3>
+<table>
+<tr><th>ページ</th><th>内容</th></tr>
+<tr><td><a href="10_PostEffects.html">ポストエフェクト</a></td><td>ブルーム・被写界深度・アウトライン等のポストプロセス</td></tr>
+<tr><td><a href="11_Window.html">ウィンドウ / オフスクリーン</a></td><td>Window、ScreenBuffer、ShadowMapBuffer</td></tr>
+</table>
+
+<h3>ユーティリティ</h3>
+<table>
+<tr><th>ページ</th><th>内容</th></tr>
+<tr><td><a href="13_Utilities.html">ユーティリティ</a></td><td>FileIO、数学関数、GameTimer、Passkey、Tag、UUID128 等</td></tr>
+<tr><td><a href="14_BuildMacros.html">ビルドマクロ</a></td><td>DEBUG_BUILD / DEVELOPMENT_BUILD / RELEASE_BUILD / USE_IMGUI</td></tr>
+</table>
+
+<h3>エディタリファレンス</h3>
+<p>シーンエディタ（ImGui）のウィンドウ操作・コンポーネントのInspector表示・使い方ガイドは、このエンジン本体リファレンスとは別サイトの<a href="../Editor/00_Index.html">エディタリファレンス</a>にまとめています。</p>
+
+<h2>命名規則の早見表</h2>
+<table>
+<tr><th>対象</th><th>規則</th><th>例</th></tr>
+<tr><td>名前空間</td><td>エンジン全体は <code>KashipanEngine</code> 名前空間</td><td><code>namespace KashipanEngine { ... }</code></td></tr>
+<tr><td>クラス名</td><td>PascalCase。インターフェースは <code>I</code> 接頭辞</td><td><code>MeshRenderer</code>, <code>IObjectComponent</code></td></tr>
+<tr><td>メソッド</td><td>PascalCase。取得/設定は <code>Get</code>/<code>Set</code> 接頭辞</td><td><code>GetComponent()</code>, <code>SetTranslate()</code></td></tr>
+<tr><td>メンバ変数</td><td>末尾アンダースコア</td><td><code>translate_</code>, <code>isActive_</code></td></tr>
+<tr><td>定数</td><td><code>k</code> 接頭辞</td><td><code>kDefaultSceneListFilePath</code></td></tr>
+<tr><td>継承</td><td>多くのクラスが <code>final</code>。継承よりコンポーネント合成を使う設計</td><td><code>class EmptyObject final</code></td></tr>
+</table>
+<p>詳細は <a href="01_Overview.html">エンジン概要とアーキテクチャ</a> を参照してください。</p>
+
+</main>
+</div>
+</body>
+</html>

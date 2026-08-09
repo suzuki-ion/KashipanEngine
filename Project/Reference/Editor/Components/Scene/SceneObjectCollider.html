@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SceneObjectCollider | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Scene_SceneObjectCollider">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>SceneObjectCollider <span class="badge final">最大1個</span></h1>
+<p class="page-lead">シーン内の<code>ICollider</code>派生コンポーネント（各種Collider）を収集し、実際の当たり判定処理（<code>Collider</code>）へ橋渡しするシーンコンポーネントです。<a href="../../Windows/06_SceneComponentInspector.html">Scene Component Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/02_Scenes.html">Engine/02_Scenes.html</a>を参照してください。</p>
+</div>
+
+<div class="note"><strong>このコンポーネントに編集可能なInspector項目はありません</strong><br>専用の<code>ShowImGui</code>実装を持たないため、コンポーネント一覧を開いても基底クラス既定の <code>None</code> というテキストが表示されるだけです。各<code>ICollider</code>派生コンポーネントの<code>Initialize</code>/<code>Finalize</code>からポインタ登録されるだけで、以後は毎フレームこのコンポーネント側が各Colliderの現在の状態（形状・トリガー設定・コールバック等）を読み取って内部の<code>Collider</code>へ反映するため、Inspector上で触る設定値自体が存在しません。</div>
+
+<h2>Add Scene Componentでの位置</h2>
+<p><span class="ui-path">Add Scene Component → Collision → SceneObjectCollider</span>。新規シーン作成時に自動で追加されるコンポーネントの1つで、誤って削除するとシーン内の当たり判定が一切動作しなくなります。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/02_Scenes.html">Engine/02_Scenes.html</a> — <code>ISceneComponent</code>・代表的なシーンコンポーネント一覧のC++ API</li>
+<li><a href="../../../Engine/06_Collision.html">Engine/06_Collision.html</a> — 当たり判定処理（<code>Collider</code>）の詳細</li>
+<li><a href="../../Windows/06_SceneComponentInspector.html">Windows/06_SceneComponentInspector.html</a> — Scene Component Inspectorの基本的な見方</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

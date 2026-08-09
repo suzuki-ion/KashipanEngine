@@ -4,6 +4,7 @@
 #include <Windows.h>
 #include "EngineSettings.h"
 #include "Utilities/FileIO/JSON.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 namespace {
@@ -66,13 +67,13 @@ inline void LoadWindowSettings(const JSON &rootJSON, EngineSettings &settings) {
     }
 
     LogSeparator();
-    Log("Window", LogSeverity::Info);
+    Log(Translation("engine.settings.window.section"), LogSeverity::Info);
     LogSeparator();
-    Log("Initial Window Title: " + settings.window.initialWindowTitle, LogSeverity::Info);
-    Log("Initial Window Width: " + std::to_string(settings.window.initialWindowWidth), LogSeverity::Info);
-    Log("Initial Window Height: " + std::to_string(settings.window.initialWindowHeight), LogSeverity::Info);
-    Log("Initial Window Style: " + styleNames, LogSeverity::Info);
-    Log("Initial Window Icon Path: " + settings.window.initialWindowIconPath, LogSeverity::Info);
+    Log(Translation("engine.settings.window.initialtitle") + settings.window.initialWindowTitle, LogSeverity::Info);
+    Log(Translation("engine.settings.window.initialwidth") + std::to_string(settings.window.initialWindowWidth), LogSeverity::Info);
+    Log(Translation("engine.settings.window.initialheight") + std::to_string(settings.window.initialWindowHeight), LogSeverity::Info);
+    Log(Translation("engine.settings.window.initialstyle") + styleNames, LogSeverity::Info);
+    Log(Translation("engine.settings.window.initialiconpath") + settings.window.initialWindowIconPath, LogSeverity::Info);
 }
 
 } // namespace KashipanEngine

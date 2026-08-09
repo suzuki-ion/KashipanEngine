@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Camera3D | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_Camera3D">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Camera3D <span class="badge final">最大1個</span></h1>
+<p class="page-lead">3Dカメラの射影パラメータだけを保持するコンポーネントです。パラメータの保持のみでビュー射影行列の計算・アップロードは行わず、実際に描画へ反映するには同一オブジェクトに<a href="CameraRenderer.html">CameraRenderer</a>を併せて付与する必要があります。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a>を参照してください。</p>
+</div>
+
+<div class="warn"><strong>Camera3Dだけでは何も起きない</strong><br>Lightと同様、Camera3Dはパラメータの入れ物でしかない。ビュー射影行列を計算して定数バッファへアップロードするのはCameraRendererの役割で、両方を同一オブジェクトへ付与して初めて描画に反映される。</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Orthographic</td><td>チェックボックス</td><td>有効にすると平行投影、無効だと透視投影（既定false＝透視投影）</td></tr>
+<tr><td>FovY</td><td>ドラッグ入力欄（ステップ0.01）</td><td>垂直画角。単位は<strong>ラジアン</strong>（既定値0.45＝約25.8°）。Transformの回転と異なり度への変換は行われない</td></tr>
+<tr><td>Near</td><td>ドラッグ入力欄（ステップ0.01）</td><td>ニアクリップ距離（既定0.1）</td></tr>
+<tr><td>Far</td><td>ドラッグ入力欄（ステップ1.0）</td><td>ファークリップ距離（既定1000.0）</td></tr>
+<tr><td>Aspect</td><td>ドラッグ入力欄（ステップ0.01）</td><td>アスペクト比（既定16:9＝約1.778）</td></tr>
+<tr><td>OrthoSize</td><td>ドラッグ入力欄（ステップ0.1）</td><td>平行投影時の縦半径（ワールド単位、既定10.0）</td></tr>
+</table>
+
+<div class="note"><strong>FovYはラジアン表示、範囲制限も無い</strong><br>Transformの回転欄は内部ラジアン→表示度で変換されるが、Camera3DのFovYはラジアンのまま直接ドラッグ入力する。DragFloatに上限・下限も設定されていないため、意図しない極端な値（0以下やπ以上）も入力できてしまう点に注意。</div>
+
+<div class="tip"><strong>OrthographicチェックでFovYは無視される</strong><br>Orthographicが有効な場合、CameraRendererが計算する投影行列はOrthoSizeとAspectのみを使い、FovYの値は使用されない。ただしFovY欄自体は非表示にはならず、常に編集可能な状態で残る。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path"><span>Add Component</span><i>›</i><span>Render</span><i>›</i><span>Camera3D</span></span> から追加する。1オブジェクトに付与できるのは最大1個。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="CameraRenderer.html">Components/Render/CameraRenderer.html</a> — Camera3D/Camera2Dの情報を実際に描画へ反映させるコンポーネント</li>
+<li><a href="CameraController.html">Components/Render/CameraController.html</a> — Camera3Dを追従対象へ滑らかに追従させるコンポーネント</li>
+<li><a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a> — <code>Camera3D</code>クラスのAPI</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Object Inspectorの基本操作</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

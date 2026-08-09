@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>12. シーンを切り替える | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-editor-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="T12_ChangeScene">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>12. シーンを切り替える</h1>
+<p class="page-lead">Play モードで完成した操作を確認し、Scene List とスクリプトを使ったシーン遷移まで仕上げます。</p>
+</div>
+
+<div class="tutorial-meta"><span>操作の起点: Scene Editor / Scene List</span><span>完成条件: Play とシーン遷移を確認</span></div>
+
+<figure class="editor-shot">
+<img src="../../assets/tutorial/12-play.png" alt="Play モードでゲーム画面を表示しているエディター">
+<figcaption>Play モードの実行画面。Scene Editor の Stop / Pause / Step Frame で再生状態を操作しながら確認できます。</figcaption>
+</figure>
+
+<h2>1. Play モードで完成状態を確認する</h2>
+<ol class="steps">
+<li>Scene Editor の <code>Play</code> を押します。</li>
+<li>A / D キーによる Player の移動、Collider、描画を確認します。</li>
+<li>必要に応じて <code>Pause</code> と <code>Step Frame</code> で 1 フレームずつ挙動を追います。</li>
+<li>確認後は <code>Stop</code> を押して編集状態へ戻ります。</li>
+</ol>
+
+<div class="note">Play 中の変更は検証用です。Stop すると Play 開始前の編集状態へ戻るため、恒久的な調整は停止後に行ってシーンを保存してください。</div>
+
+<h2>2. 切り替え先を Scene List で確認する</h2>
+<ol class="steps">
+<li><span class="ui-path">Window → Scene List</span> を開きます。</li>
+<li>遷移先のシーンが登録済みであることを確認します。未登録なら <a href="02_RegisterScene.html">2. シーンを登録する</a> の手順で追加します。</li>
+<li>一覧の <code>Switch</code> で手動切り替えを試し、対象シーンが正しく開くことを確認します。</li>
+</ol>
+
+<h2>3. スクリプトから切り替える</h2>
+<p>ゴール用オブジェクトの ScriptComponent で、衝突時に次のシーンを予約します。<code>ResultScene</code> は Scene List に登録した実際のシーン名へ置き換えてください。</p>
+<pre><code>void OnCollisionEnter(const HitInfo &amp;in hit) {
+    if (hit.otherCollider.GetTag() == Tag("Player")) {
+        Scene@ scene = GetScene();
+        if (scene !is null) {
+            scene.SetNextSceneName("ResultScene");
+            scene.ChangeToNextScene();
+        }
+    }
+}</code></pre>
+
+<div class="warn"><strong>シーン遷移は次フレームで反映されます。</strong><br><code>ChangeToNextScene()</code> を呼んだ同じフレーム内で、切り替え後のシーンへアクセスしないでください。</div>
+
+<h2>完成チェック</h2>
+<ul class="checklist">
+<li>シーンを作成し、Scene List に登録できた</li>
+<li>オブジェクト、描画コンポーネント、Collider をエディターで設定できた</li>
+<li>ScriptComponent と Input Command Editor で操作を追加できた</li>
+<li>Assets を割り当て、Play モードで実行結果を確認できた</li>
+<li>別シーンへの切り替えを実装できた</li>
+</ul>
+<p>各機能の型、引数、保存形式は <a href="../../Engine/00_Index.html">エンジンAPIリファレンス</a> から確認できます。</p>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

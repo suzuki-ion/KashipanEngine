@@ -15,6 +15,23 @@ struct DirectoryData final {
 /// @param directoryPath ディレクトリパス
 bool IsDirectoryExist(const std::string &directoryPath);
 
+/// @brief ファイルを削除する
+/// @details 名前が"DeleteFile"だとWindows APIのマクロ（DeleteFileW/A）と衝突するため、
+///          あえて"RemoveFile"という名前にしている
+/// @param filePath ファイルパス
+/// @return 削除に成功した場合、または元々存在しなかった場合は true
+bool RemoveFile(const std::string &filePath);
+
+/// @brief ディレクトリを作成する（中間ディレクトリもまとめて作成）
+/// @param directoryPath ディレクトリパス
+/// @return 作成に成功したか既に存在する場合は true
+bool CreateDirectories(const std::string &directoryPath);
+
+/// @brief 指定ファイルパスの親ディレクトリが存在しない場合に作成する
+/// @param filePath ファイルパス
+/// @return 親ディレクトリが存在する（作成できた）場合は true
+bool EnsureParentDirectoryExists(const std::string &filePath);
+
 /// @brief ディレクトリ情報取得
 /// @param directoryPath ディレクトリパス
 /// @param isRecursive 再帰的にサブディレクトリ内も検索するかどうか

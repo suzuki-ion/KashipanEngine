@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SceneScriptEngine | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Scene_SceneScriptEngine">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>SceneScriptEngine <span class="badge final">最大1個</span></h1>
+<p class="page-lead">シーン内でAngelScriptを実行するための共有スクリプトエンジン（<code>asIScriptEngine</code>）を管理するシーンコンポーネントです。<code>ScriptComponent</code>はこのコンポーネントを介してスクリプトエンジンを取得します。<a href="../../Windows/06_SceneComponentInspector.html">Scene Component Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/02_Scenes.html">Engine/02_Scenes.html</a>を参照してください。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<p>全て読み取り専用のテキスト表示です（<code>ImGui::Text</code>）。編集可能な項目はありません。</p>
+<table>
+<tr><th>表示</th><th>内容</th></tr>
+<tr><td>AngelScript Version: N</td><td>使用しているAngelScriptのバージョン番号（<code>ANGELSCRIPT_VERSION</code>）</td></tr>
+<tr><td>Engine: Initialized / Not Initialized</td><td>共有<code>asIScriptEngine</code>が初期化済みかどうか</td></tr>
+<tr><td>Modules: N</td><td>Engine初期化済みの場合のみ表示。現在ロードされているスクリプトモジュール数（<code>GetModuleCount()</code>）</td></tr>
+</table>
+
+<div class="note">シーンに未追加の場合は<code>ScriptComponent::Initialize</code>時に自動で追加されるため、通常は手動でAdd Scene Componentから追加する機会は多くありません。現時点ではエンジン側の機能をスクリプトへ公開するための型/関数登録は行われていません。</div>
+
+<h2>Add Scene Componentでの位置</h2>
+<p><span class="ui-path">Add Scene Component → Script → SceneScriptEngine</span>。新規シーン作成時に自動で追加されるコンポーネントの1つです。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/02_Scenes.html">Engine/02_Scenes.html</a> — <code>ISceneComponent</code>・代表的なシーンコンポーネント一覧のC++ API</li>
+<li><a href="../../../Engine/Script/00_Index.html">Engine/Script/00_Index.html</a> — AngelScriptスクリプトの詳細</li>
+<li><a href="../../Windows/06_SceneComponentInspector.html">Windows/06_SceneComponentInspector.html</a> — Scene Component Inspectorの基本的な見方</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

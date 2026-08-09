@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Animator | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_Animator">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Animator <span class="badge final">最大1個</span></h1>
+<p class="page-lead">スケルトンアニメーションの再生を管理するコンポーネントです。同オブジェクトの<code>MeshFilter</code>が指すメッシュのスケルトンへアニメーションクリップを適用します（UnityのAnimatorに近い役割）。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Root Bone</td><td>オブジェクト選択欄（コンボ＋ドラッグ&amp;ドロップ）</td><td>アーマチュア同期の探索起点となるオブジェクト。未設定の場合は所有オブジェクト自身の最上位の祖先が起点になる</td></tr>
+<tr><td>Animation Clip</td><td>コンボ（(None) + 取得元アセット内のクリップ名一覧）</td><td>再生するアニメーションクリップ名。空（(None)）の場合はバインドポーズのまま静止する。選択を変更すると再生位置が先頭へ戻る</td></tr>
+<tr><td>Animation Source</td><td>コンボ（(None) + 読み込み済みアニメーションアセットのパス一覧）</td><td>アニメーション取得元のアセットパス。空の場合はMeshFilterが指すメッシュ自身のファイルから取得する。別ファイルを指定すると、そのファイルのアニメーションを（ボーン名が一致する範囲で）このスケルトンへ適用できる</td></tr>
+<tr><td>Play On Start</td><td>チェックボックス</td><td>ゲームループ開始時に自動で再生を開始するか</td></tr>
+<tr><td>Loop</td><td>チェックボックス</td><td>末端に到達したらループするか</td></tr>
+<tr><td>Playback Speed</td><td>ドラッグ入力欄（ステップ0.01、範囲0〜10）</td><td>再生速度の倍率</td></tr>
+<tr><td>Play / Stop（トグルボタン）</td><td>ボタン</td><td>再生中は"Stop"、停止中は"Play"と表示され、押すと再生状態を切り替える</td></tr>
+<tr><td>Joint Count: N（テキスト表示のみ）</td><td>読み取り専用テキスト</td><td>解決済みスケルトンのジョイント（ボーン）数</td></tr>
+</table>
+
+<div class="tip">Animation Sourceの項目にカーソルを合わせると、取得元の意味についてのツールチップが表示されます。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path">Add Component → Animation → Animator</span>。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/04_ObjectComponents.html">Engine/04_ObjectComponents.html</a> — <code>Animator</code>クラスのAPI（<code>Play</code>/<code>Stop</code>/クリップ一覧取得等）</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本的な見方</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

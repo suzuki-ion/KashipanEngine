@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cstdint>
 #include <limits>
+#include <wrl/client.h>
 
 #include "Core/Window.h"
 
@@ -88,7 +89,7 @@ void Mouse::Update() {
         return;
     }
 
-    IGameInputReading *reading = nullptr;
+    Microsoft::WRL::ComPtr<IGameInputReading> reading;
     const HRESULT hr = sGameInput->GetCurrentReading(GameInputKindMouse, nullptr, &reading);
     if (FAILED(hr) || !reading) {
         return;
@@ -114,7 +115,6 @@ void Mouse::Update() {
     currentWheelValue_ = clampToInt(state.wheelY);
     // フレーム差分
     currentWheel_ = currentWheelValue_ - previousWheelValue_;
-    reading->Release();
 }
 
 bool Mouse::IsButtonDown(int button) const {

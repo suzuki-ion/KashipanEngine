@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10. 入力を設定する | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-editor-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="T10_SetupInput">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>10. 入力を設定する</h1>
+<p class="page-lead">Input Command Editor を使い、スクリプトのコマンド名とキーボード入力を画面上で結び付けます。</p>
+</div>
+
+<div class="tutorial-meta"><span>操作の起点: Debug Windows</span><span>保存先: Assets/InputCommand.json</span></div>
+
+<figure class="editor-shot">
+<img src="../../assets/tutorial/10-input-command.png" alt="Input Command Editor の New Binding と登録済みコマンド一覧">
+<figcaption>Input Command Editor。上部の New Binding で追加し、下部で登録済みコマンドの内容を確認・編集します。</figcaption>
+</figure>
+
+<h2>1. Input Command Editor を開く</h2>
+<ol class="steps">
+<li>メニューバーから <span class="ui-path">Debug Windows → Input Command Editor</span> を選択します。</li>
+<li><strong>New Binding を展開する</strong>折りたたまれていれば見出しをクリックします。</li>
+</ol>
+
+<h2>2. 左右移動を登録する</h2>
+<p>次の値を設定して <strong>Add Binding</strong> を押します。同じコマンドに複数のキーを追加する場合は、<strong>Existing Command</strong> から既存名を選ぶと入力ミスを防げます。</p>
+<table>
+<thead><tr><th>Action Name</th><th>Device</th><th>Key</th><th>State</th><th>Invert Value</th></tr></thead>
+<tbody>
+<tr><td><code>PlayerMoveLeft</code></td><td>Keyboard</td><td>A</td><td>Down</td><td>オン</td></tr>
+<tr><td><code>PlayerMoveRight</code></td><td>Keyboard</td><td>D</td><td>Down</td><td>オフ</td></tr>
+</tbody>
+</table>
+
+<p><strong>Down</strong> は押している間、<strong>Trigger</strong> は押した瞬間、<strong>Release</strong> は離した瞬間に成立します。継続移動には Down、ジャンプのような単発操作には Trigger が適します。</p>
+
+<h2>3. Play して入力を確認する</h2>
+<ol class="steps">
+<li>Scene Editor の <code>Play</code> を押します。</li>
+<li>A / D キーで Player が左右に動くことを確認します。</li>
+<li><strong>編集状態へ戻る</strong><code>Stop</code> を押します。</li>
+</ol>
+<p>登録内容はエンジン終了時に <code>Assets/InputCommand.json</code> へ保存され、次回起動時に読み込まれます。API から登録する方法は <a href="../../Engine/08_Input.html">入力のリファレンス</a> を参照してください。</p>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

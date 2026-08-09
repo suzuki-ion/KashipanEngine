@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>コンポーネント型リファレンス（基本） | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-engine-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="Script_05_ComponentTypes">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>コンポーネント型リファレンス（基本）</h1>
+<p class="page-lead">全てのコンポーネント型は参照型（ハンドル <code>T@</code> で保持）です。移動・変形・オーディオ・カメラ・アニメーション・入力適用系など、基本的なコンポーネントのスクリプトAPIをまとめます。描画・ライト・ウィンドウ系は<a href="06_RenderAndWindow.html">06_RenderAndWindow.html</a>、コライダー・ポストエフェクトは<a href="07_ColliderAndPostEffect.html">07_ColliderAndPostEffect.html</a>を参照してください。</p>
+</div>
+
+<h2>共通メソッド</h2>
+<p>全てのコンポーネント型が持つメソッドです。</p>
+<table>
+<tr><th>共通メソッド</th><th>説明</th></tr>
+<tr><td><code>bool IsActive() const</code></td><td>アクティブ状態を取得する</td></tr>
+<tr><td><code>void SetActive(bool)</code></td><td>アクティブ状態を設定する</td></tr>
+<tr><td><code>const string &amp;GetComponentType() const</code></td><td>コンポーネントの種類名を取得する</td></tr>
+<tr><td><code>void SetTag(const string &amp;in)</code></td><td>タグを設定する（<a href="04_ObjectSceneVariables.html">Tag型</a>参照）</td></tr>
+<tr><td><code>Tag GetTag() const</code></td><td>タグを取得する（比較用）</td></tr>
+<tr><td><code>const string &amp;GetTagName() const</code></td><td>タグの文字列を取得する</td></tr>
+</table>
+
+<h2>Transform</h2>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetTranslate(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetTranslate() const</code></td><td>座標の設定/取得</td></tr>
+<tr><td><code>void SetRotate(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetRotate() const</code></td><td>回転の設定/取得（オイラー角・ラジアン）</td></tr>
+<tr><td><code>void SetRotateQuaternion(const Quaternion &amp;in)</code> / <code>const Quaternion &amp;GetRotateQuaternion() const</code></td><td>回転の設定/取得（クォータニオン）</td></tr>
+<tr><td><code>void SetScale(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetScale() const</code></td><td>スケールの設定/取得</td></tr>
+<tr><td><code>const Matrix4x4 &amp;GetWorldMatrix()</code></td><td>ワールド行列を取得する（必要なら再計算される）</td></tr>
+<tr><td><code>Vector3 GetWorldPosition()</code></td><td>親を合成したワールド座標を取得する</td></tr>
+<tr><td><code>Vector3 GetWorldRotate() const</code></td><td>親を合成したワールド回転を取得する（オイラー角・ラジアン）</td></tr>
+<tr><td><code>Quaternion GetWorldRotateQuaternion() const</code></td><td>親を合成したワールド回転を取得する（クォータニオン）</td></tr>
+<tr><td><code>Vector3 GetWorldScale()</code></td><td>親を合成したワールドスケールを取得する</td></tr>
+</table>
+
+<h2>Velocity / Rotation</h2>
+<table>
+<tr><th>型</th><th>メソッド</th><th>説明</th></tr>
+<tr><td rowspan="3"><code>Velocity</code></td><td><code>void SetVelocity(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetVelocity() const</code></td><td>速度の設定/取得（単位/秒）</td></tr>
+<tr><td><code>void SetAcceleration(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetAcceleration() const</code></td><td>加速度の設定/取得（単位/秒²）</td></tr>
+<tr><td><code>void AddVelocity(const Vector3 &amp;in)</code></td><td>速度に加算する</td></tr>
+<tr><td rowspan="3"><code>Rotation</code></td><td><code>void SetAngularVelocity(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetAngularVelocity() const</code></td><td>角速度の設定/取得（ラジアン/秒）</td></tr>
+<tr><td><code>void SetAngularAcceleration(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetAngularAcceleration() const</code></td><td>角加速度の設定/取得（ラジアン/秒²）</td></tr>
+<tr><td><code>void AddAngularVelocity(const Vector3 &amp;in)</code></td><td>角速度に加算する</td></tr>
+</table>
+<p>
+<code>Rotation</code> は <code>Velocity</code> の回転版です。毎フレーム、角加速度を角速度へ、角速度を <code>Transform</code> の回転（オイラー角・ラジアン）へ自動的に適用します。
+</p>
+
+<h2>PreTransform</h2>
+<p>
+1フレーム前のTransform情報を保持するコンポーネント。オブジェクトに追加すると、シーン側で毎フレーム最後（全オブジェクト・全シーンコンポーネントの更新後）に自動で値が更新される。ローカル/ワールドそれぞれの位置・回転・スケールを取得できるため、補間や速度計算、モーションブラー等に使用できる。
+</p>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>const Vector3 &amp;GetPreviousTranslate() const</code></td><td>前フレームのローカル座標を取得する</td></tr>
+<tr><td><code>const Vector3 &amp;GetPreviousRotate() const</code></td><td>前フレームのローカル回転を取得する（オイラー角・ラジアン）</td></tr>
+<tr><td><code>const Quaternion &amp;GetPreviousRotateQuaternion() const</code></td><td>前フレームのローカル回転を取得する（クォータニオン）</td></tr>
+<tr><td><code>const Vector3 &amp;GetPreviousScale() const</code></td><td>前フレームのローカルスケールを取得する</td></tr>
+<tr><td><code>const Matrix4x4 &amp;GetPreviousWorldMatrix() const</code></td><td>前フレームのワールド行列を取得する（モーションブラー等のGPU用途）</td></tr>
+<tr><td><code>const Vector3 &amp;GetPreviousWorldPosition() const</code></td><td>前フレームのワールド座標を取得する</td></tr>
+<tr><td><code>const Vector3 &amp;GetPreviousWorldRotate() const</code></td><td>前フレームのワールド回転を取得する（オイラー角・ラジアン）</td></tr>
+<tr><td><code>const Quaternion &amp;GetPreviousWorldRotateQuaternion() const</code></td><td>前フレームのワールド回転を取得する（クォータニオン）</td></tr>
+<tr><td><code>const Vector3 &amp;GetPreviousWorldScale() const</code></td><td>前フレームのワールドスケールを取得する</td></tr>
+</table>
+
+<h2>ParticleSystem2D / ParticleSystem3D</h2>
+<p>
+指定した生成方法（自身の子/他オブジェクトの子/自身のワールド座標/指定座標のいずれか）で、一定間隔でパーティクル用オブジェクトを生成するコンポーネント。生成した各パーティクルには <code>Velocity</code>（初速・加速度）、<code>Rotation</code>（初期回転速度・回転加速度。度数法で指定した値はラジアンへ変換して適用される）と描画コンポーネント（2Dは <code>MeshFilter</code>+<code>SpriteRenderer</code>、3Dは <code>MeshFilter</code>+<code>MeshRenderer</code>）が自動で追加され、寿命に応じてスケールが変化しながら消える。寿命・初速・加速度・開始/終了スケール・初期回転・回転速度・回転加速度・一回のスポーン数は、パラメータごとに「固定値」か「Min〜Maxのランダム範囲」かを選べる。Loopを無効にして再生した場合、Total Spawn Countで指定した数だけスポーンすると自動的に停止する。スポーン範囲の形状（Point/Box/Sphere/Capsule、2DはRect/Circle）を含め、詳細なパラメータはインスペクターから設定する。
+</p>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void Play()</code> / <code>void Stop()</code></td><td>パーティクルの生成を開始/停止する（生成済みのパーティクルはStopしても寿命まで残る。停止中にPlayを呼ぶと総発生数カウントがリセットされる）</td></tr>
+<tr><td><code>bool IsPlaying() const</code></td><td>生成中かどうか</td></tr>
+<tr><td><code>void Clear()</code></td><td>生存中の全パーティクルを即座に削除する</td></tr>
+<tr><td><code>void SetEmissionRate(float)</code> / <code>float GetEmissionRate() const</code></td><td>1秒あたりの生成数の設定/取得</td></tr>
+<tr><td><code>void SetMaxParticles(int)</code> / <code>int GetMaxParticles() const</code></td><td>同時に存在できる最大パーティクル数の設定/取得</td></tr>
+<tr><td><code>void SetBillboard(bool)</code> / <code>bool IsBillboard() const</code></td><td>ビルボード化（常に指定オブジェクトの方を向く）の有効/無効の設定/取得</td></tr>
+<tr><td><code>void SetBillboardTarget(Object@)</code> / <code>Object@ GetBillboardTarget() const</code></td><td>ビルボードの向き先オブジェクトの設定/取得（未設定の場合はシーン内のカメラを自動で使う）</td></tr>
+<tr><td><code>void SetBillboardRotationMode(TargetLookAtMode)</code> / <code>TargetLookAtMode GetBillboardRotationMode() const</code></td><td>ビルボードの向き方の設定/取得（<code>TargetLookAtMode::SyncRotation</code> / <code>TargetLookAtMode::LookAt</code>。下記TargetLookAt参照）</td></tr>
+</table>
+
+<h2>AudioSource / AudioListener</h2>
+<table>
+<tr><th>型</th><th>メソッド</th><th>説明</th></tr>
+<tr><td rowspan="7"><code>AudioSource</code></td><td><code>uint Play()</code></td><td>再生する（再生中なら止めて再生し直す）。戻り値は再生ハンドル</td></tr>
+<tr><td><code>void Stop()</code> / <code>bool Pause()</code> / <code>bool Resume()</code></td><td>停止 / 一時停止 / 再開</td></tr>
+<tr><td><code>bool IsPlaying() const</code> / <code>bool IsPaused() const</code></td><td>再生中 / 一時停止中かどうか</td></tr>
+<tr><td><code>void SetSoundName(const string &amp;in)</code> / <code>const string &amp;GetSoundName() const</code></td><td>使用する音声の設定/取得</td></tr>
+<tr><td><code>void SetVolume(float)</code> / <code>float GetVolume() const</code></td><td>ボリューム（0.0〜1.0）</td></tr>
+<tr><td><code>void SetPitch(float)</code> / <code>float GetPitch() const</code></td><td>ピッチ（半音単位）</td></tr>
+<tr><td><code>void SetLoop(bool)</code> / <code>bool GetLoop() const</code></td><td>ループ再生</td></tr>
+<tr><td rowspan="2"><code>AudioListener</code></td><td><code>void SetUsed(bool)</code> / <code>bool GetUsed() const</code></td><td>使用中フラグ（シーン内で使用中にできるのは1つだけ）</td></tr>
+<tr><td><code>Vector3 GetWorldPosition() const</code></td><td>ワールド座標を取得する</td></tr>
+</table>
+
+<h2>MeshFilter / Animator</h2>
+<table>
+<tr><th>型</th><th>メソッド</th><th>説明</th></tr>
+<tr><td rowspan="2"><code>MeshFilter</code></td><td><code>void SetMeshHandle(uint)</code> / <code>uint GetMeshHandle() const</code></td><td>使用するメッシュのハンドルの設定/取得（<code>GetModelHandleFromAssetPath</code>と組み合わせる。<a href="03_ComponentAccess.html">03_ComponentAccess.html</a>）</td></tr>
+<tr><td><code>bool HasMesh() const</code></td><td>メッシュが設定されているかどうか</td></tr>
+<tr><td rowspan="2"><code>Animator</code></td><td><code>void SetAnimationName(const string &amp;in)</code> / <code>const string &amp;GetAnimationName() const</code></td><td>再生するアニメーション名の設定/取得</td></tr>
+<tr><td><code>void SetPlayOnStart(bool)</code> / <code>bool GetPlayOnStart() const</code></td><td>開始時に自動再生するかどうか</td></tr>
+</table>
+
+<h2>KeyFrameAnimator</h2>
+<p>
+キーフレームアニメーション（json）のfloat値を、同オブジェクトの他コンポーネントのパラメータへ毎フレーム適用するコンポーネントです。
+</p>
+<ul>
+<li>アニメーションのjsonはエディターツールの <strong>Keyframe Animation Editor</strong>（メニューバーの Tools &gt; Keyframe Animation Editor）で作成し、インスペクターの各アニメーションエントリの <code>Json Path</code> へ指定します。</li>
+<li>複数のアニメーションを登録でき、それぞれに再生速度・再生時オフセット（評価時刻へ加算・秒）・スケール（評価値にかける倍率）・デフォルト値オフセット（評価値へ加算）・ループ・自動再生を設定できます。適用値は <code>評価値 × Value Scale + Value Offset</code> です。</li>
+<li>適用先（Bindings・複数指定可）はインスペクターのコンボから選択します。候補は同オブジェクトの各コンポーネントのfloat系パラメータ（Vector型は成分単位）と、<code>ScriptComponent</code> の <code>[SerializeField]</code> 付き <code>float</code> 変数です。</li>
+</ul>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>bool Play(const string &amp;in name)</code></td><td>指定した名前のアニメーションを先頭から再生する</td></tr>
+<tr><td><code>bool Stop(const string &amp;in name)</code></td><td>指定した名前のアニメーションを停止する（再生位置は保持）</td></tr>
+<tr><td><code>void PlayAll()</code> / <code>void StopAll()</code></td><td>全アニメーションの再生/停止</td></tr>
+<tr><td><code>bool IsPlaying(const string &amp;in name) const</code></td><td>再生中かどうか</td></tr>
+<tr><td><code>bool SetPlaybackSpeed(const string &amp;in name, float speed)</code> / <code>float GetPlaybackSpeed(const string &amp;in name) const</code></td><td>再生速度倍率（負の値で逆再生）</td></tr>
+<tr><td><code>bool TryGetValue(const string &amp;in name, float &amp;out value) const</code></td><td>最後に評価された値（値オフセット適用後）を取得する</td></tr>
+<tr><td><code>uint GetAnimationCount() const</code></td><td>登録されているアニメーション数</td></tr>
+</table>
+<pre><code class="language-angelscript">KeyFrameAnimator@ animator;
+if (GetComponent(@animator)) {
+    animator.Play("DoorOpen");
+    float value;
+    if (animator.TryGetValue("DoorOpen", value)) {
+        // 再生中の評価値を独自の処理にも利用できる
+    }
+}</code></pre>
+
+<h2>InputCommandApplier</h2>
+<p>
+InputCommandの入力を、同オブジェクトの他コンポーネントのパラメータへ適用するコンポーネントです。1つのオブジェクトへ複数アタッチでき、コマンド・条件ごとに別々の適用が行えます。
+</p>
+<ul>
+<li>毎フレーム <code>Command Name</code> の入力コマンドを評価し、<strong>条件を満たしたフレームだけ</strong>値をバインド先へ書き込みます。</li>
+<li>条件（Condition）: コマンドがtrue / コマンドがfalse / 入力値が閾値以上 / 入力値が閾値以下 / 入力値が閾値と等しい（誤差1e-6以内）</li>
+<li>書き込む値（Value Source）: 入力コマンドの評価値 or 固定値。適用値は <code>値 × Value Scale + Value Offset</code> です。</li>
+<li>適用先（Bindings・複数指定可）は <code>KeyFrameAnimator</code> と同じ仕組みで、同オブジェクトのコンポーネントのfloat系パラメータまたは <code>ScriptComponent</code> の <code>[SerializeField]</code> 付き <code>float</code> 変数をコンボから選択します。</li>
+</ul>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetCommandName(const string &amp;in)</code> / <code>const string &amp;GetCommandName() const</code></td><td>評価する入力コマンド名</td></tr>
+<tr><td><code>void SetThreshold(float)</code> / <code>float GetThreshold() const</code></td><td>入力値と比較する閾値</td></tr>
+<tr><td><code>void SetFixedValue(float)</code> / <code>float GetFixedValue() const</code></td><td>固定値モードで書き込む値</td></tr>
+<tr><td><code>void SetValueScale(float)</code> / <code>float GetValueScale() const</code></td><td>書き込む値にかけるスケール</td></tr>
+<tr><td><code>void SetValueOffset(float)</code> / <code>float GetValueOffset() const</code></td><td>書き込む値へ加算するオフセット</td></tr>
+<tr><td><code>bool WasApplied() const</code></td><td>前回のUpdateで条件を満たして値を適用したか</td></tr>
+<tr><td><code>float GetLastValue() const</code></td><td>前回適用した値（Scale/Offset適用後）</td></tr>
+</table>
+
+<h2>ComputeShaderProcessing</h2>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetPipelineName(const string &amp;in)</code> / <code>const string &amp;GetPipelineName() const</code></td><td>使用するComputeパイプライン名の設定/取得</td></tr>
+<tr><td><code>void SetGroupCounts(uint, uint, uint)</code></td><td>ディスパッチするスレッドグループ数(x, y, z)を設定する</td></tr>
+<tr><td><code>void GetGroupCounts(uint &amp;out, uint &amp;out, uint &amp;out) const</code></td><td>スレッドグループ数(x, y, z)を取得する</td></tr>
+</table>
+
+<h2>ScriptComponent</h2>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetScriptPath(const string &amp;in)</code> / <code>const string &amp;GetScriptPath() const</code></td><td>スクリプトパスの設定/取得</td></tr>
+<tr><td><code>bool Reload()</code></td><td>スクリプトを再コンパイルする</td></tr>
+<tr><td><code>bool GetVariable(const string &amp;in, ?&amp;out) const</code></td><td>指定名の <code>[SerializeField]</code> 変数の現在値を取得する（<a href="04_ObjectSceneVariables.html">04_ObjectSceneVariables.html</a>）</td></tr>
+<tr><td><code>bool SetVariable(const string &amp;in, ?&amp;in)</code></td><td>指定名の <code>[SerializeField]</code> 変数へ値を設定する</td></tr>
+</table>
+
+<h2>関連ページ</h2>
+<ul>
+<li>描画・ライト・ウィンドウ系コンポーネント（Camera/Light/MeshRenderer/WindowObject等） → <a href="06_RenderAndWindow.html">06_RenderAndWindow.html</a></li>
+<li>コライダー・ポストエフェクト → <a href="07_ColliderAndPostEffect.html">07_ColliderAndPostEffect.html</a></li>
+<li>各コンポーネントのC++側の詳細・インスペクター表示 → <a href="../05_Rendering.html">05_Rendering.html</a> / <a href="../06_Collision.html">06_Collision.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

@@ -1,13 +1,25 @@
 #include "ModelManager.h"
+#include "Assets/AssimpUtf8IOSystem.h"
 #include "Assets/CaseInsensitive.h"
+#include "Core/ProjectPaths.h"
+#include "Assets/MaterialManager.h"
+#include "Assets/PrimitiveMeshGenerator.h"
+#include "Assets/TextureManager.h"
 
 #include "Debug/Logger.h"
+#include "Math/Quaternion.h"
+#include "Math/Vector4.h"
+#include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/Directory.h"
+#include "Utilities/FileIO/JSON.h"
+#include "Utilities/Plugin/Plugins.h"
 #include "Utilities/Translation.h"
+#include "Utilities/UUID128.h"
 
 #if defined(USE_IMGUI)
 #include <imgui.h>
 #include <imgui_internal.h>
+#include "Scene/Editor/PrefabAssetManager.h"
 #endif
 
 #include <assimp/Importer.hpp>
@@ -16,8 +28,10 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <filesystem>
 #include <functional>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 
@@ -39,6 +53,8 @@ std::unordered_map<Handle, ModelEntry> sModels;
 FileMap<Handle> sFileNameToHandle;
 FileMap<Handle> sAssetPathToHandle;
 
+ModelManager* sActiveInstance = nullptr;
+
 std::string NormalizePathSlashes(std::string s) {
     std::replace(s.begin(), s.end(), '\\', '/');
     while (!s.empty() && s.back() == '/') s.pop_back();
@@ -50,21 +66,105 @@ std::string ToLower(std::string s) {
     return s;
 }
 
+/// @brief パス末尾のファイル名部分を文字列操作のみで取得する（std::filesystem::pathを介さない）
+/// @details 埋め込みテクスチャの仮想パス（"モデルパス:埋め込み名"）はコロンを含むため、
+///          std::filesystem::pathで再パースすると意図しない解釈をされる可能性がある
+///          （Windowsのドライブレター/ADS記法との混同を避けるため、単純な文字列操作で切り出す）
+std::string ExtractFileNameOnly(const std::string &path) {
+    const auto pos = path.find_last_of("/\\");
+    return (pos == std::string::npos) ? path : path.substr(pos + 1);
+}
+
+#if defined(USE_IMGUI)
+/// @brief モデル自動生成Prefabを通常Prefabと同じID・親参照スキーマへ補完する
+/// @details 既存のコンポーネントやユーザー編集値は変更せず、Prefab同期に必要なメタデータだけを追加する。
+/// @return JSONを変更した場合はtrue
+bool EnsureModelPrefabSchema(JSON &prefab, UUID128 &prefabID) {
+    if (!prefab.is_object() || !prefab.contains("objects") || !prefab["objects"].is_array()) return false;
+
+    bool changed = false;
+    prefabID = UUID128(prefab.value("prefabID", std::string{}));
+    if (!prefabID.IsValid()) {
+        prefabID = UUID128(true);
+        prefab["prefabID"] = prefabID.ToString();
+        changed = true;
+    }
+    if (prefab.value("prefab", false) != true) {
+        prefab["prefab"] = true;
+        changed = true;
+    }
+
+    JSON &entries = prefab["objects"];
+    for (size_t i = 0; i < entries.size(); ++i) {
+        JSON &entry = entries[i];
+        if (!entry.contains("object") || !entry["object"].is_object()) continue;
+        JSON &object = entry["object"];
+
+        const UUID128 nodeID(object.value("prefabNodeID", std::string{}));
+        if (!nodeID.IsValid()) {
+            object["prefabNodeID"] = UUID128(true).ToString();
+            changed = true;
+        }
+
+        std::string expectedParentObjectID;
+        const int parentIndex = entry.value("parentIndex", -1);
+        if (parentIndex >= 0 && static_cast<size_t>(parentIndex) < entries.size()) {
+            const JSON &parentEntry = entries[static_cast<size_t>(parentIndex)];
+            if (parentEntry.contains("object")) {
+                expectedParentObjectID = parentEntry["object"].value("objectID", std::string{});
+            }
+        }
+
+        if (!object.contains("components") || !object["components"].is_array()) continue;
+        for (auto &component : object["components"]) {
+            if (component.value("type", std::string{}) != "Transform" || !component.contains("data")) continue;
+            JSON &data = component["data"];
+            if (!data.contains("customData") || !data["customData"].is_object()) {
+                data["customData"] = JSON::object();
+            }
+            JSON &customData = data["customData"];
+            const std::string currentParent = customData.value("parent", std::string{});
+            if (expectedParentObjectID.empty()) {
+                if (customData.erase("parent") != 0) changed = true;
+            } else if (currentParent != expectedParentObjectID) {
+                customData["parent"] = expectedParentObjectID;
+                changed = true;
+            }
+            break;
+        }
+    }
+    return changed;
+}
+#endif
+
 bool HasSupportedModelExtension(const std::filesystem::path& p) {
     const std::string ext = ToLower(p.extension().string());
     return (ext == ".fbx" || ext == ".obj" || ext == ".gltf" || ext == ".glb" || ext == ".dae" || ext == ".3ds" || ext == ".blend" || ext == ".ply" || ext == ".stl" || ext == ".x");
 }
 
 std::string MakeAssetRelativePath(const std::string& assetsRoot, const std::string& fullPath) {
-    std::filesystem::path root(assetsRoot);
-    std::filesystem::path full(fullPath);
+    const std::filesystem::path root = Utf8StringToPath(assetsRoot);
+    const std::filesystem::path full = Utf8StringToPath(fullPath);
 
     std::error_code ec;
     auto rel = std::filesystem::relative(full, root, ec);
     if (ec) {
-        return NormalizePathSlashes(full.filename().string());
+        return NormalizePathSlashes(PathToUtf8String(full.filename()));
     }
-    return NormalizePathSlashes(rel.string());
+    return NormalizePathSlashes(PathToUtf8String(rel));
+}
+
+Matrix4x4 ConvertMatrix(const aiMatrix4x4& m) {
+    // Assimpの行列は列ベクトル規約(v' = M * v)で定義されているが、本エンジンのMatrix4x4は
+    // 行ベクトル規約(v' = v * M)で乗算するため、そのまま乗算に使えるよう転置して格納する
+    // （SkeletonManager側はDecompose()でTRSへ分解してから本エンジン独自の規約で再構築しているため
+    // この転置は不要だが、GPUスキニングではボーンオフセット行列をそのまま乗算に使うため必須）。
+    Matrix4x4 out{};
+    out.m[0][0] = m.a1; out.m[1][0] = m.a2; out.m[2][0] = m.a3; out.m[3][0] = m.a4;
+    out.m[0][1] = m.b1; out.m[1][1] = m.b2; out.m[2][1] = m.b3; out.m[3][1] = m.b4;
+    out.m[0][2] = m.c1; out.m[1][2] = m.c2; out.m[2][2] = m.c3; out.m[3][2] = m.c4;
+    out.m[0][3] = m.d1; out.m[1][3] = m.d2; out.m[2][3] = m.d3; out.m[3][3] = m.d4;
+    return out;
 }
 
 Handle RegisterEntry(ModelEntry&& entry) {
@@ -81,14 +181,42 @@ Handle RegisterEntry(ModelEntry&& entry) {
 
 } // namespace
 
+/// @brief ParseModelFileの結果一式（実体定義。ModelManager.hではopaqueな前方宣言のみ）
+/// @details ワーカースレッドで作成された時点ではGPUリソース・グローバル状態には一切触れておらず、
+///          FinalizeParsedModel（メインスレッド）で初めてそれらに反映される
+struct ParsedModelResult {
+    bool success = false;
+
+    // RegisterEntryへ渡すためのModelEntry相当のデータ
+    std::string fullPath;
+    std::string assetPath;
+    std::string fileName;
+    ModelData data;
+
+    // ノード分解・プレハブ生成（RegisterNodeDecompositionAndPrefab）に必要な情報
+    std::unique_ptr<Assimp::Importer> importer; // scene の所有者。破棄するとsceneも無効になる
+    const aiScene *scene = nullptr;
+    std::vector<ModelData::MaterialData> materialsCopy;
+
+    /// @brief 未アップロードの埋め込みテクスチャ（デコード済み生バイト列）
+    struct PendingEmbeddedTexture {
+        std::string registerPath;
+        std::vector<uint8_t> data;
+    };
+    std::vector<PendingEmbeddedTexture> pendingTextures;
+};
+
 ModelManager::ModelManager(Passkey<GameEngine>, const std::string& assetsRootPath)
     : assetsRootPath_(NormalizePathSlashes(assetsRootPath)) {
     LogScope scope;
+    sActiveInstance = this;
+    PrimitiveMeshGenerator::RegisterBuiltinPrimitiveMeshes();
     LoadAllFromAssetsFolder();
 }
 
 ModelManager::~ModelManager() {
     LogScope scope;
+    if (sActiveInstance == this) sActiveInstance = nullptr;
     sModels.clear();
     sFileNameToHandle.clear();
     sAssetPathToHandle.clear();
@@ -108,38 +236,43 @@ void ModelManager::LoadAllFromAssetsFolder() {
     };
     flatten(filtered);
 
-    for (const auto& f : files) {
-        LoadModel(f);
+    // ファイルI/O・Assimp解析・メッシュ抽出はCPU処理のみでGPUリソース・グローバル状態に触れないため、
+    // スレッドプールで並列実行する（各要素は担当するインデックス以外書き込まないためロック不要）
+    std::vector<std::unique_ptr<ParsedModelResult>> parsedResults(files.size());
+    Plugin::RunParallelAndWait(files.size(), [this, &files, &parsedResults](size_t i) {
+        parsedResults[i] = ParseModelFile(files[i]);
+        });
+
+    // 全ファイルの解析が完了したら、メインスレッドでGPUアップロード・グローバル状態への登録・
+    // プレハブ生成を順に行う
+    for (auto& parsed : parsedResults) {
+        FinalizeParsedModel(std::move(parsed));
     }
 }
 
-ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
+std::unique_ptr<ParsedModelResult> ModelManager::ParseModelFile(const std::string& filePath) const {
     LogScope scope;
-    if (filePath.empty()) return kInvalidHandle;
+    auto result = std::make_unique<ParsedModelResult>();
+    if (filePath.empty()) return result;
 
     Log(Translation("engine.model.loading.start") + filePath, LogSeverity::Info);
 
-    {
-        const std::string normalized = NormalizePathSlashes(filePath);
-        auto it = sAssetPathToHandle.find(normalized);
-        if (it != sAssetPathToHandle.end()) {
-            Log(Translation("engine.model.loading.alreadyloaded") + normalized, LogSeverity::Debug);
-            return it->second;
-        }
-    }
-
-    std::filesystem::path p(filePath);
+    const std::filesystem::path p = Utf8StringToPath(filePath);
 
     if (!std::filesystem::exists(p)) {
-        Log(Translation("engine.model.loading.failed.notfound") + p.string(), LogSeverity::Warning);
-        return kInvalidHandle;
+        Log(Translation("engine.model.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
+        return result;
     }
     if (!HasSupportedModelExtension(p)) {
-        Log(Translation("engine.model.loading.failed.unsupported") + p.string(), LogSeverity::Warning);
-        return kInvalidHandle;
+        Log(Translation("engine.model.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
+        return result;
     }
 
-    Assimp::Importer importer;
+    result->importer = std::make_unique<Assimp::Importer>();
+    // Assimpの既定IOSystemはWindows上でfopen（現在のANSIコードページ）を使うため、
+    // コードページで表現できない文字を含むパス（多言語のファイル名等）を開けない。
+    // _wfopenベースの独自IOSystemに差し替えることで回避する（Importerが所有権を持つ）
+    result->importer->SetIOHandler(new AssimpUtf8IOSystem());
     constexpr unsigned int flags =
         aiProcess_MakeLeftHanded |
         aiProcess_FlipWindingOrder |
@@ -150,21 +283,28 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
         aiProcess_FindInvalidData |
         aiProcess_TransformUVCoords |
         aiProcess_SortByPType |
+        // 法線を持たない（または元データが不正で aiProcess_FindInvalidData により
+        // 取り除かれた）メッシュが、法線ゼロベクトルのまま描画されてライティング結果が
+        // 常に真っ黒になる問題を防ぐ。法線を既に持つメッシュには影響しない
+        // （Assimpは既存の法線がある場合この処理をスキップする）
+        aiProcess_GenSmoothNormals |
+        aiProcess_CalcTangentSpace |
         aiProcess_FlipUVs;
 
-    const aiScene* scene = importer.ReadFile(p.string(), flags);
+    const aiScene* scene = result->importer->ReadFile(PathToUtf8String(p), flags);
     if (!scene || !scene->mRootNode) {
-        Log(Translation("engine.model.loading.failed.assimp") + p.string() + " msg=" + importer.GetErrorString(), LogSeverity::Warning);
-        return kInvalidHandle;
+        Log(Translation("engine.model.loading.failed.assimp") + PathToUtf8String(p) + " msg=" + result->importer->GetErrorString(), LogSeverity::Warning);
+        result->importer.reset();
+        return result;
     }
+    result->scene = scene;
 
-    ModelEntry entry{};
-    entry.fullPath = NormalizePathSlashes(p.string());
-    entry.assetPath = MakeAssetRelativePath(assetsRootPath_, entry.fullPath);
-    entry.fileName = p.filename().string();
+    result->fullPath = NormalizePathSlashes(PathToUtf8String(p));
+    result->assetPath = MakeAssetRelativePath(assetsRootPath_, result->fullPath);
+    result->fileName = PathToUtf8String(p.filename());
 
     // Set asset relative path in ModelData
-    entry.data.assetRelativePath_ = entry.assetPath;
+    result->data.assetRelativePath_ = result->assetPath;
 
     // Extract materials from the scene and store minimal material data
     for (unsigned int mi = 0; mi < scene->mNumMaterials; ++mi) {
@@ -184,20 +324,128 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
         if (AI_SUCCESS == mat->GetTexture(aiTextureType_DIFFUSE, 0, &texPath)) {
             std::string tp = texPath.C_Str();
             if (!tp.empty() && tp[0] != '*') {
-                // Resolve relative to model file directory
-                std::filesystem::path texFull = std::filesystem::path(p).parent_path() / tp;
-                md.diffuseTexturePath = MakeAssetRelativePath(assetsRootPath_, NormalizePathSlashes(texFull.string()));
+                // 外部ファイル参照（モデルファイルからの相対パス）
+                const std::filesystem::path texFull = p.parent_path() / Utf8StringToPath(tp);
+                md.diffuseTexturePath = MakeAssetRelativePath(assetsRootPath_, NormalizePathSlashes(PathToUtf8String(texFull)));
+            } else if (!tp.empty()) {
+                // 埋め込みテクスチャ（bufferView経由。PMX→glTF変換等で全テクスチャが
+                // 1つのバイナリにまとめられている場合によく使われる）。
+                // "*N"はscene->mTextures[N]（またはGetEmbeddedTexture）への参照を表す
+                // ここではGPUアップロードは行わず、生バイト列のコピーだけを保持する
+                // （TextureManagerへの登録はメインスレッドのFinalizeParsedModelで行う）
+                if (const aiTexture *embeddedTex = scene->GetEmbeddedTexture(tp.c_str())) {
+                    // mHeight==0の場合はpcDataが圧縮画像（PNG/JPEG等）の生バイト列で、
+                    // mWidthがそのバイト数（mHeight!=0の生ARGB8888データは非対応）
+                    if (embeddedTex->mHeight == 0 && embeddedTex->pcData) {
+                        const std::string embeddedName = embeddedTex->mFilename.length > 0
+                            ? std::string(embeddedTex->mFilename.C_Str())
+                            : ("EmbeddedTexture" + std::to_string(mi));
+                        const std::string registerPath = NormalizePathSlashes(PathToUtf8String(p)) + ":" + embeddedName;
+
+                        ParsedModelResult::PendingEmbeddedTexture pending;
+                        pending.registerPath = registerPath;
+                        const auto *bytes = reinterpret_cast<const uint8_t *>(embeddedTex->pcData);
+                        pending.data.assign(bytes, bytes + embeddedTex->mWidth);
+                        result->pendingTextures.push_back(std::move(pending));
+
+                        md.diffuseTexturePath = registerPath;
+                    }
+                }
             }
         }
-        entry.data.materials_.push_back(std::move(md));
+        result->data.materials_.push_back(std::move(md));
     }
 
-    // ModelData は private メンバを持つため、friend である ModelManager（この関数内）でのみ構築する
-    const auto appendMesh = [](const aiMesh* mesh, ModelData& dst) {
+    std::function<void(const aiNode*)> appendNodeMeshes;
+    appendNodeMeshes = [&](const aiNode* node) {
+        if (!node) return;
+        for (unsigned int i = 0; i < node->mNumMeshes; ++i) {
+            const unsigned int meshIdx = node->mMeshes[i];
+            if (meshIdx >= scene->mNumMeshes) continue;
+            AppendMeshToModelData(scene->mMeshes[meshIdx], result->data);
+        }
+        for (unsigned int c = 0; c < node->mNumChildren; ++c) {
+            appendNodeMeshes(node->mChildren[c]);
+        }
+    };
+
+    appendNodeMeshes(scene->mRootNode);
+
+    if (result->data.GetVertexCount() == 0 || result->data.GetIndexCount() == 0) {
+        Log(Translation("engine.model.loading.failed.nomesh") + PathToUtf8String(p), LogSeverity::Warning);
+        result->importer.reset();
+        result->scene = nullptr;
+        return result;
+    }
+
+    result->materialsCopy = result->data.materials_;
+    result->success = true;
+    return result;
+}
+
+ModelManager::ModelHandle ModelManager::FinalizeParsedModel(std::unique_ptr<ParsedModelResult> parsed) {
+    LogScope scope;
+    if (!parsed || !parsed->success) return kInvalidHandle;
+
+    // 埋め込みテクスチャのGPUアップロード（DirectX12リソース確保を伴うためメインスレッドで行う）
+    for (const auto& pending : parsed->pendingTextures) {
+        if (auto *textureManager = TextureManager::GetActiveInstance(Passkey<ModelManager>{})) {
+            textureManager->RegisterTextureFromMemory(pending.registerPath, pending.data.data(), pending.data.size());
+        }
+    }
+
+    ModelEntry entry{};
+    entry.fullPath = parsed->fullPath;
+    entry.assetPath = parsed->assetPath;
+    entry.fileName = parsed->fileName;
+    entry.data = std::move(parsed->data);
+
+    // RegisterEntryでentryがムーブされるため、ノード分解・プレハブ生成に使う情報を先に控えておく
+    const std::string modelFullPath = parsed->fullPath;
+    const std::string baseAssetPath = parsed->assetPath;
+    const std::string baseFileName = parsed->fileName;
+    const std::vector<ModelData::MaterialData> materialsCopy = std::move(parsed->materialsCopy);
+    const aiScene* scene = parsed->scene;
+
+    const auto handle = RegisterEntry(std::move(entry));
+    if (handle == kInvalidHandle) {
+        Log(Translation("engine.model.loading.failed.register") + modelFullPath, LogSeverity::Error);
+        return kInvalidHandle;
+    }
+
+    // ノード分解によるサブメッシュ登録と、モデル階層のプレハブ自動生成
+    // （parsed->importerがsceneを所有し続けているため、この時点でもsceneは有効）
+    RegisterNodeDecompositionAndPrefab(scene, modelFullPath, baseAssetPath, baseFileName, materialsCopy);
+
+    Log(Translation("engine.model.loading.succeeded") + modelFullPath, LogSeverity::Info);
+    return handle;
+}
+
+ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
+    LogScope scope;
+    if (filePath.empty()) return kInvalidHandle;
+
+    {
+        const std::string normalized = NormalizePathSlashes(filePath);
+        auto it = sAssetPathToHandle.find(normalized);
+        if (it != sAssetPathToHandle.end()) {
+            Log(Translation("engine.model.loading.alreadyloaded") + normalized, LogSeverity::Debug);
+            return it->second;
+        }
+    }
+
+    return FinalizeParsedModel(ParseModelFile(filePath));
+}
+
+// ModelData は private メンバを持つため、friend である ModelManager のメンバ関数として実装する
+void ModelManager::AppendMeshToModelData(const aiMesh* mesh, ModelData& dst) {
+    {
         if (!mesh) return;
+        // （元はLoadModel内のローカルラムダ。インデントを維持するためブロックで囲っている）
 
         const bool hasNormals = mesh->HasNormals();
         const bool hasUV0 = mesh->HasTextureCoords(0);
+        const bool hasTangents = mesh->HasTangentsAndBitangents();
 
         const uint32_t baseVertex = static_cast<uint32_t>(dst.vertices_.size());
 
@@ -220,8 +468,22 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
                 v.v = mesh->mTextureCoords[0][i].y;
             }
 
+            // タンジェントが無いメッシュ（UV0が無い等）はModelData::Vertexの既定値のまま
+            // （法線マップ非使用のマテリアルでは参照されないため実害は無い）
+            if (hasTangents) {
+                v.tx = mesh->mTangents[i].x;
+                v.ty = mesh->mTangents[i].y;
+                v.tz = mesh->mTangents[i].z;
+            }
+
             dst.vertices_.push_back(v);
         }
+
+        // サブメッシュ範囲を記録する（aiMeshは必ず1メッシュ＝1マテリアルのため、
+        // 追加するメッシュ1つがそのまま1サブメッシュになる）
+        ModelData::SubMesh subMesh;
+        subMesh.indexStart = static_cast<uint32_t>(dst.indices_.size());
+        subMesh.materialIndex = mesh->mMaterialIndex;
 
         for (unsigned int f = 0; f < mesh->mNumFaces; ++f) {
             const aiFace& face = mesh->mFaces[f];
@@ -229,37 +491,112 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
                 dst.indices_.push_back(baseVertex + face.mIndices[j]);
             }
         }
-    };
-
-    std::function<void(const aiNode*)> appendNodeMeshes;
-    appendNodeMeshes = [&](const aiNode* node) {
-        if (!node) return;
-        for (unsigned int i = 0; i < node->mNumMeshes; ++i) {
-            const unsigned int meshIdx = node->mMeshes[i];
-            if (meshIdx >= scene->mNumMeshes) continue;
-            appendMesh(scene->mMeshes[meshIdx], entry.data);
+        subMesh.indexCount = static_cast<uint32_t>(dst.indices_.size()) - subMesh.indexStart;
+        if (subMesh.indexCount > 0) {
+            dst.subMeshes_.push_back(subMesh);
         }
-        for (unsigned int c = 0; c < node->mNumChildren; ++c) {
-            appendNodeMeshes(node->mChildren[c]);
+
+        // ボーン（スキンウェイト）の抽出。SkinnedMeshRenderer のGPUスキニングで使用する
+        for (unsigned int bi = 0; bi < mesh->mNumBones; ++bi) {
+            const aiBone* bone = mesh->mBones[bi];
+            if (!bone) continue;
+            const std::string boneName = bone->mName.C_Str();
+            if (boneName.empty()) continue;
+
+            auto& cluster = dst.skinClusters_[boneName];
+            cluster.inverseBindPoseMatrix = ConvertMatrix(bone->mOffsetMatrix);
+            cluster.vertexWeights.reserve(cluster.vertexWeights.size() + bone->mNumWeights);
+            for (unsigned int wi = 0; wi < bone->mNumWeights; ++wi) {
+                const auto& w = bone->mWeights[wi];
+                ModelData::VertexWeightData vw;
+                vw.weight = w.mWeight;
+                vw.vertexIndex = baseVertex + w.mVertexId;
+                cluster.vertexWeights.push_back(vw);
+            }
         }
-    };
 
-    appendNodeMeshes(scene->mRootNode);
+        // BlendShape（モーフターゲット）の頂点差分抽出。SkinnedMeshRenderer のGPUスキニングで使用する
+        for (unsigned int ai = 0; ai < mesh->mNumAnimMeshes; ++ai) {
+            const aiAnimMesh* animMesh = mesh->mAnimMeshes[ai];
+            if (!animMesh) continue;
+            // 名前無しの場合の連番はメッシュ内ローカル(ai)ではなくdst全体の通し番号にする。
+            // aiのままだと複数サブメッシュそれぞれの1個目が"BlendShape0"のように衝突し、
+            // 下の同名マージ処理で本来別々のBlendShapeが誤って1つに統合されてしまう
+            const std::string shapeName = animMesh->mName.length > 0
+                ? std::string(animMesh->mName.C_Str())
+                : ("BlendShape" + std::to_string(dst.blendShapes_.size()));
 
-    if (entry.data.GetVertexCount() == 0 || entry.data.GetIndexCount() == 0) {
-        Log(Translation("engine.model.loading.failed.nomesh") + p.string(), LogSeverity::Warning);
-        return kInvalidHandle;
+            // 同名のBlendShapeが既にあれば追記する（複数メッシュに分かれたモデル用）
+            ModelData::BlendShapeData* target = nullptr;
+            for (auto& bs : dst.blendShapes_) {
+                if (bs.name == shapeName) {
+                    target = &bs;
+                    break;
+                }
+            }
+            if (!target) {
+                dst.blendShapes_.push_back(ModelData::BlendShapeData{});
+                target = &dst.blendShapes_.back();
+                target->name = shapeName;
+            }
+
+            const bool hasAnimNormals = animMesh->HasNormals() && hasNormals;
+            const unsigned int animVertexCount = std::min(animMesh->mNumVertices, mesh->mNumVertices);
+            constexpr float kEpsilon = 1e-6f;
+            for (unsigned int vi = 0; vi < animVertexCount; ++vi) {
+                const aiVector3D& basePos = mesh->mVertices[vi];
+                const aiVector3D& morphPos = animMesh->mVertices[vi];
+                Vector3 deltaPos(morphPos.x - basePos.x, morphPos.y - basePos.y, morphPos.z - basePos.z);
+                Vector3 deltaNormal(0.0f, 0.0f, 0.0f);
+                if (hasAnimNormals) {
+                    const aiVector3D& baseNormal = mesh->mNormals[vi];
+                    const aiVector3D& morphNormal = animMesh->mNormals[vi];
+                    deltaNormal = Vector3(morphNormal.x - baseNormal.x, morphNormal.y - baseNormal.y, morphNormal.z - baseNormal.z);
+                }
+                if (std::abs(deltaPos.x) < kEpsilon && std::abs(deltaPos.y) < kEpsilon && std::abs(deltaPos.z) < kEpsilon &&
+                    std::abs(deltaNormal.x) < kEpsilon && std::abs(deltaNormal.y) < kEpsilon && std::abs(deltaNormal.z) < kEpsilon) {
+                    continue;
+                }
+                ModelData::BlendShapeVertexDelta delta;
+                delta.deltaPosition = deltaPos;
+                delta.deltaNormal = deltaNormal;
+                delta.vertexIndex = baseVertex + vi;
+                target->deltas.push_back(delta);
+            }
+        }
     }
+}
+
+ModelManager::ModelHandle ModelManager::RegisterProceduralMesh(const std::string& name, std::vector<ModelData::Vertex> vertices, std::vector<std::uint32_t> indices) {
+    LogScope scope;
+    const std::string normalizedName = NormalizePathSlashes(name);
+
+    // 同名で登録済みの場合は再登録せず既存のハンドルを返す
+    auto it = sAssetPathToHandle.find(normalizedName);
+    if (it != sAssetPathToHandle.end()) return it->second;
+
+    ModelEntry entry{};
+    entry.fullPath = normalizedName;
+    entry.assetPath = normalizedName;
+    entry.fileName = normalizedName;
+    entry.data.assetRelativePath_ = normalizedName;
+    entry.data.vertices_ = std::move(vertices);
+    entry.data.indices_ = std::move(indices);
 
     const auto handle = RegisterEntry(std::move(entry));
     if (handle == kInvalidHandle) {
-        Log(Translation("engine.model.loading.failed.register") + p.string(), LogSeverity::Error);
+        Log(Translation("engine.model.loading.failed.register") + normalizedName, LogSeverity::Error);
         return kInvalidHandle;
     }
-
-    Log(Translation("engine.model.loading.succeeded") + p.string(), LogSeverity::Info);
     return handle;
 }
+
+#if defined(USE_IMGUI)
+ModelManager::ModelHandle ModelManager::LoadModelDynamic(const std::string &filePath) {
+    if (!sActiveInstance) return kInvalidHandle;
+    return sActiveInstance->LoadModel(filePath);
+}
+#endif
 
 ModelManager::ModelHandle ModelManager::GetModelHandleFromFileName(const std::string& fileName) {
     LogScope scope;
@@ -279,6 +616,298 @@ ModelManager::ModelHandle ModelManager::GetModelHandleFromAssetPath(const std::s
         return kInvalidHandle;
     }
     return it->second;
+}
+
+std::string ModelManager::GetBaseAssetPath(const std::string& assetPath) {
+    // サブメッシュのアセットパスは "モデルパス:ノード名" 形式（アセットパスはAssetsルートからの
+    // 相対パスのためドライブレターの ":" は含まれない）
+    const auto pos = assetPath.find(':');
+    return (pos == std::string::npos) ? assetPath : assetPath.substr(0, pos);
+}
+
+void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
+    const std::string &modelFullPath, const std::string &baseAssetPath,
+    const std::string &baseFileName, const std::vector<ModelData::MaterialData> &materials) {
+    if (!scene || !scene->mRootNode) return;
+
+    // メッシュを持つノードの情報（サブメッシュのアセットパス・スキニング有無・使用マテリアル）
+    struct MeshNodeInfo {
+        std::string meshAssetPath;
+        bool skinned = false;
+        /// @brief ノード内の各メッシュ（＝サブメッシュ）が使用するマテリアル番号（追加順）
+        std::vector<unsigned int> materialIndices;
+    };
+    std::unordered_map<const aiNode *, MeshNodeInfo> meshNodeInfos;
+
+    // メッシュを持つノードを収集する（ノード名はモデル内で一意になるよう連番を付ける）
+    std::vector<const aiNode *> meshNodes;
+    std::unordered_map<std::string, int> nameCounts;
+    std::unordered_map<const aiNode *, std::string> uniqueNames;
+    std::function<void(const aiNode *)> collect = [&](const aiNode *node) {
+        if (!node) return;
+        if (node->mNumMeshes > 0) {
+            std::string name = node->mName.length > 0 ? node->mName.C_Str() : "Mesh";
+            const int count = ++nameCounts[name];
+            if (count > 1) name += "_" + std::to_string(count);
+            uniqueNames[node] = name;
+            meshNodes.push_back(node);
+
+            MeshNodeInfo info;
+            for (unsigned int i = 0; i < node->mNumMeshes; ++i) {
+                const unsigned int meshIdx = node->mMeshes[i];
+                if (meshIdx >= scene->mNumMeshes || !scene->mMeshes[meshIdx]) continue;
+                info.materialIndices.push_back(scene->mMeshes[meshIdx]->mMaterialIndex);
+                if (scene->mMeshes[meshIdx]->mNumBones > 0) info.skinned = true;
+            }
+            meshNodeInfos[node] = std::move(info);
+        }
+        for (unsigned int c = 0; c < node->mNumChildren; ++c) collect(node->mChildren[c]);
+    };
+    collect(scene->mRootNode);
+    if (meshNodes.empty()) return;
+
+    if (meshNodes.size() >= 2) {
+        // 複数のメッシュノードを持つ場合、ノード単位のサブメッシュを "モデルパス:ノード名" で個別登録する
+        // （Unityのモデル内サブアセットに相当。MeshFilterのMesh選択やプレハブから個別に参照できる）
+        for (const aiNode *node : meshNodes) {
+            const std::string &uniqueName = uniqueNames[node];
+            ModelEntry subEntry{};
+            subEntry.fullPath = modelFullPath + ":" + uniqueName;
+            subEntry.assetPath = baseAssetPath + ":" + uniqueName;
+            subEntry.fileName = baseFileName + ":" + uniqueName;
+            subEntry.data.assetRelativePath_ = subEntry.assetPath;
+            subEntry.data.materials_ = materials;
+            for (unsigned int i = 0; i < node->mNumMeshes; ++i) {
+                const unsigned int meshIdx = node->mMeshes[i];
+                if (meshIdx >= scene->mNumMeshes) continue;
+                AppendMeshToModelData(scene->mMeshes[meshIdx], subEntry.data);
+            }
+            if (subEntry.data.GetVertexCount() == 0) continue;
+            const std::string subAssetPath = subEntry.assetPath;
+            if (RegisterEntry(std::move(subEntry)) != kInvalidHandle) {
+                meshNodeInfos[node].meshAssetPath = subAssetPath;
+            }
+        }
+    } else {
+        // メッシュノードが1つだけの場合はモデル全体のメッシュ（既に登録済み）をそのまま参照する
+        meshNodeInfos[meshNodes.front()].meshAssetPath = baseAssetPath;
+    }
+
+#if defined(USE_IMGUI)
+    const std::string modelName = PathToUtf8String(Utf8StringToPath(baseFileName).stem());
+
+    // モデルが使用するマテリアルを自動生成する（.matファイルをモデルの隣へ書き出す）。
+    // MaterialManagerの起動時Assetsフォルダ走査を待たず、書き出した直後にLoadMaterialDynamicで
+    // 実行中のMaterialManagerへ即時登録する（そうしないとAssetsウィンドウでの
+    // ダブルクリック等、生成直後のセッション内参照が「読み込まれていない」扱いになる）。
+    // 既に.matファイルが存在する場合はユーザーの編集を保護するため上書きしないが、
+    // 登録自体は（未登録なら）行う
+    const std::string modelDir = NormalizePathSlashes(PathToUtf8String(Utf8StringToPath(modelFullPath).parent_path()));
+    std::unordered_map<unsigned int, std::string> materialIndexToName;
+    for (unsigned int mi = 0; mi < scene->mNumMaterials; ++mi) {
+        aiString aiName;
+        std::string matName;
+        if (scene->mMaterials[mi] && AI_SUCCESS == scene->mMaterials[mi]->Get(AI_MATKEY_NAME, aiName)) {
+            matName = aiName.C_Str();
+        }
+        if (matName.empty()) matName = "Material" + std::to_string(mi);
+        // ファイル名に使えない文字を除去し、モデル名を前置してモデル間の名前重複を避ける
+        constexpr std::string_view kInvalidChars = "\\/:*?\"<>|";
+        for (auto &c : matName) {
+            if (kInvalidChars.find(c) != std::string_view::npos) c = '_';
+        }
+        const std::string uniqueName = modelName + "_" + matName;
+        materialIndexToName[mi] = uniqueName;
+
+        const std::string matFilePath = modelDir + "/" + uniqueName + ".mat";
+        std::error_code matEc;
+        if (std::filesystem::exists(Utf8StringToPath(matFilePath), matEc)) {
+            MaterialManager::LoadMaterialDynamic(matFilePath);
+            continue;
+        }
+
+        // MaterialManager::SaveMaterialと同じスキーマで書き出す
+        Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
+        std::string textureFile;
+        if (mi < materials.size()) {
+            color = Vector4(materials[mi].baseColor[0], materials[mi].baseColor[1],
+                materials[mi].baseColor[2], materials[mi].baseColor[3]);
+            if (!materials[mi].diffuseTexturePath.empty()) {
+                // MaterialManagerのtextureFileはファイル名単体で管理される
+                textureFile = ExtractFileNameOnly(materials[mi].diffuseTexturePath);
+            }
+        }
+        JSON matJson = JSON::object();
+        matJson["name"] = uniqueName;
+        matJson["color"] = ToJSON(color);
+        matJson["uvTransform"] = ToJSON(Matrix4x4::Identity());
+        matJson["textureFile"] = textureFile;
+        matJson["environmentFile"] = "";
+        matJson["samplerHandle"] = static_cast<std::uint32_t>(0);
+        matJson["shininess"] = 32.0f;
+        matJson["specularColor"] = ToJSON(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+        matJson["environmentCoefficient"] = 1.0f;
+        matJson["enableLighting"] = true;
+        matJson["enableShadowMapProjection"] = true;
+        if (SaveJSON(matJson, matFilePath)) {
+            Log(Translation("engine.model.material.generated") + matFilePath, LogSeverity::Info);
+            MaterialManager::LoadMaterialDynamic(matFilePath);
+        }
+    }
+
+    // エディタービルドでは、ノード階層（アーマチュア・メッシュオブジェクト）を再現するプレハブを
+    // モデルの隣（"モデルファイル名.prefab"）へ自動生成する。
+    // 既にプレハブが存在する場合はユーザーの編集を保護し、同期に必要なID・親参照だけを補完する
+    const std::string prefabPath = modelFullPath + ".prefab";
+    // PrefabAssetManagerの索引・保存APIは論理パス（"Assets/..."）を前提にしている
+    // （EnsureIndexBuildedはProjectPaths::ListAssetFilesの論理パスで索引を構築するため、
+    //   ここで物理パスをそのまま渡すと同じprefabIDのエントリが物理パスキーで上書きされ、
+    //   AssetsウィンドウからのD&D配置（論理パスでGetPrefabIDFromPathを引く）が
+    //   PrefabIDを解決できずPrefabInstanceComponentが付与されない＝同期が機能しなくなる）
+    const std::string prefabLogicalPath = ProjectPaths::ToLogical(prefabPath);
+    std::error_code ec;
+    if (std::filesystem::exists(prefabPath, ec)) {
+        JSON existingPrefab = LoadJSON(prefabPath);
+        UUID128 existingPrefabID;
+        if (EnsureModelPrefabSchema(existingPrefab, existingPrefabID)) {
+            if (PrefabAssetManager::CreatePrefabFile(existingPrefabID, existingPrefab, prefabLogicalPath)) {
+                Log(Translation("engine.model.prefab.metadata.upgraded") + prefabPath, LogSeverity::Info);
+            } else {
+                Log(Translation("engine.model.prefab.metadata.upgrade.failed") + prefabPath, LogSeverity::Warning);
+            }
+        }
+        return;
+    }
+
+    const UUID128 prefabID(true);
+    JSON prefab;
+    prefab["prefab"] = true;
+    prefab["prefabID"] = prefabID.ToString();
+    prefab["name"] = modelName;
+    prefab["objects"] = JSON::array();
+
+    // コンポーネント1つ分のJSON（EmptyObject::SaveToJsonが書き出す形式と同じ）を構築する
+    const auto makeComponentJson = [](const char *type, int priority, JSON customData) {
+        JSON data;
+        data["priority"] = priority;
+        data["isActive"] = true;
+        data["tag"] = "";
+        data["customData"] = std::move(customData);
+        JSON comp;
+        comp["type"] = type;
+        comp["data"] = std::move(data);
+        return comp;
+    };
+
+    std::function<void(const aiNode *, int, const std::string &, const std::string &)> addNode =
+        [&](const aiNode *node, int parentIndex, const std::string &parentObjectID,
+            const std::string &nameOverride) {
+        if (!node) return;
+        const int myIndex = static_cast<int>(prefab["objects"].size());
+
+        // ノードのローカル変換をTRSへ分解してTransformにする（SkeletonManagerと同じ変換規約）
+        aiVector3D scaling;
+        aiQuaternion rotation;
+        aiVector3D translation;
+        node->mTransformation.Decompose(scaling, rotation, translation);
+        JSON transformData;
+        transformData["translate"] = ToJSON(Vector3(translation.x, translation.y, translation.z));
+        transformData["rotate"] = ToJSON(Quaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+        transformData["scale"] = ToJSON(Vector3(scaling.x, scaling.y, scaling.z));
+        if (!parentObjectID.empty()) transformData["parent"] = parentObjectID;
+
+        JSON object;
+        object["name"] = nameOverride.empty()
+            ? (node->mName.length > 0 ? std::string(node->mName.C_Str()) : std::string("Node"))
+            : nameOverride;
+        object["tag"] = "";
+        object["isActive"] = true;
+        object["editorOnly"] = false;
+        const std::string objectID = UUID128(true).ToString();
+        object["objectID"] = objectID;
+        object["prefabNodeID"] = UUID128(true).ToString();
+        object["components"] = JSON::array();
+        object["components"].push_back(makeComponentJson("Transform", 1, std::move(transformData)));
+
+        // メッシュを持つノードにはMeshFilterと描画コンポーネントを付与する
+        // （スキニングメッシュの場合はSkinnedMeshRenderer、それ以外はMeshRenderer）
+        if (auto it = meshNodeInfos.find(node); it != meshNodeInfos.end() && !it->second.meshAssetPath.empty()) {
+            JSON meshFilterData;
+            meshFilterData["meshAssetPath"] = it->second.meshAssetPath;
+            object["components"].push_back(makeComponentJson("MeshFilter", 1, std::move(meshFilterData)));
+            // 自動生成したマテリアルを適用した状態にしておく
+            // （サブメッシュ＝ノード内のメッシュごとにマテリアルスロットへ割り当てる）
+            JSON rendererData = JSON::object();
+            JSON materialNamesJson = JSON::array();
+            for (const unsigned int matIndex : it->second.materialIndices) {
+                auto matIt = materialIndexToName.find(matIndex);
+                materialNamesJson.push_back(matIt != materialIndexToName.end() ? matIt->second : std::string("Default"));
+            }
+            if (!materialNamesJson.empty()) {
+                // 後方互換のため単一の"materialName"（スロット0）も併記する
+                rendererData["materialName"] = materialNamesJson.front();
+                rendererData["materialNames"] = std::move(materialNamesJson);
+            }
+            object["components"].push_back(makeComponentJson(
+                it->second.skinned ? "SkinnedMeshRenderer" : "MeshRenderer", 900, std::move(rendererData)));
+
+            // スキニングメッシュの場合、アニメーション再生を担うAnimatorも併せて付与する
+            // （SkinnedMeshRendererはAnimatorが解決したスケルトン姿勢を読み取るだけで、
+            //   アニメーションクリップの選択・再生状態そのものは持たない）
+            if (it->second.skinned) {
+                JSON animatorData = JSON::object();
+                animatorData["rootBoneObjectID"] = "";
+                animatorData["clipName"] = "";
+                animatorData["animationSourceAssetPath"] = "";
+                animatorData["playOnStart"] = true;
+                animatorData["loop"] = true;
+                animatorData["playbackSpeed"] = 1.0;
+                object["components"].push_back(makeComponentJson("Animator", 500, std::move(animatorData)));
+            }
+        }
+
+        JSON entryJson;
+        entryJson["parentIndex"] = parentIndex;
+        entryJson["object"] = std::move(object);
+        prefab["objects"].push_back(std::move(entryJson));
+
+        for (unsigned int c = 0; c < node->mNumChildren; ++c) {
+            addNode(node->mChildren[c], myIndex, objectID, std::string());
+        }
+    };
+    // ルートノードはモデル名のオブジェクトとして生成する（Unityのモデルプレハブと同様）
+    addNode(scene->mRootNode, -1, std::string(), modelName);
+
+    if (PrefabAssetManager::CreatePrefabFile(prefabID, prefab, prefabLogicalPath)) {
+        Log(Translation("engine.model.prefab.generated") + prefabPath, LogSeverity::Info);
+    } else {
+        Log(Translation("engine.model.prefab.generate.failed") + prefabPath, LogSeverity::Warning);
+    }
+#endif // USE_IMGUI
+}
+
+bool ModelManager::RenameModel(const std::string &oldAssetPath, const std::string &newAssetPath) {
+    LogScope scope;
+    const std::string normalizedOld = NormalizePathSlashes(oldAssetPath);
+    auto pathIt = sAssetPathToHandle.find(normalizedOld);
+    if (pathIt == sAssetPathToHandle.end()) return false;
+    const Handle handle = pathIt->second;
+    auto entryIt = sModels.find(handle);
+    if (entryIt == sModels.end()) return false;
+
+    ModelEntry &entry = entryIt->second;
+    sAssetPathToHandle.erase(pathIt);
+    sFileNameToHandle.erase(entry.fileName);
+
+    const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
+    entry.assetPath = normalizedNew;
+    entry.fileName = std::filesystem::path(normalizedNew).filename().string();
+    entry.fullPath = ProjectPaths::AssetsRoot() + "/" + normalizedNew;
+    entry.data.assetRelativePath_ = normalizedNew;
+
+    sAssetPathToHandle[normalizedNew] = handle;
+    sFileNameToHandle[entry.fileName] = handle;
+    return true;
 }
 
 const ModelData &ModelManager::GetModelData(ModelHandle handle) {
@@ -316,11 +945,15 @@ const ModelData &ModelManager::GetModelDataFromAssetPath(const std::string &asse
 }
 
 #if defined(USE_IMGUI)
+std::vector<ModelManager::ModelListEntry> ModelManager::GetLoadedModelListEntries() {
+    return GetImGuiModelListEntries();
+}
+
 void ModelManager::ShowImGuiLoadedModelsWindow() {
-    ImGui::Begin("ModelManager - Loaded Models");
+    ImGui::Begin(TranslationLabel("editor.modelmanager.window"));
 
     const auto entries = ModelManager::GetImGuiModelListEntries();
-    ImGui::Text("Loaded Models: %d", static_cast<int>(entries.size()));
+    ImGui::Text(TranslationC("editor.modelmanager.loaded_models_d"), static_cast<int>(entries.size()));
 
     static ImGuiTextFilter filter;
     filter.Draw("Filter");

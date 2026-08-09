@@ -1,4 +1,6 @@
-#include "RawFile.h"
+﻿#include "RawFile.h"
+#include "Directory.h"
+#include "Utilities/Conversion/ConvertString.h"
 #include <fstream>
 #include <cctype>
 #include <algorithm>
@@ -181,7 +183,10 @@ FileType DetectFileTypeFromBytes(const uint8_t* data, size_t n) {
 } // namespace
 
 bool IsFileExist(const std::string &filePath) {
-    std::ifstream file(filePath);
+    // std::ifstream(const std::string&)はWindows上で現在のANSIコードページを使ってファイルを開くため、
+    // 非ASCII文字を含むパスが開けない。path版のコンストラクタ（内部でネイティブのワイド文字列を使う）
+    // へ渡すことで回避する
+    std::ifstream file(Utf8StringToPath(filePath));
     return file.good();
 }
 
@@ -189,7 +194,7 @@ RawFileData LoadFile(const std::string &filePath, size_t detectBytes) {
     RawFileData fileData{};
     fileData.filePath = filePath;
 
-    std::ifstream file(filePath, std::ios::binary | std::ios::ate);
+    std::ifstream file(Utf8StringToPath(filePath), std::ios::binary | std::ios::ate);
     if (!file) {
         throw std::runtime_error("Failed to open file: " + filePath);
     }
@@ -209,7 +214,9 @@ RawFileData LoadFile(const std::string &filePath, size_t detectBytes) {
 }
 
 void SaveFile(const RawFileData &fileData) {
-    std::ofstream file(fileData.filePath, std::ios::binary);
+    // 保存先フォルダが存在しない場合は作成する
+    EnsureParentDirectoryExists(fileData.filePath);
+    std::ofstream file(Utf8StringToPath(fileData.filePath), std::ios::binary);
     if (!file) {
         throw std::runtime_error("Failed to open file for writing: " + fileData.filePath);
     }
@@ -219,7 +226,7 @@ void SaveFile(const RawFileData &fileData) {
 }
 
 FileType DetectFileTypeFromFile(const std::string &filePath, size_t detectBytes) {
-    std::ifstream file(filePath, std::ios::binary);
+    std::ifstream file(Utf8StringToPath(filePath), std::ios::binary);
     if (!file) {
         throw std::runtime_error("Failed to open file: " + filePath);
     }

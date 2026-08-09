@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RigidBody3D | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Collider_RigidBody3D">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>RigidBody3D</h1>
+<p class="page-lead">ReactPhysics3Dの<code>RigidBody</code>を内部で保持する3D用の物理挙動コンポーネントです。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/06_Collision.html">Engine/06_Collision.html</a>を参照してください。</p>
+</div>
+
+<div class="note"><strong>ICollider派生ではない</strong><br>形状コライダー（<code>BoxCollider</code>等）は全て<code>ICollider</code>を継承しますが、RigidBody3Dは<code>IObjectComponent</code>を直接継承する別系統のコンポーネントです（カテゴリは同じ<code>"Collision"</code>）。そのため<code>IsTrigger</code>・<code>Continuous Detection</code>・<code>Sync With Transform</code>といったICollider共通のInspector項目はRigidBody3Dには表示されません。「形状」はコライダー側、「物理的な動き（質量・重力・速度）」はRigidBody側という役割分担です。</div>
+
+<h2>Inspectorに表示される項目</h2>
+<p>見出しテキストの下に、開閉式の<code>Settings</code>ヘッダーで主要パラメータをまとめ、その外側にコライダー選択欄が続く構成です（表示順はソースコードの<code>ShowImGui()</code>呼び出し順と同じ）。</p>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>RigidBody3D Component（見出しテキスト）</td><td>読み取り専用テキスト</td><td>コンポーネント名を示す固定文言</td></tr>
+<tr><td>Settings</td><td>開閉式ヘッダー（CollapsingHeader）</td><td>以下4項目を内包する。デフォルトは閉じた状態</td></tr>
+<tr><td>Body Type</td><td>ドロップダウン（コンボボックス、<code>Static</code>/<code>Kinematic</code>/<code>Dynamic</code>）</td><td>物理ボディの種別。既定 <code>Dynamic</code>。変更すると即座に生成済みの物理ボディへ<code>setType()</code>で反映される</td></tr>
+<tr><td>Mass</td><td>スライダー（範囲 0.1〜100）</td><td>質量。既定 <code>1.0</code>。変更すると即座に生成済みの物理ボディへ反映される</td></tr>
+<tr><td>Use Gravity</td><td>チェックボックス</td><td>重力の影響を受けるか。既定 <code>true</code>。変更すると即座に生成済みの物理ボディへ<code>enableGravity()</code>で反映される</td></tr>
+<tr><td>Interpolate</td><td>チェックボックス</td><td>既定 <code>true</code>。変更すると即座に生成済みの物理ボディの<code>setIsSleeping(!値)</code>を呼ぶ（オフにするとボディをスリープ状態にする）</td></tr>
+<tr><td>Collider Shape</td><td>ドロップダウン（コンボボックス）</td><td>物理ボディの形状として使う、同オブジェクト上の3D用<code>ICollider</code>コンポーネントを選択する。先頭の<code>(Any)</code>は未選択（どのコライダーでも使用可）を表す。候補は<code>Is2D()</code>が<code>false</code>のコライダーのみに絞られる</td></tr>
+</table>
+
+<div class="warn"><strong>移動させただけでは物理ボディへ反映されない</strong><br>エディタでオブジェクトをTransform経由で移動させても、既に生成済みの物理ボディの位置は自動的には追従しません（毎フレームの<code>Update</code>で行われるのは物理→Transformへの反映のみ）。Play開始時に古い位置（多くの場合は物理ボディ生成時点の位置）へ戻ってしまうのを防ぐため、C++側で<code>SyncFromTransform()</code>を呼んで同期を取る必要があります。この操作にInspector上のボタンはありません。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><code>RigidBody3D</code>は<code>COMPONENT_CATEGORY("Collision")</code>に属します。</p>
+<span class="ui-path"><span>Add Component</span><i>›</i><span>Collision</span><i>›</i><span>RigidBody3D</span></span>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/06_Collision.html">Engine/06_Collision.html</a> — <code>RigidBody3D</code>クラスの全メソッド（<code>SyncFromTransform()</code>やコライダー選択APIを含む）</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — コンポーネント一覧の開閉・Add Componentの操作方法</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

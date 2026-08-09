@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AudioListener | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_AudioListener">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>AudioListener <span class="badge final">最大1個</span></h1>
+<p class="page-lead">音声の受聴位置となるコンポーネントです。使用フラグ（Used）のみを持ちます。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Used</td><td>チェックボックス</td><td>このリスナーを使用中にするかどうか。オンにすると、同一シーン内の他のAudioListenerの使用フラグが自動でオフになる</td></tr>
+</table>
+
+<div class="note">シーン内で同時に使用中のAudioListenerは常に高々1つです。オブジェクト生成時に使用フラグが立っている場合はもちろん、シーン内に他に使用中のリスナーが1つも無い場合も自動的にこのリスナーが使用中になります（明示操作なしでも動作するように）。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path">Add Component → Audio → AudioListener</span>。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/09_Assets.html">Engine/09_Assets.html</a> — オーディオアセットの読み込み・<code>AudioManager</code>のAPI</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本的な見方</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

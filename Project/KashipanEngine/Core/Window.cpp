@@ -1,12 +1,17 @@
 #include "Window.h"
 #include "Core/WindowsAPI.h"
 #include "Core/DirectXCommon.h"
+#include "Core/ProjectPaths.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include <cassert>
 #include <algorithm>
 
+#if defined(USE_IMGUI)
+#include <shellapi.h>
+#endif
+
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents.h"
-#include "Graphics/Renderer.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -20,7 +25,8 @@ std::vector<HWND> sPendingDestroy;
 Window::Window(Passkey<Window>, WindowType windowType, const std::wstring &title, int32_t width, int32_t height, DWORD windowStyle, const std::wstring &iconPath) {
     LogScope scope;
     bool result = InitializeWindow(sWindowsAPI->WindowProc, windowType, title, width, height, windowStyle, iconPath);
-    if (!result) assert("Window initialization failed");
+    assert(result && "Window initialization failed");
+    if (!result) return;
     messages_.reserve(kMaxMessages);
     eventHandlers_.reserve(kMaxMessages);
 
@@ -72,16 +78,6 @@ std::vector<Window *> Window::GetWindows(const std::string &title) {
     for (auto &pair : sWindowMap) if (pair.second->descriptor_.title == title) windows.push_back(pair.second.get());
     return windows;
 }
-
-#if defined(USE_IMGUI)
-HWND Window::GetFirstWindowHwndForImGui(Passkey<ImGuiManager>) {
-    for (auto &pair : sWindowMap) {
-        if (pair.second->GetWindowType() == WindowType::Overlay) continue;
-        return pair.first;
-    }
-    return nullptr;
-}
-#endif
 
 Window *Window::GetWindow(const std::string &title) {
     for (auto &pair : sWindowMap) if (pair.second->descriptor_.title == title) return pair.second.get();
@@ -191,8 +187,6 @@ void Window::Draw(Passkey<GameEngine>) {
         if (window->GetWindowType() == WindowType::Overlay && window->GetWindowHandle()) {
             RedrawWindow(window->GetWindowHandle(), nullptr, nullptr, RDW_INVALIDATE | RDW_ALLCHILDREN);
         }
-
-        if (window->dx12SwapChain_) window->dx12SwapChain_->BeginDraw(Passkey<Window>{});
     }
 }
 
@@ -204,16 +198,18 @@ Window *Window::CreateNormal(const std::string &title, int32_t width, int32_t he
     int32_t windowWidth = (width <= 0) ? windowDefaultWidth : width;
     int32_t windowHeight = (height <= 0) ? windowDefaultHeight : height;
     DWORD windowStyle = (style == 0) ? WS_OVERLAPPEDWINDOW : style;
-    std::wstring windowIconPath = iconPath.empty() ? ConvertString(windowDefaultIconPath) : ConvertString(iconPath);
+    std::wstring windowIconPath = ConvertString(ProjectPaths::ToPhysical(iconPath.empty() ? windowDefaultIconPath : iconPath));
 
     auto window = std::make_unique<Window>(Passkey<Window>{}, WindowType::Normal, windowTitle, windowWidth, windowHeight, windowStyle, windowIconPath);
     HWND hwnd = window->GetWindowHandle();
+    if (!hwnd) {
+        Log(Translation("engine.window.create.failed"), LogSeverity::Error);
+        return nullptr;
+    }
 
     sWindowMap[hwnd] = std::move(window);
     sWindowsAPI->RegisterWindow({}, sWindowMap[hwnd].get());
     sWindowMap[hwnd]->dx12SwapChain_ = sDirectXCommon->CreateSwapChain({}, SwapChainType::ForHwnd, hwnd, windowWidth, windowHeight);
-    auto cmdList = sWindowMap[hwnd]->dx12SwapChain_->GetRecordedCommandList(Passkey<Window>{});
-    sRenderer->RegisterWindow(Passkey<Window>{}, hwnd, cmdList);
 
     Log(Translation("engine.window.create.end") + (title.empty() ? windowDefaultTitle : title), LogSeverity::Debug);
     return sWindowMap[hwnd].get();
@@ -226,7 +222,7 @@ Window *Window::CreateOverlay(const std::string &title, int32_t width, int32_t h
     std::wstring windowTitle = title.empty() ? ConvertString(windowDefaultTitle) : ConvertString(title);
     int32_t windowWidth = (width <= 0) ? windowDefaultWidth : width;
     int32_t windowHeight = (height <= 0) ? windowDefaultHeight : height;
-    std::wstring windowIconPath = iconPath.empty() ? ConvertString(windowDefaultIconPath) : ConvertString(iconPath);
+    std::wstring windowIconPath = ConvertString(ProjectPaths::ToPhysical(iconPath.empty() ? windowDefaultIconPath : iconPath));
 
     DWORD style = WS_POPUP;
     DWORD exStyle = WS_EX_NOREDIRECTIONBITMAP;
@@ -241,6 +237,10 @@ Window *Window::CreateOverlay(const std::string &title, int32_t width, int32_t h
 
     auto window = std::make_unique<Window>(Passkey<Window>{}, WindowType::Overlay, windowTitle, windowWidth, windowHeight, style, windowIconPath);
     HWND hwnd = window->GetWindowHandle();
+    if (!hwnd) {
+        Log(Translation("engine.window.create.overlay.failed"), LogSeverity::Error);
+        return nullptr;
+    }
 
     ::SetWindowLong(hwnd, GWL_EXSTYLE, ::GetWindowLong(hwnd, GWL_EXSTYLE) | exStyle);
     ::SetWindowPos(hwnd,
@@ -259,8 +259,6 @@ Window *Window::CreateOverlay(const std::string &title, int32_t width, int32_t h
     sWindowsAPI->RegisterWindow({}, sWindowMap[hwnd].get());
     sWindowMap[hwnd]->dx12SwapChain_ = sDirectXCommon->CreateSwapChain({}, SwapChainType::ForComposition, hwnd, windowWidth, windowHeight);
     sWindowMap[hwnd]->RegisterWindowEvent<WindowDefaultEvent::ClickThroughEvent>(clickThrough);
-    auto cmdList = sWindowMap[hwnd]->dx12SwapChain_->GetRecordedCommandList(Passkey<Window>{});
-    sRenderer->RegisterWindow(Passkey<Window>{}, hwnd, cmdList);
 
     Log(Translation("engine.window.create.overlay.end") + (title.empty() ? windowDefaultTitle : title), LogSeverity::Debug);
     return sWindowMap[hwnd].get();
@@ -291,6 +289,19 @@ void Window::DestroyNotify() {
 std::optional<LRESULT> Window::HandleEvent(Passkey<WindowsAPI>, UINT msg, WPARAM wparam, LPARAM lparam) {
     LogScope scope;
     messages_[msg] = { msg, wparam, lparam };
+
+    // メッセージの横取り: 受信の記録だけ行い、既定イベント・DefWindowProcを実行しない
+    // （記録は行われるため、WindowObjectコンポーネント経由のOnWindowMessage通知には届く）
+    if (interceptedMessages_.contains(msg)) {
+        return std::optional<LRESULT>(0);
+    }
+    // WM_CLOSE横取り時は、Xボタン・Alt+F4等のSC_CLOSEを既定イベント（確認ダイアログ）へ渡さず
+    // DefWindowProcへ流す（DefWindowProcがWM_CLOSEを発行し、上の横取り処理で捕捉される）
+    // ※wparamの下位4ビットはシステム予約のためマスクして比較する
+    if (msg == WM_SYSCOMMAND && (wparam & 0xFFF0) == SC_CLOSE && interceptedMessages_.contains(WM_CLOSE)) {
+        return std::nullopt;
+    }
+
     // Intercept Alt+Enter (WM_SYSKEYDOWN + VK_RETURN) to toggle fullscreen appearance
     if (msg == WM_SYSKEYDOWN && wparam == VK_RETURN) {
         // lParam bit29 indicates the ALT key is down; also accept GetKeyState as fallback
@@ -405,6 +416,8 @@ void Window::SetWindowTitle(const std::string &title) {
 
 void Window::SetWindowSize(int32_t width, int32_t height) {
     LogScope scope;
+    if (width <= 0 || height <= 0) return;
+    if (size_.clientWidth == width && size_.clientHeight == height) return;
     size_.clientWidth = width;
     size_.clientHeight = height;
     CalculateAspectRatio();
@@ -482,6 +495,18 @@ void Window::ClearWindowParent(bool applyNative) { LogScope scope; DetachFromPar
 void Window::ClearWindowChild(bool applyNative) { LogScope scope; DetachAllChildrenUnsafe(applyNative); }
 
 void Window::UnregisterWindowEvent(UINT msg) { LogScope scope; eventHandlers_.erase(msg); }
+
+ID3D12GraphicsCommandList *Window::GetCommandList() const {
+    return dx12SwapChain_ ? dx12SwapChain_->GetRecordedCommandList(Passkey<Window>{}) : nullptr;
+}
+
+void Window::BeginDraw() {
+    if (dx12SwapChain_) dx12SwapChain_->BeginDraw(Passkey<Window>{});
+}
+
+void Window::EndDraw() {
+    if (dx12SwapChain_) dx12SwapChain_->EndDraw(Passkey<Window>{});
+}
 
 const WindowMessage &Window::GetWindowMessage(UINT msg) const {
     static const WindowMessage kEmptyMessage{ WM_NULL, 0, 0 };
@@ -566,6 +591,14 @@ bool Window::InitializeWindow(WNDPROC windowProc, WindowType windowType, const s
 
     // ウィンドウハンドルにthisポインタを関連付け
     SetWindowLongPtr(descriptor_.hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+
+#if defined(USE_IMGUI)
+    // エディタービルドでは、通常ウィンドウ全体へOSからファイルをD&Dできるようにする
+    // （AssetsウィンドウがWM_DROPFILES経由で取り込む）
+    if (windowType == WindowType::Normal) {
+        DragAcceptFiles(descriptor_.hwnd, TRUE);
+    }
+#endif
 
     // ウィンドウを表示
     ShowWindow(descriptor_.hwnd, SW_SHOW);

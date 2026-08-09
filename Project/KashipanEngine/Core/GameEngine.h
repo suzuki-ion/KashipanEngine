@@ -8,11 +8,15 @@
 #include "Core/DirectXCommon.h"
 #include "Graphics/GraphicsEngine.h"
 #include "Assets/TextureManager.h"
+#include "Assets/FontManager.h"
 #include "Assets/SamplerManager.h"
 #include "Assets/ModelManager.h"
+#include "Assets/SkeletonManager.h"
 #include "Assets/AudioManager.h"
-#include "Objects/Object2DBase.h"
-#include "Objects/Object3DBase.h"
+#include "Assets/AnimationManager.h"
+#include "Assets/MaterialManager.h"
+#include "Assets/VideoManager.h"
+#include "Objects/EmptyObject.h"
 #include "Input/Input.h"
 #include "Input/InputCommand.h"
 #include "Graphics/ScreenBuffer.h"
@@ -58,21 +62,44 @@ public:
     /// @return 実行結果コード
     int Execute(PasskeyForGameEngineMain);
 
-    /// @brief ゲームループ実行関数
-    void GameLoopRun();
-    /// @brief ゲームループ終了関数
-    void GameLoopEnd();
-    /// @brief ゲームループ一時停止関数
-    void GameLoopPause();
-    /// @brief ゲームループ再開関数
-    void GameLoopResume();
-
     /// @brief ゲームループ終了条件設定
     void SetGameLoopEndCondition(const std::function<bool()> &func) {
         gameLoopEndConditionFunction_ = func;
     }
 
+    //==================================================
+    // ゲームループの終了要求
+    //==================================================
+    // シーン・シーンコンテキスト・スクリプトなど、GameEngineへの参照を持たない場所から
+    // ゲームループの終了を指示するための静的なフラグ。
+    // 非エディタービルドではゲームループ（アプリケーション）が終了する。
+    // エディタービルド（USE_IMGUI）ではエディター自体は閉じず、再生停止（PlayStop）の要求として扱われる。
+
+    /// @brief ゲームループの終了を要求する（エディター実行時は再生停止の要求になる）
+    static void RequestExitGameLoop() noexcept { sIsExitGameLoopRequested = true; }
+    /// @brief ゲームループの終了要求が出ているかを取得する
+    static bool IsExitGameLoopRequested() noexcept { return sIsExitGameLoopRequested; }
+    /// @brief ゲームループの終了要求を取り下げる（エディターが要求を消費する際にも使用する）
+    static void ClearExitGameLoopRequest() noexcept { sIsExitGameLoopRequested = false; }
+
+    //==================================================
+    // アプリケーション自体の終了要求
+    //==================================================
+    // RequestExitGameLoop はエディタービルドでは再生停止として消費されるため、
+    // 「エディターごと終了させたい」場合はこちらを使う。
+    // プロジェクトの切り替えのように、後始末を済ませてから終了したい処理から呼ぶ。
+
+    /// @brief アプリケーション自体の終了を要求する（エディタービルドでもエディターが閉じる）
+    static void RequestQuit() noexcept { sIsQuitRequested = true; }
+    /// @brief アプリケーションの終了要求が出ているかを取得する
+    static bool IsQuitRequested() noexcept { return sIsQuitRequested; }
+
 private:
+    /// @brief ゲームループの終了要求フラグ
+    static inline bool sIsExitGameLoopRequested = false;
+    /// @brief アプリケーション自体の終了要求フラグ
+    static inline bool sIsQuitRequested = false;
+
     /// @brief ゲームループ更新処理
     void GameLoopUpdate();
     /// @brief ゲームループ描画処理
@@ -117,27 +144,31 @@ private:
 
     /// @brief テクスチャ管理クラス
     std::unique_ptr<TextureManager> textureManager_;
+    /// @brief フォント管理クラス
+    std::unique_ptr<FontManager> fontManager_;
     /// @brief サンプラ管理クラス
     std::unique_ptr<SamplerManager> samplerManager_;
     /// @brief モデル管理クラス
     std::unique_ptr<ModelManager> modelManager_;
+    /// @brief スケルトン管理クラス
+    std::unique_ptr<SkeletonManager> skeletonManager_;
     /// @brief 音声管理クラス
     std::unique_ptr<AudioManager> audioManager_;
+    /// @brief アニメーション管理クラス
+    std::unique_ptr<AnimationManager> animationManager_;
+    /// @brief マテリアル管理クラス
+    std::unique_ptr<MaterialManager> materialManager_;
+    /// @brief 動画管理クラス
+    std::unique_ptr<VideoManager> videoManager_;
 
 #if defined(USE_IMGUI)
     /// @brief ImGui 管理クラス
     std::unique_ptr<ImGuiManager> imguiManager_;
 #endif
 
-    /// @brief ゲームループ実行フラグ
-    bool isGameLoopRunning_ = false;
-    /// @brief ゲームループ一時停止フラグ
-    bool isGameLoopPaused_ = false;
-    /// @brief フレーム単位で進める要求フラグ（ポーズ中のみ有効）
-    bool isNextFrameRequested_ = false;
-
     /// @brief ゲームループ終了条件関数
     std::function<bool()> gameLoopEndConditionFunction_;
+    bool isGameLoopRunning_ = true;
 
     /// @brief ウィンドウ配列
     std::vector<Window *> windows_;

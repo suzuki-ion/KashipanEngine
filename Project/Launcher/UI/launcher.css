@@ -1,0 +1,409 @@
+/* KashipanEngine プロジェクトランチャー
+ *
+ * 配色はエンジンリファレンス（Reference/assets/style.css）と同じ変数定義を使い、
+ * 見た目を揃えている。リファレンス側の配色を変更した場合はこちらも合わせること。 */
+
+:root {
+  --bg: #ffffff;
+  --bg-alt: #f5f6f8;
+  --bg-code: #f3f4f7;
+  --bg-sidebar: #fafbfc;
+  --text: #1c2128;
+  --text-dim: #57606a;
+  --border: #d8dce2;
+  --accent: #2c5edb;
+  --accent-dim: #4b74d6;
+  --accent-bg: #eaf0fe;
+  --warn-bg: #fff6e5;
+  --warn-border: #e8c877;
+  --tip-bg: #eafaf1;
+  --tip-border: #6cc79a;
+  --code-text: #b3261e;
+  --danger: #b3261e;
+  --danger-bg: #fdeceb;
+  --overlay: rgba(20, 25, 35, 0.45);
+  --scrollbar: #c7ccd4;
+  --shadow: 0 1px 3px rgba(20, 25, 35, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171c;
+    --bg-alt: #1b1f26;
+    --bg-code: #1c2128;
+    --bg-sidebar: #101317;
+    --text: #e6e9ef;
+    --text-dim: #9aa4b2;
+    --border: #2a2f38;
+    --accent: #6d9bff;
+    --accent-dim: #6d9bff;
+    --accent-bg: #1a2740;
+    --warn-bg: #2b2410;
+    --warn-border: #8a6d1f;
+    --tip-bg: #10261c;
+    --tip-border: #2f7d55;
+    --code-text: #ff8383;
+    --danger: #ff8383;
+    --danger-bg: #331a1a;
+    --overlay: rgba(0, 0, 0, 0.6);
+    --scrollbar: #3a4048;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: "Segoe UI", "Yu Gothic UI", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.7;
+  /* ランチャーはページとして読むものではないので、テキスト選択は無効にしておく */
+  user-select: none;
+  cursor: default;
+}
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+code {
+  font-family: "Cascadia Code", "Consolas", "SF Mono", monospace;
+  background: var(--bg-code);
+  color: var(--code-text);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+/* ---------- ヘッダー ---------- */
+header {
+  flex: 0 0 auto;
+  padding: 20px 28px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-sidebar);
+}
+header h1 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+header p {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+/* ---------- 本文 ---------- */
+main {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 28px 0;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+.section-title::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ---------- プロジェクト一覧 ---------- */
+#project-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 -4px;
+  padding: 0 4px 4px;
+}
+
+.project {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-alt);
+  box-shadow: var(--shadow);
+  transition: border-color .12s, background .12s;
+}
+.project:hover {
+  border-color: var(--accent-dim);
+  background: var(--bg);
+}
+.project.selected {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+/* プロジェクト名の頭文字を並べたアイコン代わりのバッジ */
+.project .badge {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 15px;
+  color: #fff;
+  background: var(--accent);
+}
+.project.selected .badge { background: var(--accent-dim); }
+
+.project .info { min-width: 0; flex: 1 1 auto; }
+.project .name {
+  font-weight: 600;
+  font-size: 14.5px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.project .path {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;      /* パスが長い場合は先頭を省略して末尾を見せる */
+  text-align: left;
+}
+
+/* GitHubアップロード設定のトグルスイッチ */
+.project .github-toggle {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.project .github-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.project .github-toggle .slider {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--border);
+  position: relative;
+  transition: background .12s;
+}
+.project .github-toggle .slider::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  transition: transform .12s;
+}
+.project .github-toggle input:checked + .slider {
+  background: var(--accent);
+}
+.project .github-toggle input:checked + .slider::before {
+  transform: translateX(14px);
+}
+.project .github-toggle-label {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+#project-list.locked .github-toggle {
+  pointer-events: none;
+  opacity: .5;
+}
+
+.empty {
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+/* ---------- フッター（操作エリア） ---------- */
+footer {
+  flex: 0 0 auto;
+  padding: 14px 28px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-sidebar);
+}
+
+.row { display: flex; gap: 10px; align-items: center; }
+.row + .row { margin-top: 10px; }
+.row.end { justify-content: flex-end; }
+.spacer { flex: 1 1 auto; }
+
+button {
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color .12s, background .12s, opacity .12s;
+}
+button:hover:not(:disabled) { border-color: var(--accent-dim); background: var(--bg-alt); }
+button:disabled { opacity: .45; cursor: default; }
+
+button.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+button.primary:hover:not(:disabled) { background: var(--accent-dim); border-color: var(--accent-dim); }
+
+/* 取り消しの効かない操作は色で区別する */
+button.danger { color: var(--danger); }
+button.danger:hover:not(:disabled) { border-color: var(--danger); background: var(--danger-bg); }
+
+input[type="text"] {
+  font: inherit;
+  font-size: 13.5px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  user-select: text;
+  cursor: text;
+}
+input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+input[type="text"]::placeholder { color: var(--text-dim); }
+
+select {
+  font: inherit;
+  font-size: 13.5px;
+  flex: 0 0 auto;
+  max-width: 190px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+}
+select:focus { outline: none; border-color: var(--accent); }
+
+#template-description {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  min-height: 19px;
+}
+
+/* ---------- ステータス表示 ---------- */
+#status {
+  margin-top: 10px;
+  min-height: 20px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#status.error {
+  color: var(--code-text);
+}
+#status.busy::after {
+  content: "";
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-left: 8px;
+  border: 2px solid var(--accent);
+  border-right-color: transparent;
+  border-radius: 50%;
+  vertical-align: -1px;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- 確認ダイアログ ---------- */
+#confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+#confirm-overlay[hidden] { display: none; }
+
+.dialog {
+  width: 100%;
+  max-width: 440px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  padding: 22px 24px 18px;
+}
+.dialog h2 {
+  margin: 0 0 14px;
+  font-size: 17px;
+  font-weight: 700;
+}
+.dialog .target {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-alt);
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+.dialog .target .name { font-weight: 600; font-size: 14px; }
+.dialog .target .path {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;
+  text-align: left;
+}
+.dialog .note {
+  margin: 0 0 18px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  line-height: 1.6;
+}

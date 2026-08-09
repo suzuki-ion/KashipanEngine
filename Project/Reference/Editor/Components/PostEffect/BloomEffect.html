@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BloomEffect | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_PostEffect_BloomEffect">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>BloomEffect</h1>
+<p class="page-lead">しきい値を超える明部を抽出し、縮小ピラミッドでぼかして加算合成するブルームポストエフェクトです。C++側のAPIは<a href="../../../Engine/10_PostEffects.html">Engine/10_PostEffects.html</a>を参照してください。</p>
+</div>
+
+<div class="note">
+<strong>付与の前提</strong><br>
+ポストエフェクトは同一オブジェクトの <code>ScreenBufferObject</code> が持つ <code>ScreenBuffer</code> に対して適用されます。<code>ScreenBufferObject</code> が付与されていないオブジェクトへ <code>BloomEffect</code> を追加しても効果は発生しません。
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Threshold</td><td>ドラッグ入力欄（ステップ0.01、範囲0.0〜10.0）</td><td>ブルームとして抽出する明部の輝度しきい値。既定値 1.0</td></tr>
+<tr><td>SoftKnee</td><td>ドラッグ入力欄（ステップ0.01、範囲0.0〜1.0）</td><td>しきい値付近の抽出をなだらかにする度合い。既定値 0.5</td></tr>
+<tr><td>Intensity</td><td>ドラッグ入力欄（ステップ0.01、範囲0.0〜5.0）</td><td>最終合成時のブルームの強さ。既定値 0.8</td></tr>
+<tr><td>BlurRadius</td><td>ドラッグ入力欄（ステップ0.01、範囲0.0〜10.0）</td><td>各段のぼかし量。既定値 1.0</td></tr>
+<tr><td>Iterations</td><td>整数ドラッグ入力欄（1〜16にクランプ）</td><td>ダウンサンプル段数（縮小ピラミッドの段数）。既定値 4</td></tr>
+</table>
+
+<div class="note">
+<strong>多段パス構成</strong><br>
+Prefilter → Blur → Downsample/Blurのチェーン → Upsample累積 → Compositeという多段のレンダーターゲットを内部で確保して描画するため、<code>Iterations</code> を大きくするほど負荷が増えます。ツールチップは表示されません。
+</div>
+
+<h2>適用先の除外設定 <span class="badge imgui">USE_IMGUI</span></h2>
+<p>同一オブジェクトに <code>ScreenBufferObject</code> が2つ以上ある場合のみ、パラメータ項目の前に "Apply Target Filter" というツリーノードが表示されます。展開すると各 <code>ScreenBuffer</code> 名のチェックボックスが並び、チェックを外すとそのスクリーンバッファへはこのエフェクトが適用されなくなります（<code>ScreenBufferObject</code> が1つ以下の場合はこの項目自体が表示されません）。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/10_PostEffects.html">Engine/10_PostEffects.html</a> — <code>IPostProcessComponent</code> の仕組みと <code>BloomEffect</code> の多段パス構成の詳細</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本操作（同一オブジェクトに <code>ScreenBufferObject</code> を付与して使用）</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

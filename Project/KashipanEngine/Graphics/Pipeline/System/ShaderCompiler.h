@@ -5,13 +5,54 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+#include <vector>
+#include <cstdint>
 
+#include "Graphics/Pipeline/System/MaterialLayout.h"
+
+class ID3D12ShaderReflectionType;
 namespace KashipanEngine {
 
 class PipelineManager;
 
 /// @brief シェーダーコンパイラクラス
 class ShaderCompiler final {
+public:
+    /// @brief シェーダー変数の反射情報
+    struct ShaderVariable {
+        const std::string &VariableName() const { return variableName; }
+        const std::string &TypeName() const { return typeName; }
+        D3D_SHADER_INPUT_TYPE ResourceType() const { return resourceType; }
+        UINT BindPoint() const { return bindPoint; }
+        UINT BindCount() const { return bindCount; }
+        UINT Space() const { return space; }
+        UINT ByteOffset() const { return byteOffset; }
+        UINT ByteSize() const { return byteSize; }
+        UINT Rows() const { return rows; }
+        UINT Columns() const { return columns; }
+        UINT Elements() const { return elements; }
+        UINT Members() const { return members; }
+        bool IsResource() const { return isResource; }
+        const std::unordered_map<std::string, ShaderVariable> &MemberVariables() const { return memberVariables; }
+    private:
+        friend class ShaderCompiler;
+        std::string variableName;
+        std::string typeName;
+        D3D_SHADER_INPUT_TYPE resourceType = D3D_SIT_CBUFFER;
+        UINT bindPoint = 0;
+        UINT bindCount = 0;
+        UINT space = 0;
+        UINT byteOffset = 0;
+        UINT byteSize = 0;
+        UINT rows = 0;
+        UINT columns = 0;
+        UINT elements = 0;
+        UINT members = 0;
+        bool isResource = false;
+        std::unordered_map<std::string, ShaderVariable> memberVariables;
+    };
+
+private:
     /// @brief リフレクションのリソースバインディング情報構造体
     struct ResourceBindingInfo {
         const std::string &Name() const { return name; }
@@ -76,11 +117,13 @@ class ShaderCompiler final {
             return nullptr;
         }
         const std::unordered_map<std::string, ResourceBindingInfo> &ResourceBindings() const { return resourceBindings; }
+        const std::unordered_map<std::string, ShaderVariable> &ShaderVariables() const { return shaderVariables; }
         const std::vector<InputParameterInfo> &InputParameters() const { return inputParameters; }
         const ThreadGroupSize &GetThreadGroupSize() const { return threadGroupSize; }
     private:
         friend class ShaderCompiler;
         std::unordered_map<std::string, ResourceBindingInfo> resourceBindings;  ///< リソースバインディング情報マップ
+        std::unordered_map<std::string, ShaderVariable> shaderVariables;        ///< CPU側からバインドする変数とメンバ変数
         std::vector<InputParameterInfo> inputParameters;                        ///< インプットパラメーター情報マップ
         ThreadGroupSize threadGroupSize;                                        ///< スレッドグループサイズ（コンピュートシェーダー用）
     };
@@ -100,12 +143,15 @@ public:
         size_t GetBytecodeSize() const { return bytecode ? bytecode->GetBufferSize() : 0; }
         /// @brief リフレクション情報
         const ShaderReflectionInfo &GetReflectionInfo() const { return reflectionInfo; }
+        /// @brief struct Material のバイトレイアウト（Material を持たないシェーダーでは空）
+        const MaterialLayout &GetMaterialLayout() const { return materialLayout; }
     private:
         friend class ShaderCompiler;
         const uint32_t id;                          ///< シェーダーID
         std::string name;                           ///< シェーダー名
         Microsoft::WRL::ComPtr<IDxcBlob> bytecode;  ///< シェーダーバイトコード
         ShaderReflectionInfo reflectionInfo;        ///< シェーダーリフレクション情報
+        MaterialLayout materialLayout;              ///< struct Material のバイトレイアウト（HLSLソース走査で取得）
     };
 
     /// @brief シェーダーコンパイル情報構造体
@@ -137,6 +183,29 @@ private:
     /// @param shaderBlob コンパイル済みシェーダーブロブ
     /// @param outReflectionInfo 出力先リフレクション情報
     void ShaderReflection(IDxcBlob *shaderBlob, ShaderReflectionInfo &outReflectionInfo);
+
+    /// @brief 型情報からシェーダー変数情報を構築
+    ShaderVariable BuildShaderVariableFromType(
+        ID3D12ShaderReflectionType *type,
+        const std::string &name,
+        UINT byteOffset,
+        UINT byteSize
+    );
+    /// @brief シェーダー変数のバインディング情報を埋める
+    /// @param variable シェーダー変数情報
+    /// @param name 変数名
+    /// @param type シェーダー入力タイプ
+    /// @param bindPoint バインドポイント
+    /// @param bindCount バインドカウント
+    /// @param space レジスタスペース
+    void FillVariableBindingInfo(
+        ShaderCompiler::ShaderVariable &variable,
+        const std::string &name,
+        D3D_SHADER_INPUT_TYPE type,
+        UINT bindPoint,
+        UINT bindCount,
+        UINT space
+    );
 
     ID3D12Device *device_;
     Microsoft::WRL::ComPtr<IDxcCompiler3> dxcCompiler_;

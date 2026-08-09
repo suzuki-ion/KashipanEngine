@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>11. アセットを読み込む | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-editor-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="T11_LoadAssets">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>11. アセットを読み込む</h1>
+<p class="page-lead">Assets ウィンドウを使い、プロジェクトに含まれる画像・マテリアル・スクリプト・プレハブを探して利用します。</p>
+</div>
+
+<div class="tutorial-meta"><span>操作の起点: Window → Assets</span><span>ゲーム用ルート: Projects/&lt;プロジェクト名&gt;/Assets</span></div>
+
+<figure class="editor-shot">
+<img src="../../assets/tutorial/11-assets.png" alt="エディター下部に表示された Assets ウィンドウ">
+<figcaption>エディター下部の Assets ウィンドウ。左のフォルダーツリーと右のサムネイル一覧でプロジェクト内を移動できます。</figcaption>
+</figure>
+
+<h2>1. Assets ウィンドウを開く</h2>
+<ol class="steps">
+<li>メニューバーから <span class="ui-path">Window → Assets</span> を選択します。</li>
+<li>左のツリーで <code>Assets/Application</code> を選択します。</li>
+<li>右側のフォルダーをダブルクリックして目的のアセットへ移動します。</li>
+</ol>
+
+<h2>2. アセットを確認・割り当てる</h2>
+<p>ファイルをダブルクリックすると、対応する編集またはプレビュー画面が開きます。用途に応じて次の操作を使います。</p>
+<ul class="checklist">
+<li><strong>スクリプト（.as）</strong>: ScriptComponent の Script Path へドラッグ＆ドロップ</li>
+<li><strong>テクスチャ</strong>: 対応するテクスチャ欄へドラッグ＆ドロップ</li>
+<li><strong>マテリアル（.mat）</strong>: Renderer のマテリアル欄へドラッグ＆ドロップ</li>
+<li><strong>プレハブ（.prefab）</strong>: Scene View または Hierarchy へドラッグ＆ドロップして配置</li>
+</ul>
+
+<h2>3. フォルダーの役割を把握する</h2>
+<table>
+<thead><tr><th>場所</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td><code>Assets/</code>直下</td><td>ゲーム固有の Image、Model、Sound、Scripts など。シーン一覧（<code>SceneList.json</code>）と入力設定（<code>InputCommand.json</code>）もここに置かれます</td></tr>
+<tr><td><code>Assets/KashipanEngine/</code></td><td>エンジンの既定画像、フォント、翻訳、パイプライン設定など。新規プロジェクト作成時に <code>AssetsTemplate/</code> からコピーされます</td></tr>
+</tbody>
+</table>
+
+<div class="note">エンジン API から直接ロードする場合は、パスから各マネージャーのハンドルを取得してコンポーネントへ設定します。対応形式と API は <a href="../../Engine/09_Assets.html">アセットのリファレンス</a> を参照してください。</div>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

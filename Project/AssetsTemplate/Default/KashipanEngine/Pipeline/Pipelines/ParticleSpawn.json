@@ -1,0 +1,61 @@
+{
+	"PipelineType": "Compute",
+	"Name": "ParticleSpawn",
+	"Category": "Compute",
+	"RootSignature": {
+		"Flags": "D3D12_ROOT_SIGNATURE_FLAG_NONE",
+		"RootParameter": {
+			"Parameters": [
+				{
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_CBV",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+					"Descriptor": {
+						"ShaderRegister": 0,
+						"RegisterSpace": 0
+					}
+				},
+				{
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_SRV",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+					"Descriptor": {
+						"ShaderRegister": 0,
+						"RegisterSpace": 0
+					}
+				},
+				{
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_UAV",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+					"Descriptor": {
+						"ShaderRegister": 0,
+						"RegisterSpace": 0
+					}
+				},
+				{
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_UAV",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+					"Descriptor": {
+						"ShaderRegister": 1,
+						"RegisterSpace": 0
+					}
+				},
+				{
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_UAV",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+					"Descriptor": {
+						"ShaderRegister": 2,
+						"RegisterSpace": 0
+					}
+				}
+			]
+		}
+	},
+	"Shader": {
+		"BaseName": "ParticleSpawn",
+		"Compute": {
+			"UsePreset": "ParticleSpawn.CS"
+		}
+	},
+	"PipelineState": {
+		"UsePreset": "Default"
+	}
+}

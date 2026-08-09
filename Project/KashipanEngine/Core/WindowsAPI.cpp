@@ -11,6 +11,9 @@
 #if defined(USE_IMGUI)
 #include <imgui.h>
 #include <imgui_impl_win32.h>
+#include "Debug/ImGuiManager.h"
+#include "Scene/Editor/AssetsWindow.h"
+#include "Utilities/Translation.h"
 #endif
 
 #pragma comment(lib, "Shcore.lib")
@@ -106,9 +109,34 @@ LRESULT CALLBACK WindowsAPI::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
     LogScope scope;
 
 #if defined(USE_IMGUI)
-    // ImGui 用イベント処理（マルチビューポートのプラットフォームウィンドウも対象になる）
-    if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {
-        return 0;
+    // ImGui 用イベント処理
+    // ImGui のメインウィンドウ宛のメッセージのみ転送する。
+    // 他ウィンドウのメッセージも転送するとマウス座標が共有され、
+    // カーソルを合わせていない ImGui アイテムが反応してしまう。
+    // （マルチビューポートのプラットフォームウィンドウは ImGui 側が
+    //   独自のウィンドウプロシージャを持つためここには来ない）
+    if (hwnd == ImGuiManager::GetMainWindowHwnd()) {
+        if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {
+            return 0;
+        }
+
+        // OSのエクスプローラー等からウィンドウ全体へファイルがD&Dされた場合、
+        // Assetsウィンドウが現在開いているフォルダへ取り込む
+        if (msg == WM_DROPFILES) {
+            HDROP hDrop = reinterpret_cast<HDROP>(wparam);
+            const UINT fileCount = DragQueryFileW(hDrop, 0xFFFFFFFF, nullptr, 0);
+            std::vector<std::string> paths;
+            paths.reserve(fileCount);
+            for (UINT i = 0; i < fileCount; ++i) {
+                const UINT len = DragQueryFileW(hDrop, i, nullptr, 0);
+                std::wstring wpath(len, L'\0');
+                DragQueryFileW(hDrop, i, wpath.data(), len + 1);
+                paths.push_back(ConvertString(wpath));
+            }
+            DragFinish(hDrop);
+            AssetsWindow::HandleDroppedFiles(paths);
+            return 0;
+        }
     }
 #endif
 
@@ -145,7 +173,7 @@ bool WindowsAPI::RegisterWindow(Passkey<Window>, Window *window) {
     assert(window && "Window instance is null");
     HWND hwnd = window->GetWindowHandle();
     if (sWindowMap.find(hwnd) != sWindowMap.end()) {
-        Log("Window is already registered.", LogSeverity::Warning);
+        Log(Translation("engine.windowsapi.window.already.registered"), LogSeverity::Warning);
         return false;
     }
     sWindowMap[hwnd] = window;
@@ -156,7 +184,7 @@ bool WindowsAPI::UnregisterWindow(Passkey<Window>, HWND hwnd) {
     LogScope scope;
     auto it = sWindowMap.find(hwnd);
     if (it == sWindowMap.end()) {
-        Log("Window not found for unregistration.", LogSeverity::Warning);
+        Log(Translation("engine.windowsapi.window.unregister.notfound"), LogSeverity::Warning);
         return false;
     }
     sWindowMap.erase(it);

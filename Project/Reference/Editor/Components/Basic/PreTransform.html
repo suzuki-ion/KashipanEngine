@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PreTransform | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_PreTransform">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>PreTransform</h1>
+<p class="page-lead">1フレーム前のTransform情報を保持するコンポーネントです。Inspector上には値の閲覧用のテキストのみが表示され、編集可能な項目はありません。</p>
+</div>
+
+<div class="note">同オブジェクトの<code>Transform</code>の値を、<code>ScenePreTransform</code>が毎フレーム最後（全オブジェクト・全シーンコンポーネントの更新後）に「前フレームの値」としてこのコンポーネントへ書き込みます。モーションブラー等のGPU用途（ワールド行列）と、スクリプトからの補間・速度計算用途の両方に使われます。</div>
+
+<h2>Inspectorに表示される項目</h2>
+<p>全て読み取り専用のテキスト表示です（<code>ImGui::Text</code>）。編集用のウィジェットはありません。</p>
+<table>
+<tr><th>表示</th><th>内容</th></tr>
+<tr><td>Previous Translate: (x, y, z)</td><td>前フレームのローカル座標</td></tr>
+<tr><td>Previous Rotate (rad): (x, y, z)</td><td>前フレームのローカル回転（オイラー角）。<strong>ラジアンのまま表示され、Transformのように度への変換はされません</strong></td></tr>
+<tr><td>Previous Scale: (x, y, z)</td><td>前フレームのローカルスケール</td></tr>
+<tr><td>Previous World Position: (x, y, z)</td><td>前フレームのワールド座標</td></tr>
+<tr><td>Previous World Rotate (rad): (x, y, z)</td><td>前フレームのワールド回転（オイラー角、ラジアン）</td></tr>
+<tr><td>Previous World Scale: (x, y, z)</td><td>前フレームのワールドスケール</td></tr>
+</table>
+
+<div class="warn">表示専用のため、Inspector上でこれらの値を書き換えることはできません。値は毎フレーム自動的に上書きされます。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path">Add Component → Physics → PreTransform</span>。最大付与数の制限はありません。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/04_ObjectComponents.html">Engine/04_ObjectComponents.html</a> — <code>PreTransform</code>クラスのAPI（前フレーム値の取得メソッド等）</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本的な見方</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

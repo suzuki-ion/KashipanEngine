@@ -61,6 +61,11 @@ public:
         float Value() const noexcept { return value; }
     };
 
+    /// @brief 登録内容の保存/読込に使う既定のファイルパス（ゲームエンジンの起動時/終了時に使用される）
+    /// @details 入力アクションの定義はエンジンの既定リソースではなくゲーム固有のデータのため、
+    ///          Assets/KashipanEngine/ ではなくAssets直下に置く。値は論理パス。
+    static constexpr const char* kDefaultSaveFilePath = "Assets/InputCommand.json";
+
     InputCommand() = delete;
     InputCommand(Passkey<GameEngine>, const Input* input);
 

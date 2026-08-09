@@ -1,8 +1,11 @@
 #include "ExportDump.h"
 #include "Utilities/TimeUtils.h"
+#include "Core/ProjectPaths.h"
+#include "Utilities/FileIO/Directory.h"
 
 #include <DbgHelp.h>
 #include <strsafe.h>
+#include "Utilities/Translation.h"
 
 #pragma comment(lib, "Dbghelp.lib")
 
@@ -13,8 +16,9 @@ void ExportDumpFile(EXCEPTION_POINTERS *exceptionPointers) {
     Log(Translation("engine.crashhandler.crash.export.dump.start"), LogSeverity::Error);
     
     auto time = GetNowTime();
-    std::string dumpFilePath = "Dumps/";
-    CreateDirectory(L"Dumps", nullptr);
+    const std::string dumpDirectory = ProjectPaths::InEngineRoot("Dumps");
+    CreateDirectories(dumpDirectory);
+    std::string dumpFilePath = dumpDirectory + "/";
     dumpFilePath += std::to_string(time.year) + "-";
     dumpFilePath += std::to_string(time.month) + "-";
     dumpFilePath += std::to_string(time.day) + "_";

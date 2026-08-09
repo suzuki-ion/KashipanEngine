@@ -1,0 +1,295 @@
+﻿{
+	// プリセット名
+	"Name": "Example RootSignature",
+
+	//==============================================================
+	// RootSignature 設定サンプル
+	// ParseRootSignature(Json) が読むキー:
+	//   Flags        : ルートシグネチャフラグ
+	//   RootParameter: { "Parameters": [...] } (任意。省略可)
+	//   Sampler      : { "Samplers": [...] }   (任意。省略可)
+	// 未指定時は各フィールド 0 初期化 (Flags は NONE)
+	//==============================================================
+
+	"RootSignature_Minimal": {
+		// 入力レイアウト等を使う場合は ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT を付与
+		"Flags": "D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT",
+		"RootParameter": {
+			"Parameters": [
+				{
+					// 単一 CBV を直接ルートに配置 (b0)
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_CBV",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_VERTEX",
+					"Descriptor": {
+						"ShaderRegister": 0,
+						"RegisterSpace": 0
+					}
+				}
+			]
+		}
+		// Sampler 無し
+	},
+
+	"RootSignature_WithConstantsAndTable": {
+		"Flags": "D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT",
+		"RootParameter": {
+			"Parameters": [
+				{
+					// VS 用 32bit 定数 (ワールド行列 float4x4 -> 16)
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_VERTEX",
+					"Constants": {
+						"ShaderRegister": 0,
+						"RegisterSpace": 0,
+						"Num32BitValues": 16
+					}
+				},
+				{
+					// PS 用 定数 (float4 + float1 = 5)
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_PIXEL",
+					"Constants": {
+						"ShaderRegister": 1,
+						"RegisterSpace": 0,
+						"Num32BitValues": 5
+					}
+				},
+				{
+					// SRV テーブル: テクスチャ8枚 (t0～t7)
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_PIXEL",
+					"DescriptorTable": {
+						"Ranges": [
+							{
+								"RangeType": "D3D12_DESCRIPTOR_RANGE_TYPE_SRV",
+								"NumDescriptors": 8,
+								"BaseShaderRegister": 0,
+								"RegisterSpace": 0,
+								"OffsetInDescriptorsFromTableStart": 0
+							}
+						]
+					}
+				},
+				{
+					// UAV テーブル: 書き込みバッファ2つ (u0～u1)
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+					"DescriptorTable": {
+						"Ranges": [
+							{
+								"RangeType": "D3D12_DESCRIPTOR_RANGE_TYPE_UAV",
+								"NumDescriptors": 2,
+								"BaseShaderRegister": 0,
+								"RegisterSpace": 0,
+								"OffsetInDescriptorsFromTableStart": 0
+							}
+						]
+					}
+				}
+			]
+		},
+		"Sampler": {
+			"Samplers": [
+				{
+					// 線形フィルタ & Clamp
+					"Filter": "D3D12_FILTER_MIN_MAG_MIP_LINEAR",
+					"AddressU": "D3D12_TEXTURE_ADDRESS_MODE_CLAMP",
+					"AddressV": "D3D12_TEXTURE_ADDRESS_MODE_CLAMP",
+					"AddressW": "D3D12_TEXTURE_ADDRESS_MODE_CLAMP",
+					"MipLODBias": 0.0,
+					"MaxAnisotropy": 1,
+					"ComparisonFunc": "D3D12_COMPARISON_FUNC_ALWAYS",
+					"BorderColor": "D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK",
+					"MinLOD": 0.0,
+					"MaxLOD": "D3D12_FLOAT32_MAX",
+					"ShaderRegister": 0,
+					"RegisterSpace": 0,
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_PIXEL"
+				},
+				{
+					// 異方性サンプラ
+					"Filter": "D3D12_FILTER_ANISOTROPIC",
+					"AddressU": "D3D12_TEXTURE_ADDRESS_MODE_WRAP",
+					"AddressV": "D3D12_TEXTURE_ADDRESS_MODE_WRAP",
+					"AddressW": "D3D12_TEXTURE_ADDRESS_MODE_WRAP",
+					"MipLODBias": 0.0,
+					"MaxAnisotropy": 16,
+					"ComparisonFunc": "D3D12_COMPARISON_FUNC_ALWAYS",
+					"BorderColor": "D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK",
+					"MinLOD": 0.0,
+					"MaxLOD": "D3D12_FLOAT32_MAX",
+					"ShaderRegister": 1,
+					"RegisterSpace": 0,
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_PIXEL"
+				}
+			]
+		}
+	},
+
+	"RootSignature_DescriptorOnly": {
+		// テーブルのみ構成 (Compute でも利用可)
+		"Flags": "D3D12_ROOT_SIGNATURE_FLAG_NONE",
+		"RootParameter": {
+			"Parameters": [
+				{
+					// SRV (t0～t3)
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+					"DescriptorTable": {
+						"Ranges": [
+							{
+								"RangeType": "D3D12_DESCRIPTOR_RANGE_TYPE_SRV",
+								"NumDescriptors": 4,
+								"BaseShaderRegister": 0,
+								"RegisterSpace": 0,
+								"OffsetInDescriptorsFromTableStart": 0
+							}
+						]
+					}
+				},
+				{
+					// UAV (u0～u1)
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+					"DescriptorTable": {
+						"Ranges": [
+							{
+								"RangeType": "D3D12_DESCRIPTOR_RANGE_TYPE_UAV",
+								"NumDescriptors": 2,
+								"BaseShaderRegister": 0,
+								"RegisterSpace": 0,
+								"OffsetInDescriptorsFromTableStart": 0
+							}
+						]
+					}
+				},
+				{
+					// CBV (b0～b1)
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+					"DescriptorTable": {
+						"Ranges": [
+							{
+								"RangeType": "D3D12_DESCRIPTOR_RANGE_TYPE_CBV",
+								"NumDescriptors": 2,
+								"BaseShaderRegister": 0,
+								"RegisterSpace": 0,
+								"OffsetInDescriptorsFromTableStart": 0
+							}
+						]
+					}
+				}
+			]
+		}
+	},
+
+	"RootSignature_DirectDescriptors": {
+		// 直接ルート配置 (高頻度更新向け)
+		"Flags": "D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT",
+		"RootParameter": {
+			"Parameters": [
+				{
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_CBV",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_VERTEX",
+					"Descriptor": {
+						"ShaderRegister": 0,
+						"RegisterSpace": 0
+					}
+				},
+				{
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_SRV",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_PIXEL",
+					"Descriptor": {
+						"ShaderRegister": 0,
+						"RegisterSpace": 0
+					}
+				},
+				{
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_UAV",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+					"Descriptor": {
+						"ShaderRegister": 0,
+						"RegisterSpace": 0
+					}
+				}
+			]
+		}
+	},
+
+	"RootSignature_ComputeTypical": {
+		// Compute 用: IA 入力不要なので ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT は付けない
+		"Flags": "D3D12_ROOT_SIGNATURE_FLAG_NONE",
+		"RootParameter": {
+			"Parameters": [
+				{
+					// 定数 (Dispatch 毎更新)
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+					"Constants": {
+						"ShaderRegister": 0,
+						"RegisterSpace": 0,
+						"Num32BitValues": 8
+					}
+				},
+				{
+					// SRV テーブル
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+					"DescriptorTable": {
+						"Ranges": [
+							{
+								"RangeType": "D3D12_DESCRIPTOR_RANGE_TYPE_SRV",
+								"NumDescriptors": 4,
+								"BaseShaderRegister": 0,
+								"RegisterSpace": 0,
+								"OffsetInDescriptorsFromTableStart": 0
+							}
+						]
+					}
+				},
+				{
+					// UAV テーブル
+					"ParameterType": "D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE",
+					"ShaderVisibility": "D3D12_SHADER_VISIBILITY_ALL",
+					"DescriptorTable": {
+						"Ranges": [
+							{
+								"RangeType": "D3D12_DESCRIPTOR_RANGE_TYPE_UAV",
+								"NumDescriptors": 2,
+								"BaseShaderRegister": 0,
+								"RegisterSpace": 0,
+								"OffsetInDescriptorsFromTableStart": 0
+							}
+						]
+					}
+				}
+			]
+		}
+	},
+
+	//==============================================================
+	// 利用可能 Flags 一覧 (参考):
+	//  D3D12_ROOT_SIGNATURE_FLAG_NONE
+	//  D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT
+	//  D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS
+	//  D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS
+	//  D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS
+	//  D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS
+	//  D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS
+	//  D3D12_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT
+	//  D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE
+	//  D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS
+	//  D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS
+	//  D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED
+	//  D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED
+	//==============================================================
+
+	"_Notes": [
+		"// DescriptorTable の Ranges が空だと意味がないため必ず1以上設定。",
+		"// 32BIT_CONSTANTS は小容量頻繁更新に限定し大きなデータは CBV に移行。",
+		"// 直接 CBV/SRV/UAV を多数置くとルートサイズ膨張 → 可能ならテーブル集約。",
+		"// Sampler は静的サンプラ。動的に差し替える必要があれば DescriptorHeap から通常サンプラを使用。",
+		"// Flags の DENY_* を使うと特定ステージへの不要データ転送を減らせる。",
+		"// Compute 専用なら IA 関連フラグ不要。"
+	]
+}

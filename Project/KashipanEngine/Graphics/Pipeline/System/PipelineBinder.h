@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <d3d12.h>
 #include <string>
 #include "Graphics/PipelineManager.h"
@@ -18,20 +19,29 @@ public:
 
     /// @brief 指定パイプラインを使用（差分がある場合のみバインド）
     void UsePipeline(const std::string &name) {
-        if (!commandList_ || !manager_ || !manager_->HasPipeline(name)) return;
+        if (!commandList_ || !manager_) return;
+        // 未読み込みの場合、Object3D/Object2DのBlend×Culling×Toon組み合わせ名であれば
+        // PipelineManager::GetOrCreatePipeline がオンデマンドでPSOを生成する
+        if (!manager_->HasPipeline(name) && !manager_->GetOrCreatePipeline(name)) return;
         if (invalidated_ || name != currentName_) {
             const auto &info = manager_->GetPipeline(name);
-            // トポロジ設定
-            commandList_->IASetPrimitiveTopology(info.TopologyType());
-            // ルートシグネチャ（Render のみ）
             const auto &set = info.GetPipelineSet();
             if (info.Type() == PipelineType::Render) {
+                // トポロジ・ルートシグネチャはRenderパイプラインのみ設定する
+                commandList_->IASetPrimitiveTopology(info.TopologyType());
                 commandList_->SetGraphicsRootSignature(set.RootSignature());
+            } else {
+                commandList_->SetComputeRootSignature(set.RootSignature());
             }
             // PSO
             commandList_->SetPipelineState(set.PipelineState());
             currentName_ = name;
             invalidated_ = false;
+            // ルートシグネチャ切り替え時のみ増分する。この値が変わらない間は、以前バインドした
+            // ルート引数（カメラ・ライト等）がまだ有効なままだと判定できる
+            // （呼び出し元がパイプライン名だけでなくこの世代値も比較することで、間に別パイプラインへの
+            // 切り替えが挟まっていないかを確実に検出できる）
+            ++generation_;
         }
     }
 
@@ -40,6 +50,9 @@ public:
 
     /// @brief 現在使用中のパイプライン名
     const std::string &CurrentPipelineName() const { return currentName_; }
+
+    /// @brief ルートシグネチャが実際に切り替わった回数（0開始）。切り替わりが無ければ変化しない
+    std::uint64_t Generation() const noexcept { return generation_; }
 
     /// @brief 単一の頂点バッファを設定する
     /// @param vb VB リソース
@@ -78,6 +91,7 @@ private:
     PipelineManager* manager_ = nullptr; // 非所有
     std::string currentName_;
     bool invalidated_ = false;
+    std::uint64_t generation_ = 0;
 };
 
 } // namespace KashipanEngine

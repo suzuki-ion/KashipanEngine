@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpriteRenderer | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_SpriteRenderer">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>SpriteRenderer</h1>
+<p class="page-lead">2Dスプライトを描画するコンポーネントです。描画するメッシュ（通常は単位クアッド）は同一オブジェクトの<code>MeshFilter</code>から取得します。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a>を参照してください。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Target</td><td>コンボボックス（シーン上のオブジェクトから選択）</td><td>描画先コンポーネントを持つオブジェクトのみが候補。ヒエラルキーからのドラッグ&amp;ドロップにも対応</td></tr>
+<tr><td>Render Target Filter（折りたたみツリー）</td><td>描画先ごとのチェックボックス</td><td>対象オブジェクトが複数の描画先コンポーネントを持つ場合のみ表示</td></tr>
+<tr><td>Pipeline</td><td>コンボボックス</td><td>読み込み済みのレンダーパイプライン名から選択（既定値 <code>Object2D.DoubleSidedCulling.BlendNormal</code>）</td></tr>
+<tr><td>Material</td><td>コンボボックス＋アセットのドラッグ&amp;ドロップ受付</td><td>読み込み済みマテリアルから選択（既定値 <code>Default</code>）。<a href="../../Windows/05_AssetsWindow.html">Assets Window</a>からマテリアルファイルをドラッグ&amp;ドロップして設定することもできる。MeshRendererと違いマテリアルスロットは1つのみ</td></tr>
+<tr><td>Anchor</td><td>XYのドラッグ入力欄（ステップ0.01）</td><td>Transformの座標に一致させるメッシュ上の点。単位クアッド内の正規化座標（(0,0)=左下 ～ (1,1)=右上）。既定値(0.5, 0.5)=中心</td></tr>
+<tr><td>Pivot</td><td>XYのドラッグ入力欄（ステップ0.01）</td><td>回転・拡縮の中心にするメッシュ上の点。正規化座標での指定はAnchorと同じ。既定値(0.5, 0.5)=中心</td></tr>
+</table>
+
+<div class="note"><strong>AnchorとPivotを別々にする効果</strong><br>両方とも既定値(0.5, 0.5)の場合は違いが出ない。Pivotだけをずらすと回転・拡縮の中心がTransformの座標（Anchorの位置）からずれ、AnchorだけをずらすとTransformの座標に一致させる点そのものが変わる（見た目上はスプライト全体が平行移動する）。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path"><span>Add Component</span><i>›</i><span>Render</span><i>›</i><span>SpriteRenderer</span></span> から追加する。同一オブジェクトに複数付与可能。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a> — 描画先の指定の仕組み、<code>SpriteRenderer</code>クラスのAPI</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Object Inspectorの基本操作</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

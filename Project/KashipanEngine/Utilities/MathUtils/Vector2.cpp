@@ -14,8 +14,12 @@ Vector2 Lerp(const Vector2 &start, const Vector2 &end, float t) noexcept {
 Vector2 Slerp(const Vector2 &start, const Vector2 &end, float t) noexcept {
     Vector2 normalizedStart = Normalize(start);
     Vector2 normalizedEnd = Normalize(end);
-    float angle = std::acos(Dot(normalizedStart, normalizedEnd));
+    const float dotProduct = std::clamp(Dot(normalizedStart, normalizedEnd), -1.0f, 1.0f);
+    float angle = std::acos(dotProduct);
     float sinTheta = std::sin(angle);
+    if (std::abs(sinTheta) <= 1.0e-6f) {
+        return Normalize(Lerp(start, end, t));
+    }
 
     float t1 = std::sin(angle * (1.0f - t));
     float t2 = std::sin(angle * t);
@@ -76,11 +80,11 @@ Vector2 CatmullRomPosition(const std::vector<Vector2> &points, float t, bool isL
     return CatmullRomInterpolation(p0, p1, p2, p3, t2);
 }
 
-constexpr float Dot(const Vector2 &vector1, const Vector2 &vector2) noexcept {
+float Dot(const Vector2 &vector1, const Vector2 &vector2) noexcept {
     return vector1.x * vector2.x + vector1.y * vector2.y;
 }
 
-constexpr float Cross(const Vector2 &vector1, const Vector2 &vector2) noexcept {
+float Cross(const Vector2 &vector1, const Vector2 &vector2) noexcept {
     return vector1.x * vector2.y - vector1.y * vector2.x;
 }
 
@@ -88,7 +92,7 @@ float Length(const Vector2 &vector) noexcept {
     return std::sqrt(LengthSquared(vector));
 }
 
-constexpr float LengthSquared(const Vector2 &vector) noexcept {
+float LengthSquared(const Vector2 &vector) noexcept {
     return Dot(vector, vector);
 }
 

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-editor-data.js"></script>
+<script defer src="../assets/nav.js"></script>
+</head>
+<body data-page="00_Index">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div class="page-header">
+<h1>KashipanEngine エディタリファレンス</h1>
+<p class="page-lead">ImGuiベースの<strong>シーンエディタ</strong>（<code>KashipanEngine/Scene/Editor/</code> 配下）についてのリファレンスです。ここではエディタという<strong>ツール</strong>の使い方・画面構成・各コンポーネントのInspector表示を扱います。エンジン本体のC++ API（クラス・関数）は別サイトの<a href="../Engine/00_Index.html">エンジン本体リファレンス</a>を参照してください。</p>
+</div>
+
+<div class="tip">
+<strong>初めての方へ</strong><br>
+まずは<a href="Guide/00_Index.html">使い方ガイド</a>に沿って、シーン作成からスクリプトでキャラクターを動かすところまでを一通り体験することをおすすめします。個別の画面・コンポーネントの詳しい項目は、慣れてきたら下記の各リファレンスを辞書的に参照してください。
+</div>
+
+<h2>このリファレンスの構成</h2>
+<p>読者（想定する利用シーン）によって4つのセクションに分かれています。</p>
+<table>
+<tr><th>セクション</th><th>対象読者</th><th>内容</th></tr>
+<tr><td><a href="Architecture/01_Overview.html">内部アーキテクチャ</a></td><td>エディタ機能自体を実装・拡張するエンジン開発者</td><td><code>SceneEditor</code>・各ウィンドウクラス・<code>SceneEditorCommands</code>（Undo/Redo）・<code>PrefabUtility</code> などC++クラス構成</td></tr>
+<tr><td>ウィンドウ（下記目次）</td><td>エディタでゲームを作る利用者</td><td>各ImGuiウィンドウのメニュー・ボタン・操作方法</td></tr>
+<tr><td>コンポーネント（下記目次）</td><td>エディタでゲームを作る利用者</td><td>Inspector上に表示されるコンポーネントごとの項目・入力欄の説明</td></tr>
+<tr><td><a href="Guide/00_Index.html">使い方ガイド</a></td><td>初めてこのエンジンでゲームを作る利用者</td><td>シーン作成からシーン遷移まで、手順を追って学ぶチュートリアル</td></tr>
+</table>
+
+<h2>ウィンドウ</h2>
+<table>
+<tr><th>ページ</th><th>内容</th></tr>
+<tr><td><a href="Windows/01_MainMenuAndPlayback.html">メインメニュー / 再生コントロール</a></td><td>File/Edit/Window/Debug Windowsメニュー、Play・Pause・Stop、Undo/Redo、自動バックアップ</td></tr>
+<tr><td><a href="Windows/02_SceneObjectHierarchy.html">Scene Object Hierarchy</a></td><td>オブジェクトツリー、選択、ドラッグ&amp;ドロップ、右クリックメニュー、ショートカット</td></tr>
+<tr><td><a href="Windows/03_ObjectInspector.html">Scene Object Inspector</a></td><td>選択オブジェクトの名前・タグ・コンポーネント一覧、Add Component</td></tr>
+<tr><td><a href="Windows/04_SceneView.html">Scene View</a></td><td>ギズモ操作、ピッキング、表示切替（グリッド/ライト/カメラ/コライダー/ボーン）</td></tr>
+<tr><td><a href="Windows/05_AssetsWindow.html">Assets Window</a></td><td>フォルダブラウザ、ファイル操作、ドラッグ&amp;ドロップでのアサット割り当て</td></tr>
+<tr><td><a href="Windows/06_SceneComponentInspector.html">Scene Component Inspector</a></td><td>シーン直下のコンポーネント（<code>SceneRenderer</code> 等）の一覧・追加・編集</td></tr>
+<tr><td><a href="Windows/07_SceneVariablesMenu.html">Scene Variables</a></td><td>シーン変数の追加・編集・削除</td></tr>
+<tr><td><a href="Windows/08_SceneListAndSaveLoad.html">Scene List / Save &amp; Load</a></td><td>登録シーン一覧、保存・読込モーダル、フォルダ形式への変換</td></tr>
+<tr><td><a href="Windows/09_ProjectWindow.html">Project</a></td><td>プロジェクトの概念とフォルダ構成、プロジェクトランチャー、新規作成・切り替え、配布時のAssetsの扱い</td></tr>
+</table>
+
+<h2>コンポーネント</h2>
+<p>Inspector上でのコンポーネントごとの項目リファレンスです。C++側のクラス・メソッドの詳細は各ページからエンジン本体リファレンスへリンクしています。</p>
+<table>
+<tr><th>カテゴリ</th><th>内容</th></tr>
+<tr><td>Basic</td><td><code>Transform</code>・<code>Velocity</code>・<code>Shake</code>・<code>ScriptComponent</code>・<code>AudioSource</code> など基礎コンポーネント</td></tr>
+<tr><td>Render</td><td><code>MeshRenderer</code>・<code>Light</code>・<code>Camera3D</code> など描画コンポーネント</td></tr>
+<tr><td>Collider</td><td><code>BoxCollider</code>・<code>RigidBody3D</code> など当たり判定・物理コンポーネント</td></tr>
+<tr><td>PostEffect</td><td><code>BloomEffect</code>・<code>OutlineEffect</code> など<code>ScreenBufferObject</code>用ポストエフェクト</td></tr>
+<tr><td>Compute</td><td><code>ComputeShaderProcessing</code></td></tr>
+<tr><td>Scene</td><td><code>SceneRenderer</code> など、Scene Component Inspectorに表示されるシーン直下のコンポーネント</td></tr>
+</table>
+<p>左のサイドバーからカテゴリごとに個別のコンポーネントページへ移動できます。</p>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

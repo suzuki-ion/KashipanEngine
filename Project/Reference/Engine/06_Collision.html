@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>コライダーと物理演算 | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-engine-data.js"></script>
+<script defer src="../assets/nav.js"></script>
+</head>
+<body data-page="06_Collision">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>コライダーと物理演算</h1>
+<p class="page-lead"><code>KashipanEngine/Objects/Components/Collider/</code> の各種コライダーコンポーネントと、<code>KashipanEngine/Objects/Collision/Collider.h</code> にある衝突判定エンジンの薄いラッパーについてまとめます。3D判定は <a href="01_Overview.html">Externals/ReactPhysics3D</a> を内部で利用し、2D判定は独自の幾何アルゴリズム（<code>CollisionAlgorithms2D.h</code>）で行われます。</p>
+</div>
+
+<h2>ディレクトリ構成</h2>
+<pre><code>Objects/
+├── Collision/
+│   ├── Collider.h / .cpp          … 衝突判定エンジンの実体（ReactPhysics3Dラッパー、2D/3D共通管理）
+│   ├── CollisionAlgorithms2D.h    … 2D形状同士の交差判定アルゴリズム
+│   └── CollisionAlgorithms3D.h    … 3D形状同士の交差判定アルゴリズム（一部の下位処理で使用）
+└── Components/Collider/
+    ├── ICollider.h                … 全コライダーコンポーネントの基底クラス
+    ├── BoxCollider.h / SphereCollider.h / CapsuleCollider.h / MeshCollider.h / RayCollider.h   … 3D用
+    ├── Box2DCollider.h / Circle2DCollider.h / Capsule2DCollider.h / Ray2DCollider.h            … 2D用
+    └── RigidBody2D.h / RigidBody3D.h                                                            … 物理挙動
+</code></pre>
+
+<div class="note">
+<strong>ポイント</strong><br>
+「当たり判定の形状（<code>BoxCollider</code>等）」と「物理挙動（<code>RigidBody2D</code>/<code>RigidBody3D</code>）」は別コンポーネントです。<code>RigidBody</code> を付けずにコライダーだけを付ければ、物理的な押し戻しを行わない静的な当たり判定（トリガーやセンサー用途）として使えます。
+</div>
+
+<h2>衝突結果を受け取る構造体</h2>
+<p>
+低レベルの<code>Objects/Collision/Collider.h</code>には<code>HitInfo</code>という最小限のフィールド（<code>isHit</code> / <code>normal</code> / <code>penetration</code>）を持つ構造体もありますが、実際にコンポーネントの衝突コールバックへ渡されるのは <code>HitInfo2D</code> / <code>HitInfo3D</code> です。
+</p>
+
+<div class="api-card">
+<h4><code>HitInfo2D</code> / <code>HitInfo3D</code></h4>
+<div class="api-sig">struct HitInfo2D { // HitInfo3Dも同じ構成
+    bool isHit = false;
+    Vector3 normal{0.0f, 0.0f, 0.0f};
+    float penetration = 0.0f;
+
+    EmptyObject *selfObject = nullptr;
+    EmptyObject *otherObject = nullptr;
+    ICollider *selfCollider = nullptr;
+    ICollider *otherCollider = nullptr;
+};</div>
+<p><code>selfObject</code>/<code>selfCollider</code> がコールバックの持ち主側、<code>otherObject</code>/<code>otherCollider</code> が衝突相手側です。</p>
+</div>
+
+<div class="api-card">
+<h4>形状情報 <code>ColliderInfo3D</code> の形状バリアント</h4>
+<div class="api-sig">using ShapeVariant = std::variant&lt;
+    SphereShape3D,        // center, radius
+    BoxShape3D,            // center, halfExtents
+    CapsuleShape3D,        // center, radius, height
+    ConvexMeshShape3D,      // vertices, indices, scale
+    ConcaveMeshShape3D,     // vertices, indices, scale
+    HeightFieldShape3D&gt;;    // heights, width, length, minHeight, maxHeight, scale</div>
+<p>各コライダーコンポーネントの <code>BuildColliderInfo3D()</code>（または2D用の <code>BuildColliderInfo2D()</code>）が、Transformと自身のパラメータからこの形状情報を毎フレーム構築します。この情報は内部の <code>SceneObjectCollider</code> コンポーネントが収集し、<code>Collider</code> エンジンへ渡します。</p>
+</div>
+
+<h2>ICollider — コライダー共通基底クラス</h2>
+<p>
+全てのコライダーコンポーネントは <code>ICollider</code>（<code>Collision</code> カテゴリ）を継承します。生成時（<code>Initialize</code>）にシーンの <code>SceneObjectCollider</code> コンポーネントへ自動登録され、以後は毎フレーム <code>BuildColliderInfo2D</code>/<code>BuildColliderInfo3D</code> が呼ばれて最新の形状が読み取られるため、パラメータを変更しても再登録は不要です。
+</p>
+
+<div class="api-card">
+<h4><code>ICollider::Shape</code></h4>
+<div class="api-sig">enum class Shape {
+    Box, Sphere, Capsule, Ray, Mesh,       // 3D
+    Ray2D, Box2D, Circle2D, Capsule2D,     // 2D
+};</div>
+</div>
+
+<div class="api-card">
+<h4>トリガー・連続衝突判定（CCD）</h4>
+<div class="api-sig">Shape GetShape() const noexcept;
+bool Is2D() const noexcept;
+bool IsTrigger() const noexcept;
+void SetTrigger(bool isTrigger) noexcept;
+bool IsContinuousDetection() const noexcept;
+void SetContinuousDetection(bool enabled) noexcept;</div>
+<p><code>SetContinuousDetection(true)</code> にすると、前フレーム位置から現在位置までの移動経路を形状サイズ以下の刻みに分割して中間位置でも判定します。高速に動く弾丸など、通常判定ではすり抜けてしまうオブジェクトに使用します。</p>
+</div>
+
+<div class="api-card">
+<h4>衝突コールバック（3D用 / 2D用）</h4>
+<div class="api-sig">void SetOnCollisionEnter3D(std::function&lt;void(const HitInfo3D &amp;)&gt; callback);
+void SetOnCollisionStay3D(std::function&lt;void(const HitInfo3D &amp;)&gt; callback);
+void SetOnCollisionExit3D(std::function&lt;void(const HitInfo3D &amp;)&gt; callback);
+
+void SetOnCollisionEnter2D(std::function&lt;void(const HitInfo2D &amp;)&gt; callback);
+void SetOnCollisionStay2D(std::function&lt;void(const HitInfo2D &amp;)&gt; callback);
+void SetOnCollisionExit2D(std::function&lt;void(const HitInfo2D &amp;)&gt; callback);</div>
+</div>
+
+<div class="api-card">
+<h4>Transform同期設定</h4>
+<div class="api-sig">bool IsSyncPositionEnabled(int axis) const noexcept;
+bool IsSyncRotationEnabled() const noexcept;
+bool IsSyncScaleEnabled(int axis) const noexcept;
+Vector3 GetSyncedOwnerPosition() const;
+Vector3 GetSyncedOwnerRotationEuler() const;
+Vector3 GetSyncedOwnerScale() const;</div>
+<p>位置・スケールはそれぞれXYZ軸ごとに、同オブジェクトの <code>Transform</code> へ追従させるかを個別に選択できます。無効にした軸は形状計算上「値なし」（位置は0、スケールは1）として扱われます。位置は既定で全軸追従、スケールは既存挙動を変えないため既定で非追従です。回転は軸ごとの部分同期を行うとオイラー角分解の順序依存とジンバルロックにより反対向きの回転や不連続なジャンプが発生するため、部分同期はサポートせず「全軸同期」か「非同期（Identity）」の二択のみです（既定は全軸同期）。</p>
+</div>
+
+<h2>3Dコライダー</h2>
+
+<div class="api-card">
+<h4><code>BoxCollider</code></h4>
+<div class="api-sig">void SetSize(const Vector3 &amp;size);     // 既定 (1,1,1)
+void SetCenter(const Vector3 &amp;center); // ローカルオフセット</div>
+</div>
+
+<div class="api-card">
+<h4><code>SphereCollider</code></h4>
+<div class="api-sig">void SetRadius(float radius); // 既定 0.5
+void SetCenter(const Vector3 &amp;center);</div>
+</div>
+
+<div class="api-card">
+<h4><code>CapsuleCollider</code></h4>
+<div class="api-sig">void SetRadius(float radius); // 既定 0.5
+void SetHeight(float height); // 既定 1.0
+void SetCenter(const Vector3 &amp;center);</div>
+</div>
+
+<div class="api-card">
+<h4><code>MeshCollider</code></h4>
+<div class="api-sig">void SetConvex(bool convex) noexcept;                    // 既定 true
+bool IsConvex() const noexcept;
+void SetMeshHandle(ModelManager::ModelHandle handle) noexcept; // 未指定ならMeshFilterのメッシュを使用
+ModelManager::ModelHandle GetEffectiveMeshHandle() const;</div>
+<p>UnityのMeshColliderに相当します。<code>Convex</code>を有効にした場合のみ凸包として扱われ、他のMeshCollider同士でも衝突できます（物理エンジン側の制約により、非Convexなメッシュ同士の衝突判定には対応していません）。メッシュを明示的に指定しない場合は、同オブジェクトの <code>MeshFilter</code>（<a href="05_Rendering.html">05_Rendering.html</a> 参照）のメッシュをそのまま使います。</p>
+</div>
+
+<div class="api-card">
+<h4><code>RayCollider</code></h4>
+<div class="api-sig">void SetDirection(const Vector3 &amp;direction); // 既定 (0,-1,0)
+void SetMaxDistance(float maxDistance);        // 既定 10.0
+bool CastRay(HitInfo3D &amp;outHit) const;</div>
+<p>常駐する当たり判定形状を持たないため、他のコライダーのようなシェイプ同士の接触判定システムには乗りません。代わりに、<code>SetOnCollisionEnter3D</code>/<code>SetOnCollisionStay3D</code>/<code>SetOnCollisionExit3D</code>のいずれかが設定されている間だけ、毎フレームのUpdateで内部的にレイキャストを行い、前フレームのヒット対象との比較からEnter/Stay/Exitを自前で判定・発火します（コールバック未設定時はレイキャスト自体を省略します）。Stay中も接触点は常に1点（ヒット面の法線のみ、<code>penetration</code>は常に0）で、経路上の最も近いヒットのみが対象です。ヒット対象がフレームをまたいで別のコライダーへ入れ替わった場合は、同一フレーム内で旧対象のExit→新対象のEnterの順に発火します。<code>CastRay()</code>はこの自動判定とは独立して、任意のタイミングで単発のレイキャストを行い、<code>HitInfo3D</code>（<code>selfObject</code>/<code>otherObject</code>/<code>selfCollider</code>/<code>otherCollider</code>込み）を直接受け取れます。</p>
+</div>
+
+<h2>2Dコライダー</h2>
+
+<div class="api-card">
+<h4><code>Box2DCollider</code></h4>
+<div class="api-sig">void SetSize(const Vector2 &amp;size);     // 既定 (1,1)
+void SetCenter(const Vector2 &amp;center);</div>
+</div>
+
+<div class="api-card">
+<h4><code>Circle2DCollider</code></h4>
+<div class="api-sig">void SetRadius(float radius); // 既定 0.5
+void SetCenter(const Vector2 &amp;center);</div>
+</div>
+
+<div class="api-card">
+<h4><code>Capsule2DCollider</code></h4>
+<div class="api-sig">void SetStart(const Vector2 &amp;start); // 既定 (0, -0.5)
+void SetEnd(const Vector2 &amp;end);     // 既定 (0, 0.5)
+void SetRadius(float radius);         // 既定 0.5</div>
+</div>
+
+<div class="api-card">
+<h4><code>Ray2DCollider</code></h4>
+<div class="api-sig">void SetDirection(const Vector2 &amp;direction); // 既定 (0,-1)
+void SetLength(float length);                  // 既定 1.0</div>
+<p>オーナーオブジェクトのワールド座標を始点とし、指定した方向・長さの線分として扱われます。3Dの<code>RayCollider</code>と異なり明示的な<code>CastRay()</code>は持たず、常駐する線分形状として他のコライダーとの衝突コールバックの対象になります。</p>
+</div>
+
+<h2>RigidBody3D / RigidBody2D — 物理挙動</h2>
+<p>
+コライダーが「形状」を表すのに対し、<code>RigidBody</code>は「物理的な動き（質量・重力・速度）」を表すコンポーネントです。同一オブジェクトに複数のコライダーが付いている場合、どのコライダーの形状を物理ボディに使うかを <code>SetSelectedCollider()</code> で選べます（未選択の場合はどれでも使用可）。
+</p>
+
+<div class="api-card">
+<h4><code>RigidBody3D</code>（ReactPhysics3Dの<code>RigidBody</code>を内部で保持）</h4>
+<div class="api-sig">void SetBodyType(reactphysics3d::BodyType type); // Static / Kinematic / Dynamic
+void SetMass(float mass);              // 既定 1.0
+void SetUseGravity(bool enabled);      // 既定 true
+void SetInterpolate(bool enabled);     // 既定 true
+reactphysics3d::RigidBody *GetRigidBody() const;
+void SetSelectedCollider(ICollider *collider);
+ICollider *GetSelectedCollider() const;
+void SyncFromTransform();</div>
+<p><code>SyncFromTransform()</code> は現在のTransformの位置・回転を物理ボディへ即座に反映します。エディタでオブジェクトを移動させても生成済みの物理ボディは自動追従しないため、Play開始時にこれを呼んで同期を取る必要があります。物理ボディの位置・回転は毎フレーム <code>Update()</code> で Transform 側へ書き戻されます。</p>
+</div>
+
+<div class="api-card">
+<h4><code>RigidBody2D</code>（独自の簡易2D物理パラメータ）</h4>
+<div class="api-sig">void SetVelocity(const Vector2 &amp;velocity);
+const Vector2 &amp;GetVelocity() const noexcept;
+void SetMass(float mass);          // 既定 1.0
+void SetUseGravity(bool enabled);  // 既定 true
+void SetSelectedCollider(ICollider *collider);</div>
+</div>
+
+<h2>衝突コールバックの仕組み</h2>
+<p>
+C++側では <code>ICollider::SetOnCollisionEnter3D()</code> 等に <code>std::function&lt;void(const HitInfo3D &amp;)&gt;</code> を渡すことでコールバックを登録できます。<code>isTrigger</code>を有効にしたコライダーは物理的な押し戻し（衝突応答）を行わず、コールバック通知のみが行われます。
+</p>
+<div class="tip">
+<strong>AngelScriptからの利用</strong><br>
+ゲームロジックは通常C++ではなく<code>ScriptComponent</code>（<a href="Script/00_Index.html">Script/00_Index.html</a> 参照）で書きます。スクリプト側で <code>ScriptComponentBehavior</code> に以下のメソッドを実装すると、同一オブジェクトのコライダーの衝突イベントに応じて自動的に呼び出されます。
+<pre><code>void OnCollisionEnter(const HitInfo &amp;in) { /* 衝突開始時 */ }
+void OnCollisionStay(const HitInfo &amp;in)  { /* 衝突継続中、毎フレーム */ }
+void OnCollisionExit(const HitInfo &amp;in)  { /* 衝突終了時 */ }</code></pre>
+スクリプト側の <code>HitInfo</code> は <code>normal</code> / <code>penetration</code> / <code>selfObject</code> / <code>otherObject</code> / <code>selfCollider</code> / <code>otherCollider</code> を持ち、C++側の <code>HitInfo2D</code>/<code>HitInfo3D</code>を1つの型としてAngelScriptへ橋渡ししたものです。<code>ScriptComponent</code>は内部で<code>ICollider</code>の各コールバックをフックしてこれを実現しています。
+</div>
+
+<h2>トリガーと衝突フィルタ</h2>
+<p>
+<code>IsTrigger()</code>/<code>SetTrigger()</code>で、物理的な押し戻しを行わない「センサー」的なコライダーとして扱うかを切り替えられます。トリガーを有効にしても<code>OnCollisionEnter/Stay/Exit</code>系のコールバックは通常どおり発火します。
+</p>
+<div class="warn">
+<strong>実装メモ: 属性ベースの衝突フィルタ</strong><br>
+低レベルの <code>ColliderInfo2D</code>/<code>ColliderInfo3D</code> には<code>attribute</code>/<code>ignoreAttribute</code>という<code>std::bitset&lt;32&gt;</code>のペアがあり、<code>Collider.cpp</code>内部の判定処理（<code>ShouldTest</code>）はこれを使ってペアごとに判定をスキップするレイヤーマスク的な仕組みを持っています。ただし現時点では<code>ICollider</code>およびその派生クラスにこれを設定する公開APIは無く、内部的な拡張ポイントに留まっています。レイヤー的な衝突フィルタが必要な場合は、コールバック内で<code>otherObject</code>のタグ（<a href="03_GameObjects.html">03_GameObjects.html</a>のTag参照）等を見て判定するのが現状の方法です。
+</div>
+
+<h2>次に読むページ</h2>
+<ul>
+<li>当たり判定に応じたゲームロジックをスクリプトで書く → <a href="Script/00_Index.html">Script/00_Index.html</a></li>
+<li>描画コンポーネント（MeshFilter/MeshRenderer等）を確認する → <a href="05_Rendering.html">05_Rendering.html</a></li>
+<li>オブジェクト・タグの基礎に戻る → <a href="03_GameObjects.html">03_GameObjects.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

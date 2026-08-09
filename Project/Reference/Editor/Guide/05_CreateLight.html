@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5. ライトオブジェクトを作成する | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-editor-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="T05_CreateLight">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>5. ライトオブジェクトを作成する</h1>
+<p class="page-lead">Light Objectを追加し、光の種類・色・強さ・影と、ライトを適用する描画先を設定します。</p>
+</div>
+
+<div class="tutorial-meta"><span>操作の起点: Create Object → 3D</span><span>追加: Light・LightRenderer</span><span>描画先: MainScreen</span></div>
+
+<h2>1. Light Objectを作成する</h2>
+<ol class="steps">
+<li><strong>ライトテンプレートを選ぶ</strong>Hierarchyの空白を右クリックし、<span class="ui-path"><span>Create Object</span><i>›</i><span>3D</span><i>›</i><span>Light Object</span></span> を選択します。</li>
+<li><strong>名前を変更する</strong>Inspector上部のNameを<code>KeyLight</code>へ変更します。</li>
+<li><strong>向きを調整する</strong>Directional、Spot、Rect、DiscではTransformのローカル+Z方向が光の向きになります。Scene Viewのライト表示を見ながらRotateを調整します。</li>
+</ol>
+
+<figure class="editor-shot">
+<div class="screenshot-placeholder">
+<div class="screenshot-placeholder-inner">
+<strong>スクリーンショット差し替え位置</strong>
+KeyLightを選択し、照明されたScene ViewとInspectorのLight・LightRenderer設定を表示したエディター画面
+<br><code>05-light-object.png</code>
+</div>
+</div>
+<figcaption><strong>ライトオブジェクトの設定例。</strong> Scene Viewのライトアイコン・方向線・照明結果と、InspectorのType・Color・Intensity・Targetが確認できる構図を想定しています。</figcaption>
+</figure>
+
+<h2>2. Lightを設定する</h2>
+<p>Light Objectテンプレートには<code>Transform</code>、<code>Light</code>、<code>LightRenderer</code>が自動で追加されます。最初はシーン全体を照らしやすいDirectionalから始めます。</p>
+<ol class="steps">
+<li><code>Light</code>の<code>Type</code>を<code>Directional</code>にします。</li>
+<li><code>Color</code>を白に、<code>Intensity</code>を<code>1.0</code>にします。</li>
+<li>Scene View上部の<code>Lights</code>を有効にし、ライトのアイコンと方向線を確認します。</li>
+</ol>
+
+<h2>ライトの種類</h2>
+<table>
+<thead><tr><th>Type</th><th>用途</th><th>主に調整する項目</th></tr></thead>
+<tbody>
+<tr><td>Directional</td><td>太陽光のようにシーン全体を一定方向から照らす</td><td>TransformのRotate、Intensity</td></tr>
+<tr><td>Point</td><td>電球のように一点から全方向へ照らす</td><td>Translate、Radius、Decay</td></tr>
+<tr><td>Spot</td><td>スポットライトのように円錐状に照らす</td><td>Distance、Inner Angle、Outer Angle</td></tr>
+<tr><td>Rect / Disc</td><td>窓や面照明のような片面発光</td><td>Distance、Source Width・HeightまたはRadius</td></tr>
+<tr><td>Sphere / Tube / Box</td><td>形状と大きさを持つ全方向または体積的な光源</td><td>Radius、Source Size、Decay</td></tr>
+</tbody>
+</table>
+
+<h2>3. LightRendererへ描画先を設定する</h2>
+<ol class="steps">
+<li><code>LightRenderer</code>を展開します。</li>
+<li><code>Target</code>から<code>MainScreen</code>を選択します。</li>
+<li><code>Pipeline</code>は空欄のまま全パイプラインへ適用するか、照明対象と同じ<code>Object3D.Solid.BlendNormal</code>を選択します。</li>
+<li>設定後は<a href="07_AddComponents.html">7. コンポーネントを追加する</a>で描画対象を作成し、MainScreen Viewer上でライトのActiveを切り替えて明るさの変化を確認します。</li>
+</ol>
+
+<h2>4. 影を有効にする</h2>
+<ol class="steps">
+<li><code>Light</code>内のShadowセクションで<code>Cast Shadows</code>を有効にします。</li>
+<li><code>Shadow Resolution</code>は最初に<code>1024</code>または<code>2048</code>を選択します。</li>
+<li>影が表面から浮く場合はShadow Biasを下げ、縞状の影が出る場合は少し上げます。</li>
+<li>Directional、Point、SpotではShadow Softnessを上げると半影を柔らかくできます。</li>
+</ol>
+
+<div class="warn"><strong>影は描画負荷が高い機能です。</strong><br>複数ライトでCast Shadowsを有効にしたり、Shadow Resolutionを過度に高くしたりすると負荷が増えます。必要なライトだけで有効にしてください。</div>
+
+<ul class="checklist">
+<li>KeyLightにLightとLightRendererがある</li>
+<li>Type、Color、Intensityを設定できる</li>
+<li>LightRendererのTargetがMainScreenになっている</li>
+<li>Scene Viewでライトの位置または方向を確認できる</li>
+</ul>
+
+<div class="note"><strong>実際の照明結果は手順7で確認します</strong><br>この段階では照らすMesh Objectがまだ存在しません。ライト設定を保存して次へ進み、描画対象をMainScreenへ接続してから照明結果を確認します。</div>
+
+<p>各ライト型、面光源、シャドウAPIの詳細は<a href="../../Engine/05_Rendering.html">描画コンポーネントのリファレンス</a>を参照してください。</p>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

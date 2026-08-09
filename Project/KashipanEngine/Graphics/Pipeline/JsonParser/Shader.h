@@ -5,6 +5,8 @@
 #include "Utilities/FileIO/JSON.h"
 #include "Graphics/Pipeline/System/ShaderCompiler.h"
 #include "Graphics/Pipeline/ComponentsPresetContainer.h"
+#include "Utilities/Translation.h"
+#include "Utilities/Conversion/ConvertString.h"
 
 namespace KashipanEngine {
 namespace Pipeline::JsonParser {
@@ -40,11 +42,13 @@ inline ParsedShadersInfo ParseShader(const Json &json, const std::filesystem::pa
     bool hasAnyStage = false;
     for (auto *s : kStages) { if (json.contains(s)) { hasAnyStage = true; break; } }
 
+    // path/string()はWindows上でANSIコードページ変換になり、日本語等の非ASCIIパスが文字化けするため
+    // Utf8StringToPath/PathToUtf8Stringを介してUTF-8前提で変換する
     auto resolvePath = [&baseDir](std::string &p) {
         if (p.empty()) return;
-        std::filesystem::path pathObj(p);
+        std::filesystem::path pathObj = Utf8StringToPath(p);
         if (!baseDir.empty() && !pathObj.is_absolute()) {
-            p = (baseDir / pathObj).string();
+            p = PathToUtf8String(baseDir / pathObj);
         }
     };
 

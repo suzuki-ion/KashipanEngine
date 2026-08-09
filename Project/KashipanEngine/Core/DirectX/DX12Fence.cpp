@@ -1,5 +1,6 @@
 #include "DX12Fence.h"
 #include <stdexcept>
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

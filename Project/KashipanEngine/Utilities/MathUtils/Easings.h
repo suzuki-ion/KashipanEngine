@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include <vector>
 #include <cmath>
 #include <numbers>
@@ -96,6 +97,11 @@ Vector4 Lerp(const Vector4 &start, const Vector4 &end, const float &t);
 /// @param type イージングタイプ
 /// @return イージング適用済み値 0.0～1.0
 float Apply(float t, EaseType type);
+
+/// @brief EaseType を文字列へ変換する（"Linear"等、列挙子名そのまま。JSON保存用）
+const char *EaseTypeToString(EaseType type);
+/// @brief 文字列を EaseType へ変換する（不明な文字列の場合は Linear）
+EaseType StringToEaseType(const std::string &str);
 
 /// @brief 任意型の補間 Start -> End
 /// @param start 開始ベクトル/値

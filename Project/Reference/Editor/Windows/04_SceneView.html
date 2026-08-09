@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scene View | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-editor-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="W04_SceneView">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Scene View</h1>
+<p class="page-lead">編集中のシーンをデバッグカメラから見て、選択したオブジェクトをギズモで直接操作できるウィンドウです。専用のオフスクリーンバッファへ描画した結果を画像として表示しています。</p>
+</div>
+
+<h2>デバッグカメラの操作</h2>
+<table>
+<tr><th>操作</th><th>結果</th></tr>
+<tr><td>マウスホイール</td><td>ズームイン/アウト（注視点までの距離を変更）</td></tr>
+<tr><td>右ドラッグ</td><td>注視点を中心にオービット回転</td></tr>
+<tr><td>中ドラッグ</td><td>視点の平行移動（パン）</td></tr>
+</table>
+<p>ゲーム内のカメラ（<code>Camera3D</code>/<code>Camera2D</code>）とは独立した、エディター専用のカメラです。</p>
+
+<h2>オブジェクトの選択（ピッキング）</h2>
+<p>画像上で何も操作していない状態（ギズモをドラッグ中でない）で左クリックを離すと、クリック位置からのレイと各オブジェクトのメッシュ三角形との交差判定でオブジェクトを選択します。<code>Ctrl</code>を押しながらのクリックで複数選択へ追加できます。選択結果は<a href="02_SceneObjectHierarchy.html">Scene Object Hierarchy</a>・<a href="03_ObjectInspector.html">Scene Object Inspector</a>と共有されます。</p>
+<p><code>LightRenderer</code>/<code>CameraRenderer</code>が付いたオブジェクトのように<code>MeshFilter</code>のメッシュを持たないオブジェクトは、下記「Lights」「Cameras」チェックボックスで表示されるアイコン（マーカー）をクリックすることで選択できます。アイコンは深度テストせずメッシュより手前に表示されるため、クリック判定もメッシュの三角形判定より優先されます。マーカー表示を無効にしている種別はアイコンごとクリック判定からも除外されます。</p>
+
+<h2>選択オブジェクトのアウトライン表示</h2>
+<p>選択中のオブジェクト自身、またはその子孫が<code>MeshRenderer</code>/<code>SkinnedMeshRenderer</code>を持つ場合、そのメッシュへ固定色の押し出しアウトラインが自動的に表示されます。複数選択時は選択している全オブジェクトにそれぞれ表示されます。オン/オフを切り替えるチェックボックスはなく、常時有効です。</p>
+<div class="note"><strong>このシーンビューだけの表示です</strong><br>アウトラインはこのシーンビュー用の描画先にのみ適用され、ゲーム画面や<code>ScreenBufferObject</code>/<code>Window Object</code>など他の描画先には一切影響しません。オブジェクト自身のマテリアルが持つアウトライン設定（lilToon風シェーダーの<code>OutlineWidth</code>等）とも独立しており、マテリアル側でアウトラインを無効にしていても選択中はこの表示が出ます。</div>
+
+<h2>ギズモ</h2>
+<p>選択中のオブジェクトには <a href="https://github.com/CedricGuillemet/ImGuizmo">ImGuizmo</a> による操作ハンドルが表示されます。ツールバーの上部で操作の種類と基準座標系を切り替えます。</p>
+<table>
+<tr><th>ボタン</th><th>内容</th></tr>
+<tr><td>Translate</td><td>移動モード</td></tr>
+<tr><td>Rotate</td><td>回転モード</td></tr>
+<tr><td>Scale</td><td>拡大縮小モード</td></tr>
+<tr><td>Local</td><td>オブジェクトのローカル軸基準で操作する</td></tr>
+<tr><td>World</td><td>ワールド軸基準で操作する</td></tr>
+</table>
+<p>単一オブジェクト選択時はLocal/World切替が有効ですが、複数オブジェクトを選択している場合は選択群の平均位置を中心としたWorld基準のグループ操作になります。</p>
+
+<h2>表示切替チェックボックス</h2>
+<table>
+<tr><th>項目</th><th>内容</th></tr>
+<tr><td>Grid</td><td>基準グリッドの表示/非表示</td></tr>
+<tr><td>Lights</td><td><code>Light</code>コンポーネントを持つオブジェクトのアイコン表示</td></tr>
+<tr><td>Cameras</td><td><code>Camera3D</code>/<code>Camera2D</code>コンポーネントを持つオブジェクトのアイコン表示</td></tr>
+<tr><td>Colliders</td><td>各種コライダーコンポーネントのワイヤーフレーム表示</td></tr>
+<tr><td>Bones</td><td><code>SkinnedMeshRenderer</code>のボーン構造の表示</td></tr>
+</table>
+<p>これらの表示設定は次回起動時にも保持されます。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="02_SceneObjectHierarchy.html">Windows/02_SceneObjectHierarchy.html</a> — オブジェクトの選択・階層</li>
+<li><a href="03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Transformなど数値でのパラメータ編集</li>
+<li><a href="../Architecture/01_Overview.html">Architecture/01_Overview.html</a> — <code>SceneEditorView</code>のC++実装</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

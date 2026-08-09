@@ -585,3 +585,46 @@ Vector3 EaseInBounce(Vector3 x1, Vector3 x2, float t) { return ApplyScalar(EaseI
 Vector3 EaseOutBounce(Vector3 x1, Vector3 x2, float t) { return ApplyScalar(EaseOutBounce, x1, x2, t); }
 Vector3 EaseInOutBounce(Vector3 x1, Vector3 x2, float t) { return ApplyScalar(EaseInOutBounce, x1, x2, t); }
 Vector3 EaseOutInBounce(Vector3 x1, Vector3 x2, float t) { return ApplyScalar(EaseOutInBounce, x1, x2, t); }
+
+namespace {
+
+/// @brief EaseTypeと列挙子名の対応表（EaseTypeToString/StringToEaseType用）
+constexpr std::pair<const char *, EaseType> kEaseTypeNames[] = {
+	{ "Linear", EaseType::Linear },
+	{ "EaseInQuad", EaseType::EaseInQuad }, { "EaseOutQuad", EaseType::EaseOutQuad },
+	{ "EaseInOutQuad", EaseType::EaseInOutQuad }, { "EaseOutInQuad", EaseType::EaseOutInQuad },
+	{ "EaseInCubic", EaseType::EaseInCubic }, { "EaseOutCubic", EaseType::EaseOutCubic },
+	{ "EaseInOutCubic", EaseType::EaseInOutCubic }, { "EaseOutInCubic", EaseType::EaseOutInCubic },
+	{ "EaseInQuart", EaseType::EaseInQuart }, { "EaseOutQuart", EaseType::EaseOutQuart },
+	{ "EaseInOutQuart", EaseType::EaseInOutQuart }, { "EaseOutInQuart", EaseType::EaseOutInQuart },
+	{ "EaseInQuint", EaseType::EaseInQuint }, { "EaseOutQuint", EaseType::EaseOutQuint },
+	{ "EaseInOutQuint", EaseType::EaseInOutQuint }, { "EaseOutInQuint", EaseType::EaseOutInQuint },
+	{ "EaseInSine", EaseType::EaseInSine }, { "EaseOutSine", EaseType::EaseOutSine },
+	{ "EaseInOutSine", EaseType::EaseInOutSine }, { "EaseOutInSine", EaseType::EaseOutInSine },
+	{ "EaseInExpo", EaseType::EaseInExpo }, { "EaseOutExpo", EaseType::EaseOutExpo },
+	{ "EaseInOutExpo", EaseType::EaseInOutExpo }, { "EaseOutInExpo", EaseType::EaseOutInExpo },
+	{ "EaseInCirc", EaseType::EaseInCirc }, { "EaseOutCirc", EaseType::EaseOutCirc },
+	{ "EaseInOutCirc", EaseType::EaseInOutCirc }, { "EaseOutInCirc", EaseType::EaseOutInCirc },
+	{ "EaseInBack", EaseType::EaseInBack }, { "EaseOutBack", EaseType::EaseOutBack },
+	{ "EaseInOutBack", EaseType::EaseInOutBack }, { "EaseOutInBack", EaseType::EaseOutInBack },
+	{ "EaseInElastic", EaseType::EaseInElastic }, { "EaseOutElastic", EaseType::EaseOutElastic },
+	{ "EaseInOutElastic", EaseType::EaseInOutElastic }, { "EaseOutInElastic", EaseType::EaseOutInElastic },
+	{ "EaseInBounce", EaseType::EaseInBounce }, { "EaseOutBounce", EaseType::EaseOutBounce },
+	{ "EaseInOutBounce", EaseType::EaseInOutBounce }, { "EaseOutInBounce", EaseType::EaseOutInBounce },
+};
+
+} // namespace
+
+const char *EaseTypeToString(EaseType type) {
+	for (const auto &[name, value] : kEaseTypeNames) {
+		if (value == type) return name;
+	}
+	return "Linear";
+}
+
+EaseType StringToEaseType(const std::string &str) {
+	for (const auto &[name, value] : kEaseTypeNames) {
+		if (str == name) return value;
+	}
+	return EaseType::Linear;
+}

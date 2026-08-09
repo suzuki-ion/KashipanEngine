@@ -1,4 +1,5 @@
 #include "IndexBufferResource.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

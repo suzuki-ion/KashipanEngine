@@ -2,123 +2,249 @@
 #include <string>
 #include <memory>
 #include <cassert>
-#include <optional>
 #include <cstdint>
-#include "Graphics/Pipeline/System/ShaderVariableBinder.h"
-
+#include <functional>
+#include <type_traits>
+#include "Utilities/FileIO.h"
+#include "ComponentSerialize/ComponentRegistry.h"
+#include "Objects/ComponentRef.h"
+#include "Utilities/MyAny.h"
+#include "Utilities/Tag.h"
 #if defined(USE_IMGUI)
-#include <imgui.h>
+#include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
 #endif
 
 namespace KashipanEngine {
 
-class IObjectContext;
-class Object2DContext;
-class Object3DContext;
+class EmptyObject;
+class ObjectContext;
+class SceneContext;
+
+/// @brief コンポーネントが型ごとの一括更新（バッチ処理）対象かどうかを判定するトレイト
+/// @details クラスに public static な constexpr bool IsBatchProcessed() が定義されていればそれを使い、
+///          未定義の場合はバッチ処理対象外（オブジェクト単位で個別にUpdateが呼ばれる、今まで通りの動作）として扱う。
+///          バッチ処理対象とマークされた型は EmptyObject::RegenerateUpdateComponentsList() で
+///          個別Update呼び出しの対象から除外される。ただし現時点ではこの仕組みの土台のみで、
+///          Scene側で型ごとに一括更新を回す実装は存在しない（どの型もまだこのフラグをtrueにしていない）。
+template <typename T, typename = void>
+struct ComponentBatchTraits {
+    static constexpr bool kIsBatchProcessed = false;
+};
+template <typename T>
+struct ComponentBatchTraits<T, std::void_t<decltype(T::IsBatchProcessed())>> {
+    static constexpr bool kIsBatchProcessed = T::IsBatchProcessed();
+};
 
 /// @brief オブジェクトコンポーネントインターフェースクラス
+/// @details 派生クラスは COMPONENT_CATEGORY マクロ（または public static な
+///          std::vector<std::string> GetComponentCategory()）でカテゴリを宣言できる。
+///          カテゴリは階層構造（例: {"Collision", "Collider"}）で、
+///          Add Component メニューにてカテゴリごとのツリーで表示される。
 class IObjectComponent {
+    /// @brief コンポーネントの型ID設定用
+    static inline size_t sComponentTypeID = 0;
 public:
+    /// @brief メンバー変数の情報（ImGuiやKeyFrameAnimator等の外部からのアクセス用）
+    struct MemberVariable {
+        void *ptr = nullptr;
+        TypeInfo typeInfo;
+        /// @brief 外部からptr経由で値を書き込んだ後に呼ぶコールバック（未設定の場合はnullptr）
+        /// @details セッターを迂回した直接書き込みで必要になる副作用（Transformのワールド行列
+        ///          キャッシュ無効化など）を、コンポーネント側がここに登録しておく。
+        ///          外部から値を書き込んだ側は、書き込み後に必ずこれを呼ぶこと
+        std::function<void()> onModified;
+    };
+    /// @brief コンポーネントの型IDを取得
+    /// @tparam T コンポーネントの型
+    /// @return コンポーネントの型ID
+    template<typename T>
+    static size_t GetComponentTypeID() {
+        static size_t typeID = sComponentTypeID++;
+        return typeID;
+    }
+
     virtual ~IObjectComponent() = default;
     IObjectComponent(const IObjectComponent &) = delete;
     IObjectComponent &operator=(const IObjectComponent &) = delete;
     IObjectComponent(IObjectComponent &&) = delete;
     IObjectComponent &operator=(IObjectComponent &&) = delete;
 
+    /// @brief コンポーネントのクローンを作成（派生クラスで実装）
+    virtual std::unique_ptr<IObjectComponent> Clone() const = 0;
+
     /// @brief コンポーネントの種類を取得
     const std::string &GetComponentType() const { return kComponentType_; }
     /// @brief 1つのオブジェクトに登録可能な同じコンポーネントの最大数を取得
     size_t GetMaxComponentCountPerObject() const { return kMaxComponentCountPerObject_; }
+    /// @brief コンポーネントの型IDを取得
+    size_t GetComponentTypeID() const { return kComponentTypeID_; }
+    /// @brief 更新優先度を取得
+    int GetUpdatePriority() const { return updatePriority_; }
+    /// @brief 更新優先度を設定
+    void SetUpdatePriority(int priority) { updatePriority_ = priority; }
+    /// @brief アクティブ状態を取得
+    /// @details EmptyObject/ObjectContext の完全な型定義が必要なため、定義は IObjectComponent.cpp にある
+    bool IsActive() const;
+    /// @brief アクティブ状態を設定
+    /// @details オブジェクトへ登録済みの場合、有効化時にInitialize、無効化時にFinalizeが走る。
+    ///          定義は EmptyObject/ObjectContext の完全な型定義が必要なため IObjectComponent.cpp にある
+    void SetActive(bool active);
 
-    /// @brief 初期化処理（オブジェクトに登録された直後に呼ばれる想定）
-    /// @return 成功した場合はtrue、失敗した場合はfalseを返す。処理を行わない場合は std::nullopt を返す
-    virtual std::optional<bool> Initialize() { return std::nullopt; }
-    /// @brief 終了処理（オブジェクトから削除される直前に呼ばれる想定）
-    /// @return 成功した場合はtrue、失敗した場合はfalseを返す。処理を行わない場合は std::nullopt を返す
-    virtual std::optional<bool> Finalize() { return std::nullopt; }
+    /// @brief タグを設定する（文字列からハッシュ化される。空文字で未設定に戻る）
+    void SetTag(const std::string &tagName) {
+        tagName_ = tagName;
+        tag_ = Tag(tagName);
+    }
+    /// @brief タグを取得する（比較用）
+    const Tag &GetTag() const noexcept { return tag_; }
+    /// @brief タグの文字列を取得する（表示・保存用）
+    const std::string &GetTagName() const noexcept { return tagName_; }
 
-    /// @brief 更新処理（オブジェクトのUpdateで呼ばれる想定）
-    /// @return 成功した場合はtrue、失敗した場合はfalseを返す。処理を行わない場合は std::nullopt を返す
-    virtual std::optional<bool> Update() { return std::nullopt; }
+    /// @brief 所属オブジェクトを取得する（未所属の場合は nullptr）
+    /// @details ObjectContext の完全な型定義が必要なため、定義は IObjectComponent.cpp にある
+    const EmptyObject *GetOwnerObject() const;
+    /// @brief このコンポーネント自身を指す ComponentRef を取得する
+    /// @details フレームをまたいで安全に保持するためのハンドル。プールのスロット再利用による
+    ///          エイリアシングを避けるため、生ポインタの代わりにこちらを保持し、使う直前に
+    ///          SceneContext::ResolveComponent() 等で毎回解決すること。
+    ///          定義は EmptyObject の完全な型定義が必要なため IObjectComponent.cpp にある
+    ComponentRef GetComponentRef() const;
+
+    /// @brief 初期化処理
+    /// @details コンテキストは常に設定されるが、Initialize はコンポーネントが
+    ///          アクティブかつ allowInitialize が true の場合のみ実行される。
+    ///          （非アクティブの場合は有効化時に Initialize が走る）
+    /// @param allowInitialize 所有オブジェクトが非アクティブの場合などに false を渡す
+    void InitializeInterface(Passkey<EmptyObject>, ObjectContext *objectContext, SceneContext *sceneContext, bool allowInitialize = true) {
+        objectContext_ = objectContext;
+        sceneContext_ = sceneContext;
+        if (allowInitialize && IsActive()) {
+            Initialize();
+        }
+    }
+    /// @brief 終了処理
+    void FinalizeInterface(Passkey<EmptyObject>) { Finalize(); }
+    /// @brief 更新処理
+    void UpdateInterface(Passkey<EmptyObject>) { if (IsActive()) { Update(); } }
+
+#ifdef USE_IMGUI
+    /// @brief ImGui 表示（ウィンドウの Begin/End は呼ばない）
+    void ShowImGuiInterface(Passkey<EmptyObject>) { ShowImGui(); }
+    /// @brief 常時ImGui表示（ゲームループがポーズ中でも毎フレーム呼ばれる）
+    void ShowPersistentImGuiInterface(Passkey<EmptyObject>) { if (IsActive()) { ShowPersistentImGui(); } }
+#endif
+    JSON SaveToJsonInterface(Passkey<EmptyObject>) const {
+        JSON json;
+        json["priority"] = updatePriority_;
+        json["isActive"] = isActive_;
+        json["tag"] = tagName_;
+        json["customData"] = SaveToJson();
+        return json;
+    }
+    bool LoadFromJsonInterface(Passkey<EmptyObject>, const JSON &json) {
+        updatePriority_ = json.value("priority", 1);
+        isActive_ = json.value("isActive", true);
+        SetTag(json.value("tag", std::string{}));
+        if (json.contains("customData")) {
+            return LoadFromJson(json["customData"]);
+        }
+        return true;
+    }
+
+    /// @brief メンバ変数の取得（外部からの汎用アクセス用。ptr経由で書き込んだ後は必ずonModifiedを呼ぶこと）
+    /// @param key 変数のキー
+    /// @return メンバー変数の情報（存在しない場合は nullptr）
+    MemberVariable *GetMemberVariable(const std::string &key) {
+        auto it = memberVariables_.find(key);
+        if (it != memberVariables_.end()) {
+            return &it->second;
+        }
+        return nullptr;
+    }
+    /// @brief 全てのメンバー変数の取得
+    /// @return メンバー変数のマップ
+    const std::unordered_map<std::string, MemberVariable> &GetAllMemberVariables() const {
+        return memberVariables_;
+    }
+
+protected:
+    IObjectComponent(const std::string &typeName, size_t maxCount, size_t componentTypeID)
+        : kComponentType_(typeName), kMaxComponentCountPerObject_(maxCount), kComponentTypeID_(componentTypeID), updatePriority_(1) {}
+#define OBJECT_COMPONENT_CONSTRUCTOR(typeName, maxCount, initializeCode) \
+    typeName() : IObjectComponent(#typeName, maxCount, GetComponentTypeID<typeName>()) { REGISTER_COMPONENT_OBJECT(typeName); initializeCode }
+
+    /// @brief 初期化処理
+    virtual void Initialize() {}
+    /// @brief 終了処理
+    virtual void Finalize() {}
+    /// @brief 更新処理
+    virtual void Update() {}
 
 #if defined(USE_IMGUI)
     /// @brief ImGui 表示（ウィンドウの Begin/End は呼ばない）
-    virtual void ShowImGui() = 0;
+    virtual void ShowImGui() {
+        ImGui::Text("%s", TranslationC("component.iobjectcomponent.none"));
+    }
+    /// @brief 常時ImGui表示（ビューアウィンドウ等、ポーズ中も表示し続けたいものに使う）
+    virtual void ShowPersistentImGui() {}
 #endif
 
-    /// @brief シェーダー変数へのバインド処理 
-    /// @param binder シェーダー変数バインダー
-    /// @return 成功した場合はtrue、失敗した場合はfalseを返す。バインドを行わない場合は std::nullopt を返す
-    virtual std::optional<bool> BindShaderVariables(ShaderVariableBinder *binder) {
-        (void)binder;
-        return std::nullopt;
-    }
+    /// @brief コンポーネント情報をjsonへ保存
+    /// @return コンポーネント情報を含むjsonオブジェクトを返す。保存する情報がない場合は空のjsonオブジェクトを返す
+    virtual JSON SaveToJson() const { return JSON::object(); }
+    /// @brief jsonからコンポーネント情報を読み込み
+    /// @param json コンポーネント情報を含むjsonオブジェクト
+    /// @return 成功した場合はtrue、失敗した場合はfalseを返す。読み込む情報がない場合は true を返す
+    virtual bool LoadFromJson(const JSON &json) { (void)json; return true; }
 
-    /// @brief インスタンシング描画時のリソースバインド（バッチ単位で 1 回）
-    /// @param binder シェーダー変数バインダー
-    /// @param instanceCount インスタンス数
-    /// @return true を返した場合のみインスタンスデータ送信が呼ばれる。処理を行わない場合は std::nullopt を返す
-    virtual std::optional<bool> BindInstancingResources(ShaderVariableBinder *binder, std::uint32_t instanceCount) {
-        (void)binder;
-        (void)instanceCount;
-        return std::nullopt;
-    }
-
-    /// @brief インスタンシング描画時のインスタンスデータ送信（インスタンス単位）
-    /// @param instanceMap 送信先のインスタンスマップ
-    /// @param instanceIndex インスタンスのインデックス
-    /// @return 成功した場合はtrue、失敗した場合はfalseを返す。処理を行わない場合は std::nullopt を返す
-    virtual std::optional<bool> SubmitInstance(void *instanceMap, std::uint32_t instanceIndex) {
-        (void)instanceMap;
-        (void)instanceIndex;
-        return std::nullopt;
-    }
-
-    /// @brief 所属オブジェクトのコンテキストを設定
-    void SetOwnerContext(IObjectContext *context) {
-        if (!context) assert(false && "Owner context cannot be null.");
-        ownerObject_ = context;
-    }
-    
-    /// @brief コンポーネントのクローンを作成（派生クラスで実装）
-    virtual std::unique_ptr<IObjectComponent> Clone() const = 0;
-
-protected:
-    IObjectComponent(const std::string &componentType, size_t maxComponentCountPerObject)
-        : kComponentType_(componentType), kMaxComponentCountPerObject_(maxComponentCountPerObject) {}
     /// @brief 所属オブジェクトのコンテキストを取得
-    IObjectContext *GetOwnerContext() const { return ownerObject_; }
+    ObjectContext *GetOwnerObjectContext() const { return objectContext_; }
+    /// @brief 所属オブジェクトのシーンのコンテキストを取得
+    SceneContext *GetOwnerSceneContext() const { return sceneContext_; }
+
+    /// @brief メンバー変数を追加する
+    /// @param key 変数のキー
+    /// @param variable メンバー変数の情報
+    void AddMemberVariable(const std::string &key, const MemberVariable &variable) {
+        memberVariables_.insert_or_assign(key, variable);
+    }
+    /// @brief メンバー変数を追加する
+    /// @tparam T 変数の型
+    /// @param key 変数のキー
+    /// @param variable 変数のポインタ
+    /// @param onModified 外部からptr経由で値を書き込まれた後に呼ばれるコールバック
+    ///                   （セッター迂回時に必要な副作用がある場合のみ指定する）
+    template <typename T>
+    void AddMemberVariable(const std::string &key, T *variable, std::function<void()> onModified = nullptr) {
+        memberVariables_.insert_or_assign(key, MemberVariable{ static_cast<void *>(variable), GetValueType<T>(), std::move(onModified) });
+    }
+#define ADD_MEMBER_VARIABLE(var) AddMemberVariable(#var, &var)
+#define ADD_MEMBER_VARIABLE_WITH_CALLBACK(var, ...) AddMemberVariable(#var, &var, __VA_ARGS__)
 
 private:
     /// @brief コンポーネントの種類名
     const std::string kComponentType_ = "IObjectComponent";
     /// @brief 1つのオブジェクトに登録可能な同じコンポーネントの最大数
     const size_t kMaxComponentCountPerObject_ = 0xFF;
-    /// @brief オーナーオブジェクト
-    IObjectContext *ownerObject_ = nullptr;
-};
+    /// @brief コンポーネントの型ID
+    const size_t kComponentTypeID_ = MAXSIZE_T;
 
-/// @brief 2D向けオブジェクトコンポーネント基底クラス
-class IObjectComponent2D : public IObjectComponent {
-public:
-    virtual ~IObjectComponent2D() = default;
-protected:
-    using IObjectComponent::IObjectComponent;
+    /// @brief オーナーオブジェクトのコンテキスト
+    ObjectContext *objectContext_ = nullptr;
+    /// @brief 所属シーンのコンテキスト
+    SceneContext *sceneContext_ = nullptr;
 
-    /// @brief 2Dオブジェクトコンテキストの取得
-    Object2DContext *GetOwner2DContext() const;
-};
+    /// @brief 更新優先度（小さいほど先に更新される）
+    int updatePriority_ = 1;
+    /// @brief アクティブ状態（falseの場合はUpdateが呼ばれない）
+    bool isActive_ = true;
+    /// @brief タグ（比較用ハッシュ）と表示・保存用のタグ文字列
+    Tag tag_;
+    std::string tagName_;
 
-/// @brief 3D向けオブジェクトコンポーネント基底クラス
-class IObjectComponent3D : public IObjectComponent {
-public:
-    virtual ~IObjectComponent3D() = default;
-protected:
-    using IObjectComponent::IObjectComponent;
-
-    /// @brief 3Dオブジェクトコンテキストの取得
-    Object3DContext *GetOwner3DContext() const;
+    /// @brief メンバー変数のマップ（ImGuiなどからアクセスするための汎用的な変数格納用）
+    std::unordered_map<std::string, MemberVariable> memberVariables_;
 };
 
 } // namespace KashipanEngine

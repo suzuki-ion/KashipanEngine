@@ -1,4 +1,5 @@
 #include "UnorderedAccessResource.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

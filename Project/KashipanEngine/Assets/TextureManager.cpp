@@ -1,5 +1,6 @@
 #include "TextureManager.h"
 #include "Assets/CaseInsensitive.h"
+#include "Core/ProjectPaths.h"
 
 #include "Core/DirectXCommon.h"
 #include "Debug/Logger.h"
@@ -16,6 +17,7 @@
 
 
 #include <d3d12.h>
+#include <d3dx12.h>
 #include <wrl.h>
 
 #include <algorithm>
@@ -40,17 +42,31 @@ struct TextureEntry final {
     std::unique_ptr<ShaderResourceResource> texture;
     Microsoft::WRL::ComPtr<ID3D12Resource> upload;
 
+    std::vector<std::unique_ptr<ShaderResourceResource>> frameViews;
+    std::vector<UINT64> frameSrvGpuPtrs;
+    std::vector<UINT> frameSrvIndices;
+
     UINT width = 0;
     UINT height = 0;
     DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
     UINT64 srvGpuPtr = 0;
     UINT srvIndex = 0;
     UINT mipLevels = 1;
+    UINT frameCount = 1;
+    /// @brief DDSのキューブマップフラグ由来のキューブマップ判定結果
+    bool isCubemap = false;
+
+    /// @brief 外部管理テクスチャ（ScreenBuffer等）。非nullの場合はSRV/サイズをここから毎回取得する
+    const IShaderTexture *external = nullptr;
 };
 
 std::unordered_map<Handle, TextureEntry> sTextures;
 FileMap<Handle> sFileNameToHandle;
 FileMap<Handle> sAssetPathToHandle;
+
+// 外部管理テクスチャ用ハンドル（SRVインデックス由来のハンドルと衝突しない上位領域を使う）
+constexpr Handle kExternalHandleBase = 0x80000000u;
+Handle sNextExternalHandle = kExternalHandleBase;
 
 ID3D12Device* sDevice = nullptr;
 SRVHeap* sSrvHeap = nullptr;
@@ -72,15 +88,57 @@ bool HasSupportedImageExtension(const std::filesystem::path& p) {
 }
 
 std::string MakeAssetRelativePath(const std::string& assetsRoot, const std::string& fullPath) {
-    std::filesystem::path root(assetsRoot);
-    std::filesystem::path full(fullPath);
+    const std::filesystem::path root = Utf8StringToPath(assetsRoot);
+    const std::filesystem::path full = Utf8StringToPath(fullPath);
 
     std::error_code ec;
     auto rel = std::filesystem::relative(full, root, ec);
     if (ec) {
-        return NormalizePathSlashes(full.filename().string());
+        return NormalizePathSlashes(PathToUtf8String(full.filename()));
     }
-    return NormalizePathSlashes(rel.string());
+    return NormalizePathSlashes(PathToUtf8String(rel));
+}
+
+/// @brief 現在アクティブなTextureManagerインスタンス（ModelManager等からのテクスチャ登録用）
+TextureManager* sActiveInstance = nullptr;
+
+/// @brief デコード直後の画像を目的フォーマットへ変換し、ミップチェインを生成する
+/// @details ディスク読み込み（LoadTextureFromFile）・メモリ読み込み（LoadTextureFromMemory）の
+///          両方から共有される後処理
+DirectX::ScratchImage ConvertAndGenerateMips(DirectX::ScratchImage scratch, const DirectX::TexMetadata& meta, DXGI_FORMAT dstFormat) {
+    DirectX::ScratchImage converted;
+    if (meta.format != dstFormat) {
+        const HRESULT hr = DirectX::Convert(scratch.GetImages(), scratch.GetImageCount(), scratch.GetMetadata(), dstFormat, DirectX::TEX_FILTER_SRGB, DirectX::TEX_THRESHOLD_DEFAULT, converted);
+        if (FAILED(hr)) return DirectX::ScratchImage();
+    }
+    DirectX::ScratchImage finalImage = (meta.format == dstFormat) ? std::move(scratch) : std::move(converted);
+
+    // ミップマップ生成
+    DirectX::ScratchImage mipChain;
+    if (DirectX::IsCompressed(finalImage.GetMetadata().format)) {
+        // 圧縮形式の場合はミップマップ生成をスキップ
+        mipChain = std::move(finalImage);
+    } else {
+        HRESULT hr = DirectX::GenerateMipMaps(finalImage.GetImages(), finalImage.GetImageCount(), finalImage.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipChain);
+        if (FAILED(hr)) {
+            // ミップマップ生成に失敗した場合は元画像をそのまま使う
+            const DirectX::Image *baseImg = finalImage.GetImages();
+            if (!baseImg || !baseImg->pixels) {
+                return DirectX::ScratchImage();
+            }
+            hr = mipChain.InitializeFromImage(*baseImg);
+            if (FAILED(hr)) {
+                return DirectX::ScratchImage();
+            }
+        }
+    }
+
+    const DirectX::Image* img0 = mipChain.GetImages();
+    if (!img0 || !img0->pixels) {
+        return DirectX::ScratchImage();
+    }
+
+    return mipChain;
 }
 
 Handle RegisterEntry(TextureEntry&& entry) {
@@ -105,6 +163,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE TextureManager::TextureView::GetSrvHandle() const no
     if (handle_ == kInvalidHandle) return h;
     auto it = sTextures.find(handle_);
     if (it == sTextures.end()) return h;
+    if (it->second.external) return it->second.external->GetSrvHandle();
     h.ptr = it->second.srvGpuPtr;
     return h;
 }
@@ -113,6 +172,7 @@ std::uint32_t TextureManager::TextureView::GetWidth() const noexcept {
     if (handle_ == kInvalidHandle) return 0;
     auto it = sTextures.find(handle_);
     if (it == sTextures.end()) return 0;
+    if (it->second.external) return it->second.external->GetWidth();
     return static_cast<std::uint32_t>(it->second.width);
 }
 
@@ -120,6 +180,7 @@ std::uint32_t TextureManager::TextureView::GetHeight() const noexcept {
     if (handle_ == kInvalidHandle) return 0;
     auto it = sTextures.find(handle_);
     if (it == sTextures.end()) return 0;
+    if (it->second.external) return it->second.external->GetHeight();
     return static_cast<std::uint32_t>(it->second.height);
 }
 
@@ -140,10 +201,52 @@ bool TextureManager::BindTexture(ShaderVariableBinder* shaderBinder, const std::
     if (it == sTextures.end()) return false;
 
     D3D12_GPU_DESCRIPTOR_HANDLE h{};
-    h.ptr = it->second.srvGpuPtr;
+    if (it->second.external) {
+        h = it->second.external->GetSrvHandle();
+    } else {
+        h.ptr = it->second.srvGpuPtr;
+    }
     if (h.ptr == 0) return false;
 
     return shaderBinder->Bind(nameKey, h);
+}
+
+TextureManager::TextureHandle TextureManager::RegisterExternalTexture(const std::string& name, const IShaderTexture* texture) {
+    LogScope scope;
+    if (!texture || name.empty()) return kInvalidHandle;
+    // 同名の外部テクスチャは登録できない
+    if (sFileNameToHandle.find(name) != sFileNameToHandle.end()) return kInvalidHandle;
+
+    TextureEntry entry{};
+    entry.fileName = name;
+    entry.assetPath = name;
+    entry.external = texture;
+
+    const Handle handle = sNextExternalHandle++;
+    sFileNameToHandle[name] = handle;
+    sAssetPathToHandle[name] = handle;
+    sTextures.emplace(handle, std::move(entry));
+    return handle;
+}
+
+bool TextureManager::UnregisterExternalTexture(TextureHandle handle) {
+    LogScope scope;
+    auto it = sTextures.find(handle);
+    if (it == sTextures.end() || !it->second.external) return false;
+    sFileNameToHandle.erase(it->second.fileName);
+    sAssetPathToHandle.erase(it->second.assetPath);
+    sTextures.erase(it);
+    return true;
+}
+
+bool TextureManager::UnregisterExternalTexture(const IShaderTexture* texture) {
+    if (!texture) return false;
+    for (const auto &kv : sTextures) {
+        if (kv.second.external == texture) {
+            return UnregisterExternalTexture(kv.first);
+        }
+    }
+    return false;
 }
 
 TextureManager::TextureManager(Passkey<GameEngine>, DirectXCommon* directXCommon, const std::string& assetsRootPath)
@@ -153,16 +256,22 @@ TextureManager::TextureManager(Passkey<GameEngine>, DirectXCommon* directXCommon
         sDevice = directXCommon_->GetDeviceForTextureManager(Passkey<TextureManager>{});
         sSrvHeap = directXCommon_->GetSRVHeapForTextureManager(Passkey<TextureManager>{});
     }
+    sActiveInstance = this;
     LoadAllFromAssetsFolder();
 }
 
 TextureManager::~TextureManager() {
     LogScope scope;
+    if (sActiveInstance == this) sActiveInstance = nullptr;
     sTextures.clear();
     sFileNameToHandle.clear();
     sAssetPathToHandle.clear();
     sSrvHeap = nullptr;
     sDevice = nullptr;
+}
+
+TextureManager* TextureManager::GetActiveInstance(Passkey<ModelManager>) {
+    return sActiveInstance;
 }
 
 void TextureManager::LoadAllFromAssetsFolder() {
@@ -179,24 +288,16 @@ void TextureManager::LoadAllFromAssetsFolder() {
     };
     flatten(filtered);
 
-	// ファイルごとに非同期タスクを追加してミップマップの生成をする
-    for (const auto& f : files) {
-        mipMapContainer_.AddMipMap(f, LoadTextureFromFile(f));
-        /*Plugin::addAsyncTask([this, f] {
-            mipMapContainer_.AddMipMap(f, LoadTextureFromFile(f));
-			}, 0);*/
-    }
-	// 非同期タスクが残っている場合は完了させる
-    while (Plugin::hasAsyncTasks())
-    {
-		Plugin::executeAsyncTasks();
-    }
+    // ファイルI/O・デコード・ミップマップ生成はCPU処理のみでGPUリソースに触れないため、
+    // スレッドプールで並列実行する（mipMapContainer_はshared_mutexで保護済み）
+    Plugin::RunParallelAndWait(files.size(), [this, &files](size_t i) {
+        mipMapContainer_.AddMipMap(files[i], LoadTextureFromFile(files[i]));
+        });
 
-	// ミップマップの生成がすべて完了したら、テクスチャの登録を行う
+    // 全ファイルのデコードが完了したら、メインスレッドでGPUリソース作成・アップロード・登録を順に行う
     for (const auto& f : files) {
-		LoadTexture(f);
+        LoadTexture(f);
     }
-    
 }
 
 TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& filePath) {
@@ -211,7 +312,7 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
         Log(Translation("engine.texture.loading.failed.loadfile") + filePath, LogSeverity::Error);
         return kInvalidHandle;
 	}
-    std::filesystem::path p(filePath);
+    const std::filesystem::path p = Utf8StringToPath(filePath);
 
 	// メタデータからテクスチャ情報を取得
     const auto &mmeta = mipChain->GetMetadata();
@@ -220,21 +321,31 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
     const DirectX::Image* img0 = mipChain->GetImages();
 
     TextureEntry entry{};
-    entry.fullPath = NormalizePathSlashes(p.string());
+    entry.fullPath = NormalizePathSlashes(PathToUtf8String(p));
     entry.assetPath = MakeAssetRelativePath(assetsRootPath_, entry.fullPath);
-    entry.fileName = p.filename().string();
+    entry.fileName = PathToUtf8String(p.filename());
     entry.width = static_cast<UINT>(img0->width);
     entry.height = static_cast<UINT>(img0->height);
     entry.format = mmeta.format;
     entry.mipLevels = static_cast<UINT>(mmeta.mipLevels);
 
+    const bool isCube = mmeta.IsCubemap();
+    UINT arraySize = 1;
+    if (isCube) {
+        arraySize = 6;
+    } else if (mmeta.arraySize > 1) {
+        arraySize = static_cast<UINT>(mmeta.arraySize);
+    }
+    entry.frameCount = arraySize;
+    entry.isCubemap = isCube;
+
     // GPU側テクスチャ + SRV を Resources 経由で作成（COPY_DEST から開始してこの後のコピーに備える）
-    if (mmeta.IsCubemap()) {
+    if (isCube) {
         D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
         srvDesc.Format = entry.format;
         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
         srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        srvDesc.TextureCube.MipLevels = entry.mipLevels;
+        srvDesc.TextureCube.MipLevels = UINT_MAX;
         srvDesc.TextureCube.MostDetailedMip = 0;
         srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
         entry.texture = std::make_unique<ShaderResourceResource>(
@@ -245,8 +356,29 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
             nullptr,
             D3D12_RESOURCE_STATE_COPY_DEST,
             mipLevels,
+            arraySize,
             &srvDesc);
-        
+
+    } else if (arraySize > 1) {
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+        srvDesc.Format = entry.format;
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        srvDesc.Texture2DArray.MipLevels = entry.mipLevels;
+        srvDesc.Texture2DArray.MostDetailedMip = 0;
+        srvDesc.Texture2DArray.FirstArraySlice = 0;
+        srvDesc.Texture2DArray.ArraySize = arraySize;
+        srvDesc.Texture2DArray.ResourceMinLODClamp = 0.0f;
+        entry.texture = std::make_unique<ShaderResourceResource>(
+            entry.width,
+            entry.height,
+            entry.format,
+            D3D12_RESOURCE_FLAG_NONE,
+            nullptr,
+            D3D12_RESOURCE_STATE_COPY_DEST,
+            mipLevels,
+            arraySize,
+            &srvDesc);
     } else {
         entry.texture = std::make_unique<ShaderResourceResource>(
             entry.width,
@@ -255,17 +387,59 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
             D3D12_RESOURCE_FLAG_NONE,
             nullptr,
             D3D12_RESOURCE_STATE_COPY_DEST,
-            mipLevels);
+            mipLevels,
+            arraySize);
     } 
 
     {
         auto *desc = entry.texture->GetDescriptorHandleInfoForTextureManager(Passkey<TextureManager>{});
         if (!desc) {
-            Log(Translation("engine.texture.loading.failed.createresource") + p.string(), LogSeverity::Error);
+            Log(Translation("engine.texture.loading.failed.createresource") + PathToUtf8String(p), LogSeverity::Error);
             return kInvalidHandle;
         }
         entry.srvGpuPtr = desc->gpuHandle.ptr;
         entry.srvIndex = desc->index;
+        entry.frameViews.clear();
+        entry.frameSrvGpuPtrs.clear();
+        entry.frameSrvIndices.clear();
+        entry.frameViews.reserve(arraySize);
+        entry.frameSrvGpuPtrs.reserve(arraySize);
+        entry.frameSrvIndices.reserve(arraySize);
+    }
+
+    if (arraySize > 1) {
+        for (UINT slice = 0; slice < arraySize; ++slice) {
+            D3D12_SHADER_RESOURCE_VIEW_DESC sliceDesc{};
+            sliceDesc.Format = entry.format;
+            sliceDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+            sliceDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+            sliceDesc.Texture2DArray.MipLevels = entry.mipLevels;
+            sliceDesc.Texture2DArray.MostDetailedMip = 0;
+            sliceDesc.Texture2DArray.FirstArraySlice = slice;
+            sliceDesc.Texture2DArray.ArraySize = 1;
+            sliceDesc.Texture2DArray.ResourceMinLODClamp = 0.0f;
+
+            auto sliceView = std::make_unique<ShaderResourceResource>(
+                entry.width,
+                entry.height,
+                entry.format,
+                D3D12_RESOURCE_FLAG_NONE,
+                entry.texture->GetResource(),
+                D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                mipLevels,
+                arraySize,
+                &sliceDesc);
+            auto *sliceDescInfo = sliceView->GetDescriptorHandleInfoForTextureManager(Passkey<TextureManager>{});
+            if (!sliceDescInfo) {
+                continue;
+            }
+            entry.frameSrvGpuPtrs.push_back(sliceDescInfo->gpuHandle.ptr);
+            entry.frameSrvIndices.push_back(sliceDescInfo->index);
+            entry.frameViews.push_back(std::move(sliceView));
+        }
+    } else {
+        entry.frameSrvGpuPtrs.push_back(entry.srvGpuPtr);
+        entry.frameSrvIndices.push_back(entry.srvIndex);
     }
 
     // 各サブリソースのフットプリント情報を取得
@@ -303,7 +477,7 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
         nullptr,
         IID_PPV_ARGS(entry.upload.GetAddressOf()));
     if (FAILED(hr)) {
-        Log(Translation("engine.texture.loading.failed.createupload") + p.string(), LogSeverity::Error);
+        Log(Translation("engine.texture.loading.failed.createupload") + PathToUtf8String(p), LogSeverity::Error);
         return kInvalidHandle;
     }
 
@@ -313,17 +487,22 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
         D3D12_RANGE range{ 0, 0 };
         hr = entry.upload->Map(0, &range, &mapped);
         if (FAILED(hr) || !mapped) {
-            Log(Translation("engine.texture.loading.failed.map") + p.string(), LogSeverity::Error);
+            Log(Translation("engine.texture.loading.failed.map") + PathToUtf8String(p), LogSeverity::Error);
             return kInvalidHandle;
         }
         uint8_t* dstAll = static_cast<uint8_t*>(mapped);
-        for (UINT i = 0; i < subresourceCount; ++i) {
-            const DirectX::Image* img = mipChain->GetImage(i, 0, 0);
-            if (!img || !img->pixels) continue;
-            auto &fp = layouts[i].Footprint;
-            uint8_t* dst = dstAll + layouts[i].Offset;
-            for (UINT y = 0; y < numRows[i]; ++y) {
-                memcpy(dst + static_cast<size_t>(y) * fp.RowPitch, img->pixels + static_cast<size_t>(y) * img->rowPitch, img->rowPitch);
+        const UINT arrayCount = texDesc.DepthOrArraySize;
+        const UINT mipCount = texDesc.MipLevels;
+        for (UINT arraySlice = 0; arraySlice < arrayCount; ++arraySlice) {
+            for (UINT mip = 0; mip < mipCount; ++mip) {
+                const UINT subresource = D3D12CalcSubresource(mip, arraySlice, 0, mipCount, arrayCount);
+                const DirectX::Image* img = mipChain->GetImage(mip, arraySlice, 0);
+                if (!img || !img->pixels) continue;
+                auto &fp = layouts[subresource].Footprint;
+                uint8_t* dst = dstAll + layouts[subresource].Offset;
+                for (UINT y = 0; y < numRows[subresource]; ++y) {
+                    memcpy(dst + static_cast<size_t>(y) * fp.RowPitch, img->pixels + static_cast<size_t>(y) * img->rowPitch, img->rowPitch);
+                }
             }
         }
         entry.upload->Unmap(0, nullptr);
@@ -361,11 +540,11 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
 
     const auto handle = RegisterEntry(std::move(entry));
     if (handle == kInvalidHandle) {
-        Log(Translation("engine.texture.loading.failed.register") + p.string(), LogSeverity::Error);
+        Log(Translation("engine.texture.loading.failed.register") + PathToUtf8String(p), LogSeverity::Error);
         return kInvalidHandle;
     }
 
-    Log(Translation("engine.texture.loading.succeeded") + p.string(), LogSeverity::Info);
+    Log(Translation("engine.texture.loading.succeeded") + PathToUtf8String(p), LogSeverity::Info);
     return handle;
 }
 
@@ -384,26 +563,26 @@ DirectX::ScratchImage TextureManager::LoadTextureFromFile(const std::string& fil
         }
     }
 
-    std::filesystem::path p(filePath);
+    const std::filesystem::path p = Utf8StringToPath(filePath);
 
     if (!std::filesystem::exists(p)) {
-        Log(Translation("engine.texture.loading.failed.notfound") + p.string(), LogSeverity::Warning);
+        Log(Translation("engine.texture.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return DirectX::ScratchImage();
     }
     if (!HasSupportedImageExtension(p)) {
-        Log(Translation("engine.texture.loading.failed.unsupported") + p.string(), LogSeverity::Warning);
+        Log(Translation("engine.texture.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
         return DirectX::ScratchImage();
     }
 
     if (!directXCommon_ || !sDevice || !sSrvHeap) {
-        Log(Translation("engine.texture.loading.failed.notinitialized") + p.string(), LogSeverity::Error);
+        Log(Translation("engine.texture.loading.failed.notinitialized") + PathToUtf8String(p), LogSeverity::Error);
         return DirectX::ScratchImage();
     }
 
     DirectX::TexMetadata meta{};
     DirectX::ScratchImage scratch;
 
-    const std::wstring wpath = ConvertString(p.string());
+    const std::wstring wpath = ConvertString(PathToUtf8String(p));
 
     HRESULT hr = E_FAIL;
     const std::string ext = ToLower(p.extension().string());
@@ -417,11 +596,10 @@ DirectX::ScratchImage TextureManager::LoadTextureFromFile(const std::string& fil
         hr = DirectX::LoadFromWICFile(wpath.c_str(), DirectX::WIC_FLAGS_FORCE_RGB, &meta, scratch);
     }
     if (FAILED(hr)) {
-        Log(Translation("engine.texture.loading.failed.decode") + p.string(), LogSeverity::Warning);
+        Log(Translation("engine.texture.loading.failed.decode") + PathToUtf8String(p), LogSeverity::Warning);
         return DirectX::ScratchImage();
     }
 
-    DirectX::ScratchImage converted;
     DXGI_FORMAT dstFormat;
     if (ext == ".hdr" || ext == ".tga") {
         dstFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -434,42 +612,53 @@ DirectX::ScratchImage TextureManager::LoadTextureFromFile(const std::string& fil
         dstFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
     }
 
-    if (meta.format != dstFormat) {
-        hr = DirectX::Convert(scratch.GetImages(), scratch.GetImageCount(), scratch.GetMetadata(), dstFormat, DirectX::TEX_FILTER_SRGB, DirectX::TEX_THRESHOLD_DEFAULT, converted);
-        if (FAILED(hr)) return DirectX::ScratchImage();
-    }
-    const DirectX::ScratchImage& finalImage = (meta.format == dstFormat) ? scratch : converted;
+    return ConvertAndGenerateMips(std::move(scratch), meta, dstFormat);
+}
 
-    // ミップマップ生成
-    DirectX::ScratchImage mipChain;
-    if (DirectX::IsCompressed(finalImage.GetMetadata().format)) {
-        // 圧縮形式の場合はミップマップ生成をスキップ
-        hr = mipChain.InitializeFromImage(*finalImage.GetImages());
-        if (FAILED(hr)) {
-            return DirectX::ScratchImage();
-        }
-    } else {
-        hr = DirectX::GenerateMipMaps(finalImage.GetImages(), finalImage.GetImageCount(), finalImage.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipChain);
-        if (FAILED(hr)) {
-            // ミップマップ生成に失敗した場合は元画像をそのまま使う
-            const DirectX::Image *baseImg = finalImage.GetImages();
-            if (!baseImg || !baseImg->pixels) {
-                return DirectX::ScratchImage();
-            }
-            hr = mipChain.InitializeFromImage(*baseImg);
-            if (FAILED(hr)) {
-                return DirectX::ScratchImage();
-            }
-        }
-    }
+DirectX::ScratchImage TextureManager::LoadTextureFromMemory(const void* data, size_t dataSize) {
+    if (!data || dataSize == 0) return DirectX::ScratchImage();
+    if (!directXCommon_ || !sDevice || !sSrvHeap) return DirectX::ScratchImage();
 
-    const DirectX::Image* img0 = mipChain.GetImages();
-    if (!img0 || !img0->pixels) {
+    DirectX::TexMetadata meta{};
+    DirectX::ScratchImage scratch;
+    // glTF等の埋め込みテクスチャは常にWICが認識できる圧縮形式（PNG/JPEG）のため、
+    // ファイル拡張子を問わずWICメモリデコードのみで対応する
+    HRESULT hr = DirectX::LoadFromWICMemory(static_cast<const uint8_t*>(data), dataSize, DirectX::WIC_FLAGS_FORCE_RGB, &meta, scratch);
+    if (FAILED(hr)) {
+        Log(Translation("engine.texture.loading.failed.decode") + std::string("(memory)"), LogSeverity::Warning);
         return DirectX::ScratchImage();
     }
 
-    return mipChain;
+    return ConvertAndGenerateMips(std::move(scratch), meta, DXGI_FORMAT_R8G8B8A8_UNORM);
 }
+
+TextureManager::TextureHandle TextureManager::RegisterTextureFromMemory(const std::string& registerPath, const void* data, size_t dataSize) {
+    if (registerPath.empty()) return kInvalidHandle;
+
+    const auto existing = GetTextureFromAssetPath(MakeAssetRelativePath(assetsRootPath_, registerPath));
+    if (existing != kInvalidHandle) return existing;
+
+    DirectX::ScratchImage mipChain = LoadTextureFromMemory(data, dataSize);
+    if (mipChain.GetImageCount() == 0) return kInvalidHandle;
+
+    mipMapContainer_.AddMipMap(registerPath, std::move(mipChain));
+    return LoadTexture(registerPath);
+}
+
+#if defined(USE_IMGUI)
+TextureManager::TextureHandle TextureManager::LoadTextureDynamic(const std::string &filePath) {
+    if (!sActiveInstance) return kInvalidHandle;
+
+    const auto existing = GetTextureFromAssetPath(MakeAssetRelativePath(sActiveInstance->assetsRootPath_, filePath));
+    if (existing != kInvalidHandle) return existing;
+
+    DirectX::ScratchImage mipChain = sActiveInstance->LoadTextureFromFile(filePath);
+    if (mipChain.GetImageCount() == 0) return kInvalidHandle;
+
+    sActiveInstance->mipMapContainer_.AddMipMap(filePath, std::move(mipChain));
+    return sActiveInstance->LoadTexture(filePath);
+}
+#endif
 
 TextureManager::TextureHandle TextureManager::GetTexture(TextureHandle handle) {
     LogScope scope;
@@ -508,6 +697,29 @@ std::string TextureManager::GetTextureAssetPath(TextureHandle handle) {
     return it->second.assetPath;
 }
 
+bool TextureManager::RenameTexture(const std::string &oldAssetPath, const std::string &newAssetPath) {
+    LogScope scope;
+    const std::string normalizedOld = NormalizePathSlashes(oldAssetPath);
+    auto pathIt = sAssetPathToHandle.find(normalizedOld);
+    if (pathIt == sAssetPathToHandle.end()) return false;
+    const Handle handle = pathIt->second;
+    auto entryIt = sTextures.find(handle);
+    if (entryIt == sTextures.end()) return false;
+
+    TextureEntry &entry = entryIt->second;
+    sAssetPathToHandle.erase(pathIt);
+    sFileNameToHandle.erase(entry.fileName);
+
+    const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
+    entry.assetPath = normalizedNew;
+    entry.fileName = PathToUtf8String(Utf8StringToPath(normalizedNew).filename());
+    entry.fullPath = ProjectPaths::AssetsRoot() + "/" + normalizedNew;
+
+    sAssetPathToHandle[normalizedNew] = handle;
+    sFileNameToHandle[entry.fileName] = handle;
+    return true;
+}
+
 std::vector<TextureManager::TextureListEntry> TextureManager::GetLoadedTextureListEntries() {
     LogScope scope;
     std::vector<TextureListEntry> out;
@@ -519,9 +731,16 @@ std::vector<TextureManager::TextureListEntry> TextureManager::GetLoadedTextureLi
         e.handle = kv.first;
         e.fileName = t.fileName;
         e.assetPath = t.assetPath;
-        e.width = t.width;
-        e.height = t.height;
-        e.srvGpuPtr = t.srvGpuPtr;
+        if (t.external) {
+            e.width = t.external->GetWidth();
+            e.height = t.external->GetHeight();
+            e.srvGpuPtr = t.external->GetSrvHandle().ptr;
+        } else {
+            e.width = t.width;
+            e.height = t.height;
+            e.srvGpuPtr = t.srvGpuPtr;
+            e.isCubemap = t.isCubemap;
+        }
         out.push_back(std::move(e));
     }
 
@@ -539,10 +758,10 @@ ImTextureID ToImGuiTextureIdFromGpuPtr(UINT64 gpuPtr) {
 } // namespace
 
 void TextureManager::ShowImGuiLoadedTexturesWindow() {
-    ImGui::Begin("TextureManager - Loaded Textures");
+    ImGui::Begin(TranslationLabel("editor.texturemanager.window"));
 
     const auto entries = GetImGuiTextureListEntries();
-    ImGui::Text("Loaded Textures: %d", static_cast<int>(entries.size()));
+    ImGui::Text(TranslationC("editor.texturemanager.loaded_textures_d"), static_cast<int>(entries.size()));
 
     static ImGuiTextFilter filter;
     filter.Draw("Filter");
@@ -581,7 +800,7 @@ void TextureManager::ShowImGuiLoadedTexturesWindow() {
             ImGui::TextUnformatted(e.assetPath.c_str());
 
             ImGui::TableSetColumnIndex(3);
-            ImGui::Text("%ux%u", e.width, e.height);
+            ImGui::Text(TranslationC("editor.texturemanager.ux_u"), e.width, e.height);
 
             ImGui::TableSetColumnIndex(4);
             if (e.srvGpuPtr != 0) {
@@ -603,26 +822,74 @@ void TextureManager::ShowImGuiLoadedTexturesWindow() {
     ImGui::End();
 
     if (sShowTextureViewer) {
-        if (ImGui::Begin("Texture Viewer", &sShowTextureViewer)) {
+        if (ImGui::Begin(TranslationLabel("editor.texturemanager.viewer.window"), &sShowTextureViewer)) {
             if (sSelectedTexture.srvGpuPtr != 0) {
-                ImGui::Text("Handle: %u", sSelectedTexture.handle);
+                ImGui::Text(TranslationC("editor.texturemanager.handle_u"), sSelectedTexture.handle);
                 ImGui::TextUnformatted(sSelectedTexture.assetPath.c_str());
                 ImGui::Separator();
 
-                ImVec2 avail = ImGui::GetContentRegionAvail();
-                const float w = static_cast<float>(sSelectedTexture.width);
-                const float h = static_cast<float>(sSelectedTexture.height);
-                ImVec2 drawSize = avail;
-                if (w > 0.0f && h > 0.0f) {
-                    const float sx = avail.x / w;
-                    const float sy = avail.y / h;
-                    const float s = (sx < sy) ? sx : sy;
-                    drawSize = ImVec2(w * s, h * s);
-                }
+                int selectedFrame = 0;
+                auto it = sTextures.find(sSelectedTexture.handle);
+                if (it != sTextures.end()) {
+                    auto &entry = it->second;
+                    static TextureManager::TextureHandle sLastHandle = TextureManager::kInvalidHandle;
+                    static int sSelectedFrame = 0;
+                    if (sLastHandle != sSelectedTexture.handle) {
+                        sSelectedFrame = 0;
+                        sLastHandle = sSelectedTexture.handle;
+                    }
 
-                ImGui::Image(ToImGuiTextureIdFromGpuPtr(sSelectedTexture.srvGpuPtr), drawSize);
+                    if (entry.frameCount > 1) {
+                        std::vector<std::string> labels;
+                        labels.reserve(entry.frameCount);
+                        std::vector<const char*> labelPtrs;
+                        labelPtrs.reserve(entry.frameCount);
+                        for (UINT i = 0; i < entry.frameCount; ++i) {
+                            labels.push_back(std::to_string(i));
+                        }
+                        for (const auto &label : labels) {
+                            labelPtrs.push_back(label.c_str());
+                        }
+                        ImGui::Combo(TranslationLabel("editor.texturemanager.frame"), &sSelectedFrame, labelPtrs.data(), static_cast<int>(labelPtrs.size()));
+                    }
+
+                    if (sSelectedFrame < 0) sSelectedFrame = 0;
+                    if (static_cast<size_t>(sSelectedFrame) >= entry.frameSrvGpuPtrs.size()) sSelectedFrame = 0;
+                    selectedFrame = sSelectedFrame;
+
+                    ImVec2 avail = ImGui::GetContentRegionAvail();
+                    const float w = static_cast<float>(sSelectedTexture.width);
+                    const float h = static_cast<float>(sSelectedTexture.height);
+                    ImVec2 drawSize = avail;
+                    if (w > 0.0f && h > 0.0f) {
+                        const float sx = avail.x / w;
+                        const float sy = avail.y / h;
+                        const float s = (sx < sy) ? sx : sy;
+                        drawSize = ImVec2(w * s, h * s);
+                    }
+
+                    if (!entry.frameSrvGpuPtrs.empty()) {
+                        const UINT64 gpuPtr = entry.frameSrvGpuPtrs[static_cast<size_t>(selectedFrame)];
+                        ImGui::Image(ToImGuiTextureIdFromGpuPtr(gpuPtr), drawSize);
+                    } else {
+                        ImGui::Image(ToImGuiTextureIdFromGpuPtr(sSelectedTexture.srvGpuPtr), drawSize);
+                    }
+                } else {
+                    ImVec2 avail = ImGui::GetContentRegionAvail();
+                    const float w = static_cast<float>(sSelectedTexture.width);
+                    const float h = static_cast<float>(sSelectedTexture.height);
+                    ImVec2 drawSize = avail;
+                    if (w > 0.0f && h > 0.0f) {
+                        const float sx = avail.x / w;
+                        const float sy = avail.y / h;
+                        const float s = (sx < sy) ? sx : sy;
+                        drawSize = ImVec2(w * s, h * s);
+                    }
+
+                    ImGui::Image(ToImGuiTextureIdFromGpuPtr(sSelectedTexture.srvGpuPtr), drawSize);
+                }
             } else {
-                ImGui::TextUnformatted("No texture selected.");
+                ImGui::TextUnformatted(TranslationC("editor.texturemanager.no_texture_selected"));
             }
         }
         ImGui::End();

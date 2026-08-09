@@ -10,6 +10,15 @@ void ShaderVariableBinder::SetNameMap(const MyStd::NameMap<ShaderVariableBinding
 
 const MyStd::NameMap<ShaderVariableBinding>& ShaderVariableBinder::GetNameMap() const { return nameMap_; }
 
+const ShaderVariableBinding *ShaderVariableBinder::FindBinding(const std::string& nameKey) const {
+    return nameMap_.TryGet(nameKey);
+}
+
+const ShaderCompiler::ShaderVariable *ShaderVariableBinder::FindShaderVariable(const std::string& nameKey) const {
+    const auto *binding = FindBinding(nameKey);
+    return binding ? &binding->Variable() : nullptr;
+}
+
 static ShaderStage VisibilityToStage(D3D12_SHADER_VISIBILITY vis) {
     switch (vis) {
     case D3D12_SHADER_VISIBILITY_VERTEX: return ShaderStage::Vertex;
@@ -28,6 +37,7 @@ ShaderStage ShaderVariableBinder::StageFromNameKey(const std::string& nameKey) {
     if (nameKey.rfind("Geometry:", 0) == 0) return ShaderStage::Geometry;
     if (nameKey.rfind("Hull:", 0) == 0) return ShaderStage::Hull;
     if (nameKey.rfind("Domain:", 0) == 0) return ShaderStage::Domain;
+    if (nameKey.rfind("Compute:", 0) == 0) return ShaderStage::Compute;
     return ShaderStage::Unknown;
 }
 
@@ -41,6 +51,17 @@ void ShaderVariableBinder::RegisterDescriptorTableRange(
     UINT startingOffsetInTable,
     ShaderStage stage
 ) {
+    if (count == UINT_MAX) {
+        ShaderResourceKey key{ type, baseRegister, space, stage };
+        ShaderBindLocation loc{};
+        loc.rootParameterIndex = rootParameterIndex;
+        loc.descriptorOffset = startingOffsetInTable;
+        loc.isDescriptorTable = true;
+        loc.isBindless = true;
+        loc.stage = stage;
+        locations_[key] = loc;
+        return;
+    }
     for (UINT i = 0; i < count; ++i) {
         ShaderResourceKey key{ type, baseRegister + i, space, stage };
         ShaderBindLocation loc{};
@@ -80,25 +101,37 @@ bool ShaderVariableBinder::Bind(const std::string& nameKey, IGraphicsResource* r
     if (it == locations_.end()) return false;
     const ShaderBindLocation& loc = it->second;
     resource->SetCommandList(cmd_);
+    if (loc.isDescriptorTable) {
+        // 自動ルートシグネチャ生成では SRV/UAV はデスクリプタテーブルになるため、
+        // リソースのデスクリプタハンドルをテーブルとしてバインドする
+        const auto handle = resource->GetGPUDescriptorHandle();
+        if (handle.ptr == 0) return false;
+        if (isCompute_) cmd_->SetComputeRootDescriptorTable(loc.rootParameterIndex, handle);
+        else cmd_->SetGraphicsRootDescriptorTable(loc.rootParameterIndex, handle);
+        return true;
+    }
     if (loc.isRootCBV) {
         if (resource->GetResourceViewType() != ResourceViewType::CBV) {
             return false;
         }
-        cmd_->SetGraphicsRootConstantBufferView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
+        if (isCompute_) cmd_->SetComputeRootConstantBufferView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
+        else cmd_->SetGraphicsRootConstantBufferView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
         return true;
     }
     if (loc.isRootSRV) {
         if (resource->GetResourceViewType() != ResourceViewType::SRV) {
             return false;
         }
-        cmd_->SetGraphicsRootShaderResourceView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
+        if (isCompute_) cmd_->SetComputeRootShaderResourceView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
+        else cmd_->SetGraphicsRootShaderResourceView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
         return true;
     }
     if (loc.isRootUAV) {
         if (resource->GetResourceViewType() != ResourceViewType::UAV) {
             return false;
         }
-        cmd_->SetGraphicsRootUnorderedAccessView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
+        if (isCompute_) cmd_->SetComputeRootUnorderedAccessView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
+        else cmd_->SetGraphicsRootUnorderedAccessView(loc.rootParameterIndex, resource->GetResource()->GetGPUVirtualAddress());
         return true;
     }
     return false;
@@ -113,18 +146,9 @@ bool ShaderVariableBinder::Bind(const std::string& nameKey, D3D12_GPU_DESCRIPTOR
     if (it == locations_.end()) return false;
     const ShaderBindLocation& loc = it->second;
     if (!loc.isDescriptorTable) return false;
-
-    /*if (loc.descriptorOffset != 0) {
-        auto *device = IGraphicsResource::GetDevice({});
-        if (!device) return false;
-
-        const bool isSampler = (binding->Type() == D3D_SIT_SAMPLER);
-        const UINT inc = device->GetDescriptorHandleIncrementSize(
-            isSampler ? D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER : D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        descriptorHandle.ptr += static_cast<UINT64>(loc.descriptorOffset) * static_cast<UINT64>(inc);
-    }*/
-
-    cmd_->SetGraphicsRootDescriptorTable(loc.rootParameterIndex, descriptorHandle);
+    // メモ：バインドレスの場合でもバインドは可能だが、その場合はデスクリプタテーブルの先頭にバインドされる
+    if (isCompute_) cmd_->SetComputeRootDescriptorTable(loc.rootParameterIndex, descriptorHandle);
+    else cmd_->SetGraphicsRootDescriptorTable(loc.rootParameterIndex, descriptorHandle);
     return true;
 }
 

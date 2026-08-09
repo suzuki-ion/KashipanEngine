@@ -1,5 +1,7 @@
 #pragma once
 #include <source_location>
+#include <string>
+#include <vector>
 #include "Utilities/Translation.h"
 #include "Utilities/Passkeys.h"
 
@@ -27,6 +29,23 @@ void ShutdownLogger(PasskeyForGameEngineMain);
 /// @brief ロガー強制終了（クラッシュハンドラ用）
 void ForceShutdownLogger(PasskeyForCrashHandler);
 
+/// @brief 1行分のログ（スプラッシュ画面など、外部へログを転送する用途向け）
+struct LogLine {
+    std::string text;
+    LogSeverity severity = LogSeverity::Info;
+};
+
+class SplashScreen;
+
+/// @brief スプラッシュ画面向けのログ収集を開始する
+/// @details 呼び出し以降に出力されたログを内部バッファへ溜め始める。
+///          通常のシンク（コンソール/ファイル/ImGui）には影響しない。
+void BeginSplashLogCapture(Passkey<SplashScreen>);
+/// @brief スプラッシュ画面向けのログ収集を終了し、溜めていたログを破棄する
+void EndSplashLogCapture(Passkey<SplashScreen>);
+/// @brief 前回の呼び出し以降に追加されたログ行を取り出す（取り出した分はバッファから消える）
+std::vector<LogLine> FetchNewSplashLogLines(Passkey<SplashScreen>);
+
 /// @brief ログ出力
 /// @param logText 出力するログテキスト
 /// @param severity ログのレベル。指定が無い場合は Info になる。
@@ -52,5 +71,10 @@ private:
     /// @brief ログからプレフィックスを削除
     void PopPrefix();
 };
+
+#ifdef USE_IMGUI
+class SceneEditor;
+void ShowImGuiLoggerWindow(Passkey<SceneEditor>);
+#endif
 
 } // namespace KashipanEngine

@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>エディタ内部アーキテクチャ | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-editor-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="A01_Overview">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>エディタ内部アーキテクチャ</h1>
+<p class="page-lead"><code>KashipanEngine/Scene/Editor/</code> 配下のImGuiベースのシーンエディタについて、構成クラスと基本操作フローを解説します。<strong>対象読者はエディタ機能自体を実装・拡張するエンジン開発者</strong>です。エディタの使い方（ボタン操作・メニュー）は<a href="../00_Index.html">ウィンドウ別リファレンス</a>を、コンポーネントのInspector項目は<a href="../00_Index.html">コンポーネントリファレンス</a>を参照してください。</p>
+</div>
+
+<div class="warn">
+<strong>USE_IMGUI 限定機能</strong><br>
+このページで扱うクラスは全て <code>#ifdef USE_IMGUI</code> ブロックの中で定義されており、<code>USE_IMGUI</code> マクロが有効な構成（Debug / Development）でのみコンパイル・動作します。Release構成では丸ごと存在しません。詳しくは <a href="../../Engine/14_BuildMacros.html">Engine/14_BuildMacros.html</a> を参照してください。
+</div>
+
+<h2>SceneEditor — 統括クラス</h2>
+<p>
+<code>Scene/SceneEditor.h</code> の <code>SceneEditor</code> は各シーンが1つずつ保持する（<code>Scene</code> クラスの <code>sceneEditor_</code>）エディタ本体です。コンストラクタは <code>Passkey&lt;Scene&gt;</code> を要求するため、<code>Scene</code> クラスの内部からのみ生成できます。
+</p>
+<div class="api-card">
+<h4><code>SceneEditor</code> <span class="badge final">final</span></h4>
+<div class="api-sig">SceneEditor(Passkey&lt;Scene&gt;, SceneEditorContext *context);
+void ShowImGui(); // 毎フレーム呼ばれ、メインメニュー・各ウィンドウ・再生コントロールを描画する</div>
+<p>
+内部で下記の各ウィンドウ用クラスをまとめて保持し、Undo/Redoショートカット処理（<code>HandleShortcuts</code>）や、間隔指定の自動バックアップ（<code>HandleAutoSave</code>、既定は <code>SceneBackups/</code> 以下へ保存）、新規シーン作成の確認モーダルなども担当します。
+</p>
+</div>
+
+<h2>主要ウィンドウ構成</h2>
+<table>
+<tr><th>クラス</th><th>役割</th></tr>
+<tr><td><code>SceneObjectHierarchy</code></td><td>オブジェクトツリー表示・選択・並び替え・複製・削除・プレハブ配置</td></tr>
+<tr><td><code>SceneObjectInspector</code></td><td>選択中オブジェクトのコンポーネント一覧・パラメータ編集（複数選択時は一括編集）</td></tr>
+<tr><td><code>SceneComponentHierarchy</code></td><td>シーン直下のコンポーネント（<code>ISceneComponent</code> 派生、例: <code>SceneRenderer</code>）の一覧表示</td></tr>
+<tr><td><code>SceneComponentInspector</code></td><td>選択中のシーンコンポーネントのインスペクター</td></tr>
+<tr><td><code>SceneEditorView</code></td><td>シーンビュー（デバッグカメラ・ギズモ・クリックピッキング）</td></tr>
+<tr><td><code>AssetsWindow</code></td><td>Unity風のアセットブラウザ</td></tr>
+<tr><td><code>SceneSaver</code> / <code>SceneLoader</code></td><td>シーンの保存/読込モーダル</td></tr>
+<tr><td><code>SceneListEditor</code></td><td>登録シーン一覧（<code>SceneManager</code>）の管理</td></tr>
+<tr><td><code>SceneVariablesMenu</code></td><td>シーン変数の追加・削除・編集</td></tr>
+</table>
+
+<h2>Undo/Redo — SceneEditorCommands</h2>
+<p>
+<code>Scene/Editor/SceneEditorCommands.h</code> はコマンドパターンによるUndo/Redo管理です。全ての編集操作は <code>IEditorCommand</code> を実装したコマンドとして表現されます。
+</p>
+<div class="api-card">
+<h4><code>IEditorCommand</code></h4>
+<div class="api-sig">class IEditorCommand {
+public:
+    virtual bool Execute(SceneEditorContext *context) = 0;
+    virtual bool Undo(SceneEditorContext *context) = 0;
+    virtual std::string GetName() const = 0;
+};</div>
+</div>
+<table>
+<tr><th>コマンド</th><th>用途</th></tr>
+<tr><td><code>CreateObjectCommand</code> / <code>CreateSiblingObjectCommand</code> / <code>CreateChildObjectCommand</code></td><td>オブジェクトの新規作成</td></tr>
+<tr><td><code>PasteObjectCommand</code></td><td>JSONスナップショット（部分木、pre-order）からの貼り付け/複製。コピー&amp;ペースト・プレハブ配置・削除のUndoが全てこの形式を共有する</td></tr>
+<tr><td><code>DeleteObjectCommand</code> / <code>MoveObjectCommand</code> / <code>ObjectPropertyCommand</code></td><td>削除・並び替え・名前/アクティブ状態の変更</td></tr>
+<tr><td><code>AddComponentCommand</code> / <code>RemoveComponentCommand</code> / <code>ComponentEditCommand</code></td><td>コンポーネントの追加・削除・パラメータ編集</td></tr>
+<tr><td><code>CompositeCommand</code></td><td>複数コマンドを1つの操作としてまとめる複合コマンド</td></tr>
+</table>
+<div class="api-card">
+<h4><code>SceneEditorCommands</code> <span class="badge final">final</span></h4>
+<div class="api-sig">bool Execute(std::unique_ptr&lt;IEditorCommand&gt; command);
+void PushExecuted(std::unique_ptr&lt;IEditorCommand&gt; command); // 適用済み操作をスタックへ積む（パラメータ編集のコアレス用）
+bool Undo();
+bool Redo();
+bool CanUndo() const noexcept;
+bool CanRedo() const noexcept;
+void Clear();
+
+void BeginPlaySession(); // 再生中のコマンドを専用の一時履歴へ分離する
+void EndPlaySession();   // 再生停止時に一時履歴を破棄する
+bool IsPlaySession() const noexcept;</div>
+<p>
+再生（Play）中に積まれたコマンドは停止時のシーン復元で巻き戻されるため、編集時の履歴とは互換性がありません。<code>BeginPlaySession</code>/<code>EndPlaySession</code> により専用の一時履歴へ分離し、編集時の履歴を再生を跨いでも安全に保持できるようにしています。
+</p>
+</div>
+
+<h2>オブジェクト階層 — SceneObjectHierarchy</h2>
+<p>
+オブジェクトツリーの表示、単一/複数選択（Ctrlでトグル追加、Shiftで範囲選択）、ドラッグ&amp;ドロップによる並び替え・親子付け替え、コピー/貼り付け/複製/削除、キーボードショートカット（<code>HandleKeyboardShortcuts()</code>）を担当します。
+</p>
+<div class="api-card">
+<h4><code>SceneObjectHierarchy</code> 主要API</h4>
+<div class="api-sig">EmptyObject *GetSelectedObject() const;                          // 最後に操作したオブジェクト
+const std::unordered_set&lt;EmptyObject *&gt; &amp;GetSelectedObjects() const; // 選択中の全オブジェクト
+void SelectObject(EmptyObject *obj, bool additive = false);      // シーンビュー等の外部からの選択操作
+
+void InstantiateNodes(const std::vector&lt;PasteObjectCommand::Node&gt; &amp;nodes,
+    const std::string &amp;name, EmptyObject *attachParent = nullptr);
+bool InstantiatePrefabFile(const std::string &amp;filePath, EmptyObject *attachParent = nullptr);</div>
+</div>
+
+<h2>プレハブ — PrefabUtility / PrefabAssetManager / PrefabSyncUtility</h2>
+<p>
+プレハブ関連の実装は役割ごとに3クラスへ分かれています。<code>PrefabUtility</code>はPrefabファイル（静的なJSON）の構築・読み込み、<code>PrefabAssetManager</code>はPrefabアセットの資産管理（ID⇔パスの索引、キャッシュ、変更通知）、<code>PrefabSyncUtility</code>／<code>PrefabSceneSync</code>はライブなシーン上のPrefabインスタンスと元Prefabとの差分検出・同期（Apply/Revert、他インスタンス・他シーンへの伝播）を担当します。
+</p>
+<h3>PrefabUtility — Prefabファイルの構築・読み込み</h3>
+<p>
+<code>Scene/Editor/PrefabUtility.h</code>。中身はシーン保存時のオブジェクトJSONと同じ形式を部分木（pre-order、先頭が根）として並べたただのJSONで、配置時はヒエラルキーのコピー/貼り付けと同じ機構（<code>PasteObjectCommand</code>）で新しいオブジェクトIDを割り当てて生成されます。
+</p>
+<div class="api-sig">JSON BuildPrefabJson(SceneEditorContext *context, EmptyObject *rootObject,
+    const UUID128 &amp;prefabID = UUID128(true));
+std::vector&lt;PasteObjectCommand::Node&gt; LoadPrefabNodes(const JSON &amp;prefabJson);
+std::vector&lt;PasteObjectCommand::Node&gt; PrepareNodesForInstantiation(
+    const std::vector&lt;PasteObjectCommand::Node&gt; &amp;source, bool preserveRootParent);</div>
+
+<h3>PrefabAssetManager — Prefabアセットの資産管理</h3>
+<p>
+<code>Scene/Editor/PrefabAssetManager.h</code>。prefabID（<code>UUID128</code>）とファイルパスの対応を索引化し、JSONのキャッシュ・保存を一元管理する静的クラスです。「元Prefabが書き変わればシーン上のインスタンスも書き変わる」機能の起点となるハブで、<code>SavePrefabJson</code>系のAPIを経由して保存が行われるたびに<code>SetChangeListener</code>で登録されたリスナー（<code>SceneEditor</code>が<code>PrefabSyncUtility::SyncAllScenes</code>を紐付けている）へ変更を通知します。
+</p>
+<div class="api-sig">static bool CreatePrefabFile(const UUID128 &amp;prefabID, const JSON &amp;json, const std::string &amp;filePath);
+static bool SavePrefabJson(const UUID128 &amp;prefabID, const JSON &amp;newJson);
+static bool SavePrefabJsonByPath(const std::string &amp;filePath, const JSON &amp;newJson);
+static void SetChangeListener(ChangeCallback callback); // (const UUID128&amp;, const JSON&amp; oldJson, const JSON&amp; newJson)</div>
+
+<h3>PrefabSyncUtility / PrefabSceneSync — インスタンスとの差分検出・同期</h3>
+<p>
+<code>Scene/Editor/PrefabSyncUtility.h</code>は「今シーンに置かれているインスタンスが、元のPrefabからどう変化しているか」をコンポーネント単位（フィールド単位ではない）で検出し、Object Inspector/Hierarchyの<code>Apply All</code>・<code>Revert All</code>・個別コンポーネントのApply/Revertから呼ばれます。<code>ApplyComponentOverride</code>/<code>ApplyAll</code>は内部で<code>PrefabAssetManager::SavePrefabJson</code>を呼ぶため、保存直後に<code>SyncAllScenes</code>が自動的に発火します。
+</p>
+<div class="api-sig">bool HasComponentOverride(SceneEditorContext *context, EmptyObject *obj);
+bool HasComponentOverrideCached(SceneEditorContext *context, EmptyObject *obj, OverrideCheckCache &amp;cache);
+SyncReport Diff(SceneEditorContext *context, EmptyObject *instanceRoot);
+bool ApplyAll(SceneEditorContext *context, EmptyObject *instanceRoot);
+bool RevertAll(SceneEditorContext *context, SceneEditorCommands *commands, EmptyObject *instanceRoot);
+void SyncAllScenes(SceneEditorContext *context, SceneEditorCommands *commands,
+    const UUID128 &amp;prefabID, const JSON &amp;oldPrefabJson, const JSON &amp;newPrefabJson);</div>
+<p>
+<code>SyncAllScenes</code>は現在開いているシーン内の他インスタンス（<code>SyncOtherInstances</code>、JSON三者マージでローカルOverrideを維持しつつ反映）と、<code>SceneManager</code>に登録されている他の全シーンファイル（<code>PrefabSceneSync::SyncRegisteredScenes</code>、<strong>開いていないシーンもディスク上で直接読み書きする</strong>）の両方へ同期します。<code>SceneObjectHierarchy</code>の行ごとのOverride色分けは高頻度に呼ばれるため、<code>HasComponentOverrideCached</code>とPrefab単位の索引キャッシュ（<code>OverrideCheckCache</code>、<code>SceneObjectHierarchy::prefabOverrideCache_</code>としてフレーム単位で保持）により、同一Prefabのメンバーが多いヒエラルキーでの毎行O(Prefab内オブジェクト数)走査を避けています。
+</p>
+
+<h2>インスペクター</h2>
+<p>
+<code>SceneObjectInspector</code> は選択中オブジェクトのコンポーネントを処理優先順位順に表示し、ドラッグ&amp;ドロップでの並び替えにも対応します。複数選択時は「プライマリ（最後に操作したオブジェクト）」の値を編集すると、他の選択オブジェクトの対応するコンポーネント（同じ型のordinal番目）へ差分を一括適用します。新規コンポーネントの追加には <code>ComponentAddMenu::Show()</code>（カテゴリ階層のツリーメニュー）を使います。
+</p>
+<div class="api-sig">// ComponentAddMenu.h
+bool Show(const std::vector&lt;std::string&gt; &amp;types,
+    const std::function&lt;const std::vector&lt;std::string&gt; &amp;(const std::string &amp;)&gt; &amp;getCategory,
+    std::string &amp;outSelectedType);</div>
+
+<h2>シーンビュー — SceneEditorView</h2>
+<p>
+専用の <code>ScreenBuffer</code> とオービット型のデバッグカメラを持ち、シーン上の全 <code>MeshRenderer</code> をこの <code>ScreenBuffer</code> に描画してImGuiウィンドウへ表示します。選択中オブジェクトには ImGuizmo によるギズモ操作（移動/回転/スケール、単一選択はLocal/World切替可、複数選択時は選択群の平均位置を中心としたグループ操作）が行えます。画像上のクリックでは、レイとメッシュ三角形の交差判定によるピッキングでオブジェクトを選択できます（Ctrlクリックでトグル追加）。グリッド・当たり判定ワイヤーフレーム・ライト/カメラのアイコン表示・ボーン表示の有効無効も切り替えられます。
+</p>
+<div class="api-card">
+<h4>選択オブジェクトのアウトライン表示</h4>
+<p>
+<code>SceneEditorView::ShowImGui</code>は毎フレーム、選択中オブジェクト集合を<code>SceneRenderer::SetEditorSelectedObjects</code>へ渡します。<code>SceneRenderer</code>側は対象オブジェクト（とその子孫）が持つ全<code>MeshRenderer</code>に対し、既存の押し出しアウトラインパイプライン（<code>Object3D.Outline</code>）を<code>"__"</code>始まりの内部専用マテリアル（<code>editorSelectionOutlineMaterial_</code>。<code>IsInternalMaterialName</code>によりマテリアル一覧・<code>SaveAllMaterials</code>から除外される）で固定色描画します。<code>editorTarget_</code>（このシーンビュー用の描画先）にのみ適用され、オブジェクト自身のマテリアルが持つ<code>OutlineWidth</code>設定とは独立しています。<code>SceneEditorView</code>のデストラクタでは<code>SetEditorSelectedObjects({})</code>を呼び、シーンビュー破棄後にアウトラインが残らないようにしています。
+</p>
+</div>
+
+<h2>アセットブラウザ — AssetsWindow</h2>
+<p>
+Unity の Assets ウィンドウ風のファイルブラウザです。左側にフォルダツリー、右側に選択中フォルダ内のファイルをグリッド表示し、対応拡張子のファイルをダブルクリックで専用の編集/プレビューウィンドウ（JSON編集、マテリアル編集、画像プレビュー、オーディオプレビュー）に開きます。ヒエラルキーからオブジェクトをドラッグ&amp;ドロップすると、その場で <code>.prefab</code> ファイルとして書き出せます。
+</p>
+
+<h2>保存・読み込み・シーン一覧</h2>
+<table>
+<tr><th>クラス</th><th>役割</th></tr>
+<tr><td><code>SceneSaver</code></td><td>保存先パスを指定するモーダルポップアップ</td></tr>
+<tr><td><code>SceneLoader</code></td><td>既存の <code>.scene</code> ファイル一覧から読み込むモーダルポップアップ</td></tr>
+<tr><td><code>SceneListEditor</code></td><td><code>SceneManager</code> に登録されているシーンの登録・削除・名前変更・読み込みJSONパス変更・スタートアップシーン指定を行う。変更内容は即座にシーンリスト定義ファイル（<code>SceneManager::kDefaultSceneListFilePath</code>）へ保存される。旧単一ファイル形式（<code>.json</code>）からフォルダ形式（<code>.scene</code>）への変換機能も持つ</td></tr>
+</table>
+
+<h2>シーン変数 — SceneVariablesMenu</h2>
+<p>
+<code>MyAny</code> 型で保持されるシーン変数（<a href="../../Engine/02_Scenes.html">Engine/02_Scenes.html</a> 参照）の追加・削除・型別の編集UIを提供します。
+</p>
+
+<h2>Play / Pause / Stop 制御（Unity風）</h2>
+<p>
+<code>Scene.h</code> にはエディター実行を前提としたUnity風の再生制御メソッドがあります。
+</p>
+<div class="api-card">
+<h4><code>Scene</code> 再生制御 <span class="badge imgui">USE_IMGUI</span></h4>
+<div class="api-sig">bool IsPlaying() const;
+bool IsPaused() const;
+void PlayStart();
+void PlayStop();
+void PlayPause();
+void PlayResume();
+void RequestStepFrame(); // 一時停止中に1フレームだけ進める</div>
+<p>
+エディター実行時、シーンの毎フレーム更新は「再生中（<code>isPlaying_</code>）かつ（一時停止していない、または1フレーム進める要求がある）」場合のみ行われます。<code>SceneEditor::ShowPlayControls()</code> がツールバーのPlay/Pause/Stopボタンとしてこれらを呼び出します。停止（<code>PlayStop</code>）時にはシーン状態が再生開始前へ復元され、再生セッション用のUndo履歴（<code>SceneEditorCommands::EndPlaySession</code>）も破棄されます。
+</p>
+</div>
+
+<h2>基本操作フロー</h2>
+<ol>
+<li>ヒエラルキーの右クリックメニュー、または <code>SceneObjectHierarchy</code> の作成メニューからオブジェクトを新規作成する（テンプレート化されたコンポーネント一式を最初から持たせることも可能）</li>
+<li>作成したオブジェクトを選択し、インスペクターの Add Component（<code>ComponentAddMenu</code>）からカテゴリツリーを辿って必要なコンポーネントを追加する</li>
+<li>インスペクターでコンポーネントのパラメータを編集する（編集はUndo履歴へ自動的に積まれる）</li>
+<li>シーンビューでギズモを使って位置・回転・スケールを調整する</li>
+<li>Playボタンで実際の挙動を確認し、必要なら Pause / Step Frame で1フレームずつ確認する</li>
+<li><code>SceneSaver</code> でシーンをファイルへ保存する（自動バックアップも別途 <code>SceneBackups/</code> 以下へ行われる）</li>
+</ol>
+<p>各手順のボタン・メニュー項目の詳細は <a href="../Windows/02_SceneObjectHierarchy.html">Windows/02_SceneObjectHierarchy.html</a>・<a href="../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a>・<a href="../Windows/04_SceneView.html">Windows/04_SceneView.html</a> を参照してください。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../Engine/02_Scenes.html">Engine/02_Scenes.html</a> — シーン・シーン変数・シーンJSONの基礎</li>
+<li><a href="../../Engine/03_GameObjects.html">Engine/03_GameObjects.html</a> — <code>EmptyObject</code> の生成・複製・削除</li>
+<li><a href="../../Engine/04_ObjectComponents.html">Engine/04_ObjectComponents.html</a> — <code>IObjectComponent</code> と <code>ShowImGui()</code> の仕組み</li>
+<li><a href="../../Engine/14_BuildMacros.html">Engine/14_BuildMacros.html</a> — <code>USE_IMGUI</code> マクロとビルド構成</li>
+<li><a href="../00_Index.html">Editor/00_Index.html</a> — ウィンドウ別・コンポーネント別リファレンスの目次（利用者向け）</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

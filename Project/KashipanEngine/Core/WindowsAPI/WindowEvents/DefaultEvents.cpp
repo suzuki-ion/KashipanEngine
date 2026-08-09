@@ -3,6 +3,7 @@
 #include "Core/Window.h"
 #include "Core/WindowsAPI/WindowDescriptor.h"
 #include "Utilities/Conversion/ConvertString.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 namespace WindowDefaultEvent {

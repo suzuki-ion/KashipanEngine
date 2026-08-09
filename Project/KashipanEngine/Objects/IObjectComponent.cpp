@@ -1,14 +1,34 @@
-#include "Objects/IObjectComponent.h"
+#include "IObjectComponent.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/ObjectContext.h"
 
 namespace KashipanEngine {
 
-Object2DContext *IObjectComponent2D::GetOwner2DContext() const {
-    return static_cast<Object2DContext *>(GetOwnerContext());
+const EmptyObject *IObjectComponent::GetOwnerObject() const {
+    return objectContext_ ? objectContext_->GetOwner() : nullptr;
 }
 
-Object3DContext *IObjectComponent3D::GetOwner3DContext() const {
-    return static_cast<Object3DContext *>(GetOwnerContext());
+ComponentRef IObjectComponent::GetComponentRef() const {
+    const EmptyObject *owner = GetOwnerObject();
+    if (!owner) return ComponentRef{};
+    return ComponentRef{ owner->GetObjectID(), owner->GetComponentAddedID(this) };
+}
+
+bool IObjectComponent::IsActive() const {
+    bool ownerActive = objectContext_ ? objectContext_->GetOwner()->IsActive() : true;
+    return isActive_ && ownerActive;
+}
+
+void IObjectComponent::SetActive(bool active) {
+    if (isActive_ == active) return;
+    isActive_ = active;
+    if (objectContext_) {
+        if (IsActive()) {
+            Initialize();
+        } else {
+            Finalize();
+        }
+    }
 }
 
 } // namespace KashipanEngine

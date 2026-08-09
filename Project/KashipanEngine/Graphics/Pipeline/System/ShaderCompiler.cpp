@@ -4,8 +4,10 @@
 #include <string>
 #include <format>
 #include <filesystem>
+#include <unordered_set>
 #include <d3d12shader.h>
 #include "Utilities/Conversion/ConvertString.h"
+#include "Utilities/Translation.h"
 
 #pragma comment(lib, "dxcompiler.lib")
 
@@ -24,6 +26,7 @@ std::vector<uint32_t> sFreeShaderIDs;
   (uint32_t)(uint8_t)(ch2) << 16  | (uint32_t)(uint8_t)(ch3) << 24   \
 )
 #endif
+
 } // namespace
 
 void ShaderCompiler::ClearAllCompiledShaders(Passkey<PipelineManager>) {
@@ -236,6 +239,11 @@ ShaderCompiler::ShaderCompiledInfo *ShaderCompiler::ShaderCompile(const CompileI
     info->name = compileInfo.name.empty() ? compileInfo.filePath : compileInfo.name;
     info->bytecode = shaderBlob;
 
+    // struct Material のバイトレイアウトをHLSLソースから求める（Materialを持たないシェーダーでは空になるだけで無害）
+    std::unordered_set<std::string> definedMacroNames;
+    for (const auto &m : compileInfo.macros) definedMacroNames.insert(m.first);
+    info->materialLayout = MaterialLayout::BuildFromHlslSource(compileInfo.filePath, definedMacroNames);
+
     // 保存して返す
     ShaderCompiledInfo *ret = info.get();
     sCompiledShaders[shaderID] = std::move(info);
@@ -279,6 +287,9 @@ void ShaderCompiler::ShaderReflection(IDxcBlob *shaderBlob, ShaderReflectionInfo
     D3D12_SHADER_DESC desc{};
     if (FAILED(shaderRefl->GetDesc(&desc))) return;
 
+    outReflectionInfo.resourceBindings.clear();
+    outReflectionInfo.shaderVariables.clear();
+
     // リソースバインディング
     for (UINT i = 0; i < desc.BoundResources; ++i) {
         D3D12_SHADER_INPUT_BIND_DESC bind{};
@@ -292,6 +303,47 @@ void ShaderCompiler::ShaderReflection(IDxcBlob *shaderBlob, ShaderReflectionInfo
         info.numSamples = bind.NumSamples;
         info.space = bind.Space;
         info.flags = bind.uFlags;
+
+        ShaderVariable resourceVariable{};
+        FillVariableBindingInfo(resourceVariable, info.name, info.type, info.bindPoint, info.bindCount, info.space);
+
+        if (info.type == D3D_SIT_CBUFFER || info.type == D3D_SIT_TBUFFER) {
+            ID3D12ShaderReflectionConstantBuffer *constantBuffer = shaderRefl->GetConstantBufferByName(info.name.c_str());
+            D3D12_SHADER_BUFFER_DESC bufferDesc{};
+            if (constantBuffer && SUCCEEDED(constantBuffer->GetDesc(&bufferDesc))) {
+                resourceVariable.byteSize = bufferDesc.Size;
+                for (UINT variableIndex = 0; variableIndex < bufferDesc.Variables; ++variableIndex) {
+                    ID3D12ShaderReflectionVariable *reflectedVariable = constantBuffer->GetVariableByIndex(variableIndex);
+                    if (!reflectedVariable) continue;
+
+                    D3D12_SHADER_VARIABLE_DESC variableDesc{};
+                    if (FAILED(reflectedVariable->GetDesc(&variableDesc))) continue;
+
+                    const std::string variableName = variableDesc.Name ? variableDesc.Name : "";
+                    ShaderVariable memberVariable = BuildShaderVariableFromType(
+                        reflectedVariable->GetType(),
+                        variableName,
+                        variableDesc.StartOffset,
+                        variableDesc.Size
+                    );
+                    resourceVariable.memberVariables[memberVariable.variableName] = std::move(memberVariable);
+                }
+            }
+        } else {
+            ID3D12ShaderReflectionVariable *reflectedVariable = shaderRefl->GetVariableByName(info.name.c_str());
+            D3D12_SHADER_VARIABLE_DESC variableDesc{};
+            if (reflectedVariable && SUCCEEDED(reflectedVariable->GetDesc(&variableDesc))) {
+                resourceVariable = BuildShaderVariableFromType(
+                    reflectedVariable->GetType(),
+                    info.name,
+                    variableDesc.StartOffset,
+                    variableDesc.Size
+                );
+                FillVariableBindingInfo(resourceVariable, info.name, info.type, info.bindPoint, info.bindCount, info.space);
+            }
+        }
+
+        outReflectionInfo.shaderVariables[info.name] = std::move(resourceVariable);
 
         // key を name + space にする場合のコード
         // std::string key = info.name + "#s" + std::to_string(info.space);
@@ -320,6 +372,69 @@ void ShaderCompiler::ShaderReflection(IDxcBlob *shaderBlob, ShaderReflectionInfo
         outReflectionInfo.threadGroupSize.y = tgy;
         outReflectionInfo.threadGroupSize.z = tgz;
     }
+}
+
+
+ShaderCompiler::ShaderVariable ShaderCompiler::BuildShaderVariableFromType(
+    ID3D12ShaderReflectionType *type,
+    const std::string &name,
+    UINT byteOffset,
+    UINT byteSize
+) {
+    ShaderCompiler::ShaderVariable variable{};
+    variable.variableName = name;
+    variable.byteOffset = byteOffset;
+    variable.byteSize = byteSize;
+
+    if (!type) return variable;
+
+    D3D12_SHADER_TYPE_DESC typeDesc{};
+    if (FAILED(type->GetDesc(&typeDesc))) return variable;
+
+    variable.typeName = typeDesc.Name ? typeDesc.Name : "";
+    variable.rows = typeDesc.Rows;
+    variable.columns = typeDesc.Columns;
+    variable.elements = typeDesc.Elements;
+    variable.members = typeDesc.Members;
+    if (variable.byteOffset == 0) variable.byteOffset = typeDesc.Offset;
+
+    for (UINT i = 0; i < typeDesc.Members; ++i) {
+        ID3D12ShaderReflectionType *memberType = type->GetMemberTypeByIndex(i);
+        if (!memberType) continue;
+
+        const char *memberTypeName = type->GetMemberTypeName(i);
+        std::string memberName = memberTypeName ? memberTypeName : ("member" + std::to_string(i));
+
+        D3D12_SHADER_TYPE_DESC memberDesc{};
+        if (SUCCEEDED(memberType->GetDesc(&memberDesc))) {
+            variable.memberVariables[memberName] = BuildShaderVariableFromType(
+                memberType,
+                memberName,
+                memberDesc.Offset,
+                0
+            );
+        } else {
+            variable.memberVariables[memberName] = BuildShaderVariableFromType(memberType, memberName, 0, 0);
+        }
+    }
+
+    return variable;
+}
+
+void ShaderCompiler::FillVariableBindingInfo(
+    ShaderCompiler::ShaderVariable &variable,
+    const std::string &name,
+    D3D_SHADER_INPUT_TYPE type,
+    UINT bindPoint,
+    UINT bindCount,
+    UINT space
+) {
+    variable.variableName = name;
+    variable.resourceType = type;
+    variable.bindPoint = bindPoint;
+    variable.bindCount = bindCount;
+    variable.space = space;
+    variable.isResource = true;
 }
 
 } // namespace KashipanEngine

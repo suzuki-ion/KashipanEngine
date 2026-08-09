@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dictionaryとJson | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-engine-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="Script_09_JsonAndDictionary">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>dictionaryとJson</h1>
+<p class="page-lead">AngelScript標準アドオンの辞書型 <code>dictionary</code> と、JSONファイルの保存・読み込みを行う <code>Json</code> 型（参照型）をまとめます。セーブデータ・ゲーム設定・レベルデータの入出力に使用できます。</p>
+</div>
+
+<h2>dictionary（辞書型）</h2>
+<p>
+文字列のキーに任意の型の値を関連付けて保持します。
+</p>
+<pre><code class="language-angelscript">dictionary dict;
+dict.set("hp", 100);
+dict.set("name", "Player");
+dict.set("position", Vector3(1.0f, 2.0f, 3.0f));
+
+// 取得（キーが無い、または型が合わない場合はfalse）
+int hp;
+if (dict.get("hp", hp)) {
+    Log("HP: " + hp);
+}
+
+// キーの存在確認・削除
+if (dict.exists("name")) {
+    dict.delete("name");
+}
+
+// キー一覧の列挙
+array&lt;string&gt;@ keys = dict.getKeys();
+for (uint i = 0; i &lt; keys.length(); i++) {
+    Log(keys[i]);
+}
+
+// 初期化リスト構文・インデックスアクセスも使用できる
+dictionary levels = {{"stage1", 10}, {"stage2", 25}};
+int64 score = int64(levels["stage1"]);</code></pre>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void set(const string &amp;in key, const ?&amp;in value)</code></td><td>値を設定する（既存キーは上書き。型が変わっても構わない）</td></tr>
+<tr><td><code>bool get(const string &amp;in key, ?&amp;out value) const</code></td><td>値を取得する（キーが無い/型が合わない場合は <code>false</code>）</td></tr>
+<tr><td><code>bool exists(const string &amp;in key) const</code></td><td>キーが存在するかどうか</td></tr>
+<tr><td><code>bool delete(const string &amp;in key)</code></td><td>キーを削除する</td></tr>
+<tr><td><code>void deleteAll()</code></td><td>全てのキーを削除する</td></tr>
+<tr><td><code>bool isEmpty() const</code></td><td>空かどうか</td></tr>
+<tr><td><code>uint getSize() const</code></td><td>要素数を取得する</td></tr>
+<tr><td><code>array&lt;string&gt;@ getKeys() const</code></td><td>全キーの配列を取得する</td></tr>
+</table>
+<ul>
+<li>値としてプリミティブ型・数学型・文字列のほか、ハンドル（<code>array@</code> や <code>dictionary@</code> 自身など）も保持できるため、ネストしたデータ構造も作れます。</li>
+<li><code>foreach (auto value, auto key : dict)</code> によるループにも対応しています。</li>
+<li>辞書の内容は <code>[SerializeField]</code> やシーン変数の対象外です。永続化したい場合は下記の <code>Json</code> を使用してください。<code>Json.Set("key", dict)</code> / <code>Json.Get("key", dict)</code> で辞書ごとJSONへ変換してファイルへ保存・復元できます（下記「配列・辞書との相互変換」参照）。</li>
+</ul>
+
+<h2>Json（JSONファイルの保存・読み込み）</h2>
+<p>
+<code>Json</code> 型（参照型）を使って、スクリプトからjsonファイルの保存・読み込みやJSONテキストの生成・解析ができます。
+</p>
+<pre><code class="language-angelscript">// 保存
+Json@ json = Json();
+json.SetString("name", "Player");
+json.SetInt("hp", 100);
+json.SetVector3("position", Vector3(1.0f, 2.0f, 3.0f));
+
+Json@ inventory = Json();
+inventory.PushString("sword");
+inventory.PushString("shield");
+json.SetJson("inventory", inventory);   // ネストしたオブジェクト・配列
+
+if (SaveJsonFile("SaveData/save1.json", json)) {
+    Log("保存しました");
+}
+
+// 読み込み
+Json@ loaded = LoadJsonFile("SaveData/save1.json");
+if (loaded !is null) {
+    string name = loaded.GetString("name");
+    int64 hp = loaded.GetInt("hp", 100);            // 第2引数はキーが無い場合のデフォルト値
+    Vector3 pos = loaded.GetVector3("position");
+
+    Json@ items = loaded.GetJson("inventory");
+    if (items !is null) {
+        for (uint i = 0; i &lt; items.Size(); i++) {
+            Log("item: " + items.At(i).AsString());
+        }
+    }
+}</code></pre>
+
+<h3>グローバル関数</h3>
+<table>
+<tr><th>関数</th><th>説明</th></tr>
+<tr><td><code>Json@ LoadJsonFile(const string &amp;in path)</code></td><td>jsonファイルを読み込む（失敗時は <code>null</code>）</td></tr>
+<tr><td><code>bool SaveJsonFile(const string &amp;in path, const Json &amp;in data, int indent = 4)</code></td><td>jsonファイルへ保存する（保存先フォルダが無い場合は自動生成される）</td></tr>
+</table>
+<p>
+パスは実行ディレクトリ（<code>Assets</code> フォルダと同じ階層）基準の相対パス、または絶対パスで指定します。
+</p>
+
+<h3>Jsonのメンバ</h3>
+<table>
+<tr><th>メンバ</th><th>説明</th></tr>
+<tr><td><code>Json()</code></td><td>空のJson値を作成する（null状態。キー設定でオブジェクトに、Pushで配列になる）</td></tr>
+<tr><td><code>bool IsNull() / IsObject() / IsArray() / IsString() / IsNumber() / IsBool() const</code></td><td>保持している値の型判定</td></tr>
+<tr><td><code>bool Has(const string &amp;in key) const</code></td><td>キーが存在するかどうか</td></tr>
+<tr><td><code>bool Remove(const string &amp;in key)</code></td><td>キーを削除する</td></tr>
+<tr><td><code>void Clear()</code></td><td>内容を破棄してnull状態に戻す</td></tr>
+<tr><td><code>array&lt;string&gt;@ GetKeys() const</code></td><td>オブジェクトの全キーを取得する</td></tr>
+<tr><td><code>void SetBool/SetInt/SetFloat/SetString(const string &amp;in key, 値)</code></td><td>キーへ値を設定する（<code>bool</code> / <code>int64</code> / <code>double</code> / <code>string</code>）</td></tr>
+<tr><td><code>void SetVector2/SetVector3/SetVector4/SetQuaternion(const string &amp;in key, 値)</code></td><td>キーへ数学型を設定する（<code>{"x": ..., "y": ...}</code> 形式で保存される）</td></tr>
+<tr><td><code>void SetJson(const string &amp;in key, const Json &amp;in value)</code></td><td>キーへ別のJson（オブジェクト・配列）を設定する</td></tr>
+<tr><td><code>void SetNull(const string &amp;in key)</code></td><td>キーへnullを設定する</td></tr>
+<tr><td><code>bool Set(const string &amp;in key, const ?&amp;in value)</code></td><td>キーへ任意の対応型を設定する（<code>array&lt;T&gt;</code> / <code>dictionary</code> を含む。下記参照）</td></tr>
+<tr><td><code>bool Get(const string &amp;in key, ?&amp;out value) const</code></td><td>キーの値を任意の対応型へ読み込む（<code>array&lt;T&gt;</code> / <code>dictionary</code> を含む）</td></tr>
+<tr><td><code>bool GetBool(key, bool defaultValue = false) const</code></td><td>値を取得する（キーが無い/型が合わない場合はデフォルト値）</td></tr>
+<tr><td><code>int64 GetInt(key, int64 defaultValue = 0) const</code></td><td>同上（整数）</td></tr>
+<tr><td><code>double GetFloat(key, double defaultValue = 0) const</code></td><td>同上（実数）</td></tr>
+<tr><td><code>string GetString(key, const string &amp;in defaultValue = "") const</code></td><td>同上（文字列）</td></tr>
+<tr><td><code>Vector2/Vector3/Vector4/Quaternion GetVector2/GetVector3/GetVector4/GetQuaternion(key, デフォルト値)</code></td><td>同上（数学型）</td></tr>
+<tr><td><code>Json@ GetJson(const string &amp;in key) const</code></td><td>ネストしたJsonを取得する（キーが無い場合は <code>null</code>）</td></tr>
+<tr><td><code>uint Size() const</code></td><td>配列・オブジェクトの要素数を取得する</td></tr>
+<tr><td><code>Json@ At(uint index) const</code></td><td>配列の要素を取得する（範囲外・配列以外は <code>null</code>）</td></tr>
+<tr><td><code>void PushBool/PushInt/PushFloat/PushString(値)</code></td><td>配列へ値を追加する</td></tr>
+<tr><td><code>void PushJson(const Json &amp;in value)</code></td><td>配列へ別のJsonを追加する</td></tr>
+<tr><td><code>bool Push(const ?&amp;in value)</code></td><td>配列へ任意の対応型を追加する（<code>array&lt;T&gt;</code> / <code>dictionary</code> を含む）</td></tr>
+<tr><td><code>bool AsBool/AsInt/AsFloat/AsString(デフォルト値) const</code></td><td>自身が保持する値を直接取得する（<code>At</code> で取り出した配列要素向け）</td></tr>
+<tr><td><code>string ToString(int indent = -1) const</code></td><td>JSONテキストへ変換する（<code>indent &gt;= 0</code> で整形出力）</td></tr>
+<tr><td><code>bool Parse(const string &amp;in text)</code></td><td>JSONテキストを解析して内容を置き換える（失敗時は <code>false</code> でnull状態になる）</td></tr>
+</table>
+<ul>
+<li><code>GetJson</code> / <code>At</code> は<strong>部分木のコピー</strong>を持つ新しいインスタンスを返します。取得した子Jsonへの変更は親へ反映されないため、変更後は <code>SetJson</code> / <code>PushJson</code> で書き戻してください。</li>
+<li>数値はJSONの仕様どおり整数・実数の区別なく保存されます。<code>GetInt</code> / <code>GetFloat</code> はどちらの数値でも取得できます。</li>
+</ul>
+
+<h3>配列・辞書との相互変換（汎用Set/Get/Push）</h3>
+<p>
+<code>Set</code> / <code>Get</code> / <code>Push</code> は渡した変数の型に応じて自動変換する汎用版です。<code>array&lt;T&gt;</code> はJSON配列、<code>dictionary</code> はJSONオブジェクトとして再帰的に変換されるため、まとまったデータをそのまま保存・復元できます。
+</p>
+<pre><code class="language-angelscript">Json@ json = Json();
+
+// array&lt;T&gt; → JSON配列（ネスト配列もOK）
+array&lt;int&gt; scores = {10, 20, 30};
+array&lt;Vector3&gt; waypoints = {Vector3(0,0,0), Vector3(1,0,2)};
+json.Set("scores", scores);
+json.Set("waypoints", waypoints);
+
+// dictionary → JSONオブジェクト（ネストした辞書・配列も変換される）
+dictionary save;
+save.set("hp", 100);
+save.set("name", "Player");
+json.Set("data", save);
+
+SaveJsonFile("SaveData/save1.json", json);
+
+// 読み込み（逆方向の変換）
+Json@ loaded = LoadJsonFile("SaveData/save1.json");
+if (loaded !is null) {
+    array&lt;int&gt; loadedScores;
+    loaded.Get("scores", loadedScores);      // JSON配列 → array&lt;int&gt;
+
+    dictionary loadedData;
+    loaded.Get("data", loadedData);          // JSONオブジェクト → dictionary
+
+    int64 hp;
+    loadedData.get("hp", hp);
+}</code></pre>
+<p>
+対応型: プリミティブ全種（<code>int8</code>〜<code>uint64</code> 含む） / <code>string</code> / <code>Vector2</code>〜<code>Vector4</code> / <code>Quaternion</code> / <code>Json</code> / それらの <code>array&lt;T&gt;</code>（ネスト可） / <code>dictionary</code>。
+</p>
+<ul>
+<li><code>Get</code> へ <code>array&lt;T&gt;@</code> や <code>dictionary@</code> の<strong>nullハンドル</strong>を渡した場合は自動で生成されます。</li>
+<li>保存時、<code>dictionary</code> 内の変換できない値（コンポーネントハンドル等）は<strong>スキップ</strong>されます。<code>array&lt;T&gt;</code> は要素型が未対応の場合、全体が失敗して <code>false</code> が返ります。</li>
+<li><code>dictionary</code> への読み込み時、数値は <code>int64</code> / <code>double</code> として格納されます。ネストしたJSONオブジェクトは <code>dictionary@</code>、JSON配列は要素型を推定した <code>array&lt;T&gt;@</code>（全要素が整数なら <code>array&lt;int64&gt;</code> 等）として復元されます。型が混在する配列・空配列は推定できないためスキップされます。</li>
+<li>数学型（<code>{"x": ..., "y": ...}</code> 形式）として保存した値を <code>dictionary</code> へ読み込むと、判別できないためネスト辞書として復元されます。数学型として取り出したい場合は <code>GetVector3</code> 等を使用してください。</li>
+<li>自己参照などによる無限再帰を防ぐため、変換は16段までに制限されています。</li>
+</ul>
+
+<h2>関連ページ</h2>
+<ul>
+<li>SerializeField・シーン変数（同期的な値受け渡し） → <a href="02_SerializeField.html">02_SerializeField.html</a> / <a href="04_ObjectSceneVariables.html">04_ObjectSceneVariables.html</a></li>
+<li>手続き生成（WFC）のシード等をJsonへ保存する例 → <a href="10_ProceduralGeneration.html">10_ProceduralGeneration.html</a></li>
+<li>EditorToolのタイルエディターでのJson利用例 → <a href="12_EditorToolScripting.html">12_EditorToolScripting.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

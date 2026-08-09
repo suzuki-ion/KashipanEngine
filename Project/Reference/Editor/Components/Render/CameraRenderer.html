@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CameraRenderer | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_CameraRenderer">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>CameraRenderer</h1>
+<p class="page-lead">同一オブジェクトの<code>Transform</code>と<a href="Camera3D.html">Camera3D</a>（または<a href="Camera2D.html">Camera2D</a>）からビュー射影行列を計算し、指定した定数バッファへアップロードするコンポーネントです。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a>を参照してください。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Target</td><td>コンボボックス（None選択可）</td><td>適用先の描画先オブジェクトをシーン上から選択。ヒエラルキーからのドラッグ&amp;ドロップにも対応。未指定（None）の場合は全ての描画先に適用される</td></tr>
+<tr><td>Render Target Filter（折りたたみツリー）</td><td>描画先ごとのチェックボックス</td><td>Targetを指定し、かつそのオブジェクトが複数の描画先コンポーネントを持つ場合のみ表示</td></tr>
+<tr><td>Pipeline</td><td>コンボボックス（None選択可）</td><td>読み込み済みのレンダーパイプライン名から選択。未指定（None）の場合は全パイプラインに適用される</td></tr>
+<tr><td>（バインド先変数名の一覧）</td><td>読み取り専用の箇条書き（BulletText）</td><td>定数バッファのバインド先変数名（例: <code>Vertex:gCamera3D</code>）を1行ずつ列挙するだけの表示。<strong>Inspector上に編集用のUIは無い</strong></td></tr>
+</table>
+
+<div class="warn"><strong>バインド先変数名はInspectorから編集できない</strong><br>一覧表示のみで追加・削除・変更を行うUIコントロールは存在しない。初期値はInitialize時に自動決定される（同一オブジェクトにCamera2Dがあれば<code>Vertex:gCamera2D</code>/<code>Pixel:gCamera2D</code>、無ければ<code>Vertex:gCamera3D</code>/<code>Pixel:gCamera3D</code>）。変更したい場合はスクリプトから<code>SetBindVariableNames()</code>を呼ぶか、シーンJSONを直接編集する必要がある。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path"><span>Add Component</span><i>›</i><span>Render</span><i>›</i><span>CameraRenderer</span></span> から追加する。同一オブジェクトに複数付与可能。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="Camera3D.html">Components/Render/Camera3D.html</a> — 3Dカメラのパラメータ本体</li>
+<li><a href="Camera2D.html">Components/Render/Camera2D.html</a> — 2Dカメラのパラメータ本体</li>
+<li><a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a> — <code>CameraRenderer</code>クラスのAPI</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Object Inspectorの基本操作</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

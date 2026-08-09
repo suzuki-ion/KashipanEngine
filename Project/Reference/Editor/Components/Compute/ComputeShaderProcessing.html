@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ComputeShaderProcessing | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Compute_ComputeShaderProcessing">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>ComputeShaderProcessing</h1>
+<p class="page-lead">Computeシェーダーをオブジェクトのスクリプトのように扱うためのコンポーネントです。使用するComputeパイプライン名・ディスパッチするスレッドグループ数・バインドしたいテクスチャ／定数バッファをInspector上で設定するだけで、エンジン専用のコマンドリスト上で毎フレームComputeシェーダーが実行されます。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/04_ObjectComponents.html">Engine/04_ObjectComponents.html</a>を参照してください。</p>
+</div>
+
+<div class="note">このコンポーネントを付与すると、内部的にシーンへ<code>SceneComputeProcessor</code>（未追加なら自動追加）が登録され、実際のDispatch呼び出しはそちら経由でRendererが毎フレーム行います。詳細は<a href="../Scene/SceneComputeProcessor.html">コンポーネント: Scene / SceneComputeProcessor</a>を参照してください。</div>
+
+<h2>基本設定</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Pipeline</td><td>コンボ（読み込み済みComputeパイプライン名の一覧から選択）</td><td>ディスパッチするComputeパイプライン名</td></tr>
+<tr><td>GroupCountX / GroupCountY / GroupCountZ</td><td>ドラッグ入力欄（int）</td><td>ディスパッチするスレッドグループ数。1未満の値を入力しても保存時に1未満にならないようクランプされる</td></tr>
+</table>
+
+<h2>Textures (SRV)</h2>
+<p><span class="ui-path">Textures (SRV)</span>ツリーを開くと、読み取り専用テクスチャのバインド要求を一覧・編集できます。</p>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Variable</td><td>テキスト入力</td><td>シェーダー側の変数名</td></tr>
+<tr><td>Texture</td><td>コンボ（読み込み済みテクスチャの一覧、先頭に「(None)」あり）</td><td>バインドするテクスチャのアセットパス</td></tr>
+<tr><td>Remove</td><td>ボタン</td><td>この行のバインド要求を削除</td></tr>
+<tr><td>Add Texture Bind</td><td>ボタン</td><td>新規バインド要求を1件追加（空の状態で追加される）</td></tr>
+</table>
+
+<h2>UAV Textures</h2>
+<p><span class="ui-path">UAV Textures</span>ツリーでは、読み書き可能なUAVテクスチャをエンジン側にサイズ指定で生成させるためのバインド要求を編集します。</p>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Variable</td><td>テキスト入力</td><td>シェーダー側の変数名</td></tr>
+<tr><td>Width / Height</td><td>ドラッグ入力欄（int）</td><td>生成するUAVテクスチャのサイズ（1未満にならないようクランプ）</td></tr>
+<tr><td>Format</td><td>コンボ（RGBA8_UNORM / R32_FLOAT / RGBA32_FLOAT）</td><td>UAVテクスチャのフォーマット種別</td></tr>
+<tr><td>Remove</td><td>ボタン</td><td>この行のバインド要求を削除</td></tr>
+<tr><td>Add UAV Texture Bind</td><td>ボタン</td><td>新規バインド要求を1件追加（既定: 256x256, RGBA8_UNORM）</td></tr>
+</table>
+
+<h2>Constant Buffers</h2>
+<p><span class="ui-path">Constant Buffers</span>ツリーでは、float配列をそのまま定数バッファとして送るバインド要求を編集します。</p>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Variable</td><td>テキスト入力</td><td>シェーダー側の変数名</td></tr>
+<tr><td>[各値]</td><td>ドラッグ入力欄（float、ステップ0.01）＋「-」ボタン</td><td>定数バッファへ順番に詰め込まれるfloat値。「-」でその値のみ削除</td></tr>
+<tr><td>Add Value</td><td>ボタン</td><td>値を1つ（初期値0.0）追加</td></tr>
+<tr><td>Remove Buffer</td><td>ボタン</td><td>この定数バッファのバインド要求自体を削除</td></tr>
+<tr><td>Add Constant Buffer Bind</td><td>ボタン</td><td>新規バインド要求を1件追加（値0個の状態で追加される）</td></tr>
+</table>
+
+<div class="warn">バインド用のGPUリソース（定数バッファ・UAVテクスチャ本体）はここでは確保されません。実際の生成・管理はエンジン側（Renderer）が行います。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path">Add Component → Compute → ComputeShaderProcessing</span>。1オブジェクトへの付与数に実質的な制限はありません。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/04_ObjectComponents.html">Engine/04_ObjectComponents.html</a> — <code>IObjectComponent</code>とコンポーネント登録マクロの共通仕様</li>
+<li><a href="../Scene/SceneComputeProcessor.html">コンポーネント: Scene / SceneComputeProcessor</a> — このコンポーネントを収集し、実際にDispatchするシーンコンポーネント</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本的な見方</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

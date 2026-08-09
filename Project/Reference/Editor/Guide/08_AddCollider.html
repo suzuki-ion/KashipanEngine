@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>8. 当たり判定を付ける | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-editor-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="T08_AddCollider">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>8. 当たり判定を付ける</h1>
+<p class="page-lead">PlayerVisualへBoxColliderを追加し、Scene Viewのワイヤーフレームで範囲を確認します。</p>
+</div>
+
+<div class="tutorial-meta"><span>操作: Add Component</span><span>追加: BoxCollider</span><span>目安: 4分</span></div>
+
+<h2>BoxColliderを追加する</h2>
+<ol class="steps">
+<li><strong>対象を選択する</strong>Hierarchyで<code>PlayerVisual</code>を選択します。</li>
+<li><strong>Add Componentを開く</strong>Scene Object Inspectorの最下部にある<code>Add Component</code>を押します。</li>
+<li><strong>BoxColliderを追加する</strong>コンポーネントメニューから<code>BoxCollider</code>を選択します。</li>
+<li><strong>タグを付ける</strong>BoxCollider内の共通プロパティ<code>Tag</code>へ<code>PlayerBox</code>を入力します。</li>
+<li><strong>形状を確認する</strong>Centerを<code>(0, 0, 0)</code>、Sizeを<code>(1, 1, 1)</code>にし、Scene Viewに表示されるコライダー線を確認します。</li>
+</ol>
+
+<figure class="editor-shot">
+<img src="../../assets/tutorial/08-collider.png" alt="BoxColliderの設定とScene Viewのコライダー表示">
+<figcaption><strong>BoxColliderの設定。</strong> 選択したオブジェクトのTransformに追従し、Scene Viewでは当たり判定の範囲をワイヤーフレームで確認できます。</figcaption>
+</figure>
+
+<h2>地面も作る</h2>
+<ol class="steps">
+<li><span class="ui-path"><span>Create Object</span><i>›</i><span>3D</span><i>›</i><span>Mesh Object</span></span>でオブジェクトを作り、<code>Ground</code>と名付けます。</li>
+<li>TransformのTranslateを<code>(0, -0.5, 0)</code>、Scaleを<code>(8, 1, 8)</code>にします。</li>
+<li>Add Componentで<code>BoxCollider</code>を追加し、Tagを<code>GroundBox</code>にします。</li>
+<li><code>Ctrl+S</code>で保存します。</li>
+</ol>
+
+<h2>主な設定</h2>
+<table>
+<tr><th>設定</th><th>意味</th></tr>
+<tr><td>Center / Size</td><td>Transformを基準にした判定中心と基本サイズ</td></tr>
+<tr><td>Is Trigger</td><td>有効にすると押し戻さず、接触イベントだけを通知する</td></tr>
+<tr><td>Continuous Detection</td><td>高速移動時のすり抜けを抑えるため連続判定を行う</td></tr>
+<tr><td>Sync Position / Rotation / Scale</td><td>Transformの各軸をコライダーへ反映するか指定する</td></tr>
+<tr><td>Tag</td><td>スクリプトからPlayerやGroundを判別する文字列</td></tr>
+</table>
+
+<div class="tip">
+<strong>線が表示されない場合</strong><br>
+Scene Viewの表示オプションで<code>Colliders</code>を有効にし、Hierarchyで対象オブジェクトを選択してください。ゲーム画面にはデバッグ用の線は描画されません。
+</div>
+
+<p>衝突イベント、RigidBody、各コライダーの詳細は<a href="../../Engine/06_Collision.html">衝突判定のリファレンス</a>を参照してください。</p>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

@@ -10,6 +10,7 @@
 
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/FileIO/Directory.h"
+#include "Core/ProjectPaths.h"
 
 #include "Graphics/Pipeline/JsonParser/BlendState.h"
 #include "Graphics/Pipeline/JsonParser/RasterizerState.h"
@@ -27,10 +28,18 @@
 
 #include "Graphics/Pipeline/System/ShaderCompiler.h"
 #include "Graphics/Pipeline/System/PipelineCreator.h"
+#include "Graphics/Pipeline/System/PipelineVariantResolver.h"
 #include "Graphics/Pipeline/ComponentsPresetContainer.h"
 #include "Graphics/PipelineManager.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
+
+#if defined(USE_IMGUI)
+namespace {
+PipelineManager *sActiveInstance = nullptr;
+} // namespace
+#endif
 
 PipelineManager::PipelineManager(Passkey<GraphicsEngine>, ID3D12Device *device, const std::string &pipelineSettingsPath) {
     LogScope scope;
@@ -41,15 +50,47 @@ PipelineManager::PipelineManager(Passkey<GraphicsEngine>, ID3D12Device *device, 
     shaderCompiler_ = std::make_unique<ShaderCompiler>(Passkey<PipelineManager>{}, device_);
     pipelineCreator_ = std::make_unique<PipelineCreator>(Passkey<PipelineManager>{}, device_, &components_, shaderCompiler_.get());
 
-    pipelineSettingsPath_ = pipelineSettingsPath;
+    pipelineSettingsPath_ = ProjectPaths::ToPhysical(pipelineSettingsPath);
     Json settings = LoadJSON(pipelineSettingsPath_);
-    pipelineFolderPath_ = settings["PipelineFolder"].get<std::string>();
+    // 設定ファイル内の参照先フォルダも論理パスで書かれているため、まとめて物理パスへ変換しておく
+    pipelineFolderPath_ = ProjectPaths::ToPhysical(settings["PipelineFolder"].get<std::string>());
     presetFolderNames_ = settings["PresetFolders"].get<std::unordered_map<std::string, std::string>>();
+    for (auto &[presetName, presetFolderPath] : presetFolderNames_) {
+        presetFolderPath = ProjectPaths::ToPhysical(presetFolderPath);
+    }
 
     LoadPreset();
     LoadPipelines();
+#if defined(USE_IMGUI)
+    sActiveInstance = this;
+#endif
     Log(Translation("engine.graphics.pipeline.manager.construct.end"), LogSeverity::Info);
 }
+
+PipelineManager::~PipelineManager() {
+#if defined(USE_IMGUI)
+    if (sActiveInstance == this) sActiveInstance = nullptr;
+#endif
+}
+
+#if defined(USE_IMGUI)
+bool PipelineManager::TryGetOrCreatePipeline(const std::string &pipelineName) {
+    if (!sActiveInstance) return false;
+    return sActiveInstance->GetOrCreatePipeline(pipelineName);
+}
+
+const MaterialLayout *PipelineManager::TryGetMaterialLayout(const std::string &pipelineName) {
+    if (!sActiveInstance || !sActiveInstance->HasPipeline(pipelineName)) return nullptr;
+    return &sActiveInstance->GetPipeline(pipelineName).GetMaterialLayout();
+}
+
+std::string PipelineManager::TryGetShaderBaseDir() {
+    if (!sActiveInstance) return {};
+    const auto shaderFolderIt = sActiveInstance->presetFolderNames_.find("Shader");
+    if (shaderFolderIt == sActiveInstance->presetFolderNames_.end()) return {};
+    return shaderFolderIt->second;
+}
+#endif
 
 void PipelineManager::ReloadPipelines() {
     LogScope scope;
@@ -58,6 +99,7 @@ void PipelineManager::ReloadPipelines() {
     pipelineInfos_.clear();
     components_.ClearAll();
     ShaderCompiler::ClearAllCompiledShaders(Passkey<PipelineManager>{});
+    pipelineCreator_->ClearRootSignatureCache(Passkey<PipelineManager>{});
 
     LoadPreset();
     LoadPipelines();
@@ -164,6 +206,46 @@ void PipelineManager::LoadPreset() {
     Log(Translation("engine.graphics.pipeline.loadpreset.end"), LogSeverity::Debug);
 }
 
+namespace {
+// ImGuiでの選択用に読み込み済みパイプライン名を保持する
+std::vector<std::string> sRenderPipelineNames;
+std::vector<std::string> sComputePipelineNames;
+// パイプライン名からカテゴリ（PipelineInfo::Category）を引くための索引（カテゴリ絞り込み用）
+std::unordered_map<std::string, std::string> sPipelineCategories;
+
+std::vector<std::string> FilterNamesByCategory(const std::vector<std::string> &names, const std::string &category) {
+    std::vector<std::string> filtered;
+    bool anyCategorized = false;
+    for (const auto &name : names) {
+        auto it = sPipelineCategories.find(name);
+        const std::string &pipelineCategory = (it != sPipelineCategories.end()) ? it->second : std::string{};
+        if (!pipelineCategory.empty()) anyCategorized = true;
+        if (pipelineCategory == category) filtered.push_back(name);
+    }
+    // 1件もCategoryが設定されていない（Categoryフィールド導入前に作られたプロジェクトの
+    // パイプライン定義等）場合、絞り込むと選択肢が0件になり選択自体ができなくなってしまうため、
+    // 絞り込まず全件を返す（後方互換）
+    if (!anyCategorized) return names;
+    return filtered;
+}
+} // namespace
+
+const std::vector<std::string> &PipelineManager::GetLoadedRenderPipelineNames() {
+    return sRenderPipelineNames;
+}
+
+const std::vector<std::string> &PipelineManager::GetLoadedComputePipelineNames() {
+    return sComputePipelineNames;
+}
+
+std::vector<std::string> PipelineManager::GetLoadedRenderPipelineNames(const std::string &category) {
+    return FilterNamesByCategory(sRenderPipelineNames, category);
+}
+
+std::vector<std::string> PipelineManager::GetLoadedComputePipelineNames(const std::string &category) {
+    return FilterNamesByCategory(sComputePipelineNames, category);
+}
+
 void PipelineManager::LoadPipelines() {
     LogScope scope;
     Log(Translation("engine.graphics.pipeline.load.start"), LogSeverity::Debug);
@@ -216,7 +298,51 @@ void PipelineManager::LoadPipelines() {
         }
     }
 
+    // ImGuiでの選択用に名前一覧を再構築する
+    sRenderPipelineNames.clear();
+    sComputePipelineNames.clear();
+    sPipelineCategories.clear();
+    for (const auto &kv : pipelineInfos_) {
+        sPipelineCategories[kv.first] = kv.second.Category();
+        if (kv.second.Type() == PipelineType::Render) {
+            sRenderPipelineNames.push_back(kv.first);
+        } else {
+            sComputePipelineNames.push_back(kv.first);
+        }
+    }
+    std::sort(sRenderPipelineNames.begin(), sRenderPipelineNames.end());
+    std::sort(sComputePipelineNames.begin(), sComputePipelineNames.end());
+
     Log(Translation("engine.graphics.pipeline.load.end"), LogSeverity::Debug);
+}
+
+bool PipelineManager::GetOrCreatePipeline(const std::string &pipelineName) {
+    LogScope scope;
+    if (HasPipeline(pipelineName)) return true;
+
+    const auto shaderFolderIt = presetFolderNames_.find("Shader");
+    const std::string shaderBaseDir = (shaderFolderIt != presetFolderNames_.end()) ? shaderFolderIt->second : std::string{};
+    auto resolution = TryResolvePipelineVariant(pipelineName, shaderBaseDir);
+    if (!resolution.matched) return false;
+
+    PipelineInfo info;
+    if (!pipelineCreator_->CreateRender(resolution.synthesizedPipelineJson, info)) {
+        Log(Translation("engine.graphics.pipeline.load.render.failed") + pipelineName, LogSeverity::Warning);
+        return false;
+    }
+    pipelineInfos_[info.Name()] = info;
+
+    // ImGuiでの選択用一覧にも反映する（LoadPipelines()末尾と同じ更新内容）
+    sPipelineCategories[info.Name()] = info.Category();
+    if (info.Type() == PipelineType::Render) {
+        auto insertPos = std::lower_bound(sRenderPipelineNames.begin(), sRenderPipelineNames.end(), info.Name());
+        if (insertPos == sRenderPipelineNames.end() || *insertPos != info.Name()) {
+            sRenderPipelineNames.insert(insertPos, info.Name());
+        }
+    }
+
+    Log(Translation("engine.graphics.pipeline.load.render.pso.create.succeeded") + info.Name() + " (dynamic variant)", LogSeverity::Info);
+    return true;
 }
 
 } // namespace KashipanEngine

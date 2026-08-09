@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Light | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_Light">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Light</h1>
+<p class="page-lead">ライトのパラメータ（種類・色・強度・減衰・形状・シャドウ設定）だけを保持するコンポーネントです。実際に描画へ反映するには同一オブジェクトに<a href="LightRenderer.html">LightRenderer</a>を併せて付与する必要があります。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a>を参照してください。</p>
+</div>
+
+<div class="warn"><strong>Lightだけでは何も起きない</strong><br>LightはTransform同様パラメータの入れ物でしかなく、Rendererへ実際にライト情報を送るのはLightRendererの役割。両方を同一オブジェクトへ付与して初めて描画に反映される。</div>
+
+<h2>共通項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Type</td><td>コンボボックス</td><td>Directional / Point / Spot / Rect / Sphere / Disc / Tube / Box の8種類。既定はDirectional</td></tr>
+<tr><td>Color</td><td>ColorEdit4（RGBA）</td><td>ライトの色</td></tr>
+<tr><td>Intensity</td><td>ドラッグ入力欄（ステップ0.01、下限0）</td><td>強度（既定1.0）</td></tr>
+</table>
+
+<h2>Typeごとに出現する項目</h2>
+<p>Colorの下、Shadowの区切り線より上に、選択中のTypeに応じて以下の項目が追加表示される（Directionalは追加項目なし）。</p>
+<table>
+<tr><th>Type</th><th>追加される項目</th></tr>
+<tr><td>Directional</td><td>（無し）</td></tr>
+<tr><td>Point</td><td>Radius（ドラッグ、ステップ0.1、0～1000、届く範囲）／ Decay（ドラッグ、ステップ0.01、0～10、減衰指数）</td></tr>
+<tr><td>Spot</td><td>Distance（届く範囲）／ Decay ／ Inner Angle（SliderAngle、0～90°）／ Outer Angle（SliderAngle、0～90°）</td></tr>
+<tr><td>Sphere</td><td>Radius (Range)（届く範囲）／ Source Radius（球の物理的な半径。ステップ0.01、0.001～100。ホバーで説明ツールチップ）／ Decay</td></tr>
+<tr><td>Tube</td><td>Radius (Range) ／ Source Radius（円柱半径）／ Source Length（チューブの長さ＝Transformローカル+X方向。ホバーでツールチップ）／ Decay</td></tr>
+<tr><td>Disc</td><td>Distance (Range) ／ Source Radius ／ Decay（ホバーで「Transformの+Z方向が発光面の法線（片面発光）」というツールチップ）</td></tr>
+<tr><td>Rect</td><td>Distance (Range) ／ Source Width ／ Source Height ／ Decay（ホバーで「+Z方向が法線、+Xが幅、+Yが高さ方向」というツールチップ）</td></tr>
+<tr><td>Box</td><td>Radius (Range)（ボックス表面からさらに届く減衰距離。ホバーでツールチップ）／ Source Width ／ Source Height ／ Source Depth（ホバーで「ローカルX/Y/Z方向の幅・高さ・奥行き」というツールチップ）／ Decay</td></tr>
+</table>
+<div class="note"><strong>RadiusとDistanceは同じ意味で名前だけが違う</strong><br>Point/Sphere/Tube/Boxは「Radius (Range)」、Spot/Disc/Rectは「Distance (Range)」という項目名になるが、内部的にはどちらも減衰距離（届く範囲）を表す別々のメンバ変数（<code>radius_</code>/<code>distance_</code>）。Rect/Sphere/Disc/Tubeは面光源として形状上の代表点法で近似され、Boxは全方位（体積）発光として扱われる。</div>
+
+<h2>Shadow（区切り線以下）</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Cast Shadows</td><td>チェックボックス</td><td>有効にすると以下の項目が追加表示される（既定false）</td></tr>
+<tr><td>Shadow Distance</td><td>ドラッグ入力欄（ステップ1.0、1～10000）</td><td>Type=Directionalの場合のみ表示。カスケードシャドウの適用範囲</td></tr>
+<tr><td>Shadow Resolution</td><td>コンボボックス（512 / 1024 / 2048 / 4096）</td><td>シャドウマップの解像度（1カスケードあたり）</td></tr>
+<tr><td>Shadow Bias</td><td>ドラッグ入力欄（ステップ0.01、0～5）</td><td>自動計算されるテクセル基準の深度バイアスへの倍率（既定1.0）。下げると影が近づく代わりにシャドウアクネが出やすく、上げると影が浮きやすくなる（ツールチップに説明あり）</td></tr>
+<tr><td>Shadow Softness</td><td>ドラッグ入力欄（ステップ0.01、0～100）</td><td>Type=Directional/Point/Spotの場合のみ編集可能。PCSS半影ソフト化に使うワールド単位の光源サイズ（0で硬い影）</td></tr>
+<tr><td>Softness: %.3f (Source Radiusから自動算出)（読み取り専用）</td><td>テキスト表示</td><td>Type=Rect/Sphere/Disc/Tube/Boxの場合、Shadow Softnessの代わりにこの読み取り専用テキストが表示される。値は形状の物理サイズ（Source Radius等）から自動計算され、編集不可</td></tr>
+</table>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path"><span>Add Component</span><i>›</i><span>Render</span><i>›</i><span>Light</span></span> から追加する。同一オブジェクトに複数付与可能（通常は1つのライトにつき1つ）。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="LightRenderer.html">Components/Render/LightRenderer.html</a> — Lightの情報を実際に描画へ反映させるコンポーネント</li>
+<li><a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a> — <code>Light</code>クラスのAPI</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Object Inspectorの基本操作</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

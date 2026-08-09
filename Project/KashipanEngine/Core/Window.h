@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
 #include <optional>
 #include <variant>
@@ -14,6 +15,8 @@
 #include "Core/WindowsAPI/WindowMessage.h"
 #include "Core/WindowsAPI/WindowSize.h"
 #include "Core/WindowsAPI/WindowEvents/DefaultEvents.h"
+#include "Graphics/IRenderTarget.h"
+#include "Utilities/FileIO.h"
 
 namespace KashipanEngine {
 
@@ -24,10 +27,6 @@ class DX12SwapChain;
 class GraphicsEngine;
 class PipelineManager;
 class Renderer;
-class ImGuiManager;
-class Object2DBase;
-class Object3DBase;
-class ScreenBuffer;
 
 /// @brief ウィンドウの種類
 enum class WindowType {
@@ -49,12 +48,10 @@ enum class SizeChangeMode {
 };
 
 /// @brief ウィンドウ用クラス
-class Window final {
+class Window final : public IRenderTarget {
     friend class IWindowEvent;
     static inline WindowsAPI *sWindowsAPI = nullptr;
     static inline DirectXCommon *sDirectXCommon = nullptr;
-    static inline PipelineManager *sPipelineManager = nullptr;
-    static inline Renderer *sRenderer = nullptr;
 
     // 値保持する既定イベント + 拡張イベント(unique_ptr) をまとめた variant
     using Events = std::variant<
@@ -92,8 +89,6 @@ public:
     static void SetWindowsAPI(Passkey<GameEngine>, WindowsAPI *windowsAPI) { sWindowsAPI = windowsAPI; }
     static void SetDirectXCommon(Passkey<GameEngine>, DirectXCommon *directXCommon) { sDirectXCommon = directXCommon; }
     static void SetDefaultParams(Passkey<GameEngine>, const std::string &title, int32_t width, int32_t height, DWORD style, const std::string &iconPath);
-    static void SetPipelineManager(Passkey<GraphicsEngine>, PipelineManager *pm) { sPipelineManager = pm; }
-    static void SetRenderer(Passkey<GraphicsEngine>, Renderer *renderer) { sRenderer = renderer; }
 
     /// @brief 全ウィンドウ破棄
     static void AllDestroy(Passkey<GameEngine>);
@@ -109,11 +104,6 @@ public:
     /// @param title ウィンドウタイトル
     /// @return 一致するウィンドウインスタンスへのポインタのリスト。存在しない場合は空のリスト
     static std::vector<Window *> GetWindows(const std::string &title);
-#if defined(USE_IMGUI)
-    /// @brief 存在するウィンドウのうち一番最初のHWNDを取得（ImGuiManager用）
-    static HWND GetFirstWindowHwndForImGui(Passkey<ImGuiManager>);
-#endif
-
     /// @brief 現在のウィンドウ数を取得
     static size_t GetWindowCount();
 
@@ -282,10 +272,19 @@ public:
     int32_t GetClientWidth() const noexcept { return size_.clientWidth; }
     /// @brief クライアント高さを取得する
     int32_t GetClientHeight() const noexcept { return size_.clientHeight; }
+    RenderTargetKind GetRenderTargetKind() const noexcept override { return RenderTargetKind::Window; }
+    std::string GetRenderTargetName() const override { return GetWindowTitle(); }
+    std::uint32_t GetRenderTargetWidth() const noexcept override { return static_cast<std::uint32_t>(GetClientWidth()); }
+    std::uint32_t GetRenderTargetHeight() const noexcept override { return static_cast<std::uint32_t>(GetClientHeight()); }
+    bool IsRenderTargetAvailable() const noexcept override { return !isPendingDestroy_ && descriptor_.hwnd != nullptr; }
     /// @brief アスペクト比を取得する
     float GetAspectRatio() const noexcept { return size_.aspectRatio; }
     /// @brief コマンドリストを取得する
-    ID3D12GraphicsCommandList *GetCommandList() const;
+    ID3D12GraphicsCommandList *GetCommandList() const override;
+    /// @brief 描画前処理
+    void BeginDraw() override;
+    /// @brief 描画後処理
+    void EndDraw() override;
 
     /// @brief 指定のウィンドウスタイルを持っているかどうかをチェック
     bool HasWindowStyle(DWORD style) const noexcept { return (descriptor_.windowStyle & style) != 0; }
@@ -293,6 +292,34 @@ public:
     bool HasMessage(UINT msg) const { return messages_.find(msg) != messages_.end(); }
     /// @brief 指定のメッセージの情報を取得
     const WindowMessage &GetWindowMessage(UINT msg) const;
+    /// @brief このフレームに受信したメッセージ一覧を取得する（メッセージ種別ごとに最後の1件を保持）
+    const std::unordered_map<UINT, WindowMessage> &GetMessages() const noexcept { return messages_; }
+
+    //==================================================
+    // メッセージの横取り（インターセプト）
+    //==================================================
+
+    /// @brief 指定のメッセージが横取り可能かどうか（ウィンドウ破棄系のメッセージは不可）
+    static bool IsInterceptableMessage(UINT msg) noexcept {
+        return msg != WM_DESTROY && msg != WM_NCDESTROY && msg != WM_QUIT;
+    }
+
+    /// @brief 指定のメッセージを横取りするかを設定する
+    /// @details 横取り対象のメッセージは受信の記録（HasMessage/GetMessages等）だけを行い、
+    ///          エンジン既定のイベント処理とOSの既定処理（DefWindowProc）を実行しない。
+    ///          WM_CLOSEを横取りした場合、タイトルバーのXボタンやAlt+F4（WM_SYSCOMMANDのSC_CLOSE）は
+    ///          既定イベント（確認ダイアログ）を経由せずWM_CLOSEとして横取りされる。
+    ///          WM_NCHITTESTやWM_SYSCOMMAND全体等を横取りするとウィンドウの基本動作
+    ///          （ドラッグ移動・リサイズ等）が壊れる点に注意すること
+    /// @return 設定できた場合はtrue（横取り不可のメッセージはfalse）
+    bool SetMessageIntercepted(UINT msg, bool enabled) {
+        if (!IsInterceptableMessage(msg)) return false;
+        if (enabled) interceptedMessages_.insert(msg);
+        else interceptedMessages_.erase(msg);
+        return true;
+    }
+    /// @brief 指定のメッセージを横取りするかを取得する
+    bool IsMessageIntercepted(UINT msg) const { return interceptedMessages_.contains(msg); }
 
     // 親子取得
     Window *GetParentWindow() const noexcept { return parentWindow_; }
@@ -373,6 +400,8 @@ private:
     WindowSize size_{};
     // メッセージ関連
     std::unordered_map<UINT, WindowMessage> messages_;
+    // 横取り対象のメッセージ（既定処理を実行しないメッセージ種別の集合）
+    std::unordered_set<UINT> interceptedMessages_;
     
     // DX12スワップチェーン
     DX12SwapChain *dx12SwapChain_ = nullptr;

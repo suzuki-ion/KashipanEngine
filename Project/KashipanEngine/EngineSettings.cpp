@@ -5,6 +5,7 @@
 #include "EngineSettings/LoadWindow.h"
 #include "EngineSettings/LoadLimits.h"
 #include "EngineSettings/LoadRendering.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 namespace {
@@ -15,8 +16,8 @@ const EngineSettings &LoadEngineSettings(PasskeyForGameEngineMain, const std::st
     LogScope scope;
     JSON json = LoadJSON(engineSettingsPath);
     if (json.empty()) {
-        Log("Failed engine settings file: " + engineSettingsPath, LogSeverity::Warning);
-        Log("Using default engine settings.", LogSeverity::Info);
+        Log(Translation("engine.settings.load.failed.file") + engineSettingsPath, LogSeverity::Warning);
+        Log(Translation("engine.settings.usedefault"), LogSeverity::Info);
         return sEngineSettings;
     }
 

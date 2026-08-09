@@ -6,6 +6,7 @@
 #include "Graphics/Pipeline/JsonParser/InputLayout.h"
 #include "Graphics/Pipeline/JsonParser/GraphicsPipelineState.h"
 #include "Graphics/Pipeline/JsonParser/RootSignature.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

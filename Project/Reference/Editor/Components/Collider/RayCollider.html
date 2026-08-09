@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RayCollider | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Collider_RayCollider">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>RayCollider</h1>
+<p class="page-lead">3D用のレイキャスト専用コライダーです。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/06_Collision.html">Engine/06_Collision.html</a>を参照してください。</p>
+</div>
+
+<div class="note"><strong>常駐する当たり判定形状を持たない</strong><br>他のコライダーと違い、<code>BuildColliderInfo3D()</code>は常に空を返すため、シーンに常駐する当たり判定形状（RigidBody上のシェイプ同士の接触判定システム）には乗りません。代わりに、<code>OnCollisionEnter</code>/<code>OnCollisionStay</code>/<code>OnCollisionExit</code>のいずれかがC++側から設定されている間だけ、毎フレームのUpdateで内部的にレイキャストを行い、前フレームのヒット対象との比較からEnter/Stay/Exitを自前で判定・発火します（コールバックが1つも設定されていなければレイキャスト自体を省略します）。他のコライダーと異なりStay中でも接触点は常に1点（ヒットした面の法線のみ。<code>penetration</code>は常に0）で、経路上に複数ヒットしても最も近い1つだけが対象になります。<code>CastRay()</code>を呼び出せば、この自動判定とは独立して任意のタイミングで単発のレイキャストも行えます。IsTrigger欄は他のコライダーとの表示統一のため表示されますが、レイキャスト専用のため物理的な押し戻しという概念自体は働きません（Enter/Stay/Exit通知の可否には影響しません）。</div>
+
+<h2>Inspectorに表示される項目</h2>
+<p>基底クラス<code>ICollider</code>の共通項目を先頭に表示し、その下に形状固有の項目が続きます（表示順はソースコードの<code>ShowImGui()</code>呼び出し順と同じ）。</p>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>IsTrigger</td><td>チェックボックス</td><td>他のコライダーと共通の項目として表示される。既定 <code>false</code></td></tr>
+<tr><td>Continuous Detection</td><td>チェックボックス</td><td>連続衝突判定（CCD）の有効/無効。ホバーすると「高速移動時のすり抜けでも衝突イベントを発生させる（連続衝突判定）」というツールチップが表示される。既定 <code>false</code>。RayColliderは常駐形状を持たないため実質的に影響しない</td></tr>
+<tr><td>Sync With Transform（区切り線の下の見出し）</td><td>テキスト見出し</td><td>以下のPos/Rotation/Scale同期チェック群のセクション見出し（クリック不可）</td></tr>
+<tr><td>Pos X / Pos Y / Pos Z</td><td>チェックボックス（3個、横並び）</td><td>同オブジェクトの<code>Transform</code>の各軸位置へ追従させるか。既定は全て<code>true</code>。レイの発射origin（ワールド座標）に影響する</td></tr>
+<tr><td>Rotation</td><td>チェックボックス</td><td>Transformの回転へ追従させるか。既定<code>true</code>。<code>CastRay()</code>実行時にDirectionをこの回転で回転させる</td></tr>
+<tr><td>Scale X / Scale Y / Scale Z</td><td>チェックボックス（3個、横並び）</td><td>Transformの各軸スケールへ追従させるか。既定は全て<code>false</code></td></tr>
+<tr><td>Direction</td><td>XYZのドラッグ入力欄（ステップ0.01）</td><td>レイのローカル方向（正規化は<code>CastRay()</code>実行時に行われる）。既定 <code>(0, -1, 0)</code></td></tr>
+<tr><td>MaxDistance</td><td>ドラッグ入力欄（ステップ0.01、下限0）</td><td>レイの最大到達距離。既定 <code>10.0</code></td></tr>
+</table>
+
+<h2>Add Componentでの位置</h2>
+<p><code>RayCollider</code>は<code>COMPONENT_CATEGORY("Collision")</code>に属します。</p>
+<span class="ui-path"><span>Add Component</span><i>›</i><span>Collision</span><i>›</i><span>RayCollider</span></span>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/06_Collision.html">Engine/06_Collision.html</a> — <code>ICollider</code>/<code>RayCollider</code>クラスの全メソッド（<code>CastRay()</code>を含む）とC++側のAPI</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — コンポーネント一覧の開閉・Add Componentの操作方法</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

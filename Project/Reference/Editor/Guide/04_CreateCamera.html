@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4. カメラオブジェクトを作成する | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-editor-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="T04_CreateCamera">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>4. カメラオブジェクトを作成する</h1>
+<p class="page-lead">3Dシーンをどの位置から、どの画角で、どの描画先へ映すかをCamera Objectで設定します。</p>
+</div>
+
+<div class="tutorial-meta"><span>操作の起点: Create Object → 3D</span><span>追加: Camera3D・CameraRenderer</span><span>描画先: MainScreen</span></div>
+
+<h2>1. Camera Objectを作成する</h2>
+<ol class="steps">
+<li><strong>カメラテンプレートを選ぶ</strong>Hierarchyの空白を右クリックし、<span class="ui-path"><span>Create Object</span><i>›</i><span>3D</span><i>›</i><span>Camera Object</span></span> を選択します。</li>
+<li><strong>名前を変更する</strong>Inspector上部のNameを<code>MainCamera</code>へ変更します。</li>
+<li><strong>位置を決める</strong>TransformのTranslateを、対象がカメラの前方（ローカル+Z方向）に入る位置へ調整します。例として<code>(0, 3, -10)</code>から始めます。</li>
+</ol>
+
+<figure class="editor-shot">
+<div class="screenshot-placeholder">
+<div class="screenshot-placeholder-inner">
+<strong>スクリーンショット差し替え位置</strong>
+MainCameraを選択し、Scene ViewのカメラフラスタムとInspectorのCamera3D・CameraRendererを表示したエディター画面
+<br><code>04-camera-object.png</code>
+</div>
+</div>
+<figcaption><strong>カメラオブジェクトの設定例。</strong> Scene View上のカメラ位置・向きと、Inspectorの射影設定・Targetが一度に確認できる構図を想定しています。</figcaption>
+</figure>
+
+<h2>2. Camera3Dを設定する</h2>
+<p>Camera Objectテンプレートには<code>Transform</code>、<code>Camera3D</code>、<code>CameraRenderer</code>が自動で追加されます。</p>
+<table>
+<thead><tr><th>項目</th><th>設定例</th><th>役割</th></tr></thead>
+<tbody>
+<tr><td>Orthographic</td><td>オフ</td><td>オフなら遠近感のある透視投影、オンなら平行投影</td></tr>
+<tr><td>FovY</td><td><code>1.0</code></td><td>縦方向の視野角。値はラジアン</td></tr>
+<tr><td>Near</td><td><code>0.1</code></td><td>これより手前を描画しない距離</td></tr>
+<tr><td>Far</td><td><code>1000</code></td><td>これより奥を描画しない距離</td></tr>
+<tr><td>Aspect</td><td><code>1.7778</code></td><td>横幅÷縦幅。1920×1080なら16:9</td></tr>
+<tr><td>OrthoSize</td><td><code>10</code></td><td>Orthographicがオンのときに使う縦方向の半径</td></tr>
+</tbody>
+</table>
+
+<h2>3. CameraRendererへ描画先を設定する</h2>
+<ol class="steps">
+<li><code>CameraRenderer</code>を展開します。</li>
+<li><code>Target</code>から前ページで作成した<code>MainScreen</code>を選択します。</li>
+<li><code>Pipeline</code>は、まず空欄のまま全パイプラインへ適用するか、3D描画に合わせて<code>Object3D.Solid.BlendNormal</code>を選択します。</li>
+<li>CameraRenderer下部に<code>Vertex:gCamera3D</code>と<code>Pixel:gCamera3D</code>が表示されることを確認します。</li>
+</ol>
+
+<div class="tip"><strong>Scene Viewでカメラを見つける</strong><br>Scene View上部の<code>Cameras</code>を有効にすると、カメラのアイコンと視錐台を確認できます。TransformのRotateを変更し、フラスタムが対象へ向くよう調整してください。</div>
+
+<h2>4. この段階で確認すること</h2>
+<ol class="steps">
+<li>MainScreenのScreenBuffer Viewerを開きます。</li>
+<li>CameraRendererのTargetがMainScreenになっていることを確認します。</li>
+<li>Scene Viewでカメラの位置、向き、視錐台を確認します。</li>
+</ol>
+
+<div class="note"><strong>Viewerへの映像表示は手順7で確認します</strong><br>この段階では描画対象のMesh Objectをまだ作っていないため、Viewerが空でも問題ありません。<a href="07_AddComponents.html">7. コンポーネントを追加する</a>で描画対象をMainScreenへ接続すると、カメラ映像を確認できます。</div>
+
+<ul class="checklist">
+<li>MainCameraにCamera3DとCameraRendererがある</li>
+<li>CameraRendererのTargetがMainScreenになっている</li>
+<li>Scene Viewでカメラの位置と向きを確認できる</li>
+<li>ScreenBuffer Viewerを開ける</li>
+</ul>
+
+<p>2Dカメラ、追従カメラ、各APIの詳細は<a href="../../Engine/05_Rendering.html">描画コンポーネントのリファレンス</a>を参照してください。</p>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

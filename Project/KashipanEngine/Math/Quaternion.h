@@ -1,7 +1,10 @@
-﻿#pragma once
+#pragma once
 #include <cmath>
 
-struct Quaternion {
+#include "Math/Matrix4x4.h"
+#include "Math/Vector3.h"
+
+struct Quaternion final {
     static Quaternion Identity() noexcept {
         static Quaternion id(0.0f, 0.0f, 0.0f, 1.0f);
         return id;
@@ -33,6 +36,59 @@ struct Quaternion {
         float s0 = std::cos(theta) - dot * sinTheta / sinTheta0;
         float s1 = sinTheta / sinTheta0;
         return (q1 * s0) + (q2Copy * s1);
+    }
+
+    static Quaternion MakeRotateEuler(const Vector3 &euler) noexcept {
+        Quaternion q;
+        Quaternion qx = q.MakeRotateAxisAngle(Vector3(1.0f, 0.0f, 0.0f), euler.x);
+        Quaternion qy = q.MakeRotateAxisAngle(Vector3(0.0f, 1.0f, 0.0f), euler.y);
+        Quaternion qz = q.MakeRotateAxisAngle(Vector3(0.0f, 0.0f, 1.0f), euler.z);
+        return (qx * qy * qz).Normalize();
+    }
+
+    static Quaternion MakeRotateAxisAngle(const Vector3 &axis, float angleRad) noexcept {
+        float halfAngle = angleRad * 0.5f;
+        float s = std::sin(halfAngle);
+        float c = std::cos(halfAngle);
+        return Quaternion(axis.x * s, axis.y * s, axis.z * s, c);
+    }
+
+    /// @brief 回転行列（スケール成分を含まない、行ベクトル規約: v' = v * M）からクォータニオンを生成する
+    /// @details オイラー角を経由すると（ジンバルロックや ImGuizmo 側との回転順の不一致により）
+    ///          ドラッグ操作中に回転が不安定になるため、行列から直接変換する必要がある場合に使う。
+    static Quaternion MakeFromRotationMatrix(const Matrix4x4 &m) noexcept {
+        const float m00 = m.m[0][0], m01 = m.m[0][1], m02 = m.m[0][2];
+        const float m10 = m.m[1][0], m11 = m.m[1][1], m12 = m.m[1][2];
+        const float m20 = m.m[2][0], m21 = m.m[2][1], m22 = m.m[2][2];
+        const float trace = m00 + m11 + m22;
+
+        Quaternion q;
+        if (trace > 0.0f) {
+            float s = std::sqrt(trace + 1.0f) * 2.0f; // s = 4w
+            q.w = 0.25f * s;
+            q.x = (m12 - m21) / s;
+            q.y = (m20 - m02) / s;
+            q.z = (m01 - m10) / s;
+        } else if (m00 > m11 && m00 > m22) {
+            float s = std::sqrt(1.0f + m00 - m11 - m22) * 2.0f; // s = 4x
+            q.w = (m12 - m21) / s;
+            q.x = 0.25f * s;
+            q.y = (m01 + m10) / s;
+            q.z = (m02 + m20) / s;
+        } else if (m11 > m22) {
+            float s = std::sqrt(1.0f + m11 - m00 - m22) * 2.0f; // s = 4y
+            q.w = (m20 - m02) / s;
+            q.x = (m01 + m10) / s;
+            q.y = 0.25f * s;
+            q.z = (m12 + m21) / s;
+        } else {
+            float s = std::sqrt(1.0f + m22 - m00 - m11) * 2.0f; // s = 4z
+            q.w = (m01 - m10) / s;
+            q.x = (m02 + m20) / s;
+            q.y = (m12 + m21) / s;
+            q.z = 0.25f * s;
+        }
+        return q.Normalize();
     }
 
     Quaternion() noexcept = default;
@@ -127,20 +183,11 @@ struct Quaternion {
         }
         return Conjugate() / normSq;
     }
-
-    Quaternion MakeRotateAxisAngle(const Vector3 &axis, float angleRad) const noexcept {
-        float halfAngle = angleRad * 0.5f;
-        float s = std::sin(halfAngle);
-        float c = std::cos(halfAngle);
-        return Quaternion(axis.x * s, axis.y * s, axis.z * s, c);
-    }
-
     Vector3 RotateVector(const Vector3 &vec) const noexcept {
         Quaternion vecQuat(vec.x, vec.y, vec.z, 0.0f);
         Quaternion resQuat = (*this) * vecQuat * Inverse();
         return Vector3(resQuat.x, resQuat.y, resQuat.z);
     }
-
     Matrix4x4 MakeRotateMatrix() const noexcept {
         Matrix4x4 mat;
         float xx = x * x;
@@ -169,6 +216,26 @@ struct Quaternion {
         mat.m[3][2] = 0.0f;
         mat.m[3][3] = 1.0f;
         return mat;
+    }
+    Vector3 MakeEuler() {
+        Matrix4x4 mat = MakeRotateMatrix();
+        float rotX, rotY, rotZ;
+
+        float sy = mat.m[0][2];
+        if (sy > 0.9999f) {
+            rotY = 3.14159265f * 0.5f;
+            rotX = std::atan2(mat.m[1][0], mat.m[1][1]);
+            rotZ = 0.0f;
+        } else if (sy < -0.9999f) {
+            rotY = -3.14159265f * 0.5f;
+            rotX = std::atan2(-mat.m[1][0], mat.m[1][1]);
+            rotZ = 0.0f;
+        } else {
+            rotY = std::asin(sy);
+            rotX = std::atan2(-mat.m[1][2], mat.m[2][2]);
+            rotZ = std::atan2(-mat.m[0][1], mat.m[0][0]);
+        }
+        return Vector3(rotX, rotY, rotZ);
     }
 
     float x;

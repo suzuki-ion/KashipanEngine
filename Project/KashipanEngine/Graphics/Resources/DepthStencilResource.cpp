@@ -1,4 +1,5 @@
 #include "DepthStencilResource.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
@@ -35,19 +36,31 @@ DepthStencilResource::DepthStencilResource(UINT width, UINT height, DXGI_FORMAT 
     FLOAT clearDepth, UINT8 clearStencil,
     ID3D12Resource *existingResource,
     bool createSrv,
-    DXGI_FORMAT srvFormat)
+    DXGI_FORMAT srvFormat,
+    UINT arraySize)
     : IGraphicsResource(ResourceViewType::DSV) {
-    Initialize(width, height, format, clearDepth, clearStencil, existingResource, createSrv, srvFormat);
+    Initialize(width, height, format, clearDepth, clearStencil, existingResource, createSrv, srvFormat, arraySize);
 }
 
 bool DepthStencilResource::Recreate(UINT width, UINT height, DXGI_FORMAT format,
     FLOAT clearDepth, UINT8 clearStencil,
     ID3D12Resource *existingResource,
     bool createSrv,
-    DXGI_FORMAT srvFormat) {
+    DXGI_FORMAT srvFormat,
+    UINT arraySize) {
     ResetResourceForRecreate();
     srvHandleInfo_.reset();
-    return Initialize(width, height, format, clearDepth, clearStencil, existingResource, createSrv, srvFormat);
+    sliceDsvHandles_.clear();
+    return Initialize(width, height, format, clearDepth, clearStencil, existingResource, createSrv, srvFormat, arraySize);
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilResource::GetSliceDsvHandle(UINT slice) const {
+    if (arraySize_ >= 2 && slice < sliceDsvHandles_.size() && sliceDsvHandles_[slice]) {
+        return sliceDsvHandles_[slice]->cpuHandle;
+    }
+    // 配列でない場合（またはスライス不正時）は通常のDSVを返す
+    const auto *handleInfo = GetDescriptorHandleInfo();
+    return handleInfo ? handleInfo->cpuHandle : D3D12_CPU_DESCRIPTOR_HANDLE{};
 }
 
 void DepthStencilResource::ClearDepthStencilView() const {
@@ -97,9 +110,16 @@ void DepthStencilResource::CreateSrvInternal(DXGI_FORMAT srvFormat) {
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.Format = srvFormat;
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.Texture2D.MipLevels = 1;
+    if (arraySize_ >= 2) {
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+        srvDesc.Texture2DArray.MipLevels = 1;
+        srvDesc.Texture2DArray.FirstArraySlice = 0;
+        srvDesc.Texture2DArray.ArraySize = arraySize_;
+    } else {
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+        srvDesc.Texture2D.MipLevels = 1;
+    }
 
     GetDevice()->CreateShaderResourceView(GetResource(), &srvDesc, srvHandleInfo_->cpuHandle);
 }
@@ -107,7 +127,8 @@ void DepthStencilResource::CreateSrvInternal(DXGI_FORMAT srvFormat) {
 bool DepthStencilResource::Initialize(UINT width, UINT height, DXGI_FORMAT format, FLOAT clearDepth, UINT8 clearStencil,
     ID3D12Resource *existingResource,
     bool createSrv,
-    DXGI_FORMAT srvFormat) {
+    DXGI_FORMAT srvFormat,
+    UINT arraySize) {
     LogScope scope;
     auto *dsvHeap = GetDSVHeap();
     if (!GetDevice() || !dsvHeap) {
@@ -117,6 +138,7 @@ bool DepthStencilResource::Initialize(UINT width, UINT height, DXGI_FORMAT forma
 
     width_ = width;
     height_ = height;
+    arraySize_ = (arraySize == 0) ? 1 : arraySize;
     format_ = format;
     clearDepth_ = clearDepth;
     clearStencil_ = clearStencil;
@@ -133,7 +155,7 @@ bool DepthStencilResource::Initialize(UINT width, UINT height, DXGI_FORMAT forma
     resourceDesc.Alignment = 0;
     resourceDesc.Width = width_;
     resourceDesc.Height = height_;
-    resourceDesc.DepthOrArraySize = 1;
+    resourceDesc.DepthOrArraySize = static_cast<UINT16>(arraySize_);
     resourceDesc.MipLevels = 1;
     resourceDesc.Format = needsTypeless ? ToTypelessForDepth(format_) : format_;
     resourceDesc.SampleDesc = {1, 0};
@@ -162,12 +184,37 @@ bool DepthStencilResource::Initialize(UINT width, UINT height, DXGI_FORMAT forma
 
     D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
     dsvDesc.Format = format_;
-    dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
     dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+    if (arraySize_ >= 2) {
+        // 全スライスを対象としたDSV（ClearDepthStencilViewで一括クリアするために使用）
+        dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+        dsvDesc.Texture2DArray.MipSlice = 0;
+        dsvDesc.Texture2DArray.FirstArraySlice = 0;
+        dsvDesc.Texture2DArray.ArraySize = arraySize_;
+    } else {
+        dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+    }
 
     GetDevice()->CreateDepthStencilView(GetResource(), &dsvDesc, handle->cpuHandle);
 
     SetDescriptorHandleInfo(std::move(handle));
+
+    // 配列の場合はスライスごとの描画先用DSVも作成する
+    if (arraySize_ >= 2) {
+        sliceDsvHandles_.reserve(arraySize_);
+        for (UINT i = 0; i < arraySize_; ++i) {
+            auto sliceHandle = dsvHeap->AllocateDescriptorHandle();
+            D3D12_DEPTH_STENCIL_VIEW_DESC sliceDesc = {};
+            sliceDesc.Format = format_;
+            sliceDesc.Flags = D3D12_DSV_FLAG_NONE;
+            sliceDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+            sliceDesc.Texture2DArray.MipSlice = 0;
+            sliceDesc.Texture2DArray.FirstArraySlice = i;
+            sliceDesc.Texture2DArray.ArraySize = 1;
+            GetDevice()->CreateDepthStencilView(GetResource(), &sliceDesc, sliceHandle->cpuHandle);
+            sliceDsvHandles_.push_back(std::move(sliceHandle));
+        }
+    }
 
     if (createSrv) {
         CreateSrvInternal(srvFormat);

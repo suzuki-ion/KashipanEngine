@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PrefabInstanceComponent | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_PrefabInstanceComponent">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>PrefabInstanceComponent <span class="badge final">最大1個</span></h1>
+<p class="page-lead">Prefabインスタンスのサブツリー根にのみ付与される、元のPrefabアセットとの対応関係を示すマーカーコンポーネントです。エディター上でPrefabをシーンへ配置した際に自動で付与され、通常は手動で追加するものではありません。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>表示</th><th>内容</th></tr>
+<tr><td>Prefab: パス</td><td>読み取り専用テキスト（<code>ImGui::TextUnformatted</code>）。対応する元の<code>.prefab</code>ファイルのパス</td></tr>
+</table>
+
+<div class="note">このコンポーネント自体のInspector表示は上記のパス表示のみです。「元のPrefabへ変更を反映する（Apply All）」「元のPrefabの内容に戻す（Revert All）」といった同期操作のUIは、このコンポーネントの項目としてではなく、<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>のPrefabセクション（対象オブジェクトがPrefabインスタンスの場合のみ表示）にまとめて用意されています。</div>
+
+<div class="warn">このコンポーネントをユーザーが手動で削除すると、そのオブジェクトはPrefabとのリンクを失います（Unityの「Unpack Prefab Instance」に相当する操作です）。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path">Add Component → Prefab → PrefabInstanceComponent</span>のカテゴリに属しますが、通常はAdd Componentメニューから手動で追加する対象ではありません（Prefab配置時にエディターが自動付与します）。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Prefabセクション（Apply All / Revert All / Overrides一覧）の詳細</li>
+<li><a href="../../../Engine/04_ObjectComponents.html">Engine/04_ObjectComponents.html</a> — <code>PrefabInstanceComponent</code>クラスのAPI</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

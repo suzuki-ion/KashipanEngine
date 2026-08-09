@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InputCommandApplier | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_InputCommandApplier">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>InputCommandApplier</h1>
+<p class="page-lead">InputCommandの入力値を、同オブジェクトの他コンポーネントのパラメータへ適用するコンポーネントです。毎フレーム条件を評価し、満たしたときだけ値（固定値または入力コマンドの値）をバインド先へ書き込みます。複数のコマンド設定を登録でき、それぞれに評価するコマンド名・条件・複数の適用先を設定できます。</p>
+</div>
+
+<h2>全体の項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Add Command</td><td>ボタン</td><td>新しいコマンド設定を1件追加する。名前は "Cmd0", "Cmd1"... のように重複しない名前が自動で割り当てられる</td></tr>
+</table>
+<p>登録済みの各コマンド設定は、名前をタイトルにした<code>ImGui::CollapsingHeader</code>（折りたたみ可能な見出し）として一覧表示されます。</p>
+
+<h2>コマンド設定1件分の項目（見出しを開いた中身）</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Name</td><td>テキスト入力欄</td><td>識別名。<code>WasApplied</code>/<code>TryGetLastValue</code>等をコードから呼ぶ際に指定する名前</td></tr>
+<tr><td>Command Name</td><td>テキスト入力欄</td><td>評価する入力コマンド名（InputCommandに登録済みのコマンド）</td></tr>
+<tr><td>Condition</td><td>コンボ（Command == true / Command == false / Value &gt;= Threshold / Value &lt;= Threshold / Value == Threshold）</td><td>値を適用する条件。条件を満たしたフレームだけ書き込みが行われる</td></tr>
+<tr><td>Threshold</td><td>ドラッグ入力欄（ステップ0.01）</td><td>Conditionが比較系（Value &gt;= / &lt;= / ==）の場合のみ表示。比較する閾値（==は誤差1e-6以内で判定）</td></tr>
+<tr><td>Value Source</td><td>コンボ（Command Value / Fixed Value）</td><td>書き込む値の種類。Command Value: 入力コマンドの評価値。Fixed Value: 固定値</td></tr>
+<tr><td>Fixed Value</td><td>ドラッグ入力欄（ステップ0.01）</td><td>Value SourceがFixed Valueの場合のみ表示。書き込む固定値</td></tr>
+<tr><td>Value Scale</td><td>ドラッグ入力欄（ステップ0.01）</td><td>書き込む値にかけるスケール。Value Offsetの加算より先に適用される（適用値 = 値 × Scale + Offset）</td></tr>
+<tr><td>Value Offset</td><td>ドラッグ入力欄（ステップ0.01）</td><td>書き込む値へ加算するデフォルト値オフセット</td></tr>
+<tr><td>（適用状態表示）</td><td>読み取り専用テキスト</td><td>直前のUpdateで条件を満たして適用した場合は "Applied: N.NNN"、そうでなければグレー文字で "Not Applied"</td></tr>
+<tr><td>Bindings (N) / Add Binding</td><td>見出しテキスト ＋ ボタン</td><td>値の適用先一覧。Add Bindingで1件追加する</td></tr>
+<tr><td>（バインド先選択コンボ ×N ＋ X削除ボタン）</td><td>コンボ ＋ 小ボタン</td><td>同オブジェクトの他コンポーネントのfloat/double/Vector成分パラメータ、または<a href="ScriptComponent.html">ScriptComponent</a>の<code>[SerializeField]</code>付きfloat変数から適用先を選択する</td></tr>
+<tr><td>Delete Command</td><td>小ボタン</td><td>このコマンド設定を削除する</td></tr>
+</table>
+
+<div class="note">1つのコンポーネントに複数のコマンド設定を登録できます（コマンド名・条件ごとに個別の適用先を持てます）。同じオブジェクトへ複数アタッチする必要はありません。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path">Add Component → Input → InputCommandApplier</span>。最大付与数の制限はありません。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/08_Input.html">Engine/08_Input.html</a> — InputCommandの登録方法・評価APIの詳細</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本的な見方</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

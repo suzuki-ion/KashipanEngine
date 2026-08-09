@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>7. コンポーネントを追加する | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-editor-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="T07_AddComponents">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>7. コンポーネントを追加する</h1>
+<p class="page-lead">Playerへ位置と見た目を追加し、Scene Viewに3Dオブジェクトを表示します。</p>
+</div>
+
+<div class="tutorial-meta"><span>操作: Inspector / Scene View</span><span>追加: Transform・MeshFilter・MeshRenderer</span><span>目安: 5分</span></div>
+
+<h2>すぐ表示できる3Dオブジェクトを作る</h2>
+<p>最初は必要なコンポーネントがまとまったテンプレートを使うのが簡単です。前ページの空Playerを残して確認したい場合は、ここで作るオブジェクトを<code>PlayerVisual</code>としてください。</p>
+<ol class="steps">
+<li><strong>3Dテンプレートを作る</strong>Hierarchyの空白を右クリックし、<span class="ui-path"><span>Create Object</span><i>›</i><span>3D</span><i>›</i><span>Mesh Object</span></span> を選びます。</li>
+<li><strong>名前をPlayerVisualへ変更する</strong>作成された項目を選び、Inspector上部のNameを<code>PlayerVisual</code>へ変更します。</li>
+<li><strong>Transformを調整する</strong>TransformのTranslateを<code>(0, 1, 0)</code>、Scaleを<code>(1, 1, 1)</code>にします。</li>
+<li><strong>描画先を接続する</strong><code>MeshRenderer</code>の<code>Target</code>から、手順3で作成した<code>MainScreen</code>を選択します。</li>
+<li><strong>Scene Viewで確認する</strong>選択中オブジェクトへギズモが表示されます。上部のTranslate / Rotate / Scaleで操作を切り替えられます。</li>
+<li><strong>Viewerで確認する</strong>MainScreenのScreenBuffer Viewerを開き、手順4のMainCameraから見たオブジェクトと、手順5のKeyLightによる照明を確認します。</li>
+</ol>
+
+<figure class="editor-shot">
+<img src="../../assets/tutorial/07-components.png" alt="Mesh ObjectのコンポーネントをScene Object Inspectorで編集している画面">
+<figcaption><strong>3DオブジェクトのInspector。</strong> Transform、MeshFilter、MeshRendererの組で位置、形状、描画方法を決めます。</figcaption>
+</figure>
+
+<h2>各コンポーネントの役割</h2>
+<table>
+<tr><th>コンポーネント</th><th>役割</th><th>このページの設定</th></tr>
+<tr><td><code>Transform</code></td><td>位置・回転・大きさ</td><td>Translate Yを<code>1</code></td></tr>
+<tr><td><code>MeshFilter</code></td><td>描画するメッシュ形状</td><td><code>PrimitiveMesh-Box</code>など</td></tr>
+<tr><td><code>MeshRenderer</code></td><td>マテリアルとパイプラインを使って描画</td><td>Targetを<code>MainScreen</code>にする</td></tr>
+</table>
+
+<h2>空のPlayerへ個別に追加する場合</h2>
+<ol class="steps">
+<li>Hierarchyで<code>Player</code>を選択します。</li>
+<li>Inspector下部の<code>Add Component</code>を押します。</li>
+<li>メニューから<code>Transform</code>、<code>MeshFilter</code>、<code>MeshRenderer</code>を1つずつ追加します。</li>
+<li>MeshFilterのMesh Asset PathとMeshRendererの設定を、テンプレートで作ったPlayerVisualを参考に揃えます。</li>
+</ol>
+
+<div class="tip">
+<strong>まずテンプレート、あとで個別追加</strong><br>
+Mesh Objectは表示に必要な構成をまとめて作れます。個別のAdd Componentは、既存オブジェクトへ機能を足すときや構成を学ぶときに便利です。
+</div>
+
+<h2>うまく表示されないとき</h2>
+<ul class="checklist">
+<li>Scene View上部でグリッドが見える位置までカメラを移動する</li>
+<li>MeshFilterにメッシュが設定されていることを確認する</li>
+<li>MeshRenderer、MainCamera、KeyLightのTargetが<code>MainScreen</code>になっていることを確認する</li>
+<li>MeshRendererとTransformのActiveが有効になっていることを確認する</li>
+<li>シーンに<code>SceneRenderer</code>が登録されていることを確認する</li>
+</ul>
+
+<p>各パラメーターと描画の詳細は<a href="../../Engine/04_ObjectComponents.html">オブジェクトコンポーネント</a>と<a href="../../Engine/05_Rendering.html">描画のリファレンス</a>を参照してください。</p>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

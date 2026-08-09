@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MeshFilter | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_MeshFilter">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>MeshFilter <span class="badge final">最大1個</span></h1>
+<p class="page-lead">使用するメッシュを保持するだけのコンポーネントです。<code>MeshRenderer</code>/<code>SpriteRenderer</code>等の描画コンポーネントがこのハンドルを参照します。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Mesh</td><td>コンボ（(None) + 読み込み済みモデルのAssetsルートからの相対パス一覧）</td><td>使用するメッシュ。選択すると、同シーンの<code>SceneRenderer</code>の描画リストキャッシュが再構築される</td></tr>
+</table>
+
+<div class="note">重複名を避けるため、コンボの候補・保存データともにハンドル値ではなくAssetsルートからの相対パス（文字列）で管理されます。サブメッシュ（"モデルパス:ノード名"形式）もこの一覧に含まれます。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path">Add Component → Render → MeshFilter</span>。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/04_ObjectComponents.html">Engine/04_ObjectComponents.html</a> — <code>MeshFilter</code>クラスのAPI</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本的な見方</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

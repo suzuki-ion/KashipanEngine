@@ -1,0 +1,29 @@
+{
+	"PipelineType": "Render",
+	"Name": "DebugLinesOverlay",
+	"Category": "Debug",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": {
+			"UsePreset": "DebugLines.Vertex"
+		},
+		"Pixel": {
+			"UsePreset": "DebugLines.Pixel"
+		}
+	},
+	"RasterizerState": {
+		"UsePreset": "DoubleSidedCulling"
+	},
+	"BlendState": {
+		"UsePreset": "Normal"
+	},
+	"DepthStencilState": {
+		"UsePreset": "DepthDisable"
+	},
+	"PipelineState": {
+		"UsePreset": "Line"
+	}
+}

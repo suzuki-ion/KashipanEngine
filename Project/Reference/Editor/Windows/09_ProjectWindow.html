@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-editor-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="W09_ProjectWindow">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Project</h1>
+<p class="page-lead">1本のゲームを構成するアセット・シーン・設定をひとまとめにした単位が<strong>プロジェクト</strong>です。プロジェクトの選択は、エディターとは別の<strong>プロジェクトランチャー</strong>（<code>KashipanHub.exe</code>）か、エディター内の <span class="ui-path"><span>File</span><i>›</i><span>Project...</span></span> で開く<code>Project</code>ウィンドウから行います。</p>
+</div>
+
+<h2>プロジェクトとは</h2>
+<p>プロジェクトはエンジンルート直下の<code>Projects/&lt;プロジェクト名&gt;/</code>フォルダそのものです。ゲーム1本分のデータがこのフォルダに閉じているため、別のゲームを作りたくなったらフォルダごと新しく生やせばよく、既存のアセットを手作業で消して回る必要はありません。</p>
+<p><code>Project.json</code>を持つフォルダがプロジェクトとして認識されます。</p>
+
+<h3>プロジェクトフォルダの構成</h3>
+<table>
+<tr><th>場所</th><th>内容</th></tr>
+<tr><td><code>Project.json</code></td><td>プロジェクト定義ファイル。このファイルの有無がプロジェクトかどうかの判定基準になる</td></tr>
+<tr><td><code>Assets/</code></td><td>ゲームが使うすべてのアセット。実行時の<code>Assets</code>ルートはここを指す</td></tr>
+<tr><td><code>Assets/SceneList.json</code></td><td>登録シーンの一覧と起動シーン（<a href="08_SceneListAndSaveLoad.html">Scene List</a>で編集）</td></tr>
+<tr><td><code>Assets/InputCommand.json</code></td><td>入力アクションの定義（Input Command Editorで編集）</td></tr>
+<tr><td><code>Assets/KashipanEngine/</code></td><td>エンジンの既定リソース（フォント・翻訳・パイプライン設定・エンジンロゴなど）</td></tr>
+<tr><td><code>EditorSettings.json</code></td><td>このプロジェクトでのエディターUIの状態（ツリーの開閉、ウィンドウの表示/非表示など）</td></tr>
+<tr><td><code>SceneBackups/</code></td><td>自動バックアップされたシーン（<a href="01_MainMenuAndPlayback.html">Auto Save Settings</a>で設定）</td></tr>
+<tr><td><code>Screenshots/</code></td><td><code>ScreenBufferObject</code>が書き出すスクリーンショットの既定の保存先</td></tr>
+<tr><td><code>as.predefined</code></td><td>VSCodeのAngelScript Language Server用の型定義（エンジン起動時に自動生成）</td></tr>
+</table>
+
+<div class="note"><strong><code>SceneList.json</code>と<code>InputCommand.json</code>が<code>Assets/</code>直下にある理由</strong><br>これらはエンジンが用意する既定リソースではなく「このゲームが定義するデータ」です。同じ理由から、<code>EditorSettings.json</code>は<code>Assets/</code>の<em>外</em>（プロジェクトルート直下）に置かれます。配布時に<code>Assets/</code>をそのままコピーしても、エディターの作業状態が製品に混入しません。</div>
+
+<h3>エンジンルート側の構成</h3>
+<p>プロジェクトの外側、つまりエンジン自体に属するものは次の場所にあります。</p>
+<table>
+<tr><th>場所</th><th>内容</th></tr>
+<tr><td><code>Projects/</code></td><td>すべてのプロジェクトが並ぶフォルダ</td></tr>
+<tr><td><code>AssetsTemplate/</code></td><td>プロジェクトテンプレート置き場。直下のフォルダ1つが1テンプレートで、その中身が新規プロジェクトの<code>Assets/</code>になる</td></tr>
+<tr><td><code>UserSettings.json</code></td><td>プロジェクトをまたいで共有される個人設定（配色・フォント・表示倍率・前回開いたプロジェクト）</td></tr>
+<tr><td><code>EditorTools/</code></td><td>エンジン共通のエディター拡張スクリプト（<code>.as</code>）</td></tr>
+<tr><td><code>EngineRoot.txt</code></td><td>exeと同じフォルダに置かれ、エンジンルートの位置を指すマーカー（ビルド時に自動生成）</td></tr>
+<tr><td><code>Logs/</code> / <code>Dumps/</code></td><td>実行ログとクラッシュダンプ</td></tr>
+</table>
+
+<h2>プロジェクトランチャー</h2>
+<p>エディター本体（<code>KashipanEngine.exe</code>）と同じフォルダにある <code>KashipanHub.exe</code> が、プロジェクトを選んでエディターを起動するためのランチャーです。DirectXやImGuiを使わないので、GPUの初期化を待たずに一瞬で開きます。</p>
+<p>画面はWebView2でHTMLとして描画しており、配色はこのリファレンスと同じ定義を使っているため、OSのライト／ダーク設定にも追従します。UIの実体は <code>Launcher/UI/</code> 配下の <code>index.html</code>・<code>launcher.css</code>・<code>launcher.js</code> で、見た目を調整したい場合はこれらを編集するだけで反映されます（再ビルドは不要）。</p>
+<table>
+<tr><th>項目</th><th>内容</th></tr>
+<tr><td>プロジェクト一覧</td><td><code>Projects/</code>配下のプロジェクト。前回開いたプロジェクトが最初から選択された状態になる。項目のダブルクリックはそのまま「開く」として扱われる</td></tr>
+<tr><td>開く</td><td>選択中のプロジェクトでエディターを起動し、ランチャー自身は閉じる</td></tr>
+<tr><td>フォルダを開く</td><td>選択中のプロジェクトのフォルダをエクスプローラーで開く</td></tr>
+<tr><td>削除</td><td>選択中のプロジェクトを削除する（確認ダイアログあり）</td></tr>
+<tr><td>更新</td><td><code>Projects/</code>とテンプレートを再スキャンする</td></tr>
+<tr><td>テンプレート / 新規プロジェクト名 / 作成</td><td>選んだテンプレートから新しいプロジェクトを作る。作成しただけでは開かないので、続けて<code>開く</code>を押す</td></tr>
+</table>
+
+<h3>プロジェクトテンプレート</h3>
+<p>新規プロジェクトの初期内容は、エンジンルート直下の<code>AssetsTemplate/</code>にあるテンプレートから選びます。既定では次の2つが用意されています。</p>
+<table>
+<tr><th>テンプレート</th><th>内容</th></tr>
+<tr><td>標準（<code>Default</code>）</td><td>カメラとライトを配置した<code>DefaultScene</code>を起動シーンとして登録済み</td></tr>
+<tr><td>空のプロジェクト（<code>Empty</code>）</td><td>エンジンの既定リソースだけの最小構成。シーンは登録されていない</td></tr>
+</table>
+<p>テンプレートを増やしたい場合は、<code>AssetsTemplate/</code>の下にフォルダを作り、新規プロジェクトの<code>Assets/</code>にしたい中身をそのまま置くだけです。フォルダ直下に次の<code>Template.json</code>を置くと、選択欄に表示される名前と説明を指定できます（省略した場合はフォルダ名がそのまま表示されます）。</p>
+<pre><code>{
+    "displayName": "標準",
+    "description": "カメラとライトを配置した DefaultScene を起動シーンとして登録済み。"
+}</code></pre>
+<div class="note"><code>Template.json</code>はテンプレート自身の説明であってゲームのデータではないため、作成されたプロジェクトの<code>Assets/</code>にはコピーされません。</div>
+
+<h3>プロジェクトの削除</h3>
+<p><code>削除</code>を押すと確認ダイアログが表示され、対象のプロジェクト名とフォルダのパスを確かめてから実行できます。</p>
+<div class="tip"><strong>削除したプロジェクトはごみ箱から戻せます</strong><br>フォルダは完全に消されるのではなく、ごみ箱へ移動します。誤って削除した場合はごみ箱から復元してください。<br>また、<code>Project.json</code>を持たないフォルダは（プロジェクトではないため）削除対象になりません。削除したプロジェクトが次回起動時に開く対象だった場合は、その指定も併せて解除されます。</div>
+
+<div class="note"><strong>ランチャーは配布物には含めません</strong><br>ランチャーはプロジェクトを切り替えるためのエディター用ツールです。ゲームを配布する際は<code>KashipanEngine.exe</code>とその隣の<code>Assets/</code>だけを配置します。</div>
+
+<div class="tip"><strong>WebView2ランタイムが無い環境では</strong><br>描画には別途OSにインストールされたWebView2ランタイムが使われます（Windows 11には標準で同梱）。ランタイムが無い場合や <code>Launcher/UI/</code> が見つからない場合は、Win32コントロールで組んだ簡素な画面へ自動的に切り替わるため、ランチャーが起動できなくなることはありません。できることは同じです。</div>
+
+<h3>コマンドラインでプロジェクトを指定する</h3>
+<p>ランチャーは選ばれたプロジェクトを、次の形でエディターへ引き渡しているだけです。同じ指定は手動やスクリプトからも使えます。</p>
+<div class="api-sig">KashipanEngine.exe --project &lt;プロジェクト名 または プロジェクトフォルダの絶対パス&gt;</div>
+<p>開くプロジェクトは<code>--project</code>の指定 → <code>UserSettings.json</code>に記録された前回のプロジェクト → <code>Projects/</code>配下で最初に見つかったプロジェクト、の順に決まります。指定されたプロジェクトが見つからない場合は警告をログへ出したうえで、以降の順序へフォールバックします。</p>
+
+<h2>Project ウィンドウ</h2>
+<p><span class="ui-path"><span>File</span><i>›</i><span>Project...</span></span>で表示を切り替えます。ランチャーを経由せず、作業中のエディターからそのままプロジェクトを切り替えたり新規作成したりできます。表示状態は<code>EditorSettings.json</code>に保存されます。</p>
+
+<h3>Current Project</h3>
+<p>現在開いているプロジェクトの名前とフォルダのフルパスが表示されます。切り替えを実行した直後は、開き直そうとしているプロジェクト名がここに表示されます。</p>
+
+<h3>Projects</h3>
+<p><code>Projects/</code>配下で見つかったプロジェクトの一覧です。</p>
+<table>
+<tr><th>項目</th><th>内容</th></tr>
+<tr><td>Refresh</td><td><code>Projects/</code>を再スキャンする。エディターの外でプロジェクトを追加した場合に使う</td></tr>
+<tr><td>Open</td><td>エディターを閉じ、そのプロジェクトを開いた状態で起動し直す。現在開いているプロジェクトの行では<code>Open (current)</code>と表示され、無効化される</td></tr>
+</table>
+
+<div class="warn"><strong>切り替えるとエディターが起動し直します</strong><br>エンジンは起動時にテクスチャ・モデル・音声などをGPUリソースごと読み込むため、実行中にプロジェクトを丸ごと差し替えることはできません。<code>Open</code>を押すとエディターは通常どおり終了処理（シーンの自動保存など）を行ったうえで自分自身を閉じ、選んだプロジェクトを開いた状態で自動的に起動し直します。</div>
+
+<h3>New Project</h3>
+<p>名前を入力して<code>Create</code>を押すと、<code>Projects/&lt;名前&gt;/</code>が作られ、テンプレートの中身がその<code>Assets/</code>へコピーされます。作成しただけでは開いているプロジェクトは変わらないため、切り替えたい場合は続けて一覧の<code>Open</code>を押します。</p>
+<div class="note">エディター内のこの画面では常に<code>Default</code>テンプレートが使われます。テンプレートを選んで作成したい場合や、プロジェクトを削除したい場合はプロジェクトランチャーを使ってください。</div>
+<p>名前はフォルダ名としてそのまま使われるため、次の場合は作成できません（理由がウィンドウ内に表示されます）。</p>
+<ul class="checklist">
+<li>空文字の場合</li>
+<li><code>\ / : * ? " &lt; &gt; |</code> を含む場合</li>
+<li>先頭または末尾が空白、あるいは末尾がピリオドの場合（Windowsが自動的に取り除いてしまうため）</li>
+<li>同名のフォルダが既に存在する場合</li>
+</ul>
+
+<div class="tip"><strong>プロジェクトが1つも無い場合</strong><br>初回起動時など<code>Projects/</code>に有効なプロジェクトが1つも無い場合は、エンジンが<code>NewProject</code>という名前のプロジェクトを<code>AssetsTemplate/</code>から自動生成して開きます。</div>
+
+<h2>アセットのパス表記</h2>
+<p>プロジェクトが分かれても、シーンJSONやマテリアル、<code>ScriptComponent</code>のScript Pathに保存されるパスは<code>Assets/Application/Model/Player.obj</code>のような<strong>プロジェクトルートからの相対パス</strong>のままです。実際のファイルを開く直前に<code>Projects/&lt;名前&gt;/Assets/...</code>へ変換されるため、プロジェクトの置き場所が変わっても、別のプロジェクトへアセットをコピーしても、保存された値はそのまま通用します。</p>
+<p><a href="05_AssetsWindow.html">Assets Window</a>のフォルダツリーやツールチップに出るパスも同じ表記です。</p>
+
+<h2>ゲームを配布するとき</h2>
+<p>配布用のexeは、<code>Projects/</code>の中を見るのではなく<strong>exeと同じ階層に置かれた<code>Assets/</code>フォルダ</strong>を使います。プロジェクトの<code>Assets/</code>をexeの隣にコピーすれば動作します。</p>
+<p>この状態ではプロジェクトの選択・作成は行われず、<code>Project</code>ウィンドウにもその旨だけが表示されます。<code>EditorSettings.json</code>・<code>SceneBackups/</code>・<code>as.predefined</code>はいずれも<code>Assets/</code>の外にあるため、コピー対象に含まれません。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="05_AssetsWindow.html">Windows/05_AssetsWindow.html</a> — プロジェクト内のアセットを閲覧・操作する</li>
+<li><a href="08_SceneListAndSaveLoad.html">Windows/08_SceneListAndSaveLoad.html</a> — <code>Assets/SceneList.json</code>の編集</li>
+<li><a href="01_MainMenuAndPlayback.html">Windows/01_MainMenuAndPlayback.html</a> — Fileメニューと自動バックアップ</li>
+<li><a href="../Guide/11_LoadAssets.html">Guide/11_LoadAssets.html</a> — アセットを読み込む手順</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

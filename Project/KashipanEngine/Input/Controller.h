@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <mutex>
 #include <span>
 #include <vector>
 
@@ -123,6 +124,7 @@ public: // internal (used by GameInput callback trampoline in .cpp)
     void OnDeviceChanged(void* device, std::uint32_t currentStatus);
 
 private:
+    mutable std::mutex devicesMutex_;
     std::vector<DeviceEntry> devices_;
 
     std::uint64_t deviceCallbackToken_ = 0;

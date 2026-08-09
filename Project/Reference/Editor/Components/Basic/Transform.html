@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transform | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_Transform">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Transform <span class="badge final">最大1個</span></h1>
+<p class="page-lead">位置・回転・スケールを持つ最も基本的なコンポーネントです。ほぼ全てのオブジェクトに付与されます。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/04_ObjectComponents.html">Engine/04_ObjectComponents.html</a>を参照してください。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>移動</td><td>XYZのドラッグ入力欄（ステップ0.01）</td><td>ローカル座標。ワールド座標ではなく、親オブジェクトからの相対位置</td></tr>
+<tr><td>回転</td><td>XYZのドラッグ入力欄（ステップ0.01、-180〜180の範囲）</td><td>オイラー角。<strong>内部の値はラジアンですが、Inspector上は度（degree）で表示・入力します</strong></td></tr>
+<tr><td>拡大縮小</td><td>XYZのドラッグ入力欄（ステップ0.01）</td><td>ローカルスケール</td></tr>
+<tr><td>親（テキスト表示のみ）</td><td>読み取り専用テキスト</td><td>現在の親オブジェクト名。未設定の場合は <code>(None)</code>。この欄自体から親を変更することはできない</td></tr>
+</table>
+
+<div class="warn"><strong>回転は内部的にクォータニオン</strong><br>Inspectorに表示・入力するオイラー角（度）は、内部で保持しているクォータニオンとの相互変換値です。回転を大きく・複雑に変更すると、オイラー角の分解方法によって表示上の角度が想定と異なる形（例: 180度を超える回転が別の角度の組み合わせで表現される）になることがあります。</div>
+
+<h2>親子関係の変更方法</h2>
+<p>Inspector上に親を変更するUIはありません。親子関係は<a href="../../Windows/02_SceneObjectHierarchy.html">Scene Object Hierarchy</a>でのドラッグ&amp;ドロップによって変更します。Transformを持たないオブジェクトを親にすることはできません。</p>
+
+<h2>Add Componentでの位置</h2>
+<p><code>Transform</code>は特別扱いのコンポーネントで、通常はオブジェクト作成時に自動的に付与されています。Add Componentメニューのカテゴリツリー上には表示されません。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/04_ObjectComponents.html">Engine/04_ObjectComponents.html</a> — <code>Transform</code>クラスの全メソッド（ワールド行列、親子関係API等）</li>
+<li><a href="../../Windows/04_SceneView.html">Windows/04_SceneView.html</a> — Scene View上でギズモを使って移動・回転・スケールを操作する方法</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

@@ -26,9 +26,12 @@ class Window;
 class GraphicsEngine;
 class Renderer;
 class TextureManager;
+class FontManager;
 class SamplerManager;
+class VideoTexture;
 class ScreenBuffer;
 class ShadowMapBuffer;
+class ComputeCommandProcessor;
 #if defined(USE_IMGUI)
 class ImGuiManager;
 #endif
@@ -63,6 +66,9 @@ public:
 
     /// @brief D3D12デバイス取得（TextureManager 用）
     ID3D12Device* GetDeviceForTextureManager(Passkey<TextureManager>) const { return dx12Device_->GetDevice(); }
+
+    /// @brief D3D12デバイス取得（FontManager 用）
+    ID3D12Device* GetDeviceForFontManager(Passkey<FontManager>) const { return dx12Device_->GetDevice(); }
     /// @brief コマンドキュー取得（TextureManager 用）
     ID3D12CommandQueue* GetCommandQueueForTextureManager(Passkey<TextureManager>) const { return dx12CommandQueue_->GetCommandQueue(); }
     /// @brief SRV ヒープ取得（TextureManager 用）
@@ -77,13 +83,38 @@ public:
 
     /// @brief D3D12デバイス取得（ScreenBuffer 用）
     ID3D12Device* GetDeviceForScreenBuffer(Passkey<ScreenBuffer>) const { return dx12Device_->GetDevice(); }
+    /// @brief コマンドキュー取得（ScreenBuffer 用。画像ファイル保存(ImageExporter)のキャプチャに使用）
+    ID3D12CommandQueue* GetCommandQueueForScreenBuffer(Passkey<ScreenBuffer>) const { return dx12CommandQueue_->GetCommandQueue(); }
 
     /// @brief ワンショットでコマンドを記録・実行し、フェンス待機まで行う（TextureManager 用）
     /// @param record コマンド記録関数（Close は内部で行う）
     void ExecuteOneShotCommandsForTextureManager(Passkey<TextureManager>, const std::function<void(ID3D12GraphicsCommandList*)>& record);
 
+    /// @brief ワンショットでコマンドを記録・実行し、フェンス待機まで行う（FontManager 用。グリフアトラスのアップロードに使用）
+    /// @param record コマンド記録関数（Close は内部で行う）
+    void ExecuteOneShotCommandsForFontManager(Passkey<FontManager>, const std::function<void(ID3D12GraphicsCommandList*)>& record);
+
+    /// @brief D3D12デバイス取得（VideoTexture 用）
+    ID3D12Device* GetDeviceForVideoTexture(Passkey<VideoTexture>) const { return dx12Device_->GetDevice(); }
+    /// @brief SRV ヒープ取得（VideoTexture 用）
+    SRVHeap* GetSRVHeapForVideoTexture(Passkey<VideoTexture>) const { return SRVHeap_.get(); }
+
+    /// @brief ワンショットでコマンドを記録・実行するが、フェンス待機（CPUブロック）は行わない（VideoTexture 用）
+    /// @details 動画フレームの毎フレーム更新のようにGPUストールを避けたい高頻度呼び出しのために用意している。
+    ///          共有DIRECTキューへ投入するため、この後に積まれる通常描画コマンドより必ず先にGPU側で実行される
+    ///          （同一キューはFIFOで実行されるため、追加の同期なしに順序が保証される）。
+    /// @param record コマンド記録関数（Close は内部で行う）
+    /// @return 発行したフェンス値（IsVideoUploadFenceCompleteでの完了確認に使う）。失敗時は0
+    uint64_t ExecuteOneShotCommandsForVideoTexture(Passkey<VideoTexture>, const std::function<void(ID3D12GraphicsCommandList*)>& record);
+
+    /// @brief ExecuteOneShotCommandsForVideoTextureで発行したフェンス値がGPU側で完了しているかをブロックせずに確認する
+    bool IsVideoUploadFenceComplete(Passkey<VideoTexture>, uint64_t fenceValue) const;
+
     /// @brief フレーム終端で実行するコマンドリストを登録
     void AddRecordCommandList(Passkey<DX12SwapChain>, ID3D12CommandList* list);
+    void AddRecordCommandList(Passkey<ScreenBuffer>, ID3D12CommandList* list);
+    void AddRecordCommandList(Passkey<ShadowMapBuffer>, ID3D12CommandList* list);
+    void AddRecordCommandList(Passkey<ComputeCommandProcessor>, ID3D12CommandList* list);
     void AddRecordCommandList(Passkey<Renderer>, ID3D12CommandList* list);
 
 #if defined(USE_IMGUI)
@@ -101,27 +132,25 @@ public:
     DX12SwapChain* GetOrCreateSwapChainForImGuiViewport(Passkey<ImGuiManager>, HWND hwnd, int32_t width, int32_t height);
 #endif
 
-    /// @brief 指定のウィンドウのスワップチェーン取得
-    DX12SwapChain *GetSwapChain(Passkey<Renderer>, HWND hwnd) const;
-    /// @brief 指定のウィンドウのコマンドリスト取得
-    ID3D12GraphicsCommandList *GetRecordedCommandList(Passkey<Renderer>, HWND hwnd) const;
-
-    /// @brief 外部で記録したコマンドリスト群を実行（Renderer 用）
-    void ExecuteExternalCommandLists(Passkey<Renderer>, const std::vector<ID3D12CommandList*>& lists);
-
     /// @brief コマンドオブジェクトを確保（DirectXCommon が所有）
     /// @return スロットインデックス（失敗時は -1）
     int AcquireCommandObjects(Passkey<ScreenBuffer>);
     int AcquireCommandObjects(Passkey<ShadowMapBuffer>);
+    int AcquireCommandObjects(Passkey<ComputeCommandProcessor>);
+    int AcquireCommandObjects(Passkey<Renderer>);
 
     /// @brief コマンドオブジェクトを取得
     DX12Commands* GetCommandObjects(Passkey<ScreenBuffer>, int slotIndex);
     DX12Commands* GetCommandObjects(Passkey<ShadowMapBuffer>, int slotIndex);
+    DX12Commands* GetCommandObjects(Passkey<ComputeCommandProcessor>, int slotIndex);
+    DX12Commands* GetCommandObjects(Passkey<Renderer>, int slotIndex);
 
     /// @brief コマンドオブジェクトを解放
     void ReleaseCommandObjects(Passkey<DX12SwapChain>, int slotIndex);
     void ReleaseCommandObjects(Passkey<ScreenBuffer>, int slotIndex);
     void ReleaseCommandObjects(Passkey<ShadowMapBuffer>, int slotIndex);
+    void ReleaseCommandObjects(Passkey<ComputeCommandProcessor>, int slotIndex);
+    void ReleaseCommandObjects(Passkey<Renderer>, int slotIndex);
 
 private:
     DirectXCommon(const DirectXCommon &) = delete;

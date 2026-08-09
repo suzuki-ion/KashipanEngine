@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SceneVariableApplier | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_SceneVariableApplier">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>SceneVariableApplier</h1>
+<p class="page-lead">シーン変数の値を、同オブジェクトの他コンポーネントのパラメータへ適用するコンポーネントです。<a href="InputCommandApplier.html">InputCommandApplier</a>/<a href="KeyFrameAnimator.html">KeyFrameAnimator</a>がfloat値のみを扱うのに対し、シーン変数が持つ型（Bool/Int/Float/Double/String/Vector2/3/4/Quaternion/Matrix4x4）をそのままバインド先へ適用できます。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Variable Name</td><td>テキスト入力欄</td><td>読み取るシーン変数名（<a href="../../Windows/07_SceneVariablesMenu.html">Scene Variables</a>ウィンドウで追加済みのもの）</td></tr>
+<tr><td>Scope</td><td>コンボ（Scene / Global）</td><td>Scene: 現在のシーン内のシーン変数。Global: シーンをまたいで保持されるグローバルシーン変数</td></tr>
+<tr><td>Type: ...（テキスト表示のみ）</td><td>読み取り専用テキスト</td><td>指定した変数名が見つかった場合、その型名を表示する。見つからない場合はオレンジ文字で "Variable &quot;名前&quot; not found" と表示される</td></tr>
+<tr><td>（適用状態表示）</td><td>読み取り専用テキスト</td><td>直前のUpdateで1件以上の適用に成功した場合は緑文字で "Applied"、そうでなければグレー文字で "Not Applied"</td></tr>
+<tr><td>Bindings (N) / Add Binding</td><td>見出しテキスト ＋ ボタン</td><td>値の適用先一覧。Add Bindingで1件追加する</td></tr>
+<tr><td>（バインド先選択コンボ ×N ＋ X削除ボタン）</td><td>コンボ ＋ 小ボタン</td><td>変数の型と互換性のある適用先のみが候補に並ぶ。数値系の型ならfloat/double/Vector成分パラメータおよび<a href="ScriptComponent.html">ScriptComponent</a>の<code>[SerializeField]</code>付きfloat変数、それ以外（Vector2/3/4・String・Quaternion・Matrix4x4）は完全に同じ型のメンバ変数のみが値全体の適用先として候補になる</td></tr>
+</table>
+
+<div class="note">変数がまだ見つからない間（未設定・変数名が空）は、バインド候補はfloat扱いの既定候補が表示されます。実際に適用できるかどうかは、実行時に変数が見つかってからの型一致で決まります。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path">Add Component → Utility → SceneVariableApplier</span>。最大付与数の制限はありません。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/04_ObjectComponents.html">Engine/04_ObjectComponents.html</a> — <code>SceneVariableApplier</code>クラスのAPI</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本的な見方</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

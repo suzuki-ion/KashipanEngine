@@ -1,5 +1,6 @@
 #include "DescriptorHeapBase.h"
 #include <stdexcept>
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

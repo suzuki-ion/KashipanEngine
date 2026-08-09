@@ -27,6 +27,7 @@ public:
         ID3D12Resource *existingResource = nullptr,
         D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
         UINT mipLevels = 1,
+        UINT arraySize = 1,
         const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc = nullptr);
 
     /// @brief RenderTargetResource の描画結果を SRV として参照するためのコンストラクタ
@@ -56,6 +57,7 @@ public:
         ID3D12Resource *existingResource = nullptr,
         D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
         UINT mipLevels = 1,
+        UINT arraySize = 1,
         const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc = nullptr);
 
     /// @brief デスクリプタ情報取得
@@ -70,6 +72,7 @@ private:
         ID3D12Resource *existingResource = nullptr,
         D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
         UINT mipLevels = 1,
+        UINT arraySize = 1,
         const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc = nullptr);
 
     UINT width_ = 0;

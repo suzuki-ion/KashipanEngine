@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scene Variables | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-editor-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="W07_SceneVariables">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Scene Variables</h1>
+<p class="page-lead">現在のシーンが持つ「シーン変数」（キーと値のペア）を追加・編集・削除するウィンドウです。<code>SceneVariableApplier</code>コンポーネントと組み合わせることで、C++コードを書かずにシーン変数の値をコンポーネントのパラメータへ反映できます。</p>
+</div>
+
+<h2>変数の追加</h2>
+<ol class="steps">
+<li><strong>変数名を入力する</strong>先頭のテキスト欄に新しい変数名を入力します。</li>
+<li><strong>型を選ぶ</strong>ドロップダウンから型を選びます。選べる型は <code>Bool</code> / <code>Int</code> / <code>Float</code> / <code>Double</code> / <code>String</code> / <code>Vector2</code> / <code>Vector3</code> / <code>Vector4</code> / <code>Quaternion</code> / <code>Matrix4x4</code> です。</li>
+<li><strong>Addを押す</strong>同名の変数が既に存在する場合、または変数名が空の場合は追加されません。</li>
+</ol>
+
+<h2>変数の一覧・編集・削除</h2>
+<p>追加済みの変数は、それぞれの型に応じたウィジェット（チェックボックス・ドラッグ入力欄など）で一覧表示され、その場で値を編集できます。各行の右にある<code>Remove</code>ボタンでその変数を削除します。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../Engine/02_Scenes.html">Engine/02_Scenes.html</a> — <code>AddSceneVariable</code>・<code>GetSceneVariable</code>などC++ API、グローバルシーン変数との違い</li>
+<li><a href="../Components/Basic/SceneVariableApplier.html">Components/Basic/SceneVariableApplier.html</a> — シーン変数の値を他コンポーネントへ適用するコンポーネント</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

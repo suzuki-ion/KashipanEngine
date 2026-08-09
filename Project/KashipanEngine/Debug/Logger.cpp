@@ -1,5 +1,6 @@
 #include "Logger.h"
 #include "LogSettings.h"
+#include "Core/ProjectPaths.h"
 #include "Utilities/TimeUtils.h"
 #include "Utilities/SourceLocation.h"
 #include "Utilities/TemplateLiteral.h"
@@ -19,11 +20,27 @@
 #include <deque>
 #include <atomic>
 #include <algorithm>
+#ifdef USE_IMGUI
+#include <imgui.h>
+#include "Utilities/Translation.h"
+#endif
 
 namespace KashipanEngine {
 namespace {
 bool sLoggerInitialized = false;
 std::ofstream sLogFile;
+struct LogEntry {
+    std::string text;
+    LogSeverity severity = LogSeverity::Info;
+};
+std::vector<LogEntry> sLogLines;
+// ImGui表示用ログ行の排他制御（ワーカースレッドが追記、メインスレッドが描画で参照するため）
+std::mutex sLogLinesMutex;
+
+// スプラッシュ画面向けログ収集（Show()〜Close()の間だけ有効化される）
+std::atomic<bool> sSplashCaptureEnabled{false};
+std::deque<LogLine> sSplashLogQueue;
+std::mutex sSplashLogMutex;
 const std::string kBuildTypeString =
 #ifdef DEBUG_BUILD
 "[Debug]";
@@ -72,21 +89,31 @@ std::wstring Utf8ToWide(const std::string &utf8) {
 //---------------- 非同期ロギング基盤 ----------------//
 std::mutex sLogMutex;
 std::condition_variable sLogCv;
-std::deque<std::string> sLogQueue;
+std::deque<LogEntry> sLogQueue;
 std::thread sLogThread;
 std::atomic<bool> sStopRequested{false};
 std::atomic<bool> sThreadRunning{false};
 
 // 直接シンクへ書き込む（ワーカースレッドのみが使用）
-void WriteToSinks(const std::string &formattedLine) {
+void WriteToSinks(const LogEntry &entry) {
     const auto &cfg = GetLogSettings();
     if (cfg.enableConsoleLogging) {
         // Wide APIに切替（UTF-8をUTF-16へ変換）
-        std::wstring w = Utf8ToWide(formattedLine);
+        std::wstring w = Utf8ToWide(entry.text);
         OutputDebugStringW(w.c_str());
     }
     if (cfg.enableFileLogging && sLogFile.is_open()) {
-        sLogFile << formattedLine;
+        sLogFile << entry.text;
+    }
+#ifdef USE_IMGUI
+    {
+        std::lock_guard<std::mutex> linesLock(sLogLinesMutex);
+        sLogLines.push_back(entry);
+    }
+#endif
+    if (sSplashCaptureEnabled.load(std::memory_order_relaxed)) {
+        std::lock_guard<std::mutex> splashLock(sSplashLogMutex);
+        sSplashLogQueue.push_back({entry.text, entry.severity});
     }
 }
 
@@ -97,10 +124,10 @@ void LoggerWorker() {
         if (sStopRequested.load() && sLogQueue.empty()) {
             break;
         }
-        auto line = std::move(sLogQueue.front());
+        auto entry = std::move(sLogQueue.front());
         sLogQueue.pop_front();
         lock.unlock();
-        WriteToSinks(line);
+        WriteToSinks(entry);
         lock.lock();
     }
 }
@@ -459,11 +486,11 @@ std::string BuildLogLine(const ScopeFrame* frame, LogSeverity severity, const st
 }
 
 // ログ出力（非同期キューへ積む）
-void WriteLog(const std::string &formattedLine) {
+void WriteLog(std::string formattedLine, LogSeverity severity) {
     // ここでは IO を行わず、ワーカースレッドに委譲
     {
         std::lock_guard<std::mutex> lock(sLogMutex);
-        sLogQueue.emplace_back(formattedLine);
+        sLogQueue.push_back({std::move(formattedLine), severity});
     }
     sLogCv.notify_one();
 }
@@ -475,7 +502,7 @@ void FlushPendingScopeEnters() {
     while (first < sScopeFrames.size() && sScopeFrames[first].enteredFlushed) ++first;
     for (size_t i = first; i < sScopeFrames.size(); ++i) {
         auto &frame = sScopeFrames[i];
-        WriteLog(BuildLogLine(&frame, LogSeverity::Info, "Entering scope."));
+        WriteLog(BuildLogLine(&frame, LogSeverity::Info, "Entering scope."), LogSeverity::Info);
         frame.enteredFlushed = true;
     }
 }
@@ -524,8 +551,7 @@ void InitializeLogger(PasskeyForGameEngineMain) {
     const auto &cfg = GetLogSettings();
 
     if (cfg.enableFileLogging) {
-        const std::string currentDir = std::filesystem::current_path().string();
-        const std::string logDir = currentDir + "/" + cfg.outputDirectory;
+        const std::string logDir = ProjectPaths::InEngineRoot(cfg.outputDirectory);
         std::filesystem::create_directories(logDir);
         const std::string logFilePath = logDir + "/" + BuildLogFileName();
         sLogFile.open(logFilePath, std::ios::out | std::ios::binary);
@@ -536,7 +562,9 @@ void InitializeLogger(PasskeyForGameEngineMain) {
         static const unsigned char kUtf8Bom[3] = {0xEF, 0xBB, 0xBF};
         sLogFile.write(reinterpret_cast<const char*>(kUtf8Bom), 3);
         if (ShouldLog(LogSeverity::Info)) {
-            WriteLog(BuildLogLine(nullptr, LogSeverity::Info, std::string("Log File: ") + logFilePath));
+            WriteLog(
+                BuildLogLine(nullptr, LogSeverity::Info, std::string("Log File: ") + logFilePath),
+                LogSeverity::Info);
         }
     }
 
@@ -546,7 +574,7 @@ void InitializeLogger(PasskeyForGameEngineMain) {
     sLogThread = std::thread(LoggerWorker);
 
     if (ShouldLog(LogSeverity::Info)) {
-        WriteLog(BuildLogLine(nullptr, LogSeverity::Info, "----- Log Start -----"));
+        WriteLog(BuildLogLine(nullptr, LogSeverity::Info, "----- Log Start -----"), LogSeverity::Info);
     }
 
     sLoggerInitialized = true;
@@ -555,7 +583,7 @@ void InitializeLogger(PasskeyForGameEngineMain) {
 void ShutdownLogger(PasskeyForGameEngineMain) {
     if (!sLoggerInitialized) return;
     if (ShouldLog(LogSeverity::Info)) {
-        WriteLog(BuildLogLine(nullptr, LogSeverity::Info, "----- Log End -----"));
+        WriteLog(BuildLogLine(nullptr, LogSeverity::Info, "----- Log End -----"), LogSeverity::Info);
     }
 
     // スレッド終了要求し、キューを空にしてから終了
@@ -606,11 +634,30 @@ void Log(const std::string &logText, LogSeverity severity) {
         for (auto &frame : sScopeFrames) frame.hadOutput = true;
     }
 
-    WriteLog(BuildLogLine(GetTopScopeFrame(), severity, logText));
+    WriteLog(BuildLogLine(GetTopScopeFrame(), severity, logText), severity);
 }
 
 void LogSeparator() {
     Log("--------------------------------------------------", LogSeverity::Info);
+}
+
+void BeginSplashLogCapture(Passkey<SplashScreen>) {
+    std::lock_guard<std::mutex> lock(sSplashLogMutex);
+    sSplashLogQueue.clear();
+    sSplashCaptureEnabled.store(true, std::memory_order_relaxed);
+}
+
+void EndSplashLogCapture(Passkey<SplashScreen>) {
+    sSplashCaptureEnabled.store(false, std::memory_order_relaxed);
+    std::lock_guard<std::mutex> lock(sSplashLogMutex);
+    sSplashLogQueue.clear();
+}
+
+std::vector<LogLine> FetchNewSplashLogLines(Passkey<SplashScreen>) {
+    std::lock_guard<std::mutex> lock(sSplashLogMutex);
+    std::vector<LogLine> out(sSplashLogQueue.begin(), sSplashLogQueue.end());
+    sSplashLogQueue.clear();
+    return out;
 }
 
 void LogScope::PushPrefix(const std::source_location &location) {
@@ -632,11 +679,86 @@ void LogScope::PopPrefix() {
     ScopeFrame frame = sScopeFrames.back();
     if (frame.hadOutput && frame.enteredFlushed) {
         if (ShouldLog(LogSeverity::Debug)) {
-            WriteLog(BuildLogLine(&frame, LogSeverity::Debug, "Exiting scope."));
+            WriteLog(BuildLogLine(&frame, LogSeverity::Debug, "Exiting scope."), LogSeverity::Debug);
         }
     }
     sScopeFrames.pop_back();
     --sTabCount;
 }
+
+#ifdef USE_IMGUI
+namespace {
+
+ImVec4 GetLogSeverityColor(LogSeverity severity) {
+    switch (severity) {
+    case LogSeverity::Debug:
+        return ImVec4(0.55f, 0.60f, 0.66f, 1.0f);
+    case LogSeverity::Info:
+        return ImVec4(0.85f, 0.90f, 1.00f, 1.0f);
+    case LogSeverity::Warning:
+        return ImVec4(1.00f, 0.78f, 0.28f, 1.0f);
+    case LogSeverity::Error:
+        return ImVec4(1.00f, 0.38f, 0.38f, 1.0f);
+    case LogSeverity::Critical:
+        return ImVec4(1.00f, 0.20f, 0.50f, 1.0f);
+    default:
+        return ImGui::GetStyleColorVec4(ImGuiCol_Text);
+    }
+}
+
+} // namespace
+
+void ShowImGuiLoggerWindow(Passkey<SceneEditor>) {
+    static bool followLatestLog = true;
+    static bool isFirstVisibleFrame = true;
+
+    constexpr float kBottomDetectionThreshold = 1.0f;
+    const ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse;
+    if (!ImGui::Begin(TranslationLabel("editor.logger.window"), nullptr, windowFlags)) {
+        ImGui::End();
+        return;
+    }
+
+    // 起動直後はimgui.iniに保存されたスクロール位置に関係なく末尾へ移動する。
+    // 以降はユーザーが末尾から離れた時に追従を解除し、末尾へ戻った時に再開する。
+    const bool isAtBottom =
+        ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - kBottomDetectionThreshold;
+    if (!isFirstVisibleFrame) {
+        followLatestLog = isAtBottom;
+    }
+
+    {
+        // ワーカースレッドが sLogLines へ追記するため、描画中はロックして参照する
+        std::lock_guard<std::mutex> linesLock(sLogLinesMutex);
+        ImGuiListClipper clipper;
+        clipper.Begin(static_cast<int>(sLogLines.size()));
+        while (clipper.Step()) {
+            for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
+                const LogEntry &entry = sLogLines[i];
+                const std::string &line = entry.text;
+                // 行末の改行はクリッパーの行高計算を狂わせるため除いて表示する
+                const char *begin = line.c_str();
+                const char *end = begin + line.size();
+                while (end > begin && (end[-1] == '\n' || end[-1] == '\r')) --end;
+                ImGui::PushStyleColor(ImGuiCol_Text, GetLogSeverityColor(entry.severity));
+                ImGui::TextUnformatted(begin, end);
+                ImGui::PopStyleColor();
+            }
+        }
+        clipper.End();
+    }
+
+    // Clipper終了後のカーソルは全ログの末尾にある。末尾マーカーを常に置いて
+    // 追従ON/OFFによるスクロール範囲の変動を防ぐ。
+    ImGui::Dummy(ImVec2(0.0f, 0.0f));
+    if (followLatestLog || isFirstVisibleFrame) {
+        // このフレームでログが増えてScrollMaxが更新された場合も末尾マーカーへ確実に追従する。
+        ImGui::SetScrollHereY(1.0f);
+        followLatestLog = true;
+    }
+    isFirstVisibleFrame = false;
+    ImGui::End();
+}
+#endif
 
 } // namespace KashipanEngine

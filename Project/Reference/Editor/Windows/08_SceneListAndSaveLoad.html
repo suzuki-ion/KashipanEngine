@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scene List / Save & Load | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-editor-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="W08_SceneList">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Scene List / Save &amp; Load</h1>
+<p class="page-lead">登録済みシーンの一覧管理を行う <code>Scene List</code> ウィンドウと、<span class="ui-path"><span>File</span><i>›</i><span>Save Scene...</span></span> / <span class="ui-path"><span>File</span><i>›</i><span>Load Scene...</span></span> の保存・読込モーダルについて説明します。</p>
+</div>
+
+<h2>Scene List ウィンドウ</h2>
+<p><span class="ui-path"><span>Window</span><i>›</i><span>Scene List</span></span> から表示できます。<code>SceneManager</code>に登録されているシーンの一覧を編集する画面です。</p>
+
+<h3>Startup Scene</h3>
+<p>先頭のドロップダウンで、アプリケーション起動時に自動的に読み込まれるシーンを選びます。<code>(None)</code>を選ぶと起動シーンの指定を解除します。変更は即座にシーンリスト定義ファイルへ保存されます。</p>
+
+<h3>登録シーン一覧テーブル</h3>
+<table>
+<tr><th>列</th><th>内容</th></tr>
+<tr><td>Name</td><td>シーン名。編集してEnterを押すと登録名が変わる（<code>RenameRegisteredScene</code>）</td></tr>
+<tr><td>File Path</td><td>読み込み元のJSON/フォルダパス。空の場合は切り替え時に空のシーンが作られる</td></tr>
+<tr><td>Switch</td><td>現在のシーンを破棄してこのシーンへ切り替える（次フレームで反映）。再生中は無効化される</td></tr>
+<tr><td>Convert to Folder Format</td><td>旧来の単一<code>.json</code>形式を、1オブジェクト1フォルダの<code>.scene</code>フォルダ形式へ変換する。既にフォルダ形式、またはパス未設定の場合は無効化される</td></tr>
+<tr><td>Delete</td><td>シーンリストから登録を削除する（シーンJSONファイル自体は削除されない）</td></tr>
+</table>
+
+<h3>Register New Scene</h3>
+<p>テーブル下部の<code>Name</code>/<code>File Path</code>欄に入力し<code>Register</code>を押すと、新しいシーンとして登録されます（名前が空の場合はボタンが無効化されます）。</p>
+
+<div class="tip"><strong>フォルダ形式への変換について</strong><br><code>Convert to Folder Format</code>は、複数人で同じシーンを編集する際に別々のオブジェクトを触っていればGitのコンフリクトが起きないようにするための機能です。詳しいシーンJSONの保存形式は<a href="../../Engine/02_Scenes.html">Engine/02_Scenes.html</a>を参照してください。変換に成功すると、元の<code>.json</code>ファイルを削除するか残すかを選ぶ確認ダイアログが続けて表示されます。</div>
+
+<h2>Save Scene... モーダル</h2>
+<p><span class="ui-path"><span>File</span><i>›</i><span>Save Scene...</span></span>（または<code>Ctrl+S</code>）で開きます。<code>Path</code>欄に保存先パスを入力し<code>Save</code>を押すと、現在のシーンをそのパスへ保存します。<code>Cancel</code>で閉じます。</p>
+
+<h2>Load Scene... モーダル</h2>
+<p><span class="ui-path"><span>File</span><i>›</i><span>Load Scene...</span></span>で開きます。一覧には<code>Assets/Scenes/</code>と<code>SceneBackups/</code>（自動バックアップ先）の両方に含まれる、<code>.scene</code>フォルダー形式・旧来の単一<code>.json</code>形式の両方のシーンファイルが表示されます。一覧から選ぶ、または<code>Path</code>欄へ直接パスを入力して<code>Load</code>を押すと、現在のシーン（未保存の変更を含む）が破棄され、選択と操作履歴（Undo/Redo）もクリアされます。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="01_MainMenuAndPlayback.html">Windows/01_MainMenuAndPlayback.html</a> — File/Editメニュー、自動バックアップ</li>
+<li><a href="../../Engine/02_Scenes.html">Engine/02_Scenes.html</a> — <code>SceneManager::RegisterSceneFile</code>・<code>SceneList.json</code>のC++ API</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

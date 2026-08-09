@@ -1,8 +1,10 @@
 #include "Collider.h"
 
+#include "Objects/EmptyObject.h"
 #include "Objects/Collision/CollisionAlgorithms2D.h"
-#include "Objects/Collision/CollisionAlgorithms3D.h"
-
+#include "Objects/Components/Transform.h"
+#include "Objects/Components/Collider/RigidBody3D.h"
+#include "Utilities/TimeUtils.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -24,48 +26,6 @@ struct Bounds3D {
     Vector3 min{0.0f, 0.0f, 0.0f};
     Vector3 max{0.0f, 0.0f, 0.0f};
 };
-
-inline Bounds2D MergeBounds2D(const Bounds2D &a, const Bounds2D &b) {
-    return Bounds2D{
-        std::min(a.minX, b.minX),
-        std::min(a.minY, b.minY),
-        std::max(a.maxX, b.maxX),
-        std::max(a.maxY, b.maxY)};
-}
-
-inline Vector2 BoundsCenter2D(const Bounds2D &b) {
-    return Vector2{(b.minX + b.maxX) * 0.5f, (b.minY + b.maxY) * 0.5f};
-}
-
-inline Vector3 BoundsCenter3D(const Bounds3D &b) {
-    return Vector3{
-        (b.min.x + b.max.x) * 0.5f,
-        (b.min.y + b.max.y) * 0.5f,
-        (b.min.z + b.max.z) * 0.5f};
-}
-
-inline float BoundsMaxSize2D(const Bounds2D &b) {
-    return std::max(b.maxX - b.minX, b.maxY - b.minY);
-}
-
-inline float BoundsMaxSize3D(const Bounds3D &b) {
-    const float sx = b.max.x - b.min.x;
-    const float sy = b.max.y - b.min.y;
-    const float sz = b.max.z - b.min.z;
-    return std::max({sx, sy, sz});
-}
-
-inline Bounds3D MergeBounds3D(const Bounds3D &a, const Bounds3D &b) {
-    return Bounds3D{
-        Vector3{
-            std::min(a.min.x, b.min.x),
-            std::min(a.min.y, b.min.y),
-            std::min(a.min.z, b.min.z)},
-        Vector3{
-            std::max(a.max.x, b.max.x),
-            std::max(a.max.y, b.max.y),
-            std::max(a.max.z, b.max.z)}};
-}
 
 struct IndexPair {
     std::size_t a = 0;
@@ -122,7 +82,26 @@ std::optional<Bounds2D> ComputeBounds2D(const ColliderInfo2D::ShapeVariant &shap
             } else if constexpr (std::is_same_v<S, Math::Circle>) {
                 return Bounds2D{s.center.x - s.radius, s.center.y - s.radius, s.center.x + s.radius, s.center.y + s.radius};
             } else if constexpr (std::is_same_v<S, Math::Rect>) {
-                return Bounds2D{s.center.x - s.halfSize.x, s.center.y - s.halfSize.y, s.center.x + s.halfSize.x, s.center.y + s.halfSize.y};
+                if (s.rotation == 0.0f) {
+                    return Bounds2D{s.center.x - s.halfSize.x, s.center.y - s.halfSize.y, s.center.x + s.halfSize.x, s.center.y + s.halfSize.y};
+                }
+                // 回転している場合は4頂点を実際に回転させ、それを包むAABBを求める
+                const float c = std::cos(s.rotation);
+                const float sn = std::sin(s.rotation);
+                const Vector2 ex{s.halfSize.x * c, s.halfSize.x * sn};
+                const Vector2 ey{-s.halfSize.y * sn, s.halfSize.y * c};
+                const Vector2 corners[4] = {
+                    s.center - ex - ey, s.center + ex - ey,
+                    s.center + ex + ey, s.center - ex + ey};
+                Vector2 minV = corners[0];
+                Vector2 maxV = corners[0];
+                for (int i = 1; i < 4; ++i) {
+                    minV.x = std::min(minV.x, corners[i].x);
+                    minV.y = std::min(minV.y, corners[i].y);
+                    maxV.x = std::max(maxV.x, corners[i].x);
+                    maxV.y = std::max(maxV.y, corners[i].y);
+                }
+                return Bounds2D{minV.x, minV.y, maxV.x, maxV.y};
             } else if constexpr (std::is_same_v<S, Math::Segment2D>) {
                 return Bounds2D{
                     std::min(s.start.x, s.end.x),
@@ -147,29 +126,52 @@ std::optional<Bounds3D> ComputeBounds3D(const ColliderInfo3D::ShapeVariant &shap
         [](const auto &s) -> std::optional<Bounds3D> {
             using S = std::decay_t<decltype(s)>;
 
-            if constexpr (std::is_same_v<S, Math::Point3D>) {
-                return Bounds3D{s.position, s.position};
-            } else if constexpr (std::is_same_v<S, Math::Sphere>) {
+            if constexpr (std::is_same_v<S, ColliderInfo3D::SphereShape3D>) {
                 const Vector3 r{s.radius, s.radius, s.radius};
                 return Bounds3D{s.center - r, s.center + r};
-            } else if constexpr (std::is_same_v<S, Math::AABB>) {
-                return Bounds3D{s.min, s.max};
-            } else if constexpr (std::is_same_v<S, Math::OBB>) {
-                const float ex = std::abs(s.orientation.m[0][0]) * s.halfSize.x
-                               + std::abs(s.orientation.m[1][0]) * s.halfSize.y
-                               + std::abs(s.orientation.m[2][0]) * s.halfSize.z;
-                const float ey = std::abs(s.orientation.m[0][1]) * s.halfSize.x
-                               + std::abs(s.orientation.m[1][1]) * s.halfSize.y
-                               + std::abs(s.orientation.m[2][1]) * s.halfSize.z;
-                const float ez = std::abs(s.orientation.m[0][2]) * s.halfSize.x
-                               + std::abs(s.orientation.m[1][2]) * s.halfSize.y
-                               + std::abs(s.orientation.m[2][2]) * s.halfSize.z;
-
-                const Vector3 ext{ex, ey, ez};
+            } else if constexpr (std::is_same_v<S, ColliderInfo3D::BoxShape3D>) {
+                return Bounds3D{s.center - s.halfExtents, s.center + s.halfExtents};
+            } else if constexpr (std::is_same_v<S, ColliderInfo3D::CapsuleShape3D>) {
+                const float halfHeight = 0.5f * s.height;
+                const Vector3 ext{s.radius, s.radius + halfHeight, s.radius};
                 return Bounds3D{s.center - ext, s.center + ext};
-            } else if constexpr (std::is_same_v<S, Math::Plane>) {
-                // 無限形状は空間分割に載せない（全体候補として扱う）
-                return std::nullopt;
+            } else if constexpr (std::is_same_v<S, ColliderInfo3D::ConvexMeshShape3D>) {
+                if (s.vertices.empty()) return std::nullopt;
+                Vector3 minV = s.vertices.front();
+                Vector3 maxV = s.vertices.front();
+                for (const auto &v : s.vertices) {
+                    minV.x = std::min(minV.x, v.x);
+                    minV.y = std::min(minV.y, v.y);
+                    minV.z = std::min(minV.z, v.z);
+                    maxV.x = std::max(maxV.x, v.x);
+                    maxV.y = std::max(maxV.y, v.y);
+                    maxV.z = std::max(maxV.z, v.z);
+                }
+                minV = Vector3{ minV.x * s.scale.x, minV.y * s.scale.y, minV.z * s.scale.z };
+                maxV = Vector3{ maxV.x * s.scale.x, maxV.y * s.scale.y, maxV.z * s.scale.z };
+                return Bounds3D{ minV, maxV };
+            } else if constexpr (std::is_same_v<S, ColliderInfo3D::ConcaveMeshShape3D>) {
+                if (s.vertices.empty()) return std::nullopt;
+                Vector3 minV = s.vertices.front();
+                Vector3 maxV = s.vertices.front();
+                for (const auto &v : s.vertices) {
+                    minV.x = std::min(minV.x, v.x);
+                    minV.y = std::min(minV.y, v.y);
+                    minV.z = std::min(minV.z, v.z);
+                    maxV.x = std::max(maxV.x, v.x);
+                    maxV.y = std::max(maxV.y, v.y);
+                    maxV.z = std::max(maxV.z, v.z);
+                }
+                minV = Vector3{ minV.x * s.scale.x, minV.y * s.scale.y, minV.z * s.scale.z };
+                maxV = Vector3{ maxV.x * s.scale.x, maxV.y * s.scale.y, maxV.z * s.scale.z };
+                return Bounds3D{ minV, maxV };
+            } else if constexpr (std::is_same_v<S, ColliderInfo3D::HeightFieldShape3D>) {
+                if (s.width == 0 || s.length == 0 || s.heights.empty()) return std::nullopt;
+                const Vector3 ext{
+                    0.5f * static_cast<float>(s.width - 1) * s.scale.x,
+                    0.5f * (s.maxHeight - s.minHeight) * s.scale.y,
+                    0.5f * static_cast<float>(s.length - 1) * s.scale.z};
+                return Bounds3D{Vector3{-ext.x, s.minHeight * s.scale.y, -ext.z}, Vector3{ext.x, s.maxHeight * s.scale.y, ext.z}};
             } else {
                 return std::nullopt;
             }
@@ -194,17 +196,7 @@ std::vector<IndexPair> BuildCandidatePairs2D(const TColliders &colliders) {
         if (!c.info.enabled) continue;
         active.push_back(i);
 
-        std::optional<Bounds2D> bounds = ComputeBounds2D(c.info.shape);
-
-        if (c.info.ccdEnabled && c.hasPrevShape) {
-            const auto prevBounds = ComputeBounds2D(c.prevShape);
-            if (bounds.has_value() && prevBounds.has_value()) {
-                bounds = MergeBounds2D(*bounds, *prevBounds);
-            } else if (!bounds.has_value() && prevBounds.has_value()) {
-                bounds = prevBounds;
-            }
-        }
-
+        const auto bounds = ComputeBounds2D(c.info.shape);
         if (!bounds.has_value()) {
             global.push_back(i);
             continue;
@@ -255,80 +247,24 @@ std::vector<IndexPair> BuildCandidatePairs2D(const TColliders &colliders) {
     return out;
 }
 
-inline std::uint64_t MakeCellKey3D(int x, int y, int z) {
-    const std::uint64_t ux = static_cast<std::uint32_t>(x);
-    const std::uint64_t uy = static_cast<std::uint32_t>(y);
-    const std::uint64_t uz = static_cast<std::uint32_t>(z);
-
-    std::uint64_t h = 0x9e3779b97f4a7c15ull;
-    h ^= ux + 0x9e3779b97f4a7c15ull + (h << 6) + (h >> 2);
-    h ^= uy + 0x9e3779b97f4a7c15ull + (h << 6) + (h >> 2);
-    h ^= uz + 0x9e3779b97f4a7c15ull + (h << 6) + (h >> 2);
-    return h;
-}
-
-inline std::uint64_t MakeIndexPairKey(std::size_t a, std::size_t b) {
-    if (a > b) std::swap(a, b);
-    return (static_cast<std::uint64_t>(static_cast<std::uint32_t>(a)) << 32)
-         | static_cast<std::uint32_t>(b);
-}
-
 template<typename TColliders>
-const std::vector<IndexPair> &BuildCandidatePairs3D(const TColliders &colliders) {
+std::vector<IndexPair> BuildCandidatePairs3D(const TColliders &colliders) {
     constexpr float kCellSize = 16.0f;
     constexpr int kMaxCellsPerShape = 512;
 
-    struct BuildCache3D {
-        std::unordered_map<std::uint64_t, std::vector<std::size_t>> grid;
-        std::vector<std::uint64_t> usedCells;
-        std::vector<std::size_t> active;
-        std::vector<std::size_t> global;
-        std::unordered_set<std::uint64_t> uniquePairKeys;
-        std::vector<IndexPair> pairs;
-    };
+    std::unordered_map<GridKey3D, std::vector<std::size_t>, GridKey3DHash> grid;
+    std::vector<std::size_t> active;
+    std::vector<std::size_t> global;
 
-    thread_local BuildCache3D cache;
-
-    auto &grid = cache.grid;
-    auto &usedCells = cache.usedCells;
-    auto &active = cache.active;
-    auto &global = cache.global;
-    auto &uniquePairKeys = cache.uniquePairKeys;
-    auto &pairs = cache.pairs;
-
-    for (auto &it : grid) {
-        it.second.clear();
-    }
-
-    usedCells.clear();
-    active.clear();
-    global.clear();
-    uniquePairKeys.clear();
-    pairs.clear();
-
-    if (active.capacity() < colliders.size()) {
-        active.reserve(colliders.size());
-    }
-    if (global.capacity() < colliders.size()) {
-        global.reserve(colliders.size());
-    }
+    active.reserve(colliders.size());
+    global.reserve(colliders.size());
 
     for (std::size_t i = 0; i < colliders.size(); ++i) {
         const auto &c = colliders[i];
         if (!c.info.enabled) continue;
         active.push_back(i);
 
-        std::optional<Bounds3D> bounds = ComputeBounds3D(c.info.shape);
-
-        if (c.info.ccdEnabled && c.hasPrevShape) {
-            const auto prevBounds = ComputeBounds3D(c.prevShape);
-            if (bounds.has_value() && prevBounds.has_value()) {
-                bounds = MergeBounds3D(*bounds, *prevBounds);
-            } else if (!bounds.has_value() && prevBounds.has_value()) {
-                bounds = prevBounds;
-            }
-        }
-
+        const auto bounds = ComputeBounds3D(c.info.shape);
         if (!bounds.has_value()) {
             global.push_back(i);
             continue;
@@ -344,8 +280,7 @@ const std::vector<IndexPair> &BuildCandidatePairs3D(const TColliders &colliders)
         const int cellsX = (maxX - minX + 1);
         const int cellsY = (maxY - minY + 1);
         const int cellsZ = (maxZ - minZ + 1);
-
-        const std::int64_t cellCount = static_cast<std::int64_t>(cellsX) * static_cast<std::int64_t>(cellsY) * static_cast<std::int64_t>(cellsZ);
+        const int cellCount = cellsX * cellsY * cellsZ;
         if (cellsX <= 0 || cellsY <= 0 || cellsZ <= 0 || cellsX > kMaxCellsPerShape || cellsY > kMaxCellsPerShape || cellsZ > kMaxCellsPerShape || cellCount > kMaxCellsPerShape) {
             global.push_back(i);
             continue;
@@ -354,10 +289,9 @@ const std::vector<IndexPair> &BuildCandidatePairs3D(const TColliders &colliders)
         for (int z = minZ; z <= maxZ; ++z) {
             for (int y = minY; y <= maxY; ++y) {
                 for (int x = minX; x <= maxX; ++x) {
-                    const std::uint64_t key = MakeCellKey3D(x, y, z);
-                    auto &cell = grid[key];
+                    auto &cell = grid[GridKey3D{x, y, z}];
                     if (cell.empty()) {
-                        usedCells.push_back(key);
+                        cell.reserve(8);
                     }
                     cell.push_back(i);
                 }
@@ -365,35 +299,38 @@ const std::vector<IndexPair> &BuildCandidatePairs3D(const TColliders &colliders)
         }
     }
 
-    uniquePairKeys.reserve((usedCells.size() * 2) + (global.size() * active.size()));
+    std::size_t estimatedPairs = 0;
+    for (const auto &[_, indices] : grid) {
+        const std::size_t n = indices.size();
+        if (n > 1) {
+            estimatedPairs += (n * (n - 1)) / 2;
+        }
+    }
+    estimatedPairs += global.size() * active.size();
 
-    for (std::uint64_t cellKey : usedCells) {
-        const auto it = grid.find(cellKey);
-        if (it == grid.end()) continue;
+    std::unordered_set<IndexPair, IndexPairHash> uniquePairs;
+    uniquePairs.reserve(estimatedPairs);
 
-        const auto &indices = it->second;
+    for (const auto &[_, indices] : grid) {
         for (std::size_t i = 0; i < indices.size(); ++i) {
             for (std::size_t j = i + 1; j < indices.size(); ++j) {
-                uniquePairKeys.insert(MakeIndexPairKey(indices[i], indices[j]));
+                uniquePairs.insert(MakeIndexPair(indices[i], indices[j]));
             }
         }
     }
 
-    for (std::size_t g : global) {
+    for (std::size_t gi = 0; gi < global.size(); ++gi) {
+        const std::size_t g = global[gi];
         for (std::size_t a : active) {
             if (a == g) continue;
-            uniquePairKeys.insert(MakeIndexPairKey(g, a));
+            uniquePairs.insert(MakeIndexPair(g, a));
         }
     }
 
-    pairs.reserve(uniquePairKeys.size());
-    for (std::uint64_t k : uniquePairKeys) {
-        pairs.push_back(IndexPair{
-            static_cast<std::size_t>(static_cast<std::uint32_t>(k >> 32)),
-            static_cast<std::size_t>(static_cast<std::uint32_t>(k & 0xffffffffull))});
-    }
-
-    return pairs;
+    std::vector<IndexPair> out;
+    out.reserve(uniquePairs.size());
+    for (const auto &p : uniquePairs) out.emplace_back(p);
+    return out;
 }
 
 inline bool ShouldTest(
@@ -416,94 +353,10 @@ inline bool Intersects2D(const ColliderInfo2D::ShapeVariant &a, const ColliderIn
         a, b);
 }
 
-inline int ComputeAdaptiveSamples2D(
-    const ColliderInfo2D::ShapeVariant &currentA,
-    const ColliderInfo2D::ShapeVariant *prevA,
-    bool ccdA,
-    const ColliderInfo2D::ShapeVariant &currentB,
-    const ColliderInfo2D::ShapeVariant *prevB,
-    bool ccdB) {
-    float maxTravel = 0.0f;
-    float minFeature = std::numeric_limits<float>::max();
-
-    const auto accumulate = [&](const ColliderInfo2D::ShapeVariant &current,
-                                const ColliderInfo2D::ShapeVariant *prev,
-                                bool ccd) {
-        const auto curBounds = ComputeBounds2D(current);
-        if (curBounds.has_value()) {
-            minFeature = std::min(minFeature, std::max(0.001f, BoundsMaxSize2D(*curBounds)));
-        }
-
-        if (!ccd || !prev) return;
-
-        const auto prevBounds = ComputeBounds2D(*prev);
-        if (!curBounds.has_value() || !prevBounds.has_value()) return;
-
-        const float travel = BoundsCenter2D(*curBounds).Distance(BoundsCenter2D(*prevBounds));
-        maxTravel = std::max(maxTravel, travel);
-    };
-
-    accumulate(currentA, prevA, ccdA);
-    accumulate(currentB, prevB, ccdB);
-
-    if (!std::isfinite(minFeature) || minFeature <= 0.0f) {
-        minFeature = 1.0f;
-    }
-
-    const float stepDistance = std::max(0.05f, minFeature * 0.5f);
-    const int travelSteps = static_cast<int>(std::ceil(maxTravel / stepDistance));
-    return std::clamp(4 + travelSteps, 8, 96);
-}
-
-inline int ComputeAdaptiveSamples3D(
-    const ColliderInfo3D::ShapeVariant &currentA,
-    const ColliderInfo3D::ShapeVariant *prevA,
-    bool ccdA,
-    const ColliderInfo3D::ShapeVariant &currentB,
-    const ColliderInfo3D::ShapeVariant *prevB,
-    bool ccdB) {
-    float maxTravel = 0.0f;
-    float minFeature = std::numeric_limits<float>::max();
-
-    const auto accumulate = [&](const ColliderInfo3D::ShapeVariant &current,
-                                const ColliderInfo3D::ShapeVariant *prev,
-                                bool ccd) {
-        const auto curBounds = ComputeBounds3D(current);
-        if (curBounds.has_value()) {
-            minFeature = std::min(minFeature, std::max(0.001f, BoundsMaxSize3D(*curBounds)));
-        }
-
-        if (!ccd || !prev) return;
-
-        const auto prevBounds = ComputeBounds3D(*prev);
-        if (!curBounds.has_value() || !prevBounds.has_value()) return;
-
-        const float travel = BoundsCenter3D(*curBounds).Distance(BoundsCenter3D(*prevBounds));
-        maxTravel = std::max(maxTravel, travel);
-    };
-
-    accumulate(currentA, prevA, ccdA);
-    accumulate(currentB, prevB, ccdB);
-
-    if (!std::isfinite(minFeature) || minFeature <= 0.0f) {
-        minFeature = 1.0f;
-    }
-
-    const float stepDistance = std::max(0.05f, minFeature * 0.5f);
-    const int travelSteps = static_cast<int>(std::ceil(maxTravel / stepDistance));
-    return std::clamp(4 + travelSteps, 8, 96);
-}
-
 inline bool Intersects3D(const ColliderInfo3D::ShapeVariant &a, const ColliderInfo3D::ShapeVariant &b) {
-    return std::visit(
-        [](const auto &lhs, const auto &rhs) {
-            if constexpr (requires { KashipanEngine::CollisionAlgorithms3D::Intersects(lhs, rhs); }) {
-                return KashipanEngine::CollisionAlgorithms3D::Intersects(lhs, rhs);
-            } else {
-                return false;
-            }
-        },
-        a, b);
+    (void)a;
+    (void)b;
+    return false;
 }
 
 inline HitInfo2D ComputeHit2D(const ColliderInfo2D::ShapeVariant &a, const ColliderInfo2D::ShapeVariant &b) {
@@ -528,301 +381,82 @@ inline HitInfo2D ComputeHit2D(const ColliderInfo2D::ShapeVariant &a, const Colli
 }
 
 inline HitInfo3D ComputeHit3D(const ColliderInfo3D::ShapeVariant &a, const ColliderInfo3D::ShapeVariant &b) {
-    return std::visit(
-        [](const auto &lhs, const auto &rhs) -> HitInfo3D {
-            if constexpr (requires { KashipanEngine::CollisionAlgorithms3D::ComputeHit(lhs, rhs); }) {
-                HitInfo hiBase = KashipanEngine::CollisionAlgorithms3D::ComputeHit(lhs, rhs);
-                HitInfo3D hi;
-                hi.isHit = hiBase.isHit;
-                hi.normal = hiBase.normal;
-                hi.penetration = hiBase.penetration;
-                return hi;
-            } else if constexpr (requires { KashipanEngine::CollisionAlgorithms3D::Intersects(lhs, rhs); }) {
-                HitInfo3D hi;
-                hi.isHit = KashipanEngine::CollisionAlgorithms3D::Intersects(lhs, rhs);
-                return hi;
-            } else {
-                return HitInfo3D{};
+    (void)a;
+    (void)b;
+    return HitInfo3D{};
+}
+
+//==================================================
+// 連続衝突判定（CCD）用ヘルパー
+//==================================================
+
+/// @brief スイープの1ステップあたりの許容移動量の下限（縮退形状・点などの保険）
+constexpr float kMinSweepStep = 0.05f;
+/// @brief スイープの最大分割数（テレポート等の巨大な移動でも計算量が爆発しないよう制限する）
+constexpr int kMaxSweepSubsteps = 16;
+
+/// @brief 2D形状の最小半径（この距離以下の移動ならすり抜けは起きないとみなせる量）を求める
+float ComputeMinHalfExtent2D(const ColliderInfo2D::ShapeVariant &shape) {
+    const auto bounds = ComputeBounds2D(shape);
+    if (!bounds) return kMinSweepStep;
+    const float width = bounds->maxX - bounds->minX;
+    const float height = bounds->maxY - bounds->minY;
+    return std::max(kMinSweepStep, std::min(width, height) * 0.5f);
+}
+
+/// @brief 3D形状の最小半径を求める
+float ComputeMinHalfExtent3D(const ColliderInfo3D::ShapeVariant &shape) {
+    const auto bounds = ComputeBounds3D(shape);
+    if (!bounds) return kMinSweepStep;
+    const Vector3 size = bounds->max - bounds->min;
+    return std::max(kMinSweepStep, std::min({ size.x, size.y, size.z }) * 0.5f);
+}
+
+/// @brief 2D形状を平行移動した複製を返す（スイープの中間位置の判定用）
+ColliderInfo2D::ShapeVariant TranslateShape2D(const ColliderInfo2D::ShapeVariant &shape, const Vector2 &offset) {
+    ColliderInfo2D::ShapeVariant result = shape;
+    std::visit(
+        [&](auto &s) {
+            using S = std::decay_t<decltype(s)>;
+            if constexpr (std::is_same_v<S, Math::Point2D>) {
+                s.position += offset;
+            } else if constexpr (std::is_same_v<S, Math::Circle>) {
+                s.center += offset;
+            } else if constexpr (std::is_same_v<S, Math::Rect>) {
+                s.center += offset;
+            } else if constexpr (std::is_same_v<S, Math::Segment2D>) {
+                s.start += offset;
+                s.end += offset;
+            } else if constexpr (std::is_same_v<S, Math::Capsule2D>) {
+                s.start += offset;
+                s.end += offset;
             }
         },
-        a, b);
-}
-
-inline float LerpFloat(float a, float b, float t) {
-    return a + (b - a) * t;
-}
-
-inline Vector2 LerpVec2(const Vector2 &a, const Vector2 &b, float t) {
-    return a + (b - a) * t;
-}
-
-inline Vector3 LerpVec3(const Vector3 &a, const Vector3 &b, float t) {
-    return a + (b - a) * t;
-}
-
-inline ColliderInfo2D::ShapeVariant InterpolateShape2D(
-    const ColliderInfo2D::ShapeVariant &from,
-    const ColliderInfo2D::ShapeVariant &to,
-    float t) {
-    if (from.index() != to.index()) {
-        return to;
-    }
-
-    return std::visit(
-        [t](const auto &a, const auto &b) -> ColliderInfo2D::ShapeVariant {
-            using A = std::decay_t<decltype(a)>;
-            using B = std::decay_t<decltype(b)>;
-
-            if constexpr (!std::is_same_v<A, B>) {
-                return b;
-            } else if constexpr (std::is_same_v<A, Math::Point2D>) {
-                Math::Point2D out = b;
-                out.position = LerpVec2(a.position, b.position, t);
-                return out;
-            } else if constexpr (std::is_same_v<A, Math::Circle>) {
-                Math::Circle out = b;
-                out.center = LerpVec2(a.center, b.center, t);
-                out.radius = LerpFloat(a.radius, b.radius, t);
-                return out;
-            } else if constexpr (std::is_same_v<A, Math::Rect>) {
-                Math::Rect out = b;
-                out.center = LerpVec2(a.center, b.center, t);
-                out.halfSize = LerpVec2(a.halfSize, b.halfSize, t);
-                return out;
-            } else if constexpr (std::is_same_v<A, Math::Segment2D>) {
-                Math::Segment2D out = b;
-                out.start = LerpVec2(a.start, b.start, t);
-                out.end = LerpVec2(a.end, b.end, t);
-                return out;
-            } else if constexpr (std::is_same_v<A, Math::Capsule2D>) {
-                Math::Capsule2D out = b;
-                out.start = LerpVec2(a.start, b.start, t);
-                out.end = LerpVec2(a.end, b.end, t);
-                out.radius = LerpFloat(a.radius, b.radius, t);
-                return out;
-            } else {
-                return b;
-            }
-        },
-        from, to);
-}
-
-inline ColliderInfo3D::ShapeVariant InterpolateShape3D(
-    const ColliderInfo3D::ShapeVariant &from,
-    const ColliderInfo3D::ShapeVariant &to,
-    float t) {
-    if (from.index() != to.index()) {
-        return to;
-    }
-
-    return std::visit(
-        [t](const auto &a, const auto &b) -> ColliderInfo3D::ShapeVariant {
-            using A = std::decay_t<decltype(a)>;
-            using B = std::decay_t<decltype(b)>;
-
-            if constexpr (!std::is_same_v<A, B>) {
-                return b;
-            } else if constexpr (std::is_same_v<A, Math::Point3D>) {
-                Math::Point3D out = b;
-                out.position = LerpVec3(a.position, b.position, t);
-                return out;
-            } else if constexpr (std::is_same_v<A, Math::Sphere>) {
-                Math::Sphere out = b;
-                out.center = LerpVec3(a.center, b.center, t);
-                out.radius = LerpFloat(a.radius, b.radius, t);
-                return out;
-            } else if constexpr (std::is_same_v<A, Math::AABB>) {
-                Math::AABB out = b;
-                out.min = LerpVec3(a.min, b.min, t);
-                out.max = LerpVec3(a.max, b.max, t);
-                return out;
-            } else if constexpr (std::is_same_v<A, Math::OBB>) {
-                Math::OBB out = b;
-                out.center = LerpVec3(a.center, b.center, t);
-                out.halfSize = LerpVec3(a.halfSize, b.halfSize, t);
-                return out;
-            } else if constexpr (std::is_same_v<A, Math::Plane>) {
-                return b;
-            } else {
-                return b;
-            }
-        },
-        from, to);
-}
-
-inline bool Intersects2DCCD(
-    const ColliderInfo2D::ShapeVariant &currentA,
-    const ColliderInfo2D::ShapeVariant *prevA,
-    bool ccdA,
-    const ColliderInfo2D::ShapeVariant &currentB,
-    const ColliderInfo2D::ShapeVariant *prevB,
-    bool ccdB) {
-    if (!ccdA && !ccdB) {
-        return Intersects2D(currentA, currentB);
-    }
-
-    const int samples = ComputeAdaptiveSamples2D(currentA, prevA, ccdA, currentB, prevB, ccdB);
-    for (int i = 0; i <= samples; ++i) {
-        const float t = static_cast<float>(i) / static_cast<float>(samples);
-
-        const auto shapeA = (ccdA && prevA) ? InterpolateShape2D(*prevA, currentA, t) : currentA;
-        const auto shapeB = (ccdB && prevB) ? InterpolateShape2D(*prevB, currentB, t) : currentB;
-
-        if (Intersects2D(shapeA, shapeB)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-inline bool Intersects3DCCD(
-    const ColliderInfo3D::ShapeVariant &currentA,
-    const ColliderInfo3D::ShapeVariant *prevA,
-    bool ccdA,
-    const ColliderInfo3D::ShapeVariant &currentB,
-    const ColliderInfo3D::ShapeVariant *prevB,
-    bool ccdB) {
-    if (!ccdA && !ccdB) {
-        return Intersects3D(currentA, currentB);
-    }
-
-    const int samples = ComputeAdaptiveSamples3D(currentA, prevA, ccdA, currentB, prevB, ccdB);
-    for (int i = 0; i <= samples; ++i) {
-        const float t = static_cast<float>(i) / static_cast<float>(samples);
-
-        const auto shapeA = (ccdA && prevA) ? InterpolateShape3D(*prevA, currentA, t) : currentA;
-        const auto shapeB = (ccdB && prevB) ? InterpolateShape3D(*prevB, currentB, t) : currentB;
-
-        if (Intersects3D(shapeA, shapeB)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-inline HitInfo2D ComputeHit2DCCD(
-    const ColliderInfo2D::ShapeVariant &currentA,
-    const ColliderInfo2D::ShapeVariant *prevA,
-    bool ccdA,
-    const ColliderInfo2D::ShapeVariant &currentB,
-    const ColliderInfo2D::ShapeVariant *prevB,
-    bool ccdB) {
-    if (!ccdA && !ccdB) {
-        HitInfo2D hi = ComputeHit2D(currentA, currentB);
-        hi.time = 1.0f;
-        return hi;
-    }
-
-    const int samples = ComputeAdaptiveSamples2D(currentA, prevA, ccdA, currentB, prevB, ccdB);
-    for (int i = 0; i <= samples; ++i) {
-        const float t = static_cast<float>(i) / static_cast<float>(samples);
-
-        const auto shapeA = (ccdA && prevA) ? InterpolateShape2D(*prevA, currentA, t) : currentA;
-        const auto shapeB = (ccdB && prevB) ? InterpolateShape2D(*prevB, currentB, t) : currentB;
-
-        HitInfo2D hi = ComputeHit2D(shapeA, shapeB);
-        if (hi.isHit) {
-            float t0 = (i == 0) ? 0.0f : static_cast<float>(i - 1) / static_cast<float>(samples);
-            float t1 = t;
-            const int binarySearchIterations = 8;
-
-            for (int j = 0; j < binarySearchIterations; ++j) {
-                float midT = t0 + (t1 - t0) * 0.5f;
-                auto midShapeA = (ccdA && prevA) ? InterpolateShape2D(*prevA, currentA, midT) : currentA;
-                auto midShapeB = (ccdB && prevB) ? InterpolateShape2D(*prevB, currentB, midT) : currentB;
-
-                HitInfo2D midHi = ComputeHit2D(midShapeA, midShapeB);
-                if (midHi.isHit) {
-                    t1 = midT;
-                    hi = midHi;
-                } else {
-                    t0 = midT;
-                }
-            }
-
-            hi.time = t1;
-            return hi;
-        }
-    }
-
-    HitInfo2D hi = ComputeHit2D(currentA, currentB);
-    hi.time = 1.0f;
-    return hi;
-}
-
-inline HitInfo3D ComputeHit3DCCD(
-    const ColliderInfo3D::ShapeVariant &currentA,
-    const ColliderInfo3D::ShapeVariant *prevA,
-    bool ccdA,
-    const ColliderInfo3D::ShapeVariant &currentB,
-    const ColliderInfo3D::ShapeVariant *prevB,
-    bool ccdB) {
-    if (!ccdA && !ccdB) {
-        HitInfo3D hi = ComputeHit3D(currentA, currentB);
-        hi.time = 1.0f;
-        return hi;
-    }
-
-    const int samples = ComputeAdaptiveSamples3D(currentA, prevA, ccdA, currentB, prevB, ccdB);
-    for (int i = 0; i <= samples; ++i) {
-        const float t = static_cast<float>(i) / static_cast<float>(samples);
-
-        const auto shapeA = (ccdA && prevA) ? InterpolateShape3D(*prevA, currentA, t) : currentA;
-        const auto shapeB = (ccdB && prevB) ? InterpolateShape3D(*prevB, currentB, t) : currentB;
-
-        HitInfo3D hi = ComputeHit3D(shapeA, shapeB);
-        if (hi.isHit) {
-            float t0 = (i == 0) ? 0.0f : static_cast<float>(i - 1) / static_cast<float>(samples);
-            float t1 = t;
-            const int binarySearchIterations = 8;
-
-            for (int j = 0; j < binarySearchIterations; ++j) {
-                float midT = t0 + (t1 - t0) * 0.5f;
-                auto midShapeA = (ccdA && prevA) ? InterpolateShape3D(*prevA, currentA, midT) : currentA;
-                auto midShapeB = (ccdB && prevB) ? InterpolateShape3D(*prevB, currentB, midT) : currentB;
-
-                HitInfo3D midHi = ComputeHit3D(midShapeA, midShapeB);
-                if (midHi.isHit) {
-                    t1 = midT;
-                    hi = midHi;
-                } else {
-                    t0 = midT;
-                }
-            }
-
-            hi.time = t1;
-            return hi;
-        }
-    }
-
-    HitInfo3D hi = ComputeHit3D(currentA, currentB);
-    hi.time = 1.0f;
-    return hi;
+        result);
+    return result;
 }
 
 } // namespace
 
+Collider::Collider() {
+    EnsureWorldCreated();
+}
+
+Collider::~Collider() {
+    ReleaseWorld();
+}
+
 Collider::ColliderID Collider::Add(const ColliderInfo2D &info) {
     const ColliderID id = nextId_++;
-    Entry<ColliderInfo2D> e;
-    e.id = id;
-    e.info = info;
-    e.prevShape = info.shape;
-    e.hasPrevShape = true;
-    colliders2D_.push_back(std::move(e));
+    colliders2D_.push_back({id, info});
     return id;
 }
 
 Collider::ColliderID Collider::Add(const ColliderInfo3D &info) {
     const ColliderID id = nextId_++;
-    Entry<ColliderInfo3D> e;
-    e.id = id;
-    e.info = info;
-    e.prevShape = info.shape;
-    e.hasPrevShape = true;
-    colliders3D_.push_back(std::move(e));
+    colliders3D_.push_back({id, info});
+    auto &entry = colliders3D_.back();
+    BuildRuntime3D(entry);
     return id;
 }
 
@@ -831,14 +465,19 @@ bool Collider::Remove2D(ColliderID id) {
 }
 
 bool Collider::Remove3D(ColliderID id) {
-    return EraseById(colliders3D_, id);
+    for (auto it = colliders3D_.begin(); it != colliders3D_.end(); ++it) {
+        if (it->id == id) {
+            ReleaseRuntime3D(*it);
+            colliders3D_.erase(it);
+            return true;
+        }
+    }
+    return false;
 }
 
 bool Collider::UpdateColliderInfo2D(ColliderID id, const ColliderInfo2D &info) {
     for (auto &e : colliders2D_) {
         if (e.id == id) {
-            e.prevShape = e.info.shape;
-            e.hasPrevShape = true;
             e.info = info;
             return true;
         }
@@ -849,8 +488,7 @@ bool Collider::UpdateColliderInfo2D(ColliderID id, const ColliderInfo2D &info) {
 bool Collider::UpdateColliderInfo3D(ColliderID id, const ColliderInfo3D &info) {
     for (auto &e : colliders3D_) {
         if (e.id == id) {
-            e.prevShape = e.info.shape;
-            e.hasPrevShape = true;
+            UpdateRuntime3D(e, info);
             e.info = info;
             return true;
         }
@@ -864,8 +502,13 @@ void Collider::Clear2D() {
 }
 
 void Collider::Clear3D() {
+    for (auto &entry : colliders3D_) {
+        ReleaseRuntime3D(entry);
+    }
     colliders3D_.clear();
     prevPairs3D_.clear();
+    frameEvents3D_.clear();
+    curPairs3D_.clear();
 }
 
 std::vector<Collider::HitPair2D> Collider::CheckAll2D() const {
@@ -883,9 +526,7 @@ std::vector<Collider::HitPair2D> Collider::CheckAll2D() const {
             continue;
         }
 
-        const auto *prevA = ai.hasPrevShape ? &ai.prevShape : nullptr;
-        const auto *prevB = bi.hasPrevShape ? &bi.prevShape : nullptr;
-        if (Intersects2DCCD(ai.info.shape, prevA, ai.info.ccdEnabled, bi.info.shape, prevB, bi.info.ccdEnabled)) {
+        if (Intersects2D(ai.info.shape, bi.info.shape)) {
             hits.push_back({ai.id, bi.id});
         }
     }
@@ -894,24 +535,72 @@ std::vector<Collider::HitPair2D> Collider::CheckAll2D() const {
 
 std::vector<Collider::HitPair3D> Collider::CheckAll3D() const {
     std::vector<HitPair3D> hits;
-    const auto &pairs = BuildCandidatePairs3D(colliders3D_);
-    hits.reserve(pairs.size());
+    if (!physicsWorld_) return hits;
 
-    for (const auto &pair : pairs) {
-        const auto &ai = colliders3D_[pair.a];
-        const auto &bi = colliders3D_[pair.b];
+    std::unordered_map<const ColliderHandle *, ColliderID> colliderIdByHandle;
+    std::unordered_map<ColliderID, const ColliderInfo3D *> infoById;
+    colliderIdByHandle.reserve(colliders3D_.size());
+    infoById.reserve(colliders3D_.size());
 
-        if (!ai.info.enabled || !bi.info.enabled) continue;
-        if (!ShouldTest(ai.info.attribute, ai.info.ignoreAttribute, bi.info.attribute) ||
-            !ShouldTest(bi.info.attribute, bi.info.ignoreAttribute, ai.info.attribute)) {
-            continue;
+    for (const auto &entry : colliders3D_) {
+        if (!entry.runtime.collider) continue;
+        colliderIdByHandle.emplace(entry.runtime.collider, entry.id);
+        infoById.emplace(entry.id, &entry.info);
+    }
+
+    std::unordered_set<std::uint64_t> uniquePairs;
+
+    struct Collector final : reactphysics3d::CollisionCallback {
+        const std::unordered_map<const ColliderHandle *, ColliderID> &idMap;
+        const std::unordered_map<ColliderID, const ColliderInfo3D *> &infoMap;
+        std::unordered_set<std::uint64_t> &pairs;
+
+        Collector(
+            const std::unordered_map<const ColliderHandle *, ColliderID> &idMap,
+            const std::unordered_map<ColliderID, const ColliderInfo3D *> &infoMap,
+            std::unordered_set<std::uint64_t> &pairs)
+            : idMap(idMap), infoMap(infoMap), pairs(pairs) {}
+
+        void onContact(const CallbackData &callbackData) override {
+            const int pairCount = callbackData.getNbContactPairs();
+            for (int i = 0; i < pairCount; ++i) {
+                const auto &pair = callbackData.getContactPair(i);
+                const auto *colliderA = pair.getCollider1();
+                const auto *colliderB = pair.getCollider2();
+                if (!colliderA || !colliderB) continue;
+
+                auto itA = idMap.find(colliderA);
+                auto itB = idMap.find(colliderB);
+                if (itA == idMap.end() || itB == idMap.end()) continue;
+
+                const ColliderID idA = itA->second;
+                const ColliderID idB = itB->second;
+
+                auto infoAIt = infoMap.find(idA);
+                auto infoBIt = infoMap.find(idB);
+                if (infoAIt == infoMap.end() || infoBIt == infoMap.end()) continue;
+
+                const auto &infoA = *infoAIt->second;
+                const auto &infoB = *infoBIt->second;
+                if (!infoA.enabled || !infoB.enabled) continue;
+                if (!ShouldTest(infoA.attribute, infoA.ignoreAttribute, infoB.attribute) ||
+                    !ShouldTest(infoB.attribute, infoB.ignoreAttribute, infoA.attribute)) {
+                    continue;
+                }
+
+                pairs.insert(MakePairKey(idA, idB));
+            }
         }
+    };
 
-        const auto *prevA = ai.hasPrevShape ? &ai.prevShape : nullptr;
-        const auto *prevB = bi.hasPrevShape ? &bi.prevShape : nullptr;
-        if (Intersects3DCCD(ai.info.shape, prevA, ai.info.ccdEnabled, bi.info.shape, prevB, bi.info.ccdEnabled)) {
-            hits.push_back({ai.id, bi.id});
-        }
+    Collector collector(colliderIdByHandle, infoById, uniquePairs);
+    physicsWorld_->testCollision(collector);
+
+    hits.reserve(uniquePairs.size());
+    for (auto key : uniquePairs) {
+        const ColliderID a = static_cast<ColliderID>(key >> 32);
+        const ColliderID b = static_cast<ColliderID>(key & 0xffffffffu);
+        hits.push_back({a, b});
     }
     return hits;
 }
@@ -927,9 +616,7 @@ bool Collider::Check2D(ColliderID a, ColliderID b) const {
         return false;
     }
 
-    const auto *prevA = pa->hasPrevShape ? &pa->prevShape : nullptr;
-    const auto *prevB = pb->hasPrevShape ? &pb->prevShape : nullptr;
-    return Intersects2DCCD(pa->info.shape, prevA, pa->info.ccdEnabled, pb->info.shape, prevB, pb->info.ccdEnabled);
+    return Intersects2D(pa->info.shape, pb->info.shape);
 }
 
 bool Collider::Check3D(ColliderID a, ColliderID b) const {
@@ -943,9 +630,40 @@ bool Collider::Check3D(ColliderID a, ColliderID b) const {
         return false;
     }
 
-    const auto *prevA = pa->hasPrevShape ? &pa->prevShape : nullptr;
-    const auto *prevB = pb->hasPrevShape ? &pb->prevShape : nullptr;
-    return Intersects3DCCD(pa->info.shape, prevA, pa->info.ccdEnabled, pb->info.shape, prevB, pb->info.ccdEnabled);
+    if (!physicsWorld_ || !pa->runtime.collider || !pb->runtime.collider) return false;
+
+    struct Collector final : reactphysics3d::CollisionCallback {
+        bool hit = false;
+        const ColliderHandle *targetA = nullptr;
+        const ColliderHandle *targetB = nullptr;
+
+        Collector(const ColliderHandle *a, const ColliderHandle *b) : targetA(a), targetB(b) {}
+
+        void onContact(const CallbackData &callbackData) override {
+            const int pairCount = callbackData.getNbContactPairs();
+            for (int i = 0; i < pairCount; ++i) {
+                const auto &pair = callbackData.getContactPair(i);
+                const auto *colliderA = pair.getCollider1();
+                const auto *colliderB = pair.getCollider2();
+                if ((colliderA == targetA && colliderB == targetB) || (colliderA == targetB && colliderB == targetA)) {
+                    hit = true;
+                    return;
+                }
+            }
+        }
+    };
+
+    Collector collector(pa->runtime.collider, pb->runtime.collider);
+    physicsWorld_->testCollision(collector);
+    return collector.hit;
+}
+
+const ColliderInfo3D *Collider::FindInfoByHandle3D(const ColliderHandle *handle) const {
+    if (!handle) return nullptr;
+    for (const auto &entry : colliders3D_) {
+        if (entry.runtime.collider == handle) return &entry.info;
+    }
+    return nullptr;
 }
 
 std::uint64_t Collider::MakePairKey(ColliderID a, ColliderID b) {
@@ -961,10 +679,18 @@ void Collider::Dispatch2D(ColliderID a, ColliderID b, const HitInfo2D &hitInfo, 
     HitInfo2D hiA = hitInfo;
     hiA.selfObject = ea->info.ownerObject;
     hiA.otherObject = eb->info.ownerObject;
+    hiA.selfCollider = ea->info.sourceCollider;
+    hiA.otherCollider = eb->info.sourceCollider;
 
     HitInfo2D hiB = hitInfo;
     hiB.selfObject = eb->info.ownerObject;
     hiB.otherObject = ea->info.ownerObject;
+    hiB.selfCollider = eb->info.sourceCollider;
+    hiB.otherCollider = ea->info.sourceCollider;
+    // hitInfo.normal は ComputeHit(A, B) により「BからAへ向かう方向
+    // （Aの押し出し方向）」で計算されるため、B側が受け取る法線
+    // （AからBへ向かう＝Bの押し出し方向）はその逆向きになる。
+    hiB.normal = -hitInfo.normal;
 
     const bool isHitNow = hitInfo.isHit;
 
@@ -983,20 +709,26 @@ void Collider::Dispatch2D(ColliderID a, ColliderID b, const HitInfo2D &hitInfo, 
     }
 }
 
-void Collider::Dispatch3D(ColliderID a, ColliderID b, const HitInfo3D &hitInfo, bool wasHit) {
+void Collider::Dispatch3D(ColliderID a, ColliderID b, const HitInfo3D &hitInfoA, const HitInfo3D &hitInfoB, bool wasHit) {
     const auto *ea = Find3D(a);
     const auto *eb = Find3D(b);
     if (!ea || !eb) return;
 
-    HitInfo3D hiA = hitInfo;
+    HitInfo3D hiA = hitInfoA;
     hiA.selfObject = ea->info.ownerObject;
     hiA.otherObject = eb->info.ownerObject;
+    hiA.selfCollider = ea->info.sourceCollider;
+    hiA.otherCollider = eb->info.sourceCollider;
+    hiA.normal = hitInfoA.normal;
 
-    HitInfo3D hiB = hitInfo;
+    HitInfo3D hiB = hitInfoB;
     hiB.selfObject = eb->info.ownerObject;
     hiB.otherObject = ea->info.ownerObject;
+    hiB.selfCollider = eb->info.sourceCollider;
+    hiB.otherCollider = ea->info.sourceCollider;
+    hiB.normal = hitInfoB.normal;
 
-    const bool isHitNow = hitInfo.isHit;
+    const bool isHitNow = hitInfoA.isHit && hitInfoB.isHit;
 
     if (isHitNow) {
         if (!wasHit) {
@@ -1016,8 +748,17 @@ void Collider::Dispatch3D(ColliderID a, ColliderID b, const HitInfo3D &hitInfo, 
 void Collider::Update2D() {
     std::vector<std::uint64_t> cur;
 
+    // 連続衝突判定（スイープ）でのみ検出できるヒットを先に収集しておく
+    // （現在位置で重なっているペアは通常判定のヒット情報を優先する）
+    std::unordered_map<std::uint64_t, HitInfo2D> continuousHits;
+    CollectContinuousHits2D(continuousHits);
+
     const auto pairs = BuildCandidatePairs2D(colliders2D_);
     cur.reserve(pairs.size());
+
+    // このフレームでDispatch済みのペア（Exitの発火漏れ・二重発火防止用）
+    std::vector<std::uint64_t> processedPairs;
+    processedPairs.reserve(pairs.size());
 
     for (const auto &pair : pairs) {
         const auto &ai = colliders2D_[pair.a];
@@ -1029,60 +770,289 @@ void Collider::Update2D() {
             continue;
         }
 
-        const auto *prevA = ai.hasPrevShape ? &ai.prevShape : nullptr;
-        const auto *prevB = bi.hasPrevShape ? &bi.prevShape : nullptr;
-        const HitInfo2D hi = ComputeHit2DCCD(ai.info.shape, prevA, ai.info.ccdEnabled, bi.info.shape, prevB, bi.info.ccdEnabled);
+        HitInfo2D hi = ComputeHit2D(ai.info.shape, bi.info.shape);
         const std::uint64_t key = MakePairKey(ai.id, bi.id);
+
+        // 現在位置で重なっていなくても、スイープで通過が検出されていればヒット扱いにする
+        if (!hi.isHit) {
+            auto ccdIt = continuousHits.find(key);
+            if (ccdIt != continuousHits.end()) {
+                hi = ccdIt->second;
+                // スイープのHitInfoは小さいID側を自分として計算されているため、順序が逆なら法線を反転する
+                if (ai.id > bi.id) hi.normal = -hi.normal;
+            }
+        }
+        continuousHits.erase(key);
 
         const bool wasHit = std::binary_search(prevPairs2D_.begin(), prevPairs2D_.end(), key);
         Dispatch2D(ai.id, bi.id, hi, wasHit);
+        processedPairs.push_back(key);
 
         if (hi.isHit) cur.push_back(key);
+    }
+
+    // 候補ペアに挙がらなかったスイープヒット（高速移動で現在位置が既に離れている場合）を発火する
+    for (const auto &[key, hi] : continuousHits) {
+        const ColliderID a = static_cast<ColliderID>(key >> 32);
+        const ColliderID b = static_cast<ColliderID>(key & 0xffffffffu);
+        const bool wasHit = std::binary_search(prevPairs2D_.begin(), prevPairs2D_.end(), key);
+        Dispatch2D(a, b, hi, wasHit);
+        processedPairs.push_back(key);
+        cur.push_back(key);
+    }
+
+    // 前フレームは接触していたが、今フレームの候補に挙がらなかった（高速に離れた）ペアのExitを発火する
+    std::sort(processedPairs.begin(), processedPairs.end());
+    for (const auto key : prevPairs2D_) {
+        if (std::binary_search(processedPairs.begin(), processedPairs.end(), key)) continue;
+        const ColliderID a = static_cast<ColliderID>(key >> 32);
+        const ColliderID b = static_cast<ColliderID>(key & 0xffffffffu);
+        Dispatch2D(a, b, HitInfo2D{}, true);
     }
 
     std::sort(cur.begin(), cur.end());
     prevPairs2D_ = std::move(cur);
 
-    for (auto &e : colliders2D_) {
-        e.prevShape = e.info.shape;
-        e.hasPrevShape = true;
+    RecordPrevPositions2D();
+}
+
+void Collider::CollectContinuousHits2D(std::unordered_map<std::uint64_t, HitInfo2D> &outHits) {
+    for (auto &entry : colliders2D_) {
+        if (!entry.info.continuousDetection || !entry.info.enabled) continue;
+        if (!entry.hasPrevPosition) continue;
+
+        const auto bounds = ComputeBounds2D(entry.info.shape);
+        if (!bounds) continue;
+        const Vector2 currentCenter((bounds->minX + bounds->maxX) * 0.5f, (bounds->minY + bounds->maxY) * 0.5f);
+        const Vector2 prevCenter(entry.prevPosition.x, entry.prevPosition.y);
+        const Vector2 delta = currentCenter - prevCenter;
+        const float distance = delta.Length();
+
+        // 1フレームの移動量が形状の最小半径以下なら、すり抜けは起きない（通常判定で検出できる）
+        const float maxStep = ComputeMinHalfExtent2D(entry.info.shape);
+        if (distance <= maxStep) continue;
+
+        const int substeps = std::min(kMaxSweepSubsteps, static_cast<int>(std::ceil(distance / maxStep)));
+
+        for (const auto &other : colliders2D_) {
+            if (other.id == entry.id || !other.info.enabled) continue;
+            if (!ShouldTest(entry.info.attribute, entry.info.ignoreAttribute, other.info.attribute) ||
+                !ShouldTest(other.info.attribute, other.info.ignoreAttribute, entry.info.attribute)) {
+                continue;
+            }
+            const std::uint64_t key = MakePairKey(entry.id, other.id);
+            if (outHits.contains(key)) continue; // 両方CCDの場合の二重スイープを防ぐ
+
+            // 移動経路の中間位置（終端は通常判定が受け持つ）を時刻順に判定し、最初のヒットを採用する
+            for (int i = 1; i < substeps; ++i) {
+                const float t = static_cast<float>(i) / static_cast<float>(substeps);
+                // 中間位置 = prev + delta*t。現在形状からの相対移動量へ変換して平行移動する
+                const Vector2 offset = delta * (t - 1.0f);
+                const auto sweptShape = TranslateShape2D(entry.info.shape, offset);
+                // ComputeHitは(自分, 相手)の順で「相手→自分」向きの法線を返すため、
+                // Dispatch側がID昇順で解釈できるよう小さいID側を自分として計算する
+                const HitInfo2D hit = (entry.id < other.id)
+                    ? ComputeHit2D(sweptShape, other.info.shape)
+                    : ComputeHit2D(other.info.shape, sweptShape);
+                if (hit.isHit) {
+                    outHits.emplace(key, hit);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void Collider::RecordPrevPositions2D() {
+    for (auto &entry : colliders2D_) {
+        entry.hasPrevPosition = false;
+        if (!entry.info.continuousDetection || !entry.info.enabled) continue;
+        const auto bounds = ComputeBounds2D(entry.info.shape);
+        if (!bounds) continue;
+        entry.prevPosition = Vector3((bounds->minX + bounds->maxX) * 0.5f, (bounds->minY + bounds->maxY) * 0.5f, 0.0f);
+        entry.hasPrevPosition = true;
+    }
+}
+
+void Collider::RecordPrevPositions3D() {
+    for (auto &entry : colliders3D_) {
+        if (entry.info.continuousDetection && entry.info.enabled && entry.runtime.body) {
+            entry.prevPosition = FromRp3d(entry.runtime.body->getTransform().getPosition());
+            entry.hasPrevPosition = true;
+        } else {
+            entry.hasPrevPosition = false;
+        }
     }
 }
 
 void Collider::Update3D() {
-    std::vector<std::uint64_t> cur;
+    if (!physicsWorld_) return;
 
-    const auto &pairs = BuildCandidatePairs3D(colliders3D_);
-    cur.reserve(pairs.size());
+    constexpr float kDefaultTimeStep = 1.0f / 60.0f;
+    const float deltaTime = GetDeltaTime();
+    accumulatedTime_ += deltaTime;
 
-    for (const auto &pair : pairs) {
-        const auto &ai = colliders3D_[pair.a];
-        const auto &bi = colliders3D_[pair.b];
+    while (accumulatedTime_ >= kDefaultTimeStep) {
+        StepPhysics(kDefaultTimeStep);
+        accumulatedTime_ -= kDefaultTimeStep;
+    }
 
-        if (!ai.info.enabled || !bi.info.enabled) continue;
-        if (!ShouldTest(ai.info.attribute, ai.info.ignoreAttribute, bi.info.attribute) ||
-            !ShouldTest(bi.info.attribute, bi.info.ignoreAttribute, ai.info.attribute)) {
-            continue;
+    frameEvents3D_.clear();
+    curPairs3D_.clear();
+
+    std::unordered_map<const ColliderHandle *, ColliderID> colliderIdByHandle;
+    std::unordered_map<ColliderID, const ColliderInfo3D *> infoById;
+    colliderIdByHandle.reserve(colliders3D_.size());
+    infoById.reserve(colliders3D_.size());
+
+    for (const auto &entry : colliders3D_) {
+        if (!entry.runtime.collider) continue;
+        colliderIdByHandle.emplace(entry.runtime.collider, entry.id);
+        infoById.emplace(entry.id, &entry.info);
+    }
+
+    struct Collector final : reactphysics3d::CollisionCallback {
+        const std::unordered_map<const ColliderHandle *, ColliderID> &idMap;
+        const std::unordered_map<ColliderID, const ColliderInfo3D *> &infoMap;
+        std::vector<CollisionEvent3D> &events;
+        std::vector<std::uint64_t> &pairs;
+
+        Collector(
+            const std::unordered_map<const ColliderHandle *, ColliderID> &idMap,
+            const std::unordered_map<ColliderID, const ColliderInfo3D *> &infoMap,
+            std::vector<CollisionEvent3D> &events,
+            std::vector<std::uint64_t> &pairs)
+            : idMap(idMap), infoMap(infoMap), events(events), pairs(pairs) {}
+
+        static HitInfo3D MakeHitInfo(const reactphysics3d::CollisionCallback::ContactPoint &contact) {
+            HitInfo3D info;
+            info.isHit = true;
+            const auto normal = contact.getWorldNormal();
+            info.normal = Vector3{normal.x, normal.y, normal.z};
+            info.penetration = contact.getPenetrationDepth();
+            return info;
         }
 
-        const auto *prevA = ai.hasPrevShape ? &ai.prevShape : nullptr;
-        const auto *prevB = bi.hasPrevShape ? &bi.prevShape : nullptr;
-        const HitInfo3D hi = ComputeHit3DCCD(ai.info.shape, prevA, ai.info.ccdEnabled, bi.info.shape, prevB, bi.info.ccdEnabled);
-        const std::uint64_t key = MakePairKey(ai.id, bi.id);
+        void onContact(const CallbackData &callbackData) override {
+            const int pairCount = callbackData.getNbContactPairs();
+            for (int i = 0; i < pairCount; ++i) {
+                const auto &pair = callbackData.getContactPair(i);
+                const auto *colliderA = pair.getCollider1();
+                const auto *colliderB = pair.getCollider2();
+                if (!colliderA || !colliderB) continue;
 
+                auto itA = idMap.find(colliderA);
+                auto itB = idMap.find(colliderB);
+                if (itA == idMap.end() || itB == idMap.end()) continue;
+
+                const ColliderID idA = itA->second;
+                const ColliderID idB = itB->second;
+
+                auto infoAIt = infoMap.find(idA);
+                auto infoBIt = infoMap.find(idB);
+                if (infoAIt == infoMap.end() || infoBIt == infoMap.end()) continue;
+
+                const auto &infoA = *infoAIt->second;
+                const auto &infoB = *infoBIt->second;
+                if (!infoA.enabled || !infoB.enabled) continue;
+                if (!ShouldTest(infoA.attribute, infoA.ignoreAttribute, infoB.attribute) ||
+                    !ShouldTest(infoB.attribute, infoB.ignoreAttribute, infoA.attribute)) {
+                    continue;
+                }
+
+                HitInfo3D hitInfoA{};
+                HitInfo3D hitInfoB{};
+                if (pair.getNbContactPoints() > 0) {
+                    // getWorldNormal() は collider1(A) から collider2(B) へ向かうベクトル。
+                    // エンジンの規約（2D側の ComputeHit と同じ）では、各コライダーが
+                    // 受け取る法線は「相手から自分へ向かう方向（押し出し方向）」なので、
+                    // B側はそのまま、A側は逆向きになる。
+                    hitInfoB = MakeHitInfo(pair.getContactPoint(0));
+                    hitInfoA = hitInfoB;
+                    hitInfoA.normal = -hitInfoB.normal;
+                } else {
+                    hitInfoA.isHit = true;
+                    hitInfoB.isHit = true;
+                }
+
+                // Dispatch側は MakePairKey（ID昇順）で a/b を復元するため、
+                // ここでも小さいID側を a に揃えておく。これがずれると、RP3Dの
+                // collider1/collider2 の内部順序次第で HitInfo が入れ替わり、
+                // 逆向きの法線が届いてしまう。
+                ColliderID eventA = idA;
+                ColliderID eventB = idB;
+                if (eventA > eventB) {
+                    std::swap(eventA, eventB);
+                    std::swap(hitInfoA, hitInfoB);
+                }
+
+                events.push_back({eventA, eventB, hitInfoA, hitInfoB});
+                pairs.push_back(MakePairKey(eventA, eventB));
+            }
+        }
+    };
+
+    Collector collector(colliderIdByHandle, infoById, frameEvents3D_, curPairs3D_);
+    physicsWorld_->testCollision(collector);
+
+    // 連続衝突判定（CCD）: 1フレームで形状サイズを超えて移動したコライダーは、
+    // 移動経路の中間位置（終端は上の通常判定で検出済み）でも判定してすり抜けを検出する。
+    // イベントは同じCollectorへ追加され、重複ペアは後段のsort/uniqueとhitMapの
+    // emplace（先勝ち）によって通常判定・より早い時刻のヒットが優先される。
+    // なお、テレポート（リスポーン等）でも経路上の判定が走るため、瞬間移動させる場合は
+    // 移動前にCCDを無効にするか、コライダーを一度無効化すること。
+    for (auto &entry : colliders3D_) {
+        if (!entry.info.continuousDetection || !entry.info.enabled) continue;
+        if (!entry.runtime.body || !entry.runtime.collider) continue;
+        if (!entry.hasPrevPosition) continue;
+
+        const reactphysics3d::Transform currentTransform = entry.runtime.body->getTransform();
+        const Vector3 currentPosition = FromRp3d(currentTransform.getPosition());
+        const Vector3 delta = currentPosition - entry.prevPosition;
+        const float distance = delta.Length();
+
+        // 1フレームの移動量が形状の最小半径以下なら、すり抜けは起きない（通常判定で検出できる）
+        const float maxStep = ComputeMinHalfExtent3D(entry.info.shape);
+        if (distance <= maxStep) continue;
+
+        const int substeps = std::min(kMaxSweepSubsteps, static_cast<int>(std::ceil(distance / maxStep)));
+        for (int i = 1; i < substeps; ++i) {
+            const float t = static_cast<float>(i) / static_cast<float>(substeps);
+            const Vector3 sweptPosition = entry.prevPosition + delta * t;
+            entry.runtime.body->setTransform(
+                reactphysics3d::Transform(ToRp3d(sweptPosition), currentTransform.getOrientation()));
+            physicsWorld_->testCollision(entry.runtime.body, collector);
+        }
+        entry.runtime.body->setTransform(currentTransform);
+    }
+
+    std::sort(curPairs3D_.begin(), curPairs3D_.end());
+    curPairs3D_.erase(std::unique(curPairs3D_.begin(), curPairs3D_.end()), curPairs3D_.end());
+
+    std::unordered_map<std::uint64_t, std::pair<HitInfo3D, HitInfo3D>> hitMap;
+    hitMap.reserve(frameEvents3D_.size());
+    for (const auto &event : frameEvents3D_) {
+        const std::uint64_t key = MakePairKey(event.a, event.b);
+        hitMap.emplace(key, std::make_pair(event.hitInfoA, event.hitInfoB));
+    }
+
+    for (const auto &[key, hitInfo] : hitMap) {
+        const ColliderID a = static_cast<ColliderID>(key >> 32);
+        const ColliderID b = static_cast<ColliderID>(key & 0xffffffffu);
         const bool wasHit = std::binary_search(prevPairs3D_.begin(), prevPairs3D_.end(), key);
-        Dispatch3D(ai.id, bi.id, hi, wasHit);
-
-        if (hi.isHit) cur.push_back(key);
+        Dispatch3D(a, b, hitInfo.first, hitInfo.second, wasHit);
     }
 
-    std::sort(cur.begin(), cur.end());
-    prevPairs3D_ = std::move(cur);
-
-    for (auto &e : colliders3D_) {
-        e.prevShape = e.info.shape;
-        e.hasPrevShape = true;
+    for (const auto key : prevPairs3D_) {
+        if (std::binary_search(curPairs3D_.begin(), curPairs3D_.end(), key)) continue;
+        const ColliderID a = static_cast<ColliderID>(key >> 32);
+        const ColliderID b = static_cast<ColliderID>(key & 0xffffffffu);
+        Dispatch3D(a, b, HitInfo3D{}, HitInfo3D{}, true);
     }
+
+    prevPairs3D_ = curPairs3D_;
+
+    RecordPrevPositions3D();
 }
 
 const Collider::Entry<ColliderInfo2D> *Collider::Find2D(ColliderID id) const {
@@ -1097,6 +1067,263 @@ const Collider::Entry<ColliderInfo3D> *Collider::Find3D(ColliderID id) const {
         if (e.id == id) return &e;
     }
     return nullptr;
+}
+
+Collider::Entry<ColliderInfo3D> *Collider::Find3D(ColliderID id) {
+    for (auto &e : colliders3D_) {
+        if (e.id == id) return &e;
+    }
+    return nullptr;
+}
+
+void Collider::StepPhysics(float timeStep) {
+    if (physicsWorld_) {
+        physicsWorld_->update(timeStep);
+    }
+}
+
+void Collider::EnsureWorldCreated() {
+    if (physicsWorld_) return;
+
+    reactphysics3d::PhysicsWorld::WorldSettings settings;
+    settings.gravity = reactphysics3d::Vector3(0.0f, -9.81f, 0.0f);
+    physicsWorld_ = physicsCommon_.createPhysicsWorld(settings);
+}
+
+void Collider::ReleaseWorld() {
+    if (physicsWorld_) {
+        physicsCommon_.destroyPhysicsWorld(physicsWorld_);
+        physicsWorld_ = nullptr;
+    }
+}
+
+bool Collider::BuildRuntime3D(Entry<ColliderInfo3D> &entry) {
+    EnsureWorldCreated();
+    if (!physicsWorld_) return false;
+
+    ReleaseRuntime3D(entry);
+
+    auto shapeHandle = CreateShape3D(entry.info);
+    if (!shapeHandle.has_value()) return false;
+
+    entry.runtime.shape = shapeHandle.value();
+    const auto transform = MakeTransform3D(entry.info);
+    // RigidBody3Dが使用コライダーを明示的に選択している場合は、そのコライダーだけを
+    // RigidBodyへ取り付ける（未選択の場合は従来通りどのコライダーでも取り付ける）
+    auto *rb = entry.info.ownerObject->GetComponent<RigidBody3D>();
+    if (rb) {
+        auto *selected = rb->GetSelectedCollider();
+        if (selected && selected != entry.info.sourceCollider) rb = nullptr;
+    }
+    if (rb) {
+        entry.runtime.body = rb->GetRigidBody();
+        entry.runtime.ownsBody = false;
+        entry.runtime.body->setTransform(transform);
+    } else {
+        entry.runtime.body = physicsWorld_->createRigidBody(transform);
+        if (!entry.runtime.body) return false;
+        entry.runtime.body->setType(reactphysics3d::BodyType::STATIC);
+        entry.runtime.body->setIsActive(entry.info.enabled);
+        entry.runtime.ownsBody = true;
+    }
+
+    entry.runtime.collider = entry.runtime.body->addCollider(entry.runtime.shape.shape, reactphysics3d::Transform::identity());
+    if (entry.runtime.collider) {
+        entry.runtime.collider->setUserData(reinterpret_cast<void *>(static_cast<std::uintptr_t>(entry.id)));
+        // トリガーは物理シミュレーション（押し戻し）の対象から外し、すり抜けるようにする。
+        // 一方でワールドクエリの対象からは外さないため、衝突検出に使っている
+        // PhysicsWorld::testCollision には引き続き現れ、OnCollisionEnter/Stay/Exitは通知される。
+        // （RP3Dのsetter名の通り「シミュレーション用の接触を生成するか」と
+        // 「ワールドクエリの結果に含めるか」は別のフラグとして管理されている）
+        entry.runtime.collider->setIsSimulationCollider(!entry.info.isTrigger);
+        entry.runtime.collider->setIsWorldQueryCollider(true);
+    }
+
+    return entry.runtime.collider != nullptr;
+}
+
+void Collider::ReleaseRuntime3D(Entry<ColliderInfo3D> &entry) {
+    if (entry.runtime.body) {
+        if (entry.runtime.collider) {
+            entry.runtime.body->removeCollider(entry.runtime.collider);
+        }
+        if (physicsWorld_ && entry.runtime.ownsBody) {
+            physicsWorld_->destroyRigidBody(entry.runtime.body);
+        }
+    }
+
+    if (entry.runtime.shape.shape) {
+        std::visit(
+            [&](const auto &shape) {
+                using S = std::decay_t<decltype(shape)>;
+                if constexpr (std::is_same_v<S, ColliderInfo3D::SphereShape3D>) {
+                    physicsCommon_.destroySphereShape(static_cast<reactphysics3d::SphereShape *>(entry.runtime.shape.shape));
+                } else if constexpr (std::is_same_v<S, ColliderInfo3D::BoxShape3D>) {
+                    physicsCommon_.destroyBoxShape(static_cast<reactphysics3d::BoxShape *>(entry.runtime.shape.shape));
+                } else if constexpr (std::is_same_v<S, ColliderInfo3D::CapsuleShape3D>) {
+                    physicsCommon_.destroyCapsuleShape(static_cast<reactphysics3d::CapsuleShape *>(entry.runtime.shape.shape));
+                } else if constexpr (std::is_same_v<S, ColliderInfo3D::ConvexMeshShape3D>) {
+                    physicsCommon_.destroyConvexMeshShape(static_cast<reactphysics3d::ConvexMeshShape *>(entry.runtime.shape.shape));
+                    if (entry.runtime.shape.convexMesh) {
+                        physicsCommon_.destroyConvexMesh(entry.runtime.shape.convexMesh);
+                    }
+                } else if constexpr (std::is_same_v<S, ColliderInfo3D::ConcaveMeshShape3D>) {
+                    physicsCommon_.destroyConcaveMeshShape(static_cast<reactphysics3d::ConcaveMeshShape *>(entry.runtime.shape.shape));
+                } else if constexpr (std::is_same_v<S, ColliderInfo3D::HeightFieldShape3D>) {
+                    physicsCommon_.destroyHeightFieldShape(static_cast<reactphysics3d::HeightFieldShape *>(entry.runtime.shape.shape));
+                    if (entry.runtime.shape.heightField) {
+                        physicsCommon_.destroyHeightField(entry.runtime.shape.heightField);
+                    }
+                }
+            },
+            entry.info.shape);
+    }
+
+    entry.runtime = {};
+}
+
+bool Collider::UpdateRuntime3D(Entry<ColliderInfo3D> &entry, const ColliderInfo3D &info) {
+    ReleaseRuntime3D(entry);
+    entry.info = info;
+    return BuildRuntime3D(entry);
+}
+
+bool Collider::UpdateColliderShape3D(Entry<ColliderInfo3D> &entry, const ColliderInfo3D &info) {
+    return UpdateRuntime3D(entry, info);
+}
+
+bool Collider::UpdateColliderTransform3D(Entry<ColliderInfo3D> &entry, const ColliderInfo3D &info) {
+    if (!entry.runtime.body) return false;
+    entry.runtime.body->setTransform(MakeTransform3D(info));
+    return true;
+}
+
+std::optional<Collider::ShapeHandle3D> Collider::CreateShape3D(const ColliderInfo3D &info) {
+    ShapeHandle3D handle{};
+
+    std::visit(
+        [&](const auto &shape) {
+            using S = std::decay_t<decltype(shape)>;
+
+            if constexpr (std::is_same_v<S, ColliderInfo3D::SphereShape3D>) {
+                handle.shape = physicsCommon_.createSphereShape(shape.radius);
+            } else if constexpr (std::is_same_v<S, ColliderInfo3D::BoxShape3D>) {
+                handle.shape = physicsCommon_.createBoxShape(ToRp3d(shape.halfExtents));
+            } else if constexpr (std::is_same_v<S, ColliderInfo3D::CapsuleShape3D>) {
+                handle.shape = physicsCommon_.createCapsuleShape(shape.radius, shape.height);
+            } else if constexpr (std::is_same_v<S, ColliderInfo3D::ConvexMeshShape3D>) {
+                if (shape.vertices.empty() || shape.indices.empty()) return;
+
+                constexpr std::uint32_t kVertexStride = sizeof(Vector3);
+                constexpr std::uint32_t kIndexStride = sizeof(std::uint32_t);
+                const std::uint32_t polygonCount = static_cast<std::uint32_t>(shape.indices.size() / 3);
+
+                std::vector<reactphysics3d::PolygonVertexArray::PolygonFace> faces;
+                faces.resize(polygonCount);
+                for (std::uint32_t i = 0; i < polygonCount; ++i) {
+                    faces[i].indexBase = i * 3;
+                    faces[i].nbVertices = 3;
+                }
+
+                reactphysics3d::PolygonVertexArray array(
+                    static_cast<std::uint32_t>(shape.vertices.size()),
+                    reinterpret_cast<const reactphysics3d::Vector3 *>(shape.vertices.data()),
+                    kVertexStride,
+                    shape.indices.data(),
+                    kIndexStride,
+                    polygonCount,
+                    faces.data(),
+                    reactphysics3d::PolygonVertexArray::VertexDataType::VERTEX_FLOAT_TYPE,
+                    reactphysics3d::PolygonVertexArray::IndexDataType::INDEX_INTEGER_TYPE);
+
+                std::vector<reactphysics3d::Message> messages;
+                handle.convexMesh = physicsCommon_.createConvexMesh(array, messages);
+                if (handle.convexMesh) {
+                    handle.shape = physicsCommon_.createConvexMeshShape(handle.convexMesh, ToRp3d(shape.scale));
+                }
+            } else if constexpr (std::is_same_v<S, ColliderInfo3D::ConcaveMeshShape3D>) {
+                /*if (shape.vertices.empty() || shape.indices.empty()) return;
+                constexpr std::uint32_t kVertexStride = sizeof(Vector3);
+                constexpr std::uint32_t kIndexStride = sizeof(std::uint32_t);
+                reactphysics3d::TriangleVertexArray array(
+                    static_cast<std::uint32_t>(shape.vertices.size() / 3),
+                    shape.vertices.data(),
+                    kVertexStride * 3,
+                    static_cast<std::uint32_t>(shape.indices.size() / 3),
+                    shape.indices.data(),
+                    kIndexStride * 3,
+                    reactphysics3d::TriangleVertexArray::VertexDataType::VERTEX_FLOAT_TYPE,
+                    reactphysics3d::TriangleVertexArray::IndexDataType::INDEX_INTEGER_TYPE);
+                std::vector<reactphysics3d::Message> messages;
+                reactphysics3d::TriangleMesh *mesh = physicsCommon_.createTriangleMesh(array, messages);
+                handle.concaveMesh = physicsCommon_.createConcaveMeshShape(mesh, ToRp3d(shape.scale));
+                if (handle.concaveMesh) {
+                    handle.shape = handle.concaveMesh;
+                }*/
+            } else if constexpr (std::is_same_v<S, ColliderInfo3D::HeightFieldShape3D>) {
+                if (shape.heights.empty() || shape.width == 0 || shape.length == 0) return;
+                std::vector<reactphysics3d::Message> messages;
+                handle.heightField = physicsCommon_.createHeightField(
+                    shape.width,
+                    shape.length,
+                    shape.heights.data(),
+                    rp3d::HeightField::HeightDataType::HEIGHT_FLOAT_TYPE,
+                    messages,
+                    shape.scale.y);
+                if (handle.heightField) {
+                    handle.shape = physicsCommon_.createHeightFieldShape(handle.heightField, ToRp3d(shape.scale));
+                }
+            }
+        },
+        info.shape);
+
+    if (!handle.shape) return std::nullopt;
+    return handle;
+}
+
+reactphysics3d::Transform Collider::MakeTransform3D(const ColliderInfo3D &info) const {
+    Vector3 center{0.0f, 0.0f, 0.0f};
+    bool hasOwnCenter = false;
+    std::visit(
+        [&](const auto &shape) {
+            using S = std::decay_t<decltype(shape)>;
+            if constexpr (std::is_same_v<S, ColliderInfo3D::SphereShape3D> ||
+                          std::is_same_v<S, ColliderInfo3D::BoxShape3D> ||
+                          std::is_same_v<S, ColliderInfo3D::CapsuleShape3D>) {
+                center = shape.center;
+                hasOwnCenter = true;
+            }
+        },
+        info.shape);
+
+    // ConvexMeshShape3D/ConcaveMeshShape3D/HeightFieldShape3Dは形状側に位置を持たない
+    // （頂点はオブジェクトのローカル座標系のまま）ため、コライダーの同期設定を考慮した位置を使用する
+    if (!hasOwnCenter && info.sourceCollider) {
+        center = info.sourceCollider->GetSyncedOwnerPosition();
+    }
+
+    reactphysics3d::Quaternion rotation = reactphysics3d::Quaternion::identity();
+    if (info.sourceCollider) {
+        const auto rot = info.sourceCollider->GetSyncedOwnerRotation();
+        rotation = reactphysics3d::Quaternion(rot.x, rot.y, rot.z, rot.w);
+    }
+    return reactphysics3d::Transform(ToRp3d(center), rotation);
+}
+
+reactphysics3d::Vector3 Collider::ToRp3d(const Vector3 &v) const {
+    return reactphysics3d::Vector3(v.x, v.y, v.z);
+}
+
+Vector3 Collider::FromRp3d(const reactphysics3d::Vector3 &v) const {
+    return Vector3{v.x, v.y, v.z};
+}
+
+HitInfo3D Collider::BuildHitInfo3D(const reactphysics3d::CollisionCallback::ContactPoint &contact) const {
+    HitInfo3D info;
+    info.isHit = true;
+    info.normal = FromRp3d(contact.getWorldNormal());
+    info.penetration = contact.getPenetrationDepth();
+    return info;
 }
 
 } // namespace KashipanEngine

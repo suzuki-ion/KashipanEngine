@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Circle2DCollider | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Collider_Circle2DCollider">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Circle2DCollider</h1>
+<p class="page-lead">円形状の2D用コライダーです。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/06_Collision.html">Engine/06_Collision.html</a>を参照してください。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<p>基底クラス<code>ICollider</code>の共通項目を先頭に表示し、その下に形状固有の項目が続きます（表示順はソースコードの<code>ShowImGui()</code>呼び出し順と同じ）。2D用コライダーはSync With Transformの項目がX/Yの2軸分のみになります。</p>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>IsTrigger</td><td>チェックボックス</td><td>有効にすると物理的な押し戻しを行わない「トリガー」として扱う。<code>OnCollisionEnter</code>等のコールバックは通常どおり発生する。既定 <code>false</code></td></tr>
+<tr><td>Continuous Detection</td><td>チェックボックス</td><td>連続衝突判定（CCD）の有効/無効。ホバーすると「高速移動時のすり抜けでも衝突イベントを発生させる（連続衝突判定）」というツールチップが表示される。既定 <code>false</code></td></tr>
+<tr><td>Sync With Transform（区切り線の下の見出し）</td><td>テキスト見出し</td><td>以下のPos/Rotation/Scale同期チェック群のセクション見出し（クリック不可）</td></tr>
+<tr><td>Pos X / Pos Y</td><td>チェックボックス（2個、横並び）</td><td>同オブジェクトの<code>Transform</code>のX/Y位置へ追従させるか。既定は全て<code>true</code></td></tr>
+<tr><td>Rotation</td><td>チェックボックス</td><td>TransformのZ回転へ追従させるか。既定<code>true</code></td></tr>
+<tr><td>Scale X / Scale Y</td><td>チェックボックス（2個、横並び）</td><td>TransformのX/Yスケールへ追従させるか。既定は全て<code>false</code>（既存挙動を変えないための後方互換）</td></tr>
+<tr><td>Radius</td><td>ドラッグ入力欄（ステップ0.01、下限0）</td><td>円の半径。既定 <code>0.5</code>。実際の判定半径はこれにSyncされたTransformスケールのX・Y成分の大きい方を掛けた値</td></tr>
+<tr><td>Center</td><td>XYのドラッグ入力欄（ステップ0.01）</td><td>Transform位置からのローカルオフセット（Rotationが有効な場合はSync後のZ回転で回転させたうえで適用される）。既定 <code>(0, 0)</code></td></tr>
+</table>
+
+<h2>Add Componentでの位置</h2>
+<p><code>Circle2DCollider</code>は<code>COMPONENT_CATEGORY("Collision")</code>に属します。</p>
+<span class="ui-path"><span>Add Component</span><i>›</i><span>Collision</span><i>›</i><span>Circle2DCollider</span></span>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/06_Collision.html">Engine/06_Collision.html</a> — <code>ICollider</code>/<code>Circle2DCollider</code>クラスの全メソッドとC++側の衝突コールバックAPI</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — コンポーネント一覧の開閉・Add Componentの操作方法</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

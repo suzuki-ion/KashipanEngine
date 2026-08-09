@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>数学型・Math・Easing・Random | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-engine-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="Script_08_MathAndUtility">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>数学型・Math・Easing・Random</h1>
+<p class="page-lead"><code>Vector2</code>/<code>Vector3</code>/<code>Vector4</code>/<code>Quaternion</code>/<code>Matrix3x3</code>/<code>Matrix4x4</code> は値型としてC++側とほぼ同じ形で登録されています。あわせて <code>Math::</code>/<code>Easing::</code>/<code>Random::</code> 名前空間をまとめます。</p>
+</div>
+
+<h2>Vector2 / Vector3 / Vector4</h2>
+<p>全て値型です（変数への代入はコピーになります）。</p>
+<pre><code class="language-angelscript">Vector3 v(1.0f, 2.0f, 3.0f);
+v.x += 1.0f;
+Vector3 doubled = v * 2.0f;
+float len = v.Length();</code></pre>
+<table>
+<tr><th>要素</th><th>Vector2</th><th>Vector3</th><th>Vector4</th></tr>
+<tr><td>コンストラクタ</td><td><code>(float x, float y)</code></td><td><code>(float x, float y, float z)</code></td><td><code>(float x, float y, float z, float w)</code></td></tr>
+<tr><td>プロパティ</td><td><code>x</code> <code>y</code></td><td><code>x</code> <code>y</code> <code>z</code></td><td><code>x</code> <code>y</code> <code>z</code> <code>w</code></td></tr>
+</table>
+<p>共通の演算子: 単項<code>-</code> / <code>+</code> / <code>-</code> / <code>+=</code> / <code>-=</code> / <code>==</code> / ベクトル同士の<code>/</code> / スカラーとの<code>*</code> <code>/</code></p>
+<table>
+<tr><th>メソッド</th><th>Vector2</th><th>Vector3</th><th>Vector4</th></tr>
+<tr><td><code>float Dot(const T &amp;in) const</code></td><td>o</td><td>o</td><td>-</td></tr>
+<tr><td><code>Cross(const T &amp;in) const</code></td><td>o（<code>float</code>）</td><td>o（<code>Vector3</code>）</td><td>-</td></tr>
+<tr><td><code>float Length() const</code></td><td>o</td><td>o</td><td>-</td></tr>
+<tr><td><code>float LengthSquared() const</code></td><td>o</td><td>o</td><td>-</td></tr>
+<tr><td><code>T Normalize() const</code></td><td>o</td><td>o</td><td>-</td></tr>
+<tr><td><code>float Distance(const T &amp;in) const</code></td><td>o</td><td>o</td><td>-</td></tr>
+</table>
+<p>行列との乗算: <code>Vector2 * Matrix3x3</code>、<code>Vector3 * Matrix4x4</code>（およびその逆順）、<code>Vector3 Transform(const Matrix4x4 &amp;in) const</code></p>
+
+<h2>Quaternion</h2>
+<pre><code class="language-angelscript">Quaternion q = Math::MakeRotateAxisAngle(Vector3(0, 1, 0), 3.14159f * 0.5f);
+Vector3 rotated = q.RotateVector(Vector3(1, 0, 0));</code></pre>
+<ul>
+<li>コンストラクタ: <code>(float x, float y, float z, float w)</code>、プロパティ: <code>x</code> <code>y</code> <code>z</code> <code>w</code></li>
+<li>演算子: <code>+</code> / <code>-</code> / <code>*</code>（クォータニオン同士） / スカラーとの <code>*</code> <code>/</code></li>
+</ul>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>Quaternion Conjugate() const</code></td><td>共役クォータニオンを取得する</td></tr>
+<tr><td><code>float Norm() const</code> / <code>float NormSquared() const</code></td><td>ノルム / ノルムの2乗</td></tr>
+<tr><td><code>Quaternion Normalize() const</code></td><td>正規化したクォータニオンを取得する</td></tr>
+<tr><td><code>Quaternion Inverse() const</code></td><td>逆クォータニオンを取得する</td></tr>
+<tr><td><code>Vector3 RotateVector(const Vector3 &amp;in) const</code></td><td>ベクトルを回転させる</td></tr>
+<tr><td><code>Matrix4x4 MakeRotateMatrix() const</code></td><td>回転行列を生成する</td></tr>
+</table>
+
+<h2>Matrix3x3 / Matrix4x4</h2>
+<pre><code class="language-angelscript">Matrix4x4 mat = Math::IdentityMatrix4x4();
+mat.MakeAffine(Vector3(1, 1, 1), Vector3(0, 0, 0), Vector3(0, 5, 0));
+float m03 = mat.GetElement(0, 3);</code></pre>
+<ul>
+<li>コンストラクタ: 全要素を行優先で指定（Matrix3x3は9個、Matrix4x4は16個のfloat）</li>
+<li>演算子: <code>+</code> / <code>-</code> / 行列同士の<code>*</code> / スカラーとの<code>*</code></li>
+</ul>
+<table>
+<tr><th>メソッド</th><th>Matrix3x3</th><th>Matrix4x4</th><th>説明</th></tr>
+<tr><td><code>float GetElement(uint row, uint col) const</code></td><td>o</td><td>o</td><td>要素の取得（範囲外は0を返す）</td></tr>
+<tr><td><code>void SetElement(uint row, uint col, float value)</code></td><td>o</td><td>o</td><td>要素の設定（範囲外は無視）</td></tr>
+<tr><td><code>T Transpose()</code></td><td>o</td><td>o</td><td>転置行列を取得する</td></tr>
+<tr><td><code>float Determinant() const</code></td><td>o</td><td>o</td><td>行列式を計算する</td></tr>
+<tr><td><code>T Inverse() const</code></td><td>o</td><td>o</td><td>逆行列を計算する</td></tr>
+<tr><td><code>void MakeIdentity()</code> / <code>MakeTranspose()</code> / <code>MakeInverse()</code></td><td>o</td><td>o</td><td>自身を単位/転置/逆行列にする</td></tr>
+<tr><td><code>void MakeTranslate(...)</code></td><td>o（<code>Vector2</code>）</td><td>o（<code>Vector3</code>）</td><td>平行移動行列を生成する</td></tr>
+<tr><td><code>void MakeScale(...)</code></td><td>o（<code>Vector2</code>）</td><td>o（<code>Vector3</code>）</td><td>拡大縮小行列を生成する</td></tr>
+<tr><td><code>void MakeRotate(...)</code></td><td>o（<code>float</code>）</td><td>o（<code>Vector3</code> または <code>float</code>×3）</td><td>回転行列を生成する</td></tr>
+<tr><td><code>void MakeRotateX/Y/Z(float)</code></td><td>-</td><td>o</td><td>各軸回転行列を生成する</td></tr>
+<tr><td><code>void MakeAffine(...)</code></td><td>o</td><td>o</td><td>アフィン行列を生成する（スケール, 回転, 平行移動）</td></tr>
+<tr><td><code>void MakeViewMatrix(const Vector3 &amp;in eye, const Vector3 &amp;in target, const Vector3 &amp;in up)</code></td><td>-</td><td>o</td><td>ビュー行列を生成する</td></tr>
+<tr><td><code>void MakePerspectiveFovMatrix(float fovY, float aspect, float near, float far)</code></td><td>-</td><td>o</td><td>透視投影行列を生成する</td></tr>
+<tr><td><code>void MakeOrthographicMatrix(float l, float t, float r, float b, float near, float far)</code></td><td>-</td><td>o</td><td>正射影行列を生成する</td></tr>
+<tr><td><code>void MakeViewportMatrix(float left, float top, float width, float height, float minD, float maxD)</code></td><td>-</td><td>o</td><td>ビューポート行列を生成する</td></tr>
+</table>
+
+<h2>Math名前空間</h2>
+<p>数学系の静的関数は <code>Math::</code> 名前空間にまとめられています。</p>
+<table>
+<tr><th>関数</th><th>説明</th></tr>
+<tr><td><code>Vector2 Math::Lerp(const Vector2 &amp;in, const Vector2 &amp;in, float t)</code></td><td>線形補間</td></tr>
+<tr><td><code>Vector2 Math::Slerp(const Vector2 &amp;in, const Vector2 &amp;in, float t)</code></td><td>球面線形補間</td></tr>
+<tr><td><code>Vector3 Math::Lerp(const Vector3 &amp;in, const Vector3 &amp;in, float t)</code></td><td>線形補間</td></tr>
+<tr><td><code>Vector3 Math::Slerp(const Vector3 &amp;in, const Vector3 &amp;in, float t)</code></td><td>球面線形補間</td></tr>
+<tr><td><code>Vector4 Math::Lerp(const Vector4 &amp;in, const Vector4 &amp;in, float t)</code></td><td>線形補間</td></tr>
+<tr><td><code>Quaternion Math::Slerp(const Quaternion &amp;in, const Quaternion &amp;in, float t)</code></td><td>球面線形補間</td></tr>
+<tr><td><code>Quaternion Math::IdentityQuaternion()</code></td><td>単位クォータニオンを取得する</td></tr>
+<tr><td><code>Quaternion Math::MakeRotateEuler(const Vector3 &amp;in euler)</code></td><td>オイラー角（ラジアン）から回転を生成する</td></tr>
+<tr><td><code>Quaternion Math::MakeRotateAxisAngle(const Vector3 &amp;in axis, float angleRad)</code></td><td>軸と角度から回転を生成する</td></tr>
+<tr><td><code>Quaternion Math::MakeFromRotationMatrix(const Matrix4x4 &amp;in)</code></td><td>回転行列からクォータニオンを生成する</td></tr>
+<tr><td><code>Matrix3x3 Math::IdentityMatrix3x3()</code></td><td>3x3単位行列を取得する</td></tr>
+<tr><td><code>Matrix4x4 Math::IdentityMatrix4x4()</code></td><td>4x4単位行列を取得する</td></tr>
+</table>
+
+<h2>Easing（イージング）</h2>
+<p>
+<code>Utilities/MathUtils/Easings.h</code> のイージング関数を <code>Easing::</code> 名前空間で使用できます。
+</p>
+<pre><code class="language-angelscript">class Popup : ScriptComponentBehavior {
+    float elapsed = 0.0f;
+
+    void Update() {
+        elapsed += GetDeltaTime();
+        float t = Easing::Normalize01(elapsed, 0.0f, 1.0f); // 0.0~1.0に正規化
+        Vector3 pos = Easing::Eased(Vector3(0, -5, 0), Vector3(0, 0, 0), t, EaseType::EaseOutBack);
+        GetTransform().SetTranslate(pos);
+    }
+}</code></pre>
+<h3>EaseType</h3>
+<p>
+<code>Linear</code> と、Quad/Cubic/Quart/Quint/Sine/Expo/Circ/Back/Elastic/Bounce の各カーブに対して <code>EaseIn</code> / <code>EaseOut</code> / <code>EaseInOut</code> / <code>EaseOutIn</code> を組み合わせた列挙値が使用できます（例: <code>EaseType::EaseInOutCubic</code>、<code>EaseType::EaseOutBounce</code>）。
+</p>
+<h3>関数</h3>
+<table>
+<tr><th>関数</th><th>説明</th></tr>
+<tr><td><code>float/Vector2/Vector3/Vector4 Easing::Normalize01(value, min, max)</code></td><td><code>value</code> を <code>min</code>〜<code>max</code> の範囲で 0.0〜1.0 に正規化する（クランプ済み）</td></tr>
+<tr><td><code>float Easing::Lerp(float start, float end, float t)</code></td><td>線形補間（<code>Vector2</code>/<code>Vector3</code>/<code>Vector4</code> の線形補間は上記の <code>Math::</code>名前空間を使用）</td></tr>
+<tr><td><code>float Easing::Apply(float t, EaseType type)</code></td><td>0.0〜1.0の進行度 <code>t</code> にイージングカーブを適用した値（0.0〜1.0）を返す</td></tr>
+<tr><td><code>float/Vector2/Vector3/Vector4 Easing::Eased(start, end, float t, EaseType type)</code></td><td><code>start</code>→<code>end</code> を <code>t</code>（0.0〜1.0）とイージングタイプで補間する</td></tr>
+<tr><td><code>float/Vector2/Vector3/Vector4 Easing::EasedGAB(start, end, float t, EaseType goType, EaseType backType)</code></td><td><code>start</code>→<code>end</code>→<code>start</code> と行って帰ってくる補間（<code>t</code>が0.5未満で行き、0.5以上で帰り）</td></tr>
+</table>
+<div class="tip">
+<strong>Easing::Lerp は減衰補間としても使われる</strong><br>
+<code>Player.as</code> の <code>LateralMovement()</code> は <code>velocity.x = Easing::Lerp(velocity.x, 0.0f, lateralDeceleration);</code> のように、毎フレーム現在値を目標値へ少しずつ寄せる「なめらかな減速」の実装にも使っています。
+</div>
+
+<h2>Random（乱数）</h2>
+<p>
+<code>Utilities/RandomValue.h</code> の乱数関数を <code>Random::</code> 名前空間で使用できます。
+</p>
+<pre><code class="language-angelscript">int enemyType = Random::Int(0, 2);
+float spawnDelay = Random::Float(1.0f, 3.0f);
+if (Random::Bool(0.1f)) { // 10%の確率でtrue
+    Log("レアドロップ発生");
+}</code></pre>
+<table>
+<tr><th>関数</th><th>説明</th></tr>
+<tr><td><code>int Random::Int(int min, int max)</code></td><td><code>min</code>以上<code>max</code>以下のランダムな整数を取得する</td></tr>
+<tr><td><code>int64 Random::Int64(int64 min, int64 max)</code></td><td><code>min</code>以上<code>max</code>以下のランダムな64ビット整数を取得する</td></tr>
+<tr><td><code>float Random::Float(float min, float max)</code></td><td><code>min</code>以上<code>max</code>以下のランダムな浮動小数点数を取得する</td></tr>
+<tr><td><code>double Random::Double(double min, double max)</code></td><td><code>min</code>以上<code>max</code>以下のランダムな倍精度浮動小数点数を取得する</td></tr>
+<tr><td><code>bool Random::Bool(float trueProbability = 0.5f)</code></td><td><code>trueProbability</code>（0.0〜1.0）の確率で <code>true</code> を返す</td></tr>
+</table>
+
+<h2>関連ページ</h2>
+<ul>
+<li>角度変換・クランプ・cmath相当の関数（グローバル） → <a href="03_ComponentAccess.html">03_ComponentAccess.html</a></li>
+<li>ユーティリティ全般（C++側） → <a href="../13_Utilities.html">13_Utilities.html</a></li>
+<li>手続き生成（WFC等）でのVector3/乱数の使用例 → <a href="10_ProceduralGeneration.html">10_ProceduralGeneration.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

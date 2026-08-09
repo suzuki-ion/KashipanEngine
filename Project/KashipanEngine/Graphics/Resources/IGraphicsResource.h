@@ -1,4 +1,6 @@
 #pragma once
+#include <limits>
+
 #include "Core/DirectX/DescriptorHeaps/DescriptorHeapBase.h"
 #include "Core/DirectX/DescriptorHeaps/HeapRTV.h"
 #include "Core/DirectX/DescriptorHeaps/HeapDSV.h"
@@ -8,6 +10,7 @@
 namespace KashipanEngine {
 
 class DirectXCommon;
+class Renderer;
 class ShaderVariableBinder;
 class ScreenBuffer;
 class ShadowMapBuffer;
@@ -42,6 +45,9 @@ public:
 
     static SRVHeap *GetSRVHeap(Passkey<ShadowMapBuffer>) { return srvHeap_; }
     static SamplerHeap *GetSamplerHeap(Passkey<ShadowMapBuffer>) { return samplerHeap_; }
+
+    static SRVHeap *GetSRVHeap(Passkey<Renderer>) { return srvHeap_; }
+    static SamplerHeap *GetSamplerHeap(Passkey<Renderer>) { return samplerHeap_; }
 
     static void ClearAllResources(Passkey<DirectXCommon>);
     virtual ~IGraphicsResource();
@@ -118,7 +124,9 @@ protected:
     const ResourceViewType resourceViewType_ = ResourceViewType::None;
 
 private:
-    uint32_t resourceID_ = 0;
+    static constexpr uint32_t kInvalidResourceID = std::numeric_limits<uint32_t>::max();
+
+    uint32_t resourceID_ = kInvalidResourceID;
     ID3D12Resource *resource_ = nullptr;
     ID3D12GraphicsCommandList *commandList_ = nullptr;
     uint32_t currentStateIndex_ = 0;

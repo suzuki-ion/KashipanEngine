@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6. オブジェクトを作成する | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-editor-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="T06_CreateObject">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>6. オブジェクトを作成する</h1>
+<p class="page-lead">Scene Object Hierarchyから空のオブジェクトを作り、Playerという名前を付けます。</p>
+</div>
+
+<div class="tutorial-meta"><span>操作: Scene Object Hierarchy</span><span>作成名: Player</span><span>目安: 2分</span></div>
+
+<h2>Playerを作る</h2>
+<ol class="steps">
+<li><strong>Hierarchyの空白を右クリックする</strong><code>Scene Object Hierarchy</code>内で、既存オブジェクトに重ならない空白部分を右クリックします。</li>
+<li><strong>Empty Objectを選ぶ</strong><span class="ui-path"><span>Create Object</span><i>›</i><span>Empty Object</span></span> を選択します。</li>
+<li><strong>作成したオブジェクトを選択する</strong>Hierarchyに追加された項目をクリックします。選択するとScene Object Inspectorにプロパティが表示されます。</li>
+<li><strong>名前をPlayerへ変更する</strong>Inspector上部の<code>Name</code>へ<code>Player</code>と入力し、Enterで確定します。</li>
+</ol>
+
+<figure class="editor-shot">
+<img src="../../assets/tutorial/06-create-object.png" alt="Scene Object HierarchyのCreate ObjectメニューからEmpty Objectを選択する画面">
+<figcaption><strong>オブジェクト作成メニュー。</strong> 空白の右クリックはルートへ作成し、既存項目の右クリックでは兄弟または子オブジェクトも作成できます。</figcaption>
+</figure>
+
+<h2>選択と階層操作</h2>
+<table>
+<tr><th>操作</th><th>結果</th></tr>
+<tr><td>クリック</td><td>1つのオブジェクトを選択する</td></tr>
+<tr><td>Ctrl + クリック</td><td>複数選択へ追加／選択解除する</td></tr>
+<tr><td>Shift + クリック</td><td>範囲選択する</td></tr>
+<tr><td>ドラッグ&amp;ドロップ</td><td>並び替え、または親子関係を変更する</td></tr>
+<tr><td>Ctrl + D</td><td>選択したオブジェクトを複製する</td></tr>
+</table>
+
+<div class="note">
+<strong>まだScene Viewには何も表示されません</strong><br>
+Empty Objectはコンポーネントを持たない入れ物です。HierarchyへPlayerが表示されていれば、この手順は成功です。次のページで位置と見た目を追加します。
+</div>
+
+<h2>保存結果</h2>
+<p><code>Ctrl+S</code>で保存すると、<code>TutorialScene.scene/Objects/&lt;UUID&gt;/object.json</code>が作成されます。UUIDは自動採番されるため手入力しません。</p>
+<pre><code>{
+  "object": {
+    "components": [],
+    "editorOnly": false,
+    "isActive": true,
+    "name": "Player",
+    "objectID": "&lt;自動生成されたUUID&gt;",
+    "tag": ""
+  },
+  "siblingIndex": 0
+}</code></pre>
+
+<p>作成、複製、親子関係の詳細は<a href="../../Engine/03_GameObjects.html">ゲームオブジェクトのリファレンス</a>を参照してください。</p>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

@@ -1,11 +1,14 @@
 #include "AudioManager.h"
 #include "Assets/CaseInsensitive.h"
+#include "Core/ProjectPaths.h"
 #include "Assets/AudioPlayer.h"
 #include "Assets/SoundBeat.h"
 
 #include "Debug/Logger.h"
 #include "Utilities/Translation.h"
+#include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/Directory.h"
+#include "Utilities/Plugin/Plugins.h"
 
 #if defined(USE_IMGUI)
 #include <imgui.h>
@@ -48,6 +51,8 @@ namespace {
 using SoundHandle = AudioManager::SoundHandle;
 using PlayHandle = AudioManager::PlayHandle;
 
+AudioManager* sActiveInstance = nullptr;
+
 struct SoundEntry final {
     std::string fullPath;
     std::string assetPath;
@@ -60,20 +65,32 @@ struct SoundEntry final {
 struct PlayEntry final {
     SoundHandle sound = AudioManager::kInvalidSoundHandle;
     IXAudio2SourceVoice* voice = nullptr;
-    IXAudio2SubmixVoice* effectVoice = nullptr;
-    Microsoft::WRL::ComPtr<IUnknown> reverbEffect;
-    Microsoft::WRL::ComPtr<IUnknown> eqEffect;
-    Microsoft::WRL::ComPtr<IUnknown> echoEffect;
-    XAUDIO2FX_REVERB_PARAMETERS reverbParams;
-    FXEQ_PARAMETERS eqParams;
-    FXECHO_PARAMETERS echoParams;
-    bool reverbEnabled = false;
-    bool eqEnabled = false;
-    bool echoEnabled = false;
     bool paused = false;
     bool loop = false;
     double startTimeSec = 0.0;
+    uint32_t sourceChannels = 0;
+    /// @brief XAPOFXのエフェクトチェーン(EQ/エコー/リミッター)付きでボイスを生成できたかどうか
+    bool hasEffectChain = false;
+    /// @brief 各チェーンエフェクトの現在の有効状態（Enable/DisableEffectの冗長呼び出しを避けるためのキャッシュ）
+    bool eqEnabled = false;
+    bool echoEnabled = false;
+    bool limiterEnabled = false;
 };
+
+// ソースボイスのエフェクトチェーン内のスロット番号（CreateSourceVoiceに渡す並び順と一致させること）
+constexpr UINT32 kEffectSlotEq = 0;
+constexpr UINT32 kEffectSlotEcho = 1;
+constexpr UINT32 kEffectSlotLimiter = 2;
+
+XAUDIO2_FILTER_TYPE ToXAudio2FilterType(AudioManager::FilterType type) {
+    switch (type) {
+    case AudioManager::FilterType::HighPass: return HighPassFilter;
+    case AudioManager::FilterType::BandPass: return BandPassFilter;
+    case AudioManager::FilterType::Notch:    return NotchFilter;
+    case AudioManager::FilterType::LowPass:
+    default:                                 return LowPassFilter;
+    }
+}
 
 std::unordered_map<SoundHandle, SoundEntry> sSounds;
 FileMap<SoundHandle> sAssetPathToHandle;
@@ -81,6 +98,10 @@ FileMap<SoundHandle> sFileNameToHandle;
 
 Microsoft::WRL::ComPtr<IXAudio2> sXaudio2;
 IXAudio2MasteringVoice* sMasterVoice = nullptr;
+// 全AudioSource共有のリバーブ送り先(モノ入力の共有バス)。初期化に失敗した場合は nullptr のままとなり、
+// リバーブ関連APIはすべて何もせず false を返す
+IXAudio2SubmixVoice* sReverbSubmixVoice = nullptr;
+Microsoft::WRL::ComPtr<IUnknown> sReverbEffect;
 bool sMfStarted = false;
 
 static constexpr size_t kMaxSimultaneousPlays = 64;
@@ -90,9 +111,6 @@ std::vector<size_t> sFreePlayIndices;
 
 std::unordered_map<PlayHandle, size_t> sPlayHandleToIndex;
 std::unordered_set<PlayHandle> sUsedPlayHandles;
-
-// Currently selected play handle for ImGui effects window
-PlayHandle sSelectedPlayHandle = AudioManager::kInvalidPlayHandle;
 
 std::unordered_set<SoundBeat*> sRegisteredSoundBeats;
 std::unordered_set<AudioPlayer*> sRegisteredAudioPlayers;
@@ -155,15 +173,15 @@ bool HasSupportedAudioExtension(const std::filesystem::path& p) {
 }
 
 std::string MakeAssetRelativePath(const std::string& assetsRoot, const std::string& fullPath) {
-    std::filesystem::path root(assetsRoot);
-    std::filesystem::path full(fullPath);
+    const std::filesystem::path root = Utf8StringToPath(assetsRoot);
+    const std::filesystem::path full = Utf8StringToPath(fullPath);
 
     std::error_code ec;
     auto rel = std::filesystem::relative(full, root, ec);
     if (ec) {
-        return NormalizePathSlashes(full.filename().string());
+        return NormalizePathSlashes(PathToUtf8String(full.filename()));
     }
-    return NormalizePathSlashes(rel.string());
+    return NormalizePathSlashes(PathToUtf8String(rel));
 }
 
 SoundHandle RegisterEntry(SoundEntry&& entry) {
@@ -210,22 +228,10 @@ void StopVoice(PlayEntry& p) {
     p.voice->FlushSourceBuffers();
     p.voice->DestroyVoice();
     p.voice = nullptr;
-    if (p.effectVoice) {
-        p.effectVoice->DestroyVoice();
-        p.effectVoice = nullptr;
-    }
-    p.reverbEffect.Reset();
-    p.eqEffect.Reset();
-    p.echoEffect.Reset();
-    p.reverbParams;
-    p.eqParams;
-    p.echoParams;
-    p.reverbEnabled = false;
-    p.eqEnabled = false;
-    p.echoEnabled = false;
     p.sound = AudioManager::kInvalidSoundHandle;
     p.paused = false;
     p.startTimeSec = 0.0;
+    p.sourceChannels = 0;
 }
 
 bool EnsureAudioInitialized() {
@@ -244,6 +250,36 @@ bool EnsureAudioInitialized() {
         Log(Translation("engine.audio.init.failed.mastervoice"), LogSeverity::Error);
         sXaudio2.Reset();
         return false;
+    }
+
+    {
+        // 全AudioSource共有のリバーブ送り先バス(モノ入力)を作成する。失敗してもオーディオ全体の初期化は継続する
+        Microsoft::WRL::ComPtr<IUnknown> reverbEffect;
+        HRESULT reverbHr = CreateAudioReverb(&reverbEffect);
+        if (SUCCEEDED(reverbHr) && reverbEffect) {
+            XAUDIO2_EFFECT_DESCRIPTOR effectDescriptor{};
+            effectDescriptor.InitialState = TRUE;
+            effectDescriptor.OutputChannels = 1;
+            effectDescriptor.pEffect = reverbEffect.Get();
+            XAUDIO2_EFFECT_CHAIN effectChain{ 1, &effectDescriptor };
+
+            XAUDIO2_VOICE_DETAILS masterDetails{};
+            sMasterVoice->GetVoiceDetails(&masterDetails);
+
+            reverbHr = sXaudio2->CreateSubmixVoice(&sReverbSubmixVoice, 1, masterDetails.InputSampleRate, 0, 0, nullptr, &effectChain);
+            if (SUCCEEDED(reverbHr) && sReverbSubmixVoice) {
+                sReverbEffect = reverbEffect;
+                XAUDIO2FX_REVERB_I3DL2_PARAMETERS i3dl2Preset = XAUDIO2FX_I3DL2_PRESET_MEDIUMROOM;
+                XAUDIO2FX_REVERB_PARAMETERS reverbParams{};
+                ReverbConvertI3DL2ToNative(&i3dl2Preset, &reverbParams);
+                sReverbSubmixVoice->SetEffectParameters(0, &reverbParams, sizeof(reverbParams));
+            } else {
+                sReverbSubmixVoice = nullptr;
+                Log(Translation("engine.audio.init.failed.reverb"), LogSeverity::Warning);
+            }
+        } else {
+            Log(Translation("engine.audio.init.failed.reverb"), LogSeverity::Warning);
+        }
     }
 
     hr = MFStartup(MF_VERSION);
@@ -286,6 +322,12 @@ void FinalizeAudio() {
         MFShutdown();
         sMfStarted = false;
     }
+
+    if (sReverbSubmixVoice) {
+        sReverbSubmixVoice->DestroyVoice();
+        sReverbSubmixVoice = nullptr;
+    }
+    sReverbEffect.Reset();
 
     if (sMasterVoice) {
         sMasterVoice->DestroyVoice();
@@ -357,6 +399,32 @@ bool DecodeToPcm(const std::wstring& wpath, WAVEFORMATEX& outWfex, std::vector<B
     return !outBuffer.empty();
 }
 
+/// @brief ファイルをデコードしてSoundEntryを組み立てる（グローバル状態への登録は行わない）
+/// @details ファイルI/O・Media Foundationによるデコードのみを行うため、スレッドプールから
+///          並列に呼び出しても安全（各呼び出しは自分のIMFSourceReaderを持ち、outEntryも呼び出し元専有）
+bool DecodeAudioFile(const std::string& filePath, const std::string& assetsRootPath, SoundEntry& outEntry) {
+    const std::filesystem::path p = Utf8StringToPath(filePath);
+    if (!std::filesystem::exists(p)) {
+        Log(Translation("engine.audio.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
+        return false;
+    }
+    if (!HasSupportedAudioExtension(p)) {
+        Log(Translation("engine.audio.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
+        return false;
+    }
+
+    outEntry.fullPath = NormalizePathSlashes(PathToUtf8String(p));
+    outEntry.assetPath = MakeAssetRelativePath(assetsRootPath, outEntry.fullPath);
+    outEntry.fileName = PathToUtf8String(p.filename());
+
+    const std::wstring wpath(p.wstring());
+    if (!DecodeToPcm(wpath, outEntry.wfex, outEntry.buffer)) {
+        Log(Translation("engine.audio.loading.failed.decode") + PathToUtf8String(p), LogSeverity::Warning);
+        return false;
+    }
+    return true;
+}
+
 float SemitonesToFrequencyRatio(float semitones) {
     return std::pow(2.0f, semitones / 12.0f);
 }
@@ -407,6 +475,7 @@ bool AudioManager::GetPlayPositionSeconds(PlayHandle play, double& outSeconds) {
 AudioManager::AudioManager(Passkey<GameEngine>, const std::string& assetsRootPath)
     : assetsRootPath_(NormalizePathSlashes(assetsRootPath)) {
     LogScope scope;
+    sActiveInstance = this;
     InitializeAudioDevice();
     LoadAllFromAssetsFolder();
 }
@@ -414,6 +483,7 @@ AudioManager::AudioManager(Passkey<GameEngine>, const std::string& assetsRootPat
 AudioManager::~AudioManager() {
     LogScope scope;
 
+    if (sActiveInstance == this) sActiveInstance = nullptr;
     FinalizeAudioDevice();
     sSounds.clear();
     sAssetPathToHandle.clear();
@@ -442,8 +512,23 @@ void AudioManager::LoadAllFromAssetsFolder() {
     };
     flatten(filtered);
 
-    for (const auto& f : files) {
-        Load(f);
+    // ファイルI/O・デコード(Media Foundation)はCPU処理のみでグローバル状態に触れないため、
+    // スレッドプールで並列実行する。各要素は担当するインデックス以外書き込まないためロック不要
+    std::vector<SoundEntry> decodedEntries(files.size());
+    std::vector<bool> decodedOk(files.size(), false);
+    Plugin::RunParallelAndWait(files.size(), [this, &files, &decodedEntries, &decodedOk](size_t i) {
+        decodedOk[i] = DecodeAudioFile(files[i], assetsRootPath_, decodedEntries[i]);
+        });
+
+    // 全ファイルのデコードが完了したら、メインスレッドでグローバルマップへの登録を順に行う
+    for (size_t i = 0; i < files.size(); ++i) {
+        if (!decodedOk[i]) continue;
+        const auto handle = RegisterEntry(std::move(decodedEntries[i]));
+        if (handle == kInvalidSoundHandle) {
+            Log(Translation("engine.audio.loading.failed.register") + files[i], LogSeverity::Error);
+            continue;
+        }
+        Log(Translation("engine.audio.loading.succeeded") + files[i], LogSeverity::Info);
     }
 }
 
@@ -453,45 +538,73 @@ SoundHandle AudioManager::Load(const std::string& filePath) {
 
     if (!EnsureAudioInitialized()) return kInvalidSoundHandle;
 
-    const std::filesystem::path p(filePath);
-    if (!std::filesystem::exists(p)) {
-        Log(Translation("engine.audio.loading.failed.notfound") + p.string(), LogSeverity::Warning);
-        return kInvalidSoundHandle;
-    }
-
-    if (!HasSupportedAudioExtension(p)) {
-        Log(Translation("engine.audio.loading.failed.unsupported") + p.string(), LogSeverity::Warning);
-        return kInvalidSoundHandle;
-    }
-
-    const std::string full = NormalizePathSlashes(p.string());
-    const std::string asset = MakeAssetRelativePath(assetsRootPath_, full);
-
+    const std::string normalizedAsset = NormalizePathSlashes(MakeAssetRelativePath(assetsRootPath_, NormalizePathSlashes(PathToUtf8String(Utf8StringToPath(filePath)))));
     {
-        auto it = sAssetPathToHandle.find(NormalizePathSlashes(asset));
+        auto it = sAssetPathToHandle.find(normalizedAsset);
         if (it != sAssetPathToHandle.end()) return it->second;
     }
 
     SoundEntry entry{};
-    entry.fullPath = full;
-    entry.assetPath = asset;
-    entry.fileName = p.filename().string();
-
-    const std::wstring wpath(p.wstring());
-    if (!DecodeToPcm(wpath, entry.wfex, entry.buffer)) {
-        Log(Translation("engine.audio.loading.failed.decode") + p.string(), LogSeverity::Warning);
+    if (!DecodeAudioFile(filePath, assetsRootPath_, entry)) {
         return kInvalidSoundHandle;
     }
 
     const auto handle = RegisterEntry(std::move(entry));
     if (handle == kInvalidSoundHandle) {
-        Log(Translation("engine.audio.loading.failed.register") + p.string(), LogSeverity::Error);
+        Log(Translation("engine.audio.loading.failed.register") + filePath, LogSeverity::Error);
         return kInvalidSoundHandle;
     }
 
-    Log(Translation("engine.audio.loading.succeeded") + p.string(), LogSeverity::Info);
+    Log(Translation("engine.audio.loading.succeeded") + filePath, LogSeverity::Info);
     return handle;
 }
+
+SoundHandle AudioManager::RegisterSoundFromMemory(const std::string &registerName,
+    uint32_t channels, uint32_t samplesPerSec, uint32_t bitsPerSample,
+    const std::vector<uint8_t> &pcmData) {
+    LogScope scope;
+    if (registerName.empty() || channels == 0 || samplesPerSec == 0 || bitsPerSample == 0 || pcmData.empty()) {
+        return kInvalidSoundHandle;
+    }
+    if (!EnsureAudioInitialized()) return kInvalidSoundHandle;
+
+    const std::string normalizedName = NormalizePathSlashes(registerName);
+    {
+        auto it = sAssetPathToHandle.find(normalizedName);
+        if (it != sAssetPathToHandle.end()) return it->second;
+    }
+
+    SoundEntry entry{};
+    entry.fullPath = normalizedName;
+    entry.assetPath = normalizedName;
+    entry.fileName = normalizedName;
+
+    entry.wfex.wFormatTag = WAVE_FORMAT_PCM;
+    entry.wfex.nChannels = static_cast<WORD>(channels);
+    entry.wfex.nSamplesPerSec = samplesPerSec;
+    entry.wfex.wBitsPerSample = static_cast<WORD>(bitsPerSample);
+    entry.wfex.nBlockAlign = static_cast<WORD>(channels * (bitsPerSample / 8));
+    entry.wfex.nAvgBytesPerSec = samplesPerSec * entry.wfex.nBlockAlign;
+    entry.wfex.cbSize = 0;
+
+    entry.buffer.assign(pcmData.begin(), pcmData.end());
+
+    const auto handle = RegisterEntry(std::move(entry));
+    if (handle == kInvalidSoundHandle) {
+        Log(Translation("engine.audio.loading.failed.register") + registerName, LogSeverity::Error);
+        return kInvalidSoundHandle;
+    }
+
+    Log(Translation("engine.audio.loading.succeeded") + registerName, LogSeverity::Info);
+    return handle;
+}
+
+#if defined(USE_IMGUI)
+SoundHandle AudioManager::LoadDynamic(const std::string &filePath) {
+    if (!sActiveInstance) return kInvalidSoundHandle;
+    return sActiveInstance->Load(filePath);
+}
+#endif
 
 SoundHandle AudioManager::GetSoundHandleFromFileName(const std::string &fileName) {
     LogScope scope;
@@ -505,6 +618,38 @@ SoundHandle AudioManager::GetSoundHandleFromAssetPath(const std::string &assetPa
     auto it = sAssetPathToHandle.find(NormalizePathSlashes(assetPath));
     if (it == sAssetPathToHandle.end()) return kInvalidSoundHandle;
     return it->second;
+}
+
+std::vector<std::string> AudioManager::GetLoadedSoundAssetPaths() {
+    LogScope scope;
+    std::vector<std::string> out;
+    out.reserve(sSounds.size());
+    for (const auto& kv : sSounds) out.push_back(kv.second.assetPath);
+    std::sort(out.begin(), out.end());
+    return out;
+}
+
+bool AudioManager::RenameSound(const std::string &oldAssetPath, const std::string &newAssetPath) {
+    LogScope scope;
+    const std::string normalizedOld = NormalizePathSlashes(oldAssetPath);
+    auto pathIt = sAssetPathToHandle.find(normalizedOld);
+    if (pathIt == sAssetPathToHandle.end()) return false;
+    const SoundHandle handle = pathIt->second;
+    auto entryIt = sSounds.find(handle);
+    if (entryIt == sSounds.end()) return false;
+
+    SoundEntry &entry = entryIt->second;
+    sAssetPathToHandle.erase(pathIt);
+    sFileNameToHandle.erase(entry.fileName);
+
+    const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
+    entry.assetPath = normalizedNew;
+    entry.fileName = PathToUtf8String(Utf8StringToPath(normalizedNew).filename());
+    entry.fullPath = ProjectPaths::AssetsRoot() + "/" + normalizedNew;
+
+    sAssetPathToHandle[normalizedNew] = handle;
+    sFileNameToHandle[entry.fileName] = handle;
+    return true;
 }
 
 AudioManager::PlayHandle AudioManager::Play(SoundHandle sound, float volume, float pitch, bool loop,
@@ -570,101 +715,47 @@ AudioManager::PlayHandle AudioManager::Play(const PlayParams& params) {
     playEntry.paused = false;
     playEntry.loop = params.loop;
     playEntry.startTimeSec = startSec;
-    playEntry.reverbParams;
-    playEntry.eqParams;
-    playEntry.echoParams;
-    playEntry.reverbEnabled = false;
+    playEntry.sourceChannels = wfex.nChannels;
+    playEntry.hasEffectChain = false;
     playEntry.eqEnabled = false;
     playEntry.echoEnabled = false;
+    playEntry.limiterEnabled = false;
 
-    Microsoft::WRL::ComPtr<IUnknown> reverb;
-    HRESULT hr = XAudio2CreateReverb(&reverb, 0);
-    if (FAILED(hr) || !reverb) {
-        playEntry.sound = kInvalidSoundHandle;
-        ReleasePlayIndex(idx);
-        Log(Translation("engine.audio.play.failed.createeffect"), LogSeverity::Error);
-        return kInvalidPlayHandle;
+    // マスターボイスに加え、共有リバーブバスが使用可能ならそちらへも常時送る
+    // (通常のウェットレベルは0で開始し、SetReverbSendで必要な時だけ送り量を上げる)
+    XAUDIO2_SEND_DESCRIPTOR sendDescriptors[2] = {
+        { 0, sMasterVoice },
+        { 0, sReverbSubmixVoice },
+    };
+    const UINT32 sendCount = sReverbSubmixVoice ? 2u : 1u;
+    XAUDIO2_VOICE_SENDS sendList{ sendCount, sendDescriptors };
+
+    // EQ/エコー/リミッターのエフェクトチェーンを全ボイスへ無効状態で付与しておく
+    // （SetEqEffect等の呼び出しで必要な時だけ有効化する。生成に失敗した場合はチェーン無しで続行する）
+    Microsoft::WRL::ComPtr<IUnknown> eqEffect;
+    Microsoft::WRL::ComPtr<IUnknown> echoEffect;
+    Microsoft::WRL::ComPtr<IUnknown> limiterEffect;
+    XAUDIO2_EFFECT_DESCRIPTOR effectDescriptors[3]{};
+    XAUDIO2_EFFECT_CHAIN effectChain{ 3, effectDescriptors };
+    XAUDIO2_EFFECT_CHAIN* effectChainPtr = nullptr;
+    if (SUCCEEDED(CreateFX(__uuidof(FXEQ), &eqEffect)) &&
+        SUCCEEDED(CreateFX(__uuidof(FXEcho), &echoEffect)) &&
+        SUCCEEDED(CreateFX(__uuidof(FXMasteringLimiter), &limiterEffect))) {
+        effectDescriptors[kEffectSlotEq] = { eqEffect.Get(), FALSE, wfex.nChannels };
+        effectDescriptors[kEffectSlotEcho] = { echoEffect.Get(), FALSE, wfex.nChannels };
+        effectDescriptors[kEffectSlotLimiter] = { limiterEffect.Get(), FALSE, wfex.nChannels };
+        effectChainPtr = &effectChain;
     }
 
-    Microsoft::WRL::ComPtr<IUnknown> eq;
-    Microsoft::WRL::ComPtr<IUnknown> echo;
-    hr = CreateFX(__uuidof(FXEQ), &eq, 0);
-    if (FAILED(hr) || !eq) {
-        playEntry.sound = kInvalidSoundHandle;
-        ReleasePlayIndex(idx);
-        Log(Translation("engine.audio.play.failed.createeffect"), LogSeverity::Error);
-        return kInvalidPlayHandle;
-    }
-
-    hr = CreateFX(__uuidof(FXEcho), &echo, 0);
-    if (FAILED(hr) || !echo) {
-        playEntry.sound = kInvalidSoundHandle;
-        ReleasePlayIndex(idx);
-        Log(Translation("engine.audio.play.failed.createeffect"), LogSeverity::Error);
-        return kInvalidPlayHandle;
-    }
-
-    IXAudio2SubmixVoice* effectVoice = nullptr;
-    hr = sXaudio2->CreateSubmixVoice(&effectVoice, it->second.wfex.nChannels, it->second.wfex.nSamplesPerSec, 0, 0, nullptr, nullptr);
-    if (FAILED(hr) || !effectVoice) {
-        playEntry.sound = kInvalidSoundHandle;
-        ReleasePlayIndex(idx);
-        Log(Translation("engine.audio.play.failed.createsubmix"), LogSeverity::Error);
-        return kInvalidPlayHandle;
-    }
-
-    XAUDIO2_EFFECT_DESCRIPTOR effectDescs[3]{};
-    effectDescs[0].pEffect = reverb.Get();
-    effectDescs[0].InitialState = FALSE;
-    effectDescs[0].OutputChannels = it->second.wfex.nChannels;
-
-    effectDescs[1].pEffect = eq.Get();
-    effectDescs[1].InitialState = FALSE;
-    effectDescs[1].OutputChannels = it->second.wfex.nChannels;
-
-    effectDescs[2].pEffect = echo.Get();
-    effectDescs[2].InitialState = FALSE;
-    effectDescs[2].OutputChannels = it->second.wfex.nChannels;
-
-    XAUDIO2_EFFECT_CHAIN effectChain{};
-    effectChain.EffectCount = 3;
-    effectChain.pEffectDescriptors = effectDescs;
-
-    hr = effectVoice->SetEffectChain(&effectChain);
-    if (FAILED(hr)) {
-        effectVoice->DestroyVoice();
-        playEntry.sound = kInvalidSoundHandle;
-        ReleasePlayIndex(idx);
-        Log(Translation("engine.audio.play.failed.seteffectchain"), LogSeverity::Error);
-        return kInvalidPlayHandle;
-    }
-
-    effectVoice->SetEffectParameters(0, &playEntry.reverbParams, sizeof(playEntry.reverbParams));
-    effectVoice->SetEffectParameters(1, &playEntry.eqParams, sizeof(playEntry.eqParams));
-    effectVoice->SetEffectParameters(2, &playEntry.echoParams, sizeof(playEntry.echoParams));
-
-    XAUDIO2_SEND_DESCRIPTOR sendDesc{};
-    sendDesc.Flags = 0;
-    sendDesc.pOutputVoice = effectVoice;
-
-    XAUDIO2_VOICE_SENDS sends{};
-    sends.SendCount = 1;
-    sends.pSends = &sendDesc;
-
-    HRESULT hrSource = sXaudio2->CreateSourceVoice(&playEntry.voice, &it->second.wfex, 0, XAUDIO2_DEFAULT_FREQ_RATIO, nullptr, &sends, nullptr);
-    hr = hrSource;
+    HRESULT hr = sXaudio2->CreateSourceVoice(&playEntry.voice, &it->second.wfex, XAUDIO2_VOICE_USEFILTER,
+        XAUDIO2_DEFAULT_FREQ_RATIO, nullptr, &sendList, effectChainPtr);
     if (FAILED(hr) || !playEntry.voice) {
-        effectVoice->DestroyVoice();
         playEntry.sound = kInvalidSoundHandle;
         ReleasePlayIndex(idx);
         Log(Translation("engine.audio.play.failed.createsourcevoice"), LogSeverity::Error);
         return kInvalidPlayHandle;
     }
-
-    playEntry.effectVoice = effectVoice;
-    playEntry.reverbEffect = reverb;
-    playEntry.eqEffect = eq;
-    playEntry.echoEffect = echo;
+    playEntry.hasEffectChain = (effectChainPtr != nullptr);
 
     XAUDIO2_BUFFER buffer{};
     buffer.AudioBytes = static_cast<UINT32>(it->second.buffer.size());
@@ -693,6 +784,12 @@ AudioManager::PlayHandle AudioManager::Play(const PlayParams& params) {
     const float volume = std::clamp(params.volume, 0.0f, 1.0f);
     playEntry.voice->SetVolume(volume);
     playEntry.voice->SetFrequencyRatio(SemitonesToFrequencyRatio(params.pitch));
+
+    if (sReverbSubmixVoice) {
+        // リバーブバスへの送り量は既定で0(ドライのみ)にしておく。必要な時だけSetReverbSendで引き上げる
+        std::vector<float> silentMatrix(static_cast<size_t>(playEntry.sourceChannels), 0.0f);
+        playEntry.voice->SetOutputMatrix(sReverbSubmixVoice, playEntry.sourceChannels, 1, silentMatrix.data());
+    }
 
     hr = playEntry.voice->Start();
     if (FAILED(hr)) {
@@ -837,7 +934,7 @@ bool AudioManager::SetPitch(PlayHandle play, float pitch) {
     return true;
 }
 
-bool AudioManager::SetReverbParameters(PlayHandle play, const XAUDIO2FX_REVERB_PARAMETERS& params) {
+bool AudioManager::SetPan(PlayHandle play, float pan) {
     LogScope scope;
     size_t idx = static_cast<size_t>(-1);
     if (!TryGetPlayIndex(play, idx)) return false;
@@ -845,16 +942,38 @@ bool AudioManager::SetReverbParameters(PlayHandle play, const XAUDIO2FX_REVERB_P
     if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) return false;
 
     PlayEntry& p = *sPlays[idx];
-    if (!p.effectVoice) return false;
+    if (!p.voice || !sMasterVoice || p.sourceChannels == 0) return false;
 
-    HRESULT hr = p.effectVoice->SetEffectParameters(0, &params, sizeof(params));
-    if (SUCCEEDED(hr)) {
-        p.reverbParams = params;
+    XAUDIO2_VOICE_DETAILS masterDetails{};
+    sMasterVoice->GetVoiceDetails(&masterDetails);
+    const uint32_t destChannels = masterDetails.InputChannels;
+    const uint32_t srcChannels = p.sourceChannels;
+    if (destChannels == 0) return false;
+
+    std::vector<float> matrix(static_cast<size_t>(srcChannels) * destChannels, 0.0f);
+    if (destChannels >= 2) {
+        pan = std::clamp(pan, -1.0f, 1.0f);
+        const float angle = (pan + 1.0f) * 0.25f * 3.14159265358979323846f;
+        const float leftGain = std::cos(angle);
+        const float rightGain = std::sin(angle);
+        // SetOutputMatrixのpLevelMatrix仕様: 送出元チャンネルSから送出先チャンネルDへの係数は
+        // pLevelMatrix[S + SourceChannels * D] に格納する(SourceChannelsが最も内側で変化する)
+        for (uint32_t s = 0; s < srcChannels; ++s) {
+            matrix[static_cast<size_t>(s) + static_cast<size_t>(srcChannels) * 0] = leftGain;
+            matrix[static_cast<size_t>(s) + static_cast<size_t>(srcChannels) * 1] = rightGain;
+        }
+    } else {
+        std::fill(matrix.begin(), matrix.end(), 1.0f);
+    }
+
+    const HRESULT hr = p.voice->SetOutputMatrix(sMasterVoice, srcChannels, destChannels, matrix.data());
+    if (FAILED(hr)) {
+        Log(Translation("engine.audio.play.failed.setoutputmatrix"), LogSeverity::Warning);
     }
     return SUCCEEDED(hr);
 }
 
-bool AudioManager::EnableReverb(PlayHandle play, bool enable) {
+bool AudioManager::SetFilter(PlayHandle play, FilterType type, float frequency, float oneOverQ) {
     LogScope scope;
     size_t idx = static_cast<size_t>(-1);
     if (!TryGetPlayIndex(play, idx)) return false;
@@ -862,84 +981,114 @@ bool AudioManager::EnableReverb(PlayHandle play, bool enable) {
     if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) return false;
 
     PlayEntry& p = *sPlays[idx];
-    if (!p.effectVoice) return false;
+    if (!p.voice) return false;
 
-    HRESULT hr = enable ? p.effectVoice->EnableEffect(0, XAUDIO2_COMMIT_NOW)
-                        : p.effectVoice->DisableEffect(0, XAUDIO2_COMMIT_NOW);
-    if (SUCCEEDED(hr)) {
-        p.reverbEnabled = enable;
-    }
+    XAUDIO2_FILTER_PARAMETERS params{};
+    params.Type = ToXAudio2FilterType(type);
+    params.Frequency = std::clamp(frequency, 0.0005f, XAUDIO2_MAX_FILTER_FREQUENCY);
+    params.OneOverQ = std::clamp(oneOverQ, 0.0005f, XAUDIO2_MAX_FILTER_ONEOVERQ);
+    const HRESULT hr = p.voice->SetFilterParameters(&params);
     return SUCCEEDED(hr);
 }
 
-bool AudioManager::SetEqParameters(PlayHandle play, const FXEQ_PARAMETERS& params) {
+bool AudioManager::SetReverbSend(PlayHandle play, float wetLevel) {
     LogScope scope;
+    if (!sReverbSubmixVoice) return false;
+
     size_t idx = static_cast<size_t>(-1);
     if (!TryGetPlayIndex(play, idx)) return false;
     if (idx >= sPlays.size() || !sPlays[idx]) return false;
     if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) return false;
 
     PlayEntry& p = *sPlays[idx];
-    if (!p.effectVoice) return false;
+    if (!p.voice || p.sourceChannels == 0) return false;
 
-    HRESULT hr = p.effectVoice->SetEffectParameters(1, &params, sizeof(params));
-    if (SUCCEEDED(hr)) {
-        p.eqParams = params;
-    }
+    wetLevel = std::clamp(wetLevel, 0.0f, 1.0f);
+    // リバーブ送り先(共有バス)の入力チャンネル数は1(モノ)固定
+    const std::vector<float> matrix(static_cast<size_t>(p.sourceChannels), wetLevel);
+    const HRESULT hr = p.voice->SetOutputMatrix(sReverbSubmixVoice, p.sourceChannels, 1, matrix.data());
     return SUCCEEDED(hr);
 }
 
-bool AudioManager::EnableEq(PlayHandle play, bool enable) {
-    LogScope scope;
+namespace {
+
+/// @brief チェーンエフェクト付きの再生中PlayEntryを取得する（無効なハンドル・チェーン無しの場合はnullptr）
+PlayEntry* GetPlayEntryWithEffectChain(PlayHandle play) {
     size_t idx = static_cast<size_t>(-1);
-    if (!TryGetPlayIndex(play, idx)) return false;
-    if (idx >= sPlays.size() || !sPlays[idx]) return false;
-    if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) return false;
+    if (!TryGetPlayIndex(play, idx)) return nullptr;
+    if (idx >= sPlays.size() || !sPlays[idx]) return nullptr;
+    if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) return nullptr;
 
     PlayEntry& p = *sPlays[idx];
-    if (!p.effectVoice) return false;
-
-    HRESULT hr = enable ? p.effectVoice->EnableEffect(1, XAUDIO2_COMMIT_NOW)
-                        : p.effectVoice->DisableEffect(1, XAUDIO2_COMMIT_NOW);
-    if (SUCCEEDED(hr)) {
-        p.eqEnabled = enable;
-    }
-    return SUCCEEDED(hr);
+    if (!p.voice || !p.hasEffectChain) return nullptr;
+    return &p;
 }
 
-bool AudioManager::SetEchoParameters(PlayHandle play, const FXECHO_PARAMETERS& params) {
-    LogScope scope;
-    size_t idx = static_cast<size_t>(-1);
-    if (!TryGetPlayIndex(play, idx)) return false;
-    if (idx >= sPlays.size() || !sPlays[idx]) return false;
-    if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) return false;
-
-    PlayEntry& p = *sPlays[idx];
-    if (!p.effectVoice) return false;
-
-    HRESULT hr = p.effectVoice->SetEffectParameters(2, &params, sizeof(params));
-    if (SUCCEEDED(hr)) {
-        p.echoParams = params;
+/// @brief チェーンエフェクトの有効状態を必要な時だけ切り替える
+/// @return 最終的にエフェクトが有効な場合 true
+bool ApplyEffectEnabledState(PlayEntry& p, UINT32 slot, bool& cachedEnabled, bool enabled) {
+    if (cachedEnabled == enabled) return enabled;
+    if (enabled) {
+        p.voice->EnableEffect(slot);
+    } else {
+        p.voice->DisableEffect(slot);
     }
-    return SUCCEEDED(hr);
+    cachedEnabled = enabled;
+    return enabled;
 }
 
-bool AudioManager::EnableEcho(PlayHandle play, bool enable) {
+} // namespace
+
+bool AudioManager::SetEqEffect(PlayHandle play, bool enabled, const EqParams &params) {
     LogScope scope;
-    size_t idx = static_cast<size_t>(-1);
-    if (!TryGetPlayIndex(play, idx)) return false;
-    if (idx >= sPlays.size() || !sPlays[idx]) return false;
-    if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) return false;
+    PlayEntry* p = GetPlayEntryWithEffectChain(play);
+    if (!p) return false;
 
-    PlayEntry& p = *sPlays[idx];
-    if (!p.effectVoice) return false;
+    if (!ApplyEffectEnabledState(*p, kEffectSlotEq, p->eqEnabled, enabled)) return true;
 
-    HRESULT hr = enable ? p.effectVoice->EnableEffect(2, XAUDIO2_COMMIT_NOW)
-                        : p.effectVoice->DisableEffect(2, XAUDIO2_COMMIT_NOW);
-    if (SUCCEEDED(hr)) {
-        p.echoEnabled = enable;
-    }
-    return SUCCEEDED(hr);
+    FXEQ_PARAMETERS eq{};
+    eq.FrequencyCenter0 = std::clamp(params.frequencyCenter[0], FXEQ_MIN_FREQUENCY_CENTER, FXEQ_MAX_FREQUENCY_CENTER);
+    eq.FrequencyCenter1 = std::clamp(params.frequencyCenter[1], FXEQ_MIN_FREQUENCY_CENTER, FXEQ_MAX_FREQUENCY_CENTER);
+    eq.FrequencyCenter2 = std::clamp(params.frequencyCenter[2], FXEQ_MIN_FREQUENCY_CENTER, FXEQ_MAX_FREQUENCY_CENTER);
+    eq.FrequencyCenter3 = std::clamp(params.frequencyCenter[3], FXEQ_MIN_FREQUENCY_CENTER, FXEQ_MAX_FREQUENCY_CENTER);
+    eq.Gain0 = std::clamp(params.gain[0], FXEQ_MIN_GAIN, FXEQ_MAX_GAIN);
+    eq.Gain1 = std::clamp(params.gain[1], FXEQ_MIN_GAIN, FXEQ_MAX_GAIN);
+    eq.Gain2 = std::clamp(params.gain[2], FXEQ_MIN_GAIN, FXEQ_MAX_GAIN);
+    eq.Gain3 = std::clamp(params.gain[3], FXEQ_MIN_GAIN, FXEQ_MAX_GAIN);
+    eq.Bandwidth0 = std::clamp(params.bandwidth[0], FXEQ_MIN_BANDWIDTH, FXEQ_MAX_BANDWIDTH);
+    eq.Bandwidth1 = std::clamp(params.bandwidth[1], FXEQ_MIN_BANDWIDTH, FXEQ_MAX_BANDWIDTH);
+    eq.Bandwidth2 = std::clamp(params.bandwidth[2], FXEQ_MIN_BANDWIDTH, FXEQ_MAX_BANDWIDTH);
+    eq.Bandwidth3 = std::clamp(params.bandwidth[3], FXEQ_MIN_BANDWIDTH, FXEQ_MAX_BANDWIDTH);
+    return SUCCEEDED(p->voice->SetEffectParameters(kEffectSlotEq, &eq, sizeof(eq)));
+}
+
+bool AudioManager::SetEchoEffect(PlayHandle play, bool enabled, const EchoParams &params) {
+    LogScope scope;
+    PlayEntry* p = GetPlayEntryWithEffectChain(play);
+    if (!p) return false;
+
+    if (!ApplyEffectEnabledState(*p, kEffectSlotEcho, p->echoEnabled, enabled)) return true;
+
+    FXECHO_PARAMETERS echo{};
+    echo.WetDryMix = std::clamp(params.wetDryMix, FXECHO_MIN_WETDRYMIX, FXECHO_MAX_WETDRYMIX);
+    echo.Feedback = std::clamp(params.feedback, FXECHO_MIN_FEEDBACK, FXECHO_MAX_FEEDBACK);
+    echo.Delay = std::clamp(params.delayMs, FXECHO_MIN_DELAY, FXECHO_MAX_DELAY);
+    return SUCCEEDED(p->voice->SetEffectParameters(kEffectSlotEcho, &echo, sizeof(echo)));
+}
+
+bool AudioManager::SetLimiterEffect(PlayHandle play, bool enabled, const LimiterParams &params) {
+    LogScope scope;
+    PlayEntry* p = GetPlayEntryWithEffectChain(play);
+    if (!p) return false;
+
+    if (!ApplyEffectEnabledState(*p, kEffectSlotLimiter, p->limiterEnabled, enabled)) return true;
+
+    FXMASTERINGLIMITER_PARAMETERS limiter{};
+    limiter.Release = std::clamp(params.release,
+        static_cast<uint32_t>(FXMASTERINGLIMITER_MIN_RELEASE), static_cast<uint32_t>(FXMASTERINGLIMITER_MAX_RELEASE));
+    limiter.Loudness = std::clamp(params.loudness,
+        static_cast<uint32_t>(FXMASTERINGLIMITER_MIN_LOUDNESS), static_cast<uint32_t>(FXMASTERINGLIMITER_MAX_LOUDNESS));
+    return SUCCEEDED(p->voice->SetEffectParameters(kEffectSlotLimiter, &limiter, sizeof(limiter)));
 }
 
 bool AudioManager::IsPlaying(PlayHandle play) {
@@ -1034,10 +1183,10 @@ std::vector<AudioManager::PlayingListEntry> AudioManager::GetImGuiPlayingListEnt
 }
 
 void AudioManager::ShowImGuiLoadedSoundsWindow() {
-    ImGui::Begin("AudioManager - Loaded Sounds");
+    ImGui::Begin(TranslationLabel("editor.audiomanager.loaded.window"));
 
     const auto entries = GetImGuiSoundListEntries();
-    ImGui::Text("Loaded Sounds: %d", static_cast<int>(entries.size()));
+    ImGui::Text(TranslationC("editor.audiomanager.loaded_sounds_d"), static_cast<int>(entries.size()));
 
     static ImGuiTextFilter filter;
     filter.Draw("Filter");
@@ -1047,9 +1196,9 @@ void AudioManager::ShowImGuiLoadedSoundsWindow() {
     static bool sLoop = false;
 
     ImGui::Separator();
-    ImGui::SliderFloat("Volume", &sVolume, 0.0f, 1.0f);
-    ImGui::SliderFloat("Pitch(semitones)", &sPitch, -24.0f, 24.0f);
-    ImGui::Checkbox("Loop", &sLoop);
+    ImGui::SliderFloat(TranslationLabel("editor.audiomanager.volume"), &sVolume, 0.0f, 1.0f);
+    ImGui::SliderFloat(TranslationLabel("editor.audiomanager.pitch_semitones"), &sPitch, -24.0f, 24.0f);
+    ImGui::Checkbox(TranslationLabel("editor.audiomanager.loop"), &sLoop);
     ImGui::Separator();
 
     if (ImGui::BeginTable("##SoundList", 7,
@@ -1083,15 +1232,15 @@ void AudioManager::ShowImGuiLoadedSoundsWindow() {
             ImGui::TextUnformatted(e.assetPath.c_str());
 
             ImGui::TableSetColumnIndex(3);
-            ImGui::Text("%uch %uHz %ubit", e.channels, e.samplesPerSec, e.bitsPerSample);
+            ImGui::Text(TranslationC("editor.audiomanager.uch_uhz_ubit"), e.channels, e.samplesPerSec, e.bitsPerSample);
 
             ImGui::TableSetColumnIndex(4);
-            ImGui::Text("%ums", e.durationMs);
+            ImGui::Text(TranslationC("editor.audiomanager.ums"), e.durationMs);
 
             ImGui::TableSetColumnIndex(5);
             ImGui::PushID(static_cast<int>(e.handle));
             static PlayHandle sLastPlayHandle = kInvalidPlayHandle;
-            if (ImGui::Button("Play")) {
+            if (ImGui::Button(TranslationLabel("editor.audiomanager.play"))) {
                 sLastPlayHandle = Play(e.handle, sVolume, sPitch, sLoop);
             }
             ImGui::PopID();
@@ -1107,20 +1256,19 @@ void AudioManager::ShowImGuiLoadedSoundsWindow() {
 }
 
 void AudioManager::ShowImGuiPlayingSoundsWindow() {
-    ImGui::Begin("AudioManager - Playing Sounds");
+    ImGui::Begin(TranslationLabel("editor.audiomanager.playing.window"));
 
     const auto entries = GetImGuiPlayingListEntries();
-    ImGui::Text("Active Plays: %d", static_cast<int>(entries.size()));
+    ImGui::Text(TranslationC("editor.audiomanager.active_plays_d"), static_cast<int>(entries.size()));
 
     static ImGuiTextFilter filter;
     filter.Draw("Filter");
 
     ImGui::Separator();
 
-    if (ImGui::BeginTable("##PlayingList", 9,
+    if (ImGui::BeginTable("##PlayingList", 8,
             ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY,
             ImVec2(0, 300))) {
-        ImGui::TableSetupColumn("Select", ImGuiTableColumnFlags_WidthFixed, 70);
         ImGui::TableSetupColumn("PlayHandle", ImGuiTableColumnFlags_WidthFixed, 90);
         ImGui::TableSetupColumn("SoundHandle", ImGuiTableColumnFlags_WidthFixed, 90);
         ImGui::TableSetupColumn("FileName");
@@ -1141,47 +1289,40 @@ void AudioManager::ShowImGuiPlayingSoundsWindow() {
             ImGui::TableNextRow();
 
             ImGui::TableSetColumnIndex(0);
-            ImGui::PushID(static_cast<int>(e.playHandle));
-            if (ImGui::Button("Select")) {
-                sSelectedPlayHandle = e.playHandle;
-            }
-            ImGui::PopID();
-
-            ImGui::TableSetColumnIndex(1);
             ImGui::Text("%u", e.playHandle);
 
-            ImGui::TableSetColumnIndex(2);
+            ImGui::TableSetColumnIndex(1);
             ImGui::Text("%u", e.soundHandle);
 
-            ImGui::TableSetColumnIndex(3);
+            ImGui::TableSetColumnIndex(2);
             ImGui::TextUnformatted(e.fileName.c_str());
 
-            ImGui::TableSetColumnIndex(4);
+            ImGui::TableSetColumnIndex(3);
             ImGui::TextUnformatted(e.assetPath.c_str());
 
-            ImGui::TableSetColumnIndex(5);
+            ImGui::TableSetColumnIndex(4);
             if (e.isPaused) {
-                ImGui::TextUnformatted("Paused");
+                ImGui::TextUnformatted(TranslationC("editor.audiomanager.paused"));
             } else if (e.isPlaying) {
-                ImGui::TextUnformatted("Playing");
+                ImGui::TextUnformatted(TranslationC("editor.audiomanager.playing"));
             } else {
-                ImGui::TextUnformatted("Ended");
+                ImGui::TextUnformatted(TranslationC("editor.audiomanager.ended"));
             }
 
             ImGui::PushID(static_cast<int>(e.playHandle));
 
-            ImGui::TableSetColumnIndex(6);
-            if (ImGui::Button("Stop")) {
+            ImGui::TableSetColumnIndex(5);
+            if (ImGui::Button(TranslationLabel("editor.audiomanager.stop"))) {
                 Stop(e.playHandle);
             }
 
-            ImGui::TableSetColumnIndex(7);
-            if (ImGui::Button("Pause")) {
+            ImGui::TableSetColumnIndex(6);
+            if (ImGui::Button(TranslationLabel("editor.audiomanager.pause"))) {
                 Pause(e.playHandle);
             }
 
-            ImGui::TableSetColumnIndex(8);
-            if (ImGui::Button("Resume")) {
+            ImGui::TableSetColumnIndex(7);
+            if (ImGui::Button(TranslationLabel("editor.audiomanager.resume"))) {
                 Resume(e.playHandle);
             }
 
@@ -1189,265 +1330,6 @@ void AudioManager::ShowImGuiPlayingSoundsWindow() {
         }
 
         ImGui::EndTable();
-    }
-
-    ImGui::End();
-}
-#endif
-
-#if defined(USE_IMGUI)
-void AudioManager::ShowImGuiEffectWindow() {
-    ImGui::Begin("AudioManager - Effects");
-
-    if (sSelectedPlayHandle == kInvalidPlayHandle) {
-        ImGui::TextUnformatted("No play selected. Select a play in 'Playing Sounds' window.");
-        ImGui::End();
-        return;
-    }
-
-    size_t idx = static_cast<size_t>(-1);
-    if (!TryGetPlayIndex(sSelectedPlayHandle, idx) || idx >= sPlays.size() || !sPlays[idx]) {
-        ImGui::TextUnformatted("Selected play is not available.");
-        if (ImGui::Button("Clear Selection")) {
-            sSelectedPlayHandle = kInvalidPlayHandle;
-        }
-        ImGui::End();
-        return;
-    }
-
-    PlayEntry& p = *sPlays[idx];
-
-    ImGui::Text("Play: %u  Sound: %u", sSelectedPlayHandle, p.sound);
-    const char* items[] = { "Reverb", "EQ", "Echo" };
-    static int currentEffect = 0;
-    ImGui::Combo("Effect", &currentEffect, items, IM_ARRAYSIZE(items));
-
-    // Enabled toggle
-    if (currentEffect == 0) {
-        bool enabled = p.reverbEnabled;
-        if (ImGui::Checkbox("Enabled", &enabled)) {
-            EnableReverb(sSelectedPlayHandle, enabled);
-        }
-    } else if (currentEffect == 1) {
-        bool enabled = p.eqEnabled;
-        if (ImGui::Checkbox("Enabled", &enabled)) {
-            EnableEq(sSelectedPlayHandle, enabled);
-        }
-    } else if (currentEffect == 2) {
-        bool enabled = p.echoEnabled;
-        if (ImGui::Checkbox("Enabled", &enabled)) {
-            EnableEcho(sSelectedPlayHandle, enabled);
-        }
-    }
-
-    ImGui::Separator();
-
-    // Generic parameter editor: treat parameter structs as float arrays and allow editing first few floats.
-    // Use typed persistent edit copies per-play so UI widgets map to real member names and persist across frames.
-    struct ReverbEdit {
-        float WetDryMix;
-        int ReflectionsDelay;
-        int ReverbDelay;
-        int RearDelay;
-        int PositionLeft;
-        int PositionRight;
-        int PositionMatrixLeft;
-        int PositionMatrixRight;
-        int EarlyDiffusion;
-        int LateDiffusion;
-        int LowEQGain;
-        int LowEQCutoff;
-        int HighEQGain;
-        int HighEQCutoff;
-        float RoomFilterFreq;
-        float RoomFilterMain;
-        float RoomFilterHF;
-        float ReflectionsGain;
-        float ReverbGain;
-        float DecayTime;
-        float Density;
-        float RoomSize;
-        bool DisableLateField;
-    };
-
-    struct EqEdit {
-        float FrequencyCenter0; float Gain0; float Bandwidth0;
-        float FrequencyCenter1; float Gain1; float Bandwidth1;
-        float FrequencyCenter2; float Gain2; float Bandwidth2;
-        float FrequencyCenter3; float Gain3; float Bandwidth3;
-    };
-
-    struct EchoEdit {
-        float WetDryMix;
-        float Feedback;
-        float Delay;
-    };
-
-    static std::unordered_map<PlayHandle, ReverbEdit> sReverbEdits;
-    static std::unordered_map<PlayHandle, EqEdit> sEqEdits;
-    static std::unordered_map<PlayHandle, EchoEdit> sEchoEdits;
-
-    if (currentEffect == 0) {
-        // Ensure edit exists
-        auto it = sReverbEdits.find(sSelectedPlayHandle);
-        if (it == sReverbEdits.end()) {
-            ReverbEdit ed{};
-            ed.WetDryMix = p.reverbParams.WetDryMix;
-            ed.ReflectionsDelay = static_cast<int>(p.reverbParams.ReflectionsDelay);
-            ed.ReverbDelay = static_cast<int>(p.reverbParams.ReverbDelay);
-            ed.RearDelay = static_cast<int>(p.reverbParams.RearDelay);
-#if defined(XAUDIO2FX_REVERB_MIN_7POINT1_SIDE_DELAY)
-            // SideDelay exists on newer SDKs
-            // We'll ignore SideDelay here (not exposed)
-#endif
-            ed.PositionLeft = static_cast<int>(p.reverbParams.PositionLeft);
-            ed.PositionRight = static_cast<int>(p.reverbParams.PositionRight);
-            ed.PositionMatrixLeft = static_cast<int>(p.reverbParams.PositionMatrixLeft);
-            ed.PositionMatrixRight = static_cast<int>(p.reverbParams.PositionMatrixRight);
-            ed.EarlyDiffusion = static_cast<int>(p.reverbParams.EarlyDiffusion);
-            ed.LateDiffusion = static_cast<int>(p.reverbParams.LateDiffusion);
-            ed.LowEQGain = static_cast<int>(p.reverbParams.LowEQGain);
-            ed.LowEQCutoff = static_cast<int>(p.reverbParams.LowEQCutoff);
-            ed.HighEQGain = static_cast<int>(p.reverbParams.HighEQGain);
-            ed.HighEQCutoff = static_cast<int>(p.reverbParams.HighEQCutoff);
-            ed.RoomFilterFreq = p.reverbParams.RoomFilterFreq;
-            ed.RoomFilterMain = p.reverbParams.RoomFilterMain;
-            ed.RoomFilterHF = p.reverbParams.RoomFilterHF;
-            ed.ReflectionsGain = p.reverbParams.ReflectionsGain;
-            ed.ReverbGain = p.reverbParams.ReverbGain;
-            ed.DecayTime = p.reverbParams.DecayTime;
-            ed.Density = p.reverbParams.Density;
-            ed.RoomSize = p.reverbParams.RoomSize;
-            ed.DisableLateField = (p.reverbParams.DisableLateField != FALSE);
-            it = sReverbEdits.emplace(sSelectedPlayHandle, std::move(ed)).first;
-        }
-
-        ReverbEdit& ed = it->second;
-
-        ImGui::DragFloat("WetDryMix", &ed.WetDryMix, 0.1f, 0.0f, 100.0f);
-        ImGui::DragInt("ReflectionsDelay (ms)", &ed.ReflectionsDelay, 1, 0, 300);
-        ImGui::DragInt("ReverbDelay (ms)", &ed.ReverbDelay, 1, 0, 85);
-        ImGui::DragInt("RearDelay (ms)", &ed.RearDelay, 1, 0, 20);
-        ImGui::DragInt("PositionLeft", &ed.PositionLeft, 1, 0, 30);
-        ImGui::DragInt("PositionRight", &ed.PositionRight, 1, 0, 30);
-        ImGui::DragInt("PositionMatrixLeft", &ed.PositionMatrixLeft, 1, 0, 30);
-        ImGui::DragInt("PositionMatrixRight", &ed.PositionMatrixRight, 1, 0, 30);
-        ImGui::DragInt("EarlyDiffusion", &ed.EarlyDiffusion, 1, 0, 15);
-        ImGui::DragInt("LateDiffusion", &ed.LateDiffusion, 1, 0, 15);
-        ImGui::DragInt("LowEQGain", &ed.LowEQGain, 1, 0, 12);
-        ImGui::DragInt("LowEQCutoff", &ed.LowEQCutoff, 1, 0, 9);
-        ImGui::DragInt("HighEQGain", &ed.HighEQGain, 1, 0, 8);
-        ImGui::DragInt("HighEQCutoff", &ed.HighEQCutoff, 1, 0, 14);
-        ImGui::DragFloat("RoomFilterFreq", &ed.RoomFilterFreq, 1.0f, 20.0f, 20000.0f);
-        ImGui::DragFloat("RoomFilterMain (dB)", &ed.RoomFilterMain, 0.1f, -100.0f, 0.0f);
-        ImGui::DragFloat("RoomFilterHF (dB)", &ed.RoomFilterHF, 0.1f, -100.0f, 0.0f);
-        ImGui::DragFloat("ReflectionsGain (dB)", &ed.ReflectionsGain, 0.1f, -100.0f, 20.0f);
-        ImGui::DragFloat("ReverbGain (dB)", &ed.ReverbGain, 0.1f, -100.0f, 20.0f);
-        ImGui::DragFloat("DecayTime (s)", &ed.DecayTime, 0.01f, 0.1f, 10.0f);
-        ImGui::DragFloat("Density", &ed.Density, 0.1f, 0.0f, 100.0f);
-        ImGui::DragFloat("RoomSize (ft)", &ed.RoomSize, 0.1f, 1.0f, 100.0f);
-        ImGui::Checkbox("DisableLateField", &ed.DisableLateField);
-
-        if (ImGui::Button("Apply")) {
-            XAUDIO2FX_REVERB_PARAMETERS newParams = p.reverbParams;
-            newParams.WetDryMix = ed.WetDryMix;
-            newParams.ReflectionsDelay = static_cast<UINT32>(std::clamp(ed.ReflectionsDelay, 0, 300));
-            newParams.ReverbDelay = static_cast<BYTE>(std::clamp(ed.ReverbDelay, 0, 85));
-            newParams.RearDelay = static_cast<BYTE>(std::clamp(ed.RearDelay, 0, 20));
-            newParams.PositionLeft = static_cast<BYTE>(std::clamp(ed.PositionLeft, 0, 30));
-            newParams.PositionRight = static_cast<BYTE>(std::clamp(ed.PositionRight, 0, 30));
-            newParams.PositionMatrixLeft = static_cast<BYTE>(std::clamp(ed.PositionMatrixLeft, 0, 30));
-            newParams.PositionMatrixRight = static_cast<BYTE>(std::clamp(ed.PositionMatrixRight, 0, 30));
-            newParams.EarlyDiffusion = static_cast<BYTE>(std::clamp(ed.EarlyDiffusion, 0, 15));
-            newParams.LateDiffusion = static_cast<BYTE>(std::clamp(ed.LateDiffusion, 0, 15));
-            newParams.LowEQGain = static_cast<BYTE>(std::clamp(ed.LowEQGain, 0, 12));
-            newParams.LowEQCutoff = static_cast<BYTE>(std::clamp(ed.LowEQCutoff, 0, 9));
-            newParams.HighEQGain = static_cast<BYTE>(std::clamp(ed.HighEQGain, 0, 8));
-            newParams.HighEQCutoff = static_cast<BYTE>(std::clamp(ed.HighEQCutoff, 0, 14));
-            newParams.RoomFilterFreq = ed.RoomFilterFreq;
-            newParams.RoomFilterMain = ed.RoomFilterMain;
-            newParams.RoomFilterHF = ed.RoomFilterHF;
-            newParams.ReflectionsGain = ed.ReflectionsGain;
-            newParams.ReverbGain = ed.ReverbGain;
-            newParams.DecayTime = ed.DecayTime;
-            newParams.Density = ed.Density;
-            newParams.RoomSize = ed.RoomSize;
-            newParams.DisableLateField = ed.DisableLateField ? TRUE : FALSE;
-
-            SetReverbParameters(sSelectedPlayHandle, newParams);
-        }
-
-    } else if (currentEffect == 1) {
-        auto it = sEqEdits.find(sSelectedPlayHandle);
-        if (it == sEqEdits.end()) {
-            EqEdit ed{};
-            ed.FrequencyCenter0 = p.eqParams.FrequencyCenter0;
-            ed.Gain0 = p.eqParams.Gain0;
-            ed.Bandwidth0 = p.eqParams.Bandwidth0;
-            ed.FrequencyCenter1 = p.eqParams.FrequencyCenter1;
-            ed.Gain1 = p.eqParams.Gain1;
-            ed.Bandwidth1 = p.eqParams.Bandwidth1;
-            ed.FrequencyCenter2 = p.eqParams.FrequencyCenter2;
-            ed.Gain2 = p.eqParams.Gain2;
-            ed.Bandwidth2 = p.eqParams.Bandwidth2;
-            ed.FrequencyCenter3 = p.eqParams.FrequencyCenter3;
-            ed.Gain3 = p.eqParams.Gain3;
-            ed.Bandwidth3 = p.eqParams.Bandwidth3;
-            it = sEqEdits.emplace(sSelectedPlayHandle, std::move(ed)).first;
-        }
-
-        EqEdit& ed = it->second;
-        ImGui::DragFloat("FrequencyCenter0 (Hz)", &ed.FrequencyCenter0, 1.0f, 20.0f, 20000.0f);
-        ImGui::DragFloat("Gain0", &ed.Gain0, 0.01f, FXEQ_MIN_GAIN, FXEQ_MAX_GAIN);
-        ImGui::DragFloat("Bandwidth0", &ed.Bandwidth0, 0.01f, FXEQ_MIN_BANDWIDTH, FXEQ_MAX_BANDWIDTH);
-        ImGui::Separator();
-        ImGui::DragFloat("FrequencyCenter1 (Hz)", &ed.FrequencyCenter1, 1.0f, 20.0f, 20000.0f);
-        ImGui::DragFloat("Gain1", &ed.Gain1, 0.01f, FXEQ_MIN_GAIN, FXEQ_MAX_GAIN);
-        ImGui::DragFloat("Bandwidth1", &ed.Bandwidth1, 0.01f, FXEQ_MIN_BANDWIDTH, FXEQ_MAX_BANDWIDTH);
-        ImGui::Separator();
-        ImGui::DragFloat("FrequencyCenter2 (Hz)", &ed.FrequencyCenter2, 1.0f, 20.0f, 20000.0f);
-        ImGui::DragFloat("Gain2", &ed.Gain2, 0.01f, FXEQ_MIN_GAIN, FXEQ_MAX_GAIN);
-        ImGui::DragFloat("Bandwidth2", &ed.Bandwidth2, 0.01f, FXEQ_MIN_BANDWIDTH, FXEQ_MAX_BANDWIDTH);
-        ImGui::Separator();
-        ImGui::DragFloat("FrequencyCenter3 (Hz)", &ed.FrequencyCenter3, 1.0f, 20.0f, 20000.0f);
-        ImGui::DragFloat("Gain3", &ed.Gain3, 0.01f, FXEQ_MIN_GAIN, FXEQ_MAX_GAIN);
-        ImGui::DragFloat("Bandwidth3", &ed.Bandwidth3, 0.01f, FXEQ_MIN_BANDWIDTH, FXEQ_MAX_BANDWIDTH);
-
-        if (ImGui::Button("Apply")) {
-            FXEQ_PARAMETERS newParams;
-            newParams.FrequencyCenter0 = ed.FrequencyCenter0; newParams.Gain0 = ed.Gain0; newParams.Bandwidth0 = ed.Bandwidth0;
-            newParams.FrequencyCenter1 = ed.FrequencyCenter1; newParams.Gain1 = ed.Gain1; newParams.Bandwidth1 = ed.Bandwidth1;
-            newParams.FrequencyCenter2 = ed.FrequencyCenter2; newParams.Gain2 = ed.Gain2; newParams.Bandwidth2 = ed.Bandwidth2;
-            newParams.FrequencyCenter3 = ed.FrequencyCenter3; newParams.Gain3 = ed.Gain3; newParams.Bandwidth3 = ed.Bandwidth3;
-            SetEqParameters(sSelectedPlayHandle, newParams);
-        }
-
-    } else if (currentEffect == 2) {
-        auto it = sEchoEdits.find(sSelectedPlayHandle);
-        if (it == sEchoEdits.end()) {
-            EchoEdit ed{};
-            ed.WetDryMix = p.echoParams.WetDryMix;
-            ed.Feedback = p.echoParams.Feedback;
-            ed.Delay = p.echoParams.Delay;
-            it = sEchoEdits.emplace(sSelectedPlayHandle, std::move(ed)).first;
-        }
-
-        EchoEdit& ed = it->second;
-        ImGui::DragFloat("WetDryMix", &ed.WetDryMix, 0.01f, FXECHO_MIN_WETDRYMIX, FXECHO_MAX_WETDRYMIX);
-        ImGui::DragFloat("Feedback", &ed.Feedback, 0.01f, FXECHO_MIN_FEEDBACK, FXECHO_MAX_FEEDBACK);
-        ImGui::DragFloat("Delay (ms)", &ed.Delay, 1.0f, FXECHO_MIN_DELAY, FXECHO_MAX_DELAY);
-
-        if (ImGui::Button("Apply")) {
-            FXECHO_PARAMETERS newParams;
-            newParams.WetDryMix = ed.WetDryMix;
-            newParams.Feedback = ed.Feedback;
-            newParams.Delay = ed.Delay;
-            SetEchoParameters(sSelectedPlayHandle, newParams);
-        }
-    }
-
-    if (ImGui::Button("Clear Selection")) {
-        sSelectedPlayHandle = kInvalidPlayHandle;
     }
 
     ImGui::End();

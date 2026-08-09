@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShadowMapObject | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_ShadowMapObject">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>ShadowMapObject</h1>
+<p class="page-lead">シャドウマップ専用のバッファ（<code>ShadowMapBuffer</code>）を1枚所有し、描画先として扱えるようにするコンポーネントです。UIは<a href="ScreenBufferObject.html">ScreenBufferObject</a>とよく似ていますが、画像ファイル保存機能はありません。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a>および<a href="../../../Engine/11_Window.html">Engine/11_Window.html</a>を参照してください。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Name</td><td>テキスト入力欄（Enterキーで確定）</td><td>TextureManagerへの登録名。Enterキーを押すまでは値が確定しない（<code>ImGuiInputTextFlags_EnterReturnsTrue</code>）</td></tr>
+<tr><td>Width</td><td>整数のドラッグ入力欄</td><td>バッファの幅（既定2048、下限1にクランプ）。変更すると生成済みバッファが実際にリサイズされる</td></tr>
+<tr><td>Height</td><td>整数のドラッグ入力欄</td><td>バッファの高さ（既定2048、下限1にクランプ）</td></tr>
+<tr><td>Open Viewer / Close Viewer</td><td>トグルボタン</td><td>押すたびに開閉する、バッファの内容を確認できる別のImGuiウィンドウ（"ShadowMapBuffer Viewer: 名前"）の表示状態を切り替える。SRVが未準備の間は「SRV not ready.」と表示される</td></tr>
+</table>
+
+<div class="warn"><strong>ScreenBufferObjectと違い「Save to File」機能は無い</strong><br><a href="ScreenBufferObject.html">ScreenBufferObject</a>にある画像保存関連の項目（Directory/File Name Prefix/Format/Save Screenshot）はShadowMapObjectには存在しない。</div>
+<div class="tip"><strong>Viewerはポーズ中も表示され続ける</strong><br>ScreenBufferObjectと同様、Viewerウィンドウは<code>ShowPersistentImGui()</code>経由で表示されるため、Inspectorが閉じていてもゲームがポーズ中でも表示され続ける。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path"><span>Add Component</span><i>›</i><span>Render</span><i>›</i><span>RenderTarget</span><i>›</i><span>ShadowMapObject</span></span> から追加する。同一オブジェクトに複数付与可能。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="ScreenBufferObject.html">Components/Render/ScreenBufferObject.html</a> — 汎用オフスクリーンバッファ版（画像保存機能あり）</li>
+<li><a href="Light.html">Components/Render/Light.html</a> — Cast Shadowsを有効にしたライトがシャドウマップ生成のトリガーとなる</li>
+<li><a href="../../../Engine/11_Window.html">Engine/11_Window.html</a> — <code>ShadowMapBuffer</code>クラス、IRenderTargetインターフェースのAPI</li>
+<li><a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a> — 描画先の指定の仕組み</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Object Inspectorの基本操作</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,578 @@
+#pragma once
+#ifdef USE_IMGUI
+#include <imgui.h>
+#include <imgui_stdlib.h>
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <any>
+#include <typeinfo>
+#include <utility>
+#include <optional>
+#include "Math/Vector2.h"
+#include "Math/Vector3.h"
+#include "Math/Vector4.h"
+#include "Math/Matrix3x3.h"
+#include "Math/Matrix4x4.h"
+#include "Math/Quaternion.h"
+#include "Math/Color.h"
+#include "Assets/TextureRef.h"
+#include "Assets/TextureCubeRef.h"
+#include "Assets/TextureManager.h"
+#include "Utilities/AssetDragDropPayload.h"
+#include "Utilities/MyAny.h"
+#include "Utilities/Translation.h"
+
+namespace ImGuiCustom {
+
+// ==========================================
+// 1. 共通オプション構造体 ＆ 前方宣言
+// ==========================================
+
+struct UiOptions {
+    bool asSlider = false;         // true: Slider系を使用 / false: Drag系を使用
+    float vSpeed = 1.0f;           // Drag時の変化速度
+    float vMin = 0.0f;             // 最小値 (0.0fのままなら型ごとのデフォルトを適用)
+    float vMax = 0.0f;             // 最大値 (0.0fのままなら型ごとのデフォルトを適用)
+    const char *format = nullptr;  // フォーマット (nullptrなら型ごとのデフォルト)
+    int flags = 0;                 // ImGuiSliderFlags や ImGuiInputTextFlags 等の兼用フラグ
+};
+
+namespace detail {
+template <typename T>
+inline std::string ToString(const T &val) {
+    if constexpr (std::is_same_v<T, std::string>) {
+        return val;
+    } else if constexpr (std::is_same_v<T, const char *>) {
+        return std::string(val);
+    } else {
+        return std::to_string(val);
+    }
+}
+}
+
+// ==========================================
+// 1-2. 文字列の選択コンボ
+// ==========================================
+
+/// @brief 文字列を候補リストから選択するコンボボックス
+/// @param label ラベル
+/// @param value 現在値（変更時に上書きされる）
+/// @param items 候補リスト
+/// @param allowNone 先頭に「(None)」を表示して空文字を選択可能にする
+/// @return 値が変更された場合は true
+inline bool SelectString(const char *label, std::string &value, const std::vector<std::string> &items, bool allowNone = false) {
+    bool changed = false;
+    const char *preview = value.empty() ? "(None)" : value.c_str();
+    if (ImGui::BeginCombo(label, preview)) {
+        if (allowNone) {
+            const bool selected = value.empty();
+            if (ImGui::Selectable(KashipanEngine::TranslationLabel("editor.imguicustom.none"), selected) && !selected) {
+                value.clear();
+                changed = true;
+            }
+        }
+        for (const auto &item : items) {
+            const bool selected = (item == value);
+            if (ImGui::Selectable(item.c_str(), selected) && !selected) {
+                value = item;
+                changed = true;
+            }
+            if (selected) ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+    return changed;
+}
+
+// ==========================================
+// 2. EditValue 拡張関数群 (編集用)
+// ==========================================
+
+// --- 2-1. 基礎型 ---
+inline bool EditValue(const char *label, bool &value, const UiOptions &opts = {}) {
+    (void)opts; // boolではオプションは無視
+    return ImGui::Checkbox(label, &value);
+}
+
+inline bool EditValue(const char *label, int &value, const UiOptions &opts = {}) {
+    if (opts.asSlider) {
+        int minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0 : static_cast<int>(opts.vMin);
+        int maxVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 100 : static_cast<int>(opts.vMax);
+        const char *fmt = opts.format ? opts.format : "%d";
+        return ImGui::SliderInt(label, &value, minVal, maxVal, fmt, opts.flags);
+    } else {
+        const char *fmt = opts.format ? opts.format : "%d";
+        return ImGui::DragInt(label, &value, opts.vSpeed, static_cast<int>(opts.vMin), static_cast<int>(opts.vMax), fmt, opts.flags);
+    }
+}
+
+inline bool EditValue(const char *label, float &value, const UiOptions &opts = {}) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    if (opts.asSlider) {
+        float minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0f : opts.vMin;
+        float maxVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 1.0f : opts.vMax;
+        return ImGui::SliderFloat(label, &value, minVal, maxVal, fmt, opts.flags);
+    } else {
+        return ImGui::DragFloat(label, &value, opts.vSpeed, opts.vMin, opts.vMax, fmt, opts.flags);
+    }
+}
+
+inline bool EditValue(const char *label, double &value, const UiOptions &opts = {}) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    if (opts.asSlider) {
+        double minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0 : static_cast<double>(opts.vMin);
+        double maxVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 1.0 : static_cast<double>(opts.vMax);
+        return ImGui::SliderScalar(label, ImGuiDataType_Double, &value, &minVal, &maxVal, fmt, opts.flags);
+    } else {
+        double minVal = static_cast<double>(opts.vMin);
+        double maxVal = static_cast<double>(opts.vMax);
+        return ImGui::DragScalar(label, ImGuiDataType_Double, &value, opts.vSpeed, &minVal, &maxVal, fmt, opts.flags);
+    }
+}
+
+inline bool EditValue(const char *label, std::string &value, const UiOptions &opts = {}) {
+    return ImGui::InputText(label, &value, opts.flags);
+}
+
+// --- 2-2. カスタム数学型 ---
+inline bool EditValue(const char *label, Vector2 &value, const UiOptions &opts = {}) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    if (opts.asSlider) {
+        float minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0f : opts.vMin;
+        float maxVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 1.0f : opts.vMax;
+        return ImGui::SliderFloat2(label, &value.x, minVal, maxVal, fmt, opts.flags);
+    } else {
+        return ImGui::DragFloat2(label, &value.x, opts.vSpeed, opts.vMin, opts.vMax, fmt, opts.flags);
+    }
+}
+
+inline bool EditValue(const char *label, Vector3 &value, const UiOptions &opts = {}) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    if (opts.asSlider) {
+        float minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0f : opts.vMin;
+        float maxVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 1.0f : opts.vMax;
+        return ImGui::SliderFloat3(label, &value.x, minVal, maxVal, fmt, opts.flags);
+    } else {
+        return ImGui::DragFloat3(label, &value.x, opts.vSpeed, opts.vMin, opts.vMax, fmt, opts.flags);
+    }
+}
+
+inline bool EditValue(const char *label, Vector4 &value, const UiOptions &opts = {}) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    if (opts.asSlider) {
+        float minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0f : opts.vMin;
+        float maxVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 1.0f : opts.vMax;
+        return ImGui::SliderFloat4(label, &value.x, minVal, maxVal, fmt, opts.flags);
+    } else {
+        return ImGui::DragFloat4(label, &value.x, opts.vSpeed, opts.vMin, opts.vMax, fmt, opts.flags);
+    }
+}
+
+/// @brief 色編集用（内部データはVector4と同じr,g,b,a）。opts（step/range）はColorEdit4には適用されない
+inline bool EditValue(const char *label, Color &value, const UiOptions &opts = {}) {
+    (void)opts;
+    return ImGui::ColorEdit4(label, &value.r);
+}
+
+/// @brief テクスチャ参照編集用。読み込み済みテクスチャからの選択とAssetsウィンドウからのD&Dの両方を受け付ける
+///        （MaterialManagerの固定テクスチャスロット選択欄と同じ操作感）。optsは使用しない
+inline bool EditValue(const char *label, TextureRef &value, const UiOptions &opts = {}) {
+    (void)opts;
+    bool changed = false;
+    std::vector<std::string> texturePaths;
+    for (const auto &entry : KashipanEngine::TextureManager::GetLoadedTextureListEntries()) {
+        texturePaths.push_back(entry.assetPath);
+    }
+    if (SelectString(label, value.assetPath, texturePaths, true)) {
+        changed = true;
+    }
+    if (std::string droppedPath; KashipanEngine::AcceptAssetDragDropTarget(KashipanEngine::kTextureAssetDragDropType, droppedPath)) {
+        value.assetPath = droppedPath;
+        changed = true;
+    }
+    return changed;
+}
+
+/// @brief キューブマップ参照編集用。EditValue(TextureRef&)と同じ操作感だが、候補を
+///        isCubemapなテクスチャのみに絞り込み、平面画像を誤って選べないようにする
+///        （ドラッグ&ドロップも同様にキューブマップ以外は無視する）
+inline bool EditValue(const char *label, TextureCubeRef &value, const UiOptions &opts = {}) {
+    (void)opts;
+    bool changed = false;
+    std::vector<std::string> texturePaths;
+    for (const auto &entry : KashipanEngine::TextureManager::GetLoadedTextureListEntries()) {
+        if (entry.isCubemap) texturePaths.push_back(entry.assetPath);
+    }
+    if (SelectString(label, value.assetPath, texturePaths, true)) {
+        changed = true;
+    }
+    if (std::string droppedPath; KashipanEngine::AcceptAssetDragDropTarget(KashipanEngine::kTextureAssetDragDropType, droppedPath)) {
+        bool droppedIsCubemap = false;
+        for (const auto &entry : KashipanEngine::TextureManager::GetLoadedTextureListEntries()) {
+            if (entry.assetPath == droppedPath) { droppedIsCubemap = entry.isCubemap; break; }
+        }
+        if (droppedIsCubemap) {
+            value.assetPath = droppedPath;
+            changed = true;
+        }
+    }
+    return changed;
+}
+
+inline bool EditValue(const char *label, Quaternion &value, const UiOptions &opts = {}) {
+    std::string q_label = std::string(label) + " (X,Y,Z,W)";
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    if (opts.asSlider) {
+        float minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0f : opts.vMin;
+        float maxVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 1.0f : opts.vMax;
+        return ImGui::SliderFloat4(q_label.c_str(), &value.x, minVal, maxVal, fmt, opts.flags);
+    } else {
+        return ImGui::DragFloat4(q_label.c_str(), &value.x, opts.vSpeed, opts.vMin, opts.vMax, fmt, opts.flags);
+    }
+}
+
+inline bool EditValue(const char *label, Matrix3x3 &value, const UiOptions &opts = {}) {
+    bool changed = false;
+    ImGui::Text(KashipanEngine::TranslationC("editor.imguicustom.desc_1"), label, opts.asSlider ? " (Slider)" : "");
+    ImGui::Indent();
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    for (int i = 0; i < 3; ++i) {
+        ImGui::PushID(i);
+        std::string row_label = "[" + std::to_string(i) + "]";
+        if (opts.asSlider) {
+            float minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0f : opts.vMin;
+            float maxVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 1.0f : opts.vMax;
+            if (ImGui::SliderFloat3(row_label.c_str(), value.m[i], minVal, maxVal, fmt, opts.flags)) { changed = true; }
+        } else {
+            if (ImGui::DragFloat3(row_label.c_str(), value.m[i], opts.vSpeed, opts.vMin, opts.vMax, fmt, opts.flags)) { changed = true; }
+        }
+        ImGui::PopID();
+    }
+    ImGui::Unindent();
+    return changed;
+}
+
+inline bool EditValue(const char *label, Matrix4x4 &value, const UiOptions &opts = {}) {
+    bool changed = false;
+    ImGui::Text(KashipanEngine::TranslationC("editor.imguicustom.desc_2"), label, opts.asSlider ? " (Slider)" : "");
+    ImGui::Indent();
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    for (int i = 0; i < 4; ++i) {
+        ImGui::PushID(i);
+        std::string row_label = "[" + std::to_string(i) + "]";
+        if (opts.asSlider) {
+            float minVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 0.0f : opts.vMin;
+            float maxVal = (opts.vMin == 0.0f && opts.vMax == 0.0f) ? 1.0f : opts.vMax;
+            if (ImGui::SliderFloat4(row_label.c_str(), value.m[i], minVal, maxVal, fmt, opts.flags)) { changed = true; }
+        } else {
+            if (ImGui::DragFloat4(row_label.c_str(), value.m[i], opts.vSpeed, opts.vMin, opts.vMax, fmt, opts.flags)) { changed = true; }
+        }
+        ImGui::PopID();
+    }
+    ImGui::Unindent();
+    return changed;
+}
+
+// --- 2-3. コンテナ型 (テンプレート・再帰処理) ---
+template <typename T>
+bool EditValue(const char *label, std::vector<T> &vec, const UiOptions &opts = {}) {
+    bool changed = false;
+    std::string node_name = std::string(label) + " [" + std::to_string(vec.size()) + " items]";
+
+    if (ImGui::TreeNode(node_name.c_str())) {
+        auto insertIt = vec.end();
+        auto eraseIt = vec.end();
+        for (size_t i = 0; i < vec.size(); ++i) {
+            ImGui::PushID(static_cast<int>(i));
+            if (ImGui::Button("+")) { insertIt = vec.begin() + i; }
+            ImGui::SameLine();
+            if (ImGui::Button("-")) { eraseIt = vec.begin() + i; }
+            ImGui::SameLine();
+            std::string item_label = "[" + std::to_string(i) + "]";
+            if (EditValue(item_label.c_str(), vec[i], opts)) { changed = true; }
+            ImGui::PopID();
+        }
+        if (insertIt != vec.end()) { vec.insert(insertIt, T{}); changed = true; }
+        if (eraseIt != vec.end()) { vec.erase(eraseIt); changed = true; }
+        if (ImGui::Button("+")) { vec.emplace_back(); changed = true; }
+        ImGui::TreePop();
+    }
+    return changed;
+}
+
+template <typename K, typename V>
+bool EditValue(const char *label, std::unordered_map<K, V> &map, const UiOptions &opts = {}) {
+    bool changed = false;
+    std::string node_name = std::string(label) + " [" + std::to_string(map.size()) + " pairs]";
+
+    if (ImGui::TreeNode(node_name.c_str())) {
+        int id = 0;
+        std::optional<std::pair<K, K>> pending_rename = std::nullopt;
+        std::optional<K> pending_erase = std::nullopt;
+
+        for (auto &kv : map) {
+            ImGui::PushID(id++);
+            if (ImGui::Button("-", ImVec2(20, 0))) { pending_erase = kv.first; }
+            ImGui::SameLine();
+
+            K temp_key = kv.first;
+            ImGui::SetNextItemWidth(100.0f);
+            if (EditValue("##key", temp_key)) {
+                if (temp_key != kv.first && map.find(temp_key) == map.end()) {
+                    pending_rename = { kv.first, temp_key };
+                }
+            }
+            ImGui::SameLine();
+            ImGui::Text("%s", KashipanEngine::TranslationC("editor.imguicustom.desc_3"));
+            ImGui::SameLine();
+
+            ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+            if (EditValue("##value", kv.second, opts)) { changed = true; }
+            ImGui::PopID();
+        }
+
+        if (pending_erase.has_value()) { map.erase(pending_erase.value()); changed = true; }
+        if (pending_rename.has_value()) {
+            auto node = map.extract(pending_rename->value().first);
+            node.key() = pending_rename->value().second;
+            map.insert(std::move(node));
+            changed = true;
+        }
+
+        ImGui::Separator();
+        static std::unordered_map<ImGuiID, K> new_key_buffers;
+        ImGuiID current_id = ImGui::GetID(label);
+        K &new_key_buffer = new_key_buffers[current_id];
+
+        if (ImGui::Button("+", ImVec2(20, 0))) {
+            if (map.find(new_key_buffer) == map.end()) {
+                map[new_key_buffer] = V{};
+                new_key_buffer = K{};
+                changed = true;
+            }
+        }
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(100.0f);
+        EditValue("##new_key", new_key_buffer);
+        ImGui::SameLine();
+        ImGui::TextDisabled("%s", KashipanEngine::TranslationC("editor.imguicustom.new_key"));
+
+        ImGui::TreePop();
+    }
+    return changed;
+}
+
+// --- 2-4. 動的型 (std::any) ---
+inline bool EditValue(const char *label, std::any &value, const UiOptions &opts = {}) {
+    if (!value.has_value()) { ImGui::Text(KashipanEngine::TranslationC("editor.imguicustom.s_empty"), label); return false; }
+
+    const auto &type = value.type();
+    bool changed = false;
+
+    if (type == typeid(int)) {
+        auto v = std::any_cast<int>(value);
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
+    } else if (type == typeid(float)) {
+        auto v = std::any_cast<float>(value);
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
+    } else if (type == typeid(double)) {
+        auto v = std::any_cast<double>(value);
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
+    } else if (type == typeid(bool)) {
+        auto v = std::any_cast<bool>(value);
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
+    } else if (type == typeid(std::string)) {
+        auto v = std::any_cast<std::string>(value);
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
+    } else if (type == typeid(Vector2)) {
+        auto v = std::any_cast<Vector2>(value);
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
+    } else if (type == typeid(Vector3)) {
+        auto v = std::any_cast<Vector3>(value);
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
+    } else if (type == typeid(Vector4)) {
+        auto v = std::any_cast<Vector4>(value);
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
+    } else if (type == typeid(Quaternion)) {
+        auto v = std::any_cast<Quaternion>(value);
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
+    } else if (type == typeid(Matrix3x3)) {
+        auto v = std::any_cast<Matrix3x3>(value);
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
+    } else if (type == typeid(Matrix4x4)) {
+        auto v = std::any_cast<Matrix4x4>(value);
+        if (EditValue(label, v, opts)) { value = v; changed = true; }
+    } else {
+        ImGui::Text(KashipanEngine::TranslationC("editor.imguicustom.s_unsupported_any_type_s"), label, type.name());
+    }
+    return changed;
+}
+
+// --- 2-5. 動的型 (MyAny) ---
+// SceneVariablesMenu（シーン変数）とMaterialManager（マテリアルの追加パラメータ）で共通利用する
+inline bool EditValue(const char *label, MyAny &value, const UiOptions &opts = {}) {
+    if (value.IsEmpty()) { ImGui::Text(KashipanEngine::TranslationC("editor.imguicustom.s_empty"), label); return false; }
+
+    switch (value.GetTypeInfo().GetBaseType()) {
+    case ValueType::Bool:
+        if (auto *v = value.AnyCastPtr<bool>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Int32:
+        if (auto *v = value.AnyCastPtr<int>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Float:
+        if (auto *v = value.AnyCastPtr<float>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Double:
+        if (auto *v = value.AnyCastPtr<double>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::String:
+        if (auto *v = value.AnyCastPtr<std::string>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Vector2:
+        if (auto *v = value.AnyCastPtr<Vector2>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Vector3:
+        if (auto *v = value.AnyCastPtr<Vector3>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Vector4:
+        if (auto *v = value.AnyCastPtr<Vector4>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Color:
+        if (auto *v = value.AnyCastPtr<Color>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::TextureRef:
+        if (auto *v = value.AnyCastPtr<TextureRef>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::TextureCubeRef:
+        if (auto *v = value.AnyCastPtr<TextureCubeRef>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Quaternion:
+        if (auto *v = value.AnyCastPtr<Quaternion>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Matrix3x3:
+        if (auto *v = value.AnyCastPtr<Matrix3x3>()) return EditValue(label, *v, opts);
+        break;
+    case ValueType::Matrix4x4:
+        if (auto *v = value.AnyCastPtr<Matrix4x4>()) return EditValue(label, *v, opts);
+        break;
+    default:
+        break;
+    }
+    ImGui::Text(KashipanEngine::TranslationC("editor.imguicustom.s_unsupported_any_type_s"), label, value.GetTypeInfo().ToString().c_str());
+    return false;
+}
+
+
+// ==========================================
+// 3. ShowValue 拡張関数群 (表示専用)
+// ==========================================
+
+// --- 3-1. 基礎型 ---
+inline void ShowValue(const char *label, const bool &value, const UiOptions &opts = {}) {
+    (void)opts;
+    ImGui::LabelText(label, value ? "true" : "false");
+}
+inline void ShowValue(const char *label, const int &value, const UiOptions &opts = {}) {
+    const char *fmt = opts.format ? opts.format : "%d";
+    ImGui::LabelText(label, fmt, value);
+}
+inline void ShowValue(const char *label, const float &value, const UiOptions &opts = {}) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    ImGui::LabelText(label, fmt, value);
+}
+inline void ShowValue(const char *label, const double &value, const UiOptions &opts = {}) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    ImGui::LabelText(label, fmt, value);
+}
+inline void ShowValue(const char *label, const std::string &value, const UiOptions &opts = {}) {
+    (void)opts;
+    ImGui::LabelText(label, "%s", value.c_str());
+}
+
+// --- 3-2. カスタム数学型 ---
+inline void ShowValue(const char *label, const Vector2 &value, const UiOptions &opts = {}) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    ImGui::LabelText(label, (std::string(fmt) + ", " + fmt).c_str(), value.x, value.y);
+}
+inline void ShowValue(const char *label, const Vector3 &value, const UiOptions &opts = {}) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    ImGui::LabelText(label, (std::string(fmt) + ", " + fmt + ", " + fmt).c_str(), value.x, value.y, value.z);
+}
+inline void ShowValue(const char *label, const Vector4 &value, const UiOptions &opts = {}) {
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    ImGui::LabelText(label, (std::string(fmt) + ", " + fmt + ", " + fmt + ", " + fmt).c_str(), value.x, value.y, value.z, value.w);
+}
+inline void ShowValue(const char *label, const Quaternion &value, const UiOptions &opts = {}) {
+    std::string q_label = std::string(label) + " (Quaternion)";
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    ImGui::LabelText(q_label.c_str(), (std::string(fmt) + ", " + fmt + ", " + fmt + ", " + fmt).c_str(), value.x, value.y, value.z, value.w);
+}
+inline void ShowValue(const char *label, const Matrix3x3 &value, const UiOptions &opts = {}) {
+    ImGui::Text(KashipanEngine::TranslationC("editor.imguicustom.s_readonly"), label);
+    ImGui::Indent();
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    std::string composite_fmt = std::string(fmt) + ", " + fmt + ", " + fmt;
+    for (int i = 0; i < 3; ++i) {
+        std::string row_label = "[" + std::to_string(i) + "]";
+        ImGui::LabelText(row_label.c_str(), composite_fmt.c_str(), value.m[i][0], value.m[i][1], value.m[i][2]);
+    }
+    ImGui::Unindent();
+}
+inline void ShowValue(const char *label, const Matrix4x4 &value, const UiOptions &opts = {}) {
+    ImGui::Text(KashipanEngine::TranslationC("editor.imguicustom.s_readonly"), label);
+    ImGui::Indent();
+    const char *fmt = opts.format ? opts.format : "%.3f";
+    std::string composite_fmt = std::string(fmt) + ", " + fmt + ", " + fmt + ", " + fmt;
+    for (int i = 0; i < 4; ++i) {
+        std::string row_label = "[" + std::to_string(i) + "]";
+        ImGui::LabelText(row_label.c_str(), composite_fmt.c_str(), value.m[i][0], value.m[i][1], value.m[i][2], value.m[i][3]);
+    }
+    ImGui::Unindent();
+}
+
+// --- 3-3. コンテナ型 (テンプレート・再帰処理) ---
+template <typename T>
+void ShowValue(const char *label, const std::vector<T> &vec, const UiOptions &opts = {}) {
+    std::string node_name = std::string(label) + " [" + std::to_string(vec.size()) + " items] (ReadOnly)";
+    if (ImGui::TreeNode(node_name.c_str())) {
+        for (size_t i = 0; i < vec.size(); ++i) {
+            ImGui::PushID(static_cast<int>(i));
+            std::string item_label = "[" + std::to_string(i) + "]";
+            ShowValue(item_label.c_str(), vec[i], opts);
+            ImGui::PopID();
+        }
+        ImGui::TreePop();
+    }
+}
+
+template <typename K, typename V>
+void ShowValue(const char *label, const std::unordered_map<K, V> &map, const UiOptions &opts = {}) {
+    std::string node_name = std::string(label) + " [" + std::to_string(map.size()) + " pairs] (ReadOnly)";
+    if (ImGui::TreeNode(node_name.c_str())) {
+        int id = 0;
+        for (const auto &kv : map) {
+            ImGui::PushID(id++);
+            std::string key_label = detail::ToString(kv.first);
+            ShowValue(key_label.c_str(), kv.second, opts);
+            ImGui::PopID();
+        }
+        ImGui::TreePop();
+    }
+}
+
+// --- 3-4. 動的型 (std::any) ---
+inline void ShowValue(const char *label, const std::any &value, const UiOptions &opts = {}) {
+    if (!value.has_value()) { ImGui::LabelText(label, "[Empty]"); return; }
+
+    const auto &type = value.type();
+
+    if (type == typeid(int)) { ShowValue(label, std::any_cast<int>(value), opts); } else if (type == typeid(float)) { ShowValue(label, std::any_cast<float>(value), opts); } else if (type == typeid(double)) { ShowValue(label, std::any_cast<double>(value), opts); } else if (type == typeid(bool)) { ShowValue(label, std::any_cast<bool>(value), opts); } else if (type == typeid(std::string)) { ShowValue(label, std::any_cast<std::string>(value), opts); } else if (type == typeid(Vector2)) { ShowValue(label, std::any_cast<Vector2>(value), opts); } else if (type == typeid(Vector3)) { ShowValue(label, std::any_cast<Vector3>(value), opts); } else if (type == typeid(Vector4)) { ShowValue(label, std::any_cast<Vector4>(value), opts); } else if (type == typeid(Quaternion)) { ShowValue(label, std::any_cast<Quaternion>(value), opts); } else if (type == typeid(Matrix3x3)) { ShowValue(label, std::any_cast<Matrix3x3>(value), opts); } else if (type == typeid(Matrix4x4)) { ShowValue(label, std::any_cast<Matrix4x4>(value), opts); } else {
+        ImGui::LabelText(label, "[Unsupported Any Type: %s]", type.name());
+    }
+}
+
+} // namespace ImGuiCustom
+
+#endif // USE_IMGUI

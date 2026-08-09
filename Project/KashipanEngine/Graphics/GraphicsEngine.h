@@ -1,5 +1,8 @@
 #pragma once
+#include <cstdint>
 #include <memory>
+
+#include "Utilities/Passkeys.h"
 
 namespace KashipanEngine {
 
@@ -7,6 +10,7 @@ class GameEngine;
 class DirectXCommon;
 class PipelineManager;
 class Renderer;
+class SceneContext;
 
 /// @brief グラフィックスエンジンクラス
 class GraphicsEngine final {
@@ -15,14 +19,15 @@ public:
     GraphicsEngine(Passkey<GameEngine>, DirectXCommon* directXCommon);
     ~GraphicsEngine();
 
-    /// @brief レンダラー取得
-    Renderer *GetRenderer(Passkey<GameEngine>) const { return renderer_.get(); }
-
     /// @brief フレーム描画処理
-    void RenderFrame(Passkey<GameEngine>);
+    /// @param sceneContext 描画対象シーンのコンテキスト
+    void RenderFrame(Passkey<GameEngine>, SceneContext *sceneContext);
 
     /// @brief レンダラーのGPUリソース全開放
     void ReleaseRendererResources(Passkey<GameEngine>);
+
+    /// @brief 直近のRenderFrameで実際に発行されたドローコール数（パフォーマンス調査用）
+    std::uint32_t GetLastFrameDrawCallCount() const;
 
 private:
     GraphicsEngine(const GraphicsEngine&) = delete;

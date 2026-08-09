@@ -1,12 +1,17 @@
-#include "INI.h"
+﻿#include "INI.h"
+#include "Directory.h"
 #include <fstream>
+
+#include "Utilities/Conversion/ConvertString.h"
 
 namespace KashipanEngine {
 
 INIData LoadINIFile(const std::string &filePath) {
     INIData iniData;
     iniData.filePath = filePath;
-    std::ifstream file(filePath);
+    // std::ifstream(const std::string&)はWindows上で現在のANSIコードページを使ってファイルを開くため、
+    // 非ASCII文字を含むパスが開けない。path版のコンストラクタへ渡すことで回避する
+    std::ifstream file(Utf8StringToPath(filePath));
     if (!file.is_open()) {
         return iniData;
     }
@@ -46,7 +51,9 @@ INIData LoadINIFile(const std::string &filePath) {
 }
 
 void SaveINIFile(const INIData &iniData) {
-    std::ofstream file(iniData.filePath);
+    // 保存先フォルダが存在しない場合は作成する
+    EnsureParentDirectoryExists(iniData.filePath);
+    std::ofstream file(Utf8StringToPath(iniData.filePath));
     if (!file.is_open()) {
         return;
     }

@@ -1,4 +1,5 @@
 #include "IGraphicsResource.h"
+#include "Utilities/Translation.h"
 
 namespace {
 /// @brief リソース管理用コンテナ
@@ -22,13 +23,15 @@ void IGraphicsResource::ClearAllResources(Passkey<DirectXCommon>) {
 
 IGraphicsResource::~IGraphicsResource() {
     LogScope scope;
-    if (resourceID_ < sResources_.size()) {
+    if (resourceID_ != kInvalidResourceID && resourceID_ < sResources_.size()) {
         sResources_[resourceID_].Reset();
         if (resourceID_ < sDescriptorInfos_.size()) {
             sDescriptorInfos_[resourceID_].reset();
         }
         sFreeResourceIndices_.push_back(resourceID_);
     }
+    resourceID_ = kInvalidResourceID;
+    resource_ = nullptr;
 }
 
 void IGraphicsResource::CreateResource(const wchar_t *resourceName, const D3D12_HEAP_PROPERTIES *heapProperties, D3D12_HEAP_FLAGS heapFlags, const D3D12_RESOURCE_DESC *resourceDesc, const D3D12_CLEAR_VALUE *optimizedClearValue) {
@@ -82,6 +85,10 @@ void IGraphicsResource::CreateResource(const wchar_t *resourceName, const D3D12_
 
 void IGraphicsResource::SetExistingResource(ID3D12Resource *existingResource) {
     LogScope scope;
+    if (!existingResource) {
+        return;
+    }
+
     // リソースIDの割り当て
     if (sFreeResourceIndices_.empty()) {
         resourceID_ = static_cast<uint32_t>(sResources_.size());
@@ -179,11 +186,15 @@ void IGraphicsResource::ResetResourceForRecreate() {
         sFreeResourceIndices_.push_back(resourceID_);
     }
 
+    resourceID_ = kInvalidResourceID;
     resource_ = nullptr;
     currentStateIndex_ = 0;
 }
 
 void IGraphicsResource::SetDescriptorHandleInfo(std::unique_ptr<DescriptorHandleInfo> info) {
+    if (resourceID_ == kInvalidResourceID) {
+        return;
+    }
     if (resourceID_ >= sDescriptorInfos_.size()) {
         sDescriptorInfos_.resize(static_cast<size_t>(resourceID_) + 1);
     }
@@ -191,7 +202,7 @@ void IGraphicsResource::SetDescriptorHandleInfo(std::unique_ptr<DescriptorHandle
 }
 
 DescriptorHandleInfo *IGraphicsResource::GetDescriptorHandleInfo() const {
-    if (resourceID_ < sDescriptorInfos_.size()) {
+    if (resourceID_ != kInvalidResourceID && resourceID_ < sDescriptorInfos_.size()) {
         return sDescriptorInfos_[resourceID_].get();
     }
     return nullptr;

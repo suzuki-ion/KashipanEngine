@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/DirectX/DescriptorHeaps/DescriptorHeapBase.h"
+#include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 

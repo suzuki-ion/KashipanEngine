@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>KashipanEngine プロジェクトランチャー</title>
+<link rel="stylesheet" href="launcher.css">
+</head>
+<body>
+
+<header>
+  <h1>KashipanEngine</h1>
+  <p>プロジェクトランチャー</p>
+</header>
+
+<main>
+  <div class="section-title">プロジェクト</div>
+  <div id="project-list"></div>
+</main>
+
+<footer>
+  <div class="row">
+    <button id="open" class="primary" disabled>開く</button>
+    <button id="reveal" disabled>フォルダを開く</button>
+    <button id="delete" class="danger" disabled>削除</button>
+    <span class="spacer"></span>
+    <button id="refresh">更新</button>
+  </div>
+  <div class="row">
+    <select id="template" title="新規プロジェクトの初期内容"></select>
+    <input type="text" id="new-name" placeholder="新規プロジェクト名" spellcheck="false" autocomplete="off">
+    <button id="create" disabled>作成</button>
+  </div>
+  <div id="template-description"></div>
+  <div id="status"></div>
+</footer>
+
+<!-- 削除の確認ダイアログ -->
+<div id="confirm-overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true">
+    <h2>プロジェクトを削除しますか？</h2>
+    <div class="target">
+      <div class="name" id="confirm-name"></div>
+      <div class="path" id="confirm-path"></div>
+    </div>
+    <p class="note">フォルダはごみ箱へ移動します。取り消したい場合はごみ箱から復元してください。</p>
+    <div class="row end">
+      <button id="confirm-cancel">キャンセル</button>
+      <button id="confirm-delete" class="danger">削除する</button>
+    </div>
+  </div>
+</div>
+
+<script src="launcher.js"></script>
+</body>
+</html>

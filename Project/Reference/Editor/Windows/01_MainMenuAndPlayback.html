@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>メインメニュー / 再生コントロール | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-editor-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="W01_MainMenu">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>メインメニュー / 再生コントロール</h1>
+<p class="page-lead">エディタ起動時に画面最上部へ表示されるメインメニューバーと、"Scene Editor" ウィンドウにあるシーン名・再生コントロール（Play/Pause/Stop）・新規作成/保存/読込・操作履歴（Undo/Redo）・自動バックアップ設定について説明します。</p>
+</div>
+
+<h2>メインメニューバー</h2>
+<p>画面最上部に常時表示されます。<code>File</code> / <code>Edit</code> / <code>Window</code> / <code>Debug Windows</code> の4つのメニューがあり、エディターツールスクリプトが <code>[MenuItem("MenuBar/...")]</code> で独自の項目を追加している場合はその末尾に表示されます。</p>
+
+<h3>File メニュー</h3>
+<table>
+<tr><th>項目</th><th>ショートカット</th><th>動作</th></tr>
+<tr><td>New Scene...</td><td>-</td><td>現在のシーンを破棄して新規シーンを作成するモーダルを開く（下記「新規シーンの作成」参照）</td></tr>
+<tr><td>Save Scene...</td><td><code>Ctrl+S</code></td><td>保存先パスを指定する保存モーダルを開く（詳細は<a href="08_SceneListAndSaveLoad.html">Scene List / Save &amp; Load</a>参照）</td></tr>
+<tr><td>Load Scene...</td><td>-</td><td>既存の <code>.scene</code> を選ぶ読込モーダルを開く</td></tr>
+<tr><td>Auto Save Settings...</td><td>-</td><td>自動バックアップの間隔・ファイル名フォーマットを設定するモーダルを開く（下記参照）</td></tr>
+</table>
+
+<h3>Edit メニュー</h3>
+<table>
+<tr><th>項目</th><th>ショートカット</th><th>動作</th></tr>
+<tr><td>Undo &lt;直前の操作名&gt;</td><td><code>Ctrl+Z</code></td><td>直前の編集操作を取り消す。履歴が無い場合は無効化表示</td></tr>
+<tr><td>Redo &lt;直前に取り消した操作名&gt;</td><td><code>Ctrl+Y</code></td><td>取り消した操作をやり直す</td></tr>
+<tr><td>Preferences...</td><td>-</td><td>Preferencesウィンドウの表示を切り替える</td></tr>
+</table>
+<div class="note"><strong>ポイント</strong><br>Undo/Redoのメニュー項目名には、実際に取り消される操作の名前（<code>IEditorCommand::GetName()</code>）が動的に表示されます。ショートカットはテキスト入力欄にフォーカスがある間は無効です。</div>
+<div class="tip"><strong>ショートカットは変更できます</strong><br>このページに載っているキー割り当ては既定値です。<code>Undo</code>・<code>Redo</code>・<code>Save Scene</code>の3つは、<code>Preferences</code>ウィンドウの<code>キーバインド</code>セクションで個人設定として変更できます（全プロジェクトで共有、Gitでは共有されません）。割り当て欄を押してキーを入力するか、<code>既定値に戻す</code>で解除します。それ以外のショートカット（ヒエラルキーのCopy/Paste/Delete等）は現時点では変更できません。</div>
+
+<h3>Window メニュー</h3>
+<p>各ウィンドウの表示/非表示をチェックボックスで切り替えます。表示状態は次回起動時にも復元されます。</p>
+<table>
+<tr><th>項目</th><th>対応ウィンドウ</th></tr>
+<tr><td>Scene View</td><td><a href="04_SceneView.html">Scene View</a></td></tr>
+<tr><td>Object Hierarchy</td><td><a href="02_SceneObjectHierarchy.html">Scene Object Hierarchy</a></td></tr>
+<tr><td>Object Inspector</td><td><a href="03_ObjectInspector.html">Scene Object Inspector</a></td></tr>
+<tr><td>Scene Component Inspector</td><td><a href="06_SceneComponentInspector.html">Scene Component Inspector</a></td></tr>
+<tr><td>Scene Variables</td><td><a href="07_SceneVariablesMenu.html">Scene Variables</a></td></tr>
+<tr><td>Assets</td><td><a href="05_AssetsWindow.html">Assets Window</a></td></tr>
+<tr><td>Scene List</td><td><a href="08_SceneListAndSaveLoad.html">Scene List / Save &amp; Load</a></td></tr>
+<tr><td>History</td><td>操作履歴（Undo/Redoスタック）を一覧表示するウィンドウ</td></tr>
+</table>
+
+<h3>Debug Windows メニュー</h3>
+<p>製品には含まれない、開発中の状態確認用ウィンドウです。</p>
+<table>
+<tr><th>項目</th><th>内容</th></tr>
+<tr><td>Loaded Textures / Loaded Models / Materials</td><td>読み込み済みアセットの一覧（<code>TextureManager</code>/<code>ModelManager</code>/<code>MaterialManager</code>）</td></tr>
+<tr><td>Loaded Sounds / Playing Sounds</td><td>読み込み済み・再生中のサウンド一覧（<code>AudioManager</code>）</td></tr>
+<tr><td>Logger</td><td>エンジンのログ出力ウィンドウ</td></tr>
+<tr><td>Input State</td><td>キーボード・マウス・コントローラーの現在の入力状態</td></tr>
+<tr><td>Input Command Editor</td><td>入力コマンド（アクション名とキー/ボタンの紐付け）の編集画面</td></tr>
+<tr><td>ImGui Demo Window</td><td>Dear ImGui標準のデモウィンドウ</td></tr>
+</table>
+
+<h2>Scene Editor ウィンドウ</h2>
+<p><code>Scene Editor</code> という名前のウィンドウには、シーン名の編集欄と再生コントロールがまとまっています。</p>
+
+<div class="api-card">
+<h4>シーン名</h4>
+<p>先頭の<code>Scene Name</code>入力欄にシーン名を入力してEnterを押すと、現在のシーンの名前（<code>SceneContext::SetName</code>）が変わります。</p>
+</div>
+
+<h3>再生コントロール（Unity風のPlay/Pause/Stop）</h3>
+<table>
+<tr><th>ボタン</th><th>表示条件</th><th>動作</th></tr>
+<tr><td>Play</td><td>停止中</td><td>再生前のシーン状態をバックアップ（<code>PlayStart_</code>プレフィックス）した上で <code>PlayStart()</code> を呼ぶ。選択オブジェクトは再生後も維持される</td></tr>
+<tr><td>Stop</td><td>再生中</td><td><code>PlayStop()</code> を呼び、再生開始前のシーン状態へ復元する。再生中に積まれたUndo履歴も破棄される</td></tr>
+<tr><td>Pause</td><td>再生中・非一時停止</td><td><code>PlayPause()</code> を呼ぶ</td></tr>
+<tr><td>Resume</td><td>再生中・一時停止</td><td><code>PlayResume()</code> を呼ぶ</td></tr>
+<tr><td>Step Frame</td><td>一時停止中のみ有効</td><td><code>RequestStepFrame()</code> を呼び、1フレームだけ進める</td></tr>
+</table>
+<div class="warn"><strong>Playを押す前に保存する</strong><br>Stopで再生開始前の状態へ戻るのは意図した挙動です。Play中に加えた変更（Inspectorでの値変更など）は<strong>Stopで消えます</strong>。恒久的な変更はPlay前、またはStop後に行い、<code>Ctrl+S</code>で保存してください。</div>
+
+<h2>新規シーンの作成（New Scene...）</h2>
+<ol class="steps">
+<li><strong>File &gt; New Scene... を選ぶ</strong>現在のシーン（未保存の変更を含む）が破棄される旨の警告とともにモーダルが開きます。</li>
+<li><strong>シーン名を入力する</strong>空欄の場合は既定で <code>New Scene</code> になります。</li>
+<li><strong>Register to Scene Listのチェックを決める</strong>オンにすると <code>Assets/Scenes/&lt;name&gt;.scene</code> へ保存し、Scene Listにも登録します（後から<a href="08_SceneListAndSaveLoad.html">Scene List</a>で切り替え可能）。オフの場合は保存・登録されないメモリ上だけのシーンになります。</li>
+<li><strong>Createを押す</strong>シーン上の全オブジェクト・シーンコンポーネントがクリアされ、描画に最低限必要な <code>SceneRenderer</code> だけが再追加された空のシーンになります。</li>
+</ol>
+
+<h2>操作履歴（History ウィンドウ）</h2>
+<p><code>Window &gt; History</code> で表示できます。Undo/Redoスタックに積まれている操作の一覧を確認できます。オブジェクトの作成・削除・パラメータ変更・コンポーネントの追加/削除など、エディタ上のほぼ全ての編集操作はコマンドとして記録され、<code>Ctrl+Z</code>/<code>Ctrl+Y</code>で戻す・やり直すことができます。</p>
+<div class="note"><strong>再生中の変更は別履歴</strong><br>Play中に行った変更は編集時のUndo履歴とは別の一時履歴に積まれ、Stop時にシーン状態の復元と一緒に破棄されます。Play中に<code>Ctrl+Z</code>を押しても、Play開始前の編集履歴に影響しません。</div>
+
+<h2>自動バックアップ（Auto Save Settings）</h2>
+<p><code>File &gt; Auto Save Settings...</code> から設定します。設定は次回起動時も保持されます。</p>
+<table>
+<tr><th>項目</th><th>既定値</th><th>内容</th></tr>
+<tr><td>Interval (minutes)</td><td>1.0分</td><td>自動バックアップの間隔（最小0.1分）</td></tr>
+<tr><td>Name Format</td><td><code>${SceneName}</code></td><td>ファイル名テンプレート。<code>${SceneName}</code> <code>${Year}</code> <code>${Month}</code> <code>${Day}</code> <code>${Hour}</code> <code>${Minute}</code> <code>${Second}</code> のプレースホルダーが使えます</td></tr>
+</table>
+<p>保存先は常に <code>SceneBackups/</code> ディレクトリで、ファイル名の先頭には状況に応じて自動的にプレフィックスが付きます（<code>Stopped_</code> = 停止中の自動保存、<code>Playing_</code> = 再生中の自動保存、<code>PlayStart_</code> = Playボタンを押した瞬間のバックアップ）。<code>File &gt; Save Scene...</code>で明示的に保存したファイルとは別に、常にバックグラウンドで保存され続けます。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../Architecture/01_Overview.html">Architecture/01_Overview.html</a> — <code>SceneEditor</code>・<code>SceneEditorCommands</code>（Undo/Redo）のC++クラス構成</li>
+<li><a href="../../Engine/02_Scenes.html">Engine/02_Scenes.html</a> — <code>Scene::PlayStart</code>等のC++ API</li>
+<li><a href="08_SceneListAndSaveLoad.html">Windows/08_SceneListAndSaveLoad.html</a> — 保存・読込・シーン一覧</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

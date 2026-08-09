@@ -36,6 +36,8 @@
 #include "Utilities/UUID128.h"
 #if defined(USE_IMGUI)
 #include "Objects/Components/Render/TargetObjectSelector.h"
+#include "Scene/Editor/ComponentAddMenu.h"
+#include "Scene/Editor/EditorSettings.h"
 #endif
 
 namespace KashipanEngine {
@@ -447,6 +449,9 @@ protected:
         auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
         if (sceneRenderer) sceneRenderer->UnregisterGpuParticleEmitter(this);
         DestroyGpuResources();
+#if defined(USE_IMGUI)
+        DestroyExtraComponentsTemplateObject();
+#endif
     }
 
     /// @brief 派生クラスのUpdateから呼ぶ。新規生成した子オブジェクトへ描画コンポーネントを
@@ -597,6 +602,10 @@ protected:
         excludeShapes_ = other.excludeShapes_;
         MarkSpawnVoxelGridDirty();
         gpuSimulation_ = other.gpuSimulation_;
+        extraComponentTemplates_ = other.extraComponentTemplates_;
+#if defined(USE_IMGUI)
+        extraComponentsTemplateDirty_ = true;
+#endif
     }
 
     JSON SaveBaseFieldsJson() const {
@@ -629,6 +638,7 @@ protected:
         json["includeShapes"] = ToJSON(includeShapes_);
         json["excludeShapes"] = ToJSON(excludeShapes_);
         json["gpuSimulation"] = gpuSimulation_;
+        json["extraComponents"] = extraComponentTemplates_;
         return json;
     }
 
@@ -721,13 +731,33 @@ protected:
         MarkSpawnVoxelGridDirty();
 
         SetGPUSimulation(json.value("gpuSimulation", false));
+
+        extraComponentTemplates_.clear();
+        if (json.contains("extraComponents")) {
+            for (const auto &entry : json["extraComponents"]) {
+                extraComponentTemplates_.push_back(entry);
+            }
+        }
+#if defined(USE_IMGUI)
+        extraComponentsTemplateDirty_ = true;
+#endif
     }
 
 #if defined(USE_IMGUI)
+    /// @brief TranslationLabelが返す"表示テキスト###翻訳キー"形式から、表示用テキスト部分の終端を求める。
+    /// @details Checkbox/Button等のImGuiウィジェットは"##"以降をIDとして扱い表示しないが、
+    ///          TextUnformatted等の素のテキスト表示関数はこの規約を解釈せず文字列をそのまま表示して
+    ///          しまうため、そちらで使う場合はこの終端位置までを明示的に渡す必要がある
+    static const char *FindImGuiLabelDisplayEnd(const char *label) {
+        const char *end = label;
+        while (end[0] != '\0' && !(end[0] == '#' && end[1] == '#')) ++end;
+        return end;
+    }
+
     /// @brief 「ランダムにするか否か」のトグルと、固定値 or Min/Max範囲の入力を表示する（float版）
     void ShowRandomizableImGui(const char *label, RandomizableValue<float> &v, float speed, float vMin = 0.0f, float vMax = 0.0f) {
         ImGui::PushID(label);
-        ImGui::TextUnformatted(label);
+        ImGui::TextUnformatted(label, FindImGuiLabelDisplayEnd(label));
         ImGui::SameLine();
         ImGui::Checkbox(TranslationLabel("component.particlesystembase.random"), &v.randomize);
         if (v.randomize) {
@@ -742,7 +772,7 @@ protected:
     /// @brief 「ランダムにするか否か」のトグルと、固定値 or Min/Max範囲の入力を表示する（int版）
     void ShowRandomizableImGui(const char *label, RandomizableValue<int> &v, int vMin = 0, int vMax = 0) {
         ImGui::PushID(label);
-        ImGui::TextUnformatted(label);
+        ImGui::TextUnformatted(label, FindImGuiLabelDisplayEnd(label));
         ImGui::SameLine();
         ImGui::Checkbox(TranslationLabel("component.particlesystembase.random"), &v.randomize);
         if (v.randomize) {
@@ -757,7 +787,7 @@ protected:
     /// @brief 「ランダムにするか否か」のトグルと、固定値 or Min/Max範囲の入力を表示する（Vector3版）
     void ShowRandomizableImGui(const char *label, RandomizableValue<Vector3> &v, float speed) {
         ImGui::PushID(label);
-        ImGui::TextUnformatted(label);
+        ImGui::TextUnformatted(label, FindImGuiLabelDisplayEnd(label));
         ImGui::SameLine();
         ImGui::Checkbox(TranslationLabel("component.particlesystembase.random"), &v.randomize);
         if (v.randomize) {
@@ -805,7 +835,7 @@ protected:
     /// @brief 形状のリスト（Include/Excludeどちらか）の追加・削除・編集UIを表示する
     void ShowSpawnShapeListImGui(const char *label, const char *addButtonLabel, std::vector<SpawnShapeEntry> &shapes) {
         ImGui::PushID(label);
-        ImGui::TextUnformatted(label);
+        ImGui::TextUnformatted(label, FindImGuiLabelDisplayEnd(label));
         int removeIndex = -1;
         for (size_t i = 0; i < shapes.size(); ++i) {
             ImGui::PushID(static_cast<int>(i));
@@ -867,7 +897,36 @@ protected:
         }
     }
 
+    /// @brief 項目数が多いため、種類ごとに開閉可能なセクションへ分けて表示する。
+    ///        各セクションの開閉状態はEditorSettingsにキーごと永続化される（2D/3Dで共通のキーを使うため
+    ///        開閉状態も共有される）
     void ShowBaseFieldsImGui() {
+        ShowPlaybackStatusSectionImGui();
+        if (EditorSettings::PersistentCollapsingHeader(TranslationC("component.particlesystembase.section.emission"), "particlesystem.section.emission")) {
+            ShowEmissionSectionImGui();
+        }
+        if (EditorSettings::PersistentCollapsingHeader(TranslationC("component.particlesystembase.section.motion"), "particlesystem.section.motion")) {
+            ShowMotionSectionImGui();
+        }
+        if (EditorSettings::PersistentCollapsingHeader(TranslationC("component.particlesystembase.section.scale"), "particlesystem.section.scale")) {
+            ShowRandomizableImGui(TranslationLabel("component.particlesystembase.start_scale"), startScale_, 0.01f);
+            ShowRandomizableImGui(TranslationLabel("component.particlesystembase.end_scale"), endScale_, 0.01f);
+        }
+        if (EditorSettings::PersistentCollapsingHeader(TranslationC("component.particlesystembase.section.rotation"), "particlesystem.section.rotation")) {
+            ShowRandomizableImGui(TranslationLabel("component.particlesystembase.initial_rotation_deg"), initialRotation_, 0.5f);
+            ShowRandomizableImGui(TranslationLabel("component.particlesystembase.initial_rotation_speed"), initialRotationSpeed_, 0.5f);
+            ShowRandomizableImGui(TranslationLabel("component.particlesystembase.rotation_acceleration"), rotationAcceleration_, 0.5f);
+        }
+        if (EditorSettings::PersistentCollapsingHeader(TranslationC("component.particlesystembase.rendering"), "particlesystem.section.rendering")) {
+            ShowRenderingSectionImGui();
+        }
+        if (EditorSettings::PersistentCollapsingHeader(TranslationC("component.particlesystembase.section.extra_components"), "particlesystem.section.extracomponents")) {
+            ShowExtraComponentsImGui();
+        }
+    }
+
+    /// @brief 再生・状態セクション（他と異なり常時表示。折り畳むと再生状況が見えなくなるため）
+    void ShowPlaybackStatusSectionImGui() {
         bool isPlayingLocal = isPlaying_;
         if (ImGui::Checkbox(TranslationLabel("component.particlesystembase.playing"), &isPlayingLocal)) {
             isPlayingLocal ? Play() : Stop();
@@ -891,6 +950,10 @@ protected:
 
         ImGui::Checkbox(TranslationLabel("component.particlesystembase.play_on_start"), &playOnStart_);
         ImGui::Checkbox(TranslationLabel("component.particlesystembase.loop"), &loop_);
+    }
+
+    /// @brief 発生セクション: 発生レート・最大数・生成範囲・生成方法
+    void ShowEmissionSectionImGui() {
         ImGui::DragFloat(TranslationLabel("component.particlesystembase.emission_rate"), &emissionRate_, 0.1f, 0.0f);
         int maxParticlesLocal = maxParticles_;
         if (ImGui::DragInt(TranslationLabel("component.particlesystembase.max_particles"), &maxParticlesLocal, 1.0f, 0)) {
@@ -905,21 +968,21 @@ protected:
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("%s", TranslationC("component.particlesystembase.loop_2"));
         }
-
         ShowRandomizableImGui(TranslationLabel("component.particlesystembase.spawn_count"), spawnCount_, 1, 100);
-        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.lifetime"), lifetime_, 0.01f, 0.0f, 60.0f);
-        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.initial_velocity"), initialVelocity_, 0.01f);
-        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.acceleration"), acceleration_, 0.01f);
-        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.start_scale"), startScale_, 0.01f);
-        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.end_scale"), endScale_, 0.01f);
-        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.initial_rotation_deg"), initialRotation_, 0.5f);
-        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.initial_rotation_speed"), initialRotationSpeed_, 0.5f);
-        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.rotation_acceleration"), rotationAcceleration_, 0.5f);
 
         ShowSpawnShapeImGui();
         ShowSpawnOriginImGui();
+    }
 
-        ImGui::SeparatorText(TranslationLabel("component.particlesystembase.rendering"));
+    /// @brief 寿命・運動セクション: 寿命・初速・加速度
+    void ShowMotionSectionImGui() {
+        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.lifetime"), lifetime_, 0.01f, 0.0f, 60.0f);
+        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.initial_velocity"), initialVelocity_, 0.01f);
+        ShowRandomizableImGui(TranslationLabel("component.particlesystembase.acceleration"), acceleration_, 0.01f);
+    }
+
+    /// @brief 描画セクション: 描画先・メッシュ・パイプライン・マテリアル・シャドウ・ビルボード
+    void ShowRenderingSectionImGui() {
         // 描画先はシーン上のオブジェクトから選択（ヒエラルキーからのD&Dも受け付ける）
         TargetObjectSelector::ShowSelector(TranslationLabel("component.common.target"), GetOwnerSceneContext(), targetObjectID_);
 
@@ -964,6 +1027,116 @@ protected:
             }
             ImGui::Unindent();
         }
+    }
+
+    /// @brief 付属コンポーネントセクション: 生成する各パーティクルへ追加で付けるコンポーネント（Light等）の編集UI。
+    ///        通常のオブジェクトインスペクターと同じ「コンポーネント追加・編集・削除」操作を、
+    ///        シーンに保存されない使い捨てのEmptyObject（extraComponentsTemplateObject_）を介して行う
+    void ShowExtraComponentsImGui() {
+        if (gpuSimulation_) {
+            ImGui::TextWrapped("%s", TranslationC("component.particlesystembase.extra_components_gpu_disabled"));
+            return;
+        }
+        ImGui::TextWrapped("%s", TranslationC("component.particlesystembase.extra_components_desc"));
+
+        EnsureExtraComponentsTemplateObject();
+        if (!extraComponentsTemplateObject_) return;
+
+        IObjectComponent *componentToRemove = nullptr;
+        for (const auto &compPair : extraComponentsTemplateObject_->GetAllComponents()) {
+            IObjectComponent *comp = compPair.first;
+            if (!comp) continue;
+            ImGui::PushID(comp);
+            if (ImGui::CollapsingHeader(comp->GetComponentType().c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+                ImGui::Indent();
+                extraComponentsTemplateObject_->ShowComponentImGui(comp);
+                if (ImGui::Button(TranslationLabel("component.particlesystembase.remove"))) {
+                    componentToRemove = comp;
+                }
+                ImGui::Unindent();
+            }
+            ImGui::PopID();
+        }
+        if (componentToRemove) {
+            extraComponentsTemplateObject_->RemoveComponent(componentToRemove);
+        }
+
+        if (ImGui::Button(TranslationLabel("editor.component.add"))) {
+            ImGui::OpenPopup("AddExtraComponentPopup");
+        }
+        if (ImGui::BeginPopup("AddExtraComponentPopup")) {
+            static const std::unordered_set<std::string> kExcludedTypes = {
+                "Transform", "Velocity", "Rotation", "MeshFilter", "MeshRenderer", "SpriteRenderer",
+                "ParticleSystem2D", "ParticleSystem3D",
+            };
+            std::vector<std::string> candidateTypes;
+            for (const auto &typeName : GetRegisteredObjectComponentTypes()) {
+                if (!kExcludedTypes.contains(typeName)) candidateTypes.push_back(typeName);
+            }
+            std::string selectedType;
+            if (ComponentAddMenu::Show(candidateTypes,
+                    [](const std::string &typeName) -> const std::vector<std::string> & { return GetObjectComponentCategory(typeName); },
+                    selectedType)) {
+                auto newComp = CreateObjectComponentByType(selectedType);
+                if (newComp) extraComponentsTemplateObject_->AddComponent(std::move(newComp));
+            }
+            ImGui::EndPopup();
+        }
+
+        SyncExtraComponentTemplatesFromTemplateObject();
+    }
+
+    /// @brief extraComponentsTemplateObject_を（無ければ生成し、extraComponentTemplates_から復元して）用意する
+    void EnsureExtraComponentsTemplateObject() {
+        auto *sceneContext = GetOwnerSceneContext();
+        if (!sceneContext) return;
+
+        // EditorOnlyオブジェクトは再生開始時にエンジン側で自動削除されるため、キャッシュした
+        // ポインタが既に無効（ダングリング）になっている可能性がある。UpdateParticlesの
+        // パーティクルプールと同じ方法（GetSceneObjectでの生存確認）で検知し、無効なら
+        // 「削除する」のではなく単にポインタを手放して作り直す（既に破棄済みのため
+        // DeleteObjectを呼ぶと二重解放になる）
+        if (extraComponentsTemplateObject_ && !sceneContext->GetSceneObject(extraComponentsTemplateObject_)) {
+            extraComponentsTemplateObject_ = nullptr;
+            extraComponentsTemplateDirty_ = true;
+        }
+
+        if (extraComponentsTemplateObject_ && !extraComponentsTemplateDirty_) return;
+
+        if (extraComponentsTemplateObject_) {
+            sceneContext->DeleteObject(extraComponentsTemplateObject_);
+            extraComponentsTemplateObject_ = nullptr;
+        }
+        extraComponentsTemplateObject_ = sceneContext->CreateEmptyObject("(Particle Extra Components)");
+        if (!extraComponentsTemplateObject_) return;
+        // 編集用の内部データであり、シーンファイルへは保存しない・実行時ビルドにも存在させない
+        extraComponentsTemplateObject_->SetSaveEnabled(false);
+        extraComponentsTemplateObject_->SetEditorOnly(true);
+        for (const auto &tmpl : extraComponentTemplates_) {
+            extraComponentsTemplateObject_->AddComponentFromJson(tmpl);
+        }
+        extraComponentsTemplateDirty_ = false;
+    }
+
+    /// @brief テンプレートオブジェクトの現在のコンポーネント構成をextraComponentTemplates_（真の保存対象）へ反映する
+    void SyncExtraComponentTemplatesFromTemplateObject() {
+        if (!extraComponentsTemplateObject_) return;
+        extraComponentTemplates_.clear();
+        for (const auto &compPair : extraComponentsTemplateObject_->GetAllComponents()) {
+            if (!compPair.first) continue;
+            extraComponentTemplates_.push_back(extraComponentsTemplateObject_->SaveComponentToJson(compPair.first));
+        }
+    }
+
+    void DestroyExtraComponentsTemplateObject() {
+        if (!extraComponentsTemplateObject_) return;
+        auto *sceneContext = GetOwnerSceneContext();
+        // EditorOnlyオブジェクトは再生開始時に既に削除されている場合があるため、
+        // 生存確認してからDeleteObjectを呼ぶ（二重解放防止）
+        if (sceneContext && sceneContext->GetSceneObject(extraComponentsTemplateObject_)) {
+            sceneContext->DeleteObject(extraComponentsTemplateObject_);
+        }
+        extraComponentsTemplateObject_ = nullptr;
     }
 #endif
 
@@ -1031,6 +1204,13 @@ protected:
     /// @brief GPUパーティクル描画パスが対象外とする描画先名（現状ImGui/JSONからは編集不可、常に空）
     std::unordered_set<std::string> excludedRenderTargetNames_;
 
+    /// @brief 生成した各パーティクルオブジェクトへ追加で付属させるコンポーネントのテンプレート
+    /// @details 各要素は EmptyObject::SaveComponentToJson / AddComponentFromJson と同じ
+    ///          {"type":..., "data":{...}} 形式。CPUシミュレーションのプール生成時（EnsurePoolSize）
+    ///          にのみ適用され、GPUシミュレーションでは対象となるパーティクルオブジェクトが
+    ///          存在しないため効果を持たない
+    std::vector<JSON> extraComponentTemplates_;
+
 private:
     /// @brief 2Dパーティクルシステムかどうか（true: Rect/Circleのみ選択可、Capsule非対応）
     const bool is2D_;
@@ -1050,6 +1230,16 @@ private:
     std::vector<ParticleSlot> slots_;
     std::vector<int> freeIndices_;
 
+#if defined(USE_IMGUI)
+    /// @brief 「付属コンポーネント」編集UI専用の使い捨てオブジェクト（extraComponentTemplates_の
+    ///        内容を実際のコンポーネントとして保持し、通常のインスペクターと同じUIで編集できるようにする）。
+    ///        SetSaveEnabled(false)のためシーンファイルには保存されず、実行時ビルドにも存在しない
+    EmptyObject *extraComponentsTemplateObject_ = nullptr;
+    /// @brief LoadBaseFieldsJson等でextraComponentTemplates_が外部から書き換わった際、
+    ///        次回のShowExtraComponentsImGuiでテンプレートオブジェクトを作り直す必要があることを示す
+    bool extraComponentsTemplateDirty_ = true;
+#endif
+
     /// @brief プールを指定サイズへ伸縮する。拡張分は setupVisual を一度だけ実行してから非アクティブ化する
     void EnsurePoolSize(int desiredSize, const std::function<void(EmptyObject *)> &setupVisual) {
         desiredSize = std::max(0, desiredSize);
@@ -1060,6 +1250,11 @@ private:
             auto *particleObj = sceneContext->CreateEmptyObject("Particle");
             if (!particleObj) break;
             if (setupVisual) setupVisual(particleObj);
+            // 付属コンポーネント（Light等）はCPUプール生成時に一度だけ付与する。
+            // GPUシミュレーションはこのメソッド自体を通らないため、ここでの付与は自然にCPUモード限定になる
+            for (const auto &extraComponentTemplate : extraComponentTemplates_) {
+                particleObj->AddComponentFromJson(extraComponentTemplate);
+            }
             if (!particleObj->GetComponent<Velocity>()) particleObj->AddComponent<Velocity>();
             if (!particleObj->GetComponent<Rotation>()) particleObj->AddComponent<Rotation>();
             particleObj->SetActive(false);

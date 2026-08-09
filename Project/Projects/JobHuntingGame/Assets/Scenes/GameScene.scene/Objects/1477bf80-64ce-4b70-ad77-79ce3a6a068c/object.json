@@ -72,6 +72,7 @@
                             }
                         },
                         "excludeShapes": [],
+                        "extraComponents": [],
                         "fixedSpawnPosition": {
                             "x": 128.0,
                             "y": 128.0,

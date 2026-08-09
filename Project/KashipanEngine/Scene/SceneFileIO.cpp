@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <functional>
+#include <optional>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -16,6 +17,10 @@ constexpr const char *kSceneFolderSuffix = ".scene";
 constexpr const char *kSceneManifestFileName = "/scene.json";
 constexpr const char *kObjectsDirName = "/Objects";
 constexpr const char *kObjectFileName = "/object.json";
+// siblingIndexを割り振る際の間隔。1つのオブジェクトを移動・追加しただけであれば、
+// 前後のオブジェクトの値の間に新しい値を割り込ませるだけで済み、他の兄弟の
+// siblingIndexを書き換えずに済む（＝Gitでの差分・コンフリクトを局所化できる）
+constexpr long long kSiblingIndexGap = 1000;
 
 bool IsFolderFormatPath(const std::string &path) {
     return path.ends_with(kSceneFolderSuffix);
@@ -37,6 +42,94 @@ std::string ExtractParentID(const JSON &objectJson) {
         return customData["parent"].get<std::string>();
     }
     return std::string();
+}
+
+/// @brief 1つの親を持つ兄弟オブジェクト列に対して、新しいsiblingIndexを決定する
+/// @param oldValues 各兄弟の直前セーブ時のsiblingIndex（同じ親のまま存在していた場合のみ値あり）
+/// @details 現在の並び順（引数の配列順）を崩さない範囲で、旧値をそのまま使える最長の部分列を
+///          最長増加部分列（LIS）で求め、その部分列に含まれるオブジェクトは値を変更しない。
+///          それ以外（新規追加・移動されたオブジェクト）だけに、前後の確定値の間へ収まる新しい
+///          値を割り当てる。間隔が枯渇している場合のみ、そのグループ全体を等間隔で振り直す
+std::vector<long long> AssignSiblingIndices(const std::vector<std::optional<long long>> &oldValues) {
+    const size_t count = oldValues.size();
+    std::vector<long long> finalValues(count);
+    if (count == 0) return finalValues;
+
+    // 旧値を持つ要素だけを対象にLISを求め、維持できる値を確定させる
+    std::vector<std::optional<long long>> keep(count);
+    {
+        std::vector<size_t> withValueIdx;
+        std::vector<long long> values;
+        for (size_t i = 0; i < count; ++i) {
+            if (oldValues[i].has_value()) {
+                withValueIdx.push_back(i);
+                values.push_back(*oldValues[i]);
+            }
+        }
+        const size_t n = values.size();
+        std::vector<int> lisLength(n, 1);
+        std::vector<int> lisPrev(n, -1);
+        int bestEnd = -1, bestLen = 0;
+        for (size_t i = 0; i < n; ++i) {
+            for (size_t j = 0; j < i; ++j) {
+                if (values[j] < values[i] && lisLength[j] + 1 > lisLength[i]) {
+                    lisLength[i] = lisLength[j] + 1;
+                    lisPrev[i] = static_cast<int>(j);
+                }
+            }
+            if (lisLength[i] > bestLen) {
+                bestLen = lisLength[i];
+                bestEnd = static_cast<int>(i);
+            }
+        }
+        for (int cur = bestEnd; cur != -1; cur = lisPrev[cur]) {
+            keep[withValueIdx[static_cast<size_t>(cur)]] = values[static_cast<size_t>(cur)];
+        }
+    }
+
+    bool rebalanceAll = false;
+    for (size_t i = 0; i < count && !rebalanceAll;) {
+        if (keep[i].has_value()) {
+            finalValues[i] = *keep[i];
+            ++i;
+            continue;
+        }
+        const size_t runStart = i;
+        while (i < count && !keep[i].has_value()) ++i;
+        const size_t runLen = i - runStart;
+        const std::optional<long long> prevValue = (runStart > 0) ? keep[runStart - 1] : std::nullopt;
+        const std::optional<long long> nextValue = (i < count) ? keep[i] : std::nullopt;
+
+        if (prevValue && nextValue) {
+            const long long span = *nextValue - *prevValue;
+            if (span <= static_cast<long long>(runLen)) {
+                rebalanceAll = true;
+                break;
+            }
+            for (size_t k = 0; k < runLen; ++k) {
+                finalValues[runStart + k] = *prevValue + span * static_cast<long long>(k + 1) / static_cast<long long>(runLen + 1);
+            }
+        } else if (prevValue && !nextValue) {
+            for (size_t k = 0; k < runLen; ++k) {
+                finalValues[runStart + k] = *prevValue + kSiblingIndexGap * static_cast<long long>(k + 1);
+            }
+        } else if (!prevValue && nextValue) {
+            for (size_t k = 0; k < runLen; ++k) {
+                finalValues[runStart + k] = *nextValue - kSiblingIndexGap * static_cast<long long>(runLen - k);
+            }
+        } else {
+            for (size_t k = 0; k < runLen; ++k) {
+                finalValues[runStart + k] = kSiblingIndexGap * static_cast<long long>(k);
+            }
+        }
+    }
+
+    if (rebalanceAll) {
+        for (size_t i = 0; i < count; ++i) {
+            finalValues[i] = kSiblingIndexGap * static_cast<long long>(i);
+        }
+    }
+    return finalValues;
 }
 
 bool SaveSceneFolder(const std::string &path, const JSON &sceneJson) {
@@ -68,6 +161,29 @@ bool SaveSceneFolder(const std::string &path, const JSON &sceneJson) {
 
     const std::string objectsDir = path + kObjectsDirName;
 
+    // 兄弟順を維持したまま移動していないオブジェクトのsiblingIndexを流用するため、
+    // 削除前に前回保存時の（親ID, siblingIndex）を読み取っておく
+    struct OldSiblingInfo {
+        std::string parentID;
+        long long siblingIndex;
+    };
+    std::unordered_map<std::string, OldSiblingInfo> oldInfoByID;
+    {
+        std::error_code readEc;
+        const auto objectsPath = Utf8StringToPath(objectsDir);
+        if (std::filesystem::exists(objectsPath, readEc) && std::filesystem::is_directory(objectsPath, readEc)) {
+            for (const auto &entry : std::filesystem::directory_iterator(objectsPath, readEc)) {
+                if (!entry.is_directory()) continue;
+                JSON wrapped = LoadJSON(PathToUtf8String(entry.path()) + kObjectFileName);
+                if (wrapped.empty() || !wrapped.contains("object")) continue;
+                const JSON &oldObjJson = wrapped["object"];
+                const std::string objectID = oldObjJson.value("objectID", "");
+                if (objectID.empty()) continue;
+                oldInfoByID[objectID] = OldSiblingInfo{ExtractParentID(oldObjJson), wrapped.value("siblingIndex", 0)};
+            }
+        }
+    }
+
     // 保存の都度Objects/を丸ごと作り直す。nlohmann::jsonはキーをアルファベット順にdumpするため
     // 内容が同じオブジェクトは毎回バイト単位で同一のファイルになり、Git上は実際に変更された
     // オブジェクトのみが差分として現れる（削除済みオブジェクトのフォルダも確実に消える）
@@ -75,12 +191,23 @@ bool SaveSceneFolder(const std::string &path, const JSON &sceneJson) {
     std::filesystem::remove_all(Utf8StringToPath(objectsDir), ec);
 
     for (const auto &[parentID, indices] : childrenByParent) {
-        for (size_t siblingIndex = 0; siblingIndex < indices.size(); ++siblingIndex) {
-            const JSON &objJson = objects[indices[siblingIndex]];
+        std::vector<std::optional<long long>> oldValues(indices.size());
+        for (size_t i = 0; i < indices.size(); ++i) {
+            const std::string objectID = objects[indices[i]].value("objectID", "");
+            const auto it = oldInfoByID.find(objectID);
+            // 親が変わっていなければ、前回保存時のsiblingIndexを維持候補として使う
+            if (it != oldInfoByID.end() && it->second.parentID == parentID) {
+                oldValues[i] = it->second.siblingIndex;
+            }
+        }
+        const std::vector<long long> finalValues = AssignSiblingIndices(oldValues);
+
+        for (size_t i = 0; i < indices.size(); ++i) {
+            const JSON &objJson = objects[indices[i]];
             const std::string objectID = objJson.value("objectID", "");
             if (objectID.empty()) continue;
             JSON wrapped;
-            wrapped["siblingIndex"] = static_cast<int>(siblingIndex);
+            wrapped["siblingIndex"] = static_cast<int>(finalValues[i]);
             wrapped["object"] = objJson;
             SaveJSON(wrapped, objectsDir + "/" + objectID + kObjectFileName);
         }

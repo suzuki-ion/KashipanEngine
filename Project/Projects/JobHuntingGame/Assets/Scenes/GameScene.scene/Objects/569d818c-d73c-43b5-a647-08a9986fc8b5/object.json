@@ -7,7 +7,7 @@
                         "rotate": {
                             "w": 0.9764145016670227,
                             "x": 0.20811551809310913,
-                            "y": -0.056206267327070236,
+                            "y": -0.05620626360177994,
                             "z": 0.011979949660599232
                         },
                         "scale": {
@@ -30,7 +30,7 @@
             {
                 "data": {
                     "customData": {
-                        "aspectRatio": 1.5771567821502686,
+                        "aspectRatio": 1.292553186416626,
                         "farClip": 1000.0,
                         "fovY": 0.44999998807907104,
                         "nearClip": 0.10000000149011612,
@@ -57,14 +57,14 @@
             {
                 "data": {
                     "customData": {
-                        "height": 823,
+                        "height": 564,
                         "isShowViewer": false,
                         "name": "EditorSceneView",
                         "saveDirectory": "Screenshots",
                         "saveFileNamePrefix": "Screenshot",
                         "saveFormat": "png",
                         "viewerId": 16289254799954061067,
-                        "width": 1298
+                        "width": 729
                     },
                     "isActive": true,
                     "priority": 1,

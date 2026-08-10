@@ -1567,6 +1567,7 @@
 		//--------- editor.menu ---------//
 		"editor.menu.debugwindows": "デバッグウィンドウ",
 		"editor.menu.debugwindows.imguidemo": "ImGuiデモウィンドウ",
+		"editor.menu.debugwindows.reloadpipelines": "シェーダー/パイプラインを再読み込み",
 		"editor.menu.edit": "編集",
 		"editor.menu.edit.preferences": "環境設定...",
 		"editor.menu.edit.redo": "やり直す",

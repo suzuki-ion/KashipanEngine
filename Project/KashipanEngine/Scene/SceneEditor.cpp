@@ -9,6 +9,7 @@
 #include "Assets/ModelManager.h"
 #include "Assets/TextureManager.h"
 #include "Debug/Logger.h"
+#include "Graphics/PipelineManager.h"
 #include "Input/Input.h"
 #include "Input/InputCommand.h"
 #include "Scene/Editor/AssetsWindow.h"
@@ -281,6 +282,10 @@ void SceneEditor::ShowMainWindow() {
             }
             if (ImGui::MenuItem(TranslationLabel("editor.logger.window"), nullptr, &isShowLoggerWindow_)) {
                 EditorSettings::SetBool("sceneEditor.showLogger", isShowLoggerWindow_);
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem(TranslationLabel("editor.menu.debugwindows.reloadpipelines"))) {
+                PipelineManager::TryReloadPipelines();
             }
             ImGui::Separator();
             if (ImGui::MenuItem(TranslationLabel("editor.input.state.window"), nullptr, &isShowInputStateWindow_)) {

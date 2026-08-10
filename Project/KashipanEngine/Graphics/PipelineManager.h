@@ -54,6 +54,10 @@ public:
     ///        ユーティリティをインスタンスへのアクセス手段を持たない呼び出し元から使うため）
     /// @return インスタンスが無い場合は空文字
     static std::string TryGetShaderBaseDir();
+    /// @brief 実行中のPipelineManagerインスタンスへReloadPipelinesを呼び出す（エディターメニュー等、
+    ///        インスタンスへのアクセス手段を持たない呼び出し元向け）
+    /// @return インスタンスが無い場合はfalse
+    static bool TryReloadPipelines();
 #endif
 
     /// @brief 読み込み済みの描画用パイプライン名一覧を取得（ImGuiでの選択用）

@@ -105,6 +105,14 @@ void PipelineManager::ReloadPipelines() {
     LoadPipelines();
 }
 
+#if defined(USE_IMGUI)
+bool PipelineManager::TryReloadPipelines() {
+    if (!sActiveInstance) return false;
+    sActiveInstance->ReloadPipelines();
+    return true;
+}
+#endif
+
 void PipelineManager::ApplyPipeline(ID3D12GraphicsCommandList* commandList, const std::string &pipelineName) {
     LogScope scope;
     assert(commandList != nullptr);

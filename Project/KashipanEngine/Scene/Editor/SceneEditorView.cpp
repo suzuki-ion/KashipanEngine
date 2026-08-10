@@ -10,6 +10,7 @@
 #include <type_traits>
 #include <variant>
 
+#include "Core/ProjectPaths.h"
 #include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/PrefabUtility.h"
 #include "Scene/Editor/SceneEditorCommands.h"
@@ -63,6 +64,7 @@ SceneEditorView::~SceneEditorView() {
         if (auto *sceneRenderer = context_->GetComponent<SceneRenderer>()) {
             sceneRenderer->SetEditorTarget(nullptr, nullptr);
             sceneRenderer->SetEditorSelectedObjects({});
+            sceneRenderer->SetEditorGhostPreviewMeshes({});
         }
     }
     // screenBuffer_ の実体は sceneViewObject_ の ScreenBufferObject コンポーネントが所有している。
@@ -294,12 +296,10 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     const ImVec2 imagePos = ImGui::GetCursorScreenPos();
     ImGui::Image(static_cast<ImTextureID>(screenBuffer_->GetPreviewSrvHandle().ptr), drawSize);
 
-    // Assetsウィンドウからのプレハブファイル（.prefab）のD&Dでシーンへ配置する
-    if (std::string droppedPath; AcceptAssetDragDropTarget(kPrefabAssetDragDropType, droppedPath)) {
-        if (hierarchy) {
-            hierarchy->InstantiatePrefabFile(droppedPath);
-        }
-    }
+    // Assetsウィンドウからのプレハブファイル（.prefab）のドラッグ&ドロップ。ドラッグ中は毎フレーム
+    // カーソル直下の配置予定位置（シーン上のメッシュ表面、無ければ地面平面）へ半透明のプレビューを
+    // 表示し、Unity等と同様、実際にドロップされた瞬間にそのままシーンへ配置する
+    HandlePrefabDragDrop(hierarchy, imagePos, drawSize);
 
     //--------- カメラ操作（画像上でのマウス操作） ---------//
     HandleCameraInput();
@@ -320,6 +320,77 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     ShowGizmo(selectedObjects, commands, imagePos, drawSize);
 
     ImGui::End();
+}
+
+void SceneEditorView::HandlePrefabDragDrop(SceneObjectHierarchy *hierarchy, const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    bool isHoveringThisView = false;
+    if (ImGui::BeginDragDropTarget()) {
+        // AcceptPeekOnly = AcceptBeforeDelivery | AcceptNoDrawDefaultRect。ドロップ前でも
+        // ペイロードを覗き見できるようにし（IsDelivery()で実際のドロップかを判別する）、
+        // 既定のハイライト矩形は出さない（プレビューメッシュ自体が視覚的なフィードバックになるため）
+        if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload(kPrefabAssetDragDropType, ImGuiDragDropFlags_AcceptPeekOnly)) {
+            IM_ASSERT(payload->DataSize == sizeof(AssetDragDropPayload));
+            const auto *assetPayload = static_cast<const AssetDragDropPayload *>(payload->Data);
+            const std::string hoveredPath = assetPayload->assetPath;
+            isHoveringThisView = true;
+
+            if (payload->IsDelivery()) {
+                // 実際にドロップされた瞬間：プレビューと同じ位置計算でシーンへ配置する
+                if (hierarchy) {
+                    const Vector3 dropPosition = ComputeCursorWorldPosition(ImGui::GetMousePos(), imagePos, imageSize);
+                    hierarchy->InstantiatePrefabFile(hoveredPath, nullptr, &dropPosition);
+                }
+            } else {
+                // ドラッグ中（未ドロップ）：カーソル直下の配置予定位置にプレビューメッシュを表示する
+                UpdateGhostPreview(hoveredPath, imagePos, imageSize);
+            }
+        }
+        ImGui::EndDragDropTarget();
+    }
+    // このシーンビュー上でのプレハブドラッグが終わった（ドロップ/キャンセル/範囲外へ移動）場合はプレビューを消す
+    if (!isHoveringThisView) {
+        ClearGhostPreview();
+    }
+}
+
+void SceneEditorView::UpdateGhostPreview(const std::string &prefabPath, const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (!context_) return;
+    auto *sceneRenderer = context_->GetComponent<SceneRenderer>();
+    if (!sceneRenderer) return;
+
+    // プレハブのパスが変わった時（ドラッグ開始・別アセットへの持ち替え）のみディスクから読み直す。
+    // ドラッグ中は毎フレームこの関数が呼ばれるため、ここを都度パースするとホバー中に無駄なIOが走る
+    if (!ghostPreviewActive_ || prefabPath != ghostPreviewAssetPath_) {
+        ghostPreviewAssetPath_ = prefabPath;
+        ghostPreviewNodes_.clear();
+        const JSON prefabJson = LoadJSON(ProjectPaths::ToPhysical(prefabPath));
+        if (prefabJson.is_object()) {
+            ghostPreviewNodes_ = PrefabUtility::LoadPrefabNodes(prefabJson);
+        }
+        ghostPreviewActive_ = true;
+    }
+
+    const Vector3 dropPosition = ComputeCursorWorldPosition(ImGui::GetMousePos(), imagePos, imageSize);
+    const auto ghostMeshes = PrefabUtility::BuildGhostPreviewMeshes(ghostPreviewNodes_, dropPosition);
+
+    std::vector<SceneRenderer::GhostPreviewMesh> rendererMeshes;
+    rendererMeshes.reserve(ghostMeshes.size());
+    for (const auto &mesh : ghostMeshes) {
+        rendererMeshes.push_back({ mesh.meshHandle, mesh.worldMatrix });
+    }
+    sceneRenderer->SetEditorGhostPreviewMeshes(std::move(rendererMeshes));
+}
+
+void SceneEditorView::ClearGhostPreview() {
+    if (!ghostPreviewActive_) return;
+    ghostPreviewActive_ = false;
+    ghostPreviewAssetPath_.clear();
+    ghostPreviewNodes_.clear();
+    if (context_) {
+        if (auto *sceneRenderer = context_->GetComponent<SceneRenderer>()) {
+            sceneRenderer->SetEditorGhostPreviewMeshes({});
+        }
+    }
 }
 
 void SceneEditorView::HandleCameraInput() {
@@ -539,6 +610,93 @@ EmptyObject *SceneEditorView::PickIconAtScreenPosition(const ImVec2 &screenPos, 
     return picked;
 }
 
+bool SceneEditorView::RaycastSceneMeshes(const ImVec2 &screenPos, const ImVec2 &imagePos, const ImVec2 &imageSize,
+    Vector3 &outRayStart, Vector3 &outRayEnd, EmptyObject *&outHitObject, float &outHitT) const {
+    outHitObject = nullptr;
+    outHitT = std::numeric_limits<float>::max();
+    if (!context_ || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return false;
+
+    // クリック位置からカメラの近平面→遠平面を貫く線分を作る（tがそのまま奥行き順の比較に使える）
+    const float ndcX = ((screenPos.x - imagePos.x) / imageSize.x) * 2.0f - 1.0f;
+    const float ndcY = -(((screenPos.y - imagePos.y) / imageSize.y) * 2.0f - 1.0f);
+    const Matrix4x4 invViewProjection = (view_ * projection_).Inverse();
+    outRayStart = UnprojectNdc(invViewProjection, ndcX, ndcY, 0.0f);
+    outRayEnd = UnprojectNdc(invViewProjection, ndcX, ndcY, 1.0f);
+
+    for (auto *obj : context_->GetSceneObjects()) {
+        if (!obj || !obj->IsActive()) continue;
+
+        // シーンビューに描画される対象（アクティブなMeshRenderer/SkinnedMeshRendererを持つ）だけを判定対象にする
+        auto *meshFilter = obj->GetComponent<MeshFilter>();
+        if (!meshFilter || !meshFilter->HasMesh()) continue;
+        auto *meshRenderer = obj->GetComponent<MeshRenderer>();
+        auto *skinnedMeshRenderer = obj->GetComponent<SkinnedMeshRenderer>();
+        const bool hasVisibleRenderer =
+            (meshRenderer && meshRenderer->IsActive()) ||
+            (skinnedMeshRenderer && skinnedMeshRenderer->IsActive());
+        if (!hasVisibleRenderer) continue;
+
+        auto *transform = obj->GetComponent<Transform>();
+        const Matrix4x4 world = transform ? transform->GetWorldMatrix() : Matrix4x4::Identity();
+
+        // レイをオブジェクトのローカル空間へ変換して三角形と判定する
+        // （アフィン変換では線分上のパラメータtが保存されるため、tはワールド空間の奥行き比較にそのまま使える）
+        const Matrix4x4 invWorld = world.Inverse();
+        const Vector3 localStart = TransformPoint(outRayStart, invWorld);
+        const Vector3 localDir = TransformPoint(outRayEnd, invWorld) - localStart;
+
+        const auto &model = ModelManager::GetModelData(meshFilter->GetMeshHandle());
+        const auto &vertices = model.GetVertices();
+        const auto &indices = model.GetIndices();
+        for (size_t i = 0; i + 2 < indices.size(); i += 3) {
+            const size_t indexA = static_cast<size_t>(indices[i]);
+            const size_t indexB = static_cast<size_t>(indices[i + 1]);
+            const size_t indexC = static_cast<size_t>(indices[i + 2]);
+            // インポート失敗や編集中のアセット差し替えで壊れたインデックスが混ざっても、
+            // シーンビューのレイ判定から頂点配列を範囲外参照しない。
+            if (indexA >= vertices.size() || indexB >= vertices.size() || indexC >= vertices.size()) {
+                continue;
+            }
+            const auto &a = vertices[indexA];
+            const auto &b = vertices[indexB];
+            const auto &c = vertices[indexC];
+            float t = 0.0f;
+            if (SegmentIntersectsTriangle(localStart, localDir,
+                    Vector3(a.px, a.py, a.pz), Vector3(b.px, b.py, b.pz), Vector3(c.px, c.py, c.pz), t)) {
+                if (t < outHitT) {
+                    outHitT = t;
+                    outHitObject = obj;
+                }
+            }
+        }
+    }
+
+    return outHitObject != nullptr;
+}
+
+Vector3 SceneEditorView::ComputeCursorWorldPosition(const ImVec2 &screenPos, const ImVec2 &imagePos, const ImVec2 &imageSize) const {
+    Vector3 rayStart{};
+    Vector3 rayEnd{};
+    EmptyObject *hitObject = nullptr;
+    float hitT = 0.0f;
+    if (RaycastSceneMeshes(screenPos, imagePos, imageSize, rayStart, rayEnd, hitObject, hitT)) {
+        return rayStart + (rayEnd - rayStart) * hitT;
+    }
+
+    // メッシュに当たらなかった場合はY=0の地面平面との交点へ配置する（Unityのシーンビューと同様の挙動）
+    const Vector3 rayDir = rayEnd - rayStart;
+    if (std::abs(rayDir.y) > 1e-6f) {
+        const float s = -rayStart.y / rayDir.y;
+        if (s > 0.0f) {
+            return rayStart + rayDir * s;
+        }
+    }
+
+    // 地面平面とも交差しない場合（真上/真下を向いている等）は、カメラから現在の注視距離だけ進めた点にする
+    const Vector3 rayDirNormalized = rayDir.Length() > 1e-6f ? rayDir.Normalize() : Vector3(0.0f, 0.0f, 1.0f);
+    return cameraEye_ + rayDirNormalized * distance_;
+}
+
 void SceneEditorView::HandleObjectPicking(SceneObjectHierarchy *hierarchy, const ImVec2 &imagePos, const ImVec2 &imageSize) {
     if (!hierarchy || !context_ || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return;
     // シーンビュー画像の上にマウスがある状態での、ドラッグを伴わない左クリック（離した瞬間）で選択する
@@ -557,62 +715,12 @@ void SceneEditorView::HandleObjectPicking(SceneObjectHierarchy *hierarchy, const
     EmptyObject *picked = PickIconAtScreenPosition(mouse, imagePos, imageSize);
 
     if (!picked) {
-        // クリック位置からカメラの近平面→遠平面を貫く線分を作る（tがそのまま奥行き順の比較に使える）
-        const float ndcX = ((mouse.x - imagePos.x) / imageSize.x) * 2.0f - 1.0f;
-        const float ndcY = -(((mouse.y - imagePos.y) / imageSize.y) * 2.0f - 1.0f);
-        const Matrix4x4 invViewProjection = (view_ * projection_).Inverse();
-        const Vector3 rayStart = UnprojectNdc(invViewProjection, ndcX, ndcY, 0.0f);
-        const Vector3 rayEnd = UnprojectNdc(invViewProjection, ndcX, ndcY, 1.0f);
-
-        float nearestT = std::numeric_limits<float>::max();
-
-        for (auto *obj : context_->GetSceneObjects()) {
-            if (!obj || !obj->IsActive()) continue;
-
-            // シーンビューに描画される対象（アクティブなMeshRenderer/SkinnedMeshRendererを持つ）だけを選択候補にする
-            auto *meshFilter = obj->GetComponent<MeshFilter>();
-            if (!meshFilter || !meshFilter->HasMesh()) continue;
-            auto *meshRenderer = obj->GetComponent<MeshRenderer>();
-            auto *skinnedMeshRenderer = obj->GetComponent<SkinnedMeshRenderer>();
-            const bool hasVisibleRenderer =
-                (meshRenderer && meshRenderer->IsActive()) ||
-                (skinnedMeshRenderer && skinnedMeshRenderer->IsActive());
-            if (!hasVisibleRenderer) continue;
-
-            auto *transform = obj->GetComponent<Transform>();
-            const Matrix4x4 world = transform ? transform->GetWorldMatrix() : Matrix4x4::Identity();
-
-            // レイをオブジェクトのローカル空間へ変換して三角形と判定する
-            // （アフィン変換では線分上のパラメータtが保存されるため、tはワールド空間の奥行き比較にそのまま使える）
-            const Matrix4x4 invWorld = world.Inverse();
-            const Vector3 localStart = TransformPoint(rayStart, invWorld);
-            const Vector3 localDir = TransformPoint(rayEnd, invWorld) - localStart;
-
-            const auto &model = ModelManager::GetModelData(meshFilter->GetMeshHandle());
-            const auto &vertices = model.GetVertices();
-            const auto &indices = model.GetIndices();
-            for (size_t i = 0; i + 2 < indices.size(); i += 3) {
-                const size_t indexA = static_cast<size_t>(indices[i]);
-                const size_t indexB = static_cast<size_t>(indices[i + 1]);
-                const size_t indexC = static_cast<size_t>(indices[i + 2]);
-                // インポート失敗や編集中のアセット差し替えで壊れたインデックスが混ざっても、
-                // シーンビューのクリック操作から頂点配列を範囲外参照しない。
-                if (indexA >= vertices.size() || indexB >= vertices.size() || indexC >= vertices.size()) {
-                    continue;
-                }
-                const auto &a = vertices[indexA];
-                const auto &b = vertices[indexB];
-                const auto &c = vertices[indexC];
-                float t = 0.0f;
-                if (SegmentIntersectsTriangle(localStart, localDir,
-                        Vector3(a.px, a.py, a.pz), Vector3(b.px, b.py, b.pz), Vector3(c.px, c.py, c.pz), t)) {
-                    if (t < nearestT) {
-                        nearestT = t;
-                        picked = obj;
-                    }
-                }
-            }
-        }
+        Vector3 rayStart{};
+        Vector3 rayEnd{};
+        EmptyObject *hitObject = nullptr;
+        float hitT = 0.0f;
+        RaycastSceneMeshes(mouse, imagePos, imageSize, rayStart, rayEnd, hitObject, hitT);
+        picked = hitObject;
     }
 
     // Ctrlクリックはトグル追加、通常クリックは単一選択（何もない場所なら選択解除）

@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include "Math/Vector3.h"
 #include "Scene/SceneEditorContext.h"
 #include "Scene/Editor/PrefabSyncUtility.h"
 #include "Scene/Editor/SceneEditorCommands.h"
@@ -64,13 +65,20 @@ public:
     /// @param nodes 配置するノード列（PrefabUtility::LoadPrefabNodes等で構築したもの）
     /// @param name Undo履歴に表示する名前（プレハブ名等）
     /// @param attachParent 配置先の親オブジェクト（nullptrの場合はルート直下）
+    /// @param worldPosition 指定した場合、ルートをこのワールド座標へ配置する（nullptrの場合はノードに
+    ///        保存されている位置をそのまま使う。シーンビューへのドラッグ&ドロップ配置で使用）。
+    ///        customData["translate"]をそのままワールド座標として書き換えるため、attachParentが
+    ///        非nullptrの場合はワールド座標ではなくattachParentのローカル座標として適用される点に注意
     void InstantiateNodes(const std::vector<PasteObjectCommand::Node> &nodes, const std::string &name,
-        EmptyObject *attachParent = nullptr);
+        EmptyObject *attachParent = nullptr, const Vector3 *worldPosition = nullptr);
     /// @brief プレハブファイル（.prefab）を読み込んでシーンへ配置する
     /// @param filePath プレハブファイルのパス（実行ディレクトリからの相対パス）
     /// @param attachParent 配置先の親オブジェクト（nullptrの場合はルート直下）
+    /// @param worldPosition 指定した場合、ルートをこのワールド座標へ配置する（nullptrの場合はプレハブに
+    ///        保存されている位置をそのまま使う。シーンビューへのドラッグ&ドロップ配置で使用）。
+    ///        attachParent指定時の座標系についてはInstantiateNodesの注意を参照
     /// @return 配置に成功した場合は true
-    bool InstantiatePrefabFile(const std::string &filePath, EmptyObject *attachParent = nullptr);
+    bool InstantiatePrefabFile(const std::string &filePath, EmptyObject *attachParent = nullptr, const Vector3 *worldPosition = nullptr);
 
     /// @brief ヒエラルキー外（シーンビューのクリック等）からの選択操作
     /// @param obj 選択するオブジェクト（nullptrかつadditive=falseの場合は選択解除）

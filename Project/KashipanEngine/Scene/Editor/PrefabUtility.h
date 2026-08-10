@@ -3,6 +3,9 @@
 #include <string>
 #include <vector>
 
+#include "Assets/ModelManager.h"
+#include "Math/Matrix4x4.h"
+#include "Math/Vector3.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 #include "Utilities/UUID128.h"
 
@@ -47,6 +50,29 @@ std::vector<PasteObjectCommand::Node> LoadPrefabNodes(const JSON &prefabJson);
 ///        falseの場合はルートノードの"parent"を消去する（PasteObjectCommand側でattachParentへ接続する）
 std::vector<PasteObjectCommand::Node> PrepareNodesForInstantiation(
     const std::vector<PasteObjectCommand::Node> &source, bool preserveRootParent);
+
+/// @brief ルートノード群（parentIndexInSubtree<0）を指定したワールド座標へ移動する
+/// @details 複数のルートノードがある場合は、先頭のルートの元の位置を基準にした差分を全ルートへ
+///          等しく適用し、ルート間の相対配置を保ったまま全体を移動する。ルートは親を持たない前提
+///          （PrepareNodesForInstantiationで親参照が消去された後の呼び出しを想定）のため、
+///          customData["translate"]をそのままワールド座標として扱う。
+///          Prefabのシーンビューへのドラッグ&ドロップ配置（カーソル位置への配置）に使う
+void OffsetRootsToWorldPosition(std::vector<PasteObjectCommand::Node> &nodes, const Vector3 &worldPosition);
+
+/// @brief シーンビューへのPrefabドラッグ中プレビュー用に、メッシュハンドルとワールド行列だけを取り出す
+/// @details EmptyObject/コンポーネントは一切生成しない（ドラッグ中は未確定のため、実際に配置される
+///          Prefabインスタンスとは無関係に、SceneRendererへ直接渡すためだけの一時データを作る）。
+///          MeshFilter+MeshRenderer（いずれも非アクティブでない）を持つノードのみを対象にする
+struct GhostPreviewMesh {
+    ModelManager::ModelHandle meshHandle = ModelManager::kInvalidHandle;
+    Matrix4x4 worldMatrix = Matrix4x4::Identity();
+};
+
+/// @param nodes プレビュー対象のノード列（PrefabUtility::LoadPrefabNodes等で構築したもの。
+///        このノード列自体は書き換えない）
+/// @param worldPosition ルートを配置するワールド座標（OffsetRootsToWorldPositionと同じ規約）
+std::vector<GhostPreviewMesh> BuildGhostPreviewMeshes(
+    const std::vector<PasteObjectCommand::Node> &nodes, const Vector3 &worldPosition);
 
 } // namespace PrefabUtility
 

@@ -663,14 +663,17 @@ void SceneObjectHierarchy::CollectSubtreeNodes(EmptyObject *obj, int parentIndex
 }
 
 void SceneObjectHierarchy::InstantiateNodes(const std::vector<PasteObjectCommand::Node> &nodes, const std::string &name,
-    EmptyObject *attachParent) {
+    EmptyObject *attachParent, const Vector3 *worldPosition) {
     if (nodes.empty() || !editorContext_) return;
     auto prepared = PrepareNodesForInstantiation(nodes, /*preserveRootParent=*/false);
+    if (worldPosition) {
+        PrefabUtility::OffsetRootsToWorldPosition(prepared, *worldPosition);
+    }
     ExecutePasteCommand(std::make_unique<PasteObjectCommand>(
         std::move(prepared), attachParent, MAXSIZE_T, name, "Instantiate Prefab"));
 }
 
-bool SceneObjectHierarchy::InstantiatePrefabFile(const std::string &filePath, EmptyObject *attachParent) {
+bool SceneObjectHierarchy::InstantiatePrefabFile(const std::string &filePath, EmptyObject *attachParent, const Vector3 *worldPosition) {
     if (filePath.empty() || !editorContext_) return false;
     const JSON prefabJson = LoadJSON(ProjectPaths::ToPhysical(filePath));
     if (!prefabJson.is_object()) {
@@ -684,7 +687,7 @@ bool SceneObjectHierarchy::InstantiatePrefabFile(const std::string &filePath, Em
     }
     const std::string prefabName = prefabJson.value("name",
         std::filesystem::path(filePath).stem().string());
-    InstantiateNodes(nodes, prefabName, attachParent);
+    InstantiateNodes(nodes, prefabName, attachParent, worldPosition);
 
     // 配置直後のルート（ExecutePasteCommandが選択状態にする）へPrefabInstanceComponentを付与し、
     // 元Prefabとのリンクを持たせる（Prefabファイル自体にはリンク情報を含めない設計のため、

@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "Scene/SceneEditorContext.h"
+#include "Scene/Editor/SceneEditorCommands.h"
 #include "Graphics/Renderer/EditorDebugDraw.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Quaternion.h"
@@ -83,6 +84,32 @@ private:
     ///          PickIconAtScreenPositionでアイコンとの距離判定を行い、そちらを優先する。Ctrlクリックで
     ///          トグル追加、何もない場所のクリックで選択解除（Unityのシーンビューと同じ挙動）
     void HandleObjectPicking(SceneObjectHierarchy *hierarchy, const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief スクリーン座標からエディターカメラのレイを飛ばし、MeshFilterを持つ描画対象オブジェクトの
+    ///        三角形と交差判定して最も手前のオブジェクトを求める（HandleObjectPicking/
+    ///        ComputeCursorWorldPositionの共通処理）
+    /// @param outRayStart レイの始点（近平面上のワールド座標）
+    /// @param outRayEnd レイの終点（遠平面上のワールド座標）
+    /// @param outHitObject 交差したオブジェクト（見つからなければnullptr）
+    /// @param outHitT 交差したオブジェクトがある場合、レイ上のパラメータt（0=始点、1=終点）
+    /// @return いずれかのオブジェクトと交差した場合true
+    bool RaycastSceneMeshes(const ImVec2 &screenPos, const ImVec2 &imagePos, const ImVec2 &imageSize,
+        Vector3 &outRayStart, Vector3 &outRayEnd, EmptyObject *&outHitObject, float &outHitT) const;
+    /// @brief シーンビュー画像上のスクリーン座標を、Prefab配置等に使うワールド座標へ変換する
+    /// @details Unityのシーンビューと同様、既存のメッシュ表面があればそこへスナップし、
+    ///          無ければY=0の地面平面との交点、それも無ければ（真上/真下を向いている等）
+    ///          カメラから現在の注視距離だけ進めた点にフォールバックする
+    Vector3 ComputeCursorWorldPosition(const ImVec2 &screenPos, const ImVec2 &imagePos, const ImVec2 &imageSize) const;
+    /// @brief Assetsウィンドウからのプレハブファイル（.prefab）のドラッグ&ドロップを処理する
+    /// @details ドラッグ中（未ドロップ）は毎フレームUpdateGhostPreviewでプレビューを更新し、
+    ///          実際にドロップされた瞬間にInstantiatePrefabFileでシーンへ配置する。ドロップ/キャンセル/
+    ///          シーンビュー範囲外への移動でこのウィンドウ上のドラッグが終わった場合はプレビューを消す
+    void HandlePrefabDragDrop(SceneObjectHierarchy *hierarchy, const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief ドラッグ中のPrefabプレビューを更新する（カーソル直下の配置予定位置に半透明メッシュを表示）
+    /// @details プレハブJSONのパースは対象パスが変わった時のみ行い（ドラッグ中の毎フレーム再パースを
+    ///          避けるため）、位置計算とワールド行列の再計算のみ毎フレーム行う
+    void UpdateGhostPreview(const std::string &prefabPath, const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief ドラッグ中のPrefabプレビューを消す
+    void ClearGhostPreview();
     /// @brief クリック位置に最も近いLight/Cameraアイコンのオブジェクトを取得する
     /// @details DrawLightMarkers/DrawCameraMarkersで描画しているアイコンは深度テストせず常に手前に
     ///          表示されるため、メッシュの三角形ピッキングより先にこちらを優先して判定する。
@@ -172,6 +199,13 @@ private:
     Vector4 backgroundColor_{ 0.0f, 0.0f, 0.0f, 1.0f };
     /// @brief 背景に使うテクスチャのAssetsルートからの相対パス（空文字の場合はbackgroundColor_を使用）
     std::string backgroundTexturePath_;
+
+    // ドラッグ中のPrefabプレビュー用状態（UpdateGhostPreview/ClearGhostPreview参照）
+    bool ghostPreviewActive_ = false;
+    /// @brief ghostPreviewNodes_が対応しているプレハブのパス（変化した時だけ再パースするためのキャッシュキー）
+    std::string ghostPreviewAssetPath_;
+    /// @brief ghostPreviewAssetPathから読み込んだプレハブのノード列（ドラッグ中は使い回す）
+    std::vector<PasteObjectCommand::Node> ghostPreviewNodes_;
 };
 
 } // namespace KashipanEngine

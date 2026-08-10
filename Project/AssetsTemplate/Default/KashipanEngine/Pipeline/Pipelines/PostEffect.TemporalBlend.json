@@ -1,0 +1,29 @@
+{
+	"PipelineType": "Render",
+	"Name": "PostEffect.TemporalBlend",
+	"Category": "PostEffect",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": {
+			"UsePreset": "TemporalBlend.Vertex"
+		},
+		"Pixel": {
+			"UsePreset": "TemporalBlend.Pixel"
+		}
+	},
+	"RasterizerState": {
+		"UsePreset": "Solid"
+	},
+	"BlendState": {
+		"UsePreset": "Normal"
+	},
+	"DepthStencilState": {
+		"UsePreset": "DepthDisable"
+	},
+	"PipelineState": {
+		"UsePreset": "Triangle"
+	}
+}

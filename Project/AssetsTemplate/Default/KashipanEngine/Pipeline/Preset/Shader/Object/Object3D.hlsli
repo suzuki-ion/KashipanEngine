@@ -7,6 +7,9 @@ struct VSOutput {
 	float3 tangent : TANGENT;
 	float3 worldPosition : WORLDPOSITION;
 	uint instanceId : INSTANCEID;
+	// 補間による丸め誤差が乗ると、ディザのハッシュ関数（sinベース）で誤差が大きく増幅され
+	// ノイズになるため、補間せず（頂点ごとに完全に同一の値のため元々補間の意味も無い）渡す
+	nointerpolation float idSeed : IDSEED;
 };
 
 struct DirectionalLight {

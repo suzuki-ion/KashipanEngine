@@ -21,6 +21,11 @@ struct TransformationMatrix {
 };
 
 StructuredBuffer<TransformationMatrix> gTransformationMatrices : register(t0);
+#ifdef Object3D
+// オブジェクト固有のシード値（半透明のディザリングパターンをオブジェクトごとに分離するために使用。
+// ObjectPS.hlsl参照）。C++側でEmptyObject::GetObjectID()から導出している
+StructuredBuffer<float> gObjectIdSeeds : register(t1);
+#endif
 
 VSOutput main(VSInput input, uint instanceId : SV_InstanceID) {
 	VSOutput output;
@@ -39,6 +44,7 @@ VSOutput main(VSInput input, uint instanceId : SV_InstanceID) {
 	output.normal = normalize(mul(input.normal, (float3x3)world));
 	output.tangent = normalize(mul(input.tangent, (float3x3)world));
 	output.worldPosition = mul(input.position, world).xyz;
+	output.idSeed = gObjectIdSeeds[instanceId];
 #endif
 	output.instanceId = instanceId;
 	return output;

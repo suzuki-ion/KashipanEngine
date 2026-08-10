@@ -61,8 +61,28 @@ Vector4 GetInstanceColorFor(const RendererT *renderer) {
         return Vector4(1.0f, 1.0f, 1.0f, 1.0f);
     }
 }
+/// @brief オブジェクト固有のUUIDから、ディザリングの位相分離等に使うシード値を導出する
+/// @details SV_InstanceIDはドローコールごとに0から振り直されるため異なるオブジェクト間で衝突しやすく、
+///          ワールド座標は原点が一致する別オブジェクト（親子で子のローカルオフセットが0など）で衝突する。
+///          UUID128はシーン内で（実質的に）確実に一意なため、いずれの衝突も避けられる
+float ObjectIdSeedFor(const EmptyObject *owner) {
+    if (!owner) return 0.0f;
+    const UUID128 &id = owner->GetObjectID();
+    // 上位/下位64bitを畳み込んで32bit値にする（std::hash<UUID128>の特殊化と同じ考え方）。
+    // シェーダー側で更にsinベースのハッシュにかけるため、ここでは高品質な乱数である必要はない
+    const std::uint64_t folded = id.GetHigh() ^ (id.GetLow() * 0x9E3779B97F4A7C15ULL);
+    const std::uint32_t seed32 = static_cast<std::uint32_t>(folded ^ (folded >> 32));
+    // [0, 1)に正規化してから渡す。32bit値をそのままfloatにキャストすると、シェーダー側の
+    // sin(x * 12.9898f)のxが数十億オーダーになり、GPUのsin()が大きな引数で精度を失って
+    // 引数簡約が破綻する（数百離れた異なる値が同じ結果に丸められてしまう）ため、ここで
+    // 小さい範囲に落としてからシェーダー側のハッシュに渡す
+    return static_cast<float>(seed32) / 4294967296.0f;
+}
+
 /// @brief 押し出しアウトライン（Inverted Hull）パイプライン名
 constexpr const char *kOutlinePipelineName = "Object3D.Outline";
+/// @brief Prefabドラッグ配置プレビュー（半透明のゴーストメッシュ）パイプライン名
+constexpr const char *kGhostPreviewPipelineName = "Object3D.Ghost";
 
 /// @brief 指定パイプラインが利用可能か確認する。未読み込みの場合はPipelineManager::GetOrCreatePipeline
 ///        による動的バリアント再構築を試みる
@@ -136,6 +156,36 @@ void AppendEditorSelectionOutlineEntries(const std::vector<MeshRenderer *> &mesh
     }
 }
 
+/// @brief Prefabドラッグ配置プレビュー用のDrawEntryを追加する（SceneEditorViewが毎フレーム設定した
+///        メッシュハンドル・ワールド行列をそのまま使う。実際のシーンオブジェクトを介さないため、
+///        AppendEditorSelectionOutlineEntriesと異なりMeshRenderer一覧を走査しない）
+void AppendGhostPreviewEntries(const std::vector<SceneRenderer::GhostPreviewMesh> &ghostPreviewMeshes,
+    PipelineManager *pipelineManager, IRenderTarget *editorTarget,
+    MaterialManager::MaterialHandle ghostPreviewMaterialHandle,
+    std::vector<SortableEntry> &out) {
+    if (ghostPreviewMeshes.empty() || !editorTarget || !editorTarget->IsRenderTargetAvailable()) return;
+    if (ghostPreviewMaterialHandle == MaterialManager::kInvalidHandle) return;
+    if (!pipelineManager->HasPipeline(kGhostPreviewPipelineName)) return;
+    const std::int32_t pipelinePriority = pipelineManager->GetPipeline(kGhostPreviewPipelineName).RenderPriority();
+    const int kindOrder = GetRenderTargetKindOrder(editorTarget->GetRenderTargetKind());
+
+    for (const auto &mesh : ghostPreviewMeshes) {
+        if (mesh.meshHandle == ModelManager::kInvalidHandle) continue;
+
+        SortableEntry sortable;
+        sortable.entry.target = editorTarget;
+        sortable.entry.pipelineName = kGhostPreviewPipelineName;
+        sortable.entry.meshHandle = mesh.meshHandle;
+        sortable.entry.materialHandle = ghostPreviewMaterialHandle;
+        // indexCount==0のためサブメッシュ分割せずメッシュ全体を描画する（マテリアルは常にゴースト用の
+        // 単色半透明マテリアルへ差し替わるため、元のサブメッシュ/マテリアル境界を気にする必要がない）
+        sortable.entry.worldMatrix = mesh.worldMatrix;
+        sortable.kindOrder = kindOrder;
+        sortable.pipelinePriority = pipelinePriority;
+        out.push_back(std::move(sortable));
+    }
+}
+
 template <typename RendererT>
 int GetInstanceColorBlendModeFor(const RendererT *renderer) {
     if constexpr (std::is_same_v<RendererT, MeshRenderer> || std::is_same_v<RendererT, SkinnedMeshRenderer>) {
@@ -174,11 +224,14 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
         // EditorOnlyオブジェクト（祖先を含む）はエディター用描画先にのみ描画する
         const EmptyObject *ownerObject = renderer->GetOwnerObject();
         const bool editorOnly = ownerObject && ownerObject->IsEditorOnlyInHierarchy();
+        // 孤立プレビュー等、Scene Viewへの映り込みを明示的に望まないオブジェクトは除外する
+        const bool hiddenFromEditorTarget = ownerObject && ownerObject->IsHiddenFromEditorTarget();
 
         auto *targetObject = renderer->GetTargetObject();
         SceneRenderer::CollectRenderTargets(targetObject, targets);
         // エディター用描画先には全てのMeshRenderer/SpriteRendererを描画する
-        if (editorTarget && editorTarget->IsRenderTargetAvailable()) {
+        // （ただしIsHiddenFromEditorTarget()なオブジェクトは例外的に除外する）
+        if (editorTarget && editorTarget->IsRenderTargetAvailable() && !hiddenFromEditorTarget) {
             targets.push_back(editorTarget);
         }
         // サブメッシュ（マテリアルごとのインデックス範囲）ごとに1エントリ作る
@@ -207,6 +260,7 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
                     renderer->GetOwnerObject(), renderer->GetWorldMatrix());
                 sortable.entry.instanceColor = GetInstanceColorFor(renderer);
                 sortable.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(renderer);
+                sortable.entry.objectIdSeed = ObjectIdSeedFor(ownerObject);
                 sortable.kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
                 sortable.pipelinePriority = pipelinePriority;
                 sortableEntries.push_back(sortable);
@@ -271,6 +325,7 @@ void CollectCacheableEntries(const std::vector<RendererT *> &renderers,
             }
             cached.ranked.entry.instanceColor = GetInstanceColorFor(renderer);
             cached.ranked.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(renderer);
+            cached.ranked.entry.objectIdSeed = ObjectIdSeedFor(renderer->GetOwnerObject());
             cached.ranked.kindOrder = GetRenderTargetKindOrder(editorTarget->GetRenderTargetKind());
             cached.ranked.pipelinePriority = pipelineManager->GetPipeline(pipelineName).RenderPriority();
             cached.source = renderer;
@@ -460,6 +515,26 @@ MaterialManager::MaterialHandle SceneRenderer::EnsureEditorSelectionOutlineMater
     return editorSelectionOutlineMaterial_;
 }
 
+MaterialManager::MaterialHandle SceneRenderer::EnsureEditorGhostPreviewMaterial() {
+    // "__"始まりの名前規約はEnsureEditorSelectionOutlineMaterialと同じ（IsInternalMaterialName参照）
+    if (editorGhostPreviewMaterial_ != MaterialManager::kInvalidHandle &&
+        MaterialManager::GetMaterial(editorGhostPreviewMaterial_)) {
+        return editorGhostPreviewMaterial_;
+    }
+    // シーン再読み込み等でSceneRendererが作り直された場合、前のインスタンスが既に登録済みのことがある。
+    // 名前で見つかればそれを使い回し、MaterialManager側にエントリが積み上がるのを防ぐ
+    if (const auto existing = MaterialManager::GetMaterialHandleFromName("__GhostPreview");
+        existing != MaterialManager::kInvalidHandle) {
+        editorGhostPreviewMaterial_ = existing;
+        return editorGhostPreviewMaterial_;
+    }
+    MaterialManager::Material material{};
+    material.name = "__GhostPreview";
+    material.extraParameters["ghostColor"] = MyAny(Vector4(0.35f, 0.75f, 1.0f, 0.4f));
+    editorGhostPreviewMaterial_ = MaterialManager::RegisterMaterial(material.name, material);
+    return editorGhostPreviewMaterial_;
+}
+
 const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(Passkey<Renderer>, PipelineManager *pipelineManager) {
     sortedDrawList_.clear();
     targetOwners_.clear();
@@ -494,10 +569,12 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
             // EditorOnlyオブジェクト（祖先を含む）はエディター用描画先にのみ描画する
             const EmptyObject *ownerObject = renderer->GetOwnerObject();
             const bool editorOnly = ownerObject && ownerObject->IsEditorOnlyInHierarchy();
+            // 孤立プレビュー等、Scene Viewへの映り込みを明示的に望まないオブジェクトは除外する
+            const bool hiddenFromEditorTarget = ownerObject && ownerObject->IsHiddenFromEditorTarget();
 
             auto *targetObject = renderer->GetTargetObject();
             SceneRenderer::CollectRenderTargets(targetObject, targets);
-            if (editorTarget_ && editorTarget_->IsRenderTargetAvailable()) {
+            if (editorTarget_ && editorTarget_->IsRenderTargetAvailable() && !hiddenFromEditorTarget) {
                 targets.push_back(editorTarget_);
             }
             // サブメッシュ（マテリアルごとのインデックス範囲）ごとに1エントリ作る
@@ -528,6 +605,7 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
                     sortable.entry.skinnedVertexBuffer = renderer->GetSkinnedVertexBuffer();
                     sortable.entry.instanceColor = GetInstanceColorFor(renderer);
                     sortable.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(renderer);
+                    sortable.entry.objectIdSeed = ObjectIdSeedFor(ownerObject);
                     sortable.kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
                     sortable.pipelinePriority = pipelinePriority;
                     freshEntries.push_back(sortable);
@@ -550,6 +628,12 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
     if (!editorSelectedObjects_.empty()) {
         AppendEditorSelectionOutlineEntries(meshRenderers_, pipelineManager, editorTarget_,
             editorSelectedObjects_, EnsureEditorSelectionOutlineMaterial(), freshEntries);
+    }
+
+    // エディターのシーンビューへドラッグ中のPrefabプレビュー（editorTarget_にのみ適用）
+    if (!editorGhostPreviewMeshes_.empty()) {
+        AppendGhostPreviewEntries(editorGhostPreviewMeshes_, pipelineManager, editorTarget_,
+            EnsureEditorGhostPreviewMaterial(), freshEntries);
     }
 
     // 描画先→パイプライン優先度→パイプライン名→メッシュ→マテリアルの順でソート

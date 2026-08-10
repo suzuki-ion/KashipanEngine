@@ -40,6 +40,7 @@
 #include "Objects/Components/PostProcessing/MotionBlurEffect.h"
 #include "Objects/Components/PostProcessing/OutlineEffect.h"
 #include "Objects/Components/PostProcessing/RadialBlurEffect.h"
+#include "Objects/Components/PostProcessing/TemporalBlendEffect.h"
 #include "Objects/Components/PostProcessing/VignetteEffect.h"
 #include "Objects/Components/Render/Camera2D.h"
 #include "Objects/Components/Render/Camera3D.h"

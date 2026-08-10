@@ -125,6 +125,28 @@ void Renderer::DrawBatch(IRenderTarget *target,
         shaderBinder.Bind("Vertex:gTransformationMatrices", instanceBuffer);
     }
 
+    // オブジェクト固有シード値のインスタンスバッファ（ディザリングの位相分離等に使用。
+    // ObjectPS.hlslのディザ抜き半透明を持たないパイプラインでは対応するバインディングが
+    // 存在せず、shaderBinder.Bind内部で何もせずfalseを返すだけなので無害）
+    {
+        char idSeedSuffix[48];
+        std::snprintf(idSeedSuffix, sizeof(idSeedSuffix), "idSeed|%u", first.indexStart);
+        auto key = MakeBatchKey(target, pipelineName, first.meshHandle, first.materialHandle, idSeedSuffix);
+        if (first.skinnedVertexBuffer) {
+            char suffix[32];
+            std::snprintf(suffix, sizeof(suffix), "|%p", static_cast<void *>(first.skinnedVertexBuffer));
+            key += suffix;
+        }
+        std::vector<float> idSeeds(instanceCount);
+        for (size_t i = 0; i < batch.size(); ++i) {
+            idSeeds[i] = batch[i].objectIdSeed;
+        }
+        auto *idSeedBuffer = resourceContainer_->GetOrUpdateStructuredBuffer(key, sizeof(float), instanceCount, idSeeds.data());
+        if (idSeedBuffer) {
+            shaderBinder.Bind("Vertex:gObjectIdSeeds", idSeedBuffer);
+        }
+    }
+
     // マテリアルの構造化バッファ（シェーダーはインスタンスIDで参照するため個数分並べる）
     {
         auto *material = MaterialManager::GetMaterial(first.materialHandle);

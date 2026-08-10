@@ -82,6 +82,7 @@
 #include "Objects/Components/PostProcessing/MotionBlurEffect.h"
 #include "Objects/Components/PostProcessing/OutlineEffect.h"
 #include "Objects/Components/PostProcessing/RadialBlurEffect.h"
+#include "Objects/Components/PostProcessing/TemporalBlendEffect.h"
 #include "Objects/Components/PostProcessing/VignetteEffect.h"
 #include "Objects/Components/Render/Camera2D.h"
 #include "Objects/Components/Render/Camera3D.h"
@@ -1171,6 +1172,10 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         })
         .method("float GetStartRadius() const", [](const RadialBlurEffect &e) { return e.GetParams().startRadius; })
         .method("void SetStartRadius(float)", [](RadialBlurEffect &e, float v) { auto p = e.GetParams(); p.startRadius = v; e.SetParams(p); });
+
+    RegisterComponentType<TemporalBlendEffect>(engine, "TemporalBlendEffect")
+        .method("float GetHistoryWeight() const", [](const TemporalBlendEffect &e) { return e.GetParams().historyWeight; })
+        .method("void SetHistoryWeight(float)", [](TemporalBlendEffect &e, float v) { auto p = e.GetParams(); p.historyWeight = v; e.SetParams(p); });
 
     RegisterComponentType<VignetteEffect>(engine, "VignetteEffect")
         .method("Vector2 GetCenter() const", [](const VignetteEffect &e) -> Vector2 {

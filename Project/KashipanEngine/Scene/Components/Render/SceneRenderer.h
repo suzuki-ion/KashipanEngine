@@ -57,6 +57,11 @@ public:
         /// @brief instanceColorの適用方法（MeshRenderer::ColorBlendMode/SkinnedMeshRenderer::ColorBlendModeの値。
         ///        0=Override,1=Multiply,2=Add,3=Subtract）
         int instanceColorBlendMode = 1;
+        /// @brief オブジェクト固有のシード値（EmptyObject::GetObjectID()から導出）。ドローコールを
+        ///        またいでもシーン内で一意になるため、SV_InstanceIDのようなドローコールローカルな値や
+        ///        ワールド座標とは異なり、原点が一致する別オブジェクト同士でも確実に異なる値になる。
+        ///        半透明のディザリングパターンをオブジェクトごとに分離する用途で使う（ObjectPS.hlsl参照）
+        float objectIdSeed = 0.0f;
     };
 
     /// @brief DrawEntryにソートキー（描画先種別順・パイプライン優先度）を付随させた中間データ
@@ -210,6 +215,23 @@ public:
         editorSelectedObjects_ = std::move(selectedObjects);
     }
 
+    /// @brief Prefabのシーンビューへのドラッグ中プレビュー用の1メッシュ分の情報
+    /// @details 実際のシーンオブジェクト（EmptyObject/MeshRenderer）を介さず、メッシュハンドルと
+    ///          ワールド行列を直接指定する（ドラッグ中は配置が未確定のため）
+    struct GhostPreviewMesh {
+        ModelManager::ModelHandle meshHandle = ModelManager::kInvalidHandle;
+        Matrix4x4 worldMatrix = Matrix4x4::Identity();
+    };
+
+    /// @brief エディターのシーンビューへドラッグ中のPrefabプレビューメッシュを設定する
+    /// @details 半透明の専用パイプライン（Object3D.Ghost）で、editorTarget_（シーンビュー用描画先）
+    ///          にのみ描画される。選択アウトライン（SetEditorSelectedObjects）と同様、
+    ///          ゲーム画面や他の描画先には一切影響しない
+    /// @param meshes プレビューするメッシュ一覧（空にするとプレビューは表示されない）
+    void SetEditorGhostPreviewMeshes(std::vector<GhostPreviewMesh> meshes) {
+        editorGhostPreviewMeshes_ = std::move(meshes);
+    }
+
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override;
@@ -251,6 +273,14 @@ private:
     MaterialManager::MaterialHandle editorSelectionOutlineMaterial_ = MaterialManager::kInvalidHandle;
     /// @brief editorSelectionOutlineMaterial_を必要に応じて生成し、そのハンドルを返す
     MaterialManager::MaterialHandle EnsureEditorSelectionOutlineMaterial();
+
+    /// @brief エディターのシーンビューへドラッグ中のPrefabプレビューメッシュ（SetEditorGhostPreviewMeshes参照）
+    std::vector<GhostPreviewMesh> editorGhostPreviewMeshes_;
+    /// @brief プレビュー用の内部マテリアル（初回のBuildSortedDrawListで遅延生成する）。
+    ///        名前を"__"で始めることで、マテリアル一覧・保存対象から除外される（IsInternalMaterialName参照）
+    MaterialManager::MaterialHandle editorGhostPreviewMaterial_ = MaterialManager::kInvalidHandle;
+    /// @brief editorGhostPreviewMaterial_を必要に応じて生成し、そのハンドルを返す
+    MaterialManager::MaterialHandle EnsureEditorGhostPreviewMaterial();
 };
 
 REGISTER_COMPONENT_SCENE(SceneRenderer)

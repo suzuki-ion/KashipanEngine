@@ -16,6 +16,7 @@ struct Material {
 #ifdef Object3D
 #include "../Common/ShadowMap.hlsli"
 #include "../Common/AreaLight.hlsli"
+#include "../Common/Time.hlsli"
 #include "Object3D.hlsli"
 
 // struct Materialの本体はここで組み立てる。基本フィールドはMaterial3D.hlsliに定義されており、
@@ -147,16 +148,38 @@ float BlinnPhongReflection(float3 normal, float3 lightDir, float3 worldPos, floa
 #endif
 }
 
-float Dither4x4(float2 screenPos) {
-	int2 ipos = int2(screenPos) & 3;
-	int idx = ipos.x + ipos.y * 4;
-	static const float dither[16] = {
-		0.0f, 8.0f, 2.0f, 10.0f,
-		12.0f, 4.0f, 14.0f, 6.0f,
-		3.0f, 11.0f, 1.0f, 9.0f,
-		15.0f, 7.0f, 13.0f, 5.0f
+float HashToUnit(float x) {
+	return frac(sin(x * 12.9898f) * 43758.5453f);
+}
+
+float Dither8x8(float2 screenPos, float objectSeed) {
+	// gTimeから導出したフレーム相当のインデックスに加え、オブジェクト固有のシード値
+	// （EmptyObject::GetObjectID()由来、C++側でハッシュ済み。ObjectVS.hlsl参照）を
+	// ハッシュ化した値でもサンプリング位置をずらす。シーン内で実質的に一意な値のため、
+	// 同一アルファのオブジェクト同士が重なった際に閾値が一致し奥が完全に消えてしまう問題を
+	// 緩和できる。オブジェクト単位で固定された値（画素ごとには変化しない）なので、
+	// 同一オブジェクトの表面内でディザパターンがばらついてノイズっぽく見えることもない。
+	// x/yのシフトを同じハッシュ値から導出すると位相の組み合わせが8通りしか作れないため、
+	// 異なる種で2回ハッシュして独立させ、8x8行列が許す最大64通りの位相を使えるようにしている
+	// （4x4だと組み合わせが16通りしかなく、約6.25%の確率で2物体の相対位相が完全に一致して
+	// しまっていた。8x8化により64通りとなり、その確率は約1.6%まで下がる）
+	int frameIndex = int(gTime * 60.0f);
+	int seedShiftX = int(HashToUnit(objectSeed) * 8.0f);
+	int seedShiftY = int(HashToUnit(objectSeed * 7.1907f) * 8.0f);
+	int2 shift = int2(frameIndex + seedShiftX, frameIndex * 3 + seedShiftY);
+	int2 ipos = (int2(screenPos) + shift) & 7;
+	int idx = ipos.x + ipos.y * 8;
+	static const float dither[64] = {
+		 0.0f, 32.0f,  8.0f, 40.0f,  2.0f, 34.0f, 10.0f, 42.0f,
+		48.0f, 16.0f, 56.0f, 24.0f, 50.0f, 18.0f, 58.0f, 26.0f,
+		12.0f, 44.0f,  4.0f, 36.0f, 14.0f, 46.0f,  6.0f, 38.0f,
+		60.0f, 28.0f, 52.0f, 20.0f, 62.0f, 30.0f, 54.0f, 22.0f,
+		 3.0f, 35.0f, 11.0f, 43.0f,  1.0f, 33.0f,  9.0f, 41.0f,
+		51.0f, 19.0f, 59.0f, 27.0f, 49.0f, 17.0f, 57.0f, 25.0f,
+		15.0f, 47.0f,  7.0f, 39.0f, 13.0f, 45.0f,  5.0f, 37.0f,
+		63.0f, 31.0f, 55.0f, 23.0f, 61.0f, 29.0f, 53.0f, 21.0f
 	};
-	return (dither[idx] + 0.5f) / 16.0f;
+	return (dither[idx] + 0.5f) / 64.0f;
 }
 #endif
 
@@ -486,7 +509,7 @@ PSOutput main(VSOutput input) {
 		discard;
 	}
 	if (output.color.a < 1.0f) {
-		float threshold = Dither4x4(input.position.xy);
+		float threshold = Dither8x8(input.position.xy, input.idSeed);
 		if (output.color.a <= threshold) {
 			discard;
 		}

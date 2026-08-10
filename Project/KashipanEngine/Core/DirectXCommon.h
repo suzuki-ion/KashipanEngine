@@ -94,6 +94,11 @@ public:
     /// @param record コマンド記録関数（Close は内部で行う）
     void ExecuteOneShotCommandsForFontManager(Passkey<FontManager>, const std::function<void(ID3D12GraphicsCommandList*)>& record);
 
+    /// @brief ワンショットでコマンドを記録・実行し、フェンス待機まで行う（Renderer 用。
+    ///        BlueNoiseGeneratorによる起動時のブルーノイズ生成（コンピュートシェーダー）に使用）
+    /// @param record コマンド記録関数（Close は内部で行う）
+    void ExecuteOneShotCommandsForRenderer(Passkey<Renderer>, const std::function<void(ID3D12GraphicsCommandList*)>& record);
+
     /// @brief D3D12デバイス取得（VideoTexture 用）
     ID3D12Device* GetDeviceForVideoTexture(Passkey<VideoTexture>) const { return dx12Device_->GetDevice(); }
     /// @brief SRV ヒープ取得（VideoTexture 用）

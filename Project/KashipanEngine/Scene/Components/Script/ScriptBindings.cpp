@@ -635,7 +635,9 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetOrthographic(bool)", &Camera3D::SetOrthographic)
         .method("bool IsOrthographic() const", &Camera3D::IsOrthographic)
         .method("void SetOrthoSize(float)", &Camera3D::SetOrthoSize)
-        .method("float GetOrthoSize() const", &Camera3D::GetOrthoSize);
+        .method("float GetOrthoSize() const", &Camera3D::GetOrthoSize)
+        .method("void SetEnableJitter(bool)", &Camera3D::SetEnableJitter)
+        .method("bool IsJitterEnabled() const", &Camera3D::IsJitterEnabled);
 
     RegisterComponentType<SpriteRenderer>(engine, "SpriteRenderer")
         .method("void SetAnchor(const Vector2 &in)", &SpriteRenderer::SetAnchor)

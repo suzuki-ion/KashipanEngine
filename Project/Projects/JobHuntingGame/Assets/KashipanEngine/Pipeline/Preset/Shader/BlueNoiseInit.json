@@ -1,0 +1,9 @@
+{
+	"BaseName": "BlueNoiseInit",
+	"Compute": {
+		"Name": "CS",
+		"Path": "BlueNoise/BlueNoiseInitCS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "cs_6_0"
+	}
+}

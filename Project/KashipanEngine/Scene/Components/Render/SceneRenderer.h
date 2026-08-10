@@ -83,6 +83,11 @@ public:
     COMPONENT_CATEGORY("Render")
     ~SceneRenderer() override = default;
 
+    /// @brief オブジェクト固有のディザ用シード値（EmptyObject::GetObjectID()から導出）を求める
+    /// @details 通常描画のDrawEntry構築時だけでなく、RendererShadow.cppのシャドウマップ描画でも
+    ///          同じ値を使い、本体と影のディザ位相を揃えるために公開している
+    static float ObjectIdSeedFor(const EmptyObject *owner);
+
     std::unique_ptr<ISceneComponent> Clone() const override {
         return std::make_unique<SceneRenderer>();
     }

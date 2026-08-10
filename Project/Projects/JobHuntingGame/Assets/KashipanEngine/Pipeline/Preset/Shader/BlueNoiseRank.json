@@ -1,0 +1,9 @@
+{
+	"BaseName": "BlueNoiseRank",
+	"Compute": {
+		"Name": "CS",
+		"Path": "BlueNoise/BlueNoiseRankCS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "cs_6_0"
+	}
+}

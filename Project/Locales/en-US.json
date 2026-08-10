@@ -755,6 +755,8 @@
 
 		//--------- component.camera3d ---------//
 		"component.camera3d.aspect": "Aspect",
+		"component.camera3d.enable_jitter": "Camera Jitter",
+		"component.camera3d.enable_jitter_desc": "Adds a sub-pixel offset to the projection matrix (TAA-style camera jitter). Intended to be paired with TemporalBlendEffect; enabling it alone will just make the image appear to shake.",
 		"component.camera3d.far": "Far",
 		"component.camera3d.fovy": "FovY",
 		"component.camera3d.near": "Near",
@@ -1252,6 +1254,10 @@
 		//--------- component.targetobjectselector ---------//
 		"component.targetobjectselector.none": "(None)",
 		"component.targetobjectselector.render_target_filter": "Render Target Filter",
+
+		//--------- component.temporalblendeffect ---------//
+		"component.temporalblendeffect.desc_1": "How strongly the history (past frames) is retained (closer to 1 gives smoother results at the cost of stronger ghosting on moving objects)",
+		"component.temporalblendeffect.history_weight": "History Weight",
 
 		//--------- component.textrenderer ---------//
 		"component.textrenderer.character_overrides": "Character Overrides",

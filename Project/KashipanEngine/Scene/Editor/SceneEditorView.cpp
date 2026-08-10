@@ -182,10 +182,18 @@ void SceneEditorView::UpdateCameraBuffer() {
     camera3d->SetAspectRatio(aspect);
     projection_.MakePerspectiveFovMatrix(camera3d->GetFovY(), aspect, camera3d->GetNearClip(), camera3d->GetFarClip());
 
+    // GPUへアップロードする投影行列にのみジッターを適用する。projection_自体（メンバ変数）は
+    // シャドウのカスケードフィッティングやギズモ操作のワールド→スクリーン変換（ScreenToWorld等）
+    // で参照されるため、非ジッターのまま保つ
+    Matrix4x4 gpuProjection = projection_;
+    if (camera3d->IsJitterEnabled()) {
+        camera3d->ApplyProjectionJitter(gpuProjection);
+    }
+
     CameraConstant constant{};
     constant.view = view_;
-    constant.projection = projection_;
-    constant.viewProjection = view_ * projection_;
+    constant.projection = gpuProjection;
+    constant.viewProjection = view_ * gpuProjection;
     constant.eyePosition = Vector4(eye.x, eye.y, eye.z, 1.0f);
     constant.fov = camera3d->GetFovY();
     cameraEye_ = eye;

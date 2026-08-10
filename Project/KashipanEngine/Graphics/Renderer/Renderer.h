@@ -8,6 +8,7 @@
 
 #include "Utilities/Passkeys.h"
 #include "Scene/Components/Render/SceneRenderer.h"
+#include "Graphics/BlueNoiseGenerator.h"
 
 namespace KashipanEngine {
 
@@ -71,6 +72,9 @@ private:
     ///          シャドウマップ配列内のスライス範囲 [baseSlice, baseSlice + sliceCount) を占有する
     struct ShadowJobData {
         Matrix4x4 viewProjections[kMaxShadowViewProjections];
+        /// @brief 各ビュー射影に対応するライト（視点）のワールド座標。シャドウマップPS側で
+        ///        本体と同じディザ閾値テーブルを参照する際、カメラの代わりに距離の基準として使う
+        Vector3 eyePositions[kMaxShadowViewProjections]{};
         float cascadeSplits[kShadowCascadeCount]{};
         /// @brief カスケードごとの深度バイアス係数（1テクセルのワールドサイズをNDC深度へ換算した値。Directional用）
         float cascadeBiasScales[kShadowCascadeCount]{};
@@ -214,6 +218,8 @@ private:
     PipelineManager *pipelineManager_ = nullptr;
     /// @brief GPUリソースキャッシュ
     std::unique_ptr<ResourceContainer> resourceContainer_;
+    /// @brief ブルーノイズによるディザ閾値テーブルの生成・保持（構築時に1回だけ生成する）
+    BlueNoiseGenerator blueNoiseGenerator_;
 
     //==================================================
     // シャドウマップ

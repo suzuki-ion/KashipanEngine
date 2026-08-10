@@ -7,6 +7,9 @@ using namespace RendererInternal;
 Renderer::Renderer(Passkey<GraphicsEngine>, DirectXCommon *directXCommon, PipelineManager *pipelineManager)
     : directXCommon_(directXCommon), pipelineManager_(pipelineManager) {
     resourceContainer_ = std::make_unique<ResourceContainer>();
+    // ブルーノイズによるディザ閾値テーブルはエンジン起動時に1回だけ生成すればよい
+    // （毎フレーム再生成する必要は無い）ため、ここで同期的に生成しておく
+    blueNoiseGenerator_.Generate(directXCommon_, pipelineManager_, Passkey<Renderer>{});
 }
 
 Renderer::~Renderer() {

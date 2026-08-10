@@ -61,24 +61,6 @@ Vector4 GetInstanceColorFor(const RendererT *renderer) {
         return Vector4(1.0f, 1.0f, 1.0f, 1.0f);
     }
 }
-/// @brief オブジェクト固有のUUIDから、ディザリングの位相分離等に使うシード値を導出する
-/// @details SV_InstanceIDはドローコールごとに0から振り直されるため異なるオブジェクト間で衝突しやすく、
-///          ワールド座標は原点が一致する別オブジェクト（親子で子のローカルオフセットが0など）で衝突する。
-///          UUID128はシーン内で（実質的に）確実に一意なため、いずれの衝突も避けられる
-float ObjectIdSeedFor(const EmptyObject *owner) {
-    if (!owner) return 0.0f;
-    const UUID128 &id = owner->GetObjectID();
-    // 上位/下位64bitを畳み込んで32bit値にする（std::hash<UUID128>の特殊化と同じ考え方）。
-    // シェーダー側で更にsinベースのハッシュにかけるため、ここでは高品質な乱数である必要はない
-    const std::uint64_t folded = id.GetHigh() ^ (id.GetLow() * 0x9E3779B97F4A7C15ULL);
-    const std::uint32_t seed32 = static_cast<std::uint32_t>(folded ^ (folded >> 32));
-    // [0, 1)に正規化してから渡す。32bit値をそのままfloatにキャストすると、シェーダー側の
-    // sin(x * 12.9898f)のxが数十億オーダーになり、GPUのsin()が大きな引数で精度を失って
-    // 引数簡約が破綻する（数百離れた異なる値が同じ結果に丸められてしまう）ため、ここで
-    // 小さい範囲に落としてからシェーダー側のハッシュに渡す
-    return static_cast<float>(seed32) / 4294967296.0f;
-}
-
 /// @brief 押し出しアウトライン（Inverted Hull）パイプライン名
 constexpr const char *kOutlinePipelineName = "Object3D.Outline";
 /// @brief Prefabドラッグ配置プレビュー（半透明のゴーストメッシュ）パイプライン名
@@ -260,7 +242,7 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
                     renderer->GetOwnerObject(), renderer->GetWorldMatrix());
                 sortable.entry.instanceColor = GetInstanceColorFor(renderer);
                 sortable.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(renderer);
-                sortable.entry.objectIdSeed = ObjectIdSeedFor(ownerObject);
+                sortable.entry.objectIdSeed = SceneRenderer::ObjectIdSeedFor(ownerObject);
                 sortable.kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
                 sortable.pipelinePriority = pipelinePriority;
                 sortableEntries.push_back(sortable);
@@ -325,7 +307,7 @@ void CollectCacheableEntries(const std::vector<RendererT *> &renderers,
             }
             cached.ranked.entry.instanceColor = GetInstanceColorFor(renderer);
             cached.ranked.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(renderer);
-            cached.ranked.entry.objectIdSeed = ObjectIdSeedFor(renderer->GetOwnerObject());
+            cached.ranked.entry.objectIdSeed = SceneRenderer::ObjectIdSeedFor(renderer->GetOwnerObject());
             cached.ranked.kindOrder = GetRenderTargetKindOrder(editorTarget->GetRenderTargetKind());
             cached.ranked.pipelinePriority = pipelineManager->GetPipeline(pipelineName).RenderPriority();
             cached.source = renderer;
@@ -347,6 +329,25 @@ void CollectCacheableEntries(const std::vector<RendererT *> &renderers,
 }
 
 } // namespace
+
+/// @brief オブジェクト固有のUUIDから、ディザリングの位相分離等に使うシード値を導出する
+/// @details SV_InstanceIDはドローコールごとに0から振り直されるため異なるオブジェクト間で衝突しやすく、
+///          ワールド座標は原点が一致する別オブジェクト（親子で子のローカルオフセットが0など）で衝突する。
+///          UUID128はシーン内で（実質的に）確実に一意なため、いずれの衝突も避けられる。
+///          RendererShadow.cppのシャドウマップ描画からも同じ値を使うため公開している
+float SceneRenderer::ObjectIdSeedFor(const EmptyObject *owner) {
+    if (!owner) return 0.0f;
+    const UUID128 &id = owner->GetObjectID();
+    // 上位/下位64bitを畳み込んで32bit値にする（std::hash<UUID128>の特殊化と同じ考え方）。
+    // シェーダー側で更にsinベースのハッシュにかけるため、ここでは高品質な乱数である必要はない
+    const std::uint64_t folded = id.GetHigh() ^ (id.GetLow() * 0x9E3779B97F4A7C15ULL);
+    const std::uint32_t seed32 = static_cast<std::uint32_t>(folded ^ (folded >> 32));
+    // [0, 1)に正規化してから渡す。32bit値をそのままfloatにキャストすると、シェーダー側の
+    // sin(x * 12.9898f)のxが数十億オーダーになり、GPUのsin()が大きな引数で精度を失って
+    // 引数簡約が破綻する（数百離れた異なる値が同じ結果に丸められてしまう）ため、ここで
+    // 小さい範囲に落としてからシェーダー側のハッシュに渡す
+    return static_cast<float>(seed32) / 4294967296.0f;
+}
 
 void SceneRenderer::CollectRenderTargets(EmptyObject *targetObject, std::vector<IRenderTarget *> &out) {
     out.clear();
@@ -605,7 +606,7 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
                     sortable.entry.skinnedVertexBuffer = renderer->GetSkinnedVertexBuffer();
                     sortable.entry.instanceColor = GetInstanceColorFor(renderer);
                     sortable.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(renderer);
-                    sortable.entry.objectIdSeed = ObjectIdSeedFor(ownerObject);
+                    sortable.entry.objectIdSeed = SceneRenderer::ObjectIdSeedFor(ownerObject);
                     sortable.kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
                     sortable.pipelinePriority = pipelinePriority;
                     freshEntries.push_back(sortable);

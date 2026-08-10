@@ -11,6 +11,8 @@ struct TransformationMatrix {
 };
 
 StructuredBuffer<TransformationMatrix> gTransformationMatrices : register(t0);
+// オブジェクト固有のディザ用シード値（本体描画のObjectVS.hlslと同じ考え方。ShadowMapPS.hlsl参照）
+StructuredBuffer<float> gObjectIdSeeds : register(t1);
 
 VSOutput main(VSInput input, uint instanceId : SV_InstanceID) {
     VSOutput output;
@@ -24,6 +26,7 @@ VSOutput main(VSInput input, uint instanceId : SV_InstanceID) {
     output.normal = normalize(mul(input.normal, (float3x3)world));
     output.worldPosition = mul(input.position, world).xyz;
     output.instanceId = instanceId;
+    output.idSeed = gObjectIdSeeds[instanceId];
 
     return output;
 }

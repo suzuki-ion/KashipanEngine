@@ -217,6 +217,12 @@ void Renderer::BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
         }
     }
 
+    // ブルーノイズによるディザ閾値テーブル（起動時に1回だけ生成済み。全描画先・全パイプラインで
+    // 共通のため、こちらもtargetやpipelineNameに依存せず無条件でバインドする）
+    if (blueNoiseGenerator_.IsReady()) {
+        shaderBinder.Bind("Pixel:gBlueNoiseDither", blueNoiseGenerator_.GetResultBuffer());
+    }
+
     // ライトは種類ごとに構造化バッファへまとめてバインドする
     BindLightBuffersAndShadowMap(target, pipelineName, sceneRenderer, shaderBinder);
 }

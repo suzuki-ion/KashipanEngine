@@ -755,6 +755,8 @@
 
 		//--------- component.camera3d ---------//
 		"component.camera3d.aspect": "アスペクト比",
+		"component.camera3d.enable_jitter": "カメラジッター",
+		"component.camera3d.enable_jitter_desc": "投影行列にサブピクセル単位の揺らぎを加える（TAA風のカメラジッター）。TemporalBlendEffectと組み合わせて使うことを想定しており、単独で有効化すると画面が揺れて見えるだけになる点に注意。",
 		"component.camera3d.far": "ファークリップ",
 		"component.camera3d.fovy": "垂直画角（FovY）",
 		"component.camera3d.near": "ニアクリップ",
@@ -1259,6 +1261,10 @@
 		//--------- component.targetobjectselector ---------//
 		"component.targetobjectselector.none": "(なし)",
 		"component.targetobjectselector.render_target_filter": "描画先フィルター",
+
+		//--------- component.temporalblendeffect ---------//
+		"component.temporalblendeffect.desc_1": "ヒストリー（過去フレーム）をどれだけ強く残すか（1に近いほど滑らかになる代わりに動く物体の残像も強くなる）",
+		"component.temporalblendeffect.history_weight": "ヒストリー強度",
 
 		//--------- component.textrenderer ---------//
 		"component.textrenderer.character_overrides": "文字ごとの上書き",

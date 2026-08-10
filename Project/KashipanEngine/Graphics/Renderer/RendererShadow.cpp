@@ -261,6 +261,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                         viewProjection.m[3][1] += (std::round(offsetY) - offsetY) / halfResolution;
 
                         job.viewProjections[c] = viewProjection;
+                        job.eyePositions[c] = eye;
                         job.cascadeSplits[c] = splitDistances[c + 1];
                         // 深度バイアス係数: 1テクセルのワールドサイズを正射影の深度レンジで正規化した値。
                         // シェーダー側で「テクセル数×この値」をNDC深度バイアスとして使うことで、
@@ -284,6 +285,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                     Matrix4x4 lightProjection;
                     lightProjection.MakePerspectiveFovMatrix(fovY, 1.0f, nearZ, farZ);
                     job.viewProjections[0] = makeLightView(lightDirection, lightPosition) * lightProjection;
+                    job.eyePositions[0] = lightPosition;
                     // 深度バイアス係数: シェーダー側でビュー深度wで割ることで、その距離での
                     // 1テクセルのワールドサイズに比例したNDC深度バイアスになる
                     // （透視投影はNDC深度が非線形のため、定数NDCバイアスだと遠方で影が大きく浮いてしまう）
@@ -312,6 +314,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                     };
                     for (int face = 0; face < 6; ++face) {
                         job.viewProjections[face] = makeLightView(kFaceDirections[face], lightPosition) * lightProjection;
+                        job.eyePositions[face] = lightPosition;
                     }
                 }
 
@@ -365,6 +368,8 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
         /// @brief 描画するインデックス範囲（サブメッシュ。indexCount==0の場合はメッシュ全体）
         std::uint32_t indexStart = 0;
         std::uint32_t indexCount = 0;
+        /// @brief オブジェクト固有のディザ用シード値（本体描画と同じ値。ShadowMapPS.hlsl参照）
+        float idSeed = 0.0f;
     };
     std::vector<ShadowDrawSource> sources;
     const auto isShadowCastingPipeline = [](const std::string &name) {
@@ -375,6 +380,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
     const auto appendShadowSources = [&sources](auto *renderer, RWStructuredBufferResource *skinnedVertexBuffer) {
         const auto &subMeshes = ModelManager::GetModelData(renderer->GetMeshHandle()).GetSubMeshes();
         const size_t subMeshCount = std::max<size_t>(1, subMeshes.size());
+        const float idSeed = SceneRenderer::ObjectIdSeedFor(renderer->GetOwnerObject());
         for (size_t subMeshIndex = 0; subMeshIndex < subMeshCount; ++subMeshIndex) {
             ShadowDrawSource source;
             source.meshHandle = renderer->GetMeshHandle();
@@ -385,6 +391,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                 source.indexStart = subMeshes[subMeshIndex].indexStart;
                 source.indexCount = subMeshes[subMeshIndex].indexCount;
             }
+            source.idSeed = idSeed;
             sources.push_back(source);
         }
     };
@@ -435,11 +442,38 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
     auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, kShadowPipelineName);
     shaderBinder.SetCommandList(commandList);
 
+    // ブルーノイズによるディザ閾値テーブル（通常描画ではBindCameraAndLightsが毎回バインドするが、
+    // シャドウマップ描画はそちらを経由しないため、ここで明示的にバインドしておく必要がある。
+    // 忘れるとgBlueNoiseDitherの参照先が未バインドのまま（前のパイプラインの使い回し等で不定）になり、
+    // 閾値が画素によらずほぼ一定の値になって、影がアルファに関わらず2値的にON/OFFしてしまう）
+    if (blueNoiseGenerator_.IsReady()) {
+        shaderBinder.Bind("Pixel:gBlueNoiseDither", blueNoiseGenerator_.GetResultBuffer());
+    }
+
+    // グローバル時刻定数（gTime）。同様にBindCameraAndLightsを経由しないため、ここで明示的に
+    // アップロード・バインドする。忘れるとShadowMapPS.hlsl側のgTimeが未バインドのまま（不定値で
+    // 固定）になり、enableTemporalDitherを有効にしても切り替えた瞬間しか模様が変わらず、
+    // 以後フレームが進んでも位相が動き続けない（無相関化が機能しない）
+    {
+        TimeConstantsData timeData;
+        timeData.time = static_cast<float>(GetGameRuntimeMillisecond()) / 1000.0f;
+        timeData.deltaTime = GetDeltaTime();
+        auto *timeBuffer = resourceContainer_->GetOrCreateConstantBuffer("ShadowTimeConstants", sizeof(TimeConstantsData));
+        if (timeBuffer) {
+            if (auto *mapped = timeBuffer->Map()) {
+                std::memcpy(mapped, &timeData, sizeof(timeData));
+                shaderBinder.Bind("Vertex:TimeConstants", timeBuffer);
+                shaderBinder.Bind("Pixel:TimeConstants", timeBuffer);
+            }
+        }
+    }
+
     //--------- バッチごとのGPUバッファ準備（全ジョブ・全スライスで共有する） ---------//
     struct PreparedShadowBatch {
         const ResourceContainer::MeshBuffers *meshBuffers = nullptr;
         RWStructuredBufferResource *skinnedVertexBuffer = nullptr;
         StructuredBufferResource *transformBuffer = nullptr;
+        StructuredBufferResource *idSeedBuffer = nullptr;
         StructuredBufferResource *materialBuffer = nullptr;
         std::uint32_t textureHandle = TextureManager::kInvalidHandle;
         SamplerManager::SamplerHandle samplerHandle = SamplerManager::kInvalidHandle;
@@ -537,6 +571,18 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                 }
             }
 
+            // オブジェクト固有のディザ用シード値のインスタンスバッファ（本体描画のgObjectIdSeedsと同じ考え方。
+            // ShadowMapPS.hlslが本体と同じ閾値テーブル・同じ位相で影の濃さをアルファに応じて薄くする）
+            std::snprintf(key, sizeof(key), "ShadowPass|%u|idSeed", batchIndex);
+            batch.idSeedBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(float), instanceCount);
+            if (batch.idSeedBuffer) {
+                if (auto *mapped = static_cast<float *>(batch.idSeedBuffer->Map())) {
+                    for (size_t i = begin; i < end; ++i) {
+                        mapped[i - begin] = sources[i].idSeed;
+                    }
+                }
+            }
+
             // マテリアルの構造化バッファ（シャドウマップ用PSがアルファ抜きに使用する）
             auto *material = MaterialManager::GetMaterial(first.materialHandle);
             if (material) {
@@ -559,7 +605,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                 }
             }
 
-            if (batch.transformBuffer && batch.materialBuffer) {
+            if (batch.transformBuffer && batch.idSeedBuffer && batch.materialBuffer) {
                 batches.push_back(batch);
                 ++batchIndex;
             }
@@ -661,6 +707,8 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
             if (auto *mapped = cameraBuffer->Map()) {
                 LightCameraConstantData constant;
                 constant.viewProjection = job.viewProjections[s];
+                // シャドウマップPS側のディザ閾値計算で、カメラの代わりに距離の基準として使う
+                constant.eyePosition = Vector4(job.eyePositions[s].x, job.eyePositions[s].y, job.eyePositions[s].z, 1.0f);
                 std::memcpy(mapped, &constant, sizeof(constant));
             }
 
@@ -673,6 +721,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                 }
                 shaderBinder.Bind("Vertex:gCamera3D", cameraBuffer);
                 shaderBinder.Bind("Vertex:gTransformationMatrices", batch.transformBuffer);
+                shaderBinder.Bind("Vertex:gObjectIdSeeds", batch.idSeedBuffer);
                 shaderBinder.Bind("Pixel:gMaterials", batch.materialBuffer);
                 if (batch.textureHandle != TextureManager::kInvalidHandle) {
                     TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", batch.textureHandle);

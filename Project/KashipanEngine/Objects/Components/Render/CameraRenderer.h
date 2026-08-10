@@ -241,7 +241,8 @@ private:
         float aspect = 16.0f / 9.0f;
         bool orthographic = false;
         float orthoSize = 10.0f;
-        if (auto *camera3d = objectContext->GetComponent<Camera3D>()) {
+        auto *camera3d = objectContext->GetComponent<Camera3D>();
+        if (camera3d) {
             fovY = camera3d->GetFovY();
             nearClip = camera3d->GetNearClip();
             farClip = camera3d->GetFarClip();
@@ -255,12 +256,19 @@ private:
         } else {
             constant.projection.MakePerspectiveFovMatrix(fovY, aspect, nearClip, farClip);
         }
+        // シャドウのカスケードフィッティングやエディタのピッキング、スクリプトへ公開している
+        // GetViewProjectionMatrix()は、ジッターの影響を受けないこちらの値を参照する
+        lastViewProjection_ = constant.view * constant.projection;
+        lastNearClip_ = nearClip;
+        lastFarClip_ = farClip;
+
+        if (camera3d && camera3d->IsJitterEnabled()) {
+            camera3d->ApplyProjectionJitter(constant.projection);
+        }
+
         constant.viewProjection = constant.view * constant.projection;
         constant.eyePosition = Vector4(world.m[3][0], world.m[3][1], world.m[3][2], 1.0f);
         constant.fov = fovY;
-        lastViewProjection_ = constant.viewProjection;
-        lastNearClip_ = nearClip;
-        lastFarClip_ = farClip;
         std::memcpy(mapped, &constant, sizeof(constant));
     }
 

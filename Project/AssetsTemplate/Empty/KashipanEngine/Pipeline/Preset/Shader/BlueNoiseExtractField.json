@@ -1,0 +1,9 @@
+{
+	"BaseName": "BlueNoiseExtractField",
+	"Compute": {
+		"Name": "CS",
+		"Path": "BlueNoise/BlueNoiseExtractFieldCS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "cs_6_0"
+	}
+}

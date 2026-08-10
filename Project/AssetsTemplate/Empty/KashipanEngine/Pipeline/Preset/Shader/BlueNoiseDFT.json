@@ -1,0 +1,9 @@
+{
+	"BaseName": "BlueNoiseDFT",
+	"Compute": {
+		"Name": "CS",
+		"Path": "BlueNoise/BlueNoiseDFTCS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "cs_6_0"
+	}
+}

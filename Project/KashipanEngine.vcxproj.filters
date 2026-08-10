@@ -426,6 +426,9 @@
     <ClCompile Include="KashipanEngine\Graphics\GraphicsEngine.cpp">
       <Filter>KashipanEngine\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\BlueNoiseGenerator.cpp">
+      <Filter>KashipanEngine\Graphics</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Graphics\PipelineManager.cpp">
       <Filter>KashipanEngine\Graphics</Filter>
     </ClCompile>
@@ -1011,6 +1014,9 @@
       <Filter>KashipanEngine\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Graphics\PipelineManager.h">
+      <Filter>KashipanEngine\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\BlueNoiseGenerator.h">
       <Filter>KashipanEngine\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\ComponentsPresetContainer.h">

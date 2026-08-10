@@ -18,6 +18,7 @@ namespace KashipanEngine {
 
 class GameEngine;
 class ModelManager;
+class SceneContext;
 
 /// @brief 1ファイル分のパース結果（Assimpの解析結果一式を保持する。実体はModelManager.cppで定義）
 /// @details ワーカースレッドでのパース（ファイルI/O・Assimp解析・メッシュ抽出）と、
@@ -45,6 +46,10 @@ public:
     struct MaterialData final {
         float baseColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
         std::string diffuseTexturePath;
+        /// @brief インポート時に自動生成されたMaterialManager登録名（".mat"アセット名）。
+        ///        USE_IMGUIビルドでのみ設定される（デバッグプレビュー等、本来のマテリアルを
+        ///        引き当てたい用途向け）。未設定の場合は空文字
+        std::string materialAssetName;
     };
 
     struct VertexWeightData final {
@@ -193,7 +198,9 @@ public:
     static std::vector<ModelListEntry> GetLoadedModelListEntries();
 
     /// @brief デバッグ用: 読み込まれたモデル一覧の ImGui ウィンドウを描画
-    static void ShowImGuiLoadedModelsWindow();
+    /// @param sceneContext 選択したモデルの3Dプレビュー表示に使う、現在編集中のシーンのコンテキスト
+    ///        （プレビュー用の非表示・非保存オブジェクトの生成先。nullptrの場合プレビューは無効）
+    static void ShowImGuiLoadedModelsWindow(SceneContext *sceneContext);
 
     /// @brief エディタのD&Dインポート等で、Assets以下に新規追加された1つのモデルファイルを動的に読み込み登録する
     /// @details 起動時のロードと同じ経路（`LoadModel`）を通るため、ノード分解によるサブメッシュ登録と

@@ -20,6 +20,18 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 #include "Scene/Editor/PrefabAssetManager.h"
+#include "Scene/SceneContext.h"
+#include "Objects/EmptyObject.h"
+#include "Objects/Components/Transform.h"
+#include "Objects/Components/MeshFilter.h"
+#include "Objects/Components/Render/Camera3D.h"
+#include "Objects/Components/Render/CameraRenderer.h"
+#include "Objects/Components/Render/Light.h"
+#include "Objects/Components/Render/LightRenderer.h"
+#include "Objects/Components/Render/MeshRenderer.h"
+#include "Objects/Components/Render/ScreenBufferObject.h"
+#include "Graphics/ScreenBuffer.h"
+#include "Math/Quaternion.h"
 #endif
 
 #include <assimp/Importer.hpp>
@@ -755,6 +767,25 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
         }
     }
 
+    // 生成・登録した.matアセット名を、既にsModelsへ登録済みのModelData（ベースモデルと
+    // 各ノード単位のサブメッシュ）へ書き戻す。デバッグプレビュー等が本来のマテリアルを
+    // 引き当てられるようにするため（RegisterEntryは本関数より前に完了しているため、
+    // materials_はここで直接パッチする必要がある）
+    const auto patchMaterialAssetNames = [&materialIndexToName](const std::string &assetPath) {
+        if (assetPath.empty()) return;
+        const auto handle = GetModelHandleFromAssetPath(assetPath);
+        const auto it = sModels.find(handle);
+        if (it == sModels.end()) return;
+        auto &mats = it->second.data.materials_;
+        for (const auto &[mi, name] : materialIndexToName) {
+            if (mi < mats.size()) mats[mi].materialAssetName = name;
+        }
+    };
+    patchMaterialAssetNames(baseAssetPath);
+    for (const aiNode *node : meshNodes) {
+        patchMaterialAssetNames(meshNodeInfos[node].meshAssetPath);
+    }
+
     // エディタービルドでは、ノード階層（アーマチュア・メッシュオブジェクト）を再現するプレハブを
     // モデルの隣（"モデルファイル名.prefab"）へ自動生成する。
     // 既にプレハブが存在する場合はユーザーの編集を保護し、同期に必要なID・親参照だけを補完する
@@ -949,7 +980,290 @@ std::vector<ModelManager::ModelListEntry> ModelManager::GetLoadedModelListEntrie
     return GetImGuiModelListEntries();
 }
 
-void ModelManager::ShowImGuiLoadedModelsWindow() {
+namespace {
+
+/// @brief デバッグ用モデルプレビューが生成する非表示・非保存オブジェクト一式のID
+/// @details 生ポインタはフレームをまたいで保持せず、毎回SceneContext::GetSceneObjectで
+///          UUIDから引き直す（Play開始・シーン再読み込みでオブジェクトが失われ得るため）
+struct ModelPreviewObjects final {
+    UUID128 targetObjectID{};
+    UUID128 cameraObjectID{};
+    UUID128 lightObjectID{};
+    UUID128 meshObjectID{};
+    bool valid = false;
+};
+
+/// @brief プレビューのオービットカメラ・選択状態（ウィンドウを開いている間、フレームをまたいで保持する）
+struct ModelPreviewState final {
+    ModelManager::ModelHandle selectedHandle = ModelManager::kInvalidHandle;
+    /// @brief 直近でプレビュー用メッシュへ反映済みのハンドル（selectedHandleと異なれば再適用する）
+    ModelManager::ModelHandle appliedHandle = ModelManager::kInvalidHandle;
+    float yaw = 0.6f;
+    float pitch = 0.35f;
+    float distance = 5.0f;
+    Vector3 target{ 0.0f, 0.0f, 0.0f };
+};
+
+constexpr std::uint32_t kModelPreviewBufferSize = 512;
+
+ModelPreviewObjects &GetModelPreviewObjects() {
+    static ModelPreviewObjects objects;
+    return objects;
+}
+
+ModelPreviewState &GetModelPreviewState() {
+    static ModelPreviewState state;
+    return state;
+}
+
+/// @brief プレビュー用オブジェクト一式を破棄する
+void DestroyModelPreviewObjects(SceneContext *sceneContext) {
+    auto &objects = GetModelPreviewObjects();
+    if (sceneContext && objects.valid) {
+        for (const UUID128 id : { objects.meshObjectID, objects.lightObjectID, objects.cameraObjectID, objects.targetObjectID }) {
+            if (auto *obj = sceneContext->GetSceneObject(id)) sceneContext->DeleteObject(obj);
+        }
+    }
+    objects = ModelPreviewObjects{};
+    GetModelPreviewState().appliedHandle = ModelManager::kInvalidHandle;
+}
+
+/// @brief プレビュー用オブジェクト一式が有効な状態で存在することを保証する（Play中は生成しない）
+bool EnsureModelPreviewObjects(SceneContext *sceneContext) {
+    auto &objects = GetModelPreviewObjects();
+    if (!sceneContext) return false;
+    if (objects.valid) {
+        if (sceneContext->GetSceneObject(objects.targetObjectID) && sceneContext->GetSceneObject(objects.cameraObjectID) &&
+            sceneContext->GetSceneObject(objects.lightObjectID) && sceneContext->GetSceneObject(objects.meshObjectID)) {
+            return true;
+        }
+        // シーン再読み込み等で一部が失われている場合は作り直す
+        objects = ModelPreviewObjects{};
+    }
+    if (sceneContext->IsPlaying()) return false;
+
+    auto *targetObj = sceneContext->CreateEmptyObject("(Model Preview Target)");
+    if (!targetObj) return false;
+    targetObj->SetSaveEnabled(false);
+    if (auto *screenBufferObject = targetObj->AddComponent<ScreenBufferObject>()) {
+        screenBufferObject->SetName("ModelPreview");
+        screenBufferObject->SetSize(kModelPreviewBufferSize, kModelPreviewBufferSize);
+    }
+
+    auto *cameraObj = sceneContext->CreateEmptyObject("(Model Preview Camera)");
+    if (!cameraObj) { sceneContext->DeleteObject(targetObj); return false; }
+    cameraObj->SetSaveEnabled(false);
+    cameraObj->AddComponent<Camera3D>();
+    if (auto *cameraRenderer = cameraObj->AddComponent<CameraRenderer>()) {
+        cameraRenderer->SetTargetObject(targetObj);
+    }
+
+    auto *lightObj = sceneContext->CreateEmptyObject("(Model Preview Light)");
+    if (!lightObj) { sceneContext->DeleteObject(cameraObj); sceneContext->DeleteObject(targetObj); return false; }
+    lightObj->SetSaveEnabled(false);
+    if (auto *transform = lightObj->GetComponent<Transform>()) {
+        transform->SetRotate(Vector3(0.9f, -0.6f, 0.0f));
+    }
+    lightObj->AddComponent<Light>();
+    if (auto *lightRenderer = lightObj->AddComponent<LightRenderer>()) {
+        lightRenderer->SetTargetObject(targetObj);
+    }
+
+    auto *meshObj = sceneContext->CreateEmptyObject("(Model Preview Mesh)");
+    if (!meshObj) { sceneContext->DeleteObject(lightObj); sceneContext->DeleteObject(cameraObj); sceneContext->DeleteObject(targetObj); return false; }
+    meshObj->SetSaveEnabled(false);
+    // 通常のScene Viewには映り込ませない（SceneRenderer::CollectSortableEntries参照）
+    meshObj->SetHiddenFromEditorTarget(true);
+    meshObj->AddComponent<MeshFilter>();
+    if (auto *meshRenderer = meshObj->AddComponent<MeshRenderer>()) {
+        meshRenderer->SetTargetObject(targetObj);
+    }
+
+    objects.targetObjectID = targetObj->GetObjectID();
+    objects.cameraObjectID = cameraObj->GetObjectID();
+    objects.lightObjectID = lightObj->GetObjectID();
+    objects.meshObjectID = meshObj->GetObjectID();
+    objects.valid = true;
+    GetModelPreviewState().appliedHandle = ModelManager::kInvalidHandle;
+    return true;
+}
+
+/// @brief モデルの全頂点から求めたAABB
+struct ModelBounds final {
+    Vector3 min{ 0.0f, 0.0f, 0.0f };
+    Vector3 max{ 0.0f, 0.0f, 0.0f };
+    bool valid = false;
+};
+ModelBounds ComputeModelBounds(const ModelData &data) {
+    ModelBounds bounds;
+    for (const auto &v : data.GetVertices()) {
+        const Vector3 p(v.px, v.py, v.pz);
+        if (!bounds.valid) {
+            bounds.min = bounds.max = p;
+            bounds.valid = true;
+            continue;
+        }
+        bounds.min.x = std::min(bounds.min.x, p.x);
+        bounds.min.y = std::min(bounds.min.y, p.y);
+        bounds.min.z = std::min(bounds.min.z, p.z);
+        bounds.max.x = std::max(bounds.max.x, p.x);
+        bounds.max.y = std::max(bounds.max.y, p.y);
+        bounds.max.z = std::max(bounds.max.z, p.z);
+    }
+    return bounds;
+}
+
+/// @brief 選択されたモデルをプレビュー用メッシュへ反映し（メッシュ・サブメッシュごとの本来のマテリアル）、
+///        モデル全体が収まるようオービットカメラを自動フィットさせる
+void ApplySelectedModelToPreview(SceneContext *sceneContext, ModelManager::ModelHandle handle) {
+    auto &objects = GetModelPreviewObjects();
+    auto &state = GetModelPreviewState();
+    if (!sceneContext || !objects.valid) return;
+
+    auto *meshObj = sceneContext->GetSceneObject(objects.meshObjectID);
+    auto *meshFilter = meshObj ? meshObj->GetComponent<MeshFilter>() : nullptr;
+    auto *meshRenderer = meshObj ? meshObj->GetComponent<MeshRenderer>() : nullptr;
+    if (!meshFilter || !meshRenderer) return;
+
+    meshFilter->SetMeshHandle(handle);
+    state.appliedHandle = handle;
+
+    if (handle == ModelManager::kInvalidHandle) {
+        state.target = Vector3(0.0f, 0.0f, 0.0f);
+        state.distance = 5.0f;
+        return;
+    }
+
+    const ModelData &data = ModelManager::GetModelData(handle);
+
+    // サブメッシュごとに、インポート時に自動生成された本来のマテリアルを割り当てる
+    // （見つからない場合はMeshRendererの既定"Default"マテリアルのまま）
+    const auto &subMeshes = data.GetSubMeshes();
+    const size_t subMeshCount = std::max<size_t>(1, subMeshes.size());
+    meshRenderer->SetMaterialSlotCount(subMeshCount);
+    for (size_t i = 0; i < subMeshCount; ++i) {
+        const std::uint32_t materialIndex = subMeshes.empty() ? 0u : subMeshes[i].materialIndex;
+        const auto *material = data.GetMaterial(materialIndex);
+        const std::string assetName = (material && !material->materialAssetName.empty())
+            ? material->materialAssetName : std::string("Default");
+        meshRenderer->SetMaterialNameAt(i, assetName);
+    }
+
+    // モデル全体が収まるようカメラの注視点・距離を自動フィットさせる
+    const ModelBounds bounds = ComputeModelBounds(data);
+    auto *cameraObj = sceneContext->GetSceneObject(objects.cameraObjectID);
+    auto *camera3d = cameraObj ? cameraObj->GetComponent<Camera3D>() : nullptr;
+    const float fovY = camera3d ? camera3d->GetFovY() : 0.45f;
+    if (bounds.valid) {
+        state.target = (bounds.min + bounds.max) * 0.5f;
+        const float radius = std::max((bounds.max - bounds.min).Length() * 0.5f, 0.01f);
+        const float halfFov = std::max(fovY * 0.5f, 0.05f);
+        state.distance = radius / std::sin(halfFov) * 1.3f;
+    } else {
+        state.target = Vector3(0.0f, 0.0f, 0.0f);
+        state.distance = 5.0f;
+    }
+    state.yaw = 0.6f;
+    state.pitch = 0.35f;
+}
+
+/// @brief オービット状態からカメラのTransformを更新する（SceneEditorViewのシーンビューカメラと同じ計算式）
+void UpdateModelPreviewCameraTransform(SceneContext *sceneContext) {
+    const auto &objects = GetModelPreviewObjects();
+    const auto &state = GetModelPreviewState();
+    if (!sceneContext || !objects.valid) return;
+    auto *cameraObj = sceneContext->GetSceneObject(objects.cameraObjectID);
+    auto *transform = cameraObj ? cameraObj->GetComponent<Transform>() : nullptr;
+    if (!transform) return;
+
+    Matrix4x4 rotateX;
+    rotateX.MakeRotateX(state.pitch);
+    Matrix4x4 rotateY;
+    rotateY.MakeRotateY(state.yaw);
+    const Matrix4x4 rotation = rotateX * rotateY;
+    const Vector3 forward(rotation.m[2][0], rotation.m[2][1], rotation.m[2][2]);
+    const Vector3 eye = state.target - forward * state.distance;
+
+    transform->SetTranslate(eye);
+    transform->SetRotateQuaternion(Quaternion::MakeFromRotationMatrix(rotation));
+}
+
+/// @brief プレビュー画像上でのマウス操作（右ドラッグでオービット・ホイールでズーム）
+void HandleModelPreviewCameraInput(ModelPreviewState &state) {
+    if (!ImGui::IsItemHovered()) return;
+    ImGuiIO &io = ImGui::GetIO();
+    if (io.MouseWheel != 0.0f) {
+        state.distance *= std::pow(0.9f, io.MouseWheel);
+        state.distance = std::clamp(state.distance, 0.01f, 10000.0f);
+    }
+    if (ImGui::IsMouseDragging(ImGuiMouseButton_Right)) {
+        state.yaw += io.MouseDelta.x * 0.005f;
+        state.pitch += io.MouseDelta.y * 0.005f;
+        state.pitch = std::clamp(state.pitch, -1.55f, 1.55f);
+    }
+}
+
+/// @brief 選択中モデルの3Dプレビューを表示する（一覧テーブルの下に呼ぶ）
+void ShowModelPreviewSection(SceneContext *sceneContext) {
+    auto &state = GetModelPreviewState();
+
+    if (state.selectedHandle == ModelManager::kInvalidHandle) {
+        ImGui::TextUnformatted(TranslationC("editor.modelmanager.preview.select_hint"));
+        return;
+    }
+    if (!sceneContext) {
+        ImGui::TextUnformatted(TranslationC("editor.modelmanager.preview.unavailable"));
+        return;
+    }
+    if (sceneContext->IsPlaying()) {
+        ImGui::TextUnformatted(TranslationC("editor.modelmanager.preview.unavailable_playing"));
+        DestroyModelPreviewObjects(sceneContext);
+        return;
+    }
+    if (!EnsureModelPreviewObjects(sceneContext)) {
+        ImGui::TextUnformatted(TranslationC("editor.modelmanager.preview.unavailable"));
+        return;
+    }
+    if (state.appliedHandle != state.selectedHandle) {
+        ApplySelectedModelToPreview(sceneContext, state.selectedHandle);
+    }
+    UpdateModelPreviewCameraTransform(sceneContext);
+
+    if (ImGui::Button(TranslationLabel("editor.modelmanager.preview.reset_view"))) {
+        ApplySelectedModelToPreview(sceneContext, state.selectedHandle);
+        UpdateModelPreviewCameraTransform(sceneContext);
+    }
+
+    const auto &objects = GetModelPreviewObjects();
+    auto *targetObj = sceneContext->GetSceneObject(objects.targetObjectID);
+    auto *screenBufferObject = targetObj ? targetObj->GetComponent<ScreenBufferObject>() : nullptr;
+    auto *screenBuffer = screenBufferObject ? screenBufferObject->GetScreenBuffer() : nullptr;
+    if (!screenBuffer) {
+        ImGui::TextUnformatted(TranslationC("editor.modelmanager.preview.unavailable"));
+        return;
+    }
+    const auto srvHandle = screenBuffer->GetPreviewSrvHandle();
+    if (srvHandle.ptr == 0) {
+        ImGui::TextUnformatted(TranslationC("component.screenbufferobject.srv_not_ready"));
+        return;
+    }
+
+    // アスペクト比を維持して表示領域にフィットさせる（ScreenBufferObject::ShowViewerWindowと同じ手法）
+    const ImVec2 avail = ImGui::GetContentRegionAvail();
+    const float w = static_cast<float>(screenBuffer->GetWidth());
+    const float h = static_cast<float>(screenBuffer->GetHeight());
+    ImVec2 drawSize = avail;
+    if (w > 0.0f && h > 0.0f && avail.x > 0.0f && avail.y > 0.0f) {
+        const float scale = std::min(avail.x / w, avail.y / h);
+        drawSize = ImVec2(w * scale, h * scale);
+    }
+    ImGui::Image(static_cast<ImTextureID>(srvHandle.ptr), drawSize);
+    HandleModelPreviewCameraInput(state);
+}
+
+} // namespace
+
+void ModelManager::ShowImGuiLoadedModelsWindow(SceneContext *sceneContext) {
     ImGui::Begin(TranslationLabel("editor.modelmanager.window"));
 
     const auto entries = ModelManager::GetImGuiModelListEntries();
@@ -980,7 +1294,12 @@ void ModelManager::ShowImGuiLoadedModelsWindow() {
             ImGui::TableNextRow();
 
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text("%u", e.handle);
+            ImGui::PushID(static_cast<int>(e.handle));
+            const bool isSelected = (GetModelPreviewState().selectedHandle == e.handle);
+            if (ImGui::Selectable(std::to_string(e.handle).c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns)) {
+                GetModelPreviewState().selectedHandle = e.handle;
+            }
+            ImGui::PopID();
 
             ImGui::TableSetColumnIndex(1);
             ImGui::TextUnformatted(e.fileName.c_str());
@@ -997,6 +1316,10 @@ void ModelManager::ShowImGuiLoadedModelsWindow() {
 
         ImGui::EndTable();
     }
+
+    ImGui::Separator();
+    ImGui::TextUnformatted(TranslationC("editor.modelmanager.preview.header"));
+    ShowModelPreviewSection(sceneContext);
 
     ImGui::End();
 }

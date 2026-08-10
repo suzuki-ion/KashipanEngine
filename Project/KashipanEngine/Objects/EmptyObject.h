@@ -246,6 +246,16 @@ public:
     /// @brief 自身または祖先のいずれかがEditorOnlyかどうか（描画の除外判定用）
     bool IsEditorOnlyInHierarchy() const;
 
+    /// @brief エディターのScene View等が使う「編集用描画先」への無条件描画から除外するかを設定する
+    /// @details 通常、MeshRendererはSetTargetObjectでカスタム描画先を指定していても、
+    ///          エディター用描画先（Scene View）には除外設定に関わらず常に描画される
+    ///          （SceneRenderer::CollectSortableEntries参照）。デバッグ用の孤立プレビュー等、
+    ///          カスタム描画先にのみ描画したく、Scene Viewには一切映り込ませたくないオブジェクトに使う。
+    ///          JSONへは保存しない（実行時のみ使う一時的なフラグ）。既定はfalse＝従来通りの挙動
+    void SetHiddenFromEditorTarget(bool hidden) noexcept { isHiddenFromEditorTarget_ = hidden; }
+    /// @brief 編集用描画先への無条件描画から除外されているかを取得する
+    bool IsHiddenFromEditorTarget() const noexcept { return isHiddenFromEditorTarget_; }
+
     //==================================================
     // JSON保存/読み込み系メソッド
     //==================================================
@@ -347,6 +357,8 @@ private:
     bool isActive_ = true;
     /// @brief EditorOnly（エディター専用）フラグ
     bool isEditorOnly_ = false;
+    /// @brief エディター用描画先（Scene View等）への無条件描画から除外するか（非シリアライズ）
+    bool isHiddenFromEditorTarget_ = false;
 };
 
 } // namespace KashipanEngine

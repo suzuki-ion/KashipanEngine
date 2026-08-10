@@ -495,6 +495,12 @@ void AssetsWindow::OpenFileEditor(const FileEntry &file) {
             if (editor && editor->GetAssetPath() == assetPath) return;
         }
         videoPreviews_.push_back(std::make_unique<VideoPreviewWindow>(assetPath));
+    } else if (IsModelExtension(file.extension)) {
+        const std::string assetPath = ToAssetsRelativePath(file.path);
+        for (auto &editor : modelPreviews_) {
+            if (editor && editor->GetAssetPath() == assetPath) return;
+        }
+        modelPreviews_.push_back(std::make_unique<ModelPreviewWindow>(assetPath));
     }
 }
 
@@ -513,6 +519,17 @@ void AssetsWindow::ShowOpenEditors() {
     prune(imagePreviews_);
     prune(audioPreviews_);
     prune(videoPreviews_);
+
+    // ModelPreviewWindowはプレビュー用オブジェクトの生成先（現在編集中のシーン）が必要なため、
+    // 他の（アセットファイル単体で完結する）プレビューウィンドウとは別に扱う
+    SceneContext *sceneContext = editorContext_ ? editorContext_->GetSceneContext() : nullptr;
+    for (size_t i = 0; i < modelPreviews_.size();) {
+        if (modelPreviews_[i] && modelPreviews_[i]->ShowImGui(sceneContext)) {
+            ++i;
+        } else {
+            modelPreviews_.erase(modelPreviews_.begin() + i);
+        }
+    }
 }
 
 void AssetsWindow::CloseEditorsForPath(const std::string &cwdRelativePath) {
@@ -528,6 +545,8 @@ void AssetsWindow::CloseEditorsForPath(const std::string &cwdRelativePath) {
         [&](const auto &editor) { return editor && editor->GetAssetPath() == assetPath; }), audioPreviews_.end());
     videoPreviews_.erase(std::remove_if(videoPreviews_.begin(), videoPreviews_.end(),
         [&](const auto &editor) { return editor && editor->GetAssetPath() == assetPath; }), videoPreviews_.end());
+    modelPreviews_.erase(std::remove_if(modelPreviews_.begin(), modelPreviews_.end(),
+        [&](const auto &editor) { return editor && editor->GetAssetPath() == assetPath; }), modelPreviews_.end());
 }
 
 void AssetsWindow::CreatePrefabFromObject(EmptyObject *obj) {

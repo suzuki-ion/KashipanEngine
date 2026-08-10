@@ -1324,6 +1324,8 @@
 		"editor.assetwindow.json.title": "JSON：",
 		"editor.assetwindow.material.notloaded": "マテリアルが読み込まれていません：",
 		"editor.assetwindow.material.title": "マテリアル：",
+		"editor.assetwindow.model.notloaded": "モデルが読み込まれていません：",
+		"editor.assetwindow.model.title": "モデル：",
 		"editor.assetwindow.sound.notloaded": "サウンドが読み込まれていません：",
 		"editor.assetwindow.texture.notloaded": "テクスチャが読み込まれていません：",
 		"editor.assetwindow.unsaved": "(未保存)",
@@ -1582,6 +1584,11 @@
 		//--------- editor.modelmanager ---------//
 		"editor.modelmanager.loaded_models_d": "読み込み済みモデル数：%d",
 		"editor.modelmanager.window": "読み込み済みモデル",
+		"editor.modelmanager.preview.header": "プレビュー（行を選択、右ドラッグで回転、ホイールでズーム）",
+		"editor.modelmanager.preview.select_hint": "一覧からモデルを選択するとプレビューが表示されます。",
+		"editor.modelmanager.preview.unavailable": "プレビューを表示できません。",
+		"editor.modelmanager.preview.unavailable_playing": "再生中はプレビューを表示できません。",
+		"editor.modelmanager.preview.reset_view": "ビューをリセット",
 
 		//--------- editor.newscene ---------//
 		"editor.newscene.registertolist": "シーン一覧へ登録する",

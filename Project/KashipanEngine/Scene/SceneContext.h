@@ -23,6 +23,8 @@ public:
     SceneContext &operator=(SceneContext &&) = delete;
 
     const std::string &GetName() const { return owner_->GetName(); }
+    /// @brief シーンが再生中かどうか（デバッグ用の一時オブジェクト管理等に使う）
+    bool IsPlaying() const { return owner_->IsPlaying(); }
 
     //==================================================
     // シーン変数

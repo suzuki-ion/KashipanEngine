@@ -1317,6 +1317,8 @@
 		"editor.assetwindow.json.title": "JSON: ",
 		"editor.assetwindow.material.notloaded": "Material is not loaded: ",
 		"editor.assetwindow.material.title": "Material: ",
+		"editor.assetwindow.model.notloaded": "Model is not loaded: ",
+		"editor.assetwindow.model.title": "Model: ",
 		"editor.assetwindow.sound.notloaded": "Sound is not loaded: ",
 		"editor.assetwindow.texture.notloaded": "Texture is not loaded: ",
 		"editor.assetwindow.unsaved": "(unsaved)",
@@ -1575,6 +1577,11 @@
 		//--------- editor.modelmanager ---------//
 		"editor.modelmanager.loaded_models_d": "Loaded Models: %d",
 		"editor.modelmanager.window": "ModelManager - Loaded Models",
+		"editor.modelmanager.preview.header": "Preview (select a row, right-drag to orbit, wheel to zoom)",
+		"editor.modelmanager.preview.select_hint": "Select a model from the list to preview it.",
+		"editor.modelmanager.preview.unavailable": "Preview is unavailable.",
+		"editor.modelmanager.preview.unavailable_playing": "Preview is unavailable while playing.",
+		"editor.modelmanager.preview.reset_view": "Reset View",
 
 		//--------- editor.newscene ---------//
 		"editor.newscene.registertolist": "Register to Scene List",

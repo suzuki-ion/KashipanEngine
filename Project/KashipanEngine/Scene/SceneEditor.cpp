@@ -175,7 +175,7 @@ void SceneEditor::ShowImGui() {
 
     //--------- デバッグ用ウィンドウ（旧ImGuiManagerから移設） ---------//
     if (isShowLoadedTexturesWindow_) TextureManager::ShowImGuiLoadedTexturesWindow();
-    if (isShowLoadedModelsWindow_) ModelManager::ShowImGuiLoadedModelsWindow();
+    if (isShowLoadedModelsWindow_) ModelManager::ShowImGuiLoadedModelsWindow(context_->GetSceneContext());
     if (isShowMaterialsWindow_) MaterialManager::ShowImGuiMaterialManagerWindow();
     if (isShowLoadedSoundsWindow_) AudioManager::ShowImGuiLoadedSoundsWindow();
     if (isShowPlayingSoundsWindow_) AudioManager::ShowImGuiPlayingSoundsWindow();

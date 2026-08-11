@@ -33,7 +33,7 @@ PSOutput main(VSOutput input) {
 		// disableShadowDitherがtrueの場合はここを丸ごとスキップし、上のalpha<0.01判定だけで
 		// 影を落とす（テクスチャのアルファ抜き形状はそのまま活きる、フォリッジ等向けの挙動）
 		float distanceFromLight = length(input.worldPosition - gCamera3D.eyePosition.xyz);
-		float threshold = DitherBlueNoise(input.position.xy, input.idSeed, mat.enableTemporalDither, distanceFromLight, mat.ditherDepthBucketSize);
+		float threshold = ComputeDitherThreshold(input.position.xy, input.idSeed, mat.enableTemporalDither, distanceFromLight, mat.ditherDepthBucketSize, mat.useBayerDither);
 		if (o.color.a <= threshold) {
 			discard;
 		}

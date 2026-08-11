@@ -147,7 +147,7 @@ float BlinnPhongReflection(float3 normal, float3 lightDir, float3 worldPos, floa
 #endif
 }
 
-// ディザ用ハッシュ・ブルーノイズテーブル・DitherBlueNoise本体はShadowMapPS.hlslとも共有するため
+// ディザ用ハッシュ・ブルーノイズテーブル・ComputeDitherThreshold本体はShadowMapPS.hlslとも共有するため
 // 共通ファイルへ切り出してある
 #include "../Common/BlueNoiseDither.hlsli"
 #endif
@@ -479,7 +479,7 @@ PSOutput main(VSOutput input) {
 	}
 	if (output.color.a < 1.0f) {
 		float distanceFromCamera = length(input.worldPosition - gCamera3D.eyePosition.xyz);
-		float threshold = DitherBlueNoise(input.position.xy, input.idSeed, mat.enableTemporalDither, distanceFromCamera, mat.ditherDepthBucketSize);
+		float threshold = ComputeDitherThreshold(input.position.xy, input.idSeed, mat.enableTemporalDither, distanceFromCamera, mat.ditherDepthBucketSize, mat.useBayerDither);
 		if (output.color.a <= threshold) {
 			discard;
 		}

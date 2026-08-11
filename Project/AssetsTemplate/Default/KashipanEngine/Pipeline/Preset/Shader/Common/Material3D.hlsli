@@ -18,6 +18,11 @@ float rimIntensity;
 // 既定はfalse（従来通り、位相はオブジェクト単位で固定）。trueにする場合は、対象の描画先に
 // TemporalBlendEffectを併用すること（単体では無相関ノイズが常時ちらつくだけになる）
 bool enableTemporalDither;
+// 半透明ディザの方式をブルーノイズ（既定）からBayer行列（16x16）へ切り替える。ブルーノイズより
+// わずかに軽いが、斜めのクロスハッチ状の規則的な模様が視認できる（意図的なレトロ表現向け）。
+// enableTemporalDither/ditherDepthBucketSize等、他のディザ関連フィールドとは独立して併用できる
+// （Common/BlueNoiseDither.hlsliのComputeDitherThreshold参照）。既定はfalse（ブルーノイズ）
+bool useBayerDither;
 // 半透明ディザの位相に、カメラからのワールド距離を量子化した項を追加する（単位: メートル、
 // この値がバケットの刻み幅）。同一メッシュ内で奥行き方向に重なる層（フード付き服の
 // フードと胴体など）を、同一idSeedのままでも独立してディザできるようにする。

@@ -23,6 +23,11 @@ bool enableTemporalDither;
 // enableTemporalDither/ditherDepthBucketSize等、他のディザ関連フィールドとは独立して併用できる
 // （Common/BlueNoiseDither.hlsliのComputeDitherThreshold参照）。既定はfalse（ブルーノイズ）
 bool useBayerDither;
+// useBayerDither有効時、Bayer行列のサイズを16x16（既定）から64x64へ切り替える。64x64は階調が
+// 4096（ブルーノイズと同数）まで増え、大きな面での模様の繰り返しが16x16よりは目立ちにくくなる
+// （斜めのクロスハッチという規則的な模様の性質自体は消えない）。useBayerDitherがfalseの場合は
+// 無視される（ブルーノイズ使用時は常に4096階調のため）。既定はfalse（16x16）
+bool useBayer64x64;
 // 半透明ディザの位相に、カメラからのワールド距離を量子化した項を追加する（単位: メートル、
 // この値がバケットの刻み幅）。同一メッシュ内で奥行き方向に重なる層（フード付き服の
 // フードと胴体など）を、同一idSeedのままでも独立してディザできるようにする。

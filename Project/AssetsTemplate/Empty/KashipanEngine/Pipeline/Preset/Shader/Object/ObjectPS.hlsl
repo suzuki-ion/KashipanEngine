@@ -479,7 +479,7 @@ PSOutput main(VSOutput input) {
 	}
 	if (output.color.a < 1.0f) {
 		float distanceFromCamera = length(input.worldPosition - gCamera3D.eyePosition.xyz);
-		float threshold = ComputeDitherThreshold(input.position.xy, input.idSeed, mat.enableTemporalDither, distanceFromCamera, mat.ditherDepthBucketSize, mat.useBayerDither);
+		float threshold = ComputeDitherThreshold(input.position.xy, input.idSeed, mat.enableTemporalDither, distanceFromCamera, mat.ditherDepthBucketSize, mat.useBayerDither, mat.useBayer64x64);
 		if (output.color.a <= threshold) {
 			discard;
 		}

@@ -23,13 +23,15 @@ PSOutput main(VSOutput input) {
 	if (o.color.a < 0.01f) {
 		discard;
 	}
-	if (o.color.a < 1.0f) {
+	if (o.color.a < 1.0f && !mat.disableShadowDither) {
 		// 本体の半透明ディザ(ObjectPS.hlsl)と同じ閾値テーブル・同じidSeedを使い、影の濃さも
 		// アルファに応じて薄くする。フレーム間の無相関化(enableTemporalDither)もキャスターの
 		// マテリアルと同じ値を使う。シャドウマップ自体には時間的ブレンドの仕組みが無いが、
 		// 影の結果は最終的に合成後のカラーバッファへ反映されるため、そちらにTemporalBlendEffectが
 		// かかっていれば本体の面と同様に時間方向で平均化され滑らかになる
 		// （gCamera3D.eyePositionはこのパイプラインではライトの位置が入っている。ShadowMapVS.hlsl参照）
+		// disableShadowDitherがtrueの場合はここを丸ごとスキップし、上のalpha<0.01判定だけで
+		// 影を落とす（テクスチャのアルファ抜き形状はそのまま活きる、フォリッジ等向けの挙動）
 		float distanceFromLight = length(input.worldPosition - gCamera3D.eyePosition.xyz);
 		float threshold = DitherBlueNoise(input.position.xy, input.idSeed, mat.enableTemporalDither, distanceFromLight, mat.ditherDepthBucketSize);
 		if (o.color.a <= threshold) {

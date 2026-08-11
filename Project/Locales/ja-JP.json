@@ -1177,6 +1177,11 @@
 		"component.screenbufferobject.srv_not_ready": "SRVが未準備です。",
 		"component.screenbufferobject.width": "幅",
 
+		//--------- component.screenwideditherblendeffect ---------//
+		"component.screenwideditherblendeffect.pass_count": "パス数",
+		"component.screenwideditherblendeffect.warning": "警告：影の再生成を含め、画面全体をパス数倍再描画します",
+		"component.screenwideditherblendeffect.warning_detail": "シャドウマップ生成とシーン全体の描画を毎フレーム「パス数」回繰り返すため、GPU負荷がほぼパス数倍になります。常時有効にするのではなく、スクリーンショットや一時停止中の高品質表示など、フレームレートの余裕がある場面での使用を推奨します",
+
 		//--------- component.scriptcomponent ---------//
 		"component.scriptcomponent.awake_s_start_s_update_s_end_s": "Awake：%s / Start：%s / Update：%s / End：%s",
 		"component.scriptcomponent.behavior_s": "挙動：%s",

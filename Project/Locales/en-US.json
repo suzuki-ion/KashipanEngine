@@ -1170,6 +1170,11 @@
 		"component.screenbufferobject.srv_not_ready": "SRV not ready.",
 		"component.screenbufferobject.width": "Width",
 
+		//--------- component.screenwideditherblendeffect ---------//
+		"component.screenwideditherblendeffect.pass_count": "Pass Count",
+		"component.screenwideditherblendeffect.warning": "Warning: redraws the entire screen (including shadow regeneration) this many times per frame",
+		"component.screenwideditherblendeffect.warning_detail": "Shadow map generation and the full scene draw are repeated \"Pass Count\" times every frame, so GPU cost scales roughly linearly with it. Prefer using this only where frame time has headroom (screenshots, paused high-quality preview, etc.) rather than leaving it on at all times",
+
 		//--------- component.scriptcomponent ---------//
 		"component.scriptcomponent.awake_s_start_s_update_s_end_s": "Awake: %s / Start: %s / Update: %s / End: %s",
 		"component.scriptcomponent.behavior_s": "Behavior: %s",

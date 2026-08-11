@@ -122,6 +122,14 @@ public:
     DepthStencilResource *GetDepthStencil() const noexcept { return depthStencils_[GetDsvReadIndex()].get(); }
     ShaderResourceResource *GetShaderResource() const noexcept { return shaderResources_[GetRtvReadIndex()].get(); }
 
+    /// @brief 今まさに描画中（書き込み側）のレンダーターゲット/深度を取得する
+    /// @details GetRenderTarget()/GetDepthStencil()はダブルバッファのうち「直前に描画が完了した
+    ///          読み取り用の面」を返す（ポストエフェクトの中間パスが直前のパス結果を参照する用途）。
+    ///          BeginDraw〜EndDrawの間に、通常の3Dオブジェクト描画が今まさに書き込んでいる面
+    ///          （＝不透明・通常ディザ描画済みの内容を含む）を参照したい場合はこちらを使うこと
+    RenderTargetResource *GetWriteRenderTarget() const noexcept { return renderTargets_[GetRtvWriteIndex()].get(); }
+    DepthStencilResource *GetWriteDepthStencil() const noexcept { return depthStencils_[GetDsvWriteIndex()].get(); }
+
     /// @brief 深度書き込みの有効/無効を設定（ポストエフェクト用や2D描画用。次のBeginDrawから反映される）
     /// @param enable true の場合、深度書き込みを有効にする。false の場合、深度書き込みを無効にする。
     void SetDepthWriteEnabled(bool enable) noexcept { isDepthWriteEnabled_ = enable; }

@@ -4,11 +4,34 @@ namespace KashipanEngine {
 
 using namespace RendererInternal;
 
+/// @brief シャドウ用idSeedバッファを取得・構築する（RenderShadowMaps本体の描画と
+///        RenderShadowMapsPhaseIntoの両方から呼ばれる共通処理）
+/// @param phaseOffset baseIdSeeds各要素へ加算する位相オフセット（通常描画では0.0）
+/// @param passIndex キャッシュキーへ含めるパス番号（-1の場合は付与しない）。画面全体Nパス
+///        ブレンドで位相だけ異なる複数パスを描画する際、バッファを使い回すとCPU側の書き込みが
+///        GPU実行前に競合してしまうため、パスごとに別バッファへ分離する
+StructuredBufferResource *Renderer::BuildShadowIdSeedBuffer(const PreparedShadowBatch &batch, float phaseOffset, int passIndex) {
+    if (batch.idSeedKeyBase.empty() || batch.baseIdSeeds.empty()) return nullptr;
+    std::string key = batch.idSeedKeyBase;
+    if (passIndex >= 0) {
+        char passSuffix[24];
+        std::snprintf(passSuffix, sizeof(passSuffix), "|swd%d", passIndex);
+        key += passSuffix;
+    }
+    std::vector<float> idSeeds(batch.baseIdSeeds.size());
+    for (size_t i = 0; i < batch.baseIdSeeds.size(); ++i) {
+        idSeeds[i] = batch.baseIdSeeds[i] + phaseOffset;
+    }
+    return resourceContainer_->GetOrUpdateStructuredBuffer(key, sizeof(float), static_cast<std::uint32_t>(idSeeds.size()), idSeeds.data());
+}
+
 void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *sceneRenderer,
     const std::vector<IRenderTarget *> &targets) {
     (void)sceneContext;
     shadowJobs_.clear();
     targetShadowEntries_.clear();
+    shadowBatches_.clear();
+    shadowGpuParticleBatches_.clear();
     if (!sceneRenderer || !directXCommon_ || !pipelineManager_) return;
 
     constexpr const char *kShadowPipelineName = "Object3D.ShadowMap.DepthOnly";
@@ -333,6 +356,8 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
         ensureFallbackArray();
         return;
     }
+    // 画面全体Nパスブレンド（RenderShadowMapsPhaseInto）のビューポート計算用に保持しておく
+    shadowResolutionForRedraw_ = resolution;
 
     //--------- シャドウマップ配列（Texture2DArray）の生成・拡張 ---------//
     // SRVがTexture2DArrayとして作られるようにスライス数は2以上にする
@@ -469,23 +494,9 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
     }
 
     //--------- バッチごとのGPUバッファ準備（全ジョブ・全スライスで共有する） ---------//
-    struct PreparedShadowBatch {
-        const ResourceContainer::MeshBuffers *meshBuffers = nullptr;
-        RWStructuredBufferResource *skinnedVertexBuffer = nullptr;
-        StructuredBufferResource *transformBuffer = nullptr;
-        StructuredBufferResource *idSeedBuffer = nullptr;
-        StructuredBufferResource *materialBuffer = nullptr;
-        std::uint32_t textureHandle = TextureManager::kInvalidHandle;
-        SamplerManager::SamplerHandle samplerHandle = SamplerManager::kInvalidHandle;
-        std::uint32_t instanceCount = 0;
-        /// @brief 描画するインデックス範囲（サブメッシュ。indexCount==0の場合はメッシュ全体）
-        std::uint32_t indexStart = 0;
-        std::uint32_t indexCount = 0;
-        /// @brief バッチ内の全インスタンスを包含するワールド空間の集合境界球（スライス単位カリングに使う）
-        Vector3 boundsCenter{ 0.0f, 0.0f, 0.0f };
-        float boundsRadius = 0.0f;
-    };
-    std::vector<PreparedShadowBatch> batches;
+    // PreparedShadowBatch/PreparedGpuParticleShadowBatchはRenderer.hで定義（画面全体Nパスブレンド
+    // ＝RenderShadowMapsPhaseIntoが位相違いで再利用できるよう、メンバー変数として保持する）
+    auto &batches = shadowBatches_;
     const auto fallbackTextureHandle = TextureManager::GetTextureFromFileName("white1x1.png");
     {
         size_t begin = 0;
@@ -571,16 +582,16 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                 }
             }
 
-            // オブジェクト固有のディザ用シード値のインスタンスバッファ（本体描画のgObjectIdSeedsと同じ考え方。
-            // ShadowMapPS.hlslが本体と同じ閾値テーブル・同じ位相で影の濃さをアルファに応じて薄くする）
+            // オブジェクト固有のディザ用シード値（本体描画のgObjectIdSeedsと同じ考え方。
+            // ShadowMapPS.hlslが本体と同じ閾値テーブル・同じ位相で影の濃さをアルファに応じて薄くする）。
+            // 実際のGPUバッファは基準値だけをここで保持し、位相オフセットを加えた実バッファは
+            // 描画直前にBuildShadowIdSeedBufferで構築する（画面全体Nパスブレンドでは位相ごとに
+            // 別バッファへ分離する必要があるため。RenderShadowMapsPhaseInto参照）
             std::snprintf(key, sizeof(key), "ShadowPass|%u|idSeed", batchIndex);
-            batch.idSeedBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(float), instanceCount);
-            if (batch.idSeedBuffer) {
-                if (auto *mapped = static_cast<float *>(batch.idSeedBuffer->Map())) {
-                    for (size_t i = begin; i < end; ++i) {
-                        mapped[i - begin] = sources[i].idSeed;
-                    }
-                }
+            batch.idSeedKeyBase = key;
+            batch.baseIdSeeds.resize(instanceCount);
+            for (size_t i = begin; i < end; ++i) {
+                batch.baseIdSeeds[i - begin] = sources[i].idSeed;
             }
 
             // マテリアルの構造化バッファ（シャドウマップ用PSがアルファ抜きに使用する）
@@ -605,8 +616,8 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                 }
             }
 
-            if (batch.transformBuffer && batch.idSeedBuffer && batch.materialBuffer) {
-                batches.push_back(batch);
+            if (batch.transformBuffer && !batch.baseIdSeeds.empty() && batch.materialBuffer) {
+                batches.push_back(std::move(batch));
                 ++batchIndex;
             }
             begin = end;
@@ -617,16 +628,11 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
     // GPUパーティクルは通常描画（RenderGpuParticles）と同じ考え方で、CPU側にワールド行列を
     // 持たない（gpuInstanceMatrixBuffer_をそのままgTransformationMatricesとしてバインドする）。
     // マテリアルはエミッター全体で1つのため、instanceCount分だけ複製したバッファを用意する
-    // （通常のMeshRenderer由来バッチと違い、他のエミッターとまとめてインスタンシングはできない）
-    struct PreparedGpuParticleShadowBatch {
-        const ResourceContainer::MeshBuffers *meshBuffers = nullptr;
-        RWStructuredBufferResource *transformBuffer = nullptr;
-        StructuredBufferResource *materialBuffer = nullptr;
-        std::uint32_t textureHandle = TextureManager::kInvalidHandle;
-        SamplerManager::SamplerHandle samplerHandle = SamplerManager::kInvalidHandle;
-        std::uint32_t instanceCount = 0;
-    };
-    std::vector<PreparedGpuParticleShadowBatch> gpuParticleBatches;
+    // （通常のMeshRenderer由来バッチと違い、他のエミッターとまとめてインスタンシングはできない）。
+    // PreparedGpuParticleShadowBatchはRenderer.hで定義（画面全体Nパスブレンドでの再利用のため
+    // メンバー変数として保持する。GPUパーティクルはidSeedによる位相分離を持たないため、
+    // 再利用時もバッファ自体の再構築は不要）
+    auto &gpuParticleBatches = shadowGpuParticleBatches_;
     {
         std::uint32_t emitterIndex = 0;
         for (auto *emitter : sceneRenderer->GetGpuParticleEmitters()) {
@@ -721,7 +727,10 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                 }
                 shaderBinder.Bind("Vertex:gCamera3D", cameraBuffer);
                 shaderBinder.Bind("Vertex:gTransformationMatrices", batch.transformBuffer);
-                shaderBinder.Bind("Vertex:gObjectIdSeeds", batch.idSeedBuffer);
+                // 位相0（通常描画）のidSeedバッファを都度取得・構築する（RenderShadowMapsPhaseInto参照）
+                if (auto *idSeedBuffer = BuildShadowIdSeedBuffer(batch, 0.0f, -1)) {
+                    shaderBinder.Bind("Vertex:gObjectIdSeeds", idSeedBuffer);
+                }
                 shaderBinder.Bind("Pixel:gMaterials", batch.materialBuffer);
                 if (batch.textureHandle != TextureManager::kInvalidHandle) {
                     TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", batch.textureHandle);
@@ -784,5 +793,120 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
     }
 }
 
+void Renderer::RenderShadowMapsPhaseInto(ScreenBuffer *screenBuffer, PipelineBinder &pipelineBinder,
+    float phaseOffset, int passIndex) {
+    if (!screenBuffer || !shadowMapArray_ || shadowJobs_.empty() || shadowResolutionForRedraw_ == 0) return;
+    auto *commandList = screenBuffer->GetCommandList();
+    if (!commandList || !pipelineManager_) return;
+
+    constexpr const char *kShadowPipelineName = "Object3D.ShadowMap.DepthOnly";
+    if (!pipelineManager_->HasPipeline(kShadowPipelineName)) return;
+
+    pipelineBinder.UsePipeline(kShadowPipelineName);
+    auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, kShadowPipelineName);
+    shaderBinder.SetCommandList(commandList);
+
+    // ブルーノイズ閾値テーブル・時刻定数は、このコマンドリスト上ではまだ一度もバインドしていないため、
+    // RenderShadowMaps本体と同様にここで明示的にバインドし直す必要がある（バインドはコマンドリスト単位）
+    if (blueNoiseGenerator_.IsReady()) {
+        shaderBinder.Bind("Pixel:gBlueNoiseDither", blueNoiseGenerator_.GetResultBuffer());
+    }
+    if (auto *timeBuffer = resourceContainer_->GetOrCreateConstantBuffer("ShadowTimeConstants", sizeof(TimeConstantsData))) {
+        shaderBinder.Bind("Vertex:TimeConstants", timeBuffer);
+        shaderBinder.Bind("Pixel:TimeConstants", timeBuffer);
+    }
+
+    const auto fallbackTextureHandle = TextureManager::GetTextureFromFileName("white1x1.png");
+
+    //--------- シャドウマップ配列を深度書き込み状態にして全スライスを一括クリアし、この位相で撮り直す ---------//
+    shadowMapArray_->SetCommandList(commandList);
+    shadowMapArray_->TransitionTo(D3D12_RESOURCE_STATE_DEPTH_WRITE);
+    {
+        const auto fullDsv = shadowMapArray_->GetCPUDescriptorHandle();
+        commandList->OMSetRenderTargets(0, nullptr, FALSE, &fullDsv);
+        shadowMapArray_->ClearDepthStencilView();
+    }
+    {
+        const float resolutionF = static_cast<float>(shadowResolutionForRedraw_);
+        D3D12_VIEWPORT viewport{ 0.0f, 0.0f, resolutionF, resolutionF, 0.0f, 1.0f };
+        D3D12_RECT scissor{ 0, 0, static_cast<LONG>(shadowResolutionForRedraw_), static_cast<LONG>(shadowResolutionForRedraw_) };
+        commandList->RSSetViewports(1, &viewport);
+        commandList->RSSetScissorRects(1, &scissor);
+    }
+
+    for (size_t jobIndex = 0; jobIndex < shadowJobs_.size(); ++jobIndex) {
+        const auto &job = shadowJobs_[jobIndex];
+        for (std::uint32_t s = 0; s < job.sliceCount; ++s) {
+            const auto dsv = shadowMapArray_->GetSliceDsvHandle(job.baseSlice + s);
+            commandList->OMSetRenderTargets(0, nullptr, FALSE, &dsv);
+
+            char cameraKey[64];
+            std::snprintf(cameraKey, sizeof(cameraKey), "ShadowPass|%zu|%u|camera", jobIndex, s);
+            auto *cameraBuffer = resourceContainer_->GetOrCreateConstantBuffer(cameraKey, sizeof(LightCameraConstantData));
+            if (!cameraBuffer) continue;
+            // カメラ自体はジョブ構築時（RenderShadowMaps）に既にこのキーで書き込み済みのため再Mapは不要
+
+            const auto frustumPlanes = ExtractFrustumPlanes(job.viewProjections[s]);
+
+            for (const auto &batch : shadowBatches_) {
+                if (!SphereIntersectsFrustum(frustumPlanes, batch.boundsCenter, batch.boundsRadius)) {
+                    continue;
+                }
+                shaderBinder.Bind("Vertex:gCamera3D", cameraBuffer);
+                shaderBinder.Bind("Vertex:gTransformationMatrices", batch.transformBuffer);
+                if (auto *idSeedBuffer = BuildShadowIdSeedBuffer(batch, phaseOffset, passIndex)) {
+                    shaderBinder.Bind("Vertex:gObjectIdSeeds", idSeedBuffer);
+                }
+                shaderBinder.Bind("Pixel:gMaterials", batch.materialBuffer);
+                if (batch.textureHandle != TextureManager::kInvalidHandle) {
+                    TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", batch.textureHandle);
+                } else if (fallbackTextureHandle != TextureManager::kInvalidHandle) {
+                    TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", fallbackTextureHandle);
+                }
+                if (batch.samplerHandle != SamplerManager::kInvalidHandle) {
+                    SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", batch.samplerHandle);
+                } else {
+                    SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", DefaultSampler::LinearWrap);
+                }
+
+                if (batch.skinnedVertexBuffer) {
+                    batch.skinnedVertexBuffer->SetCommandList(commandList);
+                    D3D12_VERTEX_BUFFER_VIEW skinnedView = batch.skinnedVertexBuffer->GetView(sizeof(ResourceContainer::MeshVertex));
+                    pipelineBinder.SetVertexBufferView(0, 1, &skinnedView);
+                } else {
+                    pipelineBinder.SetVertexBuffer(batch.meshBuffers->vertexBuffer.get(), sizeof(ResourceContainer::MeshVertex));
+                }
+                pipelineBinder.SetIndexBuffer(batch.meshBuffers->indexBuffer.get());
+                const std::uint32_t drawIndexCount = batch.indexCount > 0 ? batch.indexCount : batch.meshBuffers->indexCount;
+                commandList->DrawIndexedInstanced(drawIndexCount, batch.instanceCount, batch.indexStart, 0, 0);
+                ++drawCallCount_;
+            }
+
+            for (const auto &batch : shadowGpuParticleBatches_) {
+                shaderBinder.Bind("Vertex:gCamera3D", cameraBuffer);
+                batch.transformBuffer->SetCommandList(commandList);
+                shaderBinder.Bind("Vertex:gTransformationMatrices", batch.transformBuffer);
+                shaderBinder.Bind("Pixel:gMaterials", batch.materialBuffer);
+                if (batch.textureHandle != TextureManager::kInvalidHandle) {
+                    TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", batch.textureHandle);
+                } else if (fallbackTextureHandle != TextureManager::kInvalidHandle) {
+                    TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", fallbackTextureHandle);
+                }
+                if (batch.samplerHandle != SamplerManager::kInvalidHandle) {
+                    SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", batch.samplerHandle);
+                } else {
+                    SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", DefaultSampler::LinearWrap);
+                }
+
+                pipelineBinder.SetVertexBuffer(batch.meshBuffers->vertexBuffer.get(), sizeof(ResourceContainer::MeshVertex));
+                pipelineBinder.SetIndexBuffer(batch.meshBuffers->indexBuffer.get());
+                commandList->DrawIndexedInstanced(batch.meshBuffers->indexCount, batch.instanceCount, 0, 0, 0);
+                ++drawCallCount_;
+            }
+        }
+    }
+
+    shadowMapArray_->TransitionToShaderResource();
+}
 
 } // namespace KashipanEngine

@@ -24,6 +24,20 @@ bool enableTemporalDither;
 // 既定は0（無効＝従来通りidSeedのみで位相を決める）。1つの面の中でこの刻み幅を大きく
 // 超える奥行き変化がある場合、その境目にディザパターンの継ぎ目が見えることがある点に注意
 float ditherDepthBucketSize;
+// 半透明ディザを複数回（位相違いで）描画して結果をブレンドし、粒状感を1フレーム内で滑らかにする
+// （Renderer::RenderMultiPassDither参照）。このフィールド自体はシェーダー内では参照されず、
+// C++側がマテリアルエディタでの表示・編集用に読むだけ（対象エントリの振り分けに使う）。
+// 既定はfalse。有効にした分だけ該当オブジェクトの描画コストが数倍になる点に注意
+bool enableMultiPassDither;
+// enableMultiPassDither有効時のパス数N（Renderer::RenderMultiPassDither参照)。C++側で1〜8に
+// クランプして使用し、0または未設定の場合はエンジン既定値(4)を使う。値を大きくするほど
+// 粒状感は滑らかになるが、その分だけ該当オブジェクトの描画コストが増える
+int multiPassDitherCount;
+// このマテリアルが落とす影を、本体と同じブルーノイズディザで薄くする(ShadowMapPS.hlsl)処理を
+// 無効化する。trueにすると影は従来通りアルファ0.01以上で一律フル濃度になる（テクスチャの
+// アルファ抜き形状はそのまま活きるため、フォリッジ等「アルファは切り抜き用」なマテリアルで
+// 使う想定）。既定はfalse（影もアルファに応じて薄くなる、現状の挙動のまま）
+bool disableShadowDither;
 // オブジェクト単位の色（MeshRendererのInstance Color）。マテリアル本体（共有アセット）とは別に、
 // インスタンス（描画エントリ）ごとに異なる値を持つ
 float4 instanceColor;

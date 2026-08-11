@@ -1,4 +1,5 @@
 #include "RendererInternal.h"
+#include <optional>
 
 namespace KashipanEngine {
 
@@ -60,29 +61,48 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
 
     // 今フレームで描画される描画先ごとに、その描画先で使うカメラ・ライトからシャドウマップを生成する
     // （他の描画パスより先に実行する）
-    {
-        std::vector<IRenderTarget *> shadowTargets;
-        for (const auto &entry : drawList) {
-            if (std::find(shadowTargets.begin(), shadowTargets.end(), entry.target) == shadowTargets.end()) {
-                shadowTargets.push_back(entry.target);
-            }
+    std::vector<IRenderTarget *> shadowTargets;
+    for (const auto &entry : drawList) {
+        if (std::find(shadowTargets.begin(), shadowTargets.end(), entry.target) == shadowTargets.end()) {
+            shadowTargets.push_back(entry.target);
         }
-        RenderShadowMaps(sceneContext, sceneRenderer, shadowTargets);
     }
+    RenderShadowMaps(sceneContext, sceneRenderer, shadowTargets);
 
-    // 描画先ごとの範囲に区切って描画（リストは描画先順でソート済み）
+    // 画面全体Nパスブレンド（ScreenWideDitherBlendEffect）が有効な描画先を収集する。これらは
+    // 全描画先で共有するシャドウマップ配列を自分の位相で直接書き換えながら進むため、他の
+    // （画面全体Nパスブレンド対象ではない）描画先を全て処理し終えてから最後にまとめて処理する
+    const auto screenWideDitherTargets = CollectScreenWideDitherTargets(sceneRenderer, shadowTargets);
+    const auto findScreenWideDitherPassCount = [&screenWideDitherTargets](const IRenderTarget *target) -> std::optional<std::uint32_t> {
+        for (const auto &request : screenWideDitherTargets) {
+            if (request.screenBuffer == target) return request.passCount;
+        }
+        return std::nullopt;
+    };
+
+    // 描画先ごとの範囲に区切って描画（リストは描画先順でソート済み）。画面全体Nパスブレンド対象は
+    // ここでは描画せず、範囲だけ控えておいて最後にまとめて処理する
     std::unordered_set<const IRenderTarget *> renderedTargets;
+    std::vector<std::pair<ScreenBuffer *, std::span<const SceneRenderer::DrawEntry>>> deferredScreenWideRanges;
     size_t begin = 0;
     while (begin < drawList.size()) {
         IRenderTarget *target = drawList[begin].target;
         size_t end = begin;
         while (end < drawList.size() && drawList[end].target == target) ++end;
 
-        RenderToTarget(target,
-            std::span<const SceneRenderer::DrawEntry>(drawList.data() + begin, end - begin),
-            sceneRenderer);
+        std::span<const SceneRenderer::DrawEntry> range(drawList.data() + begin, end - begin);
+        if (findScreenWideDitherPassCount(target)) {
+            deferredScreenWideRanges.emplace_back(static_cast<ScreenBuffer *>(target), range);
+        } else {
+            RenderToTarget(target, range, sceneRenderer);
+        }
         renderedTargets.insert(target);
         begin = end;
+    }
+
+    for (const auto &[screenBuffer, range] : deferredScreenWideRanges) {
+        const auto passCount = findScreenWideDitherPassCount(screenBuffer);
+        RenderScreenWideDitherTarget(screenBuffer, range, sceneRenderer, passCount.value_or(4u));
     }
 
     // 描画対象オブジェクトが無い ScreenBuffer にもポストエフェクトのみ適用する

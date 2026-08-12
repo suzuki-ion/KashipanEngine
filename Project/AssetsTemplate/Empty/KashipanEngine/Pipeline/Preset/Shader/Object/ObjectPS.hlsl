@@ -477,7 +477,9 @@ PSOutput main(VSOutput input) {
 	if (output.color.a < 0.01f) {
 		discard;
 	}
-	if (output.color.a < 1.0f) {
+	// useAlphaBlend有効時はディザ判定を行わず、アルファ値をそのままBlendState側の本格的な
+	// アルファブレンドへ渡す(Material3D.hlsli参照)。無効時は従来通りディザで擬似的な半透明を表現する
+	if (!mat.useAlphaBlend && output.color.a < 1.0f) {
 		float distanceFromCamera = length(input.worldPosition - gCamera3D.eyePosition.xyz);
 		float threshold = ComputeDitherThreshold(input.position.xy, input.idSeed, mat.enableTemporalDither, distanceFromCamera, mat.ditherDepthBucketSize, mat.useBayerDither, mat.useBayer64x64);
 		if (output.color.a <= threshold) {

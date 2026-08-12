@@ -10,7 +10,7 @@ namespace {
 
 const std::unordered_set<std::string> &BlendSuffixes() {
     static const std::unordered_set<std::string> kSuffixes = {
-        "Add", "Exclusion", "Multiply", "None", "Normal", "Screen", "Subtract",
+        "Add", "Exclusion", "Multiply", "None", "Normal", "Screen", "Subtract", "Translucent",
     };
     return kSuffixes;
 }
@@ -78,9 +78,15 @@ PipelineVariantResolution TryResolvePipelineVariant(const std::string &pipelineN
     }
     if (rasterPreset.empty() || blendPreset.empty()) return result;
 
-    const std::string depthStencilPreset = (base == "Object3D") ? "DepthEnable" : "DepthDisable";
+    // Translucent（本格的なアルファブレンドによる半透明。Material3D.hlsliのuseAlphaBlend用）は、
+    // Object3D.Ghostパイプラインと同じく深度テストのみ・深度書き込み無し（DepthEnableToMaskZero）にする。
+    // 重なる半透明オブジェクト同士は自動でソートされないため、RenderPriorityで手動の描画順制御が必要
+    const std::string depthStencilPreset = (base != "Object3D") ? "DepthDisable"
+        : (blendPreset == "Translucent") ? "DepthEnableToMaskZero" : "DepthEnable";
+    // TranslucentのBlend方程式はNormalと同一（SrcAlpha/InvSrcAlpha）のため、同じBlendStateプリセットを再利用する
+    const std::string blendStatePreset = (blendPreset == "Translucent") ? "Normal" : blendPreset;
     // 既存の静的Pipelines/*.jsonと同じ規則: BlendStateがNormal/None（不透明・非合成）は先に描き、
-    // それ以外（Add等の透明合成系）は通常描画より後段（RenderPriority=2）で描く
+    // それ以外（Add等の透明合成系、Translucent）は通常描画より後段（RenderPriority=2）で描く
     const int renderPriority = (blendPreset == "Normal" || blendPreset == "None") ? 1 : 2;
 
     JSON pixelStage;
@@ -124,7 +130,7 @@ PipelineVariantResolution TryResolvePipelineVariant(const std::string &pipelineN
         { "Category", (base == "Object3D") ? "3D" : "2D" },
         { "Shader", shaderObj },
         { "RasterizerState", { { "UsePreset", rasterPreset } } },
-        { "BlendState", { { "UsePreset", blendPreset } } },
+        { "BlendState", { { "UsePreset", blendStatePreset } } },
         { "DepthStencilState", { { "UsePreset", depthStencilPreset } } },
         { "PipelineState", { { "UsePreset", "Triangle" } } },
         { "RenderPriority", renderPriority },

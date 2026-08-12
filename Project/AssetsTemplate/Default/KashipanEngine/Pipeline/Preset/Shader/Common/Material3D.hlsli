@@ -53,3 +53,13 @@ bool disableShadowDither;
 float4 instanceColor;
 // instanceColorの適用方法。0=Override（置き換え）, 1=Multiply（乗算）, 2=Add（加算）, 3=Subtract（減算）
 float instanceColorBlendMode;
+// 半透明を「ディザ(スクリーンドア)」ではなく、本格的なアルファブレンドで表現する。trueにすると
+// ObjectPS.hlslの上のディザ判定(ComputeDitherThreshold呼び出し)は丸ごとスキップされ、アルファ値が
+// そのままブレンドステージ(BlendState)へ渡る。ShadowMapPS.hlslでも同様にディザをスキップし、
+// disableShadowDither=trueと同じくアルファ0.01以上で一律フル濃度の影になる。
+// 有効にする場合、MeshRenderer等のpipelineNameを深度書き込みなしの半透明パイプライン
+// （例: Object3D.Solid.BlendTranslucent。PipelineVariantBuilderのBlendから選択可能）に設定すること。
+// 深度書き込みが無いため、重なった半透明オブジェクト同士は自動でソートされない。RenderPriority
+// （パイプライン単位・レンダラーコンポーネント単位のどちらも）を使い、奥にあるものから先に
+// 描画されるよう手動で順序を設定する必要がある。既定はfalse（従来通りディザ方式）
+bool useAlphaBlend;

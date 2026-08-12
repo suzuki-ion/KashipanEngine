@@ -24,7 +24,7 @@ bool Show(std::string &pipelineName) {
     static std::unordered_set<std::string> sSelectedModules;
     static const char *kVariantBaseNames[] = { "Object3D", "Object2D" };
     static const char *kVariantRasterNames[] = { "Solid", "DoubleSidedCulling" };
-    static const char *kVariantBlendNames[] = { "Add", "Exclusion", "Multiply", "None", "Normal", "Screen", "Subtract" };
+    static const char *kVariantBlendNames[] = { "Add", "Exclusion", "Multiply", "None", "Normal", "Screen", "Subtract", "Translucent" };
 
     ImGui::Combo(TranslationLabel("editor.pipelinevariantbuilder.base"), &sVariantBase, kVariantBaseNames, IM_ARRAYSIZE(kVariantBaseNames));
 

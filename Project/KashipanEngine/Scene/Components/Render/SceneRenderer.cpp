@@ -12,6 +12,7 @@
 #include "Objects/Components/Render/MeshRenderer.h"
 #include "Objects/Components/Render/SpriteRenderer.h"
 #include "Objects/Components/Render/SkinnedMeshRenderer.h"
+#include "Objects/Components/Render/TextRenderer.h"
 #include "Objects/Components/Render/CameraRenderer.h"
 #include "Objects/Components/Render/LightRenderer.h"
 #include "Objects/Components/Render/NormalWindowObject.h"
@@ -245,6 +246,8 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
                 sortable.entry.objectIdSeed = SceneRenderer::ObjectIdSeedFor(ownerObject);
                 sortable.kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
                 sortable.pipelinePriority = pipelinePriority;
+                sortable.renderPriority = renderer->GetRenderPriority();
+                sortable.entry.allowInstancing = renderer->GetAllowInstancing();
                 sortableEntries.push_back(sortable);
 
                 // マテリアルにoutlineWidth（正の値）が設定されている場合、押し出しアウトライン用の
@@ -262,11 +265,16 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
     }
 }
 
-/// @brief 描画先→パイプライン優先度→パイプライン名→メッシュ→サブメッシュ→マテリアルの順で比較する
+/// @brief 描画先→パイプライン優先度→RenderPriority→パイプライン名→メッシュ→サブメッシュ→マテリアルの順で比較する
+/// @details RenderPriorityは各Rendererコンポーネントが持つ値（既定0）で、小さいほど先（奥）、
+///          大きいほど後（手前）に描画されるよう昇順で比較する。既定値0同士は常にタイとなるため、
+///          明示的に値を変えない限り既存のパイプライン名/メッシュ/マテリアル単位の並び
+///          （＝インスタンシングのバッチ化）は一切影響を受けない
 bool CompareSortableEntry(const SortableEntry &a, const SortableEntry &b) {
     if (a.kindOrder != b.kindOrder) return a.kindOrder < b.kindOrder;
     if (a.entry.target != b.entry.target) return a.entry.target < b.entry.target;
     if (a.pipelinePriority != b.pipelinePriority) return a.pipelinePriority < b.pipelinePriority;
+    if (a.renderPriority != b.renderPriority) return a.renderPriority < b.renderPriority;
     if (a.entry.pipelineName != b.entry.pipelineName) return a.entry.pipelineName < b.entry.pipelineName;
     if (a.entry.meshHandle != b.entry.meshHandle) return a.entry.meshHandle < b.entry.meshHandle;
     if (a.entry.indexStart != b.entry.indexStart) return a.entry.indexStart < b.entry.indexStart;
@@ -308,8 +316,10 @@ void CollectCacheableEntries(const std::vector<RendererT *> &renderers,
             cached.ranked.entry.instanceColor = GetInstanceColorFor(renderer);
             cached.ranked.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(renderer);
             cached.ranked.entry.objectIdSeed = SceneRenderer::ObjectIdSeedFor(renderer->GetOwnerObject());
+            cached.ranked.entry.allowInstancing = renderer->GetAllowInstancing();
             cached.ranked.kindOrder = GetRenderTargetKindOrder(editorTarget->GetRenderTargetKind());
             cached.ranked.pipelinePriority = pipelineManager->GetPipeline(pipelineName).RenderPriority();
+            cached.ranked.renderPriority = renderer->GetRenderPriority();
             cached.source = renderer;
 
             // マテリアルにoutlineWidth（正の値）が設定されている場合、押し出しアウトライン用の
@@ -607,8 +617,12 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
                     sortable.entry.instanceColor = GetInstanceColorFor(renderer);
                     sortable.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(renderer);
                     sortable.entry.objectIdSeed = SceneRenderer::ObjectIdSeedFor(ownerObject);
+                    // skinnedVertexBufferがインスタンスごとに異なるため既に単独ドローコールになるが、
+                    // API上の一貫性のためAllowInstancingも反映しておく（実際の描画結果への影響はない）
+                    sortable.entry.allowInstancing = renderer->GetAllowInstancing();
                     sortable.kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
                     sortable.pipelinePriority = pipelinePriority;
+                    sortable.renderPriority = renderer->GetRenderPriority();
                     freshEntries.push_back(sortable);
 
                     // マテリアルにoutlineWidth（正の値）が設定されている場合、押し出しアウトライン用の
@@ -620,6 +634,86 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
                         outline.pipelinePriority = pipelineManager->GetPipeline(kOutlinePipelineName).RenderPriority();
                         freshEntries.push_back(outline);
                     }
+                }
+            }
+        }
+    }
+
+    // TextRendererは「1文字＝1インスタンス」で、MeshRenderer/SpriteRendererのような
+    // サブメッシュ単位ではなく文字単位でDrawEntryを作るためCollectSortableEntriesは使わず
+    // 個別に収集する（メッシュは全文字共通の単位クアッド、マテリアルはフォント単位の内部
+    // マテリアル（TextRenderer::GetMaterialHandle参照）を使うため、同じフォント・パイプライン・
+    // RenderPriorityを共有する文字同士は他のRendererと同じ仕組みでバッチ化される）
+    {
+        static const ModelManager::ModelHandle kTextRect2DMeshHandle =
+            ModelManager::GetModelHandleFromAssetPath("PrimitiveMesh-Rect2D");
+        std::vector<IRenderTarget *> targets;
+        for (auto *renderer : textRenderers_) {
+            if (!renderer || !renderer->IsActive()) continue;
+            if (kTextRect2DMeshHandle == ModelManager::kInvalidHandle) continue;
+
+            const std::string &pipelineName = renderer->GetPipelineName();
+            if (pipelineName.empty() || !EnsurePipelineLoaded(pipelineManager, pipelineName)) continue;
+            const std::int32_t pipelinePriority = pipelineManager->GetPipeline(pipelineName).RenderPriority();
+
+            const auto materialHandle = renderer->GetMaterialHandle();
+            if (materialHandle == MaterialManager::kInvalidHandle) continue; // フォント未設定
+
+            // EditorOnlyオブジェクト（祖先を含む）はエディター用描画先にのみ描画する
+            const EmptyObject *ownerObject = renderer->GetOwnerObject();
+            const bool editorOnly = ownerObject && ownerObject->IsEditorOnlyInHierarchy();
+            // 孤立プレビュー等、Scene Viewへの映り込みを明示的に望まないオブジェクトは除外する
+            const bool hiddenFromEditorTarget = ownerObject && ownerObject->IsHiddenFromEditorTarget();
+
+            auto *targetObject = renderer->GetTargetObject();
+            SceneRenderer::CollectRenderTargets(targetObject, targets);
+            if (editorTarget_ && editorTarget_->IsRenderTargetAvailable() && !hiddenFromEditorTarget) {
+                targets.push_back(editorTarget_);
+            }
+
+            // 文字インスタンス（ワールド行列まで合成済み）はどの描画先へも同じ内容を使えるため、
+            // 一致する描画先が1つでもある場合にのみ1回だけ計算する
+            std::vector<TextRenderer::RenderCharacterInstance> instances;
+            bool instancesComputed = false;
+
+            for (auto *target : targets) {
+                if (!target || !target->IsRenderTargetAvailable()) continue;
+                if (editorOnly && target != editorTarget_) continue;
+                if (target != editorTarget_ && !renderer->IsRenderTargetIncluded(target)) continue;
+                if (target != editorTarget_) {
+                    targetOwners_[target] = targetObject;
+                }
+
+                if (!instancesComputed) {
+                    instances = renderer->GetRenderInstances();
+                    instancesComputed = true;
+                }
+                if (instances.empty()) continue;
+
+                const float objectIdSeed = SceneRenderer::ObjectIdSeedFor(ownerObject);
+                const int kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
+                const bool allowInstancing = renderer->GetAllowInstancing();
+                const std::int32_t renderPriority = renderer->GetRenderPriority();
+
+                for (const auto &ch : instances) {
+                    SortableEntry sortable;
+                    sortable.entry.target = target;
+                    sortable.entry.pipelineName = pipelineName;
+                    sortable.entry.meshHandle = kTextRect2DMeshHandle;
+                    sortable.entry.materialHandle = materialHandle;
+                    sortable.entry.worldMatrix = ch.worldMatrix;
+                    // 文字ごとの色（リッチテキストの<color=#RRGGBB>タグ）をTextのMaterial構造体の
+                    // "characterColor"フィールドへ渡す（instanceColorBlendModeは使わない。
+                    // DrawBatch/TextSDFPS.hlsl参照）
+                    sortable.entry.instanceColor = ch.color;
+                    sortable.entry.uvRect = Vector4(ch.u0, ch.v0, ch.u1, ch.v1);
+                    sortable.entry.boldWeight = ch.boldWeight;
+                    sortable.entry.objectIdSeed = objectIdSeed;
+                    sortable.entry.allowInstancing = allowInstancing;
+                    sortable.kindOrder = kindOrder;
+                    sortable.pipelinePriority = pipelinePriority;
+                    sortable.renderPriority = renderPriority;
+                    freshEntries.push_back(sortable);
                 }
             }
         }

@@ -197,8 +197,8 @@ private:
         std::span<const SceneRenderer::DrawEntry> drawList);
 
     /// @brief 直前にカメラ・ライトをバインドした(パイプライン名, PipelineBinder世代)を記録するキャッシュ
-    /// @details 同一の描画先に対する一連の描画（DrawBatchのループ・RenderTextRenderers・
-    ///          RenderGpuParticles）の間で共有し、パイプラインが実際には切り替わっていない
+    /// @details 同一の描画先に対する一連の描画（DrawBatchのループ・RenderGpuParticles）の間で
+    ///          共有し、パイプラインが実際には切り替わっていない
     ///          （ルート引数がまだ有効な）場合にカメラ・ライトの再バインドを省略するために使う。
     ///          RenderToTarget呼び出しごとに新規に用意すること（フレーム・描画先をまたいで使い回さない）。
     struct CameraLightsBindCache {
@@ -289,21 +289,12 @@ private:
         float baseSeedOffset = 0.0f,
         int baseSeedPassIndex = -1);
 
-    /// @brief TextRendererの専用描画パス
-    /// @details 文字ごとにアトラス内UVが異なるためDrawBatchのバッチングには乗せず、
-    ///          (パイプライン名, フォントハンドル) の組ごとに全TextRendererの文字インスタンスを
-    ///          まとめて1回のDrawIndexedInstancedで描画する。RenderToTargetの通常バッチ描画の後に呼ぶ
-    void RenderTextRenderers(IRenderTarget *target,
-        PipelineBinder &pipelineBinder,
-        SceneRenderer *sceneRenderer,
-        CameraLightsBindCache &lightsCache);
-
     /// @brief GPU Simulation有効なParticleSystem2D/3Dの専用描画パス
     /// @details ProcessGpuParticlesが書き込んだgInstanceMatricesをSRVとして
     ///          そのままgTransformationMatricesにバインドし、既存のObject2D/Object3D
     ///          頂点シェーダーを無改造で利用する。常にプール容量分描画し、死亡中の
     ///          パーティクルはスケール0の行列で非表示になる（コンパクションは行わない）。
-    ///          RenderToTargetの通常バッチ描画・RenderTextRenderersの後に呼ぶ
+    ///          RenderToTargetの通常バッチ描画の後に呼ぶ
     void RenderGpuParticles(IRenderTarget *target,
         PipelineBinder &pipelineBinder,
         SceneRenderer *sceneRenderer,

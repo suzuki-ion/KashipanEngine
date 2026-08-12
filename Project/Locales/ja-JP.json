@@ -815,12 +815,16 @@
 		"component.comment.comment": "コメント",
 
 		//--------- component.common ---------//
+		"component.common.allow_instancing": "自動インスタンシングを許可",
 		"component.common.blendmode.add": "加算",
 		"component.common.blendmode.multiply": "乗算",
 		"component.common.blendmode.override": "置き換え",
 		"component.common.blendmode.subtract": "減算",
+		"component.common.desc_allow_instancing": "無効にすると、同じメッシュ/マテリアル/パイプラインを共有する他のオブジェクトが\nあっても常に単独のドローコールで描画される（既定は有効）",
+		"component.common.desc_render_priority": "描画順を制御する優先度。値が小さいほど先（奥）、大きいほど後（手前）に描画される\n（既定0。パイプラインの描画優先度より後、メッシュ/マテリアルによる並びより前に評価される）",
 		"component.common.mode.lookattarget": "ターゲットの方を向く",
 		"component.common.mode.synctargetrotation": "ターゲットの回転と同期",
+		"component.common.render_priority": "描画優先度",
 		"component.common.target": "ターゲット",
 
 		//--------- component.computeshaderprocessing ---------//

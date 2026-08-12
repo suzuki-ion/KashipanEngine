@@ -62,13 +62,29 @@ public:
         ///        ワールド座標とは異なり、原点が一致する別オブジェクト同士でも確実に異なる値になる。
         ///        半透明のディザリングパターンをオブジェクトごとに分離する用途で使う（ObjectPS.hlsl参照）
         float objectIdSeed = 0.0f;
+        /// @brief このエントリを他のエントリとインスタンシング（1回のDrawIndexedInstancedへのバッチ結合）
+        ///        の対象にしてよいか。false の場合、パイプライン/メッシュ/マテリアルが完全に一致する
+        ///        隣接エントリがあっても常に単独のドローコールとして描画される
+        ///        （MeshRenderer/SpriteRenderer/TextRendererのAllowInstancing参照）
+        bool allowInstancing = true;
+        /// @brief TextRendererのみ使用。アトラス内のUV矩形（x0,y0,x1,y1）。既定は全面（0,0,1,1）。
+        ///        Text系パイプラインのMaterial構造体にのみ存在する"uvRect"フィールドへ
+        ///        WriteMaterialFieldでインスタンスごとに書き込まれる（他の型・パイプラインでは無視される）
+        Vector4 uvRect{ 0.0f, 0.0f, 1.0f, 1.0f };
+        /// @brief TextRendererのみ使用。<b>タグによる太らせ量（SDF閾値のシフト量）。既定0
+        float boldWeight = 0.0f;
     };
 
-    /// @brief DrawEntryにソートキー（描画先種別順・パイプライン優先度）を付随させた中間データ
+    /// @brief DrawEntryにソートキー（描画先種別順・パイプライン優先度・RenderPriority）を付随させた中間データ
     struct RankedDrawEntry {
         DrawEntry entry;
         int kindOrder = 0;
         std::int32_t pipelinePriority = 0;
+        /// @brief 各Rendererコンポーネントが持つRenderPriority（既定0）。値が小さいほど先に描画され、
+        ///        大きいほど後（手前）に描画される。既定値0同士は常にタイになるため、この値を
+        ///        変更しない限り既存のパイプライン名/メッシュ/マテリアル単位の並び（＝インスタンシングの
+        ///        バッチ化）は一切影響を受けない
+        std::int32_t renderPriority = 0;
     };
 
     /// @brief キャッシュ対象（targetObjectID未指定＝エディター用描画先のみに描画するMesh/SpriteRenderer）
@@ -134,7 +150,8 @@ public:
     void ResetAllSkinnedMeshRendererPoses();
 
     /// @brief ソート済み描画リストを構築して返す
-    /// @details 描画先→パイプラインの描画優先度→メッシュ→マテリアルの順でソートされる
+    /// @details 描画先→パイプラインの描画優先度→RenderPriority（各Rendererコンポーネントが持つ値。
+    ///          小さいほど先＝奥、大きいほど後＝手前）→メッシュ→マテリアルの順でソートされる
     /// @param pipelineManager パイプラインの描画優先度取得用
     const std::vector<DrawEntry> &BuildSortedDrawList(Passkey<Renderer>, PipelineManager *pipelineManager);
 

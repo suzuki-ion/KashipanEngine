@@ -7,6 +7,7 @@
 
 #include "Objects/ObjectComponentHeader.h"
 #include "Assets/FontManager.h"
+#include "Assets/MaterialManager.h"
 #include "Graphics/IRenderTarget.h"
 #include "Graphics/PipelineManager.h"
 #include "Math/Matrix4x4.h"
@@ -30,9 +31,12 @@ namespace KashipanEngine {
 ///          &lt;size=N|N%&gt; &lt;s&gt; &lt;u&gt; &lt;sub&gt; &lt;sup&gt;）を解釈しながら
 ///          1文字ずつ独立した矩形インスタンスとして描画する。文字ごとに位置オフセット・回転・
 ///          スケールを個別に上書きできる（Transformと同様の調整。ランタイム専用でシーンJSONへは保存しない）。
-///          文字ごとにアトラス内UVが異なるため既存のMeshRenderer/SpriteRenderer用の描画バッチ
-///          （CollectSortableEntries/DrawBatch）には乗せず、Rendererの専用描画パス
-///          （RenderTextRenderers）がGetRenderInstances()の結果を直接バッチ化して描画する。
+///          各文字はMeshRenderer/SpriteRendererと同じくSceneRenderer::DrawEntry
+///          （1文字＝1エントリ）としてsortedDrawList_に乗り、共有の単位クアッド（Rect2D）メッシュと
+///          フォント単位の内部マテリアル（GetMaterialHandle参照。テクスチャ＝フォントアトラス）で
+///          Renderer::DrawBatchにより通常のMeshRenderer/SpriteRendererと同じ仕組みでバッチ描画される。
+///          文字ごとに異なるUV矩形・太字量・色は、DrawBatchがインスタンスごとにWriteMaterialFieldで
+///          Text2D/Text3DパイプラインのMaterial構造体（uvRect/boldWeight/characterColor）へ書き込む。
 class TextRenderer final : public IObjectComponent {
 public:
     /// @brief テキストブロックの横方向アライメント
@@ -72,6 +76,8 @@ public:
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(color_, [this] { MarkShapeDirty(); });
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(defaultCharacterAnchor_, [this] { MarkInstancesDirty(); });
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(defaultCharacterPivot_, [this] { MarkInstancesDirty(); });
+        ADD_MEMBER_VARIABLE(renderPriority_);
+        ADD_MEMBER_VARIABLE(allowInstancing_);
     )
     COMPONENT_CATEGORY("Render")
     ~TextRenderer() override = default;
@@ -89,6 +95,8 @@ public:
         ptr->verticalAlign_ = verticalAlign_;
         ptr->defaultCharacterAnchor_ = defaultCharacterAnchor_;
         ptr->defaultCharacterPivot_ = defaultCharacterPivot_;
+        ptr->renderPriority_ = renderPriority_;
+        ptr->allowInstancing_ = allowInstancing_;
         ptr->MarkShapeDirty();
         return ptr;
     }
@@ -133,6 +141,36 @@ public:
         return fontHandle_;
     }
 
+    /// @brief このフォントのアトラスをテクスチャに持つマテリアルを取得する
+    /// @details MeshRenderer/SpriteRendererと同様、SceneRendererはこのハンドルを
+    ///          DrawEntry::materialHandleとして通常の描画バッチ（DrawBatch）に渡す。
+    ///          フォントごとに"__TextFontAtlas_<フォント名>"という名前で1つだけ自動生成・共有される
+    ///          内部マテリアル（"__"始まりの名前規則で保存対象・マテリアル一覧から除外される。
+    ///          MaterialManager::IsInternalMaterialName参照）のため、同じフォントを使う全ての
+    ///          TextRendererが同一ハンドルを共有し、通常のインスタンシングバッチ化がそのまま効く。
+    ///          テクスチャは常にフォントのアトラスに固定され、ユーザーが任意のマテリアルへ
+    ///          差し替えることはできない（差し替えるとグリフが正しく描画できなくなるため）
+    MaterialManager::MaterialHandle GetMaterialHandle() const {
+        const auto fontHandle = GetFontHandle();
+        if (fontHandle == FontManager::kInvalidHandle) return MaterialManager::kInvalidHandle;
+        if (fontMaterialHandle_ != MaterialManager::kInvalidHandle && fontMaterialForHandle_ == fontHandle &&
+            MaterialManager::GetMaterial(fontMaterialHandle_)) {
+            return fontMaterialHandle_;
+        }
+        const std::string materialName = "__TextFontAtlas_" + fontName_;
+        if (const auto existing = MaterialManager::GetMaterialHandleFromName(materialName); existing != MaterialManager::kInvalidHandle) {
+            fontMaterialHandle_ = existing;
+            fontMaterialForHandle_ = fontHandle;
+            return existing;
+        }
+        MaterialManager::Material material{};
+        material.name = materialName;
+        material.textureHandle = FontManager::GetAtlasTextureHandle(fontHandle);
+        fontMaterialHandle_ = MaterialManager::RegisterMaterial(materialName, material);
+        fontMaterialForHandle_ = fontHandle;
+        return fontMaterialHandle_;
+    }
+
     //==================================================
     // テキスト内容・見た目
     //==================================================
@@ -167,6 +205,22 @@ public:
     /// @brief 各文字のデフォルトピボット（回転・拡縮の中心にする単位クアッド内の正規化座標、既定(0.5,0.5)）
     void SetDefaultCharacterPivot(const Vector2 &pivot) { defaultCharacterPivot_ = pivot; MarkInstancesDirty(); }
     const Vector2 &GetDefaultCharacterPivot() const noexcept { return defaultCharacterPivot_; }
+
+    //==================================================
+    // 描画順・インスタンシング制御
+    //==================================================
+
+    /// @brief 描画順を制御する優先度を設定する（既定0）。値が小さいほど先（奥）、大きいほど後（手前）に
+    ///        描画される。MeshRenderer/SpriteRendererと同じSceneRenderer::CompareSortableEntryで
+    ///        扱われるため、他の種類のRendererとの前後関係（例: 特定のSpriteをこのテキストより
+    ///        手前にする）も統一的に制御できる
+    void SetRenderPriority(std::int32_t priority) noexcept { renderPriority_ = priority; }
+    std::int32_t GetRenderPriority() const noexcept { return renderPriority_; }
+    /// @brief このレンダラーを他のオブジェクトとのインスタンシング（同一パイプライン・メッシュ・
+    ///        マテリアルを共有するインスタンスの1回のドローコールへの結合）対象にするか設定する
+    ///        （既定true）。falseにすると、この文字インスタンス群は常に単独のドローコールで描画される
+    void SetAllowInstancing(bool allow) noexcept { allowInstancing_ = allow; }
+    bool GetAllowInstancing() const noexcept { return allowInstancing_; }
 
     //==================================================
     // 文字ごとのアクセス（Transform的な調整。ランタイム専用・非シリアライズ）
@@ -281,6 +335,15 @@ protected:
 
         ImGuiCustom::SelectString(TranslationLabel("component.textrenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames("Text"));
 
+        ImGui::DragInt(TranslationLabel("component.common.render_priority"), &renderPriority_);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", TranslationC("component.common.desc_render_priority"));
+        }
+        ImGui::Checkbox(TranslationLabel("component.common.allow_instancing"), &allowInstancing_);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", TranslationC("component.common.desc_allow_instancing"));
+        }
+
         RebuildShapeIfDirty();
         if (!characterOverrides_.empty() && ImGui::TreeNode(TranslationLabel("component.textrenderer.character_overrides"))) {
             for (size_t i = 0; i < characterOverrides_.size(); ++i) {
@@ -313,6 +376,8 @@ protected:
         for (const auto &name : excludedRenderTargetNames_) {
             json["excludedRenderTargetNames"].push_back(name);
         }
+        json["renderPriority"] = renderPriority_;
+        json["allowInstancing"] = allowInstancing_;
         return json;
     }
 
@@ -336,6 +401,8 @@ protected:
         for (const auto &name : json.value("excludedRenderTargetNames", std::vector<std::string>())) {
             excludedRenderTargetNames_.insert(name);
         }
+        renderPriority_ = json.value("renderPriority", 0);
+        allowInstancing_ = json.value("allowInstancing", true);
         MarkShapeDirty();
         return true;
     }
@@ -698,10 +765,20 @@ private:
     UUID128 targetObjectID_{};
     std::string pipelineName_ = "Text2D.BlendNormal";
     std::unordered_set<std::string> excludedRenderTargetNames_;
+    /// @brief 描画順を制御する優先度（既定0。MeshRenderer/SpriteRendererと同じSceneRenderer::
+    ///        CompareSortableEntryで扱われるため、他の種類のRendererとの前後関係も統一的に制御できる）
+    int renderPriority_ = 0;
+    /// @brief 他のオブジェクトとのインスタンシング（バッチ結合）を許可するか（既定true）
+    bool allowInstancing_ = true;
 
     std::string text_;
     std::string fontName_;
     mutable FontManager::FontHandle fontHandle_ = FontManager::kInvalidHandle;
+    /// @brief GetMaterialHandle()のキャッシュ（フォント単位の内部マテリアルハンドル）
+    mutable MaterialManager::MaterialHandle fontMaterialHandle_ = MaterialManager::kInvalidHandle;
+    /// @brief fontMaterialHandle_がどのフォントに対して解決されたものかを覚えておき、
+    ///        フォント変更時にキャッシュを作り直すためのキー
+    mutable FontManager::FontHandle fontMaterialForHandle_ = FontManager::kInvalidHandle;
     float fontSize_ = 32.0f;
     Vector4 color_{ 1.0f, 1.0f, 1.0f, 1.0f };
 

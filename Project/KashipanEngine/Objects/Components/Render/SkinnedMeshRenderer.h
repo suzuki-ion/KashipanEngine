@@ -78,6 +78,8 @@ public:
         ADD_MEMBER_VARIABLE(pipelineName_);
         ADD_MEMBER_VARIABLE(castShadows_);
         ADD_MEMBER_VARIABLE(instanceColor_);
+        ADD_MEMBER_VARIABLE(renderPriority_);
+        ADD_MEMBER_VARIABLE(allowInstancing_);
     )
     COMPONENT_CATEGORY("Render")
     ~SkinnedMeshRenderer() override = default;
@@ -94,6 +96,8 @@ public:
         ptr->castShadows_ = castShadows_;
         ptr->instanceColor_ = instanceColor_;
         ptr->instanceColorBlendMode_ = instanceColorBlendMode_;
+        ptr->renderPriority_ = renderPriority_;
+        ptr->allowInstancing_ = allowInstancing_;
         return ptr;
     }
 
@@ -107,6 +111,21 @@ public:
     /// @brief インスタンスカラーをマテリアルの色へ適用する方法を設定する
     void SetInstanceColorBlendMode(ColorBlendMode mode) noexcept { instanceColorBlendMode_ = mode; }
     ColorBlendMode GetInstanceColorBlendMode() const noexcept { return instanceColorBlendMode_; }
+
+    //==================================================
+    // 描画順・インスタンシング制御
+    //==================================================
+
+    /// @brief 描画順を制御する優先度を設定する（既定0）。値が小さいほど先（奥）、大きいほど後（手前）に
+    ///        描画される。パイプラインの描画優先度より後、メッシュ/マテリアルによる並びより前に評価される
+    void SetRenderPriority(std::int32_t priority) noexcept { renderPriority_ = priority; }
+    std::int32_t GetRenderPriority() const noexcept { return renderPriority_; }
+    /// @brief このレンダラーを他のオブジェクトとのインスタンシング（1回のドローコールへのバッチ結合）
+    ///        対象にするか設定する（既定true）。SkinnedMeshRendererはGPUスキニング結果バッファが
+    ///        インスタンスごとに異なるため、実際には既に常に単独のドローコールで描画されており、
+    ///        この設定は他のRendererとのAPI上の一貫性のために存在する（見た目への影響はない）
+    void SetAllowInstancing(bool allow) noexcept { allowInstancing_ = allow; }
+    bool GetAllowInstancing() const noexcept { return allowInstancing_; }
 
     //==================================================
     // 描画先指定（MeshRendererと同じ）
@@ -321,6 +340,10 @@ private:
     /// @brief オブジェクト単位の色（マテリアルは共有したまま、この色をinstanceColorBlendMode_で適用する）
     Vector4 instanceColor_{ 1.0f, 1.0f, 1.0f, 1.0f };
     ColorBlendMode instanceColorBlendMode_ = ColorBlendMode::Multiply;
+    /// @brief 描画順を制御する優先度（既定0。SceneRenderer::CompareSortableEntry参照）
+    int renderPriority_ = 0;
+    /// @brief 他のオブジェクトとのインスタンシング（バッチ結合）を許可するか（既定true。実質的に常にno-op）
+    bool allowInstancing_ = true;
 
     SkinQuality quality_ = SkinQuality::Auto;
     std::vector<BlendShapeWeight> blendShapes_;

@@ -815,12 +815,16 @@
 		"component.comment.comment": "Comment",
 
 		//--------- component.common ---------//
+		"component.common.allow_instancing": "Allow Auto Instancing",
 		"component.common.blendmode.add": "Add",
 		"component.common.blendmode.multiply": "Multiply",
 		"component.common.blendmode.override": "Override",
 		"component.common.blendmode.subtract": "Subtract",
+		"component.common.desc_allow_instancing": "When disabled, this object is always drawn as its own draw call, even if other\nobjects share the same mesh/material/pipeline (enabled by default)",
+		"component.common.desc_render_priority": "Priority that controls draw order. Smaller values draw earlier (behind), larger\nvalues draw later (in front). Default 0. Evaluated after the pipeline's render\npriority and before mesh/material grouping",
 		"component.common.mode.lookattarget": "Look At Target",
 		"component.common.mode.synctargetrotation": "Sync Target Rotation",
+		"component.common.render_priority": "Render Priority",
 		"component.common.target": "Target",
 
 		//--------- component.computeshaderprocessing ---------//

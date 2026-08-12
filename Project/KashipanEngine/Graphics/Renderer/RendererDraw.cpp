@@ -92,21 +92,25 @@ void Renderer::RenderSceneContent(IRenderTarget *target,
     }
 
     // 同一（パイプライン・メッシュ・サブメッシュ・マテリアル）の連続範囲をバッチとしてまとめて描画
+    // （ただしallowInstancing==falseのエントリは他と結合せず必ず単独のドローコールにする）
     size_t begin = 0;
     while (begin < normalEntries.size()) {
         const auto &first = normalEntries[begin];
-        size_t end = begin;
-        while (end < normalEntries.size()) {
-            const auto &other = normalEntries[end];
-            if (other.pipelineName != first.pipelineName ||
-                other.meshHandle != first.meshHandle ||
-                other.materialHandle != first.materialHandle ||
-                other.indexStart != first.indexStart ||
-                other.indexCount != first.indexCount ||
-                other.skinnedVertexBuffer != first.skinnedVertexBuffer) {
-                break;
+        size_t end = begin + 1;
+        if (first.allowInstancing) {
+            while (end < normalEntries.size()) {
+                const auto &other = normalEntries[end];
+                if (!other.allowInstancing ||
+                    other.pipelineName != first.pipelineName ||
+                    other.meshHandle != first.meshHandle ||
+                    other.materialHandle != first.materialHandle ||
+                    other.indexStart != first.indexStart ||
+                    other.indexCount != first.indexCount ||
+                    other.skinnedVertexBuffer != first.skinnedVertexBuffer) {
+                    break;
+                }
+                ++end;
             }
-            ++end;
         }
 
         DrawBatch(target, pipelineBinder, std::span<const SceneRenderer::DrawEntry>(normalEntries).subspan(begin, end - begin),
@@ -121,8 +125,8 @@ void Renderer::RenderSceneContent(IRenderTarget *target,
             passCount, extraSeedOffset, seedPassIndex);
     }
 
-    // TextRenderer（文字ごとにアトラス内UVが異なるため通常のバッチには乗らない）は専用パスで描画する
-    RenderTextRenderers(target, pipelineBinder, sceneRenderer, lightsCache);
+    // TextRenderer（文字単位のDrawEntryとしてSceneRenderer::BuildSortedDrawListが生成する）は
+    // 上のnormalEntriesバッチループで他のRendererと同じ扱いで既に描画済み（DrawBatch参照）
 
     // GPU Simulation有効なParticleSystem2D/3D（ProcessGpuParticlesが結果を書き込み済み）も専用パスで描画する
     RenderGpuParticles(target, pipelineBinder, sceneRenderer, lightsCache);
@@ -250,6 +254,12 @@ void Renderer::DrawBatch(IRenderTarget *target,
                 WriteMaterialField(pipelineInfo, elementBytes, stride, "instanceColor", batch[i].instanceColor);
                 float blendMode = static_cast<float>(batch[i].instanceColorBlendMode);
                 WriteMaterialField(pipelineInfo, elementBytes, stride, "instanceColorBlendMode", blendMode);
+                // characterColor/uvRect/boldWeightはTextRendererのみが使うフィールド（Text2D/Text3D
+                // パイプラインのMaterial構造体にのみ存在する）。それ以外のパイプラインではGetMaterialLayout
+                // にヒットせずWriteMaterialFieldが黙ってスキップするため、他のRendererには影響しない
+                WriteMaterialField(pipelineInfo, elementBytes, stride, "characterColor", batch[i].instanceColor);
+                WriteMaterialField(pipelineInfo, elementBytes, stride, "uvRect", batch[i].uvRect);
+                WriteMaterialField(pipelineInfo, elementBytes, stride, "boldWeight", batch[i].boldWeight);
             }
             auto *materialBuffer = resourceContainer_->GetOrUpdateStructuredBuffer(key, stride, instanceCount, allBytes.data());
             if (materialBuffer) {
@@ -407,18 +417,21 @@ void Renderer::RenderMultiPassDither(ScreenBuffer *screenBuffer,
         size_t begin = 0;
         while (begin < entries.size()) {
             const auto &first = entries[begin];
-            size_t end = begin;
-            while (end < entries.size()) {
-                const auto &other = entries[end];
-                if (other.pipelineName != first.pipelineName ||
-                    other.meshHandle != first.meshHandle ||
-                    other.materialHandle != first.materialHandle ||
-                    other.indexStart != first.indexStart ||
-                    other.indexCount != first.indexCount ||
-                    other.skinnedVertexBuffer != first.skinnedVertexBuffer) {
-                    break;
+            size_t end = begin + 1;
+            if (first.allowInstancing) {
+                while (end < entries.size()) {
+                    const auto &other = entries[end];
+                    if (!other.allowInstancing ||
+                        other.pipelineName != first.pipelineName ||
+                        other.meshHandle != first.meshHandle ||
+                        other.materialHandle != first.materialHandle ||
+                        other.indexStart != first.indexStart ||
+                        other.indexCount != first.indexCount ||
+                        other.skinnedVertexBuffer != first.skinnedVertexBuffer) {
+                        break;
+                    }
+                    ++end;
                 }
-                ++end;
             }
             DrawBatch(screenBuffer, pipelineBinder, entries.subspan(begin, end - begin), sceneRenderer, lightsCache,
                 seedOffset, combinedPassIndex);
@@ -480,7 +493,7 @@ void Renderer::RenderMultiPassDither(ScreenBuffer *screenBuffer,
         ++drawCallCount_;
     }
 
-    // オーナーの色・深度を通常の描画状態へ戻す（この後RenderTextRenderers/RenderGpuParticles/
+    // オーナーの色・深度を通常の描画状態へ戻す（この後RenderGpuParticles/
     // RenderPostProcessが続けて描画するため、RTV/DSVを正しく再設定しておく必要がある）
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissor);
@@ -674,119 +687,6 @@ void Renderer::RenderScreenWideDitherTarget(ScreenBuffer *screenBuffer,
     RenderEditorDebugOverlay(screenBuffer, pipelineBinder, sceneRenderer);
     RenderPostProcess(screenBuffer, pipelineBinder, sceneRenderer->GetTargetOwner(screenBuffer), sceneRenderer);
     screenBuffer->EndDraw();
-}
-
-void Renderer::RenderTextRenderers(IRenderTarget *target, PipelineBinder &pipelineBinder, SceneRenderer *sceneRenderer,
-    CameraLightsBindCache &lightsCache) {
-    if (!target || !sceneRenderer) return;
-
-    //--------- このターゲットに適用されるTextRendererを収集する（CollectSortableEntriesと同じフィルタ条件） ---------//
-    struct TextTargetEntry {
-        TextRenderer *renderer = nullptr;
-        std::string pipelineName;
-    };
-    std::vector<TextTargetEntry> applicable;
-    std::vector<IRenderTarget *> collectedTargets;
-    auto *editorTarget = sceneRenderer->GetEditorTarget();
-
-    for (auto *renderer : sceneRenderer->GetTextRenderers()) {
-        if (!renderer || !renderer->IsActive()) continue;
-        const std::string &pipelineName = renderer->GetPipelineName();
-        if (pipelineName.empty() || !pipelineManager_->HasPipeline(pipelineName)) continue;
-
-        if (IsExcludedAsEditorOnly(renderer, target, sceneRenderer)) continue;
-
-        auto *targetObject = renderer->GetTargetObject();
-        SceneRenderer::CollectRenderTargets(targetObject, collectedTargets);
-        if (editorTarget && editorTarget->IsRenderTargetAvailable()) {
-            collectedTargets.push_back(editorTarget);
-        }
-
-        bool matches = false;
-        for (auto *candidate : collectedTargets) {
-            if (candidate != target || !target->IsRenderTargetAvailable()) continue;
-            if (target != editorTarget && !renderer->IsRenderTargetIncluded(target)) continue;
-            matches = true;
-            break;
-        }
-        if (!matches) continue;
-
-        applicable.push_back(TextTargetEntry{ renderer, pipelineName });
-    }
-    if (applicable.empty()) return;
-
-    //--------- (パイプライン名, フォントハンドル) ごとにグループ化して文字インスタンスをまとめる ---------//
-    std::map<std::pair<std::string, FontManager::FontHandle>, std::vector<TextRenderer::RenderCharacterInstance>> groups;
-    for (const auto &entry : applicable) {
-        const auto fontHandle = entry.renderer->GetFontHandle();
-        if (fontHandle == FontManager::kInvalidHandle) continue;
-        auto instances = entry.renderer->GetRenderInstances();
-        if (instances.empty()) continue;
-        auto &bucket = groups[std::make_pair(entry.pipelineName, fontHandle)];
-        bucket.insert(bucket.end(), instances.begin(), instances.end());
-    }
-    if (groups.empty()) return;
-
-    static const ModelManager::ModelHandle kRect2DMeshHandle = ModelManager::GetModelHandleFromAssetPath("PrimitiveMesh-Rect2D");
-    const auto *meshBuffers = resourceContainer_->GetOrCreateMeshBuffers(kRect2DMeshHandle);
-    if (!meshBuffers || !meshBuffers->vertexBuffer || !meshBuffers->indexBuffer) return;
-
-    auto *commandList = target->GetCommandList();
-
-    for (const auto &[key, instances] : groups) {
-        const std::string &pipelineName = key.first;
-        const FontManager::FontHandle fontHandle = key.second;
-        if (instances.empty()) continue;
-
-        pipelineBinder.UsePipeline(pipelineName);
-        auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, pipelineName);
-        shaderBinder.SetCommandList(commandList);
-
-        // カメラの定数バッファバインド（ライト関連バッファも一緒にバインドされるが、
-        // Text2DのシェーダーはgPointLights等を参照しないため無害。Object2D系の描画と同じ扱い）
-        BindCameraAndLights(commandList, target, pipelineName, sceneRenderer, pipelineBinder, lightsCache);
-
-        const std::uint32_t instanceCount = static_cast<std::uint32_t>(instances.size());
-
-        // ワールド行列のインスタンスバッファ
-        {
-            auto key2 = MakeBatchKey(target, pipelineName, kRect2DMeshHandle, fontHandle, "text_transform");
-            auto *instanceBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key2, sizeof(Matrix4x4), instanceCount);
-            if (!instanceBuffer) continue;
-            auto *mapped = static_cast<Matrix4x4 *>(instanceBuffer->Map());
-            if (!mapped) continue;
-            for (std::uint32_t i = 0; i < instanceCount; ++i) {
-                mapped[i] = instances[i].worldMatrix;
-            }
-            shaderBinder.Bind("Vertex:gTransformationMatrices", instanceBuffer);
-        }
-
-        // 文字ごとの色・UV矩形・SDFパラメータ
-        {
-            auto key2 = MakeBatchKey(target, pipelineName, kRect2DMeshHandle, fontHandle, "text_material");
-            auto *materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key2, sizeof(TextCharacterElement), instanceCount);
-            if (!materialBuffer) continue;
-            auto *mapped = static_cast<TextCharacterElement *>(materialBuffer->Map());
-            if (!mapped) continue;
-            for (std::uint32_t i = 0; i < instanceCount; ++i) {
-                const auto &src = instances[i];
-                TextCharacterElement dst;
-                dst.color = src.color;
-                dst.uvRect = Vector4(src.u0, src.v0, src.u1, src.v1);
-                dst.boldWeight = src.boldWeight;
-                mapped[i] = dst;
-            }
-            shaderBinder.Bind("Pixel:gMaterials", materialBuffer);
-        }
-
-        TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", FontManager::GetAtlasTextureHandle(fontHandle));
-        SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", DefaultSampler::LinearWrap);
-
-        pipelineBinder.SetVertexBuffer(meshBuffers->vertexBuffer.get(), sizeof(ResourceContainer::MeshVertex));
-        pipelineBinder.SetIndexBuffer(meshBuffers->indexBuffer.get());
-        commandList->DrawIndexedInstanced(meshBuffers->indexCount, instanceCount, 0, 0, 0);
-        ++drawCallCount_;
-    }
 }
 
 void Renderer::RenderGpuParticles(IRenderTarget *target, PipelineBinder &pipelineBinder, SceneRenderer *sceneRenderer,

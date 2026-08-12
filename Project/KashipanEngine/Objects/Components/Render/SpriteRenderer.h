@@ -38,6 +38,8 @@ public:
         });
         ADD_MEMBER_VARIABLE(anchor_);
         ADD_MEMBER_VARIABLE(pivot_);
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(renderPriority_, [this] { MarkDrawListDirty(); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(allowInstancing_, [this] { MarkDrawListDirty(); });
     )
     COMPONENT_CATEGORY("Render")
     ~SpriteRenderer() override = default;
@@ -51,6 +53,8 @@ public:
         ptr->excludedRenderTargetNames_ = excludedRenderTargetNames_;
         ptr->anchor_ = anchor_;
         ptr->pivot_ = pivot_;
+        ptr->renderPriority_ = renderPriority_;
+        ptr->allowInstancing_ = allowInstancing_;
         return ptr;
     }
 
@@ -127,6 +131,20 @@ public:
     ///          別の位置になる。既定値は(0.5,0.5)=中心）
     void SetPivot(const Vector2 &pivot) { pivot_ = pivot; }
     const Vector2 &GetPivot() const noexcept { return pivot_; }
+
+    //==================================================
+    // 描画順・インスタンシング制御
+    //==================================================
+
+    /// @brief 描画順を制御する優先度を設定する（既定0）。値が小さいほど先（奥）、大きいほど後（手前）に
+    ///        描画される。パイプラインの描画優先度より後、メッシュ/マテリアルによる並びより前に評価される
+    void SetRenderPriority(std::int32_t priority) noexcept { renderPriority_ = priority; MarkDrawListDirty(); }
+    std::int32_t GetRenderPriority() const noexcept { return renderPriority_; }
+    /// @brief このレンダラーを他のオブジェクトとのインスタンシング（1回のドローコールへのバッチ結合）
+    ///        対象にするか設定する（既定true）。falseにすると、同じメッシュ/マテリアル/パイプラインを
+    ///        共有する他のオブジェクトがあっても常に単独のドローコールで描画される
+    void SetAllowInstancing(bool allow) noexcept { allowInstancing_ = allow; MarkDrawListDirty(); }
+    bool GetAllowInstancing() const noexcept { return allowInstancing_; }
 
     //==================================================
     // 描画情報取得
@@ -225,6 +243,19 @@ protected:
         // アンカー・ピボット（単位クアッド内の正規化座標。(0,0)=左下 ～ (1,1)=右上）
         ImGui::DragFloat2(TranslationLabel("component.spriterenderer.anchor"), &anchor_.x, 0.01f);
         ImGui::DragFloat2(TranslationLabel("component.spriterenderer.pivot"), &pivot_.x, 0.01f);
+
+        if (ImGui::DragInt(TranslationLabel("component.common.render_priority"), &renderPriority_)) {
+            MarkDrawListDirty();
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", TranslationC("component.common.desc_render_priority"));
+        }
+        if (ImGui::Checkbox(TranslationLabel("component.common.allow_instancing"), &allowInstancing_)) {
+            MarkDrawListDirty();
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", TranslationC("component.common.desc_allow_instancing"));
+        }
     }
 #endif
 
@@ -238,6 +269,8 @@ protected:
         }
         json["anchor"] = ToJSON(anchor_);
         json["pivot"] = ToJSON(pivot_);
+        json["renderPriority"] = renderPriority_;
+        json["allowInstancing"] = allowInstancing_;
         return json;
     }
 
@@ -256,6 +289,8 @@ protected:
         }
         anchor_ = json.contains("anchor") ? FromJSON<Vector2>(json["anchor"]) : Vector2(0.5f, 0.5f);
         pivot_ = json.contains("pivot") ? FromJSON<Vector2>(json["pivot"]) : Vector2(0.5f, 0.5f);
+        renderPriority_ = json.value("renderPriority", 0);
+        allowInstancing_ = json.value("allowInstancing", true);
         // Undo/Redo等、登録済みのコンポーネントに対してもLoadFromJsonが呼ばれ得るため念のため通知する
         MarkDrawListDirty();
         return true;
@@ -292,6 +327,10 @@ private:
     Vector2 anchor_{ 0.5f, 0.5f };
     /// @brief ピボット（回転・拡縮の中心にするメッシュ上の点。単位クアッド内の正規化座標）
     Vector2 pivot_{ 0.5f, 0.5f };
+    /// @brief 描画順を制御する優先度（既定0。SceneRenderer::CompareSortableEntry参照）
+    int renderPriority_ = 0;
+    /// @brief 他のオブジェクトとのインスタンシング（バッチ結合）を許可するか（既定true）
+    bool allowInstancing_ = true;
 };
 
 REGISTER_COMPONENT_OBJECT(SpriteRenderer)

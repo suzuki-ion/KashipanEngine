@@ -44,6 +44,8 @@ public:
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(pipelineName_, [this] { MarkDrawListDirty(); });
         ADD_MEMBER_VARIABLE(castShadows_);
         ADD_MEMBER_VARIABLE(instanceColor_);
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(renderPriority_, [this] { MarkDrawListDirty(); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(allowInstancing_, [this] { MarkDrawListDirty(); });
     )
     COMPONENT_CATEGORY("Render")
     ~MeshRenderer() override = default;
@@ -58,6 +60,8 @@ public:
         ptr->castShadows_ = castShadows_;
         ptr->instanceColor_ = instanceColor_;
         ptr->instanceColorBlendMode_ = instanceColorBlendMode_;
+        ptr->renderPriority_ = renderPriority_;
+        ptr->allowInstancing_ = allowInstancing_;
         return ptr;
     }
 
@@ -71,6 +75,20 @@ public:
     /// @brief インスタンスカラーをマテリアルの色へ適用する方法を設定する
     void SetInstanceColorBlendMode(ColorBlendMode mode) noexcept { instanceColorBlendMode_ = mode; }
     ColorBlendMode GetInstanceColorBlendMode() const noexcept { return instanceColorBlendMode_; }
+
+    //==================================================
+    // 描画順・インスタンシング制御
+    //==================================================
+
+    /// @brief 描画順を制御する優先度を設定する（既定0）。値が小さいほど先（奥）、大きいほど後（手前）に
+    ///        描画される。パイプラインの描画優先度より後、メッシュ/マテリアルによる並びより前に評価される
+    void SetRenderPriority(std::int32_t priority) noexcept { renderPriority_ = priority; MarkDrawListDirty(); }
+    std::int32_t GetRenderPriority() const noexcept { return renderPriority_; }
+    /// @brief このレンダラーを他のオブジェクトとのインスタンシング（1回のドローコールへのバッチ結合）
+    ///        対象にするか設定する（既定true）。falseにすると、同じメッシュ/マテリアル/パイプラインを
+    ///        共有する他のオブジェクトがあっても常に単独のドローコールで描画される
+    void SetAllowInstancing(bool allow) noexcept { allowInstancing_ = allow; MarkDrawListDirty(); }
+    bool GetAllowInstancing() const noexcept { return allowInstancing_; }
 
     //==================================================
     // 描画先指定
@@ -231,6 +249,19 @@ protected:
             ImGui::SetTooltip("%s", TranslationC("component.meshrenderer.desc_3"));
         }
 
+        if (ImGui::DragInt(TranslationLabel("component.common.render_priority"), &renderPriority_)) {
+            MarkDrawListDirty();
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", TranslationC("component.common.desc_render_priority"));
+        }
+        if (ImGui::Checkbox(TranslationLabel("component.common.allow_instancing"), &allowInstancing_)) {
+            MarkDrawListDirty();
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", TranslationC("component.common.desc_allow_instancing"));
+        }
+
         const auto materialEntries = MaterialManager::GetLoadedMaterialListEntries();
         std::vector<std::string> materialNames;
         for (const auto &entry : materialEntries) {
@@ -284,6 +315,8 @@ protected:
         json["castShadows"] = castShadows_;
         json["instanceColor"] = ToJSON(instanceColor_);
         json["instanceColorBlendMode"] = static_cast<int>(instanceColorBlendMode_);
+        json["renderPriority"] = renderPriority_;
+        json["allowInstancing"] = allowInstancing_;
         return json;
     }
 
@@ -308,6 +341,8 @@ protected:
         castShadows_ = json.value("castShadows", true);
         instanceColor_ = json.contains("instanceColor") ? FromJSON<Vector4>(json["instanceColor"]) : Vector4(1.0f, 1.0f, 1.0f, 1.0f);
         instanceColorBlendMode_ = static_cast<ColorBlendMode>(json.value("instanceColorBlendMode", static_cast<int>(ColorBlendMode::Multiply)));
+        renderPriority_ = json.value("renderPriority", 0);
+        allowInstancing_ = json.value("allowInstancing", true);
         // Undo/Redo等、登録済みのコンポーネントに対してもLoadFromJsonが呼ばれ得るため念のため通知する
         MarkDrawListDirty();
         return true;
@@ -346,6 +381,10 @@ private:
     /// @brief オブジェクト単位の色（マテリアルは共有したまま、この色をinstanceColorBlendMode_で適用する）
     Vector4 instanceColor_{ 1.0f, 1.0f, 1.0f, 1.0f };
     ColorBlendMode instanceColorBlendMode_ = ColorBlendMode::Multiply;
+    /// @brief 描画順を制御する優先度（既定0。SceneRenderer::CompareSortableEntry参照）
+    int renderPriority_ = 0;
+    /// @brief 他のオブジェクトとのインスタンシング（バッチ結合）を許可するか（既定true）
+    bool allowInstancing_ = true;
 };
 
 REGISTER_COMPONENT_OBJECT(MeshRenderer)

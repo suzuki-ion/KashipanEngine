@@ -324,6 +324,15 @@ void SkinnedMeshRenderer::ShowImGui() {
         ImGui::SetTooltip("%s", TranslationC("component.skinnedmeshrenderer.desc_3"));
     }
 
+    ImGui::DragInt(TranslationLabel("component.common.render_priority"), &renderPriority_);
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("%s", TranslationC("component.common.desc_render_priority"));
+    }
+    ImGui::Checkbox(TranslationLabel("component.common.allow_instancing"), &allowInstancing_);
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("%s", TranslationC("component.common.desc_allow_instancing"));
+    }
+
     const auto materialEntries = MaterialManager::GetLoadedMaterialListEntries();
     std::vector<std::string> materialNames;
     for (const auto &entry : materialEntries) {
@@ -416,6 +425,8 @@ JSON SkinnedMeshRenderer::SaveToJson() const {
     json["castShadows"] = castShadows_;
     json["instanceColor"] = ToJSON(instanceColor_);
     json["instanceColorBlendMode"] = static_cast<int>(instanceColorBlendMode_);
+    json["renderPriority"] = renderPriority_;
+    json["allowInstancing"] = allowInstancing_;
     json["quality"] = static_cast<int>(quality_);
     JSON blendShapesJson = JSON::array();
     for (const auto &bs : blendShapes_) {
@@ -449,6 +460,8 @@ bool SkinnedMeshRenderer::LoadFromJson(const JSON &json) {
     castShadows_ = json.value("castShadows", true);
     instanceColor_ = json.contains("instanceColor") ? FromJSON<Vector4>(json["instanceColor"]) : Vector4(1.0f, 1.0f, 1.0f, 1.0f);
     instanceColorBlendMode_ = static_cast<ColorBlendMode>(json.value("instanceColorBlendMode", static_cast<int>(ColorBlendMode::Multiply)));
+    renderPriority_ = json.value("renderPriority", 0);
+    allowInstancing_ = json.value("allowInstancing", true);
     quality_ = static_cast<SkinQuality>(json.value("quality", static_cast<int>(SkinQuality::Auto)));
     blendShapes_.clear();
     for (const auto &bsj : json.value("blendShapes", std::vector<JSON>())) {

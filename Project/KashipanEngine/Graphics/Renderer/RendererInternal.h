@@ -13,7 +13,6 @@
 #include <utility>
 #include <vector>
 
-#include "Assets/FontManager.h"
 #include "Assets/MaterialManager.h"
 #include "Assets/SamplerManager.h"
 #include "Assets/TextureManager.h"
@@ -38,7 +37,6 @@
 #include "Objects/Components/Render/LightRenderer.h"
 #include "Objects/Components/Render/MeshRenderer.h"
 #include "Objects/Components/Render/SkinnedMeshRenderer.h"
-#include "Objects/Components/Render/TextRenderer.h"
 #include "Assets/ModelManager.h"
 #include "Graphics/Resources/RWStructuredBufferResource.h"
 #include "Graphics/Resources/StructuredBufferResource.h"
@@ -50,19 +48,12 @@
 
 namespace KashipanEngine::RendererInternal {
 
-// gMaterials（Object3D/Object2D）はBuildMaterialElementBytes（本ファイル下部）でパイプラインの
-// MaterialLayoutに従って汎用的にパックするため、専用の固定構造体は持たない
-
-/// @brief gMaterials 構造化バッファ（Text2D、TextSDFPS.hlslのTextCharacterElement）と同レイアウトの構造体
-#pragma pack(push, 4)
-struct TextCharacterElement {
-    Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
-    Vector4 uvRect{ 0.0f, 0.0f, 0.0f, 0.0f };
-    float boldWeight = 0.0f;
-    float padding[3]{};
-};
+// gMaterials（Object3D/Object2D/Text2D/Text3D）はBuildMaterialElementBytes（本ファイル下部）で
+// パイプラインのMaterialLayoutに従って汎用的にパックするため、専用の固定構造体は持たない
+// （Text用のcharacterColor/uvRect/boldWeightもDrawBatch側でWriteMaterialFieldにより書き込まれる）
 
 /// @brief gPointLights 構造化バッファと同レイアウトの構造体
+#pragma pack(push, 4)
 struct PointLightElement {
     std::uint32_t enabled = 0;
     Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
@@ -398,9 +389,11 @@ inline void BindExtraTextureParameters(ShaderVariableBinder *shaderBinder, const
 }
 
 /// @brief バッファキャッシュキー生成（描画先＋パイプライン＋メッシュ＋マテリアルでバッチを識別）
+/// @details usageは呼び出し元によっては短い定数より長くなり得るため、切り詰められて
+///          別グループ同士のキーが衝突しないよう十分な余裕を持たせている
 inline std::string MakeBatchKey(const void *target, const std::string &pipelineName,
     std::uint32_t meshHandle, std::uint32_t materialHandle, const char *usage) {
-    char buffer[64];
+    char buffer[192];
     std::snprintf(buffer, sizeof(buffer), "%p|%u|%u|%s|", target, meshHandle, materialHandle, usage);
     return std::string(buffer) + pipelineName;
 }

@@ -3,15 +3,20 @@
 // （インスタンスIDでの gTransformationMatrices 参照・Camera2D変換は共通のため）。
 #include "../Object/Object2D.hlsli"
 
-// 文字ごとのインスタンスデータ（1文字 = 1インスタンス。Renderer.cppのTextCharacterElementと同レイアウト）
-struct TextCharacterElement {
-	float4 color;
+// 文字ごとのインスタンスデータ（1文字 = 1インスタンス）。構造体名をMaterialにすることで、
+// 通常のMeshRenderer/SpriteRenderer等と同じ汎用パス（PipelineInfo::GetMaterialLayout /
+// BuildMaterialElementBytes / WriteMaterialField、DrawBatch参照）に乗せている。
+// characterColor/uvRect/boldWeightはDrawBatchがインスタンスごとにWriteMaterialFieldで上書きする
+// （colorではなくcharacterColorという名前にしているのは、Object2D/Object3D側の
+// 共有マテリアル本体の色を表す"color"フィールドと意味・書き込み経路が異なるため）
+struct Material {
+	float4 characterColor;
 	float4 uvRect;    // x0,y0,x1,y1（アトラス内の正規化UV矩形）
 	float boldWeight; // <b>タグによる太らせ量（SDF閾値のシフト量）
 	float3 padding;
 };
 
-StructuredBuffer<TextCharacterElement> gMaterials : register(t2);
+StructuredBuffer<Material> gMaterials : register(t2);
 Texture2D gTexture : register(t0);
 SamplerState gSampler : register(s0);
 
@@ -21,7 +26,7 @@ struct PSOutput {
 
 PSOutput main(VSOutput input) {
 	PSOutput output;
-	TextCharacterElement ch = gMaterials[input.instanceId];
+	Material ch = gMaterials[input.instanceId];
 
 	float2 uv = lerp(ch.uvRect.xy, ch.uvRect.zw, input.texcoord);
 	float distance = gTexture.Sample(gSampler, uv).r;
@@ -32,7 +37,7 @@ PSOutput main(VSOutput input) {
 	float threshold = 0.5f - ch.boldWeight;
 	float alpha = smoothstep(threshold - aa, threshold + aa, distance);
 
-	output.color = float4(ch.color.rgb, ch.color.a * alpha);
+	output.color = float4(ch.characterColor.rgb, ch.characterColor.a * alpha);
 	if (output.color.a < 0.01f) {
 		discard;
 	}

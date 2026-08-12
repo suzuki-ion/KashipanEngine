@@ -179,11 +179,18 @@ void Renderer::BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
     auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, pipelineName);
     shaderBinder.SetCommandList(commandList);
 
-    // エディター用描画先の場合はエディターカメラを優先してバインドする
-    if (auto *editorCameraBuffer = sceneRenderer->GetEditorCameraBuffer(target)) {
+    // エディター用描画先の場合はエディターカメラ（フリーカム）をgCamera3Dへ優先バインドする。
+    // ただしこれは3Dカメラの代替に過ぎないため、以前はここでelseに入り下のループを
+    // 丸ごとスキップしていた。すると同じ描画先に描くObject2D/Text2D等（gCamera2Dを使う）は
+    // シーン側のCameraRendererを一切バインドされず、ルート引数未初期化のままDrawされ、
+    // GPUベース検証で"Uninitialized root argument accessed"となりクラッシュしていた。
+    // gCamera3D分だけ上書きし、それ以外（gCamera2D等）は通常通りシーンのCameraRendererから
+    // バインドする
+    auto *editorCameraBuffer = sceneRenderer->GetEditorCameraBuffer(target);
+    if (editorCameraBuffer) {
         shaderBinder.Bind("Vertex:gCamera3D", editorCameraBuffer);
         shaderBinder.Bind("Pixel:gCamera3D", editorCameraBuffer);
-    } else
+    }
     for (auto *cameraRenderer : sceneRenderer->GetCameraRenderers()) {
         if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
         // EditorOnlyオブジェクトのカメラはエディター用以外の描画先にはバインドしない
@@ -191,12 +198,14 @@ void Renderer::BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
         // パイプライン指定がある場合は一致するパイプラインのみバインド
         if (!cameraRenderer->GetPipelineName().empty() && cameraRenderer->GetPipelineName() != pipelineName) continue;
         // 描画先指定がある場合は一致する描画先のみバインド
-        if (!IsTargetMatch(cameraRenderer->GetTargetObject(), cameraRenderer->GetTargetObjectID().IsValid(), target)) continue;
+        if (!IsTargetMatch(cameraRenderer->GetTargetObject(), cameraRenderer->GetTargetObjectID().IsValid(), target, sceneRenderer)) continue;
         // 除外設定されている描画先にはバインドしない
         if (!cameraRenderer->IsRenderTargetIncluded(target)) continue;
         auto *constantBuffer = cameraRenderer->GetConstantBuffer();
         if (!constantBuffer) continue;
         for (const auto &variableName : cameraRenderer->GetBindVariableNames()) {
+            // gCamera3Dはエディターカメラで上書き済みなので二重バインドしない
+            if (editorCameraBuffer && (variableName == "Vertex:gCamera3D" || variableName == "Pixel:gCamera3D")) continue;
             shaderBinder.Bind(variableName, constantBuffer);
         }
     }

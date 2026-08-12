@@ -45,6 +45,19 @@ void IGraphicsResource::CreateResource(const wchar_t *resourceName, const D3D12_
         return;
     }
 
+    // DEFAULTヒープ上のバッファ（Dimension==BUFFER）は、CreateCommittedResourceに渡す
+    // InitialResourceStateに関わらず常にD3D12_RESOURCE_STATE_COMMONで作成される（D3D12の仕様）。
+    // 要求した状態（例：UNORDERED_ACCESS）をそのまま渡すと「Ignoring InitialState」警告が出るだけでなく、
+    // エンジン側の追跡インデックス（currentStateIndex_）が実際の状態（COMMON）とズレたまま
+    // 「既にその状態のはず」と誤認し、最初のTransitionTo呼び出しでバリアが省略されてしまう
+    // （UAVとして書き込む前にCOMMON→UNORDERED_ACCESSへ遷移しないままGPUに書き込ませてしまう不具合の原因）。
+    // 追跡配列の先頭にCOMMONを補い、実態と一致させる
+    const bool isDefaultHeapBuffer = resourceDesc && resourceDesc->Dimension == D3D12_RESOURCE_DIMENSION_BUFFER &&
+        heapProperties && heapProperties->Type == D3D12_HEAP_TYPE_DEFAULT;
+    if (isDefaultHeapBuffer && transitionStates_.front() != D3D12_RESOURCE_STATE_COMMON) {
+        transitionStates_.insert(transitionStates_.begin(), D3D12_RESOURCE_STATE_COMMON);
+    }
+
     Microsoft::WRL::ComPtr<ID3D12Resource> resource;
     currentStateIndex_ = 0;
     HRESULT hr = device_->CreateCommittedResource(

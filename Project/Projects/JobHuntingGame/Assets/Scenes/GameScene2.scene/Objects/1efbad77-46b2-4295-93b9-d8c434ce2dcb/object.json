@@ -49,7 +49,7 @@
                             "Vertex:gCamera2D",
                             "Pixel:gCamera2D"
                         ],
-                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "pipelineName": "",
                         "targetObjectID": "8c03d6b4-5450-42fd-812c-f025af3e6b04"
                     },
                     "isActive": true,

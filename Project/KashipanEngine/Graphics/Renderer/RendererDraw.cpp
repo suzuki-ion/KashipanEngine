@@ -342,32 +342,38 @@ void Renderer::RenderMultiPassDither(ScreenBuffer *screenBuffer,
     static const char *kCompositePipeline = "PostEffect.MultiPassDitherComposite";
     if (!pipelineManager_->HasPipeline(kAccumulatePipeline) || !pipelineManager_->HasPipeline(kCompositePipeline)) return;
 
+    // スクラッチ・蓄積用リソースは描画先（screenBuffer）ごとに個別保持する（詳細は
+    // RendererInternal::MultiPassDitherScratchSetのコメント参照。サイズの異なる複数の
+    // ScreenBufferをRenderer全体で1組のリソースを使い回すと、同一フレーム内で他の
+    // 描画先が積んだ未実行コマンドから参照中のリソースを破棄してしまうため）
+    auto &scratch = multiPassDitherScratch_[screenBuffer];
+
     // スクラッチ・蓄積用リソースをオーナーのサイズに合わせて用意する（深度フォーマットは
     // ScreenBufferの既定値であるD24_UNORM_S8_UINTを前提とする）
-    if (!multiPassScratchColor_ || multiPassScratchColor_->GetWidth() != width || multiPassScratchColor_->GetHeight() != height) {
+    if (!scratch.scratchColor || scratch.scratchColor->GetWidth() != width || scratch.scratchColor->GetHeight() != height) {
         const FLOAT transparentClear[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-        multiPassScratchColor_ = std::make_unique<RenderTargetResource>(width, height, realColor->GetFormat(), nullptr, transparentClear);
-        multiPassAccumColor_ = std::make_unique<RenderTargetResource>(width, height, realColor->GetFormat(), nullptr, transparentClear);
-        multiPassScratchColorSrv_ = std::make_unique<ShaderResourceResource>(multiPassScratchColor_.get());
-        multiPassAccumColorSrv_ = std::make_unique<ShaderResourceResource>(multiPassAccumColor_.get());
-        multiPassDepthSnapshot_ = std::make_unique<DepthStencilResource>(width, height, DXGI_FORMAT_D24_UNORM_S8_UINT, 1.0f, static_cast<UINT8>(0));
-        multiPassScratchDepth_ = std::make_unique<DepthStencilResource>(width, height, DXGI_FORMAT_D24_UNORM_S8_UINT, 1.0f, static_cast<UINT8>(0));
+        scratch.scratchColor = std::make_unique<RenderTargetResource>(width, height, realColor->GetFormat(), nullptr, transparentClear);
+        scratch.accumColor = std::make_unique<RenderTargetResource>(width, height, realColor->GetFormat(), nullptr, transparentClear);
+        scratch.scratchColorSrv = std::make_unique<ShaderResourceResource>(scratch.scratchColor.get());
+        scratch.accumColorSrv = std::make_unique<ShaderResourceResource>(scratch.accumColor.get());
+        scratch.depthSnapshot = std::make_unique<DepthStencilResource>(width, height, DXGI_FORMAT_D24_UNORM_S8_UINT, 1.0f, static_cast<UINT8>(0));
+        scratch.scratchDepth = std::make_unique<DepthStencilResource>(width, height, DXGI_FORMAT_D24_UNORM_S8_UINT, 1.0f, static_cast<UINT8>(0));
         // DepthStencilResourceはコンストラクタでDEPTH_WRITE/DEPTH_READ（createSrv時はSRV状態）しか
         // 遷移先として登録しない。COPY_SOURCE/COPY_DESTを登録しないままTransitionToで遷移すると、
         // バリア自体は発行されるが内部の追跡インデックスが同期されず（IGraphicsResource::TransitionTo参照）、
         // 後続の「DEPTH_WRITEへ戻す」呼び出しが「既にDEPTH_WRITEのはず」と誤認してバリアをスキップし、
         // 実際にはCOPY_DEST/COPY_SOURCEのまま深度バッファとして使われてしまう
         // （描画結果が完全に消える不具合の原因だった）。ここで明示的に登録しておく
-        multiPassDepthSnapshot_->AddTransitionState(D3D12_RESOURCE_STATE_COPY_DEST);
-        multiPassDepthSnapshot_->AddTransitionState(D3D12_RESOURCE_STATE_COPY_SOURCE);
-        multiPassScratchDepth_->AddTransitionState(D3D12_RESOURCE_STATE_COPY_DEST);
+        scratch.depthSnapshot->AddTransitionState(D3D12_RESOURCE_STATE_COPY_DEST);
+        scratch.depthSnapshot->AddTransitionState(D3D12_RESOURCE_STATE_COPY_SOURCE);
+        scratch.scratchDepth->AddTransitionState(D3D12_RESOURCE_STATE_COPY_DEST);
     }
     // realDepthはScreenBuffer側が所有するダブルバッファのため、ここで取得したインスタンスに
     // COPY_SOURCEが登録済みとは限らない（フレームごとに読み取り面が入れ替わるため）。
     // 同じ理由で毎回明示的に登録する（重複登録は無害）
     realDepth->AddTransitionState(D3D12_RESOURCE_STATE_COPY_SOURCE);
-    if (!multiPassScratchColor_ || !multiPassAccumColor_ || !multiPassScratchColorSrv_ ||
-        !multiPassAccumColorSrv_ || !multiPassDepthSnapshot_ || !multiPassScratchDepth_) {
+    if (!scratch.scratchColor || !scratch.accumColor || !scratch.scratchColorSrv ||
+        !scratch.accumColorSrv || !scratch.depthSnapshot || !scratch.scratchDepth) {
         return;
     }
 
@@ -376,33 +382,33 @@ void Renderer::RenderMultiPassDither(ScreenBuffer *screenBuffer,
 
     // オーナーの現在の深度（不透明・通常ディザ描画済み）をスナップショットへコピーする
     realDepth->SetCommandList(commandList);
-    multiPassDepthSnapshot_->SetCommandList(commandList);
+    scratch.depthSnapshot->SetCommandList(commandList);
     realDepth->TransitionTo(D3D12_RESOURCE_STATE_COPY_SOURCE);
-    multiPassDepthSnapshot_->TransitionTo(D3D12_RESOURCE_STATE_COPY_DEST);
-    commandList->CopyResource(multiPassDepthSnapshot_->GetResource(), realDepth->GetResource());
+    scratch.depthSnapshot->TransitionTo(D3D12_RESOURCE_STATE_COPY_DEST);
+    commandList->CopyResource(scratch.depthSnapshot->GetResource(), realDepth->GetResource());
 
     // 蓄積バッファを透明クリアする
-    multiPassAccumColor_->SetCommandList(commandList);
-    multiPassAccumColor_->TransitionTo(D3D12_RESOURCE_STATE_RENDER_TARGET);
-    multiPassAccumColor_->ClearRenderTargetView();
+    scratch.accumColor->SetCommandList(commandList);
+    scratch.accumColor->TransitionTo(D3D12_RESOURCE_STATE_RENDER_TARGET);
+    scratch.accumColor->ClearRenderTargetView();
 
     for (std::uint32_t pass = 0; pass < passCount; ++pass) {
         // 深度をスナップショット（不透明・通常ディザ描画済み）へ巻き戻す
-        multiPassScratchDepth_->SetCommandList(commandList);
-        multiPassDepthSnapshot_->SetCommandList(commandList);
-        multiPassScratchDepth_->TransitionTo(D3D12_RESOURCE_STATE_COPY_DEST);
-        multiPassDepthSnapshot_->TransitionTo(D3D12_RESOURCE_STATE_COPY_SOURCE);
-        commandList->CopyResource(multiPassScratchDepth_->GetResource(), multiPassDepthSnapshot_->GetResource());
-        multiPassScratchDepth_->TransitionTo(D3D12_RESOURCE_STATE_DEPTH_WRITE);
+        scratch.scratchDepth->SetCommandList(commandList);
+        scratch.depthSnapshot->SetCommandList(commandList);
+        scratch.scratchDepth->TransitionTo(D3D12_RESOURCE_STATE_COPY_DEST);
+        scratch.depthSnapshot->TransitionTo(D3D12_RESOURCE_STATE_COPY_SOURCE);
+        commandList->CopyResource(scratch.scratchDepth->GetResource(), scratch.depthSnapshot->GetResource());
+        scratch.scratchDepth->TransitionTo(D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
         // スクラッチカラーを透明クリアする
-        multiPassScratchColor_->SetCommandList(commandList);
-        multiPassScratchColor_->TransitionTo(D3D12_RESOURCE_STATE_RENDER_TARGET);
-        multiPassScratchColor_->ClearRenderTargetView();
+        scratch.scratchColor->SetCommandList(commandList);
+        scratch.scratchColor->TransitionTo(D3D12_RESOURCE_STATE_RENDER_TARGET);
+        scratch.scratchColor->ClearRenderTargetView();
 
         {
-            const auto rtv = multiPassScratchColor_->GetCPUDescriptorHandle();
-            const auto dsv = multiPassScratchDepth_->GetCPUDescriptorHandle();
+            const auto rtv = scratch.scratchColor->GetCPUDescriptorHandle();
+            const auto dsv = scratch.scratchDepth->GetCPUDescriptorHandle();
             commandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
             commandList->RSSetViewports(1, &viewport);
             commandList->RSSetScissorRects(1, &scissor);
@@ -439,11 +445,11 @@ void Renderer::RenderMultiPassDither(ScreenBuffer *screenBuffer,
         }
 
         // このパスの結果を1/N重みで蓄積バッファへ加算合成する
-        multiPassScratchColor_->TransitionTo(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-        multiPassAccumColor_->SetCommandList(commandList);
-        multiPassAccumColor_->TransitionTo(D3D12_RESOURCE_STATE_RENDER_TARGET);
+        scratch.scratchColor->TransitionTo(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        scratch.accumColor->SetCommandList(commandList);
+        scratch.accumColor->TransitionTo(D3D12_RESOURCE_STATE_RENDER_TARGET);
         {
-            const auto accumRtv = multiPassAccumColor_->GetCPUDescriptorHandle();
+            const auto accumRtv = scratch.accumColor->GetCPUDescriptorHandle();
             commandList->OMSetRenderTargets(1, &accumRtv, FALSE, nullptr);
             commandList->RSSetViewports(1, &viewport);
             commandList->RSSetScissorRects(1, &scissor);
@@ -466,12 +472,12 @@ void Renderer::RenderMultiPassDither(ScreenBuffer *screenBuffer,
                 }
             }
             binder.Bind("Pixel:MultiPassDitherAccumulateCB", accumulateConstantBuffer);
-            binder.Bind("Pixel:gSceneTexture", multiPassScratchColorSrv_->GetGPUDescriptorHandle());
+            binder.Bind("Pixel:gSceneTexture", scratch.scratchColorSrv->GetGPUDescriptorHandle());
             SamplerManager::BindSampler(&binder, "Pixel:gSampler", DefaultSampler::LinearClamp);
             commandList->DrawInstanced(3, 1, 0, 0);
             ++drawCallCount_;
         }
-        multiPassAccumColor_->TransitionTo(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        scratch.accumColor->TransitionTo(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     }
 
     // 蓄積結果をオーナーの実際のカラーへ「over」合成する
@@ -487,7 +493,7 @@ void Renderer::RenderMultiPassDither(ScreenBuffer *screenBuffer,
         pipelineBinder.UsePipeline(kCompositePipeline);
         auto &binder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, kCompositePipeline);
         binder.SetCommandList(commandList);
-        binder.Bind("Pixel:gAccumTexture", multiPassAccumColorSrv_->GetGPUDescriptorHandle());
+        binder.Bind("Pixel:gAccumTexture", scratch.accumColorSrv->GetGPUDescriptorHandle());
         SamplerManager::BindSampler(&binder, "Pixel:gSampler", DefaultSampler::LinearClamp);
         commandList->DrawInstanced(3, 1, 0, 0);
         ++drawCallCount_;

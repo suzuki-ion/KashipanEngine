@@ -465,7 +465,7 @@
                                 "Vertex:gCamera3D",
                                 "Pixel:gCamera3D"
                             ],
-                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "pipelineName": "",
                             "targetObjectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5"
                         },
                         "isActive": true,
@@ -900,7 +900,7 @@
                                 "Vertex:gCamera2D",
                                 "Pixel:gCamera2D"
                             ],
-                            "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                            "pipelineName": "",
                             "targetObjectID": "8e84c41d-f9b3-4d2a-91a8-a9bc3f8fccb3"
                         },
                         "isActive": true,
@@ -916,7 +916,7 @@
                                 "Vertex:gCamera2D",
                                 "Pixel:gCamera2D"
                             ],
-                            "pipelineName": "Text2D.BlendNormal",
+                            "pipelineName": "",
                             "targetObjectID": "8e84c41d-f9b3-4d2a-91a8-a9bc3f8fccb3"
                         },
                         "isActive": true,

@@ -35,6 +35,10 @@ class ShaderVariableBinder;
 class StructuredBufferResource;
 class IRenderTarget;
 
+namespace RendererInternal {
+struct MultiPassDitherScratchSet;
+} // namespace RendererInternal
+
 /// @brief 描画用のレンダラークラス
 /// @details SceneContext から SceneRenderer コンポーネントを取得し、
 ///          SceneRenderer が構築するソート済み描画リストを元に描画処理を行う。
@@ -354,16 +358,12 @@ private:
     // Nパス蓄積による半透明ディザのブレンド（RenderMultiPassDither参照）
     //==================================================
 
-    /// @brief 1パス分の描画結果を書き込むスクラッチカラー（毎パス透明クリアして使い回す）
-    std::unique_ptr<RenderTargetResource> multiPassScratchColor_;
-    std::unique_ptr<ShaderResourceResource> multiPassScratchColorSrv_;
-    /// @brief Nパス分を1/N重みで加算合成した蓄積カラー（フレームの最初に透明クリア）
-    std::unique_ptr<RenderTargetResource> multiPassAccumColor_;
-    std::unique_ptr<ShaderResourceResource> multiPassAccumColorSrv_;
-    /// @brief オーナーの深度（不透明・通常ディザ描画済み）のスナップショット
-    std::unique_ptr<DepthStencilResource> multiPassDepthSnapshot_;
-    /// @brief 毎パス、上記スナップショットから複製して使う作業用深度
-    std::unique_ptr<DepthStencilResource> multiPassScratchDepth_;
+    /// @brief RenderMultiPassDitherのスクラッチ/蓄積GPUリソースを描画先（ScreenBuffer）ごとに保持する。
+    /// @details Renderer全体で1組だけ共有すると、サイズの異なる複数ScreenBufferを同一フレーム内で
+    ///          処理した際に、片方の描画先向けの再作成がもう片方の未実行コマンドから参照中の
+    ///          リソースを破棄してしまう（詳細はRendererInternal::MultiPassDitherScratchSet参照）。
+    ///          描画先が破棄された後のエントリはRenderFrameの冒頭でGCする
+    std::unordered_map<ScreenBuffer *, RendererInternal::MultiPassDitherScratchSet> multiPassDitherScratch_;
 
     //==================================================
     // シャドウマップ

@@ -117,7 +117,7 @@
                             "Vertex:gCamera3D",
                             "Pixel:gCamera3D"
                         ],
-                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "pipelineName": "",
                         "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
                     },
                     "isActive": true,

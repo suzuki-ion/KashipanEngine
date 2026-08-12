@@ -129,7 +129,7 @@
                                 "Vertex:gCamera3D",
                                 "Pixel:gCamera3D"
                             ],
-                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "pipelineName": "",
                             "targetObjectID": "b4477903-d3dd-4f80-b9b3-7902102e6723"
                         },
                         "isActive": true,
@@ -1593,7 +1593,7 @@
                                 "Vertex:gCamera2D",
                                 "Pixel:gCamera2D"
                             ],
-                            "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                            "pipelineName": "",
                             "targetObjectID": "554e8b56-d662-4ae6-9839-65f9509d9268"
                         },
                         "isActive": true,

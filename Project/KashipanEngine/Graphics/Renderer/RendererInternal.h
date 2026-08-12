@@ -48,6 +48,29 @@
 
 namespace KashipanEngine::RendererInternal {
 
+/// @brief RenderMultiPassDither（Renderer::RenderMultiPassDither）が使うスクラッチ/蓄積用GPUリソース一式。
+/// @details 描画先（ScreenBuffer）ごとに個別に保持する。Renderer全体で1組だけ共有する実装だと、
+///          サイズの異なる複数のScreenBufferを同一フレーム内で処理した場合（例:
+///          エディターのSceneView用ScreenBufferはパネルの表示領域に毎フレーム合わせてリサイズされる
+///          ため、固定解像度のゲーム用ScreenBufferとまずサイズが一致しない）、片方向けにリソースを
+///          作り直した瞬間、もう片方が同一フレーム内で既にコマンドリストへ積んだ描画コマンド
+///          （まだExecuteCommandLists/GPU実行前）が参照しているリソース・ディスクリプタを
+///          破棄してしまう。IGraphicsResourceの解放はGPUフェンス待ちを行わず即座にCOM解放＆
+///          ディスクリプタスロットを再利用可能にするため、これが原因でGPU側が無効な
+///          ScreenBuffer関連リソースを参照し、SwapChain::Presentの失敗という形でクラッシュしていた。
+struct MultiPassDitherScratchSet {
+    /// @brief 1パス分の描画結果を書き込むスクラッチカラー（毎パス透明クリアして使い回す）
+    std::unique_ptr<RenderTargetResource> scratchColor;
+    std::unique_ptr<ShaderResourceResource> scratchColorSrv;
+    /// @brief Nパス分を1/N重みで加算合成した蓄積カラー（フレームの最初に透明クリア）
+    std::unique_ptr<RenderTargetResource> accumColor;
+    std::unique_ptr<ShaderResourceResource> accumColorSrv;
+    /// @brief オーナーの深度（不透明・通常ディザ描画済み）のスナップショット
+    std::unique_ptr<DepthStencilResource> depthSnapshot;
+    /// @brief 毎パス、上記スナップショットから複製して使う作業用深度
+    std::unique_ptr<DepthStencilResource> scratchDepth;
+};
+
 // gMaterials（Object3D/Object2D/Text2D/Text3D）はBuildMaterialElementBytes（本ファイル下部）で
 // パイプラインのMaterialLayoutに従って汎用的にパックするため、専用の固定構造体は持たない
 // （Text用のcharacterColor/uvRect/boldWeightもDrawBatch側でWriteMaterialFieldにより書き込まれる）
@@ -408,8 +431,16 @@ inline DXGI_FORMAT UAVFormatFromKind(int formatKind) {
 }
 
 /// @brief 指定の描画先が対象オブジェクトの描画先に含まれるか（未指定の場合は全描画先に適用）
-inline bool IsTargetMatch(EmptyObject *targetObject, bool hasTargetSpecified, IRenderTarget *target) {
+/// @details MeshRenderer/SpriteRenderer等の描画エントリ収集側は、targetObjectIDの指定に
+///          関わらずeditorTarget（シーンエディターのプレビュー用描画先）へも常に描画エントリを
+///          追加する。カメラ・ライト側がここで一致判定せずeditorTargetを除外してしまうと、
+///          描画エントリ自体は生成されるのにカメラ・ライトだけバインドされないまま
+///          Drawされ、ルート引数未初期化としてGPUベース検証に検出されクラッシュする
+///          （Object2D/Text2DのgCamera2D等で発生）。描画エントリ側と対称になるよう、
+///          editorTargetは常にマッチ扱いにする
+inline bool IsTargetMatch(EmptyObject *targetObject, bool hasTargetSpecified, IRenderTarget *target, const SceneRenderer *sceneRenderer) {
     if (!hasTargetSpecified) return true;
+    if (sceneRenderer && target == sceneRenderer->GetEditorTarget()) return true;
     if (!targetObject) return false; // 指定されているが解決できない場合は適用しない
     std::vector<IRenderTarget *> targets;
     SceneRenderer::CollectRenderTargets(targetObject, targets);
@@ -443,7 +474,7 @@ inline void CollectLightsForTarget(SceneRenderer *sceneRenderer, IRenderTarget *
         // EditorOnlyオブジェクトのライトはエディター用以外の描画先には適用しない
         if (IsExcludedAsEditorOnly(lightRenderer, target, sceneRenderer)) continue;
         if (!lightRenderer->GetPipelineName().empty() && lightRenderer->GetPipelineName() != pipelineName) continue;
-        if (!IsTargetMatch(lightRenderer->GetTargetObject(), lightRenderer->GetTargetObjectID().IsValid(), target)) continue;
+        if (!IsTargetMatch(lightRenderer->GetTargetObject(), lightRenderer->GetTargetObjectID().IsValid(), target, sceneRenderer)) continue;
         if (!lightRenderer->IsRenderTargetIncluded(target)) continue;
         auto *light = lightRenderer->GetLight();
         if (!light) {
@@ -569,7 +600,7 @@ inline ConstantBufferResource *ResolveCameraConstantBuffer(SceneRenderer *sceneR
         if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
         if (IsExcludedAsEditorOnly(cameraRenderer, target, sceneRenderer)) continue;
         if (!cameraRenderer->GetPipelineName().empty() && cameraRenderer->GetPipelineName() != pipelineName) continue;
-        if (!IsTargetMatch(cameraRenderer->GetTargetObject(), cameraRenderer->GetTargetObjectID().IsValid(), target)) continue;
+        if (!IsTargetMatch(cameraRenderer->GetTargetObject(), cameraRenderer->GetTargetObjectID().IsValid(), target, sceneRenderer)) continue;
         if (!cameraRenderer->IsRenderTargetIncluded(target)) continue;
         if (auto *constantBuffer = cameraRenderer->GetConstantBuffer()) {
             result = constantBuffer;
@@ -597,7 +628,7 @@ inline IPostProcessComponent::CameraInfo ResolveCameraInfoForPostProcess(SceneRe
     for (auto *cameraRenderer : sceneRenderer->GetCameraRenderers()) {
         if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
         if (IsExcludedAsEditorOnly(cameraRenderer, target, sceneRenderer)) continue;
-        if (!IsTargetMatch(cameraRenderer->GetTargetObject(), cameraRenderer->GetTargetObjectID().IsValid(), target)) continue;
+        if (!IsTargetMatch(cameraRenderer->GetTargetObject(), cameraRenderer->GetTargetObjectID().IsValid(), target, sceneRenderer)) continue;
         if (!cameraRenderer->IsRenderTargetIncluded(target)) continue;
         result.valid = true;
         result.viewProjection = cameraRenderer->GetViewProjectionMatrix();

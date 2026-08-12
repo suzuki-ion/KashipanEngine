@@ -156,7 +156,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
             for (auto *cameraRenderer : sceneRenderer->GetCameraRenderers()) {
                 if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
                 if (IsExcludedAsEditorOnly(cameraRenderer, target, sceneRenderer)) continue;
-                if (!IsTargetMatch(cameraRenderer->GetTargetObject(), cameraRenderer->GetTargetObjectID().IsValid(), target)) continue;
+                if (!IsTargetMatch(cameraRenderer->GetTargetObject(), cameraRenderer->GetTargetObjectID().IsValid(), target, sceneRenderer)) continue;
                 if (!cameraRenderer->IsRenderTargetIncluded(target)) continue;
                 cameraViewProjection = cameraRenderer->GetViewProjectionMatrix();
                 cameraPosition = cameraRenderer->GetWorldPosition();
@@ -178,7 +178,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
             auto *light = lightRenderer->GetLight();
             if (!light || !light->IsActive() || !light->IsCastShadows()) continue;
             if (IsExcludedAsEditorOnly(lightRenderer, target, sceneRenderer)) continue;
-            if (!IsTargetMatch(lightRenderer->GetTargetObject(), lightRenderer->GetTargetObjectID().IsValid(), target)) continue;
+            if (!IsTargetMatch(lightRenderer->GetTargetObject(), lightRenderer->GetTargetObjectID().IsValid(), target, sceneRenderer)) continue;
             if (!lightRenderer->IsRenderTargetIncluded(target)) continue;
             candidates.push_back(lightRenderer);
         }

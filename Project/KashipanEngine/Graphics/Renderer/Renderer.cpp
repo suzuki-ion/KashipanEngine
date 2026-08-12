@@ -26,6 +26,16 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
     drawCallCount_ = 0;
     if (!sceneContext || !pipelineManager_) return;
 
+    // 破棄済みScreenBuffer向けのRenderMultiPassDitherスクラッチをGCする（描画先のリサイズや
+    // シーン切り替えでキーが増え続けるのを防ぐ。詳細はmultiPassDitherScratch_のコメント参照）
+    for (auto it = multiPassDitherScratch_.begin(); it != multiPassDitherScratch_.end(); ) {
+        if (!ScreenBuffer::IsExist(it->first)) {
+            it = multiPassDitherScratch_.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
     ComputeCommandProcessor::BeginFrame(Passkey<Renderer>{});
 
     // Computeシェーダー処理は他の描画パスより先に実行し、結果を後続パスから参照できるようにする

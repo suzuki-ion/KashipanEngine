@@ -79,8 +79,8 @@
                                     "y": 1.0,
                                     "z": 1.0
                                 },
-                                "capsuleHeight": 0.0,
-                                "capsuleRadius": 0.49000000953674316,
+                                "capsuleHeight": 0.20000000298023224,
+                                "capsuleRadius": 0.4000000059604645,
                                 "center": {
                                     "x": 0.0,
                                     "y": 2.0,

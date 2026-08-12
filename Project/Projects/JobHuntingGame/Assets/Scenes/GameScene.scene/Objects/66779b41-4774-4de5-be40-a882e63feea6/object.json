@@ -253,6 +253,7 @@
             {
                 "data": {
                     "customData": {
+                        "allowInstancing": true,
                         "castShadows": true,
                         "instanceColor": {
                             "w": 1.0,
@@ -266,6 +267,7 @@
                             "White"
                         ],
                         "pipelineName": "Object3D.Solid.BlendNormal",
+                        "renderPriority": 0,
                         "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
                     },
                     "isActive": true,

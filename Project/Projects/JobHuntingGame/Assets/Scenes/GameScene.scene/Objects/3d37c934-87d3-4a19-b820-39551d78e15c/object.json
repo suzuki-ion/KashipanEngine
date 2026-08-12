@@ -42,6 +42,7 @@
             {
                 "data": {
                     "customData": {
+                        "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,
                             "y": 0.5
@@ -52,6 +53,7 @@
                             "x": 0.5,
                             "y": 0.5
                         },
+                        "renderPriority": 0,
                         "targetObjectID": "8c03d6b4-5450-42fd-812c-f025af3e6b04"
                     },
                     "isActive": true,

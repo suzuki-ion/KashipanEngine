@@ -97,7 +97,7 @@ public:
     ///          上書きされる以外は変化しないため、Renderer::RenderFrameより前のタイミングで
     ///          参照しても、中間パスの内容や翌フレームの描画によって書き換えられる心配が無い
     D3D12_GPU_DESCRIPTOR_HANDLE GetPreviewSrvHandle() const noexcept {
-        return previewShaderResource_ ? previewShaderResource_->GetGPUDescriptorHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
+        return (previewReady_ && previewShaderResource_) ? previewShaderResource_->GetGPUDescriptorHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
     }
 
     /// @brief 直近で描画完了が確定した時点のレンダーターゲットを画像ファイルへ保存する
@@ -224,6 +224,12 @@ private:
     bool isDepthWriteEnabled_ = true;
     bool isLastBeginDisableDepthWrite_ = false;
     bool isFirstBeginRecord_ = true;
+    // previewShaderResource_ / shaderResources_ はInitialize直後から有効なディスクリプタを
+    // 返せてしまうが、実体（RenderTargetResource）はRENDER_TARGET状態で生成されるため、
+    // まだ一度もBeginDraw/EndDrawを経ていない段階でSRVとして参照するとD3D12の状態検証エラー
+    // となる（Debug構成での初回フレームクラッシュの原因）。previewReady_はCopyToPreviewTarget
+    // が最初に成功した時点でtrueになり、GetPreviewSrvHandle()はそれまで空ハンドルを返す
+    bool previewReady_ = false;
 
     std::unique_ptr<RenderTargetResource> renderTargets_[kBufferCount];
     std::unique_ptr<DepthStencilResource> depthStencils_[kBufferCount];

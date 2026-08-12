@@ -20,6 +20,9 @@ std::uint32_t sAutoNameCounter = 0;
 } // namespace
 
 D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetSrvHandle() const noexcept {
+    // 初回BeginRecordより前はRead面がまだPIXEL_SHADER_RESOURCEへ遷移していない
+    // （BeginRecordのisFirstBeginRecord_ブロック参照）
+    if (isFirstBeginRecord_) return D3D12_GPU_DESCRIPTOR_HANDLE{};
     const auto idx = GetRtvReadIndex();
     return shaderResources_[idx] ? shaderResources_[idx]->GetGPUDescriptorHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
 }
@@ -34,6 +37,8 @@ bool ScreenBuffer::SaveToFile(const std::string &filePath) const {
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetDepthSrvHandle() const noexcept {
+    // GetSrvHandle()と同じ理由（初回BeginRecordより前はDepth Read面が未遷移）
+    if (isFirstBeginRecord_) return D3D12_GPU_DESCRIPTOR_HANDLE{};
     const auto idx = GetDsvReadIndex();
     auto *ds = depthStencils_[idx].get();
     return (ds && ds->HasSrv()) ? ds->GetSrvGPUHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
@@ -154,6 +159,7 @@ bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
     dsvWriteIndex_ = 0;
     isLastBeginDisableDepthWrite_ = false;
     isFirstBeginRecord_ = true;
+    previewReady_ = false;
 
     for (size_t i = 0; i < kBufferCount; ++i) {
         renderTargets_[i] = std::make_unique<RenderTargetResource>(width_, height_, colorFormat_);
@@ -252,6 +258,7 @@ void ScreenBuffer::Destroy() {
     previewTargetPendingDestroy_.reset();
     previewBufferWidth_ = 0;
     previewBufferHeight_ = 0;
+    previewReady_ = false;
 
     dx12Commands_ = nullptr;
 
@@ -464,6 +471,9 @@ void ScreenBuffer::CopyToPreviewTarget(ID3D12GraphicsCommandList *cmd) {
     // 両方とも通常の読み取り用状態へ戻しておく（GetSrvHandle/GetPreviewSrvHandleでの参照に備える）
     previewTarget_->TransitionTo(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     src->TransitionTo(D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+    // ここまで到達して初めてprevewTarget_の内容・状態がSRVとして参照可能になる
+    previewReady_ = true;
 }
 
 } // namespace KashipanEngine

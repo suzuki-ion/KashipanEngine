@@ -43,6 +43,7 @@
             {
                 "data": {
                     "customData": {
+                        "allowInstancing": true,
                         "color": {
                             "w": 1.0,
                             "x": 1.0,
@@ -61,6 +62,7 @@
                         "fontSize": 64.0,
                         "horizontalAlign": 0,
                         "pipelineName": "Text2D.BlendNormal",
+                        "renderPriority": 0,
                         "targetObjectID": "8c03d6b4-5450-42fd-812c-f025af3e6b04",
                         "text": "チェックポイント",
                         "verticalAlign": 0

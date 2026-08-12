@@ -1,0 +1,63 @@
+// 敵接触の検知、被ダメージ、ノックバック、死亡コライダーを担当する
+class PlayerCombat {
+    Player@ owner;
+    PlayerMovement@ movement;
+    PlayerDamageFlash@ damageFlash;
+
+    bool isCollidingWithEnemy = false;
+    Vector3 enemyHitNormal = Vector3(0.0f, 0.0f, 0.0f);
+    float damageCooldownTimer = 0.0f;
+
+    Tag enemyColliderTag = Tag("EnemySphere");
+    Tag deathColliderTag = Tag("Death");
+
+    PlayerCombat(Player@ inOwner, PlayerMovement@ inMovement, PlayerDamageFlash@ inDamageFlash) {
+        @owner = inOwner;
+        @movement = inMovement;
+        @damageFlash = inDamageFlash;
+    }
+
+    void HandleCollisionEnter(const HitInfo &in hit) {
+        if (hit.otherObject is null) return;
+        if (hit.otherCollider.GetTag() == enemyColliderTag) {
+            if (!isCollidingWithEnemy) {
+                isCollidingWithEnemy = true;
+                enemyHitNormal = hit.normal;
+            }
+        } else if (hit.otherCollider.GetTag() == deathColliderTag) {
+            // 死亡判定のコライダーに触れたら即座にHPを0にする
+            owner.currentHp = 0;
+        }
+    }
+
+    void UpdateDamageCooldown(float dt) {
+        if (damageCooldownTimer > 0.0f) {
+            damageCooldownTimer -= dt;
+        }
+    }
+
+    // 敵の上以外から触れた場合にダメージを受ける（上から踏んだ場合はPlayerMovement::Jumping()のバウンド処理に任せる）
+    void CheckEnemyDamage(float moveDirection) {
+        if (damageCooldownTimer > 0.0f) return;
+        if (!isCollidingWithEnemy) return;
+        if (enemyHitNormal.y > owner.enemyCollisionThreshold) return; // 上から接触＝踏みなのでダメージなし
+
+        TakeDamage(owner.damageAmount, enemyHitNormal, moveDirection);
+    }
+
+    void TakeDamage(int amount, const Vector3 &in hitNormal, float moveDirection) {
+        owner.currentHp -= amount;
+        damageCooldownTimer = owner.damageCooldown;
+        damageFlash.StartFlash(owner.damageCooldown);
+
+        // 敵と反対方向へノックバック（横方向は接触方向、縦方向は常に上向きへポップさせる）
+        float knockbackDirX = (hitNormal.x != 0.0f) ? Sign(hitNormal.x) : -Sign(moveDirection);
+        movement.velocity.x = knockbackDirX * owner.knockbackPower.x;
+        movement.velocity.y = owner.knockbackPower.y;
+    }
+
+    // リスポーン時、無敵猶予として damageCooldown をそのまま流用する
+    void ResetAfterRespawn() {
+        damageCooldownTimer = owner.damageCooldown;
+    }
+}

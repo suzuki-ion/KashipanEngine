@@ -89,7 +89,7 @@
                             "slideAngleAcceleration": 0.20000000298023224,
                             "slideThreshold": 1.0
                         },
-                        "scriptPath": "Assets\\Application\\Scripts\\Player.as"
+                        "scriptPath": "Assets\\Application\\Scripts\\Player\\Player.as"
                     },
                     "isActive": true,
                     "priority": 1,

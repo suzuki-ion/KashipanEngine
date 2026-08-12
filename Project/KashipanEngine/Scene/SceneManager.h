@@ -55,6 +55,8 @@ public:
     ///          最後に生存しているインスタンスを保持しているだけなので、
     ///          通常のゲームロジックからは使用しないこと。
     static const SceneManager *GetActiveInstance(PasskeyForCrashHandler) { return sActiveInstance_; }
+    /// @brief クラッシュハンドラ用の直近スナップショットを取得する
+    const JSON &GetPreCrashSnapshot(PasskeyForCrashHandler) const { return preCrashSnapshot_; }
 
     //==================================================
     // シーンの登録・登録情報の編集
@@ -187,6 +189,11 @@ private:
     std::unique_ptr<Scene> currentScene_;
     bool hasPendingSceneChange_ = false;
     std::string pendingSceneName_;
+
+    /// @brief クラッシュハンドラ用に1秒間隔で保持する直近シーンのJSONスナップショット
+    JSON preCrashSnapshot_;
+    float preCrashSnapshotElapsedTime_ = 0.0f;
+    static constexpr float kPreCrashSnapshotInterval = 1.0f;
 };
 
 } // namespace KashipanEngine

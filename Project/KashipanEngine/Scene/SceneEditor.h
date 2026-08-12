@@ -17,6 +17,7 @@ class AssetsWindow;
 class SceneSaver;
 class SceneLoader;
 class SceneListEditor;
+class SceneCrashRecovery;
 class EditorPreferences;
 class ProjectWindow;
 class TranslationEditor;
@@ -57,6 +58,7 @@ private:
     std::unique_ptr<SceneSaver> saver_;
     std::unique_ptr<SceneLoader> loader_;
     std::unique_ptr<SceneListEditor> sceneListEditor_;
+    std::unique_ptr<SceneCrashRecovery> crashRecovery_;
     std::unique_ptr<EditorPreferences> preferences_;
     std::unique_ptr<ProjectWindow> projectWindow_;
     std::unique_ptr<TranslationEditor> translationEditor_;

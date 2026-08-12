@@ -24,19 +24,20 @@ void ExportCrashSceneBackup(PasskeyForCrashHandler passkey) {
 
         Log(Translation("engine.crashhandler.crash.export.scene.start"), LogSeverity::Error);
 
-        const std::string dumpDirectory = ProjectPaths::InEngineRoot("Dumps");
-        CreateDirectories(dumpDirectory);
-        auto time = GetNowTime();
-        std::string filePath = dumpDirectory + "/CrashSceneBackup_";
-        filePath += std::to_string(time.year) + "-";
-        filePath += std::to_string(time.month) + "-";
-        filePath += std::to_string(time.day) + "_";
-        filePath += std::to_string(time.hour) + "-";
-        filePath += std::to_string(time.minute) + "-";
-        filePath += std::to_string(time.second) + ".json";
+        // 次回起動時にこのプロジェクトを開いた際に検知・復元できるよう、プロジェクト単位の
+        // 固定ファイル名で保存する（存在すること自体を「復元待ちがある」マーカーとして使う）
+        const std::string recoveryDirectory = ProjectPaths::InProjectRoot("CrashRecovery");
+        CreateDirectories(recoveryDirectory);
+        const std::string filePath = recoveryDirectory + "/PendingCrashScene.json";
 
-        // クラッシュハンドラ内では const_cast は行わず、const な SaveToJSON のみを使用する
-        const JSON sceneJson = scene->SaveToJSON();
+        // クラッシュハンドラ内では const_cast は行わず、const な SaveToJSON のみを使用する。
+        // クラッシュ原因そのものを含んでいる可能性があるクラッシュ瞬間の生シーンではなく、
+        // SceneManagerが1秒間隔で保持している直近スナップショットを優先して使う。
+        // まだスナップショットが無い場合（シーン切替直後1秒未満など）のみ生シーンへフォールバックする
+        const JSON &bufferedSnapshot = sceneManager->GetPreCrashSnapshot(passkey);
+        JSON sceneJson = bufferedSnapshot.empty() ? scene->SaveToJSON() : bufferedSnapshot;
+        // 次回起動時の確認モーダルに表示するため、書き出し日時を付与しておく
+        sceneJson["crashRecoveryExportedAt"] = GetNowTimeString();
         if (SaveJSON(sceneJson, filePath)) {
             Log(Translation("engine.crashhandler.crash.export.scene.end") + filePath, LogSeverity::Error);
         } else {

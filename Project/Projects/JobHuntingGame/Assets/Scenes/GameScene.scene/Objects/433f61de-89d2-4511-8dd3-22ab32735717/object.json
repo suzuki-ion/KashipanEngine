@@ -51,9 +51,9 @@
                             "z": 1.0
                         },
                         "instanceColorBlendMode": 1,
-                        "materialName": "White",
+                        "materialName": "Default",
                         "materialNames": [
-                            "White"
+                            "Default"
                         ],
                         "pipelineName": "Object3D.Solid.BlendNormal",
                         "renderPriority": 0,

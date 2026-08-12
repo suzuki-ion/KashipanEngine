@@ -13,6 +13,7 @@
 #include "Input/Input.h"
 #include "Input/InputCommand.h"
 #include "Scene/Editor/AssetsWindow.h"
+#include "Scene/Editor/SceneCrashRecovery.h"
 #include "Scene/Editor/EditorKeyBindings.h"
 #include "Scene/Editor/EditorPreferences.h"
 #include "Scene/Editor/EditorSettings.h"
@@ -77,6 +78,7 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     assetsWindow_ = std::make_unique<AssetsWindow>(Passkey<SceneEditor>{}, context_);
     saver_ = std::make_unique<SceneSaver>(Passkey<SceneEditor>{}, context_);
     loader_ = std::make_unique<SceneLoader>(Passkey<SceneEditor>{}, context_);
+    crashRecovery_ = std::make_unique<SceneCrashRecovery>(Passkey<SceneEditor>{}, context_);
     sceneListEditor_ = std::make_unique<SceneListEditor>(Passkey<SceneEditor>{}, context_);
     preferences_ = std::make_unique<EditorPreferences>(Passkey<SceneEditor>{});
     projectWindow_ = std::make_unique<ProjectWindow>(Passkey<SceneEditor>{});
@@ -325,6 +327,11 @@ void SceneEditor::ShowMainWindow() {
     }
     saver_->ShowImGui();
     if (loader_->ShowImGui()) {
+        // シーンが差し替わったので選択と履歴をクリアする
+        commands_->Clear();
+        objectHierarchy_->ClearSelection();
+    }
+    if (crashRecovery_->ShowImGui()) {
         // シーンが差し替わったので選択と履歴をクリアする
         commands_->Clear();
         objectHierarchy_->ClearSelection();

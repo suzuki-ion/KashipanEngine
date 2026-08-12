@@ -1425,6 +1425,13 @@
 		"editor.component.remove": "Remove Component",
 		"editor.component.tag": "Tag",
 
+		//--------- editor.crashrecovery ---------//
+		"editor.crashrecovery.title": "Crash Recovery",
+		"editor.crashrecovery.message": "A backup from just before the last crash was found. Restore it?",
+		"editor.crashrecovery.timestamp": "Backup time: ",
+		"editor.crashrecovery.restore": "Restore",
+		"editor.crashrecovery.dismiss": "Dismiss",
+
 		//--------- editor.fontmanager ---------//
 		"editor.fontmanager.desc_1": "%zu",
 		"editor.fontmanager.u_x_u": "%u x %u",

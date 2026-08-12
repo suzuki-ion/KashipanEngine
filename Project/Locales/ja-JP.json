@@ -1432,6 +1432,13 @@
 		"editor.component.remove": "コンポーネントを削除",
 		"editor.component.tag": "タグ",
 
+		//--------- editor.crashrecovery ---------//
+		"editor.crashrecovery.title": "クラッシュリカバリー",
+		"editor.crashrecovery.message": "前回終了時のクラッシュ直前のバックアップが見つかりました。復元しますか？",
+		"editor.crashrecovery.timestamp": "バックアップ時刻: ",
+		"editor.crashrecovery.restore": "復元する",
+		"editor.crashrecovery.dismiss": "無視する",
+
 		//--------- editor.fontmanager ---------//
 		"editor.fontmanager.desc_1": "%zu",
 		"editor.fontmanager.u_x_u": "%u × %u",

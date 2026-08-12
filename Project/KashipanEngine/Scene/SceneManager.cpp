@@ -4,6 +4,7 @@
 #include "Scene/RenderTargetCarryOverRegistry.h"
 #include "Scene/SceneFileIO.h"
 #include "Utilities/FileIO/JSON.h"
+#include "Utilities/TimeUtils.h"
 
 #include <algorithm>
 
@@ -114,6 +115,15 @@ bool SceneManager::SaveSceneList(const std::string &filePath) const {
 void SceneManager::Update(Passkey<GameEngine>) {
     if (currentScene_) {
         currentScene_->UpdateInterface(Passkey<SceneManager>());
+
+        // クラッシュハンドラ用の直近スナップショットを1秒間隔で更新する。
+        // クラッシュ直前の生シーンではなく、この少し前のスナップショットを書き出すことで、
+        // クラッシュ原因そのものを含んだ状態を復元して再クラッシュする事態を避けやすくする
+        preCrashSnapshotElapsedTime_ += GetDeltaTime();
+        if (preCrashSnapshotElapsedTime_ >= kPreCrashSnapshotInterval) {
+            preCrashSnapshotElapsedTime_ = 0.0f;
+            preCrashSnapshot_ = currentScene_->SaveToJSON();
+        }
     }
 }
 
@@ -167,6 +177,11 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
         currentScene_->SetSceneManager(Passkey<SceneManager>(), this);
         currentScene_->InitializeInterface(Passkey<SceneManager>());
     }
+
+    // 直近スナップショットは切替前のシーンのものなので、切替後まで持ち越さないようクリアする。
+    // 切替直後〜次の1秒間はExportCrashSceneBackup側のライブシーンへのフォールバックで補う
+    preCrashSnapshot_ = JSON();
+    preCrashSnapshotElapsedTime_ = 0.0f;
 
     // 新しいシーン側で引き取られなかった描画先リソースをここで実際に破棄する
     RenderTargetCarryOverRegistry::EndSceneSwitch(Passkey<SceneManager>{});

@@ -82,19 +82,15 @@ class Player : ScriptComponentBehavior {
 
     void Update() {
         const float dt = GetDeltaTime() * GetGameSpeed();
-        const bool wasGroundedAtFrameStart = movement.isGrounded;
 
         input.Update();
-        // Jumping()の敵バウンド判定より前に読み取られるため、ここで一度だけ反映する
+        // UpdateVerticalMotion()の敵バウンド判定より前に読み取られるため、ここで一度だけ反映する
         movement.isJumping = input.jumpTriggered;
 
-        movement.UpdateGroundedState(dt);
-        movement.Landing();
+        movement.UpdateGroundState(dt);
         movement.LateralMovement(input.moveDirection);
-        movement.Sliding(dt, input.moveDirection);
-        movement.Jumping(dt, combat.isCollidingWithEnemy, combat.enemyHitNormal);
-        // Jumping()は離陸時にisGroundedをfalseへ変更するため、その後で床の慣性を受け渡す
-        movement.UpdatePlatformInertia(dt, wasGroundedAtFrameStart);
+        movement.UpdateSlideVelocity(dt, input.moveDirection);
+        movement.UpdateVerticalMotion(dt, combat.isCollidingWithEnemy, combat.enemyHitNormal);
         combat.UpdateDamageCooldown(dt);
         combat.CheckEnemyDamage(input.moveDirection);
         movement.ApplyVelocity(dt);
@@ -105,11 +101,6 @@ class Player : ScriptComponentBehavior {
         // 生の接触情報は毎フレームリセットする（次フレームの衝突コールバックで再設定される）
         movement.hasGroundContact = false;
         combat.isCollidingWithEnemy = false;
-        // 猶予時間も含めて完全に地面から離れたら、地面由来の情報をリセットする
-        if (!movement.isGrounded) {
-            movement.groundDelta = Vector3(0.0f, 0.0f, 0.0f);
-            movement.isOnSteepSlope = false;
-        }
     }
 
     void OnCollisionEnter(const HitInfo &in hit) {

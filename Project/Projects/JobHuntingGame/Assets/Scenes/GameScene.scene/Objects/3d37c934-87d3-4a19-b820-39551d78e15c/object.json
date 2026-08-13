@@ -64,6 +64,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": true,
         "isActive": true,
         "name": "Sprite Object",
         "objectID": "3d37c934-87d3-4a19-b820-39551d78e15c",

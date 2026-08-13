@@ -1622,6 +1622,7 @@
 		//--------- editor.objectinspector ---------//
 		"editor.objectinspector.active": "有効",
 		"editor.objectinspector.editoronly": "エディター専用",
+		"editor.objectinspector.hiddenfromeditortarget": "シーンビューに描画しない",
 		"editor.objectinspector.name": "名前",
 		"editor.objectinspector.nohierarchy": "オブジェクト階層を取得できません。",
 		"editor.objectinspector.noselection": "オブジェクトが選択されていません。",

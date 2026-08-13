@@ -89,6 +89,14 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
         obj->SetEditorOnly(editorOnly);
     }
 
+    //--------- HiddenFromEditorTarget（シーンエディターのプレビュー用描画先には描画エントリを追加しない。
+    //          他の描画先の内容を合成表示するスプライト等、シーンビューに映ると紛らわしいオブジェクト向け） ---------//
+    ImGui::SameLine();
+    bool hiddenFromEditorTarget = obj->IsHiddenFromEditorTarget();
+    if (ImGui::Checkbox(TranslationLabel("editor.objectinspector.hiddenfromeditortarget"), &hiddenFromEditorTarget)) {
+        obj->SetHiddenFromEditorTarget(hiddenFromEditorTarget);
+    }
+
     //--------- タグ（分類・判別用の任意文字列） ---------//
     std::string tagName = obj->GetTagName();
     if (ImGui::InputText(TranslationLabel("editor.objectinspector.tag"), &tagName)) {
@@ -315,6 +323,14 @@ void SceneObjectInspector::ShowMultiObjectInspector(EmptyObject *primary, const 
     if (ImGui::Checkbox(TranslationLabel("editor.objectinspector.editoronly"), &editorOnly)) {
         for (auto *obj : selectedObjects) {
             if (obj) obj->SetEditorOnly(editorOnly);
+        }
+    }
+
+    ImGui::SameLine();
+    bool hiddenFromEditorTarget = primary->IsHiddenFromEditorTarget();
+    if (ImGui::Checkbox(TranslationLabel("editor.objectinspector.hiddenfromeditortarget"), &hiddenFromEditorTarget)) {
+        for (auto *obj : selectedObjects) {
+            if (obj) obj->SetHiddenFromEditorTarget(hiddenFromEditorTarget);
         }
     }
 

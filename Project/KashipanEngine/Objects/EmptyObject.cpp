@@ -28,6 +28,7 @@ void EmptyObject::CopyStateFrom(Passkey<Scene>, const EmptyObject &source) {
     SetActive(source.isActive_);
     SetSaveEnabled(source.isSaveEnabled_);
     SetEditorOnly(source.isEditorOnly_);
+    SetHiddenFromEditorTarget(source.isHiddenFromEditorTarget_);
 }
 
 bool EmptyObject::IsEditorOnlyInHierarchy() const {
@@ -231,6 +232,7 @@ JSON EmptyObject::SaveToJson(Passkey<Scene>) {
     json["tag"] = tagName_;
     json["isActive"] = isActive_;
     json["editorOnly"] = isEditorOnly_;
+    json["hiddenFromEditorTarget"] = isHiddenFromEditorTarget_;
     json["objectID"] = objectID_.ToString();
     if (prefabNodeID_.IsValid()) json["prefabNodeID"] = prefabNodeID_.ToString();
 
@@ -264,6 +266,7 @@ bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
     SetTag(json.value("tag", std::string{}));
     isActive_ = json.value("isActive", true);
     isEditorOnly_ = json.value("editorOnly", false);
+    isHiddenFromEditorTarget_ = json.value("hiddenFromEditorTarget", false);
     objectID_ = UUID128(json.value("objectID", ""));
     prefabNodeID_ = UUID128(json.value("prefabNodeID", ""));
     const auto &componentsJson = json.value("components", JSON::array());

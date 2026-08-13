@@ -163,6 +163,7 @@ bool ObjectStateCommand::Apply(SceneEditorContext *context, const UUID128 &objec
     obj->SetTag(state.value("tag", obj->GetTagName()));
     obj->SetActive(state.value("isActive", obj->IsActive()));
     obj->SetEditorOnly(state.value("editorOnly", obj->IsEditorOnly()));
+    obj->SetHiddenFromEditorTarget(state.value("hiddenFromEditorTarget", obj->IsHiddenFromEditorTarget()));
     return true;
 }
 

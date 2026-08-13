@@ -85,7 +85,7 @@
             }
         ],
         "editorOnly": true,
-        "isActive": true,
+        "isActive": false,
         "name": "DebugLight",
         "objectID": "550feb48-e0df-4008-a7b1-b82a13b5f5dc",
         "tag": ""

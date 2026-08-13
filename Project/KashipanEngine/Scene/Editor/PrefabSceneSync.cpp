@@ -217,7 +217,7 @@ void MergeObjectProperties(
     const JSON &oldObject,
     const JSON &newObject,
     SceneSyncResult &result) {
-    static constexpr const char *kKeys[] = { "name", "tag", "isActive", "editorOnly" };
+    static constexpr const char *kKeys[] = { "name", "tag", "isActive", "editorOnly", "hiddenFromEditorTarget" };
     for (const char *key : kKeys) {
         const JSON oldValue = oldObject.contains(key) ? oldObject[key] : JSON();
         const JSON newValue = newObject.contains(key) ? newObject[key] : JSON();

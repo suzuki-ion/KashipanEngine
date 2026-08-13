@@ -1615,6 +1615,7 @@
 		//--------- editor.objectinspector ---------//
 		"editor.objectinspector.active": "Active",
 		"editor.objectinspector.editoronly": "Editor Only",
+		"editor.objectinspector.hiddenfromeditortarget": "Hide From Scene View",
 		"editor.objectinspector.name": "Name",
 		"editor.objectinspector.nohierarchy": "No object hierarchy available.",
 		"editor.objectinspector.noselection": "No object selected.",

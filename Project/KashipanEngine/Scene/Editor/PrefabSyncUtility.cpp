@@ -450,7 +450,7 @@ LiveComponentByKey IndexLiveComponentsByKey(EmptyObject *object) {
 }
 
 bool HasObjectPropertyDifference(const JSON &before, const JSON &after) {
-    static constexpr const char *kKeys[] = { "name", "tag", "isActive", "editorOnly" };
+    static constexpr const char *kKeys[] = { "name", "tag", "isActive", "editorOnly", "hiddenFromEditorTarget" };
     for (const char *key : kKeys) {
         if (before.value(key, JSON()) != after.value(key, JSON())) return true;
     }

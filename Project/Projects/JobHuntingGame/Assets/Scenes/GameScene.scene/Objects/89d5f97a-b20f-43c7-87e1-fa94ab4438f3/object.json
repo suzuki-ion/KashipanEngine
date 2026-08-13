@@ -291,9 +291,9 @@
                             "z": 1.0
                         },
                         "instanceColorBlendMode": 1,
-                        "materialName": "Default",
+                        "materialName": "CheckPoint",
                         "materialNames": [
-                            "Default"
+                            "CheckPoint"
                         ],
                         "pipelineName": "Object3D.Solid.BlendNormal",
                         "renderPriority": 0,

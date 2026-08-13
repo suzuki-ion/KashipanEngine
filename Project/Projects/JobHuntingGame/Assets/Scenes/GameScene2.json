@@ -325,6 +325,43 @@
                 {
                     "data": {
                         "customData": {
+                            "center": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "continuousDetection": false,
+                            "isTrigger": false,
+                            "size": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "syncPosition": [
+                                true,
+                                true,
+                                true
+                            ],
+                            "syncRotation": [
+                                true,
+                                true,
+                                true
+                            ],
+                            "syncScale": [
+                                true,
+                                true,
+                                true
+                            ]
+                        },
+                        "isActive": false,
+                        "priority": 1,
+                        "tag": "GroundBox"
+                    },
+                    "type": "BoxCollider"
+                },
+                {
+                    "data": {
+                        "customData": {
                             "effects": {
                                 "echo": {
                                     "delayMs": 500.0,

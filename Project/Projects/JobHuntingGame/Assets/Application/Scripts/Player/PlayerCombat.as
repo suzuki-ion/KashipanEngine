@@ -1,20 +1,34 @@
+// 他オブジェクトのEnemy.asへ撃破を要求する（ScriptComponent.SetVariableでrequestDefeatを
+// 立てるだけの共通処理。PlayerCombat[Box形態の踏みつけ]とPlayerEmbedding[Cone形態の刺さり]の
+// 両方から使うため、クラスに属さないグローバル関数としてここに1つだけ置く）
+void RequestEnemyDefeat(Object@ enemyObject) {
+    ScriptComponent@ enemyScript;
+    if (!enemyObject.GetComponent(@enemyScript)) return;
+    bool value = true;
+    enemyScript.SetVariable("requestDefeat", value);
+}
+
 // 敵接触の検知、被ダメージ、ノックバック、死亡コライダーを担当する
 class PlayerCombat {
     Player@ owner;
     PlayerMovement@ movement;
     PlayerDamageFlash@ damageFlash;
+    PlayerTransformation@ transformation;
 
     bool isCollidingWithEnemy = false;
     Vector3 enemyHitNormal = Vector3(0.0f, 0.0f, 0.0f);
+    // isCollidingWithEnemyと同時に更新する、接触相手の敵オブジェクト（Box形態の踏みつけ撃破用）
+    Object@ collidingEnemyObject;
     float damageCooldownTimer = 0.0f;
 
     Tag enemyColliderTag = Tag("EnemySphere");
     Tag deathColliderTag = Tag("Death");
 
-    PlayerCombat(Player@ inOwner, PlayerMovement@ inMovement, PlayerDamageFlash@ inDamageFlash) {
+    PlayerCombat(Player@ inOwner, PlayerMovement@ inMovement, PlayerDamageFlash@ inDamageFlash, PlayerTransformation@ inTransformation) {
         @owner = inOwner;
         @movement = inMovement;
         @damageFlash = inDamageFlash;
+        @transformation = inTransformation;
     }
 
     void HandleCollisionEnter(const HitInfo &in hit) {
@@ -23,6 +37,7 @@ class PlayerCombat {
             if (!isCollidingWithEnemy) {
                 isCollidingWithEnemy = true;
                 enemyHitNormal = hit.normal;
+                @collidingEnemyObject = hit.otherObject;
             }
         } else if (hit.otherCollider.GetTag() == deathColliderTag) {
             // 死亡判定のコライダーに触れたら即座にHPを0にする
@@ -36,11 +51,21 @@ class PlayerCombat {
         }
     }
 
-    // 敵の上以外から触れた場合にダメージを受ける（上から踏んだ場合はPlayerMovement::Jumping()のバウンド処理に任せる）
+    // 敵の上以外から触れた場合にダメージを受ける（上から踏んだ場合はPlayerMovement::UpdateVerticalMotion()のバウンド処理に任せる）
     void CheckEnemyDamage(float moveDirection) {
-        if (damageCooldownTimer > 0.0f) return;
         if (!isCollidingWithEnemy) return;
-        if (enemyHitNormal.y > owner.enemyCollisionThreshold) return; // 上から接触＝踏みなのでダメージなし
+
+        if (enemyHitNormal.y > owner.enemyCollisionThreshold) {
+            // 上からの接触＝踏みつけ。Box形態はここで敵を撃破する（Sphereは敵自身の
+            // 踏まれ判定で、Coneは刺さった瞬間にPlayerEmbedding側で既に撃破している）
+            if (transformation.CanStompDefeatEnemy() && collidingEnemyObject !is null) {
+                RequestEnemyDefeat(collidingEnemyObject);
+            }
+            return; // 踏みつけ自体では自分はダメージを受けない
+        }
+
+        if (!transformation.TakesContactDamage()) return;
+        if (damageCooldownTimer > 0.0f) return;
 
         TakeDamage(owner.damageAmount, enemyHitNormal, moveDirection);
     }

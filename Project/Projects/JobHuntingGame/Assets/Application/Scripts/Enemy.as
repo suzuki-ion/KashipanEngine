@@ -16,6 +16,13 @@ class Enemy : ScriptComponentBehavior {
     [SerializeField, Tooltip("エッジセンサーが連続して地面を検知できなかった場合に反転するまでの猶予時間（秒）。継ぎ目をまたぐ一瞬だけセンサーが両方の床の隙間に入ってしまう誤検知を無視するためのもの")]
     float edgeSensorMissTolerance = 0.05f;
 
+    // 他オブジェクトのスクリプトから ScriptComponent.SetVariable(...) で撃破を要求するためのシグナル
+    // （プレイヤーがBox形態で踏んだ時、Cone形態で刺さった時など、自分自身の衝突判定を経由しない
+    // 撃破手段のために用意している。trueにするとUpdate()冒頭で消費され、通常の踏まれ判定と同じ
+    // 撃破処理が実行される）
+    [SerializeField]
+    bool requestDefeat = false;
+
     // --- 実行時状態（保存不要） ---
     bool isAlive = true;
     bool isCollidingWithPlayer = false;
@@ -63,6 +70,12 @@ class Enemy : ScriptComponentBehavior {
         if (!isAlive) return;
         const float dt = GetDeltaTime() * GetGameSpeed();
 
+        if (requestDefeat) {
+            requestDefeat = false;
+            Defeat();
+            return;
+        }
+
         // ConsumePlayerCollision() 相当（このフレームだけ有効なパルスとして消費する）
         bool playerContact = isCollidingWithPlayer;
         isCollidingWithPlayer = false;
@@ -73,9 +86,7 @@ class Enemy : ScriptComponentBehavior {
         // 横からの接触は法線Yがほぼ0になるため、閾値は負の値と比較しないと横からの
         // 接触まで踏み判定に含まれてしまう）
         if (playerContact && playerHitNormal.y < -playerCollisionThreshold) {
-            isAlive = false;
-            Log(GetOwnerObject().GetName() + " defeated!");
-            GetOwnerObject().SetActive(false);
+            Defeat();
             return;
         }
 
@@ -86,6 +97,12 @@ class Enemy : ScriptComponentBehavior {
         hasGroundContact = false;
         hasEdgeSensorRightContact = false;
         hasEdgeSensorLeftContact = false;
+    }
+
+    void Defeat() {
+        isAlive = false;
+        Log(GetOwnerObject().GetName() + " defeated!");
+        GetOwnerObject().SetActive(false);
     }
 
     // 進行方向の反転判定。

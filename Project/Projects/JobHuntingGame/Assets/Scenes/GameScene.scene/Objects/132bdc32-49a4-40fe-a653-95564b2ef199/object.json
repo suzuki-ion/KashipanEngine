@@ -4,7 +4,7 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+                        "parent": "70ae89eb-57fb-48ba-8043-f0b5bfd6229b",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -32,9 +32,9 @@
         "editorOnly": false,
         "isActive": true,
         "name": "CameraTarget",
-        "objectID": "31c18c4e-9190-42f6-8356-7776f5da87e4",
+        "objectID": "132bdc32-49a4-40fe-a653-95564b2ef199",
         "prefabNodeID": "941401ff-fca7-45ea-9ed3-7b34f17b5c8a",
         "tag": ""
     },
-    "siblingIndex": 3
+    "siblingIndex": 3000
 }

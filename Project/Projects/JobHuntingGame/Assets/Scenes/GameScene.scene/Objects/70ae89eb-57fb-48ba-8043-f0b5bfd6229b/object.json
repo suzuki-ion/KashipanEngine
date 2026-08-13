@@ -129,6 +129,39 @@
             {
                 "data": {
                     "customData": {
+                        "center": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "continuousDetection": false,
+                        "isTrigger": false,
+                        "size": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "syncPosition": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncRotation": true,
+                        "syncScale": [
+                            true,
+                            true,
+                            true
+                        ]
+                    },
+                    "isActive": false,
+                    "priority": 1,
+                    "tag": "GroundBox"
+                },
+                "type": "BoxCollider"
+            },
+            {
+                "data": {
+                    "customData": {
                         "effects": {
                             "echo": {
                                 "delayMs": 500.0,
@@ -263,79 +296,7 @@
                             }
                         },
                         "excludeShapes": [],
-                        "extraComponents": [
-                            {
-                                "data": {
-                                    "customData": {
-                                        "rotate": {
-                                            "w": 1.0,
-                                            "x": 0.0,
-                                            "y": 0.0,
-                                            "z": 0.0
-                                        },
-                                        "scale": {
-                                            "x": 1.0,
-                                            "y": 1.0,
-                                            "z": 1.0
-                                        },
-                                        "translate": {
-                                            "x": 0.0,
-                                            "y": 0.0,
-                                            "z": 0.0
-                                        }
-                                    },
-                                    "isActive": true,
-                                    "priority": 1,
-                                    "tag": ""
-                                },
-                                "type": "Transform"
-                            },
-                            {
-                                "data": {
-                                    "customData": {
-                                        "castShadows": false,
-                                        "color": {
-                                            "w": 1.0,
-                                            "x": 1.0,
-                                            "y": 1.0,
-                                            "z": 1.0
-                                        },
-                                        "decay": 2.0,
-                                        "distance": 10.0,
-                                        "innerAngle": 0.3499999940395355,
-                                        "intensity": 1.0,
-                                        "outerAngle": 0.6000000238418579,
-                                        "radius": 1.0,
-                                        "shadowBias": 1.0,
-                                        "shadowDistance": 100.0,
-                                        "shadowMapResolution": 2048,
-                                        "shadowSoftness": 0.0,
-                                        "sourceDepth": 1.0,
-                                        "sourceHeight": 1.0,
-                                        "sourceLength": 1.0,
-                                        "sourceRadius": 0.5,
-                                        "sourceWidth": 1.0,
-                                        "type": 1
-                                    },
-                                    "isActive": true,
-                                    "priority": 1,
-                                    "tag": ""
-                                },
-                                "type": "Light"
-                            },
-                            {
-                                "data": {
-                                    "customData": {
-                                        "pipelineName": "",
-                                        "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
-                                    },
-                                    "isActive": true,
-                                    "priority": 950,
-                                    "tag": ""
-                                },
-                                "type": "LightRenderer"
-                            }
-                        ],
+                        "extraComponents": [],
                         "fixedSpawnPosition": {
                             "x": 0.0,
                             "y": 0.0,
@@ -520,7 +481,7 @@
         "editorOnly": false,
         "isActive": true,
         "name": "Player",
-        "objectID": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+        "objectID": "70ae89eb-57fb-48ba-8043-f0b5bfd6229b",
         "prefabNodeID": "9c037041-c5ee-4cc4-b429-f1db4a7784a4",
         "tag": ""
     },

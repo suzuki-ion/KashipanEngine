@@ -4,7 +4,7 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+                        "parent": "70ae89eb-57fb-48ba-8043-f0b5bfd6229b",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -77,9 +77,9 @@
         "editorOnly": false,
         "isActive": true,
         "name": "Light Object",
-        "objectID": "e105ce18-5e90-4a21-8354-88c1a9868aa3",
+        "objectID": "f0519379-83c9-4555-b25c-373b9382738f",
         "prefabNodeID": "b0df68f7-43a4-490f-b82f-c03a797a99b4",
         "tag": ""
     },
-    "siblingIndex": 2
+    "siblingIndex": 2000
 }

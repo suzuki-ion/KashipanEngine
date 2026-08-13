@@ -74,6 +74,11 @@
             "value": 0
         },
         {
+            "key": "CheckpointPriority",
+            "type": "Int32",
+            "value": 0
+        },
+        {
             "key": "checkPoint",
             "type": "Vector3",
             "value": {
@@ -81,11 +86,6 @@
                 "y": 0.0,
                 "z": 0.0
             }
-        },
-        {
-            "key": "CheckpointPriority",
-            "type": "Int32",
-            "value": 0
         },
         {
             "key": "CheckpointPosition",

@@ -1,7 +1,10 @@
 # WebView2
 
-プロジェクトランチャー（KashipanHub）のUIをHTML/CSSで描画するために使用しています。
-エンジン本体やゲームの配布物からは参照されません。
+プロジェクトランチャー（KashipanHub）のUIをHTML/CSSで描画するために使用しているほか、
+KashipanEngine本体の起動時スプラッシュ画面（`KashipanEngine/Splash/SplashScreen`）でも
+使用しています。スプラッシュ画面は`KashipanEngine.cpp`の起動処理でエディター/ランタイム
+（`--project`起動）を問わず常に表示されるため、**KashipanEngine.exeを使って配布する
+ゲームにも`WebView2Loader.dll`が同梱されます。**
 
 - 取得元: NuGet `Microsoft.Web.WebView2`
 - バージョン: 1.0.4078.44

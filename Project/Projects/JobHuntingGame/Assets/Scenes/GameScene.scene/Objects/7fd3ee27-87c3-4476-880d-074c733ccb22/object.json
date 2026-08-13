@@ -56,7 +56,7 @@
                                 "followRotationX": false,
                                 "followRotationY": false,
                                 "followRotationZ": false,
-                                "objectID": "1acacda4-8a0b-4b0d-9627-63a60150004d"
+                                "objectID": "132bdc32-49a4-40fe-a653-95564b2ef199"
                             }
                         ],
                         "fovLerpFactor": 0.10000000149011612,
@@ -102,7 +102,7 @@
                             "y": 0.0,
                             "z": 0.0
                         },
-                        "targetObjectID": "31c18c4e-9190-42f6-8356-7776f5da87e4"
+                        "targetObjectID": "132bdc32-49a4-40fe-a653-95564b2ef199"
                     },
                     "isActive": true,
                     "priority": 1,

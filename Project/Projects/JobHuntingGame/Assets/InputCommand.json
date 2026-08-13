@@ -181,6 +181,21 @@
             "threshold": 0.20000000298023224
         }
     ],
+    "PlayerTransformation": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "E",
+            "state": "Trigger"
+        },
+        {
+            "button": "Y",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Trigger"
+        }
+    ],
     "SelectDown": [
         {
             "device": "Keyboard",

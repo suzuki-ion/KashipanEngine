@@ -4,7 +4,7 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+                        "parent": "70ae89eb-57fb-48ba-8043-f0b5bfd6229b",
                         "rotate": {
                             "w": -4.371138828673793e-08,
                             "x": -4.371138828673793e-08,
@@ -77,7 +77,7 @@
         "editorOnly": false,
         "isActive": false,
         "name": "SphereLight",
-        "objectID": "d66f1aa6-012b-46f1-9a57-19b05240dc45",
+        "objectID": "08de22fb-b43b-4b49-92b1-5e36c2d57297",
         "prefabNodeID": "8fabdf67-feff-4eb2-8180-8ce0d2cce55a",
         "tag": ""
     },

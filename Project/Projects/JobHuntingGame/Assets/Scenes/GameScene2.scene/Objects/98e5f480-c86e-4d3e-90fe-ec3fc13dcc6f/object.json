@@ -18,7 +18,7 @@
                         },
                         "translate": {
                             "x": 0.0,
-                            "y": 1.0,
+                            "y": 4.0,
                             "z": -2.4532531561760607e-09
                         }
                     },
@@ -79,7 +79,7 @@
                             },
                             "moveSpeed": 0.5,
                             "movementTargetDistanceMultiplier": 0.5,
-                            "movementTargetObject": "6fc461b6-6dab-420f-aead-121fc61cf4f6",
+                            "movementTargetObject": "31c18c4e-9190-42f6-8356-7776f5da87e4",
                             "movementTargetOffset": {
                                 "x": 0.0,
                                 "y": 0.0,
@@ -125,6 +125,39 @@
                     "tag": "PlayerSphere"
                 },
                 "type": "SphereCollider"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "center": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "continuousDetection": false,
+                        "isTrigger": false,
+                        "size": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "syncPosition": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncRotation": true,
+                        "syncScale": [
+                            true,
+                            true,
+                            true
+                        ]
+                    },
+                    "isActive": false,
+                    "priority": 1,
+                    "tag": "GroundBox"
+                },
+                "type": "BoxCollider"
             },
             {
                 "data": {
@@ -420,6 +453,7 @@
             {
                 "data": {
                     "customData": {
+                        "allowInstancing": true,
                         "castShadows": true,
                         "instanceColor": {
                             "w": 1.0,
@@ -433,6 +467,7 @@
                             "EntityMaterial"
                         ],
                         "pipelineName": "Object3D.Solid.BlendNormal",
+                        "renderPriority": 0,
                         "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
                     },
                     "isActive": true,

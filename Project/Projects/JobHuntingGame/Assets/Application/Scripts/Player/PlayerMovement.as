@@ -18,6 +18,7 @@ enum PlayerGroundState {
 //   - slideVelocity:   急斜面を滑り落ちる速度
 class PlayerMovement {
     Player@ owner;
+    PlayerTransformation@ transformation;
 
     PlayerGroundState state = PlayerGroundState::Airborne;
     bool wasGrounded = false;           // 直前フレームが接地状態だったか（着地検出用）
@@ -40,8 +41,9 @@ class PlayerMovement {
     Tag audioSourcePlayerLandingTag = Tag("PlayerLanding");
     Tag particleSystemPlayerLandingTag = Tag("PlayerLanding");
 
-    PlayerMovement(Player@ inOwner) {
+    PlayerMovement(Player@ inOwner, PlayerTransformation@ inTransformation) {
         @owner = inOwner;
+        @transformation = inTransformation;
     }
 
     bool IsGrounded() const {
@@ -68,7 +70,7 @@ class PlayerMovement {
         const bool grounded = (airborneTime <= owner.groundedGraceTime);
         const PlayerGroundState newState = !grounded
             ? PlayerGroundState::Airborne
-            : (isOnSteepSlopeContact ? PlayerGroundState::Sliding : PlayerGroundState::Grounded);
+            : ((isOnSteepSlopeContact && transformation.CanSlide()) ? PlayerGroundState::Sliding : PlayerGroundState::Grounded);
 
         // 落下中（velocity.y <= 0）に接地した場合のみ着地として扱う
         // （猶予時間で接地状態が安定しているため、坂道・動く床での瞬断では再発火しない）
@@ -197,6 +199,15 @@ class PlayerMovement {
         velocity = Vector3(0.0f, 0.0f, 0.0f);
         slideVelocity = Vector3(0.0f, 0.0f, 0.0f);
         surfaceVelocity = Vector3(0.0f, 0.0f, 0.0f);
+    }
+
+    // Cone形態の刺さり解除など、外部要因で速度を強制的に上書きして空中状態へ遷移させる
+    void ApplyExternalVelocity(const Vector3 &in newVelocity) {
+        ResetVelocities();
+        velocity = newVelocity;
+        state = PlayerGroundState::Airborne;
+        airborneTime = owner.groundedGraceTime + 1.0f;
+        hasGroundContact = false;
     }
 
     // 速度ベクトルvから、surfaceNormal方向へ侵入する成分だけを取り除いたものを返す

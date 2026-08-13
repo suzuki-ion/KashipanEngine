@@ -20,7 +20,7 @@
                                 },
                                 "translate": {
                                     "x": 0.0,
-                                    "y": 1.0,
+                                    "y": 4.0,
                                     "z": -2.4532531561760607e-09
                                 }
                             },
@@ -115,11 +115,7 @@
                                     true,
                                     true
                                 ],
-                                "syncRotation": [
-                                    true,
-                                    true,
-                                    true
-                                ],
+                                "syncRotation": true,
                                 "syncScale": [
                                     true,
                                     true,
@@ -131,6 +127,39 @@
                             "tag": "PlayerSphere"
                         },
                         "type": "SphereCollider"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "center": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "continuousDetection": false,
+                                "isTrigger": false,
+                                "size": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "syncPosition": [
+                                    true,
+                                    true,
+                                    true
+                                ],
+                                "syncRotation": true,
+                                "syncScale": [
+                                    true,
+                                    true,
+                                    true
+                                ]
+                            },
+                            "isActive": false,
+                            "priority": 1,
+                            "tag": "GroundBox"
+                        },
+                        "type": "BoxCollider"
                     },
                     {
                         "data": {
@@ -268,12 +297,32 @@
                                         "z": 0.0
                                     }
                                 },
+                                "excludeShapes": [],
+                                "extraComponents": [],
                                 "fixedSpawnPosition": {
                                     "x": 0.0,
                                     "y": 0.0,
                                     "z": 0.0
                                 },
                                 "gpuSimulation": false,
+                                "includeShapes": [
+                                    {
+                                        "boxSize": {
+                                            "x": 1.0,
+                                            "y": 1.0,
+                                            "z": 1.0
+                                        },
+                                        "capsuleHeight": 1.0,
+                                        "capsuleRadius": 0.5,
+                                        "center": {
+                                            "x": 0.0,
+                                            "y": -0.5,
+                                            "z": 0.0
+                                        },
+                                        "sphereRadius": 0.10000000149011612,
+                                        "type": 2
+                                    }
+                                ],
                                 "initialRotation": {
                                     "max": {
                                         "x": 360.0,
@@ -358,25 +407,6 @@
                                         "z": 0.0
                                     }
                                 },
-                                "spawnBoxSizeMax": {
-                                    "x": 1.0,
-                                    "y": 1.0,
-                                    "z": 1.0
-                                },
-                                "spawnBoxSizeMin": {
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "spawnCapsuleHeightMax": 0.10000000149011612,
-                                "spawnCapsuleHeightMin": 0.0,
-                                "spawnCapsuleRadiusMax": 0.5,
-                                "spawnCapsuleRadiusMin": 0.49000000953674316,
-                                "spawnCenter": {
-                                    "x": 0.0,
-                                    "y": -0.5,
-                                    "z": 0.0
-                                },
                                 "spawnCount": {
                                     "max": 16,
                                     "min": 8,
@@ -385,9 +415,6 @@
                                 },
                                 "spawnOrigin": 2,
                                 "spawnParentObjectID": "450287e5-7742-4091-9abf-809076327207",
-                                "spawnShape": 2,
-                                "spawnSphereRadiusMax": 0.10000000149011612,
-                                "spawnSphereRadiusMin": 0.0,
                                 "startScale": {
                                     "max": {
                                         "x": 1.0,
@@ -418,6 +445,7 @@
                     {
                         "data": {
                             "customData": {
+                                "allowInstancing": true,
                                 "castShadows": true,
                                 "instanceColor": {
                                     "w": 1.0,
@@ -431,6 +459,7 @@
                                     "EntityMaterial"
                                 ],
                                 "pipelineName": "Object3D.Solid.BlendNormal",
+                                "renderPriority": 0,
                                 "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
                             },
                             "isActive": true,
@@ -443,7 +472,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Player",
-                "objectID": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+                "objectID": "70ae89eb-57fb-48ba-8043-f0b5bfd6229b",
                 "prefabNodeID": "9c037041-c5ee-4cc4-b429-f1db4a7784a4",
                 "tag": ""
             },
@@ -455,7 +484,7 @@
                     {
                         "data": {
                             "customData": {
-                                "parent": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+                                "parent": "70ae89eb-57fb-48ba-8043-f0b5bfd6229b",
                                 "rotate": {
                                     "w": -4.371138828673793e-08,
                                     "x": -4.371138828673793e-08,
@@ -528,7 +557,7 @@
                 "editorOnly": false,
                 "isActive": false,
                 "name": "SphereLight",
-                "objectID": "d66f1aa6-012b-46f1-9a57-19b05240dc45",
+                "objectID": "08de22fb-b43b-4b49-92b1-5e36c2d57297",
                 "prefabNodeID": "8fabdf67-feff-4eb2-8180-8ce0d2cce55a",
                 "tag": ""
             },
@@ -540,7 +569,7 @@
                     {
                         "data": {
                             "customData": {
-                                "parent": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+                                "parent": "70ae89eb-57fb-48ba-8043-f0b5bfd6229b",
                                 "rotate": {
                                     "w": 1.0,
                                     "x": 0.0,
@@ -568,7 +597,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "LandingParticlePos",
-                "objectID": "450287e5-7742-4091-9abf-809076327207",
+                "objectID": "8e3d59f6-9977-47db-890f-945536712076",
                 "prefabNodeID": "321d0596-59ff-486d-adbb-672b0b32862f",
                 "tag": ""
             },
@@ -580,7 +609,7 @@
                     {
                         "data": {
                             "customData": {
-                                "parent": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+                                "parent": "70ae89eb-57fb-48ba-8043-f0b5bfd6229b",
                                 "rotate": {
                                     "w": 1.0,
                                     "x": 0.0,
@@ -653,7 +682,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "Light Object",
-                "objectID": "e105ce18-5e90-4a21-8354-88c1a9868aa3",
+                "objectID": "f0519379-83c9-4555-b25c-373b9382738f",
                 "prefabNodeID": "b0df68f7-43a4-490f-b82f-c03a797a99b4",
                 "tag": ""
             },
@@ -665,7 +694,7 @@
                     {
                         "data": {
                             "customData": {
-                                "parent": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+                                "parent": "70ae89eb-57fb-48ba-8043-f0b5bfd6229b",
                                 "rotate": {
                                     "w": 1.0,
                                     "x": 0.0,
@@ -693,7 +722,7 @@
                 "editorOnly": false,
                 "isActive": true,
                 "name": "CameraTarget",
-                "objectID": "31c18c4e-9190-42f6-8356-7776f5da87e4",
+                "objectID": "132bdc32-49a4-40fe-a653-95564b2ef199",
                 "prefabNodeID": "941401ff-fca7-45ea-9ed3-7b34f17b5c8a",
                 "tag": ""
             },

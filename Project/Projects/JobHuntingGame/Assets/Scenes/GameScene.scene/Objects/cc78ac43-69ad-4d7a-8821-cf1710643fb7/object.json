@@ -50,7 +50,8 @@
                             "maxFallSpeed": 16.0,
                             "moveDirection": 1.0,
                             "moveSpeed": 2.0,
-                            "playerCollisionThreshold": 0.6000000238418579
+                            "playerCollisionThreshold": 0.6000000238418579,
+                            "requestDefeat": false
                         },
                         "scriptPath": "Assets\\Application\\Scripts\\Enemy.as"
                     },

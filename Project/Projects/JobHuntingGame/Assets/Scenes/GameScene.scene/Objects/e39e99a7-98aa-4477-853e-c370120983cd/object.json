@@ -32,7 +32,7 @@
                     "customData": {
                         "fields": {
                             "cameraObject": "7fd3ee27-87c3-4476-880d-074c733ccb22",
-                            "playerObject": "1acacda4-8a0b-4b0d-9627-63a60150004d",
+                            "playerObject": "70ae89eb-57fb-48ba-8043-f0b5bfd6229b",
                             "screenObject": "85df0137-8c99-4ccc-af31-59951bbae199"
                         },
                         "scriptPath": "Assets\\Application\\Scripts\\PostEffectController.as"

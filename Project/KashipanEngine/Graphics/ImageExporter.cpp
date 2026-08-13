@@ -59,7 +59,11 @@ bool ImageExporter::SaveTextureToFile(ID3D12CommandQueue *commandQueue, ID3D12Re
     std::error_code ec;
     std::filesystem::create_directories(path.parent_path(), ec);
 
-    hr = DirectX::SaveToWICFile(*img, DirectX::WIC_FLAGS_NONE, containerFormat, path.c_str());
+    // ScreenBufferの画素値は画面表示用のsRGBとして扱われている。一方、UNORM形式のまま
+    // WIC_FLAGS_NONEで保存するとDirectXTexはPNGへgamma=1.0（線形）のメタデータを書き込み、
+    // 色管理の有無によってビューア間で明るさが変わる。画素値は変換せず、出力の色空間だけを
+    // sRGBとして明示して解釈を統一する（JPEGでは対応するEXIF色空間が設定される）。
+    hr = DirectX::SaveToWICFile(*img, DirectX::WIC_FLAGS_FORCE_SRGB, containerFormat, path.c_str());
     if (FAILED(hr)) {
         Log(Translation("engine.imageexporter.failed.save") + filePath, LogSeverity::Warning);
         return false;

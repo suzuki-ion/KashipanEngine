@@ -100,6 +100,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Ground",
         "objectID": "9641ce6d-0e1f-4ac0-919e-ba9d102a3138",

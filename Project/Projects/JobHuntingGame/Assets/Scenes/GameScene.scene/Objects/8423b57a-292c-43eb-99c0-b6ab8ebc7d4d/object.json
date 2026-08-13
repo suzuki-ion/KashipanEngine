@@ -75,6 +75,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Text Object",
         "objectID": "8423b57a-292c-43eb-99c0-b6ab8ebc7d4d",

@@ -67,6 +67,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Axis",
         "objectID": "13fe465d-7ffa-4225-8b2e-d24127d077da",

@@ -256,6 +256,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Enemy",
         "objectID": "2693a87c-038c-470e-89f0-e989268f8517",

@@ -67,6 +67,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Cilinder",
         "objectID": "027971c3-5c56-4702-9cb4-553561677402",

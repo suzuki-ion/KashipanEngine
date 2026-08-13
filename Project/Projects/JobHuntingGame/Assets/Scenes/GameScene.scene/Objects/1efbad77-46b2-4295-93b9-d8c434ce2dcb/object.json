@@ -60,6 +60,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Camera 2D Object",
         "objectID": "1efbad77-46b2-4295-93b9-d8c434ce2dcb",

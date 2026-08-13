@@ -71,17 +71,17 @@
                                     "maxSlideSpeed": 32.0,
                                     "maxVelocity": {
                                         "x": 8.0,
-                                        "y": 128.0,
+                                        "y": 32.0,
                                         "z": 8.0
                                     },
                                     "minVelocity": {
                                         "x": -8.0,
-                                        "y": -128.0,
+                                        "y": -32.0,
                                         "z": -8.0
                                     },
                                     "moveSpeed": 0.5,
                                     "movementTargetDistanceMultiplier": 0.5,
-                                    "movementTargetObject": "31c18c4e-9190-42f6-8356-7776f5da87e4",
+                                    "movementTargetObject": "132bdc32-49a4-40fe-a653-95564b2ef199",
                                     "movementTargetOffset": {
                                         "x": 0.0,
                                         "y": 0.0,
@@ -107,7 +107,7 @@
                                     "y": 0.0,
                                     "z": 0.0
                                 },
-                                "continuousDetection": false,
+                                "continuousDetection": true,
                                 "isTrigger": false,
                                 "radius": 0.5,
                                 "syncPosition": [
@@ -470,6 +470,7 @@
                     }
                 ],
                 "editorOnly": false,
+                "hiddenFromEditorTarget": false,
                 "isActive": true,
                 "name": "Player",
                 "objectID": "70ae89eb-57fb-48ba-8043-f0b5bfd6229b",
@@ -555,6 +556,7 @@
                     }
                 ],
                 "editorOnly": false,
+                "hiddenFromEditorTarget": false,
                 "isActive": false,
                 "name": "SphereLight",
                 "objectID": "08de22fb-b43b-4b49-92b1-5e36c2d57297",
@@ -595,6 +597,7 @@
                     }
                 ],
                 "editorOnly": false,
+                "hiddenFromEditorTarget": false,
                 "isActive": true,
                 "name": "LandingParticlePos",
                 "objectID": "8e3d59f6-9977-47db-890f-945536712076",
@@ -680,6 +683,7 @@
                     }
                 ],
                 "editorOnly": false,
+                "hiddenFromEditorTarget": false,
                 "isActive": true,
                 "name": "Light Object",
                 "objectID": "f0519379-83c9-4555-b25c-373b9382738f",
@@ -720,6 +724,7 @@
                     }
                 ],
                 "editorOnly": false,
+                "hiddenFromEditorTarget": false,
                 "isActive": true,
                 "name": "CameraTarget",
                 "objectID": "132bdc32-49a4-40fe-a653-95564b2ef199",

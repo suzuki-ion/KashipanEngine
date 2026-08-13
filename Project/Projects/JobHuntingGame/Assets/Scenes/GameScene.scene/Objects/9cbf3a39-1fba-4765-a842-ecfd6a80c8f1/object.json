@@ -67,6 +67,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Box",
         "objectID": "9cbf3a39-1fba-4765-a842-ecfd6a80c8f1",

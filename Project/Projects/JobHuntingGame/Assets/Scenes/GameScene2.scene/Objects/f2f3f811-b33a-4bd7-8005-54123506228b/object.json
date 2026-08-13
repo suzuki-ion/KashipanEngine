@@ -30,6 +30,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "LandingParticlePos",
         "objectID": "f2f3f811-b33a-4bd7-8005-54123506228b",

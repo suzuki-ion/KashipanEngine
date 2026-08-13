@@ -62,6 +62,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Window Object",
         "objectID": "8c03d6b4-5450-42fd-812c-f025af3e6b04",

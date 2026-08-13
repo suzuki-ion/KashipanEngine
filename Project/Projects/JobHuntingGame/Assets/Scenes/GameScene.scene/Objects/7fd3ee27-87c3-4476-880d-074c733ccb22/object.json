@@ -128,6 +128,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Camera",
         "objectID": "7fd3ee27-87c3-4476-880d-074c733ccb22",

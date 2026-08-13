@@ -30,6 +30,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "CameraTarget",
         "objectID": "6fc461b6-6dab-420f-aead-121fc61cf4f6",

@@ -30,6 +30,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "FluorescentLightObject",
         "objectID": "b7001a0a-49d6-429e-8855-9aa1a9954bf9",

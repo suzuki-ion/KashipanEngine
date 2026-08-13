@@ -129,6 +129,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "RotateGround",
         "objectID": "976c6ece-a53a-4e94-94f2-fe67a84279a8",

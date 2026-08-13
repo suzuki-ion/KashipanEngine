@@ -77,6 +77,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "CheckPoint",
         "objectID": "807aca86-103b-4a27-a14a-4bd222e0fea2",

@@ -67,6 +67,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Mesh Object",
         "objectID": "cee2de64-5705-4d45-aeed-5e01b06a2abc",

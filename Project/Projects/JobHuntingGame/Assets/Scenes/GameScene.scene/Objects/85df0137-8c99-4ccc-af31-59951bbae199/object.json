@@ -55,7 +55,7 @@
                         "thresholdMin": 0.0010000000474974513
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 2,
                     "tag": ""
                 },
                 "type": "FXAAEffect"
@@ -66,11 +66,11 @@
                         "excludedScreenBuffers": [],
                         "intensity": 1.0,
                         "maxBlurPixels": 32.0,
-                        "samples": 16,
+                        "samples": 8,
                         "velocityScale": 1.0
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 3,
                     "tag": ""
                 },
                 "type": "MotionBlurEffect"
@@ -88,7 +88,7 @@
                         "sampleCount": 16
                     },
                     "isActive": true,
-                    "priority": 3,
+                    "priority": 4,
                     "tag": ""
                 },
                 "type": "DepthOfFieldEffect"
@@ -106,30 +106,10 @@
                         "sampleCount": 16
                     },
                     "isActive": true,
-                    "priority": 4,
-                    "tag": ""
-                },
-                "type": "AmbientOcclusionEffect"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "brightness": 0.10000000149011612,
-                        "colorBalance": [
-                            0.0,
-                            0.0,
-                            0.0
-                        ],
-                        "contrast": 1.0,
-                        "excludedScreenBuffers": [],
-                        "saturation": 1.0,
-                        "temperature": 0.0
-                    },
-                    "isActive": true,
                     "priority": 5,
                     "tag": ""
                 },
-                "type": "ColorAdjustEffect"
+                "type": "AmbientOcclusionEffect"
             },
             {
                 "data": {
@@ -186,9 +166,30 @@
                     "tag": ""
                 },
                 "type": "VignetteEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "brightness": 0.10000000149011612,
+                        "colorBalance": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "contrast": 1.0,
+                        "excludedScreenBuffers": [],
+                        "saturation": 1.0,
+                        "temperature": 0.0
+                    },
+                    "isActive": true,
+                    "priority": 9,
+                    "tag": ""
+                },
+                "type": "ColorAdjustEffect"
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "MainScreen",
         "objectID": "85df0137-8c99-4ccc-af31-59951bbae199",

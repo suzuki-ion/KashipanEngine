@@ -75,6 +75,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": false,
         "name": "SphereLight",
         "objectID": "c21420ab-2315-4d20-9a86-3f71d7dbb5f0",

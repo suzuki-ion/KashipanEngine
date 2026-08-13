@@ -296,7 +296,7 @@
                             "CheckPoint"
                         ],
                         "pipelineName": "Object3D.Solid.BlendNormal",
-                        "renderPriority": 0,
+                        "renderPriority": 1000,
                         "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
                     },
                     "isActive": true,
@@ -307,6 +307,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Mesh Object",
         "objectID": "34acfa47-5cf4-4d2c-91f7-6aa3c7a33510",

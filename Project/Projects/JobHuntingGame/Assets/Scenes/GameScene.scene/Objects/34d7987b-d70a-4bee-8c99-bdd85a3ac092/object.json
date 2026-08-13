@@ -87,6 +87,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "GoalObject",
         "objectID": "34d7987b-d70a-4bee-8c99-bdd85a3ac092",

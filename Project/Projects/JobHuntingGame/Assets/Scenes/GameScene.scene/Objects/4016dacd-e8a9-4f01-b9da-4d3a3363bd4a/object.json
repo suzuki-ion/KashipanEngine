@@ -350,6 +350,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "TeleporterObject",
         "objectID": "4016dacd-e8a9-4f01-b9da-4d3a3363bd4a",

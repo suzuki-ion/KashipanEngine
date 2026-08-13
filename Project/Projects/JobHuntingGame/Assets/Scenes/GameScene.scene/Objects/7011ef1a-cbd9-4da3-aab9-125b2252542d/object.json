@@ -256,6 +256,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "TeloeportPos",
         "objectID": "7011ef1a-cbd9-4da3-aab9-125b2252542d",

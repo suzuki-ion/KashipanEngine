@@ -69,12 +69,12 @@
                             "maxSlideSpeed": 32.0,
                             "maxVelocity": {
                                 "x": 8.0,
-                                "y": 128.0,
+                                "y": 32.0,
                                 "z": 8.0
                             },
                             "minVelocity": {
                                 "x": -8.0,
-                                "y": -128.0,
+                                "y": -32.0,
                                 "z": -8.0
                             },
                             "moveSpeed": 0.5,
@@ -105,7 +105,7 @@
                             "y": 0.0,
                             "z": 0.0
                         },
-                        "continuousDetection": false,
+                        "continuousDetection": true,
                         "isTrigger": false,
                         "radius": 0.5,
                         "syncPosition": [
@@ -479,6 +479,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Player",
         "objectID": "70ae89eb-57fb-48ba-8043-f0b5bfd6229b",

@@ -290,6 +290,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Goal",
         "objectID": "66779b41-4774-4de5-be40-a882e63feea6",

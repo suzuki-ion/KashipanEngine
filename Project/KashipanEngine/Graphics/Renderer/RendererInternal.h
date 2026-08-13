@@ -73,7 +73,8 @@ struct MultiPassDitherScratchSet {
 
 // gMaterials（Object3D/Object2D/Text2D/Text3D）はBuildMaterialElementBytes（本ファイル下部）で
 // パイプラインのMaterialLayoutに従って汎用的にパックするため、専用の固定構造体は持たない
-// （Text用のinstanceColor/uvRect/boldWeight/アウトライン値もDrawBatch側で書き込まれる）
+// （Text用のinstanceColor/uvRect/boldWeight/アウトライン値、および旧シェーダー互換の
+// characterColorもDrawBatch側で書き込まれる）
 
 /// @brief gPointLights 構造化バッファと同レイアウトの構造体
 #pragma pack(push, 4)

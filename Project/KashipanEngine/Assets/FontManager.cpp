@@ -2,9 +2,11 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <cstring>
 #include <filesystem>
 #include <functional>
+#include <limits>
 #include <unordered_map>
 #include <wrl.h>
 
@@ -38,8 +40,194 @@ constexpr int kSdfPadding = static_cast<int>(FontManager::kSdfPixelRange);
 constexpr unsigned char kSdfOnEdgeValue = 128;
 /// @brief 下線・取り消し線描画用の合成グリフ（常にベタ塗り）の一辺サイズ
 constexpr std::uint32_t kSolidGlyphSize = 8;
+/// @brief 線形補間時に隣接グリフの値が混入しないよう、各グリフの外周へ確保する透明テクセル数
+constexpr std::uint32_t kAtlasGlyphGutter = 1;
 /// @brief アトラスサイズの上限（これ以上は拡張しない）
 constexpr std::uint32_t kMaxAtlasSize = 4096;
+
+/// @brief stb_truetypeの標準SDF生成は3次ベジェ（CFF/OpenType）を距離・内外判定の
+///        対象にしていないため、CFFグリフ用に輪郭を十分細かい線分へ変換してSDFを作る。
+struct SdfPoint final {
+    float x = 0.0f;
+    float y = 0.0f;
+};
+
+struct SdfLine final {
+    SdfPoint begin;
+    SdfPoint end;
+};
+
+float PointToLineDistanceSquared(const SdfPoint &point, const SdfPoint &begin, const SdfPoint &end) {
+    const float dx = end.x - begin.x;
+    const float dy = end.y - begin.y;
+    const float lengthSquared = dx * dx + dy * dy;
+    if (lengthSquared <= 1.0e-12f) {
+        const float px = point.x - begin.x;
+        const float py = point.y - begin.y;
+        return px * px + py * py;
+    }
+    const float t = std::clamp(((point.x - begin.x) * dx + (point.y - begin.y) * dy) / lengthSquared, 0.0f, 1.0f);
+    const float px = begin.x + dx * t - point.x;
+    const float py = begin.y + dy * t - point.y;
+    return px * px + py * py;
+}
+
+SdfPoint Midpoint(const SdfPoint &a, const SdfPoint &b) {
+    return SdfPoint{ (a.x + b.x) * 0.5f, (a.y + b.y) * 0.5f };
+}
+
+void FlattenQuadratic(const SdfPoint &p0, const SdfPoint &p1, const SdfPoint &p2,
+    std::vector<SdfLine> &lines, int depth = 0) {
+    constexpr float kFlatnessSquared = 0.20f * 0.20f;
+    constexpr int kMaxDepth = 10;
+    if (depth >= kMaxDepth || PointToLineDistanceSquared(p1, p0, p2) <= kFlatnessSquared) {
+        lines.push_back(SdfLine{ p0, p2 });
+        return;
+    }
+    const SdfPoint p01 = Midpoint(p0, p1);
+    const SdfPoint p12 = Midpoint(p1, p2);
+    const SdfPoint p012 = Midpoint(p01, p12);
+    FlattenQuadratic(p0, p01, p012, lines, depth + 1);
+    FlattenQuadratic(p012, p12, p2, lines, depth + 1);
+}
+
+void FlattenCubic(const SdfPoint &p0, const SdfPoint &p1, const SdfPoint &p2, const SdfPoint &p3,
+    std::vector<SdfLine> &lines, int depth = 0) {
+    constexpr float kFlatnessSquared = 0.20f * 0.20f;
+    constexpr int kMaxDepth = 10;
+    const float controlDistanceSquared = std::max(
+        PointToLineDistanceSquared(p1, p0, p3), PointToLineDistanceSquared(p2, p0, p3));
+    if (depth >= kMaxDepth || controlDistanceSquared <= kFlatnessSquared) {
+        lines.push_back(SdfLine{ p0, p3 });
+        return;
+    }
+    const SdfPoint p01 = Midpoint(p0, p1);
+    const SdfPoint p12 = Midpoint(p1, p2);
+    const SdfPoint p23 = Midpoint(p2, p3);
+    const SdfPoint p012 = Midpoint(p01, p12);
+    const SdfPoint p123 = Midpoint(p12, p23);
+    const SdfPoint p0123 = Midpoint(p012, p123);
+    FlattenCubic(p0, p01, p012, p0123, lines, depth + 1);
+    FlattenCubic(p0123, p123, p23, p3, lines, depth + 1);
+}
+
+bool SamePoint(const SdfPoint &a, const SdfPoint &b) {
+    return a.x == b.x && a.y == b.y;
+}
+
+/// @brief 3次ベジェを含むグリフ輪郭からSDFを生成する
+/// @return 3次ベジェを含まない場合、または空グリフの場合は空配列
+std::vector<unsigned char> BuildCubicGlyphSdf(const stbtt_fontinfo *info, float scale, int glyph,
+    int padding, unsigned char onEdgeValue, float pixelDistScale,
+    int &width, int &height, int &xoff, int &yoff) {
+    stbtt_vertex *vertices = nullptr;
+    const int vertexCount = stbtt_GetGlyphShape(info, glyph, &vertices);
+    if (!vertices || vertexCount <= 0) return {};
+
+    bool containsCubic = false;
+    for (int i = 0; i < vertexCount; ++i) {
+        if (vertices[i].type == STBTT_vcubic) {
+            containsCubic = true;
+            break;
+        }
+    }
+    if (!containsCubic) {
+        stbtt_FreeShape(info, vertices);
+        return {};
+    }
+
+    int ix0 = 0, iy0 = 0, ix1 = 0, iy1 = 0;
+    stbtt_GetGlyphBitmapBoxSubpixel(info, glyph, scale, scale, 0.0f, 0.0f, &ix0, &iy0, &ix1, &iy1);
+    if (ix0 == ix1 || iy0 == iy1) {
+        stbtt_FreeShape(info, vertices);
+        return {};
+    }
+    ix0 -= padding;
+    iy0 -= padding;
+    ix1 += padding;
+    iy1 += padding;
+    width = ix1 - ix0;
+    height = iy1 - iy0;
+    xoff = ix0;
+    yoff = iy0;
+
+    const auto toPixelPoint = [scale](short x, short y) {
+        return SdfPoint{ static_cast<float>(x) * scale, -static_cast<float>(y) * scale };
+    };
+
+    std::vector<SdfLine> lines;
+    lines.reserve(static_cast<size_t>(vertexCount) * 3);
+    SdfPoint contourStart{};
+    SdfPoint current{};
+    bool contourOpen = false;
+    const auto closeContour = [&] {
+        if (contourOpen && !SamePoint(current, contourStart)) {
+            lines.push_back(SdfLine{ current, contourStart });
+        }
+    };
+
+    for (int i = 0; i < vertexCount; ++i) {
+        const stbtt_vertex &vertex = vertices[i];
+        const SdfPoint end = toPixelPoint(vertex.x, vertex.y);
+        switch (vertex.type) {
+            case STBTT_vmove:
+                closeContour();
+                contourStart = end;
+                current = end;
+                contourOpen = true;
+                break;
+            case STBTT_vline:
+                if (contourOpen) lines.push_back(SdfLine{ current, end });
+                current = end;
+                break;
+            case STBTT_vcurve:
+                if (contourOpen) {
+                    FlattenQuadratic(current, toPixelPoint(vertex.cx, vertex.cy), end, lines);
+                }
+                current = end;
+                break;
+            case STBTT_vcubic:
+                if (contourOpen) {
+                    FlattenCubic(current, toPixelPoint(vertex.cx, vertex.cy),
+                        toPixelPoint(vertex.cx1, vertex.cy1), end, lines);
+                }
+                current = end;
+                break;
+            default:
+                break;
+        }
+    }
+    closeContour();
+    stbtt_FreeShape(info, vertices);
+    if (lines.empty()) return {};
+
+    std::vector<unsigned char> sdf(static_cast<size_t>(width) * height);
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            const SdfPoint sample{ static_cast<float>(ix0 + x) + 0.5f, static_cast<float>(iy0 + y) + 0.5f };
+            float minDistanceSquared = std::numeric_limits<float>::max();
+            int winding = 0;
+            for (const auto &line : lines) {
+                minDistanceSquared = std::min(minDistanceSquared,
+                    PointToLineDistanceSquared(sample, line.begin, line.end));
+
+                const float cross = (line.end.x - line.begin.x) * (sample.y - line.begin.y) -
+                    (sample.x - line.begin.x) * (line.end.y - line.begin.y);
+                if (line.begin.y <= sample.y) {
+                    if (line.end.y > sample.y && cross > 0.0f) ++winding;
+                } else if (line.end.y <= sample.y && cross < 0.0f) {
+                    --winding;
+                }
+            }
+
+            float distance = std::sqrt(minDistanceSquared);
+            if (winding == 0) distance = -distance;
+            const float value = std::clamp(static_cast<float>(onEdgeValue) + pixelDistScale * distance, 0.0f, 255.0f);
+            sdf[static_cast<size_t>(y) * width + x] = static_cast<unsigned char>(value);
+        }
+    }
+    return sdf;
+}
 
 class AtlasTextureView;
 
@@ -404,10 +592,19 @@ const FontManager::GlyphInfo *FontManager::GetOrBakeGlyph(FontHandle handle, cha
 
     const float pixelDistScale = 128.0f / static_cast<float>(kSdfPadding);
     int w = 0, h = 0, xoff = 0, yoff = 0;
-    unsigned char *bitmap = stbtt_GetGlyphSDF(font.info.get(), scale, glyphIndex,
-        kSdfPadding, kSdfOnEdgeValue, pixelDistScale, &w, &h, &xoff, &yoff);
+    // stbtt_GetGlyphSDFはCFF/OpenTypeで使われる3次ベジェを処理しないため、該当グリフのみ
+    // 自前の輪郭平坦化SDFへ切り替える。TTF（直線・2次ベジェ）は従来経路を維持する。
+    std::vector<unsigned char> cubicSdf = BuildCubicGlyphSdf(font.info.get(), scale, glyphIndex,
+        kSdfPadding, kSdfOnEdgeValue, pixelDistScale, w, h, xoff, yoff);
+    unsigned char *stbSdf = nullptr;
+    const unsigned char *bitmap = cubicSdf.data();
+    if (cubicSdf.empty()) {
+        stbSdf = stbtt_GetGlyphSDF(font.info.get(), scale, glyphIndex,
+            kSdfPadding, kSdfOnEdgeValue, pixelDistScale, &w, &h, &xoff, &yoff);
+        bitmap = stbSdf;
+    }
     if (!bitmap || w <= 0 || h <= 0) {
-        if (bitmap) stbtt_FreeSDF(bitmap, nullptr);
+        if (stbSdf) stbtt_FreeSDF(stbSdf, nullptr);
         GlyphInfo info{};
         info.advance = static_cast<float>(advanceWidthUnits) * scale;
         info.isValid = false;
@@ -415,26 +612,32 @@ const FontManager::GlyphInfo *FontManager::GetOrBakeGlyph(FontHandle handle, cha
         return &inserted->second;
     }
 
-    std::uint32_t px = 0, py = 0;
-    while (!PackRect(font, w, h, px, py)) {
+    std::uint32_t packedX = 0, packedY = 0;
+    const int packedWidth = w + static_cast<int>(kAtlasGlyphGutter * 2);
+    const int packedHeight = h + static_cast<int>(kAtlasGlyphGutter * 2);
+    while (!PackRect(font, packedWidth, packedHeight, packedX, packedY)) {
         if (font.atlasSize >= kMaxAtlasSize) {
-            stbtt_FreeSDF(bitmap, nullptr);
+            if (stbSdf) stbtt_FreeSDF(stbSdf, nullptr);
             return nullptr;
         }
         GrowAtlas(font);
     }
+    const std::uint32_t px = packedX + kAtlasGlyphGutter;
+    const std::uint32_t py = packedY + kAtlasGlyphGutter;
 
     for (int y = 0; y < h; ++y) {
         std::memcpy(&font.atlasPixels[(py + static_cast<std::uint32_t>(y)) * font.atlasSize + px],
             bitmap + static_cast<size_t>(y) * w, static_cast<size_t>(w));
     }
-    stbtt_FreeSDF(bitmap, nullptr);
+    if (stbSdf) stbtt_FreeSDF(stbSdf, nullptr);
 
     GlyphInfo info;
-    info.u0 = static_cast<float>(px) / static_cast<float>(font.atlasSize);
-    info.v0 = static_cast<float>(py) / static_cast<float>(font.atlasSize);
-    info.u1 = static_cast<float>(px + static_cast<std::uint32_t>(w)) / static_cast<float>(font.atlasSize);
-    info.v1 = static_cast<float>(py + static_cast<std::uint32_t>(h)) / static_cast<float>(font.atlasSize);
+    // UV端をテクセル境界ではなく先頭/末尾テクセルの中心へ合わせる。線形補間がガターを越えて
+    // 隣接グリフを参照することを防ぎ、矩形の左上等に細い線が出るブリーディングを抑止する。
+    info.u0 = (static_cast<float>(px) + 0.5f) / static_cast<float>(font.atlasSize);
+    info.v0 = (static_cast<float>(py) + 0.5f) / static_cast<float>(font.atlasSize);
+    info.u1 = (static_cast<float>(px + static_cast<std::uint32_t>(w)) - 0.5f) / static_cast<float>(font.atlasSize);
+    info.v1 = (static_cast<float>(py + static_cast<std::uint32_t>(h)) - 0.5f) / static_cast<float>(font.atlasSize);
     info.width = static_cast<float>(w);
     info.height = static_cast<float>(h);
     info.xoff = static_cast<float>(xoff);
@@ -454,20 +657,23 @@ const FontManager::GlyphInfo *FontManager::GetSolidGlyph(FontHandle handle) {
     FontEntry &font = it->second;
     if (font.hasSolidGlyph) return &font.solidGlyph;
 
-    std::uint32_t px = 0, py = 0;
-    while (!PackRect(font, static_cast<int>(kSolidGlyphSize), static_cast<int>(kSolidGlyphSize), px, py)) {
+    std::uint32_t packedX = 0, packedY = 0;
+    const auto packedSize = static_cast<int>(kSolidGlyphSize + kAtlasGlyphGutter * 2);
+    while (!PackRect(font, packedSize, packedSize, packedX, packedY)) {
         if (font.atlasSize >= kMaxAtlasSize) return nullptr;
         GrowAtlas(font);
     }
+    const std::uint32_t px = packedX + kAtlasGlyphGutter;
+    const std::uint32_t py = packedY + kAtlasGlyphGutter;
     for (std::uint32_t y = 0; y < kSolidGlyphSize; ++y) {
         std::memset(&font.atlasPixels[(py + y) * font.atlasSize + px], 0xFF, kSolidGlyphSize);
     }
 
     GlyphInfo info;
-    info.u0 = static_cast<float>(px) / static_cast<float>(font.atlasSize);
-    info.v0 = static_cast<float>(py) / static_cast<float>(font.atlasSize);
-    info.u1 = static_cast<float>(px + kSolidGlyphSize) / static_cast<float>(font.atlasSize);
-    info.v1 = static_cast<float>(py + kSolidGlyphSize) / static_cast<float>(font.atlasSize);
+    info.u0 = (static_cast<float>(px) + 0.5f) / static_cast<float>(font.atlasSize);
+    info.v0 = (static_cast<float>(py) + 0.5f) / static_cast<float>(font.atlasSize);
+    info.u1 = (static_cast<float>(px + kSolidGlyphSize) - 0.5f) / static_cast<float>(font.atlasSize);
+    info.v1 = (static_cast<float>(py + kSolidGlyphSize) - 0.5f) / static_cast<float>(font.atlasSize);
     info.width = static_cast<float>(kSolidGlyphSize);
     info.height = static_cast<float>(kSolidGlyphSize);
     info.xoff = 0.0f;

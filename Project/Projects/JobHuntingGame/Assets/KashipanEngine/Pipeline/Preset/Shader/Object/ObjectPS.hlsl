@@ -9,6 +9,9 @@ struct Material {
 	float4x4 uvTransform;
     float useTexture;
 	float3 padding;
+	float4 instanceColor;
+	float instanceColorBlendMode;
+	float3 instanceColorPadding;
 /*{{ADDITIONAL_MATERIAL_FIELDS_2D}}*/
 };
 #endif
@@ -162,6 +165,17 @@ PSOutput main(VSOutput input) {
 		textureColor = gTexture.Sample(gSampler, transformedUV.xy);
 	}
 	output.color = mat.color * textureColor;
+	// SpriteRenderer単位の色を共有マテリアルの色へ適用する。
+	// 0=Override, 1=Multiply, 2=Add, 3=Subtract（アルファも同じ規則で合成）
+	if (mat.instanceColorBlendMode < 0.5f) {
+		output.color = mat.instanceColor;
+	} else if (mat.instanceColorBlendMode < 1.5f) {
+		output.color *= mat.instanceColor;
+	} else if (mat.instanceColorBlendMode < 2.5f) {
+		output.color += mat.instanceColor;
+	} else {
+		output.color -= mat.instanceColor;
+	}
 	// 選択されたモジュール（例: Vignette2D→ColorGrading2D、優先度順）の合成後処理をここで呼び出す
 	/*{{COMPOSITE_HOOKS_2D}}*/
 	// 選択されたモジュール（例: Dissolve2D）のアルファ処理をここで呼び出す

@@ -27,6 +27,14 @@ namespace KashipanEngine {
 ///          アンカー・ピボットはその単位クアッド内の正規化座標(0,0)=左下 ～ (1,1)=右上で指定する。
 class SpriteRenderer final : public IObjectComponent {
 public:
+    /// @brief インスタンスカラーをマテリアル色へ適用する方法
+    enum class ColorBlendMode : int {
+        Override = 0,
+        Multiply,
+        Add,
+        Subtract
+    };
+
     // pipelineName_/materialName_の直接書き込み時は、セッターと同様に描画リストの再構築
     // （materialName_はハンドルの再解決も）を促す
     OBJECT_COMPONENT_CONSTRUCTOR(SpriteRenderer, 0xFF,
@@ -38,6 +46,8 @@ public:
         });
         ADD_MEMBER_VARIABLE(anchor_);
         ADD_MEMBER_VARIABLE(pivot_);
+        ADD_MEMBER_VARIABLE(instanceColor_);
+        ADD_MEMBER_VARIABLE(instanceColorBlendMode_);
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(renderPriority_, [this] { MarkDrawListDirty(); });
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(allowInstancing_, [this] { MarkDrawListDirty(); });
     )
@@ -53,6 +63,8 @@ public:
         ptr->excludedRenderTargetNames_ = excludedRenderTargetNames_;
         ptr->anchor_ = anchor_;
         ptr->pivot_ = pivot_;
+        ptr->instanceColor_ = instanceColor_;
+        ptr->instanceColorBlendMode_ = instanceColorBlendMode_;
         ptr->renderPriority_ = renderPriority_;
         ptr->allowInstancing_ = allowInstancing_;
         return ptr;
@@ -131,6 +143,17 @@ public:
     ///          別の位置になる。既定値は(0.5,0.5)=中心）
     void SetPivot(const Vector2 &pivot) { pivot_ = pivot; }
     const Vector2 &GetPivot() const noexcept { return pivot_; }
+
+    //==================================================
+    // インスタンスカラー
+    //==================================================
+
+    /// @brief 共有マテリアルを変更せず、このスプライトだけに適用する色を設定する
+    void SetInstanceColor(const Vector4 &color) noexcept { instanceColor_ = color; }
+    const Vector4 &GetInstanceColor() const noexcept { return instanceColor_; }
+    /// @brief インスタンスカラーとマテリアル色の合成方法を設定する
+    void SetInstanceColorBlendMode(ColorBlendMode mode) noexcept { instanceColorBlendMode_ = mode; }
+    ColorBlendMode GetInstanceColorBlendMode() const noexcept { return instanceColorBlendMode_; }
 
     //==================================================
     // 描画順・インスタンシング制御
@@ -244,6 +267,13 @@ protected:
         ImGui::DragFloat2(TranslationLabel("component.spriterenderer.anchor"), &anchor_.x, 0.01f);
         ImGui::DragFloat2(TranslationLabel("component.spriterenderer.pivot"), &pivot_.x, 0.01f);
 
+        ImGui::ColorEdit4(TranslationLabel("component.spriterenderer.instance_color"), &instanceColor_.x);
+        const char *kColorBlendModeLabels[] = { TranslationC("component.common.blendmode.override"), TranslationC("component.common.blendmode.multiply"), TranslationC("component.common.blendmode.add"), TranslationC("component.common.blendmode.subtract") };
+        int blendModeIndex = static_cast<int>(instanceColorBlendMode_);
+        if (ImGui::Combo(TranslationLabel("component.spriterenderer.instance_color_blend_mode"), &blendModeIndex, kColorBlendModeLabels, IM_ARRAYSIZE(kColorBlendModeLabels))) {
+            instanceColorBlendMode_ = static_cast<ColorBlendMode>(blendModeIndex);
+        }
+
         if (ImGui::DragInt(TranslationLabel("component.common.render_priority"), &renderPriority_)) {
             MarkDrawListDirty();
         }
@@ -269,6 +299,8 @@ protected:
         }
         json["anchor"] = ToJSON(anchor_);
         json["pivot"] = ToJSON(pivot_);
+        json["instanceColor"] = ToJSON(instanceColor_);
+        json["instanceColorBlendMode"] = static_cast<int>(instanceColorBlendMode_);
         json["renderPriority"] = renderPriority_;
         json["allowInstancing"] = allowInstancing_;
         return json;
@@ -289,6 +321,8 @@ protected:
         }
         anchor_ = json.contains("anchor") ? FromJSON<Vector2>(json["anchor"]) : Vector2(0.5f, 0.5f);
         pivot_ = json.contains("pivot") ? FromJSON<Vector2>(json["pivot"]) : Vector2(0.5f, 0.5f);
+        instanceColor_ = json.contains("instanceColor") ? FromJSON<Vector4>(json["instanceColor"]) : Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+        instanceColorBlendMode_ = static_cast<ColorBlendMode>(json.value("instanceColorBlendMode", static_cast<int>(ColorBlendMode::Multiply)));
         renderPriority_ = json.value("renderPriority", 0);
         allowInstancing_ = json.value("allowInstancing", true);
         // Undo/Redo等、登録済みのコンポーネントに対してもLoadFromJsonが呼ばれ得るため念のため通知する
@@ -327,6 +361,9 @@ private:
     Vector2 anchor_{ 0.5f, 0.5f };
     /// @brief ピボット（回転・拡縮の中心にするメッシュ上の点。単位クアッド内の正規化座標）
     Vector2 pivot_{ 0.5f, 0.5f };
+    /// @brief オブジェクト単位の色（共有マテリアルは変更せず、このスプライトだけに適用する）
+    Vector4 instanceColor_{ 1.0f, 1.0f, 1.0f, 1.0f };
+    ColorBlendMode instanceColorBlendMode_ = ColorBlendMode::Multiply;
     /// @brief 描画順を制御する優先度（既定0。SceneRenderer::CompareSortableEntry参照）
     int renderPriority_ = 0;
     /// @brief 他のオブジェクトとのインスタンシング（バッチ結合）を許可するか（既定true）

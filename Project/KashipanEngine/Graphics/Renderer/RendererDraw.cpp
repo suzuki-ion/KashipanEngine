@@ -104,6 +104,8 @@ void Renderer::RenderSceneContent(IRenderTarget *target,
                     other.pipelineName != first.pipelineName ||
                     other.meshHandle != first.meshHandle ||
                     other.materialHandle != first.materialHandle ||
+                    other.textureOverrideHandle != first.textureOverrideHandle ||
+                    other.samplerOverrideHandle != first.samplerOverrideHandle ||
                     other.indexStart != first.indexStart ||
                     other.indexCount != first.indexCount ||
                     other.skinnedVertexBuffer != first.skinnedVertexBuffer) {
@@ -167,6 +169,7 @@ void Renderer::DrawBatch(IRenderTarget *target,
         char transformSuffix[48];
         std::snprintf(transformSuffix, sizeof(transformSuffix), "transform|%u", first.indexStart);
         auto key = MakeBatchKey(target, pipelineName, first.meshHandle, first.materialHandle, transformSuffix);
+        key += "|tex" + std::to_string(first.textureOverrideHandle) + "|smp" + std::to_string(first.samplerOverrideHandle);
         if (first.skinnedVertexBuffer) {
             // SkinnedMeshRendererのエントリはインスタンス結合されず必ずinstanceCount=1で
             // 個別にDrawBatchが呼ばれるが、同じメッシュ/マテリアル/パイプライン/描画先を
@@ -197,6 +200,7 @@ void Renderer::DrawBatch(IRenderTarget *target,
         char idSeedSuffix[48];
         std::snprintf(idSeedSuffix, sizeof(idSeedSuffix), "idSeed|%u", first.indexStart);
         auto key = MakeBatchKey(target, pipelineName, first.meshHandle, first.materialHandle, idSeedSuffix);
+        key += "|tex" + std::to_string(first.textureOverrideHandle) + "|smp" + std::to_string(first.samplerOverrideHandle);
         if (first.skinnedVertexBuffer) {
             char suffix[32];
             std::snprintf(suffix, sizeof(suffix), "|%p", static_cast<void *>(first.skinnedVertexBuffer));
@@ -232,6 +236,7 @@ void Renderer::DrawBatch(IRenderTarget *target,
         char materialSuffix[48];
         std::snprintf(materialSuffix, sizeof(materialSuffix), "material|%u", first.indexStart);
         auto key = MakeBatchKey(target, pipelineName, first.meshHandle, first.materialHandle, materialSuffix);
+        key += "|tex" + std::to_string(first.textureOverrideHandle) + "|smp" + std::to_string(first.samplerOverrideHandle);
         if (first.skinnedVertexBuffer) {
             // 上記の変換行列バッファと同じ理由で、スキニングインスタンスごとに専用バッファを使う
             char suffix[32];
@@ -254,12 +259,13 @@ void Renderer::DrawBatch(IRenderTarget *target,
                 WriteMaterialField(pipelineInfo, elementBytes, stride, "instanceColor", batch[i].instanceColor);
                 float blendMode = static_cast<float>(batch[i].instanceColorBlendMode);
                 WriteMaterialField(pipelineInfo, elementBytes, stride, "instanceColorBlendMode", blendMode);
-                // characterColor/uvRect/boldWeightはTextRendererのみが使うフィールド（Text2D/Text3D
+                // uvRect/boldWeight/アウトライン値はTextRendererのみが使うフィールド（Text2D/Text3D
                 // パイプラインのMaterial構造体にのみ存在する）。それ以外のパイプラインではGetMaterialLayout
                 // にヒットせずWriteMaterialFieldが黙ってスキップするため、他のRendererには影響しない
-                WriteMaterialField(pipelineInfo, elementBytes, stride, "characterColor", batch[i].instanceColor);
                 WriteMaterialField(pipelineInfo, elementBytes, stride, "uvRect", batch[i].uvRect);
                 WriteMaterialField(pipelineInfo, elementBytes, stride, "boldWeight", batch[i].boldWeight);
+                WriteMaterialField(pipelineInfo, elementBytes, stride, "outlineWidth", batch[i].textOutlineWidth);
+                WriteMaterialField(pipelineInfo, elementBytes, stride, "outlineColor", batch[i].textOutlineColor);
             }
             auto *materialBuffer = resourceContainer_->GetOrUpdateStructuredBuffer(key, stride, instanceCount, allBytes.data());
             if (materialBuffer) {
@@ -271,7 +277,9 @@ void Renderer::DrawBatch(IRenderTarget *target,
         }
 
         // マテリアルのテクスチャ・サンプラーバインド（未設定の場合は既定値をバインドする）
-        if (material && material->textureHandle != TextureManager::kInvalidHandle) {
+        if (first.textureOverrideHandle != TextureManager::kInvalidHandle) {
+            TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", first.textureOverrideHandle);
+        } else if (material && material->textureHandle != TextureManager::kInvalidHandle) {
             TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", material->textureHandle);
         } else {
             const auto fallbackHandle = TextureManager::GetTextureFromFileName("white1x1.png");
@@ -280,7 +288,9 @@ void Renderer::DrawBatch(IRenderTarget *target,
             }
         }
         BindExtraTextureParameters(&shaderBinder, material);
-        if (material && material->samplerHandle != SamplerManager::kInvalidHandle) {
+        if (first.samplerOverrideHandle != SamplerManager::kInvalidHandle) {
+            SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", first.samplerOverrideHandle);
+        } else if (material && material->samplerHandle != SamplerManager::kInvalidHandle) {
             SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", material->samplerHandle);
         } else {
             SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", DefaultSampler::LinearWrap);
@@ -431,6 +441,8 @@ void Renderer::RenderMultiPassDither(ScreenBuffer *screenBuffer,
                         other.pipelineName != first.pipelineName ||
                         other.meshHandle != first.meshHandle ||
                         other.materialHandle != first.materialHandle ||
+                        other.textureOverrideHandle != first.textureOverrideHandle ||
+                        other.samplerOverrideHandle != first.samplerOverrideHandle ||
                         other.indexStart != first.indexStart ||
                         other.indexCount != first.indexCount ||
                         other.skinnedVertexBuffer != first.skinnedVertexBuffer) {

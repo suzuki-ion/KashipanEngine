@@ -41,12 +41,16 @@
 <h2>SpriteRenderer / TextRenderer</h2>
 <table>
 <tr><th>型</th><th>メソッド</th><th>説明</th></tr>
-<tr><td rowspan="4"><code>SpriteRenderer</code></td><td><code>void SetAnchor(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetAnchor() const</code></td><td>アンカー</td></tr>
+<tr><td rowspan="6"><code>SpriteRenderer</code></td><td><code>void SetAnchor(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetAnchor() const</code></td><td>アンカー</td></tr>
 <tr><td><code>void SetPivot(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetPivot() const</code></td><td>ピボット</td></tr>
 <tr><td><code>void SetPipelineName(const string &amp;in)</code></td><td>使用パイプライン名の設定</td></tr>
 <tr><td><code>void SetMaterialName(const string &amp;in)</code></td><td>使用マテリアル名の設定</td></tr>
-<tr><td rowspan="2"><code>TextRenderer</code>（<code>Text</code>）</td><td><code>void SetText(const string &amp;in)</code> / <code>const string &amp;GetText() const</code></td><td>表示文字列の設定/取得</td></tr>
-<tr><td><code>void SetColor(const Vector4 &amp;in)</code> / <code>const Vector4 &amp;GetColor() const</code></td><td>色の設定/取得（水平/垂直揃えは <code>TextHorizontalAlign</code>/<code>TextVerticalAlign</code> 列挙）</td></tr>
+<tr><td><code>void SetInstanceColor(const Vector4 &amp;in)</code> / <code>const Vector4 &amp;GetInstanceColor() const</code></td><td>インスタンスカラー（RGBA）</td></tr>
+<tr><td><code>void SetInstanceColorBlendMode(int)</code> / <code>int GetInstanceColorBlendMode() const</code></td><td>合成方法（0=Override, 1=Multiply, 2=Add, 3=Subtract）</td></tr>
+<tr><td rowspan="4"><code>TextRenderer</code>（<code>Text</code>）</td><td><code>void SetText(const string &amp;in)</code> / <code>const string &amp;GetText() const</code></td><td>表示文字列の設定/取得</td></tr>
+<tr><td><code>void SetMaterialName(const string &amp;in)</code></td><td>使用マテリアル名（テクスチャとUVはフォント側で上書き）</td></tr>
+<tr><td><code>void SetInstanceColor(const Vector4 &amp;in)</code> / <code>void SetInstanceColorBlendMode(int)</code></td><td>マテリアル色へ適用するインスタンスカラー</td></tr>
+<tr><td><code>void SetOutlineWidth(float)</code> / <code>void SetOutlineColor(const Vector4 &amp;in)</code></td><td>文字アウトラインの太さと色（水平/垂直揃えは <code>TextHorizontalAlign</code>/<code>TextVerticalAlign</code> 列挙）</td></tr>
 </table>
 
 <h2>Camera2D / Camera3D / CameraRenderer / CameraController</h2>

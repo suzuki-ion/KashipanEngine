@@ -20,6 +20,7 @@
 #include "Utilities/UUID128.h"
 #if defined(USE_IMGUI)
 #include "Objects/Components/Render/TargetObjectSelector.h"
+#include "Utilities/AssetDragDropPayload.h"
 #include "Utilities/Translation.h"
 #endif
 
@@ -33,16 +34,18 @@ namespace KashipanEngine {
 ///          スケールを個別に上書きできる（Transformと同様の調整。ランタイム専用でシーンJSONへは保存しない）。
 ///          各文字はMeshRenderer/SpriteRendererと同じくSceneRenderer::DrawEntry
 ///          （1文字＝1エントリ）としてsortedDrawList_に乗り、共有の単位クアッド（Rect2D）メッシュと
-///          フォント単位の内部マテリアル（GetMaterialHandle参照。テクスチャ＝フォントアトラス）で
+///          ユーザー指定マテリアル（テクスチャだけはフォントアトラスで上書き）で
 ///          Renderer::DrawBatchにより通常のMeshRenderer/SpriteRendererと同じ仕組みでバッチ描画される。
 ///          文字ごとに異なるUV矩形・太字量・色は、DrawBatchがインスタンスごとにWriteMaterialFieldで
-///          Text2D/Text3DパイプラインのMaterial構造体（uvRect/boldWeight/characterColor）へ書き込む。
+///          Text2D/Text3DパイプラインのMaterial構造体へ書き込む。
 class TextRenderer final : public IObjectComponent {
 public:
     /// @brief テキストブロックの横方向アライメント
     enum class HorizontalAlign { Left, Center, Right };
     /// @brief テキストブロックの縦方向アライメント
     enum class VerticalAlign { Top, Middle, Bottom };
+    /// @brief インスタンスカラーをマテリアル色へ適用する方法（MeshRendererと同じ値）
+    enum class ColorBlendMode : int { Override = 0, Multiply, Add, Subtract };
 
     /// @brief 文字ごとの位置オフセット・回転・スケールの上書き情報（Transform的な調整用）
     struct CharacterOverride {
@@ -64,6 +67,9 @@ public:
     OBJECT_COMPONENT_CONSTRUCTOR(TextRenderer, 0xFF,
         SetUpdatePriority(900);
         ADD_MEMBER_VARIABLE(pipelineName_);
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(materialName_, [this] {
+            materialHandle_ = MaterialManager::kInvalidHandle;
+        });
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(text_, [this] { MarkShapeDirty(); });
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(fontName_, [this] {
             fontHandle_ = FontManager::kInvalidHandle;
@@ -73,7 +79,11 @@ public:
             fontSize_ = std::max(0.01f, fontSize_);
             MarkShapeDirty();
         });
-        ADD_MEMBER_VARIABLE_WITH_CALLBACK(color_, [this] { MarkShapeDirty(); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(instanceColor_, [this] { MarkShapeDirty(); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(outlineWidth_, [this] {
+            outlineWidth_ = std::clamp(outlineWidth_, 0.0f, 0.5f);
+        });
+        ADD_MEMBER_VARIABLE(outlineColor_);
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(defaultCharacterAnchor_, [this] { MarkInstancesDirty(); });
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(defaultCharacterPivot_, [this] { MarkInstancesDirty(); });
         ADD_MEMBER_VARIABLE(renderPriority_);
@@ -86,11 +96,16 @@ public:
         auto ptr = std::make_unique<TextRenderer>();
         ptr->targetObjectID_ = targetObjectID_;
         ptr->pipelineName_ = pipelineName_;
+        ptr->materialName_ = materialName_;
+        ptr->materialHandle_ = materialHandle_;
         ptr->excludedRenderTargetNames_ = excludedRenderTargetNames_;
         ptr->text_ = text_;
         ptr->fontName_ = fontName_;
         ptr->fontSize_ = fontSize_;
-        ptr->color_ = color_;
+        ptr->instanceColor_ = instanceColor_;
+        ptr->instanceColorBlendMode_ = instanceColorBlendMode_;
+        ptr->outlineWidth_ = outlineWidth_;
+        ptr->outlineColor_ = outlineColor_;
         ptr->horizontalAlign_ = horizontalAlign_;
         ptr->verticalAlign_ = verticalAlign_;
         ptr->defaultCharacterAnchor_ = defaultCharacterAnchor_;
@@ -141,34 +156,21 @@ public:
         return fontHandle_;
     }
 
-    /// @brief このフォントのアトラスをテクスチャに持つマテリアルを取得する
-    /// @details MeshRenderer/SpriteRendererと同様、SceneRendererはこのハンドルを
-    ///          DrawEntry::materialHandleとして通常の描画バッチ（DrawBatch）に渡す。
-    ///          フォントごとに"__TextFontAtlas_<フォント名>"という名前で1つだけ自動生成・共有される
-    ///          内部マテリアル（"__"始まりの名前規則で保存対象・マテリアル一覧から除外される。
-    ///          MaterialManager::IsInternalMaterialName参照）のため、同じフォントを使う全ての
-    ///          TextRendererが同一ハンドルを共有し、通常のインスタンシングバッチ化がそのまま効く。
-    ///          テクスチャは常にフォントのアトラスに固定され、ユーザーが任意のマテリアルへ
-    ///          差し替えることはできない（差し替えるとグリフが正しく描画できなくなるため）
+    void SetMaterialName(const std::string &materialName) {
+        materialName_ = materialName;
+        materialHandle_ = MaterialManager::kInvalidHandle;
+    }
+    void SetMaterialHandle(MaterialManager::MaterialHandle materialHandle) { materialHandle_ = materialHandle; }
+    const std::string &GetMaterialName() const noexcept { return materialName_; }
+    /// @brief 描画パラメーターとして使う任意マテリアルを取得する。テクスチャとUVはフォント側で上書きされる
     MaterialManager::MaterialHandle GetMaterialHandle() const {
-        const auto fontHandle = GetFontHandle();
-        if (fontHandle == FontManager::kInvalidHandle) return MaterialManager::kInvalidHandle;
-        if (fontMaterialHandle_ != MaterialManager::kInvalidHandle && fontMaterialForHandle_ == fontHandle &&
-            MaterialManager::GetMaterial(fontMaterialHandle_)) {
-            return fontMaterialHandle_;
+        if (materialHandle_ == MaterialManager::kInvalidHandle && !materialName_.empty()) {
+            materialHandle_ = MaterialManager::GetMaterialHandleFromName(materialName_);
         }
-        const std::string materialName = "__TextFontAtlas_" + fontName_;
-        if (const auto existing = MaterialManager::GetMaterialHandleFromName(materialName); existing != MaterialManager::kInvalidHandle) {
-            fontMaterialHandle_ = existing;
-            fontMaterialForHandle_ = fontHandle;
-            return existing;
+        if (materialHandle_ == MaterialManager::kInvalidHandle) {
+            materialHandle_ = MaterialManager::GetMaterialHandleFromName("Default");
         }
-        MaterialManager::Material material{};
-        material.name = materialName;
-        material.textureHandle = FontManager::GetAtlasTextureHandle(fontHandle);
-        fontMaterialHandle_ = MaterialManager::RegisterMaterial(materialName, material);
-        fontMaterialForHandle_ = fontHandle;
-        return fontMaterialHandle_;
+        return materialHandle_;
     }
 
     //==================================================
@@ -188,11 +190,21 @@ public:
     }
     float GetFontSize() const noexcept { return fontSize_; }
 
-    void SetColor(const Vector4 &color) {
-        color_ = color;
+    void SetInstanceColor(const Vector4 &color) {
+        instanceColor_ = color;
         MarkShapeDirty();
     }
-    const Vector4 &GetColor() const noexcept { return color_; }
+    const Vector4 &GetInstanceColor() const noexcept { return instanceColor_; }
+    void SetInstanceColorBlendMode(ColorBlendMode mode) noexcept { instanceColorBlendMode_ = mode; }
+    ColorBlendMode GetInstanceColorBlendMode() const noexcept { return instanceColorBlendMode_; }
+    /// @brief 旧APIとの互換。インスタンスカラーを設定する
+    void SetColor(const Vector4 &color) { SetInstanceColor(color); }
+    const Vector4 &GetColor() const noexcept { return GetInstanceColor(); }
+
+    void SetOutlineWidth(float width) noexcept { outlineWidth_ = std::clamp(width, 0.0f, 0.5f); }
+    float GetOutlineWidth() const noexcept { return std::clamp(outlineWidth_, 0.0f, 0.5f); }
+    void SetOutlineColor(const Vector4 &color) noexcept { outlineColor_ = color; }
+    const Vector4 &GetOutlineColor() const noexcept { return outlineColor_; }
 
     void SetHorizontalAlign(HorizontalAlign align) { horizontalAlign_ = align; MarkInstancesDirty(); }
     HorizontalAlign GetHorizontalAlign() const noexcept { return horizontalAlign_; }
@@ -315,7 +327,31 @@ protected:
             MarkShapeDirty();
         }
         if (ImGui::DragFloat(TranslationLabel("component.textrenderer.font_size"), &fontSize_, 0.01f, 0.01f, 1000.0f)) MarkShapeDirty();
-        if (ImGui::ColorEdit4(TranslationLabel("component.textrenderer.color"), &color_.x)) MarkShapeDirty();
+        if (ImGui::ColorEdit4(TranslationLabel("component.textrenderer.instance_color"), &instanceColor_.x)) MarkShapeDirty();
+        const char *kColorBlendModeLabels[] = { TranslationC("component.common.blendmode.override"), TranslationC("component.common.blendmode.multiply"), TranslationC("component.common.blendmode.add"), TranslationC("component.common.blendmode.subtract") };
+        int blendModeIndex = static_cast<int>(instanceColorBlendMode_);
+        if (ImGui::Combo(TranslationLabel("component.textrenderer.instance_color_blend_mode"), &blendModeIndex, kColorBlendModeLabels, IM_ARRAYSIZE(kColorBlendModeLabels))) {
+            instanceColorBlendMode_ = static_cast<ColorBlendMode>(blendModeIndex);
+        }
+        ImGui::DragFloat(TranslationLabel("component.textrenderer.outline_width"), &outlineWidth_, 0.001f, 0.0f, 0.5f);
+        outlineWidth_ = std::clamp(outlineWidth_, 0.0f, 0.5f);
+        ImGui::ColorEdit4(TranslationLabel("component.textrenderer.outline_color"), &outlineColor_.x);
+
+        const auto materialEntries = MaterialManager::GetLoadedMaterialListEntries();
+        std::vector<std::string> materialNames;
+        for (const auto &entry : materialEntries) materialNames.push_back(entry.material.name);
+        if (ImGuiCustom::SelectString(TranslationLabel("component.textrenderer.material"), materialName_, materialNames)) {
+            materialHandle_ = MaterialManager::kInvalidHandle;
+        }
+        if (std::string droppedPath; AcceptAssetDragDropTarget(kMaterialAssetDragDropType, droppedPath)) {
+            for (const auto &entry : materialEntries) {
+                if (entry.assetPath == droppedPath) {
+                    materialName_ = entry.material.name;
+                    materialHandle_ = MaterialManager::kInvalidHandle;
+                    break;
+                }
+            }
+        }
 
         const char *kHAlignLabels[] = { TranslationC("component.textrenderer.halign.left"), TranslationC("component.textrenderer.halign.center"), TranslationC("component.textrenderer.halign.right") };
         int hAlign = static_cast<int>(horizontalAlign_);
@@ -366,7 +402,13 @@ protected:
         json["text"] = text_;
         json["fontName"] = fontName_;
         json["fontSize"] = fontSize_;
-        json["color"] = ToJSON(color_);
+        // colorは旧データ/旧APIとの後方互換用に同じ値を併記する
+        json["color"] = ToJSON(instanceColor_);
+        json["instanceColor"] = ToJSON(instanceColor_);
+        json["instanceColorBlendMode"] = static_cast<int>(instanceColorBlendMode_);
+        json["materialName"] = materialName_;
+        json["outlineWidth"] = outlineWidth_;
+        json["outlineColor"] = ToJSON(outlineColor_);
         json["pipelineName"] = pipelineName_;
         json["horizontalAlign"] = static_cast<int>(horizontalAlign_);
         json["verticalAlign"] = static_cast<int>(verticalAlign_);
@@ -386,7 +428,13 @@ protected:
         fontName_ = json.value("fontName", std::string{});
         fontHandle_ = FontManager::kInvalidHandle;
         fontSize_ = json.value("fontSize", 32.0f);
-        color_ = json.contains("color") ? FromJSON<Vector4>(json["color"]) : Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+        instanceColor_ = json.contains("instanceColor") ? FromJSON<Vector4>(json["instanceColor"])
+            : json.contains("color") ? FromJSON<Vector4>(json["color"]) : Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+        instanceColorBlendMode_ = static_cast<ColorBlendMode>(json.value("instanceColorBlendMode", static_cast<int>(ColorBlendMode::Multiply)));
+        materialName_ = json.value("materialName", std::string{ "Default" });
+        materialHandle_ = MaterialManager::kInvalidHandle;
+        outlineWidth_ = std::clamp(json.value("outlineWidth", 0.0f), 0.0f, 0.5f);
+        outlineColor_ = json.contains("outlineColor") ? FromJSON<Vector4>(json["outlineColor"]) : Vector4(0.0f, 0.0f, 0.0f, 1.0f);
         pipelineName_ = json.value("pipelineName", std::string{ "Text2D.BlendNormal" });
         horizontalAlign_ = static_cast<HorizontalAlign>(json.value("horizontalAlign", 0));
         verticalAlign_ = static_cast<VerticalAlign>(json.value("verticalAlign", 0));
@@ -569,7 +617,7 @@ private:
     void RebuildShapeIfDirty() const {
         if (!shapeDirty_) return;
         shapeDirty_ = false;
-        shapedCharacters_ = ParseRichText(text_, color_);
+        shapedCharacters_ = ParseRichText(text_, instanceColor_);
         characterOverrides_.resize(shapedCharacters_.size());
     }
 
@@ -732,12 +780,23 @@ private:
         }
         lineWidths.back() = penX;
 
-        const float totalBlockHeight = static_cast<float>(lines.size()) * lineHeightPixels;
-        float startY = 0.0f;
+        const float ascentPixels = FontManager::GetAscent(fontHandle, FontManager::kBakePixelHeight);
+        const float descentPixels = FontManager::GetDescent(fontHandle, FontManager::kBakePixelHeight);
+        const float lastBaselineOffset = static_cast<float>(lines.size() - 1) * lineHeightPixels;
+        // startYは1行目のベースライン。従来はベースライン自体を上端/中央/下端へ置いていたため、
+        // どの揃えでも文字のアセント分だけ上へずれていた。フォントメトリクス上のブロック上端・
+        // 中央・下端が原点へ一致するよう、アセント/ディセントを含めて求める。
+        float startY = -ascentPixels;
         switch (verticalAlign_) {
-            case VerticalAlign::Top:    startY = 0.0f; break;
-            case VerticalAlign::Middle: startY = totalBlockHeight * 0.5f; break;
-            case VerticalAlign::Bottom: startY = totalBlockHeight; break;
+            case VerticalAlign::Top:
+                startY = -ascentPixels;
+                break;
+            case VerticalAlign::Middle:
+                startY = (lastBaselineOffset - ascentPixels - descentPixels) * 0.5f;
+                break;
+            case VerticalAlign::Bottom:
+                startY = lastBaselineOffset - descentPixels;
+                break;
         }
 
         const float worldScale = fontSize_ / FontManager::kBakePixelHeight;
@@ -764,6 +823,8 @@ private:
 
     UUID128 targetObjectID_{};
     std::string pipelineName_ = "Text2D.BlendNormal";
+    std::string materialName_ = "Default";
+    mutable MaterialManager::MaterialHandle materialHandle_ = MaterialManager::kInvalidHandle;
     std::unordered_set<std::string> excludedRenderTargetNames_;
     /// @brief 描画順を制御する優先度（既定0。MeshRenderer/SpriteRendererと同じSceneRenderer::
     ///        CompareSortableEntryで扱われるため、他の種類のRendererとの前後関係も統一的に制御できる）
@@ -774,13 +835,11 @@ private:
     std::string text_;
     std::string fontName_;
     mutable FontManager::FontHandle fontHandle_ = FontManager::kInvalidHandle;
-    /// @brief GetMaterialHandle()のキャッシュ（フォント単位の内部マテリアルハンドル）
-    mutable MaterialManager::MaterialHandle fontMaterialHandle_ = MaterialManager::kInvalidHandle;
-    /// @brief fontMaterialHandle_がどのフォントに対して解決されたものかを覚えておき、
-    ///        フォント変更時にキャッシュを作り直すためのキー
-    mutable FontManager::FontHandle fontMaterialForHandle_ = FontManager::kInvalidHandle;
     float fontSize_ = 32.0f;
-    Vector4 color_{ 1.0f, 1.0f, 1.0f, 1.0f };
+    Vector4 instanceColor_{ 1.0f, 1.0f, 1.0f, 1.0f };
+    ColorBlendMode instanceColorBlendMode_ = ColorBlendMode::Multiply;
+    float outlineWidth_ = 0.0f;
+    Vector4 outlineColor_{ 0.0f, 0.0f, 0.0f, 1.0f };
 
     HorizontalAlign horizontalAlign_ = HorizontalAlign::Left;
     VerticalAlign verticalAlign_ = VerticalAlign::Top;

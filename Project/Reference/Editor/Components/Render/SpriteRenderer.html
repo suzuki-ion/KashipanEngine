@@ -27,6 +27,8 @@
 <tr><td>Material</td><td>コンボボックス＋アセットのドラッグ&amp;ドロップ受付</td><td>読み込み済みマテリアルから選択（既定値 <code>Default</code>）。<a href="../../Windows/05_AssetsWindow.html">Assets Window</a>からマテリアルファイルをドラッグ&amp;ドロップして設定することもできる。MeshRendererと違いマテリアルスロットは1つのみ</td></tr>
 <tr><td>Anchor</td><td>XYのドラッグ入力欄（ステップ0.01）</td><td>Transformの座標に一致させるメッシュ上の点。単位クアッド内の正規化座標（(0,0)=左下 ～ (1,1)=右上）。既定値(0.5, 0.5)=中心</td></tr>
 <tr><td>Pivot</td><td>XYのドラッグ入力欄（ステップ0.01）</td><td>回転・拡縮の中心にするメッシュ上の点。正規化座標での指定はAnchorと同じ。既定値(0.5, 0.5)=中心</td></tr>
+<tr><td>Instance Color</td><td>カラーピッカー</td><td>共有マテリアルを変更せず、このSpriteRendererだけに適用する色。既定値は白</td></tr>
+<tr><td>Instance Color Blend Mode</td><td>コンボボックス</td><td>マテリアル色との合成方法（Override / Multiply / Add / Subtract）。既定値はMultiply</td></tr>
 </table>
 
 <div class="note"><strong>AnchorとPivotを別々にする効果</strong><br>両方とも既定値(0.5, 0.5)の場合は違いが出ない。Pivotだけをずらすと回転・拡縮の中心がTransformの座標（Anchorの位置）からずれ、AnchorだけをずらすとTransformの座標に一致させる点そのものが変わる（見た目上はスプライト全体が平行移動する）。</div>

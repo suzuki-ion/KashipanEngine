@@ -187,6 +187,15 @@ const Vector2 &amp;GetPivot() const noexcept;</div>
 <p>メッシュはXY平面上の-0.5～0.5の単位クアッドを想定しており、アンカー・ピボットはその単位クアッド内の正規化座標 <code>(0,0)</code>=左下 ～ <code>(1,1)</code>=右上 で指定します。アンカーは「Transformの座標に一致させる点」、ピボットは「回転・拡縮の中心にする点」で、両者に異なる点を指定すると回転・拡縮の中心とTransform座標がずれた挙動になります。</p>
 </div>
 
+<div class="api-card">
+<h4>インスタンスカラー</h4>
+<div class="api-sig">void SetInstanceColor(const Vector4 &amp;color) noexcept;
+const Vector4 &amp;GetInstanceColor() const noexcept;
+void SetInstanceColorBlendMode(ColorBlendMode mode) noexcept;
+ColorBlendMode GetInstanceColorBlendMode() const noexcept;</div>
+<p><code>MeshRenderer</code>・<code>TextRenderer</code>と同じく、共有マテリアルを変更せずSpriteRenderer単位で色を適用します。合成方法は<code>Override</code> / <code>Multiply</code> / <code>Add</code> / <code>Subtract</code>で、既定値は白＋<code>Multiply</code>です。色とアルファの両方に同じ合成規則が適用されます。</p>
+</div>
+
 <div class="tip">
 <strong>時間ベースの2Dシェーダーモジュール</strong><br>
 Object2D系パイプラインには、<code>Renderer</code>がゲーム内時刻（起動からの経過秒数 <code>gTime</code>、前フレームからの経過秒数 <code>gDeltaTime</code>）を毎フレーム自動的に注入します。<code>Pulse2D</code>（周期的な明滅）や<code>FlashColor2D</code>（ヒットフラッシュ）のような時間・パラメータ駆動の演出モジュールはこれを内部で利用しており、ゲーム側で時刻を渡すコードを書く必要はありません。マテリアルの<code>extraParameters</code>によるモジュールパラメータ制御については、前述の「MeshRenderer」節のマテリアル・シェーダーモジュールの説明を参照してください。
@@ -202,9 +211,14 @@ SDFフォント（<code>FontManager</code> 経由でTTF/OTFから読み込み・
 <div class="api-sig">void SetText(const std::string &amp;text);
 void SetFontName(const std::string &amp;fontName);
 void SetFontSize(float fontSize);
-void SetColor(const Vector4 &amp;color);
+void SetMaterialName(const std::string &amp;materialName);
+void SetInstanceColor(const Vector4 &amp;color);
+void SetInstanceColorBlendMode(ColorBlendMode mode);
+void SetOutlineWidth(float width);
+void SetOutlineColor(const Vector4 &amp;color);
 void SetHorizontalAlign(HorizontalAlign align); // Left / Center / Right
 void SetVerticalAlign(VerticalAlign align);     // Top / Middle / Bottom</div>
+<p>任意マテリアルを割り当て、Textパイプライン側の<code>Material</code>構造体に存在するパラメーターを利用できます。文字形状を保持するため、マテリアル側のテクスチャとUV変換は無視され、フォントアトラスと文字ごとのUV矩形が常に使用されます。</p>
 </div>
 
 <div class="api-card">

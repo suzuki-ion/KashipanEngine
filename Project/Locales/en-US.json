@@ -1269,6 +1269,8 @@
 
 		//--------- component.spriterenderer ---------//
 		"component.spriterenderer.anchor": "Anchor",
+		"component.spriterenderer.instance_color": "Instance Color",
+		"component.spriterenderer.instance_color_blend_mode": "Instance Color Blend Mode",
 		"component.spriterenderer.material": "Material",
 		"component.spriterenderer.pipeline": "Pipeline",
 		"component.spriterenderer.pivot": "Pivot",
@@ -1300,7 +1302,12 @@
 		"component.textrenderer.halign.left": "Left",
 		"component.textrenderer.halign.right": "Right",
 		"component.textrenderer.horizontal_align": "Horizontal Align",
+		"component.textrenderer.instance_color": "Instance Color",
+		"component.textrenderer.instance_color_blend_mode": "Instance Color Blend Mode",
+		"component.textrenderer.material": "Material",
 		"component.textrenderer.offset": "Offset",
+		"component.textrenderer.outline_color": "Outline Color",
+		"component.textrenderer.outline_width": "Outline Width",
 		"component.textrenderer.pipeline": "Pipeline",
 		"component.textrenderer.rotation": "Rotation",
 		"component.textrenderer.scale": "Scale",

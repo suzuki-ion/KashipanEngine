@@ -43,6 +43,11 @@ public:
         std::string pipelineName;
         ModelManager::ModelHandle meshHandle = ModelManager::kInvalidHandle;
         MaterialManager::MaterialHandle materialHandle = MaterialManager::kInvalidHandle;
+        /// @brief gTextureへバインドするテクスチャの上書き。TextRendererは任意マテリアルの
+        ///        テクスチャを無視し、ここへフォントアトラスを指定する。
+        TextureManager::TextureHandle textureOverrideHandle = TextureManager::kInvalidHandle;
+        /// @brief gSamplerへバインドするサンプラーの上書き。TextRendererのアトラスにはLinearClampを使う。
+        SamplerManager::SamplerHandle samplerOverrideHandle = SamplerManager::kInvalidHandle;
         /// @brief 描画するインデックス範囲（サブメッシュ。indexCount==0の場合はメッシュ全体を描画する）
         std::uint32_t indexStart = 0;
         std::uint32_t indexCount = 0;
@@ -51,10 +56,9 @@ public:
         ///        非nullの場合、頂点バッファは静的メッシュではなくこのGPUスキニング結果を使用し、
         ///        インスタンス（バッチ）結合の対象にもならない（各インスタンスが専用の出力バッファを持つため）
         RWStructuredBufferResource *skinnedVertexBuffer = nullptr;
-        /// @brief オブジェクト単位の色（MeshRenderer/SkinnedMeshRendererのInstance Color）。
-        ///        持たない型（SpriteRenderer）からのエントリは既定値のまま（見た目に影響しない）
+        /// @brief オブジェクト単位の色（MeshRenderer/SkinnedMeshRenderer/SpriteRenderer/TextRendererのInstance Color）
         Vector4 instanceColor{ 1.0f, 1.0f, 1.0f, 1.0f };
-        /// @brief instanceColorの適用方法（MeshRenderer::ColorBlendMode/SkinnedMeshRenderer::ColorBlendModeの値。
+        /// @brief instanceColorの適用方法（各RendererのColorBlendModeの値。
         ///        0=Override,1=Multiply,2=Add,3=Subtract）
         int instanceColorBlendMode = 1;
         /// @brief オブジェクト固有のシード値（EmptyObject::GetObjectID()から導出）。ドローコールを
@@ -73,6 +77,10 @@ public:
         Vector4 uvRect{ 0.0f, 0.0f, 1.0f, 1.0f };
         /// @brief TextRendererのみ使用。<b>タグによる太らせ量（SDF閾値のシフト量）。既定0
         float boldWeight = 0.0f;
+        /// @brief TextRendererのみ使用。SDF輪郭から外側へ広げるアウトライン幅（SDF正規化値）
+        float textOutlineWidth = 0.0f;
+        /// @brief TextRendererのみ使用。アウトライン色
+        Vector4 textOutlineColor{ 0.0f, 0.0f, 0.0f, 1.0f };
     };
 
     /// @brief DrawEntryにソートキー（描画先種別順・パイプライン優先度・RenderPriority）を付随させた中間データ

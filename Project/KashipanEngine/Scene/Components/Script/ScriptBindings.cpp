@@ -646,7 +646,16 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetPivot(const Vector2 &in)", &SpriteRenderer::SetPivot)
         .method("const Vector2 &GetPivot() const", &SpriteRenderer::GetPivot)
         .method("void SetPipelineName(const string &in)", &SpriteRenderer::SetPipelineName)
-        .method("void SetMaterialName(const string &in)", &SpriteRenderer::SetMaterialName);
+        .method("void SetMaterialName(const string &in)", &SpriteRenderer::SetMaterialName)
+        .method("void SetInstanceColor(const Vector4 &in)", &SpriteRenderer::SetInstanceColor)
+        .method("const Vector4 &GetInstanceColor() const", &SpriteRenderer::GetInstanceColor)
+        // instanceColorBlendModeは 0=Override, 1=Multiply, 2=Add, 3=Subtract
+        .method("void SetInstanceColorBlendMode(int)", [](SpriteRenderer &c, int mode) {
+            c.SetInstanceColorBlendMode(static_cast<SpriteRenderer::ColorBlendMode>(mode));
+        })
+        .method("int GetInstanceColorBlendMode() const", [](const SpriteRenderer &c) {
+            return static_cast<int>(c.GetInstanceColorBlendMode());
+        });
 
     RegisterComponentType<ScriptComponent>(engine, "ScriptComponent")
         .method("void SetScriptPath(const string &in)", &ScriptComponent::SetScriptPath)
@@ -740,6 +749,20 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("float GetFontSize() const", &TextRenderer::GetFontSize)
         .method("void SetColor(const Vector4 &in)", &TextRenderer::SetColor)
         .method("const Vector4 &GetColor() const", &TextRenderer::GetColor)
+        .method("void SetInstanceColor(const Vector4 &in)", &TextRenderer::SetInstanceColor)
+        .method("const Vector4 &GetInstanceColor() const", &TextRenderer::GetInstanceColor)
+        .method("void SetInstanceColorBlendMode(int)", [](TextRenderer &c, int mode) {
+            c.SetInstanceColorBlendMode(static_cast<TextRenderer::ColorBlendMode>(mode));
+        })
+        .method("int GetInstanceColorBlendMode() const", [](const TextRenderer &c) {
+            return static_cast<int>(c.GetInstanceColorBlendMode());
+        })
+        .method("void SetMaterialName(const string &in)", &TextRenderer::SetMaterialName)
+        .method("const string &GetMaterialName() const", &TextRenderer::GetMaterialName)
+        .method("void SetOutlineWidth(float)", &TextRenderer::SetOutlineWidth)
+        .method("float GetOutlineWidth() const", &TextRenderer::GetOutlineWidth)
+        .method("void SetOutlineColor(const Vector4 &in)", &TextRenderer::SetOutlineColor)
+        .method("const Vector4 &GetOutlineColor() const", &TextRenderer::GetOutlineColor)
         .method("void SetHorizontalAlign(TextHorizontalAlign)", [](TextRenderer &c, int align) {
             c.SetHorizontalAlign(static_cast<TextRenderer::HorizontalAlign>(align));
         })

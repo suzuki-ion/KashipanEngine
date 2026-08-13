@@ -51,16 +51,10 @@ MaterialManager::MaterialHandle GetMaterialHandleForSubMesh(const RendererT *ren
     }
 }
 
-/// @brief インスタンスカラー（オブジェクト単位の色）を持つレンダラー（MeshRenderer/SkinnedMeshRenderer）
-///        から取得する。持たない型（SpriteRenderer）は既定値（白＋Multiply＝見た目に影響しない）を返す
+/// @brief レンダラーが保持するインスタンスカラー（オブジェクト単位の色）を取得する
 template <typename RendererT>
 Vector4 GetInstanceColorFor(const RendererT *renderer) {
-    if constexpr (std::is_same_v<RendererT, MeshRenderer> || std::is_same_v<RendererT, SkinnedMeshRenderer>) {
-        return renderer->GetInstanceColor();
-    } else {
-        (void)renderer;
-        return Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-    }
+    return renderer->GetInstanceColor();
 }
 /// @brief 押し出しアウトライン（Inverted Hull）パイプライン名
 constexpr const char *kOutlinePipelineName = "Object3D.Outline";
@@ -171,12 +165,7 @@ void AppendGhostPreviewEntries(const std::vector<SceneRenderer::GhostPreviewMesh
 
 template <typename RendererT>
 int GetInstanceColorBlendModeFor(const RendererT *renderer) {
-    if constexpr (std::is_same_v<RendererT, MeshRenderer> || std::is_same_v<RendererT, SkinnedMeshRenderer>) {
-        return static_cast<int>(renderer->GetInstanceColorBlendMode());
-    } else {
-        (void)renderer;
-        return 1; // Multiply
-    }
+    return static_cast<int>(renderer->GetInstanceColorBlendMode());
 }
 
 /// @brief MeshRenderer/SpriteRenderer いずれの一覧からも同じ手順でDrawEntryを収集する
@@ -279,7 +268,9 @@ bool CompareSortableEntry(const SortableEntry &a, const SortableEntry &b) {
     if (a.entry.meshHandle != b.entry.meshHandle) return a.entry.meshHandle < b.entry.meshHandle;
     if (a.entry.indexStart != b.entry.indexStart) return a.entry.indexStart < b.entry.indexStart;
     if (a.entry.indexCount != b.entry.indexCount) return a.entry.indexCount < b.entry.indexCount;
-    return a.entry.materialHandle < b.entry.materialHandle;
+    if (a.entry.materialHandle != b.entry.materialHandle) return a.entry.materialHandle < b.entry.materialHandle;
+    if (a.entry.textureOverrideHandle != b.entry.textureOverrideHandle) return a.entry.textureOverrideHandle < b.entry.textureOverrideHandle;
+    return a.entry.samplerOverrideHandle < b.entry.samplerOverrideHandle;
 }
 
 /// @brief キャッシュ対象（targetObjectID未指定＝エディター用描画先にのみ描画するMesh/SpriteRenderer）を収集する
@@ -642,8 +633,9 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
     // TextRendererは「1文字＝1インスタンス」で、MeshRenderer/SpriteRendererのような
     // サブメッシュ単位ではなく文字単位でDrawEntryを作るためCollectSortableEntriesは使わず
     // 個別に収集する（メッシュは全文字共通の単位クアッド、マテリアルはフォント単位の内部
-    // マテリアル（TextRenderer::GetMaterialHandle参照）を使うため、同じフォント・パイプライン・
-    // RenderPriorityを共有する文字同士は他のRendererと同じ仕組みでバッチ化される）
+    // マテリアル（TextRenderer::GetMaterialHandle参照）を使う。フォントアトラスはDrawEntryの
+    // textureOverrideHandleで別管理するため、同じフォント・パイプライン・マテリアル・
+    // RenderPriorityを共有する文字同士が他のRendererと同じ仕組みでバッチ化される）
     {
         static const ModelManager::ModelHandle kTextRect2DMeshHandle =
             ModelManager::GetModelHandleFromAssetPath("PrimitiveMesh-Rect2D");
@@ -655,9 +647,6 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
             const std::string &pipelineName = renderer->GetPipelineName();
             if (pipelineName.empty() || !EnsurePipelineLoaded(pipelineManager, pipelineName)) continue;
             const std::int32_t pipelinePriority = pipelineManager->GetPipeline(pipelineName).RenderPriority();
-
-            const auto materialHandle = renderer->GetMaterialHandle();
-            if (materialHandle == MaterialManager::kInvalidHandle) continue; // フォント未設定
 
             // EditorOnlyオブジェクト（祖先を含む）はエディター用描画先にのみ描画する
             const EmptyObject *ownerObject = renderer->GetOwnerObject();
@@ -685,10 +674,18 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
                 }
 
                 if (!instancesComputed) {
+                    // GetRenderInstances内の初回グリフベイクでフォントアトラスが生成される。
+                    // アトラス上書きハンドルを先に取得すると未生成のままになるため、必ず
+                    // 文字インスタンス（＝初回グリフベイクとアトラス生成）を先に確定させる。
                     instances = renderer->GetRenderInstances();
                     instancesComputed = true;
                 }
                 if (instances.empty()) continue;
+
+                const auto materialHandle = renderer->GetMaterialHandle();
+                if (materialHandle == MaterialManager::kInvalidHandle) continue;
+                const auto atlasTextureHandle = FontManager::GetAtlasTextureHandle(renderer->GetFontHandle());
+                if (atlasTextureHandle == TextureManager::kInvalidHandle) continue;
 
                 const float objectIdSeed = SceneRenderer::ObjectIdSeedFor(ownerObject);
                 const int kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
@@ -701,13 +698,17 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
                     sortable.entry.pipelineName = pipelineName;
                     sortable.entry.meshHandle = kTextRect2DMeshHandle;
                     sortable.entry.materialHandle = materialHandle;
+                    sortable.entry.textureOverrideHandle = atlasTextureHandle;
+                    sortable.entry.samplerOverrideHandle = SamplerManager::GetSampler(DefaultSampler::LinearClamp);
                     sortable.entry.worldMatrix = ch.worldMatrix;
-                    // 文字ごとの色（リッチテキストの<color=#RRGGBB>タグ）をTextのMaterial構造体の
-                    // "characterColor"フィールドへ渡す（instanceColorBlendModeは使わない。
-                    // DrawBatch/TextSDFPS.hlsl参照）
+                    // 文字ごとの色（基本インスタンスカラー＋リッチテキストの<color>タグ）を
+                    // TextのinstanceColorとして渡す（DrawBatch/TextSDFPS.hlsl参照）
                     sortable.entry.instanceColor = ch.color;
                     sortable.entry.uvRect = Vector4(ch.u0, ch.v0, ch.u1, ch.v1);
                     sortable.entry.boldWeight = ch.boldWeight;
+                    sortable.entry.textOutlineWidth = renderer->GetOutlineWidth();
+                    sortable.entry.textOutlineColor = renderer->GetOutlineColor();
+                    sortable.entry.instanceColorBlendMode = static_cast<int>(renderer->GetInstanceColorBlendMode());
                     sortable.entry.objectIdSeed = objectIdSeed;
                     sortable.entry.allowInstancing = allowInstancing;
                     sortable.kindOrder = kindOrder;

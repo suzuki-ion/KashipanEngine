@@ -26,7 +26,9 @@
 <tr><td>Text</td><td>複数行テキスト入力（InputTextMultiline）</td><td>表示する文字列。直下にグレーのヒント文で使用可能タグ一覧「<code>&lt;i&gt; &lt;b&gt; &lt;color=#RRGGBB(AA)&gt; &lt;size=N|N%&gt; &lt;s&gt; &lt;u&gt; &lt;sub&gt; &lt;sup&gt;</code>」が表示される（イタリック・太字・色・サイズ・取り消し線・下線・下付き・上付き）</td></tr>
 <tr><td>Font</td><td>コンボボックス（None選択可）</td><td>FontManagerに読み込み済みのフォントから選択</td></tr>
 <tr><td>Font Size</td><td>ドラッグ入力欄（ステップ0.01、0.01～1000）</td><td>既定値32</td></tr>
-<tr><td>Color</td><td>ColorEdit4（RGBA）</td><td>ベースの文字色。<code>&lt;color=...&gt;</code>タグで部分的に上書きできる</td></tr>
+<tr><td>Instance Color / Blend Mode</td><td>ColorEdit4（RGBA）/ コンボボックス</td><td>マテリアル色へ文字単位で適用する色と合成方法。<code>&lt;color=...&gt;</code>タグで部分的に上書きできる</td></tr>
+<tr><td>Outline Width / Color</td><td>ドラッグ入力 / ColorEdit4</td><td>SDF文字アウトラインの太さ（0で無効）と色</td></tr>
+<tr><td>Material</td><td>コンボボックス</td><td>文字へ適用するマテリアル。マテリアルのテクスチャとUVは無視され、フォントアトラスが使用される</td></tr>
 <tr><td>Horizontal Align</td><td>コンボボックス（Left / Center / Right）</td><td>行の横方向アライメント</td></tr>
 <tr><td>Vertical Align</td><td>コンボボックス（Top / Middle / Bottom）</td><td>テキストブロック全体の縦方向アライメント</td></tr>
 <tr><td>Default Character Anchor</td><td>XYのドラッグ入力欄（ステップ0.01）</td><td>各文字のデフォルトアンカー（単位クアッド内の正規化座標、既定(0.5, 0.5)）</td></tr>

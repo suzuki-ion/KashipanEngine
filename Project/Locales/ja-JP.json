@@ -1276,6 +1276,8 @@
 
 		//--------- component.spriterenderer ---------//
 		"component.spriterenderer.anchor": "アンカー",
+		"component.spriterenderer.instance_color": "インスタンスカラー",
+		"component.spriterenderer.instance_color_blend_mode": "インスタンスカラーの合成方法",
 		"component.spriterenderer.material": "マテリアル",
 		"component.spriterenderer.pipeline": "パイプライン",
 		"component.spriterenderer.pivot": "ピボット",
@@ -1307,7 +1309,12 @@
 		"component.textrenderer.halign.left": "左揃え",
 		"component.textrenderer.halign.right": "右揃え",
 		"component.textrenderer.horizontal_align": "水平方向の揃え",
+		"component.textrenderer.instance_color": "インスタンスカラー",
+		"component.textrenderer.instance_color_blend_mode": "インスタンスカラーの合成方法",
+		"component.textrenderer.material": "マテリアル",
 		"component.textrenderer.offset": "オフセット",
+		"component.textrenderer.outline_color": "アウトラインの色",
+		"component.textrenderer.outline_width": "アウトラインの太さ",
 		"component.textrenderer.pipeline": "パイプライン",
 		"component.textrenderer.rotation": "回転",
 		"component.textrenderer.scale": "拡大縮小",

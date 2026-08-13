@@ -4,11 +4,11 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "85df0137-8c99-4ccc-af31-59951bbae199",
+                        "parent": "e8cc7d03-ae77-401f-99f3-9886b3032f92",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
-                            "y": 2.453249603462382e-09,
+                            "y": 0.0,
                             "z": 0.0
                         },
                         "scale": {
@@ -43,6 +43,8 @@
                 "data": {
                     "customData": {
                         "fields": {
+                            "boxGroundTiltFollowSpeed": 8.0,
+                            "coneWallReleaseUpwardPower": 16.0,
                             "currentHp": 3,
                             "damageAmount": 1,
                             "damageCooldown": 1.5,
@@ -158,6 +160,31 @@
                     "tag": "GroundBox"
                 },
                 "type": "BoxCollider"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "continuousDetection": true,
+                        "convex": true,
+                        "isTrigger": false,
+                        "meshAssetPath": "",
+                        "syncPosition": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncRotation": true,
+                        "syncScale": [
+                            true,
+                            true,
+                            true
+                        ]
+                    },
+                    "isActive": false,
+                    "priority": 1,
+                    "tag": "PlayerSphere"
+                },
+                "type": "MeshCollider"
             },
             {
                 "data": {
@@ -443,17 +470,6 @@
             {
                 "data": {
                     "customData": {
-                        "prefabID": "1d16cf84-bc2b-43d1-85d6-92b6ae9a2c96"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "PrefabInstanceComponent"
-            },
-            {
-                "data": {
-                    "customData": {
                         "allowInstancing": true,
                         "castShadows": true,
                         "instanceColor": {
@@ -486,5 +502,5 @@
         "prefabNodeID": "9c037041-c5ee-4cc4-b429-f1db4a7784a4",
         "tag": ""
     },
-    "siblingIndex": 1
+    "siblingIndex": 0
 }

@@ -1,6 +1,5 @@
 // 他オブジェクトのEnemy.asへ撃破を要求する（ScriptComponent.SetVariableでrequestDefeatを
-// 立てるだけの共通処理。PlayerCombat[Box形態の踏みつけ]とPlayerEmbedding[Cone形態の刺さり]の
-// 両方から使うため、クラスに属さないグローバル関数としてここに1つだけ置く）
+// 立てるだけの共通処理。Box形態の踏みつけとCone形態の敵への突進で使用する）
 void RequestEnemyDefeat(Object@ enemyObject) {
     ScriptComponent@ enemyScript;
     if (!enemyObject.GetComponent(@enemyScript)) return;
@@ -16,6 +15,7 @@ class PlayerCombat {
     PlayerTransformation@ transformation;
 
     bool isCollidingWithEnemy = false;
+    bool enemyBounceRequested = false;
     Vector3 enemyHitNormal = Vector3(0.0f, 0.0f, 0.0f);
     // isCollidingWithEnemyと同時に更新する、接触相手の敵オブジェクト（Box形態の踏みつけ撃破用）
     Object@ collidingEnemyObject;
@@ -38,6 +38,10 @@ class PlayerCombat {
                 isCollidingWithEnemy = true;
                 enemyHitNormal = hit.normal;
                 @collidingEnemyObject = hit.otherObject;
+                if (transformation.CanImpactDefeatEnemy()) {
+                    RequestEnemyDefeat(collidingEnemyObject);
+                    enemyBounceRequested = true;
+                }
             }
         } else if (hit.otherCollider.GetTag() == deathColliderTag) {
             // 死亡判定のコライダーに触れたら即座にHPを0にする
@@ -56,8 +60,8 @@ class PlayerCombat {
         if (!isCollidingWithEnemy) return;
 
         if (enemyHitNormal.y > owner.enemyCollisionThreshold) {
-            // 上からの接触＝踏みつけ。Box形態はここで敵を撃破する（Sphereは敵自身の
-            // 踏まれ判定で、Coneは刺さった瞬間にPlayerEmbedding側で既に撃破している）
+            // 上からの接触＝踏みつけ。Box形態はここで敵を撃破する。
+            // Sphere/ConeはPlayerSphereタグを使うため、敵自身の踏まれ判定で撃破される。
             if (transformation.CanStompDefeatEnemy() && collidingEnemyObject !is null) {
                 RequestEnemyDefeat(collidingEnemyObject);
             }
@@ -84,5 +88,6 @@ class PlayerCombat {
     // リスポーン時、無敵猶予として damageCooldown をそのまま流用する
     void ResetAfterRespawn() {
         damageCooldownTimer = owner.damageCooldown;
+        enemyBounceRequested = false;
     }
 }

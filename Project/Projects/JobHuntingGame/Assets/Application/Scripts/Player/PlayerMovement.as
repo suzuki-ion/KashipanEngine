@@ -151,10 +151,17 @@ class PlayerMovement {
     }
 
     // isCollidingWithEnemy/enemyHitNormal は PlayerCombat が同フレームで検知した敵接触情報
-    void UpdateVerticalMotion(float dt, bool isCollidingWithEnemy, const Vector3 &in enemyHitNormal) {
-        // 敵に接触している状態で、かつ法線が上向きならジャンプ状態にする
-        if (isCollidingWithEnemy && enemyHitNormal.y > owner.enemyCollisionThreshold) {
+    void UpdateVerticalMotion(float dt, bool isCollidingWithEnemy, const Vector3 &in enemyHitNormal, bool forceEnemyBounce) {
+        // 通常の上からの踏みつけ、またはConeでの敵への突進ならジャンプ状態にする
+        bool bouncedOnEnemy = isCollidingWithEnemy &&
+            (enemyHitNormal.y > owner.enemyCollisionThreshold || forceEnemyBounce);
+        if (bouncedOnEnemy) {
             isJumping = true;
+            // 敵へのバウンドはジャンプ入力の前フレーム状態に依存させず、必ず同じ強さで跳ねる。
+            // Coneがジャンプ中に敵へ突進した場合でも、ここで確実に上向き速度へ上書きする。
+            velocity.y = owner.jumpPower;
+            airborneTime = owner.groundedGraceTime + 1.0f;
+            state = PlayerGroundState::Airborne;
         }
 
         // 重力は「実際に接触していないフレーム」で適用する。猶予時間中（接地扱い）でも
@@ -162,7 +169,7 @@ class PlayerMovement {
         if (!(hasGroundContact || isCollidingWithEnemy)) {
             velocity.y -= owner.gravity * dt * 60.0f;
         }
-        if ((IsGrounded() || isCollidingWithEnemy) && isJumping && !wasJumping) {
+        if (!bouncedOnEnemy && (IsGrounded() || isCollidingWithEnemy) && isJumping && !wasJumping) {
             velocity.y = owner.jumpPower;
             // ジャンプ直後は接地の猶予を打ち切り、離陸直後の再着地誤爆を防ぐ
             airborneTime = owner.groundedGraceTime + 1.0f;
@@ -192,6 +199,50 @@ class PlayerMovement {
         Vector3 horizontalVelocity = velocity + slideVelocity + surfaceVelocity;
         horizontalVelocity.y = 0.0f;
         return horizontalVelocity;
+    }
+
+    // Boxのローカル+Y軸を接地面の法線へ、少し遅れて追従させる。
+    // 接地していない間は上向きへ戻すため、空中へ飛び出した後も傾きが残り続けない。
+    void UpdateBoxGroundTilt(float dt) {
+        if (!transformation.IsBox()) return;
+
+        Vector3 targetNormal = hasGroundContact ? groundHitNormal : Vector3(0.0f, 1.0f, 0.0f);
+        targetNormal.z = 0.0f;
+        if (targetNormal.LengthSquared() <= 0.0001f) return;
+        targetNormal = targetNormal.Normalize();
+
+        // 行ベクトル規約でローカル+Yを法線へ向けるZ軸回転。
+        float targetAngle = Atan2(-targetNormal.x, targetNormal.y);
+        Transform@ tf = GetTransform();
+        if (tf is null) return;
+
+        float currentAngle = tf.GetRotate().z;
+        float angleDifference = targetAngle - currentAngle;
+        const float pi = GetPI();
+        while (angleDifference > pi) angleDifference -= pi * 2.0f;
+        while (angleDifference < -pi) angleDifference += pi * 2.0f;
+
+        // dt依存の追従率にして、フレームレートにかかわらず同じ感触に近づける。
+        float follow = Clamp(owner.boxGroundTiltFollowSpeed * dt, 0.0f, 1.0f);
+        tf.SetRotate(Vector3(0.0f, 0.0f, currentAngle + angleDifference * follow));
+    }
+
+    // Coneの先端（プリミティブメッシュのローカル+Y軸）を、自機自身の移動方向へ向ける。
+    // 動く床から受け取るsurfaceVelocityは意図的に含めないため、床に運ばれるだけでは回転しない。
+    void UpdateConeFacing() {
+        if (!transformation.CanEmbedOnImpact()) return;
+
+        Vector3 selfVelocity = velocity + slideVelocity;
+        selfVelocity.z = 0.0f;
+        if (selfVelocity.LengthSquared() <= 0.0001f) return;
+
+        // Z軸回転でローカル+YをselfVelocityの方向へ合わせる。
+        // 行ベクトル規約では+Yを(x, y)へ向ける角度は atan2(-x, y) となる。
+        float angle = Atan2(-selfVelocity.x, selfVelocity.y);
+        Transform@ tf = GetTransform();
+        if (tf !is null) {
+            tf.SetRotate(Vector3(0.0f, 0.0f, angle));
+        }
     }
 
     // 死亡・リスポーン時に移動関連の速度を全てリセットする

@@ -4,6 +4,7 @@
             {
                 "data": {
                     "customData": {
+                        "parent": "d3280149-4b9e-48db-947d-4e3757845f87",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -49,7 +50,8 @@
         "isActive": true,
         "name": "PostEffectController",
         "objectID": "e39e99a7-98aa-4477-853e-c370120983cd",
+        "prefabNodeID": "06a33677-cf90-4095-a8ec-687be148c2d6",
         "tag": ""
     },
-    "siblingIndex": 3
+    "siblingIndex": 1000
 }

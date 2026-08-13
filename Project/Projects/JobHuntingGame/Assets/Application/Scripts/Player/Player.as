@@ -50,6 +50,16 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("急斜面を滑り落ちる最大速度")]
     float maxSlideSpeed = 10.0f;
 
+    [Header("Box形態の傾き設定")]
+
+    [SerializeField, Tooltip("Box形態が接地面の法線へ傾く速さ。大きいほど素早く追従する")]
+    float boxGroundTiltFollowSpeed = 8.0f;
+
+    [Header("Cone形態の刺さり解除設定")]
+
+    [SerializeField, Tooltip("Coneが壁から刺さり解除する際に加える上向き速度")]
+    float coneWallReleaseUpwardPower = 6.0f;
+
     [Header("プレイヤーの状態")]
 
     [SerializeField, Tooltip("最大HP")]
@@ -92,6 +102,7 @@ class Player : ScriptComponentBehavior {
         const float dt = GetDeltaTime() * GetGameSpeed();
 
         input.Update();
+        embedding.Update(dt);
 
         if (input.transformationTriggered) {
             transformation.CycleForm();
@@ -107,6 +118,9 @@ class Player : ScriptComponentBehavior {
             Vector3 popVelocity;
             if (embedding.TryRelease(input.jumpTriggered, popVelocity)) {
                 movement.ApplyExternalVelocity(popVelocity);
+                // 通常ジャンプと同様、速度を設定したフレームから移動へ反映する。
+                // 次フレームまで待つと先に重力が適用され、通常ジャンプより到達高度が低くなる。
+                movement.ApplyVelocity(dt);
             }
         } else {
             movement.isJumping = input.jumpTriggered;
@@ -116,10 +130,17 @@ class Player : ScriptComponentBehavior {
             const bool allowGroundInput = transformation.CanWalkOnGround() || !movement.IsGrounded();
             movement.LateralMovement(allowGroundInput ? input.moveDirection : 0.0f);
             movement.UpdateSlideVelocity(dt, input.moveDirection);
-            movement.UpdateVerticalMotion(dt, combat.isCollidingWithEnemy, combat.enemyHitNormal);
+            movement.UpdateVerticalMotion(dt, combat.isCollidingWithEnemy, combat.enemyHitNormal, combat.enemyBounceRequested);
             combat.UpdateDamageCooldown(dt);
             combat.CheckEnemyDamage(input.moveDirection);
             movement.ApplyVelocity(dt);
+        }
+
+        // 刺さっている間は面に固定されているため、移動方向への回転は更新しない。
+        // 刺さり解除ジャンプ後はApplyExternalVelocityで設定された自機速度に合わせて回転する。
+        if (!embedding.IsEmbedded()) {
+            movement.UpdateBoxGroundTilt(dt);
+            movement.UpdateConeFacing();
         }
 
         damageFlash.Update(dt);
@@ -129,6 +150,7 @@ class Player : ScriptComponentBehavior {
         // 生の接触情報は毎フレームリセットする（次フレームの衝突コールバックで再設定される）
         movement.hasGroundContact = false;
         combat.isCollidingWithEnemy = false;
+        combat.enemyBounceRequested = false;
     }
 
     void OnCollisionEnter(const HitInfo &in hit) {
@@ -140,6 +162,9 @@ class Player : ScriptComponentBehavior {
         embedding.HandleCollisionContact(hit);
         // 刺さっている間は通常の接地処理（押し戻し等）を行わない。Transformの制御はembedding側に任せる
         if (embedding.IsEmbedded()) return;
+        // 解除直後に元の面との接触が残っていても、Coneの角度依存の接触法線で
+        // ジャンプ速度が打ち消されないよう、短い猶予時間中は通常衝突処理へ渡さない
+        if (embedding.ShouldIgnoreReleasedSurface(hit)) return;
         movement.HandleCollisionStay(hit);
     }
 

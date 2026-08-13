@@ -51,10 +51,17 @@ class PlayerTransformation {
             meshFilter.SetMeshHandle(GetModelHandleFromAssetPath(GetMeshAssetPath()));
         }
 
+        // Cone用の回転をSphere/Boxへ持ち越さない。Cone以外は従来どおり上向きの基準姿勢へ戻す。
+        if (form != PlayerForm::Cone) {
+            Transform@ tf = GetTransform();
+            if (tf !is null) {
+                tf.SetRotate(Vector3(0.0f, 0.0f, 0.0f));
+            }
+        }
+
         SphereCollider@ sphereCollider;
         if (GetComponent(@sphereCollider)) {
-            // Cone形態も専用コライダーが無いためSphereColliderをそのまま流用する
-            sphereCollider.SetActive(form != PlayerForm::Box);
+            sphereCollider.SetActive(form == PlayerForm::Sphere);
             sphereCollider.SetTag(defaultColliderTagName);
         }
 
@@ -62,6 +69,14 @@ class PlayerTransformation {
         if (GetComponent(@boxCollider)) {
             boxCollider.SetActive(form == PlayerForm::Box);
             boxCollider.SetTag(boxFormColliderTagName);
+        }
+
+        // MeshColliderはMeshFilterの現在のメッシュを凸形状として使う。Cone形態でのみ有効にすることで、
+        // 見た目のPrimitiveMesh-Coneに近い当たり判定を使えるようにする
+        MeshCollider@ coneCollider;
+        if (GetComponent(@coneCollider)) {
+            coneCollider.SetActive(form == PlayerForm::Cone);
+            coneCollider.SetTag(defaultColliderTagName);
         }
     }
 
@@ -87,9 +102,17 @@ class PlayerTransformation {
     }
 
     // 敵を上から踏んだ際、PlayerCombat側の判定で敵を撃破できるか（Boxのみ）。
-    // Sphereは既にEnemy.as自身の踏まれ判定（PlayerSphereタグ）で撃破できているため不要。
-    // Coneは接触した瞬間に刺さって撃破するため、PlayerEmbedding側で別途処理する
+    // Sphere/ConeはEnemy.as自身の踏まれ判定（PlayerSphereタグ）で撃破できるため不要。
     bool CanStompDefeatEnemy() const {
+        return form == PlayerForm::Box;
+    }
+
+    // Coneは先端方向に移動して敵へ接触する形態のため、接触方向にかかわらず敵を撃破して跳ね返る
+    bool CanImpactDefeatEnemy() const {
+        return form == PlayerForm::Cone;
+    }
+
+    bool IsBox() const {
         return form == PlayerForm::Box;
     }
 

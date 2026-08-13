@@ -5,16 +5,8 @@
             "name": "GameScene"
         },
         {
-            "filePath": "Assets/Scenes/TestScene.json",
-            "name": "TestScene"
-        },
-        {
             "filePath": "Assets/Scenes/GameScene2.scene",
             "name": "GameScene2"
-        },
-        {
-            "filePath": "Assets/Scenes/ForwardPlusStressTest.scene",
-            "name": "ForwardPlusStressTest"
         }
     ],
     "startupScene": "GameScene"

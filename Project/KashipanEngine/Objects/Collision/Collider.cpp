@@ -1108,12 +1108,19 @@ bool Collider::BuildRuntime3D(Entry<ColliderInfo3D> &entry) {
 
     entry.runtime.shape = shapeHandle.value();
     const auto transform = MakeTransform3D(entry.info);
+    const bool isConcaveMesh = std::holds_alternative<ColliderInfo3D::ConcaveMeshShape3D>(entry.info.shape);
     // RigidBody3Dが使用コライダーを明示的に選択している場合は、そのコライダーだけを
     // RigidBodyへ取り付ける（未選択の場合は従来通りどのコライダーでも取り付ける）
     auto *rb = entry.info.ownerObject->GetComponent<RigidBody3D>();
     if (rb) {
         auto *selected = rb->GetSelectedCollider();
         if (selected && selected != entry.info.sourceCollider) rb = nullptr;
+    }
+    // ReactPhysics3Dの非凸三角形メッシュは静的ボディ専用。Dynamic/KinematicなRigidBodyへ
+    // 取り付けると物理シミュレーションの対象として扱えないため、ランタイムColliderを生成しない。
+    if (isConcaveMesh && rb && rb->GetBodyType() != reactphysics3d::BodyType::STATIC) {
+        ReleaseRuntime3D(entry);
+        return false;
     }
     if (rb) {
         entry.runtime.body = rb->GetRigidBody();
@@ -1169,6 +1176,9 @@ void Collider::ReleaseRuntime3D(Entry<ColliderInfo3D> &entry) {
                     }
                 } else if constexpr (std::is_same_v<S, ColliderInfo3D::ConcaveMeshShape3D>) {
                     physicsCommon_.destroyConcaveMeshShape(static_cast<reactphysics3d::ConcaveMeshShape *>(entry.runtime.shape.shape));
+                    if (entry.runtime.shape.triangleMesh) {
+                        physicsCommon_.destroyTriangleMesh(entry.runtime.shape.triangleMesh);
+                    }
                 } else if constexpr (std::is_same_v<S, ColliderInfo3D::HeightFieldShape3D>) {
                     physicsCommon_.destroyHeightFieldShape(static_cast<reactphysics3d::HeightFieldShape *>(entry.runtime.shape.shape));
                     if (entry.runtime.shape.heightField) {
@@ -1212,54 +1222,50 @@ std::optional<Collider::ShapeHandle3D> Collider::CreateShape3D(const ColliderInf
             } else if constexpr (std::is_same_v<S, ColliderInfo3D::CapsuleShape3D>) {
                 handle.shape = physicsCommon_.createCapsuleShape(shape.radius, shape.height);
             } else if constexpr (std::is_same_v<S, ColliderInfo3D::ConvexMeshShape3D>) {
-                if (shape.vertices.empty() || shape.indices.empty()) return;
+                if (shape.vertices.empty()) return;
 
                 constexpr std::uint32_t kVertexStride = sizeof(Vector3);
-                constexpr std::uint32_t kIndexStride = sizeof(std::uint32_t);
-                const std::uint32_t polygonCount = static_cast<std::uint32_t>(shape.indices.size() / 3);
-
-                std::vector<reactphysics3d::PolygonVertexArray::PolygonFace> faces;
-                faces.resize(polygonCount);
-                for (std::uint32_t i = 0; i < polygonCount; ++i) {
-                    faces[i].indexBase = i * 3;
-                    faces[i].nbVertices = 3;
-                }
-
-                reactphysics3d::PolygonVertexArray array(
-                    static_cast<std::uint32_t>(shape.vertices.size()),
-                    reinterpret_cast<const reactphysics3d::Vector3 *>(shape.vertices.data()),
+                // 描画用メッシュは面ごとに頂点が重複していることが多く、三角形インデックスを
+                // PolygonVertexArrayとしてそのまま渡すと「閉じた凸メッシュ」として不正になり、
+                // createConvexMesh()が失敗してランタイムColliderが生成されない場合がある。
+                // 頂点群から凸包を再構築するVertexArray版を使うことで、描画メッシュのトポロジーに
+                // 依存せず安定して物理用の凸形状を作成する。
+                reactphysics3d::VertexArray array(
+                    shape.vertices.data(),
                     kVertexStride,
-                    shape.indices.data(),
-                    kIndexStride,
-                    polygonCount,
-                    faces.data(),
-                    reactphysics3d::PolygonVertexArray::VertexDataType::VERTEX_FLOAT_TYPE,
-                    reactphysics3d::PolygonVertexArray::IndexDataType::INDEX_INTEGER_TYPE);
-
+                    static_cast<std::uint32_t>(shape.vertices.size()),
+                    reactphysics3d::VertexArray::DataType::VERTEX_FLOAT_TYPE);
                 std::vector<reactphysics3d::Message> messages;
                 handle.convexMesh = physicsCommon_.createConvexMesh(array, messages);
                 if (handle.convexMesh) {
                     handle.shape = physicsCommon_.createConvexMeshShape(handle.convexMesh, ToRp3d(shape.scale));
                 }
             } else if constexpr (std::is_same_v<S, ColliderInfo3D::ConcaveMeshShape3D>) {
-                /*if (shape.vertices.empty() || shape.indices.empty()) return;
+                // 非凸メッシュは描画用の三角形インデックスをそのまま使う。TriangleMeshは入力配列を
+                // 内部へコピーして保持するため、このローカルのTriangleVertexArrayは生成後に破棄してよい。
+                if (shape.vertices.empty() || shape.indices.empty() || shape.indices.size() % 3 != 0) return;
                 constexpr std::uint32_t kVertexStride = sizeof(Vector3);
                 constexpr std::uint32_t kIndexStride = sizeof(std::uint32_t);
                 reactphysics3d::TriangleVertexArray array(
-                    static_cast<std::uint32_t>(shape.vertices.size() / 3),
+                    static_cast<std::uint32_t>(shape.vertices.size()),
                     shape.vertices.data(),
-                    kVertexStride * 3,
+                    kVertexStride,
                     static_cast<std::uint32_t>(shape.indices.size() / 3),
                     shape.indices.data(),
                     kIndexStride * 3,
                     reactphysics3d::TriangleVertexArray::VertexDataType::VERTEX_FLOAT_TYPE,
                     reactphysics3d::TriangleVertexArray::IndexDataType::INDEX_INTEGER_TYPE);
                 std::vector<reactphysics3d::Message> messages;
-                reactphysics3d::TriangleMesh *mesh = physicsCommon_.createTriangleMesh(array, messages);
-                handle.concaveMesh = physicsCommon_.createConcaveMeshShape(mesh, ToRp3d(shape.scale));
+                handle.triangleMesh = physicsCommon_.createTriangleMesh(array, messages);
+                if (!handle.triangleMesh) return;
+
+                handle.concaveMesh = physicsCommon_.createConcaveMeshShape(handle.triangleMesh, ToRp3d(shape.scale));
                 if (handle.concaveMesh) {
                     handle.shape = handle.concaveMesh;
-                }*/
+                } else {
+                    physicsCommon_.destroyTriangleMesh(handle.triangleMesh);
+                    handle.triangleMesh = nullptr;
+                }
             } else if constexpr (std::is_same_v<S, ColliderInfo3D::HeightFieldShape3D>) {
                 if (shape.heights.empty() || shape.width == 0 || shape.length == 0) return;
                 std::vector<reactphysics3d::Message> messages;

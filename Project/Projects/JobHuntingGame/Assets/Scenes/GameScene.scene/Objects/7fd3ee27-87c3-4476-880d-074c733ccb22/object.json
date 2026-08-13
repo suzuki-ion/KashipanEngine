@@ -4,7 +4,7 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "85df0137-8c99-4ccc-af31-59951bbae199",
+                        "parent": "d3280149-4b9e-48db-947d-4e3757845f87",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -69,7 +69,7 @@
                         "moveLerpUsePerAxis": true,
                         "positionOffset": {
                             "x": 0.0,
-                            "y": 2.0,
+                            "y": 4.0,
                             "z": -16.0
                         },
                         "rotateLerpAll": 0.10000000149011612,
@@ -132,7 +132,8 @@
         "isActive": true,
         "name": "Camera",
         "objectID": "7fd3ee27-87c3-4476-880d-074c733ccb22",
+        "prefabNodeID": "9f0f6e0d-ee4f-45c6-a42f-3a46b788c7b1",
         "tag": ""
     },
-    "siblingIndex": 0
+    "siblingIndex": 2000
 }

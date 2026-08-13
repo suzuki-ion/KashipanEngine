@@ -43,6 +43,8 @@
                 "data": {
                     "customData": {
                         "fields": {
+                            "boxGroundTiltFollowSpeed": 8.0,
+                            "coneWallReleaseUpwardPower": 16.0,
                             "currentHp": 3,
                             "damageAmount": 1,
                             "damageCooldown": 1.5,
@@ -158,6 +160,31 @@
                     "tag": "GroundBox"
                 },
                 "type": "BoxCollider"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "continuousDetection": true,
+                        "convex": true,
+                        "isTrigger": false,
+                        "meshAssetPath": "",
+                        "syncPosition": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncRotation": true,
+                        "syncScale": [
+                            true,
+                            true,
+                            true
+                        ]
+                    },
+                    "isActive": false,
+                    "priority": 1,
+                    "tag": "PlayerSphere"
+                },
+                "type": "MeshCollider"
             },
             {
                 "data": {

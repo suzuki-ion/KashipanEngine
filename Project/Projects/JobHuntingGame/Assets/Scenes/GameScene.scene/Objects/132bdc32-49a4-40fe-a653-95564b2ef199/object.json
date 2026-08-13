@@ -4,7 +4,7 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "70ae89eb-57fb-48ba-8043-f0b5bfd6229b",
+                        "parent": "e8cc7d03-ae77-401f-99f3-9886b3032f92",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -37,5 +37,5 @@
         "prefabNodeID": "941401ff-fca7-45ea-9ed3-7b34f17b5c8a",
         "tag": ""
     },
-    "siblingIndex": 3000
+    "siblingIndex": 1000
 }

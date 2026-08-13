@@ -141,7 +141,7 @@ void SetCenter(const Vector3 &amp;center);</div>
 bool IsConvex() const noexcept;
 void SetMeshHandle(ModelManager::ModelHandle handle) noexcept; // 未指定ならMeshFilterのメッシュを使用
 ModelManager::ModelHandle GetEffectiveMeshHandle() const;</div>
-<p>UnityのMeshColliderに相当します。<code>Convex</code>を有効にした場合のみ凸包として扱われ、他のMeshCollider同士でも衝突できます（物理エンジン側の制約により、非Convexなメッシュ同士の衝突判定には対応していません）。メッシュを明示的に指定しない場合は、同オブジェクトの <code>MeshFilter</code>（<a href="05_Rendering.html">05_Rendering.html</a> 参照）のメッシュをそのまま使います。</p>
+<p>UnityのMeshColliderに相当します。<code>Convex</code>を有効にした場合は頂点群から凸包を生成するため、他のMeshCollider同士でも衝突できます。無効の場合は描画メッシュの三角形形状を使う非凸Colliderとなり、複雑な地形・壁などの静的オブジェクトに使用できます。物理エンジン側の制約により、非ConvexなMeshCollider同士の衝突、およびDynamic/Kinematic RigidBodyへの取り付けには対応していません。メッシュを明示的に指定しない場合は、同オブジェクトの <code>MeshFilter</code>（<a href="05_Rendering.html">05_Rendering.html</a> 参照）のメッシュをそのまま使います。</p>
 </div>
 
 <div class="api-card">

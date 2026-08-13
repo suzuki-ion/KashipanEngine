@@ -362,6 +362,31 @@
                 {
                     "data": {
                         "customData": {
+                            "continuousDetection": true,
+                            "convex": true,
+                            "isTrigger": false,
+                            "meshAssetPath": "",
+                            "syncPosition": [
+                                true,
+                                true,
+                                true
+                            ],
+                            "syncRotation": true,
+                            "syncScale": [
+                                true,
+                                true,
+                                true
+                            ]
+                        },
+                        "isActive": false,
+                        "priority": 1,
+                        "tag": "PlayerSphere"
+                    },
+                    "type": "MeshCollider"
+                },
+                {
+                    "data": {
+                        "customData": {
                             "effects": {
                                 "echo": {
                                     "delayMs": 500.0,

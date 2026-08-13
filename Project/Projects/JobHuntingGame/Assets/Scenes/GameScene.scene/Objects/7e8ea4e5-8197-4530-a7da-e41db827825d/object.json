@@ -4,6 +4,7 @@
             {
                 "data": {
                     "customData": {
+                        "parent": "d3280149-4b9e-48db-947d-4e3757845f87",
                         "rotate": {
                             "w": -4.371138828673793e-08,
                             "x": 1.0,
@@ -89,7 +90,8 @@
         "isActive": true,
         "name": "SceneLight",
         "objectID": "7e8ea4e5-8197-4530-a7da-e41db827825d",
+        "prefabNodeID": "0d28e468-b1f4-4016-8521-24ebfbd7b69c",
         "tag": ""
     },
-    "siblingIndex": 2
+    "siblingIndex": 500
 }

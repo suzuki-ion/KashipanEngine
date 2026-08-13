@@ -11,8 +11,9 @@
 namespace KashipanEngine {
 
 /// @brief UnityのMeshColliderに相当するコンポーネント
-/// @details Convexフラグをオンにした場合のみ凸包として扱われ、他のMeshColliderと衝突できるようになる
-///          （物理エンジン側の制約により、非Convexなメッシュ同士の衝突判定には対応していない）。
+/// @details Convexフラグをオンにした場合は頂点群から凸包を生成する。オフの場合は描画メッシュの
+///          三角形形状をそのまま使用する（静的な地形・壁向け）。物理エンジン側の制約により、
+///          非Convexなメッシュ同士の衝突、およびDynamic/Kinematic RigidBodyへの取り付けには対応していない。
 ///          メッシュを明示的に指定しない場合は、同オブジェクトのMeshFilterコンポーネントのメッシュを参照する。
 class MeshCollider final : public ICollider {
 public:

@@ -4,7 +4,6 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "85df0137-8c99-4ccc-af31-59951bbae199",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -27,14 +26,26 @@
                     "tag": ""
                 },
                 "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "732bff81-53c1-48a3-9139-70f7a90603be"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
             }
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "StageParent",
-        "objectID": "0decf0a7-f5f9-4cd7-b23e-21bd652b6f2f",
+        "name": "GameDefaultObjects",
+        "objectID": "d3280149-4b9e-48db-947d-4e3757845f87",
+        "prefabNodeID": "1e38fb07-568c-4cd1-ba62-a3777663b3b4",
         "tag": ""
     },
-    "siblingIndex": 9000
+    "siblingIndex": 3
 }

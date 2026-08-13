@@ -4,6 +4,7 @@
             {
                 "data": {
                     "customData": {
+                        "parent": "d3280149-4b9e-48db-947d-4e3757845f87",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -222,7 +223,8 @@
         "isActive": true,
         "name": "StageParticle",
         "objectID": "1477bf80-64ce-4b70-ad77-79ce3a6a068c",
+        "prefabNodeID": "1d962f0c-e6d4-4d84-9b79-ff7e4654b4a9",
         "tag": ""
     },
-    "siblingIndex": 6
+    "siblingIndex": 0
 }

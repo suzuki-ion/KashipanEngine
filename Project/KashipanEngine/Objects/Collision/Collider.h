@@ -208,6 +208,7 @@ private:
         reactphysics3d::CollisionShape *shape = nullptr;
         reactphysics3d::ConvexMesh *convexMesh = nullptr;
         reactphysics3d::ConcaveMeshShape *concaveMesh = nullptr;
+        reactphysics3d::TriangleMesh *triangleMesh = nullptr;
         reactphysics3d::HeightField *heightField = nullptr;
     };
 

@@ -4,7 +4,7 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "85df0137-8c99-4ccc-af31-59951bbae199",
+                        "parent": "d3280149-4b9e-48db-947d-4e3757845f87",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -32,9 +32,10 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "StageParent",
-        "objectID": "0decf0a7-f5f9-4cd7-b23e-21bd652b6f2f",
+        "name": "PlayerObjects",
+        "objectID": "e8cc7d03-ae77-401f-99f3-9886b3032f92",
+        "prefabNodeID": "a6b9ff79-9018-4b63-a1f7-b04d43ca6a69",
         "tag": ""
     },
-    "siblingIndex": 9000
+    "siblingIndex": 3000
 }

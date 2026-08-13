@@ -28,7 +28,7 @@
 <tr><td>Pos X / Pos Y / Pos Z</td><td>チェックボックス（3個、横並び）</td><td>同オブジェクトの<code>Transform</code>の各軸位置へ追従させるか。既定は全て<code>true</code></td></tr>
 <tr><td>Rotation</td><td>チェックボックス</td><td>Transformの回転へ追従させるか。既定<code>true</code>。ホバーすると「回転は軸ごとの部分同期をサポートしない（数学的に反転・不連続が避けられないため）」というツールチップが表示される</td></tr>
 <tr><td>Scale X / Scale Y / Scale Z</td><td>チェックボックス（3個、横並び）</td><td>Transformの各軸スケールへ追従させるか。既定は全て<code>false</code>（既存挙動を変えないための後方互換）</td></tr>
-<tr><td>Convex</td><td>チェックボックス</td><td>凸包として扱うか。既定 <code>true</code>。オフにした場合、その下に「Convexオフの場合、他のMeshColliderとは衝突しません」という淡色の注意文が表示される（物理エンジン側の制約で非Convexなメッシュ同士の衝突判定には対応していないため）</td></tr>
+<tr><td>Convex</td><td>チェックボックス</td><td>凸包として扱うか。既定 <code>true</code>。オフにすると描画メッシュの三角形形状をそのまま当たり判定に使う。非凸形状は静的な地形・壁向けで、他のMeshColliderとの衝突およびDynamic/Kinematic RigidBodyへの取り付けには対応しない</td></tr>
 <tr><td>Mesh (optional)</td><td>ドロップダウン（コンボボックス）</td><td>読み込み済みモデルの一覧から明示的に使用メッシュを選択する。先頭に<code>(None)</code>があり、選択すると明示指定を解除する。<code>(None)</code>の場合は同オブジェクトの<code>MeshFilter</code>コンポーネントのメッシュにフォールバックする</td></tr>
 </table>
 

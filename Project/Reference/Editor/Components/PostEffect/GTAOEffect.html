@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GTAOEffect | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_PostEffect_GTAOEffect">
+<div class="layout"><nav id="sidebar"></nav><main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>GTAOEffect</h1>
+<p class="page-lead">深度から位置と法線を再構成し、画面スライスごとの地平線角を積分する半解像度GTAOポストエフェクトです。時間蓄積を使わず、深度対応の分離フィルターとアップサンプルで安定した陰影を生成します。</p>
+</div>
+
+<div class="note"><strong>付与の前提</strong><br>
+同一オブジェクトに <code>ScreenBufferObject</code> が必要です。既存の <code>SSAOEffect</code> とは独立したエフェクトであり、通常はどちらか一方だけを有効にします。</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>内容</th></tr>
+<tr><td>Radius</td><td>遮蔽を探索するワールド空間半径。既定値 0.5</td></tr>
+<tr><td>Intensity</td><td>遮蔽の強さ。既定値 1.0</td></tr>
+<tr><td>Power</td><td>AOコントラスト。既定値 1.0</td></tr>
+<tr><td>Bias</td><td>自己遮蔽を避けるワールド距離。既定値 0.02</td></tr>
+<tr><td>Direction Count</td><td>画面上の探索方向数（2〜8）。既定値 4</td></tr>
+<tr><td>Steps Per Direction</td><td>各方向の深度探索ステップ数（2〜12）。既定値 6</td></tr>
+<tr><td>Blur Radius</td><td>半解像度AOへ適用する分離フィルター半径（0〜8）。既定値 3</td></tr>
+<tr><td>Depth Threshold</td><td>フィルターとアップサンプルの深度差許容値。既定値 0.5</td></tr>
+<tr><td>Show AO Only</td><td>合成前のAO係数をグレースケール表示するデバッグ切り替え。既定値 OFF</td></tr>
+</table>
+<p>各項目にマウスホバーすると、効果と品質・負荷への影響を説明するツールチップが表示されます。</p>
+
+<h2>品質と負荷</h2>
+<p>AOは縦横1/2の中間ターゲットへ描画されます。負荷を下げる場合は Direction Count を先に減らし、品質を上げる場合は Steps Per Direction を増やします。専用法線バッファを持たないため、シルエット付近では深度から再構成した近似法線の精度に依存します。</p>
+
+<div id="page-footer" class="page-footer"></div>
+</main></div>
+</body>
+</html>

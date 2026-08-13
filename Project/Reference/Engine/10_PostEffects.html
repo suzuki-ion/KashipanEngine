@@ -31,7 +31,7 @@
 <p>派生クラスは次のいずれかの方式でエフェクトの中身を実装します。</p>
 <ul>
 <li><strong>宣言的パス定義（<code>BuildPasses()</code>）</strong> — 1回のフルスクリーンパスで完結する単純なエフェクト向け。使用するパイプライン名と、定数バッファ・テクスチャ・サンプラーのバインド要求（<code>PassInfo</code>）を返すだけで、実際の描画コマンド発行は <code>Renderer</code> 側が行います。<code>BoxFilterEffect</code>、<code>ChromaticAberrationEffect</code>、<code>ColorAdjustEffect</code>、<code>DissolveEffect</code>、<code>DitherEffect</code>、<code>DotMatrixEffect</code>、<code>FXAAEffect</code>、<code>GaussianFilterEffect</code>、<code>GrayscaleEffect</code>、<code>OutlineEffect</code>、<code>RadialBlurEffect</code>、<code>VignetteEffect</code> がこの方式です。</li>
-<li><strong>カスタム描画（<code>RenderCustom()</code>）</strong> — 中間レンダーターゲットを使う多段パスが必要なエフェクト向け。<code>screenBuffer-&gt;NextPass()</code> で読み取り面を確定させてから内部レンダーターゲットへ複数回描画し、最後に <code>screenBuffer-&gt;RebindWriteTarget()</code> で書き込み面へ戻して合成します。<code>BloomEffect</code>、<code>AmbientOcclusionEffect</code>、<code>DepthOfFieldEffect</code>、<code>MotionBlurEffect</code> がこの方式です。</li>
+<li><strong>カスタム描画（<code>RenderCustom()</code>）</strong> — 中間レンダーターゲットを使う多段パスが必要なエフェクト向け。<code>screenBuffer-&gt;NextPass()</code> で読み取り面を確定させてから内部レンダーターゲットへ複数回描画し、最後に <code>screenBuffer-&gt;RebindWriteTarget()</code> で書き込み面へ戻して合成します。<code>BloomEffect</code>、<code>SSAOEffect</code>、<code>GTAOEffect</code>、<code>DepthOfFieldEffect</code>、<code>MotionBlurEffect</code> がこの方式です。</li>
 </ul>
 
 <h3>カメラ情報の自動注入</h3>
@@ -48,7 +48,8 @@
 <table>
 <tr><th>クラス名</th><th>概要</th><th>主なパラメータ（<code>Params</code>）</th></tr>
 <tr><td><code>BloomEffect</code></td><td>しきい値を超える明部を抽出し、縮小ピラミッドでぼかして加算合成するブルーム</td><td><code>threshold</code>, <code>softKnee</code>, <code>intensity</code>, <code>blurRadius</code>, <code>iterations</code></td></tr>
-<tr><td><code>AmbientOcclusionEffect</code></td><td>深度バッファのみから再構成する簡易SSAO（法線バッファを持たないため鏡面成分にも多少影響する既知の妥協点あり）</td><td><code>radius</code>, <code>intensity</code>, <code>power</code>, <code>bias</code>, <code>sampleCount</code>, <code>blurRadius</code>, <code>depthThreshold</code></td></tr>
+<tr><td><code>SSAOEffect</code></td><td>深度バッファのみから再構成する簡易SSAO（法線バッファを持たないため鏡面成分にも多少影響する既知の妥協点あり）</td><td><code>radius</code>, <code>intensity</code>, <code>power</code>, <code>bias</code>, <code>sampleCount</code>, <code>blurRadius</code>, <code>depthThreshold</code></td></tr>
+<tr><td><code>GTAOEffect</code></td><td>半解像度の地平線探索、深度対応の分離フィルターとアップサンプルを使う時間蓄積なしGTAO</td><td><code>radius</code>, <code>intensity</code>, <code>power</code>, <code>bias</code>, <code>directionCount</code>, <code>stepCount</code>, <code>blurRadius</code>, <code>depthThreshold</code>, <code>showAOOnly</code></td></tr>
 <tr><td><code>DepthOfFieldEffect</code></td><td>フォーカス距離から近景/遠景それぞれのCoCを求めて別々にガザリングブラーする被写界深度</td><td><code>focusDistance</code>, <code>focusRange</code>, <code>nearBlurDistance</code>, <code>farBlurDistance</code>, <code>maxBlurRadiusPixels</code>, <code>sampleCount</code>, <code>dilateRadius</code></td></tr>
 <tr><td><code>MotionBlurEffect</code></td><td>前フレームView-Projectionへの再投影によるカメラ動作由来のモーションブラー（オブジェクト自身の動きには追従しない）</td><td><code>intensity</code>, <code>velocityScale</code>, <code>maxBlurPixels</code>, <code>samples</code></td></tr>
 <tr><td><code>OutlineEffect</code></td><td>深度の差分から輪郭線を検出して描画</td><td><code>threshold</code>, <code>thickness</code>, <code>color</code></td></tr>

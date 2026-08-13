@@ -360,7 +360,8 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <None Include="Reference\Editor\Components\Collider\RigidBody3D.html" />
     <None Include="Reference\Editor\Components\Collider\SphereCollider.html" />
     <None Include="Reference\Editor\Components\Compute\ComputeShaderProcessing.html" />
-    <None Include="Reference\Editor\Components\PostEffect\AmbientOcclusionEffect.html" />
+    <None Include="Reference\Editor\Components\PostEffect\SSAOEffect.html" />
+    <None Include="Reference\Editor\Components\PostEffect\GTAOEffect.html" />
     <None Include="Reference\Editor\Components\PostEffect\BloomEffect.html" />
     <None Include="Reference\Editor\Components\PostEffect\BoxFilterEffect.html" />
     <None Include="Reference\Editor\Components\PostEffect\ChromaticAberrationEffect.html" />
@@ -1161,7 +1162,8 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\RigidBody3D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\SphereCollider.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\MeshFilter.h" />
-    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\AmbientOcclusionEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\SSAOEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\GTAOEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\BloomEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\BoxFilterEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\ChromaticAberrationEffect.h" />

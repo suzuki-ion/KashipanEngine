@@ -4381,7 +4381,7 @@
                         "priority": 4,
                         "tag": ""
                     },
-                    "type": "AmbientOcclusionEffect"
+                    "type": "SSAOEffect"
                 },
                 {
                     "data": {

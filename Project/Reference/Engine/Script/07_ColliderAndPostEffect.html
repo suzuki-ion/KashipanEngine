@@ -105,7 +105,8 @@
 </p>
 <table>
 <tr><th>コンポーネント</th><th>メソッド</th></tr>
-<tr><td><code>AmbientOcclusionEffect</code></td><td><code>GetRadius</code>/<code>SetRadius</code>, <code>GetIntensity</code>/<code>SetIntensity</code>, <code>GetPower</code>/<code>SetPower</code>, <code>GetBias</code>/<code>SetBias</code>（すべて<code>float</code>）, <code>GetSampleCount</code>/<code>SetSampleCount</code>（<code>uint</code>）, <code>GetBlurRadius</code>/<code>SetBlurRadius</code>（<code>int</code>）, <code>GetDepthThreshold</code>/<code>SetDepthThreshold</code>（<code>float</code>）</td></tr>
+<tr><td><code>SSAOEffect</code></td><td><code>GetRadius</code>/<code>SetRadius</code>, <code>GetIntensity</code>/<code>SetIntensity</code>, <code>GetPower</code>/<code>SetPower</code>, <code>GetBias</code>/<code>SetBias</code>（すべて<code>float</code>）, <code>GetSampleCount</code>/<code>SetSampleCount</code>（<code>uint</code>）, <code>GetBlurRadius</code>/<code>SetBlurRadius</code>（<code>int</code>）, <code>GetDepthThreshold</code>/<code>SetDepthThreshold</code>（<code>float</code>）</td></tr>
+<tr><td><code>GTAOEffect</code></td><td><code>GetRadius</code>/<code>SetRadius</code>, <code>GetIntensity</code>/<code>SetIntensity</code>, <code>GetPower</code>/<code>SetPower</code>, <code>GetBias</code>/<code>SetBias</code>, <code>GetDepthThreshold</code>/<code>SetDepthThreshold</code>（<code>float</code>）, <code>GetDirectionCount</code>/<code>SetDirectionCount</code>, <code>GetStepCount</code>/<code>SetStepCount</code>（<code>uint</code>）, <code>GetBlurRadius</code>/<code>SetBlurRadius</code>（<code>int</code>）, <code>GetShowAOOnly</code>/<code>SetShowAOOnly</code>（<code>bool</code>）</td></tr>
 <tr><td><code>BloomEffect</code></td><td><code>GetThreshold</code>/<code>SetThreshold</code>, <code>GetSoftKnee</code>/<code>SetSoftKnee</code>, <code>GetIntensity</code>/<code>SetIntensity</code>, <code>GetBlurRadius</code>/<code>SetBlurRadius</code>（すべて<code>float</code>）, <code>GetIterations</code>/<code>SetIterations</code>（<code>uint</code>、ダウンサンプル段数1〜16）</td></tr>
 <tr><td><code>BoxFilterEffect</code></td><td><code>GetIntensity</code>/<code>SetIntensity</code>（<code>float</code>）, <code>GetHalfSizeX</code>/<code>GetHalfSizeY</code>（<code>int</code>）, <code>SetHalfSize(int, int)</code></td></tr>
 <tr><td><code>ChromaticAberrationEffect</code></td><td><code>GetDirection</code>/<code>SetDirection</code>（<code>Vector2</code>）, <code>GetStrength</code>/<code>SetStrength</code>（<code>float</code>）</td></tr>
@@ -123,7 +124,7 @@
 <tr><td><code>VignetteEffect</code></td><td><code>GetCenter</code>/<code>SetCenter</code>（<code>Vector2</code>）, <code>GetColor</code>/<code>SetColor</code>（<code>Vector4</code>）, <code>GetIntensity</code>/<code>SetIntensity</code>, <code>GetInnerRadius</code>/<code>SetInnerRadius</code>, <code>GetSmoothness</code>/<code>SetSmoothness</code>（<code>float</code>）</td></tr>
 </table>
 <div class="note">
-<strong>AmbientOcclusionEffectの前提</strong><br>
+<strong>SSAOEffectの前提</strong><br>
 専用の法線バッファ（G-buffer）を持たないフォワードレンダリングのため、深度バッファのみからスクリーンスペースでワールド座標・法線を再構成する簡易SSAOとして実装されています。既にシェーディング済みの色へAOを乗算するため、間接光だけでなく鏡面成分にも多少影響します。また、このスクリーンバッファへ描画しているカメラ（<code>CameraRenderer</code>、またはエディター用描画先の場合はエディターカメラ）が解決できないフレームでは、AOは適用されず元の描画結果がそのまま残ります。
 </div>
 <div class="note">

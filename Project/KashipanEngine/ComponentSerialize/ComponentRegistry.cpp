@@ -73,6 +73,14 @@ bool RegisterComponentTypeObject(
     Local::GetObjectComponentCategoryMap()[typeName] = category;
     return true;
 }
+bool RegisterObjectComponentTypeAlias(
+    const std::string &aliasName,
+    std::function<std::unique_ptr<IObjectComponent>()> createFunc) {
+    auto &factoryMap = Local::GetObjectComponentFactoryMap();
+    if (factoryMap.find(aliasName) != factoryMap.end()) return false;
+    factoryMap[aliasName] = createFunc;
+    return true;
+}
 
 std::unique_ptr<ISceneComponent> CreateSceneComponentByType(const std::string &typeName) {
     auto it = Local::GetSceneComponentFactoryMap().find(typeName);

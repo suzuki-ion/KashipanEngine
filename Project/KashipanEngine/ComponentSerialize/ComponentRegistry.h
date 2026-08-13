@@ -37,6 +37,11 @@ bool RegisterComponentTypeObject(
     std::function<std::unique_ptr<IComponentPoolBase>()> poolFactory,
     bool isBatchProcessed,
     const std::vector<std::string> &category = {});
+/// @brief 旧シリアライズ名を既存のオブジェクトコンポーネント型へ割り当てる
+/// @details Add Componentの一覧には追加せず、旧データの読み込み時だけ使用する。
+bool RegisterObjectComponentTypeAlias(
+    const std::string &aliasName,
+    std::function<std::unique_ptr<IObjectComponent>()> createFunc);
 
 std::unique_ptr<ISceneComponent> CreateSceneComponentByType(const std::string &typeName);
 std::unique_ptr<IObjectComponent> CreateObjectComponentByType(const std::string &typeName);

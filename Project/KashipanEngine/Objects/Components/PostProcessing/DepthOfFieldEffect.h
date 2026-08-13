@@ -25,7 +25,7 @@ namespace KashipanEngine {
 ///          近景CoCはダイレーション（最大値フィルタ）で膨張させ、前景のボケがその物体本来の
 ///          シルエットより外側にも自然に広がるようにしている。
 ///          中間レンダーターゲットを使う多段パスのため、宣言的なパス定義ではなく
-///          カスタム描画で実装している（BloomEffect/AmbientOcclusionEffectと同様の構成）。
+///          カスタム描画で実装している（BloomEffect/SSAOEffectと同様の構成）。
 class DepthOfFieldEffect final : public IPostProcessComponent {
 public:
     struct Params {

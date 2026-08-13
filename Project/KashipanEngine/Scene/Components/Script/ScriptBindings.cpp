@@ -67,7 +67,8 @@
 #include "Objects/Components/Collider/SphereCollider.h"
 #include "Objects/Components/Compute/ComputeShaderProcessing.h"
 #include "Objects/Components/MeshFilter.h"
-#include "Objects/Components/PostProcessing/AmbientOcclusionEffect.h"
+#include "Objects/Components/PostProcessing/SSAOEffect.h"
+#include "Objects/Components/PostProcessing/GTAOEffect.h"
 #include "Objects/Components/PostProcessing/BloomEffect.h"
 #include "Objects/Components/PostProcessing/BoxFilterEffect.h"
 #include "Objects/Components/PostProcessing/ChromaticAberrationEffect.h"
@@ -984,21 +985,41 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
     //==================================================
     // それぞれ内部の Params 構造体を直接は公開せず、フィールドごとの Get/Set をラムダで提供する
 
-    RegisterComponentType<AmbientOcclusionEffect>(engine, "AmbientOcclusionEffect")
-        .method("float GetRadius() const", [](const AmbientOcclusionEffect &e) { return e.GetParams().radius; })
-        .method("void SetRadius(float)", [](AmbientOcclusionEffect &e, float v) { auto p = e.GetParams(); p.radius = v; e.SetParams(p); })
-        .method("float GetIntensity() const", [](const AmbientOcclusionEffect &e) { return e.GetParams().intensity; })
-        .method("void SetIntensity(float)", [](AmbientOcclusionEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
-        .method("float GetPower() const", [](const AmbientOcclusionEffect &e) { return e.GetParams().power; })
-        .method("void SetPower(float)", [](AmbientOcclusionEffect &e, float v) { auto p = e.GetParams(); p.power = v; e.SetParams(p); })
-        .method("float GetBias() const", [](const AmbientOcclusionEffect &e) { return e.GetParams().bias; })
-        .method("void SetBias(float)", [](AmbientOcclusionEffect &e, float v) { auto p = e.GetParams(); p.bias = v; e.SetParams(p); })
-        .method("uint GetSampleCount() const", [](const AmbientOcclusionEffect &e) -> uint32_t { return e.GetParams().sampleCount; })
-        .method("void SetSampleCount(uint)", [](AmbientOcclusionEffect &e, uint32_t v) { auto p = e.GetParams(); p.sampleCount = v; e.SetParams(p); })
-        .method("int GetBlurRadius() const", [](const AmbientOcclusionEffect &e) { return e.GetParams().blurRadius; })
-        .method("void SetBlurRadius(int)", [](AmbientOcclusionEffect &e, int v) { auto p = e.GetParams(); p.blurRadius = v; e.SetParams(p); })
-        .method("float GetDepthThreshold() const", [](const AmbientOcclusionEffect &e) { return e.GetParams().depthThreshold; })
-        .method("void SetDepthThreshold(float)", [](AmbientOcclusionEffect &e, float v) { auto p = e.GetParams(); p.depthThreshold = v; e.SetParams(p); });
+    RegisterComponentType<SSAOEffect>(engine, "SSAOEffect")
+        .method("float GetRadius() const", [](const SSAOEffect &e) { return e.GetParams().radius; })
+        .method("void SetRadius(float)", [](SSAOEffect &e, float v) { auto p = e.GetParams(); p.radius = v; e.SetParams(p); })
+        .method("float GetIntensity() const", [](const SSAOEffect &e) { return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](SSAOEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("float GetPower() const", [](const SSAOEffect &e) { return e.GetParams().power; })
+        .method("void SetPower(float)", [](SSAOEffect &e, float v) { auto p = e.GetParams(); p.power = v; e.SetParams(p); })
+        .method("float GetBias() const", [](const SSAOEffect &e) { return e.GetParams().bias; })
+        .method("void SetBias(float)", [](SSAOEffect &e, float v) { auto p = e.GetParams(); p.bias = v; e.SetParams(p); })
+        .method("uint GetSampleCount() const", [](const SSAOEffect &e) -> uint32_t { return e.GetParams().sampleCount; })
+        .method("void SetSampleCount(uint)", [](SSAOEffect &e, uint32_t v) { auto p = e.GetParams(); p.sampleCount = v; e.SetParams(p); })
+        .method("int GetBlurRadius() const", [](const SSAOEffect &e) { return e.GetParams().blurRadius; })
+        .method("void SetBlurRadius(int)", [](SSAOEffect &e, int v) { auto p = e.GetParams(); p.blurRadius = v; e.SetParams(p); })
+        .method("float GetDepthThreshold() const", [](const SSAOEffect &e) { return e.GetParams().depthThreshold; })
+        .method("void SetDepthThreshold(float)", [](SSAOEffect &e, float v) { auto p = e.GetParams(); p.depthThreshold = v; e.SetParams(p); });
+
+    RegisterComponentType<GTAOEffect>(engine, "GTAOEffect")
+        .method("float GetRadius() const", [](const GTAOEffect &e) { return e.GetParams().radius; })
+        .method("void SetRadius(float)", [](GTAOEffect &e, float v) { auto p = e.GetParams(); p.radius = v; e.SetParams(p); })
+        .method("float GetIntensity() const", [](const GTAOEffect &e) { return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](GTAOEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("float GetPower() const", [](const GTAOEffect &e) { return e.GetParams().power; })
+        .method("void SetPower(float)", [](GTAOEffect &e, float v) { auto p = e.GetParams(); p.power = v; e.SetParams(p); })
+        .method("float GetBias() const", [](const GTAOEffect &e) { return e.GetParams().bias; })
+        .method("void SetBias(float)", [](GTAOEffect &e, float v) { auto p = e.GetParams(); p.bias = v; e.SetParams(p); })
+        .method("uint GetDirectionCount() const", [](const GTAOEffect &e) -> uint32_t { return e.GetParams().directionCount; })
+        .method("void SetDirectionCount(uint)", [](GTAOEffect &e, uint32_t v) { auto p = e.GetParams(); p.directionCount = v; e.SetParams(p); })
+        .method("uint GetStepCount() const", [](const GTAOEffect &e) -> uint32_t { return e.GetParams().stepCount; })
+        .method("void SetStepCount(uint)", [](GTAOEffect &e, uint32_t v) { auto p = e.GetParams(); p.stepCount = v; e.SetParams(p); })
+        .method("int GetBlurRadius() const", [](const GTAOEffect &e) { return e.GetParams().blurRadius; })
+        .method("void SetBlurRadius(int)", [](GTAOEffect &e, int v) { auto p = e.GetParams(); p.blurRadius = v; e.SetParams(p); })
+        .method("float GetDepthThreshold() const", [](const GTAOEffect &e) { return e.GetParams().depthThreshold; })
+        .method("void SetDepthThreshold(float)", [](GTAOEffect &e, float v) { auto p = e.GetParams(); p.depthThreshold = v; e.SetParams(p); })
+        .method("bool GetShowAOOnly() const", [](const GTAOEffect &e) { return e.GetParams().showAOOnly; })
+        .method("void SetShowAOOnly(bool)", [](GTAOEffect &e, bool v) { auto p = e.GetParams(); p.showAOOnly = v; e.SetParams(p); });
 
     RegisterComponentType<BloomEffect>(engine, "BloomEffect")
         .method("float GetThreshold() const", [](const BloomEffect &e) { return e.GetParams().threshold; })

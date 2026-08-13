@@ -23,7 +23,7 @@ namespace KashipanEngine {
 ///          前フレームのView-Projectionへ再投影してスクリーンスペース速度を求める簡易実装のため、
 ///          カメラの移動・回転によるブラーのみが対象（オブジェクト自身の動きには追従しない）。
 ///          中間レンダーターゲット（速度バッファ）を使う多段パスのため、
-///          宣言的なパス定義ではなくカスタム描画で実装している（AmbientOcclusionEffectと同様の構成）。
+///          宣言的なパス定義ではなくカスタム描画で実装している（SSAOEffectと同様の構成）。
 class MotionBlurEffect final : public IPostProcessComponent {
 public:
     struct Params {

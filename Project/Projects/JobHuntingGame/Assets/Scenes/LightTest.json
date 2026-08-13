@@ -662,7 +662,7 @@
                         "priority": 3,
                         "tag": ""
                     },
-                    "type": "AmbientOcclusionEffect"
+                    "type": "SSAOEffect"
                 },
                 {
                     "data": {

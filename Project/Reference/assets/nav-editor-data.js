@@ -66,7 +66,8 @@ const KE_PAGES = [
   { id: "C_Collider_RigidBody2D", title: "RigidBody2D", group: "コンポーネント: Collider", href: "Editor/Components/Collider/RigidBody2D.html" },
   { id: "C_Collider_RigidBody3D", title: "RigidBody3D", group: "コンポーネント: Collider", href: "Editor/Components/Collider/RigidBody3D.html" },
 
-  { id: "C_PostEffect_AmbientOcclusionEffect", title: "AmbientOcclusionEffect", group: "コンポーネント: PostEffect", href: "Editor/Components/PostEffect/AmbientOcclusionEffect.html" },
+  { id: "C_PostEffect_SSAOEffect", title: "SSAOEffect", group: "コンポーネント: PostEffect", href: "Editor/Components/PostEffect/SSAOEffect.html" },
+  { id: "C_PostEffect_GTAOEffect", title: "GTAOEffect", group: "コンポーネント: PostEffect", href: "Editor/Components/PostEffect/GTAOEffect.html" },
   { id: "C_PostEffect_BloomEffect", title: "BloomEffect", group: "コンポーネント: PostEffect", href: "Editor/Components/PostEffect/BloomEffect.html" },
   { id: "C_PostEffect_BoxFilterEffect", title: "BoxFilterEffect", group: "コンポーネント: PostEffect", href: "Editor/Components/PostEffect/BoxFilterEffect.html" },
   { id: "C_PostEffect_ChromaticAberrationEffect", title: "ChromaticAberrationEffect", group: "コンポーネント: PostEffect", href: "Editor/Components/PostEffect/ChromaticAberrationEffect.html" },

@@ -1,0 +1,24 @@
+{
+	"PipelineType": "Render",
+	"Name": "PostEffect.GTAO.Blur",
+	"Category": "PostEffect",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": { "UsePreset": "GTAO.Blur.Vertex" },
+		"Pixel": { "UsePreset": "GTAO.Blur.Pixel" }
+	},
+	"RasterizerState": { "UsePreset": "Solid" },
+	"BlendState": { "UsePreset": "Normal" },
+	"DepthStencilState": { "UsePreset": "DepthDisable" },
+	"PipelineState": {
+		"NumRenderTargets": 1,
+		"RTVFormats": [ "DXGI_FORMAT_R8_UNORM" ],
+		"PrimitiveTopologyType": "D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE",
+		"SampleDesc": { "Count": 1, "Quality": 0 },
+		"SampleMask": "D3D12_DEFAULT_SAMPLE_MASK",
+		"DSVFormat": "DXGI_FORMAT_D24_UNORM_S8_UINT"
+	}
+}

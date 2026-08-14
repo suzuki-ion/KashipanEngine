@@ -29,6 +29,53 @@
 namespace KashipanEngine {
 
 namespace {
+constexpr const char *kAssetIconAtlasPath = "KashipanEngine/EditorIcons/AssetIcons.png";
+constexpr float kAssetIconAtlasColumns = 4.0f;
+constexpr float kAssetIconAtlasRows = 3.0f;
+
+enum class AssetIcon : unsigned int {
+    Folder,
+    File,
+    Image,
+    Model,
+    Audio,
+    Video,
+    Json,
+    Material,
+    Prefab,
+    Script,
+    Shader,
+    Font,
+};
+
+AssetIcon GetAssetIcon(const std::string &extension) {
+    auto in = [&extension](std::initializer_list<const char *> extensions) {
+        return std::find_if(extensions.begin(), extensions.end(), [&extension](const char *candidate) {
+            return extension == candidate;
+        }) != extensions.end();
+    };
+
+    if (in({ ".png", ".jpg", ".jpeg", ".bmp", ".tga", ".dds", ".hdr", ".tif", ".tiff", ".gif", ".webp" })) return AssetIcon::Image;
+    if (in({ ".fbx", ".obj", ".gltf", ".glb", ".dae", ".3ds", ".blend", ".ply", ".stl", ".x" })) return AssetIcon::Model;
+    if (in({ ".wav", ".mp3", ".ogg", ".flac", ".aac", ".m4a", ".wma" })) return AssetIcon::Audio;
+    if (in({ ".mp4", ".wmv", ".mov", ".avi" })) return AssetIcon::Video;
+    if (extension == ".json") return AssetIcon::Json;
+    if (extension == ".mat") return AssetIcon::Material;
+    if (extension == ".prefab") return AssetIcon::Prefab;
+    if (extension == ".as") return AssetIcon::Script;
+    if (in({ ".hlsl", ".hlsli" })) return AssetIcon::Shader;
+    if (in({ ".ttf", ".otf" })) return AssetIcon::Font;
+    return AssetIcon::File;
+}
+
+void GetAssetIconUV(AssetIcon icon, ImVec2 &uv0, ImVec2 &uv1) {
+    const unsigned int index = static_cast<unsigned int>(icon);
+    const float column = static_cast<float>(index % static_cast<unsigned int>(kAssetIconAtlasColumns));
+    const float row = static_cast<float>(index / static_cast<unsigned int>(kAssetIconAtlasColumns));
+    uv0 = ImVec2(column / kAssetIconAtlasColumns, row / kAssetIconAtlasRows);
+    uv1 = ImVec2((column + 1.0f) / kAssetIconAtlasColumns, (row + 1.0f) / kAssetIconAtlasRows);
+}
+
 /// @brief 論理パス（"Assets/..." 形式）を、TextureManagerなどが管理する
 ///        Assetsルートからの相対パスへ変換する（先頭の "Assets/" を取り除く）
 std::string ToAssetsRelativePath(const std::string &logicalPath) {
@@ -183,23 +230,6 @@ bool AssetsWindow::IsSupportedExtension(const std::string &ext) {
         [&ext](const char *s) { return ext == s; }) != kSupported.end();
 }
 
-unsigned int AssetsWindow::ExtensionColor(const std::string &ext) {
-    auto in = [&ext](std::initializer_list<const char *> list) {
-        return std::find_if(list.begin(), list.end(), [&ext](const char *s) { return ext == s; }) != list.end();
-    };
-    if (in({ ".png", ".jpg", ".jpeg", ".bmp", ".tga", ".dds", ".hdr", ".tif", ".tiff", ".gif", ".webp" })) return IM_COL32(96, 168, 96, 255);   // テクスチャ: 緑
-    if (in({ ".fbx", ".obj", ".gltf", ".glb", ".dae", ".3ds", ".blend", ".ply", ".stl", ".x" })) return IM_COL32(96, 128, 192, 255);            // モデル: 青
-    if (in({ ".wav", ".mp3", ".ogg", ".flac", ".aac", ".m4a", ".wma" })) return IM_COL32(192, 144, 64, 255);                                    // サウンド: 橙
-    if (in({ ".mp4", ".wmv", ".mov", ".avi" })) return IM_COL32(192, 96, 144, 255);                                                             // 動画: 桃
-    if (in({ ".json" })) return IM_COL32(176, 176, 96, 255);                                                                                    // JSON: 黄
-    if (in({ ".mat" })) return IM_COL32(96, 176, 176, 255);                                                                                     // マテリアル: 水色
-    if (in({ ".prefab" })) return IM_COL32(112, 144, 224, 255);                                                                                 // プレハブ: 青紫
-    if (in({ ".as" })) return IM_COL32(176, 112, 112, 255);                                                                                     // スクリプト: 赤
-
-    if (in({ ".hlsl", ".hlsli" })) return IM_COL32(160, 96, 176, 255);                                                                          // シェーダー: 紫
-    return IM_COL32(128, 128, 128, 255);
-}
-
 std::string AssetsWindow::ToLowerExtension(const std::filesystem::path &path) {
     std::string ext = path.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(),
@@ -322,6 +352,12 @@ void AssetsWindow::ShowFileGrid() {
     const float availWidth = ImGui::GetContentRegionAvail().x;
     const int columns = std::max(1, static_cast<int>(availWidth / kCellSize));
 
+    D3D12_GPU_DESCRIPTOR_HANDLE iconAtlasSrvHandle{};
+    const auto iconAtlasTextureHandle = TextureManager::GetTextureFromAssetPath(kAssetIconAtlasPath);
+    if (iconAtlasTextureHandle != TextureManager::kInvalidHandle) {
+        iconAtlasSrvHandle = TextureManager::GetTextureView(iconAtlasTextureHandle).GetSrvHandle();
+    }
+
     int index = 0;
     for (const auto &file : files_) {
         ImGui::PushID(file.path.c_str());
@@ -333,30 +369,37 @@ void AssetsWindow::ShowFileGrid() {
         ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offsetX);
 
         bool activated = false;
-        if (file.isFolder) {
-            // フォルダアイコン（黄色いブロック）
-            ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(200, 176, 96, 255));
-            activated = ImGui::Button("##folder", thumbnailSize);
-            ImGui::PopStyleColor();
-        } else {
+        D3D12_GPU_DESCRIPTOR_HANDLE srvHandle{};
+        ImVec2 uv0(0.0f, 0.0f);
+        ImVec2 uv1(1.0f, 1.0f);
+        if (!file.isFolder) {
             // 読み込み済みテクスチャの場合はサムネイルを表示する
             // file.path はプロジェクトルートからの論理パス（例: "Assets/Materials/White.png"）だが、
             // TextureManager 側は Assets ルートからの相対パス（例: "Materials/White.png"）で管理しているため、
             // 先頭の "Assets/" を取り除いてから問い合わせる必要がある
-            D3D12_GPU_DESCRIPTOR_HANDLE srvHandle{};
             const auto textureHandle = TextureManager::GetTextureFromAssetPath(ToAssetsRelativePath(file.path));
             if (textureHandle != TextureManager::kInvalidHandle) {
                 srvHandle = TextureManager::GetTextureView(textureHandle).GetSrvHandle();
             }
-            if (srvHandle.ptr != 0) {
-                activated = ImGui::ImageButton("##thumb",
-                    static_cast<ImTextureID>(srvHandle.ptr), thumbnailSize);
-            } else {
-                // 分類色のブロックに拡張子を表示する
-                ImGui::PushStyleColor(ImGuiCol_Button, ExtensionColor(file.extension));
-                activated = ImGui::Button(file.extension.c_str(), thumbnailSize);
-                ImGui::PopStyleColor();
-            }
+        }
+
+        // テクスチャ以外は、ファイル種別に対応した生成済みアイコンをアトラスから表示する。
+        // フォルダも同じアトラスを使うことで、従来の単色矩形を描画しない。
+        if (srvHandle.ptr == 0 && iconAtlasSrvHandle.ptr != 0) {
+            srvHandle = iconAtlasSrvHandle;
+            GetAssetIconUV(file.isFolder ? AssetIcon::Folder : GetAssetIcon(file.extension), uv0, uv1);
+        }
+
+        if (srvHandle.ptr != 0) {
+            ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(0, 0, 0, 0));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(255, 255, 255, 24));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(255, 255, 255, 48));
+            activated = ImGui::ImageButton("##thumb", static_cast<ImTextureID>(srvHandle.ptr),
+                thumbnailSize, uv0, uv1);
+            ImGui::PopStyleColor(3);
+        } else {
+            // アイコンアセットの読み込みに失敗しても操作領域は維持し、色付き矩形へは戻さない。
+            activated = ImGui::InvisibleButton("##missingIcon", thumbnailSize);
         }
         (void)activated;
 

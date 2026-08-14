@@ -138,8 +138,14 @@ float PhongReflection(float3 normal, float3 lightDir, float3 worldPos, float shi
 }
 
 float BlinnPhongReflection(float3 normal, float3 lightDir, float3 worldPos, float shininess) {
-	float3 viewDir = normalize(gCamera3D.eyePosition.xyz - worldPos);
-	float3 halfDir = normalize(-lightDir + viewDir);
+	float3 toEye = gCamera3D.eyePosition.xyz - worldPos;
+	float toEyeLengthSq = dot(toEye, toEye);
+	if (toEyeLengthSq <= 1e-10f) return 0.0f;
+	float3 viewDir = toEye * rsqrt(toEyeLengthSq);
+	float3 halfVector = -lightDir + viewDir;
+	float halfLengthSq = dot(halfVector, halfVector);
+	if (halfLengthSq <= 1e-10f) return 0.0f;
+	float3 halfDir = halfVector * rsqrt(halfLengthSq);
 	float NdotH = dot(normal, halfDir);
 	float spec = pow(saturate(NdotH), shininess);
 #ifdef ObjectToon
@@ -278,6 +284,7 @@ PSOutput main(VSOutput input) {
 
 				float3 toLight = light.position - input.worldPosition;
 				float dist = length(toLight);
+				if (light.radius <= 1e-5f) continue;
 				if (dist > light.radius) continue;
 
 				float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
@@ -285,7 +292,8 @@ PSOutput main(VSOutput input) {
 				if (atten <= 0.0f) continue;
 
 				float lam = HalfLambert(shadingNormal, lightDir, mat);
-				float spec = BlinnPhongReflection(shadingNormal, lightDir, input.worldPosition, mat.shininess);
+				// BlinnPhongReflectionはライトから面へ向かう方向を受け取る。
+				float spec = BlinnPhongReflection(shadingNormal, -lightDir, input.worldPosition, mat.shininess);
 				float4 diffuse = light.color * lam * light.intensity * atten;
 				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
 				// このライトが影を生成する場合、キューブシャドウマップから影係数を求める
@@ -300,20 +308,24 @@ PSOutput main(VSOutput input) {
 
 				float3 toLight = light.position - input.worldPosition;
 				float dist = length(toLight);
+				if (light.distance <= 1e-5f) continue;
 				if (dist > light.distance) continue;
 
 				float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
 				float theta = dot(-lightDir, normalize(light.direction));
-				float inner = cos(light.innerAngle);
-				float outer = cos(light.outerAngle);
-				float spot = saturate((theta - outer) / (inner - outer));
+				float angleCos0 = cos(light.innerAngle);
+				float angleCos1 = cos(light.outerAngle);
+				float inner = max(angleCos0, angleCos1);
+				float outer = min(angleCos0, angleCos1);
+				float spot = saturate((theta - outer) / max(inner - outer, 1e-5f));
 				if (spot <= 0.0f) continue;
 
 				float atten = pow(saturate(-dist / light.distance + 1.0f), light.decay) * spot;
 				if (atten <= 0.0f) continue;
 
 				float lam = HalfLambert(shadingNormal, lightDir, mat);
-				float spec = BlinnPhongReflection(shadingNormal, lightDir, input.worldPosition, mat.shininess);
+				// BlinnPhongReflectionはライトから面へ向かう方向を受け取る。
+				float spec = BlinnPhongReflection(shadingNormal, -lightDir, input.worldPosition, mat.shininess);
 				float4 diffuse = light.color * lam * light.intensity * atten;
 				float4 speculer = light.color * light.intensity * spec * mat.specularColor * atten;
 				// このライトが影を生成する場合、シャドウマップから影係数を求める
@@ -328,6 +340,7 @@ PSOutput main(VSOutput input) {
 
 				float3 toLight = light.position - input.worldPosition;
 				float dist = length(toLight);
+				if (light.radius <= 1e-5f) continue;
 				if (dist > light.radius) continue;
 
 				float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
@@ -337,7 +350,9 @@ PSOutput main(VSOutput input) {
 				// 鏡面は形状上の代表点（反射ベクトルと球面の最近接点）への方向で評価し、
 				// 光源サイズに応じてハイライトを広げる（真のLTC等ではなく代表点法による近似）
 				float3 representativePoint = SphereRepresentativePoint(input.worldPosition, reflectDir, light.position, light.sourceRadius);
-				float3 specDir = normalize(input.worldPosition - representativePoint);
+				float3 fromRepresentative = input.worldPosition - representativePoint;
+				float representativeDistance = length(fromRepresentative);
+				float3 specDir = (representativeDistance > 1e-5f) ? (fromRepresentative / representativeDistance) : -lightDir;
 				float adjustedShininess = AreaLightAdjustedShininess(mat.shininess, light.sourceRadius, dist);
 
 				float lam = HalfLambert(shadingNormal, lightDir, mat);
@@ -355,6 +370,7 @@ PSOutput main(VSOutput input) {
 
 				float3 toLight = light.position - input.worldPosition;
 				float dist = length(toLight);
+				if (light.distance <= 1e-5f) continue;
 				if (dist > light.distance) continue;
 
 				float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
@@ -367,7 +383,9 @@ PSOutput main(VSOutput input) {
 				if (atten <= 0.0f) continue;
 
 				float3 representativePoint = DiscRepresentativePoint(input.worldPosition, reflectDir, light.position, discNormal, light.sourceRadius);
-				float3 specDir = normalize(input.worldPosition - representativePoint);
+				float3 fromRepresentative = input.worldPosition - representativePoint;
+				float representativeDistance = length(fromRepresentative);
+				float3 specDir = (representativeDistance > 1e-5f) ? (fromRepresentative / representativeDistance) : -lightDir;
 				float adjustedShininess = AreaLightAdjustedShininess(mat.shininess, light.sourceRadius, dist);
 
 				float lam = HalfLambert(shadingNormal, lightDir, mat);
@@ -385,6 +403,7 @@ PSOutput main(VSOutput input) {
 
 				float3 toLight = light.position - input.worldPosition;
 				float dist = length(toLight);
+				if (light.distance <= 1e-5f) continue;
 				if (dist > light.distance) continue;
 
 				float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
@@ -398,7 +417,9 @@ PSOutput main(VSOutput input) {
 
 				float3 representativePoint = RectRepresentativePoint(input.worldPosition, reflectDir, light.position, rectNormal,
 					light.right, light.up, light.width * 0.5f, light.height * 0.5f);
-				float3 specDir = normalize(input.worldPosition - representativePoint);
+				float3 fromRepresentative = input.worldPosition - representativePoint;
+				float representativeDistance = length(fromRepresentative);
+				float3 specDir = (representativeDistance > 1e-5f) ? (fromRepresentative / representativeDistance) : -lightDir;
 				float sourceRadius = max(light.width, light.height) * 0.5f;
 				float adjustedShininess = AreaLightAdjustedShininess(mat.shininess, sourceRadius, dist);
 
@@ -419,6 +440,7 @@ PSOutput main(VSOutput input) {
 				float3 closest = TubeClosestPoint(input.worldPosition, light.p0, light.p1);
 				float3 toLight = closest - input.worldPosition;
 				float dist = length(toLight);
+				if (light.radius <= 1e-5f) continue;
 				if (dist > light.radius) continue;
 
 				float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
@@ -426,7 +448,9 @@ PSOutput main(VSOutput input) {
 				if (atten <= 0.0f) continue;
 
 				float3 representativePoint = SphereRepresentativePoint(input.worldPosition, reflectDir, closest, light.sourceRadius);
-				float3 specDir = normalize(input.worldPosition - representativePoint);
+				float3 fromRepresentative = input.worldPosition - representativePoint;
+				float representativeDistance = length(fromRepresentative);
+				float3 specDir = (representativeDistance > 1e-5f) ? (fromRepresentative / representativeDistance) : -lightDir;
 				float adjustedShininess = AreaLightAdjustedShininess(mat.shininess, light.sourceRadius, dist);
 
 				float lam = HalfLambert(shadingNormal, lightDir, mat);
@@ -443,21 +467,26 @@ PSOutput main(VSOutput input) {
 				BoxLight light = gBoxLights[lightIndex];
 				if (!light.enabled) continue;
 
-				// ボックス表面上の最近接点を代表点として、チューブライトと同じ扱いで拡散・鏡面・減衰を求める
-				// （内部・表面付近は最近接点=表面上のクランプ済み点となり減衰なし）
+				// ボックス表面上の最近接点を代表点として、チューブライトと同じ扱いで拡散・鏡面・減衰を求める。
+				// 内部では最寄りの面を照明方向に使い、減衰距離だけは従来どおり0とする。
 				float3 halfExtents = float3(light.halfWidth, light.halfHeight, light.halfDepth);
-				float3 closest = BoxClosestPoint(input.worldPosition, light.position, light.right, light.up, light.forward, halfExtents);
+				float3 closestNormal;
+				float3 closest = BoxClosestPoint(input.worldPosition, light.position, light.right, light.up, light.forward, halfExtents, closestNormal);
 				float3 toLight = closest - input.worldPosition;
-				float dist = length(toLight);
+				float directionDistance = length(toLight);
+				float dist = BoxDistanceOutside(input.worldPosition, light.position, light.right, light.up, light.forward, halfExtents);
+				if (light.radius <= 1e-5f) continue;
 				if (dist > light.radius) continue;
 
-				float3 lightDir = (dist > 1e-5f) ? (toLight / dist) : float3(0.0f, 1.0f, 0.0f);
+				float3 lightDir = (directionDistance > 1e-5f) ? (toLight / directionDistance) : -closestNormal;
 				float atten = pow(saturate(-dist / light.radius + 1.0f), light.decay);
 				if (atten <= 0.0f) continue;
 
 				float sourceRadius = max(max(light.halfWidth, light.halfHeight), light.halfDepth);
 				float3 representativePoint = SphereRepresentativePoint(input.worldPosition, reflectDir, closest, sourceRadius);
-				float3 specDir = normalize(input.worldPosition - representativePoint);
+				float3 fromRepresentative = input.worldPosition - representativePoint;
+				float representativeDistance = length(fromRepresentative);
+				float3 specDir = (representativeDistance > 1e-5f) ? (fromRepresentative / representativeDistance) : -lightDir;
 				float adjustedShininess = AreaLightAdjustedShininess(mat.shininess, sourceRadius, dist);
 
 				float lam = HalfLambert(shadingNormal, lightDir, mat);

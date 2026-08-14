@@ -51,8 +51,6 @@ private:
 
     /// @brief エンジンが対応している形式か（拡張子は小文字で渡す）
     static bool IsSupportedExtension(const std::string &ext);
-    /// @brief 拡張子の分類色（Unityのアイコンの代わり）
-    static unsigned int ExtensionColor(const std::string &ext);
     static std::string ToLowerExtension(const std::filesystem::path &path);
 
     /// @brief フォルダツリーを再構築する

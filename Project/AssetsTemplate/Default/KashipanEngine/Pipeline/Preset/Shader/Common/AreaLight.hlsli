@@ -32,7 +32,9 @@ inline float3 SphereRepresentativePoint(float3 worldPos, float3 reflectDir, floa
 	if (centerToClosestDist > 1e-4f) {
 		return sphereCenter + centerToClosest * (sphereRadius / centerToClosestDist);
 	}
-	return sphereCenter + float3(0.0f, sphereRadius, 0.0f);
+	// 反射レイが球の中心を正確に通る場合も、レイ手前側の球面を連続的な代表点として使う。
+	// 固定の+Yを返すと、正対時だけハイライト位置が不連続になる。
+	return sphereCenter - reflectDir * sphereRadius;
 }
 
 /// @brief レイと平面の交点を求める（交差しない場合はfalseを返し、hitPointはplanePointのまま）
@@ -85,14 +87,39 @@ inline float3 TubeClosestPoint(float3 worldPos, float3 p0, float3 p1) {
 	return p0 + ab * t;
 }
 
-/// @brief 表面から見てボックス（直方体）上で最も近い点を返す（拡散・鏡面双方の基準点として使う）
+/// @brief 表面から見てボックス（直方体）の表面上で最も近い点を返す（拡散・鏡面双方の基準点として使う）
 /// @details ワールド座標をボックスのローカル軸へ射影し、半径（半幅・半高・半奥行き）でクランプする。
-///          点がボックス内部にある場合は各軸ともクランプが効かないため、そのまま内部の点が返る
-///          （TubeClosestPointと同じ「最近接点法」をボックスへ拡張したもの）
-inline float3 BoxClosestPoint(float3 worldPos, float3 center, float3 right, float3 up, float3 forward, float3 halfExtents) {
+///          点が内部にある場合は最寄りの面まで押し出し、内部点自身を返さない。
+inline float3 BoxClosestPoint(float3 worldPos, float3 center, float3 right, float3 up, float3 forward,
+	float3 halfExtents, out float3 closestNormal) {
 	float3 d = worldPos - center;
-	float x = clamp(dot(d, right), -halfExtents.x, halfExtents.x);
-	float y = clamp(dot(d, up), -halfExtents.y, halfExtents.y);
-	float z = clamp(dot(d, forward), -halfExtents.z, halfExtents.z);
-	return center + right * x + up * y + forward * z;
+	float3 localPos = float3(dot(d, right), dot(d, up), dot(d, forward));
+	float3 localClosest = clamp(localPos, -halfExtents, halfExtents);
+	closestNormal = float3(0.0f, 1.0f, 0.0f);
+
+	if (all(abs(localPos) <= halfExtents)) {
+		float3 faceDistance = halfExtents - abs(localPos);
+		if (faceDistance.x <= faceDistance.y && faceDistance.x <= faceDistance.z) {
+			float side = (localPos.x >= 0.0f) ? 1.0f : -1.0f;
+			localClosest.x = side * halfExtents.x;
+			closestNormal = right * side;
+		} else if (faceDistance.y <= faceDistance.z) {
+			float side = (localPos.y >= 0.0f) ? 1.0f : -1.0f;
+			localClosest.y = side * halfExtents.y;
+			closestNormal = up * side;
+		} else {
+			float side = (localPos.z >= 0.0f) ? 1.0f : -1.0f;
+			localClosest.z = side * halfExtents.z;
+			closestNormal = forward * side;
+		}
+	}
+
+	return center + right * localClosest.x + up * localClosest.y + forward * localClosest.z;
+}
+
+/// @brief ボックス外部から表面までの距離。内部では0を返し、従来どおり減衰なしにする。
+inline float BoxDistanceOutside(float3 worldPos, float3 center, float3 right, float3 up, float3 forward, float3 halfExtents) {
+	float3 d = worldPos - center;
+	float3 localPos = float3(dot(d, right), dot(d, up), dot(d, forward));
+	return length(max(abs(localPos) - halfExtents, 0.0f));
 }

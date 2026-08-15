@@ -1,0 +1,40 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 3.0,
+                            "y": 6.9161224365234375,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "FluorescentLightObject",
+        "objectID": "409c2766-66b1-4886-94f8-a94d6f3f3de4",
+        "prefabNodeID": "88d38d8c-ada0-4561-8dbf-04179f632311",
+        "tag": ""
+    },
+    "siblingIndex": 4000
+}

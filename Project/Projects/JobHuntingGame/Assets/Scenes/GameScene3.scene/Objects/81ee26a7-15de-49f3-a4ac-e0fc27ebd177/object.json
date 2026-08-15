@@ -1,0 +1,78 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "015831d7-ed7b-457d-b947-e35226789bf1",
+                        "rotate": {
+                            "w": 0.7071067094802856,
+                            "x": 0.7071068286895752,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.1997942924499512,
+                            "y": 5.998353958129883,
+                            "z": 1.1997413635253906
+                        },
+                        "translate": {
+                            "x": -0.0082855224609375,
+                            "y": 0.0,
+                            "z": 1.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "castShadows": true,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "materialName": "Default",
+                        "materialNames": [
+                            "Default"
+                        ],
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "renderPriority": 0,
+                        "targetObjectID": "a027aee5-a3ac-4aa4-b2e8-b9c8d93f3c3f"
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "MeshRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Axis",
+        "objectID": "81ee26a7-15de-49f3-a4ac-e0fc27ebd177",
+        "prefabNodeID": "0f10eb85-3562-468a-95fc-ff821eb0e061",
+        "tag": ""
+    },
+    "siblingIndex": 1000
+}

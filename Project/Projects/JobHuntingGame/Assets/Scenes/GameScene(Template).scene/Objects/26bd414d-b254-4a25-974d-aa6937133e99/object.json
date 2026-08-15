@@ -1,0 +1,40 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": -4.0,
+                            "y": 8.5,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "MoveGround",
+        "objectID": "26bd414d-b254-4a25-974d-aa6937133e99",
+        "prefabNodeID": "8a86940c-e08a-4264-8e96-83cf91776029",
+        "tag": ""
+    },
+    "siblingIndex": 9000
+}

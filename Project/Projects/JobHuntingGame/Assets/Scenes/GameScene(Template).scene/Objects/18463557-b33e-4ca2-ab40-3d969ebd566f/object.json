@@ -1,0 +1,224 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "81b730c2-306d-4588-a7c9-cb0b12ad93c2",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 4.0,
+                            "y": 0.75,
+                            "z": 5.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Box"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "center": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "continuousDetection": false,
+                        "isTrigger": false,
+                        "size": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "syncPosition": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncRotation": true,
+                        "syncScale": [
+                            true,
+                            true,
+                            true
+                        ]
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "GroundBox"
+                },
+                "type": "BoxCollider"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "moveRangeMax": {
+                                "x": 6.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "moveRangeMin": {
+                                "x": -6.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "moveSpeed": {
+                                "x": 4.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "moveStopDuration": 2.0,
+                            "rotateRangeMax": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "rotateRangeMin": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "rotateSpeed": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "rotateStopDuration": 0.0
+                        },
+                        "scriptPath": "Assets\\Application\\Scripts\\MoveGround.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "acceleration": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "velocity": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Velocity"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "angularAcceleration": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "angularVelocity": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Rotation"
+            },
+            {
+                "data": {
+                    "customData": {},
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PreTransform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "centerZOffset": 0.0,
+                            "excludedTagNames": [
+                                "Ground"
+                            ],
+                            "interpolationSpeed": 5.0,
+                            "riderNormalThreshold": 0.4000000059604645
+                        },
+                        "scriptPath": "Assets\\Application\\Scripts\\CenterRiderOnFloor.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "castShadows": true,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "materialName": "Default",
+                        "materialNames": [
+                            "Default"
+                        ],
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "renderPriority": 0,
+                        "targetObjectID": "a027aee5-a3ac-4aa4-b2e8-b9c8d93f3c3f"
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "MeshRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "MoveGround",
+        "objectID": "18463557-b33e-4ca2-ab40-3d969ebd566f",
+        "prefabNodeID": "a2a5b7a4-6184-4424-853f-fbb504f24774",
+        "tag": "Ground"
+    },
+    "siblingIndex": 0
+}

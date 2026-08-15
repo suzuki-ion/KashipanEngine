@@ -7,6 +7,10 @@
         {
             "filePath": "Assets/Scenes/GameScene2.scene",
             "name": "GameScene2"
+        },
+        {
+            "filePath": "Assets/Scenes/GameScene3.scene",
+            "name": "GameScene3"
         }
     ],
     "startupScene": "GameScene"

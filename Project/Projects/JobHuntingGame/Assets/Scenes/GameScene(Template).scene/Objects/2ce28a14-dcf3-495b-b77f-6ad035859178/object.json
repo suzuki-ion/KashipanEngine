@@ -1,0 +1,390 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "e9fff470-3752-4290-bbaa-ff1f3d6d5cf8",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Octahedron"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "animations": [
+                            {
+                                "bindings": [
+                                    {
+                                        "channel": 1,
+                                        "componentIndex": 0,
+                                        "componentType": "Transform",
+                                        "isScriptVariable": false,
+                                        "parameterName": "translate_"
+                                    }
+                                ],
+                                "jsonPath": "Assets/Application/Keyframe/floating.json",
+                                "loop": true,
+                                "name": "Anim0",
+                                "playOnStart": true,
+                                "playbackSpeed": 0.5,
+                                "timeOffset": 0.0,
+                                "valueOffset": -0.5,
+                                "valueScale": 0.5
+                            }
+                        ]
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "Assets/Application/Keyframe/floating.json"
+                },
+                "type": "KeyFrameAnimator"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "angularAcceleration": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "angularVelocity": {
+                            "x": 0.0,
+                            "y": 1.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Rotation"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "acceleration": {
+                            "max": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "min": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "randomize": false,
+                            "value": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "billboard": false,
+                        "billboardRotationMode": 0,
+                        "billboardTargetObjectID": "",
+                        "castShadows": false,
+                        "emissionRate": 4.0,
+                        "endScale": {
+                            "max": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "min": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "randomize": false,
+                            "value": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "excludeShapes": [],
+                        "extraComponents": [
+                            {
+                                "data": {
+                                    "customData": {
+                                        "rotate": {
+                                            "w": 1.0,
+                                            "x": 0.0,
+                                            "y": 0.0,
+                                            "z": 0.0
+                                        },
+                                        "scale": {
+                                            "x": 1.0,
+                                            "y": 1.0,
+                                            "z": 1.0
+                                        },
+                                        "translate": {
+                                            "x": 0.0,
+                                            "y": 0.0,
+                                            "z": 0.0
+                                        }
+                                    },
+                                    "isActive": true,
+                                    "priority": 1,
+                                    "tag": ""
+                                },
+                                "type": "Transform"
+                            },
+                            {
+                                "data": {
+                                    "customData": {
+                                        "castShadows": false,
+                                        "color": {
+                                            "w": 1.0,
+                                            "x": 1.0,
+                                            "y": 1.0,
+                                            "z": 1.0
+                                        },
+                                        "decay": 2.0,
+                                        "distance": 10.0,
+                                        "innerAngle": 0.3499999940395355,
+                                        "intensity": 1.0,
+                                        "outerAngle": 0.6000000238418579,
+                                        "radius": 4.0,
+                                        "shadowBias": 1.0,
+                                        "shadowDistance": 100.0,
+                                        "shadowMapResolution": 2048,
+                                        "shadowSoftness": 0.0,
+                                        "sourceDepth": 1.0,
+                                        "sourceHeight": 1.0,
+                                        "sourceLength": 1.0,
+                                        "sourceRadius": 0.5,
+                                        "sourceWidth": 1.0,
+                                        "type": 1
+                                    },
+                                    "isActive": true,
+                                    "priority": 1,
+                                    "tag": ""
+                                },
+                                "type": "Light"
+                            },
+                            {
+                                "data": {
+                                    "customData": {
+                                        "pipelineName": "",
+                                        "targetObjectID": "a027aee5-a3ac-4aa4-b2e8-b9c8d93f3c3f"
+                                    },
+                                    "isActive": true,
+                                    "priority": 950,
+                                    "tag": ""
+                                },
+                                "type": "LightRenderer"
+                            }
+                        ],
+                        "fixedSpawnPosition": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "gpuSimulation": false,
+                        "includeShapes": [
+                            {
+                                "boxSize": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "capsuleHeight": 1.0,
+                                "capsuleRadius": 0.5,
+                                "center": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "sphereRadius": 1.0,
+                                "type": 0
+                            }
+                        ],
+                        "initialRotation": {
+                            "max": {
+                                "x": 360.0,
+                                "y": 360.0,
+                                "z": 360.0
+                            },
+                            "min": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "randomize": true,
+                            "value": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "initialRotationSpeed": {
+                            "max": {
+                                "x": 4.0,
+                                "y": 4.0,
+                                "z": 4.0
+                            },
+                            "min": {
+                                "x": -4.0,
+                                "y": -4.0,
+                                "z": -4.0
+                            },
+                            "randomize": true,
+                            "value": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "initialVelocity": {
+                            "max": {
+                                "x": 4.0,
+                                "y": 4.0,
+                                "z": 4.0
+                            },
+                            "min": {
+                                "x": -4.0,
+                                "y": -4.0,
+                                "z": -4.0
+                            },
+                            "randomize": true,
+                            "value": {
+                                "x": 0.0,
+                                "y": 1.0,
+                                "z": 0.0
+                            }
+                        },
+                        "lifetime": {
+                            "max": 1.0,
+                            "min": 1.0,
+                            "randomize": false,
+                            "value": 1.0
+                        },
+                        "loop": true,
+                        "materialName": "White",
+                        "maxParticles": 8,
+                        "meshAssetPath": "PrimitiveMesh-Tetrahedron",
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "playOnStart": true,
+                        "rotationAcceleration": {
+                            "max": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "min": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "randomize": false,
+                            "value": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "spawnCount": {
+                            "max": 1,
+                            "min": 1,
+                            "randomize": false,
+                            "value": 1
+                        },
+                        "spawnOrigin": 2,
+                        "spawnParentObjectID": "",
+                        "startScale": {
+                            "max": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "min": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "randomize": false,
+                            "value": {
+                                "x": 0.25,
+                                "y": 0.25,
+                                "z": 0.25
+                            }
+                        },
+                        "targetObjectID": "a027aee5-a3ac-4aa4-b2e8-b9c8d93f3c3f",
+                        "totalSpawnCount": 100
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ParticleSystem3D"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "castShadows": false,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "materialName": "CheckPoint",
+                        "materialNames": [
+                            "CheckPoint"
+                        ],
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "renderPriority": 1000,
+                        "targetObjectID": "a027aee5-a3ac-4aa4-b2e8-b9c8d93f3c3f"
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "MeshRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Mesh Object",
+        "objectID": "2ce28a14-dcf3-495b-b77f-6ad035859178",
+        "prefabNodeID": "3d485fdf-b580-4885-9912-37e74c076317",
+        "tag": ""
+    },
+    "siblingIndex": 0
+}

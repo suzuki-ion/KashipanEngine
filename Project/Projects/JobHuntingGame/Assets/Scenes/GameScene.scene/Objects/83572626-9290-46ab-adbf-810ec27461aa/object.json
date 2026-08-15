@@ -75,6 +75,17 @@
             {
                 "data": {
                     "customData": {
+                        "prefabID": "ed2a2055-97f1-460b-97c8-706f99030e5c"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "castShadows": true,
                         "instanceColor": {
@@ -104,6 +115,7 @@
         "isActive": true,
         "name": "Ground",
         "objectID": "83572626-9290-46ab-adbf-810ec27461aa",
+        "prefabNodeID": "b5e3a7c9-5b53-428c-8d23-fbd52e19bc37",
         "tag": "Ground"
     },
     "siblingIndex": 24000

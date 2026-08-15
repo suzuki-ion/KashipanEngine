@@ -47,6 +47,13 @@
                             "x": 0.5,
                             "y": 0.5
                         },
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
                         "materialName": "MainScreen",
                         "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
                         "pivot": {
@@ -68,6 +75,7 @@
         "isActive": true,
         "name": "Sprite Object",
         "objectID": "3d37c934-87d3-4a19-b820-39551d78e15c",
+        "prefabNodeID": "7284c06a-c0f4-4a13-8961-cc06a17004a5",
         "tag": ""
     },
     "siblingIndex": 1

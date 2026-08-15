@@ -4,7 +4,6 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "85df0137-8c99-4ccc-af31-59951bbae199",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -262,5 +261,5 @@
         "objectID": "da5f2c80-7bb8-43fb-9bf6-00d116e0223a",
         "tag": ""
     },
-    "siblingIndex": 5000
+    "siblingIndex": 7000
 }

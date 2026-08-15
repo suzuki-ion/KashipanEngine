@@ -71,6 +71,7 @@
         "isActive": true,
         "name": "Cilinder",
         "objectID": "50fe5110-af09-4a12-ad98-8183c1f118bb",
+        "prefabNodeID": "4aa6c89c-fd0b-4520-ae5b-8a204fab5580",
         "tag": ""
     },
     "siblingIndex": 5

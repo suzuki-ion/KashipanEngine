@@ -79,6 +79,7 @@
         "isActive": true,
         "name": "SpotLight",
         "objectID": "bf307db8-c238-460d-a081-84ede07cea5e",
+        "prefabNodeID": "1794af15-ac97-468b-bed2-244987d051be",
         "tag": ""
     },
     "siblingIndex": 2

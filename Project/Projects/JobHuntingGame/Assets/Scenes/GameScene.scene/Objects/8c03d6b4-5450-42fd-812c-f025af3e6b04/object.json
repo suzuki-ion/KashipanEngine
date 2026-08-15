@@ -4,6 +4,7 @@
             {
                 "data": {
                     "customData": {
+                        "parent": "d3280149-4b9e-48db-947d-4e3757845f87",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -66,7 +67,8 @@
         "isActive": true,
         "name": "Window Object",
         "objectID": "8c03d6b4-5450-42fd-812c-f025af3e6b04",
+        "prefabNodeID": "730ae6c9-151f-435b-878e-273041973839",
         "tag": ""
     },
-    "siblingIndex": 5
+    "siblingIndex": 6000
 }

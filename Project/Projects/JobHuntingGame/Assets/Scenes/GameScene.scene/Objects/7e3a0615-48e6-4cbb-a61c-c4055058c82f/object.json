@@ -79,6 +79,7 @@
         "isActive": true,
         "name": "PointLight",
         "objectID": "7e3a0615-48e6-4cbb-a61c-c4055058c82f",
+        "prefabNodeID": "c431fee2-1a49-4dfd-848c-3a75b54bf05e",
         "tag": ""
     },
     "siblingIndex": 0

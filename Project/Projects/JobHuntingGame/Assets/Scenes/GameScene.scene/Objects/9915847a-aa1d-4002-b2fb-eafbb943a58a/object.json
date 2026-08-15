@@ -79,6 +79,7 @@
         "isActive": true,
         "name": "Light Object",
         "objectID": "9915847a-aa1d-4002-b2fb-eafbb943a58a",
+        "prefabNodeID": "469ea866-af5a-41d8-8362-70e9ffea64d9",
         "tag": ""
     },
     "siblingIndex": 0

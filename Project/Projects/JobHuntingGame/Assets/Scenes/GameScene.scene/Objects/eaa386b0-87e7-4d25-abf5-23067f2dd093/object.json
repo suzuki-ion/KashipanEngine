@@ -27,6 +27,17 @@
                     "tag": ""
                 },
                 "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "a32fbde5-5352-4689-8c59-2dd382357648"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
             }
         ],
         "editorOnly": false,
@@ -34,6 +45,7 @@
         "isActive": true,
         "name": "MoveGround",
         "objectID": "eaa386b0-87e7-4d25-abf5-23067f2dd093",
+        "prefabNodeID": "8a86940c-e08a-4264-8e96-83cf91776029",
         "tag": ""
     },
     "siblingIndex": 79000

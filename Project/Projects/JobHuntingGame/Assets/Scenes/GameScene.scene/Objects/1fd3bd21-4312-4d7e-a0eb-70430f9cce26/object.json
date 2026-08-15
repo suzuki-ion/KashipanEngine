@@ -79,6 +79,7 @@
         "isActive": true,
         "name": "TubeLight",
         "objectID": "1fd3bd21-4312-4d7e-a0eb-70430f9cce26",
+        "prefabNodeID": "eccca814-e22f-4e20-976b-77cec18bb6fc",
         "tag": ""
     },
     "siblingIndex": 0

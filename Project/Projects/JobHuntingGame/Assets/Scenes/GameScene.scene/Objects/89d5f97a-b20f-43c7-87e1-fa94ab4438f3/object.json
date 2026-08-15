@@ -311,6 +311,7 @@
         "isActive": true,
         "name": "Mesh Object",
         "objectID": "89d5f97a-b20f-43c7-87e1-fa94ab4438f3",
+        "prefabNodeID": "3d485fdf-b580-4885-9912-37e74c076317",
         "tag": ""
     },
     "siblingIndex": 0

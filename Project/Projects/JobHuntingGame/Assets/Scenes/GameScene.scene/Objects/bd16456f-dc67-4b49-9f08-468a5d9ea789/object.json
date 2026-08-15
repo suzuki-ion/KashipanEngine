@@ -27,6 +27,17 @@
                     "tag": ""
                 },
                 "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "9a8216b2-6e51-44df-bb8f-eae8d7e8dfb4"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
             }
         ],
         "editorOnly": false,
@@ -34,6 +45,7 @@
         "isActive": true,
         "name": "RotateGround",
         "objectID": "bd16456f-dc67-4b49-9f08-468a5d9ea789",
+        "prefabNodeID": "934d93ba-5abe-452a-87cd-0b897fe7f14b",
         "tag": ""
     },
     "siblingIndex": 74000

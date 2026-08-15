@@ -91,6 +91,7 @@
         "isActive": true,
         "name": "GoalObject",
         "objectID": "34d7987b-d70a-4bee-8c99-bdd85a3ac092",
+        "prefabNodeID": "d662750e-a880-4d00-bbfb-b68a6668b3cc",
         "tag": ""
     },
     "siblingIndex": 0

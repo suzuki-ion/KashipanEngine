@@ -4,7 +4,7 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "0decf0a7-f5f9-4cd7-b23e-21bd652b6f2f",
+                        "parent": "d3280149-4b9e-48db-947d-4e3757845f87",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -67,7 +67,8 @@
         "isActive": true,
         "name": "DeathLine",
         "objectID": "54b73370-6f32-449d-a455-12e1e3e2dcba",
+        "prefabNodeID": "358296a8-f07e-4475-8f6a-e773afa57607",
         "tag": "Ground"
     },
-    "siblingIndex": 23000
+    "siblingIndex": 7000
 }

@@ -4,7 +4,6 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "85df0137-8c99-4ccc-af31-59951bbae199",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -231,6 +230,17 @@
             {
                 "data": {
                     "customData": {
+                        "prefabID": "8506a2e9-4b65-451a-a0ed-f3b02438b77b"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "castShadows": true,
                         "instanceColor": {
@@ -260,7 +270,8 @@
         "isActive": true,
         "name": "Enemy",
         "objectID": "734e69ba-ba21-4783-bacd-9076dc2ba76b",
+        "prefabNodeID": "a08f9e4f-89f4-4fc6-b988-8abbb9006e56",
         "tag": ""
     },
-    "siblingIndex": 8000
+    "siblingIndex": 4000
 }

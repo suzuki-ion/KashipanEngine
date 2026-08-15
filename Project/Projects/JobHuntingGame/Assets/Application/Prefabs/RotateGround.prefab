@@ -1,0 +1,265 @@
+{
+    "name": "RotateGround",
+    "objects": [
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 54.60790252685547,
+                                    "y": 44.058563232421875,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "RotateGround",
+                "objectID": "bd16456f-dc67-4b49-9f08-468a5d9ea789",
+                "prefabNodeID": "934d93ba-5abe-452a-87cd-0b897fe7f14b",
+                "tag": ""
+            },
+            "parentIndex": -1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "bd16456f-dc67-4b49-9f08-468a5d9ea789",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 4.0,
+                                    "y": 1.000024676322937,
+                                    "z": 5.000184059143066
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 1.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Box"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "center": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "continuousDetection": false,
+                                "isTrigger": false,
+                                "size": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "syncPosition": [
+                                    true,
+                                    true,
+                                    true
+                                ],
+                                "syncRotation": true,
+                                "syncScale": [
+                                    true,
+                                    true,
+                                    true
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "GroundBox"
+                        },
+                        "type": "BoxCollider"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "angularAcceleration": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "angularVelocity": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 1.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Rotation"
+                    },
+                    {
+                        "data": {
+                            "customData": {},
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "PreTransform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "castShadows": true,
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "materialName": "Default",
+                                "materialNames": [
+                                    "Default"
+                                ],
+                                "pipelineName": "Object3D.Solid.BlendNormal",
+                                "renderPriority": 0,
+                                "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "RotateGround",
+                "objectID": "93fa416e-4174-41b0-a0e5-cbd381964327",
+                "prefabNodeID": "7572fb50-c296-4f95-86ed-703543fb6735",
+                "tag": "Ground"
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "bd16456f-dc67-4b49-9f08-468a5d9ea789",
+                                "rotate": {
+                                    "w": 0.7071067094802856,
+                                    "x": 0.7071068286895752,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.1997942924499512,
+                                    "y": 5.998353958129883,
+                                    "z": 1.1997413635253906
+                                },
+                                "translate": {
+                                    "x": -0.0082855224609375,
+                                    "y": 0.0,
+                                    "z": 1.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "castShadows": true,
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "materialName": "Default",
+                                "materialNames": [
+                                    "Default"
+                                ],
+                                "pipelineName": "Object3D.Solid.BlendNormal",
+                                "renderPriority": 0,
+                                "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "Axis",
+                "objectID": "3a0971bf-d0d1-46fa-93b3-69c1fe26b3f7",
+                "prefabNodeID": "0f10eb85-3562-468a-95fc-ff821eb0e061",
+                "tag": ""
+            },
+            "parentIndex": 0
+        }
+    ],
+    "prefab": true,
+    "prefabID": "9a8216b2-6e51-44df-bb8f-eae8d7e8dfb4"
+}

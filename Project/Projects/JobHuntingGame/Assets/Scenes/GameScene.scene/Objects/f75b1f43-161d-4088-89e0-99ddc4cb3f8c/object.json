@@ -60,6 +60,17 @@
                     "tag": "GroundBox"
                 },
                 "type": "BoxCollider"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "977e34d7-ffef-4ce3-8b9c-cac3ffe2d16e"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
             }
         ],
         "editorOnly": false,
@@ -67,6 +78,7 @@
         "isActive": true,
         "name": "LightObject",
         "objectID": "f75b1f43-161d-4088-89e0-99ddc4cb3f8c",
+        "prefabNodeID": "57981a5e-3495-47cb-a891-9795601aabec",
         "tag": ""
     },
     "siblingIndex": 0

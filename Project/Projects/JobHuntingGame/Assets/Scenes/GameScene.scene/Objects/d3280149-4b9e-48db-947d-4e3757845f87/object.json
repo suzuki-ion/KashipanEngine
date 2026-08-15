@@ -30,7 +30,7 @@
             {
                 "data": {
                     "customData": {
-                        "prefabID": "732bff81-53c1-48a3-9139-70f7a90603be"
+                        "prefabID": "625a4b8a-db8b-49ec-ac96-27ec7c849c07"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -47,5 +47,5 @@
         "prefabNodeID": "1e38fb07-568c-4cd1-ba62-a3777663b3b4",
         "tag": ""
     },
-    "siblingIndex": 3
+    "siblingIndex": 2000
 }

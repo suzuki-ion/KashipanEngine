@@ -253,6 +253,17 @@
             {
                 "data": {
                     "customData": {
+                        "prefabID": "10540bcf-781b-483d-acca-344c29224fac"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "castShadows": true,
                         "instanceColor": {
@@ -294,6 +305,7 @@
         "isActive": true,
         "name": "Goal",
         "objectID": "66779b41-4774-4de5-be40-a882e63feea6",
+        "prefabNodeID": "65e06db6-4a5e-4c49-90a0-a6f4a02f5b74",
         "tag": ""
     },
     "siblingIndex": 130000

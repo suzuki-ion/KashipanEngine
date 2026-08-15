@@ -61,6 +61,21 @@
                         "fontName": "NekoSpoon",
                         "fontSize": 64.0,
                         "horizontalAlign": 0,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "materialName": "Default",
+                        "outlineColor": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "outlineWidth": 0.0,
                         "pipelineName": "Text2D.BlendNormal",
                         "renderPriority": 0,
                         "targetObjectID": "8c03d6b4-5450-42fd-812c-f025af3e6b04",
@@ -79,6 +94,7 @@
         "isActive": true,
         "name": "Text Object",
         "objectID": "8423b57a-292c-43eb-99c0-b6ab8ebc7d4d",
+        "prefabNodeID": "d8ce0f3b-5c01-4a54-8180-e1d479d56620",
         "tag": ""
     },
     "siblingIndex": 2

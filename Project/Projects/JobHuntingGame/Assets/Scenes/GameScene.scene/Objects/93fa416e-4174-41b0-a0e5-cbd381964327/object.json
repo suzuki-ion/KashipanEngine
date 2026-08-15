@@ -133,6 +133,7 @@
         "isActive": true,
         "name": "RotateGround",
         "objectID": "93fa416e-4174-41b0-a0e5-cbd381964327",
+        "prefabNodeID": "7572fb50-c296-4f95-86ed-703543fb6735",
         "tag": "Ground"
     },
     "siblingIndex": 0

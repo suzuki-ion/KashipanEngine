@@ -27,6 +27,17 @@
                     "tag": ""
                 },
                 "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "8eeb180e-2bec-42a3-9794-7a554e813e30"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
             }
         ],
         "editorOnly": false,
@@ -34,6 +45,7 @@
         "isActive": true,
         "name": "Teleporter",
         "objectID": "d91c9ea1-bcc0-458c-8c19-2bfb7a784ed2",
+        "prefabNodeID": "13485a4f-7769-47ed-b0c5-3ef71845b11f",
         "tag": ""
     },
     "siblingIndex": 131000

@@ -198,6 +198,7 @@
         "isActive": true,
         "name": "MoveGround",
         "objectID": "6210548c-c7dd-4ab4-b181-4866262ec4c1",
+        "prefabNodeID": "9ce2b8db-79e9-4e3d-bb6a-8efe08bc09cd",
         "tag": "Ground"
     },
     "siblingIndex": 0

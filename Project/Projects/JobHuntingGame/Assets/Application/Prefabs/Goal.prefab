@@ -1,0 +1,405 @@
+{
+    "name": "Goal",
+    "objects": [
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 172.92779541015625,
+                                    "y": 75.59130859375,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "acceleration": {
+                                    "max": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "min": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "randomize": false,
+                                    "value": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    }
+                                },
+                                "billboard": false,
+                                "billboardRotationMode": 1,
+                                "billboardTargetObjectID": "66779b41-4774-4de5-be40-a882e63feea6",
+                                "castShadows": false,
+                                "emissionRate": 8.0,
+                                "endScale": {
+                                    "max": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "min": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "randomize": false,
+                                    "value": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    }
+                                },
+                                "excludeShapes": [],
+                                "extraComponents": [],
+                                "fixedSpawnPosition": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "gpuSimulation": false,
+                                "includeShapes": [
+                                    {
+                                        "boxSize": {
+                                            "x": 1.0,
+                                            "y": 1.0,
+                                            "z": 1.0
+                                        },
+                                        "capsuleHeight": 1.0,
+                                        "capsuleRadius": 0.5,
+                                        "center": {
+                                            "x": 0.0,
+                                            "y": 0.0,
+                                            "z": 0.0
+                                        },
+                                        "sphereRadius": 1.0,
+                                        "type": 0
+                                    }
+                                ],
+                                "initialRotation": {
+                                    "max": {
+                                        "x": 360.0,
+                                        "y": 360.0,
+                                        "z": 360.0
+                                    },
+                                    "min": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "randomize": true,
+                                    "value": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    }
+                                },
+                                "initialRotationSpeed": {
+                                    "max": {
+                                        "x": 1.0,
+                                        "y": 1.0,
+                                        "z": 1.0
+                                    },
+                                    "min": {
+                                        "x": -1.0,
+                                        "y": -1.0,
+                                        "z": -1.0
+                                    },
+                                    "randomize": true,
+                                    "value": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    }
+                                },
+                                "initialVelocity": {
+                                    "max": {
+                                        "x": 2.0,
+                                        "y": 2.0,
+                                        "z": 2.0
+                                    },
+                                    "min": {
+                                        "x": -2.0,
+                                        "y": -2.0,
+                                        "z": -2.0
+                                    },
+                                    "randomize": true,
+                                    "value": {
+                                        "x": 0.0,
+                                        "y": 1.0,
+                                        "z": 0.0
+                                    }
+                                },
+                                "lifetime": {
+                                    "max": 1.0,
+                                    "min": 1.0,
+                                    "randomize": false,
+                                    "value": 1.0
+                                },
+                                "loop": true,
+                                "materialName": "ParticleWhite",
+                                "maxParticles": 16,
+                                "meshAssetPath": "PrimitiveMesh-Tetrahedron",
+                                "pipelineName": "Object3D.Solid.BlendNormal",
+                                "playOnStart": true,
+                                "rotationAcceleration": {
+                                    "max": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "min": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "randomize": false,
+                                    "value": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    }
+                                },
+                                "spawnCount": {
+                                    "max": 1,
+                                    "min": 1,
+                                    "randomize": false,
+                                    "value": 1
+                                },
+                                "spawnOrigin": 0,
+                                "spawnParentObjectID": "",
+                                "startScale": {
+                                    "max": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "min": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "randomize": false,
+                                    "value": {
+                                        "x": 0.5,
+                                        "y": 0.5,
+                                        "z": 0.5
+                                    }
+                                },
+                                "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199",
+                                "totalSpawnCount": 100
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "ParticleSystem3D"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "castShadows": true,
+                                "color": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "decay": 2.0,
+                                "distance": 10.0,
+                                "innerAngle": 0.3499999940395355,
+                                "intensity": 0.5,
+                                "outerAngle": 0.6000000238418579,
+                                "radius": 10.0,
+                                "shadowBias": 1.0,
+                                "shadowDistance": 100.0,
+                                "shadowMapResolution": 1024,
+                                "shadowSoftness": 0.0,
+                                "sourceDepth": 1.0,
+                                "sourceHeight": 1.0,
+                                "sourceLength": 1.0,
+                                "sourceRadius": 1.0,
+                                "sourceWidth": 1.0,
+                                "type": 4
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Light"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "castShadows": true,
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "materialName": "Default",
+                                "materialNames": [
+                                    "Default"
+                                ],
+                                "pipelineName": "Object3D.Solid.BlendNormal",
+                                "renderPriority": 0,
+                                "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "pipelineName": "Object3D.Solid.BlendNormal",
+                                "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                            },
+                            "isActive": true,
+                            "priority": 950,
+                            "tag": ""
+                        },
+                        "type": "LightRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "Goal",
+                "objectID": "66779b41-4774-4de5-be40-a882e63feea6",
+                "prefabNodeID": "65e06db6-4a5e-4c49-90a0-a6f4a02f5b74",
+                "tag": ""
+            },
+            "parentIndex": -1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "66779b41-4774-4de5-be40-a882e63feea6",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Tetrahedron"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "angularAcceleration": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "angularVelocity": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Rotation"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "castShadows": true,
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "materialName": "White",
+                                "materialNames": [
+                                    "White"
+                                ],
+                                "pipelineName": "Object3D.Solid.BlendNormal",
+                                "renderPriority": 0,
+                                "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "GoalObject",
+                "objectID": "34d7987b-d70a-4bee-8c99-bdd85a3ac092",
+                "prefabNodeID": "d662750e-a880-4d00-bbfb-b68a6668b3cc",
+                "tag": ""
+            },
+            "parentIndex": 0
+        }
+    ],
+    "prefab": true,
+    "prefabID": "10540bcf-781b-483d-acca-344c29224fac"
+}

@@ -16,7 +16,7 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 24.0,
+                            "x": 31.905969619750977,
                             "y": 4.0,
                             "z": 0.0
                         }
@@ -368,5 +368,5 @@
         "prefabNodeID": "65e06db6-4a5e-4c49-90a0-a6f4a02f5b74",
         "tag": ""
     },
-    "siblingIndex": 6000
+    "siblingIndex": 32000
 }

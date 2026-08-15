@@ -1,0 +1,40 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 162.42208862304688,
+                            "y": 6.273614883422852,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Teleporter",
+        "objectID": "9734e784-68ae-4e85-8eea-ea193e6f7fb0",
+        "prefabNodeID": "13485a4f-7769-47ed-b0c5-3ef71845b11f",
+        "tag": ""
+    },
+    "siblingIndex": 49000
+}

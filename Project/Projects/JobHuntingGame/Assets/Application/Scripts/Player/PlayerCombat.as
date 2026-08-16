@@ -22,7 +22,8 @@ class PlayerCombat {
     float damageCooldownTimer = 0.0f;
 
     Tag enemyColliderTag = Tag("EnemySphere");
-    Tag deathColliderTag = Tag("Death");
+    Tag deathLineColliderTag = Tag("DeathLine");
+    Tag legacyDeathColliderTag = Tag("Death");
 
     PlayerCombat(Player@ inOwner, PlayerMovement@ inMovement, PlayerDamageFlash@ inDamageFlash, PlayerTransformation@ inTransformation) {
         @owner = inOwner;
@@ -43,7 +44,8 @@ class PlayerCombat {
                     enemyBounceRequested = true;
                 }
             }
-        } else if (hit.otherCollider.GetTag() == deathColliderTag) {
+        } else if (hit.otherCollider.GetTag() == deathLineColliderTag ||
+                   hit.otherCollider.GetTag() == legacyDeathColliderTag) {
             // 死亡判定のコライダーに触れたら即座にHPを0にする
             owner.currentHp = 0;
         }

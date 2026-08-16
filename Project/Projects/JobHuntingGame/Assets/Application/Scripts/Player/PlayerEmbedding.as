@@ -1,7 +1,7 @@
 // Cone形態時、何かに接触した瞬間その場へ刺さって静止する「刺さり」機構を担当する。
 // 刺さっている間はPlayerMovementの通常の移動処理を完全に止め、代わりにこのクラスが
 // Transformを直接操作する（動く床/壁に刺さった場合は、このクラスで保持した相手の
-// 前回位置との差分をそのまま自機へ加算して追従させる）
+// 前回位置・回転との差分を自機へ反映して追従させる）
 class PlayerEmbedding {
     Player@ owner;
     PlayerTransformation@ transformation;
@@ -20,7 +20,8 @@ class PlayerEmbedding {
     // 刺さっている相手オブジェクト（動く床/壁への追従用）
     Object@ embedSurfaceObject;
     Vector3 previousSurfacePosition = Vector3(0.0f, 0.0f, 0.0f);
-    bool hasPreviousSurfacePosition = false;
+    Quaternion previousSurfaceRotation = Math::IdentityQuaternion();
+    bool hasPreviousSurfaceTransform = false;
 
     Tag groundColliderTag = Tag("GroundBox");
 
@@ -63,14 +64,15 @@ class PlayerEmbedding {
         embedPenetration = penetration;
         @embedSurfaceObject = surfaceObject;
         Transform@ surfaceTransform;
-        hasPreviousSurfacePosition = surfaceObject !is null && surfaceObject.GetComponent(@surfaceTransform);
-        if (hasPreviousSurfacePosition) {
-            previousSurfacePosition = surfaceTransform.GetTranslate();
+        hasPreviousSurfaceTransform = surfaceObject !is null && surfaceObject.GetComponent(@surfaceTransform);
+        if (hasPreviousSurfaceTransform) {
+            previousSurfacePosition = surfaceTransform.GetWorldPosition();
+            previousSurfaceRotation = surfaceTransform.GetWorldRotateQuaternion();
         }
 
     }
 
-    // 刺さっている間、相手オブジェクトの移動量へ追従させる
+    // 刺さっている間、相手オブジェクトの移動・回転へ追従させる
     void FollowSurface() {
         if (!isEmbedded || embedSurfaceObject is null) return;
         if (!IsValidObject(embedSurfaceObject) || !embedSurfaceObject.IsActive()) {
@@ -87,24 +89,36 @@ class PlayerEmbedding {
             return;
         }
 
-        Vector3 currentSurfacePosition = surfaceTransform.GetTranslate();
-        if (!hasPreviousSurfacePosition) {
+        Vector3 currentSurfacePosition = surfaceTransform.GetWorldPosition();
+        Quaternion currentSurfaceRotation = surfaceTransform.GetWorldRotateQuaternion();
+        if (!hasPreviousSurfaceTransform) {
             previousSurfacePosition = currentSurfacePosition;
-            hasPreviousSurfacePosition = true;
+            previousSurfaceRotation = currentSurfaceRotation;
+            hasPreviousSurfaceTransform = true;
             return;
         }
 
-        // PreTransformとの差分は、Playerと移動床の更新順によっては床移動後の値が既に
-        // キャプチャされて常に0になる。刺さった側で前回観測位置を保持すれば、更新順に
-        // 依存せず（床が後に更新される場合は1フレーム遅れで）移動量を取得できる。
-        Vector3 delta = currentSurfacePosition - previousSurfacePosition;
-        previousSurfacePosition = currentSurfacePosition;
-        if (delta.LengthSquared() <= 0.0f) return;
+        // 前回から現在までの床の回転差分。床の回転中心から見たPlayerの相対位置にも
+        // 適用することで、床の角度だけでなく回転に伴う周回移動にも追従させる。
+        Quaternion rotationDelta = (currentSurfaceRotation * previousSurfaceRotation.Inverse()).Normalize();
 
         Transform@ tf = GetTransform();
         if (tf !is null) {
-            tf.SetTranslate(tf.GetTranslate() + delta);
+            Vector3 playerWorldPosition = tf.GetWorldPosition();
+            Vector3 previousRelativePosition = playerWorldPosition - previousSurfacePosition;
+            Vector3 followedWorldPosition = currentSurfacePosition + rotationDelta.RotateVector(previousRelativePosition);
+
+            // Playerの親Transformはゲーム既定オブジェクト（単位Transform）なので、
+            // ワールド移動量を現在のローカル座標へ加算して位置を更新できる。
+            tf.SetTranslate(tf.GetTranslate() + (followedWorldPosition - playerWorldPosition));
+            tf.SetRotateQuaternion((rotationDelta * tf.GetRotateQuaternion()).Normalize());
+
+            // 解除ジャンプも回転後の面から離れる方向になるよう、刺さった面の法線を追従させる。
+            embedNormal = rotationDelta.RotateVector(embedNormal).Normalize();
         }
+
+        previousSurfacePosition = currentSurfacePosition;
+        previousSurfaceRotation = currentSurfaceRotation;
     }
 
     // ジャンプ入力があれば刺さりを解除し、刺さっていた面の法線方向へ飛び出す速度を返す
@@ -144,7 +158,7 @@ class PlayerEmbedding {
     void Release() {
         isEmbedded = false;
         embedPenetration = 0.0f;
-        hasPreviousSurfacePosition = false;
+        hasPreviousSurfaceTransform = false;
         @embedSurfaceObject = null;
     }
 }

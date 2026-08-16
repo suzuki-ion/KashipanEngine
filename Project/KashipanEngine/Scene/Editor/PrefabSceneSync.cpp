@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "Scene/Editor/PrefabUtility.h"
+
 namespace KashipanEngine {
 namespace PrefabSceneSync {
 
@@ -106,22 +108,6 @@ JSON AdaptComponentToInstance(const JSON &component, const std::string &parentOb
         data["customData"]["parent"] = parentObjectID;
     }
     return adapted;
-}
-
-void RemapObjectIDReferences(JSON &value, const std::unordered_map<std::string, std::string> &remap) {
-    if (value.is_string()) {
-        const std::string current = value.get<std::string>();
-        auto it = remap.find(current);
-        if (it != remap.end()) value = it->second;
-        return;
-    }
-    if (value.is_array()) {
-        for (auto &element : value) RemapObjectIDReferences(element, remap);
-        return;
-    }
-    if (value.is_object()) {
-        for (auto &entry : value.items()) RemapObjectIDReferences(entry.value(), remap);
-    }
 }
 
 PrefabGraph BuildPrefabGraph(const JSON &prefabJson) {
@@ -267,8 +253,8 @@ void MergeComponents(
         if (oldValue && newValue) {
             JSON adaptedOld = *oldValue;
             JSON adaptedNew = *newValue;
-            RemapObjectIDReferences(adaptedOld, oldObjectIDRemap);
-            RemapObjectIDReferences(adaptedNew, newObjectIDRemap);
+            PrefabUtility::RemapObjectIDReferences(adaptedOld, oldObjectIDRemap);
+            PrefabUtility::RemapObjectIDReferences(adaptedNew, newObjectIDRemap);
             adaptedOld = AdaptComponentToInstance(adaptedOld, currentParentID);
             adaptedNew = AdaptComponentToInstance(adaptedNew, currentParentID);
             if (NormalizeComponentForComparison(adaptedOld) == NormalizeComponentForComparison(adaptedNew) ||
@@ -281,12 +267,12 @@ void MergeComponents(
         } else if (!oldValue && newValue) {
             if (instanceValue) continue; // 同じ型+ordinalがローカル追加済み
             JSON adaptedNew = *newValue;
-            RemapObjectIDReferences(adaptedNew, newObjectIDRemap);
+            PrefabUtility::RemapObjectIDReferences(adaptedNew, newObjectIDRemap);
             additions.push_back(AdaptComponentToInstance(adaptedNew, currentParentID));
             ++result.componentsChanged;
         } else if (oldValue && !newValue) {
             JSON adaptedOld = *oldValue;
-            RemapObjectIDReferences(adaptedOld, oldObjectIDRemap);
+            PrefabUtility::RemapObjectIDReferences(adaptedOld, oldObjectIDRemap);
             adaptedOld = AdaptComponentToInstance(adaptedOld, currentParentID);
             if (!instanceValue || NormalizeComponentForComparison(*instanceValue) !=
                                       NormalizeComponentForComparison(adaptedOld)) {
@@ -390,7 +376,7 @@ void SyncOneInstance(
         auto addedIt = addedObjectIDByNodeID.find(newNode.nodeID);
         if (addedIt == addedObjectIDByNodeID.end()) continue;
         JSON addedObject = *newNode.object;
-        RemapObjectIDReferences(addedObject, newObjectIDRemap);
+        PrefabUtility::RemapObjectIDReferences(addedObject, newObjectIDRemap);
         addedObject["objectID"] = addedIt->second;
 
         std::string parentObjectID;

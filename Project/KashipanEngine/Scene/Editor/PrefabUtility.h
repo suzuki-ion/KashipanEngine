@@ -1,6 +1,7 @@
 #pragma once
 #ifdef USE_IMGUI
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "Assets/ModelManager.h"
@@ -42,8 +43,16 @@ JSON BuildPrefabJson(SceneEditorContext *context, EmptyObject *rootObject, const
 ///          単一オブジェクトJSONも受け付ける
 std::vector<PasteObjectCommand::Node> LoadPrefabNodes(const JSON &prefabJson);
 
+/// @brief JSON内の文字列値のうち、remapテーブル（旧文字列→新文字列）に一致するものを再帰的に
+///        置き換える。UUID文字列は衝突がほぼありえない一意な形式のため、値の完全一致だけで
+///        安全に判定できる。オブジェクトID参照（Animator.rootBoneObjectID等のUUID128フィールド）を
+///        まとめて新IDへ張り替える用途に使う
+void RemapObjectIDReferences(JSON &value, const std::unordered_map<std::string, std::string> &remap);
+
 /// @brief ノード列を配置用に複製し、全ノードへ新しいobjectIDを割り当てて
-///        部分木内部の親子参照（Transformの"parent"）を新IDへ張り替える。
+///        部分木内部の相互参照（Transformの"parent"、Animator/TargetLookAt/ParticleSystem等が
+///        持つUUID128参照フィールド全般）を新IDへ張り替える。部分木の外側（シーン内の別オブジェクト等）
+///        への参照はremapテーブルに存在しないため変更されず、意図通り維持される。
 ///        同じノード列から複数回配置してもUUIDが衝突しないよう、配置の都度呼び出すこと。
 /// @param preserveRootParent trueの場合、ルートノード（parentIndexInSubtree<0）の"parent"参照は
 ///        元のまま変更しない（複製時に、複製元と同じ親へ自動的に接続されるようにするため）。

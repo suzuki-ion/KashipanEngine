@@ -1,6 +1,8 @@
 #include "PrefabUtility.h"
 #ifdef USE_IMGUI
 
+#include <unordered_map>
+
 #include "Objects/Components/Transform.h"
 #include "Objects/EmptyObject.h"
 #include "Scene/SceneEditorContext.h"
@@ -36,6 +38,22 @@ void EraseRootPrefabInstanceComponent(JSON &objectJson) {
     }
 }
 } // namespace
+
+void RemapObjectIDReferences(JSON &value, const std::unordered_map<std::string, std::string> &remap) {
+    if (value.is_string()) {
+        const std::string current = value.get<std::string>();
+        auto it = remap.find(current);
+        if (it != remap.end()) value = it->second;
+        return;
+    }
+    if (value.is_array()) {
+        for (auto &element : value) RemapObjectIDReferences(element, remap);
+        return;
+    }
+    if (value.is_object()) {
+        for (auto &entry : value.items()) RemapObjectIDReferences(entry.value(), remap);
+    }
+}
 
 void CollectSubtreeNodes(SceneEditorContext *context, EmptyObject *obj, int parentIndex,
     std::vector<PasteObjectCommand::Node> &out) {
@@ -118,10 +136,21 @@ std::vector<PasteObjectCommand::Node> PrepareNodesForInstantiation(
         freshIDs.emplace_back(true);
     }
 
+    // 旧objectID→新objectIDの対応表を作り、部分木内部の相互参照（Animator.rootBoneObjectID、
+    // TargetLookAt.targetObjectID、ParticleSystemの各種参照、RendererのtargetObjectID等）を
+    // まとめて新IDへ張り替える。部分木の外側を指す参照は対応表に無いため変更されない
+    std::unordered_map<std::string, std::string> objectIDRemap;
+    objectIDRemap.reserve(result.size());
+    for (size_t i = 0; i < result.size(); ++i) {
+        const std::string oldID = result[i].json.value("objectID", std::string{});
+        if (!oldID.empty()) objectIDRemap[oldID] = freshIDs[i].ToString();
+    }
+
     for (size_t i = 0; i < result.size(); ++i) {
         JSON &json = result[i].json;
         json["objectID"] = freshIDs[i].ToString();
         if (!json.contains("components")) continue;
+        RemapObjectIDReferences(json["components"], objectIDRemap);
         for (auto &compJson : json["components"]) {
             if (compJson.value("type", "") != "Transform" || !compJson.contains("data")) continue;
             // Transformの実データはSaveToJsonInterfaceにより data["customData"] 以下（parent/translate等）に

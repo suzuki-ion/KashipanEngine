@@ -72,6 +72,7 @@
                             }
                         },
                         "excludeShapes": [],
+                        "extraComponents": [],
                         "fixedSpawnPosition": {
                             "x": 128.0,
                             "y": 128.0,
@@ -217,6 +218,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "StageParticle",
         "objectID": "1477bf80-64ce-4b70-ad77-79ce3a6a068c",

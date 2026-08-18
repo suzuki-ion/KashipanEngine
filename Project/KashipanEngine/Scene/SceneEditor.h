@@ -12,6 +12,7 @@ class SceneObjectHierarchy;
 class SceneObjectInspector;
 class SceneComponentInspector;
 class SceneVariablesMenu;
+class GlobalSceneVariablesMenu;
 class SceneEditorView;
 class AssetsWindow;
 class SceneSaver;
@@ -53,6 +54,7 @@ private:
     std::unique_ptr<SceneObjectInspector> objectInspector_;
     std::unique_ptr<SceneComponentInspector> componentInspector_;
     std::unique_ptr<SceneVariablesMenu> variablesMenu_;
+    std::unique_ptr<GlobalSceneVariablesMenu> globalVariablesMenu_;
     std::unique_ptr<SceneEditorView> sceneView_;
     std::unique_ptr<AssetsWindow> assetsWindow_;
     std::unique_ptr<SceneSaver> saver_;
@@ -68,6 +70,7 @@ private:
     bool isShowObjectInspector_ = true;
     bool isShowComponentInspector_ = true;
     bool isShowVariablesMenu_ = true;
+    bool isShowGlobalVariablesMenu_ = true;
     bool isShowAssets_ = true;
     bool isShowSceneList_ = true;
     bool isShowHistory_ = true;

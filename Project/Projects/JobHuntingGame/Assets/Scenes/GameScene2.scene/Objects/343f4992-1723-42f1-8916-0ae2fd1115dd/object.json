@@ -75,6 +75,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "PointLight",
         "objectID": "343f4992-1723-42f1-8916-0ae2fd1115dd",

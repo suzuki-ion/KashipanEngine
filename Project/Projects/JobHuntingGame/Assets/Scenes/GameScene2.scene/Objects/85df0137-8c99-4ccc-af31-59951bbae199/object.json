@@ -189,6 +189,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "MainScreen",
         "objectID": "85df0137-8c99-4ccc-af31-59951bbae199",

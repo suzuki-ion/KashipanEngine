@@ -75,6 +75,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "SpotLight",
         "objectID": "aec2a101-c668-4ad1-a389-f0bdff1c8ee8",

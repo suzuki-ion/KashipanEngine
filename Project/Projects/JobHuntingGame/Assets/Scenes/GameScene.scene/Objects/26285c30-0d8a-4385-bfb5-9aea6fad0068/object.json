@@ -65,7 +65,8 @@
                 "data": {
                     "customData": {
                         "fields": {
-                            "priority": 2
+                            "priority": 2,
+                            "rotatingObject": "34acfa47-5cf4-4d2c-91f7-6aa3c7a33510"
                         },
                         "scriptPath": "Assets\\Application\\Scripts\\Checkpoint.as"
                     },

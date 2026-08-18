@@ -136,6 +136,8 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     // シーンリスト定義ファイルが存在する場合は、記載されたシーンを自動登録する
     // （AppInitializeでのRegisterScene呼び出しが無くてもシーンを定義できるようにするため）
     sceneManager_->LoadSceneList();
+    // グローバルシーン変数定義ファイルが存在する場合は、保存されている変数を読み込む
+    sceneManager_->LoadGlobalSceneVariables();
 
     context_.engine = this;
     context_.sceneManager = sceneManager_.get();

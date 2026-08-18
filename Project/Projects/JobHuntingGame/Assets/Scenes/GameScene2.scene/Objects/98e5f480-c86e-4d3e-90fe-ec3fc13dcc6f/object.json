@@ -8,7 +8,7 @@
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
-                            "y": 2.453249603462382e-09,
+                            "y": 0.0,
                             "z": 0.0
                         },
                         "scale": {
@@ -323,6 +323,7 @@
                             }
                         },
                         "excludeShapes": [],
+                        "extraComponents": [],
                         "fixedSpawnPosition": {
                             "x": 0.0,
                             "y": 0.0,

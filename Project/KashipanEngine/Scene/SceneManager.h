@@ -22,6 +22,9 @@ public:
     /// @details シーンの一覧はエンジンの既定リソースではなくゲーム固有のデータのため、
     ///          Assets/KashipanEngine/ ではなくAssets直下に置く。値は論理パス。
     static constexpr const char *kDefaultSceneListFilePath = "Assets/SceneList.json";
+    /// @brief グローバルシーン変数定義ファイルのデフォルト保存先
+    /// @details シーンリスト定義ファイルと同様の理由で、Assets直下に置く。値は論理パス。
+    static constexpr const char *kDefaultGlobalSceneVariablesFilePath = "Assets/GlobalSceneVariables.json";
 
     /// @brief 登録済みシーン1件分の情報
     struct SceneEntry {
@@ -174,6 +177,15 @@ public:
     /// @brief シーン変数を取得する
     /// @return シーン変数のマップ
     const std::unordered_map<std::string, MyAny> &GetGlobalSceneVariables() const { return globalSceneVariables_; }
+
+    /// @brief グローバルシーン変数定義ファイルを読み込み、既存の内容へマージする
+    /// @param filePath 読み込むファイルのパス
+    /// @return 読み込みに成功した場合は true（ファイルが存在しない・不正な場合は false）
+    bool LoadGlobalSceneVariables(const std::string &filePath = kDefaultGlobalSceneVariablesFilePath);
+    /// @brief 現在のグローバルシーン変数をグローバルシーン変数定義ファイルへ保存する
+    /// @param filePath 保存先のファイルパス
+    /// @return 保存に成功した場合は true
+    bool SaveGlobalSceneVariables(const std::string &filePath = kDefaultGlobalSceneVariablesFilePath) const;
 
 private:
     /// @brief 名前から登録エントリを検索する（存在しない場合は nullptr）

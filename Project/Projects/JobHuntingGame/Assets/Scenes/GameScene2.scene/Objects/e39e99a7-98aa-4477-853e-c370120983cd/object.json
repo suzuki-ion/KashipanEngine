@@ -45,6 +45,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "PostEffectController",
         "objectID": "e39e99a7-98aa-4477-853e-c370120983cd",

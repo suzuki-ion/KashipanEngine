@@ -188,6 +188,7 @@
             {
                 "data": {
                     "customData": {
+                        "allowInstancing": true,
                         "castShadows": true,
                         "instanceColor": {
                             "w": 1.0,
@@ -201,6 +202,7 @@
                             "White"
                         ],
                         "pipelineName": "Object3D.Solid.BlendNormal",
+                        "renderPriority": 0,
                         "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
                     },
                     "isActive": true,
@@ -211,6 +213,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "MoveGround",
         "objectID": "6210548c-c7dd-4ab4-b181-4866262ec4c1",

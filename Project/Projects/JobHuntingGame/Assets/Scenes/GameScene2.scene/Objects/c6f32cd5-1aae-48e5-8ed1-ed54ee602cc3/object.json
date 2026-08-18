@@ -30,6 +30,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "MoveGround",
         "objectID": "c6f32cd5-1aae-48e5-8ed1-ed54ee602cc3",

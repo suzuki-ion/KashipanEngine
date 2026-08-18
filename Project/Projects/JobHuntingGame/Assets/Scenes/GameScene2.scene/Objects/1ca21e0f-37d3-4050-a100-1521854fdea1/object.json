@@ -30,6 +30,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Fence",
         "objectID": "1ca21e0f-37d3-4050-a100-1521854fdea1",

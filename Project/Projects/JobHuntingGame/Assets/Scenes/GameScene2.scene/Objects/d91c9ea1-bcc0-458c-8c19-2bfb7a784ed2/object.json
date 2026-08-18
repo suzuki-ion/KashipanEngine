@@ -30,6 +30,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Teleporter",
         "objectID": "d91c9ea1-bcc0-458c-8c19-2bfb7a784ed2",

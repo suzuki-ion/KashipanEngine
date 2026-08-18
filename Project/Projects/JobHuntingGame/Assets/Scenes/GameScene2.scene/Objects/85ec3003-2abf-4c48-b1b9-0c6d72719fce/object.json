@@ -75,6 +75,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "TubeLight",
         "objectID": "85ec3003-2abf-4c48-b1b9-0c6d72719fce",

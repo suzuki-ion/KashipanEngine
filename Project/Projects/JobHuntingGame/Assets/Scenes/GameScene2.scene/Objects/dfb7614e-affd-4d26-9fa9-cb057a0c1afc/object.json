@@ -104,6 +104,7 @@
             {
                 "data": {
                     "customData": {
+                        "allowInstancing": true,
                         "castShadows": true,
                         "instanceColor": {
                             "w": 1.0,
@@ -117,6 +118,7 @@
                             "White"
                         ],
                         "pipelineName": "Object3D.Solid.BlendNormal",
+                        "renderPriority": 0,
                         "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
                     },
                     "isActive": true,
@@ -127,6 +129,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "RotateGround",
         "objectID": "dfb7614e-affd-4d26-9fa9-cb057a0c1afc",

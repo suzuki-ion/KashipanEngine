@@ -784,6 +784,7 @@
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneObjectInspector.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneSaver.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneVariablesMenu.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\GlobalSceneVariablesMenu.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\AppInitialize.h">
@@ -1982,6 +1983,7 @@
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneObjectRegisterMenu.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneSaver.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneVariablesMenu.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\GlobalSceneVariablesMenu.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

@@ -712,6 +712,9 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneVariablesMenu.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\GlobalSceneVariablesMenu.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\SceneEditor.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Scene.cpp" />
     <ClCompile Include="KashipanEngine\Scene\SceneManager.cpp" />
@@ -1325,6 +1328,9 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneVariablesMenu.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\GlobalSceneVariablesMenu.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Scene.h" />

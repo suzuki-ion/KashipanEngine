@@ -98,7 +98,7 @@ public:
     /// @param value 変数の値
     /// @return 追加されたシーン変数のポインタ
     template <typename T>
-    MyAny *AddGlobalSceneVariable(const std::string &key, const T &value = T()) { return owner_->AddGlobalSceneVariable(key, value, GetValueType<T>()); }
+    MyAny *AddGlobalSceneVariable(const std::string &key, const T &value = T()) { return owner_->AddGlobalSceneVariable(key, value); }
     /// @brief グローバルシーン変数を削除する
     /// @param key 変数のキー
     /// @return 削除に成功した場合は true、失敗した場合は false を返す

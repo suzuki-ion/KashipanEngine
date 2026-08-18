@@ -206,4 +206,33 @@ const TypeInfo &SceneManager::GetGlobalSceneVariableTypeInfo(const std::string &
     return (it != globalSceneVariables_.end()) ? it->second.GetTypeInfo() : noneType;
 }
 
+bool SceneManager::LoadGlobalSceneVariables(const std::string &filePath) {
+    LogScope scope;
+    JSON json = LoadJSON(ProjectPaths::ToPhysical(filePath));
+    if (json.empty() || !json.is_object()) return false;
+
+    for (const auto &varData : json.value("globalSceneVariables", std::vector<JSON>())) {
+        std::string key = varData.value("key", "");
+        if (key.empty()) continue;
+        std::string type = varData.value("type", "");
+        TypeInfo typeInfo = GetValueType(type);
+        globalSceneVariables_[key] = LoadAnyFromJson(varData.value("value", JSON()), typeInfo);
+    }
+    Log(Translation("engine.scenemanager.globalscenevariables.loaded") + filePath, LogSeverity::Info);
+    return true;
+}
+
+bool SceneManager::SaveGlobalSceneVariables(const std::string &filePath) const {
+    JSON json;
+    json["globalSceneVariables"] = JSON::array();
+    for (const auto &varPair : globalSceneVariables_) {
+        JSON varJson;
+        varJson["key"] = varPair.first;
+        varJson["type"] = varPair.second.GetTypeInfo().ToString();
+        varJson["value"] = SaveAnyToJson(varPair.second);
+        json["globalSceneVariables"].push_back(varJson);
+    }
+    return SaveJSON(json, ProjectPaths::ToPhysical(filePath));
+}
+
 } // namespace KashipanEngine

@@ -85,6 +85,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": false,
         "name": "SceneLight",
         "objectID": "1f89b6fe-0c9f-4aa4-93b0-1aed7e722e84",

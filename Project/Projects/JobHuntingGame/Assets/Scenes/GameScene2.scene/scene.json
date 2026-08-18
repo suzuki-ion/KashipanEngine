@@ -59,30 +59,6 @@
     "sceneName": "GameScene2",
     "sceneVariables": [
         {
-            "key": "testFloat",
-            "type": "Float",
-            "value": 0.0
-        },
-        {
-            "key": "testString",
-            "type": "String",
-            "value": "abcdefg"
-        },
-        {
-            "key": "testInt",
-            "type": "Int32",
-            "value": 0
-        },
-        {
-            "key": "checkPoint",
-            "type": "Vector3",
-            "value": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
-            }
-        },
-        {
             "key": "CheckpointPriority",
             "type": "Int32",
             "value": 0

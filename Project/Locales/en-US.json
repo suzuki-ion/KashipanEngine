@@ -1476,6 +1476,9 @@
 		"editor.gameengine.profiling_sample_count": "Profiling Sample Count",
 		"editor.gameengine.update_3f_ms": "Update: %.3f ms",
 
+		//--------- editor.globalscenevariables ---------//
+		"editor.globalscenevariables.window": "Global Scene Variables",
+
 		//--------- editor.hierarchy ---------//
 		"editor.hierarchy.clone": "Clone Object",
 		"editor.hierarchy.clone.multiple.prefix": "Clone ",
@@ -1979,6 +1982,7 @@
 		"engine.prefab.sync.scene.failed": "Prefab sync: Failed to load or save the scene. Scene name: ",
 
 		//--------- engine.scenemanager ---------//
+		"engine.scenemanager.globalscenevariables.loaded": "Loaded the global scene variables. File path: ",
 		"engine.scenemanager.scene.alreadyregistered": "The scene is already registered, so it was skipped. Scene name: ",
 		"engine.scenemanager.scene.load.failed": "Failed to load the scene file, so an empty scene was created. File path: ",
 		"engine.scenemanager.scenelist.loaded": "Loaded the scene list. File path: ",

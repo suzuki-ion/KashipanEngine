@@ -1483,6 +1483,9 @@
 		"editor.gameengine.profiling_sample_count": "プロファイリングのサンプル数",
 		"editor.gameengine.update_3f_ms": "更新時間：%.3f ms",
 
+		//--------- editor.globalscenevariables ---------//
+		"editor.globalscenevariables.window": "グローバルシーン変数",
+
 		//--------- editor.hierarchy ---------//
 		"editor.hierarchy.clone": "オブジェクトを複製",
 		"editor.hierarchy.clone.multiple.prefix": "オブジェクトを複製：",
@@ -1986,6 +1989,7 @@
 		"engine.prefab.sync.scene.failed": "プレハブ同期：シーンの読み込みまたは保存に失敗しました。シーン名：",
 
 		//--------- engine.scenemanager ---------//
+		"engine.scenemanager.globalscenevariables.loaded": "グローバルシーン変数を読み込みました。ファイルパス：",
 		"engine.scenemanager.scene.alreadyregistered": "シーンは既に登録されているためスキップしました。シーン名：",
 		"engine.scenemanager.scene.load.failed": "シーンファイルの読み込みに失敗したため、空のシーンを作成します。ファイルパス：",
 		"engine.scenemanager.scenelist.loaded": "シーン一覧を読み込みました。ファイルパス：",

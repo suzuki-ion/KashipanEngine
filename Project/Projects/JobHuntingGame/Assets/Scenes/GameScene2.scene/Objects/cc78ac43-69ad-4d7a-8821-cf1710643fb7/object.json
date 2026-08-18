@@ -50,7 +50,8 @@
                             "maxFallSpeed": 16.0,
                             "moveDirection": 1.0,
                             "moveSpeed": 2.0,
-                            "playerCollisionThreshold": 0.6000000238418579
+                            "playerCollisionThreshold": 0.6000000238418579,
+                            "requestDefeat": false
                         },
                         "scriptPath": "Assets\\Application\\Scripts\\Enemy.as"
                     },
@@ -230,6 +231,7 @@
             {
                 "data": {
                     "customData": {
+                        "allowInstancing": true,
                         "castShadows": true,
                         "instanceColor": {
                             "w": 1.0,
@@ -243,6 +245,7 @@
                             "EnemyMaterial"
                         ],
                         "pipelineName": "Object3D.Solid.BlendNormal",
+                        "renderPriority": 0,
                         "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
                     },
                     "isActive": true,
@@ -253,6 +256,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Enemy",
         "objectID": "cc78ac43-69ad-4d7a-8821-cf1710643fb7",

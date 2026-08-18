@@ -90,6 +90,7 @@
                                 "type": 3
                             }
                         ],
+                        "extraComponents": [],
                         "fixedSpawnPosition": {
                             "x": 0.0,
                             "y": 0.0,
@@ -255,6 +256,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "TeloeportPos",
         "objectID": "6b223729-e32d-4eed-98d1-4afe1118c7bc",

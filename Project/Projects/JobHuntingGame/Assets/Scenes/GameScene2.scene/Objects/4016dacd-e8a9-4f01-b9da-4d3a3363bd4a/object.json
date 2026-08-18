@@ -158,6 +158,7 @@
                                 "type": 3
                             }
                         ],
+                        "extraComponents": [],
                         "fixedSpawnPosition": {
                             "x": 0.0,
                             "y": 0.0,
@@ -324,6 +325,7 @@
             {
                 "data": {
                     "customData": {
+                        "allowInstancing": true,
                         "castShadows": true,
                         "instanceColor": {
                             "w": 1.0,
@@ -337,6 +339,7 @@
                             "White"
                         ],
                         "pipelineName": "Object3D.Solid.BlendNormal",
+                        "renderPriority": 0,
                         "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
                     },
                     "isActive": true,
@@ -347,6 +350,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "TeleporterObject",
         "objectID": "4016dacd-e8a9-4f01-b9da-4d3a3363bd4a",

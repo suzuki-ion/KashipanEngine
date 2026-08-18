@@ -75,6 +75,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Light Object",
         "objectID": "ff2055de-64a0-45d4-9f8d-0db52f2702a5",

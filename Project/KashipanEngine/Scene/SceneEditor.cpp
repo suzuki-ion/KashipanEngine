@@ -28,6 +28,7 @@
 #include "Scene/Editor/SceneObjectHierarchy.h"
 #include "Scene/Editor/SceneObjectInspector.h"
 #include "Scene/Editor/SceneSaver.h"
+#include "Scene/Editor/GlobalSceneVariablesMenu.h"
 #include "Scene/Editor/SceneVariablesMenu.h"
 #include "Scene/Editor/TranslationEditor.h"
 #include "Scene/Components/Render/SceneRenderer.h"
@@ -74,6 +75,7 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     objectInspector_ = std::make_unique<SceneObjectInspector>(Passkey<SceneEditor>{}, context_, objectHierarchy_.get());
     componentInspector_ = std::make_unique<SceneComponentInspector>(Passkey<SceneEditor>{}, context_);
     variablesMenu_ = std::make_unique<SceneVariablesMenu>(Passkey<SceneEditor>{}, context_);
+    globalVariablesMenu_ = std::make_unique<GlobalSceneVariablesMenu>(Passkey<SceneEditor>{}, context_);
     sceneView_ = std::make_unique<SceneEditorView>(Passkey<SceneEditor>{}, context_);
     assetsWindow_ = std::make_unique<AssetsWindow>(Passkey<SceneEditor>{}, context_);
     saver_ = std::make_unique<SceneSaver>(Passkey<SceneEditor>{}, context_);
@@ -102,6 +104,7 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     isShowObjectInspector_ = EditorSettings::GetBool("sceneEditor.showObjectInspector", true);
     isShowComponentInspector_ = EditorSettings::GetBool("sceneEditor.showComponentInspector", true);
     isShowVariablesMenu_ = EditorSettings::GetBool("sceneEditor.showVariablesMenu", true);
+    isShowGlobalVariablesMenu_ = EditorSettings::GetBool("sceneEditor.showGlobalVariablesMenu", true);
     isShowAssets_ = EditorSettings::GetBool("sceneEditor.showAssets", true);
     isShowSceneList_ = EditorSettings::GetBool("sceneEditor.showSceneList", true);
     isShowHistory_ = EditorSettings::GetBool("sceneEditor.showHistory", true);
@@ -169,6 +172,7 @@ void SceneEditor::ShowImGui() {
     if (isShowObjectInspector_) objectInspector_->ShowImGui();
     if (isShowComponentInspector_) componentInspector_->ShowImGui();
     if (isShowVariablesMenu_) variablesMenu_->ShowImGui();
+    if (isShowGlobalVariablesMenu_) globalVariablesMenu_->ShowImGui();
     if (isShowSceneView_) sceneView_->ShowImGui(objectHierarchy_->GetSelectedObjects(), commands_.get(), objectHierarchy_.get());
     if (isShowAssets_) assetsWindow_->ShowImGui();
     if (isShowSceneList_) sceneListEditor_->ShowImGui();
@@ -254,6 +258,9 @@ void SceneEditor::ShowMainWindow() {
             }
             if (ImGui::MenuItem(TranslationLabel("editor.scenevariables.window"), nullptr, &isShowVariablesMenu_)) {
                 EditorSettings::SetBool("sceneEditor.showVariablesMenu", isShowVariablesMenu_);
+            }
+            if (ImGui::MenuItem(TranslationLabel("editor.globalscenevariables.window"), nullptr, &isShowGlobalVariablesMenu_)) {
+                EditorSettings::SetBool("sceneEditor.showGlobalVariablesMenu", isShowGlobalVariablesMenu_);
             }
             if (ImGui::MenuItem(TranslationLabel("editor.assets.window"), nullptr, &isShowAssets_)) {
                 EditorSettings::SetBool("sceneEditor.showAssets", isShowAssets_);

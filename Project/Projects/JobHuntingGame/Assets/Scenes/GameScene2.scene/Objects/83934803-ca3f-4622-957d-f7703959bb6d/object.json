@@ -88,7 +88,7 @@
                             },
                             "moveSpeed": {
                                 "x": 0.0,
-                                "y": -32.0,
+                                "y": -16.0,
                                 "z": 0.0
                             },
                             "moveStopDuration": 2.0,
@@ -188,6 +188,7 @@
             {
                 "data": {
                     "customData": {
+                        "allowInstancing": true,
                         "castShadows": true,
                         "instanceColor": {
                             "w": 1.0,
@@ -201,6 +202,7 @@
                             "White"
                         ],
                         "pipelineName": "Object3D.Solid.BlendNormal",
+                        "renderPriority": 0,
                         "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
                     },
                     "isActive": true,
@@ -211,6 +213,7 @@
             }
         ],
         "editorOnly": false,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "MoveGround",
         "objectID": "83934803-ca3f-4622-957d-f7703959bb6d",

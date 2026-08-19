@@ -19,13 +19,20 @@
 </div>
 
 <h2>デバッグカメラの操作</h2>
+<p>ゲーム内のカメラ（<code>Camera3D</code>/<code>Camera2D</code>）とは独立した、エディター専用のカメラです。実体はシーンへ自動生成される<code>editorOnly</code>な「Scene View」オブジェクト（<code>Transform</code> + <code>Camera3D</code> + <code>ScreenBufferObject</code>）で、<a href="02_SceneObjectHierarchy.html">Scene Object Hierarchy</a>/<a href="03_ObjectInspector.html">Object Inspector</a>から通常のオブジェクトと同様に編集・コンポーネント追加ができ、シーンJSONへシーンごとに永続化されます。</p>
+<div class="tip"><strong>InspectorでのTransform編集がそのまま反映される</strong><br>Object Inspectorで「Scene View」オブジェクトのTransformを直接編集（またはUndo/Redo）すると、次のフレームでその値からオービット/フライの内部状態が自動的に再同期されます。</div>
+<p>ツールバー上部の<strong>Orbit</strong> / <strong>Fly</strong>ラジオボタンで、2つの操作モードを切り替えられます（次回起動時も設定が保持されます）。</p>
 <table>
-<tr><th>操作</th><th>結果</th></tr>
-<tr><td>マウスホイール</td><td>ズームイン/アウト（注視点までの距離を変更）</td></tr>
-<tr><td>右ドラッグ</td><td>注視点を中心にオービット回転</td></tr>
+<tr><th>モード</th><th>操作</th><th>結果</th></tr>
+<tr><td rowspan="3">Orbit（既定）</td><td>マウスホイール</td><td>ズームイン/アウト（注視点までの距離を変更）</td></tr>
+<tr><td>右ドラッグ</td><td>注視点を中心にオービット回転（カメラ側が動く）</td></tr>
 <tr><td>中ドラッグ</td><td>視点の平行移動（パン）</td></tr>
+<tr><td rowspan="3">Fly</td><td>右ドラッグ</td><td>その場で見回す（カメラ位置は変えず向きだけ変える）</td></tr>
+<tr><td>右ボタンを押しながらWASD（+QEで上下、Shiftで加速）</td><td>見ている方向基準にカメラ自身が移動する</td></tr>
+<tr><td>マウスホイール</td><td>移動速度の調整</td></tr>
 </table>
-<p>ゲーム内のカメラ（<code>Camera3D</code>/<code>Camera2D</code>）とは独立した、エディター専用のカメラです。</p>
+<div class="note"><strong>回転すると注視点が向きに追従する（Flyモード）</strong><br>Orbitモードは注視点が固定でカメラ側が軌道を描くのに対し、Flyモードはカメラ位置が固定で回転すると注視点がその向きの先へ再計算されます。カメラ位置・注視点の両方を常に維持しているため、<strong>モードを切り替えた瞬間から自然に続きの操作ができます</strong>（Orbitで作った向き・距離のままFlyへ切り替えられ、Flyで動き回った後Orbitへ戻せば今向いている方向の先に注視点が来ます）。</div>
+<div class="warn"><strong>ロール（Z軸回転）は表現できない</strong><br>このオービットカメラのモデルはyaw/pitchのみで構成されているため、Inspectorで明示的にロールを付けた回転を設定しても、次にカメラを操作した瞬間にロール成分は失われます。</div>
 
 <h2>オブジェクトの選択（ピッキング）</h2>
 <p>画像上で何も操作していない状態（ギズモをドラッグ中でない）で左クリックを離すと、クリック位置からのレイと各オブジェクトのメッシュ三角形との交差判定でオブジェクトを選択します。<code>Ctrl</code>を押しながらのクリックで複数選択へ追加できます。選択結果は<a href="02_SceneObjectHierarchy.html">Scene Object Hierarchy</a>・<a href="03_ObjectInspector.html">Scene Object Inspector</a>と共有されます。</p>
@@ -46,6 +53,7 @@
 <tr><td>World</td><td>ワールド軸基準で操作する</td></tr>
 </table>
 <p>単一オブジェクト選択時はLocal/World切替が有効ですが、複数オブジェクトを選択している場合は選択群の平均位置を中心としたWorld基準のグループ操作になります。</p>
+<div class="note"><strong>親子ともに選択している場合は親側だけが直接操作される</strong><br>選択群の中に、他の選択オブジェクトの子孫であるものが含まれる場合、その子孫は直接のギズモ操作対象から除外されます（親が動けば階層継承で自動的に追従するため）。</div>
 
 <h2>表示切替チェックボックス</h2>
 <table>

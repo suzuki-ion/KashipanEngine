@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UIButton | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_UI_UIButton">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>UIButton</h1>
+<p class="page-lead">画面上の矩形に対するマウスのホバー・押下・クリック判定を行うUI用コンポーネントです。見た目の描画は一切行いません（同一オブジェクトの<code>SpriteRenderer</code>が描画するスプライトの矩形を、そのまま当たり判定に使う「透明な当たり判定レイヤー」）。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。</p>
+</div>
+
+<h2>前提となる構成</h2>
+<p>
+このコンポーネントは判定のみを行うため、実際にボタンとして機能させるには同一オブジェクトへ以下を組み合わせて付与します。
+</p>
+<ul>
+<li><code>MeshFilter</code>（"Rect2D"等）＋ <code>SpriteRenderer</code> — ボタンの見た目と、描画先ウィンドウの指定（<code>SpriteRenderer</code>側の<code>Target</code>をそのまま利用する）</li>
+<li><code>UIButton</code> — 上記スプライトの矩形に対する当たり判定</li>
+</ul>
+<div class="note"><strong>マウス座標変換のパイプラインはScreenBufferViewportと共通</strong><br>Windowクライアント座標 → NDC → Display Cameraの逆ビュー射影でワールド座標 → SpriteRendererの逆ワールド行列でローカル座標、という変換を行い、ローカル座標が単位クアッド範囲内（(0,0)=左下 ～ (1,1)=右上）かどうかで判定します。詳細は<a href="../Render/ScreenBufferViewport.html">ScreenBufferViewport</a>を参照してください。</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Display Camera</td><td>コンボボックス（シーン上のオブジェクトから選択）</td><td>マウス座標変換の基準にする<code>Camera2D</code>を持つオブジェクト</td></tr>
+</table>
+<p>
+実行中は現在の判定状態（Hovered / Pressed / Clicked）が確認用にそのまま表示されます。
+</p>
+
+<h2>スクリプトAPI</h2>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetDisplayCameraObject(Object@)</code></td><td>Display Cameraを設定する</td></tr>
+<tr><td><code>bool IsHovered() const</code></td><td>マウスカーソルがボタンの矩形内にあるかどうか</td></tr>
+<tr><td><code>bool IsPressed() const</code></td><td>ボタン上で左クリックが押され、まだ離されていないかどうか。押下開始はボタン上である必要があるが、離すまでの間はカーソルが矩形外へ出ても保持される（一般的なUIボタンと同じ挙動。ドラッグして矩形外で離すとクリック扱いにはならない）</td></tr>
+<tr><td><code>bool IsClicked() const</code></td><td>このフレームでクリックが確定した瞬間だけ<code>true</code>（ボタン上で押して、ボタン上で離した時のみ）</td></tr>
+</table>
+<pre><code class="language-angelscript">class StartButton : ScriptComponentBehavior {
+    void Update() {
+        UIButton@ button;
+        GetComponent(@button);
+        if (button is null) return;
+
+        if (button.IsClicked()) {
+            Log("スタートボタンが押されました");
+        }
+    }
+}</code></pre>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path"><span>Add Component</span><i>›</i><span>UI</span><i>›</i><span>UIButton</span></span> から追加する。同一オブジェクトに1つのみ付与可能。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../Render/SpriteRenderer.html">Components/Render/SpriteRenderer.html</a> — ボタンの見た目・描画先ウィンドウの指定</li>
+<li><a href="../Render/ScreenBufferViewport.html">Components/Render/ScreenBufferViewport.html</a> — 同じマウス座標変換パイプラインを使う、オフスクリーン表示用コンポーネント</li>
+<li><a href="../../../Engine/Script/06_RenderAndWindow.html">Engine/Script/06_RenderAndWindow.html</a> — WindowObjectのマウス座標取得API</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

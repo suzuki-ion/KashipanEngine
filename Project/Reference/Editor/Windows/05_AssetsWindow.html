@@ -32,10 +32,11 @@
 <h3>右クリックメニュー（ファイル上）</h3>
 <table>
 <tr><th>項目</th><th>内容</th></tr>
-<tr><td>Open</td><td>対応する拡張子であれば、専用の編集/プレビューウィンドウを開く（JSON編集、マテリアル編集、画像プレビュー、オーディオプレビュー等）</td></tr>
+<tr><td>Open</td><td>対応する拡張子であれば、専用の編集/プレビューウィンドウを開く（JSON編集、マテリアル編集、画像プレビュー、オーディオプレビュー等）。<strong>スクリプトファイル（<code>.as</code>）はVSCode（<code>code</code>コマンド）で開く</strong>（下記「スクリプトファイルを開く」参照）</td></tr>
 <tr><td>Rename</td><td>ファイル名を変更するモーダルを開く</td></tr>
 <tr><td>Delete</td><td>確認モーダルの上でファイルを削除する</td></tr>
 </table>
+<div class="note"><strong>ダブルクリックでも同じ動作</strong><br>ファイルのサムネイルをダブルクリックすると、右クリックメニューの「Open」と同じ処理が実行されます。</div>
 
 <h3>右クリックメニュー（空きスペース）</h3>
 <table>
@@ -43,7 +44,24 @@
 <tr><td>Create Folder</td><td>現在のフォルダ内に新しいフォルダを作成する</td></tr>
 <tr><td>Create JSON File</td><td>空のJSONファイルを作成する</td></tr>
 <tr><td>Create Material File</td><td>新しいマテリアルファイルを作成する</td></tr>
+<tr><td>Create Script ›</td><td>新しいAngelScriptファイル（<code>.as</code>）をテンプレートから作成する（下記「スクリプトファイルの作成」参照）</td></tr>
 </table>
+
+<h2>スクリプトファイルの作成</h2>
+<p>
+<strong>Create Script</strong>のサブメニューからテンプレートを選ぶと、名前入力モーダルが開きます。既に同名のファイルが存在する場合は作成がブロックされます（自動連番は付きません）。ファイル名（拡張子を除いた部分）からAngelScriptのクラス名を自動生成します（英数字とアンダースコア以外はアンダースコアへ置換、数字始まりの場合は先頭に<code>Script</code>を付与）。
+</p>
+<table>
+<tr><th>テンプレート</th><th>内容</th></tr>
+<tr><td>Default</td><td><code>Start</code> / <code>Update</code> / <code>End</code> のみを定義したひな型</td></tr>
+<tr><td>Collision</td><td>Default一式に加えて、当たり判定イベント（<code>OnCollisionEnter</code> / <code>OnCollisionStay</code> / <code>OnCollisionExit</code>）も定義済みのひな型。Trigger（<code>IsTrigger</code>）扱いのコライダーも同じイベントで通知される</td></tr>
+</table>
+
+<h2>スクリプトファイルを開く</h2>
+<p>
+<code>.as</code>ファイルをOpen（ダブルクリックまたは右クリックメニュー）すると、VSCodeの<code>code</code>コマンドで外部エディターとして開きます。
+</p>
+<div class="warn"><strong>codeコマンドがPATHに登録されている必要がある</strong><br>VSCodeインストール時の「PATHへ追加」オプションが有効な場合のみ動作します。見つからない/起動に失敗した場合はエラーログが出力されるだけで、エディター側はクラッシュしません。</div>
 
 <h2>ドラッグ&amp;ドロップでのアサット割り当て</h2>
 <ul>

@@ -46,6 +46,7 @@ int stageNo = 1;</code></pre>
 <tr><td>文字列</td><td><code>string</code></td></tr>
 <tr><td>数学型</td><td><code>Vector2</code> / <code>Vector3</code> / <code>Vector4</code> / <code>Quaternion</code></td></tr>
 <tr><td>オブジェクト参照</td><td><code>Object@</code>（下記「Object参照」参照）</td></tr>
+<tr><td>列挙型</td><td>C++側で登録済みの列挙型（<code>EaseType</code> 等）・スクリプト内で定義した <code>enum</code> のどちらも可（下記「列挙型（enum）」参照）</td></tr>
 <tr><td>クラス</td><td><code>[System.Serializable]</code> を付けたスクリプトクラス（下記参照）</td></tr>
 <tr><td>配列</td><td>上記対応型の <code>array&lt;T&gt;</code>（下記「配列」参照。ネスト配列・Serializableクラスの配列も可）</td></tr>
 </table>
@@ -86,6 +87,39 @@ array&lt;string&gt;@ excludedTagNames = null;</code></pre>
     if (!IsValidObject(target)) return; // 削除済み、または未設定
     Transform@ targetTf = target.GetTransform();
     // ...
+}</code></pre>
+
+<h2>列挙型（enum）</h2>
+<p>
+<code>[SerializeField]</code> は列挙型にも対応しています。<code>EaseType</code> のようなC++側で登録済みの列挙型と、スクリプト内で <code>enum</code> 宣言した独自の列挙型のどちらも、インスペクター上で名前付きのドロップダウン（コンボボックス）として編集できます。
+</p>
+<pre><code class="language-angelscript">enum Difficulty {
+    Easy,
+    Normal,
+    Hard,
+}
+
+class Enemy : ScriptComponentBehavior {
+    [SerializeField, Tooltip("移動時のイージング")]
+    EaseType moveEase = EaseType::Linear;
+
+    [SerializeField]
+    Difficulty difficulty = Difficulty::Normal;
+}</code></pre>
+<ul>
+<li>内部的にはint32相当の数値としてJSONへ保存されます（列挙値の名前ではなく数値が保存されるため、後から列挙値の並び順を変えると保存済みの値の意味が変わる点に注意してください）。</li>
+<li><code>array&lt;T&gt;</code>の要素として、また<code>[System.Serializable]</code>クラスのメンバとしてネストして使うこともできます（<code>MoveGroundPath.as</code>の<code>MoveGroundPathPoint</code>で、通過点ごとのイージング指定に使われています）。</li>
+</ul>
+<pre><code class="language-angelscript">[System.Serializable]
+class MoveGroundPathPoint {
+    Vector3 offset = Vector3(0.0f, 0.0f, 0.0f);
+    float duration = 1.0f;
+    EaseType easeType = EaseType::Linear; // ネストしたクラスのメンバとしても使える
+}
+
+class MoveGroundPath : ScriptComponentBehavior {
+    [SerializeField]
+    array&lt;MoveGroundPathPoint@&gt;@ points = null; // 配列要素の中でも使える
 }</code></pre>
 
 <h2>表示用の属性（Unity互換）</h2>

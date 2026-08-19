@@ -52,7 +52,10 @@ const KE_PAGES = [
   { id: "C_Render_NormalWindowObject", title: "NormalWindowObject", group: "コンポーネント: Render", href: "Editor/Components/Render/NormalWindowObject.html" },
   { id: "C_Render_OverlayWindowObject", title: "OverlayWindowObject", group: "コンポーネント: Render", href: "Editor/Components/Render/OverlayWindowObject.html" },
   { id: "C_Render_ScreenBufferObject", title: "ScreenBufferObject", group: "コンポーネント: Render", href: "Editor/Components/Render/ScreenBufferObject.html" },
+  { id: "C_Render_ScreenBufferViewport", title: "ScreenBufferViewport", group: "コンポーネント: Render", href: "Editor/Components/Render/ScreenBufferViewport.html" },
   { id: "C_Render_ShadowMapObject", title: "ShadowMapObject", group: "コンポーネント: Render", href: "Editor/Components/Render/ShadowMapObject.html" },
+
+  { id: "C_UI_UIButton", title: "UIButton", group: "コンポーネント: UI", href: "Editor/Components/UI/UIButton.html" },
 
   { id: "C_Collider_BoxCollider", title: "BoxCollider", group: "コンポーネント: Collider", href: "Editor/Components/Collider/BoxCollider.html" },
   { id: "C_Collider_SphereCollider", title: "SphereCollider", group: "コンポーネント: Collider", href: "Editor/Components/Collider/SphereCollider.html" },

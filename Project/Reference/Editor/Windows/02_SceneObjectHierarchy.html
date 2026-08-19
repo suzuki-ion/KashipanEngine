@@ -46,6 +46,7 @@
 <li><strong>Assets Windowからのプレハブドロップ</strong> — <a href="05_AssetsWindow.html">Assets Window</a>の<code>.prefab</code>ファイルをヒエラルキー上へドラッグ&amp;ドロップすると、その位置（またはウィンドウの空きスペースへのドロップならルート直下）へPrefabがインスタンス化されます。</li>
 <li><strong>オブジェクトからフィールドへのD&amp;D</strong> — ヒエラルキーの項目を<a href="03_ObjectInspector.html">Object Inspector</a>のオブジェクト参照欄（例: <code>CameraController</code>のフォロー対象）へドラッグすると、そのオブジェクトを値として設定できます。</li>
 </ul>
+<div class="tip"><strong>複数選択したオブジェクトの一括移動</strong><br>ドラッグしたオブジェクトが現在の複数選択に含まれている場合、選択中の全オブジェクト（他の選択オブジェクトの子孫を除いたルートのみ）がまとめて移動します。移動前の相対的な並び順を保ったまま、ドロップ先の前後/内側へ連続して挿入されます。Undo/Redoも1操作にまとまります。</div>
 
 <h2>右クリックメニュー（オブジェクト上）</h2>
 <table>
@@ -57,10 +58,13 @@
 <tr><td>Paste to Child Object</td><td><code>Ctrl+Shift+V</code></td><td>右クリックしたオブジェクトの子として貼り付ける</td></tr>
 <tr><td>Clone Object(s)</td><td><code>Ctrl+D</code></td><td>選択中オブジェクトを複製する</td></tr>
 <tr><td>Delete Object(s)</td><td><code>Delete</code></td><td>選択中オブジェクトを削除する</td></tr>
+<tr><td>Delete Object (Keep Children)</td><td>-</td><td>右クリックしたオブジェクト<strong>単体のみ</strong>を削除し、その直接の子は削除せず、削除対象がいた親（祖父母）へ1階層繰り上げて付け替える。子が無い場合はグレーアウトされる（複数選択時は右クリックした1オブジェクトのみが対象）</td></tr>
+<tr><td>Unparent All Children</td><td>-</td><td>右クリックしたオブジェクトを親としている全ての子オブジェクトの親子関係を一括で解除する（ルート直下へ移動）。子が無い場合はグレーアウトされる（複数選択時は右クリックした1オブジェクトのみが対象）</td></tr>
 <tr><td>Apply All</td><td>-</td><td>（Prefabインスタンスのルートのみ）このインスタンスへの変更を元のPrefabアセットへ反映する。反映後は開いている他の全インスタンス・<a href="08_SceneListAndSaveLoad.html">Scene List</a>に登録されている他の全シーンファイル（未オープンのものも含む）へ自動的に同期される</td></tr>
 <tr><td>Revert All</td><td>-</td><td>（Prefabインスタンスのルートのみ）ローカルの変更を破棄し、元のPrefabの内容に戻す（確認ダイアログあり、1操作でのUndoはできない）</td></tr>
 </table>
 <p>ウィンドウの何もない領域を右クリックすると、<code>Create Object</code> と <code>Paste Object</code>（ルート直下が対象）だけを含む簡略版メニューが表示されます。</p>
+<div class="note"><strong>Delete Object (Keep Children) / Unparent All Childrenは常に1オブジェクトが対象</strong><br>Copy/Clone/Delete Object(s)と異なり、この2つの操作は複数選択の一括処理には対応していません（右クリックしたオブジェクト自身の直接の子のみを対象にした、単一オブジェクト向けの操作です）。どちらもUndo/Redoは1操作にまとまります。</div>
 <div class="warn"><strong>Apply Allは他のシーンファイルも書き換えます</strong><br>同じPrefabを使っている他のシーンが現在開いていなくても、ディスク上のシーンファイルが直接読み込み・同期・保存されます（ローカルなOverrideは維持されたままマージされます）。共同作業でシーンファイルをGit管理している場合は、他の人の未コミットの変更と衝突し得る操作であることに注意してください。</div>
 
 <h3>Create Objectメニュー</h3>

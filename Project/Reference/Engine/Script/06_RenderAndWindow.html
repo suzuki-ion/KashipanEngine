@@ -169,11 +169,33 @@
 <tr><td><code>bool SetMessageIntercepted(uint msg, bool enabled)</code></td><td>メッセージを横取りするかを設定する（下記参照）</td></tr>
 <tr><td><code>bool IsMessageIntercepted(uint msg) const</code></td><td>メッセージを横取りするかを取得する</td></tr>
 <tr><td><code>void CloseWindow()</code></td><td>ウィンドウを閉じる（<code>WM_CLOSE</code> 横取り時にゲーム側の処理後に閉じるために使う）</td></tr>
+<tr><td><code>Vector2 GetMousePosition() const</code></td><td>このウィンドウのクライアント座標系（左上原点、X右・Y下方向）でのマウス座標を取得する</td></tr>
+<tr><td><code>bool IsMouseInside() const</code></td><td>マウスカーソルがこのウィンドウのクライアント領域内にあるかどうか</td></tr>
 </table>
 <ul>
 <li><code>NormalWindowObject</code> / <code>OverlayWindowObject</code> のハンドルは <code>WindowObject@</code> へ<strong>暗黙的に変換</strong>できます。</li>
 <li><code>cast&lt;NormalWindowObject&gt;(windowObject)</code> のように<strong>具体的な型へダウンキャスト</strong>できます（型が異なる場合は <code>null</code> が返ります）。</li>
 </ul>
+<p>
+任意のウィンドウのマウス座標を、そのウィンドウを所有するコンポーネント自身ではなく<strong>グローバル関数として</strong>取得することもできます（他オブジェクトが持つウィンドウを参照する場合など）。
+</p>
+<table>
+<tr><th>グローバル関数</th><th>説明</th></tr>
+<tr><td><code>Vector2 GetMousePosition(WindowObject@ window)</code></td><td>指定ウィンドウのクライアント座標系でのマウス座標を取得する</td></tr>
+<tr><td><code>bool IsMouseInsideWindow(WindowObject@ window)</code></td><td>マウスカーソルが指定ウィンドウのクライアント領域内にあるかどうか</td></tr>
+</table>
+<pre><code class="language-angelscript">class CursorTracker : ScriptComponentBehavior {
+    void Update() {
+        NormalWindowObject@ window;
+        GetComponent(@window);
+        if (window is null) return;
+
+        if (window.IsMouseInside()) {
+            Vector2 pos = window.GetMousePosition();
+            Log("Mouse: " + pos.x + ", " + pos.y);
+        }
+    }
+}</code></pre>
 
 <h2>ウィンドウメッセージ（OnWindowMessage）</h2>
 <p>
@@ -290,6 +312,8 @@ class ScreenshotTaker : ScriptComponentBehavior {
 <li>コライダー・ポストエフェクト → <a href="07_ColliderAndPostEffect.html">07_ColliderAndPostEffect.html</a></li>
 <li>描画コンポーネント全般（C++側） → <a href="../05_Rendering.html">05_Rendering.html</a></li>
 <li>ウィンドウ/オフスクリーンの仕組み（C++側） → <a href="../11_Window.html">11_Window.html</a></li>
+<li><code>ScreenBufferViewport</code>（オフスクリーンをウィンドウへ表示し、その解像度基準のマウス座標を取得する） → <a href="../../Editor/Components/Render/ScreenBufferViewport.html">Editor/Components/Render/ScreenBufferViewport.html</a></li>
+<li><code>UIButton</code>（画面上の矩形へのマウスホバー/クリック判定） → <a href="../../Editor/Components/UI/UIButton.html">Editor/Components/UI/UIButton.html</a></li>
 </ul>
 
 <div id="page-footer" class="page-footer"></div>

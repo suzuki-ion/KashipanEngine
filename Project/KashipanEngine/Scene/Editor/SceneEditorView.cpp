@@ -52,6 +52,10 @@ SceneEditorView::SceneEditorView(Passkey<SceneEditor>, SceneEditorContext *conte
     showColliderGizmos_ = EditorSettings::GetBool("sceneView.showColliderGizmos", true);
     showBoneGizmos_ = EditorSettings::GetBool("sceneView.showBoneGizmos", false);
 
+    // カメラ操作モード・フライ速度を復元する（再起動後も維持される）
+    flyMode_ = EditorSettings::GetBool("sceneView.flyMode", false);
+    flySpeed_ = EditorSettings::GetFloat("sceneView.flySpeed", 5.0f);
+
     // 背景設定を復元する（再起動後も維持される）
     backgroundColor_.x = EditorSettings::GetFloat("sceneView.backgroundColor.r", 0.0f);
     backgroundColor_.y = EditorSettings::GetFloat("sceneView.backgroundColor.g", 0.0f);
@@ -121,18 +125,20 @@ void SceneEditorView::EnsureSceneViewObject() {
 
     if (sceneViewObject_) {
         sceneViewObjectID_ = sceneViewObject_->GetObjectID();
-        // 既存オブジェクトが見つかった場合は、そのTransformからオービット操作の起点
-        // （yaw_/pitch_/target_）を逆算する。distance_はTransformに保存されない値のため
-        // SceneViewOrbitStateコンポーネントに保存しておいた値を使う（無ければ付与する）ことで、
-        // target_ = position + forward * distance_ によりカメラの位置・向き・距離を完全に再現できる
+        // 既存オブジェクトが見つかった場合は、そのTransformから内部状態（yaw_/pitch_/target_/eye_）を
+        // 逆算する。distance_はTransformに保存されない値のためSceneViewOrbitStateコンポーネントに
+        // 保存しておいた値を使う（無ければ付与する）
         if (auto *transform = sceneViewObject_->GetComponent<Transform>()) {
-            auto *orbitState = sceneViewObject_->GetComponent<SceneViewOrbitState>();
-            if (!orbitState) orbitState = sceneViewObject_->AddComponent<SceneViewOrbitState>();
-            const Vector3 forward = transform->GetRotateQuaternion().RotateVector(Vector3(0.0f, 0.0f, 1.0f));
-            yaw_ = std::atan2(forward.x, forward.z);
-            pitch_ = std::clamp(std::asin(std::clamp(-forward.y, -1.0f, 1.0f)), -1.55f, 1.55f);
-            distance_ = orbitState->GetDistance();
-            target_ = transform->GetTranslate() + forward * distance_;
+            if (!sceneViewObject_->GetComponent<SceneViewOrbitState>()) {
+                sceneViewObject_->AddComponent<SceneViewOrbitState>();
+            }
+            SyncCameraStateFromTransform(transform);
+            // 以後UpdateCameraBufferが書き込む値との比較基準を、今読み取った現在値に合わせておく
+            // （そうしないと、今回の逆算結果を再計算した値がこの生Transformの値とわずかに異なる場合に、
+            // 外部変更と誤認して次のフレームにも無駄な再同期が走ってしまう）
+            lastAppliedPosition_ = transform->GetTranslate();
+            lastAppliedRotation_ = transform->GetRotateQuaternion();
+            hasLastAppliedCameraTransform_ = true;
         }
         return;
     }
@@ -149,7 +155,10 @@ void SceneEditorView::EnsureSceneViewObject() {
     }
     sceneViewObject_ = newObj;
     sceneViewObjectID_ = newObj->GetObjectID();
-    // 新規作成時は既存の既定値（target(0,0,0)・distance 10・yaw 0・pitch 0.3）をそのまま使う
+    // 新規作成時は既存の既定値（target(0,0,0)・distance 10・yaw 0・pitch 0.3）をそのまま使う。
+    // hasLastAppliedCameraTransform_ をtrueにしておくことで、この直後に走るUpdateCameraBufferが
+    // 生成直後のTransform（原点・無回転）を「外部変更」と誤認して既定値を上書きしてしまうのを防ぐ
+    hasLastAppliedCameraTransform_ = true;
 }
 
 void SceneEditorView::UpdateCameraBuffer() {
@@ -158,19 +167,44 @@ void SceneEditorView::UpdateCameraBuffer() {
     auto *camera3d = sceneViewObject_->GetComponent<Camera3D>();
     if (!transform || !camera3d) return;
 
+    // 前回自分がTransformへ書き込んだ値から変わっていたら（Inspector編集・Undo/Redo等の外部変更）、
+    // 現在のTransformから内部状態（yaw_/pitch_/target_/eye_）を再同期してから計算する
+    const Vector3 currentTranslate = transform->GetTranslate();
+    const Quaternion currentRotation = transform->GetRotateQuaternion();
+    constexpr float kPositionEpsilon = 1e-4f;
+    constexpr float kRotationEpsilon = 1e-5f;
+    const bool positionChangedExternally = (currentTranslate - lastAppliedPosition_).Length() > kPositionEpsilon;
+    const bool rotationChangedExternally =
+        std::abs(currentRotation.x - lastAppliedRotation_.x) > kRotationEpsilon ||
+        std::abs(currentRotation.y - lastAppliedRotation_.y) > kRotationEpsilon ||
+        std::abs(currentRotation.z - lastAppliedRotation_.z) > kRotationEpsilon ||
+        std::abs(currentRotation.w - lastAppliedRotation_.w) > kRotationEpsilon;
+    if (!hasLastAppliedCameraTransform_ || positionChangedExternally || rotationChangedExternally) {
+        SyncCameraStateFromTransform(transform);
+    }
+
     // ピッチ→ヨーの順で回転（行ベクトル規約）
     Matrix4x4 rotateX;
     rotateX.MakeRotateX(pitch_);
     Matrix4x4 rotateY;
     rotateY.MakeRotateY(yaw_);
     const Matrix4x4 rotation = rotateX * rotateY;
-
     const Vector3 forward(rotation.m[2][0], rotation.m[2][1], rotation.m[2][2]);
-    const Vector3 eye = target_ - forward * distance_;
+
+    if (flyMode_) {
+        // フライモードでは eye_（カメラ自身の位置）が基準。回転すると注視点はその向きの先へ追従する
+        target_ = eye_ + forward * distance_;
+    } else {
+        // オービットモードでは target_（注視点）が基準。回転するとカメラ側が軌道を描くように動く
+        eye_ = target_ - forward * distance_;
+    }
 
     // 算出した位置・向きをTransformへ書き戻す（シーン保存時にそのまま永続化される）
-    transform->SetTranslate(eye);
+    transform->SetTranslate(eye_);
     transform->SetRotateQuaternion(Quaternion::MakeFromRotationMatrix(rotation));
+    lastAppliedPosition_ = eye_;
+    lastAppliedRotation_ = Quaternion::MakeFromRotationMatrix(rotation);
+    hasLastAppliedCameraTransform_ = true;
     // distance_はTransformに残らないため、SceneViewOrbitStateへ書き戻して永続化する
     if (auto *orbitState = sceneViewObject_->GetComponent<SceneViewOrbitState>()) {
         orbitState->SetDistance(distance_);
@@ -195,13 +229,25 @@ void SceneEditorView::UpdateCameraBuffer() {
     constant.view = view_;
     constant.projection = gpuProjection;
     constant.viewProjection = view_ * gpuProjection;
-    constant.eyePosition = Vector4(eye.x, eye.y, eye.z, 1.0f);
+    constant.eyePosition = Vector4(eye_.x, eye_.y, eye_.z, 1.0f);
     constant.fov = camera3d->GetFovY();
-    cameraEye_ = eye;
+    cameraEye_ = eye_;
 
     if (void *mapped = cameraBuffer_->Map()) {
         std::memcpy(mapped, &constant, sizeof(constant));
     }
+}
+
+void SceneEditorView::SyncCameraStateFromTransform(Transform *transform) {
+    if (!transform || !sceneViewObject_) return;
+    const Vector3 forward = transform->GetRotateQuaternion().RotateVector(Vector3(0.0f, 0.0f, 1.0f));
+    yaw_ = std::atan2(forward.x, forward.z);
+    pitch_ = std::clamp(std::asin(std::clamp(-forward.y, -1.0f, 1.0f)), -1.55f, 1.55f);
+    if (auto *orbitState = sceneViewObject_->GetComponent<SceneViewOrbitState>()) {
+        distance_ = orbitState->GetDistance();
+    }
+    eye_ = transform->GetTranslate();
+    target_ = eye_ + forward * distance_;
 }
 
 void SceneEditorView::RegisterEditorTarget() {
@@ -245,6 +291,19 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.local"), gizmoMode_ == ImGuizmo::LOCAL)) gizmoMode_ = ImGuizmo::LOCAL;
     ImGui::SameLine();
     if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.world"), gizmoMode_ == ImGuizmo::WORLD)) gizmoMode_ = ImGuizmo::WORLD;
+
+    //--------- カメラ操作モードの切り替え（オービット/フライ） ---------//
+    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.camera.orbit"), !flyMode_)) {
+        flyMode_ = false;
+        EditorSettings::SetBool("sceneView.flyMode", flyMode_);
+    }
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.camera.orbit.tooltip"));
+    ImGui::SameLine();
+    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.camera.fly"), flyMode_)) {
+        flyMode_ = true;
+        EditorSettings::SetBool("sceneView.flyMode", flyMode_);
+    }
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.camera.fly.tooltip"));
 
     //--------- デバッグ表示の有効/無効切り替え ---------//
     if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.grid"), &showGrid_)) EditorSettings::SetBool("sceneView.showGrid", showGrid_);
@@ -407,28 +466,70 @@ void SceneEditorView::HandleCameraInput() {
     if (!ImGui::IsItemHovered()) return;
     ImGuiIO &io = ImGui::GetIO();
 
-    // ホイールでズーム
-    if (io.MouseWheel != 0.0f) {
-        distance_ *= std::pow(0.9f, io.MouseWheel);
-        distance_ = std::clamp(distance_, 0.1f, 10000.0f);
-    }
-    // 右ドラッグで回転
-    if (ImGui::IsMouseDragging(ImGuiMouseButton_Right)) {
-        yaw_ += io.MouseDelta.x * 0.005f;
-        pitch_ += io.MouseDelta.y * 0.005f;
-        pitch_ = std::clamp(pitch_, -1.55f, 1.55f);
-    }
-    // 中ドラッグでパン
-    if (ImGui::IsMouseDragging(ImGuiMouseButton_Middle)) {
-        Matrix4x4 rotateX;
-        rotateX.MakeRotateX(pitch_);
-        Matrix4x4 rotateY;
-        rotateY.MakeRotateY(yaw_);
-        const Matrix4x4 rotation = rotateX * rotateY;
-        const Vector3 right(rotation.m[0][0], rotation.m[0][1], rotation.m[0][2]);
-        const Vector3 up(rotation.m[1][0], rotation.m[1][1], rotation.m[1][2]);
-        const float panSpeed = distance_ * 0.002f;
-        target_ = target_ - right * (io.MouseDelta.x * panSpeed) + up * (io.MouseDelta.y * panSpeed);
+    if (flyMode_) {
+        // 右ドラッグでその場で見回す（eye_は変えず向きだけ変える。target_は次のUpdateCameraBufferで
+        // 新しい向きの先へ追従して再計算される）
+        if (ImGui::IsMouseDragging(ImGuiMouseButton_Right)) {
+            yaw_ += io.MouseDelta.x * 0.005f;
+            pitch_ += io.MouseDelta.y * 0.005f;
+            pitch_ = std::clamp(pitch_, -1.55f, 1.55f);
+        }
+        // 右ボタンを押している間、WASD（+QE上下）で見ている方向基準に移動する
+        // （Unityのシーンビューと同じ操作感。Shiftで加速）
+        if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
+            Matrix4x4 rotateX;
+            rotateX.MakeRotateX(pitch_);
+            Matrix4x4 rotateY;
+            rotateY.MakeRotateY(yaw_);
+            const Matrix4x4 rotation = rotateX * rotateY;
+            const Vector3 forward(rotation.m[2][0], rotation.m[2][1], rotation.m[2][2]);
+            const Vector3 right(rotation.m[0][0], rotation.m[0][1], rotation.m[0][2]);
+            const Vector3 up(rotation.m[1][0], rotation.m[1][1], rotation.m[1][2]);
+
+            Vector3 move{ 0.0f, 0.0f, 0.0f };
+            if (ImGui::IsKeyDown(ImGuiKey_W)) move = move + forward;
+            if (ImGui::IsKeyDown(ImGuiKey_S)) move = move - forward;
+            if (ImGui::IsKeyDown(ImGuiKey_D)) move = move + right;
+            if (ImGui::IsKeyDown(ImGuiKey_A)) move = move - right;
+            if (ImGui::IsKeyDown(ImGuiKey_E)) move = move + up;
+            if (ImGui::IsKeyDown(ImGuiKey_Q)) move = move - up;
+
+            const float lengthSq = move.LengthSquared();
+            if (lengthSq > 1e-8f) {
+                const float speed = (ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift)) ? flySpeed_ * 3.0f : flySpeed_;
+                eye_ = eye_ + move.Normalize() * (speed * io.DeltaTime);
+            }
+        }
+        // ホイールで移動速度を調整する
+        if (io.MouseWheel != 0.0f) {
+            flySpeed_ *= std::pow(1.1f, io.MouseWheel);
+            flySpeed_ = std::clamp(flySpeed_, 0.1f, 1000.0f);
+            EditorSettings::SetFloat("sceneView.flySpeed", flySpeed_);
+        }
+    } else {
+        // ホイールでズーム
+        if (io.MouseWheel != 0.0f) {
+            distance_ *= std::pow(0.9f, io.MouseWheel);
+            distance_ = std::clamp(distance_, 0.1f, 10000.0f);
+        }
+        // 右ドラッグで注視点を中心に軌道回転
+        if (ImGui::IsMouseDragging(ImGuiMouseButton_Right)) {
+            yaw_ += io.MouseDelta.x * 0.005f;
+            pitch_ += io.MouseDelta.y * 0.005f;
+            pitch_ = std::clamp(pitch_, -1.55f, 1.55f);
+        }
+        // 中ドラッグでパン
+        if (ImGui::IsMouseDragging(ImGuiMouseButton_Middle)) {
+            Matrix4x4 rotateX;
+            rotateX.MakeRotateX(pitch_);
+            Matrix4x4 rotateY;
+            rotateY.MakeRotateY(yaw_);
+            const Matrix4x4 rotation = rotateX * rotateY;
+            const Vector3 right(rotation.m[0][0], rotation.m[0][1], rotation.m[0][2]);
+            const Vector3 up(rotation.m[1][0], rotation.m[1][1], rotation.m[1][2]);
+            const float panSpeed = distance_ * 0.002f;
+            target_ = target_ - right * (io.MouseDelta.x * panSpeed) + up * (io.MouseDelta.y * panSpeed);
+        }
     }
 }
 
@@ -1135,9 +1236,24 @@ void SceneEditorView::ShowGizmo(const std::unordered_set<EmptyObject *> &selecte
         isGizmoEditing_ = false;
     }
 
+    // 選択群内の祖先が動けば子孫は階層継承で自動的に追従するため、
+    // 子孫にも同じデルタを直接適用すると二重に移動してしまう（ドラッグ中は毎フレーム累積し発散する）。
+    // 選択群内に祖先を持つオブジェクトはギズモの直接適用対象から除外する
+    const auto isDescendantOfSelection = [this](EmptyObject *obj) {
+        auto *transform = obj->GetComponent<Transform>();
+        EmptyObject *parent = transform ? transform->GetParentObject() : nullptr;
+        while (parent) {
+            if (gizmoTargetObjects_.contains(parent)) return true;
+            auto *parentTransform = parent->GetComponent<Transform>();
+            parent = parentTransform ? parentTransform->GetParentObject() : nullptr;
+        }
+        return false;
+    };
+
     std::vector<std::pair<EmptyObject *, Transform *>> targets;
     for (auto *obj : gizmoTargetObjects_) {
         if (!obj) continue;
+        if (isDescendantOfSelection(obj)) continue;
         if (auto *transform = obj->GetComponent<Transform>()) {
             targets.emplace_back(obj, transform);
         }

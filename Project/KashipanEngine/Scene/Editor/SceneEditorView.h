@@ -149,6 +149,12 @@ private:
     void ShowGizmo(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands, const ImVec2 &imagePos, const ImVec2 &imageSize);
     /// @brief ワールド行列を（親があればローカル空間へ変換したうえで）Transformへ書き戻す
     void ApplyWorldMatrixToTransform(Transform *transform, const Matrix4x4 &worldMatrix);
+    /// @brief 現在のTransformの内容から、オービット/フライ双方の内部状態
+    ///        （yaw_/pitch_/target_/eye_、distance_はSceneViewOrbitStateから）を再同期する
+    /// @details EnsureSceneViewObjectで既存の「Scene View」オブジェクトを見つけた時、および
+    ///          UpdateCameraBufferで前回自分が書き込んだ値からTransformが変わっていた
+    ///          （Inspector編集・Undo/Redo等の外部変更）ときに呼ぶ
+    void SyncCameraStateFromTransform(Transform *transform);
 
     SceneEditorContext *context_ = nullptr;
 
@@ -160,12 +166,27 @@ private:
     ScreenBuffer *screenBuffer_ = nullptr;
     std::unique_ptr<ConstantBufferResource> cameraBuffer_;
 
-    // デバッグカメラ（注視点周りのオービットカメラ。マウス操作用の一時的なパラメータであり、
-    // 実際のカメラ位置・向きは sceneViewObject_ の Transform に都度書き戻して永続化される）
+    // デバッグカメラ（マウス操作用の一時的なパラメータであり、実際のカメラ位置・向きは
+    // sceneViewObject_ の Transform に都度書き戻して永続化される）。
+    // オービットモードでは target_（注視点）が基準で、回転すると eye_ 側が軌道を描くように動く。
+    // フライモードでは eye_（カメラ自身の位置）が基準で、回転すると target_ の方が向きの先へ
+    // 追従して再計算される（distance_はその場合「target_が常にeye_の前方どれだけ先にあるか」の
+    // 意味になる）。どちらのモードでも両方の値を毎フレーム維持するため、モード切り替え時に
+    // 特別な補正処理は不要（切り替えた瞬間から自然に続きの操作ができる）
     Vector3 target_{ 0.0f, 0.0f, 0.0f };
+    Vector3 eye_{ 0.0f, 0.0f, 10.0f };
     float distance_ = 10.0f;
     float yaw_ = 0.0f;
     float pitch_ = 0.3f;
+    /// @brief オービットモード（既定）とフライモードの切り替え（再起動後も維持される）
+    bool flyMode_ = false;
+    /// @brief フライモードの移動速度（単位/秒。マウスホイールで調整可能。再起動後も維持される）
+    float flySpeed_ = 5.0f;
+
+    /// @brief 前回自分がTransformへ書き込んだ位置・回転（Inspector編集等での外部変更を検知する基準値）
+    bool hasLastAppliedCameraTransform_ = false;
+    Vector3 lastAppliedPosition_{ 0.0f, 0.0f, 0.0f };
+    Quaternion lastAppliedRotation_ = Quaternion::Identity();
 
     Matrix4x4 view_ = Matrix4x4::Identity();
     Matrix4x4 projection_ = Matrix4x4::Identity();

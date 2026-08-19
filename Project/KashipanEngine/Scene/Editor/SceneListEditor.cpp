@@ -5,6 +5,7 @@
 #include <filesystem>
 
 #include "Core/ProjectPaths.h"
+#include "Scene/Editor/EditorWindowChrome.h"
 #include "Scene/SceneEditorContext.h"
 #include "Scene/SceneFileIO.h"
 #include "Scene/SceneManager.h"
@@ -18,6 +19,7 @@ void SceneListEditor::ShowImGui() {
         ImGui::End();
         return;
     }
+    DrawFloatingWindowChromeButtons();
 
     auto *sceneManager = context_ ? context_->GetSceneManager() : nullptr;
     if (!sceneManager) {

@@ -7,6 +7,7 @@
 #include <cctype>
 #include <vector>
 
+#include "Scene/Editor/EditorWindowChrome.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
@@ -38,6 +39,7 @@ void TranslationEditor::ShowImGui() {
         ImGui::End();
         return;
     }
+    DrawFloatingWindowChromeButtons();
 
     // 初回は現在エンジンが使っている言語を編集対象にする
     if (language_.empty()) language_ = GetCurrentLanguage();

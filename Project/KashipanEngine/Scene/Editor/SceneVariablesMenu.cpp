@@ -1,6 +1,7 @@
 #include "SceneVariablesMenu.h"
 #ifdef USE_IMGUI
 #include <imgui.h>
+#include "Scene/Editor/EditorWindowChrome.h"
 #include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
 
@@ -12,6 +13,7 @@ void SceneVariablesMenu::ShowImGui() {
         ImGui::End();
         return;
     }
+    DrawFloatingWindowChromeButtons();
 
     //--------- 変数の追加 ---------//
     ImGui::InputText("##NewVariableName", &newVariableName_);

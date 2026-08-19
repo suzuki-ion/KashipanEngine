@@ -6,6 +6,7 @@
 
 #include "Scene/Editor/ComponentAddMenu.h"
 #include "Scene/Editor/EditorSettings.h"
+#include "Scene/Editor/EditorWindowChrome.h"
 #include "ComponentSerialize/ComponentRegistry.h"
 #include "Utilities/Translation.h"
 
@@ -33,6 +34,7 @@ void SceneComponentInspector::ShowImGui() {
         ImGui::End();
         return;
     }
+    DrawFloatingWindowChromeButtons();
 
     ISceneComponent *componentToRemove = nullptr;
     int id = 0;

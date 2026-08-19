@@ -12,6 +12,7 @@
 
 #include "Core/ProjectPaths.h"
 #include "Scene/Editor/EditorSettings.h"
+#include "Scene/Editor/EditorWindowChrome.h"
 #include "Scene/Editor/PrefabUtility.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 #include "Scene/Editor/SceneObjectHierarchy.h"
@@ -228,6 +229,7 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
         ImGui::End();
         return;
     }
+    DrawFloatingWindowChromeButtons();
 
     // シーンビューにフォーカスがある間も、ヒエラルキーと同じショートカット
     // （Ctrl+C/Ctrl+V/Ctrl+Shift+V/Ctrl+D）で選択中オブジェクトを操作できるようにする

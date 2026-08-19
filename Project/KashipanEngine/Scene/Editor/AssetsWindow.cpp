@@ -16,6 +16,7 @@
 #include "Core/ProjectPaths.h"
 #include "Objects/Components/PrefabInstanceComponent.h"
 #include "Objects/EmptyObject.h"
+#include "Scene/Editor/EditorWindowChrome.h"
 #include "Scene/Editor/PrefabAssetManager.h"
 #include "Scene/Editor/PrefabUtility.h"
 #include "Scene/Editor/SceneEditorCommands.h"
@@ -148,6 +149,7 @@ void AssetsWindow::ShowImGui() {
         ImGui::End();
         return;
     }
+    DrawFloatingWindowChromeButtons();
 
     //--------- ツールバー ---------//
     ImGui::BeginDisabled(currentFolder_.empty());

@@ -765,6 +765,7 @@
     <ClCompile Include="KashipanEngine\Scene\Editor\AssetsWindow.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\ComponentAddMenu.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\EditorSettings.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\EditorWindowChrome.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneComponentInspector.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorCommands.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\SceneEditorView.cpp" />
@@ -1961,6 +1962,7 @@
     <ClInclude Include="KashipanEngine\Scene\Editor\AssetsWindow.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\ComponentAddMenu.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\EditorSettings.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\EditorWindowChrome.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentHierarchy.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentInspector.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\SceneComponentRegisterMenu.h" />

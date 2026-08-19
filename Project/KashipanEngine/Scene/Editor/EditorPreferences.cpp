@@ -8,6 +8,7 @@
 #include "Core/UserSettings.h"
 #include "Debug/ImGuiManager.h"
 #include "Scene/Editor/EditorKeyBindings.h"
+#include "Scene/Editor/EditorWindowChrome.h"
 #include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
 
@@ -977,6 +978,7 @@ void EditorPreferences::ShowImGui() {
         ImGui::End();
         return;
     }
+    DrawFloatingWindowChromeButtons();
 
     ImGui::TextDisabled("%s", TranslationC("editor.preferences.description"));
 

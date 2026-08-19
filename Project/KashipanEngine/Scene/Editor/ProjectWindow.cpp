@@ -5,6 +5,7 @@
 
 #include "Core/GameEngine.h"
 #include "Core/ProjectPaths.h"
+#include "Scene/Editor/EditorWindowChrome.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
@@ -19,6 +20,7 @@ void ProjectWindow::ShowImGui() {
         ImGui::End();
         return;
     }
+    DrawFloatingWindowChromeButtons();
 
     // Projects配下の走査はディスクアクセスを伴うため、パネルを開いた直後の1回だけ行う
     if (!hasScannedProjects_) {

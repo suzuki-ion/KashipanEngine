@@ -6,6 +6,7 @@
 #include "Core/ProjectPaths.h"
 #include "Debug/Logger.h"
 #include "Scene/Editor/EditorSettings.h"
+#include "Scene/Editor/EditorWindowChrome.h"
 #include "Scene/Editor/PrefabAssetManager.h"
 #include "Scene/Editor/PrefabSyncUtility.h"
 #include "Scene/Editor/PrefabUtility.h"
@@ -127,6 +128,7 @@ void SceneObjectHierarchy::ShowImGui() {
     RebuildObjectItems();
 
     if (ImGui::Begin(TranslationLabel("editor.sceneobjecthierarchy.window"))) {
+        DrawFloatingWindowChromeButtons();
         HandleKeyboardShortcuts();
 
         if (EditorSettings::PersistentCollapsingHeader("Objects", "hierarchy.objects")) {

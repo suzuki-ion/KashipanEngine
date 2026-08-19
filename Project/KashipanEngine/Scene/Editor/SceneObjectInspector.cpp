@@ -5,6 +5,7 @@
 #include "Objects/Components/PrefabInstanceComponent.h"
 #include "Scene/Editor/ComponentAddMenu.h"
 #include "Scene/Editor/EditorSettings.h"
+#include "Scene/Editor/EditorWindowChrome.h"
 #include "Scene/Editor/PrefabSyncUtility.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 #include "Utilities/Translation.h"
@@ -35,6 +36,7 @@ ImVec4 ComponentCardBackgroundColor() {
 
 void SceneObjectInspector::ShowImGui() {
     ImGui::Begin(TranslationLabel("editor.sceneobjectinspector.window"));
+    DrawFloatingWindowChromeButtons();
     if (objectHierarchy_) {
         EmptyObject *selectedObject = objectHierarchy_->GetSelectedObject();
         const auto &selectedObjects = objectHierarchy_->GetSelectedObjects();

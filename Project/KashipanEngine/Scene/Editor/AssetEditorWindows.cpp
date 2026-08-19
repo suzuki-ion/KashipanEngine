@@ -24,6 +24,7 @@
 #include "Objects/Components/Render/MeshRenderer.h"
 #include "Objects/Components/Render/ScreenBufferObject.h"
 #include "Objects/Components/Transform.h"
+#include "Scene/Editor/EditorWindowChrome.h"
 #include "Scene/Editor/PrefabAssetManager.h"
 #include "Scene/Editor/PrefabUtility.h"
 #include "Scene/SceneContext.h"
@@ -104,6 +105,7 @@ bool JSONFileEditorWindow::ShowImGui() {
         ImGui::End();
         return isOpen_;
     }
+    DrawFloatingWindowChromeButtons();
 
     if (loadFailed_) {
         ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "%s", TranslationC("editor.assetwindow.json.parsefailed"));
@@ -297,6 +299,7 @@ bool MaterialFileEditorWindow::ShowImGui() {
         ImGui::End();
         return isOpen_;
     }
+    DrawFloatingWindowChromeButtons();
 
     // このマテリアルファイルに対応する読み込み済みマテリアルを探す（起動時に自動で読み込まれている前提）
     MaterialManager::Material *material = nullptr;
@@ -341,6 +344,7 @@ bool ImagePreviewWindow::ShowImGui() {
         ImGui::End();
         return isOpen_;
     }
+    DrawFloatingWindowChromeButtons();
 
     const auto textureHandle = TextureManager::GetTextureFromAssetPath(assetPath_);
     if (textureHandle == TextureManager::kInvalidHandle) {
@@ -391,6 +395,7 @@ bool AudioPreviewWindow::ShowImGui() {
         ImGui::End();
         return isOpen_;
     }
+    DrawFloatingWindowChromeButtons();
 
     if (soundHandle_ == AudioManager::kInvalidSoundHandle) {
         ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "%s%s", TranslationC("editor.assetwindow.sound.notloaded"), assetPath_.c_str());
@@ -462,6 +467,7 @@ bool VideoPreviewWindow::ShowImGui() {
         ImGui::End();
         return isOpen_;
     }
+    DrawFloatingWindowChromeButtons();
 
     if (videoHandle_ == VideoManager::kInvalidHandle) {
         ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "%s%s", TranslationC("editor.assetwindow.video.notloaded"), assetPath_.c_str());
@@ -690,6 +696,7 @@ bool ModelPreviewWindow::ShowImGui(SceneContext *sceneContext) {
         if (!isOpen_) DestroyPreviewObjects(sceneContext);
         return isOpen_;
     }
+    DrawFloatingWindowChromeButtons();
 
     if (modelHandle_ == ModelManager::kInvalidHandle) {
         ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "%s%s", TranslationC("editor.assetwindow.model.notloaded"), assetPath_.c_str());

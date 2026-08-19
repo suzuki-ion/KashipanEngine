@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+#include <limits>
 #include <memory>
 
 #include "Objects/ObjectComponentHeader.h"
@@ -14,6 +16,7 @@
 #include "Objects/Components/Render/NormalWindowObject.h"
 #include "Objects/Components/Render/OverlayWindowObject.h"
 #include "Objects/Components/Render/SpriteRenderer.h"
+#include "Objects/Components/Render/TextRenderer.h"
 #include "Objects/Components/Transform.h"
 #include "Utilities/UUID128.h"
 #if defined(USE_IMGUI)
@@ -24,11 +27,12 @@
 namespace KashipanEngine {
 
 /// @brief 画面上の矩形に対するマウスのホバー・押下・クリック判定を行うUI用コンポーネント
-/// @details 見た目の描画は一切行わない（同オブジェクトのSpriteRendererが描画するスプライトの
-///          矩形をそのまま当たり判定に使う、いわば「透明な当たり判定レイヤー」）。
-///          SpriteRendererが無い場合は常に判定falseを返す。
-///          描画先ウィンドウは同オブジェクトのSpriteRenderer側（SetTargetObject）で指定された
-///          ものをそのまま使うため、このコンポーネント自体はウィンドウの参照を持たない。
+/// @details 見た目の描画は一切行わない、いわば「透明な当たり判定レイヤー」。
+///          同オブジェクトにSpriteRendererがあればそのスプライトの矩形を、無くTextRendererが
+///          あればそのテキストの外接矩形（表示中の文字列・フォントサイズに応じて動的に変わる）を
+///          そのまま当たり判定に使う。両方無い場合は常に判定falseを返す（SpriteRendererを優先）。
+///          描画先ウィンドウは同オブジェクトのSpriteRenderer/TextRenderer側（SetTargetObject）で
+///          指定されたものをそのまま使うため、このコンポーネント自体はウィンドウの参照を持たない。
 ///          マウス座標変換の基準にするCamera2Dのみ、SetDisplayCameraObjectで別途指定する
 ///          （ScreenBufferViewportのマウス座標変換と同じ考え方・同じ変換パイプライン）。
 class UIButton final : public IObjectComponent {
@@ -118,9 +122,7 @@ protected:
     }
 
 private:
-    IWindowObjectComponent *ResolveWindow(const SpriteRenderer *spriteRenderer) const {
-        if (!spriteRenderer) return nullptr;
-        EmptyObject *targetObj = spriteRenderer->GetTargetObject();
+    IWindowObjectComponent *ResolveWindow(EmptyObject *targetObj) const {
         if (!targetObj) return nullptr;
         if (auto *w = targetObj->GetComponent<NormalWindowObject>()) return w;
         if (auto *w = targetObj->GetComponent<OverlayWindowObject>()) return w;
@@ -135,17 +137,55 @@ private:
         return obj->GetComponent<Camera2D>();
     }
 
-    /// @brief 現在のマウス座標がボタンの矩形（同オブジェクトのSpriteRendererの表示範囲）内にあるかを判定する
+    /// @brief TextRendererの各文字インスタンス（ワールド行列）から、テキスト全体の外接矩形
+    ///        （ワールド空間AABB）を求め、その中にworldPosが入っているかを判定する
+    /// @details 各文字は単位クアッド（-0.5～0.5）をworldMatrixで変換したもの。回転・傾斜（イタリック）
+    ///          や文字ごとのオフセット/回転オーバーライドが付いていても、4隅を変換して外接させるため
+    ///          破綻しない（回転が大きい場合は矩形がやや大きめになる程度）
+    static bool IsInsideTextBounds(const TextRenderer *textRenderer, const Vector3 &worldPos) {
+        const auto instances = textRenderer->GetRenderInstances();
+        if (instances.empty()) return false;
+
+        const Vector3 corners[4] = {
+            Vector3(-0.5f, -0.5f, 0.0f), Vector3(0.5f, -0.5f, 0.0f),
+            Vector3(-0.5f, 0.5f, 0.0f), Vector3(0.5f, 0.5f, 0.0f),
+        };
+
+        float minX = std::numeric_limits<float>::max();
+        float maxX = std::numeric_limits<float>::lowest();
+        float minY = std::numeric_limits<float>::max();
+        float maxY = std::numeric_limits<float>::lowest();
+        for (const auto &instance : instances) {
+            for (const auto &corner : corners) {
+                const Vector3 p = corner.Transform(instance.worldMatrix);
+                minX = std::min(minX, p.x);
+                maxX = std::max(maxX, p.x);
+                minY = std::min(minY, p.y);
+                maxY = std::max(maxY, p.y);
+            }
+        }
+        return worldPos.x >= minX && worldPos.x <= maxX && worldPos.y >= minY && worldPos.y <= maxY;
+    }
+
+    /// @brief 現在のマウス座標がボタンの矩形（同オブジェクトのSpriteRenderer/TextRendererの表示範囲）
+    ///        内にあるかを判定する
     /// @details ScreenBufferViewport::TryGetOffscreenMousePositionと同じ変換パイプライン
-    ///          （Windowクライアント座標 → NDC → 表示カメラの逆ビュー射影でワールド座標 →
-    ///          スプライトの逆ワールド行列でローカル座標）を使い、最後にローカル座標が
-    ///          単位クアッド範囲内かどうかだけを見る
+    ///          （Windowクライアント座標 → NDC → 表示カメラの逆ビュー射影でワールド座標）でマウスの
+    ///          ワールド座標を求めるところまでは共通。そこから先の当たり判定方法だけ対象コンポーネント
+    ///          で分かれる： SpriteRendererはスプライトの逆ワールド行列でローカル座標へ変換して
+    ///          単位クアッド範囲内かを見る（矩形サイズはTransformのスケールに追従）。TextRendererは
+    ///          表示中の文字列から都度測った外接矩形（ワールド空間）に対して直接判定する（矩形サイズは
+    ///          文字列・フォントサイズに追従して動的に変わる）
     bool ComputeIsHovered() const {
         auto *objectContext = GetOwnerObjectContext();
-        auto *spriteRenderer = objectContext ? objectContext->GetComponent<SpriteRenderer>() : nullptr;
-        if (!spriteRenderer) return false;
+        if (!objectContext) return false;
 
-        auto *windowComponent = ResolveWindow(spriteRenderer);
+        auto *spriteRenderer = objectContext->GetComponent<SpriteRenderer>();
+        auto *textRenderer = spriteRenderer ? nullptr : objectContext->GetComponent<TextRenderer>();
+        if (!spriteRenderer && !textRenderer) return false;
+
+        EmptyObject *targetObj = spriteRenderer ? spriteRenderer->GetTargetObject() : textRenderer->GetTargetObject();
+        auto *windowComponent = ResolveWindow(targetObj);
         Window *window = windowComponent ? windowComponent->GetWindow() : nullptr;
         if (!window || !Window::IsExist(window)) return false;
 
@@ -175,14 +215,18 @@ private:
         const Matrix4x4 viewProjectionInverse = (view * projection).Inverse();
         const Vector3 worldPos = Vector3(ndcX, ndcY, 0.0f).Transform(viewProjectionInverse);
 
-        // 3. ワールド座標 → ボタンのローカル座標（-0.5～0.5の単位クアッド空間）
-        const Matrix4x4 spriteWorldInverse = spriteRenderer->GetWorldMatrix().Inverse();
-        const Vector3 localPos = worldPos.Transform(spriteWorldInverse);
+        if (spriteRenderer) {
+            // 3. ワールド座標 → ボタンのローカル座標（-0.5～0.5の単位クアッド空間）
+            const Matrix4x4 spriteWorldInverse = spriteRenderer->GetWorldMatrix().Inverse();
+            const Vector3 localPos = worldPos.Transform(spriteWorldInverse);
 
-        // 4. ローカル座標が単位クアッド範囲内（(0,0)=左下～(1,1)=右上）にあるかどうか
-        const float nx = localPos.x + 0.5f;
-        const float ny = localPos.y + 0.5f;
-        return nx >= 0.0f && nx <= 1.0f && ny >= 0.0f && ny <= 1.0f;
+            // 4. ローカル座標が単位クアッド範囲内（(0,0)=左下～(1,1)=右上）にあるかどうか
+            const float nx = localPos.x + 0.5f;
+            const float ny = localPos.y + 0.5f;
+            return nx >= 0.0f && nx <= 1.0f && ny >= 0.0f && ny <= 1.0f;
+        }
+
+        return IsInsideTextBounds(textRenderer, worldPos);
     }
 
     UUID128 displayCameraObjectID_{};

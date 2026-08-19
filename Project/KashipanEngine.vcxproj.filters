@@ -1250,6 +1250,9 @@
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\BoxCollider.h">
       <Filter>KashipanEngine\Objects\Components\Collider</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\Collider\MeshButton.h">
+      <Filter>KashipanEngine\Objects\Components\Collider</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\MeshCollider.h">
       <Filter>KashipanEngine\Objects\Components\Collider</Filter>
     </ClInclude>

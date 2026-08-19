@@ -1008,6 +1008,12 @@
 		//--------- component.lightrenderer ---------//
 		"component.lightrenderer.pipeline": "파이프라인",
 
+		//--------- component.meshbutton ---------//
+		"component.meshbutton.desc": "이 컴포넌트 자체는 아무것도 그리지 않습니다. 같은 오브젝트에 MeshRenderer/SkinnedMeshRenderer(MeshRenderer 우선)가 있으면 해당 메시의 바운딩 박스를 그대로 히트 테스트 영역으로 사용합니다.",
+		"component.meshbutton.display_camera": "표시 카메라",
+		"component.meshbutton.precise_mesh_test": "메시 삼각형으로 정밀 판정",
+		"component.meshbutton.precise_mesh_test_desc": "MeshRenderer인 경우에만 적용됩니다. SkinnedMeshRenderer는 항상 바운딩 박스 판정을 사용합니다(본 변형 후 모습은 추적하지 않음).",
+
 		//--------- component.meshcollider ---------//
 		"component.meshcollider.convex": "볼록 껍질(Convex)",
 		"component.meshcollider.convex_meshcollider": "Convex가 꺼져 있으면 다른 MeshCollider와는 충돌하지 않습니다",
@@ -1333,7 +1339,7 @@
 		"component.textrenderer.vertical_align": "세로 정렬",
 
 		//--------- component.uibutton ---------//
-		"component.uibutton.desc": "이 컴포넌트 자체는 아무것도 그리지 않습니다. 같은 오브젝트의 SpriteRenderer가 그리는 스프라이트의 사각형을 그대로 히트 테스트 영역으로 사용합니다.",
+		"component.uibutton.desc": "이 컴포넌트 자체는 아무것도 그리지 않습니다. 같은 오브젝트에 SpriteRenderer가 있으면 그 스프라이트의 사각형을, 없고 TextRenderer가 있으면 그 텍스트의 외접 사각형(표시 중인 문자열에 따라 동적으로 변함)을 그대로 히트 테스트 영역으로 사용합니다.",
 		"component.uibutton.display_camera": "표시 카메라",
 
 		//--------- component.velocity ---------//

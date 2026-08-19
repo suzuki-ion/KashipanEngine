@@ -63,6 +63,7 @@
 #include "Objects/Components/Collider/Capsule2DCollider.h"
 #include "Objects/Components/Collider/CapsuleCollider.h"
 #include "Objects/Components/Collider/Circle2DCollider.h"
+#include "Objects/Components/Collider/MeshButton.h"
 #include "Objects/Components/Collider/MeshCollider.h"
 #include "Objects/Components/Collider/Ray2DCollider.h"
 #include "Objects/Components/Collider/RayCollider.h"
@@ -1034,6 +1035,14 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("bool IsHovered() const", &UIButton::IsHovered)
         .method("bool IsPressed() const", &UIButton::IsPressed)
         .method("bool IsClicked() const", &UIButton::IsClicked);
+
+    RegisterComponentType<MeshButton>(engine, "MeshButton")
+        .method("void SetDisplayCameraObject(Object@)", [](MeshButton &c, EmptyObject *obj) { c.SetDisplayCameraObject(obj); })
+        .method("void SetPreciseMeshTest(bool)", &MeshButton::SetPreciseMeshTest)
+        .method("bool GetPreciseMeshTest() const", &MeshButton::GetPreciseMeshTest)
+        .method("bool IsHovered() const", &MeshButton::IsHovered)
+        .method("bool IsPressed() const", &MeshButton::IsPressed)
+        .method("bool IsClicked() const", &MeshButton::IsClicked);
 
     RegisterComponentType<ShadowMapObject>(engine, "ShadowMapObject")
         .method("void SetName(const string &in)", &ShadowMapObject::SetName)

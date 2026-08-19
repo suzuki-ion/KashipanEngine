@@ -1008,6 +1008,12 @@
 		//--------- component.lightrenderer ---------//
 		"component.lightrenderer.pipeline": "Pipeline",
 
+		//--------- component.meshbutton ---------//
+		"component.meshbutton.desc": "Draws nothing itself. Uses the bounding box of this object's MeshRenderer/SkinnedMeshRenderer mesh (MeshRenderer preferred) as the hit-test area.",
+		"component.meshbutton.display_camera": "Display Camera",
+		"component.meshbutton.precise_mesh_test": "Precise Mesh Triangle Test",
+		"component.meshbutton.precise_mesh_test_desc": "Only takes effect for MeshRenderer. SkinnedMeshRenderer always uses the bounding box test (it does not follow the post-skinning deformation).",
+
 		//--------- component.meshcollider ---------//
 		"component.meshcollider.convex": "Convex",
 		"component.meshcollider.convex_meshcollider": "With Convex off, this will not collide with other MeshColliders",
@@ -1333,7 +1339,7 @@
 		"component.textrenderer.vertical_align": "Vertical Align",
 
 		//--------- component.uibutton ---------//
-		"component.uibutton.desc": "Draws nothing itself. Uses the rectangle of this object's SpriteRenderer sprite as the hit-test area.",
+		"component.uibutton.desc": "Draws nothing itself. Uses the rectangle of this object's SpriteRenderer sprite if present; otherwise, if a TextRenderer is present, uses its bounding rectangle (which changes dynamically with the displayed text).",
 		"component.uibutton.display_camera": "Display Camera",
 
 		//--------- component.velocity ---------//

@@ -1008,6 +1008,12 @@
 		//--------- component.lightrenderer ---------//
 		"component.lightrenderer.pipeline": "管线",
 
+		//--------- component.meshbutton ---------//
+		"component.meshbutton.desc": "本身不进行任何绘制。若该对象上有MeshRenderer/SkinnedMeshRenderer（优先使用MeshRenderer），则直接使用该网格的包围盒作为点击判定区域。",
+		"component.meshbutton.display_camera": "显示相机",
+		"component.meshbutton.precise_mesh_test": "使用网格三角形精确判定",
+		"component.meshbutton.precise_mesh_test_desc": "仅对MeshRenderer生效。SkinnedMeshRenderer始终使用包围盒判定（不会跟随蒙皮变形后的效果）。",
+
 		//--------- component.meshcollider ---------//
 		"component.meshcollider.convex": "凸包（Convex）",
 		"component.meshcollider.convex_meshcollider": "Convex关闭时，不会与其他MeshCollider发生碰撞",
@@ -1333,7 +1339,7 @@
 		"component.textrenderer.vertical_align": "垂直对齐",
 
 		//--------- component.uibutton ---------//
-		"component.uibutton.desc": "本身不进行任何绘制。直接使用该对象SpriteRenderer所绘制精灵的矩形作为点击判定区域。",
+		"component.uibutton.desc": "本身不进行任何绘制。若该对象上有SpriteRenderer，则使用其精灵的矩形；若没有但有TextRenderer，则使用其文本的外接矩形（会随当前显示的文本动态变化）作为点击判定区域。",
 		"component.uibutton.display_camera": "显示相机",
 
 		//--------- component.velocity ---------//

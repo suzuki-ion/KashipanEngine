@@ -1008,6 +1008,12 @@
 		//--------- component.lightrenderer ---------//
 		"component.lightrenderer.pipeline": "パイプライン",
 
+		//--------- component.meshbutton ---------//
+		"component.meshbutton.desc": "見た目の描画は行いません。同オブジェクトにMeshRenderer/SkinnedMeshRenderer（MeshRendererを優先）があれば、そのメッシュのバウンディングボックスをそのまま当たり判定に使います。",
+		"component.meshbutton.display_camera": "表示カメラ",
+		"component.meshbutton.precise_mesh_test": "メッシュ三角形で正確に判定",
+		"component.meshbutton.precise_mesh_test_desc": "MeshRendererの場合のみ有効。SkinnedMeshRendererは常にバウンディングボックス判定のまま（ボーン変形後の見た目には追従しません）。",
+
 		//--------- component.meshcollider ---------//
 		"component.meshcollider.convex": "凸包（Convex）",
 		"component.meshcollider.convex_meshcollider": "Convexオフの場合、他のMeshColliderとは衝突しません",
@@ -1333,7 +1339,7 @@
 		"component.textrenderer.vertical_align": "垂直方向の揃え",
 
 		//--------- component.uibutton ---------//
-		"component.uibutton.desc": "見た目の描画は行いません。同オブジェクトのSpriteRendererが描画するスプライトの矩形をそのまま当たり判定に使います。",
+		"component.uibutton.desc": "見た目の描画は行いません。同オブジェクトにSpriteRendererがあればそのスプライトの矩形を、無くTextRendererがあればそのテキストの外接矩形（表示中の文字列に応じて動的に変わる）をそのまま当たり判定に使います。",
 		"component.uibutton.display_camera": "表示カメラ",
 
 		//--------- component.velocity ---------//

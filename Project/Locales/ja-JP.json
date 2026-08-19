@@ -1201,6 +1201,11 @@
 		"component.screenbufferobject.srv_not_ready": "SRVが未準備です。",
 		"component.screenbufferobject.width": "幅",
 
+		//--------- component.screenbufferviewport ---------//
+		"component.screenbufferviewport.desc_delegate": "描画先・アンカー/ピボット・パイプライン等は、同オブジェクトの内部SpriteRendererコンポーネントを直接編集してください。",
+		"component.screenbufferviewport.display_camera": "表示カメラ",
+		"component.screenbufferviewport.source": "映すScreenBuffer",
+
 		//--------- component.screenwideditherblendeffect ---------//
 		"component.screenwideditherblendeffect.pass_count": "パス数",
 		"component.screenwideditherblendeffect.warning": "警告：影の再生成を含め、画面全体をパス数倍再描画します",
@@ -1324,6 +1329,10 @@
 		"component.textrenderer.valign.top": "上揃え",
 		"component.textrenderer.vertical_align": "垂直方向の揃え",
 
+		//--------- component.uibutton ---------//
+		"component.uibutton.desc": "見た目の描画は行いません。同オブジェクトのSpriteRendererが描画するスプライトの矩形をそのまま当たり判定に使います。",
+		"component.uibutton.display_camera": "表示カメラ",
+
 		//--------- component.velocity ---------//
 		"component.velocity.acceleration": "加速度",
 		"component.velocity.velocity": "速度",
@@ -1346,6 +1355,12 @@
 		"editor.assets.createfolder.title": "フォルダの作成",
 		"editor.assets.createjson": "JSONファイルを作成",
 		"editor.assets.creatematerial": "マテリアルファイルを作成",
+		"editor.assets.createscript": "スクリプトを作成",
+		"editor.assets.createscript.collision": "Collision（当たり判定イベント付き）",
+		"editor.assets.createscript.default": "Default（Start/Update/End）",
+		"editor.assets.createscript.name": "スクリプト名",
+		"editor.assets.createscript.title": "スクリプトの作成",
+		"editor.assets.openscript.failed": "VSCode（codeコマンド）でスクリプトを開けませんでした。PATHにVSCodeが登録されているか確認してください：",
 		"editor.assets.delete.cannotundo": "この操作は取り消せません。",
 		"editor.assets.delete.confirm.file": "このファイルをディスクから完全に削除します：",
 		"editor.assets.delete.confirm.folder": "このフォルダと、その中身をすべてディスクから完全に削除します：",
@@ -1421,6 +1436,7 @@
 		"editor.command.createchildobject": "子オブジェクトを作成：",
 		"editor.command.createobject": "オブジェクトを作成：",
 		"editor.command.deleteobject": "オブジェクトを削除：",
+		"editor.command.deleteobjectkeepchildren": "親オブジェクトのみ削除：",
 		"editor.command.deleteobjects.prefix": "オブジェクトを削除：",
 		"editor.command.deleteobjects.suffix": "個",
 		"editor.command.editcomponent": "コンポーネントを編集：",
@@ -1436,6 +1452,7 @@
 		"editor.command.syncprefab": "現在のシーン内のプレハブを同期",
 		"editor.command.transform.prefix": "Transformを操作：",
 		"editor.command.transformobject": "Transformを操作",
+		"editor.command.unparentallchildren": "子オブジェクトの親子関係を解除：",
 
 		//--------- editor.common ---------//
 		"editor.common.add": "追加",
@@ -1511,8 +1528,11 @@
 		"editor.hierarchy.delete": "オブジェクトを削除",
 		"editor.hierarchy.delete.multiple.prefix": "オブジェクトを削除：",
 		"editor.hierarchy.delete.multiple.suffix": "個",
+		"editor.hierarchy.deletekeepchildren": "親オブジェクトのみ削除",
+		"editor.hierarchy.deletekeepchildren.tooltip": "このオブジェクトのみ削除し、子オブジェクトは削除せず、このオブジェクトが所属していた親（祖父母）へ付け替えます",
 		"editor.hierarchy.paste": "オブジェクトを貼り付け",
 		"editor.hierarchy.pastetochild": "子オブジェクトとして貼り付け",
+		"editor.hierarchy.unparentallchildren": "子オブジェクトの親子関係をすべて解除",
 
 		//--------- editor.history ---------//
 		"editor.history.playing": "(再生中：操作履歴は停止時に破棄されます)",
@@ -1834,6 +1854,10 @@
 		//--------- editor.sceneview ---------//
 		"editor.sceneview.backgroundcolor": "背景色",
 		"editor.sceneview.backgroundtexture": "背景テクスチャ",
+		"editor.sceneview.camera.fly": "フライ",
+		"editor.sceneview.camera.fly.tooltip": "右ドラッグで見回し、右ボタンを押しながらWASD（+QEで上下、Shiftで加速）で移動します。ホイールで移動速度を調整できます",
+		"editor.sceneview.camera.orbit": "オービット",
+		"editor.sceneview.camera.orbit.tooltip": "右ドラッグで注視点を中心に軌道回転、中ドラッグでパン、ホイールでズームします",
 		"editor.sceneview.gizmo.local": "ローカル",
 		"editor.sceneview.gizmo.rotate": "回転",
 		"editor.sceneview.gizmo.scale": "拡大縮小",

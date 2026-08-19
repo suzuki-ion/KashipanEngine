@@ -1194,6 +1194,11 @@
 		"component.screenbufferobject.srv_not_ready": "SRV not ready.",
 		"component.screenbufferobject.width": "Width",
 
+		//--------- component.screenbufferviewport ---------//
+		"component.screenbufferviewport.desc_delegate": "Rendering target, anchor/pivot, pipeline, etc. are edited directly on this object's internal SpriteRenderer component.",
+		"component.screenbufferviewport.display_camera": "Display Camera",
+		"component.screenbufferviewport.source": "Source ScreenBuffer",
+
 		//--------- component.screenwideditherblendeffect ---------//
 		"component.screenwideditherblendeffect.pass_count": "Pass Count",
 		"component.screenwideditherblendeffect.warning": "Warning: redraws the entire screen (including shadow regeneration) this many times per frame",
@@ -1317,6 +1322,10 @@
 		"component.textrenderer.valign.top": "Top",
 		"component.textrenderer.vertical_align": "Vertical Align",
 
+		//--------- component.uibutton ---------//
+		"component.uibutton.desc": "Draws nothing itself. Uses the rectangle of this object's SpriteRenderer sprite as the hit-test area.",
+		"component.uibutton.display_camera": "Display Camera",
+
 		//--------- component.velocity ---------//
 		"component.velocity.acceleration": "Acceleration",
 		"component.velocity.velocity": "Velocity",
@@ -1339,6 +1348,12 @@
 		"editor.assets.createfolder.title": "Create Folder",
 		"editor.assets.createjson": "Create JSON File",
 		"editor.assets.creatematerial": "Create Material File",
+		"editor.assets.createscript": "Create Script",
+		"editor.assets.createscript.collision": "Collision (with collision events)",
+		"editor.assets.createscript.default": "Default (Start/Update/End)",
+		"editor.assets.createscript.name": "Script Name",
+		"editor.assets.createscript.title": "Create Script",
+		"editor.assets.openscript.failed": "Failed to open script in VSCode (code command). Check that VSCode is registered on PATH: ",
 		"editor.assets.delete.cannotundo": "This action cannot be undone.",
 		"editor.assets.delete.confirm.file": "This will permanently delete the actual file on disk: ",
 		"editor.assets.delete.confirm.folder": "This will permanently delete the folder and everything inside it: ",
@@ -1414,6 +1429,7 @@
 		"editor.command.createchildobject": "Create Child Object: ",
 		"editor.command.createobject": "Create Object: ",
 		"editor.command.deleteobject": "Delete Object: ",
+		"editor.command.deleteobjectkeepchildren": "Delete Object (Keep Children): ",
 		"editor.command.deleteobjects.prefix": "Delete Object: ",
 		"editor.command.deleteobjects.suffix": " Objects",
 		"editor.command.editcomponent": "Edit Component: ",
@@ -1429,6 +1445,7 @@
 		"editor.command.syncprefab": "Sync Prefab Across Current Scene",
 		"editor.command.transform.prefix": "Transform: ",
 		"editor.command.transformobject": "Transform Object",
+		"editor.command.unparentallchildren": "Unparent All Children: ",
 
 		//--------- editor.common ---------//
 		"editor.common.add": "Add",
@@ -1504,8 +1521,11 @@
 		"editor.hierarchy.delete": "Delete Object",
 		"editor.hierarchy.delete.multiple.prefix": "Delete ",
 		"editor.hierarchy.delete.multiple.suffix": " Objects",
+		"editor.hierarchy.deletekeepchildren": "Delete Object (Keep Children)",
+		"editor.hierarchy.deletekeepchildren.tooltip": "Deletes only this object; its children are not deleted and are reparented to this object's own former parent (grandparent)",
 		"editor.hierarchy.paste": "Paste Object",
 		"editor.hierarchy.pastetochild": "Paste to Child Object",
+		"editor.hierarchy.unparentallchildren": "Unparent All Children",
 
 		//--------- editor.history ---------//
 		"editor.history.playing": "(Playing: command history is discarded on stop)",
@@ -1827,6 +1847,10 @@
 		//--------- editor.sceneview ---------//
 		"editor.sceneview.backgroundcolor": "Background Color",
 		"editor.sceneview.backgroundtexture": "Background Texture",
+		"editor.sceneview.camera.fly": "Fly",
+		"editor.sceneview.camera.fly.tooltip": "Right-drag to look around; hold right button and use WASD (+QE for up/down, Shift to speed up) to move. Scroll to adjust move speed",
+		"editor.sceneview.camera.orbit": "Orbit",
+		"editor.sceneview.camera.orbit.tooltip": "Right-drag to orbit around the pivot, middle-drag to pan, scroll to zoom",
 		"editor.sceneview.gizmo.local": "Local",
 		"editor.sceneview.gizmo.rotate": "Rotate",
 		"editor.sceneview.gizmo.scale": "Scale",

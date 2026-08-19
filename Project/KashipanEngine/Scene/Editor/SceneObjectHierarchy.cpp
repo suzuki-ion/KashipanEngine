@@ -396,6 +396,24 @@ void SceneObjectHierarchy::ShowObjectContextMenu(EmptyObject *obj) {
             DeleteObjects(targets);
         }
 
+        // 右クリックした1オブジェクト自身に対してのみ提供する操作（複数選択時の一括処理は意味が
+        // 曖昧になるため対象外。子の有無をここで一度だけ調べ、両メニュー項目のenabled判定に使い回す）
+        bool hasChildren = false;
+        for (auto *candidate : editorContext_->GetSceneObjects()) {
+            if (!candidate || candidate == obj) continue;
+            auto *candidateTransform = candidate->GetComponent<Transform>();
+            if (candidateTransform && candidateTransform->GetParentObject() == obj) { hasChildren = true; break; }
+        }
+        if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.deletekeepchildren"), nullptr, false, hasChildren)) {
+            DeleteObjectKeepChildren(obj);
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", TranslationC("editor.hierarchy.deletekeepchildren.tooltip"));
+        }
+        if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.unparentallchildren"), nullptr, false, hasChildren)) {
+            UnparentAllChildren(obj);
+        }
+
         // Prefabインスタンスのルート自身に対してのみ、Apply All/Revert Allを出す（Unity同様、途中階層には出さない）
         if (PrefabSyncUtility::FindEnclosingPrefabInstanceRoot(obj) == obj) {
             ImGui::Separator();
@@ -660,6 +678,84 @@ void SceneObjectHierarchy::DeleteObjects(const std::vector<EmptyObject *> &objs)
     ClearSelection();
 }
 
+void SceneObjectHierarchy::DeleteObjectKeepChildren(EmptyObject *obj) {
+    if (!obj || !editorContext_) return;
+    auto *transform = obj->GetComponent<Transform>();
+    if (!transform) return;
+    EmptyObject *grandParent = transform->GetParentObject();
+
+    // 直接の子のみを対象にする（自分自身をparentとしているオブジェクトを全走査で探す。
+    // Transform側に子一覧のキャッシュは無いため、他の削除/コピー処理と同様の走査手法を使う）
+    std::vector<EmptyObject *> children;
+    for (auto *candidate : editorContext_->GetSceneObjects()) {
+        if (!candidate || candidate == obj) continue;
+        auto *candidateTransform = candidate->GetComponent<Transform>();
+        if (candidateTransform && candidateTransform->GetParentObject() == obj) {
+            children.push_back(candidate);
+        }
+    }
+
+    if (!commands_) {
+        for (auto *child : children) {
+            if (auto *childTransform = child->GetComponent<Transform>()) {
+                childTransform->SetParentObject(grandParent);
+            }
+        }
+        editorContext_->DeleteObject(obj);
+        ClearSelection();
+        return;
+    }
+
+    // 子を祖父母へ付け替えてから対象を削除する（付け替え後は子がいなくなるため、
+    // DeleteObjectCommandは対象オブジェクト単体のみを削除する）。1つのUndo操作にまとめる
+    auto composite = std::make_unique<CompositeCommand>(Translation("editor.command.deleteobjectkeepchildren") + obj->GetName());
+    for (auto *child : children) {
+        auto *childTransform = child->GetComponent<Transform>();
+        if (!childTransform) continue;
+        JSON before = child->SaveComponentToJson(childTransform);
+        childTransform->SetParentObject(grandParent);
+        JSON after = child->SaveComponentToJson(childTransform);
+        composite->AddCommand(std::make_unique<ComponentEditCommand>(child, childTransform, before, after));
+    }
+    composite->AddCommand(std::make_unique<DeleteObjectCommand>(obj));
+    commands_->Execute(std::move(composite));
+    ClearSelection();
+}
+
+void SceneObjectHierarchy::UnparentAllChildren(EmptyObject *obj) {
+    if (!obj || !editorContext_) return;
+
+    std::vector<EmptyObject *> children;
+    for (auto *candidate : editorContext_->GetSceneObjects()) {
+        if (!candidate || candidate == obj) continue;
+        auto *candidateTransform = candidate->GetComponent<Transform>();
+        if (candidateTransform && candidateTransform->GetParentObject() == obj) {
+            children.push_back(candidate);
+        }
+    }
+    if (children.empty()) return;
+
+    if (!commands_) {
+        for (auto *child : children) {
+            if (auto *childTransform = child->GetComponent<Transform>()) {
+                childTransform->SetParentObject(nullptr);
+            }
+        }
+        return;
+    }
+
+    auto composite = std::make_unique<CompositeCommand>(Translation("editor.command.unparentallchildren") + obj->GetName());
+    for (auto *child : children) {
+        auto *childTransform = child->GetComponent<Transform>();
+        if (!childTransform) continue;
+        JSON before = child->SaveComponentToJson(childTransform);
+        childTransform->SetParentObject(nullptr);
+        JSON after = child->SaveComponentToJson(childTransform);
+        composite->AddCommand(std::make_unique<ComponentEditCommand>(child, childTransform, before, after));
+    }
+    if (!composite->IsEmpty()) commands_->Execute(std::move(composite));
+}
+
 void SceneObjectHierarchy::CollectSubtreeNodes(EmptyObject *obj, int parentIndex, std::vector<PasteObjectCommand::Node> &out) const {
     PrefabUtility::CollectSubtreeNodes(editorContext_, obj, parentIndex, out);
 }
@@ -793,44 +889,71 @@ void SceneObjectHierarchy::DragAndDropObject(ObjectItem *objItem) {
 void SceneObjectHierarchy::ApplyDragAndDrop() {
     if (!dragDropPayload_.objectSource || !dragDropPayload_.objectTarget) return;
 
-    EmptyObject *sourceObject = dragDropPayload_.objectSource;
     EmptyObject *targetObject = dragDropPayload_.objectTarget;
     DropPosition position = dragDropPayload_.position;
 
-    size_t moveIndex = editorContext_->GetObjectIndex(targetObject);
-    auto *targetTransform = targetObject->GetComponent<Transform>();
-    auto *targetParent = targetTransform ? targetTransform->GetParentObject() : nullptr;
-    auto *sourceTransform = sourceObject->GetComponent<Transform>();
-    if (!sourceTransform) {
-        sourceTransform = sourceObject->AddComponent<Transform>();
+    // ドラッグした対象が複数選択に含まれる場合は、選択群全体（他の選択オブジェクトの子孫は除く）を
+    // まとめて移動する。含まれない場合は従来通りドラッグした1つだけを対象にする
+    std::vector<EmptyObject *> sourceObjects;
+    if (selectedObjects_.size() > 1 && selectedObjects_.contains(dragDropPayload_.objectSource)) {
+        sourceObjects = GetSelectionRoots();
+    } else {
+        sourceObjects = { dragDropPayload_.objectSource };
     }
 
-    bool isParentSet = false;
-    if (sourceTransform) {
+    // 元々の相対的な並び順を保ったまま挿入できるよう、現在のシーン内インデックスの昇順で処理する
+    std::sort(sourceObjects.begin(), sourceObjects.end(), [this](EmptyObject *a, EmptyObject *b) {
+        return editorContext_->GetObjectIndex(a) < editorContext_->GetObjectIndex(b);
+    });
+
+    const size_t moveIndex = editorContext_->GetObjectIndex(targetObject);
+    auto *targetTransform = targetObject->GetComponent<Transform>();
+    auto *targetParent = targetTransform ? targetTransform->GetParentObject() : nullptr;
+
+    const std::string compositeName = (sourceObjects.size() > 1)
+        ? (Translation("editor.command.moveobject.named") + std::to_string(sourceObjects.size()) + Translation("editor.command.objects.suffix"))
+        : (Translation("editor.command.moveobject.named") + (sourceObjects.empty() ? "" : sourceObjects.front()->GetName()));
+    auto composite = std::make_unique<CompositeCommand>(compositeName);
+    bool anyMoved = false;
+    // 対象を1つずつ、直前に挿入した対象の次の位置へ連続して差し込んでいく（挿入順=昇順で処理しているため、
+    // 元の相対順序を保ったままtargetObjectの前後/内側へまとめて並ぶ）
+    size_t insertOffset = 0;
+
+    for (auto *sourceObject : sourceObjects) {
+        // ターゲット自身が選択群に含まれていた場合はスキップ（自身を自身の隣/内側へ移動する操作は無意味）。
+        // ターゲットが移動対象の子孫だった場合（自分の子孫を親にしようとするケース）は
+        // SetParentObject側の循環参照チェックで自然に弾かれる
+        if (!sourceObject || sourceObject == targetObject) continue;
+
+        auto *sourceTransform = sourceObject->GetComponent<Transform>();
+        if (!sourceTransform) sourceTransform = sourceObject->AddComponent<Transform>();
+        if (!sourceTransform) continue;
+
         // Undo用に移動前の状態を保存しておく
         const JSON transformBefore = sourceObject->SaveComponentToJson(sourceTransform);
         const size_t indexBefore = editorContext_->GetObjectIndex(sourceObject);
         size_t indexAfter = MAXSIZE_T;
+        bool isParentSet = false;
 
         switch (position) {
         case DropPosition::Above:
             isParentSet = sourceTransform->SetParentObject(targetParent);
             if (isParentSet) {
-                indexAfter = moveIndex;
+                indexAfter = moveIndex + insertOffset;
                 editorContext_->MoveObject(sourceObject, indexAfter);
             }
             break;
         case DropPosition::Below:
             isParentSet = sourceTransform->SetParentObject(targetParent);
             if (isParentSet) {
-                indexAfter = moveIndex + 1;
+                indexAfter = moveIndex + 1 + insertOffset;
                 editorContext_->MoveObject(sourceObject, indexAfter);
             }
             break;
         case DropPosition::Inside:
             isParentSet = sourceTransform->SetParentObject(targetObject);
             if (isParentSet) {
-                indexAfter = moveIndex;
+                indexAfter = moveIndex + insertOffset;
                 editorContext_->MoveObject(sourceObject, indexAfter);
             }
             break;
@@ -838,17 +961,21 @@ void SceneObjectHierarchy::ApplyDragAndDrop() {
             break;
         }
 
+        if (!isParentSet) continue;
+        ++insertOffset;
+        anyMoved = true;
+
         // 親変更と並び替えをひとつの操作としてUndo履歴へ積む
-        if (isParentSet && commands_) {
-            const JSON transformAfter = sourceObject->SaveComponentToJson(sourceTransform);
-            auto composite = std::make_unique<CompositeCommand>(Translation("editor.command.moveobject.named") + sourceObject->GetName());
-            if (transformBefore != transformAfter) {
-                composite->AddCommand(std::make_unique<ComponentEditCommand>(
-                    sourceObject, sourceTransform, transformBefore, transformAfter));
-            }
-            composite->AddCommand(std::make_unique<MoveObjectCommand>(sourceObject, indexBefore, indexAfter));
-            commands_->PushExecuted(std::move(composite));
+        const JSON transformAfter = sourceObject->SaveComponentToJson(sourceTransform);
+        if (transformBefore != transformAfter) {
+            composite->AddCommand(std::make_unique<ComponentEditCommand>(
+                sourceObject, sourceTransform, transformBefore, transformAfter));
         }
+        composite->AddCommand(std::make_unique<MoveObjectCommand>(sourceObject, indexBefore, indexAfter));
+    }
+
+    if (anyMoved && commands_) {
+        commands_->PushExecuted(std::move(composite));
     }
 
     dragDropPayload_.objectSource = nullptr;

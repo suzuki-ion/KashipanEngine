@@ -7,6 +7,9 @@
 #include <cctype>
 #include <string_view>
 
+#include <shellapi.h>
+#pragma comment(lib, "Shell32.lib")
+
 #include "Assets/AudioManager.h"
 #include "Assets/MaterialManager.h"
 #include "Assets/ModelManager.h"
@@ -14,6 +17,7 @@
 #include "Assets/VideoManager.h"
 #include "ComponentSerialize/ComponentRegistry.h"
 #include "Core/ProjectPaths.h"
+#include "Debug/Logger.h"
 #include "Objects/Components/PrefabInstanceComponent.h"
 #include "Objects/EmptyObject.h"
 #include "Scene/Editor/EditorWindowChrome.h"
@@ -25,6 +29,7 @@
 #include "Utilities/AssetDragDropPayload.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/JSON.h"
+#include "Utilities/FileIO/TextFile.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
@@ -128,6 +133,88 @@ std::filesystem::path ToPhysicalPath(const std::string &projectRelativePath) {
         ? ProjectPaths::ProjectRoot()
         : ProjectPaths::ToPhysical(projectRelativePath));
 }
+
+/// @brief スクリプトファイルを外部エディター（VSCodeのcodeコマンド）で開く
+/// @details codeコマンドはVSCodeインストール時に「PATHへ追加」が有効な場合のみ使える。
+///          見つからない/起動に失敗した場合はエラーログのみ出し、例外は投げない
+void OpenScriptInExternalEditor(const std::string &projectRelativePath) {
+    const std::filesystem::path physicalPath = ToPhysicalPath(projectRelativePath);
+    const std::wstring quotedPath = L"\"" + physicalPath.wstring() + L"\"";
+    // ShellExecuteWは成功時に32より大きい値を返す（ProjectManager.cppのフォルダを開く処理と同じ規約）
+    const HINSTANCE result = ShellExecuteW(nullptr, L"open", L"code", quotedPath.c_str(), nullptr, SW_SHOWNORMAL);
+    if (reinterpret_cast<INT_PTR>(result) <= 32) {
+        Log(Translation("editor.assets.openscript.failed") + projectRelativePath, LogSeverity::Error);
+    }
+}
+
+/// @brief スクリプトのファイル名（拡張子無し）から、AngelScriptのクラス名として使える識別子を作る
+/// @details 英数字とアンダースコア以外はアンダースコアへ置換し、先頭が数字または空になった場合は
+///          "Script" を前置する（AngelScriptの識別子規則はC系言語と同様、数字始まり不可のため）
+std::string SanitizeScriptClassName(const std::string &fileName) {
+    std::string result;
+    result.reserve(fileName.size());
+    for (const char c : fileName) {
+        result += (std::isalnum(static_cast<unsigned char>(c)) || c == '_') ? c : '_';
+    }
+    if (result.empty() || std::isdigit(static_cast<unsigned char>(result.front()))) {
+        result = "Script" + result;
+    }
+    return result;
+}
+
+/// @brief Start/Update/Endのみを定義したデフォルトのスクリプトテンプレート
+std::vector<std::string> BuildDefaultScriptTemplate(const std::string &className) {
+    return {
+        "class " + className + " : ScriptComponentBehavior {",
+        "    void Start() {",
+        "    }",
+        "",
+        "    void Update() {",
+        "    }",
+        "",
+        "    void End() {",
+        "    }",
+        "}",
+    };
+}
+
+/// @brief デフォルト一式に加え、当たり判定イベント（OnCollisionEnter/Stay/Exit）も定義したテンプレート
+/// @details Trigger（IsTrigger）扱いのコライダーも同じOnCollisionEnter/Stay/Exitで通知される
+///          （このエンジンにOnTriggerEnter等の別イベントは存在しない）
+std::vector<std::string> BuildCollisionScriptTemplate(const std::string &className) {
+    return {
+        "class " + className + " : ScriptComponentBehavior {",
+        "    void Start() {",
+        "    }",
+        "",
+        "    void Update() {",
+        "    }",
+        "",
+        "    void End() {",
+        "    }",
+        "",
+        "    void OnCollisionEnter(const HitInfo &in hit) {",
+        "    }",
+        "",
+        "    void OnCollisionStay(const HitInfo &in hit) {",
+        "    }",
+        "",
+        "    void OnCollisionExit(const HitInfo &in hit) {",
+        "    }",
+        "}",
+    };
+}
+
+/// @brief 選択されたテンプレート種別に応じたスクリプト本文を組み立てる
+std::vector<std::string> BuildScriptTemplate(AssetsWindow::ScriptTemplate scriptTemplate, const std::string &className) {
+    switch (scriptTemplate) {
+    case AssetsWindow::ScriptTemplate::Collision:
+        return BuildCollisionScriptTemplate(className);
+    case AssetsWindow::ScriptTemplate::Default:
+    default:
+        return BuildDefaultScriptTemplate(className);
+    }
+}
 } // namespace
 
 AssetsWindow::AssetsWindow(Passkey<SceneEditor>, SceneEditorContext *editorContext)
@@ -197,6 +284,7 @@ void AssetsWindow::ShowImGui() {
 
     //--------- 新規作成・リネーム・削除確認モーダル ---------//
     ShowCreateFileModal();
+    ShowCreateScriptModal();
     ShowCreateFolderModal();
     ShowRenameModal();
     ShowDeleteConfirmModal();
@@ -504,6 +592,19 @@ void AssetsWindow::ShowGridBackgroundContextMenu() {
             newFileName_ = "New Material";
             isCreateFileRequested_ = true;
         }
+        if (ImGui::BeginMenu(TranslationLabel("editor.assets.createscript"))) {
+            if (ImGui::MenuItem(TranslationLabel("editor.assets.createscript.default"))) {
+                pendingScriptTemplate_ = ScriptTemplate::Default;
+                newScriptName_ = "NewScript";
+                isCreateScriptRequested_ = true;
+            }
+            if (ImGui::MenuItem(TranslationLabel("editor.assets.createscript.collision"))) {
+                pendingScriptTemplate_ = ScriptTemplate::Collision;
+                newScriptName_ = "NewScript";
+                isCreateScriptRequested_ = true;
+            }
+            ImGui::EndMenu();
+        }
         ImGui::EndPopup();
     }
 }
@@ -522,6 +623,8 @@ void AssetsWindow::OpenFileEditor(const FileEntry &file) {
             if (editor && editor->GetAssetPath() == assetPath) return;
         }
         materialEditors_.push_back(std::make_unique<MaterialFileEditorWindow>(assetPath));
+    } else if (file.extension == ".as") {
+        OpenScriptInExternalEditor(file.path);
     } else if (IsTextureExtension(file.extension)) {
         const std::string assetPath = ToAssetsRelativePath(file.path);
         for (auto &editor : imagePreviews_) {
@@ -707,6 +810,42 @@ bool AssetsWindow::ShowCreateFileModal() {
                 succeeded = SaveJSON(JSON::object(), ProjectPaths::ToPhysical(fullPath));
             }
             if (succeeded) {
+                RefreshFileList();
+                created = true;
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        if (ImGui::Button(TranslationLabel("editor.common.cancel"), ImVec2(120, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+    return created;
+}
+
+bool AssetsWindow::ShowCreateScriptModal() {
+    bool created = false;
+    if (isCreateScriptRequested_) {
+        ImGui::OpenPopup(TranslationLabel("editor.assets.createscript.title"));
+        isCreateScriptRequested_ = false;
+    }
+    if (ImGui::BeginPopupModal(TranslationLabel("editor.assets.createscript.title"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::InputText(TranslationLabel("editor.assets.createscript.name"), &newScriptName_);
+        const std::string folder = currentFolder_.empty() ? "" : (currentFolder_ + "/");
+        const std::string fullPath = folder + newScriptName_ + ".as";
+        const bool alreadyExists = !newScriptName_.empty() && PathExistsNoThrow(ToPhysicalPath(fullPath));
+        if (alreadyExists) {
+            ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "%s", TranslationC("editor.assets.createfile.alreadyexists"));
+        }
+        ImGui::BeginDisabled(newScriptName_.empty() || alreadyExists);
+        if (ImGui::Button(TranslationLabel("editor.common.create"), ImVec2(120, 0))) {
+            TextFileData textFile{};
+            textFile.filePath = ProjectPaths::ToPhysical(fullPath);
+            textFile.lines = BuildScriptTemplate(pendingScriptTemplate_, SanitizeScriptClassName(newScriptName_));
+            SaveTextFile(textFile);
+            if (PathExistsNoThrow(ToPhysicalPath(fullPath))) {
                 RefreshFileList();
                 created = true;
                 ImGui::CloseCurrentPopup();

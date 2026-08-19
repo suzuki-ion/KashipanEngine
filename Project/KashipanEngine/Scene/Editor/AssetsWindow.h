@@ -21,6 +21,12 @@ class SceneEditorCommands;
 ///          左側にフォルダツリー、右側に選択中フォルダ内のファイルをグリッド表示する。
 class AssetsWindow final {
 public:
+    /// @brief 「スクリプトを作成」メニューで選べるテンプレートの種類
+    enum class ScriptTemplate {
+        Default,   // Start/Update/Endのみのひな型
+        Collision, // Default一式に加え、当たり判定イベント（OnCollisionEnter/Stay/Exit）も定義済み
+    };
+
     AssetsWindow(Passkey<SceneEditor>, SceneEditorContext *editorContext);
     ~AssetsWindow();
 
@@ -76,6 +82,8 @@ private:
     void CloseEditorsForPath(const std::string &cwdRelativePath);
     /// @brief 新規ファイル作成モーダル（.json / .mat）を表示する
     bool ShowCreateFileModal();
+    /// @brief 新規スクリプトファイル（.as）作成モーダルを表示する
+    bool ShowCreateScriptModal();
     /// @brief 新規フォルダ作成モーダルを表示する
     void ShowCreateFolderModal();
     /// @brief リネームモーダルを表示する（ファイル・フォルダ共通）
@@ -117,6 +125,11 @@ private:
     // 新規フォルダ作成（空白部の右クリックメニュー）
     bool isCreateFolderRequested_ = false;
     std::string newFolderName_;
+
+    // 新規スクリプト作成（空白部の右クリックメニュー）
+    bool isCreateScriptRequested_ = false;
+    std::string newScriptName_;
+    ScriptTemplate pendingScriptTemplate_ = ScriptTemplate::Default;
 
     // ファイル/フォルダアイコンの右クリックメニュー（リネーム/削除）
     std::string contextMenuTargetPath_;

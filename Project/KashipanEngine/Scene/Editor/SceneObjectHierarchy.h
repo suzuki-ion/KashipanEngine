@@ -204,6 +204,12 @@ private:
     void CloneObjects(const std::vector<EmptyObject *> &objs);
     /// @brief 指定オブジェクト群を削除する（複数の場合はまとめて1つのUndo操作にする）
     void DeleteObjects(const std::vector<EmptyObject *> &objs);
+    /// @brief 指定オブジェクトのみを削除し、その直接の子は削除せず、削除対象がいた親（祖父母）へ
+    ///        付け替える（子は1階層繰り上がる）。1つのUndo操作にまとめる
+    void DeleteObjectKeepChildren(EmptyObject *obj);
+    /// @brief 指定オブジェクトを親としている全ての子オブジェクトの親子関係を解除する（ルート直下へ移動）。
+    ///        1つのUndo操作にまとめる
+    void UnparentAllChildren(EmptyObject *obj);
     /// @brief 指定オブジェクトを根とする部分木のJSONスナップショットを収集する（pre-order）
     void CollectSubtreeNodes(EmptyObject *obj, int parentIndex, std::vector<PasteObjectCommand::Node> &out) const;
     /// @brief 貼り付け/複製コマンドを実行し、成功したら生成された全ルートオブジェクトを選択状態にする

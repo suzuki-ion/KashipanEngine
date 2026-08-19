@@ -129,6 +129,8 @@ private:
         bool isScriptObject = false;
         /// @brief array<T> 型かどうか（trueの場合、children[0]が要素のフィールド情報になる）
         bool isArray = false;
+        /// @brief AngelScriptの列挙型（enum）かどうか（内部表現はint32のため、値の読み書きはint32として行う）
+        bool isEnum = false;
         FieldAttributes attributes;
         /// @brief isScriptObject の場合のサブフィールド（isArray の場合は要素のフィールド情報1件）
         std::vector<SerializedField> children;
@@ -173,6 +175,8 @@ private:
     bool IsSupportedFieldType(int typeId) const;
     /// @brief 指定タイプIDがObject型（ハンドル修飾の有無を問わない）かを判定する
     bool IsObjectFieldType(int typeId) const;
+    /// @brief 指定タイプIDがAngelScriptの列挙型（enum。スクリプト側定義/C++側登録のどちらも含む）かを判定する
+    bool IsEnumFieldType(int typeId, asIScriptEngine *engine) const;
     /// @brief 単純な値型（プリミティブ/数学型/Object@）のフィールド値を型IDに応じてコピーする
     void CopyLeafFieldValue(int typeId, void *dst, const void *src) const;
     /// @brief [SerializeField] 付き変数（グローバル変数とBehaviorクラスのメンバ変数）を収集する

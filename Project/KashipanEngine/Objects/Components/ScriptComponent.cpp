@@ -694,6 +694,12 @@ bool ScriptComponent::IsObjectFieldType(int typeId) const {
     return objectTypeId_ != 0 && (typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST)) == objectTypeId_;
 }
 
+bool ScriptComponent::IsEnumFieldType(int typeId, asIScriptEngine *engine) const {
+    if (!engine) return false;
+    asITypeInfo *type = engine->GetTypeInfoById(typeId);
+    return type && (type->GetFlags() & asOBJ_ENUM) != 0;
+}
+
 void ScriptComponent::CollectSerializedFields(CScriptBuilder &builder) {
     serializedFields_.clear();
     asIScriptModule *module = builder.GetModule();
@@ -731,6 +737,7 @@ void ScriptComponent::CollectSerializedFields(CScriptBuilder &builder) {
         field.name = name;
         field.typeId = typeId;
         field.address = address;
+        field.isEnum = IsEnumFieldType(typeId, engine);
         field.attributes = std::move(attrs);
         SetupArrayField(field, builder, engine, 0);
         if (field.isArray) ensureValidArrayHandle(field, address);
@@ -757,6 +764,7 @@ void ScriptComponent::CollectSerializedFields(CScriptBuilder &builder) {
             field.name = name;
             field.typeId = typeId;
             field.address = address;
+            field.isEnum = IsEnumFieldType(typeId, engine);
             field.attributes = std::move(attrs);
             SetupArrayField(field, builder, engine, 0);
             if (field.isArray) ensureValidArrayHandle(field, address);
@@ -796,10 +804,11 @@ void ScriptComponent::CollectSerializableChildren(SerializedField &field, CScrip
         child.name = name;
         child.typeId = propTypeId;
         child.propertyIndex = i;
+        child.isEnum = IsEnumFieldType(propTypeId, engine);
         child.attributes = std::move(attrs);
         SetupArrayField(child, builder, engine, depth + 1);
         if (!child.isArray) CollectSerializableChildren(child, builder, engine, depth + 1);
-        if (!child.isArray && !child.isScriptObject && !IsSupportedFieldType(child.typeId)) continue;
+        if (!child.isArray && !child.isScriptObject && !child.isEnum && !IsSupportedFieldType(child.typeId)) continue;
         field.children.push_back(std::move(child));
     }
 }
@@ -817,6 +826,7 @@ void ScriptComponent::SetupArrayField(SerializedField &field, CScriptBuilder &bu
     SerializedField element;
     element.name = "[0]";
     element.typeId = type->GetSubTypeId() & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST);
+    element.isEnum = IsEnumFieldType(element.typeId, engine);
     // Range等の編集用属性は各要素へ引き継ぐ（Header/Space/Tooltipは配列自体にのみ表示する）
     element.attributes = field.attributes;
     element.attributes.header.clear();
@@ -827,7 +837,7 @@ void ScriptComponent::SetupArrayField(SerializedField &field, CScriptBuilder &bu
     if (!element.isArray) CollectSerializableChildren(element, builder, engine, depth + 1);
 
     // 要素型が未対応の場合は配列自体をシリアライズ対象にしない
-    if (!element.isArray && !element.isScriptObject && !IsSupportedFieldType(element.typeId)) return;
+    if (!element.isArray && !element.isScriptObject && !element.isEnum && !IsSupportedFieldType(element.typeId)) return;
 
     field.isArray = true;
     field.children.clear();
@@ -879,7 +889,10 @@ JSON ScriptComponent::CaptureField(const SerializedField &field, void *address) 
         return json;
     }
 
-    if (field.typeId == asTYPEID_BOOL) {
+    if (field.isEnum) {
+        // AngelScriptのenumは内部表現がint32のため、そのまま数値として保存する
+        return *static_cast<int32_t *>(address);
+    } else if (field.typeId == asTYPEID_BOOL) {
         return *static_cast<bool *>(address);
     } else if (field.typeId == asTYPEID_INT32) {
         return *static_cast<int32_t *>(address);
@@ -957,7 +970,9 @@ void ScriptComponent::ApplyField(const SerializedField &field, void *address, co
     }
 
     try {
-        if (field.typeId == asTYPEID_BOOL) {
+        if (field.isEnum) {
+            *static_cast<int32_t *>(address) = value.get<int32_t>();
+        } else if (field.typeId == asTYPEID_BOOL) {
             *static_cast<bool *>(address) = value.get<bool>();
         } else if (field.typeId == asTYPEID_INT32) {
             *static_cast<int32_t *>(address) = value.get<int32_t>();
@@ -1010,7 +1025,10 @@ void ScriptComponent::ApplyFieldValuesFromJson(const JSON &json) {
 }
 
 void ScriptComponent::CopyLeafFieldValue(int typeId, void *dst, const void *src) const {
-    if (typeId == asTYPEID_BOOL) {
+    asIScriptEngine *engine = context_ ? context_->GetEngine() : nullptr;
+    if (IsEnumFieldType(typeId, engine)) {
+        *static_cast<int32_t *>(dst) = *static_cast<const int32_t *>(src);
+    } else if (typeId == asTYPEID_BOOL) {
         *static_cast<bool *>(dst) = *static_cast<const bool *>(src);
     } else if (typeId == asTYPEID_INT32) {
         *static_cast<int32_t *>(dst) = *static_cast<const int32_t *>(src);
@@ -1225,7 +1243,38 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
         return;
     }
 
-    if (field.typeId == asTYPEID_BOOL) {
+    if (field.isEnum) {
+        // AngelScriptのリフレクションで宣言済みの値一覧を取得し、コンボボックスとして表示する
+        // （ユーザー定義のスクリプトenumも含めて汎用的に動作する）
+        asIScriptEngine *engine = context_ ? context_->GetEngine() : nullptr;
+        asITypeInfo *enumType = engine ? engine->GetTypeInfoById(field.typeId) : nullptr;
+        auto *valuePtr = static_cast<int32_t *>(address);
+        if (!enumType) {
+            ImGui::Text(TranslationC("component.scriptcomponent.s_unsupported_type"), label);
+        } else {
+            const asUINT enumCount = enumType->GetEnumValueCount();
+            std::string previewName;
+            for (asUINT i = 0; i < enumCount; ++i) {
+                int enumValue = 0;
+                const char *enumName = enumType->GetEnumValueByIndex(i, &enumValue);
+                if (enumName && enumValue == *valuePtr) { previewName = enumName; break; }
+            }
+            if (previewName.empty()) previewName = std::to_string(*valuePtr);
+            if (ImGui::BeginCombo(label, previewName.c_str())) {
+                for (asUINT i = 0; i < enumCount; ++i) {
+                    int enumValue = 0;
+                    const char *enumName = enumType->GetEnumValueByIndex(i, &enumValue);
+                    if (!enumName) continue;
+                    const bool isSelected = (enumValue == *valuePtr);
+                    if (ImGui::Selectable(enumName, isSelected)) {
+                        *valuePtr = enumValue;
+                    }
+                    if (isSelected) ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
+        }
+    } else if (field.typeId == asTYPEID_BOOL) {
         ImGui::Checkbox(label, static_cast<bool *>(address));
     } else if (field.typeId == asTYPEID_INT32) {
         if (attrs.hasRange) {

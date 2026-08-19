@@ -163,6 +163,9 @@
     <Filter Include="KashipanEngine\Objects\Components\PostProcessing">
       <UniqueIdentifier>{FA3C36D8-F1D7-585E-9CC7-DA51DF0AAC64}</UniqueIdentifier>
     </Filter>
+    <Filter Include="KashipanEngine\Objects\Components\UI">
+      <UniqueIdentifier>{93094B5E-FAF2-446B-9532-523BC7228986}</UniqueIdentifier>
+    </Filter>
     <Filter Include="KashipanEngine\Objects\Components\Render">
       <UniqueIdentifier>{FC49E268-6E8F-5982-8C91-B5B45DBA2B85}</UniqueIdentifier>
     </Filter>
@@ -1372,6 +1375,12 @@
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Render\ScreenBufferObject.h">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\ScreenBufferViewport.h">
+      <Filter>KashipanEngine\Objects\Components\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\UI\UIButton.h">
+      <Filter>KashipanEngine\Objects\Components\UI</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Render\ShadowMapObject.h">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>

@@ -21,7 +21,9 @@
 #include "Core/ProjectPaths.h"
 #include "Core/Window.h"
 #include "Debug/Logger.h"
+#include "Input/Input.h"
 #include "Input/InputCommand.h"
+#include "Input/Mouse.h"
 #include "Math/Matrix3x3.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Quaternion.h"
@@ -96,7 +98,9 @@
 #include "Objects/Components/Render/NormalWindowObject.h"
 #include "Objects/Components/Render/OverlayWindowObject.h"
 #include "Objects/Components/Render/ScreenBufferObject.h"
+#include "Objects/Components/Render/ScreenBufferViewport.h"
 #include "Objects/Components/Render/ShadowMapObject.h"
+#include "Objects/Components/UI/UIButton.h"
 #include "Objects/Components/Render/SkinnedMeshRenderer.h"
 #include "Objects/Components/Render/SpriteRenderer.h"
 #include "Objects/Components/Render/TextRenderer.h"
@@ -395,6 +399,29 @@ auto RegisterColliderType(asIScriptEngine *engine, const char *name) {
     return binder;
 }
 
+/// @brief 指定ウィンドウコンポーネントのクライアント座標系でのマウス座標を取得する（未生成/取得不可時は{0,0}）
+/// @details WindowObjectメソッド版とグローバル関数版の両方から共有される実装本体
+Vector2 GetWindowMousePosition(const IWindowObjectComponent *component) {
+    if (!component) return Vector2::Zero();
+    Window *window = component->GetWindow();
+    if (!window || !Window::IsExist(window)) return Vector2::Zero();
+    Input *input = gCurrentSceneContext ? gCurrentSceneContext->GetInput() : nullptr;
+    if (!input) return Vector2::Zero();
+    const POINT p = input->GetMouse().GetPos(window);
+    return Vector2(static_cast<float>(p.x), static_cast<float>(p.y));
+}
+
+/// @brief マウスカーソルが指定ウィンドウコンポーネントのクライアント領域内にあるかどうかを取得する
+bool IsWindowMouseInside(const IWindowObjectComponent *component) {
+    if (!component) return false;
+    Window *window = component->GetWindow();
+    if (!window || !Window::IsExist(window)) return false;
+    const Vector2 pos = GetWindowMousePosition(component);
+    return pos.x >= 0.0f && pos.y >= 0.0f &&
+        pos.x < static_cast<float>(window->GetClientWidth()) &&
+        pos.y < static_cast<float>(window->GetClientHeight());
+}
+
 /// @brief WindowObject（IWindowObjectComponent基底）型を参照型として登録する
 /// @details WindowMessageInfoのsourceComponentで「どのウィンドウコンポーネントからの通知か」を
 ///          受け渡すための共通型。NormalWindowObject/OverlayWindowObjectはopImplCastでこの型へ
@@ -430,6 +457,12 @@ void RegisterWindowObjectBaseType(asIScriptEngine *engine) {
         .method("bool IsWindowMinimized() const", [](const IWindowObjectComponent &component) -> bool {
             Window *window = component.GetWindow();
             return (window && Window::IsExist(window)) ? window->IsMinimized() : false;
+        })
+        .method("Vector2 GetMousePosition() const", [](const IWindowObjectComponent &component) -> Vector2 {
+            return GetWindowMousePosition(&component);
+        })
+        .method("bool IsMouseInside() const", [](const IWindowObjectComponent &component) -> bool {
+            return IsWindowMouseInside(&component);
         });
 }
 
@@ -986,6 +1019,19 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetSaveFormat(const string &in)", &ScreenBufferObject::SetSaveFormat)
         .method("const string &GetSaveFormat() const", &ScreenBufferObject::GetSaveFormat)
         .method("bool RequestSave(const string &in filePath = \"\")", &ScreenBufferObject::RequestSave);
+
+    RegisterComponentType<ScreenBufferViewport>(engine, "ScreenBufferViewport")
+        .method("void SetSourceObject(Object@)", [](ScreenBufferViewport &c, EmptyObject *obj) { c.SetSourceObject(obj); })
+        .method("void SetDisplayCameraObject(Object@)", [](ScreenBufferViewport &c, EmptyObject *obj) { c.SetDisplayCameraObject(obj); })
+        .method("SpriteRenderer@ GetSpriteRenderer() const", &ScreenBufferViewport::GetSpriteRenderer)
+        .method("bool TryGetOffscreenMousePosition(Vector2 &out)", &ScreenBufferViewport::TryGetOffscreenMousePosition)
+        .method("bool IsMouseOverOffscreen() const", &ScreenBufferViewport::IsMouseOverOffscreen);
+
+    RegisterComponentType<UIButton>(engine, "UIButton")
+        .method("void SetDisplayCameraObject(Object@)", [](UIButton &c, EmptyObject *obj) { c.SetDisplayCameraObject(obj); })
+        .method("bool IsHovered() const", &UIButton::IsHovered)
+        .method("bool IsPressed() const", &UIButton::IsPressed)
+        .method("bool IsClicked() const", &UIButton::IsClicked);
 
     RegisterComponentType<ShadowMapObject>(engine, "ShadowMapObject")
         .method("void SetName(const string &in)", &ShadowMapObject::SetName)
@@ -2469,6 +2515,13 @@ void RegisterGlobalFunctions(asIScriptEngine *engine) {
         .function("float GetCommandValue(const string &in)", [](const std::string &action) -> float {
             auto *command = gCurrentSceneContext ? gCurrentSceneContext->GetInputCommand() : nullptr;
             return command ? command->Evaluate(action).Value() : 0.0f;
+        })
+        // マウス（任意のウィンドウ視点でのマウス座標。自分のウィンドウならWindowObject側のメソッド版でも取得可）
+        .function("Vector2 GetMousePosition(WindowObject@ window)", [](IWindowObjectComponent *window) -> Vector2 {
+            return GetWindowMousePosition(window);
+        })
+        .function("bool IsMouseInsideWindow(WindowObject@ window)", [](IWindowObjectComponent *window) -> bool {
+            return IsWindowMouseInside(window);
         })
         // 音声
         .function("uint PlayAudio(const string &in, float volume = 1.0f)", [](const std::string &path, float volume) -> uint32_t {

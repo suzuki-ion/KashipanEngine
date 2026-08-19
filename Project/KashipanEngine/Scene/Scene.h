@@ -85,11 +85,13 @@ public:
             component->ShowImGuiInterface(Passkey<Scene>{});
         }
     }
+#endif
 
     //==================================================
-    // エディターの再生制御（Unity風のPlay/Pause/Stop）
+    // 再生状態（エディターではUnity風のPlay/Pause/Stopで制御する）
     //==================================================
 
+#if defined(USE_IMGUI)
     /// @brief 再生中かどうか
     bool IsPlaying() const { return isPlaying_; }
     /// @brief 一時停止中かどうか
@@ -104,6 +106,11 @@ public:
     void PlayResume() { isPaused_ = false; }
     /// @brief 1フレームだけ進める（一時停止中のみ有効）
     void RequestStepFrame() { isStepFrameRequested_ = true; }
+#else
+    /// @brief 再生中かどうか（非エディタービルドではシーンが動いている間は常にtrue）
+    bool IsPlaying() const { return true; }
+    /// @brief 一時停止中かどうか（非エディタービルドには一時停止の概念が無いため常にfalse）
+    bool IsPaused() const { return false; }
 #endif
 
     /// @brief ゲームループの終了を要求する

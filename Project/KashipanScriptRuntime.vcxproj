@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Development|x64">
+      <Configuration>Development</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{f223b915-f450-4a50-acc0-18cac030c396}</ProjectGuid>
+    <RootNamespace>KashipanScriptRuntime</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>$(ProjectName)</TargetName>
+    <OutDir>$(SolutionDir)..\Generated\Outputs\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\Generated\Obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <ExternalIncludePath>$(ProjectDir)Externals\reactphysics3d/src;$(ProjectDir)Externals\reactphysics3d/include;$(ProjectDir)Externals\WebView2\include;$(ExternalIncludePath)</ExternalIncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <TargetName>$(ProjectName)</TargetName>
+    <OutDir>$(SolutionDir)..\Generated\Outputs\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\Generated\Obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <ExternalIncludePath>$(ProjectDir)Externals\reactphysics3d/src;$(ProjectDir)Externals\reactphysics3d/include;$(ProjectDir)Externals\WebView2\include;$(ExternalIncludePath)</ExternalIncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'">
+    <TargetName>$(ProjectName)</TargetName>
+    <OutDir>$(SolutionDir)..\Generated\Outputs\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\Generated\Obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <ExternalIncludePath>$(ProjectDir)Externals\reactphysics3d/src;$(ProjectDir)Externals\reactphysics3d/include;$(ProjectDir)Externals\WebView2\include;$(ExternalIncludePath)</ExternalIncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>DEBUG_BUILD;_DEBUG;_WINDOWS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp23</LanguageStandard>
+      <AdditionalOptions>/utf-8 /bigobj %(AdditionalOptions)</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <AdditionalIncludeDirectories>$(ProjectDir)Externals\ReactPhysics3D\include;$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories);$(ProjectDir)Externals\angelscript\include</AdditionalIncludeDirectories>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
+      <OpenMPSupport>false</OpenMPSupport>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>RELEASE_BUILD;NDEBUG;_WINDOWS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;_ITERATOR_DEBUG_LEVEL=0</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp23</LanguageStandard>
+      <AdditionalOptions>/utf-8 /bigobj %(AdditionalOptions)</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <AdditionalIncludeDirectories>$(ProjectDir)Externals\ReactPhysics3D\include;$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories);$(ProjectDir)Externals\angelscript\include</AdditionalIncludeDirectories>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
+      <OpenMPSupport>false</OpenMPSupport>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>DEVELOPMENT_BUILD;_WINDOWS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;_ITERATOR_DEBUG_LEVEL=0</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp23</LanguageStandard>
+      <AdditionalOptions>/utf-8 /bigobj %(AdditionalOptions)</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <AdditionalIncludeDirectories>$(ProjectDir)Externals\ReactPhysics3D\include;$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories);$(ProjectDir)Externals\angelscript\include</AdditionalIncludeDirectories>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
+      <OpenMPSupport>false</OpenMPSupport>
+      <Optimization>MaxSpeed</Optimization>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>false</OmitFramePointers>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectReference Include="Externals\angelscript\projects\msvc2022\angelscript.vcxproj">
+      <Project>{39e6af97-6ba3-4a72-8c61-bcebf214ebfd}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj">
+      <Project>{371b9fa9-4c90-4ac6-a123-aced756d6c77}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Externals\angelscript\include\add_on\contextmgr\contextmgr.cpp" />
+    <ClCompile Include="Externals\angelscript\include\add_on\datetime\datetime.cpp" />
+    <ClCompile Include="Externals\angelscript\include\add_on\debugger\debugger.cpp" />
+    <ClCompile Include="Externals\angelscript\include\add_on\scriptany\scriptany.cpp" />
+    <ClCompile Include="Externals\angelscript\include\add_on\scriptarray\scriptarray.cpp" />
+    <ClCompile Include="Externals\angelscript\include\add_on\scriptbuilder\scriptbuilder.cpp" />
+    <ClCompile Include="Externals\angelscript\include\add_on\scriptdictionary\scriptdictionary.cpp" />
+    <ClCompile Include="Externals\angelscript\include\add_on\scriptfile\scriptfile.cpp" />
+    <ClCompile Include="Externals\angelscript\include\add_on\scriptfile\scriptfilesystem.cpp" />
+    <ClCompile Include="Externals\angelscript\include\add_on\scriptgrid\scriptgrid.cpp" />
+    <ClCompile Include="Externals\angelscript\include\add_on\scripthandle\scripthandle.cpp" />
+    <ClCompile Include="Externals\angelscript\include\add_on\scripthelper\scripthelper.cpp" />
+    <ClCompile Include="Externals\angelscript\include\add_on\scriptmath\scriptmath.cpp" />
+    <ClCompile Include="Externals\angelscript\include\add_on\scriptmath\scriptmathcomplex.cpp" />
+    <ClCompile Include="Externals\angelscript\include\add_on\scriptsocket\scriptsocket.cpp" />
+    <ClCompile Include="Externals\angelscript\include\add_on\scriptstdstring\scriptstdstring.cpp" />
+    <ClCompile Include="Externals\angelscript\include\add_on\scriptstdstring\scriptstdstring_utils.cpp" />
+    <ClCompile Include="Externals\angelscript\include\add_on\serializer\serializer.cpp" />
+    <ClCompile Include="Externals\angelscript\include\add_on\weakref\weakref.cpp" />
+    <ClCompile Include="Externals\imgui\ImGuizmo.cpp">
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Externals\imgui\imgui.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Externals\imgui\imgui_demo.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Externals\imgui\imgui_draw.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Externals\imgui\imgui_impl_dx12.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Externals\imgui\imgui_impl_win32.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Externals\imgui\imgui_stdlib.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Externals\imgui\imgui_tables.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Externals\imgui\imgui_widgets.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Assets\AnimationManager.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\AudioManager.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\AudioPlayer.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\FontManager.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\MaterialManager.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\ModelManager.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\PrimitiveMeshGenerator.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\SamplerManager.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\SkeletonManager.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\SoundBeat.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\TextureManager.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\VideoManager.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\VideoPlayer.cpp" />
+    <ClCompile Include="KashipanEngine\ComponentSerialize\ComponentRegistry.cpp" />
+    <ClCompile Include="KashipanEngine\ComponentSerialize\ComponentSerialize.cpp" />
+    <ClCompile Include="KashipanEngine\Core\DirectXCommon.cpp" />
+    <ClCompile Include="KashipanEngine\Core\DirectX\DCompHost.cpp" />
+    <ClCompile Include="KashipanEngine\Core\DirectX\DX12CommandQueue.cpp" />
+    <ClCompile Include="KashipanEngine\Core\DirectX\DX12Commands.cpp" />
+    <ClCompile Include="KashipanEngine\Core\DirectX\DX12DXGIs.cpp" />
+    <ClCompile Include="KashipanEngine\Core\DirectX\DX12Device.cpp" />
+    <ClCompile Include="KashipanEngine\Core\DirectX\DX12Fence.cpp" />
+    <ClCompile Include="KashipanEngine\Core\DirectX\DX12SwapChain.cpp" />
+    <ClCompile Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DescriptorHeapBase.cpp" />
+    <ClCompile Include="KashipanEngine\Core\DirectX\ResourceLeakChecker.cpp" />
+    <ClCompile Include="KashipanEngine\Core\GameEngine.cpp" />
+    <ClCompile Include="KashipanEngine\Core\ProjectManager.cpp" />
+    <ClCompile Include="KashipanEngine\Core\ProjectPaths.cpp" />
+    <ClCompile Include="KashipanEngine\Core\UserSettings.cpp" />
+    <ClCompile Include="KashipanEngine\Core\Window.cpp" />
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI.cpp" />
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\DefaultEvents.cpp" />
+    <ClCompile Include="KashipanEngine\Core\WindowsAPI\WindowEvents\IWindowEvent.cpp" />
+    <ClCompile Include="KashipanEngine\Debug\CrashHandler.cpp" />
+    <ClCompile Include="KashipanEngine\Debug\CrashHandler\ExportCrashSceneBackup.cpp" />
+    <ClCompile Include="KashipanEngine\Debug\CrashHandler\ExportDump.cpp" />
+    <ClCompile Include="KashipanEngine\Debug\ImGuiManager.cpp" />
+    <ClCompile Include="KashipanEngine\Debug\LogSettings.cpp" />
+    <ClCompile Include="KashipanEngine\Debug\Logger.cpp" />
+    <ClCompile Include="KashipanEngine\EngineSettings.cpp" />
+    <ClCompile Include="KashipanEngine\Splash\SplashScreen.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\BlueNoiseGenerator.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\GraphicsEngine.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\PipelineManager.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\PipelineCreator.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\MaterialLayout.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\PipelineVariantResolver.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\ShaderModuleComposer.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\ShaderCompiler.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Pipeline\System\ShaderVariableBinder.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Renderer\Renderer.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Renderer\RendererCompute.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Renderer\RendererDraw.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Renderer\RendererLighting.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Renderer\RendererPostProcess.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Renderer\RendererShadow.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\ConstantBufferResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\DepthStencilResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\IGraphicsResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\IndexBufferResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\RenderTargetResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\RWStructuredBufferResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\ShaderResourceResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\StructuredBufferResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\UnorderedAccessResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\Resources\VertexBufferResource.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\ComputeCommandProcessor.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\ImageExporter.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\ScreenBuffer.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\ShadowMapBuffer.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\VideoTexture.cpp" />
+    <ClCompile Include="KashipanEngine\Input\Controller.cpp" />
+    <ClCompile Include="KashipanEngine\Input\Input.cpp" />
+    <ClCompile Include="KashipanEngine\Input\InputCommand.cpp" />
+    <ClCompile Include="KashipanEngine\Input\Keyboard.cpp" />
+    <ClCompile Include="KashipanEngine\Input\Mouse.cpp" />
+    <ClCompile Include="KashipanEngine\KashipanEngine.cpp" />
+    <ClCompile Include="KashipanEngine\Math\Matrix3x3.cpp" />
+    <ClCompile Include="KashipanEngine\Math\Matrix4x4.cpp" />
+    <ClCompile Include="KashipanEngine\Math\SRTMatrix4x4.cpp" />
+    <ClCompile Include="KashipanEngine\Math\Vector2.cpp" />
+    <ClCompile Include="KashipanEngine\Math\Vector3.cpp" />
+    <ClCompile Include="KashipanEngine\Math\Vector4.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Collision\Collider.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\Compute\ComputeShaderProcessing.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\EmptyObject.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\Collider\ICollider.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\PreTransform.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\IObjectComponent.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\ParameterBinding.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\Animator.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\InputCommandApplier.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\KeyFrameAnimator.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\SceneVariableApplier.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\Shake.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\PrefabInstanceComponent.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\ScriptComponent.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\ScenePreTransform.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\SceneShakeApplier.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\Audio\SceneAudioPlayer.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\AngelScriptDebugServer.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\EditorToolManager.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\ImGuiScriptBindings.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\SceneScriptEngine.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\ScriptBindings.cpp">
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\ISceneComponent.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\SceneObjectCollider.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\KeyframeAnimator.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\Render\SceneRenderer.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\Render\TargetObjectSelector.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\Render\PipelineVariantBuilder.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\Render\SkinnedMeshRenderer.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Scene.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\SceneManager.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\SceneFileIO.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\RenderTargetCarryOverRegistry.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertColor.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Conversion\ConvertString.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Dialogs\MessageDialog.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\FileIO\CSV.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\FileIO\Directory.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\FileIO\INI.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\FileIO\JSON.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\FileIO\RawFile.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\FileIO\TextFile.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\GameTimer.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\MathUtils\Easings.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\MathUtils\FractalNoise.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\MathUtils\Matrix3x3.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\MathUtils\Matrix4x4.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\MathUtils\PerlinNoise.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\MathUtils\Vector2.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\MathUtils\Vector3.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\MathUtils\Vector4.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\MyAny.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Plugin\Texture\MipMapContainer.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\PriorityTaskDispatcher.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\ThreadPool.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Plugin\Thread\ThreadWorker.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\RandomValue.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\StageGraphGenerator.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\StageGridBuilder.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\KeyframeAnimation.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\WaveFunctionCollapse.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\SourceLocation.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\TemplateLiteral.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\TimeUtils.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\Translation.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\ValueType.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

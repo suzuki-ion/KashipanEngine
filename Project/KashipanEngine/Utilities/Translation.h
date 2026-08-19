@@ -128,18 +128,47 @@ const std::string &GetProjectTranslationFilePath(const std::string &lang);
 /// @details 書き出すのはプロジェクト層のみで、グローバル層の内容は含めない。
 bool SaveProjectTranslationFile(const std::string &lang);
 
-/// @brief 現在の言語コードを取得する
+/// @brief 現在の言語コードを取得する（エディター・エンジン側の表示言語）
+/// @details ImGuiのエディターUI・ログメッセージ（Translation/TranslationLabel/TranslationC）が
+///          参照する言語。アプリケーション（ゲーム）側の言語とは独立している
+///          （GetCurrentApplicationLanguage参照）。USE_IMGUI無効ビルドではエディターUI自体が
+///          存在しないため、実質アプリケーション側と同じ意味になる
 /// @return 言語コード
 const std::string &GetCurrentLanguage();
 
-/// @brief 現在の言語コードを設定する
+/// @brief 現在の言語コードを設定する（エディター・エンジン側の表示言語）
 void SetCurrentLanguage(const std::string &lang);
 
-/// @brief 現在の言語設定で使用するフォントパスを取得する
+/// @brief 現在の言語設定で使用するフォントパスを取得する（エディター・エンジン側の表示言語基準）
 const std::string &GetCurrentLanguageFontPath();
 
 /// @brief 指定した言語で使用するフォントパスを取得する
 /// @details 指定言語が未読込、またはフォントパス未設定の場合は英語のフォント設定へフォールバックする
 const std::string &GetLanguageFontPath(const std::string &lang);
+
+//==================================================
+// アプリケーション（ゲーム）側の表示言語
+//==================================================
+// TextRendererのローカライズキーやAngelScriptのTranslation()系APIが参照する言語。
+// エディター自身の表示言語（GetCurrentLanguage）とは独立しているため、エディターの
+// 実行(Play)モード中にゲーム側が言語を切り替えても、エディターUIの表示言語には影響しない。
+// 翻訳データ自体（Locales/・Assets/Locales/）はエディター側と共有しており、
+// 「今どちらの言語を選んでいるか」という状態だけが別々に管理される。
+
+/// @brief アプリケーション（ゲーム）側の現在の言語コードを取得する
+const std::string &GetCurrentApplicationLanguage();
+
+/// @brief アプリケーション（ゲーム）側の現在の言語コードを設定する
+void SetCurrentApplicationLanguage(const std::string &lang);
+
+/// @brief キーに対応する翻訳テキストを取得する（アプリケーション側の現在の言語設定を使用）
+/// @param key 翻訳キー
+/// @return 翻訳テキスト。見つからなかった場合はキーをそのまま返す
+const std::string &GetApplicationTranslationText(const std::string &key);
+
+/// @brief キーに対応する翻訳テキストを取得する（アプリケーション側の現在の言語設定を使用）
+/// @param key 翻訳キー
+/// @return 翻訳テキスト。見つからなかった場合はキーをそのまま返す
+inline const std::string &ApplicationTranslation(const std::string &key) { return GetApplicationTranslationText(key); }
 
 } // namespace KashipanEngine

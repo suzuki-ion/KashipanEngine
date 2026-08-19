@@ -5,6 +5,7 @@
 #include "Core/DirectX/ResourceLeakChecker.h"
 #include "Core/GameEngine.h"
 #include "Core/ProjectManager.h"
+#include "Core/PlayerSettings.h"
 #include "Core/ProjectPaths.h"
 #include "Core/UserSettings.h"
 #include "Splash/SplashScreen.h"
@@ -50,11 +51,17 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
 
     //--------- 表示言語（個人設定）の適用 ---------//
 
-    // UserSettingsはProjectPaths::Initialize以降でないと保存先が正しく解決できないため、
-    // ここが最も早いタイミングになる。未設定（初回起動）の場合はOS既定の言語のままにする
-    const std::string savedLanguage = UserSettings::GetString("editorUI.language", "");
-    if (!savedLanguage.empty()) {
-        SetCurrentLanguage(savedLanguage);
+    // UserSettings/PlayerSettingsはProjectPaths::Initialize以降でないと保存先が正しく解決できないため、
+    // ここが最も早いタイミングになる。未設定（初回起動）の場合はOS既定の言語のままにする。
+    // エディター側（UserSettings）とアプリケーション側（PlayerSettings）の表示言語は互いに
+    // 独立しているため、それぞれ別の設定値を別の状態へ適用する
+    const std::string savedEditorLanguage = UserSettings::GetString("editorUI.language", "");
+    if (!savedEditorLanguage.empty()) {
+        SetCurrentLanguage(savedEditorLanguage);
+    }
+    const std::string savedApplicationLanguage = PlayerSettings::GetString(PlayerSettings::kLanguageKey, "");
+    if (!savedApplicationLanguage.empty()) {
+        SetCurrentApplicationLanguage(savedApplicationLanguage);
     }
 
     //--------- 設定ファイル読み込み ---------//

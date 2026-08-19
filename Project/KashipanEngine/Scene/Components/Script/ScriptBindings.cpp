@@ -18,6 +18,7 @@
 #include "Assets/AudioManager.h"
 #include "Assets/ModelManager.h"
 #include "ComponentSerialize/ComponentRegistry.h"
+#include "Core/PlayerSettings.h"
 #include "Core/ProjectPaths.h"
 #include "Core/Window.h"
 #include "Debug/Logger.h"
@@ -44,6 +45,7 @@
 #include "Utilities/StageGraphGenerator.h"
 #include "Utilities/StageGridBuilder.h"
 #include "Utilities/TimeUtils.h"
+#include "Utilities/Translation.h"
 #include "Utilities/ValueType.h"
 #include "Utilities/WaveFunctionCollapse.h"
 
@@ -2481,6 +2483,23 @@ void RegisterGlobalFunctions(asIScriptEngine *engine) {
         .function("float GetDeltaTime()", &GetDeltaTime)
         .function("float GetGameSpeed()", &GetGameSpeed)
         .function("void SetGameSpeed(float)", &SetGameSpeed)
+        // ローカライズ（Locales/ および Assets/Locales/ に置かれた翻訳データを参照する）。
+        // アプリケーション側の表示言語（GetCurrentApplicationLanguage）を参照する。
+        // エディター自身の表示言語（EditorPreferencesのコンボ）とは独立しているため、
+        // スクリプトから切り替えてもエディターUI自体の言語には影響しない
+        .function("const string &Translation(const string &in)", &ApplicationTranslation)
+        .function("const string &GetCurrentLanguage()", &GetCurrentApplicationLanguage)
+        // 呼んだ言語をPlayerSettingsへ保存する（配布したゲームでの言語選択を再起動後も復元するため）。
+        // Translation.h側のSetCurrentApplicationLanguage自体は永続化の副作用を持たないため、
+        // ここでラップする
+        .function("void SetCurrentLanguage(const string &in)", [](const std::string &lang) {
+            SetCurrentApplicationLanguage(lang);
+            PlayerSettings::SetString(PlayerSettings::kLanguageKey, lang);
+        })
+        .function("array<string>@ GetLoadedLanguages()", []() -> CScriptArray * {
+            return MakeStringArray(GetLoadedLanguages());
+        })
+        .function("const string &GetLanguageDisplayName(const string &in)", &GetLanguageDisplayName)
         // ゲームループの終了要求（エディター実行時は再生停止として扱われる）
         .function("void RequestExitGameLoop()", []() { Scene::RequestExitGameLoop(); })
         // エディターツールのウィンドウ操作（[EditorWindow]で用意されたウィンドウが対象。

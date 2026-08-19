@@ -34,6 +34,10 @@ Project/UserSettings.json
 Project/UserSettings/
 Project/Projects/*/EditorSettings.json
 
+# プレイヤー（配布したゲームの実行環境）ごとの個人設定。実行環境ごとに異なる値のため共有しない
+# PlayerSettings.json: プロジェクトごとのプレイヤー設定（表示言語など）
+Project/Projects/*/PlayerSettings.json
+
 # AngelScript関連の生成物
 # AS_DEBUG/: Debug構成実行時に生成されるAngelScriptのデバッグ情報フォルダ
 # lib/*.lib, projects内の*.obj: AngelScript自体のビルドで生成される中間・成果物

@@ -42,6 +42,8 @@ LanguageData *FindLanguageData(const std::string &lang) {
     return it == sLanguageData.end() ? nullptr : &it->second;
 }
 
+/// @brief 「現在の言語」1つ分の状態を保持する。エディター側・アプリケーション側で
+///        それぞれ独立したインスタンスを持つことで、2つの表示言語を分離する
 class Language {
 public:
     Language() {
@@ -54,7 +56,7 @@ public:
             numLangs = 1;
         }
         // stringに変換
-        language = ConvertString(std::wstring(buffer));
+        language_ = ConvertString(std::wstring(buffer));
     }
     ~Language() = default;
     Language(const Language &) = delete;
@@ -62,16 +64,20 @@ public:
     Language(Language &&) = delete;
     Language &operator=(Language &&) = delete;
 
-    static void Set(const std::string &lang) {
-        language = lang;
+    void Set(const std::string &lang) {
+        language_ = lang;
     }
-    static inline const std::string &Get() {
-        return language;
+    const std::string &Get() const {
+        return language_;
     }
 
 private:
-    static inline std::string language;
-} sLanguage;
+    std::string language_;
+};
+/// @brief エディター・エンジン側の表示言語（ImGuiのUI・ログメッセージが参照する）
+Language sLanguage;
+/// @brief アプリケーション（ゲーム）側の表示言語（TextRenderer・AngelScriptが参照する）
+Language sApplicationLanguage;
 } // namespace
 
 bool LoadTranslationFile(const std::string &filePath, TranslationLayer layer) {
@@ -274,6 +280,10 @@ const std::string &GetTranslationText(const std::string &key) {
     return GetTranslationText(sLanguage.Get(), key);
 }
 
+const std::string &GetApplicationTranslationText(const std::string &key) {
+    return GetTranslationText(sApplicationLanguage.Get(), key);
+}
+
 namespace {
 // 生成した "翻訳テキスト###キー" を使い回す。unordered_map はリハッシュしても
 // 要素のアドレスが変わらないため、返した const char* はそのまま保持できる。
@@ -307,6 +317,14 @@ const std::string &GetCurrentLanguage() {
 
 void SetCurrentLanguage(const std::string &lang) {
     sLanguage.Set(lang);
+}
+
+const std::string &GetCurrentApplicationLanguage() {
+    return sApplicationLanguage.Get();
+}
+
+void SetCurrentApplicationLanguage(const std::string &lang) {
+    sApplicationLanguage.Set(lang);
 }
 
 const std::string &GetCurrentLanguageFontPath() {

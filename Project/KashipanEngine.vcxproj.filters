@@ -381,6 +381,9 @@
     <ClCompile Include="KashipanEngine\Core\GameEngine.cpp">
       <Filter>KashipanEngine\Core</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Core\PlayerSettings.cpp">
+      <Filter>KashipanEngine\Core</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Core\ProjectManager.cpp">
       <Filter>KashipanEngine\Core</Filter>
     </ClCompile>
@@ -936,6 +939,9 @@
       <Filter>KashipanEngine\Core\DirectX</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Core\GameEngine.h">
+      <Filter>KashipanEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Core\PlayerSettings.h">
       <Filter>KashipanEngine\Core</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Core\ProjectManager.h">

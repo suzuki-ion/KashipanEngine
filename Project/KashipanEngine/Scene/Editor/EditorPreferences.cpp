@@ -4,6 +4,7 @@
 #include <imgui_stdlib.h>
 #include <vector>
 
+#include "Core/PlayerSettings.h"
 #include "Core/ProjectPaths.h"
 #include "Core/UserSettings.h"
 #include "Debug/ImGuiManager.h"
@@ -971,6 +972,26 @@ void EditorPreferences::ShowLanguageSection() {
         ImGui::EndCombo();
     }
     ImGui::SetItemTooltip("%s", TranslationC("editor.preferences.language.tooltip"));
+
+    // アプリケーション（ゲーム）側の表示言語は、エディター自身の表示言語（上のコンボ）とは独立している。
+    // ここはPlayモードでの動作確認用に、エディターから手動で切り替えるための入り口
+    const std::string &currentApplicationLanguage = GetCurrentApplicationLanguage();
+
+    ImGui::SetNextItemWidth(200.0f);
+    if (ImGui::BeginCombo(TranslationLabel("editor.preferences.language.application_select"), GetLanguageDisplayName(currentApplicationLanguage).c_str())) {
+        for (const auto &lang : languages) {
+            const bool selected = (lang == currentApplicationLanguage);
+            ImGui::PushID(lang.c_str());
+            if (ImGui::Selectable(GetLanguageDisplayName(lang).c_str(), selected) && !selected) {
+                SetCurrentApplicationLanguage(lang);
+                PlayerSettings::SetString(PlayerSettings::kLanguageKey, lang);
+            }
+            if (selected) ImGui::SetItemDefaultFocus();
+            ImGui::PopID();
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::SetItemTooltip("%s", TranslationC("editor.preferences.language.application_select.tooltip"));
 }
 
 void EditorPreferences::ShowImGui() {

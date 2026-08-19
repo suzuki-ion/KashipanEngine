@@ -17,11 +17,11 @@
 #include "Objects/Components/Transform.h"
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Utilities/Conversion/ConvertString.h"
+#include "Utilities/Translation.h"
 #include "Utilities/UUID128.h"
 #if defined(USE_IMGUI)
 #include "Objects/Components/Render/TargetObjectSelector.h"
 #include "Utilities/AssetDragDropPayload.h"
-#include "Utilities/Translation.h"
 #endif
 
 namespace KashipanEngine {
@@ -100,6 +100,9 @@ public:
         ptr->materialHandle_ = materialHandle_;
         ptr->excludedRenderTargetNames_ = excludedRenderTargetNames_;
         ptr->text_ = text_;
+        ptr->useLocalizationKey_ = useLocalizationKey_;
+        ptr->localizationKey_ = localizationKey_;
+        // lastResolvedLanguage_は空のままにし、複製直後のUpdate()で確実に再解決させる
         ptr->fontName_ = fontName_;
         ptr->fontSize_ = fontSize_;
         ptr->instanceColor_ = instanceColor_;
@@ -183,6 +186,21 @@ public:
         MarkShapeDirty();
     }
     const std::string &GetText() const noexcept { return text_; }
+
+    /// @brief 翻訳キーによるテキスト解決を使うかどうかを設定する。
+    ///        trueの間はUpdate()毎フレーム、表示言語の変化を検知してtext_へ自動反映する
+    void SetUseLocalizationKey(bool use) {
+        useLocalizationKey_ = use;
+        if (useLocalizationKey_ && !localizationKey_.empty()) ApplyLocalizedText();
+    }
+    bool GetUseLocalizationKey() const noexcept { return useLocalizationKey_; }
+    /// @brief 翻訳キーを設定する（SetUseLocalizationKey(true)と併用時のみ効果を持つ）
+    void SetLocalizationKey(const std::string &key) {
+        if (localizationKey_ == key) return;
+        localizationKey_ = key;
+        if (useLocalizationKey_ && !localizationKey_.empty()) ApplyLocalizedText();
+    }
+    const std::string &GetLocalizationKey() const noexcept { return localizationKey_; }
 
     void SetFontSize(float fontSize) {
         fontSize_ = std::max(0.01f, fontSize);
@@ -308,13 +326,35 @@ protected:
         }
     }
 
+    /// @brief 翻訳キー使用時、表示言語の変化を検知してtext_へ再反映する。
+    ///        未使用のTextRendererへの負荷はbool 1回のみ（ImGuiManager::ApplyEditorPreferencesIfChanged
+    ///        と同じ「キャッシュした値と比較し、変化時のみ再構築する」ポーリング方式）
+    void Update() override {
+        if (!useLocalizationKey_ || localizationKey_.empty()) return;
+        if (GetCurrentApplicationLanguage() == lastResolvedLanguage_) return;
+        ApplyLocalizedText();
+    }
+
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         TargetObjectSelector::ShowSelector(TranslationLabel("component.common.target"), GetOwnerSceneContext(), targetObjectID_);
         TargetObjectSelector::ShowRenderTargetFilters(GetOwnerSceneContext(), targetObjectID_, excludedRenderTargetNames_);
 
+        if (ImGui::Checkbox(TranslationLabel("component.textrenderer.use_localization_key"), &useLocalizationKey_)) {
+            if (useLocalizationKey_ && !localizationKey_.empty()) ApplyLocalizedText();
+        }
+        if (useLocalizationKey_) {
+            if (ImGui::InputText(TranslationLabel("component.textrenderer.localization_key"), &localizationKey_)) {
+                if (!localizationKey_.empty()) ApplyLocalizedText();
+            }
+        }
+        ImGui::BeginDisabled(useLocalizationKey_);
         if (ImGui::InputTextMultiline(TranslationLabel("component.textrenderer.text"), &text_)) {
             MarkShapeDirty();
+        }
+        ImGui::EndDisabled();
+        if (useLocalizationKey_) {
+            ImGui::TextDisabled(TranslationC("component.textrenderer.text_is_localized_desc"));
         }
         ImGui::TextDisabled(TranslationC("component.textrenderer.desc_1"));
 
@@ -400,6 +440,8 @@ protected:
     JSON SaveToJson() const override {
         JSON json = JSON::object();
         json["text"] = text_;
+        json["useLocalizationKey"] = useLocalizationKey_;
+        json["localizationKey"] = localizationKey_;
         json["fontName"] = fontName_;
         json["fontSize"] = fontSize_;
         // colorは旧データ/旧APIとの後方互換用に同じ値を併記する
@@ -425,6 +467,9 @@ protected:
 
     bool LoadFromJson(const JSON &json) override {
         text_ = json.value("text", std::string{});
+        useLocalizationKey_ = json.value("useLocalizationKey", false);
+        localizationKey_ = json.value("localizationKey", std::string{});
+        lastResolvedLanguage_.clear();
         fontName_ = json.value("fontName", std::string{});
         fontHandle_ = FontManager::kInvalidHandle;
         fontSize_ = json.value("fontSize", 32.0f);
@@ -451,7 +496,12 @@ protected:
         }
         renderPriority_ = json.value("renderPriority", 0);
         allowInstancing_ = json.value("allowInstancing", true);
-        MarkShapeDirty();
+        // 翻訳キー使用時は、Update()を待たず最初のフレームから正しい文字列で描画されるようにする
+        if (useLocalizationKey_ && !localizationKey_.empty()) {
+            ApplyLocalizedText();
+        } else {
+            MarkShapeDirty();
+        }
         return true;
     }
 
@@ -491,6 +541,17 @@ private:
 
     void MarkShapeDirty() const { shapeDirty_ = true; instancesDirty_ = true; }
     void MarkInstancesDirty() const { instancesDirty_ = true; }
+
+    /// @brief localizationKey_の翻訳結果を無条件でtext_へ反映する
+    ///        （呼び出し元でuseLocalizationKey_/localizationKey_の有効性は確認済みであること）
+    /// @details アプリケーション側の表示言語（GetCurrentApplicationLanguage）を参照する。
+    ///          エディター自身の表示言語（GetCurrentLanguage）とは独立しているため、
+    ///          エディターのPlayモード中にここが変化してもエディターUIの言語には影響しない
+    void ApplyLocalizedText() {
+        text_ = ApplicationTranslation(localizationKey_);
+        lastResolvedLanguage_ = GetCurrentApplicationLanguage();
+        MarkShapeDirty();
+    }
 
     /// @brief "#RRGGBB"または"#RRGGBBAA"形式の色文字列を解釈する（不正な場合はfallbackを返す）
     static Vector4 ParseColorTagValue(const std::string &value, const Vector4 &fallback) {
@@ -833,6 +894,13 @@ private:
     bool allowInstancing_ = true;
 
     std::string text_;
+    /// @brief trueの間、text_はlocalizationKey_をTranslation()で解決した結果に自動追従する
+    bool useLocalizationKey_ = false;
+    /// @brief useLocalizationKey_使用時に参照する翻訳キー（Locales/またはAssets/Locales/のキー）
+    std::string localizationKey_;
+    /// @brief 直近でtext_へ反映した際の表示言語（ランタイム専用・非シリアライズ）。
+    ///        表示言語の変化を検知するための比較用で、Update()で毎フレーム軽量にポーリングする
+    std::string lastResolvedLanguage_;
     std::string fontName_;
     mutable FontManager::FontHandle fontHandle_ = FontManager::kInvalidHandle;
     float fontSize_ = 32.0f;

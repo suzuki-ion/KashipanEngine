@@ -223,6 +223,7 @@
     <ClCompile Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DescriptorHeapBase.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\ResourceLeakChecker.cpp" />
     <ClCompile Include="KashipanEngine\Core\GameEngine.cpp" />
+    <ClCompile Include="KashipanEngine\Core\PlayerSettings.cpp" />
     <ClCompile Include="KashipanEngine\Core\ProjectManager.cpp" />
     <ClCompile Include="KashipanEngine\Core\ProjectPaths.cpp" />
     <ClCompile Include="KashipanEngine\Core\UserSettings.cpp" />

@@ -554,6 +554,7 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClCompile Include="KashipanEngine\Core\DirectX\DescriptorHeaps\DescriptorHeapBase.cpp" />
     <ClCompile Include="KashipanEngine\Core\DirectX\ResourceLeakChecker.cpp" />
     <ClCompile Include="KashipanEngine\Core\GameEngine.cpp" />
+    <ClCompile Include="KashipanEngine\Core\PlayerSettings.cpp" />
     <ClCompile Include="KashipanEngine\Core\ProjectManager.cpp" />
     <ClCompile Include="KashipanEngine\Core\ProjectPaths.cpp" />
     <ClCompile Include="KashipanEngine\Core\UserSettings.cpp" />
@@ -1054,6 +1055,7 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClInclude Include="KashipanEngine\Core\DirectX\DescriptorHeaps\HeapSampler.h" />
     <ClInclude Include="KashipanEngine\Core\DirectX\ResourceLeakChecker.h" />
     <ClInclude Include="KashipanEngine\Core\GameEngine.h" />
+    <ClInclude Include="KashipanEngine\Core\PlayerSettings.h" />
     <ClInclude Include="KashipanEngine\Core\ProjectManager.h" />
     <ClInclude Include="KashipanEngine\Core\ProjectPaths.h" />
     <ClInclude Include="KashipanEngine\Core\UserSettings.h" />

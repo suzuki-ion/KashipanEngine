@@ -12,6 +12,7 @@
 #include "Utilities/Translation.h"
 
 #include <algorithm>
+#include <vector>
 
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -33,6 +34,23 @@ constexpr const char *kMainDockSpaceName = "KashipanEngineMainDockSpace.v3";
 DXGI_FORMAT ToDxgiFormat_WindowsSwapChain() {
     return DXGI_FORMAT_B8G8R8A8_UNORM;
 }
+
+/// @brief 表示言語に応じて、フォントアトラスへ焼き込むグリフ範囲を選ぶ
+/// @details 言語ごとに文字コード範囲が大きく異なる（特にハングルは日本語範囲の外）ため、
+///          言語を無視して固定範囲を使うと一部言語で文字化け（豆腐文字）になる。
+///          未知の言語コード・en-US は、Latin文字とかな漢字を含む安全側の日本語範囲へフォールバックする
+///          （これは言語追加前からの既定動作を維持するための措置）
+const ImWchar *GetGlyphRangesForLanguage(const std::string &lang) {
+    ImGuiIO &io = ImGui::GetIO();
+    if (lang == "zh-CN") return io.Fonts->GetGlyphRangesChineseSimplifiedCommon();
+    if (lang == "ko-KR") return io.Fonts->GetGlyphRangesKorean();
+    return io.Fonts->GetGlyphRangesJapanese();
+}
+
+/// @brief 言語切り替えコンボボックス用に他言語のlocaleNameから作るグリフ範囲の置き場
+/// @details AddFontFromFileTTFへ渡した範囲配列はatlasのBuild()完了まで参照され続けるため、
+///          RebuildFontAtlas()のスコープを抜けても生存させる必要がある
+std::vector<ImVector<ImWchar>> sMergedGlyphRanges;
 
 /// @brief エディターの初期ドッキング配置を構築する
 /// @details DockBuilderは保存済みのユーザー配置を上書きするため、初回起動時（レイアウトバージョン未設定時）
@@ -163,6 +181,10 @@ void ImGuiManager::InitializeInternal() {
     // 専用のImGui Windowをメインビューポートとして維持しながら、ドッキングを外した
     // ImGuiウィンドウを独立したWindowsウィンドウとして表示できるようにする
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    // io.ConfigViewportsNoDecoration = false; でOSネイティブ装飾（タイトルバー・最小化/最大化）を
+    // 有効化できるが、ImGui自身が描くタイトルバーと二重表示になる上、OS側のタイトルバーを
+    // ドラッグ/リサイズするとWindowsの内部モーダルループにより単一スレッドのメッセージポンプ
+    // （Window::ProcessMessage）がブロックされ描画が止まるため、既定（true）のまま使用しない
 
     // imgui.iniの既定パス（io.IniFilename）は未指定だとカレントディレクトリからの相対パス
     // "imgui.ini"になる。Visual Studioのデバッガー経由で起動した場合（既定のWorking Directoryは
@@ -200,11 +222,16 @@ void ImGuiManager::RebuildFontAtlas(const std::string &fontPath) {
     ImGuiIO &io = ImGui::GetIO();
     io.Fonts->Clear();
     io.FontDefault = nullptr;
+    // AddFontFromFileTTFへ渡すグリフ範囲はBuild()が実行されるまで参照され続けるため、
+    // 関数を抜けた後も生存させる必要がある（staticでatlasのClear()を跨いで使い回す）
+    sMergedGlyphRanges.clear();
 
     // フォントの大きさをDPIに基づいて設定
     auto dpi = GetDpiForSystem();
     const float fontSizeDefault = 16.0f;
     const float fontSize = fontSizeDefault * (static_cast<float>(dpi) / 96.0f);
+
+    const std::string currentLanguage = GetCurrentLanguage();
 
     // 空文字の場合は現在の言語のデフォルトフォントを使う。
     // フォントの指定は全プロジェクト共有だが値は論理パスのため、開いているプロジェクト基準で解決する
@@ -213,13 +240,37 @@ void ImGuiManager::RebuildFontAtlas(const std::string &fontPath) {
         fontPath.empty() ? GetCurrentLanguageFontPath() : fontPath);
     ImFont *font = nullptr;
     if (!resolvedPath.empty()) {
-        font = io.Fonts->AddFontFromFileTTF(resolvedPath.c_str(), fontSize, nullptr, io.Fonts->GetGlyphRangesJapanese());
+        font = io.Fonts->AddFontFromFileTTF(
+            resolvedPath.c_str(), fontSize, nullptr, GetGlyphRangesForLanguage(currentLanguage));
     }
     if (!font) {
         // 指定フォントの読み込みに失敗した場合はImGui組み込みのデフォルトフォントにフォールバックする
         font = io.Fonts->AddFontDefault();
     }
     io.FontDefault = font;
+
+    // 表示言語切り替え用コンボボックス（EditorPreferences）は、切り替え前の言語のフォントのまま
+    // 全言語のlocaleName（「日本語」「简体中文」「한국어」等）を並べて表示する。
+    // 現在のフォントには他言語の文字が含まれていないため、各言語のlocaleNameで使われている
+    // 文字だけをその言語のフォントファイルから少量マージしておき、「？」化を防ぐ
+    if (font) {
+        for (const auto &lang : GetLoadedLanguages()) {
+            if (lang == currentLanguage) continue;
+            const std::string otherResolvedPath = ProjectPaths::ToPhysical(GetLanguageFontPath(lang));
+            if (otherResolvedPath.empty() || otherResolvedPath == resolvedPath) continue;
+
+            ImFontGlyphRangesBuilder builder;
+            builder.AddText(GetLanguageDisplayName(lang).c_str());
+            sMergedGlyphRanges.emplace_back();
+            builder.BuildRanges(&sMergedGlyphRanges.back());
+            if (sMergedGlyphRanges.back().empty()) continue;
+
+            ImFontConfig mergeConfig;
+            mergeConfig.MergeMode = true;
+            io.Fonts->AddFontFromFileTTF(
+                otherResolvedPath.c_str(), fontSize, &mergeConfig, sMergedGlyphRanges.back().Data);
+        }
+    }
 }
 
 void ImGuiManager::ReapplyStyle(float uiScale, const JSON &colorsJson, const JSON &styleJson) {

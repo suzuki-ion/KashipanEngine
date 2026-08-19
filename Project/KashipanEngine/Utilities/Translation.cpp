@@ -310,13 +310,16 @@ void SetCurrentLanguage(const std::string &lang) {
 }
 
 const std::string &GetCurrentLanguageFontPath() {
+    return GetLanguageFontPath(sLanguage.Get());
+}
+
+const std::string &GetLanguageFontPath(const std::string &lang) {
     static const std::string kEmpty;
-    const std::string &lang = sLanguage.Get();
     auto langIt = sLanguageData.find(lang);
     if (langIt != sLanguageData.end() && !langIt->second.fontPath.empty()) {
         return langIt->second.fontPath;
     }
-    // 現在の言語が未読込、またはフォントパス未設定（プロジェクト側のファイルのみ読み込んだ場合）は
+    // 指定言語が未読込、またはフォントパス未設定（プロジェクト側のファイルのみ読み込んだ場合）は
     // 英語のフォント設定へフォールバックする
     if (lang != kFallbackLanguageCode) {
         auto fallbackIt = sLanguageData.find(kFallbackLanguageCode);

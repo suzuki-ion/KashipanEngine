@@ -138,4 +138,8 @@ void SetCurrentLanguage(const std::string &lang);
 /// @brief 現在の言語設定で使用するフォントパスを取得する
 const std::string &GetCurrentLanguageFontPath();
 
+/// @brief 指定した言語で使用するフォントパスを取得する
+/// @details 指定言語が未読込、またはフォントパス未設定の場合は英語のフォント設定へフォールバックする
+const std::string &GetLanguageFontPath(const std::string &lang);
+
 } // namespace KashipanEngine

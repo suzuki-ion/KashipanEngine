@@ -1203,6 +1203,7 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClInclude Include="KashipanEngine\Objects\Components\Render\IWindowObjectComponent.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\NormalWindowObject.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\OverlayWindowObject.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\ScreenAnchor.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\ScreenBufferObject.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\ScreenBufferViewport.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\UI\UIButton.h" />

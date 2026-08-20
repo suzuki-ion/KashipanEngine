@@ -21,6 +21,7 @@ public:
         ADD_MEMBER_VARIABLE(orthographic_);
         ADD_MEMBER_VARIABLE(orthoSize_);
         ADD_MEMBER_VARIABLE(enableJitter_);
+        ADD_MEMBER_VARIABLE(autoSyncAspectRatio_);
     )
     COMPONENT_CATEGORY("Render")
     ~Camera3D() override = default;
@@ -33,6 +34,7 @@ public:
         ptr->orthographic_ = orthographic_;
         ptr->orthoSize_ = orthoSize_;
         ptr->enableJitter_ = enableJitter_;
+        ptr->autoSyncAspectRatio_ = autoSyncAspectRatio_;
         return ptr;
     }
 
@@ -42,6 +44,12 @@ public:
     void SetAspectRatio(float aspectRatio) { aspectRatio_ = aspectRatio; }
     void SetOrthographic(bool orthographic) { orthographic_ = orthographic; }
     void SetOrthoSize(float orthoSize) { orthoSize_ = orthoSize; }
+    /// @brief 同オブジェクトのCameraRendererに描画先が単一指定されている場合、その描画先の実解像度から
+    ///        求めたアスペクト比へ毎フレーム自動追従させるかどうかを設定する
+    /// @details 描画先が未指定（全描画先へ適用中）の場合は解像度を一意に決められないため、
+    ///          有効にしていても何もしない（手動設定値のまま）
+    void SetAutoSyncAspectRatio(bool enable) noexcept { autoSyncAspectRatio_ = enable; }
+    bool GetAutoSyncAspectRatio() const noexcept { return autoSyncAspectRatio_; }
 
     float GetFovY() const noexcept { return fovY_; }
     float GetNearClip() const noexcept { return nearClip_; }
@@ -106,13 +114,17 @@ protected:
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("%s", TranslationC("component.camera3d.enable_jitter_desc"));
         }
+        ImGui::Checkbox(TranslationLabel("component.camera3d.auto_sync_aspect"), &autoSyncAspectRatio_);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", TranslationC("component.camera3d.auto_sync_aspect_desc"));
+        }
     }
 #endif
     JSON SaveToJson() const override {
         return JSON{
             {"fovY", fovY_}, {"nearClip", nearClip_}, {"farClip", farClip_},
             {"aspectRatio", aspectRatio_}, {"orthographic", orthographic_}, {"orthoSize", orthoSize_},
-            {"enableJitter", enableJitter_}
+            {"enableJitter", enableJitter_}, {"autoSyncAspectRatio", autoSyncAspectRatio_}
         };
     }
     bool LoadFromJson(const JSON &json) override {
@@ -123,6 +135,7 @@ protected:
         orthographic_ = json.value("orthographic", false);
         orthoSize_ = json.value("orthoSize", 10.0f);
         enableJitter_ = json.value("enableJitter", false);
+        autoSyncAspectRatio_ = json.value("autoSyncAspectRatio", false);
         return true;
     }
 
@@ -152,6 +165,8 @@ private:
     bool enableJitter_ = false;
     /// @brief ジッター列（Halton(2,3)）の現在位置。Clone/Save/Loadの対象外（実行時状態のみ）
     std::uint32_t jitterIndex_ = 0;
+    /// @brief CameraRendererの描画先解像度からアスペクト比を自動追従させるか（既定false）
+    bool autoSyncAspectRatio_ = false;
 };
 
 REGISTER_COMPONENT_OBJECT(Camera3D)

@@ -12,6 +12,7 @@ public:
         ADD_MEMBER_VARIABLE(height_);
         ADD_MEMBER_VARIABLE(nearClip_);
         ADD_MEMBER_VARIABLE(farClip_);
+        ADD_MEMBER_VARIABLE(autoSyncSize_);
     )
     COMPONENT_CATEGORY("Render")
     ~Camera2D() override = default;
@@ -21,12 +22,19 @@ public:
         ptr->height_ = height_;
         ptr->nearClip_ = nearClip_;
         ptr->farClip_ = farClip_;
+        ptr->autoSyncSize_ = autoSyncSize_;
         return ptr;
     }
 
     void SetSize(float width, float height) { width_ = width; height_ = height; }
     void SetNearClip(float nearClip) { nearClip_ = nearClip; }
     void SetFarClip(float farClip) { farClip_ = farClip; }
+    /// @brief 同オブジェクトのCameraRendererに描画先が単一指定されている場合、その描画先の実解像度へ
+    ///        width/heightを毎フレーム自動追従させるかどうかを設定する
+    /// @details 描画先が未指定（全描画先へ適用中）の場合は解像度を一意に決められないため、
+    ///          有効にしていても何もしない（手動設定値のまま）
+    void SetAutoSyncSize(bool enable) noexcept { autoSyncSize_ = enable; }
+    bool GetAutoSyncSize() const noexcept { return autoSyncSize_; }
 
     float GetWidth() const noexcept { return width_; }
     float GetHeight() const noexcept { return height_; }
@@ -36,20 +44,30 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        ImGui::BeginDisabled(autoSyncSize_);
         ImGui::DragFloat(TranslationLabel("component.camera2d.width"), &width_, 1.0f);
         ImGui::DragFloat(TranslationLabel("component.camera2d.height"), &height_, 1.0f);
+        ImGui::EndDisabled();
         ImGui::DragFloat(TranslationLabel("component.camera2d.near"), &nearClip_, 0.01f);
         ImGui::DragFloat(TranslationLabel("component.camera2d.far"), &farClip_, 1.0f);
+        ImGui::Checkbox(TranslationLabel("component.camera2d.auto_sync_size"), &autoSyncSize_);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", TranslationC("component.camera2d.auto_sync_size_desc"));
+        }
     }
 #endif
     JSON SaveToJson() const override {
-        return JSON{ {"width", width_}, {"height", height_}, {"nearClip", nearClip_}, {"farClip", farClip_} };
+        return JSON{
+            {"width", width_}, {"height", height_}, {"nearClip", nearClip_}, {"farClip", farClip_},
+            {"autoSyncSize", autoSyncSize_}
+        };
     }
     bool LoadFromJson(const JSON &json) override {
         width_ = json.value("width", 1280.0f);
         height_ = json.value("height", 720.0f);
         nearClip_ = json.value("nearClip", 0.0f);
         farClip_ = json.value("farClip", 1000.0f);
+        autoSyncSize_ = json.value("autoSyncSize", false);
         return true;
     }
 
@@ -58,6 +76,8 @@ private:
     float height_ = 720.0f;
     float nearClip_ = 0.0f;
     float farClip_ = 1000.0f;
+    /// @brief CameraRendererの描画先解像度へwidth/heightを自動追従させるか（既定false）
+    bool autoSyncSize_ = false;
 };
 
 REGISTER_COMPONENT_OBJECT(Camera2D)

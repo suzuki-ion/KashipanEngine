@@ -7,6 +7,10 @@
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Render/Camera2D.h"
 #include "Objects/Components/Render/Camera3D.h"
+#include "Objects/Components/Render/IWindowObjectComponent.h"
+#include "Objects/Components/Render/NormalWindowObject.h"
+#include "Objects/Components/Render/OverlayWindowObject.h"
+#include "Objects/Components/Render/ScreenBufferObject.h"
 #include "Objects/Components/Shake.h"
 #include "Objects/Components/Transform.h"
 #include "Graphics/IRenderTarget.h"
@@ -208,6 +212,28 @@ private:
         return Shake::ApplyRenderOnlyOffsets(GetOwnerObject(), world);
     }
 
+    /// @brief 適用先の描画先オブジェクトから実解像度(px)を取得する（Camera2D/Camera3Dの自動追従に使う）
+    /// @details 描画先が単一で明示指定されている場合のみ解決する。未指定（全描画先へ適用中）の場合は
+    ///          描画先ごとに解像度が異なりうるため一意に決められず false を返す
+    bool ResolveTargetRenderTargetSize(std::uint32_t &outWidth, std::uint32_t &outHeight) const {
+        EmptyObject *targetObj = GetTargetObject();
+        if (!targetObj) return false;
+
+        IRenderTarget *renderTarget = nullptr;
+        if (auto *normalWindow = targetObj->GetComponent<NormalWindowObject>()) {
+            renderTarget = normalWindow->GetWindow();
+        } else if (auto *overlayWindow = targetObj->GetComponent<OverlayWindowObject>()) {
+            renderTarget = overlayWindow->GetWindow();
+        } else if (auto *screenBuffer = targetObj->GetComponent<ScreenBufferObject>()) {
+            renderTarget = screenBuffer->GetScreenBuffer();
+        }
+        if (!renderTarget || !renderTarget->IsRenderTargetAvailable()) return false;
+
+        outWidth = renderTarget->GetRenderTargetWidth();
+        outHeight = renderTarget->GetRenderTargetHeight();
+        return outWidth > 0 && outHeight > 0;
+    }
+
     void UploadCameraConstant() {
         if (!constantBuffer_) return;
         auto *objectContext = GetOwnerObjectContext();
@@ -220,6 +246,12 @@ private:
         if (!mapped) return;
 
         if (auto *camera2d = objectContext->GetComponent<Camera2D>()) {
+            if (camera2d->GetAutoSyncSize()) {
+                std::uint32_t targetWidth = 0, targetHeight = 0;
+                if (ResolveTargetRenderTargetSize(targetWidth, targetHeight)) {
+                    camera2d->SetSize(static_cast<float>(targetWidth), static_cast<float>(targetHeight));
+                }
+            }
             Camera2DConstant constant{};
             constant.view = view;
             constant.projection.MakeOrthographicMatrix(
@@ -243,6 +275,12 @@ private:
         float orthoSize = 10.0f;
         auto *camera3d = objectContext->GetComponent<Camera3D>();
         if (camera3d) {
+            if (camera3d->GetAutoSyncAspectRatio()) {
+                std::uint32_t targetWidth = 0, targetHeight = 0;
+                if (ResolveTargetRenderTargetSize(targetWidth, targetHeight)) {
+                    camera3d->SetAspectRatio(static_cast<float>(targetWidth) / static_cast<float>(targetHeight));
+                }
+            }
             fovY = camera3d->GetFovY();
             nearClip = camera3d->GetNearClip();
             farClip = camera3d->GetFarClip();

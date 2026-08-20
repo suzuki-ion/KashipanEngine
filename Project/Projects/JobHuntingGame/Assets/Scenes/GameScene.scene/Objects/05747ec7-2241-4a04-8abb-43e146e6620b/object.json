@@ -42,6 +42,7 @@
                 "data": {
                     "customData": {
                         "fields": {
+                            "defeatParticleObject": "1ca77feb-02ac-46b6-acd3-ad688bed2d37",
                             "edgeSensorMissTolerance": 0.05000000074505806,
                             "gravity": 0.20000000298023224,
                             "groundStickSpeed": 2.0,
@@ -49,6 +50,9 @@
                             "maxFallSpeed": 16.0,
                             "moveDirection": 1.0,
                             "moveSpeed": 2.0,
+                            "objectsToDisableOnDefeat": [
+                                "2e693d0c-5354-4ba6-bcef-a60668c6daa8"
+                            ],
                             "playerCollisionThreshold": 0.4000000059604645,
                             "requestDefeat": false
                         },
@@ -207,6 +211,7 @@
                         "maxDistance": 25.0,
                         "minDistance": 1.0,
                         "pitch": 0.0,
+                        "playOnAwake": true,
                         "soundName": "Application/Sound/seSoftLanding.mp3",
                         "volume": 1.0
                     },

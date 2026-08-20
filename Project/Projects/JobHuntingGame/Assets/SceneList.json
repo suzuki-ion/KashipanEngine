@@ -11,6 +11,14 @@
         {
             "filePath": "Assets/Scenes/GameScene3.scene",
             "name": "GameScene3"
+        },
+        {
+            "filePath": "Assets/Scenes/Stage1.scene",
+            "name": "Stage1"
+        },
+        {
+            "filePath": "Assets/Scenes/TitleScene.scene",
+            "name": "TitleScene"
         }
     ],
     "startupScene": "GameScene"

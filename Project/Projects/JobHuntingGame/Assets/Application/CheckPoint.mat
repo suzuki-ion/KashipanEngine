@@ -1,6 +1,6 @@
 {
     "color": {
-        "w": 0.501960813999176,
+        "w": 1.0,
         "x": 1.0,
         "y": 1.0,
         "z": 1.0
@@ -31,7 +31,7 @@
         },
         "useAlphaBlend": {
             "type": "Bool",
-            "value": true
+            "value": false
         },
         "useBayer64x64": {
             "type": "Bool",

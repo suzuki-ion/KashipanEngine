@@ -4,7 +4,6 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "8c03d6b4-5450-42fd-812c-f025af3e6b04",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -17,8 +16,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 128.0,
-                            "y": 1200.0,
+                            "x": 960.0,
+                            "y": 300.0,
                             "z": 0.0
                         }
                     },
@@ -31,14 +30,27 @@
             {
                 "data": {
                     "customData": {
-                        "fields": {},
-                        "scriptPath": ""
+                        "fields": {
+                            "buttonObject": "f4a3f0f0-f5a0-426c-9f5c-b8539b6a7e11"
+                        },
+                        "scriptPath": "Assets\\Application\\Scripts\\TitleEndButton.as"
                     },
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
                 },
                 "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "displayCameraObjectID": "ebf4ac74-3737-42ba-ac53-c05fdee2df1a"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "UIButton"
             },
             {
                 "data": {
@@ -58,9 +70,9 @@
                             "x": 0.5,
                             "y": 0.5
                         },
-                        "fontName": "NekoSpoon",
-                        "fontSize": 64.0,
-                        "horizontalAlign": 0,
+                        "fontName": "NotoSansJP-Regular",
+                        "fontSize": 128.0,
+                        "horizontalAlign": 1,
                         "instanceColor": {
                             "w": 1.0,
                             "x": 1.0,
@@ -68,6 +80,7 @@
                             "z": 1.0
                         },
                         "instanceColorBlendMode": 1,
+                        "localizationKey": "",
                         "materialName": "Default",
                         "outlineColor": {
                             "w": 1.0,
@@ -75,12 +88,13 @@
                             "y": 0.0,
                             "z": 0.0
                         },
-                        "outlineWidth": 0.0,
+                        "outlineWidth": 0.5,
                         "pipelineName": "Text2D.BlendNormal",
                         "renderPriority": 0,
-                        "targetObjectID": "8c03d6b4-5450-42fd-812c-f025af3e6b04",
-                        "text": "チェックポイント",
-                        "verticalAlign": 0
+                        "targetObjectID": "54e55b7f-511f-4eea-834d-7f4ee1537f61",
+                        "text": "おわる",
+                        "useLocalizationKey": false,
+                        "verticalAlign": 1
                     },
                     "isActive": true,
                     "priority": 900,
@@ -92,10 +106,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Text Object",
-        "objectID": "8423b57a-292c-43eb-99c0-b6ab8ebc7d4d",
-        "prefabNodeID": "d8ce0f3b-5c01-4a54-8180-e1d479d56620",
+        "name": "End",
+        "objectID": "f4a3f0f0-f5a0-426c-9f5c-b8539b6a7e11",
         "tag": ""
     },
-    "siblingIndex": 2
+    "siblingIndex": 7000
 }

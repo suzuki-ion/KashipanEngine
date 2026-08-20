@@ -1,0 +1,140 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "856c3f57-73b5-4776-bf77-6239c02967f6",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 3.0,
+                            "z": -16.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "aspectRatio": 1.7777777910232544,
+                        "autoSyncAspectRatio": true,
+                        "enableJitter": false,
+                        "farClip": 1000.0,
+                        "fovY": 1.0,
+                        "nearClip": 0.10000000149011612,
+                        "orthoSize": 10.0,
+                        "orthographic": false
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Camera3D"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "followTargets": [
+                            {
+                                "followPositionX": true,
+                                "followPositionY": true,
+                                "followPositionZ": false,
+                                "followRotationX": false,
+                                "followRotationY": false,
+                                "followRotationZ": false,
+                                "objectID": "31f04ca5-4361-4601-a8ec-7f452d64d8c7"
+                            }
+                        ],
+                        "fovLerpFactor": 0.10000000149011612,
+                        "moveLerpAll": 1.0,
+                        "moveLerpPerAxis": {
+                            "x": 0.10000000149011612,
+                            "y": 0.03999999910593033,
+                            "z": 1.0
+                        },
+                        "moveLerpUsePerAxis": true,
+                        "positionOffset": {
+                            "x": 0.0,
+                            "y": 4.0,
+                            "z": -16.0
+                        },
+                        "rotateLerpAll": 0.10000000149011612,
+                        "rotateLerpPerAxis": {
+                            "x": 0.10000000149011612,
+                            "y": 0.10000000149011612,
+                            "z": 0.10000000149011612
+                        },
+                        "rotateLerpUsePerAxis": false,
+                        "rotationOffset": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "targetFovY": 1.0
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "CameraController"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "followStrength": 0.009999999776482582,
+                        "rotationMode": 1,
+                        "rotationOffset": {
+                            "x": -0.13962633907794952,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "targetObjectID": "620d578b-7c3c-478e-8376-c316a4951285"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "TargetLookAt"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "bindVariableNames": [
+                            "Vertex:gCamera3D",
+                            "Pixel:gCamera3D"
+                        ],
+                        "pipelineName": "",
+                        "targetObjectID": "31813901-d420-4f28-876d-070da9e32858"
+                    },
+                    "isActive": true,
+                    "priority": 950,
+                    "tag": ""
+                },
+                "type": "CameraRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Camera",
+        "objectID": "2f6710d8-9f7c-488e-b623-ce480fd3da6f",
+        "prefabNodeID": "9f0f6e0d-ee4f-45c6-a42f-3a46b788c7b1",
+        "tag": ""
+    },
+    "siblingIndex": 3000
+}

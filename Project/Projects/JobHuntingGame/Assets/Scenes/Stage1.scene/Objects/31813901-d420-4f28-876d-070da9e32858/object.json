@@ -1,0 +1,221 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "856c3f57-73b5-4776-bf77-6239c02967f6",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 0,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "height": 1080,
+                        "isShowViewer": true,
+                        "name": "ScreenBuffer_0",
+                        "saveDirectory": "Screenshots",
+                        "saveFileNamePrefix": "Screenshot",
+                        "saveFormat": "png",
+                        "viewerId": 12450712362724901714,
+                        "width": 1920
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScreenBufferObject"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "bias": 0.0,
+                        "blurRadius": 8,
+                        "depthThreshold": 8.0,
+                        "directionCount": 2,
+                        "excludedScreenBuffers": [],
+                        "intensity": 1.0,
+                        "power": 2.0,
+                        "radius": 1.5,
+                        "showAOOnly": false,
+                        "stepCount": 4
+                    },
+                    "isActive": true,
+                    "priority": 2,
+                    "tag": ""
+                },
+                "type": "GTAOEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "bias": 0.15000000596046448,
+                        "blurRadius": 8,
+                        "depthThreshold": 32.0,
+                        "excludedScreenBuffers": [],
+                        "intensity": 3.0,
+                        "power": 3.0,
+                        "radius": 1.5,
+                        "sampleCount": 16
+                    },
+                    "isActive": false,
+                    "priority": 3,
+                    "tag": ""
+                },
+                "type": "SSAOEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "excludedScreenBuffers": [],
+                        "strength": 1.0,
+                        "subpixelBlend": 1.0,
+                        "threshold": 0.009999999776482582,
+                        "thresholdMin": 0.0010000000474974513
+                    },
+                    "isActive": true,
+                    "priority": 4,
+                    "tag": ""
+                },
+                "type": "FXAAEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "excludedScreenBuffers": [],
+                        "intensity": 1.0,
+                        "maxBlurPixels": 32.0,
+                        "samples": 8,
+                        "velocityScale": 1.0
+                    },
+                    "isActive": true,
+                    "priority": 5,
+                    "tag": ""
+                },
+                "type": "MotionBlurEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "dilateRadius": 4,
+                        "excludedScreenBuffers": [],
+                        "farBlurDistance": 10.0,
+                        "focusDistance": 16.0,
+                        "focusRange": 4.0,
+                        "maxBlurRadiusPixels": 16.0,
+                        "nearBlurDistance": 5.0,
+                        "sampleCount": 16
+                    },
+                    "isActive": true,
+                    "priority": 6,
+                    "tag": ""
+                },
+                "type": "DepthOfFieldEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "direction": [
+                            1.0,
+                            0.0
+                        ],
+                        "excludedScreenBuffers": [],
+                        "strength": 0.0010000000474974513
+                    },
+                    "isActive": true,
+                    "priority": 7,
+                    "tag": ""
+                },
+                "type": "ChromaticAberrationEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "blurRadius": 1.0,
+                        "excludedScreenBuffers": [],
+                        "intensity": 0.25,
+                        "iterations": 4,
+                        "softKnee": 1.0,
+                        "threshold": 0.699999988079071
+                    },
+                    "isActive": true,
+                    "priority": 8,
+                    "tag": ""
+                },
+                "type": "BloomEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "center": [
+                            0.5,
+                            0.5
+                        ],
+                        "color": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "excludedScreenBuffers": [],
+                        "innerRadius": 0.30000001192092896,
+                        "intensity": 0.5,
+                        "smoothness": 0.30000001192092896
+                    },
+                    "isActive": true,
+                    "priority": 9,
+                    "tag": ""
+                },
+                "type": "VignetteEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "brightness": 0.10000000149011612,
+                        "colorBalance": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "contrast": 1.0,
+                        "excludedScreenBuffers": [],
+                        "saturation": 1.0,
+                        "temperature": 0.0
+                    },
+                    "isActive": true,
+                    "priority": 10,
+                    "tag": ""
+                },
+                "type": "ColorAdjustEffect"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "MainScreen",
+        "objectID": "31813901-d420-4f28-876d-070da9e32858",
+        "prefabNodeID": "be487d54-536f-48c2-95ef-c5d8e0d00d60",
+        "tag": ""
+    },
+    "siblingIndex": 6000
+}

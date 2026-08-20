@@ -1,0 +1,115 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 960.0,
+                            "y": 500.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "buttonObject": "7ee8e3b7-4907-4dda-9310-69ce7229b657",
+                            "nextSceneName": "GameScene"
+                        },
+                        "scriptPath": "Assets\\Application\\Scripts\\TitleStartButton.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "displayCameraObjectID": "ebf4ac74-3737-42ba-ac53-c05fdee2df1a"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "UIButton"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "color": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "defaultCharacterAnchor": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "defaultCharacterPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "fontName": "NotoSansJP-Regular",
+                        "fontSize": 128.0,
+                        "horizontalAlign": 1,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "localizationKey": "",
+                        "materialName": "Default",
+                        "outlineColor": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "outlineWidth": 0.5,
+                        "pipelineName": "Text2D.BlendNormal",
+                        "renderPriority": 0,
+                        "targetObjectID": "54e55b7f-511f-4eea-834d-7f4ee1537f61",
+                        "text": "スタート",
+                        "useLocalizationKey": false,
+                        "verticalAlign": 1
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "TextRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Start",
+        "objectID": "7ee8e3b7-4907-4dda-9310-69ce7229b657",
+        "tag": ""
+    },
+    "siblingIndex": 6000
+}

@@ -42,6 +42,38 @@
             {
                 "data": {
                     "customData": {
+                        "displayCameraObjectID": "1efbad77-46b2-4295-93b9-d8c434ce2dcb",
+                        "fitMode": 2,
+                        "sourceObjectID": "85df0137-8c99-4ccc-af31-59951bbae199"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScreenBufferViewport"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "anchorPoint": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "cameraObjectID": "1efbad77-46b2-4295-93b9-d8c434ce2dcb",
+                        "offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScreenAnchor"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,

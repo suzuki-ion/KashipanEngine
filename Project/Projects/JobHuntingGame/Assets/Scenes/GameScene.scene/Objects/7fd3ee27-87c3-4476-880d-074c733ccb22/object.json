@@ -32,6 +32,7 @@
                 "data": {
                     "customData": {
                         "aspectRatio": 1.7777777910232544,
+                        "autoSyncAspectRatio": true,
                         "enableJitter": false,
                         "farClip": 1000.0,
                         "fovY": 1.0,

@@ -26,17 +26,6 @@
                     "tag": ""
                 },
                 "type": "Transform"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "prefabID": "625a4b8a-db8b-49ec-ac96-27ec7c849c07"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "PrefabInstanceComponent"
             }
         ],
         "editorOnly": false,

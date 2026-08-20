@@ -5,10 +5,10 @@
                 "data": {
                     "customData": {
                         "rotate": {
-                            "w": 0.9974769949913025,
-                            "x": 0.044917624443769455,
-                            "y": 0.05491742491722107,
-                            "z": -0.002472999505698681
+                            "w": 0.9645028114318848,
+                            "x": 0.06036081537604332,
+                            "y": 0.2565796375274658,
+                            "z": -0.016057347878813744
                         },
                         "scale": {
                             "x": 1.0,
@@ -16,9 +16,9 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 22.122018814086914,
-                            "y": 14.994707107543945,
-                            "z": -44.59785461425781
+                            "x": 25.484066009521484,
+                            "y": 8.78172492980957,
+                            "z": -15.457015991210938
                         }
                     },
                     "isActive": true,
@@ -30,7 +30,8 @@
             {
                 "data": {
                     "customData": {
-                        "aspectRatio": 1.7803738117218018,
+                        "aspectRatio": 2.219686269760132,
+                        "autoSyncAspectRatio": false,
                         "enableJitter": false,
                         "farClip": 1000.0,
                         "fovY": 1.0,
@@ -47,7 +48,7 @@
             {
                 "data": {
                     "customData": {
-                        "distance": 74.02789306640625
+                        "distance": 12.345765113830566
                     },
                     "isActive": true,
                     "priority": 1,
@@ -58,14 +59,14 @@
             {
                 "data": {
                     "customData": {
-                        "height": 856,
+                        "height": 701,
                         "isShowViewer": false,
                         "name": "EditorSceneView",
                         "saveDirectory": "Screenshots",
                         "saveFileNamePrefix": "Screenshot",
                         "saveFormat": "png",
                         "viewerId": 16289254799954061067,
-                        "width": 1524
+                        "width": 1556
                     },
                     "isActive": true,
                     "priority": 1,

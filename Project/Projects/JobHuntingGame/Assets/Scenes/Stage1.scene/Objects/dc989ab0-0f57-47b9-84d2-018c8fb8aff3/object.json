@@ -1,0 +1,72 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "cd5b0e8d-54c2-4321-9aaf-e679269c2c1d",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "autoSyncSize": true,
+                        "farClip": 1000.0,
+                        "height": 720.0,
+                        "nearClip": 0.0,
+                        "width": 1280.0
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Camera2D"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "bindVariableNames": [
+                            "Vertex:gCamera2D",
+                            "Pixel:gCamera2D"
+                        ],
+                        "pipelineName": "",
+                        "targetObjectID": "cd5b0e8d-54c2-4321-9aaf-e679269c2c1d"
+                    },
+                    "isActive": true,
+                    "priority": 950,
+                    "tag": ""
+                },
+                "type": "CameraRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Camera 2D Object",
+        "objectID": "dc989ab0-0f57-47b9-84d2-018c8fb8aff3",
+        "prefabNodeID": "55794205-edd7-4908-a610-322471f8ed3e",
+        "tag": ""
+    },
+    "siblingIndex": 0
+}

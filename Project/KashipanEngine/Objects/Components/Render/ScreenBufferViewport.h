@@ -1,12 +1,15 @@
 #pragma once
+#include <algorithm>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include "Objects/ObjectComponentHeader.h"
 #include "Assets/MaterialManager.h"
 #include "Assets/ModelManager.h"
 #include "Assets/TextureManager.h"
 #include "Core/Window.h"
+#include "Graphics/IRenderTarget.h"
 #include "Graphics/ScreenBuffer.h"
 #include "Input/Input.h"
 #include "Input/Mouse.h"
@@ -21,6 +24,7 @@
 #include "Objects/Components/Render/OverlayWindowObject.h"
 #include "Objects/Components/Render/ScreenBufferObject.h"
 #include "Objects/Components/Render/SpriteRenderer.h"
+#include "Scene/Components/Render/SceneRenderer.h"
 #include "Utilities/UUID128.h"
 #if defined(USE_IMGUI)
 #include "Objects/Components/Render/TargetObjectSelector.h"
@@ -39,6 +43,13 @@ namespace KashipanEngine {
 ///          表示先の指定はSpriteRenderer側のSetTargetObject（GetSpriteRenderer()経由）に委譲する。
 class ScreenBufferViewport final : public IObjectComponent {
 public:
+    /// @brief 表示先（描画先）の解像度に対する自動フィット方法
+    enum class FitMode : int {
+        None = 0,   // 何もしない（Transform.Scaleを手動設定した値のまま使う）
+        Stretch,    // アスペクト比を無視して描画先いっぱいに引き伸ばす
+        Letterbox,  // アスペクト比を保ったまま描画先に収まる最大サイズにする（余白ができる）
+    };
+
     OBJECT_COMPONENT_CONSTRUCTOR(ScreenBufferViewport, 1, )
     COMPONENT_CATEGORY("Render")
     ~ScreenBufferViewport() override = default;
@@ -47,6 +58,7 @@ public:
         auto ptr = std::make_unique<ScreenBufferViewport>();
         ptr->sourceObjectID_ = sourceObjectID_;
         ptr->displayCameraObjectID_ = displayCameraObjectID_;
+        ptr->fitMode_ = fitMode_;
         return ptr;
     }
 
@@ -86,6 +98,17 @@ public:
     SpriteRenderer *GetSpriteRenderer() const noexcept { return spriteRenderer_; }
     /// @brief 内部で自動管理しているMeshFilterを取得する（常に"Rect2D"メッシュ固定）
     MeshFilter *GetMeshFilter() const noexcept { return meshFilter_; }
+
+    //==================================================
+    // フィットモード
+    //==================================================
+
+    /// @brief 描画先の解像度に対する自動フィット方法を設定する
+    /// @details None以外を指定した場合、毎フレーム自身のTransform.Scale（X/Yのみ）を
+    ///          自動で書き換える。Anchor/Pivotが既定値(0.5,0.5)のままであれば、
+    ///          フィット後も表示位置はTransform.Translateを中心に保たれる
+    void SetFitMode(FitMode fitMode) noexcept { fitMode_ = fitMode; }
+    FitMode GetFitMode() const noexcept { return fitMode_; }
 
     //==================================================
     // マウス座標変換
@@ -173,6 +196,7 @@ protected:
             spriteRenderer_->SetMaterialHandle(materialHandle_);
         }
         SyncMaterialTexture();
+        ApplyFitMode();
     }
 
     void Finalize() override {
@@ -183,6 +207,17 @@ protected:
     void ShowImGui() override {
         TargetObjectSelector::ShowSelector(TranslationLabel("component.screenbufferviewport.source"), GetOwnerSceneContext(), sourceObjectID_, true, true);
         TargetObjectSelector::ShowSelector(TranslationLabel("component.screenbufferviewport.display_camera"), GetOwnerSceneContext(), displayCameraObjectID_, true, false);
+
+        const char *kFitModeLabels[] = {
+            TranslationC("component.screenbufferviewport.fitmode.none"),
+            TranslationC("component.screenbufferviewport.fitmode.stretch"),
+            TranslationC("component.screenbufferviewport.fitmode.letterbox"),
+        };
+        int fitModeIndex = static_cast<int>(fitMode_);
+        if (ImGui::Combo(TranslationLabel("component.screenbufferviewport.fit_mode"), &fitModeIndex, kFitModeLabels, IM_ARRAYSIZE(kFitModeLabels))) {
+            fitMode_ = static_cast<FitMode>(fitModeIndex);
+        }
+
         ImGui::TextDisabled("%s", TranslationC("component.screenbufferviewport.desc_delegate"));
 
         Vector2 pos{};
@@ -191,6 +226,31 @@ protected:
         } else {
             ImGui::TextDisabled("Mouse: -");
         }
+
+        if (fitMode_ != FitMode::None) {
+            if (auto *fitTarget = ResolveRenderTarget()) {
+                ImGui::Text("Fit Target: %ux%u [%s]", fitTarget->GetRenderTargetWidth(), fitTarget->GetRenderTargetHeight(), fitTarget->GetRenderTargetName().c_str());
+            } else {
+                ImGui::TextDisabled("Fit Target: - (内部SpriteRendererのTargetが未設定か利用不可)");
+            }
+
+            auto *source = ResolveSource();
+            ScreenBuffer *buffer = source ? source->GetScreenBuffer() : nullptr;
+            if (buffer && ScreenBuffer::IsExist(buffer)) {
+                ImGui::Text("Fit Source: %ux%u", buffer->GetWidth(), buffer->GetHeight());
+            } else {
+                ImGui::TextDisabled("Fit Source: - (Sourceが未設定か利用不可)");
+            }
+
+            auto *objectContext = GetOwnerObjectContext();
+            auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
+            if (transform) {
+                const Vector3 &scale = transform->GetScale();
+                ImGui::Text("Transform Scale: (%.1f, %.1f, %.1f)", scale.x, scale.y, scale.z);
+            } else {
+                ImGui::TextDisabled("Transform Scale: - (Transformが見つかりません)");
+            }
+        }
     }
 #endif
 
@@ -198,12 +258,14 @@ protected:
         JSON json = JSON::object();
         json["sourceObjectID"] = ToJSON(sourceObjectID_);
         json["displayCameraObjectID"] = ToJSON(displayCameraObjectID_);
+        json["fitMode"] = static_cast<int>(fitMode_);
         return json;
     }
 
     bool LoadFromJson(const JSON &json) override {
         sourceObjectID_ = json.contains("sourceObjectID") ? FromJSON<UUID128>(json["sourceObjectID"]) : UUID128();
         displayCameraObjectID_ = json.contains("displayCameraObjectID") ? FromJSON<UUID128>(json["displayCameraObjectID"]) : UUID128();
+        fitMode_ = static_cast<FitMode>(json.value("fitMode", static_cast<int>(FitMode::None)));
         return true;
     }
 
@@ -228,6 +290,58 @@ private:
         if (!obj) return nullptr;
         outTransform = obj->GetComponent<Transform>();
         return obj->GetComponent<Camera2D>();
+    }
+
+    /// @brief 内部SpriteRendererが実際に描画されている先のIRenderTargetを解決する
+    /// @details ResolveWindow()と異なりWindow限定ではなく、ScreenBufferへの入れ子表示も許容する。
+    ///          対象オブジェクトに描画先コンポーネントが複数付与されている場合は最初に見つかったものを使う
+    IRenderTarget *ResolveRenderTarget() const {
+        if (!spriteRenderer_) return nullptr;
+        EmptyObject *targetObj = spriteRenderer_->GetTargetObject();
+        if (!targetObj) return nullptr;
+        std::vector<IRenderTarget *> targets;
+        SceneRenderer::CollectRenderTargets(targetObj, targets);
+        for (auto *target : targets) {
+            if (target && target->IsRenderTargetAvailable()) return target;
+        }
+        return nullptr;
+    }
+
+    /// @brief FitModeに応じて、自身のTransform.Scale（X/Yのみ）を描画先の解像度に合わせて書き換える
+    /// @details Noneの場合は何もせず、Transform.Scaleの手動設定をそのまま尊重する
+    void ApplyFitMode() {
+        if (fitMode_ == FitMode::None) return;
+        if (!spriteRenderer_) return;
+
+        auto *source = ResolveSource();
+        ScreenBuffer *buffer = source ? source->GetScreenBuffer() : nullptr;
+        if (!buffer || !ScreenBuffer::IsExist(buffer)) return;
+        const float sourceWidth = static_cast<float>(buffer->GetWidth());
+        const float sourceHeight = static_cast<float>(buffer->GetHeight());
+        if (sourceWidth <= 0.0f || sourceHeight <= 0.0f) return;
+
+        IRenderTarget *target = ResolveRenderTarget();
+        if (!target) return;
+        const float targetWidth = static_cast<float>(target->GetRenderTargetWidth());
+        const float targetHeight = static_cast<float>(target->GetRenderTargetHeight());
+        if (targetWidth <= 0.0f || targetHeight <= 0.0f) return;
+
+        auto *objectContext = GetOwnerObjectContext();
+        auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
+        if (!transform) return;
+
+        float displayWidth = targetWidth;
+        float displayHeight = targetHeight;
+        if (fitMode_ == FitMode::Letterbox) {
+            const float fitScale = std::min(targetWidth / sourceWidth, targetHeight / sourceHeight);
+            displayWidth = sourceWidth * fitScale;
+            displayHeight = sourceHeight * fitScale;
+        }
+
+        Vector3 scale = transform->GetScale();
+        scale.x = displayWidth;
+        scale.y = displayHeight;
+        transform->SetScale(scale);
     }
 
     /// @brief MeshFilter/SpriteRendererを、既存があれば拾い、無ければここで生成する
@@ -298,6 +412,7 @@ private:
 
     UUID128 sourceObjectID_{};
     UUID128 displayCameraObjectID_{};
+    FitMode fitMode_ = FitMode::None;
 
     // 内部専有（非シリアライズ、実行時に自動生成/解決される）
     MeshFilter *meshFilter_ = nullptr;

@@ -728,6 +728,7 @@
 		"component.audiosource.pause": "일시 정지",
 		"component.audiosource.pitch_semitones": "피치(반음)",
 		"component.audiosource.play": "재생",
+		"component.audiosource.play_on_awake": "자동 재생",
 		"component.audiosource.q_resonance": "Q(레조넌스)",
 		"component.audiosource.release": "릴리스",
 		"component.audiosource.resume": "재개",
@@ -743,6 +744,8 @@
 		"component.videosource.loop": "루프",
 		"component.videosource.volume": "음량",
 		"component.videosource.play_on_awake": "자동 재생",
+		"component.videosource.route_audio_to_audiosource": "AudioSource로 재생",
+		"component.videosource.route_audio_to_audiosource_desc": "같은 오브젝트의 AudioSource로 오디오를 출력하여 거리 감쇠·팬·이펙트를 적용합니다(AudioSource 필요)",
 		"component.videosource.play": "재생",
 		"component.videosource.resume": "재개",
 		"component.videosource.pause": "일시 정지",
@@ -768,6 +771,8 @@
 		"component.boxfiltereffect.intensity": "강도",
 
 		//--------- component.camera2d ---------//
+		"component.camera2d.auto_sync_size": "해상도로 자동 추적",
+		"component.camera2d.auto_sync_size_desc": "같은 오브젝트의 CameraRenderer에 대상 렌더 타깃이 하나만 명시되어 있는 경우, 해당 대상의 실제 해상도로 width/height를 매 프레임 자동으로 추적합니다. 대상이 지정되지 않은 경우(모든 렌더 타깃에 적용 중)는 해상도를 하나로 결정할 수 없으므로 아무 작업도 하지 않습니다.",
 		"component.camera2d.far": "파 클립",
 		"component.camera2d.height": "높이",
 		"component.camera2d.near": "니어 클립",
@@ -775,6 +780,8 @@
 
 		//--------- component.camera3d ---------//
 		"component.camera3d.aspect": "종횡비",
+		"component.camera3d.auto_sync_aspect": "종횡비 자동 추적",
+		"component.camera3d.auto_sync_aspect_desc": "같은 오브젝트의 CameraRenderer에 대상 렌더 타깃이 하나만 명시되어 있는 경우, 해당 대상의 실제 해상도로부터 구한 종횡비로 매 프레임 자동으로 추적합니다. 대상이 지정되지 않은 경우(모든 렌더 타깃에 적용 중)는 해상도를 하나로 결정할 수 없으므로 아무 작업도 하지 않습니다.",
 		"component.camera3d.enable_jitter": "카메라 지터",
 		"component.camera3d.enable_jitter_desc": "투영 행렬에 서브픽셀 단위의 흔들림을 추가한다(TAA풍 카메라 지터). TemporalBlendEffect와 함께 사용하는 것을 전제로 하며, 단독으로 활성화하면 화면이 흔들려 보이기만 하므로 주의.",
 		"component.camera3d.far": "파 클립",
@@ -1013,6 +1020,8 @@
 		"component.meshbutton.display_camera": "표시 카메라",
 		"component.meshbutton.precise_mesh_test": "메시 삼각형으로 정밀 판정",
 		"component.meshbutton.precise_mesh_test_desc": "MeshRenderer인 경우에만 적용됩니다. SkinnedMeshRenderer는 항상 바운딩 박스 판정을 사용합니다(본 변형 후 모습은 추적하지 않음).",
+		"component.meshbutton.drag_axis": "드래그 축",
+		"component.meshbutton.drag_axis_desc": "잡고 축을 따라 드래그하는 조작의 기준이 되는 로컬 축입니다. 드래그 중에는 잡은 순간의 월드 회전으로 고정됩니다.",
 
 		//--------- component.meshcollider ---------//
 		"component.meshcollider.convex": "볼록 껍질(Convex)",
@@ -1195,6 +1204,12 @@
 		//--------- component.scenevieworbitstate ---------//
 		"component.scenevieworbitstate.distance": "주시점까지의 거리",
 
+		//--------- component.screenanchor ---------//
+		"component.screenanchor.anchor_point": "기준점",
+		"component.screenanchor.camera": "기준 카메라",
+		"component.screenanchor.desc": "매 프레임, 기준 카메라의 width/height와 기준점·오프셋으로부터 구한 좌표로 Transform의 X/Y를 다시 씁니다(Z는 변경하지 않음). 기준점은 (0,0)=화면 왼쪽 아래 ~ (1,1)=화면 오른쪽 위입니다.",
+		"component.screenanchor.offset": "오프셋",
+
 		//--------- component.screenbufferobject ---------//
 		"component.screenbufferobject.directory": "저장 폴더",
 		"component.screenbufferobject.file_name_prefix": "파일 이름 접두사",
@@ -1210,6 +1225,10 @@
 		//--------- component.screenbufferviewport ---------//
 		"component.screenbufferviewport.desc_delegate": "렌더 대상·앵커/피벗·파이프라인 등은 같은 오브젝트 내부의 SpriteRenderer 컴포넌트를 직접 편집하세요.",
 		"component.screenbufferviewport.display_camera": "표시 카메라",
+		"component.screenbufferviewport.fit_mode": "핏 모드",
+		"component.screenbufferviewport.fitmode.letterbox": "레터박스(종횡비 유지)",
+		"component.screenbufferviewport.fitmode.none": "없음(수동)",
+		"component.screenbufferviewport.fitmode.stretch": "늘이기",
 		"component.screenbufferviewport.source": "표시할 ScreenBuffer",
 
 		//--------- component.screenwideditherblendeffect ---------//

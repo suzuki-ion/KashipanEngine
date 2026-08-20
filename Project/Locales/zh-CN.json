@@ -728,6 +728,7 @@
 		"component.audiosource.pause": "暂停",
 		"component.audiosource.pitch_semitones": "音高（半音）",
 		"component.audiosource.play": "播放",
+		"component.audiosource.play_on_awake": "自动播放",
 		"component.audiosource.q_resonance": "Q（共振）",
 		"component.audiosource.release": "释放",
 		"component.audiosource.resume": "恢复",
@@ -743,6 +744,8 @@
 		"component.videosource.loop": "循环",
 		"component.videosource.volume": "音量",
 		"component.videosource.play_on_awake": "自动播放",
+		"component.videosource.route_audio_to_audiosource": "通过AudioSource播放",
+		"component.videosource.route_audio_to_audiosource_desc": "将音频输出到同一对象上的AudioSource，应用距离衰减、声像和效果（需要AudioSource）",
 		"component.videosource.play": "播放",
 		"component.videosource.resume": "恢复",
 		"component.videosource.pause": "暂停",
@@ -768,6 +771,8 @@
 		"component.boxfiltereffect.intensity": "强度",
 
 		//--------- component.camera2d ---------//
+		"component.camera2d.auto_sync_size": "自动跟随分辨率",
+		"component.camera2d.auto_sync_size_desc": "若该对象的CameraRenderer指定了单一目标渲染对象，则每帧自动将width/height跟随该目标的实际分辨率。若未指定目标（应用于所有渲染目标），由于无法唯一确定分辨率，此项不做任何处理。",
 		"component.camera2d.far": "远裁剪",
 		"component.camera2d.height": "高度",
 		"component.camera2d.near": "近裁剪",
@@ -775,6 +780,8 @@
 
 		//--------- component.camera3d ---------//
 		"component.camera3d.aspect": "宽高比",
+		"component.camera3d.auto_sync_aspect": "自动跟随宽高比",
+		"component.camera3d.auto_sync_aspect_desc": "若该对象的CameraRenderer指定了单一目标渲染对象，则每帧自动将宽高比跟随根据该目标实际分辨率算出的值。若未指定目标（应用于所有渲染目标），由于无法唯一确定分辨率，此项不做任何处理。",
 		"component.camera3d.enable_jitter": "相机抖动",
 		"component.camera3d.enable_jitter_desc": "在投影矩阵中加入亚像素级的抖动（类似TAA的相机抖动）。设计上应与TemporalBlendEffect搭配使用，若单独启用则画面只会呈现抖动效果，请注意这一点。",
 		"component.camera3d.far": "远裁剪",
@@ -1013,6 +1020,8 @@
 		"component.meshbutton.display_camera": "显示相机",
 		"component.meshbutton.precise_mesh_test": "使用网格三角形精确判定",
 		"component.meshbutton.precise_mesh_test_desc": "仅对MeshRenderer生效。SkinnedMeshRenderer始终使用包围盒判定（不会跟随蒙皮变形后的效果）。",
+		"component.meshbutton.drag_axis": "拖拽轴",
+		"component.meshbutton.drag_axis_desc": "作为抓取并沿轴拖拽操作基准的本地轴。拖拽过程中，轴会固定为抓取瞬间的世界旋转。",
 
 		//--------- component.meshcollider ---------//
 		"component.meshcollider.convex": "凸包（Convex）",
@@ -1195,6 +1204,12 @@
 		//--------- component.scenevieworbitstate ---------//
 		"component.scenevieworbitstate.distance": "到注视点的距离",
 
+		//--------- component.screenanchor ---------//
+		"component.screenanchor.anchor_point": "基准点",
+		"component.screenanchor.camera": "基准相机",
+		"component.screenanchor.desc": "每帧根据基准相机的width/height与基准点、偏移量计算出的坐标，重写Transform的X/Y（不改变Z）。基准点为(0,0)=屏幕左下角 ～ (1,1)=屏幕右上角。",
+		"component.screenanchor.offset": "偏移量",
+
 		//--------- component.screenbufferobject ---------//
 		"component.screenbufferobject.directory": "保存目标文件夹",
 		"component.screenbufferobject.file_name_prefix": "文件名前缀",
@@ -1210,6 +1225,10 @@
 		//--------- component.screenbufferviewport ---------//
 		"component.screenbufferviewport.desc_delegate": "渲染目标、锚点/轴心点、管线等设置请直接在该对象内部的SpriteRenderer组件上编辑。",
 		"component.screenbufferviewport.display_camera": "显示相机",
+		"component.screenbufferviewport.fit_mode": "适配模式",
+		"component.screenbufferviewport.fitmode.letterbox": "信箱模式（保持宽高比）",
+		"component.screenbufferviewport.fitmode.none": "无（手动）",
+		"component.screenbufferviewport.fitmode.stretch": "拉伸",
 		"component.screenbufferviewport.source": "要显示的ScreenBuffer",
 
 		//--------- component.screenwideditherblendeffect ---------//

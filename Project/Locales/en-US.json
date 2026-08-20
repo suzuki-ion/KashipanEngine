@@ -728,6 +728,7 @@
 		"component.audiosource.pause": "Pause",
 		"component.audiosource.pitch_semitones": "Pitch(semitones)",
 		"component.audiosource.play": "Play",
+		"component.audiosource.play_on_awake": "Play On Awake",
 		"component.audiosource.q_resonance": "Q (Resonance)",
 		"component.audiosource.release": "Release",
 		"component.audiosource.resume": "Resume",
@@ -743,6 +744,8 @@
 		"component.videosource.loop": "Loop",
 		"component.videosource.volume": "Volume",
 		"component.videosource.play_on_awake": "Play On Awake",
+		"component.videosource.route_audio_to_audiosource": "Route Audio Through AudioSource",
+		"component.videosource.route_audio_to_audiosource_desc": "Outputs audio to the AudioSource on the same object, applying distance attenuation, panning, and effects (requires an AudioSource)",
 		"component.videosource.play": "Play",
 		"component.videosource.resume": "Resume",
 		"component.videosource.pause": "Pause",
@@ -768,6 +771,8 @@
 		"component.boxfiltereffect.intensity": "Intensity",
 
 		//--------- component.camera2d ---------//
+		"component.camera2d.auto_sync_size": "Auto-Sync To Resolution",
+		"component.camera2d.auto_sync_size_desc": "If this object's CameraRenderer has a single explicit target, automatically syncs width/height to that target's actual resolution every frame. Does nothing when the target is unspecified (applying to all render targets), since the resolution cannot be determined uniquely.",
 		"component.camera2d.far": "Far",
 		"component.camera2d.height": "Height",
 		"component.camera2d.near": "Near",
@@ -775,6 +780,8 @@
 
 		//--------- component.camera3d ---------//
 		"component.camera3d.aspect": "Aspect",
+		"component.camera3d.auto_sync_aspect": "Auto-Sync Aspect Ratio",
+		"component.camera3d.auto_sync_aspect_desc": "If this object's CameraRenderer has a single explicit target, automatically syncs the aspect ratio to that target's actual resolution every frame. Does nothing when the target is unspecified (applying to all render targets), since the resolution cannot be determined uniquely.",
 		"component.camera3d.enable_jitter": "Camera Jitter",
 		"component.camera3d.enable_jitter_desc": "Adds a sub-pixel offset to the projection matrix (TAA-style camera jitter). Intended to be paired with TemporalBlendEffect; enabling it alone will just make the image appear to shake.",
 		"component.camera3d.far": "Far",
@@ -1013,6 +1020,8 @@
 		"component.meshbutton.display_camera": "Display Camera",
 		"component.meshbutton.precise_mesh_test": "Precise Mesh Triangle Test",
 		"component.meshbutton.precise_mesh_test_desc": "Only takes effect for MeshRenderer. SkinnedMeshRenderer always uses the bounding box test (it does not follow the post-skinning deformation).",
+		"component.meshbutton.drag_axis": "Drag Axis",
+		"component.meshbutton.drag_axis_desc": "Local axis used as the basis for grab-and-drag-along-axis interaction. While dragging, the axis stays fixed using the world rotation captured at the moment it was grabbed.",
 
 		//--------- component.meshcollider ---------//
 		"component.meshcollider.convex": "Convex",
@@ -1195,6 +1204,12 @@
 		//--------- component.scenevieworbitstate ---------//
 		"component.scenevieworbitstate.distance": "Distance To Target",
 
+		//--------- component.screenanchor ---------//
+		"component.screenanchor.anchor_point": "Anchor Point",
+		"component.screenanchor.camera": "Anchor Camera",
+		"component.screenanchor.desc": "Every frame, rewrites this Transform's X/Y (Z is left unchanged) from the anchor camera's width/height plus the anchor point and offset. Anchor point: (0,0) = bottom-left of screen, (1,1) = top-right.",
+		"component.screenanchor.offset": "Offset",
+
 		//--------- component.screenbufferobject ---------//
 		"component.screenbufferobject.directory": "Directory",
 		"component.screenbufferobject.file_name_prefix": "File Name Prefix",
@@ -1210,6 +1225,10 @@
 		//--------- component.screenbufferviewport ---------//
 		"component.screenbufferviewport.desc_delegate": "Rendering target, anchor/pivot, pipeline, etc. are edited directly on this object's internal SpriteRenderer component.",
 		"component.screenbufferviewport.display_camera": "Display Camera",
+		"component.screenbufferviewport.fit_mode": "Fit Mode",
+		"component.screenbufferviewport.fitmode.letterbox": "Letterbox (Preserve Aspect Ratio)",
+		"component.screenbufferviewport.fitmode.none": "None (Manual)",
+		"component.screenbufferviewport.fitmode.stretch": "Stretch",
 		"component.screenbufferviewport.source": "Source ScreenBuffer",
 
 		//--------- component.screenwideditherblendeffect ---------//

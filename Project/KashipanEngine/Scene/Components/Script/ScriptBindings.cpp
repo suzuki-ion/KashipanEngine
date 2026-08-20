@@ -101,6 +101,7 @@
 #include "Objects/Components/Render/NormalWindowObject.h"
 #include "Objects/Components/Render/OverlayWindowObject.h"
 #include "Objects/Components/Render/ScreenBufferObject.h"
+#include "Objects/Components/Render/ScreenAnchor.h"
 #include "Objects/Components/Render/ScreenBufferViewport.h"
 #include "Objects/Components/Render/ShadowMapObject.h"
 #include "Objects/Components/UI/UIButton.h"
@@ -653,7 +654,10 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetPitch(float)", &AudioSource::SetPitch)
         .method("float GetPitch() const", &AudioSource::GetPitch)
         .method("void SetLoop(bool)", &AudioSource::SetLoop)
-        .method("bool GetLoop() const", &AudioSource::GetLoop);
+        .method("bool GetLoop() const", &AudioSource::GetLoop)
+        .method("void SetPlayOnAwake(bool)", &AudioSource::SetPlayOnAwake)
+        .method("bool GetPlayOnAwake() const", &AudioSource::GetPlayOnAwake)
+        .method("void AttachExternalPlayHandle(uint)", &AudioSource::AttachExternalPlayHandle);
 
     RegisterComponentType<AudioListener>(engine, "AudioListener")
         .method("void SetUsed(bool)", &AudioListener::SetUsed)
@@ -674,7 +678,9 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetOrthoSize(float)", &Camera3D::SetOrthoSize)
         .method("float GetOrthoSize() const", &Camera3D::GetOrthoSize)
         .method("void SetEnableJitter(bool)", &Camera3D::SetEnableJitter)
-        .method("bool IsJitterEnabled() const", &Camera3D::IsJitterEnabled);
+        .method("bool IsJitterEnabled() const", &Camera3D::IsJitterEnabled)
+        .method("void SetAutoSyncAspectRatio(bool)", &Camera3D::SetAutoSyncAspectRatio)
+        .method("bool GetAutoSyncAspectRatio() const", &Camera3D::GetAutoSyncAspectRatio);
 
     RegisterComponentType<SpriteRenderer>(engine, "SpriteRenderer")
         .method("void SetAnchor(const Vector2 &in)", &SpriteRenderer::SetAnchor)
@@ -900,7 +906,9 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("float GetWidth() const", &Camera2D::GetWidth)
         .method("float GetHeight() const", &Camera2D::GetHeight)
         .method("float GetNearClip() const", &Camera2D::GetNearClip)
-        .method("float GetFarClip() const", &Camera2D::GetFarClip);
+        .method("float GetFarClip() const", &Camera2D::GetFarClip)
+        .method("void SetAutoSyncSize(bool)", &Camera2D::SetAutoSyncSize)
+        .method("bool GetAutoSyncSize() const", &Camera2D::GetAutoSyncSize);
 
     RegisterComponentType<CameraRenderer>(engine, "CameraRenderer")
         .method("void SetPipelineName(const string &in)", &CameraRenderer::SetPipelineName)
@@ -1027,14 +1035,29 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetSourceObject(Object@)", [](ScreenBufferViewport &c, EmptyObject *obj) { c.SetSourceObject(obj); })
         .method("void SetDisplayCameraObject(Object@)", [](ScreenBufferViewport &c, EmptyObject *obj) { c.SetDisplayCameraObject(obj); })
         .method("SpriteRenderer@ GetSpriteRenderer() const", &ScreenBufferViewport::GetSpriteRenderer)
+        // fitModeは 0=None, 1=Stretch, 2=Letterbox
+        .method("void SetFitMode(int)", [](ScreenBufferViewport &c, int mode) {
+            c.SetFitMode(static_cast<ScreenBufferViewport::FitMode>(mode));
+        })
+        .method("int GetFitMode() const", [](const ScreenBufferViewport &c) {
+            return static_cast<int>(c.GetFitMode());
+        })
         .method("bool TryGetOffscreenMousePosition(Vector2 &out)", &ScreenBufferViewport::TryGetOffscreenMousePosition)
         .method("bool IsMouseOverOffscreen() const", &ScreenBufferViewport::IsMouseOverOffscreen);
+
+    RegisterComponentType<ScreenAnchor>(engine, "ScreenAnchor")
+        .method("void SetCameraObject(Object@)", [](ScreenAnchor &c, EmptyObject *obj) { c.SetCameraObject(obj); })
+        .method("void SetAnchorPoint(const Vector2 &in)", &ScreenAnchor::SetAnchorPoint)
+        .method("const Vector2 &GetAnchorPoint() const", &ScreenAnchor::GetAnchorPoint)
+        .method("void SetOffset(const Vector2 &in)", &ScreenAnchor::SetOffset)
+        .method("const Vector2 &GetOffset() const", &ScreenAnchor::GetOffset);
 
     RegisterComponentType<UIButton>(engine, "UIButton")
         .method("void SetDisplayCameraObject(Object@)", [](UIButton &c, EmptyObject *obj) { c.SetDisplayCameraObject(obj); })
         .method("bool IsHovered() const", &UIButton::IsHovered)
         .method("bool IsPressed() const", &UIButton::IsPressed)
-        .method("bool IsClicked() const", &UIButton::IsClicked);
+        .method("bool IsClicked() const", &UIButton::IsClicked)
+        .method("bool TryGetLocalHoverPosition(Vector2 &out)", &UIButton::TryGetLocalHoverPosition);
 
     RegisterComponentType<MeshButton>(engine, "MeshButton")
         .method("void SetDisplayCameraObject(Object@)", [](MeshButton &c, EmptyObject *obj) { c.SetDisplayCameraObject(obj); })
@@ -1042,7 +1065,10 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("bool GetPreciseMeshTest() const", &MeshButton::GetPreciseMeshTest)
         .method("bool IsHovered() const", &MeshButton::IsHovered)
         .method("bool IsPressed() const", &MeshButton::IsPressed)
-        .method("bool IsClicked() const", &MeshButton::IsClicked);
+        .method("bool IsClicked() const", &MeshButton::IsClicked)
+        .method("void SetDragAxis(const Vector3 &in)", &MeshButton::SetDragAxis)
+        .method("const Vector3 &GetDragAxis() const", &MeshButton::GetDragAxis)
+        .method("bool TryGetAxisDragOffset(float &out)", &MeshButton::TryGetAxisDragOffset);
 
     RegisterComponentType<ShadowMapObject>(engine, "ShadowMapObject")
         .method("void SetName(const string &in)", &ShadowMapObject::SetName)

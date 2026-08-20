@@ -728,6 +728,7 @@
 		"component.audiosource.pause": "一時停止",
 		"component.audiosource.pitch_semitones": "ピッチ（半音）",
 		"component.audiosource.play": "再生",
+		"component.audiosource.play_on_awake": "自動再生",
 		"component.audiosource.q_resonance": "Q（レゾナンス）",
 		"component.audiosource.release": "解放",
 		"component.audiosource.resume": "再開",
@@ -743,6 +744,8 @@
 		"component.videosource.loop": "ループ",
 		"component.videosource.volume": "音量",
 		"component.videosource.play_on_awake": "自動再生",
+		"component.videosource.route_audio_to_audiosource": "AudioSource経由で再生",
+		"component.videosource.route_audio_to_audiosource_desc": "同じオブジェクトのAudioSourceへ音声を出力し、距離減衰・パン・エフェクトを適用する（AudioSourceが必要）",
 		"component.videosource.play": "再生",
 		"component.videosource.resume": "再開",
 		"component.videosource.pause": "一時停止",
@@ -768,6 +771,8 @@
 		"component.boxfiltereffect.intensity": "強度",
 
 		//--------- component.camera2d ---------//
+		"component.camera2d.auto_sync_size": "解像度へ自動追従",
+		"component.camera2d.auto_sync_size_desc": "同オブジェクトのCameraRendererに描画先が単一指定されている場合、その描画先の実解像度へwidth/heightを毎フレーム自動追従させる。描画先が未指定（全描画先へ適用中）の場合は解像度を一意に決められないため何もしない。",
 		"component.camera2d.far": "ファークリップ",
 		"component.camera2d.height": "高さ",
 		"component.camera2d.near": "ニアクリップ",
@@ -775,6 +780,8 @@
 
 		//--------- component.camera3d ---------//
 		"component.camera3d.aspect": "アスペクト比",
+		"component.camera3d.auto_sync_aspect": "アスペクト比へ自動追従",
+		"component.camera3d.auto_sync_aspect_desc": "同オブジェクトのCameraRendererに描画先が単一指定されている場合、その描画先の実解像度から求めたアスペクト比へ毎フレーム自動追従させる。描画先が未指定（全描画先へ適用中）の場合は解像度を一意に決められないため何もしない。",
 		"component.camera3d.enable_jitter": "カメラジッター",
 		"component.camera3d.enable_jitter_desc": "投影行列にサブピクセル単位の揺らぎを加える（TAA風のカメラジッター）。TemporalBlendEffectと組み合わせて使うことを想定しており、単独で有効化すると画面が揺れて見えるだけになる点に注意。",
 		"component.camera3d.far": "ファークリップ",
@@ -1013,6 +1020,8 @@
 		"component.meshbutton.display_camera": "表示カメラ",
 		"component.meshbutton.precise_mesh_test": "メッシュ三角形で正確に判定",
 		"component.meshbutton.precise_mesh_test_desc": "MeshRendererの場合のみ有効。SkinnedMeshRendererは常にバウンディングボックス判定のまま（ボーン変形後の見た目には追従しません）。",
+		"component.meshbutton.drag_axis": "ドラッグ軸",
+		"component.meshbutton.drag_axis_desc": "掴んで軸沿いにドラッグする操作の基準にするローカル軸。ドラッグ中は掴んだ瞬間のワールド回転で固定される。",
 
 		//--------- component.meshcollider ---------//
 		"component.meshcollider.convex": "凸包（Convex）",
@@ -1195,6 +1204,12 @@
 		//--------- component.scenevieworbitstate ---------//
 		"component.scenevieworbitstate.distance": "注視点までの距離",
 
+		//--------- component.screenanchor ---------//
+		"component.screenanchor.anchor_point": "基準点",
+		"component.screenanchor.camera": "基準カメラ",
+		"component.screenanchor.desc": "毎フレーム、基準カメラのwidth/heightと基準点・オフセットから求めた座標へTransformのX/Yを書き換える（Zは変更しない）。基準点は(0,0)=画面左下～(1,1)=画面右上。",
+		"component.screenanchor.offset": "オフセット",
+
 		//--------- component.screenbufferobject ---------//
 		"component.screenbufferobject.directory": "保存先フォルダ",
 		"component.screenbufferobject.file_name_prefix": "ファイル名の接頭辞",
@@ -1210,6 +1225,10 @@
 		//--------- component.screenbufferviewport ---------//
 		"component.screenbufferviewport.desc_delegate": "描画先・アンカー/ピボット・パイプライン等は、同オブジェクトの内部SpriteRendererコンポーネントを直接編集してください。",
 		"component.screenbufferviewport.display_camera": "表示カメラ",
+		"component.screenbufferviewport.fit_mode": "フィットモード",
+		"component.screenbufferviewport.fitmode.letterbox": "レターボックス（アスペクト比維持）",
+		"component.screenbufferviewport.fitmode.none": "なし（手動）",
+		"component.screenbufferviewport.fitmode.stretch": "引き伸ばし",
 		"component.screenbufferviewport.source": "映すScreenBuffer",
 
 		//--------- component.screenwideditherblendeffect ---------//

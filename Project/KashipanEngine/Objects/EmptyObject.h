@@ -130,6 +130,19 @@ public:
     /// @brief 全コンポーネントの取得（コンポーネント本体と追加順のペアのリスト。本体はSceneのプールが所有する非所有ポインタ）
     const std::vector<std::pair<IObjectComponent *, size_t>> &GetAllComponents() const { return components_; }
 
+    /// @brief Transform・ScriptComponent以外の全コンポーネントをまとめて有効/無効化する
+    /// @details 「見た目や当たり判定は消すが、スクリプト自身のロジック（タイマー等）は
+    ///          動かし続けたい」場合に使う（例: 敵撃破時、パーティクル再生を待つ間だけ
+    ///          スクリプトを生かしたまま他の全コンポーネントを止めたい、等）
+    void SetComponentsActiveExceptTransformAndScript(bool active) {
+        for (auto &[component, addedID] : components_) {
+            if (!component) continue;
+            const std::string &type = component->GetComponentType();
+            if (type == "Transform" || type == "ScriptComponent") continue;
+            component->SetActive(active);
+        }
+    }
+
     //==================================================
     // コンポーネント追加系メソッド
     //==================================================

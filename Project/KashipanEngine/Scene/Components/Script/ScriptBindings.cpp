@@ -1520,6 +1520,7 @@ void RegisterObjectTypes(asIScriptEngine *engine) {
         .method("void SetName(const string &in)", &EmptyObject::SetName)
         .method("bool IsActive() const", &EmptyObject::IsActive)
         .method("void SetActive(bool)", &EmptyObject::SetActive)
+        .method("void SetComponentsActiveExceptTransformAndScript(bool)", &EmptyObject::SetComponentsActiveExceptTransformAndScript)
         .method("void SetTag(const string &in)", &EmptyObject::SetTag)
         .method("Tag GetTag() const", [](const EmptyObject &obj) -> Tag { return obj.GetTag(); })
         .method("const string &GetTagName() const", &EmptyObject::GetTagName)

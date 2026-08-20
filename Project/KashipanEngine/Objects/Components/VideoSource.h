@@ -3,10 +3,12 @@
 #include <cstdint>
 #include <string>
 
+#include "Assets/AudioManager.h"
 #include "Assets/MaterialManager.h"
 #include "Assets/VideoManager.h"
 #include "Assets/VideoPlayer.h"
 #include "Objects/ObjectComponentHeader.h"
+#include "Objects/Components/AudioSource.h"
 #include "Objects/Components/Render/MeshRenderer.h"
 #include "Objects/Components/Render/SpriteRenderer.h"
 #include "Utilities/AssetDragDropPayload.h"
@@ -28,6 +30,7 @@ public:
         ADD_MEMBER_VARIABLE(loop_);
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(volume_, [this] { volume_ = std::clamp(volume_, 0.0f, 1.0f); });
         ADD_MEMBER_VARIABLE(playOnAwake_);
+        ADD_MEMBER_VARIABLE(routeAudioToAudioSource_);
     )
     COMPONENT_CATEGORY("Video")
     ~VideoSource() override { Stop(); }
@@ -38,6 +41,7 @@ public:
         ptr->loop_ = loop_;
         ptr->volume_ = volume_;
         ptr->playOnAwake_ = playOnAwake_;
+        ptr->routeAudioToAudioSource_ = routeAudioToAudioSource_;
         return ptr;
     }
 
@@ -62,12 +66,22 @@ public:
         }
 
         ApplyToRenderer();
+        if (routeAudioToAudioSource_) {
+            if (auto *audioSource = ResolveAudioSource()) {
+                audioSource->AttachExternalPlayHandle(currentPlayer_->GetAudioPlayHandle());
+            }
+        }
         return true;
     }
 
     /// @brief 停止する（レンダラーのマテリアルも元へ戻す）
     void Stop() {
         RevertRenderer();
+        if (routeAudioToAudioSource_) {
+            if (auto *audioSource = ResolveAudioSource()) {
+                audioSource->Stop();
+            }
+        }
         if (currentPlayer_) {
             VideoManager::DestroyPlayer(currentPlayer_);
             currentPlayer_ = nullptr;
@@ -110,6 +124,12 @@ public:
     void SetPlayOnAwake(bool playOnAwake) { playOnAwake_ = playOnAwake; }
     bool GetPlayOnAwake() const noexcept { return playOnAwake_; }
 
+    /// @brief 動画の音声を、同じオブジェクトのAudioSourceへ出力する（距離減衰・パン・エフェクトを適用したい場合）かどうかを設定する
+    /// @details 再生開始時に、同じオブジェクトのAudioSource::AttachExternalPlayHandle()へ
+    ///          動画の音声再生ハンドルを渡す。AudioSourceが無い場合は何もしない
+    void SetRouteAudioToAudioSource(bool routeAudioToAudioSource) { routeAudioToAudioSource_ = routeAudioToAudioSource; }
+    bool GetRouteAudioToAudioSource() const noexcept { return routeAudioToAudioSource_; }
+
 protected:
     void Initialize() override {
         if (playOnAwake_) Play();
@@ -134,6 +154,10 @@ protected:
         ImGui::Checkbox(TranslationLabel("component.videosource.loop"), &loop_);
         ImGui::DragFloat(TranslationLabel("component.videosource.volume"), &volume_, 0.01f, 0.0f, 1.0f);
         ImGui::Checkbox(TranslationLabel("component.videosource.play_on_awake"), &playOnAwake_);
+        ImGui::Checkbox(TranslationLabel("component.videosource.route_audio_to_audiosource"), &routeAudioToAudioSource_);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", TranslationC("component.videosource.route_audio_to_audiosource_desc"));
+        }
 
         ImGui::Separator();
         if (!IsPlaying()) {
@@ -153,7 +177,8 @@ protected:
     JSON SaveToJson() const override {
         return JSON{
             {"videoAssetPath", videoAssetPath_}, {"loop", loop_},
-            {"volume", volume_}, {"playOnAwake", playOnAwake_}
+            {"volume", volume_}, {"playOnAwake", playOnAwake_},
+            {"routeAudioToAudioSource", routeAudioToAudioSource_}
         };
     }
 
@@ -163,10 +188,17 @@ protected:
         loop_ = json.value("loop", false);
         volume_ = json.value("volume", 1.0f);
         playOnAwake_ = json.value("playOnAwake", true);
+        routeAudioToAudioSource_ = json.value("routeAudioToAudioSource", false);
         return true;
     }
 
 private:
+    /// @brief 同じオブジェクトのAudioSourceを取得する（無ければnullptr）
+    AudioSource *ResolveAudioSource() const {
+        auto *objectContext = GetOwnerObjectContext();
+        return objectContext ? objectContext->GetComponent<AudioSource>() : nullptr;
+    }
+
     VideoManager::VideoHandle ResolveVideoHandle() const {
         if (videoHandle_ == VideoManager::kInvalidHandle && !videoAssetPath_.empty()) {
             videoHandle_ = VideoManager::GetVideoHandleFromAssetPath(videoAssetPath_);
@@ -229,6 +261,7 @@ private:
     bool loop_ = false;
     float volume_ = 1.0f;
     bool playOnAwake_ = true;
+    bool routeAudioToAudioSource_ = false;
 
     VideoPlayer *currentPlayer_ = nullptr;
 

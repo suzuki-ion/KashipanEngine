@@ -509,4 +509,6 @@ std::uint32_t VideoPlayer::GetHeight() const noexcept { return impl_->height; }
 
 TextureManager::TextureHandle VideoPlayer::GetTextureHandle() const noexcept { return impl_->rgbaHandle; }
 
+AudioManager::PlayHandle VideoPlayer::GetAudioPlayHandle() const noexcept { return impl_->playHandle; }
+
 } // namespace KashipanEngine

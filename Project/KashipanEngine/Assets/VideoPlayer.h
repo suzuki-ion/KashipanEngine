@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 
+#include "Assets/AudioManager.h"
 #include "Assets/MaterialManager.h"
 #include "Utilities/Passkeys.h"
 
@@ -64,6 +65,13 @@ public:
 
     /// @brief 内部のVideoTextureを取得する（Renderer::ProcessVideoConversions向けにVideoManagerが中継する）
     VideoTexture *GetVideoTexture(Passkey<VideoManager>) const;
+
+    /// @brief 音声トラック再生に使っているAudioManagerのPlayHandleを取得する
+    /// @details 映像フレーム表示タイミングのマスタークロックとして使われているハンドルそのものなので、
+    ///          呼び出し側でAudioManager::Stop()等を呼んで停止させないこと（VideoPlayer::Stop()が
+    ///          自身の責任で停止・解放する）。AudioSource::AttachExternalPlayHandle()経由で
+    ///          Spatial Audio/エフェクトだけを重ねて適用する用途を想定している
+    AudioManager::PlayHandle GetAudioPlayHandle() const noexcept;
 
 private:
     struct Impl;

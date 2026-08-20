@@ -61,6 +61,7 @@ public:
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(volume_, [this] { volume_ = std::clamp(volume_, 0.0f, 1.0f); });
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(pitch_, [this] { SetPitch(pitch_); });
         ADD_MEMBER_VARIABLE(loop_);
+        ADD_MEMBER_VARIABLE(playOnAwake_);
         ADD_MEMBER_VARIABLE(minDistance_);
         ADD_MEMBER_VARIABLE(maxDistance_);
         ADD_MEMBER_VARIABLE(enableSpatialAudio_);
@@ -90,6 +91,7 @@ public:
         ptr->volume_ = volume_;
         ptr->pitch_ = pitch_;
         ptr->loop_ = loop_;
+        ptr->playOnAwake_ = playOnAwake_;
         ptr->minDistance_ = minDistance_;
         ptr->maxDistance_ = maxDistance_;
         ptr->filter_ = filter_;
@@ -128,11 +130,32 @@ public:
         return currentPlayHandle_;
     }
 
-    /// @brief 再生を停止する
+    /// @brief 外部（VideoSourceの動画音声など）が既に再生中のPlayHandleに対して、
+    ///        Spatial Audio（距離減衰・パン・籠り）とエフェクトだけを適用する
+    /// @details 対象ハンドルの生成・破棄はこちら側では行わない。Stop()を呼んでも
+    ///          AudioManager::Stop()は呼ばれず、単にこのAudioSourceからの参照を外すだけになる
+    ///          （映像と音声の同期用マスタークロックとして使われている場合等に、誤って
+    ///          その音声自体を止めてしまわないようにするため）
+    void AttachExternalPlayHandle(AudioManager::PlayHandle handle) {
+        Stop();
+        if (handle == AudioManager::kInvalidPlayHandle) return;
+        currentPlayHandle_ = handle;
+        isExternalHandle_ = true;
+        AudioManager::SetPan(currentPlayHandle_, 0.0f);
+        lastMuffleAmount_ = 0.0f;
+        SetPitch(pitch_);
+        ApplyChainEffects();
+        ApplyFilterAndReverb(0.0f);
+    }
+
+    /// @brief 再生を停止する（外部ハンドルにアタッチ中の場合は、そのハンドル自体は止めず参照を外すだけ）
     void Stop() {
         if (currentPlayHandle_ != AudioManager::kInvalidPlayHandle) {
-            AudioManager::Stop(currentPlayHandle_);
+            if (!isExternalHandle_) {
+                AudioManager::Stop(currentPlayHandle_);
+            }
             currentPlayHandle_ = AudioManager::kInvalidPlayHandle;
+            isExternalHandle_ = false;
         }
     }
     /// @brief 一時停止する
@@ -169,6 +192,10 @@ public:
 
     void SetLoop(bool loop) { loop_ = loop; }
     bool GetLoop() const noexcept { return loop_; }
+
+    /// @brief シーン開始時（Initialize時）に自動で再生を開始するかどうかを設定する
+    void SetPlayOnAwake(bool playOnAwake) { playOnAwake_ = playOnAwake; }
+    bool GetPlayOnAwake() const noexcept { return playOnAwake_; }
 
     void SetMinDistance(float minDistance) { minDistance_ = std::max(0.0f, minDistance); }
     float GetMinDistance() const noexcept { return minDistance_; }
@@ -252,6 +279,7 @@ protected:
     void Initialize() override {
         auto *player = GetOrAddSceneAudioPlayer();
         if (player) player->RegisterSource(this);
+        if (playOnAwake_) Play();
     }
 
     void Finalize() override {
@@ -273,6 +301,7 @@ protected:
         ImGui::DragFloat(TranslationLabel("component.audiosource.volume"), &volume_, 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat(TranslationLabel("component.audiosource.pitch_semitones"), &pitch_, 0.1f, -24.0f, 24.0f);
         ImGui::Checkbox(TranslationLabel("component.audiosource.loop"), &loop_);
+        ImGui::Checkbox(TranslationLabel("component.audiosource.play_on_awake"), &playOnAwake_);
         ImGui::DragFloat(TranslationLabel("component.audiosource.min_distance"), &minDistance_, 0.1f, 0.0f, maxDistance_);
         ImGui::DragFloat(TranslationLabel("component.audiosource.max_distance"), &maxDistance_, 0.1f, minDistance_, 10000.0f);
 
@@ -409,6 +438,7 @@ protected:
 
         return JSON{
             {"soundName", soundName_}, {"volume", volume_}, {"pitch", pitch_}, {"loop", loop_},
+            {"playOnAwake", playOnAwake_},
             {"minDistance", minDistance_}, {"maxDistance", maxDistance_},
             {"effects", effects}, {"enableSpatialAudio", enableSpatialAudio_}
         };
@@ -420,6 +450,7 @@ protected:
         volume_ = json.value("volume", 1.0f);
         pitch_ = json.value("pitch", 0.0f);
         loop_ = json.value("loop", false);
+        playOnAwake_ = json.value("playOnAwake", true);
         minDistance_ = json.value("minDistance", 1.0f);
         maxDistance_ = json.value("maxDistance", 25.0f);
         enableSpatialAudio_ = json.value("enableSpatialAudio", false);
@@ -575,6 +606,7 @@ private:
     float volume_ = 1.0f;
     float pitch_ = 0.0f;
     bool loop_ = false;
+    bool playOnAwake_ = true;
     float minDistance_ = 1.0f;
     float maxDistance_ = 25.0f;
     FilterEffect filter_;
@@ -587,6 +619,9 @@ private:
     float lastMuffleAmount_ = 0.0f;
 
     AudioManager::PlayHandle currentPlayHandle_ = AudioManager::kInvalidPlayHandle;
+    /// @brief currentPlayHandle_がAttachExternalPlayHandle()経由の外部所有ハンドルかどうか
+    /// @details trueの場合、Stop()はAudioManager::Stop()を呼ばず参照を外すだけになる
+    bool isExternalHandle_ = false;
 };
 
 REGISTER_COMPONENT_OBJECT(AudioSource)

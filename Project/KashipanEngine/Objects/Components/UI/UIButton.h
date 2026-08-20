@@ -76,11 +76,25 @@ public:
     /// @brief このフレームでクリックが確定した瞬間かどうか（ボタン上で押して、ボタン上で離した時のみtrue）
     bool IsClicked() const noexcept { return isClicked_; }
 
+    /// @brief 直近のUpdate()時点での、対象矩形（SpriteRenderer/TextRenderer）基準のローカルUV座標を取得する
+    /// @details (0,0)=矩形の左下 ～ (1,1)=矩形の右上。矩形の外（負値や1超過）の値もそのまま返るため、
+    ///          IsPressed()中にカーソルが矩形の外へ出た場合でも位置を追い続けられる（スライダー等の
+    ///          ドラッグ操作の実装に使える）。ウィンドウ/表示カメラ/対象コンポーネントのいずれかが
+    ///          解決できず座標を計算できなかった場合はfalseを返す（outUVは変更しない）
+    bool TryGetLocalHoverPosition(Vector2 &outUV) const {
+        if (!hasValidLocalUV_) return false;
+        outUV = lastLocalUV_;
+        return true;
+    }
+
 protected:
     void Update() override {
         isClicked_ = false;
 
-        const bool hoveredNow = ComputeIsHovered();
+        hasValidLocalUV_ = ComputeLocalUV(lastLocalUV_);
+        const bool hoveredNow = hasValidLocalUV_ &&
+            lastLocalUV_.x >= 0.0f && lastLocalUV_.x <= 1.0f &&
+            lastLocalUV_.y >= 0.0f && lastLocalUV_.y <= 1.0f;
         isHovered_ = hoveredNow;
 
         auto *sceneContext = GetOwnerSceneContext();
@@ -108,6 +122,9 @@ protected:
         ImGui::TextDisabled("%s", TranslationC("component.uibutton.desc"));
         ImGui::Text("Hovered: %s / Pressed: %s / Clicked: %s",
             isHovered_ ? "true" : "false", isPressed_ ? "true" : "false", isClicked_ ? "true" : "false");
+        if (hasValidLocalUV_) {
+            ImGui::Text("Local UV: (%.3f, %.3f)", lastLocalUV_.x, lastLocalUV_.y);
+        }
     }
 #endif
 
@@ -138,11 +155,11 @@ private:
     }
 
     /// @brief TextRendererの各文字インスタンス（ワールド行列）から、テキスト全体の外接矩形
-    ///        （ワールド空間AABB）を求め、その中にworldPosが入っているかを判定する
+    ///        （ワールド空間AABB）を求める
     /// @details 各文字は単位クアッド（-0.5～0.5）をworldMatrixで変換したもの。回転・傾斜（イタリック）
     ///          や文字ごとのオフセット/回転オーバーライドが付いていても、4隅を変換して外接させるため
     ///          破綻しない（回転が大きい場合は矩形がやや大きめになる程度）
-    static bool IsInsideTextBounds(const TextRenderer *textRenderer, const Vector3 &worldPos) {
+    static bool ComputeTextWorldBounds(const TextRenderer *textRenderer, Vector3 &outMin, Vector3 &outMax) {
         const auto instances = textRenderer->GetRenderInstances();
         if (instances.empty()) return false;
 
@@ -164,19 +181,21 @@ private:
                 maxY = std::max(maxY, p.y);
             }
         }
-        return worldPos.x >= minX && worldPos.x <= maxX && worldPos.y >= minY && worldPos.y <= maxY;
+        outMin = Vector3(minX, minY, 0.0f);
+        outMax = Vector3(maxX, maxY, 0.0f);
+        return true;
     }
 
-    /// @brief 現在のマウス座標がボタンの矩形（同オブジェクトのSpriteRenderer/TextRendererの表示範囲）
-    ///        内にあるかを判定する
+    /// @brief 現在のマウス座標を、ボタンの矩形（同オブジェクトのSpriteRenderer/TextRendererの表示範囲）
+    ///        基準のローカルUV座標（(0,0)=左下～(1,1)=右上、範囲外もありうる）へ変換する
     /// @details ScreenBufferViewport::TryGetOffscreenMousePositionと同じ変換パイプライン
     ///          （Windowクライアント座標 → NDC → 表示カメラの逆ビュー射影でワールド座標）でマウスの
-    ///          ワールド座標を求めるところまでは共通。そこから先の当たり判定方法だけ対象コンポーネント
-    ///          で分かれる： SpriteRendererはスプライトの逆ワールド行列でローカル座標へ変換して
-    ///          単位クアッド範囲内かを見る（矩形サイズはTransformのスケールに追従）。TextRendererは
-    ///          表示中の文字列から都度測った外接矩形（ワールド空間）に対して直接判定する（矩形サイズは
-    ///          文字列・フォントサイズに追従して動的に変わる）
-    bool ComputeIsHovered() const {
+    ///          ワールド座標を求めるところまでは共通。そこから先のローカルUVへの変換方法だけ対象
+    ///          コンポーネントで分かれる： SpriteRendererはスプライトの逆ワールド行列でローカル座標へ
+    ///          変換する（矩形サイズはTransformのスケールに追従）。TextRendererは表示中の文字列から
+    ///          都度測った外接矩形（ワールド空間）を基準にする（矩形サイズは文字列・フォントサイズに
+    ///          追従して動的に変わる）
+    bool ComputeLocalUV(Vector2 &outUV) const {
         auto *objectContext = GetOwnerObjectContext();
         if (!objectContext) return false;
 
@@ -220,19 +239,28 @@ private:
             const Matrix4x4 spriteWorldInverse = spriteRenderer->GetWorldMatrix().Inverse();
             const Vector3 localPos = worldPos.Transform(spriteWorldInverse);
 
-            // 4. ローカル座標が単位クアッド範囲内（(0,0)=左下～(1,1)=右上）にあるかどうか
-            const float nx = localPos.x + 0.5f;
-            const float ny = localPos.y + 0.5f;
-            return nx >= 0.0f && nx <= 1.0f && ny >= 0.0f && ny <= 1.0f;
+            // 4. ローカル座標を単位クアッド空間から(0,0)=左下～(1,1)=右上のUVへ変換する
+            outUV.x = localPos.x + 0.5f;
+            outUV.y = localPos.y + 0.5f;
+            return true;
         }
 
-        return IsInsideTextBounds(textRenderer, worldPos);
+        Vector3 aabbMin, aabbMax;
+        if (!ComputeTextWorldBounds(textRenderer, aabbMin, aabbMax)) return false;
+        const float width = aabbMax.x - aabbMin.x;
+        const float height = aabbMax.y - aabbMin.y;
+        if (width <= 0.0f || height <= 0.0f) return false;
+        outUV.x = (worldPos.x - aabbMin.x) / width;
+        outUV.y = (worldPos.y - aabbMin.y) / height;
+        return true;
     }
 
     UUID128 displayCameraObjectID_{};
     bool isHovered_ = false;
     bool isPressed_ = false;
     bool isClicked_ = false;
+    Vector2 lastLocalUV_{ 0.0f, 0.0f };
+    bool hasValidLocalUV_ = false;
 };
 
 REGISTER_COMPONENT_OBJECT(UIButton)

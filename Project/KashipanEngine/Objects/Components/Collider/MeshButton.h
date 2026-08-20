@@ -52,6 +52,7 @@ public:
         auto ptr = std::make_unique<MeshButton>();
         ptr->displayCameraObjectID_ = displayCameraObjectID_;
         ptr->preciseMeshTest_ = preciseMeshTest_;
+        ptr->dragAxis_ = dragAxis_;
         return ptr;
     }
 
@@ -79,6 +80,10 @@ public:
     void SetPreciseMeshTest(bool enable) noexcept { preciseMeshTest_ = enable; }
     bool GetPreciseMeshTest() const noexcept { return preciseMeshTest_; }
 
+    /// @brief 掴んで軸沿いにドラッグする操作の基準にする、オブジェクトのローカル軸を設定する（既定は+X）
+    void SetDragAxis(const Vector3 &localAxis) { dragAxis_ = localAxis; }
+    const Vector3 &GetDragAxis() const noexcept { return dragAxis_; }
+
     //==================================================
     // 状態取得
     //==================================================
@@ -92,9 +97,26 @@ public:
     /// @brief このフレームでクリックが確定した瞬間かどうか（オブジェクト上で押して、上で離した時のみtrue）
     bool IsClicked() const noexcept { return isClicked_; }
 
+    /// @brief 掴んで軸沿いにドラッグしている間の、軸原点（掴んだ瞬間のオブジェクトのワールド座標）
+    ///        からの符号付きオフセット（ワールド単位）を取得する
+    /// @details 軸方向はSetDragAxisで指定したローカル軸を、掴んだ瞬間のオブジェクトのワールド回転で
+    ///          変換したもの（ドラッグ中にオブジェクトが回転しても軸自体は掴んだ瞬間のまま固定される）。
+    ///          値は現在のマウスレイと軸（無限直線）との最近接点までの距離で、範囲のクランプはしない
+    ///          （呼び出し側で用途に応じてクランプ・正規化すること）。オブジェクトの矩形/ボリュームを
+    ///          外れてもレイと軸の交点計算自体は破綻しないため、UIButton::TryGetLocalHoverPositionと
+    ///          異なりドラッグ対象から大きく外れても値は取得できる。離した後は次に掴むまで最後の値を
+    ///          保持する。一度も掴んでいない、またはカメラ視線とドラッグ軸がほぼ平行で計算が不安定な
+    ///          場合はfalseを返す（outOffsetは変更しない）
+    bool TryGetAxisDragOffset(float &outOffset) const {
+        if (!hasValidDragOffset_) return false;
+        outOffset = lastDragOffset_;
+        return true;
+    }
+
 protected:
     void Update() override {
         isClicked_ = false;
+        const bool wasPressed = isPressed_;
 
         const bool hoveredNow = ComputeIsHovered();
         isHovered_ = hoveredNow;
@@ -103,18 +125,32 @@ protected:
         Input *input = sceneContext ? sceneContext->GetInput() : nullptr;
         if (!input) {
             isPressed_ = false;
-            return;
-        }
-        Mouse &mouse = input->GetMouse();
-        constexpr int kLeftButton = static_cast<int>(MouseButton::Left);
+        } else {
+            Mouse &mouse = input->GetMouse();
+            constexpr int kLeftButton = static_cast<int>(MouseButton::Left);
 
-        if (!isPressed_) {
-            if (hoveredNow && mouse.IsButtonTrigger(kLeftButton)) {
-                isPressed_ = true;
+            if (!isPressed_) {
+                if (hoveredNow && mouse.IsButtonTrigger(kLeftButton)) {
+                    isPressed_ = true;
+                    CaptureDragAxisReference();
+                }
+            } else if (mouse.IsButtonRelease(kLeftButton)) {
+                if (hoveredNow) isClicked_ = true;
+                isPressed_ = false;
             }
-        } else if (mouse.IsButtonRelease(kLeftButton)) {
-            if (hoveredNow) isClicked_ = true;
-            isPressed_ = false;
+        }
+
+        // 掴んでいる間（離した瞬間のこのフレームまで）は毎フレームオフセットを更新する。
+        // 離した後は次に掴むまで最後の値を保持したままにする
+        if ((wasPressed || isPressed_) && hasDragAxisReference_) {
+            Vector3 rayWorldStart, rayWorldEnd;
+            if (ComputeMouseWorldRay(rayWorldStart, rayWorldEnd)) {
+                float offset = 0.0f;
+                if (ComputeAxisDragOffset(rayWorldStart, rayWorldEnd - rayWorldStart, offset)) {
+                    lastDragOffset_ = offset;
+                    hasValidDragOffset_ = true;
+                }
+            }
         }
     }
 
@@ -123,9 +159,14 @@ protected:
         TargetObjectSelector::ShowSelector(TranslationLabel("component.meshbutton.display_camera"), GetOwnerSceneContext(), displayCameraObjectID_, true, false);
         ImGui::Checkbox(TranslationLabel("component.meshbutton.precise_mesh_test"), &preciseMeshTest_);
         ImGui::TextDisabled("%s", TranslationC("component.meshbutton.precise_mesh_test_desc"));
+        ImGui::DragFloat3(TranslationLabel("component.meshbutton.drag_axis"), &dragAxis_.x, 0.01f);
+        ImGui::TextDisabled("%s", TranslationC("component.meshbutton.drag_axis_desc"));
         ImGui::TextDisabled("%s", TranslationC("component.meshbutton.desc"));
         ImGui::Text("Hovered: %s / Pressed: %s / Clicked: %s",
             isHovered_ ? "true" : "false", isPressed_ ? "true" : "false", isClicked_ ? "true" : "false");
+        if (hasValidDragOffset_) {
+            ImGui::Text("Axis Drag Offset: %.3f", lastDragOffset_);
+        }
     }
 #endif
 
@@ -133,11 +174,13 @@ protected:
         JSON json = JSON::object();
         json["displayCameraObjectID"] = ToJSON(displayCameraObjectID_);
         json["preciseMeshTest"] = preciseMeshTest_;
+        json["dragAxis"] = ToJSON(dragAxis_);
         return json;
     }
     bool LoadFromJson(const JSON &json) override {
         displayCameraObjectID_ = json.contains("displayCameraObjectID") ? FromJSON<UUID128>(json["displayCameraObjectID"]) : UUID128();
         preciseMeshTest_ = json.value("preciseMeshTest", false);
+        dragAxis_ = json.contains("dragAxis") ? FromJSON<Vector3>(json["dragAxis"]) : Vector3(1.0f, 0.0f, 0.0f);
         return true;
     }
 
@@ -255,18 +298,14 @@ private:
         return false;
     }
 
-    /// @brief 現在のマウス座標がオブジェクトの当たり判定内にあるかを判定する
-    /// @details Windowクライアント座標 → NDC → 表示カメラ(Camera3D)の逆ビュー射影で近平面/遠平面へ
-    ///          逆射影しワールド空間のレイを作る → オブジェクトの逆ワールド行列でレイをローカル空間へ
-    ///          （アフィン変換なので線分パラメータtは保存される）変換し、メッシュのローカル空間
-    ///          バウンディングボックスと交差判定する。preciseMeshTest_が有効かつMeshRendererの場合のみ、
-    ///          バウンディングボックスに交差した後さらに全三角形との交差判定まで行う
-    bool ComputeIsHovered() const {
+    /// @brief 対象（MeshRenderer/SkinnedMeshRenderer）の描画先ウィンドウ・表示カメラ(Camera3D)から、
+    ///        現在のマウス座標に対応するワールド空間のレイ（近平面上の点と遠平面上の点）を計算する
+    /// @details ScreenBufferViewport::TryGetOffscreenMousePositionと同じ変換パイプライン
+    ///          （Windowクライアント座標 → NDC）の先を、Camera3Dの逆ビュー射影で近平面/遠平面へ
+    ///          逆射影する形にしたもの。ComputeIsHovered/ComputeAxisDragOffsetの両方から使う
+    bool ComputeMouseWorldRay(Vector3 &outRayStart, Vector3 &outRayEnd) const {
         auto *objectContext = GetOwnerObjectContext();
         if (!objectContext) return false;
-
-        auto *meshFilter = objectContext->GetComponent<MeshFilter>();
-        if (!meshFilter || !meshFilter->HasMesh()) return false;
 
         auto *meshRenderer = objectContext->GetComponent<MeshRenderer>();
         auto *skinnedMeshRenderer = meshRenderer ? nullptr : objectContext->GetComponent<SkinnedMeshRenderer>();
@@ -299,31 +338,94 @@ private:
         projection.MakePerspectiveFovMatrix(camera3d->GetFovY(), camera3d->GetAspectRatio(), camera3d->GetNearClip(), camera3d->GetFarClip());
         const Matrix4x4 view = cameraTransform->GetWorldMatrix().Inverse();
         const Matrix4x4 viewProjectionInverse = (view * projection).Inverse();
-        const Vector3 rayWorldStart = Vector3(ndcX, ndcY, 0.0f).Transform(viewProjectionInverse);
-        const Vector3 rayWorldEnd = Vector3(ndcX, ndcY, 1.0f).Transform(viewProjectionInverse);
+        outRayStart = Vector3(ndcX, ndcY, 0.0f).Transform(viewProjectionInverse);
+        outRayEnd = Vector3(ndcX, ndcY, 1.0f).Transform(viewProjectionInverse);
+        return true;
+    }
 
-        // 3. レイをオブジェクトのローカル空間へ変換する（アフィン変換なので線分パラメータtは保存される）
+    /// @brief 現在のマウス座標がオブジェクトの当たり判定内にあるかを判定する
+    /// @details ComputeMouseWorldRayでワールド空間のレイを作る → オブジェクトの逆ワールド行列でレイを
+    ///          ローカル空間へ（アフィン変換なので線分パラメータtは保存される）変換し、メッシュの
+    ///          ローカル空間バウンディングボックスと交差判定する。preciseMeshTest_が有効かつ
+    ///          MeshRendererの場合のみ、バウンディングボックスに交差した後さらに全三角形との
+    ///          交差判定まで行う
+    bool ComputeIsHovered() const {
+        auto *objectContext = GetOwnerObjectContext();
+        if (!objectContext) return false;
+
+        auto *meshFilter = objectContext->GetComponent<MeshFilter>();
+        if (!meshFilter || !meshFilter->HasMesh()) return false;
+
+        auto *meshRenderer = objectContext->GetComponent<MeshRenderer>();
+
+        Vector3 rayWorldStart, rayWorldEnd;
+        if (!ComputeMouseWorldRay(rayWorldStart, rayWorldEnd)) return false;
+
+        // レイをオブジェクトのローカル空間へ変換する（アフィン変換なので線分パラメータtは保存される）
         auto *transform = objectContext->GetComponent<Transform>();
         const Matrix4x4 world = transform ? transform->GetWorldMatrix() : Matrix4x4::Identity();
         const Matrix4x4 worldInverse = world.Inverse();
         const Vector3 localStart = rayWorldStart.Transform(worldInverse);
         const Vector3 localDir = rayWorldEnd.Transform(worldInverse) - localStart;
 
-        // 4. バウンディングボックス判定（常に実行。preciseMeshTest_無効時はこれが最終結果）
+        // バウンディングボックス判定（常に実行。preciseMeshTest_無効時はこれが最終結果）
         const auto meshHandle = meshFilter->GetMeshHandle();
         Vector3 aabbMin, aabbMax;
         if (!GetCachedLocalAabb(meshHandle, aabbMin, aabbMax)) return false;
         if (!SegmentIntersectsAabb(localStart, localDir, aabbMin, aabbMax)) return false;
 
-        // 5. MeshRenderer限定・preciseMeshTest_有効時のみ、三角形との正確な交差判定まで行う
+        // MeshRenderer限定・preciseMeshTest_有効時のみ、三角形との正確な交差判定まで行う
         if (meshRenderer && preciseMeshTest_) {
             return IntersectsMeshTriangles(meshHandle, localStart, localDir);
         }
         return true;
     }
 
+    /// @brief 掴んで軸沿いにドラッグする操作の基準（軸原点・軸方向）を、現在のTransformから記録する
+    void CaptureDragAxisReference() {
+        hasDragAxisReference_ = false;
+        auto *objectContext = GetOwnerObjectContext();
+        auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
+        if (!transform) return;
+
+        const Matrix4x4 world = transform->GetWorldMatrix();
+        dragAxisOriginWorld_ = Vector3(world.m[3][0], world.m[3][1], world.m[3][2]);
+
+        // ローカル軸を平行移動成分を除いた回転・スケールだけで変換する（Vector3 * Matrix4x4は方向用）
+        Vector3 dirWorld = dragAxis_ * world;
+        if (dirWorld.Length() <= 1e-6f) return;
+        dragAxisDirWorld_ = dirWorld.Normalize();
+        hasDragAxisReference_ = true;
+    }
+
+    /// @brief 現在のマウスレイと、掴んだ瞬間に記録した軸（無限直線）との最近接点を求め、
+    ///        軸原点からの符号付き距離（ワールド単位）を返す
+    /// @details 2直線間の最近接点を求める標準的な式（Ericson "Real-Time Collision Detection"）。
+    ///          カメラ視線とドラッグ軸がほぼ平行な場合は分母が0に近づき不安定になるため、
+    ///          その場合はfalseを返す
+    bool ComputeAxisDragOffset(const Vector3 &rayOrigin, const Vector3 &rayDir, float &outOffset) const {
+        const Vector3 &d1 = rayDir;
+        const Vector3 &d2 = dragAxisDirWorld_;
+        const Vector3 r = rayOrigin - dragAxisOriginWorld_;
+
+        const float a = d1.Dot(d1);
+        const float e = d2.Dot(d2);
+        const float b = d1.Dot(d2);
+        const float c = d1.Dot(r);
+        const float f = d2.Dot(r);
+
+        constexpr float kEpsilon = 1e-6f;
+        if (a <= kEpsilon || e <= kEpsilon) return false;
+        const float denom = a * e - b * b;
+        if (std::abs(denom) <= kEpsilon) return false;
+
+        outOffset = (a * f - b * c) / denom;
+        return true;
+    }
+
     UUID128 displayCameraObjectID_{};
     bool preciseMeshTest_ = false;
+    Vector3 dragAxis_{ 1.0f, 0.0f, 0.0f };
     bool isHovered_ = false;
     bool isPressed_ = false;
     bool isClicked_ = false;
@@ -331,6 +433,12 @@ private:
     mutable ModelManager::ModelHandle cachedAabbMeshHandle_ = ModelManager::kInvalidHandle;
     mutable Vector3 cachedAabbMin_{};
     mutable Vector3 cachedAabbMax_{};
+
+    bool hasDragAxisReference_ = false;
+    Vector3 dragAxisOriginWorld_{};
+    Vector3 dragAxisDirWorld_{};
+    bool hasValidDragOffset_ = false;
+    float lastDragOffset_ = 0.0f;
 };
 
 REGISTER_COMPONENT_OBJECT(MeshButton)

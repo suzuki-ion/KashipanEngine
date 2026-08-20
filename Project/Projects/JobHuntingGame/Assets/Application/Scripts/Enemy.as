@@ -23,6 +23,12 @@ class Enemy : ScriptComponentBehavior {
     [SerializeField]
     bool requestDefeat = false;
 
+    [SerializeField, Tooltip("倒された瞬間に再生するパーティクル（ParticleSystem3Dを持つオブジェクト）")]
+    Object@ defeatParticleObject;
+
+    [SerializeField, Tooltip("倒された瞬間に、このオブジェクトと一緒に無効化する（SetActive(false)する）オブジェクト群")]
+    array<Object@>@ objectsToDisableOnDefeat = null;
+
     // --- 実行時状態（保存不要） ---
     bool isAlive = true;
     bool isCollidingWithPlayer = false;
@@ -102,7 +108,31 @@ class Enemy : ScriptComponentBehavior {
     void Defeat() {
         isAlive = false;
         Log(GetOwnerObject().GetName() + " defeated!");
-        GetOwnerObject().SetActive(false);
+
+        // TransformとこのScriptComponent自身以外の全コンポーネント（レンダラー・コライダー・
+        // ライト等）をまとめて無効化する（Transformは位置を保つため、スクリプトは自身の
+        // ロジック[今後の拡張用]を動かし続けるために除外する）
+        GetOwnerObject().SetComponentsActiveExceptTransformAndScript(false);
+
+        DisableAdditionalObjects();
+        PlayDefeatParticle();
+    }
+
+    // objectsToDisableOnDefeatで指定された各オブジェクトを、まるごと無効化する
+    void DisableAdditionalObjects() {
+        if (objectsToDisableOnDefeat is null) return;
+        for (uint i = 0; i < objectsToDisableOnDefeat.length(); ++i) {
+            if (objectsToDisableOnDefeat[i] !is null) objectsToDisableOnDefeat[i].SetActive(false);
+        }
+    }
+
+    void PlayDefeatParticle() {
+        if (defeatParticleObject is null) return;
+
+        ParticleSystem3D@ particle;
+        if (!defeatParticleObject.GetComponent(@particle)) return;
+
+        particle.Play();
     }
 
     // 進行方向の反転判定。

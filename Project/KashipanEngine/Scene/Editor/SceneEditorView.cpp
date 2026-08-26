@@ -885,6 +885,17 @@ bool SceneEditorView::RaycastSceneMeshes(const ImVec2 &screenPos, const ImVec2 &
     outRayStart = UnprojectNdc(invViewProjection, ndcX, ndcY, 0.0f);
     outRayEnd = UnprojectNdc(invViewProjection, ndcX, ndcY, 1.0f);
 
+    // 「2D」モード限定のフォールバック用: 三角形との厳密な交差判定が1つもヒットしなかった場合に使う、
+    // 画面空間での近さによる救済判定。ズームアウトするほどスプライトが画面上で小さくなり、
+    // ピクセル単位で完全に正確なジオメトリ判定ではクリックがどんどんシビアになってしまう
+    // （2D編集は3Dよりも「多数の小さいオブジェクトを広い範囲から選ぶ」場面が多いため影響が大きい）。
+    // アイコンピッキング（PickIconAtScreenPosition）と同様の考え方で、スクリーン空間の
+    // バウンディングボックスに数ピクセルの許容範囲を持たせて拾う
+    constexpr float kSpriteClickTolerancePx = 6.0f;
+    EmptyObject *fallbackObject = nullptr;
+    float fallbackBestAreaPx = std::numeric_limits<float>::max();
+    Vector3 fallbackWorldPosition{};
+
     for (auto *obj : context_->GetSceneObjects()) {
         if (!obj || !obj->IsActive()) continue;
 
@@ -921,6 +932,41 @@ bool SceneEditorView::RaycastSceneMeshes(const ImVec2 &screenPos, const ImVec2 &
         const auto &model = ModelManager::GetModelData(meshFilter->GetMeshHandle());
         const auto &vertices = model.GetVertices();
         const auto &indices = model.GetIndices();
+
+        // 2Dモードのフォールバック候補として、このオブジェクトの画面空間バウンディングボックスを求める
+        // （SpriteRendererのみ対象。3Dオブジェクトは既存の厳密な三角形判定のみで十分なため対象外）
+        if (displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly &&
+            spriteRenderer && !meshRenderer && !skinnedMeshRenderer) {
+            float minX = std::numeric_limits<float>::max();
+            float minY = std::numeric_limits<float>::max();
+            float maxX = -std::numeric_limits<float>::max();
+            float maxY = -std::numeric_limits<float>::max();
+            bool anyProjected = false;
+            for (const auto &v : vertices) {
+                ImVec2 screenVertex;
+                if (!ProjectToImage(TransformPoint(Vector3(v.px, v.py, v.pz), world), imagePos, imageSize, screenVertex, false)) continue;
+                minX = std::min(minX, screenVertex.x);
+                minY = std::min(minY, screenVertex.y);
+                maxX = std::max(maxX, screenVertex.x);
+                maxY = std::max(maxY, screenVertex.y);
+                anyProjected = true;
+            }
+            if (anyProjected) {
+                minX -= kSpriteClickTolerancePx; minY -= kSpriteClickTolerancePx;
+                maxX += kSpriteClickTolerancePx; maxY += kSpriteClickTolerancePx;
+                if (screenPos.x >= minX && screenPos.x <= maxX && screenPos.y >= minY && screenPos.y <= maxY) {
+                    const float areaPx = (maxX - minX) * (maxY - minY);
+                    // 複数候補が範囲内にある場合、画面上でより小さい（＝より的を絞ってクリックしたであろう）
+                    // ものを優先する
+                    if (areaPx < fallbackBestAreaPx) {
+                        fallbackBestAreaPx = areaPx;
+                        fallbackObject = obj;
+                        fallbackWorldPosition = Vector3(world.m[3][0], world.m[3][1], world.m[3][2]);
+                    }
+                }
+            }
+        }
+
         for (size_t i = 0; i + 2 < indices.size(); i += 3) {
             const size_t indexA = static_cast<size_t>(indices[i]);
             const size_t indexB = static_cast<size_t>(indices[i + 1]);
@@ -941,6 +987,22 @@ bool SceneEditorView::RaycastSceneMeshes(const ImVec2 &screenPos, const ImVec2 &
                     outHitObject = obj;
                 }
             }
+        }
+    }
+
+    // 三角形との厳密な交差判定がどれもヒットしなかった場合のみ、2Dモードのフォールバック候補を採用する
+    if (!outHitObject && fallbackObject) {
+        outHitObject = fallbackObject;
+        // レイ上でオブジェクトの位置に最も近い点のtを、外接する三角形が無くても求まる方法
+        // （レイへの正射影）で概算する。ComputeCursorWorldPosition等がこのtを深度として使うため、
+        // 0での初期化のまま（＝レイの始点扱い）にはしない
+        const Vector3 rayDir = outRayEnd - outRayStart;
+        const float rayDirLengthSq = rayDir.LengthSquared();
+        if (rayDirLengthSq > 1e-8f) {
+            const float t = (fallbackWorldPosition - outRayStart).Dot(rayDir) / rayDirLengthSq;
+            outHitT = std::clamp(t, 0.0f, 1.0f);
+        } else {
+            outHitT = 0.0f;
         }
     }
 
@@ -978,8 +1040,16 @@ void SceneEditorView::HandleObjectPicking(SceneObjectHierarchy *hierarchy, const
     // カメラ操作等のドラッグ後のリリースでは選択しない（Unityと同様、微小な移動はクリック扱い）
     constexpr float kClickMoveThreshold = 3.0f;
     if (ImGui::GetIO().MouseDragMaxDistanceSqr[ImGuiMouseButton_Left] > kClickMoveThreshold * kClickMoveThreshold) return;
-    // ギズモを操作している/ギズモの上をクリックした場合は選択を変えない
-    if (ImGuizmo::IsUsing() || ImGuizmo::IsOver()) return;
+    // ギズモを操作している/ギズモの上をクリックした場合は選択を変えない。
+    // ImGuizmo::IsOver()/IsUsing()は直前にManipulate()が呼ばれた際のスクリーン座標キャッシュを
+    // 参照して判定するため、選択が無い（ShowGizmoがtargets.empty()で早期リターンし、Manipulate()が
+    // 二度と呼ばれない）状態では、選択解除前にギズモが表示されていた古い画面位置がキャッシュされたまま
+    // 残り続ける。その状態でマウスがたまたま古い位置に近いと、実際にはギズモが存在しないにもかかわらず
+    // IsOver()がtrueを返し続け、クリックによる再選択が握りつぶされてしまう
+    // （カメラを動かすと古いキャッシュ位置と実際のクリック位置がずれるため、症状が一時的に消えていた）。
+    // gizmoTargetObjects_（ShowGizmoが選択集合が変わった時点で更新する）が空の場合は、
+    // ImGuizmoの戻り値を無条件に信用せず無視する
+    if (!gizmoTargetObjects_.empty() && (ImGuizmo::IsUsing() || ImGuizmo::IsOver())) return;
 
     const ImVec2 mouse = ImGui::GetMousePos();
 
@@ -1589,6 +1659,21 @@ void SceneEditorView::ShowGizmo(const std::unordered_set<EmptyObject *> &selecte
     Matrix4x4 projection = GetActiveProjection();
     const bool isSingle = (targets.size() == 1);
 
+    // 選択中にSpriteRenderer（2Dオブジェクト）が1つでも含まれる場合、回転操作をZ軸のみに制限する。
+    // SpriteRendererはXY平面上に貼り付く板ポリゴンのため、X/Y軸回転は板を真横から見る形になり
+    // 実用上ほぼ意味がなく、誤操作で意図せず板が傾いてしまいやすい
+    bool hasSpriteRendererInSelection = false;
+    for (auto &[obj, transform] : targets) {
+        if (obj->GetComponent<SpriteRenderer>()) {
+            hasSpriteRendererInSelection = true;
+            break;
+        }
+    }
+    ImGuizmo::OPERATION effectiveOperation = static_cast<ImGuizmo::OPERATION>(gizmoOperation_);
+    if (effectiveOperation == ImGuizmo::ROTATE && hasSpriteRendererInSelection) {
+        effectiveOperation = ImGuizmo::ROTATE_Z;
+    }
+
     if (!ImGuizmo::IsUsing()) {
         // 未操作中はギズモの基準行列を毎フレーム最新の状態から作り直す。
         // 単一選択時は対象自身のワールド行列（Local/Worldモードの切り替えが意味を持つ）、
@@ -1615,7 +1700,7 @@ void SceneEditorView::ShowGizmo(const std::unordered_set<EmptyObject *> &selecte
 
     ImGuizmo::Manipulate(
         &view.m[0][0], &projection.m[0][0],
-        static_cast<ImGuizmo::OPERATION>(gizmoOperation_),
+        effectiveOperation,
         isSingle ? static_cast<ImGuizmo::MODE>(gizmoMode_) : ImGuizmo::WORLD,
         &groupGizmoMatrix_.m[0][0]);
 

@@ -59,7 +59,7 @@ Matrix3x3 &Matrix3x3::operator*=(const Matrix3x3 &matrix) noexcept {
     return *this;
 }
 
-constexpr Matrix3x3 Matrix3x3::operator+(const Matrix3x3 &matrix) const noexcept {
+Matrix3x3 Matrix3x3::operator+(const Matrix3x3 &matrix) const noexcept {
     return Matrix3x3(
         m[0][0] + matrix.m[0][0], m[0][1] + matrix.m[0][1], m[0][2] + matrix.m[0][2],
         m[1][0] + matrix.m[1][0], m[1][1] + matrix.m[1][1], m[1][2] + matrix.m[1][2],
@@ -67,7 +67,7 @@ constexpr Matrix3x3 Matrix3x3::operator+(const Matrix3x3 &matrix) const noexcept
     );
 }
 
-constexpr Matrix3x3 Matrix3x3::operator-(const Matrix3x3 &matrix) const noexcept {
+Matrix3x3 Matrix3x3::operator-(const Matrix3x3 &matrix) const noexcept {
     return Matrix3x3(
         m[0][0] - matrix.m[0][0], m[0][1] - matrix.m[0][1], m[0][2] - matrix.m[0][2],
         m[1][0] - matrix.m[1][0], m[1][1] - matrix.m[1][1], m[1][2] - matrix.m[1][2],
@@ -75,7 +75,7 @@ constexpr Matrix3x3 Matrix3x3::operator-(const Matrix3x3 &matrix) const noexcept
     );
 }
 
-constexpr Matrix3x3 Matrix3x3::operator*(float scalar) const noexcept {
+Matrix3x3 Matrix3x3::operator*(float scalar) const noexcept {
     return Matrix3x3(
         m[0][0] * scalar, m[0][1] * scalar, m[0][2] * scalar,
         m[1][0] * scalar, m[1][1] * scalar, m[1][2] * scalar,
@@ -83,7 +83,7 @@ constexpr Matrix3x3 Matrix3x3::operator*(float scalar) const noexcept {
     );
 }
 
-constexpr Matrix3x3 Matrix3x3::operator*(const Matrix3x3 &matrix) const noexcept {
+Matrix3x3 Matrix3x3::operator*(const Matrix3x3 &matrix) const noexcept {
     return Matrix3x3(
         m[0][0] * matrix.m[0][0] + m[0][1] * matrix.m[1][0] + m[0][2] * matrix.m[2][0],
         m[0][0] * matrix.m[0][1] + m[0][1] * matrix.m[1][1] + m[0][2] * matrix.m[2][1],

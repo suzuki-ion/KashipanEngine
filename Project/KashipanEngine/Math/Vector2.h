@@ -29,10 +29,10 @@ struct Vector2 final {
     bool operator==(const Vector2 &vector) const noexcept;
     bool operator!=(const Vector2 &vector) const noexcept;
 
-    [[nodiscard]] constexpr float Dot(const Vector2 &vector) const noexcept;
-    [[nodiscard]] constexpr float Cross(const Vector2 &vector) const noexcept;
+    [[nodiscard]] float Dot(const Vector2 &vector) const noexcept;
+    [[nodiscard]] float Cross(const Vector2 &vector) const noexcept;
     [[nodiscard]] float Length() const noexcept;
-    [[nodiscard]] constexpr float LengthSquared() const noexcept;
+    [[nodiscard]] float LengthSquared() const noexcept;
     [[nodiscard]] Vector2 Normalize() const;
     [[nodiscard]] Vector2 Projection(const Vector2 &vector) const noexcept;
     [[nodiscard]] Vector2 Perpendicular() const noexcept;

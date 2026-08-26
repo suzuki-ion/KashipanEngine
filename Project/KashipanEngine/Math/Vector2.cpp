@@ -86,11 +86,11 @@ bool Vector2::operator!=(const Vector2 &vector) const noexcept {
     return x != vector.x || y != vector.y;
 }
 
-constexpr float Vector2::Dot(const Vector2 &vector) const noexcept {
+float Vector2::Dot(const Vector2 &vector) const noexcept {
     return KashipanEngine::MathUtils::Dot(*this, vector);
 }
 
-constexpr float Vector2::Cross(const Vector2 &vector) const noexcept {
+float Vector2::Cross(const Vector2 &vector) const noexcept {
     return KashipanEngine::MathUtils::Cross(*this, vector);
 }
 
@@ -98,7 +98,7 @@ float Vector2::Length() const noexcept {
     return KashipanEngine::MathUtils::Length(*this);
 }
 
-constexpr float Vector2::LengthSquared() const noexcept {
+float Vector2::LengthSquared() const noexcept {
     return KashipanEngine::MathUtils::LengthSquared(*this);
 }
 

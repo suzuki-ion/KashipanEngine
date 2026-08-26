@@ -50,7 +50,7 @@ Vector3 CatmullRomPosition(const std::vector<Vector3> &points, float t, bool isL
 /// @param vector1 ベクトル1
 /// @param vector2 ベクトル2
 /// @return 内積値
-constexpr float Dot(const Vector3 &vector1, const Vector3 &vector2) noexcept;
+float Dot(const Vector3 &vector1, const Vector3 &vector2) noexcept;
 
 /// @brief Vector3の外積計算
 /// @param vector1 ベクトル1
@@ -66,7 +66,7 @@ float Length(const Vector3 &vector) noexcept;
 /// @brief Vector3の長さの二乗計算
 /// @param vector ベクトル
 /// @return 長さの二乗
-constexpr float LengthSquared(const Vector3 &vector) noexcept;
+float LengthSquared(const Vector3 &vector) noexcept;
 
 /// @brief Vector3の正規化
 /// @param vector ベクトル

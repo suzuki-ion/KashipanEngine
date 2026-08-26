@@ -34,10 +34,10 @@ struct Matrix3x3 final {
     Matrix3x3 &operator-=(const Matrix3x3 &matrix) noexcept;
     Matrix3x3 &operator*=(float scalar) noexcept;
     Matrix3x3 &operator*=(const Matrix3x3 &matrix) noexcept;
-    constexpr Matrix3x3 operator+(const Matrix3x3 &matrix) const noexcept;
-    constexpr Matrix3x3 operator-(const Matrix3x3 &matrix) const noexcept;
-    constexpr Matrix3x3 operator*(float scalar) const noexcept;
-    constexpr Matrix3x3 operator*(const Matrix3x3 &matrix) const noexcept;
+    Matrix3x3 operator+(const Matrix3x3 &matrix) const noexcept;
+    Matrix3x3 operator-(const Matrix3x3 &matrix) const noexcept;
+    Matrix3x3 operator*(float scalar) const noexcept;
+    Matrix3x3 operator*(const Matrix3x3 &matrix) const noexcept;
 
     [[nodiscard]] static const Matrix3x3 Identity() noexcept;
     [[nodiscard]] const Matrix3x3 Transpose() const noexcept;

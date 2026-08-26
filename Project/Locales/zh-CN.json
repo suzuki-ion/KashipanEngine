@@ -1903,6 +1903,9 @@
 		"editor.sceneview.show.colliders": "碰撞体",
 		"editor.sceneview.show.grid": "网格线",
 		"editor.sceneview.show.lights": "光源",
+		"editor.sceneview.tab.camera": "相机",
+		"editor.sceneview.tab.display": "显示",
+		"editor.sceneview.tab.gizmo": "Gizmo",
 		"editor.sceneview.window": "场景视图",
 
 		//--------- editor.scriptengine ---------//

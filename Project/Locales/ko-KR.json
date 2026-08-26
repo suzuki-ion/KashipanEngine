@@ -1903,6 +1903,9 @@
 		"editor.sceneview.show.colliders": "콜라이더",
 		"editor.sceneview.show.grid": "그리드",
 		"editor.sceneview.show.lights": "라이트",
+		"editor.sceneview.tab.camera": "카메라",
+		"editor.sceneview.tab.display": "표시",
+		"editor.sceneview.tab.gizmo": "기즈모",
 		"editor.sceneview.window": "씬 뷰",
 
 		//--------- editor.scriptengine ---------//

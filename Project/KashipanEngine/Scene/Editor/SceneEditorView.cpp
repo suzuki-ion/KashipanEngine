@@ -328,7 +328,7 @@ void SceneEditorView::RegisterEditorTarget() {
 }
 
 void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands, SceneObjectHierarchy *hierarchy) {
-    if (!ImGui::Begin(TranslationLabel("editor.sceneview.window"))) {
+    if (!ImGui::Begin(TranslationLabel("editor.sceneview.window"), nullptr, ImGuiWindowFlags_MenuBar)) {
         ImGui::End();
         return;
     }
@@ -338,77 +338,90 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     // （Ctrl+C/Ctrl+V/Ctrl+Shift+V/Ctrl+D）で選択中オブジェクトを操作できるようにする
     if (hierarchy) hierarchy->HandleKeyboardShortcuts();
 
-    //--------- ギズモ操作の切り替えツールバー ---------//
-    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.translate"), gizmoOperation_ == ImGuizmo::TRANSLATE)) gizmoOperation_ = ImGuizmo::TRANSLATE;
-    ImGui::SameLine();
-    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.rotate"), gizmoOperation_ == ImGuizmo::ROTATE)) gizmoOperation_ = ImGuizmo::ROTATE;
-    ImGui::SameLine();
-    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.scale"), gizmoOperation_ == ImGuizmo::SCALE)) gizmoOperation_ = ImGuizmo::SCALE;
-    ImGui::SameLine();
-    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.local"), gizmoMode_ == ImGuizmo::LOCAL)) gizmoMode_ = ImGuizmo::LOCAL;
-    ImGui::SameLine();
-    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.world"), gizmoMode_ == ImGuizmo::WORLD)) gizmoMode_ = ImGuizmo::WORLD;
+    //--------- ツールバー（項目数が増えてきたため、メニューバーでまとめて表示する） ---------//
+    if (ImGui::BeginMenuBar()) {
+        if (ImGui::BeginMenu(TranslationLabel("editor.sceneview.tab.gizmo"))) {
+            // ギズモ操作（Translate/Rotate/Scale）とギズモモード（Local/World）の切り替え
+            if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.translate"), gizmoOperation_ == ImGuizmo::TRANSLATE)) gizmoOperation_ = ImGuizmo::TRANSLATE;
+            ImGui::SameLine();
+            if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.rotate"), gizmoOperation_ == ImGuizmo::ROTATE)) gizmoOperation_ = ImGuizmo::ROTATE;
+            ImGui::SameLine();
+            if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.scale"), gizmoOperation_ == ImGuizmo::SCALE)) gizmoOperation_ = ImGuizmo::SCALE;
+            ImGui::SameLine();
+            if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.local"), gizmoMode_ == ImGuizmo::LOCAL)) gizmoMode_ = ImGuizmo::LOCAL;
+            ImGui::SameLine();
+            if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.world"), gizmoMode_ == ImGuizmo::WORLD)) gizmoMode_ = ImGuizmo::WORLD;
+            ImGui::EndMenu();
+        }
 
-    //--------- カメラ操作モードの切り替え（オービット/フライ） ---------//
-    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.camera.orbit"), !flyMode_)) {
-        flyMode_ = false;
-        EditorSettings::SetBool("sceneView.flyMode", flyMode_);
-    }
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.camera.orbit.tooltip"));
-    ImGui::SameLine();
-    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.camera.fly"), flyMode_)) {
-        flyMode_ = true;
-        EditorSettings::SetBool("sceneView.flyMode", flyMode_);
-    }
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.camera.fly.tooltip"));
+        if (ImGui::BeginMenu(TranslationLabel("editor.sceneview.tab.camera"))) {
+            // カメラ操作モード（オービット/フライ）の切り替え
+            if (ImGui::RadioButton(TranslationLabel("editor.sceneview.camera.orbit"), !flyMode_)) {
+                flyMode_ = false;
+                EditorSettings::SetBool("sceneView.flyMode", flyMode_);
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.camera.orbit.tooltip"));
+            ImGui::SameLine();
+            if (ImGui::RadioButton(TranslationLabel("editor.sceneview.camera.fly"), flyMode_)) {
+                flyMode_ = true;
+                EditorSettings::SetBool("sceneView.flyMode", flyMode_);
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.camera.fly.tooltip"));
 
-    //--------- シーンビューの表示モード切り替え（2D/3D併用・3Dのみ・2Dのみ） ---------//
-    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.display.combined"), displayMode_ == SceneRenderer::EditorDisplayMode::Combined)) {
-        displayMode_ = SceneRenderer::EditorDisplayMode::Combined;
-        EditorSettings::SetString("sceneView.displayMode", "Combined");
-    }
-    ImGui::SameLine();
-    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.display.threed"), displayMode_ == SceneRenderer::EditorDisplayMode::ThreeDOnly)) {
-        displayMode_ = SceneRenderer::EditorDisplayMode::ThreeDOnly;
-        EditorSettings::SetString("sceneView.displayMode", "ThreeDOnly");
-    }
-    ImGui::SameLine();
-    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.display.twod"), displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly)) {
-        displayMode_ = SceneRenderer::EditorDisplayMode::TwoDOnly;
-        EditorSettings::SetString("sceneView.displayMode", "TwoDOnly");
-    }
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.display.tooltip"));
+            // シーンビューの表示モード切り替え（2D/3D併用・3Dのみ・2Dのみ）
+            if (ImGui::RadioButton(TranslationLabel("editor.sceneview.display.combined"), displayMode_ == SceneRenderer::EditorDisplayMode::Combined)) {
+                displayMode_ = SceneRenderer::EditorDisplayMode::Combined;
+                EditorSettings::SetString("sceneView.displayMode", "Combined");
+            }
+            ImGui::SameLine();
+            if (ImGui::RadioButton(TranslationLabel("editor.sceneview.display.threed"), displayMode_ == SceneRenderer::EditorDisplayMode::ThreeDOnly)) {
+                displayMode_ = SceneRenderer::EditorDisplayMode::ThreeDOnly;
+                EditorSettings::SetString("sceneView.displayMode", "ThreeDOnly");
+            }
+            ImGui::SameLine();
+            if (ImGui::RadioButton(TranslationLabel("editor.sceneview.display.twod"), displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly)) {
+                displayMode_ = SceneRenderer::EditorDisplayMode::TwoDOnly;
+                EditorSettings::SetString("sceneView.displayMode", "TwoDOnly");
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.display.tooltip"));
+            ImGui::EndMenu();
+        }
 
-    //--------- デバッグ表示の有効/無効切り替え ---------//
-    if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.grid"), &showGrid_)) EditorSettings::SetBool("sceneView.showGrid", showGrid_);
-    ImGui::SameLine();
-    if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.lights"), &showLightMarkers_)) EditorSettings::SetBool("sceneView.showLightMarkers", showLightMarkers_);
-    ImGui::SameLine();
-    if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.cameras"), &showCameraMarkers_)) EditorSettings::SetBool("sceneView.showCameraMarkers", showCameraMarkers_);
-    ImGui::SameLine();
-    if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.colliders"), &showColliderGizmos_)) EditorSettings::SetBool("sceneView.showColliderGizmos", showColliderGizmos_);
-    ImGui::SameLine();
-    if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.bones"), &showBoneGizmos_)) EditorSettings::SetBool("sceneView.showBoneGizmos", showBoneGizmos_);
+        if (ImGui::BeginMenu(TranslationLabel("editor.sceneview.tab.display"))) {
+            // デバッグ表示の有効/無効切り替え
+            if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.grid"), &showGrid_)) EditorSettings::SetBool("sceneView.showGrid", showGrid_);
+            ImGui::SameLine();
+            if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.lights"), &showLightMarkers_)) EditorSettings::SetBool("sceneView.showLightMarkers", showLightMarkers_);
+            ImGui::SameLine();
+            if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.cameras"), &showCameraMarkers_)) EditorSettings::SetBool("sceneView.showCameraMarkers", showCameraMarkers_);
+            ImGui::SameLine();
+            if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.colliders"), &showColliderGizmos_)) EditorSettings::SetBool("sceneView.showColliderGizmos", showColliderGizmos_);
+            ImGui::SameLine();
+            if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.bones"), &showBoneGizmos_)) EditorSettings::SetBool("sceneView.showBoneGizmos", showBoneGizmos_);
 
-    //--------- 背景設定（単色 or テクスチャ） ---------//
-    if (ImGui::ColorEdit4(TranslationLabel("editor.sceneview.backgroundcolor"), &backgroundColor_.x)) {
-        EditorSettings::SetFloat("sceneView.backgroundColor.r", backgroundColor_.x);
-        EditorSettings::SetFloat("sceneView.backgroundColor.g", backgroundColor_.y);
-        EditorSettings::SetFloat("sceneView.backgroundColor.b", backgroundColor_.z);
-        EditorSettings::SetFloat("sceneView.backgroundColor.a", backgroundColor_.w);
-    }
-    ImGui::SameLine();
-    std::vector<std::string> texturePaths;
-    for (const auto &entry : TextureManager::GetLoadedTextureListEntries()) {
-        texturePaths.push_back(entry.assetPath);
-    }
-    if (ImGuiCustom::SelectString(TranslationLabel("editor.sceneview.backgroundtexture"), backgroundTexturePath_, texturePaths, true)) {
-        EditorSettings::SetString("sceneView.backgroundTexturePath", backgroundTexturePath_);
-    }
-    // Assetsウィンドウからのテクスチャファイルドラッグ&ドロップも受け付ける
-    if (std::string droppedPath; AcceptAssetDragDropTarget(kTextureAssetDragDropType, droppedPath)) {
-        backgroundTexturePath_ = droppedPath;
-        EditorSettings::SetString("sceneView.backgroundTexturePath", backgroundTexturePath_);
+            // 背景設定（単色 or テクスチャ）
+            if (ImGui::ColorEdit4(TranslationLabel("editor.sceneview.backgroundcolor"), &backgroundColor_.x)) {
+                EditorSettings::SetFloat("sceneView.backgroundColor.r", backgroundColor_.x);
+                EditorSettings::SetFloat("sceneView.backgroundColor.g", backgroundColor_.y);
+                EditorSettings::SetFloat("sceneView.backgroundColor.b", backgroundColor_.z);
+                EditorSettings::SetFloat("sceneView.backgroundColor.a", backgroundColor_.w);
+            }
+            ImGui::SameLine();
+            std::vector<std::string> texturePaths;
+            for (const auto &entry : TextureManager::GetLoadedTextureListEntries()) {
+                texturePaths.push_back(entry.assetPath);
+            }
+            if (ImGuiCustom::SelectString(TranslationLabel("editor.sceneview.backgroundtexture"), backgroundTexturePath_, texturePaths, true)) {
+                EditorSettings::SetString("sceneView.backgroundTexturePath", backgroundTexturePath_);
+            }
+            // Assetsウィンドウからのテクスチャファイルドラッグ&ドロップも受け付ける
+            if (std::string droppedPath; AcceptAssetDragDropTarget(kTextureAssetDragDropType, droppedPath)) {
+                backgroundTexturePath_ = droppedPath;
+                EditorSettings::SetString("sceneView.backgroundTexturePath", backgroundTexturePath_);
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMenuBar();
     }
 
     //--------- シーンビュー画像 ---------//

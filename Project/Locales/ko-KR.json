@@ -515,6 +515,7 @@
 		"engine.video.play.failed.texture": "동영상 재생 실패. 동영상 텍스처 생성에 실패했습니다. 파일 경로: ",
 		"engine.video.play.failed.audioplay": "동영상 재생 실패. 음성 재생 시작에 실패했습니다. 파일 경로: ",
 		"engine.video.play.succeeded": "동영상 재생 성공. 파일 경로: ",
+		"engine.video.play.failed.firstframe": "동영상 미리보기 경고. 첫 프레임을 읽지 못했습니다. 파일 경로: ",
 
 		//--------- Model ---------//
 		"engine.model.loading.start": "모델 불러오기 시작. 파일 경로: ",

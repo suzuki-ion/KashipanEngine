@@ -383,6 +383,62 @@ bool VideoPlayer::Play(bool loop, float volume) {
     return true;
 }
 
+bool VideoPlayer::ShowFirstFrame() {
+    if (impl_->isPlaying) return false;
+    if (impl_->fullPath.empty()) return false;
+    // 既にこのインスタンスで（このメソッド経由で）1フレーム目を用意済みなら何もしない
+    if (impl_->reader) return true;
+
+    const std::filesystem::path p = Utf8StringToPath(impl_->fullPath);
+    const std::wstring wpath(p.wstring());
+
+    Microsoft::WRL::ComPtr<IMFSourceReader> reader;
+    HRESULT hr = MFCreateSourceReaderFromURL(wpath.c_str(), nullptr, &reader);
+    if (FAILED(hr) || !reader) {
+        Log(Translation("engine.video.play.failed.reader") + impl_->fullPath, LogSeverity::Error);
+        return false;
+    }
+    impl_->reader = reader;
+
+    impl_->reader->SetStreamSelection(static_cast<DWORD>(MF_SOURCE_READER_ALL_STREAMS), FALSE);
+    impl_->reader->SetStreamSelection(static_cast<DWORD>(MF_SOURCE_READER_FIRST_VIDEO_STREAM), TRUE);
+
+    if (!impl_->ProbeFrameSize() || !impl_->SetVideoOutputToNV12()) {
+        Log(Translation("engine.video.play.failed.videoformat") + impl_->fullPath, LogSeverity::Error);
+        impl_->reader.Reset();
+        return false;
+    }
+
+    impl_->videoTexture = std::make_unique<VideoTexture>(impl_->directXCommon, impl_->width, impl_->height);
+    if (!impl_->videoTexture->IsValid()) {
+        Log(Translation("engine.video.play.failed.texture") + impl_->fullPath, LogSeverity::Error);
+        impl_->reader.Reset();
+        impl_->videoTexture.reset();
+        return false;
+    }
+    impl_->rgbaHandle = TextureManager::RegisterExternalTexture(impl_->registerNamePrefix + "_RGBA", impl_->videoTexture->GetRgbaView());
+
+    DWORD flags = 0;
+    Microsoft::WRL::ComPtr<IMFSample> sample;
+    hr = impl_->reader->ReadSample(static_cast<DWORD>(MF_SOURCE_READER_FIRST_VIDEO_STREAM), 0, nullptr, &flags, nullptr, &sample);
+    if (SUCCEEDED(hr) && sample) {
+        Microsoft::WRL::ComPtr<IMFMediaBuffer> buffer;
+        if (SUCCEEDED(sample->ConvertToContiguousBuffer(&buffer))) {
+            BYTE *data = nullptr;
+            DWORD dataLen = 0;
+            if (SUCCEEDED(buffer->Lock(&data, nullptr, &dataLen)) && data) {
+                impl_->videoTexture->UploadFrame(data, dataLen, impl_->videoStride);
+                buffer->Unlock();
+            }
+        }
+    } else {
+        Log(Translation("engine.video.play.failed.firstframe") + impl_->fullPath, LogSeverity::Warning);
+    }
+
+    // isPlaying/isPausedはfalseのまま維持する（このインスタンスは「再生中」扱いにしない）
+    return true;
+}
+
 void VideoPlayer::Stop() {
     if (!impl_->isPlaying && !impl_->reader) return;
 

@@ -36,6 +36,12 @@ public:
     /// @param volume 音量(0.0～1.0)
     /// @return 成功した場合 true
     bool Play(bool loop = false, float volume = 1.0f);
+    /// @brief 動画の最初の1フレームだけを同期的にデコードし、静止画として表示できるようにする
+    /// @details 音声デコードやデコードスレッドの起動は行わず、IsPlaying/IsPausedはfalseのまま。
+    ///          再生停止中（ゲームループ開始前のプレビュー等）に、動画の1フレーム目を
+    ///          プレースホルダーとして表示し続けたい場合に使う。既に再生中の場合は失敗する
+    /// @return 成功した場合 true
+    bool ShowFirstFrame();
     /// @brief 再生を停止する（デコードスレッドを終了し、音声再生も止める。登録したテクスチャ/音声も解放する）
     void Stop();
     /// @brief 一時停止する

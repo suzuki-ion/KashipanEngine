@@ -515,6 +515,7 @@
 		"engine.video.play.failed.texture": "Failed to play the video. Failed to create the video texture. File path: ",
 		"engine.video.play.failed.audioplay": "Failed to play the video. Failed to start audio playback. File path: ",
 		"engine.video.play.succeeded": "Video playback started successfully. File path: ",
+		"engine.video.play.failed.firstframe": "Video preview warning. Failed to read the first frame. File path: ",
 
 		//--------- Model ---------//
 		"engine.model.loading.start": "Model loading started. File path: ",

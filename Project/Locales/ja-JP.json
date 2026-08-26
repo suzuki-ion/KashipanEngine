@@ -515,6 +515,7 @@
 		"engine.video.play.failed.texture": "動画再生失敗。動画テクスチャの作成に失敗しました。ファイルパス：",
 		"engine.video.play.failed.audioplay": "動画再生失敗。音声の再生開始に失敗しました。ファイルパス：",
 		"engine.video.play.succeeded": "動画再生成功。ファイルパス：",
+		"engine.video.play.failed.firstframe": "動画プレビュー警告。最初のフレームの読み取りに失敗しました。ファイルパス：",
 
 		//--------- Model ---------//
 		"engine.model.loading.start": "モデル読み込み開始。ファイルパス：",

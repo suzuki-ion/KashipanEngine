@@ -515,6 +515,7 @@
 		"engine.video.play.failed.texture": "视频播放失败。视频纹理创建失败。文件路径：",
 		"engine.video.play.failed.audioplay": "视频播放失败。音频播放启动失败。文件路径：",
 		"engine.video.play.succeeded": "视频播放成功。文件路径：",
+		"engine.video.play.failed.firstframe": "视频预览警告。读取第一帧失败。文件路径：",
 
 		//--------- Model ---------//
 		"engine.model.loading.start": "模型加载开始。文件路径：",

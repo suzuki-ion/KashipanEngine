@@ -33,7 +33,9 @@ public:
         ADD_MEMBER_VARIABLE(routeAudioToAudioSource_);
     )
     COMPONENT_CATEGORY("Video")
-    ~VideoSource() override { Stop(); }
+    // 破棄時にStop()を呼ぶとプレースホルダー用の新しいプレイヤーを作ってしまい、
+    // それが破棄されずに残ってしまうため、後始末のみ行うDestroyCurrentPlayer()を呼ぶ
+    ~VideoSource() override { DestroyCurrentPlayer(); }
 
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<VideoSource>();
@@ -55,13 +57,15 @@ public:
         const auto videoHandle = ResolveVideoHandle();
         if (videoHandle == VideoManager::kInvalidHandle) return false;
 
-        Stop();
+        DestroyCurrentPlayer();
 
         currentPlayer_ = VideoManager::CreatePlayer(videoHandle);
         if (!currentPlayer_) return false;
         if (!currentPlayer_->Play(loop_, volume_)) {
             VideoManager::DestroyPlayer(currentPlayer_);
             currentPlayer_ = nullptr;
+            // 再生に失敗した場合も、動画自体は指定されているので最初の1フレームは表示しておく
+            ShowFirstFramePreview();
             return false;
         }
 
@@ -74,18 +78,10 @@ public:
         return true;
     }
 
-    /// @brief 停止する（レンダラーのマテリアルも元へ戻す）
+    /// @brief 停止する（レンダラーには、動画の最初の1フレームを表示し続ける）
     void Stop() {
-        RevertRenderer();
-        if (routeAudioToAudioSource_) {
-            if (auto *audioSource = ResolveAudioSource()) {
-                audioSource->Stop();
-            }
-        }
-        if (currentPlayer_) {
-            VideoManager::DestroyPlayer(currentPlayer_);
-            currentPlayer_ = nullptr;
-        }
+        DestroyCurrentPlayer();
+        ShowFirstFramePreview();
     }
 
     /// @brief 一時停止する
@@ -132,23 +128,51 @@ public:
 
 protected:
     void Initialize() override {
-        if (playOnAwake_) Play();
+        // Initialize()はシーン読み込み・エディター編集時にも走る（ゲームループ開始前）ため、
+        // ここで即座にPlay()すると再生開始（PlayStart）前に鳴り始めてしまい、実際の再生開始時には
+        // 既に再生済み/終了済みになってしまう。実際にゲームが動き出すまで待つため、
+        // 最初のUpdate()（ゲームループが実際に回っているときのみ呼ばれる）まで再生を遅延させる。
+        // 再生されるまでの間は、動画の最初の1フレームをプレースホルダーとして表示しておく
+        pendingAutoPlay_ = playOnAwake_;
+        ShowFirstFramePreview();
     }
 
     void Finalize() override {
-        Stop();
+        DestroyCurrentPlayer();
+    }
+
+    void Update() override {
+        if (pendingAutoPlay_) {
+            pendingAutoPlay_ = false;
+            Play();
+        }
+        RetryApplyToRendererIfNeeded();
     }
 
 #if defined(USE_IMGUI)
+    /// @brief ゲームループが停止/一時停止中でも毎フレーム呼ばれる（Update()は呼ばれないため、
+    ///        エディターで停止中にレンダラーへのプレビュー反映をリトライするのに使う）
+    void ShowPersistentImGui() override {
+        RetryApplyToRendererIfNeeded();
+    }
+
     void ShowImGui() override {
         std::vector<std::string> videoPaths = VideoManager::GetLoadedVideoAssetPaths();
+        bool videoChanged = false;
         if (ImGuiCustom::SelectString(TranslationLabel("component.videosource.video"), videoAssetPath_, videoPaths, true)) {
             videoHandle_ = VideoManager::kInvalidHandle;
+            videoChanged = true;
         }
         // Assetsウィンドウからの動画ファイルドラッグ&ドロップも受け付ける
         if (std::string droppedPath; AcceptAssetDragDropTarget(kVideoAssetDragDropType, droppedPath)) {
             videoAssetPath_ = droppedPath;
             videoHandle_ = VideoManager::kInvalidHandle;
+            videoChanged = true;
+        }
+        // 再生中でなければ、選び直した動画の最初の1フレームへプレビューを更新する
+        if (videoChanged && !IsPlaying() && !IsPaused()) {
+            DestroyCurrentPlayer();
+            ShowFirstFramePreview();
         }
 
         ImGui::Checkbox(TranslationLabel("component.videosource.loop"), &loop_);
@@ -189,6 +213,16 @@ protected:
         volume_ = json.value("volume", 1.0f);
         playOnAwake_ = json.value("playOnAwake", true);
         routeAudioToAudioSource_ = json.value("routeAudioToAudioSource", false);
+
+        // シーン読み込み時はコンポーネント追加時点でInitialize()が読み込み前の
+        // videoAssetPath_/playOnAwake_（空文字・デフォルト値）で呼ばれてしまっているため、
+        // ここで読み込んだ実際の値を使って改めてプレビュー表示・自動再生予約をやり直す。
+        // 非アクティブな場合はSetActive(true)時のInitialize()に任せる
+        if (IsActive()) {
+            pendingAutoPlay_ = playOnAwake_;
+            DestroyCurrentPlayer();
+            ShowFirstFramePreview();
+        }
         return true;
     }
 
@@ -207,6 +241,62 @@ private:
             }
         }
         return videoHandle_;
+    }
+
+    /// @brief 再生中のプレイヤーを破棄し、レンダラーのマテリアルも元へ戻す（プレースホルダーの再表示は行わない）
+    void DestroyCurrentPlayer() {
+        RevertRenderer();
+        if (routeAudioToAudioSource_) {
+            if (auto *audioSource = ResolveAudioSource()) {
+                audioSource->Stop();
+            }
+        }
+        if (currentPlayer_) {
+            VideoManager::DestroyPlayer(currentPlayer_);
+            currentPlayer_ = nullptr;
+        }
+    }
+
+    /// @brief 動画が指定されていて、かつ何も再生・表示していない場合に、最初の1フレームを
+    ///        プレースホルダーとしてレンダラーへ表示する
+    /// @details ゲームループ開始前（エディター編集中等）や、再生停止後に、動画の最初の1フレームを
+    ///          表示し続けたい場合に使う。既にプレイヤーが存在する（再生中・プレビュー表示中を問わず）場合は何もしない
+    void ShowFirstFramePreview() {
+        if (currentPlayer_) return;
+        const auto videoHandle = ResolveVideoHandle();
+        if (videoHandle == VideoManager::kInvalidHandle) return;
+
+        currentPlayer_ = VideoManager::CreatePlayer(videoHandle);
+        if (!currentPlayer_) return;
+        if (!currentPlayer_->ShowFirstFrame()) {
+            VideoManager::DestroyPlayer(currentPlayer_);
+            currentPlayer_ = nullptr;
+            return;
+        }
+        ApplyToRenderer();
+    }
+
+    /// @brief レンダラーへの反映がまだ・または外れてしまっている場合に再試行する
+    /// @details 2つのケースに対応する保険:
+    ///          (1) SpriteRenderer/MeshRendererがVideoSourceより後から同じオブジェクトへ追加された場合等、
+    ///              追加順の都合でApplyToRenderer()がまだレンダラーへ反映できていないケース
+    ///          (2) シーン読み込み時、VideoSourceが自分のLoadFromJson()でオーバーライドを反映した直後に、
+    ///              同じオブジェクトのSpriteRenderer/MeshRenderer自身のLoadFromJson()が
+    ///              （読み込み順でVideoSourceより後だった場合）マテリアルハンドルを自分のJSONデータで
+    ///              上書きしてしまい、せっかく反映したオーバーライドが外れてしまうケース
+    ///          ゲームループ停止中はUpdate()が呼ばれないため、エディターではShowPersistentImGui()からも呼ぶ
+    void RetryApplyToRendererIfNeeded() {
+        if (!currentPlayer_) return;
+        auto *objectContext = GetOwnerObjectContext();
+        if (!objectContext) return;
+        auto *spriteRenderer = objectContext->GetComponent<SpriteRenderer>();
+        auto *meshRenderer = spriteRenderer ? nullptr : objectContext->GetComponent<MeshRenderer>();
+        if (!spriteRenderer && !meshRenderer) return;
+
+        const auto currentHandle = spriteRenderer ? spriteRenderer->GetMaterialHandle() : meshRenderer->GetMaterialHandle();
+        if (overrideMaterialHandle_ == MaterialManager::kInvalidHandle || currentHandle != overrideMaterialHandle_) {
+            ApplyToRenderer();
+        }
     }
 
     /// @brief 同じオブジェクトのSpriteRenderer/MeshRendererへ、再生中の動画テクスチャを適用する
@@ -262,6 +352,9 @@ private:
     float volume_ = 1.0f;
     bool playOnAwake_ = true;
     bool routeAudioToAudioSource_ = false;
+
+    /// @brief 次のUpdate()でplayOnAwakeによる再生を行うかどうか（ゲームループが実際に開始してから再生するため）
+    bool pendingAutoPlay_ = false;
 
     VideoPlayer *currentPlayer_ = nullptr;
 

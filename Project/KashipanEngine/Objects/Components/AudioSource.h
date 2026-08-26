@@ -279,7 +279,11 @@ protected:
     void Initialize() override {
         auto *player = GetOrAddSceneAudioPlayer();
         if (player) player->RegisterSource(this);
-        if (playOnAwake_) Play();
+        // Initialize()はシーン読み込み・エディター編集時にも走る（ゲームループ開始前）ため、
+        // ここで即座にPlay()すると再生開始（PlayStart）前に鳴ってしまい、実際の再生開始時には
+        // 既に再生済み/終了済みになってしまう。実際にゲームが動き出すまで待つため、
+        // 最初のUpdate()（ゲームループが実際に回っているときのみ呼ばれる）まで再生を遅延させる
+        pendingAutoPlay_ = playOnAwake_;
     }
 
     void Finalize() override {
@@ -287,6 +291,13 @@ protected:
         auto *player = sceneContext ? sceneContext->GetComponent<SceneAudioPlayer>() : nullptr;
         if (player) player->UnregisterSource(this);
         Stop();
+    }
+
+    void Update() override {
+        if (pendingAutoPlay_) {
+            pendingAutoPlay_ = false;
+            Play();
+        }
     }
 
 #if defined(USE_IMGUI)
@@ -510,6 +521,13 @@ protected:
         }
 
         ClampEffectParams();
+
+        // シーン読み込み時はコンポーネント追加時点でInitialize()が読み込み前のplayOnAwake_
+        // （デフォルト値）で呼ばれてしまっているため、ここで読み込んだ実際の値を使って改めて反映する。
+        // 非アクティブな場合はSetActive(true)時のInitialize()に任せる
+        if (IsActive()) {
+            pendingAutoPlay_ = playOnAwake_;
+        }
         return true;
     }
 
@@ -617,6 +635,8 @@ private:
     bool enableSpatialAudio_ = false;
     /// @brief 直近のspatial audioによる籠り具合（設定変更時の再適用でフィルターへ重ねるために保持する）
     float lastMuffleAmount_ = 0.0f;
+    /// @brief 次のUpdate()でplayOnAwakeによる再生を行うかどうか（ゲームループが実際に開始してから再生するため）
+    bool pendingAutoPlay_ = false;
 
     AudioManager::PlayHandle currentPlayHandle_ = AudioManager::kInvalidPlayHandle;
     /// @brief currentPlayHandle_がAttachExternalPlayHandle()経由の外部所有ハンドルかどうか

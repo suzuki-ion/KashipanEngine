@@ -122,22 +122,11 @@ public:
         }
 
         if (hasStayCorrection_) {
-            // Apply at most maxStayCorrectionPerFrame_ this frame to avoid overshooting when penetration is large
-            Vector3 correctionToApply = stayCorrection_;
-            const float len = correctionToApply.Length();
-            if (len > maxStayCorrectionPerFrame_) {
-                correctionToApply = correctionToApply.Normalize() * maxStayCorrectionPerFrame_;
-            }
-
-            position += correctionToApply;
-
-            // Remove applied portion from accumulated stayCorrection_
-            stayCorrection_ -= correctionToApply;
-            // If the remaining correction is very small, clear it
-            hasStayCorrection_ = stayCorrection_.LengthSquared() > 0.000001f;
-            if (!hasStayCorrection_) {
-                stayCorrection_ = Vector3{0.0f, 0.0f, 0.0f};
-            }
+            // 検出しためり込み量は1フレームで全て解消する。小刻みに戻すと、
+            // 大きな落下速度による貫通量に補正が追いつかず床をすり抜けてしまう。
+            position += stayCorrection_;
+            stayCorrection_ = Vector3{0.0f, 0.0f, 0.0f};
+            hasStayCorrection_ = false;
         }
     }
 
@@ -222,8 +211,7 @@ private:
         const float penetration = hit.penetration;
         if (penetration > 0.0f) {
             const float currentAlongNormal = stayCorrection_.Dot(normal);
-            // Limit how much penetration we add per hit to avoid huge instantaneous corrections
-            const float addPen = std::min(penetration - currentAlongNormal, maxStayPenetrationPerHit_);
+            const float addPen = penetration - currentAlongNormal;
             if (addPen > 0.0f) {
                 stayCorrection_ += normal * addPen;
                 hasStayCorrection_ = stayCorrection_.LengthSquared() > 0.000001f;
@@ -273,8 +261,7 @@ private:
         if (penetration <= 0.0f) return;
 
         const float currentAlongNormal = stayCorrection_.Dot(normal);
-        // Limit addition per hit to avoid huge spike when velocity is large
-        const float addPen = std::min(penetration - currentAlongNormal, maxStayPenetrationPerHit_);
+        const float addPen = penetration - currentAlongNormal;
         if (addPen > 0.0f) {
             stayCorrection_ += normal * addPen;
         }
@@ -295,8 +282,6 @@ private:
 	bool needsVelocityCorrection_ = false;
 	bool isSlowGround_ = false;
     bool collisionResponseEnabled_ = true;
-    float maxStayPenetrationPerHit_ = 0.2f;
-    float maxStayCorrectionPerFrame_ = 0.3f;
 };
 
 } // namespace KashipanEngine

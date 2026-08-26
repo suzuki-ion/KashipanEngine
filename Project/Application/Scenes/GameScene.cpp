@@ -359,7 +359,9 @@ void GameScene::OnUpdate() {
 
     if (gameClearUIController_) {
         const auto action = gameClearUIController_->ConsumeRequestedAction();
-        if (action == GameClearUIController::RequestAction::Retry) {
+        if (action == GameClearUIController::RequestAction::NextStage) {
+            queueSceneChange("GameScene");
+        } else if (action == GameClearUIController::RequestAction::Retry) {
             queueSceneChange("GameScene");
         } else if (action == GameClearUIController::RequestAction::BackToTitle) {
             queueSceneChange("TitleScene");

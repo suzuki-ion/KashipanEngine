@@ -39,6 +39,12 @@ public:
             info.attribute.set(CollisionAttribute::Ground);
             info.ignoreAttribute.set(CollisionAttribute::Ground);
             info.onCollisionEnter = [this](const HitInfo3D &hit) { OnCollisionEnter(hit); };
+            // 接触開始フレームはSAT判定が地面タイルの継ぎ目付近でZ軸法線を選んでしまうことがあり、
+            // その場合OnCollisionEnterの壁判定に弾かれて色変化が一度も発火しないまま
+            // すり抜けてしまう（onCollisionEnterはヒット継続中は再発火しないため）。
+            // onCollisionStayでも同じ判定を試みることで、後続フレームでY軸法線に
+            // 解決され次第、確実に色変化が発火するようにする。
+            info.onCollisionStay = [this](const HitInfo3D &hit) { OnCollisionEnter(hit); };
             if (!ctx->RegisterComponent<Collision3D>(collider_, info)) {
                 return false;
             }

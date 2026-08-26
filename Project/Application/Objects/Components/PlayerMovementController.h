@@ -120,6 +120,16 @@ public:
         }
         groundedThisFrame_ = grounded;
 
+        // 前フレームで検出した床へのめり込みを、今フレームの重力を加算する前に解消する。
+        // ここで先に解消しないと、貫通を戻しきる前に重力がさらに加速して沈み続け、
+        // 大きい落下速度のときに床をすり抜けてしまう。
+        if (collisionBehavior_ && gravityBehavior_ && collisionEnabled) {
+            Vector3 pos = tr->GetTranslate();
+            auto &gvRef = gravityBehavior_->GravityVelocityRef();
+            collisionBehavior_->ResolveStayTranslationAndVelocity(pos, gvRef);
+            tr->SetTranslate(pos);
+        }
+
         // 地面にいない場合は落下距離を蓄積
         if (skipLandingProcessing || !grounded) {
             const Vector3 down = gravityDirection_.Normalize();
@@ -146,16 +156,7 @@ public:
         const Vector3 gravityFramePosition = tr->GetTranslate() + gravityVelocity * dt;
         tr->SetTranslate(gravityFramePosition);
 
-        // まず重力による移動後の突き抜けを押し戻す（落下処理の押し戻し）
-        if (collisionBehavior_ && gravityBehavior_ && collisionEnabled) {
-            Vector3 pos = tr->GetTranslate();
-            auto &gvRef = gravityBehavior_->GravityVelocityRef();
-            collisionBehavior_->ResolveStayTranslationAndVelocity(pos, gvRef);
-            tr->SetTranslate(pos);
-            gravityVelocity = gvRef;
-        }
-
-        // 前方移動と横移動は落下処理と押し戻しの後に行う
+        // 前方移動と横移動は落下処理の後に行う
         if (forwardBehavior_ && gravityBehavior_) {
             forwardBehavior_->Apply(dt, (!skipLandingProcessing && grounded), gravityBehavior_->GetGravityVelocity(), gravityDirection_);
         }

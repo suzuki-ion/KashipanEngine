@@ -958,7 +958,10 @@ void Collider::Dispatch2D(ColliderID a, ColliderID b, const HitInfo2D &hitInfo, 
     const auto *eb = Find2D(b);
     if (!ea || !eb) return;
 
+    // hitInfo.normal は a -> b 方向で統一されている。b 側はこのまま押し戻し方向として使えるが、
+    // a 側から見た押し戻し方向は逆向きになるため、a に渡す法線は反転する。
     HitInfo2D hiA = hitInfo;
+    hiA.normal = hitInfo.normal * -1.0f;
     hiA.selfObject = ea->info.ownerObject;
     hiA.otherObject = eb->info.ownerObject;
 
@@ -988,7 +991,10 @@ void Collider::Dispatch3D(ColliderID a, ColliderID b, const HitInfo3D &hitInfo, 
     const auto *eb = Find3D(b);
     if (!ea || !eb) return;
 
+    // hitInfo.normal は a -> b 方向で統一されている。b 側はこのまま押し戻し方向として使えるが、
+    // a 側から見た押し戻し方向は逆向きになるため、a に渡す法線は反転する。
     HitInfo3D hiA = hitInfo;
+    hiA.normal = hitInfo.normal * -1.0f;
     hiA.selfObject = ea->info.ownerObject;
     hiA.otherObject = eb->info.ownerObject;
 

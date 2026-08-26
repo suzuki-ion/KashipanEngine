@@ -6,11 +6,13 @@
 #include "Scenes/Components/SceneChangeOut.h"
 #include "Scenes/Components/ClearScoreBoard.h"
 #include "Scenes/Components/ClearTimeBoard.h"
+#include "Utilities/FileIO/JSON.h"
 
 #include <array>
 #include <algorithm>
 #include <cmath>
 #include <string>
+#include <vector>
 
 namespace KashipanEngine {
 
@@ -18,10 +20,13 @@ class GameClearUIController final : public ISceneComponent {
 public:
     enum class RequestAction {
         None,
+        NextStage,
         Retry,
         BackToTitle,
         Quit,
     };
+
+    static constexpr int kOptionCount = 4;
 
     GameClearUIController(bool enableTouchGroundUi = false)
         : ISceneComponent("GameClearUIController", 1),
@@ -50,7 +55,8 @@ public:
         const float logoY = cy + 392.0f;
         const float touchedY = logoY - 160.0f;
         const float rankingStartY = touchedY - 96.0f;
-        const float retryY = cy - 168.0f;
+        const float nextStageY = cy - 168.0f;
+        const float retryY = nextStageY - 80.0f;
         const float backY = retryY - 80.0f;
         const float quitY = backY - 80.0f;
 
@@ -121,6 +127,18 @@ public:
             (void)ctx->AddObject2D(std::move(rank));
         }
 
+        auto nextStage = std::make_unique<Text>(64);
+        nextStage->SetName("GameClearNextStageText");
+        nextStage->SetFont("Assets/Application/Image/KaqookanV2.fnt");
+        nextStage->SetText(" ");
+        nextStage->SetTextAlign(TextAlignX::Left, TextAlignY::Center);
+        nextStage->AttachToRenderer(screenBuffer2D, "Object2D.DoubleSidedCulling.BlendNormal");
+        if (auto *tr = nextStage->GetComponent2D<Transform2D>()) {
+            tr->SetTranslate(Vector3{leftX, nextStageY, 0.0f});
+        }
+        nextStageText_ = nextStage.get();
+        (void)ctx->AddObject2D(std::move(nextStage));
+
         auto retry = std::make_unique<Text>(64);
         retry->SetName("GameClearRetryText");
         retry->SetFont("Assets/Application/Image/KaqookanV2.fnt");
@@ -179,10 +197,12 @@ public:
             const int rank = clearTimeBoard_->FindBestRank(clearTimeMilliseconds_);
             highlightedRankIndex_ = (rank > 0) ? (rank - 1) : -1;
         }
+        RefreshNextStageInfo();
         introElapsed_ = 0.0f;
         setTextAlpha(logoText_, 0.0f);
         setTextAlpha(touchedGroundText_, 0.0f);
         setTextAlpha(clearTimeText_, 0.0f);
+        setTextAlpha(nextStageText_, 0.0f);
         setTextAlpha(retryText_, 0.0f);
         setTextAlpha(backToTitleText_, 0.0f);
         setTextAlpha(quitText_, 0.0f);
@@ -226,20 +246,20 @@ public:
 
         if (ic->Evaluate("SelectUp").Triggered()) {
             const int old = selectionIndex_;
-            selectionIndex_ = (selectionIndex_ + 2) % 3;
+            selectionIndex_ = (selectionIndex_ + kOptionCount - 1) % kOptionCount;
             RefreshTexts();
             onSelectionChanged(old, selectionIndex_);
         }
         if (ic->Evaluate("SelectDown").Triggered()) {
             const int old = selectionIndex_;
-            selectionIndex_ = (selectionIndex_ + 1) % 3;
+            selectionIndex_ = (selectionIndex_ + 1) % kOptionCount;
             RefreshTexts();
             onSelectionChanged(old, selectionIndex_);
         }
 
         if (!ic->Evaluate("Submit").Triggered()) return;
 
-        if (selectionIndex_ == 2) {
+        if (selectionIndex_ == 3) {
             requestedAction_ = RequestAction::Quit;
             if (sceneDefaultVariables_ && sceneDefaultVariables_->GetMainWindow()) {
                 sceneDefaultVariables_->GetMainWindow()->DestroyNotify();
@@ -247,7 +267,17 @@ public:
             return;
         }
 
-        requestedAction_ = (selectionIndex_ == 0) ? RequestAction::Retry : RequestAction::BackToTitle;
+        if (selectionIndex_ == 0) {
+            // 次のステージが存在しない場合は選択不可（灰色表示のまま何もしない）
+            if (!hasNextStage_) return;
+            ctx->AddSceneVariable("TargetStageFilePath", nextStagePath_);
+            requestedAction_ = RequestAction::NextStage;
+        } else if (selectionIndex_ == 1) {
+            requestedAction_ = RequestAction::Retry;
+        } else {
+            requestedAction_ = RequestAction::BackToTitle;
+        }
+
         if (auto *out = ctx->GetComponent<SceneChangeOut>()) {
             out->Play();
         }
@@ -275,14 +305,29 @@ private:
         if (clearTimeText_) {
             clearTimeText_->SetTextFormat("Clear Time: {0:.2f}s", static_cast<double>(clearTimeMilliseconds_) / 1000.0);
         }
+        if (nextStageText_) {
+            nextStageText_->SetText(selectionIndex_ == 0 ? "＞ つぎのステージへ" : "  つぎのステージへ");
+            const float gray = hasNextStage_ ? 1.0f : 0.5f;
+            for (size_t i = 0; i < 128; ++i) {
+                auto *sp = (*nextStageText_)[i];
+                if (!sp) continue;
+                auto *mat = sp->GetComponent2D<Material2D>();
+                if (!mat) continue;
+                auto c = mat->GetColor();
+                c.x = gray;
+                c.y = gray;
+                c.z = gray;
+                mat->SetColor(c);
+            }
+        }
         if (retryText_) {
-            retryText_->SetText(selectionIndex_ == 0 ? "＞ やりなおす" : "  やりなおす");
+            retryText_->SetText(selectionIndex_ == 1 ? "＞ やりなおす" : "  やりなおす");
         }
         if (backToTitleText_) {
-            backToTitleText_->SetText(selectionIndex_ == 1 ? "＞ タイトルにもどる" : "  タイトルにもどる");
+            backToTitleText_->SetText(selectionIndex_ == 2 ? "＞ タイトルにもどる" : "  タイトルにもどる");
         }
         if (quitText_) {
-            quitText_->SetText(selectionIndex_ == 2 ? "＞ おわる" : "  おわる");
+            quitText_->SetText(selectionIndex_ == 3 ? "＞ おわる" : "  おわる");
         }
     }
 
@@ -312,8 +357,38 @@ private:
         }
     }
 
+    void RefreshNextStageInfo() {
+        hasNextStage_ = false;
+        nextStagePath_.clear();
+
+        auto *ctx = GetOwnerContext();
+        if (!ctx) return;
+
+        const std::string currentPath = ctx->GetSceneVariableOr<std::string>(
+            "TargetStageFilePath", "Assets/Application/StageData/stage_01.json");
+
+        const JSON listJson = LoadJSON("Assets/Application/StageData/StageList.json");
+        if (!listJson.is_array()) return;
+
+        std::vector<std::string> stagePaths;
+        for (const auto &elem : listJson) {
+            if (elem.is_string()) {
+                stagePaths.push_back(elem.get<std::string>());
+            }
+        }
+
+        const auto it = std::find(stagePaths.begin(), stagePaths.end(), currentPath);
+        if (it == stagePaths.end()) return;
+
+        const size_t currentIndex = static_cast<size_t>(std::distance(stagePaths.begin(), it));
+        if (currentIndex + 1 >= stagePaths.size()) return;
+
+        nextStagePath_ = stagePaths[currentIndex + 1];
+        hasNextStage_ = true;
+    }
+
     void cacheTextTransforms() {
-        std::array<Text *, 5> texts = {logoText_, clearTimeText_, retryText_, backToTitleText_, quitText_};
+        std::array<Text *, 6> texts = {logoText_, clearTimeText_, nextStageText_, retryText_, backToTitleText_, quitText_};
         for (size_t i = 0; i < texts.size(); ++i) {
             if (!texts[i]) continue;
             auto *tr = texts[i]->GetComponent2D<Transform2D>();
@@ -340,7 +415,7 @@ private:
     }
 
     void updateEntranceAnimation() {
-        std::array<Text *, 5> texts = {logoText_, clearTimeText_, retryText_, backToTitleText_, quitText_};
+        std::array<Text *, 6> texts = {logoText_, clearTimeText_, nextStageText_, retryText_, backToTitleText_, quitText_};
         for (size_t i = 0; i < texts.size(); ++i) {
             if (!texts[i]) continue;
             auto *tr = texts[i]->GetComponent2D<Transform2D>();
@@ -364,17 +439,17 @@ private:
     }
 
     void onSelectionChanged(int oldIndex, int newIndex) {
-        if (oldIndex >= 0 && oldIndex < 3) {
+        if (oldIndex >= 0 && oldIndex < kOptionCount) {
             optionAnimElapsed_[static_cast<size_t>(oldIndex)] = optionAnimDuration_;
         }
-        if (newIndex >= 0 && newIndex < 3) {
+        if (newIndex >= 0 && newIndex < kOptionCount) {
             optionAnimElapsed_[static_cast<size_t>(newIndex)] = 0.0f;
         }
         previousSelectionIndex_ = newIndex;
     }
 
     void updateOptionSelectionAnimation(float dt) {
-        std::array<Text *, 3> options = {retryText_, backToTitleText_, quitText_};
+        std::array<Text *, 4> options = {nextStageText_, retryText_, backToTitleText_, quitText_};
         for (size_t i = 0; i < options.size(); ++i) {
             if (!options[i]) continue;
             auto *tr = options[i]->GetComponent2D<Transform2D>();
@@ -417,9 +492,12 @@ private:
     Text *logoText_ = nullptr;
     Text *touchedGroundText_ = nullptr;
     Text *clearTimeText_ = nullptr;
+    Text *nextStageText_ = nullptr;
     Text *retryText_ = nullptr;
     Text *backToTitleText_ = nullptr;
     Text *quitText_ = nullptr;
+    bool hasNextStage_ = false;
+    std::string nextStagePath_;
     std::array<Text *, 5> rankingTextLines_{};
     Sprite *backgroundSprite_ = nullptr;
 
@@ -441,9 +519,9 @@ private:
     float optionAnimDuration_ = 0.25f;
     const float waitInputDuration_ = 1.0f;
     float waitInputElapsed_ = 0.0f;
-    std::array<float, 3> optionAnimElapsed_{};
-    std::array<Vector3, 5> basePositions_{};
-    std::array<Vector3, 5> startPositions_{};
+    std::array<float, 4> optionAnimElapsed_{};
+    std::array<Vector3, 6> basePositions_{};
+    std::array<Vector3, 6> startPositions_{};
 };
 
 } // namespace KashipanEngine

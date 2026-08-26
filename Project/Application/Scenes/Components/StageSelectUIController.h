@@ -139,7 +139,11 @@ public:
     bool IsUpdating() const { return isUpdating_; }
 
     size_t GetSelectedIndex() const { return selectionIndex_; }
-    const std::string& GetSelectedPath() const { return stagePaths_[selectionIndex_]; }
+    const std::string& GetSelectedPath() const {
+        static const std::string kEmptyPath;
+        if (selectionIndex_ >= stagePaths_.size()) return kEmptyPath;
+        return stagePaths_[selectionIndex_];
+    }
 	bool GetChanged() const { return changed_; }
 
 	/// @brief 選択されたステージを非同期に読み込むための準備（シーン変数にファイルパスをセット）

@@ -193,6 +193,16 @@ public:
     // エディター用描画先
     //==================================================
 
+    /// @brief シーンビューに表示・選択・ギズモ編集の対象とするオブジェクトの種類
+    /// @details SceneEditorViewのツールバーから切り替えられる。あくまでエディターのシーンビュー
+    ///          （editorTarget_）の表示・ピッキング対象を絞り込むだけで、実際のゲーム画面には
+    ///          一切影響しない
+    enum class EditorDisplayMode {
+        Combined,  ///< 2D/3D両方を表示・選択対象にする（既定）
+        ThreeDOnly, ///< 3Dオブジェクト（MeshRenderer/SkinnedMeshRenderer）のみを表示・選択対象にする
+        TwoDOnly,  ///< 2Dオブジェクト（SpriteRenderer）のみを表示・選択対象にする
+    };
+
     /// @brief エディターカメラの情報（シャドウマップのカスケード計算等で使用する）
     struct EditorCameraInfo {
         Matrix4x4 viewProjection = Matrix4x4::Identity();
@@ -223,6 +233,16 @@ public:
     ConstantBufferResource *GetEditorCameraBuffer(const IRenderTarget *target) const {
         return (editorTarget_ && target == editorTarget_) ? editorCameraBuffer_ : nullptr;
     }
+
+    /// @brief 「2D」表示モード専用のパン・ズームカメラの定数バッファ（gCamera2D相当）を設定する
+    /// @details SceneEditorViewが毎フレーム呼ぶ。シーン内の実際のCamera2Dコンポーネントとは独立しており、
+    ///          表示モードがTwoDOnlyの間だけGetEditorCamera2DBufferが非nullを返す
+    void SetEditorCamera2DBuffer(ConstantBufferResource *cameraBuffer) { editorCamera2DBuffer_ = cameraBuffer; }
+    /// @brief 指定描画先がエディター用描画先、かつ表示モードがTwoDOnlyの場合のみカメラ定数バッファを返す
+    ConstantBufferResource *GetEditorCamera2DBuffer(const IRenderTarget *target) const {
+        return (editorTarget_ && target == editorTarget_ && editorDisplayMode_ == EditorDisplayMode::TwoDOnly)
+            ? editorCamera2DBuffer_ : nullptr;
+    }
     /// @brief 指定描画先がエディター用描画先の場合、そのカメラ情報を返す（それ以外は nullptr）
     const EditorCameraInfo *GetEditorCameraInfo(const IRenderTarget *target) const {
         return (editorTarget_ && target == editorTarget_ && editorCameraInfo_.valid) ? &editorCameraInfo_ : nullptr;
@@ -234,6 +254,15 @@ public:
     /// @details SceneEditorViewが毎フレーム呼び、Rendererがエディター用描画先の描画時に参照する
     void SetEditorDebugDraw(EditorDebugDrawSettings settings) { editorDebugDraw_ = std::move(settings); }
     const EditorDebugDrawSettings &GetEditorDebugDraw() const noexcept { return editorDebugDraw_; }
+
+    /// @brief シーンビューの表示モード（2D/3D併用・3Dのみ・2Dのみ）を設定する
+    /// @details SceneEditorViewのツールバーから毎フレーム呼ばれる。変更時はキャッシュ済みエントリ
+    ///          （targetObjectID未指定のMesh/SpriteRenderer分）を作り直す必要がある
+    void SetEditorDisplayMode(EditorDisplayMode mode) {
+        if (editorDisplayMode_ != mode) drawListDirty_ = true;
+        editorDisplayMode_ = mode;
+    }
+    EditorDisplayMode GetEditorDisplayMode() const noexcept { return editorDisplayMode_; }
 
     /// @brief エディターのシーンビューで選択中オブジェクトへ付与する押し出しアウトラインの対象を設定する
     /// @details 対象オブジェクト自身、またはその子孫が持つ全MeshRendererに、既存の押し出しアウトライン
@@ -291,10 +320,12 @@ private:
 
     IRenderTarget *editorTarget_ = nullptr;
     ConstantBufferResource *editorCameraBuffer_ = nullptr;
+    ConstantBufferResource *editorCamera2DBuffer_ = nullptr;
     EditorCameraInfo editorCameraInfo_;
     /// @brief editorTarget_のオーナーオブジェクト（GetTargetOwner参照。ポストエフェクトの適用対象の絞り込みに使う）
     EmptyObject *editorTargetOwner_ = nullptr;
     EditorDebugDrawSettings editorDebugDraw_;
+    EditorDisplayMode editorDisplayMode_ = EditorDisplayMode::Combined;
 
     /// @brief エディターのシーンビューでアウトライン表示する対象（SetEditorSelectedObjects参照）
     std::unordered_set<EmptyObject *> editorSelectedObjects_;

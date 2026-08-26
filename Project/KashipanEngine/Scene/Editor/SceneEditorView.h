@@ -8,9 +8,11 @@
 
 #include "Scene/SceneEditorContext.h"
 #include "Scene/Editor/SceneEditorCommands.h"
+#include "Scene/Components/Render/SceneRenderer.h"
 #include "Graphics/Renderer/EditorDebugDraw.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Quaternion.h"
+#include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
 #include "Utilities/UUID128.h"
@@ -58,6 +60,12 @@ private:
         float fov = 0.0f;
         float padding[3]{};
     };
+    /// @brief gCamera2D 定数バッファと同レイアウトの構造体（CameraRenderer::Camera2DConstant参照）
+    struct Camera2DConstant {
+        Matrix4x4 view;
+        Matrix4x4 projection;
+        Matrix4x4 viewProjection;
+    };
 
     void EnsureResources();
     /// @brief シーンビュー用の editorOnly オブジェクト（Transform + Camera3D + ScreenBufferObject）を
@@ -73,10 +81,26 @@ private:
     void EnsureSceneViewObject();
     /// @brief デバッグカメラの行列を計算して定数バッファへアップロードする
     void UpdateCameraBuffer();
+    /// @brief 「2D」表示モード専用の正射影カメラ（パン・ズームのみ、Z軸方向を見る）の行列を計算して
+    ///        定数バッファへアップロードする。3Dフリーカメラ（UpdateCameraBuffer）とは完全に独立しており、
+    ///        シーン内の実際のCamera2Dコンポーネントの有無・内容に関係なく、エディター側で単独に
+    ///        パン・ズーム操作できる（RegisterEditorTargetでgCamera2Dへ上書きバインドされる）
+    void UpdateCamera2DBuffer();
     /// @brief SceneRenderer へエディター描画先として登録する
     void RegisterEditorTarget();
     void ShowSceneViewWindow(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands, SceneObjectHierarchy *hierarchy);
     void HandleCameraInput();
+    /// @brief 「2D」表示モード中のカメラ操作（左/中ドラッグでパン、ホイールでズーム）
+    void HandleCamera2DInput();
+    /// @brief 現在の表示モードに応じて、ピッキング・ギズモ・スクリーン投影で使うべきビュー行列を返す
+    ///        （2Dモード中はUpdateCamera2DBufferが計算したview2D_、それ以外はUpdateCameraBufferのview_）
+    Matrix4x4 GetActiveView() const noexcept {
+        return (displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly) ? view2D_ : view_;
+    }
+    /// @brief GetActiveViewと対になる射影行列
+    Matrix4x4 GetActiveProjection() const noexcept {
+        return (displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly) ? projection2D_ : projection_;
+    }
     /// @brief シーンビュー画像上の左クリックでオブジェクトを選択する（メッシュ三角形との正確なレイ交差判定
     ///        ＋ Light/Cameraアイコンとのスクリーン座標判定）
     /// @details クリック位置からエディターカメラのレイを飛ばし、MeshFilterを持つ描画対象オブジェクトの
@@ -142,6 +166,16 @@ private:
     void DrawLightMarkers(const ImVec2 &imagePos, const ImVec2 &imageSize);
     /// @brief CameraRenderer が付いたオブジェクトをアイコンで描画する（視錐台はGPUデバッグライン描画側で行う）
     void DrawCameraMarkers(const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief 「2D」表示モード専用のグリッド線をImGuiオーバーレイで描画する（GPUデバッグライン描画の
+    ///        3Dグリッドとは別実装。zoom2D_に応じて1-2-5系列で間隔を自動調整し、X=0/Y=0の軸は強調表示する）
+    void DrawGrid2D(const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief 「2D」表示モード専用に、2Dコライダー（Is2D()なICollider）の当たり判定形状をImGui
+    ///        オーバーレイで描画する。3D側のAppendColliderDebugLines（GPUデバッグライン）と違い、
+    ///        2D専用の正射影カメラ（view2D_/projection2D_）に投影して表示する
+    void DrawCollider2DOverlay(const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief 「2D」表示モード専用に、シーン内のCamera2Dが実際に映す範囲（矩形）をImGuiオーバーレイで
+    ///        描画する。3D/2D3DモードのAppendCameraFrustumLines（GPUデバッグライン）と対になる表示
+    void DrawCamera2DBoundsOverlay(const ImVec2 &imagePos, const ImVec2 &imageSize);
     /// @brief 選択中オブジェクト群に対してImGuizmoを表示・操作する
     /// @details 単一選択時は対象オブジェクト自身のワールド行列をそのまま渡す（Local/Worldモードの切り替えが有効）。
     ///          複数選択時は選択群の平均位置を中心としたワールド軸固定のグループ行列を渡し、
@@ -193,6 +227,15 @@ private:
     /// @brief 直近に計算したカメラ位置（シャドウマップ計算用にSceneRendererへ渡す）
     Vector3 cameraEye_{ 0.0f, 0.0f, 0.0f };
 
+    // 「2D」表示モード専用のパン・ズームカメラ状態（再起動後も維持される）。3Dフリーカメラの
+    // yaw_/pitch_/target_等とは完全に独立しており、モード切り替えの度にリセットされない
+    Vector2 pan2D_{ 0.0f, 0.0f };
+    /// @brief 画面縦方向に見えるワールド半径（Camera3Dのorthographic sizeと同じ考え方。既定5）
+    float zoom2D_ = 5.0f;
+    Matrix4x4 view2D_ = Matrix4x4::Identity();
+    Matrix4x4 projection2D_ = Matrix4x4::Identity();
+    std::unique_ptr<ConstantBufferResource> camera2DBuffer_;
+
     // ギズモ状態（ImGuizmo::OPERATION / ImGuizmo::MODE をヘッダーで公開しないため int で保持する）
     int gizmoOperation_;
     int gizmoMode_;
@@ -208,6 +251,9 @@ private:
     };
     // 操作開始時の全対象オブジェクトのTransformスナップショット（Undo用）
     std::vector<GizmoBeforeState> gizmoBeforeStates_;
+
+    /// @brief シーンビューに表示・選択・ギズモ編集の対象とするオブジェクトの種類（再起動後も維持される）
+    SceneRenderer::EditorDisplayMode displayMode_ = SceneRenderer::EditorDisplayMode::Combined;
 
     // デバッグ表示の有効/無効（再起動後も維持される）
     bool showGrid_ = true;

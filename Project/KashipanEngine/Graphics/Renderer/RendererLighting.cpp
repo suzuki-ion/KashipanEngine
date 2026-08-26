@@ -191,6 +191,15 @@ void Renderer::BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
         shaderBinder.Bind("Vertex:gCamera3D", editorCameraBuffer);
         shaderBinder.Bind("Pixel:gCamera3D", editorCameraBuffer);
     }
+    // シーンビューの表示モードが「2D」の場合のみ、エディター専用のパン・ズームカメラをgCamera2Dへ
+    // 優先バインドする（GetEditorCamera2DBufferがモード判定込みで管理。SceneRenderer::EditorDisplayMode
+    // 参照）。これによりSpriteRendererは元のパイプライン・投影のまま、シーン内の実際のCamera2D
+    // コンポーネントの有無に関係なく、エディター側で自由にパン・ズームして編集できる
+    auto *editorCamera2DBuffer = sceneRenderer->GetEditorCamera2DBuffer(target);
+    if (editorCamera2DBuffer) {
+        shaderBinder.Bind("Vertex:gCamera2D", editorCamera2DBuffer);
+        shaderBinder.Bind("Pixel:gCamera2D", editorCamera2DBuffer);
+    }
     for (auto *cameraRenderer : sceneRenderer->GetCameraRenderers()) {
         if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
         // EditorOnlyオブジェクトのカメラはエディター用以外の描画先にはバインドしない
@@ -204,8 +213,9 @@ void Renderer::BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
         auto *constantBuffer = cameraRenderer->GetConstantBuffer();
         if (!constantBuffer) continue;
         for (const auto &variableName : cameraRenderer->GetBindVariableNames()) {
-            // gCamera3Dはエディターカメラで上書き済みなので二重バインドしない
+            // gCamera3D/gCamera2Dはエディターカメラで上書き済みなので二重バインドしない
             if (editorCameraBuffer && (variableName == "Vertex:gCamera3D" || variableName == "Pixel:gCamera3D")) continue;
+            if (editorCamera2DBuffer && (variableName == "Vertex:gCamera2D" || variableName == "Pixel:gCamera2D")) continue;
             shaderBinder.Bind(variableName, constantBuffer);
         }
     }

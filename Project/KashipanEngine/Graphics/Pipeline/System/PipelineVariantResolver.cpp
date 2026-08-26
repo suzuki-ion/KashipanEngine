@@ -50,6 +50,7 @@ PipelineVariantResolution TryResolvePipelineVariant(const std::string &pipelineN
     };
 
     bool isToon = false;
+    bool isWorld = false;
     std::string rasterPreset;
     std::string blendPreset;
     std::vector<std::string> moduleTokens;
@@ -60,6 +61,12 @@ PipelineVariantResolution TryResolvePipelineVariant(const std::string &pipelineN
         if (token == "Toon") {
             if (base != "Object3D") return result; // Object2D向けのToonプリセットは存在しない
             isToon = true;
+        } else if (token == "World") {
+            // エディターのシーンビューが2Dオブジェクトを3D空間内に配置・選択・ギズモ編集できるようにする
+            // ための特殊バリアント（gCamera2Dの代わりにgCamera3Dで投影する）。Object3D側は元々
+            // gCamera3Dを使っているため意味を持たず、Object2D限定のトークンとする
+            if (base != "Object2D") return result;
+            isWorld = true;
         } else if (token == "Solid" || token == "DoubleSidedCulling") {
             if (!rasterPreset.empty()) return result; // 重複指定
             rasterPreset = token;
@@ -80,8 +87,13 @@ PipelineVariantResolution TryResolvePipelineVariant(const std::string &pipelineN
 
     // Translucent（本格的なアルファブレンドによる半透明。Material3D.hlsliのuseAlphaBlend用）は、
     // Object3D.Ghostパイプラインと同じく深度テストのみ・深度書き込み無し（DepthEnableToMaskZero）にする。
-    // 重なる半透明オブジェクト同士は自動でソートされないため、RenderPriorityで手動の描画順制御が必要
-    const std::string depthStencilPreset = (base != "Object3D") ? "DepthDisable"
+    // 重なる半透明オブジェクト同士は自動でソートされないため、RenderPriorityで手動の描画順制御が必要。
+    // Object2D+World（エディター限定の3D空間配置バリアント）は、既定パイプライン（BlendNormal）を含め
+    // 実質全てのSpriteRendererが対象になるため、Object3Dの通常オブジェクトと同じく常に深度テスト・
+    // 書き込み両方を有効にする（DepthEnableToMaskZero＝書き込み無しにすると、3Dオブジェクトが後から
+    // 描画された際にスプライトへ深度テストされず、スプライトの手前にあるべき部分が突き抜けて見える）
+    const std::string depthStencilPreset = isWorld ? "DepthEnable"
+        : (base != "Object3D") ? "DepthDisable"
         : (blendPreset == "Translucent") ? "DepthEnableToMaskZero" : "DepthEnable";
     // TranslucentのBlend方程式はNormalと同一（SrcAlpha/InvSrcAlpha）のため、同じBlendStateプリセットを再利用する
     const std::string blendStatePreset = (blendPreset == "Translucent") ? "Normal" : blendPreset;
@@ -89,11 +101,15 @@ PipelineVariantResolution TryResolvePipelineVariant(const std::string &pipelineN
     // それ以外（Add等の透明合成系、Translucent）は通常描画より後段（RenderPriority=2）で描く
     const int renderPriority = (blendPreset == "Normal" || blendPreset == "None") ? 1 : 2;
 
+    // Worldバリアントは専用のシェーダープリセット（Object2DWorld.Vertex/.Pixel、gCamera3Dで投影する）を使う。
+    // PS側の内容自体はObject2Dと同一（カメラを参照しない）が、プリセット名はVertexと対にして登録されている
+    const std::string presetBase = isWorld ? (base + "World") : base;
+
     JSON pixelStage;
     if (moduleTokens.empty()) {
         // モジュール未指定: 既存の静的プリセット（Object3D.Pixel/Object3D.Toon.Pixel）をそのまま使う。
         // 挙動は今まで通り完全に不変
-        const std::string pixelPreset = isToon ? (base + ".Toon.Pixel") : (base + ".Pixel");
+        const std::string pixelPreset = isToon ? (presetBase + ".Toon.Pixel") : (presetBase + ".Pixel");
         pixelStage = { { "UsePreset", pixelPreset } };
     } else {
         // モジュール指定あり: ShaderModuleComposerで合成したHLSLファイルをインラインPathで指定する
@@ -114,7 +130,7 @@ PipelineVariantResolution TryResolvePipelineVariant(const std::string &pipelineN
         { "AutoInputLayoutFromVS", true },
         { "AutoRTCountFromPS", true },
         { "AutoRootDescriptorFromShader", true },
-        { "Vertex", { { "UsePreset", base + ".Vertex" } } },
+        { "Vertex", { { "UsePreset", presetBase + ".Vertex" } } },
         { "Pixel", pixelStage },
     };
     if (!moduleTokens.empty()) {

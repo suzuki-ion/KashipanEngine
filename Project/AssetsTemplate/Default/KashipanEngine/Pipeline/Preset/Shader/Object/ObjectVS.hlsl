@@ -32,7 +32,11 @@ VSOutput main(VSInput input, uint instanceId : SV_InstanceID) {
 	float4x4 world = gTransformationMatrices[instanceId].world;
 
 #ifdef Object2D
+#ifdef Object2DWorld
+	float4x4 worldViewProjection = mul(world, gCamera3D.viewProjection);
+#else
 	float4x4 worldViewProjection = mul(world, gCamera2D.viewProjection);
+#endif
 #endif
 #ifdef Object3D
 	float4x4 worldViewProjection = mul(world, gCamera3D.viewProjection);

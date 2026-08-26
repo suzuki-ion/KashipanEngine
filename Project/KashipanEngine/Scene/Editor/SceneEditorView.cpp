@@ -23,6 +23,7 @@
 #include "Graphics/Resources/ConstantBufferResource.h"
 #include "Objects/EmptyObject.h"
 #include "Objects/Components/MeshFilter.h"
+#include "Objects/Components/Render/Camera2D.h"
 #include "Objects/Components/Render/Camera3D.h"
 #include "Objects/Components/Render/CameraRenderer.h"
 #include "Objects/Components/Render/SceneViewOrbitState.h"
@@ -31,6 +32,7 @@
 #include "Objects/Components/Render/MeshRenderer.h"
 #include "Objects/Components/Render/ScreenBufferObject.h"
 #include "Objects/Components/Render/SkinnedMeshRenderer.h"
+#include "Objects/Components/Render/SpriteRenderer.h"
 #include "Objects/Components/Collider/ICollider.h"
 #include "Objects/Components/Collider/RayCollider.h"
 #include "Objects/Components/Transform.h"
@@ -51,6 +53,17 @@ SceneEditorView::SceneEditorView(Passkey<SceneEditor>, SceneEditorContext *conte
     showCameraMarkers_ = EditorSettings::GetBool("sceneView.showCameraMarkers", true);
     showColliderGizmos_ = EditorSettings::GetBool("sceneView.showColliderGizmos", true);
     showBoneGizmos_ = EditorSettings::GetBool("sceneView.showBoneGizmos", false);
+
+    // シーンビューの表示モード（2D/3D併用・3Dのみ・2Dのみ）を復元する（再起動後も維持される）
+    const std::string displayModeStr = EditorSettings::GetString("sceneView.displayMode", "Combined");
+    if (displayModeStr == "ThreeDOnly") displayMode_ = SceneRenderer::EditorDisplayMode::ThreeDOnly;
+    else if (displayModeStr == "TwoDOnly") displayMode_ = SceneRenderer::EditorDisplayMode::TwoDOnly;
+    else displayMode_ = SceneRenderer::EditorDisplayMode::Combined;
+
+    // 「2D」表示モード専用のパン・ズームカメラの状態を復元する（再起動後も維持される）
+    pan2D_.x = EditorSettings::GetFloat("sceneView.pan2D.x", 0.0f);
+    pan2D_.y = EditorSettings::GetFloat("sceneView.pan2D.y", 0.0f);
+    zoom2D_ = EditorSettings::GetFloat("sceneView.zoom2D", 5.0f);
 
     // カメラ操作モード・フライ速度を復元する（再起動後も維持される）
     flyMode_ = EditorSettings::GetBool("sceneView.flyMode", false);
@@ -82,6 +95,7 @@ SceneEditorView::~SceneEditorView() {
 void SceneEditorView::ShowImGui(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands, SceneObjectHierarchy *hierarchy) {
     EnsureResources();
     UpdateCameraBuffer();
+    UpdateCamera2DBuffer();
     RegisterEditorTarget();
     UpdateEditorDebugDraw();
     // シーンビュー上で選択中オブジェクトへアウトラインを付ける（このシーンビュー用描画先にのみ適用される）
@@ -100,6 +114,9 @@ void SceneEditorView::EnsureResources() {
     }
     if (!cameraBuffer_) {
         cameraBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(CameraConstant));
+    }
+    if (!camera2DBuffer_) {
+        camera2DBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(Camera2DConstant));
     }
 }
 
@@ -238,6 +255,44 @@ void SceneEditorView::UpdateCameraBuffer() {
     }
 }
 
+void SceneEditorView::UpdateCamera2DBuffer() {
+    if (!camera2DBuffer_ || !screenBuffer_) return;
+
+    // パン位置(pan2D_)を見る正射影カメラ。Z軸方向を向く固定姿勢（SpriteRendererの単位クアッドが
+    // 乗るXY平面を正面から見る）で、3Dフリーカメラのyaw_/pitch_等とは完全に独立している。
+    // カメラ自身はZ=0ではなく、コンテンツより手前(-kCameraDistance)に置く。SpriteRendererの
+    // Transformは既定でZ=0のことが多く、もしカメラもZ=0に置くと近クリップ面(near)より
+    // 手前になってしまい、ピッキングのレイ（near→farの方向にしか伸びない）が理論上絶対に
+    // そのオブジェクトへ到達しない（tが負になり棄却される）。実際、既存シーンのSpriteRendererは
+    // Z=0.0で登録されており、この状態でクリック選択が不安定になる根本原因だった
+    constexpr float kCameraDistance = 500.0f;
+    view2D_ = Matrix4x4::Identity();
+    view2D_.m[3][0] = -pan2D_.x;
+    view2D_.m[3][1] = -pan2D_.y;
+    view2D_.m[3][2] = kCameraDistance;
+
+    const float width = static_cast<float>(screenBuffer_->GetWidth());
+    const float height = static_cast<float>(screenBuffer_->GetHeight());
+    const float aspect = (height > 0.0f) ? (width / height) : (16.0f / 9.0f);
+    // Matrix4x4::MakeOrthographicMatrix(left, top, right, bottom, near, far)のtop/bottom引数は、
+    // 見た目の上下ではなく数式上の役割（画面下端に対応するY値をtopへ、画面上端に対応するY値を
+    // bottomへ渡す）であることに注意。実際のCamera2D(CameraRenderer::UploadCameraConstant)は
+    // top=0, bottom=heightを渡しており、Y=0が画面下端・Y=heightが画面上端になる
+    // （＝左下(0,0)原点、Y上向きのワールド座標系）。ここでも同じ規約に合わせ、
+    // 画面下端に対応する値(-zoom2D_)をtopへ、画面上端に対応する値(+zoom2D_)をbottomへ渡す。
+    // near/farはカメラ位置(kCameraDistance手前)を基準にした相対値で、Z=0付近を中心に
+    // ±kCameraDistance程度の余裕を持たせ、多少Zがずれているコンテンツも問題なく拾えるようにする
+    projection2D_.MakeOrthographicMatrix(-zoom2D_ * aspect, -zoom2D_, zoom2D_ * aspect, zoom2D_, 0.1f, kCameraDistance * 2.0f);
+
+    Camera2DConstant constant{};
+    constant.view = view2D_;
+    constant.projection = projection2D_;
+    constant.viewProjection = view2D_ * projection2D_;
+    if (void *mapped = camera2DBuffer_->Map()) {
+        std::memcpy(mapped, &constant, sizeof(constant));
+    }
+}
+
 void SceneEditorView::SyncCameraStateFromTransform(Transform *transform) {
     if (!transform || !sceneViewObject_) return;
     const Vector3 forward = transform->GetRotateQuaternion().RotateVector(Vector3(0.0f, 0.0f, 1.0f));
@@ -267,6 +322,8 @@ void SceneEditorView::RegisterEditorTarget() {
         // （未指定のままだとRenderPostProcessがオーナー無しとして処理を打ち切ってしまい、
         // シーンビュー上でポストエフェクトが一切適用されなくなる）
         sceneRenderer->SetEditorTarget(screenBuffer_, cameraBuffer_.get(), cameraInfo, sceneViewObject_);
+        sceneRenderer->SetEditorDisplayMode(displayMode_);
+        sceneRenderer->SetEditorCamera2DBuffer(camera2DBuffer_.get());
     }
 }
 
@@ -304,6 +361,23 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
         EditorSettings::SetBool("sceneView.flyMode", flyMode_);
     }
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.camera.fly.tooltip"));
+
+    //--------- シーンビューの表示モード切り替え（2D/3D併用・3Dのみ・2Dのみ） ---------//
+    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.display.combined"), displayMode_ == SceneRenderer::EditorDisplayMode::Combined)) {
+        displayMode_ = SceneRenderer::EditorDisplayMode::Combined;
+        EditorSettings::SetString("sceneView.displayMode", "Combined");
+    }
+    ImGui::SameLine();
+    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.display.threed"), displayMode_ == SceneRenderer::EditorDisplayMode::ThreeDOnly)) {
+        displayMode_ = SceneRenderer::EditorDisplayMode::ThreeDOnly;
+        EditorSettings::SetString("sceneView.displayMode", "ThreeDOnly");
+    }
+    ImGui::SameLine();
+    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.display.twod"), displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly)) {
+        displayMode_ = SceneRenderer::EditorDisplayMode::TwoDOnly;
+        EditorSettings::SetString("sceneView.displayMode", "TwoDOnly");
+    }
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.display.tooltip"));
 
     //--------- デバッグ表示の有効/無効切り替え ---------//
     if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.grid"), &showGrid_)) EditorSettings::SetBool("sceneView.showGrid", showGrid_);
@@ -379,10 +453,20 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     // グリッド線・当たり判定のワイヤーフレームは screenBuffer_ へGPUで直接描画される
     // （UpdateEditorDebugDraw で設定済み。DebugGrid/DebugLinesパイプライン参照）
 
-    //--------- ライトのデバッグ表示 ---------//
-    if (showLightMarkers_) DrawLightMarkers(imagePos, drawSize);
+    //--------- 2Dモード専用のグリッド線（3Dモードのグリッドとは別実装のImGuiオーバーレイ） ---------//
+    if (showGrid_ && displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly) DrawGrid2D(imagePos, drawSize);
 
-    //--------- カメラのデバッグ表示 ---------//
+    //--------- 2Dモード専用の2Dコライダー可視化（3DのGPUデバッグラインとは別実装のImGuiオーバーレイ） ---------//
+    if (showColliderGizmos_ && displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly) DrawCollider2DOverlay(imagePos, drawSize);
+
+    //--------- 2Dモード専用のCamera2D表示範囲（3D/2D3DモードのAppendCameraFrustumLinesと対になる表示） ---------//
+    if (showCameraMarkers_ && displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly) DrawCamera2DBoundsOverlay(imagePos, drawSize);
+
+    //--------- ライトのデバッグ表示（2Dモードでは3D専用のアイコンのため表示しない） ---------//
+    if (showLightMarkers_ && displayMode_ != SceneRenderer::EditorDisplayMode::TwoDOnly) DrawLightMarkers(imagePos, drawSize);
+
+    //--------- カメラのデバッグ表示（2Dモードでは3D専用のアイコンのため表示しない） ---------//
+    // 2D/3Dどちらのカメラアイコンを出すかはDrawCameraMarkers内部で表示モードに応じて絞り込む
     if (showCameraMarkers_) DrawCameraMarkers(imagePos, drawSize);
 
     //--------- ImGuizmo によるギズモ表示 ---------//
@@ -464,6 +548,13 @@ void SceneEditorView::ClearGhostPreview() {
 
 void SceneEditorView::HandleCameraInput() {
     if (!ImGui::IsItemHovered()) return;
+
+    // 「2D」表示モード中は3Dフリーカメラ（オービット/フライ）ではなく、専用のパン・ズーム操作を行う
+    if (displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly) {
+        HandleCamera2DInput();
+        return;
+    }
+
     ImGuiIO &io = ImGui::GetIO();
 
     if (flyMode_) {
@@ -533,42 +624,79 @@ void SceneEditorView::HandleCameraInput() {
     }
 }
 
+void SceneEditorView::HandleCamera2DInput() {
+    ImGuiIO &io = ImGui::GetIO();
+
+    // ホイールでズーム（3Dフリーカメラのdistance_ズームと同じ減衰率）
+    if (io.MouseWheel != 0.0f) {
+        zoom2D_ *= std::pow(0.9f, io.MouseWheel);
+        zoom2D_ = std::clamp(zoom2D_, 0.05f, 10000.0f);
+        EditorSettings::SetFloat("sceneView.zoom2D", zoom2D_);
+    }
+    // 左ドラッグ・中ドラッグどちらでもパンする（3D空間の当たり判定を考える必要が無い2D専用モードのため、
+    // 左ドラッグをオブジェクト選択と競合させないよう、選択はクリック＝ドラッグなしの場合のみ反応する
+    // HandleObjectPicking側の既存挙動にそのまま委ねる）
+    if (ImGui::IsMouseDragging(ImGuiMouseButton_Middle) ||
+        (ImGui::IsMouseDragging(ImGuiMouseButton_Left) && io.KeyAlt)) {
+        // 画面ピクセル→ワールド単位の換算率（正射影の縦幅 zoom2D_*2 が screenBuffer_ の高さピクセルに対応する）
+        const float heightPx = screenBuffer_ ? static_cast<float>(screenBuffer_->GetHeight()) : 0.0f;
+        if (heightPx > 0.0f) {
+            const float worldPerPixel = (zoom2D_ * 2.0f) / heightPx;
+            pan2D_.x -= io.MouseDelta.x * worldPerPixel;
+            pan2D_.y += io.MouseDelta.y * worldPerPixel;
+            EditorSettings::SetFloat("sceneView.pan2D.x", pan2D_.x);
+            EditorSettings::SetFloat("sceneView.pan2D.y", pan2D_.y);
+        }
+    }
+}
+
 void SceneEditorView::UpdateEditorDebugDraw() {
     if (!context_) return;
     auto *sceneRenderer = context_->GetComponent<SceneRenderer>();
     if (!sceneRenderer) return;
 
     EditorDebugDrawSettings settings;
-    settings.showGrid = showGrid_;
-    // カメラのズーム量に応じてグリッドの表示範囲を追従させる（Blenderのように「無限」に感じられる範囲を保つ）
-    settings.gridFadeDistance = std::clamp(distance_ * 4.0f, 20.0f, 2000.0f);
-
+    // EditorDebugDrawSettings::showGridの既定値はtrueのため、2Dモードでは明示的にfalseへ
+    // 上書きする（下のif内で条件付きにshowGrid_を代入するだけだと、2Dモードで代入自体を
+    // スキップした際に既定値trueのまま送られてしまい、グリッドが消えないバグになる）
+    settings.showGrid = false;
     settings.backgroundColor = backgroundColor_;
     settings.backgroundTextureHandle = backgroundTexturePath_.empty()
         ? TextureManager::kInvalidHandle
         : TextureManager::GetTextureFromAssetPath(backgroundTexturePath_);
 
-    if (showColliderGizmos_) {
-        AppendColliderDebugLines(settings.lines);
-    }
-    if (showCameraMarkers_) {
-        AppendCameraFrustumLines(settings.lines);
-    }
-    if (showLightMarkers_) {
-        // ライトの向きはImGuiのオーバーレイではなく、エンジン側のデバッグライン描画で行う
-        // （オブジェクトとの前後関係が正しく表現される）
-        AppendLightDirectionLines(settings.lines);
-    }
-    if (showBoneGizmos_) {
-        // ボーンはモデル内部にあっても姿勢を確認できるよう、深度テストを行わない線として描画する。
-        AppendSkeletonBoneLines(settings.overlayLines);
+    // グリッド・カメラ視錐台・ライト方向・ボーンはいずれも3Dフリーカメラ（gCamera3D）の投影で
+    // 描かれるGPUデバッグライン。2Dモードでは実際の描画に2D専用の正射影カメラ（gCamera2D）が
+    // 使われるため、これらを出したままにすると3Dカメラ視点のまま取り残された残像のように見えてしまう。
+    // そのため2Dモード中はここで一切追加しない（描画自体を行わない）。コライダーのみ、2D形状は
+    // ImGuiオーバーレイ（DrawCollider2DOverlay）で別途表示するため対象外
+    if (displayMode_ != SceneRenderer::EditorDisplayMode::TwoDOnly) {
+        settings.showGrid = showGrid_;
+        // カメラのズーム量に応じてグリッドの表示範囲を追従させる（Blenderのように「無限」に感じられる範囲を保つ）
+        settings.gridFadeDistance = std::clamp(distance_ * 4.0f, 20.0f, 2000.0f);
+
+        if (showColliderGizmos_) {
+            AppendColliderDebugLines(settings.lines);
+        }
+        if (showCameraMarkers_) {
+            AppendCameraFrustumLines(settings.lines);
+        }
+        if (showLightMarkers_) {
+            // ライトの向きはImGuiのオーバーレイではなく、エンジン側のデバッグライン描画で行う
+            // （オブジェクトとの前後関係が正しく表現される）
+            AppendLightDirectionLines(settings.lines);
+        }
+        if (showBoneGizmos_) {
+            // ボーンはモデル内部にあっても姿勢を確認できるよう、深度テストを行わない線として描画する。
+            AppendSkeletonBoneLines(settings.overlayLines);
+        }
     }
 
     sceneRenderer->SetEditorDebugDraw(std::move(settings));
 }
 
 bool SceneEditorView::ProjectToImage(const Vector3 &worldPosition, const ImVec2 &imagePos, const ImVec2 &imageSize, ImVec2 &outScreenPos, bool clampToVisibleArea) const {
-    const Matrix4x4 viewProjection = view_ * projection_;
+    const Matrix4x4 viewProjection = GetActiveView() * GetActiveProjection();
     const float x = worldPosition.x * viewProjection.m[0][0] + worldPosition.y * viewProjection.m[1][0] + worldPosition.z * viewProjection.m[2][0] + viewProjection.m[3][0];
     const float y = worldPosition.x * viewProjection.m[0][1] + worldPosition.y * viewProjection.m[1][1] + worldPosition.z * viewProjection.m[2][1] + viewProjection.m[3][1];
     const float w = worldPosition.x * viewProjection.m[0][3] + worldPosition.y * viewProjection.m[1][3] + worldPosition.z * viewProjection.m[2][3] + viewProjection.m[3][3];
@@ -704,16 +832,26 @@ EmptyObject *SceneEditorView::PickIconAtScreenPosition(const ImVec2 &screenPos, 
         picked = context_->GetSceneObject(ownerObject->GetObjectID());
     };
 
-    // マーカー表示が無効な種別は、画面上にアイコンが出ていないためクリック判定からも除外する
-    if (showLightMarkers_) {
+    // マーカー表示が無効な種別・表示モード上アイコンが出ていない種別は、クリック判定からも除外する
+    // （ライトは3D専用のためDrawLightMarkersと同様に2Dモードでは対象外）
+    if (showLightMarkers_ && displayMode_ != SceneRenderer::EditorDisplayMode::TwoDOnly) {
         for (auto *lightRenderer : sceneRenderer->GetLightRenderers()) {
             if (!lightRenderer || !lightRenderer->IsActive()) continue;
             considerIcon(lightRenderer->GetWorldPosition(), lightRenderer->GetOwnerObject());
         }
     }
     if (showCameraMarkers_) {
+        // DrawCameraMarkersと同じ規則で、表示モードに応じてCamera2D/Camera3Dの対象を絞り込む
+        const bool showThreeDCameras = displayMode_ != SceneRenderer::EditorDisplayMode::TwoDOnly;
+        const bool showTwoDCameras = displayMode_ != SceneRenderer::EditorDisplayMode::ThreeDOnly;
         for (auto *cameraRenderer : sceneRenderer->GetCameraRenderers()) {
             if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
+            const auto *owner = cameraRenderer->GetOwnerObject();
+            const bool isTwoD = owner && owner->GetComponent<Camera2D>();
+            const bool isThreeD = owner && owner->GetComponent<Camera3D>();
+            if (isTwoD && !showTwoDCameras) continue;
+            if (isThreeD && !showThreeDCameras) continue;
+            if (!isTwoD && !isThreeD) continue;
             considerIcon(cameraRenderer->GetWorldPosition(), cameraRenderer->GetOwnerObject());
         }
     }
@@ -730,25 +868,36 @@ bool SceneEditorView::RaycastSceneMeshes(const ImVec2 &screenPos, const ImVec2 &
     // クリック位置からカメラの近平面→遠平面を貫く線分を作る（tがそのまま奥行き順の比較に使える）
     const float ndcX = ((screenPos.x - imagePos.x) / imageSize.x) * 2.0f - 1.0f;
     const float ndcY = -(((screenPos.y - imagePos.y) / imageSize.y) * 2.0f - 1.0f);
-    const Matrix4x4 invViewProjection = (view_ * projection_).Inverse();
+    const Matrix4x4 invViewProjection = (GetActiveView() * GetActiveProjection()).Inverse();
     outRayStart = UnprojectNdc(invViewProjection, ndcX, ndcY, 0.0f);
     outRayEnd = UnprojectNdc(invViewProjection, ndcX, ndcY, 1.0f);
 
     for (auto *obj : context_->GetSceneObjects()) {
         if (!obj || !obj->IsActive()) continue;
 
-        // シーンビューに描画される対象（アクティブなMeshRenderer/SkinnedMeshRendererを持つ）だけを判定対象にする
+        // シーンビューに描画される対象（アクティブなMeshRenderer/SkinnedMeshRenderer/SpriteRendererを持つ）
+        // だけを判定対象にする。SpriteRendererはエディターのシーンビュー上でのみ3D空間内に配置される
+        // 特殊描画（SceneRenderer.cppのResolveEditorWorldPipelineName参照）と対になる、クリック選択対応
         auto *meshFilter = obj->GetComponent<MeshFilter>();
         if (!meshFilter || !meshFilter->HasMesh()) continue;
         auto *meshRenderer = obj->GetComponent<MeshRenderer>();
         auto *skinnedMeshRenderer = obj->GetComponent<SkinnedMeshRenderer>();
+        auto *spriteRenderer = obj->GetComponent<SpriteRenderer>();
+        // シーンビューの表示モード（ツールバー）に応じて選択対象を絞り込む
+        const bool threeDVisible = displayMode_ != SceneRenderer::EditorDisplayMode::TwoDOnly;
+        const bool twoDVisible = displayMode_ != SceneRenderer::EditorDisplayMode::ThreeDOnly;
         const bool hasVisibleRenderer =
-            (meshRenderer && meshRenderer->IsActive()) ||
-            (skinnedMeshRenderer && skinnedMeshRenderer->IsActive());
+            (threeDVisible && meshRenderer && meshRenderer->IsActive()) ||
+            (threeDVisible && skinnedMeshRenderer && skinnedMeshRenderer->IsActive()) ||
+            (twoDVisible && spriteRenderer && spriteRenderer->IsActive());
         if (!hasVisibleRenderer) continue;
 
+        // SpriteRendererはアンカー/ピボット補正込みのワールド行列を使う必要があるため、
+        // MeshRenderer/SkinnedMeshRenderer（Transformのワールド行列そのまま）とは取得元を分ける
         auto *transform = obj->GetComponent<Transform>();
-        const Matrix4x4 world = transform ? transform->GetWorldMatrix() : Matrix4x4::Identity();
+        const Matrix4x4 world = (spriteRenderer && !meshRenderer && !skinnedMeshRenderer)
+            ? spriteRenderer->GetWorldMatrix()
+            : (transform ? transform->GetWorldMatrix() : Matrix4x4::Identity());
 
         // レイをオブジェクトのローカル空間へ変換して三角形と判定する
         // （アフィン変換では線分上のパラメータtが保存されるため、tはワールド空間の奥行き比較にそのまま使える）
@@ -822,7 +971,8 @@ void SceneEditorView::HandleObjectPicking(SceneObjectHierarchy *hierarchy, const
     const ImVec2 mouse = ImGui::GetMousePos();
 
     // メッシュを持たないLight/Camera等は、深度テストせず常に手前に描画されるアイコンとの
-    // スクリーン座標距離でクリック判定する（メッシュの三角形ピッキングより優先する）
+    // スクリーン座標距離でクリック判定する（メッシュの三角形ピッキングより優先する）。
+    // 表示モードに応じた絞り込みはPickIconAtScreenPosition内部で行う
     EmptyObject *picked = PickIconAtScreenPosition(mouse, imagePos, imageSize);
 
     if (!picked) {
@@ -851,14 +1001,27 @@ void SceneEditorView::DrawCameraMarkers(const ImVec2 &imagePos, const ImVec2 &im
     auto *drawList = ImGui::GetWindowDrawList();
     drawList->PushClipRect(imagePos, ImVec2(imagePos.x + imageSize.x, imagePos.y + imageSize.y), true);
 
+    // 表示モードに応じて対象カメラの種類を絞り込む（2D/3D併用モードは両方、3D/2Dのみモードはそれぞれ対応する
+    // 種類のみ）。Camera2D/Camera3Dどちらのコンポーネントも持たないCameraRenderer単体は対象外とする
+    const bool showThreeDCameras = displayMode_ != SceneRenderer::EditorDisplayMode::TwoDOnly;
+    const bool showTwoDCameras = displayMode_ != SceneRenderer::EditorDisplayMode::ThreeDOnly;
+
     for (auto *cameraRenderer : sceneRenderer->GetCameraRenderers()) {
         if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
+
+        const auto *owner = cameraRenderer->GetOwnerObject();
+        const bool isTwoD = owner && owner->GetComponent<Camera2D>();
+        const bool isThreeD = owner && owner->GetComponent<Camera3D>();
+        if (isTwoD && !showTwoDCameras) continue;
+        if (isThreeD && !showThreeDCameras) continue;
+        if (!isTwoD && !isThreeD) continue;
 
         const Vector3 position = cameraRenderer->GetWorldPosition();
         ImVec2 center;
         if (!ProjectToImage(position, imagePos, imageSize, center)) continue;
 
-        constexpr ImU32 color = IM_COL32(120, 200, 255, 255);
+        // 2Dカメラと3Dカメラでアイコンの色を分け、シーンビュー上でも見分けられるようにする
+        const ImU32 color = isTwoD ? IM_COL32(255, 200, 110, 255) : IM_COL32(120, 200, 255, 255);
 
         // カメラ風アイコン（本体の四角＋レンズの円）
         constexpr float kHalfWidth = 8.0f;
@@ -873,16 +1036,83 @@ void SceneEditorView::DrawCameraMarkers(const ImVec2 &imagePos, const ImVec2 &im
     drawList->PopClipRect();
 }
 
+void SceneEditorView::DrawGrid2D(const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (imageSize.x <= 0.0f || imageSize.y <= 0.0f || zoom2D_ <= 0.0f) return;
+
+    auto *drawList = ImGui::GetWindowDrawList();
+    drawList->PushClipRect(imagePos, ImVec2(imagePos.x + imageSize.x, imagePos.y + imageSize.y), true);
+
+    // 画面上でおよそこの間隔(px)になるよう、1-2-5系列(1,2,5,10,20,50...)から間隔(ワールド単位)を選ぶ
+    // （Photoshop/Figma等の2Dエディターでよく使われる、キリの良い数値になる方式）
+    constexpr float kTargetPixelSpacing = 64.0f;
+    const float worldPerPixel = (zoom2D_ * 2.0f) / imageSize.y;
+    const float rawSpacing = std::max(kTargetPixelSpacing * worldPerPixel, 1e-6f);
+    const float exponent = std::floor(std::log10(rawSpacing));
+    const float base = std::pow(10.0f, exponent);
+    float spacing = base * 10.0f;
+    for (const float mult : { 1.0f, 2.0f, 5.0f, 10.0f }) {
+        if (base * mult >= rawSpacing) {
+            spacing = base * mult;
+            break;
+        }
+    }
+
+    const float aspect = imageSize.x / imageSize.y;
+    const float halfHeight = zoom2D_;
+    const float halfWidth = zoom2D_ * aspect;
+    const float minX = pan2D_.x - halfWidth, maxX = pan2D_.x + halfWidth;
+    const float minY = pan2D_.y - halfHeight, maxY = pan2D_.y + halfHeight;
+
+    constexpr ImU32 kLineColor = IM_COL32(255, 255, 255, 30);
+    constexpr ImU32 kAxisColorX = IM_COL32(220, 80, 80, 160); // Y=0の軸線
+    constexpr ImU32 kAxisColorY = IM_COL32(80, 200, 80, 160); // X=0の軸線
+    constexpr float kAxisEpsilon = 1e-4f;
+
+    const int startI = static_cast<int>(std::floor(minX / spacing));
+    const int endI = static_cast<int>(std::ceil(maxX / spacing));
+    for (int i = startI; i <= endI; ++i) {
+        const float x = static_cast<float>(i) * spacing;
+        ImVec2 p0, p1;
+        if (ProjectToImage(Vector3(x, minY, 0.0f), imagePos, imageSize, p0, false) &&
+            ProjectToImage(Vector3(x, maxY, 0.0f), imagePos, imageSize, p1, false)) {
+            const bool isAxis = std::abs(x) < kAxisEpsilon;
+            drawList->AddLine(p0, p1, isAxis ? kAxisColorY : kLineColor, isAxis ? 1.5f : 1.0f);
+        }
+    }
+    const int startJ = static_cast<int>(std::floor(minY / spacing));
+    const int endJ = static_cast<int>(std::ceil(maxY / spacing));
+    for (int j = startJ; j <= endJ; ++j) {
+        const float y = static_cast<float>(j) * spacing;
+        ImVec2 p0, p1;
+        if (ProjectToImage(Vector3(minX, y, 0.0f), imagePos, imageSize, p0, false) &&
+            ProjectToImage(Vector3(maxX, y, 0.0f), imagePos, imageSize, p1, false)) {
+            const bool isAxis = std::abs(y) < kAxisEpsilon;
+            drawList->AddLine(p0, p1, isAxis ? kAxisColorX : kLineColor, isAxis ? 1.5f : 1.0f);
+        }
+    }
+
+    drawList->PopClipRect();
+}
+
 void SceneEditorView::AppendCameraFrustumLines(std::vector<DebugLineVertex> &out) {
     if (!context_) return;
     auto *sceneRenderer = context_->GetComponent<SceneRenderer>();
     if (!sceneRenderer) return;
 
-    constexpr Vector4 kNearColor{ 0.47f, 0.78f, 1.0f, 1.0f };
-    constexpr Vector4 kFarColor{ 0.47f, 0.78f, 1.0f, 0.6f };
+    constexpr Vector4 kNearColorThreeD{ 0.47f, 0.78f, 1.0f, 1.0f };
+    constexpr Vector4 kFarColorThreeD{ 0.47f, 0.78f, 1.0f, 0.6f };
+    // Camera2Dはオレンジ系にして、DrawCameraMarkersのアイコン色分けと揃える
+    constexpr Vector4 kNearColorTwoD{ 1.0f, 0.78f, 0.43f, 1.0f };
+    constexpr Vector4 kFarColorTwoD{ 1.0f, 0.78f, 0.43f, 0.6f };
 
     for (auto *cameraRenderer : sceneRenderer->GetCameraRenderers()) {
         if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
+        const auto *owner = cameraRenderer->GetOwnerObject();
+        const bool isTwoD = owner && owner->GetComponent<Camera2D>();
+        const bool isThreeD = owner && owner->GetComponent<Camera3D>();
+        if (!isTwoD && !isThreeD) continue;
+        const Vector4 &kNearColor = isTwoD ? kNearColorTwoD : kNearColorThreeD;
+        const Vector4 &kFarColor = isTwoD ? kFarColorTwoD : kFarColorThreeD;
 
         const Matrix4x4 invViewProjection = cameraRenderer->GetViewProjectionMatrix().Inverse();
 
@@ -975,6 +1205,81 @@ void SceneEditorView::AppendSkeletonBoneLines(std::vector<DebugLineVertex> &out)
             }
         }
     }
+}
+
+void SceneEditorView::DrawCamera2DBoundsOverlay(const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (!context_ || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return;
+    auto *sceneRenderer = context_->GetComponent<SceneRenderer>();
+    if (!sceneRenderer) return;
+
+    // AppendCameraFrustumLinesのCamera2D用配色と揃える
+    constexpr ImU32 kColor = IM_COL32(255, 200, 110, 220);
+
+    auto *drawList = ImGui::GetWindowDrawList();
+    drawList->PushClipRect(imagePos, ImVec2(imagePos.x + imageSize.x, imagePos.y + imageSize.y), true);
+
+    for (auto *cameraRenderer : sceneRenderer->GetCameraRenderers()) {
+        if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
+        const auto *owner = cameraRenderer->GetOwnerObject();
+        if (!owner || !owner->GetComponent<Camera2D>()) continue;
+
+        // near平面のNDC4隅をワールド座標へ逆投影する（Camera2Dは正射影のため、near/farどちらの
+        // 平面でもXY範囲は同一。2Dモードでは奥行きを見せる意味が薄いのでnear面の矩形のみ表示する）
+        const Matrix4x4 invViewProjection = cameraRenderer->GetViewProjectionMatrix().Inverse();
+        static constexpr float kNdcXY[4][2] = { {-1.0f, -1.0f}, {1.0f, -1.0f}, {1.0f, 1.0f}, {-1.0f, 1.0f} };
+        ImVec2 screenCorners[4];
+        bool allValid = true;
+        for (int i = 0; i < 4 && allValid; ++i) {
+            const Vector3 corner = UnprojectNdc(invViewProjection, kNdcXY[i][0], kNdcXY[i][1], 0.0f);
+            allValid = ProjectToImage(corner, imagePos, imageSize, screenCorners[i], false);
+        }
+        if (!allValid) continue;
+
+        for (int i = 0; i < 4; ++i) {
+            const int next = (i + 1) % 4;
+            drawList->AddLine(screenCorners[i], screenCorners[next], kColor, 2.0f);
+        }
+    }
+
+    drawList->PopClipRect();
+}
+
+void SceneEditorView::DrawCollider2DOverlay(const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (!context_ || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return;
+    auto *sceneObjectCollider = context_->GetComponent<SceneObjectCollider>();
+    if (!sceneObjectCollider) return;
+
+    // AppendColliderDebugLinesと同じ配色（GPUデバッグライン版と2Dオーバーレイ版で見た目を揃える）
+    constexpr Vector4 kSolidColor{ 0.31f, 0.90f, 0.47f, 1.0f };
+    constexpr Vector4 kTriggerColor{ 1.0f, 0.78f, 0.16f, 1.0f };
+
+    // 形状の頂点列自体はAppendCollider2DShape（ワールド空間の線分リスト）をそのまま流用し、
+    // ここでは2D専用カメラへの投影とImGui描画だけを行う（3D側と形状ロジックを二重管理しない）
+    std::vector<DebugLineVertex> lines;
+    for (auto *collider : sceneObjectCollider->GetRegisteredColliders()) {
+        if (!collider || !collider->IsActive() || !collider->Is2D()) continue;
+        const Vector4 &color = collider->IsTrigger() ? kTriggerColor : kSolidColor;
+        if (auto info = collider->BuildColliderInfo2D()) {
+            AppendCollider2DShape(lines, *info, collider->GetOwnerWorldPosition().z, color);
+        }
+    }
+    if (lines.empty()) return;
+
+    auto *drawList = ImGui::GetWindowDrawList();
+    drawList->PushClipRect(imagePos, ImVec2(imagePos.x + imageSize.x, imagePos.y + imageSize.y), true);
+    for (size_t i = 0; i + 1 < lines.size(); i += 2) {
+        ImVec2 p0, p1;
+        if (!ProjectToImage(lines[i].position, imagePos, imageSize, p0, false)) continue;
+        if (!ProjectToImage(lines[i + 1].position, imagePos, imageSize, p1, false)) continue;
+        const Vector4 &c = lines[i].color;
+        const ImU32 col = IM_COL32(
+            static_cast<int>(std::clamp(c.x, 0.0f, 1.0f) * 255.0f),
+            static_cast<int>(std::clamp(c.y, 0.0f, 1.0f) * 255.0f),
+            static_cast<int>(std::clamp(c.z, 0.0f, 1.0f) * 255.0f),
+            static_cast<int>(std::clamp(c.w, 0.0f, 1.0f) * 255.0f));
+        drawList->AddLine(p0, p1, col, 2.0f);
+    }
+    drawList->PopClipRect();
 }
 
 void SceneEditorView::AppendColliderDebugLines(std::vector<DebugLineVertex> &out) {
@@ -1260,12 +1565,15 @@ void SceneEditorView::ShowGizmo(const std::unordered_set<EmptyObject *> &selecte
     }
     if (targets.empty() || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return;
 
-    ImGuizmo::SetOrthographic(false);
+    // 「2D」表示モード中は専用の正射影パン・ズームカメラ（view2D_/projection2D_）を使う。
+    // ImGuizmoは正射影投影にも対応しており、RaycastSceneMeshes同様、判定ロジック自体は共通で流用できる
+    const bool isTwoDMode = (displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly);
+    ImGuizmo::SetOrthographic(isTwoDMode);
     ImGuizmo::SetDrawlist(ImGui::GetWindowDrawList());
     ImGuizmo::SetRect(imagePos.x, imagePos.y, imageSize.x, imageSize.y);
 
-    Matrix4x4 view = view_;
-    Matrix4x4 projection = projection_;
+    Matrix4x4 view = GetActiveView();
+    Matrix4x4 projection = GetActiveProjection();
     const bool isSingle = (targets.size() == 1);
 
     if (!ImGuizmo::IsUsing()) {

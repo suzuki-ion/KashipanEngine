@@ -73,6 +73,25 @@ bool EnsurePipelineLoaded(PipelineManager *pipelineManager, const std::string &p
     return pipelineManager->HasPipeline(pipelineName) || pipelineManager->GetOrCreatePipeline(pipelineName);
 }
 
+/// @brief エディター用描画先向けに、SpriteRendererを3D空間内オブジェクトとして描画するための
+///        Worldバリアント（gCamera2Dの代わりにgCamera3Dで投影する特殊パイプライン）の名前を解決する。
+///        シーンビューでのみ2Dオブジェクトを3D空間内に配置・選択・ギズモ編集できるようにするための
+///        エディター限定処理で、実際のゲーム画面（editorTarget以外の描画先）には一切影響しない。
+///        PipelineVariantResolverが解決できない名前（Object2Dベースでない等）の場合は空文字列を返し、
+///        呼び出し側は元のパイプラインへフォールバックする
+std::string ResolveEditorWorldPipelineName(PipelineManager *pipelineManager, const std::string &pipelineName) {
+    static constexpr char kWorldSuffix[] = ".World";
+    static constexpr size_t kWorldSuffixLength = sizeof(kWorldSuffix) - 1;
+    if (pipelineName.size() >= kWorldSuffixLength &&
+        pipelineName.compare(pipelineName.size() - kWorldSuffixLength, kWorldSuffixLength, kWorldSuffix) == 0) {
+        return pipelineName; // 既にWorldバリアント
+    }
+    std::string worldPipelineName = pipelineName;
+    worldPipelineName += kWorldSuffix;
+    if (!EnsurePipelineLoaded(pipelineManager, worldPipelineName)) return {};
+    return worldPipelineName;
+}
+
 /// @brief マテリアルのextraParameters["outlineWidth"]（Float）が正の値の場合のみアウトラインを有効とする
 /// @details rimIntensity=0でリムライト無効、と同じ「0で無効」規約に合わせる。MeshRenderer側には
 ///          専用フラグを持たせず、マテリアルの追加パラメータのみで切り替える
@@ -181,7 +200,8 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
     IRenderTarget *editorTarget,
     std::vector<SortableEntry> &sortableEntries,
     std::unordered_map<const IRenderTarget *, EmptyObject *> &targetOwners,
-    bool onlyCustomTarget) {
+    bool onlyCustomTarget,
+    SceneRenderer::EditorDisplayMode editorDisplayMode) {
     std::vector<IRenderTarget *> targets;
     for (auto *renderer : renderers) {
         if (!renderer) continue;
@@ -218,10 +238,39 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
             if (target != editorTarget) {
                 targetOwners[target] = targetObject;
             }
+
+            // シーンビューの表示モード（SceneEditorViewのツールバー）による絞り込み。エディター用
+            // 描画先だけが対象で、実際のゲーム画面（target != editorTarget）には一切影響しない
+            if (target == editorTarget) {
+                if constexpr (std::is_same_v<RendererT, SpriteRenderer>) {
+                    if (editorDisplayMode == SceneRenderer::EditorDisplayMode::ThreeDOnly) continue;
+                } else {
+                    if (editorDisplayMode == SceneRenderer::EditorDisplayMode::TwoDOnly) continue;
+                }
+            }
+
+            // SpriteRendererをエディターのシーンビューへ描画する際だけ、gCamera2D（画面固定の平行投影）
+            // の代わりにgCamera3D（エディターの3Dフリーカメラ）で投影するWorldバリアントへ差し替える。
+            // 実際のゲーム画面（editorTarget以外）は元のpipelineNameのまま変更しない。
+            // 表示モードが「2D」の場合は、元のパイプライン（gCamera2D）のままWYSIWYG表示するため
+            // Worldバリアントへは差し替えない（gCamera2D側はSceneRenderer::GetEditorCamera2DBufferで
+            // エディター専用のパン・ズームカメラへ上書きバインドされる）
+            std::string entryPipelineName = pipelineName;
+            std::int32_t entryPipelinePriority = pipelinePriority;
+            if constexpr (std::is_same_v<RendererT, SpriteRenderer>) {
+                if (target == editorTarget && editorDisplayMode != SceneRenderer::EditorDisplayMode::TwoDOnly) {
+                    if (std::string worldPipelineName = ResolveEditorWorldPipelineName(pipelineManager, pipelineName);
+                        !worldPipelineName.empty()) {
+                        entryPipelinePriority = pipelineManager->GetPipeline(worldPipelineName).RenderPriority();
+                        entryPipelineName = std::move(worldPipelineName);
+                    }
+                }
+            }
+
             for (size_t subMeshIndex = 0; subMeshIndex < subMeshCount; ++subMeshIndex) {
                 SortableEntry sortable;
                 sortable.entry.target = target;
-                sortable.entry.pipelineName = pipelineName;
+                sortable.entry.pipelineName = entryPipelineName;
                 sortable.entry.meshHandle = renderer->GetMeshHandle();
                 sortable.entry.materialHandle = GetMaterialHandleForSubMesh(renderer, subMeshIndex);
                 if (!subMeshes.empty()) {
@@ -234,7 +283,7 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
                 sortable.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(renderer);
                 sortable.entry.objectIdSeed = SceneRenderer::ObjectIdSeedFor(ownerObject);
                 sortable.kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
-                sortable.pipelinePriority = pipelinePriority;
+                sortable.pipelinePriority = entryPipelinePriority;
                 sortable.renderPriority = renderer->GetRenderPriority();
                 sortable.entry.allowInstancing = renderer->GetAllowInstancing();
                 sortableEntries.push_back(sortable);
@@ -282,14 +331,35 @@ template <typename RendererT>
 void CollectCacheableEntries(const std::vector<RendererT *> &renderers,
     PipelineManager *pipelineManager,
     IRenderTarget *editorTarget,
-    std::vector<SceneRenderer::CachedRankedEntry> &out) {
+    std::vector<SceneRenderer::CachedRankedEntry> &out,
+    SceneRenderer::EditorDisplayMode editorDisplayMode) {
     for (auto *renderer : renderers) {
         if (!renderer) continue;
         if (renderer->GetTargetObjectID().IsValid()) continue;
         if (renderer->GetMeshHandle() == ModelManager::kInvalidHandle) continue;
 
+        // このキャッシュ経路のエントリは常にeditorTarget（エディターのシーンビュー）向けのため、
+        // シーンビューの表示モードによる絞り込みをここで適用する（CollectSortableEntries参照）
+        if constexpr (std::is_same_v<RendererT, SpriteRenderer>) {
+            if (editorDisplayMode == SceneRenderer::EditorDisplayMode::ThreeDOnly) continue;
+        } else {
+            if (editorDisplayMode == SceneRenderer::EditorDisplayMode::TwoDOnly) continue;
+        }
+
         const std::string &pipelineName = renderer->GetPipelineName();
         if (pipelineName.empty() || !EnsurePipelineLoaded(pipelineManager, pipelineName)) continue;
+
+        // このキャッシュ経路のエントリは常にeditorTarget（エディターのシーンビュー）向けのため、
+        // SpriteRendererは表示モードが2D以外の場合、常にWorldバリアント（gCamera3D投影）へ差し替える
+        // （CollectSortableEntries参照。2Dモードは元のパイプラインのままWYSIWYG表示する）
+        std::string entryPipelineName = pipelineName;
+        if constexpr (std::is_same_v<RendererT, SpriteRenderer>) {
+            if (std::string worldPipelineName = (editorDisplayMode != SceneRenderer::EditorDisplayMode::TwoDOnly)
+                    ? ResolveEditorWorldPipelineName(pipelineManager, pipelineName) : std::string{};
+                !worldPipelineName.empty()) {
+                entryPipelineName = std::move(worldPipelineName);
+            }
+        }
 
         // サブメッシュ（マテリアルごとのインデックス範囲）ごとに1エントリ作る
         const auto &subMeshes = ModelManager::GetModelData(renderer->GetMeshHandle()).GetSubMeshes();
@@ -297,7 +367,7 @@ void CollectCacheableEntries(const std::vector<RendererT *> &renderers,
         for (size_t subMeshIndex = 0; subMeshIndex < subMeshCount; ++subMeshIndex) {
             SceneRenderer::CachedRankedEntry cached;
             cached.ranked.entry.target = editorTarget;
-            cached.ranked.entry.pipelineName = pipelineName;
+            cached.ranked.entry.pipelineName = entryPipelineName;
             cached.ranked.entry.meshHandle = renderer->GetMeshHandle();
             cached.ranked.entry.materialHandle = GetMaterialHandleForSubMesh(renderer, subMeshIndex);
             if (!subMeshes.empty()) {
@@ -309,7 +379,7 @@ void CollectCacheableEntries(const std::vector<RendererT *> &renderers,
             cached.ranked.entry.objectIdSeed = SceneRenderer::ObjectIdSeedFor(renderer->GetOwnerObject());
             cached.ranked.entry.allowInstancing = renderer->GetAllowInstancing();
             cached.ranked.kindOrder = GetRenderTargetKindOrder(editorTarget->GetRenderTargetKind());
-            cached.ranked.pipelinePriority = pipelineManager->GetPipeline(pipelineName).RenderPriority();
+            cached.ranked.pipelinePriority = pipelineManager->GetPipeline(entryPipelineName).RenderPriority();
             cached.ranked.renderPriority = renderer->GetRenderPriority();
             cached.source = renderer;
 
@@ -487,8 +557,8 @@ void SceneRenderer::UnregisterLightRenderer(const LightRenderer *renderer) {
 void SceneRenderer::RebuildCachedEntries(PipelineManager *pipelineManager) {
     cachedEntries_.clear();
     if (!pipelineManager || !editorTarget_) return;
-    CollectCacheableEntries(meshRenderers_, pipelineManager, editorTarget_, cachedEntries_);
-    CollectCacheableEntries(spriteRenderers_, pipelineManager, editorTarget_, cachedEntries_);
+    CollectCacheableEntries(meshRenderers_, pipelineManager, editorTarget_, cachedEntries_, editorDisplayMode_);
+    CollectCacheableEntries(spriteRenderers_, pipelineManager, editorTarget_, cachedEntries_, editorDisplayMode_);
     std::stable_sort(cachedEntries_.begin(), cachedEntries_.end(),
         [](const CachedRankedEntry &a, const CachedRankedEntry &b) {
             return CompareSortableEntry(a.ranked, b.ranked);
@@ -552,8 +622,8 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
     // キャッシュ対象にせず毎フレーム収集する（targetObjectID未指定＝エディター用描画先のみに描画する
     // 分はcachedEntries_側でまとめて扱うため、ここでは重複しない）
     std::vector<SortableEntry> freshEntries;
-    CollectSortableEntries(meshRenderers_, pipelineManager, editorTarget_, freshEntries, targetOwners_, /*onlyCustomTarget=*/true);
-    CollectSortableEntries(spriteRenderers_, pipelineManager, editorTarget_, freshEntries, targetOwners_, /*onlyCustomTarget=*/true);
+    CollectSortableEntries(meshRenderers_, pipelineManager, editorTarget_, freshEntries, targetOwners_, /*onlyCustomTarget=*/true, editorDisplayMode_);
+    CollectSortableEntries(spriteRenderers_, pipelineManager, editorTarget_, freshEntries, targetOwners_, /*onlyCustomTarget=*/true, editorDisplayMode_);
 
     // SkinnedMeshRendererはGPUスキニング結果バッファ(skinnedVertexBuffer)を追加で持つため、
     // MeshRenderer/SpriteRendererと形が異なりCollectSortableEntriesは使わず個別に収集する
@@ -587,6 +657,9 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
                 if (!target || !target->IsRenderTargetAvailable()) continue;
                 if (editorOnly && target != editorTarget_) continue;
                 if (target != editorTarget_ && !renderer->IsRenderTargetIncluded(target)) continue;
+                // シーンビューの表示モードによる絞り込み（SkinnedMeshRendererは3D扱い）。
+                // 実際のゲーム画面（target != editorTarget_）には一切影響しない
+                if (target == editorTarget_ && editorDisplayMode_ == EditorDisplayMode::TwoDOnly) continue;
                 if (target != editorTarget_) {
                     targetOwners_[target] = targetObject;
                 }

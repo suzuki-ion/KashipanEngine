@@ -11,6 +11,7 @@
 #include <variant>
 
 #include "Core/ProjectPaths.h"
+#include "Debug/ScriptDebugDraw.h"
 #include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/EditorWindowChrome.h"
 #include "Scene/Editor/PrefabUtility.h"
@@ -703,7 +704,16 @@ void SceneEditorView::UpdateEditorDebugDraw() {
             // ボーンはモデル内部にあっても姿勢を確認できるよう、深度テストを行わない線として描画する。
             AppendSkeletonBoneLines(settings.overlayLines);
         }
+
+        // スクリプト（Debug::DrawLine）から蓄積されたデバッグ線を合流させる。3Dフリーカメラ
+        // （gCamera3D）の投影で描かれるため、2Dモードでは他のデバッグ線と同様に表示しない
+        for (const auto &line : ScriptDebugDraw::GetLines()) {
+            settings.lines.push_back(DebugLineVertex{ line.start, line.color });
+            settings.lines.push_back(DebugLineVertex{ line.end, line.color });
+        }
     }
+    // 2Dモード中に蓄積され続けないよう、表示するかどうかに関わらず毎フレームクリアする
+    ScriptDebugDraw::Clear();
 
     sceneRenderer->SetEditorDebugDraw(std::move(settings));
 }

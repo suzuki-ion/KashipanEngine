@@ -22,6 +22,7 @@
 #include "Core/ProjectPaths.h"
 #include "Core/Window.h"
 #include "Debug/Logger.h"
+#include "Debug/ScriptDebugDraw.h"
 #include "Input/Input.h"
 #include "Input/InputCommand.h"
 #include "Input/Mouse.h"
@@ -137,6 +138,26 @@ std::unordered_map<int, ComponentTypeBinding> gComponentTypeBindings;
 //==================================================
 // 数学型
 //==================================================
+
+/// @brief array<Vector2>@（制御点列）からVector2::CatmullRomPosition用のstd::vectorへ変換して呼び出す
+Vector2 Vector2CatmullRomPosition(CScriptArray *points, float t, bool isLoop) {
+    if (!points || points->GetSize() == 0) return Vector2::Zero();
+    std::vector<Vector2> buffer(points->GetSize());
+    for (asUINT i = 0; i < points->GetSize(); ++i) {
+        buffer[i] = *static_cast<const Vector2 *>(points->At(i));
+    }
+    return Vector2::CatmullRomPosition(buffer, t, isLoop);
+}
+
+/// @brief array<Vector3>@（制御点列）からVector3::CatmullRomPosition用のstd::vectorへ変換して呼び出す
+Vector3 Vector3CatmullRomPosition(CScriptArray *points, float t, bool isLoop) {
+    if (!points || points->GetSize() == 0) return Vector3::Zero();
+    std::vector<Vector3> buffer(points->GetSize());
+    for (asUINT i = 0; i < points->GetSize(); ++i) {
+        buffer[i] = *static_cast<const Vector3 *>(points->At(i));
+    }
+    return Vector3::CatmullRomPosition(buffer, t, isLoop);
+}
 
 void RegisterMathTypes(asIScriptEngine *engine) {
     // 全メンバがfloatのPOD型はネイティブ呼び出し規約のためにALLFLOATSの指定が必要
@@ -306,6 +327,12 @@ void RegisterMathTypes(asIScriptEngine *engine) {
         .function("Vector3 Lerp(const Vector3 &in, const Vector3 &in, float)", &Vector3::Lerp)
         .function("Vector3 Slerp(const Vector3 &in, const Vector3 &in, float)", &Vector3::Slerp)
         .function("Vector4 Lerp(const Vector4 &in, const Vector4 &in, float)", &Vector4::Lerp)
+        .function("Vector2 Bezier(const Vector2 &in, const Vector2 &in, const Vector2 &in, float)", &Vector2::Bezier)
+        .function("Vector3 Bezier(const Vector3 &in, const Vector3 &in, const Vector3 &in, float)", &Vector3::Bezier)
+        .function("Vector2 CatmullRom(const Vector2 &in, const Vector2 &in, const Vector2 &in, const Vector2 &in, float)", &Vector2::CatmullRomInterpolation)
+        .function("Vector3 CatmullRom(const Vector3 &in, const Vector3 &in, const Vector3 &in, const Vector3 &in, float)", &Vector3::CatmullRomInterpolation)
+        .function("Vector2 CatmullRomSpline(array<Vector2>@ points, float t, bool isLoop = false)", &Vector2CatmullRomPosition)
+        .function("Vector3 CatmullRomSpline(array<Vector3>@ points, float t, bool isLoop = false)", &Vector3CatmullRomPosition)
         .function("Quaternion Slerp(const Quaternion &in, const Quaternion &in, float)", &Quaternion::Slerp)
         .function("Quaternion IdentityQuaternion()", &Quaternion::Identity)
         .function("Quaternion MakeRotateEuler(const Vector3 &in)", &Quaternion::MakeRotateEuler)
@@ -313,6 +340,19 @@ void RegisterMathTypes(asIScriptEngine *engine) {
         .function("Quaternion MakeFromRotationMatrix(const Matrix4x4 &in)", &Quaternion::MakeFromRotationMatrix)
         .function("Matrix3x3 IdentityMatrix3x3()", &Matrix3x3::Identity)
         .function("Matrix4x4 IdentityMatrix4x4()", &Matrix4x4::Identity);
+}
+
+//==================================================
+// デバッグ描画
+//==================================================
+
+/// @brief スクリプトからのデバッグ描画関数をDebug名前空間へ登録する
+/// @details 描画内容はScriptDebugDrawへ蓄積され、エディターのシーンビューにのみ表示される
+///          （ゲーム画面には出ない）。SceneEditorView::UpdateEditorDebugDrawが毎フレーム取り出してクリアする
+void RegisterDebugDrawBindings(asIScriptEngine *engine) {
+    asbind20::namespace_ debugNamespace(engine, "Debug");
+    asbind20::global(engine)
+        .function("void DrawLine(const Vector3 &in start, const Vector3 &in end, const Vector4 &in color)", &ScriptDebugDraw::AddLine);
 }
 
 //==================================================
@@ -2804,6 +2844,7 @@ bool GenerateScriptPredefinedFile(asIScriptEngine *engine, const std::string &fi
 void RegisterEngineScriptBindings(asIScriptEngine *engine) {
     if (!engine) return;
     RegisterMathTypes(engine);
+    RegisterDebugDrawBindings(engine);
     // Tag はコンポーネント共通メソッド（GetTag等）が参照するため、コンポーネント登録より先に登録する
     RegisterTagType(engine);
     // Transform は Object::GetTransform() が参照するため、Object/Scene より先に登録する

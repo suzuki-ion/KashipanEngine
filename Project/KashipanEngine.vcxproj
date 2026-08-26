@@ -568,6 +568,7 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClCompile Include="KashipanEngine\Debug\ImGuiManager.cpp" />
     <ClCompile Include="KashipanEngine\Debug\LogSettings.cpp" />
     <ClCompile Include="KashipanEngine\Debug\Logger.cpp" />
+    <ClCompile Include="KashipanEngine\Debug\ScriptDebugDraw.cpp" />
     <ClCompile Include="KashipanEngine\EngineSettings.cpp" />
     <ClCompile Include="KashipanEngine\Splash\SplashScreen.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\BlueNoiseGenerator.cpp" />
@@ -1072,6 +1073,7 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClInclude Include="KashipanEngine\Debug\ImGuiManager.h" />
     <ClInclude Include="KashipanEngine\Debug\LogSettings.h" />
     <ClInclude Include="KashipanEngine\Debug\Logger.h" />
+    <ClInclude Include="KashipanEngine\Debug\ScriptDebugDraw.h" />
     <ClInclude Include="KashipanEngine\EngineSettings.h" />
     <ClInclude Include="KashipanEngine\Splash\SplashScreen.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadLimits.h" />

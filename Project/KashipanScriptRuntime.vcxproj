@@ -237,6 +237,7 @@
     <ClCompile Include="KashipanEngine\Debug\ImGuiManager.cpp" />
     <ClCompile Include="KashipanEngine\Debug\LogSettings.cpp" />
     <ClCompile Include="KashipanEngine\Debug\Logger.cpp" />
+    <ClCompile Include="KashipanEngine\Debug\ScriptDebugDraw.cpp" />
     <ClCompile Include="KashipanEngine\EngineSettings.cpp" />
     <ClCompile Include="KashipanEngine\Splash\SplashScreen.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\BlueNoiseGenerator.cpp" />

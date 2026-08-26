@@ -423,6 +423,9 @@
     <ClCompile Include="KashipanEngine\Debug\Logger.cpp">
       <Filter>KashipanEngine\Debug</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Debug\ScriptDebugDraw.cpp">
+      <Filter>KashipanEngine\Debug</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\EngineSettings.cpp">
       <Filter>KashipanEngine</Filter>
     </ClCompile>
@@ -990,6 +993,9 @@
       <Filter>KashipanEngine\Debug</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Debug\Logger.h">
+      <Filter>KashipanEngine\Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Debug\ScriptDebugDraw.h">
       <Filter>KashipanEngine\Debug</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\EngineSettings.h">

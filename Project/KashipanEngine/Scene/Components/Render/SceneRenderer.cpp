@@ -18,6 +18,7 @@
 #include "Objects/Components/Render/NormalWindowObject.h"
 #include "Objects/Components/Render/OverlayWindowObject.h"
 #include "Objects/Components/Render/ScreenBufferObject.h"
+#include "Objects/Components/Render/ScreenBufferViewport.h"
 #include "Objects/Components/Render/ShadowMapObject.h"
 #include "Objects/Components/Transform.h"
 
@@ -552,6 +553,17 @@ void SceneRenderer::RegisterLightRenderer(LightRenderer *renderer) {
 void SceneRenderer::UnregisterLightRenderer(const LightRenderer *renderer) {
     auto it = std::find(lightRenderers_.begin(), lightRenderers_.end(), renderer);
     if (it != lightRenderers_.end()) lightRenderers_.erase(it);
+}
+
+void SceneRenderer::RegisterScreenBufferViewport(ScreenBufferViewport *viewport) {
+    if (!viewport) return;
+    if (std::find(screenBufferViewports_.begin(), screenBufferViewports_.end(), viewport) != screenBufferViewports_.end()) return;
+    screenBufferViewports_.push_back(viewport);
+}
+
+void SceneRenderer::UnregisterScreenBufferViewport(const ScreenBufferViewport *viewport) {
+    auto it = std::find(screenBufferViewports_.begin(), screenBufferViewports_.end(), viewport);
+    if (it != screenBufferViewports_.end()) screenBufferViewports_.erase(it);
 }
 
 void SceneRenderer::RebuildCachedEntries(PipelineManager *pipelineManager) {

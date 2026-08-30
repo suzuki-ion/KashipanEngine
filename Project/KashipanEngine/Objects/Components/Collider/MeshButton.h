@@ -17,8 +17,11 @@
 #include "Objects/Components/Render/MeshRenderer.h"
 #include "Objects/Components/Render/NormalWindowObject.h"
 #include "Objects/Components/Render/OverlayWindowObject.h"
+#include "Objects/Components/Render/ScreenBufferObject.h"
+#include "Objects/Components/Render/ScreenBufferViewport.h"
 #include "Objects/Components/Render/SkinnedMeshRenderer.h"
 #include "Objects/Components/Transform.h"
+#include "Scene/Components/Render/SceneRenderer.h"
 #include "Utilities/UUID128.h"
 #if defined(USE_IMGUI)
 #include "Objects/Components/Render/TargetObjectSelector.h"
@@ -185,10 +188,32 @@ protected:
     }
 
 private:
+    /// @brief 対象オブジェクトが実ウィンドウ(NormalWindowObject/OverlayWindowObject)を持っていれば
+    ///        それを返す。持たずScreenBufferObject（オフスクリーンの中間バッファ）の場合は、
+    ///        そのScreenBufferを表示しているScreenBufferViewportを探し、その表示先へ処理を委譲する
+    ///        （ScreenBufferの入れ子表示にも対応するため、実ウィンドウへ辿り着くかチェーンの上限
+    ///        （kMaxScreenBufferChainDepth）に達するまで繰り返す。循環参照があっても上限で止まる）
     IWindowObjectComponent *ResolveWindow(EmptyObject *targetObj) const {
-        if (!targetObj) return nullptr;
-        if (auto *w = targetObj->GetComponent<NormalWindowObject>()) return w;
-        if (auto *w = targetObj->GetComponent<OverlayWindowObject>()) return w;
+        constexpr int kMaxScreenBufferChainDepth = 8;
+        auto *sceneContext = GetOwnerSceneContext();
+        auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
+
+        for (int depth = 0; targetObj && depth < kMaxScreenBufferChainDepth; ++depth) {
+            if (auto *w = targetObj->GetComponent<NormalWindowObject>()) return w;
+            if (auto *w = targetObj->GetComponent<OverlayWindowObject>()) return w;
+
+            if (!targetObj->GetComponent<ScreenBufferObject>() || !sceneRenderer) return nullptr;
+
+            ScreenBufferViewport *matchedViewport = nullptr;
+            for (auto *viewport : sceneRenderer->GetScreenBufferViewports()) {
+                if (viewport && viewport->GetSourceObjectID() == targetObj->GetObjectID()) {
+                    matchedViewport = viewport;
+                    break;
+                }
+            }
+            auto *nextSpriteRenderer = matchedViewport ? matchedViewport->GetSpriteRenderer() : nullptr;
+            targetObj = nextSpriteRenderer ? nextSpriteRenderer->GetTargetObject() : nullptr;
+        }
         return nullptr;
     }
 

@@ -187,6 +187,11 @@ protected:
             if (!meshFilter_) meshFilter_ = objectContext->GetComponent<MeshFilter>();
             if (!spriteRenderer_) spriteRenderer_ = objectContext->GetComponent<SpriteRenderer>();
         }
+
+        auto *sceneRenderer = GetOrAddSceneRenderer();
+        if (sceneRenderer) {
+            sceneRenderer->RegisterScreenBufferViewport(this);
+        }
     }
 
     void Update() override {
@@ -201,6 +206,12 @@ protected:
 
     void Finalize() override {
         ReleaseInternalMaterial();
+
+        auto *sceneContext = GetOwnerSceneContext();
+        auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
+        if (sceneRenderer) {
+            sceneRenderer->UnregisterScreenBufferViewport(this);
+        }
     }
 
 #if defined(USE_IMGUI)
@@ -270,6 +281,16 @@ protected:
     }
 
 private:
+    SceneRenderer *GetOrAddSceneRenderer() const {
+        auto *sceneContext = GetOwnerSceneContext();
+        if (!sceneContext) return nullptr;
+        auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
+        if (!sceneRenderer) {
+            sceneRenderer = sceneContext->AddComponent<SceneRenderer>();
+        }
+        return sceneRenderer;
+    }
+
     ScreenBufferObject *ResolveSource() const {
         auto *obj = GetSourceObject();
         return obj ? obj->GetComponent<ScreenBufferObject>() : nullptr;

@@ -27,6 +27,7 @@ class CameraRenderer;
 class LightRenderer;
 class ParticleSystemBase;
 class IPostProcessComponent;
+class ScreenBufferViewport;
 class IRenderTarget;
 class PipelineManager;
 class Renderer;
@@ -141,6 +142,12 @@ public:
     ///          「そのオブジェクトのポストエフェクト一覧」へ一括アクセスできる
     void RegisterPostProcessComponent(IPostProcessComponent *component);
     void UnregisterPostProcessComponent(const IPostProcessComponent *component);
+    /// @brief ScreenBufferViewportを登録する（ScreenBufferViewport::Initialize/Finalizeから呼ばれる）
+    /// @details UIButton/MeshButtonが、描画先としてWindowを持たないScreenBufferObjectを対象にした際に、
+    ///          「そのScreenBufferを最終的にどのWindowへ中継表示しているか」を逆引きするために使う
+    ///          （全シーンオブジェクトを走査せず、登録済みの一覧だけを見れば済むようにするため）
+    void RegisterScreenBufferViewport(ScreenBufferViewport *viewport);
+    void UnregisterScreenBufferViewport(const ScreenBufferViewport *viewport);
 
     const std::vector<MeshRenderer *> &GetMeshRenderers() const noexcept { return meshRenderers_; }
     const std::vector<SpriteRenderer *> &GetSpriteRenderers() const noexcept { return spriteRenderers_; }
@@ -150,6 +157,7 @@ public:
     const std::vector<LightRenderer *> &GetLightRenderers() const noexcept { return lightRenderers_; }
     const std::vector<ParticleSystemBase *> &GetGpuParticleEmitters() const noexcept { return gpuParticleEmitters_; }
     const std::vector<IPostProcessComponent *> &GetPostProcessComponents() const noexcept { return postProcessComponents_; }
+    const std::vector<ScreenBufferViewport *> &GetScreenBufferViewports() const noexcept { return screenBufferViewports_; }
     /// @brief 指定オーナーオブジェクトに付与されたポストエフェクトコンポーネントのみを取得する
     std::vector<IPostProcessComponent *> GetPostProcessComponentsFor(const EmptyObject *ownerObject) const;
 
@@ -305,6 +313,7 @@ private:
     std::vector<LightRenderer *> lightRenderers_;
     std::vector<ParticleSystemBase *> gpuParticleEmitters_;
     std::vector<IPostProcessComponent *> postProcessComponents_;
+    std::vector<ScreenBufferViewport *> screenBufferViewports_;
 
     std::vector<DrawEntry> sortedDrawList_;
     std::unordered_map<const IRenderTarget *, EmptyObject *> targetOwners_;

@@ -308,7 +308,10 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
 /// @details RenderPriorityは各Rendererコンポーネントが持つ値（既定0）で、小さいほど先（奥）、
 ///          大きいほど後（手前）に描画されるよう昇順で比較する。既定値0同士は常にタイとなるため、
 ///          明示的に値を変えない限り既存のパイプライン名/メッシュ/マテリアル単位の並び
-///          （＝インスタンシングのバッチ化）は一切影響を受けない
+///          （＝インスタンシングのバッチ化）は一切影響を受けない。
+///          テクスチャ・サンプラー（textureOverrideHandle/samplerOverrideHandle）はバインドレス化
+///          （gTextures[]/gSamplers[]、RendererDraw.cpp::DrawBatch参照）によりインスタンスごとに
+///          異なっていてもよいため、このキーには含めない（同一マテリアルならバッチが分断されない）
 bool CompareSortableEntry(const SortableEntry &a, const SortableEntry &b) {
     if (a.kindOrder != b.kindOrder) return a.kindOrder < b.kindOrder;
     if (a.entry.target != b.entry.target) return a.entry.target < b.entry.target;
@@ -318,9 +321,7 @@ bool CompareSortableEntry(const SortableEntry &a, const SortableEntry &b) {
     if (a.entry.meshHandle != b.entry.meshHandle) return a.entry.meshHandle < b.entry.meshHandle;
     if (a.entry.indexStart != b.entry.indexStart) return a.entry.indexStart < b.entry.indexStart;
     if (a.entry.indexCount != b.entry.indexCount) return a.entry.indexCount < b.entry.indexCount;
-    if (a.entry.materialHandle != b.entry.materialHandle) return a.entry.materialHandle < b.entry.materialHandle;
-    if (a.entry.textureOverrideHandle != b.entry.textureOverrideHandle) return a.entry.textureOverrideHandle < b.entry.textureOverrideHandle;
-    return a.entry.samplerOverrideHandle < b.entry.samplerOverrideHandle;
+    return a.entry.materialHandle < b.entry.materialHandle;
 }
 
 /// @brief キャッシュ対象（targetObjectID未指定＝エディター用描画先にのみ描画するMesh/SpriteRenderer）を収集する

@@ -20,11 +20,11 @@ void ApplyMatcap(inout float4 outputColor, Material mat, float3 shadingNormal) {
     float3 viewNormal = mul(shadingNormal, (float3x3)gCamera3D.view);
     float2 matcapUV = viewNormal.xy * 0.5f + 0.5f;
     if (mat.matcapIntensity > 0.0f) {
-        float3 matcapColor = gMatcapTex.Sample(gSampler, matcapUV).rgb * mat.matcapIntensity;
+        float3 matcapColor = gMatcapTex.Sample(gSamplers[mat.samplerIndex], matcapUV).rgb * mat.matcapIntensity;
         outputColor.rgb = BlendMatcapLayer(outputColor.rgb, matcapColor, mat.matcapBlendMode);
     }
     if (mat.matcap2ndIntensity > 0.0f) {
-        float3 matcap2ndColor = gMatcap2ndTex.Sample(gSampler, matcapUV).rgb * mat.matcap2ndIntensity;
+        float3 matcap2ndColor = gMatcap2ndTex.Sample(gSamplers[mat.samplerIndex], matcapUV).rgb * mat.matcap2ndIntensity;
         outputColor.rgb = BlendMatcapLayer(outputColor.rgb, matcap2ndColor, mat.matcap2ndBlendMode);
     }
 }

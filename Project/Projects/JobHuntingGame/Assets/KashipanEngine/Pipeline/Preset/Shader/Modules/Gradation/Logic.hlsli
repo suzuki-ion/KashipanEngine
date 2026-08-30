@@ -5,6 +5,6 @@ Texture2D gGradationTex : register(t16);
 // （COMPOSITE_HOOKSの中でMatcapの後、優先度20で呼ぶこと）
 void ApplyGradation(inout float4 outputColor, Material mat, float toonFactor) {
     if (mat.gradationBlend <= 0.0001f) return;
-    float3 gradationColor = gGradationTex.Sample(gSampler, float2(toonFactor, 0.5f)).rgb;
+    float3 gradationColor = gGradationTex.Sample(gSamplers[mat.samplerIndex], float2(toonFactor, 0.5f)).rgb;
     outputColor.rgb = lerp(outputColor.rgb, outputColor.rgb * gradationColor, mat.gradationBlend);
 }

@@ -9,6 +9,6 @@ float3 ApplyNormalMap(float3 shadingNormal, Material mat, float3 tangent, float2
     float3 t = normalize(tangent - shadingNormal * dot(shadingNormal, tangent)); // Gram-Schmidtで再直交化
     float3 b = cross(shadingNormal, t);
     float3x3 tbn = float3x3(t, b, shadingNormal);
-    float3 sampledNormal = gNormalMap.Sample(gSampler, uv).rgb * 2.0f - 1.0f;
+    float3 sampledNormal = gNormalMap.Sample(gSamplers[mat.samplerIndex], uv).rgb * 2.0f - 1.0f;
     return normalize(mul(sampledNormal, tbn));
 }

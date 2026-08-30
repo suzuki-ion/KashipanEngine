@@ -114,8 +114,6 @@ private:
         RWStructuredBufferResource *skinnedVertexBuffer = nullptr;
         StructuredBufferResource *transformBuffer = nullptr;
         StructuredBufferResource *materialBuffer = nullptr;
-        std::uint32_t textureHandle = TextureManager::kInvalidHandle;
-        SamplerManager::SamplerHandle samplerHandle = SamplerManager::kInvalidHandle;
         std::uint32_t instanceCount = 0;
         std::uint32_t indexStart = 0;
         std::uint32_t indexCount = 0;
@@ -133,8 +131,6 @@ private:
         const ResourceContainer::MeshBuffers *meshBuffers = nullptr;
         RWStructuredBufferResource *transformBuffer = nullptr;
         StructuredBufferResource *materialBuffer = nullptr;
-        std::uint32_t textureHandle = TextureManager::kInvalidHandle;
-        SamplerManager::SamplerHandle samplerHandle = SamplerManager::kInvalidHandle;
         std::uint32_t instanceCount = 0;
     };
 

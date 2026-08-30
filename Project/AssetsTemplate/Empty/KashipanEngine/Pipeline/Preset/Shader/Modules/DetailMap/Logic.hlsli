@@ -6,6 +6,6 @@ Texture2D gDetailAlbedoTex : register(t20);
 void ApplyDetailMap(inout float4 outputColor, Material mat, float2 uv) {
     if (mat.detailBlend <= 0.0001f) return;
     float tiling = (mat.detailTiling > 0.0001f) ? mat.detailTiling : 4.0f;
-    float3 detail = gDetailAlbedoTex.Sample(gSampler, uv * tiling).rgb;
+    float3 detail = gDetailAlbedoTex.Sample(gSamplers[mat.samplerIndex], uv * tiling).rgb;
     outputColor.rgb = lerp(outputColor.rgb, outputColor.rgb * detail * 2.0f, mat.detailBlend);
 }

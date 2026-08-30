@@ -129,9 +129,11 @@ bool VideoTexture::InitializeRgbaOutput() {
 
     // 変換結果を通常のテクスチャとして読むためのSRVを同一リソースに対して追加で作成する。
     // 状態遷移バリアはrgbaUav_側のみが発行する（このSRVインスタンスの状態追跡は使わない）
+    // GetRgbaView()（マテリアルのテクスチャとして参照される経路）が返すのはこのSRVのため、
+    // バインドレステーブル用の予約レンジから確保する
     rgbaSrv_ = std::make_unique<ShaderResourceResource>(
         width_, height_, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
-        rgbaUav_->GetResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 1, 1, nullptr);
+        rgbaUav_->GetResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 1, 1, nullptr, /*useReservedRange=*/true);
     if (!rgbaSrv_->GetResource()) return false;
 
     return true;

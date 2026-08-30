@@ -467,6 +467,11 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
     auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, kShadowPipelineName);
     shaderBinder.SetCommandList(commandList);
 
+    // バインドレステクスチャ配列（Texture2D gTextures[]）のテーブル。RendererDraw.cpp::DrawBatchと同様、
+    // ヒープ先頭の予約レンジ全体を指す固定ハンドルのため、このコマンドリスト上で一度だけバインドすればよい
+    shaderBinder.Bind("Pixel:gTextures", directXCommon_->GetTextureBindlessBaseHandleForRenderer(Passkey<Renderer>{}));
+    shaderBinder.Bind("Pixel:gSamplers", directXCommon_->GetSamplerBindlessBaseHandleForRenderer(Passkey<Renderer>{}));
+
     // ブルーノイズによるディザ閾値テーブル（通常描画ではBindCameraAndLightsが毎回バインドするが、
     // シャドウマップ描画はそちらを経由しないため、ここで明示的にバインドしておく必要がある。
     // 忘れるとgBlueNoiseDitherの参照先が未バインドのまま（前のパイプラインの使い回し等で不定）になり、
@@ -497,7 +502,6 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
     // PreparedShadowBatch/PreparedGpuParticleShadowBatchはRenderer.hで定義（画面全体Nパスブレンド
     // ＝RenderShadowMapsPhaseIntoが位相違いで再利用できるよう、メンバー変数として保持する）
     auto &batches = shadowBatches_;
-    const auto fallbackTextureHandle = TextureManager::GetTextureFromFileName("white1x1.png");
     {
         size_t begin = 0;
         std::uint32_t batchIndex = 0;
@@ -598,12 +602,19 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
             auto *material = MaterialManager::GetMaterial(first.materialHandle);
             if (material) {
                 material->ResolveTextureHandles();
-                batch.textureHandle = material->textureHandle;
-                batch.samplerHandle = material->samplerHandle;
             }
             const auto &shadowPipelineInfo = pipelineManager_->GetPipeline(kShadowPipelineName);
             auto elementTemplate = BuildMaterialElementBytes(shadowPipelineInfo, material);
             const std::uint32_t materialStride = shadowPipelineInfo.GetMaterialLayout().totalByteSize;
+            // シャドウバッチ内の全インスタンスは同一マテリアルを共有する（RendererDraw.cppの
+            // MeshRenderer単位のテクスチャ/サンプラーオーバーライドに相当する概念がシャドウパスには無い）ため、
+            // テンプレート1回分だけ書き込めば、以降の per-instance memcpy で全インスタンスに伝播する
+            if (materialStride > 0) {
+                WriteMaterialField(shadowPipelineInfo, elementTemplate.data(), materialStride,
+                    "textureIndex", ResolveInstanceTextureIndex(TextureManager::kInvalidHandle, material));
+                WriteMaterialField(shadowPipelineInfo, elementTemplate.data(), materialStride,
+                    "samplerIndex", ResolveInstanceSamplerIndex(SamplerManager::kInvalidHandle, material));
+            }
             std::snprintf(key, sizeof(key), "ShadowPass|%u|material", batchIndex);
             if (materialStride > 0) {
                 batch.materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, materialStride, instanceCount);
@@ -656,12 +667,16 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
             auto *material = MaterialManager::GetMaterial(emitter->GetMaterialHandle());
             if (material) {
                 material->ResolveTextureHandles();
-                batch.textureHandle = material->textureHandle;
-                batch.samplerHandle = material->samplerHandle;
             }
             const auto &shadowPipelineInfo = pipelineManager_->GetPipeline(kShadowPipelineName);
             auto elementTemplate = BuildMaterialElementBytes(shadowPipelineInfo, material);
             const std::uint32_t materialStride = shadowPipelineInfo.GetMaterialLayout().totalByteSize;
+            if (materialStride > 0) {
+                WriteMaterialField(shadowPipelineInfo, elementTemplate.data(), materialStride,
+                    "textureIndex", ResolveInstanceTextureIndex(TextureManager::kInvalidHandle, material));
+                WriteMaterialField(shadowPipelineInfo, elementTemplate.data(), materialStride,
+                    "samplerIndex", ResolveInstanceSamplerIndex(SamplerManager::kInvalidHandle, material));
+            }
             char key[64];
             std::snprintf(key, sizeof(key), "ShadowPass|gpuParticle|%u|material", emitterIndex);
             if (materialStride > 0) {
@@ -732,16 +747,6 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                     shaderBinder.Bind("Vertex:gObjectIdSeeds", idSeedBuffer);
                 }
                 shaderBinder.Bind("Pixel:gMaterials", batch.materialBuffer);
-                if (batch.textureHandle != TextureManager::kInvalidHandle) {
-                    TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", batch.textureHandle);
-                } else if (fallbackTextureHandle != TextureManager::kInvalidHandle) {
-                    TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", fallbackTextureHandle);
-                }
-                if (batch.samplerHandle != SamplerManager::kInvalidHandle) {
-                    SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", batch.samplerHandle);
-                } else {
-                    SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", DefaultSampler::LinearWrap);
-                }
 
                 if (batch.skinnedVertexBuffer) {
                     batch.skinnedVertexBuffer->SetCommandList(commandList);
@@ -761,16 +766,6 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                 batch.transformBuffer->SetCommandList(commandList);
                 shaderBinder.Bind("Vertex:gTransformationMatrices", batch.transformBuffer);
                 shaderBinder.Bind("Pixel:gMaterials", batch.materialBuffer);
-                if (batch.textureHandle != TextureManager::kInvalidHandle) {
-                    TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", batch.textureHandle);
-                } else if (fallbackTextureHandle != TextureManager::kInvalidHandle) {
-                    TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", fallbackTextureHandle);
-                }
-                if (batch.samplerHandle != SamplerManager::kInvalidHandle) {
-                    SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", batch.samplerHandle);
-                } else {
-                    SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", DefaultSampler::LinearWrap);
-                }
 
                 pipelineBinder.SetVertexBuffer(batch.meshBuffers->vertexBuffer.get(), sizeof(ResourceContainer::MeshVertex));
                 pipelineBinder.SetIndexBuffer(batch.meshBuffers->indexBuffer.get());
@@ -806,8 +801,9 @@ void Renderer::RenderShadowMapsPhaseInto(ScreenBuffer *screenBuffer, PipelineBin
     auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, kShadowPipelineName);
     shaderBinder.SetCommandList(commandList);
 
-    // ブルーノイズ閾値テーブル・時刻定数は、このコマンドリスト上ではまだ一度もバインドしていないため、
-    // RenderShadowMaps本体と同様にここで明示的にバインドし直す必要がある（バインドはコマンドリスト単位）
+    // ブルーノイズ閾値テーブル・時刻定数・バインドレステクスチャ配列は、このコマンドリスト上では
+    // まだ一度もバインドしていないため、RenderShadowMaps本体と同様にここで明示的にバインドし直す
+    // 必要がある（バインドはコマンドリスト単位）
     if (blueNoiseGenerator_.IsReady()) {
         shaderBinder.Bind("Pixel:gBlueNoiseDither", blueNoiseGenerator_.GetResultBuffer());
     }
@@ -815,8 +811,8 @@ void Renderer::RenderShadowMapsPhaseInto(ScreenBuffer *screenBuffer, PipelineBin
         shaderBinder.Bind("Vertex:TimeConstants", timeBuffer);
         shaderBinder.Bind("Pixel:TimeConstants", timeBuffer);
     }
-
-    const auto fallbackTextureHandle = TextureManager::GetTextureFromFileName("white1x1.png");
+    shaderBinder.Bind("Pixel:gTextures", directXCommon_->GetTextureBindlessBaseHandleForRenderer(Passkey<Renderer>{}));
+    shaderBinder.Bind("Pixel:gSamplers", directXCommon_->GetSamplerBindlessBaseHandleForRenderer(Passkey<Renderer>{}));
 
     //--------- シャドウマップ配列を深度書き込み状態にして全スライスを一括クリアし、この位相で撮り直す ---------//
     shadowMapArray_->SetCommandList(commandList);
@@ -858,16 +854,6 @@ void Renderer::RenderShadowMapsPhaseInto(ScreenBuffer *screenBuffer, PipelineBin
                     shaderBinder.Bind("Vertex:gObjectIdSeeds", idSeedBuffer);
                 }
                 shaderBinder.Bind("Pixel:gMaterials", batch.materialBuffer);
-                if (batch.textureHandle != TextureManager::kInvalidHandle) {
-                    TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", batch.textureHandle);
-                } else if (fallbackTextureHandle != TextureManager::kInvalidHandle) {
-                    TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", fallbackTextureHandle);
-                }
-                if (batch.samplerHandle != SamplerManager::kInvalidHandle) {
-                    SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", batch.samplerHandle);
-                } else {
-                    SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", DefaultSampler::LinearWrap);
-                }
 
                 if (batch.skinnedVertexBuffer) {
                     batch.skinnedVertexBuffer->SetCommandList(commandList);
@@ -887,16 +873,6 @@ void Renderer::RenderShadowMapsPhaseInto(ScreenBuffer *screenBuffer, PipelineBin
                 batch.transformBuffer->SetCommandList(commandList);
                 shaderBinder.Bind("Vertex:gTransformationMatrices", batch.transformBuffer);
                 shaderBinder.Bind("Pixel:gMaterials", batch.materialBuffer);
-                if (batch.textureHandle != TextureManager::kInvalidHandle) {
-                    TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", batch.textureHandle);
-                } else if (fallbackTextureHandle != TextureManager::kInvalidHandle) {
-                    TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", fallbackTextureHandle);
-                }
-                if (batch.samplerHandle != SamplerManager::kInvalidHandle) {
-                    SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", batch.samplerHandle);
-                } else {
-                    SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", DefaultSampler::LinearWrap);
-                }
 
                 pipelineBinder.SetVertexBuffer(batch.meshBuffers->vertexBuffer.get(), sizeof(ResourceContainer::MeshVertex));
                 pipelineBinder.SetIndexBuffer(batch.meshBuffers->indexBuffer.get());

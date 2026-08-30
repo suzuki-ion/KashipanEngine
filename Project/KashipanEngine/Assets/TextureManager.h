@@ -127,6 +127,13 @@ public:
     /// @brief シェーダーへテクスチャをバインドする（IShaderTexture 経由）
     static bool BindTexture(ShaderVariableBinder* shaderBinder, const std::string& nameKey, const IShaderTexture& texture);
 
+    /// @brief ハンドルから、バインドレステクスチャ配列（Texture2D gTextures[]）内での現在のインデックスを取得する
+    /// @details 内部管理テクスチャ・外部登録テクスチャ（ScreenBuffer/ShadowMapBuffer/FontManagerのアトラス等）の
+    ///          両方に対応する。外部テクスチャは実体（ダブルバッファ等）が毎フレーム変わり得るため、呼び出す度に
+    ///          現在のGPUデスクリプタハンドルから算出する。無効ハンドルや予約レンジ外の場合は0を返す
+    ///          （0はフォールバックの白テクスチャに割り当てられる想定）
+    static std::uint32_t GetTextureBindlessIndex(TextureHandle handle);
+
 #if defined(USE_IMGUI)
     /// @brief デバッグ用: 読み込まれたテクスチャ一覧の ImGui ウィンドウを描画
     static void ShowImGuiLoadedTexturesWindow();

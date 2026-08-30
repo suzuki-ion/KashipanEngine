@@ -8,7 +8,7 @@ float4 ApplyEnvironmentMap(Material mat, float3 shadingNormal, float3 worldPosit
     if (mat.enableEnvironmentMapping <= 0.5f) return float4(0.0f, 0.0f, 0.0f, 0.0f);
     float3 cameraToPosition = worldPosition - gCamera3D.eyePosition.xyz;
     float3 reflectDir = reflect(cameraToPosition, shadingNormal);
-    float4 envColor = gEnvironmentMap.Sample(gSampler, reflectDir);
+    float4 envColor = gEnvironmentMap.Sample(gSamplers[mat.samplerIndex], reflectDir);
     envColor *= mat.environmentCoefficient;
     return envColor;
 }

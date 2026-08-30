@@ -22,8 +22,10 @@ struct Material {
 };
 
 StructuredBuffer<Material> gMaterials : register(t2);
-Texture2D gTexture : register(t0);
-SamplerState gSampler : register(s0);
+// バインドレステクスチャ配列（テクスチャごとに個別バインドせず、マテリアルのtextureIndexで選択する）
+Texture2D gTextures[2048] : register(t0, space1); // 予約レンジ数(EngineSettings::Limits::maxTextures)と一致させること。GPUがResource Binding Tier 3など、真の無制限配列に非対応な場合があるため有限長にする
+// 既定6種のみの静的サンプラー配列（ルートシグネチャに埋め込まれるためバインド操作は不要）
+SamplerState gSamplers[6] : register(s3);
 
 struct PSOutput {
 	float4 color : SV_TARGET0;
@@ -34,7 +36,7 @@ PSOutput main(VSOutput input) {
 	Material ch = gMaterials[input.instanceId];
 
 	float2 uv = lerp(ch.uvRect.xy, ch.uvRect.zw, input.texcoord);
-	float distance = gTexture.Sample(gSampler, uv).r;
+	float distance = gTextures[ch.textureIndex].Sample(gSamplers[ch.samplerIndex], uv).r;
 
 	// SDFは128(0.5相当)が輪郭。ピクセル微分（fwidth）で画面上のアンチエイリアス幅を求め、
 	// 太字はこの閾値をシフトして実現する

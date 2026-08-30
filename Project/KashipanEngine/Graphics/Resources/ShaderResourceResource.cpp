@@ -4,12 +4,12 @@
 
 namespace KashipanEngine {
 
-ShaderResourceResource::ShaderResourceResource(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState, UINT mipLevels, UINT arraySize, const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc)
+ShaderResourceResource::ShaderResourceResource(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState, UINT mipLevels, UINT arraySize, const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc, bool useReservedRange)
     : IGraphicsResource(ResourceViewType::SRV) {
-    Initialize(width, height, format, flags, existingResource, initialState, mipLevels, arraySize, externalSrvDesc);
+    Initialize(width, height, format, flags, existingResource, initialState, mipLevels, arraySize, externalSrvDesc, useReservedRange);
 }
 
-ShaderResourceResource::ShaderResourceResource(RenderTargetResource* renderTarget, D3D12_RESOURCE_STATES initialState, UINT mipLevels, const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc)
+ShaderResourceResource::ShaderResourceResource(RenderTargetResource* renderTarget, D3D12_RESOURCE_STATES initialState, UINT mipLevels, const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc, bool useReservedRange)
     : IGraphicsResource(ResourceViewType::SRV) {
     if (!renderTarget) {
         return;
@@ -24,16 +24,17 @@ ShaderResourceResource::ShaderResourceResource(RenderTargetResource* renderTarge
         initialState,
         mipLevels,
         1,
-        externalSrvDesc
+        externalSrvDesc,
+        useReservedRange
     );
 }
 
-bool ShaderResourceResource::Recreate(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState, UINT mipLevels, UINT arraySize, const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc) {
+bool ShaderResourceResource::Recreate(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState, UINT mipLevels, UINT arraySize, const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc, bool useReservedRange) {
     ResetResourceForRecreate();
-    return Initialize(width, height, format, flags, existingResource, initialState, mipLevels, arraySize, externalSrvDesc);
+    return Initialize(width, height, format, flags, existingResource, initialState, mipLevels, arraySize, externalSrvDesc, useReservedRange);
 }
 
-bool ShaderResourceResource::Initialize(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState, UINT mipLevels, UINT arraySize, const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc) {
+bool ShaderResourceResource::Initialize(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState, UINT mipLevels, UINT arraySize, const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc, bool useReservedRange) {
     LogScope scope;
     auto *srvHeap = GetSRVHeap();
     if (!GetDevice() || !srvHeap) {
@@ -73,7 +74,7 @@ bool ShaderResourceResource::Initialize(UINT width, UINT height, DXGI_FORMAT for
         }
     }
 
-    auto handle = srvHeap->AllocateDescriptorHandle();
+    auto handle = useReservedRange ? srvHeap->AllocateReservedDescriptorHandle() : srvHeap->AllocateDescriptorHandle();
 
     D3D12_SHADER_RESOURCE_VIEW_DESC defaultSrvDesc = {};
     defaultSrvDesc.Format = format_;

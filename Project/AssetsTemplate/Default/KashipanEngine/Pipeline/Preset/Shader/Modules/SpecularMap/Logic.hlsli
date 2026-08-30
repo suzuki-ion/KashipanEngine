@@ -6,6 +6,6 @@ Texture2D gSpecularTex : register(t18);
 // （PRELIGHTING_HOOKSの中でNormalMapの後、優先度20で呼ぶこと）
 void ApplySpecularMap(inout Material mat, float2 uv) {
     if (mat.specularMapIntensity <= 0.0001f) return;
-    float gloss = gSpecularTex.Sample(gSampler, uv).r;
+    float gloss = gSpecularTex.Sample(gSamplers[mat.samplerIndex], uv).r;
     mat.shininess *= gloss;
 }

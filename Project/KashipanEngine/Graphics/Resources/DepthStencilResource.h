@@ -19,12 +19,15 @@ public:
     /// @param createSrv SRV を作成するか（シャドウマップ用）
     /// @param srvFormat SRV 用フォーマット（未指定の場合は format から推定）
     /// @param arraySize 配列サイズ（2以上の場合はTexture2DArrayとして作成され、スライス別DSVと配列SRVを持つ）
+    /// @param srvUseReservedRange trueの場合、SRV確保先をSRVヒープ先頭のテクスチャ専用予約レンジ（バインドレステーブル用）にする。
+    ///        createSrv=trueかつマテリアルのテクスチャとして参照され得る場合（ShadowMapBuffer等）はtrueにすること
     DepthStencilResource(UINT width, UINT height, DXGI_FORMAT format,
         FLOAT clearDepth, UINT8 clearStencil,
         ID3D12Resource *existingResource = nullptr,
         bool createSrv = false,
         DXGI_FORMAT srvFormat = DXGI_FORMAT_UNKNOWN,
-        UINT arraySize = 1);
+        UINT arraySize = 1,
+        bool srvUseReservedRange = false);
 
     /// @brief リソース再生成
     /// @param width 横幅
@@ -42,7 +45,8 @@ public:
         ID3D12Resource *existingResource = nullptr,
         bool createSrv = false,
         DXGI_FORMAT srvFormat = DXGI_FORMAT_UNKNOWN,
-        UINT arraySize = 1);
+        UINT arraySize = 1,
+        bool srvUseReservedRange = false);
 
     /// @brief 深度ステンシルビューのクリア（配列の場合は全スライスを一括クリアする）
     void ClearDepthStencilView() const;
@@ -78,9 +82,10 @@ private:
         ID3D12Resource *existingResource,
         bool createSrv,
         DXGI_FORMAT srvFormat,
-        UINT arraySize);
+        UINT arraySize,
+        bool srvUseReservedRange);
 
-    void CreateSrvInternal(DXGI_FORMAT srvFormat);
+    void CreateSrvInternal(DXGI_FORMAT srvFormat, bool useReservedRange);
 
     UINT width_ = 0;
     UINT height_ = 0;

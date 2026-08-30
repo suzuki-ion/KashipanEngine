@@ -13,6 +13,7 @@
 #include <utility>
 #include <vector>
 
+#include "Assets/DefaultSamplerDescs.h"
 #include "Assets/MaterialManager.h"
 #include "Assets/SamplerManager.h"
 #include "Assets/TextureManager.h"
@@ -410,6 +411,36 @@ inline void BindExtraTextureParameters(ShaderVariableBinder *shaderBinder, const
             }
         }
     }
+}
+
+/// @brief インスタンスのテクスチャオーバーライド/マテリアルのテクスチャハンドルから、バインドレステクスチャ
+///        配列（gTextures[]）内での現在のインデックスを解決する（override > マテリアル > 白1x1の優先順）。
+///        テクスチャは個別バインドせずマテリアルバッファのtextureIndexフィールドへ書き込む方式のため、
+///        インスタンシングのバッチ結合条件（RendererDraw.cpp/RendererShadow.cpp参照）からは除外されている
+inline std::uint32_t ResolveInstanceTextureIndex(TextureManager::TextureHandle overrideHandle, const MaterialManager::Material *material) {
+    TextureManager::TextureHandle handle = overrideHandle;
+    if (handle == TextureManager::kInvalidHandle && material) {
+        handle = material->textureHandle;
+    }
+    if (handle == TextureManager::kInvalidHandle) {
+        handle = TextureManager::GetTextureFromFileName("white1x1.png");
+    }
+    return TextureManager::GetTextureBindlessIndex(handle);
+}
+
+/// @brief インスタンスのサンプラーオーバーライド/マテリアルのサンプラーハンドルから、静的サンプラー配列
+///        （gSamplers[6]）内での現在のインデックスを解決する（override > マテリアル > 既定LinearWrapの優先順）。
+///        gSamplers[]は既定6種のみの固定長配列のため、範囲外のハンドル（無効値・将来的なカスタムサンプラー等）は
+///        LinearWrapへフォールバックする
+inline std::uint32_t ResolveInstanceSamplerIndex(SamplerManager::SamplerHandle overrideHandle, const MaterialManager::Material *material) {
+    SamplerManager::SamplerHandle handle = overrideHandle;
+    if (handle == SamplerManager::kInvalidHandle && material) {
+        handle = material->samplerHandle;
+    }
+    if (handle == SamplerManager::kInvalidHandle || handle > kDefaultSamplerCount) {
+        handle = SamplerManager::GetSampler(DefaultSampler::LinearWrap);
+    }
+    return static_cast<std::uint32_t>(handle - 1);
 }
 
 /// @brief バッファキャッシュキー生成（描画先＋パイプライン＋メッシュ＋マテリアルでバッチを識別）

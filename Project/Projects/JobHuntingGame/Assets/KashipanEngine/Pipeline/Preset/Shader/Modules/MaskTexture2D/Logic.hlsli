@@ -7,6 +7,6 @@ Texture2D gMaskTex : register(t1);
 // （ALPHA_HOOKS_2Dの中でDissolve2Dより先、優先度5で呼ぶこと）
 void ApplyMaskTexture2D(inout float4 outputColor, Material mat, float2 uv) {
     if (mat.maskIntensity <= 0.0001f) return;
-    float mask = gMaskTex.Sample(gSampler, uv).r;
+    float mask = gMaskTex.Sample(gSamplers[mat.samplerIndex], uv).r;
     outputColor.a *= lerp(1.0f, mask, mat.maskIntensity);
 }

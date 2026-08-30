@@ -2,6 +2,7 @@
 
 #include "Core/DirectXCommon.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
+#include "Assets/DefaultSamplerDescs.h"
 #include "Debug/Logger.h"
 
 #include <unordered_map>
@@ -32,6 +33,25 @@ Handle RegisterEntry(SamplerEntry&& entry) {
     return h;
 }
 
+/// @brief 既定サンプラー専用（SamplerHeap先頭の予約レンジ）にサンプラーを確保する。
+///        gSamplers[6]（バインドレスサンプラー配列、DefaultSamplerDescs.h参照）のインデックスと
+///        ヒープ上の位置を一致させるため、コンストラクタでの既定6種の生成にのみ使う
+Handle CreateReservedSampler(const D3D12_SAMPLER_DESC &desc) {
+    if (!sDevice || !sSamplerHeap) return SamplerManager::kInvalidHandle;
+
+    auto handleInfo = sSamplerHeap->AllocateReservedDescriptorHandle();
+    if (!handleInfo) return SamplerManager::kInvalidHandle;
+
+    sDevice->CreateSampler(&desc, handleInfo->cpuHandle);
+
+    SamplerEntry e{};
+    e.gpuPtr = handleInfo->gpuHandle.ptr;
+    e.index = handleInfo->index;
+    e.desc = std::move(handleInfo);
+
+    return RegisterEntry(std::move(e));
+}
+
 } // namespace
 
 SamplerManager::SamplerManager(Passkey<GameEngine>, DirectXCommon* directXCommon) : directXCommon_(directXCommon) {
@@ -41,66 +61,21 @@ SamplerManager::SamplerManager(Passkey<GameEngine>, DirectXCommon* directXCommon
         sSamplerHeap = directXCommon_->GetSamplerHeapForSamplerManager(Passkey<SamplerManager>{});
     }
 
-    // デフォルトのサンプラーを作成しておく
-    D3D12_SAMPLER_DESC pointClamp{};
-    pointClamp.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-    pointClamp.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    pointClamp.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    pointClamp.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    pointClamp.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-    pointClamp.MaxLOD = D3D12_FLOAT32_MAX;
-    pointClamp.MaxAnisotropy = 1;
-    CreateSampler(pointClamp);
-
-    D3D12_SAMPLER_DESC pointWrap{};
-    pointWrap.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-    pointWrap.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-    pointWrap.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-    pointWrap.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-    pointWrap.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-    pointWrap.MaxLOD = D3D12_FLOAT32_MAX;
-    pointWrap.MaxAnisotropy = 1;
-    CreateSampler(pointWrap);
-
-    D3D12_SAMPLER_DESC linearClamp{};
-    linearClamp.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-    linearClamp.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    linearClamp.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    linearClamp.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    linearClamp.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-    linearClamp.MaxLOD = D3D12_FLOAT32_MAX;
-    linearClamp.MaxAnisotropy = 1;
-    CreateSampler(linearClamp);
-
-    D3D12_SAMPLER_DESC linearWrap{};
-    linearWrap.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-    linearWrap.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-    linearWrap.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-    linearWrap.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-    linearWrap.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-    linearWrap.MaxLOD = D3D12_FLOAT32_MAX;
-    linearWrap.MaxAnisotropy = 1;
-    CreateSampler(linearWrap);
-
-    D3D12_SAMPLER_DESC anisotropicClamp{};
-    anisotropicClamp.Filter = D3D12_FILTER_ANISOTROPIC;
-    anisotropicClamp.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    anisotropicClamp.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    anisotropicClamp.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    anisotropicClamp.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-    anisotropicClamp.MaxLOD = D3D12_FLOAT32_MAX;
-    anisotropicClamp.MaxAnisotropy = 16;
-    CreateSampler(anisotropicClamp);
-
-    D3D12_SAMPLER_DESC anisotropicWrap{};
-    anisotropicWrap.Filter = D3D12_FILTER_ANISOTROPIC;
-    anisotropicWrap.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-    anisotropicWrap.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-    anisotropicWrap.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-    anisotropicWrap.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-    anisotropicWrap.MaxLOD = D3D12_FLOAT32_MAX;
-    anisotropicWrap.MaxAnisotropy = 16;
-    CreateSampler(anisotropicWrap);
+    // デフォルトのサンプラーを作成しておく（gSamplers[6]（バインドレスサンプラー配列）生成と共通の
+    // 定義元（DefaultSamplerDescs.h）から、DefaultSampler enumと同じ並び順で生成する）。
+    // SamplerHeap先頭の予約レンジ（DirectXCommon参照）へ確保することで、常にインデックス0〜5に
+    // 収まることを保証する（gSamplers[]のバインドレステーブルはこの予約レンジ先頭を指す）
+    for (const auto &d : GetDefaultSamplerDescs()) {
+        D3D12_SAMPLER_DESC desc{};
+        desc.Filter = d.filter;
+        desc.AddressU = d.addressMode;
+        desc.AddressV = d.addressMode;
+        desc.AddressW = d.addressMode;
+        desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+        desc.MaxLOD = D3D12_FLOAT32_MAX;
+        desc.MaxAnisotropy = d.maxAnisotropy;
+        CreateReservedSampler(desc);
+    }
 }
 
 SamplerManager::~SamplerManager() {

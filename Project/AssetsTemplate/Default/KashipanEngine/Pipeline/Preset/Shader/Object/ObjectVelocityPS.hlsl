@@ -8,10 +8,15 @@ struct Material {
 	float4x4 uvTransform;
 	float shininess;
 	float4 specularColor;
+	// gTextures[]（バインドレステクスチャ配列）/ gSamplers[]（静的サンプラー配列）内でのインデックス
+	uint textureIndex;
+	uint samplerIndex;
 };
-Texture2D gTexture : register(t0);
+// バインドレステクスチャ配列（テクスチャごとに個別バインドせず、マテリアルのtextureIndexで選択する）
+Texture2D gTextures[2048] : register(t0, space1); // 予約レンジ数(EngineSettings::Limits::maxTextures)と一致させること。GPUがResource Binding Tier 3など、真の無制限配列に非対応な場合があるため有限長にする
 StructuredBuffer<Material> gMaterials : register(t1);
-SamplerState gSampler : register(s0);
+// 既定6種のみの静的サンプラー配列（ルートシグネチャに埋め込まれるためバインド操作は不要）
+SamplerState gSamplers[6] : register(s3);
 
 struct PSOutput {
 	float4 velocity : SV_TARGET0;
@@ -23,7 +28,7 @@ PSOutput main(ObjectVelocityVSOutput input) {
 	Material mat = gMaterials[input.instanceId];
 	float4 color = mat.color;
 	float4 transformedUV = mul(float4(input.texcoord, 0.0f, 1.0f), mat.uvTransform);
-	float4 textureColor = gTexture.Sample(gSampler, transformedUV.xy);
+	float4 textureColor = gTextures[mat.textureIndex].Sample(gSamplers[mat.samplerIndex], transformedUV.xy);
 	color *= textureColor;
 	if (color.a < 0.1f) {
 		discard;

@@ -14,6 +14,8 @@ struct EngineSettings {
     };
     //--------- エンジンリソースの制限設定 ---------//
     struct Limits {
+        // SRVヒープ先頭に予約するバインドレステクスチャ配列（gTextures[]）の実サイズとして使われる
+        // （DirectXCommon::DirectXCommon参照）。同時に読み込み可能なテクスチャ数の上限もこれで決まる
         size_t maxTextures = 2048;
         size_t maxSounds = 512;
         size_t maxModels = 1024;

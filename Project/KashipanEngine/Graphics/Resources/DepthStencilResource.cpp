@@ -37,9 +37,10 @@ DepthStencilResource::DepthStencilResource(UINT width, UINT height, DXGI_FORMAT 
     ID3D12Resource *existingResource,
     bool createSrv,
     DXGI_FORMAT srvFormat,
-    UINT arraySize)
+    UINT arraySize,
+    bool srvUseReservedRange)
     : IGraphicsResource(ResourceViewType::DSV) {
-    Initialize(width, height, format, clearDepth, clearStencil, existingResource, createSrv, srvFormat, arraySize);
+    Initialize(width, height, format, clearDepth, clearStencil, existingResource, createSrv, srvFormat, arraySize, srvUseReservedRange);
 }
 
 bool DepthStencilResource::Recreate(UINT width, UINT height, DXGI_FORMAT format,
@@ -47,11 +48,12 @@ bool DepthStencilResource::Recreate(UINT width, UINT height, DXGI_FORMAT format,
     ID3D12Resource *existingResource,
     bool createSrv,
     DXGI_FORMAT srvFormat,
-    UINT arraySize) {
+    UINT arraySize,
+    bool srvUseReservedRange) {
     ResetResourceForRecreate();
     srvHandleInfo_.reset();
     sliceDsvHandles_.clear();
-    return Initialize(width, height, format, clearDepth, clearStencil, existingResource, createSrv, srvFormat, arraySize);
+    return Initialize(width, height, format, clearDepth, clearStencil, existingResource, createSrv, srvFormat, arraySize, srvUseReservedRange);
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilResource::GetSliceDsvHandle(UINT slice) const {
@@ -93,7 +95,7 @@ DXGI_FORMAT DepthStencilResource::GuessSrvFormatFromDsvFormat(DXGI_FORMAT dsvFor
     }
 }
 
-void DepthStencilResource::CreateSrvInternal(DXGI_FORMAT srvFormat) {
+void DepthStencilResource::CreateSrvInternal(DXGI_FORMAT srvFormat, bool useReservedRange) {
     auto *srvHeap = GetSRVHeap();
     if (!GetDevice() || !srvHeap || !GetResource()) {
         return;
@@ -106,7 +108,7 @@ void DepthStencilResource::CreateSrvInternal(DXGI_FORMAT srvFormat) {
         return;
     }
 
-    srvHandleInfo_ = srvHeap->AllocateDescriptorHandle();
+    srvHandleInfo_ = useReservedRange ? srvHeap->AllocateReservedDescriptorHandle() : srvHeap->AllocateDescriptorHandle();
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.Format = srvFormat;
@@ -128,7 +130,8 @@ bool DepthStencilResource::Initialize(UINT width, UINT height, DXGI_FORMAT forma
     ID3D12Resource *existingResource,
     bool createSrv,
     DXGI_FORMAT srvFormat,
-    UINT arraySize) {
+    UINT arraySize,
+    bool srvUseReservedRange) {
     LogScope scope;
     auto *dsvHeap = GetDSVHeap();
     if (!GetDevice() || !dsvHeap) {
@@ -217,7 +220,7 @@ bool DepthStencilResource::Initialize(UINT width, UINT height, DXGI_FORMAT forma
     }
 
     if (createSrv) {
-        CreateSrvInternal(srvFormat);
+        CreateSrvInternal(srvFormat, srvUseReservedRange);
     }
 
     return true;

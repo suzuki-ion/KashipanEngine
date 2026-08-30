@@ -53,9 +53,11 @@ GifTexture::GifTexture(DirectXCommon *directXCommon, std::uint32_t width, std::u
         return;
     }
 
+    // GetSrvHandle()（マテリアルのテクスチャとして参照される経路）が返すのはこのSRVのため、
+    // バインドレステーブル用の予約レンジから確保する
     texture_ = std::make_unique<ShaderResourceResource>(
         width_, height_, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_NONE, nullptr,
-        D3D12_RESOURCE_STATE_COPY_DEST, 1, 1, nullptr);
+        D3D12_RESOURCE_STATE_COPY_DEST, 1, 1, nullptr, /*useReservedRange=*/true);
     if (!texture_->GetResource()) {
         Log(Translation("engine.gif.texture.initialize.failed"), LogSeverity::Error);
         return;

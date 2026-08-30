@@ -12,6 +12,9 @@ struct Material {
 	float4 instanceColor;
 	float instanceColorBlendMode;
 	float3 instanceColorPadding;
+	// gTextures[]（バインドレステクスチャ配列）/ gSamplers[]（静的サンプラー配列）内でのインデックス
+	uint textureIndex;
+	uint samplerIndex;
 /*{{ADDITIONAL_MATERIAL_FIELDS_2D}}*/
 };
 #endif
@@ -80,9 +83,11 @@ cbuffer TileCullingConstants : register(b4) {
 };
 #endif
 
-Texture2D gTexture : register(t0);
+// バインドレステクスチャ配列（テクスチャごとに個別バインドせず、マテリアルのtextureIndexで選択する）
+Texture2D gTextures[2048] : register(t0, space1); // 予約レンジ数(EngineSettings::Limits::maxTextures)と一致させること。GPUがResource Binding Tier 3など、真の無制限配列に非対応な場合があるため有限長にする
 StructuredBuffer<Material> gMaterials : register(t2);
-SamplerState gSampler : register(s0);
+// 既定6種のみの静的サンプラー配列（ルートシグネチャに埋め込まれるためバインド操作は不要）
+SamplerState gSamplers[6] : register(s3);
 
 struct PSOutput {
 	float4 color : SV_TARGET0;
@@ -168,7 +173,7 @@ PSOutput main(VSOutput input) {
 #ifdef Object2D
     float4 textureColor = float4(1.0f, 1.0f, 1.0f, 1.0f);
 	if (mat.useTexture > 0.5f) {
-		textureColor = gTexture.Sample(gSampler, transformedUV.xy);
+		textureColor = gTextures[mat.textureIndex].Sample(gSamplers[mat.samplerIndex], transformedUV.xy);
 	}
 	output.color = mat.color * textureColor;
 	// SpriteRenderer単位の色を共有マテリアルの色へ適用する。
@@ -191,7 +196,7 @@ PSOutput main(VSOutput input) {
 #ifdef Object3D
     float4 textureColor = float4(1.0f, 1.0f, 1.0f, 1.0f);
 	if (mat.useTexture > 0.5f) {
-		textureColor = gTexture.Sample(gSampler, transformedUV.xy);
+		textureColor = gTextures[mat.textureIndex].Sample(gSamplers[mat.samplerIndex], transformedUV.xy);
 	}
 	float4 baseColor = mat.color * textureColor;
 	// オブジェクト単位の色（MeshRendererのInstance Color）をマテリアルの色へ適用する。

@@ -1,5 +1,6 @@
 #include "DirectXCommon.h"
 #include "EngineSettings.h"
+#include "Assets/DefaultSamplerDescs.h"
 #include "Graphics/Resources.h"
 #include "Graphics/ScreenBuffer.h"
 #include <vector>
@@ -58,8 +59,14 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
 
     RTVHeap_ = std::make_unique<RTVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), settings.rtvDescriptorHeapSize);
     DSVHeap_ = std::make_unique<DSVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), settings.dsvDescriptorHeapSize);
-    SRVHeap_ = std::make_unique<SRVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), settings.srvDescriptorHeapSize);
-    SamplerHeap_ = std::make_unique<SamplerHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), 512);
+    // SRVHeap_ の先頭 [0, maxTextures) はテクスチャ専用の予約レンジ（バインドレステーブル用）とし、
+    // それ以降を従来通り汎用プール（構造化バッファ/定数バッファ/UAV/ImGui等）として使う
+    const UINT maxTextures = static_cast<UINT>(GetEngineSettings().limits.maxTextures);
+    SRVHeap_ = std::make_unique<SRVHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(),
+        settings.srvDescriptorHeapSize + maxTextures, maxTextures);
+    // SamplerHeap_ の先頭 [0, kDefaultSamplerCount) は、gSamplers[]（既定6種のバインドレスサンプラー配列、
+    // DefaultSamplerDescs.h参照）専用の予約レンジとする（SamplerManagerがここへ確保する）
+    SamplerHeap_ = std::make_unique<SamplerHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), 512, kDefaultSamplerCount);
 
     // グローバルヒープポインタ設定
     IGraphicsResource::SetDescriptorHeaps({},

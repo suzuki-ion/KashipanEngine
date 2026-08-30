@@ -6,6 +6,10 @@
 float enableLighting;
 float enableShadowMapProjection;
 float useTexture;
+// gTextures[]（バインドレステクスチャ配列）/ gSamplers[]（静的サンプラー配列）内でのインデックス。
+// テクスチャ未設定時はフォールバック（白1x1）テクスチャのインデックスを指す
+uint textureIndex;
+uint samplerIndex;
 float4 color;
 float4x4 uvTransform;
 float shininess;

@@ -92,7 +92,9 @@ void Renderer::RenderSceneContent(IRenderTarget *target,
     }
 
     // 同一（パイプライン・メッシュ・サブメッシュ・マテリアル）の連続範囲をバッチとしてまとめて描画
-    // （ただしallowInstancing==falseのエントリは他と結合せず必ず単独のドローコールにする）
+    // （ただしallowInstancing==falseのエントリは他と結合せず必ず単独のドローコールにする）。
+    // テクスチャ・サンプラーはバインドレス化（gTextures[]/gSamplers[]、DrawBatch参照）により
+    // インスタンスごとに異なっていてもよいため、バッチ結合条件には含めない
     size_t begin = 0;
     while (begin < normalEntries.size()) {
         const auto &first = normalEntries[begin];
@@ -104,8 +106,6 @@ void Renderer::RenderSceneContent(IRenderTarget *target,
                     other.pipelineName != first.pipelineName ||
                     other.meshHandle != first.meshHandle ||
                     other.materialHandle != first.materialHandle ||
-                    other.textureOverrideHandle != first.textureOverrideHandle ||
-                    other.samplerOverrideHandle != first.samplerOverrideHandle ||
                     other.indexStart != first.indexStart ||
                     other.indexCount != first.indexCount ||
                     other.skinnedVertexBuffer != first.skinnedVertexBuffer) {
@@ -169,7 +169,6 @@ void Renderer::DrawBatch(IRenderTarget *target,
         char transformSuffix[48];
         std::snprintf(transformSuffix, sizeof(transformSuffix), "transform|%u", first.indexStart);
         auto key = MakeBatchKey(target, pipelineName, first.meshHandle, first.materialHandle, transformSuffix);
-        key += "|tex" + std::to_string(first.textureOverrideHandle) + "|smp" + std::to_string(first.samplerOverrideHandle);
         if (first.skinnedVertexBuffer) {
             // SkinnedMeshRendererのエントリはインスタンス結合されず必ずinstanceCount=1で
             // 個別にDrawBatchが呼ばれるが、同じメッシュ/マテリアル/パイプライン/描画先を
@@ -200,7 +199,6 @@ void Renderer::DrawBatch(IRenderTarget *target,
         char idSeedSuffix[48];
         std::snprintf(idSeedSuffix, sizeof(idSeedSuffix), "idSeed|%u", first.indexStart);
         auto key = MakeBatchKey(target, pipelineName, first.meshHandle, first.materialHandle, idSeedSuffix);
-        key += "|tex" + std::to_string(first.textureOverrideHandle) + "|smp" + std::to_string(first.samplerOverrideHandle);
         if (first.skinnedVertexBuffer) {
             char suffix[32];
             std::snprintf(suffix, sizeof(suffix), "|%p", static_cast<void *>(first.skinnedVertexBuffer));
@@ -236,7 +234,6 @@ void Renderer::DrawBatch(IRenderTarget *target,
         char materialSuffix[48];
         std::snprintf(materialSuffix, sizeof(materialSuffix), "material|%u", first.indexStart);
         auto key = MakeBatchKey(target, pipelineName, first.meshHandle, first.materialHandle, materialSuffix);
-        key += "|tex" + std::to_string(first.textureOverrideHandle) + "|smp" + std::to_string(first.samplerOverrideHandle);
         if (first.skinnedVertexBuffer) {
             // 上記の変換行列バッファと同じ理由で、スキニングインスタンスごとに専用バッファを使う
             char suffix[32];
@@ -270,6 +267,13 @@ void Renderer::DrawBatch(IRenderTarget *target,
                 WriteMaterialField(pipelineInfo, elementBytes, stride, "boldWeight", batch[i].boldWeight);
                 WriteMaterialField(pipelineInfo, elementBytes, stride, "outlineWidth", batch[i].textOutlineWidth);
                 WriteMaterialField(pipelineInfo, elementBytes, stride, "outlineColor", batch[i].textOutlineColor);
+                // テクスチャ/サンプラーはバッチ結合条件から外れている（textureOverrideHandle/
+                // samplerOverrideHandleが異なる複数インスタンスが同一バッチに混在し得る）ため、
+                // インスタンスごとにバインドレス配列内のインデックスとして書き込む（DrawBatch冒頭コメント参照）
+                WriteMaterialField(pipelineInfo, elementBytes, stride, "textureIndex",
+                    ResolveInstanceTextureIndex(batch[i].textureOverrideHandle, material));
+                WriteMaterialField(pipelineInfo, elementBytes, stride, "samplerIndex",
+                    ResolveInstanceSamplerIndex(batch[i].samplerOverrideHandle, material));
             }
             auto *materialBuffer = resourceContainer_->GetOrUpdateStructuredBuffer(key, stride, instanceCount, allBytes.data());
             if (materialBuffer) {
@@ -280,25 +284,16 @@ void Renderer::DrawBatch(IRenderTarget *target,
             }
         }
 
-        // マテリアルのテクスチャ・サンプラーバインド（未設定の場合は既定値をバインドする）
-        if (first.textureOverrideHandle != TextureManager::kInvalidHandle) {
-            TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", first.textureOverrideHandle);
-        } else if (material && material->textureHandle != TextureManager::kInvalidHandle) {
-            TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", material->textureHandle);
-        } else {
-            const auto fallbackHandle = TextureManager::GetTextureFromFileName("white1x1.png");
-            if (fallbackHandle != TextureManager::kInvalidHandle) {
-                TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", fallbackHandle);
-            }
-        }
+        // バインドレステクスチャ配列（Texture2D gTextures[]）のテーブルをバインドする。
+        // 静的サイズではなくヒープ先頭の予約レンジ全体を指すため、パイプライン・バッチによらず
+        // 常に同じハンドルであり、該当バインディングを持たないパイプラインでは何もせずfalseを返すだけなので無害
+        shaderBinder.Bind("Pixel:gTextures", directXCommon_->GetTextureBindlessBaseHandleForRenderer(Passkey<Renderer>{}));
+        // 既定6種のサンプラー配列（gSamplers[6]）も同様に、SamplerHeap予約レンジを指す固定ハンドルを
+        // 1回だけバインドする（静的サンプラーでは実行時インデックスに対応できないため通常のテーブル扱い）
+        shaderBinder.Bind("Pixel:gSamplers", directXCommon_->GetSamplerBindlessBaseHandleForRenderer(Passkey<Renderer>{}));
+        // モジュール（NormalMap等）が使う専用テクスチャスロットは、gTexture/gSamplerとは別の
+        // 固定register番号を個別に持つため、引き続き毎ドローコールでの動的バインドが必要
         BindExtraTextureParameters(&shaderBinder, material);
-        if (first.samplerOverrideHandle != SamplerManager::kInvalidHandle) {
-            SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", first.samplerOverrideHandle);
-        } else if (material && material->samplerHandle != SamplerManager::kInvalidHandle) {
-            SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", material->samplerHandle);
-        } else {
-            SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", DefaultSampler::LinearWrap);
-        }
     }
 
     // メッシュのバインドと描画
@@ -774,6 +769,12 @@ void Renderer::RenderGpuParticles(IRenderTarget *target, PipelineBinder &pipelin
             auto elementTemplate = BuildMaterialElementBytes(pipelineInfo, material);
             const std::uint32_t stride = pipelineInfo.GetMaterialLayout().totalByteSize;
             if (stride > 0) {
+                // エミッター単位でマテリアルは1つ（パーティクルごとのテクスチャオーバーライドは無い）ため、
+                // テンプレート1回分だけ書き込めば、以降の per-instance memcpy で全パーティクルに伝播する
+                WriteMaterialField(pipelineInfo, elementTemplate.data(), stride,
+                    "textureIndex", ResolveInstanceTextureIndex(TextureManager::kInvalidHandle, material));
+                WriteMaterialField(pipelineInfo, elementTemplate.data(), stride,
+                    "samplerIndex", ResolveInstanceSamplerIndex(SamplerManager::kInvalidHandle, material));
                 auto *materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, stride, instanceCount);
                 if (materialBuffer) {
                     auto *mapped = static_cast<std::byte *>(materialBuffer->Map());
@@ -786,20 +787,13 @@ void Renderer::RenderGpuParticles(IRenderTarget *target, PipelineBinder &pipelin
                 }
             }
 
-            if (material && material->textureHandle != TextureManager::kInvalidHandle) {
-                TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", material->textureHandle);
-            } else {
-                const auto fallbackHandle = TextureManager::GetTextureFromFileName("white1x1.png");
-                if (fallbackHandle != TextureManager::kInvalidHandle) {
-                    TextureManager::BindTexture(&shaderBinder, "Pixel:gTexture", fallbackHandle);
-                }
-            }
+            // バインドレステクスチャ配列（Texture2D gTextures[]）のテーブル。DrawBatchと同じ固定ハンドルのため
+            // 該当バインディングを持たないパイプラインでは何もせずfalseを返すだけなので無害
+            shaderBinder.Bind("Pixel:gTextures", directXCommon_->GetTextureBindlessBaseHandleForRenderer(Passkey<Renderer>{}));
+        // 既定6種のサンプラー配列（gSamplers[6]）も同様に、SamplerHeap予約レンジを指す固定ハンドルを
+        // 1回だけバインドする（静的サンプラーでは実行時インデックスに対応できないため通常のテーブル扱い）
+        shaderBinder.Bind("Pixel:gSamplers", directXCommon_->GetSamplerBindlessBaseHandleForRenderer(Passkey<Renderer>{}));
             BindExtraTextureParameters(&shaderBinder, material);
-            if (material && material->samplerHandle != SamplerManager::kInvalidHandle) {
-                SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", material->samplerHandle);
-            } else {
-                SamplerManager::BindSampler(&shaderBinder, "Pixel:gSampler", DefaultSampler::LinearWrap);
-            }
         }
 
         pipelineBinder.SetVertexBuffer(meshBuffers->vertexBuffer.get(), sizeof(ResourceContainer::MeshVertex));

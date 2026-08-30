@@ -211,6 +211,33 @@ bool TextureManager::BindTexture(ShaderVariableBinder* shaderBinder, const std::
     return shaderBinder->Bind(nameKey, h);
 }
 
+std::uint32_t TextureManager::GetTextureBindlessIndex(TextureHandle handle) {
+    if (handle == kInvalidHandle || !sSrvHeap || !sDevice) return 0;
+    auto it = sTextures.find(handle);
+    if (it == sTextures.end()) return 0;
+
+    D3D12_GPU_DESCRIPTOR_HANDLE h{};
+    if (it->second.external) {
+        // 外部テクスチャ（ScreenBuffer/ShadowMapBuffer/FontManagerのアトラス等）は実体が
+        // フレームごとに変わり得るため、都度現在のハンドルを取得する
+        h = it->second.external->GetSrvHandle();
+    } else {
+        h.ptr = it->second.srvGpuPtr;
+    }
+    if (h.ptr == 0) return 0;
+
+    const auto baseHandle = sSrvHeap->GetReservedRangeBaseGpuHandle();
+    if (baseHandle.ptr == 0 || h.ptr < baseHandle.ptr) return 0;
+
+    const SIZE_T incrementSize = sDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    if (incrementSize == 0) return 0;
+
+    const UINT64 diff = h.ptr - baseHandle.ptr;
+    const UINT64 index = diff / incrementSize;
+    if (index >= sSrvHeap->GetReservedCount()) return 0;
+    return static_cast<std::uint32_t>(index);
+}
+
 TextureManager::TextureHandle TextureManager::RegisterExternalTexture(const std::string& name, const IShaderTexture* texture) {
     LogScope scope;
     if (!texture || name.empty()) return kInvalidHandle;
@@ -357,7 +384,8 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
             D3D12_RESOURCE_STATE_COPY_DEST,
             mipLevels,
             arraySize,
-            &srvDesc);
+            &srvDesc,
+            /*useReservedRange=*/true);
 
     } else if (arraySize > 1) {
         D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
@@ -378,7 +406,8 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
             D3D12_RESOURCE_STATE_COPY_DEST,
             mipLevels,
             arraySize,
-            &srvDesc);
+            &srvDesc,
+            /*useReservedRange=*/true);
     } else {
         entry.texture = std::make_unique<ShaderResourceResource>(
             entry.width,
@@ -388,8 +417,10 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
             nullptr,
             D3D12_RESOURCE_STATE_COPY_DEST,
             mipLevels,
-            arraySize);
-    } 
+            arraySize,
+            /*externalSrvDesc=*/nullptr,
+            /*useReservedRange=*/true);
+    }
 
     {
         auto *desc = entry.texture->GetDescriptorHandleInfoForTextureManager(Passkey<TextureManager>{});

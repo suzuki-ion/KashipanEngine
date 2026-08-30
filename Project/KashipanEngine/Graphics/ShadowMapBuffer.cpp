@@ -133,7 +133,9 @@ bool ShadowMapBuffer::Initialize(std::uint32_t width, std::uint32_t height, DXGI
     }
     dx12Commands_ = cmd;
 
-    depth_ = std::make_unique<DepthStencilResource>(width_, height_, depthFormat_, 1.0f, static_cast<UINT8>(0), nullptr, true, srvFormat_);
+    // GetSrvHandle()（マテリアルのテクスチャとして参照される経路）が返すのはこのSRVのため、
+    // バインドレステーブル用の予約レンジから確保する
+    depth_ = std::make_unique<DepthStencilResource>(width_, height_, depthFormat_, 1.0f, static_cast<UINT8>(0), nullptr, true, srvFormat_, 1, /*srvUseReservedRange=*/true);
     if (!depth_ || !depth_->HasSrv()) return false;
 
     return true;
@@ -147,7 +149,9 @@ bool ShadowMapBuffer::Resize(std::uint32_t width, std::uint32_t height) {
     width_ = width;
     height_ = height;
 
-    depth_ = std::make_unique<DepthStencilResource>(width_, height_, depthFormat_, 1.0f, static_cast<UINT8>(0), nullptr, true, srvFormat_);
+    // GetSrvHandle()（マテリアルのテクスチャとして参照される経路）が返すのはこのSRVのため、
+    // バインドレステーブル用の予約レンジから確保する
+    depth_ = std::make_unique<DepthStencilResource>(width_, height_, depthFormat_, 1.0f, static_cast<UINT8>(0), nullptr, true, srvFormat_, 1, /*srvUseReservedRange=*/true);
     if (!depth_ || !depth_->HasSrv()) return false;
 
     return true;

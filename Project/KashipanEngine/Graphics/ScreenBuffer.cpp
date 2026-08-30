@@ -166,7 +166,10 @@ bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
         // プレビュー安定バッファへのコピー元として使うため（CopyToPreviewTarget参照）
         renderTargets_[i]->AddTransitionState(D3D12_RESOURCE_STATE_COPY_SOURCE);
         depthStencils_[i] = std::make_unique<DepthStencilResource>(width_, height_, depthFormat_, 1.0f, static_cast<UINT8>(0), nullptr, true, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
-        shaderResources_[i] = std::make_unique<ShaderResourceResource>(renderTargets_[i].get());
+        // GetSrvHandle()（マテリアルのテクスチャとして参照される経路）が返すのはこの配列のため、
+        // バインドレステーブル用の予約レンジから確保する
+        shaderResources_[i] = std::make_unique<ShaderResourceResource>(renderTargets_[i].get(),
+            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 1, nullptr, /*useReservedRange=*/true);
 
         renderTargets_[i]->SetCommandList(cmd->GetCommandList());
         depthStencils_[i]->SetCommandList(cmd->GetCommandList());
@@ -216,7 +219,10 @@ void ScreenBuffer::EnsureRenderTargetSize(ID3D12GraphicsCommandList *cmd, bool i
         renderTargets_[i] = std::make_unique<RenderTargetResource>(width_, height_, colorFormat_);
         // プレビュー安定バッファへのコピー元として使うため（CopyToPreviewTarget参照）
         renderTargets_[i]->AddTransitionState(D3D12_RESOURCE_STATE_COPY_SOURCE);
-        shaderResources_[i] = std::make_unique<ShaderResourceResource>(renderTargets_[i].get());
+        // GetSrvHandle()（マテリアルのテクスチャとして参照される経路）が返すのはこの配列のため、
+        // バインドレステーブル用の予約レンジから確保する
+        shaderResources_[i] = std::make_unique<ShaderResourceResource>(renderTargets_[i].get(),
+            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 1, nullptr, /*useReservedRange=*/true);
         if (cmd) {
             renderTargets_[i]->SetCommandList(cmd);
         }

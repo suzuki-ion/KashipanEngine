@@ -74,6 +74,15 @@ public:
     ID3D12CommandQueue* GetCommandQueueForTextureManager(Passkey<TextureManager>) const { return dx12CommandQueue_->GetCommandQueue(); }
     /// @brief SRV ヒープ取得（TextureManager 用）
     SRVHeap* GetSRVHeapForTextureManager(Passkey<TextureManager>) const { return SRVHeap_.get(); }
+
+    /// @brief テクスチャ用バインドレステーブルのベースGPUハンドルを取得（Renderer 用）
+    /// @details SRVHeap_ 先頭に予約されたテクスチャ専用レンジ（EngineSettings::Limits::maxTextures件）の
+    ///          先頭ハンドル。gTextures[]（Texture2D 配列）のディスクリプタテーブルを1回だけバインドする際に使う
+    D3D12_GPU_DESCRIPTOR_HANDLE GetTextureBindlessBaseHandleForRenderer(Passkey<Renderer>) const { return SRVHeap_->GetReservedRangeBaseGpuHandle(); }
+    /// @brief 既定サンプラー用バインドレステーブルのベースGPUハンドルを取得（Renderer 用）
+    /// @details SamplerHeap_ 先頭に予約された既定6種のサンプラー専用レンジの先頭ハンドル。
+    ///          gSamplers[6]（SamplerState 配列）のディスクリプタテーブルを1回だけバインドする際に使う
+    D3D12_GPU_DESCRIPTOR_HANDLE GetSamplerBindlessBaseHandleForRenderer(Passkey<Renderer>) const { return SamplerHeap_->GetReservedRangeBaseGpuHandle(); }
     /// @brief Sampler ヒープ取得（TextureManager 用）
     SamplerHeap* GetSamplerHeapForTextureManager(Passkey<TextureManager>) const { return SamplerHeap_.get(); }
 

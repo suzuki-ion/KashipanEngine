@@ -482,7 +482,8 @@ void FontManager::UploadAtlasToGpu(FontHandle handle) {
 
     auto newTexture = std::make_unique<ShaderResourceResource>(
         font.atlasSize, font.atlasSize, DXGI_FORMAT_R8_UNORM,
-        D3D12_RESOURCE_FLAG_NONE, nullptr, D3D12_RESOURCE_STATE_COPY_DEST);
+        D3D12_RESOURCE_FLAG_NONE, nullptr, D3D12_RESOURCE_STATE_COPY_DEST,
+        /*mipLevels=*/1, /*arraySize=*/1, /*externalSrvDesc=*/nullptr, /*useReservedRange=*/true);
     if (!newTexture->GetResource()) return;
 
     D3D12_RESOURCE_DESC texDesc = newTexture->GetResource()->GetDesc();

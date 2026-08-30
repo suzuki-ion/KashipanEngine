@@ -15,22 +15,22 @@ DescriptorHeapBase::~DescriptorHeapBase() {
     Log(Translation("instance.destroyed"), LogSeverity::Debug);
 }
 
-std::unique_ptr<DescriptorHandleInfo> DescriptorHeapBase::AllocateDescriptorHandle() {
+std::unique_ptr<DescriptorHandleInfo> DescriptorHeapBase::AllocateFrom(std::vector<uint32_t> &pool) {
     LogScope scope;
-    if (freeIndices_.empty()) {
+    if (pool.empty()) {
         Log(Translation("engine.directx.descriptorheap.allocation.failed"), LogSeverity::Critical);
         throw std::runtime_error("No more free descriptor handles available.");
     }
 
     // 空いているデスクリプタインデックスを取得
-    UINT index = freeIndices_.back();
-    freeIndices_.pop_back();
+    UINT index = pool.back();
+    pool.pop_back();
 
     // デスクリプタハンドルの計算
     SIZE_T descriptorSize = device_->GetDescriptorHandleIncrementSize(type_);
     D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = descriptorHeap_->GetCPUDescriptorHandleForHeapStart();
     cpuHandle.ptr += index * descriptorSize;
-    
+
     // GPUデスクリプタハンドルの計算（シェーダー可視の場合のみ）
     D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = {};
     if (isShaderVisible_) {
@@ -42,23 +42,43 @@ std::unique_ptr<DescriptorHandleInfo> DescriptorHeapBase::AllocateDescriptorHand
     return std::make_unique<DescriptorHandleInfo>(Passkey<DescriptorHeapBase>{}, this, index, cpuHandle, gpuHandle);
 }
 
+std::unique_ptr<DescriptorHandleInfo> DescriptorHeapBase::AllocateDescriptorHandle() {
+    return AllocateFrom(freeIndices_);
+}
+
+std::unique_ptr<DescriptorHandleInfo> DescriptorHeapBase::AllocateReservedDescriptorHandle() {
+    return AllocateFrom(freeReservedIndices_);
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeapBase::GetReservedRangeBaseGpuHandle() const noexcept {
+    D3D12_GPU_DESCRIPTOR_HANDLE handle{};
+    if (reservedCount_ == 0 || !isShaderVisible_) return handle;
+    // 予約レンジは常にヒープ先頭（インデックス0）から確保されるため、ヒープ先頭ハンドルがそのままベースになる
+    return descriptorHeap_->GetGPUDescriptorHandleForHeapStart();
+}
+
 void DescriptorHeapBase::FreeDescriptorHandle(Passkey<DescriptorHandleInfo>, UINT index) {
     LogScope scope;
     if (index >= numDescriptors_) {
         Log(Translation("engine.directx.descriptorheap.free.failed"), LogSeverity::Critical);
         throw std::runtime_error("Invalid descriptor index to free.");
     }
-    // 解放済みデスクリプタインデックスに追加
-    freeIndices_.push_back(index);
+    // 解放済みデスクリプタインデックスを、元のプール（予約レンジ/汎用）へ戻す
+    if (index < reservedCount_) {
+        freeReservedIndices_.push_back(index);
+    } else {
+        freeIndices_.push_back(index);
+    }
 }
 
-DescriptorHeapBase::DescriptorHeapBase(ID3D12Device *device, D3D12_DESCRIPTOR_HEAP_TYPE type, UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS flags) {
+DescriptorHeapBase::DescriptorHeapBase(ID3D12Device *device, D3D12_DESCRIPTOR_HEAP_TYPE type, UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS flags, UINT reservedCount) {
     LogScope scope;
     Log(Translation("engine.directx.descriptorheap.initialize.start"), LogSeverity::Debug);
 
     device_ = device;
     type_ = type;
     numDescriptors_ = numDescriptors;
+    reservedCount_ = reservedCount;
     isShaderVisible_ = (flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE) != 0;
 
     // デスクリプタヒープの作成
@@ -74,9 +94,16 @@ DescriptorHeapBase::DescriptorHeapBase(ID3D12Device *device, D3D12_DESCRIPTOR_HE
     }
 
     // 解放済みデスクリプタインデックスの初期化
-    freeIndices_.reserve(numDescriptors_);
-    for (UINT i = 0; i < numDescriptors_; ++i) {
-        freeIndices_.push_back(numDescriptors_ - 1 - i); // 後ろから割り当てる
+    // 予約レンジ [0, reservedCount_) と汎用プール [reservedCount_, numDescriptors_) を別々のフリーリストに分離する。
+    // どちらも従来通り「後ろから割り当てる」（LIFOポップで昇順に払い出される）
+    freeReservedIndices_.reserve(reservedCount_);
+    for (UINT i = 0; i < reservedCount_; ++i) {
+        freeReservedIndices_.push_back(reservedCount_ - 1 - i);
+    }
+    const UINT generalCount = numDescriptors_ - reservedCount_;
+    freeIndices_.reserve(generalCount);
+    for (UINT i = 0; i < generalCount; ++i) {
+        freeIndices_.push_back(numDescriptors_ - 1 - i);
     }
 
     std::string logText;

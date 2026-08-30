@@ -170,6 +170,11 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
                     continue;
                 }
                 // SRV/UAV/Sampler は DescriptorTable にまとめる（ステージ別）
+                // 注記：SamplerState gSamplers[6]（既定6種の配列）は静的サンプラーでは実現できない
+                // （静的サンプラーはヒープ上の実体を持たないため、gSamplers[mat.samplerIndex]のような
+                // 実行時インデックスでの配列アクセスに対応できない。D3D12検証エラー#690で判明）。
+                // そのためテクスチャのgTextures[]と同様、通常の動的ディスクリプタテーブルとして扱い、
+                // SamplerHeapの予約レンジ（DirectXCommon参照）を指すハンドルを1回だけバインドする
                 D3D12_DESCRIPTOR_RANGE_TYPE rtype = getRangeType(rb.Type());
                 // レジスタ単位で DescriptorTable を分割する
                 RangeBuildKey key{ rtype, rb.Space(), s, rb.BindPoint() };
@@ -234,8 +239,10 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
         // desc の最終設定
         ownedRootSigParsed->desc.NumParameters = static_cast<UINT>(ownedRootSigParsed->rootParams.parameters.size());
         ownedRootSigParsed->desc.pParameters = ownedRootSigParsed->rootParams.parameters.empty() ? nullptr : ownedRootSigParsed->rootParams.parameters.data();
-        ownedRootSigParsed->desc.NumStaticSamplers = 0;
-        ownedRootSigParsed->desc.pStaticSamplers = nullptr;
+        // gSamplers[6]（静的サンプラー）を検出していた場合のみ、上のリソース収集ループで
+        // ownedRootSigParsed->samplers に積まれている（それ以外のパイプラインでは空のまま＝従来通り）
+        ownedRootSigParsed->desc.NumStaticSamplers = static_cast<UINT>(ownedRootSigParsed->samplers.size());
+        ownedRootSigParsed->desc.pStaticSamplers = ownedRootSigParsed->samplers.empty() ? nullptr : ownedRootSigParsed->samplers.data();
 
         pRootSigDesc = &ownedRootSigParsed->desc;
         outInfo.autoRootDescriptorGenerated = true;

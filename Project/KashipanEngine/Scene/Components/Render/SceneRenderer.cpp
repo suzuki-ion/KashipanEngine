@@ -752,10 +752,26 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
 
             for (auto *target : targets) {
                 if (!target || !target->IsRenderTargetAvailable()) continue;
+                // シーンビューがThreeDOnly表示中は、2Dコンテンツ扱いのTextもSpriteRenderer同様に
+                // シーンビュー向けエントリだけ除外する（実際の描画先(target!=editorTarget_)には影響しない）
+                if (target == editorTarget_ && editorDisplayMode_ == EditorDisplayMode::ThreeDOnly) continue;
                 if (editorOnly && target != editorTarget_) continue;
                 if (target != editorTarget_ && !renderer->IsRenderTargetIncluded(target)) continue;
                 if (target != editorTarget_) {
                     targetOwners_[target] = targetObject;
+                }
+
+                // シーンビューがCombined/ThreeDOnly表示中は、SpriteRendererと同様にgCamera3D投影の
+                // Worldバリアントパイプラインへ差し替える（対応するWorldパイプラインが存在しない
+                // カスタムパイプライン名の場合は元のパイプラインへフォールバックする）
+                std::string entryPipelineName = pipelineName;
+                std::int32_t entryPipelinePriority = pipelinePriority;
+                if (target == editorTarget_ && editorDisplayMode_ != EditorDisplayMode::TwoDOnly) {
+                    if (std::string worldPipelineName = ResolveEditorWorldPipelineName(pipelineManager, pipelineName);
+                        !worldPipelineName.empty()) {
+                        entryPipelinePriority = pipelineManager->GetPipeline(worldPipelineName).RenderPriority();
+                        entryPipelineName = std::move(worldPipelineName);
+                    }
                 }
 
                 if (!instancesComputed) {
@@ -780,7 +796,7 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
                 for (const auto &ch : instances) {
                     SortableEntry sortable;
                     sortable.entry.target = target;
-                    sortable.entry.pipelineName = pipelineName;
+                    sortable.entry.pipelineName = entryPipelineName;
                     sortable.entry.meshHandle = kTextRect2DMeshHandle;
                     sortable.entry.materialHandle = materialHandle;
                     sortable.entry.textureOverrideHandle = atlasTextureHandle;
@@ -797,7 +813,7 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
                     sortable.entry.objectIdSeed = objectIdSeed;
                     sortable.entry.allowInstancing = allowInstancing;
                     sortable.kindOrder = kindOrder;
-                    sortable.pipelinePriority = pipelinePriority;
+                    sortable.pipelinePriority = entryPipelinePriority;
                     sortable.renderPriority = renderPriority;
                     freshEntries.push_back(sortable);
                 }

@@ -2100,6 +2100,7 @@
 		"engine.script.field.array.recreated": "The array<T> field's handle was invalid, so it was recreated with a new empty array. Field name: ",
 		"engine.script.predefined.generate.failed": "AngelScript: Failed to generate as.predefined.",
 		"engine.script.predefined.generated": "AngelScript: Generated as.predefined.",
+		"engine.script.vscodelaunch.generate.failed": "AngelScript: Failed to generate launch.json for VSCode.",
 
 		//--------- engine.settings ---------//
 		"engine.settings.limits.maxcomponentspergameobject": "Max Components Per Game Object: ",

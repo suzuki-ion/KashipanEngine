@@ -6,10 +6,14 @@
 #include <add_on/scriptdictionary/scriptdictionary.h>
 #include <add_on/scripthelper/scripthelper.h>
 
+#include <filesystem>
+
 #include "Debug/Logger.h"
 #include "Scene/Components/Script/AngelScriptDebugServer.h"
 #include "Core/ProjectPaths.h"
 #include "Scene/Components/Script/ScriptBindings.h"
+#include "Utilities/Conversion/ConvertString.h"
+#include "Utilities/FileIO/TextFile.h"
 
 namespace KashipanEngine {
 
@@ -17,6 +21,35 @@ namespace {
 
 /// @brief メッセージ収集先（BeginMessageCapture～EndMessageCaptureの間だけ設定される）
 std::vector<std::string> *gActiveMessageCapture = nullptr;
+
+/// @brief プロジェクトルートにAngelScriptデバッグ用launch.jsonが無ければ生成する
+/// @details as.predefinedと同じプロジェクトルートフォルダをVS Codeのワークスペースとして開くと、
+///          コード補完（as.predefined）とアタッチデバッグ設定（launch.json）を同時に読み込ませられる。
+///          AssetsWindowのスクリプトダブルクリック処理がこのフォルダをワークスペースとして開く。
+///          ポート番号はAngelScriptDebugServerの既定値（27979）と一致させる必要がある。
+///          既存ファイルを上書きすると利用者の変更が消えるため、無い場合のみ生成する
+bool EnsureVSCodeDebugLaunchConfig(const std::string &launchJsonPath) {
+    if (std::filesystem::exists(Utf8StringToPath(launchJsonPath))) return true;
+
+    TextFileData textFileData;
+    textFileData.filePath = launchJsonPath;
+    textFileData.lines = {
+        "{",
+        "    \"version\": \"0.2.0\",",
+        "    \"configurations\": [",
+        "        {",
+        "            \"name\": \"Attach to KashipanEngine AngelScript\",",
+        "            \"type\": \"angel-lsp-dap\",",
+        "            \"request\": \"attach\",",
+        "            \"address\": \"localhost\",",
+        "            \"port\": 27979",
+        "        }",
+        "    ]",
+        "}",
+    };
+    SaveTextFile(textFileData);
+    return std::filesystem::exists(Utf8StringToPath(launchJsonPath));
+}
 
 void MessageCallback(const asSMessageInfo *msg, void *param) {
     (void)param;
@@ -69,6 +102,11 @@ void SceneScriptEngine::Initialize() {
         Log(Translation("engine.script.predefined.generated"));
     } else {
         Log(Translation("engine.script.predefined.generate.failed"), LogSeverity::Warning);
+    }
+
+    // VSCodeでアタッチデバッグを行うためのlaunch.jsonをプロジェクトルートへ生成する（未生成の場合のみ）
+    if (!EnsureVSCodeDebugLaunchConfig(ProjectPaths::InProjectRoot(".vscode/launch.json"))) {
+        Log(Translation("engine.script.vscodelaunch.generate.failed"), LogSeverity::Warning);
     }
 #endif
 }

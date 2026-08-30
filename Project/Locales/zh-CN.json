@@ -2100,6 +2100,7 @@
 		"engine.script.field.array.recreated": "array<T>字段的句柄无效，已用新的空数组重新生成。字段名：",
 		"engine.script.predefined.generate.failed": "AngelScript：as.predefined 生成失败。",
 		"engine.script.predefined.generated": "AngelScript：已生成 as.predefined。",
+		"engine.script.vscodelaunch.generate.failed": "AngelScript：VSCode 用 launch.json 生成失败。",
 
 		//--------- engine.settings ---------//
 		"engine.settings.limits.maxcomponentspergameobject": "每个游戏对象的组件数上限：",

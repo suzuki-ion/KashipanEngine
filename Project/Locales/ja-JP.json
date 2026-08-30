@@ -2100,6 +2100,7 @@
 		"engine.script.field.array.recreated": "array<T>フィールドのハンドルが不正だったため、新しい空の配列で再生成しました。フィールド名：",
 		"engine.script.predefined.generate.failed": "AngelScript：as.predefined の生成に失敗しました。",
 		"engine.script.predefined.generated": "AngelScript：as.predefined を生成しました。",
+		"engine.script.vscodelaunch.generate.failed": "AngelScript：VSCode用launch.jsonの生成に失敗しました。",
 
 		//--------- engine.settings ---------//
 		"engine.settings.limits.maxcomponentspergameobject": "1ゲームオブジェクトあたりのコンポーネント最大数：",

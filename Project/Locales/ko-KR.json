@@ -2100,6 +2100,7 @@
 		"engine.script.field.array.recreated": "array<T> 필드의 핸들이 올바르지 않아 새로운 빈 배열로 다시 생성했습니다. 필드 이름: ",
 		"engine.script.predefined.generate.failed": "AngelScript: as.predefined 생성에 실패했습니다.",
 		"engine.script.predefined.generated": "AngelScript: as.predefined 를 생성했습니다.",
+		"engine.script.vscodelaunch.generate.failed": "AngelScript: VSCode용 launch.json 생성에 실패했습니다.",
 
 		//--------- engine.settings ---------//
 		"engine.settings.limits.maxcomponentspergameobject": "게임 오브젝트 1개당 컴포넌트 최대 수: ",

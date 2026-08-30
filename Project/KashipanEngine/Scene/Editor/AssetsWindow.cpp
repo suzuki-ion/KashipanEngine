@@ -138,11 +138,17 @@ std::filesystem::path ToPhysicalPath(const std::string &projectRelativePath) {
 /// @brief スクリプトファイルを外部エディター（VSCodeのcodeコマンド）で開く
 /// @details codeコマンドはVSCodeインストール時に「PATHへ追加」が有効な場合のみ使える。
 ///          見つからない/起動に失敗した場合はエラーログのみ出し、例外は投げない
+/// @details ファイル単体ではなくプロジェクトルートをワークスペースとして開く（-gでファイルへジャンプ）。
+///          こうすることで、プロジェクトルート直下に生成されているas.predefined（コード補完用の型定義）と
+///          launch.json（AngelScriptアタッチデバッグ設定、SceneScriptEngine::Initializeが生成）を
+///          VSCodeが自動で読み込む状態にできる
 void OpenScriptInExternalEditor(const std::string &projectRelativePath) {
     const std::filesystem::path physicalPath = ToPhysicalPath(projectRelativePath);
-    const std::wstring quotedPath = L"\"" + physicalPath.wstring() + L"\"";
+    const std::filesystem::path projectRootPath = Utf8StringToPath(ProjectPaths::ProjectRoot());
+    const std::wstring parameters =
+        L"\"" + projectRootPath.wstring() + L"\" -g \"" + physicalPath.wstring() + L"\"";
     // ShellExecuteWは成功時に32より大きい値を返す（ProjectManager.cppのフォルダを開く処理と同じ規約）
-    const HINSTANCE result = ShellExecuteW(nullptr, L"open", L"code", quotedPath.c_str(), nullptr, SW_SHOWNORMAL);
+    const HINSTANCE result = ShellExecuteW(nullptr, L"open", L"code", parameters.c_str(), nullptr, SW_SHOWNORMAL);
     if (reinterpret_cast<INT_PTR>(result) <= 32) {
         Log(Translation("editor.assets.openscript.failed") + projectRelativePath, LogSeverity::Error);
     }

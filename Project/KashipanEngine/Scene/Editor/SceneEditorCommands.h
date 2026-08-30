@@ -239,6 +239,10 @@ public:
     ///        Execute時にこのJSONがロードされる（Redo時の復元と同じ既存の仕組みをそのまま利用する）
     AddComponentCommand(EmptyObject *obj, const std::string &componentType, JSON initialState)
         : objectID_(obj ? obj->GetObjectID() : UUID128()), componentType_(componentType), state_(std::move(initialState)) {}
+    /// @brief 対象オブジェクトがまだ生成されていない場合用（同一CompositeCommand内で、先行する
+    ///        オブジェクト生成コマンドが割り当て済みのobjectIDを直接指定する）＋初期値JSON指定版
+    AddComponentCommand(const UUID128 &objectID, const std::string &componentType, JSON initialState)
+        : objectID_(objectID), componentType_(componentType), state_(std::move(initialState)) {}
 
     bool Execute(SceneEditorContext *context) override;
     bool Undo(SceneEditorContext *context) override;

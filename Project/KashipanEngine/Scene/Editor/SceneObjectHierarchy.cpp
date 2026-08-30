@@ -505,6 +505,15 @@ void SceneObjectHierarchy::ShowCreateObjectMenu(EmptyObject *referenceObject, bo
         }
         ImGui::EndMenu();
     }
+    if (ImGui::BeginMenu(TranslationLabel("editor.hierarchy.create.category.ui"))) {
+        if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.uibuttonobject"))) {
+            CreateTemplateObject("UI Button", { "MeshFilter", "SpriteRenderer", "UIButton" }, referenceObject, asChild);
+        }
+        if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.meshbuttonobject"))) {
+            CreateTemplateObject("Mesh Button", { "MeshFilter", "MeshRenderer", "MeshButton" }, referenceObject, asChild);
+        }
+        ImGui::EndMenu();
+    }
     if (ImGui::BeginMenu(TranslationLabel("editor.hierarchy.create.category.rendertarget"))) {
         if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.windowobject"))) {
             CreateTemplateObject("Window Object", { "NormalWindowObject" }, referenceObject, asChild);
@@ -513,6 +522,10 @@ void SceneObjectHierarchy::ShowCreateObjectMenu(EmptyObject *referenceObject, bo
             CreateTemplateObject("Screen Buffer Object", { "ScreenBufferObject" }, referenceObject, asChild);
         }
         ImGui::EndMenu();
+    }
+    ImGui::Separator();
+    if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.gamescreensetup"))) {
+        CreateGameScreenSetup(referenceObject, asChild);
     }
 }
 
@@ -573,6 +586,140 @@ void SceneObjectHierarchy::CreateTemplateObject(const std::string &objectName, c
         if (auto comp = CreateObjectComponentByType(type)) {
             newObj->AddComponent(std::move(comp));
         }
+    }
+}
+
+void SceneObjectHierarchy::CreateGameScreenSetup(EmptyObject *referenceObject, bool asChild) {
+    // referenceObject/asChildの配置ルールに従ってオブジェクト生成コマンドを作る（CreateTemplateObjectと同じルール）。
+    // 兄弟として並べる場合は、8個が意図した順序で並ぶよう挿入インデックスを1つずつずらす
+    size_t siblingBaseIndex = MAXSIZE_T;
+    if (!asChild && referenceObject) {
+        const size_t index = editorContext_->GetObjectIndex(referenceObject);
+        siblingBaseIndex = (index == MAXSIZE_T) ? MAXSIZE_T : index + 1;
+    }
+    size_t siblingOffset = 0;
+    auto makeCreateCommand = [&](const std::string &name) -> std::pair<std::unique_ptr<IEditorCommand>, UUID128> {
+        if (asChild) {
+            auto cmd = std::make_unique<CreateChildObjectCommand>(name, referenceObject);
+            const UUID128 id = cmd->GetObjectID();
+            return { std::move(cmd), id };
+        }
+        if (referenceObject) {
+            const size_t index = (siblingBaseIndex == MAXSIZE_T) ? MAXSIZE_T : siblingBaseIndex + siblingOffset;
+            ++siblingOffset;
+            auto cmd = std::make_unique<CreateSiblingObjectCommand>(name, referenceObject, index);
+            const UUID128 id = cmd->GetObjectID();
+            return { std::move(cmd), id };
+        }
+        auto cmd = std::make_unique<CreateObjectCommand>(name);
+        const UUID128 id = cmd->GetObjectID();
+        return { std::move(cmd), id };
+    };
+
+    // 1. 8オブジェクト分の生成コマンドを先に確定させ、確定したIDを使って
+    //    コンポーネントの初期値JSON（相互参照）を組み立てる。
+    //    2D用・3D用のScreenBufferを別々に持たせ（解像度やポストエフェクトを個別に設定できるように
+    //    するため）、それぞれ専用のScreenBufferViewportで同一Windowへ重ねて描画する
+    //    （3D画面を背面、2D画面を手前にSpriteRendererのRenderPriorityで前後関係を付ける）
+    auto [windowCmd, windowID] = makeCreateCommand("Window Object");
+    auto [screenBuffer3DCmd, screenBuffer3DID] = makeCreateCommand("Screen Buffer 3D Object");
+    auto [screenBuffer2DCmd, screenBuffer2DID] = makeCreateCommand("Screen Buffer 2D Object");
+    auto [camera3DCmd, camera3DID] = makeCreateCommand("Screen Buffer Camera 3D");
+    auto [camera2DCmd, camera2DID] = makeCreateCommand("Screen Buffer Camera 2D");
+    auto [windowCameraCmd, windowCameraID] = makeCreateCommand("Window Camera 2D");
+    auto [viewport3DCmd, viewport3DID] = makeCreateCommand("Screen Buffer Viewport 3D");
+    auto [viewport2DCmd, viewport2DID] = makeCreateCommand("Screen Buffer Viewport 2D");
+
+    std::vector<std::unique_ptr<IEditorCommand>> allCommands;
+    allCommands.push_back(std::move(windowCmd));
+    allCommands.push_back(std::move(screenBuffer3DCmd));
+    allCommands.push_back(std::move(screenBuffer2DCmd));
+    allCommands.push_back(std::move(camera3DCmd));
+    allCommands.push_back(std::move(camera2DCmd));
+    allCommands.push_back(std::move(windowCameraCmd));
+    allCommands.push_back(std::move(viewport3DCmd));
+    allCommands.push_back(std::move(viewport2DCmd));
+
+    // 2. コンポーネント追加（フィールド初期値はコンポーネントの既定値と一致するものは省略し、
+    //    相互参照や既定値のままでは機能しない項目のみ上書きする）
+    auto addComponent = [&](const UUID128 &objectID, const std::string &type, JSON initialState = JSON{}) {
+        if (initialState.empty()) {
+            allCommands.push_back(std::make_unique<AddComponentCommand>(objectID, type));
+        } else {
+            allCommands.push_back(std::make_unique<AddComponentCommand>(objectID, type, std::move(initialState)));
+        }
+    };
+
+    addComponent(windowID, "NormalWindowObject", JSON{
+        { "customData", JSON{ { "title", "Game Window" }, { "syncWithTransform", false } } },
+    });
+    addComponent(screenBuffer3DID, "ScreenBufferObject");
+    addComponent(screenBuffer2DID, "ScreenBufferObject");
+
+    addComponent(camera3DID, "Camera3D", JSON{
+        { "customData", JSON{ { "autoSyncAspectRatio", true } } },
+    });
+    addComponent(camera3DID, "CameraRenderer", JSON{
+        { "customData", JSON{ { "targetObjectID", screenBuffer3DID.ToString() } } },
+    });
+
+    addComponent(camera2DID, "Camera2D", JSON{
+        { "customData", JSON{ { "autoSyncSize", true } } },
+    });
+    addComponent(camera2DID, "CameraRenderer", JSON{
+        { "customData", JSON{ { "targetObjectID", screenBuffer2DID.ToString() } } },
+    });
+
+    addComponent(windowCameraID, "Camera2D", JSON{
+        { "customData", JSON{ { "autoSyncSize", true } } },
+    });
+    addComponent(windowCameraID, "CameraRenderer", JSON{
+        { "customData", JSON{ { "targetObjectID", windowID.ToString() } } },
+    });
+
+    // 3D画面（背面）：RenderPriorityは既定値(0)のままでよい
+    addComponent(viewport3DID, "MeshFilter");
+    addComponent(viewport3DID, "ScreenBufferViewport", JSON{
+        { "customData", JSON{
+            { "sourceObjectID", screenBuffer3DID.ToString() },
+            { "displayCameraObjectID", windowCameraID.ToString() },
+            { "fitMode", 2 }, // FitMode::Letterbox
+        } },
+    });
+    addComponent(viewport3DID, "ScreenAnchor", JSON{
+        { "customData", JSON{ { "cameraObjectID", windowCameraID.ToString() } } },
+    });
+    addComponent(viewport3DID, "SpriteRenderer", JSON{
+        { "customData", JSON{ { "targetObjectID", windowID.ToString() } } },
+    });
+
+    // 2D画面（手前）：RenderPriorityを3D画面より大きくして必ず手前に重なるようにする
+    addComponent(viewport2DID, "MeshFilter");
+    addComponent(viewport2DID, "ScreenBufferViewport", JSON{
+        { "customData", JSON{
+            { "sourceObjectID", screenBuffer2DID.ToString() },
+            { "displayCameraObjectID", windowCameraID.ToString() },
+            { "fitMode", 2 }, // FitMode::Letterbox
+        } },
+    });
+    addComponent(viewport2DID, "ScreenAnchor", JSON{
+        { "customData", JSON{ { "cameraObjectID", windowCameraID.ToString() } } },
+    });
+    addComponent(viewport2DID, "SpriteRenderer", JSON{
+        { "customData", JSON{ { "targetObjectID", windowID.ToString() }, { "renderPriority", 1 } } },
+    });
+
+    // 3. Undo/Redo管理があれば1回の操作にまとめて実行し、無ければコマンドを直接実行する
+    if (commands_) {
+        auto composite = std::make_unique<CompositeCommand>(Translation("editor.command.create") + std::string("Game Screen Setup"));
+        for (auto &cmd : allCommands) {
+            composite->AddCommand(std::move(cmd));
+        }
+        commands_->Execute(std::move(composite));
+        return;
+    }
+    for (auto &cmd : allCommands) {
+        cmd->Execute(editorContext_);
     }
 }
 

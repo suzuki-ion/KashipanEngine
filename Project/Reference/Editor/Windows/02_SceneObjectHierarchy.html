@@ -79,9 +79,26 @@
 <tr><td>2D &gt; Sprite Object</td><td><code>MeshFilter</code>, <code>SpriteRenderer</code></td></tr>
 <tr><td>2D &gt; Text Object</td><td><code>TextRenderer</code></td></tr>
 <tr><td>2D &gt; Camera 2D Object</td><td><code>Camera2D</code>, <code>CameraRenderer</code></td></tr>
+<tr><td>UI &gt; UI Button Object</td><td><code>MeshFilter</code>, <code>SpriteRenderer</code>, <code>UIButton</code></td></tr>
+<tr><td>UI &gt; Mesh Button Object</td><td><code>MeshFilter</code>, <code>MeshRenderer</code>, <code>MeshButton</code></td></tr>
 <tr><td>Render Target &gt; Window Object</td><td><code>NormalWindowObject</code></td></tr>
 <tr><td>Render Target &gt; Screen Buffer Object</td><td><code>ScreenBufferObject</code></td></tr>
 </table>
+
+<h3>Game Screen Setup</h3>
+<p>Create Objectメニュー最下部の<strong>Game Screen Setup</strong>は、単一オブジェクトのテンプレートではなく、2D/3D描画に最低限必要なオブジェクト一式を8個まとめて生成し、それぞれの相互参照まで設定済みの状態にするプリセットです（1回のUndoでまとめて取り消せます）。2D用と3D用のScreenBufferを別々に持ち、それぞれ専用のScreenBufferViewportで同一のWindowへ重ねて合成表示する構成になっています（3D画面が背面、2D画面が手前）。</p>
+<table>
+<tr><th>生成されるオブジェクト</th><th>付与されるコンポーネント</th><th>役割</th></tr>
+<tr><td>Window Object</td><td><code>NormalWindowObject</code></td><td>実際に表示されるOSウィンドウ</td></tr>
+<tr><td>Screen Buffer 3D Object</td><td><code>ScreenBufferObject</code></td><td>3Dオブジェクトを描画するオフスクリーンバッファ</td></tr>
+<tr><td>Screen Buffer 2D Object</td><td><code>ScreenBufferObject</code></td><td>2Dオブジェクトを描画するオフスクリーンバッファ</td></tr>
+<tr><td>Screen Buffer Camera 3D</td><td><code>Camera3D</code>, <code>CameraRenderer</code>（Screen Buffer 3D Objectへ描画）</td><td>3Dオブジェクトの描画用カメラ</td></tr>
+<tr><td>Screen Buffer Camera 2D</td><td><code>Camera2D</code>, <code>CameraRenderer</code>（Screen Buffer 2D Objectへ描画）</td><td>2Dオブジェクトの描画用カメラ</td></tr>
+<tr><td>Window Camera 2D</td><td><code>Camera2D</code>, <code>CameraRenderer</code>（Window Objectへ描画）</td><td>両Viewport共通のマウス座標変換・ウィンドウ空間描画用カメラ</td></tr>
+<tr><td>Screen Buffer Viewport 3D</td><td><code>MeshFilter</code>, <code>ScreenBufferViewport</code>（source=Screen Buffer 3D Object, displayCamera=Window Camera 2D）, <code>ScreenAnchor</code>, <code>SpriteRenderer</code>（targetObjectID=Window Object, RenderPriority=0=既定値）</td><td>3D画面をWindowへ中継表示する橋渡し役（背面）</td></tr>
+<tr><td>Screen Buffer Viewport 2D</td><td><code>MeshFilter</code>, <code>ScreenBufferViewport</code>（source=Screen Buffer 2D Object, displayCamera=Window Camera 2D）, <code>ScreenAnchor</code>, <code>SpriteRenderer</code>（targetObjectID=Window Object, RenderPriority=1）</td><td>2D画面をWindowへ中継表示する橋渡し役（手前。RenderPriorityを3D側より大きくすることで必ず手前に重なる）</td></tr>
+</table>
+<p>生成後は、3Dオブジェクト（<code>MeshRenderer</code>/<code>SkinnedMeshRenderer</code>等）の<code>Target</code>を<strong>Screen Buffer 3D Object</strong>、2Dオブジェクト（<code>SpriteRenderer</code>/<code>TextRenderer</code>等）の<code>Target</code>を<strong>Screen Buffer 2D Object</strong>に設定するだけで画面に表示されるようになります。<code>UIButton</code>の<code>Display Camera</code>には<strong>Screen Buffer Camera 2D</strong>、<code>MeshButton</code>の<code>Display Camera</code>には<strong>Screen Buffer Camera 3D</strong>を指定してください。</p>
 
 <h2>キーボードショートカット</h2>
 <p>ヒエラルキーウィンドウにフォーカスがある時のみ有効です（テキスト入力中は無効）。</p>

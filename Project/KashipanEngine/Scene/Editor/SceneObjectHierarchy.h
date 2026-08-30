@@ -186,6 +186,15 @@ private:
     /// @param asChild trueの場合、referenceObjectの子として作成する
     void CreateTemplateObject(const std::string &objectName, const std::vector<std::string> &componentTypes,
         EmptyObject *referenceObject, bool asChild);
+    /// @brief 2D/3D描画を行うために最低限必要なオブジェクト一式（Window、2D用/3D用に分離した
+    ///        ScreenBuffer、それぞれの描画カメラ、両ScreenBufferの内容を同一Windowへ重ねて
+    ///        中継表示する2つのViewport）をまとめて作成する。3D画面を背面、2D画面を手前に
+    ///        SpriteRendererのRenderPriorityで前後関係を付けて合成する。生成される全オブジェクトの
+    ///        相互参照（CameraRendererの描画先、ScreenBufferViewportの表示元/表示先カメラ等）は
+    ///        生成時点で設定済みの状態になる
+    /// @param referenceObject 基準オブジェクト（asChild=falseの場合は兄弟として作成。nullptrならルート直下）
+    /// @param asChild trueの場合、referenceObjectの子として作成する
+    void CreateGameScreenSetup(EmptyObject *referenceObject, bool asChild);
     void DragAndDropObject(ObjectItem *objItem);
     void ApplyDragAndDrop();
     DropPosition DragAndDropTargetCommon();

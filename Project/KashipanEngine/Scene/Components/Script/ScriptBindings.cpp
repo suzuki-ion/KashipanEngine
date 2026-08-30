@@ -72,7 +72,10 @@
 #include "Objects/Components/Collider/RigidBody3D.h"
 #include "Objects/Components/Collider/SphereCollider.h"
 #include "Objects/Components/Compute/ComputeShaderProcessing.h"
+#include "Objects/Components/GifSource.h"
 #include "Objects/Components/MeshFilter.h"
+#include "Objects/Components/PrefabInstanceComponent.h"
+#include "Objects/Components/VideoSource.h"
 #include "Objects/Components/PostProcessing/SSAOEffect.h"
 #include "Objects/Components/PostProcessing/GTAOEffect.h"
 #include "Objects/Components/PostProcessing/BloomEffect.h"
@@ -89,6 +92,7 @@
 #include "Objects/Components/PostProcessing/MotionBlurEffect.h"
 #include "Objects/Components/PostProcessing/OutlineEffect.h"
 #include "Objects/Components/PostProcessing/RadialBlurEffect.h"
+#include "Objects/Components/PostProcessing/ScreenWideDitherBlendEffect.h"
 #include "Objects/Components/PostProcessing/TemporalBlendEffect.h"
 #include "Objects/Components/PostProcessing/VignetteEffect.h"
 #include "Objects/Components/Render/Camera2D.h"
@@ -400,11 +404,26 @@ auto RegisterComponentType(asIScriptEngine *engine, const char *name) {
     return binder;
 }
 
+/// @brief ICollider::Shape をスクリプト用の ColliderShape 列挙型として登録する
+void RegisterColliderShapeEnum(asIScriptEngine *engine) {
+    engine->RegisterEnum("ColliderShape");
+    engine->RegisterEnumValue("ColliderShape", "Box", static_cast<int>(ICollider::Shape::Box));
+    engine->RegisterEnumValue("ColliderShape", "Sphere", static_cast<int>(ICollider::Shape::Sphere));
+    engine->RegisterEnumValue("ColliderShape", "Capsule", static_cast<int>(ICollider::Shape::Capsule));
+    engine->RegisterEnumValue("ColliderShape", "Ray", static_cast<int>(ICollider::Shape::Ray));
+    engine->RegisterEnumValue("ColliderShape", "Mesh", static_cast<int>(ICollider::Shape::Mesh));
+    engine->RegisterEnumValue("ColliderShape", "Ray2D", static_cast<int>(ICollider::Shape::Ray2D));
+    engine->RegisterEnumValue("ColliderShape", "Box2D", static_cast<int>(ICollider::Shape::Box2D));
+    engine->RegisterEnumValue("ColliderShape", "Circle2D", static_cast<int>(ICollider::Shape::Circle2D));
+    engine->RegisterEnumValue("ColliderShape", "Capsule2D", static_cast<int>(ICollider::Shape::Capsule2D));
+}
+
 /// @brief Collider（ICollider基底）型を参照型として登録する
 /// @details HitInfoのselfCollider/otherColliderで「どのコライダー同士が衝突したか」を
 ///          受け渡すための共通型。各コライダー型はopImplCastでこの型へ暗黙変換でき、
 ///          cast<BoxCollider>(hit.otherCollider) のように具体型へダウンキャストもできる
 void RegisterColliderBaseType(asIScriptEngine *engine) {
+    RegisterColliderShapeEnum(engine);
     asbind20::ref_class<ICollider>(engine, "Collider", asOBJ_NOCOUNT)
         .method("bool IsActive() const", static_cast<bool (ICollider::*)() const>(&ICollider::IsActive))
         .method("void SetActive(bool)", static_cast<void (ICollider::*)(bool)>(&ICollider::SetActive))
@@ -416,7 +435,17 @@ void RegisterColliderBaseType(asIScriptEngine *engine) {
         .method("void SetTrigger(bool)", static_cast<void (ICollider::*)(bool) noexcept>(&ICollider::SetTrigger))
         .method("bool IsContinuousDetection() const", static_cast<bool (ICollider::*)() const noexcept>(&ICollider::IsContinuousDetection))
         .method("void SetContinuousDetection(bool)", static_cast<void (ICollider::*)(bool) noexcept>(&ICollider::SetContinuousDetection))
-        .method("bool Is2D() const", static_cast<bool (ICollider::*)() const noexcept>(&ICollider::Is2D));
+        .method("bool Is2D() const", static_cast<bool (ICollider::*)() const noexcept>(&ICollider::Is2D))
+        .method("ColliderShape GetShape() const", static_cast<ICollider::Shape (ICollider::*)() const noexcept>(&ICollider::GetShape))
+        .method("Vector3 GetOwnerWorldPosition() const", static_cast<Vector3 (ICollider::*)() const>(&ICollider::GetOwnerWorldPosition))
+        .method("bool IsSyncPositionEnabled(int) const", static_cast<bool (ICollider::*)(int) const noexcept>(&ICollider::IsSyncPositionEnabled))
+        .method("bool IsSyncRotationEnabled() const", static_cast<bool (ICollider::*)() const noexcept>(&ICollider::IsSyncRotationEnabled))
+        .method("bool IsSyncScaleEnabled(int) const", static_cast<bool (ICollider::*)(int) const noexcept>(&ICollider::IsSyncScaleEnabled))
+        .method("Vector3 GetSyncedOwnerPosition() const", static_cast<Vector3 (ICollider::*)() const>(&ICollider::GetSyncedOwnerPosition))
+        .method("Vector3 GetSyncedOwnerRotationEuler() const", static_cast<Vector3 (ICollider::*)() const>(&ICollider::GetSyncedOwnerRotationEuler))
+        .method("Quaternion GetSyncedOwnerRotation() const", static_cast<Quaternion (ICollider::*)() const>(&ICollider::GetSyncedOwnerRotation))
+        .method("Vector3 GetSyncedOwnerScale() const", static_cast<Vector3 (ICollider::*)() const>(&ICollider::GetSyncedOwnerScale))
+        .method("Vector2 RotateOffsetBySyncedRotation2D(const Vector2 &in) const", static_cast<Vector2 (ICollider::*)(const Vector2 &) const>(&ICollider::RotateOffsetBySyncedRotation2D));
 }
 
 /// @brief Collider@ から具体的なコライダー型へのダウンキャスト（cast<T>用）
@@ -435,12 +464,54 @@ auto RegisterColliderType(asIScriptEngine *engine, const char *name) {
         .method("bool IsContinuousDetection() const", static_cast<bool (T::*)() const noexcept>(&T::IsContinuousDetection))
         .method("void SetContinuousDetection(bool)", static_cast<void (T::*)(bool) noexcept>(&T::SetContinuousDetection))
         .method("bool Is2D() const", static_cast<bool (T::*)() const noexcept>(&T::Is2D))
+        .method("ColliderShape GetShape() const", static_cast<ICollider::Shape (T::*)() const noexcept>(&T::GetShape))
+        .method("Vector3 GetOwnerWorldPosition() const", static_cast<Vector3 (T::*)() const>(&T::GetOwnerWorldPosition))
+        .method("bool IsSyncPositionEnabled(int) const", static_cast<bool (T::*)(int) const noexcept>(&T::IsSyncPositionEnabled))
+        .method("bool IsSyncRotationEnabled() const", static_cast<bool (T::*)() const noexcept>(&T::IsSyncRotationEnabled))
+        .method("bool IsSyncScaleEnabled(int) const", static_cast<bool (T::*)(int) const noexcept>(&T::IsSyncScaleEnabled))
+        .method("Vector3 GetSyncedOwnerPosition() const", static_cast<Vector3 (T::*)() const>(&T::GetSyncedOwnerPosition))
+        .method("Vector3 GetSyncedOwnerRotationEuler() const", static_cast<Vector3 (T::*)() const>(&T::GetSyncedOwnerRotationEuler))
+        .method("Quaternion GetSyncedOwnerRotation() const", static_cast<Quaternion (T::*)() const>(&T::GetSyncedOwnerRotation))
+        .method("Vector3 GetSyncedOwnerScale() const", static_cast<Vector3 (T::*)() const>(&T::GetSyncedOwnerScale))
+        .method("Vector2 RotateOffsetBySyncedRotation2D(const Vector2 &in) const", static_cast<Vector2 (T::*)(const Vector2 &) const>(&T::RotateOffsetBySyncedRotation2D))
         // 基底のCollider型への暗黙変換（HitInfoのselfCollider/otherColliderとの比較用）
         .method("Collider@ opImplCast()", [](T &collider) -> ICollider * { return &collider; });
     // cast<具体型>(Collider@) によるダウンキャスト
     engine->RegisterObjectMethod("Collider", (std::string(name) + "@ opCast()").c_str(),
         asFUNCTION((ColliderDownCast<T>)), asCALL_CDECL_OBJLAST);
     return binder;
+}
+
+/// @brief ICollider*のポインタ配列から array<Collider@>@ を構築する（RigidBody2D/3D::GetOwnerColliders用）
+CScriptArray *MakeColliderArray(const std::vector<ICollider *> &colliders) {
+    asIScriptContext *context = asGetActiveContext();
+    asIScriptEngine *engine = context ? context->GetEngine() : nullptr;
+    if (!engine) return nullptr;
+
+    asITypeInfo *arrayType = engine->GetTypeInfoByDecl("array<Collider@>");
+    if (!arrayType) return nullptr;
+
+    CScriptArray *array = CScriptArray::Create(arrayType, static_cast<asUINT>(colliders.size()));
+    if (!array) return nullptr;
+    for (asUINT i = 0; i < colliders.size(); ++i) {
+        void *handle = colliders[i];
+        array->SetValue(i, &handle);
+    }
+    return array;
+}
+
+/// @brief std::stringの配列から array<string>@ を構築する（MakeStringArrayの前方宣言。定義はJson登録セクションにある）
+CScriptArray *MakeStringArray(const std::vector<std::string> &values);
+
+/// @brief array<string>@ からstd::vector<std::string>へ変換する（CameraRenderer::SetBindVariableNames用）
+std::vector<std::string> StringArrayToVector(CScriptArray *array) {
+    std::vector<std::string> result;
+    if (!array) return result;
+    result.reserve(array->GetSize());
+    for (asUINT i = 0; i < array->GetSize(); ++i) {
+        result.push_back(*static_cast<const std::string *>(array->At(i)));
+    }
+    return result;
 }
 
 /// @brief 指定ウィンドウコンポーネントのクライアント座標系でのマウス座標を取得する（未生成/取得不可時は{0,0}）
@@ -583,6 +654,15 @@ void RegisterTextRendererEnums(asIScriptEngine *engine) {
     engine->RegisterEnumValue("TextVerticalAlign", "Bottom", static_cast<int>(TextRenderer::VerticalAlign::Bottom));
 }
 
+/// @brief SkinnedMeshRenderer::SkinQuality をスクリプト用の SkinQuality 列挙型として登録する
+void RegisterSkinQualityEnum(asIScriptEngine *engine) {
+    engine->RegisterEnum("SkinQuality");
+    engine->RegisterEnumValue("SkinQuality", "Auto", static_cast<int>(SkinQuality::Auto));
+    engine->RegisterEnumValue("SkinQuality", "Bone1", static_cast<int>(SkinQuality::Bone1));
+    engine->RegisterEnumValue("SkinQuality", "Bone2", static_cast<int>(SkinQuality::Bone2));
+    engine->RegisterEnumValue("SkinQuality", "Bone4", static_cast<int>(SkinQuality::Bone4));
+}
+
 /// @brief Transformコンポーネントを登録する
 /// @details Object::GetTransform() が Transform@ を返すため、Object/Scene（RegisterObjectTypes）より
 ///          先に登録しておく必要がある。gComponentTypeBindings のクリアもここで行う（最初に呼ばれるため）
@@ -590,6 +670,7 @@ void RegisterTransformType(asIScriptEngine *engine) {
     gComponentTypeBindings.clear();
     RegisterLightTypeEnum(engine);
     RegisterTextRendererEnums(engine);
+    RegisterSkinQualityEnum(engine);
 
     RegisterComponentType<Transform>(engine, "Transform")
         .method("void SetTranslate(const Vector3 &in)", &Transform::SetTranslate)
@@ -728,7 +809,13 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetPivot(const Vector2 &in)", &SpriteRenderer::SetPivot)
         .method("const Vector2 &GetPivot() const", &SpriteRenderer::GetPivot)
         .method("void SetPipelineName(const string &in)", &SpriteRenderer::SetPipelineName)
+        .method("const string &GetPipelineName() const", &SpriteRenderer::GetPipelineName)
         .method("void SetMaterialName(const string &in)", &SpriteRenderer::SetMaterialName)
+        .method("const string &GetMaterialName() const", &SpriteRenderer::GetMaterialName)
+        .method("void SetMaterialHandle(uint)", [](SpriteRenderer &c, uint32_t handle) { c.SetMaterialHandle(handle); })
+        .method("uint GetMaterialHandle() const", [](const SpriteRenderer &c) -> uint32_t { return c.GetMaterialHandle(); })
+        .method("Object@ GetTargetObject() const", &SpriteRenderer::GetTargetObject)
+        .method("string GetTargetObjectID() const", [](const SpriteRenderer &c) -> std::string { return c.GetTargetObjectID().ToString(); })
         .method("void SetInstanceColor(const Vector4 &in)", &SpriteRenderer::SetInstanceColor)
         .method("const Vector4 &GetInstanceColor() const", &SpriteRenderer::GetInstanceColor)
         // instanceColorBlendModeは 0=Override, 1=Multiply, 2=Add, 3=Subtract
@@ -737,7 +824,13 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         })
         .method("int GetInstanceColorBlendMode() const", [](const SpriteRenderer &c) {
             return static_cast<int>(c.GetInstanceColorBlendMode());
-        });
+        })
+        .method("void SetRenderPriority(int)", [](SpriteRenderer &c, int32_t priority) { c.SetRenderPriority(priority); })
+        .method("int GetRenderPriority() const", [](const SpriteRenderer &c) -> int32_t { return c.GetRenderPriority(); })
+        .method("void SetAllowInstancing(bool)", &SpriteRenderer::SetAllowInstancing)
+        .method("bool GetAllowInstancing() const", &SpriteRenderer::GetAllowInstancing)
+        .method("uint GetMeshHandle() const", [](const SpriteRenderer &c) -> uint32_t { return c.GetMeshHandle(); })
+        .method("Matrix4x4 GetWorldMatrix() const", &SpriteRenderer::GetWorldMatrix);
 
     RegisterComponentType<ScriptComponent>(engine, "ScriptComponent")
         .method("void SetScriptPath(const string &in)", &ScriptComponent::SetScriptPath)
@@ -862,6 +955,18 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetDefaultCharacterPivot(const Vector2 &in)", &TextRenderer::SetDefaultCharacterPivot)
         .method("const Vector2 &GetDefaultCharacterPivot() const", &TextRenderer::GetDefaultCharacterPivot)
         .method("void SetTargetObject(Object@)", [](TextRenderer &c, EmptyObject *obj) { c.SetTargetObject(obj); })
+        .method("Object@ GetTargetObject() const", &TextRenderer::GetTargetObject)
+        .method("string GetTargetObjectID() const", [](const TextRenderer &c) -> std::string { return c.GetTargetObjectID().ToString(); })
+        .method("void SetMaterialHandle(uint)", [](TextRenderer &c, uint32_t handle) { c.SetMaterialHandle(handle); })
+        .method("uint GetMaterialHandle() const", [](const TextRenderer &c) -> uint32_t { return c.GetMaterialHandle(); })
+        .method("void SetUseLocalizationKey(bool)", &TextRenderer::SetUseLocalizationKey)
+        .method("bool GetUseLocalizationKey() const", &TextRenderer::GetUseLocalizationKey)
+        .method("void SetLocalizationKey(const string &in)", &TextRenderer::SetLocalizationKey)
+        .method("const string &GetLocalizationKey() const", &TextRenderer::GetLocalizationKey)
+        .method("void SetRenderPriority(int)", [](TextRenderer &c, int32_t priority) { c.SetRenderPriority(priority); })
+        .method("int GetRenderPriority() const", [](const TextRenderer &c) -> int32_t { return c.GetRenderPriority(); })
+        .method("void SetAllowInstancing(bool)", &TextRenderer::SetAllowInstancing)
+        .method("bool GetAllowInstancing() const", &TextRenderer::GetAllowInstancing)
         .method("void SetPipelineName(const string &in)", &TextRenderer::SetPipelineName)
         .method("const string &GetPipelineName() const", &TextRenderer::GetPipelineName)
         .method("uint64 GetCharacterCount() const", [](const TextRenderer &c) -> uint64_t { return static_cast<uint64_t>(c.GetCharacterCount()); })
@@ -900,7 +1005,10 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetMass(float)", &RigidBody2D::SetMass)
         .method("float GetMass() const", &RigidBody2D::GetMass)
         .method("void SetUseGravity(bool)", &RigidBody2D::SetUseGravity)
-        .method("bool IsGravityEnabled() const", &RigidBody2D::IsGravityEnabled);
+        .method("bool IsGravityEnabled() const", &RigidBody2D::IsGravityEnabled)
+        .method("void SetSelectedCollider(Collider@)", [](RigidBody2D &rb, ICollider *collider) { rb.SetSelectedCollider(collider); })
+        .method("Collider@ GetSelectedCollider() const", [](const RigidBody2D &rb) -> ICollider * { return rb.GetSelectedCollider(); })
+        .method("array<Collider@>@ GetOwnerColliders() const", [](const RigidBody2D &rb) -> CScriptArray * { return MakeColliderArray(rb.GetOwnerColliders()); });
 
     RegisterComponentType<RigidBody3D>(engine, "RigidBody3D")
         .method("void SetBodyType(int)", [](RigidBody3D &rb, int type) { rb.SetBodyType(static_cast<reactphysics3d::BodyType>(type)); })
@@ -911,33 +1019,83 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("bool IsGravityEnabled() const", &RigidBody3D::IsGravityEnabled)
         .method("void SetInterpolate(bool)", &RigidBody3D::SetInterpolate)
         .method("bool IsInterpolateEnabled() const", &RigidBody3D::IsInterpolateEnabled)
-        .method("void SyncFromTransform()", &RigidBody3D::SyncFromTransform);
+        .method("void SyncFromTransform()", &RigidBody3D::SyncFromTransform)
+        .method("void SetSelectedCollider(Collider@)", [](RigidBody3D &rb, ICollider *collider) { rb.SetSelectedCollider(collider); })
+        .method("Collider@ GetSelectedCollider() const", [](const RigidBody3D &rb) -> ICollider * { return rb.GetSelectedCollider(); })
+        .method("array<Collider@>@ GetOwnerColliders() const", [](const RigidBody3D &rb) -> CScriptArray * { return MakeColliderArray(rb.GetOwnerColliders()); });
 
     RegisterComponentType<MeshRenderer>(engine, "MeshRenderer")
         .method("void SetPipelineName(const string &in)", &MeshRenderer::SetPipelineName)
         .method("const string &GetPipelineName() const", &MeshRenderer::GetPipelineName)
         .method("void SetMaterialName(const string &in)", &MeshRenderer::SetMaterialName)
         .method("const string &GetMaterialName() const", &MeshRenderer::GetMaterialName)
+        .method("void SetMaterialHandle(uint)", [](MeshRenderer &c, uint32_t handle) { c.SetMaterialHandle(handle); })
+        .method("uint GetMaterialHandle() const", [](const MeshRenderer &c) -> uint32_t { return c.GetMaterialHandle(); })
+        .method("uint GetMaterialSlotCount() const", [](const MeshRenderer &c) -> uint32_t { return static_cast<uint32_t>(c.GetMaterialSlotCount()); })
+        .method("void SetMaterialSlotCount(uint)", [](MeshRenderer &c, uint32_t count) { c.SetMaterialSlotCount(count); })
+        .method("void SetMaterialNameAt(uint, const string &in)", [](MeshRenderer &c, uint32_t slot, const std::string &name) { c.SetMaterialNameAt(slot, name); })
+        .method("const string &GetMaterialNameAt(uint) const", [](const MeshRenderer &c, uint32_t slot) -> const std::string & { return c.GetMaterialNameAt(slot); })
+        .method("uint GetMaterialHandleAt(uint) const", [](const MeshRenderer &c, uint32_t slot) -> uint32_t { return c.GetMaterialHandleAt(slot); })
         .method("Object@ GetTargetObject() const", &MeshRenderer::GetTargetObject)
         .method("void SetTargetObject(Object@)", [](MeshRenderer &c, EmptyObject *obj) { c.SetTargetObject(obj); })
+        .method("string GetTargetObjectID() const", [](const MeshRenderer &c) -> std::string { return c.GetTargetObjectID().ToString(); })
         .method("void SetInstanceColor(const Vector4 &in)", &MeshRenderer::SetInstanceColor)
         .method("const Vector4 &GetInstanceColor() const", &MeshRenderer::GetInstanceColor)
         // instanceColorBlendModeは 0=Override, 1=Multiply, 2=Add, 3=Subtract
         .method("void SetInstanceColorBlendMode(int)", [](MeshRenderer &c, int mode) { c.SetInstanceColorBlendMode(static_cast<MeshRenderer::ColorBlendMode>(mode)); })
-        .method("int GetInstanceColorBlendMode() const", [](const MeshRenderer &c) { return static_cast<int>(c.GetInstanceColorBlendMode()); });
+        .method("int GetInstanceColorBlendMode() const", [](const MeshRenderer &c) { return static_cast<int>(c.GetInstanceColorBlendMode()); })
+        .method("void SetRenderPriority(int)", [](MeshRenderer &c, int32_t priority) { c.SetRenderPriority(priority); })
+        .method("int GetRenderPriority() const", [](const MeshRenderer &c) -> int32_t { return c.GetRenderPriority(); })
+        .method("void SetAllowInstancing(bool)", &MeshRenderer::SetAllowInstancing)
+        .method("bool GetAllowInstancing() const", &MeshRenderer::GetAllowInstancing)
+        .method("void SetCastShadows(bool)", &MeshRenderer::SetCastShadows)
+        .method("bool GetCastShadows() const", &MeshRenderer::GetCastShadows)
+        .method("uint GetMeshHandle() const", [](const MeshRenderer &c) -> uint32_t { return c.GetMeshHandle(); })
+        .method("Matrix4x4 GetWorldMatrix() const", &MeshRenderer::GetWorldMatrix);
 
     RegisterComponentType<SkinnedMeshRenderer>(engine, "SkinnedMeshRenderer")
         .method("void SetPipelineName(const string &in)", &SkinnedMeshRenderer::SetPipelineName)
         .method("const string &GetPipelineName() const", &SkinnedMeshRenderer::GetPipelineName)
         .method("void SetMaterialName(const string &in)", &SkinnedMeshRenderer::SetMaterialName)
         .method("const string &GetMaterialName() const", &SkinnedMeshRenderer::GetMaterialName)
+        .method("void SetMaterialHandle(uint)", [](SkinnedMeshRenderer &c, uint32_t handle) { c.SetMaterialHandle(handle); })
+        .method("uint GetMaterialHandle() const", [](const SkinnedMeshRenderer &c) -> uint32_t { return c.GetMaterialHandle(); })
+        .method("uint GetMaterialSlotCount() const", [](const SkinnedMeshRenderer &c) -> uint32_t { return static_cast<uint32_t>(c.GetMaterialSlotCount()); })
+        .method("void SetMaterialSlotCount(uint)", [](SkinnedMeshRenderer &c, uint32_t count) { c.SetMaterialSlotCount(count); })
+        .method("void SetMaterialNameAt(uint, const string &in)", [](SkinnedMeshRenderer &c, uint32_t slot, const std::string &name) { c.SetMaterialNameAt(slot, name); })
+        .method("const string &GetMaterialNameAt(uint) const", [](const SkinnedMeshRenderer &c, uint32_t slot) -> const std::string & { return c.GetMaterialNameAt(slot); })
+        .method("uint GetMaterialHandleAt(uint) const", [](const SkinnedMeshRenderer &c, uint32_t slot) -> uint32_t { return c.GetMaterialHandleAt(slot); })
         .method("void SetBlendShapeWeight(const string &in, float)", &SkinnedMeshRenderer::SetBlendShapeWeight)
         .method("float GetBlendShapeWeight(const string &in) const", &SkinnedMeshRenderer::GetBlendShapeWeight)
+        .method("uint GetBlendShapeCount() const", [](const SkinnedMeshRenderer &c) -> uint32_t { return static_cast<uint32_t>(c.GetBlendShapes().size()); })
+        .method("string GetBlendShapeNameAt(uint) const", [](const SkinnedMeshRenderer &c, uint32_t index) -> std::string {
+            const auto &shapes = c.GetBlendShapes();
+            return index < shapes.size() ? shapes[index].name : std::string();
+        })
+        .method("float GetBlendShapeWeightAt(uint) const", [](const SkinnedMeshRenderer &c, uint32_t index) -> float {
+            const auto &shapes = c.GetBlendShapes();
+            return index < shapes.size() ? shapes[index].weight : 0.0f;
+        })
         .method("void SetInstanceColor(const Vector4 &in)", &SkinnedMeshRenderer::SetInstanceColor)
         .method("const Vector4 &GetInstanceColor() const", &SkinnedMeshRenderer::GetInstanceColor)
         // instanceColorBlendModeは 0=Override, 1=Multiply, 2=Add, 3=Subtract
         .method("void SetInstanceColorBlendMode(int)", [](SkinnedMeshRenderer &c, int mode) { c.SetInstanceColorBlendMode(static_cast<SkinnedMeshRenderer::ColorBlendMode>(mode)); })
-        .method("int GetInstanceColorBlendMode() const", [](const SkinnedMeshRenderer &c) { return static_cast<int>(c.GetInstanceColorBlendMode()); });
+        .method("int GetInstanceColorBlendMode() const", [](const SkinnedMeshRenderer &c) { return static_cast<int>(c.GetInstanceColorBlendMode()); })
+        .method("void SetRenderPriority(int)", [](SkinnedMeshRenderer &c, int32_t priority) { c.SetRenderPriority(priority); })
+        .method("int GetRenderPriority() const", [](const SkinnedMeshRenderer &c) -> int32_t { return c.GetRenderPriority(); })
+        .method("void SetAllowInstancing(bool)", &SkinnedMeshRenderer::SetAllowInstancing)
+        .method("bool GetAllowInstancing() const", &SkinnedMeshRenderer::GetAllowInstancing)
+        .method("void SetCastShadows(bool)", &SkinnedMeshRenderer::SetCastShadows)
+        .method("bool GetCastShadows() const", &SkinnedMeshRenderer::GetCastShadows)
+        .method("Object@ GetTargetObject() const", &SkinnedMeshRenderer::GetTargetObject)
+        .method("void SetTargetObject(Object@)", [](SkinnedMeshRenderer &c, EmptyObject *obj) { c.SetTargetObject(obj); })
+        .method("string GetTargetObjectID() const", [](const SkinnedMeshRenderer &c) -> std::string { return c.GetTargetObjectID().ToString(); })
+        .method("void SetQuality(SkinQuality)", [](SkinnedMeshRenderer &c, int quality) { c.SetQuality(static_cast<SkinQuality>(quality)); })
+        .method("SkinQuality GetQuality() const", [](const SkinnedMeshRenderer &c) -> int { return static_cast<int>(c.GetQuality()); })
+        .method("Animator@ GetAnimator() const", &SkinnedMeshRenderer::GetAnimator)
+        .method("void ResetAnimationToBindPose()", &SkinnedMeshRenderer::ResetAnimationToBindPose)
+        .method("uint GetMeshHandle() const", [](const SkinnedMeshRenderer &c) -> uint32_t { return c.GetMeshHandle(); })
+        .method("Matrix4x4 GetWorldMatrix() const", &SkinnedMeshRenderer::GetWorldMatrix);
 
     RegisterComponentType<Camera2D>(engine, "Camera2D")
         .method("void SetSize(float, float)", &Camera2D::SetSize)
@@ -953,6 +1111,11 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
     RegisterComponentType<CameraRenderer>(engine, "CameraRenderer")
         .method("void SetPipelineName(const string &in)", &CameraRenderer::SetPipelineName)
         .method("const string &GetPipelineName() const", &CameraRenderer::GetPipelineName)
+        .method("void SetTargetObject(Object@)", [](CameraRenderer &c, EmptyObject *obj) { c.SetTargetObject(obj); })
+        .method("Object@ GetTargetObject() const", &CameraRenderer::GetTargetObject)
+        .method("string GetTargetObjectID() const", [](const CameraRenderer &c) -> std::string { return c.GetTargetObjectID().ToString(); })
+        .method("void SetBindVariableNames(array<string>@)", [](CameraRenderer &c, CScriptArray *names) { c.SetBindVariableNames(StringArrayToVector(names)); })
+        .method("array<string>@ GetBindVariableNames() const", [](const CameraRenderer &c) -> CScriptArray * { return MakeStringArray(c.GetBindVariableNames()); })
         .method("Vector3 GetWorldPosition() const", &CameraRenderer::GetWorldPosition)
         .method("const Matrix4x4 &GetViewProjectionMatrix() const", &CameraRenderer::GetViewProjectionMatrix)
         .method("float GetNearClip() const", &CameraRenderer::GetNearClip)
@@ -964,6 +1127,44 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             if (obj) c.AddFollowTarget(obj->GetObjectID());
         })
         .method("void RemoveFollowTarget(uint)", [](CameraController &c, uint32_t index) { c.RemoveFollowTarget(index); })
+        .method("uint GetFollowTargetCount() const", [](const CameraController &c) -> uint32_t {
+            return static_cast<uint32_t>(c.GetFollowTargets().size());
+        })
+        .method("Object@ GetFollowTargetObject(uint) const", [](const CameraController &c, uint32_t index) -> EmptyObject * {
+            const auto &targets = c.GetFollowTargets();
+            if (index >= targets.size() || !gCurrentSceneContext) return nullptr;
+            return gCurrentSceneContext->GetSceneObject(targets[index].objectID);
+        })
+        .method("void SetFollowPositionEnable(uint, bool, bool, bool)", [](CameraController &c, uint32_t index, bool x, bool y, bool z) {
+            auto &targets = c.GetFollowTargets();
+            if (index >= targets.size()) return;
+            targets[index].followPositionX = x;
+            targets[index].followPositionY = y;
+            targets[index].followPositionZ = z;
+        })
+        .method("void GetFollowPositionEnable(uint, bool &out, bool &out, bool &out) const", [](const CameraController &c, uint32_t index, bool &x, bool &y, bool &z) {
+            x = y = z = false;
+            const auto &targets = c.GetFollowTargets();
+            if (index >= targets.size()) return;
+            x = targets[index].followPositionX;
+            y = targets[index].followPositionY;
+            z = targets[index].followPositionZ;
+        })
+        .method("void SetFollowRotationEnable(uint, bool, bool, bool)", [](CameraController &c, uint32_t index, bool x, bool y, bool z) {
+            auto &targets = c.GetFollowTargets();
+            if (index >= targets.size()) return;
+            targets[index].followRotationX = x;
+            targets[index].followRotationY = y;
+            targets[index].followRotationZ = z;
+        })
+        .method("void GetFollowRotationEnable(uint, bool &out, bool &out, bool &out) const", [](const CameraController &c, uint32_t index, bool &x, bool &y, bool &z) {
+            x = y = z = false;
+            const auto &targets = c.GetFollowTargets();
+            if (index >= targets.size()) return;
+            x = targets[index].followRotationX;
+            y = targets[index].followRotationY;
+            z = targets[index].followRotationZ;
+        })
         .method("void SetPositionOffset(const Vector3 &in)", &CameraController::SetPositionOffset)
         .method("const Vector3 &GetPositionOffset() const", &CameraController::GetPositionOffset)
         .method("void SetRotationOffset(const Vector3 &in)", &CameraController::SetRotationOffset)
@@ -975,11 +1176,25 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             c.GetMoveStrength().all = v;
         })
         .method("float GetMoveStrength() const", [](const CameraController &c) -> float { return c.GetMoveStrength().all; })
+        .method("void SetMoveStrengthPerAxis(const Vector3 &in)", [](CameraController &c, const Vector3 &v) {
+            c.GetMoveStrength().usePerAxis = true;
+            c.GetMoveStrength().perAxis = v;
+        })
+        .method("Vector3 GetMoveStrengthPerAxis() const", [](const CameraController &c) -> Vector3 { return c.GetMoveStrength().perAxis; })
+        .method("void SetMoveStrengthUsePerAxis(bool)", [](CameraController &c, bool usePerAxis) { c.GetMoveStrength().usePerAxis = usePerAxis; })
+        .method("bool GetMoveStrengthUsePerAxis() const", [](const CameraController &c) -> bool { return c.GetMoveStrength().usePerAxis; })
         .method("void SetRotateStrength(float)", [](CameraController &c, float v) {
             c.GetRotateStrength().usePerAxis = false;
             c.GetRotateStrength().all = v;
         })
         .method("float GetRotateStrength() const", [](const CameraController &c) -> float { return c.GetRotateStrength().all; })
+        .method("void SetRotateStrengthPerAxis(const Vector3 &in)", [](CameraController &c, const Vector3 &v) {
+            c.GetRotateStrength().usePerAxis = true;
+            c.GetRotateStrength().perAxis = v;
+        })
+        .method("Vector3 GetRotateStrengthPerAxis() const", [](const CameraController &c) -> Vector3 { return c.GetRotateStrength().perAxis; })
+        .method("void SetRotateStrengthUsePerAxis(bool)", [](CameraController &c, bool usePerAxis) { c.GetRotateStrength().usePerAxis = usePerAxis; })
+        .method("bool GetRotateStrengthUsePerAxis() const", [](const CameraController &c) -> bool { return c.GetRotateStrength().usePerAxis; })
         .method("void SetFovLerpFactor(float)", &CameraController::SetFovLerpFactor)
         .method("float GetFovLerpFactor() const", &CameraController::GetFovLerpFactor);
 
@@ -1025,6 +1240,9 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
     RegisterComponentType<LightRenderer>(engine, "LightRenderer")
         .method("void SetPipelineName(const string &in)", &LightRenderer::SetPipelineName)
         .method("const string &GetPipelineName() const", &LightRenderer::GetPipelineName)
+        .method("void SetTargetObject(Object@)", [](LightRenderer &c, EmptyObject *obj) { c.SetTargetObject(obj); })
+        .method("Object@ GetTargetObject() const", &LightRenderer::GetTargetObject)
+        .method("string GetTargetObjectID() const", [](const LightRenderer &c) -> std::string { return c.GetTargetObjectID().ToString(); })
         .method("Light@ GetLight() const", &LightRenderer::GetLight)
         .method("LightType GetLightType() const", &LightRenderer::GetLightType)
         .method("Vector3 GetWorldPosition() const", &LightRenderer::GetWorldPosition)
@@ -1073,8 +1291,13 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
 
     RegisterComponentType<ScreenBufferViewport>(engine, "ScreenBufferViewport")
         .method("void SetSourceObject(Object@)", [](ScreenBufferViewport &c, EmptyObject *obj) { c.SetSourceObject(obj); })
+        .method("Object@ GetSourceObject() const", &ScreenBufferViewport::GetSourceObject)
+        .method("string GetSourceObjectID() const", [](const ScreenBufferViewport &c) -> std::string { return c.GetSourceObjectID().ToString(); })
         .method("void SetDisplayCameraObject(Object@)", [](ScreenBufferViewport &c, EmptyObject *obj) { c.SetDisplayCameraObject(obj); })
+        .method("Object@ GetDisplayCameraObject() const", &ScreenBufferViewport::GetDisplayCameraObject)
+        .method("string GetDisplayCameraObjectID() const", [](const ScreenBufferViewport &c) -> std::string { return c.GetDisplayCameraObjectID().ToString(); })
         .method("SpriteRenderer@ GetSpriteRenderer() const", &ScreenBufferViewport::GetSpriteRenderer)
+        .method("MeshFilter@ GetMeshFilter() const", &ScreenBufferViewport::GetMeshFilter)
         // fitModeは 0=None, 1=Stretch, 2=Letterbox
         .method("void SetFitMode(int)", [](ScreenBufferViewport &c, int mode) {
             c.SetFitMode(static_cast<ScreenBufferViewport::FitMode>(mode));
@@ -1087,6 +1310,8 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
 
     RegisterComponentType<ScreenAnchor>(engine, "ScreenAnchor")
         .method("void SetCameraObject(Object@)", [](ScreenAnchor &c, EmptyObject *obj) { c.SetCameraObject(obj); })
+        .method("Object@ GetCameraObject() const", &ScreenAnchor::GetCameraObject)
+        .method("string GetCameraObjectID() const", [](const ScreenAnchor &c) -> std::string { return c.GetCameraObjectID().ToString(); })
         .method("void SetAnchorPoint(const Vector2 &in)", &ScreenAnchor::SetAnchorPoint)
         .method("const Vector2 &GetAnchorPoint() const", &ScreenAnchor::GetAnchorPoint)
         .method("void SetOffset(const Vector2 &in)", &ScreenAnchor::SetOffset)
@@ -1101,6 +1326,8 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
 
     RegisterComponentType<MeshButton>(engine, "MeshButton")
         .method("void SetDisplayCameraObject(Object@)", [](MeshButton &c, EmptyObject *obj) { c.SetDisplayCameraObject(obj); })
+        .method("Object@ GetDisplayCameraObject() const", &MeshButton::GetDisplayCameraObject)
+        .method("string GetDisplayCameraObjectID() const", [](const MeshButton &c) -> std::string { return c.GetDisplayCameraObjectID().ToString(); })
         .method("void SetPreciseMeshTest(bool)", &MeshButton::SetPreciseMeshTest)
         .method("bool GetPreciseMeshTest() const", &MeshButton::GetPreciseMeshTest)
         .method("bool IsHovered() const", &MeshButton::IsHovered)
@@ -1115,16 +1342,76 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("const string &GetName() const", &ShadowMapObject::GetName)
         .method("void SetSize(uint, uint)", &ShadowMapObject::SetSize);
 
-    // コライダー
-    RegisterColliderType<BoxCollider>(engine, "BoxCollider");
-    RegisterColliderType<SphereCollider>(engine, "SphereCollider");
-    RegisterColliderType<CapsuleCollider>(engine, "CapsuleCollider");
-    RegisterColliderType<MeshCollider>(engine, "MeshCollider");
-    RegisterColliderType<RayCollider>(engine, "RayCollider");
-    RegisterColliderType<Box2DCollider>(engine, "Box2DCollider");
-    RegisterColliderType<Circle2DCollider>(engine, "Circle2DCollider");
-    RegisterColliderType<Capsule2DCollider>(engine, "Capsule2DCollider");
-    RegisterColliderType<Ray2DCollider>(engine, "Ray2DCollider");
+    // コライダー（形状固有パラメータ）
+    RegisterColliderType<BoxCollider>(engine, "BoxCollider")
+        .method("void SetSize(const Vector3 &in)", &BoxCollider::SetSize)
+        .method("const Vector3 &GetSize() const", &BoxCollider::GetSize)
+        .method("void SetCenter(const Vector3 &in)", &BoxCollider::SetCenter)
+        .method("const Vector3 &GetCenter() const", &BoxCollider::GetCenter);
+
+    RegisterColliderType<SphereCollider>(engine, "SphereCollider")
+        .method("void SetRadius(float)", &SphereCollider::SetRadius)
+        .method("float GetRadius() const", &SphereCollider::GetRadius)
+        .method("void SetCenter(const Vector3 &in)", &SphereCollider::SetCenter)
+        .method("const Vector3 &GetCenter() const", &SphereCollider::GetCenter);
+
+    RegisterColliderType<CapsuleCollider>(engine, "CapsuleCollider")
+        .method("void SetRadius(float)", &CapsuleCollider::SetRadius)
+        .method("float GetRadius() const", &CapsuleCollider::GetRadius)
+        .method("void SetHeight(float)", &CapsuleCollider::SetHeight)
+        .method("float GetHeight() const", &CapsuleCollider::GetHeight)
+        .method("void SetCenter(const Vector3 &in)", &CapsuleCollider::SetCenter)
+        .method("const Vector3 &GetCenter() const", &CapsuleCollider::GetCenter);
+
+    RegisterColliderType<MeshCollider>(engine, "MeshCollider")
+        .method("void SetConvex(bool)", &MeshCollider::SetConvex)
+        .method("bool IsConvex() const", &MeshCollider::IsConvex)
+        .method("void SetMeshHandle(uint)", [](MeshCollider &c, uint32_t handle) { c.SetMeshHandle(handle); })
+        .method("uint GetMeshHandle() const", [](const MeshCollider &c) -> uint32_t { return c.GetMeshHandle(); })
+        .method("uint GetEffectiveMeshHandle() const", [](const MeshCollider &c) -> uint32_t { return c.GetEffectiveMeshHandle(); });
+
+    RegisterColliderType<RayCollider>(engine, "RayCollider")
+        .method("void SetDirection(const Vector3 &in)", &RayCollider::SetDirection)
+        .method("const Vector3 &GetDirection() const", &RayCollider::GetDirection)
+        .method("void SetMaxDistance(float)", &RayCollider::SetMaxDistance)
+        .method("float GetMaxDistance() const", &RayCollider::GetMaxDistance)
+        .method("bool CastRay(HitInfo &out)", [](const RayCollider &self, ScriptHitInfo &outHit) -> bool {
+            HitInfo3D hit{};
+            const bool result = self.CastRay(hit);
+            outHit.normal = hit.normal;
+            outHit.penetration = hit.penetration;
+            outHit.selfObject = hit.selfObject;
+            outHit.otherObject = hit.otherObject;
+            outHit.selfCollider = hit.selfCollider;
+            outHit.otherCollider = hit.otherCollider;
+            return result;
+        });
+
+    RegisterColliderType<Box2DCollider>(engine, "Box2DCollider")
+        .method("void SetSize(const Vector2 &in)", &Box2DCollider::SetSize)
+        .method("const Vector2 &GetSize() const", &Box2DCollider::GetSize)
+        .method("void SetCenter(const Vector2 &in)", &Box2DCollider::SetCenter)
+        .method("const Vector2 &GetCenter() const", &Box2DCollider::GetCenter);
+
+    RegisterColliderType<Circle2DCollider>(engine, "Circle2DCollider")
+        .method("void SetRadius(float)", &Circle2DCollider::SetRadius)
+        .method("float GetRadius() const", &Circle2DCollider::GetRadius)
+        .method("void SetCenter(const Vector2 &in)", &Circle2DCollider::SetCenter)
+        .method("const Vector2 &GetCenter() const", &Circle2DCollider::GetCenter);
+
+    RegisterColliderType<Capsule2DCollider>(engine, "Capsule2DCollider")
+        .method("void SetStart(const Vector2 &in)", &Capsule2DCollider::SetStart)
+        .method("const Vector2 &GetStart() const", &Capsule2DCollider::GetStart)
+        .method("void SetEnd(const Vector2 &in)", &Capsule2DCollider::SetEnd)
+        .method("const Vector2 &GetEnd() const", &Capsule2DCollider::GetEnd)
+        .method("void SetRadius(float)", &Capsule2DCollider::SetRadius)
+        .method("float GetRadius() const", &Capsule2DCollider::GetRadius);
+
+    RegisterColliderType<Ray2DCollider>(engine, "Ray2DCollider")
+        .method("void SetDirection(const Vector2 &in)", &Ray2DCollider::SetDirection)
+        .method("const Vector2 &GetDirection() const", &Ray2DCollider::GetDirection)
+        .method("void SetLength(float)", &Ray2DCollider::SetLength)
+        .method("float GetLength() const", &Ray2DCollider::GetLength);
 
     //==================================================
     // ポストプロセスエフェクト
@@ -1292,7 +1579,9 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("float GetThresholdMin() const", [](const FXAAEffect &e) { return e.GetParams().thresholdMin; })
         .method("void SetThresholdMin(float)", [](FXAAEffect &e, float v) { auto p = e.GetParams(); p.thresholdMin = v; e.SetParams(p); })
         .method("float GetStrength() const", [](const FXAAEffect &e) { return e.GetParams().strength; })
-        .method("void SetStrength(float)", [](FXAAEffect &e, float v) { auto p = e.GetParams(); p.strength = v; e.SetParams(p); });
+        .method("void SetStrength(float)", [](FXAAEffect &e, float v) { auto p = e.GetParams(); p.strength = v; e.SetParams(p); })
+        .method("float GetSubpixelBlend() const", [](const FXAAEffect &e) { return e.GetParams().subpixelBlend; })
+        .method("void SetSubpixelBlend(float)", [](FXAAEffect &e, float v) { auto p = e.GetParams(); p.subpixelBlend = v; e.SetParams(p); });
 
     RegisterComponentType<GaussianFilterEffect>(engine, "GaussianFilterEffect")
         .method("int GetRadius() const", [](const GaussianFilterEffect &e) { return e.GetParams().radius; })
@@ -1363,6 +1652,58 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetInnerRadius(float)", [](VignetteEffect &e, float v) { auto p = e.GetParams(); p.innerRadius = v; e.SetParams(p); })
         .method("float GetSmoothness() const", [](const VignetteEffect &e) { return e.GetParams().smoothness; })
         .method("void SetSmoothness(float)", [](VignetteEffect &e, float v) { auto p = e.GetParams(); p.smoothness = v; e.SetParams(p); });
+
+    RegisterComponentType<ScreenWideDitherBlendEffect>(engine, "ScreenWideDitherBlendEffect")
+        .method("uint GetPassCount() const", [](const ScreenWideDitherBlendEffect &e) -> uint32_t { return e.GetPassCount(); })
+        .method("void SetPassCount(uint)", [](ScreenWideDitherBlendEffect &e, uint32_t count) { e.SetPassCount(count); });
+
+    //==================================================
+    // メディア再生
+    //==================================================
+
+    RegisterComponentType<GifSource>(engine, "GifSource")
+        .method("bool Play()", &GifSource::Play)
+        .method("void Stop()", &GifSource::Stop)
+        .method("bool Pause()", &GifSource::Pause)
+        .method("bool Resume()", &GifSource::Resume)
+        .method("bool IsPlaying() const", &GifSource::IsPlaying)
+        .method("bool IsPaused() const", &GifSource::IsPaused)
+        .method("void SetGifAssetPath(const string &in)", &GifSource::SetGifAssetPath)
+        .method("const string &GetGifAssetPath() const", &GifSource::GetGifAssetPath)
+        .method("void SetLoop(bool)", &GifSource::SetLoop)
+        .method("bool GetLoop() const", &GifSource::GetLoop)
+        .method("void SetPlayOnAwake(bool)", &GifSource::SetPlayOnAwake)
+        .method("bool GetPlayOnAwake() const", &GifSource::GetPlayOnAwake);
+
+    RegisterComponentType<VideoSource>(engine, "VideoSource")
+        .method("bool Play()", &VideoSource::Play)
+        .method("void Stop()", &VideoSource::Stop)
+        .method("bool Pause()", &VideoSource::Pause)
+        .method("bool Resume()", &VideoSource::Resume)
+        .method("bool IsPlaying() const", &VideoSource::IsPlaying)
+        .method("bool IsPaused() const", &VideoSource::IsPaused)
+        .method("void SetVideoAssetPath(const string &in)", &VideoSource::SetVideoAssetPath)
+        .method("const string &GetVideoAssetPath() const", &VideoSource::GetVideoAssetPath)
+        .method("void SetLoop(bool)", &VideoSource::SetLoop)
+        .method("bool GetLoop() const", &VideoSource::GetLoop)
+        .method("void SetVolume(float)", &VideoSource::SetVolume)
+        .method("float GetVolume() const", &VideoSource::GetVolume)
+        .method("void SetPlayOnAwake(bool)", &VideoSource::SetPlayOnAwake)
+        .method("bool GetPlayOnAwake() const", &VideoSource::GetPlayOnAwake)
+        .method("void SetRouteAudioToAudioSource(bool)", &VideoSource::SetRouteAudioToAudioSource)
+        .method("bool GetRouteAudioToAudioSource() const", &VideoSource::GetRouteAudioToAudioSource);
+
+    //==================================================
+    // Prefab
+    //==================================================
+
+    auto prefabInstanceBinder = RegisterComponentType<PrefabInstanceComponent>(engine, "PrefabInstanceComponent");
+    prefabInstanceBinder
+        .method("string GetPrefabID() const", [](const PrefabInstanceComponent &c) -> std::string { return c.GetPrefabID().ToString(); });
+#if defined(USE_IMGUI)
+    // GetPrefabPath()はUSE_IMGUI限定の実装（PrefabInstanceComponent.cpp）のため、Release構成では登録しない
+    prefabInstanceBinder.method("string GetPrefabPath() const", &PrefabInstanceComponent::GetPrefabPath);
+#endif
 }
 
 //==================================================

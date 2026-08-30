@@ -29,6 +29,7 @@ class TextureManager;
 class FontManager;
 class SamplerManager;
 class VideoTexture;
+class GifTexture;
 class ScreenBuffer;
 class ShadowMapBuffer;
 class ComputeCommandProcessor;
@@ -114,6 +115,15 @@ public:
 
     /// @brief ExecuteOneShotCommandsForVideoTextureで発行したフェンス値がGPU側で完了しているかをブロックせずに確認する
     bool IsVideoUploadFenceComplete(Passkey<VideoTexture>, uint64_t fenceValue) const;
+
+    /// @brief D3D12デバイス取得（GifTexture 用）
+    ID3D12Device* GetDeviceForGifTexture(Passkey<GifTexture>) const { return dx12Device_->GetDevice(); }
+
+    /// @brief ワンショットでコマンドを記録・実行し、フェンス待機まで行う（GifTexture 用）
+    /// @details GIFのフレーム切り替えは低頻度（数十ms〜数百ms間隔）なため、VideoTextureのような
+    ///          ダブルバッファ+フェンスポーリングは行わず、TextureManagerと同じブロッキング方式で良い
+    /// @param record コマンド記録関数（Close は内部で行う）
+    void ExecuteOneShotCommandsForGifTexture(Passkey<GifTexture>, const std::function<void(ID3D12GraphicsCommandList*)>& record);
 
     /// @brief フレーム終端で実行するコマンドリストを登録
     void AddRecordCommandList(Passkey<DX12SwapChain>, ID3D12CommandList* list);

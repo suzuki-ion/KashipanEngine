@@ -333,6 +333,12 @@
     <ClCompile Include="KashipanEngine\Assets\SoundBeat.cpp">
       <Filter>KashipanEngine\Assets</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Assets\GifManager.cpp">
+      <Filter>KashipanEngine\Assets</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Assets\GifPlayer.cpp">
+      <Filter>KashipanEngine\Assets</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Assets\TextureManager.cpp">
       <Filter>KashipanEngine\Assets</Filter>
     </ClCompile>
@@ -514,6 +520,9 @@
       <Filter>KashipanEngine\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Graphics\ScreenBuffer.cpp">
+      <Filter>KashipanEngine\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="KashipanEngine\Graphics\GifTexture.cpp">
       <Filter>KashipanEngine\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Graphics\ShadowMapBuffer.cpp">
@@ -872,6 +881,12 @@
     <ClInclude Include="KashipanEngine\Assets\TextureManager.h">
       <Filter>KashipanEngine\Assets</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\GifManager.h">
+      <Filter>KashipanEngine\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\GifPlayer.h">
+      <Filter>KashipanEngine\Assets</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Assets\TextureRef.h">
       <Filter>KashipanEngine\Assets</Filter>
     </ClInclude>
@@ -1160,6 +1175,9 @@
     <ClInclude Include="KashipanEngine\Graphics\ScreenBuffer.h">
       <Filter>KashipanEngine\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\GifTexture.h">
+      <Filter>KashipanEngine\Graphics</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Graphics\ShadowMapBuffer.h">
       <Filter>KashipanEngine\Graphics</Filter>
     </ClInclude>
@@ -1245,6 +1263,9 @@
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\AudioSource.h">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\GifSource.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\VideoSource.h">

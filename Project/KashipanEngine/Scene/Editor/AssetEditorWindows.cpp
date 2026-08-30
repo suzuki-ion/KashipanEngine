@@ -374,6 +374,89 @@ bool ImagePreviewWindow::ShowImGui() {
 }
 
 //==================================================
+// GifPreviewWindow
+//==================================================
+
+GifPreviewWindow::GifPreviewWindow(const std::string &assetPath)
+    : assetPath_(assetPath) {
+    windowTitle_ = Translation("editor.assetwindow.gif.title") + FileNameFromPath(assetPath_) + "###GifPreview_" + assetPath_;
+    gifHandle_ = GifManager::GetGifHandleFromAssetPath(assetPath_);
+    if (gifHandle_ != GifManager::kInvalidHandle) {
+        player_ = GifManager::CreatePlayer(gifHandle_);
+        // Play()が一度も押されていない状態でも最初の1フレームを表示しておく
+        if (player_) player_->ShowFirstFrame();
+    }
+}
+
+GifPreviewWindow::~GifPreviewWindow() {
+    GifManager::DestroyPlayer(std::move(player_));
+}
+
+bool GifPreviewWindow::ShowImGui() {
+    ImGui::SetNextWindowSize(ImVec2(420.0f, 460.0f), ImGuiCond_FirstUseEver);
+    if (!ImGui::Begin(windowTitle_.c_str(), &isOpen_)) {
+        ImGui::End();
+        return isOpen_;
+    }
+    DrawFloatingWindowChromeButtons();
+
+    if (!player_) {
+        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "%s%s", TranslationC("editor.assetwindow.gif.notloaded"), assetPath_.c_str());
+        ImGui::End();
+        return isOpen_;
+    }
+
+    ImGui::TextUnformatted(assetPath_.c_str());
+    ImGui::Separator();
+
+    const bool isPlaying = player_->IsPlaying();
+    const bool isPaused = player_->IsPaused();
+
+    if (!isPlaying) {
+        if (ImGui::Button(TranslationLabel("editor.gif.play"))) {
+            player_->Play(loop_);
+        }
+    } else if (isPaused) {
+        if (ImGui::Button(TranslationLabel("editor.gif.resume"))) {
+            player_->Resume();
+        }
+    } else {
+        if (ImGui::Button(TranslationLabel("editor.gif.pause"))) {
+            player_->Pause();
+        }
+    }
+    ImGui::SameLine();
+    ImGui::BeginDisabled(!isPlaying && !isPaused);
+    if (ImGui::Button(TranslationLabel("editor.gif.stop"))) {
+        player_->Stop();
+    }
+    ImGui::EndDisabled();
+
+    ImGui::Checkbox(TranslationLabel("editor.gif.loop"), &loop_);
+
+    // このウィンドウはシーンのコンポーネント更新には乗らないため、毎フレームここで自前で進行させる
+    player_->Update(ImGui::GetIO().DeltaTime);
+
+    const auto textureHandle = player_->GetTextureHandle();
+    if (textureHandle != TextureManager::kInvalidHandle) {
+        const auto view = TextureManager::GetTextureView(textureHandle);
+        const D3D12_GPU_DESCRIPTOR_HANDLE srvHandle = view.GetSrvHandle();
+        const std::uint32_t width = player_->GetWidth();
+        const std::uint32_t height = player_->GetHeight();
+        if (srvHandle.ptr != 0 && width > 0 && height > 0) {
+            const ImVec2 avail = ImGui::GetContentRegionAvail();
+            const float scale = std::min(avail.x / static_cast<float>(width), avail.y / static_cast<float>(height));
+            const ImVec2 drawSize(static_cast<float>(width) * (scale > 0.0f ? scale : 1.0f),
+                static_cast<float>(height) * (scale > 0.0f ? scale : 1.0f));
+            ImGui::Image(static_cast<ImTextureID>(srvHandle.ptr), drawSize);
+        }
+    }
+
+    ImGui::End();
+    return isOpen_;
+}
+
+//==================================================
 // AudioPreviewWindow
 //==================================================
 

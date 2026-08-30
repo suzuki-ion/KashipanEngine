@@ -538,6 +538,8 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClCompile Include="KashipanEngine\Assets\SamplerManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\SkeletonManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\SoundBeat.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\GifManager.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\GifPlayer.cpp" />
     <ClCompile Include="KashipanEngine\Assets\TextureManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\VideoManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\VideoPlayer.cpp" />
@@ -599,6 +601,7 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClCompile Include="KashipanEngine\Graphics\ComputeCommandProcessor.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\ImageExporter.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\ScreenBuffer.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\GifTexture.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\ShadowMapBuffer.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\VideoTexture.cpp" />
     <ClCompile Include="KashipanEngine\Input\Controller.cpp" />
@@ -1031,6 +1034,8 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClInclude Include="KashipanEngine\Assets\SamplerManager.h" />
     <ClInclude Include="KashipanEngine\Assets\SkeletonManager.h" />
     <ClInclude Include="KashipanEngine\Assets\SoundBeat.h" />
+    <ClInclude Include="KashipanEngine\Assets\GifManager.h" />
+    <ClInclude Include="KashipanEngine\Assets\GifPlayer.h" />
     <ClInclude Include="KashipanEngine\Assets\TextureManager.h" />
     <ClInclude Include="KashipanEngine\Assets\TextureRef.h" />
     <ClInclude Include="KashipanEngine\Assets\VideoManager.h" />
@@ -1129,6 +1134,7 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClInclude Include="KashipanEngine\Graphics\ComputeCommandProcessor.h" />
     <ClInclude Include="KashipanEngine\Graphics\ImageExporter.h" />
     <ClInclude Include="KashipanEngine\Graphics\ScreenBuffer.h" />
+    <ClInclude Include="KashipanEngine\Graphics\GifTexture.h" />
     <ClInclude Include="KashipanEngine\Graphics\ShadowMapBuffer.h" />
     <ClInclude Include="KashipanEngine\Graphics\VideoTexture.h" />
     <ClInclude Include="KashipanEngine\InputHeaders.h" />
@@ -1158,6 +1164,7 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClInclude Include="KashipanEngine\Objects\Components\AudioListener.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Comment.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\AudioSource.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\GifSource.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\VideoSource.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\Box2DCollider.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\BoxCollider.h" />

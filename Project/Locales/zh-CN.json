@@ -491,6 +491,9 @@
 		"engine.video.texture.initialize.invalidsize": "视频纹理初始化失败。尺寸不正确。",
 		"engine.video.texture.initialize.failed": "视频纹理初始化失败。GPU资源创建失败。",
 		"engine.video.texture.upload.failed.size": "视频帧上传失败。数据大小不足（可能是步幅（Stride）计算不一致）。",
+		"engine.gif.texture.initialize.invalidsize": "GIF纹理初始化失败。尺寸不正确。",
+		"engine.gif.texture.initialize.failed": "GIF纹理初始化失败。GPU资源创建失败。",
+		"engine.gif.texture.upload.failed.size": "GIF帧上传失败。数据大小不足。",
 
 		"engine.video.decode.failed.readsample": "视频解码失败。视频采样读取失败。播放器：",
 		"engine.video.decode.failed.seek": "视频解码失败。循环播放的定位（Seek）失败。播放器：",
@@ -507,6 +510,12 @@
 		"engine.video.loading.failed.probe": "视频加载失败。元数据获取失败。文件路径：",
 		"engine.video.loading.failed.register": "视频加载失败。注册失败。文件路径：",
 		"engine.video.loading.succeeded": "视频加载成功。文件路径：",
+		"engine.gif.loading.failed.notfound": "GIF加载失败。未找到文件。文件路径：",
+		"engine.gif.loading.failed.unsupported": "GIF加载失败。不支持的扩展名。文件路径：",
+		"engine.gif.loading.failed.decode": "GIF加载失败。解码失败。文件路径：",
+		"engine.gif.loading.failed.register": "GIF加载失败。注册失败。文件路径：",
+		"engine.gif.loading.succeeded": "GIF加载成功。文件路径：",
+		"engine.gif.loading.alreadyloaded": "GIF已加载。文件路径：",
 
 		"engine.video.play.failed.reader": "视频播放失败。无法打开文件。文件路径：",
 		"engine.video.play.failed.videoformat": "视频播放失败。视频流格式设置失败。文件路径：",
@@ -751,6 +760,14 @@
 		"component.videosource.resume": "恢复",
 		"component.videosource.pause": "暂停",
 		"component.videosource.stop": "停止",
+		//--------- component.gifsource ---------//
+		"component.gifsource.gif": "GIF",
+		"component.gifsource.loop": "循环",
+		"component.gifsource.play_on_awake": "自动播放",
+		"component.gifsource.play": "播放",
+		"component.gifsource.resume": "恢复",
+		"component.gifsource.pause": "暂停",
+		"component.gifsource.stop": "停止",
 
 		//--------- component.bloomeffect ---------//
 		"component.bloomeffect.blurradius": "模糊半径",
@@ -1417,6 +1434,8 @@
 		"editor.assetwindow.unsaved": "（未保存）",
 		"editor.assetwindow.video.notloaded": "视频尚未加载：",
 		"editor.assetwindow.video.title": "视频：",
+		"editor.assetwindow.gif.notloaded": "GIF尚未加载：",
+		"editor.assetwindow.gif.title": "GIF：",
 
 		//--------- editor.audio ---------//
 		"editor.audio.pause": "暂停",
@@ -1433,6 +1452,11 @@
 		"editor.video.resume": "恢复",
 		"editor.video.stop": "停止",
 		"editor.video.volume": "音量",
+		"editor.gif.loop": "循环",
+		"editor.gif.pause": "暂停",
+		"editor.gif.play": "播放",
+		"editor.gif.resume": "恢复",
+		"editor.gif.stop": "停止",
 
 		//--------- editor.audiomanager ---------//
 		"editor.audiomanager.active_plays_d": "正在播放的音频数：%d",

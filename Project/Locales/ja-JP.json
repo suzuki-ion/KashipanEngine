@@ -491,6 +491,9 @@
 		"engine.video.texture.initialize.invalidsize": "動画テクスチャ初期化失敗。サイズが不正です。",
 		"engine.video.texture.initialize.failed": "動画テクスチャ初期化失敗。GPUリソースの作成に失敗しました。",
 		"engine.video.texture.upload.failed.size": "動画フレームのアップロード失敗。データサイズが不足しています（ストライド計算の不整合の可能性）。",
+		"engine.gif.texture.initialize.invalidsize": "GIFテクスチャ初期化失敗。サイズが不正です。",
+		"engine.gif.texture.initialize.failed": "GIFテクスチャ初期化失敗。GPUリソースの作成に失敗しました。",
+		"engine.gif.texture.upload.failed.size": "GIFフレームのアップロード失敗。データサイズが不足しています。",
 
 		"engine.video.decode.failed.readsample": "動画デコード失敗。映像サンプルの読み取りに失敗しました。プレイヤー：",
 		"engine.video.decode.failed.seek": "動画デコード失敗。ループ再生のためのシークに失敗しました。プレイヤー：",
@@ -507,6 +510,12 @@
 		"engine.video.loading.failed.probe": "動画読み込み失敗。メタデータの取得に失敗しました。ファイルパス：",
 		"engine.video.loading.failed.register": "動画読み込み失敗。登録に失敗しました。ファイルパス：",
 		"engine.video.loading.succeeded": "動画読み込み成功。ファイルパス：",
+		"engine.gif.loading.failed.notfound": "GIF読み込み失敗。ファイルが見つかりません。ファイルパス：",
+		"engine.gif.loading.failed.unsupported": "GIF読み込み失敗。未対応の拡張子です。ファイルパス：",
+		"engine.gif.loading.failed.decode": "GIF読み込み失敗。デコードに失敗しました。ファイルパス：",
+		"engine.gif.loading.failed.register": "GIF読み込み失敗。登録に失敗しました。ファイルパス：",
+		"engine.gif.loading.succeeded": "GIF読み込み成功。ファイルパス：",
+		"engine.gif.loading.alreadyloaded": "GIFは既に読み込み済みです。ファイルパス：",
 
 		"engine.video.play.failed.reader": "動画再生失敗。ファイルを開けませんでした。ファイルパス：",
 		"engine.video.play.failed.videoformat": "動画再生失敗。映像ストリームの形式設定に失敗しました。ファイルパス：",
@@ -751,6 +760,14 @@
 		"component.videosource.resume": "再開",
 		"component.videosource.pause": "一時停止",
 		"component.videosource.stop": "停止",
+		//--------- component.gifsource ---------//
+		"component.gifsource.gif": "GIF",
+		"component.gifsource.loop": "ループ",
+		"component.gifsource.play_on_awake": "自動再生",
+		"component.gifsource.play": "再生",
+		"component.gifsource.resume": "再開",
+		"component.gifsource.pause": "一時停止",
+		"component.gifsource.stop": "停止",
 
 		//--------- component.bloomeffect ---------//
 		"component.bloomeffect.blurradius": "ブラー半径",
@@ -1417,6 +1434,8 @@
 		"editor.assetwindow.unsaved": "(未保存)",
 		"editor.assetwindow.video.notloaded": "動画が読み込まれていません：",
 		"editor.assetwindow.video.title": "動画：",
+		"editor.assetwindow.gif.notloaded": "GIFが読み込まれていません：",
+		"editor.assetwindow.gif.title": "GIF：",
 
 		//--------- editor.audio ---------//
 		"editor.audio.pause": "一時停止",
@@ -1433,6 +1452,11 @@
 		"editor.video.resume": "再開",
 		"editor.video.stop": "停止",
 		"editor.video.volume": "音量",
+		"editor.gif.loop": "ループ",
+		"editor.gif.pause": "一時停止",
+		"editor.gif.play": "再生",
+		"editor.gif.resume": "再開",
+		"editor.gif.stop": "停止",
 
 		//--------- editor.audiomanager ---------//
 		"editor.audiomanager.active_plays_d": "再生中の音声数：%d",

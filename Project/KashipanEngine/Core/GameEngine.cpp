@@ -129,6 +129,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     animationManager_ = std::make_unique<AnimationManager>(Passkey<GameEngine>{}, assetsRoot);
     materialManager_ = std::make_unique<MaterialManager>(Passkey<GameEngine>{}, assetsRoot);
     videoManager_ = std::make_unique<VideoManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetsRoot);
+    gifManager_ = std::make_unique<GifManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetsRoot);
     input_ = std::make_unique<Input>(Passkey<GameEngine>{});
     inputCommand_ = std::make_unique<InputCommand>(Passkey<GameEngine>{}, input_.get());
     inputCommand_->LoadFromJSON(InputCommand::kDefaultSaveFilePath);
@@ -234,6 +235,10 @@ GameEngine::~GameEngine() {
     // VideoManagerはAudioManager/TextureManager双方へ登録したハンドルを破棄側で解放するため、
     // その2つより先に破棄する
     videoManager_.reset();
+    // GifManager自体はTextureManagerへ何も登録しない（登録・解除はGifSourceが自分の
+    // Finalize()で行う。既にsceneManager_.reset()済みのためこの時点では残っていない）が、
+    // 動画・音声・マテリアル系の各Managerと並びを揃えるためここで破棄する
+    gifManager_.reset();
     materialManager_.reset();
     audioManager_.reset();
     animationManager_.reset();
@@ -356,6 +361,7 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
         ScreenBuffer::CommitDestroy({});
         ShadowMapBuffer::CommitDestroy({});
         VideoManager::CommitPendingDestroy({});
+        GifManager::CommitPendingDestroy({});
         directXCommon_->AllDestroyPendingSwapChains({});
 
         if (windowCount > Window::GetWindowCount()) {

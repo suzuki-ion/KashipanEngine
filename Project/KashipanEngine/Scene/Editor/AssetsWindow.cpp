@@ -11,6 +11,7 @@
 #pragma comment(lib, "Shell32.lib")
 
 #include "Assets/AudioManager.h"
+#include "Assets/GifManager.h"
 #include "Assets/MaterialManager.h"
 #include "Assets/ModelManager.h"
 #include "Assets/TextureManager.h"
@@ -625,6 +626,12 @@ void AssetsWindow::OpenFileEditor(const FileEntry &file) {
         materialEditors_.push_back(std::make_unique<MaterialFileEditorWindow>(assetPath));
     } else if (file.extension == ".as") {
         OpenScriptInExternalEditor(file.path);
+    } else if (file.extension == ".gif") {
+        const std::string assetPath = ToAssetsRelativePath(file.path);
+        for (auto &editor : gifPreviews_) {
+            if (editor && editor->GetAssetPath() == assetPath) return;
+        }
+        gifPreviews_.push_back(std::make_unique<GifPreviewWindow>(assetPath));
     } else if (IsTextureExtension(file.extension)) {
         const std::string assetPath = ToAssetsRelativePath(file.path);
         for (auto &editor : imagePreviews_) {
@@ -665,6 +672,7 @@ void AssetsWindow::ShowOpenEditors() {
     prune(jsonEditors_);
     prune(materialEditors_);
     prune(imagePreviews_);
+    prune(gifPreviews_);
     prune(audioPreviews_);
     prune(videoPreviews_);
 
@@ -770,6 +778,9 @@ void AssetsWindow::ImportDroppedFiles(const std::vector<std::string> &physicalPa
             const std::string ext = ToLowerExtension(destPhysicalPath);
             if (IsTextureExtension(ext)) {
                 TextureManager::LoadTextureDynamic(physicalPathStr);
+                if (ext == ".gif") {
+                    GifManager::LoadDynamic(physicalPathStr);
+                }
             } else if (IsAudioExtension(ext)) {
                 AudioManager::LoadDynamic(physicalPathStr);
             } else if (IsModelExtension(ext)) {
@@ -923,6 +934,9 @@ void AssetsWindow::ShowRenameModal() {
                     const std::string ext = ToLowerExtension(newPath);
                     if (IsTextureExtension(ext)) {
                         TextureManager::RenameTexture(oldAssetPath, newAssetPath);
+                        if (ext == ".gif") {
+                            GifManager::RenameGif(oldAssetPath, newAssetPath);
+                        }
                     } else if (ext == ".mat") {
                         MaterialManager::RenameMaterialFile(oldAssetPath, newAssetPath);
                     } else if (IsAudioExtension(ext)) {

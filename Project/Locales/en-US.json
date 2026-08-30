@@ -491,6 +491,9 @@
 		"engine.video.texture.initialize.invalidsize": "Failed to initialize the video texture. Invalid size.",
 		"engine.video.texture.initialize.failed": "Failed to initialize the video texture. Failed to create the GPU resource.",
 		"engine.video.texture.upload.failed.size": "Failed to upload the video frame. Data size is insufficient (possible stride mismatch).",
+		"engine.gif.texture.initialize.invalidsize": "Failed to initialize the GIF texture. Invalid size.",
+		"engine.gif.texture.initialize.failed": "Failed to initialize the GIF texture. Failed to create the GPU resource.",
+		"engine.gif.texture.upload.failed.size": "Failed to upload the GIF frame. Data size is insufficient.",
 
 		"engine.video.decode.failed.readsample": "Failed to decode video. Failed to read a video sample. Player: ",
 		"engine.video.decode.failed.seek": "Failed to decode video. Failed to seek for loop playback. Player: ",
@@ -507,6 +510,12 @@
 		"engine.video.loading.failed.probe": "Failed to load the video. Failed to retrieve metadata. File path: ",
 		"engine.video.loading.failed.register": "Failed to load the video. Failed to register it. File path: ",
 		"engine.video.loading.succeeded": "Video loaded successfully. File path: ",
+		"engine.gif.loading.failed.notfound": "Failed to load the GIF. File not found. File path: ",
+		"engine.gif.loading.failed.unsupported": "Failed to load the GIF. Unsupported extension. File path: ",
+		"engine.gif.loading.failed.decode": "Failed to load the GIF. Decoding failed. File path: ",
+		"engine.gif.loading.failed.register": "Failed to load the GIF. Failed to register it. File path: ",
+		"engine.gif.loading.succeeded": "GIF loaded successfully. File path: ",
+		"engine.gif.loading.alreadyloaded": "The GIF is already loaded. File path: ",
 
 		"engine.video.play.failed.reader": "Failed to play the video. Could not open the file. File path: ",
 		"engine.video.play.failed.videoformat": "Failed to play the video. Failed to configure the video stream format. File path: ",
@@ -751,6 +760,14 @@
 		"component.videosource.resume": "Resume",
 		"component.videosource.pause": "Pause",
 		"component.videosource.stop": "Stop",
+		//--------- component.gifsource ---------//
+		"component.gifsource.gif": "GIF",
+		"component.gifsource.loop": "Loop",
+		"component.gifsource.play_on_awake": "Play On Awake",
+		"component.gifsource.play": "Play",
+		"component.gifsource.resume": "Resume",
+		"component.gifsource.pause": "Pause",
+		"component.gifsource.stop": "Stop",
 
 		//--------- component.bloomeffect ---------//
 		"component.bloomeffect.blurradius": "BlurRadius",
@@ -1417,6 +1434,8 @@
 		"editor.assetwindow.unsaved": "(unsaved)",
 		"editor.assetwindow.video.notloaded": "Video is not loaded: ",
 		"editor.assetwindow.video.title": "Video: ",
+		"editor.assetwindow.gif.notloaded": "GIF is not loaded: ",
+		"editor.assetwindow.gif.title": "GIF: ",
 
 		//--------- editor.audio ---------//
 		"editor.audio.pause": "Pause",
@@ -1433,6 +1452,11 @@
 		"editor.video.resume": "Resume",
 		"editor.video.stop": "Stop",
 		"editor.video.volume": "Volume",
+		"editor.gif.loop": "Loop",
+		"editor.gif.pause": "Pause",
+		"editor.gif.play": "Play",
+		"editor.gif.resume": "Resume",
+		"editor.gif.stop": "Stop",
 
 		//--------- editor.audiomanager ---------//
 		"editor.audiomanager.active_plays_d": "Active Plays: %d",

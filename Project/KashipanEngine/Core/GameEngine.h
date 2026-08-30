@@ -16,6 +16,7 @@
 #include "Assets/AnimationManager.h"
 #include "Assets/MaterialManager.h"
 #include "Assets/VideoManager.h"
+#include "Assets/GifManager.h"
 #include "Objects/EmptyObject.h"
 #include "Input/Input.h"
 #include "Input/InputCommand.h"
@@ -160,6 +161,8 @@ private:
     std::unique_ptr<MaterialManager> materialManager_;
     /// @brief 動画管理クラス
     std::unique_ptr<VideoManager> videoManager_;
+    /// @brief GIFアニメーション管理クラス
+    std::unique_ptr<GifManager> gifManager_;
 
 #if defined(USE_IMGUI)
     /// @brief ImGui 管理クラス

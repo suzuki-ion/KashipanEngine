@@ -113,6 +113,7 @@ private:
     std::vector<std::unique_ptr<JSONFileEditorWindow>> jsonEditors_;
     std::vector<std::unique_ptr<MaterialFileEditorWindow>> materialEditors_;
     std::vector<std::unique_ptr<ImagePreviewWindow>> imagePreviews_;
+    std::vector<std::unique_ptr<GifPreviewWindow>> gifPreviews_;
     std::vector<std::unique_ptr<AudioPreviewWindow>> audioPreviews_;
     std::vector<std::unique_ptr<VideoPreviewWindow>> videoPreviews_;
     std::vector<std::unique_ptr<ModelPreviewWindow>> modelPreviews_;

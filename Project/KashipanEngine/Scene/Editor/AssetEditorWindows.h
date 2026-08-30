@@ -3,6 +3,8 @@
 #include <string>
 
 #include "Assets/AudioManager.h"
+#include "Assets/GifManager.h"
+#include "Assets/GifPlayer.h"
 #include "Assets/ModelManager.h"
 #include "Assets/VideoManager.h"
 #include "Assets/VideoPlayer.h"
@@ -67,6 +69,27 @@ private:
     std::string assetPath_;
     std::string windowTitle_;
     bool isOpen_ = true;
+};
+
+/// @brief GIFアニメーションの再生プレビュー用ウィンドウ
+/// @details フレーム送り・テクスチャのライフサイクル管理は`GifSource`コンポーネントと共通の
+///          `GifPlayer`に委譲する。`Update()`はScene側のコンポーネント更新には乗らないため、
+///          毎フレーム`ShowImGui()`内で`GifPlayer::Update()`を呼び自前で進行させる。
+class GifPreviewWindow final {
+public:
+    explicit GifPreviewWindow(const std::string &assetPath);
+    ~GifPreviewWindow();
+
+    bool ShowImGui();
+    const std::string &GetAssetPath() const noexcept { return assetPath_; }
+
+private:
+    std::string assetPath_;
+    std::string windowTitle_;
+    bool isOpen_ = true;
+    GifManager::GifHandle gifHandle_ = GifManager::kInvalidHandle;
+    std::unique_ptr<GifPlayer> player_;
+    bool loop_ = true;
 };
 
 /// @brief 音声ファイルの再生プレビュー用ウィンドウ

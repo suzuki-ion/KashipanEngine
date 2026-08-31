@@ -21,6 +21,8 @@
 #include "Objects/EmptyObject.h"
 #include "Scene/Components/Script/SceneScriptEngine.h"
 #include "Scene/Components/Script/ScriptBindings.h"
+#include "Scene/Components/Script/ScriptComponentHandle.h"
+#include "Scene/Components/Script/ScriptObjectHandle.h"
 #include "Scene/SceneContext.h"
 #include "Utilities/FileIO/Directory.h"
 #include "Utilities/UUID128.h"
@@ -470,45 +472,56 @@ void ScriptComponent::CallCollisionMethod(asIScriptFunction *method, const Vecto
     EmptyObject *selfObject, EmptyObject *otherObject,
     ICollider *selfCollider, ICollider *otherCollider) {
     if (!method || !context_ || !behaviorObject_) return;
+    if (context_->Prepare(method) < 0) return;
 
+    // ScriptHitInfoの各ハンドルは参照カウント式のため、Execute()後に必ずReleaseする
     ScriptHitInfo hitInfo;
     hitInfo.normal = normal;
     hitInfo.penetration = penetration;
-    hitInfo.selfObject = selfObject;
-    hitInfo.otherObject = otherObject;
-    hitInfo.selfCollider = selfCollider;
-    hitInfo.otherCollider = otherCollider;
+    hitInfo.selfObject = ScriptObjectHandle::Create(selfObject);
+    hitInfo.otherObject = ScriptObjectHandle::Create(otherObject);
+    hitInfo.selfCollider = ScriptComponentHandle<ICollider>::Create(selfCollider);
+    hitInfo.otherCollider = ScriptComponentHandle<ICollider>::Create(otherCollider);
 
-    if (context_->Prepare(method) < 0) return;
     context_->SetObject(behaviorObject_);
     context_->SetArgObject(0, &hitInfo);
-    ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
-    const int r = context_->Execute();
-    if (r != asEXECUTION_FINISHED) {
-        lastError_ = GetExceptionInfo(context_);
-        Log(Translation("engine.script.error") + lastError_, LogSeverity::Error);
+    {
+        ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
+        const int r = context_->Execute();
+        if (r != asEXECUTION_FINISHED) {
+            lastError_ = GetExceptionInfo(context_);
+            Log(Translation("engine.script.error") + lastError_, LogSeverity::Error);
+        }
     }
+    if (hitInfo.selfObject) hitInfo.selfObject->Release();
+    if (hitInfo.otherObject) hitInfo.otherObject->Release();
+    if (hitInfo.selfCollider) hitInfo.selfCollider->Release();
+    if (hitInfo.otherCollider) hitInfo.otherCollider->Release();
 }
 
 void ScriptComponent::CallWindowMessageMethod(asIScriptFunction *method, IWindowObjectComponent *sourceComponent,
     std::uint32_t message, std::uint64_t wparam, std::int64_t lparam) {
     if (!method || !context_ || !behaviorObject_) return;
+    if (context_->Prepare(method) < 0) return;
 
+    // ScriptWindowMessageInfo::sourceComponentは参照カウント式ハンドルのため、Execute()後に必ずReleaseする
     ScriptWindowMessageInfo messageInfo;
-    messageInfo.sourceComponent = sourceComponent;
+    messageInfo.sourceComponent = ScriptComponentHandle<IWindowObjectComponent>::Create(sourceComponent);
     messageInfo.message = message;
     messageInfo.wparam = wparam;
     messageInfo.lparam = lparam;
 
-    if (context_->Prepare(method) < 0) return;
     context_->SetObject(behaviorObject_);
     context_->SetArgObject(0, &messageInfo);
-    ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
-    const int r = context_->Execute();
-    if (r != asEXECUTION_FINISHED) {
-        lastError_ = GetExceptionInfo(context_);
-        Log(Translation("engine.script.error") + lastError_, LogSeverity::Error);
+    {
+        ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
+        const int r = context_->Execute();
+        if (r != asEXECUTION_FINISHED) {
+            lastError_ = GetExceptionInfo(context_);
+            Log(Translation("engine.script.error") + lastError_, LogSeverity::Error);
+        }
     }
+    if (messageInfo.sourceComponent) messageInfo.sourceComponent->Release();
 }
 
 size_t ScriptComponent::CountColliders() const {
@@ -913,8 +926,9 @@ JSON ScriptComponent::CaptureField(const SerializedField &field, void *address) 
     } else if (field.typeId == quaternionTypeId_) {
         return ToJSON(*static_cast<Quaternion *>(address));
     } else if (IsObjectFieldType(field.typeId)) {
-        EmptyObject *object = *static_cast<EmptyObject **>(address);
-        return object ? ToJSON(object->GetObjectID()) : JSON();
+        // ハンドルが持つUUIDをそのまま保存する（参照先の生死に関わらず、中身に触れず安全に読める）
+        ScriptObjectHandle *handle = *static_cast<ScriptObjectHandle **>(address);
+        return handle ? ToJSON(handle->GetID()) : JSON();
     }
     return JSON();
 }
@@ -993,11 +1007,11 @@ void ScriptComponent::ApplyField(const SerializedField &field, void *address, co
         } else if (field.typeId == quaternionTypeId_) {
             *static_cast<Quaternion *>(address) = FromJSON<Quaternion>(value);
         } else if (IsObjectFieldType(field.typeId)) {
-            // UUIDから参照先オブジェクトを解決する（見つからない場合はnullのまま）
-            auto *sceneContext = GetOwnerSceneContext();
-            *static_cast<EmptyObject **>(address) = (sceneContext && value.is_string())
-                ? sceneContext->GetSceneObject(FromJSON<UUID128>(value))
-                : nullptr;
+            // JSONのUUIDから直接ハンドルを作る（参照先が現時点で存在するかはResolve()の都度判定でよいため
+            // ここではシーンへ問い合わせない。既存の参照は正しくReleaseしてから差し替える）
+            auto *slot = static_cast<ScriptObjectHandle **>(address);
+            if (*slot) { (*slot)->Release(); *slot = nullptr; }
+            if (value.is_string()) *slot = ScriptObjectHandle::CreateFromID(FromJSON<UUID128>(value));
         }
     } catch (const JSON::exception &) {
         // 型が合わない保存値（スクリプト側の型変更後など）は無視して既定値のままにする
@@ -1049,7 +1063,12 @@ void ScriptComponent::CopyLeafFieldValue(int typeId, void *dst, const void *src)
     } else if (typeId == quaternionTypeId_) {
         *static_cast<Quaternion *>(dst) = *static_cast<const Quaternion *>(src);
     } else if (IsObjectFieldType(typeId)) {
-        *static_cast<EmptyObject **>(dst) = *static_cast<EmptyObject *const *>(src);
+        // ハンドル型（参照カウント式）のため、コピー元をAddRef、コピー先の既存参照をReleaseしてから代入する
+        auto *dstSlot = static_cast<ScriptObjectHandle **>(dst);
+        ScriptObjectHandle *newValue = *static_cast<ScriptObjectHandle *const *>(src);
+        if (newValue) newValue->AddRef();
+        if (*dstSlot) (*dstSlot)->Release();
+        *dstSlot = newValue;
     }
 }
 
@@ -1330,12 +1349,13 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
     } else if (field.typeId == quaternionTypeId_) {
         ImGuiCustom::EditValue(label, *static_cast<Quaternion *>(address), { .vSpeed = 0.01f });
     } else if (IsObjectFieldType(field.typeId)) {
-        auto *objectSlot = static_cast<EmptyObject **>(address);
+        auto *slot = static_cast<ScriptObjectHandle **>(address);
         auto *sceneContext = GetOwnerSceneContext();
-        UUID128 targetId = *objectSlot ? (*objectSlot)->GetObjectID() : UUID128();
+        UUID128 targetId = *slot ? (*slot)->GetID() : UUID128();
         if (sceneContext) {
             if (TargetObjectSelector::ShowSelector(label, sceneContext, targetId, true, false)) {
-                *objectSlot = sceneContext->GetSceneObject(targetId);
+                if (*slot) { (*slot)->Release(); *slot = nullptr; }
+                *slot = ScriptObjectHandle::CreateFromID(targetId);
             }
         } else {
             ImGui::Text(TranslationC("component.scriptcomponent.s_scenecontext"), label);

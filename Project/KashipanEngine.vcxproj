@@ -637,6 +637,7 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClCompile Include="KashipanEngine\Scene\Components\Script\EditorToolManager.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Script\ImGuiScriptBindings.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Script\SceneScriptEngine.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\ScriptObjectHandle.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Script\ScriptBindings.cpp">
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -1272,6 +1273,8 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClInclude Include="KashipanEngine\Scene\Components\Script\EditorToolManager.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Script\ImGuiScriptBindings.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Script\SceneScriptEngine.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptObjectHandle.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptComponentHandle.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptBindings.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ISceneComponent.h" />

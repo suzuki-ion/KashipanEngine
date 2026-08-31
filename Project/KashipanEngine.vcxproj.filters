@@ -600,6 +600,9 @@
     <ClCompile Include="KashipanEngine\Scene\Components\Script\SceneScriptEngine.cpp">
       <Filter>KashipanEngine\Scene\Components\Script</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\ScriptObjectHandle.cpp">
+      <Filter>KashipanEngine\Scene\Components\Script</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Components\Script\ScriptBindings.cpp">
       <Filter>KashipanEngine\Scene\Components\Script</Filter>
     </ClCompile>
@@ -1572,6 +1575,12 @@
       <Filter>KashipanEngine\Scene\Components\Script</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\Script\SceneScriptEngine.h">
+      <Filter>KashipanEngine\Scene\Components\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptObjectHandle.h">
+      <Filter>KashipanEngine\Scene\Components\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptComponentHandle.h">
       <Filter>KashipanEngine\Scene\Components\Script</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptBindings.h">

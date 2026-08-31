@@ -34,6 +34,8 @@
 #include "Math/Vector4.h"
 #include "Objects/EmptyObject.h"
 #include "Objects/ObjectContext.h"
+#include "Scene/Components/Script/ScriptComponentHandle.h"
+#include "Scene/Components/Script/ScriptObjectHandle.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneContext.h"
 #if defined(USE_IMGUI)
@@ -132,13 +134,31 @@ ObjectContext *gCurrentObjectContext = nullptr;
 SceneContext *gCurrentSceneContext = nullptr;
 
 /// @brief スクリプトの型ID→コンポーネント取得/生成処理のマップ（GetComponent/AddComponent(?&out)用）
+/// @details コンポーネントはScriptComponentHandle<T>（UUID+追加順ID保持の参照カウント式ハンドル）として
+///          スクリプトへ渡すため、生ポインタとハンドル(void*)の相互変換を型ごとの関数ポインタで扱う
 struct ComponentTypeBinding {
     /// @brief ComponentRegistryへ登録されている型名（CreateObjectComponentByTypeへ渡す）
     std::string engineTypeName;
     IObjectComponent *(*getOne)(EmptyObject &) = nullptr;
     std::vector<IObjectComponent *> (*getAll)(EmptyObject &) = nullptr;
+    /// @brief 生ポインタからこの型のScriptComponentHandleを生成する（refcount=1、呼び出し側が所有）
+    void *(*wrapAsHandle)(IObjectComponent *) = nullptr;
+    /// @brief wrapAsHandleで得たハンドルの所有権を1つ手放す（他で保持されていなければ破棄される）
+    void (*releaseHandle)(void *) = nullptr;
+    /// @brief ハンドル(void*)を実体へ解決する（削除済み・null時はnullptr）。RemoveComponent用
+    IObjectComponent *(*resolveHandle)(void *) = nullptr;
 };
 std::unordered_map<int, ComponentTypeBinding> gComponentTypeBindings;
+
+/// @brief Object@引数（ScriptObjectHandle）を実体へ解決する
+/// @details handleがnull（スクリプトが明示的にnullを渡した）ならそのままnullptrを返し、
+///          handleはあるが参照先が既に削除されている場合はAngelScriptの例外を投げてnullptrを返す
+EmptyObject *ResolveObjectArg(ScriptObjectHandle *handle) {
+    if (!handle) return nullptr;
+    EmptyObject *obj = handle->Resolve();
+    if (!obj) ThrowDestroyedObjectException();
+    return obj;
+}
 
 //==================================================
 // 数学型
@@ -381,17 +401,36 @@ void RegisterTagType(asIScriptEngine *engine) {
 //==================================================
 
 /// @brief コンポーネント型を参照型として登録し、GetComponent(?&out)用の取得処理をマップへ追加する
-/// @details IObjectComponent共通のメソッドも合わせて登録する。戻り値のバインダで型固有のメソッドを追加できる
+/// @details IObjectComponent共通のメソッドも合わせて登録する。戻り値のバインダで型固有のメソッドを追加できる。
+///          スクリプトへは生ポインタではなくScriptComponentHandle<T>（UUID+追加順ID保持の参照カウント式
+///          ハンドル）として公開し、各メソッドは呼び出しの都度Resolve()で生存確認してから転送する
+///          （SafeCall/型固有のラムダの詳細はScriptComponentHandle.h参照）
 template <typename T>
 auto RegisterComponentType(asIScriptEngine *engine, const char *name) {
-    auto binder = asbind20::ref_class<T>(engine, name, asOBJ_NOCOUNT);
+    auto binder = asbind20::ref_class<ScriptComponentHandle<T>>(engine, name);
     binder
-        .method("bool IsActive() const", static_cast<bool (T::*)() const>(&T::IsActive))
-        .method("void SetActive(bool)", static_cast<void (T::*)(bool)>(&T::SetActive))
-        .method("const string &GetComponentType() const", static_cast<const std::string &(T::*)() const>(&T::GetComponentType))
-        .method("void SetTag(const string &in)", static_cast<void (T::*)(const std::string &)>(&T::SetTag))
-        .method("Tag GetTag() const", [](const T &component) -> Tag { return component.GetTag(); })
-        .method("const string &GetTagName() const", [](const T &component) -> const std::string & { return component.GetTagName(); });
+        .addref(&ScriptComponentHandle<T>::AddRef)
+        .release(&ScriptComponentHandle<T>::Release)
+        .method("bool IsActive() const", SafeCall<static_cast<bool (T::*)() const>(&T::IsActive)>())
+        .method("void SetActive(bool)", SafeCall<static_cast<void (T::*)(bool)>(&T::SetActive)>())
+        .method("const string &GetComponentType() const", [](const ScriptComponentHandle<T> &self) -> const std::string & {
+            static const std::string kEmpty;
+            T *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return kEmpty; }
+            return obj->GetComponentType();
+        })
+        .method("void SetTag(const string &in)", SafeCall<static_cast<void (T::*)(const std::string &)>(&T::SetTag)>())
+        .method("Tag GetTag() const", [](const ScriptComponentHandle<T> &self) -> Tag {
+            T *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return Tag(); }
+            return obj->GetTag();
+        })
+        .method("const string &GetTagName() const", [](const ScriptComponentHandle<T> &self) -> const std::string & {
+            static const std::string kEmpty;
+            T *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return kEmpty; }
+            return obj->GetTagName();
+        });
 
     const int typeId = engine->GetTypeIdByDecl(name);
     gComponentTypeBindings[typeId] = ComponentTypeBinding{
@@ -400,6 +439,14 @@ auto RegisterComponentType(asIScriptEngine *engine, const char *name) {
         +[](EmptyObject &obj) -> std::vector<IObjectComponent *> {
             auto typed = obj.GetComponents<T>();
             return std::vector<IObjectComponent *>(typed.begin(), typed.end());
+        },
+        +[](IObjectComponent *component) -> void * {
+            return ScriptComponentHandle<T>::Create(static_cast<T *>(component));
+        },
+        +[](void *handlePtr) { if (handlePtr) static_cast<ScriptComponentHandle<T> *>(handlePtr)->Release(); },
+        +[](void *handlePtr) -> IObjectComponent * {
+            auto *handle = static_cast<ScriptComponentHandle<T> *>(handlePtr);
+            return handle ? handle->Resolve() : nullptr;
         },
     };
     return binder;
@@ -422,37 +469,60 @@ void RegisterColliderShapeEnum(asIScriptEngine *engine) {
 /// @brief Collider（ICollider基底）型を参照型として登録する
 /// @details HitInfoのselfCollider/otherColliderで「どのコライダー同士が衝突したか」を
 ///          受け渡すための共通型。各コライダー型はopImplCastでこの型へ暗黙変換でき、
-///          cast<BoxCollider>(hit.otherCollider) のように具体型へダウンキャストもできる
+///          cast<BoxCollider>(hit.otherCollider) のように具体型へダウンキャストもできる。
+///          他のコンポーネントと同様、生ポインタではなくScriptComponentHandle<ICollider>
+///          （UUID+追加順ID保持の参照カウント式ハンドル）として公開する
 void RegisterColliderBaseType(asIScriptEngine *engine) {
     RegisterColliderShapeEnum(engine);
-    asbind20::ref_class<ICollider>(engine, "Collider", asOBJ_NOCOUNT)
-        .method("bool IsActive() const", static_cast<bool (ICollider::*)() const>(&ICollider::IsActive))
-        .method("void SetActive(bool)", static_cast<void (ICollider::*)(bool)>(&ICollider::SetActive))
-        .method("const string &GetComponentType() const", static_cast<const std::string &(ICollider::*)() const>(&ICollider::GetComponentType))
-        .method("void SetTag(const string &in)", static_cast<void (ICollider::*)(const std::string &)>(&ICollider::SetTag))
-        .method("Tag GetTag() const", [](const ICollider &collider) -> Tag { return collider.GetTag(); })
-        .method("const string &GetTagName() const", [](const ICollider &collider) -> const std::string & { return collider.GetTagName(); })
-        .method("bool IsTrigger() const", static_cast<bool (ICollider::*)() const noexcept>(&ICollider::IsTrigger))
-        .method("void SetTrigger(bool)", static_cast<void (ICollider::*)(bool) noexcept>(&ICollider::SetTrigger))
-        .method("bool IsContinuousDetection() const", static_cast<bool (ICollider::*)() const noexcept>(&ICollider::IsContinuousDetection))
-        .method("void SetContinuousDetection(bool)", static_cast<void (ICollider::*)(bool) noexcept>(&ICollider::SetContinuousDetection))
-        .method("bool Is2D() const", static_cast<bool (ICollider::*)() const noexcept>(&ICollider::Is2D))
-        .method("ColliderShape GetShape() const", static_cast<ICollider::Shape (ICollider::*)() const noexcept>(&ICollider::GetShape))
-        .method("Vector3 GetOwnerWorldPosition() const", static_cast<Vector3 (ICollider::*)() const>(&ICollider::GetOwnerWorldPosition))
-        .method("bool IsSyncPositionEnabled(int) const", static_cast<bool (ICollider::*)(int) const noexcept>(&ICollider::IsSyncPositionEnabled))
-        .method("bool IsSyncRotationEnabled() const", static_cast<bool (ICollider::*)() const noexcept>(&ICollider::IsSyncRotationEnabled))
-        .method("bool IsSyncScaleEnabled(int) const", static_cast<bool (ICollider::*)(int) const noexcept>(&ICollider::IsSyncScaleEnabled))
-        .method("Vector3 GetSyncedOwnerPosition() const", static_cast<Vector3 (ICollider::*)() const>(&ICollider::GetSyncedOwnerPosition))
-        .method("Vector3 GetSyncedOwnerRotationEuler() const", static_cast<Vector3 (ICollider::*)() const>(&ICollider::GetSyncedOwnerRotationEuler))
-        .method("Quaternion GetSyncedOwnerRotation() const", static_cast<Quaternion (ICollider::*)() const>(&ICollider::GetSyncedOwnerRotation))
-        .method("Vector3 GetSyncedOwnerScale() const", static_cast<Vector3 (ICollider::*)() const>(&ICollider::GetSyncedOwnerScale))
-        .method("Vector2 RotateOffsetBySyncedRotation2D(const Vector2 &in) const", static_cast<Vector2 (ICollider::*)(const Vector2 &) const>(&ICollider::RotateOffsetBySyncedRotation2D));
+    asbind20::ref_class<ScriptComponentHandle<ICollider>>(engine, "Collider")
+        .addref(&ScriptComponentHandle<ICollider>::AddRef)
+        .release(&ScriptComponentHandle<ICollider>::Release)
+        .method("bool IsActive() const", SafeCall<static_cast<bool (ICollider::*)() const>(&ICollider::IsActive)>())
+        .method("void SetActive(bool)", SafeCall<static_cast<void (ICollider::*)(bool)>(&ICollider::SetActive)>())
+        .method("const string &GetComponentType() const", [](const ScriptComponentHandle<ICollider> &self) -> const std::string & {
+            static const std::string kEmpty;
+            ICollider *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return kEmpty; }
+            return obj->GetComponentType();
+        })
+        .method("void SetTag(const string &in)", SafeCall<static_cast<void (ICollider::*)(const std::string &)>(&ICollider::SetTag)>())
+        .method("Tag GetTag() const", [](const ScriptComponentHandle<ICollider> &self) -> Tag {
+            ICollider *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return Tag(); }
+            return obj->GetTag();
+        })
+        .method("const string &GetTagName() const", [](const ScriptComponentHandle<ICollider> &self) -> const std::string & {
+            static const std::string kEmpty;
+            ICollider *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return kEmpty; }
+            return obj->GetTagName();
+        })
+        .method("bool IsTrigger() const", SafeCall<static_cast<bool (ICollider::*)() const noexcept>(&ICollider::IsTrigger)>())
+        .method("void SetTrigger(bool)", SafeCall<static_cast<void (ICollider::*)(bool) noexcept>(&ICollider::SetTrigger)>())
+        .method("bool IsContinuousDetection() const", SafeCall<static_cast<bool (ICollider::*)() const noexcept>(&ICollider::IsContinuousDetection)>())
+        .method("void SetContinuousDetection(bool)", SafeCall<static_cast<void (ICollider::*)(bool) noexcept>(&ICollider::SetContinuousDetection)>())
+        .method("bool Is2D() const", SafeCall<static_cast<bool (ICollider::*)() const noexcept>(&ICollider::Is2D)>())
+        .method("ColliderShape GetShape() const", SafeCall<static_cast<ICollider::Shape (ICollider::*)() const noexcept>(&ICollider::GetShape)>())
+        .method("Vector3 GetOwnerWorldPosition() const", SafeCall<static_cast<Vector3 (ICollider::*)() const>(&ICollider::GetOwnerWorldPosition)>())
+        .method("bool IsSyncPositionEnabled(int) const", SafeCall<static_cast<bool (ICollider::*)(int) const noexcept>(&ICollider::IsSyncPositionEnabled)>())
+        .method("bool IsSyncRotationEnabled() const", SafeCall<static_cast<bool (ICollider::*)() const noexcept>(&ICollider::IsSyncRotationEnabled)>())
+        .method("bool IsSyncScaleEnabled(int) const", SafeCall<static_cast<bool (ICollider::*)(int) const noexcept>(&ICollider::IsSyncScaleEnabled)>())
+        .method("Vector3 GetSyncedOwnerPosition() const", SafeCall<static_cast<Vector3 (ICollider::*)() const>(&ICollider::GetSyncedOwnerPosition)>())
+        .method("Vector3 GetSyncedOwnerRotationEuler() const", SafeCall<static_cast<Vector3 (ICollider::*)() const>(&ICollider::GetSyncedOwnerRotationEuler)>())
+        .method("Quaternion GetSyncedOwnerRotation() const", SafeCall<static_cast<Quaternion (ICollider::*)() const>(&ICollider::GetSyncedOwnerRotation)>())
+        .method("Vector3 GetSyncedOwnerScale() const", SafeCall<static_cast<Vector3 (ICollider::*)() const>(&ICollider::GetSyncedOwnerScale)>())
+        .method("Vector2 RotateOffsetBySyncedRotation2D(const Vector2 &in) const", SafeCall<static_cast<Vector2 (ICollider::*)(const Vector2 &) const>(&ICollider::RotateOffsetBySyncedRotation2D)>());
 }
 
-/// @brief Collider@ から具体的なコライダー型へのダウンキャスト（cast<T>用）
+/// @brief Collider@ハンドルから具体的なコライダー型のハンドルへのダウンキャスト（cast<T>用）
+/// @details 参照先が削除済みの場合は例外化してnullptrを返す。生存していれば実際の型を
+///          dynamic_castで確認し、一致すれば同じComponentRefを持つ新しいハンドルを作る
 template <typename T>
-T *ColliderDownCast(ICollider *collider) {
-    return dynamic_cast<T *>(collider);
+ScriptComponentHandle<T> *ColliderDownCast(ScriptComponentHandle<ICollider> *handle) {
+    if (!handle) return nullptr;
+    ICollider *collider = handle->Resolve();
+    if (!collider) { ThrowDestroyedObjectException(); return nullptr; }
+    return ScriptComponentHandle<T>::Create(dynamic_cast<T *>(collider));
 }
 
 /// @brief コライダー型を登録する（ICollider共通のメソッドを追加で登録する）
@@ -460,23 +530,29 @@ template <typename T>
 auto RegisterColliderType(asIScriptEngine *engine, const char *name) {
     auto binder = RegisterComponentType<T>(engine, name);
     binder
-        .method("bool IsTrigger() const", static_cast<bool (T::*)() const noexcept>(&T::IsTrigger))
-        .method("void SetTrigger(bool)", static_cast<void (T::*)(bool) noexcept>(&T::SetTrigger))
-        .method("bool IsContinuousDetection() const", static_cast<bool (T::*)() const noexcept>(&T::IsContinuousDetection))
-        .method("void SetContinuousDetection(bool)", static_cast<void (T::*)(bool) noexcept>(&T::SetContinuousDetection))
-        .method("bool Is2D() const", static_cast<bool (T::*)() const noexcept>(&T::Is2D))
-        .method("ColliderShape GetShape() const", static_cast<ICollider::Shape (T::*)() const noexcept>(&T::GetShape))
-        .method("Vector3 GetOwnerWorldPosition() const", static_cast<Vector3 (T::*)() const>(&T::GetOwnerWorldPosition))
-        .method("bool IsSyncPositionEnabled(int) const", static_cast<bool (T::*)(int) const noexcept>(&T::IsSyncPositionEnabled))
-        .method("bool IsSyncRotationEnabled() const", static_cast<bool (T::*)() const noexcept>(&T::IsSyncRotationEnabled))
-        .method("bool IsSyncScaleEnabled(int) const", static_cast<bool (T::*)(int) const noexcept>(&T::IsSyncScaleEnabled))
-        .method("Vector3 GetSyncedOwnerPosition() const", static_cast<Vector3 (T::*)() const>(&T::GetSyncedOwnerPosition))
-        .method("Vector3 GetSyncedOwnerRotationEuler() const", static_cast<Vector3 (T::*)() const>(&T::GetSyncedOwnerRotationEuler))
-        .method("Quaternion GetSyncedOwnerRotation() const", static_cast<Quaternion (T::*)() const>(&T::GetSyncedOwnerRotation))
-        .method("Vector3 GetSyncedOwnerScale() const", static_cast<Vector3 (T::*)() const>(&T::GetSyncedOwnerScale))
-        .method("Vector2 RotateOffsetBySyncedRotation2D(const Vector2 &in) const", static_cast<Vector2 (T::*)(const Vector2 &) const>(&T::RotateOffsetBySyncedRotation2D))
-        // 基底のCollider型への暗黙変換（HitInfoのselfCollider/otherColliderとの比較用）
-        .method("Collider@ opImplCast()", [](T &collider) -> ICollider * { return &collider; });
+        .method("bool IsTrigger() const", SafeCall<static_cast<bool (T::*)() const noexcept>(&T::IsTrigger)>())
+        .method("void SetTrigger(bool)", SafeCall<static_cast<void (T::*)(bool) noexcept>(&T::SetTrigger)>())
+        .method("bool IsContinuousDetection() const", SafeCall<static_cast<bool (T::*)() const noexcept>(&T::IsContinuousDetection)>())
+        .method("void SetContinuousDetection(bool)", SafeCall<static_cast<void (T::*)(bool) noexcept>(&T::SetContinuousDetection)>())
+        .method("bool Is2D() const", SafeCall<static_cast<bool (T::*)() const noexcept>(&T::Is2D)>())
+        .method("ColliderShape GetShape() const", SafeCall<static_cast<ICollider::Shape (T::*)() const noexcept>(&T::GetShape)>())
+        .method("Vector3 GetOwnerWorldPosition() const", SafeCall<static_cast<Vector3 (T::*)() const>(&T::GetOwnerWorldPosition)>())
+        .method("bool IsSyncPositionEnabled(int) const", SafeCall<static_cast<bool (T::*)(int) const noexcept>(&T::IsSyncPositionEnabled)>())
+        .method("bool IsSyncRotationEnabled() const", SafeCall<static_cast<bool (T::*)() const noexcept>(&T::IsSyncRotationEnabled)>())
+        .method("bool IsSyncScaleEnabled(int) const", SafeCall<static_cast<bool (T::*)(int) const noexcept>(&T::IsSyncScaleEnabled)>())
+        .method("Vector3 GetSyncedOwnerPosition() const", SafeCall<static_cast<Vector3 (T::*)() const>(&T::GetSyncedOwnerPosition)>())
+        .method("Vector3 GetSyncedOwnerRotationEuler() const", SafeCall<static_cast<Vector3 (T::*)() const>(&T::GetSyncedOwnerRotationEuler)>())
+        .method("Quaternion GetSyncedOwnerRotation() const", SafeCall<static_cast<Quaternion (T::*)() const>(&T::GetSyncedOwnerRotation)>())
+        .method("Vector3 GetSyncedOwnerScale() const", SafeCall<static_cast<Vector3 (T::*)() const>(&T::GetSyncedOwnerScale)>())
+        .method("Vector2 RotateOffsetBySyncedRotation2D(const Vector2 &in) const", SafeCall<static_cast<Vector2 (T::*)(const Vector2 &) const>(&T::RotateOffsetBySyncedRotation2D)>())
+        // 基底のCollider型への暗黙変換（HitInfoのselfCollider/otherColliderとの比較用）。
+        // 参照先が削除済みでも「同じComponentRefを持つCollider@ハンドル」は作れるため、
+        // ここではResolve失敗を例外化しない（Colliderとしての生死判定はCollider側のメソッドで行われる）
+        .method("Collider@ opImplCast()", [](ScriptComponentHandle<T> &self) -> ScriptComponentHandle<ICollider> * {
+            T *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return nullptr; }
+            return ScriptComponentHandle<ICollider>::Create(static_cast<ICollider *>(obj));
+        });
     // cast<具体型>(Collider@) によるダウンキャスト
     engine->RegisterObjectMethod("Collider", (std::string(name) + "@ opCast()").c_str(),
         asFUNCTION((ColliderDownCast<T>)), asCALL_CDECL_OBJLAST);
@@ -495,8 +571,12 @@ CScriptArray *MakeColliderArray(const std::vector<ICollider *> &colliders) {
     CScriptArray *array = CScriptArray::Create(arrayType, static_cast<asUINT>(colliders.size()));
     if (!array) return nullptr;
     for (asUINT i = 0; i < colliders.size(); ++i) {
-        void *handle = colliders[i];
-        array->SetValue(i, &handle);
+        // ScriptComponentHandle<ICollider>::Createはrefcount=1で生成される。SetValueは配列側で
+        // 独自にAddRefするため、格納後にこちら側の分をReleaseして所有権を配列だけに残す
+        ScriptComponentHandle<ICollider> *handle = ScriptComponentHandle<ICollider>::Create(colliders[i]);
+        void *handlePtr = handle;
+        array->SetValue(i, &handlePtr);
+        if (handle) handle->Release();
     }
     return array;
 }
@@ -541,51 +621,89 @@ bool IsWindowMouseInside(const IWindowObjectComponent *component) {
 /// @brief WindowObject（IWindowObjectComponent基底）型を参照型として登録する
 /// @details WindowMessageInfoのsourceComponentで「どのウィンドウコンポーネントからの通知か」を
 ///          受け渡すための共通型。NormalWindowObject/OverlayWindowObjectはopImplCastでこの型へ
-///          暗黙変換でき、cast<NormalWindowObject>(info.sourceComponent) のように具体型へダウンキャストもできる
+///          暗黙変換でき、cast<NormalWindowObject>(info.sourceComponent) のように具体型へダウンキャストもできる。
+///          他のコンポーネントと同様、生ポインタではなくScriptComponentHandle<IWindowObjectComponent>
+///          （UUID+追加順ID保持の参照カウント式ハンドル）として公開する
 void RegisterWindowObjectBaseType(asIScriptEngine *engine) {
-    asbind20::ref_class<IWindowObjectComponent>(engine, "WindowObject", asOBJ_NOCOUNT)
-        .method("bool IsActive() const", static_cast<bool (IWindowObjectComponent::*)() const>(&IWindowObjectComponent::IsActive))
-        .method("void SetActive(bool)", static_cast<void (IWindowObjectComponent::*)(bool)>(&IWindowObjectComponent::SetActive))
-        .method("const string &GetComponentType() const", static_cast<const std::string &(IWindowObjectComponent::*)() const>(&IWindowObjectComponent::GetComponentType))
-        .method("void SetTag(const string &in)", static_cast<void (IWindowObjectComponent::*)(const std::string &)>(&IWindowObjectComponent::SetTag))
-        .method("Tag GetTag() const", [](const IWindowObjectComponent &component) -> Tag { return component.GetTag(); })
-        .method("const string &GetTagName() const", [](const IWindowObjectComponent &component) -> const std::string & { return component.GetTagName(); })
-        .method("void SetTitle(const string &in)", &IWindowObjectComponent::SetTitle)
-        .method("const string &GetTitle() const", &IWindowObjectComponent::GetTitle)
-        .method("void SetSize(uint, uint)", &IWindowObjectComponent::SetSize)
-        .method("void SetSyncWithTransform(bool)", &IWindowObjectComponent::SetSyncWithTransform)
-        .method("bool IsSyncWithTransformEnabled() const", &IWindowObjectComponent::IsSyncWithTransformEnabled)
-        .method("bool SetMessageIntercepted(uint msg, bool enabled)", &IWindowObjectComponent::SetMessageIntercepted)
-        .method("bool IsMessageIntercepted(uint msg) const", &IWindowObjectComponent::IsMessageIntercepted)
-        .method("void CloseWindow()", &IWindowObjectComponent::CloseWindow)
-        .method("int GetClientWidth() const", [](const IWindowObjectComponent &component) -> int {
-            Window *window = component.GetWindow();
+    asbind20::ref_class<ScriptComponentHandle<IWindowObjectComponent>>(engine, "WindowObject")
+        .addref(&ScriptComponentHandle<IWindowObjectComponent>::AddRef)
+        .release(&ScriptComponentHandle<IWindowObjectComponent>::Release)
+        .method("bool IsActive() const", SafeCall<static_cast<bool (IWindowObjectComponent::*)() const>(&IWindowObjectComponent::IsActive)>())
+        .method("void SetActive(bool)", SafeCall<static_cast<void (IWindowObjectComponent::*)(bool)>(&IWindowObjectComponent::SetActive)>())
+        .method("const string &GetComponentType() const", [](const ScriptComponentHandle<IWindowObjectComponent> &self) -> const std::string & {
+            static const std::string kEmpty;
+            IWindowObjectComponent *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return kEmpty; }
+            return obj->GetComponentType();
+        })
+        .method("void SetTag(const string &in)", SafeCall<static_cast<void (IWindowObjectComponent::*)(const std::string &)>(&IWindowObjectComponent::SetTag)>())
+        .method("Tag GetTag() const", [](const ScriptComponentHandle<IWindowObjectComponent> &self) -> Tag {
+            IWindowObjectComponent *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return Tag(); }
+            return obj->GetTag();
+        })
+        .method("const string &GetTagName() const", [](const ScriptComponentHandle<IWindowObjectComponent> &self) -> const std::string & {
+            static const std::string kEmpty;
+            IWindowObjectComponent *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return kEmpty; }
+            return obj->GetTagName();
+        })
+        .method("void SetTitle(const string &in)", SafeCall<&IWindowObjectComponent::SetTitle>())
+        .method("const string &GetTitle() const", [](const ScriptComponentHandle<IWindowObjectComponent> &self) -> const std::string & {
+            static const std::string kEmpty;
+            IWindowObjectComponent *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return kEmpty; }
+            return obj->GetTitle();
+        })
+        .method("void SetSize(uint, uint)", SafeCall<&IWindowObjectComponent::SetSize>())
+        .method("void SetSyncWithTransform(bool)", SafeCall<&IWindowObjectComponent::SetSyncWithTransform>())
+        .method("bool IsSyncWithTransformEnabled() const", SafeCall<&IWindowObjectComponent::IsSyncWithTransformEnabled>())
+        .method("bool SetMessageIntercepted(uint msg, bool enabled)", SafeCall<&IWindowObjectComponent::SetMessageIntercepted>())
+        .method("bool IsMessageIntercepted(uint msg) const", SafeCall<&IWindowObjectComponent::IsMessageIntercepted>())
+        .method("void CloseWindow()", SafeCall<&IWindowObjectComponent::CloseWindow>())
+        .method("int GetClientWidth() const", [](const ScriptComponentHandle<IWindowObjectComponent> &self) -> int {
+            IWindowObjectComponent *component = self.Resolve();
+            if (!component) { ThrowDestroyedObjectException(); return 0; }
+            Window *window = component->GetWindow();
             return (window && Window::IsExist(window)) ? window->GetClientWidth() : 0;
         })
-        .method("int GetClientHeight() const", [](const IWindowObjectComponent &component) -> int {
-            Window *window = component.GetWindow();
+        .method("int GetClientHeight() const", [](const ScriptComponentHandle<IWindowObjectComponent> &self) -> int {
+            IWindowObjectComponent *component = self.Resolve();
+            if (!component) { ThrowDestroyedObjectException(); return 0; }
+            Window *window = component->GetWindow();
             return (window && Window::IsExist(window)) ? window->GetClientHeight() : 0;
         })
-        .method("bool IsWindowFocused() const", [](const IWindowObjectComponent &component) -> bool {
-            Window *window = component.GetWindow();
+        .method("bool IsWindowFocused() const", [](const ScriptComponentHandle<IWindowObjectComponent> &self) -> bool {
+            IWindowObjectComponent *component = self.Resolve();
+            if (!component) { ThrowDestroyedObjectException(); return false; }
+            Window *window = component->GetWindow();
             return (window && Window::IsExist(window)) ? window->IsFocused() : false;
         })
-        .method("bool IsWindowMinimized() const", [](const IWindowObjectComponent &component) -> bool {
-            Window *window = component.GetWindow();
+        .method("bool IsWindowMinimized() const", [](const ScriptComponentHandle<IWindowObjectComponent> &self) -> bool {
+            IWindowObjectComponent *component = self.Resolve();
+            if (!component) { ThrowDestroyedObjectException(); return false; }
+            Window *window = component->GetWindow();
             return (window && Window::IsExist(window)) ? window->IsMinimized() : false;
         })
-        .method("Vector2 GetMousePosition() const", [](const IWindowObjectComponent &component) -> Vector2 {
-            return GetWindowMousePosition(&component);
+        .method("Vector2 GetMousePosition() const", [](const ScriptComponentHandle<IWindowObjectComponent> &self) -> Vector2 {
+            IWindowObjectComponent *component = self.Resolve();
+            if (!component) { ThrowDestroyedObjectException(); return Vector2::Zero(); }
+            return GetWindowMousePosition(component);
         })
-        .method("bool IsMouseInside() const", [](const IWindowObjectComponent &component) -> bool {
-            return IsWindowMouseInside(&component);
+        .method("bool IsMouseInside() const", [](const ScriptComponentHandle<IWindowObjectComponent> &self) -> bool {
+            IWindowObjectComponent *component = self.Resolve();
+            if (!component) { ThrowDestroyedObjectException(); return false; }
+            return IsWindowMouseInside(component);
         });
 }
 
-/// @brief WindowObject@ から具体的なウィンドウコンポーネント型へのダウンキャスト（cast<T>用）
+/// @brief WindowObject@ハンドルから具体的なウィンドウコンポーネント型のハンドルへのダウンキャスト（cast<T>用）
 template <typename T>
-T *WindowObjectDownCast(IWindowObjectComponent *component) {
-    return dynamic_cast<T *>(component);
+ScriptComponentHandle<T> *WindowObjectDownCast(ScriptComponentHandle<IWindowObjectComponent> *handle) {
+    if (!handle) return nullptr;
+    IWindowObjectComponent *component = handle->Resolve();
+    if (!component) { ThrowDestroyedObjectException(); return nullptr; }
+    return ScriptComponentHandle<T>::Create(dynamic_cast<T *>(component));
 }
 
 /// @brief よく使うウィンドウメッセージ定数（WM_*）をスクリプトへ登録する
@@ -674,46 +792,46 @@ void RegisterTransformType(asIScriptEngine *engine) {
     RegisterSkinQualityEnum(engine);
 
     RegisterComponentType<Transform>(engine, "Transform")
-        .method("void SetTranslate(const Vector3 &in)", &Transform::SetTranslate)
-        .method("const Vector3 &GetTranslate() const", &Transform::GetTranslate)
-        .method("void SetRotate(const Vector3 &in)", &Transform::SetRotate)
-        .method("const Vector3 &GetRotate() const", &Transform::GetRotate)
-        .method("void SetRotateQuaternion(const Quaternion &in)", &Transform::SetRotateQuaternion)
-        .method("const Quaternion &GetRotateQuaternion() const", &Transform::GetRotateQuaternion)
-        .method("void SetScale(const Vector3 &in)", &Transform::SetScale)
-        .method("const Vector3 &GetScale() const", &Transform::GetScale)
-        .method("const Matrix4x4 &GetWorldMatrix()", &Transform::GetWorldMatrix)
-        .method("Vector3 GetWorldPosition()", &Transform::GetWorldPosition)
-        .method("Vector3 GetWorldRotate() const", &Transform::GetWorldRotate)
-        .method("Quaternion GetWorldRotateQuaternion() const", &Transform::GetWorldRotateQuaternion)
-        .method("Vector3 GetWorldScale()", &Transform::GetWorldScale);
+        .method("void SetTranslate(const Vector3 &in)", SafeCall<&Transform::SetTranslate>())
+        .method("const Vector3 &GetTranslate() const", SafeCall<&Transform::GetTranslate>())
+        .method("void SetRotate(const Vector3 &in)", SafeCall<&Transform::SetRotate>())
+        .method("const Vector3 &GetRotate() const", SafeCall<&Transform::GetRotate>())
+        .method("void SetRotateQuaternion(const Quaternion &in)", SafeCall<&Transform::SetRotateQuaternion>())
+        .method("const Quaternion &GetRotateQuaternion() const", SafeCall<&Transform::GetRotateQuaternion>())
+        .method("void SetScale(const Vector3 &in)", SafeCall<&Transform::SetScale>())
+        .method("const Vector3 &GetScale() const", SafeCall<&Transform::GetScale>())
+        .method("const Matrix4x4 &GetWorldMatrix()", SafeCall<&Transform::GetWorldMatrix>())
+        .method("Vector3 GetWorldPosition()", SafeCall<&Transform::GetWorldPosition>())
+        .method("Vector3 GetWorldRotate() const", SafeCall<&Transform::GetWorldRotate>())
+        .method("Quaternion GetWorldRotateQuaternion() const", SafeCall<&Transform::GetWorldRotateQuaternion>())
+        .method("Vector3 GetWorldScale()", SafeCall<&Transform::GetWorldScale>());
 }
 
 void RegisterComponentTypes(asIScriptEngine *engine) {
     RegisterComponentType<Velocity>(engine, "Velocity")
-        .method("void SetVelocity(const Vector3 &in)", &Velocity::SetVelocity)
-        .method("const Vector3 &GetVelocity() const", &Velocity::GetVelocity)
-        .method("void SetAcceleration(const Vector3 &in)", &Velocity::SetAcceleration)
-        .method("const Vector3 &GetAcceleration() const", &Velocity::GetAcceleration)
-        .method("void AddVelocity(const Vector3 &in)", &Velocity::AddVelocity);
+        .method("void SetVelocity(const Vector3 &in)", SafeCall<&Velocity::SetVelocity>())
+        .method("const Vector3 &GetVelocity() const", SafeCall<&Velocity::GetVelocity>())
+        .method("void SetAcceleration(const Vector3 &in)", SafeCall<&Velocity::SetAcceleration>())
+        .method("const Vector3 &GetAcceleration() const", SafeCall<&Velocity::GetAcceleration>())
+        .method("void AddVelocity(const Vector3 &in)", SafeCall<&Velocity::AddVelocity>());
 
     RegisterComponentType<Rotation>(engine, "Rotation")
-        .method("void SetAngularVelocity(const Vector3 &in)", &Rotation::SetAngularVelocity)
-        .method("const Vector3 &GetAngularVelocity() const", &Rotation::GetAngularVelocity)
-        .method("void SetAngularAcceleration(const Vector3 &in)", &Rotation::SetAngularAcceleration)
-        .method("const Vector3 &GetAngularAcceleration() const", &Rotation::GetAngularAcceleration)
-        .method("void AddAngularVelocity(const Vector3 &in)", &Rotation::AddAngularVelocity);
+        .method("void SetAngularVelocity(const Vector3 &in)", SafeCall<&Rotation::SetAngularVelocity>())
+        .method("const Vector3 &GetAngularVelocity() const", SafeCall<&Rotation::GetAngularVelocity>())
+        .method("void SetAngularAcceleration(const Vector3 &in)", SafeCall<&Rotation::SetAngularAcceleration>())
+        .method("const Vector3 &GetAngularAcceleration() const", SafeCall<&Rotation::GetAngularAcceleration>())
+        .method("void AddAngularVelocity(const Vector3 &in)", SafeCall<&Rotation::AddAngularVelocity>());
 
     RegisterComponentType<PreTransform>(engine, "PreTransform")
-        .method("const Vector3 &GetPreviousTranslate() const", &PreTransform::GetPreviousTranslate)
-        .method("const Vector3 &GetPreviousRotate() const", &PreTransform::GetPreviousRotate)
-        .method("const Quaternion &GetPreviousRotateQuaternion() const", &PreTransform::GetPreviousRotateQuaternion)
-        .method("const Vector3 &GetPreviousScale() const", &PreTransform::GetPreviousScale)
-        .method("const Matrix4x4 &GetPreviousWorldMatrix() const", &PreTransform::GetPreviousWorldMatrix)
-        .method("const Vector3 &GetPreviousWorldPosition() const", &PreTransform::GetPreviousWorldPosition)
-        .method("const Vector3 &GetPreviousWorldRotate() const", &PreTransform::GetPreviousWorldRotate)
-        .method("const Quaternion &GetPreviousWorldRotateQuaternion() const", &PreTransform::GetPreviousWorldRotateQuaternion)
-        .method("const Vector3 &GetPreviousWorldScale() const", &PreTransform::GetPreviousWorldScale);
+        .method("const Vector3 &GetPreviousTranslate() const", SafeCall<&PreTransform::GetPreviousTranslate>())
+        .method("const Vector3 &GetPreviousRotate() const", SafeCall<&PreTransform::GetPreviousRotate>())
+        .method("const Quaternion &GetPreviousRotateQuaternion() const", SafeCall<&PreTransform::GetPreviousRotateQuaternion>())
+        .method("const Vector3 &GetPreviousScale() const", SafeCall<&PreTransform::GetPreviousScale>())
+        .method("const Matrix4x4 &GetPreviousWorldMatrix() const", SafeCall<&PreTransform::GetPreviousWorldMatrix>())
+        .method("const Vector3 &GetPreviousWorldPosition() const", SafeCall<&PreTransform::GetPreviousWorldPosition>())
+        .method("const Vector3 &GetPreviousWorldRotate() const", SafeCall<&PreTransform::GetPreviousWorldRotate>())
+        .method("const Quaternion &GetPreviousWorldRotateQuaternion() const", SafeCall<&PreTransform::GetPreviousWorldRotateQuaternion>())
+        .method("const Vector3 &GetPreviousWorldScale() const", SafeCall<&PreTransform::GetPreviousWorldScale>());
 
     // TargetLookAtの回転モード（ParticleSystemのビルボード設定でも使うため先に登録する）
     engine->RegisterEnum("TargetLookAtMode");
@@ -721,433 +839,799 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
     engine->RegisterEnumValue("TargetLookAtMode", "LookAt", static_cast<int>(TargetLookAt::RotationMode::LookAt));
 
     RegisterComponentType<ParticleSystem2D>(engine, "ParticleSystem2D")
-        .method("void Play()", [](ParticleSystem2D &self) { self.Play(); })
-        .method("void Stop()", [](ParticleSystem2D &self) { self.Stop(); })
-        .method("bool IsPlaying() const", [](const ParticleSystem2D &self) -> bool { return self.IsPlaying(); })
-        .method("void Clear()", [](ParticleSystem2D &self) { self.Clear(); })
-        .method("void SetEmissionRate(float)", [](ParticleSystem2D &self, float rate) { self.SetEmissionRate(rate); })
-        .method("float GetEmissionRate() const", [](const ParticleSystem2D &self) -> float { return self.GetEmissionRate(); })
-        .method("void SetMaxParticles(int)", [](ParticleSystem2D &self, int count) { self.SetMaxParticles(count); })
-        .method("int GetMaxParticles() const", [](const ParticleSystem2D &self) -> int { return self.GetMaxParticles(); })
-        .method("void SetBillboard(bool)", [](ParticleSystem2D &self, bool enabled) { self.SetBillboard(enabled); })
-        .method("bool IsBillboard() const", [](const ParticleSystem2D &self) -> bool { return self.IsBillboard(); })
-        .method("void SetBillboardTarget(Object@)", [](ParticleSystem2D &self, EmptyObject *obj) { self.SetBillboardTarget(obj); })
-        .method("Object@ GetBillboardTarget() const", [](const ParticleSystem2D &self) -> EmptyObject * { return self.GetBillboardTarget(); })
-        .method("void SetBillboardRotationMode(TargetLookAtMode)", [](ParticleSystem2D &self, TargetLookAt::RotationMode mode) { self.SetBillboardRotationMode(mode); })
-        .method("TargetLookAtMode GetBillboardRotationMode() const", [](const ParticleSystem2D &self) -> TargetLookAt::RotationMode { return self.GetBillboardRotationMode(); });
+        .method("void Play()", [](ScriptComponentHandle<ParticleSystem2D> &selfHandle) {
+            ParticleSystem2D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return; }
+            ParticleSystem2D &self = *selfPtr; self.Play(); })
+        .method("void Stop()", [](ScriptComponentHandle<ParticleSystem2D> &selfHandle) {
+            ParticleSystem2D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return; }
+            ParticleSystem2D &self = *selfPtr; self.Stop(); })
+        .method("bool IsPlaying() const", [](const ScriptComponentHandle<ParticleSystem2D> &selfHandle) -> bool {
+            ParticleSystem2D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
+            const ParticleSystem2D &self = *selfPtr; return self.IsPlaying(); })
+        .method("void Clear()", [](ScriptComponentHandle<ParticleSystem2D> &selfHandle) {
+            ParticleSystem2D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return; }
+            ParticleSystem2D &self = *selfPtr; self.Clear(); })
+        .method("void SetEmissionRate(float)", [](ScriptComponentHandle<ParticleSystem2D> &selfHandle, float rate) {
+            ParticleSystem2D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return; }
+            ParticleSystem2D &self = *selfPtr; self.SetEmissionRate(rate); })
+        .method("float GetEmissionRate() const", [](const ScriptComponentHandle<ParticleSystem2D> &selfHandle) -> float {
+            ParticleSystem2D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const ParticleSystem2D &self = *selfPtr; return self.GetEmissionRate(); })
+        .method("void SetMaxParticles(int)", [](ScriptComponentHandle<ParticleSystem2D> &selfHandle, int count) {
+            ParticleSystem2D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return; }
+            ParticleSystem2D &self = *selfPtr; self.SetMaxParticles(count); })
+        .method("int GetMaxParticles() const", [](const ScriptComponentHandle<ParticleSystem2D> &selfHandle) -> int {
+            ParticleSystem2D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const ParticleSystem2D &self = *selfPtr; return self.GetMaxParticles(); })
+        .method("void SetBillboard(bool)", [](ScriptComponentHandle<ParticleSystem2D> &selfHandle, bool enabled) {
+            ParticleSystem2D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return; }
+            ParticleSystem2D &self = *selfPtr; self.SetBillboard(enabled); })
+        .method("bool IsBillboard() const", [](const ScriptComponentHandle<ParticleSystem2D> &selfHandle) -> bool {
+            ParticleSystem2D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
+            const ParticleSystem2D &self = *selfPtr; return self.IsBillboard(); })
+        .method("void SetBillboardTarget(Object@)", [](ScriptComponentHandle<ParticleSystem2D> &selfHandle, ScriptObjectHandle *obj) {
+            ParticleSystem2D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return; }
+            ParticleSystem2D &self = *selfPtr; self.SetBillboardTarget(ResolveObjectArg(obj)); })
+        .method("Object@ GetBillboardTarget() const", [](const ScriptComponentHandle<ParticleSystem2D> &selfHandle) -> ScriptObjectHandle * {
+            ParticleSystem2D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<ScriptObjectHandle *>(); }
+            const ParticleSystem2D &self = *selfPtr; return ScriptObjectHandle::Create(self.GetBillboardTarget()); })
+        .method("void SetBillboardRotationMode(TargetLookAtMode)", [](ScriptComponentHandle<ParticleSystem2D> &selfHandle, TargetLookAt::RotationMode mode) {
+            ParticleSystem2D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return; }
+            ParticleSystem2D &self = *selfPtr; self.SetBillboardRotationMode(mode); })
+        .method("TargetLookAtMode GetBillboardRotationMode() const", [](const ScriptComponentHandle<ParticleSystem2D> &selfHandle) -> TargetLookAt::RotationMode {
+            ParticleSystem2D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<TargetLookAt::RotationMode>(); }
+            const ParticleSystem2D &self = *selfPtr; return self.GetBillboardRotationMode(); });
 
     RegisterComponentType<ParticleSystem3D>(engine, "ParticleSystem3D")
-        .method("void Play()", [](ParticleSystem3D &self) { self.Play(); })
-        .method("void Stop()", [](ParticleSystem3D &self) { self.Stop(); })
-        .method("bool IsPlaying() const", [](const ParticleSystem3D &self) -> bool { return self.IsPlaying(); })
-        .method("void Clear()", [](ParticleSystem3D &self) { self.Clear(); })
-        .method("void SetEmissionRate(float)", [](ParticleSystem3D &self, float rate) { self.SetEmissionRate(rate); })
-        .method("float GetEmissionRate() const", [](const ParticleSystem3D &self) -> float { return self.GetEmissionRate(); })
-        .method("void SetMaxParticles(int)", [](ParticleSystem3D &self, int count) { self.SetMaxParticles(count); })
-        .method("int GetMaxParticles() const", [](const ParticleSystem3D &self) -> int { return self.GetMaxParticles(); })
-        .method("void SetBillboard(bool)", [](ParticleSystem3D &self, bool enabled) { self.SetBillboard(enabled); })
-        .method("bool IsBillboard() const", [](const ParticleSystem3D &self) -> bool { return self.IsBillboard(); })
-        .method("void SetBillboardTarget(Object@)", [](ParticleSystem3D &self, EmptyObject *obj) { self.SetBillboardTarget(obj); })
-        .method("Object@ GetBillboardTarget() const", [](const ParticleSystem3D &self) -> EmptyObject * { return self.GetBillboardTarget(); })
-        .method("void SetBillboardRotationMode(TargetLookAtMode)", [](ParticleSystem3D &self, TargetLookAt::RotationMode mode) { self.SetBillboardRotationMode(mode); })
-        .method("TargetLookAtMode GetBillboardRotationMode() const", [](const ParticleSystem3D &self) -> TargetLookAt::RotationMode { return self.GetBillboardRotationMode(); });
+        .method("void Play()", [](ScriptComponentHandle<ParticleSystem3D> &selfHandle) {
+            ParticleSystem3D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return; }
+            ParticleSystem3D &self = *selfPtr; self.Play(); })
+        .method("void Stop()", [](ScriptComponentHandle<ParticleSystem3D> &selfHandle) {
+            ParticleSystem3D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return; }
+            ParticleSystem3D &self = *selfPtr; self.Stop(); })
+        .method("bool IsPlaying() const", [](const ScriptComponentHandle<ParticleSystem3D> &selfHandle) -> bool {
+            ParticleSystem3D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
+            const ParticleSystem3D &self = *selfPtr; return self.IsPlaying(); })
+        .method("void Clear()", [](ScriptComponentHandle<ParticleSystem3D> &selfHandle) {
+            ParticleSystem3D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return; }
+            ParticleSystem3D &self = *selfPtr; self.Clear(); })
+        .method("void SetEmissionRate(float)", [](ScriptComponentHandle<ParticleSystem3D> &selfHandle, float rate) {
+            ParticleSystem3D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return; }
+            ParticleSystem3D &self = *selfPtr; self.SetEmissionRate(rate); })
+        .method("float GetEmissionRate() const", [](const ScriptComponentHandle<ParticleSystem3D> &selfHandle) -> float {
+            ParticleSystem3D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const ParticleSystem3D &self = *selfPtr; return self.GetEmissionRate(); })
+        .method("void SetMaxParticles(int)", [](ScriptComponentHandle<ParticleSystem3D> &selfHandle, int count) {
+            ParticleSystem3D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return; }
+            ParticleSystem3D &self = *selfPtr; self.SetMaxParticles(count); })
+        .method("int GetMaxParticles() const", [](const ScriptComponentHandle<ParticleSystem3D> &selfHandle) -> int {
+            ParticleSystem3D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const ParticleSystem3D &self = *selfPtr; return self.GetMaxParticles(); })
+        .method("void SetBillboard(bool)", [](ScriptComponentHandle<ParticleSystem3D> &selfHandle, bool enabled) {
+            ParticleSystem3D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return; }
+            ParticleSystem3D &self = *selfPtr; self.SetBillboard(enabled); })
+        .method("bool IsBillboard() const", [](const ScriptComponentHandle<ParticleSystem3D> &selfHandle) -> bool {
+            ParticleSystem3D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
+            const ParticleSystem3D &self = *selfPtr; return self.IsBillboard(); })
+        .method("void SetBillboardTarget(Object@)", [](ScriptComponentHandle<ParticleSystem3D> &selfHandle, ScriptObjectHandle *obj) {
+            ParticleSystem3D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return; }
+            ParticleSystem3D &self = *selfPtr; self.SetBillboardTarget(ResolveObjectArg(obj)); })
+        .method("Object@ GetBillboardTarget() const", [](const ScriptComponentHandle<ParticleSystem3D> &selfHandle) -> ScriptObjectHandle * {
+            ParticleSystem3D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<ScriptObjectHandle *>(); }
+            const ParticleSystem3D &self = *selfPtr; return ScriptObjectHandle::Create(self.GetBillboardTarget()); })
+        .method("void SetBillboardRotationMode(TargetLookAtMode)", [](ScriptComponentHandle<ParticleSystem3D> &selfHandle, TargetLookAt::RotationMode mode) {
+            ParticleSystem3D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return; }
+            ParticleSystem3D &self = *selfPtr; self.SetBillboardRotationMode(mode); })
+        .method("TargetLookAtMode GetBillboardRotationMode() const", [](const ScriptComponentHandle<ParticleSystem3D> &selfHandle) -> TargetLookAt::RotationMode {
+            ParticleSystem3D *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<TargetLookAt::RotationMode>(); }
+            const ParticleSystem3D &self = *selfPtr; return self.GetBillboardRotationMode(); });
 
     RegisterComponentType<TargetLookAt>(engine, "TargetLookAt")
-        .method("void SetTargetObject(Object@)", [](TargetLookAt &c, EmptyObject *obj) { c.SetTargetObject(obj); })
-        .method("Object@ GetTargetObject() const", &TargetLookAt::GetTargetObject)
-        .method("void SetRotationOffset(const Vector3 &in)", &TargetLookAt::SetRotationOffset)
-        .method("const Vector3 &GetRotationOffset() const", &TargetLookAt::GetRotationOffset)
-        .method("void SetRotationMode(TargetLookAtMode)", &TargetLookAt::SetRotationMode)
-        .method("TargetLookAtMode GetRotationMode() const", &TargetLookAt::GetRotationMode)
-        .method("void SetFollowStrength(float)", &TargetLookAt::SetFollowStrength)
-        .method("float GetFollowStrength() const", &TargetLookAt::GetFollowStrength);
+        .method("void SetTargetObject(Object@)", [](ScriptComponentHandle<TargetLookAt> &cHandle, ScriptObjectHandle *obj) {
+            TargetLookAt *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            TargetLookAt &c = *cPtr; c.SetTargetObject(ResolveObjectArg(obj)); })
+        .method("Object@ GetTargetObject() const", [](const ScriptComponentHandle<TargetLookAt> &cHandle) -> ScriptObjectHandle * {
+            TargetLookAt *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<ScriptObjectHandle *>(); }
+            const TargetLookAt &c = *cPtr; return ScriptObjectHandle::Create(c.GetTargetObject()); })
+        .method("void SetRotationOffset(const Vector3 &in)", SafeCall<&TargetLookAt::SetRotationOffset>())
+        .method("const Vector3 &GetRotationOffset() const", SafeCall<&TargetLookAt::GetRotationOffset>())
+        .method("void SetRotationMode(TargetLookAtMode)", SafeCall<&TargetLookAt::SetRotationMode>())
+        .method("TargetLookAtMode GetRotationMode() const", SafeCall<&TargetLookAt::GetRotationMode>())
+        .method("void SetFollowStrength(float)", SafeCall<&TargetLookAt::SetFollowStrength>())
+        .method("float GetFollowStrength() const", SafeCall<&TargetLookAt::GetFollowStrength>());
 
     RegisterComponentType<AudioSource>(engine, "AudioSource")
-        .method("uint Play()", &AudioSource::Play)
-        .method("void Stop()", &AudioSource::Stop)
-        .method("bool Pause()", &AudioSource::Pause)
-        .method("bool Resume()", &AudioSource::Resume)
-        .method("bool IsPlaying() const", &AudioSource::IsPlaying)
-        .method("bool IsPaused() const", &AudioSource::IsPaused)
-        .method("void SetSoundName(const string &in)", &AudioSource::SetSoundName)
-        .method("const string &GetSoundName() const", &AudioSource::GetSoundName)
-        .method("void SetVolume(float)", &AudioSource::SetVolume)
-        .method("float GetVolume() const", &AudioSource::GetVolume)
-        .method("void SetPitch(float)", &AudioSource::SetPitch)
-        .method("float GetPitch() const", &AudioSource::GetPitch)
-        .method("void SetLoop(bool)", &AudioSource::SetLoop)
-        .method("bool GetLoop() const", &AudioSource::GetLoop)
-        .method("void SetPlayOnAwake(bool)", &AudioSource::SetPlayOnAwake)
-        .method("bool GetPlayOnAwake() const", &AudioSource::GetPlayOnAwake)
-        .method("void AttachExternalPlayHandle(uint)", &AudioSource::AttachExternalPlayHandle);
+        .method("uint Play()", SafeCall<&AudioSource::Play>())
+        .method("void Stop()", SafeCall<&AudioSource::Stop>())
+        .method("bool Pause()", SafeCall<&AudioSource::Pause>())
+        .method("bool Resume()", SafeCall<&AudioSource::Resume>())
+        .method("bool IsPlaying() const", SafeCall<&AudioSource::IsPlaying>())
+        .method("bool IsPaused() const", SafeCall<&AudioSource::IsPaused>())
+        .method("void SetSoundName(const string &in)", SafeCall<&AudioSource::SetSoundName>())
+        .method("const string &GetSoundName() const", SafeCall<&AudioSource::GetSoundName>())
+        .method("void SetVolume(float)", SafeCall<&AudioSource::SetVolume>())
+        .method("float GetVolume() const", SafeCall<&AudioSource::GetVolume>())
+        .method("void SetPitch(float)", SafeCall<&AudioSource::SetPitch>())
+        .method("float GetPitch() const", SafeCall<&AudioSource::GetPitch>())
+        .method("void SetLoop(bool)", SafeCall<&AudioSource::SetLoop>())
+        .method("bool GetLoop() const", SafeCall<&AudioSource::GetLoop>())
+        .method("void SetPlayOnAwake(bool)", SafeCall<&AudioSource::SetPlayOnAwake>())
+        .method("bool GetPlayOnAwake() const", SafeCall<&AudioSource::GetPlayOnAwake>())
+        .method("void AttachExternalPlayHandle(uint)", SafeCall<&AudioSource::AttachExternalPlayHandle>());
 
     RegisterComponentType<AudioListener>(engine, "AudioListener")
-        .method("void SetUsed(bool)", &AudioListener::SetUsed)
-        .method("bool GetUsed() const", &AudioListener::GetUsed)
-        .method("Vector3 GetWorldPosition() const", &AudioListener::GetWorldPosition);
+        .method("void SetUsed(bool)", SafeCall<&AudioListener::SetUsed>())
+        .method("bool GetUsed() const", SafeCall<&AudioListener::GetUsed>())
+        .method("Vector3 GetWorldPosition() const", SafeCall<&AudioListener::GetWorldPosition>());
 
     RegisterComponentType<Camera3D>(engine, "Camera3D")
-        .method("void SetFovY(float)", &Camera3D::SetFovY)
-        .method("float GetFovY() const", &Camera3D::GetFovY)
-        .method("void SetNearClip(float)", &Camera3D::SetNearClip)
-        .method("float GetNearClip() const", &Camera3D::GetNearClip)
-        .method("void SetFarClip(float)", &Camera3D::SetFarClip)
-        .method("float GetFarClip() const", &Camera3D::GetFarClip)
-        .method("void SetAspectRatio(float)", &Camera3D::SetAspectRatio)
-        .method("float GetAspectRatio() const", &Camera3D::GetAspectRatio)
-        .method("void SetOrthographic(bool)", &Camera3D::SetOrthographic)
-        .method("bool IsOrthographic() const", &Camera3D::IsOrthographic)
-        .method("void SetOrthoSize(float)", &Camera3D::SetOrthoSize)
-        .method("float GetOrthoSize() const", &Camera3D::GetOrthoSize)
-        .method("void SetEnableJitter(bool)", &Camera3D::SetEnableJitter)
-        .method("bool IsJitterEnabled() const", &Camera3D::IsJitterEnabled)
-        .method("void SetAutoSyncAspectRatio(bool)", &Camera3D::SetAutoSyncAspectRatio)
-        .method("bool GetAutoSyncAspectRatio() const", &Camera3D::GetAutoSyncAspectRatio);
+        .method("void SetFovY(float)", SafeCall<&Camera3D::SetFovY>())
+        .method("float GetFovY() const", SafeCall<&Camera3D::GetFovY>())
+        .method("void SetNearClip(float)", SafeCall<&Camera3D::SetNearClip>())
+        .method("float GetNearClip() const", SafeCall<&Camera3D::GetNearClip>())
+        .method("void SetFarClip(float)", SafeCall<&Camera3D::SetFarClip>())
+        .method("float GetFarClip() const", SafeCall<&Camera3D::GetFarClip>())
+        .method("void SetAspectRatio(float)", SafeCall<&Camera3D::SetAspectRatio>())
+        .method("float GetAspectRatio() const", SafeCall<&Camera3D::GetAspectRatio>())
+        .method("void SetOrthographic(bool)", SafeCall<&Camera3D::SetOrthographic>())
+        .method("bool IsOrthographic() const", SafeCall<&Camera3D::IsOrthographic>())
+        .method("void SetOrthoSize(float)", SafeCall<&Camera3D::SetOrthoSize>())
+        .method("float GetOrthoSize() const", SafeCall<&Camera3D::GetOrthoSize>())
+        .method("void SetEnableJitter(bool)", SafeCall<&Camera3D::SetEnableJitter>())
+        .method("bool IsJitterEnabled() const", SafeCall<&Camera3D::IsJitterEnabled>())
+        .method("void SetAutoSyncAspectRatio(bool)", SafeCall<&Camera3D::SetAutoSyncAspectRatio>())
+        .method("bool GetAutoSyncAspectRatio() const", SafeCall<&Camera3D::GetAutoSyncAspectRatio>());
 
     RegisterComponentType<SpriteRenderer>(engine, "SpriteRenderer")
-        .method("void SetAnchor(const Vector2 &in)", &SpriteRenderer::SetAnchor)
-        .method("const Vector2 &GetAnchor() const", &SpriteRenderer::GetAnchor)
-        .method("void SetPivot(const Vector2 &in)", &SpriteRenderer::SetPivot)
-        .method("const Vector2 &GetPivot() const", &SpriteRenderer::GetPivot)
-        .method("void SetPipelineName(const string &in)", &SpriteRenderer::SetPipelineName)
-        .method("const string &GetPipelineName() const", &SpriteRenderer::GetPipelineName)
-        .method("void SetMaterialName(const string &in)", &SpriteRenderer::SetMaterialName)
-        .method("const string &GetMaterialName() const", &SpriteRenderer::GetMaterialName)
-        .method("void SetMaterialHandle(uint)", [](SpriteRenderer &c, uint32_t handle) { c.SetMaterialHandle(handle); })
-        .method("uint GetMaterialHandle() const", [](const SpriteRenderer &c) -> uint32_t { return c.GetMaterialHandle(); })
-        .method("Object@ GetTargetObject() const", &SpriteRenderer::GetTargetObject)
-        .method("string GetTargetObjectID() const", [](const SpriteRenderer &c) -> std::string { return c.GetTargetObjectID().ToString(); })
-        .method("void SetInstanceColor(const Vector4 &in)", &SpriteRenderer::SetInstanceColor)
-        .method("const Vector4 &GetInstanceColor() const", &SpriteRenderer::GetInstanceColor)
+        .method("void SetAnchor(const Vector2 &in)", SafeCall<&SpriteRenderer::SetAnchor>())
+        .method("const Vector2 &GetAnchor() const", SafeCall<&SpriteRenderer::GetAnchor>())
+        .method("void SetPivot(const Vector2 &in)", SafeCall<&SpriteRenderer::SetPivot>())
+        .method("const Vector2 &GetPivot() const", SafeCall<&SpriteRenderer::GetPivot>())
+        .method("void SetPipelineName(const string &in)", SafeCall<&SpriteRenderer::SetPipelineName>())
+        .method("const string &GetPipelineName() const", SafeCall<&SpriteRenderer::GetPipelineName>())
+        .method("void SetMaterialName(const string &in)", SafeCall<&SpriteRenderer::SetMaterialName>())
+        .method("const string &GetMaterialName() const", SafeCall<&SpriteRenderer::GetMaterialName>())
+        .method("void SetMaterialHandle(uint)", [](ScriptComponentHandle<SpriteRenderer> &cHandle, uint32_t handle) {
+            SpriteRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            SpriteRenderer &c = *cPtr; c.SetMaterialHandle(handle); })
+        .method("uint GetMaterialHandle() const", [](const ScriptComponentHandle<SpriteRenderer> &cHandle) -> uint32_t {
+            SpriteRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const SpriteRenderer &c = *cPtr; return c.GetMaterialHandle(); })
+        .method("Object@ GetTargetObject() const", [](const ScriptComponentHandle<SpriteRenderer> &cHandle) -> ScriptObjectHandle * {
+            SpriteRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<ScriptObjectHandle *>(); }
+            const SpriteRenderer &c = *cPtr; return ScriptObjectHandle::Create(c.GetTargetObject()); })
+        .method("string GetTargetObjectID() const", [](const ScriptComponentHandle<SpriteRenderer> &cHandle) -> std::string {
+            SpriteRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::string>(); }
+            const SpriteRenderer &c = *cPtr; return c.GetTargetObjectID().ToString(); })
+        .method("void SetInstanceColor(const Vector4 &in)", SafeCall<&SpriteRenderer::SetInstanceColor>())
+        .method("const Vector4 &GetInstanceColor() const", SafeCall<&SpriteRenderer::GetInstanceColor>())
         // instanceColorBlendModeは 0=Override, 1=Multiply, 2=Add, 3=Subtract
-        .method("void SetInstanceColorBlendMode(int)", [](SpriteRenderer &c, int mode) {
+        .method("void SetInstanceColorBlendMode(int)", [](ScriptComponentHandle<SpriteRenderer> &cHandle, int mode) {
+            SpriteRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            SpriteRenderer &c = *cPtr;
             c.SetInstanceColorBlendMode(static_cast<SpriteRenderer::ColorBlendMode>(mode));
         })
-        .method("int GetInstanceColorBlendMode() const", [](const SpriteRenderer &c) {
+        .method("int GetInstanceColorBlendMode() const", [](const ScriptComponentHandle<SpriteRenderer> &cHandle) {
+            SpriteRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const SpriteRenderer &c = *cPtr;
             return static_cast<int>(c.GetInstanceColorBlendMode());
         })
-        .method("void SetRenderPriority(int)", [](SpriteRenderer &c, int32_t priority) { c.SetRenderPriority(priority); })
-        .method("int GetRenderPriority() const", [](const SpriteRenderer &c) -> int32_t { return c.GetRenderPriority(); })
-        .method("void SetAllowInstancing(bool)", &SpriteRenderer::SetAllowInstancing)
-        .method("bool GetAllowInstancing() const", &SpriteRenderer::GetAllowInstancing)
-        .method("uint GetMeshHandle() const", [](const SpriteRenderer &c) -> uint32_t { return c.GetMeshHandle(); })
-        .method("Matrix4x4 GetWorldMatrix() const", &SpriteRenderer::GetWorldMatrix);
+        .method("void SetRenderPriority(int)", [](ScriptComponentHandle<SpriteRenderer> &cHandle, int32_t priority) {
+            SpriteRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            SpriteRenderer &c = *cPtr; c.SetRenderPriority(priority); })
+        .method("int GetRenderPriority() const", [](const ScriptComponentHandle<SpriteRenderer> &cHandle) -> int32_t {
+            SpriteRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int32_t>(); }
+            const SpriteRenderer &c = *cPtr; return c.GetRenderPriority(); })
+        .method("void SetAllowInstancing(bool)", SafeCall<&SpriteRenderer::SetAllowInstancing>())
+        .method("bool GetAllowInstancing() const", SafeCall<&SpriteRenderer::GetAllowInstancing>())
+        .method("uint GetMeshHandle() const", [](const ScriptComponentHandle<SpriteRenderer> &cHandle) -> uint32_t {
+            SpriteRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const SpriteRenderer &c = *cPtr; return c.GetMeshHandle(); })
+        .method("Matrix4x4 GetWorldMatrix() const", SafeCall<&SpriteRenderer::GetWorldMatrix>());
 
     RegisterComponentType<ScriptComponent>(engine, "ScriptComponent")
-        .method("void SetScriptPath(const string &in)", &ScriptComponent::SetScriptPath)
-        .method("const string &GetScriptPath() const", &ScriptComponent::GetScriptPath)
-        .method("bool Reload()", &ScriptComponent::Reload)
+        .method("void SetScriptPath(const string &in)", SafeCall<&ScriptComponent::SetScriptPath>())
+        .method("const string &GetScriptPath() const", SafeCall<&ScriptComponent::GetScriptPath>())
+        .method("bool Reload()", SafeCall<&ScriptComponent::Reload>())
         // 他オブジェクトのScriptComponentを取得した上で、その[SerializeField]変数を名前で直接読み書きする
         // （シーン変数を介さないスクリプト間のデータ受け渡し用。対応型はSerializeFieldと同じプリミティブ/数学型/Object@のみ）
-        .method("bool GetVariable(const string &in, ?&out) const", [](const ScriptComponent &self, const std::string &name, void *ref, int typeId) -> bool {
+        .method("bool GetVariable(const string &in, ?&out) const", [](ScriptComponentHandle<ScriptComponent> &selfHandle, const std::string &name, void *ref, int typeId) -> bool {
+            ScriptComponent *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
+            const ScriptComponent &self = *selfPtr;
             return self.GetVariable(name, ref, typeId);
         })
-        .method("bool SetVariable(const string &in, ?&in)", [](ScriptComponent &self, const std::string &name, void *ref, int typeId) -> bool {
+        .method("bool SetVariable(const string &in, ?&in)", [](ScriptComponentHandle<ScriptComponent> &selfHandle, const std::string &name, void *ref, int typeId) -> bool {
+            ScriptComponent *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
+            ScriptComponent &self = *selfPtr;
             return self.SetVariable(name, ref, typeId);
         });
 
     RegisterComponentType<MeshFilter>(engine, "MeshFilter")
-        .method("void SetMeshHandle(uint)", [](MeshFilter &c, uint32_t handle) { c.SetMeshHandle(handle); })
-        .method("uint GetMeshHandle() const", [](const MeshFilter &c) -> uint32_t { return c.GetMeshHandle(); })
-        .method("bool HasMesh() const", &MeshFilter::HasMesh);
+        .method("void SetMeshHandle(uint)", [](ScriptComponentHandle<MeshFilter> &cHandle, uint32_t handle) {
+            MeshFilter *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            MeshFilter &c = *cPtr; c.SetMeshHandle(handle); })
+        .method("uint GetMeshHandle() const", [](const ScriptComponentHandle<MeshFilter> &cHandle) -> uint32_t {
+            MeshFilter *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const MeshFilter &c = *cPtr; return c.GetMeshHandle(); })
+        .method("bool HasMesh() const", SafeCall<&MeshFilter::HasMesh>());
 
     RegisterComponentType<Animator>(engine, "Animator")
-        .method("void SetClipName(const string &in)", &Animator::SetClipName)
-        .method("const string &GetClipName() const", &Animator::GetClipName)
-        .method("void SetAnimationSourceAssetPath(const string &in)", &Animator::SetAnimationSourceAssetPath)
-        .method("const string &GetAnimationSourceAssetPath() const", &Animator::GetAnimationSourceAssetPath)
-        .method("void SetPlayOnStart(bool)", &Animator::SetPlayOnStart)
-        .method("bool GetPlayOnStart() const", &Animator::GetPlayOnStart)
-        .method("void SetLoop(bool)", &Animator::SetLoop)
-        .method("bool GetLoop() const", &Animator::GetLoop)
-        .method("void SetPlaybackSpeed(float)", &Animator::SetPlaybackSpeed)
-        .method("float GetPlaybackSpeed() const", &Animator::GetPlaybackSpeed)
-        .method("void Play()", &Animator::Play)
-        .method("void Stop()", &Animator::Stop)
-        .method("bool IsPlaying() const", &Animator::IsPlaying);
+        .method("void SetClipName(const string &in)", SafeCall<&Animator::SetClipName>())
+        .method("const string &GetClipName() const", SafeCall<&Animator::GetClipName>())
+        .method("void SetAnimationSourceAssetPath(const string &in)", SafeCall<&Animator::SetAnimationSourceAssetPath>())
+        .method("const string &GetAnimationSourceAssetPath() const", SafeCall<&Animator::GetAnimationSourceAssetPath>())
+        .method("void SetPlayOnStart(bool)", SafeCall<&Animator::SetPlayOnStart>())
+        .method("bool GetPlayOnStart() const", SafeCall<&Animator::GetPlayOnStart>())
+        .method("void SetLoop(bool)", SafeCall<&Animator::SetLoop>())
+        .method("bool GetLoop() const", SafeCall<&Animator::GetLoop>())
+        .method("void SetPlaybackSpeed(float)", SafeCall<&Animator::SetPlaybackSpeed>())
+        .method("float GetPlaybackSpeed() const", SafeCall<&Animator::GetPlaybackSpeed>())
+        .method("void Play()", SafeCall<&Animator::Play>())
+        .method("void Stop()", SafeCall<&Animator::Stop>())
+        .method("bool IsPlaying() const", SafeCall<&Animator::IsPlaying>());
 
     RegisterComponentType<KeyFrameAnimator>(engine, "KeyFrameAnimator")
-        .method("bool Play(const string &in name)", &KeyFrameAnimator::Play)
-        .method("bool Stop(const string &in name)", &KeyFrameAnimator::Stop)
-        .method("void PlayAll()", &KeyFrameAnimator::PlayAll)
-        .method("void StopAll()", &KeyFrameAnimator::StopAll)
-        .method("bool IsPlaying(const string &in name) const", &KeyFrameAnimator::IsPlaying)
-        .method("bool SetPlaybackSpeed(const string &in name, float speed)", &KeyFrameAnimator::SetPlaybackSpeed)
-        .method("float GetPlaybackSpeed(const string &in name) const", &KeyFrameAnimator::GetPlaybackSpeed)
-        .method("bool TryGetValue(const string &in name, float &out value) const", &KeyFrameAnimator::TryGetValue)
-        .method("uint GetAnimationCount() const", [](const KeyFrameAnimator &animator) -> std::uint32_t {
+        .method("bool Play(const string &in name)", SafeCall<&KeyFrameAnimator::Play>())
+        .method("bool Stop(const string &in name)", SafeCall<&KeyFrameAnimator::Stop>())
+        .method("void PlayAll()", SafeCall<&KeyFrameAnimator::PlayAll>())
+        .method("void StopAll()", SafeCall<&KeyFrameAnimator::StopAll>())
+        .method("bool IsPlaying(const string &in name) const", SafeCall<&KeyFrameAnimator::IsPlaying>())
+        .method("bool SetPlaybackSpeed(const string &in name, float speed)", SafeCall<&KeyFrameAnimator::SetPlaybackSpeed>())
+        .method("float GetPlaybackSpeed(const string &in name) const", SafeCall<&KeyFrameAnimator::GetPlaybackSpeed>())
+        .method("bool TryGetValue(const string &in name, float &out value) const", SafeCall<&KeyFrameAnimator::TryGetValue>())
+        .method("uint GetAnimationCount() const", [](const ScriptComponentHandle<KeyFrameAnimator> &animatorHandle) -> std::uint32_t {
+            KeyFrameAnimator *animatorPtr = animatorHandle.Resolve();
+            if (!animatorPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::uint32_t>(); }
+            const KeyFrameAnimator &animator = *animatorPtr;
             return static_cast<std::uint32_t>(animator.GetAnimationCount());
         });
 
     RegisterComponentType<InputCommandApplier>(engine, "InputCommandApplier")
-        .method("bool WasApplied(const string &in name) const", &InputCommandApplier::WasApplied)
-        .method("bool TryGetLastValue(const string &in name, float &out value) const", &InputCommandApplier::TryGetLastValue)
-        .method("uint GetCommandCount() const", [](const InputCommandApplier &applier) -> std::uint32_t {
+        .method("bool WasApplied(const string &in name) const", SafeCall<&InputCommandApplier::WasApplied>())
+        .method("bool TryGetLastValue(const string &in name, float &out value) const", SafeCall<&InputCommandApplier::TryGetLastValue>())
+        .method("uint GetCommandCount() const", [](const ScriptComponentHandle<InputCommandApplier> &applierHandle) -> std::uint32_t {
+            InputCommandApplier *applierPtr = applierHandle.Resolve();
+            if (!applierPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::uint32_t>(); }
+            const InputCommandApplier &applier = *applierPtr;
             return static_cast<std::uint32_t>(applier.GetCommandCount());
         });
 
     RegisterComponentType<SceneVariableApplier>(engine, "SceneVariableApplier")
-        .method("void SetVariableName(const string &in)", &SceneVariableApplier::SetVariableName)
-        .method("const string &GetVariableName() const", &SceneVariableApplier::GetVariableName)
-        .method("bool WasApplied() const", &SceneVariableApplier::WasApplied);
+        .method("void SetVariableName(const string &in)", SafeCall<&SceneVariableApplier::SetVariableName>())
+        .method("const string &GetVariableName() const", SafeCall<&SceneVariableApplier::GetVariableName>())
+        .method("bool WasApplied() const", SafeCall<&SceneVariableApplier::WasApplied>());
 
     RegisterComponentType<Shake>(engine, "Shake")
-        .method("void Play(float = 0.0f)", &Shake::Play)
-        .method("void Stop()", &Shake::Stop)
-        .method("bool IsPlaying() const", &Shake::IsPlaying)
+        .method("void Play(float = 0.0f)", SafeCall<&Shake::Play>())
+        .method("void Stop()", SafeCall<&Shake::Stop>())
+        .method("bool IsPlaying() const", SafeCall<&Shake::IsPlaying>())
         // ProcessTiming: 0=Immediate, 1=DeferredEnd
-        .method("void SetProcessTiming(int)", &Shake::SetProcessTimingInt)
-        .method("int GetProcessTiming() const", &Shake::GetProcessTimingInt)
+        .method("void SetProcessTiming(int)", SafeCall<&Shake::SetProcessTimingInt>())
+        .method("int GetProcessTiming() const", SafeCall<&Shake::GetProcessTimingInt>())
         // ApplyTarget: 0=ToTransform, 1=RenderOnly
-        .method("void SetApplyTarget(int)", &Shake::SetApplyTargetInt)
-        .method("int GetApplyTarget() const", &Shake::GetApplyTargetInt)
-        .method("void SetPositionEnable(bool, bool, bool)", &Shake::SetPositionEnable)
-        .method("void SetPositionAmplitude(const Vector3 &in)", &Shake::SetPositionAmplitude)
-        .method("const Vector3 &GetPositionAmplitude() const", &Shake::GetPositionAmplitude)
-        .method("void SetPositionSpeed(const Vector3 &in)", &Shake::SetPositionSpeed)
-        .method("const Vector3 &GetPositionSpeed() const", &Shake::GetPositionSpeed)
-        .method("void SetPositionEaseType(int)", &Shake::SetPositionEaseTypeInt)
-        .method("int GetPositionEaseType() const", &Shake::GetPositionEaseTypeInt)
-        .method("void SetRotationEnable(bool, bool, bool)", &Shake::SetRotationEnable)
-        .method("void SetRotationAmplitude(const Vector3 &in)", &Shake::SetRotationAmplitude)
-        .method("const Vector3 &GetRotationAmplitude() const", &Shake::GetRotationAmplitude)
-        .method("void SetRotationSpeed(const Vector3 &in)", &Shake::SetRotationSpeed)
-        .method("const Vector3 &GetRotationSpeed() const", &Shake::GetRotationSpeed)
-        .method("void SetRotationEaseType(int)", &Shake::SetRotationEaseTypeInt)
-        .method("int GetRotationEaseType() const", &Shake::GetRotationEaseTypeInt);
+        .method("void SetApplyTarget(int)", SafeCall<&Shake::SetApplyTargetInt>())
+        .method("int GetApplyTarget() const", SafeCall<&Shake::GetApplyTargetInt>())
+        .method("void SetPositionEnable(bool, bool, bool)", SafeCall<&Shake::SetPositionEnable>())
+        .method("void SetPositionAmplitude(const Vector3 &in)", SafeCall<&Shake::SetPositionAmplitude>())
+        .method("const Vector3 &GetPositionAmplitude() const", SafeCall<&Shake::GetPositionAmplitude>())
+        .method("void SetPositionSpeed(const Vector3 &in)", SafeCall<&Shake::SetPositionSpeed>())
+        .method("const Vector3 &GetPositionSpeed() const", SafeCall<&Shake::GetPositionSpeed>())
+        .method("void SetPositionEaseType(int)", SafeCall<&Shake::SetPositionEaseTypeInt>())
+        .method("int GetPositionEaseType() const", SafeCall<&Shake::GetPositionEaseTypeInt>())
+        .method("void SetRotationEnable(bool, bool, bool)", SafeCall<&Shake::SetRotationEnable>())
+        .method("void SetRotationAmplitude(const Vector3 &in)", SafeCall<&Shake::SetRotationAmplitude>())
+        .method("const Vector3 &GetRotationAmplitude() const", SafeCall<&Shake::GetRotationAmplitude>())
+        .method("void SetRotationSpeed(const Vector3 &in)", SafeCall<&Shake::SetRotationSpeed>())
+        .method("const Vector3 &GetRotationSpeed() const", SafeCall<&Shake::GetRotationSpeed>())
+        .method("void SetRotationEaseType(int)", SafeCall<&Shake::SetRotationEaseTypeInt>())
+        .method("int GetRotationEaseType() const", SafeCall<&Shake::GetRotationEaseTypeInt>());
 
     RegisterComponentType<TextRenderer>(engine, "TextRenderer")
-        .method("void SetText(const string &in)", &TextRenderer::SetText)
-        .method("const string &GetText() const", &TextRenderer::GetText)
-        .method("void SetFontName(const string &in)", &TextRenderer::SetFontName)
-        .method("const string &GetFontName() const", &TextRenderer::GetFontName)
-        .method("void SetFontSize(float)", &TextRenderer::SetFontSize)
-        .method("float GetFontSize() const", &TextRenderer::GetFontSize)
-        .method("void SetColor(const Vector4 &in)", &TextRenderer::SetColor)
-        .method("const Vector4 &GetColor() const", &TextRenderer::GetColor)
-        .method("void SetInstanceColor(const Vector4 &in)", &TextRenderer::SetInstanceColor)
-        .method("const Vector4 &GetInstanceColor() const", &TextRenderer::GetInstanceColor)
-        .method("void SetInstanceColorBlendMode(int)", [](TextRenderer &c, int mode) {
+        .method("void SetText(const string &in)", SafeCall<&TextRenderer::SetText>())
+        .method("const string &GetText() const", SafeCall<&TextRenderer::GetText>())
+        .method("void SetFontName(const string &in)", SafeCall<&TextRenderer::SetFontName>())
+        .method("const string &GetFontName() const", SafeCall<&TextRenderer::GetFontName>())
+        .method("void SetFontSize(float)", SafeCall<&TextRenderer::SetFontSize>())
+        .method("float GetFontSize() const", SafeCall<&TextRenderer::GetFontSize>())
+        .method("void SetColor(const Vector4 &in)", SafeCall<&TextRenderer::SetColor>())
+        .method("const Vector4 &GetColor() const", SafeCall<&TextRenderer::GetColor>())
+        .method("void SetInstanceColor(const Vector4 &in)", SafeCall<&TextRenderer::SetInstanceColor>())
+        .method("const Vector4 &GetInstanceColor() const", SafeCall<&TextRenderer::GetInstanceColor>())
+        .method("void SetInstanceColorBlendMode(int)", [](ScriptComponentHandle<TextRenderer> &cHandle, int mode) {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            TextRenderer &c = *cPtr;
             c.SetInstanceColorBlendMode(static_cast<TextRenderer::ColorBlendMode>(mode));
         })
-        .method("int GetInstanceColorBlendMode() const", [](const TextRenderer &c) {
+        .method("int GetInstanceColorBlendMode() const", [](const ScriptComponentHandle<TextRenderer> &cHandle) {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const TextRenderer &c = *cPtr;
             return static_cast<int>(c.GetInstanceColorBlendMode());
         })
-        .method("void SetMaterialName(const string &in)", &TextRenderer::SetMaterialName)
-        .method("const string &GetMaterialName() const", &TextRenderer::GetMaterialName)
-        .method("void SetOutlineWidth(float)", &TextRenderer::SetOutlineWidth)
-        .method("float GetOutlineWidth() const", &TextRenderer::GetOutlineWidth)
-        .method("void SetOutlineColor(const Vector4 &in)", &TextRenderer::SetOutlineColor)
-        .method("const Vector4 &GetOutlineColor() const", &TextRenderer::GetOutlineColor)
-        .method("void SetHorizontalAlign(TextHorizontalAlign)", [](TextRenderer &c, int align) {
+        .method("void SetMaterialName(const string &in)", SafeCall<&TextRenderer::SetMaterialName>())
+        .method("const string &GetMaterialName() const", SafeCall<&TextRenderer::GetMaterialName>())
+        .method("void SetOutlineWidth(float)", SafeCall<&TextRenderer::SetOutlineWidth>())
+        .method("float GetOutlineWidth() const", SafeCall<&TextRenderer::GetOutlineWidth>())
+        .method("void SetOutlineColor(const Vector4 &in)", SafeCall<&TextRenderer::SetOutlineColor>())
+        .method("const Vector4 &GetOutlineColor() const", SafeCall<&TextRenderer::GetOutlineColor>())
+        .method("void SetHorizontalAlign(TextHorizontalAlign)", [](ScriptComponentHandle<TextRenderer> &cHandle, int align) {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            TextRenderer &c = *cPtr;
             c.SetHorizontalAlign(static_cast<TextRenderer::HorizontalAlign>(align));
         })
-        .method("TextHorizontalAlign GetHorizontalAlign() const", [](const TextRenderer &c) -> int {
+        .method("TextHorizontalAlign GetHorizontalAlign() const", [](const ScriptComponentHandle<TextRenderer> &cHandle) -> int {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const TextRenderer &c = *cPtr;
             return static_cast<int>(c.GetHorizontalAlign());
         })
-        .method("void SetVerticalAlign(TextVerticalAlign)", [](TextRenderer &c, int align) {
+        .method("void SetVerticalAlign(TextVerticalAlign)", [](ScriptComponentHandle<TextRenderer> &cHandle, int align) {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            TextRenderer &c = *cPtr;
             c.SetVerticalAlign(static_cast<TextRenderer::VerticalAlign>(align));
         })
-        .method("TextVerticalAlign GetVerticalAlign() const", [](const TextRenderer &c) -> int {
+        .method("TextVerticalAlign GetVerticalAlign() const", [](const ScriptComponentHandle<TextRenderer> &cHandle) -> int {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const TextRenderer &c = *cPtr;
             return static_cast<int>(c.GetVerticalAlign());
         })
-        .method("void SetDefaultCharacterAnchor(const Vector2 &in)", &TextRenderer::SetDefaultCharacterAnchor)
-        .method("const Vector2 &GetDefaultCharacterAnchor() const", &TextRenderer::GetDefaultCharacterAnchor)
-        .method("void SetDefaultCharacterPivot(const Vector2 &in)", &TextRenderer::SetDefaultCharacterPivot)
-        .method("const Vector2 &GetDefaultCharacterPivot() const", &TextRenderer::GetDefaultCharacterPivot)
-        .method("void SetTargetObject(Object@)", [](TextRenderer &c, EmptyObject *obj) { c.SetTargetObject(obj); })
-        .method("Object@ GetTargetObject() const", &TextRenderer::GetTargetObject)
-        .method("string GetTargetObjectID() const", [](const TextRenderer &c) -> std::string { return c.GetTargetObjectID().ToString(); })
-        .method("void SetMaterialHandle(uint)", [](TextRenderer &c, uint32_t handle) { c.SetMaterialHandle(handle); })
-        .method("uint GetMaterialHandle() const", [](const TextRenderer &c) -> uint32_t { return c.GetMaterialHandle(); })
-        .method("void SetUseLocalizationKey(bool)", &TextRenderer::SetUseLocalizationKey)
-        .method("bool GetUseLocalizationKey() const", &TextRenderer::GetUseLocalizationKey)
-        .method("void SetLocalizationKey(const string &in)", &TextRenderer::SetLocalizationKey)
-        .method("const string &GetLocalizationKey() const", &TextRenderer::GetLocalizationKey)
-        .method("void SetRenderPriority(int)", [](TextRenderer &c, int32_t priority) { c.SetRenderPriority(priority); })
-        .method("int GetRenderPriority() const", [](const TextRenderer &c) -> int32_t { return c.GetRenderPriority(); })
-        .method("void SetAllowInstancing(bool)", &TextRenderer::SetAllowInstancing)
-        .method("bool GetAllowInstancing() const", &TextRenderer::GetAllowInstancing)
-        .method("void SetPipelineName(const string &in)", &TextRenderer::SetPipelineName)
-        .method("const string &GetPipelineName() const", &TextRenderer::GetPipelineName)
-        .method("uint64 GetCharacterCount() const", [](const TextRenderer &c) -> uint64_t { return static_cast<uint64_t>(c.GetCharacterCount()); })
-        .method("void SetCharacterOffset(uint64, const Vector2 &in)", [](TextRenderer &c, uint64_t index, const Vector2 &offset) {
+        .method("void SetDefaultCharacterAnchor(const Vector2 &in)", SafeCall<&TextRenderer::SetDefaultCharacterAnchor>())
+        .method("const Vector2 &GetDefaultCharacterAnchor() const", SafeCall<&TextRenderer::GetDefaultCharacterAnchor>())
+        .method("void SetDefaultCharacterPivot(const Vector2 &in)", SafeCall<&TextRenderer::SetDefaultCharacterPivot>())
+        .method("const Vector2 &GetDefaultCharacterPivot() const", SafeCall<&TextRenderer::GetDefaultCharacterPivot>())
+        .method("void SetTargetObject(Object@)", [](ScriptComponentHandle<TextRenderer> &cHandle, ScriptObjectHandle *obj) {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            TextRenderer &c = *cPtr; c.SetTargetObject(ResolveObjectArg(obj)); })
+        .method("Object@ GetTargetObject() const", [](const ScriptComponentHandle<TextRenderer> &cHandle) -> ScriptObjectHandle * {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<ScriptObjectHandle *>(); }
+            const TextRenderer &c = *cPtr; return ScriptObjectHandle::Create(c.GetTargetObject()); })
+        .method("string GetTargetObjectID() const", [](const ScriptComponentHandle<TextRenderer> &cHandle) -> std::string {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::string>(); }
+            const TextRenderer &c = *cPtr; return c.GetTargetObjectID().ToString(); })
+        .method("void SetMaterialHandle(uint)", [](ScriptComponentHandle<TextRenderer> &cHandle, uint32_t handle) {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            TextRenderer &c = *cPtr; c.SetMaterialHandle(handle); })
+        .method("uint GetMaterialHandle() const", [](const ScriptComponentHandle<TextRenderer> &cHandle) -> uint32_t {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const TextRenderer &c = *cPtr; return c.GetMaterialHandle(); })
+        .method("void SetUseLocalizationKey(bool)", SafeCall<&TextRenderer::SetUseLocalizationKey>())
+        .method("bool GetUseLocalizationKey() const", SafeCall<&TextRenderer::GetUseLocalizationKey>())
+        .method("void SetLocalizationKey(const string &in)", SafeCall<&TextRenderer::SetLocalizationKey>())
+        .method("const string &GetLocalizationKey() const", SafeCall<&TextRenderer::GetLocalizationKey>())
+        .method("void SetRenderPriority(int)", [](ScriptComponentHandle<TextRenderer> &cHandle, int32_t priority) {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            TextRenderer &c = *cPtr; c.SetRenderPriority(priority); })
+        .method("int GetRenderPriority() const", [](const ScriptComponentHandle<TextRenderer> &cHandle) -> int32_t {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int32_t>(); }
+            const TextRenderer &c = *cPtr; return c.GetRenderPriority(); })
+        .method("void SetAllowInstancing(bool)", SafeCall<&TextRenderer::SetAllowInstancing>())
+        .method("bool GetAllowInstancing() const", SafeCall<&TextRenderer::GetAllowInstancing>())
+        .method("void SetPipelineName(const string &in)", SafeCall<&TextRenderer::SetPipelineName>())
+        .method("const string &GetPipelineName() const", SafeCall<&TextRenderer::GetPipelineName>())
+        .method("uint64 GetCharacterCount() const", [](const ScriptComponentHandle<TextRenderer> &cHandle) -> uint64_t {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint64_t>(); }
+            const TextRenderer &c = *cPtr; return static_cast<uint64_t>(c.GetCharacterCount()); })
+        .method("void SetCharacterOffset(uint64, const Vector2 &in)", [](ScriptComponentHandle<TextRenderer> &cHandle, uint64_t index, const Vector2 &offset) {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            TextRenderer &c = *cPtr;
             c.SetCharacterOffset(static_cast<size_t>(index), offset);
         })
-        .method("Vector2 GetCharacterOffset(uint64) const", [](const TextRenderer &c, uint64_t index) -> Vector2 {
+        .method("Vector2 GetCharacterOffset(uint64) const", [](ScriptComponentHandle<TextRenderer> &cHandle, uint64_t index) -> Vector2 {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<Vector2>(); }
+            const TextRenderer &c = *cPtr;
             return c.GetCharacterOffset(static_cast<size_t>(index));
         })
-        .method("void SetCharacterRotation(uint64, float)", [](TextRenderer &c, uint64_t index, float rotation) {
+        .method("void SetCharacterRotation(uint64, float)", [](ScriptComponentHandle<TextRenderer> &cHandle, uint64_t index, float rotation) {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            TextRenderer &c = *cPtr;
             c.SetCharacterRotation(static_cast<size_t>(index), rotation);
         })
-        .method("float GetCharacterRotation(uint64) const", [](const TextRenderer &c, uint64_t index) -> float {
+        .method("float GetCharacterRotation(uint64) const", [](ScriptComponentHandle<TextRenderer> &cHandle, uint64_t index) -> float {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const TextRenderer &c = *cPtr;
             return c.GetCharacterRotation(static_cast<size_t>(index));
         })
-        .method("void SetCharacterScale(uint64, const Vector2 &in)", [](TextRenderer &c, uint64_t index, const Vector2 &scale) {
+        .method("void SetCharacterScale(uint64, const Vector2 &in)", [](ScriptComponentHandle<TextRenderer> &cHandle, uint64_t index, const Vector2 &scale) {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            TextRenderer &c = *cPtr;
             c.SetCharacterScale(static_cast<size_t>(index), scale);
         })
-        .method("Vector2 GetCharacterScale(uint64) const", [](const TextRenderer &c, uint64_t index) -> Vector2 {
+        .method("Vector2 GetCharacterScale(uint64) const", [](ScriptComponentHandle<TextRenderer> &cHandle, uint64_t index) -> Vector2 {
+            TextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<Vector2>(); }
+            const TextRenderer &c = *cPtr;
             return c.GetCharacterScale(static_cast<size_t>(index));
         });
 
     RegisterComponentType<Comment>(engine, "Comment")
-        .method("void SetComment(const string &in)", &Comment::SetComment)
-        .method("const string &GetComment() const", &Comment::GetComment);
+        .method("void SetComment(const string &in)", SafeCall<&Comment::SetComment>())
+        .method("const string &GetComment() const", SafeCall<&Comment::GetComment>());
 
     RegisterComponentType<ComputeShaderProcessing>(engine, "ComputeShaderProcessing")
-        .method("void SetPipelineName(const string &in)", &ComputeShaderProcessing::SetPipelineName)
-        .method("const string &GetPipelineName() const", &ComputeShaderProcessing::GetPipelineName)
-        .method("void SetGroupCounts(uint, uint, uint)", &ComputeShaderProcessing::SetGroupCounts)
-        .method("void GetGroupCounts(uint &out, uint &out, uint &out) const", &ComputeShaderProcessing::GetGroupCounts);
+        .method("void SetPipelineName(const string &in)", SafeCall<&ComputeShaderProcessing::SetPipelineName>())
+        .method("const string &GetPipelineName() const", SafeCall<&ComputeShaderProcessing::GetPipelineName>())
+        .method("void SetGroupCounts(uint, uint, uint)", SafeCall<&ComputeShaderProcessing::SetGroupCounts>())
+        .method("void GetGroupCounts(uint &out, uint &out, uint &out) const", SafeCall<&ComputeShaderProcessing::GetGroupCounts>());
 
     RegisterComponentType<RigidBody2D>(engine, "RigidBody2D")
-        .method("void SetVelocity(const Vector2 &in)", &RigidBody2D::SetVelocity)
-        .method("Vector2 GetVelocity() const", &RigidBody2D::GetVelocity)
-        .method("void SetAngularVelocity(float)", &RigidBody2D::SetAngularVelocity)
-        .method("float GetAngularVelocity() const", &RigidBody2D::GetAngularVelocity)
-        .method("void SetMass(float)", &RigidBody2D::SetMass)
-        .method("float GetMass() const", &RigidBody2D::GetMass)
-        .method("void SetUseGravity(bool)", &RigidBody2D::SetUseGravity)
-        .method("bool IsGravityEnabled() const", &RigidBody2D::IsGravityEnabled)
-        .method("void SetSelectedCollider(Collider@)", [](RigidBody2D &rb, ICollider *collider) { rb.SetSelectedCollider(collider); })
-        .method("Collider@ GetSelectedCollider() const", [](const RigidBody2D &rb) -> ICollider * { return rb.GetSelectedCollider(); })
-        .method("array<Collider@>@ GetOwnerColliders() const", [](const RigidBody2D &rb) -> CScriptArray * { return MakeColliderArray(rb.GetOwnerColliders()); });
+        .method("void SetVelocity(const Vector2 &in)", SafeCall<&RigidBody2D::SetVelocity>())
+        .method("Vector2 GetVelocity() const", SafeCall<&RigidBody2D::GetVelocity>())
+        .method("void SetAngularVelocity(float)", SafeCall<&RigidBody2D::SetAngularVelocity>())
+        .method("float GetAngularVelocity() const", SafeCall<&RigidBody2D::GetAngularVelocity>())
+        .method("void SetMass(float)", SafeCall<&RigidBody2D::SetMass>())
+        .method("float GetMass() const", SafeCall<&RigidBody2D::GetMass>())
+        .method("void SetUseGravity(bool)", SafeCall<&RigidBody2D::SetUseGravity>())
+        .method("bool IsGravityEnabled() const", SafeCall<&RigidBody2D::IsGravityEnabled>())
+        .method("void SetSelectedCollider(Collider@)", [](ScriptComponentHandle<RigidBody2D> &rbHandle, ScriptComponentHandle<ICollider> *colliderHandle) {
+            RigidBody2D *rbPtr = rbHandle.Resolve();
+            if (!rbPtr) { ThrowDestroyedObjectException(); return; }
+            ICollider *collider = colliderHandle ? colliderHandle->Resolve() : nullptr;
+            if (colliderHandle && !collider) { ThrowDestroyedObjectException(); return; }
+            rbPtr->SetSelectedCollider(collider); })
+        .method("Collider@ GetSelectedCollider() const", [](const ScriptComponentHandle<RigidBody2D> &rbHandle) -> ScriptComponentHandle<ICollider> * {
+            RigidBody2D *rbPtr = rbHandle.Resolve();
+            if (!rbPtr) { ThrowDestroyedObjectException(); return nullptr; }
+            return ScriptComponentHandle<ICollider>::Create(rbPtr->GetSelectedCollider()); })
+        .method("array<Collider@>@ GetOwnerColliders() const", [](const ScriptComponentHandle<RigidBody2D> &rbHandle) -> CScriptArray * {
+            RigidBody2D *rbPtr = rbHandle.Resolve();
+            if (!rbPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<CScriptArray *>(); }
+            const RigidBody2D &rb = *rbPtr; return MakeColliderArray(rb.GetOwnerColliders()); });
 
     RegisterComponentType<RigidBody3D>(engine, "RigidBody3D")
-        .method("void SetBodyType(int)", [](RigidBody3D &rb, int type) { rb.SetBodyType(static_cast<reactphysics3d::BodyType>(type)); })
-        .method("int GetBodyType() const", [](const RigidBody3D &rb) -> int { return static_cast<int>(rb.GetBodyType()); })
-        .method("void SetMass(float)", &RigidBody3D::SetMass)
-        .method("float GetMass() const", &RigidBody3D::GetMass)
-        .method("void SetUseGravity(bool)", &RigidBody3D::SetUseGravity)
-        .method("bool IsGravityEnabled() const", &RigidBody3D::IsGravityEnabled)
-        .method("void SetInterpolate(bool)", &RigidBody3D::SetInterpolate)
-        .method("bool IsInterpolateEnabled() const", &RigidBody3D::IsInterpolateEnabled)
-        .method("void SetVelocity(const Vector3 &in)", &RigidBody3D::SetVelocity)
-        .method("Vector3 GetVelocity() const", &RigidBody3D::GetVelocity)
-        .method("void SyncFromTransform()", &RigidBody3D::SyncFromTransform)
-        .method("void SetSelectedCollider(Collider@)", [](RigidBody3D &rb, ICollider *collider) { rb.SetSelectedCollider(collider); })
-        .method("Collider@ GetSelectedCollider() const", [](const RigidBody3D &rb) -> ICollider * { return rb.GetSelectedCollider(); })
-        .method("array<Collider@>@ GetOwnerColliders() const", [](const RigidBody3D &rb) -> CScriptArray * { return MakeColliderArray(rb.GetOwnerColliders()); });
+        .method("void SetBodyType(int)", [](ScriptComponentHandle<RigidBody3D> &rbHandle, int type) {
+            RigidBody3D *rbPtr = rbHandle.Resolve();
+            if (!rbPtr) { ThrowDestroyedObjectException(); return; }
+            RigidBody3D &rb = *rbPtr; rb.SetBodyType(static_cast<reactphysics3d::BodyType>(type)); })
+        .method("int GetBodyType() const", [](const ScriptComponentHandle<RigidBody3D> &rbHandle) -> int {
+            RigidBody3D *rbPtr = rbHandle.Resolve();
+            if (!rbPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const RigidBody3D &rb = *rbPtr; return static_cast<int>(rb.GetBodyType()); })
+        .method("void SetMass(float)", SafeCall<&RigidBody3D::SetMass>())
+        .method("float GetMass() const", SafeCall<&RigidBody3D::GetMass>())
+        .method("void SetUseGravity(bool)", SafeCall<&RigidBody3D::SetUseGravity>())
+        .method("bool IsGravityEnabled() const", SafeCall<&RigidBody3D::IsGravityEnabled>())
+        .method("void SetInterpolate(bool)", SafeCall<&RigidBody3D::SetInterpolate>())
+        .method("bool IsInterpolateEnabled() const", SafeCall<&RigidBody3D::IsInterpolateEnabled>())
+        .method("void SetVelocity(const Vector3 &in)", SafeCall<&RigidBody3D::SetVelocity>())
+        .method("Vector3 GetVelocity() const", SafeCall<&RigidBody3D::GetVelocity>())
+        .method("void SyncFromTransform()", SafeCall<&RigidBody3D::SyncFromTransform>())
+        .method("void SetSelectedCollider(Collider@)", [](ScriptComponentHandle<RigidBody3D> &rbHandle, ScriptComponentHandle<ICollider> *colliderHandle) {
+            RigidBody3D *rbPtr = rbHandle.Resolve();
+            if (!rbPtr) { ThrowDestroyedObjectException(); return; }
+            ICollider *collider = colliderHandle ? colliderHandle->Resolve() : nullptr;
+            if (colliderHandle && !collider) { ThrowDestroyedObjectException(); return; }
+            rbPtr->SetSelectedCollider(collider); })
+        .method("Collider@ GetSelectedCollider() const", [](const ScriptComponentHandle<RigidBody3D> &rbHandle) -> ScriptComponentHandle<ICollider> * {
+            RigidBody3D *rbPtr = rbHandle.Resolve();
+            if (!rbPtr) { ThrowDestroyedObjectException(); return nullptr; }
+            return ScriptComponentHandle<ICollider>::Create(rbPtr->GetSelectedCollider()); })
+        .method("array<Collider@>@ GetOwnerColliders() const", [](const ScriptComponentHandle<RigidBody3D> &rbHandle) -> CScriptArray * {
+            RigidBody3D *rbPtr = rbHandle.Resolve();
+            if (!rbPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<CScriptArray *>(); }
+            const RigidBody3D &rb = *rbPtr; return MakeColliderArray(rb.GetOwnerColliders()); });
 
     RegisterComponentType<MeshRenderer>(engine, "MeshRenderer")
-        .method("void SetPipelineName(const string &in)", &MeshRenderer::SetPipelineName)
-        .method("const string &GetPipelineName() const", &MeshRenderer::GetPipelineName)
-        .method("void SetMaterialName(const string &in)", &MeshRenderer::SetMaterialName)
-        .method("const string &GetMaterialName() const", &MeshRenderer::GetMaterialName)
-        .method("void SetMaterialHandle(uint)", [](MeshRenderer &c, uint32_t handle) { c.SetMaterialHandle(handle); })
-        .method("uint GetMaterialHandle() const", [](const MeshRenderer &c) -> uint32_t { return c.GetMaterialHandle(); })
-        .method("uint GetMaterialSlotCount() const", [](const MeshRenderer &c) -> uint32_t { return static_cast<uint32_t>(c.GetMaterialSlotCount()); })
-        .method("void SetMaterialSlotCount(uint)", [](MeshRenderer &c, uint32_t count) { c.SetMaterialSlotCount(count); })
-        .method("void SetMaterialNameAt(uint, const string &in)", [](MeshRenderer &c, uint32_t slot, const std::string &name) { c.SetMaterialNameAt(slot, name); })
-        .method("const string &GetMaterialNameAt(uint) const", [](const MeshRenderer &c, uint32_t slot) -> const std::string & { return c.GetMaterialNameAt(slot); })
-        .method("uint GetMaterialHandleAt(uint) const", [](const MeshRenderer &c, uint32_t slot) -> uint32_t { return c.GetMaterialHandleAt(slot); })
-        .method("Object@ GetTargetObject() const", &MeshRenderer::GetTargetObject)
-        .method("void SetTargetObject(Object@)", [](MeshRenderer &c, EmptyObject *obj) { c.SetTargetObject(obj); })
-        .method("string GetTargetObjectID() const", [](const MeshRenderer &c) -> std::string { return c.GetTargetObjectID().ToString(); })
-        .method("void SetInstanceColor(const Vector4 &in)", &MeshRenderer::SetInstanceColor)
-        .method("const Vector4 &GetInstanceColor() const", &MeshRenderer::GetInstanceColor)
+        .method("void SetPipelineName(const string &in)", SafeCall<&MeshRenderer::SetPipelineName>())
+        .method("const string &GetPipelineName() const", SafeCall<&MeshRenderer::GetPipelineName>())
+        .method("void SetMaterialName(const string &in)", SafeCall<&MeshRenderer::SetMaterialName>())
+        .method("const string &GetMaterialName() const", SafeCall<&MeshRenderer::GetMaterialName>())
+        .method("void SetMaterialHandle(uint)", [](ScriptComponentHandle<MeshRenderer> &cHandle, uint32_t handle) {
+            MeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            MeshRenderer &c = *cPtr; c.SetMaterialHandle(handle); })
+        .method("uint GetMaterialHandle() const", [](const ScriptComponentHandle<MeshRenderer> &cHandle) -> uint32_t {
+            MeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const MeshRenderer &c = *cPtr; return c.GetMaterialHandle(); })
+        .method("uint GetMaterialSlotCount() const", [](const ScriptComponentHandle<MeshRenderer> &cHandle) -> uint32_t {
+            MeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const MeshRenderer &c = *cPtr; return static_cast<uint32_t>(c.GetMaterialSlotCount()); })
+        .method("void SetMaterialSlotCount(uint)", [](ScriptComponentHandle<MeshRenderer> &cHandle, uint32_t count) {
+            MeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            MeshRenderer &c = *cPtr; c.SetMaterialSlotCount(count); })
+        .method("void SetMaterialNameAt(uint, const string &in)", [](ScriptComponentHandle<MeshRenderer> &cHandle, uint32_t slot, const std::string &name) {
+            MeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            MeshRenderer &c = *cPtr; c.SetMaterialNameAt(slot, name); })
+        .method("const string &GetMaterialNameAt(uint) const", [](ScriptComponentHandle<MeshRenderer> &cHandle, uint32_t slot) -> const std::string & {
+            MeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<const std::string &>(); }
+            const MeshRenderer &c = *cPtr; return c.GetMaterialNameAt(slot); })
+        .method("uint GetMaterialHandleAt(uint) const", [](ScriptComponentHandle<MeshRenderer> &cHandle, uint32_t slot) -> uint32_t {
+            MeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const MeshRenderer &c = *cPtr; return c.GetMaterialHandleAt(slot); })
+        .method("Object@ GetTargetObject() const", [](const ScriptComponentHandle<MeshRenderer> &cHandle) -> ScriptObjectHandle * {
+            MeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<ScriptObjectHandle *>(); }
+            const MeshRenderer &c = *cPtr; return ScriptObjectHandle::Create(c.GetTargetObject()); })
+        .method("void SetTargetObject(Object@)", [](ScriptComponentHandle<MeshRenderer> &cHandle, ScriptObjectHandle *obj) {
+            MeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            MeshRenderer &c = *cPtr; c.SetTargetObject(ResolveObjectArg(obj)); })
+        .method("string GetTargetObjectID() const", [](const ScriptComponentHandle<MeshRenderer> &cHandle) -> std::string {
+            MeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::string>(); }
+            const MeshRenderer &c = *cPtr; return c.GetTargetObjectID().ToString(); })
+        .method("void SetInstanceColor(const Vector4 &in)", SafeCall<&MeshRenderer::SetInstanceColor>())
+        .method("const Vector4 &GetInstanceColor() const", SafeCall<&MeshRenderer::GetInstanceColor>())
         // instanceColorBlendModeは 0=Override, 1=Multiply, 2=Add, 3=Subtract
-        .method("void SetInstanceColorBlendMode(int)", [](MeshRenderer &c, int mode) { c.SetInstanceColorBlendMode(static_cast<MeshRenderer::ColorBlendMode>(mode)); })
-        .method("int GetInstanceColorBlendMode() const", [](const MeshRenderer &c) { return static_cast<int>(c.GetInstanceColorBlendMode()); })
-        .method("void SetRenderPriority(int)", [](MeshRenderer &c, int32_t priority) { c.SetRenderPriority(priority); })
-        .method("int GetRenderPriority() const", [](const MeshRenderer &c) -> int32_t { return c.GetRenderPriority(); })
-        .method("void SetAllowInstancing(bool)", &MeshRenderer::SetAllowInstancing)
-        .method("bool GetAllowInstancing() const", &MeshRenderer::GetAllowInstancing)
-        .method("void SetCastShadows(bool)", &MeshRenderer::SetCastShadows)
-        .method("bool GetCastShadows() const", &MeshRenderer::GetCastShadows)
-        .method("uint GetMeshHandle() const", [](const MeshRenderer &c) -> uint32_t { return c.GetMeshHandle(); })
-        .method("Matrix4x4 GetWorldMatrix() const", &MeshRenderer::GetWorldMatrix);
+        .method("void SetInstanceColorBlendMode(int)", [](ScriptComponentHandle<MeshRenderer> &cHandle, int mode) {
+            MeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            MeshRenderer &c = *cPtr; c.SetInstanceColorBlendMode(static_cast<MeshRenderer::ColorBlendMode>(mode)); })
+        .method("int GetInstanceColorBlendMode() const", [](const ScriptComponentHandle<MeshRenderer> &cHandle) {
+            MeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const MeshRenderer &c = *cPtr; return static_cast<int>(c.GetInstanceColorBlendMode()); })
+        .method("void SetRenderPriority(int)", [](ScriptComponentHandle<MeshRenderer> &cHandle, int32_t priority) {
+            MeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            MeshRenderer &c = *cPtr; c.SetRenderPriority(priority); })
+        .method("int GetRenderPriority() const", [](const ScriptComponentHandle<MeshRenderer> &cHandle) -> int32_t {
+            MeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int32_t>(); }
+            const MeshRenderer &c = *cPtr; return c.GetRenderPriority(); })
+        .method("void SetAllowInstancing(bool)", SafeCall<&MeshRenderer::SetAllowInstancing>())
+        .method("bool GetAllowInstancing() const", SafeCall<&MeshRenderer::GetAllowInstancing>())
+        .method("void SetCastShadows(bool)", SafeCall<&MeshRenderer::SetCastShadows>())
+        .method("bool GetCastShadows() const", SafeCall<&MeshRenderer::GetCastShadows>())
+        .method("uint GetMeshHandle() const", [](const ScriptComponentHandle<MeshRenderer> &cHandle) -> uint32_t {
+            MeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const MeshRenderer &c = *cPtr; return c.GetMeshHandle(); })
+        .method("Matrix4x4 GetWorldMatrix() const", SafeCall<&MeshRenderer::GetWorldMatrix>());
 
     RegisterComponentType<SkinnedMeshRenderer>(engine, "SkinnedMeshRenderer")
-        .method("void SetPipelineName(const string &in)", &SkinnedMeshRenderer::SetPipelineName)
-        .method("const string &GetPipelineName() const", &SkinnedMeshRenderer::GetPipelineName)
-        .method("void SetMaterialName(const string &in)", &SkinnedMeshRenderer::SetMaterialName)
-        .method("const string &GetMaterialName() const", &SkinnedMeshRenderer::GetMaterialName)
-        .method("void SetMaterialHandle(uint)", [](SkinnedMeshRenderer &c, uint32_t handle) { c.SetMaterialHandle(handle); })
-        .method("uint GetMaterialHandle() const", [](const SkinnedMeshRenderer &c) -> uint32_t { return c.GetMaterialHandle(); })
-        .method("uint GetMaterialSlotCount() const", [](const SkinnedMeshRenderer &c) -> uint32_t { return static_cast<uint32_t>(c.GetMaterialSlotCount()); })
-        .method("void SetMaterialSlotCount(uint)", [](SkinnedMeshRenderer &c, uint32_t count) { c.SetMaterialSlotCount(count); })
-        .method("void SetMaterialNameAt(uint, const string &in)", [](SkinnedMeshRenderer &c, uint32_t slot, const std::string &name) { c.SetMaterialNameAt(slot, name); })
-        .method("const string &GetMaterialNameAt(uint) const", [](const SkinnedMeshRenderer &c, uint32_t slot) -> const std::string & { return c.GetMaterialNameAt(slot); })
-        .method("uint GetMaterialHandleAt(uint) const", [](const SkinnedMeshRenderer &c, uint32_t slot) -> uint32_t { return c.GetMaterialHandleAt(slot); })
-        .method("void SetBlendShapeWeight(const string &in, float)", &SkinnedMeshRenderer::SetBlendShapeWeight)
-        .method("float GetBlendShapeWeight(const string &in) const", &SkinnedMeshRenderer::GetBlendShapeWeight)
-        .method("uint GetBlendShapeCount() const", [](const SkinnedMeshRenderer &c) -> uint32_t { return static_cast<uint32_t>(c.GetBlendShapes().size()); })
-        .method("string GetBlendShapeNameAt(uint) const", [](const SkinnedMeshRenderer &c, uint32_t index) -> std::string {
+        .method("void SetPipelineName(const string &in)", SafeCall<&SkinnedMeshRenderer::SetPipelineName>())
+        .method("const string &GetPipelineName() const", SafeCall<&SkinnedMeshRenderer::GetPipelineName>())
+        .method("void SetMaterialName(const string &in)", SafeCall<&SkinnedMeshRenderer::SetMaterialName>())
+        .method("const string &GetMaterialName() const", SafeCall<&SkinnedMeshRenderer::GetMaterialName>())
+        .method("void SetMaterialHandle(uint)", [](ScriptComponentHandle<SkinnedMeshRenderer> &cHandle, uint32_t handle) {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            SkinnedMeshRenderer &c = *cPtr; c.SetMaterialHandle(handle); })
+        .method("uint GetMaterialHandle() const", [](const ScriptComponentHandle<SkinnedMeshRenderer> &cHandle) -> uint32_t {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const SkinnedMeshRenderer &c = *cPtr; return c.GetMaterialHandle(); })
+        .method("uint GetMaterialSlotCount() const", [](const ScriptComponentHandle<SkinnedMeshRenderer> &cHandle) -> uint32_t {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const SkinnedMeshRenderer &c = *cPtr; return static_cast<uint32_t>(c.GetMaterialSlotCount()); })
+        .method("void SetMaterialSlotCount(uint)", [](ScriptComponentHandle<SkinnedMeshRenderer> &cHandle, uint32_t count) {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            SkinnedMeshRenderer &c = *cPtr; c.SetMaterialSlotCount(count); })
+        .method("void SetMaterialNameAt(uint, const string &in)", [](ScriptComponentHandle<SkinnedMeshRenderer> &cHandle, uint32_t slot, const std::string &name) {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            SkinnedMeshRenderer &c = *cPtr; c.SetMaterialNameAt(slot, name); })
+        .method("const string &GetMaterialNameAt(uint) const", [](ScriptComponentHandle<SkinnedMeshRenderer> &cHandle, uint32_t slot) -> const std::string & {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<const std::string &>(); }
+            const SkinnedMeshRenderer &c = *cPtr; return c.GetMaterialNameAt(slot); })
+        .method("uint GetMaterialHandleAt(uint) const", [](ScriptComponentHandle<SkinnedMeshRenderer> &cHandle, uint32_t slot) -> uint32_t {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const SkinnedMeshRenderer &c = *cPtr; return c.GetMaterialHandleAt(slot); })
+        .method("void SetBlendShapeWeight(const string &in, float)", SafeCall<&SkinnedMeshRenderer::SetBlendShapeWeight>())
+        .method("float GetBlendShapeWeight(const string &in) const", SafeCall<&SkinnedMeshRenderer::GetBlendShapeWeight>())
+        .method("uint GetBlendShapeCount() const", [](const ScriptComponentHandle<SkinnedMeshRenderer> &cHandle) -> uint32_t {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const SkinnedMeshRenderer &c = *cPtr; return static_cast<uint32_t>(c.GetBlendShapes().size()); })
+        .method("string GetBlendShapeNameAt(uint) const", [](ScriptComponentHandle<SkinnedMeshRenderer> &cHandle, uint32_t index) -> std::string {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::string>(); }
+            const SkinnedMeshRenderer &c = *cPtr;
             const auto &shapes = c.GetBlendShapes();
             return index < shapes.size() ? shapes[index].name : std::string();
         })
-        .method("float GetBlendShapeWeightAt(uint) const", [](const SkinnedMeshRenderer &c, uint32_t index) -> float {
+        .method("float GetBlendShapeWeightAt(uint) const", [](ScriptComponentHandle<SkinnedMeshRenderer> &cHandle, uint32_t index) -> float {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const SkinnedMeshRenderer &c = *cPtr;
             const auto &shapes = c.GetBlendShapes();
             return index < shapes.size() ? shapes[index].weight : 0.0f;
         })
-        .method("void SetInstanceColor(const Vector4 &in)", &SkinnedMeshRenderer::SetInstanceColor)
-        .method("const Vector4 &GetInstanceColor() const", &SkinnedMeshRenderer::GetInstanceColor)
+        .method("void SetInstanceColor(const Vector4 &in)", SafeCall<&SkinnedMeshRenderer::SetInstanceColor>())
+        .method("const Vector4 &GetInstanceColor() const", SafeCall<&SkinnedMeshRenderer::GetInstanceColor>())
         // instanceColorBlendModeは 0=Override, 1=Multiply, 2=Add, 3=Subtract
-        .method("void SetInstanceColorBlendMode(int)", [](SkinnedMeshRenderer &c, int mode) { c.SetInstanceColorBlendMode(static_cast<SkinnedMeshRenderer::ColorBlendMode>(mode)); })
-        .method("int GetInstanceColorBlendMode() const", [](const SkinnedMeshRenderer &c) { return static_cast<int>(c.GetInstanceColorBlendMode()); })
-        .method("void SetRenderPriority(int)", [](SkinnedMeshRenderer &c, int32_t priority) { c.SetRenderPriority(priority); })
-        .method("int GetRenderPriority() const", [](const SkinnedMeshRenderer &c) -> int32_t { return c.GetRenderPriority(); })
-        .method("void SetAllowInstancing(bool)", &SkinnedMeshRenderer::SetAllowInstancing)
-        .method("bool GetAllowInstancing() const", &SkinnedMeshRenderer::GetAllowInstancing)
-        .method("void SetCastShadows(bool)", &SkinnedMeshRenderer::SetCastShadows)
-        .method("bool GetCastShadows() const", &SkinnedMeshRenderer::GetCastShadows)
-        .method("Object@ GetTargetObject() const", &SkinnedMeshRenderer::GetTargetObject)
-        .method("void SetTargetObject(Object@)", [](SkinnedMeshRenderer &c, EmptyObject *obj) { c.SetTargetObject(obj); })
-        .method("string GetTargetObjectID() const", [](const SkinnedMeshRenderer &c) -> std::string { return c.GetTargetObjectID().ToString(); })
-        .method("void SetQuality(SkinQuality)", [](SkinnedMeshRenderer &c, int quality) { c.SetQuality(static_cast<SkinQuality>(quality)); })
-        .method("SkinQuality GetQuality() const", [](const SkinnedMeshRenderer &c) -> int { return static_cast<int>(c.GetQuality()); })
-        .method("Animator@ GetAnimator() const", &SkinnedMeshRenderer::GetAnimator)
-        .method("void ResetAnimationToBindPose()", &SkinnedMeshRenderer::ResetAnimationToBindPose)
-        .method("uint GetMeshHandle() const", [](const SkinnedMeshRenderer &c) -> uint32_t { return c.GetMeshHandle(); })
-        .method("Matrix4x4 GetWorldMatrix() const", &SkinnedMeshRenderer::GetWorldMatrix);
+        .method("void SetInstanceColorBlendMode(int)", [](ScriptComponentHandle<SkinnedMeshRenderer> &cHandle, int mode) {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            SkinnedMeshRenderer &c = *cPtr; c.SetInstanceColorBlendMode(static_cast<SkinnedMeshRenderer::ColorBlendMode>(mode)); })
+        .method("int GetInstanceColorBlendMode() const", [](const ScriptComponentHandle<SkinnedMeshRenderer> &cHandle) {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const SkinnedMeshRenderer &c = *cPtr; return static_cast<int>(c.GetInstanceColorBlendMode()); })
+        .method("void SetRenderPriority(int)", [](ScriptComponentHandle<SkinnedMeshRenderer> &cHandle, int32_t priority) {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            SkinnedMeshRenderer &c = *cPtr; c.SetRenderPriority(priority); })
+        .method("int GetRenderPriority() const", [](const ScriptComponentHandle<SkinnedMeshRenderer> &cHandle) -> int32_t {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int32_t>(); }
+            const SkinnedMeshRenderer &c = *cPtr; return c.GetRenderPriority(); })
+        .method("void SetAllowInstancing(bool)", SafeCall<&SkinnedMeshRenderer::SetAllowInstancing>())
+        .method("bool GetAllowInstancing() const", SafeCall<&SkinnedMeshRenderer::GetAllowInstancing>())
+        .method("void SetCastShadows(bool)", SafeCall<&SkinnedMeshRenderer::SetCastShadows>())
+        .method("bool GetCastShadows() const", SafeCall<&SkinnedMeshRenderer::GetCastShadows>())
+        .method("Object@ GetTargetObject() const", [](const ScriptComponentHandle<SkinnedMeshRenderer> &cHandle) -> ScriptObjectHandle * {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<ScriptObjectHandle *>(); }
+            const SkinnedMeshRenderer &c = *cPtr; return ScriptObjectHandle::Create(c.GetTargetObject()); })
+        .method("void SetTargetObject(Object@)", [](ScriptComponentHandle<SkinnedMeshRenderer> &cHandle, ScriptObjectHandle *obj) {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            SkinnedMeshRenderer &c = *cPtr; c.SetTargetObject(ResolveObjectArg(obj)); })
+        .method("string GetTargetObjectID() const", [](const ScriptComponentHandle<SkinnedMeshRenderer> &cHandle) -> std::string {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::string>(); }
+            const SkinnedMeshRenderer &c = *cPtr; return c.GetTargetObjectID().ToString(); })
+        .method("void SetQuality(SkinQuality)", [](ScriptComponentHandle<SkinnedMeshRenderer> &cHandle, int quality) {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            SkinnedMeshRenderer &c = *cPtr; c.SetQuality(static_cast<SkinQuality>(quality)); })
+        .method("SkinQuality GetQuality() const", [](const ScriptComponentHandle<SkinnedMeshRenderer> &cHandle) -> int {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const SkinnedMeshRenderer &c = *cPtr; return static_cast<int>(c.GetQuality()); })
+        .method("Animator@ GetAnimator() const", [](const ScriptComponentHandle<SkinnedMeshRenderer> &cHandle) -> ScriptComponentHandle<Animator> * {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return nullptr; }
+            return ScriptComponentHandle<Animator>::Create(cPtr->GetAnimator());
+        })
+        .method("void ResetAnimationToBindPose()", SafeCall<&SkinnedMeshRenderer::ResetAnimationToBindPose>())
+        .method("uint GetMeshHandle() const", [](const ScriptComponentHandle<SkinnedMeshRenderer> &cHandle) -> uint32_t {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const SkinnedMeshRenderer &c = *cPtr; return c.GetMeshHandle(); })
+        .method("Matrix4x4 GetWorldMatrix() const", SafeCall<&SkinnedMeshRenderer::GetWorldMatrix>());
 
     RegisterComponentType<Camera2D>(engine, "Camera2D")
-        .method("void SetSize(float, float)", &Camera2D::SetSize)
-        .method("void SetNearClip(float)", &Camera2D::SetNearClip)
-        .method("void SetFarClip(float)", &Camera2D::SetFarClip)
-        .method("float GetWidth() const", &Camera2D::GetWidth)
-        .method("float GetHeight() const", &Camera2D::GetHeight)
-        .method("float GetNearClip() const", &Camera2D::GetNearClip)
-        .method("float GetFarClip() const", &Camera2D::GetFarClip)
-        .method("void SetAutoSyncSize(bool)", &Camera2D::SetAutoSyncSize)
-        .method("bool GetAutoSyncSize() const", &Camera2D::GetAutoSyncSize);
+        .method("void SetSize(float, float)", SafeCall<&Camera2D::SetSize>())
+        .method("void SetNearClip(float)", SafeCall<&Camera2D::SetNearClip>())
+        .method("void SetFarClip(float)", SafeCall<&Camera2D::SetFarClip>())
+        .method("float GetWidth() const", SafeCall<&Camera2D::GetWidth>())
+        .method("float GetHeight() const", SafeCall<&Camera2D::GetHeight>())
+        .method("float GetNearClip() const", SafeCall<&Camera2D::GetNearClip>())
+        .method("float GetFarClip() const", SafeCall<&Camera2D::GetFarClip>())
+        .method("void SetAutoSyncSize(bool)", SafeCall<&Camera2D::SetAutoSyncSize>())
+        .method("bool GetAutoSyncSize() const", SafeCall<&Camera2D::GetAutoSyncSize>());
 
     RegisterComponentType<CameraRenderer>(engine, "CameraRenderer")
-        .method("void SetPipelineName(const string &in)", &CameraRenderer::SetPipelineName)
-        .method("const string &GetPipelineName() const", &CameraRenderer::GetPipelineName)
-        .method("void SetTargetObject(Object@)", [](CameraRenderer &c, EmptyObject *obj) { c.SetTargetObject(obj); })
-        .method("Object@ GetTargetObject() const", &CameraRenderer::GetTargetObject)
-        .method("string GetTargetObjectID() const", [](const CameraRenderer &c) -> std::string { return c.GetTargetObjectID().ToString(); })
-        .method("void SetBindVariableNames(array<string>@)", [](CameraRenderer &c, CScriptArray *names) { c.SetBindVariableNames(StringArrayToVector(names)); })
-        .method("array<string>@ GetBindVariableNames() const", [](const CameraRenderer &c) -> CScriptArray * { return MakeStringArray(c.GetBindVariableNames()); })
-        .method("Vector3 GetWorldPosition() const", &CameraRenderer::GetWorldPosition)
-        .method("const Matrix4x4 &GetViewProjectionMatrix() const", &CameraRenderer::GetViewProjectionMatrix)
-        .method("float GetNearClip() const", &CameraRenderer::GetNearClip)
-        .method("float GetFarClip() const", &CameraRenderer::GetFarClip);
+        .method("void SetPipelineName(const string &in)", SafeCall<&CameraRenderer::SetPipelineName>())
+        .method("const string &GetPipelineName() const", SafeCall<&CameraRenderer::GetPipelineName>())
+        .method("void SetTargetObject(Object@)", [](ScriptComponentHandle<CameraRenderer> &cHandle, ScriptObjectHandle *obj) {
+            CameraRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            CameraRenderer &c = *cPtr; c.SetTargetObject(ResolveObjectArg(obj)); })
+        .method("Object@ GetTargetObject() const", [](const ScriptComponentHandle<CameraRenderer> &cHandle) -> ScriptObjectHandle * {
+            CameraRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<ScriptObjectHandle *>(); }
+            const CameraRenderer &c = *cPtr; return ScriptObjectHandle::Create(c.GetTargetObject()); })
+        .method("string GetTargetObjectID() const", [](const ScriptComponentHandle<CameraRenderer> &cHandle) -> std::string {
+            CameraRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::string>(); }
+            const CameraRenderer &c = *cPtr; return c.GetTargetObjectID().ToString(); })
+        .method("void SetBindVariableNames(array<string>@)", [](ScriptComponentHandle<CameraRenderer> &cHandle, CScriptArray *names) {
+            CameraRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            CameraRenderer &c = *cPtr; c.SetBindVariableNames(StringArrayToVector(names)); })
+        .method("array<string>@ GetBindVariableNames() const", [](const ScriptComponentHandle<CameraRenderer> &cHandle) -> CScriptArray * {
+            CameraRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<CScriptArray *>(); }
+            const CameraRenderer &c = *cPtr; return MakeStringArray(c.GetBindVariableNames()); })
+        .method("Vector3 GetWorldPosition() const", SafeCall<&CameraRenderer::GetWorldPosition>())
+        .method("const Matrix4x4 &GetViewProjectionMatrix() const", SafeCall<&CameraRenderer::GetViewProjectionMatrix>())
+        .method("float GetNearClip() const", SafeCall<&CameraRenderer::GetNearClip>())
+        .method("float GetFarClip() const", SafeCall<&CameraRenderer::GetFarClip>());
 
     RegisterComponentType<CameraController>(engine, "CameraController")
-        .method("bool IsControllable() const", &CameraController::IsControllable)
-        .method("void AddFollowTarget(Object@)", [](CameraController &c, EmptyObject *obj) {
-            if (obj) c.AddFollowTarget(obj->GetObjectID());
+        .method("bool IsControllable() const", SafeCall<&CameraController::IsControllable>())
+        .method("void AddFollowTarget(Object@)", [](ScriptComponentHandle<CameraController> &cHandle, ScriptObjectHandle *obj) {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            CameraController &c = *cPtr;
+            EmptyObject *resolved = ResolveObjectArg(obj);
+            if (resolved) c.AddFollowTarget(resolved->GetObjectID());
         })
-        .method("void RemoveFollowTarget(uint)", [](CameraController &c, uint32_t index) { c.RemoveFollowTarget(index); })
-        .method("uint GetFollowTargetCount() const", [](const CameraController &c) -> uint32_t {
+        .method("void RemoveFollowTarget(uint)", [](ScriptComponentHandle<CameraController> &cHandle, uint32_t index) {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            CameraController &c = *cPtr; c.RemoveFollowTarget(index); })
+        .method("uint GetFollowTargetCount() const", [](const ScriptComponentHandle<CameraController> &cHandle) -> uint32_t {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const CameraController &c = *cPtr;
             return static_cast<uint32_t>(c.GetFollowTargets().size());
         })
-        .method("Object@ GetFollowTargetObject(uint) const", [](const CameraController &c, uint32_t index) -> EmptyObject * {
+        .method("Object@ GetFollowTargetObject(uint) const", [](ScriptComponentHandle<CameraController> &cHandle, uint32_t index) -> ScriptObjectHandle * {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<ScriptObjectHandle *>(); }
+            const CameraController &c = *cPtr;
             const auto &targets = c.GetFollowTargets();
             if (index >= targets.size() || !gCurrentSceneContext) return nullptr;
-            return gCurrentSceneContext->GetSceneObject(targets[index].objectID);
+            return ScriptObjectHandle::Create(gCurrentSceneContext->GetSceneObject(targets[index].objectID));
         })
-        .method("void SetFollowPositionEnable(uint, bool, bool, bool)", [](CameraController &c, uint32_t index, bool x, bool y, bool z) {
+        .method("void SetFollowPositionEnable(uint, bool, bool, bool)", [](ScriptComponentHandle<CameraController> &cHandle, uint32_t index, bool x, bool y, bool z) {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            CameraController &c = *cPtr;
             auto &targets = c.GetFollowTargets();
             if (index >= targets.size()) return;
             targets[index].followPositionX = x;
             targets[index].followPositionY = y;
             targets[index].followPositionZ = z;
         })
-        .method("void GetFollowPositionEnable(uint, bool &out, bool &out, bool &out) const", [](const CameraController &c, uint32_t index, bool &x, bool &y, bool &z) {
+        .method("void GetFollowPositionEnable(uint, bool &out, bool &out, bool &out) const", [](ScriptComponentHandle<CameraController> &cHandle, uint32_t index, bool &x, bool &y, bool &z) {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            const CameraController &c = *cPtr;
             x = y = z = false;
             const auto &targets = c.GetFollowTargets();
             if (index >= targets.size()) return;
@@ -1155,14 +1639,20 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             y = targets[index].followPositionY;
             z = targets[index].followPositionZ;
         })
-        .method("void SetFollowRotationEnable(uint, bool, bool, bool)", [](CameraController &c, uint32_t index, bool x, bool y, bool z) {
+        .method("void SetFollowRotationEnable(uint, bool, bool, bool)", [](ScriptComponentHandle<CameraController> &cHandle, uint32_t index, bool x, bool y, bool z) {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            CameraController &c = *cPtr;
             auto &targets = c.GetFollowTargets();
             if (index >= targets.size()) return;
             targets[index].followRotationX = x;
             targets[index].followRotationY = y;
             targets[index].followRotationZ = z;
         })
-        .method("void GetFollowRotationEnable(uint, bool &out, bool &out, bool &out) const", [](const CameraController &c, uint32_t index, bool &x, bool &y, bool &z) {
+        .method("void GetFollowRotationEnable(uint, bool &out, bool &out, bool &out) const", [](ScriptComponentHandle<CameraController> &cHandle, uint32_t index, bool &x, bool &y, bool &z) {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            const CameraController &c = *cPtr;
             x = y = z = false;
             const auto &targets = c.GetFollowTargets();
             if (index >= targets.size()) return;
@@ -1170,253 +1660,384 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             y = targets[index].followRotationY;
             z = targets[index].followRotationZ;
         })
-        .method("void SetPositionOffset(const Vector3 &in)", &CameraController::SetPositionOffset)
-        .method("const Vector3 &GetPositionOffset() const", &CameraController::GetPositionOffset)
-        .method("void SetRotationOffset(const Vector3 &in)", &CameraController::SetRotationOffset)
-        .method("const Vector3 &GetRotationOffset() const", &CameraController::GetRotationOffset)
-        .method("void SetTargetFovY(float)", &CameraController::SetTargetFovY)
-        .method("float GetTargetFovY() const", &CameraController::GetTargetFovY)
-        .method("void SetMoveStrength(float)", [](CameraController &c, float v) {
+        .method("void SetPositionOffset(const Vector3 &in)", SafeCall<&CameraController::SetPositionOffset>())
+        .method("const Vector3 &GetPositionOffset() const", SafeCall<&CameraController::GetPositionOffset>())
+        .method("void SetRotationOffset(const Vector3 &in)", SafeCall<&CameraController::SetRotationOffset>())
+        .method("const Vector3 &GetRotationOffset() const", SafeCall<&CameraController::GetRotationOffset>())
+        .method("void SetTargetFovY(float)", SafeCall<&CameraController::SetTargetFovY>())
+        .method("float GetTargetFovY() const", SafeCall<&CameraController::GetTargetFovY>())
+        .method("void SetMoveStrength(float)", [](ScriptComponentHandle<CameraController> &cHandle, float v) {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            CameraController &c = *cPtr;
             c.GetMoveStrength().usePerAxis = false;
             c.GetMoveStrength().all = v;
         })
-        .method("float GetMoveStrength() const", [](const CameraController &c) -> float { return c.GetMoveStrength().all; })
-        .method("void SetMoveStrengthPerAxis(const Vector3 &in)", [](CameraController &c, const Vector3 &v) {
+        .method("float GetMoveStrength() const", [](const ScriptComponentHandle<CameraController> &cHandle) -> float {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const CameraController &c = *cPtr; return c.GetMoveStrength().all; })
+        .method("void SetMoveStrengthPerAxis(const Vector3 &in)", [](ScriptComponentHandle<CameraController> &cHandle, const Vector3 &v) {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            CameraController &c = *cPtr;
             c.GetMoveStrength().usePerAxis = true;
             c.GetMoveStrength().perAxis = v;
         })
-        .method("Vector3 GetMoveStrengthPerAxis() const", [](const CameraController &c) -> Vector3 { return c.GetMoveStrength().perAxis; })
-        .method("void SetMoveStrengthUsePerAxis(bool)", [](CameraController &c, bool usePerAxis) { c.GetMoveStrength().usePerAxis = usePerAxis; })
-        .method("bool GetMoveStrengthUsePerAxis() const", [](const CameraController &c) -> bool { return c.GetMoveStrength().usePerAxis; })
-        .method("void SetRotateStrength(float)", [](CameraController &c, float v) {
+        .method("Vector3 GetMoveStrengthPerAxis() const", [](const ScriptComponentHandle<CameraController> &cHandle) -> Vector3 {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<Vector3>(); }
+            const CameraController &c = *cPtr; return c.GetMoveStrength().perAxis; })
+        .method("void SetMoveStrengthUsePerAxis(bool)", [](ScriptComponentHandle<CameraController> &cHandle, bool usePerAxis) {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            CameraController &c = *cPtr; c.GetMoveStrength().usePerAxis = usePerAxis; })
+        .method("bool GetMoveStrengthUsePerAxis() const", [](const ScriptComponentHandle<CameraController> &cHandle) -> bool {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
+            const CameraController &c = *cPtr; return c.GetMoveStrength().usePerAxis; })
+        .method("void SetRotateStrength(float)", [](ScriptComponentHandle<CameraController> &cHandle, float v) {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            CameraController &c = *cPtr;
             c.GetRotateStrength().usePerAxis = false;
             c.GetRotateStrength().all = v;
         })
-        .method("float GetRotateStrength() const", [](const CameraController &c) -> float { return c.GetRotateStrength().all; })
-        .method("void SetRotateStrengthPerAxis(const Vector3 &in)", [](CameraController &c, const Vector3 &v) {
+        .method("float GetRotateStrength() const", [](const ScriptComponentHandle<CameraController> &cHandle) -> float {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const CameraController &c = *cPtr; return c.GetRotateStrength().all; })
+        .method("void SetRotateStrengthPerAxis(const Vector3 &in)", [](ScriptComponentHandle<CameraController> &cHandle, const Vector3 &v) {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            CameraController &c = *cPtr;
             c.GetRotateStrength().usePerAxis = true;
             c.GetRotateStrength().perAxis = v;
         })
-        .method("Vector3 GetRotateStrengthPerAxis() const", [](const CameraController &c) -> Vector3 { return c.GetRotateStrength().perAxis; })
-        .method("void SetRotateStrengthUsePerAxis(bool)", [](CameraController &c, bool usePerAxis) { c.GetRotateStrength().usePerAxis = usePerAxis; })
-        .method("bool GetRotateStrengthUsePerAxis() const", [](const CameraController &c) -> bool { return c.GetRotateStrength().usePerAxis; })
-        .method("void SetFovLerpFactor(float)", &CameraController::SetFovLerpFactor)
-        .method("float GetFovLerpFactor() const", &CameraController::GetFovLerpFactor);
+        .method("Vector3 GetRotateStrengthPerAxis() const", [](const ScriptComponentHandle<CameraController> &cHandle) -> Vector3 {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<Vector3>(); }
+            const CameraController &c = *cPtr; return c.GetRotateStrength().perAxis; })
+        .method("void SetRotateStrengthUsePerAxis(bool)", [](ScriptComponentHandle<CameraController> &cHandle, bool usePerAxis) {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            CameraController &c = *cPtr; c.GetRotateStrength().usePerAxis = usePerAxis; })
+        .method("bool GetRotateStrengthUsePerAxis() const", [](const ScriptComponentHandle<CameraController> &cHandle) -> bool {
+            CameraController *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
+            const CameraController &c = *cPtr; return c.GetRotateStrength().usePerAxis; })
+        .method("void SetFovLerpFactor(float)", SafeCall<&CameraController::SetFovLerpFactor>())
+        .method("float GetFovLerpFactor() const", SafeCall<&CameraController::GetFovLerpFactor>());
 
     RegisterComponentType<Light>(engine, "Light")
-        .method("void SetType(LightType)", &Light::SetType)
-        .method("LightType GetType() const", &Light::GetType)
-        .method("void SetColor(const Vector4 &in)", &Light::SetColor)
-        .method("const Vector4 &GetColor() const", &Light::GetColor)
-        .method("void SetIntensity(float)", &Light::SetIntensity)
-        .method("float GetIntensity() const", &Light::GetIntensity)
-        .method("void SetRadius(float)", &Light::SetRadius)
-        .method("float GetRadius() const", &Light::GetRadius)
-        .method("void SetDistance(float)", &Light::SetDistance)
-        .method("float GetDistance() const", &Light::GetDistance)
-        .method("void SetDecay(float)", &Light::SetDecay)
-        .method("float GetDecay() const", &Light::GetDecay)
-        .method("void SetInnerAngle(float)", &Light::SetInnerAngle)
-        .method("float GetInnerAngle() const", &Light::GetInnerAngle)
-        .method("void SetOuterAngle(float)", &Light::SetOuterAngle)
-        .method("float GetOuterAngle() const", &Light::GetOuterAngle)
-        .method("void SetSourceRadius(float)", &Light::SetSourceRadius)
-        .method("float GetSourceRadius() const", &Light::GetSourceRadius)
-        .method("void SetSourceWidth(float)", &Light::SetSourceWidth)
-        .method("float GetSourceWidth() const", &Light::GetSourceWidth)
-        .method("void SetSourceHeight(float)", &Light::SetSourceHeight)
-        .method("float GetSourceHeight() const", &Light::GetSourceHeight)
-        .method("void SetSourceLength(float)", &Light::SetSourceLength)
-        .method("float GetSourceLength() const", &Light::GetSourceLength)
-        .method("void SetSourceDepth(float)", &Light::SetSourceDepth)
-        .method("float GetSourceDepth() const", &Light::GetSourceDepth)
-        .method("void SetCastShadows(bool)", &Light::SetCastShadows)
-        .method("bool IsCastShadows() const", &Light::IsCastShadows)
-        .method("void SetShadowDistance(float)", &Light::SetShadowDistance)
-        .method("float GetShadowDistance() const", &Light::GetShadowDistance)
-        .method("void SetShadowMapResolution(uint)", &Light::SetShadowMapResolution)
-        .method("uint GetShadowMapResolution() const", &Light::GetShadowMapResolution)
-        .method("void SetShadowBias(float)", &Light::SetShadowBias)
-        .method("float GetShadowBias() const", &Light::GetShadowBias)
-        .method("void SetShadowSoftness(float)", &Light::SetShadowSoftness)
-        .method("float GetShadowSoftness() const", &Light::GetShadowSoftness)
-        .method("float GetEffectiveShadowSoftness() const", &Light::GetEffectiveShadowSoftness);
+        .method("void SetType(LightType)", SafeCall<&Light::SetType>())
+        .method("LightType GetType() const", SafeCall<&Light::GetType>())
+        .method("void SetColor(const Vector4 &in)", SafeCall<&Light::SetColor>())
+        .method("const Vector4 &GetColor() const", SafeCall<&Light::GetColor>())
+        .method("void SetIntensity(float)", SafeCall<&Light::SetIntensity>())
+        .method("float GetIntensity() const", SafeCall<&Light::GetIntensity>())
+        .method("void SetRadius(float)", SafeCall<&Light::SetRadius>())
+        .method("float GetRadius() const", SafeCall<&Light::GetRadius>())
+        .method("void SetDistance(float)", SafeCall<&Light::SetDistance>())
+        .method("float GetDistance() const", SafeCall<&Light::GetDistance>())
+        .method("void SetDecay(float)", SafeCall<&Light::SetDecay>())
+        .method("float GetDecay() const", SafeCall<&Light::GetDecay>())
+        .method("void SetInnerAngle(float)", SafeCall<&Light::SetInnerAngle>())
+        .method("float GetInnerAngle() const", SafeCall<&Light::GetInnerAngle>())
+        .method("void SetOuterAngle(float)", SafeCall<&Light::SetOuterAngle>())
+        .method("float GetOuterAngle() const", SafeCall<&Light::GetOuterAngle>())
+        .method("void SetSourceRadius(float)", SafeCall<&Light::SetSourceRadius>())
+        .method("float GetSourceRadius() const", SafeCall<&Light::GetSourceRadius>())
+        .method("void SetSourceWidth(float)", SafeCall<&Light::SetSourceWidth>())
+        .method("float GetSourceWidth() const", SafeCall<&Light::GetSourceWidth>())
+        .method("void SetSourceHeight(float)", SafeCall<&Light::SetSourceHeight>())
+        .method("float GetSourceHeight() const", SafeCall<&Light::GetSourceHeight>())
+        .method("void SetSourceLength(float)", SafeCall<&Light::SetSourceLength>())
+        .method("float GetSourceLength() const", SafeCall<&Light::GetSourceLength>())
+        .method("void SetSourceDepth(float)", SafeCall<&Light::SetSourceDepth>())
+        .method("float GetSourceDepth() const", SafeCall<&Light::GetSourceDepth>())
+        .method("void SetCastShadows(bool)", SafeCall<&Light::SetCastShadows>())
+        .method("bool IsCastShadows() const", SafeCall<&Light::IsCastShadows>())
+        .method("void SetShadowDistance(float)", SafeCall<&Light::SetShadowDistance>())
+        .method("float GetShadowDistance() const", SafeCall<&Light::GetShadowDistance>())
+        .method("void SetShadowMapResolution(uint)", SafeCall<&Light::SetShadowMapResolution>())
+        .method("uint GetShadowMapResolution() const", SafeCall<&Light::GetShadowMapResolution>())
+        .method("void SetShadowBias(float)", SafeCall<&Light::SetShadowBias>())
+        .method("float GetShadowBias() const", SafeCall<&Light::GetShadowBias>())
+        .method("void SetShadowSoftness(float)", SafeCall<&Light::SetShadowSoftness>())
+        .method("float GetShadowSoftness() const", SafeCall<&Light::GetShadowSoftness>())
+        .method("float GetEffectiveShadowSoftness() const", SafeCall<&Light::GetEffectiveShadowSoftness>());
 
     RegisterComponentType<LightRenderer>(engine, "LightRenderer")
-        .method("void SetPipelineName(const string &in)", &LightRenderer::SetPipelineName)
-        .method("const string &GetPipelineName() const", &LightRenderer::GetPipelineName)
-        .method("void SetTargetObject(Object@)", [](LightRenderer &c, EmptyObject *obj) { c.SetTargetObject(obj); })
-        .method("Object@ GetTargetObject() const", &LightRenderer::GetTargetObject)
-        .method("string GetTargetObjectID() const", [](const LightRenderer &c) -> std::string { return c.GetTargetObjectID().ToString(); })
-        .method("Light@ GetLight() const", &LightRenderer::GetLight)
-        .method("LightType GetLightType() const", &LightRenderer::GetLightType)
-        .method("Vector3 GetWorldPosition() const", &LightRenderer::GetWorldPosition)
-        .method("Vector3 GetWorldDirection() const", &LightRenderer::GetWorldDirection)
-        .method("Vector3 GetWorldRight() const", &LightRenderer::GetWorldRight)
-        .method("Vector3 GetWorldUp() const", &LightRenderer::GetWorldUp);
+        .method("void SetPipelineName(const string &in)", SafeCall<&LightRenderer::SetPipelineName>())
+        .method("const string &GetPipelineName() const", SafeCall<&LightRenderer::GetPipelineName>())
+        .method("void SetTargetObject(Object@)", [](ScriptComponentHandle<LightRenderer> &cHandle, ScriptObjectHandle *obj) {
+            LightRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            LightRenderer &c = *cPtr; c.SetTargetObject(ResolveObjectArg(obj)); })
+        .method("Object@ GetTargetObject() const", [](const ScriptComponentHandle<LightRenderer> &cHandle) -> ScriptObjectHandle * {
+            LightRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<ScriptObjectHandle *>(); }
+            const LightRenderer &c = *cPtr; return ScriptObjectHandle::Create(c.GetTargetObject()); })
+        .method("string GetTargetObjectID() const", [](const ScriptComponentHandle<LightRenderer> &cHandle) -> std::string {
+            LightRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::string>(); }
+            const LightRenderer &c = *cPtr; return c.GetTargetObjectID().ToString(); })
+        .method("Light@ GetLight() const", [](const ScriptComponentHandle<LightRenderer> &cHandle) -> ScriptComponentHandle<Light> * {
+            LightRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return nullptr; }
+            return ScriptComponentHandle<Light>::Create(cPtr->GetLight());
+        })
+        .method("LightType GetLightType() const", SafeCall<&LightRenderer::GetLightType>())
+        .method("Vector3 GetWorldPosition() const", SafeCall<&LightRenderer::GetWorldPosition>())
+        .method("Vector3 GetWorldDirection() const", SafeCall<&LightRenderer::GetWorldDirection>())
+        .method("Vector3 GetWorldRight() const", SafeCall<&LightRenderer::GetWorldRight>())
+        .method("Vector3 GetWorldUp() const", SafeCall<&LightRenderer::GetWorldUp>());
 
     RegisterComponentType<NormalWindowObject>(engine, "NormalWindowObject")
-        .method("void SetTitle(const string &in)", static_cast<void (NormalWindowObject::*)(const std::string &)>(&NormalWindowObject::SetTitle))
-        .method("const string &GetTitle() const", static_cast<const std::string &(NormalWindowObject::*)() const noexcept>(&NormalWindowObject::GetTitle))
-        .method("void SetSize(uint, uint)", static_cast<void (NormalWindowObject::*)(std::uint32_t, std::uint32_t)>(&NormalWindowObject::SetSize))
-        .method("void SetSyncWithTransform(bool)", static_cast<void (NormalWindowObject::*)(bool) noexcept>(&NormalWindowObject::SetSyncWithTransform))
-        .method("bool IsSyncWithTransformEnabled() const", static_cast<bool (NormalWindowObject::*)() const noexcept>(&NormalWindowObject::IsSyncWithTransformEnabled))
-        .method("bool SetMessageIntercepted(uint msg, bool enabled)", static_cast<bool (NormalWindowObject::*)(std::uint32_t, bool)>(&NormalWindowObject::SetMessageIntercepted))
-        .method("bool IsMessageIntercepted(uint msg) const", static_cast<bool (NormalWindowObject::*)(std::uint32_t) const>(&NormalWindowObject::IsMessageIntercepted))
-        .method("void CloseWindow()", static_cast<void (NormalWindowObject::*)()>(&NormalWindowObject::CloseWindow))
+        .method("void SetTitle(const string &in)", SafeCall<static_cast<void (NormalWindowObject::*)(const std::string &)>(&NormalWindowObject::SetTitle)>())
+        .method("const string &GetTitle() const", [](const ScriptComponentHandle<NormalWindowObject> &self) -> const std::string & {
+            static const std::string kEmpty;
+            NormalWindowObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return kEmpty; }
+            return obj->GetTitle();
+        })
+        .method("void SetSize(uint, uint)", SafeCall<static_cast<void (NormalWindowObject::*)(std::uint32_t, std::uint32_t)>(&NormalWindowObject::SetSize)>())
+        .method("void SetSyncWithTransform(bool)", SafeCall<static_cast<void (NormalWindowObject::*)(bool) noexcept>(&NormalWindowObject::SetSyncWithTransform)>())
+        .method("bool IsSyncWithTransformEnabled() const", SafeCall<static_cast<bool (NormalWindowObject::*)() const noexcept>(&NormalWindowObject::IsSyncWithTransformEnabled)>())
+        .method("bool SetMessageIntercepted(uint msg, bool enabled)", SafeCall<static_cast<bool (NormalWindowObject::*)(std::uint32_t, bool)>(&NormalWindowObject::SetMessageIntercepted)>())
+        .method("bool IsMessageIntercepted(uint msg) const", SafeCall<static_cast<bool (NormalWindowObject::*)(std::uint32_t) const>(&NormalWindowObject::IsMessageIntercepted)>())
+        .method("void CloseWindow()", SafeCall<static_cast<void (NormalWindowObject::*)()>(&NormalWindowObject::CloseWindow)>())
         // 基底のWindowObject型への暗黙変換（WindowMessageInfoのsourceComponentとの比較用）
-        .method("WindowObject@ opImplCast()", [](NormalWindowObject &component) -> IWindowObjectComponent * { return &component; });
+        .method("WindowObject@ opImplCast()", [](ScriptComponentHandle<NormalWindowObject> &self) -> ScriptComponentHandle<IWindowObjectComponent> * {
+            NormalWindowObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return nullptr; }
+            return ScriptComponentHandle<IWindowObjectComponent>::Create(static_cast<IWindowObjectComponent *>(obj));
+        });
     engine->RegisterObjectMethod("WindowObject", "NormalWindowObject@ opCast()",
         asFUNCTION((WindowObjectDownCast<NormalWindowObject>)), asCALL_CDECL_OBJLAST);
 
     RegisterComponentType<OverlayWindowObject>(engine, "OverlayWindowObject")
-        .method("void SetTitle(const string &in)", static_cast<void (OverlayWindowObject::*)(const std::string &)>(&OverlayWindowObject::SetTitle))
-        .method("const string &GetTitle() const", static_cast<const std::string &(OverlayWindowObject::*)() const noexcept>(&OverlayWindowObject::GetTitle))
-        .method("void SetSize(uint, uint)", static_cast<void (OverlayWindowObject::*)(std::uint32_t, std::uint32_t)>(&OverlayWindowObject::SetSize))
-        .method("void SetSyncWithTransform(bool)", static_cast<void (OverlayWindowObject::*)(bool) noexcept>(&OverlayWindowObject::SetSyncWithTransform))
-        .method("bool IsSyncWithTransformEnabled() const", static_cast<bool (OverlayWindowObject::*)() const noexcept>(&OverlayWindowObject::IsSyncWithTransformEnabled))
-        .method("bool SetMessageIntercepted(uint msg, bool enabled)", static_cast<bool (OverlayWindowObject::*)(std::uint32_t, bool)>(&OverlayWindowObject::SetMessageIntercepted))
-        .method("bool IsMessageIntercepted(uint msg) const", static_cast<bool (OverlayWindowObject::*)(std::uint32_t) const>(&OverlayWindowObject::IsMessageIntercepted))
-        .method("void CloseWindow()", static_cast<void (OverlayWindowObject::*)()>(&OverlayWindowObject::CloseWindow))
-        .method("WindowObject@ opImplCast()", [](OverlayWindowObject &component) -> IWindowObjectComponent * { return &component; });
+        .method("void SetTitle(const string &in)", SafeCall<static_cast<void (OverlayWindowObject::*)(const std::string &)>(&OverlayWindowObject::SetTitle)>())
+        .method("const string &GetTitle() const", [](const ScriptComponentHandle<OverlayWindowObject> &self) -> const std::string & {
+            static const std::string kEmpty;
+            OverlayWindowObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return kEmpty; }
+            return obj->GetTitle();
+        })
+        .method("void SetSize(uint, uint)", SafeCall<static_cast<void (OverlayWindowObject::*)(std::uint32_t, std::uint32_t)>(&OverlayWindowObject::SetSize)>())
+        .method("void SetSyncWithTransform(bool)", SafeCall<static_cast<void (OverlayWindowObject::*)(bool) noexcept>(&OverlayWindowObject::SetSyncWithTransform)>())
+        .method("bool IsSyncWithTransformEnabled() const", SafeCall<static_cast<bool (OverlayWindowObject::*)() const noexcept>(&OverlayWindowObject::IsSyncWithTransformEnabled)>())
+        .method("bool SetMessageIntercepted(uint msg, bool enabled)", SafeCall<static_cast<bool (OverlayWindowObject::*)(std::uint32_t, bool)>(&OverlayWindowObject::SetMessageIntercepted)>())
+        .method("bool IsMessageIntercepted(uint msg) const", SafeCall<static_cast<bool (OverlayWindowObject::*)(std::uint32_t) const>(&OverlayWindowObject::IsMessageIntercepted)>())
+        .method("void CloseWindow()", SafeCall<static_cast<void (OverlayWindowObject::*)()>(&OverlayWindowObject::CloseWindow)>())
+        .method("WindowObject@ opImplCast()", [](ScriptComponentHandle<OverlayWindowObject> &self) -> ScriptComponentHandle<IWindowObjectComponent> * {
+            OverlayWindowObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return nullptr; }
+            return ScriptComponentHandle<IWindowObjectComponent>::Create(static_cast<IWindowObjectComponent *>(obj));
+        });
     engine->RegisterObjectMethod("WindowObject", "OverlayWindowObject@ opCast()",
         asFUNCTION((WindowObjectDownCast<OverlayWindowObject>)), asCALL_CDECL_OBJLAST);
 
     RegisterComponentType<ScreenBufferObject>(engine, "ScreenBufferObject")
-        .method("void SetName(const string &in)", &ScreenBufferObject::SetName)
-        .method("const string &GetName() const", &ScreenBufferObject::GetName)
-        .method("void SetSize(uint, uint)", &ScreenBufferObject::SetSize)
-        .method("void SetSaveDirectory(const string &in)", &ScreenBufferObject::SetSaveDirectory)
-        .method("const string &GetSaveDirectory() const", &ScreenBufferObject::GetSaveDirectory)
-        .method("void SetSaveFileNamePrefix(const string &in)", &ScreenBufferObject::SetSaveFileNamePrefix)
-        .method("const string &GetSaveFileNamePrefix() const", &ScreenBufferObject::GetSaveFileNamePrefix)
-        .method("void SetSaveFormat(const string &in)", &ScreenBufferObject::SetSaveFormat)
-        .method("const string &GetSaveFormat() const", &ScreenBufferObject::GetSaveFormat)
-        .method("bool RequestSave(const string &in filePath = \"\")", &ScreenBufferObject::RequestSave);
+        .method("void SetName(const string &in)", SafeCall<&ScreenBufferObject::SetName>())
+        .method("const string &GetName() const", SafeCall<&ScreenBufferObject::GetName>())
+        .method("void SetSize(uint, uint)", SafeCall<&ScreenBufferObject::SetSize>())
+        .method("void SetSaveDirectory(const string &in)", SafeCall<&ScreenBufferObject::SetSaveDirectory>())
+        .method("const string &GetSaveDirectory() const", SafeCall<&ScreenBufferObject::GetSaveDirectory>())
+        .method("void SetSaveFileNamePrefix(const string &in)", SafeCall<&ScreenBufferObject::SetSaveFileNamePrefix>())
+        .method("const string &GetSaveFileNamePrefix() const", SafeCall<&ScreenBufferObject::GetSaveFileNamePrefix>())
+        .method("void SetSaveFormat(const string &in)", SafeCall<&ScreenBufferObject::SetSaveFormat>())
+        .method("const string &GetSaveFormat() const", SafeCall<&ScreenBufferObject::GetSaveFormat>())
+        .method("bool RequestSave(const string &in filePath = \"\")", SafeCall<&ScreenBufferObject::RequestSave>());
 
     RegisterComponentType<ScreenBufferViewport>(engine, "ScreenBufferViewport")
-        .method("void SetSourceObject(Object@)", [](ScreenBufferViewport &c, EmptyObject *obj) { c.SetSourceObject(obj); })
-        .method("Object@ GetSourceObject() const", &ScreenBufferViewport::GetSourceObject)
-        .method("string GetSourceObjectID() const", [](const ScreenBufferViewport &c) -> std::string { return c.GetSourceObjectID().ToString(); })
-        .method("void SetDisplayCameraObject(Object@)", [](ScreenBufferViewport &c, EmptyObject *obj) { c.SetDisplayCameraObject(obj); })
-        .method("Object@ GetDisplayCameraObject() const", &ScreenBufferViewport::GetDisplayCameraObject)
-        .method("string GetDisplayCameraObjectID() const", [](const ScreenBufferViewport &c) -> std::string { return c.GetDisplayCameraObjectID().ToString(); })
-        .method("SpriteRenderer@ GetSpriteRenderer() const", &ScreenBufferViewport::GetSpriteRenderer)
-        .method("MeshFilter@ GetMeshFilter() const", &ScreenBufferViewport::GetMeshFilter)
+        .method("void SetSourceObject(Object@)", [](ScriptComponentHandle<ScreenBufferViewport> &cHandle, ScriptObjectHandle *obj) {
+            ScreenBufferViewport *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            ScreenBufferViewport &c = *cPtr; c.SetSourceObject(ResolveObjectArg(obj)); })
+        .method("Object@ GetSourceObject() const", [](const ScriptComponentHandle<ScreenBufferViewport> &cHandle) -> ScriptObjectHandle * {
+            ScreenBufferViewport *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<ScriptObjectHandle *>(); }
+            const ScreenBufferViewport &c = *cPtr; return ScriptObjectHandle::Create(c.GetSourceObject()); })
+        .method("string GetSourceObjectID() const", [](const ScriptComponentHandle<ScreenBufferViewport> &cHandle) -> std::string {
+            ScreenBufferViewport *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::string>(); }
+            const ScreenBufferViewport &c = *cPtr; return c.GetSourceObjectID().ToString(); })
+        .method("void SetDisplayCameraObject(Object@)", [](ScriptComponentHandle<ScreenBufferViewport> &cHandle, ScriptObjectHandle *obj) {
+            ScreenBufferViewport *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            ScreenBufferViewport &c = *cPtr; c.SetDisplayCameraObject(ResolveObjectArg(obj)); })
+        .method("Object@ GetDisplayCameraObject() const", [](const ScriptComponentHandle<ScreenBufferViewport> &cHandle) -> ScriptObjectHandle * {
+            ScreenBufferViewport *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<ScriptObjectHandle *>(); }
+            const ScreenBufferViewport &c = *cPtr; return ScriptObjectHandle::Create(c.GetDisplayCameraObject()); })
+        .method("string GetDisplayCameraObjectID() const", [](const ScriptComponentHandle<ScreenBufferViewport> &cHandle) -> std::string {
+            ScreenBufferViewport *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::string>(); }
+            const ScreenBufferViewport &c = *cPtr; return c.GetDisplayCameraObjectID().ToString(); })
+        .method("SpriteRenderer@ GetSpriteRenderer() const", [](const ScriptComponentHandle<ScreenBufferViewport> &cHandle) -> ScriptComponentHandle<SpriteRenderer> * {
+            ScreenBufferViewport *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return nullptr; }
+            return ScriptComponentHandle<SpriteRenderer>::Create(cPtr->GetSpriteRenderer());
+        })
+        .method("MeshFilter@ GetMeshFilter() const", [](const ScriptComponentHandle<ScreenBufferViewport> &cHandle) -> ScriptComponentHandle<MeshFilter> * {
+            ScreenBufferViewport *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return nullptr; }
+            return ScriptComponentHandle<MeshFilter>::Create(cPtr->GetMeshFilter());
+        })
         // fitModeは 0=None, 1=Stretch, 2=Letterbox
-        .method("void SetFitMode(int)", [](ScreenBufferViewport &c, int mode) {
+        .method("void SetFitMode(int)", [](ScriptComponentHandle<ScreenBufferViewport> &cHandle, int mode) {
+            ScreenBufferViewport *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            ScreenBufferViewport &c = *cPtr;
             c.SetFitMode(static_cast<ScreenBufferViewport::FitMode>(mode));
         })
-        .method("int GetFitMode() const", [](const ScreenBufferViewport &c) {
+        .method("int GetFitMode() const", [](const ScriptComponentHandle<ScreenBufferViewport> &cHandle) {
+            ScreenBufferViewport *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const ScreenBufferViewport &c = *cPtr;
             return static_cast<int>(c.GetFitMode());
         })
-        .method("bool TryGetOffscreenMousePosition(Vector2 &out)", &ScreenBufferViewport::TryGetOffscreenMousePosition)
-        .method("bool IsMouseOverOffscreen() const", &ScreenBufferViewport::IsMouseOverOffscreen);
+        .method("bool TryGetOffscreenMousePosition(Vector2 &out)", SafeCall<&ScreenBufferViewport::TryGetOffscreenMousePosition>())
+        .method("bool IsMouseOverOffscreen() const", SafeCall<&ScreenBufferViewport::IsMouseOverOffscreen>());
 
     RegisterComponentType<ScreenAnchor>(engine, "ScreenAnchor")
-        .method("void SetCameraObject(Object@)", [](ScreenAnchor &c, EmptyObject *obj) { c.SetCameraObject(obj); })
-        .method("Object@ GetCameraObject() const", &ScreenAnchor::GetCameraObject)
-        .method("string GetCameraObjectID() const", [](const ScreenAnchor &c) -> std::string { return c.GetCameraObjectID().ToString(); })
-        .method("void SetAnchorPoint(const Vector2 &in)", &ScreenAnchor::SetAnchorPoint)
-        .method("const Vector2 &GetAnchorPoint() const", &ScreenAnchor::GetAnchorPoint)
-        .method("void SetOffset(const Vector2 &in)", &ScreenAnchor::SetOffset)
-        .method("const Vector2 &GetOffset() const", &ScreenAnchor::GetOffset);
+        .method("void SetCameraObject(Object@)", [](ScriptComponentHandle<ScreenAnchor> &cHandle, ScriptObjectHandle *obj) {
+            ScreenAnchor *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            ScreenAnchor &c = *cPtr; c.SetCameraObject(ResolveObjectArg(obj)); })
+        .method("Object@ GetCameraObject() const", [](const ScriptComponentHandle<ScreenAnchor> &cHandle) -> ScriptObjectHandle * {
+            ScreenAnchor *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<ScriptObjectHandle *>(); }
+            const ScreenAnchor &c = *cPtr; return ScriptObjectHandle::Create(c.GetCameraObject()); })
+        .method("string GetCameraObjectID() const", [](const ScriptComponentHandle<ScreenAnchor> &cHandle) -> std::string {
+            ScreenAnchor *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::string>(); }
+            const ScreenAnchor &c = *cPtr; return c.GetCameraObjectID().ToString(); })
+        .method("void SetAnchorPoint(const Vector2 &in)", SafeCall<&ScreenAnchor::SetAnchorPoint>())
+        .method("const Vector2 &GetAnchorPoint() const", SafeCall<&ScreenAnchor::GetAnchorPoint>())
+        .method("void SetOffset(const Vector2 &in)", SafeCall<&ScreenAnchor::SetOffset>())
+        .method("const Vector2 &GetOffset() const", SafeCall<&ScreenAnchor::GetOffset>());
 
     RegisterComponentType<UIButton>(engine, "UIButton")
-        .method("void SetDisplayCameraObject(Object@)", [](UIButton &c, EmptyObject *obj) { c.SetDisplayCameraObject(obj); })
-        .method("bool IsHovered() const", &UIButton::IsHovered)
-        .method("bool IsPressed() const", &UIButton::IsPressed)
-        .method("bool IsClicked() const", &UIButton::IsClicked)
-        .method("bool TryGetLocalHoverPosition(Vector2 &out)", &UIButton::TryGetLocalHoverPosition);
+        .method("void SetDisplayCameraObject(Object@)", [](ScriptComponentHandle<UIButton> &cHandle, ScriptObjectHandle *obj) {
+            UIButton *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            UIButton &c = *cPtr; c.SetDisplayCameraObject(ResolveObjectArg(obj)); })
+        .method("bool IsHovered() const", SafeCall<&UIButton::IsHovered>())
+        .method("bool IsPressed() const", SafeCall<&UIButton::IsPressed>())
+        .method("bool IsClicked() const", SafeCall<&UIButton::IsClicked>())
+        .method("bool TryGetLocalHoverPosition(Vector2 &out)", SafeCall<&UIButton::TryGetLocalHoverPosition>());
 
     RegisterComponentType<MeshButton>(engine, "MeshButton")
-        .method("void SetDisplayCameraObject(Object@)", [](MeshButton &c, EmptyObject *obj) { c.SetDisplayCameraObject(obj); })
-        .method("Object@ GetDisplayCameraObject() const", &MeshButton::GetDisplayCameraObject)
-        .method("string GetDisplayCameraObjectID() const", [](const MeshButton &c) -> std::string { return c.GetDisplayCameraObjectID().ToString(); })
-        .method("void SetPreciseMeshTest(bool)", &MeshButton::SetPreciseMeshTest)
-        .method("bool GetPreciseMeshTest() const", &MeshButton::GetPreciseMeshTest)
-        .method("bool IsHovered() const", &MeshButton::IsHovered)
-        .method("bool IsPressed() const", &MeshButton::IsPressed)
-        .method("bool IsClicked() const", &MeshButton::IsClicked)
-        .method("void SetDragAxis(const Vector3 &in)", &MeshButton::SetDragAxis)
-        .method("const Vector3 &GetDragAxis() const", &MeshButton::GetDragAxis)
-        .method("bool TryGetAxisDragOffset(float &out)", &MeshButton::TryGetAxisDragOffset);
+        .method("void SetDisplayCameraObject(Object@)", [](ScriptComponentHandle<MeshButton> &cHandle, ScriptObjectHandle *obj) {
+            MeshButton *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            MeshButton &c = *cPtr; c.SetDisplayCameraObject(ResolveObjectArg(obj)); })
+        .method("Object@ GetDisplayCameraObject() const", [](const ScriptComponentHandle<MeshButton> &cHandle) -> ScriptObjectHandle * {
+            MeshButton *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<ScriptObjectHandle *>(); }
+            const MeshButton &c = *cPtr; return ScriptObjectHandle::Create(c.GetDisplayCameraObject()); })
+        .method("string GetDisplayCameraObjectID() const", [](const ScriptComponentHandle<MeshButton> &cHandle) -> std::string {
+            MeshButton *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::string>(); }
+            const MeshButton &c = *cPtr; return c.GetDisplayCameraObjectID().ToString(); })
+        .method("void SetPreciseMeshTest(bool)", SafeCall<&MeshButton::SetPreciseMeshTest>())
+        .method("bool GetPreciseMeshTest() const", SafeCall<&MeshButton::GetPreciseMeshTest>())
+        .method("bool IsHovered() const", SafeCall<&MeshButton::IsHovered>())
+        .method("bool IsPressed() const", SafeCall<&MeshButton::IsPressed>())
+        .method("bool IsClicked() const", SafeCall<&MeshButton::IsClicked>())
+        .method("void SetDragAxis(const Vector3 &in)", SafeCall<&MeshButton::SetDragAxis>())
+        .method("const Vector3 &GetDragAxis() const", SafeCall<&MeshButton::GetDragAxis>())
+        .method("bool TryGetAxisDragOffset(float &out)", SafeCall<&MeshButton::TryGetAxisDragOffset>());
 
     RegisterComponentType<ShadowMapObject>(engine, "ShadowMapObject")
-        .method("void SetName(const string &in)", &ShadowMapObject::SetName)
-        .method("const string &GetName() const", &ShadowMapObject::GetName)
-        .method("void SetSize(uint, uint)", &ShadowMapObject::SetSize);
+        .method("void SetName(const string &in)", SafeCall<&ShadowMapObject::SetName>())
+        .method("const string &GetName() const", SafeCall<&ShadowMapObject::GetName>())
+        .method("void SetSize(uint, uint)", SafeCall<&ShadowMapObject::SetSize>());
 
     // コライダー（形状固有パラメータ）
     RegisterColliderType<BoxCollider>(engine, "BoxCollider")
-        .method("void SetSize(const Vector3 &in)", &BoxCollider::SetSize)
-        .method("const Vector3 &GetSize() const", &BoxCollider::GetSize)
-        .method("void SetCenter(const Vector3 &in)", &BoxCollider::SetCenter)
-        .method("const Vector3 &GetCenter() const", &BoxCollider::GetCenter);
+        .method("void SetSize(const Vector3 &in)", SafeCall<&BoxCollider::SetSize>())
+        .method("const Vector3 &GetSize() const", SafeCall<&BoxCollider::GetSize>())
+        .method("void SetCenter(const Vector3 &in)", SafeCall<&BoxCollider::SetCenter>())
+        .method("const Vector3 &GetCenter() const", SafeCall<&BoxCollider::GetCenter>());
 
     RegisterColliderType<SphereCollider>(engine, "SphereCollider")
-        .method("void SetRadius(float)", &SphereCollider::SetRadius)
-        .method("float GetRadius() const", &SphereCollider::GetRadius)
-        .method("void SetCenter(const Vector3 &in)", &SphereCollider::SetCenter)
-        .method("const Vector3 &GetCenter() const", &SphereCollider::GetCenter);
+        .method("void SetRadius(float)", SafeCall<&SphereCollider::SetRadius>())
+        .method("float GetRadius() const", SafeCall<&SphereCollider::GetRadius>())
+        .method("void SetCenter(const Vector3 &in)", SafeCall<&SphereCollider::SetCenter>())
+        .method("const Vector3 &GetCenter() const", SafeCall<&SphereCollider::GetCenter>());
 
     RegisterColliderType<CapsuleCollider>(engine, "CapsuleCollider")
-        .method("void SetRadius(float)", &CapsuleCollider::SetRadius)
-        .method("float GetRadius() const", &CapsuleCollider::GetRadius)
-        .method("void SetHeight(float)", &CapsuleCollider::SetHeight)
-        .method("float GetHeight() const", &CapsuleCollider::GetHeight)
-        .method("void SetCenter(const Vector3 &in)", &CapsuleCollider::SetCenter)
-        .method("const Vector3 &GetCenter() const", &CapsuleCollider::GetCenter);
+        .method("void SetRadius(float)", SafeCall<&CapsuleCollider::SetRadius>())
+        .method("float GetRadius() const", SafeCall<&CapsuleCollider::GetRadius>())
+        .method("void SetHeight(float)", SafeCall<&CapsuleCollider::SetHeight>())
+        .method("float GetHeight() const", SafeCall<&CapsuleCollider::GetHeight>())
+        .method("void SetCenter(const Vector3 &in)", SafeCall<&CapsuleCollider::SetCenter>())
+        .method("const Vector3 &GetCenter() const", SafeCall<&CapsuleCollider::GetCenter>());
 
     RegisterColliderType<MeshCollider>(engine, "MeshCollider")
-        .method("void SetConvex(bool)", &MeshCollider::SetConvex)
-        .method("bool IsConvex() const", &MeshCollider::IsConvex)
-        .method("void SetMeshHandle(uint)", [](MeshCollider &c, uint32_t handle) { c.SetMeshHandle(handle); })
-        .method("uint GetMeshHandle() const", [](const MeshCollider &c) -> uint32_t { return c.GetMeshHandle(); })
-        .method("uint GetEffectiveMeshHandle() const", [](const MeshCollider &c) -> uint32_t { return c.GetEffectiveMeshHandle(); });
+        .method("void SetConvex(bool)", SafeCall<&MeshCollider::SetConvex>())
+        .method("bool IsConvex() const", SafeCall<&MeshCollider::IsConvex>())
+        .method("void SetMeshHandle(uint)", [](ScriptComponentHandle<MeshCollider> &cHandle, uint32_t handle) {
+            MeshCollider *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            MeshCollider &c = *cPtr; c.SetMeshHandle(handle); })
+        .method("uint GetMeshHandle() const", [](const ScriptComponentHandle<MeshCollider> &cHandle) -> uint32_t {
+            MeshCollider *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const MeshCollider &c = *cPtr; return c.GetMeshHandle(); })
+        .method("uint GetEffectiveMeshHandle() const", [](const ScriptComponentHandle<MeshCollider> &cHandle) -> uint32_t {
+            MeshCollider *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const MeshCollider &c = *cPtr; return c.GetEffectiveMeshHandle(); });
 
     RegisterColliderType<RayCollider>(engine, "RayCollider")
-        .method("void SetDirection(const Vector3 &in)", &RayCollider::SetDirection)
-        .method("const Vector3 &GetDirection() const", &RayCollider::GetDirection)
-        .method("void SetMaxDistance(float)", &RayCollider::SetMaxDistance)
-        .method("float GetMaxDistance() const", &RayCollider::GetMaxDistance)
-        .method("bool CastRay(HitInfo &out)", [](const RayCollider &self, ScriptHitInfo &outHit) -> bool {
+        .method("void SetDirection(const Vector3 &in)", SafeCall<&RayCollider::SetDirection>())
+        .method("const Vector3 &GetDirection() const", SafeCall<&RayCollider::GetDirection>())
+        .method("void SetMaxDistance(float)", SafeCall<&RayCollider::SetMaxDistance>())
+        .method("float GetMaxDistance() const", SafeCall<&RayCollider::GetMaxDistance>())
+        .method("bool CastRay(HitInfo &out)", [](const ScriptComponentHandle<RayCollider> &selfHandle, ScriptHitInfo &outHit) -> bool {
+            RayCollider *self = selfHandle.Resolve();
+            if (!self) { ThrowDestroyedObjectException(); return false; }
             HitInfo3D hit{};
-            const bool result = self.CastRay(hit);
+            const bool result = self->CastRay(hit);
             outHit.normal = hit.normal;
             outHit.penetration = hit.penetration;
-            outHit.selfObject = hit.selfObject;
-            outHit.otherObject = hit.otherObject;
-            outHit.selfCollider = hit.selfCollider;
-            outHit.otherCollider = hit.otherCollider;
+            outHit.selfObject = ScriptObjectHandle::Create(hit.selfObject);
+            outHit.otherObject = ScriptObjectHandle::Create(hit.otherObject);
+            outHit.selfCollider = ScriptComponentHandle<ICollider>::Create(hit.selfCollider);
+            outHit.otherCollider = ScriptComponentHandle<ICollider>::Create(hit.otherCollider);
             return result;
         });
 
     RegisterColliderType<Box2DCollider>(engine, "Box2DCollider")
-        .method("void SetSize(const Vector2 &in)", &Box2DCollider::SetSize)
-        .method("const Vector2 &GetSize() const", &Box2DCollider::GetSize)
-        .method("void SetCenter(const Vector2 &in)", &Box2DCollider::SetCenter)
-        .method("const Vector2 &GetCenter() const", &Box2DCollider::GetCenter);
+        .method("void SetSize(const Vector2 &in)", SafeCall<&Box2DCollider::SetSize>())
+        .method("const Vector2 &GetSize() const", SafeCall<&Box2DCollider::GetSize>())
+        .method("void SetCenter(const Vector2 &in)", SafeCall<&Box2DCollider::SetCenter>())
+        .method("const Vector2 &GetCenter() const", SafeCall<&Box2DCollider::GetCenter>());
 
     RegisterColliderType<Circle2DCollider>(engine, "Circle2DCollider")
-        .method("void SetRadius(float)", &Circle2DCollider::SetRadius)
-        .method("float GetRadius() const", &Circle2DCollider::GetRadius)
-        .method("void SetCenter(const Vector2 &in)", &Circle2DCollider::SetCenter)
-        .method("const Vector2 &GetCenter() const", &Circle2DCollider::GetCenter);
+        .method("void SetRadius(float)", SafeCall<&Circle2DCollider::SetRadius>())
+        .method("float GetRadius() const", SafeCall<&Circle2DCollider::GetRadius>())
+        .method("void SetCenter(const Vector2 &in)", SafeCall<&Circle2DCollider::SetCenter>())
+        .method("const Vector2 &GetCenter() const", SafeCall<&Circle2DCollider::GetCenter>());
 
     RegisterColliderType<Capsule2DCollider>(engine, "Capsule2DCollider")
-        .method("void SetStart(const Vector2 &in)", &Capsule2DCollider::SetStart)
-        .method("const Vector2 &GetStart() const", &Capsule2DCollider::GetStart)
-        .method("void SetEnd(const Vector2 &in)", &Capsule2DCollider::SetEnd)
-        .method("const Vector2 &GetEnd() const", &Capsule2DCollider::GetEnd)
-        .method("void SetRadius(float)", &Capsule2DCollider::SetRadius)
-        .method("float GetRadius() const", &Capsule2DCollider::GetRadius);
+        .method("void SetStart(const Vector2 &in)", SafeCall<&Capsule2DCollider::SetStart>())
+        .method("const Vector2 &GetStart() const", SafeCall<&Capsule2DCollider::GetStart>())
+        .method("void SetEnd(const Vector2 &in)", SafeCall<&Capsule2DCollider::SetEnd>())
+        .method("const Vector2 &GetEnd() const", SafeCall<&Capsule2DCollider::GetEnd>())
+        .method("void SetRadius(float)", SafeCall<&Capsule2DCollider::SetRadius>())
+        .method("float GetRadius() const", SafeCall<&Capsule2DCollider::GetRadius>());
 
     RegisterColliderType<Ray2DCollider>(engine, "Ray2DCollider")
-        .method("void SetDirection(const Vector2 &in)", &Ray2DCollider::SetDirection)
-        .method("const Vector2 &GetDirection() const", &Ray2DCollider::GetDirection)
-        .method("void SetLength(float)", &Ray2DCollider::SetLength)
-        .method("float GetLength() const", &Ray2DCollider::GetLength);
+        .method("void SetDirection(const Vector2 &in)", SafeCall<&Ray2DCollider::SetDirection>())
+        .method("const Vector2 &GetDirection() const", SafeCall<&Ray2DCollider::GetDirection>())
+        .method("void SetLength(float)", SafeCall<&Ray2DCollider::SetLength>())
+        .method("float GetLength() const", SafeCall<&Ray2DCollider::GetLength>());
 
     //==================================================
     // ポストプロセスエフェクト
@@ -1424,283 +2045,736 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
     // それぞれ内部の Params 構造体を直接は公開せず、フィールドごとの Get/Set をラムダで提供する
 
     RegisterComponentType<SSAOEffect>(engine, "SSAOEffect")
-        .method("float GetRadius() const", [](const SSAOEffect &e) { return e.GetParams().radius; })
-        .method("void SetRadius(float)", [](SSAOEffect &e, float v) { auto p = e.GetParams(); p.radius = v; e.SetParams(p); })
-        .method("float GetIntensity() const", [](const SSAOEffect &e) { return e.GetParams().intensity; })
-        .method("void SetIntensity(float)", [](SSAOEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
-        .method("float GetPower() const", [](const SSAOEffect &e) { return e.GetParams().power; })
-        .method("void SetPower(float)", [](SSAOEffect &e, float v) { auto p = e.GetParams(); p.power = v; e.SetParams(p); })
-        .method("float GetBias() const", [](const SSAOEffect &e) { return e.GetParams().bias; })
-        .method("void SetBias(float)", [](SSAOEffect &e, float v) { auto p = e.GetParams(); p.bias = v; e.SetParams(p); })
-        .method("uint GetSampleCount() const", [](const SSAOEffect &e) -> uint32_t { return e.GetParams().sampleCount; })
-        .method("void SetSampleCount(uint)", [](SSAOEffect &e, uint32_t v) { auto p = e.GetParams(); p.sampleCount = v; e.SetParams(p); })
-        .method("int GetBlurRadius() const", [](const SSAOEffect &e) { return e.GetParams().blurRadius; })
-        .method("void SetBlurRadius(int)", [](SSAOEffect &e, int v) { auto p = e.GetParams(); p.blurRadius = v; e.SetParams(p); })
-        .method("float GetDepthThreshold() const", [](const SSAOEffect &e) { return e.GetParams().depthThreshold; })
-        .method("void SetDepthThreshold(float)", [](SSAOEffect &e, float v) { auto p = e.GetParams(); p.depthThreshold = v; e.SetParams(p); });
+        .method("float GetRadius() const", [](const ScriptComponentHandle<SSAOEffect> &eHandle) {
+            SSAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const SSAOEffect &e = *ePtr; return e.GetParams().radius; })
+        .method("void SetRadius(float)", [](ScriptComponentHandle<SSAOEffect> &eHandle, float v) {
+            SSAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            SSAOEffect &e = *ePtr; auto p = e.GetParams(); p.radius = v; e.SetParams(p); })
+        .method("float GetIntensity() const", [](const ScriptComponentHandle<SSAOEffect> &eHandle) {
+            SSAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const SSAOEffect &e = *ePtr; return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](ScriptComponentHandle<SSAOEffect> &eHandle, float v) {
+            SSAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            SSAOEffect &e = *ePtr; auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("float GetPower() const", [](const ScriptComponentHandle<SSAOEffect> &eHandle) {
+            SSAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const SSAOEffect &e = *ePtr; return e.GetParams().power; })
+        .method("void SetPower(float)", [](ScriptComponentHandle<SSAOEffect> &eHandle, float v) {
+            SSAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            SSAOEffect &e = *ePtr; auto p = e.GetParams(); p.power = v; e.SetParams(p); })
+        .method("float GetBias() const", [](const ScriptComponentHandle<SSAOEffect> &eHandle) {
+            SSAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const SSAOEffect &e = *ePtr; return e.GetParams().bias; })
+        .method("void SetBias(float)", [](ScriptComponentHandle<SSAOEffect> &eHandle, float v) {
+            SSAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            SSAOEffect &e = *ePtr; auto p = e.GetParams(); p.bias = v; e.SetParams(p); })
+        .method("uint GetSampleCount() const", [](const ScriptComponentHandle<SSAOEffect> &eHandle) -> uint32_t {
+            SSAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const SSAOEffect &e = *ePtr; return e.GetParams().sampleCount; })
+        .method("void SetSampleCount(uint)", [](ScriptComponentHandle<SSAOEffect> &eHandle, uint32_t v) {
+            SSAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            SSAOEffect &e = *ePtr; auto p = e.GetParams(); p.sampleCount = v; e.SetParams(p); })
+        .method("int GetBlurRadius() const", [](const ScriptComponentHandle<SSAOEffect> &eHandle) {
+            SSAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const SSAOEffect &e = *ePtr; return e.GetParams().blurRadius; })
+        .method("void SetBlurRadius(int)", [](ScriptComponentHandle<SSAOEffect> &eHandle, int v) {
+            SSAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            SSAOEffect &e = *ePtr; auto p = e.GetParams(); p.blurRadius = v; e.SetParams(p); })
+        .method("float GetDepthThreshold() const", [](const ScriptComponentHandle<SSAOEffect> &eHandle) {
+            SSAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const SSAOEffect &e = *ePtr; return e.GetParams().depthThreshold; })
+        .method("void SetDepthThreshold(float)", [](ScriptComponentHandle<SSAOEffect> &eHandle, float v) {
+            SSAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            SSAOEffect &e = *ePtr; auto p = e.GetParams(); p.depthThreshold = v; e.SetParams(p); });
 
     RegisterComponentType<GTAOEffect>(engine, "GTAOEffect")
-        .method("float GetRadius() const", [](const GTAOEffect &e) { return e.GetParams().radius; })
-        .method("void SetRadius(float)", [](GTAOEffect &e, float v) { auto p = e.GetParams(); p.radius = v; e.SetParams(p); })
-        .method("float GetIntensity() const", [](const GTAOEffect &e) { return e.GetParams().intensity; })
-        .method("void SetIntensity(float)", [](GTAOEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
-        .method("float GetPower() const", [](const GTAOEffect &e) { return e.GetParams().power; })
-        .method("void SetPower(float)", [](GTAOEffect &e, float v) { auto p = e.GetParams(); p.power = v; e.SetParams(p); })
-        .method("float GetBias() const", [](const GTAOEffect &e) { return e.GetParams().bias; })
-        .method("void SetBias(float)", [](GTAOEffect &e, float v) { auto p = e.GetParams(); p.bias = v; e.SetParams(p); })
-        .method("uint GetDirectionCount() const", [](const GTAOEffect &e) -> uint32_t { return e.GetParams().directionCount; })
-        .method("void SetDirectionCount(uint)", [](GTAOEffect &e, uint32_t v) { auto p = e.GetParams(); p.directionCount = v; e.SetParams(p); })
-        .method("uint GetStepCount() const", [](const GTAOEffect &e) -> uint32_t { return e.GetParams().stepCount; })
-        .method("void SetStepCount(uint)", [](GTAOEffect &e, uint32_t v) { auto p = e.GetParams(); p.stepCount = v; e.SetParams(p); })
-        .method("int GetBlurRadius() const", [](const GTAOEffect &e) { return e.GetParams().blurRadius; })
-        .method("void SetBlurRadius(int)", [](GTAOEffect &e, int v) { auto p = e.GetParams(); p.blurRadius = v; e.SetParams(p); })
-        .method("float GetDepthThreshold() const", [](const GTAOEffect &e) { return e.GetParams().depthThreshold; })
-        .method("void SetDepthThreshold(float)", [](GTAOEffect &e, float v) { auto p = e.GetParams(); p.depthThreshold = v; e.SetParams(p); })
-        .method("bool GetShowAOOnly() const", [](const GTAOEffect &e) { return e.GetParams().showAOOnly; })
-        .method("void SetShowAOOnly(bool)", [](GTAOEffect &e, bool v) { auto p = e.GetParams(); p.showAOOnly = v; e.SetParams(p); });
+        .method("float GetRadius() const", [](const ScriptComponentHandle<GTAOEffect> &eHandle) {
+            GTAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const GTAOEffect &e = *ePtr; return e.GetParams().radius; })
+        .method("void SetRadius(float)", [](ScriptComponentHandle<GTAOEffect> &eHandle, float v) {
+            GTAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            GTAOEffect &e = *ePtr; auto p = e.GetParams(); p.radius = v; e.SetParams(p); })
+        .method("float GetIntensity() const", [](const ScriptComponentHandle<GTAOEffect> &eHandle) {
+            GTAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const GTAOEffect &e = *ePtr; return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](ScriptComponentHandle<GTAOEffect> &eHandle, float v) {
+            GTAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            GTAOEffect &e = *ePtr; auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("float GetPower() const", [](const ScriptComponentHandle<GTAOEffect> &eHandle) {
+            GTAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const GTAOEffect &e = *ePtr; return e.GetParams().power; })
+        .method("void SetPower(float)", [](ScriptComponentHandle<GTAOEffect> &eHandle, float v) {
+            GTAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            GTAOEffect &e = *ePtr; auto p = e.GetParams(); p.power = v; e.SetParams(p); })
+        .method("float GetBias() const", [](const ScriptComponentHandle<GTAOEffect> &eHandle) {
+            GTAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const GTAOEffect &e = *ePtr; return e.GetParams().bias; })
+        .method("void SetBias(float)", [](ScriptComponentHandle<GTAOEffect> &eHandle, float v) {
+            GTAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            GTAOEffect &e = *ePtr; auto p = e.GetParams(); p.bias = v; e.SetParams(p); })
+        .method("uint GetDirectionCount() const", [](const ScriptComponentHandle<GTAOEffect> &eHandle) -> uint32_t {
+            GTAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const GTAOEffect &e = *ePtr; return e.GetParams().directionCount; })
+        .method("void SetDirectionCount(uint)", [](ScriptComponentHandle<GTAOEffect> &eHandle, uint32_t v) {
+            GTAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            GTAOEffect &e = *ePtr; auto p = e.GetParams(); p.directionCount = v; e.SetParams(p); })
+        .method("uint GetStepCount() const", [](const ScriptComponentHandle<GTAOEffect> &eHandle) -> uint32_t {
+            GTAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const GTAOEffect &e = *ePtr; return e.GetParams().stepCount; })
+        .method("void SetStepCount(uint)", [](ScriptComponentHandle<GTAOEffect> &eHandle, uint32_t v) {
+            GTAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            GTAOEffect &e = *ePtr; auto p = e.GetParams(); p.stepCount = v; e.SetParams(p); })
+        .method("int GetBlurRadius() const", [](const ScriptComponentHandle<GTAOEffect> &eHandle) {
+            GTAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const GTAOEffect &e = *ePtr; return e.GetParams().blurRadius; })
+        .method("void SetBlurRadius(int)", [](ScriptComponentHandle<GTAOEffect> &eHandle, int v) {
+            GTAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            GTAOEffect &e = *ePtr; auto p = e.GetParams(); p.blurRadius = v; e.SetParams(p); })
+        .method("float GetDepthThreshold() const", [](const ScriptComponentHandle<GTAOEffect> &eHandle) {
+            GTAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const GTAOEffect &e = *ePtr; return e.GetParams().depthThreshold; })
+        .method("void SetDepthThreshold(float)", [](ScriptComponentHandle<GTAOEffect> &eHandle, float v) {
+            GTAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            GTAOEffect &e = *ePtr; auto p = e.GetParams(); p.depthThreshold = v; e.SetParams(p); })
+        .method("bool GetShowAOOnly() const", [](const ScriptComponentHandle<GTAOEffect> &eHandle) {
+            GTAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
+            const GTAOEffect &e = *ePtr; return e.GetParams().showAOOnly; })
+        .method("void SetShowAOOnly(bool)", [](ScriptComponentHandle<GTAOEffect> &eHandle, bool v) {
+            GTAOEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            GTAOEffect &e = *ePtr; auto p = e.GetParams(); p.showAOOnly = v; e.SetParams(p); });
 
     RegisterComponentType<BloomEffect>(engine, "BloomEffect")
-        .method("float GetThreshold() const", [](const BloomEffect &e) { return e.GetParams().threshold; })
-        .method("void SetThreshold(float)", [](BloomEffect &e, float v) { auto p = e.GetParams(); p.threshold = v; e.SetParams(p); })
-        .method("float GetSoftKnee() const", [](const BloomEffect &e) { return e.GetParams().softKnee; })
-        .method("void SetSoftKnee(float)", [](BloomEffect &e, float v) { auto p = e.GetParams(); p.softKnee = v; e.SetParams(p); })
-        .method("float GetIntensity() const", [](const BloomEffect &e) { return e.GetParams().intensity; })
-        .method("void SetIntensity(float)", [](BloomEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
-        .method("float GetBlurRadius() const", [](const BloomEffect &e) { return e.GetParams().blurRadius; })
-        .method("void SetBlurRadius(float)", [](BloomEffect &e, float v) { auto p = e.GetParams(); p.blurRadius = v; e.SetParams(p); })
-        .method("uint GetIterations() const", [](const BloomEffect &e) -> uint32_t { return e.GetParams().iterations; })
-        .method("void SetIterations(uint)", [](BloomEffect &e, uint32_t v) { auto p = e.GetParams(); p.iterations = v; e.SetParams(p); });
+        .method("float GetThreshold() const", [](const ScriptComponentHandle<BloomEffect> &eHandle) {
+            BloomEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const BloomEffect &e = *ePtr; return e.GetParams().threshold; })
+        .method("void SetThreshold(float)", [](ScriptComponentHandle<BloomEffect> &eHandle, float v) {
+            BloomEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            BloomEffect &e = *ePtr; auto p = e.GetParams(); p.threshold = v; e.SetParams(p); })
+        .method("float GetSoftKnee() const", [](const ScriptComponentHandle<BloomEffect> &eHandle) {
+            BloomEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const BloomEffect &e = *ePtr; return e.GetParams().softKnee; })
+        .method("void SetSoftKnee(float)", [](ScriptComponentHandle<BloomEffect> &eHandle, float v) {
+            BloomEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            BloomEffect &e = *ePtr; auto p = e.GetParams(); p.softKnee = v; e.SetParams(p); })
+        .method("float GetIntensity() const", [](const ScriptComponentHandle<BloomEffect> &eHandle) {
+            BloomEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const BloomEffect &e = *ePtr; return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](ScriptComponentHandle<BloomEffect> &eHandle, float v) {
+            BloomEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            BloomEffect &e = *ePtr; auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("float GetBlurRadius() const", [](const ScriptComponentHandle<BloomEffect> &eHandle) {
+            BloomEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const BloomEffect &e = *ePtr; return e.GetParams().blurRadius; })
+        .method("void SetBlurRadius(float)", [](ScriptComponentHandle<BloomEffect> &eHandle, float v) {
+            BloomEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            BloomEffect &e = *ePtr; auto p = e.GetParams(); p.blurRadius = v; e.SetParams(p); })
+        .method("uint GetIterations() const", [](const ScriptComponentHandle<BloomEffect> &eHandle) -> uint32_t {
+            BloomEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const BloomEffect &e = *ePtr; return e.GetParams().iterations; })
+        .method("void SetIterations(uint)", [](ScriptComponentHandle<BloomEffect> &eHandle, uint32_t v) {
+            BloomEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            BloomEffect &e = *ePtr; auto p = e.GetParams(); p.iterations = v; e.SetParams(p); });
 
     RegisterComponentType<BoxFilterEffect>(engine, "BoxFilterEffect")
-        .method("float GetIntensity() const", [](const BoxFilterEffect &e) { return e.GetParams().intensity; })
-        .method("void SetIntensity(float)", [](BoxFilterEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
-        .method("void SetHalfSize(int, int)", [](BoxFilterEffect &e, int x, int y) {
+        .method("float GetIntensity() const", [](const ScriptComponentHandle<BoxFilterEffect> &eHandle) {
+            BoxFilterEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const BoxFilterEffect &e = *ePtr; return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](ScriptComponentHandle<BoxFilterEffect> &eHandle, float v) {
+            BoxFilterEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            BoxFilterEffect &e = *ePtr; auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("void SetHalfSize(int, int)", [](ScriptComponentHandle<BoxFilterEffect> &eHandle, int x, int y) {
+            BoxFilterEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            BoxFilterEffect &e = *ePtr;
             auto p = e.GetParams(); p.halfSize[0] = x; p.halfSize[1] = y; e.SetParams(p);
         })
-        .method("int GetHalfSizeX() const", [](const BoxFilterEffect &e) { return e.GetParams().halfSize[0]; })
-        .method("int GetHalfSizeY() const", [](const BoxFilterEffect &e) { return e.GetParams().halfSize[1]; });
+        .method("int GetHalfSizeX() const", [](const ScriptComponentHandle<BoxFilterEffect> &eHandle) {
+            BoxFilterEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const BoxFilterEffect &e = *ePtr; return e.GetParams().halfSize[0]; })
+        .method("int GetHalfSizeY() const", [](const ScriptComponentHandle<BoxFilterEffect> &eHandle) {
+            BoxFilterEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const BoxFilterEffect &e = *ePtr; return e.GetParams().halfSize[1]; });
 
     RegisterComponentType<ChromaticAberrationEffect>(engine, "ChromaticAberrationEffect")
-        .method("void SetDirection(const Vector2 &in)", [](ChromaticAberrationEffect &e, const Vector2 &dir) {
+        .method("void SetDirection(const Vector2 &in)", [](ScriptComponentHandle<ChromaticAberrationEffect> &eHandle, const Vector2 &dir) {
+            ChromaticAberrationEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            ChromaticAberrationEffect &e = *ePtr;
             auto p = e.GetParams(); p.directionX = dir.x; p.directionY = dir.y; e.SetParams(p);
         })
-        .method("Vector2 GetDirection() const", [](const ChromaticAberrationEffect &e) -> Vector2 {
+        .method("Vector2 GetDirection() const", [](const ScriptComponentHandle<ChromaticAberrationEffect> &eHandle) -> Vector2 {
+            ChromaticAberrationEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<Vector2>(); }
+            const ChromaticAberrationEffect &e = *ePtr;
             const auto &p = e.GetParams(); return Vector2(p.directionX, p.directionY);
         })
-        .method("float GetStrength() const", [](const ChromaticAberrationEffect &e) { return e.GetParams().strength; })
-        .method("void SetStrength(float)", [](ChromaticAberrationEffect &e, float v) { auto p = e.GetParams(); p.strength = v; e.SetParams(p); });
+        .method("float GetStrength() const", [](const ScriptComponentHandle<ChromaticAberrationEffect> &eHandle) {
+            ChromaticAberrationEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const ChromaticAberrationEffect &e = *ePtr; return e.GetParams().strength; })
+        .method("void SetStrength(float)", [](ScriptComponentHandle<ChromaticAberrationEffect> &eHandle, float v) {
+            ChromaticAberrationEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            ChromaticAberrationEffect &e = *ePtr; auto p = e.GetParams(); p.strength = v; e.SetParams(p); });
 
     RegisterComponentType<ColorAdjustEffect>(engine, "ColorAdjustEffect")
-        .method("float GetBrightness() const", [](const ColorAdjustEffect &e) { return e.GetParams().brightness; })
-        .method("void SetBrightness(float)", [](ColorAdjustEffect &e, float v) { auto p = e.GetParams(); p.brightness = v; e.SetParams(p); })
-        .method("float GetContrast() const", [](const ColorAdjustEffect &e) { return e.GetParams().contrast; })
-        .method("void SetContrast(float)", [](ColorAdjustEffect &e, float v) { auto p = e.GetParams(); p.contrast = v; e.SetParams(p); })
-        .method("float GetSaturation() const", [](const ColorAdjustEffect &e) { return e.GetParams().saturation; })
-        .method("void SetSaturation(float)", [](ColorAdjustEffect &e, float v) { auto p = e.GetParams(); p.saturation = v; e.SetParams(p); })
-        .method("float GetTemperature() const", [](const ColorAdjustEffect &e) { return e.GetParams().temperature; })
-        .method("void SetTemperature(float)", [](ColorAdjustEffect &e, float v) { auto p = e.GetParams(); p.temperature = v; e.SetParams(p); })
-        .method("Vector3 GetColorBalance() const", [](const ColorAdjustEffect &e) -> Vector3 {
+        .method("float GetBrightness() const", [](const ScriptComponentHandle<ColorAdjustEffect> &eHandle) {
+            ColorAdjustEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const ColorAdjustEffect &e = *ePtr; return e.GetParams().brightness; })
+        .method("void SetBrightness(float)", [](ScriptComponentHandle<ColorAdjustEffect> &eHandle, float v) {
+            ColorAdjustEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            ColorAdjustEffect &e = *ePtr; auto p = e.GetParams(); p.brightness = v; e.SetParams(p); })
+        .method("float GetContrast() const", [](const ScriptComponentHandle<ColorAdjustEffect> &eHandle) {
+            ColorAdjustEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const ColorAdjustEffect &e = *ePtr; return e.GetParams().contrast; })
+        .method("void SetContrast(float)", [](ScriptComponentHandle<ColorAdjustEffect> &eHandle, float v) {
+            ColorAdjustEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            ColorAdjustEffect &e = *ePtr; auto p = e.GetParams(); p.contrast = v; e.SetParams(p); })
+        .method("float GetSaturation() const", [](const ScriptComponentHandle<ColorAdjustEffect> &eHandle) {
+            ColorAdjustEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const ColorAdjustEffect &e = *ePtr; return e.GetParams().saturation; })
+        .method("void SetSaturation(float)", [](ScriptComponentHandle<ColorAdjustEffect> &eHandle, float v) {
+            ColorAdjustEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            ColorAdjustEffect &e = *ePtr; auto p = e.GetParams(); p.saturation = v; e.SetParams(p); })
+        .method("float GetTemperature() const", [](const ScriptComponentHandle<ColorAdjustEffect> &eHandle) {
+            ColorAdjustEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const ColorAdjustEffect &e = *ePtr; return e.GetParams().temperature; })
+        .method("void SetTemperature(float)", [](ScriptComponentHandle<ColorAdjustEffect> &eHandle, float v) {
+            ColorAdjustEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            ColorAdjustEffect &e = *ePtr; auto p = e.GetParams(); p.temperature = v; e.SetParams(p); })
+        .method("Vector3 GetColorBalance() const", [](const ScriptComponentHandle<ColorAdjustEffect> &eHandle) -> Vector3 {
+            ColorAdjustEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<Vector3>(); }
+            const ColorAdjustEffect &e = *ePtr;
             const auto &p = e.GetParams(); return Vector3(p.colorBalance[0], p.colorBalance[1], p.colorBalance[2]);
         })
-        .method("void SetColorBalance(const Vector3 &in)", [](ColorAdjustEffect &e, const Vector3 &v) {
+        .method("void SetColorBalance(const Vector3 &in)", [](ScriptComponentHandle<ColorAdjustEffect> &eHandle, const Vector3 &v) {
+            ColorAdjustEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            ColorAdjustEffect &e = *ePtr;
             auto p = e.GetParams(); p.colorBalance[0] = v.x; p.colorBalance[1] = v.y; p.colorBalance[2] = v.z; e.SetParams(p);
         });
 
     RegisterComponentType<DepthOfFieldEffect>(engine, "DepthOfFieldEffect")
-        .method("float GetFocusDistance() const", [](const DepthOfFieldEffect &e) { return e.GetParams().focusDistance; })
-        .method("void SetFocusDistance(float)", [](DepthOfFieldEffect &e, float v) { auto p = e.GetParams(); p.focusDistance = v; e.SetParams(p); })
-        .method("float GetFocusRange() const", [](const DepthOfFieldEffect &e) { return e.GetParams().focusRange; })
-        .method("void SetFocusRange(float)", [](DepthOfFieldEffect &e, float v) { auto p = e.GetParams(); p.focusRange = v; e.SetParams(p); })
-        .method("float GetNearBlurDistance() const", [](const DepthOfFieldEffect &e) { return e.GetParams().nearBlurDistance; })
-        .method("void SetNearBlurDistance(float)", [](DepthOfFieldEffect &e, float v) { auto p = e.GetParams(); p.nearBlurDistance = v; e.SetParams(p); })
-        .method("float GetFarBlurDistance() const", [](const DepthOfFieldEffect &e) { return e.GetParams().farBlurDistance; })
-        .method("void SetFarBlurDistance(float)", [](DepthOfFieldEffect &e, float v) { auto p = e.GetParams(); p.farBlurDistance = v; e.SetParams(p); })
-        .method("float GetMaxBlurRadiusPixels() const", [](const DepthOfFieldEffect &e) { return e.GetParams().maxBlurRadiusPixels; })
-        .method("void SetMaxBlurRadiusPixels(float)", [](DepthOfFieldEffect &e, float v) { auto p = e.GetParams(); p.maxBlurRadiusPixels = v; e.SetParams(p); })
-        .method("uint GetSampleCount() const", [](const DepthOfFieldEffect &e) -> uint32_t { return e.GetParams().sampleCount; })
-        .method("void SetSampleCount(uint)", [](DepthOfFieldEffect &e, uint32_t v) { auto p = e.GetParams(); p.sampleCount = v; e.SetParams(p); })
-        .method("int GetDilateRadius() const", [](const DepthOfFieldEffect &e) { return e.GetParams().dilateRadius; })
-        .method("void SetDilateRadius(int)", [](DepthOfFieldEffect &e, int v) { auto p = e.GetParams(); p.dilateRadius = v; e.SetParams(p); });
+        .method("float GetFocusDistance() const", [](const ScriptComponentHandle<DepthOfFieldEffect> &eHandle) {
+            DepthOfFieldEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const DepthOfFieldEffect &e = *ePtr; return e.GetParams().focusDistance; })
+        .method("void SetFocusDistance(float)", [](ScriptComponentHandle<DepthOfFieldEffect> &eHandle, float v) {
+            DepthOfFieldEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DepthOfFieldEffect &e = *ePtr; auto p = e.GetParams(); p.focusDistance = v; e.SetParams(p); })
+        .method("float GetFocusRange() const", [](const ScriptComponentHandle<DepthOfFieldEffect> &eHandle) {
+            DepthOfFieldEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const DepthOfFieldEffect &e = *ePtr; return e.GetParams().focusRange; })
+        .method("void SetFocusRange(float)", [](ScriptComponentHandle<DepthOfFieldEffect> &eHandle, float v) {
+            DepthOfFieldEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DepthOfFieldEffect &e = *ePtr; auto p = e.GetParams(); p.focusRange = v; e.SetParams(p); })
+        .method("float GetNearBlurDistance() const", [](const ScriptComponentHandle<DepthOfFieldEffect> &eHandle) {
+            DepthOfFieldEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const DepthOfFieldEffect &e = *ePtr; return e.GetParams().nearBlurDistance; })
+        .method("void SetNearBlurDistance(float)", [](ScriptComponentHandle<DepthOfFieldEffect> &eHandle, float v) {
+            DepthOfFieldEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DepthOfFieldEffect &e = *ePtr; auto p = e.GetParams(); p.nearBlurDistance = v; e.SetParams(p); })
+        .method("float GetFarBlurDistance() const", [](const ScriptComponentHandle<DepthOfFieldEffect> &eHandle) {
+            DepthOfFieldEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const DepthOfFieldEffect &e = *ePtr; return e.GetParams().farBlurDistance; })
+        .method("void SetFarBlurDistance(float)", [](ScriptComponentHandle<DepthOfFieldEffect> &eHandle, float v) {
+            DepthOfFieldEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DepthOfFieldEffect &e = *ePtr; auto p = e.GetParams(); p.farBlurDistance = v; e.SetParams(p); })
+        .method("float GetMaxBlurRadiusPixels() const", [](const ScriptComponentHandle<DepthOfFieldEffect> &eHandle) {
+            DepthOfFieldEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const DepthOfFieldEffect &e = *ePtr; return e.GetParams().maxBlurRadiusPixels; })
+        .method("void SetMaxBlurRadiusPixels(float)", [](ScriptComponentHandle<DepthOfFieldEffect> &eHandle, float v) {
+            DepthOfFieldEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DepthOfFieldEffect &e = *ePtr; auto p = e.GetParams(); p.maxBlurRadiusPixels = v; e.SetParams(p); })
+        .method("uint GetSampleCount() const", [](const ScriptComponentHandle<DepthOfFieldEffect> &eHandle) -> uint32_t {
+            DepthOfFieldEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const DepthOfFieldEffect &e = *ePtr; return e.GetParams().sampleCount; })
+        .method("void SetSampleCount(uint)", [](ScriptComponentHandle<DepthOfFieldEffect> &eHandle, uint32_t v) {
+            DepthOfFieldEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DepthOfFieldEffect &e = *ePtr; auto p = e.GetParams(); p.sampleCount = v; e.SetParams(p); })
+        .method("int GetDilateRadius() const", [](const ScriptComponentHandle<DepthOfFieldEffect> &eHandle) {
+            DepthOfFieldEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const DepthOfFieldEffect &e = *ePtr; return e.GetParams().dilateRadius; })
+        .method("void SetDilateRadius(int)", [](ScriptComponentHandle<DepthOfFieldEffect> &eHandle, int v) {
+            DepthOfFieldEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DepthOfFieldEffect &e = *ePtr; auto p = e.GetParams(); p.dilateRadius = v; e.SetParams(p); });
 
     RegisterComponentType<DissolveEffect>(engine, "DissolveEffect")
-        .method("float GetMaskThreshold() const", [](const DissolveEffect &e) { return e.GetParams().maskThreshold; })
-        .method("void SetMaskThreshold(float)", [](DissolveEffect &e, float v) { auto p = e.GetParams(); p.maskThreshold = v; e.SetParams(p); })
-        .method("float GetEdgeThickness() const", [](const DissolveEffect &e) { return e.GetParams().edgeThickness; })
-        .method("void SetEdgeThickness(float)", [](DissolveEffect &e, float v) { auto p = e.GetParams(); p.edgeThickness = v; e.SetParams(p); })
-        .method("string GetBaseTexturePath() const", [](const DissolveEffect &e) -> std::string {
+        .method("float GetMaskThreshold() const", [](const ScriptComponentHandle<DissolveEffect> &eHandle) {
+            DissolveEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const DissolveEffect &e = *ePtr; return e.GetParams().maskThreshold; })
+        .method("void SetMaskThreshold(float)", [](ScriptComponentHandle<DissolveEffect> &eHandle, float v) {
+            DissolveEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DissolveEffect &e = *ePtr; auto p = e.GetParams(); p.maskThreshold = v; e.SetParams(p); })
+        .method("float GetEdgeThickness() const", [](const ScriptComponentHandle<DissolveEffect> &eHandle) {
+            DissolveEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const DissolveEffect &e = *ePtr; return e.GetParams().edgeThickness; })
+        .method("void SetEdgeThickness(float)", [](ScriptComponentHandle<DissolveEffect> &eHandle, float v) {
+            DissolveEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DissolveEffect &e = *ePtr; auto p = e.GetParams(); p.edgeThickness = v; e.SetParams(p); })
+        .method("string GetBaseTexturePath() const", [](const ScriptComponentHandle<DissolveEffect> &eHandle) -> std::string {
+            DissolveEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::string>(); }
+            const DissolveEffect &e = *ePtr;
             return TextureManager::GetTextureAssetPath(e.GetParams().baseTexture);
         })
-        .method("void SetBaseTexturePath(const string &in)", [](DissolveEffect &e, const std::string &path) {
+        .method("void SetBaseTexturePath(const string &in)", [](ScriptComponentHandle<DissolveEffect> &eHandle, const std::string &path) {
+            DissolveEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DissolveEffect &e = *ePtr;
             auto p = e.GetParams();
             p.baseTexture = path.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(path);
             e.SetParams(p);
         })
-        .method("string GetMaskTexturePath() const", [](const DissolveEffect &e) -> std::string {
+        .method("string GetMaskTexturePath() const", [](const ScriptComponentHandle<DissolveEffect> &eHandle) -> std::string {
+            DissolveEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::string>(); }
+            const DissolveEffect &e = *ePtr;
             return TextureManager::GetTextureAssetPath(e.GetParams().maskTexture);
         })
-        .method("void SetMaskTexturePath(const string &in)", [](DissolveEffect &e, const std::string &path) {
+        .method("void SetMaskTexturePath(const string &in)", [](ScriptComponentHandle<DissolveEffect> &eHandle, const std::string &path) {
+            DissolveEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DissolveEffect &e = *ePtr;
             auto p = e.GetParams();
             p.maskTexture = path.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(path);
             e.SetParams(p);
         })
-        .method("Vector4 GetBaseTextureColor() const", [](const DissolveEffect &e) -> Vector4 {
+        .method("Vector4 GetBaseTextureColor() const", [](const ScriptComponentHandle<DissolveEffect> &eHandle) -> Vector4 {
+            DissolveEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<Vector4>(); }
+            const DissolveEffect &e = *ePtr;
             const auto &c = e.GetParams().baseTextureColor; return Vector4(c[0], c[1], c[2], c[3]);
         })
-        .method("void SetBaseTextureColor(const Vector4 &in)", [](DissolveEffect &e, const Vector4 &c) {
+        .method("void SetBaseTextureColor(const Vector4 &in)", [](ScriptComponentHandle<DissolveEffect> &eHandle, const Vector4 &c) {
+            DissolveEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DissolveEffect &e = *ePtr;
             auto p = e.GetParams();
             p.baseTextureColor[0] = c.x; p.baseTextureColor[1] = c.y; p.baseTextureColor[2] = c.z; p.baseTextureColor[3] = c.w;
             e.SetParams(p);
         })
-        .method("Vector4 GetEdgeColor() const", [](const DissolveEffect &e) -> Vector4 {
+        .method("Vector4 GetEdgeColor() const", [](const ScriptComponentHandle<DissolveEffect> &eHandle) -> Vector4 {
+            DissolveEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<Vector4>(); }
+            const DissolveEffect &e = *ePtr;
             const auto &c = e.GetParams().edgeColor; return Vector4(c[0], c[1], c[2], c[3]);
         })
-        .method("void SetEdgeColor(const Vector4 &in)", [](DissolveEffect &e, const Vector4 &c) {
+        .method("void SetEdgeColor(const Vector4 &in)", [](ScriptComponentHandle<DissolveEffect> &eHandle, const Vector4 &c) {
+            DissolveEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DissolveEffect &e = *ePtr;
             auto p = e.GetParams();
             p.edgeColor[0] = c.x; p.edgeColor[1] = c.y; p.edgeColor[2] = c.z; p.edgeColor[3] = c.w;
             e.SetParams(p);
         });
 
     RegisterComponentType<DitherEffect>(engine, "DitherEffect")
-        .method("float GetIntensity() const", [](const DitherEffect &e) { return e.GetParams().intensity; })
-        .method("void SetIntensity(float)", [](DitherEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
-        .method("bool IsColorDither() const", [](const DitherEffect &e) { return e.GetParams().color; })
-        .method("void SetColorDither(bool)", [](DitherEffect &e, bool v) { auto p = e.GetParams(); p.color = v; e.SetParams(p); });
+        .method("float GetIntensity() const", [](const ScriptComponentHandle<DitherEffect> &eHandle) {
+            DitherEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const DitherEffect &e = *ePtr; return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](ScriptComponentHandle<DitherEffect> &eHandle, float v) {
+            DitherEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DitherEffect &e = *ePtr; auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("bool IsColorDither() const", [](const ScriptComponentHandle<DitherEffect> &eHandle) {
+            DitherEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
+            const DitherEffect &e = *ePtr; return e.GetParams().color; })
+        .method("void SetColorDither(bool)", [](ScriptComponentHandle<DitherEffect> &eHandle, bool v) {
+            DitherEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DitherEffect &e = *ePtr; auto p = e.GetParams(); p.color = v; e.SetParams(p); });
 
     RegisterComponentType<DotMatrixEffect>(engine, "DotMatrixEffect")
-        .method("float GetDotSpacing() const", [](const DotMatrixEffect &e) { return e.GetParams().dotSpacing; })
-        .method("void SetDotSpacing(float)", [](DotMatrixEffect &e, float v) { auto p = e.GetParams(); p.dotSpacing = v; e.SetParams(p); })
-        .method("float GetDotRadius() const", [](const DotMatrixEffect &e) { return e.GetParams().dotRadius; })
-        .method("void SetDotRadius(float)", [](DotMatrixEffect &e, float v) { auto p = e.GetParams(); p.dotRadius = v; e.SetParams(p); })
-        .method("float GetThreshold() const", [](const DotMatrixEffect &e) { return e.GetParams().threshold; })
-        .method("void SetThreshold(float)", [](DotMatrixEffect &e, float v) { auto p = e.GetParams(); p.threshold = v; e.SetParams(p); })
-        .method("float GetIntensity() const", [](const DotMatrixEffect &e) { return e.GetParams().intensity; })
-        .method("void SetIntensity(float)", [](DotMatrixEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
-        .method("bool IsMonochrome() const", [](const DotMatrixEffect &e) { return e.GetParams().monochrome; })
-        .method("void SetMonochrome(bool)", [](DotMatrixEffect &e, bool v) { auto p = e.GetParams(); p.monochrome = v; e.SetParams(p); });
+        .method("float GetDotSpacing() const", [](const ScriptComponentHandle<DotMatrixEffect> &eHandle) {
+            DotMatrixEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const DotMatrixEffect &e = *ePtr; return e.GetParams().dotSpacing; })
+        .method("void SetDotSpacing(float)", [](ScriptComponentHandle<DotMatrixEffect> &eHandle, float v) {
+            DotMatrixEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DotMatrixEffect &e = *ePtr; auto p = e.GetParams(); p.dotSpacing = v; e.SetParams(p); })
+        .method("float GetDotRadius() const", [](const ScriptComponentHandle<DotMatrixEffect> &eHandle) {
+            DotMatrixEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const DotMatrixEffect &e = *ePtr; return e.GetParams().dotRadius; })
+        .method("void SetDotRadius(float)", [](ScriptComponentHandle<DotMatrixEffect> &eHandle, float v) {
+            DotMatrixEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DotMatrixEffect &e = *ePtr; auto p = e.GetParams(); p.dotRadius = v; e.SetParams(p); })
+        .method("float GetThreshold() const", [](const ScriptComponentHandle<DotMatrixEffect> &eHandle) {
+            DotMatrixEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const DotMatrixEffect &e = *ePtr; return e.GetParams().threshold; })
+        .method("void SetThreshold(float)", [](ScriptComponentHandle<DotMatrixEffect> &eHandle, float v) {
+            DotMatrixEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DotMatrixEffect &e = *ePtr; auto p = e.GetParams(); p.threshold = v; e.SetParams(p); })
+        .method("float GetIntensity() const", [](const ScriptComponentHandle<DotMatrixEffect> &eHandle) {
+            DotMatrixEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const DotMatrixEffect &e = *ePtr; return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](ScriptComponentHandle<DotMatrixEffect> &eHandle, float v) {
+            DotMatrixEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DotMatrixEffect &e = *ePtr; auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("bool IsMonochrome() const", [](const ScriptComponentHandle<DotMatrixEffect> &eHandle) {
+            DotMatrixEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
+            const DotMatrixEffect &e = *ePtr; return e.GetParams().monochrome; })
+        .method("void SetMonochrome(bool)", [](ScriptComponentHandle<DotMatrixEffect> &eHandle, bool v) {
+            DotMatrixEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            DotMatrixEffect &e = *ePtr; auto p = e.GetParams(); p.monochrome = v; e.SetParams(p); });
 
     RegisterComponentType<FXAAEffect>(engine, "FXAAEffect")
-        .method("float GetThreshold() const", [](const FXAAEffect &e) { return e.GetParams().threshold; })
-        .method("void SetThreshold(float)", [](FXAAEffect &e, float v) { auto p = e.GetParams(); p.threshold = v; e.SetParams(p); })
-        .method("float GetThresholdMin() const", [](const FXAAEffect &e) { return e.GetParams().thresholdMin; })
-        .method("void SetThresholdMin(float)", [](FXAAEffect &e, float v) { auto p = e.GetParams(); p.thresholdMin = v; e.SetParams(p); })
-        .method("float GetStrength() const", [](const FXAAEffect &e) { return e.GetParams().strength; })
-        .method("void SetStrength(float)", [](FXAAEffect &e, float v) { auto p = e.GetParams(); p.strength = v; e.SetParams(p); })
-        .method("float GetSubpixelBlend() const", [](const FXAAEffect &e) { return e.GetParams().subpixelBlend; })
-        .method("void SetSubpixelBlend(float)", [](FXAAEffect &e, float v) { auto p = e.GetParams(); p.subpixelBlend = v; e.SetParams(p); });
+        .method("float GetThreshold() const", [](const ScriptComponentHandle<FXAAEffect> &eHandle) {
+            FXAAEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const FXAAEffect &e = *ePtr; return e.GetParams().threshold; })
+        .method("void SetThreshold(float)", [](ScriptComponentHandle<FXAAEffect> &eHandle, float v) {
+            FXAAEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            FXAAEffect &e = *ePtr; auto p = e.GetParams(); p.threshold = v; e.SetParams(p); })
+        .method("float GetThresholdMin() const", [](const ScriptComponentHandle<FXAAEffect> &eHandle) {
+            FXAAEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const FXAAEffect &e = *ePtr; return e.GetParams().thresholdMin; })
+        .method("void SetThresholdMin(float)", [](ScriptComponentHandle<FXAAEffect> &eHandle, float v) {
+            FXAAEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            FXAAEffect &e = *ePtr; auto p = e.GetParams(); p.thresholdMin = v; e.SetParams(p); })
+        .method("float GetStrength() const", [](const ScriptComponentHandle<FXAAEffect> &eHandle) {
+            FXAAEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const FXAAEffect &e = *ePtr; return e.GetParams().strength; })
+        .method("void SetStrength(float)", [](ScriptComponentHandle<FXAAEffect> &eHandle, float v) {
+            FXAAEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            FXAAEffect &e = *ePtr; auto p = e.GetParams(); p.strength = v; e.SetParams(p); })
+        .method("float GetSubpixelBlend() const", [](const ScriptComponentHandle<FXAAEffect> &eHandle) {
+            FXAAEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const FXAAEffect &e = *ePtr; return e.GetParams().subpixelBlend; })
+        .method("void SetSubpixelBlend(float)", [](ScriptComponentHandle<FXAAEffect> &eHandle, float v) {
+            FXAAEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            FXAAEffect &e = *ePtr; auto p = e.GetParams(); p.subpixelBlend = v; e.SetParams(p); });
 
     RegisterComponentType<GaussianFilterEffect>(engine, "GaussianFilterEffect")
-        .method("int GetRadius() const", [](const GaussianFilterEffect &e) { return e.GetParams().radius; })
-        .method("void SetRadius(int)", [](GaussianFilterEffect &e, int v) { auto p = e.GetParams(); p.radius = v; e.SetParams(p); })
-        .method("float GetSigma() const", [](const GaussianFilterEffect &e) { return e.GetParams().sigma; })
-        .method("void SetSigma(float)", [](GaussianFilterEffect &e, float v) { auto p = e.GetParams(); p.sigma = v; e.SetParams(p); });
+        .method("int GetRadius() const", [](const ScriptComponentHandle<GaussianFilterEffect> &eHandle) {
+            GaussianFilterEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const GaussianFilterEffect &e = *ePtr; return e.GetParams().radius; })
+        .method("void SetRadius(int)", [](ScriptComponentHandle<GaussianFilterEffect> &eHandle, int v) {
+            GaussianFilterEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            GaussianFilterEffect &e = *ePtr; auto p = e.GetParams(); p.radius = v; e.SetParams(p); })
+        .method("float GetSigma() const", [](const ScriptComponentHandle<GaussianFilterEffect> &eHandle) {
+            GaussianFilterEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const GaussianFilterEffect &e = *ePtr; return e.GetParams().sigma; })
+        .method("void SetSigma(float)", [](ScriptComponentHandle<GaussianFilterEffect> &eHandle, float v) {
+            GaussianFilterEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            GaussianFilterEffect &e = *ePtr; auto p = e.GetParams(); p.sigma = v; e.SetParams(p); });
 
     RegisterComponentType<GrayscaleEffect>(engine, "GrayscaleEffect")
-        .method("float GetIntensity() const", [](const GrayscaleEffect &e) { return e.GetParams().intensity; })
-        .method("void SetIntensity(float)", [](GrayscaleEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); });
+        .method("float GetIntensity() const", [](const ScriptComponentHandle<GrayscaleEffect> &eHandle) {
+            GrayscaleEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const GrayscaleEffect &e = *ePtr; return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](ScriptComponentHandle<GrayscaleEffect> &eHandle, float v) {
+            GrayscaleEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            GrayscaleEffect &e = *ePtr; auto p = e.GetParams(); p.intensity = v; e.SetParams(p); });
 
     RegisterComponentType<MotionBlurEffect>(engine, "MotionBlurEffect")
-        .method("float GetIntensity() const", [](const MotionBlurEffect &e) { return e.GetParams().intensity; })
-        .method("void SetIntensity(float)", [](MotionBlurEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
-        .method("float GetVelocityScale() const", [](const MotionBlurEffect &e) { return e.GetParams().velocityScale; })
-        .method("void SetVelocityScale(float)", [](MotionBlurEffect &e, float v) { auto p = e.GetParams(); p.velocityScale = v; e.SetParams(p); })
-        .method("float GetMaxBlurPixels() const", [](const MotionBlurEffect &e) { return e.GetParams().maxBlurPixels; })
-        .method("void SetMaxBlurPixels(float)", [](MotionBlurEffect &e, float v) { auto p = e.GetParams(); p.maxBlurPixels = v; e.SetParams(p); })
-        .method("uint GetSamples() const", [](const MotionBlurEffect &e) -> uint32_t { return e.GetParams().samples; })
-        .method("void SetSamples(uint)", [](MotionBlurEffect &e, uint32_t v) { auto p = e.GetParams(); p.samples = v; e.SetParams(p); });
+        .method("float GetIntensity() const", [](const ScriptComponentHandle<MotionBlurEffect> &eHandle) {
+            MotionBlurEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const MotionBlurEffect &e = *ePtr; return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](ScriptComponentHandle<MotionBlurEffect> &eHandle, float v) {
+            MotionBlurEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            MotionBlurEffect &e = *ePtr; auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("float GetVelocityScale() const", [](const ScriptComponentHandle<MotionBlurEffect> &eHandle) {
+            MotionBlurEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const MotionBlurEffect &e = *ePtr; return e.GetParams().velocityScale; })
+        .method("void SetVelocityScale(float)", [](ScriptComponentHandle<MotionBlurEffect> &eHandle, float v) {
+            MotionBlurEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            MotionBlurEffect &e = *ePtr; auto p = e.GetParams(); p.velocityScale = v; e.SetParams(p); })
+        .method("float GetMaxBlurPixels() const", [](const ScriptComponentHandle<MotionBlurEffect> &eHandle) {
+            MotionBlurEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const MotionBlurEffect &e = *ePtr; return e.GetParams().maxBlurPixels; })
+        .method("void SetMaxBlurPixels(float)", [](ScriptComponentHandle<MotionBlurEffect> &eHandle, float v) {
+            MotionBlurEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            MotionBlurEffect &e = *ePtr; auto p = e.GetParams(); p.maxBlurPixels = v; e.SetParams(p); })
+        .method("uint GetSamples() const", [](const ScriptComponentHandle<MotionBlurEffect> &eHandle) -> uint32_t {
+            MotionBlurEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const MotionBlurEffect &e = *ePtr; return e.GetParams().samples; })
+        .method("void SetSamples(uint)", [](ScriptComponentHandle<MotionBlurEffect> &eHandle, uint32_t v) {
+            MotionBlurEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            MotionBlurEffect &e = *ePtr; auto p = e.GetParams(); p.samples = v; e.SetParams(p); });
 
     RegisterComponentType<OutlineEffect>(engine, "OutlineEffect")
-        .method("float GetThreshold() const", [](const OutlineEffect &e) { return e.GetParams().threshold; })
-        .method("void SetThreshold(float)", [](OutlineEffect &e, float v) { auto p = e.GetParams(); p.threshold = v; e.SetParams(p); })
-        .method("float GetThickness() const", [](const OutlineEffect &e) { return e.GetParams().thickness; })
-        .method("void SetThickness(float)", [](OutlineEffect &e, float v) { auto p = e.GetParams(); p.thickness = v; e.SetParams(p); })
-        .method("Vector4 GetColor() const", [](const OutlineEffect &e) -> Vector4 {
+        .method("float GetThreshold() const", [](const ScriptComponentHandle<OutlineEffect> &eHandle) {
+            OutlineEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const OutlineEffect &e = *ePtr; return e.GetParams().threshold; })
+        .method("void SetThreshold(float)", [](ScriptComponentHandle<OutlineEffect> &eHandle, float v) {
+            OutlineEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            OutlineEffect &e = *ePtr; auto p = e.GetParams(); p.threshold = v; e.SetParams(p); })
+        .method("float GetThickness() const", [](const ScriptComponentHandle<OutlineEffect> &eHandle) {
+            OutlineEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const OutlineEffect &e = *ePtr; return e.GetParams().thickness; })
+        .method("void SetThickness(float)", [](ScriptComponentHandle<OutlineEffect> &eHandle, float v) {
+            OutlineEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            OutlineEffect &e = *ePtr; auto p = e.GetParams(); p.thickness = v; e.SetParams(p); })
+        .method("Vector4 GetColor() const", [](const ScriptComponentHandle<OutlineEffect> &eHandle) -> Vector4 {
+            OutlineEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<Vector4>(); }
+            const OutlineEffect &e = *ePtr;
             const auto &c = e.GetParams().color; return Vector4(c[0], c[1], c[2], c[3]);
         })
-        .method("void SetColor(const Vector4 &in)", [](OutlineEffect &e, const Vector4 &c) {
+        .method("void SetColor(const Vector4 &in)", [](ScriptComponentHandle<OutlineEffect> &eHandle, const Vector4 &c) {
+            OutlineEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            OutlineEffect &e = *ePtr;
             auto p = e.GetParams();
             p.color[0] = c.x; p.color[1] = c.y; p.color[2] = c.z; p.color[3] = c.w;
             e.SetParams(p);
         });
 
     RegisterComponentType<RadialBlurEffect>(engine, "RadialBlurEffect")
-        .method("float GetIntensity() const", [](const RadialBlurEffect &e) { return e.GetParams().intensity; })
-        .method("void SetIntensity(float)", [](RadialBlurEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
-        .method("int GetSampleCount() const", [](const RadialBlurEffect &e) { return e.GetParams().sampleCount; })
-        .method("void SetSampleCount(int)", [](RadialBlurEffect &e, int v) { auto p = e.GetParams(); p.sampleCount = v; e.SetParams(p); })
-        .method("Vector2 GetCenter() const", [](const RadialBlurEffect &e) -> Vector2 {
+        .method("float GetIntensity() const", [](const ScriptComponentHandle<RadialBlurEffect> &eHandle) {
+            RadialBlurEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const RadialBlurEffect &e = *ePtr; return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](ScriptComponentHandle<RadialBlurEffect> &eHandle, float v) {
+            RadialBlurEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            RadialBlurEffect &e = *ePtr; auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("int GetSampleCount() const", [](const ScriptComponentHandle<RadialBlurEffect> &eHandle) {
+            RadialBlurEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const RadialBlurEffect &e = *ePtr; return e.GetParams().sampleCount; })
+        .method("void SetSampleCount(int)", [](ScriptComponentHandle<RadialBlurEffect> &eHandle, int v) {
+            RadialBlurEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            RadialBlurEffect &e = *ePtr; auto p = e.GetParams(); p.sampleCount = v; e.SetParams(p); })
+        .method("Vector2 GetCenter() const", [](const ScriptComponentHandle<RadialBlurEffect> &eHandle) -> Vector2 {
+            RadialBlurEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<Vector2>(); }
+            const RadialBlurEffect &e = *ePtr;
             const auto &c = e.GetParams().radialCenter; return Vector2(c[0], c[1]);
         })
-        .method("void SetCenter(const Vector2 &in)", [](RadialBlurEffect &e, const Vector2 &c) {
+        .method("void SetCenter(const Vector2 &in)", [](ScriptComponentHandle<RadialBlurEffect> &eHandle, const Vector2 &c) {
+            RadialBlurEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            RadialBlurEffect &e = *ePtr;
             auto p = e.GetParams(); p.radialCenter[0] = c.x; p.radialCenter[1] = c.y; e.SetParams(p);
         })
-        .method("float GetStartRadius() const", [](const RadialBlurEffect &e) { return e.GetParams().startRadius; })
-        .method("void SetStartRadius(float)", [](RadialBlurEffect &e, float v) { auto p = e.GetParams(); p.startRadius = v; e.SetParams(p); });
+        .method("float GetStartRadius() const", [](const ScriptComponentHandle<RadialBlurEffect> &eHandle) {
+            RadialBlurEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const RadialBlurEffect &e = *ePtr; return e.GetParams().startRadius; })
+        .method("void SetStartRadius(float)", [](ScriptComponentHandle<RadialBlurEffect> &eHandle, float v) {
+            RadialBlurEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            RadialBlurEffect &e = *ePtr; auto p = e.GetParams(); p.startRadius = v; e.SetParams(p); });
 
     RegisterComponentType<TemporalBlendEffect>(engine, "TemporalBlendEffect")
-        .method("float GetHistoryWeight() const", [](const TemporalBlendEffect &e) { return e.GetParams().historyWeight; })
-        .method("void SetHistoryWeight(float)", [](TemporalBlendEffect &e, float v) { auto p = e.GetParams(); p.historyWeight = v; e.SetParams(p); });
+        .method("float GetHistoryWeight() const", [](const ScriptComponentHandle<TemporalBlendEffect> &eHandle) {
+            TemporalBlendEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const TemporalBlendEffect &e = *ePtr; return e.GetParams().historyWeight; })
+        .method("void SetHistoryWeight(float)", [](ScriptComponentHandle<TemporalBlendEffect> &eHandle, float v) {
+            TemporalBlendEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            TemporalBlendEffect &e = *ePtr; auto p = e.GetParams(); p.historyWeight = v; e.SetParams(p); });
 
     RegisterComponentType<VignetteEffect>(engine, "VignetteEffect")
-        .method("Vector2 GetCenter() const", [](const VignetteEffect &e) -> Vector2 {
+        .method("Vector2 GetCenter() const", [](const ScriptComponentHandle<VignetteEffect> &eHandle) -> Vector2 {
+            VignetteEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<Vector2>(); }
+            const VignetteEffect &e = *ePtr;
             const auto &c = e.GetParams().center; return Vector2(c[0], c[1]);
         })
-        .method("void SetCenter(const Vector2 &in)", [](VignetteEffect &e, const Vector2 &c) {
+        .method("void SetCenter(const Vector2 &in)", [](ScriptComponentHandle<VignetteEffect> &eHandle, const Vector2 &c) {
+            VignetteEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            VignetteEffect &e = *ePtr;
             auto p = e.GetParams(); p.center[0] = c.x; p.center[1] = c.y; e.SetParams(p);
         })
-        .method("Vector4 GetColor() const", [](const VignetteEffect &e) -> Vector4 { return e.GetParams().color; })
-        .method("void SetColor(const Vector4 &in)", [](VignetteEffect &e, const Vector4 &c) {
+        .method("Vector4 GetColor() const", [](const ScriptComponentHandle<VignetteEffect> &eHandle) -> Vector4 {
+            VignetteEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<Vector4>(); }
+            const VignetteEffect &e = *ePtr; return e.GetParams().color; })
+        .method("void SetColor(const Vector4 &in)", [](ScriptComponentHandle<VignetteEffect> &eHandle, const Vector4 &c) {
+            VignetteEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            VignetteEffect &e = *ePtr;
             auto p = e.GetParams(); p.color = c; e.SetParams(p);
         })
-        .method("float GetIntensity() const", [](const VignetteEffect &e) { return e.GetParams().intensity; })
-        .method("void SetIntensity(float)", [](VignetteEffect &e, float v) { auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
-        .method("float GetInnerRadius() const", [](const VignetteEffect &e) { return e.GetParams().innerRadius; })
-        .method("void SetInnerRadius(float)", [](VignetteEffect &e, float v) { auto p = e.GetParams(); p.innerRadius = v; e.SetParams(p); })
-        .method("float GetSmoothness() const", [](const VignetteEffect &e) { return e.GetParams().smoothness; })
-        .method("void SetSmoothness(float)", [](VignetteEffect &e, float v) { auto p = e.GetParams(); p.smoothness = v; e.SetParams(p); });
+        .method("float GetIntensity() const", [](const ScriptComponentHandle<VignetteEffect> &eHandle) {
+            VignetteEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const VignetteEffect &e = *ePtr; return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](ScriptComponentHandle<VignetteEffect> &eHandle, float v) {
+            VignetteEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            VignetteEffect &e = *ePtr; auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("float GetInnerRadius() const", [](const ScriptComponentHandle<VignetteEffect> &eHandle) {
+            VignetteEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const VignetteEffect &e = *ePtr; return e.GetParams().innerRadius; })
+        .method("void SetInnerRadius(float)", [](ScriptComponentHandle<VignetteEffect> &eHandle, float v) {
+            VignetteEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            VignetteEffect &e = *ePtr; auto p = e.GetParams(); p.innerRadius = v; e.SetParams(p); })
+        .method("float GetSmoothness() const", [](const ScriptComponentHandle<VignetteEffect> &eHandle) {
+            VignetteEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const VignetteEffect &e = *ePtr; return e.GetParams().smoothness; })
+        .method("void SetSmoothness(float)", [](ScriptComponentHandle<VignetteEffect> &eHandle, float v) {
+            VignetteEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            VignetteEffect &e = *ePtr; auto p = e.GetParams(); p.smoothness = v; e.SetParams(p); });
 
     RegisterComponentType<ScreenWideDitherBlendEffect>(engine, "ScreenWideDitherBlendEffect")
-        .method("uint GetPassCount() const", [](const ScreenWideDitherBlendEffect &e) -> uint32_t { return e.GetPassCount(); })
-        .method("void SetPassCount(uint)", [](ScreenWideDitherBlendEffect &e, uint32_t count) { e.SetPassCount(count); });
+        .method("uint GetPassCount() const", [](const ScriptComponentHandle<ScreenWideDitherBlendEffect> &eHandle) -> uint32_t {
+            ScreenWideDitherBlendEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const ScreenWideDitherBlendEffect &e = *ePtr; return e.GetPassCount(); })
+        .method("void SetPassCount(uint)", [](ScriptComponentHandle<ScreenWideDitherBlendEffect> &eHandle, uint32_t count) {
+            ScreenWideDitherBlendEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            ScreenWideDitherBlendEffect &e = *ePtr; e.SetPassCount(count); });
 
     //==================================================
     // メディア再生
     //==================================================
 
     RegisterComponentType<GifSource>(engine, "GifSource")
-        .method("bool Play()", &GifSource::Play)
-        .method("void Stop()", &GifSource::Stop)
-        .method("bool Pause()", &GifSource::Pause)
-        .method("bool Resume()", &GifSource::Resume)
-        .method("bool IsPlaying() const", &GifSource::IsPlaying)
-        .method("bool IsPaused() const", &GifSource::IsPaused)
-        .method("void SetGifAssetPath(const string &in)", &GifSource::SetGifAssetPath)
-        .method("const string &GetGifAssetPath() const", &GifSource::GetGifAssetPath)
-        .method("void SetLoop(bool)", &GifSource::SetLoop)
-        .method("bool GetLoop() const", &GifSource::GetLoop)
-        .method("void SetPlayOnAwake(bool)", &GifSource::SetPlayOnAwake)
-        .method("bool GetPlayOnAwake() const", &GifSource::GetPlayOnAwake);
+        .method("bool Play()", SafeCall<&GifSource::Play>())
+        .method("void Stop()", SafeCall<&GifSource::Stop>())
+        .method("bool Pause()", SafeCall<&GifSource::Pause>())
+        .method("bool Resume()", SafeCall<&GifSource::Resume>())
+        .method("bool IsPlaying() const", SafeCall<&GifSource::IsPlaying>())
+        .method("bool IsPaused() const", SafeCall<&GifSource::IsPaused>())
+        .method("void SetGifAssetPath(const string &in)", SafeCall<&GifSource::SetGifAssetPath>())
+        .method("const string &GetGifAssetPath() const", SafeCall<&GifSource::GetGifAssetPath>())
+        .method("void SetLoop(bool)", SafeCall<&GifSource::SetLoop>())
+        .method("bool GetLoop() const", SafeCall<&GifSource::GetLoop>())
+        .method("void SetPlayOnAwake(bool)", SafeCall<&GifSource::SetPlayOnAwake>())
+        .method("bool GetPlayOnAwake() const", SafeCall<&GifSource::GetPlayOnAwake>());
 
     RegisterComponentType<VideoSource>(engine, "VideoSource")
-        .method("bool Play()", &VideoSource::Play)
-        .method("void Stop()", &VideoSource::Stop)
-        .method("bool Pause()", &VideoSource::Pause)
-        .method("bool Resume()", &VideoSource::Resume)
-        .method("bool IsPlaying() const", &VideoSource::IsPlaying)
-        .method("bool IsPaused() const", &VideoSource::IsPaused)
-        .method("void SetVideoAssetPath(const string &in)", &VideoSource::SetVideoAssetPath)
-        .method("const string &GetVideoAssetPath() const", &VideoSource::GetVideoAssetPath)
-        .method("void SetLoop(bool)", &VideoSource::SetLoop)
-        .method("bool GetLoop() const", &VideoSource::GetLoop)
-        .method("void SetVolume(float)", &VideoSource::SetVolume)
-        .method("float GetVolume() const", &VideoSource::GetVolume)
-        .method("void SetPlayOnAwake(bool)", &VideoSource::SetPlayOnAwake)
-        .method("bool GetPlayOnAwake() const", &VideoSource::GetPlayOnAwake)
-        .method("void SetRouteAudioToAudioSource(bool)", &VideoSource::SetRouteAudioToAudioSource)
-        .method("bool GetRouteAudioToAudioSource() const", &VideoSource::GetRouteAudioToAudioSource);
+        .method("bool Play()", SafeCall<&VideoSource::Play>())
+        .method("void Stop()", SafeCall<&VideoSource::Stop>())
+        .method("bool Pause()", SafeCall<&VideoSource::Pause>())
+        .method("bool Resume()", SafeCall<&VideoSource::Resume>())
+        .method("bool IsPlaying() const", SafeCall<&VideoSource::IsPlaying>())
+        .method("bool IsPaused() const", SafeCall<&VideoSource::IsPaused>())
+        .method("void SetVideoAssetPath(const string &in)", SafeCall<&VideoSource::SetVideoAssetPath>())
+        .method("const string &GetVideoAssetPath() const", SafeCall<&VideoSource::GetVideoAssetPath>())
+        .method("void SetLoop(bool)", SafeCall<&VideoSource::SetLoop>())
+        .method("bool GetLoop() const", SafeCall<&VideoSource::GetLoop>())
+        .method("void SetVolume(float)", SafeCall<&VideoSource::SetVolume>())
+        .method("float GetVolume() const", SafeCall<&VideoSource::GetVolume>())
+        .method("void SetPlayOnAwake(bool)", SafeCall<&VideoSource::SetPlayOnAwake>())
+        .method("bool GetPlayOnAwake() const", SafeCall<&VideoSource::GetPlayOnAwake>())
+        .method("void SetRouteAudioToAudioSource(bool)", SafeCall<&VideoSource::SetRouteAudioToAudioSource>())
+        .method("bool GetRouteAudioToAudioSource() const", SafeCall<&VideoSource::GetRouteAudioToAudioSource>());
 
     RegisterComponentType<TextureSource>(engine, "TextureSource")
-        .method("void SetTextureAssetPath(const string &in)", &TextureSource::SetTextureAssetPath)
-        .method("const string &GetTextureAssetPath() const", &TextureSource::GetTextureAssetPath);
+        .method("void SetTextureAssetPath(const string &in)", SafeCall<&TextureSource::SetTextureAssetPath>())
+        .method("const string &GetTextureAssetPath() const", SafeCall<&TextureSource::GetTextureAssetPath>());
 
     //==================================================
     // Prefab
@@ -1708,10 +2782,13 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
 
     auto prefabInstanceBinder = RegisterComponentType<PrefabInstanceComponent>(engine, "PrefabInstanceComponent");
     prefabInstanceBinder
-        .method("string GetPrefabID() const", [](const PrefabInstanceComponent &c) -> std::string { return c.GetPrefabID().ToString(); });
+        .method("string GetPrefabID() const", [](const ScriptComponentHandle<PrefabInstanceComponent> &cHandle) -> std::string {
+            PrefabInstanceComponent *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::string>(); }
+            const PrefabInstanceComponent &c = *cPtr; return c.GetPrefabID().ToString(); });
 #if defined(USE_IMGUI)
     // GetPrefabPath()はUSE_IMGUI限定の実装（PrefabInstanceComponent.cpp）のため、Release構成では登録しない
-    prefabInstanceBinder.method("string GetPrefabPath() const", &PrefabInstanceComponent::GetPrefabPath);
+    prefabInstanceBinder.method("string GetPrefabPath() const", SafeCall<&PrefabInstanceComponent::GetPrefabPath>());
 #endif
 }
 
@@ -1730,9 +2807,10 @@ bool GetComponentIntoHandle(EmptyObject &obj, void *ref, int typeId) {
     if (it == gComponentTypeBindings.end()) return false;
 
     IObjectComponent *component = it->second.getOne(obj);
-    // コンポーネント型は参照カウント無し(asOBJ_NOCOUNT)のためAddRefは不要
-    *static_cast<void **>(ref) = component;
-    return component != nullptr;
+    // wrapAsHandleはrefcount=1で生成する。出力先ハンドルへそのまま所有権を移す（他にAddRef元は無い）
+    void *handle = component ? it->second.wrapAsHandle(component) : nullptr;
+    *static_cast<void **>(ref) = handle;
+    return handle != nullptr;
 }
 
 /// @brief 配列の要素型に対応する全コンポーネントを取得して出力ハンドル(array<T@>@)へ格納する
@@ -1759,8 +2837,10 @@ bool GetComponentsIntoArray(EmptyObject &obj, void *ref, int typeId) {
     CScriptArray *array = CScriptArray::Create(arrayType, static_cast<asUINT>(components.size()));
     if (!array) return false;
     for (asUINT i = 0; i < components.size(); ++i) {
-        void *handle = components[i];
+        void *handle = it->second.wrapAsHandle(components[i]);
         array->SetValue(i, &handle);
+        // SetValueが内部で独自にAddRefするため、生成時点(refcount=1)の所有権は解放して配列だけに残す
+        if (handle) it->second.releaseHandle(handle);
     }
     // Createで得た参照をそのまま出力ハンドルへ移譲する（解放はスクリプト側で行われる）
     *static_cast<CScriptArray **>(ref) = array;
@@ -1782,9 +2862,9 @@ bool AddComponentIntoHandle(EmptyObject &obj, void *ref, int typeId) {
 
     auto newComponent = CreateObjectComponentByType(it->second.engineTypeName);
     IObjectComponent *added = newComponent ? obj.AddComponent(std::move(newComponent)) : nullptr;
-    // コンポーネント型は参照カウント無し(asOBJ_NOCOUNT)のためAddRefは不要
-    *static_cast<void **>(ref) = added;
-    return added != nullptr;
+    void *handle = added ? it->second.wrapAsHandle(added) : nullptr;
+    *static_cast<void **>(ref) = handle;
+    return handle != nullptr;
 }
 
 /// @brief ?&in で渡されたコンポーネントハンドルをオブジェクトから削除する
@@ -1794,11 +2874,14 @@ bool AddComponentIntoHandle(EmptyObject &obj, void *ref, int typeId) {
 bool RemoveComponentFromHandle(EmptyObject &obj, void *ref, int typeId) {
     if (!ref || !(typeId & asTYPEID_OBJHANDLE)) return false;
     const int baseTypeId = typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST);
-    if (gComponentTypeBindings.find(baseTypeId) == gComponentTypeBindings.end()) return false;
+    auto it = gComponentTypeBindings.find(baseTypeId);
+    if (it == gComponentTypeBindings.end()) return false;
 
-    void *componentPtr = *static_cast<void **>(ref);
-    if (!componentPtr) return false;
-    return obj.RemoveComponent(static_cast<IObjectComponent *>(componentPtr));
+    void *handlePtr = *static_cast<void **>(ref);
+    if (!handlePtr) return false;
+    IObjectComponent *component = it->second.resolveHandle(handlePtr);
+    if (!component) { ThrowDestroyedObjectException(); return false; }
+    return obj.RemoveComponent(component);
 }
 
 /// @brief EmptyObjectのポインタ配列から array<Object@>@ を構築する（Scene::GetObjects用）
@@ -1813,8 +2896,12 @@ CScriptArray *MakeObjectArray(const std::vector<EmptyObject *> &objects) {
     CScriptArray *array = CScriptArray::Create(arrayType, static_cast<asUINT>(objects.size()));
     if (!array) return nullptr;
     for (asUINT i = 0; i < objects.size(); ++i) {
-        void *handle = objects[i];
-        array->SetValue(i, &handle);
+        // ScriptObjectHandle::Createはrefcount=1で生成される。SetValueは配列側で
+        // 独自にAddRefするため、格納後にこちら側の分をReleaseして所有権を配列だけに残す
+        ScriptObjectHandle *handle = ScriptObjectHandle::Create(objects[i]);
+        void *handlePtr = handle;
+        array->SetValue(i, &handlePtr);
+        if (handle) handle->Release();
     }
     return array;
 }
@@ -1904,28 +2991,78 @@ void RegisterObjectTypes(asIScriptEngine *engine) {
     gSceneVariableTypeIds.vector4TypeId = engine->GetTypeIdByDecl("Vector4");
     gSceneVariableTypeIds.quaternionTypeId = engine->GetTypeIdByDecl("Quaternion");
 
-    // エンジン側が所有権を持つ型は参照カウント無しの参照型として登録する
-    asbind20::ref_class<EmptyObject>(engine, "Object", asOBJ_NOCOUNT)
-        .method("const string &GetName() const", &EmptyObject::GetName)
-        .method("void SetName(const string &in)", &EmptyObject::SetName)
-        .method("bool IsActive() const", &EmptyObject::IsActive)
-        .method("void SetActive(bool)", &EmptyObject::SetActive)
-        .method("void SetComponentsActiveExceptTransformAndScript(bool)", &EmptyObject::SetComponentsActiveExceptTransformAndScript)
-        .method("void SetTag(const string &in)", &EmptyObject::SetTag)
-        .method("Tag GetTag() const", [](const EmptyObject &obj) -> Tag { return obj.GetTag(); })
-        .method("const string &GetTagName() const", &EmptyObject::GetTagName)
-        .method("Transform@ GetTransform()", [](EmptyObject &obj) -> Transform * { return obj.GetComponent<Transform>(); })
-        .method("bool GetComponent(?&out)", [](EmptyObject &obj, void *ref, int typeId) -> bool {
-            return GetComponentIntoHandle(obj, ref, typeId);
+    // Objectはスクリプトから参照先の生死を安全に判定できるよう、生ポインタではなくUUID保持の
+    // 参照カウント式ハンドル(ScriptObjectHandle)で登録する。各メソッドは呼び出しの都度Resolve()で
+    // 生存確認し、削除済みならAngelScriptの例外として処理する（詳細はScriptObjectHandle.h参照）
+    asbind20::ref_class<ScriptObjectHandle>(engine, "Object")
+        .addref(&ScriptObjectHandle::AddRef)
+        .release(&ScriptObjectHandle::Release)
+        .method("const string &GetName() const", [](const ScriptObjectHandle &self) -> const std::string & {
+            static const std::string kEmpty;
+            EmptyObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return kEmpty; }
+            return obj->GetName();
         })
-        .method("bool GetComponents(?&out)", [](EmptyObject &obj, void *ref, int typeId) -> bool {
-            return GetComponentsIntoArray(obj, ref, typeId);
+        .method("void SetName(const string &in)", [](ScriptObjectHandle &self, const std::string &name) {
+            EmptyObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return; }
+            obj->SetName(name);
         })
-        .method("bool AddComponent(?&out)", [](EmptyObject &obj, void *ref, int typeId) -> bool {
-            return AddComponentIntoHandle(obj, ref, typeId);
+        .method("bool IsActive() const", [](const ScriptObjectHandle &self) -> bool {
+            EmptyObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return false; }
+            return obj->IsActive();
         })
-        .method("bool RemoveComponent(?&in)", [](EmptyObject &obj, void *ref, int typeId) -> bool {
-            return RemoveComponentFromHandle(obj, ref, typeId);
+        .method("void SetActive(bool)", [](ScriptObjectHandle &self, bool active) {
+            EmptyObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return; }
+            obj->SetActive(active);
+        })
+        .method("void SetComponentsActiveExceptTransformAndScript(bool)", [](ScriptObjectHandle &self, bool active) {
+            EmptyObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return; }
+            obj->SetComponentsActiveExceptTransformAndScript(active);
+        })
+        .method("void SetTag(const string &in)", [](ScriptObjectHandle &self, const std::string &tag) {
+            EmptyObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return; }
+            obj->SetTag(tag);
+        })
+        .method("Tag GetTag() const", [](const ScriptObjectHandle &self) -> Tag {
+            EmptyObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return Tag(); }
+            return obj->GetTag();
+        })
+        .method("const string &GetTagName() const", [](const ScriptObjectHandle &self) -> const std::string & {
+            static const std::string kEmpty;
+            EmptyObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return kEmpty; }
+            return obj->GetTagName();
+        })
+        .method("Transform@ GetTransform()", [](ScriptObjectHandle &self) -> ScriptComponentHandle<Transform> * {
+            EmptyObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return nullptr; }
+            return ScriptComponentHandle<Transform>::Create(obj->GetComponent<Transform>());
+        })
+        .method("bool GetComponent(?&out)", [](ScriptObjectHandle &self, void *ref, int typeId) -> bool {
+            EmptyObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return false; }
+            return GetComponentIntoHandle(*obj, ref, typeId);
+        })
+        .method("bool GetComponents(?&out)", [](ScriptObjectHandle &self, void *ref, int typeId) -> bool {
+            EmptyObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return false; }
+            return GetComponentsIntoArray(*obj, ref, typeId);
+        })
+        .method("bool AddComponent(?&out)", [](ScriptObjectHandle &self, void *ref, int typeId) -> bool {
+            EmptyObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return false; }
+            return AddComponentIntoHandle(*obj, ref, typeId);
+        })
+        .method("bool RemoveComponent(?&in)", [](ScriptObjectHandle &self, void *ref, int typeId) -> bool {
+            EmptyObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return false; }
+            return RemoveComponentFromHandle(*obj, ref, typeId);
         });
 
     asbind20::value_class<ScriptHitInfo>(engine, "HitInfo")
@@ -1948,7 +3085,7 @@ void RegisterObjectTypes(asIScriptEngine *engine) {
     asbind20::ref_class<SceneContext>(engine, "Scene", asOBJ_NOCOUNT)
         .method("const string &GetName() const", &SceneContext::GetName)
         .method("Object@ GetObject(const string &in) const",
-            [](const SceneContext &scene, const std::string &name) -> EmptyObject * { return scene.GetSceneObject(name); })
+            [](const SceneContext &scene, const std::string &name) -> ScriptObjectHandle * { return ScriptObjectHandle::Create(scene.GetSceneObject(name)); })
         .method("array<Object@>@ GetObjects(const string &in) const", [](const SceneContext &scene, const std::string &name) -> CScriptArray * {
             return MakeObjectArray(scene.GetSceneObjects(name));
         })
@@ -1957,13 +3094,19 @@ void RegisterObjectTypes(asIScriptEngine *engine) {
         .method("bool HasNextSceneName() const", &SceneContext::HasNextSceneName)
         .method("void ClearNextSceneName()", &SceneContext::ClearNextSceneName)
         // オブジェクトの生成・複製・削除
-        .method("Object@ CreateObject(const string &in name = \"\")", [](SceneContext &scene, const std::string &name) -> EmptyObject * {
-            return scene.CreateEmptyObject(name);
+        .method("Object@ CreateObject(const string &in name = \"\")", [](SceneContext &scene, const std::string &name) -> ScriptObjectHandle * {
+            return ScriptObjectHandle::Create(scene.CreateEmptyObject(name));
         })
-        .method("Object@ CloneObject(Object@ source, const string &in name = \"\")", [](SceneContext &scene, EmptyObject *source, const std::string &name) -> EmptyObject * {
-            return scene.CloneObject(source, name);
+        .method("Object@ CloneObject(Object@ source, const string &in name = \"\")", [](SceneContext &scene, ScriptObjectHandle *source, const std::string &name) -> ScriptObjectHandle * {
+            EmptyObject *sourceObj = source ? source->Resolve() : nullptr;
+            if (source && !sourceObj) { ThrowDestroyedObjectException(); return nullptr; }
+            return ScriptObjectHandle::Create(scene.CloneObject(sourceObj, name));
         })
-        .method("bool DeleteObject(Object@ obj)", &SceneContext::DeleteObject)
+        .method("bool DeleteObject(Object@ obj)", [](SceneContext &scene, ScriptObjectHandle *handle) -> bool {
+            EmptyObject *obj = handle ? handle->Resolve() : nullptr;
+            if (handle && !obj) { ThrowDestroyedObjectException(); return false; }
+            return scene.DeleteObject(obj);
+        })
         // シーン変数（このシーンが読み込まれている間だけ有効。スクリプト間で値を受け渡すのに使う）
         .method("bool SetVariable(const string &in, ?&in)", [](SceneContext &scene, const std::string &key, void *ref, int typeId) -> bool {
             return SetSceneVariableFromGeneric(scene, key, ref, typeId);
@@ -2962,11 +4105,15 @@ void RegisterGlobalFunctions(asIScriptEngine *engine) {
             return command ? command->Evaluate(action).Value() : 0.0f;
         })
         // マウス（任意のウィンドウ視点でのマウス座標。自分のウィンドウならWindowObject側のメソッド版でも取得可）
-        .function("Vector2 GetMousePosition(WindowObject@ window)", [](IWindowObjectComponent *window) -> Vector2 {
-            return GetWindowMousePosition(window);
+        .function("Vector2 GetMousePosition(WindowObject@ window)", [](ScriptComponentHandle<IWindowObjectComponent> *window) -> Vector2 {
+            IWindowObjectComponent *resolved = window ? window->Resolve() : nullptr;
+            if (window && !resolved) { ThrowDestroyedObjectException(); return Vector2::Zero(); }
+            return GetWindowMousePosition(resolved);
         })
-        .function("bool IsMouseInsideWindow(WindowObject@ window)", [](IWindowObjectComponent *window) -> bool {
-            return IsWindowMouseInside(window);
+        .function("bool IsMouseInsideWindow(WindowObject@ window)", [](ScriptComponentHandle<IWindowObjectComponent> *window) -> bool {
+            IWindowObjectComponent *resolved = window ? window->Resolve() : nullptr;
+            if (window && !resolved) { ThrowDestroyedObjectException(); return false; }
+            return IsWindowMouseInside(resolved);
         })
         // 音声
         .function("uint PlayAudio(const string &in, float volume = 1.0f)", [](const std::string &path, float volume) -> uint32_t {
@@ -2982,24 +4129,22 @@ void RegisterGlobalFunctions(asIScriptEngine *engine) {
         // モデル
         .function("uint GetModelHandleFromAssetPath(const string &in)", &ModelManager::GetModelHandleFromAssetPath)
         // 実行コンテキスト
-        .function("Object@ GetOwnerObject()", []() -> EmptyObject * {
+        .function("Object@ GetOwnerObject()", []() -> ScriptObjectHandle * {
             // ObjectContext::GetOwner はconstポインタを返すが、スクリプトからは自身のオブジェクトを操作できてよい
-            return gCurrentObjectContext ? const_cast<EmptyObject *>(gCurrentObjectContext->GetOwner()) : nullptr;
+            return gCurrentObjectContext ? ScriptObjectHandle::Create(const_cast<EmptyObject *>(gCurrentObjectContext->GetOwner())) : nullptr;
         })
-        .function("Transform@ GetTransform()", []() -> Transform * {
-            return gCurrentObjectContext ? gCurrentObjectContext->GetComponent<Transform>() : nullptr;
+        .function("Transform@ GetTransform()", []() -> ScriptComponentHandle<Transform> * {
+            return gCurrentObjectContext ? ScriptComponentHandle<Transform>::Create(gCurrentObjectContext->GetComponent<Transform>()) : nullptr;
         })
         .function("Scene@ GetScene()", []() -> SceneContext * { return gCurrentSceneContext; })
-        .function("Object@ FindObject(const string &in)", [](const std::string &name) -> EmptyObject * {
-            return gCurrentSceneContext ? gCurrentSceneContext->GetSceneObject(name) : nullptr;
+        .function("Object@ FindObject(const string &in)", [](const std::string &name) -> ScriptObjectHandle * {
+            return gCurrentSceneContext ? ScriptObjectHandle::Create(gCurrentSceneContext->GetSceneObject(name)) : nullptr;
         })
         // objがまだシーン内に存在する有効なオブジェクトかどうかを判定する。
-        // Object型はasOBJ_NOCOUNTで参照カウントを持たないため、[SerializeField]等で保持した
-        // ハンドルの参照先が後から削除されるとダングリングポインタになり得る。この関数は
-        // 渡されたポインタの中身には一切触れず、シーンが保持する生存オブジェクト集合との
-        // アドレス一致だけで判定するため、削除済み（解放済みメモリ）を指していても安全に呼べる
-        .function("bool IsValidObject(Object@)", [](EmptyObject *obj) -> bool {
-            return gCurrentSceneContext && gCurrentSceneContext->GetSceneObject(obj) != nullptr;
+        // ObjectはUUID保持のScriptObjectHandle経由のため、ハンドル自体は常に有効（生存）だが、
+        // 参照先のEmptyObjectが削除済みの場合はResolve()がnullptrを返す
+        .function("bool IsValidObject(Object@)", [](ScriptObjectHandle *handle) -> bool {
+            return handle && handle->Resolve() != nullptr;
         })
         // 自身のオブジェクトからのコンポーネント取得（obj.GetComponent(...)の省略形）
         .function("bool GetComponent(?&out)", [](void *ref, int typeId) -> bool {

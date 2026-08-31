@@ -60,6 +60,9 @@ Project/Externals/ReactPhysics3D/lib/reactphysics3d.lib
 # ビルド後イベントが生成するエンジンルートの位置を示すマーカー
 EngineRoot.txt
 
+# ビルド中でも問題なく起動・作業できる作業用コピー先（PostBuildEventがTargetDirをそのままミラーコピーする）
+Project/WorkCopy/
+
 # User-specific files
 *.rsuser
 *.suo

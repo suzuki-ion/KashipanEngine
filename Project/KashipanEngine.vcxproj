@@ -125,7 +125,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
 copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
 copy /Y "$(ProjectDir)Externals\WebView2\lib\x64\WebView2Loader.dll" "$(TargetDir)WebView2Loader.dll"
 copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
-&gt;"$(OutDir)EngineRoot.txt" echo $(ProjectDir)</Command>
+&gt;"$(OutDir)EngineRoot.txt" echo $(ProjectDir)
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWorkCopy.ps1" -ProjectDir "$(ProjectDir)." -TargetDir "$(TargetDir)." -Platform "$(Platform)" -Configuration "$(Configuration)"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>$(ProjectDir)DpiAwarenessPerMonitor.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -167,7 +168,8 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
 copy /Y "$(ProjectDir)Externals\WebView2\lib\x64\WebView2Loader.dll" "$(TargetDir)WebView2Loader.dll"
 copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
 if exist "$(TargetDir)EngineRoot.txt" del "$(TargetDir)EngineRoot.txt"
-powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyReleaseAssets.ps1" -ProjectDir "$(ProjectDir)." -TargetDir "$(TargetDir)."</Command>
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyReleaseAssets.ps1" -ProjectDir "$(ProjectDir)." -TargetDir "$(TargetDir)."
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWorkCopy.ps1" -ProjectDir "$(ProjectDir)." -TargetDir "$(TargetDir)." -Platform "$(Platform)" -Configuration "$(Configuration)"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>$(ProjectDir)DpiAwarenessPerMonitor.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -214,7 +216,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
 copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
 copy /Y "$(ProjectDir)Externals\WebView2\lib\x64\WebView2Loader.dll" "$(TargetDir)WebView2Loader.dll"
 copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
-&gt;"$(OutDir)EngineRoot.txt" echo $(ProjectDir)</Command>
+&gt;"$(OutDir)EngineRoot.txt" echo $(ProjectDir)
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWorkCopy.ps1" -ProjectDir "$(ProjectDir)." -TargetDir "$(TargetDir)." -Platform "$(Platform)" -Configuration "$(Configuration)"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>$(ProjectDir)DpiAwarenessPerMonitor.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -441,6 +444,7 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <None Include="Reference\index.html" />
     <None Include="Tools\convert_reference_to_html.py" />
     <None Include="Tools\CopyReleaseAssets.ps1" />
+    <None Include="Tools\CopyToWorkCopy.ps1" />
     <None Include="tools\sync_filters.py" />
   </ItemGroup>
   <ItemGroup>

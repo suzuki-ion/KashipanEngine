@@ -2607,6 +2607,9 @@
     <None Include="Tools\CopyReleaseAssets.ps1">
       <Filter>Tools</Filter>
     </None>
+    <None Include="Tools\CopyToWorkCopy.ps1">
+      <Filter>Tools</Filter>
+    </None>
     <None Include="exclusion.dic" />
     <None Include="tools\sync_filters.py">
       <Filter>tools</Filter>

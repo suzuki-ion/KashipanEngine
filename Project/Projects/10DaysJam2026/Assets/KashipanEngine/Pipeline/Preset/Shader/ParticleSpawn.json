@@ -1,0 +1,9 @@
+{
+	"BaseName": "ParticleSpawn",
+	"Compute": {
+		"Name": "CS",
+		"Path": "Particle/ParticleSpawnCS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "cs_6_0"
+	}
+}

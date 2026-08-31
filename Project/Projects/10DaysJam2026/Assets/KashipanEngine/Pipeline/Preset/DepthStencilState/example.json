@@ -1,0 +1,116 @@
+﻿{
+	// プリセット名
+	"Name": "Example DepthStencilState",
+
+	//==============================================================
+	// DepthStencilState 設定サンプル
+	// ParseDepthStencilState(Json) が読み取るキー一覧
+	// 未指定フィールドはゼロ初期化 (D3D12 の既定完全再現ではないため注意)
+	//==============================================================
+	"DepthStencilState": {
+		// 深度テストを有効化するか (既定: true を想定するなら明示推奨)
+		"DepthEnable": true,
+
+		// 深度書き込みマスク: D3D12_DEPTH_WRITE_MASK_ZERO / D3D12_DEPTH_WRITE_MASK_ALL
+		// 不透明ジオメトリ: ALL / 透過など深度保持のみ: ZERO
+		"DepthWriteMask": "D3D12_DEPTH_WRITE_MASK_ALL",
+
+		// 深度比較関数:
+		// NEVER / LESS / EQUAL / LESS_EQUAL / GREATER / NOT_EQUAL / GREATER_EQUAL / ALWAYS
+		// 一般的な前方レンダ: LESS_EQUAL もしくは LESS
+		"DepthFunc": "D3D12_COMPARISON_FUNC_LESS_EQUAL",
+
+		// ステンシルテスト有効化
+		"StencilEnable": false,
+
+		// ステンシル読み取りマスク (数値または DefineMaps の文字列):
+		// 例: "D3D12_DEFAULT_STENCIL_READ_MASK" (0xFF)
+		"StencilReadMask": "D3D12_DEFAULT_STENCIL_READ_MASK",
+
+		// ステンシル書き込みマスク:
+		// 例: "D3D12_DEFAULT_STENCIL_WRITE_MASK" (0xFF)
+		"StencilWriteMask": "D3D12_DEFAULT_STENCIL_WRITE_MASK",
+
+		// 前面 (カメラから見て表向きポリゴン) のステンシル挙動
+		"FrontFace": {
+			// ステンシルテスト失敗時の操作:
+			// KEEP / ZERO / REPLACE / INCR_SAT / DECR_SAT / INVERT / INCR / DECR
+			"StencilFailOp": "D3D12_STENCIL_OP_KEEP",
+
+			// 深度は失敗・ステンシルは成功時の操作
+			"StencilDepthFailOp": "D3D12_STENCIL_OP_KEEP",
+
+			// 深度・ステンシルとも成功時の操作
+			"StencilPassOp": "D3D12_STENCIL_OP_KEEP",
+
+			// ステンシル比較関数 (DepthFunc と同種の列挙)
+			"StencilFunc": "D3D12_COMPARISON_FUNC_ALWAYS"
+		},
+
+		// 背面ポリゴンのステンシル挙動
+		"BackFace": {
+			"StencilFailOp": "D3D12_STENCIL_OP_KEEP",
+			"StencilDepthFailOp": "D3D12_STENCIL_OP_KEEP",
+			"StencilPassOp": "D3D12_STENCIL_OP_KEEP",
+			"StencilFunc": "D3D12_COMPARISON_FUNC_ALWAYS"
+		}
+	},
+
+	//==============================================================
+	// 応用例: ステンシルマスク作成用プリセット (描画時に値を書き込む)
+	//==============================================================
+	"DepthStencilState_StencilWriteExample": {
+		"DepthEnable": true,
+		"DepthWriteMask": "D3D12_DEPTH_WRITE_MASK_ALL",
+		"DepthFunc": "D3D12_COMPARISON_FUNC_LESS_EQUAL",
+		"StencilEnable": true,
+		"StencilReadMask": 255,
+		"StencilWriteMask": 255,
+		"FrontFace": {
+			// 深度/ステンシル成功で 1 加算 (飽和)
+			"StencilFailOp": "D3D12_STENCIL_OP_KEEP",
+			"StencilDepthFailOp": "D3D12_STENCIL_OP_KEEP",
+			"StencilPassOp": "D3D12_STENCIL_OP_INCR_SAT",
+			"StencilFunc": "D3D12_COMPARISON_FUNC_ALWAYS"
+		},
+		"BackFace": {
+			"StencilFailOp": "D3D12_STENCIL_OP_KEEP",
+			"StencilDepthFailOp": "D3D12_STENCIL_OP_KEEP",
+			"StencilPassOp": "D3D12_STENCIL_OP_INCR_SAT",
+			"StencilFunc": "D3D12_COMPARISON_FUNC_ALWAYS"
+		}
+	},
+
+	//==============================================================
+	// 応用例: ステンシル参照 (既に 1 以上に設定された領域のみ描画)
+	//==============================================================
+	"DepthStencilState_StencilTestExample": {
+		"DepthEnable": true,
+		"DepthWriteMask": "D3D12_DEPTH_WRITE_MASK_ZERO",
+		"DepthFunc": "D3D12_COMPARISON_FUNC_LESS_EQUAL",
+		"StencilEnable": true,
+		"StencilReadMask": 255,
+		"StencilWriteMask": 0,
+		"FrontFace": {
+			// 参照のみなので全操作 KEEP
+			"StencilFailOp": "D3D12_STENCIL_OP_KEEP",
+			"StencilDepthFailOp": "D3D12_STENCIL_OP_KEEP",
+			"StencilPassOp": "D3D12_STENCIL_OP_KEEP",
+			// 既存ステンシル値 >= 1 で描画 (RENDER PASS 前で参照値設定している前提)
+			"StencilFunc": "D3D12_COMPARISON_FUNC_GREATER_EQUAL"
+		},
+		"BackFace": {
+			"StencilFailOp": "D3D12_STENCIL_OP_KEEP",
+			"StencilDepthFailOp": "D3D12_STENCIL_OP_KEEP",
+			"StencilPassOp": "D3D12_STENCIL_OP_KEEP",
+			"StencilFunc": "D3D12_COMPARISON_FUNC_GREATER_EQUAL"
+		}
+	}
+
+	//==============================================================
+	// 注意:
+	// - StencilEnable=false の場合 FrontFace / BackFace は無視される。
+	// - 読み取り/書き込みマスクは値または DefineMaps の文字列を使用可能。
+	// - 未指定項目は 0 初期化され期待する既定(D3D12_DEFAULT_*)と異なる可能性があるため必要項目は明示する。
+	//==============================================================
+}

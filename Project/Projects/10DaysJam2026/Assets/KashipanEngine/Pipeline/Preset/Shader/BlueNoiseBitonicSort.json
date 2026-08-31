@@ -1,0 +1,9 @@
+{
+	"BaseName": "BlueNoiseBitonicSort",
+	"Compute": {
+		"Name": "CS",
+		"Path": "BlueNoise/BlueNoiseBitonicSortCS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "cs_6_0"
+	}
+}

@@ -1,0 +1,13 @@
+{
+	"BaseName": "SSAOBlur",
+	"Vertex": {
+		"Path": "PostEffect/FullScreenTriangleVS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "vs_6_0"
+	},
+	"Pixel": {
+		"Path": "PostEffect/SSAOBlurPS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "ps_6_0"
+	}
+}

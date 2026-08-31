@@ -1,0 +1,4 @@
+﻿{
+  "Name": "Default",
+  "Flags": "D3D12_PIPELINE_STATE_FLAG_NONE"
+}

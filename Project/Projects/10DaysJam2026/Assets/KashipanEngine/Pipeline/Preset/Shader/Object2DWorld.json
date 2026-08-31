@@ -1,0 +1,20 @@
+{
+	"BaseName": "Object2DWorld",
+	"Vertex": {
+		"Path": "Object/ObjectVS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "vs_6_0",
+		"Macros": [
+			{ "Name": "Object2D" },
+			{ "Name": "Object2DWorld" }
+		]
+	},
+	"Pixel": {
+		"Path": "Object/ObjectPS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "ps_6_0",
+		"Macros": [
+			{ "Name": "Object2D" }
+		]
+	}
+}

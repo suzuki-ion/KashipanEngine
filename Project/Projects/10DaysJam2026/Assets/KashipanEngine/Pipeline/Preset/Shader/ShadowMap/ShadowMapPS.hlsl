@@ -1,0 +1,45 @@
+#include "../Object/Object3D.hlsli"
+#include "../Common/BlueNoiseDither.hlsli"
+
+struct Material {
+#include "../Common/Material3D.hlsli"
+};
+
+// バインドレステクスチャ配列（テクスチャごとに個別バインドせず、マテリアルのtextureIndexで選択する）
+Texture2D gTextures[2048] : register(t0, space1); // 予約レンジ数(EngineSettings::Limits::maxTextures)と一致させること。GPUがResource Binding Tier 3など、真の無制限配列に非対応な場合があるため有限長にする
+StructuredBuffer<Material> gMaterials : register(t1);
+// 既定6種のみの静的サンプラー配列（ルートシグネチャに埋め込まれるためバインド操作は不要）
+SamplerState gSamplers[6] : register(s3);
+
+struct PSOutput {
+    float4 color : SV_TARGET0;
+};
+
+PSOutput main(VSOutput input) {
+    PSOutput o;
+	Material mat = gMaterials[input.instanceId];
+	float4 color = mat.color;
+	float4 transformedUV = mul(float4(input.texcoord, 0.0f, 1.0f), mat.uvTransform);
+	float4 textureColor = gTextures[mat.textureIndex].Sample(gSamplers[mat.samplerIndex], transformedUV.xy);
+	o.color = color * textureColor;
+	if (o.color.a < 0.01f) {
+		discard;
+	}
+	if (o.color.a < 1.0f && !mat.disableShadowDither && !mat.useAlphaBlend) {
+		// 本体の半透明ディザ(ObjectPS.hlsl)と同じ閾値テーブル・同じidSeedを使い、影の濃さも
+		// アルファに応じて薄くする。フレーム間の無相関化(enableTemporalDither)もキャスターの
+		// マテリアルと同じ値を使う。シャドウマップ自体には時間的ブレンドの仕組みが無いが、
+		// 影の結果は最終的に合成後のカラーバッファへ反映されるため、そちらにTemporalBlendEffectが
+		// かかっていれば本体の面と同様に時間方向で平均化され滑らかになる
+		// （gCamera3D.eyePositionはこのパイプラインではライトの位置が入っている。ShadowMapVS.hlsl参照）
+		// disableShadowDitherがtrueの場合、またはuseAlphaBlend（本格アルファブレンド）がtrueの場合は
+		// ここを丸ごとスキップし、上のalpha<0.01判定だけで影を落とす
+		// （テクスチャのアルファ抜き形状はそのまま活きる、フォリッジ等向けの挙動）
+		float distanceFromLight = length(input.worldPosition - gCamera3D.eyePosition.xyz);
+		float threshold = ComputeDitherThreshold(input.position.xy, input.idSeed, mat.enableTemporalDither, distanceFromLight, mat.ditherDepthBucketSize, mat.useBayerDither, mat.useBayer64x64);
+		if (o.color.a <= threshold) {
+			discard;
+		}
+	}
+    return o;
+}

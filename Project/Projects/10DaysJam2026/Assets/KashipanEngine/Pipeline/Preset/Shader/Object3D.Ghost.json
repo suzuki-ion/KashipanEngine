@@ -1,0 +1,13 @@
+{
+	"BaseName": "Object3D.Ghost",
+	"Vertex": {
+		"Path": "Object/ObjectGhostVS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "vs_6_0"
+	},
+	"Pixel": {
+		"Path": "Object/ObjectGhostPS.hlsl",
+		"EntryPoint": "main",
+		"TargetProfile": "ps_6_0"
+	}
+}

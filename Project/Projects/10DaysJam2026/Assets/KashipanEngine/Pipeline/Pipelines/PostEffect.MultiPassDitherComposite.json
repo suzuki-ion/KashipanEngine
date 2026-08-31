@@ -1,0 +1,29 @@
+{
+	"PipelineType": "Render",
+	"Name": "PostEffect.MultiPassDitherComposite",
+	"Category": "PostEffect",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": {
+			"UsePreset": "MultiPassDitherComposite.Vertex"
+		},
+		"Pixel": {
+			"UsePreset": "MultiPassDitherComposite.Pixel"
+		}
+	},
+	"RasterizerState": {
+		"UsePreset": "Solid"
+	},
+	"BlendState": {
+		"UsePreset": "PremultipliedOver"
+	},
+	"DepthStencilState": {
+		"UsePreset": "DepthDisable"
+	},
+	"PipelineState": {
+		"UsePreset": "Triangle"
+	}
+}

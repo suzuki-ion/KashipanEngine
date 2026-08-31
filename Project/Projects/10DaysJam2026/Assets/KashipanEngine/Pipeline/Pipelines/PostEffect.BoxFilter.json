@@ -1,0 +1,29 @@
+{
+	"PipelineType": "Render",
+	"Name": "PostEffect.BoxFilter",
+	"Category": "PostEffect",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": {
+			"UsePreset": "BoxFilter.Vertex"
+		},
+		"Pixel": {
+			"UsePreset": "BoxFilter.Pixel"
+		}
+	},
+	"RasterizerState": {
+		"UsePreset": "Solid"
+	},
+	"BlendState": {
+		"UsePreset": "Normal"
+	},
+	"DepthStencilState": {
+		"UsePreset": "DepthDisable"
+	},
+	"PipelineState": {
+		"UsePreset": "Triangle"
+	}
+}

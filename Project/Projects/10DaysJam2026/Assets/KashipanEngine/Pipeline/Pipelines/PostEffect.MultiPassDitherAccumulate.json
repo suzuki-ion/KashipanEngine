@@ -1,0 +1,29 @@
+{
+	"PipelineType": "Render",
+	"Name": "PostEffect.MultiPassDitherAccumulate",
+	"Category": "PostEffect",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": {
+			"UsePreset": "MultiPassDitherAccumulate.Vertex"
+		},
+		"Pixel": {
+			"UsePreset": "MultiPassDitherAccumulate.Pixel"
+		}
+	},
+	"RasterizerState": {
+		"UsePreset": "Solid"
+	},
+	"BlendState": {
+		"UsePreset": "AddUnweighted"
+	},
+	"DepthStencilState": {
+		"UsePreset": "DepthDisable"
+	},
+	"PipelineState": {
+		"UsePreset": "Triangle"
+	}
+}

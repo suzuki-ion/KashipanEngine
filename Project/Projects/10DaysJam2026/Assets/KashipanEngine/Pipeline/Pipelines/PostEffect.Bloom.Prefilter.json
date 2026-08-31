@@ -1,0 +1,29 @@
+﻿{
+	"PipelineType": "Render",
+	"Name": "PostEffect.Bloom.Prefilter",
+	"Category": "PostEffect",
+	"Shader": {
+		"AutoTopologyFromShaders": true,
+		"AutoInputLayoutFromVS": true,
+		"AutoRTCountFromPS": true,
+		"AutoRootDescriptorFromShader": true,
+		"Vertex": {
+			"UsePreset": "Bloom.Prefilter.Vertex"
+		},
+		"Pixel": {
+			"UsePreset": "Bloom.Prefilter.Pixel"
+		}
+	},
+	"RasterizerState": {
+		"UsePreset": "Solid"
+	},
+	"BlendState": {
+		"UsePreset": "Normal"
+	},
+	"DepthStencilState": {
+		"UsePreset": "DepthDisable"
+	},
+	"PipelineState": {
+		"UsePreset": "Triangle"
+	}
+}

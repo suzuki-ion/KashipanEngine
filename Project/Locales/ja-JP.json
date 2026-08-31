@@ -953,6 +953,7 @@
 		"component.inputcommandapplier.add_command": "コマンドを追加",
 		"component.inputcommandapplier.applied_3f": "適用値：%.3f",
 		"component.inputcommandapplier.command_name": "コマンド名",
+		"component.inputcommandapplier.command_notfound": "選択中のコマンドはInputCommandに登録されていません。",
 		"component.inputcommandapplier.condition": "条件",
 		"component.inputcommandapplier.delete_command": "コマンドを削除",
 		"component.inputcommandapplier.fixed_value": "固定値",

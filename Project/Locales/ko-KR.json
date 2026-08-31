@@ -953,6 +953,7 @@
 		"component.inputcommandapplier.add_command": "커맨드 추가",
 		"component.inputcommandapplier.applied_3f": "적용값: %.3f",
 		"component.inputcommandapplier.command_name": "커맨드 이름",
+		"component.inputcommandapplier.command_notfound": "선택한 커맨드가 InputCommand에 등록되어 있지 않습니다.",
 		"component.inputcommandapplier.condition": "조건",
 		"component.inputcommandapplier.delete_command": "커맨드 삭제",
 		"component.inputcommandapplier.fixed_value": "고정값",

@@ -953,6 +953,7 @@
 		"component.inputcommandapplier.add_command": "Add Command",
 		"component.inputcommandapplier.applied_3f": "Applied: %.3f",
 		"component.inputcommandapplier.command_name": "Command Name",
+		"component.inputcommandapplier.command_notfound": "The selected command is not registered in InputCommand.",
 		"component.inputcommandapplier.condition": "Condition",
 		"component.inputcommandapplier.delete_command": "Delete Command",
 		"component.inputcommandapplier.fixed_value": "Fixed Value",

@@ -1,5 +1,6 @@
 #include "Objects/Components/InputCommandApplier.h"
 
+#include <algorithm>
 #include <cmath>
 
 #include "Input/InputCommand.h"
@@ -146,9 +147,33 @@ void InputCommandApplier::ShowCommandImGui(CommandEntry &entry, const std::vecto
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("%s", "WasApplied/GetLastValue等をコードから呼ぶ際に指定する識別名");
     }
-    ImGui::InputText(TranslationLabel("component.inputcommandapplier.command_name"), &entry.commandName);
-    if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", "評価する入力コマンド名（InputCommandに登録済みのコマンド）");
+    {
+        auto *sceneContext = GetOwnerSceneContext();
+        auto *inputCommand = sceneContext ? sceneContext->GetInputCommand() : nullptr;
+        const auto commandNames = inputCommand ? inputCommand->GetRegisteredCommandNames() : std::vector<std::string>{};
+        const bool isRegistered = std::find(commandNames.begin(), commandNames.end(), entry.commandName) != commandNames.end();
+        const std::string preview = entry.commandName.empty() ? TranslationC("editor.common.none") : entry.commandName;
+        if (ImGui::BeginCombo(TranslationLabel("component.inputcommandapplier.command_name"), preview.c_str())) {
+            if (ImGui::Selectable(TranslationC("editor.common.none"), entry.commandName.empty())) {
+                entry.commandName.clear();
+            }
+            for (const auto &name : commandNames) {
+                const bool selected = (entry.commandName == name);
+                ImGui::PushID(name.c_str());
+                if (ImGui::Selectable(name.c_str(), selected)) {
+                    entry.commandName = name;
+                }
+                if (selected) ImGui::SetItemDefaultFocus();
+                ImGui::PopID();
+            }
+            ImGui::EndCombo();
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", "評価する入力コマンド名（InputCommandに登録済みのコマンドから選択）");
+        }
+        if (!entry.commandName.empty() && !isRegistered) {
+            ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f), "%s", TranslationC("component.inputcommandapplier.command_notfound"));
+        }
     }
 
     static const char *kConditionLabels[] = {

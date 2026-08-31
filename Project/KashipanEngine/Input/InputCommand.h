@@ -128,6 +128,10 @@ public:
     /// @return 入力評価結果
     ReturnInfo Evaluate(const std::string& action) const;
 
+    /// @brief 登録済みのコマンド名一覧を取得する（辞書順）
+    /// @details InputCommandApplier等、コマンド名を選択式で指定するUIから使う想定
+    std::vector<std::string> GetRegisteredCommandNames() const;
+
 #if defined(USE_IMGUI)
     void ShowImGui();
 #endif

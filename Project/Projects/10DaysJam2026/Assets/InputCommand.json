@@ -1,1 +1,66 @@
-{}
+{
+    "Jump": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Space",
+            "state": "Trigger"
+        }
+    ],
+    "MoveX": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "D",
+            "state": "Down"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": true,
+            "key": "A",
+            "state": "Down"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "D",
+            "state": "Down"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Space",
+            "state": "Trigger"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Space",
+            "state": "Trigger"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Space",
+            "state": "Trigger"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Space",
+            "state": "Trigger"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Space",
+            "state": "Trigger"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Space",
+            "state": "Trigger"
+        }
+    ]
+}

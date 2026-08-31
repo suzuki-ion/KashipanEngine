@@ -1,0 +1,73 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "height": 720,
+                        "isShowViewer": true,
+                        "name": "ScreenBuffer_0",
+                        "saveDirectory": "Screenshots",
+                        "saveFileNamePrefix": "Screenshot",
+                        "saveFormat": "png",
+                        "viewerId": 17475442547660018780,
+                        "width": 1280
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScreenBufferObject"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "direction": [
+                            1.0,
+                            0.0
+                        ],
+                        "excludedScreenBuffers": [],
+                        "strength": 0.0034000000450760126
+                    },
+                    "isActive": false,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ChromaticAberrationEffect"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "ScreenBuffer",
+        "objectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
+        "tag": ""
+    },
+    "siblingIndex": 0
+}

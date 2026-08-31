@@ -1056,11 +1056,13 @@ b2BodyDef Collider::MakeBodyDef2D(const ColliderInfo2D &info) const {
 }
 
 bool Collider::RecreateShape2D(Entry<ColliderInfo2D, ColliderRuntime2D> &entry) {
-    if (!B2_IS_NULL(entry.runtime.shape)) {
+    // ReleaseRuntime2D同様、外部（RigidBody2D）が所有するボディの破棄により
+    // シェイプが既に内部的に破棄済みの場合があるため、b2Shape_IsValidで生存確認してから破棄する
+    if (!B2_IS_NULL(entry.runtime.shape) && b2Shape_IsValid(entry.runtime.shape)) {
         b2DestroyShape(entry.runtime.shape, true);
-        entry.runtime.shape = b2_nullShapeId;
     }
-    if (B2_IS_NULL(entry.runtime.body)) return false;
+    entry.runtime.shape = b2_nullShapeId;
+    if (B2_IS_NULL(entry.runtime.body) || !b2Body_IsValid(entry.runtime.body)) return false;
 
     // シェイプ生成時、Box2Dのセグメント形状は静的ボディにしか付けられない。
     // Ray2DColliderが動的なRigidBody2Dと同じオブジェクトに付いている場合は生成をスキップする
@@ -1176,11 +1178,14 @@ void Collider::SyncStaticBodyTransform2D(Entry<ColliderInfo2D, ColliderRuntime2D
 }
 
 void Collider::ReleaseRuntime2D(Entry<ColliderInfo2D, ColliderRuntime2D> &entry) {
-    if (!B2_IS_NULL(entry.runtime.shape)) {
+    // B2_IS_NULLはIDが「未設定（nullセンチネル）」かどうかしか見ておらず、シェイプが
+    // 所有元ボディの破棄（RigidBody2D::Finalize等、Collider外の経路）によって既に内部的に
+    // 破棄済みかどうかは判定できない。破棄済みIDに対してb2DestroyShapeを呼ぶと二重解放になり
+    // クラッシュするため、必ずb2Shape_IsValid/b2Body_IsValidで生存確認してから破棄する
+    if (!B2_IS_NULL(entry.runtime.shape) && b2Shape_IsValid(entry.runtime.shape)) {
         b2DestroyShape(entry.runtime.shape, true);
-        entry.runtime.shape = b2_nullShapeId;
     }
-    if (!B2_IS_NULL(entry.runtime.body) && entry.runtime.ownsBody) {
+    if (!B2_IS_NULL(entry.runtime.body) && entry.runtime.ownsBody && b2Body_IsValid(entry.runtime.body)) {
         b2DestroyBody(entry.runtime.body);
     }
     entry.runtime = {};

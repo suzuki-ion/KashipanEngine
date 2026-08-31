@@ -174,10 +174,12 @@ protected:
     }
 
     void Finalize() override {
-        if (!B2_IS_NULL(body_)) {
+        // B2_IS_NULLは未設定判定のみで、既に破棄済み（無効化）されたIDかどうかは分からないため
+        // b2Body_IsValidで生存確認してから破棄する（Collider::ReleaseRuntime2Dと同じ理由）
+        if (!B2_IS_NULL(body_) && b2Body_IsValid(body_)) {
             b2DestroyBody(body_);
-            body_ = b2_nullBodyId;
         }
+        body_ = b2_nullBodyId;
     }
 
     void Update() override {

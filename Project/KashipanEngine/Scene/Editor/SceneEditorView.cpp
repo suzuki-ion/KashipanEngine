@@ -55,6 +55,12 @@ SceneEditorView::SceneEditorView(Passkey<SceneEditor>, SceneEditorContext *conte
     showColliderGizmos_ = EditorSettings::GetBool("sceneView.showColliderGizmos", true);
     showBoneGizmos_ = EditorSettings::GetBool("sceneView.showBoneGizmos", false);
 
+    // ギズモのグリッドスナップ設定を復元する（再起動後も維持される）
+    gizmoSnapEnabled_ = EditorSettings::GetBool("sceneView.gizmoSnapEnabled", false);
+    gizmoSnapTranslate_ = EditorSettings::GetFloat("sceneView.gizmoSnapTranslate", 1.0f);
+    gizmoSnapRotateDegrees_ = EditorSettings::GetFloat("sceneView.gizmoSnapRotateDegrees", 15.0f);
+    gizmoSnapScale_ = EditorSettings::GetFloat("sceneView.gizmoSnapScale", 0.1f);
+
     // シーンビューの表示モード（2D/3D併用・3Dのみ・2Dのみ）を復元する（再起動後も維持される）
     const std::string displayModeStr = EditorSettings::GetString("sceneView.displayMode", "Combined");
     if (displayModeStr == "ThreeDOnly") displayMode_ = SceneRenderer::EditorDisplayMode::ThreeDOnly;
@@ -352,6 +358,30 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
             if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.local"), gizmoMode_ == ImGuizmo::LOCAL)) gizmoMode_ = ImGuizmo::LOCAL;
             ImGui::SameLine();
             if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.world"), gizmoMode_ == ImGuizmo::WORLD)) gizmoMode_ = ImGuizmo::WORLD;
+
+            // グリッドスナップ（オブジェクトのグリッド配置）設定
+            ImGui::Separator();
+            if (ImGui::Checkbox(TranslationLabel("editor.sceneview.gizmo.snap"), &gizmoSnapEnabled_)) {
+                EditorSettings::SetBool("sceneView.gizmoSnapEnabled", gizmoSnapEnabled_);
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.gizmo.snap.tooltip"));
+            ImGui::SetNextItemWidth(80.0f);
+            if (ImGui::DragFloat(TranslationLabel("editor.sceneview.gizmo.snap.translate"), &gizmoSnapTranslate_, 0.01f, 0.001f, 1000.0f)) {
+                gizmoSnapTranslate_ = std::max(gizmoSnapTranslate_, 0.001f);
+                EditorSettings::SetFloat("sceneView.gizmoSnapTranslate", gizmoSnapTranslate_);
+            }
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(80.0f);
+            if (ImGui::DragFloat(TranslationLabel("editor.sceneview.gizmo.snap.rotate"), &gizmoSnapRotateDegrees_, 0.1f, 0.001f, 360.0f)) {
+                gizmoSnapRotateDegrees_ = std::max(gizmoSnapRotateDegrees_, 0.001f);
+                EditorSettings::SetFloat("sceneView.gizmoSnapRotateDegrees", gizmoSnapRotateDegrees_);
+            }
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(80.0f);
+            if (ImGui::DragFloat(TranslationLabel("editor.sceneview.gizmo.snap.scale"), &gizmoSnapScale_, 0.001f, 0.001f, 1000.0f)) {
+                gizmoSnapScale_ = std::max(gizmoSnapScale_, 0.001f);
+                EditorSettings::SetFloat("sceneView.gizmoSnapScale", gizmoSnapScale_);
+            }
             ImGui::EndMenu();
         }
 
@@ -452,6 +482,7 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     const ImVec2 drawSize = avail;
     const ImVec2 imagePos = ImGui::GetCursorScreenPos();
     ImGui::Image(static_cast<ImTextureID>(screenBuffer_->GetPreviewSrvHandle().ptr), drawSize);
+    const bool isSceneViewHovered = ImGui::IsItemHovered();
 
     // Assetsウィンドウからのプレハブファイル（.prefab）のドラッグ&ドロップ。ドラッグ中は毎フレーム
     // カーソル直下の配置予定位置（シーン上のメッシュ表面、無ければ地面平面）へ半透明のプレビューを
@@ -460,6 +491,9 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
 
     //--------- カメラ操作（画像上でのマウス操作） ---------//
     HandleCameraInput();
+
+    //--------- ギズモ操作切り替えのショートカットキー（W:移動 / E:回転 / R:拡縮） ---------//
+    HandleGizmoShortcuts(isSceneViewHovered);
 
     //--------- クリックによるオブジェクト選択 ---------//
     HandleObjectPicking(hierarchy, imagePos, drawSize);
@@ -636,6 +670,17 @@ void SceneEditorView::HandleCameraInput() {
             target_ = target_ - right * (io.MouseDelta.x * panSpeed) + up * (io.MouseDelta.y * panSpeed);
         }
     }
+}
+
+void SceneEditorView::HandleGizmoShortcuts(bool isSceneViewHovered) {
+    if (!isSceneViewHovered) return;
+    // フライモード中は右ボタン押下中にW/E/QをカメラのXZ/上下移動として使っているため、
+    // 右ボタンを押している間はギズモ切り替えショートカットを無効にする
+    if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) return;
+
+    if (ImGui::IsKeyPressed(ImGuiKey_W, false)) gizmoOperation_ = ImGuizmo::TRANSLATE;
+    if (ImGui::IsKeyPressed(ImGuiKey_E, false)) gizmoOperation_ = ImGuizmo::ROTATE;
+    if (ImGui::IsKeyPressed(ImGuiKey_R, false)) gizmoOperation_ = ImGuizmo::SCALE;
 }
 
 void SceneEditorView::HandleCamera2DInput() {
@@ -1708,11 +1753,24 @@ void SceneEditorView::ShowGizmo(const std::unordered_set<EmptyObject *> &selecte
     // このフレームの増分（デルタ）を算出するため、Manipulate直前の状態を控えておく
     const Matrix4x4 beforeManipulate = groupGizmoMatrix_;
 
+    // グリッドスナップ（オブジェクトのグリッド配置）。Ctrlキー押下中はトグル設定を一時的に反転する
+    // （Unity等のシーンビューと同じ操作感）。ImGuizmoは操作種別に応じてsnapの意味が変わる
+    // （TRANSLATE/SCALEはXYZ各軸の間隔、ROTATE/ROTATE_Zはsnap.xのみを角度[度]として使う）
+    const bool useSnap = gizmoSnapEnabled_ != ImGui::IsKeyDown(ImGuiMod_Ctrl);
+    float snap[3] = { gizmoSnapTranslate_, gizmoSnapTranslate_, gizmoSnapTranslate_ };
+    if (effectiveOperation == ImGuizmo::ROTATE || effectiveOperation == ImGuizmo::ROTATE_Z) {
+        snap[0] = gizmoSnapRotateDegrees_;
+    } else if (effectiveOperation == ImGuizmo::SCALE) {
+        snap[0] = snap[1] = snap[2] = gizmoSnapScale_;
+    }
+
     ImGuizmo::Manipulate(
         &view.m[0][0], &projection.m[0][0],
         effectiveOperation,
         isSingle ? static_cast<ImGuizmo::MODE>(gizmoMode_) : ImGuizmo::WORLD,
-        &groupGizmoMatrix_.m[0][0]);
+        &groupGizmoMatrix_.m[0][0],
+        nullptr,
+        useSnap ? snap : nullptr);
 
     if (ImGuizmo::IsUsing()) {
         // 操作開始時に変更前の状態を全対象分保存する（Undo用）

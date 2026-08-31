@@ -1268,6 +1268,9 @@
     <ClInclude Include="KashipanEngine\Objects\Components\GifSource.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\TextureSource.h">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\VideoSource.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>

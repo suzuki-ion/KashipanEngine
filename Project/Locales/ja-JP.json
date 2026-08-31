@@ -1375,6 +1375,9 @@
 		"component.textrenderer.valign.top": "上揃え",
 		"component.textrenderer.vertical_align": "垂直方向の揃え",
 
+		//--------- component.texturesource ---------//
+		"component.texturesource.texture": "テクスチャ",
+
 		//--------- component.uibutton ---------//
 		"component.uibutton.desc": "見た目の描画は行いません。同オブジェクトにSpriteRendererがあればそのスプライトの矩形を、無くTextRendererがあればそのテキストの外接矩形（表示中の文字列に応じて動的に変わる）をそのまま当たり判定に使います。",
 		"component.uibutton.display_camera": "表示カメラ",
@@ -1924,6 +1927,11 @@
 		"editor.sceneview.gizmo.local": "ローカル",
 		"editor.sceneview.gizmo.rotate": "回転",
 		"editor.sceneview.gizmo.scale": "拡大縮小",
+		"editor.sceneview.gizmo.snap": "グリッドスナップ",
+		"editor.sceneview.gizmo.snap.rotate": "角度スナップ",
+		"editor.sceneview.gizmo.snap.scale": "拡縮スナップ",
+		"editor.sceneview.gizmo.snap.tooltip": "Ctrlキーを押している間は一時的に有効/無効が反転します",
+		"editor.sceneview.gizmo.snap.translate": "グリッド間隔",
 		"editor.sceneview.gizmo.translate": "移動",
 		"editor.sceneview.gizmo.world": "ワールド",
 		"editor.sceneview.notready": "シーンビューの準備ができていません。",

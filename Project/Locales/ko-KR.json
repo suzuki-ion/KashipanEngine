@@ -1375,6 +1375,9 @@
 		"component.textrenderer.valign.top": "위쪽 정렬",
 		"component.textrenderer.vertical_align": "세로 정렬",
 
+		//--------- component.texturesource ---------//
+		"component.texturesource.texture": "텍스처",
+
 		//--------- component.uibutton ---------//
 		"component.uibutton.desc": "이 컴포넌트 자체는 아무것도 그리지 않습니다. 같은 오브젝트에 SpriteRenderer가 있으면 그 스프라이트의 사각형을, 없고 TextRenderer가 있으면 그 텍스트의 외접 사각형(표시 중인 문자열에 따라 동적으로 변함)을 그대로 히트 테스트 영역으로 사용합니다.",
 		"component.uibutton.display_camera": "표시 카메라",
@@ -1924,6 +1927,11 @@
 		"editor.sceneview.gizmo.local": "로컬",
 		"editor.sceneview.gizmo.rotate": "회전",
 		"editor.sceneview.gizmo.scale": "확대/축소",
+		"editor.sceneview.gizmo.snap": "그리드 스냅",
+		"editor.sceneview.gizmo.snap.rotate": "각도 스냅",
+		"editor.sceneview.gizmo.snap.scale": "확대/축소 스냅",
+		"editor.sceneview.gizmo.snap.tooltip": "Ctrl 키를 누르는 동안 활성화 상태가 일시적으로 반전됩니다",
+		"editor.sceneview.gizmo.snap.translate": "그리드 간격",
 		"editor.sceneview.gizmo.translate": "이동",
 		"editor.sceneview.gizmo.world": "월드",
 		"editor.sceneview.notready": "씬 뷰가 준비되지 않았습니다.",

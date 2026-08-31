@@ -75,6 +75,7 @@
 #include "Objects/Components/GifSource.h"
 #include "Objects/Components/MeshFilter.h"
 #include "Objects/Components/PrefabInstanceComponent.h"
+#include "Objects/Components/TextureSource.h"
 #include "Objects/Components/VideoSource.h"
 #include "Objects/Components/PostProcessing/SSAOEffect.h"
 #include "Objects/Components/PostProcessing/GTAOEffect.h"
@@ -1692,6 +1693,10 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("bool GetPlayOnAwake() const", &VideoSource::GetPlayOnAwake)
         .method("void SetRouteAudioToAudioSource(bool)", &VideoSource::SetRouteAudioToAudioSource)
         .method("bool GetRouteAudioToAudioSource() const", &VideoSource::GetRouteAudioToAudioSource);
+
+    RegisterComponentType<TextureSource>(engine, "TextureSource")
+        .method("void SetTextureAssetPath(const string &in)", &TextureSource::SetTextureAssetPath)
+        .method("const string &GetTextureAssetPath() const", &TextureSource::GetTextureAssetPath);
 
     //==================================================
     // Prefab

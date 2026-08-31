@@ -1165,6 +1165,7 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClInclude Include="KashipanEngine\Objects\Components\Comment.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\AudioSource.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\GifSource.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\TextureSource.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\VideoSource.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\Box2DCollider.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\BoxCollider.h" />

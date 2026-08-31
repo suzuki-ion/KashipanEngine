@@ -1375,6 +1375,9 @@
 		"component.textrenderer.valign.top": "Top",
 		"component.textrenderer.vertical_align": "Vertical Align",
 
+		//--------- component.texturesource ---------//
+		"component.texturesource.texture": "Texture",
+
 		//--------- component.uibutton ---------//
 		"component.uibutton.desc": "Draws nothing itself. Uses the rectangle of this object's SpriteRenderer sprite if present; otherwise, if a TextRenderer is present, uses its bounding rectangle (which changes dynamically with the displayed text).",
 		"component.uibutton.display_camera": "Display Camera",
@@ -1924,6 +1927,11 @@
 		"editor.sceneview.gizmo.local": "Local",
 		"editor.sceneview.gizmo.rotate": "Rotate",
 		"editor.sceneview.gizmo.scale": "Scale",
+		"editor.sceneview.gizmo.snap": "Grid Snap",
+		"editor.sceneview.gizmo.snap.rotate": "Angle Snap",
+		"editor.sceneview.gizmo.snap.scale": "Scale Snap",
+		"editor.sceneview.gizmo.snap.tooltip": "Holding Ctrl temporarily inverts the enabled state",
+		"editor.sceneview.gizmo.snap.translate": "Grid Size",
 		"editor.sceneview.gizmo.translate": "Translate",
 		"editor.sceneview.gizmo.world": "World",
 		"editor.sceneview.notready": "Scene view is not ready.",

@@ -12,6 +12,7 @@
 #include "Assets/MaterialManager.h"
 #include "Core/ProjectPaths.h"
 #include "Assets/TextureManager.h"
+#include "Utilities/Conversion/ConvertString.h"
 #include "Graphics/IShaderTexture.h"
 #include "Graphics/ScreenBuffer.h"
 #include "Math/Quaternion.h"
@@ -56,7 +57,12 @@ JSON MakeDefaultJSONValue(JSONNewValueType type) {
 }
 
 std::string FileNameFromPath(const std::string &path) {
-    return std::filesystem::path(path).filename().string();
+    // pathはエンジン規約のUTF-8前提の文字列だが、std::filesystem::path(const std::string&)や
+    // path::string()はWindows上で現在のANSIコードページ経由の変換になるため、そのコードページで
+    // 表現できない文字（多言語のファイル名等）を含むと文字化け・変換エラーが起きる
+    // （ConvertString.hのPathToUtf8String/Utf8StringToPathのコメント参照）。
+    // UTF-8前提のstd::u8stringを経由することでコードページに依存せず往復させる
+    return PathToUtf8String(Utf8StringToPath(path).filename());
 }
 
 /// @brief モデルの全頂点から求めたAABB

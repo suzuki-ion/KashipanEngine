@@ -221,11 +221,21 @@ private:
 
         IRenderTarget *renderTarget = nullptr;
         if (auto *normalWindow = targetObj->GetComponent<NormalWindowObject>()) {
-            renderTarget = normalWindow->GetWindow();
+            // window_はウィンドウがユーザー操作等で閉じられた後もコンポーネント側に残り得る
+            // （Finalize経由で破棄された場合のみクリアされる）生ポインタのため、
+            // 破棄済みの場合はWindow::IsExist()で弾いてからでないとダングリングポインタを
+            // 経由した仮想関数呼び出し（IsRenderTargetAvailable）でクラッシュする
+            Window *window = normalWindow->GetWindow();
+            if (!window || !Window::IsExist(window)) return false;
+            renderTarget = window;
         } else if (auto *overlayWindow = targetObj->GetComponent<OverlayWindowObject>()) {
-            renderTarget = overlayWindow->GetWindow();
+            Window *window = overlayWindow->GetWindow();
+            if (!window || !Window::IsExist(window)) return false;
+            renderTarget = window;
         } else if (auto *screenBuffer = targetObj->GetComponent<ScreenBufferObject>()) {
-            renderTarget = screenBuffer->GetScreenBuffer();
+            ScreenBuffer *buffer = screenBuffer->GetScreenBuffer();
+            if (!buffer || !ScreenBuffer::IsExist(buffer)) return false;
+            renderTarget = buffer;
         }
         if (!renderTarget || !renderTarget->IsRenderTargetAvailable()) return false;
 

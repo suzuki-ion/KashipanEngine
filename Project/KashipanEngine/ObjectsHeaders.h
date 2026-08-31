@@ -11,6 +11,7 @@
 #include "Objects/Components/AudioListener.h"
 #include "Objects/Components/AudioSource.h"
 #include "Objects/Components/GifSource.h"
+#include "Objects/Components/TextureSource.h"
 #include "Objects/Components/VideoSource.h"
 #include "Objects/Components/Collider/Box2DCollider.h"
 #include "Objects/Components/Collider/BoxCollider.h"

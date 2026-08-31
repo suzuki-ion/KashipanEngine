@@ -239,6 +239,18 @@ private:
     // ギズモ状態（ImGuizmo::OPERATION / ImGuizmo::MODE をヘッダーで公開しないため int で保持する）
     int gizmoOperation_;
     int gizmoMode_;
+    /// @brief グリッドスナップの有効/無効（再起動後も維持される）。Ctrlキー押下中は一時的に反転する
+    ///        （Unity等と同じ操作感）
+    bool gizmoSnapEnabled_ = false;
+    /// @brief 移動操作のグリッド間隔（ワールド単位、XYZ共通）
+    float gizmoSnapTranslate_ = 1.0f;
+    /// @brief 回転操作のスナップ角度（度）
+    float gizmoSnapRotateDegrees_ = 15.0f;
+    /// @brief 拡大縮小操作のスナップ間隔
+    float gizmoSnapScale_ = 0.1f;
+    /// @brief キーボードショートカット（W/E/R）によるギズモ操作切り替えを処理する
+    /// @details 右ボタン押下中（フリーカメラ移動でW/E/Qを使用中）はショートカットを無効にする
+    void HandleGizmoShortcuts(bool isSceneViewHovered);
     std::unordered_set<EmptyObject *> gizmoTargetObjects_;
     bool isGizmoEditing_ = false;
     // ギズモへ渡す現在の基準行列（単一選択時は対象オブジェクト自身のワールド行列、

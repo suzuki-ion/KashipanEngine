@@ -1375,6 +1375,9 @@
 		"component.textrenderer.valign.top": "顶部对齐",
 		"component.textrenderer.vertical_align": "垂直对齐",
 
+		//--------- component.texturesource ---------//
+		"component.texturesource.texture": "纹理",
+
 		//--------- component.uibutton ---------//
 		"component.uibutton.desc": "本身不进行任何绘制。若该对象上有SpriteRenderer，则使用其精灵的矩形；若没有但有TextRenderer，则使用其文本的外接矩形（会随当前显示的文本动态变化）作为点击判定区域。",
 		"component.uibutton.display_camera": "显示相机",
@@ -1924,6 +1927,11 @@
 		"editor.sceneview.gizmo.local": "局部",
 		"editor.sceneview.gizmo.rotate": "旋转",
 		"editor.sceneview.gizmo.scale": "缩放",
+		"editor.sceneview.gizmo.snap": "网格吸附",
+		"editor.sceneview.gizmo.snap.rotate": "角度吸附",
+		"editor.sceneview.gizmo.snap.scale": "缩放吸附",
+		"editor.sceneview.gizmo.snap.tooltip": "按住Ctrl键会临时反转启用状态",
+		"editor.sceneview.gizmo.snap.translate": "网格间距",
 		"editor.sceneview.gizmo.translate": "移动",
 		"editor.sceneview.gizmo.world": "世界",
 		"editor.sceneview.notready": "场景视图尚未准备就绪。",

@@ -6,6 +6,7 @@
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Assets/SkeletonManager.h"
 #include "Objects/Components/Transform.h"
+#include "Objects/Components/Collider/RigidBody2D.h"
 #include "Objects/Components/Collider/RigidBody3D.h"
 #ifdef USE_IMGUI
 #include "Scene/SceneEditor.h"
@@ -94,6 +95,9 @@ void Scene::PlayStart() {
         if (!object) continue;
         for (auto *rigidBody : object->GetComponents<RigidBody3D>()) {
             rigidBody->SyncFromTransform();
+        }
+        for (auto *rigidBody2D : object->GetComponents<RigidBody2D>()) {
+            rigidBody2D->SyncFromTransform();
         }
     }
 

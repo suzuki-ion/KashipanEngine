@@ -1247,9 +1247,6 @@
     <ClInclude Include="KashipanEngine\Objects\Collision\Collider.h">
       <Filter>KashipanEngine\Objects\Collision</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\Collision\CollisionAlgorithms2D.h">
-      <Filter>KashipanEngine\Objects\Collision</Filter>
-    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Collision\CollisionAlgorithms3D.h">
       <Filter>KashipanEngine\Objects\Collision</Filter>
     </ClInclude>
@@ -1891,6 +1888,14 @@
     <ClInclude Include="Externals\DirectXTex\DirectXTex.h" />
     <ClInclude Include="Externals\nlohmann\json.hpp" />
     <ClInclude Include="Externals\nlohmann\json_fwd.hpp" />
+    <ClInclude Include="Externals\Box2D\include\box2d\base.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\box2d.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\collision.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\config.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\constants.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\id.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\math_functions.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\types.h" />
     <ClInclude Include="Externals\ReactPhysics3D\include\reactphysics3d\body\Body.h" />
     <ClInclude Include="Externals\ReactPhysics3D\include\reactphysics3d\body\RigidBody.h" />
     <ClInclude Include="Externals\ReactPhysics3D\include\reactphysics3d\collision\broadphase\DynamicAABBTree.h" />

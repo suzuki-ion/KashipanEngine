@@ -1191,7 +1191,9 @@
 		//--------- component.rigidbody2d ---------//
 		"component.rigidbody2d.any": "(전체)",
 		"component.rigidbody2d.collider_shape": "콜라이더 형상",
+		"component.rigidbody2d.friction": "마찰 계수",
 		"component.rigidbody2d.mass": "질량",
+		"component.rigidbody2d.restitution": "반발 계수",
 		"component.rigidbody2d.usegravity": "중력 사용",
 		"component.rigidbody2d.velocity": "속도",
 

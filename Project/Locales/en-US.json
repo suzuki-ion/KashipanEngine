@@ -1191,7 +1191,9 @@
 		//--------- component.rigidbody2d ---------//
 		"component.rigidbody2d.any": "(Any)",
 		"component.rigidbody2d.collider_shape": "Collider Shape",
+		"component.rigidbody2d.friction": "Friction",
 		"component.rigidbody2d.mass": "Mass",
+		"component.rigidbody2d.restitution": "Restitution",
 		"component.rigidbody2d.usegravity": "UseGravity",
 		"component.rigidbody2d.velocity": "Velocity",
 

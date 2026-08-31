@@ -106,7 +106,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)Externals\ReactPhysics3D\include;$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories);$(ProjectDir)Externals\angelscript\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Externals\ReactPhysics3D\include;$(ProjectDir)Externals\Box2D\include;$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories);$(ProjectDir)Externals\angelscript\include</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
@@ -117,8 +117,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalOptions>/VERBOSE:UNUSEDLIBS /VERBOSE:LIB %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/debug/lib;$(ProjectDir)Externals/Assimp/lib/Debug;$(ProjectDir)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mtd.lib;reactphysics3d.lib;WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/debug/lib;$(ProjectDir)Externals/Box2D/debug/lib;$(ProjectDir)Externals/Assimp/lib/Debug;$(ProjectDir)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc143-mtd.lib;reactphysics3d.lib;box2d.lib;WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
@@ -148,7 +148,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)Externals\ReactPhysics3D\include;$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories);$(ProjectDir)Externals\angelscript\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Externals\ReactPhysics3D\include;$(ProjectDir)Externals\Box2D\include;$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories);$(ProjectDir)Externals\angelscript\include</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
@@ -158,8 +158,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/lib;$(ProjectDir)Externals/Assimp/lib/Release;$(ProjectDir)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mt.lib;reactphysics3d.lib;WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/lib;$(ProjectDir)Externals/Box2D/lib;$(ProjectDir)Externals/Assimp/lib/Release;$(ProjectDir)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc143-mt.lib;reactphysics3d.lib;box2d.lib;WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
@@ -190,7 +190,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)Externals\ReactPhysics3D\include;$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories);$(ProjectDir)Externals\angelscript\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Externals\ReactPhysics3D\include;$(ProjectDir)Externals\Box2D\include;$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories);$(ProjectDir)Externals\angelscript\include</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
@@ -204,8 +204,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/lib;$(ProjectDir)Externals/Assimp/lib/Release;$(ProjectDir)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mt.lib;reactphysics3d.lib;WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/lib;$(ProjectDir)Externals/Box2D/lib;$(ProjectDir)Externals/Assimp/lib/Release;$(ProjectDir)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc143-mt.lib;reactphysics3d.lib;box2d.lib;WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>
       </LinkTimeCodeGeneration>
     </Link>
@@ -903,6 +903,14 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     </ClInclude>
     <ClInclude Include="Externals\nlohmann\json.hpp" />
     <ClInclude Include="Externals\nlohmann\json_fwd.hpp" />
+    <ClInclude Include="Externals\Box2D\include\box2d\base.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\box2d.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\collision.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\config.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\constants.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\id.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\math_functions.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\types.h" />
     <ClInclude Include="Externals\ReactPhysics3D\include\reactphysics3d\body\Body.h" />
     <ClInclude Include="Externals\ReactPhysics3D\include\reactphysics3d\body\RigidBody.h" />
     <ClInclude Include="Externals\ReactPhysics3D\include\reactphysics3d\collision\broadphase\DynamicAABBTree.h" />
@@ -1158,7 +1166,6 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClInclude Include="KashipanEngine\Math\Color.h" />
     <ClInclude Include="KashipanEngine\ObjectsHeaders.h" />
     <ClInclude Include="KashipanEngine\Objects\Collision\Collider.h" />
-    <ClInclude Include="KashipanEngine\Objects\Collision\CollisionAlgorithms2D.h" />
     <ClInclude Include="KashipanEngine\Objects\Collision\CollisionAlgorithms3D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Animator.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\AudioListener.h" />

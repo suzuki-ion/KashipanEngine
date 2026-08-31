@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Objects/Collision/Collider.h"
-#include "Objects/Collision/CollisionAlgorithms2D.h"
 #include "Objects/Collision/CollisionAlgorithms3D.h"
 #include "Objects/Components/Animator.h"
 #include "Objects/Components/KeyFrameAnimator.h"

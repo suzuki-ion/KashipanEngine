@@ -1,8 +1,8 @@
 #include "Collider.h"
 
 #include "Objects/EmptyObject.h"
-#include "Objects/Collision/CollisionAlgorithms2D.h"
 #include "Objects/Components/Transform.h"
+#include "Objects/Components/Collider/RigidBody2D.h"
 #include "Objects/Components/Collider/RigidBody3D.h"
 #include "Utilities/TimeUtils.h"
 #include <algorithm>
@@ -15,13 +15,6 @@
 namespace KashipanEngine {
 
 namespace {
-struct Bounds2D {
-    float minX = 0.0f;
-    float minY = 0.0f;
-    float maxX = 0.0f;
-    float maxY = 0.0f;
-};
-
 struct Bounds3D {
     Vector3 min{0.0f, 0.0f, 0.0f};
     Vector3 max{0.0f, 0.0f, 0.0f};
@@ -70,55 +63,6 @@ inline IndexPair MakeIndexPair(std::size_t a, std::size_t b) {
 
 inline int ToCell(float v, float cellSize) {
     return static_cast<int>(std::floor(v / cellSize));
-}
-
-std::optional<Bounds2D> ComputeBounds2D(const ColliderInfo2D::ShapeVariant &shape) {
-    return std::visit(
-        [](const auto &s) -> std::optional<Bounds2D> {
-            using S = std::decay_t<decltype(s)>;
-
-            if constexpr (std::is_same_v<S, Math::Point2D>) {
-                return Bounds2D{s.position.x, s.position.y, s.position.x, s.position.y};
-            } else if constexpr (std::is_same_v<S, Math::Circle>) {
-                return Bounds2D{s.center.x - s.radius, s.center.y - s.radius, s.center.x + s.radius, s.center.y + s.radius};
-            } else if constexpr (std::is_same_v<S, Math::Rect>) {
-                if (s.rotation == 0.0f) {
-                    return Bounds2D{s.center.x - s.halfSize.x, s.center.y - s.halfSize.y, s.center.x + s.halfSize.x, s.center.y + s.halfSize.y};
-                }
-                // 回転している場合は4頂点を実際に回転させ、それを包むAABBを求める
-                const float c = std::cos(s.rotation);
-                const float sn = std::sin(s.rotation);
-                const Vector2 ex{s.halfSize.x * c, s.halfSize.x * sn};
-                const Vector2 ey{-s.halfSize.y * sn, s.halfSize.y * c};
-                const Vector2 corners[4] = {
-                    s.center - ex - ey, s.center + ex - ey,
-                    s.center + ex + ey, s.center - ex + ey};
-                Vector2 minV = corners[0];
-                Vector2 maxV = corners[0];
-                for (int i = 1; i < 4; ++i) {
-                    minV.x = std::min(minV.x, corners[i].x);
-                    minV.y = std::min(minV.y, corners[i].y);
-                    maxV.x = std::max(maxV.x, corners[i].x);
-                    maxV.y = std::max(maxV.y, corners[i].y);
-                }
-                return Bounds2D{minV.x, minV.y, maxV.x, maxV.y};
-            } else if constexpr (std::is_same_v<S, Math::Segment2D>) {
-                return Bounds2D{
-                    std::min(s.start.x, s.end.x),
-                    std::min(s.start.y, s.end.y),
-                    std::max(s.start.x, s.end.x),
-                    std::max(s.start.y, s.end.y)};
-            } else if constexpr (std::is_same_v<S, Math::Capsule2D>) {
-                return Bounds2D{
-                    std::min(s.start.x, s.end.x) - s.radius,
-                    std::min(s.start.y, s.end.y) - s.radius,
-                    std::max(s.start.x, s.end.x) + s.radius,
-                    std::max(s.start.y, s.end.y) + s.radius};
-            } else {
-                return std::nullopt;
-            }
-        },
-        shape);
 }
 
 std::optional<Bounds3D> ComputeBounds3D(const ColliderInfo3D::ShapeVariant &shape) {
@@ -177,74 +121,6 @@ std::optional<Bounds3D> ComputeBounds3D(const ColliderInfo3D::ShapeVariant &shap
             }
         },
         shape);
-}
-
-template<typename TColliders>
-std::vector<IndexPair> BuildCandidatePairs2D(const TColliders &colliders) {
-    constexpr float kCellSize = 10.0f;
-    constexpr int kMaxCellsPerShape = 256;
-
-    std::unordered_map<std::uint64_t, std::vector<std::size_t>> grid;
-    std::vector<std::size_t> active;
-    std::vector<std::size_t> global;
-
-    active.reserve(colliders.size());
-    global.reserve(colliders.size());
-
-    for (std::size_t i = 0; i < colliders.size(); ++i) {
-        const auto &c = colliders[i];
-        if (!c.info.enabled) continue;
-        active.push_back(i);
-
-        const auto bounds = ComputeBounds2D(c.info.shape);
-        if (!bounds.has_value()) {
-            global.push_back(i);
-            continue;
-        }
-
-        const int minX = ToCell(bounds->minX, kCellSize);
-        const int minY = ToCell(bounds->minY, kCellSize);
-        const int maxX = ToCell(bounds->maxX, kCellSize);
-        const int maxY = ToCell(bounds->maxY, kCellSize);
-
-        const int cellsX = (maxX - minX + 1);
-        const int cellsY = (maxY - minY + 1);
-        if (cellsX <= 0 || cellsY <= 0 || cellsX > kMaxCellsPerShape || cellsY > kMaxCellsPerShape || (cellsX * cellsY) > kMaxCellsPerShape) {
-            global.push_back(i);
-            continue;
-        }
-
-        for (int y = minY; y <= maxY; ++y) {
-            for (int x = minX; x <= maxX; ++x) {
-                const std::uint64_t key = (static_cast<std::uint64_t>(static_cast<std::uint32_t>(x)) << 32)
-                                        | static_cast<std::uint32_t>(y);
-                grid[key].push_back(i);
-            }
-        }
-    }
-
-    std::unordered_set<IndexPair, IndexPairHash> uniquePairs;
-
-    for (const auto &[_, indices] : grid) {
-        for (std::size_t i = 0; i < indices.size(); ++i) {
-            for (std::size_t j = i + 1; j < indices.size(); ++j) {
-                uniquePairs.insert(MakeIndexPair(indices[i], indices[j]));
-            }
-        }
-    }
-
-    for (std::size_t gi = 0; gi < global.size(); ++gi) {
-        const std::size_t g = global[gi];
-        for (std::size_t a : active) {
-            if (a == g) continue;
-            uniquePairs.insert(MakeIndexPair(g, a));
-        }
-    }
-
-    std::vector<IndexPair> out;
-    out.reserve(uniquePairs.size());
-    for (const auto &p : uniquePairs) out.push_back(p);
-    return out;
 }
 
 template<typename TColliders>
@@ -341,43 +217,10 @@ inline bool ShouldTest(
     return (selfIgnore & otherAttr).none();
 }
 
-inline bool Intersects2D(const ColliderInfo2D::ShapeVariant &a, const ColliderInfo2D::ShapeVariant &b) {
-    return std::visit(
-        [](const auto &lhs, const auto &rhs) {
-            if constexpr (requires { KashipanEngine::CollisionAlgorithms2D::Intersects(lhs, rhs); }) {
-                return KashipanEngine::CollisionAlgorithms2D::Intersects(lhs, rhs);
-            } else {
-                return false;
-            }
-        },
-        a, b);
-}
-
 inline bool Intersects3D(const ColliderInfo3D::ShapeVariant &a, const ColliderInfo3D::ShapeVariant &b) {
     (void)a;
     (void)b;
     return false;
-}
-
-inline HitInfo2D ComputeHit2D(const ColliderInfo2D::ShapeVariant &a, const ColliderInfo2D::ShapeVariant &b) {
-    return std::visit(
-        [](const auto &lhs, const auto &rhs) -> HitInfo2D {
-            if constexpr (requires { KashipanEngine::CollisionAlgorithms2D::ComputeHit(lhs, rhs); }) {
-                HitInfo hiBase = KashipanEngine::CollisionAlgorithms2D::ComputeHit(lhs, rhs);
-                HitInfo2D hi;
-                hi.isHit = hiBase.isHit;
-                hi.normal = hiBase.normal;
-                hi.penetration = hiBase.penetration;
-                return hi;
-            } else if constexpr (requires { KashipanEngine::CollisionAlgorithms2D::Intersects(lhs, rhs); }) {
-                HitInfo2D hi;
-                hi.isHit = KashipanEngine::CollisionAlgorithms2D::Intersects(lhs, rhs);
-                return hi;
-            } else {
-                return HitInfo2D{};
-            }
-        },
-        a, b);
 }
 
 inline HitInfo3D ComputeHit3D(const ColliderInfo3D::ShapeVariant &a, const ColliderInfo3D::ShapeVariant &b) {
@@ -395,15 +238,6 @@ constexpr float kMinSweepStep = 0.05f;
 /// @brief スイープの最大分割数（テレポート等の巨大な移動でも計算量が爆発しないよう制限する）
 constexpr int kMaxSweepSubsteps = 16;
 
-/// @brief 2D形状の最小半径（この距離以下の移動ならすり抜けは起きないとみなせる量）を求める
-float ComputeMinHalfExtent2D(const ColliderInfo2D::ShapeVariant &shape) {
-    const auto bounds = ComputeBounds2D(shape);
-    if (!bounds) return kMinSweepStep;
-    const float width = bounds->maxX - bounds->minX;
-    const float height = bounds->maxY - bounds->minY;
-    return std::max(kMinSweepStep, std::min(width, height) * 0.5f);
-}
-
 /// @brief 3D形状の最小半径を求める
 float ComputeMinHalfExtent3D(const ColliderInfo3D::ShapeVariant &shape) {
     const auto bounds = ComputeBounds3D(shape);
@@ -412,28 +246,106 @@ float ComputeMinHalfExtent3D(const ColliderInfo3D::ShapeVariant &shape) {
     return std::max(kMinSweepStep, std::min({ size.x, size.y, size.z }) * 0.5f);
 }
 
-/// @brief 2D形状を平行移動した複製を返す（スイープの中間位置の判定用）
-ColliderInfo2D::ShapeVariant TranslateShape2D(const ColliderInfo2D::ShapeVariant &shape, const Vector2 &offset) {
+//==================================================
+// Box2D連携用ヘルパー
+//==================================================
+
+inline b2Vec2 ToB2(const Vector2 &v) { return b2Vec2{v.x, v.y}; }
+inline Vector2 FromB2(const b2Vec2 &v) { return Vector2{v.x, v.y}; }
+
+/// @brief ワールド空間の2D形状を、指定の原点・角度を基準としたローカル空間へ変換する
+/// @details ColliderInfo2D::shapeはICollider::BuildColliderInfo2D()により常にワールド空間で
+///          構築されているが、Box2Dのシェイプはボディのローカル空間で定義する必要があるため、
+///          ボディに使うのと同じ原点・角度（ICollider::GetSyncedOwnerPosition/
+///          GetSyncedOwnerRotationEuler().z）でここへ変換してから渡す
+ColliderInfo2D::ShapeVariant ToLocalShape2D(const ColliderInfo2D::ShapeVariant &shape, const Vector2 &origin, float angle) {
+    const float c = std::cos(-angle);
+    const float s = std::sin(-angle);
+    const auto toLocal = [&](const Vector2 &worldPoint) {
+        const Vector2 d = worldPoint - origin;
+        return Vector2(d.x * c - d.y * s, d.x * s + d.y * c);
+    };
+
     ColliderInfo2D::ShapeVariant result = shape;
     std::visit(
         [&](auto &s) {
             using S = std::decay_t<decltype(s)>;
             if constexpr (std::is_same_v<S, Math::Point2D>) {
-                s.position += offset;
+                s.position = toLocal(s.position);
             } else if constexpr (std::is_same_v<S, Math::Circle>) {
-                s.center += offset;
+                s.center = toLocal(s.center);
             } else if constexpr (std::is_same_v<S, Math::Rect>) {
-                s.center += offset;
+                s.center = toLocal(s.center);
+                s.rotation -= angle;
             } else if constexpr (std::is_same_v<S, Math::Segment2D>) {
-                s.start += offset;
-                s.end += offset;
+                s.start = toLocal(s.start);
+                s.end = toLocal(s.end);
             } else if constexpr (std::is_same_v<S, Math::Capsule2D>) {
-                s.start += offset;
-                s.end += offset;
+                s.start = toLocal(s.start);
+                s.end = toLocal(s.end);
             }
         },
         result);
     return result;
+}
+
+/// @brief 2Dコライダー情報から、対応するRigidBody2Dを取得する（RigidBody3Dと同じ規約）
+/// @details RigidBody2Dが使用コライダーを明示的に選択している場合は、そのコライダー由来の
+///          ColliderInfo2Dに対してのみ関連付ける（未選択の場合はどのコライダーでも関連付ける）
+RigidBody2D *ResolveRigidBody2D(const ColliderInfo2D &info) {
+    if (!info.ownerObject) return nullptr;
+    auto *rb = info.ownerObject->GetComponent<RigidBody2D>();
+    if (!rb) return nullptr;
+    auto *selected = rb->GetSelectedCollider();
+    if (selected && selected != info.sourceCollider) return nullptr;
+    return rb;
+}
+
+/// @brief 2D形状同士が（Box2Dのシェイプ再生成が必要という意味で）等しいかを比較する
+/// @brief 2D形状同士が、ワールド位置・回転の違いを除いた「形状パラメータ」として等しいかを比較する
+/// @details ColliderInfo2D::shapeはICollider::BuildColliderInfo2D()により毎フレームワールド空間で
+///          再構築されるため、中心座標やRectのrotationには現在のTransformの位置・回転がそのまま
+///          含まれている。動的（RigidBody2D所有）な物体は毎フレーム位置・回転が変わるのが通常のため、
+///          それらをそのまま比較すると常に「形状が変わった」と誤判定してしまい、Box2Dのシェイプが
+///          毎フレーム作り直され、接触の継続性が失われて反発・摩擦が正しく働かなくなる。
+///          そのため位置・回転は無視し、サイズ等の純粋な形状パラメータだけを比較する
+///          （位置・回転の同期はBuildRuntime2D/SyncStaticBodyTransform2D側が別途担う）
+bool ShapeVariantEquals2D(const ColliderInfo2D::ShapeVariant &a, const ColliderInfo2D::ShapeVariant &b) {
+    if (a.index() != b.index()) return false;
+    return std::visit(
+        [&](const auto &sa) -> bool {
+            using S = std::decay_t<decltype(sa)>;
+            const auto &sb = std::get<S>(b);
+            if constexpr (std::is_same_v<S, Math::Point2D>) {
+                return true; // 位置以外にパラメータが無い
+            } else if constexpr (std::is_same_v<S, Math::Circle>) {
+                return sa.radius == sb.radius;
+            } else if constexpr (std::is_same_v<S, Math::Rect>) {
+                return sa.halfSize.x == sb.halfSize.x && sa.halfSize.y == sb.halfSize.y;
+            } else if constexpr (std::is_same_v<S, Math::Segment2D>) {
+                const float lenA2 = (sa.end - sa.start).LengthSquared();
+                const float lenB2 = (sb.end - sb.start).LengthSquared();
+                return lenA2 == lenB2;
+            } else { // Capsule2D
+                const float lenA2 = (sa.end - sa.start).LengthSquared();
+                const float lenB2 = (sb.end - sb.start).LengthSquared();
+                return lenA2 == lenB2 && sa.radius == sb.radius;
+            }
+        },
+        a);
+}
+
+/// @brief 2つのColliderInfo2Dの間で、Box2Dのボディ・シェイプを作り直す必要があるかを判定する
+/// @details Transformの位置・回転だけの変化はここでは対象外（形状自体は変わらないため、
+///          静的ボディならSyncStaticBodyTransform2Dで、動的ボディなら物理側でそれぞれ扱う）。
+///          Box2Dの接触の継続性（反発・摩擦の計算精度に影響する）を保つため、本当に形状・トリガー・
+///          属性フィルタが変わった時だけ作り直すようにしている
+bool RuntimeNeedsRebuild2D(const ColliderInfo2D &oldInfo, const ColliderInfo2D &newInfo) {
+    if (oldInfo.enabled != newInfo.enabled) return true;
+    if (oldInfo.isTrigger != newInfo.isTrigger) return true;
+    if (oldInfo.attribute != newInfo.attribute) return true;
+    if (oldInfo.ignoreAttribute != newInfo.ignoreAttribute) return true;
+    return !ShapeVariantEquals2D(oldInfo.shape, newInfo.shape);
 }
 
 } // namespace
@@ -449,6 +361,8 @@ Collider::~Collider() {
 Collider::ColliderID Collider::Add(const ColliderInfo2D &info) {
     const ColliderID id = nextId_++;
     colliders2D_.push_back({id, info});
+    auto &entry = colliders2D_.back();
+    BuildRuntime2D(entry);
     return id;
 }
 
@@ -461,7 +375,14 @@ Collider::ColliderID Collider::Add(const ColliderInfo3D &info) {
 }
 
 bool Collider::Remove2D(ColliderID id) {
-    return EraseById(colliders2D_, id);
+    for (auto it = colliders2D_.begin(); it != colliders2D_.end(); ++it) {
+        if (it->id == id) {
+            ReleaseRuntime2D(*it);
+            colliders2D_.erase(it);
+            return true;
+        }
+    }
+    return false;
 }
 
 bool Collider::Remove3D(ColliderID id) {
@@ -477,10 +398,20 @@ bool Collider::Remove3D(ColliderID id) {
 
 bool Collider::UpdateColliderInfo2D(ColliderID id, const ColliderInfo2D &info) {
     for (auto &e : colliders2D_) {
-        if (e.id == id) {
-            e.info = info;
-            return true;
+        if (e.id != id) continue;
+
+        const bool needsRebuild = B2_IS_NULL(e.runtime.body) || B2_IS_NULL(e.runtime.shape)
+            || RuntimeNeedsRebuild2D(e.info, info);
+        e.info = info;
+
+        if (needsRebuild) {
+            BuildRuntime2D(e);
+        } else if (e.runtime.ownsBody) {
+            // 形状自体は変わっていない。静的ボディ（RigidBody2D無し）はTransform側だけが動く
+            // （移動床等）可能性があるため、接触の継続性を壊すシェイプの作り直しはせず位置だけ同期する
+            SyncStaticBodyTransform2D(e);
         }
+        return true;
     }
     return false;
 }
@@ -497,6 +428,9 @@ bool Collider::UpdateColliderInfo3D(ColliderID id, const ColliderInfo3D &info) {
 }
 
 void Collider::Clear2D() {
+    for (auto &entry : colliders2D_) {
+        ReleaseRuntime2D(entry);
+    }
     colliders2D_.clear();
     prevPairs2D_.clear();
 }
@@ -509,28 +443,6 @@ void Collider::Clear3D() {
     prevPairs3D_.clear();
     frameEvents3D_.clear();
     curPairs3D_.clear();
-}
-
-std::vector<Collider::HitPair2D> Collider::CheckAll2D() const {
-    std::vector<HitPair2D> hits;
-    const auto pairs = BuildCandidatePairs2D(colliders2D_);
-    hits.reserve(pairs.size());
-
-    for (const auto &pair : pairs) {
-        const auto &ai = colliders2D_[pair.a];
-        const auto &bi = colliders2D_[pair.b];
-
-        if (!ai.info.enabled || !bi.info.enabled) continue;
-        if (!ShouldTest(ai.info.attribute, ai.info.ignoreAttribute, bi.info.attribute) ||
-            !ShouldTest(bi.info.attribute, bi.info.ignoreAttribute, ai.info.attribute)) {
-            continue;
-        }
-
-        if (Intersects2D(ai.info.shape, bi.info.shape)) {
-            hits.push_back({ai.id, bi.id});
-        }
-    }
-    return hits;
 }
 
 std::vector<Collider::HitPair3D> Collider::CheckAll3D() const {
@@ -603,20 +515,6 @@ std::vector<Collider::HitPair3D> Collider::CheckAll3D() const {
         hits.push_back({a, b});
     }
     return hits;
-}
-
-bool Collider::Check2D(ColliderID a, ColliderID b) const {
-    const auto *pa = Find2D(a);
-    const auto *pb = Find2D(b);
-    if (!pa || !pb) return false;
-    if (!pa->info.enabled || !pb->info.enabled) return false;
-
-    if (!ShouldTest(pa->info.attribute, pa->info.ignoreAttribute, pb->info.attribute) ||
-        !ShouldTest(pb->info.attribute, pb->info.ignoreAttribute, pa->info.attribute)) {
-        return false;
-    }
-
-    return Intersects2D(pa->info.shape, pb->info.shape);
 }
 
 bool Collider::Check3D(ColliderID a, ColliderID b) const {
@@ -745,133 +643,166 @@ void Collider::Dispatch3D(ColliderID a, ColliderID b, const HitInfo3D &hitInfoA,
     }
 }
 
+bool Collider::QueryContactHitInfo2D(ColliderID idA, ColliderID idB, HitInfo2D &outHitInfo) const {
+    const auto *ea = Find2D(idA);
+    const auto *eb = Find2D(idB);
+    if (!ea || !eb || B2_IS_NULL(ea->runtime.shape) || B2_IS_NULL(eb->runtime.shape)) return false;
+
+    // 1形状あたりの同時接触数（多角形の頂点数上限＋αの余裕を見た値）は実運用上十分な大きさ
+    constexpr int kMaxContacts = 16;
+    b2ContactData contacts[kMaxContacts];
+    const int count = b2Shape_GetContactData(ea->runtime.shape, contacts, kMaxContacts);
+    for (int i = 0; i < count; ++i) {
+        const b2ContactData &cd = contacts[i];
+        const bool aIsShapeA = B2_ID_EQUALS(cd.shapeIdA, ea->runtime.shape);
+        const b2ShapeId otherShape = aIsShapeA ? cd.shapeIdB : cd.shapeIdA;
+        if (!B2_ID_EQUALS(otherShape, eb->runtime.shape)) continue;
+        if (cd.manifold.pointCount <= 0) continue;
+
+        float minSeparation = cd.manifold.points[0].separation;
+        for (int p = 1; p < cd.manifold.pointCount; ++p) {
+            minSeparation = std::min(minSeparation, cd.manifold.points[p].separation);
+        }
+
+        // b2Manifold::normalは「クエリしたshapeId（=aIsShapeAならA、そうでなければB）→相手」の向き。
+        // Dispatch2DはidA→idBの向きを期待するため、順序が逆なら反転する
+        Vector2 normal = FromB2(cd.manifold.normal);
+        if (!aIsShapeA) normal = -normal;
+
+        outHitInfo = HitInfo2D{};
+        outHitInfo.isHit = true;
+        outHitInfo.normal = Vector3(normal.x, normal.y, 0.0f);
+        outHitInfo.penetration = std::max(0.0f, -minSeparation);
+        return true;
+    }
+    return false;
+}
+
+bool Collider::QuerySensorHitInfo2D(ColliderID sensorId, ColliderID visitorId) const {
+    const auto *sensorEntry = Find2D(sensorId);
+    if (!sensorEntry || B2_IS_NULL(sensorEntry->runtime.shape)) return false;
+    const auto *visitorEntry = Find2D(visitorId);
+    if (!visitorEntry || B2_IS_NULL(visitorEntry->runtime.shape)) return false;
+
+    const int capacity = b2Shape_GetSensorCapacity(sensorEntry->runtime.shape);
+    if (capacity <= 0) return false;
+    std::vector<b2ShapeId> visitors(static_cast<std::size_t>(capacity));
+    const int count = b2Shape_GetSensorData(sensorEntry->runtime.shape, visitors.data(), capacity);
+    for (int i = 0; i < count; ++i) {
+        if (B2_ID_EQUALS(visitors[i], visitorEntry->runtime.shape)) return true;
+    }
+    return false;
+}
+
 void Collider::Update2D() {
+    if (B2_IS_NULL(world2D_)) return;
+
+    // Box2Dは固定タイムステップを前提としたソルバーのため、Update3Dと同じ蓄積方式で
+    // 可変フレームレートを吸収する（4サブステップはBox2D公式が推奨する既定値）
+    constexpr float kDefaultTimeStep = 1.0f / 60.0f;
+    constexpr int kSubStepCount = 4;
+    const float deltaTime = GetDeltaTime();
+    accumulatedTime2D_ += deltaTime;
+    while (accumulatedTime2D_ >= kDefaultTimeStep) {
+        b2World_Step(world2D_, kDefaultTimeStep, kSubStepCount);
+        accumulatedTime2D_ -= kDefaultTimeStep;
+    }
+
+    // b2ShapeId(packed) -> ColliderID の逆引き
+    std::unordered_map<std::uint64_t, ColliderID> idByShape;
+    idByShape.reserve(colliders2D_.size());
+    for (const auto &entry : colliders2D_) {
+        if (B2_IS_NULL(entry.runtime.shape)) continue;
+        idByShape.emplace(b2StoreShapeId(entry.runtime.shape), entry.id);
+    }
+    const auto lookupId = [&](b2ShapeId shapeId) -> ColliderID {
+        const auto it = idByShape.find(b2StoreShapeId(shapeId));
+        return it != idByShape.end() ? it->second : 0;
+    };
+
     std::vector<std::uint64_t> cur;
+    std::vector<std::uint64_t> handledThisFrame;
 
-    // 連続衝突判定（スイープ）でのみ検出できるヒットを先に収集しておく
-    // （現在位置で重なっているペアは通常判定のヒット情報を優先する）
-    std::unordered_map<std::uint64_t, HitInfo2D> continuousHits;
-    CollectContinuousHits2D(continuousHits);
+    // 通常（非センサー）の接触イベント。isSensorなシェイプ同士の組み合わせはここには出てこない
+    const b2ContactEvents contactEvents = b2World_GetContactEvents(world2D_);
+    for (int i = 0; i < contactEvents.beginCount; ++i) {
+        const auto &ev = contactEvents.beginEvents[i];
+        const ColliderID idA = lookupId(ev.shapeIdA);
+        const ColliderID idB = lookupId(ev.shapeIdB);
+        if (idA == 0 || idB == 0) continue;
 
-    const auto pairs = BuildCandidatePairs2D(colliders2D_);
-    cur.reserve(pairs.size());
+        HitInfo2D hi;
+        if (!QueryContactHitInfo2D(idA, idB, hi)) continue;
 
-    // このフレームでDispatch済みのペア（Exitの発火漏れ・二重発火防止用）
-    std::vector<std::uint64_t> processedPairs;
-    processedPairs.reserve(pairs.size());
-
-    for (const auto &pair : pairs) {
-        const auto &ai = colliders2D_[pair.a];
-        const auto &bi = colliders2D_[pair.b];
-
-        if (!ai.info.enabled || !bi.info.enabled) continue;
-        if (!ShouldTest(ai.info.attribute, ai.info.ignoreAttribute, bi.info.attribute) ||
-            !ShouldTest(bi.info.attribute, bi.info.ignoreAttribute, ai.info.attribute)) {
-            continue;
-        }
-
-        HitInfo2D hi = ComputeHit2D(ai.info.shape, bi.info.shape);
-        const std::uint64_t key = MakePairKey(ai.id, bi.id);
-
-        // 現在位置で重なっていなくても、スイープで通過が検出されていればヒット扱いにする
-        if (!hi.isHit) {
-            auto ccdIt = continuousHits.find(key);
-            if (ccdIt != continuousHits.end()) {
-                hi = ccdIt->second;
-                // スイープのHitInfoは小さいID側を自分として計算されているため、順序が逆なら法線を反転する
-                if (ai.id > bi.id) hi.normal = -hi.normal;
-            }
-        }
-        continuousHits.erase(key);
-
+        const std::uint64_t key = MakePairKey(idA, idB);
         const bool wasHit = std::binary_search(prevPairs2D_.begin(), prevPairs2D_.end(), key);
-        Dispatch2D(ai.id, bi.id, hi, wasHit);
-        processedPairs.push_back(key);
-
-        if (hi.isHit) cur.push_back(key);
-    }
-
-    // 候補ペアに挙がらなかったスイープヒット（高速移動で現在位置が既に離れている場合）を発火する
-    for (const auto &[key, hi] : continuousHits) {
-        const ColliderID a = static_cast<ColliderID>(key >> 32);
-        const ColliderID b = static_cast<ColliderID>(key & 0xffffffffu);
-        const bool wasHit = std::binary_search(prevPairs2D_.begin(), prevPairs2D_.end(), key);
-        Dispatch2D(a, b, hi, wasHit);
-        processedPairs.push_back(key);
+        Dispatch2D(idA, idB, hi, wasHit);
         cur.push_back(key);
+        handledThisFrame.push_back(key);
+    }
+    for (int i = 0; i < contactEvents.endCount; ++i) {
+        const auto &ev = contactEvents.endEvents[i];
+        const ColliderID idA = lookupId(ev.shapeIdA);
+        const ColliderID idB = lookupId(ev.shapeIdB);
+        if (idA == 0 || idB == 0) continue;
+
+        Dispatch2D(idA, idB, HitInfo2D{}, true);
+        handledThisFrame.push_back(MakePairKey(idA, idB));
     }
 
-    // 前フレームは接触していたが、今フレームの候補に挙がらなかった（高速に離れた）ペアのExitを発火する
-    std::sort(processedPairs.begin(), processedPairs.end());
+    // センサー（isTrigger）の重なりイベント。Box2Dでは接触イベントと別系統で、法線・めり込み量を
+    // 持たない（物理的な接触ではなく重なり検知のため）。HitInfo2D側もisHitのみ立てて他は既定値のまま渡す
+    const b2SensorEvents sensorEvents = b2World_GetSensorEvents(world2D_);
+    for (int i = 0; i < sensorEvents.beginCount; ++i) {
+        const auto &ev = sensorEvents.beginEvents[i];
+        const ColliderID idA = lookupId(ev.sensorShapeId);
+        const ColliderID idB = lookupId(ev.visitorShapeId);
+        if (idA == 0 || idB == 0) continue;
+
+        HitInfo2D hi{};
+        hi.isHit = true;
+        const std::uint64_t key = MakePairKey(idA, idB);
+        const bool wasHit = std::binary_search(prevPairs2D_.begin(), prevPairs2D_.end(), key);
+        Dispatch2D(idA, idB, hi, wasHit);
+        cur.push_back(key);
+        handledThisFrame.push_back(key);
+    }
+    for (int i = 0; i < sensorEvents.endCount; ++i) {
+        const auto &ev = sensorEvents.endEvents[i];
+        const ColliderID idA = lookupId(ev.sensorShapeId);
+        const ColliderID idB = lookupId(ev.visitorShapeId);
+        if (idA == 0 || idB == 0) continue;
+
+        Dispatch2D(idA, idB, HitInfo2D{}, true);
+        handledThisFrame.push_back(MakePairKey(idA, idB));
+    }
+
+    std::sort(handledThisFrame.begin(), handledThisFrame.end());
+
+    // Begin/Endどちらのイベントも発生しなかった、前フレームから継続中のペアはStayを発火する
     for (const auto key : prevPairs2D_) {
-        if (std::binary_search(processedPairs.begin(), processedPairs.end(), key)) continue;
-        const ColliderID a = static_cast<ColliderID>(key >> 32);
-        const ColliderID b = static_cast<ColliderID>(key & 0xffffffffu);
-        Dispatch2D(a, b, HitInfo2D{}, true);
+        if (std::binary_search(handledThisFrame.begin(), handledThisFrame.end(), key)) continue;
+
+        const ColliderID idA = static_cast<ColliderID>(key >> 32);
+        const ColliderID idB = static_cast<ColliderID>(key & 0xffffffffu);
+
+        HitInfo2D hi;
+        if (QueryContactHitInfo2D(idA, idB, hi)) {
+            Dispatch2D(idA, idB, hi, true);
+            cur.push_back(key);
+        } else if (QuerySensorHitInfo2D(idA, idB) || QuerySensorHitInfo2D(idB, idA)) {
+            HitInfo2D sensorHit{};
+            sensorHit.isHit = true;
+            Dispatch2D(idA, idB, sensorHit, true);
+            cur.push_back(key);
+        }
+        // どちらの問い合わせも失敗した場合は、既に破棄されたコライダー等で接触情報を復元できない
+        // ケース。次フレーム以降にBox2D側のEndイベントが来ればそちらでExitが発火する
     }
 
     std::sort(cur.begin(), cur.end());
+    cur.erase(std::unique(cur.begin(), cur.end()), cur.end());
     prevPairs2D_ = std::move(cur);
-
-    RecordPrevPositions2D();
-}
-
-void Collider::CollectContinuousHits2D(std::unordered_map<std::uint64_t, HitInfo2D> &outHits) {
-    for (auto &entry : colliders2D_) {
-        if (!entry.info.continuousDetection || !entry.info.enabled) continue;
-        if (!entry.hasPrevPosition) continue;
-
-        const auto bounds = ComputeBounds2D(entry.info.shape);
-        if (!bounds) continue;
-        const Vector2 currentCenter((bounds->minX + bounds->maxX) * 0.5f, (bounds->minY + bounds->maxY) * 0.5f);
-        const Vector2 prevCenter(entry.prevPosition.x, entry.prevPosition.y);
-        const Vector2 delta = currentCenter - prevCenter;
-        const float distance = delta.Length();
-
-        // 1フレームの移動量が形状の最小半径以下なら、すり抜けは起きない（通常判定で検出できる）
-        const float maxStep = ComputeMinHalfExtent2D(entry.info.shape);
-        if (distance <= maxStep) continue;
-
-        const int substeps = std::min(kMaxSweepSubsteps, static_cast<int>(std::ceil(distance / maxStep)));
-
-        for (const auto &other : colliders2D_) {
-            if (other.id == entry.id || !other.info.enabled) continue;
-            if (!ShouldTest(entry.info.attribute, entry.info.ignoreAttribute, other.info.attribute) ||
-                !ShouldTest(other.info.attribute, other.info.ignoreAttribute, entry.info.attribute)) {
-                continue;
-            }
-            const std::uint64_t key = MakePairKey(entry.id, other.id);
-            if (outHits.contains(key)) continue; // 両方CCDの場合の二重スイープを防ぐ
-
-            // 移動経路の中間位置（終端は通常判定が受け持つ）を時刻順に判定し、最初のヒットを採用する
-            for (int i = 1; i < substeps; ++i) {
-                const float t = static_cast<float>(i) / static_cast<float>(substeps);
-                // 中間位置 = prev + delta*t。現在形状からの相対移動量へ変換して平行移動する
-                const Vector2 offset = delta * (t - 1.0f);
-                const auto sweptShape = TranslateShape2D(entry.info.shape, offset);
-                // ComputeHitは(自分, 相手)の順で「相手→自分」向きの法線を返すため、
-                // Dispatch側がID昇順で解釈できるよう小さいID側を自分として計算する
-                const HitInfo2D hit = (entry.id < other.id)
-                    ? ComputeHit2D(sweptShape, other.info.shape)
-                    : ComputeHit2D(other.info.shape, sweptShape);
-                if (hit.isHit) {
-                    outHits.emplace(key, hit);
-                    break;
-                }
-            }
-        }
-    }
-}
-
-void Collider::RecordPrevPositions2D() {
-    for (auto &entry : colliders2D_) {
-        entry.hasPrevPosition = false;
-        if (!entry.info.continuousDetection || !entry.info.enabled) continue;
-        const auto bounds = ComputeBounds2D(entry.info.shape);
-        if (!bounds) continue;
-        entry.prevPosition = Vector3((bounds->minX + bounds->maxX) * 0.5f, (bounds->minY + bounds->maxY) * 0.5f, 0.0f);
-        entry.hasPrevPosition = true;
-    }
 }
 
 void Collider::RecordPrevPositions3D() {
@@ -890,11 +821,11 @@ void Collider::Update3D() {
 
     constexpr float kDefaultTimeStep = 1.0f / 60.0f;
     const float deltaTime = GetDeltaTime();
-    accumulatedTime_ += deltaTime;
+    accumulatedTime3D_ += deltaTime;
 
-    while (accumulatedTime_ >= kDefaultTimeStep) {
+    while (accumulatedTime3D_ >= kDefaultTimeStep) {
         StepPhysics(kDefaultTimeStep);
-        accumulatedTime_ -= kDefaultTimeStep;
+        accumulatedTime3D_ -= kDefaultTimeStep;
     }
 
     frameEvents3D_.clear();
@@ -1055,21 +986,21 @@ void Collider::Update3D() {
     RecordPrevPositions3D();
 }
 
-const Collider::Entry<ColliderInfo2D> *Collider::Find2D(ColliderID id) const {
+const Collider::Entry<ColliderInfo2D, Collider::ColliderRuntime2D> *Collider::Find2D(ColliderID id) const {
     for (const auto &e : colliders2D_) {
         if (e.id == id) return &e;
     }
     return nullptr;
 }
 
-const Collider::Entry<ColliderInfo3D> *Collider::Find3D(ColliderID id) const {
+const Collider::Entry<ColliderInfo3D, Collider::ColliderRuntime3D> *Collider::Find3D(ColliderID id) const {
     for (const auto &e : colliders3D_) {
         if (e.id == id) return &e;
     }
     return nullptr;
 }
 
-Collider::Entry<ColliderInfo3D> *Collider::Find3D(ColliderID id) {
+Collider::Entry<ColliderInfo3D, Collider::ColliderRuntime3D> *Collider::Find3D(ColliderID id) {
     for (auto &e : colliders3D_) {
         if (e.id == id) return &e;
     }
@@ -1083,11 +1014,21 @@ void Collider::StepPhysics(float timeStep) {
 }
 
 void Collider::EnsureWorldCreated() {
-    if (physicsWorld_) return;
-
-    reactphysics3d::PhysicsWorld::WorldSettings settings;
-    settings.gravity = reactphysics3d::Vector3(0.0f, -9.81f, 0.0f);
-    physicsWorld_ = physicsCommon_.createPhysicsWorld(settings);
+    if (!physicsWorld_) {
+        reactphysics3d::PhysicsWorld::WorldSettings settings;
+        settings.gravity = reactphysics3d::Vector3(0.0f, -9.81f, 0.0f);
+        physicsWorld_ = physicsCommon_.createPhysicsWorld(settings);
+    }
+    if (B2_IS_NULL(world2D_)) {
+        b2WorldDef def = b2DefaultWorldDef();
+        // 3D側の物理ワールドと同じ大きさの重力に揃える
+        def.gravity = b2Vec2{0.0f, -9.81f};
+        // Box2Dの既定値（1.0 m/s）だと、その速度未満で衝突した場合に反発係数を設定していても
+        // 一切反発しない（ジッター防止のための仕様）。小さい落下距離での動作確認等、低速の衝突でも
+        // 反発係数の効果が見えるよう、ほぼ常に反発が有効になる程度まで下げておく
+        def.restitutionThreshold = 0.01f;
+        world2D_ = b2CreateWorld(&def);
+    }
 }
 
 void Collider::ReleaseWorld() {
@@ -1095,9 +1036,157 @@ void Collider::ReleaseWorld() {
         physicsCommon_.destroyPhysicsWorld(physicsWorld_);
         physicsWorld_ = nullptr;
     }
+    if (!B2_IS_NULL(world2D_)) {
+        b2DestroyWorld(world2D_);
+        world2D_ = b2_nullWorldId;
+    }
 }
 
-bool Collider::BuildRuntime3D(Entry<ColliderInfo3D> &entry) {
+b2BodyDef Collider::MakeBodyDef2D(const ColliderInfo2D &info) const {
+    b2BodyDef def = b2DefaultBodyDef();
+    // RigidBody2Dが無い（＝Colliderが自前でボディを持つ）場合の既定は静的。
+    // RigidBody2Dが見つかった場合はBuildRuntime2D側でDynamicへ差し替える
+    def.type = b2_staticBody;
+    def.isEnabled = info.enabled;
+    if (info.sourceCollider) {
+        def.position = ToB2(Vector2(info.sourceCollider->GetSyncedOwnerPosition()));
+        def.rotation = b2MakeRot(info.sourceCollider->GetSyncedOwnerRotationEuler().z);
+    }
+    return def;
+}
+
+bool Collider::RecreateShape2D(Entry<ColliderInfo2D, ColliderRuntime2D> &entry) {
+    if (!B2_IS_NULL(entry.runtime.shape)) {
+        b2DestroyShape(entry.runtime.shape, true);
+        entry.runtime.shape = b2_nullShapeId;
+    }
+    if (B2_IS_NULL(entry.runtime.body)) return false;
+
+    // シェイプ生成時、Box2Dのセグメント形状は静的ボディにしか付けられない。
+    // Ray2DColliderが動的なRigidBody2Dと同じオブジェクトに付いている場合は生成をスキップする
+    // （RigidBody3Dの凹メッシュ×動的ボディの組み合わせを弾いている既存の前例と同じ扱い）
+    const bool isSegment = std::holds_alternative<Math::Segment2D>(entry.info.shape);
+    if (isSegment && b2Body_GetType(entry.runtime.body) != b2_staticBody) {
+        return false;
+    }
+
+    Vector2 origin{0.0f, 0.0f};
+    float angle = 0.0f;
+    if (b2Body_GetType(entry.runtime.body) == b2_staticBody) {
+        // 静的ボディ（Colliderがこのフレームで新規生成した使い捨てボディ）はTransformの現在値を直接使う
+        if (entry.info.sourceCollider) {
+            origin = Vector2(entry.info.sourceCollider->GetSyncedOwnerPosition());
+            angle = entry.info.sourceCollider->GetSyncedOwnerRotationEuler().z;
+        }
+    } else {
+        // 動的ボディ（RigidBody2D所有）は、物理側が実際に把握している現在のボディ座標を基準にする。
+        // Transformは1フレーム遅れて追従する値のため使わない（ズレる上、b2Body_SetTransformでの
+        // 強制テレポートは接触の途切れ扱い・性能低下を招くため、動的ボディの位置には一切触れない）
+        origin = FromB2(b2Body_GetPosition(entry.runtime.body));
+        angle = b2Rot_GetAngle(b2Body_GetRotation(entry.runtime.body));
+    }
+    const auto localShape = ToLocalShape2D(entry.info.shape, origin, angle);
+
+    b2ShapeDef def = b2DefaultShapeDef();
+    def.isSensor = entry.info.isTrigger;
+    def.enableContactEvents = !entry.info.isTrigger;
+    def.enableSensorEvents = entry.info.isTrigger;
+    def.density = 1.0f;
+    def.filter.categoryBits = entry.info.attribute.any() ? entry.info.attribute.to_ullong() : B2_DEFAULT_CATEGORY_BITS;
+    const std::uint64_t ignoreBits = entry.info.ignoreAttribute.to_ullong();
+    // ignoreAttributeは「相手のattributeがこのビットと重なっていたら判定しない」という除外指定のため、
+    // Box2DのmaskBits（「このビットと重なっていたら判定する」という許可指定）へは反転して渡す
+    def.filter.maskBits = (ignoreBits == 0) ? B2_DEFAULT_MASK_BITS : ~ignoreBits;
+
+    entry.runtime.shape = std::visit(
+        [&](const auto &s) -> b2ShapeId {
+            using S = std::decay_t<decltype(s)>;
+            if constexpr (std::is_same_v<S, Math::Circle>) {
+                const b2Circle circle{ToB2(s.center), s.radius};
+                return b2CreateCircleShape(entry.runtime.body, &def, &circle);
+            } else if constexpr (std::is_same_v<S, Math::Rect>) {
+                const b2Polygon box = b2MakeOffsetBox(s.halfSize.x, s.halfSize.y, ToB2(s.center), b2MakeRot(s.rotation));
+                return b2CreatePolygonShape(entry.runtime.body, &def, &box);
+            } else if constexpr (std::is_same_v<S, Math::Capsule2D>) {
+                const b2Capsule capsule{ToB2(s.start), ToB2(s.end), s.radius};
+                return b2CreateCapsuleShape(entry.runtime.body, &def, &capsule);
+            } else if constexpr (std::is_same_v<S, Math::Segment2D>) {
+                const b2Segment segment{ToB2(s.start), ToB2(s.end)};
+                return b2CreateSegmentShape(entry.runtime.body, &def, &segment);
+            } else {
+                // Point2D: 現状このシステムでは常駐形状として生成されない想定
+                return b2_nullShapeId;
+            }
+        },
+        localShape);
+
+    return !B2_IS_NULL(entry.runtime.shape);
+}
+
+bool Collider::BuildRuntime2D(Entry<ColliderInfo2D, ColliderRuntime2D> &entry) {
+    EnsureWorldCreated();
+    if (B2_IS_NULL(world2D_)) return false;
+
+    ReleaseRuntime2D(entry);
+
+    // RigidBody2Dが使用コライダーを明示的に選択している場合は、そのコライダーだけを
+    // RigidBodyへ取り付ける（未選択の場合は従来通りどのコライダーでも取り付ける）
+    RigidBody2D *rb = ResolveRigidBody2D(entry.info);
+
+    if (rb) {
+        // 動的ボディは物理側が位置の実質的な所有者のため、ここではTransformの値で上書き
+        // （テレポート）しない。初期位置はRigidBody2D::TryInitialize側でボディ生成時に一度だけ設定する
+        entry.runtime.body = rb->GetRigidBodyId();
+        entry.runtime.ownsBody = false;
+    } else {
+        const b2BodyDef def = MakeBodyDef2D(entry.info);
+        entry.runtime.body = b2CreateBody(world2D_, &def);
+        entry.runtime.ownsBody = true;
+        entry.runtime.lastOrigin = FromB2(def.position);
+        entry.runtime.lastAngle = b2Rot_GetAngle(def.rotation);
+        entry.runtime.hasLastOrigin = true;
+    }
+
+    if (B2_IS_NULL(entry.runtime.body)) return false;
+    if (!RecreateShape2D(entry)) return false;
+
+    // ここに来るのは形状が新規作成・変更された時（呼び出し元がRuntimeNeedsRebuild2D等で判定済み）。
+    // RigidBody2Dが指定している質量・反発係数・摩擦係数を、Box2D既定値（密度1・反発係数0等）で
+    // 作られた新しいシェイプへ改めて適用する
+    if (rb) rb->ReapplyPhysicalProperties();
+    return true;
+}
+
+void Collider::SyncStaticBodyTransform2D(Entry<ColliderInfo2D, ColliderRuntime2D> &entry) {
+    if (B2_IS_NULL(entry.runtime.body) || !entry.runtime.ownsBody) return;
+    if (!entry.info.sourceCollider) return;
+
+    const Vector2 origin = Vector2(entry.info.sourceCollider->GetSyncedOwnerPosition());
+    const float angle = entry.info.sourceCollider->GetSyncedOwnerRotationEuler().z;
+    if (entry.runtime.hasLastOrigin
+        && origin.x == entry.runtime.lastOrigin.x && origin.y == entry.runtime.lastOrigin.y
+        && angle == entry.runtime.lastAngle) {
+        return; // 前回から変化なし。b2Body_SetTransformの呼び出し自体を避ける（接触の継続性を保つため）
+    }
+
+    b2Body_SetTransform(entry.runtime.body, ToB2(origin), b2MakeRot(angle));
+    entry.runtime.lastOrigin = origin;
+    entry.runtime.lastAngle = angle;
+    entry.runtime.hasLastOrigin = true;
+}
+
+void Collider::ReleaseRuntime2D(Entry<ColliderInfo2D, ColliderRuntime2D> &entry) {
+    if (!B2_IS_NULL(entry.runtime.shape)) {
+        b2DestroyShape(entry.runtime.shape, true);
+        entry.runtime.shape = b2_nullShapeId;
+    }
+    if (!B2_IS_NULL(entry.runtime.body) && entry.runtime.ownsBody) {
+        b2DestroyBody(entry.runtime.body);
+    }
+    entry.runtime = {};
+}
+
+bool Collider::BuildRuntime3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry) {
     EnsureWorldCreated();
     if (!physicsWorld_) return false;
 
@@ -1149,7 +1238,7 @@ bool Collider::BuildRuntime3D(Entry<ColliderInfo3D> &entry) {
     return entry.runtime.collider != nullptr;
 }
 
-void Collider::ReleaseRuntime3D(Entry<ColliderInfo3D> &entry) {
+void Collider::ReleaseRuntime3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry) {
     if (entry.runtime.body) {
         if (entry.runtime.collider) {
             entry.runtime.body->removeCollider(entry.runtime.collider);
@@ -1192,17 +1281,17 @@ void Collider::ReleaseRuntime3D(Entry<ColliderInfo3D> &entry) {
     entry.runtime = {};
 }
 
-bool Collider::UpdateRuntime3D(Entry<ColliderInfo3D> &entry, const ColliderInfo3D &info) {
+bool Collider::UpdateRuntime3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry, const ColliderInfo3D &info) {
     ReleaseRuntime3D(entry);
     entry.info = info;
     return BuildRuntime3D(entry);
 }
 
-bool Collider::UpdateColliderShape3D(Entry<ColliderInfo3D> &entry, const ColliderInfo3D &info) {
+bool Collider::UpdateColliderShape3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry, const ColliderInfo3D &info) {
     return UpdateRuntime3D(entry, info);
 }
 
-bool Collider::UpdateColliderTransform3D(Entry<ColliderInfo3D> &entry, const ColliderInfo3D &info) {
+bool Collider::UpdateColliderTransform3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry, const ColliderInfo3D &info) {
     if (!entry.runtime.body) return false;
     entry.runtime.body->setTransform(MakeTransform3D(info));
     return true;

@@ -34,6 +34,7 @@
 #include "Objects/Components/Render/ScreenBufferObject.h"
 #include "Objects/Components/Render/SkinnedMeshRenderer.h"
 #include "Objects/Components/Render/SpriteRenderer.h"
+#include "Objects/Components/Render/TextRenderer.h"
 #include "Objects/Components/Collider/ICollider.h"
 #include "Objects/Components/Collider/RayCollider.h"
 #include "Objects/Components/Transform.h"
@@ -876,6 +877,38 @@ bool SegmentIntersectsTriangle(const Vector3 &origin, const Vector3 &dir,
     outT = t;
     return true;
 }
+
+/// @brief TextRendererの各文字インスタンス（ワールド行列）から、テキスト全体の外接矩形
+///        （ワールド空間AABB）を求める（UIButton::ComputeTextWorldBoundsと同じ考え方）
+/// @details TextRendererはMeshFilterを持たない（1文字＝1インスタンスの動的描画）ため、
+///          三角形ピッキング（RaycastSceneMeshes内のMeshFilter必須ループ）の対象にできず、
+///          このAABBをスクリーン空間へ投影したバウンディングボックス判定でクリック選択する
+bool ComputeTextRendererWorldBounds(const TextRenderer *textRenderer, Vector3 &outMin, Vector3 &outMax) {
+    const auto instances = textRenderer->GetRenderInstances();
+    if (instances.empty()) return false;
+
+    const Vector3 corners[4] = {
+        Vector3(-0.5f, -0.5f, 0.0f), Vector3(0.5f, -0.5f, 0.0f),
+        Vector3(-0.5f, 0.5f, 0.0f), Vector3(0.5f, 0.5f, 0.0f),
+    };
+
+    float minX = std::numeric_limits<float>::max();
+    float maxX = std::numeric_limits<float>::lowest();
+    float minY = std::numeric_limits<float>::max();
+    float maxY = std::numeric_limits<float>::lowest();
+    for (const auto &instance : instances) {
+        for (const auto &corner : corners) {
+            const Vector3 p = corner.Transform(instance.worldMatrix);
+            minX = std::min(minX, p.x);
+            maxX = std::max(maxX, p.x);
+            minY = std::min(minY, p.y);
+            maxY = std::max(maxY, p.y);
+        }
+    }
+    outMin = Vector3(minX, minY, 0.0f);
+    outMax = Vector3(maxX, maxY, 0.0f);
+    return true;
+}
 } // namespace
 
 EmptyObject *SceneEditorView::PickIconAtScreenPosition(const ImVec2 &screenPos, const ImVec2 &imagePos, const ImVec2 &imageSize) const {
@@ -1045,7 +1078,52 @@ bool SceneEditorView::RaycastSceneMeshes(const ImVec2 &screenPos, const ImVec2 &
         }
     }
 
-    // 三角形との厳密な交差判定がどれもヒットしなかった場合のみ、2Dモードのフォールバック候補を採用する
+    // TextRendererはMeshFilterを持たない（1文字＝1インスタンスの動的描画）ため、上のMeshFilter必須
+    // ループでは判定できない。SpriteRendererと違い2D/3Dどちらの配置でも使われるコンポーネントのため、
+    // 表示モードに関わらずスクリーン空間バウンディングボックスのフォールバック判定のみで拾う
+    for (auto *obj : context_->GetSceneObjects()) {
+        if (!obj || !obj->IsActive()) continue;
+        auto *textRenderer = obj->GetComponent<TextRenderer>();
+        if (!textRenderer || !textRenderer->IsActive()) continue;
+
+        Vector3 textBoundsMin{};
+        Vector3 textBoundsMax{};
+        if (!ComputeTextRendererWorldBounds(textRenderer, textBoundsMin, textBoundsMax)) continue;
+
+        float minX = std::numeric_limits<float>::max();
+        float minY = std::numeric_limits<float>::max();
+        float maxX = -std::numeric_limits<float>::max();
+        float maxY = -std::numeric_limits<float>::max();
+        bool anyProjected = false;
+        const Vector3 worldCorners[4] = {
+            Vector3(textBoundsMin.x, textBoundsMin.y, 0.0f), Vector3(textBoundsMax.x, textBoundsMin.y, 0.0f),
+            Vector3(textBoundsMin.x, textBoundsMax.y, 0.0f), Vector3(textBoundsMax.x, textBoundsMax.y, 0.0f),
+        };
+        for (const auto &corner : worldCorners) {
+            ImVec2 screenVertex;
+            if (!ProjectToImage(corner, imagePos, imageSize, screenVertex, false)) continue;
+            minX = std::min(minX, screenVertex.x);
+            minY = std::min(minY, screenVertex.y);
+            maxX = std::max(maxX, screenVertex.x);
+            maxY = std::max(maxY, screenVertex.y);
+            anyProjected = true;
+        }
+        if (!anyProjected) continue;
+
+        minX -= kSpriteClickTolerancePx; minY -= kSpriteClickTolerancePx;
+        maxX += kSpriteClickTolerancePx; maxY += kSpriteClickTolerancePx;
+        if (screenPos.x < minX || screenPos.x > maxX || screenPos.y < minY || screenPos.y > maxY) continue;
+
+        const float areaPx = (maxX - minX) * (maxY - minY);
+        if (areaPx < fallbackBestAreaPx) {
+            fallbackBestAreaPx = areaPx;
+            fallbackObject = obj;
+            fallbackWorldPosition = (textBoundsMin + textBoundsMax) * 0.5f;
+        }
+    }
+
+    // 三角形との厳密な交差判定がどれもヒットしなかった場合のみ、バウンディングボックスによる
+    // フォールバック候補（2DモードのSpriteRenderer、表示モードに関わらないTextRenderer）を採用する
     if (!outHitObject && fallbackObject) {
         outHitObject = fallbackObject;
         // レイ上でオブジェクトの位置に最も近い点のtを、外接する三角形が無くても求まる方法

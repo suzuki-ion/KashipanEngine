@@ -1191,7 +1191,9 @@
 		//--------- component.rigidbody2d ---------//
 		"component.rigidbody2d.any": "（全部）",
 		"component.rigidbody2d.collider_shape": "碰撞体形状",
+		"component.rigidbody2d.friction": "摩擦系数",
 		"component.rigidbody2d.mass": "质量",
+		"component.rigidbody2d.restitution": "恢复系数",
 		"component.rigidbody2d.usegravity": "使用重力",
 		"component.rigidbody2d.velocity": "速度",
 

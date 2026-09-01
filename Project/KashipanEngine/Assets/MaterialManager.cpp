@@ -587,6 +587,21 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
         material.textureHandle = TextureManager::GetTextureFromAssetPath(droppedPath);
         material.textureFileName = TextureManager::GetTextureFileName(material.textureHandle);
     }
+    // サンプラーは既定6種（DefaultSampler）から選択する。gSamplers[6]は固定長のバインドレス配列のため、
+    // 現状ここで選べるのはこの6種のみ（未指定の場合は描画側でLinearWrapへフォールバックする）
+    {
+        static const char *kSamplerNames[] = {
+            "Default (LinearWrap)", "Point Clamp", "Point Wrap",
+            "Linear Clamp", "Linear Wrap", "Anisotropic Clamp", "Anisotropic Wrap",
+        };
+        int samplerIndex = (material.samplerHandle >= 1 && material.samplerHandle <= 6)
+            ? static_cast<int>(material.samplerHandle) : 0;
+        if (ImGui::Combo(TranslationLabel("editor.materialmanager.sampler"), &samplerIndex, kSamplerNames, IM_ARRAYSIZE(kSamplerNames))) {
+            material.samplerHandle = samplerIndex == 0
+                ? SamplerManager::kInvalidHandle
+                : static_cast<SamplerManager::SamplerHandle>(samplerIndex);
+        }
+    }
     ImGui::DragFloat(TranslationLabel("editor.materialmanager.shininess"), &material.shininess, 0.1f, 0.0f, 1024.0f);
     ImGui::ColorEdit4(TranslationLabel("editor.materialmanager.specular_color"), &material.specularColor.x);
     ImGui::ColorEdit4(TranslationLabel("editor.materialmanager.rim_color"), &material.rimColor.x);

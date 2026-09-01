@@ -1691,6 +1691,7 @@
 		"editor.materialmanager.rim_color": "リムライトの色",
 		"editor.materialmanager.rim_intensity": "リムライトの強さ",
 		"editor.materialmanager.rim_power": "リムライトの鋭さ",
+		"editor.materialmanager.sampler": "サンプラー",
 		"editor.materialmanager.save": "保存",
 		"editor.materialmanager.save_all": "すべて保存",
 		"editor.materialmanager.shininess": "光沢",

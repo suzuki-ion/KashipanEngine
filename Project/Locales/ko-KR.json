@@ -1691,6 +1691,7 @@
 		"editor.materialmanager.rim_color": "림 라이트 색상",
 		"editor.materialmanager.rim_intensity": "림 라이트 강도",
 		"editor.materialmanager.rim_power": "림 라이트 날카로움",
+		"editor.materialmanager.sampler": "샘플러",
 		"editor.materialmanager.save": "저장",
 		"editor.materialmanager.save_all": "모두 저장",
 		"editor.materialmanager.shininess": "광택",

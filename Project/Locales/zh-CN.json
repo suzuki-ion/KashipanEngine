@@ -1691,6 +1691,7 @@
 		"editor.materialmanager.rim_color": "边缘光颜色",
 		"editor.materialmanager.rim_intensity": "边缘光强度",
 		"editor.materialmanager.rim_power": "边缘光锐度",
+		"editor.materialmanager.sampler": "采样器",
 		"editor.materialmanager.save": "保存",
 		"editor.materialmanager.save_all": "全部保存",
 		"editor.materialmanager.shininess": "光泽度",

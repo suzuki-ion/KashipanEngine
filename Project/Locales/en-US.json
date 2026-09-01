@@ -1691,6 +1691,7 @@
 		"editor.materialmanager.rim_color": "Rim Color",
 		"editor.materialmanager.rim_intensity": "Rim Intensity",
 		"editor.materialmanager.rim_power": "Rim Power",
+		"editor.materialmanager.sampler": "Sampler",
 		"editor.materialmanager.save": "Save",
 		"editor.materialmanager.save_all": "Save All",
 		"editor.materialmanager.shininess": "Shininess",

@@ -241,6 +241,9 @@ void SceneEditor::ShowMainWindow() {
                 EditorSettings::SetBool("sceneEditor.showTranslationEditor", isShowTranslationEditor_);
             }
             ImGui::SetItemTooltip("%s", TranslationC("editor.menu.edit.translationeditor.tooltip"));
+            if (ImGui::MenuItem(TranslationLabel("editor.inputcommand.window"), nullptr, &isShowInputCommandEditorWindow_)) {
+                EditorSettings::SetBool("sceneEditor.showInputCommandEditor", isShowInputCommandEditorWindow_);
+            }
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu(TranslationLabel("editor.menu.window"))) {
@@ -299,9 +302,6 @@ void SceneEditor::ShowMainWindow() {
             ImGui::Separator();
             if (ImGui::MenuItem(TranslationLabel("editor.input.state.window"), nullptr, &isShowInputStateWindow_)) {
                 EditorSettings::SetBool("sceneEditor.showInputState", isShowInputStateWindow_);
-            }
-            if (ImGui::MenuItem(TranslationLabel("editor.inputcommand.window"), nullptr, &isShowInputCommandEditorWindow_)) {
-                EditorSettings::SetBool("sceneEditor.showInputCommandEditor", isShowInputCommandEditorWindow_);
             }
             ImGui::Separator();
             ImGui::MenuItem(TranslationLabel("editor.menu.debugwindows.imguidemo"), nullptr, &isShowImGuiDemoWindow_);

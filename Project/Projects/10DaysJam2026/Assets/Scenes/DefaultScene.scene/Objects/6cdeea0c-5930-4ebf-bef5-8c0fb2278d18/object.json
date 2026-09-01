@@ -12,13 +12,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 1.0,
-                            "y": 1.0,
+                            "x": 16.0,
+                            "y": 16.0,
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 3.6977624893188477,
-                            "y": 1.1182631254196167,
+                            "x": 60.0,
+                            "y": 0.0,
                             "z": 0.0
                         }
                     },
@@ -86,14 +86,14 @@
                         ],
                         "syncRotation": true,
                         "syncScale": [
-                            false,
-                            false,
+                            true,
+                            true,
                             false
                         ]
                     },
                     "isActive": true,
                     "priority": 2,
-                    "tag": ""
+                    "tag": "Enemy"
                 },
                 "type": "Box2DCollider"
             },
@@ -101,38 +101,7 @@
                 "data": {
                     "customData": {
                         "center": {
-                            "x": 0.0,
-                            "y": 0.6000000238418579
-                        },
-                        "continuousDetection": false,
-                        "isTrigger": false,
-                        "size": {
-                            "x": 1.0,
-                            "y": 0.10000000149011612
-                        },
-                        "syncPosition": [
-                            true,
-                            true,
-                            true
-                        ],
-                        "syncRotation": true,
-                        "syncScale": [
-                            false,
-                            false,
-                            false
-                        ]
-                    },
-                    "isActive": true,
-                    "priority": 3,
-                    "tag": ""
-                },
-                "type": "Box2DCollider"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "center": {
-                            "x": -0.6000000238418579,
+                            "x": -9.0,
                             "y": 0.0
                         },
                         "continuousDetection": false,
@@ -148,8 +117,8 @@
                         ],
                         "syncRotation": true,
                         "syncScale": [
-                            false,
-                            false,
+                            true,
+                            true,
                             false
                         ]
                     },
@@ -163,7 +132,7 @@
                 "data": {
                     "customData": {
                         "center": {
-                            "x": 0.6000000238418579,
+                            "x": 9.0,
                             "y": 0.0
                         },
                         "continuousDetection": false,
@@ -179,8 +148,8 @@
                         ],
                         "syncRotation": true,
                         "syncScale": [
-                            false,
-                            false,
+                            true,
+                            true,
                             false
                         ]
                     },
@@ -195,7 +164,7 @@
                     "customData": {
                         "fields": {
                             "frameInterval": 0.15000000596046448,
-                            "moveSpeed": 1.0,
+                            "moveSpeed": 15.0,
                             "uvStep": 0.5
                         },
                         "scriptPath": "Assets\\Scripts\\Green.as"

@@ -6,20 +6,20 @@
                     "customData": {
                         "parent": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
                         "rotate": {
-                            "w": 1.910685465164705e-15,
-                            "x": 4.371138828673793e-08,
-                            "y": -1.0,
-                            "z": 4.371138828673793e-08
+                            "w": -1.910685465164705e-15,
+                            "x": -4.371138828673793e-08,
+                            "y": 1.0,
+                            "z": -4.371138828673793e-08
                         },
                         "scale": {
-                            "x": 1.0,
-                            "y": 1.0,
+                            "x": 16.0,
+                            "y": 16.0,
                             "z": 1.0
                         },
                         "translate": {
                             "x": 0.0,
                             "y": 0.0,
-                            "z": 0.0
+                            "z": -2.148046633010381e-06
                         }
                     },
                     "isActive": true,
@@ -70,8 +70,8 @@
                         ],
                         "syncRotation": true,
                         "syncScale": [
-                            false,
-                            false,
+                            true,
+                            true,
                             false
                         ]
                     },
@@ -102,10 +102,14 @@
                     "customData": {
                         "fields": {
                             "frameInterval": 0.15000000596046448,
-                            "gravity": 0.10000000149011612,
-                            "jumpPower": 7.0,
+                            "gravity": 0.8999999761581421,
+                            "jumpPower": 70.0,
                             "maxHp": 10,
-                            "moveSpeed": 2.0
+                            "moveSpeed": 30.0,
+                            "uvStep": {
+                                "x": 0.3330000042915344,
+                                "y": 0.16599999368190765
+                            }
                         },
                         "scriptPath": "Assets\\Scripts\\Player.as"
                     },
@@ -138,7 +142,7 @@
                         "instanceUvRotation": 0.0,
                         "instanceUvScale": {
                             "x": 0.3330000042915344,
-                            "y": 0.3330000042915344
+                            "y": 0.16599999368190765
                         },
                         "instanceUvTranslate": {
                             "x": 0.0,

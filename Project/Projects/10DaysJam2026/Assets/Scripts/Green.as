@@ -37,7 +37,9 @@ class Green : ScriptComponentBehavior {
         Transform@ tf = GetTransform();
         if(tf is null) return;
 
-        tf.SetRotate(Vector3(0.0f, 0.0f, 0.0f));
+        // moveDirに応じてY軸の回転を設定
+        float rotY = (moveDir == MoveDirection::Left) ? 0.0f : 3.14159f;
+        tf.SetRotate(Vector3(0.0f, rotY, 0.0f));
 
         // 左右移動
         float dir = (moveDir == MoveDirection::Left) ? -1.0f : 1.0f;

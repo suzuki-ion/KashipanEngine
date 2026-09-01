@@ -12,13 +12,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 16.0,
-                            "y": 16.0,
+                            "x": 8.0,
+                            "y": 8.0,
                             "z": 1.0
                         },
                         "translate": {
-                            "x": -50.0,
-                            "y": 40.0,
+                            "x": -27.642148971557617,
+                            "y": 0.0,
                             "z": 0.0
                         }
                     },
@@ -42,19 +42,13 @@
             {
                 "data": {
                     "customData": {
-                        "fields": {
-                            "frameInterval": 0.15000000596046448,
-                            "moveSpeed": 12.0,
-                            "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
-                            "uvStep": 0.5
-                        },
-                        "scriptPath": "Assets\\Scripts\\Bat.as"
+                        "textureAssetPath": "App/Sprite/Item/Heart.png"
                     },
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
                 },
-                "type": "ScriptComponent"
+                "type": "TextureSource"
             },
             {
                 "data": {
@@ -83,20 +77,9 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": "Enemy"
+                    "tag": "Heart"
                 },
                 "type": "Box2DCollider"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "textureAssetPath": "App/Sprite/Enemy/bat.png"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "TextureSource"
             },
             {
                 "data": {
@@ -120,7 +103,7 @@
                         },
                         "instanceUvRotation": 0.0,
                         "instanceUvScale": {
-                            "x": 0.5,
+                            "x": 1.0,
                             "y": 1.0
                         },
                         "instanceUvTranslate": {
@@ -146,9 +129,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Bat",
-        "objectID": "849858b7-e7c3-4187-92d6-2163e2e9fc31",
+        "name": "Heart",
+        "objectID": "e41dd776-f946-4cf1-872f-b47cbad674df",
         "tag": ""
     },
-    "siblingIndex": 4000
+    "siblingIndex": 9000
 }

@@ -12,13 +12,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 10.0,
-                            "y": 1.0,
+                            "x": 160.0,
+                            "y": 16.0,
                             "z": 1.0
                         },
                         "translate": {
                             "x": 0.0,
-                            "y": -1.0,
+                            "y": -16.0,
                             "z": 0.0
                         }
                     },
@@ -74,7 +74,10 @@
                 "data": {
                     "customData": {
                         "allowInstancing": true,
-                        "castShadows": true,
+                        "anchor": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
                         "instanceColor": {
                             "w": 1.0,
                             "x": 1.0,
@@ -97,10 +100,11 @@
                             "y": 0.0
                         },
                         "materialName": "Default",
-                        "materialNames": [
-                            "Default"
-                        ],
-                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
                         "renderPriority": 0,
                         "targetObjectID": ""
                     },
@@ -108,7 +112,7 @@
                     "priority": 900,
                     "tag": ""
                 },
-                "type": "MeshRenderer"
+                "type": "SpriteRenderer"
             }
         ],
         "editorOnly": false,

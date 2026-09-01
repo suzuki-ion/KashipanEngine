@@ -27,6 +27,9 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("最大HP")]
     int maxHp = 10;
 
+    [SerializeField, Tooltip("1コマあたりのUV移動量")]
+    Vector2 uvStep = Vector2(0.333f, 0.166f);
+
     RigidBody2D@ rb;
     Box2DCollider@ col;
     SpriteRenderer@ sprite;
@@ -39,10 +42,8 @@ class Player : ScriptComponentBehavior {
     float invincibleDuration = 1.0f;
     float invincibleTimer = 0.0f;
     int hp = maxHp;
-
-    // アニメーション用変数
     float animTimer = 0.0f;
-    float uvStep = 0.333f;
+    int currentWeaponIndex = 0;
 
     void Start() {
         GetComponent(@rb);
@@ -114,15 +115,15 @@ class Player : ScriptComponentBehavior {
             // 3コマのアニメーション
             {
                 int frame = int(animTimer / frameInterval) % 3;
-                uvTranslate.x = frame * uvStep;
-                uvTranslate.y = uvStep;
+                uvTranslate.x = frame * uvStep.x;
+                uvTranslate.y = uvStep.y;
             }
             break;
 
         case State::Jump:
             // 1コマ目
             uvTranslate.x = 0.0f;
-            uvTranslate.y = uvStep * 2.0f;
+            uvTranslate.y = uvStep.y * 2.0f;
             break;
 
         default:
@@ -152,13 +153,29 @@ class Player : ScriptComponentBehavior {
 
         // 敵と当たったら
         if(hit.otherCollider.GetTag() == "Enemy" && !isInvincible){
-            hp--; // HP減算
+            Damage(1.0f); // HP減算
             isInvincible = true; // 無敵状態に変更
+        }
+
+        // 回復アイテムと当たったら
+        if(hit.otherCollider.GetTag() == "Heart"){
+            Heal(1.0f); // HP増加
+            GetScene().DeleteObject(GetScene().GetObject("Heart"));
         }
     }
 
     void OnCollidionStay(const HitInfo &in hit){
         velocity.y = 0.0f;
+    }
+
+    void Damage(int amount) {
+        hp = int(Clamp(float(hp - amount), 0.0f, float(maxHp)));
+        Log("Damage! HP:" + hp);
+    }
+
+    void Heal(int amount) {
+        hp = int(Clamp(float(hp + amount), 0.0f, float(maxHp)));
+        Log("Heal! HP:" + hp);
     }
 
     void End() {

@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": -50.0,
-                            "y": 40.0,
+                            "x": 21.499435424804688,
+                            "y": 0.0,
                             "z": 0.0
                         }
                     },
@@ -43,12 +43,10 @@
                 "data": {
                     "customData": {
                         "fields": {
-                            "frameInterval": 0.15000000596046448,
-                            "moveSpeed": 12.0,
-                            "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
-                            "uvStep": 0.5
+                            "cooldown": 0.4000000059604645,
+                            "power": 10
                         },
-                        "scriptPath": "Assets\\Scripts\\Bat.as"
+                        "scriptPath": "Assets\\Scripts\\Sword.as"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -59,38 +57,7 @@
             {
                 "data": {
                     "customData": {
-                        "center": {
-                            "x": 0.0,
-                            "y": 0.0
-                        },
-                        "continuousDetection": false,
-                        "isTrigger": false,
-                        "size": {
-                            "x": 1.0,
-                            "y": 1.0
-                        },
-                        "syncPosition": [
-                            true,
-                            true,
-                            true
-                        ],
-                        "syncRotation": true,
-                        "syncScale": [
-                            true,
-                            true,
-                            false
-                        ]
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": "Enemy"
-                },
-                "type": "Box2DCollider"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "textureAssetPath": "App/Sprite/Enemy/bat.png"
+                        "textureAssetPath": "App/Sprite/UI/katana.png"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -120,7 +87,7 @@
                         },
                         "instanceUvRotation": 0.0,
                         "instanceUvScale": {
-                            "x": 0.5,
+                            "x": 1.0,
                             "y": 1.0
                         },
                         "instanceUvTranslate": {
@@ -146,9 +113,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Bat",
-        "objectID": "849858b7-e7c3-4187-92d6-2163e2e9fc31",
+        "name": "Sword",
+        "objectID": "8da25f3a-dfdc-4603-b56f-a2cc14688f69",
         "tag": ""
     },
-    "siblingIndex": 4000
+    "siblingIndex": 8000
 }

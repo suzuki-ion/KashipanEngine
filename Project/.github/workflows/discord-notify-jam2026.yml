@@ -1,0 +1,40 @@
+name: Discord Notify (10DaysJam2026)
+
+on:
+  push:
+    branches:
+      - 10DaysJam2026
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          COMMIT_MESSAGE=$(git log -1 --pretty=format:%s "${{ github.sha }}" | head -c 500)
+          COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
+          COMPARE_URL="${{ github.event.compare }}"
+          PUSHER="${{ github.actor }}"
+
+          PAYLOAD=$(jq -n \
+            --arg content "" \
+            --arg title "10DaysJam2026 に push されました" \
+            --arg description "$COMMIT_MESSAGE" \
+            --arg url "$COMMIT_URL" \
+            --arg author "$PUSHER" \
+            --arg compare "$COMPARE_URL" \
+            '{
+              content: $content,
+              embeds: [{
+                title: $title,
+                description: $description,
+                url: $url,
+                color: 5814783,
+                author: { name: $author },
+                fields: [{ name: "変更差分", value: $compare }]
+              }]
+            }')
+
+          curl -sf -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK_URL"

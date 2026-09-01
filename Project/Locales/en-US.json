@@ -1397,11 +1397,12 @@
 		"component.texturesource.texture": "Texture",
 
 		//--------- component.tilemaprenderer ---------//
+		"component.tilemaprenderer.add_connection": "Add Connection",
 		"component.tilemaprenderer.add_tile_type": "Add Tile Type",
 		"component.tilemaprenderer.apply_cells_from_text": "Apply Text to Cells",
 		"component.tilemaprenderer.cells_bulk_edit": "Bulk Edit Cells (row=Y, comma-separated=X, -1=empty)",
-		"component.tilemaprenderer.connection_group": "Connection Group",
-		"component.tilemaprenderer.desc_1": "Cells only connect to neighbors sharing the same connection group. Each tile type expects a 4x4 (16-pattern) autotile block in the tileset image.",
+		"component.tilemaprenderer.connections": "Connects To (tile type index, one-way)",
+		"component.tilemaprenderer.desc_1": "A cell connects to a neighbor when the neighbor's tile type index is in this tile type's connection list (one-way). To connect two tile types both ways, add each other's index to both lists. Each tile type expects a 4x4 (16-pattern) autotile block in the tileset image.",
 		"component.tilemaprenderer.desc_generate_colliders": "Merges adjacent Solid cells into rectangles (greedy algorithm) and auto-generates Box2DColliders. Turning this off removes all auto-generated colliders.",
 		"component.tilemaprenderer.generate_colliders": "Generate 2D Colliders",
 		"component.tilemaprenderer.grid_height": "Grid Height",
@@ -1409,10 +1410,12 @@
 		"component.tilemaprenderer.load_cells_to_text": "Load Cells to Text",
 		"component.tilemaprenderer.material": "Material",
 		"component.tilemaprenderer.pipeline": "Pipeline",
+		"component.tilemaprenderer.remove_connection": "Remove",
 		"component.tilemaprenderer.remove_tile_type": "Remove This Tile Type",
 		"component.tilemaprenderer.solid": "Solid (Has Collision)",
 		"component.tilemaprenderer.tile_pixel_size": "Tile Pixel Size",
 		"component.tilemaprenderer.tile_size": "Tile World Size",
+		"component.tilemaprenderer.tile_type_header": "Tile Type ",
 		"component.tilemaprenderer.tile_types": "Tile Types",
 		"component.tilemaprenderer.tileset_origin_px": "Tileset Origin (px)",
 

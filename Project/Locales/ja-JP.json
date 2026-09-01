@@ -1397,11 +1397,12 @@
 		"component.texturesource.texture": "テクスチャ",
 
 		//--------- component.tilemaprenderer ---------//
+		"component.tilemaprenderer.add_connection": "接続先を追加",
 		"component.tilemaprenderer.add_tile_type": "タイル種類を追加",
 		"component.tilemaprenderer.apply_cells_from_text": "テキストからセルへ反映",
 		"component.tilemaprenderer.cells_bulk_edit": "セル一括編集（行=Y、カンマ区切り=X、-1=空）",
-		"component.tilemaprenderer.connection_group": "接続グループ",
-		"component.tilemaprenderer.desc_1": "同じ接続グループのセル同士だけ繋がっていると判定されます。タイル種類はタイルセット画像上に4x4=16パターンのブロックを持つ前提です。",
+		"component.tilemaprenderer.connections": "接続先タイル種類（番号。片方向）",
+		"component.tilemaprenderer.desc_1": "隣接セルのタイル種類インデックスが自分の接続先リストに含まれていれば繋がっていると判定されます（片方向）。相互に繋げたい場合は双方の接続先リストへ互いの番号を追加してください。タイル種類はタイルセット画像上に4x4=16パターンのブロックを持つ前提です。",
 		"component.tilemaprenderer.desc_generate_colliders": "隣接するSolidなセルを貪欲法で矩形へまとめてBox2DColliderを自動生成します。オフにすると自動生成分は全て削除されます。",
 		"component.tilemaprenderer.generate_colliders": "2D当たり判定を自動生成",
 		"component.tilemaprenderer.grid_height": "グリッド高さ",
@@ -1409,10 +1410,12 @@
 		"component.tilemaprenderer.load_cells_to_text": "セルをテキストへ読み込み",
 		"component.tilemaprenderer.material": "マテリアル",
 		"component.tilemaprenderer.pipeline": "パイプライン",
+		"component.tilemaprenderer.remove_connection": "削除",
 		"component.tilemaprenderer.remove_tile_type": "このタイル種類を削除",
 		"component.tilemaprenderer.solid": "Solid（当たり判定あり）",
 		"component.tilemaprenderer.tile_pixel_size": "タイル1つのピクセルサイズ",
 		"component.tilemaprenderer.tile_size": "タイル1つのワールドサイズ",
+		"component.tilemaprenderer.tile_type_header": "タイル種類 ",
 		"component.tilemaprenderer.tile_types": "タイル種類",
 		"component.tilemaprenderer.tileset_origin_px": "タイルセット上の原点(px)",
 

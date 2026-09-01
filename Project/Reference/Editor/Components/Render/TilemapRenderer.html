@@ -18,18 +18,18 @@
 <p class="page-lead">RPGツクール風のオートタイル（隣接する同種タイルに応じてテクスチャを自動で切り替える）に対応したタイルマップ描画コンポーネントです。自身はSceneRendererへ描画登録せず、同一オブジェクトの<code>MeshFilter</code>/<code>SpriteRenderer</code>を自動追加して駆動します（<code>ScreenBufferViewport</code>と同じパターン）。タイル配置が変わるたびに1枚の結合メッシュを再構築するため、タイル数が多くても描画コストは1オブジェクト分のドローコールに収まります。</p>
 </div>
 
-<div class="note"><strong>フェーズ①（本ページの内容）</strong><br>本コンポーネントはタイル配置データと自動タイル切り替えの仕組みそのものを提供します。シーンビュー上でクリックしてタイルを配置する専用ペイントツールは未実装で、配置はInspectorのセル一括編集欄またはAngelScriptからの<code>SetTile</code>呼び出しで行います。</div>
+<div class="note"><strong>シーンビューでの配置</strong><br>シーンビューの「Tile Paint」ツールタブ（<code>SceneEditorView</code>）から、選択中のTilemapRendererオブジェクトへクリック/ドラッグで直接タイルを配置できます（左クリック=選択中のブラシ、右クリック=常に消しゴム。右クリックは「2D」表示モード限定）。ブラシはタイルセット画像のサムネイルから選べます。Inspectorのセル一括編集欄やAngelScriptからの<code>SetTile</code>呼び出しでも配置可能です。</div>
 
 <div class="note"><strong>MeshRendererではなくSpriteRendererを使う理由</strong><br>パイプライン名<code>Object2D.*</code>は、シーンビュー（エディター）上でgCamera3D投影の「Worldバリアント」へ差し替えられて初めて3Dシーンビュー内に正しく表示されます。この差し替えは<code>SpriteRenderer</code>由来の描画エントリにしか適用されないため、同じパイプラインを<code>MeshRenderer</code>で使うとシーンビュー上でのみ真っ黒・位置ズレして表示されます（実際のゲーム画面では問題になりません）。TilemapRendererが自動追加するのが<code>SpriteRenderer</code>である理由はこのためです。</div>
 
 <h2>オートタイルの仕組み</h2>
-<p>各タイル種類（Tile Type）は「接続グループ」を持ちます。あるセルについて、上下左右の隣接セルが<strong>同じ接続グループ</strong>であればその方向のビットを立て、4bit（0〜15）のビットマスクを求めます。ビットの意味は次の通りです。</p>
+<p>各タイル種類（Tile Type）は「接続先タイル種類インデックス」のリストを持てます（Connects Toリスト）。あるセルについて、上下左右の隣接セルの<strong>タイル種類インデックス</strong>が自分のConnects Toリストに含まれていれば、その方向のビットを立て、4bit（0〜15）のビットマスクを求めます。この判定は<strong>片方向</strong>です。例えば「草」（インデックス0）のConnects Toが{0, 1}、「土」（インデックス1）のConnects Toが{1}のみの場合、草は土と接続して見えますが（草のリストに1が含まれる）、土は草と接続しません（土のリストに0が含まれない）。相互に接続させたい場合は、両方のタイル種類のConnects Toリストへ互いのインデックスを追加する必要があります。ビットの意味は次の通りです。</p>
 <table>
 <tr><th>ビット値</th><th>方向</th></tr>
-<tr><td>1</td><td>北（+Y方向）に同じ接続グループのセルがある</td></tr>
-<tr><td>2</td><td>東（+X方向）に同じ接続グループのセルがある</td></tr>
-<tr><td>4</td><td>南（-Y方向）に同じ接続グループのセルがある</td></tr>
-<tr><td>8</td><td>西（-X方向）に同じ接続グループのセルがある</td></tr>
+<tr><td>1</td><td>北（+Y方向）のセルへ接続している（自分のConnects Toに含まれる）</td></tr>
+<tr><td>2</td><td>東（+X方向）のセルへ接続している</td></tr>
+<tr><td>4</td><td>南（-Y方向）のセルへ接続している</td></tr>
+<tr><td>8</td><td>西（-X方向）のセルへ接続している</td></tr>
 </table>
 <p>タイルセット画像は、1つのタイル種類につき<strong>4x4=16パターン</strong>のブロックを敷き詰めたレイアウトを前提とします。ブロック内の位置は「列 = ビットマスク % 4」「行 = ビットマスク / 4」で、Tile TypeのTileset Origin (px)を左上原点として、その列・行にTile Pixel Size分だけオフセットした位置のタイルが使われます（RPGツクール互換の47パターンA2形式ではありません）。</p>
 
@@ -41,7 +41,7 @@
 <tr><td>Tile World Size</td><td>XYのドラッグ入力欄</td><td>タイル1個のワールド空間でのサイズ。既定値(1, 1)</td></tr>
 <tr><td>Tile Pixel Size</td><td>XYのドラッグ入力欄</td><td>タイルセット画像内でのタイル1個のピクセルサイズ。既定値(32, 32)</td></tr>
 <tr><td>Grid Width / Grid Height</td><td>整数ドラッグ入力欄</td><td>グリッドの列数・行数。変更すると既存のタイル配置は(0,0)基準で可能な範囲まで維持される</td></tr>
-<tr><td>Tile Types</td><td>リスト（Connection Group・Tileset Origin (px)・Solid・削除ボタン）</td><td>タイル種類の追加・編集・削除。Add Tile Typeボタンで末尾に追加。SolidはGenerate 2D Collidersが有効な場合に当たり判定生成の対象にするかどうか（既定true）</td></tr>
+<tr><td>Tile Types</td><td>タイル種類ごとに折りたたみ可能なセクション（Tileset Origin (px)・Solid・Connects To・削除ボタン）</td><td>タイル種類の追加・編集・削除。タイル種類が増えても見やすいよう、1種類ごとに開閉できるセクションに分かれている。Add Tile Typeボタンで末尾に追加。SolidはGenerate 2D Collidersが有効な場合に当たり判定生成の対象にするかどうか（既定true）。Connects Toは接続先タイル種類インデックスの小さなリスト（Add Connection/削除ボタンで複数登録可能。片方向）</td></tr>
 <tr><td>Generate 2D Colliders</td><td>チェックボックス</td><td>隣接するSolidなセルを貪欲法で矩形へまとめ、同一オブジェクトへBox2DColliderを自動生成する（既定false）。詳細は下記「2D当たり判定の自動生成」参照</td></tr>
 <tr><td>Bulk Edit Cells</td><td>複数行テキスト入力</td><td>「セルをテキストへ読み込み」でグリッド全体を「1行=1列（Y座標、上の行が大きいY）、カンマ区切り=X座標、-1=空セル」のテキストとして読み込み、編集後に「テキストからセルへ反映」で書き戻す。行数・列数が現在のグリッドと異なる場合は自動でResizeされる</td></tr>
 </table>
@@ -57,8 +57,10 @@
 <tr><td><code>int GetTile(int x, int y) const</code></td><td>セルのタイル種類を取得する（範囲外・空セルは-1）</td></tr>
 <tr><td><code>void Resize(int width, int height)</code></td><td>グリッドサイズを変更する</td></tr>
 <tr><td><code>void Clear()</code></td><td>全セルを空にする</td></tr>
-<tr><td><code>int AddTileType(int connectionGroup, const Vector2 &amp;in tilesetOriginPx)</code></td><td>タイル種類を追加し、新しいインデックスを返す</td></tr>
-<tr><td><code>void RemoveTileType(int index)</code></td><td>タイル種類を削除する（参照していたセルは空になる）</td></tr>
+<tr><td><code>int AddTileType(const Vector2 &amp;in tilesetOriginPx)</code></td><td>タイル種類を追加し、新しいインデックスを返す（接続先は空で始まる。自分自身を含め、AddTileTypeConnectionで追加すること）</td></tr>
+<tr><td><code>void RemoveTileType(int index)</code></td><td>タイル種類を削除する（参照していたセルは空になり、他のタイル種類のConnects Toが参照していた場合もそちらも削除・繰り上げられる）</td></tr>
+<tr><td><code>void AddTileTypeConnection(int index, int targetTileTypeIndex)</code> / <code>void RemoveTileTypeConnection(int index, int targetTileTypeIndex)</code></td><td>タイル種類indexの接続先（片方向）へtargetTileTypeIndexを追加・削除する</td></tr>
+<tr><td><code>int GetTileTypeConnectionCount(int index) const</code> / <code>int GetTileTypeConnectionAt(int index, int connectionIndex) const</code></td><td>タイル種類が持つ接続先の数・各値（タイル種類インデックス）を取得する</td></tr>
 <tr><td><code>void SetTileTypeSolid(int index, bool solid)</code> / <code>bool GetTileTypeSolid(int index) const</code></td><td>タイル種類が2D当たり判定生成の対象かを設定・取得する</td></tr>
 <tr><td><code>void SetGenerateColliders(bool enabled)</code> / <code>bool GetGenerateColliders() const</code></td><td>2D当たり判定の自動生成を設定・取得する</td></tr>
 </table>

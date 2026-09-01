@@ -32,22 +32,23 @@
                     "customData": {
                         "cells": [
                             -1,
-                            0,
                             -1,
-                            0,
-                            -1,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
+                            1,
                             -1,
                             -1,
-                            0,
                             -1,
-                            0
+                            1,
+                            -1,
+                            0,
+                            0,
+                            1,
+                            1,
+                            0,
+                            0,
+                            1,
+                            1
                         ],
+                        "generateColliders": false,
                         "gridHeight": 4,
                         "gridWidth": 4,
                         "materialName": "New Material",
@@ -62,7 +63,21 @@
                         },
                         "tileTypes": [
                             {
-                                "connectionGroup": 0,
+                                "connectsToTileTypes": [
+                                    0
+                                ],
+                                "isSolid": true,
+                                "tilesetOriginPx": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                }
+                            },
+                            {
+                                "connectsToTileTypes": [
+                                    0,
+                                    1
+                                ],
+                                "isSolid": true,
                                 "tilesetOriginPx": {
                                     "x": 0.0,
                                     "y": 0.0
@@ -79,7 +94,7 @@
             {
                 "data": {
                     "customData": {
-                        "meshAssetPath": "__TilemapRendererMesh_2109017882464"
+                        "meshAssetPath": "__TilemapRendererMesh_2317340315680"
                     },
                     "isActive": true,
                     "priority": 1,

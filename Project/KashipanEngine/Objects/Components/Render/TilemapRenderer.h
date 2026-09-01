@@ -30,7 +30,9 @@ namespace KashipanEngine {
 ///          エントリにしか適用されない。MeshRendererで同じパイプラインを使うと、この差し替えが
 ///          行われずシーンビュー上で真っ黒・位置ズレして表示される（実ゲーム画面では問題ない）。
 ///          タイル配置(cells_)が変更されると、各非空セルについて上下左右の隣接セルを見て
-///          「同じ接続グループのセルが存在するか」から4bit(0〜15)のビットマスクを求め、
+///          「自分のタイル種類がconnectsToTileTypesに隣接セルのタイル種類インデックスを
+///          含んでいるか」（片方向の判定。相手側が自分を含んでいなくても自分側の判定には影響しない）
+///          から4bit(0〜15)のビットマスクを求め、
 ///          タイル種類ごとにタイルセット画像上へ4x4=16パターン敷き詰めたブロックの中から
 ///          対応する1タイルを選んでUVを割り当てた結合メッシュを構築する。
 ///          ビットマスクのビットは 1=北(+Y方向), 2=東(+X方向), 4=南(-Y方向), 8=西(-X方向)で、
@@ -40,8 +42,10 @@ class TilemapRenderer final : public IObjectComponent {
 public:
     /// @brief タイル種類の定義（1種類につきタイルセット画像上に4x4=16パターンのオートタイルブロックを持つ）
     struct TileTypeDef {
-        /// @brief 接続グループ。同じ値同士のセルだけを「繋がっている」とみなす（地形・海等の分離用）
-        int connectionGroup = 0;
+        /// @brief 接続先タイル種類インデックスの一覧（片方向）。隣接セルのタイル種類インデックスが
+        ///        この一覧に含まれていれば、自分から見てそのセルへ「繋がっている」とみなす。
+        ///        相互に繋げたい場合は双方のconnectsToTileTypesに互いのインデックスを入れる必要がある
+        std::vector<int> connectsToTileTypes;
         /// @brief タイルセット画像上での16パターンブロックの左上原点（ピクセル）
         Vector2 tilesetOriginPx{ 0.0f, 0.0f };
         /// @brief 2D当たり判定自動生成の対象にするか（GetGenerateColliders()がtrueの時のみ意味を持つ）
@@ -125,14 +129,18 @@ public:
     //==================================================
 
     int GetTileTypeCount() const noexcept { return static_cast<int>(tileTypes_.size()); }
-    /// @brief タイル種類を追加し、その新しいインデックスを返す
-    int AddTileType(int connectionGroup, const Vector2 &tilesetOriginPx) {
-        tileTypes_.push_back(TileTypeDef{ connectionGroup, tilesetOriginPx });
+    /// @brief タイル種類を追加し、その新しいインデックスを返す（接続先は空で始まる。
+    ///        AddTileTypeConnectionで自分自身を含め接続先タイル種類を追加すること）
+    int AddTileType(const Vector2 &tilesetOriginPx) {
+        TileTypeDef tileType;
+        tileType.tilesetOriginPx = tilesetOriginPx;
+        tileTypes_.push_back(tileType);
         MarkMeshDirty();
         return static_cast<int>(tileTypes_.size()) - 1;
     }
     /// @brief タイル種類を削除する。削除したインデックスを参照していたセルは空になり、
-    ///        それより大きいインデックスを参照していたセルは1つ繰り上がる
+    ///        それより大きいインデックスを参照していたセルは1つ繰り上がる。他のタイル種類が
+    ///        connectsToTileTypesで削除対象を参照していた場合も同様に削除・繰り上げる
     void RemoveTileType(int index) {
         if (index < 0 || index >= static_cast<int>(tileTypes_.size())) return;
         tileTypes_.erase(tileTypes_.begin() + index);
@@ -140,13 +148,44 @@ public:
             if (cell == index) cell = -1;
             else if (cell > index) --cell;
         }
+        for (auto &tileType : tileTypes_) {
+            auto &targets = tileType.connectsToTileTypes;
+            targets.erase(std::remove(targets.begin(), targets.end(), index), targets.end());
+            for (auto &target : targets) {
+                if (target > index) --target;
+            }
+        }
         MarkMeshDirty();
     }
     const std::vector<TileTypeDef> &GetTileTypes() const noexcept { return tileTypes_; }
-    void SetTileTypeConnectionGroup(int index, int connectionGroup) {
+    /// @brief タイル種類indexの接続先へtargetTileTypeIndexを1つ追加する（片方向。既に含まれている
+    ///        場合は何もしない。自分自身のindexを追加すると自分自身と接続するようになる）
+    void AddTileTypeConnection(int index, int targetTileTypeIndex) {
         if (index < 0 || index >= static_cast<int>(tileTypes_.size())) return;
-        tileTypes_[index].connectionGroup = connectionGroup;
+        auto &targets = tileTypes_[index].connectsToTileTypes;
+        if (std::find(targets.begin(), targets.end(), targetTileTypeIndex) != targets.end()) return;
+        targets.push_back(targetTileTypeIndex);
         MarkMeshDirty();
+    }
+    /// @brief タイル種類indexの接続先からtargetTileTypeIndexを1つ削除する
+    void RemoveTileTypeConnection(int index, int targetTileTypeIndex) {
+        if (index < 0 || index >= static_cast<int>(tileTypes_.size())) return;
+        auto &targets = tileTypes_[index].connectsToTileTypes;
+        const auto it = std::find(targets.begin(), targets.end(), targetTileTypeIndex);
+        if (it == targets.end()) return;
+        targets.erase(it);
+        MarkMeshDirty();
+    }
+    int GetTileTypeConnectionCount(int index) const {
+        if (index < 0 || index >= static_cast<int>(tileTypes_.size())) return 0;
+        return static_cast<int>(tileTypes_[index].connectsToTileTypes.size());
+    }
+    /// @brief タイル種類indexのconnectsToTileTypes[connectionIndex]を取得する（範囲外は0）
+    int GetTileTypeConnectionAt(int index, int connectionIndex) const {
+        if (index < 0 || index >= static_cast<int>(tileTypes_.size())) return 0;
+        const auto &targets = tileTypes_[index].connectsToTileTypes;
+        if (connectionIndex < 0 || connectionIndex >= static_cast<int>(targets.size())) return 0;
+        return targets[connectionIndex];
     }
     void SetTileTypeOriginPx(int index, const Vector2 &originPx) {
         if (index < 0 || index >= static_cast<int>(tileTypes_.size())) return;
@@ -258,18 +297,46 @@ protected:
         int removeIndex = -1;
         for (int i = 0; i < static_cast<int>(tileTypes_.size()); ++i) {
             ImGui::PushID(i);
-            ImGui::Text("%d", i);
-            ImGui::SameLine();
-            if (ImGui::InputInt(TranslationLabel("component.tilemaprenderer.connection_group"), &tileTypes_[i].connectionGroup)) MarkMeshDirty();
-            if (ImGui::DragFloat2(TranslationLabel("component.tilemaprenderer.tileset_origin_px"), &tileTypes_[i].tilesetOriginPx.x, 1.0f)) MarkMeshDirty();
-            ImGui::SameLine();
-            if (ImGui::Checkbox(TranslationLabel("component.tilemaprenderer.solid"), &tileTypes_[i].isSolid)) MarkMeshDirty();
-            if (ImGui::Button(TranslationC("component.tilemaprenderer.remove_tile_type"))) removeIndex = i;
+            // タイル種類が増えても見やすいよう、1種類ごとに折りたたみ可能なセクションへ分ける
+            const std::string headerLabel = TranslationC("component.tilemaprenderer.tile_type_header") + std::to_string(i);
+            if (ImGui::CollapsingHeader(headerLabel.c_str())) {
+                ImGui::Indent();
+                if (ImGui::DragFloat2(TranslationLabel("component.tilemaprenderer.tileset_origin_px"), &tileTypes_[i].tilesetOriginPx.x, 1.0f)) MarkMeshDirty();
+                if (ImGui::Checkbox(TranslationLabel("component.tilemaprenderer.solid"), &tileTypes_[i].isSolid)) MarkMeshDirty();
+
+                // 接続先タイル種類インデックスの小さなリスト（追加・削除ボタン付き、片方向）。
+                // このタイル種類から見て、リストに含まれるインデックスのセルへ「繋がっている」と判定される
+                // （ConnectsTo参照）。相互に接続させたい場合は双方のリストへ互いのインデックスを追加すること
+                ImGui::Spacing();
+                ImGui::TextUnformatted(TranslationC("component.tilemaprenderer.connections"));
+                auto &connections = tileTypes_[i].connectsToTileTypes;
+                int removeConnectionAt = -1;
+                for (int c = 0; c < static_cast<int>(connections.size()); ++c) {
+                    ImGui::PushID(c);
+                    ImGui::SetNextItemWidth(120.0f);
+                    if (ImGui::InputInt("##connection", &connections[c])) MarkMeshDirty();
+                    ImGui::SameLine();
+                    if (ImGui::Button(TranslationC("component.tilemaprenderer.remove_connection"))) removeConnectionAt = c;
+                    ImGui::PopID();
+                }
+                if (removeConnectionAt >= 0) {
+                    connections.erase(connections.begin() + removeConnectionAt);
+                    MarkMeshDirty();
+                }
+                if (ImGui::Button(TranslationC("component.tilemaprenderer.add_connection"))) {
+                    connections.push_back(i);
+                    MarkMeshDirty();
+                }
+
+                ImGui::Spacing();
+                if (ImGui::Button(TranslationC("component.tilemaprenderer.remove_tile_type"))) removeIndex = i;
+                ImGui::Unindent();
+            }
             ImGui::PopID();
         }
         if (removeIndex >= 0) RemoveTileType(removeIndex);
         if (ImGui::Button(TranslationC("component.tilemaprenderer.add_tile_type"))) {
-            AddTileType(0, Vector2(0.0f, 0.0f));
+            AddTileType(Vector2(0.0f, 0.0f));
         }
 
         if (ImGui::Checkbox(TranslationLabel("component.tilemaprenderer.generate_colliders"), &generateColliders_)) MarkMeshDirty();
@@ -306,7 +373,7 @@ protected:
         JSON tileTypesJson = JSON::array();
         for (const auto &tileType : tileTypes_) {
             JSON tileTypeJson = JSON::object();
-            tileTypeJson["connectionGroup"] = tileType.connectionGroup;
+            tileTypeJson["connectsToTileTypes"] = tileType.connectsToTileTypes;
             tileTypeJson["tilesetOriginPx"] = ToJSON(tileType.tilesetOriginPx);
             tileTypeJson["isSolid"] = tileType.isSolid;
             tileTypesJson.push_back(tileTypeJson);
@@ -331,7 +398,7 @@ protected:
         tileTypes_.clear();
         for (const auto &tileTypeJson : json.value("tileTypes", JSON::array())) {
             TileTypeDef tileType;
-            tileType.connectionGroup = tileTypeJson.value("connectionGroup", 0);
+            tileType.connectsToTileTypes = tileTypeJson.value("connectsToTileTypes", std::vector<int>{});
             tileType.tilesetOriginPx = tileTypeJson.contains("tilesetOriginPx")
                 ? FromJSON<Vector2>(tileTypeJson["tilesetOriginPx"]) : Vector2(0.0f, 0.0f);
             tileType.isSolid = tileTypeJson.value("isSolid", true);
@@ -379,12 +446,16 @@ private:
         return materialHandle_;
     }
 
-    /// @brief セル(x,y)が非空で、指定接続グループと同じ種類か判定する（範囲外はfalse）
-    bool ConnectsTo(int x, int y, int connectionGroup) const {
+    /// @brief セル(x,y)が非空で、そのタイル種類インデックスがmyTypeIndexのconnectsToTileTypesに
+    ///        含まれているか判定する（範囲外・空セルはfalse）。片方向の判定であり、逆方向（隣接セルの
+    ///        タイル種類がmyTypeIndexを含むか）は別途そちら側のConnectsTo呼び出しで判定される
+    bool ConnectsTo(int x, int y, int myTypeIndex) const {
         if (!IsInRange(x, y)) return false;
         const int neighborType = cells_[CellIndex(x, y)];
-        if (neighborType < 0 || neighborType >= static_cast<int>(tileTypes_.size())) return false;
-        return tileTypes_[neighborType].connectionGroup == connectionGroup;
+        if (neighborType < 0) return false;
+        if (myTypeIndex < 0 || myTypeIndex >= static_cast<int>(tileTypes_.size())) return false;
+        const auto &targets = tileTypes_[myTypeIndex].connectsToTileTypes;
+        return std::find(targets.begin(), targets.end(), neighborType) != targets.end();
     }
 
     static ModelData::Vertex MakeVertex(float x, float y, float u, float v) {
@@ -496,10 +567,10 @@ private:
                 const TileTypeDef &def = tileTypes_[tileType];
 
                 int bitmask = 0;
-                if (ConnectsTo(x, y + 1, def.connectionGroup)) bitmask |= 1; // 北(+Y)
-                if (ConnectsTo(x + 1, y, def.connectionGroup)) bitmask |= 2; // 東(+X)
-                if (ConnectsTo(x, y - 1, def.connectionGroup)) bitmask |= 4; // 南(-Y)
-                if (ConnectsTo(x - 1, y, def.connectionGroup)) bitmask |= 8; // 西(-X)
+                if (ConnectsTo(x, y + 1, tileType)) bitmask |= 1; // 北(+Y)
+                if (ConnectsTo(x + 1, y, tileType)) bitmask |= 2; // 東(+X)
+                if (ConnectsTo(x, y - 1, tileType)) bitmask |= 4; // 南(-Y)
+                if (ConnectsTo(x - 1, y, tileType)) bitmask |= 8; // 西(-X)
 
                 const int subCol = bitmask % 4;
                 const int subRow = bitmask / 4;

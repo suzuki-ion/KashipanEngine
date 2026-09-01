@@ -212,6 +212,8 @@ bool TextureManager::BindTexture(ShaderVariableBinder* shaderBinder, const std::
 }
 
 std::uint32_t TextureManager::GetTextureBindlessIndex(TextureHandle handle) {
+    // 解決できなかった場合は0（white1x1.pngのインデックス）を返す。white1x1.pngは
+    // LoadAllFromAssetsFolderが他のどのテクスチャよりも必ず先に読み込むため、常にindex 0になる
     if (handle == kInvalidHandle || !sSrvHeap || !sDevice) return 0;
     auto it = sTextures.find(handle);
     if (it == sTextures.end()) return 0;
@@ -314,6 +316,19 @@ void TextureManager::LoadAllFromAssetsFolder() {
         for (const auto& sd : d.subdirectories) flatten(sd);
     };
     flatten(filtered);
+
+    // white1x1.pngは、テクスチャ解決に失敗した場合のフォールバック先としてバインドレス配列の
+    // 先頭（index 0）に来ることを前提にしている（GetTextureBindlessIndexのkInvalidHandle時の
+    // 既定戻り値が0であるため）。ディレクトリ走査順（他アセットの追加順やフォルダ構成）に
+    // よらずこれを保証するため、他のどのテクスチャよりも必ず先に単独で読み込む
+    const std::string whiteTexturePath = NormalizePathSlashes(assetsRootPath_ + "/KashipanEngine/white1x1.png");
+    files.erase(std::remove_if(files.begin(), files.end(), [&](const std::string &f) {
+        return CaseInsensitiveEqual{}(NormalizePathSlashes(f), whiteTexturePath);
+    }), files.end());
+    if (std::filesystem::exists(Utf8StringToPath(whiteTexturePath))) {
+        mipMapContainer_.AddMipMap(whiteTexturePath, LoadTextureFromFile(whiteTexturePath));
+        LoadTexture(whiteTexturePath);
+    }
 
     // ファイルI/O・デコード・ミップマップ生成はCPU処理のみでGPUリソースに触れないため、
     // スレッドプールで並列実行する（mipMapContainer_はshared_mutexで保護済み）

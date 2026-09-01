@@ -178,7 +178,6 @@ public:
 
 protected:
     void Initialize() override {
-        EnsureInternalMaterial();
         // 生成はしない（同オブジェクトの他エントリがまだJSONから読み込まれきっていない可能性があり、
         // ここで先に生成すると後から読み込まれる正規のMeshFilter/SpriteRendererと重複してしまうため）。
         // 既に存在するものがあれば拾うだけに留め、実際の生成はUpdate()の初回に遅延する
@@ -196,16 +195,14 @@ protected:
 
     void Update() override {
         EnsureInternalComponents();
-        if (spriteRenderer_ && materialHandle_ != MaterialManager::kInvalidHandle &&
-            spriteRenderer_->GetMaterialHandle() != materialHandle_) {
-            spriteRenderer_->SetMaterialHandle(materialHandle_);
-        }
+        RetryApplyToRendererIfNeeded();
+        SyncOverrideMaterialFields();
         SyncMaterialTexture();
         ApplyFitMode();
     }
 
     void Finalize() override {
-        ReleaseInternalMaterial();
+        RevertRenderer();
 
         auto *sceneContext = GetOwnerSceneContext();
         auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
@@ -215,6 +212,16 @@ protected:
     }
 
 #if defined(USE_IMGUI)
+    /// @brief ゲームループが停止/一時停止中でも毎フレーム呼ばれる（Update()は呼ばれないため、
+    ///        エディターで停止中にプレビュー・FitMode反映をリトライするのに使う）
+    void ShowPersistentImGui() override {
+        EnsureInternalComponents();
+        RetryApplyToRendererIfNeeded();
+        SyncOverrideMaterialFields();
+        SyncMaterialTexture();
+        ApplyFitMode();
+    }
+
     void ShowImGui() override {
         TargetObjectSelector::ShowSelector(TranslationLabel("component.screenbufferviewport.source"), GetOwnerSceneContext(), sourceObjectID_, true, true);
         TargetObjectSelector::ShowSelector(TranslationLabel("component.screenbufferviewport.display_camera"), GetOwnerSceneContext(), displayCameraObjectID_, true, false);
@@ -390,35 +397,98 @@ private:
         }
     }
 
-    void EnsureInternalMaterial() {
-        if (materialHandle_ != MaterialManager::kInvalidHandle) return;
+    /// @brief SpriteRendererが現在参照しているマテリアルを複製し、テクスチャをScreenBufferの内容へ
+    ///        差し替えた専用マテリアルへ差し替える（TextureSource::ApplyToRendererと同じ方式）
+    /// @details レンダラーが今参照しているマテリアルが複製先（overrideMaterialHandle_）自身でない場合、
+    ///          それは初回適用か、Inspector等で別のベースマテリアルへ切り替えられたことを意味する。
+    ///          どちらの場合もその値を新しいベースマテリアルとして採用し直し、複製先へコピーする
+    ///          （これをしないと、一度複製した後にベースマテリアルを切り替えても、次にこの関数が
+    ///          呼ばれた時点で古い複製が無条件に再適用されてしまい、切り替えが反映されない）
+    void ApplyToRenderer() {
+        if (!spriteRenderer_) return;
         if (internalMaterialName_.empty()) {
             const auto *owner = GetOwnerObject();
             internalMaterialName_ = "__ScreenBufferViewport_" +
                 (owner ? owner->GetObjectID().ToString() : std::to_string(reinterpret_cast<std::uintptr_t>(this)));
         }
-        materialHandle_ = MaterialManager::GetMaterialHandleFromName(internalMaterialName_);
-        if (materialHandle_ == MaterialManager::kInvalidHandle) {
-            MaterialManager::Material mat{};
-            mat.name = internalMaterialName_;
-            mat.enableLighting = false;
-            mat.enableShadowMapProjection = false;
-            materialHandle_ = MaterialManager::RegisterMaterial(internalMaterialName_, mat);
+
+        const auto currentHandle = spriteRenderer_->GetMaterialHandle();
+        if (currentHandle != overrideMaterialHandle_) {
+            originalMaterialHandle_ = currentHandle;
+
+            MaterialManager::Material overrideMaterial{};
+            if (auto *baseMaterial = MaterialManager::GetMaterial(originalMaterialHandle_)) {
+                overrideMaterial = *baseMaterial;
+            }
+            overrideMaterial.name = internalMaterialName_;
+            overrideMaterial.textureHandle = lastTextureHandle_;
+            // ScreenBufferの内容をそのまま映すため、元マテリアルの設定によらずライティングは無効化する
+            overrideMaterial.enableLighting = false;
+            overrideMaterial.enableShadowMapProjection = false;
+
+            if (overrideMaterialHandle_ != MaterialManager::kInvalidHandle) {
+                // 複製先マテリアルは使い回す。RegisterMaterialを呼び直すと同名でも別ハンドルが
+                // 発行され、古い複製がMaterialManagerにゴミとして残ってしまうため
+                if (auto *existing = MaterialManager::GetMaterial(overrideMaterialHandle_)) {
+                    *existing = overrideMaterial;
+                }
+            } else {
+                overrideMaterialHandle_ = MaterialManager::RegisterMaterial(internalMaterialName_, overrideMaterial);
+            }
         }
+        if (overrideMaterialHandle_ == MaterialManager::kInvalidHandle) return;
+
+        spriteRenderer_->SetMaterialHandle(overrideMaterialHandle_);
+    }
+
+    /// @brief レンダラーへの反映がまだ・または外れてしまっている場合に再試行する
+    /// @details TextureSource::RetryApplyToRendererIfNeededと同じ理由
+    void RetryApplyToRendererIfNeeded() {
+        if (!spriteRenderer_) return;
+        const auto currentHandle = spriteRenderer_->GetMaterialHandle();
+        if (overrideMaterialHandle_ == MaterialManager::kInvalidHandle || currentHandle != overrideMaterialHandle_) {
+            ApplyToRenderer();
+        }
+    }
+
+    /// @brief 複製先マテリアル（テクスチャ以外の全フィールド）を元マテリアルの最新値へ同期する
+    /// @details TextureSource::SyncOverrideMaterialFieldsと同じ理由（元マテリアルへのサンプラー・
+    ///          UV変換等の編集をリアルタイムに反映するため、テクスチャ差し替えとは独立して毎フレーム行う）
+    void SyncOverrideMaterialFields() {
+        if (overrideMaterialHandle_ == MaterialManager::kInvalidHandle) return;
+        auto *overrideMaterial = MaterialManager::GetMaterial(overrideMaterialHandle_);
+        auto *baseMaterial = MaterialManager::GetMaterial(originalMaterialHandle_);
+        if (!overrideMaterial || !baseMaterial) return;
+
+        const auto name = overrideMaterial->name;
+        const auto textureHandle = overrideMaterial->textureHandle;
+        const auto textureFileName = overrideMaterial->textureFileName;
+        *overrideMaterial = *baseMaterial;
+        overrideMaterial->name = name;
+        overrideMaterial->textureHandle = textureHandle;
+        overrideMaterial->textureFileName = textureFileName;
+        // ScreenBufferの内容をそのまま映すため、元マテリアルの設定によらずライティングは無効化する
+        overrideMaterial->enableLighting = false;
+        overrideMaterial->enableShadowMapProjection = false;
+    }
+
+    /// @brief 適用していたレンダラーのマテリアルを元へ戻し、複製した専用マテリアルを破棄する
+    void RevertRenderer() {
+        if (overrideMaterialHandle_ == MaterialManager::kInvalidHandle) return;
+
+        if (spriteRenderer_) {
+            spriteRenderer_->SetMaterialHandle(originalMaterialHandle_);
+        }
+
+        MaterialManager::RemoveMaterial(internalMaterialName_);
+        overrideMaterialHandle_ = MaterialManager::kInvalidHandle;
+        originalMaterialHandle_ = MaterialManager::kInvalidHandle;
         lastTextureHandle_ = TextureManager::kInvalidHandle;
     }
 
-    void ReleaseInternalMaterial() {
-        if (!internalMaterialName_.empty()) {
-            MaterialManager::RemoveMaterial(internalMaterialName_);
-        }
-        materialHandle_ = MaterialManager::kInvalidHandle;
-        lastTextureHandle_ = TextureManager::kInvalidHandle;
-    }
-
-    /// @brief 内部マテリアルのテクスチャハンドルを、ソースScreenBufferの現在の登録名に同期する
+    /// @brief 複製先マテリアルのテクスチャハンドルを、ソースScreenBufferの現在の登録名に同期する
     void SyncMaterialTexture() {
-        if (materialHandle_ == MaterialManager::kInvalidHandle) return;
+        if (overrideMaterialHandle_ == MaterialManager::kInvalidHandle) return;
         auto *source = ResolveSource();
         ScreenBuffer *buffer = source ? source->GetScreenBuffer() : nullptr;
         const auto texHandle = (buffer && ScreenBuffer::IsExist(buffer))
@@ -426,7 +496,7 @@ private:
             : TextureManager::kInvalidHandle;
         if (texHandle == lastTextureHandle_) return;
         lastTextureHandle_ = texHandle;
-        if (auto *mat = MaterialManager::GetMaterial(materialHandle_)) {
+        if (auto *mat = MaterialManager::GetMaterial(overrideMaterialHandle_)) {
             mat->textureHandle = texHandle;
         }
     }
@@ -439,7 +509,8 @@ private:
     MeshFilter *meshFilter_ = nullptr;
     SpriteRenderer *spriteRenderer_ = nullptr;
     std::string internalMaterialName_;
-    MaterialManager::MaterialHandle materialHandle_ = MaterialManager::kInvalidHandle;
+    MaterialManager::MaterialHandle overrideMaterialHandle_ = MaterialManager::kInvalidHandle;
+    MaterialManager::MaterialHandle originalMaterialHandle_ = MaterialManager::kInvalidHandle;
     TextureManager::TextureHandle lastTextureHandle_ = TextureManager::kInvalidHandle;
 };
 

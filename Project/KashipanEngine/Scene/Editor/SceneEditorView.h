@@ -311,6 +311,8 @@ private:
     int paintBrushTileType_ = -1;
     /// @brief ストローク（マウス押下〜離すまで）を1つのUndo単位にするための状態
     bool isPaintStrokeActive_ = false;
+    /// @brief 現在のストロークが右クリックで開始された（常に消しゴムとして塗る）ものかどうか
+    bool paintStrokeIsErase_ = false;
     JSON paintStrokeBeforeJson_;
     /// @brief ドラッグ中、前フレームで塗ったセル座標（セル間の線補間に使う。ストローク開始時は無効値）
     int lastPaintCellX_ = 0;

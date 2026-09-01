@@ -1109,7 +1109,11 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void RemoveTileType(int)", SafeCall<&TilemapRenderer::RemoveTileType>())
         .method("int GetTileTypeCount() const", SafeCall<&TilemapRenderer::GetTileTypeCount>())
         .method("void SetTileTypeConnectionGroup(int, int)", SafeCall<&TilemapRenderer::SetTileTypeConnectionGroup>())
-        .method("void SetTileTypeOriginPx(int, const Vector2 &in)", SafeCall<&TilemapRenderer::SetTileTypeOriginPx>());
+        .method("void SetTileTypeOriginPx(int, const Vector2 &in)", SafeCall<&TilemapRenderer::SetTileTypeOriginPx>())
+        .method("void SetTileTypeSolid(int, bool)", SafeCall<&TilemapRenderer::SetTileTypeSolid>())
+        .method("bool GetTileTypeSolid(int) const", SafeCall<&TilemapRenderer::GetTileTypeSolid>())
+        .method("void SetGenerateColliders(bool)", SafeCall<&TilemapRenderer::SetGenerateColliders>())
+        .method("bool GetGenerateColliders() const", SafeCall<&TilemapRenderer::GetGenerateColliders>());
 
     RegisterComponentType<ScriptComponent>(engine, "ScriptComponent")
         .method("void SetScriptPath(const string &in)", SafeCall<&ScriptComponent::SetScriptPath>())

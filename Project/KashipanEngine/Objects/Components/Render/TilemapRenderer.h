@@ -10,6 +10,7 @@
 #include "Assets/TextureManager.h"
 #include "Graphics/PipelineManager.h"
 #include "Math/Vector2.h"
+#include "Objects/Components/Collider/Box2DCollider.h"
 #include "Objects/Components/MeshFilter.h"
 #include "Objects/Components/Render/SpriteRenderer.h"
 #if defined(USE_IMGUI)
@@ -43,6 +44,8 @@ public:
         int connectionGroup = 0;
         /// @brief タイルセット画像上での16パターンブロックの左上原点（ピクセル）
         Vector2 tilesetOriginPx{ 0.0f, 0.0f };
+        /// @brief 2D当たり判定自動生成の対象にするか（GetGenerateColliders()がtrueの時のみ意味を持つ）
+        bool isSolid = true;
     };
 
     OBJECT_COMPONENT_CONSTRUCTOR(TilemapRenderer, 0xFF,
@@ -68,6 +71,7 @@ public:
         ptr->gridHeight_ = gridHeight_;
         ptr->cells_ = cells_;
         ptr->tileTypes_ = tileTypes_;
+        ptr->generateColliders_ = generateColliders_;
         ptr->MarkMeshDirty();
         return ptr;
     }
@@ -149,6 +153,16 @@ public:
         tileTypes_[index].tilesetOriginPx = originPx;
         MarkMeshDirty();
     }
+    /// @brief タイル種類が2D当たり判定自動生成の対象かを設定する（GetGenerateColliders()参照）
+    void SetTileTypeSolid(int index, bool solid) {
+        if (index < 0 || index >= static_cast<int>(tileTypes_.size())) return;
+        tileTypes_[index].isSolid = solid;
+        MarkMeshDirty();
+    }
+    bool GetTileTypeSolid(int index) const {
+        if (index < 0 || index >= static_cast<int>(tileTypes_.size())) return false;
+        return tileTypes_[index].isSolid;
+    }
 
     //==================================================
     // タイルセット・パイプライン指定
@@ -161,6 +175,8 @@ public:
         ApplyRendererSettings();
     }
     const std::string &GetMaterialName() const noexcept { return materialName_; }
+    /// @brief マテリアルハンドルを取得（未解決の場合はマテリアル名から解決を試みる。ブラシサムネイル表示等に使う）
+    MaterialManager::MaterialHandle GetMaterialHandle() const noexcept { return ResolveMaterialHandle(); }
     void SetPipelineName(const std::string &pipelineName) {
         pipelineName_ = pipelineName;
         ApplyRendererSettings();
@@ -170,6 +186,16 @@ public:
     const Vector2 &GetTileSize() const noexcept { return tileSize_; }
     void SetTilePixelSize(const Vector2 &tilePixelSize) { tilePixelSize_ = tilePixelSize; MarkMeshDirty(); }
     const Vector2 &GetTilePixelSize() const noexcept { return tilePixelSize_; }
+
+    //==================================================
+    // 2D当たり判定自動生成
+    //==================================================
+
+    /// @brief タイル配置から2D当たり判定（Box2DCollider）を自動生成するかを設定する
+    /// @details 隣接するisSolidなセルを貪欲法で矩形へ結合してから生成する（RegenerateColliders参照）。
+    ///          falseにすると、これまで自動生成していたBox2DColliderは全て削除される
+    void SetGenerateColliders(bool enabled) { generateColliders_ = enabled; MarkMeshDirty(); }
+    bool GetGenerateColliders() const noexcept { return generateColliders_; }
 
 protected:
     void Initialize() override {
@@ -236,6 +262,8 @@ protected:
             ImGui::SameLine();
             if (ImGui::InputInt(TranslationLabel("component.tilemaprenderer.connection_group"), &tileTypes_[i].connectionGroup)) MarkMeshDirty();
             if (ImGui::DragFloat2(TranslationLabel("component.tilemaprenderer.tileset_origin_px"), &tileTypes_[i].tilesetOriginPx.x, 1.0f)) MarkMeshDirty();
+            ImGui::SameLine();
+            if (ImGui::Checkbox(TranslationLabel("component.tilemaprenderer.solid"), &tileTypes_[i].isSolid)) MarkMeshDirty();
             if (ImGui::Button(TranslationC("component.tilemaprenderer.remove_tile_type"))) removeIndex = i;
             ImGui::PopID();
         }
@@ -243,6 +271,9 @@ protected:
         if (ImGui::Button(TranslationC("component.tilemaprenderer.add_tile_type"))) {
             AddTileType(0, Vector2(0.0f, 0.0f));
         }
+
+        if (ImGui::Checkbox(TranslationLabel("component.tilemaprenderer.generate_colliders"), &generateColliders_)) MarkMeshDirty();
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("component.tilemaprenderer.desc_generate_colliders"));
 
         ImGui::Separator();
         ImGui::TextUnformatted(TranslationC("component.tilemaprenderer.cells_bulk_edit"));
@@ -277,9 +308,11 @@ protected:
             JSON tileTypeJson = JSON::object();
             tileTypeJson["connectionGroup"] = tileType.connectionGroup;
             tileTypeJson["tilesetOriginPx"] = ToJSON(tileType.tilesetOriginPx);
+            tileTypeJson["isSolid"] = tileType.isSolid;
             tileTypesJson.push_back(tileTypeJson);
         }
         json["tileTypes"] = tileTypesJson;
+        json["generateColliders"] = generateColliders_;
         return json;
     }
 
@@ -301,8 +334,10 @@ protected:
             tileType.connectionGroup = tileTypeJson.value("connectionGroup", 0);
             tileType.tilesetOriginPx = tileTypeJson.contains("tilesetOriginPx")
                 ? FromJSON<Vector2>(tileTypeJson["tilesetOriginPx"]) : Vector2(0.0f, 0.0f);
+            tileType.isSolid = tileTypeJson.value("isSolid", true);
             tileTypes_.push_back(tileType);
         }
+        generateColliders_ = json.value("generateColliders", false);
 
         MarkMeshDirty();
         // シーン読み込み時はコンポーネント追加時点でInitialize()が読み込み前の既定値で
@@ -361,10 +396,81 @@ private:
         return vertex;
     }
 
+    /// @brief cells_/tileTypes_[].isSolidから貪欲法で矩形結合した2D当たり判定(Box2DCollider)を
+    ///        同一オブジェクトへ生成し直す
+    /// @details 自分が過去に生成したBox2DColliderだけをgeneratedColliderRefs_で追跡・削除するため、
+    ///          ユーザーが手動で追加した無関係なBox2DColliderには一切触れない。generateColliders_が
+    ///          falseの場合は追跡分を削除するだけで新規生成は行わない（＝オフにすると全て消える）。
+    ///          テクスチャ・マテリアルの解決状態とは無関係に成立するため、RebuildMesh()の
+    ///          テクスチャ未解決時の早期returnより前（毎回）呼ばれる
+    void RegenerateColliders() {
+        auto *sceneContext = GetOwnerSceneContext();
+        auto *objectContext = GetOwnerObjectContext();
+        if (!sceneContext || !objectContext) return;
+
+        for (const auto &ref : generatedColliderRefs_) {
+            if (auto *resolved = sceneContext->ResolveComponent(ref)) {
+                objectContext->RemoveComponent(resolved);
+            }
+        }
+        generatedColliderRefs_.clear();
+
+        if (!generateColliders_) return;
+
+        std::vector<bool> solid(static_cast<size_t>(gridWidth_) * gridHeight_, false);
+        for (int y = 0; y < gridHeight_; ++y) {
+            for (int x = 0; x < gridWidth_; ++x) {
+                const int tileType = cells_[CellIndex(x, y)];
+                solid[CellIndex(x, y)] = (tileType >= 0 && tileType < static_cast<int>(tileTypes_.size()) && tileTypes_[tileType].isSolid);
+            }
+        }
+
+        // 貪欲法による矩形分割: 未訪問のtrueセルを左上として右方向へ最大幅を求め、
+        // その幅ぶんの行が全てtrue・未訪問である限り下方向へ高さを伸ばして1矩形を確定する
+        std::vector<bool> visited(solid.size(), false);
+        for (int y0 = 0; y0 < gridHeight_; ++y0) {
+            for (int x0 = 0; x0 < gridWidth_; ++x0) {
+                const size_t startIndex = CellIndex(x0, y0);
+                if (!solid[startIndex] || visited[startIndex]) continue;
+
+                int x1 = x0 + 1;
+                while (x1 < gridWidth_ && solid[CellIndex(x1, y0)] && !visited[CellIndex(x1, y0)]) ++x1;
+
+                int y1 = y0 + 1;
+                while (y1 < gridHeight_) {
+                    bool rowOk = true;
+                    for (int x = x0; x < x1; ++x) {
+                        const size_t idx = CellIndex(x, y1);
+                        if (!solid[idx] || visited[idx]) { rowOk = false; break; }
+                    }
+                    if (!rowOk) break;
+                    ++y1;
+                }
+
+                for (int y = y0; y < y1; ++y) {
+                    for (int x = x0; x < x1; ++x) {
+                        visited[CellIndex(x, y)] = true;
+                    }
+                }
+
+                auto *collider = objectContext->AddComponent<Box2DCollider>();
+                if (!collider) continue;
+                const Vector2 size(static_cast<float>(x1 - x0) * tileSize_.x, static_cast<float>(y1 - y0) * tileSize_.y);
+                const Vector2 center(static_cast<float>(x0) * tileSize_.x + size.x * 0.5f, static_cast<float>(y0) * tileSize_.y + size.y * 0.5f);
+                collider->SetSize(size);
+                collider->SetCenter(center);
+                generatedColliderRefs_.push_back(collider->GetComponentRef());
+            }
+        }
+    }
+
     /// @brief タイル配置から結合メッシュを再構築し、MeshFilterへ反映する
-    /// @details テクスチャがまだ解決できない（読み込み中・未設定）場合は何もせずmeshDirty_を
-    ///          立てたままにし、次回のUpdate()で再試行する
+    /// @details テクスチャがまだ解決できない（読み込み中・未設定）場合はメッシュ再構築のみ
+    ///          何もせずmeshDirty_を立てたままにし、次回のUpdate()で再試行する
+    ///          （2D当たり判定はテクスチャの解決状態と無関係のため、この判定より前に再構築する）
     void RebuildMesh() {
+        RegenerateColliders();
+
         auto *objectContext = GetOwnerObjectContext();
         auto *meshFilter = objectContext ? objectContext->GetComponent<MeshFilter>() : nullptr;
         if (!meshFilter) return;
@@ -485,6 +591,12 @@ private:
     /// @brief row-major（インデックス = y * gridWidth_ + x）。値はtileTypes_内のインデックス、-1=空
     std::vector<int> cells_;
     std::vector<TileTypeDef> tileTypes_;
+
+    /// @brief タイル配置からBox2DColliderを自動生成するか（既定false。RegenerateColliders参照）
+    bool generateColliders_ = false;
+    /// @brief RegenerateColliders()が自分で生成したBox2DColliderの追跡用（JSON非保存。
+    ///        meshHandle_と同じく実行時に毎回作り直される派生データのため）
+    std::vector<ComponentRef> generatedColliderRefs_;
 
     bool meshDirty_ = true;
     /// @brief RegisterProceduralMesh登録名（インスタンスごとに一意にするためthisのアドレスを使う。

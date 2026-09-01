@@ -41,9 +41,13 @@
 <tr><td>Tile World Size</td><td>XYのドラッグ入力欄</td><td>タイル1個のワールド空間でのサイズ。既定値(1, 1)</td></tr>
 <tr><td>Tile Pixel Size</td><td>XYのドラッグ入力欄</td><td>タイルセット画像内でのタイル1個のピクセルサイズ。既定値(32, 32)</td></tr>
 <tr><td>Grid Width / Grid Height</td><td>整数ドラッグ入力欄</td><td>グリッドの列数・行数。変更すると既存のタイル配置は(0,0)基準で可能な範囲まで維持される</td></tr>
-<tr><td>Tile Types</td><td>リスト（Connection Group・Tileset Origin (px)・削除ボタン）</td><td>タイル種類の追加・編集・削除。Add Tile Typeボタンで末尾に追加</td></tr>
+<tr><td>Tile Types</td><td>リスト（Connection Group・Tileset Origin (px)・Solid・削除ボタン）</td><td>タイル種類の追加・編集・削除。Add Tile Typeボタンで末尾に追加。SolidはGenerate 2D Collidersが有効な場合に当たり判定生成の対象にするかどうか（既定true）</td></tr>
+<tr><td>Generate 2D Colliders</td><td>チェックボックス</td><td>隣接するSolidなセルを貪欲法で矩形へまとめ、同一オブジェクトへBox2DColliderを自動生成する（既定false）。詳細は下記「2D当たり判定の自動生成」参照</td></tr>
 <tr><td>Bulk Edit Cells</td><td>複数行テキスト入力</td><td>「セルをテキストへ読み込み」でグリッド全体を「1行=1列（Y座標、上の行が大きいY）、カンマ区切り=X座標、-1=空セル」のテキストとして読み込み、編集後に「テキストからセルへ反映」で書き戻す。行数・列数が現在のグリッドと異なる場合は自動でResizeされる</td></tr>
 </table>
+
+<h2>2D当たり判定の自動生成</h2>
+<p>Generate 2D Collidersを有効にすると、Solidなセルが隣接している範囲を貪欲法（左上から右方向に最大幅を求め、その幅の行が続く限り下方向へ高さを伸ばす）で矩形へまとめ、その矩形ごとに<code>Box2DCollider</code>を同一オブジェクトへ生成する。生成した<code>Box2DCollider</code>は内部的に追跡され、タイル配置や有効/無効の切り替えのたびに全て削除してから作り直される（ユーザーが手動で追加した無関係な<code>Box2DCollider</code>には触れない）。生成された<code>Box2DCollider</code>個々をInspector上で手動編集する導線は無く、手で調整したい場合はGenerate 2D Collidersをオフにして自分で追加すること。</p>
 
 <h2>AngelScriptからの操作</h2>
 <p>実行時にブロックの設置・破壊などでタイル配置を変更したい場合は、AngelScript側から次のメソッドを呼び出せます（コンポーネント取得の仕組みは他コンポーネントと同様）。</p>
@@ -55,6 +59,8 @@
 <tr><td><code>void Clear()</code></td><td>全セルを空にする</td></tr>
 <tr><td><code>int AddTileType(int connectionGroup, const Vector2 &amp;in tilesetOriginPx)</code></td><td>タイル種類を追加し、新しいインデックスを返す</td></tr>
 <tr><td><code>void RemoveTileType(int index)</code></td><td>タイル種類を削除する（参照していたセルは空になる）</td></tr>
+<tr><td><code>void SetTileTypeSolid(int index, bool solid)</code> / <code>bool GetTileTypeSolid(int index) const</code></td><td>タイル種類が2D当たり判定生成の対象かを設定・取得する</td></tr>
+<tr><td><code>void SetGenerateColliders(bool enabled)</code> / <code>bool GetGenerateColliders() const</code></td><td>2D当たり判定の自動生成を設定・取得する</td></tr>
 </table>
 <p>タイル配置の変更は即座にメッシュを作り直すのではなく、変更フラグを立てるだけで次のフレームの更新処理で1回だけ再構築されるため、1フレーム内で複数回<code>SetTile</code>を呼んでも再構築は1回で済みます。</p>
 

@@ -39,6 +39,7 @@
 #include "Objects/Components/Collider/ICollider.h"
 #include "Objects/Components/Collider/RayCollider.h"
 #include "Objects/Components/Transform.h"
+#include "Assets/MaterialManager.h"
 #include "Assets/ModelManager.h"
 #include "Assets/TextureManager.h"
 #include "Math/Quaternion.h"
@@ -1286,23 +1287,37 @@ bool SceneEditorView::HandleTilemapPaint(EmptyObject *owner, TilemapRenderer *ti
         DrawTilemapCellHighlight(owner, tilemap, cellX, cellY, imagePos, imageSize, kHighlightColor);
     }
 
-    if (hasHoverCell && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-        // ストローク開始: Undo用に変更前のJSONを1回だけ取得する（ギズモ操作開始時と同じパターン）
+    // 右クリック消しゴムは「2D」表示モード限定にする。Combined/ThreeDOnlyモードでは右ドラッグが
+    // 既に3Dフリーカメラの見回し操作（HandleCameraInput参照）に使われており、同時に奪うと
+    // カメラ操作ができなくなってしまうため（2Dモードは右ボタンをカメラ操作に使っていないため競合しない）
+    const bool rightEraseAvailable = displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly;
+    const bool leftClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+    const bool rightClicked = rightEraseAvailable && ImGui::IsMouseClicked(ImGuiMouseButton_Right);
+    const bool leftDown = ImGui::IsMouseDown(ImGuiMouseButton_Left);
+    const bool rightDown = rightEraseAvailable && ImGui::IsMouseDown(ImGuiMouseButton_Right);
+    const bool leftReleased = ImGui::IsMouseReleased(ImGuiMouseButton_Left);
+    const bool rightReleased = rightEraseAvailable && ImGui::IsMouseReleased(ImGuiMouseButton_Right);
+
+    if (hasHoverCell && (leftClicked || rightClicked)) {
+        // ストローク開始: 右クリックで始めた場合は選択中のブラシに関わらず常に消しゴム（-1）として塗る。
+        // Undo用に変更前のJSONを1回だけ取得する（ギズモ操作開始時と同じパターン）
         isPaintStrokeActive_ = true;
+        paintStrokeIsErase_ = rightClicked;
         paintStrokeBeforeJson_ = owner->SaveComponentToJson(tilemap);
-        tilemap->SetTile(cellX, cellY, paintBrushTileType_);
+        tilemap->SetTile(cellX, cellY, paintStrokeIsErase_ ? -1 : paintBrushTileType_);
         lastPaintCellX_ = cellX;
         lastPaintCellY_ = cellY;
-    } else if (isPaintStrokeActive_ && hasHoverCell && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+    } else if (isPaintStrokeActive_ && hasHoverCell && (leftDown || rightDown)) {
         // ドラッグ中: 前フレームのセルから今フレームのセルまでを線で補間して塗る
+        const int brush = paintStrokeIsErase_ ? -1 : paintBrushTileType_;
         WalkGridLine(lastPaintCellX_, lastPaintCellY_, cellX, cellY, [&](int x, int y) {
-            tilemap->SetTile(x, y, paintBrushTileType_);
+            tilemap->SetTile(x, y, brush);
         });
         lastPaintCellX_ = cellX;
         lastPaintCellY_ = cellY;
     }
 
-    if (isPaintStrokeActive_ && ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+    if (isPaintStrokeActive_ && (leftReleased || rightReleased)) {
         // ストローク終了: 変更があった場合のみUndo履歴へ積む（ギズモ操作終了時と同じ「適用済みの
         // 操作を積む」パターン。PushExecutedはSceneEditorCommands.h参照）
         isPaintStrokeActive_ = false;
@@ -1341,11 +1356,49 @@ void SceneEditorView::ShowTilemapPaintToolbar(TilemapRenderer *paintableTilemap)
     if (ImGui::RadioButton(TranslationLabel("editor.sceneview.tilepaint.erase"), paintBrushTileType_ == -1)) {
         paintBrushTileType_ = -1;
     }
-    for (int i = 0; i < paintableTilemap->GetTileTypeCount(); ++i) {
+
+    // タイルセットのSRV・サイズが解決できればサムネイル画像で、できなければ番号ボタンでフォールバック表示する
+    D3D12_GPU_DESCRIPTOR_HANDLE thumbnailSrv{};
+    float texWidth = 0.0f;
+    float texHeight = 0.0f;
+    if (const auto *material = MaterialManager::GetMaterial(paintableTilemap->GetMaterialHandle())) {
+        const auto textureView = TextureManager::GetTextureView(material->textureHandle);
+        texWidth = static_cast<float>(textureView.GetWidth());
+        texHeight = static_cast<float>(textureView.GetHeight());
+        thumbnailSrv = textureView.GetSrvHandle();
+    }
+    const bool hasThumbnail = thumbnailSrv.ptr != 0 && texWidth > 0.0f && texHeight > 0.0f;
+    const ImVec2 kThumbnailSize(32.0f, 32.0f);
+    constexpr ImU32 kSelectedBorderColor = IM_COL32(255, 220, 60, 255);
+
+    const auto &tileTypes = paintableTilemap->GetTileTypes();
+    const Vector2 &tilePixelSize = paintableTilemap->GetTilePixelSize();
+    for (int i = 0; i < static_cast<int>(tileTypes.size()); ++i) {
         ImGui::SameLine();
         ImGui::PushID(i);
-        const std::string label = std::to_string(i);
-        if (ImGui::RadioButton(label.c_str(), paintBrushTileType_ == i)) paintBrushTileType_ = i;
+        const bool isSelected = (paintBrushTileType_ == i);
+        if (isSelected) {
+            ImGui::PushStyleColor(ImGuiCol_Border, kSelectedBorderColor);
+            ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 2.0f);
+        }
+
+        bool clicked = false;
+        if (hasThumbnail) {
+            // ビットマスク0（＝tilesetOriginPxそのもの。どのタイル種類にも必ず存在する孤立パターン）を
+            // そのタイル種類の代表画像として表示する
+            const Vector2 &origin = tileTypes[i].tilesetOriginPx;
+            const ImVec2 uv0(origin.x / texWidth, origin.y / texHeight);
+            const ImVec2 uv1((origin.x + tilePixelSize.x) / texWidth, (origin.y + tilePixelSize.y) / texHeight);
+            clicked = ImGui::ImageButton("##tileThumb", static_cast<ImTextureID>(thumbnailSrv.ptr), kThumbnailSize, uv0, uv1);
+        } else {
+            clicked = ImGui::Button(std::to_string(i).c_str(), kThumbnailSize);
+        }
+        if (clicked) paintBrushTileType_ = i;
+
+        if (isSelected) {
+            ImGui::PopStyleVar();
+            ImGui::PopStyleColor();
+        }
         ImGui::PopID();
     }
 }

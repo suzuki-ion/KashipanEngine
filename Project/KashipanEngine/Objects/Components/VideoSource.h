@@ -147,6 +147,7 @@ protected:
             Play();
         }
         RetryApplyToRendererIfNeeded();
+        SyncOverrideMaterialFields();
     }
 
 #if defined(USE_IMGUI)
@@ -154,6 +155,7 @@ protected:
     ///        エディターで停止中にレンダラーへのプレビュー反映をリトライするのに使う）
     void ShowPersistentImGui() override {
         RetryApplyToRendererIfNeeded();
+        SyncOverrideMaterialFields();
     }
 
     void ShowImGui() override {
@@ -299,6 +301,26 @@ private:
         }
     }
 
+    /// @brief 複製先マテリアル（テクスチャ以外の全フィールド）を元マテリアルの最新値へ同期する
+    /// @details 複製先マテリアル自体はApplyToRenderer初回適用時の一度きりの生成のため、
+    ///          以後にマテリアルエディター等で元マテリアル（サンプラー・UV変換・色等）を編集しても
+    ///          複製先（実際にレンダラーが参照している方）へ反映されないままになっていた。
+    ///          そのためテクスチャ差し替え自体とは独立して毎フレーム同期する（TextureSource::SyncOverrideMaterialFieldsと同じ理由）
+    void SyncOverrideMaterialFields() {
+        if (overrideMaterialHandle_ == MaterialManager::kInvalidHandle) return;
+        auto *overrideMaterial = MaterialManager::GetMaterial(overrideMaterialHandle_);
+        auto *baseMaterial = MaterialManager::GetMaterial(originalMaterialHandle_);
+        if (!overrideMaterial || !baseMaterial) return;
+
+        const auto name = overrideMaterial->name;
+        const auto textureHandle = overrideMaterial->textureHandle;
+        const auto textureFileName = overrideMaterial->textureFileName;
+        *overrideMaterial = *baseMaterial;
+        overrideMaterial->name = name;
+        overrideMaterial->textureHandle = textureHandle;
+        overrideMaterial->textureFileName = textureFileName;
+    }
+
     /// @brief 同じオブジェクトのSpriteRenderer/MeshRendererへ、再生中の動画テクスチャを適用する
     /// @details 元のマテリアルを複製して専用インスタンスを作り、そのtextureHandleだけを
     ///          動画のテクスチャで上書きする（元のマテリアルアセットは書き換えない）
@@ -311,15 +333,31 @@ private:
         auto *meshRenderer = spriteRenderer ? nullptr : objectContext->GetComponent<MeshRenderer>();
         if (!spriteRenderer && !meshRenderer) return;
 
-        if (overrideMaterialHandle_ == MaterialManager::kInvalidHandle) {
-            originalMaterialHandle_ = spriteRenderer ? spriteRenderer->GetMaterialHandle() : meshRenderer->GetMaterialHandle();
+        const auto currentHandle = spriteRenderer ? spriteRenderer->GetMaterialHandle() : meshRenderer->GetMaterialHandle();
+        // レンダラーが今参照しているマテリアルが複製先（overrideMaterialHandle_）自身でない場合、
+        // それは初回適用か、Inspector等で別のベースマテリアルへ切り替えられたことを意味する。
+        // どちらの場合もその値を新しいベースマテリアルとして採用し直し、複製先へコピーする
+        // （これをしないと、一度複製した後にベースマテリアルを切り替えても、次にこの関数が
+        // 呼ばれた時点で古い複製が無条件に再適用されてしまい、切り替えが反映されなかった。
+        // TextureSource::ApplyToRendererと同じ理由）
+        if (currentHandle != overrideMaterialHandle_) {
+            originalMaterialHandle_ = currentHandle;
 
             MaterialManager::Material overrideMaterial{};
             if (auto *baseMaterial = MaterialManager::GetMaterial(originalMaterialHandle_)) {
                 overrideMaterial = *baseMaterial;
             }
             overrideMaterial.name = overrideMaterialName_;
-            overrideMaterialHandle_ = MaterialManager::RegisterMaterial(overrideMaterialName_, overrideMaterial);
+
+            if (overrideMaterialHandle_ != MaterialManager::kInvalidHandle) {
+                // 複製先マテリアルは使い回す。RegisterMaterialを呼び直すと同名でも別ハンドルが
+                // 発行され、古い複製がMaterialManagerにゴミとして残ってしまうため
+                if (auto *existing = MaterialManager::GetMaterial(overrideMaterialHandle_)) {
+                    *existing = overrideMaterial;
+                }
+            } else {
+                overrideMaterialHandle_ = MaterialManager::RegisterMaterial(overrideMaterialName_, overrideMaterial);
+            }
         }
         if (overrideMaterialHandle_ == MaterialManager::kInvalidHandle) return;
 

@@ -145,15 +145,31 @@ private:
         auto *meshRenderer = spriteRenderer ? nullptr : objectContext->GetComponent<MeshRenderer>();
         if (!spriteRenderer && !meshRenderer) return;
 
-        if (overrideMaterialHandle_ == MaterialManager::kInvalidHandle) {
-            originalMaterialHandle_ = spriteRenderer ? spriteRenderer->GetMaterialHandle() : meshRenderer->GetMaterialHandle();
+        const auto currentHandle = spriteRenderer ? spriteRenderer->GetMaterialHandle() : meshRenderer->GetMaterialHandle();
+        // レンダラーが今参照しているマテリアルが複製先（overrideMaterialHandle_）自身でない場合、
+        // それは初回適用か、Inspector等で別のベースマテリアルへ切り替えられたことを意味する。
+        // どちらの場合もその値を新しいベースマテリアルとして採用し直し、複製先へコピーする
+        // （これをしないと、一度複製した後にベースマテリアルを切り替えても、次にこの関数が
+        // 呼ばれた時点で古い複製が無条件に再適用されてしまい、切り替えが反映されなかった）
+        if (currentHandle != overrideMaterialHandle_) {
+            originalMaterialHandle_ = currentHandle;
 
             MaterialManager::Material overrideMaterial{};
             if (auto *baseMaterial = MaterialManager::GetMaterial(originalMaterialHandle_)) {
                 overrideMaterial = *baseMaterial;
             }
             overrideMaterial.name = overrideMaterialName_;
-            overrideMaterialHandle_ = MaterialManager::RegisterMaterial(overrideMaterialName_, overrideMaterial);
+            overrideMaterial.textureHandle = handle;
+
+            if (overrideMaterialHandle_ != MaterialManager::kInvalidHandle) {
+                // 複製先マテリアルは使い回す。RegisterMaterialを呼び直すと同名でも別ハンドルが
+                // 発行され、古い複製がMaterialManagerにゴミとして残ってしまうため
+                if (auto *existing = MaterialManager::GetMaterial(overrideMaterialHandle_)) {
+                    *existing = overrideMaterial;
+                }
+            } else {
+                overrideMaterialHandle_ = MaterialManager::RegisterMaterial(overrideMaterialName_, overrideMaterial);
+            }
         }
         if (overrideMaterialHandle_ == MaterialManager::kInvalidHandle) return;
 

@@ -85,6 +85,20 @@
                             "z": 1.0
                         },
                         "instanceColorBlendMode": 1,
+                        "instanceUvCombineMode": 0,
+                        "instanceUvPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceUvRotation": 0.0,
+                        "instanceUvScale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "instanceUvTranslate": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
                         "materialName": "Default",
                         "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
                         "pivot": {
@@ -106,7 +120,7 @@
         "isActive": true,
         "name": "Wall",
         "objectID": "3d6f8661-728a-4248-9c55-fb77adeb772a",
-        "tag": ""
+        "tag": "Wall"
     },
     "siblingIndex": 2000
 }

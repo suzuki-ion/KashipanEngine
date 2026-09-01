@@ -16,9 +16,9 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 1.1408644914627075,
-                            "y": 1.7855602502822876,
-                            "z": -35.60657501220703
+                            "x": 1.8206160068511963,
+                            "y": 1.1854465007781982,
+                            "z": -22.561738967895508
                         }
                     },
                     "isActive": true,
@@ -30,7 +30,7 @@
             {
                 "data": {
                     "customData": {
-                        "aspectRatio": 2.25612473487854,
+                        "aspectRatio": 2.2427616119384766,
                         "autoSyncAspectRatio": false,
                         "enableJitter": false,
                         "farClip": 1000.0,
@@ -48,7 +48,7 @@
             {
                 "data": {
                     "customData": {
-                        "distance": 31.8665828704834
+                        "distance": 18.817073822021484
                     },
                     "isActive": true,
                     "priority": 1,
@@ -66,7 +66,7 @@
                         "saveFileNamePrefix": "Screenshot",
                         "saveFormat": "png",
                         "viewerId": 1196007658575678415,
-                        "width": 1013
+                        "width": 1007
                     },
                     "isActive": true,
                     "priority": 1,

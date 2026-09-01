@@ -23,7 +23,7 @@
                         }
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 0,
                     "tag": ""
                 },
                 "type": "Transform"
@@ -42,16 +42,29 @@
             {
                 "data": {
                     "customData": {
-                        "fields": {
-                            "moveSpeed": 1.0
-                        },
-                        "scriptPath": "Assets\\Scripts\\GoombaMove.as"
+                        "friction": 0.0,
+                        "mass": 1.0,
+                        "restitution": 0.0,
+                        "selectedColliderOccurrenceIndex": 0,
+                        "selectedColliderTypeName": "Box2DCollider",
+                        "useGravity": true
                     },
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
                 },
-                "type": "ScriptComponent"
+                "type": "RigidBody2D"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "textureAssetPath": "App/Sprite/Enemy/green.png"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "TextureSource"
             },
             {
                 "data": {
@@ -79,7 +92,7 @@
                         ]
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 2,
                     "tag": ""
                 },
                 "type": "Box2DCollider"
@@ -110,7 +123,7 @@
                         ]
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 3,
                     "tag": ""
                 },
                 "type": "Box2DCollider"
@@ -141,7 +154,7 @@
                         ]
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 4,
                     "tag": ""
                 },
                 "type": "Box2DCollider"
@@ -172,7 +185,7 @@
                         ]
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 5,
                     "tag": ""
                 },
                 "type": "Box2DCollider"
@@ -180,18 +193,18 @@
             {
                 "data": {
                     "customData": {
-                        "friction": 0.0,
-                        "mass": 1.0,
-                        "restitution": 0.0,
-                        "selectedColliderOccurrenceIndex": 0,
-                        "selectedColliderTypeName": "Box2DCollider",
-                        "useGravity": true
+                        "fields": {
+                            "frameInterval": 0.15000000596046448,
+                            "moveSpeed": 1.0,
+                            "uvStep": 0.5
+                        },
+                        "scriptPath": "Assets\\Scripts\\Green.as"
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 7,
                     "tag": ""
                 },
-                "type": "RigidBody2D"
+                "type": "ScriptComponent"
             },
             {
                 "data": {
@@ -208,6 +221,20 @@
                             "z": 1.0
                         },
                         "instanceColorBlendMode": 1,
+                        "instanceUvCombineMode": 0,
+                        "instanceUvPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceUvRotation": 0.0,
+                        "instanceUvScale": {
+                            "x": 0.5,
+                            "y": 1.0
+                        },
+                        "instanceUvTranslate": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
                         "materialName": "Default",
                         "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
                         "pivot": {
@@ -218,7 +245,7 @@
                         "targetObjectID": ""
                     },
                     "isActive": true,
-                    "priority": 900,
+                    "priority": 8,
                     "tag": ""
                 },
                 "type": "SpriteRenderer"
@@ -227,7 +254,7 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Goomba",
+        "name": "Green",
         "objectID": "6cdeea0c-5930-4ebf-bef5-8c0fb2278d18",
         "tag": ""
     },

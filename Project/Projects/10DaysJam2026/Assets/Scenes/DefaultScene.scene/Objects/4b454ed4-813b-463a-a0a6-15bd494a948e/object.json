@@ -31,7 +31,7 @@
             {
                 "data": {
                     "customData": {
-                        "meshAssetPath": "PrimitiveMesh-Box"
+                        "meshAssetPath": "PrimitiveMesh-Rect2D"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -46,7 +46,7 @@
                             "x": 0.0,
                             "y": 0.0
                         },
-                        "continuousDetection": false,
+                        "continuousDetection": true,
                         "isTrigger": false,
                         "size": {
                             "x": 1.0,

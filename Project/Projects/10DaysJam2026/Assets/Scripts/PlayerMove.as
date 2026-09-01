@@ -48,6 +48,15 @@ class PlayerMove : ScriptComponentBehavior {
         isJump = false;
     }
 
+    void OnCollidionStay(const HitInfo &in hit){
+        velocity.y = 0.0f;
+        rb.SetUseGravity(false);
+    }
+
+    void OnCollidionExit(const HitInfo &in hit){
+        rb.SetUseGravity(true);
+    }
+
     void End() {
         Log("Player End");
     }

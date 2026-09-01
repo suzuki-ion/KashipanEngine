@@ -17,13 +17,13 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 0.0,
+                            "x": -5.5,
                             "y": 0.0,
                             "z": 0.0
                         }
                     },
                     "isActive": true,
-                    "priority": 0,
+                    "priority": 1,
                     "tag": ""
                 },
                 "type": "Transform"
@@ -42,22 +42,11 @@
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "App/Sprite/Player/Player.png"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "TextureSource"
-            },
-            {
-                "data": {
-                    "customData": {
                         "center": {
                             "x": 0.0,
                             "y": 0.0
                         },
-                        "continuousDetection": true,
+                        "continuousDetection": false,
                         "isTrigger": false,
                         "size": {
                             "x": 1.0,
@@ -76,42 +65,10 @@
                         ]
                     },
                     "isActive": true,
-                    "priority": 2,
+                    "priority": 1,
                     "tag": ""
                 },
                 "type": "Box2DCollider"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "friction": 0.0,
-                        "mass": 1.0,
-                        "restitution": 0.0,
-                        "selectedColliderOccurrenceIndex": 0,
-                        "selectedColliderTypeName": "Box2DCollider",
-                        "useGravity": true
-                    },
-                    "isActive": true,
-                    "priority": 3,
-                    "tag": ""
-                },
-                "type": "RigidBody2D"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "fields": {
-                            "gravity": 0.10000000149011612,
-                            "jumpPower": 7.0,
-                            "moveSpeed": 2.0
-                        },
-                        "scriptPath": "Assets\\Scripts\\PlayerMove.as"
-                    },
-                    "isActive": true,
-                    "priority": 4,
-                    "tag": ""
-                },
-                "type": "ScriptComponent"
             },
             {
                 "data": {
@@ -138,7 +95,7 @@
                         "targetObjectID": ""
                     },
                     "isActive": true,
-                    "priority": 5,
+                    "priority": 900,
                     "tag": ""
                 },
                 "type": "SpriteRenderer"
@@ -147,9 +104,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Player",
-        "objectID": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
+        "name": "Wall",
+        "objectID": "cafbb03e-6f11-4908-b611-244ca7c42164",
         "tag": ""
     },
-    "siblingIndex": 0
+    "siblingIndex": 3000
 }

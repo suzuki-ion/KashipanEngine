@@ -29,18 +29,43 @@ namespace KashipanEngine {
 ///          この差し替え（SceneRenderer.cpp::ResolveEditorWorldPipelineName）はSpriteRenderer由来の
 ///          エントリにしか適用されない。MeshRendererで同じパイプラインを使うと、この差し替えが
 ///          行われずシーンビュー上で真っ黒・位置ズレして表示される（実ゲーム画面では問題ない）。
-///          タイル配置(cells_)が変更されると、各非空セルについて上下左右の隣接セルを見て
-///          「自分のタイル種類がconnectsToTileTypesに隣接セルのタイル種類インデックスを
-///          含んでいるか」（片方向の判定。相手側が自分を含んでいなくても自分側の判定には影響しない）
-///          から4bit(0〜15)のビットマスクを求め、
-///          タイル種類ごとにタイルセット画像上へ4x4=16パターン敷き詰めたブロックの中から
-///          対応する1タイルを選んでUVを割り当てた結合メッシュを構築する。
-///          ビットマスクのビットは 1=北(+Y方向), 2=東(+X方向), 4=南(-Y方向), 8=西(-X方向)で、
-///          ブロック内の並びは (ビットマスク % 4, ビットマスク / 4) を (列, 行) として
-///          tilesetOriginPx を左上原点に敷き詰められていることを前提とする。
+///          タイル配置(cells_)が変更されると、各非空セルについて隣接セルを見て「自分のタイル種類が
+///          connectsToTileTypesに隣接セルのタイル種類インデックスを含んでいるか」（片方向の判定。
+///          相手側が自分を含んでいなくても自分側の判定には影響しない）を調べ、UVを割り当てた
+///          結合メッシュを構築する。判定方向はGetAutotileMode()で切り替えられる:
+///          - FourDirection（既定）: 上下左右4方向のみを見て4bit(0〜15)のビットマスクを求め、
+///            タイルセット画像上へ4x4=16パターン敷き詰めたブロック（(ビットマスク%4, ビットマスク/4)
+///            を(列,行)として tilesetOriginPx を左上原点に敷き詰め）から1タイルを選ぶ。
+///            ビットマスクのビットは 1=北(+Y方向), 2=東(+X方向), 4=南(-Y方向), 8=西(-X方向)。
+///          - EightDirection: 斜め4方向も含めて判定し、1タイルを4つの角（左上/右上/左下/右下）に
+///            分割してそれぞれ合成する（4分割合成方式）。タイルセット画像は1つのタイル種類につき
+///            2列×3行のブロックを前提とする: (0,0)=Isolated（孤立時にまるごと使う）、
+///            (1,0)=Cross（上下左右4方向のみ接続・斜め4つとも非接続の時にまるごと使う）、
+///            (0,1)/(1,1)/(0,2)/(1,2)=2×2ブロック（それぞれ角の位置に対応）。
+///            各角は常に「出力する角と同じ位置の1/4」を参照し、状態に応じて参照元だけが変わる:
+///            隣接2方向とも非接続=2×2ブロックの自分と同じ位置のマス、縦方向だけ接続=上下反転した
+///            位置のマス、横方向だけ接続=左右反転した位置のマス、縦横・斜め全部接続=対角のマス、
+///            縦横は接続・斜めのみ非接続=Crossタイル。反転・入れ替えは一切行わない
+///            （詳細はAppendEightDirCorner参照）
 class TilemapRenderer final : public IObjectComponent {
 public:
-    /// @brief タイル種類の定義（1種類につきタイルセット画像上に4x4=16パターンのオートタイルブロックを持つ）
+    /// @brief オートタイル判定方向。FourDirectionは既定値で既存シーンとの互換性を保つ
+    enum class AutotileMode {
+        FourDirection = 0,
+        EightDirection = 1,
+    };
+
+    /// @brief EightDirectionモードで使う、Isolated/Crossタイルの位置（タイル単位。
+    ///        tilesetOriginPxからのオフセット）。2×2ブロックの位置は列0-1×行1-2に固定
+    struct EightDirLayout {
+        /// @brief 孤立時（8方向すべて非接続）にまるごと1枚使うタイルの位置（タイル単位）
+        Vector2 isolatedTilePos{ 0.0f, 0.0f };
+        /// @brief 上下左右4方向のみ接続時（斜めは4つとも非接続）にまるごと1枚使うタイルの位置（タイル単位）
+        Vector2 crossTilePos{ 1.0f, 0.0f };
+    };
+
+    /// @brief タイル種類の定義（1種類につきタイルセット画像上にオートタイル用ブロックを持つ。
+    ///        ブロックのレイアウトはAutotileModeにより異なる）
     struct TileTypeDef {
         /// @brief 接続先タイル種類インデックスの一覧（片方向）。隣接セルのタイル種類インデックスが
         ///        この一覧に含まれていれば、自分から見てそのセルへ「繋がっている」とみなす。
@@ -76,6 +101,8 @@ public:
         ptr->cells_ = cells_;
         ptr->tileTypes_ = tileTypes_;
         ptr->generateColliders_ = generateColliders_;
+        ptr->autotileMode_ = autotileMode_;
+        ptr->eightDirLayout_ = eightDirLayout_;
         ptr->MarkMeshDirty();
         return ptr;
     }
@@ -225,6 +252,13 @@ public:
     const Vector2 &GetTileSize() const noexcept { return tileSize_; }
     void SetTilePixelSize(const Vector2 &tilePixelSize) { tilePixelSize_ = tilePixelSize; MarkMeshDirty(); }
     const Vector2 &GetTilePixelSize() const noexcept { return tilePixelSize_; }
+    /// @brief オートタイルの判定方向を設定する（クラス冒頭のコメント参照。タイルセット画像の
+    ///        レイアウトもモードにより異なるため、切り替えると見た目が変わる）
+    void SetAutotileMode(AutotileMode mode) { autotileMode_ = mode; MarkMeshDirty(); }
+    AutotileMode GetAutotileMode() const noexcept { return autotileMode_; }
+    /// @brief EightDirectionモードで使う参照位置一式をまとめて設定する
+    void SetEightDirLayout(const EightDirLayout &layout) { eightDirLayout_ = layout; MarkMeshDirty(); }
+    const EightDirLayout &GetEightDirLayout() const noexcept { return eightDirLayout_; }
 
     //==================================================
     // 2D当たり判定自動生成
@@ -283,6 +317,26 @@ protected:
             }
         }
         ImGui::TextUnformatted(TranslationC("component.tilemaprenderer.desc_1"));
+
+        {
+            int modeIndex = static_cast<int>(autotileMode_);
+            if (ImGui::RadioButton(TranslationLabel("component.tilemaprenderer.mode_4dir"), modeIndex == 0)) {
+                SetAutotileMode(AutotileMode::FourDirection);
+            }
+            ImGui::SameLine();
+            if (ImGui::RadioButton(TranslationLabel("component.tilemaprenderer.mode_8dir"), modeIndex == 1)) {
+                SetAutotileMode(AutotileMode::EightDirection);
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("component.tilemaprenderer.desc_mode"));
+        }
+
+        if (autotileMode_ == AutotileMode::EightDirection && ImGui::CollapsingHeader(TranslationC("component.tilemaprenderer.eight_dir_layout"))) {
+            ImGui::Indent();
+            ImGui::TextUnformatted(TranslationC("component.tilemaprenderer.desc_eight_dir_layout"));
+            if (ImGui::DragFloat2(TranslationLabel("component.tilemaprenderer.layout_isolated"), &eightDirLayout_.isolatedTilePos.x, 0.1f)) MarkMeshDirty();
+            if (ImGui::DragFloat2(TranslationLabel("component.tilemaprenderer.layout_cross"), &eightDirLayout_.crossTilePos.x, 0.1f)) MarkMeshDirty();
+            ImGui::Unindent();
+        }
 
         if (ImGui::DragFloat2(TranslationLabel("component.tilemaprenderer.tile_size"), &tileSize_.x, 0.01f, 0.01f, 1000.0f)) MarkMeshDirty();
         if (ImGui::DragFloat2(TranslationLabel("component.tilemaprenderer.tile_pixel_size"), &tilePixelSize_.x, 0.5f, 1.0f, 4096.0f)) MarkMeshDirty();
@@ -380,6 +434,11 @@ protected:
         }
         json["tileTypes"] = tileTypesJson;
         json["generateColliders"] = generateColliders_;
+        json["autotileMode"] = static_cast<int>(autotileMode_);
+        JSON layoutJson = JSON::object();
+        layoutJson["isolatedTilePos"] = ToJSON(eightDirLayout_.isolatedTilePos);
+        layoutJson["crossTilePos"] = ToJSON(eightDirLayout_.crossTilePos);
+        json["eightDirLayout"] = layoutJson;
         return json;
     }
 
@@ -405,6 +464,14 @@ protected:
             tileTypes_.push_back(tileType);
         }
         generateColliders_ = json.value("generateColliders", false);
+        autotileMode_ = static_cast<AutotileMode>(json.value("autotileMode", 0));
+        if (json.contains("eightDirLayout")) {
+            const JSON &layoutJson = json["eightDirLayout"];
+            eightDirLayout_.isolatedTilePos = layoutJson.contains("isolatedTilePos") ? FromJSON<Vector2>(layoutJson["isolatedTilePos"]) : Vector2(0.0f, 0.0f);
+            eightDirLayout_.crossTilePos = layoutJson.contains("crossTilePos") ? FromJSON<Vector2>(layoutJson["crossTilePos"]) : Vector2(1.0f, 0.0f);
+        } else {
+            eightDirLayout_ = EightDirLayout{};
+        }
 
         MarkMeshDirty();
         // シーン読み込み時はコンポーネント追加時点でInitialize()が読み込み前の既定値で
@@ -465,6 +532,128 @@ private:
         vertex.u = u; vertex.v = v;
         vertex.tx = 1.0f; vertex.ty = 0.0f; vertex.tz = 0.0f;
         return vertex;
+    }
+
+    /// @brief ワールド矩形(wx0,wy0)-(wx1,wy1)に、4頂点それぞれ個別のUV(bl/tl/tr/br)を割り当てた
+    ///        クアッドを積む（Rect2Dプリミティブと同じ規約: 頂点順=左下/左上/右上/右下、法線+Z）
+    static void AppendQuadUV(std::vector<ModelData::Vertex> &vertices, std::vector<std::uint32_t> &indices,
+        float wx0, float wy0, float wx1, float wy1, const Vector2 &bl, const Vector2 &tl, const Vector2 &tr, const Vector2 &br) {
+        const auto base = static_cast<std::uint32_t>(vertices.size());
+        vertices.push_back(MakeVertex(wx0, wy0, bl.x, bl.y));
+        vertices.push_back(MakeVertex(wx0, wy1, tl.x, tl.y));
+        vertices.push_back(MakeVertex(wx1, wy1, tr.x, tr.y));
+        vertices.push_back(MakeVertex(wx1, wy0, br.x, br.y));
+        indices.push_back(base + 0); indices.push_back(base + 1); indices.push_back(base + 2);
+        indices.push_back(base + 0); indices.push_back(base + 2); indices.push_back(base + 3);
+    }
+
+    /// @brief FourDirectionモード: 上下左右4方向のビットマスク(0〜15)から、タイルセット画像上の
+    ///        4x4パターンブロックの中の1タイル分をそのままUVとして割り当てたクアッドを1枚積む
+    void AppendFourDirectionTile(int x, int y, int tileType, const TileTypeDef &def,
+        float px0, float py0, float px1, float py1, float texWidth, float texHeight,
+        std::vector<ModelData::Vertex> &vertices, std::vector<std::uint32_t> &indices) const {
+        int bitmask = 0;
+        if (ConnectsTo(x, y + 1, tileType)) bitmask |= 1; // 北(+Y)
+        if (ConnectsTo(x + 1, y, tileType)) bitmask |= 2; // 東(+X)
+        if (ConnectsTo(x, y - 1, tileType)) bitmask |= 4; // 南(-Y)
+        if (ConnectsTo(x - 1, y, tileType)) bitmask |= 8; // 西(-X)
+
+        const int subCol = bitmask % 4;
+        const int subRow = bitmask / 4;
+        const float u0 = (def.tilesetOriginPx.x + static_cast<float>(subCol) * tilePixelSize_.x) / texWidth;
+        const float v0 = (def.tilesetOriginPx.y + static_cast<float>(subRow) * tilePixelSize_.y) / texHeight;
+        const float u1 = u0 + tilePixelSize_.x / texWidth;
+        const float v1 = v0 + tilePixelSize_.y / texHeight;
+
+        // UVはVの上が0・下が1
+        AppendQuadUV(vertices, indices, px0, py0, px1, py1, Vector2(u0, v1), Vector2(u0, v0), Vector2(u1, v0), Vector2(u1, v1));
+    }
+
+    /// @brief EightDirectionモード: タイルセット画像上の(col,row)（タイル単位）のタイルを
+    ///        丸ごと1枚として使う（孤立時のisolatedTilePos、全接続時のcrossTilePos専用）
+    void AppendEightDirWholeCell(const Vector2 &originPx, const Vector2 &tilePos,
+        float px0, float py0, float px1, float py1, float texWidth, float texHeight,
+        std::vector<ModelData::Vertex> &vertices, std::vector<std::uint32_t> &indices) const {
+        const float u0 = (originPx.x + tilePos.x * tilePixelSize_.x) / texWidth;
+        const float v0 = (originPx.y + tilePos.y * tilePixelSize_.y) / texHeight;
+        const float u1 = u0 + tilePixelSize_.x / texWidth;
+        const float v1 = v0 + tilePixelSize_.y / texHeight;
+        AppendQuadUV(vertices, indices, px0, py0, px1, py1, Vector2(u0, v1), Vector2(u0, v0), Vector2(u1, v0), Vector2(u1, v1));
+    }
+
+    /// @brief EightDirectionモード: 1つの角（左上/右上/左下/右下のいずれか）1枚分のクアッドを積む。
+    ///        サンプリング元のタイル（2x2ブロックの4マスのいずれか、またはCrossタイル）は
+    ///        この角自身の縦方向接続(vConn)・横方向接続(hConn)・斜め接続(diagConn)から選び、
+    ///        選んだタイル内の(cornerCol, cornerRow)のクォーター（＝この角自身のラベルと同じ位置。
+    ///        反転や入れ替えは行わない）をそのまま貼り付ける
+    /// @param cornerCol 0=左, 1=右
+    /// @param cornerRow 0=上, 1=下
+    /// @param vConn この角に隣接する縦方向（上コーナーなら北、下コーナーなら南）の接続有無
+    /// @param hConn この角に隣接する横方向（左コーナーなら西、右コーナーなら東）の接続有無
+    /// @param diagConn この角の斜め方向の接続有無
+    void AppendEightDirCorner(const Vector2 &originPx, int cornerCol, int cornerRow, bool vConn, bool hConn, bool diagConn,
+        float wx0, float wy0, float wx1, float wy1, float texWidth, float texHeight,
+        std::vector<ModelData::Vertex> &vertices, std::vector<std::uint32_t> &indices) const {
+        Vector2 tilePos;
+        if (!vConn && !hConn) {
+            // どちらも非接続: 同じ位置の2x2ブロックマス（角パーツ）
+            tilePos = Vector2(static_cast<float>(cornerCol), 1.0f + static_cast<float>(cornerRow));
+        } else if (vConn && !hConn) {
+            // 縦方向のみ接続: 行を反転した2x2ブロックマス（辺パーツ）
+            tilePos = Vector2(static_cast<float>(cornerCol), 1.0f + static_cast<float>(1 - cornerRow));
+        } else if (!vConn && hConn) {
+            // 横方向のみ接続: 列を反転した2x2ブロックマス（辺パーツ）
+            tilePos = Vector2(static_cast<float>(1 - cornerCol), 1.0f + static_cast<float>(cornerRow));
+        } else if (diagConn) {
+            // 縦横斜め全て接続（完全に囲まれている）: 行列とも反転した2x2ブロックマス（内側パーツ）
+            tilePos = Vector2(static_cast<float>(1 - cornerCol), 1.0f + static_cast<float>(1 - cornerRow));
+        } else {
+            // 縦横は接続しているが斜めだけ非接続（凹み）: Crossタイルのこの角部分を使う
+            tilePos = eightDirLayout_.crossTilePos;
+        }
+
+        const float quarterWidth = tilePixelSize_.x * 0.5f;
+        const float quarterHeight = tilePixelSize_.y * 0.5f;
+        const float u0 = (originPx.x + tilePos.x * tilePixelSize_.x + static_cast<float>(cornerCol) * quarterWidth) / texWidth;
+        const float v0 = (originPx.y + tilePos.y * tilePixelSize_.y + static_cast<float>(cornerRow) * quarterHeight) / texHeight;
+        const float u1 = u0 + quarterWidth / texWidth;
+        const float v1 = v0 + quarterHeight / texHeight;
+        AppendQuadUV(vertices, indices, wx0, wy0, wx1, wy1, Vector2(u0, v1), Vector2(u0, v0), Vector2(u1, v0), Vector2(u1, v1));
+    }
+
+    /// @brief EightDirectionモード: 1セル分（孤立・4方向接続の特別扱い、またはそれ以外は4つの角を
+    ///        個別に合成）のクアッドを積む
+    void AppendEightDirectionTile(int x, int y, int tileType, const TileTypeDef &def,
+        float px0, float py0, float px1, float py1, float texWidth, float texHeight,
+        std::vector<ModelData::Vertex> &vertices, std::vector<std::uint32_t> &indices) const {
+        const bool n = ConnectsTo(x, y + 1, tileType);
+        const bool e = ConnectsTo(x + 1, y, tileType);
+        const bool s = ConnectsTo(x, y - 1, tileType);
+        const bool w = ConnectsTo(x - 1, y, tileType);
+        const bool ne = ConnectsTo(x + 1, y + 1, tileType);
+        const bool se = ConnectsTo(x + 1, y - 1, tileType);
+        const bool sw = ConnectsTo(x - 1, y - 1, tileType);
+        const bool nw = ConnectsTo(x - 1, y + 1, tileType);
+
+        if (!n && !e && !s && !w && !ne && !se && !sw && !nw) {
+            AppendEightDirWholeCell(def.tilesetOriginPx, eightDirLayout_.isolatedTilePos, px0, py0, px1, py1, texWidth, texHeight, vertices, indices);
+            return;
+        }
+        if (n && e && s && w && !ne && !se && !sw && !nw) {
+            // 上下左右4方向のみ接続（斜めは4つとも非接続）の場合だけCrossタイルをそのまま使う。
+            // 斜めが1つでも接続している場合（3x3配置の中央など）はここに該当させず、
+            // 下の4隅個別合成へ進める（各隅がInner判定になり、継ぎ目のない内側の見た目になる）
+            AppendEightDirWholeCell(def.tilesetOriginPx, eightDirLayout_.crossTilePos, px0, py0, px1, py1, texWidth, texHeight, vertices, indices);
+            return;
+        }
+
+        const float hx = (px0 + px1) * 0.5f;
+        const float hy = (py0 + py1) * 0.5f;
+        // 各角(cornerCol, cornerRow): 0=左/上, 1=右/下。vConn=縦方向接続、hConn=横方向接続、diagConn=斜め接続
+        AppendEightDirCorner(def.tilesetOriginPx, 0, 0, n, w, nw, px0, hy, hx, py1, texWidth, texHeight, vertices, indices);
+        AppendEightDirCorner(def.tilesetOriginPx, 1, 0, n, e, ne, hx, hy, px1, py1, texWidth, texHeight, vertices, indices);
+        AppendEightDirCorner(def.tilesetOriginPx, 0, 1, s, w, sw, px0, py0, hx, hy, texWidth, texHeight, vertices, indices);
+        AppendEightDirCorner(def.tilesetOriginPx, 1, 1, s, e, se, hx, py0, px1, hy, texWidth, texHeight, vertices, indices);
     }
 
     /// @brief cells_/tileTypes_[].isSolidから貪欲法で矩形結合した2D当たり判定(Box2DCollider)を
@@ -557,8 +746,11 @@ private:
 
         std::vector<ModelData::Vertex> vertices;
         std::vector<std::uint32_t> indices;
-        vertices.reserve(static_cast<size_t>(gridWidth_) * gridHeight_ * 4);
-        indices.reserve(static_cast<size_t>(gridWidth_) * gridHeight_ * 6);
+        // EightDirectionモードは1セル最大4枚（4頂点×4）のクアッドになりうるため、その分を見込んで確保する
+        const size_t verticesPerCell = (autotileMode_ == AutotileMode::EightDirection) ? 16 : 4;
+        const size_t indicesPerCell = (autotileMode_ == AutotileMode::EightDirection) ? 24 : 6;
+        vertices.reserve(static_cast<size_t>(gridWidth_) * gridHeight_ * verticesPerCell);
+        indices.reserve(static_cast<size_t>(gridWidth_) * gridHeight_ * indicesPerCell);
 
         for (int y = 0; y < gridHeight_; ++y) {
             for (int x = 0; x < gridWidth_; ++x) {
@@ -566,33 +758,16 @@ private:
                 if (tileType < 0 || tileType >= static_cast<int>(tileTypes_.size())) continue;
                 const TileTypeDef &def = tileTypes_[tileType];
 
-                int bitmask = 0;
-                if (ConnectsTo(x, y + 1, tileType)) bitmask |= 1; // 北(+Y)
-                if (ConnectsTo(x + 1, y, tileType)) bitmask |= 2; // 東(+X)
-                if (ConnectsTo(x, y - 1, tileType)) bitmask |= 4; // 南(-Y)
-                if (ConnectsTo(x - 1, y, tileType)) bitmask |= 8; // 西(-X)
-
-                const int subCol = bitmask % 4;
-                const int subRow = bitmask / 4;
-                const float u0 = (def.tilesetOriginPx.x + static_cast<float>(subCol) * tilePixelSize_.x) / texWidth;
-                const float v0 = (def.tilesetOriginPx.y + static_cast<float>(subRow) * tilePixelSize_.y) / texHeight;
-                const float u1 = u0 + tilePixelSize_.x / texWidth;
-                const float v1 = v0 + tilePixelSize_.y / texHeight;
-
                 const float px0 = static_cast<float>(x) * tileSize_.x;
                 const float py0 = static_cast<float>(y) * tileSize_.y;
                 const float px1 = px0 + tileSize_.x;
                 const float py1 = py0 + tileSize_.y;
 
-                // Rect2Dプリミティブ（AddQuad）と同じ規約: p0=左下 p1=左上 p2=右上 p3=右下、
-                // 法線+Z、UVはVの上が0・下が1
-                const auto base = static_cast<std::uint32_t>(vertices.size());
-                vertices.push_back(MakeVertex(px0, py0, u0, v1));
-                vertices.push_back(MakeVertex(px0, py1, u0, v0));
-                vertices.push_back(MakeVertex(px1, py1, u1, v0));
-                vertices.push_back(MakeVertex(px1, py0, u1, v1));
-                indices.push_back(base + 0); indices.push_back(base + 1); indices.push_back(base + 2);
-                indices.push_back(base + 0); indices.push_back(base + 2); indices.push_back(base + 3);
+                if (autotileMode_ == AutotileMode::EightDirection) {
+                    AppendEightDirectionTile(x, y, tileType, def, px0, py0, px1, py1, texWidth, texHeight, vertices, indices);
+                } else {
+                    AppendFourDirectionTile(x, y, tileType, def, px0, py0, px1, py1, texWidth, texHeight, vertices, indices);
+                }
             }
         }
 
@@ -656,6 +831,8 @@ private:
 
     Vector2 tileSize_{ 1.0f, 1.0f };
     Vector2 tilePixelSize_{ 32.0f, 32.0f };
+    AutotileMode autotileMode_ = AutotileMode::FourDirection;
+    EightDirLayout eightDirLayout_;
 
     int gridWidth_ = 0;
     int gridHeight_ = 0;

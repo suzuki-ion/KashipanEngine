@@ -31,13 +31,36 @@
 <tr><td>4</td><td>南（-Y方向）のセルへ接続している</td></tr>
 <tr><td>8</td><td>西（-X方向）のセルへ接続している</td></tr>
 </table>
-<p>タイルセット画像は、1つのタイル種類につき<strong>4x4=16パターン</strong>のブロックを敷き詰めたレイアウトを前提とします。ブロック内の位置は「列 = ビットマスク % 4」「行 = ビットマスク / 4」で、Tile TypeのTileset Origin (px)を左上原点として、その列・行にTile Pixel Size分だけオフセットした位置のタイルが使われます（RPGツクール互換の47パターンA2形式ではありません）。</p>
+<p>タイルセット画像は、1つのタイル種類につき<strong>4x4=16パターン</strong>のブロックを敷き詰めたレイアウトを前提とします。ブロック内の位置は「列 = ビットマスク % 4」「行 = ビットマスク / 4」で、Tile TypeのTileset Origin (px)を左上原点として、その列・行にTile Pixel Size分だけオフセットした位置のタイルが使われます（RPGツクール互換の47パターンA2形式ではありません）。これはAutotile Modeが<strong>4-Direction</strong>（既定）の場合の仕様。
+
+<h2>8方向オートタイル（4分割合成）</h2>
+<p>Autotile Modeを<strong>8-Direction</strong>に切り替えると、斜め4方向も含めた8方向で接続を判定する。1タイルを4つの角（左上/右上/左下/右下）に分割し、角ごとにタイルセット上のどのクォーター（1/4マス）を貼り付けるかを、周囲の接続状況から<strong>自動的に</strong>選ぶ方式。パラメーターは一切不要（Isolated Tile・Cross Tileの位置を除く）。RPGツクールの実ファイルとの互換性は無く、独自に定義したレイアウト。</p>
+<p>タイルセット画像は、1つのタイル種類につき<strong>2列×3行</strong>のブロックを前提とする。</p>
+<table>
+<tr><th>位置（列,行）</th><th>内容</th></tr>
+<tr><td>(0,0)</td><td><strong>Isolated Tile</strong> — 周囲8方向すべて非接続の時、まるごと1枚使う</td></tr>
+<tr><td>(1,0)</td><td><strong>Cross Tile</strong> — 上下左右4方向のみ接続・斜め4つとも非接続の時、まるごと1枚使う</td></tr>
+<tr><td>(0,1) / (1,1)</td><td>2×2ブロックの上段（左上セル／右上セル）</td></tr>
+<tr><td>(0,2) / (1,2)</td><td>2×2ブロックの下段（左下セル／右下セル）</td></tr>
+</table>
+<p>上記のIsolated Tile・Cross Tile以外のケース（4つの角を個別合成する場合）は、各角ごとに「その角に隣接する縦方向1つ・横方向1つの接続有無」「その角の斜め方向1つの接続有無」を見て、2×2ブロックのどのセルの・どのクォーターを使うかを次のルールで自動的に決める。参照するクォーターの位置は常に<strong>出力する角自身と同じ位置</strong>（左上の角なら参照元セルの左上クォーター、右下の角なら参照元セルの右下クォーター、というように反転・入れ替え無しでそのまま対応する）。</p>
+<ul>
+<li>縦方向・横方向とも非接続 → 2×2ブロックの<strong>自分と同じ位置</strong>のセル</li>
+<li>縦方向のみ接続 → 2×2ブロックの<strong>上下反転</strong>した位置のセル</li>
+<li>横方向のみ接続 → 2×2ブロックの<strong>左右反転</strong>した位置のセル</li>
+<li>縦方向・横方向・斜めすべて接続（完全に囲まれている） → 2×2ブロックの<strong>対角</strong>のセル</li>
+<li>縦方向・横方向は接続しているが斜めだけ非接続（凹み） → <strong>Cross Tile</strong>（この場合もその角と同じ位置のクォーターだけを使う）</li>
+</ul>
+<p>Isolated Tile・Cross Tileの位置（タイル単位。Tileset Origin (px)からの整数タイル数オフセット）のみ、Inspectorの「Eight-Direction Layout (Advanced)」セクションから調整できる。2×2ブロックの位置は常にIsolated/Cross Tileの2行下・同じ2列に固定されており、調整項目は無い。</p>
+<div class="note">このアルゴリズムはRPGツクールのA2形式などとは異なる、KashipanEngine独自に導出したものです。実機でレンダリングしてみないと正確な見た目は確認できないため、水平/垂直のペア・L字・十字・2×2ブロック・3×3ブロックなど複数の配置パターンで実際にタイルを並べて見た目を確認すること。</div>
 
 <h2>Inspectorに表示される項目</h2>
 <table>
 <tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
 <tr><td>Pipeline</td><td>コンボボックス</td><td>読み込み済みの2D用レンダーパイプライン名から選択（既定値 <code>Object2D.DoubleSidedCulling.BlendNormal</code>）。同一オブジェクトのSpriteRendererへそのまま反映される</td></tr>
 <tr><td>Material</td><td>コンボボックス＋アセットのドラッグ&amp;ドロップ受付</td><td>タイルセット画像を含むマテリアル（既定値 <code>Default</code>）</td></tr>
+<tr><td>Autotile Mode</td><td>ラジオボタン（4-Direction / 8-Direction）</td><td>オートタイルの判定方向。既定4-Direction（既存シーンとの互換性維持）。切り替えるとタイルセット画像のレイアウトが変わる（上記参照）</td></tr>
+<tr><td>Eight-Direction Layout (Advanced)</td><td>折りたたみ可能なセクション（Isolated Tile・Cross Tileの計2個のXYドラッグ入力欄）</td><td>Autotile Modeが8-Directionの時のみ表示。Isolated Tile・Cross Tileの位置（タイル単位）を調整する。それ以外の合成パターンは自動選択されるため調整項目は無い（上記「8方向オートタイル」参照）</td></tr>
 <tr><td>Tile World Size</td><td>XYのドラッグ入力欄</td><td>タイル1個のワールド空間でのサイズ。既定値(1, 1)</td></tr>
 <tr><td>Tile Pixel Size</td><td>XYのドラッグ入力欄</td><td>タイルセット画像内でのタイル1個のピクセルサイズ。既定値(32, 32)</td></tr>
 <tr><td>Grid Width / Grid Height</td><td>整数ドラッグ入力欄</td><td>グリッドの列数・行数。変更すると既存のタイル配置は(0,0)基準で可能な範囲まで維持される</td></tr>
@@ -63,6 +86,7 @@
 <tr><td><code>int GetTileTypeConnectionCount(int index) const</code> / <code>int GetTileTypeConnectionAt(int index, int connectionIndex) const</code></td><td>タイル種類が持つ接続先の数・各値（タイル種類インデックス）を取得する</td></tr>
 <tr><td><code>void SetTileTypeSolid(int index, bool solid)</code> / <code>bool GetTileTypeSolid(int index) const</code></td><td>タイル種類が2D当たり判定生成の対象かを設定・取得する</td></tr>
 <tr><td><code>void SetGenerateColliders(bool enabled)</code> / <code>bool GetGenerateColliders() const</code></td><td>2D当たり判定の自動生成を設定・取得する</td></tr>
+<tr><td><code>void SetAutotileMode(int mode)</code> / <code>int GetAutotileMode() const</code></td><td>オートタイルの判定方向を設定・取得する（0=4-Direction, 1=8-Direction）</td></tr>
 </table>
 <p>タイル配置の変更は即座にメッシュを作り直すのではなく、変更フラグを立てるだけで次のフレームの更新処理で1回だけ再構築されるため、1フレーム内で複数回<code>SetTile</code>を呼んでも再構築は1回で済みます。</p>
 

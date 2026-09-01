@@ -1116,7 +1116,20 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetTileTypeSolid(int, bool)", SafeCall<&TilemapRenderer::SetTileTypeSolid>())
         .method("bool GetTileTypeSolid(int) const", SafeCall<&TilemapRenderer::GetTileTypeSolid>())
         .method("void SetGenerateColliders(bool)", SafeCall<&TilemapRenderer::SetGenerateColliders>())
-        .method("bool GetGenerateColliders() const", SafeCall<&TilemapRenderer::GetGenerateColliders>());
+        .method("bool GetGenerateColliders() const", SafeCall<&TilemapRenderer::GetGenerateColliders>())
+        // autotileModeは 0=FourDirection, 1=EightDirection
+        .method("void SetAutotileMode(int)", [](ScriptComponentHandle<TilemapRenderer> &cHandle, int mode) {
+            TilemapRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            TilemapRenderer &c = *cPtr;
+            c.SetAutotileMode(static_cast<TilemapRenderer::AutotileMode>(mode));
+        })
+        .method("int GetAutotileMode() const", [](const ScriptComponentHandle<TilemapRenderer> &cHandle) {
+            TilemapRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const TilemapRenderer &c = *cPtr;
+            return static_cast<int>(c.GetAutotileMode());
+        });
 
     RegisterComponentType<ScriptComponent>(engine, "ScriptComponent")
         .method("void SetScriptPath(const string &in)", SafeCall<&ScriptComponent::SetScriptPath>())

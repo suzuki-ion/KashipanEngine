@@ -25,9 +25,6 @@ class PlayerMove : ScriptComponentBehavior {
         Vector3 pos = tf.GetTranslate();
         pos.x += moveX * moveSpeed * GetDeltaTime();
 
-        // 重力
-        //pos.y -= gravity;
-
         // Translateに適用
         tf.SetTranslate(pos);
 

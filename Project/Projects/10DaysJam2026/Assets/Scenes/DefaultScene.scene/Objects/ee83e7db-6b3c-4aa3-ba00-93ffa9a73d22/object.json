@@ -18,12 +18,12 @@
                         },
                         "translate": {
                             "x": 0.0,
-                            "y": 0.0,
+                            "y": 1.3801648616790771,
                             "z": 0.0
                         }
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 0,
                     "tag": ""
                 },
                 "type": "Transform"
@@ -42,38 +42,58 @@
             {
                 "data": {
                     "customData": {
-                        "commands": [
-                            {
-                                "bindings": [],
-                                "commandName": "RightMove",
-                                "conditionType": 2,
-                                "fixedValue": 1.0,
-                                "name": "RightMove",
-                                "threshold": 0.5,
-                                "valueOffset": 0.0,
-                                "valueScale": 1.0,
-                                "valueSource": 0
-                            }
+                        "fields": {},
+                        "scriptPath": "Assets\\Scripts\\Collision.as"
+                    },
+                    "isActive": true,
+                    "priority": 2,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "center": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "continuousDetection": false,
+                        "isTrigger": false,
+                        "size": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "syncPosition": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncRotation": true,
+                        "syncScale": [
+                            false,
+                            false,
+                            false
                         ]
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 3,
                     "tag": ""
                 },
-                "type": "InputCommandApplier"
+                "type": "Box2DCollider"
             },
             {
                 "data": {
                     "customData": {
                         "fields": {
-                            "gravity": 0.20000000298023224,
+                            "gravity": 0.10000000149011612,
                             "jumpPower": 16.0,
-                            "moveSpeed": 0.10000000149011612
+                            "moveSpeed": 1.0
                         },
                         "scriptPath": "Assets\\Scripts\\PlayerMove.as"
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 4,
                     "tag": ""
                 },
                 "type": "ScriptComponent"
@@ -103,10 +123,46 @@
                         "targetObjectID": ""
                     },
                     "isActive": true,
-                    "priority": 900,
+                    "priority": 5,
                     "tag": ""
                 },
                 "type": "SpriteRenderer"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "friction": 0.0,
+                        "mass": 1.0,
+                        "restitution": 0.0,
+                        "selectedColliderOccurrenceIndex": 0,
+                        "selectedColliderTypeName": "Box2DCollider",
+                        "useGravity": true
+                    },
+                    "isActive": true,
+                    "priority": 6,
+                    "tag": ""
+                },
+                "type": "RigidBody2D"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "acceleration": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "velocity": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 7,
+                    "tag": ""
+                },
+                "type": "Velocity"
             }
         ],
         "editorOnly": false,

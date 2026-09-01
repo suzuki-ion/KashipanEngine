@@ -44,15 +44,13 @@
                     "customData": {
                         "center": {
                             "x": 0.0,
-                            "y": 0.0,
-                            "z": 0.0
+                            "y": 0.0
                         },
                         "continuousDetection": false,
                         "isTrigger": false,
                         "size": {
                             "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
+                            "y": 1.0
                         },
                         "syncPosition": [
                             true,
@@ -62,7 +60,7 @@
                         "syncRotation": true,
                         "syncScale": [
                             true,
-                            false,
+                            true,
                             false
                         ]
                     },
@@ -70,7 +68,7 @@
                     "priority": 1,
                     "tag": ""
                 },
-                "type": "BoxCollider"
+                "type": "Box2DCollider"
             },
             {
                 "data": {

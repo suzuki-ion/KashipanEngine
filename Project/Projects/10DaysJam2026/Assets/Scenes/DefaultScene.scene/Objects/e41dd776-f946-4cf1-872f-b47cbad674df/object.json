@@ -58,7 +58,7 @@
                             "y": 0.0
                         },
                         "continuousDetection": false,
-                        "isTrigger": false,
+                        "isTrigger": true,
                         "size": {
                             "x": 1.0,
                             "y": 1.0

@@ -68,6 +68,37 @@
             {
                 "data": {
                     "customData": {
+                        "center": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "continuousDetection": false,
+                        "isTrigger": true,
+                        "size": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "syncPosition": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncRotation": true,
+                        "syncScale": [
+                            true,
+                            true,
+                            false
+                        ]
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Box2DCollider"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,

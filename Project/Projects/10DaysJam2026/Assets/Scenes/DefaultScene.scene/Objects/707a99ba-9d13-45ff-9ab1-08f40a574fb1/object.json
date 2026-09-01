@@ -48,7 +48,10 @@
             {
                 "data": {
                     "customData": {
-                        "bindVariableNames": [],
+                        "bindVariableNames": [
+                            "Vertex:gCamera3D",
+                            "Pixel:gCamera3D"
+                        ],
                         "pipelineName": "",
                         "targetObjectID": "3003824d-e760-4e18-9136-e3e2a87580fb"
                     },

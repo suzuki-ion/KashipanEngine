@@ -1,7 +1,10 @@
 enum State {
     Idle,
     Walk,
-    Jump
+    Jump,
+    Attack,
+    WalkAttack,
+    JumpAttack
 }
 
 enum Direction{
@@ -24,6 +27,9 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("コマ切り替え速度(秒)")]
     float frameInterval = 0.15f;
 
+    [SerializeField, Tooltip("攻撃モーション表示時間(秒)")]
+    float attackDuration = 0.45f;
+
     [SerializeField, Tooltip("最大HP")]
     int maxHp = 10;
 
@@ -44,6 +50,9 @@ class Player : ScriptComponentBehavior {
     int hp = maxHp;
     float animTimer = 0.0f;
     int currentWeaponIndex = 0;
+    
+    // 攻撃用タイマー
+    float attackTimer = 0.0f;
 
     void Start() {
         GetComponent(@rb);
@@ -82,14 +91,36 @@ class Player : ScriptComponentBehavior {
         // RigidBodyのVelocity変更
         rb.SetVelocity(velocity);
 
+        // 攻撃入力の検知とタイマーリセット
+        if(IsCommandTriggered("Attack")){
+            attackTimer = attackDuration;
+        }
+
+        // 攻撃中判定の更新
+        bool isAttacking = false;
+        if(attackTimer > 0.0f){
+            attackTimer -= GetDeltaTime();
+            isAttacking = true;
+        }
+
         // 状態の判定
         State nextState = state;
-        if (isJump) {
-            nextState = State::Jump;
-        } else if (moveX != 0.0f) {
-            nextState = State::Walk;
+        if (isAttacking) {
+            if (isJump) {
+                nextState = State::JumpAttack;
+            } else if (moveX != 0.0f) {
+                nextState = State::WalkAttack;
+            } else {
+                nextState = State::Attack;
+            }
         } else {
-            nextState = State::Idle;
+            if (isJump) {
+                nextState = State::Jump;
+            } else if (moveX != 0.0f) {
+                nextState = State::Walk;
+            } else {
+                nextState = State::Idle;
+            }
         }
 
         // 状態が切り替わったらタイマーをリセット
@@ -112,11 +143,11 @@ class Player : ScriptComponentBehavior {
             break;
 
         case State::Walk:
-            // 3コマのアニメーション
+            // 3コマ
             {
                 int frame = int(animTimer / frameInterval) % 3;
                 uvTranslate.x = frame * uvStep.x;
-                uvTranslate.y = uvStep.y;
+                uvTranslate.y = uvStep.y * 1.0f;
             }
             break;
 
@@ -124,6 +155,27 @@ class Player : ScriptComponentBehavior {
             // 1コマ目
             uvTranslate.x = 0.0f;
             uvTranslate.y = uvStep.y * 2.0f;
+            break;
+
+        case State::Attack:
+            // 1コマ目
+            uvTranslate.x = 0.0f;
+            uvTranslate.y = uvStep.y * 3.0f;
+            break;
+
+        case State::WalkAttack:
+            // 3コマ
+            {
+                int frame = int(animTimer / frameInterval) % 3;
+                uvTranslate.x = frame * uvStep.x;
+                uvTranslate.y = uvStep.y * 4.0f;
+            }
+            break;
+
+        case State::JumpAttack:
+            // 1コマ目
+            uvTranslate.x = 0.0f;
+            uvTranslate.y = uvStep.y * 5.0f;
             break;
 
         default:
@@ -158,7 +210,7 @@ class Player : ScriptComponentBehavior {
         }
 
         // 回復アイテムと当たったら
-        if(hit.otherCollider.GetTag() == "Heart"){
+        if(hit.otherCollider.GetTag() == "Heart" && hit.otherCollider.IsTrigger()){
             Heal(1.0f); // HP増加
             GetScene().DeleteObject(GetScene().GetObject("Heart"));
         }

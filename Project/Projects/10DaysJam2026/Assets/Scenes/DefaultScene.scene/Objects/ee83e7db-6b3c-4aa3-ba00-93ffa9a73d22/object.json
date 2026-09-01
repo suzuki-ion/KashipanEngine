@@ -101,6 +101,7 @@
                 "data": {
                     "customData": {
                         "fields": {
+                            "attackDuration": 0.44999998807907104,
                             "frameInterval": 0.15000000596046448,
                             "gravity": 0.8999999761581421,
                             "jumpPower": 70.0,

@@ -28,6 +28,7 @@ class CameraRenderer;
 class Camera3D;
 class ScreenBufferObject;
 class Transform;
+class TilemapRenderer;
 struct ColliderInfo2D;
 
 /// @brief シーンエディター用のシーンビュー
@@ -123,6 +124,30 @@ private:
     ///          無ければY=0の地面平面との交点、それも無ければ（真上/真下を向いている等）
     ///          カメラから現在の注視距離だけ進めた点にフォールバックする
     Vector3 ComputeCursorWorldPosition(const ImVec2 &screenPos, const ImVec2 &imagePos, const ImVec2 &imageSize) const;
+
+    //==================================================
+    // TilemapRenderer タイルペイントツール
+    //==================================================
+
+    /// @brief シーンビューのメニューバーへ「Tile Paint」タブを表示する。選択中オブジェクトが
+    ///        単体でTilemapRendererを持つ場合のみ内容を有効化し、それ以外は無効化して表示する
+    /// @param paintableTilemap 選択中の単一オブジェクトが持つTilemapRenderer（無ければnullptr）
+    void ShowTilemapPaintToolbar(TilemapRenderer *paintableTilemap);
+    /// @brief タイルペイントの入力処理（ホバーセルのハイライト表示・クリック/ドラッグでの
+    ///        SetTile適用・ストローク単位でのUndo登録）を行う
+    /// @return このフレーム、シーンビューのマウス入力をペイント用に消費した（ホバー中含む）場合true。
+    ///         trueの場合、呼び出し側は通常のオブジェクトピッキング・ギズモ操作を行わないこと
+    bool HandleTilemapPaint(EmptyObject *owner, TilemapRenderer *tilemap, SceneEditorCommands *commands,
+        const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief スクリーン座標からのレイと、対象オブジェクトのローカルZ=0平面（TilemapRendererのメッシュが
+    ///        生成される平面）との交点を求め、タイルグリッドのセル座標へ変換する
+    /// @return グリッド範囲内のセルが求まった場合true（範囲外・平面と非交差の場合false）
+    bool ComputeTilemapCellUnderCursor(EmptyObject *owner, TilemapRenderer *tilemap, const ImVec2 &screenPos,
+        const ImVec2 &imagePos, const ImVec2 &imageSize, int &outX, int &outY) const;
+    /// @brief 指定セルの4隅をワールド→スクリーン座標へ投影し、枠線でハイライト表示する
+    void DrawTilemapCellHighlight(EmptyObject *owner, TilemapRenderer *tilemap, int cellX, int cellY,
+        const ImVec2 &imagePos, const ImVec2 &imageSize, ImU32 color) const;
+
     /// @brief Assetsウィンドウからのプレハブファイル（.prefab）のドラッグ&ドロップを処理する
     /// @details ドラッグ中（未ドロップ）は毎フレームUpdateGhostPreviewでプレビューを更新し、
     ///          実際にドロップされた瞬間にInstantiatePrefabFileでシーンへ配置する。ドロップ/キャンセル/
@@ -278,6 +303,18 @@ private:
     Vector4 backgroundColor_{ 0.0f, 0.0f, 0.0f, 1.0f };
     /// @brief 背景に使うテクスチャのAssetsルートからの相対パス（空文字の場合はbackgroundColor_を使用）
     std::string backgroundTexturePath_;
+
+    // TilemapRendererのタイルペイントツール用状態
+    /// @brief Tile Paintトグルの有効/無効（選択がTilemapRenderer付きオブジェクト単体でなくなると自動でfalseへ戻る）
+    bool tilemapPaintActive_ = false;
+    /// @brief 現在選択中のブラシ（-1=消しゴム、0以降はTilemapRenderer::GetTileTypes()のインデックス）
+    int paintBrushTileType_ = -1;
+    /// @brief ストローク（マウス押下〜離すまで）を1つのUndo単位にするための状態
+    bool isPaintStrokeActive_ = false;
+    JSON paintStrokeBeforeJson_;
+    /// @brief ドラッグ中、前フレームで塗ったセル座標（セル間の線補間に使う。ストローク開始時は無効値）
+    int lastPaintCellX_ = 0;
+    int lastPaintCellY_ = 0;
 
     // ドラッグ中のPrefabプレビュー用状態（UpdateGhostPreview/ClearGhostPreview参照）
     bool ghostPreviewActive_ = false;

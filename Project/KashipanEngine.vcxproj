@@ -393,6 +393,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <None Include="Reference\Editor\Components\Render\ShadowMapObject.html" />
     <None Include="Reference\Editor\Components\Render\SkinnedMeshRenderer.html" />
     <None Include="Reference\Editor\Components\Render\SpriteRenderer.html" />
+    <None Include="Reference\Editor\Components\Render\TilemapRenderer.html" />
     <None Include="Reference\Editor\Components\Render\TextRenderer.html" />
     <None Include="Reference\Editor\Components\Scene\KeyframeAnimator.html" />
     <None Include="Reference\Editor\Components\Scene\SceneAudioPlayer.html" />
@@ -1220,6 +1221,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClInclude Include="KashipanEngine\Objects\Components\Render\LightRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\MeshRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\SpriteRenderer.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\TilemapRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\TextRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\SkinnedMeshRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\IWindowObjectComponent.h" />

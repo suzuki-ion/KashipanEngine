@@ -59,6 +59,9 @@ struct ModelEntry final {
     std::string fileName;
 
     ModelData data;
+    /// @brief dataの版数。UpdateProceduralMeshのたびに増加する（ResourceContainer側のGPUバッファ
+    ///        キャッシュの再構築要否判定に使う。ModelManager::GetModelDataVersion参照）
+    std::uint64_t dataVersion = 1;
 };
 
 std::unordered_map<Handle, ModelEntry> sModels;
@@ -601,6 +604,25 @@ ModelManager::ModelHandle ModelManager::RegisterProceduralMesh(const std::string
         return kInvalidHandle;
     }
     return handle;
+}
+
+bool ModelManager::UpdateProceduralMesh(ModelHandle handle, std::vector<ModelData::Vertex> vertices, std::vector<std::uint32_t> indices) {
+    if (handle == kInvalidHandle) return false;
+    auto it = sModels.find(handle);
+    if (it == sModels.end()) return false;
+
+    ModelEntry &entry = it->second;
+    entry.data.vertices_ = std::move(vertices);
+    entry.data.indices_ = std::move(indices);
+    ++entry.dataVersion;
+    return true;
+}
+
+std::uint64_t ModelManager::GetModelDataVersion(ModelHandle handle) {
+    if (handle == kInvalidHandle) return 0;
+    auto it = sModels.find(handle);
+    if (it == sModels.end()) return 0;
+    return it->second.dataVersion;
 }
 
 #if defined(USE_IMGUI)

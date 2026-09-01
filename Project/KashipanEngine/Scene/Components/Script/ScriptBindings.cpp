@@ -116,6 +116,7 @@
 #include "Objects/Components/Render/SkinnedMeshRenderer.h"
 #include "Objects/Components/Render/SpriteRenderer.h"
 #include "Objects/Components/Render/TextRenderer.h"
+#include "Objects/Components/Render/TilemapRenderer.h"
 #include "Objects/Components/ScriptComponent.h"
 #include "Objects/Components/TargetLookAt.h"
 #include "Objects/Components/ParticleSystem2D.h"
@@ -1088,6 +1089,27 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
             const SpriteRenderer &c = *cPtr; return c.GetMeshHandle(); })
         .method("Matrix4x4 GetWorldMatrix() const", SafeCall<&SpriteRenderer::GetWorldMatrix>());
+
+    RegisterComponentType<TilemapRenderer>(engine, "TilemapRenderer")
+        .method("void SetTile(int, int, int)", SafeCall<&TilemapRenderer::SetTile>())
+        .method("int GetTile(int, int) const", SafeCall<&TilemapRenderer::GetTile>())
+        .method("void Resize(int, int)", SafeCall<&TilemapRenderer::Resize>())
+        .method("void Clear()", SafeCall<&TilemapRenderer::Clear>())
+        .method("int GetGridWidth() const", SafeCall<&TilemapRenderer::GetGridWidth>())
+        .method("int GetGridHeight() const", SafeCall<&TilemapRenderer::GetGridHeight>())
+        .method("void SetMaterialName(const string &in)", SafeCall<&TilemapRenderer::SetMaterialName>())
+        .method("const string &GetMaterialName() const", SafeCall<&TilemapRenderer::GetMaterialName>())
+        .method("void SetPipelineName(const string &in)", SafeCall<&TilemapRenderer::SetPipelineName>())
+        .method("const string &GetPipelineName() const", SafeCall<&TilemapRenderer::GetPipelineName>())
+        .method("void SetTileSize(const Vector2 &in)", SafeCall<&TilemapRenderer::SetTileSize>())
+        .method("const Vector2 &GetTileSize() const", SafeCall<&TilemapRenderer::GetTileSize>())
+        .method("void SetTilePixelSize(const Vector2 &in)", SafeCall<&TilemapRenderer::SetTilePixelSize>())
+        .method("const Vector2 &GetTilePixelSize() const", SafeCall<&TilemapRenderer::GetTilePixelSize>())
+        .method("int AddTileType(int, const Vector2 &in)", SafeCall<&TilemapRenderer::AddTileType>())
+        .method("void RemoveTileType(int)", SafeCall<&TilemapRenderer::RemoveTileType>())
+        .method("int GetTileTypeCount() const", SafeCall<&TilemapRenderer::GetTileTypeCount>())
+        .method("void SetTileTypeConnectionGroup(int, int)", SafeCall<&TilemapRenderer::SetTileTypeConnectionGroup>())
+        .method("void SetTileTypeOriginPx(int, const Vector2 &in)", SafeCall<&TilemapRenderer::SetTileTypeOriginPx>());
 
     RegisterComponentType<ScriptComponent>(engine, "ScriptComponent")
         .method("void SetScriptPath(const string &in)", SafeCall<&ScriptComponent::SetScriptPath>())

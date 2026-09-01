@@ -1396,6 +1396,23 @@
 		//--------- component.texturesource ---------//
 		"component.texturesource.texture": "テクスチャ",
 
+		//--------- component.tilemaprenderer ---------//
+		"component.tilemaprenderer.add_tile_type": "タイル種類を追加",
+		"component.tilemaprenderer.apply_cells_from_text": "テキストからセルへ反映",
+		"component.tilemaprenderer.cells_bulk_edit": "セル一括編集（行=Y、カンマ区切り=X、-1=空）",
+		"component.tilemaprenderer.connection_group": "接続グループ",
+		"component.tilemaprenderer.desc_1": "同じ接続グループのセル同士だけ繋がっていると判定されます。タイル種類はタイルセット画像上に4x4=16パターンのブロックを持つ前提です。",
+		"component.tilemaprenderer.grid_height": "グリッド高さ",
+		"component.tilemaprenderer.grid_width": "グリッド幅",
+		"component.tilemaprenderer.load_cells_to_text": "セルをテキストへ読み込み",
+		"component.tilemaprenderer.material": "マテリアル",
+		"component.tilemaprenderer.pipeline": "パイプライン",
+		"component.tilemaprenderer.remove_tile_type": "このタイル種類を削除",
+		"component.tilemaprenderer.tile_pixel_size": "タイル1つのピクセルサイズ",
+		"component.tilemaprenderer.tile_size": "タイル1つのワールドサイズ",
+		"component.tilemaprenderer.tile_types": "タイル種類",
+		"component.tilemaprenderer.tileset_origin_px": "タイルセット上の原点(px)",
+
 		//--------- component.uibutton ---------//
 		"component.uibutton.desc": "見た目の描画は行いません。同オブジェクトにSpriteRendererがあればそのスプライトの矩形を、無くTextRendererがあればそのテキストの外接矩形（表示中の文字列に応じて動的に変わる）をそのまま当たり判定に使います。",
 		"component.uibutton.display_camera": "表示カメラ",
@@ -1971,6 +1988,11 @@
 		"editor.sceneview.tab.camera": "カメラ",
 		"editor.sceneview.tab.display": "表示",
 		"editor.sceneview.tab.gizmo": "ギズモ",
+		"editor.sceneview.tab.tilepaint": "タイルペイント",
+		"editor.sceneview.tilepaint.brush": "ブラシ：",
+		"editor.sceneview.tilepaint.enable": "タイルペイントを有効化",
+		"editor.sceneview.tilepaint.erase": "消しゴム",
+		"editor.sceneview.tilepaint.no_selection": "TilemapRendererを持つオブジェクトを1つだけ選択してください。",
 		"editor.sceneview.window": "シーンビュー",
 
 		//--------- editor.scriptengine ---------//

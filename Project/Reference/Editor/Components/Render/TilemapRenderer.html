@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TilemapRenderer | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_TilemapRenderer">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>TilemapRenderer</h1>
+<p class="page-lead">RPGツクール風のオートタイル（隣接する同種タイルに応じてテクスチャを自動で切り替える）に対応したタイルマップ描画コンポーネントです。自身はSceneRendererへ描画登録せず、同一オブジェクトの<code>MeshFilter</code>/<code>SpriteRenderer</code>を自動追加して駆動します（<code>ScreenBufferViewport</code>と同じパターン）。タイル配置が変わるたびに1枚の結合メッシュを再構築するため、タイル数が多くても描画コストは1オブジェクト分のドローコールに収まります。</p>
+</div>
+
+<div class="note"><strong>フェーズ①（本ページの内容）</strong><br>本コンポーネントはタイル配置データと自動タイル切り替えの仕組みそのものを提供します。シーンビュー上でクリックしてタイルを配置する専用ペイントツールは未実装で、配置はInspectorのセル一括編集欄またはAngelScriptからの<code>SetTile</code>呼び出しで行います。</div>
+
+<div class="note"><strong>MeshRendererではなくSpriteRendererを使う理由</strong><br>パイプライン名<code>Object2D.*</code>は、シーンビュー（エディター）上でgCamera3D投影の「Worldバリアント」へ差し替えられて初めて3Dシーンビュー内に正しく表示されます。この差し替えは<code>SpriteRenderer</code>由来の描画エントリにしか適用されないため、同じパイプラインを<code>MeshRenderer</code>で使うとシーンビュー上でのみ真っ黒・位置ズレして表示されます（実際のゲーム画面では問題になりません）。TilemapRendererが自動追加するのが<code>SpriteRenderer</code>である理由はこのためです。</div>
+
+<h2>オートタイルの仕組み</h2>
+<p>各タイル種類（Tile Type）は「接続グループ」を持ちます。あるセルについて、上下左右の隣接セルが<strong>同じ接続グループ</strong>であればその方向のビットを立て、4bit（0〜15）のビットマスクを求めます。ビットの意味は次の通りです。</p>
+<table>
+<tr><th>ビット値</th><th>方向</th></tr>
+<tr><td>1</td><td>北（+Y方向）に同じ接続グループのセルがある</td></tr>
+<tr><td>2</td><td>東（+X方向）に同じ接続グループのセルがある</td></tr>
+<tr><td>4</td><td>南（-Y方向）に同じ接続グループのセルがある</td></tr>
+<tr><td>8</td><td>西（-X方向）に同じ接続グループのセルがある</td></tr>
+</table>
+<p>タイルセット画像は、1つのタイル種類につき<strong>4x4=16パターン</strong>のブロックを敷き詰めたレイアウトを前提とします。ブロック内の位置は「列 = ビットマスク % 4」「行 = ビットマスク / 4」で、Tile TypeのTileset Origin (px)を左上原点として、その列・行にTile Pixel Size分だけオフセットした位置のタイルが使われます（RPGツクール互換の47パターンA2形式ではありません）。</p>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Pipeline</td><td>コンボボックス</td><td>読み込み済みの2D用レンダーパイプライン名から選択（既定値 <code>Object2D.DoubleSidedCulling.BlendNormal</code>）。同一オブジェクトのSpriteRendererへそのまま反映される</td></tr>
+<tr><td>Material</td><td>コンボボックス＋アセットのドラッグ&amp;ドロップ受付</td><td>タイルセット画像を含むマテリアル（既定値 <code>Default</code>）</td></tr>
+<tr><td>Tile World Size</td><td>XYのドラッグ入力欄</td><td>タイル1個のワールド空間でのサイズ。既定値(1, 1)</td></tr>
+<tr><td>Tile Pixel Size</td><td>XYのドラッグ入力欄</td><td>タイルセット画像内でのタイル1個のピクセルサイズ。既定値(32, 32)</td></tr>
+<tr><td>Grid Width / Grid Height</td><td>整数ドラッグ入力欄</td><td>グリッドの列数・行数。変更すると既存のタイル配置は(0,0)基準で可能な範囲まで維持される</td></tr>
+<tr><td>Tile Types</td><td>リスト（Connection Group・Tileset Origin (px)・削除ボタン）</td><td>タイル種類の追加・編集・削除。Add Tile Typeボタンで末尾に追加</td></tr>
+<tr><td>Bulk Edit Cells</td><td>複数行テキスト入力</td><td>「セルをテキストへ読み込み」でグリッド全体を「1行=1列（Y座標、上の行が大きいY）、カンマ区切り=X座標、-1=空セル」のテキストとして読み込み、編集後に「テキストからセルへ反映」で書き戻す。行数・列数が現在のグリッドと異なる場合は自動でResizeされる</td></tr>
+</table>
+
+<h2>AngelScriptからの操作</h2>
+<p>実行時にブロックの設置・破壊などでタイル配置を変更したい場合は、AngelScript側から次のメソッドを呼び出せます（コンポーネント取得の仕組みは他コンポーネントと同様）。</p>
+<table>
+<tr><th>メソッド</th><th>内容</th></tr>
+<tr><td><code>void SetTile(int x, int y, int tileTypeIndex)</code></td><td>セルにタイル種類を設定する（-1で空にする）。範囲外の座標は無視される</td></tr>
+<tr><td><code>int GetTile(int x, int y) const</code></td><td>セルのタイル種類を取得する（範囲外・空セルは-1）</td></tr>
+<tr><td><code>void Resize(int width, int height)</code></td><td>グリッドサイズを変更する</td></tr>
+<tr><td><code>void Clear()</code></td><td>全セルを空にする</td></tr>
+<tr><td><code>int AddTileType(int connectionGroup, const Vector2 &amp;in tilesetOriginPx)</code></td><td>タイル種類を追加し、新しいインデックスを返す</td></tr>
+<tr><td><code>void RemoveTileType(int index)</code></td><td>タイル種類を削除する（参照していたセルは空になる）</td></tr>
+</table>
+<p>タイル配置の変更は即座にメッシュを作り直すのではなく、変更フラグを立てるだけで次のフレームの更新処理で1回だけ再構築されるため、1フレーム内で複数回<code>SetTile</code>を呼んでも再構築は1回で済みます。</p>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path"><span>Add Component</span><i>›</i><span>Render</span><i>›</i><span>TilemapRenderer</span></span> から追加する。追加時に同一オブジェクトへ<code>MeshFilter</code>/<code>SpriteRenderer</code>が無ければ自動的に追加される。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="SpriteRenderer.html">Render/SpriteRenderer.html</a> — 実際の描画を担うコンポーネント（TilemapRendererが自動追加・設定する）</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Object Inspectorの基本操作</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

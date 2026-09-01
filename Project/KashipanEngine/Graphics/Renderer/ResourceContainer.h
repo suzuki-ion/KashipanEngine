@@ -42,6 +42,10 @@ public:
         /// @brief ローカル空間の境界球（シャドウマップのスライス単位カリング等に使用）
         Vector3 boundsCenter{ 0.0f, 0.0f, 0.0f };
         float boundsRadius = 0.0f;
+        /// @brief 生成元にしたModelDataの版数（ModelManager::GetModelDataVersion）。
+        ///        TilemapRenderer等がUpdateProceduralMeshでCPU側データを書き換えた際、
+        ///        このキャッシュが古いままにならないよう再構築要否の判定に使う
+        std::uint64_t sourceDataVersion = 0;
     };
 
     ResourceContainer() = default;
@@ -52,11 +56,13 @@ public:
     ResourceContainer(ResourceContainer &&) = delete;
     ResourceContainer &operator=(ResourceContainer &&) = delete;
 
-    /// @brief メッシュハンドルからGPUバッファを取得（未作成の場合はモデルデータから生成する）
+    /// @brief メッシュハンドルからGPUバッファを取得（未作成、またはModelManager::UpdateProceduralMesh等で
+    ///        CPU側データが更新された後の場合はモデルデータから作り直す）
     /// @return メッシュバッファ（生成に失敗した場合は nullptr）
     const MeshBuffers *GetOrCreateMeshBuffers(ModelManager::ModelHandle meshHandle) {
+        const auto currentVersion = ModelManager::GetModelDataVersion(meshHandle);
         auto it = meshBuffers_.find(meshHandle);
-        if (it != meshBuffers_.end()) return it->second.get();
+        if (it != meshBuffers_.end() && it->second->sourceDataVersion == currentVersion) return it->second.get();
 
         const auto &modelData = ModelManager::GetModelData(meshHandle);
         if (modelData.GetVertexCount() == 0 || modelData.GetIndexCount() == 0) return nullptr;
@@ -73,6 +79,7 @@ public:
         const auto &srcIndices = modelData.GetIndices();
 
         auto buffers = std::make_unique<MeshBuffers>();
+        buffers->sourceDataVersion = currentVersion;
         buffers->vertexCount = modelData.GetVertexCount();
         buffers->indexCount = modelData.GetIndexCount();
         buffers->vertexBuffer = std::make_unique<VertexBufferResource>(
@@ -105,7 +112,8 @@ public:
         }
 
         auto *raw = buffers.get();
-        meshBuffers_.emplace(meshHandle, std::move(buffers));
+        // 既存キャッシュが古いデータ（sourceDataVersion不一致）で残っている場合はここで置き換える
+        meshBuffers_.insert_or_assign(meshHandle, std::move(buffers));
         return raw;
     }
 

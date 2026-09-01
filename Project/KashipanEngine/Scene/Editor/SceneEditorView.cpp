@@ -35,6 +35,7 @@
 #include "Objects/Components/Render/SkinnedMeshRenderer.h"
 #include "Objects/Components/Render/SpriteRenderer.h"
 #include "Objects/Components/Render/TextRenderer.h"
+#include "Objects/Components/Render/TilemapRenderer.h"
 #include "Objects/Components/Collider/ICollider.h"
 #include "Objects/Components/Collider/RayCollider.h"
 #include "Objects/Components/Transform.h"
@@ -346,6 +347,19 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     // （Ctrl+C/Ctrl+V/Ctrl+Shift+V/Ctrl+D）で選択中オブジェクトを操作できるようにする
     if (hierarchy) hierarchy->HandleKeyboardShortcuts();
 
+    // TilemapRendererのタイルペイントツールは、選択中オブジェクトが単体でTilemapRendererを
+    // 持つ場合のみ有効化できる。対象外になったら自動でトグルを解除する
+    TilemapRenderer *paintableTilemap = nullptr;
+    EmptyObject *paintableOwner = nullptr;
+    if (selectedObjects.size() == 1) {
+        EmptyObject *only = *selectedObjects.begin();
+        if (auto *tilemap = only ? only->GetComponent<TilemapRenderer>() : nullptr) {
+            paintableTilemap = tilemap;
+            paintableOwner = only;
+        }
+    }
+    if (!paintableTilemap) tilemapPaintActive_ = false;
+
     //--------- ツールバー（項目数が増えてきたため、メニューバーでまとめて表示する） ---------//
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu(TranslationLabel("editor.sceneview.tab.gizmo"))) {
@@ -453,6 +467,11 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
             }
             ImGui::EndMenu();
         }
+
+        if (ImGui::BeginMenu(TranslationLabel("editor.sceneview.tab.tilepaint"))) {
+            ShowTilemapPaintToolbar(paintableTilemap);
+            ImGui::EndMenu();
+        }
         ImGui::EndMenuBar();
     }
 
@@ -496,8 +515,13 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     //--------- ギズモ操作切り替えのショートカットキー（W:移動 / E:回転 / R:拡縮） ---------//
     HandleGizmoShortcuts(isSceneViewHovered);
 
+    //--------- タイルペイントツール（有効時はクリックが常にペイントになるため、通常の
+    //          オブジェクトピッキング・ギズモ操作は行わない） ---------//
+    const bool tilemapPaintConsumedInput = tilemapPaintActive_ && paintableTilemap
+        && HandleTilemapPaint(paintableOwner, paintableTilemap, commands, imagePos, drawSize);
+
     //--------- クリックによるオブジェクト選択 ---------//
-    HandleObjectPicking(hierarchy, imagePos, drawSize);
+    if (!tilemapPaintConsumedInput) HandleObjectPicking(hierarchy, imagePos, drawSize);
 
     // グリッド線・当たり判定のワイヤーフレームは screenBuffer_ へGPUで直接描画される
     // （UpdateEditorDebugDraw で設定済み。DebugGrid/DebugLinesパイプライン参照）
@@ -518,8 +542,8 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     // 2D/3Dどちらのカメラアイコンを出すかはDrawCameraMarkers内部で表示モードに応じて絞り込む
     if (showCameraMarkers_) DrawCameraMarkers(imagePos, drawSize);
 
-    //--------- ImGuizmo によるギズモ表示 ---------//
-    ShowGizmo(selectedObjects, commands, imagePos, drawSize);
+    //--------- ImGuizmo によるギズモ表示（タイルペイント中は表示・操作しない） ---------//
+    if (!(tilemapPaintActive_ && paintableTilemap)) ShowGizmo(selectedObjects, commands, imagePos, drawSize);
 
     ImGui::End();
 }
@@ -851,6 +875,27 @@ Vector3 TransformPoint(const Vector3 &p, const Matrix4x4 &m) {
     return Vector3(x / w, y / w, z / w);
 }
 
+/// @brief (x0,y0)から(x1,y1)までの格子セルをBresenhamのアルゴリズムで列挙し、visitへ順に渡す
+/// @details タイルペイントのドラッグ中、1フレームでマウスが複数セル分動いた場合に塗り残しの
+///          隙間ができないよう、前フレームのセルから今フレームのセルまでを線で補間するために使う
+template <typename Visitor>
+void WalkGridLine(int x0, int y0, int x1, int y1, Visitor &&visit) {
+    const int dx = std::abs(x1 - x0);
+    const int dy = -std::abs(y1 - y0);
+    const int sx = (x0 < x1) ? 1 : -1;
+    const int sy = (y0 < y1) ? 1 : -1;
+    int err = dx + dy;
+    int x = x0;
+    int y = y0;
+    while (true) {
+        visit(x, y);
+        if (x == x1 && y == y1) break;
+        const int e2 = 2 * err;
+        if (e2 >= dy) { err += dy; x += sx; }
+        if (e2 <= dx) { err += dx; y += sy; }
+    }
+}
+
 /// @brief 線分（origin + dir*t, t∈[0,1]）と三角形の交差判定（Möller–Trumbore法、両面判定）
 /// @param outT 交差した場合、線分上のパラメータt（0=始点、1=終点）
 bool SegmentIntersectsTriangle(const Vector3 &origin, const Vector3 &dir,
@@ -1163,6 +1208,146 @@ Vector3 SceneEditorView::ComputeCursorWorldPosition(const ImVec2 &screenPos, con
     // 地面平面とも交差しない場合（真上/真下を向いている等）は、カメラから現在の注視距離だけ進めた点にする
     const Vector3 rayDirNormalized = rayDir.Length() > 1e-6f ? rayDir.Normalize() : Vector3(0.0f, 0.0f, 1.0f);
     return cameraEye_ + rayDirNormalized * distance_;
+}
+
+bool SceneEditorView::ComputeTilemapCellUnderCursor(EmptyObject *owner, TilemapRenderer *tilemap, const ImVec2 &screenPos,
+    const ImVec2 &imagePos, const ImVec2 &imageSize, int &outX, int &outY) const {
+    if (!owner || !tilemap || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return false;
+    auto *transform = owner->GetComponent<Transform>();
+    if (!transform) return false;
+
+    // クリック位置からカメラの近平面→遠平面を貫くワールド空間のレイを作る（RaycastSceneMeshesと同じ式）
+    const float ndcX = ((screenPos.x - imagePos.x) / imageSize.x) * 2.0f - 1.0f;
+    const float ndcY = -(((screenPos.y - imagePos.y) / imageSize.y) * 2.0f - 1.0f);
+    const Matrix4x4 invViewProjection = (GetActiveView() * GetActiveProjection()).Inverse();
+    const Vector3 rayStart = UnprojectNdc(invViewProjection, ndcX, ndcY, 0.0f);
+    const Vector3 rayEnd = UnprojectNdc(invViewProjection, ndcX, ndcY, 1.0f);
+
+    // レイをTilemapRendererのローカル空間（メッシュが生成されるローカルZ=0平面）へ変換して交点を求める
+    const Matrix4x4 invWorld = transform->GetWorldMatrix().Inverse();
+    const Vector3 localStart = TransformPoint(rayStart, invWorld);
+    const Vector3 localEnd = TransformPoint(rayEnd, invWorld);
+    const Vector3 localDir = localEnd - localStart;
+    if (std::abs(localDir.z) < 1e-8f) return false; // レイがZ=0平面とほぼ平行
+    const float t = -localStart.z / localDir.z;
+    if (t < 0.0f || t > 1.0f) return false; // 近平面〜遠平面の間で交差しない
+
+    const float localX = localStart.x + localDir.x * t;
+    const float localY = localStart.y + localDir.y * t;
+
+    const Vector2 &tileSize = tilemap->GetTileSize();
+    if (tileSize.x <= 0.0f || tileSize.y <= 0.0f) return false;
+    const int cellX = static_cast<int>(std::floor(localX / tileSize.x));
+    const int cellY = static_cast<int>(std::floor(localY / tileSize.y));
+    if (cellX < 0 || cellY < 0 || cellX >= tilemap->GetGridWidth() || cellY >= tilemap->GetGridHeight()) return false;
+
+    outX = cellX;
+    outY = cellY;
+    return true;
+}
+
+void SceneEditorView::DrawTilemapCellHighlight(EmptyObject *owner, TilemapRenderer *tilemap, int cellX, int cellY,
+    const ImVec2 &imagePos, const ImVec2 &imageSize, ImU32 color) const {
+    auto *transform = owner ? owner->GetComponent<Transform>() : nullptr;
+    if (!transform) return;
+    const Matrix4x4 &world = transform->GetWorldMatrix();
+    const Vector2 &tileSize = tilemap->GetTileSize();
+
+    const float x0 = static_cast<float>(cellX) * tileSize.x;
+    const float y0 = static_cast<float>(cellY) * tileSize.y;
+    const float x1 = x0 + tileSize.x;
+    const float y1 = y0 + tileSize.y;
+    const Vector3 localCorners[4] = {
+        Vector3(x0, y0, 0.0f), Vector3(x0, y1, 0.0f), Vector3(x1, y1, 0.0f), Vector3(x1, y0, 0.0f),
+    };
+
+    ImVec2 screenCorners[4];
+    for (int i = 0; i < 4; ++i) {
+        if (!ProjectToImage(TransformPoint(localCorners[i], world), imagePos, imageSize, screenCorners[i], false)) return;
+    }
+
+    auto *drawList = ImGui::GetWindowDrawList();
+    drawList->PushClipRect(imagePos, ImVec2(imagePos.x + imageSize.x, imagePos.y + imageSize.y), true);
+    drawList->AddQuad(screenCorners[0], screenCorners[1], screenCorners[2], screenCorners[3], color, 2.0f);
+    drawList->PopClipRect();
+}
+
+bool SceneEditorView::HandleTilemapPaint(EmptyObject *owner, TilemapRenderer *tilemap, SceneEditorCommands *commands,
+    const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (!owner || !tilemap) return false;
+    const bool isHovered = ImGui::IsItemHovered();
+
+    int cellX = 0;
+    int cellY = 0;
+    const bool hasHoverCell = isHovered && ComputeTilemapCellUnderCursor(owner, tilemap, ImGui::GetMousePos(), imagePos, imageSize, cellX, cellY);
+
+    if (hasHoverCell) {
+        constexpr ImU32 kHighlightColor = IM_COL32(255, 220, 60, 255);
+        DrawTilemapCellHighlight(owner, tilemap, cellX, cellY, imagePos, imageSize, kHighlightColor);
+    }
+
+    if (hasHoverCell && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+        // ストローク開始: Undo用に変更前のJSONを1回だけ取得する（ギズモ操作開始時と同じパターン）
+        isPaintStrokeActive_ = true;
+        paintStrokeBeforeJson_ = owner->SaveComponentToJson(tilemap);
+        tilemap->SetTile(cellX, cellY, paintBrushTileType_);
+        lastPaintCellX_ = cellX;
+        lastPaintCellY_ = cellY;
+    } else if (isPaintStrokeActive_ && hasHoverCell && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+        // ドラッグ中: 前フレームのセルから今フレームのセルまでを線で補間して塗る
+        WalkGridLine(lastPaintCellX_, lastPaintCellY_, cellX, cellY, [&](int x, int y) {
+            tilemap->SetTile(x, y, paintBrushTileType_);
+        });
+        lastPaintCellX_ = cellX;
+        lastPaintCellY_ = cellY;
+    }
+
+    if (isPaintStrokeActive_ && ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+        // ストローク終了: 変更があった場合のみUndo履歴へ積む（ギズモ操作終了時と同じ「適用済みの
+        // 操作を積む」パターン。PushExecutedはSceneEditorCommands.h参照）
+        isPaintStrokeActive_ = false;
+        if (commands) {
+            JSON after = owner->SaveComponentToJson(tilemap);
+            if (after != paintStrokeBeforeJson_) {
+                commands->PushExecuted(std::make_unique<ComponentEditCommand>(owner, tilemap, paintStrokeBeforeJson_, after));
+            }
+        }
+    }
+
+    return hasHoverCell || isPaintStrokeActive_;
+}
+
+void SceneEditorView::ShowTilemapPaintToolbar(TilemapRenderer *paintableTilemap) {
+    ImGui::BeginDisabled(paintableTilemap == nullptr);
+    if (ImGui::Checkbox(TranslationLabel("editor.sceneview.tilepaint.enable"), &tilemapPaintActive_)) {
+        // トグル切り替えの瞬間にストローク状態が残らないようにする
+        isPaintStrokeActive_ = false;
+    }
+    ImGui::EndDisabled();
+
+    if (!paintableTilemap) {
+        ImGui::TextUnformatted(TranslationC("editor.sceneview.tilepaint.no_selection"));
+        return;
+    }
+
+    // タイル種類が削除される等でブラシのインデックスが範囲外になった場合は安全な値へ戻す
+    if (paintBrushTileType_ >= paintableTilemap->GetTileTypeCount()) {
+        paintBrushTileType_ = (paintableTilemap->GetTileTypeCount() > 0) ? 0 : -1;
+    }
+
+    ImGui::SameLine();
+    ImGui::TextUnformatted(TranslationC("editor.sceneview.tilepaint.brush"));
+    ImGui::SameLine();
+    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.tilepaint.erase"), paintBrushTileType_ == -1)) {
+        paintBrushTileType_ = -1;
+    }
+    for (int i = 0; i < paintableTilemap->GetTileTypeCount(); ++i) {
+        ImGui::SameLine();
+        ImGui::PushID(i);
+        const std::string label = std::to_string(i);
+        if (ImGui::RadioButton(label.c_str(), paintBrushTileType_ == i)) paintBrushTileType_ = i;
+        ImGui::PopID();
+    }
 }
 
 void SceneEditorView::HandleObjectPicking(SceneObjectHierarchy *hierarchy, const ImVec2 &imagePos, const ImVec2 &imageSize) {

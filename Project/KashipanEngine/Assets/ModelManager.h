@@ -161,10 +161,27 @@ public:
     ModelHandle LoadModel(const std::string& filePath);
 
     /// @brief 頂点・インデックス配列からメッシュを登録する（プリミティブメッシュ等の動的生成用）
-    /// @details 実ファイルを伴わないメッシュを登録する。同名で登録済みの場合は既存のハンドルを返す。
+    /// @details 実ファイルを伴わないメッシュを登録する。同名で登録済みの場合は既存のハンドルを返す
+    ///          （その場合、頂点・インデックスデータは更新されない。更新したい場合はUpdateProceduralMeshを使うこと）。
     /// @param name 登録名（重複防止のためファイル名・アセットパスの両方として使われる）
     /// @return 登録したメッシュのハンドル（失敗時は `kInvalidHandle`）
     static ModelHandle RegisterProceduralMesh(const std::string& name, std::vector<ModelData::Vertex> vertices, std::vector<std::uint32_t> indices);
+
+    /// @brief RegisterProceduralMeshで登録済みのメッシュの頂点・インデックスを差し替える（TilemapRenderer等、
+    ///        実行時に頻繁にメッシュを再構築するコンポーネント向け）
+    /// @details ハンドル自体は変わらないため、MeshFilter等が保持するハンドルの再設定は不要。
+    ///          Renderer側のGPUバッファキャッシュ（ResourceContainer::MeshBuffers）は
+    ///          GetModelDataVersion()の値を見て自動的に再構築されるため、呼び出し側はGPU側の
+    ///          後始末を意識する必要はない。
+    /// @return 成功した場合true（handleが未登録の場合false）
+    static bool UpdateProceduralMesh(ModelHandle handle, std::vector<ModelData::Vertex> vertices, std::vector<std::uint32_t> indices);
+
+    /// @brief 指定ハンドルのモデルデータの版数を取得する（UpdateProceduralMeshのたびに増加する）
+    /// @details Renderer側のGPUバッファキャッシュが、CPU側データの更新を検知して再構築すべきか
+    ///          判定するために使う（ResourceContainer::GetOrCreateMeshBuffers参照）。
+    ///          ファイル読み込みモデル等、一度登録されたら変化しないモデルは常に1を返す。
+    /// @return 版数（handleが未登録の場合0）
+    static std::uint64_t GetModelDataVersion(ModelHandle handle);
 
     /// @brief ファイル名単体からモデルハンドルを取得
     static ModelHandle GetModelHandleFromFileName(const std::string& fileName);

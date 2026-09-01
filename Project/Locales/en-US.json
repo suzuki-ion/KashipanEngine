@@ -1396,6 +1396,23 @@
 		//--------- component.texturesource ---------//
 		"component.texturesource.texture": "Texture",
 
+		//--------- component.tilemaprenderer ---------//
+		"component.tilemaprenderer.add_tile_type": "Add Tile Type",
+		"component.tilemaprenderer.apply_cells_from_text": "Apply Text to Cells",
+		"component.tilemaprenderer.cells_bulk_edit": "Bulk Edit Cells (row=Y, comma-separated=X, -1=empty)",
+		"component.tilemaprenderer.connection_group": "Connection Group",
+		"component.tilemaprenderer.desc_1": "Cells only connect to neighbors sharing the same connection group. Each tile type expects a 4x4 (16-pattern) autotile block in the tileset image.",
+		"component.tilemaprenderer.grid_height": "Grid Height",
+		"component.tilemaprenderer.grid_width": "Grid Width",
+		"component.tilemaprenderer.load_cells_to_text": "Load Cells to Text",
+		"component.tilemaprenderer.material": "Material",
+		"component.tilemaprenderer.pipeline": "Pipeline",
+		"component.tilemaprenderer.remove_tile_type": "Remove This Tile Type",
+		"component.tilemaprenderer.tile_pixel_size": "Tile Pixel Size",
+		"component.tilemaprenderer.tile_size": "Tile World Size",
+		"component.tilemaprenderer.tile_types": "Tile Types",
+		"component.tilemaprenderer.tileset_origin_px": "Tileset Origin (px)",
+
 		//--------- component.uibutton ---------//
 		"component.uibutton.desc": "Draws nothing itself. Uses the rectangle of this object's SpriteRenderer sprite if present; otherwise, if a TextRenderer is present, uses its bounding rectangle (which changes dynamically with the displayed text).",
 		"component.uibutton.display_camera": "Display Camera",
@@ -1971,6 +1988,11 @@
 		"editor.sceneview.tab.camera": "Camera",
 		"editor.sceneview.tab.display": "Display",
 		"editor.sceneview.tab.gizmo": "Gizmo",
+		"editor.sceneview.tab.tilepaint": "Tile Paint",
+		"editor.sceneview.tilepaint.brush": "Brush:",
+		"editor.sceneview.tilepaint.enable": "Enable Tile Paint",
+		"editor.sceneview.tilepaint.erase": "Erase",
+		"editor.sceneview.tilepaint.no_selection": "Select a single object that has a TilemapRenderer.",
 		"editor.sceneview.window": "Scene View",
 
 		//--------- editor.scriptengine ---------//

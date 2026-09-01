@@ -43,7 +43,7 @@
                     "customData": {
                         "displayCameraObjectID": "a5805fc8-0f8c-4264-92fa-419ddc8f876c",
                         "fitMode": 2,
-                        "sourceObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
+                        "sourceObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -105,7 +105,7 @@
                             "x": 0.5,
                             "y": 0.5
                         },
-                        "renderPriority": 0,
+                        "renderPriority": 1,
                         "targetObjectID": "02788331-11b3-451d-bad8-86c2e1f677aa"
                     },
                     "isActive": true,
@@ -118,9 +118,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "GameScreenViewport",
-        "objectID": "1236605c-fac3-49d2-b9b7-3403ec07b5d9",
+        "name": "UIScreenViewport",
+        "objectID": "7b68ff43-0a88-4264-a83a-b4f59403cbb0",
         "tag": ""
     },
-    "siblingIndex": 9000
+    "siblingIndex": 12000
 }

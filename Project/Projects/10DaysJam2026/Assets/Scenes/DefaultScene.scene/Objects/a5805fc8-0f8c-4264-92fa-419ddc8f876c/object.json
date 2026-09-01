@@ -45,12 +45,15 @@
             {
                 "data": {
                     "customData": {
-                        "bindVariableNames": [],
+                        "bindVariableNames": [
+                            "Vertex:gCamera2D",
+                            "Pixel:gCamera2D"
+                        ],
                         "pipelineName": "",
                         "targetObjectID": "02788331-11b3-451d-bad8-86c2e1f677aa"
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 950,
                     "tag": ""
                 },
                 "type": "CameraRenderer"
@@ -63,5 +66,5 @@
         "objectID": "a5805fc8-0f8c-4264-92fa-419ddc8f876c",
         "tag": ""
     },
-    "siblingIndex": 7000
+    "siblingIndex": 3000
 }

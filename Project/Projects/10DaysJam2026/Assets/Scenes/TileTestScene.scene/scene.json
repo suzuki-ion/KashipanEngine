@@ -17,6 +17,15 @@
                 "tag": ""
             },
             "type": "SceneScriptEngine"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1,
+                "tag": ""
+            },
+            "type": "SceneObjectCollider"
         }
     ],
     "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",

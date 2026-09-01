@@ -4,6 +4,7 @@
             {
                 "data": {
                     "customData": {
+                        "parent": "fa541792-508c-47a7-9dc2-105d4336681f",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -11,13 +12,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 1280.0,
-                            "y": 720.0,
-                            "z": 1.0
+                            "x": 2.0,
+                            "y": 4.999589443206787,
+                            "z": 0.999962568283081
                         },
                         "translate": {
-                            "x": 0.0,
-                            "y": 0.0,
+                            "x": 34.0,
+                            "y": 235.99887084960938,
                             "z": 0.0
                         }
                     },
@@ -41,42 +42,21 @@
             {
                 "data": {
                     "customData": {
-                        "displayCameraObjectID": "a5805fc8-0f8c-4264-92fa-419ddc8f876c",
-                        "fitMode": 2,
-                        "sourceObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
+                        "textureAssetPath": "App/Sprite/UI/hpBar.png"
                     },
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
                 },
-                "type": "ScreenBufferViewport"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "anchorPoint": {
-                            "x": 0.5,
-                            "y": 0.5
-                        },
-                        "cameraObjectID": "a5805fc8-0f8c-4264-92fa-419ddc8f876c",
-                        "offset": {
-                            "x": 0.0,
-                            "y": 0.0
-                        }
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "ScreenAnchor"
+                "type": "TextureSource"
             },
             {
                 "data": {
                     "customData": {
                         "allowInstancing": true,
                         "anchor": {
-                            "x": 0.5,
-                            "y": 0.5
+                            "x": 0.0,
+                            "y": 1.0
                         },
                         "instanceColor": {
                             "w": 1.0,
@@ -92,7 +72,7 @@
                         },
                         "instanceUvRotation": 0.0,
                         "instanceUvScale": {
-                            "x": 1.0,
+                            "x": 0.5,
                             "y": 1.0
                         },
                         "instanceUvTranslate": {
@@ -106,10 +86,10 @@
                             "y": 0.5
                         },
                         "renderPriority": 0,
-                        "targetObjectID": "02788331-11b3-451d-bad8-86c2e1f677aa"
+                        "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 900,
                     "tag": ""
                 },
                 "type": "SpriteRenderer"
@@ -118,9 +98,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "GameScreenViewport",
-        "objectID": "1236605c-fac3-49d2-b9b7-3403ec07b5d9",
+        "name": "HP_bar7",
+        "objectID": "47b45559-9a8b-498d-b7a8-1dfe527b6a1e",
         "tag": ""
     },
-    "siblingIndex": 9000
+    "siblingIndex": 7000
 }

@@ -26,32 +26,14 @@
                     "tag": ""
                 },
                 "type": "Transform"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "height": 240,
-                        "isShowViewer": true,
-                        "name": "GameScreen",
-                        "saveDirectory": "Screenshots",
-                        "saveFileNamePrefix": "Screenshot",
-                        "saveFormat": "png",
-                        "viewerId": 10841751372075025256,
-                        "width": 256
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "ScreenBufferObject"
             }
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "GameScreen",
-        "objectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d",
+        "name": "GameUI",
+        "objectID": "fa541792-508c-47a7-9dc2-105d4336681f",
         "tag": ""
     },
-    "siblingIndex": 4000
+    "siblingIndex": 13000
 }

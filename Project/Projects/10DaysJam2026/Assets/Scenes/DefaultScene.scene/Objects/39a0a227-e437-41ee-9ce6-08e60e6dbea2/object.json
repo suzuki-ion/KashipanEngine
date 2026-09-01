@@ -30,20 +30,17 @@
             {
                 "data": {
                     "customData": {
-                        "aspectRatio": 1.7777777910232544,
-                        "autoSyncAspectRatio": true,
-                        "enableJitter": false,
+                        "autoSyncSize": true,
                         "farClip": 1000.0,
-                        "fovY": 0.44999998807907104,
-                        "nearClip": 0.10000000149011612,
-                        "orthoSize": 10.0,
-                        "orthographic": false
+                        "height": 240.0,
+                        "nearClip": 0.0,
+                        "width": 256.0
                     },
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
                 },
-                "type": "Camera3D"
+                "type": "Camera2D"
             },
             {
                 "data": {
@@ -53,10 +50,10 @@
                             "Pixel:gCamera3D"
                         ],
                         "pipelineName": "",
-                        "targetObjectID": "3003824d-e760-4e18-9136-e3e2a87580fb"
+                        "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 950,
                     "tag": ""
                 },
                 "type": "CameraRenderer"
@@ -65,9 +62,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Screen Buffer Camera 3D",
-        "objectID": "707a99ba-9d13-45ff-9ab1-08f40a574fb1",
+        "name": "UIScreenCamera",
+        "objectID": "39a0a227-e437-41ee-9ce6-08e60e6dbea2",
         "tag": ""
     },
-    "siblingIndex": 5000
+    "siblingIndex": 11000
 }

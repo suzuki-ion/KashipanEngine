@@ -32,9 +32,9 @@
                     "customData": {
                         "autoSyncSize": true,
                         "farClip": 1000.0,
-                        "height": 720.0,
+                        "height": 240.0,
                         "nearClip": 0.0,
-                        "width": 1280.0
+                        "width": 256.0
                     },
                     "isActive": true,
                     "priority": 1,
@@ -53,7 +53,7 @@
                         "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 950,
                     "tag": ""
                 },
                 "type": "CameraRenderer"
@@ -62,7 +62,7 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Screen Buffer Camera 2D",
+        "name": "GameScreenCamera",
         "objectID": "a1cc5cd8-4c52-4adb-be14-ef8ad4465a02",
         "tag": ""
     },

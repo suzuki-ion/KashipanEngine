@@ -30,14 +30,14 @@
             {
                 "data": {
                     "customData": {
-                        "height": 720,
-                        "isShowViewer": false,
-                        "name": "ScreenBuffer_2",
+                        "height": 240,
+                        "isShowViewer": true,
+                        "name": "UIScreen",
                         "saveDirectory": "Screenshots",
                         "saveFileNamePrefix": "Screenshot",
                         "saveFormat": "png",
-                        "viewerId": 1815138768314544076,
-                        "width": 1280
+                        "viewerId": 11073279729237724253,
+                        "width": 256
                     },
                     "isActive": true,
                     "priority": 1,
@@ -49,9 +49,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Screen Buffer 3D Object",
-        "objectID": "3003824d-e760-4e18-9136-e3e2a87580fb",
+        "name": "UIScreen",
+        "objectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823",
         "tag": ""
     },
-    "siblingIndex": 3000
+    "siblingIndex": 10000
 }

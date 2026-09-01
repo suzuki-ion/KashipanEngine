@@ -22,7 +22,7 @@
                         }
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 0,
                     "tag": ""
                 },
                 "type": "Transform"
@@ -30,32 +30,326 @@
             {
                 "data": {
                     "customData": {
+                        "meshAssetPath": "__TilemapRendererMesh_1557114349200"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "autotileMode": 1,
                         "cells": [
+                            0,
                             -1,
                             -1,
-                            1,
                             -1,
                             -1,
                             -1,
-                            1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
                             -1,
                             0,
                             0,
-                            1,
-                            1,
+                            0,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
                             0,
                             0,
-                            1,
-                            1
+                            0,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            0,
+                            0,
+                            0,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1,
+                            -1
                         ],
+                        "eightDirLayout": {
+                            "bottomLeftInner": {
+                                "x": 2.0,
+                                "y": 3.0
+                            },
+                            "bottomLeftOuter": {
+                                "x": 0.0,
+                                "y": 3.0
+                            },
+                            "bottomRightInner": {
+                                "x": 1.0,
+                                "y": 3.0
+                            },
+                            "bottomRightOuter": {
+                                "x": 3.0,
+                                "y": 3.0
+                            },
+                            "crossTilePos": {
+                                "x": 1.0,
+                                "y": 0.0
+                            },
+                            "isolatedTilePos": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "topLeftInner": {
+                                "x": 2.0,
+                                "y": 4.0
+                            },
+                            "topLeftOuter": {
+                                "x": 0.0,
+                                "y": 2.0
+                            },
+                            "topRightInner": {
+                                "x": 1.0,
+                                "y": 4.0
+                            },
+                            "topRightOuter": {
+                                "x": 3.0,
+                                "y": 2.0
+                            }
+                        },
                         "generateColliders": false,
-                        "gridHeight": 4,
-                        "gridWidth": 4,
-                        "materialName": "New Material",
+                        "gridHeight": 16,
+                        "gridWidth": 16,
+                        "materialName": "Dot",
                         "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
                         "tilePixelSize": {
-                            "x": 32.0,
-                            "y": 32.0
+                            "x": 64.0,
+                            "y": 64.0
                         },
                         "tileSize": {
                             "x": 1.0,
@@ -71,22 +365,11 @@
                                     "x": 0.0,
                                     "y": 0.0
                                 }
-                            },
-                            {
-                                "connectsToTileTypes": [
-                                    0,
-                                    1
-                                ],
-                                "isSolid": true,
-                                "tilesetOriginPx": {
-                                    "x": 0.0,
-                                    "y": 0.0
-                                }
                             }
                         ]
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 2,
                     "tag": ""
                 },
                 "type": "TilemapRenderer"
@@ -94,17 +377,6 @@
             {
                 "data": {
                     "customData": {
-                        "meshAssetPath": "__TilemapRendererMesh_2317340315680"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "MeshFilter"
-            },
-            {
-                "data": {
-                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,
@@ -131,7 +403,7 @@
                             "x": 0.0,
                             "y": 0.0
                         },
-                        "materialName": "New Material",
+                        "materialName": "Dot",
                         "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
                         "pivot": {
                             "x": 0.5,
@@ -141,51 +413,7 @@
                         "targetObjectID": ""
                     },
                     "isActive": true,
-                    "priority": 900,
-                    "tag": ""
-                },
-                "type": "SpriteRenderer"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "allowInstancing": true,
-                        "anchor": {
-                            "x": 0.5,
-                            "y": 0.5
-                        },
-                        "instanceColor": {
-                            "w": 1.0,
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
-                        },
-                        "instanceColorBlendMode": 1,
-                        "instanceUvCombineMode": 0,
-                        "instanceUvPivot": {
-                            "x": 0.5,
-                            "y": 0.5
-                        },
-                        "instanceUvRotation": 0.0,
-                        "instanceUvScale": {
-                            "x": 1.0,
-                            "y": 1.0
-                        },
-                        "instanceUvTranslate": {
-                            "x": 0.0,
-                            "y": 0.0
-                        },
-                        "materialName": "New Material",
-                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
-                        "pivot": {
-                            "x": 0.5,
-                            "y": 0.5
-                        },
-                        "renderPriority": 0,
-                        "targetObjectID": ""
-                    },
-                    "isActive": true,
-                    "priority": 900,
+                    "priority": 4,
                     "tag": ""
                 },
                 "type": "SpriteRenderer"

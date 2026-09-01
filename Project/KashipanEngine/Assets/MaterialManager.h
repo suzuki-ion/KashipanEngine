@@ -33,6 +33,8 @@ public:
         float uvRotation = 0.0f;
         /// @brief UV座標のスケール
         Vector2 uvScale{ 1.0f, 1.0f };
+        /// @brief UV回転の中心座標（UV基準。既定は中心(0.5, 0.5)）
+        Vector2 uvPivot{ 0.5f, 0.5f };
         TextureManager::TextureHandle textureHandle = TextureManager::kInvalidHandle;
         SamplerManager::SamplerHandle samplerHandle = SamplerManager::kInvalidHandle;
         float shininess = 32.0f;
@@ -54,14 +56,21 @@ public:
         /// @brief テクスチャファイル名（読み込み時に未解決だった場合の遅延解決用）
         std::string textureFileName;
 
-        /// @brief uvTranslate/uvRotation/uvScaleからシェーダーへ渡すUV変換行列を組み立てる
+        /// @brief uvTranslate/uvRotation/uvScale/uvPivotからシェーダーへ渡すUV変換行列を組み立てる
+        /// @details 拡縮はUV原点(0,0)基準のまま、回転のみuvPivotを中心に行う
+        ///          （原点基準に平行移動→回転→逆平行移動を挟むことで実現する）
         Matrix4x4 MakeUVTransformMatrix() const {
-            Matrix4x4 result;
-            result.MakeAffine(
-                Vector3(uvScale.x, uvScale.y, 1.0f),
-                Vector3(0.0f, 0.0f, uvRotation),
-                Vector3(uvTranslate.x, uvTranslate.y, 0.0f));
-            return result;
+            Matrix4x4 scale;
+            scale.MakeScale(Vector3(uvScale.x, uvScale.y, 1.0f));
+            Matrix4x4 toPivot;
+            toPivot.MakeTranslate(Vector3(-uvPivot.x, -uvPivot.y, 0.0f));
+            Matrix4x4 rotate;
+            rotate.MakeRotateZ(uvRotation);
+            Matrix4x4 fromPivot;
+            fromPivot.MakeTranslate(Vector3(uvPivot.x, uvPivot.y, 0.0f));
+            Matrix4x4 translate;
+            translate.MakeTranslate(Vector3(uvTranslate.x, uvTranslate.y, 0.0f));
+            return scale * toPivot * rotate * fromPivot * translate;
         }
 
         /// @brief 未解決のテクスチャハンドルをファイル名から解決する

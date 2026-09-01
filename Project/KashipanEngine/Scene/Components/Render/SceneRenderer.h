@@ -11,6 +11,7 @@
 #include "Assets/MaterialManager.h"
 #include "Graphics/Renderer/EditorDebugDraw.h"
 #include "Math/Matrix4x4.h"
+#include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
 #include "Scene/Components/SceneComponentHeader.h"
@@ -62,6 +63,18 @@ public:
         /// @brief instanceColorの適用方法（各RendererのColorBlendModeの値。
         ///        0=Override,1=Multiply,2=Add,3=Subtract）
         int instanceColorBlendMode = 1;
+        /// @brief オブジェクト単位のUVオフセット（MeshRenderer/SpriteRenderer/SkinnedMeshRendererの
+        ///        InstanceUvTranslate。マテリアルのUV変換とinstanceUvCombineModeで合成される。既定(0,0)）
+        Vector2 instanceUvTranslate{ 0.0f, 0.0f };
+        /// @brief オブジェクト単位のUV回転（ラジアン。既定0）
+        float instanceUvRotation = 0.0f;
+        /// @brief オブジェクト単位のUVスケール（既定(1,1)）
+        Vector2 instanceUvScale{ 1.0f, 1.0f };
+        /// @brief オブジェクト単位のUV回転の中心座標（UV基準。既定は中心(0.5, 0.5)）
+        Vector2 instanceUvPivot{ 0.5f, 0.5f };
+        /// @brief instanceUvTranslate/Rotation/ScaleとマテリアルのUV変換の合成方法（各RendererのUVCombineModeの値。
+        ///        0=MaterialThenInstance,1=InstanceThenMaterial,2=InstanceOnly）
+        int instanceUvCombineMode = 0;
         /// @brief オブジェクト固有のシード値（EmptyObject::GetObjectID()から導出）。ドローコールを
         ///        またいでもシーン内で一意になるため、SV_InstanceIDのようなドローコールローカルな値や
         ///        ワールド座標とは異なり、原点が一致する別オブジェクト同士でも確実に異なる値になる。

@@ -73,11 +73,22 @@ public:
         Subtract,      ///< マテリアルの色から減算する
     };
 
+    /// @brief インスタンス単位のUV変換とマテリアルのUV変換（Material::uvTranslate等）の合成方法
+    enum class UVCombineMode : int {
+        MaterialThenInstance = 0, ///< 既定。マテリアルの基本マッピングの上にインスタンスのUV変換を乗せる
+        InstanceThenMaterial,     ///< インスタンスのUV変換を基準とし、マテリアルのUV変換を後から適用する
+        InstanceOnly,             ///< マテリアルのUV変換を無視し、インスタンスのUV変換のみを使う
+    };
+
     OBJECT_COMPONENT_CONSTRUCTOR(SkinnedMeshRenderer, 0xFF,
         SetUpdatePriority(900);
         ADD_MEMBER_VARIABLE(pipelineName_);
         ADD_MEMBER_VARIABLE(castShadows_);
         ADD_MEMBER_VARIABLE(instanceColor_);
+        ADD_MEMBER_VARIABLE(instanceUvTranslate_);
+        ADD_MEMBER_VARIABLE(instanceUvRotation_);
+        ADD_MEMBER_VARIABLE(instanceUvScale_);
+        ADD_MEMBER_VARIABLE(instanceUvPivot_);
         ADD_MEMBER_VARIABLE(renderPriority_);
         ADD_MEMBER_VARIABLE(allowInstancing_);
     )
@@ -96,6 +107,11 @@ public:
         ptr->castShadows_ = castShadows_;
         ptr->instanceColor_ = instanceColor_;
         ptr->instanceColorBlendMode_ = instanceColorBlendMode_;
+        ptr->instanceUvTranslate_ = instanceUvTranslate_;
+        ptr->instanceUvRotation_ = instanceUvRotation_;
+        ptr->instanceUvScale_ = instanceUvScale_;
+        ptr->instanceUvPivot_ = instanceUvPivot_;
+        ptr->instanceUvCombineMode_ = instanceUvCombineMode_;
         ptr->renderPriority_ = renderPriority_;
         ptr->allowInstancing_ = allowInstancing_;
         return ptr;
@@ -111,6 +127,26 @@ public:
     /// @brief インスタンスカラーをマテリアルの色へ適用する方法を設定する
     void SetInstanceColorBlendMode(ColorBlendMode mode) noexcept { instanceColorBlendMode_ = mode; }
     ColorBlendMode GetInstanceColorBlendMode() const noexcept { return instanceColorBlendMode_; }
+
+    //==================================================
+    // インスタンスUV（オブジェクト単位のUV変換）
+    //==================================================
+
+    /// @brief オブジェクト単位のUVオフセットを設定する（マテリアルのUV変換とinstanceUvCombineMode_で合成される）
+    void SetInstanceUvTranslate(const Vector2 &translate) noexcept { instanceUvTranslate_ = translate; }
+    const Vector2 &GetInstanceUvTranslate() const noexcept { return instanceUvTranslate_; }
+    /// @brief オブジェクト単位のUV回転を設定する（ラジアン）
+    void SetInstanceUvRotation(float radians) noexcept { instanceUvRotation_ = radians; }
+    float GetInstanceUvRotation() const noexcept { return instanceUvRotation_; }
+    /// @brief オブジェクト単位のUVスケールを設定する
+    void SetInstanceUvScale(const Vector2 &scale) noexcept { instanceUvScale_ = scale; }
+    const Vector2 &GetInstanceUvScale() const noexcept { return instanceUvScale_; }
+    /// @brief オブジェクト単位のUV回転の中心座標を設定する（拡縮は常にUV原点基準。回転のみこの座標が中心になる）
+    void SetInstanceUvPivot(const Vector2 &pivot) noexcept { instanceUvPivot_ = pivot; }
+    const Vector2 &GetInstanceUvPivot() const noexcept { return instanceUvPivot_; }
+    /// @brief インスタンスUVとマテリアルのUV変換の合成方法を設定する
+    void SetInstanceUvCombineMode(UVCombineMode mode) noexcept { instanceUvCombineMode_ = mode; }
+    UVCombineMode GetInstanceUvCombineMode() const noexcept { return instanceUvCombineMode_; }
 
     //==================================================
     // 描画順・インスタンシング制御
@@ -340,6 +376,15 @@ private:
     /// @brief オブジェクト単位の色（マテリアルは共有したまま、この色をinstanceColorBlendMode_で適用する）
     Vector4 instanceColor_{ 1.0f, 1.0f, 1.0f, 1.0f };
     ColorBlendMode instanceColorBlendMode_ = ColorBlendMode::Multiply;
+    /// @brief オブジェクト単位のUVオフセット（マテリアルのUV変換とinstanceUvCombineMode_で合成される。既定(0,0)）
+    Vector2 instanceUvTranslate_{ 0.0f, 0.0f };
+    /// @brief オブジェクト単位のUV回転（ラジアン。既定0）
+    float instanceUvRotation_ = 0.0f;
+    /// @brief オブジェクト単位のUVスケール（既定(1,1)）
+    Vector2 instanceUvScale_{ 1.0f, 1.0f };
+    /// @brief オブジェクト単位のUV回転の中心座標（UV基準。既定は中心(0.5, 0.5)）
+    Vector2 instanceUvPivot_{ 0.5f, 0.5f };
+    UVCombineMode instanceUvCombineMode_ = UVCombineMode::MaterialThenInstance;
     /// @brief 描画順を制御する優先度（既定0。SceneRenderer::CompareSortableEntry参照）
     int renderPriority_ = 0;
     /// @brief 他のオブジェクトとのインスタンシング（バッチ結合）を許可するか（既定true。実質的に常にno-op）

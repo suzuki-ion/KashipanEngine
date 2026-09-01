@@ -107,6 +107,7 @@ bool LoadMaterialFromJSON(const std::string& filePath, MaterialManager::Material
         if (json.contains("uvScale") && json["uvScale"].is_object()) {
             outMaterial.uvScale = FromJSON<Vector2>(json["uvScale"]);
         }
+        outMaterial.uvPivot = json.contains("uvPivot") ? FromJSON<Vector2>(json["uvPivot"]) : Vector2(0.5f, 0.5f);
 
         // テクスチャハンドル
         // （この時点で対象テクスチャが存在しない場合はファイル名を保持しておき、
@@ -312,6 +313,7 @@ bool MaterialManager::SaveMaterial(MaterialHandle handle, const std::string &fil
     json["uvTranslate"] = ToJSON(material.uvTranslate);
     json["uvRotation"] = material.uvRotation;
     json["uvScale"] = ToJSON(material.uvScale);
+    json["uvPivot"] = ToJSON(material.uvPivot);
     // ハンドルが未解決の場合でも読み込み時のファイル名を保持して保存する
     std::string textureFile = TextureManager::GetTextureFileName(material.textureHandle);
     if (textureFile.empty()) textureFile = material.textureFileName;
@@ -622,6 +624,37 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
         material.uvRotation = uvRotationDeg * 3.14159265f / 180.0f;
     }
     ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_scale"), material.uvScale, { .vSpeed = 0.001f });
+    ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_pivot"), material.uvPivot, { .vSpeed = 0.001f });
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("%s", TranslationC("editor.materialmanager.desc_uv_pivot"));
+    }
+
+    // ピクセル基準（0～テクスチャの幅・高さ）でのUV編集。内部値（0～1のUV基準）と相互に連動する
+    {
+        const auto textureView = TextureManager::GetTextureView(material.textureHandle);
+        const float texWidth = static_cast<float>(textureView.GetWidth());
+        const float texHeight = static_cast<float>(textureView.GetHeight());
+        const bool hasTextureSize = texWidth > 0.0f && texHeight > 0.0f;
+
+        ImGui::BeginDisabled(!hasTextureSize);
+        ImGui::TextUnformatted(TranslationC("editor.materialmanager.uv_transform_pixel"));
+        Vector2 pxTranslate = hasTextureSize
+            ? Vector2(material.uvTranslate.x * texWidth, material.uvTranslate.y * texHeight) : Vector2::Zero();
+        if (ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_translate_pixel"), pxTranslate, { .vSpeed = 0.5f }) && hasTextureSize) {
+            material.uvTranslate = Vector2(pxTranslate.x / texWidth, pxTranslate.y / texHeight);
+        }
+        Vector2 pxScale = hasTextureSize
+            ? Vector2(material.uvScale.x * texWidth, material.uvScale.y * texHeight) : Vector2::Zero();
+        if (ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_scale_pixel"), pxScale, { .vSpeed = 0.5f }) && hasTextureSize) {
+            material.uvScale = Vector2(pxScale.x / texWidth, pxScale.y / texHeight);
+        }
+        Vector2 pxPivot = hasTextureSize
+            ? Vector2(material.uvPivot.x * texWidth, material.uvPivot.y * texHeight) : Vector2::Zero();
+        if (ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_pivot_pixel"), pxPivot, { .vSpeed = 0.5f }) && hasTextureSize) {
+            material.uvPivot = Vector2(pxPivot.x / texWidth, pxPivot.y / texHeight);
+        }
+        ImGui::EndDisabled();
+    }
 
     //--------- カスタムシェーダー用の追加パラメータ ---------//
     // キー名はPixelシェーダーの struct Material のメンバー名と一致させること

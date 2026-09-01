@@ -60,11 +60,13 @@ protected:
 
     void Update() override {
         RetryApplyToRendererIfNeeded();
+        SyncOverrideMaterialFields();
     }
 
 #if defined(USE_IMGUI)
     void ShowPersistentImGui() override {
         RetryApplyToRendererIfNeeded();
+        SyncOverrideMaterialFields();
     }
 
     void ShowImGui() override {
@@ -110,6 +112,26 @@ private:
         if (overrideMaterialHandle_ == MaterialManager::kInvalidHandle || currentHandle != overrideMaterialHandle_) {
             ApplyToRenderer();
         }
+    }
+
+    /// @brief 複製先マテリアル（テクスチャ以外の全フィールド）を元マテリアルの最新値へ同期する
+    /// @details 複製先マテリアル自体はApplyToRenderer初回適用時の一度きりの生成のため、
+    ///          以後にマテリアルエディター等で元マテリアル（サンプラー・UV変換・色等）を編集しても
+    ///          複製先（実際にレンダラーが参照している方）へ反映されないままになっていた。
+    ///          そのためテクスチャ差し替え自体とは独立して毎フレーム同期する
+    void SyncOverrideMaterialFields() {
+        if (overrideMaterialHandle_ == MaterialManager::kInvalidHandle) return;
+        auto *overrideMaterial = MaterialManager::GetMaterial(overrideMaterialHandle_);
+        auto *baseMaterial = MaterialManager::GetMaterial(originalMaterialHandle_);
+        if (!overrideMaterial || !baseMaterial) return;
+
+        const auto name = overrideMaterial->name;
+        const auto textureHandle = overrideMaterial->textureHandle;
+        const auto textureFileName = overrideMaterial->textureFileName;
+        *overrideMaterial = *baseMaterial;
+        overrideMaterial->name = name;
+        overrideMaterial->textureHandle = textureHandle;
+        overrideMaterial->textureFileName = textureFileName;
     }
 
     /// @brief 同一オブジェクトのSpriteRenderer/MeshRendererへ、指定テクスチャを適用する

@@ -57,6 +57,27 @@ template <typename RendererT>
 Vector4 GetInstanceColorFor(const RendererT *renderer) {
     return renderer->GetInstanceColor();
 }
+/// @brief レンダラーが保持するインスタンスUV（オブジェクト単位のUV変換）を取得する
+template <typename RendererT>
+Vector2 GetInstanceUvTranslateFor(const RendererT *renderer) {
+    return renderer->GetInstanceUvTranslate();
+}
+template <typename RendererT>
+float GetInstanceUvRotationFor(const RendererT *renderer) {
+    return renderer->GetInstanceUvRotation();
+}
+template <typename RendererT>
+Vector2 GetInstanceUvScaleFor(const RendererT *renderer) {
+    return renderer->GetInstanceUvScale();
+}
+template <typename RendererT>
+Vector2 GetInstanceUvPivotFor(const RendererT *renderer) {
+    return renderer->GetInstanceUvPivot();
+}
+template <typename RendererT>
+int GetInstanceUvCombineModeFor(const RendererT *renderer) {
+    return static_cast<int>(renderer->GetInstanceUvCombineMode());
+}
 /// @brief 押し出しアウトライン（Inverted Hull）パイプライン名
 constexpr const char *kOutlinePipelineName = "Object3D.Outline";
 /// @brief Prefabドラッグ配置プレビュー（半透明のゴーストメッシュ）パイプライン名
@@ -282,6 +303,11 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
                     renderer->GetOwnerObject(), renderer->GetWorldMatrix());
                 sortable.entry.instanceColor = GetInstanceColorFor(renderer);
                 sortable.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(renderer);
+                sortable.entry.instanceUvTranslate = GetInstanceUvTranslateFor(renderer);
+                sortable.entry.instanceUvRotation = GetInstanceUvRotationFor(renderer);
+                sortable.entry.instanceUvScale = GetInstanceUvScaleFor(renderer);
+                sortable.entry.instanceUvPivot = GetInstanceUvPivotFor(renderer);
+                sortable.entry.instanceUvCombineMode = GetInstanceUvCombineModeFor(renderer);
                 sortable.entry.objectIdSeed = SceneRenderer::ObjectIdSeedFor(ownerObject);
                 sortable.kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
                 sortable.pipelinePriority = entryPipelinePriority;
@@ -378,6 +404,11 @@ void CollectCacheableEntries(const std::vector<RendererT *> &renderers,
             }
             cached.ranked.entry.instanceColor = GetInstanceColorFor(renderer);
             cached.ranked.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(renderer);
+            cached.ranked.entry.instanceUvTranslate = GetInstanceUvTranslateFor(renderer);
+            cached.ranked.entry.instanceUvRotation = GetInstanceUvRotationFor(renderer);
+            cached.ranked.entry.instanceUvScale = GetInstanceUvScaleFor(renderer);
+            cached.ranked.entry.instanceUvPivot = GetInstanceUvPivotFor(renderer);
+            cached.ranked.entry.instanceUvCombineMode = GetInstanceUvCombineModeFor(renderer);
             cached.ranked.entry.objectIdSeed = SceneRenderer::ObjectIdSeedFor(renderer->GetOwnerObject());
             cached.ranked.entry.allowInstancing = renderer->GetAllowInstancing();
             cached.ranked.kindOrder = GetRenderTargetKindOrder(editorTarget->GetRenderTargetKind());
@@ -693,6 +724,11 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
                     sortable.entry.skinnedVertexBuffer = renderer->GetSkinnedVertexBuffer();
                     sortable.entry.instanceColor = GetInstanceColorFor(renderer);
                     sortable.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(renderer);
+                    sortable.entry.instanceUvTranslate = GetInstanceUvTranslateFor(renderer);
+                    sortable.entry.instanceUvRotation = GetInstanceUvRotationFor(renderer);
+                    sortable.entry.instanceUvScale = GetInstanceUvScaleFor(renderer);
+                    sortable.entry.instanceUvPivot = GetInstanceUvPivotFor(renderer);
+                    sortable.entry.instanceUvCombineMode = GetInstanceUvCombineModeFor(renderer);
                     sortable.entry.objectIdSeed = SceneRenderer::ObjectIdSeedFor(ownerObject);
                     // skinnedVertexBufferがインスタンスごとに異なるため既に単独ドローコールになるが、
                     // API上の一貫性のためAllowInstancingも反映しておく（実際の描画結果への影響はない）
@@ -853,6 +889,11 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
             // Instance Colorは実行中にスクリプト等から変更され得るため、ワールド行列と同様に毎フレーム反映する
             ranked.entry.instanceColor = std::visit([](auto *r) { return GetInstanceColorFor(r); }, cached.source);
             ranked.entry.instanceColorBlendMode = std::visit([](auto *r) { return GetInstanceColorBlendModeFor(r); }, cached.source);
+            ranked.entry.instanceUvTranslate = std::visit([](auto *r) { return GetInstanceUvTranslateFor(r); }, cached.source);
+            ranked.entry.instanceUvRotation = std::visit([](auto *r) { return GetInstanceUvRotationFor(r); }, cached.source);
+            ranked.entry.instanceUvScale = std::visit([](auto *r) { return GetInstanceUvScaleFor(r); }, cached.source);
+            ranked.entry.instanceUvPivot = std::visit([](auto *r) { return GetInstanceUvPivotFor(r); }, cached.source);
+            ranked.entry.instanceUvCombineMode = std::visit([](auto *r) { return GetInstanceUvCombineModeFor(r); }, cached.source);
             cachedLive.push_back(std::move(ranked));
         }
     }

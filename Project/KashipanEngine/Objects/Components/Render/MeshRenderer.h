@@ -37,6 +37,13 @@ public:
         Subtract,      ///< マテリアルの色から減算する
     };
 
+    /// @brief インスタンス単位のUV変換とマテリアルのUV変換（Material::uvTranslate等）の合成方法
+    enum class UVCombineMode : int {
+        MaterialThenInstance = 0, ///< 既定。マテリアルの基本マッピングの上にインスタンスのUV変換を乗せる
+        InstanceThenMaterial,     ///< インスタンスのUV変換を基準とし、マテリアルのUV変換を後から適用する
+        InstanceOnly,             ///< マテリアルのUV変換を無視し、インスタンスのUV変換のみを使う
+    };
+
     // pipelineName_の直接書き込み時は、セッターと同様に描画リストの再構築を促す
     // （マテリアルはスロット制のvector管理のため、要素アドレスが変わり得ずメンバ変数登録できない）
     OBJECT_COMPONENT_CONSTRUCTOR(MeshRenderer, 0xFF,
@@ -44,6 +51,10 @@ public:
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(pipelineName_, [this] { MarkDrawListDirty(); });
         ADD_MEMBER_VARIABLE(castShadows_);
         ADD_MEMBER_VARIABLE(instanceColor_);
+        ADD_MEMBER_VARIABLE(instanceUvTranslate_);
+        ADD_MEMBER_VARIABLE(instanceUvRotation_);
+        ADD_MEMBER_VARIABLE(instanceUvScale_);
+        ADD_MEMBER_VARIABLE(instanceUvPivot_);
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(renderPriority_, [this] { MarkDrawListDirty(); });
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(allowInstancing_, [this] { MarkDrawListDirty(); });
     )
@@ -60,6 +71,11 @@ public:
         ptr->castShadows_ = castShadows_;
         ptr->instanceColor_ = instanceColor_;
         ptr->instanceColorBlendMode_ = instanceColorBlendMode_;
+        ptr->instanceUvTranslate_ = instanceUvTranslate_;
+        ptr->instanceUvRotation_ = instanceUvRotation_;
+        ptr->instanceUvScale_ = instanceUvScale_;
+        ptr->instanceUvPivot_ = instanceUvPivot_;
+        ptr->instanceUvCombineMode_ = instanceUvCombineMode_;
         ptr->renderPriority_ = renderPriority_;
         ptr->allowInstancing_ = allowInstancing_;
         return ptr;
@@ -75,6 +91,26 @@ public:
     /// @brief インスタンスカラーをマテリアルの色へ適用する方法を設定する
     void SetInstanceColorBlendMode(ColorBlendMode mode) noexcept { instanceColorBlendMode_ = mode; }
     ColorBlendMode GetInstanceColorBlendMode() const noexcept { return instanceColorBlendMode_; }
+
+    //==================================================
+    // インスタンスUV（オブジェクト単位のUV変換）
+    //==================================================
+
+    /// @brief オブジェクト単位のUVオフセットを設定する（マテリアルのUV変換とinstanceUvCombineMode_で合成される）
+    void SetInstanceUvTranslate(const Vector2 &translate) noexcept { instanceUvTranslate_ = translate; }
+    const Vector2 &GetInstanceUvTranslate() const noexcept { return instanceUvTranslate_; }
+    /// @brief オブジェクト単位のUV回転を設定する（ラジアン）
+    void SetInstanceUvRotation(float radians) noexcept { instanceUvRotation_ = radians; }
+    float GetInstanceUvRotation() const noexcept { return instanceUvRotation_; }
+    /// @brief オブジェクト単位のUVスケールを設定する
+    void SetInstanceUvScale(const Vector2 &scale) noexcept { instanceUvScale_ = scale; }
+    const Vector2 &GetInstanceUvScale() const noexcept { return instanceUvScale_; }
+    /// @brief オブジェクト単位のUV回転の中心座標を設定する（拡縮は常にUV原点基準。回転のみこの座標が中心になる）
+    void SetInstanceUvPivot(const Vector2 &pivot) noexcept { instanceUvPivot_ = pivot; }
+    const Vector2 &GetInstanceUvPivot() const noexcept { return instanceUvPivot_; }
+    /// @brief インスタンスUVとマテリアルのUV変換の合成方法を設定する
+    void SetInstanceUvCombineMode(UVCombineMode mode) noexcept { instanceUvCombineMode_ = mode; }
+    UVCombineMode GetInstanceUvCombineMode() const noexcept { return instanceUvCombineMode_; }
 
     //==================================================
     // 描画順・インスタンシング制御
@@ -249,6 +285,57 @@ protected:
             ImGui::SetTooltip("%s", TranslationC("component.meshrenderer.desc_3"));
         }
 
+        ImGui::TextUnformatted(TranslationC("component.common.instance_uv_transform"));
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", TranslationC("component.common.desc_instance_uv"));
+        }
+        ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_translate"), &instanceUvTranslate_.x, 0.001f);
+        float instanceUvRotationDeg = instanceUvRotation_ * 180.0f / 3.14159265f;
+        if (ImGui::DragFloat(TranslationLabel("component.common.instance_uv_rotation"), &instanceUvRotationDeg, 0.1f, -180.0f, 180.0f)) {
+            instanceUvRotation_ = instanceUvRotationDeg * 3.14159265f / 180.0f;
+        }
+        ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_scale"), &instanceUvScale_.x, 0.001f);
+        ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_pivot"), &instanceUvPivot_.x, 0.001f);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", TranslationC("component.common.desc_instance_uv_pivot"));
+        }
+        const char *kUvCombineModeLabels[] = {
+            TranslationC("component.common.uvcombinemode.material_then_instance"),
+            TranslationC("component.common.uvcombinemode.instance_then_material"),
+            TranslationC("component.common.uvcombinemode.instance_only"),
+        };
+        int uvCombineModeIndex = static_cast<int>(instanceUvCombineMode_);
+        if (ImGui::Combo(TranslationLabel("component.common.instance_uv_combine_mode"), &uvCombineModeIndex, kUvCombineModeLabels, IM_ARRAYSIZE(kUvCombineModeLabels))) {
+            instanceUvCombineMode_ = static_cast<UVCombineMode>(uvCombineModeIndex);
+        }
+        // ピクセル基準（0～テクスチャの幅・高さ）でのインスタンスUV編集。内部値（0～1のUV基準）と相互に連動する
+        {
+            auto *materialForUv = MaterialManager::GetMaterial(GetMaterialHandle());
+            const auto textureView = TextureManager::GetTextureView(materialForUv ? materialForUv->textureHandle : TextureManager::kInvalidHandle);
+            const float texWidth = static_cast<float>(textureView.GetWidth());
+            const float texHeight = static_cast<float>(textureView.GetHeight());
+            const bool hasTextureSize = texWidth > 0.0f && texHeight > 0.0f;
+
+            ImGui::BeginDisabled(!hasTextureSize);
+            ImGui::TextUnformatted(TranslationC("component.common.instance_uv_transform_pixel"));
+            Vector2 pxTranslate = hasTextureSize
+                ? Vector2(instanceUvTranslate_.x * texWidth, instanceUvTranslate_.y * texHeight) : Vector2::Zero();
+            if (ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_translate_pixel"), &pxTranslate.x, 0.5f) && hasTextureSize) {
+                instanceUvTranslate_ = Vector2(pxTranslate.x / texWidth, pxTranslate.y / texHeight);
+            }
+            Vector2 pxScale = hasTextureSize
+                ? Vector2(instanceUvScale_.x * texWidth, instanceUvScale_.y * texHeight) : Vector2::Zero();
+            if (ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_scale_pixel"), &pxScale.x, 0.5f) && hasTextureSize) {
+                instanceUvScale_ = Vector2(pxScale.x / texWidth, pxScale.y / texHeight);
+            }
+            Vector2 pxPivot = hasTextureSize
+                ? Vector2(instanceUvPivot_.x * texWidth, instanceUvPivot_.y * texHeight) : Vector2::Zero();
+            if (ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_pivot_pixel"), &pxPivot.x, 0.5f) && hasTextureSize) {
+                instanceUvPivot_ = Vector2(pxPivot.x / texWidth, pxPivot.y / texHeight);
+            }
+            ImGui::EndDisabled();
+        }
+
         if (ImGui::DragInt(TranslationLabel("component.common.render_priority"), &renderPriority_)) {
             MarkDrawListDirty();
         }
@@ -315,6 +402,11 @@ protected:
         json["castShadows"] = castShadows_;
         json["instanceColor"] = ToJSON(instanceColor_);
         json["instanceColorBlendMode"] = static_cast<int>(instanceColorBlendMode_);
+        json["instanceUvTranslate"] = ToJSON(instanceUvTranslate_);
+        json["instanceUvRotation"] = instanceUvRotation_;
+        json["instanceUvScale"] = ToJSON(instanceUvScale_);
+        json["instanceUvPivot"] = ToJSON(instanceUvPivot_);
+        json["instanceUvCombineMode"] = static_cast<int>(instanceUvCombineMode_);
         json["renderPriority"] = renderPriority_;
         json["allowInstancing"] = allowInstancing_;
         return json;
@@ -341,6 +433,11 @@ protected:
         castShadows_ = json.value("castShadows", true);
         instanceColor_ = json.contains("instanceColor") ? FromJSON<Vector4>(json["instanceColor"]) : Vector4(1.0f, 1.0f, 1.0f, 1.0f);
         instanceColorBlendMode_ = static_cast<ColorBlendMode>(json.value("instanceColorBlendMode", static_cast<int>(ColorBlendMode::Multiply)));
+        instanceUvTranslate_ = json.contains("instanceUvTranslate") ? FromJSON<Vector2>(json["instanceUvTranslate"]) : Vector2(0.0f, 0.0f);
+        instanceUvRotation_ = json.value("instanceUvRotation", 0.0f);
+        instanceUvScale_ = json.contains("instanceUvScale") ? FromJSON<Vector2>(json["instanceUvScale"]) : Vector2(1.0f, 1.0f);
+        instanceUvPivot_ = json.contains("instanceUvPivot") ? FromJSON<Vector2>(json["instanceUvPivot"]) : Vector2(0.5f, 0.5f);
+        instanceUvCombineMode_ = static_cast<UVCombineMode>(json.value("instanceUvCombineMode", static_cast<int>(UVCombineMode::MaterialThenInstance)));
         renderPriority_ = json.value("renderPriority", 0);
         allowInstancing_ = json.value("allowInstancing", true);
         // Undo/Redo等、登録済みのコンポーネントに対してもLoadFromJsonが呼ばれ得るため念のため通知する
@@ -381,6 +478,15 @@ private:
     /// @brief オブジェクト単位の色（マテリアルは共有したまま、この色をinstanceColorBlendMode_で適用する）
     Vector4 instanceColor_{ 1.0f, 1.0f, 1.0f, 1.0f };
     ColorBlendMode instanceColorBlendMode_ = ColorBlendMode::Multiply;
+    /// @brief オブジェクト単位のUVオフセット（マテリアルのUV変換とinstanceUvCombineMode_で合成される。既定(0,0)）
+    Vector2 instanceUvTranslate_{ 0.0f, 0.0f };
+    /// @brief オブジェクト単位のUV回転（ラジアン。既定0）
+    float instanceUvRotation_ = 0.0f;
+    /// @brief オブジェクト単位のUVスケール（既定(1,1)）
+    Vector2 instanceUvScale_{ 1.0f, 1.0f };
+    /// @brief オブジェクト単位のUV回転の中心座標（UV基準。既定は中心(0.5, 0.5)）
+    Vector2 instanceUvPivot_{ 0.5f, 0.5f };
+    UVCombineMode instanceUvCombineMode_ = UVCombineMode::MaterialThenInstance;
     /// @brief 描画順を制御する優先度（既定0。SceneRenderer::CompareSortableEntry参照）
     int renderPriority_ = 0;
     /// @brief 他のオブジェクトとのインスタンシング（バッチ結合）を許可するか（既定true）

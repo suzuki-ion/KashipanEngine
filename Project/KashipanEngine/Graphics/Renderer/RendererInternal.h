@@ -443,6 +443,45 @@ inline std::uint32_t ResolveInstanceSamplerIndex(SamplerManager::SamplerHandle o
     return static_cast<std::uint32_t>(handle - 1);
 }
 
+/// @brief マテリアルのUV変換とインスタンス単位のUV変換（MeshRenderer/SpriteRenderer/SkinnedMeshRendererの
+///        InstanceUvTranslate/Rotation/Scale）を、エントリのinstanceUvCombineModeに従って合成する
+/// @details combineModeの値はMeshRenderer::UVCombineMode等と同じ規則（0=MaterialThenInstance,
+///          1=InstanceThenMaterial,2=InstanceOnly）。テキスト（TextRenderer）はuvTransformを
+///          使わずuvRectで別途アトラス参照するため、この合成の対象外（常にMaterialThenInstance相当の
+///          既定値のまま呼ばれるが、シェーダー側で無視される）
+inline Matrix4x4 ResolveInstanceUVTransform(const SceneRenderer::DrawEntry &entry, const MaterialManager::Material *material) {
+    const Matrix4x4 materialMatrix = material ? material->MakeUVTransformMatrix() : Matrix4x4::Identity();
+    if (entry.instanceUvTranslate.x == 0.0f && entry.instanceUvTranslate.y == 0.0f &&
+        entry.instanceUvRotation == 0.0f && entry.instanceUvScale.x == 1.0f && entry.instanceUvScale.y == 1.0f) {
+        // インスタンス側が既定値（無効化）の場合はマテリアルの値をそのまま使う
+        return materialMatrix;
+    }
+
+    // マテリアル側（MakeUVTransformMatrix）と同じく、拡縮はUV原点(0,0)基準のまま
+    // 回転のみinstanceUvPivotを中心に行う
+    Matrix4x4 instanceScale;
+    instanceScale.MakeScale(Vector3(entry.instanceUvScale.x, entry.instanceUvScale.y, 1.0f));
+    Matrix4x4 instanceToPivot;
+    instanceToPivot.MakeTranslate(Vector3(-entry.instanceUvPivot.x, -entry.instanceUvPivot.y, 0.0f));
+    Matrix4x4 instanceRotate;
+    instanceRotate.MakeRotateZ(entry.instanceUvRotation);
+    Matrix4x4 instanceFromPivot;
+    instanceFromPivot.MakeTranslate(Vector3(entry.instanceUvPivot.x, entry.instanceUvPivot.y, 0.0f));
+    Matrix4x4 instanceTranslate;
+    instanceTranslate.MakeTranslate(Vector3(entry.instanceUvTranslate.x, entry.instanceUvTranslate.y, 0.0f));
+    const Matrix4x4 instanceMatrix = instanceScale * instanceToPivot * instanceRotate * instanceFromPivot * instanceTranslate;
+
+    switch (entry.instanceUvCombineMode) {
+    case 1: // InstanceThenMaterial
+        return instanceMatrix * materialMatrix;
+    case 2: // InstanceOnly
+        return instanceMatrix;
+    case 0: // MaterialThenInstance
+    default:
+        return materialMatrix * instanceMatrix;
+    }
+}
+
 /// @brief バッファキャッシュキー生成（描画先＋パイプライン＋メッシュ＋マテリアルでバッチを識別）
 /// @details usageは呼び出し元によっては短い定数より長くなり得るため、切り詰められて
 ///          別グループ同士のキーが衝突しないよう十分な余裕を持たせている

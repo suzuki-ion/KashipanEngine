@@ -755,6 +755,7 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
         matJson["uvTranslate"] = ToJSON(Vector2{ 0.0f, 0.0f });
         matJson["uvRotation"] = 0.0f;
         matJson["uvScale"] = ToJSON(Vector2{ 1.0f, 1.0f });
+        matJson["uvPivot"] = ToJSON(Vector2{ 0.5f, 0.5f });
         matJson["textureFile"] = textureFile;
         matJson["environmentFile"] = "";
         matJson["samplerHandle"] = static_cast<std::uint32_t>(0);

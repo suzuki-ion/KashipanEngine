@@ -256,6 +256,9 @@ void Renderer::DrawBatch(IRenderTarget *target,
                 WriteMaterialField(pipelineInfo, elementBytes, stride, "instanceColor", batch[i].instanceColor);
                 float blendMode = static_cast<float>(batch[i].instanceColorBlendMode);
                 WriteMaterialField(pipelineInfo, elementBytes, stride, "instanceColorBlendMode", blendMode);
+                // instanceUvTranslate/Rotation/Scaleも同様にインスタンスごとに異なり得るため、
+                // マテリアルのUV変換と合成した結果でuvTransformを上書きする
+                WriteMaterialField(pipelineInfo, elementBytes, stride, "uvTransform", ResolveInstanceUVTransform(batch[i], material));
                 // 任意マテリアル対応以前のTextシェーダーは文字色をcharacterColorとして受け取る。
                 // 既存プロジェクトに古いKashipanEngineアセットのコピーが残っていても全文字が
                 // alpha=0にならないよう、レイアウトに存在する場合だけ同じ色を書き込む。

@@ -1095,6 +1095,76 @@ bool ScriptComponent::SetVariable(const std::string &name, void *ref, int typeId
     return false;
 }
 
+asIScriptFunction *ScriptComponent::FindInvokableMethod(const std::string &name, int paramCount) const {
+    if (!behaviorType_) return nullptr;
+    const asUINT count = behaviorType_->GetMethodCount();
+    for (asUINT i = 0; i < count; ++i) {
+        asIScriptFunction *func = behaviorType_->GetMethodByIndex(i);
+        if (!func) continue;
+        if (name != func->GetName()) continue;
+        if (func->GetReturnTypeId() != asTYPEID_VOID) continue;
+        if (static_cast<int>(func->GetParamCount()) != paramCount) continue;
+        return func;
+    }
+    return nullptr;
+}
+
+bool ScriptComponent::InvokeMethod(const std::string &name) {
+    if (!context_ || !behaviorObject_) return false;
+    asIScriptFunction *method = FindInvokableMethod(name, 0);
+    if (!method) return false;
+    CallMethod(method);
+    return true;
+}
+
+bool ScriptComponent::InvokeMethod(const std::string &name, void *argRef, int argTypeId) {
+    if (!argRef || !context_ || !behaviorObject_) return false;
+    // 対応型はGetVariable/SetVariableと同じ（配列/Serializableクラスはモジュールをまたぐと型が一致しないため非対応）
+    if (!IsSupportedFieldType(argTypeId)) return false;
+
+    asIScriptFunction *method = FindInvokableMethod(name, 1);
+    if (!method) return false;
+    int paramTypeId = 0;
+    if (method->GetParam(0, &paramTypeId) < 0 || paramTypeId != argTypeId) return false;
+
+    if (context_->Prepare(method) < 0) {
+        lastError_ = "関数の準備に失敗しました";
+        return false;
+    }
+    context_->SetObject(behaviorObject_);
+
+    // 引数を型IDに応じてコンテキストへ設定する（値型はCopyLeafFieldValueと同じ分岐、
+    // Object@はハンドル修飾のため、argRefが指す「ハンドルを格納したスロット」の中身を渡す）
+    asIScriptEngine *engine = context_->GetEngine();
+    if (IsEnumFieldType(argTypeId, engine)) {
+        context_->SetArgDWord(0, static_cast<asDWORD>(*static_cast<const int32_t *>(argRef)));
+    } else if (argTypeId == asTYPEID_BOOL) {
+        context_->SetArgByte(0, *static_cast<const bool *>(argRef) ? 1 : 0);
+    } else if (argTypeId == asTYPEID_INT32) {
+        context_->SetArgDWord(0, static_cast<asDWORD>(*static_cast<const int32_t *>(argRef)));
+    } else if (argTypeId == asTYPEID_UINT32) {
+        context_->SetArgDWord(0, *static_cast<const uint32_t *>(argRef));
+    } else if (argTypeId == asTYPEID_FLOAT) {
+        context_->SetArgFloat(0, *static_cast<const float *>(argRef));
+    } else if (argTypeId == asTYPEID_DOUBLE) {
+        context_->SetArgDouble(0, *static_cast<const double *>(argRef));
+    } else if (IsObjectFieldType(argTypeId)) {
+        ScriptObjectHandle *handle = *static_cast<ScriptObjectHandle *const *>(argRef);
+        context_->SetArgObject(0, handle);
+    } else {
+        // string / Vector2 / Vector3 / Vector4 / Quaternion（登録済みの値型はアドレスをそのまま渡す）
+        context_->SetArgObject(0, argRef);
+    }
+
+    ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
+    const int r = context_->Execute();
+    if (r != asEXECUTION_FINISHED) {
+        lastError_ = GetExceptionInfo(context_);
+        Log(Translation("engine.script.error") + lastError_, LogSeverity::Error);
+    }
+    return true;
+}
+
 std::vector<std::string> ScriptComponent::GetFloatVariableNames() const {
     std::vector<std::string> names;
     for (const auto &field : serializedFields_) {

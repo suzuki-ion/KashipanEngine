@@ -1148,6 +1148,18 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
             ScriptComponent &self = *selfPtr;
             return self.SetVariable(name, ref, typeId);
+        })
+        // 他オブジェクトのScriptComponentを取得した上で、そのBehaviorインスタンスの関数を名前で直接呼び出す
+        // （スクリプト間の関数呼び出し用。対象は"void 関数名()"または引数1個・戻り値無しの関数のみ）
+        .method("bool CallMethod(const string &in)", [](ScriptComponentHandle<ScriptComponent> &selfHandle, const std::string &name) -> bool {
+            ScriptComponent *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
+            return selfPtr->InvokeMethod(name);
+        })
+        .method("bool CallMethod(const string &in, ?&in)", [](ScriptComponentHandle<ScriptComponent> &selfHandle, const std::string &name, void *ref, int typeId) -> bool {
+            ScriptComponent *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
+            return selfPtr->InvokeMethod(name, ref, typeId);
         });
 
     RegisterComponentType<MeshFilter>(engine, "MeshFilter")

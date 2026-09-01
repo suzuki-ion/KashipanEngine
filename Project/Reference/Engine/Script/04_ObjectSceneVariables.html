@@ -15,7 +15,7 @@
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
 <h1>Object・Scene・Tag・シーン変数</h1>
-<p class="page-lead"><code>Object</code>/<code>Scene</code>/<code>Tag</code> 型のAPIと、スクリプト間で値をやり取りするための2つの方法（シーン変数、<code>ScriptComponent</code>経由の直接アクセス）をまとめます。</p>
+<p class="page-lead"><code>Object</code>/<code>Scene</code>/<code>Tag</code> 型のAPIと、スクリプト間で値をやり取りする・処理を呼び出すための2つの方法（シーン変数、<code>ScriptComponent</code>経由の直接アクセス／関数呼び出し）をまとめます。</p>
 </div>
 
 <h2>Object（ゲームオブジェクト）</h2>
@@ -175,6 +175,37 @@ class Enemy : ScriptComponentBehavior {
 <li>取得・設定できるのは相手スクリプトの <strong><code>[SerializeField]</code> が付いた変数のみ</strong>です（インスペクターに公開されている＝外部から触ってよいと明示された変数、という既存の意味をそのまま利用しています）</li>
 <li>対応している型はシーン変数と同じプリミティブ/数学型に加えて <code>Object@</code> です。<code>array&lt;T&gt;</code> や <code>[System.Serializable]</code> クラスは対象外です（スクリプトごとに独立したモジュールとしてコンパイルされるため、同じ名前・同じ形のクラスでも型が一致せず安全に受け渡せないため）</li>
 <li>変数名が存在しない、または渡した変数と型が一致しない場合は <code>false</code> を返すだけで、例外にはなりません（値は変更されません）</li>
+</ul>
+
+<h3>ScriptComponent経由の関数呼び出し</h3>
+<p>
+変数の読み書きだけでなく、相手スクリプトが持つ関数を名前で直接呼び出すこともできます。<code>CallMethod</code> は引数無しの版と、値を1つ渡す版の2つがオーバーロードとして用意されています。
+</p>
+<pre><code class="language-angelscript">// scriptA.as（相手の関数を呼び出す側）
+Object@ enemy = GetScene().GetObject("Enemy");
+if (enemy !is null) {
+    ScriptComponent@ sc;
+    if (enemy.GetComponent(@sc)) {
+        sc.CallMethod("Stun");              // 引数無しの関数を呼ぶ
+        sc.CallMethod("TakeDamage", 10.0f); // 引数を1つ渡して呼ぶ
+    }
+}</code></pre>
+<pre><code class="language-angelscript">// scriptB.as（Enemyオブジェクト側。[SerializeField]の有無に関わらず呼び出せる）
+class Enemy : ScriptComponentBehavior {
+    void Stun() { /* ... */ }
+    void TakeDamage(float amount) { /* ... */ }
+}</code></pre>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>bool CallMethod(const string &amp;in name)</code></td><td>指定名の、引数無し・戻り値無し（<code>void</code>）の関数を呼び出す</td></tr>
+<tr><td><code>bool CallMethod(const string &amp;in name, ?&amp;in arg)</code></td><td>指定名の、引数1個・戻り値無しの関数へ値を渡して呼び出す</td></tr>
+</table>
+<ul>
+<li>呼び出せるのは<strong><code>void</code> を返す、引数0個または1個の関数のみ</strong>です。戻り値のある関数や引数2個以上の関数は対象外です。<code>[SerializeField]</code> の付与や <code>public</code>/<code>private</code>/<code>protected</code> の区別は問いません（<code>GetVariable</code>/<code>SetVariable</code> と違い、Serializeされていない関数も呼び出せます）</li>
+<li>引数の対応型は <code>GetVariable</code>/<code>SetVariable</code> と同じプリミティブ/数学型/<code>Object@</code>のみです。<code>array&lt;T&gt;</code> や <code>[System.Serializable]</code> クラスは対象外です</li>
+<li>該当する名前・シグネチャの関数が見つからない場合は <code>false</code> を返すだけで、例外にはなりません</li>
+<li>関数を実行できた場合は<code>true</code>を返しますが、これは「実行時例外なく完了した」ことは意味しません。実行中に例外が発生した場合、その内容は呼び出し元ではなく<strong>呼び出された側（相手）の<code>ScriptComponent</code></strong>の<code>GetLastError()</code>・インスペクターのエラー表示欄に記録され、ログにも出力されます。呼び出し元のスクリプトの実行自体は止まりません</li>
+<li>変数の読み書き（<code>GetVariable</code>/<code>SetVariable</code>）が相手の状態を覗き見る/書き換える用途なのに対し、<code>CallMethod</code>は相手へ能動的に処理を行わせる用途に使います</li>
 </ul>
 
 <h2>関連ページ</h2>

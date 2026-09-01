@@ -80,6 +80,22 @@ public:
     /// @details 対応型・非対応型はGetVariableと同じ
     bool SetVariable(const std::string &name, void *ref, int typeId);
 
+    /// @brief このスクリプトのBehaviorインスタンスが持つ、引数無し・戻り値無しの関数を名前で呼び出す
+    /// @details 他オブジェクトの ScriptComponent を GetComponent で取得した上で呼ぶ、スクリプト間の
+    ///          関数呼び出し用。対象は "void 関数名()" の関数のみ（戻り値有り・引数2個以上は非対応）。
+    ///          呼び出し中に例外が発生した場合、その内容は GetLastError() で確認できる
+    /// @param name 関数名
+    /// @return 名前が一致する引数無し・戻り値無し関数が見つかり、呼び出しを行えた場合は true
+    ///         （見つからない場合は false。falseは「未実行」を意味し、例外とは区別される）
+    bool InvokeMethod(const std::string &name);
+    /// @brief 引数を1つ渡して関数を名前で呼び出す版
+    /// @details 対応する引数型は GetVariable/SetVariable と同じプリミティブ/数学型/Object@のみ
+    /// @param name 関数名
+    /// @param argRef 引数値の格納先アドレス
+    /// @param argTypeId 引数の型ID
+    /// @return 名前・引数の型が一致する引数1個・戻り値無し関数が見つかり、呼び出しを行えた場合は true
+    bool InvokeMethod(const std::string &name, void *argRef, int argTypeId);
+
     /// @brief [SerializeField] 付きのfloat型変数の名前一覧を取得する（KeyFrameAnimator等の適用先列挙用）
     /// @details スクリプトが未ビルドの場合は空のリストを返す
     std::vector<std::string> GetFloatVariableNames() const;
@@ -143,6 +159,10 @@ private:
     SceneScriptEngine *GetSceneScriptEngine() const;
     SceneScriptEngine *GetOrAddSceneScriptEngine() const;
     void ReleaseScript();
+
+    /// @brief 名前・引数の数が一致する、戻り値無しのBehaviorメソッドを探す（見つからない場合はnullptr）
+    /// @details InvokeMethodの実装用。オーバーロードされている場合は最初に見つかったものを返す
+    asIScriptFunction *FindInvokableMethod(const std::string &name, int paramCount) const;
 
     /// @brief モジュール内から ScriptComponentBehavior を実装したクラスを探してインスタンス化する
     /// @return 成功した場合は true（失敗時は lastError_ にエラー内容を格納する）

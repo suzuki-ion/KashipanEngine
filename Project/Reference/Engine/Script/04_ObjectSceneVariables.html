@@ -25,6 +25,7 @@
 <tr><td><code>void SetName(const string &amp;in)</code></td><td>オブジェクト名を設定する</td></tr>
 <tr><td><code>bool IsActive() const</code></td><td>アクティブ状態を取得する</td></tr>
 <tr><td><code>void SetActive(bool)</code></td><td>アクティブ状態を設定する</td></tr>
+<tr><td><code>void SetComponentsActiveExceptTransformAndScript(bool)</code></td><td><code>Transform</code>と<code>ScriptComponent</code>以外の全コンポーネントをまとめて有効/無効化する。スクリプト自身のロジックは動かし続けたまま、見た目・当たり判定等だけを一括で止めたい場合に使う（個々のコンポーネント型を列挙する必要がない）</td></tr>
 <tr><td><code>void SetTag(const string &amp;in)</code></td><td>タグを設定する（下記「Tag」参照）</td></tr>
 <tr><td><code>Tag GetTag() const</code></td><td>タグを取得する（比較用）</td></tr>
 <tr><td><code>const string &amp;GetTagName() const</code></td><td>タグの文字列を取得する</td></tr>

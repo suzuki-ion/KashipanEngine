@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MeshButton | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Collider_MeshButton">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>MeshButton</h1>
+<p class="page-lead">3Dオブジェクト（<code>MeshRenderer</code>/<code>SkinnedMeshRenderer</code>）に対するマウスのホバー・押下・クリック判定を行うコンポーネントです（<code>UIButton</code>の3D版）。見た目の描画は一切行いません（同一オブジェクトのメッシュを、そのまま当たり判定に使う「透明な当たり判定レイヤー」）。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。</p>
+</div>
+
+<h2>前提となる構成</h2>
+<p>
+このコンポーネントは判定のみを行うため、実際にボタンとして機能させるには同一オブジェクトへ以下を組み合わせて付与します。
+</p>
+<ul>
+<li><code>MeshFilter</code> ＋ <code>MeshRenderer</code>または<code>SkinnedMeshRenderer</code>（<code>MeshRenderer</code>を優先） — ボタンの見た目と、描画先ウィンドウの指定（対象の<code>Renderer</code>側の<code>Target</code>をそのまま利用する）</li>
+<li><code>MeshButton</code> — 上記メッシュに対する当たり判定</li>
+</ul>
+<div class="note"><strong>既定はバウンディングボックス判定、SkinnedMeshRendererは常にそれのみ</strong><br>既定では<code>MeshFilter</code>が持つメッシュ（バインドポーズ）のローカル空間バウンディングボックスへ、マウス位置からDisplay Cameraを通したレイを飛ばして交差判定します。<code>MeshRenderer</code>に限り、Precise Mesh Triangle Testを有効にすることでバウンディングボックス通過後にメッシュの全三角形との正確な交差判定へ切り替えられます。<code>SkinnedMeshRenderer</code>はGPU側でスキニングした変形後の頂点をCPUから直接読み出す手段が無いため、このオプションを有効にしても常にバインドポーズのバウンディングボックス判定のまま（ボーン変形後の見た目には追従しない）です。</div>
+<div class="note"><strong>マウス座標変換のパイプラインはScreenBufferViewport/UIButtonと共通（射影のみ透視）</strong><br>Windowクライアント座標 → NDC → Display Camera（<code>Camera3D</code>）の逆ビュー射影で近平面・遠平面上の点を求めてワールド空間のレイを作る、という変換を行います。ScreenBufferViewportと同じく、対象の描画先が実ウィンドウではなく独立した<code>ScreenBufferObject</code>（オフスクリーン中間バッファ）の場合でも、それを表示している<code>ScreenBufferViewport</code>の表示先を辿って正しいウィンドウ・マウス座標を解決します。詳細は<a href="../Render/ScreenBufferViewport.html">ScreenBufferViewport</a>を参照してください。</div>
+
+<h2>Inspectorに表示される項目</h2>
+<p>表示順はソースコードの<code>ShowImGui()</code>呼び出し順と同じです。</p>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Display Camera</td><td>コンボボックス（シーン上のオブジェクトから選択）</td><td>マウス座標変換の基準にする<code>Camera3D</code>を持つオブジェクト</td></tr>
+<tr><td>Precise Mesh Triangle Test</td><td>チェックボックス</td><td>メッシュの三角形との正確な交差判定を行うか。既定 <code>false</code>（バウンディングボックスのみ）。<code>MeshRenderer</code>の場合のみ効果を持つ</td></tr>
+<tr><td>Drag Axis</td><td>XYZのドラッグ入力欄（ステップ0.01、範囲制限なし）</td><td>掴んで軸沿いにドラッグする操作の基準にする、オブジェクトのローカル軸。既定 <code>(1, 0, 0)</code></td></tr>
+</table>
+<p>
+Precise Mesh Triangle TestとDrag Axisの各項目の下には、その説明を補足するグレー表示のテキストが1行ずつ続き、さらにコンポーネント全体の説明文が続きます。実行中は現在の判定状態（Hovered / Pressed / Clicked）が確認用にそのまま表示され、一度でも掴んだことがある場合は直近の<code>Axis Drag Offset</code>の値（小数点以下3桁）も追加で表示されます。
+</p>
+
+<h2>スクリプトAPI</h2>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetDisplayCameraObject(Object@)</code></td><td>Display Cameraを設定する</td></tr>
+<tr><td><code>Object@ GetDisplayCameraObject() const</code></td><td>設定中のDisplay Cameraオブジェクトを取得する（未設定時は<code>null</code>）</td></tr>
+<tr><td><code>string GetDisplayCameraObjectID() const</code></td><td>設定中のDisplay CameraオブジェクトのUUID文字列を取得する</td></tr>
+<tr><td><code>void SetPreciseMeshTest(bool)</code></td><td>Precise Mesh Triangle Testを設定する</td></tr>
+<tr><td><code>bool GetPreciseMeshTest() const</code></td><td>Precise Mesh Triangle Testの現在値を取得する</td></tr>
+<tr><td><code>bool IsHovered() const</code></td><td>マウスカーソルがオブジェクトの当たり判定内にあるかどうか</td></tr>
+<tr><td><code>bool IsPressed() const</code></td><td>オブジェクト上で左クリックが押され、まだ離されていないかどうか。押下開始はオブジェクト上である必要があるが、離すまでの間はカーソルが判定外へ出ても保持される（<code>UIButton</code>と同じ挙動。ドラッグして判定外で離すとクリック扱いにはならない）</td></tr>
+<tr><td><code>bool IsClicked() const</code></td><td>このフレームでクリックが確定した瞬間だけ<code>true</code>（オブジェクト上で押して、オブジェクト上で離した時のみ）</td></tr>
+<tr><td><code>void SetDragAxis(const Vector3 &in)</code></td><td>掴んで軸沿いにドラッグする操作の基準にする、ローカル軸を設定する</td></tr>
+<tr><td><code>const Vector3 &GetDragAxis() const</code></td><td>設定中のローカル軸を取得する</td></tr>
+<tr><td><code>bool TryGetAxisDragOffset(float &out)</code></td><td>掴んで軸沿いにドラッグしている間の、軸原点（掴んだ瞬間のワールド座標）からの符号付きオフセット（ワールド単位）を取得する。軸方向は掴んだ瞬間のワールド回転で固定される。一度も掴んでいない、またはカメラ視線とドラッグ軸がほぼ平行で計算が不安定な場合は<code>false</code>を返す</td></tr>
+</table>
+<pre><code class="language-angelscript">class DraggableHandle : ScriptComponentBehavior {
+    void Update() {
+        MeshButton@ button;
+        GetComponent(@button);
+        if (button is null) return;
+
+        float offset;
+        if (button.IsPressed() && button.TryGetAxisDragOffset(offset)) {
+            Log("ドラッグオフセット: " + offset);
+        }
+
+        if (button.IsClicked()) {
+            Log("オブジェクトがクリックされました");
+        }
+    }
+}</code></pre>
+
+<h2>Add Componentでの位置</h2>
+<p><code>MeshButton</code>は<code>COMPONENT_CATEGORY("Collision")</code>に属します。</p>
+<span class="ui-path"><span>Add Component</span><i>›</i><span>Collision</span><i>›</i><span>MeshButton</span></span>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../Basic/MeshFilter.html">Components/Basic/MeshFilter.html</a> — 当たり判定に使うメッシュ（バウンディングボックス／三角形）の取得元</li>
+<li><a href="../Render/MeshRenderer.html">Components/Render/MeshRenderer.html</a> — Precise Mesh Triangle Testが効果を持つ対象、描画先ウィンドウの指定元</li>
+<li><a href="../Render/SkinnedMeshRenderer.html">Components/Render/SkinnedMeshRenderer.html</a> — バウンディングボックス判定のみに対応する対象</li>
+<li><a href="../Render/ScreenBufferViewport.html">Components/Render/ScreenBufferViewport.html</a> — 同じマウス座標変換パイプラインを使う、オフスクリーン表示用コンポーネント</li>
+<li><a href="../UI/UIButton.html">Components/UI/UIButton.html</a> — 同じ設計の2D版コンポーネント</li>
+<li><a href="../../../Engine/Script/06_RenderAndWindow.html">Engine/Script/06_RenderAndWindow.html</a> — WindowObjectのマウス座標取得API</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

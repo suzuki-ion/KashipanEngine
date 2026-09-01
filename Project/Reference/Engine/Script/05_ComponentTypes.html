@@ -94,15 +94,40 @@
 <h2>AudioSource / AudioListener</h2>
 <table>
 <tr><th>型</th><th>メソッド</th><th>説明</th></tr>
-<tr><td rowspan="7"><code>AudioSource</code></td><td><code>uint Play()</code></td><td>再生する（再生中なら止めて再生し直す）。戻り値は再生ハンドル</td></tr>
+<tr><td rowspan="9"><code>AudioSource</code></td><td><code>uint Play()</code></td><td>再生する（再生中なら止めて再生し直す）。戻り値は再生ハンドル</td></tr>
 <tr><td><code>void Stop()</code> / <code>bool Pause()</code> / <code>bool Resume()</code></td><td>停止 / 一時停止 / 再開</td></tr>
 <tr><td><code>bool IsPlaying() const</code> / <code>bool IsPaused() const</code></td><td>再生中 / 一時停止中かどうか</td></tr>
 <tr><td><code>void SetSoundName(const string &amp;in)</code> / <code>const string &amp;GetSoundName() const</code></td><td>使用する音声の設定/取得</td></tr>
 <tr><td><code>void SetVolume(float)</code> / <code>float GetVolume() const</code></td><td>ボリューム（0.0〜1.0）</td></tr>
 <tr><td><code>void SetPitch(float)</code> / <code>float GetPitch() const</code></td><td>ピッチ（半音単位）</td></tr>
 <tr><td><code>void SetLoop(bool)</code> / <code>bool GetLoop() const</code></td><td>ループ再生</td></tr>
+<tr><td><code>void SetPlayOnAwake(bool)</code> / <code>bool GetPlayOnAwake() const</code></td><td>読み込み時に自動再生するかどうか</td></tr>
+<tr><td><code>void AttachExternalPlayHandle(uint)</code></td><td>既に再生中の外部の再生ハンドル（例:<code>VideoSource</code>の音声）を取り込み、以後このAudioSourceの空間音響・エフェクト設定だけを適用する。<code>Stop()</code>を呼んでもハンドル自体の再生は止めず、参照を外すだけ（<code>VideoSource</code>の<code>SetRouteAudioToAudioSource</code>と組み合わせて使う。下記参照）</td></tr>
 <tr><td rowspan="2"><code>AudioListener</code></td><td><code>void SetUsed(bool)</code> / <code>bool GetUsed() const</code></td><td>使用中フラグ（シーン内で使用中にできるのは1つだけ）</td></tr>
 <tr><td><code>Vector3 GetWorldPosition() const</code></td><td>ワールド座標を取得する</td></tr>
+</table>
+
+<h2>TextureSource / GifSource / VideoSource</h2>
+<p>
+いずれも同オブジェクトの描画コンポーネント（<code>SpriteRenderer</code>/<code>MeshRenderer</code>等）が参照するテクスチャを、静止画/GIFアニメーション/動画で差し替えるコンポーネントです。<code>GifSource</code>/<code>VideoSource</code> は<code>AudioSource</code>と同様の再生制御メソッドを持ちます。
+</p>
+<table>
+<tr><th>型</th><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>TextureSource</code></td><td><code>void SetTextureAssetPath(const string &amp;in)</code> / <code>const string &amp;GetTextureAssetPath() const</code></td><td>使用するテクスチャアセットのパス</td></tr>
+<tr><td rowspan="6"><code>GifSource</code></td><td><code>bool Play()</code></td><td>再生する</td></tr>
+<tr><td><code>void Stop()</code> / <code>bool Pause()</code> / <code>bool Resume()</code></td><td>停止 / 一時停止 / 再開</td></tr>
+<tr><td><code>bool IsPlaying() const</code> / <code>bool IsPaused() const</code></td><td>再生中 / 一時停止中かどうか</td></tr>
+<tr><td><code>void SetGifAssetPath(const string &amp;in)</code> / <code>const string &amp;GetGifAssetPath() const</code></td><td>使用するGIFアセットのパス</td></tr>
+<tr><td><code>void SetLoop(bool)</code> / <code>bool GetLoop() const</code></td><td>ループ再生</td></tr>
+<tr><td><code>void SetPlayOnAwake(bool)</code> / <code>bool GetPlayOnAwake() const</code></td><td>読み込み時に自動再生するかどうか</td></tr>
+<tr><td rowspan="8"><code>VideoSource</code></td><td><code>bool Play()</code></td><td>再生する</td></tr>
+<tr><td><code>void Stop()</code> / <code>bool Pause()</code> / <code>bool Resume()</code></td><td>停止 / 一時停止 / 再開</td></tr>
+<tr><td><code>bool IsPlaying() const</code> / <code>bool IsPaused() const</code></td><td>再生中 / 一時停止中かどうか</td></tr>
+<tr><td><code>void SetVideoAssetPath(const string &amp;in)</code> / <code>const string &amp;GetVideoAssetPath() const</code></td><td>使用する動画アセットのパス</td></tr>
+<tr><td><code>void SetLoop(bool)</code> / <code>bool GetLoop() const</code></td><td>ループ再生</td></tr>
+<tr><td><code>void SetVolume(float)</code> / <code>float GetVolume() const</code></td><td>音声ボリューム（0.0〜1.0）</td></tr>
+<tr><td><code>void SetPlayOnAwake(bool)</code> / <code>bool GetPlayOnAwake() const</code></td><td>読み込み時に自動再生するかどうか</td></tr>
+<tr><td><code>void SetRouteAudioToAudioSource(bool)</code> / <code>bool GetRouteAudioToAudioSource() const</code></td><td>動画の音声を同オブジェクトの<code>AudioSource</code>経由で再生する（3D空間音響等に載せたい場合）かどうか</td></tr>
 </table>
 
 <h2>MeshFilter / Animator</h2>

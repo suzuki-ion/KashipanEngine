@@ -15,7 +15,7 @@
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
 <h1>コンポーネント操作とグローバル関数</h1>
-<p class="page-lead">オブジェクトに対するコンポーネントの取得・追加・削除の方法と、ログ・時間・数学・入力・音声・モデルなど、オブジェクトを介さず直接呼び出せるグローバル関数をまとめます。</p>
+<p class="page-lead">オブジェクトに対するコンポーネントの取得・追加・削除の方法と、ログ・時間・数学・入力・音声・モデル・ローカライズなど、オブジェクトを介さず直接呼び出せるグローバル関数をまとめます。</p>
 </div>
 
 <h2>コンポーネントの取得・追加・削除</h2>
@@ -65,7 +65,7 @@ GetComponent(@tf);</code></pre>
 </table>
 <ul>
 <li><code>AddComponent</code> で生成されたコンポーネントは規定値で初期化されます。既存コンポーネントの複製は <a href="04_ObjectSceneVariables.html">Scene.CloneObject</a> でオブジェクトごと複製してください（コンポーネント単体の複製はできません）。</li>
-<li><code>RemoveComponent</code> で削除した後、渡したハンドル自体は自動では <code>null</code> になりません。削除後に同じハンドルへアクセスしないでください。</li>
+<li><code>RemoveComponent</code> で削除した後、渡したハンドル自体は自動では <code>null</code> になりません。削除後に同じハンドルのメソッドを呼び出すと、削除済みコンポーネントへのアクセスとしてAngelScriptの例外になります（エンジンがクラッシュすることはなく、該当スクリプトの実行だけがそこで止まります）。</li>
 <li>コンポーネント種別ごとに1オブジェクトへ追加できる最大数が決まっており（例: <code>Transform</code> は1個まで）、上限を超えて <code>AddComponent</code> を呼ぶと失敗し <code>false</code> が返ります。</li>
 </ul>
 
@@ -157,6 +157,32 @@ isJumping = IsCommandTriggered("PlayerJump");</code></pre>
 <tr><th>関数</th><th>説明</th></tr>
 <tr><td><code>uint GetModelHandleFromAssetPath(const string &amp;in path)</code></td><td>アセットパス（例: <code>"PrimitiveMesh-Box"</code> 等）からモデルハンドルを取得する。<code>MeshFilter::SetMeshHandle</code> へそのまま渡せる</td></tr>
 </table>
+
+<h2>ローカライズ</h2>
+<p>
+<code>Locales/</code> および <code>Assets/Locales/</code> に置かれた翻訳データを参照します。ここで参照・変更するのは<strong>アプリケーション（ゲーム）側の表示言語</strong>で、エディター自身の表示言語（EditorPreferencesのコンボ）とは独立しています。Playモード中にスクリプトから言語を切り替えても、エディターUI自体の言語には影響しません。
+</p>
+<table>
+<tr><th>関数</th><th>説明</th></tr>
+<tr><td><code>const string &amp;Translation(const string &amp;in key)</code></td><td>指定キーの翻訳文字列を、現在のアプリケーション表示言語で取得する</td></tr>
+<tr><td><code>const string &amp;GetCurrentLanguage()</code></td><td>現在のアプリケーション表示言語を取得する</td></tr>
+<tr><td><code>void SetCurrentLanguage(const string &amp;in)</code></td><td>アプリケーション表示言語を切り替える。<code>PlayerSettings</code>へ保存されるため、配布したゲームでも再起動後に選択言語が復元される</td></tr>
+<tr><td><code>array&lt;string&gt;@ GetLoadedLanguages()</code></td><td>読み込まれている言語コードの一覧を取得する</td></tr>
+<tr><td><code>const string &amp;GetLanguageDisplayName(const string &amp;in languageCode)</code></td><td>言語コードに対応する表示名（言語選択UI用）を取得する</td></tr>
+</table>
+<pre><code class="language-angelscript">class LanguageSelector : ScriptComponentBehavior {
+    void Start() {
+        // 例: 保存済み設定や起動時の判定で言語を切り替える
+        SetCurrentLanguage("en-US");
+    }
+
+    void Update() {
+        TextRenderer@ label;
+        if (GetComponent(@label)) {
+            label.SetText(Translation("ui.start_button")); // 現在言語での翻訳文字列
+        }
+    }
+}</code></pre>
 
 <h2>関連ページ</h2>
 <ul>

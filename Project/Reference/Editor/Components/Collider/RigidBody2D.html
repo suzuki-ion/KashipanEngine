@@ -15,7 +15,7 @@
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
 <h1>RigidBody2D</h1>
-<p class="page-lead">2D用の簡易物理挙動（速度・質量・重力）を持たせるコンポーネントです。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/06_Collision.html">Engine/06_Collision.html</a>を参照してください。</p>
+<p class="page-lead">2D用の物理挙動（質量・重力・反発・摩擦）を持たせるコンポーネントです。内部ではBox2Dの<code>b2BodyId</code>を薄くラップしています。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。C++側のAPIは<a href="../../../Engine/06_Collision.html">Engine/06_Collision.html</a>を参照してください。</p>
 </div>
 
 <div class="note"><strong>ICollider派生ではない</strong><br>形状コライダー（<code>Box2DCollider</code>等）は全て<code>ICollider</code>を継承しますが、RigidBody2Dは<code>IObjectComponent</code>を直接継承する別系統のコンポーネントです（カテゴリは同じ<code>"Collision"</code>）。そのため<code>IsTrigger</code>・<code>Continuous Detection</code>・<code>Sync With Transform</code>といったICollider共通のInspector項目はRigidBody2Dには表示されません。「形状」はコライダー側、「物理的な動き」はRigidBody側という役割分担です。</div>
@@ -23,11 +23,14 @@
 <h2>Inspectorに表示される項目</h2>
 <table>
 <tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
-<tr><td>Velocity</td><td>XYのドラッグ入力欄（ステップ0.01）</td><td>現在の速度。既定 <code>(0, 0)</code></td></tr>
-<tr><td>Mass</td><td>ドラッグ入力欄（ステップ0.01、下限0）</td><td>質量。既定 <code>1.0</code></td></tr>
+<tr><td>Mass</td><td>ドラッグ入力欄（ステップ0.01、範囲0.001〜1000）</td><td>質量。既定 <code>1.0</code>。変更すると即座に生成済みの物理ボディへ反映される（形状由来の慣性モーメント分布は保ったまま質量だけ上書きされる）</td></tr>
 <tr><td>UseGravity</td><td>チェックボックス</td><td>重力の影響を受けるか。既定 <code>true</code></td></tr>
+<tr><td>Restitution</td><td>ドラッグ入力欄（ステップ0.01、範囲0〜1）</td><td>反発係数。<code>0</code>で衝突後に反発しない、<code>1</code>で完全弾性衝突相当。既定 <code>0.3</code>。ボディに取り付いている全シェイプへ反映される</td></tr>
+<tr><td>Friction</td><td>ドラッグ入力欄（ステップ0.01、範囲0〜10）</td><td>摩擦係数（クーロン摩擦）。<code>0</code>で無摩擦。既定 <code>0.3</code>。ボディに取り付いている全シェイプへ反映される</td></tr>
 <tr><td>Collider Shape</td><td>ドロップダウン（コンボボックス）</td><td>物理ボディの形状として使う、同オブジェクト上の2D用<code>ICollider</code>コンポーネントを選択する。先頭の<code>(Any)</code>は未選択（どのコライダーでも使用可）を表す。候補は<code>Is2D()</code>が<code>true</code>のコライダーのみに絞られる</td></tr>
 </table>
+
+<div class="note"><strong>Velocity/AngularVelocityはInspector非表示</strong><br>速度は<code>SetVelocity()</code>/<code>GetVelocity()</code>、角速度（Z軸周り、ラジアン/秒）は<code>SetAngularVelocity()</code>/<code>GetAngularVelocity()</code>でC++・スクリプトの両方から操作できますが、いずれもInspector上の直接編集項目としては表示されません。</div>
 
 <h2>Add Componentでの位置</h2>
 <p><code>RigidBody2D</code>は<code>COMPONENT_CATEGORY("Collision")</code>に属します。</p>

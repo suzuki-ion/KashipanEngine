@@ -15,18 +15,20 @@
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
 <h1>UIButton</h1>
-<p class="page-lead">画面上の矩形に対するマウスのホバー・押下・クリック判定を行うUI用コンポーネントです。見た目の描画は一切行いません（同一オブジェクトの<code>SpriteRenderer</code>が描画するスプライトの矩形を、そのまま当たり判定に使う「透明な当たり判定レイヤー」）。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。</p>
+<p class="page-lead">画面上の矩形に対するマウスのホバー・押下・クリック判定を行うUI用コンポーネントです。見た目の描画は一切行いません。同一オブジェクトに<code>SpriteRenderer</code>があればそのスプライトの矩形を、無く<code>TextRenderer</code>があればそのテキストの外接矩形（表示中の文字列・フォントサイズに応じて動的に変わる）を、そのまま当たり判定に使う「透明な当たり判定レイヤー」です（両方無い場合は常に判定false。SpriteRendererを優先）。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。</p>
 </div>
 
 <h2>前提となる構成</h2>
 <p>
-このコンポーネントは判定のみを行うため、実際にボタンとして機能させるには同一オブジェクトへ以下を組み合わせて付与します。
+このコンポーネントは判定のみを行うため、実際にボタンとして機能させるには同一オブジェクトへ以下のいずれかを組み合わせて付与します。
 </p>
 <ul>
 <li><code>MeshFilter</code>（"Rect2D"等）＋ <code>SpriteRenderer</code> — ボタンの見た目と、描画先ウィンドウの指定（<code>SpriteRenderer</code>側の<code>Target</code>をそのまま利用する）</li>
-<li><code>UIButton</code> — 上記スプライトの矩形に対する当たり判定</li>
+<li><code>TextRenderer</code> — SpriteRendererが無い場合のみ使われる。表示中のテキストの外接矩形を当たり判定に使い、描画先ウィンドウの指定も<code>TextRenderer</code>側の<code>Target</code>をそのまま利用する</li>
+<li><code>UIButton</code> — 上記いずれかの矩形に対する当たり判定</li>
 </ul>
-<div class="note"><strong>マウス座標変換のパイプラインはScreenBufferViewportと共通</strong><br>Windowクライアント座標 → NDC → Display Cameraの逆ビュー射影でワールド座標 → SpriteRendererの逆ワールド行列でローカル座標、という変換を行い、ローカル座標が単位クアッド範囲内（(0,0)=左下 ～ (1,1)=右上）かどうかで判定します。詳細は<a href="../Render/ScreenBufferViewport.html">ScreenBufferViewport</a>を参照してください。</div>
+<div class="note"><strong>マウス座標変換のパイプラインはScreenBufferViewportと共通</strong><br>Windowクライアント座標 → NDC → Display Cameraの逆ビュー射影でワールド座標、という変換を行うところまでは共通。そこから先のローカルUV座標（(0,0)=左下 ～ (1,1)=右上）への変換方法は対象コンポーネントで異なり、SpriteRendererはスプライトの逆ワールド行列でローカル座標へ変換（矩形サイズはTransformのスケールに追従）、TextRendererは表示中の文字列から都度測った外接矩形（ワールド空間）を基準にする（矩形サイズは文字列・フォントサイズに追従して動的に変わる）。ローカルUVが(0,0)～(1,1)の範囲内かどうかでHoveredを判定します。詳細は<a href="../Render/ScreenBufferViewport.html">ScreenBufferViewport</a>を参照してください。</div>
+<div class="note"><strong>描画先がScreenBufferObjectでも正しく動作する</strong><br>SpriteRenderer/TextRendererの描画先がWindowではなく<code>ScreenBufferObject</code>（オフスクリーン中間バッファ）の場合でも、そのScreenBufferを表示している<code>ScreenBufferViewport</code>を自動的に辿って実ウィンドウを解決する（入れ子表示にも対応、チェーンの深さには上限がある）。そのため独立したレンダーターゲットへ描画されるSpriteRenderer/TextRendererにUIButtonを付与しても、座標変換が破綻しない。</div>
 
 <h2>Inspectorに表示される項目</h2>
 <table>
@@ -34,7 +36,7 @@
 <tr><td>Display Camera</td><td>コンボボックス（シーン上のオブジェクトから選択）</td><td>マウス座標変換の基準にする<code>Camera2D</code>を持つオブジェクト</td></tr>
 </table>
 <p>
-実行中は現在の判定状態（Hovered / Pressed / Clicked）が確認用にそのまま表示されます。
+実行中は現在の判定状態（Hovered / Pressed / Clicked）が確認用にそのまま表示されます。さらに、マウス座標の変換自体に成功している間（矩形の外にあってローカルUVが範囲外の場合を含む）は、その時点のローカルUV座標も「Local UV: (x, y)」として表示されます。
 </p>
 
 <h2>スクリプトAPI</h2>
@@ -44,6 +46,7 @@
 <tr><td><code>bool IsHovered() const</code></td><td>マウスカーソルがボタンの矩形内にあるかどうか</td></tr>
 <tr><td><code>bool IsPressed() const</code></td><td>ボタン上で左クリックが押され、まだ離されていないかどうか。押下開始はボタン上である必要があるが、離すまでの間はカーソルが矩形外へ出ても保持される（一般的なUIボタンと同じ挙動。ドラッグして矩形外で離すとクリック扱いにはならない）</td></tr>
 <tr><td><code>bool IsClicked() const</code></td><td>このフレームでクリックが確定した瞬間だけ<code>true</code>（ボタン上で押して、ボタン上で離した時のみ）</td></tr>
+<tr><td><code>bool TryGetLocalHoverPosition(Vector2 &amp;out)</code></td><td>直近のUpdate()時点での、対象矩形基準のローカルUV座標を取得する。(0,0)=矩形の左下～(1,1)=矩形の右上で、矩形の外（負値や1超過）の値もそのまま返るため、<code>IsPressed()</code>中にカーソルが矩形の外へ出た場合でも位置を追い続けられる（スライダー等のドラッグ操作の実装に使える）。ウィンドウ/表示カメラ/対象コンポーネントのいずれかが解決できなかった場合は<code>false</code>を返す（<code>out</code>は変更しない）</td></tr>
 </table>
 <pre><code class="language-angelscript">class StartButton : ScriptComponentBehavior {
     void Update() {
@@ -63,6 +66,7 @@
 <h2>関連ページ</h2>
 <ul>
 <li><a href="../Render/SpriteRenderer.html">Components/Render/SpriteRenderer.html</a> — ボタンの見た目・描画先ウィンドウの指定</li>
+<li><a href="../Render/TextRenderer.html">Components/Render/TextRenderer.html</a> — SpriteRenderer代わりに当たり判定の基準にできるテキスト描画コンポーネント</li>
 <li><a href="../Render/ScreenBufferViewport.html">Components/Render/ScreenBufferViewport.html</a> — 同じマウス座標変換パイプラインを使う、オフスクリーン表示用コンポーネント</li>
 <li><a href="../../../Engine/Script/06_RenderAndWindow.html">Engine/Script/06_RenderAndWindow.html</a> — WindowObjectのマウス座標取得API</li>
 </ul>

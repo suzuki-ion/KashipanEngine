@@ -27,7 +27,17 @@
 <tr><td>Modules: N</td><td>Engine初期化済みの場合のみ表示。現在ロードされているスクリプトモジュール数（<code>GetModuleCount()</code>）</td></tr>
 </table>
 
-<div class="note">シーンに未追加の場合は<code>ScriptComponent::Initialize</code>時に自動で追加されるため、通常は手動でAdd Scene Componentから追加する機会は多くありません。現時点ではエンジン側の機能をスクリプトへ公開するための型/関数登録は行われていません。</div>
+<div class="note">シーンに未追加の場合は<code>ScriptComponent::Initialize</code>時に自動で追加されるため、通常は手動でAdd Scene Componentから追加する機会は多くありません。<code>Initialize</code>時にエンジン側の型・メソッドをスクリプトへ公開するための登録（<code>RegisterEngineScriptBindings</code>）が行われ、Object/各種コンポーネントのメソッドをAngelScriptから呼び出せるようになります。</div>
+
+<div class="note">
+<strong>削除済みのObject/コンポーネント参照へのアクセスはクラッシュしない</strong><br>
+スクリプトへ公開されるObject/コンポーネントのハンドルは生ポインタではなくUUIDを保持する安全なハンドルで、メソッド呼び出しの都度シーン上での生存を確認してから処理されます。参照先が既に削除されている場合はAngelScriptの例外（<code>asEXECUTION_EXCEPTION</code>）として扱われ、解放済みメモリへのアクセスは発生しません。この場合はそのスクリプトの実行のみが停止し、エンジン全体が落ちることはありません。
+</div>
+
+<div class="note">
+<strong>Development/Debug構成でのVSCode連携ファイル自動生成</strong><br>
+Releaseビルド以外では、<code>Initialize</code>時にプロジェクトルートへAngelScript Language Server用の型定義ファイル（<code>as.predefined</code>）と、VSCodeでのアタッチデバッグ用設定ファイル（<code>.vscode/launch.json</code>、ポート27979）が自動生成されます。<code>launch.json</code>は既に存在する場合は上書きされません。
+</div>
 
 <h2>Add Scene Componentでの位置</h2>
 <p><span class="ui-path">Add Scene Component → Script → SceneScriptEngine</span>。新規シーン作成時に自動で追加されるコンポーネントの1つです。</p>

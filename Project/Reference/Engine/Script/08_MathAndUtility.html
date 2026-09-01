@@ -15,7 +15,7 @@
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
 <h1>数学型・Math・Easing・Random</h1>
-<p class="page-lead"><code>Vector2</code>/<code>Vector3</code>/<code>Vector4</code>/<code>Quaternion</code>/<code>Matrix3x3</code>/<code>Matrix4x4</code> は値型としてC++側とほぼ同じ形で登録されています。あわせて <code>Math::</code>/<code>Easing::</code>/<code>Random::</code> 名前空間をまとめます。</p>
+<p class="page-lead"><code>Vector2</code>/<code>Vector3</code>/<code>Vector4</code>/<code>Quaternion</code>/<code>Matrix3x3</code>/<code>Matrix4x4</code> は値型としてC++側とほぼ同じ形で登録されています。あわせて <code>Math::</code>/<code>Easing::</code>/<code>Random::</code>/<code>Debug::</code> 名前空間をまとめます。</p>
 </div>
 
 <h2>Vector2 / Vector3 / Vector4</h2>
@@ -94,6 +94,9 @@ float m03 = mat.GetElement(0, 3);</code></pre>
 <tr><td><code>Vector3 Math::Lerp(const Vector3 &amp;in, const Vector3 &amp;in, float t)</code></td><td>線形補間</td></tr>
 <tr><td><code>Vector3 Math::Slerp(const Vector3 &amp;in, const Vector3 &amp;in, float t)</code></td><td>球面線形補間</td></tr>
 <tr><td><code>Vector4 Math::Lerp(const Vector4 &amp;in, const Vector4 &amp;in, float t)</code></td><td>線形補間</td></tr>
+<tr><td><code>Vector2/Vector3 Math::Bezier(const T &amp;in p0, const T &amp;in p1, const T &amp;in p2, float t)</code></td><td>2次ベジェ曲線上の点を求める（制御点3つ）</td></tr>
+<tr><td><code>Vector2/Vector3 Math::CatmullRom(const T &amp;in p0, const T &amp;in p1, const T &amp;in p2, const T &amp;in p3, float t)</code></td><td>4点（<code>p1</code>〜<code>p2</code>間、前後2点が接線に影響）のCatmull-Romスプライン補間</td></tr>
+<tr><td><code>Vector2/Vector3 Math::CatmullRomSpline(array&lt;T&gt;@ points, float t, bool isLoop = false)</code></td><td>制御点の配列全体を1本のCatmull-Romスプラインとみなし、<code>t</code>（0.0〜1.0でスプライン全体を表す）での点を求める。内部で <code>points.length()-1</code> 区間（<code>isLoop</code>時は<code>points.length()</code>区間）に等分される。制御点が4点未満の場合は自動的に線形補間にフォールバックする</td></tr>
 <tr><td><code>Quaternion Math::Slerp(const Quaternion &amp;in, const Quaternion &amp;in, float t)</code></td><td>球面線形補間</td></tr>
 <tr><td><code>Quaternion Math::IdentityQuaternion()</code></td><td>単位クォータニオンを取得する</td></tr>
 <tr><td><code>Quaternion Math::MakeRotateEuler(const Vector3 &amp;in euler)</code></td><td>オイラー角（ラジアン）から回転を生成する</td></tr>
@@ -152,6 +155,22 @@ if (Random::Bool(0.1f)) { // 10%の確率でtrue
 <tr><td><code>double Random::Double(double min, double max)</code></td><td><code>min</code>以上<code>max</code>以下のランダムな倍精度浮動小数点数を取得する</td></tr>
 <tr><td><code>bool Random::Bool(float trueProbability = 0.5f)</code></td><td><code>trueProbability</code>（0.0〜1.0）の確率で <code>true</code> を返す</td></tr>
 </table>
+
+<h2>Debug名前空間（デバッグ描画）</h2>
+<p>
+<code>Debug::</code> 名前空間には、エディターのシーンビューにだけ表示される（ゲーム画面には出ない）デバッグ描画関数があります。
+</p>
+<table>
+<tr><th>関数</th><th>説明</th></tr>
+<tr><td><code>void Debug::DrawLine(const Vector3 &amp;in start, const Vector3 &amp;in end, const Vector4 &amp;in color)</code></td><td>ワールド座標の2点間に線を描画する（毎フレーム呼び直す必要がある。描画内容はそのフレームだけ表示され蓄積されない）</td></tr>
+</table>
+<pre><code class="language-angelscript">void Update() {
+    Transform@ tf = GetTransform();
+    if (tf is null) return;
+    Vector3 pos = tf.GetTranslate();
+    // 視線方向を可視化する（エディターのシーンビューでのみ見える）
+    Debug::DrawLine(pos, pos + facingDirection * 3.0f, Vector4(1.0f, 0.0f, 0.0f, 1.0f));
+}</code></pre>
 
 <h2>関連ページ</h2>
 <ul>

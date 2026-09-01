@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TextureSource | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_TextureSource">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>TextureSource</h1>
+<p class="page-lead">同一オブジェクトのSpriteRenderer/MeshRendererが表示するテクスチャを、マテリアルアセット自体を編集せずに差し替えられるようにするコンポーネントです。内部では使用中のマテリアルを複製し、複製先のテクスチャだけを差し替えて割り当てます（複数オブジェクトで共有されている可能性のある元のマテリアルアセット自体は書き換えません）。コンポーネントが無効化・削除されると元のマテリアルへ戻ります。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Texture</td><td>コンボボックス＋アセットのドラッグ&amp;ドロップ受付</td><td>読み込み済みテクスチャから選択。<a href="../../Windows/05_AssetsWindow.html">Assets Window</a>からテクスチャファイルをドラッグ&amp;ドロップして設定することもできる。選択・変更すると即座に同オブジェクトのSpriteRenderer/MeshRendererへ反映される</td></tr>
+</table>
+
+<div class="note">同一オブジェクトにSpriteRendererまたはMeshRendererが無い場合は何も起こりません（両方ある場合はSpriteRenderer側が優先されます）。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path">Add Component → Render → TextureSource</span>。最大付与数の制限はありません。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/09_Assets.html">Engine/09_Assets.html</a> — テクスチャ/マテリアルアセットの読み込み・<code>TextureManager</code>/<code>MaterialManager</code>のAPI</li>
+<li><a href="../Render/SpriteRenderer.html">Components/Render/SpriteRenderer.html</a> — SpriteRendererのマテリアル設定</li>
+<li><a href="../Render/MeshRenderer.html">Components/Render/MeshRenderer.html</a> — MeshRendererのマテリアル設定</li>
+<li><a href="GifSource.html">GifSource.html</a> — 同じ方式でGIFアニメーションを差し替えるコンポーネント</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本的な見方</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

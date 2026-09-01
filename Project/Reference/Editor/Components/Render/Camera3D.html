@@ -29,11 +29,15 @@
 <tr><td>Far</td><td>ドラッグ入力欄（ステップ1.0）</td><td>ファークリップ距離（既定1000.0）</td></tr>
 <tr><td>Aspect</td><td>ドラッグ入力欄（ステップ0.01）</td><td>アスペクト比（既定16:9＝約1.778）</td></tr>
 <tr><td>OrthoSize</td><td>ドラッグ入力欄（ステップ0.1）</td><td>平行投影時の縦半径（ワールド単位、既定10.0）</td></tr>
+<tr><td>Camera Jitter</td><td>チェックボックス</td><td>投影行列にサブピクセル単位のNDCオフセット（TAA的なジッター）を乗せるか（既定false）。TemporalBlendEffect等のフレーム蓄積と組み合わせない場合、単に画面が揺れて見えるだけになる。ホバーすると説明ツールチップが表示される</td></tr>
+<tr><td>Auto-Sync Aspect Ratio</td><td>チェックボックス</td><td>有効にすると、同一オブジェクトのCameraRendererに描画先が単一で明示指定されている場合に限り、その描画先の実解像度から求めたアスペクト比へAspectを毎フレーム自動追従させる（既定false）。ホバーすると説明ツールチップが表示される</td></tr>
 </table>
 
 <div class="note"><strong>FovYはラジアン表示、範囲制限も無い</strong><br>Transformの回転欄は内部ラジアン→表示度で変換されるが、Camera3DのFovYはラジアンのまま直接ドラッグ入力する。DragFloatに上限・下限も設定されていないため、意図しない極端な値（0以下やπ以上）も入力できてしまう点に注意。</div>
 
 <div class="tip"><strong>OrthographicチェックでFovYは無視される</strong><br>Orthographicが有効な場合、CameraRendererが計算する投影行列はOrthoSizeとAspectのみを使い、FovYの値は使用されない。ただしFovY欄自体は非表示にはならず、常に編集可能な状態で残る。</div>
+
+<div class="tip"><strong>Auto-Sync Aspect Ratioが効くのは描画先を単一指定している場合のみ</strong><br>同一オブジェクトのCameraRendererが描画先を指定していない（全描画先へ適用中の）場合は解像度を一意に決められないため、Auto-Sync Aspect Ratioを有効にしていても何もせず、Aspectは手動設定値のまま変化しない。</div>
 
 <h2>Add Componentでの位置</h2>
 <p><span class="ui-path"><span>Add Component</span><i>›</i><span>Render</span><i>›</i><span>Camera3D</span></span> から追加する。1オブジェクトに付与できるのは最大1個。</p>

@@ -56,16 +56,18 @@
 <h2>Camera2D / Camera3D / CameraRenderer / CameraController</h2>
 <table>
 <tr><th>型</th><th>メソッド</th><th>説明</th></tr>
-<tr><td rowspan="6"><code>Camera3D</code></td><td><code>void SetFovY(float)</code> / <code>float GetFovY() const</code></td><td>画角Y</td></tr>
+<tr><td rowspan="7"><code>Camera3D</code></td><td><code>void SetFovY(float)</code> / <code>float GetFovY() const</code></td><td>画角Y</td></tr>
 <tr><td><code>void SetNearClip(float)</code> / <code>float GetNearClip() const</code></td><td>近クリップ距離</td></tr>
 <tr><td><code>void SetFarClip(float)</code> / <code>float GetFarClip() const</code></td><td>遠クリップ距離</td></tr>
 <tr><td><code>void SetAspectRatio(float)</code> / <code>float GetAspectRatio() const</code></td><td>アスペクト比</td></tr>
 <tr><td><code>void SetOrthographic(bool)</code> / <code>bool IsOrthographic() const</code></td><td>平行投影かどうか</td></tr>
 <tr><td><code>void SetOrthoSize(float)</code> / <code>float GetOrthoSize() const</code></td><td>平行投影サイズ</td></tr>
-<tr><td rowspan="4"><code>Camera2D</code></td><td><code>void SetSize(float width, float height)</code></td><td>表示範囲サイズを設定する</td></tr>
+<tr><td><code>void SetAutoSyncAspectRatio(bool)</code> / <code>bool GetAutoSyncAspectRatio() const</code></td><td>描画先バッファの解像度へアスペクト比を毎フレーム自動追従させるかどうか（描画先が単一に定まらない場合は手動設定値のまま何もしない）</td></tr>
+<tr><td rowspan="5"><code>Camera2D</code></td><td><code>void SetSize(float width, float height)</code></td><td>表示範囲サイズを設定する</td></tr>
 <tr><td><code>void SetNearClip(float)</code> / <code>float GetNearClip() const</code></td><td>近クリップ距離</td></tr>
 <tr><td><code>void SetFarClip(float)</code> / <code>float GetFarClip() const</code></td><td>遠クリップ距離</td></tr>
 <tr><td><code>float GetWidth() const</code> / <code>float GetHeight() const</code></td><td>表示範囲サイズを取得する</td></tr>
+<tr><td><code>void SetAutoSyncSize(bool)</code> / <code>bool GetAutoSyncSize() const</code></td><td>描画先バッファの解像度へ表示範囲サイズ（width/height）を毎フレーム自動追従させるかどうか（描画先が単一に定まらない場合は手動設定値のまま何もしない）</td></tr>
 <tr><td rowspan="4"><code>CameraRenderer</code></td><td><code>void SetPipelineName(const string &amp;in)</code> / <code>const string &amp;GetPipelineName() const</code></td><td>使用パイプライン名</td></tr>
 <tr><td><code>Vector3 GetWorldPosition() const</code></td><td>カメラのワールド座標を取得する</td></tr>
 <tr><td><code>const Matrix4x4 &amp;GetViewProjectionMatrix() const</code></td><td>直近アップロードしたビュー射影行列を取得する</td></tr>
@@ -313,7 +315,9 @@ class ScreenshotTaker : ScriptComponentBehavior {
 <li>描画コンポーネント全般（C++側） → <a href="../05_Rendering.html">05_Rendering.html</a></li>
 <li>ウィンドウ/オフスクリーンの仕組み（C++側） → <a href="../11_Window.html">11_Window.html</a></li>
 <li><code>ScreenBufferViewport</code>（オフスクリーンをウィンドウへ表示し、その解像度基準のマウス座標を取得する） → <a href="../../Editor/Components/Render/ScreenBufferViewport.html">Editor/Components/Render/ScreenBufferViewport.html</a></li>
+<li><code>ScreenAnchor</code>（画面上の位置へオブジェクトを追従させるアンカー） → <a href="../../Editor/Components/Render/ScreenAnchor.html">Editor/Components/Render/ScreenAnchor.html</a></li>
 <li><code>UIButton</code>（画面上の矩形へのマウスホバー/クリック判定） → <a href="../../Editor/Components/UI/UIButton.html">Editor/Components/UI/UIButton.html</a></li>
+<li><code>MeshButton</code>（3Dオブジェクトへのマウスホバー/クリック判定、UIButtonの3D版） → <a href="../../Editor/Components/Collider/MeshButton.html">Editor/Components/Collider/MeshButton.html</a></li>
 </ul>
 
 <div id="page-footer" class="page-footer"></div>

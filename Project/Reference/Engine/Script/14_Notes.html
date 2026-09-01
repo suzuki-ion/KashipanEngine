@@ -41,10 +41,10 @@ EditorTool側にはホットリロード機構自体が無く、追加・変更�
 
 <h2>注意事項</h2>
 <ul>
-<li><strong>ハンドルの寿命</strong>: <code>Object@</code> やコンポーネントのハンドルはエンジン側が所有する実体への参照（参照カウント無し）です。オブジェクトやコンポーネントが削除された後のハンドルへアクセスすると未定義動作になります。フレームをまたいで保持する場合は削除タイミングに注意してください（<code>[SerializeField]</code> の <code>Object@</code> は <code>IsValidObject()</code> で安全確認できます。<a href="02_SerializeField.html">02_SerializeField.html</a>）。</li>
+<li><strong>ハンドルの寿命</strong>: <code>Object@</code> やコンポーネントのハンドルは、参照先の実体を直接指す生ポインタではなく、内部でUUID（コンポーネントの場合はオーナーのUUID＋プール内追加順ID）だけを保持する安全な参照型です。メソッド呼び出しの都度、現在生存している実体へ解決し直されるため、参照先のオブジェクト・コンポーネントが削除された後のハンドルへメソッドを呼んでも<strong>エンジンがクラッシュすることはありません</strong>。その呼び出しはAngelScriptの例外として扱われ、該当スクリプトの実行だけがそこで止まります（ハンドル自体は自動では <code>null</code> になりません）。フレームをまたいで保持する場合は、意図しない例外を避けるため削除タイミングに注意してください（<code>[SerializeField]</code> の <code>Object@</code> は <code>IsValidObject()</code> で安全確認できます。<a href="02_SerializeField.html">02_SerializeField.html</a>）。</li>
 <li><strong>Behaviorクラスは1モジュール1つ</strong>: <code>ScriptComponentBehavior</code> を実装したクラスが複数ある場合、最初に見つかった1つだけが使用されます。</li>
 <li><strong>コライダーの追加/削除</strong>: 衝突コールバックのフックは毎フレームのコライダー数チェックで追従しますが、コライダーの追加とほぼ同時に発生した衝突は最初の1フレームだけ通知されないことがあります。</li>
-<li><strong>RayCollider / Ray2DCollider</strong>: レイキャスト専用のコライダーは常駐形状を持たないため、<code>OnCollisionEnter</code> 等の衝突イベントは発生しません。</li>
+<li><strong>RayCollider / Ray2DCollider</strong>: レイキャスト専用のコライダーは常駐形状を持たないため、<code>OnCollisionEnter</code> 等の衝突イベントは発生しません。<code>RayCollider</code>（3D）は <code>CastRay(HitInfo &amp;out)</code> で任意のタイミングにレイキャストできます（<a href="07_ColliderAndPostEffect.html">07_ColliderAndPostEffect.html</a>）。</li>
 <li><strong>数学型は値型</strong>: <code>Vector3</code> 等を変数に代入するとコピーされます。<code>Transform</code> の座標を変更する場合は <code>GetTranslate()</code> で取得→変更→<code>SetTranslate()</code> で書き戻してください。</li>
 <li><strong>文字列と数値の連結</strong>: <code>"value=" + 1.0f</code> のような連結が可能です（scriptstdstringアドオンによる）。</li>
 <li><strong>ポストプロセスエフェクトの内部Params構造体</strong>: <code>BloomEffect</code>等が内部で持つ <code>Params</code> 構造体自体はスクリプトへ公開されていません。フィールドごとのGet/Setメソッドを使用してください（<a href="07_ColliderAndPostEffect.html">07_ColliderAndPostEffect.html</a>）。</li>

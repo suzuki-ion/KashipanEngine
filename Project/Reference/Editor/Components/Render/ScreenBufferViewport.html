@@ -23,9 +23,26 @@
 <tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
 <tr><td>Source</td><td>コンボボックス（シーン上のオブジェクトから選択）</td><td>表示するオフスクリーンの内容を持つ、<code>ScreenBufferObject</code>を付与したオブジェクト</td></tr>
 <tr><td>Display Camera</td><td>コンボボックス（シーン上のオブジェクトから選択）</td><td>マウス座標変換（後述の<code>TryGetOffscreenMousePosition</code>）の基準にする<code>Camera2D</code>を持つオブジェクト。描画先の指定には使わない</td></tr>
+<tr><td>Fit Mode</td><td>コンボボックス（None/Stretch/Letterbox）</td><td>表示先（描画先）の解像度に対する自動フィット方法（既定None）。None以外の場合、毎フレーム自身のTransform.Scale（X/Yのみ）を自動で書き換える。Anchor/Pivotが既定値(0.5,0.5)のままであれば、フィット後も表示位置はTransform.Translateを中心に保たれる</td></tr>
 </table>
+<div class="note"><strong>Fit Modeの各値の意味</strong>
+<ul>
+<li><strong>None（Manual）</strong> — 何もしない。Transform.Scaleは手動設定した値のまま使われる</li>
+<li><strong>Stretch</strong> — アスペクト比を無視し、Scale.X/Yをそれぞれ描画先の幅・高さぴったりに引き伸ばす</li>
+<li><strong>Letterbox（Preserve Aspect Ratio）</strong> — ソースScreenBufferのアスペクト比を保ったまま、描画先に収まる最大サイズへスケールする（<code>min(destWidth/srcWidth, destHeight/srcHeight)</code>を横縦共通の倍率として使うため、余白ができる場合がある）</li>
+</ul>
+</div>
 <div class="note"><strong>描画先・アンカー/ピボット・パイプライン等は内部SpriteRenderer側で編集する</strong><br>このコンポーネント自体はそれらの委譲用ウィジェットを持ちません。自動生成された同一オブジェクトの<code>SpriteRenderer</code>コンポーネント（Inspector上には通常のコンポーネントとして表示される）で、<code>Target</code>（描画先ウィンドウ）・<code>Anchor</code>/<code>Pivot</code>・<code>Pipeline</code>等を直接編集してください。</div>
 <div class="warn"><strong>自動生成されたMeshFilter/SpriteRendererは削除しないこと</strong><br>これらはこのコンポーネントを削除しても自動では削除されません（他コンポーネントと同様、ユーザーが明示的に削除可能な通常コンポーネントとして扱われます）。誤って削除するとViewportが機能しなくなります。また<code>MeshFilter</code>は1オブジェクトにつき1つまでのため、既存のMeshFilterを持つオブジェクトに付けると流用（メッシュがRect2Dに上書き）されます。専用オブジェクトへの付与を推奨します。</div>
+
+<h2>Fit Modeのデバッグ情報表示</h2>
+<p>Fit ModeがNone以外の場合のみ、Inspector上に以下の読み取り専用のデバッグ情報が追加表示されます（編集不可、テキスト表示のみ）。</p>
+<table>
+<tr><th>表示</th><th>内容</th></tr>
+<tr><td>Fit Target</td><td>内部SpriteRendererの描画先から解決した実解像度と描画先名を<code>幅x高さ [名前]</code>形式で表示。解決できない場合（Targetが未設定、または利用不可）は「Fit Target: - (内部SpriteRendererのTargetが未設定か利用不可)」とグレー表示</td></tr>
+<tr><td>Fit Source</td><td>SourceのScreenBufferの実解像度を<code>幅x高さ</code>形式で表示。取得できない場合は「Fit Source: - (Sourceが未設定か利用不可)」とグレー表示</td></tr>
+<tr><td>Transform Scale</td><td>同一オブジェクトのTransformの現在のScale値を<code>(X, Y, Z)</code>形式で表示。Fit Modeによって書き換えられた後の値が見える。Transformが見つからない場合は「Transform Scale: - (Transformが見つかりません)」とグレー表示</td></tr>
+</table>
 
 <h2>マウス座標変換（オフスクリーンのピクセル座標）</h2>
 <p>

@@ -15,7 +15,7 @@
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
 <h1>コライダーとポストエフェクト</h1>
-<p class="page-lead">コライダー系コンポーネントの共通API・連続衝突判定（CCD）と、<code>ScreenBufferObject</code>に適用するポストエフェクト各コンポーネントのスクリプトAPIをまとめます。</p>
+<p class="page-lead">コライダー系コンポーネントの共通API・形状固有パラメータ・連続衝突判定（CCD）と、<code>ScreenBufferObject</code>に適用するポストエフェクト各コンポーネントのスクリプトAPIをまとめます。</p>
 </div>
 
 <h2>コライダー（BoxCollider / SphereCollider / CapsuleCollider / MeshCollider / RayCollider / Box2DCollider / Circle2DCollider / Capsule2DCollider / Ray2DCollider）</h2>
@@ -26,6 +26,37 @@
 <tr><td><code>bool IsContinuousDetection() const</code> / <code>void SetContinuousDetection(bool)</code></td><td>連続衝突判定（CCD）が有効かどうか（下記参照）</td></tr>
 <tr><td><code>bool Is2D() const</code></td><td>2D用コライダーかどうか</td></tr>
 </table>
+
+<h2>各コライダーの形状固有パラメータ</h2>
+<p>
+共通メソッドに加えて、コライダーの種類ごとに形状パラメータのGet/Setがあります。
+</p>
+<table>
+<tr><th>コンポーネント</th><th>メソッド</th></tr>
+<tr><td><code>BoxCollider</code></td><td><code>GetSize</code>/<code>SetSize</code>（<code>Vector3</code>）, <code>GetCenter</code>/<code>SetCenter</code>（<code>Vector3</code>）</td></tr>
+<tr><td><code>SphereCollider</code></td><td><code>GetRadius</code>/<code>SetRadius</code>（<code>float</code>）, <code>GetCenter</code>/<code>SetCenter</code>（<code>Vector3</code>）</td></tr>
+<tr><td><code>CapsuleCollider</code></td><td><code>GetRadius</code>/<code>SetRadius</code>, <code>GetHeight</code>/<code>SetHeight</code>（<code>float</code>）, <code>GetCenter</code>/<code>SetCenter</code>（<code>Vector3</code>）</td></tr>
+<tr><td><code>MeshCollider</code></td><td><code>IsConvex</code>/<code>SetConvex</code>（<code>bool</code>）, <code>GetMeshHandle</code>/<code>SetMeshHandle</code>（<code>uint</code>）, <code>uint GetEffectiveMeshHandle() const</code>（未設定時に実際に使われるメッシュハンドルを取得する）</td></tr>
+<tr><td><code>RayCollider</code></td><td><code>GetDirection</code>/<code>SetDirection</code>（<code>Vector3</code>）, <code>GetMaxDistance</code>/<code>SetMaxDistance</code>（<code>float</code>）, <code>bool CastRay(HitInfo &amp;out)</code>（下記参照）</td></tr>
+<tr><td><code>Box2DCollider</code></td><td><code>GetSize</code>/<code>SetSize</code>（<code>Vector2</code>）, <code>GetCenter</code>/<code>SetCenter</code>（<code>Vector2</code>）</td></tr>
+<tr><td><code>Circle2DCollider</code></td><td><code>GetRadius</code>/<code>SetRadius</code>（<code>float</code>）, <code>GetCenter</code>/<code>SetCenter</code>（<code>Vector2</code>）</td></tr>
+<tr><td><code>Capsule2DCollider</code></td><td><code>GetStart</code>/<code>SetStart</code>, <code>GetEnd</code>/<code>SetEnd</code>（<code>Vector2</code>）, <code>GetRadius</code>/<code>SetRadius</code>（<code>float</code>）</td></tr>
+<tr><td><code>Ray2DCollider</code></td><td><code>GetDirection</code>/<code>SetDirection</code>（<code>Vector2</code>）, <code>GetLength</code>/<code>SetLength</code>（<code>float</code>）</td></tr>
+</table>
+<div class="tip">
+<strong>RayColliderの明示的なレイキャスト（CastRay）</strong><br>
+<code>RayCollider</code> は常駐形状を持たないため <code>OnCollisionEnter</code> 等の衝突イベントは発生しませんが、<code>bool CastRay(HitInfo &amp;out hit)</code> を呼ぶとその場で（<code>Direction</code>/<code>MaxDistance</code>で決まる経路上を）レイキャストし、命中していれば <code>true</code> を返して <code>hit</code> へ情報を格納します。毎フレームではなく必要なタイミングだけ判定したい用途（照準・索敵等）に使用してください。<code>Ray2DCollider</code> には現時点で同等のメソッドはありません。</div>
+<pre><code class="language-angelscript">class Gun : ScriptComponentBehavior {
+    void Update() {
+        RayCollider@ ray;
+        if (GetComponent(@ray) &amp;&amp; IsCommandTriggered("Fire")) {
+            HitInfo hit;
+            if (ray.CastRay(hit)) {
+                Log("命中: " + hit.otherObject.GetName());
+            }
+        }
+    }
+}</code></pre>
 
 <h2>連続衝突判定（CCD）</h2>
 <p>
@@ -85,15 +116,21 @@
 }</code></pre>
 <div class="note">
 <strong>RayCollider / Ray2DCollider</strong><br>
-レイキャスト専用のコライダーは常駐形状を持たないため、<code>OnCollisionEnter</code> 等の衝突イベントは発生しません。
+レイキャスト専用のコライダーは常駐形状を持たないため、<code>OnCollisionEnter</code> 等の衝突イベントは発生しません。<code>RayCollider</code>（3D）は代わりに <code>CastRay(HitInfo &amp;out)</code> で任意のタイミングにレイキャストできます（上記「各コライダーの形状固有パラメータ」参照）。
 </div>
 
 <h2>RigidBody2D / RigidBody3D</h2>
+<p>
+2D側はBox2D v3、3D側はReactPhysics3Dへ委譲する構成です（いずれもRigidBodyがベアボディを所有し、対象のコライダーコンポーネントがシェイプを取り付けます）。
+</p>
 <table>
 <tr><th>メソッド</th><th>RigidBody2D</th><th>RigidBody3D</th><th>説明</th></tr>
 <tr><td><code>void SetMass(float)</code> / <code>float GetMass() const</code></td><td>o</td><td>o</td><td>質量</td></tr>
 <tr><td><code>void SetUseGravity(bool)</code> / <code>bool IsGravityEnabled() const</code></td><td>o</td><td>o</td><td>重力の有効/無効</td></tr>
-<tr><td><code>void SetVelocity(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetVelocity() const</code></td><td>o</td><td>-</td><td>速度</td></tr>
+<tr><td><code>void SetVelocity(const Vector2/Vector3 &amp;in)</code> / <code>Vector2/Vector3 GetVelocity() const</code></td><td>o（<code>Vector2</code>）</td><td>o（<code>Vector3</code>）</td><td>速度</td></tr>
+<tr><td><code>void SetAngularVelocity(float)</code> / <code>float GetAngularVelocity() const</code></td><td>o</td><td>-</td><td>角速度（ラジアン/秒）</td></tr>
+<tr><td><code>void SetSelectedCollider(Collider@)</code> / <code>Collider@ GetSelectedCollider() const</code></td><td>o</td><td>o</td><td>同オブジェクトに複数のコライダーが付いている場合に、物理ボディへシェイプとして使うコライダーを選択する（<code>null</code>を渡すと未選択に戻る）</td></tr>
+<tr><td><code>array&lt;Collider@&gt;@ GetOwnerColliders() const</code></td><td>o</td><td>o</td><td>同オブジェクトが持つ全コライダーコンポーネントを取得する（<code>SetSelectedCollider</code>の選択肢の列挙に使う）</td></tr>
 <tr><td><code>void SetBodyType(int)</code> / <code>int GetBodyType() const</code></td><td>-</td><td>o</td><td>物理ボディ種別（0:Static 1:Kinematic 2:Dynamic）</td></tr>
 <tr><td><code>void SetInterpolate(bool)</code> / <code>bool IsInterpolateEnabled() const</code></td><td>-</td><td>o</td><td>補間の有効/無効</td></tr>
 <tr><td><code>void SyncFromTransform()</code></td><td>-</td><td>o</td><td>現在のTransformの位置・回転を物理ボディへ反映する（Play開始時の同期用）</td></tr>
@@ -121,6 +158,8 @@
 <tr><td><code>MotionBlurEffect</code></td><td>前後フレームの<code>PreTransform</code>差分を利用したモーションブラー。詳細パラメータは<a href="../10_PostEffects.html">10_PostEffects.html</a>参照</td></tr>
 <tr><td><code>OutlineEffect</code></td><td><code>GetThreshold</code>/<code>SetThreshold</code>, <code>GetThickness</code>/<code>SetThickness</code>（<code>float</code>）, <code>GetColor</code>/<code>SetColor</code>（<code>Vector4</code>）。深度線形化に使うNear/Farはこのスクリーンバッファへ描画したカメラから自動解決されるため、手動設定は不要</td></tr>
 <tr><td><code>RadialBlurEffect</code></td><td><code>GetIntensity</code>/<code>SetIntensity</code>（<code>float</code>）, <code>GetSampleCount</code>/<code>SetSampleCount</code>（<code>int</code>）, <code>GetCenter</code>/<code>SetCenter</code>（<code>Vector2</code>）, <code>GetStartRadius</code>/<code>SetStartRadius</code>（<code>float</code>）</td></tr>
+<tr><td><code>ScreenWideDitherBlendEffect</code></td><td><code>GetPassCount</code>/<code>SetPassCount</code>（<code>uint</code>）</td></tr>
+<tr><td><code>TemporalBlendEffect</code></td><td><code>GetHistoryWeight</code>/<code>SetHistoryWeight</code>（<code>float</code>）</td></tr>
 <tr><td><code>VignetteEffect</code></td><td><code>GetCenter</code>/<code>SetCenter</code>（<code>Vector2</code>）, <code>GetColor</code>/<code>SetColor</code>（<code>Vector4</code>）, <code>GetIntensity</code>/<code>SetIntensity</code>, <code>GetInnerRadius</code>/<code>SetInnerRadius</code>, <code>GetSmoothness</code>/<code>SetSmoothness</code>（<code>float</code>）</td></tr>
 </table>
 <div class="note">

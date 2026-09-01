@@ -81,7 +81,7 @@ array&lt;string&gt;@ excludedTagNames = null;</code></pre>
 </ul>
 <div class="warn">
 <strong>実行中に参照先が削除された場合の注意</strong><br>
-<code>Object</code> 型は参照カウントを持たないため、<code>[SerializeField]</code> で保持したハンドルの参照先オブジェクトが<strong>実行中に</strong> <code>DeleteObject</code> 等で削除されても、変数は自動では <code>null</code> にならず、削除済みオブジェクトを指したままになります（保存/読込をまたいだ場合のみ <code>null</code> に解決される）。実行中に参照先が消える可能性がある場合は、使用前に <code>IsValidObject()</code> で有効性を確認してください。
+<code>[SerializeField]</code> で保持した <code>Object@</code> の参照先オブジェクトが<strong>実行中に</strong> <code>DeleteObject</code> 等で削除されても、変数は自動では <code>null</code> にならず、削除済みオブジェクトを指したままになります（保存/読込をまたいだ場合のみ <code>null</code> に解決される）。<code>Object@</code> ハンドル自体は内部でUUIDを保持する安全な参照型のため、削除済みの参照へメソッドを呼び出してもエンジンがクラッシュすることはなく、その呼び出しはAngelScriptの例外として扱われ、該当スクリプトの実行だけがそこで止まります。とはいえ意図しない例外で処理が中断するのは望ましくないため、実行中に参照先が消える可能性がある場合は、使用前に <code>IsValidObject()</code> で有効性を確認してください。
 </div>
 <pre><code class="language-angelscript">void Update() {
     if (!IsValidObject(target)) return; // 削除済み、または未設定

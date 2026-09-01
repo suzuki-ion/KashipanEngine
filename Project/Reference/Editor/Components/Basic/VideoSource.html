@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VideoSource | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_VideoSource">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>VideoSource</h1>
+<p class="page-lead">動画を再生するコンポーネントです（UnityのVideo Playerに相当）。同じオブジェクトにSpriteRenderer/MeshRendererが付いている場合、再生開始時にそのレンダラーが使用しているマテリアルを複製し、複製したマテリアルのテクスチャを再生中の動画へ差し替えて割り当てます（元のマテリアルアセット自体は書き換えません）。再生していない間（未再生・停止後）も、動画の最初の1フレームがプレースホルダーとして表示され続けます。</p>
+</div>
+
+<h2>基本設定</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Video</td><td>コンボ（(None) + 読み込み済み動画のアセットパス一覧）</td><td>再生する動画。<a href="../../Windows/05_AssetsWindow.html">Assets Window</a>から動画ファイルをこの項目へドラッグ&amp;ドロップして割り当てることもできる。選び直すと、再生中・一時停止中でなければ新しい動画の最初の1フレームへプレビューが更新される</td></tr>
+<tr><td>Loop</td><td>チェックボックス</td><td>ループ再生するか</td></tr>
+<tr><td>Volume</td><td>ドラッグ入力欄（ステップ0.01、範囲0〜1）</td><td>音量</td></tr>
+<tr><td>Play On Awake</td><td>チェックボックス</td><td>シーン開始時に自動で再生を開始するか</td></tr>
+<tr><td>Route Audio Through AudioSource</td><td>チェックボックス</td><td>有効にすると、再生開始時に同オブジェクトの<a href="AudioSource.html">AudioSource</a>へ動画の音声再生ハンドルを渡し、そのAudioSourceが持つ距離減衰・パン・各種エフェクトを動画の音声にも適用する（同オブジェクトにAudioSourceが無い場合は何もしない）。カーソルを合わせるとツールチップで説明が表示される</td></tr>
+</table>
+
+<h2>再生操作</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Play / Resume / Pause</td><td>ボタン</td><td>状態に応じて表示が切り替わる。未再生時は"Play"、一時停止中は"Resume"、再生中は"Pause"</td></tr>
+<tr><td>Stop</td><td>ボタン</td><td>再生・一時停止のどちらでもない場合は無効化（グレーアウト）される。停止すると動画の最初の1フレームがレンダラーに表示され続ける</td></tr>
+</table>
+
+<div class="note">Play On Awakeが有効な場合でも、実際の再生開始はシーン再生（ゲームループ）が始まった最初のUpdateまで遅延されます。それまでの間（シーン読み込み直後やエディター編集中）は、動画の最初の1フレームがプレースホルダーとして表示されます。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path">Add Component → Video → VideoSource</span>。最大付与数の制限はありません。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="AudioSource.html">AudioSource.html</a> — Route Audio Through AudioSourceの適用先。距離減衰・パン・各種エフェクトの設定</li>
+<li><a href="../../../Engine/09_Assets.html">Engine/09_Assets.html</a> — 動画アセットの読み込み・<code>VideoManager</code>/<code>VideoPlayer</code>のAPI</li>
+<li><a href="GifSource.html">GifSource.html</a> — 同じ方式でGIFアニメーションを差し替えるコンポーネント</li>
+<li><a href="../Render/SpriteRenderer.html">Components/Render/SpriteRenderer.html</a> — SpriteRendererのマテリアル設定</li>
+<li><a href="../Render/MeshRenderer.html">Components/Render/MeshRenderer.html</a> — MeshRendererのマテリアル設定</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本的な見方</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

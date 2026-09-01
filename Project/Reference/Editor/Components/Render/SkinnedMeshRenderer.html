@@ -33,6 +33,20 @@
 </table>
 <div class="tip"><strong>Instance ColorはMeshRendererと共通の機能</strong><br>以前はSkinnedMeshRendererに無かった機能だが、現在はMeshRendererと同じ仕様のInstance Color / Instance Color Blend Modeが追加されている。既定値のままなら見た目に影響しないため、通常は無視して構わない。</div>
 
+<h3>Instance UV / 描画順・インスタンシング制御（<a href="MeshRenderer.html">MeshRenderer</a>と共通）</h3>
+<p>共有マテリアルを変更せず、このSkinnedMeshRendererだけにUV変換（オフセット・回転・スケール）を追加で適用できる。マテリアル側のUV変換（<code>MaterialManager</code>のUV Translate/Rotation/Scale/Pivot）とはUV Combine Modeの指定に従って合成され、既定値のまま（オフセット(0,0)・回転0・スケール(1,1)）であれば見た目に影響しない。</p>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Instance UV Translate</td><td>XYのドラッグ入力欄（ステップ0.001）</td><td>オブジェクト単位のUVオフセット。既定値(0, 0)</td></tr>
+<tr><td>Instance UV Rotation (deg)</td><td>ドラッグ入力欄（ステップ0.1、範囲-180〜180）</td><td>オブジェクト単位のUV回転（度指定、内部はラジアンで保持）。既定値0</td></tr>
+<tr><td>Instance UV Scale</td><td>XYのドラッグ入力欄（ステップ0.001）</td><td>オブジェクト単位のUVスケール。既定値(1, 1)</td></tr>
+<tr><td>Instance UV Rotation Pivot</td><td>XYのドラッグ入力欄（ステップ0.001）</td><td>Instance UV Rotationの回転中心（UV基準の座標）。拡縮は常にUV原点(0, 0)基準のまま、回転のみこの点を中心に行われる。既定値(0.5, 0.5)</td></tr>
+<tr><td>UV Combine Mode</td><td>コンボ（Material-based（既定）/ Instance-based / Instance Only）</td><td>Instance UVとマテリアル側のUV変換の合成方法。Material-based: マテリアルの変換の上にInstance UVを乗せる。Instance-based: Instance UVを基準にマテリアルの変換を後から適用する。Instance Only: マテリアルのUV変換を無視しInstance UVのみを使う</td></tr>
+<tr><td>Instance UV Translate / Scale / Rotation Pivot (px)</td><td>XYのドラッグ入力欄（ステップ0.5）</td><td>上記Translate/Scale/Rotation Pivotの3項目を、マテリアルのテクスチャのピクセル単位で編集できる別表示。内部値（0〜1のUV基準）と相互に連動する。マテリアルにテクスチャが設定されていない場合は無効化（グレーアウト）される</td></tr>
+<tr><td>Render Priority</td><td>整数ドラッグ入力欄（範囲制限なし）</td><td>描画順を制御する優先度。値が小さいほど先に（奥に）、大きいほど後に（手前に）描画される。既定値0</td></tr>
+<tr><td>Allow Instancing</td><td>チェックボックス</td><td>無効にすると、他のオブジェクトとメッシュ/マテリアル/パイプラインが同じでも必ず単独のドローコールで描画される。既定true。スキンメッシュはボーン変形結果がオブジェクトごとに異なるため実質的に常に単独描画になり、この設定はAPI上の一貫性のためだけに存在する</td></tr>
+</table>
+
 <h3>Skinning（区切り線以下、SkinnedMeshRenderer固有）</h3>
 <table>
 <tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
@@ -53,6 +67,7 @@
 <li><a href="../../../Engine/05_Rendering.html">Engine/05_Rendering.html</a> — 描画先の指定の仕組み、<code>SkinnedMeshRenderer</code>クラスのAPI</li>
 <li><a href="MeshRenderer.html">Components/Render/MeshRenderer.html</a> — 描画先・パイプライン・マテリアル指定の共通部分</li>
 <li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Object Inspectorの基本操作</li>
+<li><a href="../../Windows/10_MaterialEditor.html">Windows/10_MaterialEditor.html</a> — マテリアル側のUV Transformの詳細</li>
 </ul>
 
 <div id="page-footer" class="page-footer"></div>

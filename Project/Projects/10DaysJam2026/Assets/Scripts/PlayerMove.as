@@ -10,10 +10,17 @@ class PlayerMove : ScriptComponentBehavior {
     [SerializeField, Tooltip("重力")]
     float gravity = 0.2f;
 
-    Velocity@ velocity;
+    RigidBody2D@ rb;
+    Box2DCollider@ col;
+    TextureSource@ tex;
+
+    Vector2 velocity;
+    bool isJump = false;
 
     void Start() {
-        GetComponent(@velocity);
+        GetComponent(@rb);
+        GetComponent(@col);
+        GetComponent(@tex);
     }
 
     void Update() {
@@ -22,17 +29,23 @@ class PlayerMove : ScriptComponentBehavior {
 
         // 左右移動
         float moveX = GetCommandValue("MoveX");
-        Vector3 pos = tf.GetTranslate();
-        pos.x += moveX * moveSpeed * GetDeltaTime();
-
-        // Translateに適用
-        tf.SetTranslate(pos);
+        velocity.x = moveX * moveSpeed;
 
         // ジャンプ
-        if(IsCommandTriggered("Jump") && velocity !is null){
-            velocity.AddVelocity(Vector3(0.0f, jumpPower, 0.0f));
-            Log("Jump");
+        if(IsCommandTriggered("Jump") && rb !is null && !isJump){
+            velocity.y = jumpPower;
+            isJump = true;
         }
+
+        // 重力を加算
+        velocity.y -= gravity;
+
+        // RigidBodyのVelocity変更
+        rb.SetVelocity(velocity);
+    }
+
+    void OnCollisionEnter(const HitInfo &in hit) {
+        isJump = false;
     }
 
     void End() {

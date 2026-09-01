@@ -42,14 +42,13 @@
             {
                 "data": {
                     "customData": {
-                        "fields": {},
-                        "scriptPath": "Assets\\Scripts\\Collision.as"
+                        "textureAssetPath": "App/Sprite/Player/Player.png"
                     },
                     "isActive": true,
-                    "priority": 2,
+                    "priority": 1,
                     "tag": ""
                 },
-                "type": "ScriptComponent"
+                "type": "TextureSource"
             },
             {
                 "data": {
@@ -77,7 +76,7 @@
                         ]
                     },
                     "isActive": true,
-                    "priority": 3,
+                    "priority": 2,
                     "tag": ""
                 },
                 "type": "Box2DCollider"
@@ -85,10 +84,26 @@
             {
                 "data": {
                     "customData": {
+                        "friction": 0.0,
+                        "mass": 1.0,
+                        "restitution": 0.0,
+                        "selectedColliderOccurrenceIndex": 0,
+                        "selectedColliderTypeName": "Box2DCollider",
+                        "useGravity": true
+                    },
+                    "isActive": true,
+                    "priority": 3,
+                    "tag": ""
+                },
+                "type": "RigidBody2D"
+            },
+            {
+                "data": {
+                    "customData": {
                         "fields": {
                             "gravity": 0.10000000149011612,
-                            "jumpPower": 16.0,
-                            "moveSpeed": 1.0
+                            "jumpPower": 5.0,
+                            "moveSpeed": 2.0
                         },
                         "scriptPath": "Assets\\Scripts\\PlayerMove.as"
                     },
@@ -127,42 +142,6 @@
                     "tag": ""
                 },
                 "type": "SpriteRenderer"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "friction": 0.0,
-                        "mass": 1.0,
-                        "restitution": 0.0,
-                        "selectedColliderOccurrenceIndex": 0,
-                        "selectedColliderTypeName": "Box2DCollider",
-                        "useGravity": true
-                    },
-                    "isActive": true,
-                    "priority": 6,
-                    "tag": ""
-                },
-                "type": "RigidBody2D"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "acceleration": {
-                            "x": 0.0,
-                            "y": 0.0,
-                            "z": 0.0
-                        },
-                        "velocity": {
-                            "x": 0.0,
-                            "y": 0.0,
-                            "z": 0.0
-                        }
-                    },
-                    "isActive": true,
-                    "priority": 7,
-                    "tag": ""
-                },
-                "type": "Velocity"
             }
         ],
         "editorOnly": false,

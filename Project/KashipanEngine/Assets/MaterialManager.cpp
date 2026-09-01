@@ -99,9 +99,13 @@ bool LoadMaterialFromJSON(const std::string& filePath, MaterialManager::Material
             outMaterial.color = FromJSON<Vector4>(json["color"]);
         }
 
-        // UV トランスフォーム
-        if (json.contains("uvTransform") && json["uvTransform"].is_object()) {
-            outMaterial.uvTransform = FromJSON<Matrix4x4>(json["uvTransform"]);
+        // UV トランスフォーム（位置・回転・スケール）
+        if (json.contains("uvTranslate") && json["uvTranslate"].is_object()) {
+            outMaterial.uvTranslate = FromJSON<Vector2>(json["uvTranslate"]);
+        }
+        outMaterial.uvRotation = FromJSON<float>(json.value("uvRotation", 0.0f));
+        if (json.contains("uvScale") && json["uvScale"].is_object()) {
+            outMaterial.uvScale = FromJSON<Vector2>(json["uvScale"]);
         }
 
         // テクスチャハンドル
@@ -305,7 +309,9 @@ bool MaterialManager::SaveMaterial(MaterialHandle handle, const std::string &fil
     JSON json = JSON::object();
     json["name"] = material.name;
     json["color"] = ToJSON(material.color);
-    json["uvTransform"] = ToJSON(material.uvTransform);
+    json["uvTranslate"] = ToJSON(material.uvTranslate);
+    json["uvRotation"] = material.uvRotation;
+    json["uvScale"] = ToJSON(material.uvScale);
     // ハンドルが未解決の場合でも読み込み時のファイル名を保持して保存する
     std::string textureFile = TextureManager::GetTextureFileName(material.textureHandle);
     if (textureFile.empty()) textureFile = material.textureFileName;
@@ -609,7 +615,13 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
     ImGui::DragFloat(TranslationLabel("editor.materialmanager.rim_intensity"), &material.rimIntensity, 0.01f, 0.0f, 10.0f);
     ImGui::Checkbox(TranslationLabel("editor.materialmanager.enable_lighting"), &material.enableLighting);
     ImGui::Checkbox(TranslationLabel("editor.materialmanager.enable_shadowmap_projection"), &material.enableShadowMapProjection);
-    ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_transform"), material.uvTransform);
+    ImGui::TextUnformatted(TranslationC("editor.materialmanager.uv_transform"));
+    ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_translate"), material.uvTranslate, { .vSpeed = 0.001f });
+    float uvRotationDeg = material.uvRotation * 180.0f / 3.14159265f;
+    if (ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_rotation"), uvRotationDeg, { .vSpeed = 0.1f, .vMin = -180.0f, .vMax = 180.0f })) {
+        material.uvRotation = uvRotationDeg * 3.14159265f / 180.0f;
+    }
+    ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_scale"), material.uvScale, { .vSpeed = 0.001f });
 
     //--------- カスタムシェーダー用の追加パラメータ ---------//
     // キー名はPixelシェーダーの struct Material のメンバー名と一致させること

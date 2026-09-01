@@ -359,7 +359,7 @@ inline std::vector<std::byte> BuildMaterialElementBytes(const PipelineInfo &pipe
     writeFloat("enableShadowMapProjection", material->enableShadowMapProjection ? 1.0f : 0.0f);
     writeFloat("useTexture", (material->textureHandle != TextureManager::kInvalidHandle) ? 1.0f : 0.0f);
     writeVector4("color", material->color);
-    writeMatrix4x4("uvTransform", material->uvTransform);
+    writeMatrix4x4("uvTransform", material->MakeUVTransformMatrix());
     writeFloat("shininess", material->shininess);
     writeVector4("specularColor", material->specularColor);
     writeVector4("rimColor", material->rimColor);

@@ -7,6 +7,8 @@
 #include "Assets/SamplerManager.h"
 #include "Assets/TextureManager.h"
 #include "Math/Matrix4x4.h"
+#include "Math/Vector2.h"
+#include "Math/Vector3.h"
 #include "Math/Vector4.h"
 #include "Utilities/FileIO.h"
 #include "Utilities/MyAny.h"
@@ -25,7 +27,12 @@ public:
     struct Material {
         std::string name = "Default";
         Vector4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
-        Matrix4x4 uvTransform = Matrix4x4::Identity();
+        /// @brief UV座標のオフセット
+        Vector2 uvTranslate{ 0.0f, 0.0f };
+        /// @brief UV座標の回転（ラジアン）
+        float uvRotation = 0.0f;
+        /// @brief UV座標のスケール
+        Vector2 uvScale{ 1.0f, 1.0f };
         TextureManager::TextureHandle textureHandle = TextureManager::kInvalidHandle;
         SamplerManager::SamplerHandle samplerHandle = SamplerManager::kInvalidHandle;
         float shininess = 32.0f;
@@ -46,6 +53,16 @@ public:
 
         /// @brief テクスチャファイル名（読み込み時に未解決だった場合の遅延解決用）
         std::string textureFileName;
+
+        /// @brief uvTranslate/uvRotation/uvScaleからシェーダーへ渡すUV変換行列を組み立てる
+        Matrix4x4 MakeUVTransformMatrix() const {
+            Matrix4x4 result;
+            result.MakeAffine(
+                Vector3(uvScale.x, uvScale.y, 1.0f),
+                Vector3(0.0f, 0.0f, uvRotation),
+                Vector3(uvTranslate.x, uvTranslate.y, 0.0f));
+            return result;
+        }
 
         /// @brief 未解決のテクスチャハンドルをファイル名から解決する
         /// @details 読み込み時に対象テクスチャが存在しなかった場合でも、

@@ -1697,7 +1697,10 @@
 		"editor.materialmanager.shininess": "Shininess",
 		"editor.materialmanager.specular_color": "Specular Color",
 		"editor.materialmanager.texture": "Texture",
+		"editor.materialmanager.uv_rotation": "UV Rotation (deg)",
+		"editor.materialmanager.uv_scale": "UV Scale",
 		"editor.materialmanager.uv_transform": "UV Transform",
+		"editor.materialmanager.uv_translate": "UV Translate",
 		"editor.materialmanager.window": "MaterialManager - Materials",
 
 		//--------- editor.menu ---------//

@@ -1697,7 +1697,10 @@
 		"editor.materialmanager.shininess": "光沢",
 		"editor.materialmanager.specular_color": "スペキュラの色",
 		"editor.materialmanager.texture": "テクスチャ",
+		"editor.materialmanager.uv_rotation": "UV回転（度）",
+		"editor.materialmanager.uv_scale": "UVスケール",
 		"editor.materialmanager.uv_transform": "UV変換",
+		"editor.materialmanager.uv_translate": "UV座標",
 		"editor.materialmanager.window": "マテリアル",
 
 		//--------- editor.menu ---------//

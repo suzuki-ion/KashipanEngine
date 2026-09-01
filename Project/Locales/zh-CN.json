@@ -1697,7 +1697,10 @@
 		"editor.materialmanager.shininess": "光泽度",
 		"editor.materialmanager.specular_color": "高光颜色",
 		"editor.materialmanager.texture": "纹理",
+		"editor.materialmanager.uv_rotation": "UV旋转（度）",
+		"editor.materialmanager.uv_scale": "UV缩放",
 		"editor.materialmanager.uv_transform": "UV变换",
+		"editor.materialmanager.uv_translate": "UV坐标",
 		"editor.materialmanager.window": "材质",
 
 		//--------- editor.menu ---------//

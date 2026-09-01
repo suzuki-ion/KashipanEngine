@@ -1052,6 +1052,27 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             const SpriteRenderer &c = *cPtr;
             return static_cast<int>(c.GetInstanceColorBlendMode());
         })
+        .method("void SetInstanceUvTranslate(const Vector2 &in)", SafeCall<&SpriteRenderer::SetInstanceUvTranslate>())
+        .method("const Vector2 &GetInstanceUvTranslate() const", SafeCall<&SpriteRenderer::GetInstanceUvTranslate>())
+        .method("void SetInstanceUvRotation(float)", SafeCall<&SpriteRenderer::SetInstanceUvRotation>())
+        .method("float GetInstanceUvRotation() const", SafeCall<&SpriteRenderer::GetInstanceUvRotation>())
+        .method("void SetInstanceUvScale(const Vector2 &in)", SafeCall<&SpriteRenderer::SetInstanceUvScale>())
+        .method("const Vector2 &GetInstanceUvScale() const", SafeCall<&SpriteRenderer::GetInstanceUvScale>())
+        .method("void SetInstanceUvPivot(const Vector2 &in)", SafeCall<&SpriteRenderer::SetInstanceUvPivot>())
+        .method("const Vector2 &GetInstanceUvPivot() const", SafeCall<&SpriteRenderer::GetInstanceUvPivot>())
+        // instanceUvCombineModeは 0=MaterialThenInstance, 1=InstanceThenMaterial, 2=InstanceOnly
+        .method("void SetInstanceUvCombineMode(int)", [](ScriptComponentHandle<SpriteRenderer> &cHandle, int mode) {
+            SpriteRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            SpriteRenderer &c = *cPtr;
+            c.SetInstanceUvCombineMode(static_cast<SpriteRenderer::UVCombineMode>(mode));
+        })
+        .method("int GetInstanceUvCombineMode() const", [](const ScriptComponentHandle<SpriteRenderer> &cHandle) {
+            SpriteRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const SpriteRenderer &c = *cPtr;
+            return static_cast<int>(c.GetInstanceUvCombineMode());
+        })
         .method("void SetRenderPriority(int)", [](ScriptComponentHandle<SpriteRenderer> &cHandle, int32_t priority) {
             SpriteRenderer *cPtr = cHandle.Resolve();
             if (!cPtr) { ThrowDestroyedObjectException(); return; }
@@ -1426,6 +1447,23 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             MeshRenderer *cPtr = cHandle.Resolve();
             if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
             const MeshRenderer &c = *cPtr; return static_cast<int>(c.GetInstanceColorBlendMode()); })
+        .method("void SetInstanceUvTranslate(const Vector2 &in)", SafeCall<&MeshRenderer::SetInstanceUvTranslate>())
+        .method("const Vector2 &GetInstanceUvTranslate() const", SafeCall<&MeshRenderer::GetInstanceUvTranslate>())
+        .method("void SetInstanceUvRotation(float)", SafeCall<&MeshRenderer::SetInstanceUvRotation>())
+        .method("float GetInstanceUvRotation() const", SafeCall<&MeshRenderer::GetInstanceUvRotation>())
+        .method("void SetInstanceUvScale(const Vector2 &in)", SafeCall<&MeshRenderer::SetInstanceUvScale>())
+        .method("const Vector2 &GetInstanceUvScale() const", SafeCall<&MeshRenderer::GetInstanceUvScale>())
+        .method("void SetInstanceUvPivot(const Vector2 &in)", SafeCall<&MeshRenderer::SetInstanceUvPivot>())
+        .method("const Vector2 &GetInstanceUvPivot() const", SafeCall<&MeshRenderer::GetInstanceUvPivot>())
+        // instanceUvCombineModeは 0=MaterialThenInstance, 1=InstanceThenMaterial, 2=InstanceOnly
+        .method("void SetInstanceUvCombineMode(int)", [](ScriptComponentHandle<MeshRenderer> &cHandle, int mode) {
+            MeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            MeshRenderer &c = *cPtr; c.SetInstanceUvCombineMode(static_cast<MeshRenderer::UVCombineMode>(mode)); })
+        .method("int GetInstanceUvCombineMode() const", [](const ScriptComponentHandle<MeshRenderer> &cHandle) {
+            MeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const MeshRenderer &c = *cPtr; return static_cast<int>(c.GetInstanceUvCombineMode()); })
         .method("void SetRenderPriority(int)", [](ScriptComponentHandle<MeshRenderer> &cHandle, int32_t priority) {
             MeshRenderer *cPtr = cHandle.Resolve();
             if (!cPtr) { ThrowDestroyedObjectException(); return; }
@@ -1508,6 +1546,23 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             SkinnedMeshRenderer *cPtr = cHandle.Resolve();
             if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
             const SkinnedMeshRenderer &c = *cPtr; return static_cast<int>(c.GetInstanceColorBlendMode()); })
+        .method("void SetInstanceUvTranslate(const Vector2 &in)", SafeCall<&SkinnedMeshRenderer::SetInstanceUvTranslate>())
+        .method("const Vector2 &GetInstanceUvTranslate() const", SafeCall<&SkinnedMeshRenderer::GetInstanceUvTranslate>())
+        .method("void SetInstanceUvRotation(float)", SafeCall<&SkinnedMeshRenderer::SetInstanceUvRotation>())
+        .method("float GetInstanceUvRotation() const", SafeCall<&SkinnedMeshRenderer::GetInstanceUvRotation>())
+        .method("void SetInstanceUvScale(const Vector2 &in)", SafeCall<&SkinnedMeshRenderer::SetInstanceUvScale>())
+        .method("const Vector2 &GetInstanceUvScale() const", SafeCall<&SkinnedMeshRenderer::GetInstanceUvScale>())
+        .method("void SetInstanceUvPivot(const Vector2 &in)", SafeCall<&SkinnedMeshRenderer::SetInstanceUvPivot>())
+        .method("const Vector2 &GetInstanceUvPivot() const", SafeCall<&SkinnedMeshRenderer::GetInstanceUvPivot>())
+        // instanceUvCombineModeは 0=MaterialThenInstance, 1=InstanceThenMaterial, 2=InstanceOnly
+        .method("void SetInstanceUvCombineMode(int)", [](ScriptComponentHandle<SkinnedMeshRenderer> &cHandle, int mode) {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            SkinnedMeshRenderer &c = *cPtr; c.SetInstanceUvCombineMode(static_cast<SkinnedMeshRenderer::UVCombineMode>(mode)); })
+        .method("int GetInstanceUvCombineMode() const", [](const ScriptComponentHandle<SkinnedMeshRenderer> &cHandle) {
+            SkinnedMeshRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const SkinnedMeshRenderer &c = *cPtr; return static_cast<int>(c.GetInstanceUvCombineMode()); })
         .method("void SetRenderPriority(int)", [](ScriptComponentHandle<SkinnedMeshRenderer> &cHandle, int32_t priority) {
             SkinnedMeshRenderer *cPtr = cHandle.Resolve();
             if (!cPtr) { ThrowDestroyedObjectException(); return; }

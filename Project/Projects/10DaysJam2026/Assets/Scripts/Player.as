@@ -42,6 +42,12 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("エフェクト")]
     Object@ effect;
 
+    [SerializeField, Tooltip("エフェクトの発生時間")]
+    float effectActiveDuration = 0.1f;
+
+    // エフェクトの発生タイマー
+    float effectActiveTimer = 0.0f;
+
     RigidBody2D@ rb;
     Box2DCollider@ col;
     SpriteRenderer@ sprite;
@@ -121,17 +127,7 @@ class Player : ScriptComponentBehavior {
             if(effect !is null){
                 ScriptComponent@ effectSc;
                 if(effect.GetComponent(@effectSc)){
-                    // プレイヤーの現在座標を取得し、攻撃方向ずらした位置にエフェクトを生成
-                    Vector3 effectPos = tf.GetTranslate();
-                    effectPos.x += margin; 
-                    
-                    Vector3 effectMargin;
-                    if(lastDirection == Direction::Right){
-                        effectMargin = Vector3(16.0f, 0.0f, 0.0f);
-                    }else if(lastDirection == Direction::Left){
-                        effectMargin = Vector3(-16.0f, 0.0f, 0.0f);
-                    }
-                    effectSc.CallMethod("CreateEffect", effectPos + effectMargin);
+                    effect.SetActive(true);
                 }
             }
         }
@@ -145,6 +141,43 @@ class Player : ScriptComponentBehavior {
                 if(sc.GetVariable("pos", pos)){
                     sc.SetVariable("pos", tf.GetTranslate());
                 }
+            }
+        }
+
+        // エフェクトの座標をの近くに移動
+        if(effect !is null){
+            ScriptComponent@ sc;
+            if(effect.GetComponent(@sc)){
+                Vector3 pos;
+                Vector3 rotate;
+                Vector3 finalPos;
+                Vector3 effectOffset;
+
+                // 方向に応じてオフセットと回転を変更
+                if(lastDirection == Direction::Right){
+                    effectOffset = Vector3(16.0f, 0.0f, 0.0f);
+                    finalPos = Vector3(0.0f, 0.0f, 0.0f);
+                }else if(lastDirection == Direction::Left){
+                    effectOffset = Vector3(-16.0f, 0.0f, 0.0f);
+                    finalPos = Vector3(0.0f, 3.14f, 0.0f);
+                }
+                
+                if(sc.GetVariable("pos", pos)){
+                    sc.SetVariable("pos", tf.GetTranslate() + effectOffset);
+                }
+
+                if(sc.GetVariable("rotate", rotate)){
+                    sc.SetVariable("rotate", finalPos);
+                }
+            }
+        }
+
+        // 一定時間経過後エフェクトを非アクティブ化
+        if(effect.IsActive()){
+            effectActiveTimer += GetDeltaTime();
+            if(effectActiveTimer >= effectActiveDuration){
+                effectActiveTimer = 0.0f;
+                effect.SetActive(false);
             }
         }
 

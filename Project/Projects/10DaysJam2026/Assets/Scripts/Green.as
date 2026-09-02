@@ -17,6 +17,9 @@ class Green : ScriptComponentBehavior {
     [SerializeField, Tooltip("HP")]
     float hp = 3.0f;
 
+    [SerializeField, Tooltip("死亡エフェクト")]
+    Object@ deathEffect;
+
     // 進行方向
     MoveDirection moveDir = MoveDirection::Left;
 
@@ -59,6 +62,17 @@ class Green : ScriptComponentBehavior {
 
         if (sprite !is null) {
             sprite.SetInstanceUvTranslate(Vector2(frame * uvStep, 0.0f));
+        }
+
+        // 死亡エフェクトの座標を敵に合わせる
+        if(deathEffect !is null){
+            ScriptComponent@ sc;
+            if(deathEffect.GetComponent(@sc)){
+                Vector3 pos;
+                if(sc.GetVariable("pos", pos)){
+                    sc.SetVariable("pos", tf.GetTranslate());
+                }
+            }
         }
     }
 

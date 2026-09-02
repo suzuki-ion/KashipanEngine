@@ -5,8 +5,8 @@
                 "data": {
                     "customData": {
                         "rotate": {
-                            "w": 0.9887710809707642,
-                            "x": 0.14943814277648926,
+                            "w": 1.0,
+                            "x": 0.0,
                             "y": 0.0,
                             "z": 0.0
                         },
@@ -17,8 +17,8 @@
                         },
                         "translate": {
                             "x": 0.0,
-                            "y": 2.955202102661133,
-                            "z": -9.553364753723145
+                            "y": 0.0,
+                            "z": 0.0
                         }
                     },
                     "isActive": true,
@@ -30,7 +30,7 @@
             {
                 "data": {
                     "customData": {
-                        "aspectRatio": 2.1563169956207275,
+                        "aspectRatio": 2.2427616119384766,
                         "autoSyncAspectRatio": false,
                         "enableJitter": false,
                         "farClip": 1000.0,
@@ -59,13 +59,13 @@
             {
                 "data": {
                     "customData": {
-                        "height": 467,
+                        "height": 449,
                         "isShowViewer": false,
                         "name": "EditorSceneView",
                         "saveDirectory": "Screenshots",
                         "saveFileNamePrefix": "Screenshot",
                         "saveFormat": "png",
-                        "viewerId": 4066084862678222046,
+                        "viewerId": 17057635045040618229,
                         "width": 1007
                     },
                     "isActive": true,
@@ -79,8 +79,8 @@
         "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Scene View",
-        "objectID": "f278c910-3d18-44cd-8b27-6136a7683d39",
+        "objectID": "fe87577e-9516-4af6-b3b1-c9ed01dbfe05",
         "tag": ""
     },
-    "siblingIndex": 1000
+    "siblingIndex": 14000
 }

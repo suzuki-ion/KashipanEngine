@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 0.0,
-                            "y": 89.22114562988281,
+                            "x": -7.067529678344727,
+                            "y": -0.7501469850540161,
                             "z": 0.0
                         }
                     },
@@ -42,7 +42,19 @@
             {
                 "data": {
                     "customData": {
-                        "fields": {},
+                        "fields": {
+                            "effect": "a3f33280-f1ac-4cc0-9235-bdfd97ec21ff",
+                            "frameInterval": 0.15000000596046448,
+                            "pos": {
+                                "x": -34.067527770996094,
+                                "y": -0.7501335740089417,
+                                "z": 0.0
+                            },
+                            "uvStep": {
+                                "x": 0.25,
+                                "y": 1.0
+                            }
+                        },
                         "scriptPath": "Assets\\Scripts\\EnemyDeathEffect.as"
                     },
                     "isActive": true,

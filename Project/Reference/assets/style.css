@@ -93,6 +93,19 @@ a:hover { text-decoration: underline; }
   margin-bottom: 16px;
   padding: 0 8px;
 }
+.sidebar-search {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--bg);
+  background: var(--accent);
+  border-radius: 6px;
+  padding: 7px 8px;
+  margin: 0 8px 12px;
+  text-align: center;
+}
+.sidebar-search:hover { text-decoration: none; opacity: 0.88; }
+
 .sidebar-switch {
   display: block;
   font-size: 12px;
@@ -393,6 +406,70 @@ tr:nth-child(even) td { background: var(--bg-alt); }
 }
 .badge.final { background: var(--warn-bg); color: #a06b12; }
 .badge.imgui { background: var(--tip-bg); color: #2c8a5c; }
+
+/* ---------- Search page ---------- */
+.search-box {
+  width: 100%;
+  font-size: 17px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-alt);
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.search-box:focus { outline: none; border-color: var(--accent); }
+.search-meta { color: var(--text-dim); font-size: 13px; margin: 0 0 24px; }
+
+.search-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 28px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.search-section-title::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--border);
+}
+
+.search-results { list-style: none; margin: 0; padding: 0; }
+.search-result {
+  display: block;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 0 0 8px;
+  color: var(--text);
+}
+.search-result:hover { border-color: var(--accent); text-decoration: none; background: var(--bg-alt); }
+.search-result-title { font-weight: 600; font-size: 14.5px; }
+.search-result-path { color: var(--text-dim); font-size: 12px; margin: 2px 0 6px; }
+.search-result-snippet { color: var(--text-dim); font-size: 13.5px; }
+.search-result-snippet mark, .search-result-title mark {
+  background: var(--accent-bg);
+  color: var(--accent-dim);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+.search-site-badge {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent-dim);
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.search-empty { color: var(--text-dim); padding: 24px 0; }
 
 .page-footer {
   display: flex;

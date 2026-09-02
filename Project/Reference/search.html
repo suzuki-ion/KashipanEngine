@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>全リファレンス検索 | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  body { display: block; }
+  .search-layout { max-width: 860px; margin: 0 auto; padding: 40px 24px 100px; }
+  .search-back { font-size: 13px; color: var(--text-dim); margin-bottom: 18px; display: block; }
+  .search-back a { color: var(--text-dim); }
+  .search-back a:hover { color: var(--accent); }
+  h1.search-h1 { font-size: 24px; margin: 0 0 16px; }
+</style>
+</head>
+<body>
+<div class="search-layout">
+<span class="search-back">
+  <a href="index.html">トップ</a> /
+  <a href="Engine/00_Index.html">エンジン本体</a> /
+  <a href="Editor/00_Index.html">エディタ</a> /
+  <a href="Script/00_Index.html">スクリプト</a>
+</span>
+<h1 class="search-h1">全リファレンス検索</h1>
+<input type="text" id="search-input" class="search-box" placeholder="キーワードを入力（例: MeshRenderer, SetVolume, コライダー）" autofocus>
+<p class="search-meta" id="search-meta">エンジン本体・エディタ・スクリプトの全ページを対象に、見出しとページ内の文章の両方から検索します。</p>
+<div id="search-output"></div>
+</div>
+
+<script defer src="assets/search-index.js"></script>
+<script defer>
+(function () {
+  const MAX_RESULTS = 40;
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  // クエリに一致した部分だけ <mark> で囲む（表示前に escapeHtml 済みの文字列に対して行う）
+  function highlight(text, query) {
+    const escaped = escapeHtml(text);
+    if (!query) return escaped;
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return escaped.replace(new RegExp("(" + escapedQuery + ")", "ig"), "<mark>$1</mark>");
+  }
+
+  // 一致箇所の前後を切り出して短いスニペットにする
+  function snippetAround(text, query, radius) {
+    const lower = text.toLowerCase();
+    const at = lower.indexOf(query.toLowerCase());
+    if (at === -1) return text.slice(0, radius * 2);
+    const start = Math.max(0, at - radius);
+    const end = Math.min(text.length, at + query.length + radius);
+    let snippet = text.slice(start, end);
+    if (start > 0) snippet = "…" + snippet;
+    if (end < text.length) snippet = snippet + "…";
+    return snippet;
+  }
+
+  function pageAnchorHref(page, headingIndex) {
+    const anchor = (typeof headingIndex === "number" && headingIndex >= 0) ? ("#kehead-" + headingIndex) : "";
+    return page.href + anchor;
+  }
+
+  function search(query) {
+    const output = document.getElementById("search-output");
+    const meta = document.getElementById("search-meta");
+    if (!query || query.trim().length < 1) {
+      output.innerHTML = "";
+      meta.textContent = "エンジン本体・エディタ・スクリプトの全ページを対象に、見出しとページ内の文章の両方から検索します。";
+      return;
+    }
+    const q = query.trim();
+    const qLower = q.toLowerCase();
+
+    const headingHits = [];
+    const textHits = [];
+
+    KE_SEARCH_INDEX.forEach((page) => {
+      page.headings.forEach((heading, hi) => {
+        if (heading.toLowerCase().includes(qLower)) {
+          headingHits.push({ page, headingIndex: hi, heading });
+        }
+      });
+      const titleMatch = page.title.toLowerCase().includes(qLower);
+      let textHitCountForPage = 0;
+      page.blocks.forEach((block) => {
+        if (textHitCountForPage >= 3) return; // 1ページからの本文一致は最大3件まで
+        if (block.t.toLowerCase().includes(qLower)) {
+          textHits.push({ page, block });
+          textHitCountForPage++;
+        }
+      });
+      if (titleMatch && textHitCountForPage === 0) {
+        textHits.push({ page, block: null });
+      }
+    });
+
+    let html = "";
+
+    html += '<div class="search-section-title">見出しの一致（' + headingHits.length + '件）</div>';
+    if (headingHits.length === 0) {
+      html += '<p class="search-empty">一致する見出しは見つかりませんでした。</p>';
+    } else {
+      html += '<ul class="search-results">';
+      headingHits.slice(0, MAX_RESULTS).forEach((hit) => {
+        const href = pageAnchorHref(hit.page, hit.headingIndex);
+        const titleHtml = highlight(hit.heading, q);
+        const pathHtml = escapeHtml(hit.page.title);
+        html += renderResultWithHref(hit.page, href, titleHtml, pathHtml, "");
+      });
+      html += '</ul>';
+      if (headingHits.length > MAX_RESULTS) {
+        html += '<p class="search-meta">他 ' + (headingHits.length - MAX_RESULTS) + ' 件は省略されています。</p>';
+      }
+    }
+
+    html += '<div class="search-section-title">本文の一致（' + textHits.length + '件）</div>';
+    if (textHits.length === 0) {
+      html += '<p class="search-empty">一致する本文は見つかりませんでした。</p>';
+    } else {
+      html += '<ul class="search-results">';
+      textHits.slice(0, MAX_RESULTS).forEach((hit) => {
+        const href = hit.block ? pageAnchorHref(hit.page, hit.block.h) : hit.page.href;
+        const titleHtml = highlight(hit.page.title, q);
+        const snippetHtml = hit.block ? highlight(snippetAround(hit.block.t, q, 40), q) : "";
+        html += renderResultWithHref(hit.page, href, titleHtml, escapeHtml(hit.page.href), snippetHtml);
+      });
+      html += '</ul>';
+      if (textHits.length > MAX_RESULTS) {
+        html += '<p class="search-meta">他 ' + (textHits.length - MAX_RESULTS) + ' 件は省略されています。</p>';
+      }
+    }
+
+    output.innerHTML = html;
+    meta.textContent = '"' + q + '" の検索結果';
+  }
+
+  function renderResultWithHref(page, href, titleHtml, pathText, snippetHtml) {
+    const siteLabel = (typeof KE_SITE_LABELS !== "undefined" && KE_SITE_LABELS[page.site]) || page.site;
+    return (
+      '<li><a class="search-result" href="' + href + '">' +
+      '<span class="search-site-badge">' + siteLabel + '</span>' +
+      '<span class="search-result-title">' + titleHtml + '</span>' +
+      '<div class="search-result-path">' + pathText + '</div>' +
+      (snippetHtml ? '<div class="search-result-snippet">' + snippetHtml + '</div>' : '') +
+      '</a></li>'
+    );
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const input = document.getElementById("search-input");
+
+    // ?q=... で検索語を渡してリンクできるようにする
+    const params = new URLSearchParams(window.location.search);
+    const initial = params.get("q");
+    if (initial) {
+      input.value = initial;
+      search(initial);
+    }
+
+    input.addEventListener("input", () => search(input.value));
+  });
+})();
+</script>
+</body>
+</html>

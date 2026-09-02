@@ -356,12 +356,18 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
             // 次フレームのデルタタイムへその時間が混入しないようにする
             ResetDeltaTime({});
         }
+        // スワップチェーンの破棄は、それが紐付くウィンドウ(HWND)を破棄するより必ず先に行うこと。
+        // Window::CommitDestroy()はDestroyWindow()を同期的に呼ぶため、先にHWNDを破棄してしまうと
+        // まだ生きているIDXGISwapChainが破棄済みウィンドウを参照した状態になる。この状態でPresent/
+        // 破棄が走ると、DWM側の合成状態が壊れてGPUハング（TDR）→次フレームのPresent失敗を
+        // 引き起こしうる（Play/StopでNormalWindowObject等がウィンドウごと即座に作り直される際に
+        // 顕在化しやすい）
+        directXCommon_->AllDestroyPendingSwapChains({});
         Window::CommitDestroy({});
         ScreenBuffer::CommitDestroy({});
         ShadowMapBuffer::CommitDestroy({});
         VideoManager::CommitPendingDestroy({});
         GifManager::CommitPendingDestroy({});
-        directXCommon_->AllDestroyPendingSwapChains({});
 
         if (windowCount > Window::GetWindowCount()) {
             isGameLoopRunning_ = Window::GetWindowCount() != 0;

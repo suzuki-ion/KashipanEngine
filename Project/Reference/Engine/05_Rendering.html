@@ -286,7 +286,7 @@ Vector3 GetWorldUp() const;         // Rectの高さ方向に使用</div>
 <p>描画先指定（<code>SetTargetObject</code> 等）は前述の共通APIと同じです。</p>
 </div>
 
-<h2>Camera3D / Camera2D / CameraRenderer / CameraController — カメラ</h2>
+<h2>Camera3D / Camera2D / CameraRenderer / CameraController / CameraController2D — カメラ</h2>
 <p>
 カメラも Light と同様に「パラメータ保持用コンポーネント（<code>Camera3D</code>/<code>Camera2D</code>）」と「Rendererへ情報を渡すコンポーネント（<code>CameraRenderer</code>）」に分かれています。位置・向きは同一オブジェクトの Transform から取得されます。
 </p>
@@ -333,13 +333,27 @@ void SetFovLerpFactor(float factor);</div>
 <p>同一オブジェクトの <code>Camera3D</code> を、複数の追従先オブジェクトへ軸ごとに（移動X/Y/Z・回転X/Y/Z個別に）滑らかに追従させます。追従先が1つも指定されていない場合は自分自身の Transform を追従先として扱います。複数の追従先が同じ軸を指定した場合は平均を取ります。</p>
 </div>
 
+<div class="api-card">
+<h4><code>CameraController2D</code> — 複数ターゲットへの滑らかな追従（2D版）</h4>
+<div class="api-sig">void AddFollowTarget(const UUID128 &amp;objectID);
+void RemoveFollowTarget(size_t index);
+std::vector&lt;FollowTarget&gt; &amp;GetFollowTargets() noexcept;
+void SetPositionOffset(const Vector2 &amp;offset);
+void SetRotationOffset(float offset); // 画面内回転（Z軸）、ラジアン
+void SetTargetSize(const Vector2 &amp;size); // 目標のwidth/height（ズーム相当）
+AxisStrength2 &amp;GetMoveStrength() noexcept;
+void SetRotateLerpFactor(float factor);
+void SetSizeLerpFactor(float factor);</div>
+<p><code>CameraController</code> の2D版で、同一オブジェクトの <code>Camera2D</code> を、複数の追従先オブジェクトへ位置X/Y・画面内回転（Z軸）で滑らかに追従させます。3Dの<code>SetTargetFovY</code>に相当するのが<code>SetTargetSize</code>（width/height）で、対象の<code>Camera2D</code>で<code>AutoSyncSize</code>が有効な場合は毎フレーム上書きされるため実質無効になります。追従先が1つも指定されていない場合は自分自身の Transform を追従先として扱う点、複数の追従先が同じ軸を指定した場合は平均を取る点は<code>CameraController</code>と同じです。</p>
+</div>
+
 <h2>ウィンドウへの描画先コンポーネント（概要）</h2>
 <p>
 <code>MeshRenderer</code> 等の <code>SetTargetObject()</code> で指定する先には、描画結果の出力先となるコンポーネントを付与しておく必要があります。そのうち画面上のウィンドウとして表示する2種類が <code>NormalWindowObject</code>（通常ウィンドウ）と <code>OverlayWindowObject</code>（オーバーレイウィンドウ）で、共通基底 <code>IWindowObjectComponent</code> がウィンドウの生成・タイトル/サイズ設定・受信メッセージの通知（<code>SetOnWindowMessage</code>）を担います。詳細な使い方は <a href="11_Window.html">11_Window.html</a> で扱います。
 </p>
 <div class="tip">
 <strong>スクリプトからの利用</strong><br>
-AngelScript側では <code>ScriptComponentBehavior::OnWindowMessage(const WindowMessageInfo &amp;in)</code> として、同一オブジェクトのウィンドウ系コンポーネントが受信したメッセージを受け取れます。詳しくは <a href="Script/00_Index.html">Script/00_Index.html</a> を参照してください。
+AngelScript側では <code>ScriptComponentBehavior::OnWindowMessage(const WindowMessageInfo &amp;in)</code> として、同一オブジェクトのウィンドウ系コンポーネントが受信したメッセージを受け取れます。詳しくは <a href="../Script/00_Index.html">Script/00_Index.html</a> を参照してください。
 </div>
 
 <h2>次に読むページ</h2>

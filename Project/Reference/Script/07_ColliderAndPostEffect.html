@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>コライダー共通の仕組みとポストエフェクト概要 | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-script-data.js"></script>
+<script defer src="../assets/nav.js"></script>
+</head>
+<body data-page="07_ColliderAndPostEffect">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>コライダー共通の仕組みとポストエフェクト概要</h1>
+<p class="page-lead">コライダー系コンポーネントの共通API・連続衝突判定（CCD）・<code>Collider</code>基底型と、ポストプロセスエフェクトの共通の仕組みをまとめます。各コライダー形状・各エフェクト個別のスクリプトAPIは、サイドバーの「コンポーネント: Collider / PostEffect」以下の各ページを参照してください。</p>
+</div>
+
+<h2>コライダー共通メソッド</h2>
+<p>全てのコライダー型が、コンポーネント共通メソッドに加えて持つメソッドです。</p>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>bool IsTrigger() const</code> / <code>void SetTrigger(bool)</code></td><td>トリガー（すり抜け）かどうか</td></tr>
+<tr><td><code>bool IsContinuousDetection() const</code> / <code>void SetContinuousDetection(bool)</code></td><td>連続衝突判定（CCD）が有効かどうか（下記参照）</td></tr>
+<tr><td><code>bool Is2D() const</code></td><td>2D用コライダーかどうか</td></tr>
+</table>
+
+<h2>連続衝突判定（CCD）</h2>
+<p>
+高速に移動するオブジェクトは、1フレームの移動量が形状のサイズを超えると相手のコライダーを「すり抜けて」しまい、衝突イベントが発生しないことがあります。連続衝突判定を有効にすると、前フレーム位置から現在位置までの<strong>移動経路を形状サイズ以下の刻みに分割して中間位置でも判定</strong>するため、すり抜けても <code>OnCollisionEnter</code> 等のイベントが正しく発生します。
+</p>
+<ul>
+<li>インスペクターの「<strong>Continuous Detection</strong>」チェックボックス、またはスクリプトの <code>SetContinuousDetection(true)</code> で有効にします（2D/3Dどちらのコライダーにも対応）。</li>
+<li>移動量が形状の最小半径以下の間はスイープ判定が走らないため、通常の速度では追加コストはほぼありません。高速に動く弾丸や小さいオブジェクトにだけ有効にしてください。</li>
+<li>経路の分割数には上限（16分割）があるため、1フレームで形状サイズの16倍を超えるような極端な移動では取りこぼす可能性があります。</li>
+</ul>
+<div class="warn">
+<strong>テレポートにも判定が走る</strong><br>
+テレポート（リスポーン等の瞬間移動）でも移動経路上の判定が走る点に注意してください。瞬間移動させる場合は、移動前にCCDを無効にするか、コライダーを一時的に無効化してください。
+</div>
+<pre><code class="language-angelscript">class Bullet : ScriptComponentBehavior {
+    void Start() {
+        SphereCollider@ collider;
+        if (GetComponent(@collider)) {
+            collider.SetContinuousDetection(true); // 高速移動してもすり抜けを検出できるようにする
+        }
+    }
+}</code></pre>
+
+<h2>Collider（基底型）</h2>
+<p>
+全コライダー型の基底となる参照型です。<code>HitInfo</code> の <code>selfCollider</code> / <code>otherCollider</code> として受け取れます（<a href="01_Lifecycle.html">01_Lifecycle.html</a>）。コンポーネント共通メソッドと、上記のコライダー共通メソッドが使用できます。
+</p>
+<ul>
+<li>各コライダー型のハンドルは <code>Collider@</code> へ<strong>暗黙的に変換</strong>できます。</li>
+<li><code>cast&lt;BoxCollider&gt;(collider)</code> のように<strong>具体的な型へダウンキャスト</strong>できます（型が異なる場合は <code>null</code> が返ります）。</li>
+</ul>
+<pre><code class="language-angelscript">class Player : ScriptComponentBehavior {
+    void OnCollisionEnter(const HitInfo &amp;in hit) {
+        if (hit.otherCollider is null) return;
+
+        // 相手コライダーのトリガー状態やタグで判別する
+        // （タグはオブジェクトとは別に、コライダー単位でも設定できる）
+        if (hit.otherCollider.IsTrigger()) return;
+        if (hit.otherCollider.GetTag() == Tag("DamageZone")) {
+            Log("ダメージゾーンに接触");
+        }
+
+        // 種類名での判別
+        if (hit.otherCollider.GetComponentType() == "SphereCollider") {
+            // 具体的な型へのダウンキャスト
+            SphereCollider@ sphere = cast&lt;SphereCollider&gt;(hit.otherCollider);
+        }
+
+        // 自オブジェクトに複数のコライダーが付いている場合、
+        // どのコライダーで衝突したのかをハンドル比較で判別できる
+        BoxCollider@ attackCollider;
+        GetComponent(@attackCollider);
+        if (hit.selfCollider is attackCollider) {
+            Log("攻撃判定がヒット");
+        }
+    }
+}</code></pre>
+<div class="note">
+<strong>RayCollider / Ray2DCollider</strong><br>
+レイキャスト専用のコライダーは常駐形状を持たないため、<code>OnCollisionEnter</code> 等の衝突イベントは発生しません。<code>RayCollider</code>（3D）は代わりに <code>CastRay(HitInfo &amp;out)</code> で任意のタイミングにレイキャストできます（<a href="Components/Collider/RayCollider.html">RayCollider</a>参照）。
+</div>
+
+<h2>ポストプロセスエフェクトの概要</h2>
+<p>
+<code>ScreenBufferObject</code> が付与されたオブジェクトに追加すると、そのスクリーンバッファへエフェクトがかかります。いずれもコンポーネント共通メソッドに加えて、エフェクトごとのパラメータのGet/Setを持ちます（一覧はサイドバーの「コンポーネント: PostEffect」以下の各ページを参照してください）。
+</p>
+<p>
+各エフェクトのインスペクター表示・詳細な挙動は <a href="../Engine/10_PostEffects.html">Engine/10_PostEffects.html</a> を参照してください。
+</p>
+<div class="tip">
+<strong>ポストプロセスエフェクトの内部Params構造体</strong><br>
+<code>BloomEffect</code>等が内部で持つ <code>Params</code> 構造体自体はスクリプトへ公開されていません。フィールドごとのGet/Setメソッドを使用してください。
+</div>
+
+<h2>関連ページ</h2>
+<ul>
+<li>コンポーネント共通メソッド → <a href="05_ComponentTypes.html">05_ComponentTypes.html</a></li>
+<li>ライフサイクル・HitInfo → <a href="01_Lifecycle.html">01_Lifecycle.html</a></li>
+<li>ウィンドウメッセージとバッファの仕組み → <a href="06_RenderAndWindow.html">06_RenderAndWindow.html</a></li>
+<li>コライダーと物理演算（C++側） → <a href="../Engine/06_Collision.html">Engine/06_Collision.html</a></li>
+<li>ポストエフェクト（C++側） → <a href="../Engine/10_PostEffects.html">Engine/10_PostEffects.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CameraController | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_CameraController">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>CameraController</h1>
+<p class="page-lead">同一オブジェクトの<code>Camera3D</code>を、複数の追従先オブジェクトへ滑らかに追従させるコンポーネントです。</p>
+</div>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>bool IsControllable() const</code></td><td>同オブジェクトに <code>Camera3D</code> があるかどうか</td></tr>
+<tr><td><code>void AddFollowTarget(Object@)</code></td><td>追従先オブジェクトを追加する</td></tr>
+<tr><td><code>void RemoveFollowTarget(uint index)</code></td><td>追従先オブジェクトをインデックス指定で削除する</td></tr>
+<tr><td><code>void SetPositionOffset(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetPositionOffset() const</code></td><td>位置オフセット</td></tr>
+<tr><td><code>void SetRotationOffset(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetRotationOffset() const</code></td><td>回転オフセット（オイラー角、ラジアン）</td></tr>
+<tr><td><code>void SetTargetFovY(float)</code> / <code>float GetTargetFovY() const</code></td><td>目標画角Y</td></tr>
+<tr><td><code>void SetMoveStrength(float)</code> / <code>float GetMoveStrength() const</code></td><td>移動追従の強さ（0.0〜1.0）</td></tr>
+<tr><td><code>void SetRotateStrength(float)</code> / <code>float GetRotateStrength() const</code></td><td>回転追従の強さ（0.0〜1.0）</td></tr>
+<tr><td><code>void SetFovLerpFactor(float)</code> / <code>float GetFovLerpFactor() const</code></td><td>画角遷移の強さ（0.0〜1.0）</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="Camera3D.html">Camera3D</a></li>
+<li><a href="CameraController2D.html">CameraController2D</a> — 2D版</li>
+<li><a href="../../../Editor/Components/Render/CameraController.html">Editor/Components/Render/CameraController.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

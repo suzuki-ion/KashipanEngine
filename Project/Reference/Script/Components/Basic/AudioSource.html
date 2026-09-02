@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AudioSource | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_AudioSource">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>AudioSource</h1>
+<p class="page-lead">音声を再生するコンポーネントです。</p>
+</div>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>uint Play()</code></td><td>再生する（再生中なら止めて再生し直す）。戻り値は再生ハンドル</td></tr>
+<tr><td><code>void Stop()</code> / <code>bool Pause()</code> / <code>bool Resume()</code></td><td>停止 / 一時停止 / 再開</td></tr>
+<tr><td><code>bool IsPlaying() const</code> / <code>bool IsPaused() const</code></td><td>再生中 / 一時停止中かどうか</td></tr>
+<tr><td><code>void SetSoundName(const string &amp;in)</code> / <code>const string &amp;GetSoundName() const</code></td><td>使用する音声の設定/取得</td></tr>
+<tr><td><code>void SetVolume(float)</code> / <code>float GetVolume() const</code></td><td>ボリューム（0.0〜1.0）</td></tr>
+<tr><td><code>void SetPitch(float)</code> / <code>float GetPitch() const</code></td><td>ピッチ（半音単位）</td></tr>
+<tr><td><code>void SetLoop(bool)</code> / <code>bool GetLoop() const</code></td><td>ループ再生</td></tr>
+<tr><td><code>void SetPlayOnAwake(bool)</code> / <code>bool GetPlayOnAwake() const</code></td><td>読み込み時に自動再生するかどうか</td></tr>
+<tr><td><code>void AttachExternalPlayHandle(uint)</code></td><td>既に再生中の外部の再生ハンドル（例:<code>VideoSource</code>の音声）を取り込み、以後このAudioSourceの空間音響・エフェクト設定だけを適用する。<code>Stop()</code>を呼んでもハンドル自体の再生は止めず、参照を外すだけ（<code>VideoSource</code>の<code>SetRouteAudioToAudioSource</code>と組み合わせて使う）</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="AudioListener.html">AudioListener</a></li>
+<li><a href="VideoSource.html">VideoSource</a> — 動画の音声をAudioSource経由で再生する連携</li>
+<li><a href="../../../Editor/Components/Basic/AudioSource.html">Editor/Components/Basic/AudioSource.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

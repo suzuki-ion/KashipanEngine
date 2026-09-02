@@ -2,8 +2,10 @@
 // href is always relative to the Reference/ root folder.
 const KE_SITE = "editor";
 const KE_SITE_LABEL = "エディタリファレンス";
-const KE_OTHER_SITE_LABEL = "エンジン本体リファレンス";
-const KE_OTHER_SITE_HREF = "Engine/00_Index.html";
+const KE_OTHER_SITES = [
+  { label: "エンジン本体リファレンス", href: "Engine/00_Index.html" },
+  { label: "スクリプトリファレンス", href: "Script/00_Index.html" },
+];
 
 const KE_PAGES = [
   { id: "00_Index", title: "トップページ", group: "はじめに", href: "Editor/00_Index.html" },
@@ -54,6 +56,7 @@ const KE_PAGES = [
   { id: "C_Render_Camera2D", title: "Camera2D", group: "コンポーネント: Render", href: "Editor/Components/Render/Camera2D.html" },
   { id: "C_Render_CameraRenderer", title: "CameraRenderer", group: "コンポーネント: Render", href: "Editor/Components/Render/CameraRenderer.html" },
   { id: "C_Render_CameraController", title: "CameraController", group: "コンポーネント: Render", href: "Editor/Components/Render/CameraController.html" },
+  { id: "C_Render_CameraController2D", title: "CameraController2D", group: "コンポーネント: Render", href: "Editor/Components/Render/CameraController2D.html" },
   { id: "C_Render_NormalWindowObject", title: "NormalWindowObject", group: "コンポーネント: Render", href: "Editor/Components/Render/NormalWindowObject.html" },
   { id: "C_Render_OverlayWindowObject", title: "OverlayWindowObject", group: "コンポーネント: Render", href: "Editor/Components/Render/OverlayWindowObject.html" },
   { id: "C_Render_ScreenBufferObject", title: "ScreenBufferObject", group: "コンポーネント: Render", href: "Editor/Components/Render/ScreenBufferObject.html" },

@@ -1,7 +1,7 @@
 // KashipanEngine Reference - shared navigation renderer
-// Loaded together with either nav-engine-data.js or nav-editor-data.js, which each
-// define KE_PAGES (relative to the Reference/ root) plus KE_SITE / KE_SITE_LABEL /
-// KE_OTHER_SITE_LABEL / KE_OTHER_SITE_HREF for the cross-site switcher.
+// Loaded together with one of nav-engine-data.js / nav-editor-data.js / nav-script-data.js,
+// which each define KE_PAGES (relative to the Reference/ root) plus KE_SITE / KE_SITE_LABEL /
+// KE_OTHER_SITES (array of { label, href }) for the cross-site switcher.
 (function () {
   // href の "/" の数から、現在ページを起点に Reference/ ルートへ戻るための "../" の数を求める
   function prefixForHref(href) {
@@ -33,8 +33,10 @@
     let html = '';
     html += '<a class="sidebar-title" href="' + prefix + KE_PAGES[0].href + '">KashipanEngine</a>';
     html += '<span class="sidebar-sub">' + KE_SITE_LABEL + '</span>';
-    if (typeof KE_OTHER_SITE_HREF !== "undefined") {
-      html += '<a class="sidebar-switch" href="' + prefix + KE_OTHER_SITE_HREF + '">&#8646; ' + KE_OTHER_SITE_LABEL + '</a>';
+    if (typeof KE_OTHER_SITES !== "undefined") {
+      KE_OTHER_SITES.forEach((s) => {
+        html += '<a class="sidebar-switch" href="' + prefix + s.href + '">&#8646; ' + s.label + '</a>';
+      });
     }
 
     groups.forEach((g) => {

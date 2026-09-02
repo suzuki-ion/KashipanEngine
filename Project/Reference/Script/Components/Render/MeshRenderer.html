@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MeshRenderer | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_MeshRenderer">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>MeshRenderer</h1>
+<p class="page-lead">3Dメッシュを描画するコンポーネントです。</p>
+</div>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetPipelineName(const string &amp;in)</code> / <code>const string &amp;GetPipelineName() const</code></td><td>使用パイプライン名</td></tr>
+<tr><td><code>void SetMaterialName(const string &amp;in)</code> / <code>const string &amp;GetMaterialName() const</code></td><td>使用マテリアル名</td></tr>
+<tr><td><code>void SetTargetObject(Object@)</code> / <code>Object@ GetTargetObject() const</code></td><td>描画先オブジェクト</td></tr>
+<tr><td><code>void SetInstanceColor(const Vector4 &amp;in)</code> / <code>const Vector4 &amp;GetInstanceColor() const</code></td><td>インスタンスカラー（RGBA）</td></tr>
+<tr><td><code>void SetInstanceColorBlendMode(int)</code></td><td>インスタンスカラーの合成方法（0=Override, 1=Multiply, 2=Add, 3=Subtract）</td></tr>
+<tr><td><code>void SetInstanceUvTranslate(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetInstanceUvTranslate() const</code></td><td>インスタンス単位のUVオフセット</td></tr>
+<tr><td><code>void SetInstanceUvRotation(float)</code> / <code>float GetInstanceUvRotation() const</code></td><td>インスタンス単位のUV回転（ラジアン）</td></tr>
+<tr><td><code>void SetInstanceUvScale(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetInstanceUvScale() const</code></td><td>インスタンス単位のUVスケール</td></tr>
+<tr><td><code>void SetInstanceUvPivot(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetInstanceUvPivot() const</code></td><td>UV回転の中心座標（拡縮は常にUV原点(0,0)基準のまま、回転のみこの点が中心になる）</td></tr>
+<tr><td><code>void SetInstanceUvCombineMode(int)</code> / <code>int GetInstanceUvCombineMode() const</code></td><td>マテリアルのUV変換との合成方法（0=MaterialThenInstance, 1=InstanceThenMaterial, 2=InstanceOnly）</td></tr>
+</table>
+
+<div class="note"><strong>InstanceColorはMeshRenderer/SkinnedMeshRendererの両方に対応</strong><br><code>SkinnedMeshRenderer</code> にもインスタンスカラー（アルファ値のブレンドを含む）が実装されています。被ダメージ時の点滅演出など、色を一時的に上書き/合成したい場合に <code>SetInstanceColor</code> と <code>SetInstanceColorBlendMode</code> を組み合わせて使用してください。実例は <a href="../../11_PlayerExample.html">11_PlayerExample.html</a> の被ダメージ演出を参照してください。</div>
+
+<div class="note"><strong>InstanceUv系はTextRendererには無い</strong><br><code>MeshRenderer</code>/<code>SpriteRenderer</code>/<code>SkinnedMeshRenderer</code>のInstanceUv系メソッドは、マテリアルの<code>uvTranslate</code>等と合成されるUV変換行列を経由する。<code>TextRenderer</code>はUV変換を使わず文字ごとのUV矩形（フォントアトラス参照）を直接使うため対象外。マテリアル側のUV変換とインスタンス側のUV変換の合成方法（UV Combine Mode）の詳細は<a href="../../../Editor/Components/Render/SpriteRenderer.html">Editor/Components/Render/SpriteRenderer.html</a>を参照。</div>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="SkinnedMeshRenderer.html">SkinnedMeshRenderer</a></li>
+<li><a href="../../../Editor/Components/Render/MeshRenderer.html">Editor/Components/Render/MeshRenderer.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

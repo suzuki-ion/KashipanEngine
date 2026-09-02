@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ScreenAnchor | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_ScreenAnchor">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>ScreenAnchor</h1>
+<p class="page-lead">同一オブジェクトの<code>Transform</code>を、指定した<code>Camera2D</code>の画面（width/height）上の基準点へ毎フレーム追従させるコンポーネントです。UI要素を画面端やコーナーに固定し、解像度が変化しても正しい位置を保ちたい場合に使います。対象の<code>Camera2D</code>側で<code>SetAutoSyncSize</code>を有効にしておけば、描画先の解像度変化にも連動します。</p>
+</div>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetCameraObject(Object@)</code> / <code>Object@ GetCameraObject() const</code> / <code>string GetCameraObjectID() const</code></td><td>基準にする<code>Camera2D</code>を持つオブジェクトの設定/取得</td></tr>
+<tr><td><code>void SetAnchorPoint(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetAnchorPoint() const</code></td><td>画面上の基準点。(0,0)=画面左下 〜 (1,1)=画面右上の正規化座標</td></tr>
+<tr><td><code>void SetOffset(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetOffset() const</code></td><td>基準点からのオフセット（Camera2Dのワールド単位＝Y上方向が正）</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="Camera2D.html">Camera2D</a> — <code>AutoSyncSize</code>との連携</li>
+<li><a href="../../../Editor/Components/Render/ScreenAnchor.html">Editor/Components/Render/ScreenAnchor.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

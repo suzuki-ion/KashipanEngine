@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ウィンドウメッセージとバッファの仕組み | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-script-data.js"></script>
+<script defer src="../assets/nav.js"></script>
+</head>
+<body data-page="06_RenderAndWindow">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>ウィンドウメッセージとバッファの仕組み</h1>
+<p class="page-lead"><code>WindowObject</code>基底型の共通API、<code>OnWindowMessage</code>によるウィンドウメッセージ通知、メッセージの横取り（インターセプト）、描画先バッファ系コンポーネントの共通APIをまとめます。各描画コンポーネント（MeshRenderer/Camera/Light等）個別のスクリプトAPIは、サイドバーの「コンポーネント: Render」以下の各ページを参照してください。</p>
+</div>
+
+<h2>WindowObject（基底型）</h2>
+<p>
+<code>NormalWindowObject</code> / <code>OverlayWindowObject</code> の基底となる参照型です。<code>WindowMessageInfo</code> の <code>sourceComponent</code> として受け取れます（<a href="01_Lifecycle.html">01_Lifecycle.html</a>）。コンポーネント共通メソッドに加えて以下が使用できます。
+</p>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetTitle(const string &amp;in)</code> / <code>const string &amp;GetTitle() const</code></td><td>ウィンドウタイトル</td></tr>
+<tr><td><code>void SetSize(uint width, uint height)</code></td><td>ウィンドウサイズを設定する</td></tr>
+<tr><td><code>int GetClientWidth() const</code> / <code>int GetClientHeight() const</code></td><td>クライアント領域のサイズを取得する（ウィンドウ未生成時は0）</td></tr>
+<tr><td><code>bool IsWindowFocused() const</code></td><td>ウィンドウにフォーカスがあるかどうか</td></tr>
+<tr><td><code>bool IsWindowMinimized() const</code></td><td>ウィンドウが最小化されているかどうか</td></tr>
+<tr><td><code>void SetSyncWithTransform(bool)</code> / <code>bool IsSyncWithTransformEnabled() const</code></td><td>ウィンドウの位置・サイズを同一オブジェクトのTransformと同期するかどうか</td></tr>
+<tr><td><code>bool SetMessageIntercepted(uint msg, bool enabled)</code></td><td>メッセージを横取りするかを設定する（下記参照）</td></tr>
+<tr><td><code>bool IsMessageIntercepted(uint msg) const</code></td><td>メッセージを横取りするかを取得する</td></tr>
+<tr><td><code>void CloseWindow()</code></td><td>ウィンドウを閉じる（<code>WM_CLOSE</code> 横取り時にゲーム側の処理後に閉じるために使う）</td></tr>
+<tr><td><code>Vector2 GetMousePosition() const</code></td><td>このウィンドウのクライアント座標系（左上原点、X右・Y下方向）でのマウス座標を取得する</td></tr>
+<tr><td><code>bool IsMouseInside() const</code></td><td>マウスカーソルがこのウィンドウのクライアント領域内にあるかどうか</td></tr>
+</table>
+<ul>
+<li><code>NormalWindowObject</code> / <code>OverlayWindowObject</code> のハンドルは <code>WindowObject@</code> へ<strong>暗黙的に変換</strong>できます。</li>
+<li><code>cast&lt;NormalWindowObject&gt;(windowObject)</code> のように<strong>具体的な型へダウンキャスト</strong>できます（型が異なる場合は <code>null</code> が返ります）。</li>
+</ul>
+<p>
+任意のウィンドウのマウス座標を、そのウィンドウを所有するコンポーネント自身ではなく<strong>グローバル関数として</strong>取得することもできます（他オブジェクトが持つウィンドウを参照する場合など）。
+</p>
+<table>
+<tr><th>グローバル関数</th><th>説明</th></tr>
+<tr><td><code>Vector2 GetMousePosition(WindowObject@ window)</code></td><td>指定ウィンドウのクライアント座標系でのマウス座標を取得する</td></tr>
+<tr><td><code>bool IsMouseInsideWindow(WindowObject@ window)</code></td><td>マウスカーソルが指定ウィンドウのクライアント領域内にあるかどうか</td></tr>
+</table>
+<pre><code class="language-angelscript">class CursorTracker : ScriptComponentBehavior {
+    void Update() {
+        NormalWindowObject@ window;
+        GetComponent(@window);
+        if (window is null) return;
+
+        if (window.IsMouseInside()) {
+            Vector2 pos = window.GetMousePosition();
+            Log("Mouse: " + pos.x + ", " + pos.y);
+        }
+    }
+}</code></pre>
+
+<h2>ウィンドウメッセージ（OnWindowMessage）</h2>
+<p>
+WindowObject系コンポーネントが付いているオブジェクトに <code>ScriptComponent</code> を追加すると、ウィンドウが受信したWindowsメッセージ（<code>WM_*</code>）を <code>OnWindowMessage(const WindowMessageInfo &amp;in)</code> メソッドで受け取れます。
+</p>
+<ul>
+<li>通知は毎フレーム、そのフレームにウィンドウが受信したメッセージに対して行われます。<strong>メッセージ種別ごとに最後の1件</strong>が対象で、通知順は不定です。</li>
+<li>同オブジェクトに複数のウィンドウコンポーネントがある場合は全てが通知対象です。どのウィンドウからの通知かは <code>sourceComponent</code> で判別できます。</li>
+<li>通知はウィンドウの既定処理が実行された後の<strong>事後通知</strong>です。既定処理を実行させずゲーム側の処理へ差し替えたい場合は下記「メッセージの横取り」を使用してください。</li>
+<li>主要なメッセージは以下のグローバル定数（<code>const uint</code>）として登録されています。これら以外のメッセージも <code>message</code> の数値で判定できます。
+<ul>
+<li>ウィンドウ状態: <code>WM_ACTIVATE</code> / <code>WM_CLOSE</code> / <code>WM_DESTROY</code> / <code>WM_MOVE</code> / <code>WM_SIZE</code> / <code>WM_SIZING</code> / <code>WM_ENTERSIZEMOVE</code> / <code>WM_EXITSIZEMOVE</code> / <code>WM_SETFOCUS</code> / <code>WM_KILLFOCUS</code> / <code>WM_PAINT</code></li>
+<li>キーボード: <code>WM_KEYDOWN</code> / <code>WM_KEYUP</code> / <code>WM_SYSKEYDOWN</code> / <code>WM_SYSKEYUP</code> / <code>WM_CHAR</code></li>
+<li>マウス: <code>WM_MOUSEMOVE</code> / <code>WM_LBUTTONDOWN</code> / <code>WM_LBUTTONUP</code> / <code>WM_LBUTTONDBLCLK</code> / <code>WM_RBUTTONDOWN</code> / <code>WM_RBUTTONUP</code> / <code>WM_RBUTTONDBLCLK</code> / <code>WM_MBUTTONDOWN</code> / <code>WM_MBUTTONUP</code> / <code>WM_MOUSEWHEEL</code> / <code>WM_MOUSEHWHEEL</code></li>
+<li>その他: <code>WM_DROPFILES</code></li>
+</ul>
+</li>
+</ul>
+<pre><code class="language-angelscript">class WindowWatcher : ScriptComponentBehavior {
+    void OnWindowMessage(const WindowMessageInfo &amp;in info) {
+        if (info.message == WM_SIZE) {
+            Log("リサイズ: " + info.sourceComponent.GetClientWidth() + " x " + info.sourceComponent.GetClientHeight());
+        }
+        if (info.message == WM_KILLFOCUS) {
+            Log("フォーカスを失った: " + info.sourceComponent.GetTitle());
+        }
+
+        // 複数のウィンドウコンポーネントがある場合、
+        // どのコンポーネントからの通知かをハンドル比較で判別できる
+        NormalWindowObject@ mainWindow;
+        GetComponent(@mainWindow);
+        if (info.sourceComponent is mainWindow) {
+            // メインウィンドウのメッセージ
+        }
+    }
+}</code></pre>
+
+<h2>メッセージの横取り（インターセプト）</h2>
+<p>
+<code>SetMessageIntercepted(msg, true)</code> で登録したメッセージは、<strong>ウィンドウの既定処理（エンジン既定のイベント処理・OSの既定処理）が実行されなくなり</strong>、<code>OnWindowMessage</code> への通知だけが行われます。メッセージ種別ごとに「そのままウィンドウの処理を通す」か「ウィンドウの処理を中断してゲーム側の処理に差し替える」かを選択できます。
+</p>
+<ul>
+<li>設定はスクリプトの <code>SetMessageIntercepted(uint msg, bool enabled)</code>、またはインスペクターの「<strong>Intercepted Messages</strong>」セクション（<code>WM_CLOSE</code> 用のチェックボックスと、メッセージ番号指定での追加/削除）から行えます。設定はシーンへ保存され、ウィンドウの再生成時にも引き継がれます。</li>
+</ul>
+<div class="warn">
+<strong>WM_CLOSEを横取りするとXボタンで閉じなくなる</strong><br>
+<code>WM_CLOSE</code> を横取りすると、Xボタン・Alt+F4でウィンドウが閉じなくなります（既定の確認ダイアログも出ません）。代わりにスクリプトへ <code>WM_CLOSE</code> が通知されるため、セーブや確認UIなどゲーム側の処理を行い、閉じてよくなったら <code>CloseWindow()</code> で明示的に閉じてください。
+</div>
+<ul>
+<li><code>WM_KEYDOWN</code> / <code>WM_CHAR</code> / マウス系などの入力メッセージは安全に横取りできます（OSの既定処理を止めたい場合に使用。例: <code>WM_SYSKEYDOWN</code> を横取りしてAltキーのメニュー起動やAlt+Enterのフルスクリーン切替を無効化する）。</li>
+<li><code>WM_DESTROY</code> / <code>WM_NCDESTROY</code> / <code>WM_QUIT</code> は横取りできません（<code>SetMessageIntercepted</code> が <code>false</code> を返します）。</li>
+</ul>
+<div class="warn">
+<strong>ウィンドウの基本動作を壊すメッセージがある</strong><br>
+<code>WM_NCHITTEST</code> / <code>WM_PAINT</code> / <code>WM_SETCURSOR</code> / <code>WM_SYSCOMMAND</code> 全体などを横取りすると、ドラッグ移動・リサイズ・最小化・描画といったウィンドウの基本動作が壊れます（Win32の仕様）。ゲーム側で処理したいメッセージにのみ使用してください。
+</div>
+<pre><code class="language-angelscript">class GameWindow : ScriptComponentBehavior {
+    void Start() {
+        NormalWindowObject@ window;
+        GetComponent(@window);
+        window.SetMessageIntercepted(WM_CLOSE, true); // Xボタンで閉じずにスクリプトへ通知する
+    }
+
+    void OnWindowMessage(const WindowMessageInfo &amp;in info) {
+        if (info.message == WM_CLOSE) {
+            // セーブや終了確認UIなど、ゲーム側の処理をここで行う
+            Log("閉じる操作を検知しました");
+            // 閉じてよければ明示的に閉じる（呼ばなければウィンドウは開いたまま）
+            info.sourceComponent.CloseWindow();
+        }
+    }
+}</code></pre>
+
+<h2>描画先バッファ系（共通）</h2>
+<p>
+<code>ScreenBufferObject</code> / <code>ShadowMapObject</code> はいずれもオフスクリーンの描画先バッファを1枚所有するコンポーネントで、共通メソッドに加えて以下を持ちます。
+</p>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetName(const string &amp;in)</code> / <code>const string &amp;GetName() const</code></td><td>管理用名前（TextureManagerへの登録名）の設定/取得</td></tr>
+<tr><td><code>void SetSize(uint width, uint height)</code></td><td>サイズの設定（既存バッファを実際にリサイズする）</td></tr>
+</table>
+<p>それぞれの固有機能（<code>ScreenBufferObject</code>の画像ファイル保存等）は、サイドバーの「コンポーネント: Render」以下の各ページを参照してください。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li>コンポーネント共通メソッド → <a href="05_ComponentTypes.html">05_ComponentTypes.html</a></li>
+<li>ライフサイクル・HitInfo・WindowMessageInfo → <a href="01_Lifecycle.html">01_Lifecycle.html</a></li>
+<li>コライダー共通の仕組みとポストエフェクト概要 → <a href="07_ColliderAndPostEffect.html">07_ColliderAndPostEffect.html</a></li>
+<li>描画コンポーネント全般（C++側） → <a href="../Engine/05_Rendering.html">Engine/05_Rendering.html</a></li>
+<li>ウィンドウ/オフスクリーンの仕組み（C++側） → <a href="../Engine/11_Window.html">Engine/11_Window.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Velocity | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_Velocity">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Velocity</h1>
+<p class="page-lead">速度・加速度を保持し、毎フレーム自動的にTransformの位置へ加算するコンポーネントです。</p>
+</div>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetVelocity(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetVelocity() const</code></td><td>速度の設定/取得（単位/秒）</td></tr>
+<tr><td><code>void SetAcceleration(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetAcceleration() const</code></td><td>加速度の設定/取得（単位/秒²）</td></tr>
+<tr><td><code>void AddVelocity(const Vector3 &amp;in)</code></td><td>速度に加算する</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="Rotation.html">Rotation</a> — 回転版のVelocity</li>
+<li><a href="../../../Editor/Components/Basic/Velocity.html">Editor/Components/Basic/Velocity.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

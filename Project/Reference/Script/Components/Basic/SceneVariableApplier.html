@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SceneVariableApplier | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_SceneVariableApplier">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>SceneVariableApplier</h1>
+<p class="page-lead">シーン変数の値を、同オブジェクトの他コンポーネントのパラメータへ適用するコンポーネントです。<code>InputCommandApplier</code>/<code>KeyFrameAnimator</code>がfloat値のみを扱うのに対し、シーン変数が持つ型（Bool/Int/Float/Double/String/Vector2/3/4/Quaternion/Matrix4x4）をそのままバインド先へ適用できます。</p>
+</div>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetVariableName(const string &amp;in)</code> / <code>const string &amp;GetVariableName() const</code></td><td>読み取るシーン変数名の設定/取得</td></tr>
+<tr><td><code>void SetVariableScope(int)</code> / <code>int GetVariableScope() const</code></td><td>シーン変数のスコープ。<code>0</code>=Scene（現在のシーン内でのみ有効） / <code>1</code>=Global（シーンをまたいで保持される）</td></tr>
+<tr><td><code>bool WasApplied() const</code></td><td>前回のUpdateで値の適用に（1件以上）成功したかどうか</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="InputCommandApplier.html">InputCommandApplier</a> / <a href="KeyFrameAnimator.html">KeyFrameAnimator</a> — 同じ「Bindings」の仕組みで他の値をパラメータへ適用するコンポーネント</li>
+<li><a href="../../04_ObjectSceneVariables.html">04_ObjectSceneVariables.html</a> — シーン変数</li>
+<li><a href="../../../Editor/Components/Basic/SceneVariableApplier.html">Editor/Components/Basic/SceneVariableApplier.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

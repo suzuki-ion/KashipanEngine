@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ParticleSystem3D | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_ParticleSystem3D">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>ParticleSystem3D</h1>
+<p class="page-lead">指定した生成方法（自身の子/他オブジェクトの子/自身のワールド座標/指定座標のいずれか）で、一定間隔でパーティクル用オブジェクトを生成するコンポーネントです。生成した各パーティクルには<code>Velocity</code>（初速・加速度）、<code>Rotation</code>（初期回転速度・回転加速度。度数法で指定した値はラジアンへ変換して適用される）と<code>MeshFilter</code>+<code>MeshRenderer</code>が自動で追加され、寿命に応じてスケールが変化しながら消えます。寿命・初速・加速度・開始/終了スケール・初期回転・回転速度・回転加速度・一回のスポーン数は、パラメータごとに「固定値」か「Min〜Maxのランダム範囲」かを選べます。Loopを無効にして再生した場合、Total Spawn Countで指定した数だけスポーンすると自動的に停止します。スポーン範囲の形状（Point/Box/Sphere/Capsule）を含め、詳細なパラメータはインスペクターから設定します。</p>
+</div>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void Play()</code> / <code>void Stop()</code></td><td>パーティクルの生成を開始/停止する（生成済みのパーティクルはStopしても寿命まで残る。停止中にPlayを呼ぶと総発生数カウントがリセットされる）</td></tr>
+<tr><td><code>bool IsPlaying() const</code></td><td>生成中かどうか</td></tr>
+<tr><td><code>void Clear()</code></td><td>生存中の全パーティクルを即座に削除する</td></tr>
+<tr><td><code>void SetEmissionRate(float)</code> / <code>float GetEmissionRate() const</code></td><td>1秒あたりの生成数の設定/取得</td></tr>
+<tr><td><code>void SetMaxParticles(int)</code> / <code>int GetMaxParticles() const</code></td><td>同時に存在できる最大パーティクル数の設定/取得</td></tr>
+<tr><td><code>void SetBillboard(bool)</code> / <code>bool IsBillboard() const</code></td><td>ビルボード化（常に指定オブジェクトの方を向く）の有効/無効の設定/取得</td></tr>
+<tr><td><code>void SetBillboardTarget(Object@)</code> / <code>Object@ GetBillboardTarget() const</code></td><td>ビルボードの向き先オブジェクトの設定/取得（未設定の場合はシーン内のカメラを自動で使う）</td></tr>
+<tr><td><code>void SetBillboardRotationMode(TargetLookAtMode)</code> / <code>TargetLookAtMode GetBillboardRotationMode() const</code></td><td>ビルボードの向き方の設定/取得（<code>TargetLookAtMode::SyncRotation</code> / <code>TargetLookAtMode::LookAt</code>。<a href="TargetLookAt.html">TargetLookAt</a>参照）</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="ParticleSystem2D.html">ParticleSystem2D</a> — 2D版（<code>MeshFilter</code>+<code>SpriteRenderer</code>を自動追加する点のみ異なる）</li>
+<li><a href="../../../Editor/Components/Basic/ParticleSystem3D.html">Editor/Components/Basic/ParticleSystem3D.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

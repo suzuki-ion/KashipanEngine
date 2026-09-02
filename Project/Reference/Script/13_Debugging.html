@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VS CodeによるAngelScriptデバッグ | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-script-data.js"></script>
+<script defer src="../assets/nav.js"></script>
+</head>
+<body data-page="13_Debugging">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>VS CodeによるAngelScriptデバッグ</h1>
+<p class="page-lead">KashipanEngineのDebug/Developmentビルドは、ゲーム用 <code>ScriptComponent</code> と <code>EditorTool</code> を対象とする技術検証版のDebug Adapter Protocol（DAP）サーバーを内蔵しています。VS Codeからブレークポイントを張って実行を止め、変数の中身を確認できます。</p>
+</div>
+
+<h2>対応機能</h2>
+<ul>
+<li><code>.as</code>ファイルに設定した行ブレークポイント</li>
+<li>Continue / Pause</li>
+<li>Step In / Step Over / Step Out</li>
+<li>停止位置とコールスタックの表示</li>
+<li>ローカル変数、<code>this</code>メンバー、グローバル変数の表示</li>
+<li>配列、スクリプトオブジェクト、登録済み値型の子要素表示</li>
+<li><code>Assets</code>以下のゲームスクリプトと <code>EditorTools</code>以下のEditorToolスクリプト</li>
+</ul>
+<div class="note">
+<strong>未対応の機能</strong><br>
+条件付きブレークポイント、ログポイント、ウォッチ式の評価、変数の書き換えは技術検証版では未対応です。
+</div>
+
+<h2>使用手順</h2>
+<ol>
+<li>VS Codeへ <strong>AngelScript Language Server</strong>（<code>sashi0034.angel-lsp</code>）をインストールします。</li>
+<li>VS Codeでこのリポジトリの <code>Project</code> フォルダーを開きます。</li>
+<li>KashipanEngineをDebugまたはDevelopmentビルドで起動し、デバッグ対象のシーンを開きます。</li>
+<li>VS Codeの「実行とデバッグ」から <code>Attach to KashipanEngine AngelScript</code> を開始します。</li>
+<li><code>Assets</code>または<code>EditorTools</code>以下の<code>.as</code>ファイルへブレークポイントを設定し、ゲームを実行するかEditorToolを操作します。</li>
+</ol>
+<div class="tip">
+<strong>接続先</strong><br>
+DAPサーバーは <code>localhost:27979</code> だけで待ち受けます。正常に開始するとエンジンログへ「<code>AngelScript DAP: localhost:27979 で待受を開始しました</code>」と出力されます。
+</div>
+<div class="note">
+<strong>Debug構成での動作確認について</strong><br>
+Debug構成はD3D12デバッグレイヤー（GPUベース検証含む）が有効なため、Development構成より起動・描画が重くなります。AngelScriptデバッグ自体はDebug/Developmentどちらのビルドでも利用できます。
+</div>
+
+<h2>制限事項</h2>
+<ul>
+<li>ブレークポイント停止中はAngelScriptを実行しているエンジンのメインスレッドも停止します。</li>
+<li>同じスクリプトを複数の <code>ScriptComponent</code> が使用している場合、ブレークポイントは全インスタンスへ適用されます。</li>
+<li>Releaseビルドではデバッグサーバーを開始しません。</li>
+<li>別のプロセスが27979番ポートを使用している場合、DAPサーバーは開始されません。</li>
+</ul>
+
+<h2>関連ページ</h2>
+<ul>
+<li>スクリプトの基本的な使い方 → <a href="00_Index.html">00_Index.html</a></li>
+<li>Reload失敗時のエラー確認方法 → <a href="14_Notes.html">14_Notes.html</a></li>
+<li>EditorTool（デバッグ対象のもう一方のエンジン） → <a href="12_EditorToolScripting.html">12_EditorToolScripting.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

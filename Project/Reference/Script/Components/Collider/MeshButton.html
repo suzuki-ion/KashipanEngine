@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MeshButton | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Collider_MeshButton">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>MeshButton</h1>
+<p class="page-lead">3Dオブジェクト（<code>MeshRenderer</code>/<code>SkinnedMeshRenderer</code>）に対するマウスのホバー・押下・クリック判定を行うコンポーネントです（<code>UIButton</code>の3D版）。見た目の描画は一切行いません（同一オブジェクトのメッシュを、そのまま当たり判定に使う「透明な当たり判定レイヤー」）。</p>
+</div>
+
+<p>同オブジェクトに<code>MeshRenderer</code>または<code>SkinnedMeshRenderer</code>があれば（MeshRendererを優先）、同じく<code>MeshFilter</code>が持つメッシュのローカル空間バウンディングボックスへ、マウス位置から表示カメラ（<code>Camera3D</code>）を通したレイを飛ばして交差判定します。<code>SkinnedMeshRenderer</code>は常にこのバウンディングボックス判定のみで、ボーン変形後の見た目には追従しません（GPU側でスキニングした結果をCPUから直接読めないため）。</p>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetDisplayCameraObject(Object@)</code> / <code>Object@ GetDisplayCameraObject() const</code> / <code>string GetDisplayCameraObjectID() const</code></td><td>マウス座標変換の基準にする<code>Camera3D</code>を持つオブジェクトの設定/取得</td></tr>
+<tr><td><code>void SetPreciseMeshTest(bool)</code> / <code>bool GetPreciseMeshTest() const</code></td><td>メッシュの三角形との正確な交差判定を行うかどうか（既定false＝バウンディングボックスのみ）。<code>MeshRenderer</code>の場合のみ効果を持つ（<code>SkinnedMeshRenderer</code>は常にバウンディングボックス判定のまま）</td></tr>
+<tr><td><code>bool IsHovered() const</code></td><td>マウスカーソルがオブジェクトの当たり判定内にあるかどうか</td></tr>
+<tr><td><code>bool IsPressed() const</code></td><td>オブジェクト上で左クリックが押され、まだ離されていないかどうか</td></tr>
+<tr><td><code>bool IsClicked() const</code></td><td>このフレームでクリックが確定した瞬間かどうか</td></tr>
+<tr><td><code>void SetDragAxis(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetDragAxis() const</code></td><td>掴んで軸沿いにドラッグする操作の基準にする、オブジェクトのローカル軸（既定は+X）</td></tr>
+<tr><td><code>bool TryGetAxisDragOffset(float &amp;out)</code></td><td>掴んで軸沿いにドラッグしている間の、軸原点（掴んだ瞬間のオブジェクトのワールド座標）からの符号付きオフセット（ワールド単位）を取得する。値のクランプはしないため、呼び出し側で用途に応じてクランプ・正規化する。一度も掴んでいない場合はfalseを返す</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="../../07_ColliderAndPostEffect.html">07_ColliderAndPostEffect.html</a>（IsTrigger/SetTrigger/IsContinuousDetection/SetContinuousDetection/Is2D、CCD、Collider基底型）</li>
+<li><a href="../UI/UIButton.html">UIButton</a> — 2D版</li>
+<li><a href="../../../Editor/Components/Collider/MeshButton.html">Editor/Components/Collider/MeshButton.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

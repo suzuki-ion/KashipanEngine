@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MeshCollider | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Collider_MeshCollider">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>MeshCollider</h1>
+<p class="page-lead">メッシュ形状の3D用コライダーです。コンポーネント共通メソッドと、コライダー共通メソッド（<a href="../../07_ColliderAndPostEffect.html">07_ColliderAndPostEffect.html</a>参照）に加えて以下を持ちます。</p>
+</div>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>IsConvex</code>/<code>SetConvex</code>（<code>bool</code>）</td><td>凸形状として扱うかどうか</td></tr>
+<tr><td><code>GetMeshHandle</code>/<code>SetMeshHandle</code>（<code>uint</code>）</td><td>衝突判定に使うメッシュのハンドル</td></tr>
+<tr><td><code>uint GetEffectiveMeshHandle() const</code></td><td>未設定時に実際に使われるメッシュハンドルを取得する</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="../../07_ColliderAndPostEffect.html">07_ColliderAndPostEffect.html</a>（IsTrigger/SetTrigger/IsContinuousDetection/SetContinuousDetection/Is2D、CCD、Collider基底型）</li>
+<li><a href="../../../Editor/Components/Collider/MeshCollider.html">Editor/Components/Collider/MeshCollider.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

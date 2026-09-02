@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EditorTool（エディタ拡張スクリプト） | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-script-data.js"></script>
+<script defer src="../assets/nav.js"></script>
+</head>
+<body data-page="12_EditorToolScripting">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>EditorTool（エディタ拡張スクリプト）</h1>
+<p class="page-lead">エディター拡張（メニュー項目・専用ウィンドウなど）をAngelScriptで追加するための <code>EditorTool</code> スクリプトのリファレンスです。ゲームプレイ用の <code>ScriptComponent</code>（このセクションの他ページ）とは<strong>別のAngelScriptエンジンインスタンス</strong>で動作します。</p>
+</div>
+
+<div class="note">
+<strong>対象・配置場所</strong><br>
+対象: <code>EditorToolManager</code>（エディターのみ・<code>USE_IMGUI</code> 定義時のみ有効）。配置場所: 実行ディレクトリ（<code>Assets</code> フォルダと同じ階層）直下の <strong><code>EditorTools</code> フォルダ</strong>（サブフォルダも再帰的に読み込まれる）。
+</div>
+
+<h2>基本的な使い方</h2>
+<ol>
+<li><code>EditorTools</code> フォルダ（無ければ作成する。<code>Assets</code> フォルダと同じ階層）に <code>.as</code> ファイルを置く</li>
+<li>スクリプト内で <code>EditorTool</code> インターフェースを実装したクラスを定義する</li>
+<li>エディターを起動すると、<code>EditorTools</code> フォルダ以下の <code>.as</code> が<strong>起動時に一度だけ</strong>自動で読み込まれ、<code>EditorTool</code> を実装した全クラスがそれぞれ1つずつインスタンス化される</li>
+<li>クラスに付けた <code>[MenuItem(...)]</code> からメニュー選択時の処理を、<code>[EditorWindow(...)]</code> から専用ウィンドウの中身を実装する</li>
+</ol>
+<div class="warn">
+<strong>ホットリロードは無い</strong><br>
+<code>ScriptComponent</code> の <code>Reload</code> ボタンのようなホットリロード機構は無いため、スクリプトを追加・編集した場合はエディターを再起動して反映してください。
+</div>
+<p>
+<code>EditorTools/as.predefined</code> が自動生成され、VSCodeの <strong>AngelScript Language Server</strong> 拡張機能はこれを読み込んでコード補完・型チェックを行います。<code>EditorTools</code> フォルダをVSCodeで開く（またはワークスペースに含める）と補完が有効になります。ゲームプレイ用の <code>.as</code>（<code>ScriptComponent</code> 側）は実行ディレクトリ直下の <code>as.predefined</code> を参照するため別ファイルであり、内容も異なります（EditorTool専用エンジンには後述の <code>ImGui::</code> 名前空間が追加登録されている一方、後述の理由で <code>GetOwnerObject()</code> 等は実行時に無効です）。
+</p>
+
+<h2>EditorTool（ライフサイクル）</h2>
+<pre><code class="language-angelscript">[EditorWindow("My Tool")]
+[MenuItem("MenuBar/Tools/My Tool", "open_my_tool")]
+class MyTool : EditorTool {
+    void InitializeOnLoad() {}                       // 読み込み直後に一度だけ
+    void Update() {}                                  // 毎フレーム（[EditorWindow]がある場合はウィンドウのBegin/Endの中で呼ばれる）
+    void OnItemSelected(const string &amp;in tag) {}      // [MenuItem]の項目がクリックされたとき（第2引数のタグが渡される）
+    void OnWindowEnable(const string &amp;in windowName) {}  // [EditorWindow]のウィンドウが開いたとき
+    void OnWindowDisable(const string &amp;in windowName) {} // [EditorWindow]のウィンドウが閉じたとき
+}</code></pre>
+<table>
+<tr><th>メソッド</th><th>呼び出しタイミング</th></tr>
+<tr><td><code>void InitializeOnLoad()</code></td><td>全ツールの読み込みが完了した直後に一度だけ</td></tr>
+<tr><td><code>void Update()</code></td><td>毎フレーム。クラスが <code>[EditorWindow(...)]</code> を持つ場合、対応するウィンドウが開いている間だけ、その <code>ImGui::Begin</code>/<code>End</code> の中で呼ばれる（閉じている間は呼ばれない）。<code>[EditorWindow]</code> を持たないクラスは常に毎フレーム呼ばれる</td></tr>
+<tr><td><code>void OnItemSelected(const string &amp;in tag)</code></td><td><code>[MenuItem(...)]</code> で追加した項目がクリックされたとき。タグは属性の第2引数（省略時は項目名）</td></tr>
+<tr><td><code>void OnWindowEnable(const string &amp;in windowName)</code></td><td><code>[EditorWindow(...)]</code> のウィンドウが閉→開へ変化したとき</td></tr>
+<tr><td><code>void OnWindowDisable(const string &amp;in windowName)</code></td><td><code>[EditorWindow(...)]</code> のウィンドウが開→閉へ変化したとき（右上の×で閉じた場合も含む）</td></tr>
+</table>
+<p>
+全メソッドは省略可能。1つの <code>.as</code> ファイルに複数の <code>EditorTool</code> 実装クラスを定義してもよく、それぞれ独立にインスタンス化されます。
+</p>
+
+<h2>クラス属性（[EditorWindow] / [MenuItem]）</h2>
+<p>
+クラス宣言の直前に付けます。複数付けたい場合は <code>[EditorWindow("..."), MenuItem("...", "...")]</code> のようにまとめて書けます。
+</p>
+<table>
+<tr><th>属性</th><th>引数</th><th>説明</th></tr>
+<tr><td><code>[EditorWindow("ウィンドウ名")]</code></td><td>ウィンドウタイトル</td><td>このクラス用の <code>ImGui</code> ウィンドウを1つ用意する。表示/非表示は下記の <code>OpenEditorWindow</code> 等のスクリプト側の呼び出しで制御する（クラスを読み込んだだけでは開かない）</td></tr>
+<tr><td><code>[MenuItem("階層パス", "タグ")]</code></td><td>階層パスとクリック時に渡すタグ（タグは省略可、省略時は項目名がそのまま渡る）</td><td>メニューに項目を追加する。階層パスの先頭は <code>"MenuBar/..."</code>（メインメニューバー）または <code>"Hierarchy/..."</code>（ヒエラルキーの右クリックメニュー）のいずれか。<code>/</code> 区切りの中間部分はサブメニューになる（例: <code>"MenuBar/Tools/WFC/Tile Editor"</code> → <code>Tools</code> の中に <code>WFC</code> サブメニュー → <code>Tile Editor</code> 項目）</td></tr>
+</table>
+<p>
+同じクラスに <code>[MenuItem(...)]</code> を複数付けることもできます（それぞれ別のタグで <code>OnItemSelected</code> が呼ばれます）。
+</p>
+
+<h2>ウィンドウ操作用グローバル関数</h2>
+<p>
+<code>[EditorWindow]</code> で用意したウィンドウの開閉を制御します（<code>ScriptComponent</code> 側にも同じ関数が登録されていますが、エディターが無効なビルドでは何もしません）。
+</p>
+<table>
+<tr><th>関数</th><th>説明</th></tr>
+<tr><td><code>void OpenEditorWindow(const string &amp;in name)</code></td><td>指定した名前の <code>[EditorWindow]</code> を開く</td></tr>
+<tr><td><code>void CloseEditorWindow(const string &amp;in name)</code></td><td>指定した名前の <code>[EditorWindow]</code> を閉じる</td></tr>
+<tr><td><code>bool IsEditorWindowOpen(const string &amp;in name)</code></td><td>指定した名前の <code>[EditorWindow]</code> が開いているか</td></tr>
+</table>
+<p>
+<code>Update()</code> 内でウィンドウの中身を描く前に <code>IsEditorWindowOpen</code> で開いているか確認するのが基本パターンです（<code>[EditorWindow]</code>を持つクラスでは<code>Update()</code>自体がウィンドウが開いている間しか呼ばれないため必須ではありませんが、<code>[MenuItem]</code>から複数ウィンドウを開閉する構成にする場合など、明示的に確認したい場面で使います）。
+</p>
+
+<h2>ScriptComponentとのAPIの違い</h2>
+<p>
+EditorToolのエンジンには他ページで解説した数学型・コンポーネント型・<code>Json</code>・<code>dictionary</code>・<code>Math</code>/<code>Easing</code>/<code>Random</code> 名前空間・<code>WaveFunctionCollapse</code> 等、ほぼ同じエンジンAPIが登録されています。ただし以下の点が異なります。
+</p>
+<ul>
+<li><strong><code>ObjectContext</code> が存在しない</strong>: EditorToolはどのオブジェクトにも属さないため、<code>GetOwnerObject()</code> / <code>GetTransform()</code> / <code>GetComponent(?&amp;out)</code> / <code>FindObject(...)</code> の<strong>オブジェクト起点</strong>の関数は正しく動作しません（対象が無い扱いになります）。使えるのは <code>GetScene()</code> が返す <code>Scene@</code> を経由した操作（<code>GetScene().CreateObject(...)</code>、<code>GetScene().GetObjects(name)</code> 等）のみです。</li>
+<li><strong><code>GetScene()</code> はエディターで開いている（編集中の）シーン</strong>を返します。ゲーム実行中かどうかに関わらず、エディターの現在のシーンコンテキストが対象になります。</li>
+<li><strong><code>ImGui::</code> 名前空間が追加登録されている</strong>（下記）。<code>ScriptComponent</code> 側では登録されていないため使用できません。</li>
+<li><strong>ホットリロード無し</strong>: <code>ScriptComponent</code> の <code>Reload</code> ボタンに相当する機能は無く、スクリプトの追加・変更はエディター再起動で反映します。</li>
+</ul>
+
+<h2>ImGui名前空間</h2>
+<p>
+<code>ImGui::Xxx(...)</code> として呼び出します。値を書き換えて返す系の関数（<code>Checkbox</code>/<code>DragFloat</code>/<code>InputText</code>等）は、<strong>戻り値を使わず参照引数（<code>&amp;inout</code>）を直接書き換える</strong>AngelScript特有の呼び方をする点に注意してください（例: <code>ImGui::DragFloat("Speed", speed, 0.1f);</code> のように呼び、<code>speed</code> が直接更新されます）。
+</p>
+<table>
+<tr><th>分類</th><th>関数</th></tr>
+<tr><td>テキスト</td><td><code>void Text(const string &amp;in)</code> / <code>void TextColored(const Vector4 &amp;in color, const string &amp;in)</code> / <code>void TextWrapped(const string &amp;in)</code> / <code>void TextDisabled(const string &amp;in)</code> / <code>void BulletText(const string &amp;in)</code></td></tr>
+<tr><td>ボタン等</td><td><code>bool Button(const string &amp;in, float width = 0, float height = 0)</code> / <code>bool SmallButton(const string &amp;in)</code> / <code>bool Checkbox(const string &amp;in, bool &amp;inout value)</code> / <code>bool RadioButton(const string &amp;in, bool active)</code> / <code>bool Selectable(const string &amp;in, bool selected = false)</code></td></tr>
+<tr><td>入力</td><td><code>bool InputText(const string &amp;in, string &amp;inout text)</code> / <code>bool InputTextMultiline(const string &amp;in, string &amp;inout text, float width = 0, float height = 0)</code> / <code>bool DragInt(const string &amp;in, int &amp;inout value, float speed = 1.0f, int min = 0, int max = 0)</code> / <code>bool DragFloat(const string &amp;in, float &amp;inout value, float speed = 1.0f, float min = 0, float max = 0)</code> / <code>bool SliderInt(const string &amp;in, int &amp;inout value, int min, int max)</code> / <code>bool SliderFloat(const string &amp;in, float &amp;inout value, float min, float max)</code> / <code>bool DragVector2(const string &amp;in, Vector2 &amp;inout value, float speed = 1.0f)</code> / <code>bool DragVector3(const string &amp;in, Vector3 &amp;inout value, float speed = 1.0f)</code> / <code>bool DragVector4(const string &amp;in, Vector4 &amp;inout value, float speed = 1.0f)</code> / <code>bool ColorEdit3(const string &amp;in, Vector3 &amp;inout color)</code> / <code>bool ColorEdit4(const string &amp;in, Vector4 &amp;inout color)</code> / <code>bool Combo(const string &amp;in, int &amp;inout currentIndex, const array&lt;string&gt; &amp;in items)</code> / <code>void ProgressBar(float fraction, const string &amp;in overlay = "")</code></td></tr>
+<tr><td>レイアウト</td><td><code>void Separator()</code> / <code>void SameLine(float offsetX = 0.0f, float spacing = -1.0f)</code> / <code>void NewLine()</code> / <code>void Spacing()</code> / <code>void Indent(float width = 0.0f)</code> / <code>void Unindent(float width = 0.0f)</code> / <code>void SetNextItemWidth(float width)</code> / <code>void PushID(int id)</code> / <code>void PushID(const string &amp;in id)</code> / <code>void PopID()</code> / <code>void BeginDisabled(bool disabled = true)</code> / <code>void EndDisabled()</code> / <code>bool BeginChild(const string &amp;in id, float width = 0, float height = 0, bool border = false)</code> / <code>void EndChild()</code></td></tr>
+<tr><td>ツリー・折りたたみ</td><td><code>bool TreeNode(const string &amp;in)</code> / <code>void TreePop()</code> / <code>bool CollapsingHeader(const string &amp;in)</code></td></tr>
+<tr><td>状態取得・その他</td><td><code>bool IsItemHovered()</code> / <code>bool IsItemClicked(int button = 0)</code> / <code>bool IsItemActive()</code> / <code>void SetTooltip(const string &amp;in)</code> / <code>Vector2 GetContentRegionAvail()</code></td></tr>
+<tr><td>図形描画（現在のウィンドウの描画リストへ直接描く。スクリーン座標系）</td><td><code>Vector2 GetCursorScreenPos()</code> / <code>void Dummy(const Vector2 &amp;in size)</code> / <code>void DrawLine(const Vector2 &amp;in p1, const Vector2 &amp;in p2, const Vector4 &amp;in color, float thickness = 1.0f)</code> / <code>void DrawRect(const Vector2 &amp;in pMin, const Vector2 &amp;in pMax, const Vector4 &amp;in color, float thickness = 1.0f, float rounding = 0.0f)</code> / <code>void DrawRectFilled(const Vector2 &amp;in pMin, const Vector2 &amp;in pMax, const Vector4 &amp;in color, float rounding = 0.0f)</code> / <code>void DrawCircleFilled(const Vector2 &amp;in center, float radius, const Vector4 &amp;in color, int segments = 0)</code> / <code>void DrawText(const Vector2 &amp;in pos, const Vector4 &amp;in color, const string &amp;in text)</code></td></tr>
+<tr><td>マウス入力（自作の直接描画UIをクリック/ドラッグ操作させる）</td><td><code>Vector2 GetMousePos()</code> / <code>bool InvisibleButton(const string &amp;in id, const Vector2 &amp;in size)</code></td></tr>
+</table>
+<p>
+<code>Combo</code> は選択肢の一覧（<code>array&lt;string&gt;</code>）と現在のインデックス（<code>&amp;inout</code>）を渡す簡易版（内部で<code>BeginCombo</code>/<code>Selectable</code>/<code>EndCombo</code>を組み立てる）です。個別の<code>BeginCombo</code>/<code>EndCombo</code>は登録されていません。
+</p>
+<div class="tip">
+<strong>図形描画とマウス入力の組み合わせ方</strong><br>
+図形描画系は<code>ImGui::GetCursorScreenPos()</code>で描画開始位置（スクリーン座標）を取得し、<code>DrawLine</code>等で任意の図形を描いた後、実際に描いた領域のサイズを<code>ImGui::Dummy(size)</code>に渡してレイアウト領域を確保するのが基本パターンです（<code>Dummy</code>を呼ばないと後続のウィジェットが描画内容に重なります）。クリック/ドラッグ操作を受け付けたい場合は<code>Dummy</code>の代わりに<code>InvisibleButton(id, size)</code>を同じ位置へ置きます（レイアウト確保を兼ねる透明なボタンになる）。戻り値はクリックされた瞬間だけ<code>true</code>、<code>ImGui::IsItemActive()</code>はマウスボタンを押している間ずっと<code>true</code>になる（カーソルが領域外へ出てもドラッグ中は<code>true</code>のまま）ため、<code>GetMousePos()</code>と組み合わせて値をドラッグで書き換えるUIが作れます。グラフ・カーブエディター・ミニマップ等の自作UIに使います。実例は <code>EditorTools/KeyframeAnimationEditor.as</code> の <code>ShowCurveSection()</code>（キーフレームの点をドラッグして値を編集する）を参照してください。
+</div>
+
+<h2>サンプルスクリプト</h2>
+<p>メニューから開く簡単なカウンターウィンドウの例:</p>
+<pre><code class="language-angelscript">[EditorWindow("Counter Tool")]
+[MenuItem("MenuBar/Tools/Counter Tool", "open_counter_tool")]
+class CounterTool : EditorTool {
+    int count = 0;
+
+    void InitializeOnLoad() {
+        Log("CounterTool: 読み込まれました (Tools &gt; Counter Tool)");
+    }
+
+    void OnItemSelected(const string &amp;in tag) {
+        if (tag == "open_counter_tool") {
+            OpenEditorWindow("Counter Tool");
+        }
+    }
+
+    void Update() {
+        ImGui::Text("Count: " + count);
+        if (ImGui::Button("+1")) {
+            count++;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Reset")) {
+            count = 0;
+        }
+
+        ImGui::Separator();
+        // GetScene()経由でシーン内のオブジェクトを直接操作することもできる
+        if (ImGui::Button("Create Empty Object")) {
+            GetScene().CreateObject("EditorCreated");
+        }
+    }
+}</code></pre>
+<p>ヒエラルキーの右クリックメニューに項目を追加する例:</p>
+<pre><code class="language-angelscript">class HierarchyTool : EditorTool {
+    [MenuItem("Hierarchy/Create Marker", "create_marker")]
+    void OnItemSelected(const string &amp;in tag) {
+        if (tag == "create_marker") {
+            GetScene().CreateObject("Marker");
+        }
+    }
+}</code></pre>
+<p>より実践的な例として、以下の同梱ツールも参照してください。</p>
+<ul>
+<li><code>EditorTools/WfcTileEditor.as</code> — <a href="10_ProceduralGeneration.html">WaveFunctionCollapse</a>用タイル定義のグリッドエディター（<code>Json</code>の保存/読み込み・動的な接続編集を含む）</li>
+<li><code>EditorTools/KeyframeAnimationEditor.as</code> — <code>KeyFrameAnimator</code>コンポーネント用のキーフレームjson作成エディター（イージング選択コンボ・評価値プレビューを含む）</li>
+</ul>
+
+<h2>注意事項</h2>
+<ul>
+<li><code>EditorTool</code> を実装するクラスにはデフォルトコンストラクタ（引数無しで呼べるコンストラクタ）が必要です（内部でファクトリ関数経由でインスタンス化するため）。</li>
+<li>1つの <code>.as</code> に複数の <code>EditorTool</code> 実装クラスを書けます。それぞれ独立に読み込まれ、<code>[EditorWindow]</code>/<code>[MenuItem]</code> もクラスごとに個別に登録されます。</li>
+<li>コンパイルエラーはログにのみ出力されます（<code>ScriptComponent</code> のようなインスペクター表示は無い）。エディター起動直後のログを確認してください。</li>
+<li><code>EditorTools</code> フォルダが存在しない場合、エディターツールは一切読み込まれません（エラーにはならず、単に無視されます）。</li>
+</ul>
+
+<h2>関連ページ</h2>
+<ul>
+<li>ゲームプレイ用スクリプトの基本 → <a href="00_Index.html">00_Index.html</a></li>
+<li>VS CodeによるAngelScriptデバッグ（EditorToolも対象） → <a href="13_Debugging.html">13_Debugging.html</a></li>
+<li>WaveFunctionCollapse → <a href="10_ProceduralGeneration.html">10_ProceduralGeneration.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

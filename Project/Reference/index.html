@@ -10,7 +10,7 @@
   .landing { max-width: 760px; padding: 40px 24px; }
   .landing h1 { font-size: 26px; margin: 0 0 8px; }
   .landing > p { color: var(--text-dim); margin: 0 0 28px; }
-  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
   .card {
     display: block; border: 1px solid var(--border); border-radius: 10px;
     padding: 20px 22px; background: var(--bg-alt); color: var(--text);
@@ -18,13 +18,13 @@
   .card:hover { border-color: var(--accent); text-decoration: none; }
   .card h2 { margin: 0 0 6px; font-size: 17px; }
   .card p { margin: 0; color: var(--text-dim); font-size: 13.5px; }
-  @media (max-width: 640px) { .cards { grid-template-columns: 1fr; } }
+  @media (max-width: 900px) { .cards { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 <div class="landing">
 <h1>KashipanEngine リファレンス</h1>
-<p>DirectX12ベースの独自C++ゲームエンジン「KashipanEngine」のリファレンスです。エンジン本体（C++ API）とシーンエディタ（ImGuiツール）で、別々のリファレンスに分かれています。</p>
+<p>DirectX12ベースの独自C++ゲームエンジン「KashipanEngine」のリファレンスです。エンジン本体（C++ API）・シーンエディタ（ImGuiツール）・スクリプティング（AngelScript）で、別々のリファレンスに分かれています。</p>
 <div class="cards">
 <a class="card" href="Engine/00_Index.html">
 <h2>エンジン本体リファレンス</h2>
@@ -33,6 +33,10 @@
 <a class="card" href="Editor/00_Index.html">
 <h2>エディタリファレンス</h2>
 <p>ImGuiベースのシーンエディタの画面構成・操作方法・コンポーネントのInspector表示、使い方ガイド。</p>
+</a>
+<a class="card" href="Script/00_Index.html">
+<h2>スクリプトリファレンス</h2>
+<p>AngelScriptによるゲームロジックの書き方。ScriptComponentのライフサイクル、SerializeField、コンポーネント型リファレンス、EditorTool拡張など。</p>
 </a>
 </div>
 </div>

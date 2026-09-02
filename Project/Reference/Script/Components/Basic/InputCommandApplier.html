@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InputCommandApplier | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_InputCommandApplier">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>InputCommandApplier</h1>
+<p class="page-lead">InputCommandの入力を、同オブジェクトの他コンポーネントのパラメータへ適用するコンポーネントです。1つのコンポーネントに複数の入力コマンド設定（コマンド名・条件・バインド先）を名前付きで登録できます。</p>
+</div>
+
+<ul><li>各設定エントリは識別名・評価する<code>Command Name</code>・条件（Condition）・書き込む値（Value Source）・バインド先（Bindings）を持ち、インスペクターから登録します（スクリプトからの動的な追加/変更はできません）。</li><li>条件（Condition）: コマンドがtrue / コマンドがfalse / 入力値が閾値以上 / 入力値が閾値以下 / 入力値が閾値と等しい（誤差1e-6以内）</li><li>書き込む値（Value Source）: 入力コマンドの評価値 or 固定値。適用値は <code>値 × Value Scale + Value Offset</code> です。</li><li>適用先（Bindings・複数指定可）は <code>KeyFrameAnimator</code> と同じ仕組みで、同オブジェクトのコンポーネントのfloat系パラメータまたは <code>ScriptComponent</code> の <code>[SerializeField]</code> 付き <code>float</code> 変数をコンボから選択します。</li><li>毎フレーム条件を評価し、<strong>条件を満たしたフレームだけ</strong>値をバインド先へ書き込みます。</li></ul>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>bool WasApplied(const string &amp;in name) const</code></td><td>指定した名前の設定エントリが、前回のUpdateで条件を満たして値を適用したかどうか</td></tr>
+<tr><td><code>bool TryGetLastValue(const string &amp;in name, float &amp;out value) const</code></td><td>指定した名前の設定エントリが前回適用した値（Scale/Offset適用後）を取得する。名前が一致するエントリが見つかった場合に<code>true</code>を返す（未適用の間は前回値を保持する）</td></tr>
+<tr><td><code>uint GetCommandCount() const</code></td><td>登録されている設定エントリの数を取得する</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="KeyFrameAnimator.html">KeyFrameAnimator</a> / <a href="SceneVariableApplier.html">SceneVariableApplier</a> — 同じ「Bindings」の仕組みで他の値をパラメータへ適用するコンポーネント</li>
+<li><a href="../../../Engine/08_Input.html">Engine/08_Input.html</a> — 入力コマンドの評価（C++側）</li>
+<li><a href="../../../Editor/Components/Basic/InputCommandApplier.html">Editor/Components/Basic/InputCommandApplier.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

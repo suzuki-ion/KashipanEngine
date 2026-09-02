@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Object・Scene・Tag・シーン変数 | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-script-data.js"></script>
+<script defer src="../assets/nav.js"></script>
+</head>
+<body data-page="04_ObjectSceneVariables">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Object・Scene・Tag・シーン変数</h1>
+<p class="page-lead"><code>Object</code>/<code>Scene</code>/<code>Tag</code> 型のAPIと、スクリプト間で値をやり取りする・処理を呼び出すための2つの方法（シーン変数、<code>ScriptComponent</code>経由の直接アクセス／関数呼び出し）をまとめます。</p>
+</div>
+
+<h2>Object（ゲームオブジェクト）</h2>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>const string &amp;GetName() const</code></td><td>オブジェクト名を取得する</td></tr>
+<tr><td><code>void SetName(const string &amp;in)</code></td><td>オブジェクト名を設定する</td></tr>
+<tr><td><code>bool IsActive() const</code></td><td>アクティブ状態を取得する</td></tr>
+<tr><td><code>void SetActive(bool)</code></td><td>アクティブ状態を設定する</td></tr>
+<tr><td><code>void SetComponentsActiveExceptTransformAndScript(bool)</code></td><td><code>Transform</code>と<code>ScriptComponent</code>以外の全コンポーネントをまとめて有効/無効化する。スクリプト自身のロジックは動かし続けたまま、見た目・当たり判定等だけを一括で止めたい場合に使う（個々のコンポーネント型を列挙する必要がない）</td></tr>
+<tr><td><code>void SetTag(const string &amp;in)</code></td><td>タグを設定する（下記「Tag」参照）</td></tr>
+<tr><td><code>Tag GetTag() const</code></td><td>タグを取得する（比較用）</td></tr>
+<tr><td><code>const string &amp;GetTagName() const</code></td><td>タグの文字列を取得する</td></tr>
+<tr><td><code>Transform@ GetTransform()</code></td><td>Transformコンポーネントを取得する</td></tr>
+<tr><td><code>bool GetComponent(?&amp;out)</code></td><td>コンポーネントを取得する（<a href="03_ComponentAccess.html">03_ComponentAccess.html</a>）</td></tr>
+<tr><td><code>bool GetComponents(?&amp;out)</code></td><td>コンポーネントを全件取得する</td></tr>
+<tr><td><code>bool AddComponent(?&amp;out)</code></td><td>コンポーネントを新規追加する</td></tr>
+<tr><td><code>bool RemoveComponent(?&amp;in)</code></td><td>コンポーネントを削除する</td></tr>
+</table>
+
+<h2>Scene（シーン）</h2>
+<div class="api-card">
+<h4><code>Scene</code></h4>
+<div class="api-sig">const string &amp;GetName() const;
+Object@ GetObject(const string &amp;in name) const;
+array&lt;Object@&gt;@ GetObjects(const string &amp;in name) const;
+Object@ CreateObject(const string &amp;in name = "");
+Object@ CloneObject(Object@ source, const string &amp;in name = "");
+bool DeleteObject(Object@ obj);
+void SetNextSceneName(const string &amp;in);
+bool ChangeToNextScene();
+bool HasNextSceneName() const;
+void ClearNextSceneName();
+void RequestExitGameLoop();
+
+// シーン変数（このシーンが読み込まれている間だけ有効）
+bool SetVariable(const string &amp;in key, ?&amp;in value);
+bool GetVariable(const string &amp;in key, ?&amp;out value);
+bool HasVariable(const string &amp;in key);
+bool RemoveVariable(const string &amp;in key);
+
+// グローバルシーン変数（シーンを跨いでも値が残る。SceneManagerが保持）
+bool SetGlobalVariable(const string &amp;in key, ?&amp;in value);
+bool GetGlobalVariable(const string &amp;in key, ?&amp;out value);
+bool HasGlobalVariable(const string &amp;in key);
+bool RemoveGlobalVariable(const string &amp;in key);</div>
+</div>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>Object@ GetObject(const string &amp;in name) const</code></td><td>名前が一致する最初のオブジェクトを取得する</td></tr>
+<tr><td><code>array&lt;Object@&gt;@ GetObjects(const string &amp;in name) const</code></td><td>名前が一致する<strong>全ての</strong>オブジェクトを取得する（0件でも配列は返る）</td></tr>
+<tr><td><code>Object@ CreateObject(const string &amp;in name = "")</code></td><td>空のオブジェクトを新規生成してシーンへ追加する</td></tr>
+<tr><td><code>Object@ CloneObject(Object@ source, const string &amp;in name = "")</code></td><td>既存オブジェクトを複製してシーンへ追加する（<code>source</code> はこのシーンに属している必要がある。子オブジェクトや親子関係は複製されない）</td></tr>
+<tr><td><code>bool DeleteObject(Object@ obj)</code></td><td>オブジェクトを削除する（子オブジェクトがあれば道連れに削除される）</td></tr>
+<tr><td><code>void SetNextSceneName(const string &amp;in)</code> / <code>bool ChangeToNextScene()</code></td><td>次のシーン名の設定 / 実際の切り替え。詳細は <a href="../Engine/02_Scenes.html">02_Scenes.html</a></td></tr>
+</table>
+<div class="warn">
+<strong>CloneObjectの複製範囲</strong><br>
+<code>Scene.CloneObject</code> は対象オブジェクト自身が持つコンポーネントのみを複製します。子オブジェクトの複製や、親子関係（<code>Transform</code>の親設定）の引き継ぎは行われません。
+</div>
+
+<h2>Tag（タグ）</h2>
+<p>
+文字列からハッシュ値（FNV-1a 64bit）を計算して保持する軽量な値型です。比較（<code>==</code> / <code>!=</code>）はハッシュ値同士で行われるため、文字列比較より高速にオブジェクトやコンポーネントの分類・判別ができます。
+</p>
+<table>
+<tr><th>メンバ</th><th>説明</th></tr>
+<tr><td><code>Tag()</code></td><td>既定のタグを作成する（空文字列のタグと等しい）</td></tr>
+<tr><td><code>Tag(const string &amp;in name)</code></td><td>文字列からタグを作成する</td></tr>
+<tr><td><code>uint64 GetHash() const</code></td><td>内部のハッシュ値を取得する</td></tr>
+<tr><td><code>bool IsEmpty() const</code></td><td>空文字列のタグ（未設定）かどうか</td></tr>
+<tr><td><code>==</code> / <code>!=</code></td><td>ハッシュ値同士の比較</td></tr>
+</table>
+<p>
+タグはエディターのインスペクター（オブジェクト・各コンポーネント・シーンコンポーネントの「Tag」欄）からも設定でき、シーンへ保存されます。スクリプト側では <code>SetTag</code> / <code>GetTag</code> / <code>GetTagName</code> で読み書きします。
+</p>
+<pre><code class="language-angelscript">class Player : ScriptComponentBehavior {
+    // スクリプト側でTagを作成して比較に使う
+    Tag enemyTag("Enemy");
+
+    void Start() {
+        // オブジェクトへのタグ設定（コンポーネントにも同様に設定できる）
+        GetOwnerObject().SetTag("Player");
+    }
+
+    void OnCollisionEnter(const HitInfo &amp;in hit) {
+        if (hit.otherObject is null) return;
+        // タグでの判別（名前と違い、ハッシュ同士の高速な比較になる）
+        if (hit.otherObject.GetTag() == enemyTag) {
+            Log("敵と衝突: " + hit.otherObject.GetTagName());
+        }
+    }
+}</code></pre>
+<ul>
+<li>同じ文字列からは常に同じハッシュ値が計算されるため、別々の場所で <code>Tag("Enemy")</code> と作成したもの同士も等しくなります。</li>
+<li>タグ未設定（空文字列）の状態は <code>IsEmpty()</code> で判定できます。<code>Tag()</code>（既定値）とも等しくなります。</li>
+</ul>
+
+<h2>シーン変数（スクリプト間の値の受け渡し）</h2>
+<p>
+<code>ScriptComponent</code> は1つにつき独立したスクリプトモジュールとしてコンパイルされるため、あるスクリプトのグローバル変数やクラスのメンバー変数に、別のスクリプトから同じ型として直接アクセスすることはできません。スクリプト間で値をやり取りする方法は主に2つあります。
+</p>
+<ul>
+<li><strong>シーン変数</strong>（このセクション）: <code>Scene</code> が持つキー・バリューの共有領域を経由する方法。相手のオブジェクトを意識せず、緩く値をやり取りしたい場合に向いています</li>
+<li><strong><a href="#scriptcomponent">ScriptComponent経由の直接アクセス</a></strong>: 相手オブジェクトの <code>ScriptComponent</code> を取得し、<code>[SerializeField]</code> 変数を名前で直接読み書きする方法。相手のオブジェクトが分かっている場合に向いています</li>
+</ul>
+<pre><code class="language-angelscript">// scriptA.as（敵を倒した側）
+GetScene().SetVariable("lastKilledEnemyName", GetOwnerObject().GetName());
+GetScene().SetGlobalVariable("score", currentScore + 100); // シーン遷移後も保持したい値
+
+// scriptB.as（UI表示側、別オブジェクト）
+string enemyName;
+if (GetScene().GetVariable("lastKilledEnemyName", enemyName)) {
+    Log("倒した敵: " + enemyName);
+}
+int score;
+GetScene().GetGlobalVariable("score", score);</code></pre>
+<ul>
+<li><strong>シーン変数</strong>（<code>SetVariable</code>/<code>GetVariable</code>/<code>HasVariable</code>/<code>RemoveVariable</code>）は、そのシーンが読み込まれている間だけ有効です。シーンが切り替わると失われます。</li>
+<li><strong>グローバルシーン変数</strong>（<code>SetGlobalVariable</code>/<code>GetGlobalVariable</code>/<code>HasGlobalVariable</code>/<code>RemoveGlobalVariable</code>）は <code>SceneManager</code> が保持するため、シーンを切り替えても値が残ります。スコアやフラグなどシーンを跨いで引き継ぎたい値に使用してください。</li>
+<li><code>SetVariable</code>/<code>SetGlobalVariable</code> は同じキーへ再度呼び出すと値を上書きします（型が変わっても構いません）。</li>
+<li><code>GetVariable</code>/<code>GetGlobalVariable</code> は、キーが存在しない場合、または既存の値と渡した変数の型が異なる場合に <code>false</code> を返します（<code>value</code> は変更されません）。</li>
+<li>対応している型は <code>[SerializeField]</code> と同じです: <code>bool</code> / <code>int</code> / <code>uint</code> / <code>float</code> / <code>double</code> / <code>string</code> / <code>Vector2</code> / <code>Vector3</code> / <code>Vector4</code> / <code>Quaternion</code>。</li>
+</ul>
+<div class="note">
+<strong>実例: チェックポイント連携</strong><br>
+<code>Checkpoint.as</code> は接触時に自身の位置をシーン変数へ保存し、<code>Player.as</code> はHPが尽きたときにその値を読み出してリスポーンします。直接の参照関係を持たない2つのオブジェクトが、文字列キーのシーン変数だけを介して疎結合に連携できる例です。詳しくは <a href="11_PlayerExample.html">11_PlayerExample.html</a> を参照してください。
+</div>
+
+<h2 id="scriptcomponent">ScriptComponent経由のスクリプト間データ受け渡し</h2>
+<p>
+相手のオブジェクトが分かっている場合は、シーン変数を経由せずに相手オブジェクトの <code>ScriptComponent</code> を取得して、<code>[SerializeField]</code> 変数を名前で直接取得・設定できます。
+</p>
+<pre><code class="language-angelscript">// scriptA.as（相手を直接操作する側）
+Object@ enemy = GetScene().GetObject("Enemy");
+if (enemy !is null) {
+    ScriptComponent@ sc;
+    if (enemy.GetComponent(@sc)) {
+        float hp;
+        if (sc.GetVariable("hp", hp)) {
+            Log("敵のHP: " + hp);
+            sc.SetVariable("hp", hp - 10.0f);
+        }
+    }
+}</code></pre>
+<pre><code class="language-angelscript">// scriptB.as（Enemyオブジェクト側。hpはSerializeFieldが付いているので外部から読み書きできる）
+class Enemy : ScriptComponentBehavior {
+    [SerializeField]
+    float hp = 100.0f;
+}</code></pre>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>bool GetVariable(const string &amp;in name, ?&amp;out) const</code></td><td>指定名の <code>[SerializeField]</code> 変数の現在値を取得する</td></tr>
+<tr><td><code>bool SetVariable(const string &amp;in name, ?&amp;in)</code></td><td>指定名の <code>[SerializeField]</code> 変数へ値を設定する</td></tr>
+</table>
+<ul>
+<li>取得・設定できるのは相手スクリプトの <strong><code>[SerializeField]</code> が付いた変数のみ</strong>です（インスペクターに公開されている＝外部から触ってよいと明示された変数、という既存の意味をそのまま利用しています）</li>
+<li>対応している型はシーン変数と同じプリミティブ/数学型に加えて <code>Object@</code> です。<code>array&lt;T&gt;</code> や <code>[System.Serializable]</code> クラスは対象外です（スクリプトごとに独立したモジュールとしてコンパイルされるため、同じ名前・同じ形のクラスでも型が一致せず安全に受け渡せないため）</li>
+<li>変数名が存在しない、または渡した変数と型が一致しない場合は <code>false</code> を返すだけで、例外にはなりません（値は変更されません）</li>
+</ul>
+
+<h3>ScriptComponent経由の関数呼び出し</h3>
+<p>
+変数の読み書きだけでなく、相手スクリプトが持つ関数を名前で直接呼び出すこともできます。<code>CallMethod</code> は引数無しの版と、値を1つ渡す版の2つがオーバーロードとして用意されています。
+</p>
+<pre><code class="language-angelscript">// scriptA.as（相手の関数を呼び出す側）
+Object@ enemy = GetScene().GetObject("Enemy");
+if (enemy !is null) {
+    ScriptComponent@ sc;
+    if (enemy.GetComponent(@sc)) {
+        sc.CallMethod("Stun");              // 引数無しの関数を呼ぶ
+        sc.CallMethod("TakeDamage", 10.0f); // 引数を1つ渡して呼ぶ
+    }
+}</code></pre>
+<pre><code class="language-angelscript">// scriptB.as（Enemyオブジェクト側。[SerializeField]の有無に関わらず呼び出せる）
+class Enemy : ScriptComponentBehavior {
+    void Stun() { /* ... */ }
+    void TakeDamage(float amount) { /* ... */ }
+}</code></pre>
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>bool CallMethod(const string &amp;in name)</code></td><td>指定名の、引数無し・戻り値無し（<code>void</code>）の関数を呼び出す</td></tr>
+<tr><td><code>bool CallMethod(const string &amp;in name, ?&amp;in arg)</code></td><td>指定名の、引数1個・戻り値無しの関数へ値を渡して呼び出す</td></tr>
+</table>
+<ul>
+<li>呼び出せるのは<strong><code>void</code> を返す、引数0個または1個の関数のみ</strong>です。戻り値のある関数や引数2個以上の関数は対象外です。<code>[SerializeField]</code> の付与や <code>public</code>/<code>private</code>/<code>protected</code> の区別は問いません（<code>GetVariable</code>/<code>SetVariable</code> と違い、Serializeされていない関数も呼び出せます）</li>
+<li>引数の対応型は <code>GetVariable</code>/<code>SetVariable</code> と同じプリミティブ/数学型/<code>Object@</code>のみです。<code>array&lt;T&gt;</code> や <code>[System.Serializable]</code> クラスは対象外です</li>
+<li>該当する名前・シグネチャの関数が見つからない場合は <code>false</code> を返すだけで、例外にはなりません</li>
+<li>関数を実行できた場合は<code>true</code>を返しますが、これは「実行時例外なく完了した」ことは意味しません。実行中に例外が発生した場合、その内容は呼び出し元ではなく<strong>呼び出された側（相手）の<code>ScriptComponent</code></strong>の<code>GetLastError()</code>・インスペクターのエラー表示欄に記録され、ログにも出力されます。呼び出し元のスクリプトの実行自体は止まりません</li>
+<li>変数の読み書き（<code>GetVariable</code>/<code>SetVariable</code>）が相手の状態を覗き見る/書き換える用途なのに対し、<code>CallMethod</code>は相手へ能動的に処理を行わせる用途に使います</li>
+</ul>
+
+<h2>関連ページ</h2>
+<ul>
+<li>コンポーネントの取得・追加・削除 → <a href="03_ComponentAccess.html">03_ComponentAccess.html</a></li>
+<li>SerializeField属性の詳細 → <a href="02_SerializeField.html">02_SerializeField.html</a></li>
+<li>シーン・シーン変数・シーン遷移（C++側） → <a href="../Engine/02_Scenes.html">02_Scenes.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

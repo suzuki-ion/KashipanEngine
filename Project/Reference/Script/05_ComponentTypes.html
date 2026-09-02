@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>コンポーネント共通メソッド | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-script-data.js"></script>
+<script defer src="../assets/nav.js"></script>
+</head>
+<body data-page="05_ComponentTypes">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>コンポーネント共通メソッド</h1>
+<p class="page-lead">全てのコンポーネント型は参照型（ハンドル <code>T@</code> で保持）で、種類によらず共通のメソッドを持ちます。各コンポーネント型ごとの個別のスクリプトAPIは、サイドバーの「コンポーネント: Basic / Render / UI / Collider / PostEffect / Compute」以下の各ページを参照してください。</p>
+</div>
+
+<h2>共通メソッド</h2>
+<p>全てのコンポーネント型が持つメソッドです。</p>
+<table>
+<tr><th>共通メソッド</th><th>説明</th></tr>
+<tr><td><code>bool IsActive() const</code></td><td>アクティブ状態を取得する</td></tr>
+<tr><td><code>void SetActive(bool)</code></td><td>アクティブ状態を設定する</td></tr>
+<tr><td><code>const string &amp;GetComponentType() const</code></td><td>コンポーネントの種類名を取得する</td></tr>
+<tr><td><code>void SetTag(const string &amp;in)</code></td><td>タグを設定する（<a href="04_ObjectSceneVariables.html">Tag型</a>参照）</td></tr>
+<tr><td><code>Tag GetTag() const</code></td><td>タグを取得する（比較用）</td></tr>
+<tr><td><code>const string &amp;GetTagName() const</code></td><td>タグの文字列を取得する</td></tr>
+</table>
+
+<h2>コンポーネントの分類</h2>
+<table>
+<tr><th>分類</th><th>内容</th></tr>
+<tr><td>Basic</td><td>Transform・移動/回転・オーディオ・カメラ追従補助・アニメーション・入力/シーン変数の適用・スクリプト等、基本的なコンポーネント</td></tr>
+<tr><td>Render</td><td>メッシュ/スプライト/テキストの描画、カメラ、ライト、ウィンドウ・オフスクリーンバッファ</td></tr>
+<tr><td>UI</td><td>UIButton（画面上の矩形へのマウス判定）</td></tr>
+<tr><td>Collider</td><td>各種コライダー形状・RigidBody</td></tr>
+<tr><td>PostEffect</td><td>スクリーンバッファへ適用するポストプロセスエフェクト</td></tr>
+<tr><td>Compute</td><td>ComputeShaderProcessing</td></tr>
+</table>
+
+<h2>関連ページ</h2>
+<ul>
+<li>ウィンドウメッセージ・コライダー/コンポーネント基底型などの共通機構 → <a href="06_RenderAndWindow.html">06_RenderAndWindow.html</a> / <a href="07_ColliderAndPostEffect.html">07_ColliderAndPostEffect.html</a></li>
+<li>各コンポーネントのC++側の詳細・インスペクター表示 → <a href="../Engine/05_Rendering.html">Engine/05_Rendering.html</a> / <a href="../Engine/06_Collision.html">Engine/06_Collision.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

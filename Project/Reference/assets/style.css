@@ -101,8 +101,9 @@ a:hover { text-decoration: underline; }
   background: var(--accent-bg);
   border-radius: 6px;
   padding: 6px 8px;
-  margin: 0 8px 16px;
+  margin: 0 8px 6px;
 }
+.sidebar-switch:last-of-type { margin-bottom: 16px; }
 .sidebar-switch:hover { text-decoration: none; opacity: 0.85; }
 
 .nav-group { margin-bottom: 4px; }

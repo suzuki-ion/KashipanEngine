@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TargetLookAt | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_TargetLookAt">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>TargetLookAt</h1>
+<p class="page-lead">指定オブジェクトへ向き続ける（ビルボードのような動作をする）コンポーネントです。回転の決め方は<code>TargetLookAtMode</code>列挙型で2種類から選択できます。</p>
+</div>
+
+<ul><li><code>TargetLookAtMode::SyncRotation</code> — ターゲットの<strong>ワールド回転と同期</strong>する。カメラをターゲットにすると常に画面と正対する<strong>ビルボード</strong>になる</li><li><code>TargetLookAtMode::LookAt</code> — 自身の<strong>+Z軸が常にターゲットの方向を向く</strong>よう回転する</li></ul>
+
+<p>どちらのモードでも回転オフセット（オイラー角、ラジアン）を追加で適用できます。ターゲットが未指定・存在しない場合は回転を変更しません。</p>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetTargetObject(Object@)</code></td><td>ターゲットオブジェクトを設定する</td></tr>
+<tr><td><code>Object@ GetTargetObject() const</code></td><td>ターゲットオブジェクトを取得する（無い場合は <code>null</code>）</td></tr>
+<tr><td><code>void SetRotationOffset(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetRotationOffset() const</code></td><td>回転オフセット（オイラー角、ラジアン）</td></tr>
+<tr><td><code>void SetRotationMode(TargetLookAtMode)</code> / <code>TargetLookAtMode GetRotationMode() const</code></td><td>回転モード</td></tr>
+</table>
+
+<pre><code class="language-angelscript">class Billboard : ScriptComponentBehavior {
+    void Start() {
+        TargetLookAt@ lookAt;
+        if (AddComponent(@lookAt)) {
+            lookAt.SetTargetObject(FindObject("MainCamera"));
+            lookAt.SetRotationMode(TargetLookAtMode::SyncRotation); // カメラと正対し続ける
+        }
+    }
+}</code></pre>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="ParticleSystem2D.html">ParticleSystem2D</a> / <a href="ParticleSystem3D.html">ParticleSystem3D</a> — ビルボードの向き方に同じ列挙を使用</li>
+<li><a href="../../../Editor/Components/Basic/TargetLookAt.html">Editor/Components/Basic/TargetLookAt.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RigidBody3D | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Collider_RigidBody3D">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>RigidBody3D</h1>
+<p class="page-lead">ReactPhysics3Dへ委譲する3D用の物理ボディコンポーネントです（RigidBodyがベアボディを所有し、対象のコライダーコンポーネントがシェイプを取り付けます）。</p>
+</div>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetMass(float)</code> / <code>float GetMass() const</code></td><td>質量</td></tr>
+<tr><td><code>void SetUseGravity(bool)</code> / <code>bool IsGravityEnabled() const</code></td><td>重力の有効/無効</td></tr>
+<tr><td><code>void SetVelocity(const Vector3 &amp;in)</code> / <code>Vector3 GetVelocity() const</code></td><td>速度</td></tr>
+<tr><td><code>void SetSelectedCollider(Collider@)</code> / <code>Collider@ GetSelectedCollider() const</code></td><td>同オブジェクトに複数のコライダーが付いている場合に、物理ボディへシェイプとして使うコライダーを選択する（<code>null</code>を渡すと未選択に戻る）</td></tr>
+<tr><td><code>array&lt;Collider@&gt;@ GetOwnerColliders() const</code></td><td>同オブジェクトが持つ全コライダーコンポーネントを取得する（<code>SetSelectedCollider</code>の選択肢の列挙に使う）</td></tr>
+<tr><td><code>void SetBodyType(int)</code> / <code>int GetBodyType() const</code></td><td>物理ボディ種別（0:Static 1:Kinematic 2:Dynamic）</td></tr>
+<tr><td><code>void SetInterpolate(bool)</code> / <code>bool IsInterpolateEnabled() const</code></td><td>補間の有効/無効</td></tr>
+<tr><td><code>void SyncFromTransform()</code></td><td>現在のTransformの位置・回転を物理ボディへ反映する（Play開始時の同期用）</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="../../07_ColliderAndPostEffect.html">07_ColliderAndPostEffect.html</a>（IsTrigger/SetTrigger/IsContinuousDetection/SetContinuousDetection/Is2D、CCD、Collider基底型）</li>
+<li><a href="RigidBody2D.html">RigidBody2D</a> — 2D版</li>
+<li><a href="../../../Editor/Components/Collider/RigidBody3D.html">Editor/Components/Collider/RigidBody3D.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

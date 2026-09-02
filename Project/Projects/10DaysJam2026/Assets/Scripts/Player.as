@@ -210,7 +210,7 @@ class Player : ScriptComponentBehavior {
         }
 
         // 回復アイテムと当たったら
-        if(hit.otherCollider.GetTag() == "Heart" && hit.otherCollider.IsTrigger()){
+        if(hit.otherCollider.GetTag() == "Heart"){
             Heal(1.0f); // HP増加
             GetScene().DeleteObject(GetScene().GetObject("Heart"));
         }

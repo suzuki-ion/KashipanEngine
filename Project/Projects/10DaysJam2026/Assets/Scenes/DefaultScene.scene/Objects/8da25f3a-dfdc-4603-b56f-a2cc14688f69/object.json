@@ -18,7 +18,7 @@
                         },
                         "translate": {
                             "x": 21.499435424804688,
-                            "y": 0.0,
+                            "y": 58.07683181762695,
                             "z": 0.0
                         }
                     },
@@ -73,7 +73,7 @@
                             "y": 0.0
                         },
                         "continuousDetection": false,
-                        "isTrigger": true,
+                        "isTrigger": false,
                         "size": {
                             "x": 1.0,
                             "y": 1.0

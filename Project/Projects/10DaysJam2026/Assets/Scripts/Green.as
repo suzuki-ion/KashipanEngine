@@ -24,10 +24,13 @@ class Green : ScriptComponentBehavior {
     MoveDirection moveDir = MoveDirection::Left;
 
     Vector2 velocity;
-    float gravity = 0.2f;
+    // 元々はBox2D時代のrb.SetVelocity()にGetDeltaTime()無しで渡す値だったため、
+    // 60fps相当のフレーム単位の量になっていた。位置積分にGetDeltaTime()を使うようになった
+    // 今は「1秒あたりの変化量」として扱う必要があるため、当時の値の60倍にしている
+    float gravity = 12.0f;
+    float groundedThreshold = 0.5f;
 
     Box2DCollider@ col;
-    RigidBody2D@ rb;
     SpriteRenderer@ sprite;
 
     // アニメーション用タイマー
@@ -35,7 +38,6 @@ class Green : ScriptComponentBehavior {
 
     void Start() {
         GetComponent(@col);
-        GetComponent(@rb);
         GetComponent(@sprite);
     }
 
@@ -48,13 +50,16 @@ class Green : ScriptComponentBehavior {
         tf.SetRotate(Vector3(0.0f, rotY, 0.0f));
 
         // 左右移動
+        // velocityは「1秒あたりの移動量」なので、この時点ではGetDeltaTime()を掛けない
+        // （掛けるのは下の位置積分の1箇所だけにする）
         float dir = (moveDir == MoveDirection::Left) ? -1.0f : 1.0f;
         velocity.x = dir * moveSpeed;
 
-        // 重力
-        velocity.y -= gravity;
+        // 重力（フレームをまたいで蓄積する値なので、ここはGetDeltaTime()を掛ける）
+        velocity.y -= gravity * GetDeltaTime();
 
-        rb.SetVelocity(velocity);
+        // RigidBodyを使わず、速度を自前でTransformへ積分する
+        tf.SetTranslate(tf.GetTranslate() + Vector3(velocity.x, velocity.y, 0.0f) * GetDeltaTime());
 
         // アニメーション処理
         animTimer += GetDeltaTime();
@@ -81,6 +86,9 @@ class Green : ScriptComponentBehavior {
     }
 
     void OnCollisionEnter(const HitInfo &in hit) {
+        // めり込み分を押し戻す
+        ResolvePenetration(hit);
+
         // 進行方向の切り替え
         if(hit.otherObject.GetTag() == "Wall"){
             if (moveDir == MoveDirection::Left) {
@@ -94,6 +102,24 @@ class Green : ScriptComponentBehavior {
     }
 
     void OnCollisionStay(const HitInfo &in hit){
-        velocity.y = 0.0f;
+        // めり込み分を押し戻す
+        ResolvePenetration(hit);
+
+        // 床（法線が上向き）からの接触で、かつ上昇中でない時だけ落下速度をリセットする
+        // （無条件にすると、壁への接触中も重力による落下が止まってしまう）
+        if (hit.normal.y > groundedThreshold && velocity.y <= 0.0f) {
+            velocity.y = 0.0f;
+        }
+    }
+
+    // hit.normal（自分を押し出す方向） * hit.penetration（めり込み量）だけ
+    // Transformを移動させ、他コライダーとのめり込みを解消する
+    void ResolvePenetration(const HitInfo &in hit) {
+        if(hit.penetration <= 0.0f) return;
+
+        Transform@ tf = GetTransform();
+        if(tf is null) return;
+
+        tf.SetTranslate(tf.GetTranslate() + hit.normal * hit.penetration);
     }
 }

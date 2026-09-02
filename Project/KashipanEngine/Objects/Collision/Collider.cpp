@@ -289,6 +289,123 @@ ColliderInfo2D::ShapeVariant ToLocalShape2D(const ColliderInfo2D::ShapeVariant &
     return result;
 }
 
+//==================================================
+// Static-Static間の手動オーバーラップ判定用ヘルパー
+//==================================================
+// Box2Dは性能上の理由から、両方とも非Dynamic（Static/Kinematic）なボディ同士のコンタクトを
+// 生成しない（b2World_GetContactEvents/GetSensorEventsに一切現れない）。RigidBody2Dを
+// 持たないColliderは静的ボディになるため、そのままではStatic同士のペアでOnCollisionEnter/
+// Stay/Exitが発火しない。3D側（PhysicsWorld::testCollision、ボディ種別を問わない幾何学的
+// 判定）と挙動を揃えるため、Static-Static間だけはBox2Dが公開している狭域衝突関数
+// （b2Collide*）を使って毎フレーム自前でマニフォールドを計算する。
+// RigidBody2Dが絡む（少なくとも一方がDynamicな）ペアは今まで通りBox2D本体の自動解決に
+// 任せる（ここでは扱わない）
+
+/// @brief b2Collide*系関数の呼び出し結果
+/// @details Box2Dの各Collide関数は形状種別の組み合わせごとに引数順が固定されているため、
+///          呼び出せる関数が要求する順に合わせてshapeA/shapeBを入れ替えて呼ぶ場合がある。
+///          入れ替えた場合、manifoldは関数側のA（＝実際にはshapeB）のローカル空間で得られる
+struct ManualManifold2D {
+    b2LocalManifold manifold{};
+    bool functionAIsShapeA = true;
+};
+
+/// @brief 2つのBox2Dシェイプ（shapeA/shapeB、それぞれのボディローカル空間の生ジオメトリ）から
+///        対応するb2Collide*関数を選んでマニフォールドを計算する
+/// @details Box2Dの狭域衝突関数は形状種別ペアごとに1つしか公開されていない（例：Circle×Capsuleは
+///          b2CollideCapsuleAndCircleのみで、逆順の関数は無い）ため、ここで形状種別を見て
+///          呼び出せる関数と引数順を判定している
+std::optional<ManualManifold2D> ComputeManualManifold2D(b2ShapeId shapeA, b2ShapeId shapeB, const b2Transform &xfA, const b2Transform &xfB) {
+    const b2ShapeType typeA = b2Shape_GetType(shapeA);
+    const b2ShapeType typeB = b2Shape_GetType(shapeB);
+
+    ManualManifold2D result;
+    const b2Transform xfAtoB = b2InvMulTransforms(xfA, xfB);
+    const b2Transform xfBtoA = b2InvMulTransforms(xfB, xfA);
+
+    if (typeA == b2_circleShape && typeB == b2_circleShape) {
+        const b2Circle a = b2Shape_GetCircle(shapeA);
+        const b2Circle b = b2Shape_GetCircle(shapeB);
+        result.manifold = b2CollideCircles(&a, &b, xfAtoB);
+    } else if (typeA == b2_capsuleShape && typeB == b2_capsuleShape) {
+        const b2Capsule a = b2Shape_GetCapsule(shapeA);
+        const b2Capsule b = b2Shape_GetCapsule(shapeB);
+        result.manifold = b2CollideCapsules(&a, &b, xfAtoB);
+    } else if (typeA == b2_polygonShape && typeB == b2_polygonShape) {
+        const b2Polygon a = b2Shape_GetPolygon(shapeA);
+        const b2Polygon b = b2Shape_GetPolygon(shapeB);
+        result.manifold = b2CollidePolygons(&a, &b, xfAtoB);
+    } else if (typeA == b2_segmentShape && typeB == b2_segmentShape) {
+        return std::nullopt; // Box2Dはセグメント同士の衝突判定に対応しない
+    } else if ((typeA == b2_capsuleShape && typeB == b2_circleShape) || (typeA == b2_circleShape && typeB == b2_capsuleShape)) {
+        result.functionAIsShapeA = (typeA == b2_capsuleShape);
+        const b2Capsule capsule = b2Shape_GetCapsule(result.functionAIsShapeA ? shapeA : shapeB);
+        const b2Circle circle = b2Shape_GetCircle(result.functionAIsShapeA ? shapeB : shapeA);
+        result.manifold = b2CollideCapsuleAndCircle(&capsule, &circle, result.functionAIsShapeA ? xfAtoB : xfBtoA);
+    } else if ((typeA == b2_segmentShape && typeB == b2_circleShape) || (typeA == b2_circleShape && typeB == b2_segmentShape)) {
+        result.functionAIsShapeA = (typeA == b2_segmentShape);
+        const b2Segment segment = b2Shape_GetSegment(result.functionAIsShapeA ? shapeA : shapeB);
+        const b2Circle circle = b2Shape_GetCircle(result.functionAIsShapeA ? shapeB : shapeA);
+        result.manifold = b2CollideSegmentAndCircle(&segment, &circle, result.functionAIsShapeA ? xfAtoB : xfBtoA);
+    } else if ((typeA == b2_polygonShape && typeB == b2_circleShape) || (typeA == b2_circleShape && typeB == b2_polygonShape)) {
+        result.functionAIsShapeA = (typeA == b2_polygonShape);
+        const b2Polygon polygon = b2Shape_GetPolygon(result.functionAIsShapeA ? shapeA : shapeB);
+        const b2Circle circle = b2Shape_GetCircle(result.functionAIsShapeA ? shapeB : shapeA);
+        result.manifold = b2CollidePolygonAndCircle(&polygon, &circle, result.functionAIsShapeA ? xfAtoB : xfBtoA);
+    } else if ((typeA == b2_segmentShape && typeB == b2_capsuleShape) || (typeA == b2_capsuleShape && typeB == b2_segmentShape)) {
+        result.functionAIsShapeA = (typeA == b2_segmentShape);
+        const b2Segment segment = b2Shape_GetSegment(result.functionAIsShapeA ? shapeA : shapeB);
+        const b2Capsule capsule = b2Shape_GetCapsule(result.functionAIsShapeA ? shapeB : shapeA);
+        result.manifold = b2CollideSegmentAndCapsule(&segment, &capsule, result.functionAIsShapeA ? xfAtoB : xfBtoA);
+    } else if ((typeA == b2_polygonShape && typeB == b2_capsuleShape) || (typeA == b2_capsuleShape && typeB == b2_polygonShape)) {
+        result.functionAIsShapeA = (typeA == b2_polygonShape);
+        const b2Polygon polygon = b2Shape_GetPolygon(result.functionAIsShapeA ? shapeA : shapeB);
+        const b2Capsule capsule = b2Shape_GetCapsule(result.functionAIsShapeA ? shapeB : shapeA);
+        result.manifold = b2CollidePolygonAndCapsule(&polygon, &capsule, result.functionAIsShapeA ? xfAtoB : xfBtoA);
+    } else if ((typeA == b2_segmentShape && typeB == b2_polygonShape) || (typeA == b2_polygonShape && typeB == b2_segmentShape)) {
+        result.functionAIsShapeA = (typeA == b2_segmentShape);
+        const b2Segment segment = b2Shape_GetSegment(result.functionAIsShapeA ? shapeA : shapeB);
+        const b2Polygon polygon = b2Shape_GetPolygon(result.functionAIsShapeA ? shapeB : shapeA);
+        result.manifold = b2CollideSegmentAndPolygon(&segment, &polygon, result.functionAIsShapeA ? xfAtoB : xfBtoA);
+    } else {
+        return std::nullopt; // ChainSegment等、この2Dコライダーシステムでは生成されない組み合わせ
+    }
+
+    return result;
+}
+
+/// @brief Static-Static間のシェイプペアについて、現在のHitInfo2D（isHit/normal/penetration）を
+///        自前で計算する。normalはQueryContactHitInfo2Dと同じ「shapeA→shapeB」の向きの
+///        世界座標ベクトルとして返す（Dispatch2D側で「相手→自分」へ変換される）
+bool ComputeStaticStaticHitInfo2D(b2ShapeId shapeA, b2ShapeId shapeB, HitInfo2D &outHitInfo) {
+    const b2Transform xfA = b2Body_GetTransform(b2Shape_GetBody(shapeA));
+    const b2Transform xfB = b2Body_GetTransform(b2Shape_GetBody(shapeB));
+
+    const auto result = ComputeManualManifold2D(shapeA, shapeB, xfA, xfB);
+    if (!result.has_value() || result->manifold.pointCount <= 0) return false;
+
+    float minSeparation = result->manifold.points[0].separation;
+    for (int p = 1; p < result->manifold.pointCount; ++p) {
+        minSeparation = std::min(minSeparation, result->manifold.points[p].separation);
+    }
+
+    // マニフォールドの法線は呼び出しに使った関数側のA（functionAIsShapeAがfalseならshapeB）の
+    // ローカル空間で得られるため、そちらのボディ回転で世界座標へ変換する
+    const b2Transform &frameXf = result->functionAIsShapeA ? xfA : xfB;
+    b2Vec2 worldNormal = b2RotateVector(frameXf.q, result->manifold.normal);
+    // functionAIsShapeAがfalseの場合、得られる法線は「shapeB→shapeA」なので、
+    // QueryContactHitInfo2Dと同じ「shapeA→shapeB」に揃えるため反転する
+    if (!result->functionAIsShapeA) {
+        worldNormal = b2Vec2{-worldNormal.x, -worldNormal.y};
+    }
+
+    outHitInfo = HitInfo2D{};
+    outHitInfo.isHit = true;
+    outHitInfo.normal = Vector3(worldNormal.x, worldNormal.y, 0.0f);
+    outHitInfo.penetration = std::max(0.0f, -minSeparation);
+    return true;
+}
+
 /// @brief 2Dコライダー情報から、対応するRigidBody2Dを取得する（RigidBody3Dと同じ規約）
 /// @details RigidBody2Dが使用コライダーを明示的に選択している場合は、そのコライダー由来の
 ///          ColliderInfo2Dに対してのみ関連付ける（未選択の場合はどのコライダーでも関連付ける）
@@ -579,16 +696,17 @@ void Collider::Dispatch2D(ColliderID a, ColliderID b, const HitInfo2D &hitInfo, 
     hiA.otherObject = eb->info.ownerObject;
     hiA.selfCollider = ea->info.sourceCollider;
     hiA.otherCollider = eb->info.sourceCollider;
+    // hitInfo.normal はQueryContactHitInfo2D/ComputeManifold2Dにより「AからBへ向かう方向」で
+    // 計算されるため、エンジンの規約（3D側のDispatch3Dと同じ、法線は「相手から自分へ向かう方向
+    // ＝押し出し方向」）に合わせるには、A側が受け取る法線はその逆向きにする必要がある。
+    hiA.normal = -hitInfo.normal;
 
     HitInfo2D hiB = hitInfo;
     hiB.selfObject = eb->info.ownerObject;
     hiB.otherObject = ea->info.ownerObject;
     hiB.selfCollider = eb->info.sourceCollider;
     hiB.otherCollider = ea->info.sourceCollider;
-    // hitInfo.normal は ComputeHit(A, B) により「BからAへ向かう方向
-    // （Aの押し出し方向）」で計算されるため、B側が受け取る法線
-    // （AからBへ向かう＝Bの押し出し方向）はその逆向きになる。
-    hiB.normal = -hitInfo.normal;
+    // B側はhitInfo.normal（AからBへ向かう方向）がそのまま「相手(A)から自分(B)へ向かう方向」になる
 
     const bool isHitNow = hitInfo.isHit;
 
@@ -798,6 +916,46 @@ void Collider::Update2D() {
         }
         // どちらの問い合わせも失敗した場合は、既に破棄されたコライダー等で接触情報を復元できない
         // ケース。次フレーム以降にBox2D側のEndイベントが来ればそちらでExitが発火する
+    }
+
+    // Static-Static間の手動オーバーラップ判定。
+    // RigidBody2Dが絡む（少なくとも一方がDynamicな）ペアはここまでの処理で解決済みのため、
+    // 双方が静的ボディのペアだけを対象にする。Box2Dはこの組み合わせのコンタクトを一切
+    // 生成しないため、ここでのExit判定はBox2D側のEndイベントに頼れない
+    // （上のStay継続ループと違い、判定失敗＝接触終了として自分でExitを発火する）
+    for (std::size_t i = 0; i < colliders2D_.size(); ++i) {
+        const auto &ei = colliders2D_[i];
+        if (!ei.info.enabled || B2_IS_NULL(ei.runtime.shape)) continue;
+        if (B2_IS_NULL(ei.runtime.body) || b2Body_GetType(ei.runtime.body) != b2_staticBody) continue;
+
+        for (std::size_t j = i + 1; j < colliders2D_.size(); ++j) {
+            const auto &ej = colliders2D_[j];
+            if (!ej.info.enabled || B2_IS_NULL(ej.runtime.shape)) continue;
+            if (B2_IS_NULL(ej.runtime.body) || b2Body_GetType(ej.runtime.body) != b2_staticBody) continue;
+
+            if (!ShouldTest(ei.info.attribute, ei.info.ignoreAttribute, ej.info.attribute) ||
+                !ShouldTest(ej.info.attribute, ej.info.ignoreAttribute, ei.info.attribute)) {
+                continue;
+            }
+
+            const std::uint64_t key = MakePairKey(ei.id, ej.id);
+            const bool wasHit = std::binary_search(prevPairs2D_.begin(), prevPairs2D_.end(), key);
+
+            HitInfo2D hi;
+            const bool touching = ComputeStaticStaticHitInfo2D(ei.runtime.shape, ej.runtime.shape, hi);
+            if (touching && (ei.info.isTrigger || ej.info.isTrigger)) {
+                // センサー相当：Box2Dのセンサーイベントと同じく重なりの有無のみを見る
+                hi = HitInfo2D{};
+                hi.isHit = true;
+            }
+
+            if (touching) {
+                Dispatch2D(ei.id, ej.id, hi, wasHit);
+                cur.push_back(key);
+            } else if (wasHit) {
+                Dispatch2D(ei.id, ej.id, HitInfo2D{}, true);
+            }
+        }
     }
 
     std::sort(cur.begin(), cur.end());

@@ -64,9 +64,9 @@
                             "x": -128.0,
                             "y": -120.0
                         },
-                        "rotateLerpFactor": 0.5,
+                        "rotateLerpFactor": 0.10000000149011612,
                         "rotationOffset": 0.0,
-                        "sizeLerpFactor": 0.5,
+                        "sizeLerpFactor": 0.10000000149011612,
                         "targetSize": {
                             "x": 256.0,
                             "y": 240.0

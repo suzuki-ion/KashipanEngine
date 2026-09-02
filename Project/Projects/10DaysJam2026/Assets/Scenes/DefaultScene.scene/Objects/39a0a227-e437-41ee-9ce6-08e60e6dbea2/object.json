@@ -34,6 +34,7 @@
                         "farClip": 1000.0,
                         "height": 240.0,
                         "nearClip": 0.0,
+                        "pixelSnapping": false,
                         "width": 256.0
                     },
                     "isActive": true,

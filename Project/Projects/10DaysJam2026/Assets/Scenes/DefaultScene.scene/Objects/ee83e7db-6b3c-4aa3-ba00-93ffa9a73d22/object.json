@@ -85,40 +85,26 @@
             {
                 "data": {
                     "customData": {
-                        "friction": 0.0,
-                        "mass": 1.0,
-                        "restitution": 0.0,
-                        "selectedColliderOccurrenceIndex": 0,
-                        "selectedColliderTypeName": "Box2DCollider",
-                        "useGravity": true
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "RigidBody2D"
-            },
-            {
-                "data": {
-                    "customData": {
                         "fields": {
                             "attackDuration": 0.44999998807907104,
-                            "effect": "9da682a8-30e0-48ec-b449-3f4d2ff986fe",
                             "effectActiveDuration": 0.10000000149011612,
                             "frameInterval": 0.15000000596046448,
-                            "gravity": 120.0,
-                            "jumpPower": 4000.0,
+                            "gravity": 360.0,
+                            "groundedThreshold": 0.5,
+                            "jumpPower": 180.0,
                             "maxHp": 10.0,
-                            "moveSpeed": 4000.0,
+                            "moveSpeed": 80.0,
+                            "pushBackCorrectionFactor": 0.30000001192092896,
+                            "pushBackExcludeTags": [
+                                "Enemy"
+                            ],
                             "uvStep": {
                                 "x": 0.3330000042915344,
                                 "y": 0.16599999368190765
                             },
-                            "weapons": [
-                                "8da25f3a-dfdc-4603-b56f-a2cc14688f69"
-                            ]
+                            "weapons": []
                         },
-                        "scriptPath": "Assets\\Scripts\\Player.as"
+                        "scriptPath": "Assets/Scripts/Player.as"
                     },
                     "isActive": true,
                     "priority": 4,

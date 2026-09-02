@@ -12,13 +12,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 128.0,
+                            "x": 32.0,
                             "y": 32.0,
                             "z": 1.0
                         },
                         "translate": {
                             "x": 0.0,
-                            "y": 25.26886558532715,
+                            "y": 89.22114562988281,
                             "z": 0.0
                         }
                     },
@@ -54,7 +54,7 @@
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "App/Sprite/Effect/explosionS.png"
+                        "textureAssetPath": "App/Sprite/Effect/enemyDead.png"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -84,7 +84,7 @@
                         },
                         "instanceUvRotation": 0.0,
                         "instanceUvScale": {
-                            "x": 1.0,
+                            "x": 0.25,
                             "y": 1.0
                         },
                         "instanceUvTranslate": {

@@ -794,6 +794,8 @@
 		"component.camera2d.far": "Far",
 		"component.camera2d.height": "Height",
 		"component.camera2d.near": "Near",
+		"component.camera2d.pixel_snapping": "Pixel Snapping",
+		"component.camera2d.pixel_snapping_desc": "Rounds the camera's world X/Y to whole pixels before rendering. Prevents visible jitter (pixel swimming) between the camera and fixed objects when the camera position becomes sub-pixel, e.g. from smooth follow, in projects that display pixel art at 1x scale.",
 		"component.camera2d.width": "Width",
 
 		//--------- component.camera3d ---------//

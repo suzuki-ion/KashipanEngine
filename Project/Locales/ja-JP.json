@@ -794,6 +794,8 @@
 		"component.camera2d.far": "ファークリップ",
 		"component.camera2d.height": "高さ",
 		"component.camera2d.near": "ニアクリップ",
+		"component.camera2d.pixel_snapping": "ピクセルスナップ",
+		"component.camera2d.pixel_snapping_desc": "カメラのワールド座標(X/Y)を整数ピクセル単位に丸めてから描画に使う。ドット絵をスケール1倍のまま表示するプロジェクトで、スムーズ追従などによりカメラ位置がサブピクセル値になった際の見た目のガタつき（ピクセルの揺れ）を防ぐ。",
 		"component.camera2d.width": "幅",
 
 		//--------- component.camera3d ---------//

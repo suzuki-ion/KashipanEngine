@@ -794,6 +794,8 @@
 		"component.camera2d.far": "远裁剪",
 		"component.camera2d.height": "高度",
 		"component.camera2d.near": "近裁剪",
+		"component.camera2d.pixel_snapping": "像素吸附",
+		"component.camera2d.pixel_snapping_desc": "在渲染前将摄像机的世界坐标(X/Y)取整为整数像素。用于以1倍缩放显示像素画的项目，防止平滑跟随等导致摄像机位置出现亚像素值时，与固定物体之间产生画面抖动（像素漂移）。",
 		"component.camera2d.width": "宽度",
 
 		//--------- component.camera3d ---------//

@@ -13,6 +13,7 @@ public:
         ADD_MEMBER_VARIABLE(nearClip_);
         ADD_MEMBER_VARIABLE(farClip_);
         ADD_MEMBER_VARIABLE(autoSyncSize_);
+        ADD_MEMBER_VARIABLE(pixelSnapping_);
     )
     COMPONENT_CATEGORY("Render")
     ~Camera2D() override = default;
@@ -23,6 +24,7 @@ public:
         ptr->nearClip_ = nearClip_;
         ptr->farClip_ = farClip_;
         ptr->autoSyncSize_ = autoSyncSize_;
+        ptr->pixelSnapping_ = pixelSnapping_;
         return ptr;
     }
 
@@ -35,6 +37,13 @@ public:
     ///          有効にしていても何もしない（手動設定値のまま）
     void SetAutoSyncSize(bool enable) noexcept { autoSyncSize_ = enable; }
     bool GetAutoSyncSize() const noexcept { return autoSyncSize_; }
+
+    /// @brief カメラのワールド座標(X/Y)を整数ピクセル単位に丸めてから描画に使うかどうかを設定する
+    /// @details ドット絵をスケール1倍のまま表示するプロジェクトで、スムーズ追従などにより
+    ///          カメラ位置がサブピクセル値になった際の見た目のガタつき（pixel swimming）を防ぐ。
+    ///          既定は無効（従来通りfloatのまま使用）
+    void SetPixelSnapping(bool enable) noexcept { pixelSnapping_ = enable; }
+    bool GetPixelSnapping() const noexcept { return pixelSnapping_; }
 
     float GetWidth() const noexcept { return width_; }
     float GetHeight() const noexcept { return height_; }
@@ -54,12 +63,16 @@ protected:
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("%s", TranslationC("component.camera2d.auto_sync_size_desc"));
         }
+        ImGui::Checkbox(TranslationLabel("component.camera2d.pixel_snapping"), &pixelSnapping_);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", TranslationC("component.camera2d.pixel_snapping_desc"));
+        }
     }
 #endif
     JSON SaveToJson() const override {
         return JSON{
             {"width", width_}, {"height", height_}, {"nearClip", nearClip_}, {"farClip", farClip_},
-            {"autoSyncSize", autoSyncSize_}
+            {"autoSyncSize", autoSyncSize_}, {"pixelSnapping", pixelSnapping_}
         };
     }
     bool LoadFromJson(const JSON &json) override {
@@ -68,6 +81,7 @@ protected:
         nearClip_ = json.value("nearClip", 0.0f);
         farClip_ = json.value("farClip", 1000.0f);
         autoSyncSize_ = json.value("autoSyncSize", false);
+        pixelSnapping_ = json.value("pixelSnapping", false);
         return true;
     }
 
@@ -78,6 +92,8 @@ private:
     float farClip_ = 1000.0f;
     /// @brief CameraRendererの描画先解像度へwidth/heightを自動追従させるか（既定false）
     bool autoSyncSize_ = false;
+    /// @brief カメラのワールド座標(X/Y)を整数ピクセルへスナップしてから描画に使うか（既定false）
+    bool pixelSnapping_ = false;
 };
 
 REGISTER_COMPONENT_OBJECT(Camera2D)

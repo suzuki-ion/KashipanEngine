@@ -794,6 +794,8 @@
 		"component.camera2d.far": "파 클립",
 		"component.camera2d.height": "높이",
 		"component.camera2d.near": "니어 클립",
+		"component.camera2d.pixel_snapping": "픽셀 스냅",
+		"component.camera2d.pixel_snapping_desc": "카메라의 월드 좌표(X/Y)를 정수 픽셀 단위로 반올림한 뒤 렌더링에 사용합니다. 도트 그래픽을 1배율 그대로 표시하는 프로젝트에서, 부드러운 추적 등으로 카메라 위치가 서브픽셀 값이 되었을 때 고정 오브젝트와의 사이에서 발생하는 흔들림(픽셀 스위밍)을 방지합니다.",
 		"component.camera2d.width": "너비",
 
 		//--------- component.camera3d ---------//

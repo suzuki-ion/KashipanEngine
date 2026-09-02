@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include <cmath>
 #include <cstring>
 #include <string>
 #include <unordered_set>
@@ -270,13 +271,21 @@ private:
 
         RefreshBindVariableNames(objectContext);
 
-        const Matrix4x4 world = GetRenderWorldMatrix();
+        Matrix4x4 world = GetRenderWorldMatrix();
+        auto *camera2d = objectContext->GetComponent<Camera2D>();
+        if (camera2d && camera2d->GetPixelSnapping()) {
+            // ドット絵をスケール1倍のまま表示する用途向け：カメラのワールドX/Yを整数ピクセルへ
+            // スナップしてからビュー行列化する。スムーズ追従等でカメラ位置がサブピクセル値に
+            // なっても、固定オブジェクトとの間で見た目上のガタつき（pixel swimming）が出ない
+            world.m[3][0] = std::floor(world.m[3][0]);
+            world.m[3][1] = std::floor(world.m[3][1]);
+        }
         const Matrix4x4 view = world.Inverse();
 
         void *mapped = constantBuffer_->Map();
         if (!mapped) return;
 
-        if (auto *camera2d = objectContext->GetComponent<Camera2D>()) {
+        if (camera2d) {
             if (camera2d->GetAutoSyncSize()) {
                 std::uint32_t targetWidth = 0, targetHeight = 0;
                 if (ResolveTargetRenderTargetSize(targetWidth, targetHeight)) {

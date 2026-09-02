@@ -12,13 +12,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 16.0,
-                            "y": 16.0,
+                            "x": 256.0,
+                            "y": 64.0,
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 21.499435424804688,
-                            "y": 58.07683181762695,
+                            "x": 0.0,
+                            "y": 40.80535125732422,
                             "z": 0.0
                         }
                     },
@@ -42,16 +42,8 @@
             {
                 "data": {
                     "customData": {
-                        "fields": {
-                            "cooldown": 0.4000000059604645,
-                            "pos": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "power": 10
-                        },
-                        "scriptPath": "Assets\\Scripts\\Sword.as"
+                        "fields": {},
+                        "scriptPath": "Assets\\Scripts\\EnemyDeathEffect.as"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -62,44 +54,13 @@
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "App/Sprite/UI/katana.png"
+                        "textureAssetPath": "App/Sprite/Effect/enemyDead.png"
                     },
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
                 },
                 "type": "TextureSource"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "center": {
-                            "x": 0.0,
-                            "y": 0.0
-                        },
-                        "continuousDetection": false,
-                        "isTrigger": true,
-                        "size": {
-                            "x": 0.800000011920929,
-                            "y": 0.800000011920929
-                        },
-                        "syncPosition": [
-                            true,
-                            true,
-                            true
-                        ],
-                        "syncRotation": true,
-                        "syncScale": [
-                            true,
-                            true,
-                            false
-                        ]
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "Box2DCollider"
             },
             {
                 "data": {
@@ -137,7 +98,7 @@
                             "y": 0.5
                         },
                         "renderPriority": 0,
-                        "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
+                        "targetObjectID": ""
                     },
                     "isActive": true,
                     "priority": 900,
@@ -149,9 +110,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Sword",
-        "objectID": "8da25f3a-dfdc-4603-b56f-a2cc14688f69",
+        "name": "EnemyDeathEffect",
+        "objectID": "a3f33280-f1ac-4cc0-9235-bdfd97ec21ff",
         "tag": ""
     },
-    "siblingIndex": 8000
+    "siblingIndex": 11000
 }

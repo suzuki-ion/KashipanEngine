@@ -102,15 +102,19 @@
                     "customData": {
                         "fields": {
                             "attackDuration": 0.44999998807907104,
+                            "effect": "9da682a8-30e0-48ec-b449-3f4d2ff986fe",
                             "frameInterval": 0.15000000596046448,
-                            "gravity": 0.8999999761581421,
-                            "jumpPower": 70.0,
-                            "maxHp": 10,
-                            "moveSpeed": 30.0,
+                            "gravity": 120.0,
+                            "jumpPower": 4000.0,
+                            "maxHp": 10.0,
+                            "moveSpeed": 4000.0,
                             "uvStep": {
                                 "x": 0.3330000042915344,
                                 "y": 0.16599999368190765
-                            }
+                            },
+                            "weapons": [
+                                "8da25f3a-dfdc-4603-b56f-a2cc14688f69"
+                            ]
                         },
                         "scriptPath": "Assets\\Scripts\\Player.as"
                     },

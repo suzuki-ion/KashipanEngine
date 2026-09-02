@@ -6,19 +6,19 @@
                     "customData": {
                         "parent": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
                         "rotate": {
-                            "w": 1.0,
+                            "w": 0.9999619126319885,
                             "x": 0.0,
-                            "y": 0.0,
+                            "y": 0.008726535364985466,
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 16.0,
-                            "y": 16.0,
+                            "x": 15.0,
+                            "y": 6.0,
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 21.499435424804688,
-                            "y": 58.07683181762695,
+                            "x": 16.0,
+                            "y": 0.4836845397949219,
                             "z": 0.0
                         }
                     },
@@ -42,27 +42,7 @@
             {
                 "data": {
                     "customData": {
-                        "fields": {
-                            "cooldown": 0.4000000059604645,
-                            "pos": {
-                                "x": 0.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "power": 10
-                        },
-                        "scriptPath": "Assets\\Scripts\\Sword.as"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "ScriptComponent"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "textureAssetPath": "App/Sprite/UI/katana.png"
+                        "textureAssetPath": "App/Sprite/Effect/Katana.png"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -73,33 +53,21 @@
             {
                 "data": {
                     "customData": {
-                        "center": {
-                            "x": 0.0,
-                            "y": 0.0
+                        "fields": {
+                            "activeDuration": 0.10000000149011612,
+                            "pos": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
                         },
-                        "continuousDetection": false,
-                        "isTrigger": true,
-                        "size": {
-                            "x": 0.800000011920929,
-                            "y": 0.800000011920929
-                        },
-                        "syncPosition": [
-                            true,
-                            true,
-                            true
-                        ],
-                        "syncRotation": true,
-                        "syncScale": [
-                            true,
-                            true,
-                            false
-                        ]
+                        "scriptPath": "Assets\\Scripts\\WeaponEffect.as"
                     },
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
                 },
-                "type": "Box2DCollider"
+                "type": "ScriptComponent"
             },
             {
                 "data": {
@@ -137,7 +105,7 @@
                             "y": 0.5
                         },
                         "renderPriority": 0,
-                        "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
+                        "targetObjectID": ""
                     },
                     "isActive": true,
                     "priority": 900,
@@ -149,9 +117,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Sword",
-        "objectID": "8da25f3a-dfdc-4603-b56f-a2cc14688f69",
+        "name": "SlashEffect",
+        "objectID": "9da682a8-30e0-48ec-b449-3f4d2ff986fe",
         "tag": ""
     },
-    "siblingIndex": 8000
+    "siblingIndex": 10000
 }

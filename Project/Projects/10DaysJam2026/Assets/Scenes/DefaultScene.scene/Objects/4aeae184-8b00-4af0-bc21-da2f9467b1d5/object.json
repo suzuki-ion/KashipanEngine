@@ -26,46 +26,12 @@
                     "tag": ""
                 },
                 "type": "Transform"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "height": 720,
-                        "isShowViewer": false,
-                        "name": "ScreenBuffer_0",
-                        "saveDirectory": "Screenshots",
-                        "saveFileNamePrefix": "Screenshot",
-                        "saveFormat": "png",
-                        "viewerId": 17475442547660018780,
-                        "width": 1280
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "ScreenBufferObject"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "direction": [
-                            1.0,
-                            0.0
-                        ],
-                        "excludedScreenBuffers": [],
-                        "strength": 0.0034000000450760126
-                    },
-                    "isActive": false,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "ChromaticAberrationEffect"
             }
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "ScreenBuffer",
+        "name": "GameObjects",
         "objectID": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
         "tag": ""
     },

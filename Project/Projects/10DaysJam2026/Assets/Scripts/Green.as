@@ -14,6 +14,9 @@ class Green : ScriptComponentBehavior {
     [SerializeField, Tooltip("1コマあたりのUV移動量")]
     float uvStep = 0.5f;
 
+    [SerializeField, Tooltip("HP")]
+    float hp = 3.0f;
+
     // 進行方向
     MoveDirection moveDir = MoveDirection::Left;
 

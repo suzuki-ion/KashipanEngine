@@ -164,6 +164,7 @@
                     "customData": {
                         "fields": {
                             "frameInterval": 0.15000000596046448,
+                            "hp": 3.0,
                             "moveSpeed": 15.0,
                             "uvStep": 0.5
                         },

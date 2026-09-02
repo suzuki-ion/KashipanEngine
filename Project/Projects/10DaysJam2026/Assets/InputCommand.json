@@ -1,5 +1,25 @@
 {
+    "Attack": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Z",
+            "state": "Trigger"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "J",
+            "state": "Trigger"
+        }
+    ],
     "Jump": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "X",
+            "state": "Trigger"
+        },
         {
             "device": "Keyboard",
             "invertValue": false,
@@ -11,6 +31,18 @@
         {
             "device": "Keyboard",
             "invertValue": false,
+            "key": "Right",
+            "state": "Down"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": true,
+            "key": "Left",
+            "state": "Down"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
             "key": "D",
             "state": "Down"
         },
@@ -19,48 +51,6 @@
             "invertValue": true,
             "key": "A",
             "state": "Down"
-        },
-        {
-            "device": "Keyboard",
-            "invertValue": false,
-            "key": "D",
-            "state": "Down"
-        },
-        {
-            "device": "Keyboard",
-            "invertValue": false,
-            "key": "Space",
-            "state": "Trigger"
-        },
-        {
-            "device": "Keyboard",
-            "invertValue": false,
-            "key": "Space",
-            "state": "Trigger"
-        },
-        {
-            "device": "Keyboard",
-            "invertValue": false,
-            "key": "Space",
-            "state": "Trigger"
-        },
-        {
-            "device": "Keyboard",
-            "invertValue": false,
-            "key": "Space",
-            "state": "Trigger"
-        },
-        {
-            "device": "Keyboard",
-            "invertValue": false,
-            "key": "Space",
-            "state": "Trigger"
-        },
-        {
-            "device": "Keyboard",
-            "invertValue": false,
-            "key": "Space",
-            "state": "Trigger"
         }
     ]
 }

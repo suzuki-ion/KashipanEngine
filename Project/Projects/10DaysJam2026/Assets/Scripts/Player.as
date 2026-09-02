@@ -31,10 +31,16 @@ class Player : ScriptComponentBehavior {
     float attackDuration = 0.45f;
 
     [SerializeField, Tooltip("最大HP")]
-    int maxHp = 10;
+    float maxHp = 10.0f;
 
     [SerializeField, Tooltip("1コマあたりのUV移動量")]
     Vector2 uvStep = Vector2(0.333f, 0.166f);
+
+    [SerializeField, Tooltip("武器一覧")]
+    array<Object@>@ weapons;
+
+    [SerializeField, Tooltip("エフェクト")]
+    Object@ effect;
 
     RigidBody2D@ rb;
     Box2DCollider@ col;
@@ -47,7 +53,7 @@ class Player : ScriptComponentBehavior {
     bool isInvincible = false;
     float invincibleDuration = 1.0f;
     float invincibleTimer = 0.0f;
-    int hp = maxHp;
+    float hp = maxHp;
     float animTimer = 0.0f;
     int currentWeaponIndex = 0;
     
@@ -66,7 +72,7 @@ class Player : ScriptComponentBehavior {
 
         // 左右移動
         float moveX = GetCommandValue("MoveX");
-        velocity.x = moveX * moveSpeed;
+        velocity.x = moveX * moveSpeed * GetDeltaTime();
 
         // 移動入力がある時だけ向きを更新
         if (moveX >= 0.01f) {
@@ -81,12 +87,12 @@ class Player : ScriptComponentBehavior {
 
         // ジャンプ
         if(IsCommandTriggered("Jump") && rb !is null && !isJump){
-            velocity.y = jumpPower;
+            velocity.y = jumpPower * GetDeltaTime();
             isJump = true;
         }
 
         // 重力を加算
-        velocity.y -= gravity;
+        velocity.y -= gravity * GetDeltaTime();
 
         // RigidBodyのVelocity変更
         rb.SetVelocity(velocity);
@@ -94,6 +100,52 @@ class Player : ScriptComponentBehavior {
         // 攻撃入力の検知とタイマーリセット
         if(IsCommandTriggered("Attack")){
             attackTimer = attackDuration;
+            float margin = 0.0f;
+
+            // 攻撃
+            if(weapons[currentWeaponIndex] !is null){
+                ScriptComponent@ sc;
+                if(weapons[currentWeaponIndex].GetComponent(@sc)){
+                    float margin;
+                    if(lastDirection == Direction::Right){
+                        margin = 16.0f;
+                    }else if(lastDirection == Direction::Left){
+                        margin = -16.0f;
+                    }
+
+                    // 武器の向きに応じて中心点をずらす
+                    sc.CallMethod("Attack", margin);
+                }
+            }
+
+            if(effect !is null){
+                ScriptComponent@ effectSc;
+                if(effect.GetComponent(@effectSc)){
+                    // プレイヤーの現在座標を取得し、攻撃方向ずらした位置にエフェクトを生成
+                    Vector3 effectPos = tf.GetTranslate();
+                    effectPos.x += margin; 
+                    
+                    Vector3 effectMargin;
+                    if(lastDirection == Direction::Right){
+                        effectMargin = Vector3(16.0f, 0.0f, 0.0f);
+                    }else if(lastDirection == Direction::Left){
+                        effectMargin = Vector3(-16.0f, 0.0f, 0.0f);
+                    }
+                    effectSc.CallMethod("CreateEffect", effectPos + effectMargin);
+                }
+            }
+        }
+
+        // 武器の座標をプレイヤーに合わせる
+        Object@ currentWeapon = weapons[currentWeaponIndex];
+        if(currentWeapon !is null){
+            ScriptComponent@ sc;
+            if(currentWeapon.GetComponent(@sc)){
+                Vector3 pos;
+                if(sc.GetVariable("pos", pos)){
+                    sc.SetVariable("pos", tf.GetTranslate());
+                }
+            }
         }
 
         // 攻撃中判定の更新
@@ -220,13 +272,13 @@ class Player : ScriptComponentBehavior {
         velocity.y = 0.0f;
     }
 
-    void Damage(int amount) {
-        hp = int(Clamp(float(hp - amount), 0.0f, float(maxHp)));
+    void Damage(float amount) {
+        hp = Clamp(hp - amount, 0.0f, maxHp);
         Log("Damage! HP:" + hp);
     }
 
-    void Heal(int amount) {
-        hp = int(Clamp(float(hp + amount), 0.0f, float(maxHp)));
+    void Heal(float amount) {
+        hp = Clamp(hp + amount, 0.0f, maxHp);
         Log("Heal! HP:" + hp);
     }
 

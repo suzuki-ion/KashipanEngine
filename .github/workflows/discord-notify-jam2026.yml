@@ -13,28 +13,28 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          COMMIT_MESSAGE=$(git log -1 --pretty=format:%s "${{ github.sha }}" | head -c 500)
-          COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
-          COMPARE_URL="${{ github.event.compare }}"
-          PUSHER="${{ github.actor }}"
-
           PAYLOAD=$(jq -n \
-            --arg content "" \
+            --argjson event "$(cat "$GITHUB_EVENT_PATH")" \
             --arg title "10DaysJam2026 に push されました" \
-            --arg description "$COMMIT_MESSAGE" \
-            --arg url "$COMMIT_URL" \
-            --arg author "$PUSHER" \
-            --arg compare "$COMPARE_URL" \
-            '{
-              content: $content,
+            '
+            ($event.commits // []) as $commits |
+            {
               embeds: [{
                 title: $title,
-                description: $description,
-                url: $url,
+                url: $event.compare,
                 color: 5814783,
-                author: { name: $author },
-                fields: [{ name: "変更差分", value: $compare }]
+                author: { name: $event.pusher.name },
+                fields: (
+                  $commits
+                  | .[0:10]
+                  | map({
+                      name: ((.id[0:7]) + " - " + .author.name),
+                      value: (.message | split("\n")[0] | .[0:200]),
+                      inline: false
+                    })
+                )
               }]
-            }')
+            }
+            ')
 
           curl -sf -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK_URL"

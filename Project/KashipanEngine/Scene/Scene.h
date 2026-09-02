@@ -81,9 +81,14 @@ public:
         if (!isPlaying_ || (isPaused_ && !isStepFrameRequested_)) return;
         isStepFrameRequested_ = false;
 #endif
+        // このスコープ中のDeleteObjectは実体の破棄を遅延させる（後述のisProcessingObjectLifecycle_を参照）
+        isProcessingObjectLifecycle_ = true;
         UpdateSceneObjects();
         UpdateComponents();
         OnUpdate();
+        isProcessingObjectLifecycle_ = false;
+        // Update中に溜まった削除待ちオブジェクトを、更新が完全に終わった安全なタイミングで実際に破棄する
+        FlushPendingDestroys();
     }
 
 #if defined(USE_IMGUI)
@@ -506,6 +511,7 @@ private:
     void UpdateComponents();
     void RegenerateUpdateComponentsList();
     void RemoveObjectFromMaps(EmptyObject *obj);
+    void FlushPendingDestroys();
 
     std::string name_;
 
@@ -517,6 +523,13 @@ private:
     ChunkedPool<EmptyObject> objectPool_;
     /// @brief シーン内での表示・保存順を保持する非所有ポインタのリスト（実体は objectPool_ が所有）
     std::vector<EmptyObject *> objects_;
+    /// @brief オブジェクト/コンポーネントの更新処理中（UpdateInterface実行中）かどうか。
+    ///        trueの間にDeleteObjectが呼ばれた場合、実体の破棄をFlushPendingDestroysまで遅延する。
+    ///        （スクリプトが自分自身の所有オブジェクトを削除すると、実行中のScriptComponent自体を
+    ///          即座に破棄してしまい use-after-free になるため）
+    bool isProcessingObjectLifecycle_ = false;
+    /// @brief isProcessingObjectLifecycle_中にDeleteObjectされ、実体の破棄を待っているオブジェクト
+    std::vector<EmptyObject *> pendingDestroyObjects_;
     std::unordered_map<UUID128, EmptyObject *> objectsByUUID_;
     std::unordered_set<EmptyObject *> objectsExistingSet_;
     std::unordered_map<std::string, std::unordered_set<EmptyObject *>> objectsByName_;

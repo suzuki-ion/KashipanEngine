@@ -317,10 +317,34 @@ bool Scene::DeleteObject(EmptyObject *obj) {
     // 子オブジェクトの削除により objects_ が変化しているため、対象オブジェクトを再検索する
     it = std::find(objects_.begin(), objects_.end(), obj);
     if (it == objects_.end()) return false;
+    // シーンからは即座に見えなくする（名前/UUID検索・存在確認はここから無効になる）
     RemoveObjectFromMaps(obj);
     objects_.erase(it);
-    objectPool_.Remove(obj);
+
+    if (isProcessingObjectLifecycle_) {
+        // 更新処理中（スクリプトが自分自身の所有オブジェクトを削除する場合など）は、
+        // ここで実体を破棄すると実行中のコンポーネント自身を破棄してしまい危険なため、
+        // 更新が完全に終わった安全なタイミング（FlushPendingDestroys）まで実破棄を遅延する
+        pendingDestroyObjects_.push_back(obj);
+    } else {
+        objectPool_.Remove(obj);
+    }
     return true;
+}
+
+void Scene::FlushPendingDestroys() {
+    if (pendingDestroyObjects_.empty()) return;
+    // 破棄処理（Finalize等）の連鎖でさらにDeleteObjectが呼ばれる場合に備え、
+    // その間も遅延させつつキューが尽きるまで繰り返す
+    isProcessingObjectLifecycle_ = true;
+    while (!pendingDestroyObjects_.empty()) {
+        std::vector<EmptyObject *> batch;
+        batch.swap(pendingDestroyObjects_);
+        for (EmptyObject *obj : batch) {
+            objectPool_.Remove(obj);
+        }
+    }
+    isProcessingObjectLifecycle_ = false;
 }
 
 void Scene::DeleteEditorOnlyObjects() {
@@ -409,6 +433,9 @@ void Scene::ClearSceneObjects() {
         }
     }
     objectPool_.Clear();
+    // objectPool_.Clear() で一括破棄済みのため、破棄待ちキューに残ったポインタは
+    // すべてダングリングになる。FlushPendingDestroysで二重に触れないようここで捨てる
+    pendingDestroyObjects_.clear();
     objects_.clear();
     objectsByUUID_.clear();
     objectsExistingSet_.clear();

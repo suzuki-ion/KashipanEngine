@@ -828,6 +828,23 @@
 		"component.cameracontroller.rotation_offset": "回転オフセット",
 		"component.cameracontroller.target_fovy": "目標の垂直画角",
 
+		//--------- component.cameracontroller2d ---------//
+		"component.cameracontroller2d.add_follow_target": "追従ターゲットを追加",
+		"component.cameracontroller2d.follow_position": "位置を追従",
+		"component.cameracontroller2d.follow_rotation": "回転を追従",
+		"component.cameracontroller2d.follow_targets": "追従ターゲット",
+		"component.cameracontroller2d.move_all": "移動をまとめて設定",
+		"component.cameracontroller2d.move_follow_strength": "移動の追従の強さ",
+		"component.cameracontroller2d.move_per_axis": "移動：軸ごと",
+		"component.cameracontroller2d.move_x_y": "移動 X/Y",
+		"component.cameracontroller2d.no_target_following_own_transform": "(ターゲット未設定：自身のTransformに追従します)",
+		"component.cameracontroller2d.position_offset": "位置オフセット",
+		"component.cameracontroller2d.remove_target": "ターゲットを削除",
+		"component.cameracontroller2d.rotate_follow_strength": "回転の追従の強さ",
+		"component.cameracontroller2d.rotation_offset": "回転オフセット",
+		"component.cameracontroller2d.size_transition_strength": "サイズの追従の強さ",
+		"component.cameracontroller2d.target_size": "目標のサイズ（幅/高さ）",
+
 		//--------- component.camerarenderer ---------//
 		"component.camerarenderer.pipeline": "パイプライン",
 		"component.camerarenderer.warning_no_camera_component": "警告：Camera2D/Camera3Dが付与されていないため、バインド変数名がgCamera3D扱いになっています",

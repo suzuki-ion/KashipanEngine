@@ -101,6 +101,7 @@
 #include "Objects/Components/Render/Camera2D.h"
 #include "Objects/Components/Render/Camera3D.h"
 #include "Objects/Components/Render/CameraController.h"
+#include "Objects/Components/Render/CameraController2D.h"
 #include "Objects/Components/Render/CameraRenderer.h"
 #include "Objects/Components/Render/IWindowObjectComponent.h"
 #include "Objects/Components/Render/Light.h"
@@ -1837,6 +1838,109 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             const CameraController &c = *cPtr; return c.GetRotateStrength().usePerAxis; })
         .method("void SetFovLerpFactor(float)", SafeCall<&CameraController::SetFovLerpFactor>())
         .method("float GetFovLerpFactor() const", SafeCall<&CameraController::GetFovLerpFactor>());
+
+    RegisterComponentType<CameraController2D>(engine, "CameraController2D")
+        .method("bool IsControllable() const", SafeCall<&CameraController2D::IsControllable>())
+        .method("void AddFollowTarget(Object@)", [](ScriptComponentHandle<CameraController2D> &cHandle, ScriptObjectHandle *obj) {
+            CameraController2D *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            CameraController2D &c = *cPtr;
+            EmptyObject *resolved = ResolveObjectArg(obj);
+            if (resolved) c.AddFollowTarget(resolved->GetObjectID());
+        })
+        .method("void RemoveFollowTarget(uint)", [](ScriptComponentHandle<CameraController2D> &cHandle, uint32_t index) {
+            CameraController2D *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            CameraController2D &c = *cPtr; c.RemoveFollowTarget(index); })
+        .method("uint GetFollowTargetCount() const", [](const ScriptComponentHandle<CameraController2D> &cHandle) -> uint32_t {
+            CameraController2D *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const CameraController2D &c = *cPtr;
+            return static_cast<uint32_t>(c.GetFollowTargets().size());
+        })
+        .method("Object@ GetFollowTargetObject(uint) const", [](ScriptComponentHandle<CameraController2D> &cHandle, uint32_t index) -> ScriptObjectHandle * {
+            CameraController2D *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<ScriptObjectHandle *>(); }
+            const CameraController2D &c = *cPtr;
+            const auto &targets = c.GetFollowTargets();
+            if (index >= targets.size() || !gCurrentSceneContext) return nullptr;
+            return ScriptObjectHandle::Create(gCurrentSceneContext->GetSceneObject(targets[index].objectID));
+        })
+        .method("void SetFollowPositionEnable(uint, bool, bool)", [](ScriptComponentHandle<CameraController2D> &cHandle, uint32_t index, bool x, bool y) {
+            CameraController2D *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            CameraController2D &c = *cPtr;
+            auto &targets = c.GetFollowTargets();
+            if (index >= targets.size()) return;
+            targets[index].followPositionX = x;
+            targets[index].followPositionY = y;
+        })
+        .method("void GetFollowPositionEnable(uint, bool &out, bool &out) const", [](ScriptComponentHandle<CameraController2D> &cHandle, uint32_t index, bool &x, bool &y) {
+            CameraController2D *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            const CameraController2D &c = *cPtr;
+            x = y = false;
+            const auto &targets = c.GetFollowTargets();
+            if (index >= targets.size()) return;
+            x = targets[index].followPositionX;
+            y = targets[index].followPositionY;
+        })
+        .method("void SetFollowRotationEnable(uint, bool)", [](ScriptComponentHandle<CameraController2D> &cHandle, uint32_t index, bool z) {
+            CameraController2D *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            CameraController2D &c = *cPtr;
+            auto &targets = c.GetFollowTargets();
+            if (index >= targets.size()) return;
+            targets[index].followRotationZ = z;
+        })
+        .method("bool GetFollowRotationEnable(uint) const", [](ScriptComponentHandle<CameraController2D> &cHandle, uint32_t index) -> bool {
+            CameraController2D *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
+            const CameraController2D &c = *cPtr;
+            const auto &targets = c.GetFollowTargets();
+            if (index >= targets.size()) return false;
+            return targets[index].followRotationZ;
+        })
+        .method("void SetPositionOffset(const Vector2 &in)", SafeCall<&CameraController2D::SetPositionOffset>())
+        .method("const Vector2 &GetPositionOffset() const", SafeCall<&CameraController2D::GetPositionOffset>())
+        .method("void SetRotationOffset(float)", SafeCall<&CameraController2D::SetRotationOffset>())
+        .method("float GetRotationOffset() const", SafeCall<&CameraController2D::GetRotationOffset>())
+        .method("void SetTargetSize(const Vector2 &in)", SafeCall<&CameraController2D::SetTargetSize>())
+        .method("const Vector2 &GetTargetSize() const", SafeCall<&CameraController2D::GetTargetSize>())
+        .method("void SetMoveStrength(float)", [](ScriptComponentHandle<CameraController2D> &cHandle, float v) {
+            CameraController2D *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            CameraController2D &c = *cPtr;
+            c.GetMoveStrength().usePerAxis = false;
+            c.GetMoveStrength().all = v;
+        })
+        .method("float GetMoveStrength() const", [](const ScriptComponentHandle<CameraController2D> &cHandle) -> float {
+            CameraController2D *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const CameraController2D &c = *cPtr; return c.GetMoveStrength().all; })
+        .method("void SetMoveStrengthPerAxis(const Vector2 &in)", [](ScriptComponentHandle<CameraController2D> &cHandle, const Vector2 &v) {
+            CameraController2D *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            CameraController2D &c = *cPtr;
+            c.GetMoveStrength().usePerAxis = true;
+            c.GetMoveStrength().perAxis = v;
+        })
+        .method("Vector2 GetMoveStrengthPerAxis() const", [](const ScriptComponentHandle<CameraController2D> &cHandle) -> Vector2 {
+            CameraController2D *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<Vector2>(); }
+            const CameraController2D &c = *cPtr; return c.GetMoveStrength().perAxis; })
+        .method("void SetMoveStrengthUsePerAxis(bool)", [](ScriptComponentHandle<CameraController2D> &cHandle, bool usePerAxis) {
+            CameraController2D *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            CameraController2D &c = *cPtr; c.GetMoveStrength().usePerAxis = usePerAxis; })
+        .method("bool GetMoveStrengthUsePerAxis() const", [](const ScriptComponentHandle<CameraController2D> &cHandle) -> bool {
+            CameraController2D *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
+            const CameraController2D &c = *cPtr; return c.GetMoveStrength().usePerAxis; })
+        .method("void SetRotateLerpFactor(float)", SafeCall<&CameraController2D::SetRotateLerpFactor>())
+        .method("float GetRotateLerpFactor() const", SafeCall<&CameraController2D::GetRotateLerpFactor>())
+        .method("void SetSizeLerpFactor(float)", SafeCall<&CameraController2D::SetSizeLerpFactor>())
+        .method("float GetSizeLerpFactor() const", SafeCall<&CameraController2D::GetSizeLerpFactor>());
 
     RegisterComponentType<Light>(engine, "Light")
         .method("void SetType(LightType)", SafeCall<&Light::SetType>())

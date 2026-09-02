@@ -1,7 +1,7 @@
 {
     "scenes": [
         {
-            "filePath": "Assets/Scenes/DefaultScene.json",
+            "filePath": "Assets/Scenes/DefaultScene.scene",
             "name": "DefaultScene"
         }
     ],

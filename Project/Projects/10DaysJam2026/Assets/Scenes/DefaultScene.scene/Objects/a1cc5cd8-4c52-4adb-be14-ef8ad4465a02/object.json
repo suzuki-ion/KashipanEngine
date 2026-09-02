@@ -45,6 +45,41 @@
             {
                 "data": {
                     "customData": {
+                        "followTargets": [
+                            {
+                                "followPositionX": true,
+                                "followPositionY": true,
+                                "followRotationZ": false,
+                                "objectID": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22"
+                            }
+                        ],
+                        "moveLerpAll": 0.5,
+                        "moveLerpPerAxis": {
+                            "x": 0.10000000149011612,
+                            "y": 0.10000000149011612
+                        },
+                        "moveLerpUsePerAxis": false,
+                        "positionOffset": {
+                            "x": -128.0,
+                            "y": -120.0
+                        },
+                        "rotateLerpFactor": 0.5,
+                        "rotationOffset": 0.0,
+                        "sizeLerpFactor": 0.5,
+                        "targetSize": {
+                            "x": 256.0,
+                            "y": 240.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "CameraController2D"
+            },
+            {
+                "data": {
+                    "customData": {
                         "bindVariableNames": [
                             "Vertex:gCamera2D",
                             "Pixel:gCamera2D"

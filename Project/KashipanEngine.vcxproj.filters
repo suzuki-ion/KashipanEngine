@@ -1382,6 +1382,9 @@
     <ClInclude Include="KashipanEngine\Objects\Components\Render\CameraController.h">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\CameraController2D.h">
+      <Filter>KashipanEngine\Objects\Components\Render</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Render\CameraRenderer.h">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
@@ -2425,6 +2428,9 @@
       <Filter>Reference\Editor\Components\Render</Filter>
     </None>
     <None Include="Reference\Editor\Components\Render\CameraController.html">
+      <Filter>Reference\Editor\Components\Render</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Render\CameraController2D.html">
       <Filter>Reference\Editor\Components\Render</Filter>
     </None>
     <None Include="Reference\Editor\Components\Render\CameraRenderer.html">

@@ -828,6 +828,23 @@
 		"component.cameracontroller.rotation_offset": "旋转偏移",
 		"component.cameracontroller.target_fovy": "目标垂直视场角",
 
+		//--------- component.cameracontroller2d ---------//
+		"component.cameracontroller2d.add_follow_target": "添加跟随目标",
+		"component.cameracontroller2d.follow_position": "跟随位置",
+		"component.cameracontroller2d.follow_rotation": "跟随旋转",
+		"component.cameracontroller2d.follow_targets": "跟随目标",
+		"component.cameracontroller2d.move_all": "统一设置移动",
+		"component.cameracontroller2d.move_follow_strength": "移动跟随强度",
+		"component.cameracontroller2d.move_per_axis": "移动：按轴",
+		"component.cameracontroller2d.move_x_y": "移动 X/Y",
+		"component.cameracontroller2d.no_target_following_own_transform": "（未设置目标：将跟随自身的Transform）",
+		"component.cameracontroller2d.position_offset": "位置偏移",
+		"component.cameracontroller2d.remove_target": "删除目标",
+		"component.cameracontroller2d.rotate_follow_strength": "旋转跟随强度",
+		"component.cameracontroller2d.rotation_offset": "旋转偏移",
+		"component.cameracontroller2d.size_transition_strength": "尺寸跟随强度",
+		"component.cameracontroller2d.target_size": "目标尺寸",
+
 		//--------- component.camerarenderer ---------//
 		"component.camerarenderer.pipeline": "管线",
 		"component.camerarenderer.warning_no_camera_component": "警告：未附加Camera2D/Camera3D，绑定变量名将按gCamera3D处理",

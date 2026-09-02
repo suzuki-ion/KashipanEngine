@@ -383,6 +383,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <None Include="Reference\Editor\Components\Render\Camera2D.html" />
     <None Include="Reference\Editor\Components\Render\Camera3D.html" />
     <None Include="Reference\Editor\Components\Render\CameraController.html" />
+    <None Include="Reference\Editor\Components\Render\CameraController2D.html" />
     <None Include="Reference\Editor\Components\Render\CameraRenderer.html" />
     <None Include="Reference\Editor\Components\Render\Light.html" />
     <None Include="Reference\Editor\Components\Render\LightRenderer.html" />
@@ -1216,6 +1217,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClInclude Include="KashipanEngine\Objects\Components\Render\Camera2D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\Camera3D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\CameraController.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\CameraController2D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\CameraRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\Light.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\LightRenderer.h" />

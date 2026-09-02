@@ -48,6 +48,7 @@
 #include "Objects/Components/Render/Camera2D.h"
 #include "Objects/Components/Render/Camera3D.h"
 #include "Objects/Components/Render/CameraController.h"
+#include "Objects/Components/Render/CameraController2D.h"
 #include "Objects/Components/Render/CameraRenderer.h"
 #include "Objects/Components/Render/IWindowObjectComponent.h"
 #include "Objects/Components/Render/Light.h"

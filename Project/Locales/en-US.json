@@ -828,6 +828,23 @@
 		"component.cameracontroller.rotation_offset": "Rotation Offset",
 		"component.cameracontroller.target_fovy": "Target FovY",
 
+		//--------- component.cameracontroller2d ---------//
+		"component.cameracontroller2d.add_follow_target": "Add Follow Target",
+		"component.cameracontroller2d.follow_position": "Follow Position",
+		"component.cameracontroller2d.follow_rotation": "Follow Rotation",
+		"component.cameracontroller2d.follow_targets": "Follow Targets",
+		"component.cameracontroller2d.move_all": "Move All",
+		"component.cameracontroller2d.move_follow_strength": "Move Follow Strength",
+		"component.cameracontroller2d.move_per_axis": "Move: Per-Axis",
+		"component.cameracontroller2d.move_x_y": "Move X/Y",
+		"component.cameracontroller2d.no_target_following_own_transform": "(No target: following own Transform)",
+		"component.cameracontroller2d.position_offset": "Position Offset",
+		"component.cameracontroller2d.remove_target": "Remove Target",
+		"component.cameracontroller2d.rotate_follow_strength": "Rotate Follow Strength",
+		"component.cameracontroller2d.rotation_offset": "Rotation Offset",
+		"component.cameracontroller2d.size_transition_strength": "Size Transition Strength",
+		"component.cameracontroller2d.target_size": "Target Size",
+
 		//--------- component.camerarenderer ---------//
 		"component.camerarenderer.pipeline": "Pipeline",
 		"component.camerarenderer.warning_no_camera_component": "Warning: No Camera2D/Camera3D attached, so bind variable names default to gCamera3D",

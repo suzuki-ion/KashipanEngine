@@ -828,6 +828,23 @@
 		"component.cameracontroller.rotation_offset": "회전 오프셋",
 		"component.cameracontroller.target_fovy": "목표 수직 화각",
 
+		//--------- component.cameracontroller2d ---------//
+		"component.cameracontroller2d.add_follow_target": "추적 타깃 추가",
+		"component.cameracontroller2d.follow_position": "위치 추적",
+		"component.cameracontroller2d.follow_rotation": "회전 추적",
+		"component.cameracontroller2d.follow_targets": "추적 타깃",
+		"component.cameracontroller2d.move_all": "이동을 한꺼번에 설정",
+		"component.cameracontroller2d.move_follow_strength": "이동 추적 강도",
+		"component.cameracontroller2d.move_per_axis": "이동: 축별",
+		"component.cameracontroller2d.move_x_y": "이동 X/Y",
+		"component.cameracontroller2d.no_target_following_own_transform": "(타깃 미설정: 자신의 Transform을 따릅니다)",
+		"component.cameracontroller2d.position_offset": "위치 오프셋",
+		"component.cameracontroller2d.remove_target": "타깃 삭제",
+		"component.cameracontroller2d.rotate_follow_strength": "회전 추적 강도",
+		"component.cameracontroller2d.rotation_offset": "회전 오프셋",
+		"component.cameracontroller2d.size_transition_strength": "크기 추적 강도",
+		"component.cameracontroller2d.target_size": "목표 크기",
+
 		//--------- component.camerarenderer ---------//
 		"component.camerarenderer.pipeline": "파이프라인",
 		"component.camerarenderer.warning_no_camera_component": "경고: Camera2D/Camera3D가 없어 바인드 변수 이름이 gCamera3D로 처리됩니다",

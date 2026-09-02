@@ -830,6 +830,7 @@
 
 		//--------- component.camerarenderer ---------//
 		"component.camerarenderer.pipeline": "管线",
+		"component.camerarenderer.warning_no_camera_component": "警告：未附加Camera2D/Camera3D，绑定变量名将按gCamera3D处理",
 
 		//--------- component.capsule2dcollider ---------//
 		"component.capsule2dcollider.end": "终点",

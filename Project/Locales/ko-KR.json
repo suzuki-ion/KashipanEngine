@@ -830,6 +830,7 @@
 
 		//--------- component.camerarenderer ---------//
 		"component.camerarenderer.pipeline": "파이프라인",
+		"component.camerarenderer.warning_no_camera_component": "경고: Camera2D/Camera3D가 없어 바인드 변수 이름이 gCamera3D로 처리됩니다",
 
 		//--------- component.capsule2dcollider ---------//
 		"component.capsule2dcollider.end": "끝점",

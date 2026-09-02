@@ -830,6 +830,7 @@
 
 		//--------- component.camerarenderer ---------//
 		"component.camerarenderer.pipeline": "パイプライン",
+		"component.camerarenderer.warning_no_camera_component": "警告：Camera2D/Camera3Dが付与されていないため、バインド変数名がgCamera3D扱いになっています",
 
 		//--------- component.capsule2dcollider ---------//
 		"component.capsule2dcollider.end": "終了",

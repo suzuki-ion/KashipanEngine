@@ -6,9 +6,9 @@
                     "customData": {
                         "rotate": {
                             "w": 0.9911981821060181,
-                            "x": 0.08695141226053238,
-                            "y": -0.0994459018111229,
-                            "z": 0.008723746985197067
+                            "x": 0.08695141971111298,
+                            "y": -0.09944585710763931,
+                            "z": 0.008723743259906769
                         },
                         "scale": {
                             "x": 1.0,
@@ -16,7 +16,7 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 59.38957977294922,
+                            "x": 59.38956832885742,
                             "y": 31.716835021972656,
                             "z": -210.02169799804688
                         }
@@ -30,7 +30,7 @@
             {
                 "data": {
                     "customData": {
-                        "aspectRatio": 1.5209251642227173,
+                        "aspectRatio": 2.026184558868408,
                         "autoSyncAspectRatio": false,
                         "enableJitter": false,
                         "farClip": 1000.0,
@@ -59,14 +59,14 @@
             {
                 "data": {
                     "customData": {
-                        "height": 908,
+                        "height": 802,
                         "isShowViewer": false,
                         "name": "EditorSceneView",
                         "saveDirectory": "Screenshots",
                         "saveFileNamePrefix": "Screenshot",
                         "saveFormat": "png",
                         "viewerId": 1196007658575678415,
-                        "width": 1381
+                        "width": 1625
                     },
                     "isActive": true,
                     "priority": 1,

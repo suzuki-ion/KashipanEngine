@@ -830,6 +830,7 @@
 
 		//--------- component.camerarenderer ---------//
 		"component.camerarenderer.pipeline": "Pipeline",
+		"component.camerarenderer.warning_no_camera_component": "Warning: No Camera2D/Camera3D attached, so bind variable names default to gCamera3D",
 
 		//--------- component.capsule2dcollider ---------//
 		"component.capsule2dcollider.end": "End",

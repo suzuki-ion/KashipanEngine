@@ -78,6 +78,8 @@ public:
     }
 
     /// @brief バインド先の定数バッファ変数名を設定（例: "Vertex:gCamera3D"）
+    /// @details 毎フレームRefreshBindVariableNames()がアタッチされているCamera2D/Camera3Dの
+    ///          種類から上書きし直すため、ここで設定した値は次フレームには失われる
     void SetBindVariableNames(const std::vector<std::string> &names) { bindVariableNames_ = names; }
     const std::vector<std::string> &GetBindVariableNames() const noexcept { return bindVariableNames_; }
 
@@ -107,15 +109,6 @@ protected:
         if (!constantBuffer_) {
             constantBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(Camera3DConstant));
         }
-        // バインド先が未指定の場合はカメラの種類から既定値を設定
-        if (bindVariableNames_.empty()) {
-            auto *objectContext = GetOwnerObjectContext();
-            if (objectContext && objectContext->GetComponent<Camera2D>()) {
-                bindVariableNames_ = { "Vertex:gCamera2D", "Pixel:gCamera2D" };
-            } else {
-                bindVariableNames_ = { "Vertex:gCamera3D", "Pixel:gCamera3D" };
-            }
-        }
         auto *sceneRenderer = GetOrAddSceneRenderer();
         if (sceneRenderer) {
             sceneRenderer->RegisterCameraRenderer(this);
@@ -142,6 +135,15 @@ protected:
         ImGuiCustom::SelectString(TranslationLabel("component.camerarenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames(), true);
         for (const auto &name : bindVariableNames_) {
             ImGui::BulletText("%s", name.c_str());
+        }
+        // Camera2D/Camera3Dのどちらも付与されていない場合、バインド名をgCamera3D側に
+        // 決め打ちせざるを得ず（RefreshBindVariableNames参照）意図と食い違う恐れがあるため警告する
+        auto *objectContext = GetOwnerObjectContext();
+        const bool hasCamera2D = objectContext && objectContext->GetComponent<Camera2D>();
+        const bool hasCamera3D = objectContext && objectContext->GetComponent<Camera3D>();
+        if (!hasCamera2D && !hasCamera3D) {
+            ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "%s",
+                TranslationC("component.camerarenderer.warning_no_camera_component"));
         }
     }
 #endif
@@ -244,10 +246,29 @@ private:
         return outWidth > 0 && outHeight > 0;
     }
 
+    /// @brief アタッチされているCamera2D/Camera3Dの種類からバインド変数名を導出し直す
+    /// @details 以前はInitialize()時（コンポーネント付与時）の一度きりの判定だったため、
+    ///          複製後にCamera2D⇔Camera3Dを差し替えてもバインド名が古いまま残ってしまい、
+    ///          該当の定数バッファが実質どのシェーダー変数にもバインドされない（Bindが黙って
+    ///          失敗する）事故があった。これを防ぐため毎フレーム（UploadCameraConstant()から）
+    ///          呼び出し、常に現在アタッチされているコンポーネントへ追従させる
+    void RefreshBindVariableNames(ObjectContext *objectContext) {
+        static const std::vector<std::string> kCamera2DNames = { "Vertex:gCamera2D", "Pixel:gCamera2D" };
+        static const std::vector<std::string> kCamera3DNames = { "Vertex:gCamera3D", "Pixel:gCamera3D" };
+        // Camera2Dが無い場合はCamera3D扱いにする（どちらも無い場合はShowImGui()側で警告する）
+        const bool hasCamera2D = objectContext && objectContext->GetComponent<Camera2D>();
+        const auto &expected = hasCamera2D ? kCamera2DNames : kCamera3DNames;
+        if (bindVariableNames_ != expected) {
+            bindVariableNames_ = expected;
+        }
+    }
+
     void UploadCameraConstant() {
         if (!constantBuffer_) return;
         auto *objectContext = GetOwnerObjectContext();
         if (!objectContext) return;
+
+        RefreshBindVariableNames(objectContext);
 
         const Matrix4x4 world = GetRenderWorldMatrix();
         const Matrix4x4 view = world.Inverse();

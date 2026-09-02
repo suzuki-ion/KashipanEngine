@@ -125,14 +125,14 @@
                             "x": 0.0,
                             "y": 0.0
                         },
-                        "materialName": "Default",
+                        "materialName": "Dot",
                         "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
                         "pivot": {
                             "x": 0.5,
                             "y": 0.5
                         },
                         "renderPriority": 0,
-                        "targetObjectID": ""
+                        "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                     },
                     "isActive": true,
                     "priority": 900,

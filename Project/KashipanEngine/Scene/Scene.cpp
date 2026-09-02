@@ -1,6 +1,7 @@
 #include "Scene/Scene.h"
 #include "Scene/SceneBackupPath.h"
 #include "Core/GameEngine.h"
+#include "Graphics/GraphicsEngine.h"
 #include "Scene/SceneManager.h"
 #include "Scene/SceneContext.h"
 #include "Scene/Components/Render/SceneRenderer.h"
@@ -83,6 +84,12 @@ void Scene::ShowImGuiInterface(Passkey<SceneManager>) {
 
 void Scene::PlayStart() {
     if (isPlaying_) return;
+    // DeleteEditorOnlyObjects以降で大量のGPUリソース（ScreenBuffer等）を即座に破棄する。
+    // 通常のフレームループは毎フレーム終端でGPU同期しているため安全だが、Play/Stopは
+    // GameLoopUpdate()の途中（＝直前フレームの描画がGPU側で完了しているとは限らないタイミング）
+    // で割り込むため、ここで明示的に同期してから破棄する（未完了のまま破棄するとGPUハング/
+    // スワップチェーンPresent失敗を引き起こしうる。Play/Stopの高速連打で再現するクラッシュの対策）
+    if (sDirectXCommon_) sDirectXCommon_->WaitForGPUIdle(Passkey<Scene>{});
     editModeSnapshot_ = SaveToJSON();
 
     // EditorOnlyオブジェクトは再生中のシーンには存在させない（子孫ごと削除される）。
@@ -108,6 +115,9 @@ void Scene::PlayStart() {
 
 void Scene::PlayStop() {
     if (!isPlaying_) return;
+    // PlayStart側と同じ理由。ClearSceneObjects/ClearSceneComponentsで大量のGPUリソースを
+    // 即座に破棄する前に、直前フレームのGPU処理が確実に完了していることを保証する
+    if (sDirectXCommon_) sDirectXCommon_->WaitForGPUIdle(Passkey<Scene>{});
     isPlaying_ = false;
     isPaused_ = false;
     isStepFrameRequested_ = false;
@@ -128,6 +138,15 @@ void Scene::PlayStop() {
 
     ClearSceneObjects();
     ClearSceneComponents();
+
+    // これから読み込む新しいコンポーネント群は、削除された旧インスタンスとは別のアドレス・
+    // addedIDを持つ。Renderer::resourceContainer_内のキャッシュ（構造化バッファ等）は
+    // インスタンス固有の値をキーへ含むものがあり、ここで破棄しないと旧インスタンス由来の
+    // エントリが二度と参照されないまま溜まり続け、再生・停止を繰り返すたびにディスクリプタ
+    // ヒープを消費し尽くしてクラッシュする（通常のシーン切り替え時はSceneManagerが
+    // 同様の破棄を行うが、Play/Stopはそこを経由しないため漏れていた）
+    if (sGraphicsEngine_) sGraphicsEngine_->ReleaseRendererResources(Passkey<Scene>{});
+
     LoadFromJSON(snapshot);
 }
 #endif

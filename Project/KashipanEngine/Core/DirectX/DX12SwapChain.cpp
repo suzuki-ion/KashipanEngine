@@ -2,6 +2,7 @@
 #include "Core/DirectXCommon.h"
 #include <cmath>
 #include <algorithm>
+#include <sstream>
 #include <stdexcept>
 #include "Utilities/Translation.h"
 
@@ -190,7 +191,14 @@ void DX12SwapChain::Present(Passkey<DirectXCommon>) {
 
     HRESULT hr = swapChain_->Present(syncInterval, presentFlags);
     if (FAILED(hr)) {
-        Log(Translation("engine.directx.swapchain.present.failed"), LogSeverity::Critical);
+        std::stringstream ss;
+        ss << Translation("engine.directx.swapchain.present.failed")
+           << " HRESULT=0x" << std::hex << std::uppercase << static_cast<unsigned long>(hr);
+        if ((hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET) && sDevice) {
+            const HRESULT reason = sDevice->GetDeviceRemovedReason();
+            ss << " DeviceRemovedReason=0x" << std::hex << std::uppercase << static_cast<unsigned long>(reason);
+        }
+        Log(ss.str(), LogSeverity::Critical);
         throw std::runtime_error("Failed to present DX12 swap chain.");
     }
 }

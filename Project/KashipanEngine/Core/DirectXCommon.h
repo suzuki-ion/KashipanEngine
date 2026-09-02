@@ -33,6 +33,7 @@ class GifTexture;
 class ScreenBuffer;
 class ShadowMapBuffer;
 class ComputeCommandProcessor;
+class Scene;
 #if defined(USE_IMGUI)
 class ImGuiManager;
 #endif
@@ -61,6 +62,16 @@ public:
     /// @brief スワップチェーン破棄指示
     /// @param hwnd ウィンドウハンドル
     void DestroySwapChainSignal(Passkey<Window>, HWND hwnd);
+
+    /// @brief GPU処理完了を同期的に待つ（Scene 用）
+    /// @details Play開始/終了時のようにシーン内の全オブジェクト・GPUリソースを一括で
+    ///          破棄・再生成する直前に呼ぶ。通常のフレームループは毎フレーム終端で
+    ///          既にGPU同期しているため不要だが、Play/Stopはその境界を無視して
+    ///          GameLoopUpdate()の途中で大量のGPUリソースを即座に破棄するため、
+    ///          直前フレームの描画がGPU側で本当に完了しているとは限らない
+    ///          （未完了のまま破棄すると使用中のリソースを破壊し、GPUハング/
+    ///          スワップチェーンPresent失敗を引き起こしうる）
+    bool WaitForGPUIdle(Passkey<Scene>) { return WaitForFence(); }
 
     /// @brief D3D12デバイス取得
     ID3D12Device* GetDevice(Passkey<GraphicsEngine>) const { return dx12Device_->GetDevice(); }

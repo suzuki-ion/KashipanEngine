@@ -40,6 +40,8 @@ class AnimationManager;
 class MaterialManager;
 class Input;
 class InputCommand;
+class DirectXCommon;
+class GraphicsEngine;
 
 /// @brief シーンクラス
 class Scene final {
@@ -48,6 +50,14 @@ class Scene final {
     friend class SceneEditorContext;
 #endif
 public:
+    /// @brief GameEngine から DirectXCommon を設定（Play開始/終了時のGPU同期に使う）
+    static void SetDirectXCommon(Passkey<GameEngine>, DirectXCommon *dx) { sDirectXCommon_ = dx; }
+    /// @brief GameEngine から GraphicsEngine を設定
+    /// @details PlayStop()がシーン内の全オブジェクト・コンポーネントを作り直す際、
+    ///          Rendererの構造化バッファ等のキャッシュ（古いインスタンス由来のキーが
+    ///          溜まり続けディスクリプタヒープを枯渇させる）を破棄するために使う
+    static void SetGraphicsEngine(Passkey<GameEngine>, GraphicsEngine *graphicsEngine) { sGraphicsEngine_ = graphicsEngine; }
+
     explicit Scene(const std::string &sceneName);
     explicit Scene(const JSON &sceneData);
 
@@ -489,6 +499,8 @@ private:
     static inline MaterialManager *sMaterialManager = nullptr;
     static inline Input *sInput = nullptr;
     static inline InputCommand *sInputCommand = nullptr;
+    static inline DirectXCommon *sDirectXCommon_ = nullptr;
+    static inline GraphicsEngine *sGraphicsEngine_ = nullptr;
 
     void UpdateSceneObjects();
     void UpdateComponents();

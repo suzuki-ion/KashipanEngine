@@ -319,12 +319,24 @@ public:
     }
 
     /// @brief 全コンポーネントの常時ImGui表示（ゲームループがポーズ中でも毎フレーム呼ばれる）
+    /// @details TilemapRenderer/ScreenBufferViewport等は、この呼び出しの中から自分自身の
+    ///          兄弟コンポーネント（MeshFilter/Box2DCollider等）をAddComponent/RemoveComponentする
+    ///          ことがある。components_ を直接range-forで回すとその場でベクタが再確保・縮小され、
+    ///          ループ中の参照/イテレータが無効化されてダングリングポインタ経由のクラッシュ
+    ///          （あるいはDevelopment構成では検出されないヒープ破壊）を起こす。
+    ///          Update()（RegenerateUpdateComponentsList参照）と同じ理由・同じ対処として、
+    ///          呼び出し前に一覧をスナップショットし、呼び出し直前に addedID で現在も
+    ///          同一コンポーネントが同じ位置に存在するかを再確認してから呼び出す
     void ShowPersistentImGui(Passkey<Scene>) {
         if (!IsActive()) return;
-        for (auto &pair : components_) {
-            if (pair.first) {
-                pair.first->ShowPersistentImGuiInterface(Passkey<EmptyObject>{});
-            }
+        std::vector<std::pair<IObjectComponent *, size_t>> snapshot = components_;
+        for (const auto &[component, addedID] : snapshot) {
+            if (!component) continue;
+            const auto it = componentsIndexByPointer_.find(component);
+            if (it == componentsIndexByPointer_.end() || it->second >= components_.size()) continue;
+            const auto &[ownedComponent, currentAddedID] = components_[it->second];
+            if (ownedComponent != component || currentAddedID != addedID) continue;
+            component->ShowPersistentImGuiInterface(Passkey<EmptyObject>{});
         }
     }
 #endif

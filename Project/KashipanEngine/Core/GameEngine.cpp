@@ -2,6 +2,7 @@
 #include "EngineSettings.h"
 #include "Core/ProjectPaths.h"
 #include "Core/Window.h"
+#include "Scene/Scene.h"
 #include "Scene/SceneContext.h"
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/Translation.h"
@@ -114,8 +115,10 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     directXCommon_ = std::make_unique<DirectXCommon>(Passkey<GameEngine>{});
     ScreenBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     ShadowMapBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
+    Scene::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     ComputeCommandProcessor::Initialize(Passkey<GameEngine>{}, directXCommon_.get());
     graphicsEngine_ = std::make_unique<GraphicsEngine>(Passkey<GameEngine>{}, directXCommon_.get());
+    Scene::SetGraphicsEngine(Passkey<GameEngine>{}, graphicsEngine_.get());
 
     // 各Managerには物理パスのAssetsルートを渡す。Manager内部で扱うアセットパスは
     // このルートからの相対パスになるため、プロジェクトが変わっても値は変わらない
@@ -175,12 +178,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
 
     gameLoopEndConditionFunction_ = [this]() {
 #ifdef USE_IMGUI
-        if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-            return Window::GetWindowCount() == 0;
-        } else {
-            // ビューポートが無効な場合は、ImGuiのウィンドウが閉じられたかどうかで終了条件を判断する
-            return Window::GetWindow("ImGui Window") == nullptr;
-        }
+        return Window::GetWindow("ImGui Window") == nullptr;
 #else
         return isGameLoopRunning_ == false;
 #endif
@@ -248,6 +246,7 @@ GameEngine::~GameEngine() {
     fontManager_.reset();
     textureManager_.reset();
 
+    Scene::SetGraphicsEngine(Passkey<GameEngine>{}, nullptr);
     graphicsEngine_.reset();
     directXCommon_.reset();
     windowsAPI_.reset();
@@ -352,7 +351,7 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
         GameLoopDraw();
 
         if (sceneManager_ && sceneManager_->CommitPendingSceneChange({})) {
-            graphicsEngine_->ReleaseRendererResources({});
+            graphicsEngine_->ReleaseRendererResources(Passkey<GameEngine>{});
             // シーン構築中のアセット読み込みで実時間が飛んでいるため、
             // 次フレームのデルタタイムへその時間が混入しないようにする
             ResetDeltaTime({});

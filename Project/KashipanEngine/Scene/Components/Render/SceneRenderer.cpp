@@ -14,6 +14,8 @@
 #include "Objects/Components/Render/SpriteRenderer.h"
 #include "Objects/Components/Render/SkinnedMeshRenderer.h"
 #include "Objects/Components/Render/TextRenderer.h"
+#include "Objects/Components/Render/BitmapTextRenderer.h"
+#include "Assets/BitmapFontManager.h"
 #include "Objects/Components/Render/CameraRenderer.h"
 #include "Objects/Components/Render/LightRenderer.h"
 #include "Objects/Components/Render/NormalWindowObject.h"
@@ -526,6 +528,17 @@ void SceneRenderer::UnregisterTextRenderer(const TextRenderer *renderer) {
     if (it != textRenderers_.end()) textRenderers_.erase(it);
 }
 
+void SceneRenderer::RegisterBitmapTextRenderer(BitmapTextRenderer *renderer) {
+    if (!renderer) return;
+    if (std::find(bitmapTextRenderers_.begin(), bitmapTextRenderers_.end(), renderer) != bitmapTextRenderers_.end()) return;
+    bitmapTextRenderers_.push_back(renderer);
+}
+
+void SceneRenderer::UnregisterBitmapTextRenderer(const BitmapTextRenderer *renderer) {
+    auto it = std::find(bitmapTextRenderers_.begin(), bitmapTextRenderers_.end(), renderer);
+    if (it != bitmapTextRenderers_.end()) bitmapTextRenderers_.erase(it);
+}
+
 void SceneRenderer::RegisterGpuParticleEmitter(ParticleSystemBase *emitter) {
     if (!emitter) return;
     if (std::find(gpuParticleEmitters_.begin(), gpuParticleEmitters_.end(), emitter) != gpuParticleEmitters_.end()) return;
@@ -869,6 +882,102 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
         }
     }
 
+    // BitmapTextRendererもTextRendererと同様「1文字＝1インスタンス」でDrawEntryを作る。
+    // ただしシェーダー/パイプラインはTextRendererの専用SDFパイプラインではなく、SpriteRenderer/
+    // MeshRendererと同じObject2D系パイプラインをそのまま使う。文字ごとのUV矩形は、SpriteRendererが
+    // 既に持つ汎用UVトランスフォーム機構（instanceUvTranslate/instanceUvScale、
+    // instanceUvCombineMode=InstanceOnly）へ載せることで、専用シェーダーを新設せずに済ませている。
+    // フォントアトラス（BitmapFontManagerがロードしたページテクスチャ）はTextRendererと同じく
+    // DrawEntry::textureOverrideHandleで、割り当てマテリアルのテクスチャを上書きする。
+    {
+        static const ModelManager::ModelHandle kBitmapTextRect2DMeshHandle =
+            ModelManager::GetModelHandleFromAssetPath("PrimitiveMesh-Rect2D");
+        std::vector<IRenderTarget *> targets;
+        for (auto *renderer : bitmapTextRenderers_) {
+            if (!renderer || !renderer->IsActive()) continue;
+            if (kBitmapTextRect2DMeshHandle == ModelManager::kInvalidHandle) continue;
+
+            const std::string &pipelineName = renderer->GetPipelineName();
+            if (pipelineName.empty() || !EnsurePipelineLoaded(pipelineManager, pipelineName)) continue;
+            const std::int32_t pipelinePriority = pipelineManager->GetPipeline(pipelineName).RenderPriority();
+
+            const EmptyObject *ownerObject = renderer->GetOwnerObject();
+            const bool editorOnly = ownerObject && ownerObject->IsEditorOnlyInHierarchy();
+            const bool hiddenFromEditorTarget = ownerObject && ownerObject->IsHiddenFromEditorTarget();
+
+            auto *targetObject = renderer->GetTargetObject();
+            SceneRenderer::CollectRenderTargets(targetObject, targets);
+            if (editorTarget_ && editorTarget_->IsRenderTargetAvailable() && !hiddenFromEditorTarget) {
+                targets.push_back(editorTarget_);
+            }
+
+            std::vector<BitmapTextRenderer::RenderCharacterInstance> instances;
+            bool instancesComputed = false;
+
+            for (auto *target : targets) {
+                if (!target || !target->IsRenderTargetAvailable()) continue;
+                if (target == editorTarget_ && editorDisplayMode_ == EditorDisplayMode::ThreeDOnly) continue;
+                if (editorOnly && target != editorTarget_) continue;
+                if (target != editorTarget_ && !renderer->IsRenderTargetIncluded(target)) continue;
+                if (target != editorTarget_) {
+                    targetOwners_[target] = targetObject;
+                }
+
+                std::string entryPipelineName = pipelineName;
+                std::int32_t entryPipelinePriority = pipelinePriority;
+                if (target == editorTarget_ && editorDisplayMode_ != EditorDisplayMode::TwoDOnly) {
+                    if (std::string worldPipelineName = ResolveEditorWorldPipelineName(pipelineManager, pipelineName);
+                        !worldPipelineName.empty()) {
+                        entryPipelinePriority = pipelineManager->GetPipeline(worldPipelineName).RenderPriority();
+                        entryPipelineName = std::move(worldPipelineName);
+                    }
+                }
+
+                if (!instancesComputed) {
+                    instances = renderer->GetRenderInstances();
+                    instancesComputed = true;
+                }
+                if (instances.empty()) continue;
+
+                const auto materialHandle = renderer->GetMaterialHandle();
+                if (materialHandle == MaterialManager::kInvalidHandle) continue;
+                const auto pageTextureHandle = BitmapFontManager::GetPageTextureHandle(renderer->GetFontHandle());
+                if (pageTextureHandle == TextureManager::kInvalidHandle) continue;
+
+                const auto samplerHandle = SamplerManager::GetSampler(
+                    renderer->GetPointSampling() ? DefaultSampler::PointClamp : DefaultSampler::LinearClamp);
+
+                const float objectIdSeed = SceneRenderer::ObjectIdSeedFor(ownerObject);
+                const int kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
+                const bool allowInstancing = renderer->GetAllowInstancing();
+                const std::int32_t renderPriority = renderer->GetRenderPriority();
+
+                for (const auto &ch : instances) {
+                    SortableEntry sortable;
+                    sortable.entry.target = target;
+                    sortable.entry.pipelineName = entryPipelineName;
+                    sortable.entry.meshHandle = kBitmapTextRect2DMeshHandle;
+                    sortable.entry.materialHandle = materialHandle;
+                    sortable.entry.textureOverrideHandle = pageTextureHandle;
+                    sortable.entry.samplerOverrideHandle = samplerHandle;
+                    sortable.entry.worldMatrix = ch.worldMatrix;
+                    sortable.entry.instanceColor = ch.color;
+                    sortable.entry.instanceColorBlendMode = static_cast<int>(renderer->GetInstanceColorBlendMode());
+                    // マテリアル側のUV変換は無視し、文字のアトラス内UV矩形のみを使う
+                    sortable.entry.instanceUvTranslate = Vector2(ch.u0, ch.v0);
+                    sortable.entry.instanceUvScale = Vector2(ch.u1 - ch.u0, ch.v1 - ch.v0);
+                    sortable.entry.instanceUvCombineMode = 2; // SpriteRenderer::UVCombineMode::InstanceOnly
+                    sortable.entry.objectIdSeed = objectIdSeed;
+                    sortable.entry.allowInstancing = allowInstancing;
+                    sortable.kindOrder = kindOrder;
+                    sortable.pipelinePriority = entryPipelinePriority;
+                    sortable.renderPriority = renderPriority;
+                    freshEntries.push_back(sortable);
+                }
+            }
+        }
+    }
+
     // エディターのシーンビューで選択中オブジェクトへ付与する選択アウトライン（editorTarget_にのみ適用）
     if (!editorSelectedObjects_.empty()) {
         AppendEditorSelectionOutlineEntries(meshRenderers_, pipelineManager, editorTarget_,
@@ -938,6 +1047,7 @@ void SceneRenderer::ShowImGui() {
     ImGui::Text("MeshRenderers: %d", static_cast<int>(meshRenderers_.size()));
     ImGui::Text("SpriteRenderers: %d", static_cast<int>(spriteRenderers_.size()));
     ImGui::Text("TextRenderers: %d", static_cast<int>(textRenderers_.size()));
+    ImGui::Text("BitmapTextRenderers: %d", static_cast<int>(bitmapTextRenderers_.size()));
     ImGui::Text("SkinnedMeshRenderers: %d", static_cast<int>(skinnedMeshRenderers_.size()));
     ImGui::Text("CameraRenderers: %d", static_cast<int>(cameraRenderers_.size()));
     ImGui::Text("LightRenderers: %d", static_cast<int>(lightRenderers_.size()));

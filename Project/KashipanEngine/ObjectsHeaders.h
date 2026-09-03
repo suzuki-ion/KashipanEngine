@@ -45,6 +45,7 @@
 #include "Objects/Components/PostProcessing/ScreenWideDitherBlendEffect.h"
 #include "Objects/Components/PostProcessing/TemporalBlendEffect.h"
 #include "Objects/Components/PostProcessing/VignetteEffect.h"
+#include "Objects/Components/Render/BitmapTextRenderer.h"
 #include "Objects/Components/Render/Camera2D.h"
 #include "Objects/Components/Render/Camera3D.h"
 #include "Objects/Components/Render/CameraController.h"

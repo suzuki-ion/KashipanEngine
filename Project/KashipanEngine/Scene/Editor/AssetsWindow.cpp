@@ -71,7 +71,7 @@ AssetIcon GetAssetIcon(const std::string &extension) {
     if (extension == ".prefab") return AssetIcon::Prefab;
     if (extension == ".as") return AssetIcon::Script;
     if (in({ ".hlsl", ".hlsli" })) return AssetIcon::Shader;
-    if (in({ ".ttf", ".otf" })) return AssetIcon::Font;
+    if (in({ ".ttf", ".otf", ".fnt" })) return AssetIcon::Font;
     return AssetIcon::File;
 }
 
@@ -301,7 +301,7 @@ void AssetsWindow::ShowImGui() {
 }
 
 bool AssetsWindow::IsSupportedExtension(const std::string &ext) {
-    static const std::array<const char *, 42> kSupported = {
+    static const std::array<const char *, 43> kSupported = {
         // テクスチャ（TextureManager対応形式）
         ".png", ".jpg", ".jpeg", ".bmp", ".tga", ".dds", ".hdr", ".tif", ".tiff", ".gif", ".webp",
         // モデル（ModelManager対応形式）
@@ -321,7 +321,7 @@ bool AssetsWindow::IsSupportedExtension(const std::string &ext) {
         // シェーダー
         ".hlsl", ".hlsli",
         // フォント・翻訳・テキスト
-        ".ttf", ".otf", ".csv", ".txt",
+        ".ttf", ".otf", ".fnt", ".csv", ".txt",
     };
     return std::find_if(kSupported.begin(), kSupported.end(),
         [&ext](const char *s) { return ext == s; }) != kSupported.end();

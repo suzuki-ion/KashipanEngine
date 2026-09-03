@@ -500,6 +500,9 @@ void SceneObjectHierarchy::ShowCreateObjectMenu(EmptyObject *referenceObject, bo
         if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.textobject"))) {
             CreateTemplateObject("Text Object", { "TextRenderer" }, referenceObject, asChild);
         }
+        if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.bitmaptextobject"))) {
+            CreateTemplateObject("Bitmap Text Object", { "BitmapTextRenderer" }, referenceObject, asChild);
+        }
         if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.camera2dobject"))) {
             CreateTemplateObject("Camera 2D Object", { "Camera2D", "CameraRenderer" }, referenceObject, asChild);
         }

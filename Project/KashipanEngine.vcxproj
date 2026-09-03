@@ -537,6 +537,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClCompile Include="KashipanEngine\Assets\AnimationManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\AudioManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\AudioPlayer.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\BitmapFontManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\FontManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\MaterialManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\ModelManager.cpp" />
@@ -1041,6 +1042,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClInclude Include="KashipanEngine\Assets\AudioManager.h" />
     <ClInclude Include="KashipanEngine\Assets\AudioPlayer.h" />
     <ClInclude Include="KashipanEngine\Assets\CaseInsensitive.h" />
+    <ClInclude Include="KashipanEngine\Assets\BitmapFontManager.h" />
     <ClInclude Include="KashipanEngine\Assets\FontManager.h" />
     <ClInclude Include="KashipanEngine\Assets\MaterialManager.h" />
     <ClInclude Include="KashipanEngine\Assets\AssimpUtf8IOSystem.h" />
@@ -1222,6 +1224,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClInclude Include="KashipanEngine\Objects\Components\Render\Light.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\LightRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\MeshRenderer.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\BitmapTextRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\SpriteRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\TilemapRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\TextRenderer.h" />

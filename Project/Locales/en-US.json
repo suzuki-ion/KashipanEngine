@@ -1424,6 +1424,17 @@
 		"component.textrenderer.valign.top": "Top",
 		"component.textrenderer.vertical_align": "Vertical Align",
 
+		//--------- component.bitmaptextrenderer ---------//
+		"component.bitmaptextrenderer.character_overrides": "Character Overrides",
+		"component.bitmaptextrenderer.font": "Font",
+		"component.bitmaptextrenderer.font_size": "Font Size",
+		"component.bitmaptextrenderer.instance_color": "Instance Color",
+		"component.bitmaptextrenderer.instance_color_blend_mode": "Instance Color Blend Mode",
+		"component.bitmaptextrenderer.material": "Material",
+		"component.bitmaptextrenderer.pipeline": "Pipeline",
+		"component.bitmaptextrenderer.point_sampling": "Point Sampling",
+		"component.bitmaptextrenderer.text": "Text",
+
 		//--------- component.texturesource ---------//
 		"component.texturesource.texture": "Texture",
 
@@ -1623,6 +1634,9 @@
 		"editor.fontmanager.u_x_u": "%u x %u",
 		"editor.fontmanager.window": "Loaded Fonts",
 
+		//--------- editor.bitmapfontmanager ---------//
+		"editor.bitmapfontmanager.window": "Loaded Bitmap Fonts",
+
 		//--------- editor.gameengine ---------//
 		"editor.gameengine.averages_zu_samples": "Averages (%zu samples)",
 		"editor.gameengine.avg_draw_3f_ms": "Avg Draw: %.3f ms",
@@ -1660,6 +1674,7 @@
 		"editor.hierarchy.create.skinnedmeshobject": "Skinned Mesh Object",
 		"editor.hierarchy.create.spriteobject": "Sprite Object",
 		"editor.hierarchy.create.textobject": "Text Object",
+		"editor.hierarchy.create.bitmaptextobject": "Bitmap Text Object",
 		"editor.hierarchy.create.uibuttonobject": "UI Button Object",
 		"editor.hierarchy.create.windowobject": "Window Object",
 		"editor.hierarchy.createchildobject": "Create Child Object",
@@ -2127,6 +2142,15 @@
 		"engine.font.loading.failed.read": "Failed to load the font. Failed to read the file. File path: ",
 		"engine.font.loading.failed.unsupported": "Failed to load the font. Unsupported extension. File path: ",
 		"engine.font.loading.succeeded": "Font loaded successfully. File path: ",
+
+		//--------- engine.bitmapfont ---------//
+		"engine.bitmapfont.loading.failed.notfound": "Failed to load the bitmap font. File not found. File path: ",
+		"engine.bitmapfont.loading.failed.nopage": "Failed to load the bitmap font. No page (texture) is defined. File path: ",
+		"engine.bitmapfont.loading.failed.pagenotfound": "Failed to load the bitmap font. Could not find a texture already loaded under this page image's file name (make sure the page image is placed somewhere under Assets). File name: ",
+		"engine.bitmapfont.loading.failed.read": "Failed to load the bitmap font. Failed to open the file. File path: ",
+		"engine.bitmapfont.loading.failed.unsupported": "Failed to load the bitmap font. Unsupported extension. File path: ",
+		"engine.bitmapfont.loading.succeeded": "Bitmap font loaded successfully. File path: ",
+		"engine.bitmapfont.loading.warning.multipage": "This bitmap font has multiple pages. Only the first page will be used. File path: ",
 
 		//--------- engine.gpuparticle ---------//
 		"engine.gpuparticle.dispatching": "Dispatching GPU particles. Emitter count: ",

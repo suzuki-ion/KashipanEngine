@@ -23,6 +23,7 @@ class EmptyObject;
 class MeshRenderer;
 class SpriteRenderer;
 class TextRenderer;
+class BitmapTextRenderer;
 class SkinnedMeshRenderer;
 class CameraRenderer;
 class LightRenderer;
@@ -140,6 +141,8 @@ public:
     void UnregisterSpriteRenderer(const SpriteRenderer *renderer);
     void RegisterTextRenderer(TextRenderer *renderer);
     void UnregisterTextRenderer(const TextRenderer *renderer);
+    void RegisterBitmapTextRenderer(BitmapTextRenderer *renderer);
+    void UnregisterBitmapTextRenderer(const BitmapTextRenderer *renderer);
     void RegisterSkinnedMeshRenderer(SkinnedMeshRenderer *renderer);
     void UnregisterSkinnedMeshRenderer(const SkinnedMeshRenderer *renderer);
     void RegisterCameraRenderer(CameraRenderer *renderer);
@@ -165,6 +168,7 @@ public:
     const std::vector<MeshRenderer *> &GetMeshRenderers() const noexcept { return meshRenderers_; }
     const std::vector<SpriteRenderer *> &GetSpriteRenderers() const noexcept { return spriteRenderers_; }
     const std::vector<TextRenderer *> &GetTextRenderers() const noexcept { return textRenderers_; }
+    const std::vector<BitmapTextRenderer *> &GetBitmapTextRenderers() const noexcept { return bitmapTextRenderers_; }
     const std::vector<SkinnedMeshRenderer *> &GetSkinnedMeshRenderers() const noexcept { return skinnedMeshRenderers_; }
     const std::vector<CameraRenderer *> &GetCameraRenderers() const noexcept { return cameraRenderers_; }
     const std::vector<LightRenderer *> &GetLightRenderers() const noexcept { return lightRenderers_; }
@@ -321,6 +325,7 @@ private:
     std::vector<MeshRenderer *> meshRenderers_;
     std::vector<SpriteRenderer *> spriteRenderers_;
     std::vector<TextRenderer *> textRenderers_;
+    std::vector<BitmapTextRenderer *> bitmapTextRenderers_;
     std::vector<SkinnedMeshRenderer *> skinnedMeshRenderers_;
     std::vector<CameraRenderer *> cameraRenderers_;
     std::vector<LightRenderer *> lightRenderers_;

@@ -125,6 +125,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     const std::string &assetsRoot = ProjectPaths::AssetsRoot();
     textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetsRoot);
     fontManager_ = std::make_unique<FontManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetsRoot);
+    bitmapFontManager_ = std::make_unique<BitmapFontManager>(Passkey<GameEngine>{}, assetsRoot);
     samplerManager_ = std::make_unique<SamplerManager>(Passkey<GameEngine>{}, directXCommon_.get());
     modelManager_ = std::make_unique<ModelManager>(Passkey<GameEngine>{}, assetsRoot);
     skeletonManager_ = std::make_unique<SkeletonManager>(Passkey<GameEngine>{}, assetsRoot);
@@ -244,6 +245,7 @@ GameEngine::~GameEngine() {
     modelManager_.reset();
     samplerManager_.reset();
     fontManager_.reset();
+    bitmapFontManager_.reset();
     textureManager_.reset();
 
     Scene::SetGraphicsEngine(Passkey<GameEngine>{}, nullptr);

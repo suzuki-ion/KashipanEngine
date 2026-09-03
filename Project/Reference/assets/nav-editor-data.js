@@ -50,6 +50,7 @@ const KE_PAGES = [
   { id: "C_Render_SpriteRenderer", title: "SpriteRenderer", group: "コンポーネント: Render", href: "Editor/Components/Render/SpriteRenderer.html" },
   { id: "C_Render_TilemapRenderer", title: "TilemapRenderer", group: "コンポーネント: Render", href: "Editor/Components/Render/TilemapRenderer.html" },
   { id: "C_Render_TextRenderer", title: "TextRenderer", group: "コンポーネント: Render", href: "Editor/Components/Render/TextRenderer.html" },
+  { id: "C_Render_BitmapTextRenderer", title: "BitmapTextRenderer", group: "コンポーネント: Render", href: "Editor/Components/Render/BitmapTextRenderer.html" },
   { id: "C_Render_Light", title: "Light", group: "コンポーネント: Render", href: "Editor/Components/Render/Light.html" },
   { id: "C_Render_LightRenderer", title: "LightRenderer", group: "コンポーネント: Render", href: "Editor/Components/Render/LightRenderer.html" },
   { id: "C_Render_Camera3D", title: "Camera3D", group: "コンポーネント: Render", href: "Editor/Components/Render/Camera3D.html" },

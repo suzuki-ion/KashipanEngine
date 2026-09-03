@@ -1424,6 +1424,17 @@
 		"component.textrenderer.valign.top": "顶部对齐",
 		"component.textrenderer.vertical_align": "垂直对齐",
 
+		//--------- component.bitmaptextrenderer ---------//
+		"component.bitmaptextrenderer.character_overrides": "逐字符覆盖",
+		"component.bitmaptextrenderer.font": "字体",
+		"component.bitmaptextrenderer.font_size": "字体大小",
+		"component.bitmaptextrenderer.instance_color": "实例颜色",
+		"component.bitmaptextrenderer.instance_color_blend_mode": "实例颜色的合成方式",
+		"component.bitmaptextrenderer.material": "材质",
+		"component.bitmaptextrenderer.pipeline": "管线",
+		"component.bitmaptextrenderer.point_sampling": "点采样",
+		"component.bitmaptextrenderer.text": "文本",
+
 		//--------- component.texturesource ---------//
 		"component.texturesource.texture": "纹理",
 
@@ -1593,6 +1604,9 @@
 		"editor.fontmanager.u_x_u": "%u × %u",
 		"editor.fontmanager.window": "已加载的字体",
 
+		//--------- editor.bitmapfontmanager ---------//
+		"editor.bitmapfontmanager.window": "已加载的位图字体",
+
 		//--------- editor.gameengine ---------//
 		"editor.gameengine.averages_zu_samples": "平均值（%zu 个样本）",
 		"editor.gameengine.avg_draw_3f_ms": "平均绘制时间：%.3f ms",
@@ -1630,6 +1644,7 @@
 		"editor.hierarchy.create.skinnedmeshobject": "蒙皮网格对象",
 		"editor.hierarchy.create.spriteobject": "精灵对象",
 		"editor.hierarchy.create.textobject": "文本对象",
+		"editor.hierarchy.create.bitmaptextobject": "位图文本对象",
 		"editor.hierarchy.create.uibuttonobject": "UI按钮对象",
 		"editor.hierarchy.create.windowobject": "窗口对象",
 		"editor.hierarchy.createchildobject": "创建子对象",
@@ -2092,6 +2107,15 @@
 		"engine.font.loading.failed.read": "字体加载失败。文件读取失败。文件路径：",
 		"engine.font.loading.failed.unsupported": "字体加载失败。不支持的扩展名。文件路径：",
 		"engine.font.loading.succeeded": "字体加载成功。文件路径：",
+
+		//--------- engine.bitmapfont ---------//
+		"engine.bitmapfont.loading.failed.notfound": "位图字体加载失败。未找到文件。文件路径：",
+		"engine.bitmapfont.loading.failed.nopage": "位图字体加载失败。未定义页面（纹理）。文件路径：",
+		"engine.bitmapfont.loading.failed.pagenotfound": "位图字体加载失败。未找到与页面图像同名的已加载纹理（请将页面图像放置在Assets目录下的某处）。文件名：",
+		"engine.bitmapfont.loading.failed.read": "位图字体加载失败。无法打开文件。文件路径：",
+		"engine.bitmapfont.loading.failed.unsupported": "位图字体加载失败。不支持的扩展名。文件路径：",
+		"engine.bitmapfont.loading.succeeded": "位图字体加载成功。文件路径：",
+		"engine.bitmapfont.loading.warning.multipage": "此位图字体包含多个页面，仅使用第一页。文件路径：",
 
 		//--------- engine.gpuparticle ---------//
 		"engine.gpuparticle.dispatching": "开始派发GPU粒子。发射器数：",

@@ -277,6 +277,12 @@ void Renderer::DrawBatch(IRenderTarget *target,
                     ResolveInstanceTextureIndex(batch[i].textureOverrideHandle, material));
                 WriteMaterialField(pipelineInfo, elementBytes, stride, "samplerIndex",
                     ResolveInstanceSamplerIndex(batch[i].samplerOverrideHandle, material));
+                // textureOverrideHandleが指定されている場合（TextRenderer/BitmapTextRendererのように
+                // マテリアルのテクスチャを完全に上書きする用途）は、割り当てマテリアル自身のuseTexture設定
+                // （単色マテリアルではfalseのことがある）に関わらず必ずサンプリングさせる
+                if (batch[i].textureOverrideHandle != TextureManager::kInvalidHandle) {
+                    WriteMaterialField(pipelineInfo, elementBytes, stride, "useTexture", 1.0f);
+                }
             }
             auto *materialBuffer = resourceContainer_->GetOrUpdateStructuredBuffer(key, stride, instanceCount, allBytes.data());
             if (materialBuffer) {

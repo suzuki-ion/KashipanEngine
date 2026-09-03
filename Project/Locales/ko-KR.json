@@ -1424,6 +1424,17 @@
 		"component.textrenderer.valign.top": "위쪽 정렬",
 		"component.textrenderer.vertical_align": "세로 정렬",
 
+		//--------- component.bitmaptextrenderer ---------//
+		"component.bitmaptextrenderer.character_overrides": "문자별 재정의",
+		"component.bitmaptextrenderer.font": "폰트",
+		"component.bitmaptextrenderer.font_size": "폰트 크기",
+		"component.bitmaptextrenderer.instance_color": "인스턴스 컬러",
+		"component.bitmaptextrenderer.instance_color_blend_mode": "인스턴스 컬러 합성 방법",
+		"component.bitmaptextrenderer.material": "머티리얼",
+		"component.bitmaptextrenderer.pipeline": "파이프라인",
+		"component.bitmaptextrenderer.point_sampling": "포인트 샘플링",
+		"component.bitmaptextrenderer.text": "텍스트",
+
 		//--------- component.texturesource ---------//
 		"component.texturesource.texture": "텍스처",
 
@@ -1593,6 +1604,9 @@
 		"editor.fontmanager.u_x_u": "%u × %u",
 		"editor.fontmanager.window": "불러온 폰트",
 
+		//--------- editor.bitmapfontmanager ---------//
+		"editor.bitmapfontmanager.window": "불러온 비트맵 폰트",
+
 		//--------- editor.gameengine ---------//
 		"editor.gameengine.averages_zu_samples": "평균(%zu 샘플)",
 		"editor.gameengine.avg_draw_3f_ms": "평균 렌더링 시간: %.3f ms",
@@ -1630,6 +1644,7 @@
 		"editor.hierarchy.create.skinnedmeshobject": "스킨 메시 오브젝트",
 		"editor.hierarchy.create.spriteobject": "스프라이트 오브젝트",
 		"editor.hierarchy.create.textobject": "텍스트 오브젝트",
+		"editor.hierarchy.create.bitmaptextobject": "비트맵 텍스트 오브젝트",
 		"editor.hierarchy.create.uibuttonobject": "UI 버튼 오브젝트",
 		"editor.hierarchy.create.windowobject": "윈도우 오브젝트",
 		"editor.hierarchy.createchildobject": "자식 오브젝트 생성",
@@ -2092,6 +2107,15 @@
 		"engine.font.loading.failed.read": "폰트 불러오기 실패. 파일 읽기에 실패했습니다. 파일 경로: ",
 		"engine.font.loading.failed.unsupported": "폰트 불러오기 실패. 지원하지 않는 확장자입니다. 파일 경로: ",
 		"engine.font.loading.succeeded": "폰트 불러오기 성공. 파일 경로: ",
+
+		//--------- engine.bitmapfont ---------//
+		"engine.bitmapfont.loading.failed.notfound": "비트맵 폰트 불러오기 실패. 파일을 찾을 수 없습니다. 파일 경로: ",
+		"engine.bitmapfont.loading.failed.nopage": "비트맵 폰트 불러오기 실패. 페이지(텍스처)가 정의되어 있지 않습니다. 파일 경로: ",
+		"engine.bitmapfont.loading.failed.pagenotfound": "비트맵 폰트 불러오기 실패. 페이지 이미지와 같은 이름의 불러온 텍스처를 찾을 수 없습니다(페이지 이미지를 Assets 하위 어딘가에 배치하세요). 파일 이름: ",
+		"engine.bitmapfont.loading.failed.read": "비트맵 폰트 불러오기 실패. 파일을 열 수 없습니다. 파일 경로: ",
+		"engine.bitmapfont.loading.failed.unsupported": "비트맵 폰트 불러오기 실패. 지원하지 않는 확장자입니다. 파일 경로: ",
+		"engine.bitmapfont.loading.succeeded": "비트맵 폰트 불러오기 성공. 파일 경로: ",
+		"engine.bitmapfont.loading.warning.multipage": "이 비트맵 폰트는 여러 페이지로 구성되어 있습니다. 첫 페이지만 사용됩니다. 파일 경로: ",
 
 		//--------- engine.gpuparticle ---------//
 		"engine.gpuparticle.dispatching": "GPU 파티클 디스패치를 시작합니다. 이미터 수: ",

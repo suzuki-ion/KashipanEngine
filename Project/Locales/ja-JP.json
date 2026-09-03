@@ -1424,6 +1424,17 @@
 		"component.textrenderer.valign.top": "上揃え",
 		"component.textrenderer.vertical_align": "垂直方向の揃え",
 
+		//--------- component.bitmaptextrenderer ---------//
+		"component.bitmaptextrenderer.character_overrides": "文字ごとの上書き",
+		"component.bitmaptextrenderer.font": "フォント",
+		"component.bitmaptextrenderer.font_size": "フォントサイズ",
+		"component.bitmaptextrenderer.instance_color": "インスタンスカラー",
+		"component.bitmaptextrenderer.instance_color_blend_mode": "インスタンスカラーの合成方法",
+		"component.bitmaptextrenderer.material": "マテリアル",
+		"component.bitmaptextrenderer.pipeline": "パイプライン",
+		"component.bitmaptextrenderer.point_sampling": "ポイントサンプリング",
+		"component.bitmaptextrenderer.text": "テキスト",
+
 		//--------- component.texturesource ---------//
 		"component.texturesource.texture": "テクスチャ",
 
@@ -1623,6 +1634,9 @@
 		"editor.fontmanager.u_x_u": "%u × %u",
 		"editor.fontmanager.window": "読み込み済みフォント",
 
+		//--------- editor.bitmapfontmanager ---------//
+		"editor.bitmapfontmanager.window": "読み込み済みビットマップフォント",
+
 		//--------- editor.gameengine ---------//
 		"editor.gameengine.averages_zu_samples": "平均（%zu サンプル）",
 		"editor.gameengine.avg_draw_3f_ms": "平均描画時間：%.3f ms",
@@ -1660,6 +1674,7 @@
 		"editor.hierarchy.create.skinnedmeshobject": "スキンメッシュオブジェクト",
 		"editor.hierarchy.create.spriteobject": "スプライトオブジェクト",
 		"editor.hierarchy.create.textobject": "テキストオブジェクト",
+		"editor.hierarchy.create.bitmaptextobject": "ビットマップテキストオブジェクト",
 		"editor.hierarchy.create.uibuttonobject": "UIボタンオブジェクト",
 		"editor.hierarchy.create.windowobject": "ウィンドウオブジェクト",
 		"editor.hierarchy.createchildobject": "子オブジェクトを作成",
@@ -2127,6 +2142,15 @@
 		"engine.font.loading.failed.read": "フォント読み込み失敗。ファイルの読み込みに失敗しました。ファイルパス：",
 		"engine.font.loading.failed.unsupported": "フォント読み込み失敗。未対応の拡張子です。ファイルパス：",
 		"engine.font.loading.succeeded": "フォント読み込み成功。ファイルパス：",
+
+		//--------- engine.bitmapfont ---------//
+		"engine.bitmapfont.loading.failed.notfound": "ビットマップフォント読み込み失敗。ファイルが見つかりません。ファイルパス：",
+		"engine.bitmapfont.loading.failed.nopage": "ビットマップフォント読み込み失敗。ページ（テクスチャ）が定義されていません。ファイルパス：",
+		"engine.bitmapfont.loading.failed.pagenotfound": "ビットマップフォント読み込み失敗。ページ画像と同名の読み込み済みテクスチャが見つかりません（ページ画像をAssets配下のどこかに配置してください）。ファイル名：",
+		"engine.bitmapfont.loading.failed.read": "ビットマップフォント読み込み失敗。ファイルを開けませんでした。ファイルパス：",
+		"engine.bitmapfont.loading.failed.unsupported": "ビットマップフォント読み込み失敗。未対応の拡張子です。ファイルパス：",
+		"engine.bitmapfont.loading.succeeded": "ビットマップフォント読み込み成功。ファイルパス：",
+		"engine.bitmapfont.loading.warning.multipage": "このビットマップフォントは複数ページ構成です。先頭ページのみ使用します。ファイルパス：",
 
 		//--------- engine.gpuparticle ---------//
 		"engine.gpuparticle.dispatching": "GPUパーティクルのディスパッチを開始します。エミッター数：",

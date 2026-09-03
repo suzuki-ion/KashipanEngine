@@ -315,6 +315,9 @@
     <ClCompile Include="KashipanEngine\Assets\FontManager.cpp">
       <Filter>KashipanEngine\Assets</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Assets\BitmapFontManager.cpp">
+      <Filter>KashipanEngine\Assets</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Assets\MaterialManager.cpp">
       <Filter>KashipanEngine\Assets</Filter>
     </ClCompile>
@@ -858,6 +861,9 @@
       <Filter>KashipanEngine\Assets</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Assets\FontManager.h">
+      <Filter>KashipanEngine\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\BitmapFontManager.h">
       <Filter>KashipanEngine\Assets</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Assets\MaterialManager.h">
@@ -1404,6 +1410,9 @@
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Render\TextRenderer.h">
+      <Filter>KashipanEngine\Objects\Components\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\BitmapTextRenderer.h">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Render\SkinnedMeshRenderer.h">

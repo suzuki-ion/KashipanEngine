@@ -72,6 +72,10 @@ public:
     const std::string &GetName() const { return name_; }
     const std::string &GetNextSceneName() const { return nextSceneName_; }
     SceneContext *GetSceneContext() const { return sceneContext_.get(); }
+    /// @brief シーンの識別ID（シーンJSONの"sceneID"）を取得する
+    /// @details シーン名は変更されうるため、シーンごとのエディター設定（EditorSettings）の
+    ///          キーにはこちらを使う（SceneEditorView::EnsureSceneViewObject参照）
+    const UUID128 &GetSceneID() const noexcept { return sceneID_; }
 
     void InitializeInterface(Passkey<SceneManager>) { OnInitialize(); }
     void FinalizeInterface(Passkey<SceneManager>) { OnFinalize(); }

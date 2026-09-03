@@ -22,12 +22,14 @@
 #include "Scene/Components/SceneObjectCollider.h"
 #include "Graphics/ScreenBuffer.h"
 #include "Graphics/Resources/ConstantBufferResource.h"
+#include "Scene/RenderTargetCarryOverRegistry.h"
 #include "Objects/EmptyObject.h"
 #include "Objects/Components/MeshFilter.h"
 #include "Objects/Components/Render/Camera2D.h"
 #include "Objects/Components/Render/Camera3D.h"
 #include "Objects/Components/Render/CameraRenderer.h"
 #include "Objects/Components/Render/SceneViewOrbitState.h"
+#include "Objects/Components/Render/SceneViewCameraSettings.h"
 #include "Objects/Components/Render/Light.h"
 #include "Objects/Components/Render/LightRenderer.h"
 #include "Objects/Components/Render/MeshRenderer.h"
@@ -70,14 +72,10 @@ SceneEditorView::SceneEditorView(Passkey<SceneEditor>, SceneEditorContext *conte
     else if (displayModeStr == "TwoDOnly") displayMode_ = SceneRenderer::EditorDisplayMode::TwoDOnly;
     else displayMode_ = SceneRenderer::EditorDisplayMode::Combined;
 
-    // 「2D」表示モード専用のパン・ズームカメラの状態を復元する（再起動後も維持される）
-    pan2D_.x = EditorSettings::GetFloat("sceneView.pan2D.x", 0.0f);
-    pan2D_.y = EditorSettings::GetFloat("sceneView.pan2D.y", 0.0f);
-    zoom2D_ = EditorSettings::GetFloat("sceneView.zoom2D", 5.0f);
-
-    // カメラ操作モード・フライ速度を復元する（再起動後も維持される）
-    flyMode_ = EditorSettings::GetBool("sceneView.flyMode", false);
-    flySpeed_ = EditorSettings::GetFloat("sceneView.flySpeed", 5.0f);
+    // 3D/2Dカメラの位置・向き・パン・ズーム等はシーンごとにEditorSettingsへ保存される。
+    // ここではまだシーンIDが確定していない（Scene::Sceneのデリゲートコンストラクタ経由で
+    // このSceneEditorViewが構築される時点では、JSONからのsceneID_読み込みがまだ行われていない）
+    // ため、初回のEnsureCameraSettingsComponentで遅延読み込みする
 
     // 背景設定を復元する（再起動後も維持される）
     backgroundColor_.x = EditorSettings::GetFloat("sceneView.backgroundColor.r", 0.0f);
@@ -95,15 +93,23 @@ SceneEditorView::~SceneEditorView() {
             sceneRenderer->SetEditorGhostPreviewMeshes({});
         }
     }
-    // screenBuffer_ の実体は sceneViewObject_ の ScreenBufferObject コンポーネントが所有している。
-    // シーン破棄時はそちらの Finalize() が RenderTargetCarryOverRegistry 経由で後始末
-    // （同名コンポーネントへの引き継ぎ、または破棄）を行うため、ここでは何もしない
+    // screenBuffer_ はこのクラスが直接所有している（ScreenBufferObjectコンポーネントを介さない）。
+    // ScreenBufferObject::Finalizeと同様、実際には即座に破棄せず次のシーンの
+    // SceneEditorViewへの引き継ぎ候補としてRenderTargetCarryOverRegistryへ預ける
+    // （シーン切り替え中でなければ即座に破棄される）
+    if (screenBuffer_ && ScreenBuffer::IsExist(screenBuffer_)) {
+        RenderTargetCarryOverRegistry::Deposit(RenderTargetCarryOverRegistry::Kind::ScreenBuffer, kScreenBufferName, screenBuffer_,
+            [b = screenBuffer_] { if (ScreenBuffer::IsExist(b)) b->DestroyNotify(); });
+    }
     screenBuffer_ = nullptr;
     sceneViewObject_ = nullptr;
 }
 
 void SceneEditorView::ShowImGui(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands, SceneObjectHierarchy *hierarchy) {
     EnsureResources();
+    // SceneViewCameraSettingsコンポーネント（Inspectorでの編集結果）を読み取り、
+    // このクラスの内部状態（target_/eye_/yaw_/pitch_/...）へ反映する
+    PullCameraSettingsFromComponent();
     UpdateCameraBuffer();
     UpdateCamera2DBuffer();
     RegisterEditorTarget();
@@ -113,13 +119,21 @@ void SceneEditorView::ShowImGui(const std::unordered_set<EmptyObject *> &selecte
         sceneRenderer->SetEditorSelectedObjects(selectedObjects);
     }
     ShowSceneViewWindow(selectedObjects, commands, hierarchy);
+    // マウス操作（HandleCameraInput等）による今フレームの変更をコンポーネント・EditorSettingsへ反映する
+    PushCameraSettingsToComponent();
 }
 
 void SceneEditorView::EnsureResources() {
     EnsureSceneViewObject();
-    if (sceneViewObject_) {
-        if (auto *screenBufferObject = sceneViewObject_->GetComponent<ScreenBufferObject>()) {
-            screenBuffer_ = screenBufferObject->GetScreenBuffer();
+    EnsureCameraSettingsComponent();
+    if (!screenBuffer_ || !ScreenBuffer::IsExist(screenBuffer_)) {
+        // シーン切り替え中であれば、直前のSceneEditorViewが預けたバッファを引き継ぐ
+        // （引き継げればサイズ・内容がそのまま継続し、チラつきや無駄な再生成を避けられる）
+        if (auto *carried = static_cast<ScreenBuffer *>(
+                RenderTargetCarryOverRegistry::Claim(RenderTargetCarryOverRegistry::Kind::ScreenBuffer, kScreenBufferName))) {
+            screenBuffer_ = carried;
+        } else {
+            screenBuffer_ = ScreenBuffer::Create(1280, 720, kScreenBufferName);
         }
     }
     if (!cameraBuffer_) {
@@ -128,6 +142,13 @@ void SceneEditorView::EnsureResources() {
     if (!camera2DBuffer_) {
         camera2DBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(Camera2DConstant));
     }
+}
+
+void SceneEditorView::StripLegacyScreenBufferComponent(EmptyObject *sceneViewObject) {
+    if (!sceneViewObject) return;
+    if (!sceneViewObject->GetComponent<ScreenBufferObject>()) return;
+    // RemoveComponent経由でFinalize()を呼び、旧バッファを正しく後始末（登録解除）させてから取り除く
+    sceneViewObject->RemoveComponents<ScreenBufferObject>();
 }
 
 void SceneEditorView::EnsureSceneViewObject() {
@@ -139,12 +160,17 @@ void SceneEditorView::EnsureSceneViewObject() {
     // と同じ方式でダングリングポインタ参照を避ける）
     if (sceneViewObjectID_.IsValid()) {
         sceneViewObject_ = context_->GetSceneObject(sceneViewObjectID_);
-        if (sceneViewObject_) return;
+        if (sceneViewObject_) {
+            StripLegacyScreenBufferComponent(sceneViewObject_);
+            return;
+        }
     }
 
     for (auto *obj : context_->GetSceneObjects()) {
         if (!obj || !obj->IsEditorOnly()) continue;
-        if (obj->GetComponent<Camera3D>() && obj->GetComponent<ScreenBufferObject>()) {
+        // 新方式のSceneViewCameraSettings、または旧バージョンで残っているCamera3D（移行対象）
+        // のどちらかを持っていれば「Scene View」オブジェクトとみなす
+        if (obj->GetComponent<SceneViewCameraSettings>() || obj->GetComponent<Camera3D>()) {
             sceneViewObject_ = obj;
             break;
         }
@@ -152,63 +178,171 @@ void SceneEditorView::EnsureSceneViewObject() {
 
     if (sceneViewObject_) {
         sceneViewObjectID_ = sceneViewObject_->GetObjectID();
-        // 既存オブジェクトが見つかった場合は、そのTransformから内部状態（yaw_/pitch_/target_/eye_）を
-        // 逆算する。distance_はTransformに保存されない値のためSceneViewOrbitStateコンポーネントに
-        // 保存しておいた値を使う（無ければ付与する）
-        if (auto *transform = sceneViewObject_->GetComponent<Transform>()) {
-            if (!sceneViewObject_->GetComponent<SceneViewOrbitState>()) {
-                sceneViewObject_->AddComponent<SceneViewOrbitState>();
-            }
-            SyncCameraStateFromTransform(transform);
-            // 以後UpdateCameraBufferが書き込む値との比較基準を、今読み取った現在値に合わせておく
-            // （そうしないと、今回の逆算結果を再計算した値がこの生Transformの値とわずかに異なる場合に、
-            // 外部変更と誤認して次のフレームにも無駄な再同期が走ってしまう）
-            lastAppliedPosition_ = transform->GetTranslate();
-            lastAppliedRotation_ = transform->GetRotateQuaternion();
-            hasLastAppliedCameraTransform_ = true;
-        }
+        // 旧バージョンで保存されたシーンJSONに残っているScreenBufferObjectを取り除く
+        // （残したままだと、このクラスが直接生成するscreenBuffer_と同名バッファが二重に
+        // 生成されてしまう）
+        StripLegacyScreenBufferComponent(sceneViewObject_);
         return;
     }
 
-    // シーン上に見つからない場合は新規作成する。ScreenBufferObjectの内部バッファ自動生成と
-    // 同様のブートストラップ処理のため、Undo/Redoコマンドは通さない
+    // シーン上に見つからない場合は新規作成する。ブートストラップ処理のため、Undo/Redoコマンドは通さない。
+    // カメラの実体はこのクラスが直接持つため、ここではTransform（自動付与、未使用）のみを持つ
+    // 空オブジェクトを作る。SceneViewCameraSettingsコンポーネントはEnsureCameraSettingsComponent
+    // が付与する
     EmptyObject *newObj = context_->CreateEmptyObject("Scene View");
     if (!newObj) return;
     newObj->SetEditorOnly(true);
-    newObj->AddComponent<Camera3D>();
-    newObj->AddComponent<SceneViewOrbitState>();
-    if (auto *screenBufferObject = newObj->AddComponent<ScreenBufferObject>()) {
-        screenBufferObject->SetName("EditorSceneView");
-    }
     sceneViewObject_ = newObj;
     sceneViewObjectID_ = newObj->GetObjectID();
-    // 新規作成時は既存の既定値（target(0,0,0)・distance 10・yaw 0・pitch 0.3）をそのまま使う。
-    // hasLastAppliedCameraTransform_ をtrueにしておくことで、この直後に走るUpdateCameraBufferが
-    // 生成直後のTransform（原点・無回転）を「外部変更」と誤認して既定値を上書きしてしまうのを防ぐ
-    hasLastAppliedCameraTransform_ = true;
+}
+
+void SceneEditorView::EnsureCameraSettingsComponent() {
+    if (!sceneViewObject_) return;
+
+    auto *settings = sceneViewObject_->GetComponent<SceneViewCameraSettings>();
+    if (!settings) settings = sceneViewObject_->AddComponent<SceneViewCameraSettings>();
+    if (!settings) return;
+
+    auto *legacyCamera3d = sceneViewObject_->GetComponent<Camera3D>();
+    if (!hasLoadedCameraSettings_) {
+        hasLoadedCameraSettings_ = true;
+        if (!LoadCameraSettingsFromEditorSettings() && legacyCamera3d) {
+            // このシーン用の保存値がまだ無く、旧バージョンのCamera3D/Transformが残っている場合、
+            // 直前まで使っていたカメラ位置をリセットせずに引き継ぐ
+            MigrateLegacyCameraState(legacyCamera3d);
+        }
+        // 読み込み/移行した値を、この時点でコンポーネントへも反映しておく（直後にこの関数の
+        // 呼び出し元が行うPullCameraSettingsFromComponentで、コンポーネント側のまだ既定値のままの
+        // フィールドによって上書きされてしまうのを防ぐ）
+        settings->target = target_;
+        settings->eye = eye_;
+        settings->distance = distance_;
+        settings->yawDegrees = yaw_ * (180.0f / std::numbers::pi_v<float>);
+        settings->pitchDegrees = pitch_ * (180.0f / std::numbers::pi_v<float>);
+        settings->flyMode = flyMode_;
+        settings->flySpeed = flySpeed_;
+        settings->fovY = fovY_;
+        settings->nearClip = nearClip_;
+        settings->farClip = farClip_;
+        settings->enableJitter = enableJitter_;
+        settings->pan2D = pan2D_;
+        settings->zoom2D = zoom2D_;
+        settings->cameraDistance2D = cameraDistance2D_;
+    }
+
+    // 旧バージョンのコンポーネントは、移行の有無に関わらず必ず取り除く
+    // （残しておくとカメラの実体が二重に存在してしまうため）
+    if (legacyCamera3d) sceneViewObject_->RemoveComponents<Camera3D>();
+    if (sceneViewObject_->GetComponent<SceneViewOrbitState>()) sceneViewObject_->RemoveComponents<SceneViewOrbitState>();
+}
+
+void SceneEditorView::MigrateLegacyCameraState(Camera3D *legacyCamera3d) {
+    if (!sceneViewObject_ || !legacyCamera3d) return;
+    if (auto *transform = sceneViewObject_->GetComponent<Transform>()) {
+        const Vector3 forward = transform->GetRotateQuaternion().RotateVector(Vector3(0.0f, 0.0f, 1.0f));
+        yaw_ = std::atan2(forward.x, forward.z);
+        pitch_ = std::clamp(std::asin(std::clamp(-forward.y, -1.0f, 1.0f)), -1.55f, 1.55f);
+        if (auto *orbitState = sceneViewObject_->GetComponent<SceneViewOrbitState>()) {
+            distance_ = orbitState->GetDistance();
+        }
+        eye_ = transform->GetTranslate();
+        target_ = eye_ + forward * distance_;
+    }
+    fovY_ = legacyCamera3d->GetFovY();
+    nearClip_ = legacyCamera3d->GetNearClip();
+    farClip_ = legacyCamera3d->GetFarClip();
+    enableJitter_ = legacyCamera3d->IsJitterEnabled();
+}
+
+void SceneEditorView::PullCameraSettingsFromComponent() {
+    auto *settings = sceneViewObject_ ? sceneViewObject_->GetComponent<SceneViewCameraSettings>() : nullptr;
+    if (!settings) return;
+    constexpr float kDegToRad = std::numbers::pi_v<float> / 180.0f;
+    target_ = settings->target;
+    eye_ = settings->eye;
+    distance_ = settings->distance;
+    yaw_ = settings->yawDegrees * kDegToRad;
+    pitch_ = std::clamp(settings->pitchDegrees * kDegToRad, -1.55f, 1.55f);
+    flyMode_ = settings->flyMode;
+    flySpeed_ = settings->flySpeed;
+    fovY_ = settings->fovY;
+    nearClip_ = settings->nearClip;
+    farClip_ = settings->farClip;
+    enableJitter_ = settings->enableJitter;
+    pan2D_ = settings->pan2D;
+    zoom2D_ = settings->zoom2D;
+    cameraDistance2D_ = settings->cameraDistance2D;
+}
+
+void SceneEditorView::PushCameraSettingsToComponent() {
+    constexpr float kRadToDeg = 180.0f / std::numbers::pi_v<float>;
+    if (auto *settings = sceneViewObject_ ? sceneViewObject_->GetComponent<SceneViewCameraSettings>() : nullptr) {
+        settings->target = target_;
+        settings->eye = eye_;
+        settings->distance = distance_;
+        settings->yawDegrees = yaw_ * kRadToDeg;
+        settings->pitchDegrees = pitch_ * kRadToDeg;
+        settings->flyMode = flyMode_;
+        settings->flySpeed = flySpeed_;
+        settings->fovY = fovY_;
+        settings->nearClip = nearClip_;
+        settings->farClip = farClip_;
+        settings->enableJitter = enableJitter_;
+        settings->pan2D = pan2D_;
+        settings->zoom2D = zoom2D_;
+        settings->cameraDistance2D = cameraDistance2D_;
+    }
+
+    if (!context_) return;
+    JSON json;
+    json["target"] = ToJSON(target_);
+    json["eye"] = ToJSON(eye_);
+    json["distance"] = distance_;
+    json["yawDegrees"] = yaw_ * kRadToDeg;
+    json["pitchDegrees"] = pitch_ * kRadToDeg;
+    json["flyMode"] = flyMode_;
+    json["flySpeed"] = flySpeed_;
+    json["fovY"] = fovY_;
+    json["nearClip"] = nearClip_;
+    json["farClip"] = farClip_;
+    json["enableJitter"] = enableJitter_;
+    json["pan2D"] = ToJSON(pan2D_);
+    json["zoom2D"] = zoom2D_;
+    json["cameraDistance2D"] = cameraDistance2D_;
+    // 値が前回保存時から変わっていない場合、EditorSettings::SetJSON内部の比較により
+    // 実際のファイル書き込みは発生しない（毎フレーム呼んでも無駄なIOにはならない）
+    EditorSettings::SetJSON(BuildCameraSettingsKey(), json);
+}
+
+std::string SceneEditorView::BuildCameraSettingsKey() const {
+    return context_ ? ("sceneView.camera." + context_->GetSceneID().ToString()) : std::string{};
+}
+
+bool SceneEditorView::LoadCameraSettingsFromEditorSettings() {
+    if (!context_) return false;
+    const JSON stored = EditorSettings::GetJSON(BuildCameraSettingsKey(), JSON());
+    if (!stored.is_object() || stored.empty()) return false;
+
+    constexpr float kDegToRad = std::numbers::pi_v<float> / 180.0f;
+    if (stored.contains("target")) target_ = FromJSON<Vector3>(stored["target"]);
+    if (stored.contains("eye")) eye_ = FromJSON<Vector3>(stored["eye"]);
+    distance_ = stored.value("distance", distance_);
+    yaw_ = stored.value("yawDegrees", yaw_ / kDegToRad) * kDegToRad;
+    pitch_ = std::clamp(stored.value("pitchDegrees", pitch_ / kDegToRad) * kDegToRad, -1.55f, 1.55f);
+    flyMode_ = stored.value("flyMode", flyMode_);
+    flySpeed_ = stored.value("flySpeed", flySpeed_);
+    fovY_ = stored.value("fovY", fovY_);
+    nearClip_ = stored.value("nearClip", nearClip_);
+    farClip_ = stored.value("farClip", farClip_);
+    enableJitter_ = stored.value("enableJitter", enableJitter_);
+    if (stored.contains("pan2D")) pan2D_ = FromJSON<Vector2>(stored["pan2D"]);
+    zoom2D_ = stored.value("zoom2D", zoom2D_);
+    cameraDistance2D_ = stored.value("cameraDistance2D", cameraDistance2D_);
+    return true;
 }
 
 void SceneEditorView::UpdateCameraBuffer() {
     if (!cameraBuffer_ || !screenBuffer_ || !sceneViewObject_) return;
-    auto *transform = sceneViewObject_->GetComponent<Transform>();
-    auto *camera3d = sceneViewObject_->GetComponent<Camera3D>();
-    if (!transform || !camera3d) return;
-
-    // 前回自分がTransformへ書き込んだ値から変わっていたら（Inspector編集・Undo/Redo等の外部変更）、
-    // 現在のTransformから内部状態（yaw_/pitch_/target_/eye_）を再同期してから計算する
-    const Vector3 currentTranslate = transform->GetTranslate();
-    const Quaternion currentRotation = transform->GetRotateQuaternion();
-    constexpr float kPositionEpsilon = 1e-4f;
-    constexpr float kRotationEpsilon = 1e-5f;
-    const bool positionChangedExternally = (currentTranslate - lastAppliedPosition_).Length() > kPositionEpsilon;
-    const bool rotationChangedExternally =
-        std::abs(currentRotation.x - lastAppliedRotation_.x) > kRotationEpsilon ||
-        std::abs(currentRotation.y - lastAppliedRotation_.y) > kRotationEpsilon ||
-        std::abs(currentRotation.z - lastAppliedRotation_.z) > kRotationEpsilon ||
-        std::abs(currentRotation.w - lastAppliedRotation_.w) > kRotationEpsilon;
-    if (!hasLastAppliedCameraTransform_ || positionChangedExternally || rotationChangedExternally) {
-        SyncCameraStateFromTransform(transform);
-    }
 
     // ピッチ→ヨーの順で回転（行ベクトル規約）
     Matrix4x4 rotateX;
@@ -226,30 +360,25 @@ void SceneEditorView::UpdateCameraBuffer() {
         eye_ = target_ - forward * distance_;
     }
 
-    // 算出した位置・向きをTransformへ書き戻す（シーン保存時にそのまま永続化される）
-    transform->SetTranslate(eye_);
-    transform->SetRotateQuaternion(Quaternion::MakeFromRotationMatrix(rotation));
-    lastAppliedPosition_ = eye_;
-    lastAppliedRotation_ = Quaternion::MakeFromRotationMatrix(rotation);
-    hasLastAppliedCameraTransform_ = true;
-    // distance_はTransformに残らないため、SceneViewOrbitStateへ書き戻して永続化する
-    if (auto *orbitState = sceneViewObject_->GetComponent<SceneViewOrbitState>()) {
-        orbitState->SetDistance(distance_);
-    }
+    // ワールド行列を直接組み立てる（以前はTransformコンポーネント経由で計算していたが、
+    // カメラの実体はもうTransformを使わないため、Transform::GetWorldMatrixと同じ計算
+    // （回転→平行移動、スケールは常に単位行列扱い）をここで直接行う）
+    Matrix4x4 translateMat;
+    translateMat.MakeTranslate(eye_);
+    const Matrix4x4 world = rotation * translateMat;
+    view_ = world.Inverse();
 
-    view_ = transform->GetWorldMatrix().Inverse();
     const float width = static_cast<float>(screenBuffer_->GetWidth());
     const float height = static_cast<float>(screenBuffer_->GetHeight());
     const float aspect = (height > 0.0f) ? (width / height) : (16.0f / 9.0f);
-    camera3d->SetAspectRatio(aspect);
-    projection_.MakePerspectiveFovMatrix(camera3d->GetFovY(), aspect, camera3d->GetNearClip(), camera3d->GetFarClip());
+    projection_.MakePerspectiveFovMatrix(fovY_, aspect, nearClip_, farClip_);
 
     // GPUへアップロードする投影行列にのみジッターを適用する。projection_自体（メンバ変数）は
     // シャドウのカスケードフィッティングやギズモ操作のワールド→スクリーン変換（ScreenToWorld等）
     // で参照されるため、非ジッターのまま保つ
     Matrix4x4 gpuProjection = projection_;
-    if (camera3d->IsJitterEnabled()) {
-        camera3d->ApplyProjectionJitter(gpuProjection);
+    if (enableJitter_) {
+        ApplyCameraJitter(gpuProjection, aspect);
     }
 
     CameraConstant constant{};
@@ -257,7 +386,7 @@ void SceneEditorView::UpdateCameraBuffer() {
     constant.projection = gpuProjection;
     constant.viewProjection = view_ * gpuProjection;
     constant.eyePosition = Vector4(eye_.x, eye_.y, eye_.z, 1.0f);
-    constant.fov = camera3d->GetFovY();
+    constant.fov = fovY_;
     cameraEye_ = eye_;
 
     if (void *mapped = cameraBuffer_->Map()) {
@@ -270,16 +399,17 @@ void SceneEditorView::UpdateCamera2DBuffer() {
 
     // パン位置(pan2D_)を見る正射影カメラ。Z軸方向を向く固定姿勢（SpriteRendererの単位クアッドが
     // 乗るXY平面を正面から見る）で、3Dフリーカメラのyaw_/pitch_等とは完全に独立している。
-    // カメラ自身はZ=0ではなく、コンテンツより手前(-kCameraDistance)に置く。SpriteRendererの
+    // カメラ自身はZ=0ではなく、コンテンツより手前(-cameraDistance2D_)に置く。SpriteRendererの
     // Transformは既定でZ=0のことが多く、もしカメラもZ=0に置くと近クリップ面(near)より
     // 手前になってしまい、ピッキングのレイ（near→farの方向にしか伸びない）が理論上絶対に
     // そのオブジェクトへ到達しない（tが負になり棄却される）。実際、既存シーンのSpriteRendererは
-    // Z=0.0で登録されており、この状態でクリック選択が不安定になる根本原因だった
-    constexpr float kCameraDistance = 500.0f;
+    // Z=0.0で登録されており、この状態でクリック選択が不安定になる根本原因だった。
+    // Inspectorから編集可能なため、0以下（near/farが破綻する）にならないようクランプする
+    const float cameraDistance = std::max(cameraDistance2D_, 1.0f);
     view2D_ = Matrix4x4::Identity();
     view2D_.m[3][0] = -pan2D_.x;
     view2D_.m[3][1] = -pan2D_.y;
-    view2D_.m[3][2] = kCameraDistance;
+    view2D_.m[3][2] = cameraDistance;
 
     const float width = static_cast<float>(screenBuffer_->GetWidth());
     const float height = static_cast<float>(screenBuffer_->GetHeight());
@@ -290,9 +420,9 @@ void SceneEditorView::UpdateCamera2DBuffer() {
     // top=0, bottom=heightを渡しており、Y=0が画面下端・Y=heightが画面上端になる
     // （＝左下(0,0)原点、Y上向きのワールド座標系）。ここでも同じ規約に合わせ、
     // 画面下端に対応する値(-zoom2D_)をtopへ、画面上端に対応する値(+zoom2D_)をbottomへ渡す。
-    // near/farはカメラ位置(kCameraDistance手前)を基準にした相対値で、Z=0付近を中心に
-    // ±kCameraDistance程度の余裕を持たせ、多少Zがずれているコンテンツも問題なく拾えるようにする
-    projection2D_.MakeOrthographicMatrix(-zoom2D_ * aspect, -zoom2D_, zoom2D_ * aspect, zoom2D_, 0.1f, kCameraDistance * 2.0f);
+    // near/farはカメラ位置(cameraDistance手前)を基準にした相対値で、Z=0付近を中心に
+    // ±cameraDistance程度の余裕を持たせ、多少Zがずれているコンテンツも問題なく拾えるようにする
+    projection2D_.MakeOrthographicMatrix(-zoom2D_ * aspect, -zoom2D_, zoom2D_ * aspect, zoom2D_, 0.1f, cameraDistance * 2.0f);
 
     Camera2DConstant constant{};
     constant.view = view2D_;
@@ -303,29 +433,51 @@ void SceneEditorView::UpdateCamera2DBuffer() {
     }
 }
 
-void SceneEditorView::SyncCameraStateFromTransform(Transform *transform) {
-    if (!transform || !sceneViewObject_) return;
-    const Vector3 forward = transform->GetRotateQuaternion().RotateVector(Vector3(0.0f, 0.0f, 1.0f));
-    yaw_ = std::atan2(forward.x, forward.z);
-    pitch_ = std::clamp(std::asin(std::clamp(-forward.y, -1.0f, 1.0f)), -1.55f, 1.55f);
-    if (auto *orbitState = sceneViewObject_->GetComponent<SceneViewOrbitState>()) {
-        distance_ = orbitState->GetDistance();
+namespace {
+/// @brief Halton(base)列のindex番目の値を[0,1)で返す（カメラジッター用の低差異乱数。
+///        Camera3D::HaltonSequenceと同一実装）
+float HaltonSequence(std::uint32_t index, std::uint32_t base) noexcept {
+    float result = 0.0f;
+    float f = 1.0f / static_cast<float>(base);
+    std::uint32_t i = index;
+    while (i > 0) {
+        result += f * static_cast<float>(i % base);
+        i /= base;
+        f /= static_cast<float>(base);
     }
-    eye_ = transform->GetTranslate();
-    target_ = eye_ + forward * distance_;
+    return result;
+}
+} // namespace
+
+void SceneEditorView::ApplyCameraJitter(Matrix4x4 &projection, float aspect) {
+    // Halton(2,3)列を8点周期で回す。0番目は(0,0)で偏るため1から使う（Camera3D::ApplyProjectionJitter参照）
+    constexpr std::uint32_t kJitterPeriod = 8;
+    const std::uint32_t index = (jitterIndex_ % kJitterPeriod) + 1;
+    ++jitterIndex_;
+    const float hx = HaltonSequence(index, 2) - 0.5f;
+    const float hy = HaltonSequence(index, 3) - 0.5f;
+
+    constexpr float kJitterReferenceHeight = 1080.0f;
+    const float referenceWidth = kJitterReferenceHeight * aspect;
+    const float jitterX = hx * (2.0f / referenceWidth);
+    const float jitterY = hy * (2.0f / kJitterReferenceHeight);
+
+    // 透視投影ではview空間zがそのままwになる行（3行目）へ加算することで、
+    // 透視除算後に深度へ依らず一定のNDCオフセットになる（シーンビューは常に透視投影）
+    projection.m[2][0] += jitterX;
+    projection.m[2][1] += jitterY;
 }
 
 void SceneEditorView::RegisterEditorTarget() {
     if (!context_) return;
     auto *sceneRenderer = context_->GetComponent<SceneRenderer>();
     if (sceneRenderer && screenBuffer_) {
-        auto *camera3d = sceneViewObject_ ? sceneViewObject_->GetComponent<Camera3D>() : nullptr;
         // シャドウマップのカスケード計算用にエディターカメラの情報も渡す
         SceneRenderer::EditorCameraInfo cameraInfo;
         cameraInfo.viewProjection = view_ * projection_;
         cameraInfo.position = cameraEye_;
-        cameraInfo.nearClip = camera3d ? camera3d->GetNearClip() : 0.1f;
-        cameraInfo.farClip = camera3d ? camera3d->GetFarClip() : 1000.0f;
+        cameraInfo.nearClip = nearClip_;
+        cameraInfo.farClip = farClip_;
         cameraInfo.valid = true;
         // オーナーオブジェクトも渡しておくことで、GetTargetOwner経由でこのScreenBufferへの
         // ポストエフェクト適用対象を「Scene View」オブジェクトへ絞り込めるようにする
@@ -405,13 +557,11 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
             // カメラ操作モード（オービット/フライ）の切り替え
             if (ImGui::RadioButton(TranslationLabel("editor.sceneview.camera.orbit"), !flyMode_)) {
                 flyMode_ = false;
-                EditorSettings::SetBool("sceneView.flyMode", flyMode_);
             }
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.camera.orbit.tooltip"));
             ImGui::SameLine();
             if (ImGui::RadioButton(TranslationLabel("editor.sceneview.camera.fly"), flyMode_)) {
                 flyMode_ = true;
-                EditorSettings::SetBool("sceneView.flyMode", flyMode_);
             }
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.camera.fly.tooltip"));
 
@@ -495,9 +645,7 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
         const auto newWidth = static_cast<std::uint32_t>(avail.x);
         const auto newHeight = static_cast<std::uint32_t>(avail.y);
         if (newWidth != screenBuffer_->GetWidth() || newHeight != screenBuffer_->GetHeight()) {
-            if (auto *screenBufferObject = sceneViewObject_ ? sceneViewObject_->GetComponent<ScreenBufferObject>() : nullptr) {
-                screenBufferObject->SetSize(newWidth, newHeight);
-            }
+            screenBuffer_->Resize(newWidth, newHeight);
         }
     }
     const ImVec2 drawSize = avail;
@@ -669,7 +817,6 @@ void SceneEditorView::HandleCameraInput() {
         if (io.MouseWheel != 0.0f) {
             flySpeed_ *= std::pow(1.1f, io.MouseWheel);
             flySpeed_ = std::clamp(flySpeed_, 0.1f, 1000.0f);
-            EditorSettings::SetFloat("sceneView.flySpeed", flySpeed_);
         }
     } else {
         // ホイールでズーム
@@ -716,7 +863,6 @@ void SceneEditorView::HandleCamera2DInput() {
     if (io.MouseWheel != 0.0f) {
         zoom2D_ *= std::pow(0.9f, io.MouseWheel);
         zoom2D_ = std::clamp(zoom2D_, 0.05f, 10000.0f);
-        EditorSettings::SetFloat("sceneView.zoom2D", zoom2D_);
     }
     // 左ドラッグ・中ドラッグどちらでもパンする（3D空間の当たり判定を考える必要が無い2D専用モードのため、
     // 左ドラッグをオブジェクト選択と競合させないよう、選択はクリック＝ドラッグなしの場合のみ反応する
@@ -729,8 +875,6 @@ void SceneEditorView::HandleCamera2DInput() {
             const float worldPerPixel = (zoom2D_ * 2.0f) / heightPx;
             pan2D_.x -= io.MouseDelta.x * worldPerPixel;
             pan2D_.y += io.MouseDelta.y * worldPerPixel;
-            EditorSettings::SetFloat("sceneView.pan2D.x", pan2D_.x);
-            EditorSettings::SetFloat("sceneView.pan2D.y", pan2D_.y);
         }
     }
 }

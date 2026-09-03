@@ -42,12 +42,22 @@ std::unique_ptr<IObjectComponent> Shake::Clone() const {
     ptr->positionAmplitude_ = positionAmplitude_;
     ptr->positionSpeed_ = positionSpeed_;
     ptr->positionEaseType_ = positionEaseType_;
+    ptr->positionAmplitudeStartMultiplier_ = positionAmplitudeStartMultiplier_;
+    ptr->positionAmplitudeEndMultiplier_ = positionAmplitudeEndMultiplier_;
+    ptr->positionSpeedStartMultiplier_ = positionSpeedStartMultiplier_;
+    ptr->positionSpeedEndMultiplier_ = positionSpeedEndMultiplier_;
+    ptr->positionEnvelopeEaseType_ = positionEnvelopeEaseType_;
     ptr->rotationEnableX_ = rotationEnableX_;
     ptr->rotationEnableY_ = rotationEnableY_;
     ptr->rotationEnableZ_ = rotationEnableZ_;
     ptr->rotationAmplitudeDeg_ = rotationAmplitudeDeg_;
     ptr->rotationSpeed_ = rotationSpeed_;
     ptr->rotationEaseType_ = rotationEaseType_;
+    ptr->rotationAmplitudeStartMultiplier_ = rotationAmplitudeStartMultiplier_;
+    ptr->rotationAmplitudeEndMultiplier_ = rotationAmplitudeEndMultiplier_;
+    ptr->rotationSpeedStartMultiplier_ = rotationSpeedStartMultiplier_;
+    ptr->rotationSpeedEndMultiplier_ = rotationSpeedEndMultiplier_;
+    ptr->rotationEnvelopeEaseType_ = rotationEnvelopeEaseType_;
     ptr->autoPlay_ = autoPlay_;
     ptr->duration_ = duration_;
     ptr->processTiming_ = processTiming_;
@@ -117,14 +127,22 @@ float Shake::UpdateAxisRuntime(AxisRuntime &state, bool enabled, float amplitude
 
 void Shake::ComputeOffsets(float dt) {
     const bool playing = isPlaying_;
-    const float px = UpdateAxisRuntime(positionRuntime_[0], playing && positionEnableX_, positionAmplitude_.x, positionSpeed_.x, positionEaseType_, dt);
-    const float py = UpdateAxisRuntime(positionRuntime_[1], playing && positionEnableY_, positionAmplitude_.y, positionSpeed_.y, positionEaseType_, dt);
-    const float pz = UpdateAxisRuntime(positionRuntime_[2], playing && positionEnableZ_, positionAmplitude_.z, positionSpeed_.z, positionEaseType_, dt);
+    const float progress = GetPlayProgress();
+
+    // 振れ幅・スピードへ掛ける時間変化係数（start→endをイージング補間、負値にはならないようclamp）
+    const float posAmplitudeMul = std::max(0.0f, Eased(positionAmplitudeStartMultiplier_, positionAmplitudeEndMultiplier_, progress, positionEnvelopeEaseType_));
+    const float posSpeedMul = std::max(0.0f, Eased(positionSpeedStartMultiplier_, positionSpeedEndMultiplier_, progress, positionEnvelopeEaseType_));
+    const float rotAmplitudeMul = std::max(0.0f, Eased(rotationAmplitudeStartMultiplier_, rotationAmplitudeEndMultiplier_, progress, rotationEnvelopeEaseType_));
+    const float rotSpeedMul = std::max(0.0f, Eased(rotationSpeedStartMultiplier_, rotationSpeedEndMultiplier_, progress, rotationEnvelopeEaseType_));
+
+    const float px = UpdateAxisRuntime(positionRuntime_[0], playing && positionEnableX_, positionAmplitude_.x * posAmplitudeMul, positionSpeed_.x * posSpeedMul, positionEaseType_, dt);
+    const float py = UpdateAxisRuntime(positionRuntime_[1], playing && positionEnableY_, positionAmplitude_.y * posAmplitudeMul, positionSpeed_.y * posSpeedMul, positionEaseType_, dt);
+    const float pz = UpdateAxisRuntime(positionRuntime_[2], playing && positionEnableZ_, positionAmplitude_.z * posAmplitudeMul, positionSpeed_.z * posSpeedMul, positionEaseType_, dt);
     currentPositionOffset_ = Vector3(px, py, pz);
 
-    const float rx = UpdateAxisRuntime(rotationRuntime_[0], playing && rotationEnableX_, rotationAmplitudeDeg_.x, rotationSpeed_.x, rotationEaseType_, dt);
-    const float ry = UpdateAxisRuntime(rotationRuntime_[1], playing && rotationEnableY_, rotationAmplitudeDeg_.y, rotationSpeed_.y, rotationEaseType_, dt);
-    const float rz = UpdateAxisRuntime(rotationRuntime_[2], playing && rotationEnableZ_, rotationAmplitudeDeg_.z, rotationSpeed_.z, rotationEaseType_, dt);
+    const float rx = UpdateAxisRuntime(rotationRuntime_[0], playing && rotationEnableX_, rotationAmplitudeDeg_.x * rotAmplitudeMul, rotationSpeed_.x * rotSpeedMul, rotationEaseType_, dt);
+    const float ry = UpdateAxisRuntime(rotationRuntime_[1], playing && rotationEnableY_, rotationAmplitudeDeg_.y * rotAmplitudeMul, rotationSpeed_.y * rotSpeedMul, rotationEaseType_, dt);
+    const float rz = UpdateAxisRuntime(rotationRuntime_[2], playing && rotationEnableZ_, rotationAmplitudeDeg_.z * rotAmplitudeMul, rotationSpeed_.z * rotSpeedMul, rotationEaseType_, dt);
     currentRotationOffset_ = Vector3(rx * kDegToRad, ry * kDegToRad, rz * kDegToRad);
 }
 
@@ -239,6 +257,13 @@ void Shake::ShowImGui() {
     ImGuiCustom::EditValue(TranslationLabel("component.shake.position_speed"), positionSpeed_, { .vSpeed = 0.1f, .vMin = 0.0f });
     easeCombo("Position Ease", positionEaseType_);
 
+    ImGui::TextUnformatted(TranslationC("component.shake.envelope_section"));
+    ImGui::DragFloat(TranslationLabel("component.shake.position_envelope_amplitude_start"), &positionAmplitudeStartMultiplier_, 0.01f, 0.0f, 10.0f);
+    ImGui::DragFloat(TranslationLabel("component.shake.position_envelope_amplitude_end"), &positionAmplitudeEndMultiplier_, 0.01f, 0.0f, 10.0f);
+    ImGui::DragFloat(TranslationLabel("component.shake.position_envelope_speed_start"), &positionSpeedStartMultiplier_, 0.01f, 0.0f, 10.0f);
+    ImGui::DragFloat(TranslationLabel("component.shake.position_envelope_speed_end"), &positionSpeedEndMultiplier_, 0.01f, 0.0f, 10.0f);
+    easeCombo("Position Envelope Ease", positionEnvelopeEaseType_);
+
     ImGui::Separator();
     ImGui::TextUnformatted(TranslationC("component.shake.rotation_shake"));
     ImGui::Checkbox(TranslationLabel("component.shake.rot_x"), &rotationEnableX_); ImGui::SameLine();
@@ -247,6 +272,13 @@ void Shake::ShowImGui() {
     ImGuiCustom::EditValue(TranslationLabel("component.shake.rotation_amplitude_deg"), rotationAmplitudeDeg_, { .vSpeed = 0.1f, .vMin = 0.0f });
     ImGuiCustom::EditValue(TranslationLabel("component.shake.rotation_speed"), rotationSpeed_, { .vSpeed = 0.1f, .vMin = 0.0f });
     easeCombo("Rotation Ease", rotationEaseType_);
+
+    ImGui::TextUnformatted(TranslationC("component.shake.envelope_section"));
+    ImGui::DragFloat(TranslationLabel("component.shake.rotation_envelope_amplitude_start"), &rotationAmplitudeStartMultiplier_, 0.01f, 0.0f, 10.0f);
+    ImGui::DragFloat(TranslationLabel("component.shake.rotation_envelope_amplitude_end"), &rotationAmplitudeEndMultiplier_, 0.01f, 0.0f, 10.0f);
+    ImGui::DragFloat(TranslationLabel("component.shake.rotation_envelope_speed_start"), &rotationSpeedStartMultiplier_, 0.01f, 0.0f, 10.0f);
+    ImGui::DragFloat(TranslationLabel("component.shake.rotation_envelope_speed_end"), &rotationSpeedEndMultiplier_, 0.01f, 0.0f, 10.0f);
+    easeCombo("Rotation Envelope Ease", rotationEnvelopeEaseType_);
 }
 
 #endif // USE_IMGUI
@@ -259,12 +291,22 @@ JSON Shake::SaveToJson() const {
     json["positionAmplitude"] = ToJSON(positionAmplitude_);
     json["positionSpeed"] = ToJSON(positionSpeed_);
     json["positionEaseType"] = EaseTypeToString(positionEaseType_);
+    json["positionAmplitudeStartMultiplier"] = positionAmplitudeStartMultiplier_;
+    json["positionAmplitudeEndMultiplier"] = positionAmplitudeEndMultiplier_;
+    json["positionSpeedStartMultiplier"] = positionSpeedStartMultiplier_;
+    json["positionSpeedEndMultiplier"] = positionSpeedEndMultiplier_;
+    json["positionEnvelopeEaseType"] = EaseTypeToString(positionEnvelopeEaseType_);
     json["rotationEnableX"] = rotationEnableX_;
     json["rotationEnableY"] = rotationEnableY_;
     json["rotationEnableZ"] = rotationEnableZ_;
     json["rotationAmplitudeDeg"] = ToJSON(rotationAmplitudeDeg_);
     json["rotationSpeed"] = ToJSON(rotationSpeed_);
     json["rotationEaseType"] = EaseTypeToString(rotationEaseType_);
+    json["rotationAmplitudeStartMultiplier"] = rotationAmplitudeStartMultiplier_;
+    json["rotationAmplitudeEndMultiplier"] = rotationAmplitudeEndMultiplier_;
+    json["rotationSpeedStartMultiplier"] = rotationSpeedStartMultiplier_;
+    json["rotationSpeedEndMultiplier"] = rotationSpeedEndMultiplier_;
+    json["rotationEnvelopeEaseType"] = EaseTypeToString(rotationEnvelopeEaseType_);
     json["autoPlay"] = autoPlay_;
     json["duration"] = duration_;
     json["processTiming"] = static_cast<int>(processTiming_);
@@ -279,6 +321,11 @@ bool Shake::LoadFromJson(const JSON &json) {
     if (json.contains("positionAmplitude")) positionAmplitude_ = FromJSON<Vector3>(json["positionAmplitude"]);
     if (json.contains("positionSpeed")) positionSpeed_ = FromJSON<Vector3>(json["positionSpeed"]);
     positionEaseType_ = StringToEaseType(json.value("positionEaseType", std::string("Linear")));
+    positionAmplitudeStartMultiplier_ = json.value("positionAmplitudeStartMultiplier", 1.0f);
+    positionAmplitudeEndMultiplier_ = json.value("positionAmplitudeEndMultiplier", 1.0f);
+    positionSpeedStartMultiplier_ = json.value("positionSpeedStartMultiplier", 1.0f);
+    positionSpeedEndMultiplier_ = json.value("positionSpeedEndMultiplier", 1.0f);
+    positionEnvelopeEaseType_ = StringToEaseType(json.value("positionEnvelopeEaseType", std::string("Linear")));
 
     rotationEnableX_ = json.value("rotationEnableX", false);
     rotationEnableY_ = json.value("rotationEnableY", false);
@@ -286,6 +333,11 @@ bool Shake::LoadFromJson(const JSON &json) {
     if (json.contains("rotationAmplitudeDeg")) rotationAmplitudeDeg_ = FromJSON<Vector3>(json["rotationAmplitudeDeg"]);
     if (json.contains("rotationSpeed")) rotationSpeed_ = FromJSON<Vector3>(json["rotationSpeed"]);
     rotationEaseType_ = StringToEaseType(json.value("rotationEaseType", std::string("Linear")));
+    rotationAmplitudeStartMultiplier_ = json.value("rotationAmplitudeStartMultiplier", 1.0f);
+    rotationAmplitudeEndMultiplier_ = json.value("rotationAmplitudeEndMultiplier", 1.0f);
+    rotationSpeedStartMultiplier_ = json.value("rotationSpeedStartMultiplier", 1.0f);
+    rotationSpeedEndMultiplier_ = json.value("rotationSpeedEndMultiplier", 1.0f);
+    rotationEnvelopeEaseType_ = StringToEaseType(json.value("rotationEnvelopeEaseType", std::string("Linear")));
 
     autoPlay_ = json.value("autoPlay", true);
     duration_ = json.value("duration", 0.0f);

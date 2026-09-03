@@ -14,6 +14,12 @@ namespace KashipanEngine {
 /// @details 位置・回転それぞれXYZ軸ごとに有効/無効・振れ幅・目標値へ到達する速度・
 ///          イージング種類を設定できる。各軸は独立して「ランダムな目標値」を選び直し、
 ///          指定した速度とイージングでその目標値へ向かって遷移し続けることで揺れを表現する。
+///          - 振れ幅・スピードの時間変化（エンベロープ）:
+///            再生開始(0%)〜終了(100%)の進行度に応じて、振れ幅・スピードそれぞれへ
+///            乗算する係数を開始値→終了値へイージング補間で変化させられる（位置・回転で
+///            それぞれ独立設定）。例えば開始1.0→終了0.0にすれば時間経過で揺れが収まる
+///            演出になる。duration（再生時間）が0以下（無期限再生）の場合は進行度が
+///            常に0%扱いとなり、開始値のまま変化しない。
 ///          - 処理タイミング（ProcessTiming）:
 ///            Immediate  = 自身のUpdate内でその場処理する
 ///            DeferredEnd= SceneShakeApplierへ登録し、全オブジェクトのUpdate/衝突解決が
@@ -42,11 +48,19 @@ public:
         ADD_MEMBER_VARIABLE(positionEnableZ_);
         ADD_MEMBER_VARIABLE(positionAmplitude_);
         ADD_MEMBER_VARIABLE(positionSpeed_);
+        ADD_MEMBER_VARIABLE(positionAmplitudeStartMultiplier_);
+        ADD_MEMBER_VARIABLE(positionAmplitudeEndMultiplier_);
+        ADD_MEMBER_VARIABLE(positionSpeedStartMultiplier_);
+        ADD_MEMBER_VARIABLE(positionSpeedEndMultiplier_);
         ADD_MEMBER_VARIABLE(rotationEnableX_);
         ADD_MEMBER_VARIABLE(rotationEnableY_);
         ADD_MEMBER_VARIABLE(rotationEnableZ_);
         ADD_MEMBER_VARIABLE(rotationAmplitudeDeg_);
         ADD_MEMBER_VARIABLE(rotationSpeed_);
+        ADD_MEMBER_VARIABLE(rotationAmplitudeStartMultiplier_);
+        ADD_MEMBER_VARIABLE(rotationAmplitudeEndMultiplier_);
+        ADD_MEMBER_VARIABLE(rotationSpeedStartMultiplier_);
+        ADD_MEMBER_VARIABLE(rotationSpeedEndMultiplier_);
         ADD_MEMBER_VARIABLE(autoPlay_);
         ADD_MEMBER_VARIABLE(duration_);
     )
@@ -69,6 +83,11 @@ public:
     /// @brief シェイクを停止する（ToTransform適用中だった場合、そのフレームでオフセットが差し引かれ元に戻る）
     void Stop() noexcept { isPlaying_ = false; }
     bool IsPlaying() const noexcept { return isPlaying_; }
+    /// @brief 現在の再生進行度（0.0〜1.0）。durationが0以下（無期限再生）の場合は常に0.0を返す
+    float GetPlayProgress() const noexcept {
+        if (playDuration_ <= 0.0f) return 0.0f;
+        return std::clamp(elapsedPlayTime_ / playDuration_, 0.0f, 1.0f);
+    }
 
     void SetProcessTiming(ProcessTiming timing) noexcept { processTiming_ = timing; }
     ProcessTiming GetProcessTiming() const noexcept { return processTiming_; }
@@ -91,12 +110,36 @@ public:
     void SetPositionSpeed(const Vector3 &speed) noexcept { positionSpeed_ = speed; }
     const Vector3 &GetPositionSpeed() const noexcept { return positionSpeed_; }
 
+    /// @brief 位置の振れ幅に掛かる時間変化係数を設定する（再生開始時=start、再生終了時=end）
+    void SetPositionAmplitudeMultiplier(float start, float end) noexcept { positionAmplitudeStartMultiplier_ = start; positionAmplitudeEndMultiplier_ = end; }
+    float GetPositionAmplitudeStartMultiplier() const noexcept { return positionAmplitudeStartMultiplier_; }
+    float GetPositionAmplitudeEndMultiplier() const noexcept { return positionAmplitudeEndMultiplier_; }
+    /// @brief 位置のスピードに掛かる時間変化係数を設定する（再生開始時=start、再生終了時=end）
+    void SetPositionSpeedMultiplier(float start, float end) noexcept { positionSpeedStartMultiplier_ = start; positionSpeedEndMultiplier_ = end; }
+    float GetPositionSpeedStartMultiplier() const noexcept { return positionSpeedStartMultiplier_; }
+    float GetPositionSpeedEndMultiplier() const noexcept { return positionSpeedEndMultiplier_; }
+    /// @brief 位置の振れ幅・スピード時間変化に使うイージング種類を設定する
+    void SetPositionEnvelopeEaseTypeInt(int type) noexcept { positionEnvelopeEaseType_ = static_cast<EaseType>(type); }
+    int GetPositionEnvelopeEaseTypeInt() const noexcept { return static_cast<int>(positionEnvelopeEaseType_); }
+
     void SetRotationEnable(bool x, bool y, bool z) noexcept { rotationEnableX_ = x; rotationEnableY_ = y; rotationEnableZ_ = z; }
     /// @brief 回転の振れ幅を設定する（度）
     void SetRotationAmplitude(const Vector3 &amplitudeDeg) noexcept { rotationAmplitudeDeg_ = amplitudeDeg; }
     const Vector3 &GetRotationAmplitude() const noexcept { return rotationAmplitudeDeg_; }
     void SetRotationSpeed(const Vector3 &speed) noexcept { rotationSpeed_ = speed; }
     const Vector3 &GetRotationSpeed() const noexcept { return rotationSpeed_; }
+
+    /// @brief 回転の振れ幅に掛かる時間変化係数を設定する（再生開始時=start、再生終了時=end）
+    void SetRotationAmplitudeMultiplier(float start, float end) noexcept { rotationAmplitudeStartMultiplier_ = start; rotationAmplitudeEndMultiplier_ = end; }
+    float GetRotationAmplitudeStartMultiplier() const noexcept { return rotationAmplitudeStartMultiplier_; }
+    float GetRotationAmplitudeEndMultiplier() const noexcept { return rotationAmplitudeEndMultiplier_; }
+    /// @brief 回転のスピードに掛かる時間変化係数を設定する（再生開始時=start、再生終了時=end）
+    void SetRotationSpeedMultiplier(float start, float end) noexcept { rotationSpeedStartMultiplier_ = start; rotationSpeedEndMultiplier_ = end; }
+    float GetRotationSpeedStartMultiplier() const noexcept { return rotationSpeedStartMultiplier_; }
+    float GetRotationSpeedEndMultiplier() const noexcept { return rotationSpeedEndMultiplier_; }
+    /// @brief 回転の振れ幅・スピード時間変化に使うイージング種類を設定する
+    void SetRotationEnvelopeEaseTypeInt(int type) noexcept { rotationEnvelopeEaseType_ = static_cast<EaseType>(type); }
+    int GetRotationEnvelopeEaseTypeInt() const noexcept { return static_cast<int>(rotationEnvelopeEaseType_); }
 
     /// @brief 現在フレームの位置オフセット（ワールド空間、未適用のRenderOnly参照用）
     const Vector3 &GetCurrentPositionOffset() const noexcept { return currentPositionOffset_; }
@@ -136,6 +179,12 @@ private:
     Vector3 positionAmplitude_{ 0.1f, 0.1f, 0.1f };
     Vector3 positionSpeed_{ 20.0f, 20.0f, 20.0f };
     EaseType positionEaseType_ = EaseType::Linear;
+    // 位置の振れ幅・スピードに掛かる時間変化係数（再生進行度0.0〜1.0でstart→endへイージング補間）
+    float positionAmplitudeStartMultiplier_ = 1.0f;
+    float positionAmplitudeEndMultiplier_ = 1.0f;
+    float positionSpeedStartMultiplier_ = 1.0f;
+    float positionSpeedEndMultiplier_ = 1.0f;
+    EaseType positionEnvelopeEaseType_ = EaseType::Linear;
 
     // --- 回転シェイク設定（振れ幅は度で保持し、適用時にラジアンへ変換する） ---
     bool rotationEnableX_ = false;
@@ -144,6 +193,12 @@ private:
     Vector3 rotationAmplitudeDeg_{ 0.0f, 0.0f, 0.0f };
     Vector3 rotationSpeed_{ 20.0f, 20.0f, 20.0f };
     EaseType rotationEaseType_ = EaseType::Linear;
+    // 回転の振れ幅・スピードに掛かる時間変化係数（再生進行度0.0〜1.0でstart→endへイージング補間）
+    float rotationAmplitudeStartMultiplier_ = 1.0f;
+    float rotationAmplitudeEndMultiplier_ = 1.0f;
+    float rotationSpeedStartMultiplier_ = 1.0f;
+    float rotationSpeedEndMultiplier_ = 1.0f;
+    EaseType rotationEnvelopeEaseType_ = EaseType::Linear;
 
     // --- 再生設定 ---
     bool autoPlay_ = true;

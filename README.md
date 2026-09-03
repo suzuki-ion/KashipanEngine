@@ -66,6 +66,7 @@ KashipanEngineの内部コード、及びエディター上の操作やオブジ
 - [ImGui](https://github.com/ocornut/imgui)
 - [Assimp 5.3.0](https://github.com/assimp)
 - [React Physics 3D](https://github.com/DanielChappuis/reactphysics3d)
+- [Box2D](https://github.com/erincatto/box2d)
 - [nlohmann/json](https://github.com/nlohmann/json)
 - [UTF8-CPP](https://github.com/nemtrif/utfcpp)
 - [Angel Script](https://github.com/anjo76/angelscript)
@@ -88,6 +89,7 @@ KashipanEngineは[MIT License](LICENSE)で公開しています。商用利用�
 | ImGui | MIT License |
 | Assimp | BSD 3-Clause License |
 | React Physics 3D | zlib License |
+| Box2D | MIT License |
 | nlohmann/json | MIT License |
 | UTF8-CPP | Boost Software License 1.0 |
 | Angel Script | zlib License（※KashipanEngineにて一部改変） |

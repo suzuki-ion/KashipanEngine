@@ -18,7 +18,7 @@
                         },
                         "translate": {
                             "x": 37.0,
-                            "y": 235.99887084960938,
+                            "y": 234.0,
                             "z": 0.0
                         }
                     },
@@ -99,7 +99,7 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "HP_bar9",
+        "name": "HP_player_bar8",
         "objectID": "8d30b24d-4447-4311-ac99-fec64ff2b373",
         "tag": ""
     },

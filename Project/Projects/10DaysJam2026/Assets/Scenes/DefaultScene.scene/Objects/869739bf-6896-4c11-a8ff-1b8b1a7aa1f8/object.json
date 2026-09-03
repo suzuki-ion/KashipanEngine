@@ -12,13 +12,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 2.0,
-                            "y": 4.999589443206787,
+                            "x": 16.0,
+                            "y": 16.0,
                             "z": 0.999962568283081
                         },
                         "translate": {
-                            "x": 34.0,
-                            "y": 234.0,
+                            "x": 100.0,
+                            "y": 240.0,
                             "z": 0.0
                         }
                     },
@@ -42,7 +42,7 @@
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "App/Sprite/UI/hpBar.png"
+                        "textureAssetPath": "App/Sprite/UI/weponFrame.png"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -55,7 +55,7 @@
                     "customData": {
                         "allowInstancing": true,
                         "anchor": {
-                            "x": 0.0,
+                            "x": 0.5,
                             "y": 1.0
                         },
                         "instanceColor": {
@@ -72,7 +72,7 @@
                         },
                         "instanceUvRotation": 0.0,
                         "instanceUvScale": {
-                            "x": 0.5,
+                            "x": 1.0,
                             "y": 1.0
                         },
                         "instanceUvTranslate": {
@@ -99,9 +99,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "HP_player_bar7",
-        "objectID": "47b45559-9a8b-498d-b7a8-1dfe527b6a1e",
+        "name": "Weapon Frame",
+        "objectID": "869739bf-6896-4c11-a8ff-1b8b1a7aa1f8",
         "tag": ""
     },
-    "siblingIndex": 7000
+    "siblingIndex": 22000
 }

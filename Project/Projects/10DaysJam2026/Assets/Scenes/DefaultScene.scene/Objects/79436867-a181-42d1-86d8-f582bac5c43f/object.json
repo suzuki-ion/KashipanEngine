@@ -18,7 +18,7 @@
                         },
                         "translate": {
                             "x": 4.0,
-                            "y": 236.0,
+                            "y": 234.0,
                             "z": 0.0
                         }
                     },
@@ -99,7 +99,7 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "HP_icon",
+        "name": "HP_player_icon",
         "objectID": "79436867-a181-42d1-86d8-f582bac5c43f",
         "tag": ""
     },

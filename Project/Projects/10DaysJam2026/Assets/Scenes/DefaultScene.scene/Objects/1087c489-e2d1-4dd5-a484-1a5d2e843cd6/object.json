@@ -29,50 +29,12 @@
             },
             {
                 "data": {
-                    "customData": {
-                        "aspectRatio": 2.2427616119384766,
-                        "autoSyncAspectRatio": false,
-                        "enableJitter": false,
-                        "farClip": 1000.0,
-                        "fovY": 0.44999998807907104,
-                        "nearClip": 0.10000000149011612,
-                        "orthoSize": 10.0,
-                        "orthographic": false
-                    },
+                    "customData": {},
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
                 },
-                "type": "Camera3D"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "distance": 10.0
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "SceneViewOrbitState"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "height": 449,
-                        "isShowViewer": false,
-                        "name": "EditorSceneView",
-                        "saveDirectory": "Screenshots",
-                        "saveFileNamePrefix": "Screenshot",
-                        "saveFormat": "png",
-                        "viewerId": 3327572256969744826,
-                        "width": 1007
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "ScreenBufferObject"
+                "type": "SceneViewCameraSettings"
             }
         ],
         "editorOnly": true,

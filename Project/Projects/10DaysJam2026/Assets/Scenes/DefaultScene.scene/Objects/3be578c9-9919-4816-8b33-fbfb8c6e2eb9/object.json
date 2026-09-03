@@ -17,7 +17,7 @@
                             "z": 0.999962568283081
                         },
                         "translate": {
-                            "x": 34.0,
+                            "x": 228.0,
                             "y": 234.0,
                             "z": 0.0
                         }
@@ -55,7 +55,7 @@
                     "customData": {
                         "allowInstancing": true,
                         "anchor": {
-                            "x": 0.0,
+                            "x": 1.0,
                             "y": 1.0
                         },
                         "instanceColor": {
@@ -99,9 +99,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "HP_player_bar7",
-        "objectID": "47b45559-9a8b-498d-b7a8-1dfe527b6a1e",
+        "name": "HP_boss_bar2",
+        "objectID": "3be578c9-9919-4816-8b33-fbfb8c6e2eb9",
         "tag": ""
     },
-    "siblingIndex": 7000
+    "siblingIndex": 13000
 }

@@ -1,0 +1,68 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "fa541792-508c-47a7-9dc2-105d4336681f",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 0.75,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 120.0,
+                            "y": 232.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "fontName": "jfdot-Shinonome-12",
+                        "fontSize": 12.0,
+                        "horizontalAlign": 0,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 0.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "materialName": "Default",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "pointSampling": true,
+                        "renderPriority": 0,
+                        "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823",
+                        "text": "Lv1",
+                        "verticalAlign": 1
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "BitmapTextRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Level Text",
+        "objectID": "ac21e927-47b6-46c3-ad79-2ee2ad320683",
+        "tag": ""
+    },
+    "siblingIndex": 24000
+}

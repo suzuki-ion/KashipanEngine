@@ -17,7 +17,7 @@
                             "z": 0.999962568283081
                         },
                         "translate": {
-                            "x": 34.0,
+                            "x": 40.0,
                             "y": 234.0,
                             "z": 0.0
                         }
@@ -99,9 +99,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "HP_player_bar7",
-        "objectID": "47b45559-9a8b-498d-b7a8-1dfe527b6a1e",
+        "name": "HP_player_bar9",
+        "objectID": "e57aade7-8cc4-4607-8b98-ccd138f3a3a4",
         "tag": ""
     },
-    "siblingIndex": 7000
+    "siblingIndex": 9000
 }

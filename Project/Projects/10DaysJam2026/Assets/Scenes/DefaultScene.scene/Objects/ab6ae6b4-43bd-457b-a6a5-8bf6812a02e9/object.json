@@ -12,14 +12,14 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 2.0,
-                            "y": 4.999589443206787,
-                            "z": 0.999962568283081
+                            "x": 256.0,
+                            "y": 16.0,
+                            "z": 1.0
                         },
                         "translate": {
-                            "x": 34.0,
-                            "y": 234.0,
-                            "z": 0.0
+                            "x": 128.0,
+                            "y": 232.0,
+                            "z": 1.0
                         }
                     },
                     "isActive": true,
@@ -42,27 +42,16 @@
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "App/Sprite/UI/hpBar.png"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "TextureSource"
-            },
-            {
-                "data": {
-                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
-                            "x": 0.0,
-                            "y": 1.0
+                            "x": 0.5,
+                            "y": 0.5
                         },
                         "instanceColor": {
                             "w": 1.0,
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
+                            "x": 0.1568627506494522,
+                            "y": 0.1411764770746231,
+                            "z": 0.250980406999588
                         },
                         "instanceColorBlendMode": 1,
                         "instanceUvCombineMode": 0,
@@ -72,7 +61,7 @@
                         },
                         "instanceUvRotation": 0.0,
                         "instanceUvScale": {
-                            "x": 0.5,
+                            "x": 1.0,
                             "y": 1.0
                         },
                         "instanceUvTranslate": {
@@ -86,7 +75,7 @@
                             "y": 0.5
                         },
                         "pixelSnapping": false,
-                        "renderPriority": 0,
+                        "renderPriority": -50,
                         "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
                     },
                     "isActive": true,
@@ -99,9 +88,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "HP_player_bar7",
-        "objectID": "47b45559-9a8b-498d-b7a8-1dfe527b6a1e",
+        "name": "Background",
+        "objectID": "ab6ae6b4-43bd-457b-a6a5-8bf6812a02e9",
         "tag": ""
     },
-    "siblingIndex": 7000
+    "siblingIndex": -1000
 }

@@ -1367,6 +1367,8 @@
 		"component.spriterenderer.material": "材质",
 		"component.spriterenderer.pipeline": "管线",
 		"component.spriterenderer.pivot": "轴心点",
+		"component.spriterenderer.pixel_snapping": "像素吸附",
+		"component.spriterenderer.pixel_snapping_desc": "在渲染前将该对象的世界坐标(X/Y)取整为整数像素。用于以1倍缩放显示像素画的项目：当移动对象自身的Transform也可能出现亚像素值时（例如平滑移动），除摄像机侧的像素吸附（Camera2D）外也启用此项，可防止相对于摄像机产生画面抖动。",
 
 		//--------- component.targetlookat ---------//
 		"component.targetlookat.desc_1": "Sync Target Rotation: 与目标的世界旋转同步（适用于公告板）\nLook At Target: 自身的+Z轴始终朝向目标方向",

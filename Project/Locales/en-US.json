@@ -1367,6 +1367,8 @@
 		"component.spriterenderer.material": "Material",
 		"component.spriterenderer.pipeline": "Pipeline",
 		"component.spriterenderer.pivot": "Pivot",
+		"component.spriterenderer.pixel_snapping": "Pixel Snapping",
+		"component.spriterenderer.pixel_snapping_desc": "Rounds this object's world X/Y to whole pixels before rendering. For projects displaying pixel art at 1x scale: enable this in addition to the camera-side pixel snapping (Camera2D) when the moving object's own Transform can end up at sub-pixel values (e.g. from smooth movement), to prevent visible jitter relative to the camera.",
 
 		//--------- component.targetlookat ---------//
 		"component.targetlookat.desc_1": "Sync Target Rotation: synchronizes with the target's world rotation (for billboards)\nLook At Target: this object's +Z axis always faces the target",

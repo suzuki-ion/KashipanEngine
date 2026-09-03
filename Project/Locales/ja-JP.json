@@ -1367,6 +1367,8 @@
 		"component.spriterenderer.material": "マテリアル",
 		"component.spriterenderer.pipeline": "パイプライン",
 		"component.spriterenderer.pivot": "ピボット",
+		"component.spriterenderer.pixel_snapping": "ピクセルスナップ",
+		"component.spriterenderer.pixel_snapping_desc": "ワールド座標(X/Y)を整数ピクセル単位に丸めてから描画に使う。ドット絵をスケール1倍のまま表示するプロジェクト向け。カメラ側（Camera2Dのピクセルスナップ）だけでなく、動くオブジェクト自身のTransformがサブピクセル値になる場合（スムーズ移動等）も有効にすると、カメラに対する見た目のガタつき（ピクセルの揺れ）を防げる。",
 
 		//--------- component.targetlookat ---------//
 		"component.targetlookat.desc_1": "Sync Target Rotation: ターゲットのワールド回転と同期する（ビルボード向け）\nLook At Target: 自身の+Z軸が常にターゲットの方向を向く",

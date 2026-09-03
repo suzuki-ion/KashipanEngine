@@ -62,6 +62,7 @@ public:
         ADD_MEMBER_VARIABLE(instanceUvCombineMode_);
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(renderPriority_, [this] { MarkDrawListDirty(); });
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(allowInstancing_, [this] { MarkDrawListDirty(); });
+        ADD_MEMBER_VARIABLE(pixelSnapping_);
     )
     COMPONENT_CATEGORY("Render")
     ~SpriteRenderer() override = default;
@@ -84,6 +85,7 @@ public:
         ptr->instanceUvCombineMode_ = instanceUvCombineMode_;
         ptr->renderPriority_ = renderPriority_;
         ptr->allowInstancing_ = allowInstancing_;
+        ptr->pixelSnapping_ = pixelSnapping_;
         return ptr;
     }
 
@@ -205,6 +207,14 @@ public:
     ///        共有する他のオブジェクトがあっても常に単独のドローコールで描画される
     void SetAllowInstancing(bool allow) noexcept { allowInstancing_ = allow; MarkDrawListDirty(); }
     bool GetAllowInstancing() const noexcept { return allowInstancing_; }
+
+    /// @brief ワールド座標(X/Y)を整数ピクセル単位に丸めてから描画に使うかどうかを設定する（既定false）
+    /// @details ドット絵をスケール1倍のまま表示するプロジェクト向け。CameraController2D等でカメラが
+    ///          サブピクセル位置を取り得る場合、カメラ側のみピクセルスナップしていてもこのオブジェクトの
+    ///          Transformがサブピクセル値のままだと、カメラに対して相対的にガタつく（pixel swimming）。
+    ///          有効にすると、このオブジェクトのワールドX/Yも整数ピクセルへ丸めてから描画される
+    void SetPixelSnapping(bool enable) noexcept { pixelSnapping_ = enable; MarkDrawListDirty(); }
+    bool GetPixelSnapping() const noexcept { return pixelSnapping_; }
 
     //==================================================
     // 描画情報取得
@@ -374,6 +384,12 @@ protected:
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("%s", TranslationC("component.common.desc_allow_instancing"));
         }
+        if (ImGui::Checkbox(TranslationLabel("component.spriterenderer.pixel_snapping"), &pixelSnapping_)) {
+            MarkDrawListDirty();
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", TranslationC("component.spriterenderer.pixel_snapping_desc"));
+        }
     }
 #endif
 
@@ -396,6 +412,7 @@ protected:
         json["instanceUvCombineMode"] = static_cast<int>(instanceUvCombineMode_);
         json["renderPriority"] = renderPriority_;
         json["allowInstancing"] = allowInstancing_;
+        json["pixelSnapping"] = pixelSnapping_;
         return json;
     }
 
@@ -423,6 +440,7 @@ protected:
         instanceUvCombineMode_ = static_cast<UVCombineMode>(json.value("instanceUvCombineMode", static_cast<int>(UVCombineMode::MaterialThenInstance)));
         renderPriority_ = json.value("renderPriority", 0);
         allowInstancing_ = json.value("allowInstancing", true);
+        pixelSnapping_ = json.value("pixelSnapping", false);
         // Undo/Redo等、登録済みのコンポーネントに対してもLoadFromJsonが呼ばれ得るため念のため通知する
         MarkDrawListDirty();
         return true;
@@ -475,6 +493,8 @@ private:
     int renderPriority_ = 0;
     /// @brief 他のオブジェクトとのインスタンシング（バッチ結合）を許可するか（既定true）
     bool allowInstancing_ = true;
+    /// @brief ワールド座標(X/Y)を整数ピクセルへスナップしてから描画に使うか（既定false）
+    bool pixelSnapping_ = false;
 };
 
 REGISTER_COMPONENT_OBJECT(SpriteRenderer)

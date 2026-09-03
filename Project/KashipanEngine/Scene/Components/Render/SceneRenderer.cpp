@@ -1,6 +1,7 @@
 #include "SceneRenderer.h"
 
 #include <algorithm>
+#include <cmath>
 #include <type_traits>
 
 #include "Graphics/IRenderTarget.h"
@@ -301,6 +302,16 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
                 }
                 sortable.entry.worldMatrix = Shake::ApplyRenderOnlyOffsets(
                     renderer->GetOwnerObject(), renderer->GetWorldMatrix());
+                // SpriteRenderer側でピクセルスナップが有効な場合、ワールドX/Yを整数ピクセルへ丸める。
+                // カメラ側（Camera2D::GetPixelSnapping）だけを丸めても、このオブジェクトのTransformが
+                // サブピクセル値のままだと相対的にガタつく（pixel swimming）ため、対象がドット絵なら
+                // オブジェクト側も同じグリッドへ揃える必要がある
+                if constexpr (std::is_same_v<RendererT, SpriteRenderer>) {
+                    if (renderer->GetPixelSnapping()) {
+                        sortable.entry.worldMatrix.m[3][0] = std::floor(sortable.entry.worldMatrix.m[3][0]);
+                        sortable.entry.worldMatrix.m[3][1] = std::floor(sortable.entry.worldMatrix.m[3][1]);
+                    }
+                }
                 sortable.entry.instanceColor = GetInstanceColorFor(renderer);
                 sortable.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(renderer);
                 sortable.entry.instanceUvTranslate = GetInstanceUvTranslateFor(renderer);

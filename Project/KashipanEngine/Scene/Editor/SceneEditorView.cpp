@@ -211,23 +211,16 @@ void SceneEditorView::EnsureCameraSettingsComponent() {
             // 直前まで使っていたカメラ位置をリセットせずに引き継ぐ
             MigrateLegacyCameraState(legacyCamera3d);
         }
-        // 読み込み/移行した値を、この時点でコンポーネントへも反映しておく（直後にこの関数の
-        // 呼び出し元が行うPullCameraSettingsFromComponentで、コンポーネント側のまだ既定値のままの
-        // フィールドによって上書きされてしまうのを防ぐ）
-        settings->target = target_;
-        settings->eye = eye_;
-        settings->distance = distance_;
-        settings->yawDegrees = yaw_ * (180.0f / std::numbers::pi_v<float>);
-        settings->pitchDegrees = pitch_ * (180.0f / std::numbers::pi_v<float>);
-        settings->flyMode = flyMode_;
-        settings->flySpeed = flySpeed_;
-        settings->fovY = fovY_;
-        settings->nearClip = nearClip_;
-        settings->farClip = farClip_;
-        settings->enableJitter = enableJitter_;
-        settings->pan2D = pan2D_;
-        settings->zoom2D = zoom2D_;
-        settings->cameraDistance2D = cameraDistance2D_;
+    }
+
+    // このコンポーネントインスタンスへまだ一度もSceneEditorViewの値を書き込んでいない場合
+    // （AddComponentで今フレーム新規生成された、またはPlay開始時のDeleteEditorOnlyObjects・
+    // Play終了時のスナップショット復元等でシーンJSONから読み込まれた直後で既定値のまま）、
+    // ここで現在の内部状態を書き込んでおかないと、直後のPullCameraSettingsFromComponentで
+    // 既定値により内部状態が上書きされてしまう（Play開始・終了時にカメラが原点へ
+    // リセットされる不具合の原因だった）
+    if (!settings->hasSyncedFromEditorView) {
+        WriteCameraStateToComponent(settings);
     }
 
     // 旧バージョンのコンポーネントは、移行の有無に関わらず必ず取り除く
@@ -274,26 +267,31 @@ void SceneEditorView::PullCameraSettingsFromComponent() {
     cameraDistance2D_ = settings->cameraDistance2D;
 }
 
-void SceneEditorView::PushCameraSettingsToComponent() {
+void SceneEditorView::WriteCameraStateToComponent(SceneViewCameraSettings *settings) const {
+    if (!settings) return;
     constexpr float kRadToDeg = 180.0f / std::numbers::pi_v<float>;
-    if (auto *settings = sceneViewObject_ ? sceneViewObject_->GetComponent<SceneViewCameraSettings>() : nullptr) {
-        settings->target = target_;
-        settings->eye = eye_;
-        settings->distance = distance_;
-        settings->yawDegrees = yaw_ * kRadToDeg;
-        settings->pitchDegrees = pitch_ * kRadToDeg;
-        settings->flyMode = flyMode_;
-        settings->flySpeed = flySpeed_;
-        settings->fovY = fovY_;
-        settings->nearClip = nearClip_;
-        settings->farClip = farClip_;
-        settings->enableJitter = enableJitter_;
-        settings->pan2D = pan2D_;
-        settings->zoom2D = zoom2D_;
-        settings->cameraDistance2D = cameraDistance2D_;
-    }
+    settings->target = target_;
+    settings->eye = eye_;
+    settings->distance = distance_;
+    settings->yawDegrees = yaw_ * kRadToDeg;
+    settings->pitchDegrees = pitch_ * kRadToDeg;
+    settings->flyMode = flyMode_;
+    settings->flySpeed = flySpeed_;
+    settings->fovY = fovY_;
+    settings->nearClip = nearClip_;
+    settings->farClip = farClip_;
+    settings->enableJitter = enableJitter_;
+    settings->pan2D = pan2D_;
+    settings->zoom2D = zoom2D_;
+    settings->cameraDistance2D = cameraDistance2D_;
+    settings->hasSyncedFromEditorView = true;
+}
+
+void SceneEditorView::PushCameraSettingsToComponent() {
+    WriteCameraStateToComponent(sceneViewObject_ ? sceneViewObject_->GetComponent<SceneViewCameraSettings>() : nullptr);
 
     if (!context_) return;
+    constexpr float kRadToDeg = 180.0f / std::numbers::pi_v<float>;
     JSON json;
     json["target"] = ToJSON(target_);
     json["eye"] = ToJSON(eye_);

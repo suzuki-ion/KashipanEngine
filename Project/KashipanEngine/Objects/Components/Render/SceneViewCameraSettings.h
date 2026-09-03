@@ -57,6 +57,15 @@ public:
     /// @brief 2DカメラのZ軸方向の位置（コンテンツより手前に置く距離。SceneEditorView::UpdateCamera2DBuffer参照）
     float cameraDistance2D = 500.0f;
 
+    /// @brief SceneEditorViewが一度でもこのインスタンスへ現在のカメラ値を書き込んだか
+    /// @details 新規生成された（AddComponent直後、またはPlay終了時のスナップショット復元等で
+    ///          シーンJSONから読み込まれた直後の）インスタンスはfalseのまま＝上記フィールドは
+    ///          すべて既定値。SceneEditorView::EnsureCameraSettingsComponentがこれを見て、
+    ///          まだ値を書き込んでいない（＝既定値のままの）インスタンスを
+    ///          PullCameraSettingsFromComponentで誤って読み取ってしまう
+    ///          （＝カメラがリセットされたように見える）のを防ぐ。ShowImGuiには出さない
+    bool hasSyncedFromEditorView = false;
+
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {

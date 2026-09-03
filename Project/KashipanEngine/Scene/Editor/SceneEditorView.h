@@ -26,6 +26,7 @@ class ScreenBuffer;
 class ConstantBufferResource;
 class CameraRenderer;
 class Camera3D;
+class SceneViewCameraSettings;
 class ScreenBufferObject;
 class Transform;
 class TilemapRenderer;
@@ -124,6 +125,16 @@ private:
     /// @details マウス操作（HandleCameraInput等）による変更をInspector表示・永続化へ反映するため、
     ///          1フレームの処理の最後（ShowImGuiの末尾）で呼ぶ
     void PushCameraSettingsToComponent();
+    /// @brief このクラスの内部状態（target_/eye_/yaw_/pitch_/...）を指定コンポーネントへ書き込む
+    ///        （EditorSettingsへの保存は行わない。PushCameraSettingsToComponentとの共通処理）
+    /// @details Play開始時のDeleteEditorOnlyObjects、Play終了時のスナップショット復元等で
+    ///          「Scene View」オブジェクトとSceneViewCameraSettingsコンポーネントが同一フレーム内で
+    ///          削除→再生成されると、コンポーネントは何も持たない既定値の新規インスタンスになる。
+    ///          そのままだと直後のPullCameraSettingsFromComponentでこの既定値により
+    ///          内部状態が上書きされ、カメラが原点にリセットされたように見えてしまう。
+    ///          EnsureCameraSettingsComponentが「今フレームで新規生成した」場合に必ずこれを呼び、
+    ///          再生成された空のコンポーネントへ現在の内部状態を書き戻すことでこれを防ぐ
+    void WriteCameraStateToComponent(SceneViewCameraSettings *settings) const;
     /// @brief シーンごとのカメラ設定の保存キーを組み立てる（シーンIDを含むため、シーンをまたいで
     ///        別々の値が保存される。シーン名ではなくIDを使うのは、シーン名は変更されうるため）
     std::string BuildCameraSettingsKey() const;

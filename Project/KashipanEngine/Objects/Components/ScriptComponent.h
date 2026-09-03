@@ -67,6 +67,11 @@ public:
     /// @brief 直近のコンパイル/実行時エラー内容を取得する（無い場合は空文字）
     const std::string &GetLastError() const noexcept { return lastError_; }
 
+    /// @brief スクリプトファイルを読み直す（Reload→コライダー/ウィンドウフックの張り直し→Awake()呼び出し）
+    /// @details コンポーネント追加時のInitialize()と同じ手順。ゲームループの再生開始時に、
+    ///          エディター上で編集した内容を反映するために呼ばれる
+    void ReloadFromDisk();
+
     /// @brief このスクリプトの [SerializeField] 付き変数を名前で取得する（スクリプト間のデータ受け渡し用）
     /// @details シーン変数と異なり、他オブジェクトの ScriptComponent を GetComponent で取得した上で
     ///          直接読み書きする経路。対応型は [SerializeField] と同じプリミティブ/数学型/Object@のみで、

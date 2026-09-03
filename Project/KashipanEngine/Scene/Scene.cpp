@@ -10,6 +10,7 @@
 #include "Objects/Components/Collider/RigidBody2D.h"
 #include "Objects/Components/Collider/RigidBody3D.h"
 #ifdef USE_IMGUI
+#include "Objects/Components/ScriptComponent.h"
 #include "Scene/SceneEditor.h"
 #include "Scene/SceneEditorContext.h"
 #endif
@@ -105,6 +106,12 @@ void Scene::PlayStart() {
         }
         for (auto *rigidBody2D : object->GetComponents<RigidBody2D>()) {
             rigidBody2D->SyncFromTransform();
+        }
+        // ScriptComponentが参照する.asファイルは、通常はコンポーネント追加時（Initialize）にしか
+        // 読み込まれない。エディター上で編集した内容を再生開始時点で反映できるよう、
+        // Initializeと同様の手順（Reload→フック張り直し→Awake）で読み直す
+        for (auto *script : object->GetComponents<ScriptComponent>()) {
+            script->ReloadFromDisk();
         }
     }
 

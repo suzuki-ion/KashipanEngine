@@ -387,6 +387,14 @@ bool ScriptComponent::Reload() {
     return true;
 }
 
+void ScriptComponent::ReloadFromDisk() {
+    if (Reload()) {
+        HookColliders();
+        HookWindowObjects();
+        CallMethod(awakeMethod_);
+    }
+}
+
 bool ScriptComponent::CreateBehaviorInstance(asIScriptEngine *engine, CScriptBuilder &builder) {
     asIScriptModule *module = builder.GetModule();
     asITypeInfo *interfaceType = engine->GetTypeInfoByDecl(kBehaviorInterfaceName);
@@ -660,11 +668,7 @@ void ScriptComponent::UnhookWindowObjects() {
 }
 
 void ScriptComponent::Initialize() {
-    if (Reload()) {
-        HookColliders();
-        HookWindowObjects();
-        CallMethod(awakeMethod_);
-    }
+    ReloadFromDisk();
 }
 
 void ScriptComponent::Finalize() {
@@ -1188,11 +1192,7 @@ void ScriptComponent::ShowImGui() {
         // スクリプトパス一覧・シーンJSONはバックスラッシュ区切りで統一されているため合わせる
         std::replace(droppedPath.begin(), droppedPath.end(), '/', '\\');
         scriptPath_ = droppedPath;
-        if (Reload()) {
-            HookColliders();
-            HookWindowObjects();
-            CallMethod(awakeMethod_);
-        }
+        ReloadFromDisk();
     }
     ImGui::SameLine();
     if (ImGui::Button(TranslationLabel("component.scriptcomponent.refresh_list"))) {
@@ -1200,11 +1200,7 @@ void ScriptComponent::ShowImGui() {
     }
     // コンボの右に並べると画面外へはみ出して押しづらいため、Reloadは下の行に配置する
     if (ImGui::Button(TranslationLabel("component.scriptcomponent.reload"))) {
-        if (Reload()) {
-            HookColliders();
-            HookWindowObjects();
-            CallMethod(awakeMethod_);
-        }
+        ReloadFromDisk();
     }
 
     ImGui::Text(TranslationC("component.scriptcomponent.behavior_s"), behaviorType_ ? behaviorType_->GetName() : "(None)");
@@ -1453,11 +1449,7 @@ bool ScriptComponent::LoadFromJson(const JSON &json) {
     // 呼ばれてしまっているため、ここで読み込んだパスを使って改めてリロードする。
     // 非アクティブな場合はSetActive(true)時のInitialize()に任せる
     if (IsActive()) {
-        if (Reload()) {
-            HookColliders();
-            HookWindowObjects();
-            CallMethod(awakeMethod_);
-        }
+        ReloadFromDisk();
     } else if (!serializedFields_.empty()) {
         // 既にビルド済み（Initialize後に読み込まれた）の場合はその場で反映する
         ApplyFieldValuesFromJson(pendingFieldValues_);

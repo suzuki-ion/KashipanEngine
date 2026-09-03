@@ -1173,7 +1173,9 @@ bool SceneEditorView::RaycastSceneMeshes(const ImVec2 &screenPos, const ImVec2 &
     Vector3 fallbackWorldPosition{};
 
     for (auto *obj : context_->GetSceneObjects()) {
-        if (!obj || !obj->IsActive()) continue;
+        // SceneRenderer側の描画除外（IsHiddenFromEditorTarget）と揃える。描画されていないのに
+        // クリックだけは通ってしまう不整合を防ぐ
+        if (!obj || !obj->IsActive() || obj->IsHiddenFromEditorTarget()) continue;
 
         // シーンビューに描画される対象（アクティブなMeshRenderer/SkinnedMeshRenderer/SpriteRendererを持つ）
         // だけを判定対象にする。SpriteRendererはエディターのシーンビュー上でのみ3D空間内に配置される
@@ -1270,7 +1272,9 @@ bool SceneEditorView::RaycastSceneMeshes(const ImVec2 &screenPos, const ImVec2 &
     // ループでは判定できない。SpriteRendererと違い2D/3Dどちらの配置でも使われるコンポーネントのため、
     // 表示モードに関わらずスクリーン空間バウンディングボックスのフォールバック判定のみで拾う
     for (auto *obj : context_->GetSceneObjects()) {
-        if (!obj || !obj->IsActive()) continue;
+        // SceneRenderer側の描画除外（IsHiddenFromEditorTarget）と揃える。描画されていないのに
+        // クリックだけは通ってしまう不整合を防ぐ
+        if (!obj || !obj->IsActive() || obj->IsHiddenFromEditorTarget()) continue;
         auto *textRenderer = obj->GetComponent<TextRenderer>();
         if (!textRenderer || !textRenderer->IsActive()) continue;
 

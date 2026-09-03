@@ -17,9 +17,9 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 42.65917205810547,
-                            "y": 83.40512084960938,
-                            "z": 5.951777711743489e-05
+                            "x": 43.09050750732422,
+                            "y": 83.24605560302734,
+                            "z": 5.899777897866443e-05
                         }
                     },
                     "isActive": true,
@@ -43,7 +43,9 @@
                 "data": {
                     "customData": {
                         "fields": {
+                            "deathEffect": "a3f33280-f1ac-4cc0-9235-bdfd97ec21ff",
                             "frameInterval": 0.15000000596046448,
+                            "hp": 1.0,
                             "moveSpeed": 12.0,
                             "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
                             "uvStep": 0.5

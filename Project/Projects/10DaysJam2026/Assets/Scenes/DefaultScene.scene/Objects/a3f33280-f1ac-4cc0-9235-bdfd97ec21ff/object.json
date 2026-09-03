@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 139.55577087402344,
-                            "y": 77.33118438720703,
+                            "x": 119.07166290283203,
+                            "y": 93.85545349121094,
                             "z": 0.0
                         }
                     },
@@ -125,6 +125,7 @@
         "isActive": true,
         "name": "EnemyDeathEffect",
         "objectID": "a3f33280-f1ac-4cc0-9235-bdfd97ec21ff",
+        "prefabNodeID": "4f2405a0-9a8c-4f30-9ab2-e1a61df713ee",
         "tag": ""
     },
     "siblingIndex": 11000

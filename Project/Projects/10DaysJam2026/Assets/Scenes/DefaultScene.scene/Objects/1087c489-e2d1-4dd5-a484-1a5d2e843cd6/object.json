@@ -30,7 +30,7 @@
             {
                 "data": {
                     "customData": {
-                        "aspectRatio": 1.637647032737732,
+                        "aspectRatio": 2.2427616119384766,
                         "autoSyncAspectRatio": false,
                         "enableJitter": false,
                         "farClip": 1000.0,
@@ -59,14 +59,14 @@
             {
                 "data": {
                     "customData": {
-                        "height": 850,
+                        "height": 449,
                         "isShowViewer": false,
                         "name": "EditorSceneView",
                         "saveDirectory": "Screenshots",
                         "saveFileNamePrefix": "Screenshot",
                         "saveFormat": "png",
-                        "viewerId": 1196007658575678415,
-                        "width": 1392
+                        "viewerId": 3327572256969744826,
+                        "width": 1007
                     },
                     "isActive": true,
                     "priority": 1,
@@ -79,7 +79,7 @@
         "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Scene View",
-        "objectID": "fe87577e-9516-4af6-b3b1-c9ed01dbfe05",
+        "objectID": "1087c489-e2d1-4dd5-a484-1a5d2e843cd6",
         "tag": ""
     },
     "siblingIndex": 14000

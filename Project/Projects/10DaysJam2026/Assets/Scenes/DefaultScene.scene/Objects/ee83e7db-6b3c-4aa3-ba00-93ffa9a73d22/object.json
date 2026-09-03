@@ -18,7 +18,7 @@
                         },
                         "translate": {
                             "x": 93.8106918334961,
-                            "y": 64.83551788330078,
+                            "y": 64.42455291748047,
                             "z": -2.1480484519997844e-06
                         }
                     },
@@ -87,22 +87,28 @@
                     "customData": {
                         "fields": {
                             "attackDuration": 0.44999998807907104,
+                            "effect": "9da682a8-30e0-48ec-b449-3f4d2ff986fe",
                             "effectActiveDuration": 0.10000000149011612,
                             "frameInterval": 0.15000000596046448,
                             "gravity": 360.0,
                             "groundedThreshold": 0.5,
+                            "healItem": "e41dd776-f946-4cf1-872f-b47cbad674df",
+                            "hp": 10.0,
                             "jumpPower": 180.0,
                             "maxHp": 10.0,
                             "moveSpeed": 80.0,
                             "pushBackCorrectionFactor": 0.30000001192092896,
                             "pushBackExcludeTags": [
-                                "Enemy"
+                                "Enemy",
+                                "Heart"
                             ],
                             "uvStep": {
                                 "x": 0.3330000042915344,
                                 "y": 0.16599999368190765
                             },
-                            "weapons": []
+                            "weapons": [
+                                "8da25f3a-dfdc-4603-b56f-a2cc14688f69"
+                            ]
                         },
                         "scriptPath": "Assets/Scripts/Player.as"
                     },
@@ -139,7 +145,7 @@
                         },
                         "instanceUvTranslate": {
                             "x": 0.0,
-                            "y": 0.49799996614456177
+                            "y": 0.0
                         },
                         "materialName": "Dot",
                         "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",

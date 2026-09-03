@@ -15,13 +15,20 @@ class Green : ScriptComponentBehavior {
     float uvStep = 0.5f;
 
     [SerializeField, Tooltip("HP")]
-    float hp = 3.0f;
+    float hp = 1.0f;
 
     [SerializeField, Tooltip("死亡エフェクト")]
     Object@ deathEffect;
 
+    // エフェクトのクローン
+    Object@ cloneEffect;
+
     // 進行方向
     MoveDirection moveDir = MoveDirection::Left;
+
+    bool isAlive = true;
+    bool isAnimation = false;
+    float deathEffectTimer = 0.0f;
 
     Vector2 velocity;
     // 元々はBox2D時代のrb.SetVelocity()にGetDeltaTime()無しで渡す値だったため、
@@ -69,13 +76,47 @@ class Green : ScriptComponentBehavior {
             sprite.SetInstanceUvTranslate(Vector2(frame * uvStep, 0.0f));
         }
 
-        // 死亡エフェクトの座標を敵に合わせる
-        if(deathEffect !is null){
-            ScriptComponent@ sc;
-            if(deathEffect.GetComponent(@sc)){
-                Vector3 pos;
-                if(sc.GetVariable("pos", pos)){
-                    sc.SetVariable("pos", tf.GetTranslate());
+        // HPが0になったら
+        if(hp <= 0.0f){
+            isAlive = false;
+        }
+
+        if(!isAlive){
+            if(!isAnimation){
+                @cloneEffect = GetScene().CloneObject(deathEffect, "CloneDeathEffect");
+                
+                if(cloneEffect !is null){
+                    Transform@ cloneTf = cloneEffect.GetTransform();
+                    if(cloneTf !is null){
+                        cloneTf.SetScale(Vector3(32.0f, 32.0f, 1.0f));
+                    }
+
+                    ScriptComponent@ sc;
+                    if(cloneEffect.GetComponent(@sc)){
+                        sc.CallMethod("StartAnimation");
+                        sc.SetVariable("pos", tf.GetTranslate());
+                    }
+                }
+    
+                // 自身の描画と当たり判定を無効化
+                if(col !is null) col.SetActive(false);
+                if(sprite !is null) sprite.SetActive(false);
+    
+                isAnimation = true;
+            }
+
+            // アニメーション更新処理
+            if(cloneEffect !is null){
+                deathEffectTimer += GetDeltaTime();
+                float deathEffectDuration = 0.6f;
+                ScriptComponent@ sc;
+                if(cloneEffect.GetComponent(@sc)){
+                    sc.CallMethod("UpdateAnimation");
+
+                    // アニメーションが終了したら非アクティブ化
+                    if(deathEffectTimer >= deathEffectDuration){
+                        cloneEffect.SetActive(false);
+                    }
                 }
             }
         }

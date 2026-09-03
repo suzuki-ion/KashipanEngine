@@ -36,6 +36,9 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("最大HP")]
     float maxHp = 10.0f;
 
+    [SerializeField, Tooltip("HP")]
+    float hp = maxHp;
+
     [SerializeField, Tooltip("1コマあたりのUV移動量")]
     Vector2 uvStep = Vector2(0.333f, 0.166f);
 
@@ -54,6 +57,9 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("1回の押し戻しで実際に補正する割合(0～1)。1未満にすると複数フレームに分けて収束させ、挟まれた際の上下振動を和らげる")]
     float pushBackCorrectionFactor = 0.3f;
 
+    [SerializeField, Tooltip("回復アイテム")]
+    Object@ healItem;
+
     // エフェクトの発生タイマー
     float effectActiveTimer = 0.0f;
 
@@ -67,7 +73,6 @@ class Player : ScriptComponentBehavior {
     bool isInvincible = false;
     float invincibleDuration = 1.0f;
     float invincibleTimer = 0.0f;
-    float hp = maxHp;
     float animTimer = 0.0f;
     int currentWeaponIndex = 0;
     
@@ -321,7 +326,7 @@ class Player : ScriptComponentBehavior {
         // 回復アイテムと当たったら
         if(hit.otherCollider.GetTag() == "Heart"){
             Heal(1.0f); // HP増加
-            GetScene().DeleteObject(GetScene().GetObject("Heart"));
+            healItem.SetActive(false);
         }
     }
 

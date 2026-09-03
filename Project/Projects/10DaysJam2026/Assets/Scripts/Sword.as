@@ -51,7 +51,8 @@ class Sword : ScriptComponentBehavior {
 
     void OnCollisionEnter(const HitInfo &in hit){
         if(hit.otherCollider.GetTag() == "Enemy"){
-            Object@ enemy = GetScene().GetObject("Green");
+            Object@ enemy = hit.otherObject;
+
             if (enemy !is null) {
                 ScriptComponent@ sc;
                 if (enemy.GetComponent(@sc)) {

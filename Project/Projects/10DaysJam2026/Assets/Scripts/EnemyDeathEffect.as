@@ -13,6 +13,7 @@ class EnemyDeathEffect : ScriptComponentBehavior {
 
     SpriteRenderer@ sprite;
     float animTimer = 0.0f;
+    bool isStartAnimation = false;
 
     void Start() {
         GetComponent(@sprite);
@@ -23,22 +24,27 @@ class EnemyDeathEffect : ScriptComponentBehavior {
         if(tf is null)return;
 
         tf.SetTranslate(pos);
+    }
 
-        // タイマー更新
-        animTimer += GetDeltaTime();
-
-        // 4コマのアニメーションフレーム計算
-        int frame = int(animTimer / frameInterval) % 4;
-        Vector2 uvTranslate = Vector2(frame * uvStep.x, 0.0f);
-
-        // UVTranslateの適用
-        if (sprite !is null) {
-            sprite.SetInstanceUvTranslate(uvTranslate);
+    void StartAnimation() {
+        if(!isStartAnimation){
+            isStartAnimation = true;
         }
+    }
 
-        // アニメーションが1周したらオブジェクトを削除
-        if (animTimer >= frameInterval * 4.0f) {
-            effect.SetActive(false);
+    void UpdateAnimation(){
+        if(isStartAnimation) {
+            // タイマー更新
+            animTimer += GetDeltaTime();
+    
+            // 4コマのアニメーションフレーム計算
+            int frame = int(animTimer / frameInterval) % 4;
+            Vector2 uvTranslate = Vector2(frame * uvStep.x, 0.0f);
+    
+            // UVTranslateの適用
+            if (sprite !is null) {
+                sprite.SetInstanceUvTranslate(uvTranslate);
+            }
         }
     }
 

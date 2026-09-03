@@ -1,10 +1,13 @@
+#include "WeaponList.as"
+
 enum State {
     Idle,
     Walk,
     Jump,
     Attack,
     WalkAttack,
-    JumpAttack
+    JumpAttack,
+    Dead
 }
 
 enum Direction{
@@ -42,26 +45,46 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("HP")]
     float hp = maxHp;
 
-    [SerializeField, Tooltip("1コマあたりのUV移動量")]
-    Vector2 uvStep = Vector2(0.333f, 0.166f);
-
-    [SerializeField, Tooltip("武器一覧")]
-    array<Object@>@ weapons;
-
-    [SerializeField, Tooltip("エフェクト")]
-    Object@ effect;
-
     [SerializeField, Tooltip("エフェクトの発生時間")]
     float effectActiveDuration = 0.1f;
-
-    [SerializeField, Tooltip("押し戻しを行わない相手のタグ一覧")]
-    array<string>@ pushBackExcludeTags;
 
     [SerializeField, Tooltip("1回の押し戻しで実際に補正する割合(0～1)。1未満にすると複数フレームに分けて収束させ、挟まれた際の上下振動を和らげる")]
     float pushBackCorrectionFactor = 0.3f;
 
+    [SerializeField, Tooltip("手裏剣の生存時間(秒)")]
+    float syurikenLifeTime = 2.0f;
+
+    [SerializeField, Tooltip("剣の攻撃間隔(秒)")]
+    float swordAttackInterval = 0.4f;
+
+    [SerializeField, Tooltip("手裏剣の発射間隔(秒)")]
+    float syurikenAttackInterval = 0.2f;
+
+    [SerializeField, Tooltip("1コマあたりのUV移動量")]
+    Vector2 uvStep = Vector2(0.333f, 0.1428f);
+
+    [SerializeField, Tooltip("武器一覧")]
+    array<Object@>@ weapons;
+
+    [SerializeField, Tooltip("所持武器")]
+    WeaponList currentWeaponType = WeaponList::Sword;
+
+    [SerializeField, Tooltip("押し戻しを行わない相手のタグ一覧")]
+    array<string>@ pushBackExcludeTags;
+
+    [SerializeField, Tooltip("エフェクト")]
+    Object@ effect;
+
     [SerializeField, Tooltip("回復アイテム")]
     Object@ healItem;
+
+    // クールダウン計算用タイマー
+    float swordCooldownTimer = 0.0f;
+    float syurikenCooldownTimer = 0.0f;
+
+    // 手裏剣クローン管理用
+    array<Object@> syurikenClones;
+    array<float> syurikenTimers;
 
     // エフェクトの発生タイマー
     float effectActiveTimer = 0.0f;
@@ -77,7 +100,7 @@ class Player : ScriptComponentBehavior {
     float invincibleDuration = 1.0f;
     float invincibleTimer = 0.0f;
     float animTimer = 0.0f;
-    int currentWeaponIndex = 0;
+    bool isAlive = true;
     
     // 攻撃用タイマー
     float attackTimer = 0.0f;
@@ -114,6 +137,21 @@ class Player : ScriptComponentBehavior {
             isJump = true;
         }
 
+        // 武器の切り替え
+        if (weapons !is null && weapons.length() > 0) {
+            int weaponCount = int(weapons.length());
+            int currentIndex = int(currentWeaponType);
+        
+            if (IsCommandTriggered("WeaponChangeRight")) {
+                currentWeaponType = WeaponList((currentIndex + 1) % weaponCount);
+                Log("WeaponType" + int(currentWeaponType));
+            }
+            if (IsCommandTriggered("WeaponChangeLeft")) {
+                currentWeaponType = WeaponList((currentIndex - 1 + weaponCount) % weaponCount);
+                Log("WeaponType" + int(currentWeaponType));
+            }
+        }
+
         // 重力を加算（フレームをまたいで蓄積する値なので、ここはGetDeltaTime()を掛ける）
         velocity.y -= gravity * GetDeltaTime();
 
@@ -121,45 +159,116 @@ class Player : ScriptComponentBehavior {
         tf.SetTranslate(tf.GetTranslate() + Vector3(velocity.x, velocity.y, 0.0f) * GetDeltaTime());
 
         // weapons未設定・currentWeaponIndexが範囲外の場合の"Index out of bounds"を防ぐ
-        bool hasWeapon = currentWeaponIndex >= 0 && uint(currentWeaponIndex) < weapons.length();
+        bool hasWeapon = currentWeaponType >= 0 && uint(currentWeaponType) < weapons.length();
+
+        // 攻撃クールダウンタイマーの更新
+        if (swordCooldownTimer > 0.0f) {
+            swordCooldownTimer -= GetDeltaTime();
+        }
+        if (syurikenCooldownTimer > 0.0f) {
+            syurikenCooldownTimer -= GetDeltaTime();
+        }
 
         // 攻撃入力の検知とタイマーリセット
-        if(IsCommandTriggered("Attack")){
-            attackTimer = attackDuration;
-            float margin = 0.0f;
-
-            // 攻撃
-            if(hasWeapon && weapons[currentWeaponIndex] !is null){
-                ScriptComponent@ sc;
-                if(weapons[currentWeaponIndex].GetComponent(@sc)){
-                    float margin;
-                    if(lastDirection == Direction::Right){
-                        margin = 16.0f;
-                    }else if(lastDirection == Direction::Left){
-                        margin = -16.0f;
-                    }
-
-                    // 武器の向きに応じて中心点をずらす
-                    sc.CallMethod("Attack", margin);
-                }
+        if (IsCommandTriggered("Attack")) {
+            // 現在選択中の武器に応じた攻撃の可否判定
+            bool canAttack = false;
+            if (currentWeaponType == WeaponList::Sword && swordCooldownTimer <= 0.0f) {
+                canAttack = true;
+                swordCooldownTimer = swordAttackInterval; // 剣のクールダウンリセット
+            } else if (currentWeaponType == WeaponList::Syuriken && syurikenCooldownTimer <= 0.0f) {
+                canAttack = true;
+                syurikenCooldownTimer = syurikenAttackInterval; // 手裏剣のクールダウンリセット
             }
 
-            if(effect !is null){
-                ScriptComponent@ effectSc;
-                if(effect.GetComponent(@effectSc)){
-                    effect.SetActive(true);
+            // 攻撃実行処理
+            if (canAttack) {
+                attackTimer = attackDuration;
+
+                // 攻撃オブジェクトの呼び出し
+                if (hasWeapon && weapons[currentWeaponType] !is null) {
+                    ScriptComponent@ sc;
+                    if (weapons[currentWeaponType].GetComponent(@sc)) {
+                        float margin;
+                        float syurikenMoveX;
+                        Vector3 pos;
+                        if (lastDirection == Direction::Right) {
+                            margin = 16.0f;
+                            syurikenMoveX = 1.0f;
+                        } else if (lastDirection == Direction::Left) {
+                            margin = -16.0f;
+                            syurikenMoveX = -1.0f;
+                        }
+
+                        switch (currentWeaponType) {
+                        case WeaponList::Sword:
+                            sc.CallMethod("Attack", margin);
+                            break;
+
+                        case WeaponList::Syuriken:
+                            {
+                                Object@ cloneSyuriken = GetScene().CloneObject(weapons[currentWeaponType], "CloneSyuriken");
+                                if (cloneSyuriken !is null) {
+                                    cloneSyuriken.SetActive(true);
+
+                                    Transform@ cloneTf = cloneSyuriken.GetTransform();
+                                    if (cloneTf !is null) {
+                                        cloneTf.SetScale(Vector3(6.0f, 6.0f, 1.0f));
+                                        cloneTf.SetTranslate(tf.GetTranslate());
+                                    }
+                                    
+                                    ScriptComponent@ cloneSc;
+                                    if (cloneSyuriken.GetComponent(@cloneSc)) {
+                                        cloneSc.SetVariable("pos", tf.GetTranslate());
+                                        cloneSc.CallMethod("Attack", syurikenMoveX);
+                                    }
+
+                                    syurikenClones.insertLast(cloneSyuriken);
+                                    syurikenTimers.insertLast(0.0f);
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                // エフェクト制御
+                switch (currentWeaponType) {
+                case WeaponList::Sword:
+                    if (effect !is null) {
+                        ScriptComponent@ effectSc;
+                        if (effect.GetComponent(@effectSc)) {
+                            effect.SetActive(true);
+                        }
+                    }
+                    break;
+
+                case WeaponList::Syuriken:
+                    break;
+
+                default:
+                    break;
                 }
             }
         }
 
-        // 武器の座標をプレイヤーに合わせる
-        Object@ currentWeapon = hasWeapon ? weapons[currentWeaponIndex] : null;
-        if(currentWeapon !is null){
+        // 武器の座標制御
+        uint swordIndex = uint(WeaponList::Sword);
+        if (weapons !is null && swordIndex < weapons.length() && weapons[swordIndex] !is null) {
             ScriptComponent@ sc;
-            if(currentWeapon.GetComponent(@sc)){
+            if (weapons[swordIndex].GetComponent(@sc)) {
+                Vector3 targetPos;
+                
+                // 装備中がソードならプレイヤーの位置に、手裏剣などそれ以外なら退避座標へ移動
+                if (currentWeaponType == WeaponList::Sword) {
+                    targetPos = tf.GetTranslate();
+                } else {
+                    targetPos = Vector3(-100.0f, 0.0f, 0.0f);
+                }
+
                 Vector3 pos;
-                if(sc.GetVariable("pos", pos)){
-                    sc.SetVariable("pos", tf.GetTranslate());
+                if (sc.GetVariable("pos", pos)) {
+                    sc.SetVariable("pos", targetPos);
                 }
             }
         }
@@ -208,9 +317,17 @@ class Player : ScriptComponentBehavior {
             isAttacking = true;
         }
 
+        // HP0になったら死亡
+        if(hp <= 0.0f){
+            isAlive = false;
+        }
+
         // 状態の判定
         State nextState = state;
-        if (isAttacking) {
+        if (!isAlive) {
+            nextState = State::Dead;
+        }
+        else if (isAttacking) {
             if (isJump) {
                 nextState = State::JumpAttack;
             } else if (moveX != 0.0f) {
@@ -242,7 +359,6 @@ class Player : ScriptComponentBehavior {
 
         switch (state) {
         case State::Idle:
-            // 1コマ目
             uvTranslate.x = 0.0f;
             uvTranslate.y = 0.0f;
             break;
@@ -257,13 +373,11 @@ class Player : ScriptComponentBehavior {
             break;
 
         case State::Jump:
-            // 1コマ目
             uvTranslate.x = 0.0f;
             uvTranslate.y = uvStep.y * 2.0f;
             break;
 
         case State::Attack:
-            // 1コマ目
             uvTranslate.x = 0.0f;
             uvTranslate.y = uvStep.y * 3.0f;
             break;
@@ -277,10 +391,14 @@ class Player : ScriptComponentBehavior {
             }
             break;
 
-        case State::JumpAttack:
-            // 1コマ目
+        case State::Dead:
             uvTranslate.x = 0.0f;
             uvTranslate.y = uvStep.y * 5.0f;
+            break;
+
+        case State::JumpAttack:
+            uvTranslate.x = 0.0f;
+            uvTranslate.y = uvStep.y * 6.0f;
             break;
 
         default:
@@ -301,6 +419,31 @@ class Player : ScriptComponentBehavior {
         if(invincibleTimer >= invincibleDuration){
             invincibleTimer = 0.0f;
             isInvincible = false; // 無敵状態解除
+        }
+
+        // 手裏剣クローンの更新および削除処理
+        for (uint i = 0; i < syurikenClones.length(); ) {
+            Object@ clone = syurikenClones[i];
+
+            if (clone !is null) {
+                // タイマー加算
+                syurikenTimers[i] += GetDeltaTime();
+
+                // 当たり判定等で非アクティブ化されたか、生存時間を超えた場合
+                if (!clone.IsActive() || syurikenTimers[i] >= syurikenLifeTime) {
+                    clone.SetActive(false);
+                    syurikenClones.removeAt(i);
+                    syurikenTimers.removeAt(i);
+                    continue; // インデックスを進めずに次の要素へ
+                }
+            } else {
+                // nullの場合も配列から除外
+                syurikenClones.removeAt(i);
+                syurikenTimers.removeAt(i);
+                continue;
+            }
+
+            i++;
         }
     }
 

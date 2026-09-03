@@ -52,5 +52,33 @@
             "key": "A",
             "state": "Down"
         }
+    ],
+    "WeaponChangeLeft": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "K",
+            "state": "Trigger"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "C",
+            "state": "Trigger"
+        }
+    ],
+    "WeaponChangeRight": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "L",
+            "state": "Trigger"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "V",
+            "state": "Trigger"
+        }
     ]
 }

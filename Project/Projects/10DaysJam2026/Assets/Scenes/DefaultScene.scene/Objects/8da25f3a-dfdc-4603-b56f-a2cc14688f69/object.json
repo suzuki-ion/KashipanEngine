@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 93.8106918334961,
-                            "y": 64.42455291748047,
+                            "x": -15.88197135925293,
+                            "y": 113.52628326416016,
                             "z": -2.1480484519997844e-06
                         }
                     },
@@ -45,7 +45,7 @@
                         "fields": {
                             "cooldown": 0.4000000059604645,
                             "pos": {
-                                "x": 93.8106918334961,
+                                "x": -100.0,
                                 "y": 64.42455291748047,
                                 "z": -2.1480484519997844e-06
                             },
@@ -101,51 +101,6 @@
                     "tag": ""
                 },
                 "type": "Box2DCollider"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "allowInstancing": true,
-                        "anchor": {
-                            "x": 0.5,
-                            "y": 0.5
-                        },
-                        "instanceColor": {
-                            "w": 1.0,
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
-                        },
-                        "instanceColorBlendMode": 1,
-                        "instanceUvCombineMode": 0,
-                        "instanceUvPivot": {
-                            "x": 0.5,
-                            "y": 0.5
-                        },
-                        "instanceUvRotation": 0.0,
-                        "instanceUvScale": {
-                            "x": 1.0,
-                            "y": 1.0
-                        },
-                        "instanceUvTranslate": {
-                            "x": 0.0,
-                            "y": 0.0
-                        },
-                        "materialName": "Dot",
-                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
-                        "pivot": {
-                            "x": 0.5,
-                            "y": 0.5
-                        },
-                        "pixelSnapping": true,
-                        "renderPriority": 0,
-                        "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
-                    },
-                    "isActive": true,
-                    "priority": 900,
-                    "tag": ""
-                },
-                "type": "SpriteRenderer"
             }
         ],
         "editorOnly": false,

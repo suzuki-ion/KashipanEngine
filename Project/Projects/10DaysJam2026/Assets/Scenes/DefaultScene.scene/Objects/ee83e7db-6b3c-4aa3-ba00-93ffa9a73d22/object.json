@@ -61,7 +61,7 @@
                         "continuousDetection": false,
                         "isTrigger": false,
                         "size": {
-                            "x": 1.0,
+                            "x": 0.800000011920929,
                             "y": 1.0
                         },
                         "syncPosition": [
@@ -78,7 +78,7 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": ""
+                    "tag": "Player"
                 },
                 "type": "Box2DCollider"
             },
@@ -87,6 +87,7 @@
                     "customData": {
                         "fields": {
                             "attackDuration": 0.44999998807907104,
+                            "currentWeaponType": 1,
                             "effect": "9da682a8-30e0-48ec-b449-3f4d2ff986fe",
                             "effectActiveDuration": 0.10000000149011612,
                             "frameInterval": 0.15000000596046448,
@@ -103,12 +104,16 @@
                                 "Enemy",
                                 "Heart"
                             ],
+                            "swordAttackInterval": 0.4000000059604645,
+                            "syurikenAttackInterval": 0.4000000059604645,
+                            "syurikenLifeTime": 2.0,
                             "uvStep": {
                                 "x": 0.3330000042915344,
-                                "y": 0.16599999368190765
+                                "y": 0.1428000032901764
                             },
                             "weapons": [
-                                "8da25f3a-dfdc-4603-b56f-a2cc14688f69"
+                                "8da25f3a-dfdc-4603-b56f-a2cc14688f69",
+                                "8bf086b0-18bf-4b32-83b6-5892013ee4e6"
                             ]
                         },
                         "scriptPath": "Assets/Scripts/Player.as"
@@ -142,7 +147,7 @@
                         "instanceUvRotation": 0.0,
                         "instanceUvScale": {
                             "x": 0.3330000042915344,
-                            "y": 0.16599999368190765
+                            "y": 0.14300000667572021
                         },
                         "instanceUvTranslate": {
                             "x": 0.0,

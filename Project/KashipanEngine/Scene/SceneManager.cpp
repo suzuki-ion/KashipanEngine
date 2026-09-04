@@ -135,7 +135,7 @@ void SceneManager::ShowImGui(Passkey<GameEngine>) {
 }
 #endif // USE_IMGUI
 
-bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
+bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {  
     if (!hasPendingSceneChange_) return false;
     hasPendingSceneChange_ = false;
 

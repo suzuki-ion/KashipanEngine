@@ -54,7 +54,7 @@
                                 "objectID": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22"
                             }
                         ],
-                        "moveLerpAll": 0.30000001192092896,
+                        "moveLerpAll": 0.5,
                         "moveLerpPerAxis": {
                             "x": 0.10000000149011612,
                             "y": 0.10000000149011612

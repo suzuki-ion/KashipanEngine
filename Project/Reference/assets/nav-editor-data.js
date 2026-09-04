@@ -29,6 +29,7 @@ const KE_PAGES = [
   { id: "C_Basic_Rotation", title: "Rotation", group: "コンポーネント: Basic", href: "Editor/Components/Basic/Rotation.html" },
   { id: "C_Basic_Shake", title: "Shake", group: "コンポーネント: Basic", href: "Editor/Components/Basic/Shake.html" },
   { id: "C_Basic_TargetLookAt", title: "TargetLookAt", group: "コンポーネント: Basic", href: "Editor/Components/Basic/TargetLookAt.html" },
+  { id: "C_Basic_TransformSync", title: "TransformSync", group: "コンポーネント: Basic", href: "Editor/Components/Basic/TransformSync.html" },
   { id: "C_Basic_Comment", title: "Comment", group: "コンポーネント: Basic", href: "Editor/Components/Basic/Comment.html" },
   { id: "C_Basic_Animator", title: "Animator", group: "コンポーネント: Basic", href: "Editor/Components/Basic/Animator.html" },
   { id: "C_Basic_KeyFrameAnimator", title: "KeyFrameAnimator", group: "コンポーネント: Basic", href: "Editor/Components/Basic/KeyFrameAnimator.html" },

@@ -795,7 +795,7 @@
 		"component.camera2d.height": "Height",
 		"component.camera2d.near": "Near",
 		"component.camera2d.pixel_snapping": "Pixel Snapping",
-		"component.camera2d.pixel_snapping_desc": "Rounds the camera's world X/Y to whole pixels before rendering. Prevents visible jitter (pixel swimming) between the camera and fixed objects when the camera position becomes sub-pixel, e.g. from smooth follow, in projects that display pixel art at 1x scale.",
+		"component.camera2d.pixel_snapping_desc": "Uses this camera as the reference for snapping enabled SpriteRenderers to the render target's pixel grid. The camera Transform remains unrounded, keeping camera-object relative positions stable during smooth follow.",
 		"component.camera2d.width": "Width",
 
 		//--------- component.camera3d ---------//
@@ -1377,7 +1377,7 @@
 		"component.spriterenderer.pipeline": "Pipeline",
 		"component.spriterenderer.pivot": "Pivot",
 		"component.spriterenderer.pixel_snapping": "Pixel Snapping",
-		"component.spriterenderer.pixel_snapping_desc": "Rounds this object's world X/Y to whole pixels before rendering. For projects displaying pixel art at 1x scale: enable this in addition to the camera-side pixel snapping (Camera2D) when the moving object's own Transform can end up at sub-pixel values (e.g. from smooth movement), to prevent visible jitter relative to the camera.",
+		"component.spriterenderer.pixel_snapping_desc": "When Pixel Snapping is also enabled on the applicable Camera2D, snaps this object's camera-relative position to the render target's pixel grid. This prevents relative jitter when both move by the same sub-pixel amount. Without a matching camera, world coordinates are rounded as before.",
 
 		//--------- component.targetlookat ---------//
 		"component.targetlookat.desc_1": "Sync Target Rotation: synchronizes with the target's world rotation (for billboards)\nLook At Target: this object's +Z axis always faces the target",
@@ -1467,6 +1467,16 @@
 		"component.tilemaprenderer.tile_type_header": "Tile Type ",
 		"component.tilemaprenderer.tile_types": "Tile Types",
 		"component.tilemaprenderer.tileset_origin_px": "Tileset Origin (px)",
+
+		//--------- component.transformsync ---------//
+		"component.transformsync.desc_1": "Every frame, copies the target's world position/rotation/scale (each plus its own offset) onto this object's Transform. This does not change the actual scene-graph parent.",
+		"component.transformsync.no_target": "(No target: sync is not applied)",
+		"component.transformsync.position_offset": "Position Offset",
+		"component.transformsync.rotation_offset": "Rotation Offset",
+		"component.transformsync.scale_offset": "Scale Offset",
+		"component.transformsync.sync_position": "Sync Position",
+		"component.transformsync.sync_rotation": "Sync Rotation",
+		"component.transformsync.sync_scale": "Sync Scale",
 
 		//--------- component.uibutton ---------//
 		"component.uibutton.desc": "Draws nothing itself. Uses the rectangle of this object's SpriteRenderer sprite if present; otherwise, if a TextRenderer is present, uses its bounding rectangle (which changes dynamically with the displayed text).",

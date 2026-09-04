@@ -53,6 +53,58 @@
             {
                 "data": {
                     "customData": {
+                        "applyTarget": 1,
+                        "autoPlay": false,
+                        "duration": 0.5,
+                        "positionAmplitude": {
+                            "x": 2.0,
+                            "y": 2.0,
+                            "z": 2.0
+                        },
+                        "positionAmplitudeEndMultiplier": 0.0,
+                        "positionAmplitudeStartMultiplier": 1.0,
+                        "positionEaseType": "Linear",
+                        "positionEnableX": true,
+                        "positionEnableY": true,
+                        "positionEnableZ": false,
+                        "positionEnvelopeEaseType": "Linear",
+                        "positionSpeed": {
+                            "x": 128.0,
+                            "y": 128.0,
+                            "z": 128.0
+                        },
+                        "positionSpeedEndMultiplier": 1.0,
+                        "positionSpeedStartMultiplier": 1.0,
+                        "processTiming": 1,
+                        "rotationAmplitudeDeg": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "rotationAmplitudeEndMultiplier": 1.0,
+                        "rotationAmplitudeStartMultiplier": 1.0,
+                        "rotationEaseType": "Linear",
+                        "rotationEnableX": false,
+                        "rotationEnableY": false,
+                        "rotationEnableZ": false,
+                        "rotationEnvelopeEaseType": "Linear",
+                        "rotationSpeed": {
+                            "x": 20.0,
+                            "y": 20.0,
+                            "z": 20.0
+                        },
+                        "rotationSpeedEndMultiplier": 1.0,
+                        "rotationSpeedStartMultiplier": 1.0
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Shake"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,
@@ -98,7 +150,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
+        "isActive": false,
         "name": "HP_bar",
         "objectID": "ef2708cb-284c-4190-98c3-f3e129164360",
         "tag": ""

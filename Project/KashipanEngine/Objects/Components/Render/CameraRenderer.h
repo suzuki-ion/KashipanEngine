@@ -1,5 +1,4 @@
 ﻿#pragma once
-#include <cmath>
 #include <cstring>
 #include <string>
 #include <unordered_set>
@@ -91,6 +90,17 @@ public:
     Vector3 GetWorldPosition() const {
         const Matrix4x4 world = GetRenderWorldMatrix();
         return Vector3(world.m[3][0], world.m[3][1], world.m[3][2]);
+    }
+
+    /// @brief 描画専用Shakeを反映した、丸め前のカメラワールド行列を取得する
+    /// @details SceneRendererがSpriteRendererをカメラ相対の画面ピクセルへ揃える際に使用する。
+    ///          物理・追従処理が参照するTransform自体は変更しない
+    Matrix4x4 GetPixelSnappingReferenceWorldMatrix() const { return GetRenderWorldMatrix(); }
+
+    /// @brief 同一オブジェクトのCamera2Dを取得する（無い場合はnullptr）
+    Camera2D *GetCamera2D() const {
+        auto *objectContext = GetOwnerObjectContext();
+        return objectContext ? objectContext->GetComponent<Camera2D>() : nullptr;
     }
 
     /// @brief 最後にアップロードしたビュー射影行列を取得（シャドウマップ定数等に使用）
@@ -271,15 +281,8 @@ private:
 
         RefreshBindVariableNames(objectContext);
 
-        Matrix4x4 world = GetRenderWorldMatrix();
+        const Matrix4x4 world = GetRenderWorldMatrix();
         auto *camera2d = objectContext->GetComponent<Camera2D>();
-        if (camera2d && camera2d->GetPixelSnapping()) {
-            // ドット絵をスケール1倍のまま表示する用途向け：カメラのワールドX/Yを整数ピクセルへ
-            // スナップしてからビュー行列化する。スムーズ追従等でカメラ位置がサブピクセル値に
-            // なっても、固定オブジェクトとの間で見た目上のガタつき（pixel swimming）が出ない
-            world.m[3][0] = std::floor(world.m[3][0]);
-            world.m[3][1] = std::floor(world.m[3][1]);
-        }
         const Matrix4x4 view = world.Inverse();
 
         void *mapped = constantBuffer_->Map();

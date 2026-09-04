@@ -795,7 +795,7 @@
 		"component.camera2d.height": "高度",
 		"component.camera2d.near": "近裁剪",
 		"component.camera2d.pixel_snapping": "像素吸附",
-		"component.camera2d.pixel_snapping_desc": "在渲染前将摄像机的世界坐标(X/Y)取整为整数像素。用于以1倍缩放显示像素画的项目，防止平滑跟随等导致摄像机位置出现亚像素值时，与固定物体之间产生画面抖动（像素漂移）。",
+		"component.camera2d.pixel_snapping_desc": "以此摄像机为基准，将启用Pixel Snapping的SpriteRenderer相对位置对齐到渲染目标的像素网格。摄像机Transform本身不会被取整，因此在平滑跟随时也能保持摄像机与物体的相对位置稳定。",
 		"component.camera2d.width": "宽度",
 
 		//--------- component.camera3d ---------//
@@ -1377,7 +1377,7 @@
 		"component.spriterenderer.pipeline": "管线",
 		"component.spriterenderer.pivot": "轴心点",
 		"component.spriterenderer.pixel_snapping": "像素吸附",
-		"component.spriterenderer.pixel_snapping_desc": "在渲染前将该对象的世界坐标(X/Y)取整为整数像素。用于以1倍缩放显示像素画的项目：当移动对象自身的Transform也可能出现亚像素值时（例如平滑移动），除摄像机侧的像素吸附（Camera2D）外也启用此项，可防止相对于摄像机产生画面抖动。",
+		"component.spriterenderer.pixel_snapping_desc": "当适用的Camera2D也启用Pixel Snapping时，将此物体相对摄像机的位置对齐到渲染目标的像素网格，可防止两者以相同亚像素距离移动时产生相对抖动。没有匹配摄像机时，仍按原方式将世界坐标取整。",
 
 		//--------- component.targetlookat ---------//
 		"component.targetlookat.desc_1": "Sync Target Rotation: 与目标的世界旋转同步（适用于公告板）\nLook At Target: 自身的+Z轴始终朝向目标方向",
@@ -1437,6 +1437,16 @@
 
 		//--------- component.texturesource ---------//
 		"component.texturesource.texture": "纹理",
+
+		//--------- component.transformsync ---------//
+		"component.transformsync.desc_1": "每帧将目标的世界位置/旋转/缩放（各自加上偏移量）应用到该对象的Transform上。不会更改实际的场景层级父子关系。",
+		"component.transformsync.no_target": "(未设置目标：不会进行同步)",
+		"component.transformsync.position_offset": "位置偏移",
+		"component.transformsync.rotation_offset": "旋转偏移",
+		"component.transformsync.scale_offset": "缩放偏移",
+		"component.transformsync.sync_position": "同步位置",
+		"component.transformsync.sync_rotation": "同步旋转",
+		"component.transformsync.sync_scale": "同步缩放",
 
 		//--------- component.uibutton ---------//
 		"component.uibutton.desc": "本身不进行任何绘制。若该对象上有SpriteRenderer，则使用其精灵的矩形；若没有但有TextRenderer，则使用其文本的外接矩形（会随当前显示的文本动态变化）作为点击判定区域。",

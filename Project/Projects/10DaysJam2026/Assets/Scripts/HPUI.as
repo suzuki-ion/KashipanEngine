@@ -21,6 +21,10 @@ class HPUI : ScriptComponentBehavior {
     // 複製したHPゲージオブジェクト一覧
     array<Object@> gauges;
 
+    // 前フレームのHP(ゲージが減った瞬間の検出用)
+    float previousHp = 0.0f;
+    bool hasPreviousHp = false;
+
     void Start() {
         if (player is null || gaugeSource is null) return;
 
@@ -71,17 +75,35 @@ class HPUI : ScriptComponentBehavior {
         float hp = 0.0f;
         if (!playerSc.GetVariable("hp", hp)) return;
 
+        // 初回はShake判定の基準を作るだけで、揺れは発生させない
+        if (!hasPreviousHp) {
+            previousHp = hp;
+            hasPreviousHp = true;
+        }
+
         for (uint i = 0; i < gauges.length(); ++i) {
             Object@ gauge = gauges[i];
             if (gauge is null) continue;
 
-            SpriteRenderer@ sprite;
-            if (!gauge.GetComponent(@sprite)) continue;
+            bool wasFilled = float(i) < previousHp;
+            bool isFilled = float(i) < hp;
 
-            // 現在HPぶんだけUVをX座標0.0、それ以外は0.5に設定
-            float uvX = (float(i) < hp) ? 0.0f : 0.5f;
-            sprite.SetInstanceUvTranslate(Vector2(uvX, 0.0f));
+            SpriteRenderer@ sprite;
+            if (gauge.GetComponent(@sprite)) {
+                // 現在HPぶんだけUVをX座標0.0、それ以外は0.5に設定
+                sprite.SetInstanceUvTranslate(Vector2(isFilled ? 0.0f : 0.5f, 0.0f));
+            }
+
+            // このゲージが満タン→空に変わった瞬間だけShakeを再生
+            if (wasFilled && !isFilled) {
+                Shake@ shake;
+                if (gauge.GetComponent(@shake)) {
+                    shake.Play();
+                }
+            }
         }
+
+        previousHp = hp;
     }
 
     void End() {

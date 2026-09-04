@@ -121,6 +121,7 @@
 #include "Objects/Components/Render/TilemapRenderer.h"
 #include "Objects/Components/ScriptComponent.h"
 #include "Objects/Components/TargetLookAt.h"
+#include "Objects/Components/TransformSync.h"
 #include "Objects/Components/ParticleSystem2D.h"
 #include "Objects/Components/ParticleSystem3D.h"
 #include "Objects/Components/PreTransform.h"
@@ -973,6 +974,28 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetFollowStrength(float)", SafeCall<&TargetLookAt::SetFollowStrength>())
         .method("float GetFollowStrength() const", SafeCall<&TargetLookAt::GetFollowStrength>());
 
+    RegisterComponentType<TransformSync>(engine, "TransformSync")
+        .method("void SetTargetObject(Object@)", [](ScriptComponentHandle<TransformSync> &cHandle, ScriptObjectHandle *obj) {
+            TransformSync *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            TransformSync &c = *cPtr; c.SetTargetObject(ResolveObjectArg(obj)); })
+        .method("Object@ GetTargetObject() const", [](const ScriptComponentHandle<TransformSync> &cHandle) -> ScriptObjectHandle * {
+            TransformSync *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<ScriptObjectHandle *>(); }
+            const TransformSync &c = *cPtr; return ScriptObjectHandle::Create(c.GetTargetObject()); })
+        .method("void SetSyncPosition(bool)", SafeCall<&TransformSync::SetSyncPosition>())
+        .method("bool GetSyncPosition() const", SafeCall<&TransformSync::GetSyncPosition>())
+        .method("void SetSyncRotation(bool)", SafeCall<&TransformSync::SetSyncRotation>())
+        .method("bool GetSyncRotation() const", SafeCall<&TransformSync::GetSyncRotation>())
+        .method("void SetSyncScale(bool)", SafeCall<&TransformSync::SetSyncScale>())
+        .method("bool GetSyncScale() const", SafeCall<&TransformSync::GetSyncScale>())
+        .method("void SetPositionOffset(const Vector3 &in)", SafeCall<&TransformSync::SetPositionOffset>())
+        .method("const Vector3 &GetPositionOffset() const", SafeCall<&TransformSync::GetPositionOffset>())
+        .method("void SetRotationOffset(const Vector3 &in)", SafeCall<&TransformSync::SetRotationOffset>())
+        .method("const Vector3 &GetRotationOffset() const", SafeCall<&TransformSync::GetRotationOffset>())
+        .method("void SetScaleOffset(const Vector3 &in)", SafeCall<&TransformSync::SetScaleOffset>())
+        .method("const Vector3 &GetScaleOffset() const", SafeCall<&TransformSync::GetScaleOffset>());
+
     RegisterComponentType<AudioSource>(engine, "AudioSource")
         .method("uint Play()", SafeCall<&AudioSource::Play>())
         .method("void Stop()", SafeCall<&AudioSource::Stop>())
@@ -1222,7 +1245,8 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("bool WasApplied() const", SafeCall<&SceneVariableApplier::WasApplied>());
 
     RegisterComponentType<Shake>(engine, "Shake")
-        .method("void Play(float = 0.0f)", SafeCall<&Shake::Play>())
+        // 引数省略時はduration_（インスペクターで設定した既定の再生時間）を使う。明示的に0以下を渡した場合のみ無期限再生になる
+        .method("void Play(float = -1.0f)", SafeCall<&Shake::Play>())
         .method("void Stop()", SafeCall<&Shake::Stop>())
         .method("bool IsPlaying() const", SafeCall<&Shake::IsPlaying>())
         // ProcessTiming: 0=Immediate, 1=DeferredEnd

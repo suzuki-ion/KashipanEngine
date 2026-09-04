@@ -129,6 +129,66 @@ bool MaterialWantsOutline(MaterialManager::MaterialHandle handle) {
     return width && *width > 0.0f;
 }
 
+/// @brief CameraRendererの描画先指定が、現在の描画先に一致するか判定する
+/// @details 実描画時のRendererInternal::IsTargetMatchと同じ規則にする。エディター描画先は
+///          専用カメラで上書きされるため、カメラ相対スナップの解決対象にはしない
+bool IsCameraTargetMatch(const CameraRenderer *cameraRenderer, IRenderTarget *target) {
+    if (!cameraRenderer || !target) return false;
+    if (!cameraRenderer->GetTargetObjectID().IsValid()) return true;
+    auto *targetObject = cameraRenderer->GetTargetObject();
+    if (!targetObject) return false;
+    std::vector<IRenderTarget *> targets;
+    SceneRenderer::CollectRenderTargets(targetObject, targets);
+    return std::find(targets.begin(), targets.end(), target) != targets.end();
+}
+
+/// @brief 実描画時に同じ描画先・パイプラインへ最後に適用されるPixel Snapping有効なCamera2Dを解決する
+/// @details カメラ定数バッファは複数一致時に後から登録されたものが上書きするため、ここでも最後の一致を使う
+CameraRenderer *ResolvePixelSnappingCamera(const std::vector<CameraRenderer *> &cameraRenderers,
+    IRenderTarget *target, const std::string &pipelineName) {
+    CameraRenderer *result = nullptr;
+    for (auto *cameraRenderer : cameraRenderers) {
+        if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
+        const EmptyObject *owner = cameraRenderer->GetOwnerObject();
+        if (owner && owner->IsEditorOnlyInHierarchy()) continue;
+        if (!cameraRenderer->GetPipelineName().empty() && cameraRenderer->GetPipelineName() != pipelineName) continue;
+        if (!IsCameraTargetMatch(cameraRenderer, target)) continue;
+        if (!cameraRenderer->IsRenderTargetIncluded(target)) continue;
+        auto *camera2d = cameraRenderer->GetCamera2D();
+        if (!camera2d || !camera2d->GetPixelSnapping()) continue;
+        result = cameraRenderer;
+    }
+    return result;
+}
+
+/// @brief スプライト原点をカメラローカル空間へ移し、描画先の1ピクセル単位へ丸めてワールド空間へ戻す
+/// @details カメラとスプライトを別々に丸めないため、両者が同じ量だけサブピクセル移動した場合に
+///          画面上の相対位置が1ピクセル往復することを防ぐ。カメラ回転にも追従して画面X/Y軸で丸める
+bool ApplyCameraRelativePixelSnapping(Matrix4x4 &world, const std::vector<CameraRenderer *> &cameraRenderers,
+    IRenderTarget *target, const std::string &pipelineName) {
+    if (!target || target->GetRenderTargetWidth() == 0 || target->GetRenderTargetHeight() == 0) return false;
+    auto *cameraRenderer = ResolvePixelSnappingCamera(cameraRenderers, target, pipelineName);
+    if (!cameraRenderer) return false;
+
+    auto *camera2d = cameraRenderer->GetCamera2D();
+    if (!camera2d) return false;
+    const float pixelWidth = camera2d->GetWidth() / static_cast<float>(target->GetRenderTargetWidth());
+    const float pixelHeight = camera2d->GetHeight() / static_cast<float>(target->GetRenderTargetHeight());
+    if (!std::isfinite(pixelWidth) || !std::isfinite(pixelHeight) || pixelWidth <= 0.0f || pixelHeight <= 0.0f) return false;
+
+    const Matrix4x4 cameraWorld = cameraRenderer->GetPixelSnappingReferenceWorldMatrix();
+    const Matrix4x4 cameraView = cameraWorld.Inverse();
+    Vector3 position(world.m[3][0], world.m[3][1], world.m[3][2]);
+    Vector3 cameraLocal = position.Transform(cameraView);
+    cameraLocal.x = std::round(cameraLocal.x / pixelWidth) * pixelWidth;
+    cameraLocal.y = std::round(cameraLocal.y / pixelHeight) * pixelHeight;
+    const Vector3 snappedWorld = cameraLocal.Transform(cameraWorld);
+    world.m[3][0] = snappedWorld.x;
+    world.m[3][1] = snappedWorld.y;
+    world.m[3][2] = snappedWorld.z;
+    return true;
+}
+
 /// @brief objがselectedObjectsに含まれるか、その祖先のいずれかが含まれるかを判定する
 ///        （選択した親オブジェクトの子孫にも選択アウトラインを付けるための判定。IsDescendantOfAny
 ///        と同じTransform親参照チェーンの辿り方）
@@ -223,6 +283,7 @@ template <typename RendererT>
 void CollectSortableEntries(const std::vector<RendererT *> &renderers,
     PipelineManager *pipelineManager,
     IRenderTarget *editorTarget,
+    const std::vector<CameraRenderer *> &cameraRenderers,
     std::vector<SortableEntry> &sortableEntries,
     std::unordered_map<const IRenderTarget *, EmptyObject *> &targetOwners,
     bool onlyCustomTarget,
@@ -304,14 +365,17 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
                 }
                 sortable.entry.worldMatrix = Shake::ApplyRenderOnlyOffsets(
                     renderer->GetOwnerObject(), renderer->GetWorldMatrix());
-                // SpriteRenderer側でピクセルスナップが有効な場合、ワールドX/Yを整数ピクセルへ丸める。
-                // カメラ側（Camera2D::GetPixelSnapping）だけを丸めても、このオブジェクトのTransformが
-                // サブピクセル値のままだと相対的にガタつく（pixel swimming）ため、対象がドット絵なら
-                // オブジェクト側も同じグリッドへ揃える必要がある
+                // SpriteRendererと適用先Camera2Dの両方でPixel Snappingが有効なら、カメラ相対の
+                // 画面ピクセル格子へ揃える。エディター描画先や対応カメラが無い場合は、従来互換として
+                // ワールド座標を整数単位へ丸める
                 if constexpr (std::is_same_v<RendererT, SpriteRenderer>) {
                     if (renderer->GetPixelSnapping()) {
-                        sortable.entry.worldMatrix.m[3][0] = std::floor(sortable.entry.worldMatrix.m[3][0]);
-                        sortable.entry.worldMatrix.m[3][1] = std::floor(sortable.entry.worldMatrix.m[3][1]);
+                        const bool snappedRelativeToCamera = target != editorTarget && ApplyCameraRelativePixelSnapping(
+                            sortable.entry.worldMatrix, cameraRenderers, target, entryPipelineName);
+                        if (!snappedRelativeToCamera) {
+                            sortable.entry.worldMatrix.m[3][0] = std::floor(sortable.entry.worldMatrix.m[3][0]);
+                            sortable.entry.worldMatrix.m[3][1] = std::floor(sortable.entry.worldMatrix.m[3][1]);
+                        }
                     }
                 }
                 sortable.entry.instanceColor = GetInstanceColorFor(renderer);
@@ -690,8 +754,8 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
     // キャッシュ対象にせず毎フレーム収集する（targetObjectID未指定＝エディター用描画先のみに描画する
     // 分はcachedEntries_側でまとめて扱うため、ここでは重複しない）
     std::vector<SortableEntry> freshEntries;
-    CollectSortableEntries(meshRenderers_, pipelineManager, editorTarget_, freshEntries, targetOwners_, /*onlyCustomTarget=*/true, editorDisplayMode_);
-    CollectSortableEntries(spriteRenderers_, pipelineManager, editorTarget_, freshEntries, targetOwners_, /*onlyCustomTarget=*/true, editorDisplayMode_);
+    CollectSortableEntries(meshRenderers_, pipelineManager, editorTarget_, cameraRenderers_, freshEntries, targetOwners_, /*onlyCustomTarget=*/true, editorDisplayMode_);
+    CollectSortableEntries(spriteRenderers_, pipelineManager, editorTarget_, cameraRenderers_, freshEntries, targetOwners_, /*onlyCustomTarget=*/true, editorDisplayMode_);
 
     // SkinnedMeshRendererはGPUスキニング結果バッファ(skinnedVertexBuffer)を追加で持つため、
     // MeshRenderer/SpriteRendererと形が異なりCollectSortableEntriesは使わず個別に収集する

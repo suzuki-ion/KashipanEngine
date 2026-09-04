@@ -88,7 +88,7 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Background",
+        "name": "UI_Background",
         "objectID": "ab6ae6b4-43bd-457b-a6a5-8bf6812a02e9",
         "tag": ""
     },

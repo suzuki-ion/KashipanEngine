@@ -42,6 +42,192 @@
             {
                 "data": {
                     "customData": {
+                        "effects": {
+                            "echo": {
+                                "delayMs": 500.0,
+                                "enabled": false,
+                                "feedback": 0.5,
+                                "wetDryMix": 0.5
+                            },
+                            "eq": {
+                                "bandwidth": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ],
+                                "enabled": false,
+                                "frequencyCenter": [
+                                    100.0,
+                                    800.0,
+                                    2000.0,
+                                    10000.0
+                                ],
+                                "gain": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ]
+                            },
+                            "filter": {
+                                "enabled": false,
+                                "frequency": 1.0,
+                                "kind": 0,
+                                "q": 1.0
+                            },
+                            "limiter": {
+                                "enabled": false,
+                                "loudness": 1000,
+                                "release": 6
+                            },
+                            "reverb": {
+                                "enabled": false,
+                                "mix": 0.30000001192092896
+                            }
+                        },
+                        "enableSpatialAudio": false,
+                        "loop": false,
+                        "maxDistance": 25.0,
+                        "minDistance": 1.0,
+                        "pitch": 0.0,
+                        "playOnAwake": false,
+                        "soundName": "App/Sound/playerJump.mp3",
+                        "volume": 0.5
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "Jump"
+                },
+                "type": "AudioSource"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "effects": {
+                            "echo": {
+                                "delayMs": 500.0,
+                                "enabled": false,
+                                "feedback": 0.5,
+                                "wetDryMix": 0.5
+                            },
+                            "eq": {
+                                "bandwidth": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ],
+                                "enabled": false,
+                                "frequencyCenter": [
+                                    100.0,
+                                    800.0,
+                                    2000.0,
+                                    10000.0
+                                ],
+                                "gain": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ]
+                            },
+                            "filter": {
+                                "enabled": false,
+                                "frequency": 1.0,
+                                "kind": 0,
+                                "q": 1.0
+                            },
+                            "limiter": {
+                                "enabled": false,
+                                "loudness": 1000,
+                                "release": 6
+                            },
+                            "reverb": {
+                                "enabled": false,
+                                "mix": 0.30000001192092896
+                            }
+                        },
+                        "enableSpatialAudio": false,
+                        "loop": false,
+                        "maxDistance": 25.0,
+                        "minDistance": 1.0,
+                        "pitch": 0.0,
+                        "playOnAwake": false,
+                        "soundName": "App/Sound/playerLanding.mp3",
+                        "volume": 0.5
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "Landing"
+                },
+                "type": "AudioSource"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "effects": {
+                            "echo": {
+                                "delayMs": 500.0,
+                                "enabled": false,
+                                "feedback": 0.5,
+                                "wetDryMix": 0.5
+                            },
+                            "eq": {
+                                "bandwidth": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ],
+                                "enabled": false,
+                                "frequencyCenter": [
+                                    100.0,
+                                    800.0,
+                                    2000.0,
+                                    10000.0
+                                ],
+                                "gain": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ]
+                            },
+                            "filter": {
+                                "enabled": false,
+                                "frequency": 1.0,
+                                "kind": 0,
+                                "q": 1.0
+                            },
+                            "limiter": {
+                                "enabled": false,
+                                "loudness": 1000,
+                                "release": 6
+                            },
+                            "reverb": {
+                                "enabled": false,
+                                "mix": 0.30000001192092896
+                            }
+                        },
+                        "enableSpatialAudio": false,
+                        "loop": false,
+                        "maxDistance": 25.0,
+                        "minDistance": 1.0,
+                        "pitch": 0.0,
+                        "playOnAwake": false,
+                        "soundName": "App/Sound/playerDamage.mp3",
+                        "volume": 0.5
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "Damage"
+                },
+                "type": "AudioSource"
+            },
+            {
+                "data": {
+                    "customData": {
                         "groundedThreshold": 0.5,
                         "ignoredTags": [
                             "Enemy",

@@ -1121,7 +1121,7 @@
             {
                 "data": {
                     "customData": {
-                        "meshAssetPath": "__TilemapRendererMesh_1799818788960"
+                        "meshAssetPath": "__TilemapRendererMesh_1973755258688"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -1708,7 +1708,7 @@
                             "x": 0.5,
                             "y": 0.5
                         },
-                        "pixelSnapping": false,
+                        "pixelSnapping": true,
                         "renderPriority": -50,
                         "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                     },

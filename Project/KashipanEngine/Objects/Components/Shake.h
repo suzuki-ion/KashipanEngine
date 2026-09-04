@@ -73,11 +73,17 @@ public:
     // 再生制御
     //==================================================
 
+    /// @brief Play()の引数を省略した場合に「duration（インスペクターで設定した既定の再生時間）を
+    ///        使う」ことを表す番兵値。ImGui側でduration_は0.0〜60.0にクランプされるため、
+    ///        実際の設定値と衝突しない
+    static constexpr float kUseConfiguredDuration = -1.0f;
+
     /// @brief シェイクを開始する
-    /// @param duration 再生時間（秒）。0以下を指定すると Stop() が呼ばれるまで無期限に再生する
-    void Play(float duration = 0.0f) noexcept {
+    /// @param duration 再生時間（秒）。省略した場合はduration（インスペクターで設定した値）を使う。
+    ///        明示的に0以下を指定した場合は Stop() が呼ばれるまで無期限に再生する
+    void Play(float duration = kUseConfiguredDuration) noexcept {
         isPlaying_ = true;
-        playDuration_ = duration;
+        playDuration_ = (duration == kUseConfiguredDuration) ? duration_ : duration;
         elapsedPlayTime_ = 0.0f;
     }
     /// @brief シェイクを停止する（ToTransform適用中だった場合、そのフレームでオフセットが差し引かれ元に戻る）

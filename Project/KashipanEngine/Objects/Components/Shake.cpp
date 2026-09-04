@@ -67,7 +67,7 @@ std::unique_ptr<IObjectComponent> Shake::Clone() const {
 
 void Shake::Initialize() {
     if (autoPlay_) {
-        Play(duration_);
+        Play(); // 引数省略でduration_（インスペクターの設定値）を使う
     }
     auto *applier = GetOrAddSceneShakeApplier();
     if (applier) applier->RegisterShake(this);
@@ -224,7 +224,7 @@ void Shake::ShowImGui() {
     } else {
         ImGui::TextDisabled("%s", TranslationC("component.shake.stopped"));
         ImGui::SameLine();
-        if (ImGui::Button(TranslationLabel("component.shake.play"))) Play(duration_);
+        if (ImGui::Button(TranslationLabel("component.shake.play"))) Play();
     }
 
     ImGui::Checkbox(TranslationLabel("component.shake.auto_play"), &autoPlay_);

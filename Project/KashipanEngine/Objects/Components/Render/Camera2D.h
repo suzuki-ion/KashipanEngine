@@ -38,10 +38,10 @@ public:
     void SetAutoSyncSize(bool enable) noexcept { autoSyncSize_ = enable; }
     bool GetAutoSyncSize() const noexcept { return autoSyncSize_; }
 
-    /// @brief カメラのワールド座標(X/Y)を整数ピクセル単位に丸めてから描画に使うかどうかを設定する
-    /// @details ドット絵をスケール1倍のまま表示するプロジェクトで、スムーズ追従などにより
-    ///          カメラ位置がサブピクセル値になった際の見た目のガタつき（pixel swimming）を防ぐ。
-    ///          既定は無効（従来通りfloatのまま使用）
+    /// @brief このカメラを基準に、ピクセルスナップ対象のSpriteRendererを画面ピクセルへ揃えるか設定する
+    /// @details カメラ自身のTransformは丸めず、SpriteRendererとカメラの相対座標を描画先解像度の
+    ///          ピクセル格子へ丸める。スムーズ追従で両者がサブピクセル移動しても、相対位置が一定なら
+    ///          画面上の位置も一定に保たれる。既定は無効
     void SetPixelSnapping(bool enable) noexcept { pixelSnapping_ = enable; }
     bool GetPixelSnapping() const noexcept { return pixelSnapping_; }
 
@@ -92,7 +92,7 @@ private:
     float farClip_ = 1000.0f;
     /// @brief CameraRendererの描画先解像度へwidth/heightを自動追従させるか（既定false）
     bool autoSyncSize_ = false;
-    /// @brief カメラのワールド座標(X/Y)を整数ピクセルへスナップしてから描画に使うか（既定false）
+    /// @brief このカメラを基準にSpriteRendererを画面ピクセルへスナップするか（既定false）
     bool pixelSnapping_ = false;
 };
 

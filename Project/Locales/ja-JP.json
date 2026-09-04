@@ -795,7 +795,7 @@
 		"component.camera2d.height": "高さ",
 		"component.camera2d.near": "ニアクリップ",
 		"component.camera2d.pixel_snapping": "ピクセルスナップ",
-		"component.camera2d.pixel_snapping_desc": "カメラのワールド座標(X/Y)を整数ピクセル単位に丸めてから描画に使う。ドット絵をスケール1倍のまま表示するプロジェクトで、スムーズ追従などによりカメラ位置がサブピクセル値になった際の見た目のガタつき（ピクセルの揺れ）を防ぐ。",
+		"component.camera2d.pixel_snapping_desc": "このカメラを基準に、Pixel Snappingが有効なSpriteRendererの相対位置を描画先のピクセル格子へ揃える。カメラ自身のTransformは丸めないため、スムーズ追従中もカメラとオブジェクトの相対位置を安定させられる。",
 		"component.camera2d.width": "幅",
 
 		//--------- component.camera3d ---------//
@@ -1377,7 +1377,7 @@
 		"component.spriterenderer.pipeline": "パイプライン",
 		"component.spriterenderer.pivot": "ピボット",
 		"component.spriterenderer.pixel_snapping": "ピクセルスナップ",
-		"component.spriterenderer.pixel_snapping_desc": "ワールド座標(X/Y)を整数ピクセル単位に丸めてから描画に使う。ドット絵をスケール1倍のまま表示するプロジェクト向け。カメラ側（Camera2Dのピクセルスナップ）だけでなく、動くオブジェクト自身のTransformがサブピクセル値になる場合（スムーズ移動等）も有効にすると、カメラに対する見た目のガタつき（ピクセルの揺れ）を防げる。",
+		"component.spriterenderer.pixel_snapping_desc": "Camera2D側のPixel Snappingも有効な場合、このオブジェクトのカメラ相対位置を描画先のピクセル格子へ揃える。両者が同じ量だけサブピクセル移動したときの相対的な揺れを防げる。対応カメラが無い場合はワールド座標を整数単位へ丸める。",
 
 		//--------- component.targetlookat ---------//
 		"component.targetlookat.desc_1": "Sync Target Rotation: ターゲットのワールド回転と同期する（ビルボード向け）\nLook At Target: 自身の+Z軸が常にターゲットの方向を向く",
@@ -1467,6 +1467,16 @@
 		"component.tilemaprenderer.tile_type_header": "タイル種類 ",
 		"component.tilemaprenderer.tile_types": "タイル種類",
 		"component.tilemaprenderer.tileset_origin_px": "タイルセット上の原点(px)",
+
+		//--------- component.transformsync ---------//
+		"component.transformsync.desc_1": "ターゲットのワールド座標・回転・スケールに、それぞれのオフセットを加えた値を自身のTransformへ毎フレーム反映します（親子付けはしません）。",
+		"component.transformsync.no_target": "(ターゲット未設定：同期は行われません)",
+		"component.transformsync.position_offset": "位置オフセット",
+		"component.transformsync.rotation_offset": "回転オフセット",
+		"component.transformsync.scale_offset": "スケールオフセット",
+		"component.transformsync.sync_position": "位置を同期",
+		"component.transformsync.sync_rotation": "回転を同期",
+		"component.transformsync.sync_scale": "スケールを同期",
 
 		//--------- component.uibutton ---------//
 		"component.uibutton.desc": "見た目の描画は行いません。同オブジェクトにSpriteRendererがあればそのスプライトの矩形を、無くTextRendererがあればそのテキストの外接矩形（表示中の文字列に応じて動的に変わる）をそのまま当たり判定に使います。",

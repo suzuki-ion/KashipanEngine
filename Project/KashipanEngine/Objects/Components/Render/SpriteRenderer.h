@@ -208,11 +208,10 @@ public:
     void SetAllowInstancing(bool allow) noexcept { allowInstancing_ = allow; MarkDrawListDirty(); }
     bool GetAllowInstancing() const noexcept { return allowInstancing_; }
 
-    /// @brief ワールド座標(X/Y)を整数ピクセル単位に丸めてから描画に使うかどうかを設定する（既定false）
-    /// @details ドット絵をスケール1倍のまま表示するプロジェクト向け。CameraController2D等でカメラが
-    ///          サブピクセル位置を取り得る場合、カメラ側のみピクセルスナップしていてもこのオブジェクトの
-    ///          Transformがサブピクセル値のままだと、カメラに対して相対的にガタつく（pixel swimming）。
-    ///          有効にすると、このオブジェクトのワールドX/Yも整数ピクセルへ丸めてから描画される
+    /// @brief 適用先Camera2Dから見た位置を画面ピクセル単位に丸めて描画するか設定する（既定false）
+    /// @details Camera2D側のPixel Snappingも有効な場合、カメラとこのオブジェクトの相対座標を
+    ///          描画先解像度のピクセル格子へ揃える。カメラがサブピクセル位置を取っていても、両者の
+    ///          相対位置が一定なら画面上で揺れない。対応カメラが無い場合は従来通りワールド単位で丸める
     void SetPixelSnapping(bool enable) noexcept { pixelSnapping_ = enable; MarkDrawListDirty(); }
     bool GetPixelSnapping() const noexcept { return pixelSnapping_; }
 
@@ -493,7 +492,7 @@ private:
     int renderPriority_ = 0;
     /// @brief 他のオブジェクトとのインスタンシング（バッチ結合）を許可するか（既定true）
     bool allowInstancing_ = true;
-    /// @brief ワールド座標(X/Y)を整数ピクセルへスナップしてから描画に使うか（既定false）
+    /// @brief 適用先Camera2Dから見た位置を画面ピクセルへスナップするか（既定false）
     bool pixelSnapping_ = false;
 };
 

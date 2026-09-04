@@ -95,6 +95,7 @@ class Player : ScriptComponentBehavior {
     Box2DCollider@ col;
     CharacterController2D@ controller;
     SpriteRenderer@ sprite;
+    array<AudioSource@>@ audioSources;
 
     Vector2 velocity;
     bool isJump = false;
@@ -121,6 +122,17 @@ class Player : ScriptComponentBehavior {
             }
         }
         GetComponent(@sprite);
+        GetComponents(@audioSources);
+    }
+
+    // タグの一致するAudioSourceの音を再生する
+    void PlayTaggedAudio(const string &in tagName) {
+        if(audioSources is null) return;
+        for(uint i = 0; i < audioSources.length(); ++i) {
+            if(audioSources[i] !is null && audioSources[i].GetTag() == tagName) {
+                audioSources[i].Play();
+            }
+        }
     }
 
     void Update() {
@@ -132,6 +144,9 @@ class Player : ScriptComponentBehavior {
         if(controller !is null) {
             if(controller.IsGrounded() && velocity.y <= 0.0f) {
                 velocity.y = 0.0f;
+                if(isJump) {
+                    PlayTaggedAudio("Landing"); // 着地時の音を再生
+                }
                 isJump = false;
             }
             if(controller.IsTouchingCeiling() && velocity.y > 0.0f) {
@@ -160,6 +175,7 @@ class Player : ScriptComponentBehavior {
         if(IsCommandTriggered("Jump") && !isJump){
             velocity.y = jumpPower;
             isJump = true;
+            PlayTaggedAudio("Jump"); // ジャンプ時の音を再生
         }
 
         // 武器の切り替え
@@ -477,6 +493,7 @@ class Player : ScriptComponentBehavior {
     void Damage(float amount) {
         hp = Clamp(hp - amount, 0.0f, maxHp);
         Log("Damage! HP:" + hp);
+        PlayTaggedAudio("Damage"); // ダメージ時の音を再生
     }
 
     void Heal(float amount) {

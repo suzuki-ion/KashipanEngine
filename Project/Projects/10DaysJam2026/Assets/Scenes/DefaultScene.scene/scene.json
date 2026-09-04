@@ -26,6 +26,24 @@
                 "tag": ""
             },
             "type": "SceneObjectCollider"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 2000,
+                "tag": ""
+            },
+            "type": "SceneShakeApplier"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 500,
+                "tag": ""
+            },
+            "type": "SceneAudioPlayer"
         }
     ],
     "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",

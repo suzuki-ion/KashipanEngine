@@ -19,6 +19,22 @@ void EmptyObject::CopyStateFrom(Passkey<Scene>, const EmptyObject &source) {
     SetTag(source.tagName_);
     for (const auto &comp : source.components_) {
         if (!comp.first) continue;
+
+        // Transformはコンストラクタで既定のものが1つ追加済みのため、そのまま複製・追加すると
+        // 2つ目のTransformが増えてしまう。GetComponent<T>()は型が一致する最初の1つ（＝先に
+        // 追加済みの既定Transform）を返すため、複製した値が反映されずscale等が常に初期値(1,1,1)に
+        // なってしまう。既定のTransformへ値だけ反映することで対処する（親子関係はClone()と同様に
+        // 引き継がない）
+        if (auto *sourceTransform = dynamic_cast<Transform *>(comp.first)) {
+            if (auto *destTransform = GetComponent<Transform>()) {
+                destTransform->SetTranslate(sourceTransform->GetTranslate());
+                destTransform->SetRotateQuaternion(sourceTransform->GetRotateQuaternion());
+                destTransform->SetScale(sourceTransform->GetScale());
+                destTransform->SetTag(comp.first->GetTagName());
+                continue;
+            }
+        }
+
         auto clonedComp = comp.first->Clone();
         if (!clonedComp) continue;
         // 派生クラスのCloneは基底クラスのタグを複製しないため、ここで引き継ぐ

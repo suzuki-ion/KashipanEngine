@@ -82,6 +82,8 @@ public:
         ADD_MEMBER_VARIABLE(pointSampling_);
         ADD_MEMBER_VARIABLE(renderPriority_);
         ADD_MEMBER_VARIABLE(allowInstancing_);
+        ADD_MEMBER_VARIABLE(pixelSnapping_);
+        ADD_MEMBER_VARIABLE(pixelSnapOutsetPixels_);
     )
     COMPONENT_CATEGORY("Render")
     ~BitmapTextRenderer() override = default;
@@ -103,6 +105,8 @@ public:
         ptr->pointSampling_ = pointSampling_;
         ptr->renderPriority_ = renderPriority_;
         ptr->allowInstancing_ = allowInstancing_;
+        ptr->pixelSnapping_ = pixelSnapping_;
+        ptr->pixelSnapOutsetPixels_ = pixelSnapOutsetPixels_;
         ptr->MarkShapeDirty();
         return ptr;
     }
@@ -207,6 +211,23 @@ public:
     std::int32_t GetRenderPriority() const noexcept { return renderPriority_; }
     void SetAllowInstancing(bool allow) noexcept { allowInstancing_ = allow; }
     bool GetAllowInstancing() const noexcept { return allowInstancing_; }
+
+    /// @brief 適用先Camera2Dから見た位置を画面ピクセルへスナップするか（既定false）
+    /// @details SpriteRenderer::SetPixelSnappingと同じ仕組み。ドット絵フォント（PointSampling有効）を
+    ///          原寸大でクッキリ表示したい場合に使う
+    void SetPixelSnapping(bool enable) noexcept { pixelSnapping_ = enable; }
+    bool GetPixelSnapping() const noexcept { return pixelSnapping_; }
+
+    /// @brief ピクセルスナップ有効時、境界ピクセルの取りこぼしを防ぐためにクアッドを外側へ
+    ///        わずかに広げる安全マージン（片側、ピクセル単位）を設定する（既定0.0=無効）
+    /// @details SpriteRenderer::SetPixelSnapOutsetPixelsと同じ仕組み。文字は必ずフォントアトラス内の
+    ///          サブ矩形（instanceUvTranslate/instanceUvScale）を切り出して描画するため、この
+    ///          マージンによりUVがそのサブ矩形からわずかにはみ出すと、隣接する文字の領域が縁に漏れる
+    ///          可能性がある（サンプラーがPointClamp/LinearClampのいずれでも、切り出したサブ矩形と
+    ///          アトラス内の隣接文字との間にパディングが無い限り発生し得る）。フォントアトラス生成時に
+    ///          グリフ間へ数px程度の余白があるかを確認した上で、小さい値から試すこと
+    void SetPixelSnapOutsetPixels(float pixels) noexcept { pixelSnapOutsetPixels_ = std::max(0.0f, pixels); }
+    float GetPixelSnapOutsetPixels() const noexcept { return pixelSnapOutsetPixels_; }
 
     //==================================================
     // 文字ごとのアクセス（Transform的な調整。ランタイム専用・非シリアライズ）
@@ -339,6 +360,18 @@ protected:
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("%s", TranslationC("component.common.desc_allow_instancing"));
         }
+        ImGui::Checkbox(TranslationLabel("component.bitmaptextrenderer.pixel_snapping"), &pixelSnapping_);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", TranslationC("component.bitmaptextrenderer.pixel_snapping_desc"));
+        }
+        if (pixelSnapping_) {
+            if (ImGui::DragFloat(TranslationLabel("component.bitmaptextrenderer.pixel_snap_outset"), &pixelSnapOutsetPixels_, 0.01f, 0.0f, 1.0f)) {
+                pixelSnapOutsetPixels_ = std::max(0.0f, pixelSnapOutsetPixels_);
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("%s", TranslationC("component.bitmaptextrenderer.pixel_snap_outset_desc"));
+            }
+        }
 
         RebuildShapeIfDirty();
         if (!characterOverrides_.empty() && ImGui::TreeNode(TranslationLabel("component.bitmaptextrenderer.character_overrides"))) {
@@ -375,6 +408,8 @@ protected:
         }
         json["renderPriority"] = renderPriority_;
         json["allowInstancing"] = allowInstancing_;
+        json["pixelSnapping"] = pixelSnapping_;
+        json["pixelSnapOutsetPixels"] = pixelSnapOutsetPixels_;
         return json;
     }
 
@@ -402,6 +437,8 @@ protected:
         }
         renderPriority_ = json.value("renderPriority", 0);
         allowInstancing_ = json.value("allowInstancing", true);
+        pixelSnapping_ = json.value("pixelSnapping", false);
+        pixelSnapOutsetPixels_ = std::max(0.0f, json.value("pixelSnapOutsetPixels", 0.0f));
         MarkShapeDirty();
         return true;
     }
@@ -541,6 +578,11 @@ private:
     std::unordered_set<std::string> excludedRenderTargetNames_;
     int renderPriority_ = 0;
     bool allowInstancing_ = true;
+    /// @brief 適用先Camera2Dから見た位置を画面ピクセルへスナップするか（既定false）
+    bool pixelSnapping_ = false;
+    /// @brief ピクセルスナップ時、境界ピクセルの取りこぼし防止用にクアッドを外側へ広げる
+    ///        安全マージン（片側、ピクセル単位。既定0.0=無効。SetPixelSnapOutsetPixels参照）
+    float pixelSnapOutsetPixels_ = 0.0f;
 
     std::string text_;
     std::string fontName_;

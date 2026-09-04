@@ -1378,6 +1378,8 @@
 		"component.spriterenderer.pivot": "피벗",
 		"component.spriterenderer.pixel_snapping": "픽셀 스냅",
 		"component.spriterenderer.pixel_snapping_desc": "적용되는 Camera2D에서도 Pixel Snapping이 활성화된 경우 이 오브젝트의 카메라 상대 위치를 렌더 대상의 픽셀 격자에 맞춥니다. 둘이 같은 서브픽셀 거리만큼 움직일 때의 상대적인 흔들림을 방지합니다. 일치하는 카메라가 없으면 이전처럼 월드 좌표를 정수 단위로 반올림합니다.",
+		"component.spriterenderer.pixel_snap_outset": "픽셀 스냅 외곽 여백",
+		"component.spriterenderer.pixel_snap_outset_desc": "0보다 큰 값을 설정하면 경계 픽셀의 행/열이 통째로 사라지는 것을 방지하기 위해 쿼드를 한쪽으로 이 값(px)만큼 바깥으로 확장합니다. 왕복 행렬 연산에서 발생하는 아주 미세한 부동소수점 오차로 인해, 스냅된 경계에 정확히 걸친 픽셀을 래스터라이저가 바깥쪽으로 잘못 판정할 수 있는데, 이 여백이 이를 방지합니다. 스프라이트가 텍스처 전체를 사용하는 경우에는 무해하지만, 아틀라스/타일맵의 일부(instanceUvTranslate/instanceUvScale)를 잘라 쓰는 경우에는 샘플러의 주소 지정 방식과 무관하게 인접 영역 사이에 여백이 없으면 UV가 인접 타일로 번질 수 있습니다. 아틀라스에 타일 간 여백이 있는지 확인하거나, 값을 작게 유지한 채 시각적으로 확인하세요. 기본값 0.0=비활성화.",
 
 		//--------- component.targetlookat ---------//
 		"component.targetlookat.desc_1": "Sync Target Rotation: 타깃의 월드 회전과 동기화(빌보드용)\nLook At Target: 자신의 +Z축이 항상 타깃 방향을 바라봄",
@@ -1433,6 +1435,10 @@
 		"component.bitmaptextrenderer.material": "머티리얼",
 		"component.bitmaptextrenderer.pipeline": "파이프라인",
 		"component.bitmaptextrenderer.point_sampling": "포인트 샘플링",
+		"component.bitmaptextrenderer.pixel_snapping": "픽셀 스냅",
+		"component.bitmaptextrenderer.pixel_snapping_desc": "적용되는 Camera2D에서도 Pixel Snapping이 활성화된 경우 이 문자의 카메라 상대 위치를 렌더 대상의 픽셀 격자에 맞춥니다. 픽셀 아트 폰트(포인트 샘플링 활성화)를 원본 크기로 선명하게 표시할 때 사용합니다.",
+		"component.bitmaptextrenderer.pixel_snap_outset": "픽셀 스냅 외곽 여백",
+		"component.bitmaptextrenderer.pixel_snap_outset_desc": "0보다 큰 값을 설정하면 경계 픽셀의 행/열이 통째로 사라지는 것을 방지하기 위해 각 문자의 쿼드를 한쪽으로 이 값(px)만큼 바깥으로 확장합니다. 왕복 행렬 연산에서 발생하는 아주 미세한 부동소수점 오차로 인해, 스냅된 경계에 정확히 걸친 픽셀을 래스터라이저가 바깥쪽으로 잘못 판정할 수 있는데, 이 여백이 이를 방지합니다. 각 문자는 항상 폰트 아틀라스 내의 서브 사각형을 잘라 쓰므로, 샘플러의 주소 지정 방식과 무관하게 글리프 사이에 여백이 없으면 UV가 인접 문자로 번질 수 있습니다. 폰트 아틀라스 생성 시 글리프 간 여백이 있는지 확인하거나, 값을 작게 유지한 채 시각적으로 확인하세요. 기본값 0.0=비활성화.",
 		"component.bitmaptextrenderer.text": "텍스트",
 
 		//--------- component.texturesource ---------//

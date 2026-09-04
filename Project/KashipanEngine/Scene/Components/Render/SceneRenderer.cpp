@@ -161,11 +161,63 @@ CameraRenderer *ResolvePixelSnappingCamera(const std::vector<CameraRenderer *> &
     return result;
 }
 
+/// @brief ワールド行列のローカルX/Y軸（拡縮を含む）をカメラローカル画面軸へ投影し、軸が画面X/Y軸と
+///        ほぼ平行（無回転または90度単位の回転）とみなせる場合のみ、その長さを描画先の1ピクセル単位の
+///        整数個数へ丸める
+/// @param outsetPixels 0より大きい場合、丸めた長さへさらにこの量（片側、ピクセル単位）を外側へ
+///        加算する安全マージン。位置・サイズを整数ピクセル境界へ厳密に一致させると、往復する行列変換の
+///        ごく僅かな浮動小数点誤差だけでGPUラスタライズの「ピクセル中心が内側か」判定が境界ピクセルを
+///        誤って外側と判定し、その行/列が丸ごと欠落することがある（SpriteRenderer::
+///        SetPixelSnapOutsetPixels参照）。0の場合は付与しない（既定・従来互換）
+/// @details Transformのscaleはエディタのドラッグ操作等の丸め誤差で意図した整数値からわずかにずれる
+///          ことが多く（例: 32.0のつもりが31.99957...）、原点の位置だけをピクセルへスナップしても
+///          スプライトの反対側の辺は境界からずれたままになる。原寸大のドット絵の全ピクセルを画面へ
+///          確実に対応させるには、位置だけでなくサイズも整数ピクセルへ強制する必要がある。
+///          軸が画面X/Y軸に対して斜めの場合（90度単位でない回転）はそもそも軸をピクセル格子へ
+///          一致させられないため補正せず素通りする（回転した見た目を歪めないため）
+void SnapAxisToPixelGrid(Matrix4x4 &world, int row, const Vector3 &origin, const Vector3 &originCameraLocal,
+    const Matrix4x4 &cameraWorld, const Matrix4x4 &cameraView, float pixelWidth, float pixelHeight, float outsetPixels) {
+    const Vector3 axisWorld(world.m[row][0], world.m[row][1], world.m[row][2]);
+    if (axisWorld.LengthSquared() < 1e-8f) return;
+
+    const Vector3 tipCameraLocal = (origin + axisWorld).Transform(cameraView);
+    const Vector3 axisCameraLocal = tipCameraLocal - originCameraLocal;
+
+    // 画面X/Y軸のどちらに支配的に沿っているかを判定し、もう一方の成分が無視できるほど小さい
+    // （＝回転が90度単位で画面軸と平行）場合のみ整数ピクセルへ丸める
+    const bool dominantIsX = std::abs(axisCameraLocal.x) >= std::abs(axisCameraLocal.y);
+    const float dominantLength = dominantIsX ? axisCameraLocal.x : axisCameraLocal.y;
+    const float minorLength = dominantIsX ? axisCameraLocal.y : axisCameraLocal.x;
+    constexpr float kAxisAlignedTolerance = 0.01f;
+    if (std::abs(minorLength) > std::abs(dominantLength) * kAxisAlignedTolerance) return;
+
+    const float pixelSize = dominantIsX ? pixelWidth : pixelHeight;
+    float snappedDominant = std::round(dominantLength / pixelSize) * pixelSize;
+    if (outsetPixels > 0.0f) {
+        // 符号（軸の向き）を保ったまま、両端がそれぞれoutsetPixels分だけ外側へ広がるよう
+        // 全体の長さへ2倍加算する（原点は動かしていないため、軸の伸長は自動的に両側対称になる）
+        snappedDominant += std::copysign(outsetPixels * 2.0f * pixelSize, dominantLength);
+    }
+    const Vector3 snappedCameraLocal = dominantIsX
+        ? Vector3(snappedDominant, 0.0f, axisCameraLocal.z)
+        : Vector3(0.0f, snappedDominant, axisCameraLocal.z);
+
+    const Vector3 snappedTip = (originCameraLocal + snappedCameraLocal).Transform(cameraWorld);
+    const Vector3 snappedAxisWorld = snappedTip - origin;
+    world.m[row][0] = snappedAxisWorld.x;
+    world.m[row][1] = snappedAxisWorld.y;
+    world.m[row][2] = snappedAxisWorld.z;
+}
+
 /// @brief スプライト原点をカメラローカル空間へ移し、描画先の1ピクセル単位へ丸めてワールド空間へ戻す
 /// @details カメラとスプライトを別々に丸めないため、両者が同じ量だけサブピクセル移動した場合に
-///          画面上の相対位置が1ピクセル往復することを防ぐ。カメラ回転にも追従して画面X/Y軸で丸める
+///          画面上の相対位置が1ピクセル往復することを防ぐ。カメラ回転にも追従して画面X/Y軸で丸める。
+///          位置に加えて、ローカルX/Y軸の長さ（SnapAxisToPixelGrid参照）も同じ基準で整数ピクセルへ
+///          スナップし、Transformのscaleにわずかな誤差があってもスプライトのサイズが常に画面ピクセルの
+///          整数個数になるようにする
+/// @param outsetPixels SnapAxisToPixelGrid参照。0の場合は付与しない（既定・従来互換）
 bool ApplyCameraRelativePixelSnapping(Matrix4x4 &world, const std::vector<CameraRenderer *> &cameraRenderers,
-    IRenderTarget *target, const std::string &pipelineName) {
+    IRenderTarget *target, const std::string &pipelineName, float outsetPixels) {
     if (!target || target->GetRenderTargetWidth() == 0 || target->GetRenderTargetHeight() == 0) return false;
     auto *cameraRenderer = ResolvePixelSnappingCamera(cameraRenderers, target, pipelineName);
     if (!cameraRenderer) return false;
@@ -178,8 +230,15 @@ bool ApplyCameraRelativePixelSnapping(Matrix4x4 &world, const std::vector<Camera
 
     const Matrix4x4 cameraWorld = cameraRenderer->GetPixelSnappingReferenceWorldMatrix();
     const Matrix4x4 cameraView = cameraWorld.Inverse();
-    Vector3 position(world.m[3][0], world.m[3][1], world.m[3][2]);
-    Vector3 cameraLocal = position.Transform(cameraView);
+    const Vector3 position(world.m[3][0], world.m[3][1], world.m[3][2]);
+    const Vector3 originCameraLocal = position.Transform(cameraView);
+
+    // サイズ（ローカルX/Y軸の長さ）を先にスナップする。position（原点）はまだ動かしていないため、
+    // 軸ベクトルの計算にそのまま使える
+    SnapAxisToPixelGrid(world, 0, position, originCameraLocal, cameraWorld, cameraView, pixelWidth, pixelHeight, outsetPixels);
+    SnapAxisToPixelGrid(world, 1, position, originCameraLocal, cameraWorld, cameraView, pixelWidth, pixelHeight, outsetPixels);
+
+    Vector3 cameraLocal = originCameraLocal;
     cameraLocal.x = std::round(cameraLocal.x / pixelWidth) * pixelWidth;
     cameraLocal.y = std::round(cameraLocal.y / pixelHeight) * pixelHeight;
     const Vector3 snappedWorld = cameraLocal.Transform(cameraWorld);
@@ -371,7 +430,7 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
                 if constexpr (std::is_same_v<RendererT, SpriteRenderer>) {
                     if (renderer->GetPixelSnapping()) {
                         const bool snappedRelativeToCamera = target != editorTarget && ApplyCameraRelativePixelSnapping(
-                            sortable.entry.worldMatrix, cameraRenderers, target, entryPipelineName);
+                            sortable.entry.worldMatrix, cameraRenderers, target, entryPipelineName, renderer->GetPixelSnapOutsetPixels());
                         if (!snappedRelativeToCamera) {
                             sortable.entry.worldMatrix.m[3][0] = std::floor(sortable.entry.worldMatrix.m[3][0]);
                             sortable.entry.worldMatrix.m[3][1] = std::floor(sortable.entry.worldMatrix.m[3][1]);
@@ -1015,6 +1074,8 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
                 const int kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
                 const bool allowInstancing = renderer->GetAllowInstancing();
                 const std::int32_t renderPriority = renderer->GetRenderPriority();
+                const bool pixelSnapping = renderer->GetPixelSnapping();
+                const float pixelSnapOutsetPixels = renderer->GetPixelSnapOutsetPixels();
 
                 for (const auto &ch : instances) {
                     SortableEntry sortable;
@@ -1025,6 +1086,17 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
                     sortable.entry.textureOverrideHandle = pageTextureHandle;
                     sortable.entry.samplerOverrideHandle = samplerHandle;
                     sortable.entry.worldMatrix = ch.worldMatrix;
+                    // SpriteRendererと同様、適用先Camera2Dの両方でPixel Snappingが有効なら、カメラ相対の
+                    // 画面ピクセル格子へ文字ごとに揃える。エディター描画先や対応カメラが無い場合は、
+                    // 従来互換としてワールド座標を整数単位へ丸める
+                    if (pixelSnapping) {
+                        const bool snappedRelativeToCamera = target != editorTarget_ && ApplyCameraRelativePixelSnapping(
+                            sortable.entry.worldMatrix, cameraRenderers_, target, entryPipelineName, pixelSnapOutsetPixels);
+                        if (!snappedRelativeToCamera) {
+                            sortable.entry.worldMatrix.m[3][0] = std::floor(sortable.entry.worldMatrix.m[3][0]);
+                            sortable.entry.worldMatrix.m[3][1] = std::floor(sortable.entry.worldMatrix.m[3][1]);
+                        }
+                    }
                     sortable.entry.instanceColor = ch.color;
                     sortable.entry.instanceColorBlendMode = static_cast<int>(renderer->GetInstanceColorBlendMode());
                     // マテリアル側のUV変換は無視し、文字のアトラス内UV矩形のみを使う

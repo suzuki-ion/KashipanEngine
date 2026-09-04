@@ -1378,6 +1378,8 @@
 		"component.spriterenderer.pivot": "ピボット",
 		"component.spriterenderer.pixel_snapping": "ピクセルスナップ",
 		"component.spriterenderer.pixel_snapping_desc": "Camera2D側のPixel Snappingも有効な場合、このオブジェクトのカメラ相対位置を描画先のピクセル格子へ揃える。両者が同じ量だけサブピクセル移動したときの相対的な揺れを防げる。対応カメラが無い場合はワールド座標を整数単位へ丸める。",
+		"component.spriterenderer.pixel_snap_outset": "ピクセルスナップの外側マージン",
+		"component.spriterenderer.pixel_snap_outset_desc": "0より大きい値を設定すると、境界ピクセルの取りこぼしを防ぐためクアッドを片側にこの値(px)だけ外側へ広げる。往復する行列変換のごく僅かな誤差でラスタライズ境界のピクセルが丸ごと欠落する事故を防ぐ安全マージン。テクスチャ全体を1枚のスプライトとして使う場合は無害だが、アトラス/タイルマップの一部を切り出している場合はサンプラーの種類に関わらず隣接タイルが縁に漏れる可能性があるため、アトラスにタイル間の余白があるか確認するか、値を小さく保って見た目を確認すること。既定0.0=無効。",
 
 		//--------- component.targetlookat ---------//
 		"component.targetlookat.desc_1": "Sync Target Rotation: ターゲットのワールド回転と同期する（ビルボード向け）\nLook At Target: 自身の+Z軸が常にターゲットの方向を向く",
@@ -1433,6 +1435,10 @@
 		"component.bitmaptextrenderer.material": "マテリアル",
 		"component.bitmaptextrenderer.pipeline": "パイプライン",
 		"component.bitmaptextrenderer.point_sampling": "ポイントサンプリング",
+		"component.bitmaptextrenderer.pixel_snapping": "ピクセルスナップ",
+		"component.bitmaptextrenderer.pixel_snapping_desc": "Camera2D側のPixel Snappingも有効な場合、この文字のカメラ相対位置を描画先のピクセル格子へ揃える。ドット絵フォント（Point Sampling有効）を原寸大でクッキリ表示したい場合に使う。",
+		"component.bitmaptextrenderer.pixel_snap_outset": "ピクセルスナップの外側マージン",
+		"component.bitmaptextrenderer.pixel_snap_outset_desc": "0より大きい値を設定すると、境界ピクセルの取りこぼしを防ぐため文字のクアッドを片側にこの値(px)だけ外側へ広げる。往復する行列変換のごく僅かな誤差でラスタライズ境界のピクセルが丸ごと欠落する事故を防ぐ安全マージン。文字は必ずフォントアトラス内のサブ矩形を切り出して描画するため、サンプラーの種類に関わらず隣接文字の領域が縁に漏れる可能性がある。フォントアトラス生成時にグリフ間へ余白があるか確認するか、値を小さく保って見た目を確認すること。既定0.0=無効。",
 		"component.bitmaptextrenderer.text": "テキスト",
 
 		//--------- component.texturesource ---------//

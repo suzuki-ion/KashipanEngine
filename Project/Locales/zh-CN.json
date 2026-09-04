@@ -1378,6 +1378,8 @@
 		"component.spriterenderer.pivot": "轴心点",
 		"component.spriterenderer.pixel_snapping": "像素吸附",
 		"component.spriterenderer.pixel_snapping_desc": "当适用的Camera2D也启用Pixel Snapping时，将此物体相对摄像机的位置对齐到渲染目标的像素网格，可防止两者以相同亚像素距离移动时产生相对抖动。没有匹配摄像机时，仍按原方式将世界坐标取整。",
+		"component.spriterenderer.pixel_snap_outset": "像素吸附外扩边距",
+		"component.spriterenderer.pixel_snap_outset_desc": "设置大于0的值时，会将四边形向外扩展该数值(px，单边)，以防止边界像素整行/整列丢失。往返矩阵运算产生的极微小浮点误差，可能导致光栅化时把恰好落在吸附边界上的像素误判为在外侧；此边距用于防止该问题。若精灵使用整张贴图则无影响，但若截取了图集/瓦片贴图的一部分（instanceUvTranslate/instanceUvScale），无论采样器的寻址模式如何，只要相邻区域之间没有留白，UV都可能溢出到相邻贴图——请确认图集是否留有边距，或将该值保持较小并目视确认效果。默认0.0=禁用。",
 
 		//--------- component.targetlookat ---------//
 		"component.targetlookat.desc_1": "Sync Target Rotation: 与目标的世界旋转同步（适用于公告板）\nLook At Target: 自身的+Z轴始终朝向目标方向",
@@ -1433,6 +1435,10 @@
 		"component.bitmaptextrenderer.material": "材质",
 		"component.bitmaptextrenderer.pipeline": "管线",
 		"component.bitmaptextrenderer.point_sampling": "点采样",
+		"component.bitmaptextrenderer.pixel_snapping": "像素吸附",
+		"component.bitmaptextrenderer.pixel_snapping_desc": "当适用的Camera2D也启用Pixel Snapping时，将此字符相对摄像机的位置对齐到渲染目标的像素网格。用于让点阵字体（启用点采样时）以原始大小清晰显示。",
+		"component.bitmaptextrenderer.pixel_snap_outset": "像素吸附外扩边距",
+		"component.bitmaptextrenderer.pixel_snap_outset_desc": "设置大于0的值时，会将字符四边形向外扩展该数值(px，单边)，以防止边界像素整行/整列丢失。往返矩阵运算产生的极微小浮点误差，可能导致光栅化时把恰好落在吸附边界上的像素误判为在外侧；此边距用于防止该问题。由于每个字符都是从字体图集中截取的子矩形，无论采样器的寻址模式如何，只要字形之间没有留白，UV都可能溢出到相邻字符——请确认图集是否留有边距，或将该值保持较小并目视确认效果。默认0.0=禁用。",
 		"component.bitmaptextrenderer.text": "文本",
 
 		//--------- component.texturesource ---------//

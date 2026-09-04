@@ -10,6 +10,8 @@
 #include <cstring>
 #include <functional>
 #include <map>
+#include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -383,17 +385,68 @@ inline std::vector<std::byte> BuildMaterialElementBytes(const PipelineInfo &pipe
             writeFloat(name.c_str(), *asBool ? 1.0f : 0.0f);
         } else if (const auto *asInt = value.AnyCastPtr<std::int32_t>()) {
             WriteMaterialField(pipelineInfo, bytes.data(), static_cast<std::uint32_t>(bytes.size()), name, *asInt);
+        } else if (const auto *asTextureRef = value.AnyCastPtr<TextureRef>()) {
+            // バインドレス化済みのシェーダーモジュール専用テクスチャスロット（NormalMap等）向け。
+            // extraParametersのキー名がstruct Material側のuintフィールド名（例: normalMapTextureIndex）と
+            // 一致している前提で、gTextures[]内のインデックスとしてマテリアル要素へ直接書き込む
+            // （固定スロットのgTextureと同じ考え方だが、こちらはインスタンスごとにバッチ内で異なり得る
+            // ため、shaderBinder経由の毎バッチ1回バインドではなくgMaterials[]本体へ含める）。
+            // 未設定/未解決の場合は既定値(0)のまま。該当スロットは通常useXxx系フラグで使用有無を
+            // 別途判定するため、フォールバックしなくても実害は無い
+            if (!asTextureRef->assetPath.empty()) {
+                const auto handle = TextureManager::GetTextureFromAssetPath(asTextureRef->assetPath);
+                if (handle != TextureManager::kInvalidHandle) {
+                    WriteMaterialField(pipelineInfo, bytes.data(), static_cast<std::uint32_t>(bytes.size()), name,
+                        TextureManager::GetTextureBindlessIndex(handle));
+                }
+            }
         }
+        // TextureCubeRefは今のところバインドレス配列化されていないため、この汎用ループでは扱わない
+        // （BindExtraTextureParametersが従来通り固定スロットへ直接バインドする）
     }
 
     return bytes;
 }
+
+/// @brief パイプラインのMaterialLayoutに従ってパックしたマテリアル基本フィールドのバイト列を、
+///        (パイプライン名, マテリアルハンドル)単位でキャッシュしながら取得する
+/// @details 同じマテリアルを共有するインスタンスがバッチをまたいで多数存在する場合に、
+///          BuildMaterialElementBytes（extraParametersのハッシュマップ走査を含む）をインスタンスの
+///          数だけ再実行する無駄を避けるためのもの。マテリアルごとのバッチ結合をやめ、バッチ内の
+///          各インスタンスが自分自身のマテリアルを参照できるようにする改修（DrawBatch/
+///          RenderShadowMaps参照）に伴い導入した。textureIndex/samplerIndex等インスタンスごとに
+///          個別上書きが必要なフィールドはこのテンプレートに含まれないため、呼び出し側で
+///          テンプレートをmemcpyした後に個別上書きすること。フレーム内（関数呼び出しの都度）で
+///          使い捨てる想定で、マテリアルの編集をまたいで古い内容を返さないようフレームをまたいで
+///          保持しないこと
+class MaterialTemplateCache {
+public:
+    const std::vector<std::byte> &Get(const PipelineInfo &pipelineInfo, const std::string &pipelineName,
+        MaterialManager::MaterialHandle handle) {
+        auto &perPipeline = cache_[pipelineName];
+        auto it = perPipeline.find(handle);
+        if (it != perPipeline.end()) return it->second;
+
+        auto *material = MaterialManager::GetMaterial(handle);
+        if (material) material->ResolveTextureHandles();
+        auto [inserted, _] = perPipeline.emplace(handle, BuildMaterialElementBytes(pipelineInfo, material));
+        return inserted->second;
+    }
+
+private:
+    std::unordered_map<std::string, std::unordered_map<MaterialManager::MaterialHandle, std::vector<std::byte>>> cache_;
+};
 
 /// @brief extraParametersのTextureRef/TextureCubeRef型エントリを、キー名をそのままシェーダー変数名として
 ///        毎描画バインドする。gTexture等ごく一部の固定スロットとは別に、各シェーダーモジュールが独自に宣言する
 ///        任意のTexture2D/TextureCubeスロットへ対応するためのもの。該当スロットを持たないパイプラインでは
 ///        ShaderVariableBinder::Bindが黙ってfalseを返すだけなので無害。未設定/未解決の場合はバインドを
 ///        スキップする（フォールバックしない）
+/// @details バインドレス化済みのモジュール（NormalMap等）は、対応するTexture2D宣言自体を持たなくなり
+///          （BuildMaterialElementBytesの extraParameters ループがstruct Material側のuintフィールドへ
+///          インデックスとして直接書き込む方式へ移行済みのため）、ここでのBindは単に該当変数が
+///          見つからず無害にスキップされるだけになる。まだバインドレス化されていないモジュール
+///          （TextureCubeRef系等）だけが実質的にこの関数を必要とする
 inline void BindExtraTextureParameters(ShaderVariableBinder *shaderBinder, const MaterialManager::Material *material) {
     if (!material) return;
     for (const auto &[name, value] : material->extraParameters) {
@@ -491,6 +544,33 @@ inline std::string MakeBatchKey(const void *target, const std::string &pipelineN
     std::snprintf(buffer, sizeof(buffer), "%p|%u|%u|%s|", target, meshHandle, materialHandle, usage);
     return std::string(buffer) + pipelineName;
 }
+
+/// @brief 1回のRenderSceneContent/RenderMultiPassDither呼び出し内で、同じ「形状」
+///        （target・パイプライン・メッシュ・用途で決まるMakeBatchKeyの結果）を持つバッチが
+///        複数回出現しても、GPU構造化バッファのキャッシュキーが衝突しないよう連番を付与する
+/// @details マテリアルをバッチ結合条件から外した改修（DrawBatch参照）に伴い、RenderPriorityの違いや
+///          AllowInstancing==falseにより、対象インスタンスは別でも同じ形状のバッチが複数生成され
+///          得るようになった。それらが同じキーのGPUバッファを取り合って上書きし合う
+///          （後から呼ばれた方の内容で先の描画結果まで上書きされる）事故を防ぐための一意化。
+///          最初の出現（カウント0）はサフィックスを付けないため、大半のケース（形状ごとにバッチが
+///          1つだけ）ではキーが従来と変わらず、フレームをまたいだキャッシュ再利用
+///          （GetOrUpdateStructuredBufferの内容比較による書き込み省略）が引き続き効く。
+///          呼び出し側でRenderSceneContent呼び出しの先頭で構築し、以降その呼び出し内の
+///          全DrawBatch/RenderMultiPassDither呼び出しへ参照で渡し続けること（フレームをまたいで
+///          使い回すと「同じ形状のバッチが複数フレームにまたがって存在する」という誤った前提になり、
+///          本来別のはずのバッチが同じキーを共有してしまう）
+class BatchKeySequencer {
+public:
+    std::string Next(const std::string &coreKey) {
+        auto &count = counts_[coreKey];
+        std::string key = (count == 0) ? coreKey : (coreKey + "|#" + std::to_string(count));
+        ++count;
+        return key;
+    }
+
+private:
+    std::unordered_map<std::string, std::uint32_t> counts_;
+};
 
 /// @brief ComputeShaderProcessing::UAVTextureBindRequirement::formatKind から DXGI_FORMAT へ変換
 inline DXGI_FORMAT UAVFormatFromKind(int formatKind) {

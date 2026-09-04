@@ -1378,6 +1378,8 @@
 		"component.spriterenderer.pivot": "Pivot",
 		"component.spriterenderer.pixel_snapping": "Pixel Snapping",
 		"component.spriterenderer.pixel_snapping_desc": "When Pixel Snapping is also enabled on the applicable Camera2D, snaps this object's camera-relative position to the render target's pixel grid. This prevents relative jitter when both move by the same sub-pixel amount. Without a matching camera, world coordinates are rounded as before.",
+		"component.spriterenderer.pixel_snap_outset": "Pixel Snap Outset",
+		"component.spriterenderer.pixel_snap_outset_desc": "When set above 0, expands the quad outward by this amount (px, per side) to avoid losing a boundary pixel row/column. A tiny floating-point residue from the round-trip matrix math can make the rasterizer miscount a pixel exactly on the snapped boundary as outside; this margin guards against that. Harmless for a standalone sprite using its whole texture, but if part of an atlas/tilemap is cropped out (via instanceUvTranslate/instanceUvScale), the UV may spill into a neighboring tile regardless of the sampler's address mode, unless the atlas has padding between tiles — check for that, or keep this value small and verify visually. Default 0.0 = disabled.",
 
 		//--------- component.targetlookat ---------//
 		"component.targetlookat.desc_1": "Sync Target Rotation: synchronizes with the target's world rotation (for billboards)\nLook At Target: this object's +Z axis always faces the target",
@@ -1433,6 +1435,10 @@
 		"component.bitmaptextrenderer.material": "Material",
 		"component.bitmaptextrenderer.pipeline": "Pipeline",
 		"component.bitmaptextrenderer.point_sampling": "Point Sampling",
+		"component.bitmaptextrenderer.pixel_snapping": "Pixel Snapping",
+		"component.bitmaptextrenderer.pixel_snapping_desc": "When Pixel Snapping is also enabled on the applicable Camera2D, snaps this character's camera-relative position to the render target's pixel grid. Use this to display a pixel-art font (with Point Sampling enabled) crisply at native size.",
+		"component.bitmaptextrenderer.pixel_snap_outset": "Pixel Snap Outset",
+		"component.bitmaptextrenderer.pixel_snap_outset_desc": "When set above 0, expands each character's quad outward by this amount (px, per side) to avoid losing a boundary pixel row/column. A tiny floating-point residue from the round-trip matrix math can make the rasterizer miscount a pixel exactly on the snapped boundary as outside; this margin guards against that. Since each character always crops a sub-rectangle out of the font atlas, the UV may spill into a neighboring character regardless of the sampler's address mode, unless the atlas has padding between glyphs — check for that, or keep this value small and verify visually. Default 0.0 = disabled.",
 		"component.bitmaptextrenderer.text": "Text",
 
 		//--------- component.texturesource ---------//

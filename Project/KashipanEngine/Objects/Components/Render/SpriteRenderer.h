@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <unordered_set>
 
 #include "Objects/ObjectComponentHeader.h"
@@ -63,6 +64,7 @@ public:
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(renderPriority_, [this] { MarkDrawListDirty(); });
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(allowInstancing_, [this] { MarkDrawListDirty(); });
         ADD_MEMBER_VARIABLE(pixelSnapping_);
+        ADD_MEMBER_VARIABLE(pixelSnapOutsetPixels_);
     )
     COMPONENT_CATEGORY("Render")
     ~SpriteRenderer() override = default;
@@ -86,6 +88,7 @@ public:
         ptr->renderPriority_ = renderPriority_;
         ptr->allowInstancing_ = allowInstancing_;
         ptr->pixelSnapping_ = pixelSnapping_;
+        ptr->pixelSnapOutsetPixels_ = pixelSnapOutsetPixels_;
         return ptr;
     }
 
@@ -214,6 +217,21 @@ public:
     ///          相対位置が一定なら画面上で揺れない。対応カメラが無い場合は従来通りワールド単位で丸める
     void SetPixelSnapping(bool enable) noexcept { pixelSnapping_ = enable; MarkDrawListDirty(); }
     bool GetPixelSnapping() const noexcept { return pixelSnapping_; }
+
+    /// @brief ピクセルスナップ有効時、境界ピクセルの取りこぼしを防ぐためにクアッドを外側へ
+    ///        わずかに広げる安全マージン（片側、ピクセル単位）を設定する（既定0.0=無効）
+    /// @details 位置・サイズを整数ピクセル境界へ厳密に一致させると、往復する行列変換のごく僅かな
+    ///          浮動小数点誤差だけで、GPUラスタライズの「ピクセル中心が内側か」判定が境界ピクセルの
+    ///          中心を外側と誤判定し、その行/列が丸ごと欠落することがある。0より大きい値を設定すると
+    ///          この際どい判定に安全マージンを持たせられる。ただしUVがわずかに[0,1]の外へはみ出すため、
+    ///          テクスチャ全体を1枚のスプライトとして使う場合は無害だが、アトラス/タイルマップの一部
+    ///          （instanceUvTranslate/instanceUvScale等）を切り出している場合は隣接タイルの領域まで
+    ///          はみ出し縁に漏れる可能性がある（この漏れはサンプラーがClampかWrapかに関係なく、
+    ///          切り出したサブ矩形とアトラス内の隣接領域との間にパディングが無い限り発生し得る）。
+    ///          アトラス用途では、アトラス生成時にタイル間へ数px程度の余白を確保しておくか、
+    ///          このマージンを十分小さく保った上で実際の見た目を確認すること
+    void SetPixelSnapOutsetPixels(float pixels) noexcept { pixelSnapOutsetPixels_ = std::max(0.0f, pixels); MarkDrawListDirty(); }
+    float GetPixelSnapOutsetPixels() const noexcept { return pixelSnapOutsetPixels_; }
 
     //==================================================
     // 描画情報取得
@@ -389,6 +407,15 @@ protected:
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("%s", TranslationC("component.spriterenderer.pixel_snapping_desc"));
         }
+        if (pixelSnapping_) {
+            if (ImGui::DragFloat(TranslationLabel("component.spriterenderer.pixel_snap_outset"), &pixelSnapOutsetPixels_, 0.01f, 0.0f, 1.0f)) {
+                pixelSnapOutsetPixels_ = std::max(0.0f, pixelSnapOutsetPixels_);
+                MarkDrawListDirty();
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("%s", TranslationC("component.spriterenderer.pixel_snap_outset_desc"));
+            }
+        }
     }
 #endif
 
@@ -412,6 +439,7 @@ protected:
         json["renderPriority"] = renderPriority_;
         json["allowInstancing"] = allowInstancing_;
         json["pixelSnapping"] = pixelSnapping_;
+        json["pixelSnapOutsetPixels"] = pixelSnapOutsetPixels_;
         return json;
     }
 
@@ -440,6 +468,7 @@ protected:
         renderPriority_ = json.value("renderPriority", 0);
         allowInstancing_ = json.value("allowInstancing", true);
         pixelSnapping_ = json.value("pixelSnapping", false);
+        pixelSnapOutsetPixels_ = std::max(0.0f, json.value("pixelSnapOutsetPixels", 0.0f));
         // Undo/Redo等、登録済みのコンポーネントに対してもLoadFromJsonが呼ばれ得るため念のため通知する
         MarkDrawListDirty();
         return true;
@@ -494,6 +523,9 @@ private:
     bool allowInstancing_ = true;
     /// @brief 適用先Camera2Dから見た位置を画面ピクセルへスナップするか（既定false）
     bool pixelSnapping_ = false;
+    /// @brief ピクセルスナップ時、境界ピクセルの取りこぼし防止用にクアッドを外側へ広げる
+    ///        安全マージン（片側、ピクセル単位。既定0.0=無効。SetPixelSnapOutsetPixels参照）
+    float pixelSnapOutsetPixels_ = 0.0f;
 };
 
 REGISTER_COMPONENT_OBJECT(SpriteRenderer)

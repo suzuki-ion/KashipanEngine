@@ -52,6 +52,14 @@ void Renderer::RenderSceneContent(IRenderTarget *target,
     bool disableNestedMultiPassDither) {
     if (!target) return;
 
+    // マテリアルごとのGPUバッファ構築を、この呼び出し（1描画先・1フェーズ分）の間だけキャッシュする。
+    // 画面全体Nパスブレンドで同じentriesに対しRenderSceneContentが複数回呼ばれる場合、各回で
+    // 新しく構築されるが、バッチの並び自体は毎回決定的なため、生成されるキー（BatchKeySequencer）は
+    // 呼び出しをまたいでも同じ内容に対しては同じになり、GetOrUpdateStructuredBufferの内容比較による
+    // 書き込み省略が引き続き効く
+    MaterialTemplateCache materialTemplateCache;
+    BatchKeySequencer batchKeySequencer;
+
     // エディター用描画先の場合、他の描画より先に背景（単色 or テクスチャ）を描画する
     if (target->GetRenderTargetKind() == RenderTargetKind::ScreenBuffer) {
         RenderEditorBackground(static_cast<ScreenBuffer *>(target), pipelineBinder, sceneRenderer);
@@ -91,10 +99,12 @@ void Renderer::RenderSceneContent(IRenderTarget *target,
         }
     }
 
-    // 同一（パイプライン・メッシュ・サブメッシュ・マテリアル）の連続範囲をバッチとしてまとめて描画
+    // 同一（パイプライン・メッシュ・サブメッシュ）の連続範囲をバッチとしてまとめて描画
     // （ただしallowInstancing==falseのエントリは他と結合せず必ず単独のドローコールにする）。
     // テクスチャ・サンプラーはバインドレス化（gTextures[]/gSamplers[]、DrawBatch参照）により
-    // インスタンスごとに異なっていてもよいため、バッチ結合条件には含めない
+    // インスタンスごとに異なっていてもよいため、バッチ結合条件には含めない。マテリアルも同様に
+    // gMaterials[instanceId]がインスタンスごとに個別のマテリアルを参照できる（DrawBatch参照）ため、
+    // 結合条件から外している（異なるマテリアルのインスタンスが同一バッチに混在し得る）
     size_t begin = 0;
     while (begin < normalEntries.size()) {
         const auto &first = normalEntries[begin];
@@ -105,7 +115,6 @@ void Renderer::RenderSceneContent(IRenderTarget *target,
                 if (!other.allowInstancing ||
                     other.pipelineName != first.pipelineName ||
                     other.meshHandle != first.meshHandle ||
-                    other.materialHandle != first.materialHandle ||
                     other.indexStart != first.indexStart ||
                     other.indexCount != first.indexCount ||
                     other.skinnedVertexBuffer != first.skinnedVertexBuffer) {
@@ -116,7 +125,7 @@ void Renderer::RenderSceneContent(IRenderTarget *target,
         }
 
         DrawBatch(target, pipelineBinder, std::span<const SceneRenderer::DrawEntry>(normalEntries).subspan(begin, end - begin),
-            sceneRenderer, lightsCache, extraSeedOffset, seedPassIndex);
+            sceneRenderer, lightsCache, materialTemplateCache, batchKeySequencer, extraSeedOffset, seedPassIndex);
         begin = end;
     }
 
@@ -124,7 +133,7 @@ void Renderer::RenderSceneContent(IRenderTarget *target,
     for (auto &[passCount, group] : multiPassEntriesByCount) {
         if (group.empty()) continue;
         RenderMultiPassDither(static_cast<ScreenBuffer *>(target), pipelineBinder, group, sceneRenderer, lightsCache,
-            passCount, extraSeedOffset, seedPassIndex);
+            materialTemplateCache, batchKeySequencer, passCount, extraSeedOffset, seedPassIndex);
     }
 
     // TextRenderer（文字単位のDrawEntryとしてSceneRenderer::BuildSortedDrawListが生成する）は
@@ -139,6 +148,8 @@ void Renderer::DrawBatch(IRenderTarget *target,
     std::span<const SceneRenderer::DrawEntry> batch,
     SceneRenderer *sceneRenderer,
     CameraLightsBindCache &lightsCache,
+    MaterialTemplateCache &materialTemplateCache,
+    BatchKeySequencer &batchKeySequencer,
     float extraSeedOffset,
     int seedPassIndex) {
     if (batch.empty()) return;
@@ -168,7 +179,7 @@ void Renderer::DrawBatch(IRenderTarget *target,
         // 別バッファを使うよう、キーにインデックス範囲を含める
         char transformSuffix[48];
         std::snprintf(transformSuffix, sizeof(transformSuffix), "transform|%u", first.indexStart);
-        auto key = MakeBatchKey(target, pipelineName, first.meshHandle, first.materialHandle, transformSuffix);
+        auto key = batchKeySequencer.Next(MakeBatchKey(target, pipelineName, first.meshHandle, 0u, transformSuffix));
         if (first.skinnedVertexBuffer) {
             // SkinnedMeshRendererのエントリはインスタンス結合されず必ずinstanceCount=1で
             // 個別にDrawBatchが呼ばれるが、同じメッシュ/マテリアル/パイプライン/描画先を
@@ -198,7 +209,7 @@ void Renderer::DrawBatch(IRenderTarget *target,
     {
         char idSeedSuffix[48];
         std::snprintf(idSeedSuffix, sizeof(idSeedSuffix), "idSeed|%u", first.indexStart);
-        auto key = MakeBatchKey(target, pipelineName, first.meshHandle, first.materialHandle, idSeedSuffix);
+        auto key = batchKeySequencer.Next(MakeBatchKey(target, pipelineName, first.meshHandle, 0u, idSeedSuffix));
         if (first.skinnedVertexBuffer) {
             char suffix[32];
             std::snprintf(suffix, sizeof(suffix), "|%p", static_cast<void *>(first.skinnedVertexBuffer));
@@ -225,15 +236,16 @@ void Renderer::DrawBatch(IRenderTarget *target,
 
     // マテリアルの構造化バッファ（シェーダーはインスタンスIDで参照するため個数分並べる）
     {
-        auto *material = MaterialManager::GetMaterial(first.materialHandle);
-        if (material) {
-            // 読み込み時に未解決だったテクスチャハンドルの解決を試みる
-            material->ResolveTextureHandles();
-        }
+        // マテリアルはバッチ結合条件から外れている（異なるマテリアルのインスタンスが同一バッチに
+        // 混在し得る）ため、固定フィールド（color/shininess/rim*等）もインスタンスごとに自分自身の
+        // マテリアルから解決する。BuildMaterialElementBytes自体（extraParametersのハッシュマップ走査を
+        // 含む）を毎インスタンスで再実行しないよう、(パイプライン, マテリアルハンドル)単位で
+        // materialTemplateCacheにテンプレートを使い回す
+        auto *firstMaterial = MaterialManager::GetMaterial(first.materialHandle);
 
         char materialSuffix[48];
         std::snprintf(materialSuffix, sizeof(materialSuffix), "material|%u", first.indexStart);
-        auto key = MakeBatchKey(target, pipelineName, first.meshHandle, first.materialHandle, materialSuffix);
+        auto key = batchKeySequencer.Next(MakeBatchKey(target, pipelineName, first.meshHandle, 0u, materialSuffix));
         if (first.skinnedVertexBuffer) {
             // 上記の変換行列バッファと同じ理由で、スキニングインスタンスごとに専用バッファを使う
             char suffix[32];
@@ -244,11 +256,12 @@ void Renderer::DrawBatch(IRenderTarget *target,
         // バイトレイアウト（PipelineInfo::GetMaterialLayout）に従って汎用的にパックする。これにより
         // Object3D/Object2D/Velocity等、異なるMaterial定義を持つシェーダーを同一ロジックで扱える
         const auto &pipelineInfo = pipelineManager_->GetPipeline(pipelineName);
-        auto elementTemplate = BuildMaterialElementBytes(pipelineInfo, material);
         const std::uint32_t stride = pipelineInfo.GetMaterialLayout().totalByteSize;
         if (stride > 0) {
             std::vector<std::byte> allBytes(static_cast<size_t>(stride) * instanceCount);
             for (std::uint32_t i = 0; i < instanceCount; ++i) {
+                auto *material = MaterialManager::GetMaterial(batch[i].materialHandle);
+                const auto &elementTemplate = materialTemplateCache.Get(pipelineInfo, pipelineName, batch[i].materialHandle);
                 std::byte *elementBytes = allBytes.data() + static_cast<size_t>(i) * stride;
                 std::memcpy(elementBytes, elementTemplate.data(), stride);
                 // instanceColor/instanceColorBlendModeはインスタンス（MeshRenderer）ごとに異なり得るため、
@@ -300,9 +313,14 @@ void Renderer::DrawBatch(IRenderTarget *target,
         // 既定6種のサンプラー配列（gSamplers[6]）も同様に、SamplerHeap予約レンジを指す固定ハンドルを
         // 1回だけバインドする（静的サンプラーでは実行時インデックスに対応できないため通常のテーブル扱い）
         shaderBinder.Bind("Pixel:gSamplers", directXCommon_->GetSamplerBindlessBaseHandleForRenderer(Passkey<Renderer>{}));
-        // モジュール（NormalMap等）が使う専用テクスチャスロットは、gTexture/gSamplerとは別の
-        // 固定register番号を個別に持つため、引き続き毎ドローコールでの動的バインドが必要
-        BindExtraTextureParameters(&shaderBinder, material);
+        // バインドレス化されていないモジュール専用テクスチャスロット（現状TextureCubeRef系のみ。
+        // NormalMap等のTexture2Dスロットは、gTexture/gSamplerとは別の固定register番号を個別に持つ形を
+        // やめ、gTextures[]内のインデックスとしてgMaterials[]本体へ含める方式へ移行済みのため、
+        // インスタンスごとに正しく解決される（materialTemplateCache/BuildMaterialElementBytes参照）。
+        // まだ移行していないスロットは、この呼び出しが1回のドローコールにつき1回・バッチ先頭
+        // （firstMaterial）でしか動的バインドしないため、異なる専用テクスチャを持つ別マテリアルが
+        // 同一バッチに混在すると非firstのインスタンスにfirstの専用テクスチャが誤って適用される
+        BindExtraTextureParameters(&shaderBinder, firstMaterial);
     }
 
     // メッシュのバインドと描画
@@ -336,6 +354,8 @@ void Renderer::RenderMultiPassDither(ScreenBuffer *screenBuffer,
     std::span<const SceneRenderer::DrawEntry> entries,
     SceneRenderer *sceneRenderer,
     CameraLightsBindCache &lightsCache,
+    MaterialTemplateCache &materialTemplateCache,
+    BatchKeySequencer &batchKeySequencer,
     std::uint32_t passCount,
     float baseSeedOffset,
     int baseSeedPassIndex) {
@@ -448,7 +468,6 @@ void Renderer::RenderMultiPassDither(ScreenBuffer *screenBuffer,
                     if (!other.allowInstancing ||
                         other.pipelineName != first.pipelineName ||
                         other.meshHandle != first.meshHandle ||
-                        other.materialHandle != first.materialHandle ||
                         other.textureOverrideHandle != first.textureOverrideHandle ||
                         other.samplerOverrideHandle != first.samplerOverrideHandle ||
                         other.indexStart != first.indexStart ||
@@ -460,7 +479,7 @@ void Renderer::RenderMultiPassDither(ScreenBuffer *screenBuffer,
                 }
             }
             DrawBatch(screenBuffer, pipelineBinder, entries.subspan(begin, end - begin), sceneRenderer, lightsCache,
-                seedOffset, combinedPassIndex);
+                materialTemplateCache, batchKeySequencer, seedOffset, combinedPassIndex);
             begin = end;
         }
 

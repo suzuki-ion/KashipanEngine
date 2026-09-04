@@ -436,13 +436,14 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
         appendShadowSources(renderer, renderer->GetSkinnedVertexBuffer());
     }
 
-    // 同一（メッシュ・サブメッシュ・マテリアル）をまとめてインスタンシング描画できるようにソート
+    // 同一（メッシュ・サブメッシュ）をまとめてインスタンシング描画できるようにソート。
+    // マテリアルは各インスタンスが自分自身のものを参照できる（後段のマテリアル構造化バッファ構築
+    // 参照）ため、ソート・バッチ結合条件のどちらにも含めない
     std::stable_sort(sources.begin(), sources.end(),
         [](const ShadowDrawSource &a, const ShadowDrawSource &b) {
             if (a.skinnedVertexBuffer != b.skinnedVertexBuffer) return a.skinnedVertexBuffer < b.skinnedVertexBuffer;
             if (a.meshHandle != b.meshHandle) return a.meshHandle < b.meshHandle;
-            if (a.indexStart != b.indexStart) return a.indexStart < b.indexStart;
-            return a.materialHandle < b.materialHandle;
+            return a.indexStart < b.indexStart;
         });
 
     //--------- コマンド記録開始 ---------//
@@ -502,6 +503,11 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
     // PreparedShadowBatch/PreparedGpuParticleShadowBatchはRenderer.hで定義（画面全体Nパスブレンド
     // ＝RenderShadowMapsPhaseIntoが位相違いで再利用できるよう、メンバー変数として保持する）
     auto &batches = shadowBatches_;
+    // マテリアルはバッチ結合条件から外れている（異なるマテリアルのインスタンスが同一バッチに
+    // 混在し得る）ため、固定フィールドをインスタンスごとに自分自身のマテリアルから解決する。
+    // BuildMaterialElementBytes自体を毎インスタンスで再実行しないよう、このRenderShadowMaps呼び出し
+    // （＝1フレーム）の間だけ(パイプライン, マテリアルハンドル)単位でテンプレートを使い回す
+    MaterialTemplateCache shadowMaterialTemplateCache;
     {
         size_t begin = 0;
         std::uint32_t batchIndex = 0;
@@ -510,7 +516,6 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
             size_t end = begin;
             while (end < sources.size() &&
                    sources[end].meshHandle == first.meshHandle &&
-                   sources[end].materialHandle == first.materialHandle &&
                    sources[end].skinnedVertexBuffer == first.skinnedVertexBuffer &&
                    sources[end].indexStart == first.indexStart &&
                    sources[end].indexCount == first.indexCount) {
@@ -598,31 +603,29 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
                 batch.baseIdSeeds[i - begin] = sources[i].idSeed;
             }
 
-            // マテリアルの構造化バッファ（シャドウマップ用PSがアルファ抜きに使用する）
-            auto *material = MaterialManager::GetMaterial(first.materialHandle);
-            if (material) {
-                material->ResolveTextureHandles();
-            }
+            // マテリアルの構造化バッファ（シャドウマップ用PSがアルファ抜きに使用する）。マテリアルは
+            // バッチ結合条件から外れているため、インスタンスごとに自分自身のマテリアルを解決する
+            // （textureIndex/samplerIndexしか使わないシャドウ用PSでも、テクスチャが違うインスタンスが
+            // 同一バッチに混在し得るため必須）
             const auto &shadowPipelineInfo = pipelineManager_->GetPipeline(kShadowPipelineName);
-            auto elementTemplate = BuildMaterialElementBytes(shadowPipelineInfo, material);
             const std::uint32_t materialStride = shadowPipelineInfo.GetMaterialLayout().totalByteSize;
-            // シャドウバッチ内の全インスタンスは同一マテリアルを共有する（RendererDraw.cppの
-            // MeshRenderer単位のテクスチャ/サンプラーオーバーライドに相当する概念がシャドウパスには無い）ため、
-            // テンプレート1回分だけ書き込めば、以降の per-instance memcpy で全インスタンスに伝播する
-            if (materialStride > 0) {
-                WriteMaterialField(shadowPipelineInfo, elementTemplate.data(), materialStride,
-                    "textureIndex", ResolveInstanceTextureIndex(TextureManager::kInvalidHandle, material));
-                WriteMaterialField(shadowPipelineInfo, elementTemplate.data(), materialStride,
-                    "samplerIndex", ResolveInstanceSamplerIndex(SamplerManager::kInvalidHandle, material));
-            }
             std::snprintf(key, sizeof(key), "ShadowPass|%u|material", batchIndex);
             if (materialStride > 0) {
+                std::vector<std::byte> allBytes(static_cast<size_t>(materialStride) * instanceCount);
+                for (size_t i = begin; i < end; ++i) {
+                    auto *material = MaterialManager::GetMaterial(sources[i].materialHandle);
+                    const auto &elementTemplate = shadowMaterialTemplateCache.Get(shadowPipelineInfo, kShadowPipelineName, sources[i].materialHandle);
+                    std::byte *elementBytes = allBytes.data() + (i - begin) * materialStride;
+                    std::memcpy(elementBytes, elementTemplate.data(), materialStride);
+                    WriteMaterialField(shadowPipelineInfo, elementBytes, materialStride,
+                        "textureIndex", ResolveInstanceTextureIndex(TextureManager::kInvalidHandle, material));
+                    WriteMaterialField(shadowPipelineInfo, elementBytes, materialStride,
+                        "samplerIndex", ResolveInstanceSamplerIndex(SamplerManager::kInvalidHandle, material));
+                }
                 batch.materialBuffer = resourceContainer_->GetOrCreateStructuredBuffer(key, materialStride, instanceCount);
                 if (batch.materialBuffer) {
                     if (auto *mapped = static_cast<std::byte *>(batch.materialBuffer->Map())) {
-                        for (std::uint32_t i = 0; i < instanceCount; ++i) {
-                            std::memcpy(mapped + static_cast<size_t>(i) * materialStride, elementTemplate.data(), materialStride);
-                        }
+                        std::memcpy(mapped, allBytes.data(), allBytes.size());
                     }
                 }
             }

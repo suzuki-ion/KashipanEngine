@@ -37,6 +37,8 @@ class IRenderTarget;
 
 namespace RendererInternal {
 struct MultiPassDitherScratchSet;
+class MaterialTemplateCache;
+class BatchKeySequencer;
 } // namespace RendererInternal
 
 /// @brief 描画用のレンダラークラス
@@ -263,6 +265,8 @@ private:
         std::span<const SceneRenderer::DrawEntry> batch,
         SceneRenderer *sceneRenderer,
         CameraLightsBindCache &lightsCache,
+        RendererInternal::MaterialTemplateCache &materialTemplateCache,
+        RendererInternal::BatchKeySequencer &batchKeySequencer,
         float extraSeedOffset = 0.0f,
         int seedPassIndex = -1);
 
@@ -285,6 +289,8 @@ private:
         std::span<const SceneRenderer::DrawEntry> entries,
         SceneRenderer *sceneRenderer,
         CameraLightsBindCache &lightsCache,
+        RendererInternal::MaterialTemplateCache &materialTemplateCache,
+        RendererInternal::BatchKeySequencer &batchKeySequencer,
         std::uint32_t passCount,
         float baseSeedOffset = 0.0f,
         int baseSeedPassIndex = -1);

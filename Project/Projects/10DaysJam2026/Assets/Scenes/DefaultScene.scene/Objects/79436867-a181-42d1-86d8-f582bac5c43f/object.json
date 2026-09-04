@@ -17,8 +17,8 @@
                             "z": 0.999962568283081
                         },
                         "translate": {
-                            "x": 4.0,
-                            "y": 234.0,
+                            "x": 10.0,
+                            "y": 232.0,
                             "z": 0.0
                         }
                     },
@@ -53,10 +53,35 @@
             {
                 "data": {
                     "customData": {
+                        "fields": {
+                            "gaugeInterval": {
+                                "x": 3.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "gaugeSource": "ef2708cb-284c-4190-98c3-f3e129164360",
+                            "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
+                            "startPosition": {
+                                "x": 8.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "scriptPath": "Assets\\Scripts\\HPUI.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
-                            "x": 0.0,
-                            "y": 1.0
+                            "x": 0.5,
+                            "y": 0.5
                         },
                         "instanceColor": {
                             "w": 1.0,

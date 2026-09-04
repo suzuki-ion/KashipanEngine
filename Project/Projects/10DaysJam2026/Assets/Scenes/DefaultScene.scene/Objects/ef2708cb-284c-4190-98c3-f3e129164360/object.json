@@ -17,8 +17,8 @@
                             "z": 0.999962568283081
                         },
                         "translate": {
-                            "x": 16.0,
-                            "y": 234.0,
+                            "x": -103.00926208496094,
+                            "y": 280.5359191894531,
                             "z": 0.0
                         }
                     },
@@ -55,8 +55,8 @@
                     "customData": {
                         "allowInstancing": true,
                         "anchor": {
-                            "x": 0.0,
-                            "y": 1.0
+                            "x": 0.5,
+                            "y": 0.5
                         },
                         "instanceColor": {
                             "w": 1.0,
@@ -99,7 +99,7 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "HP_player_bar1",
+        "name": "HP_bar",
         "objectID": "ef2708cb-284c-4190-98c3-f3e129164360",
         "tag": ""
     },

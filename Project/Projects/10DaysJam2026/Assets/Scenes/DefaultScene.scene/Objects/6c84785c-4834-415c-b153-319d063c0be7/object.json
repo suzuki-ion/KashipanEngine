@@ -13,7 +13,7 @@
                         },
                         "scale": {
                             "x": 256.0,
-                            "y": 240.0,
+                            "y": 144.0,
                             "z": 1.0
                         },
                         "translate": {
@@ -38,6 +38,17 @@
                     "tag": ""
                 },
                 "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "textureAssetPath": "App/Sprite/background/sunset.png"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "TextureSource"
             },
             {
                 "data": {
@@ -78,9 +89,9 @@
                         },
                         "instanceColor": {
                             "w": 1.0,
-                            "x": 0.6253602504730225,
-                            "y": 0.291954904794693,
-                            "z": 0.0
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
                         },
                         "instanceColorBlendMode": 1,
                         "instanceUvCombineMode": 0,
@@ -104,7 +115,7 @@
                             "y": 0.5
                         },
                         "pixelSnapping": true,
-                        "renderPriority": -101,
+                        "renderPriority": -100,
                         "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                     },
                     "isActive": true,
@@ -117,9 +128,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Background Color",
-        "objectID": "3b941a1e-0a39-49c5-aca4-4faf0e46f843",
+        "name": "Background",
+        "objectID": "6c84785c-4834-415c-b153-319d063c0be7",
         "tag": ""
     },
-    "siblingIndex": -4000
+    "siblingIndex": -3000
 }

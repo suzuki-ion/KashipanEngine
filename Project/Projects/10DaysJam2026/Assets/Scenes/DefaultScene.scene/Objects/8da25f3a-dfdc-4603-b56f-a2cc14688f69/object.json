@@ -98,7 +98,7 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": ""
+                    "tag": "Weapon"
                 },
                 "type": "Box2DCollider"
             }

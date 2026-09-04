@@ -78,7 +78,7 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": ""
+                    "tag": "Weapon"
                 },
                 "type": "Box2DCollider"
             },
@@ -93,10 +93,10 @@
                                 "y": 0.0,
                                 "z": 0.0
                             },
-                            "speed": 80.0,
+                            "speed": 100.0,
                             "uvStep": 0.5
                         },
-                        "scriptPath": "Assets\\Scripts\\Syuriken.as"
+                        "scriptPath": "Assets\\Scripts\\Shuriken.as"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -141,7 +141,7 @@
                         },
                         "pixelSnapping": false,
                         "renderPriority": 0,
-                        "targetObjectID": ""
+                        "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                     },
                     "isActive": true,
                     "priority": 900,

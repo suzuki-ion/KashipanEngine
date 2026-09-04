@@ -31,7 +31,7 @@
             {
                 "data": {
                     "customData": {
-                        "autotileMode": 0,
+                        "autotileMode": 1,
                         "cells": [
                             0,
                             0,
@@ -1121,7 +1121,7 @@
             {
                 "data": {
                     "customData": {
-                        "meshAssetPath": "__TilemapRendererMesh_2226932039584"
+                        "meshAssetPath": "__TilemapRendererMesh_2011655321376"
                     },
                     "isActive": true,
                     "priority": 1,

@@ -45,7 +45,7 @@
                         "textureAssetPath": "App/Sprite/Enemy/green.png"
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 2,
                     "tag": ""
                 },
                 "type": "TextureSource"
@@ -77,7 +77,7 @@
                         ]
                     },
                     "isActive": true,
-                    "priority": 2,
+                    "priority": 3,
                     "tag": "Enemy"
                 },
                 "type": "Box2DCollider"
@@ -151,12 +151,32 @@
                     "customData": {
                         "fields": {
                             "deathEffect": "a3f33280-f1ac-4cc0-9235-bdfd97ec21ff",
-                            "frameInterval": 0.15000000596046448,
                             "hp": 1.0,
                             "moveSpeed": 15.0,
-                            "uvStep": 0.5
+                            "self": "6cdeea0c-5930-4ebf-bef5-8c0fb2278d18"
                         },
                         "scriptPath": "Assets\\Scripts\\Green.as"
+                    },
+                    "isActive": true,
+                    "priority": 6,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "frameCount": 2,
+                            "frameInterval": 0.15000000596046448,
+                            "isLoop": true,
+                            "startRow": 0,
+                            "uvStep": {
+                                "x": 0.5,
+                                "y": 1.0
+                            }
+                        },
+                        "scriptPath": "Assets\\Scripts\\SpriteAnimator.as"
                     },
                     "isActive": true,
                     "priority": 7,

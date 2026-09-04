@@ -57,14 +57,17 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("手裏剣の発射間隔(秒)")]
     float syurikenAttackInterval = 0.2f;
 
-    [SerializeField, Tooltip("1コマあたりのUV移動量")]
-    Vector2 uvStep = Vector2(0.333f, 0.1428f);
+    [SerializeField, Tooltip("ヴィネットをかけるHP値")]
+    float vignetteHp = 3.0f;
+
+    [SerializeField, Tooltip("点滅の切り替え間隔(秒)")]
+    float blinkInterval = 0.08f;
 
     [SerializeField, Tooltip("武器一覧")]
     array<Object@>@ weapons;
 
     [SerializeField, Tooltip("所持武器")]
-    WeaponList currentWeaponType = WeaponList::Sword;
+    int currentWeaponType = 1;
 
     [SerializeField, Tooltip("押し戻しを行わない相手のタグ一覧")]
     array<string>@ pushBackExcludeTags;
@@ -74,6 +77,9 @@ class Player : ScriptComponentBehavior {
 
     [SerializeField, Tooltip("回復アイテム")]
     Object@ healItem;
+
+    [SerializeField, Tooltip("ゲーム画面")]
+    Object@ gameScreen;
 
     // クールダウン計算用タイマー
     float swordCooldownTimer = 0.0f;
@@ -97,7 +103,6 @@ class Player : ScriptComponentBehavior {
     bool isInvincible = false;
     float invincibleDuration = 1.0f;
     float invincibleTimer = 0.0f;
-    float animTimer = 0.0f;
     bool isAlive = true;
     
     // 攻撃用タイマー
@@ -202,7 +207,7 @@ class Player : ScriptComponentBehavior {
             if (currentWeaponType == WeaponList::Sword && swordCooldownTimer <= 0.0f) {
                 canAttack = true;
                 swordCooldownTimer = swordAttackInterval; // 剣のクールダウンリセット
-            } else if (currentWeaponType == WeaponList::Syuriken && syurikenCooldownTimer <= 0.0f) {
+            } else if (currentWeaponType == WeaponList::Shuriken && syurikenCooldownTimer <= 0.0f) {
                 canAttack = true;
                 syurikenCooldownTimer = syurikenAttackInterval; // 手裏剣のクールダウンリセット
             }
@@ -231,7 +236,7 @@ class Player : ScriptComponentBehavior {
                             sc.CallMethod("Attack", margin);
                             break;
 
-                        case WeaponList::Syuriken:
+                        case WeaponList::Shuriken:
                             {
                                 Object@ cloneSyuriken = GetScene().CloneObject(weapons[currentWeaponType], "CloneSyuriken");
                                 if (cloneSyuriken !is null) {
@@ -269,7 +274,7 @@ class Player : ScriptComponentBehavior {
                     }
                     break;
 
-                case WeaponList::Syuriken:
+                case WeaponList::Shuriken:
                     break;
 
                 default:
@@ -343,6 +348,14 @@ class Player : ScriptComponentBehavior {
             isAttacking = true;
         }
 
+        // HPが指定値以下になったらヴィネットをかける
+        // if(hp <= vignetteHp){
+        //     ScriptComponent@ sc;
+        //     if(GetComponent(@sc)){
+                
+        //     }
+        // }
+
         // HP0になったら死亡
         if(hp <= 0.0f){
             isAlive = false;
@@ -371,74 +384,44 @@ class Player : ScriptComponentBehavior {
             }
         }
 
-        // 状態が切り替わったらタイマーをリセット
+        // 状態が切り替わったらアニメーターに指示を出す
         if (nextState != state) {
             state = nextState;
-            animTimer = 0.0f;
-        }
 
-        // タイマー更新
-        animTimer += GetDeltaTime();
+            ScriptComponent@ animSc;
+            if (GetComponent(@animSc)) {
+                // Y位置の変更。Stateの数値をそのまま行番号として渡す
+                animSc.CallMethod("PlayRow", int(state));
 
-        // UVオフセット値の計算
-        Vector2 uvTranslate = Vector2(0.0f, 0.0f);
-
-        switch (state) {
-        case State::Idle:
-            uvTranslate.x = 0.0f;
-            uvTranslate.y = 0.0f;
-            break;
-
-        case State::Walk:
-            // 3コマ
-            {
-                int frame = int(animTimer / frameInterval) % 3;
-                uvTranslate.x = frame * uvStep.x;
-                uvTranslate.y = uvStep.y * 1.0f;
+                // X位置の変更。歩きと歩き攻撃のみ3コマ、他は1コマ
+                if (state == State::Walk || state == State::WalkAttack) {
+                    animSc.CallMethod("SetFrameCount", 3);
+                } else {
+                    animSc.CallMethod("SetFrameCount", 1);
+                }
             }
-            break;
-
-        case State::Jump:
-            uvTranslate.x = 0.0f;
-            uvTranslate.y = uvStep.y * 2.0f;
-            break;
-
-        case State::Attack:
-            uvTranslate.x = 0.0f;
-            uvTranslate.y = uvStep.y * 3.0f;
-            break;
-
-        case State::WalkAttack:
-            // 3コマ
-            {
-                int frame = int(animTimer / frameInterval) % 3;
-                uvTranslate.x = frame * uvStep.x;
-                uvTranslate.y = uvStep.y * 4.0f;
-            }
-            break;
-
-        case State::Dead:
-            uvTranslate.x = 0.0f;
-            uvTranslate.y = uvStep.y * 5.0f;
-            break;
-
-        case State::JumpAttack:
-            uvTranslate.x = 0.0f;
-            uvTranslate.y = uvStep.y * 6.0f;
-            break;
-
-        default:
-            break;
         }
 
-        // UVTranslateの適用
-        if (sprite !is null) {
-            sprite.SetInstanceUvTranslate(uvTranslate);
-        }
-
-        // 無敵時間タイマー更新
-        if(isInvincible){
+        // 無敵時間タイマー更新および点滅処理
+        if (isInvincible) {
             invincibleTimer += GetDeltaTime();
+
+            // blinkIntervalごとにフラグを交互に切り替える
+            bool isVisible = (int(invincibleTimer / blinkInterval) % 2 == 0);
+            if (sprite !is null) {
+                sprite.SetActive(isVisible);
+            }
+
+            // 無敵時間終了
+            if (invincibleTimer >= invincibleDuration) {
+                invincibleTimer = 0.0f;
+                isInvincible = false;
+
+                // 終了時は必ず表示状態に戻す
+                if (sprite !is null) {
+                    sprite.SetActive(true);
+                }
+            }
         }
 
         // 一定時間経過したら

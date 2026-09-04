@@ -8,12 +8,6 @@ class Bat : ScriptComponentBehavior {
     [SerializeField, Tooltip("移動速度")]
     float moveSpeed = 10.0f;
 
-    [SerializeField, Tooltip("コマ切り替え速度(秒)")]
-    float frameInterval = 0.15f;
-
-    [SerializeField, Tooltip("1コマあたりのUV移動量")]
-    float uvStep = 0.5f;
-
     [SerializeField, Tooltip("HP")]
     float hp = 1.0f;
 
@@ -23,32 +17,24 @@ class Bat : ScriptComponentBehavior {
     [SerializeField, Tooltip("死亡エフェクト")]
     Object@ deathEffect;
 
+    [SerializeField, Tooltip("セルフオブジェ")]
+    Object@ self;
+
     // エフェクトのクローン
     Object@ cloneEffect;
 
-    SpriteRenderer@ sprite;
     Box2DCollider@ col;
-    float animTimer = 0.0f;
     bool isAlive = true;
     bool isAnimation = false;
     float deathEffectTimer = 0.0f;
 
     void Start() {
-        GetComponent(@sprite);
         GetComponent(@col);
     }
 
     void Update() {
         Transform@ tf = GetTransform();
         if(tf is null) return;
-
-        // アニメーション処理
-        animTimer += GetDeltaTime();
-        int frame = int(animTimer / frameInterval) % 2;
-
-        if (sprite !is null) {
-            sprite.SetInstanceUvTranslate(Vector2(frame * uvStep, 0.0f));
-        }
 
         // プレイヤー追従処理
         if (player is null) return;
@@ -95,8 +81,7 @@ class Bat : ScriptComponentBehavior {
                 }
     
                 // 自身の描画と当たり判定を無効化
-                if(col !is null) col.SetActive(false);
-                if(sprite !is null) sprite.SetActive(false);
+                self.SetComponentsActiveExceptTransformAndScript(false);
     
                 isAnimation = true;
             }

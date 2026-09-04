@@ -45,7 +45,7 @@
                         "textureAssetPath": "App/Sprite/Player/Player.png"
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 2,
                     "tag": ""
                 },
                 "type": "TextureSource"
@@ -77,7 +77,7 @@
                         ]
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 3,
                     "tag": "Player"
                 },
                 "type": "Box2DCollider"
@@ -105,10 +105,12 @@
                     "customData": {
                         "fields": {
                             "attackDuration": 0.44999998807907104,
+                            "blinkInterval": 0.07999999821186066,
                             "currentWeaponType": 1,
                             "effect": "9da682a8-30e0-48ec-b449-3f4d2ff986fe",
                             "effectActiveDuration": 0.10000000149011612,
                             "frameInterval": 0.15000000596046448,
+                            "gameScreen": "281b0c8e-708d-404c-94ea-3d918a8fbd5d",
                             "gravity": 360.0,
                             "groundedThreshold": 0.5,
                             "healItem": "e41dd776-f946-4cf1-872f-b47cbad674df",
@@ -123,10 +125,7 @@
                             "swordAttackInterval": 0.4000000059604645,
                             "syurikenAttackInterval": 0.4000000059604645,
                             "syurikenLifeTime": 2.0,
-                            "uvStep": {
-                                "x": 0.3330000042915344,
-                                "y": 0.1428000032901764
-                            },
+                            "vignetteHp": 3.0,
                             "weapons": [
                                 "8da25f3a-dfdc-4603-b56f-a2cc14688f69",
                                 "8bf086b0-18bf-4b32-83b6-5892013ee4e6"
@@ -136,6 +135,27 @@
                     },
                     "isActive": true,
                     "priority": 4,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "frameCount": 1,
+                            "frameInterval": 0.15000000596046448,
+                            "isLoop": true,
+                            "startRow": 0,
+                            "uvStep": {
+                                "x": 0.3330000042915344,
+                                "y": 0.14300000667572021
+                            }
+                        },
+                        "scriptPath": "Assets\\Scripts\\SpriteAnimator.as"
+                    },
+                    "isActive": true,
+                    "priority": 5,
                     "tag": ""
                 },
                 "type": "ScriptComponent"
@@ -180,7 +200,7 @@
                         "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                     },
                     "isActive": true,
-                    "priority": 5,
+                    "priority": 6,
                     "tag": ""
                 },
                 "type": "SpriteRenderer"

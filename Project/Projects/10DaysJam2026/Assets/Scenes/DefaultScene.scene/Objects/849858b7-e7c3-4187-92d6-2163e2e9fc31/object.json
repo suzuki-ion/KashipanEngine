@@ -23,7 +23,7 @@
                         }
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 0,
                     "tag": ""
                 },
                 "type": "Transform"
@@ -38,25 +38,6 @@
                     "tag": ""
                 },
                 "type": "MeshFilter"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "fields": {
-                            "deathEffect": "a3f33280-f1ac-4cc0-9235-bdfd97ec21ff",
-                            "frameInterval": 0.15000000596046448,
-                            "hp": 1.0,
-                            "moveSpeed": 12.0,
-                            "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
-                            "uvStep": 0.5
-                        },
-                        "scriptPath": "Assets\\Scripts\\Bat.as"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "ScriptComponent"
             },
             {
                 "data": {
@@ -85,7 +66,7 @@
                         ]
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 2,
                     "tag": "Enemy"
                 },
                 "type": "Box2DCollider"
@@ -96,10 +77,49 @@
                         "textureAssetPath": "App/Sprite/Enemy/bat.png"
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 3,
                     "tag": ""
                 },
                 "type": "TextureSource"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "deathEffect": "a3f33280-f1ac-4cc0-9235-bdfd97ec21ff",
+                            "hp": 1.0,
+                            "moveSpeed": 12.0,
+                            "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
+                            "self": "849858b7-e7c3-4187-92d6-2163e2e9fc31"
+                        },
+                        "scriptPath": "Assets\\Scripts\\Bat.as"
+                    },
+                    "isActive": true,
+                    "priority": 4,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "frameCount": 2,
+                            "frameInterval": 0.15000000596046448,
+                            "isLoop": true,
+                            "startRow": 0,
+                            "uvStep": {
+                                "x": 0.5,
+                                "y": 1.0
+                            }
+                        },
+                        "scriptPath": "Assets\\Scripts\\SpriteAnimator.as"
+                    },
+                    "isActive": true,
+                    "priority": 5,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
             },
             {
                 "data": {
@@ -141,7 +161,7 @@
                         "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                     },
                     "isActive": true,
-                    "priority": 900,
+                    "priority": 6,
                     "tag": ""
                 },
                 "type": "SpriteRenderer"

@@ -1,4 +1,4 @@
-class Syuriken : ScriptComponentBehavior {
+class Shuriken : ScriptComponentBehavior {
     [SerializeField, Tooltip("コマ切り替え速度(秒)")]
     float frameInterval = 0.15f;
 

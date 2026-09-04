@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <algorithm>
+#include "Debug/Logger.h"
 #include "Objects/Components/Collider/ICollider.h"
 #include "Math/Vector2.h"
 #include "Utilities/Translation.h"
@@ -10,12 +11,14 @@ namespace KashipanEngine {
 class Circle2DCollider final : public ICollider {
 public:
     Circle2DCollider() : ICollider("Circle2DCollider", Shape::Circle2D, true, GetComponentTypeID<Circle2DCollider>()) {
+        LogScope scope;
         ADD_MEMBER_VARIABLE(radius_);
         ADD_MEMBER_VARIABLE(center_);
     }
     ~Circle2DCollider() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<Circle2DCollider>();
         ptr->radius_ = radius_;
         ptr->center_ = center_;
@@ -30,6 +33,7 @@ public:
     const Vector2 &GetCenter() const noexcept { return center_; }
 
     std::optional<ColliderInfo2D> BuildColliderInfo2D() const override {
+        LogScope scope;
         ColliderInfo2D info;
         Math::Circle circle;
         const Vector3 scale = GetSyncedOwnerScale();
@@ -43,18 +47,21 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         ICollider::ShowImGui();
         ImGui::DragFloat(TranslationLabel("component.circle2dcollider.radius"), &radius_, 0.01f, 0.0f);
         ImGui::DragFloat2(TranslationLabel("component.circle2dcollider.center"), &center_.x, 0.01f);
     }
 #endif
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = ICollider::SaveToJson();
         json["radius"] = radius_;
         json["center"] = ToJSON(center_);
         return json;
     }
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         ICollider::LoadFromJson(json);
         radius_ = json.value("radius", 0.5f);
         if (json.contains("center")) center_ = FromJSON<Vector2>(json["center"]);

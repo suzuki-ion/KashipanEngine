@@ -20,6 +20,7 @@ std::uint32_t sAutoNameCounter = 0;
 } // namespace
 
 D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetSrvHandle() const noexcept {
+    LogScope scope;
     // 初回BeginRecordより前はRead面がまだPIXEL_SHADER_RESOURCEへ遷移していない
     // （BeginRecordのisFirstBeginRecord_ブロック参照）
     if (isFirstBeginRecord_) return D3D12_GPU_DESCRIPTOR_HANDLE{};
@@ -28,6 +29,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetSrvHandle() const noexcept {
 }
 
 bool ScreenBuffer::SaveToFile(const std::string &filePath) const {
+    LogScope scope;
     if (!sDirectXCommon_) return false;
     auto *resource = previewTarget_ ? previewTarget_->GetResource() : nullptr;
     if (!resource) return false;
@@ -37,6 +39,7 @@ bool ScreenBuffer::SaveToFile(const std::string &filePath) const {
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetDepthSrvHandle() const noexcept {
+    LogScope scope;
     // GetSrvHandle()と同じ理由（初回BeginRecordより前はDepth Read面が未遷移）
     if (isFirstBeginRecord_) return D3D12_GPU_DESCRIPTOR_HANDLE{};
     const auto idx = GetDsvReadIndex();
@@ -46,6 +49,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE ScreenBuffer::GetDepthSrvHandle() const noexcept {
 
 ScreenBuffer *ScreenBuffer::Create(std::uint32_t width, std::uint32_t height,
     const std::string &name, DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat) {
+    LogScope scope;
     std::unique_ptr<ScreenBuffer> buffer(new ScreenBuffer());
     auto *raw = buffer.get();
 
@@ -60,12 +64,14 @@ ScreenBuffer *ScreenBuffer::Create(std::uint32_t width, std::uint32_t height,
 }
 
 void ScreenBuffer::SetRenderTargetName(const std::string &name) {
+    LogScope scope;
     if (name.empty() || name == name_) return;
     UnregisterFromTextureManager();
     RegisterToTextureManager(name);
 }
 
 void ScreenBuffer::RegisterToTextureManager(const std::string &name) {
+    LogScope scope;
     // 名前が空の場合は自動生成する
     std::string registerName = name;
     if (registerName.empty()) {
@@ -88,6 +94,7 @@ void ScreenBuffer::RegisterToTextureManager(const std::string &name) {
 }
 
 void ScreenBuffer::UnregisterFromTextureManager() {
+    LogScope scope;
     if (textureHandle_ != TextureManager::kInvalidHandle) {
         TextureManager::UnregisterExternalTexture(textureHandle_);
         textureHandle_ = TextureManager::kInvalidHandle;
@@ -95,16 +102,19 @@ void ScreenBuffer::UnregisterFromTextureManager() {
 }
 
 void ScreenBuffer::AllDestroy(Passkey<GameEngine>) {
+    LogScope scope;
     sBufferMap.clear();
     sPendingDestroy.clear();
 }
 
 bool ScreenBuffer::IsExist(ScreenBuffer *buffer) {
+    LogScope scope;
     if (!buffer) return false;
     return sBufferMap.find(buffer) != sBufferMap.end();
 }
 
 void ScreenBuffer::DestroyNotify() {
+    LogScope scope;
     if (!IsExist(const_cast<ScreenBuffer *>(this))) return;
     if (IsPendingDestroy()) return;
     UnregisterFromTextureManager();
@@ -112,10 +122,12 @@ void ScreenBuffer::DestroyNotify() {
 }
 
 bool ScreenBuffer::IsPendingDestroy() const {
+    LogScope scope;
     return std::find(sPendingDestroy.begin(), sPendingDestroy.end(), this) != sPendingDestroy.end();
 }
 
 void ScreenBuffer::CommitDestroy(Passkey<GameEngine>) {
+    LogScope scope;
     if (sPendingDestroy.empty()) return;
 
     // 重複があっても安全にする
@@ -133,11 +145,13 @@ void ScreenBuffer::CommitDestroy(Passkey<GameEngine>) {
 }
 
 ScreenBuffer::~ScreenBuffer() {
+    LogScope scope;
     Destroy();
 }
 
 bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
     DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat) {
+    LogScope scope;
     Destroy();
 
     width_ = width;
@@ -195,6 +209,7 @@ bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
 }
 
 bool ScreenBuffer::Resize(std::uint32_t width, std::uint32_t height) {
+    LogScope scope;
     if (width == 0 || height == 0) return false;
     if (width == width_ && height == height_) return true;
     if (!dx12Commands_) return false;
@@ -209,6 +224,7 @@ bool ScreenBuffer::Resize(std::uint32_t width, std::uint32_t height) {
 }
 
 void ScreenBuffer::EnsureRenderTargetSize(ID3D12GraphicsCommandList *cmd, bool isMainCall) {
+    LogScope scope;
     if (width_ == 0 || height_ == 0) return;
     if (rtBufferWidth_ == width_ && rtBufferHeight_ == height_) return;
     // NextPass経由（isMainCall=false）の作り直しは行わない（EnsureRenderTargetSizeのヘッダーコメント参照）。
@@ -233,6 +249,7 @@ void ScreenBuffer::EnsureRenderTargetSize(ID3D12GraphicsCommandList *cmd, bool i
 }
 
 void ScreenBuffer::EnsureDepthStencilSize(ID3D12GraphicsCommandList *cmd) {
+    LogScope scope;
     if (width_ == 0 || height_ == 0) return;
     if (dsBufferWidth_ == width_ && dsBufferHeight_ == height_) return;
 
@@ -248,6 +265,7 @@ void ScreenBuffer::EnsureDepthStencilSize(ID3D12GraphicsCommandList *cmd) {
 }
 
 void ScreenBuffer::Destroy() {
+    LogScope scope;
     for (size_t i = 0; i < kBufferCount; ++i) {
         shaderResources_[i].reset();
         depthStencils_[i].reset();
@@ -278,15 +296,18 @@ void ScreenBuffer::Destroy() {
 }
 
 void ScreenBuffer::BeginDraw() {
+    LogScope scope;
     BeginRecord(!isDepthWriteEnabled_, /*isMainCall=*/true);
 }
 
 void ScreenBuffer::NextPass() {
+    LogScope scope;
     if (!EndRecord()) return;
     BeginRecord(true, /*isMainCall=*/false);
 }
 
 void ScreenBuffer::RebindWriteTarget() {
+    LogScope scope;
     if (!dx12Commands_) return;
     auto *cmd = dx12Commands_->GetCommandList();
     auto *rt = renderTargets_[GetRtvWriteIndex()].get();
@@ -317,6 +338,7 @@ void ScreenBuffer::RebindWriteTarget() {
 }
 
 void ScreenBuffer::EndDraw() {
+    LogScope scope;
     if (!EndRecord()) return;
 
     // このフレームの最終結果をプレビュー安定バッファへコピーする（コマンドリストがまだ
@@ -442,6 +464,7 @@ bool ScreenBuffer::EndRecord(bool discard) {
 }
 
 void ScreenBuffer::CopyToPreviewTarget(ID3D12GraphicsCommandList *cmd) {
+    LogScope scope;
     if (!cmd) return;
     if (width_ == 0 || height_ == 0) return;
 

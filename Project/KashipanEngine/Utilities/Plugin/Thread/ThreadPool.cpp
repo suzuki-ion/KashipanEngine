@@ -2,6 +2,7 @@
 #include <KashipanEngine.h>
 
 Plugin::ThreadPool::ThreadPool() {
+	KashipanEngine::LogScope scope;
 	size_t threadCount = std::thread::hardware_concurrency();
 
 	if (threadCount > 1) {

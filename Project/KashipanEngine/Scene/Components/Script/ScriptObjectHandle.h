@@ -1,6 +1,7 @@
 #pragma once
 #include <atomic>
 
+#include "Debug/Logger.h"
 #include "Utilities/UUID128.h"
 
 namespace KashipanEngine {
@@ -22,6 +23,7 @@ class ScriptObjectHandle final {
 public:
     void AddRef() { refCount_.fetch_add(1, std::memory_order_relaxed); }
     void Release() {
+        LogScope scope;
         if (refCount_.fetch_sub(1, std::memory_order_acq_rel) == 1) delete this;
     }
 

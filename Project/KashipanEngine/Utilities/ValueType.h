@@ -16,6 +16,7 @@
 #include "Assets/TextureRef.h"
 #include "Assets/TextureCubeRef.h"
 #include "Utilities/FileIO/JSON.h"
+#include "Debug/Logger.h"
 
 /// @brief 値の型を表す列挙型
 enum class ValueType {
@@ -89,6 +90,7 @@ private:
 template <typename T>
 struct TypeExtractor {
     static TypeInfo Get() {
+        KashipanEngine::LogScope scope;
         if constexpr (std::is_pointer_v<T>) {
             return TypeInfo(ValueType::Pointer);
         } else if constexpr (std::is_class_v<T>) {

@@ -3,6 +3,7 @@
 
 #include <unordered_set>
 
+#include "Debug/Logger.h"
 #include "Scene/SceneEditorContext.h"
 #include "Scene/SceneFileIO.h"
 #include "Scene/SceneManager.h"
@@ -15,6 +16,7 @@ RegisteredScenesSyncResult SyncRegisteredScenes(
     const UUID128 &prefabID,
     const JSON &oldPrefabJson,
     const JSON &newPrefabJson) {
+    LogScope scope;
     RegisteredScenesSyncResult result;
     SceneManager *sceneManager = context ? context->GetSceneManager() : nullptr;
     if (!sceneManager) return result;

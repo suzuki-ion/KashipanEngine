@@ -1,10 +1,12 @@
 #include "DX12Commands.h"
 
 #include <stdexcept>
+#include "Debug/Logger.h"
 
 namespace KashipanEngine {
 
 DX12Commands::DX12Commands(Passkey<DirectXCommon>, ID3D12Device* device, D3D12_COMMAND_LIST_TYPE type) {
+    LogScope scope;
     if (!device) {
         throw std::runtime_error("DX12Commands: device is null");
     }
@@ -23,6 +25,7 @@ DX12Commands::DX12Commands(Passkey<DirectXCommon>, ID3D12Device* device, D3D12_C
 }
 
 ID3D12GraphicsCommandList* DX12Commands::BeginRecord() {
+    LogScope scope;
     if (isRecording_) return commandList_.Get();
     if (!commandAllocator_ || !commandList_) return nullptr;
 
@@ -38,6 +41,7 @@ ID3D12GraphicsCommandList* DX12Commands::BeginRecord() {
 }
 
 bool DX12Commands::EndRecord() {
+    LogScope scope;
     if (!isRecording_) return false;
     if (!commandList_) return false;
 

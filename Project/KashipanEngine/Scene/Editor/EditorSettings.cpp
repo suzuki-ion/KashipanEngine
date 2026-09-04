@@ -2,15 +2,18 @@
 #ifdef USE_IMGUI
 #include <imgui.h>
 #include "Core/ProjectPaths.h"
+#include "Debug/Logger.h"
 #include "Utilities/FileIO.h"
 
 namespace KashipanEngine {
 
 std::string EditorSettings::GetFilePath() {
+    LogScope scope;
     return ProjectPaths::InProjectRoot(kFileName);
 }
 
 bool EditorSettings::GetBool(const std::string &key, bool defaultValue) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it == sData_.end() || !it->is_boolean()) return defaultValue;
@@ -18,6 +21,7 @@ bool EditorSettings::GetBool(const std::string &key, bool defaultValue) {
 }
 
 void EditorSettings::SetBool(const std::string &key, bool value) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it != sData_.end() && it->is_boolean() && it->get<bool>() == value) return;
@@ -26,6 +30,7 @@ void EditorSettings::SetBool(const std::string &key, bool value) {
 }
 
 float EditorSettings::GetFloat(const std::string &key, float defaultValue) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it == sData_.end() || !it->is_number()) return defaultValue;
@@ -33,6 +38,7 @@ float EditorSettings::GetFloat(const std::string &key, float defaultValue) {
 }
 
 void EditorSettings::SetFloat(const std::string &key, float value) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it != sData_.end() && it->is_number() && it->get<float>() == value) return;
@@ -41,6 +47,7 @@ void EditorSettings::SetFloat(const std::string &key, float value) {
 }
 
 std::string EditorSettings::GetString(const std::string &key, const std::string &defaultValue) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it == sData_.end() || !it->is_string()) return defaultValue;
@@ -48,6 +55,7 @@ std::string EditorSettings::GetString(const std::string &key, const std::string 
 }
 
 void EditorSettings::SetString(const std::string &key, const std::string &value) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it != sData_.end() && it->is_string() && it->get<std::string>() == value) return;
@@ -56,6 +64,7 @@ void EditorSettings::SetString(const std::string &key, const std::string &value)
 }
 
 JSON EditorSettings::GetJSON(const std::string &key, const JSON &defaultValue) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it == sData_.end()) return defaultValue;
@@ -63,6 +72,7 @@ JSON EditorSettings::GetJSON(const std::string &key, const JSON &defaultValue) {
 }
 
 void EditorSettings::SetJSON(const std::string &key, const JSON &value) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it != sData_.end() && *it == value) return;
@@ -71,6 +81,7 @@ void EditorSettings::SetJSON(const std::string &key, const JSON &value) {
 }
 
 bool EditorSettings::PersistentTreeNode(const char *label, const std::string &key, bool defaultOpen) {
+    LogScope scope;
     const bool stored = GetBool(key, defaultOpen);
     ImGui::SetNextItemOpen(stored, ImGuiCond_Once);
     const bool open = ImGui::TreeNode(label);
@@ -79,6 +90,7 @@ bool EditorSettings::PersistentTreeNode(const char *label, const std::string &ke
 }
 
 bool EditorSettings::PersistentCollapsingHeader(const char *label, const std::string &key, bool defaultOpen) {
+    LogScope scope;
     const bool stored = GetBool(key, defaultOpen);
     ImGui::SetNextItemOpen(stored, ImGuiCond_Once);
     const bool open = ImGui::CollapsingHeader(label);
@@ -87,6 +99,7 @@ bool EditorSettings::PersistentCollapsingHeader(const char *label, const std::st
 }
 
 void EditorSettings::EnsureLoaded() {
+    LogScope scope;
     if (sLoaded_) return;
     sData_ = LoadJSON(GetFilePath());
     if (!sData_.is_object()) sData_ = JSON::object();
@@ -94,6 +107,7 @@ void EditorSettings::EnsureLoaded() {
 }
 
 void EditorSettings::Save() {
+    LogScope scope;
     SaveJSON(sData_, GetFilePath());
 }
 

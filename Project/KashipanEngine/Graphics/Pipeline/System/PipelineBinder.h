@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <d3d12.h>
 #include <string>
+#include "Debug/Logger.h"
 #include "Graphics/PipelineManager.h"
 #include "Graphics/Resources.h"
 
@@ -19,6 +20,7 @@ public:
 
     /// @brief 指定パイプラインを使用（差分がある場合のみバインド）
     void UsePipeline(const std::string &name) {
+        LogScope scope;
         if (!commandList_ || !manager_) return;
         // 未読み込みの場合、Object3D/Object2DのBlend×Culling×Toon組み合わせ名であれば
         // PipelineManager::GetOrCreatePipeline がオンデマンドでPSOを生成する
@@ -59,6 +61,7 @@ public:
     /// @param stride 頂点ストライド（バイト）
     /// @param slot スロット番号（デフォルト 0）
     void SetVertexBuffer(VertexBufferResource *vb, UINT stride, UINT slot = 0) {
+        LogScope scope;
         if (!commandList_ || !vb) return;
         vb->SetCommandList(commandList_);
         D3D12_VERTEX_BUFFER_VIEW view = vb->GetView(stride);
@@ -68,6 +71,7 @@ public:
     /// @brief 単一のインデックスバッファを設定する
     /// @param ib IB リソース
     void SetIndexBuffer(IndexBufferResource *ib) {
+        LogScope scope;
         if (!commandList_ || !ib) return;
         ib->SetCommandList(commandList_);
         D3D12_INDEX_BUFFER_VIEW view = ib->GetView();
@@ -76,12 +80,14 @@ public:
 
     /// @brief 既に作成済みのビューで頂点バッファを設定する
     void SetVertexBufferView(UINT startSlot, UINT viewCount, const D3D12_VERTEX_BUFFER_VIEW *views) {
+        LogScope scope;
         if (!commandList_ || !views || viewCount == 0) return;
         commandList_->IASetVertexBuffers(startSlot, viewCount, views);
     }
 
     /// @brief 既に作成済みのインデックスバッファビューで設定する
     void SetIndexBufferView(const D3D12_INDEX_BUFFER_VIEW *view) {
+        LogScope scope;
         if (!commandList_ || !view) return;
         commandList_->IASetIndexBuffer(view);
     }

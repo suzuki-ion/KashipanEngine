@@ -2,11 +2,13 @@
 #include "Directory.h"
 #include <fstream>
 
+#include "Debug/Logger.h"
 #include "Utilities/Conversion/ConvertString.h"
 
 namespace KashipanEngine {
 
 TextFileData LoadTextFile(const std::string &filePath) {
+    LogScope scope;
     TextFileData textFileData;
     textFileData.filePath = filePath;
     // std::ifstream(const std::string&)はWindows上で現在のANSIコードページを使ってファイルを開くため、
@@ -24,6 +26,7 @@ TextFileData LoadTextFile(const std::string &filePath) {
 }
 
 void SaveTextFile(const TextFileData &textFileData) {
+    LogScope scope;
     // 保存先フォルダが存在しない場合は作成する
     EnsureParentDirectoryExists(textFileData.filePath);
     std::ofstream file(Utf8StringToPath(textFileData.filePath));

@@ -272,21 +272,25 @@ BitmapFontManager::FontHandle BitmapFontManager::LoadFont(const std::string &fil
 }
 
 BitmapFontManager::FontHandle BitmapFontManager::GetFontHandleFromFileName(const std::string &fileName) {
+    LogScope scope;
     auto it = sFileNameToHandle.find(fileName);
     return it != sFileNameToHandle.end() ? it->second : kInvalidHandle;
 }
 
 BitmapFontManager::FontHandle BitmapFontManager::GetFontHandleFromAssetPath(const std::string &assetPath) {
+    LogScope scope;
     auto it = sAssetPathToHandle.find(NormalizePathSlashes(assetPath));
     return it != sAssetPathToHandle.end() ? it->second : kInvalidHandle;
 }
 
 BitmapFontManager::FontHandle BitmapFontManager::GetFontHandleFromName(const std::string &name) {
+    LogScope scope;
     auto it = sNameToHandle.find(name);
     return it != sNameToHandle.end() ? it->second : kInvalidHandle;
 }
 
 std::vector<BitmapFontManager::FontListEntry> BitmapFontManager::GetLoadedFontListEntries() {
+    LogScope scope;
     std::vector<FontListEntry> result;
     result.reserve(sFonts.size());
     for (const auto &[handle, entry] : sFonts) {
@@ -296,6 +300,7 @@ std::vector<BitmapFontManager::FontListEntry> BitmapFontManager::GetLoadedFontLi
 }
 
 const BitmapFontManager::CharInfo *BitmapFontManager::GetCharInfo(FontHandle handle, char32_t codepoint) {
+    LogScope scope;
     auto it = sFonts.find(handle);
     if (it == sFonts.end()) return nullptr;
     auto charIt = it->second.chars.find(codepoint);
@@ -303,23 +308,27 @@ const BitmapFontManager::CharInfo *BitmapFontManager::GetCharInfo(FontHandle han
 }
 
 TextureManager::TextureHandle BitmapFontManager::GetPageTextureHandle(FontHandle handle) {
+    LogScope scope;
     auto it = sFonts.find(handle);
     return it != sFonts.end() ? it->second.pageTextureHandle : TextureManager::kInvalidHandle;
 }
 
 float BitmapFontManager::GetScaleForFontSize(FontHandle handle, float fontSize) {
+    LogScope scope;
     auto it = sFonts.find(handle);
     if (it == sFonts.end() || it->second.bakeSize <= 0.0f) return 1.0f;
     return fontSize / it->second.bakeSize;
 }
 
 float BitmapFontManager::GetLineHeight(FontHandle handle, float fontSize) {
+    LogScope scope;
     auto it = sFonts.find(handle);
     if (it == sFonts.end()) return fontSize;
     return it->second.lineHeight * GetScaleForFontSize(handle, fontSize);
 }
 
 float BitmapFontManager::GetBase(FontHandle handle, float fontSize) {
+    LogScope scope;
     auto it = sFonts.find(handle);
     if (it == sFonts.end()) return fontSize;
     return it->second.base * GetScaleForFontSize(handle, fontSize);

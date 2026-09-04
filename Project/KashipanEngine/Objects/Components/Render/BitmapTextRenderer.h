@@ -4,6 +4,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Assets/BitmapFontManager.h"
 #include "Assets/MaterialManager.h"
@@ -87,6 +88,7 @@ public:
     ~BitmapTextRenderer() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<BitmapTextRenderer>();
         ptr->targetObjectID_ = targetObjectID_;
         ptr->pipelineName_ = pipelineName_;
@@ -117,11 +119,13 @@ public:
     void SetTargetObject(const UUID128 &targetObjectID) { targetObjectID_ = targetObjectID; }
     const UUID128 &GetTargetObjectID() const noexcept { return targetObjectID_; }
     EmptyObject *GetTargetObject() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext || !targetObjectID_.IsValid()) return nullptr;
         return sceneContext->GetSceneObject(targetObjectID_);
     }
     bool IsRenderTargetIncluded(const IRenderTarget *target) const {
+        LogScope scope;
         if (!target) return false;
         return !excludedRenderTargetNames_.contains(target->GetRenderTargetName());
     }
@@ -134,6 +138,7 @@ public:
     const std::string &GetPipelineName() const noexcept { return pipelineName_; }
 
     void SetFontName(const std::string &fontName) {
+        LogScope scope;
         fontName_ = fontName;
         fontHandle_ = BitmapFontManager::kInvalidHandle;
         MarkInstancesDirty();
@@ -141,6 +146,7 @@ public:
     const std::string &GetFontName() const noexcept { return fontName_; }
     /// @brief フォントハンドルを取得する（未解決の場合はフォント名から解決を試みる）
     BitmapFontManager::FontHandle GetFontHandle() const {
+        LogScope scope;
         if (fontHandle_ == BitmapFontManager::kInvalidHandle && !fontName_.empty()) {
             fontHandle_ = BitmapFontManager::GetFontHandleFromName(fontName_);
         }
@@ -148,6 +154,7 @@ public:
     }
 
     void SetMaterialName(const std::string &materialName) {
+        LogScope scope;
         materialName_ = materialName;
         materialHandle_ = MaterialManager::kInvalidHandle;
     }
@@ -155,6 +162,7 @@ public:
     const std::string &GetMaterialName() const noexcept { return materialName_; }
     /// @brief 描画パラメーターとして使う任意マテリアルを取得する。テクスチャはフォントページで上書きされる
     MaterialManager::MaterialHandle GetMaterialHandle() const {
+        LogScope scope;
         if (materialHandle_ == MaterialManager::kInvalidHandle && !materialName_.empty()) {
             materialHandle_ = MaterialManager::GetMaterialHandleFromName(materialName_);
         }
@@ -169,6 +177,7 @@ public:
     //==================================================
 
     void SetText(const std::string &text) {
+        LogScope scope;
         if (text_ == text) return;
         text_ = text;
         MarkShapeDirty();
@@ -176,12 +185,14 @@ public:
     const std::string &GetText() const noexcept { return text_; }
 
     void SetFontSize(float fontSize) {
+        LogScope scope;
         fontSize_ = std::max(0.01f, fontSize);
         MarkShapeDirty();
     }
     float GetFontSize() const noexcept { return fontSize_; }
 
     void SetInstanceColor(const Vector4 &color) {
+        LogScope scope;
         instanceColor_ = color;
         MarkInstancesDirty();
     }
@@ -189,9 +200,9 @@ public:
     void SetInstanceColorBlendMode(ColorBlendMode mode) noexcept { instanceColorBlendMode_ = mode; }
     ColorBlendMode GetInstanceColorBlendMode() const noexcept { return instanceColorBlendMode_; }
 
-    void SetHorizontalAlign(HorizontalAlign align) { horizontalAlign_ = align; MarkInstancesDirty(); }
+    void SetHorizontalAlign(HorizontalAlign align) { LogScope scope; horizontalAlign_ = align; MarkInstancesDirty(); }
     HorizontalAlign GetHorizontalAlign() const noexcept { return horizontalAlign_; }
-    void SetVerticalAlign(VerticalAlign align) { verticalAlign_ = align; MarkInstancesDirty(); }
+    void SetVerticalAlign(VerticalAlign align) { LogScope scope; verticalAlign_ = align; MarkInstancesDirty(); }
     VerticalAlign GetVerticalAlign() const noexcept { return verticalAlign_; }
 
     /// @brief アトラスのサンプリング方式を設定する（true=ポイント/ニアレスト、false=リニア。既定true）
@@ -214,36 +225,43 @@ public:
 
     /// @brief 改行文字も1つとしてカウントした実際の文字数を取得する
     size_t GetCharacterCount() const {
+        LogScope scope;
         RebuildShapeIfDirty();
         return characterOverrides_.size();
     }
     void SetCharacterOffset(size_t index, const Vector2 &offset) {
+        LogScope scope;
         RebuildShapeIfDirty();
         if (index >= characterOverrides_.size()) return;
         characterOverrides_[index].offset = offset;
         MarkInstancesDirty();
     }
     Vector2 GetCharacterOffset(size_t index) const {
+        LogScope scope;
         RebuildShapeIfDirty();
         return index < characterOverrides_.size() ? characterOverrides_[index].offset : Vector2(0.0f, 0.0f);
     }
     void SetCharacterRotation(size_t index, float rotation) {
+        LogScope scope;
         RebuildShapeIfDirty();
         if (index >= characterOverrides_.size()) return;
         characterOverrides_[index].rotation = rotation;
         MarkInstancesDirty();
     }
     float GetCharacterRotation(size_t index) const {
+        LogScope scope;
         RebuildShapeIfDirty();
         return index < characterOverrides_.size() ? characterOverrides_[index].rotation : 0.0f;
     }
     void SetCharacterScale(size_t index, const Vector2 &scale) {
+        LogScope scope;
         RebuildShapeIfDirty();
         if (index >= characterOverrides_.size()) return;
         characterOverrides_[index].scale = scale;
         MarkInstancesDirty();
     }
     Vector2 GetCharacterScale(size_t index) const {
+        LogScope scope;
         RebuildShapeIfDirty();
         return index < characterOverrides_.size() ? characterOverrides_[index].scale : Vector2(1.0f, 1.0f);
     }
@@ -254,6 +272,7 @@ public:
 
     /// @brief 現在のTransformワールド行列まで合成した、描画に使う文字ごとのインスタンス一覧を取得する
     std::vector<RenderCharacterInstance> GetRenderInstances() const {
+        LogScope scope;
         RebuildInstancesIfDirty();
         auto *objectContext = GetOwnerObjectContext();
         auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
@@ -268,6 +287,7 @@ public:
 
 protected:
     void Initialize() override {
+        LogScope scope;
         auto *sceneRenderer = GetOrAddSceneRenderer();
         if (sceneRenderer) {
             sceneRenderer->RegisterBitmapTextRenderer(this);
@@ -275,6 +295,7 @@ protected:
     }
 
     void Finalize() override {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
         if (sceneRenderer) {
@@ -284,6 +305,7 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         TargetObjectSelector::ShowSelector(TranslationLabel("component.common.target"), GetOwnerSceneContext(), targetObjectID_);
         TargetObjectSelector::ShowRenderTargetFilters(GetOwnerSceneContext(), targetObjectID_, excludedRenderTargetNames_);
 
@@ -358,6 +380,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = JSON::object();
         json["text"] = text_;
         json["fontName"] = fontName_;
@@ -379,6 +402,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         text_ = json.value("text", std::string{});
         fontName_ = json.value("fontName", std::string{});
         fontHandle_ = BitmapFontManager::kInvalidHandle;
@@ -408,6 +432,7 @@ protected:
 
 private:
     SceneRenderer *GetOrAddSceneRenderer() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext) return nullptr;
         auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
@@ -417,13 +442,14 @@ private:
         return sceneRenderer;
     }
 
-    void MarkShapeDirty() const { shapeDirty_ = true; instancesDirty_ = true; }
-    void MarkInstancesDirty() const { instancesDirty_ = true; }
+    void MarkShapeDirty() const { LogScope scope; shapeDirty_ = true; instancesDirty_ = true; }
+    void MarkInstancesDirty() const { LogScope scope; instancesDirty_ = true; }
 
     /// @brief テキストをコードポイント列へ分解し、文字ごとのTransform上書き情報の器
     ///        （characterOverrides_）を現在の文字数に合わせて確保する。resize()を使うため、
     ///        テキストが少し変わっても既存の上書き値はインデックスが同じ限り保持される
     void RebuildShapeIfDirty() const {
+        LogScope scope;
         if (!shapeDirty_) return;
         shapeDirty_ = false;
         shapedCodepoints_ = Utf8ToCodepoints(text_);
@@ -431,6 +457,7 @@ private:
     }
 
     void RebuildInstancesIfDirty() const {
+        LogScope scope;
         RebuildShapeIfDirty();
         if (!instancesDirty_) return;
         instancesDirty_ = false;

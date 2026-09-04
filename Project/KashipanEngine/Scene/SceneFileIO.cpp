@@ -1,5 +1,6 @@
 #include "SceneFileIO.h"
 #include "Core/ProjectPaths.h"
+#include "Debug/Logger.h"
 #include "Utilities/Conversion/ConvertString.h"
 
 #include <algorithm>
@@ -23,6 +24,7 @@ constexpr const char *kObjectFileName = "/object.json";
 constexpr long long kSiblingIndexGap = 1000;
 
 bool IsFolderFormatPath(const std::string &path) {
+    LogScope scope;
     return path.ends_with(kSceneFolderSuffix);
 }
 
@@ -31,6 +33,7 @@ bool IsFolderFormatPath(const std::string &path) {
 /// @details PrefabUtility.cppのEraseTransformParentと同じ探索経路（components→Transform→
 ///          data→customData→parent）を読み取るだけで、書き換えは行わない
 std::string ExtractParentID(const JSON &objectJson) {
+    LogScope scope;
     if (!objectJson.contains("components")) return std::string();
     for (const auto &compJson : objectJson["components"]) {
         if (compJson.value("type", "") != "Transform") continue;
@@ -51,6 +54,7 @@ std::string ExtractParentID(const JSON &objectJson) {
 ///          それ以外（新規追加・移動されたオブジェクト）だけに、前後の確定値の間へ収まる新しい
 ///          値を割り当てる。間隔が枯渇している場合のみ、そのグループ全体を等間隔で振り直す
 std::vector<long long> AssignSiblingIndices(const std::vector<std::optional<long long>> &oldValues) {
+    LogScope scope;
     const size_t count = oldValues.size();
     std::vector<long long> finalValues(count);
     if (count == 0) return finalValues;
@@ -133,6 +137,7 @@ std::vector<long long> AssignSiblingIndices(const std::vector<std::optional<long
 }
 
 bool SaveSceneFolder(const std::string &path, const JSON &sceneJson) {
+    LogScope scope;
     // マニフェスト（シーンレベルのメタ情報のみ。オブジェクト順序は含めない）
     JSON manifest;
     manifest["sceneName"] = sceneJson.value("sceneName", "");
@@ -216,6 +221,7 @@ bool SaveSceneFolder(const std::string &path, const JSON &sceneJson) {
 }
 
 JSON LoadSceneFolder(const std::string &path) {
+    LogScope scope;
     JSON manifest = LoadJSON(path + kSceneManifestFileName);
     if (manifest.empty()) return JSON();
 
@@ -289,6 +295,7 @@ JSON LoadSceneFolder(const std::string &path) {
 } // namespace
 
 bool SaveSceneToPath(const JSON &sceneJson, const std::string &path) {
+    LogScope scope;
     // 呼び出し元は "Assets/Scenes/..." や "SceneBackups/..." といった論理パスを渡してくるため、
     // ここで開いているプロジェクト基準の物理パスへ変換する
     const std::string resolvedPath = ProjectPaths::ToPhysical(path);
@@ -297,6 +304,7 @@ bool SaveSceneToPath(const JSON &sceneJson, const std::string &path) {
 }
 
 JSON LoadSceneFromPath(const std::string &path) {
+    LogScope scope;
     const std::string resolvedPath = ProjectPaths::ToPhysical(path);
     if (IsFolderFormatPath(resolvedPath)) return LoadSceneFolder(resolvedPath);
     return LoadJSON(resolvedPath);

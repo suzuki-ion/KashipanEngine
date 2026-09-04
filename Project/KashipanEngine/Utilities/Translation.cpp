@@ -30,6 +30,7 @@ std::unordered_map<std::string, LanguageData> sLanguageData;
 
 /// @brief グローバル層へプロジェクト層を重ねて、実際に引かれる translations を作り直す
 void RebuildMergedTranslations(LanguageData &langData) {
+    LogScope scope;
     langData.translations = langData.globalTranslations;
     for (const auto &[key, value] : langData.projectTranslations) {
         langData.translations[key] = value;
@@ -38,6 +39,7 @@ void RebuildMergedTranslations(LanguageData &langData) {
 
 /// @brief 指定言語のデータを取得する（存在しない場合は nullptr）
 LanguageData *FindLanguageData(const std::string &lang) {
+    LogScope scope;
     auto it = sLanguageData.find(lang);
     return it == sLanguageData.end() ? nullptr : &it->second;
 }
@@ -47,6 +49,7 @@ LanguageData *FindLanguageData(const std::string &lang) {
 class Language {
 public:
     Language() {
+        LogScope scope;
         ULONG numLangs = 0;
         WCHAR buffer[256];
         ULONG bufferSize = sizeof(buffer) / sizeof(WCHAR);
@@ -65,9 +68,11 @@ public:
     Language &operator=(Language &&) = delete;
 
     void Set(const std::string &lang) {
+        LogScope scope;
         language_ = lang;
     }
     const std::string &Get() const {
+        LogScope scope;
         return language_;
     }
 
@@ -81,6 +86,7 @@ Language sApplicationLanguage;
 } // namespace
 
 bool LoadTranslationFile(const std::string &filePath, TranslationLayer layer) {
+    LogScope scope;
     JSON json = LoadJSON(ProjectPaths::ToPhysical(filePath));
     if (json.empty()) {
         Log(Translation("engine.translations.load.failed") + filePath, LogSeverity::Error);
@@ -138,6 +144,7 @@ bool LoadTranslationFile(const std::string &filePath, TranslationLayer layer) {
 }
 
 std::vector<std::string> LoadGlobalTranslationFiles() {
+    LogScope scope;
     // エンジン共通の翻訳はエンジンルート直下の Locales/ に置く決まりにしてある。
     // EngineSettings.json はプロジェクト内にあり、プロジェクトを開くより先に翻訳が必要になる
     // （プロジェクト解決中のログも翻訳したい）ため、設定で場所を指定させずに規約で拾う。
@@ -156,6 +163,7 @@ std::vector<std::string> LoadGlobalTranslationFiles() {
 }
 
 std::vector<std::string> GetLoadedLanguages() {
+    LogScope scope;
     std::vector<std::string> languages;
     languages.reserve(sLanguageData.size());
     for (const auto &[langCode, data] : sLanguageData) {
@@ -167,29 +175,34 @@ std::vector<std::string> GetLoadedLanguages() {
 }
 
 const std::string &GetLanguageDisplayName(const std::string &lang) {
+    LogScope scope;
     const LanguageData *langData = FindLanguageData(lang);
     // 表示名が未設定なら言語コードをそのまま見せる
     return (langData && !langData->langName.empty()) ? langData->langName : lang;
 }
 
 const std::unordered_map<std::string, std::string> &GetProjectTranslations(const std::string &lang) {
+    LogScope scope;
     static const std::unordered_map<std::string, std::string> kEmpty;
     const LanguageData *langData = FindLanguageData(lang);
     return langData ? langData->projectTranslations : kEmpty;
 }
 
 const std::unordered_map<std::string, std::string> &GetGlobalTranslations(const std::string &lang) {
+    LogScope scope;
     static const std::unordered_map<std::string, std::string> kEmpty;
     const LanguageData *langData = FindLanguageData(lang);
     return langData ? langData->globalTranslations : kEmpty;
 }
 
 bool IsGlobalTranslationKey(const std::string &lang, const std::string &key) {
+    LogScope scope;
     const LanguageData *langData = FindLanguageData(lang);
     return langData && langData->globalTranslations.contains(key);
 }
 
 void SetProjectTranslation(const std::string &lang, const std::string &key, const std::string &text) {
+    LogScope scope;
     if (lang.empty() || key.empty()) return;
     LanguageData &langData = sLanguageData[lang];
     if (langData.langCode.empty()) langData.langCode = lang;
@@ -199,6 +212,7 @@ void SetProjectTranslation(const std::string &lang, const std::string &key, cons
 }
 
 bool RemoveProjectTranslation(const std::string &lang, const std::string &key) {
+    LogScope scope;
     LanguageData *langData = FindLanguageData(lang);
     if (!langData) return false;
     if (langData->projectTranslations.erase(key) == 0) return false;
@@ -209,12 +223,14 @@ bool RemoveProjectTranslation(const std::string &lang, const std::string &key) {
 }
 
 const std::string &GetProjectTranslationFilePath(const std::string &lang) {
+    LogScope scope;
     static const std::string kEmpty;
     const LanguageData *langData = FindLanguageData(lang);
     return langData ? langData->projectFilePath : kEmpty;
 }
 
 bool SaveProjectTranslationFile(const std::string &lang) {
+    LogScope scope;
     LanguageData *langData = FindLanguageData(lang);
     if (!langData) return false;
 
@@ -251,6 +267,7 @@ bool SaveProjectTranslationFile(const std::string &lang) {
 }
 
 const std::string &GetTranslationText(const std::string &lang, const std::string &key) {
+    LogScope scope;
     auto langIt = sLanguageData.find(lang);
     if (langIt != sLanguageData.end()) {
         const auto &translations = langIt->second.translations;
@@ -277,10 +294,12 @@ const std::string &GetTranslationText(const std::string &lang, const std::string
 }
 
 const std::string &GetTranslationText(const std::string &key) {
+    LogScope scope;
     return GetTranslationText(sLanguage.Get(), key);
 }
 
 const std::string &GetApplicationTranslationText(const std::string &key) {
+    LogScope scope;
     return GetTranslationText(sApplicationLanguage.Get(), key);
 }
 
@@ -292,10 +311,12 @@ std::string sLabelCacheLang;
 } // namespace
 
 void InvalidateTranslationLabelCache() {
+    LogScope scope;
     sLabelCache.clear();
 }
 
 const char *TranslationLabel(const std::string &key) {
+    LogScope scope;
     if (sLabelCacheLang != sLanguage.Get()) {
         sLabelCache.clear();
         sLabelCacheLang = sLanguage.Get();
@@ -312,26 +333,32 @@ const char *TranslationLabel(const std::string &key) {
 }
 
 const std::string &GetCurrentLanguage() {
+    LogScope scope;
     return sLanguage.Get();
 }
 
 void SetCurrentLanguage(const std::string &lang) {
+    LogScope scope;
     sLanguage.Set(lang);
 }
 
 const std::string &GetCurrentApplicationLanguage() {
+    LogScope scope;
     return sApplicationLanguage.Get();
 }
 
 void SetCurrentApplicationLanguage(const std::string &lang) {
+    LogScope scope;
     sApplicationLanguage.Set(lang);
 }
 
 const std::string &GetCurrentLanguageFontPath() {
+    LogScope scope;
     return GetLanguageFontPath(sLanguage.Get());
 }
 
 const std::string &GetLanguageFontPath(const std::string &lang) {
+    LogScope scope;
     static const std::string kEmpty;
     auto langIt = sLanguageData.find(lang);
     if (langIt != sLanguageData.end() && !langIt->second.fontPath.empty()) {

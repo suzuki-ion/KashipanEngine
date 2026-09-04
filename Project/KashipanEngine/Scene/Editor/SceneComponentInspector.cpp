@@ -4,6 +4,7 @@
 #include <imgui.h>
 #include <imgui_stdlib.h>
 
+#include "Debug/Logger.h"
 #include "Scene/Editor/ComponentAddMenu.h"
 #include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/EditorWindowChrome.h"
@@ -18,6 +19,7 @@ namespace {
 ///          ほぼ変化が無く、Lightテーマ（WindowBgが白に近い）では逆に暗くなりすぎるため、
 ///          テーマの明暗によらず同じ量だけ暗くなる減算方式にしている
 ImVec4 ComponentCardBackgroundColor() {
+    LogScope scope;
     constexpr float kDarkenAmount = 0.05f;
     const ImVec4 windowBg = ImGui::GetStyleColorVec4(ImGuiCol_WindowBg);
     return ImVec4(
@@ -29,6 +31,7 @@ ImVec4 ComponentCardBackgroundColor() {
 } // namespace
 
 void SceneComponentInspector::ShowImGui() {
+    LogScope scope;
     if (!context_) return;
     if (!ImGui::Begin(TranslationLabel("editor.scenecomponentinspector.window"))) {
         ImGui::End();

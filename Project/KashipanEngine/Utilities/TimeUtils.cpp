@@ -6,6 +6,8 @@
 #include <cmath>
 #include <unordered_map>
 
+#include "Debug/Logger.h"
+
 namespace KashipanEngine {
 
 namespace {
@@ -31,6 +33,7 @@ float sDeltaTimeClamp = 0.1f;
 /// @brief タイムゾーン付き現在時刻の取得
 /// @return タイムゾーン付き現在時刻
 auto GetZonedTime() {
+    LogScope scope;
     auto now = std::chrono::system_clock::now();
     auto zone = std::chrono::current_zone();
     return std::chrono::zoned_time(zone, now);
@@ -38,6 +41,7 @@ auto GetZonedTime() {
 } // namespace
 
 void UpdateDeltaTime(Passkey<GameEngine>) {
+    LogScope scope;
     auto currentTime = std::chrono::high_resolution_clock::now();
     if (sForceNextDeltaTimeZero) {
         sDeltaTime = 0.0f;
@@ -49,18 +53,22 @@ void UpdateDeltaTime(Passkey<GameEngine>) {
 }
 
 void ResetDeltaTime(Passkey<GameEngine>) {
+    LogScope scope;
     sForceNextDeltaTimeZero = true;
 }
 
 void SetGameSpeed(float speed) {
+    LogScope scope;
     sGameSpeed = speed;
 }
 
 float GetGameSpeed() {
+    LogScope scope;
     return sGameSpeed;
 }
 
 int GetNowTimeYear() {
+    LogScope scope;
     auto zonedTime = GetZonedTime();
     auto localTime = zonedTime.get_local_time();
     auto ymd = std::chrono::year_month_day{ std::chrono::floor<std::chrono::days>(localTime) };
@@ -68,6 +76,7 @@ int GetNowTimeYear() {
 }
 
 int GetNowTimeMonth() {
+    LogScope scope;
     auto zonedTime = GetZonedTime();
     auto localTime = zonedTime.get_local_time();
     auto ymd = std::chrono::year_month_day{ std::chrono::floor<std::chrono::days>(localTime) };
@@ -75,6 +84,7 @@ int GetNowTimeMonth() {
 }
 
 int GetNowTimeDay() {
+    LogScope scope;
     auto zonedTime = GetZonedTime();
     auto localTime = zonedTime.get_local_time();
     auto ymd = std::chrono::year_month_day{ std::chrono::floor<std::chrono::days>(localTime) };
@@ -82,6 +92,7 @@ int GetNowTimeDay() {
 }
 
 int GetNowTimeHour() {
+    LogScope scope;
     auto zonedTime = GetZonedTime();
     auto localTime = zonedTime.get_local_time();
     auto timeOfDay = std::chrono::hh_mm_ss{ std::chrono::duration_cast<std::chrono::seconds>(localTime - std::chrono::floor<std::chrono::days>(localTime)) };
@@ -89,6 +100,7 @@ int GetNowTimeHour() {
 }
 
 int GetNowTimeMinute() {
+    LogScope scope;
     auto zonedTime = GetZonedTime();
     auto localTime = zonedTime.get_local_time();
     auto timeOfDay = std::chrono::hh_mm_ss{ std::chrono::duration_cast<std::chrono::seconds>(localTime - std::chrono::floor<std::chrono::days>(localTime)) };
@@ -96,6 +108,7 @@ int GetNowTimeMinute() {
 }
 
 long long GetNowTimeSecond() {
+    LogScope scope;
     auto zonedTime = GetZonedTime();
     auto localTime = zonedTime.get_local_time();
     auto timeOfDay = std::chrono::hh_mm_ss{ std::chrono::duration_cast<std::chrono::seconds>(localTime - std::chrono::floor<std::chrono::days>(localTime)) };
@@ -103,6 +116,7 @@ long long GetNowTimeSecond() {
 }
 
 long long GetNowTimeMillisecond() {
+    LogScope scope;
     auto zonedTime = GetZonedTime();
     auto localTime = zonedTime.get_local_time();
     auto timeOfDay = std::chrono::hh_mm_ss{ std::chrono::duration_cast<std::chrono::milliseconds>(localTime - std::chrono::floor<std::chrono::days>(localTime)) };
@@ -110,6 +124,7 @@ long long GetNowTimeMillisecond() {
 }
 
 TimeRecord GetNowTime() {
+    LogScope scope;
     TimeRecord record = {};
     auto zonedTime = GetZonedTime();
     auto localTime = zonedTime.get_local_time();
@@ -126,6 +141,7 @@ TimeRecord GetNowTime() {
 }
 
 int GetGameRuntimeYear() {
+    LogScope scope;
     auto now = std::chrono::system_clock::now();
     auto elapsed = now - kProgramStartTime;
     auto years = std::chrono::duration_cast<std::chrono::years>(elapsed);
@@ -133,6 +149,7 @@ int GetGameRuntimeYear() {
 }
 
 int GetGameRuntimeMonth() {
+    LogScope scope;
     auto now = std::chrono::system_clock::now();
     auto elapsed = now - kProgramStartTime;
     auto months = std::chrono::duration_cast<std::chrono::months>(elapsed);
@@ -140,6 +157,7 @@ int GetGameRuntimeMonth() {
 }
 
 int GetGameRuntimeDay() {
+    LogScope scope;
     auto now = std::chrono::system_clock::now();
     auto elapsed = now - kProgramStartTime;
     auto days = std::chrono::duration_cast<std::chrono::days>(elapsed);
@@ -147,6 +165,7 @@ int GetGameRuntimeDay() {
 }
 
 int GetGameRuntimeHour() {
+    LogScope scope;
     auto now = std::chrono::system_clock::now();
     auto elapsed = now - kProgramStartTime;
     auto hours = std::chrono::duration_cast<std::chrono::hours>(elapsed);
@@ -154,6 +173,7 @@ int GetGameRuntimeHour() {
 }
 
 int GetGameRuntimeMinute() {
+    LogScope scope;
     auto now = std::chrono::system_clock::now();
     auto elapsed = now - kProgramStartTime;
     auto minutes = std::chrono::duration_cast<std::chrono::minutes>(elapsed);
@@ -161,6 +181,7 @@ int GetGameRuntimeMinute() {
 }
 
 long long GetGameRuntimeSecond() {
+    LogScope scope;
     auto now = std::chrono::system_clock::now();
     auto elapsed = now - kProgramStartTime;
     auto seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed);
@@ -168,6 +189,7 @@ long long GetGameRuntimeSecond() {
 }
 
 long long GetGameRuntimeMillisecond() {
+    LogScope scope;
     auto now = std::chrono::system_clock::now();
     auto elapsed = now - kProgramStartTime;
     auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
@@ -175,6 +197,7 @@ long long GetGameRuntimeMillisecond() {
 }
 
 TimeRecord GetGameRuntime() {
+    LogScope scope;
     TimeRecord record = {};
     auto now = std::chrono::system_clock::now();
     auto elapsed = now - kProgramStartTime;
@@ -195,10 +218,12 @@ TimeRecord GetGameRuntime() {
 }
 
 void StartTimeMeasurement(const std::string &label) {
+    LogScope scope;
     sTimerStartTimes[label] = std::chrono::high_resolution_clock::now();
 }
 
 TimeRecord EndTimeMeasurement(const std::string &label) {
+    LogScope scope;
     TimeRecord record = {};
     auto endTime = std::chrono::high_resolution_clock::now();
     if (sTimerStartTimes.find(label) != sTimerStartTimes.end()) {
@@ -223,18 +248,22 @@ TimeRecord EndTimeMeasurement(const std::string &label) {
 }
 
 float GetDeltaTime() {
+    LogScope scope;
     return std::min(sDeltaTime, sDeltaTimeClamp);
 }
 
 void SetDeltaTimeClamp(float clamp) {
+    LogScope scope;
     sDeltaTimeClamp = clamp;
 }
 
 float GetDeltaTimeClamp() {
+    LogScope scope;
     return sDeltaTimeClamp;
 }
 
 std::string GetNowTimeString(const std::string &format) {
+    LogScope scope;
     auto now = std::chrono::system_clock::now();
     auto nowSeconds = std::chrono::time_point_cast<std::chrono::seconds>(now);
     auto zonedTime = std::chrono::zoned_time{ std::chrono::current_zone(), nowSeconds };
@@ -246,6 +275,7 @@ GameTimer::GameTimer(float duration, bool loop)
     : duration_(duration), loop_(loop) {}
 
 void GameTimer::Update() {
+    LogScope scope;
     if (!isActive_) return;
 
     loopedThisFrame_ = false;
@@ -266,6 +296,7 @@ void GameTimer::Update() {
 
 
 void GameTimer::Start(float duration, bool loop) {
+    LogScope scope;
     duration_ = duration;
     loop_ = loop;
     currentTime_ = 0.0f;
@@ -276,10 +307,12 @@ void GameTimer::Start(float duration, bool loop) {
 }
 
 void GameTimer::Stop() {
+    LogScope scope;
     isActive_ = false;
 }
 
 void GameTimer::Reset() {
+    LogScope scope;
     currentTime_ = 0.0f;
     isActive_ = false;
     finished_ = false;
@@ -287,10 +320,12 @@ void GameTimer::Reset() {
 }
 
 void GameTimer::Pause() {
+    LogScope scope;
     isActive_ = false;
 }
 
 void GameTimer::Resume() {
+    LogScope scope;
     if (currentTime_ < duration_) {
         isActive_ = true;
         finished_ = false;
@@ -298,14 +333,17 @@ void GameTimer::Resume() {
 }
 
 bool GameTimer::IsActive() const {
+    LogScope scope;
     return isActive_;
 }
 
 bool GameTimer::IsFinished() const {
+    LogScope scope;
     return finished_;
 }
 
 float GameTimer::GetProgress() const {
+    LogScope scope;
     if (duration_ <= 0.0f) return 1.0f;
 
     float progress = currentTime_ / duration_;
@@ -315,22 +353,27 @@ float GameTimer::GetProgress() const {
 }
 
 float GameTimer::GetReverseProgress() const {
+    LogScope scope;
     return 1.0f - GetProgress();
 }
 
 float GameTimer::GetRemainingTime() const {
+    LogScope scope;
     return (std::max)(0.0f, duration_ - currentTime_);
 }
 
 float GameTimer::GetElapsedTime() const {
+    LogScope scope;
     return currentTime_;
 }
 
 float GameTimer::GetDuration() const {
+    LogScope scope;
     return duration_;
 }
 
 void GameTimer::SetDuration(float duration) {
+    LogScope scope;
     duration_ = duration;
     if (currentTime_ >= duration_ && isActive_) {
         finished_ = true;
@@ -341,6 +384,7 @@ void GameTimer::SetDuration(float duration) {
 }
 
 void GameTimer::SetLoop(bool loop) {
+    LogScope scope;
     loop_ = loop;
 }
 

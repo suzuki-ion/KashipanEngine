@@ -33,6 +33,7 @@ DX12Fence::~DX12Fence() {
 }
 
 void DX12Fence::Signal(Passkey<DirectXCommon>, ID3D12CommandQueue *commandQueue) {
+    LogScope scope;
     currentValue_++;
     HRESULT hr = commandQueue->Signal(fence_.Get(), currentValue_);
     if (FAILED(hr)) {
@@ -42,6 +43,7 @@ void DX12Fence::Signal(Passkey<DirectXCommon>, ID3D12CommandQueue *commandQueue)
 }
 
 bool DX12Fence::Wait(Passkey<DirectXCommon>) {
+    LogScope scope;
     if (fence_->GetCompletedValue() < currentValue_) {
         HRESULT hr = fence_->SetEventOnCompletion(currentValue_, fenceEvent_);
         if (FAILED(hr)) {

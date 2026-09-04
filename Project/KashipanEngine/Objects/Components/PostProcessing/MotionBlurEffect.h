@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 
+#include "Debug/Logger.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 #include "Graphics/Pipeline/System/PipelineBinder.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"

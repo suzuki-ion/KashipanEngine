@@ -14,6 +14,7 @@ constexpr std::uint32_t kMaxMultiPassDitherCount = 8;
 void Renderer::RenderToTarget(IRenderTarget *target,
     std::span<const SceneRenderer::DrawEntry> entries,
     SceneRenderer *sceneRenderer) {
+    LogScope scope;
     if (!target) return;
 
     target->BeginDraw();
@@ -50,6 +51,7 @@ void Renderer::RenderSceneContent(IRenderTarget *target,
     float extraSeedOffset,
     int seedPassIndex,
     bool disableNestedMultiPassDither) {
+    LogScope scope;
     if (!target) return;
 
     // エディター用描画先の場合、他の描画より先に背景（単色 or テクスチャ）を描画する
@@ -141,6 +143,7 @@ void Renderer::DrawBatch(IRenderTarget *target,
     CameraLightsBindCache &lightsCache,
     float extraSeedOffset,
     int seedPassIndex) {
+    LogScope scope;
     if (batch.empty()) return;
 
     const auto &first = batch.front();
@@ -339,6 +342,7 @@ void Renderer::RenderMultiPassDither(ScreenBuffer *screenBuffer,
     std::uint32_t passCount,
     float baseSeedOffset,
     int baseSeedPassIndex) {
+    LogScope scope;
     if (!screenBuffer || entries.empty() || passCount == 0) return;
 
     auto *commandList = screenBuffer->GetCommandList();
@@ -535,6 +539,7 @@ void Renderer::RenderMultiPassDither(ScreenBuffer *screenBuffer,
 
 std::vector<Renderer::ScreenWideDitherRequest> Renderer::CollectScreenWideDitherTargets(
     SceneRenderer *sceneRenderer, const std::vector<IRenderTarget *> &targets) {
+    LogScope scope;
     std::vector<ScreenWideDitherRequest> result;
     if (!sceneRenderer) return result;
     for (auto *target : targets) {
@@ -557,6 +562,7 @@ void Renderer::RenderScreenWideDitherTarget(ScreenBuffer *screenBuffer,
     std::span<const SceneRenderer::DrawEntry> entries,
     SceneRenderer *sceneRenderer,
     std::uint32_t passCount) {
+    LogScope scope;
     if (!screenBuffer) return;
     passCount = std::clamp(passCount, 1u, 8u);
 
@@ -717,6 +723,7 @@ void Renderer::RenderScreenWideDitherTarget(ScreenBuffer *screenBuffer,
 
 void Renderer::RenderGpuParticles(IRenderTarget *target, PipelineBinder &pipelineBinder, SceneRenderer *sceneRenderer,
     CameraLightsBindCache &lightsCache) {
+    LogScope scope;
     if (!target || !sceneRenderer) return;
     const auto &emitters = sceneRenderer->GetGpuParticleEmitters();
     if (emitters.empty()) return;

@@ -6,6 +6,7 @@ using namespace RendererInternal;
 
 void Renderer::RenderPostProcessOnlyTargets(SceneContext *sceneContext,
     const std::unordered_set<const IRenderTarget *> &renderedTargets) {
+    LogScope scope;
     auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
     if (!sceneRenderer) return;
     for (auto *object : sceneContext->GetSceneObjects()) {
@@ -45,6 +46,7 @@ void Renderer::RenderPostProcessOnlyTargets(SceneContext *sceneContext,
 void Renderer::RenderEditorDebugOverlay(ScreenBuffer *screenBuffer,
     PipelineBinder &pipelineBinder,
     SceneRenderer *sceneRenderer) {
+    LogScope scope;
     if (!screenBuffer || !sceneRenderer) return;
 
     // エディター用描画先でなければ何もしない（通常の描画先にはデバッグ表示を出さない）
@@ -110,6 +112,7 @@ void Renderer::RenderEditorDebugOverlay(ScreenBuffer *screenBuffer,
 void Renderer::RenderEditorBackground(ScreenBuffer *screenBuffer,
     PipelineBinder &pipelineBinder,
     SceneRenderer *sceneRenderer) {
+    LogScope scope;
     if (!screenBuffer || !sceneRenderer) return;
 
     // エディター用描画先でなければ何もしない（通常の描画先の背景には影響しない）
@@ -157,6 +160,7 @@ void Renderer::RenderPostProcess(ScreenBuffer *screenBuffer,
     PipelineBinder &pipelineBinder,
     EmptyObject *ownerObject,
     SceneRenderer *sceneRenderer) {
+    LogScope scope;
     if (!screenBuffer || !ownerObject || !sceneRenderer) return;
 
     auto postProcessComponents = sceneRenderer->GetPostProcessComponentsFor(ownerObject);

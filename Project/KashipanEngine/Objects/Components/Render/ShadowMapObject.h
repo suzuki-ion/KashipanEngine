@@ -4,6 +4,7 @@
 #include <random>
 #include <string>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/EmptyObject.h"
 #include "Graphics/ShadowMapBuffer.h"
@@ -24,6 +25,7 @@ public:
     ~ShadowMapObject() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<ShadowMapObject>();
         ptr->name_ = name_;
         ptr->width_ = width_;
@@ -35,6 +37,7 @@ public:
     ShadowMapBuffer *GetShadowMapBuffer() const noexcept { return buffer_; }
     /// @brief 管理用の名前を設定（TextureManagerへの登録名になる）
     void SetName(const std::string &name) {
+        LogScope scope;
         name_ = name;
         if (buffer_ && ShadowMapBuffer::IsExist(buffer_)) {
             buffer_->SetRenderTargetName(name_);
@@ -43,6 +46,7 @@ public:
     const std::string &GetName() const noexcept { return name_; }
     /// @brief バッファサイズを変更する（既存のバッファがあれば実際にリサイズされる）
     void SetSize(std::uint32_t width, std::uint32_t height) {
+        LogScope scope;
         width_ = width;
         height_ = height;
         if (buffer_ && ShadowMapBuffer::IsExist(buffer_)) {
@@ -52,6 +56,7 @@ public:
 
 protected:
     void Initialize() override {
+        LogScope scope;
         if (buffer_) return;
         buffer_ = ShadowMapBuffer::Create(width_, height_, name_);
         // 自動生成された名前を保持する（保存時に確定した名前が残るようにする）
@@ -60,6 +65,7 @@ protected:
         }
     }
     void Finalize() override {
+        LogScope scope;
         if (buffer_ && ShadowMapBuffer::IsExist(buffer_)) {
             buffer_->DestroyNotify();
         }
@@ -68,6 +74,7 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         if (ImGui::InputText(TranslationLabel("component.shadowmapobject.name"), &name_, ImGuiInputTextFlags_EnterReturnsTrue)) {
             SetName(name_);
         }
@@ -86,11 +93,13 @@ protected:
 
     /// @brief 描画内容確認用のImGuiウィンドウ表示（ポーズ中も表示し続ける）
     void ShowPersistentImGui() override {
+        LogScope scope;
         ShowViewerWindow();
     }
 
     /// @brief 描画内容確認用のImGuiウィンドウ表示
     void ShowViewerWindow() {
+        LogScope scope;
         if (!isShowViewer_) return;
         if (!buffer_ || !ShadowMapBuffer::IsExist(buffer_)) return;
 
@@ -123,6 +132,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = JSON::object();
         json["name"] = name_;
         json["width"] = width_;
@@ -133,6 +143,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         const std::string loadedName = json.value("name", std::string{});
         const std::uint32_t loadedWidth = json.value("width", 2048u);
         const std::uint32_t loadedHeight = json.value("height", 2048u);
@@ -172,6 +183,7 @@ private:
     /// @brief ビューアウィンドウのImGui ID用に一意な値を生成する（所属オブジェクトが
     ///        取得できない場合のフォールバック用。詳細はComputeViewerWindowIdSuffix()参照）
     static std::uint64_t GenerateViewerId() {
+        LogScope scope;
         static std::mt19937_64 rng{std::random_device{}()};
         return rng();
     }
@@ -186,6 +198,7 @@ private:
     ///          所属オブジェクトが取得できない場合（コンポーネント単体の一時的な利用時など）は、
     ///          viewerId_をフォールバックとして使う
     std::string ComputeViewerWindowIdSuffix() const {
+        LogScope scope;
         if (const EmptyObject *owner = GetOwnerObject()) {
             const auto siblings = owner->GetComponents<ShadowMapObject>();
             for (size_t i = 0; i < siblings.size(); ++i) {

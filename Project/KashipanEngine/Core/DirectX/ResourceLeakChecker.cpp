@@ -4,12 +4,14 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <dxgidebug.h>
+#include "Debug/Logger.h"
 
 #pragma comment(lib, "dxguid.lib")
 
 namespace KashipanEngine {
 
 D3DResourceLeakChecker::~D3DResourceLeakChecker() {
+    LogScope scope;
     // リソースリークチェック
     Microsoft::WRL::ComPtr<IDXGIDebug1> debug;
     if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&debug)))) {

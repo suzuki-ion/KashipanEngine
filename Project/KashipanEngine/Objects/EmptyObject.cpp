@@ -17,13 +17,34 @@ EmptyObject::~EmptyObject() {
 
 void EmptyObject::CopyStateFrom(Passkey<Scene>, const EmptyObject &source) {
     SetTag(source.tagName_);
+    // このオブジェクトはコンストラクタで既にTransform等をデフォルト構築済みのため、
+    // 同型コンポーネントをAddComponentで追加しようとすると最大数チェック（GetMaxComponentCountPerObject）
+    // に引っかかって黙って失敗し、複製したデータが破棄されてしまう（Transformなら
+    // 常にscale等がデフォルト値のまま残る）。既存の同型コンポーネントは新規追加ではなく
+    // 上書きロードで対応する
+    std::vector<std::pair<IObjectComponent *, size_t>> existing = components_;
+    std::vector<bool> consumed(existing.size(), false);
     for (const auto &comp : source.components_) {
         if (!comp.first) continue;
         auto clonedComp = comp.first->Clone();
         if (!clonedComp) continue;
         // 派生クラスのCloneは基底クラスのタグを複製しないため、ここで引き継ぐ
         clonedComp->SetTag(comp.first->GetTagName());
-        AddComponent(std::move(clonedComp));
+
+        size_t typeIndex = clonedComp->GetComponentTypeID();
+        IObjectComponent *reused = nullptr;
+        for (size_t i = 0; i < existing.size(); ++i) {
+            if (consumed[i] || !existing[i].first) continue;
+            if (existing[i].first->GetComponentTypeID() != typeIndex) continue;
+            reused = existing[i].first;
+            consumed[i] = true;
+            break;
+        }
+        if (reused) {
+            reused->LoadFromJsonInterface(Passkey<EmptyObject>(), clonedComp->SaveToJsonInterface(Passkey<EmptyObject>()));
+        } else {
+            AddComponent(std::move(clonedComp));
+        }
     }
     SetActive(source.isActive_);
     SetSaveEnabled(source.isSaveEnabled_);

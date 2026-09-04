@@ -9,6 +9,7 @@
 #include "Objects/Components/Transform.h"
 #include "Objects/Components/Collider/RigidBody2D.h"
 #include "Objects/Components/Collider/RigidBody3D.h"
+#include "Debug/Logger.h"
 #ifdef USE_IMGUI
 #include "Objects/Components/ScriptComponent.h"
 #include "Scene/SceneEditor.h"
@@ -31,6 +32,7 @@ void Scene::SetEnginePointers(
     MaterialManager *materialManager,
     Input *input,
     InputCommand *inputCommand) {
+    LogScope scope;
     sAudioManager = audioManager;
     sModelManager = modelManager;
     sSkeletonManager = skeletonManager;
@@ -43,11 +45,13 @@ void Scene::SetEnginePointers(
 }
 
 void Scene::RequestExitGameLoop() {
+    LogScope scope;
     GameEngine::RequestExitGameLoop();
 }
 
 Scene::Scene(const std::string &sceneName)
     : name_(sceneName) {
+    LogScope scope;
     sceneContext_ = std::make_unique<SceneContext>(Passkey<Scene>{}, this);
 #ifdef USE_IMGUI
     sceneEditorContext_ = std::make_unique<SceneEditorContext>(Passkey<Scene>{}, this);
@@ -56,10 +60,12 @@ Scene::Scene(const std::string &sceneName)
 }
 
 Scene::Scene(const JSON &sceneData) : Scene(std::string("Unnamed Scene")) {
+    LogScope scope;
     LoadFromJSON(sceneData);
 }
 
 Scene::~Scene() {
+    LogScope scope;
 #if !defined(RELEASE_BUILD)
     // Releaseビルドではデバッグ用のバックアップ書き出しを行わない
     json sceneData = SaveToJSON();
@@ -72,6 +78,7 @@ Scene::~Scene() {
 
 #ifdef USE_IMGUI
 void Scene::ShowImGuiInterface(Passkey<SceneManager>) {
+    LogScope scope;
     if (sceneEditor_) {
         sceneEditor_->ShowImGui();
     }
@@ -84,6 +91,7 @@ void Scene::ShowImGuiInterface(Passkey<SceneManager>) {
 }
 
 void Scene::PlayStart() {
+    LogScope scope;
     if (isPlaying_) return;
     // DeleteEditorOnlyObjects以降で大量のGPUリソース（ScreenBuffer等）を即座に破棄する。
     // 通常のフレームループは毎フレーム終端でGPU同期しているため安全だが、Play/Stopは
@@ -121,6 +129,7 @@ void Scene::PlayStart() {
 }
 
 void Scene::PlayStop() {
+    LogScope scope;
     if (!isPlaying_) return;
     // PlayStart側と同じ理由。ClearSceneObjects/ClearSceneComponentsで大量のGPUリソースを
     // 即座に破棄する前に、直前フレームのGPU処理が確実に完了していることを保証する
@@ -159,6 +168,7 @@ void Scene::PlayStop() {
 #endif
 
 JSON Scene::SaveToJSON() const {
+    LogScope scope;
     JSON json;
     json["sceneName"] = name_;
     json["sceneID"] = sceneID_.ToString();
@@ -184,6 +194,7 @@ JSON Scene::SaveToJSON() const {
 }
 
 bool Scene::LoadFromJSON(const JSON &json) {
+    LogScope scope;
     if (json.empty()) return false;
     name_ = json.value("sceneName", "");
     sceneID_ = UUID128(json.value("sceneID", ""));
@@ -243,6 +254,7 @@ bool Scene::LoadFromJSON(const JSON &json) {
 }
 
 bool Scene::RemoveSceneVariable(const std::string &key) {
+    LogScope scope;
     auto it = sceneVariables_.find(key);
     if (it == sceneVariables_.end()) return false;
     sceneVariables_.erase(it);
@@ -250,6 +262,7 @@ bool Scene::RemoveSceneVariable(const std::string &key) {
 }
 
 MyAny *Scene::GetSceneVariable(const std::string &key) {
+    LogScope scope;
     auto it = sceneVariables_.find(key);
     if (it != sceneVariables_.end()) {
         return &(it->second);
@@ -258,6 +271,7 @@ MyAny *Scene::GetSceneVariable(const std::string &key) {
 }
 
 const TypeInfo &Scene::GetSceneVariableTypeInfo(const std::string &key) {
+    LogScope scope;
     auto *var = GetSceneVariable(key);
     if (var) {
         return var->GetTypeInfo();
@@ -266,6 +280,7 @@ const TypeInfo &Scene::GetSceneVariableTypeInfo(const std::string &key) {
 }
 
 const TypeInfo &Scene::GetGlobalSceneVariableTypeInfo(const std::string &key) {
+    LogScope scope;
     auto *var = GetGlobalSceneVariableInternal(key);
     if (var) {
         return var->GetTypeInfo();
@@ -274,6 +289,7 @@ const TypeInfo &Scene::GetGlobalSceneVariableTypeInfo(const std::string &key) {
 }
 
 EmptyObject *Scene::CreateEmptyObject(const std::string &name, const UUID128 &objectID, size_t index) {
+    LogScope scope;
     EmptyObject *newObjPtr = objectPool_.Emplace(Passkey<Scene>{}, sceneContext_.get(), name);
     // objectIDが未指定（無効なUUID）の場合、EmptyObjectのコンストラクタで自動生成された
     // 有効なUUIDをそのまま使う。ここで無条件に上書きすると、IDを指定しない全ての呼び出し
@@ -294,6 +310,7 @@ EmptyObject *Scene::CreateEmptyObject(const std::string &name, const UUID128 &ob
 }
 
 EmptyObject *Scene::CloneObject(EmptyObject *source, const std::string &name) {
+    LogScope scope;
     if (!source || !objectsExistingSet_.contains(source)) return nullptr;
 
     EmptyObject *clonedPtr = CreateEmptyObject(name.empty() ? source->GetName() : name);
@@ -303,6 +320,7 @@ EmptyObject *Scene::CloneObject(EmptyObject *source, const std::string &name) {
 }
 
 bool Scene::DeleteObject(EmptyObject *obj) {
+    LogScope scope;
     if (!obj) return false;
     auto it = std::find(objects_.begin(), objects_.end(), obj);
     if (it == objects_.end()) return false;
@@ -340,6 +358,7 @@ bool Scene::DeleteObject(EmptyObject *obj) {
 }
 
 void Scene::FlushPendingDestroys() {
+    LogScope scope;
     if (pendingDestroyObjects_.empty()) return;
     // 破棄処理（Finalize等）の連鎖でさらにDeleteObjectが呼ばれる場合に備え、
     // その間も遅延させつつキューが尽きるまで繰り返す
@@ -355,6 +374,7 @@ void Scene::FlushPendingDestroys() {
 }
 
 void Scene::DeleteEditorOnlyObjects() {
+    LogScope scope;
     // DeleteObjectで子孫が道連れに削除されobjects_が変化するため、先に対象を収集する
     std::vector<EmptyObject *> editorOnlyObjects;
     for (auto *object : objects_) {
@@ -367,6 +387,7 @@ void Scene::DeleteEditorOnlyObjects() {
 }
 
 bool Scene::ReleaseObject(EmptyObject *obj) {
+    LogScope scope;
     if (!obj) return false;
     auto it = std::find(objects_.begin(), objects_.end(), obj);
     if (it == objects_.end()) return false;
@@ -377,6 +398,7 @@ bool Scene::ReleaseObject(EmptyObject *obj) {
 }
 
 bool Scene::MoveObject(EmptyObject *obj, size_t newIndex) {
+    LogScope scope;
     if (!obj) return false;
     auto it = std::find(objects_.begin(), objects_.end(), obj);
     if (it == objects_.end()) return false;
@@ -388,6 +410,7 @@ bool Scene::MoveObject(EmptyObject *obj, size_t newIndex) {
 }
 
 std::vector<EmptyObject *> Scene::GetSceneObjects(const std::string &objectName) const {
+    LogScope scope;
     std::vector<EmptyObject *> result;
     auto it = objectsByName_.find(objectName);
     if (it == objectsByName_.end()) return result;
@@ -401,6 +424,7 @@ std::vector<EmptyObject *> Scene::GetSceneObjects(const std::string &objectName)
 }
 
 EmptyObject *Scene::GetSceneObject(const std::string &objectName) const {
+    LogScope scope;
     auto it = objectsByName_.find(objectName);
     if (it == objectsByName_.end() || it->second.empty()) return nullptr;
     for (auto *obj : objects_) {
@@ -412,16 +436,19 @@ EmptyObject *Scene::GetSceneObject(const std::string &objectName) const {
 }
 
 EmptyObject *Scene::GetSceneObject(EmptyObject *obj) const {
+    LogScope scope;
     if (!obj) return nullptr;
     return objectsExistingSet_.contains(obj) ? obj : nullptr;
 }
 
 EmptyObject *Scene::GetSceneObject(const UUID128 &uuid) const {
+    LogScope scope;
     auto it = objectsByUUID_.find(uuid);
     return it != objectsByUUID_.end() ? it->second : nullptr;
 }
 
 void Scene::RemoveObjectFromMaps(EmptyObject *obj) {
+    LogScope scope;
     if (!obj) return;
     objectsByUUID_.erase(obj->GetObjectID());
     objectsExistingSet_.erase(obj);
@@ -433,6 +460,7 @@ void Scene::RemoveObjectFromMaps(EmptyObject *obj) {
 }
 
 void Scene::ClearSceneObjects() {
+    LogScope scope;
     // FinalizeInterface を呼んでからオブジェクトを破棄する
     for (auto *obj : objects_) {
         if (obj) {
@@ -450,6 +478,7 @@ void Scene::ClearSceneObjects() {
 }
 
 ISceneComponent *Scene::GetComponent(const ISceneComponent *component) const {
+    LogScope scope;
     if (component == nullptr) return nullptr;
     auto it = componentsIndexByPointer_.find(component);
     if (it == componentsIndexByPointer_.end()) return nullptr;
@@ -459,6 +488,7 @@ ISceneComponent *Scene::GetComponent(const ISceneComponent *component) const {
 }
 
 size_t Scene::HasComponent(const ISceneComponent *component) const {
+    LogScope scope;
     if (component == nullptr) return 0;
     auto it = componentsIndexByPointer_.find(component);
     if (it == componentsIndexByPointer_.end()) return 0;
@@ -466,6 +496,7 @@ size_t Scene::HasComponent(const ISceneComponent *component) const {
 }
 
 ISceneComponent *Scene::AddComponent(std::unique_ptr<ISceneComponent> comp) {
+    LogScope scope;
     if (!comp) return nullptr;
     size_t typeIndex = comp->GetComponentTypeID();
     if (typeIndex >= componentsIndexByType_.size()) {
@@ -494,6 +525,7 @@ ISceneComponent *Scene::AddComponent(std::unique_ptr<ISceneComponent> comp) {
 }
 
 bool Scene::RemoveComponent(const ISceneComponent *component) {
+    LogScope scope;
     if (component == nullptr) return false;
     auto it = componentsIndexByPointer_.find(component);
     if (it == componentsIndexByPointer_.end()) return false;
@@ -511,6 +543,7 @@ bool Scene::RemoveComponent(const ISceneComponent *component) {
 }
 
 void Scene::ClearSceneComponents() {
+    LogScope scope;
     // FinalizeInterface を呼んでからコンポーネントを破棄する
     for (auto &compPair : components_) {
         if (compPair.first) {
@@ -528,6 +561,7 @@ void Scene::ClearSceneComponents() {
 }
 
 bool Scene::ChangeToNextScene() {
+    LogScope scope;
     if (sceneManager_ && !nextSceneName_.empty()) {
         return sceneManager_->ChangeScene(nextSceneName_);
     }
@@ -535,6 +569,7 @@ bool Scene::ChangeToNextScene() {
 }
 
 void Scene::UpdateSceneObjects() {
+    LogScope scope;
     if (objects_.empty()) return;
 
     // Update中に他のオブジェクトが生成/削除されても objects_ 自体の
@@ -556,6 +591,7 @@ void Scene::UpdateSceneObjects() {
 }
 
 void Scene::UpdateComponents() {
+    LogScope scope;
     updateComponents_.clear();
     updateComponents_.reserve(components_.size());
     for (const auto &comp : components_) {
@@ -585,21 +621,25 @@ void Scene::UpdateComponents() {
 void Scene::RegenerateUpdateComponentsList() {}
 
 MyAny *Scene::AddGlobalSceneVariableInternal(const std::string &key, const MyAny &value, const TypeInfo &typeInfo) {
+    LogScope scope;
     if (!sceneManager_) return nullptr;
     return sceneManager_->AddGlobalSceneVariable(key, value, typeInfo);
 }
 
 bool Scene::RemoveGlobalSceneVariableInternal(const std::string &key) {
+    LogScope scope;
     if (!sceneManager_) return false;
     return sceneManager_->RemoveGlobalSceneVariable(key);
 }
 
 MyAny *Scene::GetGlobalSceneVariableInternal(const std::string &key) {
+    LogScope scope;
     if (!sceneManager_) return nullptr;
     return sceneManager_->GetGlobalSceneVariable(key);
 }
 
 const std::unordered_map<std::string, MyAny> &Scene::GetGlobalSceneVariablesInternal() const {
+    LogScope scope;
     if (!sceneManager_) {
         static const std::unordered_map<std::string, MyAny> emptyMap;
         return emptyMap;

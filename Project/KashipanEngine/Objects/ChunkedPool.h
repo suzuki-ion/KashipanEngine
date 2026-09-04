@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "Debug/Logger.h"
+
 namespace KashipanEngine {
 
 /// @brief 固定長チャンクを連ねて要素を格納するプール
@@ -26,13 +28,14 @@ public:
 
     /// @brief デフォルト構築で要素を追加
     /// @return 追加された要素へのポインタ
-    T *EmplaceDefault() { return Emplace(); }
+    T *EmplaceDefault() { LogScope scope; return Emplace(); }
 
     /// @brief 引数を転送し、最終的な格納場所へ直接配置構築する（ムーブ・コピーは発生しない）
     /// @param args コンストラクタへ転送する引数
     /// @return 追加された要素へのポインタ
     template <typename... Args>
     T *Emplace(Args &&...args) {
+        LogScope scope;
         size_t index;
         if (!freeIndices_.empty()) {
             index = freeIndices_.back();
@@ -53,6 +56,7 @@ public:
     /// @param ptr 破棄する要素へのポインタ
     /// @return 破棄に成功した場合はtrue
     bool Remove(const T *ptr) {
+        LogScope scope;
         auto it = indexByPointer_.find(ptr);
         if (it == indexByPointer_.end()) return false;
         size_t index = it->second;
@@ -63,13 +67,14 @@ public:
     }
 
     /// @brief このプールが指定ポインタの要素を現在所有しているか
-    bool Owns(const T *ptr) const { return indexByPointer_.contains(ptr); }
+    bool Owns(const T *ptr) const { LogScope scope; return indexByPointer_.contains(ptr); }
 
     /// @brief 現在生存している要素数
-    size_t LiveCount() const { return indexByPointer_.size(); }
+    size_t LiveCount() const { LogScope scope; return indexByPointer_.size(); }
 
     /// @brief 全要素を破棄し、確保済みチャンクも含めて完全にリセットする
     void Clear() {
+        LogScope scope;
         chunks_.clear();
         freeIndices_.clear();
         indexByPointer_.clear();
@@ -81,6 +86,7 @@ private:
     using Chunk = std::array<Slot, kChunkSize>;
 
     void EnsureChunk(size_t index) {
+        LogScope scope;
         size_t chunkIndex = index / kChunkSize;
         if (chunkIndex >= chunks_.size()) {
             chunks_.push_back(std::make_unique<Chunk>());
@@ -88,6 +94,7 @@ private:
     }
 
     Slot &SlotAt(size_t index) {
+        LogScope scope;
         return (*chunks_[index / kChunkSize])[index % kChunkSize];
     }
 

@@ -11,18 +11,21 @@
 namespace KashipanEngine {
 
 SceneManager::SceneEntry *SceneManager::FindEntry(const std::string &sceneName) {
+    LogScope scope;
     auto it = std::find_if(registeredScenes_.begin(), registeredScenes_.end(),
         [&sceneName](const SceneEntry &entry) { return entry.name == sceneName; });
     return (it != registeredScenes_.end()) ? &(*it) : nullptr;
 }
 
 const SceneManager::SceneEntry *SceneManager::FindEntry(const std::string &sceneName) const {
+    LogScope scope;
     auto it = std::find_if(registeredScenes_.begin(), registeredScenes_.end(),
         [&sceneName](const SceneEntry &entry) { return entry.name == sceneName; });
     return (it != registeredScenes_.end()) ? &(*it) : nullptr;
 }
 
 bool SceneManager::ChangeScene(const std::string &sceneName) {
+    LogScope scope;
     if (!FindEntry(sceneName)) return false;
     pendingSceneName_ = sceneName;
     hasPendingSceneChange_ = true;
@@ -30,6 +33,7 @@ bool SceneManager::ChangeScene(const std::string &sceneName) {
 }
 
 bool SceneManager::RegisterScene(const std::string &sceneName, const JSON &factoryData) {
+    LogScope scope;
     if (sceneName.empty()) return false;
     if (FindEntry(sceneName)) return false; // すでに登録されている場合は登録できない
     registeredScenes_.push_back(SceneEntry{ sceneName, std::string(), factoryData });
@@ -37,6 +41,7 @@ bool SceneManager::RegisterScene(const std::string &sceneName, const JSON &facto
 }
 
 bool SceneManager::RegisterSceneFile(const std::string &sceneName, const std::string &filePath) {
+    LogScope scope;
     if (sceneName.empty()) return false;
     if (FindEntry(sceneName)) return false; // すでに登録されている場合は登録できない
     registeredScenes_.push_back(SceneEntry{ sceneName, filePath, JSON() });
@@ -44,6 +49,7 @@ bool SceneManager::RegisterSceneFile(const std::string &sceneName, const std::st
 }
 
 bool SceneManager::UnregisterScene(const std::string &sceneName) {
+    LogScope scope;
     auto it = std::find_if(registeredScenes_.begin(), registeredScenes_.end(),
         [&sceneName](const SceneEntry &entry) { return entry.name == sceneName; });
     if (it == registeredScenes_.end()) return false;
@@ -53,6 +59,7 @@ bool SceneManager::UnregisterScene(const std::string &sceneName) {
 }
 
 bool SceneManager::RenameRegisteredScene(const std::string &oldName, const std::string &newName) {
+    LogScope scope;
     if (newName.empty()) return false;
     if (oldName == newName) return true;
     if (FindEntry(newName)) return false; // 変更後の名前が既に使われている場合は変更できない
@@ -65,6 +72,7 @@ bool SceneManager::RenameRegisteredScene(const std::string &oldName, const std::
 }
 
 bool SceneManager::SetRegisteredSceneFilePath(const std::string &sceneName, const std::string &filePath) {
+    LogScope scope;
     auto *entry = FindEntry(sceneName);
     if (!entry) return false;
     entry->filePath = filePath;
@@ -72,6 +80,7 @@ bool SceneManager::SetRegisteredSceneFilePath(const std::string &sceneName, cons
 }
 
 bool SceneManager::UpdateRegisteredSceneData(const std::string &sceneName, const JSON &factoryData) {
+    LogScope scope;
     auto *entry = FindEntry(sceneName);
     if (!entry) return false; // 登録されていない場合は更新できない
     entry->factoryData = factoryData;
@@ -100,6 +109,7 @@ bool SceneManager::LoadSceneList(const std::string &filePath) {
 }
 
 bool SceneManager::SaveSceneList(const std::string &filePath) const {
+    LogScope scope;
     JSON json;
     json["startupScene"] = startupSceneName_;
     json["scenes"] = JSON::array();
@@ -113,6 +123,7 @@ bool SceneManager::SaveSceneList(const std::string &filePath) const {
 }
 
 void SceneManager::Update(Passkey<GameEngine>) {
+    LogScope scope;
     if (currentScene_) {
         currentScene_->UpdateInterface(Passkey<SceneManager>());
 
@@ -129,6 +140,7 @@ void SceneManager::Update(Passkey<GameEngine>) {
 
 #ifdef USE_IMGUI
 void SceneManager::ShowImGui(Passkey<GameEngine>) {
+    LogScope scope;
     if (currentScene_) {
         currentScene_->ShowImGuiInterface(Passkey<SceneManager>());
     }
@@ -136,6 +148,7 @@ void SceneManager::ShowImGui(Passkey<GameEngine>) {
 #endif // USE_IMGUI
 
 bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
+    LogScope scope;
     if (!hasPendingSceneChange_) return false;
     hasPendingSceneChange_ = false;
 
@@ -162,7 +175,6 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
         if (!sceneData.empty()) {
             currentScene_ = std::make_unique<Scene>(sceneData);
         } else {
-            LogScope scope;
             Log(Translation("engine.scenemanager.scene.load.failed") + entry->filePath, LogSeverity::Warning);
             currentScene_ = std::make_unique<Scene>(pendingSceneName_);
         }
@@ -191,16 +203,19 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
 }
 
 MyAny *SceneManager::AddGlobalSceneVariable(const std::string &key, const MyAny &value, const TypeInfo &typeInfo) {
+    LogScope scope;
     globalSceneVariables_.emplace(key, MyAny(value, typeInfo));
     return &globalSceneVariables_[key];
 }
 
 MyAny *SceneManager::GetGlobalSceneVariable(const std::string &key) {
+    LogScope scope;
     auto it = globalSceneVariables_.find(key);
     return (it != globalSceneVariables_.end()) ? &it->second : nullptr;
 }
 
 const TypeInfo &SceneManager::GetGlobalSceneVariableTypeInfo(const std::string &key) {
+    LogScope scope;
     static TypeInfo noneType(ValueType::None);
     auto it = globalSceneVariables_.find(key);
     return (it != globalSceneVariables_.end()) ? it->second.GetTypeInfo() : noneType;
@@ -223,6 +238,7 @@ bool SceneManager::LoadGlobalSceneVariables(const std::string &filePath) {
 }
 
 bool SceneManager::SaveGlobalSceneVariables(const std::string &filePath) const {
+    LogScope scope;
     JSON json;
     json["globalSceneVariables"] = JSON::array();
     for (const auto &varPair : globalSceneVariables_) {

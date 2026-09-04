@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Utilities/Translation.h"
 
@@ -18,6 +19,7 @@ public:
     COMPONENT_CATEGORY("Render")
     ~Camera2D() override = default;
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<Camera2D>();
         ptr->width_ = width_;
         ptr->height_ = height_;
@@ -53,6 +55,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         ImGui::BeginDisabled(autoSyncSize_);
         ImGui::DragFloat(TranslationLabel("component.camera2d.width"), &width_, 1.0f);
         ImGui::DragFloat(TranslationLabel("component.camera2d.height"), &height_, 1.0f);
@@ -70,12 +73,14 @@ protected:
     }
 #endif
     JSON SaveToJson() const override {
+        LogScope scope;
         return JSON{
             {"width", width_}, {"height", height_}, {"nearClip", nearClip_}, {"farClip", farClip_},
             {"autoSyncSize", autoSyncSize_}, {"pixelSnapping", pixelSnapping_}
         };
     }
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         width_ = json.value("width", 1280.0f);
         height_ = json.value("height", 720.0f);
         nearClip_ = json.value("nearClip", 0.0f);

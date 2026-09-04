@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include "ComponentSerialize/ComponentRegistry.h"
+#include "Debug/Logger.h"
 #include "Objects/Components/PrefabInstanceComponent.h"
 #include "Scene/Editor/ComponentAddMenu.h"
 #include "Scene/Editor/EditorSettings.h"
@@ -24,6 +25,7 @@ struct ComponentDragDropPayload {
 ///          ほぼ変化が無く、Lightテーマ（WindowBgが白に近い）では逆に暗くなりすぎるため、
 ///          テーマの明暗によらず同じ量だけ暗くなる減算方式にしている
 ImVec4 ComponentCardBackgroundColor() {
+    LogScope scope;
     constexpr float kDarkenAmount = 0.05f;
     const ImVec4 windowBg = ImGui::GetStyleColorVec4(ImGuiCol_WindowBg);
     return ImVec4(
@@ -35,6 +37,7 @@ ImVec4 ComponentCardBackgroundColor() {
 } // namespace
 
 void SceneObjectInspector::ShowImGui() {
+    LogScope scope;
     ImGui::Begin(TranslationLabel("editor.sceneobjectinspector.window"));
     DrawFloatingWindowChromeButtons();
     if (objectHierarchy_) {
@@ -57,6 +60,7 @@ void SceneObjectInspector::ShowImGui() {
 }
 
 void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
+    LogScope scope;
     ImGui::TextUnformatted(TranslationC("editor.objectinspector.title"));
     ImGui::Separator();
 
@@ -232,6 +236,7 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
 }
 
 void SceneObjectInspector::ShowPrefabSection(EmptyObject *obj) {
+    LogScope scope;
     auto *prefabComp = obj->GetComponent<PrefabInstanceComponent>();
     if (!prefabComp || !prefabComp->GetPrefabID().IsValid()) return;
 
@@ -269,6 +274,7 @@ void SceneObjectInspector::ShowPrefabSection(EmptyObject *obj) {
 }
 
 void SceneObjectInspector::ShowRevertPrefabConfirmModal() {
+    LogScope scope;
     // モーダルは複数フレームにまたがって表示され続けるため、生ポインタは毎フレームUUIDから引き直す
     // （プールのスロット再利用によるエイリアシング対策）
     pendingRevertPrefabTarget_ = context_ ? context_->GetSceneObject(pendingRevertPrefabTargetID_) : nullptr;
@@ -298,6 +304,7 @@ void SceneObjectInspector::ShowRevertPrefabConfirmModal() {
 }
 
 void SceneObjectInspector::ShowMultiObjectInspector(EmptyObject *primary, const std::unordered_set<EmptyObject *> &selectedObjects) {
+    LogScope scope;
     ImGui::Text("%s (%d)", TranslationC("editor.objectinspector.title"), static_cast<int>(selectedObjects.size()));
     ImGui::Separator();
 
@@ -535,6 +542,7 @@ namespace {
 /// @details オブジェクト同士は再帰的に比較し、配列・プリミティブ値は変更があれば丸ごとafterの値になる。
 ///          結果はnlohmann::jsonのmerge_patch（RFC 7386）でそのまま適用できる形になる
 JSON MakeChangedValuePatch(const JSON &before, const JSON &after) {
+    LogScope scope;
     if (!before.is_object() || !after.is_object()) {
         return (before == after) ? JSON() : after;
     }
@@ -558,6 +566,7 @@ JSON MakeChangedValuePatch(const JSON &before, const JSON &after) {
 } // namespace
 
 void SceneObjectInspector::ApplyEditToCounterparts(const JSON &before, const JSON &after, const ComponentCounterparts &counterparts) {
+    LogScope scope;
     // 変更された値だけを適用することで、対象ごとに異なる他の値（位置など）は保持される
     const JSON patch = MakeChangedValuePatch(before, after);
     if (!patch.is_object() || patch.empty()) return;
@@ -570,6 +579,7 @@ void SceneObjectInspector::ApplyEditToCounterparts(const JSON &before, const JSO
 }
 
 IObjectComponent *SceneObjectInspector::FindComponentByTypeOrdinal(EmptyObject *obj, const std::string &typeName, size_t ordinal) {
+    LogScope scope;
     size_t count = 0;
     for (IObjectComponent *comp : GetOrderedComponents(obj)) {
         if (comp->GetComponentType() != typeName) continue;
@@ -581,6 +591,7 @@ IObjectComponent *SceneObjectInspector::FindComponentByTypeOrdinal(EmptyObject *
 
 void SceneObjectInspector::TrackComponentEdit(EmptyObject *obj, IObjectComponent *component, const JSON &before, const JSON &after,
     const ComponentCounterparts &linkedTargets) {
+    LogScope scope;
     (void)obj;
     const ComponentRef newRef = component ? component->GetComponentRef() : ComponentRef{};
     // 別のコンポーネントの編集が始まった場合は先に確定させる
@@ -604,6 +615,7 @@ void SceneObjectInspector::TrackComponentEdit(EmptyObject *obj, IObjectComponent
 }
 
 void SceneObjectInspector::CommitPendingEdit() {
+    LogScope scope;
     if (!hasPendingEdit_) return;
 
     // 編集セッションはスライダードラッグ等で複数フレームにまたがるため、スクリプト、Undo/Redo、
@@ -640,6 +652,7 @@ void SceneObjectInspector::CommitPendingEdit() {
 }
 
 void SceneObjectInspector::ResetPendingEdit() {
+    LogScope scope;
     hasPendingEdit_ = false;
     editComponentRef_ = ComponentRef{};
     editBefore_ = JSON();
@@ -648,6 +661,7 @@ void SceneObjectInspector::ResetPendingEdit() {
 }
 
 void SceneObjectInspector::FlushPendingComponentEdit() {
+    LogScope scope;
     if (!hasPendingEdit_) return;
     // 編集ウィジェットの操作が終わったタイミングでひとつの操作として確定する
     if (ImGui::IsAnyItemActive()) return;
@@ -655,6 +669,7 @@ void SceneObjectInspector::FlushPendingComponentEdit() {
 }
 
 std::vector<IObjectComponent *> SceneObjectInspector::GetOrderedComponents(EmptyObject *obj) {
+    LogScope scope;
     // (更新優先度, 追加順ID) で並べる。実際の Update 実行順（EmptyObject::RegenerateUpdateComponentsList）と一致させる
     std::vector<std::pair<IObjectComponent *, size_t>> entries;
     for (const auto &entry : obj->GetAllComponents()) {
@@ -677,6 +692,7 @@ std::vector<IObjectComponent *> SceneObjectInspector::GetOrderedComponents(Empty
 }
 
 void SceneObjectInspector::DragAndDropComponent(IObjectComponent *comp) {
+    LogScope scope;
     if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
         ComponentDragDropPayload dndPayload;
         dndPayload.component = comp;
@@ -711,6 +727,7 @@ void SceneObjectInspector::DragAndDropComponent(IObjectComponent *comp) {
 }
 
 void SceneObjectInspector::ApplyComponentDragAndDrop(EmptyObject *obj) {
+    LogScope scope;
     IObjectComponent *source = componentDragSource_;
     IObjectComponent *target = componentDragTarget_;
     const ComponentDropPosition position = componentDragPosition_;

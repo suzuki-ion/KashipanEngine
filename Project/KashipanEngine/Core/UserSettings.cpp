@@ -4,6 +4,7 @@
 #include <filesystem>
 
 #include "Core/ProjectPaths.h"
+#include "Debug/Logger.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/Directory.h"
 #include "Utilities/FileIO/JSON.h"
@@ -16,6 +17,7 @@ namespace {
 
 /// @brief プリセット名をファイル名として使えるよう、Windowsで使用できない文字を置換する
 std::string SanitizeFileName(const std::string &name) {
+    LogScope scope;
     std::string result = name;
     for (char &c : result) {
         if (c == '\\' || c == '/' || c == ':' || c == '*' || c == '?' ||
@@ -29,6 +31,7 @@ std::string SanitizeFileName(const std::string &name) {
 
 /// @brief フォルダ直下（非再帰）にある指定拡張子のファイル名一覧を、拡張子を除いた状態で取得する
 std::vector<std::string> ListFileStems(const std::string &folderPath, const std::string &extension) {
+    LogScope scope;
     const DirectoryData dir = GetDirectoryDataByExtension(folderPath, { extension }, false, false);
     std::vector<std::string> names;
     names.reserve(dir.files.size());
@@ -41,6 +44,7 @@ std::vector<std::string> ListFileStems(const std::string &folderPath, const std:
 
 /// @brief 複数行のiniテキストを、SaveTextFileが行単位で書き出せるよう分割する
 std::vector<std::string> SplitLines(const std::string &text) {
+    LogScope scope;
     std::vector<std::string> lines;
     size_t start = 0;
     while (start <= text.size()) {
@@ -58,18 +62,22 @@ std::vector<std::string> SplitLines(const std::string &text) {
 } // namespace
 
 std::string UserSettings::GetSettingsFilePath() {
+    LogScope scope;
     return ProjectPaths::InEngineRoot(std::string(kFolderName) + "/" + kSettingsFileName);
 }
 
 std::string UserSettings::GetColorPresetsFolderPath() {
+    LogScope scope;
     return ProjectPaths::InEngineRoot(std::string(kFolderName) + "/" + kColorPresetsSubfolder);
 }
 
 std::string UserSettings::GetLayoutPresetsFolderPath() {
+    LogScope scope;
     return ProjectPaths::InEngineRoot(std::string(kFolderName) + "/" + kLayoutPresetsSubfolder);
 }
 
 bool UserSettings::GetBool(const std::string &key, bool defaultValue) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it == sData_.end() || !it->is_boolean()) return defaultValue;
@@ -77,6 +85,7 @@ bool UserSettings::GetBool(const std::string &key, bool defaultValue) {
 }
 
 void UserSettings::SetBool(const std::string &key, bool value) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it != sData_.end() && it->is_boolean() && it->get<bool>() == value) return;
@@ -85,6 +94,7 @@ void UserSettings::SetBool(const std::string &key, bool value) {
 }
 
 float UserSettings::GetFloat(const std::string &key, float defaultValue) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it == sData_.end() || !it->is_number()) return defaultValue;
@@ -92,6 +102,7 @@ float UserSettings::GetFloat(const std::string &key, float defaultValue) {
 }
 
 void UserSettings::SetFloat(const std::string &key, float value) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it != sData_.end() && it->is_number() && it->get<float>() == value) return;
@@ -100,6 +111,7 @@ void UserSettings::SetFloat(const std::string &key, float value) {
 }
 
 std::string UserSettings::GetString(const std::string &key, const std::string &defaultValue) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it == sData_.end() || !it->is_string()) return defaultValue;
@@ -107,6 +119,7 @@ std::string UserSettings::GetString(const std::string &key, const std::string &d
 }
 
 void UserSettings::SetString(const std::string &key, const std::string &value) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it != sData_.end() && it->is_string() && it->get<std::string>() == value) return;
@@ -115,6 +128,7 @@ void UserSettings::SetString(const std::string &key, const std::string &value) {
 }
 
 JSON UserSettings::GetJSON(const std::string &key, const JSON &defaultValue) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it == sData_.end()) return defaultValue;
@@ -122,6 +136,7 @@ JSON UserSettings::GetJSON(const std::string &key, const JSON &defaultValue) {
 }
 
 void UserSettings::SetJSON(const std::string &key, const JSON &value) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it != sData_.end() && *it == value) return;
@@ -130,32 +145,38 @@ void UserSettings::SetJSON(const std::string &key, const JSON &value) {
 }
 
 std::vector<std::string> UserSettings::GetColorPresetNames() {
+    LogScope scope;
     EnsureLoaded();
     return ListFileStems(GetColorPresetsFolderPath(), ".json");
 }
 
 JSON UserSettings::GetColorPreset(const std::string &name, const JSON &defaultValue) {
+    LogScope scope;
     EnsureLoaded();
     const JSON data = LoadJSON(GetColorPresetsFolderPath() + "/" + SanitizeFileName(name) + ".json");
     return data.is_array() ? data : defaultValue;
 }
 
 void UserSettings::SetColorPreset(const std::string &name, const JSON &colors) {
+    LogScope scope;
     EnsureLoaded();
     SaveJSON(colors, GetColorPresetsFolderPath() + "/" + SanitizeFileName(name) + ".json");
 }
 
 void UserSettings::DeleteColorPreset(const std::string &name) {
+    LogScope scope;
     EnsureLoaded();
     RemoveFile(GetColorPresetsFolderPath() + "/" + SanitizeFileName(name) + ".json");
 }
 
 std::vector<std::string> UserSettings::GetLayoutPresetNames() {
+    LogScope scope;
     EnsureLoaded();
     return ListFileStems(GetLayoutPresetsFolderPath(), ".ini");
 }
 
 std::string UserSettings::GetLayoutPreset(const std::string &name) {
+    LogScope scope;
     EnsureLoaded();
     const TextFileData data = LoadTextFile(GetLayoutPresetsFolderPath() + "/" + SanitizeFileName(name) + ".ini");
     std::string text;
@@ -167,6 +188,7 @@ std::string UserSettings::GetLayoutPreset(const std::string &name) {
 }
 
 void UserSettings::SetLayoutPreset(const std::string &name, const std::string &iniText) {
+    LogScope scope;
     EnsureLoaded();
     TextFileData data;
     data.filePath = GetLayoutPresetsFolderPath() + "/" + SanitizeFileName(name) + ".ini";
@@ -175,11 +197,13 @@ void UserSettings::SetLayoutPreset(const std::string &name, const std::string &i
 }
 
 void UserSettings::DeleteLayoutPreset(const std::string &name) {
+    LogScope scope;
     EnsureLoaded();
     RemoveFile(GetLayoutPresetsFolderPath() + "/" + SanitizeFileName(name) + ".ini");
 }
 
 void UserSettings::EnsureLoaded() {
+    LogScope scope;
     if (sLoaded_) return;
     sLoaded_ = true;
     MigrateFromLegacyFileIfNeeded();
@@ -188,10 +212,12 @@ void UserSettings::EnsureLoaded() {
 }
 
 void UserSettings::Save() {
+    LogScope scope;
     SaveJSON(sData_, GetSettingsFilePath());
 }
 
 void UserSettings::MigrateFromLegacyFileIfNeeded() {
+    LogScope scope;
     const std::string settingsPath = GetSettingsFilePath();
     if (IsFileExist(settingsPath)) return; // 移行済み、または新規インストール後に既にSettings.jsonがある
 

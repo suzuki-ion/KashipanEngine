@@ -1,4 +1,5 @@
 #pragma once
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Collider/ICollider.h"
 #include "Objects/Components/Transform.h"
@@ -24,6 +25,7 @@ public:
     ~RigidBody3D() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<RigidBody3D>();
         ptr->world_ = world_;
         ptr->bodyType_ = bodyType_;
@@ -43,6 +45,7 @@ public:
     /// @brief 同一オブジェクト上のICollider派生コンポーネントから使用する形状を選択する
     /// @param collider 選択するコライダー（nullptrの場合は未選択＝どのコライダーでも使用可）
     void SetSelectedCollider(ICollider *collider) {
+        LogScope scope;
         if (!collider) {
             selectedColliderTypeName_.clear();
             selectedColliderOccurrenceIndex_ = 0;
@@ -60,6 +63,7 @@ public:
     }
     /// @brief 選択中のコライダーを取得（未選択・見つからない場合は nullptr）
     ICollider *GetSelectedCollider() const {
+        LogScope scope;
         if (selectedColliderTypeName_.empty()) return nullptr;
         int occurrence = 0;
         for (auto *candidate : GetOwnerColliders()) {
@@ -71,6 +75,7 @@ public:
     }
     /// @brief 同一オブジェクト上の全ICollider派生コンポーネントを取得
     std::vector<ICollider *> GetOwnerColliders() const {
+        LogScope scope;
         std::vector<ICollider *> result;
         auto *ctx = GetOwnerObjectContext();
         if (!ctx) return result;
@@ -87,6 +92,7 @@ public:
     reactphysics3d::RigidBody *GetRigidBody() const { return rigidBody_; }
 
     void SetBodyType(reactphysics3d::BodyType type) {
+        LogScope scope;
         bodyType_ = type;
         if (rigidBody_) rigidBody_->setType(type);
     }
@@ -94,6 +100,7 @@ public:
     reactphysics3d::BodyType GetBodyType() const { return bodyType_; }
 
     void SetMass(float mass) {
+        LogScope scope;
         mass_ = mass;
         if (rigidBody_) rigidBody_->setMass(mass);
     }
@@ -101,6 +108,7 @@ public:
     float GetMass() const { return mass_; }
 
     void SetUseGravity(bool enabled) {
+        LogScope scope;
         useGravity_ = enabled;
         if (rigidBody_) rigidBody_->enableGravity(enabled);
     }
@@ -108,6 +116,7 @@ public:
     bool IsGravityEnabled() const { return useGravity_; }
 
     void SetInterpolate(bool enabled) {
+        LogScope scope;
         interpolate_ = enabled;
         if (rigidBody_) rigidBody_->setIsSleeping(!enabled);
     }
@@ -120,6 +129,7 @@ public:
     }
     /// @brief 現在の速度（ワールド空間、単位/秒）を取得する（ボディ未生成の場合はゼロベクトル）
     Vector3 GetVelocity() const {
+        LogScope scope;
         if (!rigidBody_) return Vector3(0.0f, 0.0f, 0.0f);
         const auto v = rigidBody_->getLinearVelocity();
         return Vector3(v.x, v.y, v.z);
@@ -131,6 +141,7 @@ public:
     ///          そのままPlayを開始すると、物理ボディが生成された時点の古い位置（多くの場合原点）へ
     ///          Transformが引き戻されてしまうため、Play開始時にこれを呼んで同期を取る。
     void SyncFromTransform() {
+        LogScope scope;
         if (!rigidBody_) return;
         auto *ctx = GetOwnerObjectContext();
         auto *tr = ctx ? ctx->GetComponent<Transform>() : nullptr;
@@ -151,6 +162,7 @@ protected:
     }
 
     void Update() override {
+        LogScope scope;
         TryInitialize();
         if (!rigidBody_) return;
         auto *ctx = GetOwnerObjectContext();
@@ -168,6 +180,7 @@ protected:
 
 #ifdef USE_IMGUI
     void ShowImGui() override {
+        LogScope scope;
         ImGui::Text("%s", TranslationC("component.rigidbody3d.rigidbody3d_component"));
         if (ImGui::CollapsingHeader(TranslationLabel("component.rigidbody3d.settings"))) {
             if (ImGui::Combo(TranslationLabel("component.rigidbody3d.body_type"), reinterpret_cast<int *>(&bodyType_), "Static\0Kinematic\0Dynamic\0")) {
@@ -207,6 +220,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = JSON::object();
         json["selectedColliderTypeName"] = selectedColliderTypeName_;
         json["selectedColliderOccurrenceIndex"] = selectedColliderOccurrenceIndex_;
@@ -218,6 +232,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         selectedColliderTypeName_ = json.value("selectedColliderTypeName", std::string{});
         selectedColliderOccurrenceIndex_ = json.value("selectedColliderOccurrenceIndex", 0);
         bodyType_ = static_cast<reactphysics3d::BodyType>(json.value("bodyType", static_cast<int>(reactphysics3d::BodyType::DYNAMIC)));
@@ -229,6 +244,7 @@ protected:
 
 private:
     bool TryInitialize() {
+        LogScope scope;
         if (isInitialized_) return true;
         auto *sceneCtx = GetOwnerSceneContext();
         auto *colliderComp = sceneCtx ? sceneCtx->GetComponent<SceneObjectCollider>() : nullptr;
@@ -254,6 +270,7 @@ private:
         return true;
     }
     void ApplySettings() {
+        LogScope scope;
         if (!rigidBody_) return;
         rigidBody_->setType(bodyType_);
         rigidBody_->setMass(mass_);

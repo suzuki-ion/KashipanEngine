@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 
+#include "Debug/Logger.h"
 #include "Objects/Components/Transform.h"
 #include "Objects/EmptyObject.h"
 #include "Scene/SceneEditorContext.h"
@@ -14,6 +15,7 @@ namespace PrefabUtility {
 namespace {
 /// @brief オブジェクトJSON内のTransformの親参照（customData["parent"]）を消去する
 void EraseTransformParent(JSON &objectJson) {
+    LogScope scope;
     if (!objectJson.contains("components")) return;
     for (auto &compJson : objectJson["components"]) {
         if (compJson.value("type", "") != "Transform" || !compJson.contains("data")) continue;
@@ -27,6 +29,7 @@ void EraseTransformParent(JSON &objectJson) {
 /// @details Prefab化する対象が既に別のPrefabインスタンスの根だった場合、新しく作るPrefabへ
 ///          古いリンク情報が紛れ込まないようにするため
 void EraseRootPrefabInstanceComponent(JSON &objectJson) {
+    LogScope scope;
     if (!objectJson.contains("components")) return;
     auto &components = objectJson["components"];
     for (auto it = components.begin(); it != components.end();) {
@@ -40,6 +43,7 @@ void EraseRootPrefabInstanceComponent(JSON &objectJson) {
 } // namespace
 
 void RemapObjectIDReferences(JSON &value, const std::unordered_map<std::string, std::string> &remap) {
+    LogScope scope;
     if (value.is_string()) {
         const std::string current = value.get<std::string>();
         auto it = remap.find(current);
@@ -57,6 +61,7 @@ void RemapObjectIDReferences(JSON &value, const std::unordered_map<std::string, 
 
 void CollectSubtreeNodes(SceneEditorContext *context, EmptyObject *obj, int parentIndex,
     std::vector<PasteObjectCommand::Node> &out) {
+    LogScope scope;
     if (!obj || !context) return;
     const int myIndex = static_cast<int>(out.size());
     out.push_back({ context->SaveObjectToJson(obj), parentIndex });
@@ -72,6 +77,7 @@ void CollectSubtreeNodes(SceneEditorContext *context, EmptyObject *obj, int pare
 }
 
 JSON BuildPrefabJson(SceneEditorContext *context, EmptyObject *rootObject, const UUID128 &prefabID) {
+    LogScope scope;
     JSON json = JSON::object();
     if (!context || !rootObject) return json;
 
@@ -107,6 +113,7 @@ JSON BuildPrefabJson(SceneEditorContext *context, EmptyObject *rootObject, const
 }
 
 std::vector<PasteObjectCommand::Node> LoadPrefabNodes(const JSON &prefabJson) {
+    LogScope scope;
     std::vector<PasteObjectCommand::Node> nodes;
     if (!prefabJson.is_object()) return nodes;
 
@@ -128,6 +135,7 @@ std::vector<PasteObjectCommand::Node> LoadPrefabNodes(const JSON &prefabJson) {
 
 std::vector<PasteObjectCommand::Node> PrepareNodesForInstantiation(
     const std::vector<PasteObjectCommand::Node> &source, bool preserveRootParent) {
+    LogScope scope;
     std::vector<PasteObjectCommand::Node> result = source;
 
     std::vector<UUID128> freshIDs;
@@ -170,6 +178,7 @@ std::vector<PasteObjectCommand::Node> PrepareNodesForInstantiation(
 }
 
 void OffsetRootsToWorldPosition(std::vector<PasteObjectCommand::Node> &nodes, const Vector3 &worldPosition) {
+    LogScope scope;
     // 差分適用の基準として、最初のルートノードの元の位置を探す
     bool hasOrigin = false;
     Vector3 origin{};
@@ -202,6 +211,7 @@ void OffsetRootsToWorldPosition(std::vector<PasteObjectCommand::Node> &nodes, co
 
 std::vector<GhostPreviewMesh> BuildGhostPreviewMeshes(
     const std::vector<PasteObjectCommand::Node> &sourceNodes, const Vector3 &worldPosition) {
+    LogScope scope;
     std::vector<GhostPreviewMesh> result;
     if (sourceNodes.empty()) return result;
 

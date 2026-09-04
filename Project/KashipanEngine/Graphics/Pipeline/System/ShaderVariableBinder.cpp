@@ -1,25 +1,30 @@
 #include "ShaderVariableBinder.h"
 
+#include "Debug/Logger.h"
+
 namespace KashipanEngine {
 
 ShaderVariableBinder::ShaderVariableBinder(Passkey<PipelineInfo>) {}
 
-void ShaderVariableBinder::SetCommandList(ID3D12GraphicsCommandList* cmd) { cmd_ = cmd; }
+void ShaderVariableBinder::SetCommandList(ID3D12GraphicsCommandList* cmd) { LogScope scope; cmd_ = cmd; }
 
-void ShaderVariableBinder::SetNameMap(const MyStd::NameMap<ShaderVariableBinding>& nameMap) { nameMap_ = nameMap; }
+void ShaderVariableBinder::SetNameMap(const MyStd::NameMap<ShaderVariableBinding>& nameMap) { LogScope scope; nameMap_ = nameMap; }
 
-const MyStd::NameMap<ShaderVariableBinding>& ShaderVariableBinder::GetNameMap() const { return nameMap_; }
+const MyStd::NameMap<ShaderVariableBinding>& ShaderVariableBinder::GetNameMap() const { LogScope scope; return nameMap_; }
 
 const ShaderVariableBinding *ShaderVariableBinder::FindBinding(const std::string& nameKey) const {
+    LogScope scope;
     return nameMap_.TryGet(nameKey);
 }
 
 const ShaderCompiler::ShaderVariable *ShaderVariableBinder::FindShaderVariable(const std::string& nameKey) const {
+    LogScope scope;
     const auto *binding = FindBinding(nameKey);
     return binding ? &binding->Variable() : nullptr;
 }
 
 static ShaderStage VisibilityToStage(D3D12_SHADER_VISIBILITY vis) {
+    LogScope scope;
     switch (vis) {
     case D3D12_SHADER_VISIBILITY_VERTEX: return ShaderStage::Vertex;
     case D3D12_SHADER_VISIBILITY_PIXEL: return ShaderStage::Pixel;
@@ -31,6 +36,7 @@ static ShaderStage VisibilityToStage(D3D12_SHADER_VISIBILITY vis) {
 }
 
 ShaderStage ShaderVariableBinder::StageFromNameKey(const std::string& nameKey) {
+    LogScope scope;
     // expects prefix like "Vertex:" or "Pixel:"; Unknown if not present
     if (nameKey.rfind("Vertex:", 0) == 0) return ShaderStage::Vertex;
     if (nameKey.rfind("Pixel:", 0) == 0) return ShaderStage::Pixel;
@@ -51,6 +57,7 @@ void ShaderVariableBinder::RegisterDescriptorTableRange(
     UINT startingOffsetInTable,
     ShaderStage stage
 ) {
+    LogScope scope;
     if (count == UINT_MAX) {
         ShaderResourceKey key{ type, baseRegister, space, stage };
         ShaderBindLocation loc{};
@@ -81,6 +88,7 @@ void ShaderVariableBinder::RegisterRootDescriptor(
     UINT rootParameterIndex,
     ShaderStage stage
 ) {
+    LogScope scope;
     ShaderResourceKey key{ type, registerIndex, space, stage };
     ShaderBindLocation loc{};
     loc.rootParameterIndex = rootParameterIndex;
@@ -93,6 +101,7 @@ void ShaderVariableBinder::RegisterRootDescriptor(
 }
 
 bool ShaderVariableBinder::Bind(const std::string& nameKey, IGraphicsResource* resource) {
+    LogScope scope;
     auto* binding = nameMap_.TryGet(nameKey);
     if (!binding || !cmd_ || !resource || !resource->GetResource()) return false;
     ShaderStage stage = StageFromNameKey(nameKey);
@@ -138,6 +147,7 @@ bool ShaderVariableBinder::Bind(const std::string& nameKey, IGraphicsResource* r
 }
 
 bool ShaderVariableBinder::Bind(const std::string& nameKey, D3D12_GPU_DESCRIPTOR_HANDLE descriptorHandle) {
+    LogScope scope;
     auto* binding = nameMap_.TryGet(nameKey);
     if (!binding || !cmd_) return false;
     ShaderStage stage = StageFromNameKey(nameKey);

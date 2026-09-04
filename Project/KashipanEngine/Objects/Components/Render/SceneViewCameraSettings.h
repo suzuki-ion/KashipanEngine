@@ -1,5 +1,6 @@
 #pragma once
 #if defined(USE_IMGUI)
+#include "Debug/Logger.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Objects/ObjectComponentHeader.h"
@@ -26,6 +27,7 @@ public:
     ~SceneViewCameraSettings() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         // シーンに1つだけ存在するエディター専用オブジェクトのためのコンポーネントであり、
         // 複製・貼り付けの対象にはならない（値はSceneEditorViewが毎フレーム上書きする）
         return std::make_unique<SceneViewCameraSettings>();
@@ -69,6 +71,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         ImGui::TextUnformatted(TranslationC("component.sceneviewcamerasettings.desc"));
 
         if (ImGui::TreeNodeEx(TranslationLabel("component.sceneviewcamerasettings.camera3d"), ImGuiTreeNodeFlags_DefaultOpen)) {

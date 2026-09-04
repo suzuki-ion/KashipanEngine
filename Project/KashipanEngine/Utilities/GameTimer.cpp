@@ -2,10 +2,14 @@
 #include <algorithm>
 #include <cmath>
 
+#include "Debug/Logger.h"
+
 GameTimer::GameTimer(float duration, bool loop)
     : duration_(duration), loop_(loop) {}
 
 void GameTimer::Update(float deltaTime) {
+    KashipanEngine::LogScope scope;
+
     if (!isActive_) return;
 
     loopedThisFrame_ = false;
@@ -28,6 +32,8 @@ void GameTimer::Update(float deltaTime) {
 
 
 void GameTimer::Start(float duration, bool loop) {
+    KashipanEngine::LogScope scope;
+
     duration_ = duration;
     loop_ = loop;
     currentTime_ = 0.0f;
@@ -42,6 +48,8 @@ void GameTimer::Stop() {
 }
 
 void GameTimer::Reset() {
+    KashipanEngine::LogScope scope;
+
     currentTime_ = 0.0f;
     isActive_ = false;
     finished_ = false;
@@ -53,6 +61,8 @@ void GameTimer::Pause() {
 }
 
 void GameTimer::Resume() {
+    KashipanEngine::LogScope scope;
+
     if (currentTime_ < duration_) {
         isActive_ = true;
         finished_ = false;
@@ -68,6 +78,8 @@ bool GameTimer::IsFinished() const {
 }
 
 float GameTimer::GetProgress() const {
+    KashipanEngine::LogScope scope;
+
     if (duration_ <= 0.0f) return 1.0f;
 
     float progress = currentTime_ / duration_;
@@ -93,6 +105,8 @@ float GameTimer::GetDuration() const {
 }
 
 void GameTimer::SetDuration(float duration) {
+    KashipanEngine::LogScope scope;
+
     duration_ = duration;
     if (currentTime_ >= duration_ && isActive_) {
         finished_ = true;

@@ -3,44 +3,55 @@
 #include <algorithm>
 #include <utility>
 
+#include "Debug/Logger.h"
+
 namespace KashipanEngine {
 
 void StageGridBuilder::SetRoomSize(std::uint32_t sizeX, std::uint32_t sizeY, std::uint32_t sizeZ) {
+    LogScope scope;
     roomSizeX_ = sizeX;
     roomSizeY_ = sizeY;
     roomSizeZ_ = sizeZ;
 }
 
 void StageGridBuilder::SetRoomSpacing(std::uint32_t spacing) {
+    LogScope scope;
     roomSpacing_ = spacing;
 }
 
 void StageGridBuilder::SetCorridorWidth(std::uint32_t width) {
+    LogScope scope;
     corridorWidth_ = width;
 }
 
 void StageGridBuilder::SetTileWorldSize(float size) {
+    LogScope scope;
     tileWorldSize_ = size;
 }
 
 void StageGridBuilder::SetRoomTileName(RoomType type, const std::string &tileName) {
+    LogScope scope;
     roomTileNames_[type] = tileName;
 }
 
 void StageGridBuilder::SetDefaultRoomTileName(const std::string &tileName) {
+    LogScope scope;
     defaultRoomTileName_ = tileName;
 }
 
 void StageGridBuilder::SetCorridorTileName(const std::string &tileName) {
+    LogScope scope;
     corridorTileName_ = tileName;
 }
 
 std::uint32_t StageGridBuilder::OriginOf(std::uint32_t slot, std::uint32_t cellSize) const {
+    LogScope scope;
     return slot * (cellSize + roomSpacing_);
 }
 
 void StageGridBuilder::GetRequiredGridSize(const StageGraphGenerator &graph,
     std::uint32_t &outWidth, std::uint32_t &outHeight, std::uint32_t &outDepth) const {
+    LogScope scope;
     const std::uint32_t gw = graph.GetGridWidth();
     const std::uint32_t gh = graph.GetGridHeight();
     const std::uint32_t gd = graph.GetGridDepth();
@@ -50,6 +61,7 @@ void StageGridBuilder::GetRequiredGridSize(const StageGraphGenerator &graph,
 }
 
 bool StageGridBuilder::Build(const StageGraphGenerator &graph, WaveFunctionCollapse &wfc) const {
+    LogScope scope;
     if (!defaultRoomTileName_ || !corridorTileName_ || graph.GetRoomCount() == 0) {
         return false;
     }
@@ -162,6 +174,7 @@ bool StageGridBuilder::Build(const StageGraphGenerator &graph, WaveFunctionColla
 
 bool StageGridBuilder::GetRoomGridCenter(const StageGraphGenerator &graph, std::uint32_t roomID,
     std::uint32_t &outX, std::uint32_t &outY, std::uint32_t &outZ) const {
+    LogScope scope;
     const RoomNode *room = graph.GetRoom(roomID);
     if (!room) {
         return false;
@@ -173,6 +186,7 @@ bool StageGridBuilder::GetRoomGridCenter(const StageGraphGenerator &graph, std::
 }
 
 bool StageGridBuilder::GetRoomWorldCenter(const StageGraphGenerator &graph, std::uint32_t roomID, Vector3 &outPosition) const {
+    LogScope scope;
     std::uint32_t gx = 0, gy = 0, gz = 0;
     if (!GetRoomGridCenter(graph, roomID, gx, gy, gz)) {
         return false;

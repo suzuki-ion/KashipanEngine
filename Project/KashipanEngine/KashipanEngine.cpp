@@ -1,5 +1,6 @@
 #include "KashipanEngine.h"
 #include "EngineSettings.h"
+#include "Debug/Logger.h"
 #include "Debug/CrashHandler.h"
 #include "Debug/LogSettings.h"
 #include "Core/DirectX/ResourceLeakChecker.h"
@@ -20,9 +21,11 @@ namespace {
 ///          確実にスプラッシュを閉じてスレッドを回収できるようにする
 struct ScopedSplashScreen {
     explicit ScopedSplashScreen(PasskeyForGameEngineMain passkey) : passkey_(passkey) {
+        LogScope scope;
         SplashScreen::Show(passkey_);
     }
     ~ScopedSplashScreen() {
+        LogScope scope;
         SplashScreen::Close(passkey_);
     }
     PasskeyForGameEngineMain passkey_;
@@ -30,6 +33,7 @@ struct ScopedSplashScreen {
 } // namespace
 
 int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsPath) {
+    LogScope scope;
     SetUnhandledExceptionFilter(CrashHandler);
     D3DResourceLeakChecker resourceLeakChecker;
 

@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <algorithm>
 #include "Assets/TextureManager.h"
+#include "Debug/Logger.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 #include "Utilities/Translation.h"
 
@@ -33,6 +34,7 @@ public:
     ~DissolveEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<DissolveEffect>();
         ptr->params_ = params_;
         return ptr;
@@ -44,6 +46,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         IPostProcessComponent::ShowImGui();
         ImGui::DragFloat(TranslationLabel("component.dissolveeffect.mask_threshold"), &params_.maskThreshold, 0.001f, 0.0f, 1.0f, "%.3f");
         ImGui::DragFloat(TranslationLabel("component.dissolveeffect.edge_thickness"), &params_.edgeThickness, 0.001f, 0.0f, 1.0f, "%.3f");
@@ -68,6 +71,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = IPostProcessComponent::SaveToJson();
         json["maskThreshold"] = params_.maskThreshold;
         json["edgeThickness"] = params_.edgeThickness;
@@ -79,6 +83,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         IPostProcessComponent::LoadFromJson(json);
         params_.maskThreshold = json.value("maskThreshold", 0.5f);
         params_.edgeThickness = json.value("edgeThickness", 0.1f);
@@ -94,6 +99,7 @@ protected:
     }
 
     std::vector<PassInfo> BuildPasses() override {
+        LogScope scope;
         cbData_.maskThreshold = std::clamp(params_.maskThreshold, 0.0f, 1.0f);
         cbData_.edgeThickness = std::max(0.0f, params_.edgeThickness);
         cbData_.useBaseTexture = (params_.baseTexture != TextureManager::kInvalidHandle) ? 1 : 0;

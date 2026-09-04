@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 
+#include "Debug/Logger.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 #include "Graphics/Pipeline/System/PipelineBinder.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
@@ -44,6 +45,7 @@ public:
     ~TemporalBlendEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<TemporalBlendEffect>();
         ptr->params_ = params_;
         return ptr;
@@ -54,6 +56,7 @@ public:
 
 protected:
     void Finalize() override {
+        LogScope scope;
         IPostProcessComponent::Finalize();
         history_[0] = {};
         history_[1] = {};
@@ -64,6 +67,7 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         IPostProcessComponent::ShowImGui();
         ImGui::DragFloat(TranslationLabel("component.temporalblendeffect.history_weight"), &params_.historyWeight, 0.01f, 0.0f, 0.98f, "%.3f");
         if (ImGui::IsItemHovered()) {
@@ -73,12 +77,14 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = IPostProcessComponent::SaveToJson();
         json["historyWeight"] = params_.historyWeight;
         return json;
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         IPostProcessComponent::LoadFromJson(json);
         params_.historyWeight = json.value("historyWeight", 0.5f);
         return true;
@@ -88,6 +94,7 @@ protected:
     std::vector<PassInfo> BuildPasses() override { return {}; }
 
     bool RenderCustom(CustomRenderContext &context) override {
+        LogScope scope;
         auto *screenBuffer = context.screenBuffer;
         auto *commandList = context.commandList;
         if (!screenBuffer || !commandList || !context.pipelineManager || !context.pipelineBinder || !context.getShaderBinder) return false;
@@ -179,6 +186,7 @@ private:
 
     /// @brief ヒストリー用レンダーターゲット（ping-pong 2枚）をオーナーのサイズ・フォーマットに合わせて用意する
     bool EnsureHistoryTargets(ScreenBuffer *owner) {
+        LogScope scope;
         const std::uint32_t width = owner->GetWidth();
         const std::uint32_t height = owner->GetHeight();
         if (width == 0 || height == 0) return false;

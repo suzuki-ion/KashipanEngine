@@ -1,6 +1,8 @@
 #pragma once
 #include <random>
 
+#include "Debug/Logger.h"
+
 namespace KashipanEngine {
 
 /// @brief min以上max以下のランダムな値を取得する
@@ -10,6 +12,7 @@ namespace KashipanEngine {
 /// @return ランダムな値
 template<typename T>
 T GetRandomValue(T min, T max) {
+    LogScope scope;
     static std::random_device rd;
     static std::mt19937 mtEngine(rd());
     if constexpr (std::is_integral_v<T>) {

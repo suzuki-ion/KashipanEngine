@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Render/Camera2D.h"
 #include "Objects/Components/Render/Camera3D.h"
@@ -41,6 +42,7 @@ public:
     ~CameraRenderer() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<CameraRenderer>();
         ptr->targetObjectID_ = targetObjectID_;
         ptr->pipelineName_ = pipelineName_;
@@ -67,6 +69,7 @@ public:
     const UUID128 &GetTargetObjectID() const noexcept { return targetObjectID_; }
     /// @brief 適用先の描画先オブジェクトを取得（未指定・存在しない場合は nullptr）
     EmptyObject *GetTargetObject() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext || !targetObjectID_.IsValid()) return nullptr;
         return sceneContext->GetSceneObject(targetObjectID_);
@@ -74,6 +77,7 @@ public:
 
     /// @brief 指定の描画先がこのコンポーネントの適用対象に含まれるか（除外設定されていないか）
     bool IsRenderTargetIncluded(const IRenderTarget *target) const {
+        LogScope scope;
         if (!target) return false;
         return !excludedRenderTargetNames_.contains(target->GetRenderTargetName());
     }
@@ -89,6 +93,7 @@ public:
 
     /// @brief カメラのワールド座標を取得（Transform が無い場合は原点）
     Vector3 GetWorldPosition() const {
+        LogScope scope;
         const Matrix4x4 world = GetRenderWorldMatrix();
         return Vector3(world.m[3][0], world.m[3][1], world.m[3][2]);
     }
@@ -103,10 +108,14 @@ public:
     /// @brief カメラの定数バッファを現在のTransformの状態で更新する
     /// @details ゲームループが停止/一時停止中でも描画自体は継続されるため、
     ///          Update() ではなく Renderer から毎フレーム直接呼ばれる（プル型の更新）
-    void RefreshConstantBuffer() { UploadCameraConstant(); }
+    void RefreshConstantBuffer() {
+        LogScope scope;
+        UploadCameraConstant();
+    }
 
 protected:
     void Initialize() override {
+        LogScope scope;
         if (!constantBuffer_) {
             constantBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(Camera3DConstant));
         }
@@ -118,6 +127,7 @@ protected:
     }
 
     void Finalize() override {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
         if (sceneRenderer) {
@@ -128,6 +138,7 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         // 適用先の描画先オブジェクトをシーン上から選択（D&D対応、未指定は全描画先）
         TargetObjectSelector::ShowSelector(TranslationLabel("component.common.target"), GetOwnerSceneContext(), targetObjectID_);
         // 対象オブジェクトが持つ描画先ごとに適用する/しないを選択する
@@ -150,6 +161,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = JSON::object();
         json["targetObjectID"] = ToJSON(targetObjectID_);
         json["pipelineName"] = pipelineName_;
@@ -161,6 +173,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         if (json.contains("targetObjectID")) {
             targetObjectID_ = FromJSON<UUID128>(json["targetObjectID"]);
         } else {
@@ -198,6 +211,7 @@ private:
     };
 
     SceneRenderer *GetOrAddSceneRenderer() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext) return nullptr;
         auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
@@ -209,6 +223,7 @@ private:
 
     /// @brief Transformを変更せず、RenderOnlyシェイクを反映した描画用ワールド行列を取得する
     Matrix4x4 GetRenderWorldMatrix() const {
+        LogScope scope;
         auto *objectContext = GetOwnerObjectContext();
         auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
         const Matrix4x4 world = transform ? transform->GetWorldMatrix() : Matrix4x4::Identity();
@@ -219,6 +234,7 @@ private:
     /// @details 描画先が単一で明示指定されている場合のみ解決する。未指定（全描画先へ適用中）の場合は
     ///          描画先ごとに解像度が異なりうるため一意に決められず false を返す
     bool ResolveTargetRenderTargetSize(std::uint32_t &outWidth, std::uint32_t &outHeight) const {
+        LogScope scope;
         EmptyObject *targetObj = GetTargetObject();
         if (!targetObj) return false;
 
@@ -254,6 +270,7 @@ private:
     ///          失敗する）事故があった。これを防ぐため毎フレーム（UploadCameraConstant()から）
     ///          呼び出し、常に現在アタッチされているコンポーネントへ追従させる
     void RefreshBindVariableNames(ObjectContext *objectContext) {
+        LogScope scope;
         static const std::vector<std::string> kCamera2DNames = { "Vertex:gCamera2D", "Pixel:gCamera2D" };
         static const std::vector<std::string> kCamera3DNames = { "Vertex:gCamera3D", "Pixel:gCamera3D" };
         // Camera2Dが無い場合はCamera3D扱いにする（どちらも無い場合はShowImGui()側で警告する）
@@ -265,6 +282,7 @@ private:
     }
 
     void UploadCameraConstant() {
+        LogScope scope;
         if (!constantBuffer_) return;
         auto *objectContext = GetOwnerObjectContext();
         if (!objectContext) return;

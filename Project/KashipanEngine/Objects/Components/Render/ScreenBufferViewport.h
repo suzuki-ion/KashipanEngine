@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Assets/MaterialManager.h"
 #include "Assets/ModelManager.h"
@@ -55,6 +56,7 @@ public:
     ~ScreenBufferViewport() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<ScreenBufferViewport>();
         ptr->sourceObjectID_ = sourceObjectID_;
         ptr->displayCameraObjectID_ = displayCameraObjectID_;
@@ -73,6 +75,7 @@ public:
     void SetSourceObject(const UUID128 &sourceObjectID) { sourceObjectID_ = sourceObjectID; }
     const UUID128 &GetSourceObjectID() const noexcept { return sourceObjectID_; }
     EmptyObject *GetSourceObject() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext || !sourceObjectID_.IsValid()) return nullptr;
         return sceneContext->GetSceneObject(sourceObjectID_);
@@ -87,6 +90,7 @@ public:
     void SetDisplayCameraObject(const UUID128 &cameraObjectID) { displayCameraObjectID_ = cameraObjectID; }
     const UUID128 &GetDisplayCameraObjectID() const noexcept { return displayCameraObjectID_; }
     EmptyObject *GetDisplayCameraObject() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext || !displayCameraObjectID_.IsValid()) return nullptr;
         return sceneContext->GetSceneObject(displayCameraObjectID_);
@@ -118,6 +122,7 @@ public:
     /// @param outPixel 変換結果（ScreenBufferのピクセル座標。左上原点、X右・Y下方向）
     /// @return 変換に成功し、かつマウスがスプライトの表示範囲内にある場合はtrue
     bool TryGetOffscreenMousePosition(Vector2 &outPixel) const {
+        LogScope scope;
         if (!spriteRenderer_) return false;
 
         auto *windowComponent = ResolveWindow();
@@ -172,12 +177,14 @@ public:
 
     /// @brief マウスカーソルが表示範囲内にあるかどうかを取得する
     bool IsMouseOverOffscreen() const {
+        LogScope scope;
         Vector2 dummy{};
         return TryGetOffscreenMousePosition(dummy);
     }
 
 protected:
     void Initialize() override {
+        LogScope scope;
         // 生成はしない（同オブジェクトの他エントリがまだJSONから読み込まれきっていない可能性があり、
         // ここで先に生成すると後から読み込まれる正規のMeshFilter/SpriteRendererと重複してしまうため）。
         // 既に存在するものがあれば拾うだけに留め、実際の生成はUpdate()の初回に遅延する
@@ -194,6 +201,7 @@ protected:
     }
 
     void Update() override {
+        LogScope scope;
         EnsureInternalComponents();
         RetryApplyToRendererIfNeeded();
         SyncOverrideMaterialFields();
@@ -202,6 +210,7 @@ protected:
     }
 
     void Finalize() override {
+        LogScope scope;
         RevertRenderer();
 
         auto *sceneContext = GetOwnerSceneContext();
@@ -215,6 +224,7 @@ protected:
     /// @brief ゲームループが停止/一時停止中でも毎フレーム呼ばれる（Update()は呼ばれないため、
     ///        エディターで停止中にプレビュー・FitMode反映をリトライするのに使う）
     void ShowPersistentImGui() override {
+        LogScope scope;
         EnsureInternalComponents();
         RetryApplyToRendererIfNeeded();
         SyncOverrideMaterialFields();
@@ -223,6 +233,7 @@ protected:
     }
 
     void ShowImGui() override {
+        LogScope scope;
         TargetObjectSelector::ShowSelector(TranslationLabel("component.screenbufferviewport.source"), GetOwnerSceneContext(), sourceObjectID_, true, true);
         TargetObjectSelector::ShowSelector(TranslationLabel("component.screenbufferviewport.display_camera"), GetOwnerSceneContext(), displayCameraObjectID_, true, false);
 
@@ -273,6 +284,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = JSON::object();
         json["sourceObjectID"] = ToJSON(sourceObjectID_);
         json["displayCameraObjectID"] = ToJSON(displayCameraObjectID_);
@@ -281,6 +293,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         sourceObjectID_ = json.contains("sourceObjectID") ? FromJSON<UUID128>(json["sourceObjectID"]) : UUID128();
         displayCameraObjectID_ = json.contains("displayCameraObjectID") ? FromJSON<UUID128>(json["displayCameraObjectID"]) : UUID128();
         fitMode_ = static_cast<FitMode>(json.value("fitMode", static_cast<int>(FitMode::None)));
@@ -289,6 +302,7 @@ protected:
 
 private:
     SceneRenderer *GetOrAddSceneRenderer() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext) return nullptr;
         auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
@@ -299,11 +313,13 @@ private:
     }
 
     ScreenBufferObject *ResolveSource() const {
+        LogScope scope;
         auto *obj = GetSourceObject();
         return obj ? obj->GetComponent<ScreenBufferObject>() : nullptr;
     }
 
     IWindowObjectComponent *ResolveWindow() const {
+        LogScope scope;
         if (!spriteRenderer_) return nullptr;
         EmptyObject *targetObj = spriteRenderer_->GetTargetObject();
         if (!targetObj) return nullptr;
@@ -313,6 +329,7 @@ private:
     }
 
     Camera2D *ResolveDisplayCamera(Transform *&outTransform) const {
+        LogScope scope;
         outTransform = nullptr;
         auto *obj = GetDisplayCameraObject();
         if (!obj) return nullptr;
@@ -324,6 +341,7 @@ private:
     /// @details ResolveWindow()と異なりWindow限定ではなく、ScreenBufferへの入れ子表示も許容する。
     ///          対象オブジェクトに描画先コンポーネントが複数付与されている場合は最初に見つかったものを使う
     IRenderTarget *ResolveRenderTarget() const {
+        LogScope scope;
         if (!spriteRenderer_) return nullptr;
         EmptyObject *targetObj = spriteRenderer_->GetTargetObject();
         if (!targetObj) return nullptr;
@@ -338,6 +356,7 @@ private:
     /// @brief FitModeに応じて、自身のTransform.Scale（X/Yのみ）を描画先の解像度に合わせて書き換える
     /// @details Noneの場合は何もせず、Transform.Scaleの手動設定をそのまま尊重する
     void ApplyFitMode() {
+        LogScope scope;
         if (fitMode_ == FitMode::None) return;
         if (!spriteRenderer_) return;
 
@@ -376,6 +395,7 @@ private:
     /// @details Update()は同オブジェクトの全コンポーネントがJSONから読み込まれきった後にのみ
     ///          呼ばれるため、ここで初めて「本当に無い場合だけ生成する」判定が安全に行える
     void EnsureInternalComponents() {
+        LogScope scope;
         auto *objectContext = GetOwnerObjectContext();
         if (!objectContext) return;
 
@@ -405,6 +425,7 @@ private:
     ///          （これをしないと、一度複製した後にベースマテリアルを切り替えても、次にこの関数が
     ///          呼ばれた時点で古い複製が無条件に再適用されてしまい、切り替えが反映されない）
     void ApplyToRenderer() {
+        LogScope scope;
         if (!spriteRenderer_) return;
         if (internalMaterialName_.empty()) {
             const auto *owner = GetOwnerObject();
@@ -444,6 +465,7 @@ private:
     /// @brief レンダラーへの反映がまだ・または外れてしまっている場合に再試行する
     /// @details TextureSource::RetryApplyToRendererIfNeededと同じ理由
     void RetryApplyToRendererIfNeeded() {
+        LogScope scope;
         if (!spriteRenderer_) return;
         const auto currentHandle = spriteRenderer_->GetMaterialHandle();
         if (overrideMaterialHandle_ == MaterialManager::kInvalidHandle || currentHandle != overrideMaterialHandle_) {
@@ -455,6 +477,7 @@ private:
     /// @details TextureSource::SyncOverrideMaterialFieldsと同じ理由（元マテリアルへのサンプラー・
     ///          UV変換等の編集をリアルタイムに反映するため、テクスチャ差し替えとは独立して毎フレーム行う）
     void SyncOverrideMaterialFields() {
+        LogScope scope;
         if (overrideMaterialHandle_ == MaterialManager::kInvalidHandle) return;
         auto *overrideMaterial = MaterialManager::GetMaterial(overrideMaterialHandle_);
         auto *baseMaterial = MaterialManager::GetMaterial(originalMaterialHandle_);
@@ -474,6 +497,7 @@ private:
 
     /// @brief 適用していたレンダラーのマテリアルを元へ戻し、複製した専用マテリアルを破棄する
     void RevertRenderer() {
+        LogScope scope;
         if (overrideMaterialHandle_ == MaterialManager::kInvalidHandle) return;
 
         if (spriteRenderer_) {
@@ -488,6 +512,7 @@ private:
 
     /// @brief 複製先マテリアルのテクスチャハンドルを、ソースScreenBufferの現在の登録名に同期する
     void SyncMaterialTexture() {
+        LogScope scope;
         if (overrideMaterialHandle_ == MaterialManager::kInvalidHandle) return;
         auto *source = ResolveSource();
         ScreenBuffer *buffer = source ? source->GetScreenBuffer() : nullptr;

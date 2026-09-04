@@ -7,6 +7,7 @@ using namespace RendererInternal;
 
 Renderer::Renderer(Passkey<GraphicsEngine>, DirectXCommon *directXCommon, PipelineManager *pipelineManager)
     : directXCommon_(directXCommon), pipelineManager_(pipelineManager) {
+    LogScope scope;
     resourceContainer_ = std::make_unique<ResourceContainer>();
     // ブルーノイズによるディザ閾値テーブルはエンジン起動時に1回だけ生成すればよい
     // （毎フレーム再生成する必要は無い）ため、ここで同期的に生成しておく
@@ -14,6 +15,7 @@ Renderer::Renderer(Passkey<GraphicsEngine>, DirectXCommon *directXCommon, Pipeli
 }
 
 Renderer::~Renderer() {
+    LogScope scope;
     shadowMapArray_.reset();
     if (directXCommon_ && shadowCommandSlotIndex_ >= 0) {
         directXCommon_->ReleaseCommandObjects(Passkey<Renderer>{}, shadowCommandSlotIndex_);
@@ -23,6 +25,7 @@ Renderer::~Renderer() {
 }
 
 void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) {
+    LogScope scope;
     drawCallCount_ = 0;
     if (!sceneContext || !pipelineManager_) return;
 
@@ -129,6 +132,7 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
 
 
 void Renderer::ReleaseAllResources(Passkey<GraphicsEngine>) {
+    LogScope scope;
     if (resourceContainer_) {
         resourceContainer_->Clear();
     }

@@ -3,6 +3,7 @@
 #include <string>
 #include <unordered_set>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Render/Light.h"
 #include "Objects/Components/Shake.h"
@@ -31,6 +32,7 @@ public:
     ~LightRenderer() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<LightRenderer>();
         ptr->targetObjectID_ = targetObjectID_;
         ptr->pipelineName_ = pipelineName_;
@@ -56,6 +58,7 @@ public:
     const UUID128 &GetTargetObjectID() const noexcept { return targetObjectID_; }
     /// @brief 適用先の描画先オブジェクトを取得（未指定・存在しない場合は nullptr）
     EmptyObject *GetTargetObject() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext || !targetObjectID_.IsValid()) return nullptr;
         return sceneContext->GetSceneObject(targetObjectID_);
@@ -63,6 +66,7 @@ public:
 
     /// @brief 指定の描画先がこのコンポーネントの適用対象に含まれるか（除外設定されていないか）
     bool IsRenderTargetIncluded(const IRenderTarget *target) const {
+        LogScope scope;
         if (!target) return false;
         return !excludedRenderTargetNames_.contains(target->GetRenderTargetName());
     }
@@ -73,24 +77,28 @@ public:
 
     /// @brief 同一オブジェクトの Light コンポーネントを取得（存在しない場合は nullptr）
     Light *GetLight() const {
+        LogScope scope;
         auto *objectContext = GetOwnerObjectContext();
         return objectContext ? objectContext->GetComponent<Light>() : nullptr;
     }
 
     /// @brief ライトの種類を取得（Light コンポーネントが無い場合は Directional）
     Light::Type GetLightType() const {
+        LogScope scope;
         auto *light = GetLight();
         return light ? light->GetType() : Light::Type::Directional;
     }
 
     /// @brief ライトのワールド座標を取得（Transform が無い場合は原点）
     Vector3 GetWorldPosition() const {
+        LogScope scope;
         const Matrix4x4 world = GetRenderWorldMatrix();
         return Vector3(world.m[3][0], world.m[3][1], world.m[3][2]);
     }
 
     /// @brief ライトのワールド方向（Transform の +Z）を取得
     Vector3 GetWorldDirection() const {
+        LogScope scope;
         Vector3 direction(0.0f, -1.0f, 0.0f);
         const Matrix4x4 world = GetRenderWorldMatrix();
         Vector3 forward(world.m[2][0], world.m[2][1], world.m[2][2]);
@@ -101,6 +109,7 @@ public:
 
     /// @brief ライトのワールド右方向（Transform の +X）を取得（Rect/Tubeの軸方向に使用）
     Vector3 GetWorldRight() const {
+        LogScope scope;
         Vector3 right(1.0f, 0.0f, 0.0f);
         const Matrix4x4 world = GetRenderWorldMatrix();
         Vector3 axis(world.m[0][0], world.m[0][1], world.m[0][2]);
@@ -111,6 +120,7 @@ public:
 
     /// @brief ライトのワールド上方向（Transform の +Y）を取得（Rectの高さ方向に使用）
     Vector3 GetWorldUp() const {
+        LogScope scope;
         Vector3 up(0.0f, 1.0f, 0.0f);
         const Matrix4x4 world = GetRenderWorldMatrix();
         Vector3 axis(world.m[1][0], world.m[1][1], world.m[1][2]);
@@ -121,6 +131,7 @@ public:
 
 protected:
     void Initialize() override {
+        LogScope scope;
         auto *sceneRenderer = GetOrAddSceneRenderer();
         if (sceneRenderer) {
             sceneRenderer->RegisterLightRenderer(this);
@@ -128,6 +139,7 @@ protected:
     }
 
     void Finalize() override {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
         if (sceneRenderer) {
@@ -137,6 +149,7 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         // 適用先の描画先オブジェクトをシーン上から選択（D&D対応、未指定は全描画先）
         TargetObjectSelector::ShowSelector(TranslationLabel("component.common.target"), GetOwnerSceneContext(), targetObjectID_);
         // 対象オブジェクトが持つ描画先ごとに適用する/しないを選択する
@@ -147,6 +160,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = JSON::object();
         json["targetObjectID"] = ToJSON(targetObjectID_);
         json["pipelineName"] = pipelineName_;
@@ -157,6 +171,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         if (json.contains("targetObjectID")) {
             targetObjectID_ = FromJSON<UUID128>(json["targetObjectID"]);
         } else {
@@ -173,6 +188,7 @@ protected:
 private:
     /// @brief Transformを変更せず、RenderOnlyシェイクを反映した描画用ワールド行列を取得する
     Matrix4x4 GetRenderWorldMatrix() const {
+        LogScope scope;
         auto *objectContext = GetOwnerObjectContext();
         auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
         const Matrix4x4 world = transform ? transform->GetWorldMatrix() : Matrix4x4::Identity();
@@ -180,6 +196,7 @@ private:
     }
 
     SceneRenderer *GetOrAddSceneRenderer() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext) return nullptr;
         auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();

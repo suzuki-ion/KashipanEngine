@@ -28,10 +28,12 @@ bool sIsEngineInitialized = false;
 
 #if defined(USE_IMGUI)
 GameEngine::RollingAverage::RollingAverage(std::size_t capacity) {
+    LogScope scope;
     SetCapacity(capacity);
 }
 
 void GameEngine::RollingAverage::SetCapacity(std::size_t capacity) {
+    LogScope scope;
     capacity = std::max<std::size_t>(1, capacity);
     if (capacity_ == capacity) return;
 
@@ -43,6 +45,7 @@ void GameEngine::RollingAverage::SetCapacity(std::size_t capacity) {
 }
 
 void GameEngine::RollingAverage::Add(double value) {
+    LogScope scope;
     if (samples_.size() < capacity_) {
         samples_.push_back(value);
         sum_ += value;
@@ -57,15 +60,18 @@ void GameEngine::RollingAverage::Add(double value) {
 }
 
 double GameEngine::RollingAverage::GetAverage() const {
+    LogScope scope;
     if (samples_.empty()) return 0.0;
     return sum_ / static_cast<double>(samples_.size());
 }
 
 std::size_t GameEngine::RollingAverage::GetCount() const {
+    LogScope scope;
     return samples_.size();
 }
 
 void GameEngine::DrawProfilingImGui() {
+    LogScope scope;
     const std::size_t cap = static_cast<std::size_t>(std::max(1, profilingSampleCount_));
     avgUpdateMs_.SetCapacity(cap);
     avgDrawMs_.SetCapacity(cap);
@@ -262,6 +268,7 @@ GameEngine::~GameEngine() {
 }
 
 void GameEngine::GameLoopUpdate() {
+    LogScope scope;
 #if defined(USE_IMGUI)
     const auto beginTp = std::chrono::high_resolution_clock::now();
 #endif
@@ -304,6 +311,7 @@ void GameEngine::GameLoopUpdate() {
 }
 
 void GameEngine::GameLoopDraw() {
+    LogScope scope;
 #if defined(USE_IMGUI)
     const auto beginTp = std::chrono::high_resolution_clock::now();
 #endif
@@ -338,6 +346,7 @@ void GameEngine::GameLoopDraw() {
 }
 
 int GameEngine::Execute(PasskeyForGameEngineMain) {
+    LogScope scope;
     static size_t windowCount = 0;
 
     while (!gameLoopEndConditionFunction_()) {

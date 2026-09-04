@@ -6,6 +6,7 @@
 #include <random>
 #include <string>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/EmptyObject.h"
 #include "Core/ProjectPaths.h"
@@ -27,6 +28,7 @@ public:
         ~ScreenBufferObject() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<ScreenBufferObject>();
         ptr->name_ = name_;
         ptr->width_ = width_;
@@ -41,6 +43,7 @@ public:
     ScreenBuffer *GetScreenBuffer() const noexcept { return buffer_; }
     /// @brief 管理用の名前を設定（TextureManagerへの登録名になる）
     void SetName(const std::string &name) {
+        LogScope scope;
         name_ = name;
         if (buffer_ && ScreenBuffer::IsExist(buffer_)) {
             buffer_->SetRenderTargetName(name_);
@@ -49,6 +52,7 @@ public:
     const std::string &GetName() const noexcept { return name_; }
     /// @brief バッファサイズを変更する（既存のバッファがあれば実際にリサイズされる）
     void SetSize(std::uint32_t width, std::uint32_t height) {
+        LogScope scope;
         width_ = width;
         height_ = height;
         if (buffer_ && ScreenBuffer::IsExist(buffer_)) {
@@ -77,12 +81,14 @@ public:
     ///        SaveFormatから自動生成する）
     /// @return 成功した場合は true
     bool RequestSave(const std::string &filePath = "") {
+        LogScope scope;
         if (!buffer_ || !ScreenBuffer::IsExist(buffer_)) return false;
         return buffer_->SaveToFile(filePath.empty() ? BuildAutoSavePath() : filePath);
     }
 
 protected:
     void Initialize() override {
+        LogScope scope;
         if (buffer_) return;
         buffer_ = ScreenBuffer::Create(width_, height_, name_);
         // 自動生成された名前を保持する（保存時に確定した名前が残るようにする）
@@ -91,6 +97,7 @@ protected:
         }
     }
     void Finalize() override {
+        LogScope scope;
         // シーン切り替え中は即座に破棄せず、次のシーンの同名コンポーネントへの
         // 引き継ぎ候補として預ける（切り替え中でなければ登録側が即座に破棄する）
         if (buffer_ && ScreenBuffer::IsExist(buffer_)) {
@@ -102,6 +109,7 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         if (ImGui::InputText(TranslationLabel("component.screenbufferobject.name"), &name_, ImGuiInputTextFlags_EnterReturnsTrue)) {
             SetName(name_);
         }
@@ -139,11 +147,13 @@ protected:
 
     /// @brief 描画内容確認用のImGuiウィンドウ表示（ポーズ中も表示し続ける）
     void ShowPersistentImGui() override {
+        LogScope scope;
         ShowViewerWindow();
     }
 
     /// @brief 描画内容確認用のImGuiウィンドウ表示
     void ShowViewerWindow() {
+        LogScope scope;
         if (!isShowViewer_) return;
         if (!buffer_ || !ScreenBuffer::IsExist(buffer_)) return;
 
@@ -180,6 +190,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = JSON::object();
         json["name"] = name_;
         json["width"] = width_;
@@ -193,6 +204,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         const std::string loadedName = json.value("name", std::string{});
         const std::uint32_t loadedWidth = json.value("width", 1280u);
         const std::uint32_t loadedHeight = json.value("height", 720u);
@@ -253,6 +265,7 @@ protected:
 private:
     /// @brief SaveDirectory/SaveFileNamePrefix/SaveFormatとタイムスタンプから保存先パスを組み立てる
     std::string BuildAutoSavePath() const {
+        LogScope scope;
         const auto now = std::chrono::system_clock::now();
         const std::time_t t = std::chrono::system_clock::to_time_t(now);
         std::tm tm{};
@@ -274,6 +287,7 @@ private:
     /// @brief ビューアウィンドウのImGui ID用に一意な値を生成する（所属オブジェクトが
     ///        取得できない場合のフォールバック用。詳細はComputeViewerWindowIdSuffix()参照）
     static std::uint64_t GenerateViewerId() {
+        LogScope scope;
         static std::mt19937_64 rng{std::random_device{}()};
         return rng();
     }
@@ -288,6 +302,7 @@ private:
     ///          所属オブジェクトが取得できない場合（コンポーネント単体の一時的な利用時など）は、
     ///          viewerId_をフォールバックとして使う
     std::string ComputeViewerWindowIdSuffix() const {
+        LogScope scope;
         if (const EmptyObject *owner = GetOwnerObject()) {
             const auto siblings = owner->GetComponents<ScreenBufferObject>();
             for (size_t i = 0; i < siblings.size(); ++i) {

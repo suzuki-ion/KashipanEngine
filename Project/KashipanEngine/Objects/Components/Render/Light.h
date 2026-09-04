@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cstdint>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Math/Vector4.h"
 #include "Utilities/Translation.h"
@@ -37,6 +38,7 @@ public:
     COMPONENT_CATEGORY("Render")
     ~Light() override = default;
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<Light>();
         ptr->type_ = type_;
         ptr->color_ = color_;
@@ -121,6 +123,7 @@ public:
     /// @details Sphere/Disc/Tubeは半径、Rectは対角の半分に相当する値を自動的に返す。
     ///          Directional/Point/Spotはユーザー設定のShadowSoftnessをそのまま返す（既定0=硬い影）
     float GetEffectiveShadowSoftness() const noexcept {
+        LogScope scope;
         switch (type_) {
         case Type::Sphere:
         case Type::Tube:
@@ -138,6 +141,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         int t = static_cast<int>(type_);
         const char *items[] = { "Directional", "Point", "Spot", "Rect", "Sphere", "Disc", "Tube", "Box" };
         if (ImGui::Combo(TranslationLabel("component.light.type"), &t, items, 8)) type_ = static_cast<Type>(t);
@@ -216,6 +220,7 @@ protected:
     }
 #endif
     JSON SaveToJson() const override {
+        LogScope scope;
         return JSON{
             {"type", static_cast<int>(type_)}, {"color", ToJSON(color_)}, {"intensity", intensity_},
             {"radius", radius_}, {"distance", distance_}, {"decay", decay_},
@@ -229,6 +234,7 @@ protected:
         };
     }
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         type_ = static_cast<Type>(json.value("type", 0));
         if (json.contains("color")) color_ = FromJSON<Vector4>(json["color"]);
         intensity_ = json.value("intensity", 1.0f);

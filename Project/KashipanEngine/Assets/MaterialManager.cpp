@@ -193,6 +193,7 @@ MaterialManager::~MaterialManager() {
 }
 
 void MaterialManager::InitializeMaterialManager() {
+    LogScope scope;
     sMaterials.clear();
     sNameToHandle.clear();
     sFileNameToHandle.clear();
@@ -200,6 +201,7 @@ void MaterialManager::InitializeMaterialManager() {
 }
 
 void MaterialManager::FinalizeMaterialManager() {
+    LogScope scope;
     sMaterials.clear();
     sNameToHandle.clear();
     sFileNameToHandle.clear();
@@ -225,6 +227,7 @@ void MaterialManager::LoadAllFromAssetsFolder() {
 }
 
 void MaterialManager::EnsureDefaultMaterialExists() {
+    LogScope scope;
     if (GetMaterialHandleFromName("Default") != kInvalidHandle) return;
 
     // ディスク上に.matが存在しなくても、保存先の慣例パス（他マテリアルと同じMaterials/フォルダ）を
@@ -288,12 +291,14 @@ MaterialManager::MaterialHandle MaterialManager::LoadMaterial(const std::string&
 
 #if defined(USE_IMGUI)
 MaterialManager::MaterialHandle MaterialManager::LoadMaterialDynamic(const std::string &filePath) {
+    LogScope scope;
     if (!sActiveInstance) return kInvalidHandle;
     return sActiveInstance->LoadMaterial(filePath);
 }
 #endif
 
 bool MaterialManager::SaveMaterial(MaterialHandle handle, const std::string &filePath) {
+    LogScope scope;
     if (handle == kInvalidHandle) return false;
     auto it = sMaterials.find(handle);
     if (it == sMaterials.end()) return false;
@@ -352,6 +357,7 @@ bool MaterialManager::SaveMaterial(MaterialHandle handle, const std::string &fil
 }
 
 bool MaterialManager::SaveAllMaterials(const std::string &folderPath) {
+    LogScope scope;
     for (const auto &pair : sMaterials) {
         const MaterialHandle handle = pair.first;
         const MaterialEntry &entry = pair.second;
@@ -406,6 +412,7 @@ bool MaterialManager::RenameMaterialFile(const std::string &oldAssetPath, const 
 }
 
 MaterialManager::Material* MaterialManager::GetMaterial(MaterialHandle handle) {
+    LogScope scope;
     if (handle == kInvalidHandle) return nullptr;
     auto it = sMaterials.find(handle);
     if (it == sMaterials.end()) return nullptr;
@@ -413,11 +420,13 @@ MaterialManager::Material* MaterialManager::GetMaterial(MaterialHandle handle) {
 }
 
 MaterialManager::Material* MaterialManager::GetMaterial(const std::string& name) {
+    LogScope scope;
     MaterialHandle handle = GetMaterialHandleFromName(name);
     return GetMaterial(handle);
 }
 
 MaterialHandle MaterialManager::RegisterMaterial(const std::string &name, const Material &material, const std::string &filePath) {
+    LogScope scope;
     (void)name;
     MaterialEntry entry{};
     entry.fullPath = NormalizePathSlashes(filePath);
@@ -461,6 +470,7 @@ std::vector<MaterialEntry> MaterialManager::GetLoadedMaterialListEntries() {
 }
 
 const std::string &MaterialManager::GetAssetsRootPath() const noexcept {
+    LogScope scope;
     return sAssetsRootPath;
 }
 

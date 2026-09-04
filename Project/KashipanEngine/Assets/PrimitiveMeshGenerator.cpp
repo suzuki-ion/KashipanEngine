@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "Assets/ModelManager.h"
+#include "Debug/Logger.h"
 #include "Math/Vector3.h"
 #include "Utilities/MathUtils.h"
 
@@ -562,6 +563,7 @@ void RegisterMesh(const std::string &name, std::vector<Vertex> vertices, std::ve
 } // namespace
 
 void PrimitiveMeshGenerator::RegisterBuiltinPrimitiveMeshes() {
+    LogScope scope;
     {
         std::vector<Vertex> verts; std::vector<uint32_t> idx;
         GenerateUVSphere(verts, idx);

@@ -53,6 +53,7 @@ void DX12SwapChain::Destroy(Passkey<DirectXCommon>) {
 }
 
 void DX12SwapChain::DestroyInternal() {
+    LogScope scope;
     depthStencilBuffer_.reset();
     backBuffers_.clear();
     swapChain_.Reset();
@@ -63,11 +64,13 @@ void DX12SwapChain::DestroyInternal() {
 
 void DX12SwapChain::BindCommandObjects(Passkey<DirectXCommon>,
     DX12Commands *commands, int slotIndex) {
+    LogScope scope;
     slotIndex_ = slotIndex;
     commands_ = commands;
 }
 
 void DX12SwapChain::SetViewport(float topLeftX, float topLeftY, float width, float height, float minDepth, float maxDepth) {
+    LogScope scope;
     viewport_.TopLeftX = topLeftX;
     viewport_.TopLeftY = topLeftY;
     viewport_.Width = width;
@@ -77,6 +80,7 @@ void DX12SwapChain::SetViewport(float topLeftX, float topLeftY, float width, flo
 }
 
 void DX12SwapChain::SetScissor(int32_t left, int32_t top, int32_t right, int32_t bottom) {
+    LogScope scope;
     scissorRect_.left = std::max(0, left);
     scissorRect_.top = std::max(0, top);
     scissorRect_.right = std::min(width_, right);
@@ -84,6 +88,7 @@ void DX12SwapChain::SetScissor(int32_t left, int32_t top, int32_t right, int32_t
 }
 
 void DX12SwapChain::SetLetterboxViewportAndScissor(float targetAspectRatio) {
+    LogScope scope;
     targetAspectRatio_ = targetAspectRatio;
     float width = static_cast<float>(width_);
     float height = static_cast<float>(height_);
@@ -111,12 +116,14 @@ void DX12SwapChain::SetLetterboxViewportAndScissor(float targetAspectRatio) {
 }
 
 void DX12SwapChain::ResetViewportAndScissor() {
+    LogScope scope;
     targetAspectRatio_ = 0.0f;
     SetViewport(0.0f, 0.0f, static_cast<float>(width_), static_cast<float>(height_), 0.0f, 1.0f);
     SetScissor(0, 0, width_, height_);
 }
 
 void DX12SwapChain::BeginDrawInternal() {
+    LogScope scope;
     if (!isCreated_ || isDrawing_) return;
     if (!commands_) {
         Log(Translation("engine.directx.swapchain.commandlist.reset.failed"), LogSeverity::Critical);
@@ -149,6 +156,7 @@ void DX12SwapChain::BeginDrawInternal() {
 }
 
 void DX12SwapChain::EndDrawInternal() {
+    LogScope scope;
     if (!isCreated_ || !isDrawing_) return;
     backBuffers_[currentBufferIndex_]->TransitionToNext();
 
@@ -162,24 +170,29 @@ void DX12SwapChain::EndDrawInternal() {
 }
 
 void DX12SwapChain::BeginDraw(Passkey<Window>) {
+    LogScope scope;
     BeginDrawInternal();
 }
 
 #if defined(USE_IMGUI)
 void DX12SwapChain::BeginDraw(Passkey<ImGuiManager>) {
+    LogScope scope;
     BeginDrawInternal();
 }
 #endif
 
 void DX12SwapChain::EndDraw(Passkey<Window>) {
+    LogScope scope;
     EndDrawInternal();
 }
 
 void DX12SwapChain::EndDraw(Passkey<DirectXCommon>) {
+    LogScope scope;
     EndDrawInternal();
 }
 
 void DX12SwapChain::Present(Passkey<DirectXCommon>) {
+    LogScope scope;
     if (!isCreated_) return;
     UINT syncInterval = 1;
     UINT presentFlags = 0;
@@ -212,11 +225,13 @@ void DX12SwapChain::ResizeSignalInternal(int32_t width, int32_t height) {
 }
 
 void DX12SwapChain::ResizeSignal(Passkey<Window>, int32_t width, int32_t height) {
+    LogScope scope;
     ResizeSignalInternal(width, height);
 }
 
 #if defined(USE_IMGUI)
 void DX12SwapChain::ResizeSignal(Passkey<ImGuiManager>, int32_t width, int32_t height) {
+    LogScope scope;
     ResizeSignalInternal(width, height);
 }
 #endif
@@ -295,6 +310,7 @@ void DX12SwapChain::CreateSwapChainForHWND() {
 }
 
 void DX12SwapChain::CreateSwapChainForComposition() {
+    LogScope scope;
     LONG exStyle = GetWindowLong(hwnd_, GWL_EXSTYLE);
     exStyle |= WS_EX_NOREDIRECTIONBITMAP;
     SetWindowLong(hwnd_, GWL_EXSTYLE, exStyle);
@@ -346,6 +362,7 @@ void DX12SwapChain::CreateSwapChainForComposition() {
 }
 
 void DX12SwapChain::SetViewportAndScissorRect() {
+    LogScope scope;
     viewport_.TopLeftX = 0.0f;
     viewport_.TopLeftY = 0.0f;
     viewport_.Width = static_cast<FLOAT>(width_);
@@ -360,6 +377,7 @@ void DX12SwapChain::SetViewportAndScissorRect() {
 }
 
 void DX12SwapChain::CreateBackBuffers() {
+    LogScope scope;
     backBuffers_.resize(bufferCount_);
     rtvHandles_.resize(bufferCount_);
     for (int32_t i = 0; i < bufferCount_; ++i) {
@@ -395,6 +413,7 @@ void DX12SwapChain::CreateBackBuffers() {
 }
 
 void DX12SwapChain::CreateDepthStencilBuffer() {
+    LogScope scope;
     depthStencilBuffer_ = std::make_unique<DepthStencilResource>(
         static_cast<UINT>(width_), static_cast<UINT>(height_),
         DXGI_FORMAT_D24_UNORM_S8_UINT, 1.0f, static_cast<UINT8>(0));

@@ -2,6 +2,7 @@
 #ifdef USE_IMGUI
 #include <imgui.h>
 
+#include "Debug/Logger.h"
 #include "Objects/EmptyObject.h"
 #include "Scene/SceneContext.h"
 #include "Scene/Editor/SceneObjectPayload.h"
@@ -28,6 +29,7 @@ const char *ToString(RenderTargetKind kind) {
 } // namespace
 
 bool HasRenderTargetComponent(EmptyObject *object) {
+    LogScope scope;
     if (!object) return false;
     return object->HasComponents<NormalWindowObject>() > 0 ||
            object->HasComponents<OverlayWindowObject>() > 0 ||
@@ -36,6 +38,7 @@ bool HasRenderTargetComponent(EmptyObject *object) {
 }
 
 bool ShowSelector(const char *label, SceneContext *sceneContext, UUID128 &targetObjectID, bool allowNone, bool restrictToRenderTargets) {
+    LogScope scope;
     if (!sceneContext) return false;
     bool changed = false;
 
@@ -83,6 +86,7 @@ bool ShowSelector(const char *label, SceneContext *sceneContext, UUID128 &target
 }
 
 void ShowRenderTargetFilters(SceneContext *sceneContext, const UUID128 &targetObjectID, std::unordered_set<std::string> &excludedRenderTargetNames) {
+    LogScope scope;
     if (!sceneContext || !targetObjectID.IsValid()) return;
     EmptyObject *targetObject = sceneContext->GetSceneObject(targetObjectID);
     if (!targetObject) return;

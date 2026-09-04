@@ -68,6 +68,7 @@ PipelineManager::PipelineManager(Passkey<GraphicsEngine>, ID3D12Device *device, 
 }
 
 PipelineManager::~PipelineManager() {
+    LogScope scope;
 #if defined(USE_IMGUI)
     if (sActiveInstance == this) sActiveInstance = nullptr;
 #endif
@@ -75,16 +76,19 @@ PipelineManager::~PipelineManager() {
 
 #if defined(USE_IMGUI)
 bool PipelineManager::TryGetOrCreatePipeline(const std::string &pipelineName) {
+    LogScope scope;
     if (!sActiveInstance) return false;
     return sActiveInstance->GetOrCreatePipeline(pipelineName);
 }
 
 const MaterialLayout *PipelineManager::TryGetMaterialLayout(const std::string &pipelineName) {
+    LogScope scope;
     if (!sActiveInstance || !sActiveInstance->HasPipeline(pipelineName)) return nullptr;
     return &sActiveInstance->GetPipeline(pipelineName).GetMaterialLayout();
 }
 
 std::string PipelineManager::TryGetShaderBaseDir() {
+    LogScope scope;
     if (!sActiveInstance) return {};
     const auto shaderFolderIt = sActiveInstance->presetFolderNames_.find("Shader");
     if (shaderFolderIt == sActiveInstance->presetFolderNames_.end()) return {};
@@ -107,6 +111,7 @@ void PipelineManager::ReloadPipelines() {
 
 #if defined(USE_IMGUI)
 bool PipelineManager::TryReloadPipelines() {
+    LogScope scope;
     if (!sActiveInstance) return false;
     sActiveInstance->ReloadPipelines();
     return true;
@@ -222,6 +227,7 @@ std::vector<std::string> sComputePipelineNames;
 std::unordered_map<std::string, std::string> sPipelineCategories;
 
 std::vector<std::string> FilterNamesByCategory(const std::vector<std::string> &names, const std::string &category) {
+    LogScope scope;
     std::vector<std::string> filtered;
     bool anyCategorized = false;
     for (const auto &name : names) {
@@ -239,18 +245,22 @@ std::vector<std::string> FilterNamesByCategory(const std::vector<std::string> &n
 } // namespace
 
 const std::vector<std::string> &PipelineManager::GetLoadedRenderPipelineNames() {
+    LogScope scope;
     return sRenderPipelineNames;
 }
 
 const std::vector<std::string> &PipelineManager::GetLoadedComputePipelineNames() {
+    LogScope scope;
     return sComputePipelineNames;
 }
 
 std::vector<std::string> PipelineManager::GetLoadedRenderPipelineNames(const std::string &category) {
+    LogScope scope;
     return FilterNamesByCategory(sRenderPipelineNames, category);
 }
 
 std::vector<std::string> PipelineManager::GetLoadedComputePipelineNames(const std::string &category) {
+    LogScope scope;
     return FilterNamesByCategory(sComputePipelineNames, category);
 }
 

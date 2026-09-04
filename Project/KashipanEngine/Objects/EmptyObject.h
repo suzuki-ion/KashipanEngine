@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include "Debug/Logger.h"
 #include "Objects/IObjectComponent.h"
 #include "Objects/ComponentPool.h"
 #include "Math/Matrix4x4.h"
@@ -32,15 +33,16 @@ public:
     ///          objectID・prefabNodeIDは複製されない（このオブジェクト自身のものを維持する）
     void CopyStateFrom(Passkey<Scene>, const EmptyObject &source);
 
-    void InitializeInterface(Passkey<Scene>) { Initialize(); }
-    void FinalizeInterface(Passkey<Scene>) { Finalize(); }
-    void UpdateInterface(Passkey<Scene>) { Update(); }
+    void InitializeInterface(Passkey<Scene>) { LogScope scope; Initialize(); }
+    void FinalizeInterface(Passkey<Scene>) { LogScope scope; Finalize(); }
+    void UpdateInterface(Passkey<Scene>) { LogScope scope; Update(); }
 
     void SetName(const std::string &name) { name_ = name; }
     const std::string &GetName() const { return name_; }
 
     /// @brief タグを設定する（文字列からハッシュ化される。空文字で未設定に戻る）
     void SetTag(const std::string &tagName) {
+        LogScope scope;
         tagName_ = tagName;
         tag_ = Tag(tagName);
     }
@@ -58,6 +60,7 @@ public:
     /// @return 一致するコンポーネントのリスト（存在しない場合は空のリスト）
     template<typename T>
     std::vector<T *> GetComponents() const {
+        LogScope scope;
         static_assert(std::is_base_of_v<IObjectComponent, T>, "T must derive from IObjectComponent");
         std::vector<T *> result;
         size_t typeIndex = IObjectComponent::GetComponentTypeID<T>();
@@ -82,6 +85,7 @@ public:
     /// @return 一致するコンポーネント（存在しない場合は nullptr）
     template<typename T>
     T *GetComponent() const {
+        LogScope scope;
         static_assert(std::is_base_of_v<IObjectComponent, T>, "T must derive from IObjectComponent");
         size_t typeIndex = IObjectComponent::GetComponentTypeID<T>();
         if (typeIndex >= componentsIndexByType_.size()) return nullptr;
@@ -103,6 +107,7 @@ public:
     /// @param component 対象コンポーネントのポインタ
     /// @return 追加順ID（存在しない場合は MAXSIZE_T）
     size_t GetComponentAddedID(const IObjectComponent *component) const {
+        LogScope scope;
         auto it = componentsIndexByPointer_.find(component);
         if (it == componentsIndexByPointer_.end() || it->second >= components_.size()) return MAXSIZE_T;
         return components_[it->second].second;
@@ -117,6 +122,7 @@ public:
     /// @return 一致するコンポーネントの個数
     template<typename T>
     size_t HasComponents() const {
+        LogScope scope;
         static_assert(std::is_base_of_v<IObjectComponent, T>, "T must derive from IObjectComponent");
         size_t typeIndex = IObjectComponent::GetComponentTypeID<T>();
         if (typeIndex >= componentsIndexByType_.size()) return 0;
@@ -135,6 +141,7 @@ public:
     ///          動かし続けたい」場合に使う（例: 敵撃破時、パーティクル再生を待つ間だけ
     ///          スクリプトを生かしたまま他の全コンポーネントを止めたい、等）
     void SetComponentsActiveExceptTransformAndScript(bool active) {
+        LogScope scope;
         for (auto &[component, addedID] : components_) {
             if (!component) continue;
             const std::string &type = component->GetComponentType();
@@ -161,6 +168,7 @@ public:
     /// @return 追加に成功した場合はコンポーネントのポインタ、失敗した場合は nullptr
     template<typename T>
     T *AddComponent(std::unique_ptr<T> comp) {
+        LogScope scope;
         static_assert(std::is_base_of_v<IObjectComponent, T>, "T must derive from IObjectComponent");
         return static_cast<T *>(AddComponent(std::unique_ptr<IObjectComponent>(std::move(comp))));
     }
@@ -171,6 +179,7 @@ public:
     /// @return 追加に成功した場合はコンポーネントのポインタ、失敗した場合は nullptr
     template<typename T, typename... Args>
     T *AddComponent(Args&&... args) {
+        LogScope scope;
         static_assert(std::is_base_of_v<IObjectComponent, T>, "T must derive from IObjectComponent");
         if constexpr (sizeof...(Args) == 0) {
             // 引数無し（実質全ての呼び出し箇所がこちら）の場合は、プールへ直接デフォルト構築する
@@ -199,6 +208,7 @@ public:
     /// @return 削除に成功した場合は true
     template<typename T>
     bool RemoveComponent() {
+        LogScope scope;
         static_assert(std::is_base_of_v<IObjectComponent, T>, "T must derive from IObjectComponent");
         T *comp = GetComponent<T>();
         if (!comp) return false;
@@ -209,6 +219,7 @@ public:
     /// @return 削除に成功した場合は true
     template <typename T>
     bool RemoveComponents() {
+        LogScope scope;
         static_assert(std::is_base_of_v<IObjectComponent, T>, "T must derive from IObjectComponent");
         bool allRemoved = true;
         while (true) {
@@ -284,6 +295,7 @@ public:
 
     /// @brief 所有コンポーネント単体をjsonへ保存（type と data を含む）
     JSON SaveComponentToJson(const IObjectComponent *component) const {
+        LogScope scope;
         JSON json = JSON::object();
         auto *comp = GetComponent(component);
         if (!comp) return json;
@@ -293,6 +305,7 @@ public:
     }
     /// @brief jsonからコンポーネントを生成して追加する
     IObjectComponent *AddComponentFromJson(const JSON &json) {
+        LogScope scope;
         const std::string type = json.value("type", "");
         if (type.empty()) return nullptr;
         auto comp = CreateObjectComponentByType(type);
@@ -304,6 +317,7 @@ public:
     }
     /// @brief 所有コンポーネントの状態をjsonから復元する
     bool LoadComponentFromJson(IObjectComponent *component, const JSON &json) {
+        LogScope scope;
         auto *comp = GetComponent(component);
         if (!comp) return false;
         const JSON &data = json.contains("data") ? json["data"] : json;
@@ -313,6 +327,7 @@ public:
 #if defined(USE_IMGUI)
     /// @brief 所有コンポーネントの ImGui 表示（ウィンドウの Begin/End は呼ばない）
     void ShowComponentImGui(IObjectComponent *component) {
+        LogScope scope;
         if (GetComponent(component)) {
             component->ShowImGuiInterface(Passkey<EmptyObject>{});
         }
@@ -328,6 +343,7 @@ public:
     ///          呼び出し前に一覧をスナップショットし、呼び出し直前に addedID で現在も
     ///          同一コンポーネントが同じ位置に存在するかを再確認してから呼び出す
     void ShowPersistentImGui(Passkey<Scene>) {
+        LogScope scope;
         if (!IsActive()) return;
         std::vector<std::pair<IObjectComponent *, size_t>> snapshot = components_;
         for (const auto &[component, addedID] : snapshot) {

@@ -6,6 +6,7 @@
 
 #include "Core/WindowsAPI.h"
 #include "Core/DirectXCommon.h"
+#include "Debug/Logger.h"
 #include "Graphics/GraphicsEngine.h"
 #include "Assets/TextureManager.h"
 #include "Assets/FontManager.h"
@@ -38,6 +39,7 @@ public:
         InputCommand *inputCommand = nullptr;
 
         void SetGameLoopEndCondition(const std::function<bool()> &func) const {
+            LogScope scope;
             if (!engine) return;
             engine->SetGameLoopEndCondition(func);
         }

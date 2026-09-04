@@ -3,6 +3,7 @@
 #include <KashipanEngine.h>
 
 Plugin::ThreadWorker::ThreadWorker() {
+	KashipanEngine::LogScope scope;
 	// スレッドを起動
 	isRunning_ = true;
 	workerThread_ = std::thread([this]() {
@@ -41,6 +42,7 @@ Plugin::ThreadWorker::ThreadWorker() {
 }
 
 Plugin::ThreadWorker::~ThreadWorker() {
+	KashipanEngine::LogScope scope;
 	// スレッドを停止
 	isRunning_ = false;
 	condition_.notify_all(); // 待機中のスレッドを起こす

@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Assets/MaterialManager.h"
 #include "Assets/ModelManager.h"
@@ -96,6 +97,7 @@ public:
     ~SkinnedMeshRenderer() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<SkinnedMeshRenderer>();
         ptr->targetObjectID_ = targetObjectID_;
         ptr->pipelineName_ = pipelineName_;
@@ -173,11 +175,13 @@ public:
     void SetTargetObject(const UUID128 &targetObjectID) { targetObjectID_ = targetObjectID; }
     const UUID128 &GetTargetObjectID() const noexcept { return targetObjectID_; }
     EmptyObject *GetTargetObject() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext || !targetObjectID_.IsValid()) return nullptr;
         return sceneContext->GetSceneObject(targetObjectID_);
     }
     bool IsRenderTargetIncluded(const IRenderTarget *target) const {
+        LogScope scope;
         if (!target) return false;
         return !excludedRenderTargetNames_.contains(target->GetRenderTargetName());
     }
@@ -206,6 +210,7 @@ public:
     size_t GetMaterialSlotCount() const noexcept { return materialNames_.size(); }
     /// @brief マテリアルスロット数を変更する（追加分は最後のスロットと同じマテリアルで埋める）
     void SetMaterialSlotCount(size_t count) {
+        LogScope scope;
         if (count < 1) count = 1;
         if (count == materialNames_.size()) return;
         materialNames_.resize(count, materialNames_.back());
@@ -213,6 +218,7 @@ public:
     }
     /// @brief 指定スロットのマテリアル名を設定する（スロットが足りない場合は拡張される）
     void SetMaterialNameAt(size_t slot, const std::string &materialName) {
+        LogScope scope;
         if (slot >= materialNames_.size()) SetMaterialSlotCount(slot + 1);
         materialNames_[slot] = materialName;
         materialHandles_[slot] = MaterialManager::kInvalidHandle;
@@ -224,6 +230,7 @@ public:
     /// @brief 指定スロットのマテリアルハンドルを取得（未解決の場合はマテリアル名から解決を試みる）
     /// @details スロット数を超えるサブメッシュは最後のスロットのマテリアルで描画される（Unityと同様）
     MaterialManager::MaterialHandle GetMaterialHandleAt(size_t slot) const noexcept {
+        LogScope scope;
         const size_t index = std::min(slot, materialNames_.size() - 1);
         if (materialHandles_[index] == MaterialManager::kInvalidHandle && !materialNames_[index].empty()) {
             materialHandles_[index] = MaterialManager::GetMaterialHandleFromName(materialNames_[index]);
@@ -246,6 +253,7 @@ public:
     /// @details アニメーションの再生・スケルトン姿勢の更新はAnimatorの責務。
     ///          Animatorが無い場合、このコンポーネントはバインドポーズのまま描画する
     Animator *GetAnimator() const {
+        LogScope scope;
         auto *objectContext = GetOwnerObjectContext();
         return objectContext ? objectContext->GetComponent<Animator>() : nullptr;
     }
@@ -253,6 +261,7 @@ public:
     /// @brief このコンポーネント（が参照するAnimator）専用のスケルトンインスタンスの姿勢を
     ///        バインドポーズへ戻す（ゲームループ停止時にSceneRenderer経由で呼ばれる）
     void ResetAnimationToBindPose() {
+        LogScope scope;
         if (auto *animator = GetAnimator()) animator->ResetToBindPose();
     }
 
@@ -261,6 +270,7 @@ public:
     //==================================================
 
     ModelManager::ModelHandle GetMeshHandle() const {
+        LogScope scope;
         auto *objectContext = GetOwnerObjectContext();
         if (!objectContext) return ModelManager::kInvalidHandle;
         auto *meshFilter = objectContext->GetComponent<MeshFilter>();
@@ -269,6 +279,7 @@ public:
     }
 
     Matrix4x4 GetWorldMatrix() const {
+        LogScope scope;
         // Root Boneが設定されている場合は、そのオブジェクトのTransformに沿って動く（Unityと同様。
         // Root Boneの設定自体はAnimatorが保持する）
         if (auto *animator = GetAnimator()) {
@@ -332,6 +343,7 @@ public:
     /// @details ゲームループが停止/一時停止中でも描画自体は継続されるため、Update()ではなく
     ///          Rendererから毎フレーム直接呼ばれる（CameraRenderer::RefreshConstantBufferと同じ考え方）。
     void RefreshSkinningResources(Passkey<Renderer>) {
+        LogScope scope;
         RebuildSkinningResourcesIfNeeded();
         UpdateSkinningBuffers();
     }
@@ -349,6 +361,7 @@ protected:
 
 private:
     SceneRenderer *GetOrAddSceneRenderer() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext) return nullptr;
         auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();

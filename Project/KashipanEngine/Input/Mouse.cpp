@@ -1,5 +1,7 @@
 #include "Input/Mouse.h"
 
+#include "Debug/Logger.h"
+
 #include <GameInput.h>
 
 #include <algorithm>
@@ -20,10 +22,12 @@ IGameInput* sGameInput = nullptr;
 Mouse::Mouse(Passkey<Input>) {}
 
 Mouse::~Mouse() {
+    LogScope scope;
     Finalize();
 }
 
 void Mouse::Initialize() {
+    LogScope scope;
     if (!sGameInput) {
         const HRESULT hr = GameInputCreate(&sGameInput);
         if (FAILED(hr)) {
@@ -52,6 +56,7 @@ void Mouse::Initialize() {
 }
 
 void Mouse::Finalize() {
+    LogScope scope;
     initialized_ = false;
 
     currentButtons_.fill(0);
@@ -68,6 +73,7 @@ void Mouse::Finalize() {
 }
 
 void Mouse::Update() {
+    LogScope scope;
     previousButtons_ = currentButtons_;
     previousDeltaX_ = currentDeltaX_;
     previousDeltaY_ = currentDeltaY_;
@@ -118,56 +124,69 @@ void Mouse::Update() {
 }
 
 bool Mouse::IsButtonDown(int button) const {
+    LogScope scope;
     if (button < 0 || button >= 8) return false;
     return (currentButtons_[button] & 0x80) != 0;
 }
 
 bool Mouse::WasButtonDown(int button) const {
+    LogScope scope;
     if (button < 0 || button >= 8) return false;
     return (previousButtons_[button] & 0x80) != 0;
 }
 
 bool Mouse::IsButtonTrigger(int button) const {
+    LogScope scope;
     return IsButtonDown(button) && !WasButtonDown(button);
 }
 
 bool Mouse::IsButtonRelease(int button) const {
+    LogScope scope;
     return !IsButtonDown(button) && WasButtonDown(button);
 }
 
 int Mouse::GetDeltaX() const {
+    LogScope scope;
     return currentDeltaX_;
 }
 
 int Mouse::GetDeltaY() const {
+    LogScope scope;
     return currentDeltaY_;
 }
 
 int Mouse::GetWheel() const {
+    LogScope scope;
     return currentWheel_;
 }
 
 int Mouse::GetWheelValue() const {
+    LogScope scope;
     return currentWheelValue_;
 }
 
 int Mouse::GetPrevWheel() const {
+    LogScope scope;
     return previousWheel_;
 }
 
 int Mouse::GetPrevWheelValue() const {
+    LogScope scope;
     return previousWheelValue_;
 }
 
 int Mouse::GetPrevDeltaX() const {
+    LogScope scope;
     return previousDeltaX_;
 }
 
 int Mouse::GetPrevDeltaY() const {
+    LogScope scope;
     return previousDeltaY_;
 }
 
 POINT Mouse::GetPos(HWND hwnd) const {
+    LogScope scope;
     POINT p = currentPosScreen;
     if (hwnd) {
         ScreenToClient(hwnd, &p);
@@ -180,6 +199,7 @@ POINT Mouse::GetPos(HWND hwnd) const {
 }
 
 POINT Mouse::GetPrevPos(HWND hwnd) const {
+    LogScope scope;
     if (!hwnd) {
         return previousPosScreen;
     }
@@ -198,42 +218,52 @@ POINT Mouse::GetPrevPos(HWND hwnd) const {
 }
 
 int Mouse::GetX(HWND hwnd) const {
+    LogScope scope;
     return GetPos(hwnd).x;
 }
 
 int Mouse::GetY(HWND hwnd) const {
+    LogScope scope;
     return GetPos(hwnd).y;
 }
 
 int Mouse::GetPrevX(HWND hwnd) const {
+    LogScope scope;
     return GetPrevPos(hwnd).x;
 }
 
 int Mouse::GetPrevY(HWND hwnd) const {
+    LogScope scope;
     return GetPrevPos(hwnd).y;
 }
 
 POINT Mouse::GetPos(const Window* window) const {
+    LogScope scope;
     return GetPos(window ? window->GetWindowHandle() : nullptr);
 }
 
 POINT Mouse::GetPrevPos(const Window* window) const {
+    LogScope scope;
     return GetPrevPos(window ? window->GetWindowHandle() : nullptr);
 }
 
 int Mouse::GetX(const Window* window) const {
+    LogScope scope;
     return GetX(window ? window->GetWindowHandle() : nullptr);
 }
 
 int Mouse::GetY(const Window* window) const {
+    LogScope scope;
     return GetY(window ? window->GetWindowHandle() : nullptr);
 }
 
 int Mouse::GetPrevX(const Window* window) const {
+    LogScope scope;
     return GetPrevX(window ? window->GetWindowHandle() : nullptr);
 }
 
 int Mouse::GetPrevY(const Window* window) const {
+    LogScope scope;
     return GetPrevY(window ? window->GetWindowHandle() : nullptr);
 }
 

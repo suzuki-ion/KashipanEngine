@@ -5,15 +5,18 @@ namespace KashipanEngine {
 
 RenderTargetResource::RenderTargetResource(UINT width, UINT height, DXGI_FORMAT format, ID3D12Resource *existingResource, const FLOAT clearColor[4])
     : IGraphicsResource(ResourceViewType::RTV) {
+    LogScope scope;
     Initialize(width, height, format, existingResource, clearColor);
 }
 
 bool RenderTargetResource::Recreate(UINT width, UINT height, DXGI_FORMAT format, ID3D12Resource *existingResource, const FLOAT clearColor[4]) {
+    LogScope scope;
     ResetResourceForRecreate();
     return Initialize(width, height, format, existingResource, clearColor);
 }
 
 void RenderTargetResource::ClearRenderTargetView() const {
+    LogScope scope;
     auto *cl = GetCommandList();
     if (!cl || !GetDescriptorHandleInfo()) {
         return;

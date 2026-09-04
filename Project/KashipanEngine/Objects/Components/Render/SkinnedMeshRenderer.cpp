@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstring>
 
+#include "Debug/Logger.h"
 #include "Graphics/Resources/ConstantBufferResource.h"
 #include "Graphics/Resources/RWStructuredBufferResource.h"
 #include "Graphics/Resources/StructuredBufferResource.h"
@@ -50,6 +51,7 @@ struct BlendShapeDeltaCPU {
 } // namespace
 
 void SkinnedMeshRenderer::Initialize() {
+    LogScope scope;
     auto *sceneRenderer = GetOrAddSceneRenderer();
     if (sceneRenderer) {
         sceneRenderer->RegisterSkinnedMeshRenderer(this);
@@ -58,6 +60,7 @@ void SkinnedMeshRenderer::Initialize() {
 }
 
 void SkinnedMeshRenderer::Finalize() {
+    LogScope scope;
     auto *sceneContext = GetOwnerSceneContext();
     auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
     if (sceneRenderer) {
@@ -66,6 +69,7 @@ void SkinnedMeshRenderer::Finalize() {
 }
 
 void SkinnedMeshRenderer::RebuildSkinningResourcesIfNeeded() {
+    LogScope scope;
     const auto meshHandle = GetMeshHandle();
     if (meshHandle == ModelManager::kInvalidHandle) return;
     if (meshHandle == lastMeshHandle_ && sourceVerticesBuffer_) return;
@@ -196,6 +200,7 @@ void SkinnedMeshRenderer::RebuildSkinningResourcesIfNeeded() {
 }
 
 void SkinnedMeshRenderer::UpdateSkinningBuffers() {
+    LogScope scope;
     if (!boneMatricesBuffer_ || !skinningConstants_) return;
 
     // jointNames_が空（ボーンを持たないメッシュ）の場合でも、gVertexCount等の定数と
@@ -258,6 +263,7 @@ void SkinnedMeshRenderer::UpdateSkinningBuffers() {
 }
 
 void SkinnedMeshRenderer::SetBlendShapeWeight(const std::string &name, float weight) {
+    LogScope scope;
     // BlendShape一覧はメッシュ側から自動的に同期されるため、存在する名前のウェイトのみ更新する
     for (auto &bs : blendShapes_) {
         if (bs.name == name) {
@@ -268,6 +274,7 @@ void SkinnedMeshRenderer::SetBlendShapeWeight(const std::string &name, float wei
 }
 
 float SkinnedMeshRenderer::GetBlendShapeWeight(const std::string &name) const {
+    LogScope scope;
     for (const auto &bs : blendShapes_) {
         if (bs.name == name) return bs.weight;
     }
@@ -276,6 +283,7 @@ float SkinnedMeshRenderer::GetBlendShapeWeight(const std::string &name) const {
 
 #if defined(USE_IMGUI)
 std::vector<SkinnedMeshRenderer::DebugJointInfo> SkinnedMeshRenderer::GetDebugJointInfos() {
+    LogScope scope;
     std::vector<DebugJointInfo> result;
     auto *animator = GetAnimator();
     if (!animator) return result;
@@ -299,6 +307,7 @@ std::vector<SkinnedMeshRenderer::DebugJointInfo> SkinnedMeshRenderer::GetDebugJo
 }
 
 void SkinnedMeshRenderer::ShowImGui() {
+    LogScope scope;
     TargetObjectSelector::ShowSelector(TranslationLabel("component.common.target"), GetOwnerSceneContext(), targetObjectID_);
     TargetObjectSelector::ShowRenderTargetFilters(GetOwnerSceneContext(), targetObjectID_, excludedRenderTargetNames_);
     ImGuiCustom::SelectString(TranslationLabel("component.skinnedmeshrenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames("3D"));
@@ -464,6 +473,7 @@ void SkinnedMeshRenderer::ShowImGui() {
 #endif
 
 JSON SkinnedMeshRenderer::SaveToJson() const {
+    LogScope scope;
     JSON json = JSON::object();
     json["targetObjectID"] = ToJSON(targetObjectID_);
     json["pipelineName"] = pipelineName_;
@@ -496,6 +506,7 @@ JSON SkinnedMeshRenderer::SaveToJson() const {
 }
 
 bool SkinnedMeshRenderer::LoadFromJson(const JSON &json) {
+    LogScope scope;
     if (json.contains("targetObjectID")) {
         targetObjectID_ = FromJSON<UUID128>(json["targetObjectID"]);
     } else {

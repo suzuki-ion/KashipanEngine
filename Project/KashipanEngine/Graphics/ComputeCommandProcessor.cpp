@@ -1,10 +1,12 @@
 #include "ComputeCommandProcessor.h"
 #include "Core/DirectXCommon.h"
 #include "Core/DirectX/DX12Commands.h"
+#include "Debug/Logger.h"
 
 namespace KashipanEngine {
 
 void ComputeCommandProcessor::Initialize(Passkey<GameEngine>, DirectXCommon *dx) {
+    LogScope scope;
     sDirectXCommon_ = dx;
     if (!sDirectXCommon_ || sCommandSlotIndex_ >= 0) return;
     sCommandSlotIndex_ = sDirectXCommon_->AcquireCommandObjects(Passkey<ComputeCommandProcessor>{});
@@ -12,6 +14,7 @@ void ComputeCommandProcessor::Initialize(Passkey<GameEngine>, DirectXCommon *dx)
 }
 
 void ComputeCommandProcessor::Finalize(Passkey<GameEngine>) {
+    LogScope scope;
     if (sDirectXCommon_ && sCommandSlotIndex_ >= 0) {
         sDirectXCommon_->ReleaseCommandObjects(Passkey<ComputeCommandProcessor>{}, sCommandSlotIndex_);
     }
@@ -22,15 +25,18 @@ void ComputeCommandProcessor::Finalize(Passkey<GameEngine>) {
 }
 
 void ComputeCommandProcessor::BeginFrame(Passkey<Renderer>) {
+    LogScope scope;
     sFrameActive_ = true;
 }
 
 ID3D12GraphicsCommandList *ComputeCommandProcessor::GetCommandList(Passkey<Renderer>) {
+    LogScope scope;
     if (!sFrameActive_ || !sCommands_) return nullptr;
     return sCommands_->BeginRecord();
 }
 
 void ComputeCommandProcessor::EndFrame(Passkey<Renderer>) {
+    LogScope scope;
     if (sCommands_ && sCommands_->IsRecording() && sCommands_->EndRecord() && sDirectXCommon_) {
         sDirectXCommon_->AddRecordCommandList(Passkey<ComputeCommandProcessor>{}, sCommands_->GetCommandList());
     }

@@ -7,6 +7,7 @@
 #include <typeindex>
 #include <type_traits>
 
+#include "Debug/Logger.h"
 #include "Objects/EmptyObject.h"
 #include "Scene/SceneContext.h"
 #include "Utilities/Passkeys.h"
@@ -64,20 +65,20 @@ public:
     /// @brief 既存コンポーネントの追加
     /// @param comp 既存コンポーネント（ムーブされる）
     /// @return 追加に成功した場合はコンポーネントのポインタ、失敗した場合は nullptr
-    IObjectComponent *AddComponent(std::unique_ptr<IObjectComponent> comp) { return owner_->AddComponent(std::move(comp)); }
+    IObjectComponent *AddComponent(std::unique_ptr<IObjectComponent> comp) { LogScope scope; return owner_->AddComponent(std::move(comp)); }
     /// @brief 既存コンポーネントの追加
     /// @tparam T コンポーネントの型
     /// @param comp 既存コンポーネント（ムーブされる）
     /// @return 追加に成功した場合はコンポーネントのポインタ、失敗した場合は nullptr
     template<typename T>
-    T *AddComponent(std::unique_ptr<T> comp) { return owner_->AddComponent<T>(std::move(comp)); }
+    T *AddComponent(std::unique_ptr<T> comp) { LogScope scope; return owner_->AddComponent<T>(std::move(comp)); }
     /// @brief コンポーネントの追加（生成）
     /// @tparam T コンポーネントの型
     /// @tparam Args コンポーネントのコンストラクタ引数の型
     /// @param args コンポーネントのコンストラクタ引数
     /// @return 追加に成功した場合はコンポーネントのポインタ、失敗した場合は nullptr
     template<typename T, typename... Args>
-    T *AddComponent(Args&&... args) { return owner_->AddComponent<T>(std::forward<Args>(args)...); }
+    T *AddComponent(Args&&... args) { LogScope scope; return owner_->AddComponent<T>(std::forward<Args>(args)...); }
 
     //==================================================
     // コンポーネント削除系メソッド
@@ -86,17 +87,17 @@ public:
     /// @brief ポインタからコンポーネントを削除
     /// @param component 削除したいコンポーネントのポインタ
     /// @return 削除に成功した場合は true
-    bool RemoveComponent(const IObjectComponent *component) { return owner_->RemoveComponent(component); }
+    bool RemoveComponent(const IObjectComponent *component) { LogScope scope; return owner_->RemoveComponent(component); }
     /// @brief 型から一致する最初のコンポーネントを削除
     /// @tparam T 削除したいコンポーネントの型
     /// @return 削除に成功した場合は true
     template<typename T>
-    bool RemoveComponent() { return owner_->RemoveComponent<T>(); }
+    bool RemoveComponent() { LogScope scope; return owner_->RemoveComponent<T>(); }
     /// @brief 型から一致する全てのコンポーネントを削除
     /// @tparam T 削除したいコンポーネントの型
     /// @return 削除に成功した場合は true
     template <typename T>
-    bool RemoveComponents() { return owner_->RemoveComponents<T>(); }
+    bool RemoveComponents() { LogScope scope; return owner_->RemoveComponents<T>(); }
 
     /// @brief オブジェクトIDの取得
     const UUID128 &GetObjectID() const { return owner_->GetObjectID(); }

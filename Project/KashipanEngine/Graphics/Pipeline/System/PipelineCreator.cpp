@@ -15,6 +15,7 @@
 namespace KashipanEngine {
 namespace {
 D3D12_PRIMITIVE_TOPOLOGY ToD3DTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE type) {
+    LogScope scope;
     switch (type) {
         case D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT: return D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
         case D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE: return D3D_PRIMITIVE_TOPOLOGY_LINELIST;
@@ -24,6 +25,7 @@ D3D12_PRIMITIVE_TOPOLOGY ToD3DTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE type) {
     }
 }
 DXGI_FORMAT InferFormatFromMaskAndType(BYTE mask, D3D_REGISTER_COMPONENT_TYPE compType) {
+    LogScope scope;
     int compCount = 0;
     if (mask & 0x1) ++compCount;
     if (mask & 0x2) ++compCount;
@@ -41,11 +43,13 @@ DXGI_FORMAT InferFormatFromMaskAndType(BYTE mask, D3D_REGISTER_COMPONENT_TYPE co
     }
 }
 std::string HrToHex(HRESULT hr) {
+    LogScope scope;
     std::stringstream ss; ss << "0x" << std::hex << std::uppercase << static_cast<unsigned int>(hr);
     return ss.str();
 }
 
 ShaderStage StageFromName(const std::string &stageName) {
+    LogScope scope;
     if (stageName == "Vertex") return ShaderStage::Vertex;
     if (stageName == "Pixel") return ShaderStage::Pixel;
     if (stageName == "Geometry") return ShaderStage::Geometry;
@@ -56,6 +60,7 @@ ShaderStage StageFromName(const std::string &stageName) {
 }
 
 D3D12_SHADER_VISIBILITY VisibilityFromStage(ShaderStage stage) {
+    LogScope scope;
     switch (stage) {
         case ShaderStage::Vertex: return D3D12_SHADER_VISIBILITY_VERTEX;
         case ShaderStage::Pixel: return D3D12_SHADER_VISIBILITY_PIXEL;
@@ -70,6 +75,7 @@ D3D12_SHADER_VISIBILITY VisibilityFromStage(ShaderStage stage) {
 } // namespace
 
 Microsoft::WRL::ComPtr<ID3D12RootSignature> PipelineCreator::GetOrCreateRootSignature(ID3DBlob *signatureBlob) {
+    LogScope scope;
     std::string key(static_cast<const char *>(signatureBlob->GetBufferPointer()), signatureBlob->GetBufferSize());
     auto it = rootSignatureCache_.find(key);
     if (it != rootSignatureCache_.end()) return it->second;
@@ -480,6 +486,7 @@ bool PipelineCreator::CreateCompute(const Json &json, PipelineInfo &outInfo) {
 }
 
 void PipelineCreator::BuildShaderVariableBinder(PipelineInfo &outInfo, const std::vector<std::pair<ShaderCompiler::ShaderCompiledInfo *, std::string>> &shadersWithStages, std::optional<Pipeline::JsonParser::RootSignatureParsed> customRootSig, bool isCompute) {
+    LogScope scope;
     outInfo.variableBinder.SetIsCompute({}, isCompute);
     MyStd::NameMap<ShaderVariableBinding> nameMap;
     for (const auto &entry : shadersWithStages) {

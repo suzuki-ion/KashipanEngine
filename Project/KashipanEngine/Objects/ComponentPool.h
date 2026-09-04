@@ -1,5 +1,6 @@
 #pragma once
 #include <type_traits>
+#include "Debug/Logger.h"
 #include "Objects/ChunkedPool.h"
 
 namespace KashipanEngine {
@@ -27,17 +28,19 @@ class ComponentPool final : public IComponentPoolBase {
     static_assert(std::is_base_of_v<IObjectComponent, T>, "T must derive from IObjectComponent");
 
 public:
-    IObjectComponent *EmplaceDefault() override { return pool_.EmplaceDefault(); }
+    IObjectComponent *EmplaceDefault() override { LogScope scope; return pool_.EmplaceDefault(); }
 
     /// @brief 引数を転送して直接配置構築する（コンパイル時に型Tが分かっている呼び出し元専用）
     template <typename... Args>
-    T *Emplace(Args &&...args) { return pool_.Emplace(std::forward<Args>(args)...); }
+    T *Emplace(Args &&...args) { LogScope scope; return pool_.Emplace(std::forward<Args>(args)...); }
 
     bool Remove(const IObjectComponent *component) override {
+        LogScope scope;
         return pool_.Remove(static_cast<const T *>(component));
     }
 
     bool Owns(const IObjectComponent *component) const override {
+        LogScope scope;
         return pool_.Owns(static_cast<const T *>(component));
     }
 

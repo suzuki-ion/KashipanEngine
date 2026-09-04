@@ -2,6 +2,7 @@
 #include <atomic>
 #include <type_traits>
 
+#include "Debug/Logger.h"
 #include "Objects/ComponentRef.h"
 #include "Objects/IObjectComponent.h"
 #include "Scene/Components/Script/ScriptBindings.h"
@@ -26,11 +27,13 @@ public:
 
     void AddRef() { refCount_.fetch_add(1, std::memory_order_relaxed); }
     void Release() {
+        LogScope scope;
         if (refCount_.fetch_sub(1, std::memory_order_acq_rel) == 1) delete this;
     }
 
     /// @brief 現在生存している参照先コンポーネントへ解決する（削除済み、またはシーン外の場合はnullptr）
     T *Resolve() const {
+        LogScope scope;
         SceneContext *sceneContext = ScriptExecutionScope::GetCurrentSceneContext();
         if (!sceneContext) return nullptr;
         IObjectComponent *component = sceneContext->ResolveComponent(ref_);
@@ -41,6 +44,7 @@ public:
 
     /// @brief 対象コンポーネントからハンドルを作成する（componentがnullptrの場合はnullptrを返す）
     static ScriptComponentHandle<T> *Create(T *component) {
+        LogScope scope;
         if (!component) return nullptr;
         return new ScriptComponentHandle<T>(component->GetComponentRef());
     }
@@ -57,6 +61,7 @@ private:
 ///          参照を返す（ダングリング参照を作らないため）。それ以外は値初期化した一時オブジェクトを返す
 template <typename Ret>
 Ret SafeCallDefault() {
+    LogScope scope;
     if constexpr (std::is_reference_v<Ret>) {
         static const std::remove_reference_t<Ret> kDefault{};
         return kDefault;
@@ -84,6 +89,7 @@ template <typename T, typename Ret, typename... Args>
 struct MemberFunctionTraits<Ret (T::*)(Args...)> {
     template <auto Method>
     static constexpr auto Make() {
+        LogScope scope;
         return [](ScriptComponentHandle<T> &self, Args... args) -> Ret {
             T *obj = self.Resolve();
             if (!obj) {
@@ -100,6 +106,7 @@ template <typename T, typename Ret, typename... Args>
 struct MemberFunctionTraits<Ret (T::*)(Args...) const> {
     template <auto Method>
     static constexpr auto Make() {
+        LogScope scope;
         return [](const ScriptComponentHandle<T> &self, Args... args) -> Ret {
             T *obj = self.Resolve();
             if (!obj) {
@@ -116,6 +123,7 @@ template <typename T, typename Ret, typename... Args>
 struct MemberFunctionTraits<Ret (T::*)(Args...) noexcept> {
     template <auto Method>
     static constexpr auto Make() {
+        LogScope scope;
         return [](ScriptComponentHandle<T> &self, Args... args) -> Ret {
             T *obj = self.Resolve();
             if (!obj) {
@@ -132,6 +140,7 @@ template <typename T, typename Ret, typename... Args>
 struct MemberFunctionTraits<Ret (T::*)(Args...) const noexcept> {
     template <auto Method>
     static constexpr auto Make() {
+        LogScope scope;
         return [](const ScriptComponentHandle<T> &self, Args... args) -> Ret {
             T *obj = self.Resolve();
             if (!obj) {
@@ -149,6 +158,7 @@ struct MemberFunctionTraits<Ret (T::*)(Args...) const noexcept> {
 ///          安全なデフォルト値（SafeCallDefault参照）を返す。使い方: SafeCall<&T::Method>()
 template <auto Method>
 constexpr auto SafeCall() {
+    LogScope scope;
     return MemberFunctionTraits<decltype(Method)>::template Make<Method>();
 }
 

@@ -2,6 +2,7 @@
 #include <d3d12.h>
 #include <memory>
 #include <vector>
+#include "Debug/Logger.h"
 #include "Graphics/Resources/IGraphicsResource.h"
 #include "Core/DirectX/DescriptorHeaps/HeapDSV.h"
 
@@ -71,6 +72,7 @@ public:
 
     /// @brief SRV を持つ場合、シェーダーからサンプル可能な状態へ遷移
     bool TransitionToShaderResource() {
+        LogScope scope;
         if (!HasSrv()) return false;
         return TransitionTo(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     }

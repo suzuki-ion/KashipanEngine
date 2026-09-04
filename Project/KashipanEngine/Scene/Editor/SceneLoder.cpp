@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <filesystem>
 #include "Core/ProjectPaths.h"
+#include "Debug/Logger.h"
 #include "Scene/SceneBackupPath.h"
 #include "Scene/SceneFileIO.h"
 #include "Utilities/Conversion/ConvertString.h"
@@ -12,11 +13,13 @@
 namespace KashipanEngine {
 
 void SceneLoader::Open() {
+    LogScope scope;
     isOpenRequested_ = true;
     RefreshFileList();
 }
 
 bool SceneLoader::ShowImGui() {
+    LogScope scope;
     bool loaded = false;
     if (isOpenRequested_) {
         ImGui::OpenPopup(TranslationLabel("editor.loadscene.title"));
@@ -57,6 +60,7 @@ bool SceneLoader::ShowImGui() {
 }
 
 void SceneLoader::RefreshFileList() {
+    LogScope scope;
     sceneFiles_.clear();
     static const char *kSearchFolders[] = {
         "Assets/Scenes",

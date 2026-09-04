@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <algorithm>
+#include "Debug/Logger.h"
 #include "Objects/Components/Collider/ICollider.h"
 #include "Math/Vector2.h"
 #include "Utilities/Translation.h"
@@ -11,12 +12,14 @@ namespace KashipanEngine {
 class Ray2DCollider final : public ICollider {
 public:
     Ray2DCollider() : ICollider("Ray2DCollider", Shape::Ray2D, true, GetComponentTypeID<Ray2DCollider>()) {
+        LogScope scope;
         ADD_MEMBER_VARIABLE(direction_);
         ADD_MEMBER_VARIABLE(length_);
     }
     ~Ray2DCollider() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<Ray2DCollider>();
         ptr->direction_ = direction_;
         ptr->length_ = length_;
@@ -31,6 +34,7 @@ public:
     float GetLength() const noexcept { return length_; }
 
     std::optional<ColliderInfo2D> BuildColliderInfo2D() const override {
+        LogScope scope;
         ColliderInfo2D info;
         Math::Segment2D segment;
         const Vector3 scale = GetSyncedOwnerScale();
@@ -45,18 +49,21 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         ICollider::ShowImGui();
         ImGui::DragFloat2(TranslationLabel("component.ray2dcollider.direction"), &direction_.x, 0.01f);
         ImGui::DragFloat(TranslationLabel("component.ray2dcollider.length"), &length_, 0.01f, 0.0f);
     }
 #endif
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = ICollider::SaveToJson();
         json["direction"] = ToJSON(direction_);
         json["length"] = length_;
         return json;
     }
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         ICollider::LoadFromJson(json);
         if (json.contains("direction")) direction_ = FromJSON<Vector2>(json["direction"]);
         length_ = json.value("length", 1.0f);

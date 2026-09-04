@@ -334,6 +334,7 @@ SkeletonManager::SkeletonHandle SkeletonManager::LoadSkeleton(const std::string 
 }
 
 SkeletonManager::SkeletonHandle SkeletonManager::GetSkeletonHandleFromFileName(const std::string &fileName) {
+    LogScope scope;
     if (fileName.empty()) return kInvalidHandle;
     auto it = sFileNameToHandle.find(fileName);
     if (it == sFileNameToHandle.end()) return kInvalidHandle;
@@ -341,6 +342,7 @@ SkeletonManager::SkeletonHandle SkeletonManager::GetSkeletonHandleFromFileName(c
 }
 
 SkeletonManager::SkeletonHandle SkeletonManager::GetSkeletonHandleFromAssetPath(const std::string &assetPath) {
+    LogScope scope;
     if (assetPath.empty()) return kInvalidHandle;
     auto it = sAssetPathToHandle.find(NormalizePathSlashes(assetPath));
     if (it == sAssetPathToHandle.end()) return kInvalidHandle;
@@ -348,6 +350,7 @@ SkeletonManager::SkeletonHandle SkeletonManager::GetSkeletonHandleFromAssetPath(
 }
 
 const SkeletonData &SkeletonManager::GetSkeletonData(SkeletonHandle handle) {
+    LogScope scope;
     if (handle == kInvalidHandle) return sEmptyData;
     auto it = sSkeletons.find(handle);
     if (it == sSkeletons.end()) return sEmptyData;
@@ -355,14 +358,17 @@ const SkeletonData &SkeletonManager::GetSkeletonData(SkeletonHandle handle) {
 }
 
 const SkeletonData &SkeletonManager::GetSkeletonDataFromFileName(const std::string &fileName) {
+    LogScope scope;
     return GetSkeletonData(GetSkeletonHandleFromFileName(fileName));
 }
 
 const SkeletonData &SkeletonManager::GetSkeletonDataFromAssetPath(const std::string &assetPath) {
+    LogScope scope;
     return GetSkeletonData(GetSkeletonHandleFromAssetPath(assetPath));
 }
 
 std::vector<SkeletonManager::SkeletonListEntry> SkeletonManager::GetLoadedSkeletonListEntries() {
+    LogScope scope;
     std::vector<SkeletonListEntry> list;
     list.reserve(sSkeletons.size());
     for (const auto &pair : sSkeletons) {
@@ -377,6 +383,7 @@ std::vector<SkeletonManager::SkeletonListEntry> SkeletonManager::GetLoadedSkelet
 }
 
 const bool SkeletonManager::UpdateSkeletonJointTransforms(SkeletonHandle handle) {
+    LogScope scope;
     auto it = sSkeletons.find(handle);
     if (it == sSkeletons.end()) {
         return false;
@@ -394,6 +401,7 @@ const bool SkeletonManager::UpdateSkeletonJointTransforms(SkeletonHandle handle)
 }
 
 Skeleton SkeletonManager::CloneSkeleton(SkeletonHandle handle) {
+    LogScope scope;
     Skeleton out{};
     if (handle == kInvalidHandle) return out;
 
@@ -424,6 +432,7 @@ Skeleton SkeletonManager::CloneSkeleton(SkeletonHandle handle) {
 }
 
 void SkeletonManager::ResetAllSkeletonsToBindPose() {
+    LogScope scope;
     for (auto &kv : sSkeletons) {
         const Skeleton &skeleton = kv.second.data.GetSkeleton();
         for (auto &joint : skeleton.joints) {

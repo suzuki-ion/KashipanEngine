@@ -5,10 +5,12 @@ namespace KashipanEngine {
 
 StructuredBufferResource::StructuredBufferResource(size_t elementStride, size_t elementCount, const void* initialData, ID3D12Resource* existingResource)
     : IGraphicsResource(ResourceViewType::SRV) {
+    LogScope scope;
     Initialize(elementStride, elementCount, initialData, existingResource);
 }
 
 bool StructuredBufferResource::Recreate(size_t elementStride, size_t elementCount, const void* initialData, ID3D12Resource* existingResource) {
+    LogScope scope;
     ResetMappedPointer_();
     ResetResourceForRecreate();
     return Initialize(elementStride, elementCount, initialData, existingResource);
@@ -76,6 +78,7 @@ bool StructuredBufferResource::Initialize(size_t elementStride, size_t elementCo
 }
 
 void* StructuredBufferResource::Map() {
+    LogScope scope;
     if (mappedPtr_) return mappedPtr_;
 
     void* ptr = nullptr;

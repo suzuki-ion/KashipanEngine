@@ -1,4 +1,5 @@
 #include "IObjectComponent.h"
+#include "Debug/Logger.h"
 #include "Objects/EmptyObject.h"
 #include "Objects/ObjectContext.h"
 
@@ -9,17 +10,20 @@ const EmptyObject *IObjectComponent::GetOwnerObject() const {
 }
 
 ComponentRef IObjectComponent::GetComponentRef() const {
+    LogScope scope;
     const EmptyObject *owner = GetOwnerObject();
     if (!owner) return ComponentRef{};
     return ComponentRef{ owner->GetObjectID(), owner->GetComponentAddedID(this) };
 }
 
 bool IObjectComponent::IsActive() const {
+    LogScope scope;
     bool ownerActive = objectContext_ ? objectContext_->GetOwner()->IsActive() : true;
     return isActive_ && ownerActive;
 }
 
 void IObjectComponent::SetActive(bool active) {
+    LogScope scope;
     if (isActive_ == active) return;
     isActive_ = active;
     if (objectContext_) {

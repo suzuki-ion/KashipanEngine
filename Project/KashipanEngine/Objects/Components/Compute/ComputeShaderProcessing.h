@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Scene/Components/Compute/SceneComputeProcessor.h"
 
@@ -46,6 +47,7 @@ public:
     ~ComputeShaderProcessing() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<ComputeShaderProcessing>();
         ptr->pipelineName_ = pipelineName_;
         ptr->groupCountX_ = groupCountX_;
@@ -75,10 +77,12 @@ public:
 
 protected:
     void Initialize() override {
+        LogScope scope;
         auto *sceneProcessor = GetOrAddSceneComputeProcessor();
         if (sceneProcessor) sceneProcessor->RegisterComputeShaderProcessing(this);
     }
     void Finalize() override {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         auto *sceneProcessor = sceneContext ? sceneContext->GetComponent<SceneComputeProcessor>() : nullptr;
         if (sceneProcessor) sceneProcessor->UnregisterComputeShaderProcessing(this);
@@ -93,6 +97,7 @@ protected:
 
 private:
     SceneComputeProcessor *GetOrAddSceneComputeProcessor() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext) return nullptr;
         auto *sceneProcessor = sceneContext->GetComponent<SceneComputeProcessor>();

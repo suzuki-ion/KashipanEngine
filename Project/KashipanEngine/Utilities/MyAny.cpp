@@ -1,8 +1,12 @@
 #include "MyAny.h"
 
+#include "Debug/Logger.h"
+
 namespace KashipanEngine {
 
 JSON SaveAnyToJson(const MyAny &value) {
+    LogScope scope;
+
     if (value.IsEmpty()) return JSON();
     const TypeInfo &typeInfo = value.GetTypeInfo();
     if (typeInfo.GetBaseType() == ValueType::None) return JSON();
@@ -62,6 +66,8 @@ JSON SaveAnyToJson(const MyAny &value) {
 }
 
 MyAny LoadAnyFromJson(const JSON &json, const TypeInfo &typeInfo) {
+    LogScope scope;
+
     if (typeInfo.GetBaseType() == ValueType::None) return MyAny();
     else if (typeInfo.GetBaseType() == ValueType::Bool) return MyAny(FromJSON<bool>(json));
     else if (typeInfo.GetBaseType() == ValueType::Int8) return MyAny(FromJSON<int8_t>(json));

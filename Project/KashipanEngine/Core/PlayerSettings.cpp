@@ -2,14 +2,17 @@
 
 #include "Core/ProjectPaths.h"
 #include "Utilities/FileIO/JSON.h"
+#include "Debug/Logger.h"
 
 namespace KashipanEngine {
 
 std::string PlayerSettings::GetFilePath() {
+    LogScope scope;
     return ProjectPaths::InProjectRoot(kFileName);
 }
 
 bool PlayerSettings::GetBool(const std::string &key, bool defaultValue) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it == sData_.end() || !it->is_boolean()) return defaultValue;
@@ -17,6 +20,7 @@ bool PlayerSettings::GetBool(const std::string &key, bool defaultValue) {
 }
 
 void PlayerSettings::SetBool(const std::string &key, bool value) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it != sData_.end() && it->is_boolean() && it->get<bool>() == value) return;
@@ -25,6 +29,7 @@ void PlayerSettings::SetBool(const std::string &key, bool value) {
 }
 
 float PlayerSettings::GetFloat(const std::string &key, float defaultValue) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it == sData_.end() || !it->is_number()) return defaultValue;
@@ -32,6 +37,7 @@ float PlayerSettings::GetFloat(const std::string &key, float defaultValue) {
 }
 
 void PlayerSettings::SetFloat(const std::string &key, float value) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it != sData_.end() && it->is_number() && it->get<float>() == value) return;
@@ -40,6 +46,7 @@ void PlayerSettings::SetFloat(const std::string &key, float value) {
 }
 
 std::string PlayerSettings::GetString(const std::string &key, const std::string &defaultValue) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it == sData_.end() || !it->is_string()) return defaultValue;
@@ -47,6 +54,7 @@ std::string PlayerSettings::GetString(const std::string &key, const std::string 
 }
 
 void PlayerSettings::SetString(const std::string &key, const std::string &value) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it != sData_.end() && it->is_string() && it->get<std::string>() == value) return;
@@ -55,6 +63,7 @@ void PlayerSettings::SetString(const std::string &key, const std::string &value)
 }
 
 JSON PlayerSettings::GetJSON(const std::string &key, const JSON &defaultValue) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it == sData_.end()) return defaultValue;
@@ -62,6 +71,7 @@ JSON PlayerSettings::GetJSON(const std::string &key, const JSON &defaultValue) {
 }
 
 void PlayerSettings::SetJSON(const std::string &key, const JSON &value) {
+    LogScope scope;
     EnsureLoaded();
     auto it = sData_.find(key);
     if (it != sData_.end() && *it == value) return;
@@ -70,6 +80,7 @@ void PlayerSettings::SetJSON(const std::string &key, const JSON &value) {
 }
 
 void PlayerSettings::EnsureLoaded() {
+    LogScope scope;
     if (sLoaded_) return;
     sLoaded_ = true;
     sData_ = LoadJSON(GetFilePath());
@@ -77,6 +88,7 @@ void PlayerSettings::EnsureLoaded() {
 }
 
 void PlayerSettings::Save() {
+    LogScope scope;
     SaveJSON(sData_, GetFilePath());
 }
 

@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <reactphysics3d/reactphysics3d.h>
 
+#include "Debug/Logger.h"
 #include "Objects/Components/Collider/ICollider.h"
 #include "Scene/Components/SceneObjectCollider.h"
 #include "Scene/SceneContext.h"
@@ -18,12 +19,14 @@ namespace KashipanEngine {
 class RayCollider final : public ICollider {
 public:
     RayCollider() : ICollider("RayCollider", Shape::Ray, false, GetComponentTypeID<RayCollider>()) {
+        LogScope scope;
         ADD_MEMBER_VARIABLE(direction_);
         ADD_MEMBER_VARIABLE(maxDistance_);
     }
     ~RayCollider() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<RayCollider>();
         ptr->direction_ = direction_;
         ptr->maxDistance_ = maxDistance_;
@@ -46,6 +49,7 @@ public:
 
 protected:
     void Update() override {
+        LogScope scope;
         // 誰もEnter/Stay/Exitを監視していない場合は、毎フレームのレイキャストを省略する
         if (!GetOnCollisionEnter3D() && !GetOnCollisionStay3D() && !GetOnCollisionExit3D()) {
             if (wasHit_) DispatchExit();
@@ -75,24 +79,28 @@ protected:
 
     /// @brief 無効化・破棄時にヒット中であれば最後にExitを発火してから登録解除する
     void Finalize() override {
+        LogScope scope;
         if (wasHit_) DispatchExit();
         ICollider::Finalize();
     }
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         ICollider::ShowImGui();
         ImGui::DragFloat3(TranslationLabel("component.raycollider.direction"), &direction_.x, 0.01f);
         ImGui::DragFloat(TranslationLabel("component.raycollider.maxdistance"), &maxDistance_, 0.01f, 0.0f);
     }
 #endif
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = ICollider::SaveToJson();
         json["direction"] = ToJSON(direction_);
         json["maxDistance"] = maxDistance_;
         return json;
     }
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         ICollider::LoadFromJson(json);
         if (json.contains("direction")) direction_ = FromJSON<Vector3>(json["direction"]);
         maxDistance_ = json.value("maxDistance", 10.0f);
@@ -102,6 +110,7 @@ protected:
 private:
     /// @brief 現在のワールド座標・方向でレイキャストを行い、ヒットした相手（オブジェクト/コライダー）込みで結果を得る
     bool CastRayInternal(HitInfo3D &outHit) const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         auto *sceneObjectCollider = sceneContext ? sceneContext->GetComponent<SceneObjectCollider>() : nullptr;
         auto *colliderSystem = sceneObjectCollider ? sceneObjectCollider->GetCollider() : nullptr;
@@ -148,6 +157,7 @@ private:
     /// @details lastHitColliderRef_/lastHitObjectID_はフレームをまたいで保持されるため、生ポインタではなく
     ///          ComponentRef/UUIDで保持し、使う直前にここで解決する（プールのスロット再利用対策）
     void DispatchExit() {
+        LogScope scope;
         if (GetOnCollisionExit3D()) {
             auto *sceneCtx = GetOwnerSceneContext();
             HitInfo3D exitInfo{};

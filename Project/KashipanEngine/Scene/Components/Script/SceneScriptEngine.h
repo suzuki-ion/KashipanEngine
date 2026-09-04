@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Scene/Components/SceneComponentHeader.h"
 
 class asIScriptEngine;
@@ -22,6 +23,7 @@ public:
     ~SceneScriptEngine() override;
 
     std::unique_ptr<ISceneComponent> Clone() const override {
+        LogScope scope;
         return std::make_unique<SceneScriptEngine>();
     }
 

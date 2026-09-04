@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <memory>
+#include "Debug/Logger.h"
 #include "Utilities/FileIO/JSON.h"
 #include "Graphics/Pipeline/PipelineInfo.h"
 #include "Graphics/Pipeline/System/ShaderCompiler.h"
@@ -75,6 +76,7 @@ public:
     void ApplyPipeline(ID3D12GraphicsCommandList* commandList, const std::string &pipelineName);
     /// @brief シェーダーの変数バインダーを取得（Rendererから呼ばれる想定）
     ShaderVariableBinder &GetShaderVariableBinder(Passkey<Renderer>, const std::string &pipelineName) {
+        LogScope scope;
         auto it = pipelineInfos_.find(pipelineName);
         if (it == pipelineInfos_.end()) {
             throw std::runtime_error("PipelineManager::GetShaderVariableBinder: Pipeline not found: " + pipelineName);

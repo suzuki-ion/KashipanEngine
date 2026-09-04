@@ -2,10 +2,12 @@
 #ifdef USE_IMGUI
 
 #include "Core/UserSettings.h"
+#include "Debug/Logger.h"
 
 namespace KashipanEngine {
 
 ImGuiKeyChord EditorKeyBindings::Get(const std::string &action, ImGuiKeyChord defaultChord) {
+    LogScope scope;
     const JSON stored = UserSettings::GetJSON(kSettingsKey, JSON::object());
     if (stored.is_object()) {
         auto it = stored.find(action);
@@ -17,6 +19,7 @@ ImGuiKeyChord EditorKeyBindings::Get(const std::string &action, ImGuiKeyChord de
 }
 
 void EditorKeyBindings::Set(const std::string &action, ImGuiKeyChord chord) {
+    LogScope scope;
     JSON stored = UserSettings::GetJSON(kSettingsKey, JSON::object());
     if (!stored.is_object()) stored = JSON::object();
     stored[action] = static_cast<int>(chord);
@@ -24,10 +27,12 @@ void EditorKeyBindings::Set(const std::string &action, ImGuiKeyChord chord) {
 }
 
 void EditorKeyBindings::ResetAll() {
+    LogScope scope;
     UserSettings::SetJSON(kSettingsKey, JSON::object());
 }
 
 std::string EditorKeyBindings::ToDisplayString(ImGuiKeyChord chord) {
+    LogScope scope;
     const ImGuiKey key = static_cast<ImGuiKey>(chord & ~ImGuiMod_Mask_);
     if (chord == 0 || key == ImGuiKey_None) return "-";
 
@@ -42,6 +47,7 @@ std::string EditorKeyBindings::ToDisplayString(ImGuiKeyChord chord) {
 }
 
 ImGuiKeyChord EditorKeyBindings::CaptureChordThisFrame() {
+    LogScope scope;
     for (int k = ImGuiKey_NamedKey_BEGIN; k < ImGuiKey_NamedKey_END; ++k) {
         const ImGuiKey key = static_cast<ImGuiKey>(k);
         // 修飾キー単体は組み合わせの構成要素であって、単体では割り当て対象にしない

@@ -11,6 +11,7 @@
 
 #include "Assets/MaterialManager.h"
 #include "Core/ProjectPaths.h"
+#include "Debug/Logger.h"
 #include "Assets/TextureManager.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Graphics/IShaderTexture.h"
@@ -45,6 +46,7 @@ enum class JSONNewValueType {
 constexpr const char *kJSONTypeNames[] = { "String", "Number", "Bool", "Object", "Array", "Null" };
 
 JSON MakeDefaultJSONValue(JSONNewValueType type) {
+    LogScope scope;
     switch (type) {
     case JSONNewValueType::String: return JSON("");
     case JSONNewValueType::Number: return JSON(0.0);
@@ -72,6 +74,7 @@ struct ModelBounds final {
     bool valid = false;
 };
 ModelBounds ComputeModelBounds(const ModelData &data) {
+    LogScope scope;
     ModelBounds bounds;
     for (const auto &v : data.GetVertices()) {
         const Vector3 p(v.px, v.py, v.pz);
@@ -99,6 +102,7 @@ constexpr std::uint32_t kModelPreviewBufferSize = 512;
 
 JSONFileEditorWindow::JSONFileEditorWindow(const std::string &filePath)
     : filePath_(filePath) {
+    LogScope scope;
     windowTitle_ = Translation("editor.assetwindow.json.title") + FileNameFromPath(filePath_) + "###JSONFileEditor_" + filePath_;
     data_ = LoadJSON(ProjectPaths::ToPhysical(filePath_));
     loadFailed_ = data_.is_discarded();
@@ -106,6 +110,7 @@ JSONFileEditorWindow::JSONFileEditorWindow(const std::string &filePath)
 }
 
 bool JSONFileEditorWindow::ShowImGui() {
+    LogScope scope;
     ImGui::SetNextWindowSize(ImVec2(420.0f, 480.0f), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin(windowTitle_.c_str(), &isOpen_)) {
         ImGui::End();
@@ -145,6 +150,7 @@ bool JSONFileEditorWindow::ShowImGui() {
 }
 
 void JSONFileEditorWindow::ShowNode(const std::string &label, JSON &node) {
+    LogScope scope;
     switch (node.type()) {
     case JSON::value_t::object: {
         const std::string header = label + " {" + std::to_string(node.size()) + "}";
@@ -255,6 +261,7 @@ void JSONFileEditorWindow::ShowNode(const std::string &label, JSON &node) {
 }
 
 void JSONFileEditorWindow::ShowAddMemberRow(JSON &objectNode) {
+    LogScope scope;
     static std::unordered_map<ImGuiID, std::string> sNewKeyBuffers;
     static std::unordered_map<ImGuiID, int> sNewTypeBuffers;
     const ImGuiID rowID = ImGui::GetID("##addMember");
@@ -277,6 +284,7 @@ void JSONFileEditorWindow::ShowAddMemberRow(JSON &objectNode) {
 }
 
 void JSONFileEditorWindow::ShowAddElementRow(JSON &arrayNode) {
+    LogScope scope;
     static std::unordered_map<ImGuiID, int> sNewTypeBuffers;
     const ImGuiID rowID = ImGui::GetID("##addElement");
     int &newType = sNewTypeBuffers[rowID];
@@ -296,10 +304,12 @@ void JSONFileEditorWindow::ShowAddElementRow(JSON &arrayNode) {
 
 MaterialFileEditorWindow::MaterialFileEditorWindow(const std::string &assetPath)
     : assetPath_(assetPath) {
+    LogScope scope;
     windowTitle_ = Translation("editor.assetwindow.material.title") + FileNameFromPath(assetPath_) + "###MaterialFileEditor_" + assetPath_;
 }
 
 bool MaterialFileEditorWindow::ShowImGui() {
+    LogScope scope;
     ImGui::SetNextWindowSize(ImVec2(360.0f, 420.0f), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin(windowTitle_.c_str(), &isOpen_)) {
         ImGui::End();
@@ -341,10 +351,12 @@ bool MaterialFileEditorWindow::ShowImGui() {
 
 ImagePreviewWindow::ImagePreviewWindow(const std::string &assetPath)
     : assetPath_(assetPath) {
+    LogScope scope;
     windowTitle_ = Translation("editor.assetwindow.image.title") + FileNameFromPath(assetPath_) + "###ImagePreview_" + assetPath_;
 }
 
 bool ImagePreviewWindow::ShowImGui() {
+    LogScope scope;
     ImGui::SetNextWindowSize(ImVec2(420.0f, 420.0f), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin(windowTitle_.c_str(), &isOpen_)) {
         ImGui::End();
@@ -385,6 +397,7 @@ bool ImagePreviewWindow::ShowImGui() {
 
 GifPreviewWindow::GifPreviewWindow(const std::string &assetPath)
     : assetPath_(assetPath) {
+    LogScope scope;
     windowTitle_ = Translation("editor.assetwindow.gif.title") + FileNameFromPath(assetPath_) + "###GifPreview_" + assetPath_;
     gifHandle_ = GifManager::GetGifHandleFromAssetPath(assetPath_);
     if (gifHandle_ != GifManager::kInvalidHandle) {
@@ -395,10 +408,12 @@ GifPreviewWindow::GifPreviewWindow(const std::string &assetPath)
 }
 
 GifPreviewWindow::~GifPreviewWindow() {
+    LogScope scope;
     GifManager::DestroyPlayer(std::move(player_));
 }
 
 bool GifPreviewWindow::ShowImGui() {
+    LogScope scope;
     ImGui::SetNextWindowSize(ImVec2(420.0f, 460.0f), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin(windowTitle_.c_str(), &isOpen_)) {
         ImGui::End();
@@ -468,17 +483,20 @@ bool GifPreviewWindow::ShowImGui() {
 
 AudioPreviewWindow::AudioPreviewWindow(const std::string &assetPath)
     : assetPath_(assetPath) {
+    LogScope scope;
     windowTitle_ = Translation("editor.assetwindow.audio.title") + FileNameFromPath(assetPath_) + "###AudioPreview_" + assetPath_;
     soundHandle_ = AudioManager::GetSoundHandleFromAssetPath(assetPath_);
 }
 
 AudioPreviewWindow::~AudioPreviewWindow() {
+    LogScope scope;
     if (playHandle_ != AudioManager::kInvalidPlayHandle) {
         AudioManager::Stop(playHandle_);
     }
 }
 
 bool AudioPreviewWindow::ShowImGui() {
+    LogScope scope;
     ImGui::SetNextWindowSize(ImVec2(340.0f, 160.0f), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin(windowTitle_.c_str(), &isOpen_)) {
         ImGui::End();
@@ -539,11 +557,13 @@ bool AudioPreviewWindow::ShowImGui() {
 
 VideoPreviewWindow::VideoPreviewWindow(const std::string &assetPath)
     : assetPath_(assetPath) {
+    LogScope scope;
     windowTitle_ = Translation("editor.assetwindow.video.title") + FileNameFromPath(assetPath_) + "###VideoPreview_" + assetPath_;
     videoHandle_ = VideoManager::GetVideoHandleFromAssetPath(assetPath_);
 }
 
 VideoPreviewWindow::~VideoPreviewWindow() {
+    LogScope scope;
     if (player_) {
         VideoManager::DestroyPlayer(player_);
         player_ = nullptr;
@@ -551,6 +571,7 @@ VideoPreviewWindow::~VideoPreviewWindow() {
 }
 
 bool VideoPreviewWindow::ShowImGui() {
+    LogScope scope;
     ImGui::SetNextWindowSize(ImVec2(420.0f, 460.0f), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin(windowTitle_.c_str(), &isOpen_)) {
         ImGui::End();
@@ -624,11 +645,13 @@ bool VideoPreviewWindow::ShowImGui() {
 
 ModelPreviewWindow::ModelPreviewWindow(const std::string &assetPath)
     : assetPath_(assetPath) {
+    LogScope scope;
     windowTitle_ = Translation("editor.assetwindow.model.title") + FileNameFromPath(assetPath_) + "###ModelPreview_" + assetPath_;
     modelHandle_ = ModelManager::GetModelHandleFromAssetPath(assetPath_);
 }
 
 bool ModelPreviewWindow::EnsurePreviewObjects(SceneContext *sceneContext) {
+    LogScope scope;
     if (!sceneContext) return false;
     if (objectsValid_) {
         if (sceneContext->GetSceneObject(targetObjectID_) && sceneContext->GetSceneObject(cameraObjectID_) &&
@@ -687,6 +710,7 @@ bool ModelPreviewWindow::EnsurePreviewObjects(SceneContext *sceneContext) {
 }
 
 void ModelPreviewWindow::DestroyPreviewObjects(SceneContext *sceneContext) {
+    LogScope scope;
     if (sceneContext && objectsValid_) {
         for (const UUID128 id : { meshObjectID_, lightObjectID_, cameraObjectID_, targetObjectID_ }) {
             if (auto *obj = sceneContext->GetSceneObject(id)) sceneContext->DeleteObject(obj);
@@ -697,6 +721,7 @@ void ModelPreviewWindow::DestroyPreviewObjects(SceneContext *sceneContext) {
 }
 
 void ModelPreviewWindow::ApplyModelToPreview(SceneContext *sceneContext) {
+    LogScope scope;
     if (!sceneContext || !objectsValid_) return;
 
     auto *meshObj = sceneContext->GetSceneObject(meshObjectID_);
@@ -747,6 +772,7 @@ void ModelPreviewWindow::ApplyModelToPreview(SceneContext *sceneContext) {
 }
 
 void ModelPreviewWindow::UpdateCameraTransform(SceneContext *sceneContext) {
+    LogScope scope;
     if (!sceneContext || !objectsValid_) return;
     auto *cameraObj = sceneContext->GetSceneObject(cameraObjectID_);
     auto *transform = cameraObj ? cameraObj->GetComponent<Transform>() : nullptr;
@@ -765,6 +791,7 @@ void ModelPreviewWindow::UpdateCameraTransform(SceneContext *sceneContext) {
 }
 
 void ModelPreviewWindow::HandleCameraInput() {
+    LogScope scope;
     if (!ImGui::IsItemHovered()) return;
     ImGuiIO &io = ImGui::GetIO();
     if (io.MouseWheel != 0.0f) {
@@ -779,6 +806,7 @@ void ModelPreviewWindow::HandleCameraInput() {
 }
 
 bool ModelPreviewWindow::ShowImGui(SceneContext *sceneContext) {
+    LogScope scope;
     ImGui::SetNextWindowSize(ImVec2(420.0f, 460.0f), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin(windowTitle_.c_str(), &isOpen_)) {
         ImGui::End();

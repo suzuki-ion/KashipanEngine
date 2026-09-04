@@ -8,6 +8,7 @@
 #include "Core/ProjectPaths.h"
 #include "Core/UserSettings.h"
 #include "Debug/ImGuiManager.h"
+#include "Debug/Logger.h"
 #include "Scene/Editor/EditorKeyBindings.h"
 #include "Scene/Editor/EditorWindowChrome.h"
 #include "Utilities/ImGuiCustom.h"
@@ -19,6 +20,7 @@ namespace {
 
 /// @brief ImGuiStyleの配色をEditorSettingsへ保存するJSON配列（要素数ImGuiCol_COUNT、各要素は[r,g,b,a]）へ変換する
 JSON ColorsToJSON(const ImVec4 *colors) {
+    LogScope scope;
     JSON arr = JSON::array();
     for (int i = 0; i < ImGuiCol_COUNT; ++i) {
         arr.push_back(JSON::array({ colors[i].x, colors[i].y, colors[i].z, colors[i].w }));
@@ -28,6 +30,7 @@ JSON ColorsToJSON(const ImVec4 *colors) {
 
 /// @brief Unity Editor（Darkスキン）に近い配色を組み立てる。ピクセル単位の再現ではなく近似
 ImGuiStyle BuildUnityStyle() {
+    LogScope scope;
     ImGuiStyle style;
     ImGui::StyleColorsDark(&style);
     ImVec4 *c = style.Colors;
@@ -99,6 +102,7 @@ ImGuiStyle BuildUnityStyle() {
 
 /// @brief Misskeyの既定ダークテーマ「Mi Dark」に近い配色を組み立てる
 ImGuiStyle BuildMisskeyMiDarkStyle() {
+    LogScope scope;
     ImGuiStyle style;
     ImGui::StyleColorsDark(&style);
     ImVec4 *c = style.Colors;
@@ -174,6 +178,7 @@ ImGuiStyle BuildMisskeyMiDarkStyle() {
 
 /// @brief Misskeyの既定ライトテーマ「Mi Light」に近い配色を組み立てる
 ImGuiStyle BuildMisskeyMiLightStyle() {
+    LogScope scope;
     ImGuiStyle style;
     ImGui::StyleColorsLight(&style);
     ImVec4 *c = style.Colors;
@@ -251,6 +256,7 @@ ImGuiStyle BuildMisskeyMiLightStyle() {
 ///        Discord公式クライアントのスタイルシートから採取された値を基にしている
 ///        （出典: https://css.gomuks.app/theme/discord-ash.css）
 ImGuiStyle BuildDiscordAshStyle() {
+    LogScope scope;
     ImGuiStyle style;
     ImGui::StyleColorsDark(&style);
     ImVec4 *c = style.Colors;
@@ -328,6 +334,7 @@ ImGuiStyle BuildDiscordAshStyle() {
 ///        Steamの公式パレットとして広く知られる値を基にしている
 ///        （出典: https://colorswall.com/palette/193 ほか。#171a21/#1b2838/#2a475e/#66c0f4/#c7d5e0）
 ImGuiStyle BuildSteamStyle() {
+    LogScope scope;
     ImGuiStyle style;
     ImGui::StyleColorsDark(&style);
     ImVec4 *c = style.Colors;
@@ -406,6 +413,7 @@ ImGuiStyle BuildSteamStyle() {
 /// @brief GitHubのダークテーマに近い配色を組み立てる。デザインシステム「Primer」の色トークンを基にしている
 ///        （出典: https://primer.style/primitives/colors/ ほか。#0d1117/#161b22/#30363d/#e6edf3/#58a6ff）
 ImGuiStyle BuildGitHubStyle() {
+    LogScope scope;
     ImGuiStyle style;
     ImGui::StyleColorsDark(&style);
     ImVec4 *c = style.Colors;
@@ -482,6 +490,7 @@ ImGuiStyle BuildGitHubStyle() {
 /// @brief YouTubeのライトテーマに近い配色を組み立てる。ブランドカラーの赤をアクセントに使用
 ///        （出典: 各種配色まとめサイトで広く一致する値。#ffffff/#f2f2f2/#0f0f0f/#606060/#ff0000）
 ImGuiStyle BuildYouTubeLightStyle() {
+    LogScope scope;
     ImGuiStyle style;
     ImGui::StyleColorsLight(&style);
     ImVec4 *c = style.Colors;
@@ -560,6 +569,7 @@ ImGuiStyle BuildYouTubeLightStyle() {
 /// @brief YouTubeのダークテーマに近い配色を組み立てる（BuildYouTubeLightStyleのダーク版）
 ///        （出典: 各種配色まとめサイトで広く一致する値。#0f0f0f/#212121/#272727/#aaaaaa/#ff0000）
 ImGuiStyle BuildYouTubeDarkStyle() {
+    LogScope scope;
     ImGuiStyle style;
     ImGui::StyleColorsDark(&style);
     ImVec4 *c = style.Colors;
@@ -639,6 +649,7 @@ ImGuiStyle BuildYouTubeDarkStyle() {
 ///        単なる「青がメイン」ではなく、役割ごとに複数の場所へ意図的に散りばめて使用する
 ///        （出典: Googleのブランドカラーとして広く知られる値。#4285F4/#EA4335/#FBBC05/#34A853）
 ImGuiStyle BuildGoogleStyle() {
+    LogScope scope;
     ImGuiStyle style;
     ImGui::StyleColorsLight(&style);
     ImVec4 *c = style.Colors;
@@ -720,11 +731,13 @@ ImGuiStyle BuildGoogleStyle() {
 } // namespace
 
 void EditorPreferences::RefreshFontFileList() {
+    LogScope scope;
     fontFiles_ = ProjectPaths::ListAssetFiles({ ".ttf", ".otf" });
     hasScannedFontFiles_ = true;
 }
 
 void EditorPreferences::EnsureDefaultPresets() {
+    LogScope scope;
     hasEnsuredDefaultPresets_ = true;
 
     // Dark/Light/Classicは初回（プリセットが1つも無い場合）のみまとめて登録する。
@@ -789,6 +802,7 @@ void EditorPreferences::EnsureDefaultPresets() {
 }
 
 void EditorPreferences::ShowStyleSection() {
+    LogScope scope;
     if (!ImGui::TreeNode(TranslationLabel("editor.preferences.style"))) return;
     ImGui::TextDisabled("%s", TranslationC("editor.preferences.style.description"));
 
@@ -849,6 +863,7 @@ void EditorPreferences::ShowStyleSection() {
 }
 
 void EditorPreferences::ShowKeyBindingRow(const char *labelKey, const std::string &action, ImGuiKeyChord defaultChord) {
+    LogScope scope;
     ImGui::PushID(action.c_str());
 
     ImGui::TextUnformatted(TranslationC(labelKey));
@@ -885,6 +900,7 @@ void EditorPreferences::ShowKeyBindingRow(const char *labelKey, const std::strin
 }
 
 void EditorPreferences::ShowKeyBindingsSection() {
+    LogScope scope;
     if (!ImGui::TreeNode(TranslationLabel("editor.preferences.keybindings"))) return;
     ImGui::TextDisabled("%s", TranslationC("editor.preferences.keybindings.description"));
 
@@ -902,6 +918,7 @@ void EditorPreferences::ShowKeyBindingsSection() {
 }
 
 void EditorPreferences::ShowLayoutSection() {
+    LogScope scope;
     if (!ImGui::TreeNode(TranslationLabel("editor.preferences.layout"))) return;
     ImGui::TextDisabled("%s", TranslationC("editor.preferences.layout.description"));
 
@@ -952,6 +969,7 @@ void EditorPreferences::ShowLayoutSection() {
 }
 
 void EditorPreferences::ShowLanguageSection() {
+    LogScope scope;
     ImGui::SeparatorText(TranslationLabel("editor.preferences.language"));
 
     const std::vector<std::string> languages = GetLoadedLanguages();
@@ -995,6 +1013,7 @@ void EditorPreferences::ShowLanguageSection() {
 }
 
 void EditorPreferences::ShowImGui() {
+    LogScope scope;
     if (!ImGui::Begin(TranslationLabel("editor.preferences.window"))) {
         ImGui::End();
         return;

@@ -1,5 +1,6 @@
 #include "Collider.h"
 
+#include "Debug/Logger.h"
 #include "Objects/EmptyObject.h"
 #include "Objects/Components/Transform.h"
 #include "Objects/Components/Collider/RigidBody2D.h"
@@ -25,12 +26,14 @@ struct IndexPair {
     std::size_t b = 0;
 
     bool operator==(const IndexPair &o) const noexcept {
+        LogScope scope;
         return a == o.a && b == o.b;
     }
 };
 
 struct IndexPairHash {
     std::size_t operator()(const IndexPair &p) const noexcept {
+        LogScope scope;
         std::size_t h1 = std::hash<std::size_t>{}(p.a);
         std::size_t h2 = std::hash<std::size_t>{}(p.b);
         return h1 ^ (h2 + 0x9e3779b9u + (h1 << 6) + (h1 >> 2));
@@ -43,12 +46,14 @@ struct GridKey3D {
     int z = 0;
 
     bool operator==(const GridKey3D &o) const noexcept {
+        LogScope scope;
         return x == o.x && y == o.y && z == o.z;
     }
 };
 
 struct GridKey3DHash {
     std::size_t operator()(const GridKey3D &k) const noexcept {
+        LogScope scope;
         std::size_t h = std::hash<int>{}(k.x);
         h ^= std::hash<int>{}(k.y) + 0x9e3779b9u + (h << 6) + (h >> 2);
         h ^= std::hash<int>{}(k.z) + 0x9e3779b9u + (h << 6) + (h >> 2);
@@ -57,15 +62,18 @@ struct GridKey3DHash {
 };
 
 inline IndexPair MakeIndexPair(std::size_t a, std::size_t b) {
+    LogScope scope;
     if (a > b) std::swap(a, b);
     return IndexPair{a, b};
 }
 
 inline int ToCell(float v, float cellSize) {
+    LogScope scope;
     return static_cast<int>(std::floor(v / cellSize));
 }
 
 std::optional<Bounds3D> ComputeBounds3D(const ColliderInfo3D::ShapeVariant &shape) {
+    LogScope scope;
     return std::visit(
         [](const auto &s) -> std::optional<Bounds3D> {
             using S = std::decay_t<decltype(s)>;
@@ -125,6 +133,7 @@ std::optional<Bounds3D> ComputeBounds3D(const ColliderInfo3D::ShapeVariant &shap
 
 template<typename TColliders>
 std::vector<IndexPair> BuildCandidatePairs3D(const TColliders &colliders) {
+    LogScope scope;
     constexpr float kCellSize = 16.0f;
     constexpr int kMaxCellsPerShape = 512;
 
@@ -213,17 +222,20 @@ inline bool ShouldTest(
     const std::bitset<ColliderInfo2D::kMaxAttributes> &selfAttr,
     const std::bitset<ColliderInfo2D::kMaxAttributes> &selfIgnore,
     const std::bitset<ColliderInfo2D::kMaxAttributes> &otherAttr) {
+    LogScope scope;
     (void)selfAttr;
     return (selfIgnore & otherAttr).none();
 }
 
 inline bool Intersects3D(const ColliderInfo3D::ShapeVariant &a, const ColliderInfo3D::ShapeVariant &b) {
+    LogScope scope;
     (void)a;
     (void)b;
     return false;
 }
 
 inline HitInfo3D ComputeHit3D(const ColliderInfo3D::ShapeVariant &a, const ColliderInfo3D::ShapeVariant &b) {
+    LogScope scope;
     (void)a;
     (void)b;
     return HitInfo3D{};
@@ -240,6 +252,7 @@ constexpr int kMaxSweepSubsteps = 16;
 
 /// @brief 3D形状の最小半径を求める
 float ComputeMinHalfExtent3D(const ColliderInfo3D::ShapeVariant &shape) {
+    LogScope scope;
     const auto bounds = ComputeBounds3D(shape);
     if (!bounds) return kMinSweepStep;
     const Vector3 size = bounds->max - bounds->min;
@@ -250,8 +263,8 @@ float ComputeMinHalfExtent3D(const ColliderInfo3D::ShapeVariant &shape) {
 // Box2D連携用ヘルパー
 //==================================================
 
-inline b2Vec2 ToB2(const Vector2 &v) { return b2Vec2{v.x, v.y}; }
-inline Vector2 FromB2(const b2Vec2 &v) { return Vector2{v.x, v.y}; }
+inline b2Vec2 ToB2(const Vector2 &v) { LogScope scope; return b2Vec2{v.x, v.y}; }
+inline Vector2 FromB2(const b2Vec2 &v) { LogScope scope; return Vector2{v.x, v.y}; }
 
 /// @brief ワールド空間の2D形状を、指定の原点・角度を基準としたローカル空間へ変換する
 /// @details ColliderInfo2D::shapeはICollider::BuildColliderInfo2D()により常にワールド空間で
@@ -259,6 +272,7 @@ inline Vector2 FromB2(const b2Vec2 &v) { return Vector2{v.x, v.y}; }
 ///          ボディに使うのと同じ原点・角度（ICollider::GetSyncedOwnerPosition/
 ///          GetSyncedOwnerRotationEuler().z）でここへ変換してから渡す
 ColliderInfo2D::ShapeVariant ToLocalShape2D(const ColliderInfo2D::ShapeVariant &shape, const Vector2 &origin, float angle) {
+    LogScope scope;
     const float c = std::cos(-angle);
     const float s = std::sin(-angle);
     const auto toLocal = [&](const Vector2 &worldPoint) {
@@ -316,6 +330,7 @@ struct ManualManifold2D {
 ///          b2CollideCapsuleAndCircleのみで、逆順の関数は無い）ため、ここで形状種別を見て
 ///          呼び出せる関数と引数順を判定している
 std::optional<ManualManifold2D> ComputeManualManifold2D(b2ShapeId shapeA, b2ShapeId shapeB, const b2Transform &xfA, const b2Transform &xfB) {
+    LogScope scope;
     const b2ShapeType typeA = b2Shape_GetType(shapeA);
     const b2ShapeType typeB = b2Shape_GetType(shapeB);
 
@@ -378,6 +393,7 @@ std::optional<ManualManifold2D> ComputeManualManifold2D(b2ShapeId shapeA, b2Shap
 ///        自前で計算する。normalはQueryContactHitInfo2Dと同じ「shapeA→shapeB」の向きの
 ///        世界座標ベクトルとして返す（Dispatch2D側で「相手→自分」へ変換される）
 bool ComputeStaticStaticHitInfo2D(b2ShapeId shapeA, b2ShapeId shapeB, HitInfo2D &outHitInfo) {
+    LogScope scope;
     const b2Transform xfA = b2Body_GetTransform(b2Shape_GetBody(shapeA));
     const b2Transform xfB = b2Body_GetTransform(b2Shape_GetBody(shapeB));
 
@@ -410,6 +426,7 @@ bool ComputeStaticStaticHitInfo2D(b2ShapeId shapeA, b2ShapeId shapeB, HitInfo2D 
 /// @details RigidBody2Dが使用コライダーを明示的に選択している場合は、そのコライダー由来の
 ///          ColliderInfo2Dに対してのみ関連付ける（未選択の場合はどのコライダーでも関連付ける）
 RigidBody2D *ResolveRigidBody2D(const ColliderInfo2D &info) {
+    LogScope scope;
     if (!info.ownerObject) return nullptr;
     auto *rb = info.ownerObject->GetComponent<RigidBody2D>();
     if (!rb) return nullptr;
@@ -428,6 +445,7 @@ RigidBody2D *ResolveRigidBody2D(const ColliderInfo2D &info) {
 ///          そのため位置・回転は無視し、サイズ等の純粋な形状パラメータだけを比較する
 ///          （位置・回転の同期はBuildRuntime2D/SyncStaticBodyTransform2D側が別途担う）
 bool ShapeVariantEquals2D(const ColliderInfo2D::ShapeVariant &a, const ColliderInfo2D::ShapeVariant &b) {
+    LogScope scope;
     if (a.index() != b.index()) return false;
     return std::visit(
         [&](const auto &sa) -> bool {
@@ -458,6 +476,7 @@ bool ShapeVariantEquals2D(const ColliderInfo2D::ShapeVariant &a, const ColliderI
 ///          Box2Dの接触の継続性（反発・摩擦の計算精度に影響する）を保つため、本当に形状・トリガー・
 ///          属性フィルタが変わった時だけ作り直すようにしている
 bool RuntimeNeedsRebuild2D(const ColliderInfo2D &oldInfo, const ColliderInfo2D &newInfo) {
+    LogScope scope;
     if (oldInfo.enabled != newInfo.enabled) return true;
     if (oldInfo.isTrigger != newInfo.isTrigger) return true;
     if (oldInfo.attribute != newInfo.attribute) return true;
@@ -468,14 +487,17 @@ bool RuntimeNeedsRebuild2D(const ColliderInfo2D &oldInfo, const ColliderInfo2D &
 } // namespace
 
 Collider::Collider() {
+    LogScope scope;
     EnsureWorldCreated();
 }
 
 Collider::~Collider() {
+    LogScope scope;
     ReleaseWorld();
 }
 
 Collider::ColliderID Collider::Add(const ColliderInfo2D &info) {
+    LogScope scope;
     const ColliderID id = nextId_++;
     colliders2D_.push_back({id, info});
     auto &entry = colliders2D_.back();
@@ -484,6 +506,7 @@ Collider::ColliderID Collider::Add(const ColliderInfo2D &info) {
 }
 
 Collider::ColliderID Collider::Add(const ColliderInfo3D &info) {
+    LogScope scope;
     const ColliderID id = nextId_++;
     colliders3D_.push_back({id, info});
     auto &entry = colliders3D_.back();
@@ -492,6 +515,7 @@ Collider::ColliderID Collider::Add(const ColliderInfo3D &info) {
 }
 
 bool Collider::Remove2D(ColliderID id) {
+    LogScope scope;
     for (auto it = colliders2D_.begin(); it != colliders2D_.end(); ++it) {
         if (it->id == id) {
             ReleaseRuntime2D(*it);
@@ -503,6 +527,7 @@ bool Collider::Remove2D(ColliderID id) {
 }
 
 bool Collider::Remove3D(ColliderID id) {
+    LogScope scope;
     for (auto it = colliders3D_.begin(); it != colliders3D_.end(); ++it) {
         if (it->id == id) {
             ReleaseRuntime3D(*it);
@@ -514,6 +539,7 @@ bool Collider::Remove3D(ColliderID id) {
 }
 
 bool Collider::UpdateColliderInfo2D(ColliderID id, const ColliderInfo2D &info) {
+    LogScope scope;
     for (auto &e : colliders2D_) {
         if (e.id != id) continue;
 
@@ -534,6 +560,7 @@ bool Collider::UpdateColliderInfo2D(ColliderID id, const ColliderInfo2D &info) {
 }
 
 bool Collider::UpdateColliderInfo3D(ColliderID id, const ColliderInfo3D &info) {
+    LogScope scope;
     for (auto &e : colliders3D_) {
         if (e.id == id) {
             UpdateRuntime3D(e, info);
@@ -545,6 +572,7 @@ bool Collider::UpdateColliderInfo3D(ColliderID id, const ColliderInfo3D &info) {
 }
 
 void Collider::Clear2D() {
+    LogScope scope;
     for (auto &entry : colliders2D_) {
         ReleaseRuntime2D(entry);
     }
@@ -553,6 +581,7 @@ void Collider::Clear2D() {
 }
 
 void Collider::Clear3D() {
+    LogScope scope;
     for (auto &entry : colliders3D_) {
         ReleaseRuntime3D(entry);
     }
@@ -563,6 +592,7 @@ void Collider::Clear3D() {
 }
 
 std::vector<Collider::HitPair3D> Collider::CheckAll3D() const {
+    LogScope scope;
     std::vector<HitPair3D> hits;
     if (!physicsWorld_) return hits;
 
@@ -591,6 +621,7 @@ std::vector<Collider::HitPair3D> Collider::CheckAll3D() const {
             : idMap(idMap), infoMap(infoMap), pairs(pairs) {}
 
         void onContact(const CallbackData &callbackData) override {
+            LogScope scope;
             const int pairCount = callbackData.getNbContactPairs();
             for (int i = 0; i < pairCount; ++i) {
                 const auto &pair = callbackData.getContactPair(i);
@@ -635,6 +666,7 @@ std::vector<Collider::HitPair3D> Collider::CheckAll3D() const {
 }
 
 bool Collider::Check3D(ColliderID a, ColliderID b) const {
+    LogScope scope;
     const auto *pa = Find3D(a);
     const auto *pb = Find3D(b);
     if (!pa || !pb) return false;
@@ -655,6 +687,7 @@ bool Collider::Check3D(ColliderID a, ColliderID b) const {
         Collector(const ColliderHandle *a, const ColliderHandle *b) : targetA(a), targetB(b) {}
 
         void onContact(const CallbackData &callbackData) override {
+            LogScope scope;
             const int pairCount = callbackData.getNbContactPairs();
             for (int i = 0; i < pairCount; ++i) {
                 const auto &pair = callbackData.getContactPair(i);
@@ -674,6 +707,7 @@ bool Collider::Check3D(ColliderID a, ColliderID b) const {
 }
 
 const ColliderInfo3D *Collider::FindInfoByHandle3D(const ColliderHandle *handle) const {
+    LogScope scope;
     if (!handle) return nullptr;
     for (const auto &entry : colliders3D_) {
         if (entry.runtime.collider == handle) return &entry.info;
@@ -682,11 +716,13 @@ const ColliderInfo3D *Collider::FindInfoByHandle3D(const ColliderHandle *handle)
 }
 
 std::uint64_t Collider::MakePairKey(ColliderID a, ColliderID b) {
+    LogScope scope;
     if (a > b) std::swap(a, b);
     return (static_cast<std::uint64_t>(a) << 32) | static_cast<std::uint64_t>(b);
 }
 
 void Collider::Dispatch2D(ColliderID a, ColliderID b, const HitInfo2D &hitInfo, bool wasHit) {
+    LogScope scope;
     const auto *ea = Find2D(a);
     const auto *eb = Find2D(b);
     if (!ea || !eb) return;
@@ -726,6 +762,7 @@ void Collider::Dispatch2D(ColliderID a, ColliderID b, const HitInfo2D &hitInfo, 
 }
 
 void Collider::Dispatch3D(ColliderID a, ColliderID b, const HitInfo3D &hitInfoA, const HitInfo3D &hitInfoB, bool wasHit) {
+    LogScope scope;
     const auto *ea = Find3D(a);
     const auto *eb = Find3D(b);
     if (!ea || !eb) return;
@@ -762,6 +799,7 @@ void Collider::Dispatch3D(ColliderID a, ColliderID b, const HitInfo3D &hitInfoA,
 }
 
 bool Collider::QueryContactHitInfo2D(ColliderID idA, ColliderID idB, HitInfo2D &outHitInfo) const {
+    LogScope scope;
     const auto *ea = Find2D(idA);
     const auto *eb = Find2D(idB);
     if (!ea || !eb || B2_IS_NULL(ea->runtime.shape) || B2_IS_NULL(eb->runtime.shape)) return false;
@@ -797,6 +835,7 @@ bool Collider::QueryContactHitInfo2D(ColliderID idA, ColliderID idB, HitInfo2D &
 }
 
 bool Collider::QuerySensorHitInfo2D(ColliderID sensorId, ColliderID visitorId) const {
+    LogScope scope;
     const auto *sensorEntry = Find2D(sensorId);
     if (!sensorEntry || B2_IS_NULL(sensorEntry->runtime.shape)) return false;
     const auto *visitorEntry = Find2D(visitorId);
@@ -813,6 +852,7 @@ bool Collider::QuerySensorHitInfo2D(ColliderID sensorId, ColliderID visitorId) c
 }
 
 void Collider::Update2D() {
+    LogScope scope;
     if (B2_IS_NULL(world2D_)) return;
 
     // Box2Dは固定タイムステップを前提としたソルバーのため、Update3Dと同じ蓄積方式で
@@ -964,6 +1004,7 @@ void Collider::Update2D() {
 }
 
 void Collider::RecordPrevPositions3D() {
+    LogScope scope;
     for (auto &entry : colliders3D_) {
         if (entry.info.continuousDetection && entry.info.enabled && entry.runtime.body) {
             entry.prevPosition = FromRp3d(entry.runtime.body->getTransform().getPosition());
@@ -975,6 +1016,7 @@ void Collider::RecordPrevPositions3D() {
 }
 
 void Collider::Update3D() {
+    LogScope scope;
     if (!physicsWorld_) return;
 
     constexpr float kDefaultTimeStep = 1.0f / 60.0f;
@@ -1014,6 +1056,7 @@ void Collider::Update3D() {
             : idMap(idMap), infoMap(infoMap), events(events), pairs(pairs) {}
 
         static HitInfo3D MakeHitInfo(const reactphysics3d::CollisionCallback::ContactPoint &contact) {
+            LogScope scope;
             HitInfo3D info;
             info.isHit = true;
             const auto normal = contact.getWorldNormal();
@@ -1023,6 +1066,7 @@ void Collider::Update3D() {
         }
 
         void onContact(const CallbackData &callbackData) override {
+            LogScope scope;
             const int pairCount = callbackData.getNbContactPairs();
             for (int i = 0; i < pairCount; ++i) {
                 const auto &pair = callbackData.getContactPair(i);
@@ -1145,6 +1189,7 @@ void Collider::Update3D() {
 }
 
 const Collider::Entry<ColliderInfo2D, Collider::ColliderRuntime2D> *Collider::Find2D(ColliderID id) const {
+    LogScope scope;
     for (const auto &e : colliders2D_) {
         if (e.id == id) return &e;
     }
@@ -1152,6 +1197,7 @@ const Collider::Entry<ColliderInfo2D, Collider::ColliderRuntime2D> *Collider::Fi
 }
 
 const Collider::Entry<ColliderInfo3D, Collider::ColliderRuntime3D> *Collider::Find3D(ColliderID id) const {
+    LogScope scope;
     for (const auto &e : colliders3D_) {
         if (e.id == id) return &e;
     }
@@ -1159,6 +1205,7 @@ const Collider::Entry<ColliderInfo3D, Collider::ColliderRuntime3D> *Collider::Fi
 }
 
 Collider::Entry<ColliderInfo3D, Collider::ColliderRuntime3D> *Collider::Find3D(ColliderID id) {
+    LogScope scope;
     for (auto &e : colliders3D_) {
         if (e.id == id) return &e;
     }
@@ -1166,12 +1213,14 @@ Collider::Entry<ColliderInfo3D, Collider::ColliderRuntime3D> *Collider::Find3D(C
 }
 
 void Collider::StepPhysics(float timeStep) {
+    LogScope scope;
     if (physicsWorld_) {
         physicsWorld_->update(timeStep);
     }
 }
 
 void Collider::EnsureWorldCreated() {
+    LogScope scope;
     if (!physicsWorld_) {
         reactphysics3d::PhysicsWorld::WorldSettings settings;
         settings.gravity = reactphysics3d::Vector3(0.0f, -9.81f, 0.0f);
@@ -1190,6 +1239,7 @@ void Collider::EnsureWorldCreated() {
 }
 
 void Collider::ReleaseWorld() {
+    LogScope scope;
     if (physicsWorld_) {
         physicsCommon_.destroyPhysicsWorld(physicsWorld_);
         physicsWorld_ = nullptr;
@@ -1201,6 +1251,7 @@ void Collider::ReleaseWorld() {
 }
 
 b2BodyDef Collider::MakeBodyDef2D(const ColliderInfo2D &info) const {
+    LogScope scope;
     b2BodyDef def = b2DefaultBodyDef();
     // RigidBody2Dが無い（＝Colliderが自前でボディを持つ）場合の既定は静的。
     // RigidBody2Dが見つかった場合はBuildRuntime2D側でDynamicへ差し替える
@@ -1214,6 +1265,7 @@ b2BodyDef Collider::MakeBodyDef2D(const ColliderInfo2D &info) const {
 }
 
 bool Collider::RecreateShape2D(Entry<ColliderInfo2D, ColliderRuntime2D> &entry) {
+    LogScope scope;
     // ReleaseRuntime2D同様、外部（RigidBody2D）が所有するボディの破棄により
     // シェイプが既に内部的に破棄済みの場合があるため、b2Shape_IsValidで生存確認してから破棄する
     if (!B2_IS_NULL(entry.runtime.shape) && b2Shape_IsValid(entry.runtime.shape)) {
@@ -1284,6 +1336,7 @@ bool Collider::RecreateShape2D(Entry<ColliderInfo2D, ColliderRuntime2D> &entry) 
 }
 
 bool Collider::BuildRuntime2D(Entry<ColliderInfo2D, ColliderRuntime2D> &entry) {
+    LogScope scope;
     EnsureWorldCreated();
     if (B2_IS_NULL(world2D_)) return false;
 
@@ -1318,6 +1371,7 @@ bool Collider::BuildRuntime2D(Entry<ColliderInfo2D, ColliderRuntime2D> &entry) {
 }
 
 void Collider::SyncStaticBodyTransform2D(Entry<ColliderInfo2D, ColliderRuntime2D> &entry) {
+    LogScope scope;
     if (B2_IS_NULL(entry.runtime.body) || !entry.runtime.ownsBody) return;
     if (!entry.info.sourceCollider) return;
 
@@ -1336,6 +1390,7 @@ void Collider::SyncStaticBodyTransform2D(Entry<ColliderInfo2D, ColliderRuntime2D
 }
 
 void Collider::ReleaseRuntime2D(Entry<ColliderInfo2D, ColliderRuntime2D> &entry) {
+    LogScope scope;
     // B2_IS_NULLはIDが「未設定（nullセンチネル）」かどうかしか見ておらず、シェイプが
     // 所有元ボディの破棄（RigidBody2D::Finalize等、Collider外の経路）によって既に内部的に
     // 破棄済みかどうかは判定できない。破棄済みIDに対してb2DestroyShapeを呼ぶと二重解放になり
@@ -1350,6 +1405,7 @@ void Collider::ReleaseRuntime2D(Entry<ColliderInfo2D, ColliderRuntime2D> &entry)
 }
 
 bool Collider::BuildRuntime3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry) {
+    LogScope scope;
     EnsureWorldCreated();
     if (!physicsWorld_) return false;
 
@@ -1402,6 +1458,7 @@ bool Collider::BuildRuntime3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry) {
 }
 
 void Collider::ReleaseRuntime3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry) {
+    LogScope scope;
     if (entry.runtime.body) {
         if (entry.runtime.collider) {
             entry.runtime.body->removeCollider(entry.runtime.collider);
@@ -1445,22 +1502,26 @@ void Collider::ReleaseRuntime3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry)
 }
 
 bool Collider::UpdateRuntime3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry, const ColliderInfo3D &info) {
+    LogScope scope;
     ReleaseRuntime3D(entry);
     entry.info = info;
     return BuildRuntime3D(entry);
 }
 
 bool Collider::UpdateColliderShape3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry, const ColliderInfo3D &info) {
+    LogScope scope;
     return UpdateRuntime3D(entry, info);
 }
 
 bool Collider::UpdateColliderTransform3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry, const ColliderInfo3D &info) {
+    LogScope scope;
     if (!entry.runtime.body) return false;
     entry.runtime.body->setTransform(MakeTransform3D(info));
     return true;
 }
 
 std::optional<Collider::ShapeHandle3D> Collider::CreateShape3D(const ColliderInfo3D &info) {
+    LogScope scope;
     ShapeHandle3D handle{};
 
     std::visit(
@@ -1540,6 +1601,7 @@ std::optional<Collider::ShapeHandle3D> Collider::CreateShape3D(const ColliderInf
 }
 
 reactphysics3d::Transform Collider::MakeTransform3D(const ColliderInfo3D &info) const {
+    LogScope scope;
     Vector3 center{0.0f, 0.0f, 0.0f};
     bool hasOwnCenter = false;
     std::visit(
@@ -1569,14 +1631,17 @@ reactphysics3d::Transform Collider::MakeTransform3D(const ColliderInfo3D &info) 
 }
 
 reactphysics3d::Vector3 Collider::ToRp3d(const Vector3 &v) const {
+    LogScope scope;
     return reactphysics3d::Vector3(v.x, v.y, v.z);
 }
 
 Vector3 Collider::FromRp3d(const reactphysics3d::Vector3 &v) const {
+    LogScope scope;
     return Vector3{v.x, v.y, v.z};
 }
 
 HitInfo3D Collider::BuildHitInfo3D(const reactphysics3d::CollisionCallback::ContactPoint &contact) const {
+    LogScope scope;
     HitInfo3D info;
     info.isHit = true;
     info.normal = FromRp3d(contact.getWorldNormal());

@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "Debug/Logger.h"
 #include "Scene/Editor/PrefabUtility.h"
 
 namespace KashipanEngine {
@@ -31,12 +32,14 @@ struct SceneIndex {
 };
 
 const JSON &GetComponents(const JSON &objectJson) {
+    LogScope scope;
     static const JSON kEmpty = JSON::array();
     if (!objectJson.contains("components") || !objectJson["components"].is_array()) return kEmpty;
     return objectJson["components"];
 }
 
 JSON &GetOrCreateComponents(JSON &objectJson) {
+    LogScope scope;
     if (!objectJson.contains("components") || !objectJson["components"].is_array()) {
         objectJson["components"] = JSON::array();
     }
@@ -44,6 +47,7 @@ JSON &GetOrCreateComponents(JSON &objectJson) {
 }
 
 JSON *FindTransformComponent(JSON &objectJson) {
+    LogScope scope;
     JSON &components = GetOrCreateComponents(objectJson);
     for (auto &component : components) {
         if (component.value("type", std::string{}) == "Transform") return &component;
@@ -52,6 +56,7 @@ JSON *FindTransformComponent(JSON &objectJson) {
 }
 
 const JSON *FindTransformComponent(const JSON &objectJson) {
+    LogScope scope;
     for (const auto &component : GetComponents(objectJson)) {
         if (component.value("type", std::string{}) == "Transform") return &component;
     }
@@ -59,6 +64,7 @@ const JSON *FindTransformComponent(const JSON &objectJson) {
 }
 
 std::string GetTransformParentID(const JSON &objectJson) {
+    LogScope scope;
     const JSON *transform = FindTransformComponent(objectJson);
     if (!transform || !transform->contains("data")) return {};
     const JSON &data = (*transform)["data"];
@@ -67,6 +73,7 @@ std::string GetTransformParentID(const JSON &objectJson) {
 }
 
 void SetTransformParentID(JSON &objectJson, const std::string &parentID) {
+    LogScope scope;
     JSON *transform = FindTransformComponent(objectJson);
     if (!transform || !transform->contains("data")) return;
     JSON &data = (*transform)["data"];
@@ -81,6 +88,7 @@ void SetTransformParentID(JSON &objectJson, const std::string &parentID) {
 }
 
 JSON NormalizeComponentForComparison(const JSON &component) {
+    LogScope scope;
     JSON normalized = component;
     if (normalized.value("type", std::string{}) != "Transform" || !normalized.contains("data")) {
         return normalized;
@@ -94,6 +102,7 @@ JSON NormalizeComponentForComparison(const JSON &component) {
 }
 
 JSON AdaptComponentToInstance(const JSON &component, const std::string &parentObjectID) {
+    LogScope scope;
     JSON adapted = component;
     if (adapted.value("type", std::string{}) != "Transform" || !adapted.contains("data")) {
         return adapted;
@@ -111,6 +120,7 @@ JSON AdaptComponentToInstance(const JSON &component, const std::string &parentOb
 }
 
 PrefabGraph BuildPrefabGraph(const JSON &prefabJson) {
+    LogScope scope;
     PrefabGraph graph;
     if (!prefabJson.contains("objects") || !prefabJson["objects"].is_array()) return graph;
 
@@ -138,6 +148,7 @@ PrefabGraph BuildPrefabGraph(const JSON &prefabJson) {
 }
 
 SceneIndex BuildSceneIndex(const JSON &objects) {
+    LogScope scope;
     SceneIndex index;
     if (!objects.is_array()) return index;
     for (size_t i = 0; i < objects.size(); ++i) {
@@ -150,6 +161,7 @@ SceneIndex BuildSceneIndex(const JSON &objects) {
 }
 
 bool HasPrefabMarker(const JSON &objectJson, const UUID128 &prefabID) {
+    LogScope scope;
     const std::string wanted = prefabID.ToString();
     for (const auto &component : GetComponents(objectJson)) {
         if (component.value("type", std::string{}) != "PrefabInstanceComponent" ||
@@ -165,6 +177,7 @@ bool HasPrefabMarker(const JSON &objectJson, const UUID128 &prefabID) {
 
 std::unordered_set<std::string> CollectSubtreeObjectIDs(
     const SceneIndex &index, const std::string &rootObjectID) {
+    LogScope scope;
     std::unordered_set<std::string> result;
     std::deque<std::string> pending;
     pending.push_back(rootObjectID);
@@ -187,6 +200,7 @@ struct ComponentSlot {
 using ComponentSlots = std::unordered_map<std::string, ComponentSlot>;
 
 ComponentSlots IndexComponents(const JSON &components) {
+    LogScope scope;
     ComponentSlots result;
     std::unordered_map<std::string, size_t> ordinalByType;
     if (!components.is_array()) return result;
@@ -203,6 +217,7 @@ void MergeObjectProperties(
     const JSON &oldObject,
     const JSON &newObject,
     SceneSyncResult &result) {
+    LogScope scope;
     static constexpr const char *kKeys[] = { "name", "tag", "isActive", "editorOnly", "hiddenFromEditorTarget" };
     for (const char *key : kKeys) {
         const JSON oldValue = oldObject.contains(key) ? oldObject[key] : JSON();
@@ -225,6 +240,7 @@ void MergeComponents(
     const std::unordered_map<std::string, std::string> &oldObjectIDRemap,
     const std::unordered_map<std::string, std::string> &newObjectIDRemap,
     SceneSyncResult &result) {
+    LogScope scope;
     const JSON &oldComponents = GetComponents(oldObject);
     const JSON &newComponents = GetComponents(newObject);
     JSON &instanceComponents = GetOrCreateComponents(instanceObject);
@@ -298,6 +314,7 @@ std::unordered_map<std::string, std::string> BuildLiveNodeMap(
     const JSON &objects,
     const SceneIndex &index,
     const std::unordered_set<std::string> &subtreeObjectIDs) {
+    LogScope scope;
     std::unordered_map<std::string, std::string> result;
     for (const auto &objectID : subtreeObjectIDs) {
         auto indexIt = index.objectIndexByID.find(objectID);
@@ -311,6 +328,7 @@ std::unordered_map<std::string, std::string> BuildLiveNodeMap(
 std::string ResolveParentNodeID(
     const JSON &object,
     const std::unordered_map<std::string, std::string> &objectToNodeID) {
+    LogScope scope;
     const std::string parentObjectID = GetTransformParentID(object);
     auto it = objectToNodeID.find(parentObjectID);
     return it != objectToNodeID.end() ? it->second : std::string{};
@@ -322,6 +340,7 @@ void SyncOneInstance(
     const PrefabGraph &oldGraph,
     const PrefabGraph &newGraph,
     SceneSyncResult &result) {
+    LogScope scope;
     SceneIndex sceneIndex = BuildSceneIndex(objects);
     if (!sceneIndex.objectIndexByID.contains(rootObjectID)) return;
 
@@ -458,6 +477,7 @@ SceneSyncResult SyncSceneJson(
     const UUID128 &prefabID,
     const JSON &oldPrefabJson,
     const JSON &newPrefabJson) {
+    LogScope scope;
     SceneSyncResult result;
     if (!prefabID.IsValid() || !sceneJson.is_object()) return result;
     if (!sceneJson.contains("sceneObjects") || !sceneJson["sceneObjects"].is_array()) return result;

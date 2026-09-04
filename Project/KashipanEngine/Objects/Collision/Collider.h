@@ -8,6 +8,7 @@
 #include <variant>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Math/Vector3.h"
 
 #include "Objects/MathObjects/2D/Capsule2D.h"
@@ -251,6 +252,7 @@ private:
 
     template<typename TEntry>
     static bool EraseById(std::vector<TEntry> &v, ColliderID id) {
+        LogScope scope;
         for (auto it = v.begin(); it != v.end(); ++it) {
             if (it->id == id) {
                 v.erase(it);

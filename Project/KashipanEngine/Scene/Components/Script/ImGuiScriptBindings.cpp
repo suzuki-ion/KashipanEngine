@@ -10,6 +10,7 @@
 #include <imgui.h>
 #include <imgui_stdlib.h>
 
+#include "Debug/Logger.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
@@ -17,6 +18,7 @@
 namespace KashipanEngine {
 
 void RegisterImGuiScriptBindings(asIScriptEngine *engine) {
+    LogScope scope;
     if (!engine) return;
 
     // スクリプト側からは ImGui::Xxx(...) として呼び出す

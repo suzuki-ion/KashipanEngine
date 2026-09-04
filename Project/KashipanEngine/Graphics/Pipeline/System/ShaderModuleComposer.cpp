@@ -16,6 +16,7 @@ namespace {
 // 開くため、日本語等の非ASCII文字を含むパスが開けない。Utf8StringToPathでpath版コンストラクタへ
 // 渡して回避する
 std::string ReadFileText(const std::string &path) {
+    LogScope scope;
     std::ifstream file(Utf8StringToPath(path), std::ios::binary);
     if (!file) return {};
     std::ostringstream ss;
@@ -24,6 +25,7 @@ std::string ReadFileText(const std::string &path) {
 }
 
 bool WriteFileText(const std::string &path, const std::string &content) {
+    LogScope scope;
     EnsureParentDirectoryExists(path);
     std::ofstream file(Utf8StringToPath(path), std::ios::binary | std::ios::trunc);
     if (!file) return false;
@@ -51,6 +53,7 @@ constexpr const char *kAlpha2DHooksMarker = "/*{{ALPHA_HOOKS_2D}}*/";
 
 // beginマーカーからendマーカーまで（両端含む）を置換する。見つからなければ何もしない
 void ReplaceRegion(std::string &source, const std::string &beginMarker, const std::string &endMarker, const std::string &replacement) {
+    LogScope scope;
     size_t begin = source.find(beginMarker);
     if (begin == std::string::npos) return;
     size_t end = source.find(endMarker, begin);
@@ -61,12 +64,14 @@ void ReplaceRegion(std::string &source, const std::string &beginMarker, const st
 
 // マーカー文字列そのものを置換する。見つからなければ何もしない
 void ReplaceMarker(std::string &source, const std::string &marker, const std::string &replacement) {
+    LogScope scope;
     size_t pos = source.find(marker);
     if (pos == std::string::npos) return;
     source.replace(pos, marker.size(), replacement);
 }
 
 const ShaderModuleDefinition *FindModule(const std::vector<ShaderModuleDefinition> &registry, const std::string &token) {
+    LogScope scope;
     for (const auto &m : registry) {
         if (m.token == token) return &m;
     }
@@ -76,10 +81,12 @@ const ShaderModuleDefinition *FindModule(const std::vector<ShaderModuleDefinitio
 } // namespace
 
 bool IsTwoDimensionalSlot(ModuleHookSlot slot) {
+    LogScope scope;
     return slot == ModuleHookSlot::Composite2D || slot == ModuleHookSlot::Alpha2D;
 }
 
 const std::vector<ShaderModuleDefinition> &GetShaderModuleRegistry() {
+    LogScope scope;
     static const std::vector<ShaderModuleDefinition> kModules = {
         { "MultiTone",    ModuleHookSlot::Tone,        0,   "return ApplyMultiTone(halfLambert, mat);" },
         { "RimShade",     ModuleHookSlot::RimColor,    0,   "float3 rimColor = ApplyRimShade(mat, lam);" },
@@ -108,6 +115,7 @@ const std::vector<ShaderModuleDefinition> &GetShaderModuleRegistry() {
 }
 
 std::string ComposeAndWriteShader(const std::vector<std::string> &selectedTokens, const std::string &shaderBaseDir) {
+    LogScope scope;
     if (selectedTokens.empty()) return {};
 
     const std::string basePath = shaderBaseDir + "/Object/ObjectPS.hlsl";
@@ -212,6 +220,7 @@ std::string ComposeAndWriteShader(const std::vector<std::string> &selectedTokens
 }
 
 std::vector<std::string> GetModuleFieldNames(const std::string &token, const std::string &shaderBaseDir) {
+    LogScope scope;
     const std::string source = ReadFileText(shaderBaseDir + "/Modules/" + token + "/Fields.hlsli");
     static const std::regex kFieldLineRe(R"(^\s*\w+\s+(\w+)\s*(?:\[\s*\d+\s*\])?\s*;)");
     std::vector<std::string> names;

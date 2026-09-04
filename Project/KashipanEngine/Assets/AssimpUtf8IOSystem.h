@@ -5,6 +5,7 @@
 #include <assimp/IOStream.hpp>
 #include <assimp/IOSystem.hpp>
 
+#include "Debug/Logger.h"
 #include "Utilities/Conversion/ConvertString.h"
 
 namespace KashipanEngine {
@@ -18,6 +19,7 @@ class AssimpUtf8IOStream final : public Assimp::IOStream {
 public:
     explicit AssimpUtf8IOStream(FILE *file) : file_(file) {}
     ~AssimpUtf8IOStream() override {
+        LogScope scope;
         if (file_) fclose(file_);
     }
 
@@ -28,6 +30,7 @@ public:
         return file_ ? fwrite(buffer, size, count, file_) : 0;
     }
     aiReturn Seek(size_t offset, aiOrigin origin) override {
+        LogScope scope;
         if (!file_) return aiReturn_FAILURE;
         int whence = SEEK_SET;
         if (origin == aiOrigin_CUR) whence = SEEK_CUR;
@@ -38,6 +41,7 @@ public:
         return file_ ? static_cast<size_t>(_ftelli64(file_)) : 0;
     }
     size_t FileSize() const override {
+        LogScope scope;
         if (!file_) return 0;
         const long long current = _ftelli64(file_);
         _fseeki64(file_, 0, SEEK_END);
@@ -63,6 +67,7 @@ private:
 class AssimpUtf8IOSystem final : public Assimp::IOSystem {
 public:
     bool Exists(const char *file) const override {
+        LogScope scope;
         FILE *f = OpenRaw(file, "rb");
         if (!f) return false;
         fclose(f);
@@ -70,6 +75,7 @@ public:
     }
     char getOsSeparator() const override { return '\\'; }
     Assimp::IOStream *Open(const char *file, const char *mode = "rb") override {
+        LogScope scope;
         FILE *f = OpenRaw(file, mode);
         return f ? new AssimpUtf8IOStream(f) : nullptr;
     }
@@ -77,6 +83,7 @@ public:
 
 private:
     static FILE *OpenRaw(const char *utf8Path, const char *mode) {
+        LogScope scope;
         const std::wstring widePath = ConvertString(std::string(utf8Path));
         const std::wstring wideMode = ConvertString(std::string(mode));
         FILE *file = nullptr;

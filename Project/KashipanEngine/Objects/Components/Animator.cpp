@@ -4,6 +4,7 @@
 #include <cmath>
 #include <unordered_map>
 
+#include "Debug/Logger.h"
 #include "Objects/Components/MeshFilter.h"
 #include "Objects/Components/Transform.h"
 #include "Scene/SceneContext.h"
@@ -19,6 +20,7 @@ namespace KashipanEngine {
 namespace {
 
 float SampleFloatTimeline(const KeyframeTimeline &timeline, float time, bool loop) {
+    LogScope scope;
     if (timeline.keys.empty()) return 0.0f;
     if (timeline.keys.size() == 1) return std::get<float>(timeline.keys.front().value);
 
@@ -47,6 +49,7 @@ float SampleFloatTimeline(const KeyframeTimeline &timeline, float time, bool loo
 }
 
 Quaternion SampleQuaternionTimeline(const KeyframeTimeline &timeline, float time, bool loop) {
+    LogScope scope;
     if (timeline.keys.empty()) return Quaternion::Identity();
     if (timeline.keys.size() == 1) return std::get<Quaternion>(timeline.keys.front().value);
 
@@ -76,6 +79,7 @@ Quaternion SampleQuaternionTimeline(const KeyframeTimeline &timeline, float time
 
 /// @brief アニメーションクリップをスケルトンの各ジョイントのTransformへ適用する
 void ApplyClipToSkeletonJoints(const AnimationClip &clip, const Skeleton &skeleton, float time, bool loop) {
+    LogScope scope;
     for (const auto &joint : skeleton.joints) {
         auto it = clip.nodeNameToTimelineIndices.find(joint.name);
         if (it == clip.nodeNameToTimelineIndices.end()) continue;
@@ -116,11 +120,13 @@ void ApplyClipToSkeletonJoints(const AnimationClip &clip, const Skeleton &skelet
 } // namespace
 
 void Animator::Initialize() {
+    LogScope scope;
     isPlaying_ = playOnStart_;
     RebuildSkeletonInstanceIfNeeded();
 }
 
 void Animator::Update() {
+    LogScope scope;
     RebuildSkeletonInstanceIfNeeded();
     if (skeletonInstance_.joints.empty()) return;
     AdvanceAnimation(GetDeltaTime() * GetGameSpeed());
@@ -132,6 +138,7 @@ void Animator::Update() {
 }
 
 ModelManager::ModelHandle Animator::GetMeshHandle() const {
+    LogScope scope;
     auto *objectContext = GetOwnerObjectContext();
     if (!objectContext) return ModelManager::kInvalidHandle;
     auto *meshFilter = objectContext->GetComponent<MeshFilter>();
@@ -140,6 +147,7 @@ ModelManager::ModelHandle Animator::GetMeshHandle() const {
 }
 
 void Animator::RebuildSkeletonInstanceIfNeeded() {
+    LogScope scope;
     const auto meshHandle = GetMeshHandle();
     if (meshHandle == ModelManager::kInvalidHandle) return;
 
@@ -168,6 +176,7 @@ void Animator::RebuildSkeletonInstanceIfNeeded() {
 }
 
 void Animator::AdvanceAnimation(float deltaTime) {
+    LogScope scope;
     if (!isPlaying_ || clipName_.empty()) return;
     if (skeletonHandle_ == SkeletonManager::kInvalidHandle || animationHandle_ == AnimationManager::kInvalidHandle) return;
 
@@ -192,6 +201,7 @@ void Animator::AdvanceAnimation(float deltaTime) {
 }
 
 void Animator::SyncArmatureObjects() {
+    LogScope scope;
     if (skeletonInstance_.joints.empty()) return;
     auto *sceneContext = GetOwnerSceneContext();
     if (!sceneContext) return;
@@ -246,6 +256,7 @@ void Animator::SyncArmatureObjects() {
 }
 
 void Animator::ResetToBindPose() {
+    LogScope scope;
     for (auto &joint : skeletonInstance_.joints) {
         if (auto *t = joint.transform.get()) t->ResetToBindPose();
         if (auto *t = joint.skeletonSpaceTransform.get()) t->ResetToBindPose();

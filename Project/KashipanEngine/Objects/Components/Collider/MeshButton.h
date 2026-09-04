@@ -3,6 +3,7 @@
 #include <cmath>
 #include <memory>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Assets/ModelManager.h"
 #include "Core/Window.h"
@@ -52,6 +53,7 @@ public:
     ~MeshButton() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<MeshButton>();
         ptr->displayCameraObjectID_ = displayCameraObjectID_;
         ptr->preciseMeshTest_ = preciseMeshTest_;
@@ -70,6 +72,7 @@ public:
     void SetDisplayCameraObject(const UUID128 &cameraObjectID) { displayCameraObjectID_ = cameraObjectID; }
     const UUID128 &GetDisplayCameraObjectID() const noexcept { return displayCameraObjectID_; }
     EmptyObject *GetDisplayCameraObject() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext || !displayCameraObjectID_.IsValid()) return nullptr;
         return sceneContext->GetSceneObject(displayCameraObjectID_);
@@ -111,6 +114,7 @@ public:
     ///          保持する。一度も掴んでいない、またはカメラ視線とドラッグ軸がほぼ平行で計算が不安定な
     ///          場合はfalseを返す（outOffsetは変更しない）
     bool TryGetAxisDragOffset(float &outOffset) const {
+        LogScope scope;
         if (!hasValidDragOffset_) return false;
         outOffset = lastDragOffset_;
         return true;
@@ -118,6 +122,7 @@ public:
 
 protected:
     void Update() override {
+        LogScope scope;
         isClicked_ = false;
         const bool wasPressed = isPressed_;
 
@@ -159,6 +164,7 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         TargetObjectSelector::ShowSelector(TranslationLabel("component.meshbutton.display_camera"), GetOwnerSceneContext(), displayCameraObjectID_, true, false);
         ImGui::Checkbox(TranslationLabel("component.meshbutton.precise_mesh_test"), &preciseMeshTest_);
         ImGui::TextDisabled("%s", TranslationC("component.meshbutton.precise_mesh_test_desc"));
@@ -174,6 +180,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = JSON::object();
         json["displayCameraObjectID"] = ToJSON(displayCameraObjectID_);
         json["preciseMeshTest"] = preciseMeshTest_;
@@ -181,6 +188,7 @@ protected:
         return json;
     }
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         displayCameraObjectID_ = json.contains("displayCameraObjectID") ? FromJSON<UUID128>(json["displayCameraObjectID"]) : UUID128();
         preciseMeshTest_ = json.value("preciseMeshTest", false);
         dragAxis_ = json.contains("dragAxis") ? FromJSON<Vector3>(json["dragAxis"]) : Vector3(1.0f, 0.0f, 0.0f);
@@ -194,6 +202,7 @@ private:
     ///        （ScreenBufferの入れ子表示にも対応するため、実ウィンドウへ辿り着くかチェーンの上限
     ///        （kMaxScreenBufferChainDepth）に達するまで繰り返す。循環参照があっても上限で止まる）
     IWindowObjectComponent *ResolveWindow(EmptyObject *targetObj) const {
+        LogScope scope;
         constexpr int kMaxScreenBufferChainDepth = 8;
         auto *sceneContext = GetOwnerSceneContext();
         auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
@@ -218,6 +227,7 @@ private:
     }
 
     Camera3D *ResolveDisplayCamera(Transform *&outTransform) const {
+        LogScope scope;
         outTransform = nullptr;
         auto *obj = GetDisplayCameraObject();
         if (!obj) return nullptr;
@@ -228,6 +238,7 @@ private:
     /// @brief メッシュ（バインドポーズ）のローカル空間バウンディングボックスを取得する
     ///        （メッシュハンドルが変わらない限りキャッシュを使い回す）
     bool GetCachedLocalAabb(ModelManager::ModelHandle meshHandle, Vector3 &outMin, Vector3 &outMax) const {
+        LogScope scope;
         if (meshHandle == ModelManager::kInvalidHandle) return false;
         if (cachedAabbMeshHandle_ != meshHandle) {
             const auto &vertices = ModelManager::GetModelData(meshHandle).GetVertices();
@@ -250,6 +261,7 @@ private:
 
     /// @brief 線分（origin + dir*t, t∈[0,1]）とAABBの交差判定（スラブ法）
     static bool SegmentIntersectsAabb(const Vector3 &origin, const Vector3 &dir, const Vector3 &boxMin, const Vector3 &boxMax) {
+        LogScope scope;
         float tMin = 0.0f;
         float tMax = 1.0f;
         const float originArr[3] = { origin.x, origin.y, origin.z };
@@ -277,6 +289,7 @@ private:
     ///          このコンポーネント側にも同じものを持たせている。エディター専用コードとは共有しない）
     static bool SegmentIntersectsTriangle(const Vector3 &origin, const Vector3 &dir,
         const Vector3 &v0, const Vector3 &v1, const Vector3 &v2, float &outT) {
+        LogScope scope;
         constexpr float kEpsilon = 1e-8f;
         const Vector3 edge1 = v1 - v0;
         const Vector3 edge2 = v2 - v0;
@@ -302,6 +315,7 @@ private:
 
     /// @brief メッシュの全三角形のいずれかと線分が交差するかどうか
     static bool IntersectsMeshTriangles(ModelManager::ModelHandle meshHandle, const Vector3 &origin, const Vector3 &dir) {
+        LogScope scope;
         const auto &model = ModelManager::GetModelData(meshHandle);
         const auto &vertices = model.GetVertices();
         const auto &indices = model.GetIndices();
@@ -329,6 +343,7 @@ private:
     ///          （Windowクライアント座標 → NDC）の先を、Camera3Dの逆ビュー射影で近平面/遠平面へ
     ///          逆射影する形にしたもの。ComputeIsHovered/ComputeAxisDragOffsetの両方から使う
     bool ComputeMouseWorldRay(Vector3 &outRayStart, Vector3 &outRayEnd) const {
+        LogScope scope;
         auto *objectContext = GetOwnerObjectContext();
         if (!objectContext) return false;
 
@@ -375,6 +390,7 @@ private:
     ///          MeshRendererの場合のみ、バウンディングボックスに交差した後さらに全三角形との
     ///          交差判定まで行う
     bool ComputeIsHovered() const {
+        LogScope scope;
         auto *objectContext = GetOwnerObjectContext();
         if (!objectContext) return false;
 
@@ -408,6 +424,7 @@ private:
 
     /// @brief 掴んで軸沿いにドラッグする操作の基準（軸原点・軸方向）を、現在のTransformから記録する
     void CaptureDragAxisReference() {
+        LogScope scope;
         hasDragAxisReference_ = false;
         auto *objectContext = GetOwnerObjectContext();
         auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
@@ -429,6 +446,7 @@ private:
     ///          カメラ視線とドラッグ軸がほぼ平行な場合は分母が0に近づき不安定になるため、
     ///          その場合はfalseを返す
     bool ComputeAxisDragOffset(const Vector3 &rayOrigin, const Vector3 &rayDir, float &outOffset) const {
+        LogScope scope;
         const Vector3 &d1 = rayDir;
         const Vector3 &d2 = dragAxisDirWorld_;
         const Vector3 r = rayOrigin - dragAxisOriginWorld_;

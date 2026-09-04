@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <functional>
 #include <type_traits>
+#include "Debug/Logger.h"
 #include "Utilities/FileIO.h"
 #include "ComponentSerialize/ComponentRegistry.h"
 #include "Objects/ComponentRef.h"
@@ -60,6 +61,7 @@ public:
     /// @return コンポーネントの型ID
     template<typename T>
     static size_t GetComponentTypeID() {
+        LogScope scope;
         static size_t typeID = sComponentTypeID++;
         return typeID;
     }
@@ -93,6 +95,7 @@ public:
 
     /// @brief タグを設定する（文字列からハッシュ化される。空文字で未設定に戻る）
     void SetTag(const std::string &tagName) {
+        LogScope scope;
         tagName_ = tagName;
         tag_ = Tag(tagName);
     }
@@ -117,6 +120,7 @@ public:
     ///          （非アクティブの場合は有効化時に Initialize が走る）
     /// @param allowInitialize 所有オブジェクトが非アクティブの場合などに false を渡す
     void InitializeInterface(Passkey<EmptyObject>, ObjectContext *objectContext, SceneContext *sceneContext, bool allowInitialize = true) {
+        LogScope scope;
         objectContext_ = objectContext;
         sceneContext_ = sceneContext;
         if (allowInitialize && IsActive()) {
@@ -124,17 +128,18 @@ public:
         }
     }
     /// @brief 終了処理
-    void FinalizeInterface(Passkey<EmptyObject>) { Finalize(); }
+    void FinalizeInterface(Passkey<EmptyObject>) { LogScope scope; Finalize(); }
     /// @brief 更新処理
-    void UpdateInterface(Passkey<EmptyObject>) { if (IsActive()) { Update(); } }
+    void UpdateInterface(Passkey<EmptyObject>) { LogScope scope; if (IsActive()) { Update(); } }
 
 #ifdef USE_IMGUI
     /// @brief ImGui 表示（ウィンドウの Begin/End は呼ばない）
-    void ShowImGuiInterface(Passkey<EmptyObject>) { ShowImGui(); }
+    void ShowImGuiInterface(Passkey<EmptyObject>) { LogScope scope; ShowImGui(); }
     /// @brief 常時ImGui表示（ゲームループがポーズ中でも毎フレーム呼ばれる）
-    void ShowPersistentImGuiInterface(Passkey<EmptyObject>) { if (IsActive()) { ShowPersistentImGui(); } }
+    void ShowPersistentImGuiInterface(Passkey<EmptyObject>) { LogScope scope; if (IsActive()) { ShowPersistentImGui(); } }
 #endif
     JSON SaveToJsonInterface(Passkey<EmptyObject>) const {
+        LogScope scope;
         JSON json;
         json["priority"] = updatePriority_;
         json["isActive"] = isActive_;
@@ -143,6 +148,7 @@ public:
         return json;
     }
     bool LoadFromJsonInterface(Passkey<EmptyObject>, const JSON &json) {
+        LogScope scope;
         updatePriority_ = json.value("priority", 1);
         isActive_ = json.value("isActive", true);
         SetTag(json.value("tag", std::string{}));
@@ -156,6 +162,7 @@ public:
     /// @param key 変数のキー
     /// @return メンバー変数の情報（存在しない場合は nullptr）
     MemberVariable *GetMemberVariable(const std::string &key) {
+        LogScope scope;
         auto it = memberVariables_.find(key);
         if (it != memberVariables_.end()) {
             return &it->second;
@@ -184,6 +191,7 @@ protected:
 #if defined(USE_IMGUI)
     /// @brief ImGui 表示（ウィンドウの Begin/End は呼ばない）
     virtual void ShowImGui() {
+        LogScope scope;
         ImGui::Text("%s", TranslationC("component.iobjectcomponent.none"));
     }
     /// @brief 常時ImGui表示（ビューアウィンドウ等、ポーズ中も表示し続けたいものに使う）
@@ -192,11 +200,11 @@ protected:
 
     /// @brief コンポーネント情報をjsonへ保存
     /// @return コンポーネント情報を含むjsonオブジェクトを返す。保存する情報がない場合は空のjsonオブジェクトを返す
-    virtual JSON SaveToJson() const { return JSON::object(); }
+    virtual JSON SaveToJson() const { LogScope scope; return JSON::object(); }
     /// @brief jsonからコンポーネント情報を読み込み
     /// @param json コンポーネント情報を含むjsonオブジェクト
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す。読み込む情報がない場合は true を返す
-    virtual bool LoadFromJson(const JSON &json) { (void)json; return true; }
+    virtual bool LoadFromJson(const JSON &json) { LogScope scope; (void)json; return true; }
 
     /// @brief 所属オブジェクトのコンテキストを取得
     ObjectContext *GetOwnerObjectContext() const { return objectContext_; }
@@ -207,6 +215,7 @@ protected:
     /// @param key 変数のキー
     /// @param variable メンバー変数の情報
     void AddMemberVariable(const std::string &key, const MemberVariable &variable) {
+        LogScope scope;
         memberVariables_.insert_or_assign(key, variable);
     }
     /// @brief メンバー変数を追加する
@@ -217,6 +226,7 @@ protected:
     ///                   （セッター迂回時に必要な副作用がある場合のみ指定する）
     template <typename T>
     void AddMemberVariable(const std::string &key, T *variable, std::function<void()> onModified = nullptr) {
+        LogScope scope;
         memberVariables_.insert_or_assign(key, MemberVariable{ static_cast<void *>(variable), GetValueType<T>(), std::move(onModified) });
     }
 #define ADD_MEMBER_VARIABLE(var) AddMemberVariable(#var, &var)

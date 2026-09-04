@@ -3,6 +3,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include "Debug/Logger.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
@@ -88,6 +89,7 @@ inline JSON ToJSON(const std::vector<JSON> &values) { return JSON(values); }
 inline JSON ToJSON(const UUID128 &uuid) { return JSON(uuid.ToString()); }
 template <typename T>
 JSON ToJSON(const std::vector<T> &vec) {
+    LogScope scope;
     JSON jsonArray = JSON::array();
     for (const auto &item : vec) {
         jsonArray.push_back(ToJSON(item));
@@ -96,6 +98,7 @@ JSON ToJSON(const std::vector<T> &vec) {
 }
 template <typename T>
 JSON ToJSON(const std::optional<T> &opt) {
+    LogScope scope;
     if (opt.has_value()) {
         return ToJSON(opt.value());
     } else {
@@ -104,6 +107,7 @@ JSON ToJSON(const std::optional<T> &opt) {
 }
 template <typename K, typename V>
 JSON ToJSON(const std::map<K, V> &map) {
+    LogScope scope;
     JSON jsonObject = JSON::object();
     for (const auto &[key, value] : map) {
         jsonObject[std::to_string(key)] = ToJSON(value);
@@ -112,6 +116,7 @@ JSON ToJSON(const std::map<K, V> &map) {
 }
 template <typename K, typename V>
 JSON ToJSON(const std::unordered_map<K, V> &map) {
+    LogScope scope;
     JSON jsonObject = JSON::object();
     for (const auto &[key, value] : map) {
         jsonObject[std::to_string(key)] = ToJSON(value);
@@ -203,6 +208,7 @@ struct FromJSONImpl<UUID128> {
 template <typename T>
 struct FromJSONImpl<std::vector<T>> {
     static std::vector<T> invoke(const JSON &json) {
+        LogScope scope;
         std::vector<T> vec;
         for (const auto &item : json) {
             vec.push_back(FromJSON<T>(item));
@@ -213,6 +219,7 @@ struct FromJSONImpl<std::vector<T>> {
 template <typename T>
 struct FromJSONImpl<std::optional<T>> {
     static std::optional<T> invoke(const JSON &json) {
+        LogScope scope;
         if (json.is_null()) {
             return std::nullopt;
         } else {
@@ -223,6 +230,7 @@ struct FromJSONImpl<std::optional<T>> {
 template <typename K, typename V>
 struct FromJSONImpl<std::map<K, V>> {
     static std::map<K, V> invoke(const JSON &json) {
+        LogScope scope;
         std::map<K, V> map;
         for (auto it = json.begin(); it != json.end(); ++it) {
             map[static_cast<K>(std::stoi(it.key()))] = FromJSON<V>(it.value());
@@ -233,6 +241,7 @@ struct FromJSONImpl<std::map<K, V>> {
 template <typename K, typename V>
 struct FromJSONImpl<std::unordered_map<K, V>> {
     static std::unordered_map<K, V> invoke(const JSON &json) {
+        LogScope scope;
         std::unordered_map<K, V> map;
         for (auto it = json.begin(); it != json.end(); ++it) {
             map[static_cast<K>(std::stoi(it.key()))] = FromJSON<V>(it.value());

@@ -103,6 +103,7 @@ SamplerManager::SamplerHandle SamplerManager::CreateSampler(const D3D12_SAMPLER_
 }
 
 SamplerManager::SamplerHandle SamplerManager::GetSampler(DefaultSampler state) {
+    LogScope scope;
     switch (state) {
     case DefaultSampler::PointClamp:
         return 1;
@@ -122,6 +123,7 @@ SamplerManager::SamplerHandle SamplerManager::GetSampler(DefaultSampler state) {
 }
 
 bool SamplerManager::BindSampler(ShaderVariableBinder* shaderBinder, const std::string& nameKey, SamplerHandle handle) {
+    LogScope scope;
     if (!shaderBinder) return false;
     if (handle == kInvalidHandle) return false;
 
@@ -136,6 +138,7 @@ bool SamplerManager::BindSampler(ShaderVariableBinder* shaderBinder, const std::
 }
 
 bool SamplerManager::BindSampler(ShaderVariableBinder *shaderBinder, const std::string &nameKey, DefaultSampler defaultSampler) {
+    LogScope scope;
     if (!shaderBinder) return false;
     Handle handle = kInvalidHandle;
     switch (defaultSampler) {

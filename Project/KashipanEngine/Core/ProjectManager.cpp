@@ -34,6 +34,7 @@ constexpr const char *kInvalidProjectNameCharacters = "\\/:*?\"<>|";
 } // namespace
 
 bool ProjectManager::IsValidProjectName(const std::string &name, std::string *outErrorMessage) {
+    LogScope scope;
     const auto fail = [outErrorMessage](const std::string &message) {
         if (outErrorMessage) *outErrorMessage = message;
         return false;
@@ -51,6 +52,7 @@ bool ProjectManager::IsValidProjectName(const std::string &name, std::string *ou
 }
 
 bool ProjectManager::ReadProjectFile(const std::string &projectRootPath, ProjectInfo &outInfo) {
+    LogScope scope;
     const std::string filePath = projectRootPath + "/" + ProjectPaths::kProjectFileName;
     const JSON json = LoadJSON(filePath);
     if (!json.is_object()) return false;
@@ -64,6 +66,7 @@ bool ProjectManager::ReadProjectFile(const std::string &projectRootPath, Project
 }
 
 bool ProjectManager::WriteProjectFile(const ProjectInfo &info) {
+    LogScope scope;
     JSON json = JSON::object();
     json["formatVersion"] = info.formatVersion;
     json["projectName"] = info.name;
@@ -94,6 +97,7 @@ std::vector<ProjectManager::ProjectInfo> ProjectManager::GetProjectList() {
 }
 
 ProjectManager::ProjectInfo ProjectManager::GetActiveProject() {
+    LogScope scope;
     ProjectInfo info;
     if (!ReadProjectFile(ProjectPaths::ProjectRoot(), info)) {
         // 配布形態など Project.json が無い場合でも、名前とパスは埋めて返す
@@ -292,10 +296,12 @@ bool ProjectManager::SetIncludeInGithubPush(const std::string &name, bool includ
 }
 
 void ProjectManager::SetStartupProject(const std::string &name) {
+    LogScope scope;
     UserSettings::SetString(UserSettings::kLastOpenedProjectKey, name);
 }
 
 std::string ProjectManager::GetStartupProject() {
+    LogScope scope;
     return UserSettings::GetString(UserSettings::kLastOpenedProjectKey, "");
 }
 
@@ -357,6 +363,7 @@ bool ProjectManager::StartEditorProcess(const std::string &projectName, std::str
 }
 
 bool ProjectManager::LaunchPendingRestart(PasskeyForGameEngineMain) {
+    LogScope scope;
     if (sPendingRestartProjectName_.empty()) return false;
 
     const std::string projectName = sPendingRestartProjectName_;
@@ -365,6 +372,7 @@ bool ProjectManager::LaunchPendingRestart(PasskeyForGameEngineMain) {
 }
 
 bool ProjectManager::LaunchEditor(const std::string &name, std::string *outErrorMessage) {
+    LogScope scope;
     ProjectInfo info;
     if (!ReadProjectFile(ProjectPaths::ProjectsRoot() + "/" + name, info)) {
         if (outErrorMessage) *outErrorMessage = Translation("engine.project.notfound") + name;

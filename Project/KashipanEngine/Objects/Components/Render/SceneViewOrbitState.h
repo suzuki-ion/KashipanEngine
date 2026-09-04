@@ -1,4 +1,5 @@
 #pragma once
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Utilities/Translation.h"
 
@@ -17,6 +18,7 @@ public:
     ~SceneViewOrbitState() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<SceneViewOrbitState>();
         ptr->distance_ = distance_;
         return ptr;
@@ -28,14 +30,17 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         ImGui::DragFloat(TranslationLabel("component.scenevieworbitstate.distance"), &distance_, 0.1f, 0.1f, 10000.0f);
     }
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         return JSON{ {"distance", distance_} };
     }
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         distance_ = json.value("distance", 10.0f);
         return true;
     }

@@ -1,8 +1,10 @@
 #include "ValueType.h"
+#include "Debug/Logger.h"
 
 namespace {
 
 std::string Trim(std::string s) {
+    KashipanEngine::LogScope scope;
     const auto isSpace = [](unsigned char c) { return std::isspace(c) != 0; };
 
     while (!s.empty() && isSpace(static_cast<unsigned char>(s.front()))) {
@@ -15,6 +17,7 @@ std::string Trim(std::string s) {
 }
 
 std::vector<std::string> SplitTemplateArguments(const std::string &argsStr) {
+    KashipanEngine::LogScope scope;
     std::vector<std::string> result;
     std::string current;
     int depth = 0;
@@ -44,6 +47,7 @@ std::vector<std::string> SplitTemplateArguments(const std::string &argsStr) {
 } // namespace
 
 std::string ValueTypeToString(ValueType type) {
+    KashipanEngine::LogScope scope;
     switch (type) {
         case ValueType::None:         return "None";
         case ValueType::Bool:         return "Bool";
@@ -78,6 +82,7 @@ std::string ValueTypeToString(ValueType type) {
 }
 
 ValueType StringToValueType(const std::string &str) {
+    KashipanEngine::LogScope scope;
     if (str == "Bool") return ValueType::Bool;
     if (str == "Int8") return ValueType::Int8;
     if (str == "UInt8") return ValueType::UInt8;
@@ -109,6 +114,7 @@ ValueType StringToValueType(const std::string &str) {
 }
 
 std::string TypeInfo::ToString() const {
+    KashipanEngine::LogScope scope;
     std::string result = ValueTypeToString(baseType_);
 
     // テンプレート引数（内部型）が存在する場合、< > で囲んで再帰的に文字列化
@@ -125,11 +131,12 @@ std::string TypeInfo::ToString() const {
     return result;
 }
 
-ValueType TypeInfo::GetBaseType() const { return baseType_; }
+ValueType TypeInfo::GetBaseType() const { KashipanEngine::LogScope scope; return baseType_; }
 
-const std::vector<TypeInfo> &TypeInfo::GetTemplateArguments() const { return templateArguments_; }
+const std::vector<TypeInfo> &TypeInfo::GetTemplateArguments() const { KashipanEngine::LogScope scope; return templateArguments_; }
 
 TypeInfo GetValueType(const std::string &typeStr) {
+    KashipanEngine::LogScope scope;
     std::string s = Trim(typeStr);
 
     size_t pos = s.find('<');

@@ -2,9 +2,12 @@
 
 #include <cmath>
 
+#include "Debug/Logger.h"
+
 namespace KashipanEngine {
 
 SoundBeat::SoundBeat() {
+    LogScope scope;
     playHandle_ = AudioManager::kInvalidPlayHandle;
     bpm_ = 0.0f;
     startOffsetSec_ = 0.0;
@@ -14,15 +17,18 @@ SoundBeat::SoundBeat() {
 }
 
 SoundBeat::SoundBeat(PlayHandle play, float bpm, double startOffsetSec) {
+    LogScope scope;
     SetBeat(play, bpm, startOffsetSec);
     AudioManager::RegisterSoundBeat({}, this);
 }
 
 SoundBeat::~SoundBeat() {
+    LogScope scope;
     AudioManager::UnregisterSoundBeat({}, this);
 }
 
 void SoundBeat::SetBeat(PlayHandle play, float bpm, double startOffsetSec) {
+    LogScope scope;
     playHandle_ = play;
     bpm_ = (bpm > 0.0f) ? bpm : 0.0f;
     startOffsetSec_ = startOffsetSec;
@@ -36,6 +42,7 @@ void SoundBeat::SetBeat(PlayHandle play, float bpm, double startOffsetSec) {
 }
 
 void SoundBeat::SetPlayHandle(PlayHandle play) noexcept {
+    LogScope scope;
     playHandle_ = play;
     if (playHandle_ == AudioManager::kInvalidPlayHandle) {
         isUseManualTime_ = false;
@@ -45,6 +52,7 @@ void SoundBeat::SetPlayHandle(PlayHandle play) noexcept {
 }
 
 void SoundBeat::StartManualBeat() {
+    LogScope scope;
     if (playHandle_ != AudioManager::kInvalidPlayHandle) return;
     isUseManualTime_ = true;
     manualStartTime_ = std::chrono::steady_clock::now();
@@ -53,10 +61,12 @@ void SoundBeat::StartManualBeat() {
 }
 
 void SoundBeat::SetOnBeat(std::function<void(PlayHandle, uint64_t, double)> cb) {
+    LogScope scope;
     onBeatCallback_ = std::move(cb);
 }
 
 void SoundBeat::Update(Passkey<AudioManager>) {
+    LogScope scope;
     isOnBeatTriggered_ = false;
     if (!IsActive()) return;
     double posSec = 0.0;
@@ -91,6 +101,7 @@ void SoundBeat::Update(Passkey<AudioManager>) {
 }
 
 float SoundBeat::GetBeatProgress() const {
+    LogScope scope;
     if (!IsActive()) return 0.0f;
     double posSec = 0.0;
     if (playHandle_ != AudioManager::kInvalidPlayHandle) {
@@ -113,6 +124,7 @@ float SoundBeat::GetBeatProgress() const {
 }
 
 void SoundBeat::Reset() {
+    LogScope scope;
     currentBeatIndex_ = std::numeric_limits<uint64_t>::max();
     if (isUseManualTime_) manualStartTime_ = std::chrono::steady_clock::now();
 }

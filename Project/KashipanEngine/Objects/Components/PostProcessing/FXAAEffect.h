@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <algorithm>
+#include "Debug/Logger.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 #include "Utilities/Translation.h"
 
@@ -24,6 +25,7 @@ public:
     ~FXAAEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<FXAAEffect>();
         ptr->params_ = params_;
         return ptr;
@@ -35,6 +37,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         IPostProcessComponent::ShowImGui();
         ImGui::DragFloat(TranslationLabel("component.fxaaeffect.threshold"), &params_.threshold, 0.001f, 0.0f, 0.5f, "%.4f");
         if (ImGui::IsItemHovered()) {
@@ -56,6 +59,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = IPostProcessComponent::SaveToJson();
         json["threshold"] = params_.threshold;
         json["thresholdMin"] = params_.thresholdMin;
@@ -65,6 +69,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         IPostProcessComponent::LoadFromJson(json);
         params_.threshold = json.value("threshold", 0.01f);
         params_.thresholdMin = json.value("thresholdMin", 0.001f);
@@ -74,6 +79,7 @@ protected:
     }
 
     std::vector<PassInfo> BuildPasses() override {
+        LogScope scope;
         auto *owner = GetOwnerScreenBuffer();
         cbData_.texelSize[0] = (owner && owner->GetWidth() > 0) ? (1.0f / static_cast<float>(owner->GetWidth())) : 0.0f;
         cbData_.texelSize[1] = (owner && owner->GetHeight() > 0) ? (1.0f / static_cast<float>(owner->GetHeight())) : 0.0f;

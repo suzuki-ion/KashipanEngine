@@ -1,6 +1,7 @@
 #include "SceneVariablesMenu.h"
 #ifdef USE_IMGUI
 #include <imgui.h>
+#include "Debug/Logger.h"
 #include "Scene/Editor/EditorWindowChrome.h"
 #include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
@@ -8,6 +9,7 @@
 namespace KashipanEngine {
 
 void SceneVariablesMenu::ShowImGui() {
+    LogScope scope;
     if (!context_) return;
     if (!ImGui::Begin(TranslationLabel("editor.scenevariables.window"))) {
         ImGui::End();
@@ -53,6 +55,7 @@ void SceneVariablesMenu::ShowImGui() {
 }
 
 void SceneVariablesMenu::AddVariableOfSelectedType(const std::string &key) {
+    LogScope scope;
     switch (newVariableType_) {
     case 0: context_->AddSceneVariable<bool>(key, false); break;
     case 1: context_->AddSceneVariable<int>(key, 0); break;
@@ -69,6 +72,7 @@ void SceneVariablesMenu::AddVariableOfSelectedType(const std::string &key) {
 }
 
 void SceneVariablesMenu::ShowVariableEditor(const std::string &key, MyAny *variable) {
+    LogScope scope;
     ImGuiCustom::EditValue(key.c_str(), *variable);
 }
 

@@ -23,6 +23,7 @@ std::vector<HWND> sPendingDestroySwapChains;                           // 破棄
 } // namespace
 
 void DirectXCommon::AllDestroyPendingSwapChains(Passkey<GameEngine>) {
+    LogScope scope;
     DestroyPendingSwapChains();
 }
 
@@ -196,6 +197,7 @@ void DirectXCommon::DestroySwapChainSignal(Passkey<Window>, HWND hwnd) {
 
 #if defined(USE_IMGUI)
 ID3D12GraphicsCommandList* DirectXCommon::GetRecordedCommandListForImGui(Passkey<ImGuiManager>, HWND hwnd) const {
+    LogScope scope;
     auto it = sHwndToSwapChainIndex.find(hwnd);
     if (it == sHwndToSwapChainIndex.end()) return nullptr;
     auto* sc = sSwapChains[it->second].get();
@@ -241,6 +243,7 @@ DX12SwapChain* DirectXCommon::GetOrCreateSwapChainForImGuiViewport(Passkey<ImGui
 #endif
 
 void DirectXCommon::DestroyPendingSwapChains() {
+    LogScope scope;
     // 破棄対象がある場合は必ずGPUの処理完了を待つ
     if (sPendingDestroySwapChains.empty()) return;
     WaitForFence();
@@ -268,36 +271,43 @@ void DirectXCommon::DestroyPendingSwapChains() {
 }
 
 bool DirectXCommon::WaitForFence() {
+    LogScope scope;
     dx12Fence_->Signal({}, dx12CommandQueue_->GetCommandQueue());
     return dx12Fence_->Wait({});
 }
 
 void DirectXCommon::AddRecordCommandList(Passkey<DX12SwapChain>, ID3D12CommandList* list) {
+    LogScope scope;
     if (!list) return;
     recordedCommandLists_.push_back(list);
 }
 
 void DirectXCommon::AddRecordCommandList(Passkey<ScreenBuffer>, ID3D12CommandList* list) {
+    LogScope scope;
     if (!list) return;
     recordedCommandLists_.push_back(list);
 }
 
 void DirectXCommon::AddRecordCommandList(Passkey<ShadowMapBuffer>, ID3D12CommandList* list) {
+    LogScope scope;
     if (!list) return;
     recordedCommandLists_.push_back(list);
 }
 
 void DirectXCommon::AddRecordCommandList(Passkey<ComputeCommandProcessor>, ID3D12CommandList* list) {
+    LogScope scope;
     if (!list) return;
     recordedCommandLists_.push_back(list);
 }
 
 void DirectXCommon::AddRecordCommandList(Passkey<Renderer>, ID3D12CommandList* list) {
+    LogScope scope;
     if (!list) return;
     recordedCommandLists_.push_back(list);
 }
 
 void DirectXCommon::ExecuteCommandLists() {
+    LogScope scope;
     for (auto &sc : sSwapChains) {
         if (sc && sc->IsCreated() && sc->IsDrawing()) sc->EndDraw(Passkey<DirectXCommon>{});
     }
@@ -324,6 +334,7 @@ void DirectXCommon::ExecuteCommandLists() {
 }
 
 void DirectXCommon::ExecuteOneShotCommandsForTextureManager(Passkey<TextureManager>, const std::function<void(ID3D12GraphicsCommandList*)>& record) {
+    LogScope scope;
     if (!dx12Device_ || !dx12CommandQueue_ || !dx12Fence_) return;
     auto* device = dx12Device_->GetDevice();
     auto* queue = dx12CommandQueue_->GetCommandQueue();
@@ -353,6 +364,7 @@ void DirectXCommon::ExecuteOneShotCommandsForTextureManager(Passkey<TextureManag
 }
 
 void DirectXCommon::ExecuteOneShotCommandsForGifTexture(Passkey<GifTexture>, const std::function<void(ID3D12GraphicsCommandList*)>& record) {
+    LogScope scope;
     if (!dx12Device_ || !dx12CommandQueue_ || !dx12Fence_) return;
     auto* device = dx12Device_->GetDevice();
     auto* queue = dx12CommandQueue_->GetCommandQueue();
@@ -382,6 +394,7 @@ void DirectXCommon::ExecuteOneShotCommandsForGifTexture(Passkey<GifTexture>, con
 }
 
 void DirectXCommon::ExecuteOneShotCommandsForRenderer(Passkey<Renderer>, const std::function<void(ID3D12GraphicsCommandList*)>& record) {
+    LogScope scope;
     if (!dx12Device_ || !dx12CommandQueue_ || !dx12Fence_) return;
     auto* device = dx12Device_->GetDevice();
     auto* queue = dx12CommandQueue_->GetCommandQueue();
@@ -411,6 +424,7 @@ void DirectXCommon::ExecuteOneShotCommandsForRenderer(Passkey<Renderer>, const s
 }
 
 void DirectXCommon::ExecuteOneShotCommandsForFontManager(Passkey<FontManager>, const std::function<void(ID3D12GraphicsCommandList*)>& record) {
+    LogScope scope;
     if (!dx12Device_ || !dx12CommandQueue_ || !dx12Fence_) return;
     auto* device = dx12Device_->GetDevice();
     auto* queue = dx12CommandQueue_->GetCommandQueue();
@@ -440,6 +454,7 @@ void DirectXCommon::ExecuteOneShotCommandsForFontManager(Passkey<FontManager>, c
 }
 
 uint64_t DirectXCommon::ExecuteOneShotCommandsForVideoTexture(Passkey<VideoTexture>, const std::function<void(ID3D12GraphicsCommandList*)>& record) {
+    LogScope scope;
     if (!dx12Device_ || !dx12CommandQueue_ || !dx12Fence_) return 0;
     auto* device = dx12Device_->GetDevice();
     auto* queue = dx12CommandQueue_->GetCommandQueue();
@@ -472,12 +487,14 @@ uint64_t DirectXCommon::ExecuteOneShotCommandsForVideoTexture(Passkey<VideoTextu
 }
 
 bool DirectXCommon::IsVideoUploadFenceComplete(Passkey<VideoTexture>, uint64_t fenceValue) const {
+    LogScope scope;
     if (!dx12Fence_) return false;
     if (fenceValue == 0) return true;
     return dx12Fence_->IsComplete(Passkey<DirectXCommon>{}, fenceValue);
 }
 
 int DirectXCommon::AcquireCommandObjectsInternal(std::vector<std::unique_ptr<DX12Commands>>& pool, std::vector<int>& freeSlots) {
+    LogScope scope;
     if (!dx12Device_) return -1;
     const auto* device = dx12Device_->GetDevice();
     if (!device) return -1;
@@ -496,6 +513,7 @@ int DirectXCommon::AcquireCommandObjectsInternal(std::vector<std::unique_ptr<DX1
 }
 
 DX12Commands* DirectXCommon::GetCommandObjectsInternal(std::vector<std::unique_ptr<DX12Commands>>& pool, int slotIndex) {
+    LogScope scope;
     if (slotIndex < 0) return nullptr;
     const size_t idx = static_cast<size_t>(slotIndex);
     if (idx >= pool.size()) return nullptr;
@@ -503,6 +521,7 @@ DX12Commands* DirectXCommon::GetCommandObjectsInternal(std::vector<std::unique_p
 }
 
 void DirectXCommon::ReleaseCommandObjectsInternal(std::vector<std::unique_ptr<DX12Commands>>& pool, std::vector<int>& freeSlots, int slotIndex) {
+    LogScope scope;
     if (slotIndex < 0) return;
     const size_t idx = static_cast<size_t>(slotIndex);
     if (idx >= pool.size()) return;
@@ -517,54 +536,67 @@ void DirectXCommon::ReleaseCommandObjectsInternal(std::vector<std::unique_ptr<DX
 }
 
 int DirectXCommon::AcquireCommandObjects(Passkey<ScreenBuffer>) {
+    LogScope scope;
     return AcquireCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_);
 }
 
 int DirectXCommon::AcquireCommandObjects(Passkey<ShadowMapBuffer>) {
+    LogScope scope;
     return AcquireCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_);
 }
 
 int DirectXCommon::AcquireCommandObjects(Passkey<ComputeCommandProcessor>) {
+    LogScope scope;
     return AcquireCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_);
 }
 
 int DirectXCommon::AcquireCommandObjects(Passkey<Renderer>) {
+    LogScope scope;
     return AcquireCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_);
 }
 
 DX12Commands* DirectXCommon::GetCommandObjects(Passkey<ScreenBuffer>, int slotIndex) {
+    LogScope scope;
     return GetCommandObjectsInternal(commandObjects_, slotIndex);
 }
 
 DX12Commands* DirectXCommon::GetCommandObjects(Passkey<ShadowMapBuffer>, int slotIndex) {
+    LogScope scope;
     return GetCommandObjectsInternal(commandObjects_, slotIndex);
 }
 
 DX12Commands* DirectXCommon::GetCommandObjects(Passkey<ComputeCommandProcessor>, int slotIndex) {
+    LogScope scope;
     return GetCommandObjectsInternal(commandObjects_, slotIndex);
 }
 
 DX12Commands* DirectXCommon::GetCommandObjects(Passkey<Renderer>, int slotIndex) {
+    LogScope scope;
     return GetCommandObjectsInternal(commandObjects_, slotIndex);
 }
 
 void DirectXCommon::ReleaseCommandObjects(Passkey<DX12SwapChain>, int slotIndex) {
+    LogScope scope;
     ReleaseCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_, slotIndex);
 }
 
 void DirectXCommon::ReleaseCommandObjects(Passkey<ScreenBuffer>, int slotIndex) {
+    LogScope scope;
     ReleaseCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_, slotIndex);
 }
 
 void DirectXCommon::ReleaseCommandObjects(Passkey<ShadowMapBuffer>, int slotIndex) {
+    LogScope scope;
     ReleaseCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_, slotIndex);
 }
 
 void DirectXCommon::ReleaseCommandObjects(Passkey<ComputeCommandProcessor>, int slotIndex) {
+    LogScope scope;
     ReleaseCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_, slotIndex);
 }
 
 void DirectXCommon::ReleaseCommandObjects(Passkey<Renderer>, int slotIndex) {
+    LogScope scope;
     ReleaseCommandObjectsInternal(commandObjects_, freeCommandObjectSlots_, slotIndex);
 }
 

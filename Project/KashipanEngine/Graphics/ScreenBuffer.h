@@ -7,6 +7,7 @@
 #include <unordered_map>
 
 #include "Core/DirectX/DX12Commands.h"
+#include "Debug/Logger.h"
 #include "Graphics/Resources/RenderTargetResource.h"
 #include "Graphics/Resources/DepthStencilResource.h"
 #include "Graphics/Resources/ShaderResourceResource.h"
@@ -158,6 +159,7 @@ private:
     size_t GetDsvReadIndex() const noexcept { return (dsvWriteIndex_ + 1) % kBufferCount; }
 
     void AdvanceFrameBufferIndex(bool updateRtv, bool updateDsv) noexcept {
+        LogScope scope;
         if (updateRtv) {
             rtvWriteIndex_ = (rtvWriteIndex_ + 1) % kBufferCount;
         }

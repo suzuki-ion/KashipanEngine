@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include "Debug/Logger.h"
 #include "Utilities/ImGuiCustom.h"
 #include "Scene/SceneEditorContext.h"
 #include "Scene/Editor/SceneObjectHierarchy.h"
@@ -64,6 +65,7 @@ private:
     void DragAndDropComponent(IObjectComponent *comp);
     /// @brief pendingRevertPrefabTarget_/IDを両方まとめて設定する（複数フレームにまたがるモーダル用）
     void SetPendingRevertPrefabTarget(EmptyObject *obj) {
+        LogScope scope;
         pendingRevertPrefabTarget_ = obj;
         pendingRevertPrefabTargetID_ = obj ? obj->GetObjectID() : UUID128();
     }

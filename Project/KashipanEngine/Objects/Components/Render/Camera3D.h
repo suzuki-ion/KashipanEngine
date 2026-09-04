@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <cstdint>
 
+#include "Debug/Logger.h"
 #include "Math/Matrix4x4.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Utilities/Translation.h"
@@ -26,6 +27,7 @@ public:
     COMPONENT_CATEGORY("Render")
     ~Camera3D() override = default;
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<Camera3D>();
         ptr->fovY_ = fovY_;
         ptr->nearClip_ = nearClip_;
@@ -77,6 +79,7 @@ public:
     ///          サブピクセル幅を近似する。実解像度と多少ずれてもジッター量が意図よりわずかに
     ///          大小するだけで実害は無い
     void ApplyProjectionJitter(Matrix4x4 &projection) {
+        LogScope scope;
         // Halton(2,3)列を8点周期で回す。0番目は(0,0)で偏るため1から使う
         constexpr std::uint32_t kJitterPeriod = 8;
         const std::uint32_t index = (jitterIndex_ % kJitterPeriod) + 1;
@@ -104,6 +107,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         ImGui::Checkbox(TranslationLabel("component.camera3d.orthographic"), &orthographic_);
         ImGui::DragFloat(TranslationLabel("component.camera3d.fovy"), &fovY_, 0.01f);
         ImGui::DragFloat(TranslationLabel("component.camera3d.near"), &nearClip_, 0.01f);
@@ -121,6 +125,7 @@ protected:
     }
 #endif
     JSON SaveToJson() const override {
+        LogScope scope;
         return JSON{
             {"fovY", fovY_}, {"nearClip", nearClip_}, {"farClip", farClip_},
             {"aspectRatio", aspectRatio_}, {"orthographic", orthographic_}, {"orthoSize", orthoSize_},
@@ -128,6 +133,7 @@ protected:
         };
     }
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         fovY_ = json.value("fovY", 0.45f);
         nearClip_ = json.value("nearClip", 0.1f);
         farClip_ = json.value("farClip", 1000.0f);
@@ -142,6 +148,7 @@ protected:
 private:
     /// @brief Halton(base)列のindex番目の値を[0,1)で返す（カメラジッター用の低差異乱数）
     static float HaltonSequence(std::uint32_t index, std::uint32_t base) noexcept {
+        LogScope scope;
         float result = 0.0f;
         float f = 1.0f / static_cast<float>(base);
         std::uint32_t i = index;

@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <algorithm>
+#include "Debug/Logger.h"
 #include "Objects/Components/Collider/ICollider.h"
 #include "Math/Vector2.h"
 #include "Utilities/Translation.h"
@@ -10,6 +11,7 @@ namespace KashipanEngine {
 class Capsule2DCollider final : public ICollider {
 public:
     Capsule2DCollider() : ICollider("Capsule2DCollider", Shape::Capsule2D, true, GetComponentTypeID<Capsule2DCollider>()) {
+        LogScope scope;
         ADD_MEMBER_VARIABLE(start_);
         ADD_MEMBER_VARIABLE(end_);
         ADD_MEMBER_VARIABLE(radius_);
@@ -17,6 +19,7 @@ public:
     ~Capsule2DCollider() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<Capsule2DCollider>();
         ptr->start_ = start_;
         ptr->end_ = end_;
@@ -34,6 +37,7 @@ public:
     float GetRadius() const noexcept { return radius_; }
 
     std::optional<ColliderInfo2D> BuildColliderInfo2D() const override {
+        LogScope scope;
         ColliderInfo2D info;
         const Vector2 worldPos(GetSyncedOwnerPosition());
         const Vector3 scale = GetSyncedOwnerScale();
@@ -49,6 +53,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         ICollider::ShowImGui();
         ImGui::DragFloat2(TranslationLabel("component.capsule2dcollider.start"), &start_.x, 0.01f);
         ImGui::DragFloat2(TranslationLabel("component.capsule2dcollider.end"), &end_.x, 0.01f);
@@ -56,6 +61,7 @@ protected:
     }
 #endif
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = ICollider::SaveToJson();
         json["start"] = ToJSON(start_);
         json["end"] = ToJSON(end_);
@@ -63,6 +69,7 @@ protected:
         return json;
     }
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         ICollider::LoadFromJson(json);
         if (json.contains("start")) start_ = FromJSON<Vector2>(json["start"]);
         if (json.contains("end")) end_ = FromJSON<Vector2>(json["end"]);

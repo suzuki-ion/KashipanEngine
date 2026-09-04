@@ -13,6 +13,7 @@ namespace {
 
 /// @brief D3D12_HEAP_TYPE_UPLOADのバッファリソースを確保し、そのまま永続Mapする
 bool CreatePersistentUploadBuffer(ID3D12Device *device, UINT64 sizeBytes, Microsoft::WRL::ComPtr<ID3D12Resource> &outResource, void *&outMapped) {
+    LogScope scope;
     D3D12_HEAP_PROPERTIES uploadHeap{};
     uploadHeap.Type = D3D12_HEAP_TYPE_UPLOAD;
 
@@ -79,6 +80,7 @@ GifTexture::GifTexture(DirectXCommon *directXCommon, std::uint32_t width, std::u
 GifTexture::~GifTexture() = default;
 
 bool GifTexture::UploadFrame(const std::uint8_t *rgba, std::size_t dataSize) {
+    LogScope scope;
     if (!valid_ || !rgba) return false;
 
     const std::size_t expectedSize = static_cast<std::size_t>(width_) * height_ * 4;
@@ -119,6 +121,7 @@ bool GifTexture::UploadFrame(const std::uint8_t *rgba, std::size_t dataSize) {
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE GifTexture::GetSrvHandle() const noexcept {
+    LogScope scope;
     return texture_ ? texture_->GetGPUDescriptorHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
 }
 

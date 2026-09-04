@@ -2,9 +2,13 @@
 
 #include <algorithm>
 
+#include "Debug/Logger.h"
+
 namespace KashipanEngine {
 
 void KeyframeAnimation::AddKeyframe(float time, float value, EaseType easeType) {
+    LogScope scope;
+
     Keyframe key;
     key.time = time;
     key.value = value;
@@ -16,6 +20,8 @@ void KeyframeAnimation::AddKeyframe(float time, float value, EaseType easeType) 
 }
 
 float KeyframeAnimation::Evaluate(float time) const {
+    LogScope scope;
+
     if (keyframes_.empty()) return 0.0f;
     if (time <= keyframes_.front().time) return keyframes_.front().value;
     if (time >= keyframes_.back().time) return keyframes_.back().value;
@@ -32,6 +38,8 @@ float KeyframeAnimation::Evaluate(float time) const {
 }
 
 JSON KeyframeAnimation::SaveToJson() const {
+    LogScope scope;
+
     JSON json = JSON::object();
     JSON keysJson = JSON::array();
     for (const auto &key : keyframes_) {
@@ -46,6 +54,8 @@ JSON KeyframeAnimation::SaveToJson() const {
 }
 
 bool KeyframeAnimation::LoadFromJson(const JSON &json) {
+    LogScope scope;
+
     keyframes_.clear();
     if (!json.is_object() || !json.contains("keyframes") || !json["keyframes"].is_array()) {
         return false;

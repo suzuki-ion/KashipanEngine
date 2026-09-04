@@ -156,6 +156,7 @@ std::unordered_map<int, ComponentTypeBinding> gComponentTypeBindings;
 /// @details handleがnull（スクリプトが明示的にnullを渡した）ならそのままnullptrを返し、
 ///          handleはあるが参照先が既に削除されている場合はAngelScriptの例外を投げてnullptrを返す
 EmptyObject *ResolveObjectArg(ScriptObjectHandle *handle) {
+    LogScope scope;
     if (!handle) return nullptr;
     EmptyObject *obj = handle->Resolve();
     if (!obj) ThrowDestroyedObjectException();
@@ -168,6 +169,7 @@ EmptyObject *ResolveObjectArg(ScriptObjectHandle *handle) {
 
 /// @brief array<Vector2>@（制御点列）からVector2::CatmullRomPosition用のstd::vectorへ変換して呼び出す
 Vector2 Vector2CatmullRomPosition(CScriptArray *points, float t, bool isLoop) {
+    LogScope scope;
     if (!points || points->GetSize() == 0) return Vector2::Zero();
     std::vector<Vector2> buffer(points->GetSize());
     for (asUINT i = 0; i < points->GetSize(); ++i) {
@@ -178,6 +180,7 @@ Vector2 Vector2CatmullRomPosition(CScriptArray *points, float t, bool isLoop) {
 
 /// @brief array<Vector3>@（制御点列）からVector3::CatmullRomPosition用のstd::vectorへ変換して呼び出す
 Vector3 Vector3CatmullRomPosition(CScriptArray *points, float t, bool isLoop) {
+    LogScope scope;
     if (!points || points->GetSize() == 0) return Vector3::Zero();
     std::vector<Vector3> buffer(points->GetSize());
     for (asUINT i = 0; i < points->GetSize(); ++i) {
@@ -187,6 +190,7 @@ Vector3 Vector3CatmullRomPosition(CScriptArray *points, float t, bool isLoop) {
 }
 
 void RegisterMathTypes(asIScriptEngine *engine) {
+    LogScope scope;
     // 全メンバがfloatのPOD型はネイティブ呼び出し規約のためにALLFLOATSの指定が必要
     constexpr asQWORD kMathClassFlags = asOBJ_APP_CLASS_ALLFLOATS | asOBJ_APP_CLASS_MORE_CONSTRUCTORS;
 
@@ -377,6 +381,7 @@ void RegisterMathTypes(asIScriptEngine *engine) {
 /// @details 描画内容はScriptDebugDrawへ蓄積され、エディターのシーンビューにのみ表示される
 ///          （ゲーム画面には出ない）。SceneEditorView::UpdateEditorDebugDrawが毎フレーム取り出してクリアする
 void RegisterDebugDrawBindings(asIScriptEngine *engine) {
+    LogScope scope;
     asbind20::namespace_ debugNamespace(engine, "Debug");
     asbind20::global(engine)
         .function("void DrawLine(const Vector3 &in start, const Vector3 &in end, const Vector4 &in color)", &ScriptDebugDraw::AddLine);
@@ -390,6 +395,7 @@ void RegisterDebugDrawBindings(asIScriptEngine *engine) {
 /// @details 文字列からハッシュ値を計算して保持する軽量な比較用タグ。
 ///          オブジェクト/コンポーネントのGetTag()との比較や、スクリプト内での分類判定に使う
 void RegisterTagType(asIScriptEngine *engine) {
+    LogScope scope;
     asbind20::value_class<Tag>(engine, "Tag", asOBJ_APP_CLASS_ALLINTS | asOBJ_APP_CLASS_MORE_CONSTRUCTORS)
         .behaviours_by_traits()
         .constructor<const std::string &>("const string &in name")
@@ -409,6 +415,7 @@ void RegisterTagType(asIScriptEngine *engine) {
 ///          （SafeCall/型固有のラムダの詳細はScriptComponentHandle.h参照）
 template <typename T>
 auto RegisterComponentType(asIScriptEngine *engine, const char *name) {
+    LogScope scope;
     auto binder = asbind20::ref_class<ScriptComponentHandle<T>>(engine, name);
     binder
         .addref(&ScriptComponentHandle<T>::AddRef)
@@ -456,6 +463,7 @@ auto RegisterComponentType(asIScriptEngine *engine, const char *name) {
 
 /// @brief ICollider::Shape をスクリプト用の ColliderShape 列挙型として登録する
 void RegisterColliderShapeEnum(asIScriptEngine *engine) {
+    LogScope scope;
     engine->RegisterEnum("ColliderShape");
     engine->RegisterEnumValue("ColliderShape", "Box", static_cast<int>(ICollider::Shape::Box));
     engine->RegisterEnumValue("ColliderShape", "Sphere", static_cast<int>(ICollider::Shape::Sphere));
@@ -475,6 +483,7 @@ void RegisterColliderShapeEnum(asIScriptEngine *engine) {
 ///          他のコンポーネントと同様、生ポインタではなくScriptComponentHandle<ICollider>
 ///          （UUID+追加順ID保持の参照カウント式ハンドル）として公開する
 void RegisterColliderBaseType(asIScriptEngine *engine) {
+    LogScope scope;
     RegisterColliderShapeEnum(engine);
     asbind20::ref_class<ScriptComponentHandle<ICollider>>(engine, "Collider")
         .addref(&ScriptComponentHandle<ICollider>::AddRef)
@@ -521,6 +530,7 @@ void RegisterColliderBaseType(asIScriptEngine *engine) {
 ///          dynamic_castで確認し、一致すれば同じComponentRefを持つ新しいハンドルを作る
 template <typename T>
 ScriptComponentHandle<T> *ColliderDownCast(ScriptComponentHandle<ICollider> *handle) {
+    LogScope scope;
     if (!handle) return nullptr;
     ICollider *collider = handle->Resolve();
     if (!collider) { ThrowDestroyedObjectException(); return nullptr; }
@@ -530,6 +540,7 @@ ScriptComponentHandle<T> *ColliderDownCast(ScriptComponentHandle<ICollider> *han
 /// @brief コライダー型を登録する（ICollider共通のメソッドを追加で登録する）
 template <typename T>
 auto RegisterColliderType(asIScriptEngine *engine, const char *name) {
+    LogScope scope;
     auto binder = RegisterComponentType<T>(engine, name);
     binder
         .method("bool IsTrigger() const", SafeCall<static_cast<bool (T::*)() const noexcept>(&T::IsTrigger)>())
@@ -563,6 +574,7 @@ auto RegisterColliderType(asIScriptEngine *engine, const char *name) {
 
 /// @brief ICollider*のポインタ配列から array<Collider@>@ を構築する（RigidBody2D/3D::GetOwnerColliders用）
 CScriptArray *MakeColliderArray(const std::vector<ICollider *> &colliders) {
+    LogScope scope;
     asIScriptContext *context = asGetActiveContext();
     asIScriptEngine *engine = context ? context->GetEngine() : nullptr;
     if (!engine) return nullptr;
@@ -588,6 +600,7 @@ CScriptArray *MakeStringArray(const std::vector<std::string> &values);
 
 /// @brief array<string>@ からstd::vector<std::string>へ変換する（CameraRenderer::SetBindVariableNames用）
 std::vector<std::string> StringArrayToVector(CScriptArray *array) {
+    LogScope scope;
     std::vector<std::string> result;
     if (!array) return result;
     result.reserve(array->GetSize());
@@ -600,6 +613,7 @@ std::vector<std::string> StringArrayToVector(CScriptArray *array) {
 /// @brief 指定ウィンドウコンポーネントのクライアント座標系でのマウス座標を取得する（未生成/取得不可時は{0,0}）
 /// @details WindowObjectメソッド版とグローバル関数版の両方から共有される実装本体
 Vector2 GetWindowMousePosition(const IWindowObjectComponent *component) {
+    LogScope scope;
     if (!component) return Vector2::Zero();
     Window *window = component->GetWindow();
     if (!window || !Window::IsExist(window)) return Vector2::Zero();
@@ -611,6 +625,7 @@ Vector2 GetWindowMousePosition(const IWindowObjectComponent *component) {
 
 /// @brief マウスカーソルが指定ウィンドウコンポーネントのクライアント領域内にあるかどうかを取得する
 bool IsWindowMouseInside(const IWindowObjectComponent *component) {
+    LogScope scope;
     if (!component) return false;
     Window *window = component->GetWindow();
     if (!window || !Window::IsExist(window)) return false;
@@ -627,6 +642,7 @@ bool IsWindowMouseInside(const IWindowObjectComponent *component) {
 ///          他のコンポーネントと同様、生ポインタではなくScriptComponentHandle<IWindowObjectComponent>
 ///          （UUID+追加順ID保持の参照カウント式ハンドル）として公開する
 void RegisterWindowObjectBaseType(asIScriptEngine *engine) {
+    LogScope scope;
     asbind20::ref_class<ScriptComponentHandle<IWindowObjectComponent>>(engine, "WindowObject")
         .addref(&ScriptComponentHandle<IWindowObjectComponent>::AddRef)
         .release(&ScriptComponentHandle<IWindowObjectComponent>::Release)
@@ -702,6 +718,7 @@ void RegisterWindowObjectBaseType(asIScriptEngine *engine) {
 /// @brief WindowObject@ハンドルから具体的なウィンドウコンポーネント型のハンドルへのダウンキャスト（cast<T>用）
 template <typename T>
 ScriptComponentHandle<T> *WindowObjectDownCast(ScriptComponentHandle<IWindowObjectComponent> *handle) {
+    LogScope scope;
     if (!handle) return nullptr;
     IWindowObjectComponent *component = handle->Resolve();
     if (!component) { ThrowDestroyedObjectException(); return nullptr; }
@@ -710,6 +727,7 @@ ScriptComponentHandle<T> *WindowObjectDownCast(ScriptComponentHandle<IWindowObje
 
 /// @brief よく使うウィンドウメッセージ定数（WM_*）をスクリプトへ登録する
 void RegisterWindowMessageConstants(asIScriptEngine *engine) {
+    LogScope scope;
     static const std::pair<const char *, asUINT> kConstants[] = {
         { "WM_ACTIVATE", WM_ACTIVATE },
         { "WM_CLOSE", WM_CLOSE },
@@ -751,6 +769,7 @@ void RegisterWindowMessageConstants(asIScriptEngine *engine) {
 
 /// @brief Light::Type をスクリプト用の LightType 列挙型として登録する
 void RegisterLightTypeEnum(asIScriptEngine *engine) {
+    LogScope scope;
     engine->RegisterEnum("LightType");
     engine->RegisterEnumValue("LightType", "Directional", static_cast<int>(Light::Type::Directional));
     engine->RegisterEnumValue("LightType", "Point", static_cast<int>(Light::Type::Point));
@@ -764,6 +783,7 @@ void RegisterLightTypeEnum(asIScriptEngine *engine) {
 
 /// @brief TextRenderer::HorizontalAlign/VerticalAlign をスクリプト用の列挙型として登録する
 void RegisterTextRendererEnums(asIScriptEngine *engine) {
+    LogScope scope;
     engine->RegisterEnum("TextHorizontalAlign");
     engine->RegisterEnumValue("TextHorizontalAlign", "Left", static_cast<int>(TextRenderer::HorizontalAlign::Left));
     engine->RegisterEnumValue("TextHorizontalAlign", "Center", static_cast<int>(TextRenderer::HorizontalAlign::Center));
@@ -777,6 +797,7 @@ void RegisterTextRendererEnums(asIScriptEngine *engine) {
 
 /// @brief SkinnedMeshRenderer::SkinQuality をスクリプト用の SkinQuality 列挙型として登録する
 void RegisterSkinQualityEnum(asIScriptEngine *engine) {
+    LogScope scope;
     engine->RegisterEnum("SkinQuality");
     engine->RegisterEnumValue("SkinQuality", "Auto", static_cast<int>(SkinQuality::Auto));
     engine->RegisterEnumValue("SkinQuality", "Bone1", static_cast<int>(SkinQuality::Bone1));
@@ -788,6 +809,7 @@ void RegisterSkinQualityEnum(asIScriptEngine *engine) {
 /// @details Object::GetTransform() が Transform@ を返すため、Object/Scene（RegisterObjectTypes）より
 ///          先に登録しておく必要がある。gComponentTypeBindings のクリアもここで行う（最初に呼ばれるため）
 void RegisterTransformType(asIScriptEngine *engine) {
+    LogScope scope;
     gComponentTypeBindings.clear();
     RegisterLightTypeEnum(engine);
     RegisterTextRendererEnums(engine);
@@ -810,6 +832,7 @@ void RegisterTransformType(asIScriptEngine *engine) {
 }
 
 void RegisterComponentTypes(asIScriptEngine *engine) {
+    LogScope scope;
     RegisterComponentType<Velocity>(engine, "Velocity")
         .method("void SetVelocity(const Vector3 &in)", SafeCall<&Velocity::SetVelocity>())
         .method("const Vector3 &GetVelocity() const", SafeCall<&Velocity::GetVelocity>())
@@ -3031,6 +3054,7 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
 /// @param typeId 出力先のスクリプト型ID
 /// @return コンポーネントが見つかった場合は true
 bool GetComponentIntoHandle(EmptyObject &obj, void *ref, int typeId) {
+    LogScope scope;
     if (!ref || !(typeId & asTYPEID_OBJHANDLE)) return false;
     const int baseTypeId = typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST);
     auto it = gComponentTypeBindings.find(baseTypeId);
@@ -3048,6 +3072,7 @@ bool GetComponentIntoHandle(EmptyObject &obj, void *ref, int typeId) {
 /// @param typeId 出力先のスクリプト型ID
 /// @return 取得に成功した場合は true（0個でも配列は生成される）
 bool GetComponentsIntoArray(EmptyObject &obj, void *ref, int typeId) {
+    LogScope scope;
     if (!ref || !(typeId & asTYPEID_OBJHANDLE)) return false;
 
     asIScriptContext *context = asGetActiveContext();
@@ -3082,6 +3107,7 @@ bool GetComponentsIntoArray(EmptyObject &obj, void *ref, int typeId) {
 /// @param typeId 出力先のスクリプト型ID
 /// @return 追加できた場合は true（型が未登録、または追加数上限などで失敗した場合は false）
 bool AddComponentIntoHandle(EmptyObject &obj, void *ref, int typeId) {
+    LogScope scope;
     if (!ref || !(typeId & asTYPEID_OBJHANDLE)) return false;
     const int baseTypeId = typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST);
     auto it = gComponentTypeBindings.find(baseTypeId);
@@ -3102,6 +3128,7 @@ bool AddComponentIntoHandle(EmptyObject &obj, void *ref, int typeId) {
 /// @param typeId 渡されたハンドルのスクリプト型ID
 /// @return 削除できた場合は true
 bool RemoveComponentFromHandle(EmptyObject &obj, void *ref, int typeId) {
+    LogScope scope;
     if (!ref || !(typeId & asTYPEID_OBJHANDLE)) return false;
     const int baseTypeId = typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST);
     auto it = gComponentTypeBindings.find(baseTypeId);
@@ -3116,6 +3143,7 @@ bool RemoveComponentFromHandle(EmptyObject &obj, void *ref, int typeId) {
 
 /// @brief EmptyObjectのポインタ配列から array<Object@>@ を構築する（Scene::GetObjects用）
 CScriptArray *MakeObjectArray(const std::vector<EmptyObject *> &objects) {
+    LogScope scope;
     asIScriptContext *context = asGetActiveContext();
     asIScriptEngine *engine = context ? context->GetEngine() : nullptr;
     if (!engine) return nullptr;
@@ -3155,6 +3183,7 @@ SceneVariableTypeIds gSceneVariableTypeIds;
 /// @brief ?&in で渡された値を型に応じてシーン変数へ書き込む（上書き）
 /// @return 対応している型であれば true、対応外の型の場合は false
 bool SetSceneVariableFromGeneric(SceneContext &scene, const std::string &key, void *ref, int typeId) {
+    LogScope scope;
     if (!ref) return false;
     if (typeId == asTYPEID_BOOL) { scene.AddSceneVariable<bool>(key, *static_cast<bool *>(ref)); return true; }
     if (typeId == asTYPEID_INT32) { scene.AddSceneVariable<int32_t>(key, *static_cast<int32_t *>(ref)); return true; }
@@ -3173,6 +3202,7 @@ bool SetSceneVariableFromGeneric(SceneContext &scene, const std::string &key, vo
 /// @details AddGlobalSceneVariable は既存キーがあっても上書きしない仕様のため、先に削除してから追加する
 /// @return 対応している型であれば true、対応外の型の場合は false
 bool SetGlobalSceneVariableFromGeneric(SceneContext &scene, const std::string &key, void *ref, int typeId) {
+    LogScope scope;
     if (!ref) return false;
     scene.RemoveGlobalSceneVariable(key);
     if (typeId == asTYPEID_BOOL) { scene.AddGlobalSceneVariable<bool>(key, *static_cast<bool *>(ref)); return true; }
@@ -3191,6 +3221,7 @@ bool SetGlobalSceneVariableFromGeneric(SceneContext &scene, const std::string &k
 /// @brief MyAny（シーン変数の実体）の値を型に応じて ?&out の変数へ書き戻す
 /// @return 変数が存在し、かつ渡された型と一致していれば true
 bool WriteSceneVariableToGeneric(MyAny *value, void *ref, int typeId) {
+    LogScope scope;
     if (!value || !ref || value->IsEmpty()) return false;
     if (typeId == asTYPEID_BOOL && value->IsType<bool>()) { *static_cast<bool *>(ref) = value->AnyCast<bool>(); return true; }
     if (typeId == asTYPEID_INT32 && value->IsType<int32_t>()) { *static_cast<int32_t *>(ref) = value->AnyCast<int32_t>(); return true; }
@@ -3214,6 +3245,7 @@ bool WriteSceneVariableToGeneric(MyAny *value, void *ref, int typeId) {
 ///          MeshRenderer 等ここより後に登録されるコンポーネントは Object@/Scene@ を
 ///          パラメータ/戻り値として自由に参照できる（型は既に登録済みのため）。
 void RegisterObjectTypes(asIScriptEngine *engine) {
+    LogScope scope;
     // シーン変数の ?&in/?&out 変換で使うタイプIDをキャッシュする（string/Vector2等はここまでに登録済み）
     gSceneVariableTypeIds.stringTypeId = engine->GetTypeIdByDecl("string");
     gSceneVariableTypeIds.vector2TypeId = engine->GetTypeIdByDecl("Vector2");
@@ -3386,6 +3418,7 @@ public:
 
     void AddRef() { refCount_.fetch_add(1, std::memory_order_relaxed); }
     void Release() {
+        LogScope scope;
         if (refCount_.fetch_sub(1, std::memory_order_acq_rel) == 1) delete this;
     }
 
@@ -3399,6 +3432,7 @@ private:
 
 /// @brief std::stringの配列から array<string>@ を構築する（Json::GetKeys用）
 CScriptArray *MakeStringArray(const std::vector<std::string> &values) {
+    LogScope scope;
     asIScriptContext *context = asGetActiveContext();
     asIScriptEngine *engine = context ? context->GetEngine() : nullptr;
     if (!engine) return nullptr;
@@ -3424,6 +3458,7 @@ bool JsonToGeneric(asIScriptEngine *engine, const JSON &value, void *ref, int ty
 /// @details 対応型: プリミティブ / string / Vector2-4 / Quaternion / Json / array<対応型> / dictionary。
 ///          array・dictionary・Jsonはハンドルでも実体でも受け付ける
 bool GenericToJson(asIScriptEngine *engine, const void *ref, int typeId, JSON &out, int depth) {
+    LogScope scope;
     if (!engine || !ref || depth > kMaxJsonConversionDepth) return false;
 
     // ハンドルで渡された場合は実体へデリファレンスする（nullハンドルはJSONのnullにする）
@@ -3516,6 +3551,7 @@ bool GenericToJson(asIScriptEngine *engine, const void *ref, int typeId, JSON &o
 /// @brief JSON配列から復元先のarray要素型を推定する（dictionaryの値として復元する場合用）
 /// @return 推定できた場合はarrayの型情報、混在・空配列などで推定できない場合はnullptr
 asITypeInfo *InferArrayTypeForJson(asIScriptEngine *engine, const JSON &jsonArray) {
+    LogScope scope;
     if (!jsonArray.is_array() || jsonArray.empty()) return nullptr;
 
     auto allOf = [&jsonArray](auto predicate) {
@@ -3539,6 +3575,7 @@ asITypeInfo *InferArrayTypeForJson(asIScriptEngine *engine, const JSON &jsonArra
 /// @details 対応型はGenericToJsonと同じ。array<T>はサイズを合わせてから各要素を書き込み、
 ///          dictionaryは内容をクリアしてからJSONオブジェクトの値を型に応じて格納する
 bool JsonToGeneric(asIScriptEngine *engine, const JSON &value, void *ref, int typeId, int depth) {
+    LogScope scope;
     if (!engine || !ref || depth > kMaxJsonConversionDepth) return false;
 
     // ハンドル変数が渡された場合は実体へ書き込む（nullハンドルはarray/dictionary/Jsonなら生成する）
@@ -3677,6 +3714,7 @@ bool JsonToGeneric(asIScriptEngine *engine, const JSON &value, void *ref, int ty
 
 /// @brief Json型（参照型）とファイル入出力のグローバル関数を登録する
 void RegisterJsonBindings(asIScriptEngine *engine) {
+    LogScope scope;
     asbind20::ref_class<ScriptJsonValue>(engine, "Json")
         .default_factory()
         .addref(&ScriptJsonValue::AddRef)
@@ -3860,6 +3898,7 @@ void RegisterJsonBindings(asIScriptEngine *engine) {
 
 /// @brief EaseType 列挙型と Easing:: 名前空間のユーティリティ関数を登録する
 void RegisterEasingBindings(asIScriptEngine *engine) {
+    LogScope scope;
     engine->RegisterEnum("EaseType");
     static const std::pair<const char *, EaseType> kEaseTypeValues[] = {
         { "Linear", EaseType::Linear },
@@ -3918,6 +3957,7 @@ void RegisterEasingBindings(asIScriptEngine *engine) {
 
 /// @brief 角度変換・円周率・Clampをグローバル関数として登録する
 void RegisterMathUtilBindings(asIScriptEngine *engine) {
+    LogScope scope;
     asbind20::global(engine)
         .function("float GetPI()", &GetPI<float>)
         .function("float ToDegrees(float)", &ToDegrees<float>)
@@ -3944,6 +3984,7 @@ void RegisterMathUtilBindings(asIScriptEngine *engine) {
 
 /// @brief abs/sqrt/pow/三角関数など、標準的な数学関数をグローバル関数として登録する
 void RegisterMathFunctionBindings(asIScriptEngine *engine) {
+    LogScope scope;
     asbind20::global(engine)
         .function("float Abs(float)", [](float value) -> float { return std::abs(value); })
         .function("int Abs(int)", [](int value) -> int { return std::abs(value); })
@@ -3982,6 +4023,7 @@ public:
 
     void AddRef() { refCount_.fetch_add(1, std::memory_order_relaxed); }
     void Release() {
+        LogScope scope;
         if (refCount_.fetch_sub(1, std::memory_order_acq_rel) == 1) delete this;
     }
 
@@ -3998,6 +4040,7 @@ private:
 ///          ネイティブ呼び出し規約での直接受け渡しはできない。そのためラムダ側は
 ///          uintで受け取り、内部でDirectionへキャストしてから本体を呼び出す
 void RegisterWaveFunctionCollapseBindings(asIScriptEngine *engine) {
+    LogScope scope;
     engine->RegisterEnum("WFCDirection");
     engine->RegisterEnumValue("WFCDirection", "Up", static_cast<int>(WaveFunctionCollapse::Direction::Up));
     engine->RegisterEnumValue("WFCDirection", "Down", static_cast<int>(WaveFunctionCollapse::Direction::Down));
@@ -4090,6 +4133,7 @@ public:
 
     void AddRef() { refCount_.fetch_add(1, std::memory_order_relaxed); }
     void Release() {
+        LogScope scope;
         if (refCount_.fetch_sub(1, std::memory_order_acq_rel) == 1) delete this;
     }
 
@@ -4107,6 +4151,7 @@ public:
 
     void AddRef() { refCount_.fetch_add(1, std::memory_order_relaxed); }
     void Release() {
+        LogScope scope;
         if (refCount_.fetch_sub(1, std::memory_order_acq_rel) == 1) delete this;
     }
 

@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "Assets/ModelManager.h"
+#include "Debug/Logger.h"
 #include "Graphics/Resources/ConstantBufferResource.h"
 #include "Graphics/Resources/IndexBufferResource.h"
 #include "Graphics/Resources/RWStructuredBufferResource.h"
@@ -60,6 +61,7 @@ public:
     ///        CPU側データが更新された後の場合はモデルデータから作り直す）
     /// @return メッシュバッファ（生成に失敗した場合は nullptr）
     const MeshBuffers *GetOrCreateMeshBuffers(ModelManager::ModelHandle meshHandle) {
+        LogScope scope;
         const auto currentVersion = ModelManager::GetModelDataVersion(meshHandle);
         auto it = meshBuffers_.find(meshHandle);
         if (it != meshBuffers_.end() && it->second->sourceDataVersion == currentVersion) return it->second.get();
@@ -119,6 +121,7 @@ public:
 
     /// @brief キーに対応する構造化バッファを取得（容量不足の場合は作り直す）
     StructuredBufferResource *GetOrCreateStructuredBuffer(const std::string &key, size_t elementStride, size_t elementCount) {
+        LogScope scope;
         if (elementStride == 0 || elementCount == 0) return nullptr;
         auto it = structuredBuffers_.find(key);
         if (it != structuredBuffers_.end() &&
@@ -144,6 +147,7 @@ public:
 
     /// @brief キーに対応する定数バッファを取得（サイズ不一致の場合は作り直す）
     ConstantBufferResource *GetOrCreateConstantBuffer(const std::string &key, size_t byteSize) {
+        LogScope scope;
         if (byteSize == 0) return nullptr;
         auto it = constantBuffers_.find(key);
         if (it != constantBuffers_.end() && it->second.byteSize == byteSize) {
@@ -160,6 +164,7 @@ public:
 
     /// @brief キーに対応する頂点バッファを取得（容量不足の場合は作り直す）
     VertexBufferResource *GetOrCreateVertexBuffer(const std::string &key, size_t byteSize) {
+        LogScope scope;
         if (byteSize == 0) return nullptr;
         auto it = vertexBuffers_.find(key);
         if (it != vertexBuffers_.end() && it->second.byteSize >= byteSize) {
@@ -184,6 +189,7 @@ public:
     /// @details 作り直された場合、前フレームまでの内容は失われる（Computeシェーダー側での
     ///          再初期化が必要な場合は formatKind やサイズを変更しない運用にすること）
     UnorderedAccessResource *GetOrCreateUAVTexture(const std::string &key, UINT width, UINT height, DXGI_FORMAT format) {
+        LogScope scope;
         if (width == 0 || height == 0) return nullptr;
         auto it = uavTextures_.find(key);
         if (it != uavTextures_.end() && it->second.width == width && it->second.height == height && it->second.format == format) {
@@ -205,6 +211,7 @@ public:
     ///          （例: Forward+のタイルライトインデックスバッファ）。作り直された場合は
     ///          前フレームまでの内容は失われる
     RWStructuredBufferResource *GetOrCreateRWStructuredBufferSrv(const std::string &key, size_t elementStride, size_t elementCount) {
+        LogScope scope;
         if (elementStride == 0 || elementCount == 0) return nullptr;
         auto it = rwStructuredBuffers_.find(key);
         if (it != rwStructuredBuffers_.end() &&
@@ -236,6 +243,7 @@ public:
     ///          していた小〜中規模の構造化バッファのみなので影響は小さい。
     /// @return 対応するバッファ（内容不一致・新規作成時のみ実際に書き込み、一致すれば書き込まず返す）
     StructuredBufferResource *GetOrUpdateStructuredBuffer(const std::string &key, size_t elementStride, size_t elementCount, const void *data) {
+        LogScope scope;
         auto *buffer = GetOrCreateStructuredBuffer(key, elementStride, elementCount);
         if (!buffer || !data || elementCount == 0) return buffer;
 
@@ -255,6 +263,7 @@ public:
 
     /// @brief 保持している全リソースを解放する
     void Clear() {
+        LogScope scope;
         meshBuffers_.clear();
         structuredBuffers_.clear();
         rwStructuredBuffers_.clear();

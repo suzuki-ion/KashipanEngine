@@ -47,6 +47,7 @@ namespace KashipanEngine {
 namespace {
 /// @brief 自動保存のファイル名をTemplateLiteralから構築する（拡張子が無ければ .json を付与する）
 std::string RenderAutoSaveFileName(const std::string &nameFormat, const std::string &sceneName) {
+    LogScope scope;
     auto pad2 = [](int v) { std::ostringstream os; os << std::setw(2) << std::setfill('0') << v; return os.str(); };
     auto pad4 = [](int v) { std::ostringstream os; os << std::setw(4) << std::setfill('0') << v; return os.str(); };
 
@@ -69,6 +70,7 @@ std::string RenderAutoSaveFileName(const std::string &nameFormat, const std::str
 } // namespace
 
 SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
+    LogScope scope;
     context_ = context;
     commands_ = std::make_unique<SceneEditorCommands>(Passkey<SceneEditor>{}, context_);
     objectHierarchy_ = std::make_unique<SceneObjectHierarchy>(Passkey<SceneEditor>{}, context_);
@@ -129,6 +131,7 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
 SceneEditor::~SceneEditor() = default;
 
 void SceneEditor::ShowImGui() {
+    LogScope scope;
     // スクリプトやシーンからのゲームループ終了要求は、エディター上では再生停止として消費する
     // （エディター自体は閉じない。Stopボタンと同様にUUIDで選択を退避してから復元する）
     if (GameEngine::IsExitGameLoopRequested()) {
@@ -197,6 +200,7 @@ void SceneEditor::ShowImGui() {
 }
 
 void SceneEditor::ShowMainWindow() {
+    LogScope scope;
     //--------- メインメニューバー（保存・読込・Undo/Redo・ウィンドウ切替・デバッグウィンドウ） ---------//
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu(TranslationLabel("editor.menu.file"))) {
@@ -361,6 +365,7 @@ void SceneEditor::ShowMainWindow() {
 }
 
 void SceneEditor::ShowPlayControls() {
+    LogScope scope;
     ImGui::Separator();
     if (!context_->IsPlaying()) {
         if (ImGui::Button(TranslationLabel("editor.play.play"))) {
@@ -401,6 +406,7 @@ void SceneEditor::ShowPlayControls() {
 }
 
 bool SceneEditor::ShowNewSceneModal() {
+    LogScope scope;
     bool created = false;
     if (isNewSceneRequested_) {
         ImGui::OpenPopup(TranslationLabel("editor.newscene.title"));
@@ -442,6 +448,7 @@ bool SceneEditor::ShowNewSceneModal() {
 }
 
 void SceneEditor::HandleShortcuts() {
+    LogScope scope;
     if (ImGui::GetIO().WantTextInput) return;
     if (ImGui::IsKeyChordPressed(EditorKeyBindings::Get("Undo", ImGuiMod_Ctrl | ImGuiKey_Z))) {
         PerformUndo();
@@ -455,6 +462,7 @@ void SceneEditor::HandleShortcuts() {
 }
 
 void SceneEditor::PerformUndo() {
+    LogScope scope;
     // オブジェクトの削除/再生成でポインタが変わる可能性があるため、
     // UUIDで選択を控えてから実行し、実行後にUUIDから再解決して選択を復元する
     const auto selectedIDs = objectHierarchy_->GetSelectedObjectIDs();
@@ -463,12 +471,14 @@ void SceneEditor::PerformUndo() {
 }
 
 void SceneEditor::PerformRedo() {
+    LogScope scope;
     const auto selectedIDs = objectHierarchy_->GetSelectedObjectIDs();
     commands_->Redo();
     objectHierarchy_->RestoreSelection(selectedIDs);
 }
 
 void SceneEditor::HandleAutoSave() {
+    LogScope scope;
     float intervalMinutes = autoSaveIntervalMinutes_;
     if (intervalMinutes < 0.1f) intervalMinutes = 0.1f;
 
@@ -481,12 +491,14 @@ void SceneEditor::HandleAutoSave() {
 }
 
 void SceneEditor::TakeSceneBackup(const std::string &prefix) {
+    LogScope scope;
     const std::string fileName = prefix + RenderAutoSaveFileName(autoSaveNameFormat_, context_->GetName());
     const std::string filePath = kSceneBackupDirectory + fileName;
     SaveJSON(context_->SaveSceneToJSON(), filePath);
 }
 
 void SceneEditor::ShowAutoSaveSettingsModal() {
+    LogScope scope;
     if (isAutoSaveSettingsRequested_) {
         ImGui::OpenPopup(TranslationLabel("editor.autosave.title"));
         isAutoSaveSettingsRequested_ = false;

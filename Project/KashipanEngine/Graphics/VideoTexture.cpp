@@ -25,6 +25,7 @@ namespace {
 
 /// @brief D3D12_HEAP_TYPE_UPLOADのバッファリソースを確保し、そのまま永続Mapする
 bool CreatePersistentUploadBuffer(ID3D12Device *device, UINT64 sizeBytes, Microsoft::WRL::ComPtr<ID3D12Resource> &outResource, void *&outMapped) {
+    LogScope scope;
     D3D12_HEAP_PROPERTIES uploadHeap{};
     uploadHeap.Type = D3D12_HEAP_TYPE_UPLOAD;
 
@@ -83,6 +84,7 @@ VideoTexture::VideoTexture(DirectXCommon *directXCommon, std::uint32_t width, st
 VideoTexture::~VideoTexture() = default;
 
 bool VideoTexture::InitializeYuvSlot(YuvSlot &slot) {
+    LogScope scope;
     auto *device = directXCommon_->GetDeviceForVideoTexture(Passkey<VideoTexture>{});
     if (!device) return false;
 
@@ -120,6 +122,7 @@ bool VideoTexture::InitializeYuvSlot(YuvSlot &slot) {
 }
 
 bool VideoTexture::InitializeRgbaOutput() {
+    LogScope scope;
     rgbaUav_ = std::make_unique<UnorderedAccessResource>(width_, height_, DXGI_FORMAT_R8G8B8A8_UNORM);
     if (!rgbaUav_->GetResource()) return false;
     // UnorderedAccessResourceはUNORDERED_ACCESS状態のみを登録して生成されるため、
@@ -140,6 +143,7 @@ bool VideoTexture::InitializeRgbaOutput() {
 }
 
 bool VideoTexture::UploadFrame(const std::uint8_t *nv12Data, std::size_t dataSize, std::uint32_t sourceStride) {
+    LogScope scope;
     if (!valid_ || !nv12Data) return false;
 
     const std::uint32_t stride = (sourceStride != 0) ? sourceStride : width_;
@@ -245,19 +249,23 @@ bool VideoTexture::UploadFrame(const std::uint8_t *nv12Data, std::size_t dataSiz
     return true;
 }
 
-IShaderTexture *VideoTexture::GetRgbaView() const noexcept { return rgbaView_.get(); }
+IShaderTexture *VideoTexture::GetRgbaView() const noexcept { LogScope scope; return rgbaView_.get(); }
 
 ShaderResourceResource *VideoTexture::GetLumaResource(Passkey<Renderer>) const noexcept {
+    LogScope scope;
     return yuvSlots_[readIndex_].lumaTexture.get();
 }
 ShaderResourceResource *VideoTexture::GetChromaResource(Passkey<Renderer>) const noexcept {
+    LogScope scope;
     return yuvSlots_[readIndex_].chromaTexture.get();
 }
 UnorderedAccessResource *VideoTexture::GetRgbaUavResource(Passkey<Renderer>) const noexcept {
+    LogScope scope;
     return rgbaUav_.get();
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE VideoTexture::GetRgbaSrvHandle() const noexcept {
+    LogScope scope;
     return rgbaSrv_ ? rgbaSrv_->GetGPUDescriptorHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
 }
 

@@ -3,12 +3,14 @@
 #include <unordered_set>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Graphics/Pipeline/System/ShaderModuleComposer.h"
 
 namespace KashipanEngine {
 namespace {
 
 const std::unordered_set<std::string> &BlendSuffixes() {
+    LogScope scope;
     static const std::unordered_set<std::string> kSuffixes = {
         "Add", "Exclusion", "Multiply", "None", "Normal", "Screen", "Subtract", "Translucent",
     };
@@ -16,6 +18,7 @@ const std::unordered_set<std::string> &BlendSuffixes() {
 }
 
 std::vector<std::string> SplitByDot(const std::string &name) {
+    LogScope scope;
     std::vector<std::string> tokens;
     size_t start = 0;
     while (start <= name.size()) {
@@ -33,6 +36,7 @@ std::vector<std::string> SplitByDot(const std::string &name) {
 } // namespace
 
 PipelineVariantResolution TryResolvePipelineVariant(const std::string &pipelineName, const std::string &shaderBaseDir) {
+    LogScope scope;
     PipelineVariantResolution result;
 
     const std::vector<std::string> tokens = SplitByDot(pipelineName);

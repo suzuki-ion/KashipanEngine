@@ -5,17 +5,20 @@
 
 #include "Core/GameEngine.h"
 #include "Core/ProjectPaths.h"
+#include "Debug/Logger.h"
 #include "Scene/Editor/EditorWindowChrome.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
 void ProjectWindow::RefreshProjectList() {
+    LogScope scope;
     projects_ = ProjectManager::GetProjectList();
     hasScannedProjects_ = true;
 }
 
 void ProjectWindow::ShowImGui() {
+    LogScope scope;
     if (!ImGui::Begin(TranslationLabel("editor.project.window"))) {
         ImGui::End();
         return;

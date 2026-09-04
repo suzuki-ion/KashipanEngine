@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Graphics/Pipeline/System/ShaderModuleComposer.h"
 #include "Graphics/PipelineManager.h"
 #include "Utilities/Translation.h"
@@ -14,6 +15,7 @@ namespace KashipanEngine {
 namespace PipelineVariantBuilder {
 
 bool Show(std::string &pipelineName) {
+    LogScope scope;
     bool applied = false;
     if (!ImGui::TreeNode(TranslationLabel("editor.pipelinevariantbuilder.builder"))) return applied;
 

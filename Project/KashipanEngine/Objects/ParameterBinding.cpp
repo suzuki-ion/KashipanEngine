@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <unordered_map>
 
+#include "Debug/Logger.h"
 #include "Objects/Components/ScriptComponent.h"
 #include "Objects/IObjectComponent.h"
 #include "Objects/ObjectContext.h"
@@ -14,6 +15,7 @@ namespace {
 
 /// @brief バインド先の同型コンポーネントをcomponentIndex番目（追加順）から探す（自分自身は除外）
 IObjectComponent *FindParameterBindingTarget(ObjectContext *objectContext, const ParameterBinding &binding, const IObjectComponent *self) {
+    LogScope scope;
     if (!objectContext) return nullptr;
     int typeIndex = 0;
     for (const auto &componentPair : objectContext->GetAllComponents()) {
@@ -29,6 +31,7 @@ IObjectComponent *FindParameterBindingTarget(ObjectContext *objectContext, const
 
 /// @brief MyAnyが数値系（Bool/Int32/Float/Double）ならfloatへ変換する
 bool TryAnyToFloat(const MyAny &value, float &outValue) {
+    LogScope scope;
     if (value.IsType<float>()) { outValue = value.AnyCast<float>(); return true; }
     if (value.IsType<double>()) { outValue = static_cast<float>(value.AnyCast<double>()); return true; }
     if (value.IsType<int>()) { outValue = static_cast<float>(value.AnyCast<int>()); return true; }
@@ -44,6 +47,7 @@ bool IsNumericValueType(ValueType type) {
 } // namespace
 
 bool ApplyParameterBinding(ObjectContext *objectContext, const ParameterBinding &binding, float value, const IObjectComponent *self) {
+    LogScope scope;
     IObjectComponent *target = FindParameterBindingTarget(objectContext, binding, self);
     if (!target) return false;
 
@@ -87,6 +91,7 @@ bool ApplyParameterBinding(ObjectContext *objectContext, const ParameterBinding 
 }
 
 bool ApplyParameterBindingValue(ObjectContext *objectContext, const ParameterBinding &binding, const MyAny &value, const IObjectComponent *self) {
+    LogScope scope;
     IObjectComponent *target = FindParameterBindingTarget(objectContext, binding, self);
     if (!target) return false;
 
@@ -185,6 +190,7 @@ JSON SaveParameterBindingToJson(const ParameterBinding &binding) {
 }
 
 ParameterBinding LoadParameterBindingFromJson(const JSON &json) {
+    LogScope scope;
     ParameterBinding binding;
     if (!json.is_object()) return binding;
     binding.componentType = json.value("componentType", std::string{});
@@ -198,6 +204,7 @@ ParameterBinding LoadParameterBindingFromJson(const JSON &json) {
 #if defined(USE_IMGUI)
 
 std::vector<ParameterBindingCandidate> CollectParameterBindingCandidates(ObjectContext *objectContext, const IObjectComponent *self) {
+    LogScope scope;
     std::vector<ParameterBindingCandidate> candidates;
     if (!objectContext) return candidates;
 
@@ -258,6 +265,7 @@ std::vector<ParameterBindingCandidate> CollectParameterBindingCandidates(ObjectC
 }
 
 std::vector<ParameterBindingCandidate> CollectParameterBindingCandidatesForType(ObjectContext *objectContext, const IObjectComponent *self, const TypeInfo &sourceType) {
+    LogScope scope;
     std::vector<ParameterBindingCandidate> candidates;
     if (!objectContext) return candidates;
     const ValueType sourceBaseType = sourceType.GetBaseType();
@@ -332,6 +340,7 @@ std::vector<ParameterBindingCandidate> CollectParameterBindingCandidatesForType(
 }
 
 void ShowParameterBindingListImGui(std::vector<ParameterBinding> &bindings, const std::vector<ParameterBindingCandidate> &candidates) {
+    LogScope scope;
     ImGui::Text(TranslationC("component.parameterbinding.bindings_d"), static_cast<int>(bindings.size()));
     ImGui::SameLine();
     if (ImGui::SmallButton(TranslationLabel("component.parameterbinding.add_binding"))) {

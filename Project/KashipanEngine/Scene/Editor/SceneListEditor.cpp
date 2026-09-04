@@ -5,6 +5,7 @@
 #include <filesystem>
 
 #include "Core/ProjectPaths.h"
+#include "Debug/Logger.h"
 #include "Scene/Editor/EditorWindowChrome.h"
 #include "Scene/SceneEditorContext.h"
 #include "Scene/SceneFileIO.h"
@@ -15,6 +16,7 @@
 namespace KashipanEngine {
 
 void SceneListEditor::ShowImGui() {
+    LogScope scope;
     if (!ImGui::Begin(TranslationLabel("editor.scenelist.window"))) {
         ImGui::End();
         return;
@@ -151,6 +153,7 @@ void SceneListEditor::ShowImGui() {
 }
 
 void SceneListEditor::ConvertSceneToFolderFormat(const std::string &sceneName, const std::string &oldFilePath) {
+    LogScope scope;
     auto *sceneManager = context_ ? context_->GetSceneManager() : nullptr;
     if (!sceneManager) return;
 
@@ -175,6 +178,7 @@ void SceneListEditor::ConvertSceneToFolderFormat(const std::string &sceneName, c
 }
 
 void SceneListEditor::ShowConfirmDeleteOldFilePopup() {
+    LogScope scope;
     if (isConfirmDeleteOldFileRequested_) {
         ImGui::OpenPopup(TranslationLabel("editor.scenelist.deleteoriginal.title"));
         isConfirmDeleteOldFileRequested_ = false;

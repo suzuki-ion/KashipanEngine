@@ -3,6 +3,7 @@
 #include <functional>
 #include <optional>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Collision/Collider.h"
 #include "Math/Quaternion.h"
@@ -49,6 +50,7 @@ public:
 
     /// @brief 他のICollider（通常は複製元）からTransform同期設定・判定設定をコピーする（Cloneで使用）
     void CopySyncSettingsFrom(const ICollider &other) {
+        LogScope scope;
         for (int i = 0; i < 3; ++i) {
             syncPosition_[i] = other.syncPosition_[i];
             syncScale_[i] = other.syncScale_[i];
@@ -116,6 +118,7 @@ public:
 
     /// @brief 同期設定のZ回転を考慮して、2D用のローカルオフセットを回転させる
     Vector2 RotateOffsetBySyncedRotation2D(const Vector2 &localOffset) const {
+        LogScope scope;
         const float angle = GetSyncedOwnerRotationEuler().z;
         if (angle == 0.0f) return localOffset;
         const float c = std::cos(angle);
@@ -126,6 +129,7 @@ public:
 protected:
     ICollider(const std::string &typeName, Shape shape, bool is2D, size_t componentTypeID)
         : IObjectComponent(typeName, 0xFF, componentTypeID), shape_(shape), is2D_(is2D) {
+        LogScope scope;
         // 共通のImGui編集パラメータを外部アクセス用に登録する（形状パラメータは各派生クラスで登録）
         ADD_MEMBER_VARIABLE(isTrigger_);
         ADD_MEMBER_VARIABLE(continuousDetection_);
@@ -138,6 +142,7 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         ImGui::Checkbox(TranslationLabel("component.icollider.istrigger"), &isTrigger_);
         ImGui::Checkbox(TranslationLabel("component.icollider.continuous_detection"), &continuousDetection_);
         if (ImGui::IsItemHovered()) {
@@ -167,6 +172,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = JSON::object();
         json["isTrigger"] = isTrigger_;
         json["continuousDetection"] = continuousDetection_;
@@ -177,6 +183,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         isTrigger_ = json.value("isTrigger", false);
         continuousDetection_ = json.value("continuousDetection", false);
         if (json.contains("syncPosition") && json["syncPosition"].is_array() && json["syncPosition"].size() == 3) {

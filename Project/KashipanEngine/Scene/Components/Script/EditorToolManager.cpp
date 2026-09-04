@@ -30,6 +30,7 @@ constexpr const char *kEditorToolsDirectory = "EditorTools";
 constexpr const char *kEditorToolInterfaceName = "EditorTool";
 
 void EditorToolMessageCallback(const asSMessageInfo *msg, void *param) {
+    LogScope scope;
     (void)param;
     LogSeverity severity = LogSeverity::Info;
     if (msg->type == asMSGTYPE_ERROR) {
@@ -43,6 +44,7 @@ void EditorToolMessageCallback(const asSMessageInfo *msg, void *param) {
 
 /// @brief `#include "path.as"` を解決するコールバック（ScriptComponentと同じ解決規則）
 int ResolveEditorToolIncludePath(const char *include, const char *from, CScriptBuilder *builder, void *) {
+    LogScope scope;
     if (!include || !builder) return -1;
 
     std::string includePath = include;
@@ -66,6 +68,7 @@ struct ToolAttributeToken final {
 };
 
 std::string TrimToolMetadata(const std::string &metadata) {
+    LogScope scope;
     const auto first = metadata.find_first_not_of(" \t");
     if (first == std::string::npos) return {};
     const auto last = metadata.find_last_not_of(" \t");
@@ -73,6 +76,7 @@ std::string TrimToolMetadata(const std::string &metadata) {
 }
 
 std::string UnquoteToolAttributeArg(const std::string &arg) {
+    LogScope scope;
     std::string s = TrimToolMetadata(arg);
     if (s.size() >= 2 && ((s.front() == '"' && s.back() == '"') || (s.front() == '\'' && s.back() == '\''))) {
         s = s.substr(1, s.size() - 2);
@@ -84,6 +88,7 @@ std::string UnquoteToolAttributeArg(const std::string &arg) {
 /// @details `[EditorWindow("..."), MenuItem("...", "...")]` のように1ブロックへ複数属性を書けるため、
 ///          括弧・引用符の外にあるカンマでのみ分割する（ScriptComponentの属性解析と同じ規則）
 void ParseToolMetadataString(const std::string &metadata, std::vector<ToolAttributeToken> &out) {
+    LogScope scope;
     std::vector<std::string> parts;
     std::string current;
     int parenDepth = 0;
@@ -139,6 +144,7 @@ void ParseToolMetadataString(const std::string &metadata, std::vector<ToolAttrib
 }
 
 std::vector<ToolAttributeToken> ParseToolAttributeTokens(const std::vector<std::string> &metadataList) {
+    LogScope scope;
     std::vector<ToolAttributeToken> tokens;
     for (const auto &metadata : metadataList) {
         ParseToolMetadataString(metadata, tokens);
@@ -148,6 +154,7 @@ std::vector<ToolAttributeToken> ParseToolAttributeTokens(const std::vector<std::
 
 /// @brief パスを '/' で分割する（空セグメントは除外）
 std::vector<std::string> SplitMenuPath(const std::string &path) {
+    LogScope scope;
     std::vector<std::string> segments;
     std::string current;
     for (const char c : path) {
@@ -165,11 +172,13 @@ std::vector<std::string> SplitMenuPath(const std::string &path) {
 } // namespace
 
 EditorToolManager &EditorToolManager::GetInstance() {
+    LogScope scope;
     static EditorToolManager instance;
     return instance;
 }
 
 EditorToolManager::~EditorToolManager() {
+    LogScope scope;
     for (auto &tool : tools_) {
         if (tool.object) tool.object->Release();
     }
@@ -185,17 +194,20 @@ EditorToolManager::~EditorToolManager() {
 }
 
 void EditorToolManager::BeginFrame(SceneContext *sceneContext) {
+    LogScope scope;
     currentSceneContext_ = sceneContext;
     EnsureLoaded();
 }
 
 void EditorToolManager::EnsureLoaded() {
+    LogScope scope;
     if (loaded_) return;
     loaded_ = true;
     LoadTools();
 }
 
 void EditorToolManager::LoadTools() {
+    LogScope scope;
     const std::string editorToolsDirectory = ProjectPaths::InEngineRoot(kEditorToolsDirectory);
     if (!IsDirectoryExist(editorToolsDirectory)) {
         return;
@@ -291,7 +303,7 @@ void EditorToolManager::LoadTools() {
             if (context_->Prepare(factory) < 0) continue;
             int r;
             {
-                ScriptExecutionScope scope(nullptr, currentSceneContext_);
+                ScriptExecutionScope execScope(nullptr, currentSceneContext_);
                 r = context_->Execute();
             }
             if (r != asEXECUTION_FINISHED) {
@@ -349,6 +361,7 @@ void EditorToolManager::LoadTools() {
 }
 
 void EditorToolManager::RegisterMenuItem(const std::string &path, const std::string &tag, size_t toolIndex) {
+    LogScope scope;
     auto segments = SplitMenuPath(path);
     if (segments.size() < 2) {
         Log(Translation("engine.editortool.menuitem.invalidpath") + path, LogSeverity::Warning);
@@ -378,6 +391,7 @@ void EditorToolManager::RegisterMenuItem(const std::string &path, const std::str
 }
 
 void EditorToolManager::ShowMenuNode(const MenuNode &node) {
+    LogScope scope;
     for (const auto &[name, child] : node.children) {
         if (ImGui::BeginMenu(name.c_str())) {
             ShowMenuNode(child);
@@ -395,16 +409,19 @@ void EditorToolManager::ShowMenuNode(const MenuNode &node) {
 }
 
 void EditorToolManager::ShowMenuBarItems() {
+    LogScope scope;
     EnsureLoaded();
     ShowMenuNode(menuBarRoot_);
 }
 
 void EditorToolManager::ShowHierarchyMenuItems() {
+    LogScope scope;
     EnsureLoaded();
     ShowMenuNode(hierarchyRoot_);
 }
 
 void EditorToolManager::UpdateTools() {
+    LogScope scope;
     EnsureLoaded();
 
     // ウィンドウの開閉遷移を通知する（開いた: OnWindowEnable、閉じた: OnWindowDisable）
@@ -439,18 +456,21 @@ void EditorToolManager::UpdateTools() {
 }
 
 void EditorToolManager::OpenWindow(const std::string &name) {
+    LogScope scope;
     for (auto &window : windows_) {
         if (window.name == name) window.isOpen = true;
     }
 }
 
 void EditorToolManager::CloseWindow(const std::string &name) {
+    LogScope scope;
     for (auto &window : windows_) {
         if (window.name == name) window.isOpen = false;
     }
 }
 
 bool EditorToolManager::IsWindowOpen(const std::string &name) const {
+    LogScope scope;
     for (const auto &window : windows_) {
         if (window.name == name && window.isOpen) return true;
     }
@@ -458,6 +478,7 @@ bool EditorToolManager::IsWindowOpen(const std::string &name) const {
 }
 
 void EditorToolManager::CallToolMethod(ToolInstance &tool, asIScriptFunction *method, const std::string *stringArg) {
+    LogScope scope;
     if (!method || !context_ || !tool.object) return;
 
     if (context_->Prepare(method) < 0) return;
@@ -465,7 +486,7 @@ void EditorToolManager::CallToolMethod(ToolInstance &tool, asIScriptFunction *me
     if (stringArg) {
         context_->SetArgObject(0, const_cast<std::string *>(stringArg));
     }
-    ScriptExecutionScope scope(nullptr, currentSceneContext_);
+    ScriptExecutionScope execScope(nullptr, currentSceneContext_);
     const int r = context_->Execute();
     if (r != asEXECUTION_FINISHED) {
         Log(Translation("engine.editortool.exception") + GetExceptionInfo(context_), LogSeverity::Error);

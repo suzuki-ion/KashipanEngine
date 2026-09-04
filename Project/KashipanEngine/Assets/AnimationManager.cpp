@@ -309,11 +309,13 @@ AnimationManager::AnimationHandle AnimationManager::LoadAnimation(const std::str
 }
 
 AnimationManager::AnimationHandle AnimationManager::GetAnimationHandleFromFileName(const std::string &fileName) {
+    LogScope scope;
     const auto &handles = GetAnimationHandlesFromFileName(fileName);
     return handles.empty() ? kInvalidHandle : handles.front();
 }
 
 const std::vector<AnimationManager::AnimationHandle> &AnimationManager::GetAnimationHandlesFromFileName(const std::string &fileName) {
+    LogScope scope;
     if (fileName.empty()) return sEmptyHandleList;
     auto it = sFileNameToHandle.find(fileName);
     if (it == sFileNameToHandle.end()) return sEmptyHandleList;
@@ -321,6 +323,7 @@ const std::vector<AnimationManager::AnimationHandle> &AnimationManager::GetAnima
 }
 
 AnimationManager::AnimationHandle AnimationManager::GetAnimationHandleFromAssetPath(const std::string &assetPath) {
+    LogScope scope;
     if (assetPath.empty()) return kInvalidHandle;
     auto it = sAssetPathToHandle.find(NormalizePathSlashes(assetPath));
     if (it == sAssetPathToHandle.end()) return kInvalidHandle;
@@ -328,6 +331,7 @@ AnimationManager::AnimationHandle AnimationManager::GetAnimationHandleFromAssetP
 }
 
 const AnimationData &AnimationManager::GetAnimationData(AnimationHandle handle) {
+    LogScope scope;
     if (handle == kInvalidHandle) return sEmptyData;
     auto it = sAnimations.find(handle);
     if (it == sAnimations.end()) return sEmptyData;
@@ -335,14 +339,17 @@ const AnimationData &AnimationManager::GetAnimationData(AnimationHandle handle) 
 }
 
 const AnimationData &AnimationManager::GetAnimationDataFromFileName(const std::string &fileName) {
+    LogScope scope;
     return GetAnimationData(GetAnimationHandleFromFileName(fileName));
 }
 
 const AnimationData &AnimationManager::GetAnimationDataFromAssetPath(const std::string &assetPath) {
+    LogScope scope;
     return GetAnimationData(GetAnimationHandleFromAssetPath(assetPath));
 }
 
 std::vector<AnimationManager::AnimationListEntry> AnimationManager::GetLoadedAnimationListEntries() {
+    LogScope scope;
     std::vector<AnimationListEntry> list;
     list.reserve(sAnimations.size());
     for (const auto &[handle, entry] : sAnimations) {

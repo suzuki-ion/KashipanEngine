@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Collider/ICollider.h"
 #include "Objects/Components/Transform.h"
@@ -33,6 +34,7 @@ public:
     ~RigidBody2D() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<RigidBody2D>();
         ptr->mass_ = mass_;
         ptr->useGravity_ = useGravity_;
@@ -51,6 +53,7 @@ public:
         if (!B2_IS_NULL(body_)) b2Body_SetLinearVelocity(body_, b2Vec2{ velocity.x, velocity.y });
     }
     Vector2 GetVelocity() const {
+        LogScope scope;
         if (B2_IS_NULL(body_)) return Vector2{ 0.0f, 0.0f };
         const b2Vec2 v = b2Body_GetLinearVelocity(body_);
         return Vector2{ v.x, v.y };
@@ -63,23 +66,27 @@ public:
         return B2_IS_NULL(body_) ? 0.0f : b2Body_GetAngularVelocity(body_);
     }
     void SetMass(float mass) {
+        LogScope scope;
         mass_ = std::max(mass, kMinMass);
         ApplyMass();
     }
     float GetMass() const noexcept { return mass_; }
     void SetUseGravity(bool enabled) {
+        LogScope scope;
         useGravity_ = enabled;
         if (!B2_IS_NULL(body_)) b2Body_SetGravityScale(body_, enabled ? 1.0f : 0.0f);
     }
     bool IsGravityEnabled() const noexcept { return useGravity_; }
     /// @brief 反発係数（0=衝突後に反発しない、1=完全弾性衝突相当）
     void SetRestitution(float restitution) {
+        LogScope scope;
         restitution_ = std::clamp(restitution, 0.0f, 1.0f);
         ApplyMaterial();
     }
     float GetRestitution() const noexcept { return restitution_; }
     /// @brief 摩擦係数（クーロン摩擦、0=無摩擦）
     void SetFriction(float friction) {
+        LogScope scope;
         friction_ = std::max(friction, 0.0f);
         ApplyMaterial();
     }
@@ -100,6 +107,7 @@ public:
     ///          Transformが引き戻されてしまうため、Play開始時にこれを呼んで同期を取る
     ///          （RigidBody3D::SyncFromTransformと同じ役割）
     void SyncFromTransform() {
+        LogScope scope;
         if (B2_IS_NULL(body_)) return;
         auto *ctx = GetOwnerObjectContext();
         auto *tr = ctx ? ctx->GetComponent<Transform>() : nullptr;
@@ -118,6 +126,7 @@ public:
     ///          mass_/restitution_/friction_をここで毎回上書きし直すことで、シェイプが作り直されても
     ///          設定値が失われないようにする
     void ReapplyPhysicalProperties() {
+        LogScope scope;
         ApplyMass();
         ApplyMaterial();
     }
@@ -129,6 +138,7 @@ public:
     /// @brief 同一オブジェクト上のICollider派生コンポーネントから使用する形状を選択する
     /// @param collider 選択するコライダー（nullptrの場合は未選択＝どのコライダーでも使用可）
     void SetSelectedCollider(ICollider *collider) {
+        LogScope scope;
         if (!collider) {
             selectedColliderTypeName_.clear();
             selectedColliderOccurrenceIndex_ = 0;
@@ -146,6 +156,7 @@ public:
     }
     /// @brief 選択中のコライダーを取得（未選択・見つからない場合は nullptr）
     ICollider *GetSelectedCollider() const {
+        LogScope scope;
         if (selectedColliderTypeName_.empty()) return nullptr;
         int occurrence = 0;
         for (auto *candidate : GetOwnerColliders()) {
@@ -157,6 +168,7 @@ public:
     }
     /// @brief 同一オブジェクト上の全ICollider派生コンポーネントを取得
     std::vector<ICollider *> GetOwnerColliders() const {
+        LogScope scope;
         std::vector<ICollider *> result;
         auto *ctx = GetOwnerObjectContext();
         if (!ctx) return result;
@@ -174,6 +186,7 @@ protected:
     }
 
     void Finalize() override {
+        LogScope scope;
         // B2_IS_NULLは未設定判定のみで、既に破棄済み（無効化）されたIDかどうかは分からないため
         // b2Body_IsValidで生存確認してから破棄する（Collider::ReleaseRuntime2Dと同じ理由）
         if (!B2_IS_NULL(body_) && b2Body_IsValid(body_)) {
@@ -183,6 +196,7 @@ protected:
     }
 
     void Update() override {
+        LogScope scope;
         TryInitialize();
         if (B2_IS_NULL(body_)) return;
         auto *ctx = GetOwnerObjectContext();
@@ -201,6 +215,7 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         if (ImGui::DragFloat(TranslationLabel("component.rigidbody2d.mass"), &mass_, 0.01f, kMinMass, 1000.0f)) {
             SetMass(mass_);
         }
@@ -236,6 +251,7 @@ protected:
     }
 #endif
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json{
             {"mass", mass_}, {"useGravity", useGravity_},
             {"restitution", restitution_}, {"friction", friction_},
@@ -245,6 +261,7 @@ protected:
         return json;
     }
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         mass_ = std::max(json.value("mass", 1.0f), kMinMass);
         useGravity_ = json.value("useGravity", true);
         restitution_ = std::clamp(json.value("restitution", 0.3f), 0.0f, 1.0f);
@@ -264,6 +281,7 @@ private:
     /// @brief 所属するSceneObjectColliderのBox2Dワールドへベアボディ（形状なし）を生成する
     /// @details 実際の形状の取り付けはCollider::BuildRuntime2D（対象コライダー側のシェイプ同期時）が行う
     bool TryInitialize() {
+        LogScope scope;
         if (!B2_IS_NULL(body_)) return true;
         auto *sceneCtx = GetOwnerSceneContext();
         auto *colliderComp = sceneCtx ? sceneCtx->GetComponent<SceneObjectCollider>() : nullptr;
@@ -287,6 +305,7 @@ private:
 
     /// @brief mass_をボディへ反映する（形状由来の慣性モーメント分布は保ったまま、質量だけ上書きする）
     void ApplyMass() {
+        LogScope scope;
         if (B2_IS_NULL(body_) || b2Body_GetShapeCount(body_) <= 0) return;
         b2Body_ApplyMassFromShapes(body_);
         b2MassData massData = b2Body_GetMassData(body_);
@@ -299,6 +318,7 @@ private:
 
     /// @brief restitution_/friction_を、ボディに取り付いている全シェイプへ反映する
     void ApplyMaterial() {
+        LogScope scope;
         if (B2_IS_NULL(body_)) return;
         const int count = b2Body_GetShapeCount(body_);
         if (count <= 0) return;

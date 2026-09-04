@@ -28,6 +28,7 @@ using PrefabUtility::PrepareNodesForInstantiation;
 
 /// @brief objがcandidatesのいずれかの子孫であるかをTransformの親参照チェーンから判定する
 bool IsDescendantOfAny(EmptyObject *obj, const std::unordered_set<EmptyObject *> &candidates) {
+    LogScope scope;
     auto *transform = obj->GetComponent<Transform>();
     EmptyObject *parent = transform ? transform->GetParentObject() : nullptr;
     while (parent) {
@@ -40,6 +41,7 @@ bool IsDescendantOfAny(EmptyObject *obj, const std::unordered_set<EmptyObject *>
 } // namespace
 
 std::vector<UUID128> SceneObjectHierarchy::GetSelectedObjectIDs() const {
+    LogScope scope;
     std::vector<UUID128> ids;
     ids.reserve(selectedObjectIDs_.size());
     // 先頭にプライマリ（最後に操作したオブジェクト）を入れ、復元時にプライマリを維持する
@@ -51,6 +53,7 @@ std::vector<UUID128> SceneObjectHierarchy::GetSelectedObjectIDs() const {
 }
 
 void SceneObjectHierarchy::ValidateCachedObjects() {
+    LogScope scope;
     // selectedObject_ 等の生ポインタは「このフレーム用に解決済みのキャッシュ」であり、
     // 正であるUUID側から毎フレーム引き直す（プールのスロット再利用によるエイリアシング対策）。
     const auto isAlive = [this](EmptyObject *obj) {
@@ -93,6 +96,7 @@ void SceneObjectHierarchy::ValidateCachedObjects() {
 }
 
 void SceneObjectHierarchy::RequestScrollTo(EmptyObject *obj) {
+    LogScope scope;
     pendingScrollToObject_ = obj;
     forceOpenAncestors_.clear();
     if (!obj) return;
@@ -107,6 +111,7 @@ void SceneObjectHierarchy::RequestScrollTo(EmptyObject *obj) {
 }
 
 void SceneObjectHierarchy::RestoreSelection(const std::vector<UUID128> &objectIDs) {
+    LogScope scope;
     ClearSelection();
     if (!editorContext_) return;
     for (const auto &id : objectIDs) {
@@ -119,6 +124,7 @@ void SceneObjectHierarchy::RestoreSelection(const std::vector<UUID128> &objectID
 }
 
 void SceneObjectHierarchy::ShowImGui() {
+    LogScope scope;
     ValidateCachedObjects();
     // このフレームの表示順はShowObjectItemの呼び出し毎に積み直す（Shift範囲選択の計算に使う）
     visibleOrderThisFrame_.clear();
@@ -179,6 +185,7 @@ void SceneObjectHierarchy::ShowImGui() {
 }
 
 void SceneObjectHierarchy::RebuildObjectItems() {
+    LogScope scope;
     const auto &objects = editorContext_->GetSceneObjects();
     objectItems_.clear();
     objectParentMap_.clear();
@@ -210,6 +217,7 @@ void SceneObjectHierarchy::RebuildObjectItems() {
 }
 
 void SceneObjectHierarchy::RecursivelyBuildObjectItems(EmptyObject *obj, ObjectItem &item, size_t depth) {
+    LogScope scope;
     for (const auto &childPair : objectParentMap_[obj]) {
         ObjectItem childItem{};
         childItem.object = childPair.first;
@@ -222,6 +230,7 @@ void SceneObjectHierarchy::RecursivelyBuildObjectItems(EmptyObject *obj, ObjectI
 }
 
 void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index) {
+    LogScope scope;
     // このフレームの表示順を記録する（Shift範囲選択の範囲計算に使う）
     visibleOrderThisFrame_.push_back(item.object);
 
@@ -355,6 +364,7 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
 }
 
 void SceneObjectHierarchy::ShowObjectContextMenu(EmptyObject *obj) {
+    LogScope scope;
     if (ImGui::BeginPopupContextItem("ObjectContextMenu")) {
         // 右クリックしたオブジェクトが複数選択に含まれる場合、Copy/Clone/Deleteは選択中の全オブジェクトを対象にする
         // （Create/Pasteはあくまで右クリックした1点を基準にした挿入操作のため対象外）
@@ -430,6 +440,7 @@ void SceneObjectHierarchy::ShowObjectContextMenu(EmptyObject *obj) {
 }
 
 void SceneObjectHierarchy::ShowRevertPrefabConfirmModal() {
+    LogScope scope;
     if (isRevertPrefabConfirmRequested_) {
         ImGui::OpenPopup(TranslationLabel("editor.prefab.revert.title"));
         isRevertPrefabConfirmRequested_ = false;
@@ -456,6 +467,7 @@ void SceneObjectHierarchy::ShowRevertPrefabConfirmModal() {
 }
 
 void SceneObjectHierarchy::ShowHierarchyContextMenu() {
+    LogScope scope;
     // ImGuiPopupFlags_NoOpenOverItems を指定しないと、オブジェクト項目上での右クリックでも
     // この window レベルのメニューが同一フレームで開いてしまい、
     // オブジェクト自体の ObjectContextMenu を閉じてしまう（表示されないように見える）ため必須。
@@ -474,6 +486,7 @@ void SceneObjectHierarchy::ShowHierarchyContextMenu() {
 }
 
 void SceneObjectHierarchy::ShowCreateObjectMenu(EmptyObject *referenceObject, bool asChild) {
+    LogScope scope;
     if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.emptyobject"))) {
         CreateTemplateObject("EmptyObject", {}, referenceObject, asChild);
     }
@@ -534,6 +547,7 @@ void SceneObjectHierarchy::ShowCreateObjectMenu(EmptyObject *referenceObject, bo
 
 void SceneObjectHierarchy::CreateTemplateObject(const std::string &objectName, const std::vector<std::string> &componentTypes,
     EmptyObject *referenceObject, bool asChild) {
+    LogScope scope;
     UUID128 newObjectID;
     std::unique_ptr<IEditorCommand> createCommand;
 
@@ -593,6 +607,7 @@ void SceneObjectHierarchy::CreateTemplateObject(const std::string &objectName, c
 }
 
 void SceneObjectHierarchy::CreateGameScreenSetup(EmptyObject *referenceObject, bool asChild) {
+    LogScope scope;
     // referenceObject/asChildの配置ルールに従ってオブジェクト生成コマンドを作る（CreateTemplateObjectと同じルール）。
     // 兄弟として並べる場合は、8個が意図した順序で並ぶよう挿入インデックスを1つずつずらす
     size_t siblingBaseIndex = MAXSIZE_T;
@@ -727,6 +742,7 @@ void SceneObjectHierarchy::CreateGameScreenSetup(EmptyObject *referenceObject, b
 }
 
 void SceneObjectHierarchy::HandleKeyboardShortcuts() {
+    LogScope scope;
     // ヒエラルキーウィンドウにフォーカスがある時のみ有効にする（テキスト入力中などに誤爆させないため）
     if (!ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) return;
 
@@ -766,6 +782,7 @@ void SceneObjectHierarchy::HandleKeyboardShortcuts() {
 }
 
 std::vector<EmptyObject *> SceneObjectHierarchy::GetSelectionRoots() const {
+    LogScope scope;
     std::vector<EmptyObject *> roots;
     for (auto *obj : selectedObjects_) {
         if (obj && !IsDescendantOfAny(obj, selectedObjects_)) roots.push_back(obj);
@@ -774,6 +791,7 @@ std::vector<EmptyObject *> SceneObjectHierarchy::GetSelectionRoots() const {
 }
 
 void SceneObjectHierarchy::CopyObjects(const std::vector<EmptyObject *> &objs) {
+    LogScope scope;
     if (objs.empty() || !editorContext_) return;
     clipboardNodes_.clear();
     for (auto *obj : objs) {
@@ -783,6 +801,7 @@ void SceneObjectHierarchy::CopyObjects(const std::vector<EmptyObject *> &objs) {
 }
 
 void SceneObjectHierarchy::PasteObject(EmptyObject *attachParent, size_t insertIndex) {
+    LogScope scope;
     if (clipboardNodes_.empty() || !editorContext_) return;
     auto nodes = PrepareNodesForInstantiation(clipboardNodes_, /*preserveRootParent=*/false);
     ExecutePasteCommand(std::make_unique<PasteObjectCommand>(
@@ -790,6 +809,7 @@ void SceneObjectHierarchy::PasteObject(EmptyObject *attachParent, size_t insertI
 }
 
 void SceneObjectHierarchy::CloneObjects(const std::vector<EmptyObject *> &objs) {
+    LogScope scope;
     if (objs.empty() || !editorContext_) return;
     std::vector<PasteObjectCommand::Node> nodes;
     for (auto *obj : objs) {
@@ -808,6 +828,7 @@ void SceneObjectHierarchy::CloneObjects(const std::vector<EmptyObject *> &objs) 
 }
 
 void SceneObjectHierarchy::DeleteObjects(const std::vector<EmptyObject *> &objs) {
+    LogScope scope;
     if (objs.empty() || !editorContext_) return;
 
     if (commands_) {
@@ -829,6 +850,7 @@ void SceneObjectHierarchy::DeleteObjects(const std::vector<EmptyObject *> &objs)
 }
 
 void SceneObjectHierarchy::DeleteObjectKeepChildren(EmptyObject *obj) {
+    LogScope scope;
     if (!obj || !editorContext_) return;
     auto *transform = obj->GetComponent<Transform>();
     if (!transform) return;
@@ -873,6 +895,7 @@ void SceneObjectHierarchy::DeleteObjectKeepChildren(EmptyObject *obj) {
 }
 
 void SceneObjectHierarchy::UnparentAllChildren(EmptyObject *obj) {
+    LogScope scope;
     if (!obj || !editorContext_) return;
 
     std::vector<EmptyObject *> children;
@@ -907,11 +930,13 @@ void SceneObjectHierarchy::UnparentAllChildren(EmptyObject *obj) {
 }
 
 void SceneObjectHierarchy::CollectSubtreeNodes(EmptyObject *obj, int parentIndex, std::vector<PasteObjectCommand::Node> &out) const {
+    LogScope scope;
     PrefabUtility::CollectSubtreeNodes(editorContext_, obj, parentIndex, out);
 }
 
 void SceneObjectHierarchy::InstantiateNodes(const std::vector<PasteObjectCommand::Node> &nodes, const std::string &name,
     EmptyObject *attachParent, const Vector3 *worldPosition) {
+    LogScope scope;
     if (nodes.empty() || !editorContext_) return;
     auto prepared = PrepareNodesForInstantiation(nodes, /*preserveRootParent=*/false);
     if (worldPosition) {
@@ -922,6 +947,7 @@ void SceneObjectHierarchy::InstantiateNodes(const std::vector<PasteObjectCommand
 }
 
 bool SceneObjectHierarchy::InstantiatePrefabFile(const std::string &filePath, EmptyObject *attachParent, const Vector3 *worldPosition) {
+    LogScope scope;
     if (filePath.empty() || !editorContext_) return false;
     const JSON prefabJson = LoadJSON(ProjectPaths::ToPhysical(filePath));
     if (!prefabJson.is_object()) {
@@ -957,6 +983,7 @@ bool SceneObjectHierarchy::InstantiatePrefabFile(const std::string &filePath, Em
 }
 
 void SceneObjectHierarchy::ExecutePasteCommand(std::unique_ptr<PasteObjectCommand> command) {
+    LogScope scope;
     if (!command || !editorContext_) return;
     PasteObjectCommand *rawCommand = command.get();
     const bool succeeded = commands_ ? commands_->Execute(std::move(command)) : rawCommand->Execute(editorContext_);
@@ -972,6 +999,7 @@ void SceneObjectHierarchy::ExecutePasteCommand(std::unique_ptr<PasteObjectComman
 }
 
 void SceneObjectHierarchy::ApplyPendingRangeSelect() {
+    LogScope scope;
     if (!pendingRangeTarget_) return;
     EmptyObject *target = pendingRangeTarget_;
     pendingRangeTarget_ = nullptr;
@@ -1001,6 +1029,7 @@ void SceneObjectHierarchy::ApplyPendingRangeSelect() {
 }
 
 void SceneObjectHierarchy::DragAndDropObject(ObjectItem *objItem) {
+    LogScope scope;
     if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
         // 外部（インスペクター等）でも受け取れる共有ペイロード型で送る
         SceneObjectDragDropPayload dndPayload;
@@ -1037,6 +1066,7 @@ void SceneObjectHierarchy::DragAndDropObject(ObjectItem *objItem) {
 }
 
 void SceneObjectHierarchy::ApplyDragAndDrop() {
+    LogScope scope;
     if (!dragDropPayload_.objectSource || !dragDropPayload_.objectTarget) return;
 
     EmptyObject *targetObject = dragDropPayload_.objectTarget;
@@ -1133,6 +1163,7 @@ void SceneObjectHierarchy::ApplyDragAndDrop() {
 }
 
 SceneObjectHierarchy::DropPosition SceneObjectHierarchy::DragAndDropTargetCommon() {
+    LogScope scope;
     ImVec2 itemRectMin = ImGui::GetItemRectMin();
     ImVec2 itemRectMax = ImGui::GetItemRectMax();
     float mouseY = ImGui::GetMousePos().y;

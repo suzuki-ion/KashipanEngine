@@ -3,12 +3,14 @@
 #include <imgui.h>
 #include "Scene/Editor/EditorWindowChrome.h"
 #include "Scene/SceneManager.h"
+#include "Debug/Logger.h"
 #include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
 
 void GlobalSceneVariablesMenu::ShowImGui() {
+    LogScope scope;
     if (!context_) return;
     if (!ImGui::Begin(TranslationLabel("editor.globalscenevariables.window"))) {
         ImGui::End();
@@ -62,6 +64,7 @@ void GlobalSceneVariablesMenu::ShowImGui() {
 }
 
 void GlobalSceneVariablesMenu::AddVariableOfSelectedType(const std::string &key) {
+    LogScope scope;
     switch (newVariableType_) {
     case 0: context_->AddGlobalSceneVariable<bool>(key, false); break;
     case 1: context_->AddGlobalSceneVariable<int>(key, 0); break;
@@ -78,10 +81,12 @@ void GlobalSceneVariablesMenu::AddVariableOfSelectedType(const std::string &key)
 }
 
 bool GlobalSceneVariablesMenu::ShowVariableEditor(const std::string &key, MyAny *variable) {
+    LogScope scope;
     return ImGuiCustom::EditValue(key.c_str(), *variable);
 }
 
 void GlobalSceneVariablesMenu::SaveToFile() {
+    LogScope scope;
     if (auto *sceneManager = context_->GetSceneManager()) {
         sceneManager->SaveGlobalSceneVariables();
     }

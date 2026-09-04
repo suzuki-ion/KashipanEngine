@@ -2,24 +2,30 @@
 
 #include <algorithm>
 
+#include "Debug/Logger.h"
+
 namespace KashipanEngine {
 
 void StageGraphGenerator::SetSeed(std::uint32_t seed) {
+    LogScope scope;
     seed_ = seed;
     randomEngine_.seed(seed_);
 }
 
 void StageGraphGenerator::SetGridSize(std::uint32_t width, std::uint32_t height, std::uint32_t depth) {
+    LogScope scope;
     width_ = width;
     height_ = height;
     depth_ = depth;
 }
 
 void StageGraphGenerator::SetBranchProbability(float probability) {
+    LogScope scope;
     branchProbability_ = std::clamp(probability, 0.0f, 1.0f);
 }
 
 bool StageGraphGenerator::AddSideRoomType(RoomType type, float weight) {
+    LogScope scope;
     if (weight <= 0.0f) {
         return false;
     }
@@ -28,10 +34,12 @@ bool StageGraphGenerator::AddSideRoomType(RoomType type, float weight) {
 }
 
 void StageGraphGenerator::ClearSideRoomTypes() {
+    LogScope scope;
     sideRoomTypes_.clear();
 }
 
 RoomType StageGraphGenerator::PickSideRoomType() {
+    LogScope scope;
     if (sideRoomTypes_.empty()) {
         return RoomType::Branch;
     }
@@ -51,6 +59,7 @@ RoomType StageGraphGenerator::PickSideRoomType() {
 }
 
 std::uint32_t StageGraphGenerator::AddRoom(RoomType type, std::uint32_t x, std::uint32_t y, std::uint32_t z) {
+    LogScope scope;
     RoomNode room;
     room.id = static_cast<std::uint32_t>(rooms_.size());
     room.type = type;
@@ -63,15 +72,18 @@ std::uint32_t StageGraphGenerator::AddRoom(RoomType type, std::uint32_t x, std::
 }
 
 void StageGraphGenerator::Connect(std::uint32_t roomA, std::uint32_t roomB) {
+    LogScope scope;
     rooms_[roomA].connectedRoomIDs.push_back(roomB);
     rooms_[roomB].connectedRoomIDs.push_back(roomA);
 }
 
 bool StageGraphGenerator::IsOccupied(std::uint32_t x, std::uint32_t y, std::uint32_t z) const {
+    LogScope scope;
     return occupied_[x][y][z];
 }
 
 void StageGraphGenerator::Generate() {
+    LogScope scope;
     rooms_.clear();
     startRoomID_.reset();
     goalRoomID_.reset();
@@ -133,6 +145,7 @@ void StageGraphGenerator::Generate() {
 }
 
 const RoomNode *StageGraphGenerator::GetRoomByIndex(std::size_t index) const {
+    LogScope scope;
     if (index >= rooms_.size()) {
         return nullptr;
     }
@@ -140,6 +153,7 @@ const RoomNode *StageGraphGenerator::GetRoomByIndex(std::size_t index) const {
 }
 
 const RoomNode *StageGraphGenerator::GetRoom(std::uint32_t roomID) const {
+    LogScope scope;
     return GetRoomByIndex(roomID);
 }
 

@@ -1,4 +1,5 @@
 #include "LogSettings.h"
+#include "Debug/Logger.h"
 #include "Utilities/FileIO/JSON.h"
 
 namespace KashipanEngine {
@@ -7,6 +8,7 @@ LogSettings sLogSettings;
 } // anonymous
 
 const LogSettings &LoadLogSettings(PasskeyForGameEngineMain, const std::string &logSettingsFilePath) {
+    LogScope scope;
     JSON json = LoadJSON(logSettingsFilePath);
     if (json.empty()) {
         return sLogSettings;

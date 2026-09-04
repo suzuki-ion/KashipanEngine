@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Render/ScreenBufferObject.h"
 #include "Assets/SamplerManager.h"
@@ -102,6 +103,7 @@ public:
     /// @details 同一オブジェクトに複数の ScreenBufferObject が付与されている場合に、
     ///          どのスクリーンバッファへ適用するかを個別に除外設定できる。
     bool IsScreenBufferIncluded(const ScreenBuffer *screenBuffer) const {
+        LogScope scope;
         if (!screenBuffer) return false;
         return !excludedScreenBufferNames_.contains(screenBuffer->GetRenderTargetName());
     }
@@ -118,6 +120,7 @@ protected:
     /// @brief SceneRendererへ自身を登録する（派生クラスがoverrideする場合は必ず
     ///        `IPostProcessComponent::Initialize();` を呼ぶこと）
     void Initialize() override {
+        LogScope scope;
         auto *sceneRenderer = GetOrAddSceneRenderer();
         if (sceneRenderer) sceneRenderer->RegisterPostProcessComponent(this);
     }
@@ -125,6 +128,7 @@ protected:
     /// @brief SceneRendererから自身の登録を解除する（派生クラスがoverrideする場合は必ず
     ///        `IPostProcessComponent::Finalize();` を呼ぶこと）
     void Finalize() override {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
         if (sceneRenderer) sceneRenderer->UnregisterPostProcessComponent(this);
@@ -143,6 +147,7 @@ protected:
 
     /// @brief 同一オブジェクトの ScreenBufferObject からスクリーンバッファを取得
     ScreenBuffer *GetOwnerScreenBuffer() const {
+        LogScope scope;
         auto *objectContext = GetOwnerObjectContext();
         if (!objectContext) return nullptr;
         auto *screenBufferObject = objectContext->GetComponent<ScreenBufferObject>();
@@ -156,6 +161,7 @@ protected:
     /// @brief 適用先ScreenBufferObjectの除外設定UI（派生クラスは自身のShowImGui()の先頭でこれを呼ぶこと）
     /// @details 同一オブジェクトが持つ ScreenBufferObject が2つ以上ある場合のみ表示する
     void ShowImGui() override {
+        LogScope scope;
         auto *objectContext = GetOwnerObjectContext();
         auto screenBufferObjects = objectContext ? objectContext->GetComponents<ScreenBufferObject>() : std::vector<ScreenBufferObject *>{};
         if (screenBufferObjects.size() <= 1) return;
@@ -184,6 +190,7 @@ protected:
     /// @brief 派生クラスは自身のSaveToJson()の先頭で `JSON json = IPostProcessComponent::SaveToJson();` として呼び、
     ///        追加のフィールドをマージすること
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = JSON::object();
         json["excludedScreenBuffers"] = JSON::array();
         for (const auto &name : excludedScreenBufferNames_) {
@@ -194,6 +201,7 @@ protected:
 
     /// @brief 派生クラスは自身のLoadFromJson()の先頭で `IPostProcessComponent::LoadFromJson(json);` を呼ぶこと
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         excludedScreenBufferNames_.clear();
         for (const auto &name : json.value("excludedScreenBuffers", std::vector<std::string>())) {
             excludedScreenBufferNames_.insert(name);
@@ -203,6 +211,7 @@ protected:
 
 private:
     SceneRenderer *GetOrAddSceneRenderer() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext) return nullptr;
         auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();

@@ -2,17 +2,20 @@
 
 #include <algorithm>
 
+#include "Debug/Logger.h"
 #include "Objects/Components/Collider/ICollider.h"
 
 namespace KashipanEngine {
 
 void SceneObjectCollider::RegisterCollider(ICollider *collider) {
+    LogScope scope;
     if (!collider) return;
     if (std::find(registeredColliders_.begin(), registeredColliders_.end(), collider) != registeredColliders_.end()) return;
     registeredColliders_.push_back(collider);
 }
 
 void SceneObjectCollider::UnregisterCollider(const ICollider *collider) {
+    LogScope scope;
     auto it = std::find(registeredColliders_.begin(), registeredColliders_.end(), collider);
     if (it != registeredColliders_.end()) registeredColliders_.erase(it);
 
@@ -29,6 +32,7 @@ void SceneObjectCollider::UnregisterCollider(const ICollider *collider) {
 }
 
 void SceneObjectCollider::SyncRegisteredColliders() {
+    LogScope scope;
     for (auto *collider : registeredColliders_) {
         if (!collider) continue;
 
@@ -84,6 +88,7 @@ void SceneObjectCollider::SyncRegisteredColliders() {
 }
 
 void SceneObjectCollider::Update() {
+    LogScope scope;
     SyncRegisteredColliders();
     collider_.Update2D();
     // ReactPhysics3D is updated in this existing call.
@@ -91,6 +96,7 @@ void SceneObjectCollider::Update() {
 }
 
 void SceneObjectCollider::Finalize() {
+    LogScope scope;
     collider_.Clear2D();
     collider_.Clear3D();
     colliderIds2D_.clear();

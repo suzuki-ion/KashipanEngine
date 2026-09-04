@@ -270,6 +270,7 @@ GifManager::GifManager(Passkey<GameEngine>, DirectXCommon *directXCommon, const 
 }
 
 GifManager::~GifManager() {
+    LogScope scope;
     sPendingDestroyPlayers.clear();
     if (sActiveInstance == this) sActiveInstance = nullptr;
 }
@@ -326,24 +327,28 @@ GifManager::GifHandle GifManager::Load(const std::string &filePath) {
 }
 
 GifManager::GifHandle GifManager::GetGifHandleFromFileName(const std::string &fileName) {
+    LogScope scope;
     auto it = sFileNameToHandle.find(fileName);
     if (it == sFileNameToHandle.end()) return kInvalidHandle;
     return it->second;
 }
 
 GifManager::GifHandle GifManager::GetGifHandleFromAssetPath(const std::string &assetPath) {
+    LogScope scope;
     auto it = sAssetPathToHandle.find(NormalizePathSlashes(assetPath));
     if (it == sAssetPathToHandle.end()) return kInvalidHandle;
     return it->second;
 }
 
 const GifManager::GifAnimation *GifManager::GetGifAnimation(GifHandle handle) {
+    LogScope scope;
     auto it = sGifs.find(handle);
     if (it == sGifs.end()) return nullptr;
     return &it->second;
 }
 
 std::vector<std::string> GifManager::GetLoadedGifAssetPaths() {
+    LogScope scope;
     std::vector<std::string> out;
     out.reserve(sGifs.size());
     for (const auto &kv : sGifs) out.push_back(kv.second.assetPath);
@@ -352,6 +357,7 @@ std::vector<std::string> GifManager::GetLoadedGifAssetPaths() {
 }
 
 bool GifManager::RenameGif(const std::string &oldAssetPath, const std::string &newAssetPath) {
+    LogScope scope;
     const std::string normalizedOld = NormalizePathSlashes(oldAssetPath);
     auto it = sAssetPathToHandle.find(normalizedOld);
     if (it == sAssetPathToHandle.end()) return false;
@@ -375,12 +381,14 @@ bool GifManager::RenameGif(const std::string &oldAssetPath, const std::string &n
 }
 
 std::unique_ptr<GifPlayer> GifManager::CreatePlayer(GifHandle handle) {
+    LogScope scope;
     if (!sActiveInstance) return nullptr;
     if (sGifs.find(handle) == sGifs.end()) return nullptr;
     return std::make_unique<GifPlayer>(sActiveInstance->directXCommon_, handle);
 }
 
 std::unique_ptr<GifTexture> GifManager::CreateGifTexture(Passkey<GifPlayer>, GifHandle handle) {
+    LogScope scope;
     if (!sActiveInstance) return nullptr;
     auto it = sGifs.find(handle);
     if (it == sGifs.end()) return nullptr;
@@ -391,11 +399,13 @@ std::unique_ptr<GifTexture> GifManager::CreateGifTexture(Passkey<GifPlayer>, Gif
 }
 
 void GifManager::DestroyPlayer(std::unique_ptr<GifPlayer> player) {
+    LogScope scope;
     if (!player) return;
     sPendingDestroyPlayers.push_back(std::move(player));
 }
 
 void GifManager::CommitPendingDestroy(Passkey<GameEngine>) {
+    LogScope scope;
     // unique_ptrの破棄でGifPlayerのデストラクタが走り、ここで初めてGifTextureのGPUリソース
     // （SRVを含む）の実体解放が行われる。この呼び出しはGameLoopDraw完了（ImGuiの描画コマンド
     // 発行＋GPU同期）の後で行うこと（GameEngine::Execute参照）
@@ -404,6 +414,7 @@ void GifManager::CommitPendingDestroy(Passkey<GameEngine>) {
 
 #if defined(USE_IMGUI)
 GifManager::GifHandle GifManager::LoadDynamic(const std::string &filePath) {
+    LogScope scope;
     if (!sActiveInstance) return kInvalidHandle;
     return sActiveInstance->Load(filePath);
 }

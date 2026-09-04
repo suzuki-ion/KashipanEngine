@@ -451,21 +451,25 @@ FontManager::FontHandle FontManager::LoadFont(const std::string &filePath) {
 }
 
 FontManager::FontHandle FontManager::GetFontHandleFromFileName(const std::string &fileName) {
+    LogScope scope;
     auto it = sFileNameToHandle.find(fileName);
     return it != sFileNameToHandle.end() ? it->second : kInvalidHandle;
 }
 
 FontManager::FontHandle FontManager::GetFontHandleFromAssetPath(const std::string &assetPath) {
+    LogScope scope;
     auto it = sAssetPathToHandle.find(NormalizePathSlashes(assetPath));
     return it != sAssetPathToHandle.end() ? it->second : kInvalidHandle;
 }
 
 FontManager::FontHandle FontManager::GetFontHandleFromName(const std::string &name) {
+    LogScope scope;
     auto it = sNameToHandle.find(name);
     return it != sNameToHandle.end() ? it->second : kInvalidHandle;
 }
 
 std::vector<FontManager::FontListEntry> FontManager::GetLoadedFontListEntries() {
+    LogScope scope;
     std::vector<FontListEntry> result;
     result.reserve(sFonts.size());
     for (const auto &[handle, entry] : sFonts) {
@@ -475,6 +479,7 @@ std::vector<FontManager::FontListEntry> FontManager::GetLoadedFontListEntries() 
 }
 
 void FontManager::UploadAtlasToGpu(FontHandle handle) {
+    LogScope scope;
     auto it = sFonts.find(handle);
     if (it == sFonts.end()) return;
     FontEntry &font = it->second;
@@ -572,6 +577,7 @@ void FontManager::UploadAtlasToGpu(FontHandle handle) {
 }
 
 const FontManager::GlyphInfo *FontManager::GetOrBakeGlyph(FontHandle handle, char32_t codepoint) {
+    LogScope scope;
     auto it = sFonts.find(handle);
     if (it == sFonts.end() || !it->second.info) return nullptr;
     FontEntry &font = it->second;
@@ -653,6 +659,7 @@ const FontManager::GlyphInfo *FontManager::GetOrBakeGlyph(FontHandle handle, cha
 }
 
 const FontManager::GlyphInfo *FontManager::GetSolidGlyph(FontHandle handle) {
+    LogScope scope;
     auto it = sFonts.find(handle);
     if (it == sFonts.end()) return nullptr;
     FontEntry &font = it->second;
@@ -690,17 +697,20 @@ const FontManager::GlyphInfo *FontManager::GetSolidGlyph(FontHandle handle) {
 }
 
 TextureManager::TextureHandle FontManager::GetAtlasTextureHandle(FontHandle handle) {
+    LogScope scope;
     auto it = sFonts.find(handle);
     return it != sFonts.end() ? it->second.atlasTextureHandle : TextureManager::kInvalidHandle;
 }
 
 float FontManager::GetScaleForPixelHeight(FontHandle handle, float pixelHeight) {
+    LogScope scope;
     auto it = sFonts.find(handle);
     if (it == sFonts.end() || !it->second.info) return 1.0f;
     return stbtt_ScaleForPixelHeight(it->second.info.get(), pixelHeight);
 }
 
 float FontManager::GetAscent(FontHandle handle, float pixelHeight) {
+    LogScope scope;
     auto it = sFonts.find(handle);
     if (it == sFonts.end() || !it->second.info) return pixelHeight;
     int ascent = 0, descent = 0, lineGap = 0;
@@ -710,6 +720,7 @@ float FontManager::GetAscent(FontHandle handle, float pixelHeight) {
 }
 
 float FontManager::GetDescent(FontHandle handle, float pixelHeight) {
+    LogScope scope;
     auto it = sFonts.find(handle);
     if (it == sFonts.end() || !it->second.info) return 0.0f;
     int ascent = 0, descent = 0, lineGap = 0;
@@ -719,6 +730,7 @@ float FontManager::GetDescent(FontHandle handle, float pixelHeight) {
 }
 
 float FontManager::GetLineHeight(FontHandle handle, float pixelHeight) {
+    LogScope scope;
     auto it = sFonts.find(handle);
     if (it == sFonts.end() || !it->second.info) return pixelHeight;
     int ascent = 0, descent = 0, lineGap = 0;

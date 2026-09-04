@@ -2,26 +2,31 @@
 
 #include <string>
 
+#include "Debug/Logger.h"
 #include "Graphics/GifTexture.h"
 
 namespace KashipanEngine {
 
 GifPlayer::GifPlayer(DirectXCommon *directXCommon, GifManager::GifHandle handle)
     : directXCommon_(directXCommon), handle_(handle) {
+    LogScope scope;
 }
 
 GifPlayer::~GifPlayer() {
+    LogScope scope;
     if (textureHandle_ != TextureManager::kInvalidHandle) {
         TextureManager::UnregisterExternalTexture(textureHandle_);
     }
 }
 
 bool GifPlayer::IsValid() const noexcept {
+    LogScope scope;
     const auto *animation = GifManager::GetGifAnimation(handle_);
     return animation && !animation->frames.empty();
 }
 
 bool GifPlayer::EnsureTexture() {
+    LogScope scope;
     const auto *animation = GifManager::GetGifAnimation(handle_);
     if (!animation || animation->frames.empty()) return false;
 
@@ -48,6 +53,7 @@ bool GifPlayer::EnsureTexture() {
 }
 
 void GifPlayer::UploadCurrentFrame() {
+    LogScope scope;
     const auto *animation = GifManager::GetGifAnimation(handle_);
     if (!animation || !texture_ || currentFrameIndex_ >= animation->frames.size()) return;
     const auto &frame = animation->frames[currentFrameIndex_];
@@ -55,6 +61,7 @@ void GifPlayer::UploadCurrentFrame() {
 }
 
 bool GifPlayer::Play(bool loop) {
+    LogScope scope;
     if (!EnsureTexture()) return false;
 
     loop_ = loop;
@@ -67,6 +74,7 @@ bool GifPlayer::Play(bool loop) {
 }
 
 void GifPlayer::Stop() {
+    LogScope scope;
     isPlaying_ = false;
     isPaused_ = false;
     currentFrameIndex_ = 0;
@@ -75,18 +83,21 @@ void GifPlayer::Stop() {
 }
 
 bool GifPlayer::Pause() {
+    LogScope scope;
     if (!isPlaying_) return false;
     isPaused_ = true;
     return true;
 }
 
 bool GifPlayer::Resume() {
+    LogScope scope;
     if (!isPlaying_ || !isPaused_) return false;
     isPaused_ = false;
     return true;
 }
 
 bool GifPlayer::ShowFirstFrame() {
+    LogScope scope;
     if (isPlaying_) return true;
     if (!EnsureTexture()) return false;
 
@@ -97,6 +108,7 @@ bool GifPlayer::ShowFirstFrame() {
 }
 
 void GifPlayer::Update(float deltaTime) {
+    LogScope scope;
     if (!isPlaying_ || isPaused_) return;
     const auto *animation = GifManager::GetGifAnimation(handle_);
     if (!animation || animation->frames.empty() || !texture_) return;
@@ -122,11 +134,13 @@ void GifPlayer::Update(float deltaTime) {
 }
 
 std::uint32_t GifPlayer::GetWidth() const noexcept {
+    LogScope scope;
     const auto *animation = GifManager::GetGifAnimation(handle_);
     return animation ? animation->width : 0;
 }
 
 std::uint32_t GifPlayer::GetHeight() const noexcept {
+    LogScope scope;
     const auto *animation = GifManager::GetGifAnimation(handle_);
     return animation ? animation->height : 0;
 }

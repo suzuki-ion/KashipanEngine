@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 
+#include "Debug/Logger.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 #include "Utilities/Translation.h"
 
@@ -33,6 +34,7 @@ public:
     ~ScreenWideDitherBlendEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<ScreenWideDitherBlendEffect>();
         ptr->params_ = params_;
         return ptr;
@@ -45,6 +47,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         IPostProcessComponent::ShowImGui();
         int passCount = static_cast<int>(params_.passCount);
         if (ImGui::SliderInt(TranslationLabel("component.screenwideditherblendeffect.pass_count"), &passCount, 1, 8)) {
@@ -58,12 +61,14 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = IPostProcessComponent::SaveToJson();
         json["passCount"] = params_.passCount;
         return json;
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         IPostProcessComponent::LoadFromJson(json);
         params_.passCount = json.value("passCount", 4u);
         return true;

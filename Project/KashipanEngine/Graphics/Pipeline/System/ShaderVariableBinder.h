@@ -3,6 +3,7 @@
 #include <string_view>
 #include <utility>
 #include <d3d12.h>
+#include "Debug/Logger.h"
 #include "Graphics/Resources.h"
 #include "ShaderCompiler.h"
 #include "NameMap.h"
@@ -48,6 +49,7 @@ private:
 };
 
 inline MyStd::NameMap<ShaderVariableBinding> CreateShaderVariableMap(const ShaderCompiler::ShaderCompiledInfo &compiled, bool appendSpace = true) {
+    LogScope scope;
     MyStd::NameMap<ShaderVariableBinding> map;
     const auto &refl = compiled.GetReflectionInfo();
     for (const auto &kv : refl.ResourceBindings()) {

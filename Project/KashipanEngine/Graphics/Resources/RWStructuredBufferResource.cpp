@@ -5,10 +5,12 @@ namespace KashipanEngine {
 
 RWStructuredBufferResource::RWStructuredBufferResource(size_t elementStride, size_t elementCount, bool createSrv)
     : IGraphicsResource(ResourceViewType::UAV) {
+    LogScope scope;
     Initialize(elementStride, elementCount, createSrv);
 }
 
 bool RWStructuredBufferResource::Recreate(size_t elementStride, size_t elementCount, bool createSrv) {
+    LogScope scope;
     ResetResourceForRecreate();
     return Initialize(elementStride, elementCount, createSrv);
 }
@@ -80,6 +82,7 @@ bool RWStructuredBufferResource::Initialize(size_t elementStride, size_t element
 }
 
 D3D12_VERTEX_BUFFER_VIEW RWStructuredBufferResource::GetView(UINT stride) const {
+    LogScope scope;
     D3D12_VERTEX_BUFFER_VIEW view{};
     if (GetResource()) {
         view.BufferLocation = GetResource()->GetGPUVirtualAddress();

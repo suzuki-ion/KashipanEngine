@@ -6,6 +6,7 @@
 
 #include "Assets/SamplerManager.h"
 #include "Assets/TextureManager.h"
+#include "Debug/Logger.h"
 #include "Math/Matrix4x4.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
@@ -60,6 +61,7 @@ public:
         /// @details 拡縮はUV原点(0,0)基準のまま、回転のみuvPivotを中心に行う
         ///          （原点基準に平行移動→回転→逆平行移動を挟むことで実現する）
         Matrix4x4 MakeUVTransformMatrix() const {
+            LogScope scope;
             Matrix4x4 scale;
             scale.MakeScale(Vector3(uvScale.x, uvScale.y, 1.0f));
             Matrix4x4 toPivot;
@@ -77,6 +79,7 @@ public:
         /// @details 読み込み時に対象テクスチャが存在しなかった場合でも、
         ///          ハンドルが得られるまで呼び出しの度に解決を試み続ける。
         void ResolveTextureHandles() {
+            LogScope scope;
             if (textureHandle == TextureManager::kInvalidHandle && !textureFileName.empty()) {
                 textureHandle = TextureManager::GetTextureFromFileName(textureFileName);
             } else {

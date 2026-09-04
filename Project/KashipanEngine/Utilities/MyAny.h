@@ -1,5 +1,6 @@
 #pragma once
 #include "Utilities/ValueType.h"
+#include "Debug/Logger.h"
 
 template <typename T> struct is_vector : std::false_type {};
 template <typename T, typename Alloc> struct is_vector<std::vector<T, Alloc>> : std::true_type {};
@@ -33,24 +34,28 @@ public:
     ///          誤用（既存の MyAny をさらに MyAny(value, typeInfo) で包む）を安全にする。
     MyAny(const MyAny &value, const TypeInfo &explicitTypeInfo)
         : content(value.content ? value.content->clone() : nullptr) {
+        KashipanEngine::LogScope scope;
         if (content) content->typeInfo = explicitTypeInfo;
     }
     MyAny(const MyAny &other) : content(other.content ? std::move(other.content->clone()) : nullptr) {}
     MyAny(MyAny &&other) noexcept : content(std::move(other.content)) {}
     ~MyAny() = default;
     MyAny &operator=(const MyAny &other) {
+        KashipanEngine::LogScope scope;
         if (this != &other) {
             content = other.content ? std::move(other.content->clone()) : nullptr;
         }
         return *this;
     }
     MyAny &operator=(MyAny &&other) noexcept {
+        KashipanEngine::LogScope scope;
         if (this != &other) {
             content = std::move(other.content);
         }
         return *this;
     }
     bool operator==(const MyAny &other) const {
+        KashipanEngine::LogScope scope;
         if (content && other.content) {
             return GetRawPointer() == other.GetRawPointer();
         }
@@ -65,6 +70,7 @@ public:
     }
     template<typename T>
     T AnyCast() const {
+        KashipanEngine::LogScope scope;
         if (!content || !content->isType<T>()) {
             throw std::bad_cast();
         }
@@ -72,12 +78,14 @@ public:
     }
     template <typename T>
     T *AnyCastPtr() const {
+        KashipanEngine::LogScope scope;
         if (!content || !content->isType<T>()) {
             return nullptr;
         }
         return &(static_cast<Holder<T>*>(content.get())->value);
     }
     void *GetRawPointer() const {
+        KashipanEngine::LogScope scope;
         if (!content) {
             return nullptr;
         }
@@ -87,6 +95,7 @@ public:
         return !content;
     }
     const TypeInfo &GetTypeInfo() const {
+        KashipanEngine::LogScope scope;
         if (!content) {
             static TypeInfo noneType(ValueType::None);
             return noneType;
@@ -101,6 +110,7 @@ private:
             return valueType == ValueType::Any || valueType == typeInfo.GetBaseType();
         }
         bool isType(const std::vector<TypeInfo> &templateArgs) const {
+            KashipanEngine::LogScope scope;
             if (typeInfo.GetBaseType() == ValueType::Any) return true;
             if (typeInfo.GetTemplateArguments().size() != templateArgs.size()) return false;
             for (size_t i = 0; i < templateArgs.size(); ++i) {
@@ -114,6 +124,7 @@ private:
         }
         template<typename T>
         bool isType() const {
+            KashipanEngine::LogScope scope;
             TypeInfo typeInfoT = GetValueType<T>();
             return typeInfoT.GetBaseType() == ValueType::Any || isType(typeInfoT);
         }
@@ -143,6 +154,7 @@ struct hash<MyAny> {
 
 template <typename T, typename>
 MyAny::MyAny(const T &value) : content(std::make_unique<Holder<T>>(value)) {
+    KashipanEngine::LogScope scope;
     if constexpr (is_vector_v<T>) {
         // すでに std::vector<MyAny> であればそのまま保持
         if constexpr (std::is_same_v<typename T::value_type, MyAny>) {

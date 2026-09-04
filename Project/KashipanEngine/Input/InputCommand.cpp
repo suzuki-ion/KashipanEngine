@@ -1,5 +1,7 @@
 #include "Input/InputCommand.h"
 
+#include "Debug/Logger.h"
+
 #include "Input/Input.h"
 #include "Input/Keyboard.h"
 #include "Input/Mouse.h"
@@ -21,14 +23,17 @@ namespace KashipanEngine {
 
 namespace {
 float Clamp01(float v) {
+    LogScope scope;
     return std::clamp(v, 0.0f, 1.0f);
 }
 
 float Clamp11(float v) {
+    LogScope scope;
     return std::clamp(v, -1.0f, 1.0f);
 }
 
 bool EvaluateDigital(bool down, bool trigger, bool release, InputCommand::InputState state) {
+    LogScope scope;
     switch (state) {
     case InputCommand::InputState::Down: return down;
     case InputCommand::InputState::Trigger: return trigger;
@@ -38,23 +43,28 @@ bool EvaluateDigital(bool down, bool trigger, bool release, InputCommand::InputS
 }
 
 float NormalizeTrigger255(int v) {
+    LogScope scope;
     return Clamp01(static_cast<float>(v) / 255.0f);
 }
 
 float NormalizeStickInt16(int v) {
+    LogScope scope;
     if (v >= 0) return Clamp11(static_cast<float>(v) / 32767.0f);
     return Clamp11(static_cast<float>(v) / 32768.0f);
 }
 
 float NormalizeTriggerDelta255(int dv) {
+    LogScope scope;
     return Clamp11(static_cast<float>(dv) / 255.0f);
 }
 
 float NormalizeStickDeltaInt16(int dv) {
+    LogScope scope;
     return Clamp11(static_cast<float>(dv) / 32767.0f);
 }
 
 static bool AxisTriggered(float v, float threshold) {
+    LogScope scope;
     return std::abs(v) > threshold;
 }
 
@@ -82,6 +92,7 @@ constexpr const char* kControllerAnalogNames[] = { "LeftTrigger", "RightTrigger"
 
 /// @brief 文字列配列から一致するインデックスを探す（見つからない場合は0）
 int FindIndex(const char* const* names, int count, const std::string& value) {
+    LogScope scope;
     for (int i = 0; i < count; ++i) {
         if (value == names[i]) return i;
     }
@@ -93,10 +104,12 @@ int FindIndex(const char* const* names, int count, const std::string& value) {
 InputCommand::InputCommand(Passkey<GameEngine>, const Input* input) : input_(input) {}
 
 void InputCommand::Clear() {
+    LogScope scope;
     bindings_.clear();
 }
 
 void InputCommand::RegisterCommand(const std::string& action, Key key, InputState state, bool invertValue) {
+    LogScope scope;
     if (action.empty()) return;
     Binding b{};
     b.kind = DeviceKind::Keyboard;
@@ -107,6 +120,7 @@ void InputCommand::RegisterCommand(const std::string& action, Key key, InputStat
 }
 
 void InputCommand::RegisterCommand(const std::string& action, MouseButton button, InputState state, bool invertValue) {
+    LogScope scope;
     if (action.empty()) return;
     Binding b{};
     b.kind = DeviceKind::MouseButton;
@@ -117,6 +131,7 @@ void InputCommand::RegisterCommand(const std::string& action, MouseButton button
 }
 
 void InputCommand::RegisterCommand(const std::string& action, MouseAxis axis, void* hwnd, float threshold, bool invertValue) {
+    LogScope scope;
     if (action.empty()) return;
     Binding b{};
     b.kind = DeviceKind::MouseAxis;
@@ -129,6 +144,7 @@ void InputCommand::RegisterCommand(const std::string& action, MouseAxis axis, vo
 }
 
 void InputCommand::RegisterCommand(const std::string& action, ControllerButton button, InputState state, int controllerIndex, bool invertValue) {
+    LogScope scope;
     if (action.empty()) return;
     Binding b{};
     b.kind = DeviceKind::ControllerButton;
@@ -140,6 +156,7 @@ void InputCommand::RegisterCommand(const std::string& action, ControllerButton b
 }
 
 void InputCommand::RegisterCommand(const std::string& action, ControllerAnalog analog, InputState state, int controllerIndex, float threshold, bool invertValue) {
+    LogScope scope;
     if (action.empty()) return;
     Binding b{};
     b.kind = DeviceKind::ControllerAnalog;
@@ -152,6 +169,7 @@ void InputCommand::RegisterCommand(const std::string& action, ControllerAnalog a
 }
 
 void InputCommand::RegisterCommand(const std::string& action, ControllerAnalog analog, int controllerIndex, float threshold, bool invertValue) {
+    LogScope scope;
     if (action.empty()) return;
     Binding b{};
     b.kind = DeviceKind::ControllerAnalogDelta;
@@ -163,6 +181,7 @@ void InputCommand::RegisterCommand(const std::string& action, ControllerAnalog a
 }
 
 std::vector<std::string> InputCommand::GetRegisteredCommandNames() const {
+    LogScope scope;
     std::vector<std::string> names;
     names.reserve(bindings_.size());
     for (const auto& [action, binds] : bindings_) {
@@ -173,6 +192,7 @@ std::vector<std::string> InputCommand::GetRegisteredCommandNames() const {
 }
 
 InputCommand::ReturnInfo InputCommand::Evaluate(const std::string& action) const {
+    LogScope scope;
     if (!input_) return MakeReturnInfo(false, 0.0f);
 
     auto it = bindings_.find(action);
@@ -196,6 +216,7 @@ InputCommand::ReturnInfo InputCommand::Evaluate(const std::string& action) const
 
 #if defined(USE_IMGUI)
 void InputCommand::ShowImGui() {
+    LogScope scope;
     if (!ImGui::Begin(TranslationLabel("editor.inputcommand.window"))) {
         ImGui::End();
         return;
@@ -478,6 +499,7 @@ void InputCommand::ShowImGui() {
 #endif
 
 InputCommand::ReturnInfo InputCommand::EvaluateBinding(const Binding& b) const {
+    LogScope scope;
     if (!input_) return MakeReturnInfo(false, 0.0f);
 
     const auto applyInvertIfNeeded = [&](ReturnInfo ri) {
@@ -641,6 +663,7 @@ InputCommand::ReturnInfo InputCommand::EvaluateBinding(const Binding& b) const {
 // ===== JSON import/export =====
 
 bool InputCommand::SaveToJSON(const std::string& filepath) const {
+    LogScope scope;
     JSON root = JSON::object();
 
     for (const auto& [action, binds] : bindings_) {
@@ -690,6 +713,7 @@ bool InputCommand::SaveToJSON(const std::string& filepath) const {
 }
 
 bool InputCommand::LoadFromJSON(const std::string& filepath) {
+    LogScope scope;
     const std::string resolvedPath = ProjectPaths::ToPhysical(filepath);
     if (!IsJSONFileValid(resolvedPath)) return false;
 
@@ -796,6 +820,7 @@ bool InputCommand::LoadFromJSON(const std::string& filepath) {
 // ===== String conversion utilities =====
 
 std::string InputCommand::KeyToString(Key key) {
+    LogScope scope;
     static const std::unordered_map<Key, std::string> kMap = {
         {Key::Unknown, "Unknown"},
         {Key::A, "A"}, {Key::B, "B"}, {Key::C, "C"}, {Key::D, "D"},
@@ -824,6 +849,7 @@ std::string InputCommand::KeyToString(Key key) {
 }
 
 Key InputCommand::StringToKey(const std::string& str) {
+    LogScope scope;
     static const std::unordered_map<std::string, Key> kMap = {
         {"Unknown", Key::Unknown},
         {"A", Key::A}, {"B", Key::B}, {"C", Key::C}, {"D", Key::D},
@@ -852,6 +878,7 @@ Key InputCommand::StringToKey(const std::string& str) {
 }
 
 std::string InputCommand::MouseButtonToString(MouseButton button) {
+    LogScope scope;
     static const std::unordered_map<MouseButton, std::string> kMap = {
         {MouseButton::Left, "Left"}, {MouseButton::Right, "Right"}, {MouseButton::Middle, "Middle"},
         {MouseButton::Button4, "Button4"}, {MouseButton::Button5, "Button5"},
@@ -862,6 +889,7 @@ std::string InputCommand::MouseButtonToString(MouseButton button) {
 }
 
 MouseButton InputCommand::StringToMouseButton(const std::string& str) {
+    LogScope scope;
     static const std::unordered_map<std::string, MouseButton> kMap = {
         {"Left", MouseButton::Left}, {"Right", MouseButton::Right}, {"Middle", MouseButton::Middle},
         {"Button4", MouseButton::Button4}, {"Button5", MouseButton::Button5},
@@ -872,6 +900,7 @@ MouseButton InputCommand::StringToMouseButton(const std::string& str) {
 }
 
 std::string InputCommand::ControllerButtonToString(ControllerButton button) {
+    LogScope scope;
     static const std::unordered_map<ControllerButton, std::string> kMap = {
         {ControllerButton::DPadUp, "DPadUp"}, {ControllerButton::DPadDown, "DPadDown"},
         {ControllerButton::DPadLeft, "DPadLeft"}, {ControllerButton::DPadRight, "DPadRight"},
@@ -886,6 +915,7 @@ std::string InputCommand::ControllerButtonToString(ControllerButton button) {
 }
 
 ControllerButton InputCommand::StringToControllerButton(const std::string& str) {
+    LogScope scope;
     static const std::unordered_map<std::string, ControllerButton> kMap = {
         {"DPadUp", ControllerButton::DPadUp}, {"DPadDown", ControllerButton::DPadDown},
         {"DPadLeft", ControllerButton::DPadLeft}, {"DPadRight", ControllerButton::DPadRight},
@@ -900,6 +930,7 @@ ControllerButton InputCommand::StringToControllerButton(const std::string& str) 
 }
 
 std::string InputCommand::ControllerAnalogToString(ControllerAnalog analog) {
+    LogScope scope;
     switch (analog) {
     case ControllerAnalog::LeftTrigger:  return "LeftTrigger";
     case ControllerAnalog::RightTrigger: return "RightTrigger";
@@ -912,6 +943,7 @@ std::string InputCommand::ControllerAnalogToString(ControllerAnalog analog) {
 }
 
 InputCommand::ControllerAnalog InputCommand::StringToControllerAnalog(const std::string& str) {
+    LogScope scope;
     static const std::unordered_map<std::string, ControllerAnalog> kMap = {
         {"LeftTrigger", ControllerAnalog::LeftTrigger}, {"RightTrigger", ControllerAnalog::RightTrigger},
         {"LeftStickX", ControllerAnalog::LeftStickX}, {"LeftStickY", ControllerAnalog::LeftStickY},
@@ -922,6 +954,7 @@ InputCommand::ControllerAnalog InputCommand::StringToControllerAnalog(const std:
 }
 
 std::string InputCommand::InputStateToString(InputState state) {
+    LogScope scope;
     switch (state) {
     case InputState::Down:    return "Down";
     case InputState::Trigger: return "Trigger";
@@ -931,12 +964,14 @@ std::string InputCommand::InputStateToString(InputState state) {
 }
 
 InputCommand::InputState InputCommand::StringToInputState(const std::string& str) {
+    LogScope scope;
     if (str == "Trigger") return InputState::Trigger;
     if (str == "Release") return InputState::Release;
     return InputState::Down;
 }
 
 std::string InputCommand::MouseAxisToString(MouseAxis axis) {
+    LogScope scope;
     switch (axis) {
     case MouseAxis::X:          return "X";
     case MouseAxis::Y:          return "Y";
@@ -949,6 +984,7 @@ std::string InputCommand::MouseAxisToString(MouseAxis axis) {
 }
 
 InputCommand::MouseAxis InputCommand::StringToMouseAxis(const std::string& str) {
+    LogScope scope;
     static const std::unordered_map<std::string, MouseAxis> kMap = {
         {"X", MouseAxis::X}, {"Y", MouseAxis::Y},
         {"DeltaX", MouseAxis::DeltaX}, {"DeltaY", MouseAxis::DeltaY},
@@ -959,6 +995,7 @@ InputCommand::MouseAxis InputCommand::StringToMouseAxis(const std::string& str) 
 }
 
 std::string InputCommand::DeviceKindToString(DeviceKind kind) {
+    LogScope scope;
     switch (kind) {
     case DeviceKind::Keyboard:             return "Keyboard";
     case DeviceKind::MouseButton:          return "MouseButton";
@@ -971,6 +1008,7 @@ std::string InputCommand::DeviceKindToString(DeviceKind kind) {
 }
 
 InputCommand::DeviceKind InputCommand::StringToDeviceKind(const std::string& str) {
+    LogScope scope;
     static const std::unordered_map<std::string, DeviceKind> kMap = {
         {"Keyboard", DeviceKind::Keyboard},
         {"MouseButton", DeviceKind::MouseButton},

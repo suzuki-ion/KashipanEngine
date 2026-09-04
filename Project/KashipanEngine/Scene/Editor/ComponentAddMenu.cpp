@@ -3,6 +3,8 @@
 #include <imgui.h>
 #include <map>
 
+#include "Debug/Logger.h"
+
 namespace KashipanEngine {
 namespace ComponentAddMenu {
 
@@ -15,6 +17,7 @@ struct CategoryNode {
 };
 
 bool ShowNode(const CategoryNode &node, std::string &outSelectedType) {
+    LogScope scope;
     bool selected = false;
     for (const auto &pair : node.children) {
         if (ImGui::BeginMenu(pair.first.c_str())) {
@@ -36,6 +39,7 @@ bool ShowNode(const CategoryNode &node, std::string &outSelectedType) {
 bool Show(const std::vector<std::string> &types,
     const std::function<const std::vector<std::string> &(const std::string &)> &getCategory,
     std::string &outSelectedType) {
+    LogScope scope;
     // カテゴリ階層からツリーを構築する（カテゴリ無しはルート直下）
     CategoryNode root;
     for (const auto &type : types) {

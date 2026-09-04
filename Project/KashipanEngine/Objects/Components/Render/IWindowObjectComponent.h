@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Core/Window.h"
 #include "Scene/RenderTargetCarryOverRegistry.h"

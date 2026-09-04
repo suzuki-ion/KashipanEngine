@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <algorithm>
+#include "Debug/Logger.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 #include "Utilities/Translation.h"
 
@@ -20,6 +21,7 @@ public:
     ~GaussianFilterEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<GaussianFilterEffect>();
         ptr->params_ = params_;
         return ptr;
@@ -31,6 +33,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         IPostProcessComponent::ShowImGui();
         ImGui::DragInt(TranslationLabel("component.gaussianfiltereffect.radius"), &params_.radius, 1.0f, 0, 32);
         ImGui::DragFloat(TranslationLabel("component.gaussianfiltereffect.sigma"), &params_.sigma, 0.01f, 0.01f, 32.0f, "%.3f");
@@ -38,6 +41,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = IPostProcessComponent::SaveToJson();
         json["radius"] = params_.radius;
         json["sigma"] = params_.sigma;
@@ -45,6 +49,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         IPostProcessComponent::LoadFromJson(json);
         params_.radius = json.value("radius", 3);
         params_.sigma = json.value("sigma", 1.0f);
@@ -52,6 +57,7 @@ protected:
     }
 
     std::vector<PassInfo> BuildPasses() override {
+        LogScope scope;
         auto *owner = GetOwnerScreenBuffer();
         cbData_.invResolution[0] = (owner && owner->GetWidth() > 0) ? (1.0f / static_cast<float>(owner->GetWidth())) : 0.0f;
         cbData_.invResolution[1] = (owner && owner->GetHeight() > 0) ? (1.0f / static_cast<float>(owner->GetHeight())) : 0.0f;

@@ -20,6 +20,7 @@
 #include "Assets/TextureRef.h"
 #include "Assets/TextureCubeRef.h"
 #include "Core/DirectXCommon.h"
+#include "Debug/Logger.h"
 #include "Graphics/ComputeCommandProcessor.h"
 #include "Graphics/IRenderTarget.h"
 #include "Graphics/Pipeline/System/PipelineBinder.h"
@@ -257,6 +258,7 @@ struct TileCullingConstants {
 
 /// @brief シャドウマップ比較用サンプラーのハンドルを取得する（初回に作成）
 inline SamplerManager::SamplerHandle GetShadowSamplerCmpHandle() {
+    LogScope scope;
     static SamplerManager::SamplerHandle sHandle = [] {
         D3D12_SAMPLER_DESC desc{};
         desc.Filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
@@ -280,6 +282,7 @@ struct FrustumPlane {
 
 /// @brief ビュー射影行列（このエンジンの行ベクトル規約、D3DのNDC z範囲[0,1]）から視錐台の6平面を抽出する
 inline std::array<FrustumPlane, 6> ExtractFrustumPlanes(const Matrix4x4 &viewProjection) {
+    LogScope scope;
     const auto &m = viewProjection.m;
     const float c0[4] = { m[0][0], m[1][0], m[2][0], m[3][0] };
     const float c1[4] = { m[0][1], m[1][1], m[2][1], m[3][1] };
@@ -303,6 +306,7 @@ inline std::array<FrustumPlane, 6> ExtractFrustumPlanes(const Matrix4x4 &viewPro
 /// @brief 球が視錐台と交差する可能性があるか（完全に外側であることが確定した場合のみfalse。
 ///        視錐台の角付近では偽陽性があり得るが偽陰性は無い、カリング用途では安全な近似）
 inline bool SphereIntersectsFrustum(const std::array<FrustumPlane, 6> &planes, const Vector3 &center, float radius) {
+    LogScope scope;
     for (const auto &p : planes) {
         const float dist = p.a * center.x + p.b * center.y + p.c * center.z + p.d;
         if (dist < -radius) return false;
@@ -314,6 +318,7 @@ inline bool SphereIntersectsFrustum(const std::array<FrustumPlane, 6> &planes, c
 ///        大きい場合はフィールドのサイズに切り詰める。該当フィールドが無いシェーダーでは何もしない）
 inline void WriteMaterialFieldRaw(const PipelineInfo &pipelineInfo, std::byte *elementBytes, std::uint32_t elementByteSize,
     const std::string &name, const void *src, std::uint32_t srcSize) {
+    LogScope scope;
     const auto *field = pipelineInfo.GetMaterialLayout().Find(name);
     if (!field) return;
     std::uint32_t copySize = std::min(srcSize, field->byteSize);
@@ -336,6 +341,7 @@ inline void WriteMaterialField(const PipelineInfo &pipelineInfo, std::byte *elem
 ///          同一のロジックで扱える。instanceColor等インスタンス単位の値は含まないため、
 ///          呼び出し側で WriteMaterialField を使って個別に上書きすること
 inline std::vector<std::byte> BuildMaterialElementBytes(const PipelineInfo &pipelineInfo, const MaterialManager::Material *material) {
+    LogScope scope;
     const auto &layout = pipelineInfo.GetMaterialLayout();
     std::vector<std::byte> bytes(layout.totalByteSize, std::byte{ 0 });
     if (bytes.empty()) return bytes;
@@ -395,6 +401,7 @@ inline std::vector<std::byte> BuildMaterialElementBytes(const PipelineInfo &pipe
 ///        ShaderVariableBinder::Bindが黙ってfalseを返すだけなので無害。未設定/未解決の場合はバインドを
 ///        スキップする（フォールバックしない）
 inline void BindExtraTextureParameters(ShaderVariableBinder *shaderBinder, const MaterialManager::Material *material) {
+    LogScope scope;
     if (!material) return;
     for (const auto &[name, value] : material->extraParameters) {
         if (const auto *asTextureRef = value.AnyCastPtr<TextureRef>()) {
@@ -418,6 +425,7 @@ inline void BindExtraTextureParameters(ShaderVariableBinder *shaderBinder, const
 ///        テクスチャは個別バインドせずマテリアルバッファのtextureIndexフィールドへ書き込む方式のため、
 ///        インスタンシングのバッチ結合条件（RendererDraw.cpp/RendererShadow.cpp参照）からは除外されている
 inline std::uint32_t ResolveInstanceTextureIndex(TextureManager::TextureHandle overrideHandle, const MaterialManager::Material *material) {
+    LogScope scope;
     TextureManager::TextureHandle handle = overrideHandle;
     if (handle == TextureManager::kInvalidHandle && material) {
         handle = material->textureHandle;
@@ -433,6 +441,7 @@ inline std::uint32_t ResolveInstanceTextureIndex(TextureManager::TextureHandle o
 ///        gSamplers[]は既定6種のみの固定長配列のため、範囲外のハンドル（無効値・将来的なカスタムサンプラー等）は
 ///        LinearWrapへフォールバックする
 inline std::uint32_t ResolveInstanceSamplerIndex(SamplerManager::SamplerHandle overrideHandle, const MaterialManager::Material *material) {
+    LogScope scope;
     SamplerManager::SamplerHandle handle = overrideHandle;
     if (handle == SamplerManager::kInvalidHandle && material) {
         handle = material->samplerHandle;
@@ -450,6 +459,7 @@ inline std::uint32_t ResolveInstanceSamplerIndex(SamplerManager::SamplerHandle o
 ///          使わずuvRectで別途アトラス参照するため、この合成の対象外（常にMaterialThenInstance相当の
 ///          既定値のまま呼ばれるが、シェーダー側で無視される）
 inline Matrix4x4 ResolveInstanceUVTransform(const SceneRenderer::DrawEntry &entry, const MaterialManager::Material *material) {
+    LogScope scope;
     const Matrix4x4 materialMatrix = material ? material->MakeUVTransformMatrix() : Matrix4x4::Identity();
     if (entry.instanceUvTranslate.x == 0.0f && entry.instanceUvTranslate.y == 0.0f &&
         entry.instanceUvRotation == 0.0f && entry.instanceUvScale.x == 1.0f && entry.instanceUvScale.y == 1.0f) {
@@ -487,6 +497,7 @@ inline Matrix4x4 ResolveInstanceUVTransform(const SceneRenderer::DrawEntry &entr
 ///          別グループ同士のキーが衝突しないよう十分な余裕を持たせている
 inline std::string MakeBatchKey(const void *target, const std::string &pipelineName,
     std::uint32_t meshHandle, std::uint32_t materialHandle, const char *usage) {
+    LogScope scope;
     char buffer[192];
     std::snprintf(buffer, sizeof(buffer), "%p|%u|%u|%s|", target, meshHandle, materialHandle, usage);
     return std::string(buffer) + pipelineName;
@@ -494,6 +505,7 @@ inline std::string MakeBatchKey(const void *target, const std::string &pipelineN
 
 /// @brief ComputeShaderProcessing::UAVTextureBindRequirement::formatKind から DXGI_FORMAT へ変換
 inline DXGI_FORMAT UAVFormatFromKind(int formatKind) {
+    LogScope scope;
     switch (formatKind) {
         case 1: return DXGI_FORMAT_R32_FLOAT;
         case 2: return DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -510,6 +522,7 @@ inline DXGI_FORMAT UAVFormatFromKind(int formatKind) {
 ///          （Object2D/Text2DのgCamera2D等で発生）。描画エントリ側と対称になるよう、
 ///          editorTargetは常にマッチ扱いにする
 inline bool IsTargetMatch(EmptyObject *targetObject, bool hasTargetSpecified, IRenderTarget *target, const SceneRenderer *sceneRenderer) {
+    LogScope scope;
     if (!hasTargetSpecified) return true;
     if (sceneRenderer && target == sceneRenderer->GetEditorTarget()) return true;
     if (!targetObject) return false; // 指定されているが解決できない場合は適用しない
@@ -521,6 +534,7 @@ inline bool IsTargetMatch(EmptyObject *targetObject, bool hasTargetSpecified, IR
 /// @brief EditorOnlyオブジェクト（祖先を含む）のコンポーネントを、エディター用以外の描画先から除外するか
 /// @details ライト・カメラがEditorOnlyオブジェクトに付いている場合、エディターのシーンビュー以外へは適用しない
 inline bool IsExcludedAsEditorOnly(const IObjectComponent *component, const IRenderTarget *target, const SceneRenderer *sceneRenderer) {
+    LogScope scope;
     if (!component || !sceneRenderer) return false;
     if (target == sceneRenderer->GetEditorTarget()) return false;
     const EmptyObject *owner = component->GetOwnerObject();
@@ -540,6 +554,7 @@ inline void CollectLightsForTarget(SceneRenderer *sceneRenderer, IRenderTarget *
     std::vector<RectLightElement> &rectLights,
     std::vector<TubeLightElement> &tubeLights,
     std::vector<BoxLightElement> &boxLights) {
+    LogScope scope;
     for (auto *lightRenderer : sceneRenderer->GetLightRenderers()) {
         if (!lightRenderer || !lightRenderer->IsActive()) continue;
         // EditorOnlyオブジェクトのライトはエディター用以外の描画先には適用しない
@@ -663,6 +678,7 @@ inline void CollectLightsForTarget(SceneRenderer *sceneRenderer, IRenderTarget *
 
 /// @brief 指定の描画先・パイプラインに適用されるカメラの定数バッファを解決する（複数該当する場合は最後に一致したもの）
 inline ConstantBufferResource *ResolveCameraConstantBuffer(SceneRenderer *sceneRenderer, IRenderTarget *target, const std::string &pipelineName) {
+    LogScope scope;
     if (auto *editorCameraBuffer = sceneRenderer->GetEditorCameraBuffer(target)) {
         return editorCameraBuffer;
     }
@@ -685,6 +701,7 @@ inline ConstantBufferResource *ResolveCameraConstantBuffer(SceneRenderer *sceneR
 ///        ポストエフェクトは特定パイプラインに紐付かないため、ResolveCameraConstantBuffer と
 ///        異なりパイプライン名による絞り込みは行わない
 inline IPostProcessComponent::CameraInfo ResolveCameraInfoForPostProcess(SceneRenderer *sceneRenderer, IRenderTarget *target) {
+    LogScope scope;
     IPostProcessComponent::CameraInfo result;
     if (const auto *editorInfo = sceneRenderer->GetEditorCameraInfo(target)) {
         if (editorInfo->valid) {

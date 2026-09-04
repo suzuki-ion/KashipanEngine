@@ -9,6 +9,8 @@
 
 #include <unordered_map>
 
+#include "Debug/Logger.h"
+
 namespace KashipanEngine {
 
 namespace {
@@ -20,6 +22,7 @@ struct RestoreRect {
 
 // 最大化前の位置・サイズをウィンドウIDごとに記憶しておく
 std::unordered_map<ImGuiID, RestoreRect> &GetRestoreRects() {
+    LogScope scope;
     static std::unordered_map<ImGuiID, RestoreRect> rects;
     return rects;
 }
@@ -30,6 +33,7 @@ std::unordered_map<ImGuiID, RestoreRect> &GetRestoreRects() {
 // ウィンドウ移動のクリック判定に使った後でこの関数が呼ばれるため、標準機構を
 // 経由するとクリップ矩形やアクティブID管理と噛み合わず正しく反応しないため
 bool DrawChromeButton(ImDrawList *drawList, const ImRect &bb, bool isHovered) {
+    LogScope scope;
     const ImU32 bgCol = isHovered
         ? ImGui::GetColorU32(ImGuiCol_ButtonHovered)
         : IM_COL32(0, 0, 0, 0);
@@ -38,12 +42,14 @@ bool DrawChromeButton(ImDrawList *drawList, const ImRect &bb, bool isHovered) {
 }
 
 void DrawMinimizeGlyph(ImDrawList *drawList, const ImRect &bb, ImU32 color) {
+    LogScope scope;
     const float inset = bb.GetWidth() * 0.28f;
     const float y = bb.Max.y - bb.GetHeight() * 0.32f;
     drawList->AddLine(ImVec2(bb.Min.x + inset, y), ImVec2(bb.Max.x - inset, y), color, 1.5f);
 }
 
 void DrawMaximizeGlyph(ImDrawList *drawList, const ImRect &bb, ImU32 color, bool isMaximized) {
+    LogScope scope;
     const float inset = bb.GetWidth() * 0.26f;
     if (!isMaximized) {
         const ImRect r(bb.Min.x + inset, bb.Min.y + inset, bb.Max.x - inset, bb.Max.y - inset);
@@ -62,6 +68,7 @@ void DrawMaximizeGlyph(ImDrawList *drawList, const ImRect &bb, ImU32 color, bool
 } // namespace
 
 void DrawFloatingWindowChromeButtons() {
+    LogScope scope;
     ImGuiContext &g = *GImGui;
     ImGuiWindow *window = g.CurrentWindow;
     if (!window || window->Collapsed) return;

@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Utilities/Passkeys.h"
 #include "Scene/Components/KeyframeAnimator.h"
 
@@ -37,6 +38,7 @@ public:
     uint32_t GetClipCount() const noexcept { return static_cast<uint32_t>(clips_.size()); }
     const AnimationClip *GetClip(uint32_t idx) const noexcept { return idx < clips_.size() ? &clips_[idx] : nullptr; }
     const AnimationClip *FindClipByName(const std::string &clipName) const noexcept {
+        LogScope scope;
         auto it = clipNameToIndex_.find(clipName);
         if (it == clipNameToIndex_.end()) return nullptr;
         return GetClip(it->second);

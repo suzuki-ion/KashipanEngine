@@ -5,10 +5,12 @@
 namespace KashipanEngine {
 
 const WindowDescriptor &IWindowEvent::GetWindowDescriptor() const {
+    LogScope scope;
     return window_->descriptor_;
 }
 
 const WindowSize &IWindowEvent::GetWindowSize() const {
+    LogScope scope;
     return window_->size_;
 }
 

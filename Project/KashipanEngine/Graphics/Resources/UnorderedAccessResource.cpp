@@ -5,10 +5,12 @@ namespace KashipanEngine {
 
 UnorderedAccessResource::UnorderedAccessResource(UINT width, UINT height, DXGI_FORMAT format, ID3D12Resource *existingResource)
     : IGraphicsResource(ResourceViewType::UAV) {
+    LogScope scope;
     Initialize(width, height, format, existingResource);
 }
 
 bool UnorderedAccessResource::Recreate(UINT width, UINT height, DXGI_FORMAT format, ID3D12Resource *existingResource) {
+    LogScope scope;
     ResetResourceForRecreate();
     return Initialize(width, height, format, existingResource);
 }

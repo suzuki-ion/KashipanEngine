@@ -30,6 +30,7 @@ std::unordered_map<HWND, Window *> sWindowMap;
 
 // タスクバーの辺を判定
 UINT DetermineTaskbarEdge(const RECT &tb, const RECT &mon) {
+    LogScope scope;
     int monW = mon.right - mon.left;
     int monH = mon.bottom - mon.top;
     int tbW = tb.right - tb.left;
@@ -54,6 +55,7 @@ UINT DetermineTaskbarEdge(const RECT &tb, const RECT &mon) {
 
 // DPI取得（失敗時は 96 を返す）
 void FetchMonitorDpi(HMONITOR mon, UINT &dpiX, UINT &dpiY) {
+    LogScope scope;
     dpiX = dpiY = 96;
     if (!mon) return;
     UINT x = 0, y = 0;
@@ -71,6 +73,7 @@ void FetchMonitorDpi(HMONITOR mon, UINT &dpiX, UINT &dpiY) {
 
 // リフレッシュレート取得（Hz）
 float FetchMonitorRefreshRate(const MONITORINFOEXW &mi) {
+    LogScope scope;
     DEVMODEW dm{}; dm.dmSize = sizeof(dm);
     if (EnumDisplaySettingsExW(mi.szDevice, ENUM_CURRENT_SETTINGS, &dm, 0)) {
         if (dm.dmDisplayFrequency > 1) return static_cast<float>(dm.dmDisplayFrequency);
@@ -81,6 +84,7 @@ float FetchMonitorRefreshRate(const MONITORINFOEXW &mi) {
 // タスクバー候補を列挙
 struct TaskbarWindow { HWND hwnd; RECT rect; HMONITOR monitor; UINT edge; };
 std::vector<TaskbarWindow> EnumerateTaskbars() {
+    LogScope scope;
     std::vector<TaskbarWindow> result;
     // プライマリ
     if (HWND primary = FindWindowW(L"Shell_TrayWnd", nullptr)) {
@@ -192,6 +196,7 @@ bool WindowsAPI::UnregisterWindow(Passkey<Window>, HWND hwnd) {
 }
 
 std::optional<MonitorInfo> WindowsAPI::QueryMonitorInfo(HMONITOR monitor) {
+    LogScope scope;
     // 対象決定（nullptrならプライマリ）
     if (!monitor) {
         POINT pt{ 0,0 }; monitor = MonitorFromPoint(pt, MONITOR_DEFAULTTOPRIMARY);
@@ -204,6 +209,7 @@ std::optional<MonitorInfo> WindowsAPI::QueryMonitorInfo(HMONITOR monitor) {
 }
 
 std::vector<MonitorInfo> WindowsAPI::QueryAllMonitorInfos() {
+    LogScope scope;
     std::vector<MonitorInfo> infos;
     auto taskbars = EnumerateTaskbars();
 

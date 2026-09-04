@@ -121,6 +121,7 @@ std::mt19937& Rng() {
 }
 
 PlayHandle GenerateUniquePlayHandle() {
+    LogScope scope;
     std::uniform_int_distribution<uint32_t> dist(1u, 0xFFFFFFFFu);
     for (int i = 0; i < 128; ++i) {
         const PlayHandle h = static_cast<PlayHandle>(dist(Rng()));
@@ -196,6 +197,7 @@ SoundHandle RegisterEntry(SoundEntry&& entry) {
 }
 
 size_t AcquirePlayIndex() {
+    LogScope scope;
     if (!sFreePlayIndices.empty()) {
         size_t idx = sFreePlayIndices.back();
         sFreePlayIndices.pop_back();
@@ -223,6 +225,7 @@ void ReleasePlayIndex(size_t idx) {
 }
 
 void StopVoice(PlayEntry& p) {
+    LogScope scope;
     if (!p.voice) return;
     p.voice->Stop();
     p.voice->FlushSourceBuffers();
@@ -338,6 +341,7 @@ void FinalizeAudio() {
 }
 
 bool DecodeToPcm(const std::wstring& wpath, WAVEFORMATEX& outWfex, std::vector<BYTE>& outBuffer) {
+    LogScope scope;
     Microsoft::WRL::ComPtr<IMFSourceReader> reader;
     HRESULT hr = MFCreateSourceReaderFromURL(wpath.c_str(), nullptr, &reader);
     if (FAILED(hr) || !reader) return false;
@@ -403,6 +407,7 @@ bool DecodeToPcm(const std::wstring& wpath, WAVEFORMATEX& outWfex, std::vector<B
 /// @details ファイルI/O・Media Foundationによるデコードのみを行うため、スレッドプールから
 ///          並列に呼び出しても安全（各呼び出しは自分のIMFSourceReaderを持ち、outEntryも呼び出し元専有）
 bool DecodeAudioFile(const std::string& filePath, const std::string& assetsRootPath, SoundEntry& outEntry) {
+    LogScope scope;
     const std::filesystem::path p = Utf8StringToPath(filePath);
     if (!std::filesystem::exists(p)) {
         Log(Translation("engine.audio.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
@@ -448,6 +453,7 @@ uint32_t EstimateDurationMs(const WAVEFORMATEX& wfex, const std::vector<BYTE>& b
 } // namespace
 
 bool AudioManager::GetPlayPositionSeconds(PlayHandle play, double& outSeconds) {
+    LogScope scope;
     outSeconds = 0.0;
     size_t idx = static_cast<size_t>(-1);
     if (!TryGetPlayIndex(play, idx)) return false;
@@ -491,10 +497,12 @@ AudioManager::~AudioManager() {
 }
 
 void AudioManager::InitializeAudioDevice() {
+    LogScope scope;
     EnsureAudioInitialized();
 }
 
 void AudioManager::FinalizeAudioDevice() {
+    LogScope scope;
     FinalizeAudio();
 }
 
@@ -601,6 +609,7 @@ SoundHandle AudioManager::RegisterSoundFromMemory(const std::string &registerNam
 
 #if defined(USE_IMGUI)
 SoundHandle AudioManager::LoadDynamic(const std::string &filePath) {
+    LogScope scope;
     if (!sActiveInstance) return kInvalidSoundHandle;
     return sActiveInstance->Load(filePath);
 }
@@ -654,6 +663,7 @@ bool AudioManager::RenameSound(const std::string &oldAssetPath, const std::strin
 
 AudioManager::PlayHandle AudioManager::Play(SoundHandle sound, float volume, float pitch, bool loop,
     double startTimeSec, double endTimeSec) {
+    LogScope scope;
     PlayParams params{};
     params.sound = sound;
     params.volume = volume;
@@ -808,21 +818,25 @@ AudioManager::PlayHandle AudioManager::Play(const PlayParams& params) {
 }
 
 void AudioManager::RegisterSoundBeat(Passkey<SoundBeat>, SoundBeat* soundBeat) {
+    LogScope scope;
     if (!soundBeat) return;
     sRegisteredSoundBeats.insert(soundBeat);
 }
 
 void AudioManager::UnregisterSoundBeat(Passkey<SoundBeat>, SoundBeat* soundBeat) {
+    LogScope scope;
     if (!soundBeat) return;
     sRegisteredSoundBeats.erase(soundBeat);
 }
 
 void AudioManager::RegisterAudioPlayer(Passkey<AudioPlayer>, AudioPlayer* player) {
+    LogScope scope;
     if (!player) return;
     sRegisteredAudioPlayers.insert(player);
 }
 
 void AudioManager::UnregisterAudioPlayer(Passkey<AudioPlayer>, AudioPlayer* player) {
+    LogScope scope;
     if (!player) return;
     sRegisteredAudioPlayers.erase(player);
 }

@@ -4,6 +4,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Utilities/ValueType.h"
 
 namespace KashipanEngine {
@@ -41,6 +42,7 @@ struct MaterialLayout {
     std::vector<std::string> textureCubeFields;
 
     const MaterialFieldLayout *Find(const std::string &name) const {
+        LogScope scope;
         for (const auto &field : fields) {
             if (field.name == name) return &field;
         }

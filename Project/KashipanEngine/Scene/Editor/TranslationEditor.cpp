@@ -7,6 +7,7 @@
 #include <cctype>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Scene/Editor/EditorWindowChrome.h"
 #include "Utilities/Translation.h"
 
@@ -16,6 +17,7 @@ namespace {
 
 /// @brief 大文字小文字を区別せずに部分一致を判定する
 bool ContainsIgnoreCase(const std::string &haystack, const std::string &needle) {
+    LogScope scope;
     if (needle.empty()) return true;
     const auto it = std::search(
         haystack.begin(), haystack.end(), needle.begin(), needle.end(),
@@ -26,6 +28,7 @@ bool ContainsIgnoreCase(const std::string &haystack, const std::string &needle) 
 /// @brief 翻訳マップをキーの昇順に並べ替えて返す（描画順を安定させるため）
 std::vector<std::pair<std::string, std::string>> SortedEntries(
     const std::unordered_map<std::string, std::string> &translations) {
+    LogScope scope;
     std::vector<std::pair<std::string, std::string>> entries(translations.begin(), translations.end());
     std::sort(entries.begin(), entries.end(),
         [](const auto &a, const auto &b) { return a.first < b.first; });
@@ -35,6 +38,7 @@ std::vector<std::pair<std::string, std::string>> SortedEntries(
 } // namespace
 
 void TranslationEditor::ShowImGui() {
+    LogScope scope;
     if (!ImGui::Begin(TranslationLabel("editor.translationeditor.window"))) {
         ImGui::End();
         return;
@@ -56,6 +60,7 @@ void TranslationEditor::ShowImGui() {
 }
 
 void TranslationEditor::ShowLanguageSelector() {
+    LogScope scope;
     const std::vector<std::string> languages = GetLoadedLanguages();
 
     ImGui::SetNextItemWidth(200.0f);
@@ -86,6 +91,7 @@ void TranslationEditor::ShowLanguageSelector() {
 }
 
 void TranslationEditor::ShowProjectTranslations() {
+    LogScope scope;
     ImGui::SeparatorText(TranslationLabel("editor.translationeditor.project.section"));
 
     ShowAddRow();
@@ -197,6 +203,7 @@ void TranslationEditor::ShowProjectTranslations() {
 }
 
 void TranslationEditor::ShowAddRow() {
+    LogScope scope;
     ImGui::SetNextItemWidth(240.0f);
     ImGui::InputTextWithHint("##NewTranslationKey",
         TranslationC("editor.translationeditor.newkey.hint"), &newKeyBuffer_);
@@ -228,6 +235,7 @@ void TranslationEditor::ShowAddRow() {
 }
 
 void TranslationEditor::ShowGlobalTranslationReference() {
+    LogScope scope;
     // 折りたたんだ状態が既定。エンジン側のキーは数が多く、普段は畳んでおきたいため
     if (!ImGui::CollapsingHeader(TranslationLabel("editor.translationeditor.global.section"))) {
         return;

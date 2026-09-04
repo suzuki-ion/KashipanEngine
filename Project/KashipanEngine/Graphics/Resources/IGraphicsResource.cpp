@@ -205,6 +205,7 @@ void IGraphicsResource::ResetResourceForRecreate() {
 }
 
 void IGraphicsResource::SetDescriptorHandleInfo(std::unique_ptr<DescriptorHandleInfo> info) {
+    LogScope scope;
     if (resourceID_ == kInvalidResourceID) {
         return;
     }
@@ -215,6 +216,7 @@ void IGraphicsResource::SetDescriptorHandleInfo(std::unique_ptr<DescriptorHandle
 }
 
 DescriptorHandleInfo *IGraphicsResource::GetDescriptorHandleInfo() const {
+    LogScope scope;
     if (resourceID_ != kInvalidResourceID && resourceID_ < sDescriptorInfos_.size()) {
         return sDescriptorInfos_[resourceID_].get();
     }
@@ -222,11 +224,13 @@ DescriptorHandleInfo *IGraphicsResource::GetDescriptorHandleInfo() const {
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE IGraphicsResource::GetCPUDescriptorHandle() const {
+    LogScope scope;
     auto *info = GetDescriptorHandleInfo();
     return info ? info->cpuHandle : D3D12_CPU_DESCRIPTOR_HANDLE{};
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE IGraphicsResource::GetGPUDescriptorHandle() const {
+    LogScope scope;
     auto *info = GetDescriptorHandleInfo();
     return info ? info->gpuHandle : D3D12_GPU_DESCRIPTOR_HANDLE{};
 }

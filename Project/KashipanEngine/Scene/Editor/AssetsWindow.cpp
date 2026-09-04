@@ -56,6 +56,7 @@ enum class AssetIcon : unsigned int {
 };
 
 AssetIcon GetAssetIcon(const std::string &extension) {
+    LogScope scope;
     auto in = [&extension](std::initializer_list<const char *> extensions) {
         return std::find_if(extensions.begin(), extensions.end(), [&extension](const char *candidate) {
             return extension == candidate;
@@ -76,6 +77,7 @@ AssetIcon GetAssetIcon(const std::string &extension) {
 }
 
 void GetAssetIconUV(AssetIcon icon, ImVec2 &uv0, ImVec2 &uv1) {
+    LogScope scope;
     const unsigned int index = static_cast<unsigned int>(icon);
     const float column = static_cast<float>(index % static_cast<unsigned int>(kAssetIconAtlasColumns));
     const float row = static_cast<float>(index / static_cast<unsigned int>(kAssetIconAtlasColumns));
@@ -86,6 +88,7 @@ void GetAssetIconUV(AssetIcon icon, ImVec2 &uv0, ImVec2 &uv1) {
 /// @brief 論理パス（"Assets/..." 形式）を、TextureManagerなどが管理する
 ///        Assetsルートからの相対パスへ変換する（先頭の "Assets/" を取り除く）
 std::string ToAssetsRelativePath(const std::string &logicalPath) {
+    LogScope scope;
     constexpr std::string_view kAssetsPrefix = "Assets/";
     if (logicalPath.rfind(kAssetsPrefix, 0) == 0) {
         return logicalPath.substr(kAssetsPrefix.size());
@@ -94,6 +97,7 @@ std::string ToAssetsRelativePath(const std::string &logicalPath) {
 }
 
 bool IsTextureExtension(const std::string &ext) {
+    LogScope scope;
     static const std::array<const char *, 11> kExts = {
         ".png", ".jpg", ".jpeg", ".bmp", ".tga", ".dds", ".hdr", ".tif", ".tiff", ".gif", ".webp",
     };
@@ -101,6 +105,7 @@ bool IsTextureExtension(const std::string &ext) {
 }
 
 bool IsAudioExtension(const std::string &ext) {
+    LogScope scope;
     static const std::array<const char *, 7> kExts = {
         ".wav", ".mp3", ".ogg", ".flac", ".aac", ".m4a", ".wma",
     };
@@ -108,6 +113,7 @@ bool IsAudioExtension(const std::string &ext) {
 }
 
 bool IsModelExtension(const std::string &ext) {
+    LogScope scope;
     static const std::array<const char *, 10> kExts = {
         ".fbx", ".obj", ".gltf", ".glb", ".dae", ".3ds", ".blend", ".ply", ".stl", ".x",
     };
@@ -115,6 +121,7 @@ bool IsModelExtension(const std::string &ext) {
 }
 
 bool IsVideoExtension(const std::string &ext) {
+    LogScope scope;
     static const std::array<const char *, 4> kExts = {
         ".mp4", ".wmv", ".mov", ".avi",
     };
@@ -122,6 +129,7 @@ bool IsVideoExtension(const std::string &ext) {
 }
 
 bool PathExistsNoThrow(const std::filesystem::path &path) {
+    LogScope scope;
     std::error_code ec;
     return std::filesystem::exists(path, ec) && !ec;
 }
@@ -130,6 +138,7 @@ bool PathExistsNoThrow(const std::filesystem::path &path) {
 ///        実際にファイル操作を行える物理パスへ変換する
 /// @details 空文字はプロジェクトルート自身を指す
 std::filesystem::path ToPhysicalPath(const std::string &projectRelativePath) {
+    LogScope scope;
     return Utf8StringToPath(projectRelativePath.empty()
         ? ProjectPaths::ProjectRoot()
         : ProjectPaths::ToPhysical(projectRelativePath));
@@ -143,6 +152,7 @@ std::filesystem::path ToPhysicalPath(const std::string &projectRelativePath) {
 ///          launch.json（AngelScriptアタッチデバッグ設定、SceneScriptEngine::Initializeが生成）を
 ///          VSCodeが自動で読み込む状態にできる
 void OpenScriptInExternalEditor(const std::string &projectRelativePath) {
+    LogScope scope;
     const std::filesystem::path physicalPath = ToPhysicalPath(projectRelativePath);
     const std::filesystem::path projectRootPath = Utf8StringToPath(ProjectPaths::ProjectRoot());
     const std::wstring parameters =
@@ -158,6 +168,7 @@ void OpenScriptInExternalEditor(const std::string &projectRelativePath) {
 /// @details 英数字とアンダースコア以外はアンダースコアへ置換し、先頭が数字または空になった場合は
 ///          "Script" を前置する（AngelScriptの識別子規則はC系言語と同様、数字始まり不可のため）
 std::string SanitizeScriptClassName(const std::string &fileName) {
+    LogScope scope;
     std::string result;
     result.reserve(fileName.size());
     for (const char c : fileName) {
@@ -171,6 +182,7 @@ std::string SanitizeScriptClassName(const std::string &fileName) {
 
 /// @brief Start/Update/Endのみを定義したデフォルトのスクリプトテンプレート
 std::vector<std::string> BuildDefaultScriptTemplate(const std::string &className) {
+    LogScope scope;
     return {
         "class " + className + " : ScriptComponentBehavior {",
         "    void Start() {",
@@ -189,6 +201,7 @@ std::vector<std::string> BuildDefaultScriptTemplate(const std::string &className
 /// @details Trigger（IsTrigger）扱いのコライダーも同じOnCollisionEnter/Stay/Exitで通知される
 ///          （このエンジンにOnTriggerEnter等の別イベントは存在しない）
 std::vector<std::string> BuildCollisionScriptTemplate(const std::string &className) {
+    LogScope scope;
     return {
         "class " + className + " : ScriptComponentBehavior {",
         "    void Start() {",
@@ -214,6 +227,7 @@ std::vector<std::string> BuildCollisionScriptTemplate(const std::string &classNa
 
 /// @brief 選択されたテンプレート種別に応じたスクリプト本文を組み立てる
 std::vector<std::string> BuildScriptTemplate(AssetsWindow::ScriptTemplate scriptTemplate, const std::string &className) {
+    LogScope scope;
     switch (scriptTemplate) {
     case AssetsWindow::ScriptTemplate::Collision:
         return BuildCollisionScriptTemplate(className);
@@ -226,19 +240,23 @@ std::vector<std::string> BuildScriptTemplate(AssetsWindow::ScriptTemplate script
 
 AssetsWindow::AssetsWindow(Passkey<SceneEditor>, SceneEditorContext *editorContext)
     : editorContext_(editorContext) {
+    LogScope scope;
     sActiveInstance_ = this;
     RefreshFolderTree();
 }
 
 AssetsWindow::~AssetsWindow() {
+    LogScope scope;
     if (sActiveInstance_ == this) sActiveInstance_ = nullptr;
 }
 
 void AssetsWindow::HandleDroppedFiles(const std::vector<std::string> &physicalPaths) {
+    LogScope scope;
     if (sActiveInstance_) sActiveInstance_->ImportDroppedFiles(physicalPaths);
 }
 
 void AssetsWindow::ShowImGui() {
+    LogScope scope;
     if (!ImGui::Begin(TranslationLabel("editor.assets.window"))) {
         ImGui::End();
         return;
@@ -301,6 +319,7 @@ void AssetsWindow::ShowImGui() {
 }
 
 bool AssetsWindow::IsSupportedExtension(const std::string &ext) {
+    LogScope scope;
     static const std::array<const char *, 43> kSupported = {
         // テクスチャ（TextureManager対応形式）
         ".png", ".jpg", ".jpeg", ".bmp", ".tga", ".dds", ".hdr", ".tif", ".tiff", ".gif", ".webp",
@@ -328,6 +347,7 @@ bool AssetsWindow::IsSupportedExtension(const std::string &ext) {
 }
 
 std::string AssetsWindow::ToLowerExtension(const std::filesystem::path &path) {
+    LogScope scope;
     std::string ext = path.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(),
         [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
@@ -335,6 +355,7 @@ std::string AssetsWindow::ToLowerExtension(const std::filesystem::path &path) {
 }
 
 void AssetsWindow::RefreshFolderTree() {
+    LogScope scope;
     rootFolder_ = FolderNode{};
     rootFolder_.name = Translation("editor.assets.folder.root");
     rootFolder_.path = "";
@@ -343,6 +364,7 @@ void AssetsWindow::RefreshFolderTree() {
 }
 
 void AssetsWindow::BuildFolderNode(FolderNode &node) {
+    LogScope scope;
     std::error_code ec;
     const std::filesystem::path base = ToPhysicalPath(node.path);
     for (const auto &entry : std::filesystem::directory_iterator(
@@ -365,6 +387,7 @@ void AssetsWindow::BuildFolderNode(FolderNode &node) {
 }
 
 void AssetsWindow::RefreshFileList() {
+    LogScope scope;
     files_.clear();
     std::error_code ec;
     const std::filesystem::path base = ToPhysicalPath(currentFolder_);
@@ -395,6 +418,7 @@ void AssetsWindow::RefreshFileList() {
 }
 
 void AssetsWindow::NavigateToFolder(const std::string &path) {
+    LogScope scope;
     currentFolder_ = path;
     RefreshFileList();
 
@@ -413,12 +437,14 @@ void AssetsWindow::NavigateToFolder(const std::string &path) {
 }
 
 std::string AssetsWindow::GetParentFolder(const std::string &path) {
+    LogScope scope;
     const size_t pos = path.find_last_of('/');
     if (pos == std::string::npos) return "";
     return path.substr(0, pos);
 }
 
 void AssetsWindow::ShowFolderNode(FolderNode &node) {
+    LogScope scope;
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
     if (node.children.empty()) flags |= ImGuiTreeNodeFlags_Leaf;
     if (node.path == currentFolder_) flags |= ImGuiTreeNodeFlags_Selected;
@@ -444,6 +470,7 @@ void AssetsWindow::ShowFolderNode(FolderNode &node) {
 }
 
 void AssetsWindow::ShowFileGrid() {
+    LogScope scope;
     constexpr float kCellSize = 96.0f;
     constexpr float kThumbnailSize = 64.0f;
     const float availWidth = ImGui::GetContentRegionAvail().x;
@@ -557,6 +584,7 @@ void AssetsWindow::ShowFileGrid() {
 }
 
 void AssetsWindow::ShowFileContextMenu(const FileEntry &file) {
+    LogScope scope;
     if (ImGui::BeginPopupContextItem("FileContextMenu")) {
         if (!file.isFolder) {
             if (ImGui::MenuItem(TranslationLabel("editor.common.open"))) {
@@ -580,6 +608,7 @@ void AssetsWindow::ShowFileContextMenu(const FileEntry &file) {
 }
 
 void AssetsWindow::ShowGridBackgroundContextMenu() {
+    LogScope scope;
     // ImGuiPopupFlags_NoOpenOverItems を指定しないと、ファイル項目上での右クリックでも
     // この window レベルのメニューが同一フレームで開いてしまい、
     // ファイル自体の FileContextMenu を閉じてしまう（表示されないように見える）ため必須。
@@ -617,6 +646,7 @@ void AssetsWindow::ShowGridBackgroundContextMenu() {
 }
 
 void AssetsWindow::OpenFileEditor(const FileEntry &file) {
+    LogScope scope;
     if (file.isFolder) return;
     if (file.extension == ".json" || file.extension == ".prefab") {
         // .prefabの中身はただのJSONのため、JSONエディターでそのまま開ける
@@ -666,6 +696,7 @@ void AssetsWindow::OpenFileEditor(const FileEntry &file) {
 }
 
 void AssetsWindow::ShowOpenEditors() {
+    LogScope scope;
     auto prune = [](auto &container) {
         for (size_t i = 0; i < container.size();) {
             if (container[i] && container[i]->ShowImGui()) {
@@ -695,6 +726,7 @@ void AssetsWindow::ShowOpenEditors() {
 }
 
 void AssetsWindow::CloseEditorsForPath(const std::string &cwdRelativePath) {
+    LogScope scope;
     jsonEditors_.erase(std::remove_if(jsonEditors_.begin(), jsonEditors_.end(),
         [&](const auto &editor) { return editor && editor->GetFilePath() == cwdRelativePath; }), jsonEditors_.end());
 
@@ -712,6 +744,7 @@ void AssetsWindow::CloseEditorsForPath(const std::string &cwdRelativePath) {
 }
 
 void AssetsWindow::CreatePrefabFromObject(EmptyObject *obj) {
+    LogScope scope;
     if (!obj || !editorContext_) return;
 
     // このPrefab資産の固有ID。対象が既に別Prefabのインスタンスだったとしても、
@@ -751,6 +784,7 @@ void AssetsWindow::CreatePrefabFromObject(EmptyObject *obj) {
 }
 
 void AssetsWindow::ImportDroppedFiles(const std::vector<std::string> &physicalPaths) {
+    LogScope scope;
     bool anyImported = false;
     const std::string folder = currentFolder_.empty() ? "" : (currentFolder_ + "/");
 
@@ -801,6 +835,7 @@ void AssetsWindow::ImportDroppedFiles(const std::vector<std::string> &physicalPa
 }
 
 bool AssetsWindow::ShowCreateFileModal() {
+    LogScope scope;
     bool created = false;
     if (isCreateFileRequested_) {
         ImGui::OpenPopup(TranslationLabel("editor.assets.createfile.title"));
@@ -843,6 +878,7 @@ bool AssetsWindow::ShowCreateFileModal() {
 }
 
 bool AssetsWindow::ShowCreateScriptModal() {
+    LogScope scope;
     bool created = false;
     if (isCreateScriptRequested_) {
         ImGui::OpenPopup(TranslationLabel("editor.assets.createscript.title"));
@@ -879,6 +915,7 @@ bool AssetsWindow::ShowCreateScriptModal() {
 }
 
 void AssetsWindow::ShowCreateFolderModal() {
+    LogScope scope;
     if (isCreateFolderRequested_) {
         ImGui::OpenPopup(TranslationLabel("editor.assets.createfolder.title"));
         isCreateFolderRequested_ = false;
@@ -909,6 +946,7 @@ void AssetsWindow::ShowCreateFolderModal() {
 }
 
 void AssetsWindow::ShowRenameModal() {
+    LogScope scope;
     if (isRenameRequested_) {
         ImGui::OpenPopup(TranslationLabel("editor.assets.rename.title"));
         isRenameRequested_ = false;
@@ -971,6 +1009,7 @@ void AssetsWindow::ShowRenameModal() {
 }
 
 void AssetsWindow::ShowDeleteConfirmModal() {
+    LogScope scope;
     if (isDeleteRequested_) {
         ImGui::OpenPopup(TranslationLabel("editor.assets.delete.title"));
         isDeleteRequested_ = false;

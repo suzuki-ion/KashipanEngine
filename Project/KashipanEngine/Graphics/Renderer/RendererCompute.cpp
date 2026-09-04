@@ -10,6 +10,7 @@ namespace KashipanEngine {
 using namespace RendererInternal;
 
 void Renderer::ProcessComputeShaders(SceneContext *sceneContext) {
+    LogScope scope;
     if (!sceneContext) return;
     auto *sceneProcessor = sceneContext->GetComponent<SceneComputeProcessor>();
     if (!sceneProcessor) return;
@@ -81,6 +82,7 @@ void Renderer::ProcessComputeShaders(SceneContext *sceneContext) {
 }
 
 void Renderer::ProcessVideoConversions() {
+    LogScope scope;
     if (!pipelineManager_) return;
     auto pendingConversions = VideoManager::GetPendingConversions(Passkey<Renderer>{});
     if (pendingConversions.empty()) return;
@@ -135,6 +137,7 @@ void Renderer::ProcessVideoConversions() {
 }
 
 void Renderer::ProcessSkinning(SceneContext *sceneContext) {
+    LogScope scope;
     if (!sceneContext || !pipelineManager_) return;
     auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
     if (!sceneRenderer) return;
@@ -193,6 +196,7 @@ void Renderer::ProcessSkinning(SceneContext *sceneContext) {
 }
 
 void Renderer::ProcessGpuParticles(SceneContext *sceneContext) {
+    LogScope scope;
     // デバッグ用: どこで早期returnしているかを一度だけログに出す（GPUパーティクルが描画されない問題の調査用）
     static bool sLoggedEmittersEmpty = false;
     static bool sLoggedSpawnPipelineMissing = false;

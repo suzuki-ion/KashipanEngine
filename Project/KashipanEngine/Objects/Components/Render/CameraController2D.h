@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Render/Camera2D.h"
 #include "Objects/Components/Transform.h"
@@ -41,6 +42,7 @@ public:
     ~CameraController2D() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<CameraController2D>();
         ptr->followTargets_ = followTargets_;
         ptr->positionOffset_ = positionOffset_;
@@ -72,6 +74,7 @@ public:
 
     /// @brief 同一オブジェクトから Camera2D コンポーネントが取得できるか（制御可能かどうか）
     bool IsControllable() const {
+        LogScope scope;
         auto *objectContext = GetOwnerObjectContext();
         return objectContext && objectContext->GetComponent<Camera2D>() != nullptr;
     }
@@ -83,11 +86,13 @@ public:
     std::vector<FollowTarget> &GetFollowTargets() noexcept { return followTargets_; }
     const std::vector<FollowTarget> &GetFollowTargets() const noexcept { return followTargets_; }
     void AddFollowTarget(const UUID128 &objectID) {
+        LogScope scope;
         FollowTarget target;
         target.objectID = objectID;
         followTargets_.push_back(target);
     }
     void RemoveFollowTarget(size_t index) {
+        LogScope scope;
         if (index < followTargets_.size()) followTargets_.erase(followTargets_.begin() + index);
     }
 
@@ -118,6 +123,7 @@ public:
 
 protected:
     void Update() override {
+        LogScope scope;
         auto *objectContext = GetOwnerObjectContext();
         if (!objectContext) return;
         auto *camera = objectContext->GetComponent<Camera2D>();
@@ -193,6 +199,7 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         ImGui::TextColored(IsControllable() ? ImVec4(0.5f, 1.0f, 0.5f, 1.0f) : ImVec4(1.0f, 0.5f, 0.5f, 1.0f),
             IsControllable() ? "Controllable (Camera2D found)" : "Not controllable (Camera2D component required)");
         ImGui::Separator();
@@ -243,6 +250,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = JSON::object();
 
         JSON targetsJson = JSON::array();
@@ -270,6 +278,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         followTargets_.clear();
         if (json.contains("followTargets")) {
             for (const auto &t : json["followTargets"]) {
@@ -302,6 +311,7 @@ protected:
 private:
     /// @brief Transformの親子関係をたどり、ワールド回転（クォータニオン）を合成する
     static Quaternion GetWorldRotationQuaternion(Transform *transform) {
+        LogScope scope;
         if (!transform) return Quaternion::Identity();
         const Quaternion local = transform->GetRotateQuaternion();
         EmptyObject *parentObject = transform->GetParentObject();
@@ -314,6 +324,7 @@ private:
 
     /// @brief 角度（ラジアン）を最短経路で補間する
     static float LerpAngle(float current, float target, float t) {
+        LogScope scope;
         constexpr float kPi = GetPI<float>();
         float delta = target - current;
         while (delta > kPi) delta -= 2.0f * kPi;

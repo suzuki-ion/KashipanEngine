@@ -1,6 +1,7 @@
 #pragma once
 #include <unordered_set>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Assets/MaterialManager.h"
 #include "Assets/ModelManager.h"
@@ -68,6 +69,7 @@ public:
     ~SpriteRenderer() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<SpriteRenderer>();
         ptr->targetObjectID_ = targetObjectID_;
         ptr->pipelineName_ = pipelineName_;
@@ -95,11 +97,13 @@ public:
 
     /// @brief 描画先オブジェクトを設定（描画先コンポーネントが付与されたオブジェクト）
     void SetTargetObject(const EmptyObject *targetObject) {
+        LogScope scope;
         targetObjectID_ = targetObject ? targetObject->GetObjectID() : UUID128();
         MarkDrawListDirty();
     }
     /// @brief 描画先オブジェクトをUUIDから設定
     void SetTargetObject(const UUID128 &targetObjectID) {
+        LogScope scope;
         targetObjectID_ = targetObjectID;
         MarkDrawListDirty();
     }
@@ -107,6 +111,7 @@ public:
     const UUID128 &GetTargetObjectID() const noexcept { return targetObjectID_; }
     /// @brief 描画先オブジェクトを取得（存在しない場合は nullptr）
     EmptyObject *GetTargetObject() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext || !targetObjectID_.IsValid()) return nullptr;
         return sceneContext->GetSceneObject(targetObjectID_);
@@ -114,6 +119,7 @@ public:
 
     /// @brief 指定の描画先がこのコンポーネントの描画対象に含まれるか（除外設定されていないか）
     bool IsRenderTargetIncluded(const IRenderTarget *target) const {
+        LogScope scope;
         if (!target) return false;
         return !excludedRenderTargetNames_.contains(target->GetRenderTargetName());
     }
@@ -123,23 +129,27 @@ public:
     //==================================================
 
     void SetPipelineName(const std::string &pipelineName) {
+        LogScope scope;
         pipelineName_ = pipelineName;
         MarkDrawListDirty();
     }
     const std::string &GetPipelineName() const noexcept { return pipelineName_; }
 
     void SetMaterialName(const std::string &materialName) {
+        LogScope scope;
         materialName_ = materialName;
         materialHandle_ = MaterialManager::kInvalidHandle;
         MarkDrawListDirty();
     }
     void SetMaterialHandle(MaterialManager::MaterialHandle materialHandle) {
+        LogScope scope;
         materialHandle_ = materialHandle;
         MarkDrawListDirty();
     }
     const std::string &GetMaterialName() const noexcept { return materialName_; }
     /// @brief マテリアルハンドルを取得（未解決の場合はマテリアル名から解決を試みる）
     MaterialManager::MaterialHandle GetMaterialHandle() const noexcept {
+        LogScope scope;
         if (materialHandle_ == MaterialManager::kInvalidHandle && !materialName_.empty()) {
             materialHandle_ = MaterialManager::GetMaterialHandleFromName(materialName_);
         }
@@ -200,12 +210,12 @@ public:
 
     /// @brief 描画順を制御する優先度を設定する（既定0）。値が小さいほど先（奥）、大きいほど後（手前）に
     ///        描画される。パイプラインの描画優先度より後、メッシュ/マテリアルによる並びより前に評価される
-    void SetRenderPriority(std::int32_t priority) noexcept { renderPriority_ = priority; MarkDrawListDirty(); }
+    void SetRenderPriority(std::int32_t priority) noexcept { LogScope scope; renderPriority_ = priority; MarkDrawListDirty(); }
     std::int32_t GetRenderPriority() const noexcept { return renderPriority_; }
     /// @brief このレンダラーを他のオブジェクトとのインスタンシング（1回のドローコールへのバッチ結合）
     ///        対象にするか設定する（既定true）。falseにすると、同じメッシュ/マテリアル/パイプラインを
     ///        共有する他のオブジェクトがあっても常に単独のドローコールで描画される
-    void SetAllowInstancing(bool allow) noexcept { allowInstancing_ = allow; MarkDrawListDirty(); }
+    void SetAllowInstancing(bool allow) noexcept { LogScope scope; allowInstancing_ = allow; MarkDrawListDirty(); }
     bool GetAllowInstancing() const noexcept { return allowInstancing_; }
 
     /// @brief ワールド座標(X/Y)を整数ピクセル単位に丸めてから描画に使うかどうかを設定する（既定false）
@@ -213,7 +223,7 @@ public:
     ///          サブピクセル位置を取り得る場合、カメラ側のみピクセルスナップしていてもこのオブジェクトの
     ///          Transformがサブピクセル値のままだと、カメラに対して相対的にガタつく（pixel swimming）。
     ///          有効にすると、このオブジェクトのワールドX/Yも整数ピクセルへ丸めてから描画される
-    void SetPixelSnapping(bool enable) noexcept { pixelSnapping_ = enable; MarkDrawListDirty(); }
+    void SetPixelSnapping(bool enable) noexcept { LogScope scope; pixelSnapping_ = enable; MarkDrawListDirty(); }
     bool GetPixelSnapping() const noexcept { return pixelSnapping_; }
 
     //==================================================
@@ -222,6 +232,7 @@ public:
 
     /// @brief 描画に使用するメッシュハンドルを取得（MeshFilter コンポーネントから）
     ModelManager::ModelHandle GetMeshHandle() const {
+        LogScope scope;
         auto *objectContext = GetOwnerObjectContext();
         if (!objectContext) return ModelManager::kInvalidHandle;
         auto *meshFilter = objectContext->GetComponent<MeshFilter>();
@@ -234,6 +245,7 @@ public:
     ///          原点となるように平行移動し、続けてアンカー点がTransformのワールド座標に一致するように
     ///          再度平行移動で補正する（アンカーとピボットが同じ場合は何も変化しない）。
     Matrix4x4 GetWorldMatrix() const {
+        LogScope scope;
         auto *objectContext = GetOwnerObjectContext();
         auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
         if (!transform) return Matrix4x4::Identity();
@@ -264,6 +276,7 @@ public:
 
 protected:
     void Initialize() override {
+        LogScope scope;
         auto *sceneRenderer = GetOrAddSceneRenderer();
         if (sceneRenderer) {
             sceneRenderer->RegisterSpriteRenderer(this);
@@ -271,6 +284,7 @@ protected:
     }
 
     void Finalize() override {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
         if (sceneRenderer) {
@@ -280,6 +294,7 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         // 描画先はシーン上のオブジェクトから選択（ヒエラルキーからのD&Dも受け付ける）
         if (TargetObjectSelector::ShowSelector(TranslationLabel("component.common.target"), GetOwnerSceneContext(), targetObjectID_)) {
             MarkDrawListDirty();
@@ -394,6 +409,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = JSON::object();
         json["targetObjectID"] = ToJSON(targetObjectID_);
         json["pipelineName"] = pipelineName_;
@@ -417,6 +433,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         if (json.contains("targetObjectID")) {
             targetObjectID_ = FromJSON<UUID128>(json["targetObjectID"]);
         } else {
@@ -451,12 +468,14 @@ private:
     ///        変更した際に呼ぶ（SceneRendererが未登録の場合は何もしない。登録済みなら次回のBuildSortedDrawList
     ///        でキャッシュが再構築される）
     void MarkDrawListDirty() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
         if (sceneRenderer) sceneRenderer->MarkDrawListDirty();
     }
 
     SceneRenderer *GetOrAddSceneRenderer() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext) return nullptr;
         auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();

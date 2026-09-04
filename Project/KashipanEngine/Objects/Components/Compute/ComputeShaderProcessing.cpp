@@ -1,5 +1,7 @@
 #include "ComputeShaderProcessing.h"
 
+#include "Debug/Logger.h"
+
 #if defined(USE_IMGUI)
 #include <algorithm>
 #include <imgui.h>
@@ -13,6 +15,7 @@ namespace KashipanEngine {
 
 #if defined(USE_IMGUI)
 void ComputeShaderProcessing::ShowImGui() {
+    LogScope scope;
     // 使用するComputeパイプラインは読み込み済みのものから選択する
     ImGuiCustom::SelectString(TranslationLabel("component.computeshaderprocessing.pipeline"), pipelineName_, PipelineManager::GetLoadedComputePipelineNames());
 
@@ -110,6 +113,7 @@ void ComputeShaderProcessing::ShowImGui() {
 #endif
 
 JSON ComputeShaderProcessing::SaveToJson() const {
+    LogScope scope;
     JSON json = JSON::object();
     json["pipelineName"] = pipelineName_;
     json["groupCountX"] = groupCountX_;
@@ -140,6 +144,7 @@ JSON ComputeShaderProcessing::SaveToJson() const {
 }
 
 bool ComputeShaderProcessing::LoadFromJson(const JSON &json) {
+    LogScope scope;
     pipelineName_ = json.value("pipelineName", std::string{});
     groupCountX_ = json.value("groupCountX", 1u);
     groupCountY_ = json.value("groupCountY", 1u);

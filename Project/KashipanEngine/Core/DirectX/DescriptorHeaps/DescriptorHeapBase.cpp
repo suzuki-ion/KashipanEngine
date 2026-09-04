@@ -5,6 +5,7 @@
 namespace KashipanEngine {
 
 DescriptorHandleInfo::~DescriptorHandleInfo() {
+    LogScope scope;
     owner_->FreeDescriptorHandle({}, index);
 }
 
@@ -43,14 +44,17 @@ std::unique_ptr<DescriptorHandleInfo> DescriptorHeapBase::AllocateFrom(std::vect
 }
 
 std::unique_ptr<DescriptorHandleInfo> DescriptorHeapBase::AllocateDescriptorHandle() {
+    LogScope scope;
     return AllocateFrom(freeIndices_);
 }
 
 std::unique_ptr<DescriptorHandleInfo> DescriptorHeapBase::AllocateReservedDescriptorHandle() {
+    LogScope scope;
     return AllocateFrom(freeReservedIndices_);
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeapBase::GetReservedRangeBaseGpuHandle() const noexcept {
+    LogScope scope;
     D3D12_GPU_DESCRIPTOR_HANDLE handle{};
     if (reservedCount_ == 0 || !isShaderVisible_) return handle;
     // 予約レンジは常にヒープ先頭（インデックス0）から確保されるため、ヒープ先頭ハンドルがそのままベースになる

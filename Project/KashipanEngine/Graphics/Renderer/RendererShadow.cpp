@@ -11,6 +11,7 @@ using namespace RendererInternal;
 ///        ブレンドで位相だけ異なる複数パスを描画する際、バッファを使い回すとCPU側の書き込みが
 ///        GPU実行前に競合してしまうため、パスごとに別バッファへ分離する
 StructuredBufferResource *Renderer::BuildShadowIdSeedBuffer(const PreparedShadowBatch &batch, float phaseOffset, int passIndex) {
+    LogScope scope;
     if (batch.idSeedKeyBase.empty() || batch.baseIdSeeds.empty()) return nullptr;
     std::string key = batch.idSeedKeyBase;
     if (passIndex >= 0) {
@@ -27,6 +28,7 @@ StructuredBufferResource *Renderer::BuildShadowIdSeedBuffer(const PreparedShadow
 
 void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *sceneRenderer,
     const std::vector<IRenderTarget *> &targets) {
+    LogScope scope;
     (void)sceneContext;
     shadowJobs_.clear();
     targetShadowEntries_.clear();
@@ -790,6 +792,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
 
 void Renderer::RenderShadowMapsPhaseInto(ScreenBuffer *screenBuffer, PipelineBinder &pipelineBinder,
     float phaseOffset, int passIndex) {
+    LogScope scope;
     if (!screenBuffer || !shadowMapArray_ || shadowJobs_.empty() || shadowResolutionForRedraw_ == 0) return;
     auto *commandList = screenBuffer->GetCommandList();
     if (!commandList || !pipelineManager_) return;

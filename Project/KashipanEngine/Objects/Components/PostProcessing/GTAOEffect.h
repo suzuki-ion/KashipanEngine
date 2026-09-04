@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 
+#include "Debug/Logger.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 #include "Graphics/Pipeline/System/PipelineBinder.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
@@ -50,12 +51,14 @@ public:
     ~GTAOEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<GTAOEffect>();
         ptr->params_ = params_;
         return ptr;
     }
 
     void SetParams(const Params &params) {
+        LogScope scope;
         params_ = params;
         SanitizeParams();
     }
@@ -63,6 +66,7 @@ public:
 
 protected:
     void Finalize() override {
+        LogScope scope;
         IPostProcessComponent::Finalize();
         aoRaw_ = {};
         aoBlurTemp_ = {};
@@ -75,6 +79,7 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         IPostProcessComponent::ShowImGui();
         ImGui::DragFloat(TranslationLabel("component.gtaoeffect.radius"), &params_.radius, 0.01f, 0.01f, 20.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
@@ -129,6 +134,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = IPostProcessComponent::SaveToJson();
         json["radius"] = params_.radius;
         json["intensity"] = params_.intensity;
@@ -143,6 +149,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         IPostProcessComponent::LoadFromJson(json);
         params_.radius = json.value("radius", 0.5f);
         params_.intensity = json.value("intensity", 1.0f);
@@ -160,6 +167,7 @@ protected:
     std::vector<PassInfo> BuildPasses() override { return {}; }
 
     bool RenderCustom(CustomRenderContext &context) override {
+        LogScope scope;
         auto *screenBuffer = context.screenBuffer;
         auto *commandList = context.commandList;
         if (!screenBuffer || !commandList || !context.pipelineManager || !context.pipelineBinder || !context.getShaderBinder) return false;
@@ -327,6 +335,7 @@ private:
     };
 
     void SanitizeParams() {
+        LogScope scope;
         params_.radius = std::max(params_.radius, 0.01f);
         params_.intensity = std::max(params_.intensity, 0.0f);
         params_.power = std::max(params_.power, 0.1f);
@@ -338,6 +347,7 @@ private:
     }
 
     bool EnsureIntermediateTargets(ScreenBuffer *owner) {
+        LogScope scope;
         const std::uint32_t width = (owner->GetWidth() + 1u) / 2u;
         const std::uint32_t height = (owner->GetHeight() + 1u) / 2u;
         if (width == 0 || height == 0) return false;

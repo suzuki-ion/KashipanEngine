@@ -6,6 +6,7 @@ using namespace RendererInternal;
 
 void Renderer::ProcessLightCulling(SceneContext *sceneContext, SceneRenderer *sceneRenderer,
     std::span<const SceneRenderer::DrawEntry> drawList) {
+    LogScope scope;
     if (!sceneContext || !sceneRenderer) return;
     if (!pipelineManager_->HasPipeline("LightCulling") || pipelineManager_->GetPipeline("LightCulling").Type() != PipelineType::Compute) return;
 
@@ -165,6 +166,7 @@ void Renderer::BindCameraAndLights(ID3D12GraphicsCommandList *commandList,
     SceneRenderer *sceneRenderer,
     PipelineBinder &pipelineBinder,
     CameraLightsBindCache &lightsCache) {
+    LogScope scope;
     // 直前のバインドと同じパイプラインのままで、かつその間にパイプラインの実切り替え
     // （ルートシグネチャの変更）が一度も起きていなければ、ルート引数（カメラ・ライト）は
     // まだ有効なはずなので再バインドをスキップする（同一(target, pipeline)のバッチが
@@ -250,6 +252,7 @@ void Renderer::BindLightBuffersAndShadowMap(IRenderTarget *target,
     const std::string &pipelineName,
     SceneRenderer *sceneRenderer,
     ShaderVariableBinder &shaderBinder) {
+    LogScope scope;
     //--------- この描画先の「影を生成するライト」割り当て（RenderShadowMapsで構築済み） ---------//
     const std::vector<TargetShadowEntry> *shadowEntries = nullptr;
     if (auto it = targetShadowEntries_.find(target); it != targetShadowEntries_.end()) {

@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <algorithm>
+#include "Debug/Logger.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 #include "Utilities/Translation.h"
 
@@ -22,6 +23,7 @@ public:
     ~ChromaticAberrationEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<ChromaticAberrationEffect>();
         ptr->params_ = params_;
         return ptr;
@@ -33,6 +35,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         IPostProcessComponent::ShowImGui();
         ImGui::DragFloat(TranslationLabel("component.chromaticaberrationeffect.strength"), &params_.strength, 0.0001f, 0.0f, 0.05f, "%.5f");
         ImGui::DragFloat2(TranslationLabel("component.chromaticaberrationeffect.direction"), &params_.directionX, 0.01f, -1.0f, 1.0f);
@@ -40,6 +43,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = IPostProcessComponent::SaveToJson();
         json["direction"] = { params_.directionX, params_.directionY };
         json["strength"] = params_.strength;
@@ -47,6 +51,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         IPostProcessComponent::LoadFromJson(json);
         if (json.contains("direction") && json["direction"].is_array() && json["direction"].size() >= 2) {
             params_.directionX = json["direction"][0].get<float>();
@@ -57,6 +62,7 @@ protected:
     }
 
     std::vector<PassInfo> BuildPasses() override {
+        LogScope scope;
         cbData_.direction[0] = params_.directionX;
         cbData_.direction[1] = params_.directionY;
         cbData_.strength = params_.strength;

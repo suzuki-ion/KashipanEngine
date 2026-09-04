@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <algorithm>
+#include "Debug/Logger.h"
 #include "Math/Vector4.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 #include "Utilities/Translation.h"
@@ -28,6 +29,7 @@ public:
     ~VignetteEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<VignetteEffect>();
         ptr->params_ = params_;
         return ptr;
@@ -39,6 +41,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         IPostProcessComponent::ShowImGui();
         ImGui::DragFloat2(TranslationLabel("component.vignetteeffect.center"), params_.center, 0.001f, -2.0f, 2.0f, "%.3f");
         ImGui::ColorEdit4(TranslationLabel("component.vignetteeffect.color"), &params_.color.x);
@@ -49,6 +52,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = IPostProcessComponent::SaveToJson();
         json["center"] = { params_.center[0], params_.center[1] };
         json["color"] = ToJSON(params_.color);
@@ -59,6 +63,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         IPostProcessComponent::LoadFromJson(json);
         if (json.contains("center") && json["center"].is_array() && json["center"].size() >= 2) {
             params_.center[0] = json["center"][0].get<float>();
@@ -72,6 +77,7 @@ protected:
     }
 
     std::vector<PassInfo> BuildPasses() override {
+        LogScope scope;
         cbData_.center[0] = params_.center[0];
         cbData_.center[1] = params_.center[1];
         cbData_.color = params_.color;

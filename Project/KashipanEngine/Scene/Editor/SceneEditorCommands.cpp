@@ -3,6 +3,7 @@
 #include <imgui.h>
 
 #include "ComponentSerialize/ComponentRegistry.h"
+#include "Debug/Logger.h"
 #include "Objects/Components/Transform.h"
 #include "Utilities/Translation.h"
 
@@ -13,14 +14,17 @@ namespace KashipanEngine {
 //==================================================
 
 bool CreateObjectCommand::Execute(SceneEditorContext *context) {
+    LogScope scope;
     return context->CreateEmptyObject(name_, objectID_, index_) != nullptr;
 }
 bool CreateObjectCommand::Undo(SceneEditorContext *context) {
+    LogScope scope;
     auto *obj = context->GetSceneObject(objectID_);
     return obj && context->DeleteObject(obj);
 }
 
 bool CreateSiblingObjectCommand::Execute(SceneEditorContext *context) {
+    LogScope scope;
     auto *obj = context->CreateEmptyObject(name_, objectID_, index_);
     if (!obj) return false;
     // 参照オブジェクトと同じ親を設定する（参照オブジェクトがルートの場合は親無しのまま）
@@ -34,11 +38,13 @@ bool CreateSiblingObjectCommand::Execute(SceneEditorContext *context) {
     return true;
 }
 bool CreateSiblingObjectCommand::Undo(SceneEditorContext *context) {
+    LogScope scope;
     auto *obj = context->GetSceneObject(objectID_);
     return obj && context->DeleteObject(obj);
 }
 
 bool CreateChildObjectCommand::Execute(SceneEditorContext *context) {
+    LogScope scope;
     // 末尾（配列の最後）に作成すると、既存の子はそれより前に作られているため
     // 兄弟内で最後の子として並ぶ
     auto *obj = context->CreateEmptyObject(name_, objectID_, MAXSIZE_T);
@@ -51,11 +57,13 @@ bool CreateChildObjectCommand::Execute(SceneEditorContext *context) {
     return true;
 }
 bool CreateChildObjectCommand::Undo(SceneEditorContext *context) {
+    LogScope scope;
     auto *obj = context->GetSceneObject(objectID_);
     return obj && context->DeleteObject(obj);
 }
 
 bool PasteObjectCommand::Execute(SceneEditorContext *context) {
+    LogScope scope;
     if (nodes_.empty()) return false;
     EmptyObject *attachParent = attachParentID_.IsValid() ? context->GetSceneObject(attachParentID_) : nullptr;
     EmptyObject *rootObj = nullptr;
@@ -76,6 +84,7 @@ bool PasteObjectCommand::Execute(SceneEditorContext *context) {
     return rootObj != nullptr;
 }
 bool PasteObjectCommand::Undo(SceneEditorContext *context) {
+    LogScope scope;
     // 子孫から先に削除する（nodes_はルート→子孫の順で積まれているため逆順に辿る）
     bool allSucceeded = true;
     for (auto it = nodes_.rbegin(); it != nodes_.rend(); ++it) {
@@ -91,6 +100,7 @@ namespace {
 ///        （PasteObjectCommandのクリップボード構築と同じ手法。DeleteObjectCommandの
 ///        Undo用に、削除で失われる子孫も含めて復元できるようにするため使用する）
 void CollectSubtreeSnapshot(SceneEditorContext *context, EmptyObject *obj, int parentIndex, std::vector<PasteObjectCommand::Node> &out) {
+    LogScope scope;
     if (!obj || !context) return;
     const int myIndex = static_cast<int>(out.size());
     out.push_back({ context->SaveObjectToJson(obj), parentIndex });
@@ -105,6 +115,7 @@ void CollectSubtreeSnapshot(SceneEditorContext *context, EmptyObject *obj, int p
 } // namespace
 
 bool DeleteObjectCommand::Execute(SceneEditorContext *context) {
+    LogScope scope;
     auto *obj = context->GetSceneObject(objectID_);
     if (!obj) return false;
     snapshot_.clear();
@@ -114,6 +125,7 @@ bool DeleteObjectCommand::Execute(SceneEditorContext *context) {
     return context->DeleteObject(obj);
 }
 bool DeleteObjectCommand::Undo(SceneEditorContext *context) {
+    LogScope scope;
     if (snapshot_.empty()) return false;
     // pre-order（親→子の順）でそのまま復元すれば、各ノードのTransform "parent" が
     // 元のobjectIDを参照しているため、親が先に生成済みであれば自動的に親子関係も復元される
@@ -128,6 +140,7 @@ bool DeleteObjectCommand::Undo(SceneEditorContext *context) {
 }
 
 bool MoveObjectCommand::Execute(SceneEditorContext *context) {
+    LogScope scope;
     auto *obj = context->GetSceneObject(objectID_);
     if (!obj) return false;
     if (oldIndex_ == MAXSIZE_T) {
@@ -136,12 +149,14 @@ bool MoveObjectCommand::Execute(SceneEditorContext *context) {
     return context->MoveObject(obj, newIndex_);
 }
 bool MoveObjectCommand::Undo(SceneEditorContext *context) {
+    LogScope scope;
     auto *obj = context->GetSceneObject(objectID_);
     if (!obj) return false;
     return context->MoveObject(obj, oldIndex_);
 }
 
 bool ObjectPropertyCommand::Execute(SceneEditorContext *context) {
+    LogScope scope;
     auto *obj = context->GetSceneObject(objectID_);
     if (!obj) return false;
     obj->SetName(newName_);
@@ -149,6 +164,7 @@ bool ObjectPropertyCommand::Execute(SceneEditorContext *context) {
     return true;
 }
 bool ObjectPropertyCommand::Undo(SceneEditorContext *context) {
+    LogScope scope;
     auto *obj = context->GetSceneObject(objectID_);
     if (!obj) return false;
     obj->SetName(oldName_);
@@ -157,6 +173,7 @@ bool ObjectPropertyCommand::Undo(SceneEditorContext *context) {
 }
 
 bool ObjectStateCommand::Apply(SceneEditorContext *context, const UUID128 &objectID, const JSON &state) {
+    LogScope scope;
     auto *obj = context ? context->GetSceneObject(objectID) : nullptr;
     if (!obj) return false;
     obj->SetName(state.value("name", obj->GetName()));
@@ -168,10 +185,12 @@ bool ObjectStateCommand::Apply(SceneEditorContext *context, const UUID128 &objec
 }
 
 bool ObjectStateCommand::Execute(SceneEditorContext *context) {
+    LogScope scope;
     return Apply(context, objectID_, after_);
 }
 
 bool ObjectStateCommand::Undo(SceneEditorContext *context) {
+    LogScope scope;
     return Apply(context, objectID_, before_);
 }
 
@@ -180,6 +199,7 @@ bool ObjectStateCommand::Undo(SceneEditorContext *context) {
 //==================================================
 
 bool AddComponentCommand::Execute(SceneEditorContext *context) {
+    LogScope scope;
     auto *obj = context->GetSceneObject(objectID_);
     if (!obj) return false;
     auto newComponent = CreateObjectComponentByType(componentType_);
@@ -194,6 +214,7 @@ bool AddComponentCommand::Execute(SceneEditorContext *context) {
     return true;
 }
 bool AddComponentCommand::Undo(SceneEditorContext *context) {
+    LogScope scope;
     auto *obj = context->GetSceneObject(objectID_);
     IObjectComponent *component = context->ResolveComponent(componentRef_);
     if (!obj || !component) return false;
@@ -204,6 +225,7 @@ bool AddComponentCommand::Undo(SceneEditorContext *context) {
 }
 
 bool RemoveComponentCommand::Execute(SceneEditorContext *context) {
+    LogScope scope;
     auto *obj = context->GetSceneObject(objectID_);
     IObjectComponent *component = context->ResolveComponent(componentRef_);
     if (!obj || !component) return false;
@@ -213,6 +235,7 @@ bool RemoveComponentCommand::Execute(SceneEditorContext *context) {
     return removed;
 }
 bool RemoveComponentCommand::Undo(SceneEditorContext *context) {
+    LogScope scope;
     auto *obj = context->GetSceneObject(objectID_);
     if (!obj) return false;
     IObjectComponent *component = obj->AddComponentFromJson(snapshot_);
@@ -221,12 +244,14 @@ bool RemoveComponentCommand::Undo(SceneEditorContext *context) {
 }
 
 bool ComponentEditCommand::Execute(SceneEditorContext *context) {
+    LogScope scope;
     auto *obj = context->GetSceneObject(objectID_);
     IObjectComponent *component = context->ResolveComponent(componentRef_);
     if (!obj || !component) return false;
     return obj->LoadComponentFromJson(component, after_);
 }
 bool ComponentEditCommand::Undo(SceneEditorContext *context) {
+    LogScope scope;
     auto *obj = context->GetSceneObject(objectID_);
     IObjectComponent *component = context->ResolveComponent(componentRef_);
     if (!obj || !component) return false;
@@ -238,6 +263,7 @@ bool ComponentEditCommand::Undo(SceneEditorContext *context) {
 //==================================================
 
 bool CompositeCommand::Execute(SceneEditorContext *context) {
+    LogScope scope;
     bool allSucceeded = true;
     for (auto &command : commands_) {
         if (!command->Execute(context)) allSucceeded = false;
@@ -245,6 +271,7 @@ bool CompositeCommand::Execute(SceneEditorContext *context) {
     return allSucceeded;
 }
 bool CompositeCommand::Undo(SceneEditorContext *context) {
+    LogScope scope;
     bool allSucceeded = true;
     for (auto it = commands_.rbegin(); it != commands_.rend(); ++it) {
         if (!(*it)->Undo(context)) allSucceeded = false;
@@ -257,6 +284,7 @@ bool CompositeCommand::Undo(SceneEditorContext *context) {
 //==================================================
 
 bool SceneEditorCommands::Execute(std::unique_ptr<IEditorCommand> command) {
+    LogScope scope;
     if (!command || !context_) return false;
     if (!command->Execute(context_)) return false;
     PushToUndoStack(std::move(command));
@@ -264,11 +292,13 @@ bool SceneEditorCommands::Execute(std::unique_ptr<IEditorCommand> command) {
 }
 
 void SceneEditorCommands::PushExecuted(std::unique_ptr<IEditorCommand> command) {
+    LogScope scope;
     if (!command) return;
     PushToUndoStack(std::move(command));
 }
 
 bool SceneEditorCommands::Undo() {
+    LogScope scope;
     auto &undoStack = GetActiveUndoStack();
     if (undoStack.empty() || !context_) return false;
     auto command = std::move(undoStack.back());
@@ -279,6 +309,7 @@ bool SceneEditorCommands::Undo() {
 }
 
 bool SceneEditorCommands::Redo() {
+    LogScope scope;
     auto &redoStack = GetActiveRedoStack();
     if (redoStack.empty() || !context_) return false;
     auto command = std::move(redoStack.back());
@@ -289,6 +320,7 @@ bool SceneEditorCommands::Redo() {
 }
 
 void SceneEditorCommands::ShowHistoryImGui() {
+    LogScope scope;
     const auto &undoStack = GetActiveUndoStack();
     if (isPlaySession_) {
         ImGui::TextDisabled("%s", TranslationC("editor.history.playing"));
@@ -300,6 +332,7 @@ void SceneEditorCommands::ShowHistoryImGui() {
 }
 
 void SceneEditorCommands::PushToUndoStack(std::unique_ptr<IEditorCommand> command) {
+    LogScope scope;
     auto &undoStack = GetActiveUndoStack();
     undoStack.push_back(std::move(command));
     if (undoStack.size() > kMaxHistory) {

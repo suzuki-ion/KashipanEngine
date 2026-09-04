@@ -207,6 +207,7 @@ public:
     template<class TEvent, class... Args>
     requires (IsDefaultEventV<TEvent>)
     void RegisterWindowEvent(Args&&... args) {
+        LogScope scope;
         // 一度だけ仮生成してメッセージ値を取得
         TEvent temp(std::forward<Args>(args)...);
         const UINT msg = temp.kTargetMessage_;
@@ -221,6 +222,7 @@ public:
     template<class TEvent>
     requires (IsDefaultEventV<TEvent>)
     void RegisterWindowEvent(std::unique_ptr<TEvent> handler) {
+        LogScope scope;
         if (!handler) return;
         const UINT msg = handler->kTargetMessage_;
         auto &slot = eventHandlers_[msg];
@@ -231,6 +233,7 @@ public:
     /// @brief ウィンドウ拡張イベントを登録する（unique_ptr保持）
     template<class TEvent> requires (IsUserEventV<TEvent>)
     void RegisterWindowEvent(std::unique_ptr<TEvent> handler) {
+        LogScope scope;
         if (!handler) return;
         handler->SetWindow(this);
         const UINT msg = handler->kTargetMessage_;
@@ -243,6 +246,7 @@ public:
     /// @brief ウィンドウ拡張イベントを登録する（値指定でも内部でunique_ptr化）
     template<class TEvent, class... Args> requires (IsUserEventV<TEvent>)
     void RegisterWindowEvent(Args&&... args) {
+        LogScope scope;
         auto ptr = std::make_unique<TEvent>(std::forward<Args>(args)...);
         ptr->SetWindow(this);
         const UINT msg = ptr->kTargetMessage_;
@@ -313,6 +317,7 @@ public:
     ///          （ドラッグ移動・リサイズ等）が壊れる点に注意すること
     /// @return 設定できた場合はtrue（横取り不可のメッセージはfalse）
     bool SetMessageIntercepted(UINT msg, bool enabled) {
+        LogScope scope;
         if (!IsInterceptableMessage(msg)) return false;
         if (enabled) interceptedMessages_.insert(msg);
         else interceptedMessages_.erase(msg);

@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <algorithm>
+#include "Debug/Logger.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 #include "Utilities/Translation.h"
 
@@ -25,6 +26,7 @@ public:
     ~OutlineEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<OutlineEffect>();
         ptr->params_ = params_;
         return ptr;
@@ -36,6 +38,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         IPostProcessComponent::ShowImGui();
         ImGui::DragFloat(TranslationLabel("component.outlineeffect.threshold"), &params_.threshold, 0.001f, 0.0f, 10.0f, "%.4f");
         ImGui::DragFloat(TranslationLabel("component.outlineeffect.thickness"), &params_.thickness, 0.1f, 0.0f, 16.0f, "%.1f");
@@ -48,6 +51,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = IPostProcessComponent::SaveToJson();
         json["threshold"] = params_.threshold;
         json["thickness"] = params_.thickness;
@@ -56,6 +60,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         IPostProcessComponent::LoadFromJson(json);
         params_.threshold = json.value("threshold", 0.1f);
         params_.thickness = json.value("thickness", 1.0f);
@@ -67,6 +72,7 @@ protected:
     }
 
     std::vector<PassInfo> BuildPasses() override {
+        LogScope scope;
         auto *owner = GetOwnerScreenBuffer();
         cbData_.texelSize[0] = (owner && owner->GetWidth() > 0) ? (1.0f / static_cast<float>(owner->GetWidth())) : 0.0f;
         cbData_.texelSize[1] = (owner && owner->GetHeight() > 0) ? (1.0f / static_cast<float>(owner->GetHeight())) : 0.0f;

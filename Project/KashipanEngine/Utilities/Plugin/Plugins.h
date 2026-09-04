@@ -3,6 +3,7 @@
 #include <chrono>
 #include <cstddef>
 #include <thread>
+#include "Debug/Logger.h"
 #include "Thread/ThreadPool.h"
 #include "Thread/PriorityTaskDispatcher.h"
 
@@ -19,6 +20,7 @@ namespace Plugin {
 	///        複数のワーカースレッドから並列に呼ばれるため、スレッドセーフに実装すること
 	/// @param priority タスクの優先度（数値が小さいほど高優先度）
 	inline void RunParallelAndWait(size_t count, const std::function<void(size_t)>& taskForIndex, int priority = 0) {
+		KashipanEngine::LogScope scope;
 		if (count == 0) return;
 
 		std::atomic<size_t> remaining{ count };

@@ -5,10 +5,12 @@ namespace KashipanEngine {
 
 VertexBufferResource::VertexBufferResource(size_t byteSize, const void *initialData, ID3D12Resource *existingResource)
     : IGraphicsResource(ResourceViewType::VBV) {
+    LogScope scope;
     Initialize(byteSize, initialData, existingResource);
 }
 
 bool VertexBufferResource::Recreate(size_t byteSize, const void *initialData, ID3D12Resource *existingResource) {
+    LogScope scope;
     ResetResourceForRecreate();
     return Initialize(byteSize, initialData, existingResource);
 }
@@ -56,6 +58,7 @@ bool VertexBufferResource::Initialize(size_t byteSize, const void *initialData, 
 }
 
 D3D12_VERTEX_BUFFER_VIEW VertexBufferResource::GetView(UINT stride) const {
+    LogScope scope;
     D3D12_VERTEX_BUFFER_VIEW view{};
     if (GetResource()) {
         view.BufferLocation = GetResource()->GetGPUVirtualAddress();
@@ -66,6 +69,7 @@ D3D12_VERTEX_BUFFER_VIEW VertexBufferResource::GetView(UINT stride) const {
 }
 
 void *VertexBufferResource::Map() {
+    LogScope scope;
     void *ptr = nullptr;
     if (GetResource()) {
         GetResource()->Map(0, nullptr, &ptr);
@@ -74,6 +78,7 @@ void *VertexBufferResource::Map() {
 }
 
 void VertexBufferResource::Unmap() {
+    LogScope scope;
     if (GetResource()) {
         GetResource()->Unmap(0, nullptr);
     }

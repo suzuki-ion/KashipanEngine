@@ -1,5 +1,6 @@
 ﻿#include "RawFile.h"
 #include "Directory.h"
+#include "Debug/Logger.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include <fstream>
 #include <cctype>
@@ -10,17 +11,20 @@ namespace KashipanEngine {
 namespace {
 
 inline size_t clampDetectSize(size_t size, size_t detectBytes) {
+    LogScope scope;
     if (detectBytes == 0) return 0;
     return std::min(size, detectBytes);
 }
 
 inline bool startsWith(const uint8_t* d, size_t n, const uint8_t* sig, size_t m) {
+    LogScope scope;
     if (n < m) return false;
     for (size_t i = 0; i < m; ++i) if (d[i] != sig[i]) return false;
     return true;
 }
 
 inline bool equalsAt(const uint8_t* d, size_t n, size_t at, const char* s) {
+    LogScope scope;
     size_t m = 0; while (s[m] != '\0') ++m;
     if (at + m > n) return false;
     for (size_t i = 0; i < m; ++i) if (d[at + i] != static_cast<uint8_t>(s[i])) return false;
@@ -31,6 +35,7 @@ inline bool isWhitespace(uint8_t c) { return c == ' ' || c == '\t' || c == '\r' 
 
 // Rough UTF-8 validation without NUL bytes
 bool IsLikelyUtf8Text(const uint8_t* s, size_t len) {
+    LogScope scope;
     if (!s) return false;
     for (size_t i = 0; i < len; ) {
         uint8_t c = s[i];
@@ -64,6 +69,7 @@ bool IsLikelyUtf8Text(const uint8_t* s, size_t len) {
 }
 
 FileType DetectFileTypeFromBytes(const uint8_t* data, size_t n) {
+    LogScope scope;
     if (!data || n == 0) return FileType::unknown;
 
     // PNG
@@ -183,6 +189,7 @@ FileType DetectFileTypeFromBytes(const uint8_t* data, size_t n) {
 } // namespace
 
 bool IsFileExist(const std::string &filePath) {
+    LogScope scope;
     // std::ifstream(const std::string&)はWindows上で現在のANSIコードページを使ってファイルを開くため、
     // 非ASCII文字を含むパスが開けない。path版のコンストラクタ（内部でネイティブのワイド文字列を使う）
     // へ渡すことで回避する
@@ -191,6 +198,7 @@ bool IsFileExist(const std::string &filePath) {
 }
 
 RawFileData LoadFile(const std::string &filePath, size_t detectBytes) {
+    LogScope scope;
     RawFileData fileData{};
     fileData.filePath = filePath;
 
@@ -214,6 +222,7 @@ RawFileData LoadFile(const std::string &filePath, size_t detectBytes) {
 }
 
 void SaveFile(const RawFileData &fileData) {
+    LogScope scope;
     // 保存先フォルダが存在しない場合は作成する
     EnsureParentDirectoryExists(fileData.filePath);
     std::ofstream file(Utf8StringToPath(fileData.filePath), std::ios::binary);
@@ -226,6 +235,7 @@ void SaveFile(const RawFileData &fileData) {
 }
 
 FileType DetectFileTypeFromFile(const std::string &filePath, size_t detectBytes) {
+    LogScope scope;
     std::ifstream file(Utf8StringToPath(filePath), std::ios::binary);
     if (!file) {
         throw std::runtime_error("Failed to open file: " + filePath);

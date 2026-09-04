@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Scene/SceneEditorContext.h"
 #include "Objects/ComponentRef.h"
 #include "Utilities/Translation.h"
@@ -118,11 +119,13 @@ public:
     std::string GetName() const override { return commandName_ + ": " + rootName_; }
 
     EmptyObject *GetRootObject(SceneEditorContext *context) const {
+        LogScope scope;
         if (nodes_.empty()) return nullptr;
         return context->GetSceneObject(UUID128(nodes_.front().json.value("objectID", std::string{})));
     }
     /// @brief 生成された部分木の根を全て取得する（複数選択でのコピー/複製に対応するため複数返りうる）
     std::vector<EmptyObject *> GetRootObjects(SceneEditorContext *context) const {
+        LogScope scope;
         std::vector<EmptyObject *> result;
         for (const auto &node : nodes_) {
             if (node.parentIndexInSubtree >= 0) continue;
@@ -310,6 +313,7 @@ public:
     explicit CompositeCommand(const std::string &name) : name_(name) {}
 
     void AddCommand(std::unique_ptr<IEditorCommand> command) {
+        LogScope scope;
         if (command) commands_.push_back(std::move(command));
     }
     bool IsEmpty() const noexcept { return commands_.empty(); }
@@ -349,6 +353,7 @@ public:
 
     /// @brief 履歴を全消去する（シーンロード時など）
     void Clear() {
+        LogScope scope;
         undoStack_.clear();
         redoStack_.clear();
         playUndoStack_.clear();
@@ -365,6 +370,7 @@ public:
 
     /// @brief 再生セッションを開始する（以後のコマンドは再生用の一時履歴へ積まれる）
     void BeginPlaySession() {
+        LogScope scope;
         if (isPlaySession_) return;
         isPlaySession_ = true;
         playUndoStack_.clear();
@@ -372,6 +378,7 @@ public:
     }
     /// @brief 再生セッションを終了し、再生中に積まれたコマンドを破棄する（編集時の履歴へ戻る）
     void EndPlaySession() {
+        LogScope scope;
         if (!isPlaySession_) return;
         isPlaySession_ = false;
         playUndoStack_.clear();

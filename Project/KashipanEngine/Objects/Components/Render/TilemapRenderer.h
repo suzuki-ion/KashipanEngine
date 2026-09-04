@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Assets/MaterialManager.h"
 #include "Assets/ModelManager.h"
@@ -91,6 +92,7 @@ public:
     ~TilemapRenderer() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<TilemapRenderer>();
         ptr->materialName_ = materialName_;
         ptr->pipelineName_ = pipelineName_;

@@ -1,8 +1,10 @@
 #include "DCompHost.h"
+#include "Debug/Logger.h"
 
 namespace KashipanEngine {
 
 bool DCompHost::InitializeForHwnd(HWND hwnd, BOOL topmost) {
+    LogScope scope;
     hwnd_ = hwnd;
     // デバイス作成
     Microsoft::WRL::ComPtr<IDCompositionDevice> device;
@@ -43,12 +45,14 @@ bool DCompHost::InitializeForHwnd(HWND hwnd, BOOL topmost) {
 }
 
 bool DCompHost::SetContentSwapChain(IUnknown *swapChainContent) {
+    LogScope scope;
     if (!root_) return false;
     HRESULT hr = root_->SetContent(swapChainContent);
     return SUCCEEDED(hr);
 }
 
 bool DCompHost::Commit() {
+    LogScope scope;
     if (!device_) return false;
     return SUCCEEDED(device_->Commit());
 }

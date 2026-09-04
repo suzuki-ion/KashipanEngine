@@ -64,6 +64,7 @@ void SerializeComponent(const void *component, const std::vector<FieldInfo> &fie
 }
 
 void DeserializeComponent(void *component, const std::vector<FieldInfo> &fields, const json &inJson) {
+    LogScope scope;
     char *base = static_cast<char *>(component);
     for (const auto &field : fields) {
         void *fieldPtr = base + field.offset;

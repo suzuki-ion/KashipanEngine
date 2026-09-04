@@ -3,6 +3,7 @@
 #include <memory>
 #include <cassert>
 #include <cstdint>
+#include "Debug/Logger.h"
 #include "Utilities/FileIO.h"
 #include "Utilities/Tag.h"
 #include "ComponentSerialize/ComponentRegistry.h"
@@ -31,6 +32,7 @@ public:
     /// @return コンポーネントの型ID
     template<typename T>
     static size_t GetComponentTypeID() {
+        LogScope scope;
         static size_t typeID = sComponentTypeID++;
         return typeID;
     }
@@ -57,6 +59,7 @@ public:
     /// @brief アクティブ状態を設定
     /// @details シーンへ登録済みの場合、有効化時にInitialize、無効化時にFinalizeが走る
     void SetActive(bool active) {
+        LogScope scope;
         if (isActive_ == active) return;
         isActive_ = active;
         if (sceneContext_) {
@@ -70,6 +73,7 @@ public:
 
     /// @brief タグを設定する（文字列からハッシュ化される。空文字で未設定に戻る）
     void SetTag(const std::string &tagName) {
+        LogScope scope;
         tagName_ = tagName;
         tag_ = Tag(tagName);
     }
@@ -82,21 +86,23 @@ public:
     /// @details コンテキストは常に設定されるが、Initialize はコンポーネントが
     ///          アクティブな場合のみ実行される（非アクティブの場合は有効化時に走る）。
     void InitializeInterface(Passkey<Scene>, SceneContext *sceneContext) {
+        LogScope scope;
         sceneContext_ = sceneContext;
         if (isActive_) {
             Initialize();
         }
     }
     /// @brief 終了処理
-    void FinalizeInterface(Passkey<Scene>) { Finalize(); }
+    void FinalizeInterface(Passkey<Scene>) { LogScope scope; Finalize(); }
     /// @brief 更新処理
-    void UpdateInterface(Passkey<Scene>) { if (IsActive()) { Update(); } }
+    void UpdateInterface(Passkey<Scene>) { LogScope scope; if (IsActive()) { Update(); } }
 
 #ifdef USE_IMGUI
     /// @brief ImGui 表示（ウィンドウの Begin/End は呼ばない）
-    void ShowImGuiInterface(Passkey<Scene>) { ShowImGui(); }
+    void ShowImGuiInterface(Passkey<Scene>) { LogScope scope; ShowImGui(); }
 #endif
     JSON SaveToJsonInterface(Passkey<Scene>) const {
+        LogScope scope;
         JSON json;
         json["priority"] = updatePriority_;
         json["isActive"] = isActive_;
@@ -105,6 +111,7 @@ public:
         return json;
     }
     bool LoadFromJsonInterface(Passkey<Scene>, const JSON &json) {
+        LogScope scope;
         updatePriority_ = json.value("priority", 1);
         isActive_ = json.value("isActive", true);
         SetTag(json.value("tag", std::string{}));
@@ -127,17 +134,18 @@ protected:
 #if defined(USE_IMGUI)
     /// @brief ImGui 表示（ウィンドウの Begin/End は呼ばない）
     virtual void ShowImGui() {
+        LogScope scope;
         ImGui::Text("%s", TranslationC("editor.iscenecomponent.none"));
     }
 #endif
 
     /// @brief コンポーネント情報をjsonへ保存
     /// @return コンポーネント情報を含むjsonオブジェクトを返す。保存する情報がない場合は空のjsonオブジェクトを返す
-    virtual JSON SaveToJson() const { return JSON::object(); }
+    virtual JSON SaveToJson() const { LogScope scope; return JSON::object(); }
     /// @brief jsonからコンポーネント情報を読み込み
     /// @param json コンポーネント情報を含むjsonオブジェクト
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す。読み込む情報がない場合は true を返す
-    virtual bool LoadFromJson(const JSON &json) { (void)json; return true; }
+    virtual bool LoadFromJson(const JSON &json) { LogScope scope; (void)json; return true; }
 
     /// @brief 更新優先度を設定
     void SetUpdatePriority(int priority) { updatePriority_ = priority; }

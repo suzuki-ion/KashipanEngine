@@ -251,6 +251,7 @@ ShaderCompiler::ShaderCompiledInfo *ShaderCompiler::ShaderCompile(const CompileI
 }
 
 void ShaderCompiler::ShaderReflection(IDxcBlob *shaderBlob, ShaderReflectionInfo &outReflectionInfo) {
+    LogScope scope;
     if (shaderBlob == nullptr) return;
 
     Microsoft::WRL::ComPtr<IDxcContainerReflection> container;
@@ -381,6 +382,7 @@ ShaderCompiler::ShaderVariable ShaderCompiler::BuildShaderVariableFromType(
     UINT byteOffset,
     UINT byteSize
 ) {
+    LogScope scope;
     ShaderCompiler::ShaderVariable variable{};
     variable.variableName = name;
     variable.byteOffset = byteOffset;
@@ -429,6 +431,7 @@ void ShaderCompiler::FillVariableBindingInfo(
     UINT bindCount,
     UINT space
 ) {
+    LogScope scope;
     variable.variableName = name;
     variable.resourceType = type;
     variable.bindPoint = bindPoint;

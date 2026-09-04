@@ -1,5 +1,7 @@
 #include "Input/Controller.h"
 
+#include "Debug/Logger.h"
+
 #include <GameInput.h>
 
 #include <algorithm>
@@ -15,17 +17,20 @@ namespace {
 IGameInput* sGameInput = nullptr;
 
 std::int16_t ApplyDeadZone(std::int16_t v, std::int16_t dz) {
+    LogScope scope;
     if (v < +dz && v > -dz) return 0;
     return v;
 }
 
 bool IsDeviceConnected(IGameInputDevice* device) {
+    LogScope scope;
     if (!device) return false;
     const auto status = device->GetDeviceStatus();
     return (status & GameInputDeviceConnected) != 0;
 }
 
 int FindDeviceIndex(const std::vector<Controller::DeviceEntry>& devices, IGameInputDevice* device) {
+    LogScope scope;
     for (size_t i = 0; i < devices.size(); ++i) {
         if (devices[i].device == device) return static_cast<int>(i);
     }
@@ -41,6 +46,7 @@ void CALLBACK OnGamepadDeviceChanged(
     uint64_t /*timestamp*/,
     GameInputDeviceStatus currentStatus,
     GameInputDeviceStatus /*previousStatus*/) {
+    LogScope scope;
 
     if (!context || !device) return;
     auto* self = reinterpret_cast<Controller*>(context);
@@ -48,6 +54,7 @@ void CALLBACK OnGamepadDeviceChanged(
 }
 
 void Controller::OnDeviceChanged(void* dev, std::uint32_t currentStatus) {
+    LogScope scope;
     auto* device = static_cast<IGameInputDevice*>(dev);
     if (!device) return;
 
@@ -77,10 +84,12 @@ void Controller::OnDeviceChanged(void* dev, std::uint32_t currentStatus) {
 Controller::Controller(Passkey<Input>) {}
 
 Controller::~Controller() {
+    LogScope scope;
     Finalize();
 }
 
 void Controller::Initialize() {
+    LogScope scope;
     Finalize();
 
     if (!sGameInput) {
@@ -120,6 +129,7 @@ void Controller::Initialize() {
 }
 
 void Controller::Finalize() {
+    LogScope scope;
     // 先にコールバックを停止して、終了処理と競合しないようにする
     if (sGameInput && deviceCallbackToken_ != 0) {
         const GameInputCallbackToken token = deviceCallbackToken_;
@@ -152,6 +162,7 @@ void Controller::Finalize() {
 }
 
 std::uint16_t Controller::ButtonsToXInputMask(std::uint32_t b) noexcept {
+    LogScope scope;
     // XInput.h を include せず互換性を保つため、値を XInput.h から複製している
     constexpr std::uint16_t X_DPAD_UP = 0x0001;
     constexpr std::uint16_t X_DPAD_DOWN = 0x0002;
@@ -193,6 +204,7 @@ std::uint16_t Controller::ButtonsToXInputMask(std::uint32_t b) noexcept {
 }
 
 void Controller::Update() {
+    LogScope scope;
     previous_ = current_;
     prevConnected_ = connected_;
 
@@ -264,104 +276,129 @@ void Controller::Update() {
 }
 
 bool Controller::IsConnected(int index) const {
+    LogScope scope;
     return (index >= 0 && index < static_cast<int>(connected_.size())) ? connected_[static_cast<size_t>(index)] : false;
 }
 
 bool Controller::WasConnected(int index) const {
+    LogScope scope;
     return (index >= 0 && index < static_cast<int>(prevConnected_.size())) ? prevConnected_[static_cast<size_t>(index)] : false;
 }
 
 bool Controller::IsButtonDown(ControllerButton button, int index) const {
+    LogScope scope;
     if (!IsConnected(index)) return false;
     return (current_[static_cast<size_t>(index)].buttons & ToMask(button)) != 0;
 }
 
 bool Controller::WasButtonDown(ControllerButton button, int index) const {
+    LogScope scope;
     if (!(index >= 0 && index < static_cast<int>(previous_.size()))) return false;
     return (previous_[static_cast<size_t>(index)].buttons & ToMask(button)) != 0;
 }
 
 bool Controller::IsButtonTrigger(ControllerButton button, int index) const {
+    LogScope scope;
     return IsButtonDown(button, index) && !WasButtonDown(button, index);
 }
 
 bool Controller::IsButtonRelease(ControllerButton button, int index) const {
+    LogScope scope;
     return !IsButtonDown(button, index) && WasButtonDown(button, index);
 }
 
 int Controller::GetLeftTrigger(int index) const {
+    LogScope scope;
     return (index >= 0 && index < static_cast<int>(current_.size())) ? static_cast<int>(current_[static_cast<size_t>(index)].leftTrigger) : 0;
 }
 
 int Controller::GetRightTrigger(int index) const {
+    LogScope scope;
     return (index >= 0 && index < static_cast<int>(current_.size())) ? static_cast<int>(current_[static_cast<size_t>(index)].rightTrigger) : 0;
 }
 
 int Controller::GetLeftStickX(int index) const {
+    LogScope scope;
     return (index >= 0 && index < static_cast<int>(current_.size())) ? static_cast<int>(current_[static_cast<size_t>(index)].leftX) : 0;
 }
 
 int Controller::GetLeftStickY(int index) const {
+    LogScope scope;
     return (index >= 0 && index < static_cast<int>(current_.size())) ? static_cast<int>(current_[static_cast<size_t>(index)].leftY) : 0;
 }
 
 int Controller::GetRightStickX(int index) const {
+    LogScope scope;
     return (index >= 0 && index < static_cast<int>(current_.size())) ? static_cast<int>(current_[static_cast<size_t>(index)].rightX) : 0;
 }
 
 int Controller::GetRightStickY(int index) const {
+    LogScope scope;
     return (index >= 0 && index < static_cast<int>(current_.size())) ? static_cast<int>(current_[static_cast<size_t>(index)].rightY) : 0;
 }
 
 int Controller::GetPrevLeftTrigger(int index) const {
+    LogScope scope;
     return (index >= 0 && index < static_cast<int>(previous_.size())) ? static_cast<int>(previous_[static_cast<size_t>(index)].leftTrigger) : 0;
 }
 
 int Controller::GetPrevRightTrigger(int index) const {
+    LogScope scope;
     return (index >= 0 && index < static_cast<int>(previous_.size())) ? static_cast<int>(previous_[static_cast<size_t>(index)].rightTrigger) : 0;
 }
 
 int Controller::GetPrevLeftStickX(int index) const {
+    LogScope scope;
     return (index >= 0 && index < static_cast<int>(previous_.size())) ? static_cast<int>(previous_[static_cast<size_t>(index)].leftX) : 0;
 }
 
 int Controller::GetPrevLeftStickY(int index) const {
+    LogScope scope;
     return (index >= 0 && index < static_cast<int>(previous_.size())) ? static_cast<int>(previous_[static_cast<size_t>(index)].leftY) : 0;
 }
 
 int Controller::GetPrevRightStickX(int index) const {
+    LogScope scope;
     return (index >= 0 && index < static_cast<int>(previous_.size())) ? static_cast<int>(previous_[static_cast<size_t>(index)].rightX) : 0;
 }
 
 int Controller::GetPrevRightStickY(int index) const {
+    LogScope scope;
     return (index >= 0 && index < static_cast<int>(previous_.size())) ? static_cast<int>(previous_[static_cast<size_t>(index)].rightY) : 0;
 }
 
 int Controller::GetDeltaLeftTrigger(int index) const {
+    LogScope scope;
     return GetLeftTrigger(index) - GetPrevLeftTrigger(index);
 }
 
 int Controller::GetDeltaRightTrigger(int index) const {
+    LogScope scope;
     return GetRightTrigger(index) - GetPrevRightTrigger(index);
 }
 
 int Controller::GetDeltaLeftStickX(int index) const {
+    LogScope scope;
     return GetLeftStickX(index) - GetPrevLeftStickX(index);
 }
 
 int Controller::GetDeltaLeftStickY(int index) const {
+    LogScope scope;
     return GetLeftStickY(index) - GetPrevLeftStickY(index);
 }
 
 int Controller::GetDeltaRightStickX(int index) const {
+    LogScope scope;
     return GetRightStickX(index) - GetPrevRightStickX(index);
 }
 
 int Controller::GetDeltaRightStickY(int index) const {
+    LogScope scope;
     return GetRightStickY(index) - GetPrevRightStickY(index);
 }
 
 void Controller::SetVibration(int index, int leftMotor, int rightMotor) {
+    LogScope scope;
     Microsoft::WRL::ComPtr<IGameInputDevice> device;
     {
         std::lock_guard lock(devicesMutex_);
@@ -388,6 +425,7 @@ void Controller::SetVibration(int index, int leftMotor, int rightMotor) {
 }
 
 void Controller::StopVibration(int index) {
+    LogScope scope;
     Microsoft::WRL::ComPtr<IGameInputDevice> device;
     {
         std::lock_guard lock(devicesMutex_);

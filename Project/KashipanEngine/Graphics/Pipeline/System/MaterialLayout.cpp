@@ -15,6 +15,7 @@ namespace {
 // std::ifstream(const std::string&)はWindows上で現在のANSIコードページを使ってファイルを開くため、
 // 日本語等の非ASCII文字を含むパスが開けない。Utf8StringToPathでpath版コンストラクタへ渡して回避する
 std::string ReadFileText(const std::string &path) {
+    LogScope scope;
     std::ifstream file(Utf8StringToPath(path), std::ios::binary);
     if (!file) return {};
     std::ostringstream ss;
@@ -24,6 +25,7 @@ std::string ReadFileText(const std::string &path) {
 
 /// @brief #include "X" を再帰的にインライン展開する（構造体探索が目的の簡易展開。多重インクルードガードは考慮しない）
 std::string ExpandIncludes(const std::string &source, const std::filesystem::path &baseDir, std::unordered_set<std::string> &visited, int depth) {
+    LogScope scope;
     if (depth > 8) return source; // 無限再帰対策
     static const std::regex kIncludeRe(R"(#include\s*\"([^\"]+)\")");
     std::string result;
@@ -48,6 +50,7 @@ std::string ExpandIncludes(const std::string &source, const std::filesystem::pat
 
 /// @brief 単純な #ifdef/#ifndef/#else/#endif のみを評価する簡易プリプロセッサ（#if式や#define非対応）
 std::string StripConditionals(const std::string &source, const std::unordered_set<std::string> &definedMacros) {
+    LogScope scope;
     struct CondFrame {
         bool parentActive;
         bool anyTaken;
@@ -99,6 +102,7 @@ std::string StripConditionals(const std::string &source, const std::unordered_se
 
 /// @brief ブロックコメント(/* */)のみを除去する（行コメント// @Range等の注釈を読み取るために残す）
 std::string StripBlockCommentsOnly(const std::string &source) {
+    LogScope scope;
     std::string result;
     result.reserve(source.size());
     bool inBlockComment = false;
@@ -126,6 +130,7 @@ struct HlslTypeInfo {
 };
 
 bool ResolveHlslType(const std::string &typeName, HlslTypeInfo &out) {
+    LogScope scope;
     static const std::unordered_map<std::string, HlslTypeInfo> kTypeMap = {
         { "float",    { 4,  ValueType::Float } },
         { "float2",   { 8,  ValueType::Vector2 } },
@@ -146,6 +151,7 @@ bool ResolveHlslType(const std::string &typeName, HlslTypeInfo &out) {
 ///        fieldへ反映する。@ColorはvalueTypeをVector4からColorへ差し替える（呼び出し側でfloat4の
 ///        場合のみ意味を持つ。それ以外の型に付いていても無視する）
 void ApplyAnnotations(const std::string &annotationText, MaterialFieldLayout &field) {
+    LogScope scope;
     if (annotationText.empty()) return;
 
     if (annotationText.find("@Color") != std::string::npos && field.valueType == ValueType::Vector4) {
@@ -165,6 +171,7 @@ void ApplyAnnotations(const std::string &annotationText, MaterialFieldLayout &fi
 /// @brief 前処理済みソースから、指定した種類のテクスチャ宣言（`<Kind> <name> : register(tN);`）の
 ///        変数名を列挙する共通実装
 std::vector<std::string> ScanTextureDeclarationsOfKind(const std::string &source, const char *kind) {
+    LogScope scope;
     const std::regex declRe(std::string(kind) + R"(\s+(\w+)\s*:\s*register\(\s*t\d+\s*\))");
     std::vector<std::string> names;
     auto it = std::sregex_iterator(source.begin(), source.end(), declRe);
@@ -177,17 +184,20 @@ std::vector<std::string> ScanTextureDeclarationsOfKind(const std::string &source
 
 /// @brief 前処理済みソースから `Texture2D <name> : register(tN);` 宣言の変数名を列挙する
 std::vector<std::string> ScanTextureDeclarations(const std::string &source) {
+    LogScope scope;
     return ScanTextureDeclarationsOfKind(source, "Texture2D");
 }
 
 /// @brief 前処理済みソースから `TextureCube <name> : register(tN);` 宣言の変数名を列挙する
 std::vector<std::string> ScanTextureCubeDeclarations(const std::string &source) {
+    LogScope scope;
     return ScanTextureDeclarationsOfKind(source, "TextureCube");
 }
 
 } // namespace
 
 MaterialLayout MaterialLayout::BuildFromHlslSource(const std::string &shaderFilePath, const std::unordered_set<std::string> &definedMacros) {
+    LogScope scope;
     MaterialLayout layout;
     if (shaderFilePath.empty()) return layout;
 

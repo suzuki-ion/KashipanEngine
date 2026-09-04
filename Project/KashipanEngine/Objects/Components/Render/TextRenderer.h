@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Assets/FontManager.h"
 #include "Assets/MaterialManager.h"
@@ -93,6 +94,7 @@ public:
     ~TextRenderer() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<TextRenderer>();
         ptr->targetObjectID_ = targetObjectID_;
         ptr->pipelineName_ = pipelineName_;
@@ -129,11 +131,13 @@ public:
     void SetTargetObject(const UUID128 &targetObjectID) { targetObjectID_ = targetObjectID; }
     const UUID128 &GetTargetObjectID() const noexcept { return targetObjectID_; }
     EmptyObject *GetTargetObject() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext || !targetObjectID_.IsValid()) return nullptr;
         return sceneContext->GetSceneObject(targetObjectID_);
     }
     bool IsRenderTargetIncluded(const IRenderTarget *target) const {
+        LogScope scope;
         if (!target) return false;
         return !excludedRenderTargetNames_.contains(target->GetRenderTargetName());
     }
@@ -146,6 +150,7 @@ public:
     const std::string &GetPipelineName() const noexcept { return pipelineName_; }
 
     void SetFontName(const std::string &fontName) {
+        LogScope scope;
         fontName_ = fontName;
         fontHandle_ = FontManager::kInvalidHandle;
         MarkShapeDirty();
@@ -153,6 +158,7 @@ public:
     const std::string &GetFontName() const noexcept { return fontName_; }
     /// @brief フォントハンドルを取得する（未解決の場合はフォント名から解決を試みる）
     FontManager::FontHandle GetFontHandle() const {
+        LogScope scope;
         if (fontHandle_ == FontManager::kInvalidHandle && !fontName_.empty()) {
             fontHandle_ = FontManager::GetFontHandleFromName(fontName_);
         }
@@ -160,6 +166,7 @@ public:
     }
 
     void SetMaterialName(const std::string &materialName) {
+        LogScope scope;
         materialName_ = materialName;
         materialHandle_ = MaterialManager::kInvalidHandle;
     }
@@ -167,6 +174,7 @@ public:
     const std::string &GetMaterialName() const noexcept { return materialName_; }
     /// @brief 描画パラメーターとして使う任意マテリアルを取得する。テクスチャとUVはフォント側で上書きされる
     MaterialManager::MaterialHandle GetMaterialHandle() const {
+        LogScope scope;
         if (materialHandle_ == MaterialManager::kInvalidHandle && !materialName_.empty()) {
             materialHandle_ = MaterialManager::GetMaterialHandleFromName(materialName_);
         }
@@ -181,6 +189,7 @@ public:
     //==================================================
 
     void SetText(const std::string &text) {
+        LogScope scope;
         if (text_ == text) return;
         text_ = text;
         MarkShapeDirty();
@@ -190,12 +199,14 @@ public:
     /// @brief 翻訳キーによるテキスト解決を使うかどうかを設定する。
     ///        trueの間はUpdate()毎フレーム、表示言語の変化を検知してtext_へ自動反映する
     void SetUseLocalizationKey(bool use) {
+        LogScope scope;
         useLocalizationKey_ = use;
         if (useLocalizationKey_ && !localizationKey_.empty()) ApplyLocalizedText();
     }
     bool GetUseLocalizationKey() const noexcept { return useLocalizationKey_; }
     /// @brief 翻訳キーを設定する（SetUseLocalizationKey(true)と併用時のみ効果を持つ）
     void SetLocalizationKey(const std::string &key) {
+        LogScope scope;
         if (localizationKey_ == key) return;
         localizationKey_ = key;
         if (useLocalizationKey_ && !localizationKey_.empty()) ApplyLocalizedText();
@@ -203,12 +214,14 @@ public:
     const std::string &GetLocalizationKey() const noexcept { return localizationKey_; }
 
     void SetFontSize(float fontSize) {
+        LogScope scope;
         fontSize_ = std::max(0.01f, fontSize);
         MarkShapeDirty();
     }
     float GetFontSize() const noexcept { return fontSize_; }
 
     void SetInstanceColor(const Vector4 &color) {
+        LogScope scope;
         instanceColor_ = color;
         MarkShapeDirty();
     }
@@ -224,16 +237,16 @@ public:
     void SetOutlineColor(const Vector4 &color) noexcept { outlineColor_ = color; }
     const Vector4 &GetOutlineColor() const noexcept { return outlineColor_; }
 
-    void SetHorizontalAlign(HorizontalAlign align) { horizontalAlign_ = align; MarkInstancesDirty(); }
+    void SetHorizontalAlign(HorizontalAlign align) { LogScope scope; horizontalAlign_ = align; MarkInstancesDirty(); }
     HorizontalAlign GetHorizontalAlign() const noexcept { return horizontalAlign_; }
-    void SetVerticalAlign(VerticalAlign align) { verticalAlign_ = align; MarkInstancesDirty(); }
+    void SetVerticalAlign(VerticalAlign align) { LogScope scope; verticalAlign_ = align; MarkInstancesDirty(); }
     VerticalAlign GetVerticalAlign() const noexcept { return verticalAlign_; }
 
     /// @brief 各文字のデフォルトアンカー（単位クアッド内の正規化座標。(0,0)=左下 ～ (1,1)=右上、既定(0.5,0.5)）
-    void SetDefaultCharacterAnchor(const Vector2 &anchor) { defaultCharacterAnchor_ = anchor; MarkInstancesDirty(); }
+    void SetDefaultCharacterAnchor(const Vector2 &anchor) { LogScope scope; defaultCharacterAnchor_ = anchor; MarkInstancesDirty(); }
     const Vector2 &GetDefaultCharacterAnchor() const noexcept { return defaultCharacterAnchor_; }
     /// @brief 各文字のデフォルトピボット（回転・拡縮の中心にする単位クアッド内の正規化座標、既定(0.5,0.5)）
-    void SetDefaultCharacterPivot(const Vector2 &pivot) { defaultCharacterPivot_ = pivot; MarkInstancesDirty(); }
+    void SetDefaultCharacterPivot(const Vector2 &pivot) { LogScope scope; defaultCharacterPivot_ = pivot; MarkInstancesDirty(); }
     const Vector2 &GetDefaultCharacterPivot() const noexcept { return defaultCharacterPivot_; }
 
     //==================================================
@@ -258,36 +271,43 @@ public:
 
     /// @brief タグを除いた実際の文字数（改行文字も1つとしてカウントする）を取得する
     size_t GetCharacterCount() const {
+        LogScope scope;
         RebuildShapeIfDirty();
         return characterOverrides_.size();
     }
     void SetCharacterOffset(size_t index, const Vector2 &offset) {
+        LogScope scope;
         RebuildShapeIfDirty();
         if (index >= characterOverrides_.size()) return;
         characterOverrides_[index].offset = offset;
         MarkInstancesDirty();
     }
     Vector2 GetCharacterOffset(size_t index) const {
+        LogScope scope;
         RebuildShapeIfDirty();
         return index < characterOverrides_.size() ? characterOverrides_[index].offset : Vector2(0.0f, 0.0f);
     }
     void SetCharacterRotation(size_t index, float rotation) {
+        LogScope scope;
         RebuildShapeIfDirty();
         if (index >= characterOverrides_.size()) return;
         characterOverrides_[index].rotation = rotation;
         MarkInstancesDirty();
     }
     float GetCharacterRotation(size_t index) const {
+        LogScope scope;
         RebuildShapeIfDirty();
         return index < characterOverrides_.size() ? characterOverrides_[index].rotation : 0.0f;
     }
     void SetCharacterScale(size_t index, const Vector2 &scale) {
+        LogScope scope;
         RebuildShapeIfDirty();
         if (index >= characterOverrides_.size()) return;
         characterOverrides_[index].scale = scale;
         MarkInstancesDirty();
     }
     Vector2 GetCharacterScale(size_t index) const {
+        LogScope scope;
         RebuildShapeIfDirty();
         return index < characterOverrides_.size() ? characterOverrides_[index].scale : Vector2(1.0f, 1.0f);
     }
@@ -298,6 +318,7 @@ public:
 
     /// @brief 現在のTransformワールド行列まで合成した、描画に使う文字ごとのインスタンス一覧を取得する
     std::vector<RenderCharacterInstance> GetRenderInstances() const {
+        LogScope scope;
         RebuildInstancesIfDirty();
         auto *objectContext = GetOwnerObjectContext();
         auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
@@ -312,6 +333,7 @@ public:
 
 protected:
     void Initialize() override {
+        LogScope scope;
         auto *sceneRenderer = GetOrAddSceneRenderer();
         if (sceneRenderer) {
             sceneRenderer->RegisterTextRenderer(this);
@@ -319,6 +341,7 @@ protected:
     }
 
     void Finalize() override {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
         if (sceneRenderer) {
@@ -330,6 +353,7 @@ protected:
     ///        未使用のTextRendererへの負荷はbool 1回のみ（ImGuiManager::ApplyEditorPreferencesIfChanged
     ///        と同じ「キャッシュした値と比較し、変化時のみ再構築する」ポーリング方式）
     void Update() override {
+        LogScope scope;
         if (!useLocalizationKey_ || localizationKey_.empty()) return;
         if (GetCurrentApplicationLanguage() == lastResolvedLanguage_) return;
         ApplyLocalizedText();
@@ -337,6 +361,7 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         TargetObjectSelector::ShowSelector(TranslationLabel("component.common.target"), GetOwnerSceneContext(), targetObjectID_);
         TargetObjectSelector::ShowRenderTargetFilters(GetOwnerSceneContext(), targetObjectID_, excludedRenderTargetNames_);
 
@@ -438,6 +463,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = JSON::object();
         json["text"] = text_;
         json["useLocalizationKey"] = useLocalizationKey_;
@@ -466,6 +492,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         text_ = json.value("text", std::string{});
         useLocalizationKey_ = json.value("useLocalizationKey", false);
         localizationKey_ = json.value("localizationKey", std::string{});
@@ -530,6 +557,7 @@ private:
     };
 
     SceneRenderer *GetOrAddSceneRenderer() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext) return nullptr;
         auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
@@ -539,8 +567,8 @@ private:
         return sceneRenderer;
     }
 
-    void MarkShapeDirty() const { shapeDirty_ = true; instancesDirty_ = true; }
-    void MarkInstancesDirty() const { instancesDirty_ = true; }
+    void MarkShapeDirty() const { LogScope scope; shapeDirty_ = true; instancesDirty_ = true; }
+    void MarkInstancesDirty() const { LogScope scope; instancesDirty_ = true; }
 
     /// @brief localizationKey_の翻訳結果を無条件でtext_へ反映する
     ///        （呼び出し元でuseLocalizationKey_/localizationKey_の有効性は確認済みであること）
@@ -548,6 +576,7 @@ private:
     ///          エディター自身の表示言語（GetCurrentLanguage）とは独立しているため、
     ///          エディターのPlayモード中にここが変化してもエディターUIの言語には影響しない
     void ApplyLocalizedText() {
+        LogScope scope;
         text_ = ApplicationTranslation(localizationKey_);
         lastResolvedLanguage_ = GetCurrentApplicationLanguage();
         MarkShapeDirty();
@@ -555,6 +584,7 @@ private:
 
     /// @brief "#RRGGBB"または"#RRGGBBAA"形式の色文字列を解釈する（不正な場合はfallbackを返す）
     static Vector4 ParseColorTagValue(const std::string &value, const Vector4 &fallback) {
+        LogScope scope;
         if (value.size() < 7 || value[0] != '#') return fallback;
         auto hexNibble = [](char c) -> int {
             if (c >= '0' && c <= '9') return c - '0';
@@ -583,6 +613,7 @@ private:
 
     /// @brief "N"（ワールド単位の絶対値）または"N%"（fontSize_に対する割合）形式のサイズ指定を倍率へ変換する
     float ParseSizeTagValue(const std::string &value, float fallbackScale) const {
+        LogScope scope;
         if (value.empty()) return fallbackScale;
         if (value.back() == '%') {
             const float percent = static_cast<float>(std::atof(value.substr(0, value.size() - 1).c_str()));
@@ -595,6 +626,7 @@ private:
 
     /// @brief リッチテキストを解析し、タグを除いた文字ごとの見た目情報を求める
     std::vector<ShapedCharacter> ParseRichText(const std::string &text, const Vector4 &baseColor) const {
+        LogScope scope;
         std::vector<ShapedCharacter> result;
         const auto codepoints = Utf8ToCodepoints(text);
         result.reserve(codepoints.size());
@@ -676,6 +708,7 @@ private:
     }
 
     void RebuildShapeIfDirty() const {
+        LogScope scope;
         if (!shapeDirty_) return;
         shapeDirty_ = false;
         shapedCharacters_ = ParseRichText(text_, instanceColor_);
@@ -684,6 +717,7 @@ private:
 
     /// @brief アンカー/ピボット補正（SpriteRenderer::GetWorldMatrixと同じ考え方。単位クアッド内の正規化座標）
     void ApplyAnchorPivot(Matrix4x4 &mat) const {
+        LogScope scope;
         const float pivotOffsetX = 0.5f - defaultCharacterPivot_.x;
         const float pivotOffsetY = 0.5f - defaultCharacterPivot_.y;
         if (pivotOffsetX != 0.0f || pivotOffsetY != 0.0f) {
@@ -702,6 +736,7 @@ private:
 
     void AppendGlyphInstance(const PositionedChar &pc, float lineOffsetX, float lineBaselineY, float worldScale,
         const FontManager::GlyphInfo &glyph) const {
+        LogScope scope;
         const ShapedCharacter &shaped = shapedCharacters_[pc.shapedIndex];
         const CharacterOverride &ov = characterOverrides_[pc.shapedIndex];
 
@@ -744,6 +779,7 @@ private:
 
     void AppendDecorationRuns(const std::vector<PositionedChar> &line, float lineOffsetX, float lineBaselineY,
         float worldScale, FontManager::FontHandle fontHandle, bool strikethroughMode) const {
+        LogScope scope;
         const auto *solid = FontManager::GetSolidGlyph(fontHandle);
         if (!solid) return;
 
@@ -790,6 +826,7 @@ private:
     }
 
     void RebuildInstancesIfDirty() const {
+        LogScope scope;
         RebuildShapeIfDirty();
         if (!instancesDirty_) return;
         instancesDirty_ = false;

@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "Core/DirectXCommon.h"
+#include "Debug/Logger.h"
 #include "Graphics/Pipeline/System/PipelineBinder.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
 #include "Graphics/PipelineManager.h"
@@ -52,6 +53,7 @@ struct RankConstants {
 /// @brief UAVバリアを1つ発行する（compute→computeの依存関係はTransitionToではバリアが
 ///        挿入されない＝UNORDERED_ACCESS状態のまま変化が無いため、明示的に呼ぶ必要がある）
 void UavBarrier(ID3D12GraphicsCommandList *commandList, RWStructuredBufferResource *resource) {
+    LogScope scope;
     if (!commandList || !resource) return;
     D3D12_RESOURCE_BARRIER barrier{};
     barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
@@ -61,6 +63,7 @@ void UavBarrier(ID3D12GraphicsCommandList *commandList, RWStructuredBufferResour
 
 template <typename T>
 void UploadConstants(ConstantBufferResource *buffer, const T &data) {
+    LogScope scope;
     if (!buffer) return;
     if (void *mapped = buffer->Map()) {
         std::memcpy(mapped, &data, sizeof(T));
@@ -72,6 +75,7 @@ void UploadConstants(ConstantBufferResource *buffer, const T &data) {
 BlueNoiseGenerator::~BlueNoiseGenerator() = default;
 
 void BlueNoiseGenerator::Generate(DirectXCommon *directXCommon, PipelineManager *pipelineManager, Passkey<Renderer> rendererPasskey) {
+    LogScope scope;
     if (!directXCommon || !pipelineManager) return;
     static const char *kPipelines[] = {
         "BlueNoiseInit", "BlueNoiseDFT", "BlueNoiseFilter",

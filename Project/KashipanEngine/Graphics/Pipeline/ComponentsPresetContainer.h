@@ -46,6 +46,7 @@ public:
 
     //--------- RootSignature ---------//
     void RegisterRootSignature(const std::string &name, const Pipeline::JsonParser::RootSignatureParsed &parsed) {
+        LogScope scope;
         // 一時オブジェクトにポインタを張ると push_back 時にコピーされ寿命が切れてしまうため
         // 先に値だけコピーし、コンテナ挿入後にポインタを再設定する。
         RootSignatureStored stored;
@@ -169,6 +170,7 @@ public:
 
     /// @brief すべてのプリセットをクリア
     void ClearAll() {
+        LogScope scope;
         rootSignatures_.clear();
         rootParameters_.clear();
         descriptorRanges_.clear();
@@ -205,6 +207,7 @@ private:
     }
     template<typename MapT>
     static bool RemoveByKey(MapT &m, const std::string &name) {
+        LogScope scope;
         auto it = m.find(name);
         if (it == m.end()) return false;
         m.erase(it->index);

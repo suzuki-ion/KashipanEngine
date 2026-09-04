@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 
+#include "Debug/Logger.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 #include "Graphics/Pipeline/System/PipelineBinder.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
@@ -49,6 +50,7 @@ public:
     ~SSAOEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<SSAOEffect>();
         ptr->params_ = params_;
         return ptr;
@@ -59,6 +61,7 @@ public:
 
 protected:
     void Finalize() override {
+        LogScope scope;
         IPostProcessComponent::Finalize();
         ssaoRaw_ = {};
         ssaoBlurred_ = {};
@@ -68,6 +71,7 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         IPostProcessComponent::ShowImGui();
         ImGui::DragFloat(TranslationLabel("component.ssaoeffect.radius"), &params_.radius, 0.01f, 0.01f, 20.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
@@ -108,6 +112,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = IPostProcessComponent::SaveToJson();
         json["radius"] = params_.radius;
         json["intensity"] = params_.intensity;
@@ -120,6 +125,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         IPostProcessComponent::LoadFromJson(json);
         params_.radius = json.value("radius", 0.5f);
         params_.intensity = json.value("intensity", 1.0f);
@@ -135,6 +141,7 @@ protected:
     std::vector<PassInfo> BuildPasses() override { return {}; }
 
     bool RenderCustom(CustomRenderContext &context) override {
+        LogScope scope;
         auto *screenBuffer = context.screenBuffer;
         auto *commandList = context.commandList;
         if (!screenBuffer || !commandList || !context.pipelineManager || !context.pipelineBinder || !context.getShaderBinder) return false;
@@ -282,6 +289,7 @@ private:
 
     /// @brief 中間レンダーターゲット群をオーナーのサイズ・フォーマットに合わせて用意する
     bool EnsureIntermediateTargets(ScreenBuffer *owner) {
+        LogScope scope;
         const std::uint32_t width = owner->GetWidth();
         const std::uint32_t height = owner->GetHeight();
         if (width == 0 || height == 0) return false;

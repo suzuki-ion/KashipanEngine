@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <algorithm>
+#include "Debug/Logger.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 #include "Utilities/Translation.h"
 
@@ -20,6 +21,7 @@ public:
     ~DitherEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<DitherEffect>();
         ptr->params_ = params_;
         return ptr;
@@ -31,6 +33,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         IPostProcessComponent::ShowImGui();
         ImGui::DragFloat(TranslationLabel("component.dithereffect.intensity"), &params_.intensity, 0.01f, 0.0f, 1.0f, "%.3f");
         ImGui::Checkbox(TranslationLabel("component.dithereffect.color"), &params_.color);
@@ -38,6 +41,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = IPostProcessComponent::SaveToJson();
         json["intensity"] = params_.intensity;
         json["color"] = params_.color;
@@ -45,6 +49,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         IPostProcessComponent::LoadFromJson(json);
         params_.intensity = json.value("intensity", 1.0f);
         params_.color = json.value("color", true);
@@ -52,6 +57,7 @@ protected:
     }
 
     std::vector<PassInfo> BuildPasses() override {
+        LogScope scope;
         auto *owner = GetOwnerScreenBuffer();
         cbData_.invResolution[0] = (owner && owner->GetWidth() > 0) ? (1.0f / static_cast<float>(owner->GetWidth())) : 0.0f;
         cbData_.invResolution[1] = (owner && owner->GetHeight() > 0) ? (1.0f / static_cast<float>(owner->GetHeight())) : 0.0f;

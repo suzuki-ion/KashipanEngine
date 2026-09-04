@@ -3,11 +3,13 @@
 #include <iostream>
 #include "JSON.h"
 #include "Directory.h"
+#include "Debug/Logger.h"
 #include "Utilities/Conversion/ConvertString.h"
 
 namespace KashipanEngine {
 
 JSON LoadJSON(const std::string &filename) {
+    LogScope scope;
     JSON jsonData;
     // std::fstream(const std::string&)はWindows上で現在のANSIコードページを使ってファイルを開くため、
     // 非ASCII文字を含むパスが開けない。path版のコンストラクタ（内部でネイティブのワイド文字列を使う）
@@ -18,6 +20,7 @@ JSON LoadJSON(const std::string &filename) {
 }
 
 bool SaveJSON(const JSON &jsonData, const std::string &filepath, int indent) {
+    LogScope scope;
     try {
         // 保存先フォルダが存在しない場合は作成する
         if (!EnsureParentDirectoryExists(filepath)) {
@@ -37,6 +40,7 @@ bool SaveJSON(const JSON &jsonData, const std::string &filepath, int indent) {
 
 template<typename T>
 std::optional<T> GetJSONValue(const JSON &json, const std::string &key) {
+    LogScope scope;
     try {
         if (json.contains(key) && !json[key].is_null()) {
             return json[key].get<T>();
@@ -49,11 +53,13 @@ std::optional<T> GetJSONValue(const JSON &json, const std::string &key) {
 
 template<typename T>
 T GetJSONValueOrDefault(const JSON &json, const std::string &key, const T &defaultValue) {
+    LogScope scope;
     auto value = GetJSONValue<T>(json, key);
     return value.has_value() ? value.value() : defaultValue;
 }
 
 std::optional<JSON> GetNestedJSONValue(const JSON &json, const std::string &path) {
+    LogScope scope;
     try {
         JSON current = json;
         std::stringstream ss(path);
@@ -91,6 +97,7 @@ std::optional<JSON> GetNestedJSONValue(const JSON &json, const std::string &path
 }
 
 bool ValidateJSONStructure(const JSON &json, const std::vector<std::string> &requiredKeys) {
+    LogScope scope;
     for (const auto &key : requiredKeys) {
         if (!json.contains(key)) {
             return false;
@@ -100,6 +107,7 @@ bool ValidateJSONStructure(const JSON &json, const std::vector<std::string> &req
 }
 
 bool IsJSONFileValid(const std::string &filepath) {
+    LogScope scope;
     try {
         std::ifstream file(Utf8StringToPath(filepath));
         if (!file.is_open()) {
@@ -113,6 +121,7 @@ bool IsJSONFileValid(const std::string &filepath) {
 }
 
 JSON MergeJSON(const JSON &base, const JSON &overlay, bool deepMerge) {
+    LogScope scope;
     if (!deepMerge) {
         JSON result = base;
         result.update(overlay);
@@ -131,6 +140,7 @@ JSON MergeJSON(const JSON &base, const JSON &overlay, bool deepMerge) {
 }
 
 bool AppendToJSONArray(JSON &json, const std::string &arrayKey, const JSON &value) {
+    LogScope scope;
     try {
         if (!json.contains(arrayKey)) {
             json[arrayKey] = JSON::array();
@@ -145,6 +155,7 @@ bool AppendToJSONArray(JSON &json, const std::string &arrayKey, const JSON &valu
 }
 
 bool RemoveFromJSONArray(JSON &json, const std::string &arrayKey, size_t index) {
+    LogScope scope;
     try {
         if (!json.contains(arrayKey) || !json[arrayKey].is_array()) {
             return false;
@@ -163,6 +174,7 @@ bool RemoveFromJSONArray(JSON &json, const std::string &arrayKey, size_t index) 
 }
 
 std::string JSONToFormattedString(const JSON &json, int indent) {
+    LogScope scope;
     try {
         return json.dump(indent);
     } catch (const std::exception &) {
@@ -171,6 +183,7 @@ std::string JSONToFormattedString(const JSON &json, int indent) {
 }
 
 void PrintJSON(const JSON &json, const std::string &title) {
+    LogScope scope;
     std::cout << "=== " << title << " ===" << std::endl;
     std::cout << JSONToFormattedString(json, 2) << std::endl;
     std::cout << "===================" << std::endl;

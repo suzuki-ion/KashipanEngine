@@ -1,6 +1,7 @@
 #include "Directory.h"
 #include <filesystem>
 
+#include "Debug/Logger.h"
 #include "Utilities/Conversion/ConvertString.h"
 
 namespace KashipanEngine {
@@ -11,6 +12,7 @@ namespace {
 /// @details path::string()はWindows上でANSIコードページを使うため、非ASCII文字を含む
 ///          ファイル名が文字化けする。常にPathToUtf8Stringで変換すること
 std::string GetFileName(const std::filesystem::path &filePath, bool isFullPath) {
+    LogScope scope;
     if (isFullPath) {
         return PathToUtf8String(filePath);
     } else {
@@ -20,6 +22,7 @@ std::string GetFileName(const std::filesystem::path &filePath, bool isFullPath) 
 
 /// @brief 指定ディレクトリの情報を構築する（必要に応じて再帰）
 DirectoryData BuildDirectoryData(const std::filesystem::path &directoryPath, bool isRecursive, bool isFullPath) {
+    LogScope scope;
     DirectoryData data{};
 
     // ディレクトリ名（ルート等で空の場合はフルパスを設定）
@@ -55,6 +58,7 @@ bool IsDirectoryExist(const std::string &directoryPath) {
 }
 
 bool RemoveFile(const std::string &filePath) {
+    LogScope scope;
     std::error_code ec;
     const std::filesystem::path path = Utf8StringToPath(filePath);
     std::filesystem::remove(path, ec);
@@ -62,6 +66,7 @@ bool RemoveFile(const std::string &filePath) {
 }
 
 bool CreateDirectories(const std::string &directoryPath) {
+    LogScope scope;
     if (directoryPath.empty()) return true;
     std::error_code ec;
     const std::filesystem::path dirPath = Utf8StringToPath(directoryPath);
@@ -73,6 +78,7 @@ bool CreateDirectories(const std::string &directoryPath) {
 }
 
 bool EnsureParentDirectoryExists(const std::string &filePath) {
+    LogScope scope;
     std::error_code ec;
     const std::filesystem::path parent = Utf8StringToPath(filePath).parent_path();
     if (parent.empty()) return true; // カレントディレクトリ直下
@@ -82,11 +88,13 @@ bool EnsureParentDirectoryExists(const std::string &filePath) {
 }
 
 DirectoryData GetDirectoryData(const std::string &directoryPath, bool isRecursive, bool isFullPath) {
+    LogScope scope;
     const std::filesystem::path dirPath = Utf8StringToPath(directoryPath);
     return BuildDirectoryData(dirPath, isRecursive, isFullPath);
 }
 
 DirectoryData GetDirectoryDataByExtension(const DirectoryData &directoryData, const std::vector<std::string> &extensions) {
+    LogScope scope;
     DirectoryData filteredData;
     filteredData.directoryName = directoryData.directoryName;
     // ファイルをフィルタリング
@@ -111,6 +119,7 @@ DirectoryData GetDirectoryDataByExtension(const DirectoryData &directoryData, co
 }
 
 DirectoryData GetDirectoryDataByExtension(const std::string &directoryPath, const std::vector<std::string> &extensions, bool isRecursive, bool isFullPath) {
+    LogScope scope;
     DirectoryData dirData = GetDirectoryData(directoryPath, isRecursive, isFullPath);
     return GetDirectoryDataByExtension(dirData, extensions);
 }

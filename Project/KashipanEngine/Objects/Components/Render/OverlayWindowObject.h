@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Render/IWindowObjectComponent.h"
 #include "Objects/Components/Transform.h"
@@ -18,6 +19,7 @@ public:
     ~OverlayWindowObject() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<OverlayWindowObject>();
         ptr->title_ = title_;
         ptr->width_ = width_;
@@ -29,12 +31,14 @@ public:
 
 protected:
     void Initialize() override {
+        LogScope scope;
         if (window_) return;
         window_ = Window::CreateOverlay(title_, static_cast<int32_t>(width_), static_cast<int32_t>(height_));
         // メッセージの横取り設定を生成したウィンドウへ適用する
         ApplyInterceptedMessages();
     }
     void Update() override {
+        LogScope scope;
         // ウィンドウが受信したメッセージをコールバック（スクリプト等）へ通知する
         DispatchWindowMessages();
 
@@ -62,11 +66,13 @@ protected:
         }
     }
     void Finalize() override {
+        LogScope scope;
         DepositWindowForCarryOver(RenderTargetCarryOverRegistry::Kind::OverlayWindow);
     }
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         ImGuiCustom::EditValue(TranslationLabel("component.overlaywindowobject.title"), title_);
         int w = static_cast<int>(width_);
         int h = static_cast<int>(height_);
@@ -78,6 +84,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = JSON::object();
         json["title"] = title_;
         json["width"] = width_;
@@ -88,6 +95,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         title_ = json.value("title", std::string{ "Overlay Window" });
         width_ = json.value("width", 1280u);
         height_ = json.value("height", 720u);

@@ -1,5 +1,7 @@
 #include "Input/Input.h"
 
+#include "Debug/Logger.h"
+
 #include "Input/Keyboard.h"
 #include "Input/Mouse.h"
 #include "Input/Controller.h"
@@ -17,6 +19,7 @@ Input::Input(Passkey<GameEngine>)
     : keyboard_(std::make_unique<Keyboard>(Passkey<Input>{}))
     , mouse_(std::make_unique<Mouse>(Passkey<Input>{}))
     , controller_(std::make_unique<Controller>(Passkey<Input>{})) {
+    LogScope scope;
     if (keyboard_) {
         keyboard_->Initialize();
     }
@@ -29,6 +32,7 @@ Input::Input(Passkey<GameEngine>)
 }
 
 Input::~Input() {
+    LogScope scope;
     if (controller_) {
         controller_->Finalize();
     }
@@ -41,6 +45,7 @@ Input::~Input() {
 }
 
 void Input::Update() {
+    LogScope scope;
     if (keyboard_) {
         keyboard_->Update();
     }
@@ -53,26 +58,32 @@ void Input::Update() {
 }
 
 Keyboard& Input::GetKeyboard() {
+    LogScope scope;
     return *keyboard_;
 }
 
 const Keyboard& Input::GetKeyboard() const {
+    LogScope scope;
     return *keyboard_;
 }
 
 Mouse& Input::GetMouse() {
+    LogScope scope;
     return *mouse_;
 }
 
 const Mouse& Input::GetMouse() const {
+    LogScope scope;
     return *mouse_;
 }
 
 Controller& Input::GetController() {
+    LogScope scope;
     return *controller_;
 }
 
 const Controller& Input::GetController() const {
+    LogScope scope;
     return *controller_;
 }
 
@@ -115,6 +126,7 @@ constexpr KeyEntry kKeyEntries[] = {
 };
 
 float NormalizeStick(int v) {
+    LogScope scope;
     // Controller は -32767..32767 相当
     constexpr float denom = 32767.0f;
     float f = static_cast<float>(v) / denom;
@@ -124,6 +136,7 @@ float NormalizeStick(int v) {
 }
 
 float NormalizeTrigger(int v) {
+    LogScope scope;
     // Controller は 0..255
     constexpr float denom = 255.0f;
     float f = static_cast<float>(v) / denom;
@@ -134,6 +147,7 @@ float NormalizeTrigger(int v) {
 } // namespace
 
 void Input::ShowImGui() {
+    LogScope scope;
     if (!keyboard_ || !mouse_ || !controller_) return;
 
     if (!ImGui::Begin(TranslationLabel("editor.input.state.window"))) {

@@ -1,24 +1,28 @@
 #include "PrefabAssetManager.h"
 #ifdef USE_IMGUI
 #include "Core/ProjectPaths.h"
+#include "Debug/Logger.h"
 #include "Scene/Editor/PrefabUtility.h"
 #include "Utilities/FileIO/Directory.h"
 
 namespace KashipanEngine {
 
 std::string PrefabAssetManager::GetPrefabPath(const UUID128 &prefabID) {
+    LogScope scope;
     EnsureIndexBuilt();
     auto it = sIDToPath_.find(prefabID);
     return it != sIDToPath_.end() ? it->second : std::string{};
 }
 
 UUID128 PrefabAssetManager::GetPrefabIDFromPath(const std::string &filePath) {
+    LogScope scope;
     EnsureIndexBuilt();
     auto it = sPathToID_.find(filePath);
     return it != sPathToID_.end() ? it->second : UUID128();
 }
 
 bool PrefabAssetManager::CreatePrefabFile(const UUID128 &prefabID, const JSON &json, const std::string &filePath) {
+    LogScope scope;
     EnsureIndexBuilt();
     if (!prefabID.IsValid()) return false;
 
@@ -41,10 +45,12 @@ bool PrefabAssetManager::CreatePrefabFile(const UUID128 &prefabID, const JSON &j
 }
 
 JSON PrefabAssetManager::LoadPrefabJson(const UUID128 &prefabID) {
+    LogScope scope;
     return LoadPrefabJsonRef(prefabID);
 }
 
 const JSON &PrefabAssetManager::LoadPrefabJsonRef(const UUID128 &prefabID) {
+    LogScope scope;
     static const JSON kEmpty = JSON();
     EnsureIndexBuilt();
     auto cacheIt = sCache_.find(prefabID);
@@ -57,6 +63,7 @@ const JSON &PrefabAssetManager::LoadPrefabJsonRef(const UUID128 &prefabID) {
 }
 
 bool PrefabAssetManager::SavePrefabJson(const UUID128 &prefabID, const JSON &newJson) {
+    LogScope scope;
     EnsureIndexBuilt();
     auto pathIt = sIDToPath_.find(prefabID);
     if (pathIt == sIDToPath_.end()) return false;
@@ -68,6 +75,7 @@ bool PrefabAssetManager::SavePrefabJson(const UUID128 &prefabID, const JSON &new
 }
 
 bool PrefabAssetManager::SavePrefabJsonByPath(const std::string &filePath, const JSON &newJson) {
+    LogScope scope;
     EnsureIndexBuilt();
     const UUID128 prefabID(newJson.value("prefabID", std::string{}));
     if (!prefabID.IsValid()) {
@@ -80,6 +88,7 @@ bool PrefabAssetManager::SavePrefabJsonByPath(const std::string &filePath, const
 }
 
 bool PrefabAssetManager::RenamePrefabFile(const std::string &oldFilePath, const std::string &newFilePath) {
+    LogScope scope;
     EnsureIndexBuilt();
     auto it = sPathToID_.find(oldFilePath);
     if (it == sPathToID_.end()) return false;
@@ -91,10 +100,12 @@ bool PrefabAssetManager::RenamePrefabFile(const std::string &oldFilePath, const 
 }
 
 void PrefabAssetManager::SetChangeListener(ChangeCallback callback) {
+    LogScope scope;
     sListener_ = std::move(callback);
 }
 
 void PrefabAssetManager::EnsureIndexBuilt() {
+    LogScope scope;
     if (sIndexBuilt_) return;
     sIndexBuilt_ = true;
 
@@ -111,6 +122,7 @@ void PrefabAssetManager::EnsureIndexBuilt() {
 }
 
 void PrefabAssetManager::NotifyChanged(const UUID128 &prefabID, const JSON &oldJson, const JSON &newJson) {
+    LogScope scope;
     sCache_[prefabID] = newJson;
     if (sListener_) sListener_(prefabID, oldJson, newJson);
 }

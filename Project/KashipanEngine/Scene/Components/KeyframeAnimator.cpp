@@ -7,6 +7,7 @@
 #include "Assets/AnimationManager.h"
 #include "Assets/SkeletonManager.h"
 #include "Core/ProjectPaths.h"
+#include "Debug/Logger.h"
 #include "Scene/SceneContext.h"
 #include "Objects/Components/Transform.h"
 
@@ -16,6 +17,7 @@ namespace KashipanEngine {
 
 namespace {
 float EvaluateTimelineFloat(const KeyframeTimeline &timeline, float time) {
+    LogScope scope;
     if (timeline.keys.empty()) return 0.0f;
     if (timeline.keys.size() == 1) return std::get<float>(timeline.keys.front().value);
 
@@ -46,6 +48,7 @@ float EvaluateTimelineFloat(const KeyframeTimeline &timeline, float time) {
 }
 
 Vector3 EvaluateTimelineVector3(const KeyframeTimeline &timeline, float time) {
+    LogScope scope;
     if (timeline.keys.empty()) return Vector3();
     if (timeline.keys.size() == 1) return std::get<Vector3>(timeline.keys.front().value);
 
@@ -83,6 +86,7 @@ Vector3 EvaluateTimelineVector3(const KeyframeTimeline &timeline, float time) {
 }
 
 Quaternion EvaluateTimelineQuaternion(const KeyframeTimeline &timeline, float time) {
+    LogScope scope;
     if (timeline.keys.empty()) return Quaternion::Identity();
     if (timeline.keys.size() == 1) return std::get<Quaternion>(timeline.keys.front().value);
 
@@ -113,6 +117,7 @@ Quaternion EvaluateTimelineQuaternion(const KeyframeTimeline &timeline, float ti
 }
 
 KeyframeValue EvaluateTimeline(const KeyframeTimeline &timeline, float time) {
+    LogScope scope;
     switch (timeline.valueType) {
     case KeyframeValueType::Vector3:
         return EvaluateTimelineVector3(timeline, time);
@@ -125,6 +130,7 @@ KeyframeValue EvaluateTimeline(const KeyframeTimeline &timeline, float time) {
 }
 
 std::string EnsureJsonExtension(std::string path) {
+    LogScope scope;
     if (path.empty()) return path;
 
     auto lowerPath = path;
@@ -139,6 +145,7 @@ std::string EnsureJsonExtension(std::string path) {
 }
 
 void SortTimelineKeys(KeyframeTimeline &timeline) {
+    LogScope scope;
     std::sort(timeline.keys.begin(), timeline.keys.end(), [](const KeyframeNode &lhs, const KeyframeNode &rhs) {
         return lhs.time < rhs.time;
         });
@@ -154,6 +161,7 @@ void SortTimelineKeys(KeyframeTimeline &timeline) {
 } // namespace
 
 bool KeyframeAnimator::PlayFromAnimationHandle(uint32_t handle, const std::string &objectName, bool loop) {
+    LogScope scope;
     if (handle == AnimationManager::kInvalidHandle) return false;
     if (objectName.empty()) return false;
 
@@ -272,6 +280,7 @@ bool KeyframeAnimator::PlayFromAnimationHandle(uint32_t handle, const std::strin
 }
 
 bool KeyframeAnimator::PlayFromAnimationAndSkeletonHandle(uint32_t animationHandle, uint32_t skeletonHandle, bool loop, std::string clipName) {
+    LogScope scope;
     if (animationHandle == AnimationManager::kInvalidHandle) return false;
     if (skeletonHandle == SkeletonManager::kInvalidHandle) return false;
 
@@ -391,18 +400,22 @@ bool KeyframeAnimator::PlayFromAnimationAndSkeletonHandle(uint32_t animationHand
 
 KeyframeAnimator::KeyframeAnimator()
     : ISceneComponent("KeyframeAnimator", 1, GetComponentTypeID<KeyframeAnimator>()) {
+    LogScope scope;
 }
 
 void KeyframeAnimator::Initialize() {
+    LogScope scope;
     playbackStates_.clear();
 }
 
 void KeyframeAnimator::Finalize() {
+    LogScope scope;
     playbackStates_.clear();
     timelines_.clear();
 }
 
 void KeyframeAnimator::Update() {
+    LogScope scope;
     if (playbackStates_.empty()) return;
 
     const float dt = std::max(0.0f, GetDeltaTime()) * GetGameSpeed();
@@ -452,6 +465,7 @@ void KeyframeAnimator::Update() {
 }
 
 bool KeyframeAnimator::AddTimeline(const std::string &timelineName) {
+    LogScope scope;
     if (timelineName.empty()) return false;
     if (timelines_.contains(timelineName)) return false;
 
@@ -470,6 +484,7 @@ bool KeyframeAnimator::AddTimeline(const std::string &timelineName) {
 }
 
 bool KeyframeAnimator::AddTimeline(const KeyframeTimeline &timeline) {
+    LogScope scope;
     if (timeline.name.empty()) return false;
     if (timelines_.contains(timeline.name)) return false;
 
@@ -490,6 +505,7 @@ bool KeyframeAnimator::AddTimeline(const KeyframeTimeline &timeline) {
 }
 
 bool KeyframeAnimator::RemoveTimeline(const std::string &timelineName) {
+    LogScope scope;
     if (timelineName.empty()) return false;
     const auto before = timelines_.size();
     timelines_.erase(timelineName);
@@ -498,10 +514,12 @@ bool KeyframeAnimator::RemoveTimeline(const std::string &timelineName) {
 }
 
 bool KeyframeAnimator::HasTimeline(const std::string &timelineName) const {
+    LogScope scope;
     return timelines_.contains(timelineName);
 }
 
 bool KeyframeAnimator::AddTimelineKey(const std::string &timelineName, float time, float value, EaseType easeType) {
+    LogScope scope;
     auto it = timelines_.find(timelineName);
     if (it == timelines_.end()) return false;
 
@@ -528,6 +546,7 @@ bool KeyframeAnimator::AddTimelineKey(const std::string &timelineName, float tim
 }
 
 bool KeyframeAnimator::UpdateTimelineKey(const std::string &timelineName, size_t keyIndex, float value) {
+    LogScope scope;
     auto it = timelines_.find(timelineName);
     if (it == timelines_.end()) return false;
     if (keyIndex >= it->second.keys.size()) return false;
@@ -538,6 +557,7 @@ bool KeyframeAnimator::UpdateTimelineKey(const std::string &timelineName, size_t
 }
 
 bool KeyframeAnimator::RemoveTimelineKey(const std::string &timelineName, size_t keyIndex) {
+    LogScope scope;
     auto it = timelines_.find(timelineName);
     if (it == timelines_.end()) return false;
     if (keyIndex >= it->second.keys.size()) return false;
@@ -558,6 +578,7 @@ bool KeyframeAnimator::RemoveTimelineKey(const std::string &timelineName, size_t
 }
 
 bool KeyframeAnimator::SetTimelineLoop(const std::string &timelineName, bool loop) {
+    LogScope scope;
     auto it = timelines_.find(timelineName);
     if (it == timelines_.end()) return false;
     it->second.loop = loop;
@@ -565,18 +586,21 @@ bool KeyframeAnimator::SetTimelineLoop(const std::string &timelineName, bool loo
 }
 
 bool KeyframeAnimator::IsTimelinePlaying(const std::string &timelineName) const {
+    LogScope scope;
     auto it = playbackStates_.find(timelineName);
     if (it == playbackStates_.end()) return false;
     return it->second.playing;
 }
 
 bool KeyframeAnimator::IsTimelinePaused(const std::string &timelineName) const {
+    LogScope scope;
     auto it = playbackStates_.find(timelineName);
     if (it == playbackStates_.end()) return false;
     return it->second.paused;
 }
 
 bool KeyframeAnimator::SaveSettings(const std::string &filePath) {
+    LogScope scope;
     const std::string normalizedPath = EnsureJsonExtension(filePath);
     if (normalizedPath.empty()) return false;
 
@@ -608,6 +632,7 @@ bool KeyframeAnimator::SaveSettings(const std::string &filePath) {
 }
 
 bool KeyframeAnimator::LoadSettings(const std::string &filePath) {
+    LogScope scope;
     const std::string normalizedPath = EnsureJsonExtension(filePath);
     if (normalizedPath.empty()) return false;
 

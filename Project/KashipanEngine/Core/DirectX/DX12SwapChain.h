@@ -36,6 +36,7 @@ public:
     static void Initialize(Passkey<DirectXCommon>, DirectXCommon *directXCommon,
         ID3D12Device *device, IDXGIFactory7 *dxgiFactory, ID3D12CommandQueue *commandQueue,
         RTVHeap *rtvHeap, DSVHeap *dsvHeap, SRVHeap *srvHeap, SamplerHeap *samplerHeap) {
+        LogScope scope;
         sDirectXCommon = directXCommon;
         sDevice = device;
         sDXGIFactory = dxgiFactory;
@@ -49,7 +50,7 @@ public:
     /// @brief 遅延初期化用コンストラクタ (HWND 未決定)
     DX12SwapChain(Passkey<DirectXCommon>, int32_t bufferCount = 2) : bufferCount_(bufferCount) {
     }
-    ~DX12SwapChain() { DestroyInternal(); }
+    ~DX12SwapChain() { LogScope scope; DestroyInternal(); }
 
     DX12SwapChain(const DX12SwapChain &) = delete;
     DX12SwapChain &operator=(const DX12SwapChain &) = delete;

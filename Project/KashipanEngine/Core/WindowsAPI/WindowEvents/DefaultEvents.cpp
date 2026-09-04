@@ -2,6 +2,7 @@
 #include <Windows.h>
 #include "Core/Window.h"
 #include "Core/WindowsAPI/WindowDescriptor.h"
+#include "Debug/Logger.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/Translation.h"
 
@@ -9,12 +10,14 @@ namespace KashipanEngine {
 namespace WindowDefaultEvent {
 
 std::optional<LRESULT> ActivateEvent::OnEvent(UINT msg, WPARAM /*wparam*/, LPARAM lparam) {
+    LogScope scope;
     static_cast<void>(msg);
     static_cast<void>(lparam);
     return std::nullopt;
 }
 
 std::optional<LRESULT> ClickThroughEvent::OnEvent(UINT /*msg*/, WPARAM /*wparam*/, LPARAM /*lparam*/) {
+    LogScope scope;
     if (!enable_) {
         return std::nullopt;
     }
@@ -22,25 +25,30 @@ std::optional<LRESULT> ClickThroughEvent::OnEvent(UINT /*msg*/, WPARAM /*wparam*
 }
 
 std::optional<LRESULT> CloseEvent::OnEvent(UINT /*msg*/, WPARAM /*wparam*/, LPARAM /*lparam*/) {
+    LogScope scope;
     GetWindow()->DestroyNotify();
     return 0;
 }
 
 std::optional<LRESULT> DestroyEvent::OnEvent(UINT /*msg*/, WPARAM /*wparam*/, LPARAM /*lparam*/) {
+    LogScope scope;
     return 0;
 }
 
 std::optional<LRESULT> EnterSizeMoveEvent::OnEvent(UINT msg, WPARAM /*wparam*/, LPARAM /*lparam*/) {
+    LogScope scope;
     if (msg != kTargetMessage_) return std::nullopt;
     return std::nullopt;
 }
 
 std::optional<LRESULT> ExitSizeMoveEvent::OnEvent(UINT msg, WPARAM /*wparam*/, LPARAM /*lparam*/) {
+    LogScope scope;
     if (msg != kTargetMessage_) return std::nullopt;
     return std::nullopt;
 }
 
 std::optional<LRESULT> GetMinMaxInfoEvent::OnEvent(UINT msg, WPARAM /*wparam*/, LPARAM lparam) {
+    LogScope scope;
     if (msg != kTargetMessage_) return std::nullopt;
 
     auto *window = GetWindow();
@@ -69,6 +77,7 @@ std::optional<LRESULT> GetMinMaxInfoEvent::OnEvent(UINT msg, WPARAM /*wparam*/, 
 }
 
 std::optional<LRESULT> SizeEvent::OnEvent(UINT /*msg*/, WPARAM /*wparam*/, LPARAM lparam) {
+    LogScope scope;
     UINT width = LOWORD(lparam);
     UINT height = HIWORD(lparam);
     auto *window = GetWindow();
@@ -83,6 +92,7 @@ std::optional<LRESULT> SizeEvent::OnEvent(UINT /*msg*/, WPARAM /*wparam*/, LPARA
 }
 
 std::optional<LRESULT> SizingEvent::OnEvent(UINT /*msg*/, WPARAM wparam, LPARAM lparam) {
+    LogScope scope;
     auto *window = GetWindow();
     if (!window || window->GetSizeChangeMode() != SizeChangeMode::FixedAspect) return std::nullopt;
 
@@ -119,6 +129,7 @@ std::optional<LRESULT> SizingEvent::OnEvent(UINT /*msg*/, WPARAM wparam, LPARAM 
 }
 
 std::optional<LRESULT> SysCommandCloseEvent::OnEvent(UINT /*msg*/, WPARAM wparam, LPARAM /*lparam*/) {
+    LogScope scope;
     if (wparam != SC_CLOSE) {
         return std::nullopt;
     }
@@ -135,6 +146,7 @@ std::optional<LRESULT> SysCommandCloseEvent::OnEvent(UINT /*msg*/, WPARAM wparam
 }
 
 std::optional<LRESULT> SysCommandCloseEventSimple::OnEvent(UINT /*msg*/, WPARAM wparam, LPARAM /*lparam*/) {
+    LogScope scope;
     if (wparam != SC_CLOSE) {
         return std::nullopt;
     }

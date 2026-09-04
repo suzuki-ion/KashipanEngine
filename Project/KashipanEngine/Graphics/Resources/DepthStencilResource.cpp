@@ -5,6 +5,7 @@ namespace KashipanEngine {
 
 namespace {
 bool IsDepthStencilFormat(DXGI_FORMAT f) noexcept {
+    LogScope scope;
     switch (f) {
     case DXGI_FORMAT_D16_UNORM:
     case DXGI_FORMAT_D24_UNORM_S8_UINT:
@@ -17,6 +18,7 @@ bool IsDepthStencilFormat(DXGI_FORMAT f) noexcept {
 }
 
 DXGI_FORMAT ToTypelessForDepth(DXGI_FORMAT f) noexcept {
+    LogScope scope;
     switch (f) {
     case DXGI_FORMAT_D16_UNORM:
         return DXGI_FORMAT_R16_TYPELESS;
@@ -40,6 +42,7 @@ DepthStencilResource::DepthStencilResource(UINT width, UINT height, DXGI_FORMAT 
     UINT arraySize,
     bool srvUseReservedRange)
     : IGraphicsResource(ResourceViewType::DSV) {
+    LogScope scope;
     Initialize(width, height, format, clearDepth, clearStencil, existingResource, createSrv, srvFormat, arraySize, srvUseReservedRange);
 }
 
@@ -50,6 +53,7 @@ bool DepthStencilResource::Recreate(UINT width, UINT height, DXGI_FORMAT format,
     DXGI_FORMAT srvFormat,
     UINT arraySize,
     bool srvUseReservedRange) {
+    LogScope scope;
     ResetResourceForRecreate();
     srvHandleInfo_.reset();
     sliceDsvHandles_.clear();
@@ -57,6 +61,7 @@ bool DepthStencilResource::Recreate(UINT width, UINT height, DXGI_FORMAT format,
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilResource::GetSliceDsvHandle(UINT slice) const {
+    LogScope scope;
     if (arraySize_ >= 2 && slice < sliceDsvHandles_.size() && sliceDsvHandles_[slice]) {
         return sliceDsvHandles_[slice]->cpuHandle;
     }
@@ -66,6 +71,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilResource::GetSliceDsvHandle(UINT slice) 
 }
 
 void DepthStencilResource::ClearDepthStencilView() const {
+    LogScope scope;
     auto *cl = GetCommandList();
     if (!cl || !GetDescriptorHandleInfo()) {
         return;
@@ -81,6 +87,7 @@ void DepthStencilResource::ClearDepthStencilView() const {
 }
 
 DXGI_FORMAT DepthStencilResource::GuessSrvFormatFromDsvFormat(DXGI_FORMAT dsvFormat) noexcept {
+    LogScope scope;
     switch (dsvFormat) {
     case DXGI_FORMAT_D16_UNORM:
         return DXGI_FORMAT_R16_UNORM;
@@ -96,6 +103,7 @@ DXGI_FORMAT DepthStencilResource::GuessSrvFormatFromDsvFormat(DXGI_FORMAT dsvFor
 }
 
 void DepthStencilResource::CreateSrvInternal(DXGI_FORMAT srvFormat, bool useReservedRange) {
+    LogScope scope;
     auto *srvHeap = GetSRVHeap();
     if (!GetDevice() || !srvHeap || !GetResource()) {
         return;

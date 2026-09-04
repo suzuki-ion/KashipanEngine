@@ -1,12 +1,15 @@
 #include "Scene/RenderTargetCarryOverRegistry.h"
+#include "Debug/Logger.h"
 
 namespace KashipanEngine {
 
 void RenderTargetCarryOverRegistry::BeginSceneSwitch(Passkey<SceneManager>) {
+    LogScope scope;
     sSceneSwitchInProgress_ = true;
 }
 
 void RenderTargetCarryOverRegistry::EndSceneSwitch(Passkey<SceneManager>) {
+    LogScope scope;
     sSceneSwitchInProgress_ = false;
     // 引き取られなかったリソースはここで実際に破棄する
     for (auto &pool : sPools_) {
@@ -18,10 +21,12 @@ void RenderTargetCarryOverRegistry::EndSceneSwitch(Passkey<SceneManager>) {
 }
 
 bool RenderTargetCarryOverRegistry::IsSceneSwitchInProgress() {
+    LogScope scope;
     return sSceneSwitchInProgress_;
 }
 
 void RenderTargetCarryOverRegistry::Deposit(Kind kind, const std::string &key, void *resource, std::function<void()> destroyFn) {
+    LogScope scope;
     if (!resource || !destroyFn) return;
     if (key.empty() || !sSceneSwitchInProgress_) {
         // 切り替え中でない場合は引き継ぎを行わず即座に破棄する（リーク防止）
@@ -38,6 +43,7 @@ void RenderTargetCarryOverRegistry::Deposit(Kind kind, const std::string &key, v
 }
 
 void *RenderTargetCarryOverRegistry::Claim(Kind kind, const std::string &key) {
+    LogScope scope;
     if (key.empty()) return nullptr;
     auto &pool = sPools_[PoolIndex(kind)];
     auto it = pool.find(key);

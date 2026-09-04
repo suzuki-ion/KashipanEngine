@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include "Debug/Logger.h"
 #include "Math/Vector3.h"
 #include "Scene/SceneEditorContext.h"
 #include "Scene/Editor/PrefabSyncUtility.h"
@@ -39,6 +40,7 @@ public:
     void SetCommands(SceneEditorCommands *commands) { commands_ = commands; }
     /// @brief 選択状態をクリアする（Undo/Redoやシーンロードでオブジェクトが変わった場合用）
     void ClearSelection() {
+        LogScope scope;
         SetSelectedObject(nullptr);
         ClearSelectionSet();
         SetSelectionAnchor(nullptr);
@@ -84,6 +86,7 @@ public:
     /// @param obj 選択するオブジェクト（nullptrかつadditive=falseの場合は選択解除）
     /// @param additive trueの場合、既存の選択集合へトグル追加/削除する（Ctrlクリック相当）
     void SelectObject(EmptyObject *obj, bool additive = false) {
+        LogScope scope;
         if (!obj) {
             if (!additive) ClearSelection();
             return;
@@ -139,28 +142,34 @@ private:
     // キャッシュ」として扱う（ValidateCachedObjects()で毎フレーム引き直す）。以下のSetXxx/AddXxx系
     // ヘルパーは、両者を必ずセットで更新するための唯一の書き込み経路とする。
     void SetSelectedObject(EmptyObject *obj) {
+        LogScope scope;
         selectedObject_ = obj;
         selectedObjectID_ = obj ? obj->GetObjectID() : UUID128();
     }
     void SetSelectionAnchor(EmptyObject *obj) {
+        LogScope scope;
         selectionAnchorObject_ = obj;
         selectionAnchorObjectID_ = obj ? obj->GetObjectID() : UUID128();
     }
     void SetPendingRevertPrefabTarget(EmptyObject *obj) {
+        LogScope scope;
         pendingRevertPrefabTarget_ = obj;
         pendingRevertPrefabTargetID_ = obj ? obj->GetObjectID() : UUID128();
     }
     void AddToSelectionSet(EmptyObject *obj) {
+        LogScope scope;
         if (!obj) return;
         selectedObjects_.insert(obj);
         selectedObjectIDs_.insert(obj->GetObjectID());
     }
     void RemoveFromSelectionSet(EmptyObject *obj) {
+        LogScope scope;
         if (!obj) return;
         selectedObjects_.erase(obj);
         selectedObjectIDs_.erase(obj->GetObjectID());
     }
     void ClearSelectionSet() {
+        LogScope scope;
         selectedObjects_.clear();
         selectedObjectIDs_.clear();
     }

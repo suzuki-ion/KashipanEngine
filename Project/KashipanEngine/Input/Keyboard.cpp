@@ -1,5 +1,7 @@
 #include "Input/Keyboard.h"
 
+#include "Debug/Logger.h"
+
 #include <GameInput.h>
 
 #include <cassert>
@@ -13,6 +15,7 @@ namespace {
 IGameInput* sGameInput = nullptr;
 
 Key FromVirtualKey(std::uint8_t vk) noexcept {
+    LogScope scope;
     // Letters
     if (vk >= 'A' && vk <= 'Z') {
         return static_cast<Key>(static_cast<std::uint16_t>(Key::A) + static_cast<std::uint16_t>(vk - 'A'));
@@ -68,10 +71,12 @@ Key FromVirtualKey(std::uint8_t vk) noexcept {
 Keyboard::Keyboard(Passkey<Input>) {}
 
 Keyboard::~Keyboard() {
+    LogScope scope;
     Finalize();
 }
 
 void Keyboard::Initialize() {
+    LogScope scope;
     if (!sGameInput) {
         const HRESULT hr = GameInputCreate(&sGameInput);
         if (FAILED(hr)) {
@@ -86,16 +91,19 @@ void Keyboard::Initialize() {
 }
 
 void Keyboard::Finalize() {
+    LogScope scope;
     initialized_ = false;
     current.fill(0);
     previous.fill(0);
 }
 
 size_t Keyboard::ToIndex_(Key key) noexcept {
+    LogScope scope;
     return static_cast<size_t>(key) & 0xFFu;
 }
 
 void Keyboard::Update() {
+    LogScope scope;
     previous = current;
     current.fill(0);
 
@@ -145,20 +153,24 @@ void Keyboard::Update() {
 }
 
 bool Keyboard::IsDown(Key key) const {
+    LogScope scope;
     const auto idx = ToIndex_(key);
     return (idx < current.size()) ? ((current[idx] & 0x80) != 0) : false;
 }
 
 bool Keyboard::WasDown(Key key) const {
+    LogScope scope;
     const auto idx = ToIndex_(key);
     return (idx < previous.size()) ? ((previous[idx] & 0x80) != 0) : false;
 }
 
 bool Keyboard::IsTrigger(Key key) const {
+    LogScope scope;
     return IsDown(key) && !WasDown(key);
 }
 
 bool Keyboard::IsRelease(Key key) const {
+    LogScope scope;
     return !IsDown(key) && WasDown(key);
 }
 

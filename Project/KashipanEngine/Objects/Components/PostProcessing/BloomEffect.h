@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 #include "Graphics/Pipeline/System/PipelineBinder.h"
 #include "Graphics/Pipeline/System/ShaderVariableBinder.h"
@@ -42,6 +43,7 @@ public:
     ~BloomEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<BloomEffect>();
         ptr->params_ = params_;
         return ptr;
@@ -52,6 +54,7 @@ public:
 
 protected:
     void Finalize() override {
+        LogScope scope;
         IPostProcessComponent::Finalize();
         pyramid_.clear();
         pyramidBlur_.clear();
@@ -61,6 +64,7 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         IPostProcessComponent::ShowImGui();
         ImGui::DragFloat(TranslationLabel("component.bloomeffect.threshold"), &params_.threshold, 0.01f, 0.0f, 10.0f, "%.3f");
         ImGui::DragFloat(TranslationLabel("component.bloomeffect.softknee"), &params_.softKnee, 0.01f, 0.0f, 1.0f, "%.3f");
@@ -74,6 +78,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = IPostProcessComponent::SaveToJson();
         json["threshold"] = params_.threshold;
         json["softKnee"] = params_.softKnee;
@@ -84,6 +89,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         IPostProcessComponent::LoadFromJson(json);
         params_.threshold = json.value("threshold", 1.0f);
         params_.softKnee = json.value("softKnee", 0.5f);
@@ -97,6 +103,7 @@ protected:
     std::vector<PassInfo> BuildPasses() override { return {}; }
 
     bool RenderCustom(CustomRenderContext &context) override {
+        LogScope scope;
         auto *screenBuffer = context.screenBuffer;
         auto *commandList = context.commandList;
         if (!screenBuffer || !commandList || !context.pipelineManager || !context.pipelineBinder || !context.getShaderBinder) return false;
@@ -218,6 +225,7 @@ private:
 
     /// @brief 中間レンダーターゲット群をオーナーのサイズ・フォーマットに合わせて用意する
     bool EnsureIntermediateTargets(ScreenBuffer *owner) {
+        LogScope scope;
         const std::uint32_t baseWidth = owner->GetWidth();
         const std::uint32_t baseHeight = owner->GetHeight();
         if (baseWidth == 0 || baseHeight == 0) return false;
@@ -263,6 +271,7 @@ private:
 
     /// @brief 定数バッファへ現在のパラメータをアップロードする
     bool UpdateConstantBuffer() {
+        LogScope scope;
         if (!constantBuffer_) {
             constantBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(CBData));
         }

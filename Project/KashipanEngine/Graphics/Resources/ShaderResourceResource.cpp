@@ -6,11 +6,13 @@ namespace KashipanEngine {
 
 ShaderResourceResource::ShaderResourceResource(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState, UINT mipLevels, UINT arraySize, const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc, bool useReservedRange)
     : IGraphicsResource(ResourceViewType::SRV) {
+    LogScope scope;
     Initialize(width, height, format, flags, existingResource, initialState, mipLevels, arraySize, externalSrvDesc, useReservedRange);
 }
 
 ShaderResourceResource::ShaderResourceResource(RenderTargetResource* renderTarget, D3D12_RESOURCE_STATES initialState, UINT mipLevels, const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc, bool useReservedRange)
     : IGraphicsResource(ResourceViewType::SRV) {
+    LogScope scope;
     if (!renderTarget) {
         return;
     }
@@ -30,6 +32,7 @@ ShaderResourceResource::ShaderResourceResource(RenderTargetResource* renderTarge
 }
 
 bool ShaderResourceResource::Recreate(UINT width, UINT height, DXGI_FORMAT format, D3D12_RESOURCE_FLAGS flags, ID3D12Resource *existingResource, D3D12_RESOURCE_STATES initialState, UINT mipLevels, UINT arraySize, const D3D12_SHADER_RESOURCE_VIEW_DESC *externalSrvDesc, bool useReservedRange) {
+    LogScope scope;
     ResetResourceForRecreate();
     return Initialize(width, height, format, flags, existingResource, initialState, mipLevels, arraySize, externalSrvDesc, useReservedRange);
 }

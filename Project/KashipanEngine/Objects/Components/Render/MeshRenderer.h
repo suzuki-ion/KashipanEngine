@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Assets/MaterialManager.h"
 #include "Assets/ModelManager.h"
@@ -62,6 +63,7 @@ public:
     ~MeshRenderer() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<MeshRenderer>();
         ptr->targetObjectID_ = targetObjectID_;
         ptr->pipelineName_ = pipelineName_;
@@ -118,12 +120,12 @@ public:
 
     /// @brief 描画順を制御する優先度を設定する（既定0）。値が小さいほど先（奥）、大きいほど後（手前）に
     ///        描画される。パイプラインの描画優先度より後、メッシュ/マテリアルによる並びより前に評価される
-    void SetRenderPriority(std::int32_t priority) noexcept { renderPriority_ = priority; MarkDrawListDirty(); }
+    void SetRenderPriority(std::int32_t priority) noexcept { LogScope scope; renderPriority_ = priority; MarkDrawListDirty(); }
     std::int32_t GetRenderPriority() const noexcept { return renderPriority_; }
     /// @brief このレンダラーを他のオブジェクトとのインスタンシング（1回のドローコールへのバッチ結合）
     ///        対象にするか設定する（既定true）。falseにすると、同じメッシュ/マテリアル/パイプラインを
     ///        共有する他のオブジェクトがあっても常に単独のドローコールで描画される
-    void SetAllowInstancing(bool allow) noexcept { allowInstancing_ = allow; MarkDrawListDirty(); }
+    void SetAllowInstancing(bool allow) noexcept { LogScope scope; allowInstancing_ = allow; MarkDrawListDirty(); }
     bool GetAllowInstancing() const noexcept { return allowInstancing_; }
 
     //==================================================
@@ -132,11 +134,13 @@ public:
 
     /// @brief 描画先オブジェクトを設定（描画先コンポーネントが付与されたオブジェクト）
     void SetTargetObject(const EmptyObject *targetObject) {
+        LogScope scope;
         targetObjectID_ = targetObject ? targetObject->GetObjectID() : UUID128();
         MarkDrawListDirty();
     }
     /// @brief 描画先オブジェクトをUUIDから設定
     void SetTargetObject(const UUID128 &targetObjectID) {
+        LogScope scope;
         targetObjectID_ = targetObjectID;
         MarkDrawListDirty();
     }
@@ -144,6 +148,7 @@ public:
     const UUID128 &GetTargetObjectID() const noexcept { return targetObjectID_; }
     /// @brief 描画先オブジェクトを取得（存在しない場合は nullptr）
     EmptyObject *GetTargetObject() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext || !targetObjectID_.IsValid()) return nullptr;
         return sceneContext->GetSceneObject(targetObjectID_);
@@ -151,6 +156,7 @@ public:
 
     /// @brief 指定の描画先がこのコンポーネントの描画対象に含まれるか（除外設定されていないか）
     bool IsRenderTargetIncluded(const IRenderTarget *target) const {
+        LogScope scope;
         if (!target) return false;
         return !excludedRenderTargetNames_.contains(target->GetRenderTargetName());
     }
@@ -160,6 +166,7 @@ public:
     //==================================================
 
     void SetPipelineName(const std::string &pipelineName) {
+        LogScope scope;
         pipelineName_ = pipelineName;
         MarkDrawListDirty();
     }
@@ -171,6 +178,7 @@ public:
 
     void SetMaterialName(const std::string &materialName) { SetMaterialNameAt(0, materialName); }
     void SetMaterialHandle(MaterialManager::MaterialHandle materialHandle) {
+        LogScope scope;
         materialHandles_[0] = materialHandle;
         MarkDrawListDirty();
     }
@@ -186,6 +194,7 @@ public:
     size_t GetMaterialSlotCount() const noexcept { return materialNames_.size(); }
     /// @brief マテリアルスロット数を変更する（追加分は最後のスロットと同じマテリアルで埋める）
     void SetMaterialSlotCount(size_t count) {
+        LogScope scope;
         if (count < 1) count = 1;
         if (count == materialNames_.size()) return;
         materialNames_.resize(count, materialNames_.back());
@@ -194,6 +203,7 @@ public:
     }
     /// @brief 指定スロットのマテリアル名を設定する（スロットが足りない場合は拡張される）
     void SetMaterialNameAt(size_t slot, const std::string &materialName) {
+        LogScope scope;
         if (slot >= materialNames_.size()) SetMaterialSlotCount(slot + 1);
         materialNames_[slot] = materialName;
         materialHandles_[slot] = MaterialManager::kInvalidHandle;
@@ -206,6 +216,7 @@ public:
     /// @brief 指定スロットのマテリアルハンドルを取得（未解決の場合はマテリアル名から解決を試みる）
     /// @details スロット数を超えるサブメッシュは最後のスロットのマテリアルで描画される（Unityと同様）
     MaterialManager::MaterialHandle GetMaterialHandleAt(size_t slot) const noexcept {
+        LogScope scope;
         const size_t index = std::min(slot, materialNames_.size() - 1);
         if (materialHandles_[index] == MaterialManager::kInvalidHandle && !materialNames_[index].empty()) {
             materialHandles_[index] = MaterialManager::GetMaterialHandleFromName(materialNames_[index]);
@@ -219,6 +230,7 @@ public:
 
     /// @brief 描画に使用するメッシュハンドルを取得（MeshFilter コンポーネントから）
     ModelManager::ModelHandle GetMeshHandle() const {
+        LogScope scope;
         auto *objectContext = GetOwnerObjectContext();
         if (!objectContext) return ModelManager::kInvalidHandle;
         auto *meshFilter = objectContext->GetComponent<MeshFilter>();
@@ -228,6 +240,7 @@ public:
 
     /// @brief ワールド行列を取得（Transform コンポーネントから）
     Matrix4x4 GetWorldMatrix() const {
+        LogScope scope;
         auto *objectContext = GetOwnerObjectContext();
         auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
         return transform ? transform->GetWorldMatrix() : Matrix4x4::Identity();
@@ -235,6 +248,7 @@ public:
 
 protected:
     void Initialize() override {
+        LogScope scope;
         auto *sceneRenderer = GetOrAddSceneRenderer();
         if (sceneRenderer) {
             sceneRenderer->RegisterMeshRenderer(this);
@@ -242,6 +256,7 @@ protected:
     }
 
     void Finalize() override {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
         if (sceneRenderer) {
@@ -251,6 +266,7 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         // 描画先はシーン上のオブジェクトから選択（ヒエラルキーからのD&Dも受け付ける）
         if (TargetObjectSelector::ShowSelector(TranslationLabel("component.common.target"), GetOwnerSceneContext(), targetObjectID_)) {
             MarkDrawListDirty();
@@ -390,6 +406,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = JSON::object();
         json["targetObjectID"] = ToJSON(targetObjectID_);
         json["pipelineName"] = pipelineName_;
@@ -413,6 +430,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         if (json.contains("targetObjectID")) {
             targetObjectID_ = FromJSON<UUID128>(json["targetObjectID"]);
         } else {
@@ -450,12 +468,14 @@ private:
     ///        変更した際に呼ぶ（SceneRendererが未登録の場合は何もしない。登録済みなら次回のBuildSortedDrawList
     ///        でキャッシュが再構築される）
     void MarkDrawListDirty() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         auto *sceneRenderer = sceneContext ? sceneContext->GetComponent<SceneRenderer>() : nullptr;
         if (sceneRenderer) sceneRenderer->MarkDrawListDirty();
     }
 
     SceneRenderer *GetOrAddSceneRenderer() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext) return nullptr;
         auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();

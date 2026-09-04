@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 
+#include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
@@ -32,6 +33,7 @@ public:
     ~ScreenAnchor() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<ScreenAnchor>();
         ptr->cameraObjectID_ = cameraObjectID_;
         ptr->anchorPoint_ = anchorPoint_;
@@ -50,6 +52,7 @@ public:
     void SetCameraObject(const UUID128 &cameraObjectID) { cameraObjectID_ = cameraObjectID; }
     const UUID128 &GetCameraObjectID() const noexcept { return cameraObjectID_; }
     EmptyObject *GetCameraObject() const {
+        LogScope scope;
         auto *sceneContext = GetOwnerSceneContext();
         if (!sceneContext || !cameraObjectID_.IsValid()) return nullptr;
         return sceneContext->GetSceneObject(cameraObjectID_);
@@ -64,6 +67,7 @@ public:
 
 protected:
     void Update() override {
+        LogScope scope;
         auto *cameraObj = GetCameraObject();
         auto *camera2d = cameraObj ? cameraObj->GetComponent<Camera2D>() : nullptr;
         if (!camera2d) return;
@@ -80,6 +84,7 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         TargetObjectSelector::ShowSelector(TranslationLabel("component.screenanchor.camera"), GetOwnerSceneContext(), cameraObjectID_, true, false);
         ImGui::DragFloat2(TranslationLabel("component.screenanchor.anchor_point"), &anchorPoint_.x, 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat2(TranslationLabel("component.screenanchor.offset"), &offset_.x, 1.0f);
@@ -88,6 +93,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = JSON::object();
         json["cameraObjectID"] = ToJSON(cameraObjectID_);
         json["anchorPoint"] = ToJSON(anchorPoint_);
@@ -95,6 +101,7 @@ protected:
         return json;
     }
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         cameraObjectID_ = json.contains("cameraObjectID") ? FromJSON<UUID128>(json["cameraObjectID"]) : UUID128();
         anchorPoint_ = json.contains("anchorPoint") ? FromJSON<Vector2>(json["anchorPoint"]) : Vector2(0.5f, 0.5f);
         offset_ = json.contains("offset") ? FromJSON<Vector2>(json["offset"]) : Vector2(0.0f, 0.0f);

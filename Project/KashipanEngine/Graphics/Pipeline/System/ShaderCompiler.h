@@ -8,6 +8,7 @@
 #include <vector>
 #include <cstdint>
 
+#include "Debug/Logger.h"
 #include "Graphics/Pipeline/System/MaterialLayout.h"
 
 class ID3D12ShaderReflectionType;
@@ -102,6 +103,7 @@ private:
     /// @brief リフレクション情報構造体
     struct ShaderReflectionInfo {
         const ResourceBindingInfo *GetResourceBindingInfo(const std::string &name) const {
+            LogScope scope;
             auto it = resourceBindings.find(name);
             if (it != resourceBindings.end()) {
                 return &it->second;
@@ -109,6 +111,7 @@ private:
             return nullptr;
         }
         const InputParameterInfo *GetInputParameterInfo(const std::string &semanticName, UINT semanticIndex) const {
+            LogScope scope;
             for (const auto &param : inputParameters) {
                 if (param.semanticName == semanticName && param.semanticIndex == semanticIndex) {
                     return &param;

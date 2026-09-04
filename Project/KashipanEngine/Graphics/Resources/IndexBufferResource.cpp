@@ -5,10 +5,12 @@ namespace KashipanEngine {
 
 IndexBufferResource::IndexBufferResource(size_t byteSize, DXGI_FORMAT indexFormat, const void *initialData, ID3D12Resource *existingResource)
     : IGraphicsResource(ResourceViewType::IBV) {
+    LogScope scope;
     Initialize(byteSize, indexFormat, initialData, existingResource);
 }
 
 bool IndexBufferResource::Recreate(size_t byteSize, DXGI_FORMAT indexFormat, const void *initialData, ID3D12Resource *existingResource) {
+    LogScope scope;
     ResetResourceForRecreate();
     return Initialize(byteSize, indexFormat, initialData, existingResource);
 }
@@ -57,6 +59,7 @@ bool IndexBufferResource::Initialize(size_t byteSize, DXGI_FORMAT indexFormat, c
 }
 
 D3D12_INDEX_BUFFER_VIEW IndexBufferResource::GetView() const {
+    LogScope scope;
     D3D12_INDEX_BUFFER_VIEW view{};
     if (GetResource()) {
         view.BufferLocation = GetResource()->GetGPUVirtualAddress();
@@ -67,6 +70,7 @@ D3D12_INDEX_BUFFER_VIEW IndexBufferResource::GetView() const {
 }
 
 void *IndexBufferResource::Map() {
+    LogScope scope;
     void *ptr = nullptr;
     if (GetResource()) {
         GetResource()->Map(0, nullptr, &ptr);
@@ -75,6 +79,7 @@ void *IndexBufferResource::Map() {
 }
 
 void IndexBufferResource::Unmap() {
+    LogScope scope;
     if (GetResource()) {
         GetResource()->Unmap(0, nullptr);
     }

@@ -17,6 +17,7 @@
 #include <WebView2.h>
 
 #include "Core/ProjectPaths.h"
+#include "Debug/Logger.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/JSON.h"
 
@@ -61,6 +62,7 @@ ULONGLONG sShowStartTick = 0;
 /// @details ランチャー（KashipanHub）とはユーザーデータフォルダを分け、
 ///          起動プロセスの入れ替わりが重なってもWebView2側のロックが競合しないようにする
 std::wstring GetUserDataFolder() {
+    LogScope scope;
     PWSTR localAppData = nullptr;
     if (FAILED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &localAppData))) {
         return {};
@@ -74,6 +76,7 @@ std::wstring GetUserDataFolder() {
 } // namespace
 
 void SplashScreen::NotifyClosing() {
+    LogScope scope;
     if (!sWebView) return;
     JSON message = JSON::object();
     message["type"] = "closing";
@@ -81,6 +84,7 @@ void SplashScreen::NotifyClosing() {
 }
 
 void SplashScreen::FlushLogLinesToWebView() {
+    LogScope scope;
     if (!sWebView) return;
 
     std::vector<LogLine> lines = FetchNewSplashLogLines(Passkey<SplashScreen>{});
@@ -101,6 +105,7 @@ void SplashScreen::FlushLogLinesToWebView() {
 }
 
 void SplashScreen::CreateWebView(HWND hwnd) {
+    LogScope scope;
     const std::wstring userDataFolder = GetUserDataFolder();
 
     CreateCoreWebView2EnvironmentWithOptions(
@@ -153,6 +158,7 @@ void SplashScreen::CreateWebView(HWND hwnd) {
 }
 
 LRESULT CALLBACK SplashScreen::WindowProc(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
+    LogScope scope;
     switch (message) {
     case WM_TIMER:
         if (wparam == kLogTimerId) {
@@ -179,6 +185,7 @@ LRESULT CALLBACK SplashScreen::WindowProc(HWND window, UINT message, WPARAM wpar
 }
 
 void SplashScreen::ThreadMain() {
+    LogScope scope;
     if (FAILED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED))) {
         SetEvent(sWindowReadyEvent);
         return;
@@ -234,6 +241,7 @@ void SplashScreen::ThreadMain() {
 }
 
 void SplashScreen::Show(PasskeyForGameEngineMain) {
+    LogScope scope;
     if (sThread.joinable()) return;
 
     BeginSplashLogCapture(Passkey<SplashScreen>{});
@@ -253,6 +261,7 @@ void SplashScreen::Show(PasskeyForGameEngineMain) {
 }
 
 void SplashScreen::Close(PasskeyForGameEngineMain) {
+    LogScope scope;
     if (!sThread.joinable()) return;
 
     // 初期化が一瞬で終わった場合でも、ロゴが一瞬で消えないよう最低表示時間まで待つ

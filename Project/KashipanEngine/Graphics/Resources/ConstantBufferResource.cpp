@@ -7,10 +7,12 @@ static inline size_t Align256(size_t size) { return (size + 255) & ~static_cast<
 
 ConstantBufferResource::ConstantBufferResource(size_t byteSize, ID3D12Resource *existingResource)
     : IGraphicsResource(ResourceViewType::CBV) {
+    LogScope scope;
     Initialize(byteSize, existingResource);
 }
 
 bool ConstantBufferResource::Recreate(size_t byteSize, ID3D12Resource *existingResource) {
+    LogScope scope;
     ResetMappedPointer_();
     ResetResourceForRecreate();
     return Initialize(byteSize, existingResource);
@@ -69,6 +71,7 @@ bool ConstantBufferResource::Initialize(size_t byteSize, ID3D12Resource *existin
 }
 
 void *ConstantBufferResource::Map() {
+    LogScope scope;
     if (mappedPtr_) return mappedPtr_;
 
     void *ptr = nullptr;

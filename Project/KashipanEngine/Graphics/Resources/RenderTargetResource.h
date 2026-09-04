@@ -1,6 +1,7 @@
 #pragma once
 #include <d3d12.h>
 #include <memory>
+#include "Debug/Logger.h"
 #include "Graphics/Resources/IGraphicsResource.h"
 #include "Core/DirectX/DescriptorHeaps/HeapRTV.h"
 
@@ -15,6 +16,7 @@ public:
     /// @brief デフォルトのクリアカラー設定
     /// @param clearColor クリアカラー配列（RGBA）
     static void SetDefaultClearColor(Passkey<DirectXCommon>, const FLOAT clearColor[4]) {
+        LogScope scope;
         sDefaultClearColor_[0] = clearColor[0];
         sDefaultClearColor_[1] = clearColor[1];
         sDefaultClearColor_[2] = clearColor[2];

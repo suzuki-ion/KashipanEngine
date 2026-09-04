@@ -75,6 +75,7 @@ inline InputLayoutParsedInfo ParseInputLayout(const Json &json) {
 }
 
 inline D3D12_INPUT_LAYOUT_DESC AsInputLayoutDesc(const InputLayoutParsedInfo &info) {
+    LogScope scope;
     D3D12_INPUT_LAYOUT_DESC desc{};
     if (!info.elements.empty()) {
         desc.NumElements = static_cast<UINT>(info.elements.size());

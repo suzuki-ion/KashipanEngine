@@ -4,6 +4,7 @@
 #include <filesystem>
 
 #include "Core/ProjectPaths.h"
+#include "Debug/Logger.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO.h"
 #include "Utilities/Translation.h"
@@ -11,6 +12,7 @@
 namespace KashipanEngine {
 
 SceneCrashRecovery::SceneCrashRecovery(Passkey<SceneEditor>, SceneEditorContext *context) : context_(context) {
+    LogScope scope;
     pendingFilePath_ = ProjectPaths::InProjectRoot("CrashRecovery/PendingCrashScene.json");
 
     std::error_code ec;
@@ -27,6 +29,7 @@ SceneCrashRecovery::SceneCrashRecovery(Passkey<SceneEditor>, SceneEditorContext 
 }
 
 bool SceneCrashRecovery::ShowImGui() {
+    LogScope scope;
     if (!isPendingFound_) return false;
 
     bool restored = false;

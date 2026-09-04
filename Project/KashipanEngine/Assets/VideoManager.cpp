@@ -80,6 +80,7 @@ std::string MakeAssetRelativePath(const std::string &assetsRoot, const std::stri
 
 /// @brief 動画ストリームの出力形式をNV12に設定する（VideoPlayer::Impl::SetVideoOutputToNV12と同じ手順）
 bool SetVideoOutputToNV12(IMFSourceReader *reader) {
+    LogScope scope;
     Microsoft::WRL::ComPtr<IMFMediaType> type;
     HRESULT hr = MFCreateMediaType(&type);
     if (FAILED(hr) || !type) return false;
@@ -99,6 +100,7 @@ bool SetVideoOutputToNV12(IMFSourceReader *reader) {
 ///          このため「別のIMFSourceReaderインスタンスを使い捨てで作って1フレーム読み、破棄する」
 ///          という形でも、再生開始時(VideoPlayer::Play)の初回ReadSampleの体感遅延を軽減できる
 void WarmUpVideoDecoder(IMFSourceReader *reader) {
+    LogScope scope;
     reader->SetStreamSelection(static_cast<DWORD>(MF_SOURCE_READER_ALL_STREAMS), FALSE);
     reader->SetStreamSelection(static_cast<DWORD>(MF_SOURCE_READER_FIRST_VIDEO_STREAM), TRUE);
     if (!SetVideoOutputToNV12(reader)) return;
@@ -113,6 +115,7 @@ void WarmUpVideoDecoder(IMFSourceReader *reader) {
 /// @brief 動画ファイルのメタデータ（フレームサイズ・長さ）だけを軽量に取得する
 /// @details 実際のフレーム/音声デコードは行わない（ModelManagerと同様、重い処理はPlay時まで遅延する）
 bool ProbeVideo(const std::string &filePath, const std::string &assetsRootPath, VideoInfo &outInfo) {
+    LogScope scope;
     const std::filesystem::path p = Utf8StringToPath(filePath);
     if (!std::filesystem::exists(p)) {
         Log(Translation("engine.video.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
@@ -193,6 +196,7 @@ VideoManager::~VideoManager() {
 }
 
 void VideoManager::InitializeMediaFoundation() {
+    LogScope scope;
     // Media Foundationは内部で参照カウントされ多重初期化が許されているため、
     // AudioManager側の初期化状態には関与せず、VideoManagerが独立してStartup/Shutdownを行う
     const HRESULT hr = MFStartup(MF_VERSION);
@@ -203,6 +207,7 @@ void VideoManager::InitializeMediaFoundation() {
 }
 
 void VideoManager::FinalizeMediaFoundation() {
+    LogScope scope;
     if (mfInitialized_) {
         MFShutdown();
         mfInitialized_ = false;
@@ -210,6 +215,7 @@ void VideoManager::FinalizeMediaFoundation() {
 }
 
 void VideoManager::LoadAllFromAssetsFolder() {
+    LogScope scope;
     const auto dir = GetDirectoryData(assetsRootPath_, true, true);
     const auto filtered = GetDirectoryDataByExtension(dir, { ".mp4", ".wmv", ".mov", ".avi" });
 
@@ -251,24 +257,28 @@ VideoManager::VideoHandle VideoManager::Load(const std::string &filePath) {
 }
 
 VideoManager::VideoHandle VideoManager::GetVideoHandleFromFileName(const std::string &fileName) {
+    LogScope scope;
     auto it = sFileNameToHandle.find(fileName);
     if (it == sFileNameToHandle.end()) return kInvalidHandle;
     return it->second;
 }
 
 VideoManager::VideoHandle VideoManager::GetVideoHandleFromAssetPath(const std::string &assetPath) {
+    LogScope scope;
     auto it = sAssetPathToHandle.find(NormalizePathSlashes(assetPath));
     if (it == sAssetPathToHandle.end()) return kInvalidHandle;
     return it->second;
 }
 
 const VideoManager::VideoInfo *VideoManager::GetVideoInfo(VideoHandle handle) {
+    LogScope scope;
     auto it = sVideos.find(handle);
     if (it == sVideos.end()) return nullptr;
     return &it->second;
 }
 
 std::vector<std::string> VideoManager::GetLoadedVideoAssetPaths() {
+    LogScope scope;
     std::vector<std::string> out;
     out.reserve(sVideos.size());
     for (const auto &kv : sVideos) out.push_back(kv.second.assetPath);
@@ -277,6 +287,7 @@ std::vector<std::string> VideoManager::GetLoadedVideoAssetPaths() {
 }
 
 bool VideoManager::RenameVideo(const std::string &oldAssetPath, const std::string &newAssetPath) {
+    LogScope scope;
     const std::string normalizedOld = NormalizePathSlashes(oldAssetPath);
     auto it = sAssetPathToHandle.find(normalizedOld);
     if (it == sAssetPathToHandle.end()) return false;
@@ -301,12 +312,14 @@ bool VideoManager::RenameVideo(const std::string &oldAssetPath, const std::strin
 
 #if defined(USE_IMGUI)
 VideoManager::VideoHandle VideoManager::LoadDynamic(const std::string &filePath) {
+    LogScope scope;
     if (!sActiveInstance) return kInvalidHandle;
     return sActiveInstance->Load(filePath);
 }
 #endif
 
 VideoPlayer *VideoManager::CreatePlayer(VideoHandle handle) {
+    LogScope scope;
     if (!sActiveInstance) return nullptr;
     auto it = sVideos.find(handle);
     if (it == sVideos.end()) return nullptr;
@@ -319,6 +332,7 @@ VideoPlayer *VideoManager::CreatePlayer(VideoHandle handle) {
 }
 
 void VideoManager::DestroyPlayer(VideoPlayer *player) {
+    LogScope scope;
     if (!player) return;
     for (auto it = sPlayers.begin(); it != sPlayers.end(); ++it) {
         if (it->get() == player) {
@@ -332,6 +346,7 @@ void VideoManager::DestroyPlayer(VideoPlayer *player) {
 }
 
 void VideoManager::CommitPendingDestroy(Passkey<GameEngine>) {
+    LogScope scope;
     // unique_ptrの破棄でVideoPlayerのデストラクタ(Stop())が走り、ここで初めて
     // 音声停止・GPUリソース（VideoTexture）の実体解放が行われる。この呼び出しは
     // GameLoopDraw完了（ImGuiの描画コマンド発行＋WaitForFenceによるGPU同期）の後で
@@ -340,12 +355,14 @@ void VideoManager::CommitPendingDestroy(Passkey<GameEngine>) {
 }
 
 void VideoManager::Update() {
+    LogScope scope;
     for (auto &player : sPlayers) {
         player->Update();
     }
 }
 
 std::vector<VideoTexture *> VideoManager::GetPendingConversions(Passkey<Renderer> passkey) {
+    LogScope scope;
     std::vector<VideoTexture *> result;
     for (auto &player : sPlayers) {
         VideoTexture *videoTexture = player->GetVideoTexture(Passkey<VideoManager>{});

@@ -1,20 +1,25 @@
 #include "AudioPlayer.h"
 
+#include "Debug/Logger.h"
+
 #include <algorithm>
 
 namespace KashipanEngine {
 
 AudioPlayer::AudioPlayer() {
+    LogScope scope;
     AudioManager::RegisterAudioPlayer({}, this);
 }
 
 AudioPlayer::~AudioPlayer() {
+    LogScope scope;
     AudioManager::UnregisterAudioPlayer({}, this);
     StopHandle(currentPlay_);
     StopHandle(nextPlay_);
 }
 
 void AudioPlayer::AddAudio(SoundHandle sound) {
+    LogScope scope;
     if (sound == AudioManager::kInvalidSoundHandle) return;
     AudioManager::PlayParams params{};
     params.sound = sound;
@@ -22,23 +27,27 @@ void AudioPlayer::AddAudio(SoundHandle sound) {
 }
 
 void AudioPlayer::AddAudio(const AudioManager::PlayParams& params) {
+    LogScope scope;
     if (params.sound == AudioManager::kInvalidSoundHandle) return;
     sounds_.push_back(params);
 }
 
 void AudioPlayer::AddAudios(const std::vector<SoundHandle>& sounds) {
+    LogScope scope;
     for (const auto sound : sounds) {
         AddAudio(sound);
     }
 }
 
 void AudioPlayer::AddAudios(const std::vector<AudioManager::PlayParams>& paramsList) {
+    LogScope scope;
     for (const auto& params : paramsList) {
         AddAudio(params);
     }
 }
 
 void AudioPlayer::RemoveAudio(SoundHandle sound) {
+    LogScope scope;
     if (sounds_.empty()) return;
 
     const SoundHandle currentSound = (currentIndex_ < sounds_.size()) ? sounds_[currentIndex_].sound
@@ -73,21 +82,25 @@ void AudioPlayer::RemoveAudio(SoundHandle sound) {
 }
 
 void AudioPlayer::RemoveAudios(const std::vector<SoundHandle>& sounds) {
+    LogScope scope;
     for (const auto sound : sounds) {
         RemoveAudio(sound);
     }
 }
 
 bool AudioPlayer::ChangeAudio(double crossFadeSec, size_t changeAudioIndex) {
+    LogScope scope;
     return ChangeAudioInternal(crossFadeSec, nullptr, changeAudioIndex);
 }
 
 bool AudioPlayer::ChangeAudio(double crossFadeSec, const AudioManager::PlayParams& params, size_t changeAudioIndex) {
+    LogScope scope;
     return ChangeAudioInternal(crossFadeSec, &params, changeAudioIndex);
 }
 
 bool AudioPlayer::ChangeAudioInternal(double crossFadeSec, const AudioManager::PlayParams* overrideParams,
     size_t changeAudioIndex) {
+    LogScope scope;
     if (sounds_.empty()) return false;
 
     const size_t nextIndex = ResolveNextIndex(changeAudioIndex, overrideParams);
@@ -149,6 +162,7 @@ bool AudioPlayer::ChangeAudioInternal(double crossFadeSec, const AudioManager::P
 }
 
 void AudioPlayer::Update(Passkey<AudioManager>) {
+    LogScope scope;
     const auto now = std::chrono::steady_clock::now();
     if (lastUpdateTime_ == std::chrono::steady_clock::time_point{}) {
         lastUpdateTime_ = now;
@@ -187,17 +201,20 @@ void AudioPlayer::Update(Passkey<AudioManager>) {
 }
 
 void AudioPlayer::StopHandle(PlayHandle& handle) {
+    LogScope scope;
     if (handle == AudioManager::kInvalidPlayHandle) return;
     AudioManager::Stop(handle);
     handle = AudioManager::kInvalidPlayHandle;
 }
 
 void AudioPlayer::ApplyVolume(PlayHandle handle, float volume) {
+    LogScope scope;
     if (handle == AudioManager::kInvalidPlayHandle) return;
     AudioManager::SetVolume(handle, volume);
 }
 
 size_t AudioPlayer::ResolveNextIndex(size_t changeAudioIndex, const AudioManager::PlayParams* params) const {
+    LogScope scope;
     if (sounds_.empty()) return kInvalidAudioIndex;
     if (changeAudioIndex != kInvalidAudioIndex) {
         return (changeAudioIndex < sounds_.size()) ? changeAudioIndex : kInvalidAudioIndex;

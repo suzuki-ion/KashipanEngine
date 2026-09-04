@@ -68,27 +68,30 @@ void Window::AllDestroy(Passkey<GameEngine> passkey) {
 }
 
 Window *Window::GetWindow(HWND hwnd) {
+    LogScope scope;
     auto it = sWindowMap.find(hwnd);
     if (it != sWindowMap.end()) return it->second.get();
     return nullptr;
 }
 
 std::vector<Window *> Window::GetWindows(const std::string &title) {
+    LogScope scope;
     std::vector<Window *> windows;
     for (auto &pair : sWindowMap) if (pair.second->descriptor_.title == title) windows.push_back(pair.second.get());
     return windows;
 }
 
 Window *Window::GetWindow(const std::string &title) {
+    LogScope scope;
     for (auto &pair : sWindowMap) if (pair.second->descriptor_.title == title) return pair.second.get();
     return nullptr;
 }
 
-size_t Window::GetWindowCount() { return sWindowMap.size(); }
+size_t Window::GetWindowCount() { LogScope scope; return sWindowMap.size(); }
 
-bool Window::IsExist(HWND hwnd) { return sWindowMap.find(hwnd) != sWindowMap.end(); }
-bool Window::IsExist(Window *window) { for (auto &pair : sWindowMap) if (pair.second.get() == window) return true; return false; }
-bool Window::IsExist(const std::string &title) { for (auto &pair : sWindowMap) if (pair.second->descriptor_.title == title) return true; return false; }
+bool Window::IsExist(HWND hwnd) { LogScope scope; return sWindowMap.find(hwnd) != sWindowMap.end(); }
+bool Window::IsExist(Window *window) { LogScope scope; for (auto &pair : sWindowMap) if (pair.second.get() == window) return true; return false; }
+bool Window::IsExist(const std::string &title) { LogScope scope; for (auto &pair : sWindowMap) if (pair.second->descriptor_.title == title) return true; return false; }
 
 void Window::Update(Passkey<GameEngine>) {
     LogScope scope;
@@ -435,6 +438,7 @@ void Window::SetWindowVisible(bool visible) {
 }
 
 void Window::DetachFromParentUnsafe(bool applyNative) {
+    LogScope scope;
     if (!parentWindow_) return;
     parentWindow_->RemoveChildPointerUnsafe(this);
     if (applyNative && descriptor_.hwnd) SetParent(descriptor_.hwnd, nullptr);
@@ -442,6 +446,7 @@ void Window::DetachFromParentUnsafe(bool applyNative) {
 }
 
 void Window::DetachAllChildrenUnsafe(bool applyNative) {
+    LogScope scope;
     for (auto *child : childWindows_) {
         if (!child) continue;
         child->parentWindow_ = nullptr;
@@ -451,6 +456,7 @@ void Window::DetachAllChildrenUnsafe(bool applyNative) {
 }
 
 void Window::RemoveChildPointerUnsafe(Window *child) {
+    LogScope scope;
     if (!child) return;
     auto it = std::find(childWindows_.begin(), childWindows_.end(), child);
     if (it != childWindows_.end()) childWindows_.erase(it);
@@ -497,18 +503,22 @@ void Window::ClearWindowChild(bool applyNative) { LogScope scope; DetachAllChild
 void Window::UnregisterWindowEvent(UINT msg) { LogScope scope; eventHandlers_.erase(msg); }
 
 ID3D12GraphicsCommandList *Window::GetCommandList() const {
+    LogScope scope;
     return dx12SwapChain_ ? dx12SwapChain_->GetRecordedCommandList(Passkey<Window>{}) : nullptr;
 }
 
 void Window::BeginDraw() {
+    LogScope scope;
     if (dx12SwapChain_) dx12SwapChain_->BeginDraw(Passkey<Window>{});
 }
 
 void Window::EndDraw() {
+    LogScope scope;
     if (dx12SwapChain_) dx12SwapChain_->EndDraw(Passkey<Window>{});
 }
 
 const WindowMessage &Window::GetWindowMessage(UINT msg) const {
+    LogScope scope;
     static const WindowMessage kEmptyMessage{ WM_NULL, 0, 0 };
     auto it = messages_.find(msg);
     if (it != messages_.end()) return it->second;

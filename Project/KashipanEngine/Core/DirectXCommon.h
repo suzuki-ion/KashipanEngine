@@ -71,7 +71,7 @@ public:
     ///          直前フレームの描画がGPU側で本当に完了しているとは限らない
     ///          （未完了のまま破棄すると使用中のリソースを破壊し、GPUハング/
     ///          スワップチェーンPresent失敗を引き起こしうる）
-    bool WaitForGPUIdle(Passkey<Scene>) { return WaitForFence(); }
+    bool WaitForGPUIdle(Passkey<Scene>) { LogScope scope; return WaitForFence(); }
 
     /// @brief D3D12デバイス取得
     ID3D12Device* GetDevice(Passkey<GraphicsEngine>) const { return dx12Device_->GetDevice(); }

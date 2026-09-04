@@ -1,5 +1,6 @@
 #include "ShadowMapBuffer.h"
 #include "Core/DirectXCommon.h"
+#include "Debug/Logger.h"
 #include "Graphics/Resources/IGraphicsResource.h"
 #include "Assets/TextureManager.h"
 #include <algorithm>
@@ -18,10 +19,12 @@ std::uint32_t sAutoNameCounter = 0;
 } // namespace
 
 D3D12_GPU_DESCRIPTOR_HANDLE ShadowMapBuffer::GetSrvHandle() const noexcept {
+    LogScope scope;
     return depth_ ? depth_->GetSrvGPUHandle() : D3D12_GPU_DESCRIPTOR_HANDLE{};
 }
 
 ShadowMapBuffer *ShadowMapBuffer::Create(std::uint32_t width, std::uint32_t height, const std::string &name, DXGI_FORMAT depthFormat, DXGI_FORMAT srvFormat) {
+    LogScope scope;
     std::unique_ptr<ShadowMapBuffer> buffer(new ShadowMapBuffer());
     auto *raw = buffer.get();
 
@@ -36,12 +39,14 @@ ShadowMapBuffer *ShadowMapBuffer::Create(std::uint32_t width, std::uint32_t heig
 }
 
 void ShadowMapBuffer::SetRenderTargetName(const std::string &name) {
+    LogScope scope;
     if (name.empty() || name == name_) return;
     UnregisterFromTextureManager();
     RegisterToTextureManager(name);
 }
 
 void ShadowMapBuffer::RegisterToTextureManager(const std::string &name) {
+    LogScope scope;
     // 名前が空の場合は自動生成する
     std::string registerName = name;
     if (registerName.empty()) {
@@ -64,6 +69,7 @@ void ShadowMapBuffer::RegisterToTextureManager(const std::string &name) {
 }
 
 void ShadowMapBuffer::UnregisterFromTextureManager() {
+    LogScope scope;
     if (textureHandle_ != TextureManager::kInvalidHandle) {
         TextureManager::UnregisterExternalTexture(textureHandle_);
         textureHandle_ = TextureManager::kInvalidHandle;
@@ -71,16 +77,19 @@ void ShadowMapBuffer::UnregisterFromTextureManager() {
 }
 
 void ShadowMapBuffer::AllDestroy(Passkey<GameEngine>) {
+    LogScope scope;
     sBufferMap.clear();
     sPendingDestroy.clear();
 }
 
 bool ShadowMapBuffer::IsExist(ShadowMapBuffer *buffer) {
+    LogScope scope;
     if (!buffer) return false;
     return sBufferMap.find(buffer) != sBufferMap.end();
 }
 
 void ShadowMapBuffer::DestroyNotify() {
+    LogScope scope;
     if (!IsExist(this)) return;
     if (IsPendingDestroy()) return;
     // 名前を即座に解放しないと、同フレーム内で同名の ShadowMapBuffer を
@@ -92,10 +101,12 @@ void ShadowMapBuffer::DestroyNotify() {
 }
 
 bool ShadowMapBuffer::IsPendingDestroy() const {
+    LogScope scope;
     return std::find(sPendingDestroy.begin(), sPendingDestroy.end(), this) != sPendingDestroy.end();
 }
 
 void ShadowMapBuffer::CommitDestroy(Passkey<GameEngine>) {
+    LogScope scope;
     if (sPendingDestroy.empty()) return;
 
     std::stable_sort(sPendingDestroy.begin(), sPendingDestroy.end());
@@ -112,10 +123,12 @@ void ShadowMapBuffer::CommitDestroy(Passkey<GameEngine>) {
 }
 
 ShadowMapBuffer::~ShadowMapBuffer() {
+    LogScope scope;
     Destroy();
 }
 
 bool ShadowMapBuffer::Initialize(std::uint32_t width, std::uint32_t height, DXGI_FORMAT depthFormat, DXGI_FORMAT srvFormat) {
+    LogScope scope;
     Destroy();
 
     width_ = width;
@@ -142,6 +155,7 @@ bool ShadowMapBuffer::Initialize(std::uint32_t width, std::uint32_t height, DXGI
 }
 
 bool ShadowMapBuffer::Resize(std::uint32_t width, std::uint32_t height) {
+    LogScope scope;
     if (width == 0 || height == 0) return false;
     if (width == width_ && height == height_) return true;
     if (!dx12Commands_) return false;
@@ -158,6 +172,7 @@ bool ShadowMapBuffer::Resize(std::uint32_t width, std::uint32_t height) {
 }
 
 void ShadowMapBuffer::Destroy() {
+    LogScope scope;
     UnregisterFromTextureManager();
     depth_.reset();
 
@@ -175,10 +190,12 @@ void ShadowMapBuffer::Destroy() {
 }
 
 void ShadowMapBuffer::BeginDraw() {
+    LogScope scope;
     BeginRecord();
 }
 
 void ShadowMapBuffer::EndDraw() {
+    LogScope scope;
     if (!EndRecord()) return;
 
     // コマンドリストを閉じてフレーム終端実行用に登録する
@@ -189,6 +206,7 @@ void ShadowMapBuffer::EndDraw() {
 }
 
 ID3D12GraphicsCommandList *ShadowMapBuffer::BeginRecord() {
+    LogScope scope;
     if (!dx12Commands_) return nullptr;
     if (!depth_) return nullptr;
 
@@ -233,6 +251,7 @@ ID3D12GraphicsCommandList *ShadowMapBuffer::BeginRecord() {
 }
 
 bool ShadowMapBuffer::EndRecord() {
+    LogScope scope;
     if (!dx12Commands_) return false;
 
     if (depth_) {

@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <algorithm>
+#include "Debug/Logger.h"
 #include "Objects/Components/Collider/ICollider.h"
 #include "Math/Vector3.h"
 #include "Utilities/Translation.h"
@@ -9,12 +10,14 @@ namespace KashipanEngine {
 class SphereCollider final : public ICollider {
 public:
     SphereCollider() : ICollider("SphereCollider", Shape::Sphere, false, GetComponentTypeID<SphereCollider>()) {
+        LogScope scope;
         ADD_MEMBER_VARIABLE(radius_);
         ADD_MEMBER_VARIABLE(center_);
     }
     ~SphereCollider() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<SphereCollider>();
         ptr->radius_ = radius_;
         ptr->center_ = center_;
@@ -29,6 +32,7 @@ public:
     const Vector3 &GetCenter() const noexcept { return center_; }
 
     std::optional<ColliderInfo3D> BuildColliderInfo3D() const override {
+        LogScope scope;
         ColliderInfo3D info;
         ColliderInfo3D::SphereShape3D sphere;
         const Vector3 scale = GetSyncedOwnerScale();
@@ -42,18 +46,21 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         ICollider::ShowImGui();
         ImGui::DragFloat(TranslationLabel("component.spherecollider.radius"), &radius_, 0.01f, 0.0f);
         ImGui::DragFloat3(TranslationLabel("component.spherecollider.center"), &center_.x, 0.01f);
     }
 #endif
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = ICollider::SaveToJson();
         json["radius"] = radius_;
         json["center"] = ToJSON(center_);
         return json;
     }
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         ICollider::LoadFromJson(json);
         radius_ = json.value("radius", 0.5f);
         if (json.contains("center")) center_ = FromJSON<Vector3>(json["center"]);

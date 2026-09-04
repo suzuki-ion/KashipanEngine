@@ -79,10 +79,12 @@ struct VideoPlayer::Impl final {
     bool loggedPositionUnavailable = false;
 
     ~Impl() {
+        LogScope scope;
         StopDecodeThread();
     }
 
     void StopDecodeThread() {
+        LogScope scope;
         stopRequested = true;
         queueCv.notify_all();
         if (decodeThread.joinable()) {
@@ -92,6 +94,7 @@ struct VideoPlayer::Impl final {
 
     /// @brief 動画ストリームのネイティブなフレームサイズを取得する
     bool ProbeFrameSize() {
+        LogScope scope;
         Microsoft::WRL::ComPtr<IMFMediaType> nativeType;
         HRESULT hr = reader->GetNativeMediaType(static_cast<DWORD>(MF_SOURCE_READER_FIRST_VIDEO_STREAM), 0, &nativeType);
         if (FAILED(hr) || !nativeType) return false;
@@ -107,6 +110,7 @@ struct VideoPlayer::Impl final {
 
     /// @brief 動画ストリームの出力形式をNV12に設定する（YUV→RGB変換はシェーダー側で行う）
     bool SetVideoOutputToNV12() {
+        LogScope scope;
         Microsoft::WRL::ComPtr<IMFMediaType> type;
         HRESULT hr = MFCreateMediaType(&type);
         if (FAILED(hr) || !type) return false;
@@ -138,6 +142,7 @@ struct VideoPlayer::Impl final {
     /// @brief 音声ストリームをPCMへ設定し、全体をデコードしてAudioManagerへ登録する
     /// @details AudioManager::DecodeToPcm(Assets/AudioManager.cpp)と同じ手順で行う
     bool DecodeAudioTrackToPcm() {
+        LogScope scope;
         Microsoft::WRL::ComPtr<IMFMediaType> type;
         HRESULT hr = MFCreateMediaType(&type);
         if (FAILED(hr) || !type) return false;
@@ -199,6 +204,7 @@ struct VideoPlayer::Impl final {
 
     /// @brief 映像ストリームを専用スレッドでストリーミングデコードし、フレームキューへ積み続ける
     void DecodeThreadMain() {
+        LogScope scope;
         // Media FoundationのAPIを呼ぶスレッドはCOMを初期化しておく必要がある
         const HRESULT coHr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
         const bool needCoUninit = SUCCEEDED(coHr);
@@ -291,12 +297,14 @@ struct VideoPlayer::Impl final {
 
 VideoPlayer::VideoPlayer(DirectXCommon *directXCommon, std::string fullPath, std::string registerNamePrefix)
     : impl_(std::make_unique<Impl>()), fullPath_(fullPath) {
+    LogScope scope;
     impl_->directXCommon = directXCommon;
     impl_->fullPath = std::move(fullPath);
     impl_->registerNamePrefix = std::move(registerNamePrefix);
 }
 
 VideoPlayer::~VideoPlayer() {
+    LogScope scope;
     Stop();
 }
 
@@ -384,6 +392,7 @@ bool VideoPlayer::Play(bool loop, float volume) {
 }
 
 bool VideoPlayer::ShowFirstFrame() {
+    LogScope scope;
     if (impl_->isPlaying) return false;
     if (impl_->fullPath.empty()) return false;
     // 既にこのインスタンスで（このメソッド経由で）1フレーム目を用意済みなら何もしない
@@ -440,6 +449,7 @@ bool VideoPlayer::ShowFirstFrame() {
 }
 
 void VideoPlayer::Stop() {
+    LogScope scope;
     if (!impl_->isPlaying && !impl_->reader) return;
 
     impl_->StopDecodeThread();
@@ -465,21 +475,24 @@ void VideoPlayer::Stop() {
 }
 
 void VideoPlayer::Pause() {
+    LogScope scope;
     if (!impl_->isPlaying || impl_->isPaused) return;
     AudioManager::Pause(impl_->playHandle);
     impl_->isPaused = true;
 }
 
 void VideoPlayer::Resume() {
+    LogScope scope;
     if (!impl_->isPlaying || !impl_->isPaused) return;
     AudioManager::Resume(impl_->playHandle);
     impl_->isPaused = false;
 }
 
-bool VideoPlayer::IsPlaying() const noexcept { return impl_->isPlaying; }
-bool VideoPlayer::IsPaused() const noexcept { return impl_->isPaused; }
+bool VideoPlayer::IsPlaying() const noexcept { LogScope scope; return impl_->isPlaying; }
+bool VideoPlayer::IsPaused() const noexcept { LogScope scope; return impl_->isPaused; }
 
 void VideoPlayer::Update() {
+    LogScope scope;
     if (!impl_->isPlaying || impl_->isPaused) return;
 
     // デバッグ用: Play直後の数秒間、Updateが実際にどの頻度で呼ばれ、キューがどう変化しているかを
@@ -549,6 +562,7 @@ void VideoPlayer::Update() {
 }
 
 void VideoPlayer::ConfigureMaterial(MaterialManager::MaterialHandle materialHandle) const {
+    LogScope scope;
     auto *material = MaterialManager::GetMaterial(materialHandle);
     if (!material) return;
 
@@ -557,14 +571,15 @@ void VideoPlayer::ConfigureMaterial(MaterialManager::MaterialHandle materialHand
 }
 
 VideoTexture *VideoPlayer::GetVideoTexture(Passkey<VideoManager>) const {
+    LogScope scope;
     return impl_->videoTexture.get();
 }
 
-std::uint32_t VideoPlayer::GetWidth() const noexcept { return impl_->width; }
-std::uint32_t VideoPlayer::GetHeight() const noexcept { return impl_->height; }
+std::uint32_t VideoPlayer::GetWidth() const noexcept { LogScope scope; return impl_->width; }
+std::uint32_t VideoPlayer::GetHeight() const noexcept { LogScope scope; return impl_->height; }
 
-TextureManager::TextureHandle VideoPlayer::GetTextureHandle() const noexcept { return impl_->rgbaHandle; }
+TextureManager::TextureHandle VideoPlayer::GetTextureHandle() const noexcept { LogScope scope; return impl_->rgbaHandle; }
 
-AudioManager::PlayHandle VideoPlayer::GetAudioPlayHandle() const noexcept { return impl_->playHandle; }
+AudioManager::PlayHandle VideoPlayer::GetAudioPlayHandle() const noexcept { LogScope scope; return impl_->playHandle; }
 
 } // namespace KashipanEngine

@@ -29,6 +29,7 @@ std::vector<std::string> *gActiveMessageCapture = nullptr;
 ///          ポート番号はAngelScriptDebugServerの既定値（27979）と一致させる必要がある。
 ///          既存ファイルを上書きすると利用者の変更が消えるため、無い場合のみ生成する
 bool EnsureVSCodeDebugLaunchConfig(const std::string &launchJsonPath) {
+    LogScope scope;
     if (std::filesystem::exists(Utf8StringToPath(launchJsonPath))) return true;
 
     TextFileData textFileData;
@@ -52,6 +53,7 @@ bool EnsureVSCodeDebugLaunchConfig(const std::string &launchJsonPath) {
 }
 
 void MessageCallback(const asSMessageInfo *msg, void *param) {
+    LogScope scope;
     (void)param;
     LogSeverity severity = LogSeverity::Info;
     const char *severityLabel = "[Info]";
@@ -74,6 +76,7 @@ void MessageCallback(const asSMessageInfo *msg, void *param) {
 SceneScriptEngine::~SceneScriptEngine() = default;
 
 void SceneScriptEngine::Initialize() {
+    LogScope scope;
     if (engine_) return;
 
     engine_ = asCreateScriptEngine();
@@ -112,22 +115,26 @@ void SceneScriptEngine::Initialize() {
 }
 
 void SceneScriptEngine::AttachDebugger(asIScriptContext *context) const {
+    LogScope scope;
     if (debugServer_) {
         debugServer_->AttachContext(context);
     }
 }
 
 void SceneScriptEngine::BeginMessageCapture() {
+    LogScope scope;
     messageCaptureBuffer_.clear();
     gActiveMessageCapture = &messageCaptureBuffer_;
 }
 
 std::vector<std::string> SceneScriptEngine::EndMessageCapture() {
+    LogScope scope;
     gActiveMessageCapture = nullptr;
     return std::move(messageCaptureBuffer_);
 }
 
 void SceneScriptEngine::Finalize() {
+    LogScope scope;
     if (gActiveMessageCapture == &messageCaptureBuffer_) {
         gActiveMessageCapture = nullptr;
     }
@@ -140,6 +147,7 @@ void SceneScriptEngine::Finalize() {
 
 #if defined(USE_IMGUI)
 void SceneScriptEngine::ShowImGui() {
+    LogScope scope;
     ImGui::Text("%s%d", TranslationC("editor.scriptengine.version"), ANGELSCRIPT_VERSION);
     ImGui::Text("%s%s", TranslationC("editor.scriptengine.engine"),
         engine_ ? TranslationC("initialized") : TranslationC("editor.scriptengine.notinitialized"));

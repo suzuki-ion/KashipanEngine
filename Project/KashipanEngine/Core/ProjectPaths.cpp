@@ -69,6 +69,7 @@ std::string ReadEngineRootMarker(const std::filesystem::path &markerFilePath) {
 } // namespace
 
 std::string ProjectPaths::NormalizeSeparators(std::string path) {
+    LogScope scope;
     std::replace(path.begin(), path.end(), '\\', '/');
     while (path.size() > 1 && path.back() == '/') path.pop_back();
     return path;
@@ -103,12 +104,14 @@ void ProjectPaths::Initialize(PasskeyForGameEngineMain) {
 }
 
 void ProjectPaths::InitializeEngineRootOnly(PasskeyForWinMain) {
+    LogScope scope;
     ResolveEngineRoot();
     // プロジェクトを開かないため、配布形態かどうかの判定も行わない
     sIsStandalone = false;
 }
 
 void ProjectPaths::ResolveEngineRoot() {
+    LogScope scope;
     // Initialize() より先に InitializeEngineRootOnly() が呼ばれることがあるため、
     // 二重に解決しないようここでガードする（Initialize() 側のガードとは別）
     if (sIsEngineRootResolved) return;
@@ -125,6 +128,7 @@ void ProjectPaths::ResolveEngineRoot() {
 }
 
 std::string ProjectPaths::GetProjectArgument() {
+    LogScope scope;
     int argumentCount = 0;
     LPWSTR *arguments = CommandLineToArgvW(GetCommandLineW(), &argumentCount);
     if (!arguments) return {};
@@ -143,6 +147,7 @@ std::string ProjectPaths::GetProjectArgument() {
 }
 
 void ProjectPaths::ResolveActiveProject() {
+    LogScope scope;
     std::error_code ec;
     const std::filesystem::path projectsRoot = Utf8StringToPath(ProjectsRoot());
 
@@ -201,14 +206,33 @@ void ProjectPaths::ResolveActiveProject() {
     Log(Translation("engine.project.notfound.any") + ProjectsRoot(), LogSeverity::Warning);
 }
 
-const std::string &ProjectPaths::ExecutableDirectory() { return sExecutableDirectory; }
-const std::string &ProjectPaths::EngineRoot() { return sEngineRoot; }
-const std::string &ProjectPaths::ProjectRoot() { return sProjectRoot; }
-const std::string &ProjectPaths::AssetsRoot() { return sAssetsRoot; }
-const std::string &ProjectPaths::ProjectName() { return sProjectName; }
-bool ProjectPaths::IsStandalone() { return sIsStandalone; }
+const std::string &ProjectPaths::ExecutableDirectory() {
+    LogScope scope;
+    return sExecutableDirectory;
+}
+const std::string &ProjectPaths::EngineRoot() {
+    LogScope scope;
+    return sEngineRoot;
+}
+const std::string &ProjectPaths::ProjectRoot() {
+    LogScope scope;
+    return sProjectRoot;
+}
+const std::string &ProjectPaths::AssetsRoot() {
+    LogScope scope;
+    return sAssetsRoot;
+}
+const std::string &ProjectPaths::ProjectName() {
+    LogScope scope;
+    return sProjectName;
+}
+bool ProjectPaths::IsStandalone() {
+    LogScope scope;
+    return sIsStandalone;
+}
 
 bool ProjectPaths::HasActiveProject() {
+    LogScope scope;
     if (sProjectRoot.empty()) return false;
     if (sIsStandalone) return true;
     std::error_code ec;
@@ -216,6 +240,7 @@ bool ProjectPaths::HasActiveProject() {
 }
 
 std::string ProjectPaths::ToPhysical(const std::string &logicalPath) {
+    LogScope scope;
     if (logicalPath.empty()) return logicalPath;
 
     const std::string normalized = NormalizeSeparators(logicalPath);
@@ -230,6 +255,7 @@ std::string ProjectPaths::ToPhysical(const std::string &logicalPath) {
 }
 
 std::string ProjectPaths::ToLogical(const std::string &physicalPath) {
+    LogScope scope;
     if (physicalPath.empty()) return physicalPath;
 
     const std::string normalized = NormalizeSeparators(physicalPath);
@@ -248,19 +274,28 @@ std::string ProjectPaths::ToLogical(const std::string &physicalPath) {
 }
 
 std::string ProjectPaths::InProjectRoot(const std::string &relativePath) {
+    LogScope scope;
     if (sProjectRoot.empty()) return NormalizeSeparators(relativePath);
     return sProjectRoot + "/" + NormalizeSeparators(relativePath);
 }
 
 std::string ProjectPaths::InEngineRoot(const std::string &relativePath) {
+    LogScope scope;
     if (sEngineRoot.empty()) return NormalizeSeparators(relativePath);
     return sEngineRoot + "/" + NormalizeSeparators(relativePath);
 }
 
-std::string ProjectPaths::AssetsTemplateRoot() { return InEngineRoot(kAssetsTemplateFolderName); }
-std::string ProjectPaths::ProjectsRoot() { return InEngineRoot(kProjectsFolderName); }
+std::string ProjectPaths::AssetsTemplateRoot() {
+    LogScope scope;
+    return InEngineRoot(kAssetsTemplateFolderName);
+}
+std::string ProjectPaths::ProjectsRoot() {
+    LogScope scope;
+    return InEngineRoot(kProjectsFolderName);
+}
 
 std::vector<std::string> ProjectPaths::ListAssetFiles(const std::vector<std::string> &extensions) {
+    LogScope scope;
     std::vector<std::string> files;
     if (sAssetsRoot.empty()) return files;
 

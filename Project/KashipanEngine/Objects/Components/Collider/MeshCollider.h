@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 
+#include "Debug/Logger.h"
 #include "Objects/Components/Collider/ICollider.h"
 #include "Objects/Components/MeshFilter.h"
 #include "Assets/ModelManager.h"
@@ -18,11 +19,13 @@ namespace KashipanEngine {
 class MeshCollider final : public ICollider {
 public:
     MeshCollider() : ICollider("MeshCollider", Shape::Mesh, false, GetComponentTypeID<MeshCollider>()) {
+        LogScope scope;
         ADD_MEMBER_VARIABLE(convex_);
     }
     ~MeshCollider() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<MeshCollider>();
         ptr->convex_ = convex_;
         ptr->explicitMeshHandle_ = explicitMeshHandle_;
@@ -41,6 +44,7 @@ public:
     /// @brief 実際に衝突判定に使用するメッシュハンドルを取得する
     /// @details 明示的な指定が無い場合は同オブジェクトのMeshFilterコンポーネントのメッシュにフォールバックする
     ModelManager::ModelHandle GetEffectiveMeshHandle() const {
+        LogScope scope;
         if (explicitMeshHandle_ != ModelManager::kInvalidHandle) return explicitMeshHandle_;
         auto *objectContext = GetOwnerObjectContext();
         if (!objectContext) return ModelManager::kInvalidHandle;
@@ -49,6 +53,7 @@ public:
     }
 
     std::optional<ColliderInfo3D> BuildColliderInfo3D() const override {
+        LogScope scope;
         const auto meshHandle = GetEffectiveMeshHandle();
         if (meshHandle == ModelManager::kInvalidHandle) return std::nullopt;
 
@@ -84,6 +89,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         ICollider::ShowImGui();
         ImGui::Checkbox(TranslationLabel("component.meshcollider.convex"), &convex_);
         ImGui::TextDisabled("%s", TranslationC("component.meshcollider.convex_meshcollider"));
@@ -102,6 +108,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = ICollider::SaveToJson();
         json["convex"] = convex_;
         // ハンドル値はモデルの読み込み順や数で変わってしまうため、
@@ -113,6 +120,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         ICollider::LoadFromJson(json);
         convex_ = json.value("convex", true);
         if (json.contains("meshAssetPath")) {

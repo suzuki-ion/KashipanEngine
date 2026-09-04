@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <algorithm>
+#include "Debug/Logger.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 #include "Utilities/Translation.h"
 
@@ -28,6 +29,7 @@ public:
     ~ColorAdjustEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<ColorAdjustEffect>();
         ptr->params_ = params_;
         return ptr;
@@ -39,6 +41,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         IPostProcessComponent::ShowImGui();
         ImGui::DragFloat(TranslationLabel("component.coloradjusteffect.brightness"), &params_.brightness, 0.01f, -1.0f, 1.0f, "%.3f");
         ImGui::DragFloat(TranslationLabel("component.coloradjusteffect.contrast"), &params_.contrast, 0.01f, 0.0f, 4.0f, "%.3f");
@@ -49,6 +52,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = IPostProcessComponent::SaveToJson();
         json["brightness"] = params_.brightness;
         json["contrast"] = params_.contrast;
@@ -59,6 +63,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         IPostProcessComponent::LoadFromJson(json);
         params_.brightness = json.value("brightness", 0.0f);
         params_.contrast = json.value("contrast", 1.0f);
@@ -71,6 +76,7 @@ protected:
     }
 
     std::vector<PassInfo> BuildPasses() override {
+        LogScope scope;
         cbData_.brightness = std::clamp(params_.brightness, -1.0f, 1.0f);
         cbData_.contrast = std::max(params_.contrast, 0.0f);
         cbData_.saturation = std::max(params_.saturation, 0.0f);

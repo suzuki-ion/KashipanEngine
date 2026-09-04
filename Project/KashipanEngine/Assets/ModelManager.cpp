@@ -454,6 +454,7 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
 
 // ModelData は private メンバを持つため、friend である ModelManager のメンバ関数として実装する
 void ModelManager::AppendMeshToModelData(const aiMesh* mesh, ModelData& dst) {
+    LogScope scope;
     {
         if (!mesh) return;
         // （元はLoadModel内のローカルラムダ。インデントを維持するためブロックで囲っている）
@@ -607,6 +608,7 @@ ModelManager::ModelHandle ModelManager::RegisterProceduralMesh(const std::string
 }
 
 bool ModelManager::UpdateProceduralMesh(ModelHandle handle, std::vector<ModelData::Vertex> vertices, std::vector<std::uint32_t> indices) {
+    LogScope scope;
     if (handle == kInvalidHandle) return false;
     auto it = sModels.find(handle);
     if (it == sModels.end()) return false;
@@ -619,6 +621,7 @@ bool ModelManager::UpdateProceduralMesh(ModelHandle handle, std::vector<ModelDat
 }
 
 std::uint64_t ModelManager::GetModelDataVersion(ModelHandle handle) {
+    LogScope scope;
     if (handle == kInvalidHandle) return 0;
     auto it = sModels.find(handle);
     if (it == sModels.end()) return 0;
@@ -627,6 +630,7 @@ std::uint64_t ModelManager::GetModelDataVersion(ModelHandle handle) {
 
 #if defined(USE_IMGUI)
 ModelManager::ModelHandle ModelManager::LoadModelDynamic(const std::string &filePath) {
+    LogScope scope;
     if (!sActiveInstance) return kInvalidHandle;
     return sActiveInstance->LoadModel(filePath);
 }
@@ -653,6 +657,7 @@ ModelManager::ModelHandle ModelManager::GetModelHandleFromAssetPath(const std::s
 }
 
 std::string ModelManager::GetBaseAssetPath(const std::string& assetPath) {
+    LogScope scope;
     // サブメッシュのアセットパスは "モデルパス:ノード名" 形式（アセットパスはAssetsルートからの
     // 相対パスのためドライブレターの ":" は含まれない）
     const auto pos = assetPath.find(':');
@@ -662,6 +667,7 @@ std::string ModelManager::GetBaseAssetPath(const std::string& assetPath) {
 void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
     const std::string &modelFullPath, const std::string &baseAssetPath,
     const std::string &baseFileName, const std::vector<ModelData::MaterialData> &materials) {
+    LogScope scope;
     if (!scene || !scene->mRootNode) return;
 
     // メッシュを持つノードの情報（サブメッシュのアセットパス・スキニング有無・使用マテリアル）
@@ -1002,6 +1008,7 @@ const ModelData &ModelManager::GetModelDataFromAssetPath(const std::string &asse
 
 #if defined(USE_IMGUI)
 std::vector<ModelManager::ModelListEntry> ModelManager::GetLoadedModelListEntries() {
+    LogScope scope;
     return GetImGuiModelListEntries();
 }
 

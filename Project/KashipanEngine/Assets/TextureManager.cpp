@@ -159,6 +159,7 @@ UINT Align256(UINT v) { return (v + 255u) & ~255u; }
 } // namespace
 
 D3D12_GPU_DESCRIPTOR_HANDLE TextureManager::TextureView::GetSrvHandle() const noexcept {
+    LogScope scope;
     D3D12_GPU_DESCRIPTOR_HANDLE h{};
     if (handle_ == kInvalidHandle) return h;
     auto it = sTextures.find(handle_);
@@ -169,6 +170,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE TextureManager::TextureView::GetSrvHandle() const no
 }
 
 std::uint32_t TextureManager::TextureView::GetWidth() const noexcept {
+    LogScope scope;
     if (handle_ == kInvalidHandle) return 0;
     auto it = sTextures.find(handle_);
     if (it == sTextures.end()) return 0;
@@ -177,6 +179,7 @@ std::uint32_t TextureManager::TextureView::GetWidth() const noexcept {
 }
 
 std::uint32_t TextureManager::TextureView::GetHeight() const noexcept {
+    LogScope scope;
     if (handle_ == kInvalidHandle) return 0;
     auto it = sTextures.find(handle_);
     if (it == sTextures.end()) return 0;
@@ -185,6 +188,7 @@ std::uint32_t TextureManager::TextureView::GetHeight() const noexcept {
 }
 
 bool TextureManager::BindTexture(ShaderVariableBinder* shaderBinder, const std::string& nameKey, const IShaderTexture& texture) {
+    LogScope scope;
     if (!shaderBinder) return false;
 
     const auto h = texture.GetSrvHandle();
@@ -194,6 +198,7 @@ bool TextureManager::BindTexture(ShaderVariableBinder* shaderBinder, const std::
 }
 
 bool TextureManager::BindTexture(ShaderVariableBinder* shaderBinder, const std::string& nameKey, TextureHandle handle) {
+    LogScope scope;
     if (!shaderBinder) return false;
     if (handle == kInvalidHandle) return false;
 
@@ -212,6 +217,7 @@ bool TextureManager::BindTexture(ShaderVariableBinder* shaderBinder, const std::
 }
 
 std::uint32_t TextureManager::GetTextureBindlessIndex(TextureHandle handle) {
+    LogScope scope;
     // 解決できなかった場合は0（white1x1.pngのインデックス）を返す。white1x1.pngは
     // LoadAllFromAssetsFolderが他のどのテクスチャよりも必ず先に読み込むため、常にindex 0になる
     if (handle == kInvalidHandle || !sSrvHeap || !sDevice) return 0;
@@ -269,6 +275,7 @@ bool TextureManager::UnregisterExternalTexture(TextureHandle handle) {
 }
 
 bool TextureManager::UnregisterExternalTexture(const IShaderTexture* texture) {
+    LogScope scope;
     if (!texture) return false;
     for (const auto &kv : sTextures) {
         if (kv.second.external == texture) {
@@ -300,6 +307,7 @@ TextureManager::~TextureManager() {
 }
 
 TextureManager* TextureManager::GetActiveInstance(Passkey<ModelManager>) {
+    LogScope scope;
     return sActiveInstance;
 }
 
@@ -343,6 +351,7 @@ void TextureManager::LoadAllFromAssetsFolder() {
 }
 
 TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& filePath) {
+    LogScope scope;
 	// ミップマップの生成
 	const DirectX::ScratchImage* mipChain = mipMapContainer_.GetMipMap(filePath);
     if(mipChain == nullptr) {
@@ -662,6 +671,7 @@ DirectX::ScratchImage TextureManager::LoadTextureFromFile(const std::string& fil
 }
 
 DirectX::ScratchImage TextureManager::LoadTextureFromMemory(const void* data, size_t dataSize) {
+    LogScope scope;
     if (!data || dataSize == 0) return DirectX::ScratchImage();
     if (!directXCommon_ || !sDevice || !sSrvHeap) return DirectX::ScratchImage();
 
@@ -679,6 +689,7 @@ DirectX::ScratchImage TextureManager::LoadTextureFromMemory(const void* data, si
 }
 
 TextureManager::TextureHandle TextureManager::RegisterTextureFromMemory(const std::string& registerPath, const void* data, size_t dataSize) {
+    LogScope scope;
     if (registerPath.empty()) return kInvalidHandle;
 
     const auto existing = GetTextureFromAssetPath(MakeAssetRelativePath(assetsRootPath_, registerPath));
@@ -693,6 +704,7 @@ TextureManager::TextureHandle TextureManager::RegisterTextureFromMemory(const st
 
 #if defined(USE_IMGUI)
 TextureManager::TextureHandle TextureManager::LoadTextureDynamic(const std::string &filePath) {
+    LogScope scope;
     if (!sActiveInstance) return kInvalidHandle;
 
     const auto existing = GetTextureFromAssetPath(MakeAssetRelativePath(sActiveInstance->assetsRootPath_, filePath));
@@ -953,6 +965,7 @@ std::vector<TextureManager::TextureHandle> TextureManager::GetAllImGuiTextures()
 }
 
 std::vector<TextureManager::TextureListEntry> TextureManager::GetImGuiTextureListEntries() {
+    LogScope scope;
     return GetLoadedTextureListEntries();
 }
 #endif

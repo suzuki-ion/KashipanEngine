@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <iterator>
 
+#include "Debug/Logger.h"
+
 namespace KashipanEngine {
 
 namespace {

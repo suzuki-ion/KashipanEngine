@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <algorithm>
 #include <cstdint>
+#include "Debug/Logger.h"
 #include "Objects/Components/PostProcessing/IPostProcessComponent.h"
 #include "Utilities/Translation.h"
 
@@ -26,6 +27,7 @@ public:
     ~RadialBlurEffect() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
+        LogScope scope;
         auto ptr = std::make_unique<RadialBlurEffect>();
         ptr->params_ = params_;
         return ptr;
@@ -37,6 +39,7 @@ public:
 protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
+        LogScope scope;
         IPostProcessComponent::ShowImGui();
         ImGui::DragFloat(TranslationLabel("component.radialblureffect.intensity"), &params_.intensity, 0.01f, 0.0f, 4.0f, "%.3f");
         ImGui::DragInt(TranslationLabel("component.radialblureffect.sample_count"), &params_.sampleCount, 1.0f, 1, 64);
@@ -46,6 +49,7 @@ protected:
 #endif
 
     JSON SaveToJson() const override {
+        LogScope scope;
         JSON json = IPostProcessComponent::SaveToJson();
         json["intensity"] = params_.intensity;
         json["sampleCount"] = params_.sampleCount;
@@ -55,6 +59,7 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        LogScope scope;
         IPostProcessComponent::LoadFromJson(json);
         params_.intensity = json.value("intensity", 0.25f);
         params_.sampleCount = json.value("sampleCount", 8);
@@ -67,6 +72,7 @@ protected:
     }
 
     std::vector<PassInfo> BuildPasses() override {
+        LogScope scope;
         cbData_.intensity = std::max(0.0f, params_.intensity);
         cbData_.sampleCount = static_cast<std::uint32_t>(std::max(1, params_.sampleCount));
         cbData_.radialCenter[0] = params_.radialCenter[0];

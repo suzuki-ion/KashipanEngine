@@ -1,4 +1,5 @@
 #pragma once
+#include "Debug/Logger.h"
 #include "Utilities/UUID128.h"
 
 namespace KashipanEngine {
@@ -21,9 +22,10 @@ struct ComponentRef {
     bool IsValid() const { return ownerObjectID.IsValid() && addedID != MAXSIZE_T; }
 
     bool operator==(const ComponentRef &other) const {
+        LogScope scope;
         return ownerObjectID == other.ownerObjectID && addedID == other.addedID;
     }
-    bool operator!=(const ComponentRef &other) const { return !(*this == other); }
+    bool operator!=(const ComponentRef &other) const { LogScope scope; return !(*this == other); }
 };
 
 } // namespace KashipanEngine
@@ -32,6 +34,7 @@ namespace std {
 template <>
 struct hash<KashipanEngine::ComponentRef> {
     std::size_t operator()(const KashipanEngine::ComponentRef &ref) const noexcept {
+        KashipanEngine::LogScope scope;
         std::size_t h1 = std::hash<KashipanEngine::UUID128>()(ref.ownerObjectID);
         std::size_t h2 = std::hash<size_t>()(ref.addedID);
         return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));

@@ -2,11 +2,13 @@
 #include "Directory.h"
 #include <fstream>
 
+#include "Debug/Logger.h"
 #include "Utilities/Conversion/ConvertString.h"
 
 namespace KashipanEngine {
 
 INIData LoadINIFile(const std::string &filePath) {
+    LogScope scope;
     INIData iniData;
     iniData.filePath = filePath;
     // std::ifstream(const std::string&)はWindows上で現在のANSIコードページを使ってファイルを開くため、
@@ -51,6 +53,7 @@ INIData LoadINIFile(const std::string &filePath) {
 }
 
 void SaveINIFile(const INIData &iniData) {
+    LogScope scope;
     // 保存先フォルダが存在しない場合は作成する
     EnsureParentDirectoryExists(iniData.filePath);
     std::ofstream file(Utf8StringToPath(iniData.filePath));

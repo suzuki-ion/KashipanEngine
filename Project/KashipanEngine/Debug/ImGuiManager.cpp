@@ -8,6 +8,7 @@
 #include "EngineSettings.h"
 #include "Core/ProjectPaths.h"
 #include "Core/UserSettings.h"
+#include "Debug/Logger.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/Translation.h"
 
@@ -41,6 +42,7 @@ DXGI_FORMAT ToDxgiFormat_WindowsSwapChain() {
 ///          未知の言語コード・en-US は、Latin文字とかな漢字を含む安全側の日本語範囲へフォールバックする
 ///          （これは言語追加前からの既定動作を維持するための措置）
 const ImWchar *GetGlyphRangesForLanguage(const std::string &lang) {
+    LogScope scope;
     ImGuiIO &io = ImGui::GetIO();
     if (lang == "zh-CN") return io.Fonts->GetGlyphRangesChineseSimplifiedCommon();
     if (lang == "ko-KR") return io.Fonts->GetGlyphRangesKorean();
@@ -57,6 +59,7 @@ std::vector<ImVector<ImWchar>> sMergedGlyphRanges;
 ///          に限って呼び出すこと。ウィンドウがまだBeginされていなくても、名前で予約しておけば
 ///          後から表示された時点で指定ノードへドッキングされる
 void BuildDefaultDockLayout(ImGuiID dockSpaceId, const ImVec2 &dockSpaceSize) {
+    LogScope scope;
     // DockSpaceOverViewportで作成済みのルート自体は維持し、保存済みの子ノードと
     // ドッキング参照だけを初期化する。これにより現在フレームのホストとの関連を壊さない
     ImGui::DockBuilderRemoveNodeDockedWindows(dockSpaceId);
@@ -101,6 +104,7 @@ void BuildDefaultDockLayout(ImGuiID dockSpaceId, const ImVec2 &dockSpaceSize) {
 /// @details キーが存在しない項目はbaseline（引数のstyle自身が持つ値、通常はImGuiStyle()の既定値）を
 ///          そのまま維持する。ScaleAllSizesを掛ける前の素の値として扱うこと
 void ApplyStyleOverrides(ImGuiStyle &style, const JSON &styleJson) {
+    LogScope scope;
     if (!styleJson.is_object()) return;
     auto applyFloat = [&](const char *key, float &target) {
         auto it = styleJson.find(key);
@@ -143,6 +147,7 @@ SRVHeap *sImGuiSrvHeap = nullptr;
 std::unordered_map<UINT64, std::unique_ptr<DescriptorHandleInfo>> sImGuiTextureDescriptors;
 
 void ImGuiSrvDescriptorAllocFn(ImGui_ImplDX12_InitInfo *, D3D12_CPU_DESCRIPTOR_HANDLE *outCpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE *outGpuHandle) {
+    LogScope scope;
     auto handle = sImGuiSrvHeap->AllocateDescriptorHandle();
     *outCpuHandle = handle->cpuHandle;
     *outGpuHandle = handle->gpuHandle;
@@ -150,10 +155,12 @@ void ImGuiSrvDescriptorAllocFn(ImGui_ImplDX12_InitInfo *, D3D12_CPU_DESCRIPTOR_H
 }
 
 void ImGuiSrvDescriptorFreeFn(ImGui_ImplDX12_InitInfo *, D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle) {
+    LogScope scope;
     sImGuiTextureDescriptors.erase(gpuHandle.ptr);
 }
 
 HWND PlatformHwndFromViewport(ImGuiViewport* vp) {
+    LogScope scope;
     if (!vp) return nullptr;
     return (HWND)vp->PlatformHandleRaw;
 }
@@ -162,14 +169,17 @@ HWND PlatformHwndFromViewport(ImGuiViewport* vp) {
 
 ImGuiManager::ImGuiManager(Passkey<GameEngine>, WindowsAPI* windowsAPI, DirectXCommon* directXCommon)
     : windowsAPI_(windowsAPI), directXCommon_(directXCommon) {
+    LogScope scope;
     InitializeInternal();
 }
 
 ImGuiManager::~ImGuiManager() {
+    LogScope scope;
     ShutdownInternal();
 }
 
 void ImGuiManager::InitializeInternal() {
+    LogScope scope;
     if (isInitialized_) return;
 
     IMGUI_CHECKVERSION();
@@ -219,6 +229,7 @@ void ImGuiManager::InitializeInternal() {
 }
 
 void ImGuiManager::RebuildFontAtlas(const std::string &fontPath) {
+    LogScope scope;
     ImGuiIO &io = ImGui::GetIO();
     io.Fonts->Clear();
     io.FontDefault = nullptr;
@@ -274,6 +285,7 @@ void ImGuiManager::RebuildFontAtlas(const std::string &fontPath) {
 }
 
 void ImGuiManager::ReapplyStyle(float uiScale, const JSON &colorsJson, const JSON &styleJson) {
+    LogScope scope;
     ImGuiStyle &style = ImGui::GetStyle();
     // サイズ・配色を素の状態（スケール1.0相当）へ戻してから組み立て直す。
     // ScaleAllSizesは呼ぶたびに現在値へ倍率をかける累積処理のため、都度リセットしないと
@@ -304,6 +316,7 @@ void ImGuiManager::ReapplyStyle(float uiScale, const JSON &colorsJson, const JSO
 }
 
 void ImGuiManager::ApplyEditorPreferencesIfChanged() {
+    LogScope scope;
     // 文字サイズ（FontGlobalScale）はアトラスの作り直しが不要なため、変更検知なしで毎フレーム同期する
     ImGuiIO &io = ImGui::GetIO();
     io.FontGlobalScale = std::max(0.1f, UserSettings::GetFloat("editorUI.fontScale", 1.0f));
@@ -332,6 +345,7 @@ void ImGuiManager::ApplyEditorPreferencesIfChanged() {
 }
 
 void ImGuiManager::ResetDockLayoutToDefault() {
+    LogScope scope;
     const ImGuiID dockSpaceId = ImHashStr(kMainDockSpaceName);
     if (ImGui::DockBuilderGetNode(dockSpaceId) != nullptr) {
         ImGui::DockBuilderRemoveNode(dockSpaceId);
@@ -339,11 +353,13 @@ void ImGuiManager::ResetDockLayoutToDefault() {
 }
 
 void ImGuiManager::RequestLoadIniSettings(std::string iniText) {
+    LogScope scope;
     sPendingIniSettings_ = std::move(iniText);
     sHasPendingIniSettings_ = true;
 }
 
 void ImGuiManager::ShutdownInternal() {
+    LogScope scope;
     if (!isInitialized_) return;
 
     if (isBackendInitialized_) {
@@ -363,6 +379,7 @@ void ImGuiManager::ShutdownInternal() {
 }
 
 void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
+    LogScope scope;
     if (!isInitialized_) return;
 
     // エディターUI設定の変更を毎フレーム確認して反映する（フォントアトラスの作り直しを伴いうるため、
@@ -440,6 +457,7 @@ void ImGuiManager::BeginFrame(Passkey<GameEngine>) {
 }
 
 void ImGuiManager::Render(Passkey<GameEngine>) {
+    LogScope scope;
     if (!isInitialized_) return;
     if (!isBackendInitialized_) return;
 

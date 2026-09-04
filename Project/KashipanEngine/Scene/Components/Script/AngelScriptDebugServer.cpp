@@ -36,6 +36,7 @@ namespace {
 constexpr int kScriptThreadId = 1;
 
 std::string NormalizeSlashesAndCase(std::string path) {
+    LogScope scope;
     std::replace(path.begin(), path.end(), '\\', '/');
     std::transform(path.begin(), path.end(), path.begin(), [](const unsigned char c) {
         return static_cast<char>(std::tolower(c));
@@ -48,6 +49,7 @@ std::string NormalizeSlashesAndCase(std::string path) {
 
 /// @brief 実行側の相対パスとVS Code側の絶対パスを同じキーへ変換する
 std::string MakeSourceKey(const std::string &path) {
+    LogScope scope;
     std::string normalized = NormalizeSlashesAndCase(path);
     constexpr std::string_view sourceRoots[] = {
         "/assets/",
@@ -66,11 +68,13 @@ std::string MakeSourceKey(const std::string &path) {
 }
 
 std::string GetFileName(const std::string &path) {
+    LogScope scope;
     const auto slashPos = path.find_last_of("/\\");
     return slashPos == std::string::npos ? path : path.substr(slashPos + 1);
 }
 
 std::string GetSectionName(asIScriptContext *context, const asUINT stackLevel, int *line = nullptr) {
+    LogScope scope;
     const char *section = nullptr;
     const int currentLine = context->GetLineNumber(stackLevel, nullptr, &section);
     if (line) {
@@ -106,10 +110,12 @@ struct AngelScriptDebugServer::Impl final {
     };
 
     ~Impl() {
+        LogScope scope;
         Stop();
     }
 
     bool Start(const std::uint16_t port) {
+        LogScope scope;
         if (running_.load()) {
             return true;
         }
@@ -152,6 +158,7 @@ struct AngelScriptDebugServer::Impl final {
     }
 
     void Stop() {
+        LogScope scope;
         if (!running_.exchange(false)) {
             CleanupWinsock();
             return;
@@ -177,6 +184,7 @@ struct AngelScriptDebugServer::Impl final {
     }
 
     void AttachContext(asIScriptContext *context) {
+        LogScope scope;
         if (!context) {
             return;
         }
@@ -188,6 +196,7 @@ struct AngelScriptDebugServer::Impl final {
     }
 
     static void DebugLineCallback(asIScriptContext *context, void *userData) {
+        LogScope scope;
         if (!userData) {
             return;
         }
@@ -196,6 +205,7 @@ struct AngelScriptDebugServer::Impl final {
 
 private:
     static void CloseSocket(SOCKET &socketHandle) {
+        LogScope scope;
         if (socketHandle == INVALID_SOCKET) {
             return;
         }
@@ -205,6 +215,7 @@ private:
     }
 
     void CleanupWinsock() {
+        LogScope scope;
         if (winsockInitialized_) {
             WSACleanup();
             winsockInitialized_ = false;
@@ -212,6 +223,7 @@ private:
     }
 
     void ServerLoop(const std::stop_token stopToken) {
+        LogScope scope;
         const SOCKET listenSocket = listenSocket_;
         while (running_.load() && !stopToken.stop_requested()) {
             SOCKET acceptedSocket = accept(listenSocket, nullptr, nullptr);
@@ -254,6 +266,7 @@ private:
     }
 
     void ClientLoop(const std::stop_token stopToken, const SOCKET socketHandle) {
+        LogScope scope;
         std::string receiveBuffer;
         receiveBuffer.reserve(8192);
         bool closeRequested = false;
@@ -275,6 +288,7 @@ private:
     }
 
     bool TryTakeMessage(std::string &buffer, bool &closeRequested) {
+        LogScope scope;
         constexpr std::string_view headerTerminator = "\r\n\r\n";
         const auto headerEnd = buffer.find(headerTerminator);
         if (headerEnd == std::string::npos) {
@@ -322,6 +336,7 @@ private:
     }
 
     bool HandleMessage(const JSON &message) {
+        LogScope scope;
         if (message.value("type", std::string{}) != "request") {
             return false;
         }
@@ -395,6 +410,7 @@ private:
     }
 
     void HandleSetBreakpoints(const JSON &request) {
+        LogScope scope;
         const JSON &arguments = request.value("arguments", JSON::object());
         const JSON &source = arguments.value("source", JSON::object());
         const std::string sourcePath = source.value("path", std::string{});
@@ -425,6 +441,7 @@ private:
     }
 
     void HandleStackTrace(const JSON &request) {
+        LogScope scope;
         JSON frames = JSON::array();
         int totalFrames = 0;
 
@@ -463,6 +480,7 @@ private:
     }
 
     void HandleScopes(const JSON &request) {
+        LogScope scope;
         JSON scopes = JSON::array();
         const JSON &arguments = request.value("arguments", JSON::object());
         const int frameId = arguments.value("frameId", 0);
@@ -527,6 +545,7 @@ private:
     }
 
     void HandleVariables(const JSON &request) {
+        LogScope scope;
         JSON variables = JSON::array();
         const JSON &arguments = request.value("arguments", JSON::object());
         const int referenceId = arguments.value("variablesReference", 0);
@@ -551,12 +570,14 @@ private:
     }
 
     int AddVariableReferenceLocked(VariableReference reference) {
+        LogScope scope;
         const int referenceId = nextVariableReference_++;
         variableReferences_.emplace(referenceId, std::move(reference));
         return referenceId;
     }
 
     static void *ResolveObjectPointer(void *address, const int typeId, const bool directObject) {
+        LogScope scope;
         if (!address) {
             return nullptr;
         }
@@ -570,6 +591,7 @@ private:
     }
 
     static std::string GetTypeName(asIScriptEngine *engine, const int typeId) {
+        LogScope scope;
         if (!engine) {
             return {};
         }
@@ -578,15 +600,18 @@ private:
     }
 
     static bool IsArrayType(asITypeInfo *typeInfo) {
+        LogScope scope;
         return typeInfo && std::string_view(typeInfo->GetName()) == "array" &&
             (typeInfo->GetFlags() & asOBJ_TEMPLATE) != 0;
     }
 
     static bool IsStringType(asITypeInfo *typeInfo) {
+        LogScope scope;
         return typeInfo && std::string_view(typeInfo->GetName()) == "string";
     }
 
     static std::string FormatInteger(const std::int64_t value) {
+        LogScope scope;
         return std::to_string(value);
     }
 
@@ -595,6 +620,7 @@ private:
         void *address,
         const int typeId,
         const bool directObject = false) const {
+        LogScope scope;
         if (!address) {
             return "<利用不可>";
         }
@@ -666,6 +692,7 @@ private:
         void *address,
         const int typeId,
         const bool directObject = false) const {
+        LogScope scope;
         void *objectPointer = ResolveObjectPointer(address, typeId, directObject);
         if (!objectPointer || !engine) {
             return false;
@@ -686,6 +713,7 @@ private:
         void *address,
         const int typeId,
         const bool directObject = false) {
+        LogScope scope;
         asIScriptEngine *engine = context ? context->GetEngine() : nullptr;
         int childReference = 0;
         if (CanExpandValueLocked(engine, address, typeId, directObject)) {
@@ -718,6 +746,7 @@ private:
     }
 
     void AppendLocalVariablesLocked(const VariableReference &reference, JSON &variables) {
+        LogScope scope;
         asIScriptContext *context = reference.context;
         const int variableCount = context->GetVarCount(reference.stackLevel);
         for (int index = 0; index < variableCount; ++index) {
@@ -738,6 +767,7 @@ private:
     }
 
     void AppendGlobalVariablesLocked(const VariableReference &reference, JSON &variables) {
+        LogScope scope;
         if (!reference.module) {
             return;
         }
@@ -759,6 +789,7 @@ private:
     }
 
     void AppendValueChildrenLocked(const VariableReference &reference, JSON &variables) {
+        LogScope scope;
         asIScriptContext *context = reference.context;
         asIScriptEngine *engine = context ? context->GetEngine() : nullptr;
         if (!engine) {
@@ -834,6 +865,7 @@ private:
     }
 
     void BeginStep(const StepMode mode) {
+        LogScope scope;
         std::scoped_lock lock(stateMutex_);
         stepMode_ = mode;
         if (!stoppedContext_) {
@@ -847,6 +879,7 @@ private:
     }
 
     void ResumeExecution() {
+        LogScope scope;
         {
             std::scoped_lock lock(stateMutex_);
             resumeRequested_ = true;
@@ -857,6 +890,7 @@ private:
     }
 
     void OnLine(asIScriptContext *context) {
+        LogScope scope;
         if (!context || !clientConfigured_.load()) {
             return;
         }
@@ -921,11 +955,13 @@ private:
     }
 
     std::string FindClientSourcePathLocked(const std::string &section) const {
+        LogScope scope;
         const auto found = clientSourcePaths_.find(MakeSourceKey(section));
         return found == clientSourcePaths_.end() ? std::string{} : found->second;
     }
 
     void ClearClientState() {
+        LogScope scope;
         std::scoped_lock lock(stateMutex_);
         breakpoints_.clear();
         clientSourcePaths_.clear();
@@ -940,6 +976,7 @@ private:
     }
 
     void SendResponse(const JSON &request, JSON body = JSON::object()) {
+        LogScope scope;
         JSON response = {
             {"seq", serverSequence_.fetch_add(1)},
             {"type", "response"},
@@ -954,6 +991,7 @@ private:
     }
 
     void SendErrorResponse(const JSON &request, const std::string &message) {
+        LogScope scope;
         SendMessage({
             {"seq", serverSequence_.fetch_add(1)},
             {"type", "response"},
@@ -965,6 +1003,7 @@ private:
     }
 
     void SendEvent(const std::string &eventName, JSON body = JSON::object()) {
+        LogScope scope;
         JSON event = {
             {"seq", serverSequence_.fetch_add(1)},
             {"type", "event"},
@@ -977,6 +1016,7 @@ private:
     }
 
     void SendMessage(const JSON &message) {
+        LogScope scope;
         const std::string jsonText = message.dump();
         const std::string framedMessage =
             "Content-Length: " + std::to_string(jsonText.size()) + "\r\n\r\n" + jsonText;
@@ -1037,18 +1077,22 @@ AngelScriptDebugServer::AngelScriptDebugServer()
 AngelScriptDebugServer::~AngelScriptDebugServer() = default;
 
 bool AngelScriptDebugServer::Start(const std::uint16_t port) {
+    LogScope scope;
     return impl_->Start(port);
 }
 
 void AngelScriptDebugServer::Stop() {
+    LogScope scope;
     impl_->Stop();
 }
 
 void AngelScriptDebugServer::AttachContext(asIScriptContext *context) const {
+    LogScope scope;
     impl_->AttachContext(context);
 }
 
 AngelScriptDebugServer &GetProcessAngelScriptDebugServer() {
+    LogScope scope;
     static AngelScriptDebugServer server;
     return server;
 }

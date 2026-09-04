@@ -293,13 +293,63 @@ EmptyObject *Scene::CreateEmptyObject(const std::string &name, const UUID128 &ob
     return newObjPtr;
 }
 
-EmptyObject *Scene::CloneObject(EmptyObject *source, const std::string &name) {
+EmptyObject *Scene::CloneObject(EmptyObject *source, const std::string &name, bool includeChildren) {
     if (!source || !objectsExistingSet_.contains(source)) return nullptr;
 
-    EmptyObject *clonedPtr = CreateEmptyObject(name.empty() ? source->GetName() : name);
-    if (!clonedPtr) return nullptr;
-    clonedPtr->CopyStateFrom(Passkey<Scene>{}, *source);
-    return clonedPtr;
+    if (!includeChildren) {
+        EmptyObject *clonedPtr = CreateEmptyObject(name.empty() ? source->GetName() : name);
+        if (!clonedPtr) return nullptr;
+        clonedPtr->CopyStateFrom(Passkey<Scene>{}, *source);
+        return clonedPtr;
+    }
+
+    // source自身と子孫（孫以降も含む）を収集し、元オブジェクト→複製後オブジェクトの対応を取りながら
+    // 1つずつ複製する。この時点では親子関係は結び直さない（元の親は別の複製後オブジェクトに
+    // 対応しているため、全て複製し終えてからでないと正しい対応先が定まらない）
+    std::vector<EmptyObject *> subtree;
+    CollectSubtreeObjects(source, subtree);
+
+    std::unordered_map<EmptyObject *, EmptyObject *> originalToClone;
+    originalToClone.reserve(subtree.size());
+
+    EmptyObject *clonedRoot = nullptr;
+    for (auto *original : subtree) {
+        const std::string cloneName = (original == source && !name.empty()) ? name : original->GetName();
+        EmptyObject *clonedPtr = CreateEmptyObject(cloneName);
+        if (!clonedPtr) continue;
+        clonedPtr->CopyStateFrom(Passkey<Scene>{}, *original);
+        originalToClone[original] = clonedPtr;
+        if (original == source) clonedRoot = clonedPtr;
+    }
+
+    // 複製後オブジェクト同士で親子関係を結び直す（source自身の親は複製しない。CopyStateFrom内で
+    // Transformを既存のものへ値だけ反映しているため、親は未設定のまま＝1個目のCloneObjectと同じ挙動）
+    for (auto *original : subtree) {
+        if (original == source) continue;
+        EmptyObject *originalParent = original->GetComponent<Transform>() ? original->GetComponent<Transform>()->GetParentObject() : nullptr;
+        if (!originalParent) continue;
+
+        auto parentIt = originalToClone.find(originalParent);
+        auto childIt = originalToClone.find(original);
+        if (parentIt == originalToClone.end() || childIt == originalToClone.end()) continue;
+
+        auto *clonedTransform = childIt->second->GetComponent<Transform>();
+        if (clonedTransform) clonedTransform->SetParentObject(parentIt->second);
+    }
+
+    return clonedRoot;
+}
+
+void Scene::CollectSubtreeObjects(EmptyObject *root, std::vector<EmptyObject *> &out) const {
+    if (!root) return;
+    out.push_back(root);
+    for (auto *candidate : objects_) {
+        if (!candidate || candidate == root) continue;
+        auto *candidateTransform = candidate->GetComponent<Transform>();
+        if (candidateTransform && candidateTransform->GetParentObject() == root) {
+            CollectSubtreeObjects(candidate, out);
+        }
+    }
 }
 
 bool Scene::DeleteObject(EmptyObject *obj) {

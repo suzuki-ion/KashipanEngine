@@ -235,12 +235,17 @@ protected:
     /// @return 生成された空のオブジェクトのポインタ
     EmptyObject *CreateEmptyObject(const std::string &name = "", const UUID128 &objectID = UUID128(), size_t index = MAXSIZE_T);
     /// @brief 既存オブジェクトを複製してシーンへ追加する
-    /// @details 複製されるのは対象オブジェクト自身のコンポーネントのみで、親子関係や子オブジェクトは複製されない
-    ///          （EmptyObject::Clone() の仕様に準じる）
+    /// @details includeChildren=falseの場合、複製されるのは対象オブジェクト自身のコンポーネントのみで、
+    ///          親子関係や子オブジェクトは複製されない（EmptyObject::Clone() の仕様に準じる）。
+    ///          includeChildren=trueの場合、sourceを親として持つ子孫オブジェクト（シーン全体をTransformの
+    ///          親子関係で走査して収集する）もまとめて複製し、複製後の親子関係を元の階層と同じ形に
+    ///          結び直す（ルート自身の親は複製しない点はfalseの場合と同じ）
     /// @param source 複製元オブジェクトのポインタ（このシーンに属している必要がある）
-    /// @param name 複製後のオブジェクト名（空の場合は複製元と同じ名前になる）
-    /// @return 複製されたオブジェクトのポインタ（失敗した場合は nullptr）
-    EmptyObject *CloneObject(EmptyObject *source, const std::string &name = "");
+    /// @param name 複製後のオブジェクト名（空の場合は複製元と同じ名前になる。子孫オブジェクトの名前は
+    ///             常に複製元と同じ名前を引き継ぐ）
+    /// @param includeChildren 子孫オブジェクトもまとめて複製するか
+    /// @return 複製されたルートオブジェクトのポインタ（失敗した場合は nullptr）
+    EmptyObject *CloneObject(EmptyObject *source, const std::string &name = "", bool includeChildren = false);
     /// @brief オブジェクトを削除
     /// @param obj 削除するオブジェクトのポインタ
     /// @return 削除に成功した場合は true、失敗した場合は false を返す
@@ -516,6 +521,9 @@ private:
     void RegenerateUpdateComponentsList();
     void RemoveObjectFromMaps(EmptyObject *obj);
     void FlushPendingDestroys();
+    /// @brief root自身とその子孫（Transformの親子関係をシーン全体から走査して収集）をoutへ追加する
+    /// @details DeleteObjectの子孫収集処理と同様の全走査方式（Transformは子一覧を持たないため）
+    void CollectSubtreeObjects(EmptyObject *root, std::vector<EmptyObject *> &out) const;
 
     std::string name_;
 

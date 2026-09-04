@@ -3362,10 +3362,10 @@ void RegisterObjectTypes(asIScriptEngine *engine) {
         .method("Object@ CreateObject(const string &in name = \"\")", [](SceneContext &scene, const std::string &name) -> ScriptObjectHandle * {
             return ScriptObjectHandle::Create(scene.CreateEmptyObject(name));
         })
-        .method("Object@ CloneObject(Object@ source, const string &in name = \"\")", [](SceneContext &scene, ScriptObjectHandle *source, const std::string &name) -> ScriptObjectHandle * {
+        .method("Object@ CloneObject(Object@ source, const string &in name = \"\", bool includeChildren = false)", [](SceneContext &scene, ScriptObjectHandle *source, const std::string &name, bool includeChildren) -> ScriptObjectHandle * {
             EmptyObject *sourceObj = source ? source->Resolve() : nullptr;
             if (source && !sourceObj) { ThrowDestroyedObjectException(); return nullptr; }
-            return ScriptObjectHandle::Create(scene.CloneObject(sourceObj, name));
+            return ScriptObjectHandle::Create(scene.CloneObject(sourceObj, name, includeChildren));
         })
         .method("bool DeleteObject(Object@ obj)", [](SceneContext &scene, ScriptObjectHandle *handle) -> bool {
             EmptyObject *obj = handle ? handle->Resolve() : nullptr;

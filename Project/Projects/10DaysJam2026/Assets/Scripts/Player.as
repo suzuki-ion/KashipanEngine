@@ -388,16 +388,20 @@ class Player : ScriptComponentBehavior {
         if (nextState != state) {
             state = nextState;
 
-            ScriptComponent@ animSc;
-            if (GetComponent(@animSc)) {
-                // Y位置の変更。Stateの数値をそのまま行番号として渡す
-                animSc.CallMethod("PlayRow", int(state));
-
-                // X位置の変更。歩きと歩き攻撃のみ3コマ、他は1コマ
-                if (state == State::Walk || state == State::WalkAttack) {
-                    animSc.CallMethod("SetFrameCount", 3);
-                } else {
-                    animSc.CallMethod("SetFrameCount", 1);
+            array<ScriptComponent@>@ scripts;
+            if (GetComponents(@scripts)) {
+                for(int i = 0; i < scripts.length(); ++i){
+                    if(scripts[i].GetTag() == "AnimatorSC"){
+                        // Y位置の変更。Stateの数値をそのまま行番号として渡す
+                        scripts[i].CallMethod("PlayRow", int(state));
+        
+                        // X位置の変更。歩きと歩き攻撃のみ3コマ、他は1コマ
+                        if (state == State::Walk || state == State::WalkAttack) {
+                            scripts[i].CallMethod("SetFrameCount", 3);
+                        } else {
+                            scripts[i].CallMethod("SetFrameCount", 1);
+                        }
+                    } 
                 }
             }
         }

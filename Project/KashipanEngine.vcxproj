@@ -1185,6 +1185,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClInclude Include="KashipanEngine\Objects\Components\VideoSource.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\Box2DCollider.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\BoxCollider.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Collider\CharacterController2D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\MeshButton.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\MeshCollider.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\Capsule2DCollider.h" />

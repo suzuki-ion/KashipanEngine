@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <string>
 #include <unordered_map>
 #include <variant>
 #include <vector>
@@ -150,6 +151,28 @@ struct ColliderInfo3D final {
     bool continuousDetection = false;
 };
 
+/// @brief CharacterController2D の1回の移動で接触した方向
+/// @details ビットフラグとして組み合わせて使用する。
+enum class CharacterCollisionFlags2D : std::uint8_t {
+    None  = 0,
+    Below = 1 << 0,
+    Above = 1 << 1,
+    Left  = 1 << 2,
+    Right = 1 << 3,
+};
+
+/// @brief CharacterController2D の移動解決結果
+/// @details Collider は Transform を直接変更せず、許可された移動量と接触情報だけを返す。
+///          形状別のスイープ実装を Collider 側に閉じ込めることで、将来 Capsule2D/Circle へ
+///          拡張しても CharacterController2D の公開 API を維持できるようにする。
+struct CharacterMoveResult2D final {
+    Vector2 requestedDelta{0.0f, 0.0f};
+    Vector2 appliedDelta{0.0f, 0.0f};
+    Vector2 groundNormal{0.0f, 0.0f};
+    std::uint8_t collisionFlags = static_cast<std::uint8_t>(CharacterCollisionFlags2D::None);
+    bool shapeSupported = false;
+};
+
 class Collider final {
 public:
     using ColliderID = std::uint32_t;
@@ -190,6 +213,22 @@ public:
 
     void Update2D();
     void Update3D();
+
+    /// @brief 登録済み2Dコライダーを用いて、キャラクターの移動量を衝突しない範囲へ制限する
+    /// @details 現在は軸平行な Math::Rect（Box2DCollider）を X→Y の順にスイープする。
+    ///          接触後のめり込みを押し戻す方式ではなく、移動前に停止位置を決めるため、
+    ///          縦に並ぶ壁コライダーの継ぎ目を床として拾う問題を避けられる。
+    /// @param selfCollider CharacterController2D が移動形状として使用するコライダー
+    /// @param requestedDelta このフレームに要求されたワールドXY移動量
+    /// @param skinWidth 接触面との間に残す微小な隙間
+    /// @param groundedThreshold 接地とみなす法線Y成分の下限
+    /// @param ignoredTags ブロッキング対象から除外するコライダータグ
+    CharacterMoveResult2D MoveCharacter2D(
+        const ICollider *selfCollider,
+        const Vector2 &requestedDelta,
+        float skinWidth,
+        float groundedThreshold,
+        const std::vector<std::string> &ignoredTags) const;
 
     void StepPhysics(float timeStep);
 

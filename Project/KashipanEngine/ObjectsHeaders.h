@@ -14,6 +14,7 @@
 #include "Objects/Components/VideoSource.h"
 #include "Objects/Components/Collider/Box2DCollider.h"
 #include "Objects/Components/Collider/BoxCollider.h"
+#include "Objects/Components/Collider/CharacterController2D.h"
 #include "Objects/Components/Collider/Capsule2DCollider.h"
 #include "Objects/Components/Collider/CapsuleCollider.h"
 #include "Objects/Components/Collider/Circle2DCollider.h"

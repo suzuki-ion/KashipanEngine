@@ -465,6 +465,47 @@ bool RuntimeNeedsRebuild2D(const ColliderInfo2D &oldInfo, const ColliderInfo2D &
     return !ShapeVariantEquals2D(oldInfo.shape, newInfo.shape);
 }
 
+//==================================================
+// CharacterController2D 用ヘルパー
+//==================================================
+
+struct AxisAlignedBounds2D final {
+    Vector2 center{0.0f, 0.0f};
+    Vector2 halfSize{0.0f, 0.0f};
+};
+
+/// @brief 現段階で CharacterController2D が扱える軸平行矩形へ変換する
+/// @details 0/90/180/270度回転は軸平行のままなので対応し、それ以外の回転は将来の
+///          斜面対応用スイープへ委ねるため unsupported とする。
+std::optional<AxisAlignedBounds2D> ToAxisAlignedBounds(const ColliderInfo2D::ShapeVariant &shape) {
+    const auto *rect = std::get_if<Math::Rect>(&shape);
+    if (!rect) return std::nullopt;
+
+    const float sine = std::sin(rect->rotation);
+    const float cosine = std::cos(rect->rotation);
+    if (std::abs(2.0f * sine * cosine) > 0.001f) return std::nullopt;
+
+    const float halfX = std::abs(rect->halfSize.x);
+    const float halfY = std::abs(rect->halfSize.y);
+    return AxisAlignedBounds2D{
+        rect->center,
+        Vector2{
+            std::abs(cosine) * halfX + std::abs(sine) * halfY,
+            std::abs(sine) * halfX + std::abs(cosine) * halfY,
+        },
+    };
+}
+
+inline void AddCharacterCollisionFlag(CharacterMoveResult2D &result, CharacterCollisionFlags2D flag) {
+    result.collisionFlags |= static_cast<std::uint8_t>(flag);
+}
+
+inline bool HasIgnoredTag(const ColliderInfo2D &info, const std::vector<std::string> &ignoredTags) {
+    if (!info.sourceCollider) return false;
+    const auto &tag = info.sourceCollider->GetTagName();
+    return std::find(ignoredTags.begin(), ignoredTags.end(), tag) != ignoredTags.end();
+}
+
 } // namespace
 
 Collider::Collider() {
@@ -473,6 +514,174 @@ Collider::Collider() {
 
 Collider::~Collider() {
     ReleaseWorld();
+}
+
+CharacterMoveResult2D Collider::MoveCharacter2D(
+    const ICollider *selfCollider,
+    const Vector2 &requestedDelta,
+    float skinWidth,
+    float groundedThreshold,
+    const std::vector<std::string> &ignoredTags) const {
+    CharacterMoveResult2D result;
+    result.requestedDelta = requestedDelta;
+
+    const Entry<ColliderInfo2D, ColliderRuntime2D> *self = nullptr;
+    for (const auto &entry : colliders2D_) {
+        if (entry.info.sourceCollider == selfCollider) {
+            self = &entry;
+            break;
+        }
+    }
+    // CharacterController2DはTransformを所有する非RigidBodyキャラクター向け。
+    // RigidBody2D共有ボディ（ownsBody=false）を同時に動かすと物理位置とTransformが競合する。
+    if (!self || !self->info.enabled || self->info.isTrigger || !self->runtime.ownsBody) return result;
+
+    auto mover = ToAxisAlignedBounds(self->info.shape);
+    if (!mover.has_value()) return result;
+    result.shapeSupported = true;
+
+    const float skin = std::max(0.0f, skinWidth);
+    const float groundThreshold = std::clamp(groundedThreshold, 0.0f, 1.0f);
+    constexpr float kOverlapEpsilon = 0.0001f;
+
+    const auto canBlock = [&](const auto &candidate) {
+        if (&candidate == self || !candidate.info.enabled || candidate.info.isTrigger) return false;
+        // 同一オブジェクト上の補助コライダー同士では移動を妨げない。
+        if (candidate.info.ownerObject && candidate.info.ownerObject == self->info.ownerObject) return false;
+        if (!ShouldTest(self->info.attribute, self->info.ignoreAttribute, candidate.info.attribute) ||
+            !ShouldTest(candidate.info.attribute, candidate.info.ignoreAttribute, self->info.attribute)) {
+            return false;
+        }
+        return !HasIgnoredTag(candidate.info, ignoredTags);
+    };
+
+    const auto recordNormal = [&](const Vector2 &normal) {
+        if (normal.y > groundThreshold) {
+            AddCharacterCollisionFlag(result, CharacterCollisionFlags2D::Below);
+            result.groundNormal = normal;
+        } else if (normal.y < -groundThreshold) {
+            AddCharacterCollisionFlag(result, CharacterCollisionFlags2D::Above);
+        }
+        if (normal.x > kOverlapEpsilon) {
+            AddCharacterCollisionFlag(result, CharacterCollisionFlags2D::Left);
+        } else if (normal.x < -kOverlapEpsilon) {
+            AddCharacterCollisionFlag(result, CharacterCollisionFlags2D::Right);
+        }
+    };
+
+    // エディター配置や外部Transform変更で既にめり込んでいた場合だけ、最小軸で復帰させる。
+    // 通常の移動はこの後のスイープで接触前に止まるため、この処理が常用されることはない。
+    Vector2 recovery{0.0f, 0.0f};
+    constexpr int kMaxRecoveryIterations = 4;
+    for (int iteration = 0; iteration < kMaxRecoveryIterations; ++iteration) {
+        bool found = false;
+        Vector2 bestCorrection{0.0f, 0.0f};
+        Vector2 bestNormal{0.0f, 0.0f};
+        float bestDistance = std::numeric_limits<float>::max();
+
+        for (const auto &candidate : colliders2D_) {
+            if (!canBlock(candidate)) continue;
+            const auto obstacle = ToAxisAlignedBounds(candidate.info.shape);
+            if (!obstacle.has_value()) continue;
+
+            const float deltaX = mover->center.x - obstacle->center.x;
+            const float deltaY = mover->center.y - obstacle->center.y;
+            const float overlapX = mover->halfSize.x + obstacle->halfSize.x - std::abs(deltaX);
+            const float overlapY = mover->halfSize.y + obstacle->halfSize.y - std::abs(deltaY);
+            if (overlapX <= kOverlapEpsilon || overlapY <= kOverlapEpsilon) continue;
+
+            Vector2 correction;
+            Vector2 normal;
+            if (overlapX < overlapY) {
+                normal = Vector2{deltaX < 0.0f ? -1.0f : 1.0f, 0.0f};
+                correction = normal * (overlapX + skin);
+            } else {
+                normal = Vector2{0.0f, deltaY < 0.0f ? -1.0f : 1.0f};
+                correction = normal * (overlapY + skin);
+            }
+
+            const float distance = std::abs(correction.x) + std::abs(correction.y);
+            if (distance < bestDistance) {
+                found = true;
+                bestDistance = distance;
+                bestCorrection = correction;
+                bestNormal = normal;
+            }
+        }
+
+        if (!found) break;
+        mover->center = mover->center + bestCorrection;
+        recovery = recovery + bestCorrection;
+        recordNormal(bestNormal);
+    }
+
+    Vector2 sweptDelta = requestedDelta;
+
+    // X軸を先に解決する。床・天井との単なる接触（Y方向の重なりが無い状態）は
+    // 横移動を妨げないよう、直交軸は厳密な重なりだけを対象にする。
+    if (std::abs(sweptDelta.x) > kOverlapEpsilon) {
+        float allowed = std::abs(sweptDelta.x);
+        const float direction = sweptDelta.x > 0.0f ? 1.0f : -1.0f;
+        Vector2 hitNormal{0.0f, 0.0f};
+        bool hit = false;
+
+        for (const auto &candidate : colliders2D_) {
+            if (!canBlock(candidate)) continue;
+            const auto obstacle = ToAxisAlignedBounds(candidate.info.shape);
+            if (!obstacle.has_value()) continue;
+
+            const float overlapY = std::min(mover->center.y + mover->halfSize.y, obstacle->center.y + obstacle->halfSize.y) -
+                                   std::max(mover->center.y - mover->halfSize.y, obstacle->center.y - obstacle->halfSize.y);
+            if (overlapY <= kOverlapEpsilon) continue;
+
+            const float gap = direction > 0.0f
+                ? (obstacle->center.x - obstacle->halfSize.x) - (mover->center.x + mover->halfSize.x)
+                : (mover->center.x - mover->halfSize.x) - (obstacle->center.x + obstacle->halfSize.x);
+            if (gap < -kOverlapEpsilon || gap > allowed + skin) continue;
+
+            allowed = std::min(allowed, std::max(0.0f, gap - skin));
+            hit = true;
+            hitNormal = Vector2{-direction, 0.0f};
+        }
+
+        sweptDelta.x = direction * allowed;
+        mover->center.x += sweptDelta.x;
+        if (hit) recordNormal(hitNormal);
+    }
+
+    // X解決後の位置からY軸を解決する。壁の手前にskin分の隙間が残るため、縦に並ぶ
+    // 壁コライダーの継ぎ目はYスイープの候補にならず、床として誤認されない。
+    if (std::abs(sweptDelta.y) > kOverlapEpsilon) {
+        float allowed = std::abs(sweptDelta.y);
+        const float direction = sweptDelta.y > 0.0f ? 1.0f : -1.0f;
+        Vector2 hitNormal{0.0f, 0.0f};
+        bool hit = false;
+
+        for (const auto &candidate : colliders2D_) {
+            if (!canBlock(candidate)) continue;
+            const auto obstacle = ToAxisAlignedBounds(candidate.info.shape);
+            if (!obstacle.has_value()) continue;
+
+            const float overlapX = std::min(mover->center.x + mover->halfSize.x, obstacle->center.x + obstacle->halfSize.x) -
+                                   std::max(mover->center.x - mover->halfSize.x, obstacle->center.x - obstacle->halfSize.x);
+            if (overlapX <= kOverlapEpsilon) continue;
+
+            const float gap = direction > 0.0f
+                ? (obstacle->center.y - obstacle->halfSize.y) - (mover->center.y + mover->halfSize.y)
+                : (mover->center.y - mover->halfSize.y) - (obstacle->center.y + obstacle->halfSize.y);
+            if (gap < -kOverlapEpsilon || gap > allowed + skin) continue;
+
+            allowed = std::min(allowed, std::max(0.0f, gap - skin));
+            hit = true;
+            hitNormal = Vector2{0.0f, -direction};
+        }
+
+        sweptDelta.y = direction * allowed;
+        if (hit) recordNormal(hitNormal);
+    }
+
+    result.appliedDelta = recovery + sweptDelta;
+    return result;
 }
 
 Collider::ColliderID Collider::Add(const ColliderInfo2D &info) {

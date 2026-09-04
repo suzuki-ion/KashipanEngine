@@ -85,6 +85,24 @@
             {
                 "data": {
                     "customData": {
+                        "groundedThreshold": 0.5,
+                        "ignoredTags": [
+                            "Enemy",
+                            "Heart"
+                        ],
+                        "selectedColliderOccurrenceIndex": 0,
+                        "selectedColliderTypeName": "Box2DCollider",
+                        "skinWidth": 0.009999999776482582
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "CharacterController2D"
+            },
+            {
+                "data": {
+                    "customData": {
                         "fields": {
                             "attackDuration": 0.44999998807907104,
                             "currentWeaponType": 1,
@@ -92,14 +110,12 @@
                             "effectActiveDuration": 0.10000000149011612,
                             "frameInterval": 0.15000000596046448,
                             "gravity": 360.0,
-                            "groundedFootInsetRatio": 0.5,
                             "groundedThreshold": 0.5,
                             "healItem": "e41dd776-f946-4cf1-872f-b47cbad674df",
                             "hp": 10.0,
                             "jumpPower": 180.0,
                             "maxHp": 10.0,
                             "moveSpeed": 80.0,
-                            "pushBackCorrectionFactor": 0.30000001192092896,
                             "pushBackExcludeTags": [
                                 "Enemy",
                                 "Heart"

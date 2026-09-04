@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "Objects/Components/Collider/CharacterController2D.h"
 #include "Objects/Components/Collider/ICollider.h"
 
 namespace KashipanEngine {
@@ -26,6 +27,17 @@ void SceneObjectCollider::UnregisterCollider(const ICollider *collider) {
         collider_.Remove3D(it3D->second);
         colliderIds3D_.erase(it3D);
     }
+}
+
+void SceneObjectCollider::RegisterCharacterController2D(CharacterController2D *controller) {
+    if (!controller) return;
+    if (std::find(characterControllers2D_.begin(), characterControllers2D_.end(), controller) != characterControllers2D_.end()) return;
+    characterControllers2D_.push_back(controller);
+}
+
+void SceneObjectCollider::UnregisterCharacterController2D(const CharacterController2D *controller) {
+    auto it = std::find(characterControllers2D_.begin(), characterControllers2D_.end(), controller);
+    if (it != characterControllers2D_.end()) characterControllers2D_.erase(it);
 }
 
 void SceneObjectCollider::SyncRegisteredColliders() {
@@ -84,6 +96,13 @@ void SceneObjectCollider::SyncRegisteredColliders() {
 }
 
 void SceneObjectCollider::Update() {
+    // 全Object（スクリプトを含む）のUpdate後に現在形状を同期し、CharacterController2Dが
+    // 予約した移動を解決する。Transformが変わるため、その後もう一度同期してから通常の
+    // 接触イベントを更新する。
+    SyncRegisteredColliders();
+    for (auto *controller : characterControllers2D_) {
+        if (controller && controller->IsActive()) controller->ResolvePendingMove(collider_);
+    }
     SyncRegisteredColliders();
     collider_.Update2D();
     // ReactPhysics3D is updated in this existing call.
@@ -95,6 +114,7 @@ void SceneObjectCollider::Finalize() {
     collider_.Clear3D();
     colliderIds2D_.clear();
     colliderIds3D_.clear();
+    characterControllers2D_.clear();
 }
 
 } // namespace KashipanEngine

@@ -63,6 +63,7 @@
 #include "Objects/Components/AudioSource.h"
 #include "Objects/Components/Collider/Box2DCollider.h"
 #include "Objects/Components/Collider/BoxCollider.h"
+#include "Objects/Components/Collider/CharacterController2D.h"
 #include "Objects/Components/Collider/Capsule2DCollider.h"
 #include "Objects/Components/Collider/CapsuleCollider.h"
 #include "Objects/Components/Collider/Circle2DCollider.h"
@@ -1429,6 +1430,40 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             RigidBody2D *rbPtr = rbHandle.Resolve();
             if (!rbPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<CScriptArray *>(); }
             const RigidBody2D &rb = *rbPtr; return MakeColliderArray(rb.GetOwnerColliders()); });
+
+    RegisterComponentType<CharacterController2D>(engine, "CharacterController2D")
+        .method("void Move(const Vector2 &in)", SafeCall<&CharacterController2D::Move>())
+        .method("void SetSkinWidth(float)", SafeCall<&CharacterController2D::SetSkinWidth>())
+        .method("float GetSkinWidth() const", SafeCall<&CharacterController2D::GetSkinWidth>())
+        .method("void SetGroundedThreshold(float)", SafeCall<&CharacterController2D::SetGroundedThreshold>())
+        .method("float GetGroundedThreshold() const", SafeCall<&CharacterController2D::GetGroundedThreshold>())
+        .method("bool IsGrounded() const", SafeCall<&CharacterController2D::IsGrounded>())
+        .method("bool IsTouchingCeiling() const", SafeCall<&CharacterController2D::IsTouchingCeiling>())
+        .method("bool IsTouchingLeft() const", SafeCall<&CharacterController2D::IsTouchingLeft>())
+        .method("bool IsTouchingRight() const", SafeCall<&CharacterController2D::IsTouchingRight>())
+        .method("bool IsTouchingWall() const", SafeCall<&CharacterController2D::IsTouchingWall>())
+        .method("bool WasLastMoveShapeSupported() const", SafeCall<&CharacterController2D::WasLastMoveShapeSupported>())
+        .method("Vector2 GetGroundNormal() const", SafeCall<&CharacterController2D::GetGroundNormal>())
+        .method("Vector2 GetRequestedDelta() const", SafeCall<&CharacterController2D::GetRequestedDelta>())
+        .method("Vector2 GetAppliedDelta() const", SafeCall<&CharacterController2D::GetAppliedDelta>())
+        .method("void AddIgnoredTag(const string &in)", SafeCall<&CharacterController2D::AddIgnoredTag>())
+        .method("void RemoveIgnoredTag(const string &in)", SafeCall<&CharacterController2D::RemoveIgnoredTag>())
+        .method("void ClearIgnoredTags()", SafeCall<&CharacterController2D::ClearIgnoredTags>())
+        .method("bool IsTagIgnored(const string &in) const", SafeCall<&CharacterController2D::IsTagIgnored>())
+        .method("void SetSelectedCollider(Collider@)", [](ScriptComponentHandle<CharacterController2D> &controllerHandle, ScriptComponentHandle<ICollider> *colliderHandle) {
+            CharacterController2D *controller = controllerHandle.Resolve();
+            if (!controller) { ThrowDestroyedObjectException(); return; }
+            ICollider *collider = colliderHandle ? colliderHandle->Resolve() : nullptr;
+            if (colliderHandle && !collider) { ThrowDestroyedObjectException(); return; }
+            controller->SetSelectedCollider(collider); })
+        .method("Collider@ GetSelectedCollider() const", [](const ScriptComponentHandle<CharacterController2D> &controllerHandle) -> ScriptComponentHandle<ICollider> * {
+            CharacterController2D *controller = controllerHandle.Resolve();
+            if (!controller) { ThrowDestroyedObjectException(); return nullptr; }
+            return ScriptComponentHandle<ICollider>::Create(controller->GetSelectedCollider()); })
+        .method("array<Collider@>@ GetOwnerColliders() const", [](const ScriptComponentHandle<CharacterController2D> &controllerHandle) -> CScriptArray * {
+            CharacterController2D *controller = controllerHandle.Resolve();
+            if (!controller) { ThrowDestroyedObjectException(); return SafeCallDefault<CScriptArray *>(); }
+            return MakeColliderArray(controller->GetOwnerColliders()); });
 
     RegisterComponentType<RigidBody3D>(engine, "RigidBody3D")
         .method("void SetBodyType(int)", [](ScriptComponentHandle<RigidBody3D> &rbHandle, int type) {

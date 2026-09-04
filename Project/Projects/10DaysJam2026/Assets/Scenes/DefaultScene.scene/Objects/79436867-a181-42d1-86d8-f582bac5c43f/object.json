@@ -162,7 +162,7 @@
                             "x": 0.5,
                             "y": 0.5
                         },
-                        "pixelSnapping": false,
+                        "pixelSnapping": true,
                         "renderPriority": 0,
                         "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
                     },

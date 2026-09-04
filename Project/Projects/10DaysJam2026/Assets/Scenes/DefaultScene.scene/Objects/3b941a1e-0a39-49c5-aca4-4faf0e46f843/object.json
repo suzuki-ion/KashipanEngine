@@ -116,7 +116,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
+        "isActive": false,
         "name": "Background Color",
         "objectID": "3b941a1e-0a39-49c5-aca4-4faf0e46f843",
         "tag": ""

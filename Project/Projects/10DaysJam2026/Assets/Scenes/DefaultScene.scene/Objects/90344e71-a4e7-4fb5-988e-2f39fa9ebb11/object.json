@@ -1,0 +1,68 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "b68049dc-7078-4e91-aa0c-2a450f6754fc",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 64.0,
+                            "y": 50.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "fontName": "jfdot-Shinonome-12",
+                        "fontSize": 12.0,
+                        "horizontalAlign": 0,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "materialName": "Dot",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "pointSampling": true,
+                        "renderPriority": 50,
+                        "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823",
+                        "text": "これはテストテキストだぁヨ。\nデバッグ\nデバッグ",
+                        "verticalAlign": 0
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "BitmapTextRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "TalkText",
+        "objectID": "90344e71-a4e7-4fb5-988e-2f39fa9ebb11",
+        "tag": ""
+    },
+    "siblingIndex": 2000
+}

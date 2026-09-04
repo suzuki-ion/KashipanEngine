@@ -679,6 +679,18 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
             "rimColor", "rimPower", "rimIntensity", "instanceColor", "instanceColorBlendMode",
             "padding", // Object2DのMaterial構造体が持つ実体の無い予約フィールド（アラインメント用）
         };
+        // バインドレス化済みのモジュール専用テクスチャスロット（NormalMap/Matcap等）の命名規則。
+        // struct Material側にはgTextures[]内インデックスを保持するuintフィールドとして
+        // "<名前>TextureIndex"（メインテクスチャの固定フィールドである"textureIndex"自体は除く）の
+        // 形で現れる。この汎用ループでInt32既定値を入れてしまうとテクスチャピッカーUIにならないため、
+        // 下の専用ループでTextureRef型として追加する
+        // （RendererInternal::BuildMaterialElementBytesがこの命名規則を前提に解決する）
+        static const std::string kTextureIndexSuffix = "TextureIndex";
+        auto isBindlessTextureIndexField = [](const std::string &name) {
+            if (name == "textureIndex") return false;
+            if (name.size() <= kTextureIndexSuffix.size()) return false;
+            return name.compare(name.size() - kTextureIndexSuffix.size(), kTextureIndexSuffix.size(), kTextureIndexSuffix) == 0;
+        };
         auto defaultValueForType = [](ValueType type) -> MyAny {
             switch (type) {
             case ValueType::Bool: return MyAny(false);
@@ -694,6 +706,7 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
         };
         for (const auto &field : referenceLayout->fields) {
             if (kFixedFieldNames.contains(field.name)) continue;
+            if (isBindlessTextureIndexField(field.name)) continue;
             if (material.extraParameters.contains(field.name)) continue;
             MyAny defaultValue = defaultValueForType(field.valueType);
             if (!defaultValue.IsEmpty()) material.extraParameters[field.name] = defaultValue;
@@ -710,6 +723,15 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
         for (const auto &textureCubeName : referenceLayout->textureCubeFields) {
             if (material.extraParameters.contains(textureCubeName)) continue;
             material.extraParameters[textureCubeName] = MyAny(TextureCubeRef{});
+        }
+        // バインドレス化済みのモジュール専用テクスチャスロット。Texture2D宣言を持たなくなり
+        // （textureFieldsに載らない）struct Material側のuintフィールドとしてのみ現れるため、
+        // 上のisBindlessTextureIndexFieldの命名規則から検出し、対応するextraParametersキーへ
+        // TextureRef型の既定値を追加する
+        for (const auto &field : referenceLayout->fields) {
+            if (!isBindlessTextureIndexField(field.name)) continue;
+            if (material.extraParameters.contains(field.name)) continue;
+            material.extraParameters[field.name] = MyAny(TextureRef{});
         }
     }
     ImGui::EndDisabled();

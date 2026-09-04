@@ -85,16 +85,16 @@ class Shuriken : ScriptComponentBehavior {
             if (enemy !is null) {
                 ScriptComponent@ sc;
                 if (enemy.GetComponent(@sc)) {
+                    sc.CallMethod("Damage", damageAmount);
                     float hp;
                     if (sc.GetVariable("hp", hp)) {
                         Log("敵のHP: " + hp);
-                        sc.SetVariable("hp", Clamp(hp - damageAmount, 0.0f, 100.0f));
                     }
                 }
             }
-        }else if(hit.otherCollider.GetTag() != "Player"){
+        }else if(hit.otherCollider.GetTag() != "Player" && hit.otherCollider.GetTag() != "Weapon" && hit.otherCollider.GetTag() != "Direction"&& hit.otherCollider.GetTag() != "Bullet"){
             hit.selfCollider.SetActive(false);
-            pos = Vector3(-100.0f, 0.0f, 0.0f);
+            pos = Vector3(-1000.0f, 0.0f, 0.0f);
             movingX = 0.0f;
         }
     }

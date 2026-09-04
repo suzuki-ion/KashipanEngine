@@ -14,6 +14,15 @@ class Green : ScriptComponentBehavior {
     [SerializeField, Tooltip("撃破時にもらえる経験値")]
     float expValue = 5.0f;
 
+    [SerializeField, Tooltip("重力")]
+    float gravity = 12.0f;
+
+    [SerializeField, Tooltip("無敵時間(秒)")]
+    float invincibleDuration = 0.5f;
+
+    [SerializeField, Tooltip("点滅の切り替え間隔(秒)")]
+    float blinkInterval = 0.08f;
+
     [SerializeField, Tooltip("プレイヤー")]
     Object@ player;
 
@@ -33,19 +42,46 @@ class Green : ScriptComponentBehavior {
     bool isAnimation = false;
     float deathEffectTimer = 0.0f;
 
+    // 無敵時間・点滅管理用
+    bool isInvincible = false;
+    float invincibleTimer = 0.0f;
+    SpriteRenderer@ sprite;
+
     Vector2 velocity;
-    float gravity = 12.0f;
     float groundedThreshold = 0.5f;
 
     Box2DCollider@ col;
 
     void Start() {
         GetComponent(@col);
+        GetComponent(@sprite);
     }
 
     void Update() {
         Transform@ tf = GetTransform();
         if(tf is null) return;
+
+        // 生存時の無敵時間タイマー更新および点滅処理
+        if (isAlive && isInvincible) {
+            invincibleTimer += GetDeltaTime();
+
+            // blinkIntervalごとにスプライトの表示・非表示を交互に切替
+            bool isVisible = (int(invincibleTimer / blinkInterval) % 2 == 0);
+            if (sprite !is null) {
+                sprite.SetActive(isVisible);
+            }
+
+            // 無敵時間終了
+            if (invincibleTimer >= invincibleDuration) {
+                invincibleTimer = 0.0f;
+                isInvincible = false;
+
+                // 終了時は必ず表示状態に戻す
+                if (sprite !is null) {
+                    sprite.SetActive(true);
+                }
+            }
+        }
 
         // moveDirに応じてY軸の回転を設定
         float rotY = (moveDir == MoveDirection::Left) ? 0.0f : 3.14159f;
@@ -114,6 +150,15 @@ class Green : ScriptComponentBehavior {
         }
     }
 
+    // ダメージ受けて無敵状態を開始するメソッド
+    void Damage(float amount) {
+        if (!isAlive || isInvincible) return;
+
+        hp -= amount;
+        isInvincible = true;
+        invincibleTimer = 0.0f;
+    }
+
     void End() {
         Log("GoombaEnd");
     }
@@ -123,7 +168,7 @@ class Green : ScriptComponentBehavior {
         ResolvePenetration(hit);
 
         // 進行方向の切り替え
-        if(hit.otherObject.GetTag() == "Wall"){
+        if(hit.otherObject.GetTag() == "Tilemap" && hit.selfCollider.GetTag() == "Direction"){
             if (moveDir == MoveDirection::Left) {
                 moveDir = MoveDirection::Right;
                 Log("Right");

@@ -60,6 +60,9 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("点滅の切り替え間隔(秒)")]
     float blinkInterval = 0.08f;
 
+    [SerializeField, Tooltip("獲得可能なすべての武器オブジェクト一覧")]
+    array<Object@>@ allWeapons;
+
     [SerializeField, Tooltip("武器一覧")]
     array<Object@>@ weapons;
 
@@ -285,7 +288,7 @@ class Player : ScriptComponentBehavior {
                 if (currentWeaponType == WeaponList::Katana) {
                     targetPos = tf.GetTranslate();
                 } else {
-                    targetPos = Vector3(-100.0f, 0.0f, 0.0f);
+                    targetPos = Vector3(-1000.0f, 0.0f, 0.0f);
                 }
 
                 Vector3 pos;
@@ -425,6 +428,75 @@ class Player : ScriptComponentBehavior {
         if(hit.otherCollider.GetTag() == "Heart"){
             Heal(1.0f); // HP増加
             healItem.SetActive(false);
+        }
+    }
+
+    // 武器名から対応する武器を探して追加する
+    void AddWeaponByName(const string &in name) {
+        if (allWeapons is null) return;
+
+        // WeaponListの定数や配列インデックスと照合
+        int targetIndex = -1;
+        if (name == "Katana") {
+            targetIndex = int(WeaponList::Katana);
+        } else if (name == "Shuriken") {
+            targetIndex = int(WeaponList::Shuriken);
+        }
+
+        // 対象の武器オブジェクトが存在すれば追加処理を行う
+        if (targetIndex >= 0 && uint(targetIndex) < allWeapons.length()) {
+            Object@ weaponObj = allWeapons[targetIndex];
+            if (weaponObj !is null) {
+                AddWeapon(weaponObj);
+            }
+        }
+    }
+
+    // 武器をweaponsに追加する処理
+    void AddWeapon(Object@ newWeapon) {
+        if (newWeapon is null) return;
+
+        if (weapons is null) {
+            @weapons = array<Object@>();
+        }
+
+        // 重複チェック
+        for (uint i = 0; i < weapons.length(); ++i) {
+            if (weapons[i] is newWeapon) {
+                Log("すでに所持している武器です");
+                return;
+            }
+        }
+
+        // 所持リストに追加し、追加した武器を装備
+        weapons.insertLast(newWeapon);
+        currentWeaponType = weapons.length() - 1;
+        Log("新しい武器を獲得！ 現在の武器インデックス: " + currentWeaponType);
+    }
+
+    // 宝箱との接触・開ける処理
+    void OnCollisionStay(const HitInfo &in hit) {
+        // 宝箱に接しているときに下ボタンを押したら
+        if (hit.otherCollider.GetTag() == "Chest" && IsCommandTriggered("Bottom")) {
+            Object@ chestObj = hit.otherObject;
+            if (chestObj !is null) {
+                ScriptComponent@ chestSc;
+                if (chestObj.GetComponent(@chestSc)) {
+                    bool isOpen = false;
+                    chestSc.GetVariable("isOpen", isOpen);
+
+                    // 未開封の場合のみ開く処理を実行
+                    if (!isOpen) {
+                        chestSc.CallMethod("Open");
+
+                        // string型で宝箱の中身の名前を取得
+                        string itemName = "";
+                        if (chestSc.GetVariable("itemName", itemName)) {
+                            AddWeaponByName(itemName);
+                        }
+                    }
+                }
+            }
         }
     }
 

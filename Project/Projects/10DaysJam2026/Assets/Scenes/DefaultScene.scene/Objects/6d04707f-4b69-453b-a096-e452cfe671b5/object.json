@@ -85,7 +85,10 @@
             {
                 "data": {
                     "customData": {
-                        "fields": {},
+                        "fields": {
+                            "isOpen": false,
+                            "itemName": "Katana"
+                        },
                         "scriptPath": "Assets\\Scripts\\Chest.as"
                     },
                     "isActive": true,
@@ -98,12 +101,12 @@
                 "data": {
                     "customData": {
                         "fields": {
-                            "frameCount": 1,
+                            "frameCount": 2,
                             "frameInterval": 0.15000000596046448,
-                            "isLoop": true,
+                            "isLoop": false,
                             "startRow": 0,
                             "uvStep": {
-                                "x": 0.25,
+                                "x": 0.5,
                                 "y": 1.0
                             }
                         },
@@ -111,7 +114,7 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": ""
+                    "tag": "AnimatorSC"
                 },
                 "type": "ScriptComponent"
             },

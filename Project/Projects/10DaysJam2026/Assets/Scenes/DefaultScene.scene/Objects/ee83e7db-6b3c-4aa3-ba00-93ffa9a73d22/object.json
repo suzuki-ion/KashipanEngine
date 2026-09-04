@@ -290,6 +290,10 @@
                 "data": {
                     "customData": {
                         "fields": {
+                            "allWeapons": [
+                                "8da25f3a-dfdc-4603-b56f-a2cc14688f69",
+                                "8bf086b0-18bf-4b32-83b6-5892013ee4e6"
+                            ],
                             "attackDuration": 0.44999998807907104,
                             "blinkInterval": 0.07999999821186066,
                             "currentWeaponType": 0,

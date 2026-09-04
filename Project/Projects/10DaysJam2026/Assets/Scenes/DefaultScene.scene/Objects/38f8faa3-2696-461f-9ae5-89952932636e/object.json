@@ -12,8 +12,8 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 1.0,
-                            "y": 1.0,
+                            "x": 4.0,
+                            "y": 4.0,
                             "z": 1.0
                         },
                         "translate": {
@@ -48,7 +48,7 @@
                             "y": 0.0
                         },
                         "continuousDetection": false,
-                        "isTrigger": false,
+                        "isTrigger": true,
                         "size": {
                             "x": 1.0,
                             "y": 1.0
@@ -70,6 +70,26 @@
                     "tag": ""
                 },
                 "type": "Box2DCollider"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "damageAmount": 1.0,
+                            "pos": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "speed": 50.0
+                        },
+                        "scriptPath": "Assets\\Scripts\\EnemyBullet.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
             },
             {
                 "data": {
@@ -100,7 +120,7 @@
                             "x": 0.0,
                             "y": 0.0
                         },
-                        "materialName": "Default",
+                        "materialName": "Dot",
                         "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
                         "pivot": {
                             "x": 0.5,
@@ -108,7 +128,7 @@
                         },
                         "pixelSnapping": true,
                         "renderPriority": 0,
-                        "targetObjectID": ""
+                        "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                     },
                     "isActive": true,
                     "priority": 900,

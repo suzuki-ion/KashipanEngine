@@ -13,6 +13,14 @@
             "state": "Trigger"
         }
     ],
+    "Bottom": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Down",
+            "state": "Trigger"
+        }
+    ],
     "Jump": [
         {
             "device": "Keyboard",

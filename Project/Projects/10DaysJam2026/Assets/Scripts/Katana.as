@@ -109,6 +109,7 @@ class Katana : ScriptComponentBehavior {
                     } else {
                         // レベル3以外は1コマに設定
                         scripts[i].CallMethod("SetFrameCount", 1);
+                        sprite.SetInstanceUvScale(Vector2(1.0f, 1.0f));
                     }
                 }
             }
@@ -161,10 +162,10 @@ class Katana : ScriptComponentBehavior {
             if (enemy !is null) {
                 ScriptComponent@ sc;
                 if (enemy.GetComponent(@sc)) {
+                    sc.CallMethod("Damage", damageAmount);
                     float hp;
                     if (sc.GetVariable("hp", hp)) {
                         Log("敵のHP: " + hp);
-                        sc.SetVariable("hp", Clamp(hp - damageAmount, 0.0f, 100.0f));
                     }
                 }
             }
@@ -179,6 +180,7 @@ class Katana : ScriptComponentBehavior {
         while (exp >= nextExp) {
             exp -= nextExp;
             level++;
+            level = Clamp(level, 0, 3);
             nextExp *= 1.5f; // 次の必要経験値を増加
             damageAmount += 1.0f; // レベルアップで攻撃力を強化
             Log("Katana Level Up Lv." + level + " (攻撃力: " + damageAmount + ")");

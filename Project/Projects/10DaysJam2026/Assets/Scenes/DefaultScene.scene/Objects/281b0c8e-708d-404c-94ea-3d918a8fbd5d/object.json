@@ -60,7 +60,7 @@
                         },
                         "excludedScreenBuffers": [],
                         "innerRadius": 0.1469999998807907,
-                        "intensity": 1.0,
+                        "intensity": 0.0,
                         "smoothness": 0.30000001192092896
                     },
                     "isActive": true,

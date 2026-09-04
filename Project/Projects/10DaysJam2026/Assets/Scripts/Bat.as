@@ -11,6 +11,9 @@ class Bat : ScriptComponentBehavior {
     [SerializeField, Tooltip("HP")]
     float hp = 1.0f;
 
+    [SerializeField, Tooltip("撃破時にもらえる経験値")]
+    float expValue = 5.0f;
+
     [SerializeField, Tooltip("プレイヤー")]
     Object@ player;
 
@@ -65,6 +68,14 @@ class Bat : ScriptComponentBehavior {
 
         if(!isAlive){
             if(!isAnimation){
+                // 経験値付与処理
+                if (player !is null) {
+                    ScriptComponent@ playerSc;
+                    if (player.GetComponent(@playerSc)) {
+                        playerSc.CallMethod("AddExp", expValue);
+                    }
+                }
+
                 @cloneEffect = GetScene().CloneObject(deathEffect, "CloneDeathEffect");
                 
                 if(cloneEffect !is null){

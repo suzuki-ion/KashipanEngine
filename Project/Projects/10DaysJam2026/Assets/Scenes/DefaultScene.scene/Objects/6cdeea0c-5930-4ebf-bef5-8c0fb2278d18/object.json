@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 206.1786651611328,
-                            "y": 74.18688201904297,
+                            "x": -1413.950927734375,
+                            "y": -68035.2421875,
                             "z": 0.0
                         }
                     },
@@ -33,7 +33,7 @@
                     "customData": {
                         "meshAssetPath": "PrimitiveMesh-Rect2D"
                     },
-                    "isActive": true,
+                    "isActive": false,
                     "priority": 1,
                     "tag": ""
                 },
@@ -44,7 +44,7 @@
                     "customData": {
                         "textureAssetPath": "App/Sprite/Enemy/green.png"
                     },
-                    "isActive": true,
+                    "isActive": false,
                     "priority": 2,
                     "tag": ""
                 },
@@ -76,7 +76,7 @@
                             false
                         ]
                     },
-                    "isActive": true,
+                    "isActive": false,
                     "priority": 3,
                     "tag": "Enemy"
                 },
@@ -108,7 +108,7 @@
                             false
                         ]
                     },
-                    "isActive": true,
+                    "isActive": false,
                     "priority": 4,
                     "tag": "Enemy"
                 },
@@ -140,7 +140,7 @@
                             false
                         ]
                     },
-                    "isActive": true,
+                    "isActive": false,
                     "priority": 5,
                     "tag": "Enemy"
                 },
@@ -151,8 +151,10 @@
                     "customData": {
                         "fields": {
                             "deathEffect": "a3f33280-f1ac-4cc0-9235-bdfd97ec21ff",
-                            "hp": 1.0,
+                            "expValue": 20.0,
+                            "hp": 0.0,
                             "moveSpeed": 15.0,
+                            "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
                             "self": "6cdeea0c-5930-4ebf-bef5-8c0fb2278d18"
                         },
                         "scriptPath": "Assets\\Scripts\\Green.as"
@@ -223,7 +225,7 @@
                         "renderPriority": 0,
                         "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                     },
-                    "isActive": true,
+                    "isActive": false,
                     "priority": 8,
                     "tag": ""
                 },

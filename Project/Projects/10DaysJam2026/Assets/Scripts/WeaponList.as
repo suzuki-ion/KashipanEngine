@@ -1,4 +1,4 @@
 enum WeaponList{
-    Sword = 0,
+    Katana = 0,
     Shuriken = 1
 }

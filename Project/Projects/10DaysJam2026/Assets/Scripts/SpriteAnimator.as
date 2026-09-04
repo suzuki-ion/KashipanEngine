@@ -21,7 +21,7 @@ class SpriteAnimator : ScriptComponentBehavior {
 
     void Start() {
         GetComponent(@sprite);
-        currentRow = startRow; // 初期ステート（行）を設定
+        currentRow = startRow;
     }
 
     void Update() {
@@ -43,8 +43,6 @@ class SpriteAnimator : ScriptComponentBehavior {
         Vector2 currentUv = Vector2(frame * uvStep.x, currentRow * uvStep.y);
         sprite.SetInstanceUvTranslate(currentUv);
     }
-
-    // --- CallMethod 用メソッド (すべて引数は1つ＝全体で最大2引数) ---
 
     // 指定した行(Y位置)のアニメーションを再生
     void PlayRow(int row) {

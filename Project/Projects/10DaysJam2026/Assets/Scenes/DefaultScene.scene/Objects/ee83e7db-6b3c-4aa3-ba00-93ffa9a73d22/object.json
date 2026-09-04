@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 93.8106918334961,
-                            "y": 64.42455291748047,
+                            "x": 121.51631164550781,
+                            "y": 56.209999084472656,
                             "z": -2.1480484519997844e-06
                         }
                     },
@@ -292,15 +292,13 @@
                         "fields": {
                             "attackDuration": 0.44999998807907104,
                             "blinkInterval": 0.07999999821186066,
-                            "currentWeaponType": 1,
-                            "effect": "9da682a8-30e0-48ec-b449-3f4d2ff986fe",
-                            "effectActiveDuration": 0.10000000149011612,
+                            "currentWeaponType": 0,
                             "frameInterval": 0.15000000596046448,
                             "gameScreen": "281b0c8e-708d-404c-94ea-3d918a8fbd5d",
                             "gravity": 360.0,
                             "groundedThreshold": 0.5,
                             "healItem": "e41dd776-f946-4cf1-872f-b47cbad674df",
-                            "hp": 10.0,
+                            "hp": 8.0,
                             "jumpPower": 180.0,
                             "maxHp": 10.0,
                             "moveSpeed": 80.0,

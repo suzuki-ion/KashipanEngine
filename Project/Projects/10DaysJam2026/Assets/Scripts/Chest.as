@@ -1,4 +1,6 @@
 class Chest : ScriptComponentBehavior {
+    bool isOpen = false;
+
     void Start() {
     }
 

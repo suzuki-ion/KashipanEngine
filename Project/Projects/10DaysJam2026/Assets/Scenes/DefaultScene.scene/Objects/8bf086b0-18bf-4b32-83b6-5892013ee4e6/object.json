@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 81.76944732666016,
-                            "y": 91.9033203125,
+                            "x": -100.0,
+                            "y": 0.0,
                             "z": 0.0
                         }
                     },
@@ -42,7 +42,7 @@
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "App/Sprite/Player/shuriken.png"
+                        "textureAssetPath": "App/Sprite/Player/Shuriken.png"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -76,7 +76,7 @@
                             false
                         ]
                     },
-                    "isActive": true,
+                    "isActive": false,
                     "priority": 1,
                     "tag": "Weapon"
                 },
@@ -87,13 +87,26 @@
                     "customData": {
                         "fields": {
                             "damageAmount": 1.0,
+                            "exp": 0.0,
                             "frameInterval": 0.15000000596046448,
+                            "level": 1,
+                            "nextExp": 10.0,
                             "pos": {
-                                "x": 0.0,
+                                "x": -100.0,
                                 "y": 0.0,
                                 "z": 0.0
                             },
+                            "scales": [
+                                6.0,
+                                8.0,
+                                12.0
+                            ],
                             "speed": 100.0,
+                            "textureNames": [
+                                "Shuriken",
+                                "Shuriken2",
+                                "Shuriken3"
+                            ],
                             "uvStep": 0.5
                         },
                         "scriptPath": "Assets\\Scripts\\Shuriken.as"
@@ -153,7 +166,7 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Syuriken",
+        "name": "Shuriken",
         "objectID": "8bf086b0-18bf-4b32-83b6-5892013ee4e6",
         "tag": ""
     },

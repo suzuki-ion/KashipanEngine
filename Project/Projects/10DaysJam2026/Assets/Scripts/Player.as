@@ -42,9 +42,6 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("HP")]
     float hp = maxHp;
 
-    [SerializeField, Tooltip("エフェクトの発生時間")]
-    float effectActiveDuration = 0.1f;
-
     [SerializeField, Tooltip("1回の押し戻しで実際に補正する割合(0～1)。1未満にすると複数フレームに分けて収束させ、挟まれた際の上下振動を和らげる")]
     float pushBackCorrectionFactor = 0.3f;
 
@@ -72,14 +69,13 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("押し戻しを行わない相手のタグ一覧")]
     array<string>@ pushBackExcludeTags;
 
-    [SerializeField, Tooltip("エフェクト")]
-    Object@ effect;
-
     [SerializeField, Tooltip("回復アイテム")]
     Object@ healItem;
 
     [SerializeField, Tooltip("ゲーム画面")]
     Object@ gameScreen;
+
+    VignetteEffect@ vignetteEffect;
 
     // クールダウン計算用タイマー
     float swordCooldownTimer = 0.0f;
@@ -88,9 +84,6 @@ class Player : ScriptComponentBehavior {
     // 手裏剣クローン管理用
     array<Object@> syurikenClones;
     array<float> syurikenTimers;
-
-    // エフェクトの発生タイマー
-    float effectActiveTimer = 0.0f;
 
     Box2DCollider@ col;
     CharacterController2D@ controller;
@@ -220,7 +213,7 @@ class Player : ScriptComponentBehavior {
         if (IsCommandTriggered("Attack")) {
             // 現在選択中の武器に応じた攻撃の可否判定
             bool canAttack = false;
-            if (currentWeaponType == WeaponList::Sword && swordCooldownTimer <= 0.0f) {
+            if (currentWeaponType == WeaponList::Katana && swordCooldownTimer <= 0.0f) {
                 canAttack = true;
                 swordCooldownTimer = swordAttackInterval; // 剣のクールダウンリセット
             } else if (currentWeaponType == WeaponList::Shuriken && syurikenCooldownTimer <= 0.0f) {
@@ -248,7 +241,7 @@ class Player : ScriptComponentBehavior {
                         }
 
                         switch (currentWeaponType) {
-                        case WeaponList::Sword:
+                        case WeaponList::Katana:
                             sc.CallMethod("Attack", margin);
                             break;
 
@@ -278,36 +271,18 @@ class Player : ScriptComponentBehavior {
                         }
                     }
                 }
-
-                // エフェクト制御
-                switch (currentWeaponType) {
-                case WeaponList::Sword:
-                    if (effect !is null) {
-                        ScriptComponent@ effectSc;
-                        if (effect.GetComponent(@effectSc)) {
-                            effect.SetActive(true);
-                        }
-                    }
-                    break;
-
-                case WeaponList::Shuriken:
-                    break;
-
-                default:
-                    break;
-                }
             }
         }
 
         // 武器の座標制御
-        uint swordIndex = uint(WeaponList::Sword);
+        uint swordIndex = uint(WeaponList::Katana);
         if (weapons !is null && swordIndex < weapons.length() && weapons[swordIndex] !is null) {
             ScriptComponent@ sc;
             if (weapons[swordIndex].GetComponent(@sc)) {
                 Vector3 targetPos;
                 
                 // 装備中がソードならプレイヤーの位置に、手裏剣などそれ以外なら退避座標へ移動
-                if (currentWeaponType == WeaponList::Sword) {
+                if (currentWeaponType == WeaponList::Katana) {
                     targetPos = tf.GetTranslate();
                 } else {
                     targetPos = Vector3(-100.0f, 0.0f, 0.0f);
@@ -320,43 +295,6 @@ class Player : ScriptComponentBehavior {
             }
         }
 
-        // エフェクトの座標をの近くに移動
-        if(effect !is null){
-            ScriptComponent@ sc;
-            if(effect.GetComponent(@sc)){
-                Vector3 pos;
-                Vector3 rotate;
-                Vector3 finalPos;
-                Vector3 effectOffset;
-
-                // 方向に応じてオフセットと回転を変更
-                if(lastDirection == Direction::Right){
-                    effectOffset = Vector3(16.0f, 0.0f, 0.0f);
-                    finalPos = Vector3(0.0f, 0.0f, 0.0f);
-                }else if(lastDirection == Direction::Left){
-                    effectOffset = Vector3(-16.0f, 0.0f, 0.0f);
-                    finalPos = Vector3(0.0f, 3.14f, 0.0f);
-                }
-                
-                if(sc.GetVariable("pos", pos)){
-                    sc.SetVariable("pos", tf.GetTranslate() + effectOffset);
-                }
-
-                if(sc.GetVariable("rotate", rotate)){
-                    sc.SetVariable("rotate", finalPos);
-                }
-            }
-        }
-
-        // 一定時間経過後エフェクトを非アクティブ化
-        if(effect !is null && effect.IsActive()){
-            effectActiveTimer += GetDeltaTime();
-            if(effectActiveTimer >= effectActiveDuration){
-                effectActiveTimer = 0.0f;
-                effect.SetActive(false);
-            }
-        }
-
         // 攻撃中判定の更新
         bool isAttacking = false;
         if(attackTimer > 0.0f){
@@ -365,12 +303,12 @@ class Player : ScriptComponentBehavior {
         }
 
         // HPが指定値以下になったらヴィネットをかける
-        // if(hp <= vignetteHp){
-        //     ScriptComponent@ sc;
-        //     if(GetComponent(@sc)){
-                
-        //     }
-        // }
+        if(hp <= vignetteHp){
+            VignetteEffect@ vf;
+            if(gameScreen.GetComponent(@vf)){
+                vf.SetIntensity(1.0f);
+            }
+        }
 
         // HP0になったら死亡
         if(hp <= 0.0f){
@@ -503,5 +441,19 @@ class Player : ScriptComponentBehavior {
 
     void End() {
         Log("Player End");
+    }
+
+    // 経験値獲得処理
+    void AddExp(float expAmount) {
+        if (weapons is null || uint(currentWeaponType) >= weapons.length()) return;
+
+        Object@ currentWeapon = weapons[currentWeaponType];
+        if (currentWeapon !is null) {
+            ScriptComponent@ sc;
+            if (currentWeapon.GetComponent(@sc)) {
+                // 装備中の武器に経験値を渡す
+                sc.CallMethod("AddExp", expAmount);
+            }
+        }
     }
 }

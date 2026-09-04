@@ -42,7 +42,7 @@
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "App/Sprite/UI/katana.png"
+                        "textureAssetPath": "App/Sprite/UI/Katana.png"
                     },
                     "isActive": true,
                     "priority": 1,

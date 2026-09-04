@@ -2,6 +2,9 @@
 #ifdef USE_IMGUI
 #include <imgui.h>
 #include <imgui_stdlib.h>
+#include <algorithm>
+#include <cctype>
+#include <functional>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -82,6 +85,126 @@ inline bool SelectString(const char *label, std::string &value, const std::vecto
         }
         ImGui::EndCombo();
     }
+    return changed;
+}
+
+// ==========================================
+// 1-3. テクスチャアセットのサムネイル選択（Unity風ピッカー）
+// ==========================================
+
+/// @brief テクスチャアセットをサムネイル付きボタン+ポップアップグリッドから選択するUnity風ピッカー。
+///        プレビューのサムネイルボタンをクリックすると候補一覧をサムネイルグリッドで表示する
+///        ポップアップが開き、クリックで選択できる（Scene/Editor/AssetsWindow::ShowFileGridと
+///        同じ`ImGui::ImageButton`+`TextureListEntry::srvGpuPtr`方式）。Assetsウィンドウからの
+///        ドラッグ&ドロップも従来通りプレビューボタンへ受け付ける
+/// @param label ラベル（プレビューの右に表示する。ImGui ID分離のため内部でPushIDする）
+/// @param assetPath 選択中のアセット相対パス（変更時に上書きされる。空文字列="未選択"）
+/// @param candidates 選択候補（呼び出し側でTextureCubeRef用等のフィルタ済みの一覧を渡す）
+/// @param allowNone ポップアップ先頭に「(None)」セルを表示して空文字を選択可能にする
+/// @param dropFilter 指定時、ドラッグ&ドロップされたアセットパスがtrueを返す場合のみ受け付ける
+///        （EditValue(TextureCubeRef&)がキューブマップ以外のドロップを無視するために使う）
+/// @return 値が変更された場合は true
+inline bool TextureThumbnailPicker(const char *label, std::string &assetPath,
+    const std::vector<KashipanEngine::TextureManager::TextureListEntry> &candidates, bool allowNone = true,
+    const std::function<bool(const std::string &)> &dropFilter = nullptr) {
+    bool changed = false;
+    constexpr float kThumbnailSize = 48.0f;
+    constexpr float kGridThumbnailSize = 64.0f;
+    constexpr float kGridCellSize = 84.0f;
+
+    ImGui::PushID(label);
+
+    // 選択中テクスチャのSRVは候補一覧（呼び出し側で読み込み済みテクスチャから作られる）から探す。
+    // 候補に含まれない（フィルタで外れた等）場合は見つからずプレースホルダー表示になる
+    const auto *current = assetPath.empty() ? nullptr : [&]() -> const KashipanEngine::TextureManager::TextureListEntry * {
+        for (const auto &entry : candidates) {
+            if (entry.assetPath == assetPath) return &entry;
+        }
+        return nullptr;
+    }();
+
+    if (current && current->srvGpuPtr != 0) {
+        if (ImGui::ImageButton("##preview", static_cast<ImTextureID>(current->srvGpuPtr), ImVec2(kThumbnailSize, kThumbnailSize))) {
+            ImGui::OpenPopup("##texPickerPopup");
+        }
+    } else {
+        if (ImGui::Button(assetPath.empty() ? "(None)" : "?", ImVec2(kThumbnailSize, kThumbnailSize))) {
+            ImGui::OpenPopup("##texPickerPopup");
+        }
+    }
+    if (ImGui::IsItemHovered() && !assetPath.empty()) {
+        ImGui::SetTooltip("%s", assetPath.c_str());
+    }
+    if (std::string droppedPath; KashipanEngine::AcceptAssetDragDropTarget(KashipanEngine::kTextureAssetDragDropType, droppedPath)) {
+        if (!dropFilter || dropFilter(droppedPath)) {
+            assetPath = droppedPath;
+            changed = true;
+        }
+    }
+
+    ImGui::SameLine();
+    ImGui::BeginGroup();
+    ImGui::TextUnformatted(label);
+    ImGui::TextUnformatted(assetPath.empty() ? "(None)" : assetPath.c_str());
+    ImGui::EndGroup();
+
+    if (ImGui::BeginPopup("##texPickerPopup")) {
+        static char sFilterBuf[128] = "";
+        ImGui::SetNextItemWidth(kGridCellSize * 3.0f);
+        ImGui::InputTextWithHint("##texPickerFilter", "Search...", sFilterBuf, sizeof(sFilterBuf));
+        ImGui::Separator();
+
+        std::string filterLower = sFilterBuf;
+        std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+        const float availWidth = ImGui::GetContentRegionAvail().x;
+        const int columns = std::max(1, static_cast<int>(availWidth / kGridCellSize));
+
+        ImGui::BeginChild("##texPickerGrid", ImVec2(0.0f, 320.0f));
+        int index = 0;
+        if (allowNone) {
+            if (ImGui::Button(KashipanEngine::TranslationLabel("editor.imguicustom.none"), ImVec2(kGridThumbnailSize, kGridThumbnailSize))) {
+                assetPath.clear();
+                changed = true;
+                ImGui::CloseCurrentPopup();
+            }
+            ++index;
+        }
+        for (const auto &entry : candidates) {
+            if (!filterLower.empty()) {
+                std::string pathLower = entry.assetPath;
+                std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(),
+                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+                if (pathLower.find(filterLower) == std::string::npos) continue;
+            }
+            if (index % columns != 0) ImGui::SameLine();
+            ImGui::PushID(entry.assetPath.c_str());
+            bool clicked = false;
+            if (entry.srvGpuPtr != 0) {
+                const bool selected = (entry.assetPath == assetPath);
+                if (selected) ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+                clicked = ImGui::ImageButton("##thumb", static_cast<ImTextureID>(entry.srvGpuPtr), ImVec2(kGridThumbnailSize, kGridThumbnailSize));
+                if (selected) ImGui::PopStyleColor();
+            } else {
+                clicked = ImGui::Button("?", ImVec2(kGridThumbnailSize, kGridThumbnailSize));
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("%s\n%ux%u", entry.assetPath.c_str(), entry.width, entry.height);
+            }
+            if (clicked) {
+                assetPath = entry.assetPath;
+                changed = true;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::PopID();
+            ++index;
+        }
+        ImGui::EndChild();
+        ImGui::EndPopup();
+    }
+
+    ImGui::PopID();
     return changed;
 }
 
@@ -175,23 +298,12 @@ inline bool EditValue(const char *label, Color &value, const UiOptions &opts = {
     return ImGui::ColorEdit4(label, &value.r);
 }
 
-/// @brief テクスチャ参照編集用。読み込み済みテクスチャからの選択とAssetsウィンドウからのD&Dの両方を受け付ける
-///        （MaterialManagerの固定テクスチャスロット選択欄と同じ操作感）。optsは使用しない
+/// @brief テクスチャ参照編集用。サムネイル付きボタンをクリックすると候補一覧をサムネイルグリッドで
+///        表示するポップアップが開く（TextureThumbnailPicker参照）。Assetsウィンドウからの
+///        D&Dも受け付ける（MaterialManagerの固定テクスチャスロット選択欄と同じ操作感）。optsは使用しない
 inline bool EditValue(const char *label, TextureRef &value, const UiOptions &opts = {}) {
     (void)opts;
-    bool changed = false;
-    std::vector<std::string> texturePaths;
-    for (const auto &entry : KashipanEngine::TextureManager::GetLoadedTextureListEntries()) {
-        texturePaths.push_back(entry.assetPath);
-    }
-    if (SelectString(label, value.assetPath, texturePaths, true)) {
-        changed = true;
-    }
-    if (std::string droppedPath; KashipanEngine::AcceptAssetDragDropTarget(KashipanEngine::kTextureAssetDragDropType, droppedPath)) {
-        value.assetPath = droppedPath;
-        changed = true;
-    }
-    return changed;
+    return TextureThumbnailPicker(label, value.assetPath, KashipanEngine::TextureManager::GetLoadedTextureListEntries(), true);
 }
 
 /// @brief キューブマップ参照編集用。EditValue(TextureRef&)と同じ操作感だが、候補を
@@ -199,25 +311,17 @@ inline bool EditValue(const char *label, TextureRef &value, const UiOptions &opt
 ///        （ドラッグ&ドロップも同様にキューブマップ以外は無視する）
 inline bool EditValue(const char *label, TextureCubeRef &value, const UiOptions &opts = {}) {
     (void)opts;
-    bool changed = false;
-    std::vector<std::string> texturePaths;
-    for (const auto &entry : KashipanEngine::TextureManager::GetLoadedTextureListEntries()) {
-        if (entry.isCubemap) texturePaths.push_back(entry.assetPath);
+    std::vector<KashipanEngine::TextureManager::TextureListEntry> cubemapEntries;
+    for (auto &entry : KashipanEngine::TextureManager::GetLoadedTextureListEntries()) {
+        if (entry.isCubemap) cubemapEntries.push_back(std::move(entry));
     }
-    if (SelectString(label, value.assetPath, texturePaths, true)) {
-        changed = true;
-    }
-    if (std::string droppedPath; KashipanEngine::AcceptAssetDragDropTarget(KashipanEngine::kTextureAssetDragDropType, droppedPath)) {
-        bool droppedIsCubemap = false;
-        for (const auto &entry : KashipanEngine::TextureManager::GetLoadedTextureListEntries()) {
-            if (entry.assetPath == droppedPath) { droppedIsCubemap = entry.isCubemap; break; }
+    auto dropFilter = [&cubemapEntries](const std::string &path) {
+        for (const auto &entry : cubemapEntries) {
+            if (entry.assetPath == path) return true;
         }
-        if (droppedIsCubemap) {
-            value.assetPath = droppedPath;
-            changed = true;
-        }
-    }
-    return changed;
+        return false;
+    };
+    return TextureThumbnailPicker(label, value.assetPath, cubemapEntries, true, dropFilter);
 }
 
 inline bool EditValue(const char *label, Quaternion &value, const UiOptions &opts = {}) {

@@ -577,22 +577,15 @@ void MaterialManager::ShowImGuiMaterialManagerWindow() {
 void MaterialManager::ShowMaterialEditorFields(Material &material) {
     ImGui::ColorEdit4(TranslationLabel("editor.materialmanager.color"), &material.color.x);
 
-    // テクスチャは読み込み済みのものから選択する
-    // ファイル名単体だと同名ファイルが複数フォルダにある場合にImGuiのID重複警告が出るため、
-    // Assetsからの相対パスを表示・選択キーとして使う（選択候補は常に解決済みなのでハンドルは即座に得られる）
-    std::vector<std::string> texturePaths;
-    for (const auto &entry : TextureManager::GetLoadedTextureListEntries()) {
-        texturePaths.push_back(entry.assetPath);
-    }
+    // テクスチャは読み込み済みのものからサムネイルグリッドのポップアップで選択する
+    // （ImGuiCustom::TextureThumbnailPicker参照。ファイル名単体だと同名ファイルが複数フォルダにある場合に
+    // ImGuiのID重複警告が出るため、Assetsからの相対パスを表示・選択キーとして使う。選択候補は
+    // 常に解決済みなのでハンドルは即座に得られる。D&Dの受け付けもピッカー内部で行う）
     std::string texturePath = TextureManager::GetTextureAssetPath(material.textureHandle);
     if (texturePath.empty()) texturePath = material.textureFileName; // 未解決の場合は保留中のファイル名を表示
-    if (ImGuiCustom::SelectString(TranslationLabel("editor.materialmanager.texture"), texturePath, texturePaths, true)) {
+    if (ImGuiCustom::TextureThumbnailPicker(TranslationLabel("editor.materialmanager.texture"), texturePath,
+        TextureManager::GetLoadedTextureListEntries(), true)) {
         material.textureHandle = texturePath.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(texturePath);
-        material.textureFileName = TextureManager::GetTextureFileName(material.textureHandle);
-    }
-    // Assetsウィンドウからのテクスチャファイルドラッグ&ドロップも受け付ける
-    if (std::string droppedPath; AcceptAssetDragDropTarget(kTextureAssetDragDropType, droppedPath)) {
-        material.textureHandle = TextureManager::GetTextureFromAssetPath(droppedPath);
         material.textureFileName = TextureManager::GetTextureFileName(material.textureHandle);
     }
     // サンプラーは既定6種（DefaultSampler）から選択する。gSamplers[6]は固定長のバインドレス配列のため、

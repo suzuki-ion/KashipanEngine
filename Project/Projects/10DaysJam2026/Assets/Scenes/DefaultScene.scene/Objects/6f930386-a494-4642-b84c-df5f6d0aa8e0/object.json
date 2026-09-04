@@ -12,13 +12,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 6.0,
-                            "y": 6.0,
+                            "x": 16.0,
+                            "y": 16.0,
                             "z": 1.0
                         },
                         "translate": {
-                            "x": -100.0,
-                            "y": 0.0,
+                            "x": 256.9076232910156,
+                            "y": 24.52518081665039,
                             "z": 0.0
                         }
                     },
@@ -38,17 +38,6 @@
                     "tag": ""
                 },
                 "type": "MeshFilter"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "textureAssetPath": "App/Sprite/Player/Shuriken.png"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "TextureSource"
             },
             {
                 "data": {
@@ -76,44 +65,57 @@
                             false
                         ]
                     },
-                    "isActive": false,
+                    "isActive": true,
                     "priority": 1,
-                    "tag": "Weapon"
+                    "tag": "Chest"
                 },
                 "type": "Box2DCollider"
             },
             {
                 "data": {
                     "customData": {
-                        "fields": {
-                            "damageAmount": 1.0,
-                            "exp": 0.0,
-                            "frameInterval": 0.15000000596046448,
-                            "level": 1,
-                            "nextExp": 10.0,
-                            "pos": {
-                                "x": -1000.0,
-                                "y": 0.0,
-                                "z": 0.0
-                            },
-                            "scales": [
-                                6.0,
-                                8.0,
-                                12.0
-                            ],
-                            "speed": 100.0,
-                            "textureNames": [
-                                "Shuriken",
-                                "Shuriken2",
-                                "Shuriken3"
-                            ],
-                            "uvStep": 0.5
-                        },
-                        "scriptPath": "Assets\\Scripts\\Shuriken.as"
+                        "textureAssetPath": "App/Sprite/Object/chest.png"
                     },
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
+                },
+                "type": "TextureSource"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "isOpen": false,
+                            "itemName": "Shuriken"
+                        },
+                        "scriptPath": "Assets\\Scripts\\Chest.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "frameCount": 2,
+                            "frameInterval": 0.15000000596046448,
+                            "isLoop": false,
+                            "playOnStart": false,
+                            "startRow": 0,
+                            "uvStep": {
+                                "x": 0.5,
+                                "y": 1.0
+                            }
+                        },
+                        "scriptPath": "Assets\\Scripts\\SpriteAnimator.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "AnimatorSC"
                 },
                 "type": "ScriptComponent"
             },
@@ -166,9 +168,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Shuriken",
-        "objectID": "8bf086b0-18bf-4b32-83b6-5892013ee4e6",
+        "name": "Chest",
+        "objectID": "6f930386-a494-4642-b84c-df5f6d0aa8e0",
         "tag": ""
     },
-    "siblingIndex": 12000
+    "siblingIndex": 13500
 }

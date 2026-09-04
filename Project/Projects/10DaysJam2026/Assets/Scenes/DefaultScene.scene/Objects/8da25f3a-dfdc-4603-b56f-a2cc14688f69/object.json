@@ -87,6 +87,7 @@
                             "frameCount": 3,
                             "frameInterval": 0.10000000149011612,
                             "isLoop": false,
+                            "playOnStart": true,
                             "startRow": 0,
                             "uvStep": {
                                 "x": 0.3330000042915344,

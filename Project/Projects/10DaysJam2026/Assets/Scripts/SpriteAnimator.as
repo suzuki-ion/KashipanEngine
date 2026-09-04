@@ -11,6 +11,9 @@ class SpriteAnimator : ScriptComponentBehavior {
     [SerializeField, Tooltip("初期の行(Y位置)")]
     int startRow = 0;
 
+    [SerializeField, Tooltip("ゲーム開始時から自動再生するか(false=何かのきっかけで再生開始するまで静止)")]
+    bool playOnStart = true;
+
     [SerializeField, Tooltip("ループ再生")]
     bool isLoop = true;
 
@@ -22,6 +25,7 @@ class SpriteAnimator : ScriptComponentBehavior {
     void Start() {
         GetComponent(@sprite);
         currentRow = startRow;
+        isPlaying = playOnStart;
     }
 
     void Update() {

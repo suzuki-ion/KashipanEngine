@@ -67,7 +67,7 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": ""
+                    "tag": "Chest"
                 },
                 "type": "Box2DCollider"
             },
@@ -104,6 +104,7 @@
                             "frameCount": 2,
                             "frameInterval": 0.15000000596046448,
                             "isLoop": false,
+                            "playOnStart": false,
                             "startRow": 0,
                             "uvStep": {
                                 "x": 0.5,

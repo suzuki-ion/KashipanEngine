@@ -66,8 +66,8 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("武器一覧")]
     array<Object@>@ weapons;
 
-    [SerializeField, Tooltip("所持武器")]
-    int currentWeaponType = 1;
+    [SerializeField, Tooltip("現在装備中の武器タイプ(WeaponListの値。-1は未所持=武器なし)")]
+    int currentWeaponType = -1;
 
     [SerializeField, Tooltip("押し戻しを行わない相手のタグ一覧")]
     array<string>@ pushBackExcludeTags;
@@ -174,18 +174,21 @@ class Player : ScriptComponentBehavior {
             PlayTaggedAudio("Jump"); // ジャンプ時の音を再生
         }
 
-        // 武器の切り替え
+        // 武器の切り替え(所持している武器タイプの中だけを巡回する)
         if (weapons !is null && weapons.length() > 0) {
-            int weaponCount = int(weapons.length());
-            int currentIndex = int(currentWeaponType);
-        
             if (IsCommandTriggered("WeaponChangeRight")) {
-                currentWeaponType = WeaponList((currentIndex + 1) % weaponCount);
-                Log("WeaponType" + int(currentWeaponType));
+                int next = FindOwnedWeapon(1);
+                if (next >= 0) {
+                    currentWeaponType = next;
+                    Log("WeaponType" + currentWeaponType);
+                }
             }
             if (IsCommandTriggered("WeaponChangeLeft")) {
-                currentWeaponType = WeaponList((currentIndex - 1 + weaponCount) % weaponCount);
-                Log("WeaponType" + int(currentWeaponType));
+                int prev = FindOwnedWeapon(-1);
+                if (prev >= 0) {
+                    currentWeaponType = prev;
+                    Log("WeaponType" + currentWeaponType);
+                }
             }
         }
 
@@ -201,8 +204,9 @@ class Player : ScriptComponentBehavior {
             tf.SetTranslate(tf.GetTranslate() + Vector3(movement.x, movement.y, 0.0f));
         }
 
-        // weapons未設定・currentWeaponIndexが範囲外の場合の"Index out of bounds"を防ぐ
-        bool hasWeapon = currentWeaponType >= 0 && uint(currentWeaponType) < weapons.length();
+        // weapons未設定・currentWeaponTypeが範囲外/未所持(null)の場合の"Index out of bounds"を防ぐ
+        bool hasWeapon = weapons !is null && currentWeaponType >= 0
+            && uint(currentWeaponType) < weapons.length() && weapons[currentWeaponType] !is null;
 
         // 攻撃クールダウンタイマーの更新
         if (swordCooldownTimer > 0.0f) {
@@ -435,7 +439,7 @@ class Player : ScriptComponentBehavior {
     void AddWeaponByName(const string &in name) {
         if (allWeapons is null) return;
 
-        // WeaponListの定数や配列インデックスと照合
+        // WeaponListの定数と照合
         int targetIndex = -1;
         if (name == "Katana") {
             targetIndex = int(WeaponList::Katana);
@@ -447,31 +451,51 @@ class Player : ScriptComponentBehavior {
         if (targetIndex >= 0 && uint(targetIndex) < allWeapons.length()) {
             Object@ weaponObj = allWeapons[targetIndex];
             if (weaponObj !is null) {
-                AddWeapon(weaponObj);
+                AddWeapon(targetIndex, weaponObj);
             }
         }
     }
 
     // 武器をweaponsに追加する処理
-    void AddWeapon(Object@ newWeapon) {
-        if (newWeapon is null) return;
+    // weaponsはallWeaponsと同じ並び(WeaponListの値=インデックス)で管理し、
+    // 未所持のスロットはnullのままにする
+    void AddWeapon(int weaponType, Object@ newWeapon) {
+        if (newWeapon is null || weaponType < 0) return;
 
         if (weapons is null) {
             @weapons = array<Object@>();
         }
 
-        // 重複チェック
-        for (uint i = 0; i < weapons.length(); ++i) {
-            if (weapons[i] is newWeapon) {
-                Log("すでに所持している武器です");
-                return;
-            }
+        // weaponTypeのスロットまで配列を広げる(未所持分はnullで埋める)
+        while (weapons.length() <= uint(weaponType)) {
+            weapons.insertLast(null);
         }
 
-        // 所持リストに追加し、追加した武器を装備
-        weapons.insertLast(newWeapon);
-        currentWeaponType = weapons.length() - 1;
-        Log("新しい武器を獲得！ 現在の武器インデックス: " + currentWeaponType);
+        // 重複チェック
+        if (weapons[weaponType] !is null) {
+            Log("すでに所持している武器です");
+            return;
+        }
+
+        // 所持リストに追加し、取得した武器を自動装備
+        @weapons[weaponType] = newWeapon;
+        currentWeaponType = weaponType;
+        Log("新しい武器を獲得！ 現在の武器タイプ: " + currentWeaponType);
+    }
+
+    // 現在位置からstep方向(+1/-1)に所持済みの武器タイプを探す。見つからなければ-1
+    int FindOwnedWeapon(int step) {
+        if (weapons is null || weapons.length() == 0) return -1;
+
+        int count = int(weapons.length());
+        int start = (currentWeaponType >= 0 && uint(currentWeaponType) < weapons.length())
+            ? currentWeaponType : 0;
+
+        for (int i = 1; i <= count; ++i) {
+            int idx = ((start + step * i) % count + count) % count;
+            if (weapons[idx] !is null) return idx;
+        }
+        return -1;
     }
 
     // 宝箱との接触・開ける処理

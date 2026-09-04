@@ -48,7 +48,7 @@ class EnemyBullet : ScriptComponentBehavior {
             hit.selfCollider.SetActive(false);
             pos = Vector3(-1000.0f, 0.0f, 0.0f);
             movingX = 0.0f;
-        } else if(hit.otherCollider.GetTag() != "Enemy"){
+        } else if(hit.otherObject.GetTag() == "Tilemap"){
             // 敵・プレイヤー以外に当たったら消滅
             hit.selfCollider.SetActive(false);
             pos = Vector3(-1000.0f, 0.0f, 0.0f);

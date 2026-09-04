@@ -97,7 +97,7 @@
             }
         ],
         "editorOnly": false,
-        "hiddenFromEditorTarget": false,
+        "hiddenFromEditorTarget": true,
         "isActive": true,
         "name": "TalkPeopleIcon",
         "objectID": "1fcaaf04-0627-4958-a051-12f47f3f42a4",

@@ -315,10 +315,7 @@
                             "syurikenAttackInterval": 0.4000000059604645,
                             "syurikenLifeTime": 2.0,
                             "vignetteHp": 3.0,
-                            "weapons": [
-                                "8da25f3a-dfdc-4603-b56f-a2cc14688f69",
-                                "8bf086b0-18bf-4b32-83b6-5892013ee4e6"
-                            ]
+                            "weapons": []
                         },
                         "scriptPath": "Assets/Scripts/Player.as"
                     },
@@ -335,6 +332,7 @@
                             "frameCount": 1,
                             "frameInterval": 0.15000000596046448,
                             "isLoop": true,
+                            "playOnStart": true,
                             "startRow": 0,
                             "uvStep": {
                                 "x": 0.3330000042915344,

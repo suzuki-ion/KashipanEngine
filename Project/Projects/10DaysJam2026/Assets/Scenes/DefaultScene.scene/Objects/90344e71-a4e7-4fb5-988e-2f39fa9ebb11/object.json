@@ -58,7 +58,7 @@
             }
         ],
         "editorOnly": false,
-        "hiddenFromEditorTarget": false,
+        "hiddenFromEditorTarget": true,
         "isActive": true,
         "name": "TalkText",
         "objectID": "90344e71-a4e7-4fb5-988e-2f39fa9ebb11",

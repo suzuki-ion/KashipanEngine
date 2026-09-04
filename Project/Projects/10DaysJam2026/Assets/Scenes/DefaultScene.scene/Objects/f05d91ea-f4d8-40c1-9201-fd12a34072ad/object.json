@@ -97,7 +97,7 @@
             }
         ],
         "editorOnly": false,
-        "hiddenFromEditorTarget": false,
+        "hiddenFromEditorTarget": true,
         "isActive": true,
         "name": "TalkBackground",
         "objectID": "f05d91ea-f4d8-40c1-9201-fd12a34072ad",

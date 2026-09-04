@@ -92,7 +92,7 @@ class Shuriken : ScriptComponentBehavior {
                     }
                 }
             }
-        }else if(hit.otherCollider.GetTag() != "Player" && hit.otherCollider.GetTag() != "Weapon" && hit.otherCollider.GetTag() != "Direction"&& hit.otherCollider.GetTag() != "Bullet"){
+        }else if(hit.otherObject.GetTag() == "Tilemap"){
             hit.selfCollider.SetActive(false);
             pos = Vector3(-1000.0f, 0.0f, 0.0f);
             movingX = 0.0f;

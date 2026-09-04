@@ -20,8 +20,13 @@ class WeaponUI : ScriptComponentBehavior {
         ScriptComponent@ sc;
         if(player.GetComponent(@sc)){
            if(sc.GetVariable("currentWeaponType", currentWeaponType)){
-               string textureName = "App/Sprite/UI/" + textureNames[currentWeaponType] + ".png";
-               currentTexture.SetTextureAssetPath(textureName);
+               // -1は未所持(武器なし)を表すのでテクスチャ更新をスキップ
+               if (currentWeaponType >= 0 && textureNames !is null && uint(currentWeaponType) < textureNames.length()) {
+                   string textureName = "App/Sprite/UI/" + textureNames[currentWeaponType] + ".png";
+                   currentTexture.SetTextureAssetPath(textureName);
+               } else {
+                   currentTexture.SetTextureAssetPath("");
+               }
            }
         }
     }

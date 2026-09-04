@@ -119,6 +119,7 @@
                             "frameCount": 2,
                             "frameInterval": 1.0,
                             "isLoop": true,
+                            "playOnStart": true,
                             "startRow": 0,
                             "uvStep": {
                                 "x": 0.5,

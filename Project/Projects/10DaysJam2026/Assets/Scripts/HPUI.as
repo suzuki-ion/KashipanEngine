@@ -81,21 +81,21 @@ class HPUI : ScriptComponentBehavior {
             hasPreviousHp = true;
         }
 
+        // HPが減った瞬間は、減った特定のゲージだけでなく全ゲージアイコンを揺らす
+        bool hpDecreased = hp < previousHp;
+
         for (uint i = 0; i < gauges.length(); ++i) {
             Object@ gauge = gauges[i];
             if (gauge is null) continue;
 
-            bool wasFilled = float(i) < previousHp;
-            bool isFilled = float(i) < hp;
-
             SpriteRenderer@ sprite;
             if (gauge.GetComponent(@sprite)) {
                 // 現在HPぶんだけUVをX座標0.0、それ以外は0.5に設定
+                bool isFilled = float(i) < hp;
                 sprite.SetInstanceUvTranslate(Vector2(isFilled ? 0.0f : 0.5f, 0.0f));
             }
 
-            // このゲージが満タン→空に変わった瞬間だけShakeを再生
-            if (wasFilled && !isFilled) {
+            if (hpDecreased) {
                 Shake@ shake;
                 if (gauge.GetComponent(@shake)) {
                     shake.Play();

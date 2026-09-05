@@ -105,6 +105,7 @@
                             "x": 0.5,
                             "y": 0.5
                         },
+                        "pixelSnapOutsetPixels": 0.0,
                         "pixelSnapping": false,
                         "renderPriority": 0,
                         "targetObjectID": "02788331-11b3-451d-bad8-86c2e1f677aa"

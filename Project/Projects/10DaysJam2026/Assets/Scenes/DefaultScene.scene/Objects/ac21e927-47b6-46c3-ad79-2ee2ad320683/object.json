@@ -44,6 +44,8 @@
                         "instanceColorBlendMode": 1,
                         "materialName": "Default",
                         "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "pixelSnapOutsetPixels": 0.0,
+                        "pixelSnapping": false,
                         "pointSampling": true,
                         "renderPriority": 0,
                         "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823",

@@ -17,7 +17,7 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 113.38896942138672,
+                            "x": 113.38899993896484,
                             "y": 110.27903747558594,
                             "z": 0.0
                         }
@@ -71,6 +71,17 @@
             {
                 "data": {
                     "customData": {
+                        "textureAssetPath": "KashipanEngine/white1x1.png"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "TextureSource"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,
@@ -103,6 +114,7 @@
                             "x": 0.5,
                             "y": 0.5
                         },
+                        "pixelSnapOutsetPixels": 0.0,
                         "pixelSnapping": true,
                         "renderPriority": -101,
                         "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
@@ -116,7 +128,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": false,
+        "isActive": true,
         "name": "Background Color",
         "objectID": "3b941a1e-0a39-49c5-aca4-4faf0e46f843",
         "tag": ""

@@ -42,6 +42,17 @@
             {
                 "data": {
                     "customData": {
+                        "textureAssetPath": "KashipanEngine/white1x1.png"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "TextureSource"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,
@@ -74,7 +85,8 @@
                             "x": 0.5,
                             "y": 0.5
                         },
-                        "pixelSnapping": true,
+                        "pixelSnapOutsetPixels": 1.0,
+                        "pixelSnapping": false,
                         "renderPriority": -50,
                         "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
                     },

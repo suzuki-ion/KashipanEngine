@@ -12,7 +12,7 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 10.999587059020996,
+                            "x": 11.0,
                             "y": 9.0,
                             "z": 0.999962568283081
                         },
@@ -162,7 +162,8 @@
                             "x": 0.5,
                             "y": 0.5
                         },
-                        "pixelSnapping": true,
+                        "pixelSnapOutsetPixels": 1.0,
+                        "pixelSnapping": false,
                         "renderPriority": 0,
                         "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
                     },

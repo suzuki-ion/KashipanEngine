@@ -14,6 +14,12 @@ class KnifeThrowing : ScriptComponentBehavior {
     [SerializeField, Tooltip("ナイフの発生位置オフセット")]
     Vector3 knifeOffset = Vector3(0.0f, 0.0f, 0.0f);
 
+    [SerializeField, Tooltip("前後の揺れ幅")]
+    float hoverAmplitude = 8.0f;
+
+    [SerializeField, Tooltip("1往復にかかる時間(秒)")]
+    float hoverCycle = 2.0f;
+
     [SerializeField, Tooltip("HP")]
     float hp = 1.0f;
 
@@ -38,6 +44,11 @@ class KnifeThrowing : ScriptComponentBehavior {
     // 発射タイマー
     float shotTimer = 0.0f;
 
+    // 揺れ計算用の変数
+    Vector3 basePos;
+    float hoverTimer = 0.0f;
+    bool isBasePosInitialized = false;
+
     // 発射したナイフのクローン管理用
     array<Object@> knifeClones;
     array<float> knifeTimers;
@@ -60,6 +71,12 @@ class KnifeThrowing : ScriptComponentBehavior {
     void Update() {
         Transform@ tf = GetTransform();
         if(tf is null) return;
+
+        // 基準座標の初期化（ノックバック等の影響を防ぐため初回のみ保存）
+        if (!isBasePosInitialized) {
+            basePos = tf.GetTranslate();
+            isBasePosInitialized = true;
+        }
 
         // 生存時の無敵時間タイマー更新および点滅処理
         if (isAlive && isInvincible) {
@@ -85,6 +102,22 @@ class KnifeThrowing : ScriptComponentBehavior {
         }
 
         if(isAlive){
+            // 揺れる処理
+            if (hoverCycle > 0.0f) {
+                hoverTimer += GetDeltaTime();
+                float timeRatio = hoverTimer / hoverCycle;
+                timeRatio -= int(timeRatio); 
+                float wave = (timeRatio < 0.5f) ? (timeRatio * 4.0f - 1.0f) : (3.0f - timeRatio * 4.0f);
+                float v = (wave + 1.0f) * 0.5f;
+                float smoothV = v * v * (3.0f - 2.0f * v);
+                float finalWave = smoothV * 2.0f - 1.0f;
+
+                // X軸に揺れを適用する
+                Vector3 newPos = basePos;
+                newPos.x = basePos.x + finalWave * hoverAmplitude;
+                tf.SetTranslate(newPos);
+            }
+
             // プレイヤーの方を向く処理
             if (player !is null) {
                 Transform@ playerTf = player.GetTransform();

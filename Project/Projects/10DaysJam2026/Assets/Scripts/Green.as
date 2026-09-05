@@ -171,10 +171,8 @@ class Green : ScriptComponentBehavior {
         if(hit.selfCollider.GetTag() == "Direction"){
             if (moveDir == MoveDirection::Left) {
                 moveDir = MoveDirection::Right;
-                Log("Right");
             } else {
                 moveDir = MoveDirection::Left;
-                Log("Left");
             }
         }
     }

@@ -74,6 +74,7 @@ class Shuriken : ScriptComponentBehavior {
                     }
                 }
             }
+            GetOwnerObject().SetActive(false);
         }else if(hit.otherObject.GetTag() == "Tilemap"){
             hit.selfCollider.SetActive(false);
             pos = Vector3(-1000.0f, 0.0f, 0.0f);

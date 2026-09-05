@@ -94,6 +94,8 @@ class Ball : ScriptComponentBehavior {
                     sc.CallMethod("Damage", damageAmount);
                 }
             }
+
+            GetOwnerObject().SetActive(false);
         }
         // Tilemapに当たった際の反射処理
         else if(hit.otherObject.GetTag() == "Tilemap"){

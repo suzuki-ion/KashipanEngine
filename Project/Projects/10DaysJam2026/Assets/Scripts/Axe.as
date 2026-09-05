@@ -110,6 +110,8 @@ class Axe : ScriptComponentBehavior {
                     sc.CallMethod("Damage", damageAmount);
                 }
             }
+
+            GetOwnerObject().SetActive(false);
         }
         // Tilemapに当たったら消滅させる
         else if(hit.otherObject.GetTag() == "Tilemap"){

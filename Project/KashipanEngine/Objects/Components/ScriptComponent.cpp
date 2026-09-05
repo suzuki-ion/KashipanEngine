@@ -6,6 +6,7 @@
 #include <string_view>
 
 #include <angelscript.h>
+#include <add_on/scriptany/scriptany.h>
 #include <add_on/scriptarray/scriptarray.h>
 #include <add_on/scriptbuilder/scriptbuilder.h>
 #include <add_on/scripthelper/scripthelper.h>
@@ -27,8 +28,11 @@
 #include "Utilities/FileIO/Directory.h"
 #include "Utilities/UUID128.h"
 #if defined(USE_IMGUI)
+#include "Assets/AudioManager.h"
+#include "Assets/TextureManager.h"
 #include "Objects/Components/Render/TargetObjectSelector.h"
 #include "Utilities/AssetDragDropPayload.h"
+#include "Utilities/ImGuiCustom.h"
 #endif
 
 namespace KashipanEngine {
@@ -180,6 +184,10 @@ ScriptComponent::FieldAttributes ParseFieldAttributes(const std::vector<std::str
             attrs.space = ParseFloatArg(token.args, 0, 8.0f);  // Unityの[Space]の既定値と同じ8px
         } else if (token.name == "Tooltip") {
             if (!token.args.empty()) attrs.tooltip = token.args[0];
+        } else if (token.name == "TexturePath") {
+            attrs.texturePath = true;
+        } else if (token.name == "AudioPath") {
+            attrs.audioPath = true;
         }
     }
     return attrs;
@@ -290,6 +298,10 @@ void ScriptComponent::ReleaseScript() {
         behaviorObject_->Release();
         behaviorObject_ = nullptr;
     }
+    if (lastReturnValue_) {
+        lastReturnValue_->Release();
+        lastReturnValue_ = nullptr;
+    }
     behaviorType_ = nullptr;
     startMethod_ = nullptr;
     updateMethod_ = nullptr;
@@ -362,6 +374,18 @@ bool ScriptComponent::Reload() {
             ? "スクリプトのビルドに失敗しました: " + scriptPath_
             : "スクリプトファイルの読み込みに失敗しました: " + scriptPath_;
         buildErrorMessages_ = std::move(buildMessages);
+        engine->DiscardModule(moduleName_.c_str());
+        moduleName_.clear();
+        return false;
+    }
+
+    // GC管理対象の型（array<T>・dictionary等）をハンドル（@）無しの危険な値的構文で宣言していないかを
+    // 検証する。実行時の値には一切触れず型IDだけで判定するため、この検証自体が壊れたハンドルを踏んで
+    // クラッシュすることはない（詳細はValidateGCValueDeclarationsのコメント参照）
+    if (std::vector<std::string> unsafeGCFields; !ValidateGCValueDeclarations(builder.GetModule(), engine, unsafeGCFields)) {
+        lastError_ = Translation("engine.script.field.gc_type.unsafe_declaration") + scriptPath_;
+        buildErrorMessages_ = std::move(unsafeGCFields);
+        Log(lastError_, LogSeverity::Error);
         engine->DiscardModule(moduleName_.c_str());
         moduleName_.clear();
         return false;
@@ -717,6 +741,33 @@ bool ScriptComponent::IsEnumFieldType(int typeId, asIScriptEngine *engine) const
     return type && (type->GetFlags() & asOBJ_ENUM) != 0;
 }
 
+bool ScriptComponent::IsExchangeableFieldType(int typeId, asIScriptEngine *engine) const {
+    if (typeId == asTYPEID_BOOL || typeId == asTYPEID_INT32 || typeId == asTYPEID_UINT32 ||
+        typeId == asTYPEID_FLOAT || typeId == asTYPEID_DOUBLE ||
+        typeId == stringTypeId_ || typeId == vector2TypeId_ || typeId == vector3TypeId_ ||
+        typeId == vector4TypeId_ || typeId == quaternionTypeId_) return true;
+    if (IsEnumFieldType(typeId, engine)) return true;
+    // Object@ / array<T>@ / dictionary@ / 独自クラス・独自enumのハンドル等、あらゆるハンドル型を許可する。
+    // 安全性は呼び出し元で行う型IDの完全一致チェックによって担保される（一致すれば同一のasITypeInfoである
+    // ことが保証されるため、独自クラス/enumはshared宣言、array/dictionaryはエンジン共有のためそのまま安全）
+    return (typeId & asTYPEID_OBJHANDLE) != 0;
+}
+
+void ScriptComponent::WarnIfLikelySharedMismatch(int expectedTypeId, int actualTypeId, asIScriptEngine *engine) const {
+    if (!engine || expectedTypeId == actualTypeId) return;
+    constexpr int kHandleMask = ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST);
+    asITypeInfo *expectedType = engine->GetTypeInfoById(expectedTypeId & kHandleMask);
+    asITypeInfo *actualType = engine->GetTypeInfoById(actualTypeId & kHandleMask);
+    if (!expectedType || !actualType || expectedType == actualType) return;
+    const char *expectedName = expectedType->GetName();
+    const char *actualName = actualType->GetName();
+    // 型名が同じなのに型IDが違う＝別モジュールでコンパイルされた別実体の可能性が高く、
+    // 独自クラス/enumをスクリプトをまたいでやり取りする際の shared 宣言忘れが典型例
+    if (expectedName && actualName && std::string_view(expectedName) == actualName) {
+        Log(Translation("engine.script.variable.type_mismatch_shared_hint") + expectedName, LogSeverity::Warning);
+    }
+}
+
 void ScriptComponent::CollectSerializedFields(CScriptBuilder &builder) {
     serializedFields_.clear();
     asIScriptModule *module = builder.GetModule();
@@ -868,6 +919,51 @@ bool ScriptComponent::IsArrayHandleValid(CScriptArray *array, int fieldTypeId) c
     asITypeInfo *expectedType = engine->GetTypeInfoById(fieldTypeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST));
     asITypeInfo *actualType = array->GetArrayObjectType();
     return expectedType && actualType && expectedType == actualType;
+}
+
+bool ScriptComponent::ValidateGCValueDeclarations(asIScriptModule *module, asIScriptEngine *engine, std::vector<std::string> &violations) const {
+    violations.clear();
+    if (!module || !engine) return true;
+
+    // typeIdの実行時の値には一切触れず、型ID（ハンドル修飾ビットの有無）だけで判定する。
+    // GC管理対象の型（array<T>・dictionary等、asOBJ_GCフラグを持つ型）を値的構文で使うと
+    // AngelScript側のGC追跡が壊れる実装依存の問題があるため、ハンドル（@）として宣言されていない
+    // 限り危険とみなす（array固有の問題ではなく asOBJ_GC を持つ型全般に共通するリスクとして扱う）
+    const auto isUnsafeGCValueType = [engine](int typeId) {
+        if (typeId & asTYPEID_OBJHANDLE) return false;
+        asITypeInfo *type = engine->GetTypeInfoById(typeId);
+        return type && (type->GetFlags() & asOBJ_GC) != 0;
+    };
+
+    const asUINT varCount = module->GetGlobalVarCount();
+    for (asUINT i = 0; i < varCount; ++i) {
+        const char *name = nullptr;
+        int typeId = 0;
+        if (module->GetGlobalVar(i, &name, nullptr, &typeId) < 0 || !name) continue;
+        if (isUnsafeGCValueType(typeId)) {
+            violations.push_back(std::string(name) + Translation("engine.script.field.gc_type.unsafe_declaration.global_suffix"));
+        }
+    }
+
+    // モジュール内で定義された全クラス型を対象にする（[SerializeField]の有無やBehaviorクラスかどうかは問わない。
+    // AngelScript側のGC破棄処理はシリアライズ対象かどうかに関係なく壊れたハンドルを踏みうるため）
+    const asUINT typeCount = module->GetObjectTypeCount();
+    for (asUINT t = 0; t < typeCount; ++t) {
+        asITypeInfo *classType = module->GetObjectTypeByIndex(t);
+        if (!classType || !(classType->GetFlags() & asOBJ_SCRIPT_OBJECT)) continue;
+
+        const asUINT propCount = classType->GetPropertyCount();
+        for (asUINT p = 0; p < propCount; ++p) {
+            const char *propName = nullptr;
+            int propTypeId = 0;
+            if (classType->GetProperty(p, &propName, &propTypeId) < 0 || !propName) continue;
+            if (isUnsafeGCValueType(propTypeId)) {
+                violations.push_back(std::string(classType->GetName()) + "::" + propName);
+            }
+        }
+    }
+
+    return violations.empty();
 }
 
 JSON ScriptComponent::CaptureField(const SerializedField &field, void *address) const {
@@ -1073,15 +1169,55 @@ void ScriptComponent::CopyLeafFieldValue(int typeId, void *dst, const void *src)
         if (newValue) newValue->AddRef();
         if (*dstSlot) (*dstSlot)->Release();
         *dstSlot = newValue;
+    } else if ((typeId & asTYPEID_OBJHANDLE) && engine) {
+        // Object以外の汎用ハンドル型（array<T>@ / dictionary@ / 独自クラス・enumのハンドル等）。
+        // 具体的な型を問わずAddRef/Releaseできるエンジンの汎用APIでハンドルを差し替える
+        asITypeInfo *type = engine->GetTypeInfoById(typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST));
+        // 型情報が取得できない場合はAddRef/Releaseの整合性を保証できないため、
+        // 参照カウントを壊さないよう代入自体を行わない（呼び出し元は型ID一致を確認済みのため通常は発生しない）
+        if (!type) return;
+        auto *dstSlot = static_cast<void **>(dst);
+        void *newValue = *static_cast<void *const *>(src);
+        if (newValue) engine->AddRefScriptObject(newValue, type);
+        if (*dstSlot) engine->ReleaseScriptObject(*dstSlot, type);
+        *dstSlot = newValue;
+    }
+}
+
+void ScriptComponent::SetContextArg(int argIndex, const void *ref, int typeId, asIScriptEngine *engine) const {
+    const asUINT index = static_cast<asUINT>(argIndex);
+    if (IsEnumFieldType(typeId, engine)) {
+        context_->SetArgDWord(index, static_cast<asDWORD>(*static_cast<const int32_t *>(ref)));
+    } else if (typeId == asTYPEID_BOOL) {
+        context_->SetArgByte(index, *static_cast<const bool *>(ref) ? 1 : 0);
+    } else if (typeId == asTYPEID_INT32) {
+        context_->SetArgDWord(index, static_cast<asDWORD>(*static_cast<const int32_t *>(ref)));
+    } else if (typeId == asTYPEID_UINT32) {
+        context_->SetArgDWord(index, *static_cast<const uint32_t *>(ref));
+    } else if (typeId == asTYPEID_FLOAT) {
+        context_->SetArgFloat(index, *static_cast<const float *>(ref));
+    } else if (typeId == asTYPEID_DOUBLE) {
+        context_->SetArgDouble(index, *static_cast<const double *>(ref));
+    } else if (typeId & asTYPEID_OBJHANDLE) {
+        // Object@ / array<T>@ / dictionary@ / 独自クラス・enumのハンドル等（ハンドルスロットの中身を渡す）
+        void *handle = *static_cast<void *const *>(ref);
+        context_->SetArgObject(index, handle);
+    } else {
+        // string / Vector2 / Vector3 / Vector4 / Quaternion（登録済みの値型はアドレスをそのまま渡す）
+        context_->SetArgObject(index, const_cast<void *>(ref));
     }
 }
 
 bool ScriptComponent::GetVariable(const std::string &name, void *ref, int typeId) const {
     if (!ref) return false;
+    asIScriptEngine *engine = context_ ? context_->GetEngine() : nullptr;
     for (const auto &field : serializedFields_) {
-        if (field.name != name || field.typeId != typeId) continue;
-        // array<T>や[System.Serializable]クラスはモジュールをまたぐと型が一致しないため対象外
-        if (field.isArray || field.isScriptObject || !field.address) return false;
+        if (field.name != name) continue;
+        if (field.typeId != typeId) {
+            WarnIfLikelySharedMismatch(field.typeId, typeId, engine);
+            continue;
+        }
+        if (!field.address || !IsExchangeableFieldType(typeId, engine)) return false;
         CopyLeafFieldValue(typeId, ref, field.address);
         return true;
     }
@@ -1090,9 +1226,14 @@ bool ScriptComponent::GetVariable(const std::string &name, void *ref, int typeId
 
 bool ScriptComponent::SetVariable(const std::string &name, void *ref, int typeId) {
     if (!ref) return false;
+    asIScriptEngine *engine = context_ ? context_->GetEngine() : nullptr;
     for (auto &field : serializedFields_) {
-        if (field.name != name || field.typeId != typeId) continue;
-        if (field.isArray || field.isScriptObject || !field.address) return false;
+        if (field.name != name) continue;
+        if (field.typeId != typeId) {
+            WarnIfLikelySharedMismatch(field.typeId, typeId, engine);
+            continue;
+        }
+        if (!field.address || !IsExchangeableFieldType(typeId, engine)) return false;
         CopyLeafFieldValue(typeId, field.address, ref);
         return true;
     }
@@ -1106,7 +1247,6 @@ asIScriptFunction *ScriptComponent::FindInvokableMethod(const std::string &name,
         asIScriptFunction *func = behaviorType_->GetMethodByIndex(i);
         if (!func) continue;
         if (name != func->GetName()) continue;
-        if (func->GetReturnTypeId() != asTYPEID_VOID) continue;
         if (static_cast<int>(func->GetParamCount()) != paramCount) continue;
         return func;
     }
@@ -1114,22 +1254,30 @@ asIScriptFunction *ScriptComponent::FindInvokableMethod(const std::string &name,
 }
 
 bool ScriptComponent::InvokeMethod(const std::string &name) {
-    if (!context_ || !behaviorObject_) return false;
-    asIScriptFunction *method = FindInvokableMethod(name, 0);
-    if (!method) return false;
-    CallMethod(method);
-    return true;
+    return InvokeMethod(name, {});
 }
 
-bool ScriptComponent::InvokeMethod(const std::string &name, void *argRef, int argTypeId) {
-    if (!argRef || !context_ || !behaviorObject_) return false;
-    // 対応型はGetVariable/SetVariableと同じ（配列/Serializableクラスはモジュールをまたぐと型が一致しないため非対応）
-    if (!IsSupportedFieldType(argTypeId)) return false;
+bool ScriptComponent::InvokeMethod(const std::string &name, std::initializer_list<std::pair<void *, int>> args) {
+    if (!context_ || !behaviorObject_) return false;
+    asIScriptEngine *engine = context_->GetEngine();
 
-    asIScriptFunction *method = FindInvokableMethod(name, 1);
+    for (const auto &[ref, typeId] : args) {
+        if (!ref || !IsExchangeableFieldType(typeId, engine)) return false;
+    }
+
+    asIScriptFunction *method = FindInvokableMethod(name, static_cast<int>(args.size()));
     if (!method) return false;
-    int paramTypeId = 0;
-    if (method->GetParam(0, &paramTypeId) < 0 || paramTypeId != argTypeId) return false;
+
+    asUINT index = 0;
+    for (const auto &[ref, typeId] : args) {
+        int paramTypeId = 0;
+        if (method->GetParam(index, &paramTypeId) < 0) return false;
+        if (paramTypeId != typeId) {
+            WarnIfLikelySharedMismatch(paramTypeId, typeId, engine);
+            return false;
+        }
+        ++index;
+    }
 
     if (context_->Prepare(method) < 0) {
         lastError_ = "関数の準備に失敗しました";
@@ -1137,27 +1285,15 @@ bool ScriptComponent::InvokeMethod(const std::string &name, void *argRef, int ar
     }
     context_->SetObject(behaviorObject_);
 
-    // 引数を型IDに応じてコンテキストへ設定する（値型はCopyLeafFieldValueと同じ分岐、
-    // Object@はハンドル修飾のため、argRefが指す「ハンドルを格納したスロット」の中身を渡す）
-    asIScriptEngine *engine = context_->GetEngine();
-    if (IsEnumFieldType(argTypeId, engine)) {
-        context_->SetArgDWord(0, static_cast<asDWORD>(*static_cast<const int32_t *>(argRef)));
-    } else if (argTypeId == asTYPEID_BOOL) {
-        context_->SetArgByte(0, *static_cast<const bool *>(argRef) ? 1 : 0);
-    } else if (argTypeId == asTYPEID_INT32) {
-        context_->SetArgDWord(0, static_cast<asDWORD>(*static_cast<const int32_t *>(argRef)));
-    } else if (argTypeId == asTYPEID_UINT32) {
-        context_->SetArgDWord(0, *static_cast<const uint32_t *>(argRef));
-    } else if (argTypeId == asTYPEID_FLOAT) {
-        context_->SetArgFloat(0, *static_cast<const float *>(argRef));
-    } else if (argTypeId == asTYPEID_DOUBLE) {
-        context_->SetArgDouble(0, *static_cast<const double *>(argRef));
-    } else if (IsObjectFieldType(argTypeId)) {
-        ScriptObjectHandle *handle = *static_cast<ScriptObjectHandle *const *>(argRef);
-        context_->SetArgObject(0, handle);
-    } else {
-        // string / Vector2 / Vector3 / Vector4 / Quaternion（登録済みの値型はアドレスをそのまま渡す）
-        context_->SetArgObject(0, argRef);
+    index = 0;
+    for (const auto &[ref, typeId] : args) {
+        SetContextArg(static_cast<int>(index), ref, typeId, engine);
+        ++index;
+    }
+
+    if (lastReturnValue_) {
+        lastReturnValue_->Release();
+        lastReturnValue_ = nullptr;
     }
 
     ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
@@ -1165,8 +1301,19 @@ bool ScriptComponent::InvokeMethod(const std::string &name, void *argRef, int ar
     if (r != asEXECUTION_FINISHED) {
         lastError_ = GetExceptionInfo(context_);
         Log(Translation("engine.script.error") + lastError_, LogSeverity::Error);
+        return true;
+    }
+
+    const int returnTypeId = method->GetReturnTypeId();
+    if (returnTypeId != asTYPEID_VOID) {
+        void *returnAddress = context_->GetAddressOfReturnValue();
+        if (returnAddress) lastReturnValue_ = new CScriptAny(returnAddress, returnTypeId, engine);
     }
     return true;
+}
+
+bool ScriptComponent::GetLastReturnValue(void *ref, int typeId) const {
+    return ref && lastReturnValue_ && lastReturnValue_->Retrieve(ref, typeId);
 }
 
 std::vector<std::string> ScriptComponent::GetFloatVariableNames() const {
@@ -1392,7 +1539,11 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
         }
     } else if (field.typeId == stringTypeId_) {
         auto *str = static_cast<std::string *>(address);
-        if (attrs.multiline) {
+        if (attrs.texturePath) {
+            ImGuiCustom::TextureThumbnailPicker(label, *str, TextureManager::GetLoadedTextureListEntries(), true);
+        } else if (attrs.audioPath) {
+            ImGuiCustom::AudioAssetPicker(label, *str, AudioManager::GetLoadedSoundAssetPaths(), true);
+        } else if (attrs.multiline) {
             // 内容の行数に応じて minLines〜maxLines の範囲で高さを調整する（UnityのTextArea相当）
             int lineCount = 1 + static_cast<int>(std::count(str->begin(), str->end(), '\n'));
             lineCount = std::clamp(lineCount, attrs.minLines, attrs.maxLines);

@@ -1161,7 +1161,10 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("const string &GetScriptPath() const", SafeCall<&ScriptComponent::GetScriptPath>())
         .method("bool Reload()", SafeCall<&ScriptComponent::Reload>())
         // 他オブジェクトのScriptComponentを取得した上で、その[SerializeField]変数を名前で直接読み書きする
-        // （シーン変数を介さないスクリプト間のデータ受け渡し用。対応型はSerializeFieldと同じプリミティブ/数学型/Object@のみ）
+        // （シーン変数を介さないスクリプト間のデータ受け渡し用。対応型はプリミティブ/数学型/enum、および
+        //  Object@・array<T>@・dictionary@・[System.Serializable]クラスを含むあらゆるハンドル型。ただし
+        //  呼び出し元と呼び出し先で型IDが完全一致する必要があり、独自クラス/独自enumをやり取りする場合は
+        //  shared class / shared enum として宣言すること）
         .method("bool GetVariable(const string &in, ?&out) const", [](ScriptComponentHandle<ScriptComponent> &selfHandle, const std::string &name, void *ref, int typeId) -> bool {
             ScriptComponent *selfPtr = selfHandle.Resolve();
             if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
@@ -1175,16 +1178,43 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             return self.SetVariable(name, ref, typeId);
         })
         // 他オブジェクトのScriptComponentを取得した上で、そのBehaviorインスタンスの関数を名前で直接呼び出す
-        // （スクリプト間の関数呼び出し用。対象は"void 関数名()"または引数1個・戻り値無しの関数のみ）
+        // （スクリプト間の関数呼び出し用。引数は0〜4個まで対応し、対応する引数型はGetVariable/SetVariableと同じ。
+        //  戻り値の有無は問わない。呼び出した関数の戻り値はGetLastReturnValueで取得できる）
         .method("bool CallMethod(const string &in)", [](ScriptComponentHandle<ScriptComponent> &selfHandle, const std::string &name) -> bool {
             ScriptComponent *selfPtr = selfHandle.Resolve();
             if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
             return selfPtr->InvokeMethod(name);
         })
-        .method("bool CallMethod(const string &in, ?&in)", [](ScriptComponentHandle<ScriptComponent> &selfHandle, const std::string &name, void *ref, int typeId) -> bool {
+        .method("bool CallMethod(const string &in, ?&in)", [](ScriptComponentHandle<ScriptComponent> &selfHandle, const std::string &name, void *ref0, int typeId0) -> bool {
             ScriptComponent *selfPtr = selfHandle.Resolve();
             if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
-            return selfPtr->InvokeMethod(name, ref, typeId);
+            return selfPtr->InvokeMethod(name, {{ref0, typeId0}});
+        })
+        .method("bool CallMethod(const string &in, ?&in, ?&in)", [](ScriptComponentHandle<ScriptComponent> &selfHandle, const std::string &name,
+                void *ref0, int typeId0, void *ref1, int typeId1) -> bool {
+            ScriptComponent *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
+            return selfPtr->InvokeMethod(name, {{ref0, typeId0}, {ref1, typeId1}});
+        })
+        .method("bool CallMethod(const string &in, ?&in, ?&in, ?&in)", [](ScriptComponentHandle<ScriptComponent> &selfHandle, const std::string &name,
+                void *ref0, int typeId0, void *ref1, int typeId1, void *ref2, int typeId2) -> bool {
+            ScriptComponent *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
+            return selfPtr->InvokeMethod(name, {{ref0, typeId0}, {ref1, typeId1}, {ref2, typeId2}});
+        })
+        .method("bool CallMethod(const string &in, ?&in, ?&in, ?&in, ?&in)", [](ScriptComponentHandle<ScriptComponent> &selfHandle, const std::string &name,
+                void *ref0, int typeId0, void *ref1, int typeId1, void *ref2, int typeId2, void *ref3, int typeId3) -> bool {
+            ScriptComponent *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
+            return selfPtr->InvokeMethod(name, {{ref0, typeId0}, {ref1, typeId1}, {ref2, typeId2}, {ref3, typeId3}});
+        })
+        // 直近のCallMethodで呼び出した関数の戻り値を取得する（戻り値の型とtypeIdが完全一致しない場合や、
+        // 戻り値の無い関数を呼んだ直後・一度も呼び出していない場合はfalseを返す）
+        .method("bool GetLastReturnValue(?&out) const", [](ScriptComponentHandle<ScriptComponent> &selfHandle, void *ref, int typeId) -> bool {
+            ScriptComponent *selfPtr = selfHandle.Resolve();
+            if (!selfPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<bool>(); }
+            const ScriptComponent &self = *selfPtr;
+            return self.GetLastReturnValue(ref, typeId);
         });
 
     RegisterComponentType<MeshFilter>(engine, "MeshFilter")

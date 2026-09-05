@@ -19,6 +19,8 @@ inline constexpr const char *kScriptAssetDragDropType = "DND_ASSET_SCRIPT";
 inline constexpr const char *kPrefabAssetDragDropType = "DND_ASSET_PREFAB";
 /// @brief Assetsウィンドウからの動画ファイルドラッグのペイロード型名
 inline constexpr const char *kVideoAssetDragDropType = "DND_ASSET_VIDEO";
+/// @brief Assetsウィンドウからの音声ファイルドラッグのペイロード型名
+inline constexpr const char *kAudioAssetDragDropType = "DND_ASSET_AUDIO";
 
 /// @brief Assetsウィンドウからのアセットファイルドラッグ用ペイロード
 /// @details assetPath はAssetsルートからの相対パス（TextureManager/MaterialManager等の

@@ -500,15 +500,18 @@ void AssetsWindow::ShowFileGrid() {
         }
         (void)activated;
 
-        // テクスチャ/動画/マテリアル/スクリプト/プレハブファイルはD&Dでコンポーネントのフィールド指定や
+        // テクスチャ/動画/音声/マテリアル/スクリプト/プレハブファイルはD&Dでコンポーネントのフィールド指定や
         // シーンへの配置ができるようにする
         if (!file.isFolder && (IsTextureExtension(file.extension) || IsVideoExtension(file.extension) ||
-            file.extension == ".mat" || file.extension == ".as" || file.extension == ".prefab")) {
+            IsAudioExtension(file.extension) || file.extension == ".mat" || file.extension == ".as" ||
+            file.extension == ".prefab")) {
             if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
                 if (IsTextureExtension(file.extension)) {
                     SetAssetDragDropPayload(kTextureAssetDragDropType, ToAssetsRelativePath(file.path));
                 } else if (IsVideoExtension(file.extension)) {
                     SetAssetDragDropPayload(kVideoAssetDragDropType, ToAssetsRelativePath(file.path));
+                } else if (IsAudioExtension(file.extension)) {
+                    SetAssetDragDropPayload(kAudioAssetDragDropType, ToAssetsRelativePath(file.path));
                 } else if (file.extension == ".mat") {
                     SetAssetDragDropPayload(kMaterialAssetDragDropType, ToAssetsRelativePath(file.path));
                 } else if (file.extension == ".prefab") {

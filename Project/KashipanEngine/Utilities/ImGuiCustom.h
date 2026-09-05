@@ -22,6 +22,7 @@
 #include "Assets/TextureRef.h"
 #include "Assets/TextureCubeRef.h"
 #include "Assets/TextureManager.h"
+#include "Assets/AudioManager.h"
 #include "Utilities/AssetDragDropPayload.h"
 #include "Utilities/MyAny.h"
 #include "Utilities/Translation.h"
@@ -199,6 +200,73 @@ inline bool TextureThumbnailPicker(const char *label, std::string &assetPath,
             }
             ImGui::PopID();
             ++index;
+        }
+        ImGui::EndChild();
+        ImGui::EndPopup();
+    }
+
+    ImGui::PopID();
+    return changed;
+}
+
+// ==========================================
+// 1-4. 音声アセットの一覧選択（サムネイル無し版ピッカー）
+// ==========================================
+
+/// @brief 音声アセットを一覧ポップアップから選択するシンプルなピッカー（サムネイルは無し）。
+///        TextureThumbnailPickerの音声版だが、波形/アイコンのプレビューは行わずファイル名の
+///        検索可能なリストのみを表示する。Assetsウィンドウからのドラッグ&ドロップも受け付ける
+/// @param label ラベル（プレビューの右に表示する。ImGui ID分離のため内部でPushIDする）
+/// @param assetPath 選択中のアセット相対パス（変更時に上書きされる。空文字列="未選択"）
+/// @param candidates 選択候補（Assetsルートからの相対パス一覧）
+/// @param allowNone ポップアップ先頭に「(None)」項目を表示して空文字を選択可能にする
+/// @return 値が変更された場合は true
+inline bool AudioAssetPicker(const char *label, std::string &assetPath,
+    const std::vector<std::string> &candidates, bool allowNone = true) {
+    bool changed = false;
+    ImGui::PushID(label);
+
+    if (ImGui::Button(assetPath.empty() ? "(None)" : assetPath.c_str(), ImVec2(220.0f, 0.0f))) {
+        ImGui::OpenPopup("##audioPickerPopup");
+    }
+    if (std::string droppedPath; KashipanEngine::AcceptAssetDragDropTarget(KashipanEngine::kAudioAssetDragDropType, droppedPath)) {
+        assetPath = droppedPath;
+        changed = true;
+    }
+    ImGui::SameLine();
+    ImGui::TextUnformatted(label);
+
+    if (ImGui::BeginPopup("##audioPickerPopup")) {
+        static char sFilterBuf[128] = "";
+        ImGui::SetNextItemWidth(220.0f);
+        ImGui::InputTextWithHint("##audioPickerFilter", "Search...", sFilterBuf, sizeof(sFilterBuf));
+        ImGui::Separator();
+
+        std::string filterLower = sFilterBuf;
+        std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+        ImGui::BeginChild("##audioPickerList", ImVec2(220.0f, 240.0f));
+        if (allowNone) {
+            if (ImGui::Selectable(KashipanEngine::TranslationLabel("editor.imguicustom.none"), assetPath.empty())) {
+                assetPath.clear();
+                changed = true;
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        for (const auto &candidatePath : candidates) {
+            if (!filterLower.empty()) {
+                std::string pathLower = candidatePath;
+                std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(),
+                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+                if (pathLower.find(filterLower) == std::string::npos) continue;
+            }
+            const bool selected = (candidatePath == assetPath);
+            if (ImGui::Selectable(candidatePath.c_str(), selected)) {
+                assetPath = candidatePath;
+                changed = true;
+                ImGui::CloseCurrentPopup();
+            }
         }
         ImGui::EndChild();
         ImGui::EndPopup();

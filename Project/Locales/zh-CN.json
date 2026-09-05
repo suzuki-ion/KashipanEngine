@@ -2225,7 +2225,7 @@
 		"engine.script.error": "AngelScript：",
 		"engine.script.failed.createengine": "AngelScript：asCreateScriptEngine失败。",
 		"engine.script.field.array.recreated": "array<T>字段的句柄无效，已用新的空数组重新生成。字段名：",
-		"engine.script.field.gc_type.unsafe_declaration": "发现使用不安全的值语法而非句柄（@）声明的GC托管类型（如array<T>、dictionary等）字段，已中止构建。请修改为句柄语法（例如 array<T>@ 名称 = null;）。脚本：",
+		"engine.script.field.gc_type.unsafe_declaration": "发现使用不安全的值语法而非句柄（@）声明的字段，已中止构建。GC托管类型（如array<T>、dictionary等）以及[System.Serializable]类等脚本类类型，必须使用句柄语法声明（例如 array<T>@ 名称 = null; 或 array<T@>@ 名称 = null;）。脚本：",
 		"engine.script.field.gc_type.unsafe_declaration.global_suffix": "（全局变量）",
 		"engine.script.predefined.generate.failed": "AngelScript：as.predefined 生成失败。",
 		"engine.script.predefined.generated": "AngelScript：已生成 as.predefined。",

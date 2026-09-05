@@ -921,18 +921,51 @@ bool ScriptComponent::IsArrayHandleValid(CScriptArray *array, int fieldTypeId) c
     return expectedType && actualType && expectedType == actualType;
 }
 
+void *ScriptComponent::CreateScriptObjectViaFactory(asITypeInfo *type) const {
+    // CreateBehaviorInstance()がBehaviorクラス本体の生成に使っているのと同じ「ファクトリ関数を
+    // VMで実際に実行する」方式。array<T@>@の新規要素を生成する際に使う
+    if (!type || !context_) return nullptr;
+
+    const std::string factoryDecl = std::string(type->GetName()) + " @" + type->GetName() + "()";
+    asIScriptFunction *factory = type->GetFactoryByDecl(factoryDecl.c_str());
+    if (!factory) return nullptr;
+
+    if (context_->Prepare(factory) < 0) return nullptr;
+    int r;
+    {
+        ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
+        r = context_->Execute();
+    }
+    if (r != asEXECUTION_FINISHED) return nullptr;
+
+    void *retAddr = context_->GetAddressOfReturnValue();
+    asIScriptObject *object = retAddr ? *static_cast<asIScriptObject **>(retAddr) : nullptr;
+    // GetAddressOfReturnValue()が指す先はコンテキスト内部の一時領域であり、次のPrepare()で
+    // 上書き・解放されうるため、呼び出し元へ渡す前に明示的に参照を1つ取得しておく
+    // （CreateBehaviorInstance()でbehaviorObject_->AddRef()しているのと同じ理由）
+    if (object) object->AddRef();
+    return object;
+}
+
 bool ScriptComponent::ValidateGCValueDeclarations(asIScriptModule *module, asIScriptEngine *engine, std::vector<std::string> &violations) const {
     violations.clear();
     if (!module || !engine) return true;
 
-    // typeIdの実行時の値には一切触れず、型ID（ハンドル修飾ビットの有無）だけで判定する。
-    // GC管理対象の型（array<T>・dictionary等、asOBJ_GCフラグを持つ型）を値的構文で使うと
-    // AngelScript側のGC追跡が壊れる実装依存の問題があるため、ハンドル（@）として宣言されていない
-    // 限り危険とみなす（array固有の問題ではなく asOBJ_GC を持つ型全般に共通するリスクとして扱う）
-    const auto isUnsafeGCValueType = [engine](int typeId) {
+    // typeIdの実行時の値には一切触れず、型ID（ハンドル修飾ビットの有無）とフラグだけで判定する。
+    // (1) GC管理対象の型（array<T>・dictionary等、asOBJ_GCフラグを持つ型）を値的構文で使うと
+    //     AngelScript側のGC追跡が壊れる実装依存の問題があるため、ハンドル（@）として宣言されていない
+    //     限り危険とみなす（array固有の問題ではなく asOBJ_GC を持つ型全般に共通するリスクとして扱う）
+    // (2) スクリプトクラス型（[System.Serializable]クラス等、asOBJ_SCRIPT_OBJECTフラグを持つ型）を
+    //     ハンドル無しの「複合メンバ」として持たせると、実機で検証した結果AngelScript側がそのメンバを
+    //     一切初期化せず未初期化のポインタが残ることが判明しているため、常に危険とみなす
+    //     （[System.Serializable]のドキュメントでは自動生成されると説明されているが、少なくとも
+    //     engine->CreateScriptObject()・VMでのファクトリ実行のどちらの生成経路でも機能しない）
+    const auto isUnsafeValueType = [engine](int typeId) {
         if (typeId & asTYPEID_OBJHANDLE) return false;
         asITypeInfo *type = engine->GetTypeInfoById(typeId);
-        return type && (type->GetFlags() & asOBJ_GC) != 0;
+        if (!type) return false;
+        const asQWORD flags = type->GetFlags();
+        return (flags & asOBJ_GC) != 0 || (flags & asOBJ_SCRIPT_OBJECT) != 0;
     };
 
     const asUINT varCount = module->GetGlobalVarCount();
@@ -940,7 +973,7 @@ bool ScriptComponent::ValidateGCValueDeclarations(asIScriptModule *module, asISc
         const char *name = nullptr;
         int typeId = 0;
         if (module->GetGlobalVar(i, &name, nullptr, &typeId) < 0 || !name) continue;
-        if (isUnsafeGCValueType(typeId)) {
+        if (isUnsafeValueType(typeId)) {
             violations.push_back(std::string(name) + Translation("engine.script.field.gc_type.unsafe_declaration.global_suffix"));
         }
     }
@@ -957,7 +990,7 @@ bool ScriptComponent::ValidateGCValueDeclarations(asIScriptModule *module, asISc
             const char *propName = nullptr;
             int propTypeId = 0;
             if (classType->GetProperty(p, &propName, &propTypeId) < 0 || !propName) continue;
-            if (isUnsafeGCValueType(propTypeId)) {
+            if (isUnsafeValueType(propTypeId)) {
                 violations.push_back(std::string(classType->GetName()) + "::" + propName);
             }
         }
@@ -1060,7 +1093,7 @@ void ScriptComponent::ApplyField(const SerializedField &field, void *address, co
                 void **slot = static_cast<void **>(array->At(i));
                 if (slot && !*slot && value[i].is_object()) {
                     asITypeInfo *elementType = engine->GetTypeInfoById(subTypeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST));
-                    if (elementType) *slot = engine->CreateScriptObject(elementType);
+                    if (elementType) *slot = CreateScriptObjectViaFactory(elementType);
                 }
             }
             void *at = array->At(i);
@@ -1418,7 +1451,7 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
             if (!elementType) return;
             for (asUINT i = 0; i < array->GetSize(); ++i) {
                 void **slot = static_cast<void **>(array->At(i));
-                if (slot && !*slot) *slot = engine->CreateScriptObject(elementType);
+                if (slot && !*slot) *slot = CreateScriptObjectViaFactory(elementType);
             }
         };
 

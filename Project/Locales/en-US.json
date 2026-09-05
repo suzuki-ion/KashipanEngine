@@ -2260,7 +2260,7 @@
 		"engine.script.error": "AngelScript: ",
 		"engine.script.failed.createengine": "AngelScript: asCreateScriptEngine failed.",
 		"engine.script.field.array.recreated": "The array<T> field's handle was invalid, so it was recreated with a new empty array. Field name: ",
-		"engine.script.field.gc_type.unsafe_declaration": "Build aborted: found a field of a GC-tracked type (e.g. array<T>, dictionary) declared with unsafe value syntax instead of a handle. Fix it to use handle syntax (e.g. array<T>@ name = null;). Script: ",
+		"engine.script.field.gc_type.unsafe_declaration": "Build aborted: found a field declared with unsafe value syntax instead of a handle. GC-tracked types (e.g. array<T>, dictionary) and script class types (e.g. [System.Serializable] classes) must always be declared with handle syntax (e.g. array<T>@ name = null; or array<T@>@ name = null;). Script: ",
 		"engine.script.field.gc_type.unsafe_declaration.global_suffix": " (global variable)",
 		"engine.script.predefined.generate.failed": "AngelScript: Failed to generate as.predefined.",
 		"engine.script.predefined.generated": "AngelScript: Generated as.predefined.",

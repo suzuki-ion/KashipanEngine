@@ -2225,7 +2225,7 @@
 		"engine.script.error": "AngelScript: ",
 		"engine.script.failed.createengine": "AngelScript: asCreateScriptEngine에 실패했습니다.",
 		"engine.script.field.array.recreated": "array<T> 필드의 핸들이 올바르지 않아 새로운 빈 배열로 다시 생성했습니다. 필드 이름: ",
-		"engine.script.field.gc_type.unsafe_declaration": "핸들(@) 대신 안전하지 않은 값 구문으로 선언된 GC 관리 대상 타입(array<T>, dictionary 등) 필드가 발견되어 빌드를 중단했습니다. 핸들 구문(예: array<T>@ 이름 = null;)으로 수정하세요. 스크립트: ",
+		"engine.script.field.gc_type.unsafe_declaration": "핸들(@) 대신 안전하지 않은 값 구문으로 선언된 필드가 발견되어 빌드를 중단했습니다. GC 관리 대상 타입(array<T>, dictionary 등)과 [System.Serializable] 클래스 등 스크립트 클래스 타입은 반드시 핸들 구문(예: array<T>@ 이름 = null; 또는 array<T@>@ 이름 = null;)으로 선언하세요. 스크립트: ",
 		"engine.script.field.gc_type.unsafe_declaration.global_suffix": " (전역 변수)",
 		"engine.script.predefined.generate.failed": "AngelScript: as.predefined 생성에 실패했습니다.",
 		"engine.script.predefined.generated": "AngelScript: as.predefined 를 생성했습니다.",

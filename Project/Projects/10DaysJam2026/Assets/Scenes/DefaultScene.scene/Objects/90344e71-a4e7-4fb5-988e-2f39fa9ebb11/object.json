@@ -49,7 +49,7 @@
                         "pointSampling": true,
                         "renderPriority": 50,
                         "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823",
-                        "text": "これはテストテキストだぁヨ。\nデバッグ\nデバッグ",
+                        "text": "",
                         "verticalAlign": 0
                     },
                     "isActive": true,

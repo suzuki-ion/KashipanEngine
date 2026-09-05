@@ -47,8 +47,8 @@ int stageNo = 1;</code></pre>
 <tr><td>数学型</td><td><code>Vector2</code> / <code>Vector3</code> / <code>Vector4</code> / <code>Quaternion</code></td></tr>
 <tr><td>オブジェクト参照</td><td><code>Object@</code>（下記「Object参照」参照）</td></tr>
 <tr><td>列挙型</td><td>C++側で登録済みの列挙型（<code>EaseType</code> 等）・スクリプト内で定義した <code>enum</code> のどちらも可（下記「列挙型（enum）」参照）</td></tr>
-<tr><td>クラス</td><td><code>[System.Serializable]</code> を付けたスクリプトクラス（下記参照）</td></tr>
-<tr><td>配列</td><td>上記対応型の <code>array&lt;T&gt;</code>（下記「配列」参照。ネスト配列・Serializableクラスの配列も可）</td></tr>
+<tr><td>クラス</td><td><code>[System.Serializable]</code> を付けたスクリプトクラス。<strong>必ず <code>array&lt;T@&gt;@</code>（ハンドルの配列）として使う</strong>こと（下記「System.Serializable」「配列」参照。ハンドル無しで直接メンバに持たせることはできない）</td></tr>
+<tr><td>配列</td><td>上記対応型の <code>array&lt;T&gt;</code>（下記「配列」参照。ネスト配列・Serializableクラスの配列（<code>array&lt;T@&gt;@</code>）も可）</td></tr>
 </table>
 <p>
 上記以外の型に付けた場合、インスペクターには <code>(unsupported type)</code> と表示され、保存対象になりません。<code>Tag</code> 型は対応型に<strong>含まれません</strong>。タグ名をインスペクターから編集したい場合は文字列（または <code>array&lt;string&gt;</code>）として保持し、比較時に <code>Tag(name)</code> へ変換してください。
@@ -165,7 +165,6 @@ uint samplesPerSegment = 16;</code></pre>
 <li>クラスの <strong>publicメンバは自動的に対象</strong>になります（<code>[SerializeField]</code> 不要）</li>
 <li><strong>private / protectedメンバは <code>[SerializeField]</code> を付けた場合のみ</strong>対象になります</li>
 <li>メンバ変数にも <code>[Range]</code> などの表示用の属性を付けられます</li>
-<li>Serializableクラスの中にさらにSerializableクラスを持つネストにも対応しています（ネストの深さ制限は8段）</li>
 </ul>
 <pre><code class="language-angelscript">[System.Serializable]
 class JumpSettings {
@@ -175,12 +174,17 @@ class JumpSettings {
 
     [SerializeField]
     private float internalValue = 0; // privateはSerializeFieldが必要
-}
-
-class Player : ScriptComponentBehavior {
-    [SerializeField, Header("ジャンプ設定")]
-    JumpSettings jump;
 }</code></pre>
+
+<div class="warn">
+<strong>[System.Serializable]クラスを、ハンドル（@）を付けずに他のクラスのメンバとして直接持たせることはできません</strong><br>
+<pre><code class="language-angelscript">class Player : ScriptComponentBehavior {
+    [SerializeField, Header("ジャンプ設定")]
+    JumpSettings jump; // NG: ハンドル無しの直接メンバ。ビルドエラーになる
+}</code></pre>
+実機で検証した結果、この書き方（ハンドル無しの「複合メンバ」）はAngelScript側がメンバを一切初期化せず、未初期化の不正なポインタが残ることが判明しています。これを放置するとInspector表示・シーン保存/読込・オブジェクト破棄のいずれかのタイミングで不正なメモリアクセスが発生し、<strong>エンジンごとクラッシュします</strong>。そのため<code>ScriptComponent</code>はビルド時にこのパターンを検出し、クラッシュではなく明確なビルドエラー（「<code>@（ハンドル）ではなく安全でない値的構文で宣言されたフィールドが見つかったため、ビルドを中止しました。(...)スクリプト：</code>」、違反した<code>クラス名::メンバ名</code>の一覧付き）として報告します。<br><br>
+<strong>[System.Serializable]クラスを他のクラスへ含めたい場合は、必ず下記「配列（array&lt;T&gt;）」の <code>array&lt;T@&gt;@</code>（ハンドルの配列）として持たせてください。</strong>要素数が1件だけの用途でも、配列として宣言すればインスペクターの「+」ボタンで安全にインスタンスを生成できます。単純な数値・ベクトル・enum程度の内容であれば、無理にクラスへまとめず<code>Player</code>側へ直接フラットにフィールドを並べる方法もあります（<code>DialogueBox.as</code>の<code>DialogueEntry</code>を参照）。
+</div>
 
 <h2>配列（array&lt;T&gt;）</h2>
 <p>
@@ -204,7 +208,7 @@ class Player : ScriptComponentBehavior {
     array&lt;array&lt;int&gt;&gt;@ grid = null;      // ネスト配列も可（内側の要素型はこれまで通りでよい）
 
     [SerializeField]
-    array&lt;JumpSettings&gt;@ presets = null; // [System.Serializable]クラスの配列も可
+    array&lt;JumpSettings@&gt;@ presets = null; // [System.Serializable]クラスの配列も可（要素は必ずハンドル＝JumpSettings@）
 }</code></pre>
 <p>
 配列を実行時に初期化する場合は、<code>null</code> チェックしてから生成します（<code>WaypointCurve.as</code> の <code>Start()</code> より）。
@@ -229,6 +233,7 @@ void RebuildCurve() {
 <ul>
 <li>要素型が未対応の配列（コンポーネントハンドルの配列など）はシリアライズ対象になりません。</li>
 <li><code>array&lt;T@&gt;</code>（ハンドル）で宣言したSerializableクラス配列のnull要素は、シーン読込時・エディターでの要素追加時に自動でインスタンスが生成されます。</li>
+<li><code>array&lt;array&lt;T&gt;&gt;</code>のようなネスト配列や、Serializableクラスが<code>array&lt;T@&gt;@</code>フィールドを持つ場合など、フィールドの構造を辿る処理には深さ制限（8段）があります。制限を超えた分は無視されます（通常の用途で到達することはまずありません）。</li>
 </ul>
 
 <h2>関連ページ</h2>

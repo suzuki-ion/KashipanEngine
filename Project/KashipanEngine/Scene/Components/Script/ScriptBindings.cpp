@@ -99,6 +99,7 @@
 #include "Objects/Components/PostProcessing/ScreenWideDitherBlendEffect.h"
 #include "Objects/Components/PostProcessing/TemporalBlendEffect.h"
 #include "Objects/Components/PostProcessing/VignetteEffect.h"
+#include "Objects/Components/Render/BitmapTextRenderer.h"
 #include "Objects/Components/Render/Camera2D.h"
 #include "Objects/Components/Render/Camera3D.h"
 #include "Objects/Components/Render/CameraController.h"
@@ -1448,6 +1449,132 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             TextRenderer *cPtr = cHandle.Resolve();
             if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<Vector2>(); }
             const TextRenderer &c = *cPtr;
+            return c.GetCharacterScale(static_cast<size_t>(index));
+        });
+
+    RegisterComponentType<BitmapTextRenderer>(engine, "BitmapTextRenderer")
+        .method("void SetText(const string &in)", SafeCall<&BitmapTextRenderer::SetText>())
+        .method("const string &GetText() const", SafeCall<&BitmapTextRenderer::GetText>())
+        .method("void SetFontName(const string &in)", SafeCall<&BitmapTextRenderer::SetFontName>())
+        .method("const string &GetFontName() const", SafeCall<&BitmapTextRenderer::GetFontName>())
+        .method("void SetFontSize(float)", SafeCall<&BitmapTextRenderer::SetFontSize>())
+        .method("float GetFontSize() const", SafeCall<&BitmapTextRenderer::GetFontSize>())
+        .method("void SetInstanceColor(const Vector4 &in)", SafeCall<&BitmapTextRenderer::SetInstanceColor>())
+        .method("const Vector4 &GetInstanceColor() const", SafeCall<&BitmapTextRenderer::GetInstanceColor>())
+        .method("void SetInstanceColorBlendMode(int)", [](ScriptComponentHandle<BitmapTextRenderer> &cHandle, int mode) {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            BitmapTextRenderer &c = *cPtr;
+            c.SetInstanceColorBlendMode(static_cast<BitmapTextRenderer::ColorBlendMode>(mode));
+        })
+        .method("int GetInstanceColorBlendMode() const", [](const ScriptComponentHandle<BitmapTextRenderer> &cHandle) {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const BitmapTextRenderer &c = *cPtr;
+            return static_cast<int>(c.GetInstanceColorBlendMode());
+        })
+        .method("void SetMaterialName(const string &in)", SafeCall<&BitmapTextRenderer::SetMaterialName>())
+        .method("const string &GetMaterialName() const", SafeCall<&BitmapTextRenderer::GetMaterialName>())
+        .method("void SetHorizontalAlign(TextHorizontalAlign)", [](ScriptComponentHandle<BitmapTextRenderer> &cHandle, int align) {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            BitmapTextRenderer &c = *cPtr;
+            c.SetHorizontalAlign(static_cast<BitmapTextRenderer::HorizontalAlign>(align));
+        })
+        .method("TextHorizontalAlign GetHorizontalAlign() const", [](const ScriptComponentHandle<BitmapTextRenderer> &cHandle) -> int {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const BitmapTextRenderer &c = *cPtr;
+            return static_cast<int>(c.GetHorizontalAlign());
+        })
+        .method("void SetVerticalAlign(TextVerticalAlign)", [](ScriptComponentHandle<BitmapTextRenderer> &cHandle, int align) {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            BitmapTextRenderer &c = *cPtr;
+            c.SetVerticalAlign(static_cast<BitmapTextRenderer::VerticalAlign>(align));
+        })
+        .method("TextVerticalAlign GetVerticalAlign() const", [](const ScriptComponentHandle<BitmapTextRenderer> &cHandle) -> int {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const BitmapTextRenderer &c = *cPtr;
+            return static_cast<int>(c.GetVerticalAlign());
+        })
+        .method("void SetPointSampling(bool)", SafeCall<&BitmapTextRenderer::SetPointSampling>())
+        .method("bool GetPointSampling() const", SafeCall<&BitmapTextRenderer::GetPointSampling>())
+        .method("void SetTargetObject(Object@)", [](ScriptComponentHandle<BitmapTextRenderer> &cHandle, ScriptObjectHandle *obj) {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            BitmapTextRenderer &c = *cPtr; c.SetTargetObject(ResolveObjectArg(obj)); })
+        .method("Object@ GetTargetObject() const", [](const ScriptComponentHandle<BitmapTextRenderer> &cHandle) -> ScriptObjectHandle * {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<ScriptObjectHandle *>(); }
+            const BitmapTextRenderer &c = *cPtr; return ScriptObjectHandle::Create(c.GetTargetObject()); })
+        .method("string GetTargetObjectID() const", [](const ScriptComponentHandle<BitmapTextRenderer> &cHandle) -> std::string {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::string>(); }
+            const BitmapTextRenderer &c = *cPtr; return c.GetTargetObjectID().ToString(); })
+        .method("void SetMaterialHandle(uint)", [](ScriptComponentHandle<BitmapTextRenderer> &cHandle, uint32_t handle) {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            BitmapTextRenderer &c = *cPtr; c.SetMaterialHandle(handle); })
+        .method("uint GetMaterialHandle() const", [](const ScriptComponentHandle<BitmapTextRenderer> &cHandle) -> uint32_t {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint32_t>(); }
+            const BitmapTextRenderer &c = *cPtr; return c.GetMaterialHandle(); })
+        .method("void SetRenderPriority(int)", [](ScriptComponentHandle<BitmapTextRenderer> &cHandle, int32_t priority) {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            BitmapTextRenderer &c = *cPtr; c.SetRenderPriority(priority); })
+        .method("int GetRenderPriority() const", [](const ScriptComponentHandle<BitmapTextRenderer> &cHandle) -> int32_t {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int32_t>(); }
+            const BitmapTextRenderer &c = *cPtr; return c.GetRenderPriority(); })
+        .method("void SetAllowInstancing(bool)", SafeCall<&BitmapTextRenderer::SetAllowInstancing>())
+        .method("bool GetAllowInstancing() const", SafeCall<&BitmapTextRenderer::GetAllowInstancing>())
+        .method("void SetPixelSnapping(bool)", SafeCall<&BitmapTextRenderer::SetPixelSnapping>())
+        .method("bool GetPixelSnapping() const", SafeCall<&BitmapTextRenderer::GetPixelSnapping>())
+        .method("void SetPixelSnapOutsetPixels(float)", SafeCall<&BitmapTextRenderer::SetPixelSnapOutsetPixels>())
+        .method("float GetPixelSnapOutsetPixels() const", SafeCall<&BitmapTextRenderer::GetPixelSnapOutsetPixels>())
+        .method("void SetPipelineName(const string &in)", SafeCall<&BitmapTextRenderer::SetPipelineName>())
+        .method("const string &GetPipelineName() const", SafeCall<&BitmapTextRenderer::GetPipelineName>())
+        .method("uint64 GetCharacterCount() const", [](const ScriptComponentHandle<BitmapTextRenderer> &cHandle) -> uint64_t {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<uint64_t>(); }
+            const BitmapTextRenderer &c = *cPtr; return static_cast<uint64_t>(c.GetCharacterCount()); })
+        .method("void SetCharacterOffset(uint64, const Vector2 &in)", [](ScriptComponentHandle<BitmapTextRenderer> &cHandle, uint64_t index, const Vector2 &offset) {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            BitmapTextRenderer &c = *cPtr;
+            c.SetCharacterOffset(static_cast<size_t>(index), offset);
+        })
+        .method("Vector2 GetCharacterOffset(uint64) const", [](ScriptComponentHandle<BitmapTextRenderer> &cHandle, uint64_t index) -> Vector2 {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<Vector2>(); }
+            const BitmapTextRenderer &c = *cPtr;
+            return c.GetCharacterOffset(static_cast<size_t>(index));
+        })
+        .method("void SetCharacterRotation(uint64, float)", [](ScriptComponentHandle<BitmapTextRenderer> &cHandle, uint64_t index, float rotation) {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            BitmapTextRenderer &c = *cPtr;
+            c.SetCharacterRotation(static_cast<size_t>(index), rotation);
+        })
+        .method("float GetCharacterRotation(uint64) const", [](ScriptComponentHandle<BitmapTextRenderer> &cHandle, uint64_t index) -> float {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const BitmapTextRenderer &c = *cPtr;
+            return c.GetCharacterRotation(static_cast<size_t>(index));
+        })
+        .method("void SetCharacterScale(uint64, const Vector2 &in)", [](ScriptComponentHandle<BitmapTextRenderer> &cHandle, uint64_t index, const Vector2 &scale) {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            BitmapTextRenderer &c = *cPtr;
+            c.SetCharacterScale(static_cast<size_t>(index), scale);
+        })
+        .method("Vector2 GetCharacterScale(uint64) const", [](ScriptComponentHandle<BitmapTextRenderer> &cHandle, uint64_t index) -> Vector2 {
+            BitmapTextRenderer *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<Vector2>(); }
+            const BitmapTextRenderer &c = *cPtr;
             return c.GetCharacterScale(static_cast<size_t>(index));
         });
 

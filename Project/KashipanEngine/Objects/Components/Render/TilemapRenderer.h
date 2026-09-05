@@ -790,6 +790,11 @@ private:
         }
 
         if (meshHandle_ == ModelManager::kInvalidHandle) {
+            if (meshRegistryName_.empty()) {
+                const auto *owner = GetOwnerObject();
+                meshRegistryName_ = "__TilemapRendererMesh_" +
+                    (owner ? owner->GetObjectID().ToString() : std::to_string(reinterpret_cast<std::uintptr_t>(this)));
+            }
             meshHandle_ = ModelManager::RegisterProceduralMesh(meshRegistryName_, std::move(vertices), std::move(indices));
             meshFilter->SetMeshHandle(meshHandle_);
         } else {
@@ -862,9 +867,13 @@ private:
     bool generateColliders_ = false;
 
     bool meshDirty_ = true;
-    /// @brief RegisterProceduralMesh登録名（インスタンスごとに一意にするためthisのアドレスを使う。
-    ///        TextureSource::overrideMaterialName_と同じ手法）
-    const std::string meshRegistryName_ = "__TilemapRendererMesh_" + std::to_string(reinterpret_cast<std::uintptr_t>(this));
+    /// @brief RegisterProceduralMesh登録名（インスタンスごとに一意にするため所有オブジェクトのUUIDを使う。
+    ///        コンストラクト時点ではまだ所有オブジェクトへアタッチされておらずGetOwnerObject()がnullptrを
+    ///        返すため、初回のRebuildMesh()で遅延初期化する（ScreenBufferViewport::ApplyToRendererの
+    ///        internalMaterialName_と同じ手法）。UUIDはシーンJSONへ永続化され再読込後も変わらないため、
+    ///        thisのアドレスを使う場合と異なりGit差分・コンフリクトが実行のたびに発生しなくなる。
+    ///        所有オブジェクトが取得できない場合（プレビュー生成等）はthisのアドレスへフォールバックする
+    std::string meshRegistryName_;
     ModelManager::ModelHandle meshHandle_ = ModelManager::kInvalidHandle;
 
 #if defined(USE_IMGUI)

@@ -1,0 +1,80 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "b68049dc-7078-4e91-aa0c-2a450f6754fc",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "advanceCommandName": "Attack",
+                            "backgroundObject": "f05d91ea-f4d8-40c1-9201-fd12a34072ad",
+                            "dialogues": [
+                                {
+                                    "characterInterval": 0.10000000149011612,
+                                    "iconTextureName": "App/Sprite/Talk/portrait.png",
+                                    "iconUvPosition": {
+                                        "x": 0.0,
+                                        "y": 0.0
+                                    },
+                                    "iconUvScale": {
+                                        "x": 0.5,
+                                        "y": 1.0
+                                    },
+                                    "shakeAmplitude": {
+                                        "x": 2.0,
+                                        "y": 2.0
+                                    },
+                                    "shakeEaseType": 0,
+                                    "shakeEnabled": false,
+                                    "shakeSpeed": 20.0,
+                                    "text": "テストテキストああああ"
+                                }
+                            ],
+                            "iconObject": "1fcaaf04-0627-4958-a051-12f47f3f42a4",
+                            "isVisible": false,
+                            "textObject": "90344e71-a4e7-4fb5-988e-2f39fa9ebb11"
+                        },
+                        "scriptPath": "Assets/Scripts/DialogueBox.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "TalkScript",
+        "objectID": "f29192e0-44bf-4fb0-a35a-2ca4a97fdb70",
+        "tag": ""
+    },
+    "siblingIndex": -1000
+}

@@ -252,12 +252,24 @@ private:
     /// @details 何らかの理由でハンドルスロットの内容が壊れている場合、GetSize()等の呼び出しが
     ///          不正なメモリアクセスでクラッシュするため、呼び出し前に必ずこれで確認する
     bool IsArrayHandleValid(CScriptArray *array, int fieldTypeId) const;
-    /// @brief ビルド済みモジュール内に、GC管理対象の型（array<T>・dictionary等、asOBJ_GCフラグを持つ型）を
-    ///        ハンドル（@）を付けずに危険な値的構文で宣言している変数・メンバが無いかを検証する
-    ///        （グローバル変数とモジュール内の全クラス型が対象）
-    /// @details 値的構文はAngelScript側のGC追跡が壊れる実装依存の問題があるため、フィールドの実行時の
-    ///          値には一切触れず、型ID（ハンドル修飾ビットの有無）だけで安全に判定する。array固有の
-    ///          問題ではなく asOBJ_GC を持つ型全般に共通するリスクとして扱う
+    /// @brief 指定した型のデフォルトコンストラクタ（ファクトリ関数）をVM上で実際に実行してインスタンスを生成する
+    /// @details engine->CreateScriptObject()を直接使うのではなく、CreateBehaviorInstance()と同様に
+    ///          Prepare()+Execute()でファクトリ関数を実行する。戻り値は呼び出し元が所有する参照
+    ///          （AddRef済み）。ファクトリが見つからない/実行に失敗した場合はnullptr
+    void *CreateScriptObjectViaFactory(asITypeInfo *type) const;
+    /// @brief ビルド済みモジュール内に、ハンドル（@）を付けずに危険な値的構文で宣言している変数・メンバが
+    ///        無いかを検証する（グローバル変数とモジュール内の全クラス型が対象）
+    ///        検証対象は以下の2種類：
+    ///        (1) GC管理対象の型（array<T>・dictionary等、asOBJ_GCフラグを持つ型）
+    ///            → 値的構文はAngelScript側のGC追跡が壊れる実装依存の問題があるため危険
+    ///        (2) スクリプトクラス型（asOBJ_SCRIPT_OBJECTフラグを持つ型。[System.Serializable]クラス等）
+    ///            → 実機で検証した結果、この種の「複合メンバ」はengine->CreateScriptObject()経由・
+    ///              VMでのファクトリ実行のどちらで親オブジェクトを生成しても、AngelScript側が
+    ///              一切初期化せず未初期化の不正なポインタが残ることが判明した（[System.Serializable]の
+    ///              ドキュメントでは自動生成されると説明されているが、少なくともこの経路では機能しない）。
+    ///              そのままではInspector表示・シーン保存/読込・オブジェクト破棄のいずれかのタイミングで
+    ///              不正なメモリアクセスによりエンジンごとクラッシュするため、ビルド時に検出してエラーにする
+    /// @details 値には一切触れず、型ID（ハンドル修飾ビットの有無）と型のフラグだけで安全に判定する
     /// @param violations 違反が見つかった変数名/クラス名::メンバ名の一覧（呼び出し前にクリアされる）
     /// @return 違反が1件も無ければ true
     bool ValidateGCValueDeclarations(asIScriptModule *module, asIScriptEngine *engine, std::vector<std::string> &violations) const;

@@ -1990,6 +1990,7 @@
 		"editor.preferences.window": "エディター環境設定",
 
 		//--------- editor.savescene ---------//
+		"editor.savescene.playing.warning": "ゲームループ再生中です。保存されるのは再生開始前のシーン内容です。",
 		"editor.savescene.title": "シーンを保存",
 
 		//--------- editor.sceneaudioplayer ---------//
@@ -2259,8 +2260,11 @@
 		"engine.script.error": "AngelScript：",
 		"engine.script.failed.createengine": "AngelScript：asCreateScriptEngine に失敗しました。",
 		"engine.script.field.array.recreated": "array<T>フィールドのハンドルが不正だったため、新しい空の配列で再生成しました。フィールド名：",
+		"engine.script.field.gc_type.unsafe_declaration": "@（ハンドル）ではなく安全でない値的構文で宣言されたGC管理対象の型（array<T>やdictionary等）のフィールドが見つかったため、ビルドを中止しました。ハンドル構文（例：array<T>@ 変数名 = null;）に修正してください。スクリプト：",
+		"engine.script.field.gc_type.unsafe_declaration.global_suffix": "（グローバル変数）",
 		"engine.script.predefined.generate.failed": "AngelScript：as.predefined の生成に失敗しました。",
 		"engine.script.predefined.generated": "AngelScript：as.predefined を生成しました。",
+		"engine.script.variable.type_mismatch_shared_hint": "スクリプト間のデータ受け渡しで型名は一致していますが型IDが一致しません。独自クラス/enumの場合は shared 宣言を忘れている可能性があります。型名：",
 		"engine.script.vscodelaunch.generate.failed": "AngelScript：VSCode用launch.jsonの生成に失敗しました。",
 
 		//--------- engine.settings ---------//

@@ -11,6 +11,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "Core/DirectXCommon.h"
 #include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Rotation.h"
@@ -42,6 +43,7 @@
 
 namespace KashipanEngine {
 
+class GameEngine;
 class Renderer;
 
 /// @brief GPUシミュレーション用の永続パーティクル状態（コンピュートシェーダーが読み書きする）
@@ -191,6 +193,9 @@ struct FromJSONImpl<SpawnShapeEntry> {
 class ParticleSystemBase : public IObjectComponent {
 public:
     COMPONENT_CATEGORY("Effect")
+
+    /// @brief GameEngine から DirectXCommon を設定
+    static void SetDirectXCommon(Passkey<GameEngine>, DirectXCommon *dx) { sDirectXCommon_ = dx; }
 
     /// @brief パーティクルオブジェクトの生成方法
     enum class SpawnOrigin {
@@ -1292,6 +1297,8 @@ private:
     // GPUシミュレーション用リソース
     //==================================================
 
+    static inline DirectXCommon *sDirectXCommon_ = nullptr;
+
     std::unique_ptr<RWStructuredBufferResource> gpuParticleBuffer_;
     std::unique_ptr<RWStructuredBufferResource> gpuInstanceMatrixBuffer_;
     std::unique_ptr<StructuredBufferResource> gpuSpawnRequestBuffer_;
@@ -1311,6 +1318,10 @@ private:
     bool gpuUpdatedThisFrame_ = false;
 
     void InitializeGpuResources() {
+        // 既存バッファを差し替える場合、直前フレームのDispatchがGPU側で完了していることを
+        // 保証してから破棄する（未完了のまま破棄すると使用中のUAVを破壊し、GPUクラッシュ/
+        // デバイスリムーブを引き起こしうる。Scene::PlayStart/PlayStopでの同種の対策と同じ理由）
+        if (sDirectXCommon_ && gpuParticleBuffer_) sDirectXCommon_->WaitForGPUIdle(Passkey<ParticleSystemBase>{});
         const size_t capacity = static_cast<size_t>(std::max(1, maxParticles_));
         gpuParticleBuffer_ = std::make_unique<RWStructuredBufferResource>(sizeof(GPUParticleData), capacity, false);
         gpuInstanceMatrixBuffer_ = std::make_unique<RWStructuredBufferResource>(sizeof(Matrix4x4), capacity, true);
@@ -1325,6 +1336,7 @@ private:
     }
 
     void DestroyGpuResources() {
+        if (sDirectXCommon_ && gpuParticleBuffer_) sDirectXCommon_->WaitForGPUIdle(Passkey<ParticleSystemBase>{});
         gpuParticleBuffer_.reset();
         gpuInstanceMatrixBuffer_.reset();
         gpuSpawnRequestBuffer_.reset();

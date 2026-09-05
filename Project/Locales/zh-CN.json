@@ -1960,6 +1960,7 @@
 		"editor.preferences.window": "编辑器首选项",
 
 		//--------- editor.savescene ---------//
+		"editor.savescene.playing.warning": "游戏循环正在播放中。保存的内容将是开始播放前的场景状态。",
 		"editor.savescene.title": "保存场景",
 
 		//--------- editor.sceneaudioplayer ---------//
@@ -2224,8 +2225,11 @@
 		"engine.script.error": "AngelScript：",
 		"engine.script.failed.createengine": "AngelScript：asCreateScriptEngine失败。",
 		"engine.script.field.array.recreated": "array<T>字段的句柄无效，已用新的空数组重新生成。字段名：",
+		"engine.script.field.gc_type.unsafe_declaration": "发现使用不安全的值语法而非句柄（@）声明的GC托管类型（如array<T>、dictionary等）字段，已中止构建。请修改为句柄语法（例如 array<T>@ 名称 = null;）。脚本：",
+		"engine.script.field.gc_type.unsafe_declaration.global_suffix": "（全局变量）",
 		"engine.script.predefined.generate.failed": "AngelScript：as.predefined 生成失败。",
 		"engine.script.predefined.generated": "AngelScript：已生成 as.predefined。",
+		"engine.script.variable.type_mismatch_shared_hint": "脚本间数据传递时类型名相同但类型ID不一致。如果是自定义类或enum，可能是忘记声明为shared。类型名：",
 		"engine.script.vscodelaunch.generate.failed": "AngelScript：VSCode 用 launch.json 生成失败。",
 
 		//--------- engine.settings ---------//

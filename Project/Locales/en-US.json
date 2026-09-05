@@ -1990,6 +1990,7 @@
 		"editor.preferences.window": "Editor Preferences",
 
 		//--------- editor.savescene ---------//
+		"editor.savescene.playing.warning": "Game loop is currently playing. The saved content will be the scene state from before playback started.",
 		"editor.savescene.title": "Save Scene",
 
 		//--------- editor.sceneaudioplayer ---------//
@@ -2259,8 +2260,11 @@
 		"engine.script.error": "AngelScript: ",
 		"engine.script.failed.createengine": "AngelScript: asCreateScriptEngine failed.",
 		"engine.script.field.array.recreated": "The array<T> field's handle was invalid, so it was recreated with a new empty array. Field name: ",
+		"engine.script.field.gc_type.unsafe_declaration": "Build aborted: found a field of a GC-tracked type (e.g. array<T>, dictionary) declared with unsafe value syntax instead of a handle. Fix it to use handle syntax (e.g. array<T>@ name = null;). Script: ",
+		"engine.script.field.gc_type.unsafe_declaration.global_suffix": " (global variable)",
 		"engine.script.predefined.generate.failed": "AngelScript: Failed to generate as.predefined.",
 		"engine.script.predefined.generated": "AngelScript: Generated as.predefined.",
+		"engine.script.variable.type_mismatch_shared_hint": "Type name matches but type ID does not when exchanging data between scripts. If this is a custom class/enum, you may have forgotten to declare it as shared. Type name: ",
 		"engine.script.vscodelaunch.generate.failed": "AngelScript: Failed to generate launch.json for VSCode.",
 
 		//--------- engine.settings ---------//

@@ -10,6 +10,7 @@
 #include "Graphics/ScreenBuffer.h"
 #include "Graphics/ShadowMapBuffer.h"
 #include "Graphics/ComputeCommandProcessor.h"
+#include "Objects/Components/ParticleSystemBase.h"
 #include "AppInitialize.h"
 
 #include <cstdint>
@@ -116,6 +117,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     ScreenBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     ShadowMapBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     Scene::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
+    ParticleSystemBase::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     ComputeCommandProcessor::Initialize(Passkey<GameEngine>{}, directXCommon_.get());
     graphicsEngine_ = std::make_unique<GraphicsEngine>(Passkey<GameEngine>{}, directXCommon_.get());
     Scene::SetGraphicsEngine(Passkey<GameEngine>{}, graphicsEngine_.get());

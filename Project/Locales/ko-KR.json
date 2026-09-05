@@ -1960,6 +1960,7 @@
 		"editor.preferences.window": "에디터 환경 설정",
 
 		//--------- editor.savescene ---------//
+		"editor.savescene.playing.warning": "게임 루프가 재생 중입니다. 저장되는 내용은 재생 시작 전의 씬 상태입니다.",
 		"editor.savescene.title": "씬 저장",
 
 		//--------- editor.sceneaudioplayer ---------//
@@ -2224,8 +2225,11 @@
 		"engine.script.error": "AngelScript: ",
 		"engine.script.failed.createengine": "AngelScript: asCreateScriptEngine에 실패했습니다.",
 		"engine.script.field.array.recreated": "array<T> 필드의 핸들이 올바르지 않아 새로운 빈 배열로 다시 생성했습니다. 필드 이름: ",
+		"engine.script.field.gc_type.unsafe_declaration": "핸들(@) 대신 안전하지 않은 값 구문으로 선언된 GC 관리 대상 타입(array<T>, dictionary 등) 필드가 발견되어 빌드를 중단했습니다. 핸들 구문(예: array<T>@ 이름 = null;)으로 수정하세요. 스크립트: ",
+		"engine.script.field.gc_type.unsafe_declaration.global_suffix": " (전역 변수)",
 		"engine.script.predefined.generate.failed": "AngelScript: as.predefined 생성에 실패했습니다.",
 		"engine.script.predefined.generated": "AngelScript: as.predefined 를 생성했습니다.",
+		"engine.script.variable.type_mismatch_shared_hint": "스크립트 간 데이터 전달 시 타입 이름은 일치하지만 타입 ID가 일치하지 않습니다. 사용자 정의 클래스/enum이라면 shared 선언을 잊었을 수 있습니다. 타입 이름: ",
 		"engine.script.vscodelaunch.generate.failed": "AngelScript: VSCode용 launch.json 생성에 실패했습니다.",
 
 		//--------- engine.settings ---------//

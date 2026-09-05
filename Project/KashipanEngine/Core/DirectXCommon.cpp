@@ -250,11 +250,12 @@ void DirectXCommon::DestroyPendingSwapChains() {
         if (it != sHwndToSwapChainIndex.end()) {
             size_t index = it->second;
             if (sSwapChains[index]) {
+                // DX12SwapChain::Destroy() 内で ReleaseCommandObjects() が呼ばれ、
+                // スワップチェーン自身が保持する正しいコマンドスロット(slotIndex_)の
+                // ResetFlags/解放は既に完了している。ここで index(sSwapChains用の添字)を
+                // commandObjects_ の添字として再利用すると、無関係なスロット(他のScreenBuffer等)を
+                // 誤って操作してしまうため、重複した ResetFlags 呼び出しは行わない。
                 sSwapChains[index]->Destroy(Passkey<DirectXCommon>{});
-            }
-
-            if (index < commandObjects_.size() && commandObjects_[index]) {
-                commandObjects_[index]->ResetFlags(Passkey<DirectXCommon>{});
             }
 
             sFreeSwapChains.push_back(index);

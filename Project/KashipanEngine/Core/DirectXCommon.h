@@ -34,6 +34,7 @@ class ScreenBuffer;
 class ShadowMapBuffer;
 class ComputeCommandProcessor;
 class Scene;
+class ParticleSystemBase;
 #if defined(USE_IMGUI)
 class ImGuiManager;
 #endif
@@ -72,6 +73,12 @@ public:
     ///          （未完了のまま破棄すると使用中のリソースを破壊し、GPUハング/
     ///          スワップチェーンPresent失敗を引き起こしうる）
     bool WaitForGPUIdle(Passkey<Scene>) { return WaitForFence(); }
+
+    /// @brief GPU処理完了を同期的に待つ（ParticleSystemBase 用）
+    /// @details GPUパーティクル用バッファの再生成（Max Particles変更やCPU/GPUシミュレーション
+    ///          方式の切り替え）直前に、直前フレームのDispatchがGPU側で完了していることを
+    ///          保証するために呼ぶ（Scene::PlayStart/PlayStopでの同種の対策と同じ理由）
+    bool WaitForGPUIdle(Passkey<ParticleSystemBase>) { return WaitForFence(); }
 
     /// @brief D3D12デバイス取得
     ID3D12Device* GetDevice(Passkey<GraphicsEngine>) const { return dx12Device_->GetDevice(); }

@@ -48,11 +48,17 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("手裏剣の生存時間(秒)")]
     float syurikenLifeTime = 2.0f;
 
+    [SerializeField, Tooltip("手裏剣の発射間隔(秒)")]
+    float syurikenAttackInterval = 0.2f;
+
     [SerializeField, Tooltip("剣の攻撃間隔(秒)")]
     float swordAttackInterval = 0.4f;
 
-    [SerializeField, Tooltip("手裏剣の発射間隔(秒)")]
-    float syurikenAttackInterval = 0.2f;
+    [SerializeField, Tooltip("斧の攻撃間隔(秒)")]
+    float axeAttackInterval = 0.5f;
+
+    [SerializeField, Tooltip("斧の生存時間(秒)")]
+    float axeLifeTime = 2.0f;
 
     [SerializeField, Tooltip("ヴィネットをかけるHP値")]
     float vignetteHp = 3.0f;
@@ -83,6 +89,11 @@ class Player : ScriptComponentBehavior {
     // クールダウン計算用タイマー
     float swordCooldownTimer = 0.0f;
     float syurikenCooldownTimer = 0.0f;
+    float axeCooldownTimer = 0.0f;
+
+    // 斧クローン管理用
+    array<Object@> axeClones;
+    array<float> axeTimers;
 
     // 手裏剣クローン管理用
     array<Object@> syurikenClones;
@@ -215,6 +226,9 @@ class Player : ScriptComponentBehavior {
         if (syurikenCooldownTimer > 0.0f) {
             syurikenCooldownTimer -= GetDeltaTime();
         }
+        if (axeCooldownTimer > 0.0f) {
+            axeCooldownTimer -= GetDeltaTime();
+        }
 
         // 攻撃入力の検知とタイマーリセット
         if (IsCommandTriggered("Attack")) {
@@ -226,6 +240,9 @@ class Player : ScriptComponentBehavior {
             } else if (currentWeaponType == WeaponList::Shuriken && syurikenCooldownTimer <= 0.0f) {
                 canAttack = true;
                 syurikenCooldownTimer = syurikenAttackInterval; // 手裏剣のクールダウンリセット
+            }else if (currentWeaponType == WeaponList::Axe && axeCooldownTimer <= 0.0f) {
+                canAttack = true;
+                axeCooldownTimer = axeAttackInterval; // 斧のクールダウンリセット
             }
 
             // 攻撃実行処理
@@ -272,6 +289,29 @@ class Player : ScriptComponentBehavior {
 
                                     syurikenClones.insertLast(cloneSyuriken);
                                     syurikenTimers.insertLast(0.0f);
+                                }
+                            }
+                            break;
+
+                        case WeaponList::Axe:
+                            {
+                                Object@ cloneAxe = GetScene().CloneObject(weapons[currentWeaponType], "CloneAxe");
+                                if (cloneAxe !is null) {
+                                    cloneAxe.SetActive(true);
+
+                                    Transform@ cloneTf = cloneAxe.GetTransform();
+                                    if (cloneTf !is null) {
+                                        cloneTf.SetTranslate(tf.GetTranslate());
+                                    }
+                                    
+                                    ScriptComponent@ cloneSc;
+                                    if (cloneAxe.GetComponent(@cloneSc)) {
+                                        cloneSc.SetVariable("pos", tf.GetTranslate());
+                                        cloneSc.CallMethod("Attack", syurikenMoveX); // 向き変数をそのまま流用
+                                    }
+
+                                    axeClones.insertLast(cloneAxe);
+                                    axeTimers.insertLast(0.0f);
                                 }
                             }
                             break;
@@ -419,6 +459,25 @@ class Player : ScriptComponentBehavior {
 
             i++;
         }
+
+        // 斧クローンの更新および削除処理
+        for (uint i = 0; i < axeClones.length(); ) {
+            Object@ clone = axeClones[i];
+            if (clone !is null) {
+                axeTimers[i] += GetDeltaTime();
+                if (!clone.IsActive() || axeTimers[i] >= axeLifeTime) {
+                    clone.SetActive(false);
+                    axeClones.removeAt(i);
+                    axeTimers.removeAt(i);
+                    continue;
+                }
+            } else {
+                axeClones.removeAt(i);
+                axeTimers.removeAt(i);
+                continue;
+            }
+            i++;
+        }
     }
 
     void OnCollisionEnter(const HitInfo &in hit) {
@@ -445,6 +504,8 @@ class Player : ScriptComponentBehavior {
             targetIndex = int(WeaponList::Katana);
         } else if (name == "Shuriken") {
             targetIndex = int(WeaponList::Shuriken);
+        }else if (name == "Axe") {
+            targetIndex = int(WeaponList::Axe);
         }
 
         // 対象の武器オブジェクトが存在すれば追加処理を行う

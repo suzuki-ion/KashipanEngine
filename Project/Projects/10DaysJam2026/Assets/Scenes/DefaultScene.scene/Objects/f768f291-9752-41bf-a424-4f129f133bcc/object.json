@@ -57,7 +57,8 @@
                             "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
                             "textureNames": [
                                 "Katana",
-                                "Shuriken"
+                                "Shuriken",
+                                "Axe"
                             ]
                         },
                         "scriptPath": "Assets\\Scripts\\WeaponUI.as"

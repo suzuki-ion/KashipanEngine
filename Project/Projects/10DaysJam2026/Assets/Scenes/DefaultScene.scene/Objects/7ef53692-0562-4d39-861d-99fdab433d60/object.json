@@ -17,7 +17,7 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 256.9076232910156,
+                            "x": 294.63427734375,
                             "y": 24.52518081665039,
                             "z": 0.0
                         }
@@ -87,7 +87,7 @@
                     "customData": {
                         "fields": {
                             "isOpen": false,
-                            "itemName": "Shuriken"
+                            "itemName": "Axe"
                         },
                         "scriptPath": "Assets\\Scripts\\Chest.as"
                     },
@@ -170,8 +170,8 @@
         "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "Chest",
-        "objectID": "6f930386-a494-4642-b84c-df5f6d0aa8e0",
+        "objectID": "7ef53692-0562-4d39-861d-99fdab433d60",
         "tag": ""
     },
-    "siblingIndex": 13500
+    "siblingIndex": 14500
 }

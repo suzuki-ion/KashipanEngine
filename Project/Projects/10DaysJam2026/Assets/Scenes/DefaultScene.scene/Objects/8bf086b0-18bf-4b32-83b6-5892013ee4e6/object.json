@@ -17,7 +17,7 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": -100.0,
+                            "x": -1000.0,
                             "y": 0.0,
                             "z": 0.0
                         }
@@ -88,7 +88,6 @@
                         "fields": {
                             "damageAmount": 1.0,
                             "exp": 0.0,
-                            "frameInterval": 0.15000000596046448,
                             "level": 1,
                             "nextExp": 10.0,
                             "pos": {
@@ -106,10 +105,31 @@
                                 "Shuriken",
                                 "Shuriken2",
                                 "Shuriken3"
-                            ],
-                            "uvStep": 0.5
+                            ]
                         },
                         "scriptPath": "Assets\\Scripts\\Shuriken.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "frameCount": 2,
+                            "frameInterval": 0.15000000596046448,
+                            "isLoop": true,
+                            "playOnStart": true,
+                            "startRow": 0,
+                            "uvStep": {
+                                "x": 0.5,
+                                "y": 1.0
+                            }
+                        },
+                        "scriptPath": "Assets\\Scripts\\SpriteAnimator.as"
                     },
                     "isActive": true,
                     "priority": 1,

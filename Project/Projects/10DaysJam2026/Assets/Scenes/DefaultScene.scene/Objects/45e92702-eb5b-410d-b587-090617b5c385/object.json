@@ -17,9 +17,9 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 150.0,
-                            "y": 60.0,
-                            "z": 0.0
+                            "x": 295.4742736816406,
+                            "y": 34.93515396118164,
+                            "z": 1.2717765457637142e-05
                         }
                     },
                     "isActive": true,
@@ -53,12 +53,12 @@
                             },
                             "deathEffect": "a3f33280-f1ac-4cc0-9235-bdfd97ec21ff",
                             "expValue": 5.0,
+                            "facingDirection": 1,
                             "hp": 2.0,
                             "invincibleDuration": 0.5,
                             "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
                             "self": "45e92702-eb5b-410d-b587-090617b5c385",
                             "shotDelay": 1.0,
-                            "shotDirectionX": -1.0,
                             "shotDuration": 2.0
                         },
                         "scriptPath": "Assets\\Scripts\\WallEnemy.as"
@@ -137,6 +137,17 @@
             {
                 "data": {
                     "customData": {
+                        "prefabID": "1a4c1427-da81-46aa-be4f-ff71954f8af3"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,
@@ -186,6 +197,7 @@
         "isActive": true,
         "name": "WallEnemy",
         "objectID": "45e92702-eb5b-410d-b587-090617b5c385",
+        "prefabNodeID": "088ea901-2c21-424c-a852-28cf1122a25d",
         "tag": ""
     },
     "siblingIndex": 2562

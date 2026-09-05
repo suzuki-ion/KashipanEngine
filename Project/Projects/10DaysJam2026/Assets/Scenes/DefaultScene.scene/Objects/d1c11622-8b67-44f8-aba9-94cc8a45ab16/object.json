@@ -4,7 +4,6 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -17,9 +16,9 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 271.58447265625,
-                            "y": 33.61632537841797,
-                            "z": 0.0
+                            "x": 6.4677734375,
+                            "y": 128.71910095214844,
+                            "z": 3.0517578125e-05
                         }
                     },
                     "isActive": true,
@@ -99,7 +98,7 @@
                                 "z": 0.0
                             },
                             "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
-                            "self": "d06b8dcb-f0ed-4d88-b873-22cbacc64c26",
+                            "self": "d1c11622-8b67-44f8-aba9-94cc8a45ab16",
                             "shotDirectionX": 1.0,
                             "shotDuration": 2.0
                         },
@@ -173,9 +172,9 @@
         "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "KnifeThrowing",
-        "objectID": "d06b8dcb-f0ed-4d88-b873-22cbacc64c26",
+        "objectID": "d1c11622-8b67-44f8-aba9-94cc8a45ab16",
         "prefabNodeID": "a965e1d1-8997-4632-b4b3-d0f21a3928f5",
         "tag": ""
     },
-    "siblingIndex": 2979
+    "siblingIndex": 20000
 }

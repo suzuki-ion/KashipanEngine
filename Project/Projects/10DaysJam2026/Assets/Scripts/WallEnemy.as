@@ -1,3 +1,8 @@
+enum WallEnemyDirection {
+    Right,
+    Left
+}
+
 class WallEnemy : ScriptComponentBehavior {
     [SerializeField, Tooltip("弾の発射間隔")]
     float shotDuration = 2.0f;
@@ -5,13 +10,13 @@ class WallEnemy : ScriptComponentBehavior {
     [SerializeField, Tooltip("弾")]
     Object@ bullet;
 
-    [SerializeField, Tooltip("弾の発射方向(X)。右向きなら1.0、左向きなら-1.0")]
-    float shotDirectionX = -1.0f;
+    [SerializeField, Tooltip("初期の向き(0: Right, 1: Left)")]
+    WallEnemyDirection facingDirection = WallEnemyDirection::Left;
 
     [SerializeField, Tooltip("弾の生存時間(秒)")]
     float bulletLifeTime = 5.0f;
 
-    [SerializeField, Tooltip("弾の発生位置オフセット")]
+    [SerializeField, Tooltip("弾の発生位置オフセット(右向き基準で設定してください)")]
     Vector3 bulletOffset = Vector3(0.0f, 0.0f, 0.0f);
 
     [SerializeField, Tooltip("アニメーション再生開始から弾を発射するまでの遅延(秒)。2コマ目が表示されるタイミングに合わせる")]
@@ -38,6 +43,9 @@ class WallEnemy : ScriptComponentBehavior {
     [SerializeField, Tooltip("プレイヤー")]
     Object@ player;
 
+    // 内部で管理する発射方向
+    float shotDirectionX = -1.0f;
+
     // 弾の発射タイマー
     float shotTimer = 0.0f;
 
@@ -63,6 +71,18 @@ class WallEnemy : ScriptComponentBehavior {
 
     void Start() {
         GetComponent(@sprite);
+
+        // 向きに応じた回転と発射方向の決定
+        Transform@ tf = GetTransform();
+        if (tf !is null) {
+            if (facingDirection == WallEnemyDirection::Right) {
+                shotDirectionX = 1.0f;
+                tf.SetRotate(Vector3(0.0f, 3.14159f, 0.0f));
+            } else {
+                shotDirectionX = -1.0f;
+                tf.SetRotate(Vector3(0.0f, 0.0f, 0.0f)); // Y軸に180度回転して反転させる
+            }
+        }
     }
 
     void Update() {
@@ -123,7 +143,9 @@ class WallEnemy : ScriptComponentBehavior {
                     isShooting = false;
 
                     if (bullet !is null) {
-                        Vector3 spawnPos = tf.GetTranslate() + bulletOffset;
+                        // オフセットのX座標を向いている方向に応じて反転させる
+                        Vector3 spawnOffset = Vector3(bulletOffset.x * shotDirectionX, bulletOffset.y, bulletOffset.z);
+                        Vector3 spawnPos = tf.GetTranslate() + spawnOffset;
 
                         Object@ cloneBullet = GetScene().CloneObject(bullet, "CloneEnemyBullet");
                         if (cloneBullet !is null) {

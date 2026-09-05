@@ -18,7 +18,7 @@
                         },
                         "translate": {
                             "x": 76.31214904785156,
-                            "y": 57.84101104736328,
+                            "y": 24.421241760253906,
                             "z": 0.0
                         }
                     },
@@ -38,6 +38,17 @@
                     "tag": ""
                 },
                 "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "72f46d3e-3a58-48cf-8c9b-4f4dd8b2ec0f"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
             },
             {
                 "data": {
@@ -242,6 +253,7 @@
         "isActive": true,
         "name": "Red",
         "objectID": "72e3e66b-ff09-408f-8183-9ae82c8b6968",
+        "prefabNodeID": "8142ecaa-0000-4d0e-85a9-dfbc8b3b56ca",
         "tag": ""
     },
     "siblingIndex": 2250

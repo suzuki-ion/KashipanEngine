@@ -17,7 +17,7 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 55.58924865722656,
+                            "x": 291.98504638671875,
                             "y": 90.51248931884766,
                             "z": -2.1480484519997844e-06
                         }
@@ -38,6 +38,17 @@
                     "tag": ""
                 },
                 "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "5c06497b-45ce-435b-936b-ddccf430b22a"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
             },
             {
                 "data": {
@@ -177,6 +188,7 @@
         "isActive": true,
         "name": "Bat",
         "objectID": "849858b7-e7c3-4187-92d6-2163e2e9fc31",
+        "prefabNodeID": "6a34211e-cef8-4f9a-8d4d-4216ba93be80",
         "tag": ""
     },
     "siblingIndex": -500

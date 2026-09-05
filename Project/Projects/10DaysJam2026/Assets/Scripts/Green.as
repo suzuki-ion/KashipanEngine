@@ -168,7 +168,7 @@ class Green : ScriptComponentBehavior {
         ResolvePenetration(hit);
 
         // 進行方向の切り替え
-        if(hit.otherObject.GetTag() == "Tilemap" && hit.selfCollider.GetTag() == "Direction"){
+        if(hit.selfCollider.GetTag() == "Direction"){
             if (moveDir == MoveDirection::Left) {
                 moveDir = MoveDirection::Right;
                 Log("Right");

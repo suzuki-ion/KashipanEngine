@@ -18,7 +18,7 @@
                         },
                         "translate": {
                             "x": 203.72695922851563,
-                            "y": 73.67579650878906,
+                            "y": 24.529048919677734,
                             "z": 0.0
                         }
                     },
@@ -38,6 +38,17 @@
                     "tag": ""
                 },
                 "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "de4f4f76-bb85-4708-9707-61d8bb234cea"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
             },
             {
                 "data": {
@@ -242,6 +253,7 @@
         "isActive": true,
         "name": "Green",
         "objectID": "6cdeea0c-5930-4ebf-bef5-8c0fb2278d18",
+        "prefabNodeID": "d1949970-ee56-4fb0-bcc7-d72325400edd",
         "tag": ""
     },
     "siblingIndex": 1000

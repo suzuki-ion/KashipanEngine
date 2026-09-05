@@ -6,7 +6,7 @@ class KnifeThrowing : ScriptComponentBehavior {
     Object@ knife;
 
     [SerializeField, Tooltip("ナイフの発射方向(X)。右向きなら1.0、左向きなら-1.0")]
-    float shotDirectionX = -1.0f;
+    float shotDirectionX = 1.0f;
 
     [SerializeField, Tooltip("ナイフの生存時間(秒)")]
     float knifeLifeTime = 5.0f;
@@ -85,6 +85,22 @@ class KnifeThrowing : ScriptComponentBehavior {
         }
 
         if(isAlive){
+            // プレイヤーの方を向く処理
+            if (player !is null) {
+                Transform@ playerTf = player.GetTransform();
+                if (playerTf !is null) {
+                    if (playerTf.GetTranslate().x > tf.GetTranslate().x) {
+                        // プレイヤーが右側にいる場合
+                        shotDirectionX = 1.0f;
+                        tf.SetRotate(Vector3(0.0f, 3.14159f, 0.0f));
+                    } else {
+                        // プレイヤーが左側にいる場合
+                        shotDirectionX = -1.0f;
+                        tf.SetRotate(Vector3(0.0f, 0.0f, 0.0f));
+                    }
+                }
+            }
+
             shotTimer += GetDeltaTime();
 
             // 発射間隔ごとにアニメーション待機なしで即座に投擲する
@@ -92,7 +108,9 @@ class KnifeThrowing : ScriptComponentBehavior {
                 shotTimer = 0.0f;
 
                 if (knife !is null) {
-                    Vector3 spawnPos = tf.GetTranslate() + knifeOffset;
+                    // 向いている方向によってオフセットのX方向も反転させる
+                    Vector3 spawnOffset = Vector3(knifeOffset.x * shotDirectionX, knifeOffset.y, knifeOffset.z);
+                    Vector3 spawnPos = tf.GetTranslate() + spawnOffset;
 
                     Object@ cloneKnife = GetScene().CloneObject(knife, "CloneEnemyKnife");
                     if (cloneKnife !is null) {

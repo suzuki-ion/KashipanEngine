@@ -83,20 +83,20 @@
                             0,
                             0,
                             0,
-                            -1,
-                            -1,
-                            -1,
-                            -1,
-                            -1,
-                            -1,
-                            -1,
-                            -1,
-                            -1,
-                            -1,
-                            -1,
-                            -1,
-                            -1,
-                            -1,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
                             0,
                             -1,
                             -1,
@@ -160,8 +160,8 @@
                             -1,
                             -1,
                             -1,
-                            -1,
                             0,
+                            0,
                             -1,
                             -1,
                             0,
@@ -211,20 +211,20 @@
                             -1,
                             -1,
                             0,
-                            -1,
-                            -1,
-                            -1,
-                            -1,
-                            -1,
                             -1,
                             -1,
+                            0,
+                            0,
                             -1,
                             -1,
                             -1,
                             -1,
                             -1,
+                            0,
+                            0,
                             -1,
                             -1,
+                            0,
                             0,
                             -1,
                             -1,
@@ -288,7 +288,7 @@
                             -1,
                             -1,
                             -1,
-                            -1,
+                            0,
                             0,
                             -1,
                             -1,
@@ -344,16 +344,16 @@
                             -1,
                             -1,
                             -1,
-                            -1,
-                            -1,
-                            -1,
-                            -1,
+                            0,
+                            0,
+                            0,
                             -1,
                             -1,
                             -1,
                             -1,
                             -1,
                             0,
+                            0,
                             -1,
                             -1,
                             -1,
@@ -416,7 +416,7 @@
                             -1,
                             -1,
                             -1,
-                            -1,
+                            0,
                             0,
                             -1,
                             -1,
@@ -480,7 +480,7 @@
                             -1,
                             -1,
                             -1,
-                            -1,
+                            0,
                             -1,
                             -1,
                             -1,
@@ -544,7 +544,7 @@
                             -1,
                             -1,
                             -1,
-                            -1,
+                            0,
                             -1,
                             -1,
                             -1,
@@ -608,7 +608,7 @@
                             -1,
                             -1,
                             -1,
-                            -1,
+                            0,
                             -1,
                             -1,
                             -1,
@@ -672,7 +672,7 @@
                             -1,
                             -1,
                             -1,
-                            -1,
+                            0,
                             -1,
                             -1,
                             -1,
@@ -736,7 +736,7 @@
                             -1,
                             -1,
                             -1,
-                            -1,
+                            0,
                             -1,
                             -1,
                             -1,
@@ -800,7 +800,7 @@
                             -1,
                             -1,
                             -1,
-                            -1,
+                            0,
                             -1,
                             -1,
                             -1,
@@ -4193,7 +4193,7 @@
             {
                 "data": {
                     "customData": {
-                        "meshAssetPath": "__TilemapRendererMesh_2079009642304"
+                        "meshAssetPath": "__TilemapRendererMesh_fe5dd59b-db64-4ddb-bfbd-2d4237fec6af"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -4206,13 +4206,13 @@
                     "customData": {
                         "autoGenerated": true,
                         "center": {
-                            "x": 400.0,
+                            "x": 512.0,
                             "y": 8.0
                         },
                         "continuousDetection": false,
                         "isTrigger": false,
                         "size": {
-                            "x": 800.0,
+                            "x": 1024.0,
                             "y": 16.0
                         },
                         "syncPosition": [
@@ -4366,6 +4366,38 @@
                     "customData": {
                         "autoGenerated": true,
                         "center": {
+                            "x": 1016.0,
+                            "y": 104.0
+                        },
+                        "continuousDetection": false,
+                        "isTrigger": false,
+                        "size": {
+                            "x": 16.0,
+                            "y": 176.0
+                        },
+                        "syncPosition": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncRotation": true,
+                        "syncScale": [
+                            false,
+                            false,
+                            false
+                        ]
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Box2DCollider"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "autoGenerated": true,
+                        "center": {
                             "x": 104.0,
                             "y": 40.0
                         },
@@ -4462,6 +4494,70 @@
                     "customData": {
                         "autoGenerated": true,
                         "center": {
+                            "x": 848.0,
+                            "y": 40.0
+                        },
+                        "continuousDetection": false,
+                        "isTrigger": false,
+                        "size": {
+                            "x": 32.0,
+                            "y": 16.0
+                        },
+                        "syncPosition": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncRotation": true,
+                        "syncScale": [
+                            false,
+                            false,
+                            false
+                        ]
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Box2DCollider"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "autoGenerated": true,
+                        "center": {
+                            "x": 960.0,
+                            "y": 40.0
+                        },
+                        "continuousDetection": false,
+                        "isTrigger": false,
+                        "size": {
+                            "x": 32.0,
+                            "y": 16.0
+                        },
+                        "syncPosition": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncRotation": true,
+                        "syncScale": [
+                            false,
+                            false,
+                            false
+                        ]
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Box2DCollider"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "autoGenerated": true,
+                        "center": {
                             "x": 432.0,
                             "y": 64.0
                         },
@@ -4470,6 +4566,38 @@
                         "size": {
                             "x": 32.0,
                             "y": 32.0
+                        },
+                        "syncPosition": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncRotation": true,
+                        "syncScale": [
+                            false,
+                            false,
+                            false
+                        ]
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Box2DCollider"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "autoGenerated": true,
+                        "center": {
+                            "x": 904.0,
+                            "y": 72.0
+                        },
+                        "continuousDetection": false,
+                        "isTrigger": false,
+                        "size": {
+                            "x": 48.0,
+                            "y": 16.0
                         },
                         "syncPosition": [
                             true,

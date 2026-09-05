@@ -58,7 +58,8 @@
                             "textureNames": [
                                 "Katana",
                                 "Shuriken",
-                                "Axe"
+                                "Axe",
+                                "Ball"
                             ]
                         },
                         "scriptPath": "Assets\\Scripts\\WeaponUI.as"

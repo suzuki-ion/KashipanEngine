@@ -12,13 +12,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 16.0,
-                            "y": 16.0,
+                            "x": 48.0,
+                            "y": 64.0,
                             "z": 1.0
                         },
                         "translate": {
-                            "x": -1000.0,
-                            "y": 0.0,
+                            "x": 904.984375,
+                            "y": 111.0,
                             "z": 0.0
                         }
                     },
@@ -38,6 +38,17 @@
                     "tag": ""
                 },
                 "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "textureAssetPath": "App/Sprite/Boss/boss2.png"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "TextureSource"
             },
             {
                 "data": {
@@ -67,49 +78,42 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": "Weapon"
+                    "tag": "Enemy"
                 },
                 "type": "Box2DCollider"
             },
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "App/Sprite/Player/axe.png"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "TextureSource"
-            },
-            {
-                "data": {
-                    "customData": {
                         "fields": {
-                            "damageAmount": 1.0,
-                            "exp": 0.0,
-                            "gravity": 300.0,
-                            "initialSpeedX": 60.0,
-                            "initialSpeedY": 150.0,
-                            "level": 1,
-                            "nextExp": 10.0,
-                            "pos": {
-                                "x": -1000.0,
-                                "y": 0.0,
-                                "z": 0.0
+                            "areaDuration": 4.0,
+                            "attackInterval": 5.0,
+                            "attackWindup": 2.0,
+                            "damageColor": {
+                                "w": 1.0,
+                                "x": 10.0,
+                                "y": 10.0,
+                                "z": 10.0
                             },
-                            "scales": [
-                                16.0,
-                                16.0,
-                                16.0
-                            ],
-                            "textureNames": [
-                                "Axe",
-                                "Axe2",
-                                "Axe3"
-                            ]
+                            "damageFlashDuration": 0.10000000149011612,
+                            "floatAmplitude": 10.0,
+                            "floatSpeed": 1.5,
+                            "hp": 30.0,
+                            "normalColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "pendulumRadius": 100.0,
+                            "pendulumSpeed": 1.5,
+                            "pendulumSwingRange": 0.800000011920929,
+                            "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
+                            "sickle": "df044188-56ae-41c3-82f4-bc6837cb6def",
+                            "sickleCount": 2,
+                            "sickleSpawnRadius": 120.0
                         },
-                        "scriptPath": "Assets\\Scripts\\Axe.as"
+                        "scriptPath": "Assets\\Scripts\\Boss2.as"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -121,13 +125,13 @@
                 "data": {
                     "customData": {
                         "fields": {
-                            "frameCount": 4,
+                            "frameCount": 3,
                             "frameInterval": 0.15000000596046448,
                             "isLoop": true,
                             "playOnStart": true,
                             "startRow": 0,
                             "uvStep": {
-                                "x": 0.25,
+                                "x": 0.3330000042915344,
                                 "y": 1.0
                             }
                         },
@@ -161,7 +165,7 @@
                         },
                         "instanceUvRotation": 0.0,
                         "instanceUvScale": {
-                            "x": 0.25,
+                            "x": 0.3330000042915344,
                             "y": 1.0
                         },
                         "instanceUvTranslate": {
@@ -189,9 +193,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Axe",
-        "objectID": "9497b163-f450-4598-bab8-75df986567cb",
+        "name": "Boss2",
+        "objectID": "45effcb6-a612-4079-a8d7-a78ee62a5d5f",
         "tag": ""
     },
-    "siblingIndex": 12333
+    "siblingIndex": 17388
 }

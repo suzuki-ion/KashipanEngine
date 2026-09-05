@@ -1257,6 +1257,21 @@
 		"component.scenevariableapplier.variable_name": "변수 이름",
 		"component.scenevariableapplier.variable_notfound": "변수 \"%s\"를 찾을 수 없습니다",
 
+		//--------- component.sceneviewcamerasettings ---------//
+		"component.sceneviewcamerasettings.camera2d": "2D 카메라",
+		"component.sceneviewcamerasettings.camera3d": "3D 카메라",
+		"component.sceneviewcamerasettings.cameradistance2d": "카메라 거리(Z축)",
+		"component.sceneviewcamerasettings.desc": "씬 뷰 카메라의 현재 값을 표시·편집합니다(실제 값은 에디터 측 SceneEditorView가 보유합니다).",
+		"component.sceneviewcamerasettings.distance": "주시점까지의 거리",
+		"component.sceneviewcamerasettings.eye": "카메라 위치",
+		"component.sceneviewcamerasettings.flymode": "플라이 모드",
+		"component.sceneviewcamerasettings.flyspeed": "이동 속도",
+		"component.sceneviewcamerasettings.pan2d": "팬 위치",
+		"component.sceneviewcamerasettings.pitch": "피치 각(도)",
+		"component.sceneviewcamerasettings.target": "주시점",
+		"component.sceneviewcamerasettings.yaw": "요 각(도)",
+		"component.sceneviewcamerasettings.zoom2d": "줌",
+
 		//--------- component.scenevieworbitstate ---------//
 		"component.scenevieworbitstate.distance": "주시점까지의 거리",
 

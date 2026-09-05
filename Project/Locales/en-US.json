@@ -1257,6 +1257,21 @@
 		"component.scenevariableapplier.variable_name": "Variable Name",
 		"component.scenevariableapplier.variable_notfound": "Variable \\\"%s\\\" not found",
 
+		//--------- component.sceneviewcamerasettings ---------//
+		"component.sceneviewcamerasettings.camera2d": "2D Camera",
+		"component.sceneviewcamerasettings.camera3d": "3D Camera",
+		"component.sceneviewcamerasettings.cameradistance2d": "Camera Distance (Z)",
+		"component.sceneviewcamerasettings.desc": "Displays and edits the current Scene View camera values (the actual state is held by SceneEditorView on the editor side).",
+		"component.sceneviewcamerasettings.distance": "Distance To Target",
+		"component.sceneviewcamerasettings.eye": "Camera Position",
+		"component.sceneviewcamerasettings.flymode": "Fly Mode",
+		"component.sceneviewcamerasettings.flyspeed": "Fly Speed",
+		"component.sceneviewcamerasettings.pan2d": "Pan",
+		"component.sceneviewcamerasettings.pitch": "Pitch (deg)",
+		"component.sceneviewcamerasettings.target": "Target",
+		"component.sceneviewcamerasettings.yaw": "Yaw (deg)",
+		"component.sceneviewcamerasettings.zoom2d": "Zoom",
+
 		//--------- component.scenevieworbitstate ---------//
 		"component.scenevieworbitstate.distance": "Distance To Target",
 

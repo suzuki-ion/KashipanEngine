@@ -1257,6 +1257,21 @@
 		"component.scenevariableapplier.variable_name": "变量名",
 		"component.scenevariableapplier.variable_notfound": "未找到变量 \"%s\"",
 
+		//--------- component.sceneviewcamerasettings ---------//
+		"component.sceneviewcamerasettings.camera2d": "2D相机",
+		"component.sceneviewcamerasettings.camera3d": "3D相机",
+		"component.sceneviewcamerasettings.cameradistance2d": "相机距离（Z轴）",
+		"component.sceneviewcamerasettings.desc": "显示并编辑场景视图相机的当前值（实际数据由编辑器侧的SceneEditorView持有）。",
+		"component.sceneviewcamerasettings.distance": "到注视点的距离",
+		"component.sceneviewcamerasettings.eye": "相机位置",
+		"component.sceneviewcamerasettings.flymode": "飞行模式",
+		"component.sceneviewcamerasettings.flyspeed": "移动速度",
+		"component.sceneviewcamerasettings.pan2d": "平移位置",
+		"component.sceneviewcamerasettings.pitch": "俯仰角（度）",
+		"component.sceneviewcamerasettings.target": "注视点",
+		"component.sceneviewcamerasettings.yaw": "偏航角（度）",
+		"component.sceneviewcamerasettings.zoom2d": "缩放",
+
 		//--------- component.scenevieworbitstate ---------//
 		"component.scenevieworbitstate.distance": "到注视点的距离",
 

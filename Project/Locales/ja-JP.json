@@ -1257,6 +1257,21 @@
 		"component.scenevariableapplier.variable_name": "変数名",
 		"component.scenevariableapplier.variable_notfound": "変数 \"%s\" が見つかりません",
 
+		//--------- component.sceneviewcamerasettings ---------//
+		"component.sceneviewcamerasettings.camera2d": "2Dカメラ",
+		"component.sceneviewcamerasettings.camera3d": "3Dカメラ",
+		"component.sceneviewcamerasettings.cameradistance2d": "カメラ距離（Z軸）",
+		"component.sceneviewcamerasettings.desc": "シーンビューカメラの現在値を表示・編集します（実体はエディター側のSceneEditorViewが保持しています）。",
+		"component.sceneviewcamerasettings.distance": "注視点までの距離",
+		"component.sceneviewcamerasettings.eye": "カメラ位置",
+		"component.sceneviewcamerasettings.flymode": "フライモード",
+		"component.sceneviewcamerasettings.flyspeed": "移動速度",
+		"component.sceneviewcamerasettings.pan2d": "パン位置",
+		"component.sceneviewcamerasettings.pitch": "ピッチ角（度）",
+		"component.sceneviewcamerasettings.target": "注視点",
+		"component.sceneviewcamerasettings.yaw": "ヨー角（度）",
+		"component.sceneviewcamerasettings.zoom2d": "ズーム",
+
 		//--------- component.scenevieworbitstate ---------//
 		"component.scenevieworbitstate.distance": "注視点までの距離",
 

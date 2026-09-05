@@ -68,6 +68,10 @@ class Katana : ScriptComponentBehavior {
             cooldownTimer -= GetDeltaTime();
         }
 
+        if(level == 3){
+            effectOffsetY = 10.0f;
+        }
+
         // 攻撃中は方向に応じたオフセットを加えて表示・当たり判定を配置
         Vector3 drawPos = pos;
         if (isActive) {

@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 145.10670471191406,
-                            "y": 56.209999084472656,
+                            "x": 556.106689453125,
+                            "y": 24.209999084472656,
                             "z": -2.1480484519997844e-06
                         }
                     },
@@ -321,7 +321,12 @@
                             "syurikenAttackInterval": 0.4000000059604645,
                             "syurikenLifeTime": 2.0,
                             "vignetteHp": 3.0,
-                            "weapons": []
+                            "weapons": [
+                                "8da25f3a-dfdc-4603-b56f-a2cc14688f69",
+                                "8bf086b0-18bf-4b32-83b6-5892013ee4e6",
+                                "9497b163-f450-4598-bab8-75df986567cb",
+                                "ba65ba8c-d359-4579-bdb0-3157f408a1e2"
+                            ]
                         },
                         "scriptPath": "Assets/Scripts/Player.as"
                     },

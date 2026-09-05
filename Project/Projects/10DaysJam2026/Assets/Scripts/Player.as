@@ -42,7 +42,7 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("HP")]
     float hp = maxHp;
 
-    [SerializeField, Tooltip("1回の押し戻しで実際に補正する割合(0～1)。1未満にすると複数フレームに分けて収束させ、挟まれた際の上下振動を和らげる")]
+    [SerializeField, Tooltip("1回の押し戻しで実際に補正する割合")]
     float pushBackCorrectionFactor = 0.3f;
 
     [SerializeField, Tooltip("手裏剣の生存時間(秒)")]
@@ -59,6 +59,12 @@ class Player : ScriptComponentBehavior {
 
     [SerializeField, Tooltip("斧の生存時間(秒)")]
     float axeLifeTime = 2.0f;
+
+    [SerializeField, Tooltip("ボールの攻撃間隔(秒)")]
+    float ballAttackInterval = 0.5f;
+
+    [SerializeField, Tooltip("ボールの生存時間(秒)")]
+    float ballLifeTime = 3.0f;
 
     [SerializeField, Tooltip("ヴィネットをかけるHP値")]
     float vignetteHp = 3.0f;
@@ -90,6 +96,7 @@ class Player : ScriptComponentBehavior {
     float swordCooldownTimer = 0.0f;
     float syurikenCooldownTimer = 0.0f;
     float axeCooldownTimer = 0.0f;
+    float ballCooldownTimer = 0.0f;
 
     // 斧クローン管理用
     array<Object@> axeClones;
@@ -98,6 +105,10 @@ class Player : ScriptComponentBehavior {
     // 手裏剣クローン管理用
     array<Object@> syurikenClones;
     array<float> syurikenTimers;
+
+    // ボールクローン管理用を追加
+    array<Object@> ballClones;
+    array<float> ballTimers;
 
     Box2DCollider@ col;
     CharacterController2D@ controller;
@@ -132,7 +143,6 @@ class Player : ScriptComponentBehavior {
         GetComponents(@audioSources);
     }
 
-    // タグの一致するAudioSourceの音を再生する
     void PlayTaggedAudio(const string &in tagName) {
         if(audioSources is null) return;
         for(uint i = 0; i < audioSources.length(); ++i) {
@@ -146,13 +156,11 @@ class Player : ScriptComponentBehavior {
         Transform@ tf = GetTransform();
         if(tf is null) return;
 
-        // 前フレーム後半に確定した接触結果から、接触面へ向かう縦速度だけを消す。
-        // 壁との接触では縦速度を変更しない。
         if(controller !is null) {
             if(controller.IsGrounded() && velocity.y <= 0.0f) {
                 velocity.y = 0.0f;
                 if(isJump) {
-                    PlayTaggedAudio("Landing"); // 着地時の音を再生
+                    PlayTaggedAudio("Landing");
                 }
                 isJump = false;
             }
@@ -161,31 +169,24 @@ class Player : ScriptComponentBehavior {
             }
         }
 
-        // 左右移動
-        // velocityは「1秒あたりの移動量」なので、この時点ではGetDeltaTime()を掛けない
-        // （掛けるのは下の位置積分の1箇所だけにする）
         float moveX = GetCommandValue("MoveX");
         velocity.x = moveX * moveSpeed;
 
-        // 移動入力がある時だけ向きを更新
         if (moveX >= 0.01f) {
             lastDirection = Direction::Right;
         } else if (moveX <= -0.01f) {
             lastDirection = Direction::Left;
         }
 
-        // lastDirectionを元に回転を適用
         float rotY = (lastDirection == Direction::Left) ? 3.14159f : 0.0f;
         tf.SetRotate(Vector3(0.0f, rotY, 0.0f));
 
-        // ジャンプ
         if(IsCommandTriggered("Jump") && !isJump){
             velocity.y = jumpPower;
             isJump = true;
-            PlayTaggedAudio("Jump"); // ジャンプ時の音を再生
+            PlayTaggedAudio("Jump");
         }
 
-        // 武器の切り替え(所持している武器タイプの中だけを巡回する)
         if (weapons !is null && weapons.length() > 0) {
             if (IsCommandTriggered("WeaponChangeRight")) {
                 int next = FindOwnedWeapon(1);
@@ -203,19 +204,15 @@ class Player : ScriptComponentBehavior {
             }
         }
 
-        // 重力を加算（フレームをまたいで蓄積する値なので、ここはGetDeltaTime()を掛ける）
         velocity.y -= gravity * GetDeltaTime();
 
-        // 移動要求は予約し、同フレーム後半にCharacterController2DがX→Y順で解決する。
         Vector2 movement = velocity * GetDeltaTime();
         if(controller !is null) {
             controller.Move(movement);
         } else {
-            // CharacterController2Dが無い旧シーン用の互換フォールバック。
             tf.SetTranslate(tf.GetTranslate() + Vector3(movement.x, movement.y, 0.0f));
         }
 
-        // weapons未設定・currentWeaponTypeが範囲外/未所持(null)の場合の"Index out of bounds"を防ぐ
         bool hasWeapon = weapons !is null && currentWeaponType >= 0
             && uint(currentWeaponType) < weapons.length() && weapons[currentWeaponType] !is null;
 
@@ -229,27 +226,33 @@ class Player : ScriptComponentBehavior {
         if (axeCooldownTimer > 0.0f) {
             axeCooldownTimer -= GetDeltaTime();
         }
+        // Ball用に追加
+        if (ballCooldownTimer > 0.0f) {
+            ballCooldownTimer -= GetDeltaTime();
+        }
 
         // 攻撃入力の検知とタイマーリセット
         if (IsCommandTriggered("Attack")) {
-            // 現在選択中の武器に応じた攻撃の可否判定
             bool canAttack = false;
             if (currentWeaponType == WeaponList::Katana && swordCooldownTimer <= 0.0f) {
                 canAttack = true;
-                swordCooldownTimer = swordAttackInterval; // 剣のクールダウンリセット
+                swordCooldownTimer = swordAttackInterval;
             } else if (currentWeaponType == WeaponList::Shuriken && syurikenCooldownTimer <= 0.0f) {
                 canAttack = true;
-                syurikenCooldownTimer = syurikenAttackInterval; // 手裏剣のクールダウンリセット
-            }else if (currentWeaponType == WeaponList::Axe && axeCooldownTimer <= 0.0f) {
+                syurikenCooldownTimer = syurikenAttackInterval;
+            } else if (currentWeaponType == WeaponList::Axe && axeCooldownTimer <= 0.0f) {
                 canAttack = true;
-                axeCooldownTimer = axeAttackInterval; // 斧のクールダウンリセット
+                axeCooldownTimer = axeAttackInterval;
+            // Ballの攻撃判定を追加
+            } else if (currentWeaponType == WeaponList::Ball && ballCooldownTimer <= 0.0f) {
+                canAttack = true;
+                ballCooldownTimer = ballAttackInterval;
             }
 
             // 攻撃実行処理
             if (canAttack) {
                 attackTimer = attackDuration;
 
-                // 攻撃オブジェクトの呼び出し
                 if (hasWeapon && weapons[currentWeaponType] !is null) {
                     ScriptComponent@ sc;
                     if (weapons[currentWeaponType].GetComponent(@sc)) {
@@ -307,11 +310,35 @@ class Player : ScriptComponentBehavior {
                                     ScriptComponent@ cloneSc;
                                     if (cloneAxe.GetComponent(@cloneSc)) {
                                         cloneSc.SetVariable("pos", tf.GetTranslate());
-                                        cloneSc.CallMethod("Attack", syurikenMoveX); // 向き変数をそのまま流用
+                                        cloneSc.CallMethod("Attack", syurikenMoveX);
                                     }
 
                                     axeClones.insertLast(cloneAxe);
                                     axeTimers.insertLast(0.0f);
+                                }
+                            }
+                            break;
+
+                        // Ball用の射出処理を追加
+                        case WeaponList::Ball:
+                            {
+                                Object@ cloneBall = GetScene().CloneObject(weapons[currentWeaponType], "CloneBall");
+                                if (cloneBall !is null) {
+                                    cloneBall.SetActive(true);
+
+                                    Transform@ cloneTf = cloneBall.GetTransform();
+                                    if (cloneTf !is null) {
+                                        cloneTf.SetTranslate(tf.GetTranslate());
+                                    }
+                                    
+                                    ScriptComponent@ cloneSc;
+                                    if (cloneBall.GetComponent(@cloneSc)) {
+                                        cloneSc.SetVariable("pos", tf.GetTranslate());
+                                        cloneSc.CallMethod("Attack", syurikenMoveX); // 向きはそのまま流用
+                                    }
+
+                                    ballClones.insertLast(cloneBall);
+                                    ballTimers.insertLast(0.0f);
                                 }
                             }
                             break;
@@ -327,8 +354,6 @@ class Player : ScriptComponentBehavior {
             ScriptComponent@ sc;
             if (weapons[swordIndex].GetComponent(@sc)) {
                 Vector3 targetPos;
-                
-                // 装備中がソードならプレイヤーの位置に、手裏剣などそれ以外なら退避座標へ移動
                 if (currentWeaponType == WeaponList::Katana) {
                     targetPos = tf.GetTranslate();
                 } else {
@@ -342,14 +367,12 @@ class Player : ScriptComponentBehavior {
             }
         }
 
-        // 攻撃中判定の更新
         bool isAttacking = false;
         if(attackTimer > 0.0f){
             attackTimer -= GetDeltaTime();
             isAttacking = true;
         }
 
-        // HPが指定値以下になったらヴィネットをかける
         if(hp <= vignetteHp){
             VignetteEffect@ vf;
             if(gameScreen.GetComponent(@vf)){
@@ -357,12 +380,10 @@ class Player : ScriptComponentBehavior {
             }
         }
 
-        // HP0になったら死亡
         if(hp <= 0.0f){
             isAlive = false;
         }
 
-        // 状態の判定
         State nextState = state;
         if (!isAlive) {
             nextState = State::Dead;
@@ -385,7 +406,6 @@ class Player : ScriptComponentBehavior {
             }
         }
 
-        // 状態が切り替わったらアニメーターに指示を出す
         if (nextState != state) {
             state = nextState;
 
@@ -393,10 +413,7 @@ class Player : ScriptComponentBehavior {
             if (GetComponents(@scripts)) {
                 for(int i = 0; i < scripts.length(); ++i){
                     if(scripts[i].GetTag() == "AnimatorSC"){
-                        // Y位置の変更。Stateの数値をそのまま行番号として渡す
                         scripts[i].CallMethod("PlayRow", int(state));
-        
-                        // X位置の変更。歩きと歩き攻撃のみ3コマ、他は1コマ
                         if (state == State::Walk || state == State::WalkAttack) {
                             scripts[i].CallMethod("SetFrameCount", 3);
                         } else {
@@ -407,56 +424,43 @@ class Player : ScriptComponentBehavior {
             }
         }
 
-        // 無敵時間タイマー更新および点滅処理
         if (isInvincible) {
             invincibleTimer += GetDeltaTime();
-
-            // blinkIntervalごとにフラグを交互に切り替える
             bool isVisible = (int(invincibleTimer / blinkInterval) % 2 == 0);
             if (sprite !is null) {
                 sprite.SetActive(isVisible);
             }
 
-            // 無敵時間終了
             if (invincibleTimer >= invincibleDuration) {
                 invincibleTimer = 0.0f;
                 isInvincible = false;
-
-                // 終了時は必ず表示状態に戻す
                 if (sprite !is null) {
                     sprite.SetActive(true);
                 }
             }
         }
 
-        // 一定時間経過したら
         if(invincibleTimer >= invincibleDuration){
             invincibleTimer = 0.0f;
-            isInvincible = false; // 無敵状態解除
+            isInvincible = false;
         }
 
         // 手裏剣クローンの更新および削除処理
         for (uint i = 0; i < syurikenClones.length(); ) {
             Object@ clone = syurikenClones[i];
-
             if (clone !is null) {
-                // タイマー加算
                 syurikenTimers[i] += GetDeltaTime();
-
-                // 当たり判定等で非アクティブ化されたか、生存時間を超えた場合
                 if (!clone.IsActive() || syurikenTimers[i] >= syurikenLifeTime) {
                     clone.SetActive(false);
                     syurikenClones.removeAt(i);
                     syurikenTimers.removeAt(i);
-                    continue; // インデックスを進めずに次の要素へ
+                    continue;
                 }
             } else {
-                // nullの場合も配列から除外
                 syurikenClones.removeAt(i);
                 syurikenTimers.removeAt(i);
                 continue;
             }
-
             i++;
         }
 
@@ -478,37 +482,54 @@ class Player : ScriptComponentBehavior {
             }
             i++;
         }
+
+        // ボールクローンの更新および削除処理
+        for (uint i = 0; i < ballClones.length(); ) {
+            Object@ clone = ballClones[i];
+            if (clone !is null) {
+                ballTimers[i] += GetDeltaTime();
+                if (!clone.IsActive() || ballTimers[i] >= ballLifeTime) {
+                    clone.SetActive(false);
+                    ballClones.removeAt(i);
+                    ballTimers.removeAt(i);
+                    continue;
+                }
+            } else {
+                ballClones.removeAt(i);
+                ballTimers.removeAt(i);
+                continue;
+            }
+            i++;
+        }
     }
 
     void OnCollisionEnter(const HitInfo &in hit) {
-        // 敵と当たったら
         if(hit.otherCollider.GetTag() == "Enemy" && !isInvincible){
-            Damage(1.0f); // HP減算
-            isInvincible = true; // 無敵状態に変更
+            Damage(1.0f);
+            isInvincible = true;
         }
 
-        // 回復アイテムと当たったら
         if(hit.otherCollider.GetTag() == "Heart"){
-            Heal(1.0f); // HP増加
+            Heal(1.0f);
             healItem.SetActive(false);
         }
     }
 
-    // 武器名から対応する武器を探して追加する
     void AddWeaponByName(const string &in name) {
         if (allWeapons is null) return;
 
-        // WeaponListの定数と照合
         int targetIndex = -1;
         if (name == "Katana") {
             targetIndex = int(WeaponList::Katana);
         } else if (name == "Shuriken") {
             targetIndex = int(WeaponList::Shuriken);
-        }else if (name == "Axe") {
+        } else if (name == "Axe") {
             targetIndex = int(WeaponList::Axe);
+        // Ballを受け取る処理を追加
+        } else if (name == "Ball") {
+            targetIndex = int(WeaponList::Ball);
         }
 
-        // 対象の武器オブジェクトが存在すれば追加処理を行う
         if (targetIndex >= 0 && uint(targetIndex) < allWeapons.length()) {
             Object@ weaponObj = allWeapons[targetIndex];
             if (weaponObj !is null) {
@@ -517,9 +538,6 @@ class Player : ScriptComponentBehavior {
         }
     }
 
-    // 武器をweaponsに追加する処理
-    // weaponsはallWeaponsと同じ並び(WeaponListの値=インデックス)で管理し、
-    // 未所持のスロットはnullのままにする
     void AddWeapon(int weaponType, Object@ newWeapon) {
         if (newWeapon is null || weaponType < 0) return;
 
@@ -527,24 +545,20 @@ class Player : ScriptComponentBehavior {
             @weapons = array<Object@>();
         }
 
-        // weaponTypeのスロットまで配列を広げる(未所持分はnullで埋める)
         while (weapons.length() <= uint(weaponType)) {
             weapons.insertLast(null);
         }
 
-        // 重複チェック
         if (weapons[weaponType] !is null) {
             Log("すでに所持している武器です");
             return;
         }
 
-        // 所持リストに追加し、取得した武器を自動装備
         @weapons[weaponType] = newWeapon;
         currentWeaponType = weaponType;
         Log("新しい武器を獲得！ 現在の武器タイプ: " + currentWeaponType);
     }
 
-    // 現在位置からstep方向(+1/-1)に所持済みの武器タイプを探す。見つからなければ-1
     int FindOwnedWeapon(int step) {
         if (weapons is null || weapons.length() == 0) return -1;
 
@@ -559,9 +573,7 @@ class Player : ScriptComponentBehavior {
         return -1;
     }
 
-    // 宝箱との接触・開ける処理
     void OnCollisionStay(const HitInfo &in hit) {
-        // 宝箱に接しているときに下ボタンを押したら
         if (hit.otherCollider.GetTag() == "Chest" && IsCommandTriggered("Bottom")) {
             Object@ chestObj = hit.otherObject;
             if (chestObj !is null) {
@@ -570,11 +582,9 @@ class Player : ScriptComponentBehavior {
                     bool isOpen = false;
                     chestSc.GetVariable("isOpen", isOpen);
 
-                    // 未開封の場合のみ開く処理を実行
                     if (!isOpen) {
                         chestSc.CallMethod("Open");
 
-                        // string型で宝箱の中身の名前を取得
                         string itemName = "";
                         if (chestSc.GetVariable("itemName", itemName)) {
                             AddWeaponByName(itemName);
@@ -588,7 +598,7 @@ class Player : ScriptComponentBehavior {
     void Damage(float amount) {
         hp = Clamp(hp - amount, 0.0f, maxHp);
         Log("Damage! HP:" + hp);
-        PlayTaggedAudio("Damage"); // ダメージ時の音を再生
+        PlayTaggedAudio("Damage");
     }
 
     void Heal(float amount) {
@@ -600,7 +610,6 @@ class Player : ScriptComponentBehavior {
         Log("Player End");
     }
 
-    // 経験値獲得処理
     void AddExp(float expAmount) {
         if (weapons is null || uint(currentWeaponType) >= weapons.length()) return;
 
@@ -608,7 +617,6 @@ class Player : ScriptComponentBehavior {
         if (currentWeapon !is null) {
             ScriptComponent@ sc;
             if (currentWeapon.GetComponent(@sc)) {
-                // 装備中の武器に経験値を渡す
                 sc.CallMethod("AddExp", expAmount);
             }
         }

@@ -293,11 +293,14 @@
                             "allWeapons": [
                                 "8da25f3a-dfdc-4603-b56f-a2cc14688f69",
                                 "8bf086b0-18bf-4b32-83b6-5892013ee4e6",
-                                "9497b163-f450-4598-bab8-75df986567cb"
+                                "9497b163-f450-4598-bab8-75df986567cb",
+                                "ba65ba8c-d359-4579-bdb0-3157f408a1e2"
                             ],
                             "attackDuration": 0.44999998807907104,
                             "axeAttackInterval": 0.5,
                             "axeLifeTime": 2.0,
+                            "ballAttackInterval": 0.5,
+                            "ballLifeTime": 3.0,
                             "blinkInterval": 0.07999999821186066,
                             "currentWeaponType": -1,
                             "frameInterval": 0.15000000596046448,

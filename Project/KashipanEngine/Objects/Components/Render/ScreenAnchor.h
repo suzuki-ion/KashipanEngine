@@ -64,21 +64,20 @@ public:
 
 protected:
     void Update() override {
-        auto *cameraObj = GetCameraObject();
-        auto *camera2d = cameraObj ? cameraObj->GetComponent<Camera2D>() : nullptr;
-        if (!camera2d) return;
-
-        auto *objectContext = GetOwnerObjectContext();
-        auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
-        if (!transform) return;
-
-        Vector3 translate = transform->GetTranslate();
-        translate.x = anchorPoint_.x * camera2d->GetWidth() + offset_.x;
-        translate.y = anchorPoint_.y * camera2d->GetHeight() + offset_.y;
-        transform->SetTranslate(translate);
+        ApplyAnchor();
     }
 
 #if defined(USE_IMGUI)
+    /// @brief エディターでPlayしていない間も追従させるためのフック
+    /// @details Update()はScene::UpdateInterfaceがPlay中（isPlaying_）にしか呼ばないため
+    ///          （Scene.h参照）、それだけに頼るとエディター編集中にAnchorPoint/Offsetを
+    ///          変更したりCamera2Dのサイズが変わったりしても見た目に反映されない。
+    ///          ShowPersistentImGuiInterfaceはPlay中かどうかに関わらず毎フレーム呼ばれるため
+    ///          （TilemapRenderer::ShowPersistentImGuiと同じ理由・同じ対処）、ここでも同じ追従処理を行う
+    void ShowPersistentImGui() override {
+        ApplyAnchor();
+    }
+
     void ShowImGui() override {
         TargetObjectSelector::ShowSelector(TranslationLabel("component.screenanchor.camera"), GetOwnerSceneContext(), cameraObjectID_, true, false);
         ImGui::DragFloat2(TranslationLabel("component.screenanchor.anchor_point"), &anchorPoint_.x, 0.01f, 0.0f, 1.0f);
@@ -102,6 +101,22 @@ protected:
     }
 
 private:
+    /// @brief 対象Camera2Dの画面上の基準点へTransformのX/Yを追従させる（Update()/ShowPersistentImGui()共通処理）
+    void ApplyAnchor() {
+        auto *cameraObj = GetCameraObject();
+        auto *camera2d = cameraObj ? cameraObj->GetComponent<Camera2D>() : nullptr;
+        if (!camera2d) return;
+
+        auto *objectContext = GetOwnerObjectContext();
+        auto *transform = objectContext ? objectContext->GetComponent<Transform>() : nullptr;
+        if (!transform) return;
+
+        Vector3 translate = transform->GetTranslate();
+        translate.x = anchorPoint_.x * camera2d->GetWidth() + offset_.x;
+        translate.y = anchorPoint_.y * camera2d->GetHeight() + offset_.y;
+        transform->SetTranslate(translate);
+    }
+
     UUID128 cameraObjectID_{};
     Vector2 anchorPoint_{ 0.5f, 0.5f };
     Vector2 offset_{ 0.0f, 0.0f };

@@ -141,7 +141,7 @@ protected:
 
         TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), targetObjectID_, true, false);
         if (!targetObjectID_.IsValid()) {
-            ImGui::TextDisabled("%s", TranslationC("component.transformsync.no_target"));
+            ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.transformsync.no_target"));
         }
 
         ImGui::Spacing();

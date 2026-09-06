@@ -269,12 +269,12 @@ protected:
         }
         ImGui::Checkbox(TranslationLabel("component.meshrenderer.cast_shadows"), &castShadows_);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.meshrenderer.desc_1"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.meshrenderer.desc_1"));
         }
 
         ImGui::ColorEdit4(TranslationLabel("component.meshrenderer.instance_color"), &instanceColor_.x);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.meshrenderer.desc_2"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.meshrenderer.desc_2"));
         }
         const char *kColorBlendModeLabels[] = { TranslationC("component.common.blendmode.override"), TranslationC("component.common.blendmode.multiply"), TranslationC("component.common.blendmode.add"), TranslationC("component.common.blendmode.subtract") };
         int blendModeIndex = static_cast<int>(instanceColorBlendMode_);
@@ -282,12 +282,12 @@ protected:
             instanceColorBlendMode_ = static_cast<ColorBlendMode>(blendModeIndex);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.meshrenderer.desc_3"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.meshrenderer.desc_3"));
         }
 
         ImGui::TextUnformatted(TranslationC("component.common.instance_uv_transform"));
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.common.desc_instance_uv"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_instance_uv"));
         }
         ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_translate"), &instanceUvTranslate_.x, 0.001f);
         float instanceUvRotationDeg = instanceUvRotation_ * 180.0f / 3.14159265f;
@@ -297,7 +297,7 @@ protected:
         ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_scale"), &instanceUvScale_.x, 0.001f);
         ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_pivot"), &instanceUvPivot_.x, 0.001f);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.common.desc_instance_uv_pivot"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_instance_uv_pivot"));
         }
         const char *kUvCombineModeLabels[] = {
             TranslationC("component.common.uvcombinemode.material_then_instance"),
@@ -340,13 +340,13 @@ protected:
             MarkDrawListDirty();
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.common.desc_render_priority"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_render_priority"));
         }
         if (ImGui::Checkbox(TranslationLabel("component.common.allow_instancing"), &allowInstancing_)) {
             MarkDrawListDirty();
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.common.desc_allow_instancing"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_allow_instancing"));
         }
 
         const auto materialEntries = MaterialManager::GetLoadedMaterialListEntries();

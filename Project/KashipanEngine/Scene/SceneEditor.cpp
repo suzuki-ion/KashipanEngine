@@ -30,6 +30,7 @@
 #include "Scene/Editor/SceneSaver.h"
 #include "Scene/Editor/GlobalSceneVariablesMenu.h"
 #include "Scene/Editor/SceneVariablesMenu.h"
+#include "Utilities/ImGuiCustom.h"
 #include "Scene/Editor/TranslationEditor.h"
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Scene/Components/Script/EditorToolManager.h"
@@ -498,7 +499,7 @@ void SceneEditor::ShowAutoSaveSettingsModal() {
         if (ImGui::InputText(TranslationLabel("editor.autosave.nameformat"), &autoSaveNameFormat_)) {
             EditorSettings::SetString("sceneEditor.autoSaveNameFormat", autoSaveNameFormat_);
         }
-        ImGui::TextDisabled("%s${SceneName} ${Year} ${Month} ${Day} ${Hour} ${Minute} ${Second}", TranslationC("editor.autosave.placeholders"));
+        ImGuiCustom::TextDisabledWrapped("%s${SceneName} ${Year} ${Month} ${Day} ${Hour} ${Minute} ${Second}", TranslationC("editor.autosave.placeholders"));
 
         const std::string preview = RenderAutoSaveFileName(autoSaveNameFormat_, context_->GetName());
         ImGui::Text("%s%s%s", TranslationC("editor.autosave.preview"), kSceneBackupDirectory, preview.c_str());

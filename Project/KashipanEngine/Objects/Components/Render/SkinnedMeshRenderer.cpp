@@ -308,12 +308,12 @@ void SkinnedMeshRenderer::ShowImGui() {
     PipelineVariantBuilder::Show(pipelineName_);
     ImGui::Checkbox(TranslationLabel("component.skinnedmeshrenderer.cast_shadows"), &castShadows_);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", TranslationC("component.skinnedmeshrenderer.desc_1"));
+        ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.skinnedmeshrenderer.desc_1"));
     }
 
     ImGui::ColorEdit4(TranslationLabel("component.skinnedmeshrenderer.instance_color"), &instanceColor_.x);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", TranslationC("component.skinnedmeshrenderer.desc_2"));
+        ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.skinnedmeshrenderer.desc_2"));
     }
     const char *kColorBlendModeLabels[] = { TranslationC("component.common.blendmode.override"), TranslationC("component.common.blendmode.multiply"), TranslationC("component.common.blendmode.add"), TranslationC("component.common.blendmode.subtract") };
     int blendModeIndex = static_cast<int>(instanceColorBlendMode_);
@@ -321,12 +321,12 @@ void SkinnedMeshRenderer::ShowImGui() {
         instanceColorBlendMode_ = static_cast<ColorBlendMode>(blendModeIndex);
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", TranslationC("component.skinnedmeshrenderer.desc_3"));
+        ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.skinnedmeshrenderer.desc_3"));
     }
 
     ImGui::TextUnformatted(TranslationC("component.common.instance_uv_transform"));
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", TranslationC("component.common.desc_instance_uv"));
+        ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_instance_uv"));
     }
     ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_translate"), &instanceUvTranslate_.x, 0.001f);
     float instanceUvRotationDeg = instanceUvRotation_ * 180.0f / 3.14159265f;
@@ -336,7 +336,7 @@ void SkinnedMeshRenderer::ShowImGui() {
     ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_scale"), &instanceUvScale_.x, 0.001f);
     ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_pivot"), &instanceUvPivot_.x, 0.001f);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", TranslationC("component.common.desc_instance_uv_pivot"));
+        ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_instance_uv_pivot"));
     }
     const char *kUvCombineModeLabels[] = {
         TranslationC("component.common.uvcombinemode.material_then_instance"),
@@ -377,11 +377,11 @@ void SkinnedMeshRenderer::ShowImGui() {
 
     ImGui::DragInt(TranslationLabel("component.common.render_priority"), &renderPriority_);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", TranslationC("component.common.desc_render_priority"));
+        ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_render_priority"));
     }
     ImGui::Checkbox(TranslationLabel("component.common.allow_instancing"), &allowInstancing_);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", TranslationC("component.common.desc_allow_instancing"));
+        ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_allow_instancing"));
     }
 
     const auto materialEntries = MaterialManager::GetLoadedMaterialListEntries();
@@ -427,14 +427,14 @@ void SkinnedMeshRenderer::ShowImGui() {
         quality_ = static_cast<SkinQuality>(qualityIndex);
     }
     if (!GetAnimator()) {
-        ImGui::TextDisabled("%s", TranslationC("component.skinnedmeshrenderer.no_animator_on_this_object_bind_pose_only"));
+        ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.skinnedmeshrenderer.no_animator_on_this_object_bind_pose_only"));
     }
     ImGui::Text(TranslationC("component.skinnedmeshrenderer.vertex_count_u"), vertexCount_);
     ImGui::Text(TranslationC("component.skinnedmeshrenderer.joint_count_d"), static_cast<int>(jointNames_.size()));
 
     if (ImGui::TreeNode(TranslationLabel("component.skinnedmeshrenderer.blend_shapes"))) {
         if (blendShapes_.empty()) {
-            ImGui::TextDisabled("%s", TranslationC("component.skinnedmeshrenderer.no_blend_shapes_on_this_mesh"));
+            ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.skinnedmeshrenderer.no_blend_shapes_on_this_mesh"));
         }
         // 一覧はメッシュ（インポートされたBlendShape）から自動的に同期されるため、追加・削除はできない
         // （Unityと同じ挙動）。ただしFBX（Blenderのシェイプキー順）とAssimpのインポート順が

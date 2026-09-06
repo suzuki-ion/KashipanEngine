@@ -303,7 +303,7 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         auto tooltip = [](const char *text) {
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", text);
+            if (ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", text);
         };
 
         if (ImGuiCustom::SelectString(TranslationLabel("component.audiosource.sound"), soundName_, AudioManager::GetLoadedSoundAssetPaths(), true)) {

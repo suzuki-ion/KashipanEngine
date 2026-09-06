@@ -619,7 +619,7 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
     ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_scale"), material.uvScale, { .vSpeed = 0.001f });
     ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_pivot"), material.uvPivot, { .vSpeed = 0.001f });
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", TranslationC("editor.materialmanager.desc_uv_pivot"));
+        ImGuiCustom::SetTooltipWrapped("%s", TranslationC("editor.materialmanager.desc_uv_pivot"));
     }
 
     // ピクセル基準（0～テクスチャの幅・高さ）でのUV編集。内部値（0～1のUV基準）と相互に連動する

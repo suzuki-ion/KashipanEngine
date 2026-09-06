@@ -38,19 +38,19 @@ protected:
         IPostProcessComponent::ShowImGui();
         ImGui::DragFloat(TranslationLabel("component.fxaaeffect.threshold"), &params_.threshold, 0.001f, 0.0f, 0.5f, "%.4f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.fxaaeffect.0_03_0_16_n_aa"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.fxaaeffect.0_03_0_16_n_aa"));
         }
         ImGui::DragFloat(TranslationLabel("component.fxaaeffect.threshold_min"), &params_.thresholdMin, 0.0001f, 0.0f, 0.2f, "%.4f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.fxaaeffect.desc_1"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.fxaaeffect.desc_1"));
         }
         ImGui::DragFloat(TranslationLabel("component.fxaaeffect.strength"), &params_.strength, 0.01f, 0.0f, 1.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.fxaaeffect.desc_2"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.fxaaeffect.desc_2"));
         }
         ImGui::DragFloat(TranslationLabel("component.fxaaeffect.subpixel_blend"), &params_.subpixelBlend, 0.01f, 0.0f, 1.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.fxaaeffect.desc_3"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.fxaaeffect.desc_3"));
         }
     }
 #endif

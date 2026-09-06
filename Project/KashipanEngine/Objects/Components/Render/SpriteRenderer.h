@@ -340,7 +340,7 @@ protected:
 
         ImGui::TextUnformatted(TranslationC("component.common.instance_uv_transform"));
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.common.desc_instance_uv"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_instance_uv"));
         }
         ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_translate"), &instanceUvTranslate_.x, 0.001f);
         float instanceUvRotationDeg = instanceUvRotation_ * 180.0f / 3.14159265f;
@@ -350,7 +350,7 @@ protected:
         ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_scale"), &instanceUvScale_.x, 0.001f);
         ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_pivot"), &instanceUvPivot_.x, 0.001f);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.common.desc_instance_uv_pivot"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_instance_uv_pivot"));
         }
         const char *kUvCombineModeLabels[] = {
             TranslationC("component.common.uvcombinemode.material_then_instance"),
@@ -393,19 +393,19 @@ protected:
             MarkDrawListDirty();
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.common.desc_render_priority"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_render_priority"));
         }
         if (ImGui::Checkbox(TranslationLabel("component.common.allow_instancing"), &allowInstancing_)) {
             MarkDrawListDirty();
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.common.desc_allow_instancing"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_allow_instancing"));
         }
         if (ImGui::Checkbox(TranslationLabel("component.spriterenderer.pixel_snapping"), &pixelSnapping_)) {
             MarkDrawListDirty();
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.spriterenderer.pixel_snapping_desc"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.spriterenderer.pixel_snapping_desc"));
         }
         if (pixelSnapping_) {
             if (ImGui::DragFloat(TranslationLabel("component.spriterenderer.pixel_snap_outset"), &pixelSnapOutsetPixels_, 0.01f, 0.0f, 1.0f)) {
@@ -413,7 +413,7 @@ protected:
                 MarkDrawListDirty();
             }
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%s", TranslationC("component.spriterenderer.pixel_snap_outset_desc"));
+                ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.spriterenderer.pixel_snap_outset_desc"));
             }
         }
     }

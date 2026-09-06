@@ -337,7 +337,7 @@ protected:
             if (ImGui::RadioButton(TranslationLabel("component.tilemaprenderer.mode_8dir"), modeIndex == 1)) {
                 SetAutotileMode(AutotileMode::EightDirection);
             }
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("component.tilemaprenderer.desc_mode"));
+            if (ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.tilemaprenderer.desc_mode"));
         }
 
         if (autotileMode_ == AutotileMode::EightDirection && ImGui::CollapsingHeader(TranslationC("component.tilemaprenderer.eight_dir_layout"))) {
@@ -404,7 +404,7 @@ protected:
         }
 
         if (ImGui::Checkbox(TranslationLabel("component.tilemaprenderer.generate_colliders"), &generateColliders_)) MarkMeshDirty();
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("component.tilemaprenderer.desc_generate_colliders"));
+        if (ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.tilemaprenderer.desc_generate_colliders"));
 
         ImGui::Separator();
         ImGui::TextUnformatted(TranslationC("component.tilemaprenderer.cells_bulk_edit"));

@@ -288,7 +288,7 @@ void Animator::ShowImGui() {
         animationSourceAssetPath_ = sourcePath;
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip(TranslationC("component.animator.desc_1"));
+        ImGuiCustom::SetTooltipWrapped(TranslationC("component.animator.desc_1"));
     }
 
     ImGui::Checkbox(TranslationLabel("component.animator.play_on_start"), &playOnStart_);

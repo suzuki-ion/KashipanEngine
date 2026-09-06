@@ -354,9 +354,9 @@ protected:
         }
         ImGui::EndDisabled();
         if (useLocalizationKey_) {
-            ImGui::TextDisabled(TranslationC("component.textrenderer.text_is_localized_desc"));
+            ImGuiCustom::TextDisabledWrapped(TranslationC("component.textrenderer.text_is_localized_desc"));
         }
-        ImGui::TextDisabled(TranslationC("component.textrenderer.desc_1"));
+        ImGuiCustom::TextDisabledWrapped(TranslationC("component.textrenderer.desc_1"));
 
         std::vector<std::string> fontNames;
         for (const auto &entry : FontManager::GetLoadedFontListEntries()) {
@@ -413,11 +413,11 @@ protected:
 
         ImGui::DragInt(TranslationLabel("component.common.render_priority"), &renderPriority_);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.common.desc_render_priority"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_render_priority"));
         }
         ImGui::Checkbox(TranslationLabel("component.common.allow_instancing"), &allowInstancing_);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.common.desc_allow_instancing"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_allow_instancing"));
         }
 
         RebuildShapeIfDirty();

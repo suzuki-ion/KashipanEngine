@@ -19,6 +19,7 @@
 #include "Objects/Components/Transform.h"
 #include "Utilities/AssetDragDropPayload.h"
 #include "Utilities/FileIO/JSON.h"
+#include "Utilities/ImGuiCustom.h"
 
 namespace KashipanEngine {
 
@@ -287,7 +288,7 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
     }
     // Commentコンポーネントが付いている場合、カーソルを合わせた際にその内容をツールチップ表示する
     if (auto *comment = item.object->GetComponent<Comment>(); comment && !comment->GetComment().empty() && ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", comment->GetComment().c_str());
+        ImGuiCustom::SetTooltipWrapped("%s", comment->GetComment().c_str());
     }
     // forceOpenは一時的な表示上の強制展開のため、ユーザーが手動で折り畳んでいた保存済み設定は書き換えない
     if (!item.children.empty() && !forceOpen && isOpen != storedOpen) {
@@ -408,7 +409,7 @@ void SceneObjectHierarchy::ShowObjectContextMenu(EmptyObject *obj) {
             DeleteObjectKeepChildren(obj);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("editor.hierarchy.deletekeepchildren.tooltip"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("editor.hierarchy.deletekeepchildren.tooltip"));
         }
         if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.unparentallchildren"), nullptr, false, hasChildren)) {
             UnparentAllChildren(obj);

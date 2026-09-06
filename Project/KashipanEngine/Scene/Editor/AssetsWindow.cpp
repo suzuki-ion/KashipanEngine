@@ -31,6 +31,7 @@
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/FileIO/TextFile.h"
+#include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
@@ -252,7 +253,7 @@ void AssetsWindow::ShowImGui() {
     }
     ImGui::EndDisabled();
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", TranslationC("editor.assets.up"));
+        ImGuiCustom::SetTooltipWrapped("%s", TranslationC("editor.assets.up"));
     }
     ImGui::SameLine();
     if (ImGui::Button(TranslationLabel("editor.common.refresh"))) {
@@ -539,7 +540,7 @@ void AssetsWindow::ShowFileGrid() {
         }
         ShowFileContextMenu(file);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", file.path.c_str());
+            ImGuiCustom::SetTooltipWrapped("%s", file.path.c_str());
         }
 
         // ファイル名（セル幅で折り返し）

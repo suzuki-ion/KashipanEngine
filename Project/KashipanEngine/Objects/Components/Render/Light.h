@@ -154,32 +154,32 @@ protected:
         } else if (type_ == Type::Sphere) {
             ImGui::DragFloat(TranslationLabel("component.light.radius_range"), &radius_, 0.1f, 0.0f, 1000.0f);
             ImGui::DragFloat(TranslationLabel("component.light.source_radius"), &sourceRadius_, 0.01f, 0.001f, 100.0f);
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("component.light.desc_1"));
+            if (ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.light.desc_1"));
             ImGui::DragFloat(TranslationLabel("component.light.decay"), &decay_, 0.01f, 0.0f, 10.0f);
         } else if (type_ == Type::Tube) {
             ImGui::DragFloat(TranslationLabel("component.light.radius_range"), &radius_, 0.1f, 0.0f, 1000.0f);
             ImGui::DragFloat(TranslationLabel("component.light.source_radius"), &sourceRadius_, 0.01f, 0.001f, 100.0f);
             ImGui::DragFloat(TranslationLabel("component.light.source_length"), &sourceLength_, 0.01f, 0.0f, 1000.0f);
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("component.light.transform_x"));
+            if (ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.light.transform_x"));
             ImGui::DragFloat(TranslationLabel("component.light.decay"), &decay_, 0.01f, 0.0f, 10.0f);
         } else if (type_ == Type::Disc) {
             ImGui::DragFloat(TranslationLabel("component.light.distance_range"), &distance_, 0.1f, 0.0f, 1000.0f);
             ImGui::DragFloat(TranslationLabel("component.light.source_radius"), &sourceRadius_, 0.01f, 0.001f, 100.0f);
             ImGui::DragFloat(TranslationLabel("component.light.decay"), &decay_, 0.01f, 0.0f, 10.0f);
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("component.light.transform_z"));
+            if (ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.light.transform_z"));
         } else if (type_ == Type::Rect) {
             ImGui::DragFloat(TranslationLabel("component.light.distance_range"), &distance_, 0.1f, 0.0f, 1000.0f);
             ImGui::DragFloat(TranslationLabel("component.light.source_width"), &sourceWidth_, 0.01f, 0.001f, 100.0f);
             ImGui::DragFloat(TranslationLabel("component.light.source_height"), &sourceHeight_, 0.01f, 0.001f, 100.0f);
             ImGui::DragFloat(TranslationLabel("component.light.decay"), &decay_, 0.01f, 0.0f, 10.0f);
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("component.light.transform_z_x_y"));
+            if (ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.light.transform_z_x_y"));
         } else if (type_ == Type::Box) {
             ImGui::DragFloat(TranslationLabel("component.light.radius_range"), &radius_, 0.1f, 0.0f, 1000.0f);
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("component.light.desc_2"));
+            if (ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.light.desc_2"));
             ImGui::DragFloat(TranslationLabel("component.light.source_width"), &sourceWidth_, 0.01f, 0.001f, 100.0f);
             ImGui::DragFloat(TranslationLabel("component.light.source_height"), &sourceHeight_, 0.01f, 0.001f, 100.0f);
             ImGui::DragFloat(TranslationLabel("component.light.source_depth"), &sourceDepth_, 0.01f, 0.001f, 100.0f);
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("component.light.transform_x_y_z"));
+            if (ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.light.transform_x_y_z"));
             ImGui::DragFloat(TranslationLabel("component.light.decay"), &decay_, 0.01f, 0.0f, 10.0f);
         }
 
@@ -202,12 +202,12 @@ protected:
             }
             ImGui::DragFloat(TranslationLabel("component.light.shadow_bias"), &shadowBias_, 0.01f, 0.0f, 5.0f);
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%s", TranslationC("component.light.desc_3"));
+                ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.light.desc_3"));
             }
             if (type_ == Type::Directional || type_ == Type::Point || type_ == Type::Spot) {
                 ImGui::DragFloat(TranslationLabel("component.light.shadow_softness"), &shadowSoftness_, 0.01f, 0.0f, 100.0f);
                 if (ImGui::IsItemHovered()) {
-                    ImGui::SetTooltip("%s", TranslationC("component.light.pcss_n0"));
+                    ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.light.pcss_n0"));
                 }
             } else {
                 ImGui::Text(TranslationC("component.light.softness_3f_source_radius"), GetEffectiveShadowSoftness());

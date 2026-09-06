@@ -866,7 +866,7 @@ protected:
     void ShowSpawnShapeImGui() {
         ImGui::SeparatorText(TranslationLabel("component.particlesystembase.spawn_area"));
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip(TranslationC("component.particlesystembase.desc_1"));
+            ImGuiCustom::SetTooltipWrapped(TranslationC("component.particlesystembase.desc_1"));
         }
         ShowSpawnShapeListImGui(TranslationLabel("component.particlesystembase.include_shapes"), TranslationLabel("component.particlesystembase.add_include_shape"), includeShapes_);
         ShowSpawnShapeListImGui(TranslationLabel("component.particlesystembase.exclude_shapes"), TranslationLabel("component.particlesystembase.add_exclude_shape"), excludeShapes_);
@@ -883,13 +883,13 @@ protected:
             spawnOrigin_ = static_cast<SpawnOrigin>(originIndex);
         }
         if (gpuSimulation_ && (spawnOrigin_ == SpawnOrigin::ChildOfSelf || spawnOrigin_ == SpawnOrigin::ChildOfOther)) {
-            ImGui::TextDisabled(TranslationC("component.particlesystembase.gpu_n"));
+            ImGuiCustom::TextDisabledWrapped(TranslationC("component.particlesystembase.gpu_n"));
         }
         switch (spawnOrigin_) {
         case SpawnOrigin::ChildOfOther:
             TargetObjectSelector::ShowSelector(TranslationLabel("component.particlesystembase.parent_object"), GetOwnerSceneContext(), spawnParentObjectID_, true, false);
             if (!spawnParentObjectID_.IsValid()) {
-                ImGui::TextDisabled("%s", TranslationC("component.particlesystembase.desc_2"));
+                ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.particlesystembase.desc_2"));
             }
             break;
         case SpawnOrigin::AtFixedPosition:
@@ -950,7 +950,7 @@ protected:
             SetGPUSimulation(gpuSimulationLocal);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.particlesystembase.desc_3"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.particlesystembase.desc_3"));
         }
 
         ImGui::Checkbox(TranslationLabel("component.particlesystembase.play_on_start"), &playOnStart_);
@@ -965,13 +965,13 @@ protected:
             SetMaxParticles(maxParticlesLocal);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.particlesystembase.desc_4"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.particlesystembase.desc_4"));
         }
         ImGui::BeginDisabled(loop_);
         ImGui::DragInt(TranslationLabel("component.particlesystembase.total_spawn_count"), &totalSpawnCount_, 1.0f, 0, 1000000);
         ImGui::EndDisabled();
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.particlesystembase.loop_2"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.particlesystembase.loop_2"));
         }
         ShowRandomizableImGui(TranslationLabel("component.particlesystembase.spawn_count"), spawnCount_, 1, 100);
 
@@ -1007,19 +1007,19 @@ protected:
 
         ImGui::Checkbox(TranslationLabel("component.particlesystembase.cast_shadows"), &castShadows_);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip(TranslationC("component.particlesystembase.desc_5"));
+            ImGuiCustom::SetTooltipWrapped(TranslationC("component.particlesystembase.desc_5"));
         }
 
         ImGui::Checkbox(TranslationLabel("component.particlesystembase.billboard"), &billboard_);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.particlesystembase.targetlookat"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.particlesystembase.targetlookat"));
         }
         if (billboard_) {
             ImGui::Indent();
             // 向き先を明示的に指定しない場合は、シーン内のカメラを自動で使う
             TargetObjectSelector::ShowSelector(TranslationLabel("component.particlesystembase.billboard_target"), GetOwnerSceneContext(), billboardTargetObjectID_, true, false);
             if (!billboardTargetObjectID_.IsValid()) {
-                ImGui::TextDisabled("%s", TranslationC("component.particlesystembase.desc_6"));
+                ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.particlesystembase.desc_6"));
             }
 
             const char *kModeLabels[] = { TranslationC("component.common.mode.synctargetrotation"), TranslationC("component.common.mode.lookattarget") };
@@ -1028,7 +1028,7 @@ protected:
                 billboardRotationMode_ = static_cast<TargetLookAt::RotationMode>(mode);
             }
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%s", TranslationC("component.particlesystembase.desc_7"));
+                ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.particlesystembase.desc_7"));
             }
             ImGui::Unindent();
         }

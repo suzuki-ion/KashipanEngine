@@ -188,7 +188,7 @@ protected:
         }
 
         if (current && current->GetShape() != ICollider::Shape::Box2D) {
-            ImGui::TextDisabled("Current version supports axis-aligned Box2DCollider only.");
+            ImGuiCustom::TextDisabledWrapped("Current version supports axis-aligned Box2DCollider only.");
         }
     }
 #endif

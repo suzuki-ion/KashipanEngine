@@ -1436,7 +1436,7 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
             return;
         }
         const bool isOpen = ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_DefaultOpen);
-        if (!attrs.tooltip.empty() && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", attrs.tooltip.c_str());
+        if (!attrs.tooltip.empty() && ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", attrs.tooltip.c_str());
         if (!isOpen) return;
 
         SerializedField &element = field.children[0];
@@ -1496,7 +1496,7 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
             return;
         }
         const bool isOpen = ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_DefaultOpen);
-        if (!attrs.tooltip.empty() && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", attrs.tooltip.c_str());
+        if (!attrs.tooltip.empty() && ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", attrs.tooltip.c_str());
         if (isOpen) {
             for (auto &child : field.children) {
                 ImGui::PushID(child.name.c_str());
@@ -1614,7 +1614,7 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
         ImGui::Text(TranslationC("component.scriptcomponent.s_unsupported_type"), label);
     }
 
-    if (!attrs.tooltip.empty() && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", attrs.tooltip.c_str());
+    if (!attrs.tooltip.empty() && ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", attrs.tooltip.c_str());
 }
 #endif
 

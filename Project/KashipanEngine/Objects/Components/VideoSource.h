@@ -182,7 +182,7 @@ protected:
         ImGui::Checkbox(TranslationLabel("component.videosource.play_on_awake"), &playOnAwake_);
         ImGui::Checkbox(TranslationLabel("component.videosource.route_audio_to_audiosource"), &routeAudioToAudioSource_);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.videosource.route_audio_to_audiosource_desc"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.videosource.route_audio_to_audiosource_desc"));
         }
 
         ImGui::Separator();

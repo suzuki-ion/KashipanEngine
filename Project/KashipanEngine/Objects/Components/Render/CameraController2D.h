@@ -216,7 +216,7 @@ protected:
             followTargets_.push_back(FollowTarget{});
         }
         if (followTargets_.empty()) {
-            ImGui::TextDisabled("%s", TranslationC("component.cameracontroller2d.no_target_following_own_transform"));
+            ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.cameracontroller2d.no_target_following_own_transform"));
         }
 
         ImGui::Separator();

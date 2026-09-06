@@ -354,22 +354,22 @@ protected:
 
         ImGui::DragInt(TranslationLabel("component.common.render_priority"), &renderPriority_);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.common.desc_render_priority"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_render_priority"));
         }
         ImGui::Checkbox(TranslationLabel("component.common.allow_instancing"), &allowInstancing_);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.common.desc_allow_instancing"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_allow_instancing"));
         }
         ImGui::Checkbox(TranslationLabel("component.bitmaptextrenderer.pixel_snapping"), &pixelSnapping_);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.bitmaptextrenderer.pixel_snapping_desc"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.bitmaptextrenderer.pixel_snapping_desc"));
         }
         if (pixelSnapping_) {
             if (ImGui::DragFloat(TranslationLabel("component.bitmaptextrenderer.pixel_snap_outset"), &pixelSnapOutsetPixels_, 0.01f, 0.0f, 1.0f)) {
                 pixelSnapOutsetPixels_ = std::max(0.0f, pixelSnapOutsetPixels_);
             }
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%s", TranslationC("component.bitmaptextrenderer.pixel_snap_outset_desc"));
+                ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.bitmaptextrenderer.pixel_snap_outset_desc"));
             }
         }
 

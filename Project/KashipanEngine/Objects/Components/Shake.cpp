@@ -222,7 +222,7 @@ void Shake::ShowImGui() {
         ImGui::TextColored(ImVec4(0.4f, 0.9f, 0.4f, 1.0f), "%s", TranslationC("component.shake.playing"));
         if (ImGui::Button(TranslationLabel("component.shake.stop"))) Stop();
     } else {
-        ImGui::TextDisabled("%s", TranslationC("component.shake.stopped"));
+        ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.shake.stopped"));
         ImGui::SameLine();
         if (ImGui::Button(TranslationLabel("component.shake.play"))) Play();
     }
@@ -236,7 +236,7 @@ void Shake::ShowImGui() {
         processTiming_ = static_cast<ProcessTiming>(timingIndex);
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", "Immediate: 自身のUpdate内でその場処理 / Deferred: 全オブジェクト更新後にまとめて処理（他スクリプトと競合しない）");
+        ImGuiCustom::SetTooltipWrapped("%s", "Immediate: 自身のUpdate内でその場処理 / Deferred: 全オブジェクト更新後にまとめて処理（他スクリプトと競合しない）");
     }
 
     const char *kApplyLabels[] = { TranslationC("component.shake.applytarget.transform"), TranslationC("component.shake.applytarget.renderonly") };
@@ -245,7 +245,7 @@ void Shake::ShowImGui() {
         applyTarget_ = static_cast<ApplyTarget>(applyIndex);
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", "To Transform: Transform自体を書き換える（終了後は元に戻る） / Render Only: 描画にのみ適用しTransformは変更しない");
+        ImGuiCustom::SetTooltipWrapped("%s", "To Transform: Transform自体を書き換える（終了後は元に戻る） / Render Only: 描画にのみ適用しTransformは変更しない");
     }
 
     ImGui::Separator();

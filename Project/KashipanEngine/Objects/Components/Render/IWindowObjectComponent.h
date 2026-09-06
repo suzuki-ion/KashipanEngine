@@ -161,7 +161,7 @@ protected:
     void ShowInterceptedMessagesImGui() {
         if (!ImGui::TreeNode(TranslationLabel("component.iwindowobjectcomponent.intercepted_messages"))) return;
         ImGui::PushTextWrapPos(0.0f);
-        ImGui::TextDisabled("%s", TranslationC("component.iwindowobjectcomponent.onwindowmessage"));
+        ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.iwindowobjectcomponent.onwindowmessage"));
         ImGui::PopTextWrapPos();
 
         bool interceptClose = IsMessageIntercepted(WM_CLOSE);
@@ -169,7 +169,7 @@ protected:
             SetMessageIntercepted(WM_CLOSE, interceptClose);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.iwindowobjectcomponent.x_alt_f4_closewindow"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.iwindowobjectcomponent.x_alt_f4_closewindow"));
         }
 
         std::uint32_t removeTarget = 0;

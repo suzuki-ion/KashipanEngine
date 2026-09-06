@@ -40,7 +40,7 @@ void SceneVariableApplier::Update() {
 void SceneVariableApplier::ShowImGui() {
     ImGui::InputText(TranslationLabel("component.scenevariableapplier.variable_name"), &variableName_);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", "読み取るシーン変数名（Scene Variablesウィンドウで追加済みのもの）");
+        ImGuiCustom::SetTooltipWrapped("%s", "読み取るシーン変数名（Scene Variablesウィンドウで追加済みのもの）");
     }
 
     const char *kScopeLabels[] = { TranslationC("component.scenevariableapplier.scope.scene"), TranslationC("component.scenevariableapplier.scope.global") };
@@ -49,7 +49,7 @@ void SceneVariableApplier::ShowImGui() {
         variableScope_ = static_cast<VariableScope>(scopeIndex);
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", "Scene: 現在のシーン内のシーン変数 / Global: シーンをまたいで保持されるグローバルシーン変数");
+        ImGuiCustom::SetTooltipWrapped("%s", "Scene: 現在のシーン内のシーン変数 / Global: シーンをまたいで保持されるグローバルシーン変数");
     }
 
     auto *sceneContext = GetOwnerSceneContext();
@@ -65,7 +65,7 @@ void SceneVariableApplier::ShowImGui() {
     if (wasApplied_) {
         ImGui::TextColored(ImVec4(0.4f, 0.9f, 0.4f, 1.0f), "%s", TranslationC("component.scenevariableapplier.applied"));
     } else {
-        ImGui::TextDisabled("%s", TranslationC("component.scenevariableapplier.not_applied"));
+        ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.scenevariableapplier.not_applied"));
     }
 
     ImGui::Separator();

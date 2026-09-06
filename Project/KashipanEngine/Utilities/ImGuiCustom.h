@@ -56,6 +56,36 @@ inline std::string ToString(const T &val) {
 }
 
 // ==========================================
+// 1-1b. 折り返し付きテキスト／ツールチップ（説明文の見切れ対策）
+// ==========================================
+
+/// @brief ImGui::TextDisabledの折り返し版。インスペクターの説明文が長い場合でも、ウィンドウ幅で
+///        自動改行されるため右端で見切れない（短い文字列では通常のTextDisabledと見た目は変わらない）
+inline void TextDisabledWrapped(const char *fmt, ...) IM_FMTARGS(1);
+inline void TextDisabledWrapped(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    ImGui::TextWrappedV(fmt, args);
+    ImGui::PopStyleColor();
+    va_end(args);
+}
+
+/// @brief ImGui::SetTooltipの折り返し版。長い説明文でも一定幅（フォントサイズの35倍。ImGui標準の
+///        目安値）で自動改行される（短い文字列では通常のSetTooltipと見た目は変わらない）
+inline void SetTooltipWrapped(const char *fmt, ...) IM_FMTARGS(1);
+inline void SetTooltipWrapped(const char *fmt, ...) {
+    if (!ImGui::BeginTooltip()) return;
+    ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+    va_list args;
+    va_start(args, fmt);
+    ImGui::TextV(fmt, args);
+    va_end(args);
+    ImGui::PopTextWrapPos();
+    ImGui::EndTooltip();
+}
+
+// ==========================================
 // 1-2. 文字列の選択コンボ
 // ==========================================
 
@@ -134,7 +164,7 @@ inline bool TextureThumbnailPicker(const char *label, std::string &assetPath,
         }
     }
     if (ImGui::IsItemHovered() && !assetPath.empty()) {
-        ImGui::SetTooltip("%s", assetPath.c_str());
+        ImGuiCustom::SetTooltipWrapped("%s", assetPath.c_str());
     }
     if (std::string droppedPath; KashipanEngine::AcceptAssetDragDropTarget(KashipanEngine::kTextureAssetDragDropType, droppedPath)) {
         if (!dropFilter || dropFilter(droppedPath)) {
@@ -191,7 +221,7 @@ inline bool TextureThumbnailPicker(const char *label, std::string &assetPath,
                 clicked = ImGui::Button("?", ImVec2(kGridThumbnailSize, kGridThumbnailSize));
             }
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%s\n%ux%u", entry.assetPath.c_str(), entry.width, entry.height);
+                ImGuiCustom::SetTooltipWrapped("%s\n%ux%u", entry.assetPath.c_str(), entry.width, entry.height);
             }
             if (clicked) {
                 assetPath = entry.assetPath;
@@ -528,7 +558,7 @@ bool EditValue(const char *label, std::unordered_map<K, V> &map, const UiOptions
         ImGui::SetNextItemWidth(100.0f);
         EditValue("##new_key", new_key_buffer);
         ImGui::SameLine();
-        ImGui::TextDisabled("%s", KashipanEngine::TranslationC("editor.imguicustom.new_key"));
+        ImGuiCustom::TextDisabledWrapped("%s", KashipanEngine::TranslationC("editor.imguicustom.new_key"));
 
         ImGui::TreePop();
     }

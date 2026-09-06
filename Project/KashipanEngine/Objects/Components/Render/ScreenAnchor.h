@@ -83,7 +83,7 @@ protected:
         TargetObjectSelector::ShowSelector(TranslationLabel("component.screenanchor.camera"), GetOwnerSceneContext(), cameraObjectID_, true, false);
         ImGui::DragFloat2(TranslationLabel("component.screenanchor.anchor_point"), &anchorPoint_.x, 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat2(TranslationLabel("component.screenanchor.offset"), &offset_.x, 1.0f);
-        ImGui::TextDisabled("%s", TranslationC("component.screenanchor.desc"));
+        ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.screenanchor.desc"));
     }
 #endif
 

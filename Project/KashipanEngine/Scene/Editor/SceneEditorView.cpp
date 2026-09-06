@@ -17,6 +17,7 @@
 #include "Scene/Editor/PrefabUtility.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 #include "Scene/Editor/SceneObjectHierarchy.h"
+#include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Scene/Components/SceneObjectCollider.h"
@@ -530,7 +531,7 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
             if (ImGui::Checkbox(TranslationLabel("editor.sceneview.gizmo.snap"), &gizmoSnapEnabled_)) {
                 EditorSettings::SetBool("sceneView.gizmoSnapEnabled", gizmoSnapEnabled_);
             }
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.gizmo.snap.tooltip"));
+            if (ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", TranslationC("editor.sceneview.gizmo.snap.tooltip"));
             ImGui::SetNextItemWidth(80.0f);
             if (ImGui::DragFloat(TranslationLabel("editor.sceneview.gizmo.snap.translate"), &gizmoSnapTranslate_, 0.01f, 0.001f, 1000.0f)) {
                 gizmoSnapTranslate_ = std::max(gizmoSnapTranslate_, 0.001f);
@@ -556,12 +557,12 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
             if (ImGui::RadioButton(TranslationLabel("editor.sceneview.camera.orbit"), !flyMode_)) {
                 flyMode_ = false;
             }
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.camera.orbit.tooltip"));
+            if (ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", TranslationC("editor.sceneview.camera.orbit.tooltip"));
             ImGui::SameLine();
             if (ImGui::RadioButton(TranslationLabel("editor.sceneview.camera.fly"), flyMode_)) {
                 flyMode_ = true;
             }
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.camera.fly.tooltip"));
+            if (ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", TranslationC("editor.sceneview.camera.fly.tooltip"));
 
             // シーンビューの表示モード切り替え（2D/3D併用・3Dのみ・2Dのみ）
             if (ImGui::RadioButton(TranslationLabel("editor.sceneview.display.combined"), displayMode_ == SceneRenderer::EditorDisplayMode::Combined)) {
@@ -578,7 +579,7 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
                 displayMode_ = SceneRenderer::EditorDisplayMode::TwoDOnly;
                 EditorSettings::SetString("sceneView.displayMode", "TwoDOnly");
             }
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.display.tooltip"));
+            if (ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", TranslationC("editor.sceneview.display.tooltip"));
             ImGui::EndMenu();
         }
 

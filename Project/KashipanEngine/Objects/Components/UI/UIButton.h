@@ -11,6 +11,7 @@
 #include "Math/Matrix4x4.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
+#include "Objects/Components/Render/BitmapTextRenderer.h"
 #include "Objects/Components/Render/Camera2D.h"
 #include "Objects/Components/Render/IWindowObjectComponent.h"
 #include "Objects/Components/Render/NormalWindowObject.h"
@@ -31,11 +32,13 @@ namespace KashipanEngine {
 
 /// @brief 画面上の矩形に対するマウスのホバー・押下・クリック判定を行うUI用コンポーネント
 /// @details 見た目の描画は一切行わない、いわば「透明な当たり判定レイヤー」。
-///          同オブジェクトにSpriteRendererがあればそのスプライトの矩形を、無くTextRendererが
-///          あればそのテキストの外接矩形（表示中の文字列・フォントサイズに応じて動的に変わる）を
-///          そのまま当たり判定に使う。両方無い場合は常に判定falseを返す（SpriteRendererを優先）。
-///          描画先ウィンドウは同オブジェクトのSpriteRenderer/TextRenderer側（SetTargetObject）で
-///          指定されたものをそのまま使うため、このコンポーネント自体はウィンドウの参照を持たない。
+///          同オブジェクトにSpriteRendererがあればそのスプライトの矩形を、無くTextRenderer/
+///          BitmapTextRendererがあればそのテキストの外接矩形（表示中の文字列・フォントサイズに
+///          応じて動的に変わる）をそのまま当たり判定に使う。いずれも無い場合は常に判定falseを
+///          返す（優先順位はSpriteRenderer→TextRenderer→BitmapTextRenderer）。
+///          描画先ウィンドウは同オブジェクトのSpriteRenderer/TextRenderer/BitmapTextRenderer側
+///          （SetTargetObject）で指定されたものをそのまま使うため、このコンポーネント自体は
+///          ウィンドウの参照を持たない。
 ///          マウス座標変換の基準にするCamera2Dのみ、SetDisplayCameraObjectで別途指定する
 ///          （ScreenBufferViewportのマウス座標変換と同じ考え方・同じ変換パイプライン）。
 class UIButton final : public IObjectComponent {
@@ -79,7 +82,7 @@ public:
     /// @brief このフレームでクリックが確定した瞬間かどうか（ボタン上で押して、ボタン上で離した時のみtrue）
     bool IsClicked() const noexcept { return isClicked_; }
 
-    /// @brief 直近のUpdate()時点での、対象矩形（SpriteRenderer/TextRenderer）基準のローカルUV座標を取得する
+    /// @brief 直近のUpdate()時点での、対象矩形（SpriteRenderer/TextRenderer/BitmapTextRenderer）基準のローカルUV座標を取得する
     /// @details (0,0)=矩形の左下 ～ (1,1)=矩形の右上。矩形の外（負値や1超過）の値もそのまま返るため、
     ///          IsPressed()中にカーソルが矩形の外へ出た場合でも位置を追い続けられる（スライダー等の
     ///          ドラッグ操作の実装に使える）。ウィンドウ/表示カメラ/対象コンポーネントのいずれかが
@@ -122,7 +125,7 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         TargetObjectSelector::ShowSelector(TranslationLabel("component.uibutton.display_camera"), GetOwnerSceneContext(), displayCameraObjectID_, true, false);
-        ImGui::TextDisabled("%s", TranslationC("component.uibutton.desc"));
+        ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.uibutton.desc"));
         ImGui::Text("Hovered: %s / Pressed: %s / Clicked: %s",
             isHovered_ ? "true" : "false", isPressed_ ? "true" : "false", isClicked_ ? "true" : "false");
         if (hasValidLocalUV_) {
@@ -179,13 +182,16 @@ private:
         return obj->GetComponent<Camera2D>();
     }
 
-    /// @brief TextRendererの各文字インスタンス（ワールド行列）から、テキスト全体の外接矩形
-    ///        （ワールド空間AABB）を求める
+    /// @brief TextRenderer/BitmapTextRendererの各文字インスタンス（ワールド行列）から、テキスト全体の
+    ///        外接矩形（ワールド空間AABB）を求める
     /// @details 各文字は単位クアッド（-0.5～0.5）をworldMatrixで変換したもの。回転・傾斜（イタリック）
     ///          や文字ごとのオフセット/回転オーバーライドが付いていても、4隅を変換して外接させるため
-    ///          破綻しない（回転が大きい場合は矩形がやや大きめになる程度）
-    static bool ComputeTextWorldBounds(const TextRenderer *textRenderer, Vector3 &outMin, Vector3 &outMax) {
-        const auto instances = textRenderer->GetRenderInstances();
+    ///          破綻しない（回転が大きい場合は矩形がやや大きめになる程度）。TextRenderer/
+    ///          BitmapTextRendererいずれもGetRenderInstances()がworldMatrixを持つ要素の配列を
+    ///          返すため、テンプレートで共通化している
+    template <typename TextLikeRenderer>
+    static bool ComputeTextWorldBounds(const TextLikeRenderer *renderer, Vector3 &outMin, Vector3 &outMax) {
+        const auto instances = renderer->GetRenderInstances();
         if (instances.empty()) return false;
 
         const Vector3 corners[4] = {
@@ -211,24 +217,28 @@ private:
         return true;
     }
 
-    /// @brief 現在のマウス座標を、ボタンの矩形（同オブジェクトのSpriteRenderer/TextRendererの表示範囲）
-    ///        基準のローカルUV座標（(0,0)=左下～(1,1)=右上、範囲外もありうる）へ変換する
+    /// @brief 現在のマウス座標を、ボタンの矩形（同オブジェクトのSpriteRenderer/TextRenderer/
+    ///        BitmapTextRendererの表示範囲）基準のローカルUV座標（(0,0)=左下～(1,1)=右上、範囲外も
+    ///        ありうる）へ変換する
     /// @details ScreenBufferViewport::TryGetOffscreenMousePositionと同じ変換パイプライン
     ///          （Windowクライアント座標 → NDC → 表示カメラの逆ビュー射影でワールド座標）でマウスの
     ///          ワールド座標を求めるところまでは共通。そこから先のローカルUVへの変換方法だけ対象
     ///          コンポーネントで分かれる： SpriteRendererはスプライトの逆ワールド行列でローカル座標へ
-    ///          変換する（矩形サイズはTransformのスケールに追従）。TextRendererは表示中の文字列から
-    ///          都度測った外接矩形（ワールド空間）を基準にする（矩形サイズは文字列・フォントサイズに
-    ///          追従して動的に変わる）
+    ///          変換する（矩形サイズはTransformのスケールに追従）。TextRenderer/BitmapTextRendererは
+    ///          表示中の文字列から都度測った外接矩形（ワールド空間）を基準にする（矩形サイズは
+    ///          文字列・フォントサイズに追従して動的に変わる）
     bool ComputeLocalUV(Vector2 &outUV) const {
         auto *objectContext = GetOwnerObjectContext();
         if (!objectContext) return false;
 
         auto *spriteRenderer = objectContext->GetComponent<SpriteRenderer>();
         auto *textRenderer = spriteRenderer ? nullptr : objectContext->GetComponent<TextRenderer>();
-        if (!spriteRenderer && !textRenderer) return false;
+        auto *bitmapTextRenderer = (spriteRenderer || textRenderer) ? nullptr : objectContext->GetComponent<BitmapTextRenderer>();
+        if (!spriteRenderer && !textRenderer && !bitmapTextRenderer) return false;
 
-        EmptyObject *targetObj = spriteRenderer ? spriteRenderer->GetTargetObject() : textRenderer->GetTargetObject();
+        EmptyObject *targetObj = spriteRenderer ? spriteRenderer->GetTargetObject()
+            : textRenderer ? textRenderer->GetTargetObject()
+            : bitmapTextRenderer->GetTargetObject();
         auto *windowComponent = ResolveWindow(targetObj);
         Window *window = windowComponent ? windowComponent->GetWindow() : nullptr;
         if (!window || !Window::IsExist(window)) return false;
@@ -271,7 +281,10 @@ private:
         }
 
         Vector3 aabbMin, aabbMax;
-        if (!ComputeTextWorldBounds(textRenderer, aabbMin, aabbMax)) return false;
+        const bool gotBounds = textRenderer
+            ? ComputeTextWorldBounds(textRenderer, aabbMin, aabbMax)
+            : ComputeTextWorldBounds(bitmapTextRenderer, aabbMin, aabbMax);
+        if (!gotBounds) return false;
         const float width = aabbMax.x - aabbMin.x;
         const float height = aabbMax.y - aabbMin.y;
         if (width <= 0.0f || height <= 0.0f) return false;

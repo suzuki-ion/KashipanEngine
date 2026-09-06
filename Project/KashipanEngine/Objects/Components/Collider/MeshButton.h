@@ -161,10 +161,10 @@ protected:
     void ShowImGui() override {
         TargetObjectSelector::ShowSelector(TranslationLabel("component.meshbutton.display_camera"), GetOwnerSceneContext(), displayCameraObjectID_, true, false);
         ImGui::Checkbox(TranslationLabel("component.meshbutton.precise_mesh_test"), &preciseMeshTest_);
-        ImGui::TextDisabled("%s", TranslationC("component.meshbutton.precise_mesh_test_desc"));
+        ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.meshbutton.precise_mesh_test_desc"));
         ImGui::DragFloat3(TranslationLabel("component.meshbutton.drag_axis"), &dragAxis_.x, 0.01f);
-        ImGui::TextDisabled("%s", TranslationC("component.meshbutton.drag_axis_desc"));
-        ImGui::TextDisabled("%s", TranslationC("component.meshbutton.desc"));
+        ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.meshbutton.drag_axis_desc"));
+        ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.meshbutton.desc"));
         ImGui::Text("Hovered: %s / Pressed: %s / Clicked: %s",
             isHovered_ ? "true" : "false", isPressed_ ? "true" : "false", isClicked_ ? "true" : "false");
         if (hasValidDragOffset_) {

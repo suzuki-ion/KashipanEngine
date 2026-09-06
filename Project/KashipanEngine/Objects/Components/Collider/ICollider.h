@@ -141,7 +141,7 @@ protected:
         ImGui::Checkbox(TranslationLabel("component.icollider.istrigger"), &isTrigger_);
         ImGui::Checkbox(TranslationLabel("component.icollider.continuous_detection"), &continuousDetection_);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", "高速移動時のすり抜けでも衝突イベントを発生させる（連続衝突判定）");
+            ImGuiCustom::SetTooltipWrapped("%s", "高速移動時のすり抜けでも衝突イベントを発生させる（連続衝突判定）");
         }
         ImGui::Separator();
         ImGui::TextUnformatted(TranslationC("component.icollider.sync_with_transform"));
@@ -157,7 +157,7 @@ protected:
             ImGui::Checkbox(TranslationLabel("component.icollider.pos_z"), &syncPosition_[2]);
             ImGui::Checkbox(TranslationLabel("component.icollider.rotation"), &syncRotation_);
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%s", "回転は軸ごとの部分同期をサポートしない（数学的に反転・不連続が避けられないため）");
+                ImGuiCustom::SetTooltipWrapped("%s", "回転は軸ごとの部分同期をサポートしない（数学的に反転・不連続が避けられないため）");
             }
             ImGui::Checkbox(TranslationLabel("component.icollider.scale_x"), &syncScale_[0]); ImGui::SameLine();
             ImGui::Checkbox(TranslationLabel("component.icollider.scale_y"), &syncScale_[1]); ImGui::SameLine();

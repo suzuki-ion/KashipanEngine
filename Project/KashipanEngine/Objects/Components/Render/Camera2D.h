@@ -61,11 +61,11 @@ protected:
         ImGui::DragFloat(TranslationLabel("component.camera2d.far"), &farClip_, 1.0f);
         ImGui::Checkbox(TranslationLabel("component.camera2d.auto_sync_size"), &autoSyncSize_);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.camera2d.auto_sync_size_desc"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.camera2d.auto_sync_size_desc"));
         }
         ImGui::Checkbox(TranslationLabel("component.camera2d.pixel_snapping"), &pixelSnapping_);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.camera2d.pixel_snapping_desc"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.camera2d.pixel_snapping_desc"));
         }
     }
 #endif

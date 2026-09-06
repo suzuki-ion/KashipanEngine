@@ -236,20 +236,20 @@ protected:
             fitMode_ = static_cast<FitMode>(fitModeIndex);
         }
 
-        ImGui::TextDisabled("%s", TranslationC("component.screenbufferviewport.desc_delegate"));
+        ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.screenbufferviewport.desc_delegate"));
 
         Vector2 pos{};
         if (TryGetOffscreenMousePosition(pos)) {
             ImGui::Text("Mouse: (%.1f, %.1f)", pos.x, pos.y);
         } else {
-            ImGui::TextDisabled("Mouse: -");
+            ImGuiCustom::TextDisabledWrapped("Mouse: -");
         }
 
         if (fitMode_ != FitMode::None) {
             if (auto *fitTarget = ResolveRenderTarget()) {
                 ImGui::Text("Fit Target: %ux%u [%s]", fitTarget->GetRenderTargetWidth(), fitTarget->GetRenderTargetHeight(), fitTarget->GetRenderTargetName().c_str());
             } else {
-                ImGui::TextDisabled("Fit Target: - (内部SpriteRendererのTargetが未設定か利用不可)");
+                ImGuiCustom::TextDisabledWrapped("Fit Target: - (内部SpriteRendererのTargetが未設定か利用不可)");
             }
 
             auto *source = ResolveSource();
@@ -257,7 +257,7 @@ protected:
             if (buffer && ScreenBuffer::IsExist(buffer)) {
                 ImGui::Text("Fit Source: %ux%u", buffer->GetWidth(), buffer->GetHeight());
             } else {
-                ImGui::TextDisabled("Fit Source: - (Sourceが未設定か利用不可)");
+                ImGuiCustom::TextDisabledWrapped("Fit Source: - (Sourceが未設定か利用不可)");
             }
 
             auto *objectContext = GetOwnerObjectContext();
@@ -266,7 +266,7 @@ protected:
                 const Vector3 &scale = transform->GetScale();
                 ImGui::Text("Transform Scale: (%.1f, %.1f, %.1f)", scale.x, scale.y, scale.z);
             } else {
-                ImGui::TextDisabled("Transform Scale: - (Transformが見つかりません)");
+                ImGuiCustom::TextDisabledWrapped("Transform Scale: - (Transformが見つかりません)");
             }
         }
     }

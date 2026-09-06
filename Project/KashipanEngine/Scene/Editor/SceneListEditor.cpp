@@ -10,6 +10,7 @@
 #include "Scene/SceneFileIO.h"
 #include "Scene/SceneManager.h"
 #include "Utilities/FileIO.h"
+#include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
@@ -23,7 +24,7 @@ void SceneListEditor::ShowImGui() {
 
     auto *sceneManager = context_ ? context_->GetSceneManager() : nullptr;
     if (!sceneManager) {
-        ImGui::TextDisabled("%s", TranslationC("editor.scenelist.nomanager"));
+        ImGuiCustom::TextDisabledWrapped("%s", TranslationC("editor.scenelist.nomanager"));
         ImGui::End();
         return;
     }

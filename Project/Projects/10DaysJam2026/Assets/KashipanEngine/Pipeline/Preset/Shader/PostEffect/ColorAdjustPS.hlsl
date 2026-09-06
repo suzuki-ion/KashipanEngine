@@ -21,6 +21,11 @@ float3 ApplySaturation(float3 color, float saturation) {
 	return lerp(float3(lum, lum, lum), color, saturation);
 }
 
+float3 ApplyPosterize(float3 color, float levels) {
+	float steps = max(levels - 1.0f, 1.0f);
+	return round(color * steps) / steps;
+}
+
 float4 main(VSOutput input) : SV_Target0 {
 	float2 uv = saturate(input.uv);
 	float4 baseColor = gTexture.Sample(gSampler, uv);
@@ -30,6 +35,11 @@ float4 main(VSOutput input) : SV_Target0 {
 	color = ApplySaturation(color, gSaturation);
 	color = ApplyTemperature(color, gTemperature);
 	color += gColorBalance;
+	color = saturate(color);
 
-	return float4(saturate(color), baseColor.a);
+	if (gPosterizeLevels >= 1.5f) {
+		color = ApplyPosterize(color, gPosterizeLevels);
+	}
+
+	return float4(color, baseColor.a);
 }

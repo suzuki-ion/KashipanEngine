@@ -873,6 +873,7 @@
 		"component.coloradjusteffect.brightness": "Brightness",
 		"component.coloradjusteffect.colorbalance": "ColorBalance",
 		"component.coloradjusteffect.contrast": "Contrast",
+		"component.coloradjusteffect.posterize_levels": "Posterize Levels",
 		"component.coloradjusteffect.saturation": "Saturation",
 		"component.coloradjusteffect.temperature": "Temperature",
 

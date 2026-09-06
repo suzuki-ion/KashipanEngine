@@ -873,6 +873,7 @@
 		"component.coloradjusteffect.brightness": "밝기",
 		"component.coloradjusteffect.colorbalance": "컬러 밸런스",
 		"component.coloradjusteffect.contrast": "대비",
+		"component.coloradjusteffect.posterize_levels": "포스터화 레벨",
 		"component.coloradjusteffect.saturation": "채도",
 		"component.coloradjusteffect.temperature": "색온도",
 

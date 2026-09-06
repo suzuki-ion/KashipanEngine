@@ -14,6 +14,7 @@ public:
         float saturation = 1.0f;
         float temperature = 0.0f;
         float colorBalance[3] = { 0.0f, 0.0f, 0.0f };
+        int posterizeLevels = 0; // 0で無効、2以上でチャンネルごとの色数をその段数まで機械的に削減する
     };
 
     ColorAdjustEffect() : IPostProcessComponent("ColorAdjustEffect", GetComponentTypeID<ColorAdjustEffect>()) {
@@ -24,6 +25,7 @@ public:
         AddMemberVariable("params_.colorBalance[0]", &params_.colorBalance[0]);
         AddMemberVariable("params_.colorBalance[1]", &params_.colorBalance[1]);
         AddMemberVariable("params_.colorBalance[2]", &params_.colorBalance[2]);
+        ADD_MEMBER_VARIABLE(params_.posterizeLevels);
     }
     ~ColorAdjustEffect() override = default;
 
@@ -45,6 +47,7 @@ protected:
         ImGui::DragFloat(TranslationLabel("component.coloradjusteffect.saturation"), &params_.saturation, 0.01f, 0.0f, 4.0f, "%.3f");
         ImGui::DragFloat(TranslationLabel("component.coloradjusteffect.temperature"), &params_.temperature, 0.01f, -2.0f, 2.0f, "%.3f");
         ImGui::DragFloat3(TranslationLabel("component.coloradjusteffect.colorbalance"), params_.colorBalance, 0.01f, -1.0f, 1.0f, "%.3f");
+        ImGui::DragInt(TranslationLabel("component.coloradjusteffect.posterize_levels"), &params_.posterizeLevels, 1.0f, 0, 64);
     }
 #endif
 
@@ -55,6 +58,7 @@ protected:
         json["saturation"] = params_.saturation;
         json["temperature"] = params_.temperature;
         json["colorBalance"] = { params_.colorBalance[0], params_.colorBalance[1], params_.colorBalance[2] };
+        json["posterizeLevels"] = params_.posterizeLevels;
         return json;
     }
 
@@ -67,6 +71,7 @@ protected:
         if (json.contains("colorBalance") && json["colorBalance"].is_array() && json["colorBalance"].size() >= 3) {
             for (int i = 0; i < 3; ++i) params_.colorBalance[i] = json["colorBalance"][i].get<float>();
         }
+        params_.posterizeLevels = json.value("posterizeLevels", 0);
         return true;
     }
 
@@ -78,6 +83,7 @@ protected:
         cbData_.colorBalance[0] = std::clamp(params_.colorBalance[0], -1.0f, 1.0f);
         cbData_.colorBalance[1] = std::clamp(params_.colorBalance[1], -1.0f, 1.0f);
         cbData_.colorBalance[2] = std::clamp(params_.colorBalance[2], -1.0f, 1.0f);
+        cbData_.posterizeLevels = static_cast<float>(std::clamp(params_.posterizeLevels, 0, 256));
         PassInfo pass;
         pass.pipelineName = "PostEffect.ColorAdjust";
         pass.constantBufferRequirements = {
@@ -95,6 +101,8 @@ private:
         float temperature = 0.0f;
         float colorBalance[3]{};
         float pad = 0.0f;
+        float posterizeLevels = 0.0f;
+        float pad2[3]{};
     };
 
     Params params_{};

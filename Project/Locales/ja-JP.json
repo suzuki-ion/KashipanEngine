@@ -873,6 +873,7 @@
 		"component.coloradjusteffect.brightness": "明るさ",
 		"component.coloradjusteffect.colorbalance": "カラーバランス",
 		"component.coloradjusteffect.contrast": "コントラスト",
+		"component.coloradjusteffect.posterize_levels": "減色レベル",
 		"component.coloradjusteffect.saturation": "彩度",
 		"component.coloradjusteffect.temperature": "色温度",
 

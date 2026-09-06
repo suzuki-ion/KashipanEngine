@@ -2754,7 +2754,15 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             if (!ePtr) { ThrowDestroyedObjectException(); return; }
             ColorAdjustEffect &e = *ePtr;
             auto p = e.GetParams(); p.colorBalance[0] = v.x; p.colorBalance[1] = v.y; p.colorBalance[2] = v.z; e.SetParams(p);
-        });
+        })
+        .method("int GetPosterizeLevels() const", [](const ScriptComponentHandle<ColorAdjustEffect> &eHandle) {
+            ColorAdjustEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const ColorAdjustEffect &e = *ePtr; return e.GetParams().posterizeLevels; })
+        .method("void SetPosterizeLevels(int)", [](ScriptComponentHandle<ColorAdjustEffect> &eHandle, int v) {
+            ColorAdjustEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            ColorAdjustEffect &e = *ePtr; auto p = e.GetParams(); p.posterizeLevels = v; e.SetParams(p); });
 
     RegisterComponentType<DepthOfFieldEffect>(engine, "DepthOfFieldEffect")
         .method("float GetFocusDistance() const", [](const ScriptComponentHandle<DepthOfFieldEffect> &eHandle) {

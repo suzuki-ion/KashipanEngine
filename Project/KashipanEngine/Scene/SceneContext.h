@@ -80,6 +80,15 @@ public:
     /// @return シーン変数のマップ
     const std::unordered_map<std::string, MyAny> &GetGlobalSceneVariables() const { return owner_->GetGlobalSceneVariables(); }
 
+    /// @brief グローバルシーン変数をファイルへ保存する（ゲームのセーブデータ用途を想定）
+    /// @param filePath 保存先のファイルパス（空の場合は既定のパスを使用する）
+    /// @return 保存に成功した場合は true
+    bool SaveGlobalSceneVariables(const std::string &filePath = "") const { return owner_->SaveGlobalSceneVariables(filePath); }
+    /// @brief グローバルシーン変数をファイルから読み込む（ゲームのセーブデータ用途を想定）
+    /// @param filePath 読み込むファイルのパス（空の場合は既定のパスを使用する）
+    /// @return 読み込みに成功した場合は true
+    bool LoadGlobalSceneVariables(const std::string &filePath = "") { return owner_->LoadGlobalSceneVariables(filePath); }
+
     //==================================================
     // シーン内オブジェクト管理
     //==================================================

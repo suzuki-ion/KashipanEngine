@@ -657,4 +657,14 @@ const std::unordered_map<std::string, MyAny> &Scene::GetGlobalSceneVariablesInte
     return sceneManager_->GetGlobalSceneVariables();
 }
 
+bool Scene::SaveGlobalSceneVariables(const std::string &filePath) const {
+    if (!sceneManager_) return false;
+    return filePath.empty() ? sceneManager_->SaveGlobalSceneVariables() : sceneManager_->SaveGlobalSceneVariables(filePath);
+}
+
+bool Scene::LoadGlobalSceneVariables(const std::string &filePath) {
+    if (!sceneManager_) return false;
+    return filePath.empty() ? sceneManager_->LoadGlobalSceneVariables() : sceneManager_->LoadGlobalSceneVariables(filePath);
+}
+
 } // namespace KashipanEngine

@@ -3583,6 +3583,9 @@ void RegisterObjectTypes(asIScriptEngine *engine) {
             return scene.GetGlobalSceneVariable(key) != nullptr;
         })
         .method("bool RemoveGlobalVariable(const string &in)", &SceneContext::RemoveGlobalSceneVariable)
+        // グローバルシーン変数の永続化（ゲームのセーブ/ロード用途。filePathを省略すると既定のパスを使用する）
+        .method("bool SaveGlobalVariables(const string &in filePath = \"\") const", &SceneContext::SaveGlobalSceneVariables)
+        .method("bool LoadGlobalVariables(const string &in filePath = \"\")", &SceneContext::LoadGlobalSceneVariables)
         // ゲームループの終了要求（エディター実行時は再生停止として扱われる）
         .method("void RequestExitGameLoop()", &SceneContext::RequestExitGameLoop);
 

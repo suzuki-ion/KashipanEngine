@@ -3,6 +3,10 @@
         {
             "filePath": "Assets/Scenes/DefaultScene.scene",
             "name": "DefaultScene"
+        },
+        {
+            "filePath": "Assets/Scenes/TitleScene.scene",
+            "name": "TitleScene"
         }
     ],
     "startupScene": "DefaultScene"

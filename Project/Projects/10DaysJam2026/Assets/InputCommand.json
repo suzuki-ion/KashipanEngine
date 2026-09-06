@@ -98,6 +98,34 @@
             "threshold": -0.10000000149011612
         }
     ],
+    "SelectDown": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Down",
+            "state": "Trigger"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "S",
+            "state": "Trigger"
+        }
+    ],
+    "SelectUp": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "W",
+            "state": "Trigger"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Up",
+            "state": "Trigger"
+        }
+    ],
     "WeaponChangeLeft": [
         {
             "device": "Keyboard",

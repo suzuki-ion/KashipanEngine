@@ -1,0 +1,48 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {},
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "SceneViewCameraSettings"
+            }
+        ],
+        "editorOnly": true,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Scene View",
+        "objectID": "e61a47ea-fc3b-476c-8c37-60f4393b5a53",
+        "tag": ""
+    },
+    "siblingIndex": 0
+}

@@ -95,6 +95,46 @@ public:
 
 protected:
     void Update() override {
+        UpdateButtonState();
+    }
+
+#if defined(USE_IMGUI)
+    /// @brief エディターでPlayしていない間もHover/Press/ClickのデバッグInspector表示を機能させるためのフック
+    /// @details Update()はScene::UpdateInterfaceがPlay中（isPlaying_）にしか呼ばないため
+    ///          （Scene.h参照）、それだけに頼るとエディター編集中はマウスをボタン上に置いても
+    ///          Hovered/Pressed/Clickedの表示が更新されない。ShowPersistentImGuiInterfaceは
+    ///          Play中かどうかに関わらず毎フレーム呼ばれるため（ScreenAnchor::ShowPersistentImGui
+    ///          と同じ理由・同じ対処）、ここでも同じ判定処理を行う。Input::Update()自体は
+    ///          GameEngine::GameLoopUpdate()からPlay状態に関わらず毎フレーム呼ばれているため、
+    ///          マウス座標・ボタン状態は編集中も最新の値が取れる
+    void ShowPersistentImGui() override {
+        UpdateButtonState();
+    }
+
+    void ShowImGui() override {
+        TargetObjectSelector::ShowSelector(TranslationLabel("component.uibutton.display_camera"), GetOwnerSceneContext(), displayCameraObjectID_, true, false);
+        ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.uibutton.desc"));
+        ImGui::Text("Hovered: %s / Pressed: %s / Clicked: %s",
+            isHovered_ ? "true" : "false", isPressed_ ? "true" : "false", isClicked_ ? "true" : "false");
+        if (hasValidLocalUV_) {
+            ImGui::Text("Local UV: (%.3f, %.3f)", lastLocalUV_.x, lastLocalUV_.y);
+        }
+    }
+#endif
+
+    JSON SaveToJson() const override {
+        JSON json = JSON::object();
+        json["displayCameraObjectID"] = ToJSON(displayCameraObjectID_);
+        return json;
+    }
+    bool LoadFromJson(const JSON &json) override {
+        displayCameraObjectID_ = json.contains("displayCameraObjectID") ? FromJSON<UUID128>(json["displayCameraObjectID"]) : UUID128();
+        return true;
+    }
+
+private:
+    /// @brief Hover/Press/Clickの判定を更新する（Update()/ShowPersistentImGui()共通処理）
+    void UpdateButtonState() {
         isClicked_ = false;
 
         hasValidLocalUV_ = ComputeLocalUV(lastLocalUV_);
@@ -122,29 +162,6 @@ protected:
         }
     }
 
-#if defined(USE_IMGUI)
-    void ShowImGui() override {
-        TargetObjectSelector::ShowSelector(TranslationLabel("component.uibutton.display_camera"), GetOwnerSceneContext(), displayCameraObjectID_, true, false);
-        ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.uibutton.desc"));
-        ImGui::Text("Hovered: %s / Pressed: %s / Clicked: %s",
-            isHovered_ ? "true" : "false", isPressed_ ? "true" : "false", isClicked_ ? "true" : "false");
-        if (hasValidLocalUV_) {
-            ImGui::Text("Local UV: (%.3f, %.3f)", lastLocalUV_.x, lastLocalUV_.y);
-        }
-    }
-#endif
-
-    JSON SaveToJson() const override {
-        JSON json = JSON::object();
-        json["displayCameraObjectID"] = ToJSON(displayCameraObjectID_);
-        return json;
-    }
-    bool LoadFromJson(const JSON &json) override {
-        displayCameraObjectID_ = json.contains("displayCameraObjectID") ? FromJSON<UUID128>(json["displayCameraObjectID"]) : UUID128();
-        return true;
-    }
-
-private:
     /// @brief 対象オブジェクトが実ウィンドウ(NormalWindowObject/OverlayWindowObject)を持っていれば
     ///        それを返す。持たずScreenBufferObject（オフスクリーンの中間バッファ）の場合は、
     ///        そのScreenBufferを表示しているScreenBufferViewportを探し、その表示先へ処理を委譲する

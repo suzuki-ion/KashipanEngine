@@ -34,6 +34,7 @@
                         "fields": {
                             "advanceCommandName": "Attack",
                             "backgroundObject": "f05d91ea-f4d8-40c1-9201-fd12a34072ad",
+                            "choiceSlotObjects": [],
                             "dialogues": [
                                 {
                                     "characterInterval": 0.10000000149011612,
@@ -54,10 +55,50 @@
                                     "shakeEnabled": false,
                                     "shakeSpeed": 20.0,
                                     "text": "テストテキストああああ"
+                                },
+                                {
+                                    "characterInterval": 0.05000000074505806,
+                                    "iconTextureName": "",
+                                    "iconUvPosition": {
+                                        "x": 0.0,
+                                        "y": 0.0
+                                    },
+                                    "iconUvScale": {
+                                        "x": 1.0,
+                                        "y": 1.0
+                                    },
+                                    "shakeAmplitude": {
+                                        "x": 2.0,
+                                        "y": 2.0
+                                    },
+                                    "shakeEaseType": 0,
+                                    "shakeEnabled": false,
+                                    "shakeSpeed": 20.0,
+                                    "text": ""
+                                },
+                                {
+                                    "characterInterval": 0.05000000074505806,
+                                    "iconTextureName": "",
+                                    "iconUvPosition": {
+                                        "x": 0.0,
+                                        "y": 0.0
+                                    },
+                                    "iconUvScale": {
+                                        "x": 1.0,
+                                        "y": 1.0
+                                    },
+                                    "shakeAmplitude": {
+                                        "x": 2.0,
+                                        "y": 2.0
+                                    },
+                                    "shakeEaseType": 0,
+                                    "shakeEnabled": false,
+                                    "shakeSpeed": 20.0,
+                                    "text": ""
                                 }
                             ],
                             "iconObject": "1fcaaf04-0627-4958-a051-12f47f3f42a4",
-                            "isVisible": false,
+                            "isVisible": true,
                             "textObject": "90344e71-a4e7-4fb5-988e-2f39fa9ebb11"
                         },
                         "scriptPath": "Assets/Scripts/DialogueBox.as"

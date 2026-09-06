@@ -1653,6 +1653,9 @@
 
 		//--------- editor.globalscenevariables ---------//
 		"editor.globalscenevariables.window": "글로벌 씬 변수",
+		"editor.globalscenevariables.clear_all": "모두 삭제",
+		"editor.globalscenevariables.clear_all_confirm_title": "글로벌 씬 변수 모두 삭제",
+		"editor.globalscenevariables.clear_all_confirm_message": "모든 글로벌 씬 변수를 삭제합니다. 이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?",
 
 		//--------- editor.hierarchy ---------//
 		"editor.hierarchy.clone": "오브젝트 복제",

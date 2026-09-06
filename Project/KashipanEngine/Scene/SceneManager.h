@@ -166,6 +166,9 @@ public:
     /// @param key 変数のキー
     /// @return 削除に成功した場合は true、失敗した場合は false を返す
     bool RemoveGlobalSceneVariable(const std::string &key) { return globalSceneVariables_.erase(key) > 0; }
+    /// @brief グローバルシーン変数を全て削除する（セーブデータのリセット用途）
+    /// @details メモリ上の内容を消すだけで、ファイルへの反映は別途SaveGlobalSceneVariables()の呼び出しが必要
+    void ClearGlobalSceneVariables() { globalSceneVariables_.clear(); }
     /// @brief シーン変数の情報を取得する
     /// @param key 変数のキー
     /// @return シーン変数のポインタ（存在しない場合は nullptr）

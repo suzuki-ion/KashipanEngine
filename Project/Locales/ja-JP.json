@@ -1683,6 +1683,9 @@
 
 		//--------- editor.globalscenevariables ---------//
 		"editor.globalscenevariables.window": "グローバルシーン変数",
+		"editor.globalscenevariables.clear_all": "全て削除",
+		"editor.globalscenevariables.clear_all_confirm_title": "グローバルシーン変数の全削除",
+		"editor.globalscenevariables.clear_all_confirm_message": "グローバルシーン変数を全て削除します。この操作は元に戻せません。よろしいですか？",
 
 		//--------- editor.hierarchy ---------//
 		"editor.hierarchy.clone": "オブジェクトを複製",

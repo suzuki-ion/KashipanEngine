@@ -1653,6 +1653,9 @@
 
 		//--------- editor.globalscenevariables ---------//
 		"editor.globalscenevariables.window": "全局场景变量",
+		"editor.globalscenevariables.clear_all": "全部删除",
+		"editor.globalscenevariables.clear_all_confirm_title": "删除全部全局场景变量",
+		"editor.globalscenevariables.clear_all_confirm_message": "将删除全部全局场景变量，此操作无法撤销。是否继续？",
 
 		//--------- editor.hierarchy ---------//
 		"editor.hierarchy.clone": "复制对象",

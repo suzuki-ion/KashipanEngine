@@ -141,6 +141,138 @@ class Player : ScriptComponentBehavior {
         }
         GetComponent(@sprite);
         GetComponents(@audioSources);
+
+        LoadProgress();
+    }
+
+    // 現在のシーン実行状態でセーブデータの読み書きを行ってよいかどうか
+    // (エディターでPlayを押さずに編集しているだけの間は保存/読込を行わない。
+    //  エディターを持たないビルド(Release相当)ではIsPlaying()が常にfalseになる仕様のため、
+    //  そちらは常に許可する)
+    bool ShouldPersistProgress() {
+        return GetScene().IsPlaying() || !IsEditorBuild();
+    }
+
+    // WeaponListの値からセーブキーに使う武器名を返す(対応が無ければ空文字)
+    string GetWeaponSaveKeyName(int weaponType) {
+        if (weaponType == int(WeaponList::Katana)) return "Katana";
+        if (weaponType == int(WeaponList::Shuriken)) return "Shuriken";
+        if (weaponType == int(WeaponList::Axe)) return "Axe";
+        if (weaponType == int(WeaponList::Ball)) return "Ball";
+        return "";
+    }
+
+    // グローバルシーン変数(メモリ上。シーンを跨いでも値が残る)から進行状況を読み込み、
+    // 自身と所持武器へ反映する
+    // (ディスクのセーブファイルからの読込は、このプレイセッション中で最初の1回だけ行う。
+    //  毎シーンでディスクから読み直してしまうと、セーブ地点をまだ通っていない状態変化
+    //  ―別シーンで拾ったばかりの武器など―が、古いセーブファイルの内容で
+    //  上書きされてしまうため)
+    void LoadProgress() {
+        if (!ShouldPersistProgress()) return;
+
+        bool hasLoadedSaveThisSession = false;
+        GetScene().GetGlobalVariable("hasLoadedSaveThisSession", hasLoadedSaveThisSession);
+        if (!hasLoadedSaveThisSession) {
+            GetScene().LoadGlobalVariables();
+            GetScene().SetGlobalVariable("hasLoadedSaveThisSession", true);
+        }
+
+        float savedHp;
+        if (GetScene().GetGlobalVariable("save_hp", savedHp)) {
+            hp = savedHp;
+        }
+
+        if (allWeapons !is null) {
+            for (uint i = 0; i < allWeapons.length(); ++i) {
+                string keyName = GetWeaponSaveKeyName(int(i));
+                if (keyName.length() == 0) continue;
+
+                bool owned = false;
+                GetScene().GetGlobalVariable("save_weapon_" + keyName + "_owned", owned);
+                if (!owned) continue;
+
+                Object@ weaponObj = allWeapons[i];
+                if (weaponObj is null) continue;
+
+                AddWeapon(int(i), weaponObj);
+
+                ScriptComponent@ sc;
+                if (weaponObj.GetComponent(@sc)) {
+                    int level;
+                    if (GetScene().GetGlobalVariable("save_weapon_" + keyName + "_level", level)) {
+                        sc.SetVariable("level", level);
+                    }
+                    float exp;
+                    if (GetScene().GetGlobalVariable("save_weapon_" + keyName + "_exp", exp)) {
+                        sc.SetVariable("exp", exp);
+                    }
+                    float nextExp;
+                    if (GetScene().GetGlobalVariable("save_weapon_" + keyName + "_nextExp", nextExp)) {
+                        sc.SetVariable("nextExp", nextExp);
+                    }
+                    float weaponDamage;
+                    if (GetScene().GetGlobalVariable("save_weapon_" + keyName + "_damageAmount", weaponDamage)) {
+                        sc.SetVariable("damageAmount", weaponDamage);
+                    }
+                }
+            }
+        }
+
+        int savedWeaponType;
+        if (GetScene().GetGlobalVariable("save_currentWeaponType", savedWeaponType)) {
+            if (weapons !is null && savedWeaponType >= 0 && uint(savedWeaponType) < weapons.length() && weapons[savedWeaponType] !is null) {
+                currentWeaponType = savedWeaponType;
+            }
+        }
+    }
+
+    // 現在の進行状況をグローバルシーン変数(メモリ上)へ書き出す。ファイルへは保存しない
+    // (シーン切り替え時の引き継ぎ用。End()から毎回呼ばれる)
+    void UpdateProgressVariables() {
+        if (!ShouldPersistProgress()) return;
+
+        GetScene().SetGlobalVariable("save_hp", hp);
+        GetScene().SetGlobalVariable("save_currentWeaponType", currentWeaponType);
+
+        if (allWeapons !is null) {
+            for (uint i = 0; i < allWeapons.length(); ++i) {
+                string keyName = GetWeaponSaveKeyName(int(i));
+                if (keyName.length() == 0) continue;
+
+                bool owned = weapons !is null && i < weapons.length() && weapons[i] !is null;
+                GetScene().SetGlobalVariable("save_weapon_" + keyName + "_owned", owned);
+                if (!owned) continue;
+
+                ScriptComponent@ sc;
+                if (weapons[i].GetComponent(@sc)) {
+                    int level = 0;
+                    float exp = 0.0f;
+                    float nextExp = 0.0f;
+                    float weaponDamage = 0.0f;
+                    sc.GetVariable("level", level);
+                    sc.GetVariable("exp", exp);
+                    sc.GetVariable("nextExp", nextExp);
+                    sc.GetVariable("damageAmount", weaponDamage);
+
+                    GetScene().SetGlobalVariable("save_weapon_" + keyName + "_level", level);
+                    GetScene().SetGlobalVariable("save_weapon_" + keyName + "_exp", exp);
+                    GetScene().SetGlobalVariable("save_weapon_" + keyName + "_nextExp", nextExp);
+                    GetScene().SetGlobalVariable("save_weapon_" + keyName + "_damageAmount", weaponDamage);
+                }
+            }
+        }
+    }
+
+    // セーブ地点(SavePoint等)からのシーン変数経由の要求で呼ばれる、実際にファイルへ書き込む処理。
+    // メモリ上のグローバルシーン変数を最新化してから、まとめてセーブファイルへ保存する
+    // @return 実際にファイルへの保存を行った場合はtrue(Playを押していないエディター編集中等は
+    //         ShouldPersistProgress()がfalseになりそのままfalseを返す)
+    bool SaveProgress() {
+        if (!ShouldPersistProgress()) return false;
+
+        UpdateProgressVariables();
+        return GetScene().SaveGlobalVariables();
     }
 
     void PlayTaggedAudio(const string &in tagName) {
@@ -153,6 +285,22 @@ class Player : ScriptComponentBehavior {
     }
 
     void Update() {
+        // シーン変数経由のセーブ要求を監視する(SavePoint.as参照)。
+        // 消費したら自分でfalseへ戻す(シーン変数は自動ではリセットされないため)
+        bool saveRequested = false;
+        GetScene().GetVariable("saveRequested", saveRequested);
+        if (saveRequested) {
+            GetScene().SetVariable("saveRequested", false);
+            if (SaveProgress()) {
+                Log("セーブしました");
+            }
+        }
+
+        // 会話中(isDialogueActive)は移動・攻撃などの処理を止める
+        bool isDialogueActive = false;
+        GetScene().GetVariable("isDialogueActive", isDialogueActive);
+        if (isDialogueActive) return;
+
         Transform@ tf = GetTransform();
         if(tf is null) return;
 
@@ -608,6 +756,8 @@ class Player : ScriptComponentBehavior {
 
     void End() {
         Log("Player End");
+        // シーン切り替え時の引き継ぎ(メモリ上の更新のみ)。ファイルへの保存はSavePointから行う
+        UpdateProgressVariables();
     }
 
     void AddExp(float expAmount) {

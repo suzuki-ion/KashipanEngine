@@ -3587,7 +3587,11 @@ void RegisterObjectTypes(asIScriptEngine *engine) {
         .method("bool SaveGlobalVariables(const string &in filePath = \"\") const", &SceneContext::SaveGlobalSceneVariables)
         .method("bool LoadGlobalVariables(const string &in filePath = \"\")", &SceneContext::LoadGlobalSceneVariables)
         // ゲームループの終了要求（エディター実行時は再生停止として扱われる）
-        .method("void RequestExitGameLoop()", &SceneContext::RequestExitGameLoop);
+        .method("void RequestExitGameLoop()", &SceneContext::RequestExitGameLoop)
+        // シーンが再生中かどうか（エディターでPlayボタンを押している間のみtrue。
+        // エディターを持たないビルドではこのフラグ自体が意味を持たないため、
+        // セーブ処理などの分岐にはIsEditorBuild()と組み合わせて使うこと）
+        .method("bool IsPlaying() const", &SceneContext::IsPlaying);
 
     // スクリプト側でコンポーネントの動作を定義するためのインターフェース
     // （ScriptComponentはこのインターフェースを実装したクラスを探して実行する）
@@ -4528,6 +4532,17 @@ void RegisterGlobalFunctions(asIScriptEngine *engine) {
         .function("const string &GetLanguageDisplayName(const string &in)", &GetLanguageDisplayName)
         // ゲームループの終了要求（エディター実行時は再生停止として扱われる）
         .function("void RequestExitGameLoop()", []() { Scene::RequestExitGameLoop(); })
+        // エディター機能を含むビルドかどうか（Debug/Development=true、Release=false）。
+        // Release相当のビルドではSceneContext::IsPlaying()が意味を持たない（Playボタン自体が
+        // 存在せず、常にfalseのまま）ため、セーブ処理等の分岐は
+        // 「IsPlaying() || !IsEditorBuild()」の形で組み合わせて使うことを想定している
+        .function("bool IsEditorBuild()", []() -> bool {
+#if defined(USE_IMGUI)
+            return true;
+#else
+            return false;
+#endif
+        })
         // エディターツールのウィンドウ操作（[EditorWindow]で用意されたウィンドウが対象。
         // エディター無効ビルドでは何もしない）
         .function("void OpenEditorWindow(const string &in)", [](const std::string &name) {

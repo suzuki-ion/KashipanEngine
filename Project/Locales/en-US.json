@@ -1683,6 +1683,9 @@
 
 		//--------- editor.globalscenevariables ---------//
 		"editor.globalscenevariables.window": "Global Scene Variables",
+		"editor.globalscenevariables.clear_all": "Clear All",
+		"editor.globalscenevariables.clear_all_confirm_title": "Clear All Global Scene Variables",
+		"editor.globalscenevariables.clear_all_confirm_message": "This will delete all global scene variables. This cannot be undone. Continue?",
 
 		//--------- editor.hierarchy ---------//
 		"editor.hierarchy.clone": "Clone Object",

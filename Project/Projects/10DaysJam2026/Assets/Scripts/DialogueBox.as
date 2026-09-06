@@ -50,6 +50,9 @@ class DialogueBox : ScriptComponentBehavior {
     [SerializeField, Tooltip("会話ボックスの表示フラグ。falseの間は関連オブジェクトを非アクティブ化する")]
     bool isVisible = false;
 
+    [SerializeField, Tooltip("表示中、シーン変数isDialogueActiveをtrueにしてプレイヤー・敵の移動などの処理を止めるか")]
+    bool pauseGameplayWhileVisible = true;
+
     [Header("参照オブジェクト")]
     [SerializeField, Tooltip("テキストボックスの背景オブジェクト")]
     Object@ backgroundObject;
@@ -81,6 +84,10 @@ class DialogueBox : ScriptComponentBehavior {
     TextureSource@ iconTexture;
 
     // --- 実行時状態(保存不要) ---
+    // 背景/テキスト/アイコンオブジェクトを複数のDialogueBoxが共有していても同時に競合しないよう、
+    // シーン変数"dialogueBoxUIBusy"を排他ロックとして使う。isVisible=trueで表示要求が来ても、
+    // 既に他のDialogueBoxがロックを持っている間は何もせず待機し、ロックが空いてから表示を開始する
+    bool hasLock = false;
     bool previousVisible = false;
     int currentIndex = -1;
     bool isAnimating = false;
@@ -102,10 +109,43 @@ class DialogueBox : ScriptComponentBehavior {
             iconObject.GetComponent(@iconSprite);
             iconObject.GetComponent(@iconTexture);
         }
-        ApplyActive(isVisible);
+        ApplyActive(false);
+    }
+
+    // 会話の途中(isVisible=trueのまま)でPlay停止やシーン切り替えが起きた場合、Update()側の
+    // 解放処理(isVisibleがfalseに戻ったタイミング)が呼ばれずロックが残り続けてしまう。
+    // それを防ぐため、終了時に保有中のロックがあれば解放しておく
+    void End() {
+        if (hasLock) {
+            hasLock = false;
+            GetScene().SetVariable("dialogueBoxUIBusy", false);
+            if (pauseGameplayWhileVisible) {
+                GetScene().SetVariable("isDialogueActive", false);
+            }
+        }
     }
 
     void Update() {
+        // 表示要求はあるがまだロックを持っていない場合、共有UIが他のDialogueBoxで
+        // 使用中でないか確認してから取得を試みる
+        if (isVisible && !hasLock) {
+            bool busy = false;
+            GetScene().GetVariable("dialogueBoxUIBusy", busy);
+            if (busy) {
+                // 他のDialogueBoxが使用中。表示・処理は行わず、空くまで待機する
+                previousVisible = false;
+                return;
+            }
+
+            hasLock = true;
+            GetScene().SetVariable("dialogueBoxUIBusy", true);
+        }
+
+        if (!hasLock) {
+            previousVisible = false;
+            return;
+        }
+
         bool justShown = isVisible && !previousVisible;
         ApplyActive(isVisible);
 
@@ -138,6 +178,22 @@ class DialogueBox : ScriptComponentBehavior {
         }
 
         previousVisible = isVisible;
+
+        // 会話中はプレイヤー・敵の移動などの処理を止められるよう、シーン変数へ表示状態を反映する
+        // (Player.as・各種敵スクリプト等がUpdate()の先頭でこの値を見て処理を分岐する)。
+        // ここまでの処理でEndDialogue等によりisVisibleがfalseへ変わっている場合があるため、
+        // 内容処理より後ろで最終的な値を書き込む(先頭で書くと、会話終了フレームで古いtrueの
+        // 値を書いてしまい、ロック解放後は早期returnするため書き直す機会がなくなってしまう)
+        if (pauseGameplayWhileVisible) {
+            GetScene().SetVariable("isDialogueActive", isVisible);
+        }
+
+        if (!isVisible) {
+            // 会話が終了した(EndDialogue等でisVisibleがfalseになった)ので、
+            // 他のDialogueBoxが使えるようロックを解放する
+            hasLock = false;
+            GetScene().SetVariable("dialogueBoxUIBusy", false);
+        }
     }
 
     // 背景/テキスト/アイコンオブジェクトのアクティブ状態をまとめて切り替える

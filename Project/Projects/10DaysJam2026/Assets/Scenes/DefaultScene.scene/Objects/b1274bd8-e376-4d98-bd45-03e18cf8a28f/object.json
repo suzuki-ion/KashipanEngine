@@ -4,7 +4,7 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "4ec93cd0-f20a-444a-8ce4-96121b05247d",
+                        "parent": "e19e4382-581a-4a49-b919-c3d35f15e56c",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -75,7 +75,7 @@
         "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "TalkScript",
-        "objectID": "f29192e0-44bf-4fb0-a35a-2ca4a97fdb70",
+        "objectID": "b1274bd8-e376-4d98-bd45-03e18cf8a28f",
         "prefabNodeID": "d2b98713-1d27-4a1f-86bd-fd05827d490f",
         "tag": ""
     },

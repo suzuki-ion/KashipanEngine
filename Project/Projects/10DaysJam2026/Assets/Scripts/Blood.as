@@ -1,38 +1,34 @@
-class Rubble : ScriptComponentBehavior {
-    [SerializeField, Tooltip("落下時の重力")]
-    float gravity = 200.0f;
-
-    [SerializeField, Tooltip("生成されてから落下を開始するまでの待機時間(秒)")]
-    float dropDelay = 1.0f;
+class Blood : ScriptComponentBehavior {
+    [SerializeField, Tooltip("落下速度(下方向への一定速度)")]
+    float fallSpeed = 180.0f;
 
     [SerializeField, Tooltip("全体の最大生存時間(秒)")]
-    float lifeTime = 5.0f;
+    float lifeTime = 4.0f;
 
-    [SerializeField, Tooltip("地面に落下してから消滅するまでの時間(秒)")]
-    float destroyDelay = 0.5f;
+    [SerializeField, Tooltip("地面に着弾してから消滅するまでの時間(秒)")]
+    float destroyDelay = 0.2f;
 
     [SerializeField, Tooltip("ダメージ量")]
-    float damageAmount = 1;
+    float damageAmount = 1.0f;
 
     float timer = 0.0f;
-    float dropTimer = 0.0f;
     float groundTimer = 0.0f;
-    bool isDropping = false;
     bool isGrounded = false;
     Vector2 velocity;
-    
+
     CharacterController2D@ controller;
 
     void Start() {
         GetComponent(@controller);
-        velocity.y = 0.0f;
+        velocity.x = 0.0f;
+        velocity.y = -fallSpeed; // 重力加速はせず、常に一定速度で下方向へ飛ばす
     }
 
     void Update() {
         Transform@ tf = GetTransform();
         if (tf is null) return;
 
-        // 最大生存時間を超えたら強制的に非アクティブ化して削除扱いにする
+        // 最大生存時間を超えたら強制的に非アクティブ化する
         timer += GetDeltaTime();
         if (timer >= lifeTime) {
             Object@ obj = GetOwnerObject();
@@ -40,20 +36,11 @@ class Rubble : ScriptComponentBehavior {
             return;
         }
 
-        if (!isDropping) {
-            // 落下前の待機時間カウント
-            dropTimer += GetDeltaTime();
-            if (dropTimer >= dropDelay) {
-                isDropping = true;
-            }
-        } else if (!isGrounded) {
-            // 重力を適用して落下
-            velocity.y -= gravity * GetDeltaTime();
-
+        if (!isGrounded) {
             if (controller !is null) {
                 // CharacterController2Dがある場合はコライダーベースで移動と着地判定を行う
                 controller.Move(velocity * GetDeltaTime());
-                if (controller.IsGrounded() && velocity.y <= 0.0f) {
+                if (controller.IsGrounded()) {
                     isGrounded = true;
                     velocity.y = 0.0f;
                 }
@@ -61,7 +48,7 @@ class Rubble : ScriptComponentBehavior {
                 // Controllerがない場合の簡易フォールバック
                 Vector3 pos = tf.GetTranslate();
                 pos.y += velocity.y * GetDeltaTime();
-                
+
                 if (pos.y <= 0.0f) {
                     pos.y = 0.0f;
                     isGrounded = true;
@@ -70,7 +57,7 @@ class Rubble : ScriptComponentBehavior {
                 tf.SetTranslate(pos);
             }
         } else {
-            // 地面に落ちたあとは少し待ってから消滅させる
+            // 着地(または画面下端到達)後は少し待ってから消滅させる
             groundTimer += GetDeltaTime();
             if (groundTimer >= destroyDelay) {
                 Object@ obj = GetOwnerObject();
@@ -79,9 +66,8 @@ class Rubble : ScriptComponentBehavior {
         }
     }
 
-    // プレイヤーなどの動的オブジェクトとぶつかった際の処理
+    // プレイヤーなどにぶつかった際の処理
     void OnCollisionEnter(const HitInfo &in hit) {
-        // プレイヤーに直撃した場合は即座に岩を消滅させる
         if (hit.otherCollider.GetTag() == "Player") {
             Object@ obj = GetOwnerObject();
             if (obj !is null) {
@@ -89,7 +75,6 @@ class Rubble : ScriptComponentBehavior {
             }
 
             Object@ player = hit.otherObject;
-
             if (player !is null) {
                 ScriptComponent@ sc;
                 if (player.GetComponent(@sc)) {
@@ -97,10 +82,6 @@ class Rubble : ScriptComponentBehavior {
                 }
             }
         }
-    }
-
-    void SetDropDelay(float delay) {
-        dropDelay = delay;
     }
 
     void End() {

@@ -12,18 +12,18 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 48.0,
-                            "y": 64.0,
+                            "x": 32.0,
+                            "y": 32.0,
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 904.984375,
-                            "y": 111.0,
+                            "x": 624.0,
+                            "y": 284.0,
                             "z": 0.0
                         }
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 0,
                     "tag": ""
                 },
                 "type": "Transform"
@@ -42,10 +42,10 @@
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "App/Sprite/Boss/boss2.png"
+                        "textureAssetPath": "App/Sprite/Boss/ovary.png"
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 2,
                     "tag": ""
                 },
                 "type": "TextureSource"
@@ -77,7 +77,7 @@
                         ]
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 3,
                     "tag": "Enemy"
                 },
                 "type": "Box2DCollider"
@@ -86,9 +86,7 @@
                 "data": {
                     "customData": {
                         "fields": {
-                            "areaDuration": 4.0,
-                            "attackInterval": 5.0,
-                            "attackWindup": 2.0,
+                            "boss": "95dcc865-6e8c-434a-a994-a5fb66424538",
                             "damageColor": {
                                 "w": 1.0,
                                 "x": 10.0,
@@ -96,31 +94,20 @@
                                 "z": 10.0
                             },
                             "damageFlashDuration": 0.10000000149011612,
-                            "deathEffect": "4d114c9e-706a-42e9-bf74-8efd6424a4a0",
-                            "deathEffectCount": 10,
-                            "deathEffectSpawnInterval": 0.15000000596046448,
-                            "deathEffectSpread": 50.0,
-                            "floatAmplitude": 10.0,
-                            "floatSpeed": 1.5,
-                            "hp": 30.0,
+                            "deathDelay": 0.30000001192092896,
+                            "isLeftOvary": true,
+                            "maxHP": 20.0,
                             "normalColor": {
                                 "w": 1.0,
                                 "x": 1.0,
                                 "y": 1.0,
                                 "z": 1.0
-                            },
-                            "pendulumRadius": 100.0,
-                            "pendulumSpeed": 1.5,
-                            "pendulumSwingRange": 0.800000011920929,
-                            "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
-                            "sickle": "df044188-56ae-41c3-82f4-bc6837cb6def",
-                            "sickleCount": 2,
-                            "sickleSpawnRadius": 120.0
+                            }
                         },
-                        "scriptPath": "Assets\\Scripts\\Boss2.as"
+                        "scriptPath": "Assets\\Scripts\\Ovary.as"
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 4,
                     "tag": ""
                 },
                 "type": "ScriptComponent"
@@ -129,20 +116,20 @@
                 "data": {
                     "customData": {
                         "fields": {
-                            "frameCount": 3,
+                            "frameCount": 6,
                             "frameInterval": 0.15000000596046448,
                             "isLoop": true,
                             "playOnStart": true,
                             "startRow": 0,
                             "uvStep": {
-                                "x": 0.3330000042915344,
+                                "x": 0.16660000383853912,
                                 "y": 1.0
                             }
                         },
                         "scriptPath": "Assets\\Scripts\\SpriteAnimator.as"
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 5,
                     "tag": "AnimatorSC"
                 },
                 "type": "ScriptComponent"
@@ -169,7 +156,7 @@
                         },
                         "instanceUvRotation": 0.0,
                         "instanceUvScale": {
-                            "x": 0.3330000042915344,
+                            "x": 0.16660000383853912,
                             "y": 1.0
                         },
                         "instanceUvTranslate": {
@@ -188,7 +175,7 @@
                         "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                     },
                     "isActive": true,
-                    "priority": 900,
+                    "priority": 6,
                     "tag": ""
                 },
                 "type": "SpriteRenderer"
@@ -197,9 +184,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Boss2",
-        "objectID": "45effcb6-a612-4079-a8d7-a78ee62a5d5f",
+        "name": "Ovary",
+        "objectID": "b03fef43-e9fd-4c32-b247-732f786306d6",
         "tag": ""
     },
-    "siblingIndex": 17388
+    "siblingIndex": 17462
 }

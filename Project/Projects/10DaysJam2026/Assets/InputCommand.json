@@ -11,6 +11,13 @@
             "invertValue": false,
             "key": "J",
             "state": "Trigger"
+        },
+        {
+            "button": "X",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Trigger"
         }
     ],
     "Bottom": [
@@ -18,6 +25,13 @@
             "device": "Keyboard",
             "invertValue": false,
             "key": "Down",
+            "state": "Trigger"
+        },
+        {
+            "button": "DPadDown",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
             "state": "Trigger"
         }
     ],
@@ -32,6 +46,13 @@
             "device": "Keyboard",
             "invertValue": false,
             "key": "Space",
+            "state": "Trigger"
+        },
+        {
+            "button": "A",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
             "state": "Trigger"
         }
     ],
@@ -59,6 +80,22 @@
             "invertValue": true,
             "key": "A",
             "state": "Down"
+        },
+        {
+            "analog": "LeftStickX",
+            "controllerIndex": 0,
+            "device": "ControllerAnalog",
+            "invertValue": false,
+            "state": "Down",
+            "threshold": 0.10000000149011612
+        },
+        {
+            "analog": "LeftStickX",
+            "controllerIndex": 0,
+            "device": "ControllerAnalog",
+            "invertValue": false,
+            "state": "Down",
+            "threshold": -0.10000000149011612
         }
     ],
     "WeaponChangeLeft": [
@@ -73,6 +110,13 @@
             "invertValue": false,
             "key": "C",
             "state": "Trigger"
+        },
+        {
+            "button": "LeftShoulder",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Trigger"
         }
     ],
     "WeaponChangeRight": [
@@ -86,6 +130,13 @@
             "device": "Keyboard",
             "invertValue": false,
             "key": "V",
+            "state": "Trigger"
+        },
+        {
+            "button": "RightShoulder",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
             "state": "Trigger"
         }
     ]

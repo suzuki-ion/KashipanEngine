@@ -47,7 +47,23 @@ class Boss2 : ScriptComponentBehavior {
     [SerializeField, Tooltip("プレイヤー")]
     Object@ player;
 
+    [SerializeField, Tooltip("死亡エフェクト")]
+    Object@ deathEffect;
+
+    [SerializeField, Tooltip("死亡エフェクトの発生数")]
+    int deathEffectCount = 5;
+
+    [SerializeField, Tooltip("死亡エフェクトの散らばる範囲(半径)")]
+    float deathEffectSpread = 50.0f;
+
+    [SerializeField, Tooltip("死亡エフェクトの生成間隔(秒)")]
+    float deathEffectSpawnInterval = 0.15f;
+
+    int spawnedEffectCount = 0;
+    float deathEffectTimer = 0.0f;
+    bool isAnimation = false;
     float attackTimer = 0.0f;
+    array<Object@> cloneEffects;
 
     // 振り子移動管理用
     float swingTimer = 0.0f;
@@ -89,7 +105,82 @@ class Boss2 : ScriptComponentBehavior {
 
         // HPチェック
         if (hp <= 0.0f) {
+            // 死亡時のエフェクト処理
+            if(!isAnimation){
+                isAnimation = true;
+                deathEffectTimer = 0.0f;
+                spawnedEffectCount = 0; // 生成数の初期化
+            }
 
+            deathEffectTimer += GetDeltaTime();
+
+            // エフェクトを順番に生成
+            if (spawnedEffectCount < deathEffectCount) {
+                // 経過時間が生成タイミングに達したら生成
+                if (deathEffectTimer >= float(spawnedEffectCount) * deathEffectSpawnInterval) {
+                    Transform@ tf = GetTransform();
+                    Vector3 centerPos = (tf !is null) ? tf.GetTranslate() : Vector3();
+
+                    Object@ clone = GetScene().CloneObject(deathEffect, "CloneDeathEffect_" + spawnedEffectCount);
+                    if(clone !is null){
+                        Transform@ cloneTf = clone.GetTransform();
+                        if(cloneTf !is null){
+                            cloneTf.SetScale(Vector3(32.0f, 32.0f, 1.0f));
+                        }
+
+                        ScriptComponent@ sc;
+                        if(clone.GetComponent(@sc)){
+                            sc.CallMethod("StartAnimation");
+                            
+                            float angle = 6.28318f * (float(spawnedEffectCount) / float(deathEffectCount));
+                            float r = deathEffectSpread * (spawnedEffectCount % 2 == 0 ? 1.0f : 0.6f); 
+                            
+                            Vector3 spawnPos = Vector3(
+                                centerPos.x + Cos(angle) * r,
+                                centerPos.y + Sin(angle) * r,
+                                centerPos.z - 0.1f 
+                            );
+                            
+                            sc.SetVariable("pos", spawnPos);
+                        }
+                        cloneEffects.insertLast(clone);
+                    }
+                    spawnedEffectCount++;
+                }
+            }
+
+            // アニメーション更新処理
+            bool allEffectsFinished = true;
+            if(cloneEffects.length() > 0){
+                float deathEffectDuration = 0.6f;
+                
+                for(uint i = 0; i < cloneEffects.length(); i++){
+                    Object@ clone = cloneEffects[i];
+                    if(clone !is null && clone.IsActive()){
+                        ScriptComponent@ sc;
+                        if(clone.GetComponent(@sc)){
+                            sc.CallMethod("UpdateAnimation");
+                        }
+
+                        // 各エフェクトが生成されてからの経過時間
+                        float effectAge = deathEffectTimer - (float(i) * deathEffectSpawnInterval);
+
+                        // アニメーションが終了したら非アクティブ化
+                        if(effectAge >= deathEffectDuration){
+                            clone.SetActive(false);
+                        } else {
+                            allEffectsFinished = false; // まだ終わっていないエフェクトがある
+                        }
+                    }
+                }
+            } else {
+                allEffectsFinished = false; // まだ1つも生成されていない
+            }
+
+            // 全てのエフェクトが生成され、かつ全て終了した場合にボスの姿を消す
+            if (spawnedEffectCount >= deathEffectCount && allEffectsFinished) {
+                GetOwnerObject().SetComponentsActiveExceptTransformAndScript(false);
+            }
         } else {
             Transform@ tf = GetTransform();
             if (tf !is null && player !is null) {

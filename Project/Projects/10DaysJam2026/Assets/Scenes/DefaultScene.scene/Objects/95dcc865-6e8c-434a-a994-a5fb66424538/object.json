@@ -12,13 +12,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 48.0,
-                            "y": 64.0,
+                            "x": 159.99900817871094,
+                            "y": 159.99900817871094,
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 904.984375,
-                            "y": 111.0,
+                            "x": 750.044189453125,
+                            "y": 330.0113525390625,
                             "z": 0.0
                         }
                     },
@@ -42,7 +42,7 @@
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "App/Sprite/Boss/boss2.png"
+                        "textureAssetPath": "App/Sprite/Boss/cradle.png"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -78,7 +78,7 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": "Enemy"
+                    "tag": ""
                 },
                 "type": "Box2DCollider"
             },
@@ -86,64 +86,35 @@
                 "data": {
                     "customData": {
                         "fields": {
-                            "areaDuration": 4.0,
-                            "attackInterval": 5.0,
-                            "attackWindup": 2.0,
-                            "damageColor": {
-                                "w": 1.0,
-                                "x": 10.0,
-                                "y": 10.0,
-                                "z": 10.0
-                            },
-                            "damageFlashDuration": 0.10000000149011612,
-                            "deathEffect": "4d114c9e-706a-42e9-bf74-8efd6424a4a0",
-                            "deathEffectCount": 10,
-                            "deathEffectSpawnInterval": 0.15000000596046448,
-                            "deathEffectSpread": 50.0,
-                            "floatAmplitude": 10.0,
-                            "floatSpeed": 1.5,
-                            "hp": 30.0,
-                            "normalColor": {
-                                "w": 1.0,
-                                "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
-                            },
-                            "pendulumRadius": 100.0,
-                            "pendulumSpeed": 1.5,
-                            "pendulumSwingRange": 0.800000011920929,
+                            "attackDuration": 0.5,
+                            "bloodCount": 3,
+                            "bloodPrefab": "fc580a6e-415a-4780-b03c-4c33e4f7a4c0",
+                            "bloodSpawnOffsetY": -10.0,
+                            "bloodSpreadX": 40.0,
+                            "bloodTargetedCount": 5,
+                            "idleDuration": 1.5,
+                            "initialLeftOvaryHP": 20.0,
+                            "initialRightOvaryHP": 20.0,
+                            "ovaryLeft": "b03fef43-e9fd-4c32-b247-732f786306d6",
+                            "ovaryRight": "03dda788-8556-4718-ab08-13ad2d48a100",
                             "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
-                            "sickle": "df044188-56ae-41c3-82f4-bc6837cb6def",
-                            "sickleCount": 2,
-                            "sickleSpawnRadius": 120.0
+                            "rubbleCenterMediumCount": 3,
+                            "rubbleCenterSmallCount": 3,
+                            "rubbleDropHeight": 50.0,
+                            "rubbleMedium": "7e90c5d6-e37b-4420-942f-bc4530d20094",
+                            "rubbleMediumCount": 6,
+                            "rubbleOffsetLeftX": -70.0,
+                            "rubbleOffsetRightX": 70.0,
+                            "rubbleSmall": "d5a1df87-7e02-4164-bd53-c6a58e756183",
+                            "rubbleSmallCount": 6,
+                            "rubbleSpreadWidth": 60.0,
+                            "telegraphDuration": 1.2000000476837158
                         },
-                        "scriptPath": "Assets\\Scripts\\Boss2.as"
+                        "scriptPath": "Assets\\Scripts\\Boss3.as"
                     },
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
-                },
-                "type": "ScriptComponent"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "fields": {
-                            "frameCount": 3,
-                            "frameInterval": 0.15000000596046448,
-                            "isLoop": true,
-                            "playOnStart": true,
-                            "startRow": 0,
-                            "uvStep": {
-                                "x": 0.3330000042915344,
-                                "y": 1.0
-                            }
-                        },
-                        "scriptPath": "Assets\\Scripts\\SpriteAnimator.as"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": "AnimatorSC"
                 },
                 "type": "ScriptComponent"
             },
@@ -169,8 +140,8 @@
                         },
                         "instanceUvRotation": 0.0,
                         "instanceUvScale": {
-                            "x": 0.3330000042915344,
-                            "y": 1.0
+                            "x": 1.0,
+                            "y": 0.25
                         },
                         "instanceUvTranslate": {
                             "x": 0.0,
@@ -196,10 +167,10 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
-        "name": "Boss2",
-        "objectID": "45effcb6-a612-4079-a8d7-a78ee62a5d5f",
+        "isActive": false,
+        "name": "Boss3",
+        "objectID": "95dcc865-6e8c-434a-a994-a5fb66424538",
         "tag": ""
     },
-    "siblingIndex": 17388
+    "siblingIndex": 17453
 }

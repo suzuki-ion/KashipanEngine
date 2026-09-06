@@ -94,6 +94,10 @@
                                 "z": 10.0
                             },
                             "damageFlashDuration": 0.10000000149011612,
+                            "deathEffect": "4d114c9e-706a-42e9-bf74-8efd6424a4a0",
+                            "deathEffectCount": 10,
+                            "deathEffectSpawnInterval": 0.15000000596046448,
+                            "deathEffectSpread": 20.0,
                             "gravity": 150.0,
                             "groundedThreshold": 0.5,
                             "hp": 20.0,
@@ -111,9 +115,9 @@
                                 "Enemy"
                             ],
                             "rubbleMedium": "7e90c5d6-e37b-4420-942f-bc4530d20094",
-                            "rubbleMediumCount": 3,
+                            "rubbleMediumCount": 6,
                             "rubbleSmall": "d5a1df87-7e02-4164-bd53-c6a58e756183",
-                            "rubbleSmallCount": 3,
+                            "rubbleSmallCount": 6,
                             "smallJumpPower": 100.0
                         },
                         "scriptPath": "Assets\\Scripts\\Boss1.as"

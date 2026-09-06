@@ -12,13 +12,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 48.0,
-                            "y": 64.0,
+                            "x": 16.0,
+                            "y": 16.0,
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 904.984375,
-                            "y": 111.0,
+                            "x": -1000.0,
+                            "y": 0.0,
                             "z": 0.0
                         }
                     },
@@ -42,7 +42,7 @@
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "App/Sprite/Boss/boss2.png"
+                        "textureAssetPath": "App/Sprite/Boss/blood.png"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -78,7 +78,7 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": "Enemy"
+                    "tag": ""
                 },
                 "type": "Box2DCollider"
             },
@@ -86,64 +86,16 @@
                 "data": {
                     "customData": {
                         "fields": {
-                            "areaDuration": 4.0,
-                            "attackInterval": 5.0,
-                            "attackWindup": 2.0,
-                            "damageColor": {
-                                "w": 1.0,
-                                "x": 10.0,
-                                "y": 10.0,
-                                "z": 10.0
-                            },
-                            "damageFlashDuration": 0.10000000149011612,
-                            "deathEffect": "4d114c9e-706a-42e9-bf74-8efd6424a4a0",
-                            "deathEffectCount": 10,
-                            "deathEffectSpawnInterval": 0.15000000596046448,
-                            "deathEffectSpread": 50.0,
-                            "floatAmplitude": 10.0,
-                            "floatSpeed": 1.5,
-                            "hp": 30.0,
-                            "normalColor": {
-                                "w": 1.0,
-                                "x": 1.0,
-                                "y": 1.0,
-                                "z": 1.0
-                            },
-                            "pendulumRadius": 100.0,
-                            "pendulumSpeed": 1.5,
-                            "pendulumSwingRange": 0.800000011920929,
-                            "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
-                            "sickle": "df044188-56ae-41c3-82f4-bc6837cb6def",
-                            "sickleCount": 2,
-                            "sickleSpawnRadius": 120.0
+                            "damageAmount": 1.0,
+                            "destroyDelay": 0.20000000298023224,
+                            "fallSpeed": 180.0,
+                            "lifeTime": 4.0
                         },
-                        "scriptPath": "Assets\\Scripts\\Boss2.as"
+                        "scriptPath": "Assets\\Scripts\\Blood.as"
                     },
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
-                },
-                "type": "ScriptComponent"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "fields": {
-                            "frameCount": 3,
-                            "frameInterval": 0.15000000596046448,
-                            "isLoop": true,
-                            "playOnStart": true,
-                            "startRow": 0,
-                            "uvStep": {
-                                "x": 0.3330000042915344,
-                                "y": 1.0
-                            }
-                        },
-                        "scriptPath": "Assets\\Scripts\\SpriteAnimator.as"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": "AnimatorSC"
                 },
                 "type": "ScriptComponent"
             },
@@ -169,7 +121,7 @@
                         },
                         "instanceUvRotation": 0.0,
                         "instanceUvScale": {
-                            "x": 0.3330000042915344,
+                            "x": 1.0,
                             "y": 1.0
                         },
                         "instanceUvTranslate": {
@@ -197,9 +149,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Boss2",
-        "objectID": "45effcb6-a612-4079-a8d7-a78ee62a5d5f",
+        "name": "Blood",
+        "objectID": "fc580a6e-415a-4780-b03c-4c33e4f7a4c0",
         "tag": ""
     },
-    "siblingIndex": 17388
+    "siblingIndex": 17481
 }

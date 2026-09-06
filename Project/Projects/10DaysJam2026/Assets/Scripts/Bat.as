@@ -23,6 +23,9 @@ class Bat : ScriptComponentBehavior {
     [SerializeField, Tooltip("プレイヤー")]
     Object@ player;
 
+    [SerializeField, Tooltip("この距離以内にプレイヤーがいる場合のみ移動を行う")]
+    float activationRange = 150.0f;
+
     [SerializeField, Tooltip("死亡エフェクト")]
     Object@ deathEffect;
 
@@ -74,25 +77,27 @@ class Bat : ScriptComponentBehavior {
         }
 
         // プレイヤー追従処理
-        if (player is null) return;
-        Transform@ playerTf = player.GetTransform();
-        if (playerTf is null) return;
+        if (player !is null) {
+            Transform@ playerTf = player.GetTransform();
+            if (playerTf !is null) {
+                Vector3 currentPos = tf.GetTranslate();
+                Vector3 targetPos = playerTf.GetTranslate();
 
-        Vector3 currentPos = tf.GetTranslate();
-        Vector3 targetPos = playerTf.GetTranslate();
+                // プレイヤーへのベクトルと距離を計算
+                Vector3 diff = targetPos - currentPos;
+                float dist = diff.Length();
 
-        // プレイヤーへのベクトルと距離を計算
-        Vector3 diff = targetPos - currentPos;
-        float dist = diff.Length();
+                // プレイヤーが有効範囲内にいる場合のみ追従する
+                if (dist <= activationRange && dist > 0.01f) {
+                    // プレイヤーの位置に応じて向きを切り替え
+                    float rotY = (diff.x < 0.0f) ? 0.0f : 3.14159f;
+                    tf.SetRotate(Vector3(0.0f, rotY, 0.0f));
 
-        if (dist > 0.01f) {
-            // プレイヤーの位置に応じて向きを切り替え
-            float rotY = (diff.x < 0.0f) ? 0.0f : 3.14159f;
-            tf.SetRotate(Vector3(0.0f, rotY, 0.0f));
-
-            // プレイヤーに向かって移動
-            Vector3 dir = diff / dist;
-            tf.SetTranslate(currentPos + dir * moveSpeed * GetDeltaTime());
+                    // プレイヤーに向かって移動
+                    Vector3 dir = diff / dist;
+                    tf.SetTranslate(currentPos + dir * moveSpeed * GetDeltaTime());
+                }
+            }
         }
 
         // HPが0になったら

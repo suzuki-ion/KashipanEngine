@@ -43,6 +43,9 @@ class WallEnemy : ScriptComponentBehavior {
     [SerializeField, Tooltip("プレイヤー")]
     Object@ player;
 
+    [SerializeField, Tooltip("この距離以内にプレイヤーがいる場合のみ攻撃を行う")]
+    float activationRange = 150.0f;
+
     // 内部で管理する発射方向
     float shotDirectionX = -1.0f;
 
@@ -116,7 +119,17 @@ class WallEnemy : ScriptComponentBehavior {
             isAlive = false;
         }
 
-        if(isAlive){
+        // プレイヤーとの距離を判定し、範囲外なら攻撃処理を行わない
+        bool playerNearby = false;
+        if (player !is null) {
+            Transform@ playerTf = player.GetTransform();
+            if (playerTf !is null) {
+                float distToPlayer = (playerTf.GetTranslate() - tf.GetTranslate()).Length();
+                playerNearby = (distToPlayer <= activationRange);
+            }
+        }
+
+        if(isAlive && playerNearby){
             shotTimer += GetDeltaTime();
 
             // 発射間隔ごとにアニメーションを頭から再生し、発射までの遅延タイマーを開始する

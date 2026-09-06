@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 90.0,
-                            "y": 56.0,
+                            "x": 760.0,
+                            "y": 469.0,
                             "z": 0.0
                         }
                     },
@@ -169,7 +169,7 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Chest",
+        "name": "Chest_Shuriken",
         "objectID": "6f930386-a494-4642-b84c-df5f6d0aa8e0",
         "tag": ""
     },

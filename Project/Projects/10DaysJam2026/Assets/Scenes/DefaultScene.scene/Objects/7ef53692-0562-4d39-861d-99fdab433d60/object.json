@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 120.0,
-                            "y": 56.0,
+                            "x": 790.0,
+                            "y": 469.0,
                             "z": 0.0
                         }
                     },
@@ -169,7 +169,7 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Chest",
+        "name": "Chest_Axe",
         "objectID": "7ef53692-0562-4d39-861d-99fdab433d60",
         "tag": ""
     },

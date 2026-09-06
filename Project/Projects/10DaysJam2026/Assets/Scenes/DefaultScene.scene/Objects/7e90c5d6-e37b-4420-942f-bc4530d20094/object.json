@@ -67,7 +67,7 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": ""
+                    "tag": "Enemy"
                 },
                 "type": "Box2DCollider"
             },
@@ -149,7 +149,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
+        "isActive": false,
         "name": "RubbleM",
         "objectID": "7e90c5d6-e37b-4420-942f-bc4530d20094",
         "tag": ""

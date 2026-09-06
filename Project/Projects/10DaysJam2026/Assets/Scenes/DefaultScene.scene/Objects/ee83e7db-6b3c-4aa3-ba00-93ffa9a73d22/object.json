@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 819.106689453125,
-                            "y": 26.209991455078125,
+                            "x": 146.106689453125,
+                            "y": 136.20999145507813,
                             "z": -2.1480484519997844e-06
                         }
                     },
@@ -395,7 +395,7 @@
                         },
                         "pixelSnapOutsetPixels": 0.0,
                         "pixelSnapping": true,
-                        "renderPriority": 0,
+                        "renderPriority": 1,
                         "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                     },
                     "isActive": true,

@@ -67,7 +67,7 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": ""
+                    "tag": "Enemy"
                 },
                 "type": "Box2DCollider"
             },
@@ -149,7 +149,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
+        "isActive": false,
         "name": "RubbleS",
         "objectID": "d5a1df87-7e02-4164-bd53-c6a58e756183",
         "tag": ""

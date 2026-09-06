@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 747.0,
-                            "y": 32.0,
+                            "x": 1111.0,
+                            "y": 128.0,
                             "z": 0.0
                         }
                     },
@@ -214,7 +214,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
+        "isActive": false,
         "name": "Boss1",
         "objectID": "5db46d62-cefd-4eff-bebe-39d3d28b4e3e",
         "tag": ""

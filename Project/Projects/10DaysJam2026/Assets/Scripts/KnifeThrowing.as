@@ -41,6 +41,9 @@ class KnifeThrowing : ScriptComponentBehavior {
     [SerializeField, Tooltip("プレイヤー")]
     Object@ player;
 
+    [SerializeField, Tooltip("この距離以内にプレイヤーがいる場合のみ移動・攻撃を行う")]
+    float activationRange = 150.0f;
+
     // 発射タイマー
     float shotTimer = 0.0f;
 
@@ -101,7 +104,17 @@ class KnifeThrowing : ScriptComponentBehavior {
             isAlive = false;
         }
 
-        if(isAlive){
+        // プレイヤーとの距離を判定し、範囲外なら移動・攻撃処理を行わない
+        bool playerNearby = false;
+        if (player !is null) {
+            Transform@ playerTf = player.GetTransform();
+            if (playerTf !is null) {
+                float distToPlayer = (playerTf.GetTranslate() - tf.GetTranslate()).Length();
+                playerNearby = (distToPlayer <= activationRange);
+            }
+        }
+
+        if(isAlive && playerNearby){
             // 揺れる処理
             if (hoverCycle > 0.0f) {
                 hoverTimer += GetDeltaTime();

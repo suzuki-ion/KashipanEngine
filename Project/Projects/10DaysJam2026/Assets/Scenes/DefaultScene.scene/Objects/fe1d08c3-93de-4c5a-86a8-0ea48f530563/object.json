@@ -131,7 +131,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
+        "isActive": false,
         "name": "SavePoint",
         "objectID": "fe1d08c3-93de-4c5a-86a8-0ea48f530563",
         "tag": ""

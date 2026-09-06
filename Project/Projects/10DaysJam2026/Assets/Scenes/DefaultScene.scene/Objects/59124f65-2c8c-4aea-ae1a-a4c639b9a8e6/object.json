@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 150.0,
-                            "y": 56.0,
+                            "x": 820.0,
+                            "y": 469.0,
                             "z": 0.0
                         }
                     },
@@ -169,7 +169,7 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Chest",
+        "name": "Chest_Ball",
         "objectID": "59124f65-2c8c-4aea-ae1a-a4c639b9a8e6",
         "tag": ""
     },

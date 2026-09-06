@@ -26,6 +26,9 @@ class Green : ScriptComponentBehavior {
     [SerializeField, Tooltip("プレイヤー")]
     Object@ player;
 
+    [SerializeField, Tooltip("この距離以内にプレイヤーがいる場合のみ移動を行う")]
+    float activationRange = 150.0f;
+
     [SerializeField, Tooltip("死亡エフェクト")]
     Object@ deathEffect;
 
@@ -83,19 +86,31 @@ class Green : ScriptComponentBehavior {
             }
         }
 
-        // moveDirに応じてY軸の回転を設定
-        float rotY = (moveDir == MoveDirection::Left) ? 0.0f : 3.14159f;
-        tf.SetRotate(Vector3(0.0f, rotY, 0.0f));
+        // プレイヤーとの距離を判定し、範囲外なら移動処理を行わない
+        bool playerNearby = false;
+        if (player !is null) {
+            Transform@ playerTf = player.GetTransform();
+            if (playerTf !is null) {
+                float distToPlayer = (playerTf.GetTranslate() - tf.GetTranslate()).Length();
+                playerNearby = (distToPlayer <= activationRange);
+            }
+        }
 
-        // 左右移動
-        float dir = (moveDir == MoveDirection::Left) ? -1.0f : 1.0f;
-        velocity.x = dir * moveSpeed;
+        if (playerNearby) {
+            // moveDirに応じてY軸の回転を設定
+            float rotY = (moveDir == MoveDirection::Left) ? 0.0f : 3.14159f;
+            tf.SetRotate(Vector3(0.0f, rotY, 0.0f));
 
-        // 重力
-        velocity.y -= gravity * GetDeltaTime();
+            // 左右移動
+            float dir = (moveDir == MoveDirection::Left) ? -1.0f : 1.0f;
+            velocity.x = dir * moveSpeed;
 
-        // 位置の更新
-        tf.SetTranslate(tf.GetTranslate() + Vector3(velocity.x, velocity.y, 0.0f) * GetDeltaTime());
+            // 重力
+            velocity.y -= gravity * GetDeltaTime();
+
+            // 位置の更新
+            tf.SetTranslate(tf.GetTranslate() + Vector3(velocity.x, velocity.y, 0.0f) * GetDeltaTime());
+        }
 
         // HPが0になったら
         if(hp <= 0.0f){

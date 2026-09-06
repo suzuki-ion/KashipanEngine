@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 904.984375,
-                            "y": 111.0,
+                            "x": 945.980224609375,
+                            "y": 241.0,
                             "z": 0.0
                         }
                     },
@@ -196,7 +196,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
+        "isActive": false,
         "name": "Boss2",
         "objectID": "45effcb6-a612-4079-a8d7-a78ee62a5d5f",
         "tag": ""

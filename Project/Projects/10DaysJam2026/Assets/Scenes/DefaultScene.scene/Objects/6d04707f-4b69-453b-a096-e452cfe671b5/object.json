@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 60.0,
-                            "y": 56.0,
+                            "x": 407.0,
+                            "y": 136.0,
                             "z": 0.0
                         }
                     },
@@ -169,7 +169,7 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Chest",
+        "name": "Chest_Katana",
         "objectID": "6d04707f-4b69-453b-a096-e452cfe671b5",
         "tag": ""
     },

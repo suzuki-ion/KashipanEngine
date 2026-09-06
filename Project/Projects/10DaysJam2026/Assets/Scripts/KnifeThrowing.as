@@ -72,6 +72,11 @@ class KnifeThrowing : ScriptComponentBehavior {
     }
 
     void Update() {
+        // 会話中(isDialogueActive)は移動・攻撃などの処理を止める
+        bool isDialogueActive = false;
+        GetScene().GetVariable("isDialogueActive", isDialogueActive);
+        if (isDialogueActive) return;
+
         Transform@ tf = GetTransform();
         if(tf is null) return;
 

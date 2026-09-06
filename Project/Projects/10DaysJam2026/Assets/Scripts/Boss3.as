@@ -114,6 +114,11 @@ class Boss3 : ScriptComponentBehavior {
     }
 
     void Update() {
+        // 会話中(isDialogueActive)は移動・攻撃などの処理を止める
+        bool isDialogueActive = false;
+        GetScene().GetVariable("isDialogueActive", isDialogueActive);
+        if (isDialogueActive) return;
+
         if (state == Boss3State::Dead) return;
 
         if (leftOvaryHP <= 0.0f && rightOvaryHP <= 0.0f) {

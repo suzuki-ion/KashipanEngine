@@ -43,6 +43,11 @@ class Ovary : ScriptComponentBehavior {
     }
 
     void Update() {
+        // 会話中(isDialogueActive)は処理を止める
+        bool isDialogueActive = false;
+        GetScene().GetVariable("isDialogueActive", isDialogueActive);
+        if (isDialogueActive) return;
+
         // ダメージ時の色点滅処理
         if (isFlashing) {
             damageFlashTimer -= GetDeltaTime();

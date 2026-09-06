@@ -34,6 +34,11 @@ class Sickle : ScriptComponentBehavior {
     }
 
     void Update() {
+        // 会話中(isDialogueActive)は飛行などの処理を止める
+        bool isDialogueActive = false;
+        GetScene().GetVariable("isDialogueActive", isDialogueActive);
+        if (isDialogueActive) return;
+
         // 生存時間チェック
         lifeTimer += GetDeltaTime();
         if (lifeTimer >= lifeTime) {

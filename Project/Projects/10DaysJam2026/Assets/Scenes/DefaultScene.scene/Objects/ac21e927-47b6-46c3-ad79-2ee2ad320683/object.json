@@ -31,6 +31,20 @@
             {
                 "data": {
                     "customData": {
+                        "fields": {
+                            "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22"
+                        },
+                        "scriptPath": "Assets\\Scripts\\WeaponLevelText.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "fontName": "jfdot-Shinonome-12",
                         "fontSize": 12.0,

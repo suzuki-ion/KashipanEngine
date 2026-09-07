@@ -3493,6 +3493,13 @@ void RegisterObjectTypes(asIScriptEngine *engine) {
             if (!obj) { ThrowDestroyedObjectException(); return kEmpty; }
             return obj->GetTagName();
         })
+        // オブジェクト固有のUUID(シーンJSON上のフォルダ名と同じ値)。シーン内に複数存在しうる
+        // オブジェクト(宝箱・会話トリガー等)ごとのセーブデータキーを作る用途などに使う
+        .method("string GetUUID() const", [](const ScriptObjectHandle &self) -> std::string {
+            EmptyObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return std::string(); }
+            return obj->GetObjectID().ToString();
+        })
         .method("Transform@ GetTransform()", [](ScriptObjectHandle &self) -> ScriptComponentHandle<Transform> * {
             EmptyObject *obj = self.Resolve();
             if (!obj) { ThrowDestroyedObjectException(); return nullptr; }

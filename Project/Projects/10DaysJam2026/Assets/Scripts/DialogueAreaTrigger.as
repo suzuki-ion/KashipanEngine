@@ -18,9 +18,36 @@ class DialogueAreaTrigger : ScriptComponentBehavior {
     bool hasTriggered = false;
 
     void Start() {
+        // triggerOnce=trueの場合、セーブ&ロードやシーン再訪問をまたいでも再発動しないよう、
+        // 発動済みかどうかをオブジェクトのUUIDをキーにしてセーブデータから復元する
+        if (!triggerOnce) return;
+        if (!ShouldPersistProgress()) return;
+
+        // セーブデータのファイルからの読み込みは、シーン内のどのスクリプトが最初に
+        // Start()を迎えても一度だけ行われるようにする(Player.as参照)
+        bool hasLoadedSaveThisSession = false;
+        GetScene().GetGlobalVariable("hasLoadedSaveThisSession", hasLoadedSaveThisSession);
+        if (!hasLoadedSaveThisSession) {
+            GetScene().LoadGlobalVariables();
+            GetScene().SetGlobalVariable("hasLoadedSaveThisSession", true);
+        }
+
+        bool savedTriggered = false;
+        if (GetScene().GetGlobalVariable(GetSaveKey(), savedTriggered) && savedTriggered) {
+            hasTriggered = true;
+        }
     }
 
     void Update() {
+    }
+
+    bool ShouldPersistProgress() const {
+        return GetScene().IsPlaying() || !IsEditorBuild();
+    }
+
+    // オブジェクトのUUIDを使ったセーブデータキー(シーン内に複数のトリガーがあっても衝突しない)
+    string GetSaveKey() const {
+        return "dialogueTrigger_" + GetOwnerObject().GetUUID() + "_fired";
     }
 
     // プレイヤーが領域に進入した瞬間に呼ばれる
@@ -29,6 +56,9 @@ class DialogueAreaTrigger : ScriptComponentBehavior {
         if (triggerOnce && hasTriggered) return;
 
         hasTriggered = true;
+        if (triggerOnce && ShouldPersistProgress()) {
+            GetScene().SetGlobalVariable(GetSaveKey(), true);
+        }
         StartDialogue();
     }
 

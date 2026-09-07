@@ -32,10 +32,21 @@ private:
     /// @brief 削除確認ポップアップで表示・削除対象になる元ファイルのパス
     std::string pendingDeleteOldFilePath_;
 
+    /// @brief シーン複製ポップアップを開く要求フラグ
+    bool isDuplicateSceneRequested_ = false;
+    /// @brief 複製元のシーン名
+    std::string duplicateSourceName_;
+    /// @brief 複製先の名前の入力バッファ
+    std::string duplicateNewName_;
+    /// @brief 複製先のファイルパスの入力バッファ（複製元がファイルパスを持たない場合は使用しない）
+    std::string duplicateNewFilePath_;
+
     /// @brief 登録済みシーンを単一ファイル形式（.json）からフォルダ形式（.scene）へ変換する
     void ConvertSceneToFolderFormat(const std::string &sceneName, const std::string &oldFilePath);
     /// @brief 変換後の削除確認ポップアップを表示する
     void ShowConfirmDeleteOldFilePopup();
+    /// @brief シーン複製ポップアップを表示する
+    void ShowDuplicateScenePopup();
 };
 
 } // namespace KashipanEngine

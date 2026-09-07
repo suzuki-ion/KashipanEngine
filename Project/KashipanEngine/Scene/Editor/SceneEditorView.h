@@ -30,6 +30,8 @@ class SceneViewCameraSettings;
 class ScreenBufferObject;
 class Transform;
 class TilemapRenderer;
+class CameraBoundsZone2D;
+class CameraBoundsZone3D;
 struct ColliderInfo2D;
 
 /// @brief シーンエディター用のシーンビュー
@@ -213,6 +215,43 @@ private:
     void DrawTilemapCellHighlight(EmptyObject *owner, TilemapRenderer *tilemap, int cellX, int cellY,
         const ImVec2 &imagePos, const ImVec2 &imageSize, ImU32 color) const;
 
+    //==================================================
+    // CameraBoundsZone2D/3D の可視化・矩形ドラッグ編集
+    //==================================================
+
+    /// @brief シーンビューのメニューバーへ「Bounds Zone」タブを表示する。選択中オブジェクトが
+    ///        単体でCameraBoundsZone2D/3Dを持つ場合のみ内容を有効化し、それ以外は無効化して表示する
+    void ShowCameraBoundsZoneToolbar(CameraBoundsZone2D *paintableZone2D, CameraBoundsZone3D *paintableZone3D);
+    /// @brief CameraBoundsZone2Dの、インスペクターで選択中の矩形をドラッグ編集する（所有オブジェクトの
+    ///        ローカルZ=0平面上での編集。ComputeTilemapCellUnderCursorと同じ平面レイキャスト方式）
+    /// @return このフレーム、シーンビューのマウス入力を矩形編集用に消費した（ホバー中含む）場合true
+    bool HandleCameraBoundsZoneEdit2D(EmptyObject *owner, CameraBoundsZone2D *zone, SceneEditorCommands *commands,
+        const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief CameraBoundsZone3Dの、インスペクターで選択中の矩形をドラッグ編集する（所有オブジェクトの
+    ///        ローカル空間で、選択中矩形のY中央高さのXZ平面上での編集。高さ(min.y/max.y)はインスペクターの
+    ///        数値入力のみで編集し、ここではフットプリント（XZ）のみを対象とする）
+    /// @return このフレーム、シーンビューのマウス入力を矩形編集用に消費した（ホバー中含む）場合true
+    bool HandleCameraBoundsZoneEdit3D(EmptyObject *owner, CameraBoundsZone3D *zone, SceneEditorCommands *commands,
+        const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief ドラッグ対象のハンドル種別（矩形の四隅・四辺・内部移動）
+    enum class CameraBoundsDragHandle {
+        None, Move,
+        EdgeMinA, EdgeMaxA, EdgeMinB, EdgeMaxB,
+        CornerMinAMinB, CornerMinAMaxB, CornerMaxAMinB, CornerMaxAMaxB,
+    };
+    /// @brief マウス位置と矩形4隅のスクリーン座標から、掴んでいるハンドルを判定する
+    /// @param cornerScreen 4隅のスクリーン座標。[0]=(minA,minB) [1]=(minA,maxB) [2]=(maxA,minB) [3]=(maxA,maxB)
+    /// @param insideCursor ローカルカーソルが矩形の内部にある場合true（どのハンドルにも当たらなければMoveを返す判定に使う）
+    CameraBoundsDragHandle PickCameraBoundsHandle(const ImVec2 &mouseScreen, const ImVec2 cornerScreen[4], bool insideCursor, float handleRadiusPx) const;
+    /// @brief 掴んだハンドルとローカル空間での移動量から、矩形の新しいmin/maxを計算する
+    void ApplyCameraBoundsDrag(CameraBoundsDragHandle handle, const Vector2 &startMin, const Vector2 &startMax,
+        const Vector2 &deltaLocal, Vector2 &outMin, Vector2 &outMax) const;
+    /// @brief 「2D」表示モード専用に、シーン内の全CameraBoundsZone2Dの矩形群をImGuiオーバーレイで描画する
+    ///        （常時表示。選択の有無に関わらず、グループごとに色分けして表示する）
+    void DrawCameraBoundsZoneOverlay2D(const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief シーン上の全CameraBoundsZone3Dの矩形群（直方体ワイヤーフレーム）をワールド空間の線分として追加する
+    void AppendCameraBoundsZoneDebugLines(std::vector<DebugLineVertex> &out);
+
     /// @brief Assetsウィンドウからのプレハブファイル（.prefab）のドラッグ&ドロップを処理する
     /// @details ドラッグ中（未ドロップ）は毎フレームUpdateGhostPreviewでプレビューを更新し、
     ///          実際にドロップされた瞬間にInstantiatePrefabFileでシーンへ配置する。ドロップ/キャンセル/
@@ -390,6 +429,20 @@ private:
     /// @brief ドラッグ中、前フレームで塗ったセル座標（セル間の線補間に使う。ストローク開始時は無効値）
     int lastPaintCellX_ = 0;
     int lastPaintCellY_ = 0;
+
+    // CameraBoundsZone2D/3D の可視化・矩形ドラッグ編集用状態
+    /// @brief 全CameraBoundsZone2D/3Dの矩形群を常時表示するか（再起動後も維持される）
+    bool showCameraBoundsGizmos_ = true;
+    /// @brief Bounds Zone編集トグルの有効/無効（選択がCameraBoundsZone2D/3D付きオブジェクト単体でなくなると自動でfalseへ戻る）
+    bool cameraBoundsEditActive_ = false;
+    /// @brief 矩形のドラッグ操作中かどうか（マウス押下〜離すまでを1つのUndo単位にする）
+    bool isCameraBoundsDragActive_ = false;
+    CameraBoundsDragHandle cameraBoundsDragHandle_ = CameraBoundsDragHandle::None;
+    JSON cameraBoundsDragBeforeJson_;
+    /// @brief ドラッグ開始時のローカルカーソル位置（2Dは(x,y)、3Dはフットプリントの(x,z)）
+    Vector2 cameraBoundsDragStartLocalCursor_{};
+    Vector2 cameraBoundsDragStartMin_{};
+    Vector2 cameraBoundsDragStartMax_{};
 
     // ドラッグ中のPrefabプレビュー用状態（UpdateGhostPreview/ClearGhostPreview参照）
     bool ghostPreviewActive_ = false;

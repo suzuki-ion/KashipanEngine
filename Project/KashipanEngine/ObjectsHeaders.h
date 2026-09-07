@@ -49,6 +49,8 @@
 #include "Objects/Components/Render/BitmapTextRenderer.h"
 #include "Objects/Components/Render/Camera2D.h"
 #include "Objects/Components/Render/Camera3D.h"
+#include "Objects/Components/Render/CameraBoundsZone2D.h"
+#include "Objects/Components/Render/CameraBoundsZone3D.h"
 #include "Objects/Components/Render/CameraController.h"
 #include "Objects/Components/Render/CameraController2D.h"
 #include "Objects/Components/Render/CameraRenderer.h"

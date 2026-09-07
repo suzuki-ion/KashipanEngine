@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CameraBoundsZone2D | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_CameraBoundsZone2D">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>CameraBoundsZone2D <span class="badge final">最大1個</span></h1>
+<p class="page-lead"><a href="CameraController2D.html">CameraController2D</a>の移動範囲制限（Camera Bounds Zone）機能で参照される、境界データ専用コンポーネントです。単純な1矩形のmin/maxクランプではなく、「グループ」を複数持て、各グループはさらに複数の矩形から成ります。追従ターゲットが今どのグループの範囲内にいるかで、カメラのクランプに使うグループが自動的に切り替わります（部屋Aにいる間は部屋Aの矩形群でクランプ、部屋Bへ移動したら部屋Bの矩形群に切り替わる、といった使い方を想定）。</p>
+</div>
+
+<h2>データ構造</h2>
+<table>
+<tr><th>用語</th><th>内容</th></tr>
+<tr><td>Group（グループ）</td><td>複数の矩形（Rect）から成る。何個でも追加できる</td></tr>
+<tr><td>Rect（矩形）</td><td>min/max（Vector2）で定義される軸並行の矩形。<strong>コンポーネントを持つオブジェクト自身のTransformのローカル空間</strong>で定義される（オブジェクトを移動・回転させると矩形群も一緒に動く）</td></tr>
+</table>
+
+<h3>クランプの仕組み</h3>
+<p>1グループ内に複数の矩形がある場合、各矩形ごとに個別にクランプ計算を行い、元の位置から最も近い結果を採用する。これにより、複数の矩形を隣接・重複させることでL字型などの凹形状の範囲を表現でき、その形状に沿ったクランプが行われる。矩形同士が離れている（隙間がある）場合、その隙間にターゲットが入り込むと最も近い矩形へスナップする。</p>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Group N（グループごとの折りたたみヘッダー）</td><td>CollapsingHeader</td><td>グループ内の矩形一覧を表示する</td></tr>
+<tr><td>Rect（矩形ごとの行）</td><td>Selectable + Min/Max（Vector2ドラッグ入力×2）</td><td>矩形1件分の編集行。行をクリックするとシーンビュー上でのドラッグ編集対象として選択される（後述）</td></tr>
+<tr><td>Remove Rect</td><td>ボタン</td><td>その矩形を削除する</td></tr>
+<tr><td>Add Rect / Remove Group</td><td>ボタン</td><td>グループへの矩形追加・グループ自体の削除</td></tr>
+<tr><td>Add Group</td><td>ボタン</td><td>新しいグループを末尾に追加する</td></tr>
+</table>
+
+<h2>シーンビューでの可視化・編集</h2>
+<p>すべてのCameraBoundsZone2Dの矩形群は、Scene Viewの「表示」タブの「境界ゾーン」トグルが有効な間、常時（選択の有無に関わらず）2Dモードでオーバーレイ表示される（グループごとに色分け）。</p>
+<p>矩形1件を編集するには、対象オブジェクトを単体で選択したうえでScene Viewの「境界ゾーン」タブから「矩形編集を有効化」をオンにし、Inspector側で編集したい矩形の行をクリックして選択する。選択中の矩形はシーンビュー上に黄色い枠とハンドル（四隅・四辺）が表示され、四隅ドラッグでサイズ変更（縦横同時）、四辺ドラッグで片軸のみのサイズ変更、矩形内部のドラッグで矩形全体の移動ができる。ドラッグの確定はUndo履歴に1操作として積まれる。</p>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path"><span>Add Component</span><i>›</i><span>Render</span><i>›</i><span>CameraBoundsZone2D</span></span> から追加する。1オブジェクトに付与できるのは最大1個。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="CameraController2D.html">Components/Render/CameraController2D.html</a> — このコンポーネントを参照して移動範囲制限を行うカメラ側コンポーネント</li>
+<li><a href="CameraBoundsZone3D.html">Components/Render/CameraBoundsZone3D.html</a> — 3D用の同種コンポーネント</li>
+<li><a href="../../Windows/04_SceneView.html">Windows/04_SceneView.html</a> — Scene Viewの表示トグル・ツールバータブの基本操作</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

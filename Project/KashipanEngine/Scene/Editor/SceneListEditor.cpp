@@ -52,11 +52,12 @@ void SceneListEditor::ShowImGui() {
     const std::vector<SceneManager::SceneEntry> entries = sceneManager->GetRegisteredScenes();
     const bool isPlaying = context_->IsPlaying();
 
-    if (ImGui::BeginTable("##SceneListTable", 5,
+    if (ImGui::BeginTable("##SceneListTable", 6,
         ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingStretchProp)) {
         ImGui::TableSetupColumn(TranslationLabel("editor.scenelist.column.name"), ImGuiTableColumnFlags_WidthStretch, 0.3f);
         ImGui::TableSetupColumn(TranslationLabel("editor.scenelist.column.filepath"), ImGuiTableColumnFlags_WidthStretch, 0.5f);
         ImGui::TableSetupColumn(TranslationLabel("editor.scenelist.column.switch"), ImGuiTableColumnFlags_WidthFixed);
+        ImGui::TableSetupColumn(TranslationLabel("editor.scenelist.column.duplicate"), ImGuiTableColumnFlags_WidthFixed);
         ImGui::TableSetupColumn(TranslationLabel("editor.scenelist.column.convert"), ImGuiTableColumnFlags_WidthFixed);
         ImGui::TableSetupColumn(TranslationLabel("editor.scenelist.column.delete"), ImGuiTableColumnFlags_WidthFixed);
         ImGui::TableHeadersRow();
@@ -104,6 +105,26 @@ void SceneListEditor::ShowImGui() {
                 ImGui::SetItemTooltip("%s", TranslationC("editor.scenelist.switch.tooltip"));
             }
 
+            //--------- 複製 ---------//
+            ImGui::TableNextColumn();
+            if (ImGui::Button(TranslationLabel("editor.scenelist.duplicate"))) {
+                isDuplicateSceneRequested_ = true;
+                duplicateSourceName_ = entry.name;
+                duplicateNewName_ = entry.name + " Copy";
+                duplicateNewFilePath_.clear();
+                if (!entry.filePath.empty()) {
+                    std::string base = entry.filePath;
+                    std::string ext;
+                    const size_t dotPos = base.find_last_of('.');
+                    if (dotPos != std::string::npos && dotPos > base.find_last_of("/\\")) {
+                        ext = base.substr(dotPos);
+                        base.erase(dotPos);
+                    }
+                    duplicateNewFilePath_ = base + " Copy" + ext;
+                }
+            }
+            ImGui::SetItemTooltip("%s", TranslationC("editor.scenelist.duplicate.tooltip"));
+
             //--------- フォルダ形式（.scene）への変換 ---------//
             ImGui::TableNextColumn();
             const bool canConvert = entry.filePath.size() > 5 && entry.filePath.substr(entry.filePath.size() - 5) == ".json";
@@ -147,6 +168,7 @@ void SceneListEditor::ShowImGui() {
     ImGui::EndDisabled();
 
     ShowConfirmDeleteOldFilePopup();
+    ShowDuplicateScenePopup();
 
     ImGui::End();
 }
@@ -192,6 +214,42 @@ void SceneListEditor::ShowConfirmDeleteOldFilePopup() {
         ImGui::SameLine();
         if (ImGui::Button(TranslationLabel("editor.scenelist.deleteoriginal.keep"), ImVec2(120, 0))) {
             pendingDeleteOldFilePath_.clear();
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+}
+
+void SceneListEditor::ShowDuplicateScenePopup() {
+    auto *sceneManager = context_ ? context_->GetSceneManager() : nullptr;
+
+    if (isDuplicateSceneRequested_) {
+        ImGui::OpenPopup(TranslationLabel("editor.scenelist.duplicate.title"));
+        isDuplicateSceneRequested_ = false;
+    }
+    if (ImGui::BeginPopupModal(TranslationLabel("editor.scenelist.duplicate.title"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("%s: %s", TranslationC("editor.scenelist.duplicate.source"), duplicateSourceName_.c_str());
+        ImGui::InputText(TranslationLabel("editor.scenelist.duplicate.newname"), &duplicateNewName_);
+        if (!duplicateNewFilePath_.empty()) {
+            ImGui::InputText(TranslationLabel("editor.scenelist.duplicate.newfilepath"), &duplicateNewFilePath_);
+        }
+
+        const bool nameEmpty = duplicateNewName_.empty();
+        const bool nameAlreadyExists = sceneManager && sceneManager->IsSceneRegistered(duplicateNewName_);
+        if (nameAlreadyExists) {
+            ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f), "%s", TranslationC("editor.scenelist.duplicate.namealreadyexists"));
+        }
+
+        ImGui::BeginDisabled(nameEmpty || nameAlreadyExists || !sceneManager);
+        if (ImGui::Button(TranslationLabel("editor.scenelist.duplicate.button"), ImVec2(120, 0))) {
+            if (sceneManager->DuplicateRegisteredScene(duplicateSourceName_, duplicateNewName_, duplicateNewFilePath_)) {
+                sceneManager->SaveSceneList();
+            }
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        if (ImGui::Button(TranslationLabel("editor.common.cancel"), ImVec2(120, 0))) {
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();

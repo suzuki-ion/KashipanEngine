@@ -28,6 +28,8 @@
 #include "Objects/Components/MeshFilter.h"
 #include "Objects/Components/Render/Camera2D.h"
 #include "Objects/Components/Render/Camera3D.h"
+#include "Objects/Components/Render/CameraBoundsZone2D.h"
+#include "Objects/Components/Render/CameraBoundsZone3D.h"
 #include "Objects/Components/Render/CameraRenderer.h"
 #include "Objects/Components/Render/SceneViewOrbitState.h"
 #include "Objects/Components/Render/SceneViewCameraSettings.h"
@@ -60,6 +62,7 @@ SceneEditorView::SceneEditorView(Passkey<SceneEditor>, SceneEditorContext *conte
     showCameraMarkers_ = EditorSettings::GetBool("sceneView.showCameraMarkers", true);
     showColliderGizmos_ = EditorSettings::GetBool("sceneView.showColliderGizmos", true);
     showBoneGizmos_ = EditorSettings::GetBool("sceneView.showBoneGizmos", false);
+    showCameraBoundsGizmos_ = EditorSettings::GetBool("sceneView.showCameraBoundsGizmos", true);
 
     // ギズモのグリッドスナップ設定を復元する（再起動後も維持される）
     gizmoSnapEnabled_ = EditorSettings::GetBool("sceneView.gizmoSnapEnabled", false);
@@ -512,6 +515,25 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     }
     if (!paintableTilemap) tilemapPaintActive_ = false;
 
+    // CameraBoundsZone2D/3Dの矩形編集も同様に、選択中オブジェクトが単体でどちらかを
+    // 持つ場合のみ有効化できる（両方持つ場合は2D側を優先する）
+    CameraBoundsZone2D *paintableBoundsZone2D = nullptr;
+    CameraBoundsZone3D *paintableBoundsZone3D = nullptr;
+    EmptyObject *paintableBoundsOwner = nullptr;
+    if (selectedObjects.size() == 1) {
+        EmptyObject *only = *selectedObjects.begin();
+        if (only) {
+            if (auto *zone2D = only->GetComponent<CameraBoundsZone2D>()) {
+                paintableBoundsZone2D = zone2D;
+                paintableBoundsOwner = only;
+            } else if (auto *zone3D = only->GetComponent<CameraBoundsZone3D>()) {
+                paintableBoundsZone3D = zone3D;
+                paintableBoundsOwner = only;
+            }
+        }
+    }
+    if (!paintableBoundsZone2D && !paintableBoundsZone3D) cameraBoundsEditActive_ = false;
+
     //--------- ツールバー（項目数が増えてきたため、メニューバーでまとめて表示する） ---------//
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu(TranslationLabel("editor.sceneview.tab.gizmo"))) {
@@ -594,6 +616,8 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
             if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.colliders"), &showColliderGizmos_)) EditorSettings::SetBool("sceneView.showColliderGizmos", showColliderGizmos_);
             ImGui::SameLine();
             if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.bones"), &showBoneGizmos_)) EditorSettings::SetBool("sceneView.showBoneGizmos", showBoneGizmos_);
+            ImGui::SameLine();
+            if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.boundszones"), &showCameraBoundsGizmos_)) EditorSettings::SetBool("sceneView.showCameraBoundsGizmos", showCameraBoundsGizmos_);
 
             // 背景設定（単色 or テクスチャ）
             if (ImGui::ColorEdit4(TranslationLabel("editor.sceneview.backgroundcolor"), &backgroundColor_.x)) {
@@ -620,6 +644,11 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
 
         if (ImGui::BeginMenu(TranslationLabel("editor.sceneview.tab.tilepaint"))) {
             ShowTilemapPaintToolbar(paintableTilemap);
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu(TranslationLabel("editor.sceneview.tab.boundszone"))) {
+            ShowCameraBoundsZoneToolbar(paintableBoundsZone2D, paintableBoundsZone3D);
             ImGui::EndMenu();
         }
         ImGui::EndMenuBar();
@@ -668,8 +697,15 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     const bool tilemapPaintConsumedInput = tilemapPaintActive_ && paintableTilemap
         && HandleTilemapPaint(paintableOwner, paintableTilemap, commands, imagePos, drawSize);
 
+    //--------- Camera Bounds Zoneの矩形ドラッグ編集（有効時はクリックが常に矩形編集になるため、
+    //          通常のオブジェクトピッキング・ギズモ操作は行わない） ---------//
+    const bool cameraBoundsEditConsumedInput = !tilemapPaintConsumedInput && cameraBoundsEditActive_ && paintableBoundsOwner
+        && (paintableBoundsZone2D
+            ? HandleCameraBoundsZoneEdit2D(paintableBoundsOwner, paintableBoundsZone2D, commands, imagePos, drawSize)
+            : (paintableBoundsZone3D && HandleCameraBoundsZoneEdit3D(paintableBoundsOwner, paintableBoundsZone3D, commands, imagePos, drawSize)));
+
     //--------- クリックによるオブジェクト選択 ---------//
-    if (!tilemapPaintConsumedInput) HandleObjectPicking(hierarchy, imagePos, drawSize);
+    if (!tilemapPaintConsumedInput && !cameraBoundsEditConsumedInput) HandleObjectPicking(hierarchy, imagePos, drawSize);
 
     // グリッド線・当たり判定のワイヤーフレームは screenBuffer_ へGPUで直接描画される
     // （UpdateEditorDebugDraw で設定済み。DebugGrid/DebugLinesパイプライン参照）
@@ -682,6 +718,10 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
 
     //--------- 2Dモード専用のCamera2D表示範囲（3D/2D3DモードのAppendCameraFrustumLinesと対になる表示） ---------//
     if (showCameraMarkers_ && displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly) DrawCamera2DBoundsOverlay(imagePos, drawSize);
+
+    //--------- 2Dモード専用のCameraBoundsZone2D矩形群の可視化（3D側はAppendCameraBoundsZoneDebugLines
+    //          によりGPUデバッグラインで表示するため対象外） ---------//
+    if (showCameraBoundsGizmos_ && displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly) DrawCameraBoundsZoneOverlay2D(imagePos, drawSize);
 
     //--------- ライトのデバッグ表示（2Dモードでは3D専用のアイコンのため表示しない） ---------//
     if (showLightMarkers_ && displayMode_ != SceneRenderer::EditorDisplayMode::TwoDOnly) DrawLightMarkers(imagePos, drawSize);
@@ -905,6 +945,9 @@ void SceneEditorView::UpdateEditorDebugDraw() {
 
         if (showColliderGizmos_) {
             AppendColliderDebugLines(settings.lines);
+        }
+        if (showCameraBoundsGizmos_) {
+            AppendCameraBoundsZoneDebugLines(settings.lines);
         }
         if (showCameraMarkers_) {
             AppendCameraFrustumLines(settings.lines);
@@ -1547,6 +1590,379 @@ void SceneEditorView::ShowTilemapPaintToolbar(TilemapRenderer *paintableTilemap)
             ImGui::PopStyleColor();
         }
         ImGui::PopID();
+    }
+}
+
+void SceneEditorView::ShowCameraBoundsZoneToolbar(CameraBoundsZone2D *paintableZone2D, CameraBoundsZone3D *paintableZone3D) {
+    const bool hasZone = (paintableZone2D != nullptr) || (paintableZone3D != nullptr);
+    ImGui::BeginDisabled(!hasZone);
+    if (ImGui::Checkbox(TranslationLabel("editor.sceneview.boundszone.enable"), &cameraBoundsEditActive_)) {
+        // トグル切り替えの瞬間にドラッグ状態が残らないようにする
+        isCameraBoundsDragActive_ = false;
+    }
+    ImGui::EndDisabled();
+
+    if (!hasZone) {
+        ImGui::TextUnformatted(TranslationC("editor.sceneview.boundszone.no_selection"));
+        return;
+    }
+    ImGuiCustom::TextDisabledWrapped("%s", TranslationC("editor.sceneview.boundszone.hint"));
+}
+
+SceneEditorView::CameraBoundsDragHandle SceneEditorView::PickCameraBoundsHandle(
+    const ImVec2 &mouseScreen, const ImVec2 cornerScreen[4], bool insideCursor, float handleRadiusPx) const {
+    const float r2 = handleRadiusPx * handleRadiusPx;
+    auto distSq = [&](const ImVec2 &p) {
+        const float dx = p.x - mouseScreen.x;
+        const float dy = p.y - mouseScreen.y;
+        return dx * dx + dy * dy;
+    };
+    // cornerScreen: [0]=(minA,minB) [1]=(minA,maxB) [2]=(maxA,minB) [3]=(maxA,maxB)
+    if (distSq(cornerScreen[0]) <= r2) return CameraBoundsDragHandle::CornerMinAMinB;
+    if (distSq(cornerScreen[1]) <= r2) return CameraBoundsDragHandle::CornerMinAMaxB;
+    if (distSq(cornerScreen[2]) <= r2) return CameraBoundsDragHandle::CornerMaxAMinB;
+    if (distSq(cornerScreen[3]) <= r2) return CameraBoundsDragHandle::CornerMaxAMaxB;
+
+    auto mid = [](const ImVec2 &a, const ImVec2 &b) { return ImVec2((a.x + b.x) * 0.5f, (a.y + b.y) * 0.5f); };
+    if (distSq(mid(cornerScreen[0], cornerScreen[1])) <= r2) return CameraBoundsDragHandle::EdgeMinA;
+    if (distSq(mid(cornerScreen[2], cornerScreen[3])) <= r2) return CameraBoundsDragHandle::EdgeMaxA;
+    if (distSq(mid(cornerScreen[0], cornerScreen[2])) <= r2) return CameraBoundsDragHandle::EdgeMinB;
+    if (distSq(mid(cornerScreen[1], cornerScreen[3])) <= r2) return CameraBoundsDragHandle::EdgeMaxB;
+
+    if (insideCursor) return CameraBoundsDragHandle::Move;
+    return CameraBoundsDragHandle::None;
+}
+
+void SceneEditorView::ApplyCameraBoundsDrag(CameraBoundsDragHandle handle, const Vector2 &startMin, const Vector2 &startMax,
+    const Vector2 &deltaLocal, Vector2 &outMin, Vector2 &outMax) const {
+    outMin = startMin;
+    outMax = startMax;
+    switch (handle) {
+    case CameraBoundsDragHandle::Move:
+        outMin = startMin + deltaLocal;
+        outMax = startMax + deltaLocal;
+        break;
+    case CameraBoundsDragHandle::EdgeMinA: outMin.x = startMin.x + deltaLocal.x; break;
+    case CameraBoundsDragHandle::EdgeMaxA: outMax.x = startMax.x + deltaLocal.x; break;
+    case CameraBoundsDragHandle::EdgeMinB: outMin.y = startMin.y + deltaLocal.y; break;
+    case CameraBoundsDragHandle::EdgeMaxB: outMax.y = startMax.y + deltaLocal.y; break;
+    case CameraBoundsDragHandle::CornerMinAMinB:
+        outMin.x = startMin.x + deltaLocal.x;
+        outMin.y = startMin.y + deltaLocal.y;
+        break;
+    case CameraBoundsDragHandle::CornerMinAMaxB:
+        outMin.x = startMin.x + deltaLocal.x;
+        outMax.y = startMax.y + deltaLocal.y;
+        break;
+    case CameraBoundsDragHandle::CornerMaxAMinB:
+        outMax.x = startMax.x + deltaLocal.x;
+        outMin.y = startMin.y + deltaLocal.y;
+        break;
+    case CameraBoundsDragHandle::CornerMaxAMaxB:
+        outMax.x = startMax.x + deltaLocal.x;
+        outMax.y = startMax.y + deltaLocal.y;
+        break;
+    default:
+        break;
+    }
+    // 反転防止: ハンドルがもう一方の端を追い越した場合は、矩形が潰れる方向へクランプする
+    // （min>maxのまま保持して符号が反転するのを避けるため、軸ごとにソートし直す）
+    {
+        const float a = outMin.x, b = outMax.x;
+        outMin.x = std::min(a, b);
+        outMax.x = std::max(a, b);
+    }
+    {
+        const float a = outMin.y, b = outMax.y;
+        outMin.y = std::min(a, b);
+        outMax.y = std::max(a, b);
+    }
+}
+
+bool SceneEditorView::HandleCameraBoundsZoneEdit2D(EmptyObject *owner, CameraBoundsZone2D *zone, SceneEditorCommands *commands,
+    const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (!owner || !zone || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return false;
+    int selectedGroup = -1, selectedRect = -1;
+    zone->GetEditorSelection(selectedGroup, selectedRect);
+    if (selectedGroup < 0 || selectedRect < 0) return false;
+    auto &groups = zone->GetGroups();
+    if (static_cast<size_t>(selectedGroup) >= groups.size()) return false;
+    auto &rects = groups[static_cast<size_t>(selectedGroup)].rects;
+    if (static_cast<size_t>(selectedRect) >= rects.size()) return false;
+    auto &rect = rects[static_cast<size_t>(selectedRect)];
+
+    auto *transform = owner->GetComponent<Transform>();
+    if (!transform) return false;
+    const Matrix4x4 &world = transform->GetWorldMatrix();
+
+    const bool isHovered = ImGui::IsItemHovered();
+    const ImVec2 mouseScreen = ImGui::GetMousePos();
+
+    // ローカルZ=0平面とのカーソル交点（ComputeTilemapCellUnderCursorと同じ式。セル量子化はしない）
+    Vector2 localCursor{};
+    bool hasLocalCursor = false;
+    if (isHovered || isCameraBoundsDragActive_) {
+        const float ndcX = ((mouseScreen.x - imagePos.x) / imageSize.x) * 2.0f - 1.0f;
+        const float ndcY = -(((mouseScreen.y - imagePos.y) / imageSize.y) * 2.0f - 1.0f);
+        const Matrix4x4 invViewProjection = (GetActiveView() * GetActiveProjection()).Inverse();
+        const Vector3 rayStart = UnprojectNdc(invViewProjection, ndcX, ndcY, 0.0f);
+        const Vector3 rayEnd = UnprojectNdc(invViewProjection, ndcX, ndcY, 1.0f);
+        const Matrix4x4 invWorld = world.Inverse();
+        const Vector3 localStart = TransformPoint(rayStart, invWorld);
+        const Vector3 localEnd = TransformPoint(rayEnd, invWorld);
+        const Vector3 localDir = localEnd - localStart;
+        if (std::abs(localDir.z) >= 1e-8f) {
+            const float t = -localStart.z / localDir.z;
+            if (t >= 0.0f && t <= 1.0f) {
+                localCursor = Vector2(localStart.x + localDir.x * t, localStart.y + localDir.y * t);
+                hasLocalCursor = true;
+            }
+        }
+    }
+
+    ImVec2 cornerScreen[4];
+    bool cornersValid = true;
+    const Vector3 localCorners[4] = {
+        Vector3(rect.min.x, rect.min.y, 0.0f), Vector3(rect.min.x, rect.max.y, 0.0f),
+        Vector3(rect.max.x, rect.min.y, 0.0f), Vector3(rect.max.x, rect.max.y, 0.0f),
+    };
+    for (int i = 0; i < 4; ++i) {
+        if (!ProjectToImage(TransformPoint(localCorners[i], world), imagePos, imageSize, cornerScreen[i], false)) cornersValid = false;
+    }
+
+    constexpr float kHandleRadiusPx = 8.0f;
+    const bool insideRect = hasLocalCursor && localCursor.x >= rect.min.x && localCursor.x <= rect.max.x &&
+        localCursor.y >= rect.min.y && localCursor.y <= rect.max.y;
+
+    const bool leftClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+    const bool leftDown = ImGui::IsMouseDown(ImGuiMouseButton_Left);
+    const bool leftReleased = ImGui::IsMouseReleased(ImGuiMouseButton_Left);
+
+    if (!isCameraBoundsDragActive_ && isHovered && cornersValid && hasLocalCursor && leftClicked) {
+        const CameraBoundsDragHandle handle = PickCameraBoundsHandle(mouseScreen, cornerScreen, insideRect, kHandleRadiusPx);
+        if (handle != CameraBoundsDragHandle::None) {
+            isCameraBoundsDragActive_ = true;
+            cameraBoundsDragHandle_ = handle;
+            cameraBoundsDragBeforeJson_ = owner->SaveComponentToJson(zone);
+            cameraBoundsDragStartLocalCursor_ = localCursor;
+            cameraBoundsDragStartMin_ = rect.min;
+            cameraBoundsDragStartMax_ = rect.max;
+        }
+    } else if (isCameraBoundsDragActive_ && leftDown && hasLocalCursor) {
+        const Vector2 deltaLocal = localCursor - cameraBoundsDragStartLocalCursor_;
+        Vector2 newMin, newMax;
+        ApplyCameraBoundsDrag(cameraBoundsDragHandle_, cameraBoundsDragStartMin_, cameraBoundsDragStartMax_, deltaLocal, newMin, newMax);
+        rect.min = newMin;
+        rect.max = newMax;
+    }
+
+    if (isCameraBoundsDragActive_ && leftReleased) {
+        // ドラッグ終了: 変更があった場合のみUndo履歴へ積む（HandleTilemapPaintと同じパターン）
+        isCameraBoundsDragActive_ = false;
+        cameraBoundsDragHandle_ = CameraBoundsDragHandle::None;
+        if (commands) {
+            JSON after = owner->SaveComponentToJson(zone);
+            if (after != cameraBoundsDragBeforeJson_) {
+                commands->PushExecuted(std::make_unique<ComponentEditCommand>(owner, zone, cameraBoundsDragBeforeJson_, after));
+            }
+        }
+    }
+
+    if (cornersValid) {
+        constexpr ImU32 kSelectedColor = IM_COL32(255, 220, 60, 255);
+        auto *drawList = ImGui::GetWindowDrawList();
+        drawList->PushClipRect(imagePos, ImVec2(imagePos.x + imageSize.x, imagePos.y + imageSize.y), true);
+        drawList->AddQuad(cornerScreen[0], cornerScreen[1], cornerScreen[3], cornerScreen[2], kSelectedColor, 2.0f);
+        for (const auto &corner : cornerScreen) drawList->AddCircleFilled(corner, 4.0f, kSelectedColor);
+        drawList->PopClipRect();
+    }
+
+    return isCameraBoundsDragActive_ || (isHovered && insideRect);
+}
+
+bool SceneEditorView::HandleCameraBoundsZoneEdit3D(EmptyObject *owner, CameraBoundsZone3D *zone, SceneEditorCommands *commands,
+    const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (!owner || !zone || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return false;
+    int selectedGroup = -1, selectedRect = -1;
+    zone->GetEditorSelection(selectedGroup, selectedRect);
+    if (selectedGroup < 0 || selectedRect < 0) return false;
+    auto &groups = zone->GetGroups();
+    if (static_cast<size_t>(selectedGroup) >= groups.size()) return false;
+    auto &rects = groups[static_cast<size_t>(selectedGroup)].rects;
+    if (static_cast<size_t>(selectedRect) >= rects.size()) return false;
+    auto &rect = rects[static_cast<size_t>(selectedRect)];
+
+    auto *transform = owner->GetComponent<Transform>();
+    if (!transform) return false;
+    const Matrix4x4 &world = transform->GetWorldMatrix();
+    // フットプリント（XZ）編集用の高さ: 選択中矩形のY範囲の中央に固定する
+    const float editHeight = (rect.min.y + rect.max.y) * 0.5f;
+
+    const bool isHovered = ImGui::IsItemHovered();
+    const ImVec2 mouseScreen = ImGui::GetMousePos();
+
+    // ローカルY=editHeight平面とのカーソル交点（ComputeTilemapCellUnderCursorのZ=0平面版をY基準にしたもの）
+    Vector2 localCursor{}; // (x, z)
+    bool hasLocalCursor = false;
+    if (isHovered || isCameraBoundsDragActive_) {
+        const float ndcX = ((mouseScreen.x - imagePos.x) / imageSize.x) * 2.0f - 1.0f;
+        const float ndcY = -(((mouseScreen.y - imagePos.y) / imageSize.y) * 2.0f - 1.0f);
+        const Matrix4x4 invViewProjection = (GetActiveView() * GetActiveProjection()).Inverse();
+        const Vector3 rayStart = UnprojectNdc(invViewProjection, ndcX, ndcY, 0.0f);
+        const Vector3 rayEnd = UnprojectNdc(invViewProjection, ndcX, ndcY, 1.0f);
+        const Matrix4x4 invWorld = world.Inverse();
+        const Vector3 localStart = TransformPoint(rayStart, invWorld);
+        const Vector3 localEnd = TransformPoint(rayEnd, invWorld);
+        const Vector3 localDir = localEnd - localStart;
+        if (std::abs(localDir.y) >= 1e-8f) {
+            const float t = (editHeight - localStart.y) / localDir.y;
+            if (t >= 0.0f && t <= 1.0f) {
+                localCursor = Vector2(localStart.x + localDir.x * t, localStart.z + localDir.z * t);
+                hasLocalCursor = true;
+            }
+        }
+    }
+
+    ImVec2 cornerScreen[4];
+    bool cornersValid = true;
+    const Vector3 localCorners[4] = {
+        Vector3(rect.min.x, editHeight, rect.min.z), Vector3(rect.min.x, editHeight, rect.max.z),
+        Vector3(rect.max.x, editHeight, rect.min.z), Vector3(rect.max.x, editHeight, rect.max.z),
+    };
+    for (int i = 0; i < 4; ++i) {
+        if (!ProjectToImage(TransformPoint(localCorners[i], world), imagePos, imageSize, cornerScreen[i], false)) cornersValid = false;
+    }
+
+    constexpr float kHandleRadiusPx = 8.0f;
+    const bool insideRect = hasLocalCursor && localCursor.x >= rect.min.x && localCursor.x <= rect.max.x &&
+        localCursor.y >= rect.min.z && localCursor.y <= rect.max.z;
+
+    const bool leftClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+    const bool leftDown = ImGui::IsMouseDown(ImGuiMouseButton_Left);
+    const bool leftReleased = ImGui::IsMouseReleased(ImGuiMouseButton_Left);
+
+    if (!isCameraBoundsDragActive_ && isHovered && cornersValid && hasLocalCursor && leftClicked) {
+        const CameraBoundsDragHandle handle = PickCameraBoundsHandle(mouseScreen, cornerScreen, insideRect, kHandleRadiusPx);
+        if (handle != CameraBoundsDragHandle::None) {
+            isCameraBoundsDragActive_ = true;
+            cameraBoundsDragHandle_ = handle;
+            cameraBoundsDragBeforeJson_ = owner->SaveComponentToJson(zone);
+            cameraBoundsDragStartLocalCursor_ = localCursor;
+            cameraBoundsDragStartMin_ = Vector2(rect.min.x, rect.min.z);
+            cameraBoundsDragStartMax_ = Vector2(rect.max.x, rect.max.z);
+        }
+    } else if (isCameraBoundsDragActive_ && leftDown && hasLocalCursor) {
+        const Vector2 deltaLocal = localCursor - cameraBoundsDragStartLocalCursor_;
+        Vector2 newMin, newMax;
+        ApplyCameraBoundsDrag(cameraBoundsDragHandle_, cameraBoundsDragStartMin_, cameraBoundsDragStartMax_, deltaLocal, newMin, newMax);
+        rect.min.x = newMin.x;
+        rect.min.z = newMin.y;
+        rect.max.x = newMax.x;
+        rect.max.z = newMax.y;
+    }
+
+    if (isCameraBoundsDragActive_ && leftReleased) {
+        isCameraBoundsDragActive_ = false;
+        cameraBoundsDragHandle_ = CameraBoundsDragHandle::None;
+        if (commands) {
+            JSON after = owner->SaveComponentToJson(zone);
+            if (after != cameraBoundsDragBeforeJson_) {
+                commands->PushExecuted(std::make_unique<ComponentEditCommand>(owner, zone, cameraBoundsDragBeforeJson_, after));
+            }
+        }
+    }
+
+    if (cornersValid) {
+        constexpr ImU32 kSelectedColor = IM_COL32(255, 220, 60, 255);
+        auto *drawList = ImGui::GetWindowDrawList();
+        drawList->PushClipRect(imagePos, ImVec2(imagePos.x + imageSize.x, imagePos.y + imageSize.y), true);
+        drawList->AddQuad(cornerScreen[0], cornerScreen[1], cornerScreen[3], cornerScreen[2], kSelectedColor, 2.0f);
+        for (const auto &corner : cornerScreen) drawList->AddCircleFilled(corner, 4.0f, kSelectedColor);
+        drawList->PopClipRect();
+    }
+
+    return isCameraBoundsDragActive_ || (isHovered && insideRect);
+}
+
+void SceneEditorView::DrawCameraBoundsZoneOverlay2D(const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (!context_ || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return;
+    constexpr ImU32 kGroupColors[4] = {
+        IM_COL32(255, 140, 140, 220), IM_COL32(140, 200, 255, 220),
+        IM_COL32(160, 255, 160, 220), IM_COL32(255, 220, 120, 220),
+    };
+
+    auto *drawList = ImGui::GetWindowDrawList();
+    drawList->PushClipRect(imagePos, ImVec2(imagePos.x + imageSize.x, imagePos.y + imageSize.y), true);
+
+    for (auto *object : context_->GetSceneObjects()) {
+        if (!object) continue;
+        auto *zone = object->GetComponent<CameraBoundsZone2D>();
+        if (!zone || !zone->IsActive()) continue;
+        auto *transform = object->GetComponent<Transform>();
+        if (!transform) continue;
+        const Matrix4x4 &world = transform->GetWorldMatrix();
+
+        const auto &groups = zone->GetGroups();
+        for (size_t g = 0; g < groups.size(); ++g) {
+            const ImU32 color = kGroupColors[g % 4];
+            for (const auto &rect : groups[g].rects) {
+                const Vector3 localCorners[4] = {
+                    Vector3(rect.min.x, rect.min.y, 0.0f), Vector3(rect.min.x, rect.max.y, 0.0f),
+                    Vector3(rect.max.x, rect.max.y, 0.0f), Vector3(rect.max.x, rect.min.y, 0.0f),
+                };
+                ImVec2 screenCorners[4];
+                bool allValid = true;
+                for (int i = 0; i < 4 && allValid; ++i) {
+                    allValid = ProjectToImage(TransformPoint(localCorners[i], world), imagePos, imageSize, screenCorners[i], false);
+                }
+                if (!allValid) continue;
+                for (int i = 0; i < 4; ++i) {
+                    drawList->AddLine(screenCorners[i], screenCorners[(i + 1) % 4], color, 2.0f);
+                }
+            }
+        }
+    }
+
+    drawList->PopClipRect();
+}
+
+void SceneEditorView::AppendCameraBoundsZoneDebugLines(std::vector<DebugLineVertex> &out) {
+    if (!context_) return;
+    constexpr Vector4 kGroupColors[4] = {
+        Vector4(1.0f, 0.55f, 0.55f, 1.0f), Vector4(0.55f, 0.78f, 1.0f, 1.0f),
+        Vector4(0.63f, 1.0f, 0.63f, 1.0f), Vector4(1.0f, 0.86f, 0.47f, 1.0f),
+    };
+    static constexpr int kEdges[12][2] = {
+        {0, 1}, {0, 2}, {0, 4}, {1, 3}, {1, 5}, {2, 3},
+        {2, 6}, {3, 7}, {4, 5}, {4, 6}, {5, 7}, {6, 7},
+    };
+
+    for (auto *object : context_->GetSceneObjects()) {
+        if (!object) continue;
+        auto *zone = object->GetComponent<CameraBoundsZone3D>();
+        if (!zone || !zone->IsActive()) continue;
+        auto *transform = object->GetComponent<Transform>();
+        if (!transform) continue;
+        const Matrix4x4 &world = transform->GetWorldMatrix();
+
+        const auto &groups = zone->GetGroups();
+        for (size_t g = 0; g < groups.size(); ++g) {
+            const Vector4 &color = kGroupColors[g % 4];
+            for (const auto &rect : groups[g].rects) {
+                Vector3 corners[8];
+                for (int i = 0; i < 8; ++i) {
+                    const Vector3 local(
+                        (i & 1) ? rect.max.x : rect.min.x,
+                        (i & 2) ? rect.max.y : rect.min.y,
+                        (i & 4) ? rect.max.z : rect.min.z);
+                    corners[i] = local.Transform(world);
+                }
+                for (const auto &edge : kEdges) {
+                    out.push_back({ corners[edge[0]], color });
+                    out.push_back({ corners[edge[1]], color });
+                }
+            }
+        }
     }
 }
 

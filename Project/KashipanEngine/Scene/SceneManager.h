@@ -84,6 +84,12 @@ public:
     /// @param newName 変更後のシーン名（既に同名のシーンが登録されている場合は失敗する）
     /// @return 変更に成功した場合は true、失敗した場合は false を返す
     bool RenameRegisteredScene(const std::string &oldName, const std::string &newName);
+    /// @brief 登録されているシーンを新しい名前・ファイルパスで複製する
+    /// @param sourceName 複製元のシーン名
+    /// @param newName 複製先のシーン名（既に同名のシーンが登録されている場合は失敗する）
+    /// @param newFilePath 複製先のシーンJSONファイルパス（複製元がファイルパスを持たない場合は無視される）
+    /// @return 複製に成功した場合は true、失敗した場合は false を返す
+    bool DuplicateRegisteredScene(const std::string &sourceName, const std::string &newName, const std::string &newFilePath);
     /// @brief 登録されているシーンの読み込みファイルパスを変更する
     /// @param sceneName 対象のシーン名
     /// @param filePath 新しいシーンJSONファイルのパス

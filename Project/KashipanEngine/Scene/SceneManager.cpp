@@ -64,6 +64,23 @@ bool SceneManager::RenameRegisteredScene(const std::string &oldName, const std::
     return true;
 }
 
+bool SceneManager::DuplicateRegisteredScene(const std::string &sourceName, const std::string &newName, const std::string &newFilePath) {
+    if (newName.empty()) return false;
+    if (FindEntry(newName)) return false; // 複製先の名前が既に使われている場合は複製できない
+    const SceneEntry *source = FindEntry(sourceName);
+    if (!source) return false;
+
+    if (source->filePath.empty()) {
+        // ファイルパスを持たない（直接JSON登録 or 空シーン）場合はファイルI/O無しでそのまま複製する
+        return RegisterScene(newName, source->factoryData);
+    }
+
+    JSON sceneJson = LoadSceneFromPath(source->filePath);
+    if (sceneJson.empty()) return false;
+    if (!SaveSceneToPath(sceneJson, newFilePath)) return false;
+    return RegisterSceneFile(newName, newFilePath);
+}
+
 bool SceneManager::SetRegisteredSceneFilePath(const std::string &sceneName, const std::string &filePath) {
     auto *entry = FindEntry(sceneName);
     if (!entry) return false;

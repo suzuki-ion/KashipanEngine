@@ -4,11 +4,13 @@
 
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Render/Camera2D.h"
+#include "Objects/Components/Render/CameraBoundsZone2D.h"
 #include "Objects/Components/Transform.h"
 #include "Math/Quaternion.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Utilities/MathUtils.h"
+#include "Utilities/MathUtils/Easings.h"
 #include "Utilities/TimeUtils.h"
 #include "Utilities/UUID128.h"
 #if defined(USE_IMGUI)
@@ -49,8 +51,19 @@ public:
         ptr->moveLerpFactor_ = moveLerpFactor_;
         ptr->rotateLerpFactor_ = rotateLerpFactor_;
         ptr->sizeLerpFactor_ = sizeLerpFactor_;
+        ptr->enableBoundsClamp_ = enableBoundsClamp_;
+        ptr->boundsClampMode_ = boundsClampMode_;
+        ptr->boundsZoneObjectID_ = boundsZoneObjectID_;
+        ptr->boundsTransitionDuration_ = boundsTransitionDuration_;
+        ptr->boundsTransitionEaseType_ = boundsTransitionEaseType_;
         return ptr;
     }
+
+    /// @brief 移動範囲制限（Camera Bounds Zone）のクランプ基準
+    enum class BoundsClampMode {
+        Position, ///< カメラ座標そのものをクランプする
+        ViewArea, ///< カメラが今映している範囲（表示矩形）がゾーンからはみ出さないようクランプする
+    };
 
     /// @brief 追従先オブジェクト1件分の設定
     struct FollowTarget {
@@ -116,6 +129,23 @@ public:
     void SetSizeLerpFactor(float factor) { sizeLerpFactor_ = factor; }
     float GetSizeLerpFactor() const noexcept { return sizeLerpFactor_; }
 
+    //==================================================
+    // 移動範囲制限（Camera Bounds Zone）
+    //==================================================
+
+    void SetEnableBoundsClamp(bool enable) noexcept { enableBoundsClamp_ = enable; }
+    bool GetEnableBoundsClamp() const noexcept { return enableBoundsClamp_; }
+    void SetBoundsClampMode(BoundsClampMode mode) noexcept { boundsClampMode_ = mode; }
+    BoundsClampMode GetBoundsClampMode() const noexcept { return boundsClampMode_; }
+    void SetBoundsZoneObjectID(const UUID128 &objectID) noexcept { boundsZoneObjectID_ = objectID; }
+    const UUID128 &GetBoundsZoneObjectID() const noexcept { return boundsZoneObjectID_; }
+    /// @brief アクティブなグループが切り替わった瞬間の、クランプ位置の不連続な変化を滑らかにする
+    ///        遷移時間（秒）。0以下の場合は即座に切り替える（既定・従来動作）
+    void SetBoundsTransitionDuration(float duration) noexcept { boundsTransitionDuration_ = duration; }
+    float GetBoundsTransitionDuration() const noexcept { return boundsTransitionDuration_; }
+    void SetBoundsTransitionEaseType(EaseType type) noexcept { boundsTransitionEaseType_ = type; }
+    EaseType GetBoundsTransitionEaseType() const noexcept { return boundsTransitionEaseType_; }
+
 protected:
     void Update() override {
         auto *objectContext = GetOwnerObjectContext();
@@ -163,8 +193,21 @@ protected:
         // 追従先が寄与しない軸は現在値を維持する（オフセットも寄与がある軸にのみ適用する）
         const Vector3 currentTranslate = cameraTransform->GetTranslate();
         Vector3 desiredTranslate = currentTranslate;
-        if (posCountX > 0) desiredTranslate.x = posSum.x / static_cast<float>(posCountX) + positionOffset_.x;
-        if (posCountY > 0) desiredTranslate.y = posSum.y / static_cast<float>(posCountY) + positionOffset_.y;
+        // rawTargetPosition: positionOffset_を加算する前の、追従先そのものの座標（Bounds Zoneのグループ判定用）。
+        // desiredTranslateは「カメラ自身の目標位置」であり、positionOffset_（画面中央合わせ等で
+        // -size/2のような値を設定するのが一般的）が加わっているため、そのままではターゲットの実座標と
+        // 大きくズレてしまい、境界矩形との位置関係を正しく判定できない
+        Vector2 rawTargetPosition(currentTranslate.x, currentTranslate.y);
+        if (posCountX > 0) {
+            const float avgX = posSum.x / static_cast<float>(posCountX);
+            desiredTranslate.x = avgX + positionOffset_.x;
+            rawTargetPosition.x = avgX;
+        }
+        if (posCountY > 0) {
+            const float avgY = posSum.y / static_cast<float>(posCountY);
+            desiredTranslate.y = avgY + positionOffset_.y;
+            rawTargetPosition.y = avgY;
+        }
 
         const Vector3 currentEuler = cameraTransform->GetRotate();
         float desiredRotZ = currentEuler.z;
@@ -176,6 +219,78 @@ protected:
         Vector3 newTranslate = currentTranslate;
         newTranslate.x = currentTranslate.x + (desiredTranslate.x - currentTranslate.x) * axisLerpT(moveLerpFactor_.GetX());
         newTranslate.y = currentTranslate.y + (desiredTranslate.y - currentTranslate.y) * axisLerpT(moveLerpFactor_.GetY());
+
+        // 移動範囲制限（Camera Bounds Zone）: ターゲットが今どのグループに属しているかで
+        // アクティブなグループを切り替え、そのグループの矩形群に沿ってカメラ位置をクランプする
+        if (enableBoundsClamp_) {
+            EmptyObject *zoneObject = sceneContext ? sceneContext->GetSceneObject(boundsZoneObjectID_) : nullptr;
+            auto *zone = zoneObject ? zoneObject->GetComponent<CameraBoundsZone2D>() : nullptr;
+            auto *zoneTransform = zoneObject ? zoneObject->GetComponent<Transform>() : nullptr;
+            if (zone && zoneTransform) {
+                const Matrix4x4 invZoneWorld = zoneTransform->GetWorldMatrix().Inverse();
+                // グループ判定はrawTargetPosition（追従先そのものの座標）で行う
+                const Vector3 localTarget3 = Vector3(rawTargetPosition.x, rawTargetPosition.y, 0.0f).Transform(invZoneWorld);
+                const Vector2 localTarget(localTarget3.x, localTarget3.y);
+                const int previousBoundsGroupIndex = activeBoundsGroupIndex_;
+                if (activeBoundsGroupIndex_ < 0 || !zone->IsPointInGroup(static_cast<size_t>(activeBoundsGroupIndex_), localTarget)) {
+                    // 矩形間に隙間があると、ターゲットがそこを通過する一瞬だけどのグループにも
+                    // 属さなくなることがある。見つからない場合はactiveBoundsGroupIndex_を-1に
+                    // 戻さず直前のグループを維持することで、その一瞬だけクランプが完全に外れて
+                    // 位置が飛ぶ（せっかくの遷移処理も発動しない）事態を防ぐ
+                    const int found = zone->FindGroupContaining(localTarget);
+                    if (found >= 0) activeBoundsGroupIndex_ = found;
+                }
+                if (activeBoundsGroupIndex_ >= 0) {
+                    Vector2 insetMin{ 0.0f, 0.0f };
+                    Vector2 insetMax{ 0.0f, 0.0f };
+                    if (boundsClampMode_ == BoundsClampMode::ViewArea) {
+                        // Camera2Dのtranslateは表示範囲の中心ではなく左上角を表すため、表示範囲の半径ぶんを
+                        // 対称にinsetするのではなく、positionOffset_を差し引いた「基準点」（＝positionOffset_を
+                        // size/2の負値に設定する一般的な中央追従構成では表示範囲の中心と一致する）に対して
+                        // 対称にinsetする。これによりtranslateの左上角基準という実装の都合を吸収する
+                        insetMin = insetMax = Vector2(camera->GetWidth() * 0.5f, camera->GetHeight() * 0.5f);
+                    }
+                    // クランプはpositionOffset_を差し引いた基準点に対して行い、結果へオフセットを戻す
+                    // （positionOffset_がどんな値でも、矩形は追従先が動き回るワールド空間の範囲として
+                    // 一貫して扱えるようにするため。offsetが0ならreferencePointはnewTranslateと同じ）
+                    const Vector2 referencePoint(newTranslate.x - positionOffset_.x, newTranslate.y - positionOffset_.y);
+
+                    // アクティブなグループが切り替わった瞬間はクランプ結果が不連続にジャンプしうるため、
+                    // 指定の秒数・イージングで現在位置から新しいクランプ結果へ滑らかに遷移させる。
+                    // 遷移の起点にはreferencePoint（今フレームの追従補間・moveLerpFactor_適用後の値）
+                    // ではなく、前フレームで実際に表示されていた位置（currentTranslateから逆算）を使う。
+                    // referencePointを使うと、切り替わり直前まで境界にピン留めされていた影響で
+                    // 追従補間の目標（desiredTranslate）だけが大きく先行してしまっていた場合に、
+                    // その追従補間分がそのまま遷移の起点に混入し、遷移アニメーションが始まる前に
+                    // カメラが一瞬だけ意図しない位置へガクッと動いてしまう
+                    if (activeBoundsGroupIndex_ != previousBoundsGroupIndex && boundsTransitionDuration_ > 0.0f) {
+                        boundsTransitionElapsed_ = 0.0f;
+                        boundsTransitionActive_ = true;
+                        boundsTransitionStartValue_ = Vector2(currentTranslate.x - positionOffset_.x, currentTranslate.y - positionOffset_.y);
+                    }
+
+                    const Vector3 localReference3 = Vector3(referencePoint.x, referencePoint.y, 0.0f).Transform(invZoneWorld);
+                    const Vector2 clampedLocal = zone->ClampToGroup(static_cast<size_t>(activeBoundsGroupIndex_),
+                        Vector2(localReference3.x, localReference3.y), insetMin, insetMax);
+                    const Vector3 clampedReferenceWorld3 = Vector3(clampedLocal.x, clampedLocal.y, 0.0f).Transform(zoneTransform->GetWorldMatrix());
+                    Vector2 finalReferenceWorld(clampedReferenceWorld3.x, clampedReferenceWorld3.y);
+
+                    if (boundsTransitionActive_) {
+                        // 経過時間の加算より先にtを求めることで、遷移開始1フレーム目はt=0
+                        // （完全に遷移前の位置）から始まるようにする
+                        const float t = (boundsTransitionDuration_ > 0.0f)
+                            ? std::clamp(boundsTransitionElapsed_ / boundsTransitionDuration_, 0.0f, 1.0f) : 1.0f;
+                        finalReferenceWorld = Eased(boundsTransitionStartValue_, finalReferenceWorld, t, boundsTransitionEaseType_);
+                        boundsTransitionElapsed_ += dt;
+                        if (t >= 1.0f) boundsTransitionActive_ = false;
+                    }
+
+                    newTranslate.x = finalReferenceWorld.x + positionOffset_.x;
+                    newTranslate.y = finalReferenceWorld.y + positionOffset_.y;
+                }
+            }
+        }
+
         cameraTransform->SetTranslate(newTranslate);
 
         Vector3 newEuler = currentEuler;
@@ -239,6 +354,43 @@ protected:
 
         ImGui::Separator();
         ImGui::DragFloat(TranslationLabel("component.cameracontroller2d.size_transition_strength"), &sizeLerpFactor_, 0.01f, 0.0f, 1.0f);
+
+        ImGui::Separator();
+        ImGui::TextUnformatted(TranslationC("component.cameracontroller2d.bounds_clamp"));
+        ImGui::Checkbox(TranslationLabel("component.cameracontroller2d.bounds_clamp_enable"), &enableBoundsClamp_);
+        if (enableBoundsClamp_) {
+            TargetObjectSelector::ShowSelector(TranslationLabel("component.cameracontroller2d.bounds_zone_object"), GetOwnerSceneContext(), boundsZoneObjectID_, true, false);
+            int clampModeInt = static_cast<int>(boundsClampMode_);
+            if (ImGui::RadioButton(TranslationLabel("component.cameracontroller2d.bounds_clamp_mode_position"), clampModeInt == static_cast<int>(BoundsClampMode::Position))) {
+                boundsClampMode_ = BoundsClampMode::Position;
+            }
+            ImGui::SameLine();
+            if (ImGui::RadioButton(TranslationLabel("component.cameracontroller2d.bounds_clamp_mode_viewarea"), clampModeInt == static_cast<int>(BoundsClampMode::ViewArea))) {
+                boundsClampMode_ = BoundsClampMode::ViewArea;
+            }
+            ImGui::DragFloat(TranslationLabel("component.cameracontroller2d.bounds_transition_duration"), &boundsTransitionDuration_, 0.01f, 0.0f, 10.0f);
+            ImGui::SetItemTooltip("%s", TranslationC("component.cameracontroller2d.bounds_transition_duration.tooltip"));
+            static constexpr const char *kEaseTypeComboNames[] = {
+                "Linear",
+                "EaseInQuad", "EaseOutQuad", "EaseInOutQuad", "EaseOutInQuad",
+                "EaseInCubic", "EaseOutCubic", "EaseInOutCubic", "EaseOutInCubic",
+                "EaseInQuart", "EaseOutQuart", "EaseInOutQuart", "EaseOutInQuart",
+                "EaseInQuint", "EaseOutQuint", "EaseInOutQuint", "EaseOutInQuint",
+                "EaseInSine", "EaseOutSine", "EaseInOutSine", "EaseOutInSine",
+                "EaseInExpo", "EaseOutExpo", "EaseInOutExpo", "EaseOutInExpo",
+                "EaseInCirc", "EaseOutCirc", "EaseInOutCirc", "EaseOutInCirc",
+                "EaseInBack", "EaseOutBack", "EaseInOutBack", "EaseOutInBack",
+                "EaseInElastic", "EaseOutElastic", "EaseInOutElastic", "EaseOutInElastic",
+                "EaseInBounce", "EaseOutBounce", "EaseInOutBounce", "EaseOutInBounce",
+            };
+            int easeIndex = 0;
+            for (int i = 0; i < IM_ARRAYSIZE(kEaseTypeComboNames); ++i) {
+                if (EaseTypeToString(boundsTransitionEaseType_) == std::string(kEaseTypeComboNames[i])) { easeIndex = i; break; }
+            }
+            if (ImGui::Combo(TranslationLabel("component.cameracontroller2d.bounds_transition_ease"), &easeIndex, kEaseTypeComboNames, IM_ARRAYSIZE(kEaseTypeComboNames))) {
+                boundsTransitionEaseType_ = StringToEaseType(kEaseTypeComboNames[easeIndex]);
+            }
+        }
     }
 #endif
 
@@ -266,6 +418,12 @@ protected:
 
         json["rotateLerpFactor"] = rotateLerpFactor_;
         json["sizeLerpFactor"] = sizeLerpFactor_;
+
+        json["enableBoundsClamp"] = enableBoundsClamp_;
+        json["boundsClampMode"] = static_cast<int>(boundsClampMode_);
+        json["boundsZoneObjectID"] = ToJSON(boundsZoneObjectID_);
+        json["boundsTransitionDuration"] = boundsTransitionDuration_;
+        json["boundsTransitionEaseType"] = EaseTypeToString(boundsTransitionEaseType_);
         return json;
     }
 
@@ -296,6 +454,12 @@ protected:
 
         rotateLerpFactor_ = json.value("rotateLerpFactor", 0.1f);
         sizeLerpFactor_ = json.value("sizeLerpFactor", 0.1f);
+
+        enableBoundsClamp_ = json.value("enableBoundsClamp", false);
+        boundsClampMode_ = static_cast<BoundsClampMode>(json.value("boundsClampMode", static_cast<int>(BoundsClampMode::Position)));
+        if (json.contains("boundsZoneObjectID")) boundsZoneObjectID_ = FromJSON<UUID128>(json["boundsZoneObjectID"]);
+        boundsTransitionDuration_ = json.value("boundsTransitionDuration", 0.0f);
+        boundsTransitionEaseType_ = StringToEaseType(json.value("boundsTransitionEaseType", std::string("Linear")));
         return true;
     }
 
@@ -332,6 +496,23 @@ private:
     AxisStrength2 moveLerpFactor_{};
     float rotateLerpFactor_ = 0.1f;
     float sizeLerpFactor_ = 0.1f;
+
+    //==================================================
+    // 移動範囲制限（Camera Bounds Zone）
+    //==================================================
+
+    bool enableBoundsClamp_ = false;
+    BoundsClampMode boundsClampMode_ = BoundsClampMode::Position;
+    UUID128 boundsZoneObjectID_{};
+    /// @brief アクティブなグループが切り替わった際の遷移時間（秒）。0以下なら即座に切り替える
+    float boundsTransitionDuration_ = 0.0f;
+    EaseType boundsTransitionEaseType_ = EaseType::Linear;
+    /// @brief 現在アクティブなグループの添字（実行時のみ・非シリアライズ、未確定は-1）
+    int activeBoundsGroupIndex_ = -1;
+    /// @brief グループ切り替え遷移の実行時状態（非シリアライズ）
+    bool boundsTransitionActive_ = false;
+    float boundsTransitionElapsed_ = 0.0f;
+    Vector2 boundsTransitionStartValue_{ 0.0f, 0.0f };
 };
 
 REGISTER_COMPONENT_OBJECT(CameraController2D)

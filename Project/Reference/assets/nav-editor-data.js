@@ -59,6 +59,8 @@ const KE_PAGES = [
   { id: "C_Render_CameraRenderer", title: "CameraRenderer", group: "コンポーネント: Render", href: "Editor/Components/Render/CameraRenderer.html" },
   { id: "C_Render_CameraController", title: "CameraController", group: "コンポーネント: Render", href: "Editor/Components/Render/CameraController.html" },
   { id: "C_Render_CameraController2D", title: "CameraController2D", group: "コンポーネント: Render", href: "Editor/Components/Render/CameraController2D.html" },
+  { id: "C_Render_CameraBoundsZone2D", title: "CameraBoundsZone2D", group: "コンポーネント: Render", href: "Editor/Components/Render/CameraBoundsZone2D.html" },
+  { id: "C_Render_CameraBoundsZone3D", title: "CameraBoundsZone3D", group: "コンポーネント: Render", href: "Editor/Components/Render/CameraBoundsZone3D.html" },
   { id: "C_Render_NormalWindowObject", title: "NormalWindowObject", group: "コンポーネント: Render", href: "Editor/Components/Render/NormalWindowObject.html" },
   { id: "C_Render_OverlayWindowObject", title: "OverlayWindowObject", group: "コンポーネント: Render", href: "Editor/Components/Render/OverlayWindowObject.html" },
   { id: "C_Render_ScreenBufferObject", title: "ScreenBufferObject", group: "コンポーネント: Render", href: "Editor/Components/Render/ScreenBufferObject.html" },

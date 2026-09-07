@@ -16,8 +16,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": -6.4836883544921875,
-                            "y": -63.790000915527344,
+                            "x": 51.51631164550781,
+                            "y": 47.209999084472656,
                             "z": 0.0
                         }
                     },
@@ -46,6 +46,11 @@
             {
                 "data": {
                     "customData": {
+                        "boundsClampMode": 1,
+                        "boundsTransitionDuration": 0.5,
+                        "boundsTransitionEaseType": "EaseOutCubic",
+                        "boundsZoneObjectID": "c9519a98-e331-4137-a5f7-a4b1e4424bb5",
+                        "enableBoundsClamp": true,
                         "followTargets": [
                             {
                                 "followPositionX": true,

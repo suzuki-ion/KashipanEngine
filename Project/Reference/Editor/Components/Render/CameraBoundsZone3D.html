@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CameraBoundsZone3D | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_CameraBoundsZone3D">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>CameraBoundsZone3D <span class="badge final">最大1個</span></h1>
+<p class="page-lead"><a href="CameraController.html">CameraController</a>（3D用）の移動範囲制限（Camera Bounds Zone）機能で参照される、境界データ専用コンポーネントです。<a href="CameraBoundsZone2D.html">CameraBoundsZone2D</a>の3D版で、判定・クランプの考え方（複数グループ・矩形ごとにクランプして最近傍を採用）は共通です。矩形は軸並行の直方体（min/maxのVector3）で、<strong>コンポーネントを持つオブジェクト自身のTransformのローカル空間</strong>で定義されます。</p>
+</div>
+
+<h2>2D版との違い（フットプリント編集）</h2>
+<p>3D空間中で直方体の全頂点をドラッグ編集対象にするのはコストが高いため、意図的にスコープを絞っている。シーンビュー上でドラッグ編集できるのはXZ平面上のフットプリント（min.x/max.x, min.z/max.z）のみで、高さ方向（min.y/max.y）はInspectorの数値入力でのみ編集する。フットプリントのドラッグ編集は、選択中矩形のY範囲の中央の高さに置いた水平面上でカーソル位置を判定する。ワイヤーフレーム自体は高さも含めた直方体として常時表示される。</p>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Group N（グループごとの折りたたみヘッダー）</td><td>CollapsingHeader</td><td>グループ内の矩形一覧を表示する</td></tr>
+<tr><td>Rect（矩形ごとの行）</td><td>Selectable + Min/Max（Vector3ドラッグ入力×2）</td><td>矩形1件分の編集行（X/Y/Zすべて数値編集可能）。行をクリックするとシーンビュー上でのフットプリントドラッグ編集対象として選択される</td></tr>
+<tr><td>Remove Rect</td><td>ボタン</td><td>その矩形を削除する</td></tr>
+<tr><td>Add Rect / Remove Group</td><td>ボタン</td><td>グループへの矩形追加・グループ自体の削除</td></tr>
+<tr><td>Add Group</td><td>ボタン</td><td>新しいグループを末尾に追加する</td></tr>
+</table>
+
+<h2>シーンビューでの可視化・編集</h2>
+<p>すべてのCameraBoundsZone3Dの矩形群は、Scene Viewの「表示」タブの「境界ゾーン」トグルが有効な間、3D/Combinedモードで直方体のワイヤーフレームとして常時（選択の有無に関わらず）表示される（グループごとに色分け）。</p>
+<p>フットプリントを編集するには、対象オブジェクトを単体で選択したうえでScene Viewの「境界ゾーン」タブから「矩形編集を有効化」をオンにし、Inspector側で編集したい矩形の行をクリックして選択する。選択中矩形のY中央高さの水平面上に黄色い枠とハンドル（四隅・四辺）が表示され、四隅ドラッグでXZ両方のサイズ変更、四辺ドラッグでX・Zいずれか片方のみのサイズ変更、矩形内部のドラッグでフットプリント全体の移動ができる。ドラッグの確定はUndo履歴に1操作として積まれる。</p>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path"><span>Add Component</span><i>›</i><span>Render</span><i>›</i><span>CameraBoundsZone3D</span></span> から追加する。1オブジェクトに付与できるのは最大1個。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="CameraController.html">Components/Render/CameraController.html</a> — このコンポーネントを参照して移動範囲制限を行うカメラ側コンポーネント</li>
+<li><a href="CameraBoundsZone2D.html">Components/Render/CameraBoundsZone2D.html</a> — 2D用の同種コンポーネント</li>
+<li><a href="../../Windows/04_SceneView.html">Windows/04_SceneView.html</a> — Scene Viewの表示トグル・ツールバータブの基本操作</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

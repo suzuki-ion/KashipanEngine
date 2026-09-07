@@ -118,6 +118,15 @@ class Player : ScriptComponentBehavior {
 
     Vector2 velocity;
     bool isJump = false;
+
+    // 動く床への追従用（JobHuntingGameのPlayerMovementと同じ仕組み）。
+    // 接地している床のTransformとPreTransform（前フレーム値）との差分をこのフレームの
+    // 床の移動量として記録し（OnCollisionStay）、Update側でその移動量を自機の速度に加算する。
+    // 離床した瞬間の値をそのまま慣性として使い続けるため、動く床から降りた直後の勢いも再現される
+    Vector2 surfaceVelocity = Vector2(0.0f, 0.0f);
+    Vector2 rawGroundDelta = Vector2(0.0f, 0.0f);
+    bool hasGroundContact = false;
+
     State state = State::Idle;
     Direction lastDirection = Direction::Right;
     bool isInvincible = false;
@@ -389,7 +398,13 @@ class Player : ScriptComponentBehavior {
 
         velocity.y -= gravity * GetDeltaTime();
 
-        Vector2 movement = velocity * GetDeltaTime();
+        // 接地中の床の速度を実測する（動く床への追従・離床後の慣性の両方に使う）。
+        // hasGroundContactがfalseの間（空中）は直前に測定した値をそのまま使い続ける
+        if (hasGroundContact && GetDeltaTime() > 0.0f) {
+            surfaceVelocity = rawGroundDelta / GetDeltaTime();
+        }
+
+        Vector2 movement = (velocity + surfaceVelocity) * GetDeltaTime();
         if(controller !is null) {
             controller.Move(movement);
         } else {
@@ -681,6 +696,9 @@ class Player : ScriptComponentBehavior {
             }
             i++;
         }
+
+        // 生の接触情報は毎フレームリセットする（次フレームの衝突コールバックで再設定される）
+        hasGroundContact = false;
     }
 
     void OnCollisionEnter(const HitInfo &in hit) {
@@ -754,6 +772,23 @@ class Player : ScriptComponentBehavior {
     }
 
     void OnCollisionStay(const HitInfo &in hit) {
+        // 動く床への追従。地面のTransformとPreTransform（前フレームの値）との差分から
+        // 実際の移動量を求めておき、Update側でsurfaceVelocityへ変換する
+        // （velocity本体に加算すると接地中に蓄積し続けてしまうため）
+        if (hit.otherObject !is null && hit.otherCollider !is null && !hit.otherCollider.IsTrigger()
+        && hit.normal.y > groundedThreshold) {
+            hasGroundContact = true;
+
+            Transform@ groundTransform;
+            PreTransform@ groundPreTransform;
+            if (hit.otherObject.GetComponent(@groundTransform) && hit.otherObject.GetComponent(@groundPreTransform)) {
+                Vector3 delta = groundTransform.GetTranslate() - groundPreTransform.GetPreviousTranslate();
+                rawGroundDelta = Vector2(delta.x, delta.y);
+            } else {
+                rawGroundDelta = Vector2(0.0f, 0.0f);
+            }
+        }
+
         if (hit.otherCollider.GetTag() == "Chest" && IsCommandTriggered("Bottom")) {
             Object@ chestObj = hit.otherObject;
             if (chestObj !is null) {

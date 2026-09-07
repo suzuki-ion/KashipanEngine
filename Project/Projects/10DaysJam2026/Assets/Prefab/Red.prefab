@@ -151,6 +151,21 @@
                     {
                         "data": {
                             "customData": {
+                                "groundedThreshold": 0.5,
+                                "ignoredTags": [],
+                                "selectedColliderOccurrenceIndex": 0,
+                                "selectedColliderTypeName": "Box2DCollider",
+                                "skinWidth": 0.009999999776482582
+                            },
+                            "isActive": true,
+                            "priority": 6,
+                            "tag": ""
+                        },
+                        "type": "CharacterController2D"
+                    },
+                    {
+                        "data": {
+                            "customData": {
                                 "fields": {
                                     "blinkInterval": 0.07999999821186066,
                                     "deathEffect": "a3f33280-f1ac-4cc0-9235-bdfd97ec21ff",
@@ -165,7 +180,7 @@
                                 "scriptPath": "Assets\\Scripts\\Green.as"
                             },
                             "isActive": true,
-                            "priority": 6,
+                            "priority": 7,
                             "tag": ""
                         },
                         "type": "ScriptComponent"
@@ -187,7 +202,7 @@
                                 "scriptPath": "Assets\\Scripts\\SpriteAnimator.as"
                             },
                             "isActive": true,
-                            "priority": 7,
+                            "priority": 8,
                             "tag": ""
                         },
                         "type": "ScriptComponent"
@@ -233,7 +248,7 @@
                                 "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                             },
                             "isActive": true,
-                            "priority": 8,
+                            "priority": 9,
                             "tag": ""
                         },
                         "type": "SpriteRenderer"

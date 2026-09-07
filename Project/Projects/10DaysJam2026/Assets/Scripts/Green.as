@@ -35,6 +35,12 @@ class Green : ScriptComponentBehavior {
     [SerializeField, Tooltip("セルフオブジェ")]
     Object@ self;
 
+    [SerializeField, Tooltip("接地とみなす法線Y成分のしきい値")]
+    float groundedThreshold = 0.5f;
+
+    [SerializeField, Tooltip("押し戻しを行わない相手のタグ一覧")]
+    array<string>@ pushBackExcludeTags;
+
     // エフェクトのクローン
     Object@ cloneEffect;
 
@@ -51,12 +57,24 @@ class Green : ScriptComponentBehavior {
     SpriteRenderer@ sprite;
 
     Vector2 velocity;
-    float groundedThreshold = 0.5f;
 
     Box2DCollider@ col;
+    CharacterController2D@ controller;
 
     void Start() {
         GetComponent(@col);
+        if (GetComponent(@controller)) {
+            if (col !is null) {
+                controller.SetSelectedCollider(col);
+            }
+            controller.SetGroundedThreshold(groundedThreshold);
+            controller.ClearIgnoredTags();
+            if (pushBackExcludeTags !is null) {
+                for (uint i = 0; i < pushBackExcludeTags.length(); ++i) {
+                    controller.AddIgnoredTag(pushBackExcludeTags[i]);
+                }
+            }
+        }
         GetComponent(@sprite);
     }
 
@@ -113,8 +131,18 @@ class Green : ScriptComponentBehavior {
             // 重力
             velocity.y -= gravity * GetDeltaTime();
 
-            // 位置の更新
-            tf.SetTranslate(tf.GetTranslate() + Vector3(velocity.x, velocity.y, 0.0f) * GetDeltaTime());
+            // 移動・当たり判定処理(プレイヤーと同じCharacterController2Dによる押し戻し)
+            if (controller !is null) {
+                controller.Move(velocity * GetDeltaTime());
+
+                // 着地判定
+                if (controller.IsGrounded() && velocity.y <= 0.0f) {
+                    velocity.y = 0.0f;
+                }
+            } else {
+                // controllerがない場合の簡易フォールバック
+                tf.SetTranslate(tf.GetTranslate() + Vector3(velocity.x, velocity.y, 0.0f) * GetDeltaTime());
+            }
         }
 
         // HPが0になったら
@@ -184,9 +212,6 @@ class Green : ScriptComponentBehavior {
     }
 
     void OnCollisionEnter(const HitInfo &in hit) {
-        // めり込み分を押し戻す
-        ResolvePenetration(hit);
-
         // 進行方向の切り替え
         if(hit.selfCollider.GetTag() == "Direction"){
             if (moveDir == MoveDirection::Left) {
@@ -195,24 +220,5 @@ class Green : ScriptComponentBehavior {
                 moveDir = MoveDirection::Left;
             }
         }
-    }
-
-    void OnCollisionStay(const HitInfo &in hit){
-        // めり込み分を押し戻す
-        ResolvePenetration(hit);
-
-        // 床からの接触かつ上昇中でない時だけ落下速度をリセット
-        if (hit.normal.y > groundedThreshold && velocity.y <= 0.0f) {
-            velocity.y = 0.0f;
-        }
-    }
-
-    void ResolvePenetration(const HitInfo &in hit) {
-        if(hit.penetration <= 0.0f) return;
-
-        Transform@ tf = GetTransform();
-        if(tf is null) return;
-
-        tf.SetTranslate(tf.GetTranslate() + hit.normal * hit.penetration);
     }
 }

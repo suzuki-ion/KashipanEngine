@@ -99,8 +99,8 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
-        "name": "HP_boss_bar1",
+        "isActive": false,
+        "name": "HP_boss_bar",
         "objectID": "3f58c43a-6e9d-47de-a4e0-de822816facf",
         "tag": ""
     },

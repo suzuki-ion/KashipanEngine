@@ -53,6 +53,32 @@
             {
                 "data": {
                     "customData": {
+                        "fields": {
+                            "boss": "5db46d62-cefd-4eff-bebe-39d3d28b4e3e",
+                            "gaugeInterval": {
+                                "x": 3.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "gaugeSource": "3f58c43a-6e9d-47de-a4e0-de822816facf",
+                            "hpPerGauge": 4.0,
+                            "startPosition": {
+                                "x": 8.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "scriptPath": "Assets\\Scripts\\BossHPUI.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,

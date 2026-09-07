@@ -149,7 +149,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": false,
+        "isActive": true,
         "name": "RubbleS",
         "objectID": "d5a1df87-7e02-4164-bd53-c6a58e756183",
         "tag": ""

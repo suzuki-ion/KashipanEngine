@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 1111.0,
-                            "y": 128.0,
+                            "x": 670.0,
+                            "y": 576.0,
                             "z": 0.0
                         }
                     },
@@ -100,8 +100,9 @@
                             "deathEffectSpread": 20.0,
                             "gravity": 150.0,
                             "groundedThreshold": 0.5,
-                            "hp": 20.0,
+                            "hp": 40.0,
                             "idleDuration": 2.0,
+                            "maxHp": 40.0,
                             "moveSpeed": 80.0,
                             "normalColor": {
                                 "w": 1.0,
@@ -214,7 +215,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": false,
+        "isActive": true,
         "name": "Boss1",
         "objectID": "5db46d62-cefd-4eff-bebe-39d3d28b4e3e",
         "tag": ""

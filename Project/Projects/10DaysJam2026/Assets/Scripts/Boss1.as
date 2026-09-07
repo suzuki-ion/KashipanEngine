@@ -21,8 +21,11 @@ class Boss1 : ScriptComponentBehavior {
     [SerializeField, Tooltip("待機時間(秒)")]
     float idleDuration = 2.0f;
 
+    [SerializeField, Tooltip("最大HP")]
+    float maxHp = 20.0f;
+
     [SerializeField, Tooltip("HP")]
-    float hp = 20.0f;
+    float hp = maxHp;
 
     [SerializeField, Tooltip("ダメージを受けた際の色変化時間(秒)")]
     float damageFlashDuration = 0.1f;

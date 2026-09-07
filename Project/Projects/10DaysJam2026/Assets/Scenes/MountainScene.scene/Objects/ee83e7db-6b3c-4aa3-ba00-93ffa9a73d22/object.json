@@ -304,6 +304,7 @@
                             "blinkInterval": 0.07999999821186066,
                             "currentWeaponType": -1,
                             "fallDeathHeight": 150.0,
+                            "fallDeathY": -50.0,
                             "frameInterval": 0.15000000596046448,
                             "gravity": 360.0,
                             "groundedThreshold": 0.5,

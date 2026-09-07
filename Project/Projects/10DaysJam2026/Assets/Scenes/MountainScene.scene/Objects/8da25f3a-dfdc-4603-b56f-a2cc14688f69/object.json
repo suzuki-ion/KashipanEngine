@@ -45,6 +45,7 @@
                         "fields": {
                             "activeDuration": 0.30000001192092896,
                             "cooldown": 0.4000000059604645,
+                            "currentMargin": 16.0,
                             "damageAmount": 1.0,
                             "effectOffsetY": 3.5,
                             "exp": 0.0,

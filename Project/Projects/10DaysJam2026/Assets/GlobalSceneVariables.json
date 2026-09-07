@@ -1,0 +1,9 @@
+{
+    "globalSceneVariables": [
+        {
+            "key": "hasLoadedSaveThisSession",
+            "type": "Bool",
+            "value": true
+        }
+    ]
+}

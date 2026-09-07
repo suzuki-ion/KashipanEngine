@@ -215,7 +215,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
+        "isActive": false,
         "name": "Boss1",
         "objectID": "5db46d62-cefd-4eff-bebe-39d3d28b4e3e",
         "tag": ""

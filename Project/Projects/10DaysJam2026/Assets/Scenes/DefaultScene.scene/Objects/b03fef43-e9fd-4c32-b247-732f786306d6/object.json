@@ -185,7 +185,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
+        "isActive": false,
         "name": "Ovary",
         "objectID": "b03fef43-e9fd-4c32-b247-732f786306d6",
         "tag": ""

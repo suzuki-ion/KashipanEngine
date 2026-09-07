@@ -212,6 +212,11 @@ class Green : ScriptComponentBehavior {
     }
 
     void OnCollisionEnter(const HitInfo &in hit) {
+    // 相手がPlayerの場合はめり込み補正を行わない
+    if (hit.otherCollider.GetTag() != "Player") {
+        ResolvePenetration(hit);
+    }
+
         // 進行方向の切り替え
         if(hit.selfCollider.GetTag() == "Direction"){
             if (moveDir == MoveDirection::Left) {

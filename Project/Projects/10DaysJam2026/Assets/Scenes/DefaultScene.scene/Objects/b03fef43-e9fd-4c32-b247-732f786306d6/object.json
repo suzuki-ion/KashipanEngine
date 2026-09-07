@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 624.0,
-                            "y": 284.0,
+                            "x": 823.0,
+                            "y": 167.0,
                             "z": 0.0
                         }
                     },
@@ -97,6 +97,8 @@
                             "deathDelay": 0.30000001192092896,
                             "isLeftOvary": true,
                             "maxHP": 20.0,
+                            "moveAmplitude": 15.0,
+                            "moveSpeed": 2.0,
                             "normalColor": {
                                 "w": 1.0,
                                 "x": 1.0,
@@ -183,7 +185,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": false,
+        "isActive": true,
         "name": "Ovary",
         "objectID": "b03fef43-e9fd-4c32-b247-732f786306d6",
         "tag": ""

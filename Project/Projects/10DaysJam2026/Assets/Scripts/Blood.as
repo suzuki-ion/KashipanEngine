@@ -1,35 +1,23 @@
 class Blood : ScriptComponentBehavior {
-    [SerializeField, Tooltip("落下速度(下方向への一定速度)")]
-    float fallSpeed = 180.0f;
-
-    [SerializeField, Tooltip("全体の最大生存時間(秒)")]
+    [SerializeField, Tooltip("最大生存時間(秒)。発射されるまでの待機時間も含む")]
     float lifeTime = 4.0f;
-
-    [SerializeField, Tooltip("地面に着弾してから消滅するまでの時間(秒)")]
-    float destroyDelay = 0.2f;
 
     [SerializeField, Tooltip("ダメージ量")]
     float damageAmount = 1.0f;
 
-    float timer = 0.0f;
-    float groundTimer = 0.0f;
-    bool isGrounded = false;
     Vector2 velocity;
+    float timer = 0.0f;
+
+    // Launch()が呼ばれるまでは、その場に留まり円形配置の見た目を保つ
+    bool isLaunched = false;
 
     CharacterController2D@ controller;
 
     void Start() {
         GetComponent(@controller);
-        velocity.x = 0.0f;
-        velocity.y = -fallSpeed; // 重力加速はせず、常に一定速度で下方向へ飛ばす
     }
 
     void Update() {
-        // 会話中(isDialogueActive)は落下などの処理を止める
-        bool isDialogueActive = false;
-        GetScene().GetVariable("isDialogueActive", isDialogueActive);
-        if (isDialogueActive) return;
-
         Transform@ tf = GetTransform();
         if (tf is null) return;
 
@@ -41,34 +29,23 @@ class Blood : ScriptComponentBehavior {
             return;
         }
 
-        if (!isGrounded) {
-            if (controller !is null) {
-                // CharacterController2Dがある場合はコライダーベースで移動と着地判定を行う
-                controller.Move(velocity * GetDeltaTime());
-                if (controller.IsGrounded()) {
-                    isGrounded = true;
-                    velocity.y = 0.0f;
-                }
-            } else {
-                // Controllerがない場合の簡易フォールバック
-                Vector3 pos = tf.GetTranslate();
-                pos.y += velocity.y * GetDeltaTime();
+        // 発射されるまでは静止したまま
+        if (!isLaunched) return;
 
-                if (pos.y <= 0.0f) {
-                    pos.y = 0.0f;
-                    isGrounded = true;
-                    velocity.y = 0.0f;
-                }
-                tf.SetTranslate(pos);
-            }
+        if (controller !is null) {
+            controller.Move(velocity * GetDeltaTime());
         } else {
-            // 着地(または画面下端到達)後は少し待ってから消滅させる
-            groundTimer += GetDeltaTime();
-            if (groundTimer >= destroyDelay) {
-                Object@ obj = GetOwnerObject();
-                if (obj !is null) obj.SetActive(false);
-            }
+            Vector3 pos = tf.GetTranslate();
+            pos.x += velocity.x * GetDeltaTime();
+            pos.y += velocity.y * GetDeltaTime();
+            tf.SetTranslate(pos);
         }
+    }
+
+    // Boss3から呼び出され、指定した速度ベクトルで発射
+    void Launch(Vector2 vel) {
+        velocity = vel;
+        isLaunched = true;
     }
 
     // プレイヤーなどにぶつかった際の処理

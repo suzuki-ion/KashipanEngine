@@ -1,13 +1,9 @@
 enum Boss3State {
     Idle,
-    BloodTelegraph,         // 通常のBlood攻撃の予備動作
-    BloodAttack,            // 通常のBlood攻撃
-    RubbleTelegraph,        // 通常のRubble攻撃の予備動作
-    RubbleAttack,           // 通常のRubble攻撃
-    BloodTargetedTelegraph, // 追尾型Blood攻撃の予備動作
-    BloodTargetedAttack,    // 追尾型Blood攻撃
-    RubbleCenterTelegraph,  // 中央集中Rubble攻撃の予備動作
-    RubbleCenterAttack,     // 中央集中Rubble攻撃
+    BloodTelegraph,  // Blood攻撃の予備動作
+    BloodAttack,     // Blood攻撃
+    RubbleTelegraph, // Rubble攻撃の予備動作
+    RubbleAttack,    // Rubble攻撃
     Dead
 }
 
@@ -33,47 +29,47 @@ class Boss3 : ScriptComponentBehavior {
     [SerializeField, Tooltip("各攻撃の予備動作時間(ピンチの兆候)(秒)")]
     float telegraphDuration = 1.2f;
 
-    [SerializeField, Tooltip("各攻撃の演出時間(秒)")]
+    [SerializeField, Tooltip("Rubble攻撃の演出時間(秒)/ Blood攻撃では全バースト終了後の締めの待機時間としても使用")]
     float attackDuration = 0.5f;
 
     [SerializeField, Tooltip("Bloodのプレハブ")]
     Object@ bloodPrefab;
 
-    [SerializeField, Tooltip("通常のBlood攻撃で生成する弾数")]
-    int bloodCount = 3;
+    [SerializeField, Tooltip("この攻撃全体で円形発射を連続して行う回数")]
+    int bloodBurstCount = 5;
 
-    [SerializeField, Tooltip("追尾型のBlood攻撃で生成する弾数")]
-    int bloodTargetedCount = 5;
+    [SerializeField, Tooltip("1回の円形発射で配置するBloodの数")]
+    int bloodRingCount = 8;
 
-    [SerializeField, Tooltip("Blood同士の横方向の間隔")]
-    float bloodSpreadX = 40.0f;
+    [SerializeField, Tooltip("円の半径(中心点からBloodを配置する距離)")]
+    float bloodBurstRadius = 30.0f;
 
-    [SerializeField, Tooltip("ボス基準位置からのBlood生成オフセット(Y)")]
-    float bloodSpawnOffsetY = -10.0f;
+    [SerializeField, Tooltip("一斉発射時の速度(速め推奨)")]
+    float bloodBurstSpeed = 260.0f;
 
-    [SerializeField, Tooltip("岩(小)のプレハブ")]
-    Object@ rubbleSmall;
+    [SerializeField, Tooltip("円上にBloodを1体ずつ生成する間隔(秒)")]
+    float bloodRingSpawnInterval = 0.05f;
+
+    [SerializeField, Tooltip("1回の円形発射が完了してから次の発射を始めるまでの間隔(秒)")]
+    float bloodBurstInterval = 0.4f;
+
+    [SerializeField, Tooltip("プレイヤー周辺のどれくらいの範囲からランダムに中心点を選ぶか")]
+    float bloodCenterRandomRadius = 60.0f;
+
+    [SerializeField, Tooltip("Blood(の生成位置)をプレイヤーからどれだけ離すか(最低距離)")]
+    float bloodMinDistanceFromPlayer = 40.0f;
 
     [SerializeField, Tooltip("岩(中)のプレハブ")]
     Object@ rubbleMedium;
 
-    [SerializeField, Tooltip("通常の岩(小)の生成数")]
-    int rubbleSmallCount = 2;
+    [SerializeField, Tooltip("岩(中)の生成数")]
+    int rubbleMediumCount = 4;
 
-    [SerializeField, Tooltip("通常の岩(中)の生成数")]
-    int rubbleMediumCount = 2;
-
-    [SerializeField, Tooltip("中央集中の岩(小)の生成数")]
-    int rubbleCenterSmallCount = 3;
-
-    [SerializeField, Tooltip("中央集中の岩(中)の生成数")]
-    int rubbleCenterMediumCount = 3;
-
-    [SerializeField, Tooltip("岩を降らせる高さ")]
+    [SerializeField, Tooltip("岩を降らせる高さ(固定)")]
     float rubbleDropHeight = 150.0f;
 
-    [SerializeField, Tooltip("岩の横方向の散らばり幅")]
-    float rubbleSpreadWidth = 60.0f;
+    [SerializeField, Tooltip("Ovary位置を基準にどれくらいランダムに横方向へばらけさせるか")]
+    float rubbleRandomRangeX = 50.0f;
 
     [SerializeField, Tooltip("左側Ovary基準の岩生成オフセットX")]
     float rubbleOffsetLeftX = 0.0f;
@@ -81,12 +77,24 @@ class Boss3 : ScriptComponentBehavior {
     [SerializeField, Tooltip("右側Ovary基準の岩生成オフセットX")]
     float rubbleOffsetRightX = 0.0f;
 
+    [SerializeField, Tooltip("岩を1つ落とすごとにずらす落下開始遅延(秒)")]
+    float rubbleDropDelayStep = 0.2f;
+
+    [SerializeField, Tooltip("待機中・Blood攻撃中に上下に動く幅(振幅)")]
+    float moveAmplitude = 10.0f;
+
+    [SerializeField, Tooltip("待機中・Blood攻撃中に上下に動く速さ")]
+    float moveSpeed = 2.0f;
+
     Boss3State state = Boss3State::Idle;
     Boss3State lastState = Boss3State::Idle;
     float stateTimer = 0.0f;
 
+    // 上下移動用タイマー
+    float moveTimer = 0.0f;
+
     // 攻撃パターンのサイクル用
-    int attackCycle = 0; 
+    int attackCycle = 0;
 
     float leftOvaryHP = 0.0f;
     float rightOvaryHP = 0.0f;
@@ -97,6 +105,19 @@ class Boss3 : ScriptComponentBehavior {
 
     Vector3 initialBossPos;
 
+    // Blood攻撃の進行管理用
+    int bloodBurstsFired = 0;
+    int ringSpawnedCount = 0;
+    float ringSpawnTimer = 0.0f;
+    bool isWaitingNextBurst = false;
+    float burstWaitTimer = 0.0f;
+    Vector3 currentBurstCenter;
+    array<Object@> currentRingBlood;
+    array<float> currentRingAngle;
+
+    // 疑似乱数
+    uint rngState = 88172645;
+
     void Start() {
         leftOvaryHP = initialLeftOvaryHP;
         rightOvaryHP = initialRightOvaryHP;
@@ -106,6 +127,9 @@ class Boss3 : ScriptComponentBehavior {
         Transform@ tf = GetTransform();
         if (tf !is null) {
             initialBossPos = tf.GetTranslate();
+            // ボスの座標を種としてばらつきを持たせる
+            rngState = uint(Abs(initialBossPos.x) * 1000.0f) + uint(Abs(initialBossPos.y) * 37.0f) + 12345;
+            if (rngState == 0) rngState = 12345;
         }
 
         hpTier = CalcHpTier();
@@ -124,19 +148,26 @@ class Boss3 : ScriptComponentBehavior {
         if (leftOvaryHP <= 0.0f && rightOvaryHP <= 0.0f) {
             ChangeState(Boss3State::Dead);
         } else {
-            FacePlayer();
             stateTimer += GetDeltaTime();
 
             switch (state) {
                 case Boss3State::Idle:
+                    // 待機中の上下移動
+                    moveTimer += GetDeltaTime();
+                    {
+                        Transform@ tf = GetTransform();
+                        if (tf !is null) {
+                            Vector3 pos = initialBossPos;
+                            pos.y += Sin(moveTimer * moveSpeed) * moveAmplitude;
+                            tf.SetTranslate(pos);
+                        }
+                    }
+
                     if (stateTimer >= idleDuration) {
-                        // 順番に攻撃を行う
                         if (attackCycle == 0) ChangeState(Boss3State::BloodTelegraph);
-                        else if (attackCycle == 1) ChangeState(Boss3State::RubbleTelegraph);
-                        else if (attackCycle == 2) ChangeState(Boss3State::BloodTargetedTelegraph);
-                        else if (attackCycle == 3) ChangeState(Boss3State::RubbleCenterTelegraph);
-                        
-                        attackCycle = (attackCycle + 1) % 4; // 次の攻撃へ
+                        else ChangeState(Boss3State::RubbleTelegraph);
+
+                        attackCycle = (attackCycle + 1) % 2; // Blood/Rubbleを交互に
                     }
                     break;
 
@@ -151,23 +182,24 @@ class Boss3 : ScriptComponentBehavior {
                     if (stateTimer >= telegraphDuration) ChangeState(Boss3State::RubbleAttack);
                     break;
 
-                case Boss3State::BloodTargetedTelegraph:
-                    UpdateTelegraphMotion(stateTimer, telegraphDuration, 2);
-                    if (stateTimer >= telegraphDuration) ChangeState(Boss3State::BloodTargetedAttack);
-                    break;
-
-                case Boss3State::RubbleCenterTelegraph:
-                    UpdateTelegraphMotion(stateTimer, telegraphDuration, 3);
-                    if (stateTimer >= telegraphDuration) ChangeState(Boss3State::RubbleCenterAttack);
-                    break;
-
                 // 攻撃発動ステート
                 case Boss3State::BloodAttack:
+                    // Blood攻撃中も上下移動を継続
+                    moveTimer += GetDeltaTime();
+                    {
+                        Transform@ tf = GetTransform();
+                        if (tf !is null) {
+                            Vector3 pos = initialBossPos;
+                            pos.y += Sin(moveTimer * moveSpeed) * moveAmplitude;
+                            tf.SetTranslate(pos);
+                        }
+                    }
+                    UpdateBloodAttack();
+                    break;
+
                 case Boss3State::RubbleAttack:
-                case Boss3State::BloodTargetedAttack:
-                case Boss3State::RubbleCenterAttack:
                     if (stateTimer >= attackDuration) {
-                        ChangeState(Boss3State::Idle); // 攻撃が終わったらIdle
+                        ChangeState(Boss3State::Idle);
                     }
                     break;
             }
@@ -187,24 +219,20 @@ class Boss3 : ScriptComponentBehavior {
 
         switch (state) {
             case Boss3State::Idle:
+                moveTimer = 0.0f; // 中心から滑らかに動かし始める
+                ResetPosition();
+                break;
             case Boss3State::Dead:
                 ResetPosition();
                 break;
             case Boss3State::BloodAttack:
+                moveTimer = 0.0f; // Blood攻撃開始時もタイマーをリセットして滑らかに動かす
                 ResetPosition();
-                SpawnBlood(false); // 通常Blood
+                StartBloodAttack();
                 break;
             case Boss3State::RubbleAttack:
                 ResetPosition();
-                DropRubbles(false); // 通常Rubble
-                break;
-            case Boss3State::BloodTargetedAttack:
-                ResetPosition();
-                SpawnBlood(true); // 追尾型Blood
-                break;
-            case Boss3State::RubbleCenterAttack:
-                ResetPosition();
-                DropRubbles(true); // 中央集中Rubble
+                DropRubbles();
                 break;
             default:
                 break;
@@ -219,27 +247,16 @@ class Boss3 : ScriptComponentBehavior {
         float progress = timer / maxTime;
         float intensity = 8.0f * progress; // 時間経過で揺れを強くする
         float wave = ((int(timer * 60.0f) % 2) == 0) ? 1.0f : -1.0f;
-        
+
         Vector3 pos = initialBossPos;
 
         if (attackType == 0) {
-            // 通常Blood
+            // Blood
             pos.x += wave * intensity;
             pos.y += 15.0f * progress;
-        } 
-        else if (attackType == 1) {
-            // 通常Rubble
+        } else if (attackType == 1) {
+            // Rubble
             pos.y += (wave * intensity) - (15.0f * progress);
-        }
-        else if (attackType == 2) {
-            // 追尾Blood
-            pos.x += wave * (intensity * 1.5f);
-        }
-        else if (attackType == 3) {
-            // 中央Rubble
-            float wave2 = ((int(timer * 60.0f + 1) % 2) == 0) ? 1.0f : -1.0f;
-            pos.x += wave * intensity;
-            pos.y += 10.0f * progress + (wave2 * intensity);
         }
 
         tf.SetTranslate(pos);
@@ -252,19 +269,6 @@ class Boss3 : ScriptComponentBehavior {
         }
     }
 
-    void FacePlayer() {
-        Transform@ tf = GetTransform();
-        if (player is null || tf is null) return;
-        Transform@ playerTf = player.GetTransform();
-        if (playerTf is null) return;
-
-        if (playerTf.GetTranslate().x > tf.GetTranslate().x) {
-            tf.SetRotate(Vector3(0.0f, 3.14159f, 0.0f));
-        } else {
-            tf.SetRotate(Vector3(0.0f, 0.0f, 0.0f));
-        }
-    }
-
     int CalcHpTier() {
         float ratio = (leftOvaryHP + rightOvaryHP) / maxHP;
         if (ratio > 0.75f) return 0;
@@ -273,103 +277,178 @@ class Boss3 : ScriptComponentBehavior {
         return 3;
     }
 
-    // Blood攻撃の生成
-    void SpawnBlood(bool isTargeted) {
-        if (bloodPrefab is null) return;
-        Transform@ tf = GetTransform();
-        if (tf is null) return;
+    // Blood攻撃
+    void StartBloodAttack() {
+        bloodBurstsFired = 0;
+        ringSpawnedCount = 0;
+        ringSpawnTimer = 0.0f;
+        isWaitingNextBurst = false;
+        burstWaitTimer = 0.0f;
+        currentRingBlood.resize(0);
+        currentRingAngle.resize(0);
+        PickNewBurstCenter();
+    }
 
-        Vector3 basePos = tf.GetTranslate();
-        int count = isTargeted ? bloodTargetedCount : bloodCount;
-        
-        // 追尾の場合はプレイヤーのX座標を基準にする
-        if (isTargeted && player !is null) {
-            Transform@ pTf = player.GetTransform();
-            if (pTf !is null) {
-                basePos.x = pTf.GetTranslate().x;
-                basePos.y += 40.0f; // ボスより少し高い位置から降らせる
+    void UpdateBloodAttack() {
+        float dt = GetDeltaTime();
+
+        if (isWaitingNextBurst) {
+            // 発射後の間隔待ち、または全バースト終了後の締めの待機
+            burstWaitTimer += dt;
+            float waitTarget = (bloodBurstsFired < bloodBurstCount) ? bloodBurstInterval : attackDuration;
+            if (burstWaitTimer >= waitTarget) {
+                isWaitingNextBurst = false;
+                burstWaitTimer = 0.0f;
+
+                if (bloodBurstsFired >= bloodBurstCount) {
+                    ChangeState(Boss3State::Idle);
+                } else {
+                    ringSpawnedCount = 0;
+                    currentRingBlood.resize(0);
+                    currentRingAngle.resize(0);
+                    PickNewBurstCenter();
+                }
             }
+            return;
         }
 
-        float centerOffset = float(count - 1) * 0.5f;
+        if (ringSpawnedCount < bloodRingCount) {
+            // 円周上にBloodを1体ずつ生成していく
+            ringSpawnTimer += dt;
+            if (ringSpawnTimer >= bloodRingSpawnInterval) {
+                SpawnOneRingBlood(ringSpawnedCount);
+                ringSpawnedCount++;
+                ringSpawnTimer = 0.0f;
+            }
+        } else {
+            // 配置が完了したので全方向へ一斉発射
+            LaunchRingBlood();
+            bloodBurstsFired++;
+            isWaitingNextBurst = true;
+            burstWaitTimer = 0.0f;
+        }
+    }
 
-        for (int i = 0; i < count; i++) {
-            Object@ clone = GetScene().CloneObject(bloodPrefab, "CloneBlood");
-            if (clone is null) continue;
-            clone.SetActive(true);
-            Transform@ cloneTf = clone.GetTransform();
-            if (cloneTf !is null) {
-                // 追尾型の場合は少し狭めの間隔で降らせる
-                float currentSpread = isTargeted ? (bloodSpreadX * 0.6f) : bloodSpreadX;
-                float offsetX = (float(i) - centerOffset) * currentSpread;
-                Vector3 spawnPos = Vector3(basePos.x + offsetX, basePos.y + bloodSpawnOffsetY, basePos.z);
-                cloneTf.SetTranslate(spawnPos);
+    // プレイヤー周辺のランダムな点を、今回の円形発射の中心点として選ぶ
+    void PickNewBurstCenter() {
+        Vector3 basePos = initialBossPos;
+        if (player !is null) {
+            Transform@ pTf = player.GetTransform();
+            if (pTf !is null) basePos = pTf.GetTranslate();
+        }
+
+        float angle = RandomRange(0.0f, 6.28318f);
+
+        float minDist = bloodMinDistanceFromPlayer + bloodBurstRadius;
+        float maxDist = bloodCenterRandomRadius;
+        if (maxDist < minDist) maxDist = minDist;
+
+        float dist = RandomRange(minDist, maxDist);
+
+        currentBurstCenter = Vector3(
+            basePos.x + Cos(angle) * dist,
+            basePos.y + Sin(angle) * dist,
+            basePos.z
+        );
+    }
+
+    // 中心点を囲うようにBloodを1体だけ生成する
+    void SpawnOneRingBlood(int index) {
+        if (bloodPrefab is null || bloodRingCount <= 0) return;
+
+        float angle = (6.28318f / float(bloodRingCount)) * float(index);
+        Vector3 spawnPos = Vector3(
+            currentBurstCenter.x + Cos(angle) * bloodBurstRadius,
+            currentBurstCenter.y + Sin(angle) * bloodBurstRadius,
+            currentBurstCenter.z
+        );
+
+        Object@ clone = GetScene().CloneObject(bloodPrefab, "CloneBlood");
+        if (clone is null) return;
+
+        clone.SetActive(true);
+        Transform@ cloneTf = clone.GetTransform();
+        if (cloneTf !is null) {
+            cloneTf.SetTranslate(spawnPos);
+        }
+
+        currentRingBlood.insertLast(clone);
+        currentRingAngle.insertLast(angle);
+    }
+
+    // 円周上に並んだBloodを、それぞれ中心点から外向きの方向へ一斉に発射する
+    void LaunchRingBlood() {
+        for (uint i = 0; i < currentRingBlood.length(); ++i) {
+            Object@ b = currentRingBlood[i];
+            if (b is null) continue;
+
+            float angle = currentRingAngle[i];
+            Vector2 vel = Vector2(Cos(angle) * bloodBurstSpeed, Sin(angle) * bloodBurstSpeed);
+
+            ScriptComponent@ sc;
+            if (b.GetComponent(@sc)) {
+                sc.CallMethod("Launch", vel);
             }
         }
     }
 
-    // Rubble攻撃の生成
-    void DropRubbles(bool isCenter) {
+    // Rubble攻撃
+    void DropRubbles() {
+        if (rubbleMedium is null) return;
+
         Transform@ tf = GetTransform();
         if (tf is null) return;
         Vector3 basePos = tf.GetTranslate();
-        
+
         Vector3 leftPos = basePos;
         Vector3 rightPos = basePos;
 
-        if (!isCenter) {
-            if (ovaryLeft !is null) {
-                Transform@ leftTf = ovaryLeft.GetTransform();
-                if (leftTf !is null) leftPos = leftTf.GetTranslate();
-                leftPos.x += rubbleOffsetLeftX;
-            }
-            if (ovaryRight !is null) {
-                Transform@ rightTf = ovaryRight.GetTransform();
-                if (rightTf !is null) rightPos = rightTf.GetTranslate();
-                rightPos.x += rubbleOffsetRightX;
-            }
+        if (ovaryLeft !is null) {
+            Transform@ leftTf = ovaryLeft.GetTransform();
+            if (leftTf !is null) leftPos = leftTf.GetTranslate();
+            leftPos.x += rubbleOffsetLeftX;
+        }
+        if (ovaryRight !is null) {
+            Transform@ rightTf = ovaryRight.GetTransform();
+            if (rightTf !is null) rightPos = rightTf.GetTranslate();
+            rightPos.x += rubbleOffsetRightX;
         }
 
-        int sCount = isCenter ? rubbleCenterSmallCount : rubbleSmallCount;
-        if (rubbleSmall !is null) {
-            for (int i = 0; i < sCount; i++) {
-                Object@ clone = GetScene().CloneObject(rubbleSmall, "CloneRubbleSmall");
-                if (clone !is null) {
-                    clone.SetActive(true);
-                    Transform@ cloneTf = clone.GetTransform();
-                    if (cloneTf !is null) {
-                        Vector3 targetPos = isCenter ? basePos : ((i % 2 == 0) ? leftPos : rightPos);
-                        float spread = isCenter ? (rubbleSpreadWidth * 1.2f) : rubbleSpreadWidth;
-                        float offsetX = (i % 2 == 0 ? 1.0f : -1.0f) * spread * (0.2f + (i * 0.2f));
-                        Vector3 spawnPos = Vector3(targetPos.x + offsetX, targetPos.y + rubbleDropHeight, targetPos.z);
-                        cloneTf.SetTranslate(spawnPos);
-                    }
-                }
-            }
-        }
+        float currentDelay = 0.0f;
 
-        int mCount = isCenter ? rubbleCenterMediumCount : rubbleMediumCount;
-        if (rubbleMedium !is null) {
-            for (int i = 0; i < mCount; i++) {
-                Object@ clone = GetScene().CloneObject(rubbleMedium, "CloneRubbleMedium");
-                if (clone !is null) {
-                    clone.SetActive(true);
-                    Transform@ cloneTf = clone.GetTransform();
-                    if (cloneTf !is null) {
-                        Vector3 targetPos = isCenter ? basePos : ((i % 2 == 0) ? rightPos : leftPos);
-                        float spread = isCenter ? (rubbleSpreadWidth * 1.5f) : rubbleSpreadWidth;
-                        float offsetX = (i % 2 == 0 ? -1.0f : 1.0f) * spread * (0.1f + (i * 0.3f));
-                        Vector3 spawnPos = Vector3(targetPos.x + offsetX, targetPos.y + rubbleDropHeight + 20.0f, targetPos.z);
-                        cloneTf.SetTranslate(spawnPos);
-                    }
-                }
+        for (int i = 0; i < rubbleMediumCount; i++) {
+            Object@ clone = GetScene().CloneObject(rubbleMedium, "CloneRubbleMedium");
+            if (clone is null) continue;
+
+            clone.SetActive(true);
+            Transform@ cloneTf = clone.GetTransform();
+            if (cloneTf !is null) {
+                Vector3 targetPos = (i % 2 == 0) ? leftPos : rightPos;
+                float offsetX = RandomRange(-rubbleRandomRangeX, rubbleRandomRangeX);
+                Vector3 spawnPos = Vector3(targetPos.x + offsetX, targetPos.y + rubbleDropHeight, targetPos.z);
+                cloneTf.SetTranslate(spawnPos);
             }
+
+            ScriptComponent@ sc;
+            if (clone.GetComponent(@sc)) {
+                sc.CallMethod("SetDropDelay", currentDelay);
+            }
+            currentDelay += rubbleDropDelayStep;
         }
     }
 
     void OnLeftOvaryHPChanged(float hp) { leftOvaryHP = hp; }
     void OnRightOvaryHPChanged(float hp) { rightOvaryHP = hp; }
     void Damage(float amount) { }
+
+    float NextRandom01() {
+        rngState = rngState * 1664525 + 1013904223;
+        return float(rngState % 100000) / 100000.0f;
+    }
+
+    float RandomRange(float minVal, float maxVal) {
+        return minVal + NextRandom01() * (maxVal - minVal);
+    }
 
     void SetAnimation(Boss3State animState, int tier) {
         const int rowsPerTier = 4;
@@ -384,19 +463,15 @@ class Boss3 : ScriptComponentBehavior {
                         case Boss3State::Idle:
                         case Boss3State::BloodTelegraph:
                         case Boss3State::RubbleTelegraph:
-                        case Boss3State::BloodTargetedTelegraph:
-                        case Boss3State::RubbleCenterTelegraph:
-                            stateOffset = 0; // 待機や予備動作はすべてIdleアニメーション
+                            stateOffset = 0;
                             frameCount = 3;
                             break;
                         case Boss3State::BloodAttack:
-                        case Boss3State::BloodTargetedAttack:
-                            stateOffset = 1; // Blood系の攻撃アニメーション
+                            stateOffset = 1;
                             frameCount = 4;
                             break;
                         case Boss3State::RubbleAttack:
-                        case Boss3State::RubbleCenterAttack:
-                            stateOffset = 2; // Rubble系の攻撃アニメーション
+                            stateOffset = 2;
                             frameCount = 4;
                             break;
                         case Boss3State::Dead:

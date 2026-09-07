@@ -20,6 +20,12 @@ class Ovary : ScriptComponentBehavior {
     [SerializeField, Tooltip("HP0になってから消滅するまでの時間(秒)")]
     float deathDelay = 0.3f;
 
+    [SerializeField, Tooltip("上下に動く幅(振幅)")]
+    float moveAmplitude = 15.0f;
+
+    [SerializeField, Tooltip("上下に動く速さ")]
+    float moveSpeed = 2.0f;
+
     float hp = 0.0f;
     bool isDead = false;
     float deathTimer = 0.0f;
@@ -27,6 +33,10 @@ class Ovary : ScriptComponentBehavior {
     // ダメージ演出管理用
     float damageFlashTimer = 0.0f;
     bool isFlashing = false;
+
+    // 上下移動用
+    float initialY = 0.0f;
+    float moveTimer = 0.0f;
 
     SpriteRenderer@ sprite;
 
@@ -38,6 +48,12 @@ class Ovary : ScriptComponentBehavior {
             sprite.SetInstanceColor(normalColor);
         }
 
+        // 初期高さを記憶しておく
+        Transform@ tf = GetTransform();
+        if (tf !is null) {
+            initialY = tf.GetTranslate().y;
+        }
+
         SetAnimation(false);
         NotifyBoss();
     }
@@ -47,6 +63,17 @@ class Ovary : ScriptComponentBehavior {
         bool isDialogueActive = false;
         GetScene().GetVariable("isDialogueActive", isDialogueActive);
         if (isDialogueActive) return;
+
+        // 生存中のみ一定の範囲で上下に動き続ける
+        if (!isDead) {
+            moveTimer += GetDeltaTime();
+            Transform@ tf = GetTransform();
+            if (tf !is null) {
+                Vector3 pos = tf.GetTranslate();
+                pos.y = initialY + Sin(moveTimer * moveSpeed) * moveAmplitude;
+                tf.SetTranslate(pos);
+            }
+        }
 
         // ダメージ時の色点滅処理
         if (isFlashing) {

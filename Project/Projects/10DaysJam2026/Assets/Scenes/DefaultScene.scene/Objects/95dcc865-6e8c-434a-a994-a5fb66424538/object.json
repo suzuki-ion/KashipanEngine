@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 750.044189453125,
-                            "y": 330.0113525390625,
+                            "x": 952.0642700195313,
+                            "y": 193.01458740234375,
                             "z": 0.0
                         }
                     },
@@ -87,27 +87,30 @@
                     "customData": {
                         "fields": {
                             "attackDuration": 0.5,
-                            "bloodCount": 3,
+                            "bloodBurstCount": 5,
+                            "bloodBurstInterval": 1.2000000476837158,
+                            "bloodBurstRadius": 30.0,
+                            "bloodBurstSpeed": 100.0,
+                            "bloodCenterRandomRadius": 100.0,
+                            "bloodMinDistanceFromPlayer": 40.0,
                             "bloodPrefab": "fc580a6e-415a-4780-b03c-4c33e4f7a4c0",
-                            "bloodSpawnOffsetY": -10.0,
-                            "bloodSpreadX": 40.0,
-                            "bloodTargetedCount": 5,
+                            "bloodRingCount": 8,
+                            "bloodRingSpawnInterval": 0.10000000149011612,
                             "idleDuration": 1.5,
                             "initialLeftOvaryHP": 20.0,
                             "initialRightOvaryHP": 20.0,
+                            "moveAmplitude": 10.0,
+                            "moveSpeed": 2.0,
                             "ovaryLeft": "b03fef43-e9fd-4c32-b247-732f786306d6",
                             "ovaryRight": "03dda788-8556-4718-ab08-13ad2d48a100",
                             "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
-                            "rubbleCenterMediumCount": 3,
-                            "rubbleCenterSmallCount": 3,
+                            "rubbleDropDelayStep": 0.10000000149011612,
                             "rubbleDropHeight": 50.0,
                             "rubbleMedium": "7e90c5d6-e37b-4420-942f-bc4530d20094",
-                            "rubbleMediumCount": 6,
-                            "rubbleOffsetLeftX": -70.0,
-                            "rubbleOffsetRightX": 70.0,
-                            "rubbleSmall": "d5a1df87-7e02-4164-bd53-c6a58e756183",
-                            "rubbleSmallCount": 6,
-                            "rubbleSpreadWidth": 60.0,
+                            "rubbleMediumCount": 28,
+                            "rubbleOffsetLeftX": 0.0,
+                            "rubbleOffsetRightX": 0.0,
+                            "rubbleRandomRangeX": 80.0,
                             "telegraphDuration": 1.2000000476837158
                         },
                         "scriptPath": "Assets\\Scripts\\Boss3.as"
@@ -167,7 +170,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": false,
+        "isActive": true,
         "name": "Boss3",
         "objectID": "95dcc865-6e8c-434a-a994-a5fb66424538",
         "tag": ""

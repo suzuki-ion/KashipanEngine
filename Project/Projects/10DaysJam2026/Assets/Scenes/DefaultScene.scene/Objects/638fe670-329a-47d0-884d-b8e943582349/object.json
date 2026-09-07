@@ -185,7 +185,9 @@
                             "invincibleDuration": 0.5,
                             "moveSpeed": 15.0,
                             "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
-                            "pushBackExcludeTags": [],
+                            "pushBackExcludeTags": [
+                                "Player"
+                            ],
                             "self": "638fe670-329a-47d0-884d-b8e943582349"
                         },
                         "scriptPath": "Assets\\Scripts\\Green.as"

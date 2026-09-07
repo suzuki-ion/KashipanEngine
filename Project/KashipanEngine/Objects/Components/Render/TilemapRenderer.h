@@ -795,11 +795,18 @@ private:
                 meshRegistryName_ = "__TilemapRendererMesh_" +
                     (owner ? owner->GetObjectID().ToString() : std::to_string(reinterpret_cast<std::uintptr_t>(this)));
             }
-            meshHandle_ = ModelManager::RegisterProceduralMesh(meshRegistryName_, std::move(vertices), std::move(indices));
+            // RegisterProceduralMeshは登録名が既存の場合、頂点・インデックスを更新せず既存ハンドルを
+            // そのまま返す仕様（ModelManager.h参照）。シーン切り替え時、直前に破棄された別インスタンス
+            // （旧シーンの同名オブジェクトを複製したなどでUUIDが重複するケースや、破棄直後に同アドレスへ
+            // 再確保されたインスタンス等）が同じ名前を既に登録済みだった場合にここへ入ると、
+            // vectorをmoveで渡すだけでは古いシーンのメッシュデータがそのまま表示され続けてしまう
+            // （「前のシーンのタイルマップ描画が維持されたままになる」不具合の原因）。
+            // 新規登録・既存流用のどちらでも直後に必ずUpdateProceduralMeshで今回のデータへ
+            // 上書きすることで、名前が衝突していても常に自分自身のセルデータが反映されるようにする
+            meshHandle_ = ModelManager::RegisterProceduralMesh(meshRegistryName_, vertices, indices);
             meshFilter->SetMeshHandle(meshHandle_);
-        } else {
-            ModelManager::UpdateProceduralMesh(meshHandle_, std::move(vertices), std::move(indices));
         }
+        ModelManager::UpdateProceduralMesh(meshHandle_, std::move(vertices), std::move(indices));
     }
 
 #if defined(USE_IMGUI)

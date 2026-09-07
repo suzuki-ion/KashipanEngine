@@ -213,7 +213,7 @@ class Green : ScriptComponentBehavior {
 
     void OnCollisionEnter(const HitInfo &in hit) {
         // 進行方向の切り替え
-        if(hit.selfCollider.GetTag() == "Direction"){
+        if(hit.selfCollider.GetTag() == "Direction" && hit.otherCollider.GetTag() == "Tilemap"){
             if (moveDir == MoveDirection::Left) {
                 moveDir = MoveDirection::Right;
             } else {

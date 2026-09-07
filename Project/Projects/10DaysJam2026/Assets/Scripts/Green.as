@@ -213,10 +213,24 @@ class Green : ScriptComponentBehavior {
 
     void OnCollisionEnter(const HitInfo &in hit) {
         // 進行方向の切り替え
-        if(hit.selfCollider.GetTag() == "Direction" && hit.otherObject.GetTag() == "Tilemap"){
+        if(hit.selfCollider.GetTag() == "Direction" && (hit.otherObject.GetTag() == "Tilemap" || hit.otherCollider.GetTag() == "Wall")){
             if (moveDir == MoveDirection::Left) {
                 moveDir = MoveDirection::Right;
             } else {
+                moveDir = MoveDirection::Left;
+            }
+        }
+    }
+
+    void OnCollisionExit(const HitInfo &in hit) {
+        if(hit.selfCollider.GetTag() == "TilemapCheckerLeft" && hit.otherObject.GetTag() == "Tilemap"){
+            if (moveDir == MoveDirection::Left) {
+                moveDir = MoveDirection::Right;
+            }
+        }
+
+        if(hit.selfCollider.GetTag() == "TilemapCheckerRight" && hit.otherObject.GetTag() == "Tilemap"){
+            if (moveDir == MoveDirection::Right) {
                 moveDir = MoveDirection::Left;
             }
         }

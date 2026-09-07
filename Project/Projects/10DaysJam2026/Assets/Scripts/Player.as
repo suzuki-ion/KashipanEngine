@@ -6,8 +6,8 @@ enum State {
     Jump,
     Attack,
     WalkAttack,
-    JumpAttack,
-    Dead
+    Dead,
+    JumpAttack
 }
 
 enum Direction{
@@ -74,6 +74,9 @@ class Player : ScriptComponentBehavior {
 
     [SerializeField, Tooltip("即死となる落下距離")]
     float fallDeathHeight = 150.0f;
+
+    [SerializeField, Tooltip("即死となる最下限のY座標(落下死高度)")]
+    float fallDeathY = -50.0f;
 
     [SerializeField, Tooltip("獲得可能なすべての武器オブジェクト一覧")]
     array<Object@>@ allWeapons;
@@ -144,6 +147,11 @@ class Player : ScriptComponentBehavior {
         GetComponents(@audioSources);
 
         LoadProgress();
+
+        // 未装備かつ武器が存在する場合、自動で最初の所持武器を装備
+        if (currentWeaponType < 0 && weapons !is null && weapons.length() > 0) {
+            currentWeaponType = FindOwnedWeapon(1);
+        }
     }
 
     // 現在のシーン実行状態でセーブデータの読み書きを行ってよいかどうか
@@ -306,11 +314,13 @@ class Player : ScriptComponentBehavior {
         if(tf is null) return;
 
         if(controller !is null) {
+            float currentY = tf.GetTranslate().y;
+
             if(controller.IsGrounded()) {
                 if(velocity.y <= 0.0f) {
                     // 着地時に落下距離を判定
-                    float fallDistance = highestY - tf.GetTranslate().y;
-                    if (isJump && fallDistance >= fallDeathHeight) {
+                    float fallDistance = highestY - currentY;
+                    if (isAlive && isJump && fallDistance >= fallDeathHeight) {
                         Damage(hp);
                     }
 
@@ -320,12 +330,20 @@ class Player : ScriptComponentBehavior {
                     }
                     isJump = false;
                 }
-                highestY = tf.GetTranslate().y; // 地上にいる間は常にY座標を更新
+                highestY = currentY; // 地上にいる間は常にY座標を更新
             } else {
                 isJump = true;
                 // 空中で最高到達点を記録
-                if (tf.GetTranslate().y > highestY) {
-                    highestY = tf.GetTranslate().y;
+                if (currentY > highestY) {
+                    highestY = currentY;
+                }
+
+                // 空中での落下死判定（設定した落下距離超過、または最下限Y座標を下回った場合）
+                if (isAlive) {
+                    float fallDistance = highestY - currentY;
+                    if (fallDistance >= fallDeathHeight || currentY <= fallDeathY) {
+                        Damage(hp);
+                    }
                 }
             }
 
@@ -529,6 +547,10 @@ class Player : ScriptComponentBehavior {
                 if (sc.GetVariable("pos", pos)) {
                     sc.SetVariable("pos", targetPos);
                 }
+
+                // プレイヤーの最新の向きに応じたmarginをKatanaに送信
+                float margin = (lastDirection == Direction::Right) ? 16.0f : -16.0f;
+                sc.SetVariable("currentMargin", margin);
             }
         }
 

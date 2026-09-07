@@ -35,6 +35,9 @@ class Katana : ScriptComponentBehavior {
     [SerializeField, Tooltip("攻撃演出の縦方向オフセット")]
     float effectOffsetY = 3.5f;
 
+    [SerializeField, Tooltip("現在のオフセット値保持")]
+    float currentMargin = 16.0f;
+
     float cooldownTimer = 0.0f;
     Box2DCollider@ col;
     bool isActive = false;
@@ -77,7 +80,14 @@ class Katana : ScriptComponentBehavior {
             effectOffsetY = 10.0f;
         }
 
-        // 攻撃中は方向に応じたオフセットを加えて表示・当たり判定を配置
+        // 攻撃中はプレイヤーの向きに合わせて毎フレーム回転とオフセットを追従
+        if (isActive) {
+            attackOffsetX = currentMargin;
+            bool facingRight = (currentMargin >= 0.0f);
+            float rotY = facingRight ? 0.0f : 3.14159f;
+            tf.SetRotate(Vector3(0.0f, rotY, 0.0f));
+        }
+
         Vector3 drawPos = pos;
         if (isActive) {
             drawPos += Vector3(attackOffsetX, effectOffsetY, 0.0f);

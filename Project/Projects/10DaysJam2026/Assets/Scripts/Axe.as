@@ -118,13 +118,6 @@ class Axe : ScriptComponentBehavior {
 
             GetOwnerObject().SetActive(false);
         }
-        // Tilemapに当たったら消滅させる
-        else if(hit.otherObject.GetTag() == "Tilemap"){
-            hit.selfCollider.SetActive(false);
-            pos = Vector3(-1000.0f, 0.0f, 0.0f);
-            currentSpeedX = 0.0f;
-            currentSpeedY = 0.0f;
-        }
     }
 
     void SetPos(Vector3 playerPos){
@@ -139,6 +132,7 @@ class Axe : ScriptComponentBehavior {
         while (exp >= nextExp) {
             exp -= nextExp;
             level++;
+            level = Clamp(level, 0, 3);
             nextExp *= 1.5f; // 次の必要経験値を増加
             damageAmount += 1.0f; // レベルアップで攻撃力を強化
             Log("Axe Level Up Lv." + level + " (攻撃力: " + damageAmount + ")");

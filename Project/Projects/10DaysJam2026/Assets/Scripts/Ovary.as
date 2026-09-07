@@ -38,6 +38,10 @@ class Ovary : ScriptComponentBehavior {
     float initialY = 0.0f;
     float moveTimer = 0.0f;
 
+    // との相対位置保持用
+    Vector3 offsetPos;
+    bool isOffsetInitialized = false;
+
     SpriteRenderer@ sprite;
 
     void Start() {
@@ -64,14 +68,18 @@ class Ovary : ScriptComponentBehavior {
         GetScene().GetVariable("isDialogueActive", isDialogueActive);
         if (isDialogueActive) return;
 
-        // 生存中のみ一定の範囲で上下に動き続ける
-        if (!isDead) {
-            moveTimer += GetDeltaTime();
+        // Boss3の位置に追従する処理
+        if (boss !is null) {
+            Transform@ bossTf = boss.GetTransform();
             Transform@ tf = GetTransform();
-            if (tf !is null) {
-                Vector3 pos = tf.GetTranslate();
-                pos.y = initialY + Sin(moveTimer * moveSpeed) * moveAmplitude;
-                tf.SetTranslate(pos);
+            if (bossTf !is null && tf !is null) {
+                if (!isOffsetInitialized) {
+                    // 初期配置におけるBoss3との相対オフセットを記録
+                    offsetPos = tf.GetTranslate() - bossTf.GetTranslate();
+                    isOffsetInitialized = true;
+                }
+                // Boss3の現在位置に合わせて自身の座標を更新
+                tf.SetTranslate(bossTf.GetTranslate() + offsetPos);
             }
         }
 

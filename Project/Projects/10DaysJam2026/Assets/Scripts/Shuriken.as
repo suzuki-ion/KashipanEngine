@@ -99,8 +99,9 @@ class Shuriken : ScriptComponentBehavior {
         while (exp >= nextExp) {
             exp -= nextExp;
             level++;
-            nextExp *= 1.5f;
-            damageAmount += 1.0f;
+            level = Clamp(level, 0, 3);
+            nextExp *= 1.5f; // 次の必要経験値を増加
+            damageAmount += 1.0f; // レベルアップで攻撃力を強化
             Log("Shuriken Level Up Lv." + level + " (攻撃力: " + damageAmount + ")");
         }
     }

@@ -46,11 +46,11 @@
             {
                 "data": {
                     "customData": {
-                        "boundsClampMode": 1,
-                        "boundsTransitionDuration": 0.5,
-                        "boundsTransitionEaseType": "EaseOutCubic",
-                        "boundsZoneObjectID": "c9519a98-e331-4137-a5f7-a4b1e4424bb5",
-                        "enableBoundsClamp": true,
+                        "boundsClampMode": 0,
+                        "boundsTransitionDuration": 0.0,
+                        "boundsTransitionEaseType": "Linear",
+                        "boundsZoneObjectID": "",
+                        "enableBoundsClamp": false,
                         "followTargets": [
                             {
                                 "followPositionX": true,

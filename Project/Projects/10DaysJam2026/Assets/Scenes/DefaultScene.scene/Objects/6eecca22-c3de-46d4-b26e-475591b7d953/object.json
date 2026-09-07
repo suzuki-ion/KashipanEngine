@@ -195,7 +195,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": false,
+        "isActive": true,
         "name": "FinalBoss",
         "objectID": "6eecca22-c3de-46d4-b26e-475591b7d953",
         "tag": ""

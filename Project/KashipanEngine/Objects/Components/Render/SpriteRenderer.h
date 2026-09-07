@@ -120,6 +120,13 @@ public:
         if (!target) return false;
         return !excludedRenderTargetNames_.contains(target->GetRenderTargetName());
     }
+    /// @brief 除外する描画先の名前一覧をまとめて設定する（TilemapRenderer等、複数のSpriteRenderer
+    ///        インスタンスへ同じ描画先設定を一括反映したいコンポーネントから使う）
+    void SetExcludedRenderTargetNames(const std::unordered_set<std::string> &names) {
+        excludedRenderTargetNames_ = names;
+        MarkDrawListDirty();
+    }
+    const std::unordered_set<std::string> &GetExcludedRenderTargetNames() const noexcept { return excludedRenderTargetNames_; }
 
     //==================================================
     // パイプライン・マテリアル指定

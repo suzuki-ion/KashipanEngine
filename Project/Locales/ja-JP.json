@@ -2141,6 +2141,9 @@
 		"editor.sceneview.tilepaint.enable": "タイルペイントを有効化",
 		"editor.sceneview.tilepaint.erase": "消しゴム",
 		"editor.sceneview.tilepaint.no_selection": "TilemapRendererを持つオブジェクトを1つだけ選択してください。",
+		"editor.sceneview.tilepaint.pen_shape_circle": "円形",
+		"editor.sceneview.tilepaint.pen_shape_square": "正方形",
+		"editor.sceneview.tilepaint.pen_size": "ペンサイズ",
 		"editor.sceneview.window": "シーンビュー",
 
 		//--------- editor.scriptengine ---------//

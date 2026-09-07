@@ -2139,6 +2139,9 @@
 		"editor.sceneview.tilepaint.enable": "Enable Tile Paint",
 		"editor.sceneview.tilepaint.erase": "Erase",
 		"editor.sceneview.tilepaint.no_selection": "Select a single object that has a TilemapRenderer.",
+		"editor.sceneview.tilepaint.pen_shape_circle": "Circle",
+		"editor.sceneview.tilepaint.pen_shape_square": "Square",
+		"editor.sceneview.tilepaint.pen_size": "Pen Size",
 		"editor.sceneview.window": "Scene View",
 
 		//--------- editor.scriptengine ---------//

@@ -1,7 +1,9 @@
 #pragma once
 #include <algorithm>
+#include <charconv>
 #include <cstdint>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "Objects/ObjectComponentHeader.h"
@@ -10,10 +12,15 @@
 #include "Assets/TextureManager.h"
 #include "Graphics/PipelineManager.h"
 #include "Math/Vector2.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/Components/Collider/Box2DCollider.h"
 #include "Objects/Components/MeshFilter.h"
 #include "Objects/Components/Render/SpriteRenderer.h"
+#include "Objects/Components/Transform.h"
+#include "Scene/SceneContext.h"
+#include "Utilities/UUID128.h"
 #if defined(USE_IMGUI)
+#include "Objects/Components/Render/TargetObjectSelector.h"
 #include "Utilities/AssetDragDropPayload.h"
 #include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
@@ -22,8 +29,12 @@
 namespace KashipanEngine {
 
 /// @brief RPGツクール風のオートタイル対応タイルマップ描画コンポーネント
-/// @details 自身はSceneRendererへ描画登録せず、同一オブジェクトのMeshFilter/SpriteRendererを
-///          自動追加して駆動する（ScreenBufferViewportと同じパターン）。MeshRendererではなく
+/// @details 自身はSceneRendererへ描画登録せず、タイル配置を一定サイズ（kChunkSize四方）の
+///          チャンクへ分割し、チャンクごとに自動生成した子オブジェクト（Transform+MeshFilter+
+///          SpriteRenderer、ChunkState参照）が実際の描画を担う。1マスタイルを書き換えるたびに
+///          グリッド全体を再構築していた旧実装と異なり、変更されたチャンクとその隣接チャンク
+///          （オートタイル判定が参照しうる範囲）だけをdirty化して再構築するため、大きなマップで
+///          実行時に頻繁にタイルを書き換えても負荷が抑えられる。MeshRendererではなく
 ///          SpriteRendererを使う理由: パイプライン名"Object2D.*"はシーンビュー（エディター）上で
 ///          gCamera3D投影のWorldバリアントへ差し替えられて初めて3Dシーンビュー内に正しく表示されるが、
 ///          この差し替え（SceneRenderer.cpp::ResolveEditorWorldPipelineName）はSpriteRenderer由来の
@@ -80,18 +91,20 @@ public:
     OBJECT_COMPONENT_CONSTRUCTOR(TilemapRenderer, 0xFF,
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(materialName_, [this] {
             materialHandle_ = MaterialManager::kInvalidHandle;
-            MarkMeshDirty();
+            MarkAllChunksDirty();
             ApplyRendererSettings();
         });
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(pipelineName_, [this] { ApplyRendererSettings(); });
-        ADD_MEMBER_VARIABLE_WITH_CALLBACK(tileSize_, [this] { MarkMeshDirty(); });
-        ADD_MEMBER_VARIABLE_WITH_CALLBACK(tilePixelSize_, [this] { MarkMeshDirty(); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(tileSize_, [this] { MarkAllChunksDirty(); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(tilePixelSize_, [this] { MarkAllChunksDirty(); });
     )
     COMPONENT_CATEGORY("Render")
     ~TilemapRenderer() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<TilemapRenderer>();
+        ptr->targetObjectID_ = targetObjectID_;
+        ptr->excludedRenderTargetNames_ = excludedRenderTargetNames_;
         ptr->materialName_ = materialName_;
         ptr->pipelineName_ = pipelineName_;
         ptr->tileSize_ = tileSize_;
@@ -103,8 +116,31 @@ public:
         ptr->generateColliders_ = generateColliders_;
         ptr->autotileMode_ = autotileMode_;
         ptr->eightDirLayout_ = eightDirLayout_;
-        ptr->MarkMeshDirty();
         return ptr;
+    }
+
+    //==================================================
+    // 描画先指定
+    //==================================================
+
+    /// @brief 描画先オブジェクトを設定する（描画先コンポーネントが付与されたオブジェクト。
+    ///        SpriteRenderer::SetTargetObjectと同じ意味。全チャンクのSpriteRendererへ反映される）
+    void SetTargetObject(const EmptyObject *targetObject) {
+        targetObjectID_ = targetObject ? targetObject->GetObjectID() : UUID128();
+        ApplyRendererSettings();
+    }
+    /// @brief 描画先オブジェクトをUUIDから設定する
+    void SetTargetObject(const UUID128 &targetObjectID) {
+        targetObjectID_ = targetObjectID;
+        ApplyRendererSettings();
+    }
+    /// @brief 描画先オブジェクトのUUIDを取得する
+    const UUID128 &GetTargetObjectID() const noexcept { return targetObjectID_; }
+    /// @brief 描画先オブジェクトを取得（存在しない場合はnullptr）
+    EmptyObject *GetTargetObject() const {
+        auto *sceneContext = GetOwnerSceneContext();
+        if (!sceneContext || !targetObjectID_.IsValid()) return nullptr;
+        return sceneContext->GetSceneObject(targetObjectID_);
     }
 
     //==================================================
@@ -128,13 +164,16 @@ public:
         gridWidth_ = width;
         gridHeight_ = height;
         cells_ = std::move(newCells);
-        MarkMeshDirty();
+        // チャンク数自体が変わらないリサイズ（例: 31→32）だとEnsureChunkTopology側の
+        // 「チャンク数が変わらなければ何もしない」早期returnに引っかかり、新しく増えた
+        // セルが再構築されないまま取り残されてしまう。そのため常に全チャンクdirty化しておく
+        MarkAllChunksDirty();
     }
 
     /// @brief 全セルを空にする
     void Clear() {
         std::fill(cells_.begin(), cells_.end(), -1);
-        MarkMeshDirty();
+        MarkAllChunksDirty();
     }
 
     /// @brief セルにタイル種類を設定する（範囲外は無視。tileTypeIndexに-1を渡すと空セルにする）
@@ -143,7 +182,7 @@ public:
         const size_t index = CellIndex(x, y);
         if (cells_[index] == tileTypeIndex) return;
         cells_[index] = tileTypeIndex;
-        MarkMeshDirty();
+        MarkCellDirty(x, y);
     }
     /// @brief セルのタイル種類を取得する（範囲外・空セルは-1）
     int GetTile(int x, int y) const {
@@ -162,7 +201,7 @@ public:
         TileTypeDef tileType;
         tileType.tilesetOriginPx = tilesetOriginPx;
         tileTypes_.push_back(tileType);
-        MarkMeshDirty();
+        MarkAllChunksDirty();
         return static_cast<int>(tileTypes_.size()) - 1;
     }
     /// @brief タイル種類を削除する。削除したインデックスを参照していたセルは空になり、
@@ -182,7 +221,7 @@ public:
                 if (target > index) --target;
             }
         }
-        MarkMeshDirty();
+        MarkAllChunksDirty();
     }
     const std::vector<TileTypeDef> &GetTileTypes() const noexcept { return tileTypes_; }
     /// @brief タイル種類indexの接続先へtargetTileTypeIndexを1つ追加する（片方向。既に含まれている
@@ -192,7 +231,7 @@ public:
         auto &targets = tileTypes_[index].connectsToTileTypes;
         if (std::find(targets.begin(), targets.end(), targetTileTypeIndex) != targets.end()) return;
         targets.push_back(targetTileTypeIndex);
-        MarkMeshDirty();
+        MarkAllChunksDirty();
     }
     /// @brief タイル種類indexの接続先からtargetTileTypeIndexを1つ削除する
     void RemoveTileTypeConnection(int index, int targetTileTypeIndex) {
@@ -201,7 +240,7 @@ public:
         const auto it = std::find(targets.begin(), targets.end(), targetTileTypeIndex);
         if (it == targets.end()) return;
         targets.erase(it);
-        MarkMeshDirty();
+        MarkAllChunksDirty();
     }
     int GetTileTypeConnectionCount(int index) const {
         if (index < 0 || index >= static_cast<int>(tileTypes_.size())) return 0;
@@ -217,13 +256,13 @@ public:
     void SetTileTypeOriginPx(int index, const Vector2 &originPx) {
         if (index < 0 || index >= static_cast<int>(tileTypes_.size())) return;
         tileTypes_[index].tilesetOriginPx = originPx;
-        MarkMeshDirty();
+        MarkAllChunksDirty();
     }
     /// @brief タイル種類が2D当たり判定自動生成の対象かを設定する（GetGenerateColliders()参照）
     void SetTileTypeSolid(int index, bool solid) {
         if (index < 0 || index >= static_cast<int>(tileTypes_.size())) return;
         tileTypes_[index].isSolid = solid;
-        MarkMeshDirty();
+        MarkCollidersDirty(); // 見た目のメッシュには影響しないため、コライダー再生成のみ要求する
     }
     bool GetTileTypeSolid(int index) const {
         if (index < 0 || index >= static_cast<int>(tileTypes_.size())) return false;
@@ -237,7 +276,7 @@ public:
     void SetMaterialName(const std::string &materialName) {
         materialName_ = materialName;
         materialHandle_ = MaterialManager::kInvalidHandle;
-        MarkMeshDirty();
+        MarkAllChunksDirty();
         ApplyRendererSettings();
     }
     const std::string &GetMaterialName() const noexcept { return materialName_; }
@@ -248,16 +287,16 @@ public:
         ApplyRendererSettings();
     }
     const std::string &GetPipelineName() const noexcept { return pipelineName_; }
-    void SetTileSize(const Vector2 &tileSize) { tileSize_ = tileSize; MarkMeshDirty(); }
+    void SetTileSize(const Vector2 &tileSize) { tileSize_ = tileSize; MarkAllChunksDirty(); }
     const Vector2 &GetTileSize() const noexcept { return tileSize_; }
-    void SetTilePixelSize(const Vector2 &tilePixelSize) { tilePixelSize_ = tilePixelSize; MarkMeshDirty(); }
+    void SetTilePixelSize(const Vector2 &tilePixelSize) { tilePixelSize_ = tilePixelSize; MarkAllChunksDirty(); }
     const Vector2 &GetTilePixelSize() const noexcept { return tilePixelSize_; }
     /// @brief オートタイルの判定方向を設定する（クラス冒頭のコメント参照。タイルセット画像の
     ///        レイアウトもモードにより異なるため、切り替えると見た目が変わる）
-    void SetAutotileMode(AutotileMode mode) { autotileMode_ = mode; MarkMeshDirty(); }
+    void SetAutotileMode(AutotileMode mode) { autotileMode_ = mode; MarkAllChunksDirty(); }
     AutotileMode GetAutotileMode() const noexcept { return autotileMode_; }
     /// @brief EightDirectionモードで使う参照位置一式をまとめて設定する
-    void SetEightDirLayout(const EightDirLayout &layout) { eightDirLayout_ = layout; MarkMeshDirty(); }
+    void SetEightDirLayout(const EightDirLayout &layout) { eightDirLayout_ = layout; MarkAllChunksDirty(); }
     const EightDirLayout &GetEightDirLayout() const noexcept { return eightDirLayout_; }
 
     //==================================================
@@ -267,26 +306,38 @@ public:
     /// @brief タイル配置から2D当たり判定（Box2DCollider）を自動生成するかを設定する
     /// @details 隣接するisSolidなセルを貪欲法で矩形へ結合してから生成する（RegenerateColliders参照）。
     ///          falseにすると、これまで自動生成していたBox2DColliderは全て削除される
-    void SetGenerateColliders(bool enabled) { generateColliders_ = enabled; MarkMeshDirty(); }
+    void SetGenerateColliders(bool enabled) { generateColliders_ = enabled; MarkCollidersDirty(); }
     bool GetGenerateColliders() const noexcept { return generateColliders_; }
+
+    /// @brief タイル編集をまとめて行う間、コライダーの再生成を保留する
+    /// @details 1マス変更するたびにRegenerateColliders()（グリッド全体を毎回スキャンする）が
+    ///          走ってしまうと、エディターのペイントツールで連続的にSetTile()する場面で
+    ///          大きなグリッドほど重くなる。保留中はSetTile()等でdirty化されても実際の
+    ///          再生成を行わず、保留を解除（false）した時点でまだ再生成が必要な変更が
+    ///          残っていれば、そこで1回だけまとめて再生成する。通常のゲームプレイ中に
+    ///          単発でSetTile()する分にはこれを使わず、即座にコライダーへ反映されたままでよい
+    void SetCollidersRegenerationSuspended(bool suspended) {
+        collidersRegenerationSuspended_ = suspended;
+        if (!suspended && collidersDirty_) {
+            RegenerateColliders();
+            collidersDirty_ = false;
+        }
+    }
+    bool IsCollidersRegenerationSuspended() const noexcept { return collidersRegenerationSuspended_; }
 
 protected:
     void Initialize() override {
-        // ここではEnsureSiblingComponents()を呼ばない（同オブジェクトの他エントリ、特に
-        // SpriteRendererがJSON上でTilemapRendererより後ろに並んでいる場合、EmptyObject::LoadFromJson
-        // の1パス目（各コンポーネントを追加した直後にInitialize()が即座に走る）の時点ではまだ
-        // 追加されておらず、GetComponent<SpriteRenderer>()が偽陰性を返して重複生成してしまう
-        // （実際にシーンファイル保存時、再生・停止を繰り返すたびに空のSpriteRendererが1個ずつ
-        // 増え続ける不具合として発現した）。ScreenBufferViewport::Initialize()と同じ理由・
-        // 同じ対処として、実際の生成はUpdate()/ShowPersistentImGui()の初回（＝同オブジェクトの
-        // 全コンポーネントが読み込まれきった後）に遅延する
-        MarkMeshDirty();
+        // ここではチャンク子オブジェクトの生成（EnsureChunkTopology）を呼ばない。
+        // 所有オブジェクトがシーンへ完全に登録・アタッチされきる前にSceneContext経由で
+        // 子オブジェクトを生成しようとすると、シーン読み込み中の状態次第で不安定になりうる
+        // （ScreenBufferViewport::Initialize()と同じ理由・同じ対処）。実際の生成は
+        // Update()/ShowPersistentImGui()の初回（＝同オブジェクトの全コンポーネントが
+        // 読み込まれきった後）に遅延する。dirtyフラグは既定でtrueのため、ここで何もしなくても
+        // 初回のRebuildMesh()で正しく構築される
     }
 
     void Update() override {
-        EnsureSiblingComponents();
-        ApplyRendererSettings();
-        if (meshDirty_) RebuildMesh();
+        RebuildMesh();
     }
 
 #if defined(USE_IMGUI)
@@ -295,15 +346,30 @@ protected:
     ///          （Scene.h参照）、それだけに頼るとエディターでタイルを編集しても見た目に反映されない。
     ///          ShowPersistentImGuiInterfaceはPlay中かどうかに関わらず毎フレーム呼ばれるため
     ///          （TextureSource::ShowPersistentImGuiと同じ理由・同じ対処）、ここでも同じ再構築を行う。
-    ///          RebuildMesh()側でmeshDirty_をfalseにするため、Update()と同一フレームで両方
+    ///          RebuildMesh()側で各dirtyフラグをfalseにするため、Update()と同一フレームで両方
     ///          呼ばれても二重に構築されることはない
     void ShowPersistentImGui() override {
-        EnsureSiblingComponents();
-        ApplyRendererSettings();
-        if (meshDirty_) RebuildMesh();
+        RebuildMesh();
     }
 
     void ShowImGui() override {
+        // 描画先はシーン上のオブジェクトから選択（ヒエラルキーからのD&Dも受け付ける。SpriteRendererと同じUI）。
+        // ここで設定した内容は全チャンクのSpriteRendererへApplyRendererSettings()経由で反映される
+        if (TargetObjectSelector::ShowSelector(TranslationLabel("component.common.target"), GetOwnerSceneContext(), targetObjectID_)) {
+            ApplyRendererSettings();
+        }
+        // 対象オブジェクトが持つ描画先ごとに描画する/しないを選択する（戻り値が無いため、直前の値と
+        // 比較して実際に変更があった場合のみApplyRendererSettings()を呼ぶ。ApplyRendererSettings()は
+        // 全チャンク（最大数百個）のSpriteRendererへSetXXXを呼び直し、それぞれがMarkDrawListDirty()で
+        // SceneRenderer側の描画リストキャッシュ全体を無効化するため、Inspector表示中に無条件で毎フレーム
+        // 呼ぶと選択している間ずっと毎フレーム描画リストが再構築される重大な性能劣化になる
+        // （Inspectorでオブジェクトを選択した途端に重くなる不具合として発現した）
+        const auto excludedRenderTargetNamesBefore = excludedRenderTargetNames_;
+        TargetObjectSelector::ShowRenderTargetFilters(GetOwnerSceneContext(), targetObjectID_, excludedRenderTargetNames_);
+        if (excludedRenderTargetNames_ != excludedRenderTargetNamesBefore) {
+            ApplyRendererSettings();
+        }
+
         if (ImGuiCustom::SelectString(TranslationLabel("component.tilemaprenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames("2D"))) {
             ApplyRendererSettings();
         }
@@ -312,7 +378,7 @@ protected:
         for (const auto &entry : materialEntries) materialNames.push_back(entry.material.name);
         if (ImGuiCustom::SelectString(TranslationLabel("component.tilemaprenderer.material"), materialName_, materialNames)) {
             materialHandle_ = MaterialManager::kInvalidHandle;
-            MarkMeshDirty();
+            MarkAllChunksDirty();
             ApplyRendererSettings();
         }
         if (std::string droppedPath; AcceptAssetDragDropTarget(kMaterialAssetDragDropType, droppedPath)) {
@@ -320,7 +386,7 @@ protected:
                 if (entry.assetPath == droppedPath) {
                     materialName_ = entry.material.name;
                     materialHandle_ = MaterialManager::kInvalidHandle;
-                    MarkMeshDirty();
+                    MarkAllChunksDirty();
                     ApplyRendererSettings();
                     break;
                 }
@@ -343,13 +409,13 @@ protected:
         if (autotileMode_ == AutotileMode::EightDirection && ImGui::CollapsingHeader(TranslationC("component.tilemaprenderer.eight_dir_layout"))) {
             ImGui::Indent();
             ImGui::TextUnformatted(TranslationC("component.tilemaprenderer.desc_eight_dir_layout"));
-            if (ImGui::DragFloat2(TranslationLabel("component.tilemaprenderer.layout_isolated"), &eightDirLayout_.isolatedTilePos.x, 0.1f)) MarkMeshDirty();
-            if (ImGui::DragFloat2(TranslationLabel("component.tilemaprenderer.layout_cross"), &eightDirLayout_.crossTilePos.x, 0.1f)) MarkMeshDirty();
+            if (ImGui::DragFloat2(TranslationLabel("component.tilemaprenderer.layout_isolated"), &eightDirLayout_.isolatedTilePos.x, 0.1f)) MarkAllChunksDirty();
+            if (ImGui::DragFloat2(TranslationLabel("component.tilemaprenderer.layout_cross"), &eightDirLayout_.crossTilePos.x, 0.1f)) MarkAllChunksDirty();
             ImGui::Unindent();
         }
 
-        if (ImGui::DragFloat2(TranslationLabel("component.tilemaprenderer.tile_size"), &tileSize_.x, 0.01f, 0.01f, 1000.0f)) MarkMeshDirty();
-        if (ImGui::DragFloat2(TranslationLabel("component.tilemaprenderer.tile_pixel_size"), &tilePixelSize_.x, 0.5f, 1.0f, 4096.0f)) MarkMeshDirty();
+        if (ImGui::DragFloat2(TranslationLabel("component.tilemaprenderer.tile_size"), &tileSize_.x, 0.01f, 0.01f, 1000.0f)) MarkAllChunksDirty();
+        if (ImGui::DragFloat2(TranslationLabel("component.tilemaprenderer.tile_pixel_size"), &tilePixelSize_.x, 0.5f, 1.0f, 4096.0f)) MarkAllChunksDirty();
 
         int width = gridWidth_;
         int height = gridHeight_;
@@ -365,8 +431,8 @@ protected:
             const std::string headerLabel = TranslationC("component.tilemaprenderer.tile_type_header") + std::to_string(i);
             if (ImGui::CollapsingHeader(headerLabel.c_str())) {
                 ImGui::Indent();
-                if (ImGui::DragFloat2(TranslationLabel("component.tilemaprenderer.tileset_origin_px"), &tileTypes_[i].tilesetOriginPx.x, 1.0f)) MarkMeshDirty();
-                if (ImGui::Checkbox(TranslationLabel("component.tilemaprenderer.solid"), &tileTypes_[i].isSolid)) MarkMeshDirty();
+                if (ImGui::DragFloat2(TranslationLabel("component.tilemaprenderer.tileset_origin_px"), &tileTypes_[i].tilesetOriginPx.x, 1.0f)) MarkAllChunksDirty();
+                if (ImGui::Checkbox(TranslationLabel("component.tilemaprenderer.solid"), &tileTypes_[i].isSolid)) MarkCollidersDirty();
 
                 // 接続先タイル種類インデックスの小さなリスト（追加・削除ボタン付き、片方向）。
                 // このタイル種類から見て、リストに含まれるインデックスのセルへ「繋がっている」と判定される
@@ -378,18 +444,18 @@ protected:
                 for (int c = 0; c < static_cast<int>(connections.size()); ++c) {
                     ImGui::PushID(c);
                     ImGui::SetNextItemWidth(120.0f);
-                    if (ImGui::InputInt("##connection", &connections[c])) MarkMeshDirty();
+                    if (ImGui::InputInt("##connection", &connections[c])) MarkAllChunksDirty();
                     ImGui::SameLine();
                     if (ImGui::Button(TranslationC("component.tilemaprenderer.remove_connection"))) removeConnectionAt = c;
                     ImGui::PopID();
                 }
                 if (removeConnectionAt >= 0) {
                     connections.erase(connections.begin() + removeConnectionAt);
-                    MarkMeshDirty();
+                    MarkAllChunksDirty();
                 }
                 if (ImGui::Button(TranslationC("component.tilemaprenderer.add_connection"))) {
                     connections.push_back(i);
-                    MarkMeshDirty();
+                    MarkAllChunksDirty();
                 }
 
                 ImGui::Spacing();
@@ -403,7 +469,7 @@ protected:
             AddTileType(Vector2(0.0f, 0.0f));
         }
 
-        if (ImGui::Checkbox(TranslationLabel("component.tilemaprenderer.generate_colliders"), &generateColliders_)) MarkMeshDirty();
+        if (ImGui::Checkbox(TranslationLabel("component.tilemaprenderer.generate_colliders"), &generateColliders_)) MarkCollidersDirty();
         if (ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.tilemaprenderer.desc_generate_colliders"));
 
         ImGui::Separator();
@@ -427,13 +493,29 @@ protected:
 
     JSON SaveToJson() const override {
         JSON json = JSON::object();
+        json["targetObjectID"] = ToJSON(targetObjectID_);
+        for (const auto &name : excludedRenderTargetNames_) {
+            json["excludedRenderTargetNames"].push_back(name);
+        }
         json["materialName"] = materialName_;
         json["pipelineName"] = pipelineName_;
         json["tileSize"] = ToJSON(tileSize_);
         json["tilePixelSize"] = ToJSON(tilePixelSize_);
         json["gridWidth"] = gridWidth_;
         json["gridHeight"] = gridHeight_;
-        json["cells"] = cells_;
+        // cells_を1マス1要素のJSON配列でそのまま書き出すと、大きなグリッド（例: 800x800なら64万要素）で
+        // nlohmann::jsonのノード構築コストが無視できなくなる。SaveToJson()はUndoスナップショットや
+        // クラッシュ復元用スナップショット（SceneManager、1秒間隔で編集有無に関わらず常時実行）等、
+        // 実際の変更頻度よりずっと高い頻度で呼ばれるため、行ごとにカンマ区切り文字列へエンコードして
+        // 1行1要素（＝1マス1要素よりずっと少ない要素数）に圧縮する。1マス変更しただけでもその行の文字列
+        // 全体が変わって見えるためGit差分の粒度はマス単位から行単位へ粗くなるが、シーンファイルの
+        // 行数・パース対象ノード数を大幅に減らせる。旧形式（フラットな数値配列）のシーンファイルは
+        // LoadFromJson()側で読み込めるようにしてある
+        JSON cellsJson = JSON::array();
+        for (int y = 0; y < gridHeight_; ++y) {
+            cellsJson.push_back(EncodeCellsRow(&cells_[CellIndex(0, y)], gridWidth_));
+        }
+        json["cells"] = std::move(cellsJson);
         JSON tileTypesJson = JSON::array();
         for (const auto &tileType : tileTypes_) {
             JSON tileTypeJson = JSON::object();
@@ -453,6 +535,11 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        targetObjectID_ = json.contains("targetObjectID") ? FromJSON<UUID128>(json["targetObjectID"]) : UUID128();
+        excludedRenderTargetNames_.clear();
+        for (const auto &name : json.value("excludedRenderTargetNames", std::vector<std::string>())) {
+            excludedRenderTargetNames_.insert(name);
+        }
         materialName_ = json.value("materialName", std::string{ "Default" });
         materialHandle_ = MaterialManager::kInvalidHandle;
         pipelineName_ = json.value("pipelineName", std::string{ "Object2D.DoubleSidedCulling.BlendNormal" });
@@ -460,9 +547,21 @@ protected:
         tilePixelSize_ = json.contains("tilePixelSize") ? FromJSON<Vector2>(json["tilePixelSize"]) : Vector2(32.0f, 32.0f);
         gridWidth_ = json.value("gridWidth", 0);
         gridHeight_ = json.value("gridHeight", 0);
-        cells_ = json.contains("cells")
-            ? json["cells"].get<std::vector<int>>()
-            : std::vector<int>(static_cast<size_t>(gridWidth_) * gridHeight_, -1);
+        cells_.assign(static_cast<size_t>(gridWidth_) * gridHeight_, -1);
+        if (json.contains("cells") && json["cells"].is_array()) {
+            const JSON &cellsJson = json["cells"];
+            if (!cellsJson.empty() && cellsJson[0].is_string()) {
+                // 新形式: 行ごとにカンマ区切り文字列でエンコードされている（SaveToJson参照）
+                const int rowCount = std::min(gridHeight_, static_cast<int>(cellsJson.size()));
+                for (int y = 0; y < rowCount; ++y) {
+                    DecodeCellsRow(cellsJson[y].get<std::string>(), &cells_[CellIndex(0, y)], gridWidth_);
+                }
+            } else {
+                // 旧形式（1マス1要素のフラットな数値配列）との後方互換
+                const auto flat = cellsJson.get<std::vector<int>>();
+                std::copy_n(flat.begin(), std::min(flat.size(), cells_.size()), cells_.begin());
+            }
+        }
 
         tileTypes_.clear();
         for (const auto &tileTypeJson : json.value("tileTypes", JSON::array())) {
@@ -483,37 +582,183 @@ protected:
             eightDirLayout_ = EightDirLayout{};
         }
 
-        MarkMeshDirty();
+        MarkAllChunksDirty();
         // シーン読み込み時はコンポーネント追加時点でInitialize()が読み込み前の既定値で
         // 呼ばれてしまっているため（TextureSource::LoadFromJsonと同じ理由）、アクティブなら
-        // ここでMeshFilter/SpriteRendererへ改めて設定し直す。メッシュ本体はmeshDirty_経由でUpdate()が再構築する
+        // ここでチャンク子オブジェクトへ改めて設定し直す。メッシュ本体は各dirtyフラグ経由で
+        // Update()が再構築する
         if (IsActive()) {
-            EnsureSiblingComponents();
+            EnsureChunkTopology();
             ApplyRendererSettings();
         }
         return true;
     }
 
 private:
+    /// @brief チャンク1つ分の実行時状態（シーンJSONには保存しない。EnsureChunkTopology参照）
+    struct ChunkState {
+        /// @brief このチャンク専用の子オブジェクト（Transform+MeshFilter+SpriteRenderer持ち）
+        EmptyObject *object = nullptr;
+        ModelManager::ModelHandle meshHandle = ModelManager::kInvalidHandle;
+        /// @brief RegisterProceduralMesh登録名（遅延生成。RebuildChunkMesh参照）
+        std::string meshRegistryName;
+        bool dirty = true;
+    };
+    /// @brief 1チャンクの一辺のセル数
+    static constexpr int kChunkSize = 32;
+
     bool IsInRange(int x, int y) const noexcept { return x >= 0 && y >= 0 && x < gridWidth_ && y < gridHeight_; }
     size_t CellIndex(int x, int y) const noexcept { return static_cast<size_t>(y) * gridWidth_ + x; }
-    void MarkMeshDirty() noexcept { meshDirty_ = true; }
 
-    void EnsureSiblingComponents() {
-        auto *objectContext = GetOwnerObjectContext();
-        if (!objectContext) return;
-        if (!objectContext->GetComponent<MeshFilter>()) objectContext->AddComponent<MeshFilter>();
-        if (!objectContext->GetComponent<SpriteRenderer>()) objectContext->AddComponent<SpriteRenderer>();
+    /// @brief セル1行分（width個のint、row[0]がx=0）をカンマ区切り文字列へエンコードする（SaveToJson参照）
+    static std::string EncodeCellsRow(const int *row, int width) {
+        std::string result;
+        result.reserve(static_cast<size_t>(width) * 4);
+        char buffer[16];
+        for (int x = 0; x < width; ++x) {
+            if (x != 0) result += ',';
+            const auto res = std::to_chars(buffer, buffer + sizeof(buffer), row[x]);
+            result.append(buffer, res.ptr);
+        }
+        return result;
+    }
+    /// @brief EncodeCellsRow()の逆変換。encodedのトークン数がwidthに満たない場合、残りは空セル(-1)として扱う
+    static void DecodeCellsRow(const std::string &encoded, int *outRow, int width) {
+        size_t pos = 0;
+        for (int x = 0; x < width; ++x) {
+            int value = -1;
+            if (pos <= encoded.size()) {
+                size_t comma = encoded.find(',', pos);
+                if (comma == std::string::npos) comma = encoded.size();
+                std::from_chars(encoded.data() + pos, encoded.data() + comma, value);
+                pos = comma + 1;
+            }
+            outRow[x] = value;
+        }
     }
 
-    /// @brief 同一オブジェクトのSpriteRendererへマテリアル・パイプライン名を反映する
-    /// @details MeshRendererではなくSpriteRendererを使う理由はクラス冒頭のコメント参照
+    /// @brief 全チャンクをdirty化する（グリッド全体・タイル種類定義に影響する変更で使う）
+    void MarkAllChunksDirty() noexcept {
+        for (auto &chunk : chunks_) chunk.dirty = true;
+        anyChunkDirty_ = !chunks_.empty();
+        collidersDirty_ = true;
+    }
+    /// @brief コライダーの再生成だけを要求する（見た目のメッシュには影響しない変更で使う）
+    void MarkCollidersDirty() noexcept { collidersDirty_ = true; }
+    /// @brief セル(x,y)を含むチャンクと、オートタイル判定が参照しうる周囲8方向の隣接チャンクを
+    ///        dirty化する
+    /// @details オートタイルはEightDirectionモードで斜め含め周囲8方向を参照しうるため、
+    ///          チャンク境界付近のセルを変更すると、変更したセル自身のチャンクだけでなく
+    ///          隣接チャンクの境界タイルの見た目も変わりうる。安全のため常に3x3セル分の
+    ///          範囲にかかるチャンクをまとめてdirty化しておく（FourDirectionモードでも
+    ///          過剰マージンなだけで害はない）
+    void MarkCellDirty(int x, int y) noexcept {
+        collidersDirty_ = true;
+        if (chunks_.empty()) return; // トポロジ未構築。初回EnsureChunkTopologyで全チャンクがdirty=trueとして生成される
+        for (int dy = -1; dy <= 1; ++dy) {
+            for (int dx = -1; dx <= 1; ++dx) {
+                const int nx = x + dx;
+                const int ny = y + dy;
+                if (nx < 0 || ny < 0 || nx >= gridWidth_ || ny >= gridHeight_) continue;
+                chunks_[ChunkIndex(nx / kChunkSize, ny / kChunkSize)].dirty = true;
+            }
+        }
+        anyChunkDirty_ = true;
+    }
+
+    int ChunkIndex(int cx, int cy) const noexcept { return cy * chunkCountX_ + cx; }
+
+    /// @brief gridWidth_/gridHeight_から必要なチャンク数を算出し、chunks_の構成をそれに合わせる
+    /// @details チャンク数が変化する場合（Resize()直後等）は既存チャンクオブジェクトを全て破棄して
+    ///          作り直す（Resize自体が頻繁には起きない操作のため、差分更新の複雑さより
+    ///          単純さを優先する）。チャンク数が変わらない場合は何もせず即returnするため、
+    ///          毎フレーム呼んでもコストはごく小さい
+    void EnsureChunkTopology() {
+        const int newCountX = gridWidth_ > 0 ? (gridWidth_ + kChunkSize - 1) / kChunkSize : 0;
+        const int newCountY = gridHeight_ > 0 ? (gridHeight_ + kChunkSize - 1) / kChunkSize : 0;
+        if (newCountX == chunkCountX_ && newCountY == chunkCountY_) return;
+
+        DestroyAllChunkObjects();
+        chunkCountX_ = newCountX;
+        chunkCountY_ = newCountY;
+        chunks_.assign(static_cast<size_t>(chunkCountX_) * chunkCountY_, ChunkState{});
+        anyChunkDirty_ = !chunks_.empty();
+
+        for (int cy = 0; cy < chunkCountY_; ++cy) {
+            for (int cx = 0; cx < chunkCountX_; ++cx) {
+                CreateChunkObject(cx, cy);
+            }
+        }
+    }
+
+    /// @brief チャンク(cx,cy)専用の子オブジェクト（Transform+MeshFilter+SpriteRenderer）を生成する
+    /// @details MeshFilterは1オブジェクトにつき1個までのため（MeshFilter.h参照）、チャンクごとに
+    ///          独立した描画データを持たせるにはBox2DColliderの自動生成のようにコンポーネントを
+    ///          増やすだけでは足りず、子オブジェクトそのものを分ける必要がある。生成した子は
+    ///          SetSaveEnabled(false)でシーンJSONへ保存せず、次回シーン読み込み時はEnsureChunkTopology
+    ///          経由で毎回作り直す想定にする。頂点はこれまで通り自身のローカル座標系でそのまま
+    ///          生成するため、子オブジェクトのTransformは既定（恒等）のまま親
+    ///          （このコンポーネントの所有オブジェクト）へぶら下げるだけで元と同じ位置に描画される
+    void CreateChunkObject(int cx, int cy) {
+        auto *sceneContext = GetOwnerSceneContext();
+        const auto *ownerObject = GetOwnerObject();
+        if (!sceneContext || !ownerObject) return;
+        auto *parent = sceneContext->GetSceneObject(ownerObject->GetObjectID());
+        if (!parent) return;
+
+        auto *chunkObj = sceneContext->CreateEmptyObject("TilemapChunk_" + std::to_string(cx) + "_" + std::to_string(cy));
+        if (!chunkObj) return;
+        chunkObj->SetSaveEnabled(false);
+        if (auto *chunkTransform = chunkObj->GetComponent<Transform>()) {
+            chunkTransform->SetParentObject(parent);
+        }
+        chunkObj->AddComponent<MeshFilter>();
+        if (auto *spriteRenderer = chunkObj->AddComponent<SpriteRenderer>()) {
+            spriteRenderer->SetPipelineName(pipelineName_);
+            spriteRenderer->SetMaterialName(materialName_);
+            spriteRenderer->SetTargetObject(targetObjectID_);
+            spriteRenderer->SetExcludedRenderTargetNames(excludedRenderTargetNames_);
+        }
+
+        ChunkState &state = chunks_[ChunkIndex(cx, cy)];
+        state.object = chunkObj;
+        state.dirty = true;
+    }
+
+    /// @brief 全チャンクの子オブジェクトを破棄する
+    /// @details EnsureChunkTopology()（Update()/ShowPersistentImGui()経由、通常の実行タイミング）
+    ///          からのみ呼び出すこと。Finalize()から呼んではいけない: シーン全体の破棄
+    ///          （Scene::ClearSceneObjects）はobjects_を直接ループしながら各オブジェクトの
+    ///          Finalize()を呼ぶため、その最中にDeleteObjectでobjects_を変更するとイテレーターが
+    ///          壊れて危険（Scene.cpp参照）。シーン全体の破棄時はScene側が全オブジェクト
+    ///          （このチャンク子オブジェクトも含む）を一括で破棄するため、このコンポーネント側で
+    ///          明示的に破棄しなくてもリークしない
+    void DestroyAllChunkObjects() {
+        auto *sceneContext = GetOwnerSceneContext();
+        if (sceneContext) {
+            for (auto &chunk : chunks_) {
+                if (chunk.object) sceneContext->DeleteObject(chunk.object);
+            }
+        }
+        chunks_.clear();
+    }
+
+    /// @brief 全チャンクのSpriteRendererへマテリアル・パイプライン名・描画先指定を反映する
+    /// @details MeshRendererではなくSpriteRendererを使う理由はクラス冒頭のコメント参照。
+    ///          描画先（targetObjectID_/excludedRenderTargetNames_）を反映し忘れると、
+    ///          各チャンクのSpriteRendererが既定の描画先（＝TilemapRenderer自身が本来
+    ///          意図した描画先とは異なる場合がある）のままになり、実際の画面には何も
+    ///          描画されないという不具合になる
     void ApplyRendererSettings() {
-        auto *objectContext = GetOwnerObjectContext();
-        auto *spriteRenderer = objectContext ? objectContext->GetComponent<SpriteRenderer>() : nullptr;
-        if (!spriteRenderer) return;
-        spriteRenderer->SetPipelineName(pipelineName_);
-        spriteRenderer->SetMaterialName(materialName_);
+        for (auto &chunk : chunks_) {
+            if (!chunk.object) continue;
+            auto *spriteRenderer = chunk.object->GetComponent<SpriteRenderer>();
+            if (!spriteRenderer) continue;
+            spriteRenderer->SetPipelineName(pipelineName_);
+            spriteRenderer->SetMaterialName(materialName_);
+            spriteRenderer->SetTargetObject(targetObjectID_);
+            spriteRenderer->SetExcludedRenderTargetNames(excludedRenderTargetNames_);
+        }
     }
 
     MaterialManager::MaterialHandle ResolveMaterialHandle() const {
@@ -677,8 +922,8 @@ private:
     ///          コライダーはそのまま兄弟コンポーネントとして再読込されるため孤立してしまい、
     ///          再生・停止を繰り返すたびにコライダーが二重・三重に増え続ける不具合があった）。
     ///          generateColliders_がfalseの場合は削除するだけで新規生成は行わない
-    ///          （＝オフにすると全て消える）。テクスチャ・マテリアルの解決状態とは無関係に
-    ///          成立するため、RebuildMesh()のテクスチャ未解決時の早期returnより前（毎回）呼ばれる
+    ///          （＝オフにすると全て消える）。チャンク分割の対象外（メッシュとは独立に、collidersDirty_
+    ///          が立っている時だけRebuildMesh()から呼ばれる）
     void RegenerateColliders() {
         auto *objectContext = GetOwnerObjectContext();
         if (!objectContext) return;
@@ -742,36 +987,64 @@ private:
         }
     }
 
-    /// @brief タイル配置から結合メッシュを再構築し、MeshFilterへ反映する
-    /// @details テクスチャがまだ解決できない（読み込み中・未設定）場合はメッシュ再構築のみ
-    ///          何もせずmeshDirty_を立てたままにし、次回のUpdate()で再試行する
-    ///          （2D当たり判定はテクスチャの解決状態と無関係のため、この判定より前に再構築する）
+    /// @brief dirtyなチャンクだけメッシュを再構築し、対応するチャンク子オブジェクトのMeshFilterへ
+    ///        反映する
+    /// @details テクスチャがまだ解決できない（読み込み中・未設定）場合は何もせずdirtyフラグを
+    ///          立てたままにし、次回のUpdate()で再試行する（2D当たり判定はテクスチャの解決状態と
+    ///          無関係のため、この判定より前にRegenerateColliders()を呼ぶ）。1マスの変更でも
+    ///          グリッド全体を作り直していた旧実装と異なり、変更のあったチャンク（kChunkSize四方）
+    ///          だけを再構築する
     void RebuildMesh() {
-        RegenerateColliders();
+        EnsureChunkTopology();
 
-        auto *objectContext = GetOwnerObjectContext();
-        auto *meshFilter = objectContext ? objectContext->GetComponent<MeshFilter>() : nullptr;
-        if (!meshFilter) return;
+        if (collidersDirty_ && !collidersRegenerationSuspended_) {
+            RegenerateColliders();
+            collidersDirty_ = false;
+        }
+
+        if (!anyChunkDirty_) return;
 
         const auto materialHandle = ResolveMaterialHandle();
         const auto *material = MaterialManager::GetMaterial(materialHandle);
         const auto textureView = TextureManager::GetTextureView(material ? material->textureHandle : TextureManager::kInvalidHandle);
         const float texWidth = static_cast<float>(textureView.GetWidth());
         const float texHeight = static_cast<float>(textureView.GetHeight());
-        if (texWidth <= 0.0f || texHeight <= 0.0f) return; // 未解決。meshDirty_はtrueのまま次回再試行
+        if (texWidth <= 0.0f || texHeight <= 0.0f) return; // 未解決。dirtyのまま次回再試行
 
-        meshDirty_ = false;
+        for (int cy = 0; cy < chunkCountY_; ++cy) {
+            for (int cx = 0; cx < chunkCountX_; ++cx) {
+                ChunkState &chunk = chunks_[ChunkIndex(cx, cy)];
+                if (!chunk.dirty) continue;
+                RebuildChunkMesh(cx, cy, chunk, texWidth, texHeight);
+                chunk.dirty = false;
+            }
+        }
+        anyChunkDirty_ = false;
+    }
+
+    /// @brief チャンク(cx,cy)が担当するセル範囲だけを走査してメッシュを構築し、そのチャンク専用の
+    ///        MeshFilterへ反映する
+    void RebuildChunkMesh(int cx, int cy, ChunkState &chunk, float texWidth, float texHeight) {
+        if (!chunk.object) return;
+        auto *meshFilter = chunk.object->GetComponent<MeshFilter>();
+        if (!meshFilter) return;
+
+        const int xBegin = cx * kChunkSize;
+        const int xEnd = std::min(xBegin + kChunkSize, gridWidth_);
+        const int yBegin = cy * kChunkSize;
+        const int yEnd = std::min(yBegin + kChunkSize, gridHeight_);
 
         std::vector<ModelData::Vertex> vertices;
         std::vector<std::uint32_t> indices;
         // EightDirectionモードは1セル最大4枚（4頂点×4）のクアッドになりうるため、その分を見込んで確保する
         const size_t verticesPerCell = (autotileMode_ == AutotileMode::EightDirection) ? 16 : 4;
         const size_t indicesPerCell = (autotileMode_ == AutotileMode::EightDirection) ? 24 : 6;
-        vertices.reserve(static_cast<size_t>(gridWidth_) * gridHeight_ * verticesPerCell);
-        indices.reserve(static_cast<size_t>(gridWidth_) * gridHeight_ * indicesPerCell);
+        const size_t cellCount = static_cast<size_t>(std::max(0, xEnd - xBegin)) * static_cast<size_t>(std::max(0, yEnd - yBegin));
+        vertices.reserve(cellCount * verticesPerCell);
+        indices.reserve(cellCount * indicesPerCell);
 
-        for (int y = 0; y < gridHeight_; ++y) {
-            for (int x = 0; x < gridWidth_; ++x) {
+        for (int y = yBegin; y < yEnd; ++y) {
+            for (int x = xBegin; x < xEnd; ++x) {
                 const int tileType = cells_[CellIndex(x, y)];
                 if (tileType < 0 || tileType >= static_cast<int>(tileTypes_.size())) continue;
                 const TileTypeDef &def = tileTypes_[tileType];
@@ -789,24 +1062,20 @@ private:
             }
         }
 
-        if (meshHandle_ == ModelManager::kInvalidHandle) {
-            if (meshRegistryName_.empty()) {
+        if (chunk.meshHandle == ModelManager::kInvalidHandle) {
+            if (chunk.meshRegistryName.empty()) {
                 const auto *owner = GetOwnerObject();
-                meshRegistryName_ = "__TilemapRendererMesh_" +
-                    (owner ? owner->GetObjectID().ToString() : std::to_string(reinterpret_cast<std::uintptr_t>(this)));
+                chunk.meshRegistryName = "__TilemapRendererMesh_" +
+                    (owner ? owner->GetObjectID().ToString() : std::to_string(reinterpret_cast<std::uintptr_t>(this))) +
+                    "_" + std::to_string(cx) + "_" + std::to_string(cy);
             }
             // RegisterProceduralMeshは登録名が既存の場合、頂点・インデックスを更新せず既存ハンドルを
-            // そのまま返す仕様（ModelManager.h参照）。シーン切り替え時、直前に破棄された別インスタンス
-            // （旧シーンの同名オブジェクトを複製したなどでUUIDが重複するケースや、破棄直後に同アドレスへ
-            // 再確保されたインスタンス等）が同じ名前を既に登録済みだった場合にここへ入ると、
-            // vectorをmoveで渡すだけでは古いシーンのメッシュデータがそのまま表示され続けてしまう
-            // （「前のシーンのタイルマップ描画が維持されたままになる」不具合の原因）。
-            // 新規登録・既存流用のどちらでも直後に必ずUpdateProceduralMeshで今回のデータへ
-            // 上書きすることで、名前が衝突していても常に自分自身のセルデータが反映されるようにする
-            meshHandle_ = ModelManager::RegisterProceduralMesh(meshRegistryName_, vertices, indices);
-            meshFilter->SetMeshHandle(meshHandle_);
+            // そのまま返す仕様（ModelManager.h参照）。名前が衝突していても常に自分自身のセルデータが
+            // 反映されるよう、登録直後に必ずUpdateProceduralMeshで上書きする
+            chunk.meshHandle = ModelManager::RegisterProceduralMesh(chunk.meshRegistryName, vertices, indices);
+            meshFilter->SetMeshHandle(chunk.meshHandle);
         }
-        ModelManager::UpdateProceduralMesh(meshHandle_, std::move(vertices), std::move(indices));
+        ModelManager::UpdateProceduralMesh(chunk.meshHandle, std::move(vertices), std::move(indices));
     }
 
 #if defined(USE_IMGUI)
@@ -855,6 +1124,10 @@ private:
     }
 #endif
 
+    UUID128 targetObjectID_{};
+    /// @brief 除外する描画先の名前（GetRenderTargetName()）の集合。SpriteRenderer::excludedRenderTargetNames_と同じ意味
+    std::unordered_set<std::string> excludedRenderTargetNames_;
+
     std::string materialName_ = "Default";
     mutable MaterialManager::MaterialHandle materialHandle_ = MaterialManager::kInvalidHandle;
     std::string pipelineName_ = "Object2D.DoubleSidedCulling.BlendNormal";
@@ -873,15 +1146,17 @@ private:
     /// @brief タイル配置からBox2DColliderを自動生成するか（既定false。RegenerateColliders参照）
     bool generateColliders_ = false;
 
-    bool meshDirty_ = true;
-    /// @brief RegisterProceduralMesh登録名（インスタンスごとに一意にするため所有オブジェクトのUUIDを使う。
-    ///        コンストラクト時点ではまだ所有オブジェクトへアタッチされておらずGetOwnerObject()がnullptrを
-    ///        返すため、初回のRebuildMesh()で遅延初期化する（ScreenBufferViewport::ApplyToRendererの
-    ///        internalMaterialName_と同じ手法）。UUIDはシーンJSONへ永続化され再読込後も変わらないため、
-    ///        thisのアドレスを使う場合と異なりGit差分・コンフリクトが実行のたびに発生しなくなる。
-    ///        所有オブジェクトが取得できない場合（プレビュー生成等）はthisのアドレスへフォールバックする
-    std::string meshRegistryName_;
-    ModelManager::ModelHandle meshHandle_ = ModelManager::kInvalidHandle;
+    /// @brief チャンク実行時状態（インデックス = cy * chunkCountX_ + cx）。シーンJSONには保存しない
+    std::vector<ChunkState> chunks_;
+    int chunkCountX_ = 0;
+    int chunkCountY_ = 0;
+    /// @brief chunks_内に1つでもdirty=trueなチャンクがあるか（RebuildMesh()の早期判定用キャッシュ）
+    bool anyChunkDirty_ = true;
+    /// @brief RegenerateColliders()の再実行が必要か
+    bool collidersDirty_ = true;
+    /// @brief trueの間はcollidersDirty_が立ってもRegenerateColliders()を実行しない
+    ///        （SetCollidersRegenerationSuspended参照）
+    bool collidersRegenerationSuspended_ = false;
 
 #if defined(USE_IMGUI)
     /// @brief セル一括編集用のテキストバッファ（ShowImGuiの「セルをテキストへ読み込み」ボタンで生成される）

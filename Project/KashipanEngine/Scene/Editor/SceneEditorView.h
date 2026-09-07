@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "Objects/ComponentRef.h"
 #include "Scene/SceneEditorContext.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 #include "Scene/Components/Render/SceneRenderer.h"
@@ -251,6 +252,17 @@ private:
     void DrawCameraBoundsZoneOverlay2D(const ImVec2 &imagePos, const ImVec2 &imageSize);
     /// @brief シーン上の全CameraBoundsZone3Dの矩形群（直方体ワイヤーフレーム）をワールド空間の線分として追加する
     void AppendCameraBoundsZoneDebugLines(std::vector<DebugLineVertex> &out);
+    /// @brief シーン内の全CameraBoundsZone2D/3Dの矩形をクリックで選択する（現在の選択状態に関わらず、
+    ///        表示中の全ゾーンを対象にヒットテストする）。ヒットした場合は所有オブジェクトを選択し、
+    ///        その矩形をエディター選択（矩形編集の対象）にしたうえで、矩形編集トグルも自動で有効化する
+    /// @details メッシュ・アイコンの通常ピッキングより先に呼ぶことで、境界矩形のクリックを優先させる
+    ///          （表示モードに応じて2D表示モードならCameraBoundsZone2D、それ以外はCameraBoundsZone3Dを対象にする）
+    /// @return いずれかの矩形をヒットして選択した場合true（呼び出し側は通常のオブジェクトピッキングを行わないこと）
+    bool HandleCameraBoundsZoneClickSelect(SceneObjectHierarchy *hierarchy, const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief レイ（rayStart起点、rayDir方向、t=0〜1の区間）と軸並行境界ボックス(AABB)の交差判定
+    /// @param outT 交差した場合、区間内で最初に交差するt値
+    /// @return 区間内で交差する場合true
+    static bool RayIntersectsAABB(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &boxMin, const Vector3 &boxMax, float &outT);
 
     /// @brief Assetsウィンドウからのプレハブファイル（.prefab）のドラッグ&ドロップを処理する
     /// @details ドラッグ中（未ドロップ）は毎フレームUpdateGhostPreviewでプレビューを更新し、
@@ -421,6 +433,10 @@ private:
     bool tilemapPaintActive_ = false;
     /// @brief 現在選択中のブラシ（-1=消しゴム、0以降はTilemapRenderer::GetTileTypes()のインデックス）
     int paintBrushTileType_ = -1;
+    /// @brief ペンサイズ（一辺のセル数。1=1マスのみ。ForEachBrushCell参照）
+    int paintBrushSize_ = 1;
+    /// @brief ペンの形状。trueで円形、falseで正方形（ForEachBrushCell参照）
+    bool paintBrushCircular_ = false;
     /// @brief ストローク（マウス押下〜離すまで）を1つのUndo単位にするための状態
     bool isPaintStrokeActive_ = false;
     /// @brief 現在のストロークが右クリックで開始された（常に消しゴムとして塗る）ものかどうか
@@ -429,6 +445,10 @@ private:
     /// @brief ドラッグ中、前フレームで塗ったセル座標（セル間の線補間に使う。ストローク開始時は無効値）
     int lastPaintCellX_ = 0;
     int lastPaintCellY_ = 0;
+    /// @brief 現在コライダー再生成を保留中のTilemapRenderer（無ければ無効値）。生ポインタを
+    ///        フレームをまたいで保持すると、選択解除等でストロークが正常に終了しないまま対象が
+    ///        破棄・再利用された場合に危険なため、ComponentRefで安全に参照する（HandleTilemapPaint参照）
+    ComponentRef paintSuspendedTilemapRef_;
 
     // CameraBoundsZone2D/3D の可視化・矩形ドラッグ編集用状態
     /// @brief 全CameraBoundsZone2D/3Dの矩形群を常時表示するか（再起動後も維持される）

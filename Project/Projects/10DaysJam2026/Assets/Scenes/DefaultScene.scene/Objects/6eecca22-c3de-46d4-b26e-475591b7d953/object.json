@@ -12,13 +12,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 159.99900817871094,
-                            "y": 159.99900817871094,
+                            "x": 256.0,
+                            "y": 48.0,
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 952.0642700195313,
-                            "y": 193.01458740234375,
+                            "x": 950.0,
+                            "y": 297.0,
                             "z": 0.0
                         }
                     },
@@ -42,7 +42,7 @@
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "App/Sprite/Boss/cradle.png"
+                        "textureAssetPath": "App/Sprite/Boss/finalBoss.png"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -59,9 +59,9 @@
                             "y": 0.0
                         },
                         "continuousDetection": false,
-                        "isTrigger": true,
+                        "isTrigger": false,
                         "size": {
-                            "x": 1.0,
+                            "x": 0.20000000298023224,
                             "y": 1.0
                         },
                         "syncPosition": [
@@ -85,49 +85,6 @@
             {
                 "data": {
                     "customData": {
-                        "fields": {
-                            "attackDuration": 0.5,
-                            "bloodBurstCount": 5,
-                            "bloodBurstInterval": 1.2000000476837158,
-                            "bloodBurstRadius": 30.0,
-                            "bloodBurstSpeed": 100.0,
-                            "bloodCenterRandomRadius": 100.0,
-                            "bloodMinDistanceFromPlayer": 40.0,
-                            "bloodPrefab": "fc580a6e-415a-4780-b03c-4c33e4f7a4c0",
-                            "bloodRingCount": 8,
-                            "bloodRingSpawnInterval": 0.10000000149011612,
-                            "deathEffect": "4d114c9e-706a-42e9-bf74-8efd6424a4a0",
-                            "deathEffectCount": 30,
-                            "deathEffectSpawnInterval": 0.10000000149011612,
-                            "deathEffectSpread": 80.0,
-                            "idleDuration": 1.5,
-                            "initialLeftOvaryHP": 20.0,
-                            "initialRightOvaryHP": 20.0,
-                            "moveAmplitude": 10.0,
-                            "moveSpeed": 2.0,
-                            "ovaryLeft": "b03fef43-e9fd-4c32-b247-732f786306d6",
-                            "ovaryRight": "03dda788-8556-4718-ab08-13ad2d48a100",
-                            "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
-                            "rubbleDropDelayStep": 0.10000000149011612,
-                            "rubbleDropHeight": 50.0,
-                            "rubbleMedium": "7e90c5d6-e37b-4420-942f-bc4530d20094",
-                            "rubbleMediumCount": 28,
-                            "rubbleOffsetLeftX": 0.0,
-                            "rubbleOffsetRightX": 0.0,
-                            "rubbleRandomRangeX": 80.0,
-                            "telegraphDuration": 1.2000000476837158
-                        },
-                        "scriptPath": "Assets\\Scripts\\Boss3.as"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "ScriptComponent"
-            },
-            {
-                "data": {
-                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,
@@ -147,8 +104,8 @@
                         },
                         "instanceUvRotation": 0.0,
                         "instanceUvScale": {
-                            "x": 1.0,
-                            "y": 0.25
+                            "x": 0.11100000143051147,
+                            "y": 0.11100000143051147
                         },
                         "instanceUvTranslate": {
                             "x": 0.0,
@@ -175,9 +132,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Boss3",
-        "objectID": "95dcc865-6e8c-434a-a994-a5fb66424538",
+        "name": "FinalBoss",
+        "objectID": "6eecca22-c3de-46d4-b26e-475591b7d953",
         "tag": ""
     },
-    "siblingIndex": 17453
+    "siblingIndex": 17485
 }

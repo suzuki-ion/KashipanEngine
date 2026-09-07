@@ -86,6 +86,18 @@ class Boss3 : ScriptComponentBehavior {
     [SerializeField, Tooltip("待機中・Blood攻撃中に上下に動く速さ")]
     float moveSpeed = 2.0f;
 
+    [SerializeField, Tooltip("死亡エフェクト")]
+    Object@ deathEffect;
+
+    [SerializeField, Tooltip("死亡エフェクトの発生数")]
+    int deathEffectCount = 5;
+
+    [SerializeField, Tooltip("死亡エフェクトの散らばる範囲(半径)")]
+    float deathEffectSpread = 50.0f;
+
+    [SerializeField, Tooltip("死亡エフェクトの生成間隔(秒)")]
+    float deathEffectSpawnInterval = 0.15f;
+
     Boss3State state = Boss3State::Idle;
     Boss3State lastState = Boss3State::Idle;
     float stateTimer = 0.0f;
@@ -115,10 +127,37 @@ class Boss3 : ScriptComponentBehavior {
     array<Object@> currentRingBlood;
     array<float> currentRingAngle;
 
+    // 死亡エフェクト管理用
+    int spawnedEffectCount = 0;
+    float deathEffectTimer = 0.0f;
+    bool isAnimation = false;
+    array<Object@> cloneEffects;
+
     // 疑似乱数
     uint rngState = 88172645;
 
+    // スプライト
+    SpriteRenderer@ sprite;
+
     void Start() {
+        GetComponent(@sprite);
+
+        // インスペクタの設定ミスを防ぐため、Boss側から各Ovaryへ強制的に左右属性をセットする
+        if (ovaryLeft !is null) {
+            ScriptComponent@ scLeft;
+            if (ovaryLeft.GetComponent(@scLeft)) {
+                scLeft.SetVariable("isLeftOvary", true);
+                scLeft.SetVariable("boss", GetOwnerObject());
+            }
+        }
+        if (ovaryRight !is null) {
+            ScriptComponent@ scRight;
+            if (ovaryRight.GetComponent(@scRight)) {
+                scRight.SetVariable("isLeftOvary", false);
+                scRight.SetVariable("boss", GetOwnerObject());
+            }
+        }
+
         leftOvaryHP = initialLeftOvaryHP;
         rightOvaryHP = initialRightOvaryHP;
         maxHP = initialLeftOvaryHP + initialRightOvaryHP;
@@ -143,10 +182,14 @@ class Boss3 : ScriptComponentBehavior {
         GetScene().GetVariable("isDialogueActive", isDialogueActive);
         if (isDialogueActive) return;
 
-        if (state == Boss3State::Dead) return;
-
-        if (leftOvaryHP <= 0.0f && rightOvaryHP <= 0.0f) {
+        // まだDead状態になっておらず、左右の弱点が両方ともHP0以下になった場合に死亡状態へ移行
+        if (state != Boss3State::Dead && leftOvaryHP <= 0.0f && rightOvaryHP <= 0.0f) {
             ChangeState(Boss3State::Dead);
+        }
+
+        if (state == Boss3State::Dead) {
+            // 死亡演出の更新処理
+            UpdateDeathAnimation();
         } else {
             stateTimer += GetDeltaTime();
 
@@ -210,6 +253,90 @@ class Boss3 : ScriptComponentBehavior {
             lastState = state;
             lastHpTier = hpTier;
             SetAnimation(state, hpTier);
+        }
+
+        // HPに応じたスプライトの変化
+        if (sprite !is null) {
+            sprite.SetInstanceUvTranslate(Vector2(0.0f, float(hpTier) * 0.25f));
+        }
+    }
+    
+    // 死亡エフェクトの生成と更新処理
+    void UpdateDeathAnimation() {
+        if (!isAnimation) {
+            isAnimation = true;
+            deathEffectTimer = 0.0f;
+            spawnedEffectCount = 0; // 生成数の初期化
+        }
+
+        deathEffectTimer += GetDeltaTime();
+
+        // エフェクトを順番に生成
+        if (spawnedEffectCount < deathEffectCount) {
+            // 経過時間が生成タイミングに達したら生成
+            if (deathEffectTimer >= float(spawnedEffectCount) * deathEffectSpawnInterval) {
+                Transform@ tf = GetTransform();
+                Vector3 centerPos = (tf !is null) ? tf.GetTranslate() : initialBossPos;
+
+                Object@ clone = GetScene().CloneObject(deathEffect, "CloneDeathEffect_" + spawnedEffectCount);
+                if (clone !is null) {
+                    Transform@ cloneTf = clone.GetTransform();
+                    if (cloneTf !is null) {
+                        cloneTf.SetScale(Vector3(32.0f, 32.0f, 1.0f));
+                    }
+
+                    ScriptComponent@ sc;
+                    if (clone.GetComponent(@sc)) {
+                        sc.CallMethod("StartAnimation");
+                        
+                        float angle = 6.28318f * (float(spawnedEffectCount) / float(deathEffectCount));
+                        float r = deathEffectSpread * (spawnedEffectCount % 2 == 0 ? 1.0f : 0.6f); 
+                        
+                        Vector3 spawnPos = Vector3(
+                            centerPos.x + Cos(angle) * r,
+                            centerPos.y + Sin(angle) * r,
+                            centerPos.z - 0.1f 
+                        );
+                        
+                        sc.SetVariable("pos", spawnPos);
+                    }
+                    cloneEffects.insertLast(clone);
+                }
+                spawnedEffectCount++;
+            }
+        }
+
+        // アニメーション更新処理
+        bool allEffectsFinished = true;
+        if (cloneEffects.length() > 0) {
+            float deathEffectDuration = 0.6f;
+            
+            for (uint i = 0; i < cloneEffects.length(); i++) {
+                Object@ clone = cloneEffects[i];
+                if (clone !is null && clone.IsActive()) {
+                    ScriptComponent@ sc;
+                    if (clone.GetComponent(@sc)) {
+                        sc.CallMethod("UpdateAnimation");
+                    }
+
+                    // 各エフェクトが生成されてからの経過時間
+                    float effectAge = deathEffectTimer - (float(i) * deathEffectSpawnInterval);
+
+                    // アニメーションが終了したら非アクティブ化
+                    if (effectAge >= deathEffectDuration) {
+                        clone.SetActive(false);
+                    } else {
+                        allEffectsFinished = false; // まだ終わっていないエフェクトがある
+                    }
+                }
+            }
+        } else {
+            allEffectsFinished = false; // まだ1つも生成されていない
+        }
+
+        // 全てのエフェクトが生成され、かつ全て終了した場合にボスの姿を消す
+        if (spawnedEffectCount >= deathEffectCount && allEffectsFinished) {
+            GetOwnerObject().SetComponentsActiveExceptTransformAndScript(false);
         }
     }
 

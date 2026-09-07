@@ -87,11 +87,6 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("回復アイテム")]
     Object@ healItem;
 
-    [SerializeField, Tooltip("ゲーム画面")]
-    Object@ gameScreen;
-
-    VignetteEffect@ vignetteEffect;
-
     // クールダウン計算用タイマー
     float swordCooldownTimer = 0.0f;
     float syurikenCooldownTimer = 0.0f;
@@ -519,13 +514,6 @@ class Player : ScriptComponentBehavior {
         if(attackTimer > 0.0f){
             attackTimer -= GetDeltaTime();
             isAttacking = true;
-        }
-
-        if(hp <= vignetteHp){
-            VignetteEffect@ vf;
-            if(gameScreen.GetComponent(@vf)){
-                vf.SetIntensity(1.0f);
-            }
         }
 
         if(hp <= 0.0f){

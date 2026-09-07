@@ -123,7 +123,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": false,
+        "isActive": true,
         "name": "BossDeathEffect",
         "objectID": "4d114c9e-706a-42e9-bf74-8efd6424a4a0",
         "tag": ""

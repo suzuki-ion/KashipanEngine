@@ -209,6 +209,103 @@ std::vector<IndexPair> BuildCandidatePairs3D(const TColliders &colliders) {
     return out;
 }
 
+//==================================================
+// 2Dブロードフェーズ用の均等グリッド
+//==================================================
+// Static-Static総当たり判定・CharacterController2Dのスイープ判定は、いずれも対象コライダー数の
+// 増加に対して素朴な総当たりになりやすい。AABBを均等グリッドへ登録し、近傍セルだけを候補として
+// 絞り込むことでコライダー数増加時の悪化を抑える（3D側のBuildCandidatePairs3Dと同じ考え方の2D版）。
+
+struct Bounds2D {
+    Vector2 min{0.0f, 0.0f};
+    Vector2 max{0.0f, 0.0f};
+};
+
+struct GridKey2D {
+    int x = 0;
+    int y = 0;
+
+    bool operator==(const GridKey2D &o) const noexcept { return x == o.x && y == o.y; }
+};
+
+struct GridKey2DHash {
+    std::size_t operator()(const GridKey2D &k) const noexcept {
+        std::size_t h = std::hash<int>{}(k.x);
+        h ^= std::hash<int>{}(k.y) + 0x9e3779b9u + (h << 6) + (h >> 2);
+        return h;
+    }
+};
+
+struct Grid2D {
+    float cellSize = 1.0f;
+    std::unordered_map<GridKey2D, std::vector<std::size_t>, GridKey2DHash> cells;
+};
+
+/// @brief インデックス群のAABBから均等グリッドを構築する。セルサイズはプロジェクトごとの
+///        ワールドスケール差を吸収するため、対象AABBの平均サイズから適応的に決める
+Grid2D BuildGrid2D(const std::vector<std::size_t> &indices, const std::vector<Bounds2D> &bounds) {
+    Grid2D grid;
+    if (indices.empty()) return grid;
+
+    float sizeSum = 0.0f;
+    for (const auto &b : bounds) {
+        sizeSum += std::max(b.max.x - b.min.x, b.max.y - b.min.y);
+    }
+    grid.cellSize = std::max(0.01f, sizeSum / static_cast<float>(bounds.size()));
+    grid.cells.reserve(indices.size() * 2);
+
+    for (std::size_t k = 0; k < indices.size(); ++k) {
+        const auto &b = bounds[k];
+        const int minX = ToCell(b.min.x, grid.cellSize);
+        const int minY = ToCell(b.min.y, grid.cellSize);
+        const int maxX = ToCell(b.max.x, grid.cellSize);
+        const int maxY = ToCell(b.max.y, grid.cellSize);
+        for (int y = minY; y <= maxY; ++y) {
+            for (int x = minX; x <= maxX; ++x) {
+                grid.cells[GridKey2D{x, y}].push_back(indices[k]);
+            }
+        }
+    }
+    return grid;
+}
+
+/// @brief 指定範囲と重なるセルに登録済みのインデックスを重複無く集める
+std::vector<std::size_t> QueryGrid2D(const Grid2D &grid, const Bounds2D &region) {
+    std::vector<std::size_t> out;
+    if (grid.cells.empty()) return out;
+
+    const int minX = ToCell(region.min.x, grid.cellSize);
+    const int minY = ToCell(region.min.y, grid.cellSize);
+    const int maxX = ToCell(region.max.x, grid.cellSize);
+    const int maxY = ToCell(region.max.y, grid.cellSize);
+
+    std::unordered_set<std::size_t> seen;
+    for (int y = minY; y <= maxY; ++y) {
+        for (int x = minX; x <= maxX; ++x) {
+            const auto it = grid.cells.find(GridKey2D{x, y});
+            if (it == grid.cells.end()) continue;
+            for (const auto idx : it->second) {
+                if (seen.insert(idx).second) out.push_back(idx);
+            }
+        }
+    }
+    return out;
+}
+
+/// @brief グリッドの同一セルを共有するインデックスの組を、重複無く候補ペアとして列挙する
+std::vector<IndexPair> BuildGridCandidatePairs2D(const Grid2D &grid) {
+    std::unordered_set<IndexPair, IndexPairHash> uniquePairs;
+    for (const auto &[key, bucket] : grid.cells) {
+        (void)key;
+        for (std::size_t i = 0; i < bucket.size(); ++i) {
+            for (std::size_t j = i + 1; j < bucket.size(); ++j) {
+                uniquePairs.insert(MakeIndexPair(bucket[i], bucket[j]));
+            }
+        }
+    }
+    return std::vector<IndexPair>(uniquePairs.begin(), uniquePairs.end());
+}
+
 inline bool ShouldTest(
     const std::bitset<ColliderInfo2D::kMaxAttributes> &selfAttr,
     const std::bitset<ColliderInfo2D::kMaxAttributes> &selfIgnore,
@@ -569,6 +666,29 @@ CharacterMoveResult2D Collider::MoveCharacter2D(
         }
     };
 
+    // 障害物候補（自分以外の軸平行矩形化できるコライダー）をAABBグリッドへ登録しておき、
+    // 復帰・X/Yスイープの各フェーズで全コライダーを毎回総当たりせず、近傍セルだけを問い合わせる。
+    std::vector<std::size_t> obstacleIndices;
+    std::vector<Bounds2D> obstacleGridBounds;
+    std::unordered_map<std::size_t, AxisAlignedBounds2D> obstacleBoundsByIndex;
+    obstacleIndices.reserve(colliders2D_.size());
+    obstacleGridBounds.reserve(colliders2D_.size());
+    obstacleBoundsByIndex.reserve(colliders2D_.size());
+
+    for (std::size_t i = 0; i < colliders2D_.size(); ++i) {
+        const auto &candidate = colliders2D_[i];
+        if (&candidate == self) continue;
+        const auto bounds = ToAxisAlignedBounds(candidate.info.shape);
+        if (!bounds.has_value()) continue;
+
+        obstacleIndices.push_back(i);
+        obstacleGridBounds.push_back(Bounds2D{
+            bounds->center - bounds->halfSize,
+            bounds->center + bounds->halfSize});
+        obstacleBoundsByIndex.emplace(i, *bounds);
+    }
+    const Grid2D obstacleGrid = BuildGrid2D(obstacleIndices, obstacleGridBounds);
+
     // エディター配置や外部Transform変更で既にめり込んでいた場合だけ、最小軸で復帰させる。
     // 通常の移動はこの後のスイープで接触前に止まるため、この処理が常用されることはない。
     Vector2 recovery{0.0f, 0.0f};
@@ -579,15 +699,18 @@ CharacterMoveResult2D Collider::MoveCharacter2D(
         Vector2 bestNormal{0.0f, 0.0f};
         float bestDistance = std::numeric_limits<float>::max();
 
-        for (const auto &candidate : colliders2D_) {
+        const Bounds2D moverRegion{
+            mover->center - mover->halfSize,
+            mover->center + mover->halfSize};
+        for (const auto idx : QueryGrid2D(obstacleGrid, moverRegion)) {
+            const auto &candidate = colliders2D_[idx];
             if (!canBlock(candidate)) continue;
-            const auto obstacle = ToAxisAlignedBounds(candidate.info.shape);
-            if (!obstacle.has_value()) continue;
+            const auto &obstacle = obstacleBoundsByIndex.at(idx);
 
-            const float deltaX = mover->center.x - obstacle->center.x;
-            const float deltaY = mover->center.y - obstacle->center.y;
-            const float overlapX = mover->halfSize.x + obstacle->halfSize.x - std::abs(deltaX);
-            const float overlapY = mover->halfSize.y + obstacle->halfSize.y - std::abs(deltaY);
+            const float deltaX = mover->center.x - obstacle.center.x;
+            const float deltaY = mover->center.y - obstacle.center.y;
+            const float overlapX = mover->halfSize.x + obstacle.halfSize.x - std::abs(deltaX);
+            const float overlapY = mover->halfSize.y + obstacle.halfSize.y - std::abs(deltaY);
             if (overlapX <= kOverlapEpsilon || overlapY <= kOverlapEpsilon) continue;
 
             Vector2 correction;
@@ -625,18 +748,25 @@ CharacterMoveResult2D Collider::MoveCharacter2D(
         Vector2 hitNormal{0.0f, 0.0f};
         bool hit = false;
 
-        for (const auto &candidate : colliders2D_) {
-            if (!canBlock(candidate)) continue;
-            const auto obstacle = ToAxisAlignedBounds(candidate.info.shape);
-            if (!obstacle.has_value()) continue;
+        const float travel = allowed + skin;
+        const Bounds2D sweepRegion{
+            Vector2(mover->center.x - mover->halfSize.x - (direction > 0.0f ? 0.0f : travel),
+                    mover->center.y - mover->halfSize.y),
+            Vector2(mover->center.x + mover->halfSize.x + (direction > 0.0f ? travel : 0.0f),
+                    mover->center.y + mover->halfSize.y)};
 
-            const float overlapY = std::min(mover->center.y + mover->halfSize.y, obstacle->center.y + obstacle->halfSize.y) -
-                                   std::max(mover->center.y - mover->halfSize.y, obstacle->center.y - obstacle->halfSize.y);
+        for (const auto idx : QueryGrid2D(obstacleGrid, sweepRegion)) {
+            const auto &candidate = colliders2D_[idx];
+            if (!canBlock(candidate)) continue;
+            const auto &obstacle = obstacleBoundsByIndex.at(idx);
+
+            const float overlapY = std::min(mover->center.y + mover->halfSize.y, obstacle.center.y + obstacle.halfSize.y) -
+                                   std::max(mover->center.y - mover->halfSize.y, obstacle.center.y - obstacle.halfSize.y);
             if (overlapY <= kOverlapEpsilon) continue;
 
             const float gap = direction > 0.0f
-                ? (obstacle->center.x - obstacle->halfSize.x) - (mover->center.x + mover->halfSize.x)
-                : (mover->center.x - mover->halfSize.x) - (obstacle->center.x + obstacle->halfSize.x);
+                ? (obstacle.center.x - obstacle.halfSize.x) - (mover->center.x + mover->halfSize.x)
+                : (mover->center.x - mover->halfSize.x) - (obstacle.center.x + obstacle.halfSize.x);
             if (gap < -kOverlapEpsilon || gap > allowed + skin) continue;
 
             allowed = std::min(allowed, std::max(0.0f, gap - skin));
@@ -657,18 +787,25 @@ CharacterMoveResult2D Collider::MoveCharacter2D(
         Vector2 hitNormal{0.0f, 0.0f};
         bool hit = false;
 
-        for (const auto &candidate : colliders2D_) {
-            if (!canBlock(candidate)) continue;
-            const auto obstacle = ToAxisAlignedBounds(candidate.info.shape);
-            if (!obstacle.has_value()) continue;
+        const float travel = allowed + skin;
+        const Bounds2D sweepRegion{
+            Vector2(mover->center.x - mover->halfSize.x,
+                    mover->center.y - mover->halfSize.y - (direction > 0.0f ? 0.0f : travel)),
+            Vector2(mover->center.x + mover->halfSize.x,
+                    mover->center.y + mover->halfSize.y + (direction > 0.0f ? travel : 0.0f))};
 
-            const float overlapX = std::min(mover->center.x + mover->halfSize.x, obstacle->center.x + obstacle->halfSize.x) -
-                                   std::max(mover->center.x - mover->halfSize.x, obstacle->center.x - obstacle->halfSize.x);
+        for (const auto idx : QueryGrid2D(obstacleGrid, sweepRegion)) {
+            const auto &candidate = colliders2D_[idx];
+            if (!canBlock(candidate)) continue;
+            const auto &obstacle = obstacleBoundsByIndex.at(idx);
+
+            const float overlapX = std::min(mover->center.x + mover->halfSize.x, obstacle.center.x + obstacle.halfSize.x) -
+                                   std::max(mover->center.x - mover->halfSize.x, obstacle.center.x - obstacle.halfSize.x);
             if (overlapX <= kOverlapEpsilon) continue;
 
             const float gap = direction > 0.0f
-                ? (obstacle->center.y - obstacle->halfSize.y) - (mover->center.y + mover->halfSize.y)
-                : (mover->center.y - mover->halfSize.y) - (obstacle->center.y + obstacle->halfSize.y);
+                ? (obstacle.center.y - obstacle.halfSize.y) - (mover->center.y + mover->halfSize.y)
+                : (mover->center.y - mover->halfSize.y) - (obstacle.center.y + obstacle.halfSize.y);
             if (gap < -kOverlapEpsilon || gap > allowed + skin) continue;
 
             allowed = std::min(allowed, std::max(0.0f, gap - skin));
@@ -1132,22 +1269,44 @@ void Collider::Update2D() {
     // 双方が静的ボディのペアだけを対象にする。Box2Dはこの組み合わせのコンタクトを一切
     // 生成しないため、ここでのExit判定はBox2D側のEndイベントに頼れない
     // （上のStay継続ループと違い、判定失敗＝接触終了として自分でExitを発火する）
-    for (std::size_t i = 0; i < colliders2D_.size(); ++i) {
-        const auto &ei = colliders2D_[i];
-        if (!ei.info.enabled || B2_IS_NULL(ei.runtime.shape)) continue;
-        if (B2_IS_NULL(ei.runtime.body) || b2Body_GetType(ei.runtime.body) != b2_staticBody) continue;
+    // 総当たりだとコライダー数の二乗で悪化するため、AABBグリッドで近傍の組だけに絞り込む。
+    {
+        std::vector<std::size_t> staticIndices;
+        std::vector<Bounds2D> staticBounds;
+        std::unordered_map<ColliderID, std::size_t> staticIndexById;
+        staticIndices.reserve(colliders2D_.size());
+        staticBounds.reserve(colliders2D_.size());
 
-        for (std::size_t j = i + 1; j < colliders2D_.size(); ++j) {
-            const auto &ej = colliders2D_[j];
-            if (!ej.info.enabled || B2_IS_NULL(ej.runtime.shape)) continue;
-            if (B2_IS_NULL(ej.runtime.body) || b2Body_GetType(ej.runtime.body) != b2_staticBody) continue;
+        for (std::size_t i = 0; i < colliders2D_.size(); ++i) {
+            const auto &e = colliders2D_[i];
+            if (!e.info.enabled || B2_IS_NULL(e.runtime.shape)) continue;
+            if (B2_IS_NULL(e.runtime.body) || b2Body_GetType(e.runtime.body) != b2_staticBody) continue;
+
+            const b2AABB aabb = b2Shape_GetAABB(e.runtime.shape);
+            staticIndices.push_back(i);
+            staticBounds.push_back(Bounds2D{
+                Vector2(aabb.lowerBound.x, aabb.lowerBound.y),
+                Vector2(aabb.upperBound.x, aabb.upperBound.y)});
+            staticIndexById.emplace(e.id, i);
+        }
+
+        // ペアごとの実際の判定処理。グリッド候補と、前フレームまで接触していたが今フレームは
+        // グリッド候補から外れたペア（離れて接触が切れたケース）の両方から呼ばれる
+        std::unordered_set<std::uint64_t> handledStaticPairs;
+        const auto testStaticPair = [&](std::size_t idxA, std::size_t idxB) {
+            const std::size_t iIdx = std::min(idxA, idxB);
+            const std::size_t jIdx = std::max(idxA, idxB);
+            const auto &ei = colliders2D_[iIdx];
+            const auto &ej = colliders2D_[jIdx];
+
+            const std::uint64_t key = MakePairKey(ei.id, ej.id);
+            if (!handledStaticPairs.insert(key).second) return;
 
             if (!ShouldTest(ei.info.attribute, ei.info.ignoreAttribute, ej.info.attribute) ||
                 !ShouldTest(ej.info.attribute, ej.info.ignoreAttribute, ei.info.attribute)) {
-                continue;
+                return;
             }
 
-            const std::uint64_t key = MakePairKey(ei.id, ej.id);
             const bool wasHit = std::binary_search(prevPairs2D_.begin(), prevPairs2D_.end(), key);
 
             HitInfo2D hi;
@@ -1164,6 +1323,22 @@ void Collider::Update2D() {
             } else if (wasHit) {
                 Dispatch2D(ei.id, ej.id, HitInfo2D{}, true);
             }
+        };
+
+        const Grid2D grid = BuildGrid2D(staticIndices, staticBounds);
+        for (const auto &pair : BuildGridCandidatePairs2D(grid)) {
+            testStaticPair(pair.a, pair.b);
+        }
+
+        // 前フレームまで接触していたペアが、今フレームは離れてグリッド候補から外れた場合も
+        // 取りこぼさず判定する。実際に接触中のペア数は総コライダー数に依存しないため軽量
+        for (const auto key : prevPairs2D_) {
+            const ColliderID idA = static_cast<ColliderID>(key >> 32);
+            const ColliderID idB = static_cast<ColliderID>(key & 0xffffffffu);
+            const auto itA = staticIndexById.find(idA);
+            const auto itB = staticIndexById.find(idB);
+            if (itA == staticIndexById.end() || itB == staticIndexById.end()) continue;
+            testStaticPair(itA->second, itB->second);
         }
     }
 

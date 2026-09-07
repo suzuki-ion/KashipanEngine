@@ -72,6 +72,9 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("点滅の切り替え間隔(秒)")]
     float blinkInterval = 0.08f;
 
+    [SerializeField, Tooltip("即死となる落下距離")]
+    float fallDeathHeight = 150.0f;
+
     [SerializeField, Tooltip("獲得可能なすべての武器オブジェクト一覧")]
     array<Object@>@ allWeapons;
 
@@ -118,6 +121,9 @@ class Player : ScriptComponentBehavior {
     float invincibleDuration = 1.0f;
     float invincibleTimer = 0.0f;
     bool isAlive = true;
+
+    // 落下開始時の最高到達Y座標
+    float highestY = 0.0f;
     
     // 攻撃用タイマー
     float attackTimer = 0.0f;
@@ -302,15 +308,25 @@ class Player : ScriptComponentBehavior {
         if(controller !is null) {
             if(controller.IsGrounded()) {
                 if(velocity.y <= 0.0f) {
+                    // 着地時に落下距離を判定
+                    float fallDistance = highestY - tf.GetTranslate().y;
+                    if (isJump && fallDistance >= fallDeathHeight) {
+                        Damage(hp);
+                    }
+
                     velocity.y = 0.0f;
                     if(isJump) {
                         PlayTaggedAudio("Landing");
                     }
                     isJump = false;
                 }
+                highestY = tf.GetTranslate().y; // 地上にいる間は常にY座標を更新
             } else {
-                // 空中にいる場合はジャンプフラグを立てて空中ジャンプを防止
                 isJump = true;
+                // 空中で最高到達点を記録
+                if (tf.GetTranslate().y > highestY) {
+                    highestY = tf.GetTranslate().y;
+                }
             }
 
             if(controller.IsTouchingCeiling() && velocity.y > 0.0f) {

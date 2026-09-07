@@ -300,13 +300,19 @@ class Player : ScriptComponentBehavior {
         if(tf is null) return;
 
         if(controller !is null) {
-            if(controller.IsGrounded() && velocity.y <= 0.0f) {
-                velocity.y = 0.0f;
-                if(isJump) {
-                    PlayTaggedAudio("Landing");
+            if(controller.IsGrounded()) {
+                if(velocity.y <= 0.0f) {
+                    velocity.y = 0.0f;
+                    if(isJump) {
+                        PlayTaggedAudio("Landing");
+                    }
+                    isJump = false;
                 }
-                isJump = false;
+            } else {
+                // 空中にいる場合はジャンプフラグを立てて空中ジャンプを防止
+                isJump = true;
             }
+
             if(controller.IsTouchingCeiling() && velocity.y > 0.0f) {
                 velocity.y = 0.0f;
             }

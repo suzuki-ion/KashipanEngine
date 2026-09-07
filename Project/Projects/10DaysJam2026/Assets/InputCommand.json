@@ -40,20 +40,20 @@
             "device": "Keyboard",
             "invertValue": false,
             "key": "X",
-            "state": "Trigger"
+            "state": "Down"
         },
         {
             "device": "Keyboard",
             "invertValue": false,
             "key": "Space",
-            "state": "Trigger"
+            "state": "Down"
         },
         {
             "button": "A",
             "controllerIndex": 0,
             "device": "ControllerButton",
             "invertValue": false,
-            "state": "Trigger"
+            "state": "Down"
         }
     ],
     "MoveX": [

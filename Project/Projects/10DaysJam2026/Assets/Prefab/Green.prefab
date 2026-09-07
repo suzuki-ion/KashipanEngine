@@ -20,7 +20,7 @@
                                 },
                                 "translate": {
                                     "x": 391.9253845214844,
-                                    "y": 297.44207763671875,
+                                    "y": 137.44207763671875,
                                     "z": 0.0
                                 }
                             },
@@ -241,7 +241,9 @@
                                     "invincibleDuration": 0.5,
                                     "moveSpeed": 15.0,
                                     "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
-                                    "pushBackExcludeTags": [],
+                                    "pushBackExcludeTags": [
+                                        "Player"
+                                    ],
                                     "self": "2c8f2294-f1b9-49cc-84bd-94deaa717ab7"
                                 },
                                 "scriptPath": "Assets\\Scripts\\Green.as"
@@ -333,5 +335,5 @@
         }
     ],
     "prefab": true,
-    "prefabID": "e6b1a322-6361-48b1-8616-4fcb8601ac2a"
+    "prefabID": "1580c66b-d47f-43b0-b95b-31c4b0a40458"
 }

@@ -309,6 +309,7 @@
                             "gravity": 360.0,
                             "groundedThreshold": 0.5,
                             "hp": 8.0,
+                            "jumpCutFactor": 0.5,
                             "jumpPower": 180.0,
                             "knockbackDuration": 0.20000000298023224,
                             "knockbackForceX": 100.0,

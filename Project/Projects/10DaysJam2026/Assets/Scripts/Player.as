@@ -24,6 +24,9 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("ジャンプ力")]
     float jumpPower = 66.6667f;
 
+    [SerializeField, Tooltip("ボタンを離した際の上昇速度カット率(小ジャンプ調整用)")]
+    float jumpCutFactor = 0.5f;
+
     [SerializeField, Tooltip("重力")]
     float gravity = 120.0f;
 
@@ -395,6 +398,11 @@ class Player : ScriptComponentBehavior {
             velocity.y = jumpPower;
             isJump = true;
             PlayTaggedAudio("Jump");
+        }
+
+        // ボタンを押していない状態で上昇中の時、Y速度を削ってジャンプを中断させる
+        if(GetCommandValue("Jump") <= 0.0f && velocity.y > 0.0f && isJump) {
+            velocity.y *= jumpCutFactor;
         }
 
         if (weapons !is null && weapons.length() > 0) {

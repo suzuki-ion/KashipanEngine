@@ -1,0 +1,57 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "height": 240,
+                        "isShowViewer": true,
+                        "name": "UIScreen",
+                        "saveDirectory": "Screenshots",
+                        "saveFileNamePrefix": "Screenshot",
+                        "saveFormat": "png",
+                        "viewerId": 11073279729237724253,
+                        "width": 256
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScreenBufferObject"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "UIScreen",
+        "objectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823",
+        "tag": ""
+    },
+    "siblingIndex": 7000
+}

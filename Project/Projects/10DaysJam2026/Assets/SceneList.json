@@ -7,6 +7,10 @@
         {
             "filePath": "Assets/Scenes/TitleScene.scene",
             "name": "TitleScene"
+        },
+        {
+            "filePath": "Assets/Scenes/MountainScene.scene",
+            "name": "MountainScene"
         }
     ],
     "startupScene": "DefaultScene"

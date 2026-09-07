@@ -1,0 +1,106 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": -6.4836883544921875,
+                            "y": -63.790000915527344,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "autoSyncSize": true,
+                        "farClip": 1000.0,
+                        "height": 240.0,
+                        "nearClip": 0.0,
+                        "pixelSnapping": true,
+                        "width": 256.0
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Camera2D"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "followTargets": [
+                            {
+                                "followPositionX": true,
+                                "followPositionY": true,
+                                "followRotationZ": false,
+                                "objectID": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22"
+                            }
+                        ],
+                        "moveLerpAll": 0.5,
+                        "moveLerpPerAxis": {
+                            "x": 0.10000000149011612,
+                            "y": 0.10000000149011612
+                        },
+                        "moveLerpUsePerAxis": false,
+                        "positionOffset": {
+                            "x": -128.0,
+                            "y": -120.0
+                        },
+                        "rotateLerpFactor": 0.10000000149011612,
+                        "rotationOffset": 0.0,
+                        "sizeLerpFactor": 0.10000000149011612,
+                        "targetSize": {
+                            "x": 256.0,
+                            "y": 240.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "CameraController2D"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "bindVariableNames": [
+                            "Vertex:gCamera2D",
+                            "Pixel:gCamera2D"
+                        ],
+                        "pipelineName": "",
+                        "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
+                    },
+                    "isActive": true,
+                    "priority": 950,
+                    "tag": ""
+                },
+                "type": "CameraRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "GameScreenCamera",
+        "objectID": "a1cc5cd8-4c52-4adb-be14-ef8ad4465a02",
+        "tag": ""
+    },
+    "siblingIndex": 5000
+}

@@ -4,7 +4,6 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -12,13 +11,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 256.0,
-                            "y": 48.0,
+                            "x": 16.0,
+                            "y": 7.0,
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 1048.0,
-                            "y": 135.99990844726563,
+                            "x": 515.871337890625,
+                            "y": 131.0,
                             "z": 0.0
                         }
                     },
@@ -42,7 +41,7 @@
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "App/Sprite/Boss/finalBoss.png"
+                        "textureAssetPath": "App/Sprite/Object/needle.png"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -59,9 +58,9 @@
                             "y": 0.0
                         },
                         "continuousDetection": false,
-                        "isTrigger": false,
+                        "isTrigger": true,
                         "size": {
-                            "x": 0.20000000298023224,
+                            "x": 1.0,
                             "y": 1.0
                         },
                         "syncPosition": [
@@ -78,73 +77,20 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": ""
+                    "tag": "Needle"
                 },
                 "type": "Box2DCollider"
             },
             {
                 "data": {
                     "customData": {
-                        "fields": {
-                            "dashChargeDuration": 0.6000000238418579,
-                            "dashDuration": 0.4000000059604645,
-                            "dashOvershoot": 30.0,
-                            "highAttackExtendDuration": 0.30000001192092896,
-                            "highAttackHeightOffset": 40.0,
-                            "highAttackHoldDuration": 0.30000001192092896,
-                            "highAttackMaxLength": 200.0,
-                            "highAttackPrefab": "7bbdf022-46bc-42eb-9045-91a89ffb6c14",
-                            "highAttackTelegraphDuration": 0.5,
-                            "hoverChargeDuration": 0.6000000238418579,
-                            "hoverDiveDuration": 0.30000001192092896,
-                            "hoverHeight": 80.0,
-                            "hoverJumpDuration": 0.3499999940395355,
-                            "hoverPauseDuration": 0.4000000059604645,
-                            "hoverRepeatCount": 4,
-                            "idleDuration": 1.0,
-                            "lowAttackExtendDuration": 0.30000001192092896,
-                            "lowAttackHeightOffset": -10.0,
-                            "lowAttackHoldDuration": 0.30000001192092896,
-                            "lowAttackMaxLength": 200.0,
-                            "lowAttackPrefab": "7bbdf022-46bc-42eb-9045-91a89ffb6c14",
-                            "lowAttackTelegraphDuration": 0.5,
-                            "needleActiveDuration": 0.5,
-                            "needlePrefab": "7bbdf022-46bc-42eb-9045-91a89ffb6c14",
-                            "needleTelegraphDuration": 0.6000000238418579,
-                            "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
-                            "retreatDistance": 80.0,
-                            "retreatJumpDuration": 0.4000000059604645,
-                            "retreatJumpHeight": 30.0
-                        },
-                        "scriptPath": "Assets\\Scripts\\FinalBoss.as"
+                        "prefabID": "5dc70355-51bd-4801-a039-c3a9065d2812"
                     },
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
                 },
-                "type": "ScriptComponent"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "fields": {
-                            "frameCount": 1,
-                            "frameInterval": 0.15000000596046448,
-                            "isLoop": true,
-                            "playOnStart": true,
-                            "startRow": 0,
-                            "uvStep": {
-                                "x": 0.25,
-                                "y": 1.0
-                            }
-                        },
-                        "scriptPath": "Assets\\Scripts\\SpriteAnimator.as"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": "AnimatorSC"
-                },
-                "type": "ScriptComponent"
+                "type": "PrefabInstanceComponent"
             },
             {
                 "data": {
@@ -168,8 +114,8 @@
                         },
                         "instanceUvRotation": 0.0,
                         "instanceUvScale": {
-                            "x": 0.11100000143051147,
-                            "y": 0.11100000143051147
+                            "x": 1.0,
+                            "y": 1.0
                         },
                         "instanceUvTranslate": {
                             "x": 0.0,
@@ -195,10 +141,11 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": false,
-        "name": "FinalBoss",
-        "objectID": "6eecca22-c3de-46d4-b26e-475591b7d953",
+        "isActive": true,
+        "name": "Stage_Needle",
+        "objectID": "9f999ade-3cc3-428b-b484-bad1db1b877a",
+        "prefabNodeID": "4a77ed58-d362-4703-9c6a-52cba4f891b7",
         "tag": ""
     },
-    "siblingIndex": 17485
+    "siblingIndex": 21000
 }

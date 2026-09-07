@@ -78,6 +78,15 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("即死となる最下限のY座標(落下死高度)")]
     float fallDeathY = -50.0f;
 
+    [SerializeField, Tooltip("ノックバック時の横方向の力")]
+    float knockbackForceX = 100.0f;
+
+    [SerializeField, Tooltip("ノックバック時の縦方向の力")]
+    float knockbackForceY = 50.0f;
+
+    [SerializeField, Tooltip("ノックバック中の制御不能時間(秒)")]
+    float knockbackDuration = 0.2f;
+
     [SerializeField, Tooltip("獲得可能なすべての武器オブジェクト一覧")]
     array<Object@>@ allWeapons;
 
@@ -89,9 +98,6 @@ class Player : ScriptComponentBehavior {
 
     [SerializeField, Tooltip("押し戻しを行わない相手のタグ一覧")]
     array<string>@ pushBackExcludeTags;
-
-    [SerializeField, Tooltip("回復アイテム")]
-    Object@ healItem;
 
     // クールダウン計算用タイマー
     float swordCooldownTimer = 0.0f;
@@ -139,6 +145,13 @@ class Player : ScriptComponentBehavior {
     
     // 攻撃用タイマー
     float attackTimer = 0.0f;
+
+    // ノックバックタイマー
+    float knockbackTimer = 0.0f;
+
+    float moveX = 0.0f;
+
+    Transform@ tf;
 
     void Start() {
         GetComponent(@col);
@@ -319,7 +332,7 @@ class Player : ScriptComponentBehavior {
         GetScene().GetVariable("isDialogueActive", isDialogueActive);
         if (isDialogueActive) return;
 
-        Transform@ tf = GetTransform();
+        @tf = GetTransform();
         if(tf is null) return;
 
         if(controller !is null) {
@@ -361,13 +374,18 @@ class Player : ScriptComponentBehavior {
             }
         }
 
-        float moveX = GetCommandValue("MoveX");
-        velocity.x = moveX * moveSpeed;
+        // ノックバック中のタイマー更新と移動入力制御
+        if (knockbackTimer > 0.0f) {
+            knockbackTimer -= GetDeltaTime();
+        } else {
+            moveX = GetCommandValue("MoveX");
+            velocity.x = moveX * moveSpeed;
 
-        if (moveX >= 0.01f) {
-            lastDirection = Direction::Right;
-        } else if (moveX <= -0.01f) {
-            lastDirection = Direction::Left;
+            if (moveX >= 0.01f) {
+                lastDirection = Direction::Right;
+            } else if (moveX <= -0.01f) {
+                lastDirection = Direction::Left;
+            }
         }
 
         float rotY = (lastDirection == Direction::Left) ? 3.14159f : 0.0f;
@@ -702,14 +720,10 @@ class Player : ScriptComponentBehavior {
     }
 
     void OnCollisionEnter(const HitInfo &in hit) {
-        if(hit.otherCollider.GetTag() == "Enemy" && !isInvincible){
-            Damage(1.0f);
-            isInvincible = true;
-        }
+        ProcessDamageAndKnockback(hit);
 
         if(hit.otherCollider.GetTag() == "Heart"){
             Heal(1.0f);
-            healItem.SetActive(false);
         }
     }
 
@@ -772,6 +786,9 @@ class Player : ScriptComponentBehavior {
     }
 
     void OnCollisionStay(const HitInfo &in hit) {
+        // 重複・長時間の接触中に無敵時間が切れた場合もダメージを受けるように処理
+        ProcessDamageAndKnockback(hit);
+
         // 動く床への追従。地面のTransformとPreTransform（前フレームの値）との差分から
         // 実際の移動量を求めておき、Update側でsurfaceVelocityへ変換する
         // （velocity本体に加算すると接地中に蓄積し続けてしまうため）
@@ -805,6 +822,26 @@ class Player : ScriptComponentBehavior {
                             AddWeaponByName(itemName);
                         }
                     }
+                }
+            }
+        }
+    }
+
+    void ProcessDamageAndKnockback(const HitInfo &in hit) {
+        Tag tag = hit.otherCollider.GetTag();
+        if ((tag == "Enemy" || tag == "Needle") && !isInvincible) {
+            Damage(1.0f);
+            isInvincible = true;
+
+            // 敵との位置関係からノックバック方向を決定
+            if (hit.otherObject !is null) {
+                Transform@ enemyTf = hit.otherObject.GetTransform();
+                if (enemyTf !is null) {
+                    float dirX = (tf.GetTranslate().x >= enemyTf.GetTranslate().x) ? 1.0f : -1.0f;
+                    velocity.x = dirX * knockbackForceX;
+                    velocity.y = knockbackForceY;
+                    knockbackTimer = knockbackDuration;
+                    isJump = true;
                 }
             }
         }

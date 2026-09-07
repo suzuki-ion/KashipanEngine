@@ -88,9 +88,11 @@ class Katana : ScriptComponentBehavior {
             tf.SetRotate(Vector3(0.0f, rotY, 0.0f));
         }
 
-        Vector3 drawPos = pos;
+        Vector3 drawPos;
         if (isActive) {
-            drawPos += Vector3(attackOffsetX, effectOffsetY, 0.0f);
+            drawPos = pos + Vector3(attackOffsetX, effectOffsetY, 0.0f);
+        } else {
+            drawPos = Vector3(-1000.0f, 0.0f, 0.0f);
         }
         tf.SetTranslate(drawPos);
 

@@ -207,4 +207,23 @@ class Katana : ScriptComponentBehavior {
             Log("Katana Level Up Lv." + level + " (攻撃力: " + damageAmount + ")");
         }
     }
+
+    // 経験値の減少とレベルダウン処理
+    void RemoveExp(float amount) {
+        exp -= amount;
+        Log("Katana EXP: " + exp + " / " + nextExp);
+
+        while (exp < 0.0f && level > 1) {
+            level--;
+            nextExp /= 1.5f; // AddExpと逆算し、1つ前のレベルの必要経験値に戻す
+            exp += nextExp;
+            damageAmount -= 1.0f; // レベルアップ時に強化した分の攻撃力を戻す
+            Log("Katana Level Down Lv." + level + " (攻撃力: " + damageAmount + ")");
+        }
+
+        // レベル1未満には下げないので、経験値も0未満にはしない
+        if (level <= 1 && exp < 0.0f) {
+            exp = 0.0f;
+        }
+    }
 }

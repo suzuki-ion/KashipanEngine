@@ -93,6 +93,9 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("ノックバック中の制御不能時間(秒)")]
     float knockbackDuration = 0.2f;
 
+    [SerializeField, Tooltip("被ダメージ時に装備中の武器から減少させる経験値量")]
+    float weaponExpLossOnDamage = 1.0f;
+
     [SerializeField, Tooltip("獲得可能なすべての武器オブジェクト一覧")]
     array<Object@>@ allWeapons;
 
@@ -986,6 +989,9 @@ class Player : ScriptComponentBehavior {
         hp = Clamp(hp - amount, 0.0f, maxHp);
         Log("Damage! HP:" + hp);
         PlayTaggedAudio("Damage");
+
+        // 被ダメージの瞬間、その時点で装備している武器の経験値を減少させる
+        RemoveWeaponExp(weaponExpLossOnDamage);
     }
 
     void Heal(float amount) {
@@ -1007,6 +1013,19 @@ class Player : ScriptComponentBehavior {
             ScriptComponent@ sc;
             if (currentWeapon.GetComponent(@sc)) {
                 sc.CallMethod("AddExp", expAmount);
+            }
+        }
+    }
+
+    // 現在装備中の武器の経験値を減少させる(被ダメージ時などに使用)
+    void RemoveWeaponExp(float expAmount) {
+        if (weapons is null || uint(currentWeaponType) >= weapons.length()) return;
+
+        Object@ currentWeapon = weapons[currentWeaponType];
+        if (currentWeapon !is null) {
+            ScriptComponent@ sc;
+            if (currentWeapon.GetComponent(@sc)) {
+                sc.CallMethod("RemoveExp", expAmount);
             }
         }
     }

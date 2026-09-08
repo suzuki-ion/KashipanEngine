@@ -335,6 +335,7 @@
                             "ballLifeTime": 3.0,
                             "blinkInterval": 0.07999999821186066,
                             "camera": "a1cc5cd8-4c52-4adb-be14-ef8ad4465a02",
+                            "coyoteTime": 0.10000000149011612,
                             "currentWeaponType": -1,
                             "fallDeathHeight": 150.0,
                             "fallDeathY": -50.0,
@@ -359,6 +360,7 @@
                             "syurikenAttackInterval": 0.4000000059604645,
                             "syurikenLifeTime": 2.0,
                             "vignetteHp": 3.0,
+                            "weaponExpLossOnDamage": 1.0,
                             "weapons": [
                                 "8da25f3a-dfdc-4603-b56f-a2cc14688f69",
                                 "8bf086b0-18bf-4b32-83b6-5892013ee4e6",

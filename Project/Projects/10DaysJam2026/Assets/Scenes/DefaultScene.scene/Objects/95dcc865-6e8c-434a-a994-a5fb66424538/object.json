@@ -193,7 +193,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
+        "isActive": false,
         "name": "Boss3",
         "objectID": "95dcc865-6e8c-434a-a994-a5fb66424538",
         "prefabNodeID": "7eb4af40-77dc-4741-b4ff-975128330d76",

@@ -19,9 +19,9 @@
                                     "z": 1.0
                                 },
                                 "translate": {
-                                    "x": 295.4742736816406,
-                                    "y": 34.93515396118164,
-                                    "z": 1.2717765457637142e-05
+                                    "x": 237.1643524169922,
+                                    "y": 52.65565872192383,
+                                    "z": 500.00006103515625
                                 }
                             },
                             "isActive": true,
@@ -45,6 +45,7 @@
                         "data": {
                             "customData": {
                                 "fields": {
+                                    "activationRange": 10000.0,
                                     "blinkInterval": 0.07999999821186066,
                                     "bullet": "38f8faa3-2696-461f-9ae5-89952932636e",
                                     "bulletLifeTime": 5.0,
@@ -59,7 +60,7 @@
                                     "hp": 2.0,
                                     "invincibleDuration": 0.5,
                                     "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
-                                    "self": "45e92702-eb5b-410d-b587-090617b5c385",
+                                    "self": "b63802fe-21d4-4629-9fae-253623cf7f73",
                                     "shotDelay": 1.0,
                                     "shotDuration": 2.0
                                 },
@@ -187,7 +188,7 @@
                 "hiddenFromEditorTarget": false,
                 "isActive": true,
                 "name": "WallEnemy",
-                "objectID": "45e92702-eb5b-410d-b587-090617b5c385",
+                "objectID": "b63802fe-21d4-4629-9fae-253623cf7f73",
                 "prefabNodeID": "088ea901-2c21-424c-a852-28cf1122a25d",
                 "tag": ""
             },

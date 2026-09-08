@@ -23,9 +23,6 @@ class Bat : ScriptComponentBehavior {
     [SerializeField, Tooltip("プレイヤー")]
     Object@ player;
 
-    [SerializeField, Tooltip("処理範囲の基準にするカメラ(Camera2D)")]
-    Object@ camera;
-
     [SerializeField, Tooltip("カメラの表示範囲からこの距離(px)以内であれば移動を行う(画面端での見切れを防ぐマージン)")]
     float activationRange = 16.0f;
 
@@ -97,14 +94,11 @@ class Bat : ScriptComponentBehavior {
 
                 // カメラの表示範囲を判定し、範囲外なら追従しない
                 bool inCameraView = false;
-                if (camera !is null) {
-                    Transform@ cameraTf = camera.GetTransform();
-                    Camera2D@ cam2d;
-                    if (cameraTf !is null && camera.GetComponent(@cam2d)) {
-                        Vector3 camPos = cameraTf.GetTranslate();
-                        inCameraView = (currentPos.x >= camPos.x - activationRange && currentPos.x <= camPos.x + cam2d.GetWidth() + activationRange &&
-                                        currentPos.y >= camPos.y - activationRange && currentPos.y <= camPos.y + cam2d.GetHeight() + activationRange);
-                    }
+                Vector3 camPos;
+                Vector2 camSize;
+                if (GetScene().GetVariable("gameplayCameraPos", camPos) && GetScene().GetVariable("gameplayCameraSize", camSize)) {
+                    inCameraView = (currentPos.x >= camPos.x - activationRange && currentPos.x <= camPos.x + camSize.x + activationRange &&
+                                    currentPos.y >= camPos.y - activationRange && currentPos.y <= camPos.y + camSize.y + activationRange);
                 }
 
                 // カメラの表示範囲内にいる場合のみ追従する

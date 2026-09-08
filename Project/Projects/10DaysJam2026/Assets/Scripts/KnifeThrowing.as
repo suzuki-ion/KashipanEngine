@@ -41,9 +41,6 @@ class KnifeThrowing : ScriptComponentBehavior {
     [SerializeField, Tooltip("プレイヤー")]
     Object@ player;
 
-    [SerializeField, Tooltip("処理範囲の基準にするカメラ(Camera2D)")]
-    Object@ camera;
-
     [SerializeField, Tooltip("カメラの表示範囲からこの距離(px)以内であれば移動・攻撃を行う(画面端での見切れを防ぐマージン)")]
     float activationRange = 16.0f;
 
@@ -114,15 +111,12 @@ class KnifeThrowing : ScriptComponentBehavior {
 
         // カメラの表示範囲を判定し、範囲外なら移動・攻撃処理を行わない
         bool inCameraView = false;
-        if (camera !is null) {
-            Transform@ cameraTf = camera.GetTransform();
-            Camera2D@ cam2d;
-            if (cameraTf !is null && camera.GetComponent(@cam2d)) {
-                Vector3 camPos = cameraTf.GetTranslate();
-                Vector3 pos = tf.GetTranslate();
-                inCameraView = (pos.x >= camPos.x - activationRange && pos.x <= camPos.x + cam2d.GetWidth() + activationRange &&
-                                 pos.y >= camPos.y - activationRange && pos.y <= camPos.y + cam2d.GetHeight() + activationRange);
-            }
+        Vector3 camPos;
+        Vector2 camSize;
+        if (GetScene().GetVariable("gameplayCameraPos", camPos) && GetScene().GetVariable("gameplayCameraSize", camSize)) {
+            Vector3 pos = tf.GetTranslate();
+            inCameraView = (pos.x >= camPos.x - activationRange && pos.x <= camPos.x + camSize.x + activationRange &&
+                             pos.y >= camPos.y - activationRange && pos.y <= camPos.y + camSize.y + activationRange);
         }
 
         if(isAlive && inCameraView){

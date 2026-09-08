@@ -98,6 +98,18 @@
                     "tag": ""
                 },
                 "type": "CameraRenderer"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {},
+                        "scriptPath": "Assets\\Scripts\\GameplayCameraPublisher.as"
+                    },
+                    "isActive": true,
+                    "priority": 2,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
             }
         ],
         "editorOnly": false,

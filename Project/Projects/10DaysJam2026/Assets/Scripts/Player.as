@@ -78,12 +78,6 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("点滅の切り替え間隔(秒)")]
     float blinkInterval = 0.08f;
 
-    [SerializeField, Tooltip("即死となる落下距離")]
-    float fallDeathHeight = 150.0f;
-
-    [SerializeField, Tooltip("即死となる最下限のY座標(落下死高度)")]
-    float fallDeathY = -50.0f;
-
     [SerializeField, Tooltip("ノックバック時の横方向の力")]
     float knockbackForceX = 100.0f;
 
@@ -413,12 +407,6 @@ class Player : ScriptComponentBehavior {
                 jumpConsumedThisAirtime = false;
 
                 if(velocity.y <= 0.0f) {
-                    // 着地時に落下距離を判定
-                    float fallDistance = highestY - currentY;
-                    if (isAlive && isJump && fallDistance >= fallDeathHeight) {
-                        Damage(hp);
-                    }
-
                     velocity.y = 0.0f;
                     if(isJump) {
                         PlayTaggedAudio("Landing");
@@ -432,14 +420,6 @@ class Player : ScriptComponentBehavior {
                 // 空中で最高到達点を記録
                 if (currentY > highestY) {
                     highestY = currentY;
-                }
-
-                // 空中での落下死判定（設定した落下距離超過、または最下限Y座標を下回った場合）
-                if (isAlive) {
-                    float fallDistance = highestY - currentY;
-                    if (fallDistance >= fallDeathHeight || currentY <= fallDeathY) {
-                        Damage(hp);
-                    }
                 }
             }
 

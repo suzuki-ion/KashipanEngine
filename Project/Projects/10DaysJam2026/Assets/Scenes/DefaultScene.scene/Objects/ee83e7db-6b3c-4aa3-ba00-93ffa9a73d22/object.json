@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 764.106689453125,
-                            "y": 136.2099609375,
+                            "x": 392.106689453125,
+                            "y": 299.2099609375,
                             "z": -2.1480484519997844e-06
                         }
                     },
@@ -337,8 +337,6 @@
                             "camera": "a1cc5cd8-4c52-4adb-be14-ef8ad4465a02",
                             "coyoteTime": 0.10000000149011612,
                             "currentWeaponType": -1,
-                            "fallDeathHeight": 150.0,
-                            "fallDeathY": -50.0,
                             "frameInterval": 0.15000000596046448,
                             "gravity": 360.0,
                             "groundedThreshold": 0.5,

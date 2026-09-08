@@ -17,7 +17,7 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 1048.0,
+                            "x": 1076.0,
                             "y": 135.99990844726563,
                             "z": 0.0
                         }
@@ -171,6 +171,21 @@
             {
                 "data": {
                     "customData": {
+                        "groundedThreshold": 0.5,
+                        "ignoredTags": [],
+                        "selectedColliderOccurrenceIndex": 0,
+                        "selectedColliderTypeName": "Box2DCollider",
+                        "skinWidth": 0.009999999776482582
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "CharacterController2D"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,
@@ -217,7 +232,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": false,
+        "isActive": true,
         "name": "FinalBoss",
         "objectID": "6eecca22-c3de-46d4-b26e-475591b7d953",
         "tag": ""

@@ -242,7 +242,8 @@
                                     "moveSpeed": 15.0,
                                     "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
                                     "pushBackExcludeTags": [
-                                        "Player"
+                                        "Player",
+                                        "Weapon"
                                     ],
                                     "self": "2c8f2294-f1b9-49cc-84bd-94deaa717ab7"
                                 },

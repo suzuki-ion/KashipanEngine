@@ -19,9 +19,9 @@
                                     "z": 1.0
                                 },
                                 "translate": {
-                                    "x": 887.95703125,
-                                    "y": 139.8223419189453,
-                                    "z": 3.0517578125e-05
+                                    "x": 922.0223388671875,
+                                    "y": 176.34619140625,
+                                    "z": 0.0
                                 }
                             },
                             "isActive": true,
@@ -178,9 +178,10 @@
                                     "moveSpeed": 25.0,
                                     "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
                                     "pushBackExcludeTags": [
-                                        "Player"
+                                        "Player",
+                                        "Weapon"
                                     ],
-                                    "self": "3f334220-6910-4083-a91e-a62719c2971d"
+                                    "self": "61df65f9-c07a-4eae-83b8-85e2afa1910b"
                                 },
                                 "scriptPath": "Assets\\Scripts\\Green.as"
                             },
@@ -263,7 +264,7 @@
                 "hiddenFromEditorTarget": false,
                 "isActive": true,
                 "name": "Red",
-                "objectID": "3f334220-6910-4083-a91e-a62719c2971d",
+                "objectID": "61df65f9-c07a-4eae-83b8-85e2afa1910b",
                 "prefabNodeID": "8142ecaa-0000-4d0e-85a9-dfbc8b3b56ca",
                 "tag": ""
             },

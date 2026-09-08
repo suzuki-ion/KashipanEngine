@@ -6,6 +6,11 @@ class Chest : ScriptComponentBehavior {
     [SerializeField, Tooltip("すでに開いているか")]
     bool isOpen = false;
 
+    ParticleSystem2D@ particle;
+
+    float particleDeleteTimer = 0.0f;
+    float particleDeleteDuratiom = 1.0f;
+
     void Start() {
         if (!ShouldPersistProgress()) return;
 
@@ -26,6 +31,15 @@ class Chest : ScriptComponentBehavior {
     }
 
     void Update() {
+        if(particle is null)return;
+        
+        if(particle.IsPlaying()){
+            particleDeleteTimer += GetDeltaTime();
+            if(particleDeleteTimer >= particleDeleteDuratiom){
+                particleDeleteTimer = 0.0f;
+                particle.Stop();
+            }
+        }
     }
 
     void End() {
@@ -51,6 +65,12 @@ class Chest : ScriptComponentBehavior {
 
         if (ShouldPersistProgress()) {
             GetScene().SetGlobalVariable(GetSaveKey(), true);
+        }
+
+        // パーティクル生成
+        GetComponent(@particle);
+        if(particle !is null){
+            particle.Play();
         }
 
         PlayOpenAnimation();

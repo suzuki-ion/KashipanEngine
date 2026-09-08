@@ -126,6 +126,9 @@ class Axe : ScriptComponentBehavior {
 
     // 経験値の加算とレベルアップ処理
     void AddExp(float amount) {
+        // 最大レベル(3)に達している場合は経験値を加算しない
+        if (level >= 3) return;
+
         exp += amount;
         Log("Axe EXP: " + exp + " / " + nextExp);
 
@@ -136,6 +139,12 @@ class Axe : ScriptComponentBehavior {
             nextExp *= 1.5f; // 次の必要経験値を増加
             damageAmount += 1.0f; // レベルアップで攻撃力を強化
             Log("Axe Level Up Lv." + level + " (攻撃力: " + damageAmount + ")");
+
+            // 最大レベルに達したら以降の加算・レベルアップを止める
+            if (level >= 3) {
+                exp = 0.0f;
+                break;
+            }
         }
     }
 

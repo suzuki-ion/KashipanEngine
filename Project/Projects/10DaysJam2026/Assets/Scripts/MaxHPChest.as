@@ -67,10 +67,14 @@ class MaxHpChest : ScriptComponentBehavior {
 
         // プレイヤーの最大HPを増加
         if (playerObj !is null) {
-            ScriptComponent@ sc;
-            if (playerObj.GetComponent(@sc)) {
-                sc.CallMethod("IncreaseMaxHp", hpIncreaseAmount);
-                Log("HP Heal");
+            array<ScriptComponent@>@ scripts;
+            if(playerObj.GetComponents(@scripts)){
+                for (int i = 0; i < scripts.length(); ++i) {
+                    if (scripts[i].GetTag() == "PlayerSC") {
+                        scripts[i].CallMethod("IncreaseMaxHp", hpIncreaseAmount);
+                        Log("HP Heal");
+                    }
+                }
             }
         }
     }

@@ -12,7 +12,7 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 16.0,
+                            "x": 0.0,
                             "y": 7.9998321533203125,
                             "z": 0.9999409914016724
                         },
@@ -60,6 +60,21 @@
                     "tag": ""
                 },
                 "type": "Comment"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "maxScaleX": 26.0,
+                            "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22"
+                        },
+                        "scriptPath": "Assets\\Scripts\\LevelGauge.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
             },
             {
                 "data": {

@@ -274,9 +274,6 @@ class Player : ScriptComponentBehavior {
             maxHp = savedMaxHp;
         }
 
-        // UpdateProgressVariables()内のsave_hp保存直下に追記
-        GetScene().SetGlobalVariable("save_maxHp", maxHp);
-
         if (allWeapons !is null) {
             for (uint i = 0; i < allWeapons.length(); ++i) {
                 string keyName = GetWeaponSaveKeyName(int(i));
@@ -327,6 +324,7 @@ class Player : ScriptComponentBehavior {
         if (!ShouldPersistProgress()) return;
 
         GetScene().SetGlobalVariable("save_hp", hp);
+        GetScene().SetGlobalVariable("save_maxHp", maxHp);
         GetScene().SetGlobalVariable("save_currentWeaponType", currentWeaponType);
 
         if (allWeapons !is null) {

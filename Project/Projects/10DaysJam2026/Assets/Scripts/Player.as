@@ -27,6 +27,9 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("ボタンを離した際の上昇速度カット率(小ジャンプ調整用)")]
     float jumpCutFactor = 0.5f;
 
+    [SerializeField, Tooltip("接地でなくなってからもジャンプ入力を受け付ける猶予時間(秒)。いわゆるコヨーテタイム")]
+    float coyoteTime = 0.1f;
+
     [SerializeField, Tooltip("重力")]
     float gravity = 120.0f;
 
@@ -128,6 +131,13 @@ class Player : ScriptComponentBehavior {
     Vector2 velocity;
     bool isJump = false;
     bool jumpButtonReleased = true;
+
+    // コヨーテタイム用。接地している間はcoyoteTimeへ毎フレーム戻し、接地でなくなってからは
+    // 減っていく。0より大きい間だけジャンプ入力を受け付ける
+    float coyoteTimer = 0.0f;
+    // 今の空中滞在（接地〜次に接地するまでの間）で既にジャンプを使ったかどうか。
+    // これが無いと、coyoteTimer>0の間ジャンプボタンを押すたび何度でも空中ジャンプできてしまう
+    bool jumpConsumedThisAirtime = false;
 
     // 動く床への追従用。プレイヤー本体のコライダーとは別に、足元にトリガー用の
     // センサーコライダー（Tag: "GroundSensor"）を用意しておくこと。そのセンサーが
@@ -386,6 +396,10 @@ class Player : ScriptComponentBehavior {
             wasGroundedPreviousFrame = grounded;
 
             if(grounded) {
+                // 接地している間はコヨーテタイムを満タンに保ち、空中ジャンプの消費状態もリセットする
+                coyoteTimer = coyoteTime;
+                jumpConsumedThisAirtime = false;
+
                 if(velocity.y <= 0.0f) {
                     // 着地時に落下距離を判定
                     float fallDistance = highestY - currentY;
@@ -402,6 +416,7 @@ class Player : ScriptComponentBehavior {
                 highestY = currentY; // 地上にいる間は常にY座標を更新
             } else {
                 isJump = true;
+                coyoteTimer -= GetDeltaTime();
                 // 空中で最高到達点を記録
                 if (currentY > highestY) {
                     highestY = currentY;
@@ -443,11 +458,14 @@ class Player : ScriptComponentBehavior {
             jumpButtonReleased = true;
         }
         
-        // 再入力が許可されている場合のみジャンプを実行
-        if (IsCommandTriggered("Jump") && !isJump && jumpButtonReleased) {
+        // 再入力が許可されており、かつコヨーテタイム中（接地中を含む）でまだこの空中滞在で
+        // ジャンプを使っていない場合のみジャンプを実行
+        if (IsCommandTriggered("Jump") && jumpButtonReleased && coyoteTimer > 0.0f && !jumpConsumedThisAirtime) {
             velocity.y = jumpPower;
             isJump = true;
             jumpButtonReleased = false; // ジャンプ発動時にロックをかける
+            jumpConsumedThisAirtime = true; // この空中滞在中はコヨーテタイムが残っていても再ジャンプさせない
+            coyoteTimer = 0.0f; // 空中ジャンプ直後は猶予を打ち切る（着地するまで再ジャンプ不可）
             PlayTaggedAudio("Jump");
         }
 

@@ -42,7 +42,7 @@
                 "data": {
                     "customData": {
                         "fields": {
-                            "activationRange": 10000.0,
+                            "activationRange": 16.0,
                             "blinkInterval": 0.07999999821186066,
                             "bullet": "38f8faa3-2696-461f-9ae5-89952932636e",
                             "bulletLifeTime": 5.0,

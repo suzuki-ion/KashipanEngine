@@ -17,13 +17,13 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 353.0,
-                            "y": 136.0,
+                            "x": 788.0,
+                            "y": 120.0,
                             "z": 0.0
                         }
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 0,
                     "tag": ""
                 },
                 "type": "Transform"
@@ -45,10 +45,25 @@
                         "textureAssetPath": "App/Sprite/Object/chest.png"
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 2,
                     "tag": ""
                 },
                 "type": "TextureSource"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "hpIncreaseAmount": 2.0,
+                            "isOpen": false
+                        },
+                        "scriptPath": "Assets\\Scripts\\MaxHPChest.as"
+                    },
+                    "isActive": true,
+                    "priority": 3,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
             },
             {
                 "data": {
@@ -67,7 +82,7 @@
                         "scriptPath": "Assets\\Scripts\\SpriteAnimator.as"
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 4,
                     "tag": "AnimatorSC"
                 },
                 "type": "ScriptComponent"
@@ -99,7 +114,7 @@
                         ]
                     },
                     "isActive": true,
-                    "priority": 1,
+                    "priority": 5,
                     "tag": "Chest"
                 },
                 "type": "Box2DCollider"
@@ -145,7 +160,7 @@
                         "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                     },
                     "isActive": true,
-                    "priority": 900,
+                    "priority": 6,
                     "tag": ""
                 },
                 "type": "SpriteRenderer"

@@ -18,7 +18,7 @@
                         },
                         "translate": {
                             "x": 1005.0,
-                            "y": 255.0,
+                            "y": 167.0,
                             "z": 3.0517443519784138e-05
                         }
                     },
@@ -196,7 +196,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": false,
+        "isActive": true,
         "name": "Ovary",
         "objectID": "3ee56610-39ea-40a4-87c8-534108fc2f84",
         "prefabNodeID": "2d17f565-8fc5-4ef2-9326-f7f865ec7e77",

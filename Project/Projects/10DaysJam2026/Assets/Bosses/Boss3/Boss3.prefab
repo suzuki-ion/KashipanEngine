@@ -89,7 +89,7 @@
                             "customData": {
                                 "fields": {
                                     "attackDuration": 0.5,
-                                    "bloodBurstCount": 5,
+                                    "bloodBurstCount": 1,
                                     "bloodBurstInterval": 1.2000000476837158,
                                     "bloodBurstSpeed": 100.0,
                                     "bloodDirectionCount": 3,
@@ -105,13 +105,18 @@
                                     "deathEffectCount": 30,
                                     "deathEffectSpawnInterval": 0.10000000149011612,
                                     "deathEffectSpread": 80.0,
+                                    "finalBossPrefab": "6eecca22-c3de-46d4-b26e-475591b7d953",
+                                    "finalBossSpawnOffset": {
+                                        "x": 0.0,
+                                        "y": 60.0
+                                    },
                                     "idleDuration": 1.5,
                                     "initialLeftOvaryHP": 20.0,
                                     "initialRightOvaryHP": 20.0,
                                     "moveAmplitude": 10.0,
                                     "moveSpeed": 2.0,
                                     "ovaryLeft": "b03fef43-e9fd-4c32-b247-732f786306d6",
-                                    "ovaryRight": "03dda788-8556-4718-ab08-13ad2d48a100",
+                                    "ovaryRight": "3ee56610-39ea-40a4-87c8-534108fc2f84",
                                     "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
                                     "rubbleDropDelayStep": 0.10000000149011612,
                                     "rubbleDropHeight": 50.0,

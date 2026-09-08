@@ -102,7 +102,7 @@
                             },
                             "isActive": true,
                             "priority": 1,
-                            "tag": ""
+                            "tag": "Bullet"
                         },
                         "type": "Box2DCollider"
                     },

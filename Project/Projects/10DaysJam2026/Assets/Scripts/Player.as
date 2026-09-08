@@ -946,7 +946,7 @@ class Player : ScriptComponentBehavior {
 
     void ProcessDamageAndKnockback(const HitInfo &in hit) {
         Tag tag = hit.otherCollider.GetTag();
-        if ((tag == "Enemy" || tag == "Needle") && !isInvincible) {
+        if ((tag == "Enemy" || tag == "Needle" || tag == "Bullet") && !isInvincible) {
             Damage(1.0f);
             isInvincible = true;
 

@@ -18,7 +18,7 @@
                         },
                         "translate": {
                             "x": 952.0642700195313,
-                            "y": 281.01458740234375,
+                            "y": 193.01458740234375,
                             "z": 0.0
                         }
                     },
@@ -103,6 +103,11 @@
                             "deathEffectCount": 30,
                             "deathEffectSpawnInterval": 0.10000000149011612,
                             "deathEffectSpread": 80.0,
+                            "finalBossPrefab": "6eecca22-c3de-46d4-b26e-475591b7d953",
+                            "finalBossSpawnOffset": {
+                                "x": 0.0,
+                                "y": 60.0
+                            },
                             "idleDuration": 1.5,
                             "initialLeftOvaryHP": 20.0,
                             "initialRightOvaryHP": 20.0,
@@ -188,7 +193,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": false,
+        "isActive": true,
         "name": "Boss3",
         "objectID": "95dcc865-6e8c-434a-a994-a5fb66424538",
         "prefabNodeID": "7eb4af40-77dc-4741-b4ff-975128330d76",

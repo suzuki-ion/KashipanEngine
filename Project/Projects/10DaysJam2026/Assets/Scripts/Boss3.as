@@ -98,6 +98,12 @@ class Boss3 : ScriptComponentBehavior {
     [SerializeField, Tooltip("死亡エフェクトの生成間隔(秒)")]
     float deathEffectSpawnInterval = 0.15f;
 
+    [SerializeField, Tooltip("Boss3撃破後に出現させるFinalBossのプレハブ")]
+    Object@ finalBossPrefab;
+
+    [SerializeField, Tooltip("FinalBossの出現位置オフセット(ボスの上の方から出す場合はYをプラスにする)")]
+    Vector2 finalBossSpawnOffset = Vector2(0.0f, 60.0f);
+
     Boss3State state = Boss3State::Idle;
     Boss3State lastState = Boss3State::Idle;
     float stateTimer = 0.0f;
@@ -132,6 +138,9 @@ class Boss3 : ScriptComponentBehavior {
     float deathEffectTimer = 0.0f;
     bool isAnimation = false;
     array<Object@> cloneEffects;
+
+    // FinalBoss出現管理用(二重出現防止)
+    bool finalBossSpawned = false;
 
     // 疑似乱数
     uint rngState = 88172645;
@@ -334,9 +343,32 @@ class Boss3 : ScriptComponentBehavior {
             allEffectsFinished = false; // まだ1つも生成されていない
         }
 
-        // 全てのエフェクトが生成され、かつ全て終了した場合にボスの姿を消す
+        // 全てのエフェクトが生成され、かつ全て終了した場合にボスの姿を消し、FinalBossを出現させる
         if (spawnedEffectCount >= deathEffectCount && allEffectsFinished) {
+            if (!finalBossSpawned) {
+                SpawnFinalBoss();
+                finalBossSpawned = true;
+            }
             GetOwnerObject().SetComponentsActiveExceptTransformAndScript(false);
+        }
+    }
+
+    // Boss3撃破後、FinalBossをBoss3の上部から出現させる
+    void SpawnFinalBoss() {
+        if (finalBossPrefab is null) return;
+
+        Object@ clone = GetScene().CloneObject(finalBossPrefab, "FinalBoss");
+        if (clone is null) return;
+
+        clone.SetActive(true);
+        Transform@ cloneTf = clone.GetTransform();
+        if (cloneTf !is null) {
+            Vector3 spawnPos = Vector3(
+                initialBossPos.x + finalBossSpawnOffset.x,
+                initialBossPos.y + finalBossSpawnOffset.y,
+                initialBossPos.z
+            );
+            cloneTf.SetTranslate(spawnPos);
         }
     }
 

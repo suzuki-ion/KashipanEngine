@@ -160,7 +160,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
+        "isActive": false,
         "name": "RubbleS",
         "objectID": "d5a1df87-7e02-4164-bd53-c6a58e756183",
         "prefabNodeID": "9eca364b-9c6c-4b5c-8462-8bd9439b5c7a",

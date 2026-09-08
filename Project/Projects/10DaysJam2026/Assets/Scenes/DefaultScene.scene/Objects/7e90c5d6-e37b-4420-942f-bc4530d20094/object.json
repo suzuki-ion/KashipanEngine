@@ -160,7 +160,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
+        "isActive": false,
         "name": "RubbleM",
         "objectID": "7e90c5d6-e37b-4420-942f-bc4530d20094",
         "prefabNodeID": "d33edddd-b93e-49c3-922f-a57706e6fd09",

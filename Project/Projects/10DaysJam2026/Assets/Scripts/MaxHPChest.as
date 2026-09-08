@@ -70,6 +70,7 @@ class MaxHpChest : ScriptComponentBehavior {
             ScriptComponent@ sc;
             if (playerObj.GetComponent(@sc)) {
                 sc.CallMethod("IncreaseMaxHp", hpIncreaseAmount);
+                Log("HP Heal");
             }
         }
     }

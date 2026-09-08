@@ -268,7 +268,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
+        "isActive": false,
         "name": "FinalBoss",
         "objectID": "6eecca22-c3de-46d4-b26e-475591b7d953",
         "prefabNodeID": "ebe67461-ee25-4f69-8588-91edb8322c39",

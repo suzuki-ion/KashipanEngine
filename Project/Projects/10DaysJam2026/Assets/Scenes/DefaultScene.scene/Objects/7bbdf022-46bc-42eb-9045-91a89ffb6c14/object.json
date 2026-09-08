@@ -100,7 +100,7 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": ""
+                    "tag": "Bullet"
                 },
                 "type": "Box2DCollider"
             },
@@ -164,7 +164,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
+        "isActive": false,
         "name": "Needle",
         "objectID": "7bbdf022-46bc-42eb-9045-91a89ffb6c14",
         "prefabNodeID": "71553bdd-ed87-4ced-aade-5fe668c46afa",

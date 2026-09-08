@@ -20,15 +20,15 @@
             "state": "Trigger"
         }
     ],
-    "Bottom": [
+    "Decide": [
         {
             "device": "Keyboard",
             "invertValue": false,
-            "key": "Down",
+            "key": "Up",
             "state": "Trigger"
         },
         {
-            "button": "DPadDown",
+            "button": "DPadUp",
             "controllerIndex": 0,
             "device": "ControllerButton",
             "invertValue": false,
@@ -37,7 +37,7 @@
         {
             "device": "Keyboard",
             "invertValue": false,
-            "key": "S",
+            "key": "W",
             "state": "Trigger"
         },
         {
@@ -46,7 +46,7 @@
             "device": "ControllerAnalog",
             "invertValue": false,
             "state": "Trigger",
-            "threshold": -0.10000000149011612
+            "threshold": 0.10000000149011612
         }
     ],
     "Jump": [

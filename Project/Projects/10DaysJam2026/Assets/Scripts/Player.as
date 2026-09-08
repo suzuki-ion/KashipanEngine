@@ -102,6 +102,9 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("押し戻しを行わない相手のタグ一覧")]
     array<string>@ pushBackExcludeTags;
 
+    [SerializeField, Tooltip("カメラ")]
+    Object@ camera;
+
     // クールダウン計算用タイマー
     float swordCooldownTimer = 0.0f;
     float syurikenCooldownTimer = 0.0f;
@@ -252,6 +255,14 @@ class Player : ScriptComponentBehavior {
         if (GetScene().GetGlobalVariable("save_hp", savedHp)) {
             hp = savedHp;
         }
+
+        float savedMaxHp;
+        if (GetScene().GetGlobalVariable("save_maxHp", savedMaxHp)) {
+            maxHp = savedMaxHp;
+        }
+
+        // UpdateProgressVariables()内のsave_hp保存直下に追記
+        GetScene().SetGlobalVariable("save_maxHp", maxHp);
 
         if (allWeapons !is null) {
             for (uint i = 0; i < allWeapons.length(); ++i) {
@@ -730,12 +741,52 @@ class Player : ScriptComponentBehavior {
             i++;
         }
 
+        // カメラ情報の取得（画面外判定用）
+        CameraController2D@ camController;
+        Vector3 camPos;
+        Vector2 targetSize;
+        bool hasCameraData = false;
+
+        if (camera !is null) {
+            camera.GetComponent(@camController);
+            if (camController !is null) {
+                Transform@ camTf = camera.GetTransform();
+                if (camTf !is null) {
+                    camPos = camTf.GetTranslate();
+                    targetSize = camController.GetTargetSize();
+                    hasCameraData = true;
+                }
+            }
+        }
+
         // 斧クローンの更新および削除処理
         for (uint i = 0; i < axeClones.length(); ) {
             Object@ clone = axeClones[i];
             if (clone !is null) {
                 axeTimers[i] += GetDeltaTime();
-                if (!clone.IsActive() || axeTimers[i] >= axeLifeTime) {
+
+                // 画面外判定
+                bool isOutOfBounds = false;
+                // 発射後0.1秒経過してから判定を行う
+                if (hasCameraData && clone.IsActive() && axeTimers[i] > 0.1f) {
+                    Transform@ cloneTf = clone.GetTransform();
+                    if (cloneTf !is null) {
+                        Vector3 clonePos = cloneTf.GetTranslate();
+                        
+                        // 画面サイズの外側に少しマージンを持たせる
+                        float margin = 64.0f; 
+                        float halfW = targetSize.x * 0.5f + margin;
+                        float halfH = targetSize.y * 0.5f + margin;
+
+                        if (clonePos.x < camPos.x - halfW || clonePos.x > camPos.x + halfW ||
+                            clonePos.y < camPos.y - halfH || clonePos.y > camPos.y + halfH) {
+                            isOutOfBounds = true;
+                        }
+                    }
+                }
+
+                // 非アクティブ、寿命、または画面外に出た場合に削除
+                if (!clone.IsActive() || axeTimers[i] >= axeLifeTime || isOutOfBounds) {
                     clone.SetActive(false);
                     axeClones.removeAt(i);
                     axeTimers.removeAt(i);
@@ -774,6 +825,7 @@ class Player : ScriptComponentBehavior {
 
         if(hit.otherCollider.GetTag() == "Heart"){
             Heal(1.0f);
+            hit.otherObject.SetActive(false);
         }
 
         if(hit.otherCollider.GetTag() == "DeadArea"){
@@ -871,7 +923,7 @@ class Player : ScriptComponentBehavior {
             }
         }
 
-        if (hit.otherCollider.GetTag() == "Chest" && IsCommandTriggered("Bottom")) {
+        if (hit.otherCollider.GetTag() == "Chest" && IsCommandTriggered("Decide")) {
             Object@ chestObj = hit.otherObject;
             if (chestObj !is null) {
                 ScriptComponent@ chestSc;
@@ -939,5 +991,11 @@ class Player : ScriptComponentBehavior {
                 sc.CallMethod("AddExp", expAmount);
             }
         }
+    }
+
+    void IncreaseMaxHp(float amount) {
+        maxHp += amount;
+        hp += amount; // 最大HP増加に合わせて現在HPも回復
+        Log("最大HPアップ！ 現在の最大HP: " + maxHp + " / 現在HP: " + hp);
     }
 }

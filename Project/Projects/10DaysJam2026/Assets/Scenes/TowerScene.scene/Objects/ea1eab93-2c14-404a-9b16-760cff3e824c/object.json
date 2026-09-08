@@ -16,8 +16,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 127.0889663696289,
-                            "y": 408.23675537109375,
+                            "x": 1007.0889892578125,
+                            "y": 152.23675537109375,
                             "z": 3.0517578125e-05
                         }
                     },
@@ -52,7 +52,7 @@
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "App/Sprite/Enemy/green.png"
+                        "textureAssetPath": "App/Sprite/Enemy/red.png"
                     },
                     "isActive": true,
                     "priority": 3,
@@ -334,7 +334,7 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Green",
+        "name": "Red",
         "objectID": "ea1eab93-2c14-404a-9b16-760cff3e824c",
         "prefabNodeID": "d1949970-ee56-4fb0-bcc7-d72325400edd",
         "tag": ""

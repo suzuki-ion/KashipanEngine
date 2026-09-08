@@ -16,8 +16,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 127.0889663696289,
-                            "y": 408.23675537109375,
+                            "x": 1007.0889892578125,
+                            "y": 152.23675537109375,
                             "z": 3.0517578125e-05
                         }
                     },
@@ -52,7 +52,7 @@
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "App/Sprite/Enemy/green.png"
+                        "textureAssetPath": "App/Sprite/Enemy/red.png"
                     },
                     "isActive": true,
                     "priority": 3,
@@ -247,7 +247,7 @@
                             "groundedThreshold": 0.10000000149011612,
                             "hp": 2.0,
                             "invincibleDuration": 0.5,
-                            "moveSpeed": 15.0,
+                            "moveSpeed": 25.0,
                             "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
                             "pushBackExcludeTags": [
                                 "Player",
@@ -335,7 +335,7 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Green",
+        "name": "Red",
         "objectID": "2c8f2294-f1b9-49cc-84bd-94deaa717ab7",
         "prefabNodeID": "d1949970-ee56-4fb0-bcc7-d72325400edd",
         "tag": ""

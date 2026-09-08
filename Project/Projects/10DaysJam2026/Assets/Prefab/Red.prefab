@@ -1,5 +1,5 @@
 {
-    "name": "Red",
+    "name": "Green",
     "objects": [
         {
             "object": {
@@ -19,9 +19,9 @@
                                     "z": 1.0
                                 },
                                 "translate": {
-                                    "x": 263.0732421875,
-                                    "y": 58.17721939086914,
-                                    "z": 500.00006103515625
+                                    "x": 957.0223388671875,
+                                    "y": 120.34619140625,
+                                    "z": 0.0
                                 }
                             },
                             "isActive": true,
@@ -44,7 +44,7 @@
                     {
                         "data": {
                             "customData": {
-                                "textureAssetPath": "App/Sprite/Enemy/red.png"
+                                "textureAssetPath": "App/Sprite/Enemy/green.png"
                             },
                             "isActive": true,
                             "priority": 2,
@@ -175,14 +175,13 @@
                                     "groundedThreshold": 0.5,
                                     "hp": 2.0,
                                     "invincibleDuration": 1.0,
-                                    "moveSpeed": 25.0,
+                                    "moveSpeed": 15.0,
                                     "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
                                     "pushBackExcludeTags": [
                                         "Player",
                                         "Weapon"
                                     ],
-                                    "self": "61df65f9-c07a-4eae-83b8-85e2afa1910b",
-                                    "camera": "a1cc5cd8-4c52-4adb-be14-ef8ad4465a02"
+                                    "self": "61df65f9-c07a-4eae-83b8-85e2afa1910b"
                                 },
                                 "scriptPath": "Assets\\Scripts\\Green.as"
                             },
@@ -264,7 +263,7 @@
                 "editorOnly": false,
                 "hiddenFromEditorTarget": false,
                 "isActive": true,
-                "name": "Red",
+                "name": "Green",
                 "objectID": "61df65f9-c07a-4eae-83b8-85e2afa1910b",
                 "prefabNodeID": "8142ecaa-0000-4d0e-85a9-dfbc8b3b56ca",
                 "tag": ""

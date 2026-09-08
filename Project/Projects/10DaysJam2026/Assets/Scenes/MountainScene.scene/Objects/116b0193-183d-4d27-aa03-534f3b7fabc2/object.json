@@ -52,7 +52,7 @@
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "App/Sprite/Enemy/red.png"
+                        "textureAssetPath": "App/Sprite/Enemy/green.png"
                     },
                     "isActive": true,
                     "priority": 2,
@@ -269,7 +269,7 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Red",
+        "name": "Green",
         "objectID": "116b0193-183d-4d27-aa03-534f3b7fabc2",
         "prefabNodeID": "8142ecaa-0000-4d0e-85a9-dfbc8b3b56ca",
         "tag": ""

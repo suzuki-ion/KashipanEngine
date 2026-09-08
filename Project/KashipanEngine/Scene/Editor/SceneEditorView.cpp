@@ -716,8 +716,9 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
             ? HandleCameraBoundsZoneEdit2D(paintableBoundsOwner, paintableBoundsZone2D, commands, imagePos, drawSize)
             : (paintableBoundsZone3D && HandleCameraBoundsZoneEdit3D(paintableBoundsOwner, paintableBoundsZone3D, commands, imagePos, drawSize)));
 
-    //--------- Camera Bounds Zoneの矩形クリック選択（選択状態に関わらず、表示中の全ゾーンの矩形を
-    //          対象にヒットテストする。ヒットした場合は通常のオブジェクトピッキングより優先する） ---------//
+    //--------- Camera Bounds Zoneの矩形の境界線クリック選択（選択状態に関わらず、表示中の全ゾーンの
+    //          矩形境界線を対象にヒットテストする。境界線のみが対象のため、矩形内部にある他オブジェクトの
+    //          クリックは妨げない。境界線をヒットした場合は通常のオブジェクトピッキングより優先する） ---------//
     const bool cameraBoundsClickConsumedInput = !tilemapPaintConsumedInput && !cameraBoundsEditConsumedInput
         && HandleCameraBoundsZoneClickSelect(hierarchy, imagePos, drawSize);
 
@@ -1079,6 +1080,22 @@ Vector3 TransformPoint(const Vector3 &p, const Matrix4x4 &m) {
     float w = p.x * m.m[0][3] + p.y * m.m[1][3] + p.z * m.m[2][3] + m.m[3][3];
     if (std::abs(w) < 1e-8f) w = 1e-8f;
     return Vector3(x / w, y / w, z / w);
+}
+
+/// @brief スクリーン座標上での点pと線分(a,b)との最短距離
+float DistancePointToSegment(const ImVec2 &p, const ImVec2 &a, const ImVec2 &b) {
+    const float abx = b.x - a.x;
+    const float aby = b.y - a.y;
+    const float lengthSq = abx * abx + aby * aby;
+    float t = 0.0f;
+    if (lengthSq > 1e-8f) {
+        t = std::clamp(((p.x - a.x) * abx + (p.y - a.y) * aby) / lengthSq, 0.0f, 1.0f);
+    }
+    const float closestX = a.x + abx * t;
+    const float closestY = a.y + aby * t;
+    const float dx = p.x - closestX;
+    const float dy = p.y - closestY;
+    return std::sqrt(dx * dx + dy * dy);
 }
 
 /// @brief (x0,y0)から(x1,y1)までの格子セルをBresenhamのアルゴリズムで列挙し、visitへ順に渡す
@@ -2056,51 +2073,19 @@ void SceneEditorView::AppendCameraBoundsZoneDebugLines(std::vector<DebugLineVert
     }
 }
 
-bool SceneEditorView::RayIntersectsAABB(const Vector3 &rayStart, const Vector3 &rayDir, const Vector3 &boxMin, const Vector3 &boxMax, float &outT) {
-    // スラブ法。tは区間[0,1]（近平面〜遠平面）に制限する
-    float tMin = 0.0f;
-    float tMax = 1.0f;
-    const float starts[3] = { rayStart.x, rayStart.y, rayStart.z };
-    const float dirs[3] = { rayDir.x, rayDir.y, rayDir.z };
-    const float mins[3] = { boxMin.x, boxMin.y, boxMin.z };
-    const float maxs[3] = { boxMax.x, boxMax.y, boxMax.z };
-    for (int axis = 0; axis < 3; ++axis) {
-        if (std::abs(dirs[axis]) < 1e-8f) {
-            if (starts[axis] < mins[axis] || starts[axis] > maxs[axis]) return false;
-            continue;
-        }
-        float t1 = (mins[axis] - starts[axis]) / dirs[axis];
-        float t2 = (maxs[axis] - starts[axis]) / dirs[axis];
-        if (t1 > t2) std::swap(t1, t2);
-        tMin = std::max(tMin, t1);
-        tMax = std::min(tMax, t2);
-        if (tMin > tMax) return false;
-    }
-    outT = tMin;
-    return true;
-}
+EmptyObject *SceneEditorView::PickCameraBoundsZoneOwnerAtScreenPosition(const ImVec2 &screenPos, const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (!context_ || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return nullptr;
+    if (!showCameraBoundsGizmos_) return nullptr;
 
-bool SceneEditorView::HandleCameraBoundsZoneClickSelect(SceneObjectHierarchy *hierarchy, const ImVec2 &imagePos, const ImVec2 &imageSize) {
-    if (!hierarchy || !context_ || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return false;
-    if (!showCameraBoundsGizmos_) return false;
-    if (!ImGui::IsItemHovered()) return false;
-    if (!ImGui::IsMouseReleased(ImGuiMouseButton_Left)) return false;
-    // カメラ操作等のドラッグ後のリリースでは選択しない（HandleObjectPickingと同じ判定）
-    constexpr float kClickMoveThreshold = 3.0f;
-    if (ImGui::GetIO().MouseDragMaxDistanceSqr[ImGuiMouseButton_Left] > kClickMoveThreshold * kClickMoveThreshold) return false;
-    if (!gizmoTargetObjects_.empty() && (ImGuizmo::IsUsing() || ImGuizmo::IsOver())) return false;
-
-    const ImVec2 mouse = ImGui::GetMousePos();
-    const float ndcX = ((mouse.x - imagePos.x) / imageSize.x) * 2.0f - 1.0f;
-    const float ndcY = -(((mouse.y - imagePos.y) / imageSize.y) * 2.0f - 1.0f);
-    const Matrix4x4 invViewProjection = (GetActiveView() * GetActiveProjection()).Inverse();
-    const Vector3 worldRayStart = UnprojectNdc(invViewProjection, ndcX, ndcY, 0.0f);
-    const Vector3 worldRayEnd = UnprojectNdc(invViewProjection, ndcX, ndcY, 1.0f);
+    // 未選択の矩形は「内部」ではなく「境界線（4辺）」への近さで判定する。これにより、矩形の内側にある
+    // 他オブジェクトのクリックを妨げない（選択中の矩形は別途HandleCameraBoundsZoneEdit2D/3Dが内部込みで
+    // 判定し、この関数より先に入力を消費するため、ここに来る時点で「選択中の矩形の内部」は除外済み）
+    constexpr float kLineHitDistancePx = 6.0f;
 
     EmptyObject *bestOwner = nullptr;
     int bestGroup = -1;
     int bestRect = -1;
-    float bestT = std::numeric_limits<float>::max();
+    float bestDist = kLineHitDistancePx;
 
     if (displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly) {
         for (auto *object : context_->GetSceneObjects()) {
@@ -2109,25 +2094,31 @@ bool SceneEditorView::HandleCameraBoundsZoneClickSelect(SceneObjectHierarchy *hi
             if (!zone || !zone->IsActive()) continue;
             auto *transform = object->GetComponent<Transform>();
             if (!transform) continue;
-            const Matrix4x4 invWorld = transform->GetWorldMatrix().Inverse();
-            const Vector3 localStart = TransformPoint(worldRayStart, invWorld);
-            const Vector3 localEnd = TransformPoint(worldRayEnd, invWorld);
-            const Vector3 localDir = localEnd - localStart;
-            if (std::abs(localDir.z) < 1e-8f) continue;
-            const float t = -localStart.z / localDir.z;
-            if (t < 0.0f || t > 1.0f || t >= bestT) continue;
-            const Vector2 localPoint(localStart.x + localDir.x * t, localStart.y + localDir.y * t);
+            const Matrix4x4 &world = transform->GetWorldMatrix();
             const auto &groups = zone->GetGroups();
             for (size_t g = 0; g < groups.size(); ++g) {
                 const auto &rects = groups[g].rects;
                 for (size_t r = 0; r < rects.size(); ++r) {
                     const auto &rect = rects[r];
-                    if (localPoint.x < rect.min.x || localPoint.x > rect.max.x ||
-                        localPoint.y < rect.min.y || localPoint.y > rect.max.y) continue;
-                    bestT = t;
-                    bestOwner = object;
-                    bestGroup = static_cast<int>(g);
-                    bestRect = static_cast<int>(r);
+                    const Vector3 localCorners[4] = {
+                        Vector3(rect.min.x, rect.min.y, 0.0f), Vector3(rect.min.x, rect.max.y, 0.0f),
+                        Vector3(rect.max.x, rect.max.y, 0.0f), Vector3(rect.max.x, rect.min.y, 0.0f),
+                    };
+                    ImVec2 screenCorners[4];
+                    bool allValid = true;
+                    for (int i = 0; i < 4 && allValid; ++i) {
+                        allValid = ProjectToImage(TransformPoint(localCorners[i], world), imagePos, imageSize, screenCorners[i], false);
+                    }
+                    if (!allValid) continue;
+                    for (int i = 0; i < 4; ++i) {
+                        const float dist = DistancePointToSegment(screenPos, screenCorners[i], screenCorners[(i + 1) % 4]);
+                        if (dist < bestDist) {
+                            bestDist = dist;
+                            bestOwner = object;
+                            bestGroup = static_cast<int>(g);
+                            bestRect = static_cast<int>(r);
+                        }
+                    }
                 }
             }
         }
@@ -2138,37 +2129,47 @@ bool SceneEditorView::HandleCameraBoundsZoneClickSelect(SceneObjectHierarchy *hi
             if (!zone || !zone->IsActive()) continue;
             auto *transform = object->GetComponent<Transform>();
             if (!transform) continue;
-            const Matrix4x4 invWorld = transform->GetWorldMatrix().Inverse();
-            const Vector3 localStart = TransformPoint(worldRayStart, invWorld);
-            const Vector3 localEnd = TransformPoint(worldRayEnd, invWorld);
-            const Vector3 localDir = localEnd - localStart;
+            const Matrix4x4 &world = transform->GetWorldMatrix();
             const auto &groups = zone->GetGroups();
             for (size_t g = 0; g < groups.size(); ++g) {
                 const auto &rects = groups[g].rects;
                 for (size_t r = 0; r < rects.size(); ++r) {
-                    float t = 0.0f;
-                    if (!RayIntersectsAABB(localStart, localDir, rects[r].min, rects[r].max, t)) continue;
-                    if (t >= bestT) continue;
-                    bestT = t;
-                    bestOwner = object;
-                    bestGroup = static_cast<int>(g);
-                    bestRect = static_cast<int>(r);
+                    const auto &rect = rects[r];
+                    // フットプリント（XZ）の境界線のみ判定対象にする（高さ方向の辺は対象外）。
+                    // 高さはHandleCameraBoundsZoneEdit3Dと同じく選択中矩形のY中央に合わせて描画される
+                    const float editHeight = (rect.min.y + rect.max.y) * 0.5f;
+                    const Vector3 localCorners[4] = {
+                        Vector3(rect.min.x, editHeight, rect.min.z), Vector3(rect.min.x, editHeight, rect.max.z),
+                        Vector3(rect.max.x, editHeight, rect.max.z), Vector3(rect.max.x, editHeight, rect.min.z),
+                    };
+                    ImVec2 screenCorners[4];
+                    bool allValid = true;
+                    for (int i = 0; i < 4 && allValid; ++i) {
+                        allValid = ProjectToImage(TransformPoint(localCorners[i], world), imagePos, imageSize, screenCorners[i], false);
+                    }
+                    if (!allValid) continue;
+                    for (int i = 0; i < 4; ++i) {
+                        const float dist = DistancePointToSegment(screenPos, screenCorners[i], screenCorners[(i + 1) % 4]);
+                        if (dist < bestDist) {
+                            bestDist = dist;
+                            bestOwner = object;
+                            bestGroup = static_cast<int>(g);
+                            bestRect = static_cast<int>(r);
+                        }
+                    }
                 }
             }
         }
     }
 
-    if (!bestOwner) return false;
+    if (!bestOwner) return nullptr;
 
     if (auto *zone2D = bestOwner->GetComponent<CameraBoundsZone2D>()) zone2D->SetEditorSelection(bestGroup, bestRect);
     if (auto *zone3D = bestOwner->GetComponent<CameraBoundsZone3D>()) zone3D->SetEditorSelection(bestGroup, bestRect);
     // クリックした矩形をすぐ掴んで編集できるよう、矩形編集トグルを自動で有効にする
     cameraBoundsEditActive_ = true;
     isCameraBoundsDragActive_ = false;
-
-    const bool additive = ImGui::IsKeyDown(ImGuiMod_Ctrl);
-    hierarchy->SelectObject(bestOwner, additive);
-    return true;
+    return bestOwner;
 }
 
 void SceneEditorView::HandleObjectPicking(SceneObjectHierarchy *hierarchy, const ImVec2 &imagePos, const ImVec2 &imageSize) {
@@ -2213,6 +2214,23 @@ void SceneEditorView::HandleObjectPicking(SceneObjectHierarchy *hierarchy, const
     } else if (!additive) {
         hierarchy->SelectObject(nullptr, false);
     }
+}
+
+bool SceneEditorView::HandleCameraBoundsZoneClickSelect(SceneObjectHierarchy *hierarchy, const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (!hierarchy || !context_ || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return false;
+    if (!ImGui::IsItemHovered()) return false;
+    if (!ImGui::IsMouseReleased(ImGuiMouseButton_Left)) return false;
+    // カメラ操作等のドラッグ後のリリースでは選択しない（HandleObjectPickingと同じ判定）
+    constexpr float kClickMoveThreshold = 3.0f;
+    if (ImGui::GetIO().MouseDragMaxDistanceSqr[ImGuiMouseButton_Left] > kClickMoveThreshold * kClickMoveThreshold) return false;
+    if (!gizmoTargetObjects_.empty() && (ImGuizmo::IsUsing() || ImGuizmo::IsOver())) return false;
+
+    EmptyObject *picked = PickCameraBoundsZoneOwnerAtScreenPosition(ImGui::GetMousePos(), imagePos, imageSize);
+    if (!picked) return false;
+
+    const bool additive = ImGui::IsKeyDown(ImGuiMod_Ctrl);
+    hierarchy->SelectObject(picked, additive);
+    return true;
 }
 
 void SceneEditorView::DrawCameraMarkers(const ImVec2 &imagePos, const ImVec2 &imageSize) {

@@ -107,6 +107,7 @@ public:
         ptr->excludedRenderTargetNames_ = excludedRenderTargetNames_;
         ptr->materialName_ = materialName_;
         ptr->pipelineName_ = pipelineName_;
+        ptr->renderPriority_ = renderPriority_;
         ptr->tileSize_ = tileSize_;
         ptr->tilePixelSize_ = tilePixelSize_;
         ptr->gridWidth_ = gridWidth_;
@@ -287,6 +288,15 @@ public:
         ApplyRendererSettings();
     }
     const std::string &GetPipelineName() const noexcept { return pipelineName_; }
+    /// @brief 描画順を制御する優先度を設定する（既定0）。値が小さいほど先（奥）、大きいほど後（手前）に
+    ///        描画される。SpriteRenderer::SetRenderPriorityと同じ意味で、全チャンクのSpriteRendererへ
+    ///        同じ値が反映される（チャンク間の相対順は保証されず、あくまでこのタイルマップ全体としての
+    ///        優先度になる）
+    void SetRenderPriority(std::int32_t priority) noexcept {
+        renderPriority_ = priority;
+        ApplyRendererSettings();
+    }
+    std::int32_t GetRenderPriority() const noexcept { return renderPriority_; }
     void SetTileSize(const Vector2 &tileSize) { tileSize_ = tileSize; MarkAllChunksDirty(); }
     const Vector2 &GetTileSize() const noexcept { return tileSize_; }
     void SetTilePixelSize(const Vector2 &tilePixelSize) { tilePixelSize_ = tilePixelSize; MarkAllChunksDirty(); }
@@ -372,6 +382,12 @@ protected:
 
         if (ImGuiCustom::SelectString(TranslationLabel("component.tilemaprenderer.pipeline"), pipelineName_, PipelineManager::GetLoadedRenderPipelineNames("2D"))) {
             ApplyRendererSettings();
+        }
+        if (ImGui::DragInt(TranslationLabel("component.common.render_priority"), &renderPriority_)) {
+            ApplyRendererSettings();
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_render_priority"));
         }
         const auto materialEntries = MaterialManager::GetLoadedMaterialListEntries();
         std::vector<std::string> materialNames;
@@ -499,6 +515,7 @@ protected:
         }
         json["materialName"] = materialName_;
         json["pipelineName"] = pipelineName_;
+        json["renderPriority"] = renderPriority_;
         json["tileSize"] = ToJSON(tileSize_);
         json["tilePixelSize"] = ToJSON(tilePixelSize_);
         json["gridWidth"] = gridWidth_;
@@ -543,6 +560,7 @@ protected:
         materialName_ = json.value("materialName", std::string{ "Default" });
         materialHandle_ = MaterialManager::kInvalidHandle;
         pipelineName_ = json.value("pipelineName", std::string{ "Object2D.DoubleSidedCulling.BlendNormal" });
+        renderPriority_ = json.value("renderPriority", 0);
         tileSize_ = json.contains("tileSize") ? FromJSON<Vector2>(json["tileSize"]) : Vector2(1.0f, 1.0f);
         tilePixelSize_ = json.contains("tilePixelSize") ? FromJSON<Vector2>(json["tilePixelSize"]) : Vector2(32.0f, 32.0f);
         gridWidth_ = json.value("gridWidth", 0);
@@ -718,6 +736,7 @@ private:
             spriteRenderer->SetMaterialName(materialName_);
             spriteRenderer->SetTargetObject(targetObjectID_);
             spriteRenderer->SetExcludedRenderTargetNames(excludedRenderTargetNames_);
+            spriteRenderer->SetRenderPriority(renderPriority_);
         }
 
         ChunkState &state = chunks_[ChunkIndex(cx, cy)];
@@ -758,6 +777,7 @@ private:
             spriteRenderer->SetMaterialName(materialName_);
             spriteRenderer->SetTargetObject(targetObjectID_);
             spriteRenderer->SetExcludedRenderTargetNames(excludedRenderTargetNames_);
+            spriteRenderer->SetRenderPriority(renderPriority_);
         }
     }
 
@@ -1131,6 +1151,8 @@ private:
     std::string materialName_ = "Default";
     mutable MaterialManager::MaterialHandle materialHandle_ = MaterialManager::kInvalidHandle;
     std::string pipelineName_ = "Object2D.DoubleSidedCulling.BlendNormal";
+    /// @brief 描画順を制御する優先度（既定0。SpriteRenderer::renderPriority_と同じ意味。SetRenderPriority参照）
+    std::int32_t renderPriority_ = 0;
 
     Vector2 tileSize_{ 1.0f, 1.0f };
     Vector2 tilePixelSize_{ 32.0f, 32.0f };

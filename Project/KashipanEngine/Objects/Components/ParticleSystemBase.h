@@ -649,6 +649,11 @@ protected:
 
     void LoadBaseFieldsJson(const JSON &json) {
         playOnStart_ = json.value("playOnStart", true);
+        // シーン読み込み時はコンポーネント追加時点でInitialize()が読み込み前のplayOnStart_
+        // （デフォルト値true）で呼ばれてしまっているため、ここで読み込んだ実際の値を使って
+        // 改めて反映する（AudioSource::LoadFromJsonのpendingAutoPlay_と同じ理由）。
+        // 非アクティブな場合はSetActive(true)時のInitialize()に任せる
+        if (IsActive()) isPlaying_ = playOnStart_;
         loop_ = json.value("loop", true);
         emissionRate_ = json.value("emissionRate", 10.0f);
         maxParticles_ = json.value("maxParticles", 100);

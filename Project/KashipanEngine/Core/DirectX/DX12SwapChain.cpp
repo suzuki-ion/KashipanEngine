@@ -58,7 +58,15 @@ void DX12SwapChain::DestroyInternal() {
     swapChain_.Reset();
     dcompHost_.reset();
     currentBufferIndex_ = 0;
-    sDirectXCommon->ReleaseCommandObjects(Passkey<DX12SwapChain>{}, slotIndex_);
+    // Destroy() 後もスワップチェーンの管理スロットにはこのインスタンスが残り、
+    // 再利用時にデストラクタから再度ここへ来る。返却済みのコマンドスロットは
+    // ScreenBuffer 等に再割り当てされ得るため、所有権を一度だけ返却する。
+    if (sDirectXCommon && slotIndex_ >= 0) {
+        sDirectXCommon->ReleaseCommandObjects(Passkey<DX12SwapChain>{}, slotIndex_);
+    }
+    slotIndex_ = -1;
+    commands_ = nullptr;
+    isDrawing_ = false;
 }
 
 void DX12SwapChain::BindCommandObjects(Passkey<DirectXCommon>,

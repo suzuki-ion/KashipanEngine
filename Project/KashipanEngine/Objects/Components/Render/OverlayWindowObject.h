@@ -40,7 +40,9 @@ protected:
 
         if (!window_ || !Window::IsExist(window_)) return;
         if (!syncWithTransform_) return;
-        auto *tr = GetOwnerObjectContext()->GetComponent<Transform>();
+        auto *ownerContext = GetOwnerObjectContext();
+        if (!ownerContext) return;
+        auto *tr = ownerContext->GetComponent<Transform>();
         if (!tr) return;
         // ワールド行列から位置とスケールを取得してウィンドウに反映
         auto worldMatrix = tr->GetWorldMatrix();

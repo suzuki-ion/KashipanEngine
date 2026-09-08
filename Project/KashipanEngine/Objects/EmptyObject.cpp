@@ -119,6 +119,10 @@ IObjectComponent *EmptyObject::AddComponent(std::unique_ptr<IObjectComponent> co
     if (!pool) return nullptr;
     IObjectComponent *placed = pool->EmplaceDefault();
     if (!placed) return nullptr;
+    // LoadFromJsonInterface（派生クラスのLoadFromJson）はUpdate()等でGetOwnerObjectContext()に
+    // 依存する場合があるため、正式な初期化（Initialize呼び出し）はRegisterPlacedComponentに
+    // 任せつつ、コンテキストだけは状態転送より前に設定しておく（未設定のままだとnull参照になる）
+    placed->InitializeInterface(Passkey<EmptyObject>(), objectContext_.get(), ownerSceneContext_, false);
     placed->LoadFromJsonInterface(Passkey<EmptyObject>(), comp->SaveToJsonInterface(Passkey<EmptyObject>()));
     return RegisterPlacedComponent(placed, typeIndex);
 }

@@ -430,7 +430,14 @@ protected:
 
     /// @brief 派生クラスのInitializeから呼ぶ
     void InitializeBase() {
-        if (playOnStart_) isPlaying_ = true;
+        // Initialize()はシーン読み込み時、実際のJSONデータ（LoadFromJson）が反映されるより前に
+        // デフォルト値のplayOnStart_（true）で呼ばれてしまう（EmptyObject::AddComponentが
+        // 新規デフォルト構築→Initialize→実データのLoadFromJsonという順で処理するため）。
+        // ここで即座にisPlaying_を確定させると、playOnStart=falseで保存されたシーンでも
+        // 一時的に（かつLoadFromJson側の反映漏れがあれば恒久的に）再生中扱いになってしまうため、
+        // 実際にゲームループが動き出す最初のUpdate()まで判定を遅延させる
+        // （AudioSource::pendingAutoPlay_と同じ対策。詳細はLoadBaseFieldsJson側のコメントも参照）
+        pendingAutoPlay_ = playOnStart_;
         if (gpuSimulation_) {
             InitializeGpuResources();
             auto *sceneRenderer = GetOrAddSceneRenderer();
@@ -459,10 +466,22 @@ protected:
 #endif
     }
 
+    /// @brief pendingAutoPlay_が立っていれば、最初のUpdate()（＝実際にゲームループが動いている
+    ///        時点）で改めてplayOnStart_を読み直してPlay()するかどうかを決定する。
+    ///        Initialize()時点の（読み込み前で古い可能性がある）値ではなく、ここで確定している
+    ///        最新のplayOnStart_を見るため、LoadBaseFieldsJson側での反映漏れがあっても
+    ///        再生中判定を誤らない
+    void ConsumePendingAutoPlay() {
+        if (!pendingAutoPlay_) return;
+        pendingAutoPlay_ = false;
+        if (playOnStart_) Play();
+    }
+
     /// @brief 派生クラスのUpdateから呼ぶ。新規生成した子オブジェクトへ描画コンポーネントを
     ///        追加してもらうため、プール生成時に一度だけ setupVisual(生成したEmptyObject*) を呼び出す
     ///        （GPU Simulation有効時はこちらは呼ばず、代わりにUpdateParticlesGPUを呼ぶこと）
     void UpdateParticles(const std::function<void(EmptyObject *)> &setupVisual) {
+        ConsumePendingAutoPlay();
         EnsurePoolSize(maxParticles_, setupVisual);
 
         const float dt = GetDeltaTime();
@@ -517,6 +536,7 @@ protected:
     /// @brief GPU Simulation有効時に派生クラスのUpdateから呼ぶ。発生タイミングの計算・スポーン
     ///        パラメータの抽選はCPU側で行い、実際の移動・寿命計算はコンピュートシェーダーへ委ねる
     void UpdateParticlesGPU() {
+        ConsumePendingAutoPlay();
         // このフレームはゲームループが動いている（ポーズ中でない）ことをRendererへ伝える
         gpuUpdatedThisFrame_ = true;
 
@@ -651,9 +671,12 @@ protected:
         playOnStart_ = json.value("playOnStart", true);
         // シーン読み込み時はコンポーネント追加時点でInitialize()が読み込み前のplayOnStart_
         // （デフォルト値true）で呼ばれてしまっているため、ここで読み込んだ実際の値を使って
-        // 改めて反映する（AudioSource::LoadFromJsonのpendingAutoPlay_と同じ理由）。
-        // 非アクティブな場合はSetActive(true)時のInitialize()に任せる
-        if (IsActive()) isPlaying_ = playOnStart_;
+        // pendingAutoPlay_を改めて反映する（AudioSource::LoadFromJsonのpendingAutoPlay_と同じ理由）。
+        // 非アクティブな場合はSetActive(true)時のInitialize()に任せる。
+        // なお実際にisPlaying_を確定させるのは最初のUpdate()時点（ConsumePendingAutoPlay）で、
+        // その時点で改めてplayOnStart_を読み直すため、ここでの反映漏れがあっても再生中判定を
+        // 誤ることはない
+        if (IsActive()) pendingAutoPlay_ = playOnStart_;
         loop_ = json.value("loop", true);
         emissionRate_ = json.value("emissionRate", 10.0f);
         maxParticles_ = json.value("maxParticles", 100);
@@ -1154,6 +1177,10 @@ protected:
     bool playOnStart_ = true;
     bool loop_ = true;
     bool isPlaying_ = false;
+    /// @brief 次のUpdate()（実際にゲームループが動いているときのみ呼ばれる）でplayOnStart_による
+    ///        再生を行うかどうか。AudioSource::pendingAutoPlay_と同じ理由で、Initialize()の時点
+    ///        では即座にisPlaying_を確定させず、ここに一旦predicateを退避しておく
+    bool pendingAutoPlay_ = false;
 
     // 発生設定
     float emissionRate_ = 10.0f;

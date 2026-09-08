@@ -54,6 +54,10 @@ class Green : ScriptComponentBehavior {
     bool isAnimation = false;
     float deathEffectTimer = 0.0f;
 
+    // 左右の足元チェッカーが接触しているTilemapの数
+    int leftContactCount = 0;
+    int rightContactCount = 0;
+
     // 無敵時間・点滅管理用
     bool isInvincible = false;
     float invincibleTimer = 0.0f;
@@ -218,7 +222,7 @@ class Green : ScriptComponentBehavior {
     }
 
     void OnCollisionEnter(const HitInfo &in hit) {
-        // 進行方向の切り替え
+        // 進行方向の切り替え (壁や段差への衝突)
         if(hit.selfCollider.GetTag() == "Direction" && (hit.otherObject.GetTag() == "Tilemap" || hit.otherCollider.GetTag() == "Wall")){
             if (moveDir == MoveDirection::Left) {
                 moveDir = MoveDirection::Right;
@@ -226,18 +230,37 @@ class Green : ScriptComponentBehavior {
                 moveDir = MoveDirection::Left;
             }
         }
+
+        // 足元チェッカーがTilemapに触れたらカウントを増やす
+        if (hit.selfCollider.GetTag() == "TilemapCheckerLeft" && hit.otherObject.GetTag() == "Tilemap") {
+            leftContactCount++;
+        }
+        if (hit.selfCollider.GetTag() == "TilemapCheckerRight" && hit.otherObject.GetTag() == "Tilemap") {
+            rightContactCount++;
+        }
     }
 
     void OnCollisionExit(const HitInfo &in hit) {
+        // 足元チェッカーがTilemapから離れたらカウントを減らす
         if(hit.selfCollider.GetTag() == "TilemapCheckerLeft" && hit.otherObject.GetTag() == "Tilemap"){
-            if (moveDir == MoveDirection::Left) {
-                moveDir = MoveDirection::Right;
+            leftContactCount--;
+            // 接触しているTilemapがなくなったら反転
+            if (leftContactCount <= 0) {
+                leftContactCount = 0; // マイナス防止
+                if (moveDir == MoveDirection::Left) {
+                    moveDir = MoveDirection::Right;
+                }
             }
         }
 
         if(hit.selfCollider.GetTag() == "TilemapCheckerRight" && hit.otherObject.GetTag() == "Tilemap"){
-            if (moveDir == MoveDirection::Right) {
-                moveDir = MoveDirection::Left;
+            rightContactCount--;
+            // 接触しているTilemapがなくなったら反転
+            if (rightContactCount <= 0) {
+                rightContactCount = 0; // マイナス防止
+                if (moveDir == MoveDirection::Right) {
+                    moveDir = MoveDirection::Left;
+                }
             }
         }
     }

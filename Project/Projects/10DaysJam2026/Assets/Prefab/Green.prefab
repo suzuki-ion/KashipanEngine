@@ -246,7 +246,7 @@
                                         "Player",
                                         "Weapon"
                                     ],
-                                    "self": "bd1599de-da0e-43a9-b49a-1ac5c99706aa"
+                                    "self": "2c8f2294-f1b9-49cc-84bd-94deaa717ab7"
                                 },
                                 "scriptPath": "Assets\\Scripts\\Green.as"
                             },
@@ -329,7 +329,7 @@
                 "hiddenFromEditorTarget": false,
                 "isActive": true,
                 "name": "Green",
-                "objectID": "bd1599de-da0e-43a9-b49a-1ac5c99706aa",
+                "objectID": "2c8f2294-f1b9-49cc-84bd-94deaa717ab7",
                 "prefabNodeID": "d1949970-ee56-4fb0-bcc7-d72325400edd",
                 "tag": ""
             },

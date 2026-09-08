@@ -188,7 +188,8 @@ private:
     bool RaycastSceneMeshes(const ImVec2 &screenPos, const ImVec2 &imagePos, const ImVec2 &imageSize,
         Vector3 &outRayStart, Vector3 &outRayEnd, EmptyObject *&outHitObject, float &outHitT) const;
     /// @brief シーンビュー画像上のスクリーン座標を、Prefab配置等に使うワールド座標へ変換する
-    /// @details Unityのシーンビューと同様、既存のメッシュ表面があればそこへスナップし、
+    /// @details Unityのシーンビューと同様、既存のメッシュ表面があればそこへスナップする。
+    ///          2D表示モードはSpriteRendererが乗るZ=0平面との交点を使う。3D系の表示モードは
     ///          無ければY=0の地面平面との交点、それも無ければ（真上/真下を向いている等）
     ///          カメラから現在の注視距離だけ進めた点にフォールバックする
     Vector3 ComputeCursorWorldPosition(const ImVec2 &screenPos, const ImVec2 &imagePos, const ImVec2 &imageSize) const;

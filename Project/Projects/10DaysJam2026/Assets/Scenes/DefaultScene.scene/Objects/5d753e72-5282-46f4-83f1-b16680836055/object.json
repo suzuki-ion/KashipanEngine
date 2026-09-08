@@ -11,18 +11,18 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 16.0,
-                            "y": 16.0,
+                            "x": 32.0,
+                            "y": 6.0,
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 1238.0445556640625,
-                            "y": 330.0561828613281,
-                            "z": 0.44663429260253906
+                            "x": 361.0,
+                            "y": 156.0,
+                            "z": 0.0
                         }
                     },
                     "isActive": true,
-                    "priority": 0,
+                    "priority": 1,
                     "tag": ""
                 },
                 "type": "Transform"
@@ -41,13 +41,86 @@
             {
                 "data": {
                     "customData": {
-                        "prefabID": "5c06497b-45ce-435b-936b-ddccf430b22a"
+                        "textureAssetPath": "App/Sprite/Object/moveScaffold.png"
                     },
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
                 },
-                "type": "PrefabInstanceComponent"
+                "type": "TextureSource"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "loop": true,
+                            "loopBackDuration": 1.0,
+                            "loopBackEaseType": 0,
+                            "loopBackWaitDuration": 0.0,
+                            "points": [
+                                {
+                                    "duration": 1.0,
+                                    "easeType": 0,
+                                    "offset": {
+                                        "x": 0.0,
+                                        "y": 32.0,
+                                        "z": 0.0
+                                    },
+                                    "rotateOffset": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "waitDuration": 0.0
+                                },
+                                {
+                                    "duration": 1.0,
+                                    "easeType": 0,
+                                    "offset": {
+                                        "x": 32.0,
+                                        "y": 32.0,
+                                        "z": 0.0
+                                    },
+                                    "rotateOffset": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "waitDuration": 0.0
+                                },
+                                {
+                                    "duration": 1.0,
+                                    "easeType": 0,
+                                    "offset": {
+                                        "x": 32.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "rotateOffset": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "waitDuration": 0.0
+                                }
+                            ]
+                        },
+                        "scriptPath": "Assets/Scripts/MoveGroundPath.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {},
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PreTransform"
             },
             {
                 "data": {
@@ -76,66 +149,10 @@
                         ]
                     },
                     "isActive": true,
-                    "priority": 2,
-                    "tag": "Enemy"
+                    "priority": 1,
+                    "tag": ""
                 },
                 "type": "Box2DCollider"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "textureAssetPath": "App/Sprite/Enemy/bat.png"
-                    },
-                    "isActive": true,
-                    "priority": 3,
-                    "tag": ""
-                },
-                "type": "TextureSource"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "fields": {
-                            "activationRange": 16.0,
-                            "blinkInterval": 0.07999999821186066,
-                            "deathEffect": "a3f33280-f1ac-4cc0-9235-bdfd97ec21ff",
-                            "expValue": 5.0,
-                            "hp": 2.0,
-                            "invincibleDuration": 0.5,
-                            "moveSpeed": 12.0,
-                            "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
-                            "camera": "a1cc5cd8-4c52-4adb-be14-ef8ad4465a02",
-                            "self": "7587c69a-f646-4bd8-886f-0833154cd7b3"
-                        },
-                        "scriptPath": "Assets\\Scripts\\Bat.as"
-                    },
-                    "isActive": true,
-                    "priority": 4,
-                    "tag": ""
-                },
-                "type": "ScriptComponent"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "fields": {
-                            "frameCount": 2,
-                            "frameInterval": 0.15000000596046448,
-                            "isLoop": true,
-                            "playOnStart": true,
-                            "startRow": 0,
-                            "uvStep": {
-                                "x": 0.5,
-                                "y": 1.0
-                            }
-                        },
-                        "scriptPath": "Assets\\Scripts\\SpriteAnimator.as"
-                    },
-                    "isActive": true,
-                    "priority": 5,
-                    "tag": ""
-                },
-                "type": "ScriptComponent"
             },
             {
                 "data": {
@@ -159,8 +176,8 @@
                         },
                         "instanceUvRotation": 0.0,
                         "instanceUvScale": {
-                            "x": 0.5,
-                            "y": 1.0
+                            "x": 1.0,
+                            "y": 0.5
                         },
                         "instanceUvTranslate": {
                             "x": 0.0,
@@ -173,12 +190,12 @@
                             "y": 0.5
                         },
                         "pixelSnapOutsetPixels": 0.0,
-                        "pixelSnapping": true,
+                        "pixelSnapping": false,
                         "renderPriority": 0,
                         "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                     },
                     "isActive": true,
-                    "priority": 6,
+                    "priority": 900,
                     "tag": ""
                 },
                 "type": "SpriteRenderer"
@@ -187,10 +204,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Bat",
-        "objectID": "7587c69a-f646-4bd8-886f-0833154cd7b3",
-        "prefabNodeID": "6a34211e-cef8-4f9a-8d4d-4216ba93be80",
+        "name": "MoveFloor",
+        "objectID": "5d753e72-5282-46f4-83f1-b16680836055",
         "tag": ""
     },
-    "siblingIndex": 26000
+    "siblingIndex": 13583
 }

@@ -1453,8 +1453,26 @@ Vector3 SceneEditorView::ComputeCursorWorldPosition(const ImVec2 &screenPos, con
         return rayStart + (rayEnd - rayStart) * hitT;
     }
 
-    // メッシュに当たらなかった場合はY=0の地面平面との交点へ配置する（Unityのシーンビューと同様の挙動）
     const Vector3 rayDir = rayEnd - rayStart;
+
+    // 「2D」表示モードはUpdateCamera2DBufferのコメントの通り、SpriteRendererの単位クアッドが乗る
+    // Z=0平面を正面から見る専用の正射影カメラ（3Dのyaw_/pitch_/distance_/cameraEye_とは無関係）。
+    // 以前はここでY=0地面平面判定に続けて3D側のcameraEye_/distance_へフォールバックしていたが、
+    // 2DモードではrayDir.yがほぼ0（カメラがZ軸方向しか向かない）ため常にY=0判定をすり抜け、
+    // 無関係な（多くの場合原点付近の既定値のままの）3Dカメラ状態を使ってしまい、既存メッシュが
+    // 無い場所へドロップした際にプレハブが原点付近へ配置される不具合の原因になっていた。
+    // 2DモードではZ=0平面との交点をそのまま使う
+    if (displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly) {
+        if (std::abs(rayDir.z) > 1e-6f) {
+            const float s = -rayStart.z / rayDir.z;
+            if (s > 0.0f) {
+                return rayStart + rayDir * s;
+            }
+        }
+        return Vector3(rayStart.x, rayStart.y, 0.0f);
+    }
+
+    // メッシュに当たらなかった場合はY=0の地面平面との交点へ配置する（Unityのシーンビューと同様の挙動）
     if (std::abs(rayDir.y) > 1e-6f) {
         const float s = -rayStart.y / rayDir.y;
         if (s > 0.0f) {

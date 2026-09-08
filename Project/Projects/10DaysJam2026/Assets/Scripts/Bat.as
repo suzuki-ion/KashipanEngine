@@ -23,8 +23,11 @@ class Bat : ScriptComponentBehavior {
     [SerializeField, Tooltip("プレイヤー")]
     Object@ player;
 
-    [SerializeField, Tooltip("この距離以内にプレイヤーがいる場合のみ移動を行う")]
-    float activationRange = 150.0f;
+    [SerializeField, Tooltip("処理範囲の基準にするカメラ(Camera2D)")]
+    Object@ camera;
+
+    [SerializeField, Tooltip("カメラの表示範囲からこの距離(px)以内であれば移動を行う(画面端での見切れを防ぐマージン)")]
+    float activationRange = 16.0f;
 
     [SerializeField, Tooltip("死亡エフェクト")]
     Object@ deathEffect;
@@ -92,8 +95,20 @@ class Bat : ScriptComponentBehavior {
                 Vector3 diff = targetPos - currentPos;
                 float dist = diff.Length();
 
-                // プレイヤーが有効範囲内にいる場合のみ追従する
-                if (dist <= activationRange && dist > 0.01f) {
+                // カメラの表示範囲を判定し、範囲外なら追従しない
+                bool inCameraView = false;
+                if (camera !is null) {
+                    Transform@ cameraTf = camera.GetTransform();
+                    Camera2D@ cam2d;
+                    if (cameraTf !is null && camera.GetComponent(@cam2d)) {
+                        Vector3 camPos = cameraTf.GetTranslate();
+                        inCameraView = (currentPos.x >= camPos.x - activationRange && currentPos.x <= camPos.x + cam2d.GetWidth() + activationRange &&
+                                        currentPos.y >= camPos.y - activationRange && currentPos.y <= camPos.y + cam2d.GetHeight() + activationRange);
+                    }
+                }
+
+                // カメラの表示範囲内にいる場合のみ追従する
+                if (inCameraView && dist > 0.01f) {
                     // プレイヤーの位置に応じて向きを切り替え
                     float rotY = (diff.x < 0.0f) ? 0.0f : 3.14159f;
                     tf.SetRotate(Vector3(0.0f, rotY, 0.0f));

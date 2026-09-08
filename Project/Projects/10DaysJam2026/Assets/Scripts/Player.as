@@ -129,13 +129,19 @@ class Player : ScriptComponentBehavior {
     bool isJump = false;
     bool jumpButtonReleased = true;
 
-    // 動く床への追従用（JobHuntingGameのPlayerMovementと同じ仕組み）。
-    // 接地している床のTransformとPreTransform（前フレーム値）との差分をこのフレームの
-    // 床の移動量として記録し（OnCollisionStay）、Update側でその移動量を自機の速度に加算する。
-    // 離床した瞬間の値をそのまま慣性として使い続けるため、動く床から降りた直後の勢いも再現される
-    Vector2 surfaceVelocity = Vector2(0.0f, 0.0f);
-    Vector2 rawGroundDelta = Vector2(0.0f, 0.0f);
-    bool hasGroundContact = false;
+    // 動く床への追従用。床のTransformとPreTransform（前フレーム値）との差分＝
+    // 「直前の接触フレームで床が実際に動いた量」を保持する（OnCollisionStayで更新し、
+    // 1フレーム分Updateで消費したら0へ戻す。持ち越して慣性として使い続けたりはしない）。
+    // ・X（左右）はOnCollisionStayの中でその場ですぐに自機のTransformへ直接加算する
+    //   （controller.Move()を経由させると床自体が障害物としてスイープに引っかかり、
+    //   不要な押し戻し・振動が出るため）。
+    // ・Y（上下）は直接加算せず、Update側でこの値ぶんだけ自機の落下速度を底上げしてから
+    //   通常通りcontroller.Move()へ渡す。重力だけでは降下する床の速度に追いつけず
+    //   接地判定が外れて浮いてしまう（＝当たり判定自体が発生しなくなる）ため、
+    //   スイープが毎フレーム確実に床を捉えられるようにするための下駄である。
+    //   上昇する床は床の方が自機へめり込む形になるため、CharacterController2D自身の
+    //   押し戻し処理で特別な処理なしに追従できている
+    Vector2 lastGroundDelta = Vector2(0.0f, 0.0f);
 
     State state = State::Idle;
     Direction lastDirection = Direction::Right;
@@ -432,13 +438,16 @@ class Player : ScriptComponentBehavior {
 
         velocity.y -= gravity * GetDeltaTime();
 
-        // 接地中の床の速度を実測する（動く床への追従・離床後の慣性の両方に使う）。
-        // hasGroundContactがfalseの間（空中）は直前に測定した値をそのまま使い続ける
-        if (hasGroundContact && GetDeltaTime() > 0.0f) {
-            surfaceVelocity = rawGroundDelta / GetDeltaTime();
+        // 降下する動く床に追従しきれず浮いてしまわないよう、直前に接触していた床の
+        // 下降量ぶんは最低限沈み込めるようにする（実際に接地するかはこの後のスイープ判定に委ねる）
+        if (!isJump && controller !is null && controller.IsGrounded() && GetDeltaTime() > 0.0f && lastGroundDelta.y < 0.0f) {
+            float platformVelocityY = lastGroundDelta.y / GetDeltaTime();
+            if (platformVelocityY < velocity.y) {
+                velocity.y = platformVelocityY;
+            }
         }
 
-        Vector2 movement = (velocity + surfaceVelocity) * GetDeltaTime();
+        Vector2 movement = velocity * GetDeltaTime();
         if(controller !is null) {
             controller.Move(movement);
         } else {
@@ -731,8 +740,8 @@ class Player : ScriptComponentBehavior {
             i++;
         }
 
-        // 生の接触情報は毎フレームリセットする（次フレームの衝突コールバックで再設定される）
-        hasGroundContact = false;
+        // 床の移動量は1フレームだけ使ったら破棄する（次フレームの衝突コールバックで再設定される）
+        lastGroundDelta = Vector2(0.0f, 0.0f);
     }
 
     void OnCollisionEnter(const HitInfo &in hit) {
@@ -809,20 +818,23 @@ class Player : ScriptComponentBehavior {
         // 重複・長時間の接触中に無敵時間が切れた場合もダメージを受けるように処理
         ProcessDamageAndKnockback(hit);
 
-        // 動く床への追従。地面のTransformとPreTransform（前フレームの値）との差分から
-        // 実際の移動量を求めておき、Update側でsurfaceVelocityへ変換する
-        // （velocity本体に加算すると接地中に蓄積し続けてしまうため）
-        if (hit.otherObject !is null && hit.otherCollider !is null && !hit.otherCollider.IsTrigger()
+        // 動く床への追従。床のTransformとPreTransform（前フレームの値）との差分＝
+        // このフレームで床が実際に動いた量を計測する。
+        // X（左右）はその場で即座に自機のTransformへ直接加算する（controller.Move()は
+        // 経由させない。掃引判定に床自体が引っかかって不要な押し戻し・振動が起きるのを避けるため）。
+        // Y（上下）はここでは加算せず、次フレームのUpdateで落下速度の底上げに使う
+        // （直接加算すると、重力の底上げで既にスイープ判定が正しく床を捉えた分と
+        // 二重に加算されて床へ沈み込んでしまうため）
+        if (tf !is null && hit.otherObject !is null && hit.otherCollider !is null && !hit.otherCollider.IsTrigger()
         && hit.normal.y > groundedThreshold) {
-            hasGroundContact = true;
-
             Transform@ groundTransform;
             PreTransform@ groundPreTransform;
             if (hit.otherObject.GetComponent(@groundTransform) && hit.otherObject.GetComponent(@groundPreTransform)) {
                 Vector3 delta = groundTransform.GetTranslate() - groundPreTransform.GetPreviousTranslate();
-                rawGroundDelta = Vector2(delta.x, delta.y);
-            } else {
-                rawGroundDelta = Vector2(0.0f, 0.0f);
+                lastGroundDelta = Vector2(delta.x, delta.y);
+                if (delta.x != 0.0f) {
+                    tf.SetTranslate(tf.GetTranslate() + Vector3(delta.x, 0.0f, 0.0f));
+                }
             }
         }
 

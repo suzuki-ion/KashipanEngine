@@ -35,9 +35,11 @@ class Chest : ScriptComponentBehavior {
         return GetScene().IsPlaying() || !IsEditorBuild();
     }
 
-    // オブジェクトのUUIDを使ったセーブデータキー(シーン内に複数の宝箱があっても衝突しない)
+    // シーン名+オブジェクトのUUIDを使ったセーブデータキー
+    // (UUIDだけだとシーンを複製した際に複製元と同じUUIDを持つオブジェクトが存在しうるため、
+    //  シーン名も含めて衝突を避ける)
     string GetSaveKey() const {
-        return "chest_" + GetOwnerObject().GetUUID() + "_opened";
+        return "chest_" + GetScene().GetName() + "_" + GetOwnerObject().GetUUID() + "_opened";
     }
 
     // 宝箱を開ける処理

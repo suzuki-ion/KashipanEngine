@@ -45,9 +45,11 @@ class DialogueAreaTrigger : ScriptComponentBehavior {
         return GetScene().IsPlaying() || !IsEditorBuild();
     }
 
-    // オブジェクトのUUIDを使ったセーブデータキー(シーン内に複数のトリガーがあっても衝突しない)
+    // シーン名+オブジェクトのUUIDを使ったセーブデータキー
+    // (UUIDだけだとシーンを複製した際に複製元と同じUUIDを持つオブジェクトが存在しうるため、
+    //  シーン名も含めて衝突を避ける)
     string GetSaveKey() const {
-        return "dialogueTrigger_" + GetOwnerObject().GetUUID() + "_fired";
+        return "dialogueTrigger_" + GetScene().GetName() + "_" + GetOwnerObject().GetUUID() + "_fired";
     }
 
     // プレイヤーが領域に進入した瞬間に呼ばれる

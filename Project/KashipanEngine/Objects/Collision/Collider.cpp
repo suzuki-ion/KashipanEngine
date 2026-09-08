@@ -1271,63 +1271,72 @@ void Collider::Update2D() {
     // （上のStay継続ループと違い、判定失敗＝接触終了として自分でExitを発火する）
     // 総当たりだとコライダー数の二乗で悪化するため、AABBグリッドで近傍の組だけに絞り込む。
     {
-        std::vector<std::size_t> staticIndices;
+        // NOTE: ここで組んだ候補ペアは、後続のtestStaticPair内のDispatch2D経由でユーザースクリプトの
+        // OnCollisionEnter/Stay/Exitが呼ばれ、そこでColliderの追加・削除（colliders2D_の再配置・
+        // 再確保）が起こり得る。そのため候補・既存ペアは常にcolliders2D_内の生インデックスではなく
+        // ColliderIDで保持し、実際に使う直前にFind2D(id)で毎回引き直す（IDならcolliders2D_が
+        // 途中で変化してもぶら下がらない）。過去はここが生インデックス直参照になっており、
+        // ループ中の追加/削除でインデックスがずれてcolliders2D_の範囲外・別要素を指してしまい、
+        // ComputeStaticStaticHitInfo2D内のb2Body_GetTransform等が不正なb2ShapeIdを踏んでクラッシュしていた
+        // BuildGrid2D/BuildGridCandidatePairs2DはColliderIDをstd::size_tの不透明なペイロードとして
+        // 扱うだけなので、colliders2D_内の位置ではなくColliderIDそのものを渡す
+        std::vector<std::size_t> staticIds;
         std::vector<Bounds2D> staticBounds;
-        std::unordered_map<ColliderID, std::size_t> staticIndexById;
-        staticIndices.reserve(colliders2D_.size());
+        std::unordered_set<ColliderID> staticIdSet;
+        staticIds.reserve(colliders2D_.size());
         staticBounds.reserve(colliders2D_.size());
+        staticIdSet.reserve(colliders2D_.size());
 
-        for (std::size_t i = 0; i < colliders2D_.size(); ++i) {
-            const auto &e = colliders2D_[i];
+        for (const auto &e : colliders2D_) {
             if (!e.info.enabled || B2_IS_NULL(e.runtime.shape)) continue;
             if (B2_IS_NULL(e.runtime.body) || b2Body_GetType(e.runtime.body) != b2_staticBody) continue;
 
             const b2AABB aabb = b2Shape_GetAABB(e.runtime.shape);
-            staticIndices.push_back(i);
+            staticIds.push_back(static_cast<std::size_t>(e.id));
             staticBounds.push_back(Bounds2D{
                 Vector2(aabb.lowerBound.x, aabb.lowerBound.y),
                 Vector2(aabb.upperBound.x, aabb.upperBound.y)});
-            staticIndexById.emplace(e.id, i);
+            staticIdSet.insert(e.id);
         }
 
         // ペアごとの実際の判定処理。グリッド候補と、前フレームまで接触していたが今フレームは
         // グリッド候補から外れたペア（離れて接触が切れたケース）の両方から呼ばれる
         std::unordered_set<std::uint64_t> handledStaticPairs;
-        const auto testStaticPair = [&](std::size_t idxA, std::size_t idxB) {
-            const std::size_t iIdx = std::min(idxA, idxB);
-            const std::size_t jIdx = std::max(idxA, idxB);
-            const auto &ei = colliders2D_[iIdx];
-            const auto &ej = colliders2D_[jIdx];
-
-            const std::uint64_t key = MakePairKey(ei.id, ej.id);
+        const auto testStaticPair = [&](ColliderID idA, ColliderID idB) {
+            const std::uint64_t key = MakePairKey(idA, idB);
             if (!handledStaticPairs.insert(key).second) return;
 
-            if (!ShouldTest(ei.info.attribute, ei.info.ignoreAttribute, ej.info.attribute) ||
-                !ShouldTest(ej.info.attribute, ej.info.ignoreAttribute, ei.info.attribute)) {
+            // 同フレーム内の直前のDispatch2Dで既に破棄されている可能性があるため、毎回引き直す
+            const auto *ei = Find2D(idA);
+            const auto *ej = Find2D(idB);
+            if (!ei || !ej) return;
+
+            if (!ShouldTest(ei->info.attribute, ei->info.ignoreAttribute, ej->info.attribute) ||
+                !ShouldTest(ej->info.attribute, ej->info.ignoreAttribute, ei->info.attribute)) {
                 return;
             }
 
             const bool wasHit = std::binary_search(prevPairs2D_.begin(), prevPairs2D_.end(), key);
 
             HitInfo2D hi;
-            const bool touching = ComputeStaticStaticHitInfo2D(ei.runtime.shape, ej.runtime.shape, hi);
-            if (touching && (ei.info.isTrigger || ej.info.isTrigger)) {
+            const bool touching = ComputeStaticStaticHitInfo2D(ei->runtime.shape, ej->runtime.shape, hi);
+            if (touching && (ei->info.isTrigger || ej->info.isTrigger)) {
                 // センサー相当：Box2Dのセンサーイベントと同じく重なりの有無のみを見る
                 hi = HitInfo2D{};
                 hi.isHit = true;
             }
 
             if (touching) {
-                Dispatch2D(ei.id, ej.id, hi, wasHit);
+                Dispatch2D(idA, idB, hi, wasHit);
                 cur.push_back(key);
             } else if (wasHit) {
-                Dispatch2D(ei.id, ej.id, HitInfo2D{}, true);
+                Dispatch2D(idA, idB, HitInfo2D{}, true);
             }
         };
 
-        const Grid2D grid = BuildGrid2D(staticIndices, staticBounds);
+        const Grid2D grid = BuildGrid2D(staticIds, staticBounds);
         for (const auto &pair : BuildGridCandidatePairs2D(grid)) {
-            testStaticPair(pair.a, pair.b);
+            testStaticPair(static_cast<ColliderID>(pair.a), static_cast<ColliderID>(pair.b));
         }
 
         // 前フレームまで接触していたペアが、今フレームは離れてグリッド候補から外れた場合も
@@ -1335,10 +1344,8 @@ void Collider::Update2D() {
         for (const auto key : prevPairs2D_) {
             const ColliderID idA = static_cast<ColliderID>(key >> 32);
             const ColliderID idB = static_cast<ColliderID>(key & 0xffffffffu);
-            const auto itA = staticIndexById.find(idA);
-            const auto itB = staticIndexById.find(idB);
-            if (itA == staticIndexById.end() || itB == staticIndexById.end()) continue;
-            testStaticPair(itA->second, itB->second);
+            if (staticIdSet.find(idA) == staticIdSet.end() || staticIdSet.find(idB) == staticIdSet.end()) continue;
+            testStaticPair(idA, idB);
         }
     }
 

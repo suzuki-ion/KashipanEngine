@@ -26,8 +26,11 @@ class Green : ScriptComponentBehavior {
     [SerializeField, Tooltip("プレイヤー")]
     Object@ player;
 
-    [SerializeField, Tooltip("この距離以内にプレイヤーがいる場合のみ移動を行う")]
-    float activationRange = 150.0f;
+    [SerializeField, Tooltip("処理範囲の基準にするカメラ(Camera2D)")]
+    Object@ camera;
+
+    [SerializeField, Tooltip("カメラの表示範囲からこの距離(px)以内であれば移動を行う(画面端での見切れを防ぐマージン)")]
+    float activationRange = 16.0f;
 
     [SerializeField, Tooltip("死亡エフェクト")]
     Object@ deathEffect;
@@ -109,17 +112,20 @@ class Green : ScriptComponentBehavior {
             }
         }
 
-        // プレイヤーとの距離を判定し、範囲外なら移動処理を行わない
-        bool playerNearby = false;
-        if (player !is null) {
-            Transform@ playerTf = player.GetTransform();
-            if (playerTf !is null) {
-                float distToPlayer = (playerTf.GetTranslate() - tf.GetTranslate()).Length();
-                playerNearby = (distToPlayer <= activationRange);
+        // カメラの表示範囲を判定し、範囲外なら移動処理を行わない
+        bool inCameraView = false;
+        if (camera !is null) {
+            Transform@ cameraTf = camera.GetTransform();
+            Camera2D@ cam2d;
+            if (cameraTf !is null && camera.GetComponent(@cam2d)) {
+                Vector3 camPos = cameraTf.GetTranslate();
+                Vector3 pos = tf.GetTranslate();
+                inCameraView = (pos.x >= camPos.x - activationRange && pos.x <= camPos.x + cam2d.GetWidth() + activationRange &&
+                                 pos.y >= camPos.y - activationRange && pos.y <= camPos.y + cam2d.GetHeight() + activationRange);
             }
         }
 
-        if (playerNearby) {
+        if (inCameraView) {
             // moveDirに応じてY軸の回転を設定
             float rotY = (moveDir == MoveDirection::Left) ? 0.0f : 3.14159f;
             tf.SetRotate(Vector3(0.0f, rotY, 0.0f));

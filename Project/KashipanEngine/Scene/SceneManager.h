@@ -196,6 +196,17 @@ public:
     /// @return 保存に成功した場合は true
     bool SaveGlobalSceneVariables(const std::string &filePath = kDefaultGlobalSceneVariablesFilePath) const;
 
+    /// @brief Play開始時点のグローバルシーン変数をスナップショットする
+    /// @details Sceneのローカルシーン変数(sceneVariables_)と同様、Play/Stopでもグローバルシーン
+    ///          変数が編集時の状態へ戻るようにするための呼び出し（Scene::PlayStartから呼ばれる）
+    void SnapshotGlobalSceneVariablesForPlay(Passkey<Scene>) { playModeSnapshot_ = globalSceneVariables_; }
+    /// @brief Play終了時、グローバルシーン変数をPlay開始前の状態へ復元する
+    /// @details Scene::PlayStopから呼ばれる
+    void RestoreGlobalSceneVariablesForPlay(Passkey<Scene>) {
+        globalSceneVariables_ = std::move(playModeSnapshot_);
+        playModeSnapshot_.clear();
+    }
+
 private:
     /// @brief 名前から登録エントリを検索する（存在しない場合は nullptr）
     SceneEntry *FindEntry(const std::string &sceneName);
@@ -206,6 +217,8 @@ private:
     std::vector<SceneEntry> registeredScenes_;
     std::string startupSceneName_;
     std::unordered_map<std::string, MyAny> globalSceneVariables_;
+    /// @brief Play中の変更を破棄してPlay開始前の状態へ戻すためのスナップショット（Play中のみ有効）
+    std::unordered_map<std::string, MyAny> playModeSnapshot_;
 
     std::unique_ptr<Scene> currentScene_;
     bool hasPendingSceneChange_ = false;

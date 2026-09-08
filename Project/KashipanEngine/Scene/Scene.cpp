@@ -92,6 +92,9 @@ void Scene::PlayStart() {
     // スワップチェーンPresent失敗を引き起こしうる。Play/Stopの高速連打で再現するクラッシュの対策）
     if (sDirectXCommon_) sDirectXCommon_->WaitForGPUIdle(Passkey<Scene>{});
     editModeSnapshot_ = SaveToJSON();
+    // グローバルシーン変数はSceneではなくSceneManagerが保持するため、ローカルのsceneVariables_と
+    // 同様にPlay/Stopをまたいでも編集時の値へ戻せるよう、ここで別途スナップショットを取る
+    if (sceneManager_) sceneManager_->SnapshotGlobalSceneVariablesForPlay(Passkey<Scene>{});
 
     // EditorOnlyオブジェクトは再生中のシーンには存在させない（子孫ごと削除される）。
     // スナップショットには保存済みのため、PlayStopでの復元時に元へ戻る
@@ -128,6 +131,9 @@ void Scene::PlayStop() {
     isPlaying_ = false;
     isPaused_ = false;
     isStepFrameRequested_ = false;
+
+    // PlayStart側で取ったグローバルシーン変数のスナップショットへ戻す（snapshot.emptyでの早期returnより前に行う）
+    if (sceneManager_) sceneManager_->RestoreGlobalSceneVariablesForPlay(Passkey<Scene>{});
 
     // SkinnedMeshRendererのアニメーションは各コンポーネントが専用に複製したスケルトンインスタンスの
     // ジョイントTransformを直接書き換えて進行するため、シーンオブジェクトを再生開始前の状態へ

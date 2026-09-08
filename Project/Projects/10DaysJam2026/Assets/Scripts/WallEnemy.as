@@ -43,8 +43,11 @@ class WallEnemy : ScriptComponentBehavior {
     [SerializeField, Tooltip("プレイヤー")]
     Object@ player;
 
-    [SerializeField, Tooltip("この距離以内にプレイヤーがいる場合のみ攻撃を行う")]
-    float activationRange = 150.0f;
+    [SerializeField, Tooltip("処理範囲の基準にするカメラ(Camera2D)")]
+    Object@ camera;
+
+    [SerializeField, Tooltip("カメラの表示範囲からこの距離(px)以内であれば攻撃を行う(画面端での見切れを防ぐマージン)")]
+    float activationRange = 16.0f;
 
     // 内部で管理する発射方向
     float shotDirectionX = -1.0f;
@@ -124,17 +127,20 @@ class WallEnemy : ScriptComponentBehavior {
             isAlive = false;
         }
 
-        // プレイヤーとの距離を判定し、範囲外なら攻撃処理を行わない
-        bool playerNearby = false;
-        if (player !is null) {
-            Transform@ playerTf = player.GetTransform();
-            if (playerTf !is null) {
-                float distToPlayer = (playerTf.GetTranslate() - tf.GetTranslate()).Length();
-                playerNearby = (distToPlayer <= activationRange);
+        // カメラの表示範囲を判定し、範囲外なら攻撃処理を行わない
+        bool inCameraView = false;
+        if (camera !is null) {
+            Transform@ cameraTf = camera.GetTransform();
+            Camera2D@ cam2d;
+            if (cameraTf !is null && camera.GetComponent(@cam2d)) {
+                Vector3 camPos = cameraTf.GetTranslate();
+                Vector3 pos = tf.GetTranslate();
+                inCameraView = (pos.x >= camPos.x - activationRange && pos.x <= camPos.x + cam2d.GetWidth() + activationRange &&
+                                 pos.y >= camPos.y - activationRange && pos.y <= camPos.y + cam2d.GetHeight() + activationRange);
             }
         }
 
-        if(isAlive && playerNearby){
+        if(isAlive && inCameraView){
             shotTimer += GetDeltaTime();
 
             // 発射間隔ごとにアニメーションを頭から再生し、発射までの遅延タイマーを開始する

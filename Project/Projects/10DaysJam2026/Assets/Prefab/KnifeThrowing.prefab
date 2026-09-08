@@ -104,7 +104,8 @@
                                         "z": 0.0
                                     },
                                     "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
-                                    "self": "fbcb144c-f598-4b52-8999-168ede93f36b",
+                                    "camera": "a1cc5cd8-4c52-4adb-be14-ef8ad4465a02",
+                                    "self": "d06b8dcb-f0ed-4d88-b873-22cbacc64c26",
                                     "shotDirectionX": 1.0,
                                     "shotDuration": 2.0
                                 },

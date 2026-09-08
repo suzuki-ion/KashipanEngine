@@ -305,6 +305,7 @@ void ScriptComponent::ReleaseScript() {
     behaviorType_ = nullptr;
     startMethod_ = nullptr;
     updateMethod_ = nullptr;
+    drawGizmosMethod_ = nullptr;
     endMethod_ = nullptr;
     onCollisionEnterMethod_ = nullptr;
     onCollisionStayMethod_ = nullptr;
@@ -474,6 +475,7 @@ bool ScriptComponent::CreateBehaviorInstance(asIScriptEngine *engine, CScriptBui
     awakeMethod_ = behaviorType_->GetMethodByDecl("void Awake()");
     startMethod_ = behaviorType_->GetMethodByDecl("void Start()");
     updateMethod_ = behaviorType_->GetMethodByDecl("void Update()");
+    drawGizmosMethod_ = behaviorType_->GetMethodByDecl("void OnDrawGizmos()");
     endMethod_ = behaviorType_->GetMethodByDecl("void End()");
     onCollisionEnterMethod_ = behaviorType_->GetMethodByDecl("void OnCollisionEnter(const HitInfo &in)");
     onCollisionStayMethod_ = behaviorType_->GetMethodByDecl("void OnCollisionStay(const HitInfo &in)");
@@ -721,6 +723,16 @@ void ScriptComponent::Update() {
     }
     CallMethod(updateMethod_);
 }
+
+#if defined(USE_IMGUI)
+void ScriptComponent::ShowPersistentImGui() {
+    // OnDrawGizmos()はUpdate()と異なりPlay中かどうかに関わらず毎フレーム呼ばれる
+    // （ShowPersistentImGuiInterface自体がそういう仕組みのため。TilemapRenderer等と同じ経路）。
+    // Start()の遅延呼び出しは行わない。エディターでシーンを開いただけでStart()の副作用
+    // （セーブデータ読み込みやオブジェクト生成等）が走ってしまうのを避けるため
+    CallMethod(drawGizmosMethod_);
+}
+#endif
 
 bool ScriptComponent::IsSupportedFieldType(int typeId) const {
     return typeId == asTYPEID_BOOL || typeId == asTYPEID_INT32 || typeId == asTYPEID_UINT32 ||

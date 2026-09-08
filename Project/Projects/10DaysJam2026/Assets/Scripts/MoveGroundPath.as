@@ -124,7 +124,42 @@ class MoveGroundPath : ScriptComponentBehavior {
         return Math::MakeRotateEuler(initialRotation + ToRadians(points[index].rotateOffset));
     }
 
+    // エディターのシーンビューに、通過点を結んだ経路をデバッグ表示する（ゲーム画面には出ない）。
+    // OnDrawGizmosはPlay中かどうかに関わらず毎エディターフレーム呼ばれるため、再生前の
+    // エディター編集中でも経路を確認できる。再生中は開始位置(startPosition)を基準にする
+    // （移動中のTransformを基準にすると経路自体が一緒に動いてしまうため）。未再生時は
+    // startPositionがまだ設定されていない（Start()未実行）ため、代わりに現在のTransform
+    // 位置を基準にする
+    void OnDrawGizmos() {
+        Transform@ tf = GetTransform();
+        if (tf is null) return;
+        const int count = GetPointCount();
+        if (count == 0) return;
+
+        const Vector3 basePosition = GetScene().IsPlaying() ? startPosition : tf.GetTranslate();
+        const Vector4 pathColor = Vector4(1.0f, 1.0f, 0.0f, 1.0f);
+
+        Vector3 previousPoint = basePosition;
+        for (int i = 0; i < count; ++i) {
+            if (points[i] is null) continue;
+            Vector3 nextPoint = basePosition + points[i].offset;
+            Debug::DrawLine(previousPoint, nextPoint, pathColor);
+            previousPoint = nextPoint;
+        }
+        if (loop) {
+            Debug::DrawLine(previousPoint, basePosition, pathColor);
+        }
+    }
+
     void Update() {
+        // 会話中(isDialogueActive)は移動を止める（Player.asの入力停止と同じシーン変数を見る）
+        bool isDialogueActive = false;
+        GetScene().GetVariable("isDialogueActive", isDialogueActive);
+        if (isDialogueActive) {
+            currentVelocity = Vector2(0.0f, 0.0f);
+            return;
+        }
+
         Transform@ tf = GetTransform();
         if (tf is null) return;
         const int count = GetPointCount();

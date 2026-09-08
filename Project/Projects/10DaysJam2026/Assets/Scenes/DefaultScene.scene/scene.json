@@ -64,24 +64,9 @@
             "value": false
         },
         {
-            "key": "testFloat",
-            "type": "Float",
-            "value": 0.0
-        },
-        {
             "key": "saveRequested",
             "type": "Bool",
             "value": false
-        },
-        {
-            "key": "testString",
-            "type": "String",
-            "value": "abcdefg"
-        },
-        {
-            "key": "testInt",
-            "type": "Int32",
-            "value": 0
         },
         {
             "key": "dialogueBoxUIBusy",

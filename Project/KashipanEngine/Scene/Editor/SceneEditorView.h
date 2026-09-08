@@ -318,6 +318,10 @@ private:
     ///        オーバーレイで描画する。3D側のAppendColliderDebugLines（GPUデバッグライン）と違い、
     ///        2D専用の正射影カメラ（view2D_/projection2D_）に投影して表示する
     void DrawCollider2DOverlay(const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief 「2D」表示モード専用に、スクリプトのDebug::DrawLineで蓄積された線分（ScriptDebugDraw）を
+    ///        ImGuiオーバーレイで描画する。3D側（UpdateEditorDebugDraw内、GPUデバッグライン）と違い
+    ///        2D専用の正射影カメラに投影して表示する。各線が自身の色を持つため固定色分岐は不要
+    void DrawScriptDebugLineOverlay2D(const ImVec2 &imagePos, const ImVec2 &imageSize);
     /// @brief 「2D」表示モード専用に、シーン内のCamera2Dが実際に映す範囲（矩形）をImGuiオーバーレイで
     ///        描画する。3D/2D3DモードのAppendCameraFrustumLines（GPUデバッグライン）と対になる表示
     void DrawCamera2DBoundsOverlay(const ImVec2 &imagePos, const ImVec2 &imageSize);

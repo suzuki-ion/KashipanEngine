@@ -32,6 +32,10 @@ class EmptyObject;
 ///          - void Awake()  : インスタンス生成時（コンポーネントとしてアタッチされた時。Reload成功時も含む）に一度だけ
 ///          - void Start()  : ゲームループ中、そのインスタンスに対して最初にUpdate()が呼ばれる直前に一度だけ
 ///          - void Update() : 毎フレーム
+///          - void OnDrawGizmos() : エディターのみ、Play中かどうか（一時停止中も含む）に関わらず
+///            毎フレーム呼ばれる。デバッグ表示（Debug::DrawLine等）専用の任意メソッド。
+///            Start()より前に呼ばれうるため、Start()/Update()で初めて設定される実行時状態には
+///            依存しないこと（[SerializeField]の値と現在のTransform等、常に有効な情報のみ使う）
 ///          - void End()    : 終了時（コンポーネント削除・非アクティブ化・リロード時）
 ///          - void OnCollisionEnter/Stay/Exit(const HitInfo &in) : 同オブジェクトのコライダーの衝突時
 ///          - void OnWindowMessage(const WindowMessageInfo &in) : 同オブジェクトのWindowObject系
@@ -158,6 +162,9 @@ protected:
 
 #if defined(USE_IMGUI)
     void ShowImGui() override;
+    /// @brief OnDrawGizmos()の呼び出し口。ShowPersistentImGuiInterface経由でPlay中かどうかに
+    ///        関わらず毎フレーム呼ばれる（詳細はIObjectComponent::ShowPersistentImGui参照）
+    void ShowPersistentImGui() override;
 #endif
 
     JSON SaveToJson() const override;
@@ -296,6 +303,9 @@ private:
     asIScriptFunction *awakeMethod_ = nullptr;
     asIScriptFunction *startMethod_ = nullptr;
     asIScriptFunction *updateMethod_ = nullptr;
+    /// @brief OnDrawGizmos()。エディターのみ、ShowPersistentImGui経由でPlay中かどうかに
+    ///        関わらず毎フレーム呼ばれる（Start()未呼び出しの状態でも呼ばれうる点に注意）
+    asIScriptFunction *drawGizmosMethod_ = nullptr;
     asIScriptFunction *endMethod_ = nullptr;
     /// @brief このインスタンスに対して既にStart()を呼び終えたか（次回Update()で一度だけ呼ぶための管理用）
     bool startCalled_ = false;

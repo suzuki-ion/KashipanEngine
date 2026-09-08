@@ -125,6 +125,11 @@ void SceneEditorView::ShowImGui(const std::unordered_set<EmptyObject *> &selecte
     ShowSceneViewWindow(selectedObjects, commands, hierarchy);
     // マウス操作（HandleCameraInput等）による今フレームの変更をコンポーネント・EditorSettingsへ反映する
     PushCameraSettingsToComponent();
+
+    // スクリプトのDebug::DrawLineが蓄積した線分は、3Dモード用（UpdateEditorDebugDraw内）・
+    // 2Dモード用（ShowSceneViewWindow内のDrawScriptDebugLineOverlay2D）の両方の消費が
+    // 終わったこのタイミングでまとめてクリアする（表示するかどうかに関わらず、蓄積され続けないよう毎フレーム行う）
+    ScriptDebugDraw::Clear();
 }
 
 void SceneEditorView::EnsureResources() {
@@ -736,6 +741,11 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     //--------- 2Dモード専用の2Dコライダー可視化（3DのGPUデバッグラインとは別実装のImGuiオーバーレイ） ---------//
     if (showColliderGizmos_ && displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly) DrawCollider2DOverlay(imagePos, drawSize);
 
+    //--------- 2Dモード専用のスクリプトデバッグライン（Debug::DrawLine）表示。3Dモードでは
+    //          UpdateEditorDebugDraw内でGPUデバッグラインとして表示されるため、ここでは
+    //          2Dモードの時だけ描画する（3D側と同様、専用の表示トグルは設けていない） ---------//
+    if (displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly) DrawScriptDebugLineOverlay2D(imagePos, drawSize);
+
     //--------- 2Dモード専用のCamera2D表示範囲（3D/2D3DモードのAppendCameraFrustumLinesと対になる表示） ---------//
     if (showCameraMarkers_ && displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly) DrawCamera2DBoundsOverlay(imagePos, drawSize);
 
@@ -989,8 +999,10 @@ void SceneEditorView::UpdateEditorDebugDraw() {
             settings.lines.push_back(DebugLineVertex{ line.end, line.color });
         }
     }
-    // 2Dモード中に蓄積され続けないよう、表示するかどうかに関わらず毎フレームクリアする
-    ScriptDebugDraw::Clear();
+    // ScriptDebugDraw::Clear()はここでは呼ばない。2Dモード用のオーバーレイ
+    // （DrawScriptDebugLineOverlay2D、ShowSceneViewWindow内でこの後呼ばれる）がまだ
+    // ScriptDebugDraw::GetLines()を読んでいないため、ここで消してしまうと2Dモードでは
+    // 何も表示されなくなる。ShowImGui()の末尾で両方の消費が終わった後にまとめてクリアする
 
     sceneRenderer->SetEditorDebugDraw(std::move(settings));
 }
@@ -2530,6 +2542,31 @@ void SceneEditorView::DrawCollider2DOverlay(const ImVec2 &imagePos, const ImVec2
         if (!ProjectToImage(lines[i].position, imagePos, imageSize, p0, false)) continue;
         if (!ProjectToImage(lines[i + 1].position, imagePos, imageSize, p1, false)) continue;
         const Vector4 &c = lines[i].color;
+        const ImU32 col = IM_COL32(
+            static_cast<int>(std::clamp(c.x, 0.0f, 1.0f) * 255.0f),
+            static_cast<int>(std::clamp(c.y, 0.0f, 1.0f) * 255.0f),
+            static_cast<int>(std::clamp(c.z, 0.0f, 1.0f) * 255.0f),
+            static_cast<int>(std::clamp(c.w, 0.0f, 1.0f) * 255.0f));
+        drawList->AddLine(p0, p1, col, 2.0f);
+    }
+    drawList->PopClipRect();
+}
+
+void SceneEditorView::DrawScriptDebugLineOverlay2D(const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (imageSize.x <= 0.0f || imageSize.y <= 0.0f) return;
+    const auto &lines = ScriptDebugDraw::GetLines();
+    if (lines.empty()) return;
+
+    // 3D側（UpdateEditorDebugDraw内でscreenBuffer_へGPU描画）と違い、2D専用カメラで
+    // 画面座標へ投影してImGuiで描く（DrawCollider2DOverlayと同じ方式）。各線が色を持っているため
+    // コライダーオーバーレイのようなトリガー/非トリガーでの色分岐は不要
+    auto *drawList = ImGui::GetWindowDrawList();
+    drawList->PushClipRect(imagePos, ImVec2(imagePos.x + imageSize.x, imagePos.y + imageSize.y), true);
+    for (const auto &line : lines) {
+        ImVec2 p0, p1;
+        if (!ProjectToImage(line.start, imagePos, imageSize, p0, false)) continue;
+        if (!ProjectToImage(line.end, imagePos, imageSize, p1, false)) continue;
+        const Vector4 &c = line.color;
         const ImU32 col = IM_COL32(
             static_cast<int>(std::clamp(c.x, 0.0f, 1.0f) * 255.0f),
             static_cast<int>(std::clamp(c.y, 0.0f, 1.0f) * 255.0f),

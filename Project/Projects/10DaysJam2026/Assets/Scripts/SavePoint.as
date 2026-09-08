@@ -11,7 +11,11 @@ class SavePoint : ScriptComponentBehavior {
     [SerializeField, Tooltip("セーブを実行するための入力コマンド名")]
     string saveCommandName = "Bottom";
 
+    // セーブ演出用。自身にParticleSystem2Dが付いていれば、セーブ要求時に再生する
+    ParticleSystem2D@ particle;
+
     void Start() {
+        GetComponent(@particle);
     }
 
     void Update() {
@@ -23,5 +27,9 @@ class SavePoint : ScriptComponentBehavior {
         if (!IsCommandTriggered(saveCommandName)) return;
 
         GetScene().SetVariable("saveRequested", true);
+
+        if (particle !is null) {
+            particle.Play();
+        }
     }
 }

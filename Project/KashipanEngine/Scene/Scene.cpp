@@ -1,6 +1,7 @@
 #include "Scene/Scene.h"
 #include "Scene/SceneBackupPath.h"
 #include "Core/GameEngine.h"
+#include "Debug/Logger.h"
 #include "Graphics/GraphicsEngine.h"
 #include "Scene/SceneManager.h"
 #include "Scene/SceneContext.h"
@@ -124,7 +125,14 @@ void Scene::PlayStart() {
 }
 
 void Scene::PlayStop() {
-    if (!isPlaying_) return;
+    if (!isPlaying_) {
+        // 「シーン切り替えでこのSceneインスタンスが再生開始前に置き換わっており、
+        // Stopボタン相当の操作が実質何もせず抜けている」ケースを切り分けるためのログ。
+        // 再生中にScene自体が切り替わると、新しいSceneインスタンスのisPlaying_は
+        // falseから始まるため、以後Stopを押してもここで早期returnし続ける
+        Log(Translation("engine.scene.playstop.notplaying"), LogSeverity::Warning);
+        return;
+    }
     // PlayStart側と同じ理由。ClearSceneObjects/ClearSceneComponentsで大量のGPUリソースを
     // 即座に破棄する前に、直前フレームのGPU処理が確実に完了していることを保証する
     if (sDirectXCommon_) sDirectXCommon_->WaitForGPUIdle(Passkey<Scene>{});
@@ -147,7 +155,13 @@ void Scene::PlayStop() {
 
     JSON snapshot = std::move(editModeSnapshot_);
     editModeSnapshot_ = JSON();
-    if (snapshot.empty()) return;
+    if (snapshot.empty()) {
+        // isPlaying_はtrueだったがスナップショットが空＝このSceneインスタンスで
+        // PlayStart()が一度も呼ばれていない状態。通常はあり得ないが、シーン切り替え関連の
+        // 不整合を切り分けるためのログ（このケースではシーン内容の復元がスキップされる）
+        Log(Translation("engine.scene.playstop.emptysnapshot"), LogSeverity::Warning);
+        return;
+    }
 
     ClearSceneObjects();
     ClearSceneComponents();

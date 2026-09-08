@@ -479,6 +479,7 @@ bool DirectXCommon::IsVideoUploadFenceComplete(Passkey<VideoTexture>, uint64_t f
 }
 
 int DirectXCommon::AcquireCommandObjectsInternal(std::vector<std::unique_ptr<DX12Commands>>& pool, std::vector<int>& freeSlots) {
+    LogScope scope;
     if (!dx12Device_) return -1;
     const auto* device = dx12Device_->GetDevice();
     if (!device) return -1;
@@ -489,7 +490,15 @@ int DirectXCommon::AcquireCommandObjectsInternal(std::vector<std::unique_ptr<DX1
         freeSlots.pop_back();
     }
 
-    if (index < 0) return -1;
+    if (index < 0) {
+        // ScreenBuffer/ShadowMapBuffer/スワップチェーン等が共有する固定サイズプール
+        // （EngineSettings.limits.maxWindows）が枯渇している。Create()側は例外を投げず
+        // nullptrを返して静かに失敗するため、ここでログを残さないと原因特定が困難になる
+        // （Play/Stopで旧シーンの破棄予約分がまだ解放されていない間に新シーンが確保しようと
+        // して一時的に必要数が倍増するケースを疑う場合はこのログを確認すること）
+        Log(Translation("engine.directx.commandobjects.no.free.slot") + std::to_string(pool.size()), LogSeverity::Error);
+        return -1;
+    }
     const size_t idx = static_cast<size_t>(index);
     if (idx >= pool.size() || !pool[idx]) return -1;
     pool[idx]->ResetFlags(Passkey<DirectXCommon>{});

@@ -347,6 +347,16 @@ private:
     void RenderPostProcessOnlyTargets(SceneContext *sceneContext,
         const std::unordered_set<const IRenderTarget *> &renderedTargets);
 
+    /// @brief デバッグ調査用：シーン内の各ScreenBufferObjectについて、今フレームの描画リストに
+    ///        含まれる描画エントリ数（＝実際に何か描画されたか）を追跡し、「描画され続けていた
+    ///        描画先が、ある時点から一定フレーム連続でゼロ件になった」瞬間だけログを出す。
+    /// @details ScreenBuffer自体の生成・引き継ぎは正常でも、カメラ等の対象解決が何らかの理由で
+    ///          外れて描画エントリが一切積まれなくなるケース（ポストエフェクトが付いていれば
+    ///          RenderPostProcessOnlyTargetsで空のクリア色のまま「準備済み」にされてしまい、
+    ///          SRV未準備の表示にもならず、ただ透明に見える）を切り分けるための一時的な計測
+    void TrackZeroDrawEntryTargets(SceneContext *sceneContext,
+        std::span<const SceneRenderer::DrawEntry> drawList);
+
     /// @brief DirectX共通クラスへのポインタ
     DirectXCommon *directXCommon_ = nullptr;
     /// @brief パイプラインマネージャーへのポインタ
@@ -366,6 +376,18 @@ private:
     ///          リソースを破棄してしまう（詳細はRendererInternal::MultiPassDitherScratchSet参照）。
     ///          描画先が破棄された後のエントリはRenderFrameの冒頭でGCする
     std::unordered_map<ScreenBuffer *, RendererInternal::MultiPassDitherScratchSet> multiPassDitherScratch_;
+
+    //==================================================
+    // デバッグ調査用：TrackZeroDrawEntryTargets参照
+    //==================================================
+
+    /// @brief 描画先の名前（ScreenBuffer::GetRenderTargetName）ごとの「描画エントリ0件が
+    ///        何フレーム連続しているか」。ポインタではなく名前で追跡することで、
+    ///        Play/Stopや同名でのScreenBuffer再生成を跨いでも連続性を追える
+    std::unordered_map<std::string, std::uint32_t> zeroDrawEntryStreak_;
+    /// @brief 上記が閾値に達した時点で一度だけ警告ログを出すためのフラグ（0件が続いている間は
+    ///        再度ログしない。0件でなくなった時点でリセットし、回復ログを出す）
+    std::unordered_map<std::string, bool> zeroDrawEntryLogged_;
 
     //==================================================
     // シャドウマップ

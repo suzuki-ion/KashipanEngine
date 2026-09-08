@@ -77,6 +77,8 @@
 		"engine.directx.commands.commandqueue.initialize.start": "명령 큐 초기화 시작",
 		"engine.directx.commands.commandqueue.initialize.end": "명령 큐 초기화 완료",
 		"engine.directx.commands.commandqueue.initialize.failed": "명령 큐 초기화에 실패했습니다.",
+		// コマンドオブジェクトプール（ScreenBuffer/ShadowMapBuffer/スワップチェーン等が共有）
+		"engine.directx.commandobjects.no.free.slot": "명령 객체 확보에 실패했습니다. 사용 가능한 슬롯이 없습니다. 풀 크기: ",
 		// コマンドアロケータ
 		"engine.directx.swapchain.commandallocator.initialize.start": "명령 할당자 초기화 시작",
 		"engine.directx.swapchain.commandallocator.initialize.end": "명령 할당자 초기화 완료",
@@ -2256,13 +2258,39 @@
 		"engine.prefab.sync.result.updated": ", 갱신한 씬 수 ",
 		"engine.prefab.sync.scene.failed": "프리팹 동기화: 씬 불러오기 또는 저장에 실패했습니다. 씬 이름: ",
 
+		//--------- engine.renderer ---------//
+		"engine.renderer.zerodrawentries.detected": "그리기 항목이 일정 시간 동안 0으로 유지되고 있습니다（카메라 등의 대상 해석이 풀렸을 수 있습니다）. ScreenBufferObject 이름: ",
+		"engine.renderer.zerodrawentries.recovered": "그리기 항목이 복구되었습니다. ScreenBufferObject 이름: ",
+
+		//--------- engine.rendertargetcarryover ---------//
+		"engine.rendertargetcarryover.beginsceneswitch": "씬 전환: 렌더 타겟 인계 접수를 시작했습니다.",
+		"engine.rendertargetcarryover.claim.success": "씬 전환: 인계 풀에서 렌더 타겟 리소스를 가져왔습니다. 종류/키: ",
+		"engine.rendertargetcarryover.deposit.carried": "씬 전환: 렌더 타겟 리소스를 인계 풀에 맡겼습니다. 종류/키: ",
+		"engine.rendertargetcarryover.deposit.destroyed": "씬 전환 중이 아니므로 렌더 타겟 리소스를 즉시 파괴했습니다. 종류/키: ",
+		"engine.rendertargetcarryover.endsceneswitch.unclaimed": "씬 전환: 인계받지 못한 렌더 타겟 리소스를 파괴했습니다（새 씬에 동일한 이름의 컴포넌트가 없을 수 있습니다）. 종류/키: ",
+
+		//--------- engine.scene ---------//
+		"engine.scene.playstop.emptysnapshot": "PlayStop(): editModeSnapshot_가 비어 있어 씬 내용 복원을 건너뛰었습니다. 이 Scene 인스턴스에서 PlayStart()가 호출되지 않았을 수 있습니다.",
+		"engine.scene.playstop.notplaying": "PlayStop()이 호출되었지만 이 Scene 인스턴스는 재생 중이 아닙니다（isPlaying_=false）. 재생 중에 씬이 전환되어 다른 Scene 인스턴스로 교체되었을 수 있습니다.",
+
 		//--------- engine.scenemanager ---------//
 		"engine.scenemanager.globalscenevariables.loaded": "글로벌 씬 변수를 불러왔습니다. 파일 경로: ",
 		"engine.scenemanager.scene.alreadyregistered": "씬이 이미 등록되어 있어 건너뛰었습니다. 씬 이름: ",
 		"engine.scenemanager.scene.load.failed": "씬 파일 불러오기에 실패하여 빈 씬을 생성합니다. 파일 경로: ",
+		"engine.scenemanager.scene.switch.end": "씬 전환 완료. 전환 대상: ",
+		"engine.scenemanager.scene.switch.start": "씬 전환 시작. 전환 대상: ",
 		"engine.scenemanager.scenelist.loaded": "씬 목록을 불러왔습니다. 파일 경로: ",
 
+		//--------- engine.screenbuffer ---------//
+		"engine.screenbuffer.initialize.failed.doublebuffer": "ScreenBuffer 초기화에 실패했습니다. 더블 버퍼 리소스 생성에 실패했습니다. 크기: ",
+		"engine.screenbuffer.initialize.failed.nodirectxcommon": "ScreenBuffer 초기화에 실패했습니다. DirectXCommon이 설정되지 않았습니다.",
+		"engine.screenbuffer.initialize.failed.noslot": "ScreenBuffer 초기화에 실패했습니다. 명령 객체 슬롯을 확보할 수 없었습니다. 크기: ",
+		"engine.screenbuffer.initialize.failed.previewbuffer": "ScreenBuffer 초기화에 실패했습니다. 미리보기 버퍼 생성에 실패했습니다. 크기: ",
+
 		//--------- engine.screenbufferobject ---------//
+		"engine.screenbufferobject.loadfromjson.carried": "인계 풀에서 기존 ScreenBuffer 인스턴스를 그대로 인계받았습니다. 이름(포인터) 크기: ",
+		"engine.screenbufferobject.loadfromjson.recreated": "크기 불일치로 인해 새 ScreenBuffer 인스턴스를 다시 생성했습니다. 이름(포인터) 크기: ",
+		"engine.screenbufferobject.loadfromjson.reused": "Initialize() 직후 생성된 임시 ScreenBuffer 인스턴스를 그대로 재사용했습니다. 이름(포인터) 크기: ",
 		"engine.screenbufferobject.screenshot.failed": "스크린샷 저장에 실패했습니다.",
 
 		//--------- engine.script ---------//
@@ -2315,6 +2343,11 @@
 		"engine.settings.window.initialtitle": "초기 윈도우 제목: ",
 		"engine.settings.window.initialwidth": "초기 윈도우 너비: ",
 		"engine.settings.window.section": "윈도우 설정",
+
+		//--------- engine.shadowmapbuffer ---------//
+		"engine.shadowmapbuffer.initialize.failed.depth": "ShadowMapBuffer 초기화에 실패했습니다. 깊이 버퍼 생성에 실패했습니다. 크기: ",
+		"engine.shadowmapbuffer.initialize.failed.nodirectxcommon": "ShadowMapBuffer 초기화에 실패했습니다. DirectXCommon이 설정되지 않았습니다.",
+		"engine.shadowmapbuffer.initialize.failed.noslot": "ShadowMapBuffer 초기화에 실패했습니다. 명령 객체 슬롯을 확보할 수 없었습니다. 크기: ",
 
 		//--------- engine.texture ---------//
 		"engine.texture.loading.failed.loadfile": "텍스처 불러오기 실패. 파일 읽기에 실패했습니다. 파일 경로: ",

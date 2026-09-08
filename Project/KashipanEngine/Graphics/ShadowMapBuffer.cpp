@@ -2,6 +2,7 @@
 #include "Core/DirectXCommon.h"
 #include "Graphics/Resources/IGraphicsResource.h"
 #include "Assets/TextureManager.h"
+#include "Debug/Logger.h"
 #include <algorithm>
 #include <cstdio>
 #include <vector>
@@ -116,6 +117,7 @@ ShadowMapBuffer::~ShadowMapBuffer() {
 }
 
 bool ShadowMapBuffer::Initialize(std::uint32_t width, std::uint32_t height, DXGI_FORMAT depthFormat, DXGI_FORMAT srvFormat) {
+    LogScope scope;
     Destroy();
 
     width_ = width;
@@ -123,12 +125,20 @@ bool ShadowMapBuffer::Initialize(std::uint32_t width, std::uint32_t height, DXGI
     depthFormat_ = depthFormat;
     srvFormat_ = srvFormat;
 
-    if (!sDirectXCommon_) return false;
+    if (!sDirectXCommon_) {
+        Log(Translation("engine.shadowmapbuffer.initialize.failed.nodirectxcommon"), LogSeverity::Error);
+        return false;
+    }
 
     commandSlotIndex_ = sDirectXCommon_->AcquireCommandObjects(Passkey<ShadowMapBuffer>{});
     auto *cmd = sDirectXCommon_->GetCommandObjects(Passkey<ShadowMapBuffer>{}, commandSlotIndex_);
     if (!cmd || !cmd->GetCommandAllocator() || !cmd->GetCommandList()) {
         commandSlotIndex_ = -1;
+        // AcquireCommandObjects失敗（共有コマンドオブジェクトプール枯渇。ScreenBufferと同じ
+        // プールを取り合っている）の詳細はDirectXCommon::AcquireCommandObjectsInternal側の
+        // ログを参照。ここでは「このShadowMapBufferの生成自体が失敗した」ことを残す
+        Log(Translation("engine.shadowmapbuffer.initialize.failed.noslot") +
+            std::to_string(width_) + "x" + std::to_string(height_), LogSeverity::Error);
         return false;
     }
     dx12Commands_ = cmd;
@@ -136,7 +146,11 @@ bool ShadowMapBuffer::Initialize(std::uint32_t width, std::uint32_t height, DXGI
     // GetSrvHandle()（マテリアルのテクスチャとして参照される経路）が返すのはこのSRVのため、
     // バインドレステーブル用の予約レンジから確保する
     depth_ = std::make_unique<DepthStencilResource>(width_, height_, depthFormat_, 1.0f, static_cast<UINT8>(0), nullptr, true, srvFormat_, 1, /*srvUseReservedRange=*/true);
-    if (!depth_ || !depth_->HasSrv()) return false;
+    if (!depth_ || !depth_->HasSrv()) {
+        Log(Translation("engine.shadowmapbuffer.initialize.failed.depth") +
+            std::to_string(width_) + "x" + std::to_string(height_), LogSeverity::Error);
+        return false;
+    }
 
     return true;
 }

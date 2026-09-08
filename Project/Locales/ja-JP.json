@@ -77,6 +77,8 @@
 		"engine.directx.commands.commandqueue.initialize.start": "コマンドキュー初期化開始",
 		"engine.directx.commands.commandqueue.initialize.end": "コマンドキュー初期化完了",
 		"engine.directx.commands.commandqueue.initialize.failed": "コマンドキューの初期化に失敗しました。",
+		// コマンドオブジェクトプール（ScreenBuffer/ShadowMapBuffer/スワップチェーン等が共有）
+		"engine.directx.commandobjects.no.free.slot": "コマンドオブジェクトの確保に失敗しました。利用可能なスロットがありません。プールサイズ：",
 		// コマンドアロケータ
 		"engine.directx.swapchain.commandallocator.initialize.start": "コマンドアロケータ初期化開始",
 		"engine.directx.swapchain.commandallocator.initialize.end": "コマンドアロケータ初期化完了",
@@ -2296,13 +2298,39 @@
 		"engine.prefab.sync.result.updated": "、更新したシーン数 ",
 		"engine.prefab.sync.scene.failed": "プレハブ同期：シーンの読み込みまたは保存に失敗しました。シーン名：",
 
+		//--------- engine.renderer ---------//
+		"engine.renderer.zerodrawentries.detected": "描画エントリが一定時間ゼロのままです（カメラ等の対象解決が外れている可能性があります）。ScreenBufferObject名：",
+		"engine.renderer.zerodrawentries.recovered": "描画エントリが復帰しました。ScreenBufferObject名：",
+
+		//--------- engine.rendertargetcarryover ---------//
+		"engine.rendertargetcarryover.beginsceneswitch": "シーン切り替え：描画先リソースの引き継ぎ受付を開始しました。",
+		"engine.rendertargetcarryover.claim.success": "シーン切り替え：描画先リソースを引き継ぎプールから引き取りました。種別/キー：",
+		"engine.rendertargetcarryover.deposit.carried": "シーン切り替え：描画先リソースを引き継ぎプールへ預けました。種別/キー：",
+		"engine.rendertargetcarryover.deposit.destroyed": "シーン切り替え中ではないため、描画先リソースを即座に破棄しました。種別/キー：",
+		"engine.rendertargetcarryover.endsceneswitch.unclaimed": "シーン切り替え：引き取られなかった描画先リソースを破棄しました（新シーン側に同名のコンポーネントが存在しない可能性があります）。種別/キー：",
+
+		//--------- engine.scene ---------//
+		"engine.scene.playstop.emptysnapshot": "PlayStop()：editModeSnapshot_が空のため、シーン内容の復元をスキップしました。このSceneインスタンスでPlayStart()が呼ばれていない可能性があります。",
+		"engine.scene.playstop.notplaying": "PlayStop()が呼ばれましたが、このSceneインスタンスは再生中ではありません（isPlaying_=false）。再生中にシーンが切り替わり、別のSceneインスタンスに置き換わった可能性があります。",
+
 		//--------- engine.scenemanager ---------//
 		"engine.scenemanager.globalscenevariables.loaded": "グローバルシーン変数を読み込みました。ファイルパス：",
 		"engine.scenemanager.scene.alreadyregistered": "シーンは既に登録されているためスキップしました。シーン名：",
 		"engine.scenemanager.scene.load.failed": "シーンファイルの読み込みに失敗したため、空のシーンを作成します。ファイルパス：",
+		"engine.scenemanager.scene.switch.end": "シーン切り替え完了。切り替え先：",
+		"engine.scenemanager.scene.switch.start": "シーン切り替え開始。切り替え先：",
 		"engine.scenemanager.scenelist.loaded": "シーン一覧を読み込みました。ファイルパス：",
 
+		//--------- engine.screenbuffer ---------//
+		"engine.screenbuffer.initialize.failed.doublebuffer": "ScreenBufferの初期化に失敗しました。ダブルバッファ用リソースの作成に失敗しました。サイズ：",
+		"engine.screenbuffer.initialize.failed.nodirectxcommon": "ScreenBufferの初期化に失敗しました。DirectXCommonが未設定です。",
+		"engine.screenbuffer.initialize.failed.noslot": "ScreenBufferの初期化に失敗しました。コマンドオブジェクトのスロットを確保できませんでした。サイズ：",
+		"engine.screenbuffer.initialize.failed.previewbuffer": "ScreenBufferの初期化に失敗しました。プレビュー用バッファの作成に失敗しました。サイズ：",
+
 		//--------- engine.screenbufferobject ---------//
+		"engine.screenbufferobject.loadfromjson.carried": "引き継ぎプールから既存のScreenBufferインスタンスをそのまま引き継ぎました。名前(ポインタ) サイズ：",
+		"engine.screenbufferobject.loadfromjson.recreated": "サイズ不一致のため新しいScreenBufferインスタンスを作り直しました。名前(ポインタ) サイズ：",
+		"engine.screenbufferobject.loadfromjson.reused": "Initialize()直後の仮ScreenBufferインスタンスをそのまま使い回しました。名前(ポインタ) サイズ：",
 		"engine.screenbufferobject.screenshot.failed": "スクリーンショットの保存に失敗しました。",
 
 		//--------- engine.script ---------//
@@ -2355,6 +2383,11 @@
 		"engine.settings.window.initialtitle": "初期ウィンドウタイトル：",
 		"engine.settings.window.initialwidth": "初期ウィンドウ幅：",
 		"engine.settings.window.section": "ウィンドウ設定",
+
+		//--------- engine.shadowmapbuffer ---------//
+		"engine.shadowmapbuffer.initialize.failed.depth": "ShadowMapBufferの初期化に失敗しました。深度バッファの作成に失敗しました。サイズ：",
+		"engine.shadowmapbuffer.initialize.failed.nodirectxcommon": "ShadowMapBufferの初期化に失敗しました。DirectXCommonが未設定です。",
+		"engine.shadowmapbuffer.initialize.failed.noslot": "ShadowMapBufferの初期化に失敗しました。コマンドオブジェクトのスロットを確保できませんでした。サイズ：",
 
 		//--------- engine.texture ---------//
 		"engine.texture.loading.failed.loadfile": "テクスチャ読み込み失敗。ファイルの読み込みに失敗しました。ファイルパス：",

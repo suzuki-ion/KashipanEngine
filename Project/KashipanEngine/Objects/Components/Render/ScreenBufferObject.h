@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <cstdio>
 #include <ctime>
 #include <random>
 #include <string>
@@ -12,6 +13,7 @@
 #include "Graphics/ScreenBuffer.h"
 #include "Scene/RenderTargetCarryOverRegistry.h"
 #include "Utilities/Translation.h"
+#include "Debug/Logger.h"
 
 namespace KashipanEngine {
 
@@ -219,6 +221,14 @@ protected:
                 name_ = buffer_->GetRenderTargetName();
                 width_ = loadedWidth;
                 height_ = loadedHeight;
+                // デバッグ調査用：GameScreen等が「引き継ぎで既存インスタンスをそのまま使い回した」
+                // ことを記録する（シーン切り替え直後の状態を追うためのログ）
+                {
+                    char buf[32];
+                    std::snprintf(buf, sizeof(buf), "%p", static_cast<const void *>(buffer_));
+                    Log(Translation("engine.screenbufferobject.loadfromjson.carried") +
+                        name_ + " (" + buf + ") " + std::to_string(width_) + "x" + std::to_string(height_), LogSeverity::Debug);
+                }
                 return true;
             }
         }
@@ -235,12 +245,26 @@ protected:
                 buffer_->DestroyNotify();
                 buffer_ = ScreenBuffer::Create(loadedWidth, loadedHeight, loadedName);
                 name_ = buffer_ ? buffer_->GetRenderTargetName() : loadedName;
+                // デバッグ調査用：サイズ不一致により新規インスタンスを作り直したことを記録する
+                {
+                    char buf[32];
+                    std::snprintf(buf, sizeof(buf), "%p", static_cast<const void *>(buffer_));
+                    Log(Translation("engine.screenbufferobject.loadfromjson.recreated") +
+                        name_ + " (" + buf + ") " + std::to_string(loadedWidth) + "x" + std::to_string(loadedHeight), LogSeverity::Debug);
+                }
             } else {
                 name_ = loadedName;
                 if (!name_.empty()) {
                     buffer_->SetRenderTargetName(name_);
                 }
                 name_ = buffer_->GetRenderTargetName();
+                // デバッグ調査用：Initialize()直後の仮バッファをそのまま（作り直さずに）使い回したことを記録する
+                {
+                    char buf[32];
+                    std::snprintf(buf, sizeof(buf), "%p", static_cast<const void *>(buffer_));
+                    Log(Translation("engine.screenbufferobject.loadfromjson.reused") +
+                        name_ + " (" + buf + ") " + std::to_string(loadedWidth) + "x" + std::to_string(loadedHeight), LogSeverity::Debug);
+                }
             }
         } else {
             name_ = loadedName;

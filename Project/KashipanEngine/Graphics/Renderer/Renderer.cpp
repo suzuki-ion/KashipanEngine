@@ -1,4 +1,5 @@
 #include "RendererInternal.h"
+#include "Debug/Logger.h"
 #include <optional>
 
 namespace KashipanEngine {
@@ -124,6 +125,61 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
         editorTarget->GetRenderTargetKind() == RenderTargetKind::ScreenBuffer &&
         renderedTargets.find(editorTarget) == renderedTargets.end()) {
         RenderToTarget(editorTarget, {}, sceneRenderer);
+    }
+
+    // デバッグ調査用：ScreenBufferObjectへの描画エントリが継続的にゼロになっていないか追跡する
+    TrackZeroDrawEntryTargets(sceneContext, drawList);
+}
+
+void Renderer::TrackZeroDrawEntryTargets(SceneContext *sceneContext, std::span<const SceneRenderer::DrawEntry> drawList) {
+    if (!sceneContext) return;
+
+    // 描画先ポインタごとの今フレームの描画エントリ数を集計する
+    std::unordered_map<const IRenderTarget *, std::uint32_t> countByTarget;
+    for (const auto &entry : drawList) {
+        ++countByTarget[entry.target];
+    }
+
+    // 約0.5秒（60fps基準）連続で描画エントリ0件が続いたら異常とみなす。
+    // Play/Stopのたびにフレームレートが一時的に落ちることもあるため、余裕を持たせている
+    constexpr std::uint32_t kZeroFrameThreshold = 30;
+
+    for (auto *object : sceneContext->GetSceneObjects()) {
+        if (!object || !object->IsActive()) continue;
+        for (auto *screenBufferObject : object->GetComponents<ScreenBufferObject>()) {
+            if (!screenBufferObject || !screenBufferObject->IsActive()) continue;
+            auto *buffer = screenBufferObject->GetScreenBuffer();
+            if (!buffer || !ScreenBuffer::IsExist(buffer)) continue;
+            if (!buffer->IsRenderTargetAvailable()) continue;
+
+            const std::string &name = screenBufferObject->GetName();
+            if (name.empty()) continue;
+
+            const auto it = countByTarget.find(buffer);
+            const std::uint32_t count = (it != countByTarget.end()) ? it->second : 0;
+
+            auto &streak = zeroDrawEntryStreak_[name];
+            auto &logged = zeroDrawEntryLogged_[name];
+
+            if (count == 0) {
+                if (streak < kZeroFrameThreshold) ++streak;
+                if (streak >= kZeroFrameThreshold && !logged) {
+                    // ScreenBuffer自体は正常（previewReady_も立ちうる）だが、実際の描画エントリが
+                    // 一定時間ゼロのまま＝カメラ等の対象解決が外れて何も描かれていない状態。
+                    // ポストエフェクトが付いていればRenderPostProcessOnlyTargets経由で
+                    // クリア色のまま「準備済み」にされるため、SRV未準備の表示にもならず
+                    // ただ透明に見える、という症状の切り分け用ログ
+                    Log(Translation("engine.renderer.zerodrawentries.detected") + name, LogSeverity::Warning);
+                    logged = true;
+                }
+            } else {
+                if (logged) {
+                    Log(Translation("engine.renderer.zerodrawentries.recovered") + name, LogSeverity::Info);
+                }
+                streak = 0;
+                logged = false;
+            }
+        }
     }
 }
 

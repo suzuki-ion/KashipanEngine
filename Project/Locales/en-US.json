@@ -77,6 +77,8 @@
 		"engine.directx.commands.commandqueue.initialize.start": "Command queue initialization started",
 		"engine.directx.commands.commandqueue.initialize.end": "Command queue initialization completed",
 		"engine.directx.commands.commandqueue.initialize.failed": "Failed to initialize the command queue.",
+		// コマンドオブジェクトプール（ScreenBuffer/ShadowMapBuffer/スワップチェーン等が共有）
+		"engine.directx.commandobjects.no.free.slot": "Failed to acquire a command object. No free slots are available. Pool size: ",
 		// コマンドアロケータ
 		"engine.directx.swapchain.commandallocator.initialize.start": "Command allocator initialization started",
 		"engine.directx.swapchain.commandallocator.initialize.end": "Command allocator initialization completed",
@@ -2294,13 +2296,39 @@
 		"engine.prefab.sync.result.updated": ", updated scene count ",
 		"engine.prefab.sync.scene.failed": "Prefab sync: Failed to load or save the scene. Scene name: ",
 
+		//--------- engine.renderer ---------//
+		"engine.renderer.zerodrawentries.detected": "Draw entries have stayed at zero for a while (the target resolution, e.g. a camera, may have become unbound). ScreenBufferObject name: ",
+		"engine.renderer.zerodrawentries.recovered": "Draw entries have recovered. ScreenBufferObject name: ",
+
+		//--------- engine.rendertargetcarryover ---------//
+		"engine.rendertargetcarryover.beginsceneswitch": "Scene switch: started accepting render target carry-overs.",
+		"engine.rendertargetcarryover.claim.success": "Scene switch: claimed a render target resource from the carry-over pool. Kind/Key: ",
+		"engine.rendertargetcarryover.deposit.carried": "Scene switch: deposited a render target resource into the carry-over pool. Kind/Key: ",
+		"engine.rendertargetcarryover.deposit.destroyed": "Not during a scene switch, so the render target resource was destroyed immediately. Kind/Key: ",
+		"engine.rendertargetcarryover.endsceneswitch.unclaimed": "Scene switch: destroyed an unclaimed render target resource (the new scene may not have a component with the same name). Kind/Key: ",
+
+		//--------- engine.scene ---------//
+		"engine.scene.playstop.emptysnapshot": "PlayStop(): editModeSnapshot_ is empty, so restoring the scene content was skipped. PlayStart() may not have been called on this Scene instance.",
+		"engine.scene.playstop.notplaying": "PlayStop() was called, but this Scene instance is not playing (isPlaying_=false). The scene may have switched to a different Scene instance while playing.",
+
 		//--------- engine.scenemanager ---------//
 		"engine.scenemanager.globalscenevariables.loaded": "Loaded the global scene variables. File path: ",
 		"engine.scenemanager.scene.alreadyregistered": "The scene is already registered, so it was skipped. Scene name: ",
 		"engine.scenemanager.scene.load.failed": "Failed to load the scene file, so an empty scene was created. File path: ",
+		"engine.scenemanager.scene.switch.end": "Scene switch completed. Target: ",
+		"engine.scenemanager.scene.switch.start": "Scene switch started. Target: ",
 		"engine.scenemanager.scenelist.loaded": "Loaded the scene list. File path: ",
 
+		//--------- engine.screenbuffer ---------//
+		"engine.screenbuffer.initialize.failed.doublebuffer": "Failed to initialize the ScreenBuffer. Failed to create the double-buffer resources. Size: ",
+		"engine.screenbuffer.initialize.failed.nodirectxcommon": "Failed to initialize the ScreenBuffer. DirectXCommon is not set.",
+		"engine.screenbuffer.initialize.failed.noslot": "Failed to initialize the ScreenBuffer. Could not acquire a command object slot. Size: ",
+		"engine.screenbuffer.initialize.failed.previewbuffer": "Failed to initialize the ScreenBuffer. Failed to create the preview buffer. Size: ",
+
 		//--------- engine.screenbufferobject ---------//
+		"engine.screenbufferobject.loadfromjson.carried": "Carried over an existing ScreenBuffer instance from the carry-over pool as-is. Name(pointer) size: ",
+		"engine.screenbufferobject.loadfromjson.recreated": "Recreated a new ScreenBuffer instance due to a size mismatch. Name(pointer) size: ",
+		"engine.screenbufferobject.loadfromjson.reused": "Reused the temporary ScreenBuffer instance created right after Initialize() as-is. Name(pointer) size: ",
 		"engine.screenbufferobject.screenshot.failed": "Failed to save the screenshot.",
 
 		//--------- engine.script ---------//
@@ -2353,6 +2381,11 @@
 		"engine.settings.window.initialtitle": "Initial Window Title: ",
 		"engine.settings.window.initialwidth": "Initial Window Width: ",
 		"engine.settings.window.section": "Window",
+
+		//--------- engine.shadowmapbuffer ---------//
+		"engine.shadowmapbuffer.initialize.failed.depth": "Failed to initialize the ShadowMapBuffer. Failed to create the depth buffer. Size: ",
+		"engine.shadowmapbuffer.initialize.failed.nodirectxcommon": "Failed to initialize the ShadowMapBuffer. DirectXCommon is not set.",
+		"engine.shadowmapbuffer.initialize.failed.noslot": "Failed to initialize the ShadowMapBuffer. Could not acquire a command object slot. Size: ",
 
 		//--------- engine.texture ---------//
 		"engine.texture.loading.failed.loadfile": "Failed to load the texture. Failed to read the file. File path: ",

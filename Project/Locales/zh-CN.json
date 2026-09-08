@@ -77,6 +77,8 @@
 		"engine.directx.commands.commandqueue.initialize.start": "命令队列初始化开始",
 		"engine.directx.commands.commandqueue.initialize.end": "命令队列初始化完成",
 		"engine.directx.commands.commandqueue.initialize.failed": "命令队列初始化失败。",
+		// コマンドオブジェクトプール（ScreenBuffer/ShadowMapBuffer/スワップチェーン等が共有）
+		"engine.directx.commandobjects.no.free.slot": "命令对象的获取失败。没有可用的插槽。池大小：",
 		// コマンドアロケータ
 		"engine.directx.swapchain.commandallocator.initialize.start": "命令分配器初始化开始",
 		"engine.directx.swapchain.commandallocator.initialize.end": "命令分配器初始化完成",
@@ -2256,13 +2258,39 @@
 		"engine.prefab.sync.result.updated": "，已更新的场景数",
 		"engine.prefab.sync.scene.failed": "预制体同步：场景加载或保存失败。场景名称：",
 
+		//--------- engine.renderer ---------//
+		"engine.renderer.zerodrawentries.detected": "绘制条目已连续一段时间为零（相机等目标解析可能已失效）。ScreenBufferObject名称：",
+		"engine.renderer.zerodrawentries.recovered": "绘制条目已恢复。ScreenBufferObject名称：",
+
+		//--------- engine.rendertargetcarryover ---------//
+		"engine.rendertargetcarryover.beginsceneswitch": "场景切换：已开始接受渲染目标的继承。",
+		"engine.rendertargetcarryover.claim.success": "场景切换：已从继承池中取回渲染目标资源。种类/键：",
+		"engine.rendertargetcarryover.deposit.carried": "场景切换：已将渲染目标资源存入继承池。种类/键：",
+		"engine.rendertargetcarryover.deposit.destroyed": "当前不在场景切换中，已立即销毁渲染目标资源。种类/键：",
+		"engine.rendertargetcarryover.endsceneswitch.unclaimed": "场景切换：销毁了未被取走的渲染目标资源（新场景中可能不存在同名组件）。种类/键：",
+
+		//--------- engine.scene ---------//
+		"engine.scene.playstop.emptysnapshot": "PlayStop()：由于editModeSnapshot_为空，已跳过场景内容的恢复。此Scene实例可能未调用过PlayStart()。",
+		"engine.scene.playstop.notplaying": "调用了PlayStop()，但此Scene实例并未处于播放状态（isPlaying_=false）。可能是在播放过程中场景发生了切换，替换为了另一个Scene实例。",
+
 		//--------- engine.scenemanager ---------//
 		"engine.scenemanager.globalscenevariables.loaded": "已加载全局场景变量。文件路径：",
 		"engine.scenemanager.scene.alreadyregistered": "场景已注册，已跳过。场景名称：",
 		"engine.scenemanager.scene.load.failed": "场景文件加载失败，将创建空场景。文件路径：",
+		"engine.scenemanager.scene.switch.end": "场景切换完成。切换目标：",
+		"engine.scenemanager.scene.switch.start": "场景切换开始。切换目标：",
 		"engine.scenemanager.scenelist.loaded": "已加载场景列表。文件路径：",
 
+		//--------- engine.screenbuffer ---------//
+		"engine.screenbuffer.initialize.failed.doublebuffer": "ScreenBuffer初始化失败。双缓冲资源的创建失败。尺寸：",
+		"engine.screenbuffer.initialize.failed.nodirectxcommon": "ScreenBuffer初始化失败。DirectXCommon未设置。",
+		"engine.screenbuffer.initialize.failed.noslot": "ScreenBuffer初始化失败。无法获取命令对象插槽。尺寸：",
+		"engine.screenbuffer.initialize.failed.previewbuffer": "ScreenBuffer初始化失败。预览缓冲区的创建失败。尺寸：",
+
 		//--------- engine.screenbufferobject ---------//
+		"engine.screenbufferobject.loadfromjson.carried": "已从继承池中直接继承了已有的ScreenBuffer实例。名称(指针) 尺寸：",
+		"engine.screenbufferobject.loadfromjson.recreated": "由于尺寸不一致，已重新创建了新的ScreenBuffer实例。名称(指针) 尺寸：",
+		"engine.screenbufferobject.loadfromjson.reused": "直接复用了Initialize()后创建的临时ScreenBuffer实例。名称(指针) 尺寸：",
 		"engine.screenbufferobject.screenshot.failed": "截图保存失败。",
 
 		//--------- engine.script ---------//
@@ -2315,6 +2343,11 @@
 		"engine.settings.window.initialtitle": "初始窗口标题：",
 		"engine.settings.window.initialwidth": "初始窗口宽度：",
 		"engine.settings.window.section": "窗口设置",
+
+		//--------- engine.shadowmapbuffer ---------//
+		"engine.shadowmapbuffer.initialize.failed.depth": "ShadowMapBuffer初始化失败。深度缓冲区的创建失败。尺寸：",
+		"engine.shadowmapbuffer.initialize.failed.nodirectxcommon": "ShadowMapBuffer初始化失败。DirectXCommon未设置。",
+		"engine.shadowmapbuffer.initialize.failed.noslot": "ShadowMapBuffer初始化失败。无法获取命令对象插槽。尺寸：",
 
 		//--------- engine.texture ---------//
 		"engine.texture.loading.failed.loadfile": "纹理加载失败。文件读取失败。文件路径：",

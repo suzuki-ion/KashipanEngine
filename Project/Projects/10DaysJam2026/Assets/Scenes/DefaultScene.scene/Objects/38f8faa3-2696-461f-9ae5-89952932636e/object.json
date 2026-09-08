@@ -67,7 +67,7 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": ""
+                    "tag": "Bullet"
                 },
                 "type": "Box2DCollider"
             },
@@ -90,6 +90,17 @@
                     "tag": ""
                 },
                 "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "9a5fdddd-94c7-40bf-baf6-d62c0727a66c"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
             },
             {
                 "data": {
@@ -143,6 +154,7 @@
         "isActive": true,
         "name": "WallEnemyBullet",
         "objectID": "38f8faa3-2696-461f-9ae5-89952932636e",
+        "prefabNodeID": "e19e40d6-6765-48b1-af34-6dad5370bf3c",
         "tag": ""
     },
     "siblingIndex": 12833

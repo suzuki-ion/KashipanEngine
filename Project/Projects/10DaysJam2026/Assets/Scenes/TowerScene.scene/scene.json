@@ -44,20 +44,29 @@
                 "tag": ""
             },
             "type": "SceneAudioPlayer"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1001,
+                "tag": ""
+            },
+            "type": "ScenePreTransform"
         }
     ],
     "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",
     "sceneName": "TowerScene",
     "sceneVariables": [
         {
-            "key": "testFloat",
-            "type": "Float",
-            "value": 0.0
-        },
-        {
             "key": "isDialogueActive",
             "type": "Bool",
             "value": false
+        },
+        {
+            "key": "testFloat",
+            "type": "Float",
+            "value": 0.0
         },
         {
             "key": "testString",

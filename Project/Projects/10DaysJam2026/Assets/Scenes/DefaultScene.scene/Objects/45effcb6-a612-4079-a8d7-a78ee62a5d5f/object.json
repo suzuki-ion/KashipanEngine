@@ -150,6 +150,17 @@
             {
                 "data": {
                     "customData": {
+                        "prefabID": "2da22e1c-8d8c-4a21-9122-d13c0ed831c0"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,
@@ -199,6 +210,7 @@
         "isActive": false,
         "name": "Boss2",
         "objectID": "45effcb6-a612-4079-a8d7-a78ee62a5d5f",
+        "prefabNodeID": "d64be3c9-146a-416b-bd8d-6ac3e1e89f86",
         "tag": ""
     },
     "siblingIndex": 17388

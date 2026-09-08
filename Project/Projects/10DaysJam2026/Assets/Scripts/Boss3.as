@@ -35,29 +35,29 @@ class Boss3 : ScriptComponentBehavior {
     [SerializeField, Tooltip("Bloodのプレハブ")]
     Object@ bloodPrefab;
 
-    [SerializeField, Tooltip("この攻撃全体で円形発射を連続して行う回数")]
+    [SerializeField, Tooltip("この攻撃全体で発射を連続して行う回数(バースト数)")]
     int bloodBurstCount = 5;
 
-    [SerializeField, Tooltip("1回の円形発射で配置するBloodの数")]
-    int bloodRingCount = 8;
-
-    [SerializeField, Tooltip("円の半径(中心点からBloodを配置する距離)")]
-    float bloodBurstRadius = 30.0f;
+    [SerializeField, Tooltip("1回の発射で放つBloodの数(方向数)。インスペクターで調整可能")]
+    int bloodDirectionCount = 3;
 
     [SerializeField, Tooltip("一斉発射時の速度(速め推奨)")]
     float bloodBurstSpeed = 260.0f;
 
-    [SerializeField, Tooltip("円上にBloodを1体ずつ生成する間隔(秒)")]
-    float bloodRingSpawnInterval = 0.05f;
+    [SerializeField, Tooltip("Bloodを1体ずつ生成する間隔(秒)")]
+    float bloodSpawnInterval = 0.05f;
 
-    [SerializeField, Tooltip("1回の円形発射が完了してから次の発射を始めるまでの間隔(秒)")]
+    [SerializeField, Tooltip("1回の発射が完了してから次の発射を始めるまでの間隔(秒)")]
     float bloodBurstInterval = 0.4f;
 
-    [SerializeField, Tooltip("プレイヤー周辺のどれくらいの範囲からランダムに中心点を選ぶか")]
-    float bloodCenterRandomRadius = 60.0f;
+    [SerializeField, Tooltip("ボスの中心座標からのBlood発射位置オフセット。下の方から出す場合はYをマイナスにする")]
+    Vector2 bloodSpawnOffset = Vector2(0.0f, -40.0f);
 
-    [SerializeField, Tooltip("Blood(の生成位置)をプレイヤーからどれだけ離すか(最低距離)")]
-    float bloodMinDistanceFromPlayer = 40.0f;
+    [SerializeField, Tooltip("Bloodが扇状に広がる角度の範囲(度)。0にすると全方向とも同じ向きに飛ぶ")]
+    float bloodFanAngle = 90.0f;
+
+    [SerializeField, Tooltip("扇の中心となる発射方向(度)。0=右、90=上、-90=下、180=左")]
+    float bloodFanCenterAngleDeg = -90.0f;
 
     [SerializeField, Tooltip("岩(中)のプレハブ")]
     Object@ rubbleMedium;
@@ -98,6 +98,12 @@ class Boss3 : ScriptComponentBehavior {
     [SerializeField, Tooltip("死亡エフェクトの生成間隔(秒)")]
     float deathEffectSpawnInterval = 0.15f;
 
+    [SerializeField, Tooltip("Boss3撃破後に出現させるFinalBossのプレハブ")]
+    Object@ finalBossPrefab;
+
+    [SerializeField, Tooltip("FinalBossの出現位置オフセット(ボスの上の方から出す場合はYをプラスにする)")]
+    Vector2 finalBossSpawnOffset = Vector2(0.0f, 60.0f);
+
     Boss3State state = Boss3State::Idle;
     Boss3State lastState = Boss3State::Idle;
     float stateTimer = 0.0f;
@@ -119,19 +125,22 @@ class Boss3 : ScriptComponentBehavior {
 
     // Blood攻撃の進行管理用
     int bloodBurstsFired = 0;
-    int ringSpawnedCount = 0;
-    float ringSpawnTimer = 0.0f;
+    int spawnedBloodCount = 0;
+    float bloodSpawnTimer = 0.0f;
     bool isWaitingNextBurst = false;
     float burstWaitTimer = 0.0f;
     Vector3 currentBurstCenter;
-    array<Object@> currentRingBlood;
-    array<float> currentRingAngle;
+    array<Object@> currentBurstBlood;
+    array<float> currentBurstAngle;
 
     // 死亡エフェクト管理用
     int spawnedEffectCount = 0;
     float deathEffectTimer = 0.0f;
     bool isAnimation = false;
     array<Object@> cloneEffects;
+
+    // FinalBoss出現管理用(二重出現防止)
+    bool finalBossSpawned = false;
 
     // 疑似乱数
     uint rngState = 88172645;
@@ -334,9 +343,32 @@ class Boss3 : ScriptComponentBehavior {
             allEffectsFinished = false; // まだ1つも生成されていない
         }
 
-        // 全てのエフェクトが生成され、かつ全て終了した場合にボスの姿を消す
+        // 全てのエフェクトが生成され、かつ全て終了した場合にボスの姿を消し、FinalBossを出現させる
         if (spawnedEffectCount >= deathEffectCount && allEffectsFinished) {
+            if (!finalBossSpawned) {
+                SpawnFinalBoss();
+                finalBossSpawned = true;
+            }
             GetOwnerObject().SetComponentsActiveExceptTransformAndScript(false);
+        }
+    }
+
+    // Boss3撃破後、FinalBossをBoss3の上部から出現させる
+    void SpawnFinalBoss() {
+        if (finalBossPrefab is null) return;
+
+        Object@ clone = GetScene().CloneObject(finalBossPrefab, "FinalBoss");
+        if (clone is null) return;
+
+        clone.SetActive(true);
+        Transform@ cloneTf = clone.GetTransform();
+        if (cloneTf !is null) {
+            Vector3 spawnPos = Vector3(
+                initialBossPos.x + finalBossSpawnOffset.x,
+                initialBossPos.y + finalBossSpawnOffset.y,
+                initialBossPos.z
+            );
+            cloneTf.SetTranslate(spawnPos);
         }
     }
 
@@ -407,13 +439,13 @@ class Boss3 : ScriptComponentBehavior {
     // Blood攻撃
     void StartBloodAttack() {
         bloodBurstsFired = 0;
-        ringSpawnedCount = 0;
-        ringSpawnTimer = 0.0f;
+        spawnedBloodCount = 0;
+        bloodSpawnTimer = 0.0f;
         isWaitingNextBurst = false;
         burstWaitTimer = 0.0f;
-        currentRingBlood.resize(0);
-        currentRingAngle.resize(0);
-        PickNewBurstCenter();
+        currentBurstBlood.resize(0);
+        currentBurstAngle.resize(0);
+        PickBloodSpawnPoint();
     }
 
     void UpdateBloodAttack() {
@@ -430,65 +462,50 @@ class Boss3 : ScriptComponentBehavior {
                 if (bloodBurstsFired >= bloodBurstCount) {
                     ChangeState(Boss3State::Idle);
                 } else {
-                    ringSpawnedCount = 0;
-                    currentRingBlood.resize(0);
-                    currentRingAngle.resize(0);
-                    PickNewBurstCenter();
+                    spawnedBloodCount = 0;
+                    currentBurstBlood.resize(0);
+                    currentBurstAngle.resize(0);
+                    PickBloodSpawnPoint();
                 }
             }
             return;
         }
 
-        if (ringSpawnedCount < bloodRingCount) {
-            // 円周上にBloodを1体ずつ生成していく
-            ringSpawnTimer += dt;
-            if (ringSpawnTimer >= bloodRingSpawnInterval) {
-                SpawnOneRingBlood(ringSpawnedCount);
-                ringSpawnedCount++;
-                ringSpawnTimer = 0.0f;
+        if (spawnedBloodCount < bloodDirectionCount) {
+            // Bloodを1体ずつ生成していく
+            bloodSpawnTimer += dt;
+            if (bloodSpawnTimer >= bloodSpawnInterval) {
+                SpawnOneBlood(spawnedBloodCount);
+                spawnedBloodCount++;
+                bloodSpawnTimer = 0.0f;
             }
         } else {
-            // 配置が完了したので全方向へ一斉発射
-            LaunchRingBlood();
+            // 配置が完了したので各方向へ一斉発射
+            LaunchBurstBlood();
             bloodBurstsFired++;
             isWaitingNextBurst = true;
             burstWaitTimer = 0.0f;
         }
     }
 
-    // プレイヤー周辺のランダムな点を、今回の円形発射の中心点として選ぶ
-    void PickNewBurstCenter() {
+    // ボスの下の方(bloodSpawnOffset分ずらした位置)を、今回の発射位置として選ぶ
+    void PickBloodSpawnPoint() {
         Vector3 basePos = initialBossPos;
-        if (player !is null) {
-            Transform@ pTf = player.GetTransform();
-            if (pTf !is null) basePos = pTf.GetTranslate();
-        }
-
-        float angle = RandomRange(0.0f, 6.28318f);
-
-        float minDist = bloodMinDistanceFromPlayer + bloodBurstRadius;
-        float maxDist = bloodCenterRandomRadius;
-        if (maxDist < minDist) maxDist = minDist;
-
-        float dist = RandomRange(minDist, maxDist);
+        Transform@ tf = GetTransform();
+        if (tf !is null) basePos = tf.GetTranslate();
 
         currentBurstCenter = Vector3(
-            basePos.x + Cos(angle) * dist,
-            basePos.y + Sin(angle) * dist,
+            basePos.x + bloodSpawnOffset.x,
+            basePos.y + bloodSpawnOffset.y,
             basePos.z
         );
     }
 
-    // 中心点を囲うようにBloodを1体だけ生成する
-    void SpawnOneRingBlood(int index) {
-        if (bloodPrefab is null || bloodRingCount <= 0) return;
+    // 発射位置にBloodを1体だけ生成する(この時点では全方向とも同じ位置に生成される)
+    void SpawnOneBlood(int index) {
+        if (bloodPrefab is null || bloodDirectionCount <= 0) return;
 
-        float angle = (6.28318f / float(bloodRingCount)) * float(index);
-        Vector3 spawnPos = Vector3(
-            currentBurstCenter.x + Cos(angle) * bloodBurstRadius,
-            currentBurstCenter.y + Sin(angle) * bloodBurstRadius,
-            currentBurstCenter.z
-        );
+        float angle = CalcFanAngle(index);
 
         Object@ clone = GetScene().CloneObject(bloodPrefab, "CloneBlood");
         if (clone is null) return;
@@ -496,20 +513,33 @@ class Boss3 : ScriptComponentBehavior {
         clone.SetActive(true);
         Transform@ cloneTf = clone.GetTransform();
         if (cloneTf !is null) {
-            cloneTf.SetTranslate(spawnPos);
+            cloneTf.SetTranslate(currentBurstCenter);
         }
 
-        currentRingBlood.insertLast(clone);
-        currentRingAngle.insertLast(angle);
+        currentBurstBlood.insertLast(clone);
+        currentBurstAngle.insertLast(angle);
     }
 
-    // 円周上に並んだBloodを、それぞれ中心点から外向きの方向へ一斉に発射する
-    void LaunchRingBlood() {
-        for (uint i = 0; i < currentRingBlood.length(); ++i) {
-            Object@ b = currentRingBlood[i];
+    // bloodDirectionCount本を、bloodFanCenterAngleDeg方向を中心にbloodFanAngle度の扇状に均等配分した角度(ラジアン)を求める
+    float CalcFanAngle(int index) {
+        const float degToRad = 3.14159265f / 180.0f;
+        float centerAngle = bloodFanCenterAngleDeg * degToRad;
+
+        if (bloodDirectionCount <= 1) return centerAngle;
+
+        float fanRad = bloodFanAngle * degToRad;
+        float startAngle = centerAngle - fanRad * 0.5f;
+        float step = fanRad / float(bloodDirectionCount - 1);
+        return startAngle + step * float(index);
+    }
+
+    // 発射位置に並んだBloodを、それぞれ扇状の方向へ一斉に発射する
+    void LaunchBurstBlood() {
+        for (uint i = 0; i < currentBurstBlood.length(); ++i) {
+            Object@ b = currentBurstBlood[i];
             if (b is null) continue;
 
-            float angle = currentRingAngle[i];
+            float angle = currentBurstAngle[i];
             Vector2 vel = Vector2(Cos(angle) * bloodBurstSpeed, Sin(angle) * bloodBurstSpeed);
 
             ScriptComponent@ sc;

@@ -103,6 +103,17 @@
             {
                 "data": {
                     "customData": {
+                        "prefabID": "09775c25-b862-46ac-80a4-6dbb03e33bcc"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,
@@ -152,6 +163,7 @@
         "isActive": false,
         "name": "RubbleM",
         "objectID": "7e90c5d6-e37b-4420-942f-bc4530d20094",
+        "prefabNodeID": "d33edddd-b93e-49c3-922f-a57706e6fd09",
         "tag": ""
     },
     "siblingIndex": 17333

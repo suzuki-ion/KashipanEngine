@@ -60,7 +60,7 @@ class HeartItem : ScriptComponentBehavior {
 
     void OnCollisionEnter(const HitInfo &in hit) {
         if (hit.otherCollider.GetTag() == "Player") {
-            GetScene().DeleteObject(GetOwnerObject());
+            GetOwnerObject().SetActive(false);
         }
     }
 }

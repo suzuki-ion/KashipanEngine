@@ -100,6 +100,17 @@
             {
                 "data": {
                     "customData": {
+                        "prefabID": "10be4b29-2663-40d3-adb4-ece02159c9c3"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,
@@ -146,9 +157,10 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
+        "isActive": false,
         "name": "Blood",
         "objectID": "fc580a6e-415a-4780-b03c-4c33e4f7a4c0",
+        "prefabNodeID": "8da5d217-6745-482e-90c2-293dc0148d84",
         "tag": ""
     },
     "siblingIndex": 17481

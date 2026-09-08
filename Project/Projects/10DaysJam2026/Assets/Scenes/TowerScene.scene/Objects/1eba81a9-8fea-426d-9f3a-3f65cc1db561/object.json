@@ -4,7 +4,6 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -12,13 +11,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 16.0,
-                            "y": 16.0,
+                            "x": 32.0,
+                            "y": 6.0,
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 416.505126953125,
-                            "y": 272.8738708496094,
+                            "x": 433.3175964355469,
+                            "y": 147.83523559570313,
                             "z": 0.0
                         }
                     },
@@ -42,7 +41,7 @@
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "App/Sprite/Object/chest.png"
+                        "textureAssetPath": "App/Sprite/Object/moveScaffold.png"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -54,15 +53,63 @@
                 "data": {
                     "customData": {
                         "fields": {
-                            "floorOffset": -8.0,
-                            "isOpen": false,
-                            "itemOriginal": "5fa1adc8-6935-4cd2-90ff-485b3d030dc1",
-                            "maxSpawnForceY": 100.0,
-                            "minSpawnForceY": 40.0,
-                            "spawnCount": 5,
-                            "spawnForceX": 60.0
+                            "currentVelocity": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "loop": true,
+                            "loopBackDuration": 1.0,
+                            "loopBackEaseType": 0,
+                            "loopBackWaitDuration": 0.0,
+                            "points": [
+                                {
+                                    "duration": 1.0,
+                                    "easeType": 0,
+                                    "offset": {
+                                        "x": 0.0,
+                                        "y": 32.0,
+                                        "z": 0.0
+                                    },
+                                    "rotateOffset": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "waitDuration": 0.0
+                                },
+                                {
+                                    "duration": 1.0,
+                                    "easeType": 0,
+                                    "offset": {
+                                        "x": 32.0,
+                                        "y": 32.0,
+                                        "z": 0.0
+                                    },
+                                    "rotateOffset": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "waitDuration": 0.0
+                                },
+                                {
+                                    "duration": 1.0,
+                                    "easeType": 0,
+                                    "offset": {
+                                        "x": 32.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "rotateOffset": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "waitDuration": 0.0
+                                }
+                            ]
                         },
-                        "scriptPath": "Assets\\Scripts\\HeartChest.as"
+                        "scriptPath": "Assets/Scripts/MoveGroundPath.as"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -72,25 +119,12 @@
             },
             {
                 "data": {
-                    "customData": {
-                        "fields": {
-                            "frameCount": 2,
-                            "frameInterval": 0.15000000596046448,
-                            "isLoop": false,
-                            "playOnStart": false,
-                            "startRow": 0,
-                            "uvStep": {
-                                "x": 0.5,
-                                "y": 1.0
-                            }
-                        },
-                        "scriptPath": "Assets\\Scripts\\SpriteAnimator.as"
-                    },
+                    "customData": {},
                     "isActive": true,
                     "priority": 1,
-                    "tag": "AnimatorSC"
+                    "tag": ""
                 },
-                "type": "ScriptComponent"
+                "type": "PreTransform"
             },
             {
                 "data": {
@@ -101,7 +135,7 @@
                             "y": 0.0
                         },
                         "continuousDetection": false,
-                        "isTrigger": true,
+                        "isTrigger": false,
                         "size": {
                             "x": 1.0,
                             "y": 1.0
@@ -120,14 +154,14 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": "Chest"
+                    "tag": ""
                 },
                 "type": "Box2DCollider"
             },
             {
                 "data": {
                     "customData": {
-                        "prefabID": "b94e13bd-0281-4097-b7eb-de28a9ace5f8"
+                        "prefabID": "fa9b4734-d936-4ed2-a961-a1e37946de76"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -157,8 +191,8 @@
                         },
                         "instanceUvRotation": 0.0,
                         "instanceUvScale": {
-                            "x": 0.5,
-                            "y": 1.0
+                            "x": 1.0,
+                            "y": 0.5
                         },
                         "instanceUvTranslate": {
                             "x": 0.0,
@@ -185,10 +219,10 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Chest_Heart",
-        "objectID": "28da754c-2b25-45b9-a91c-ffebfc442e8d",
-        "prefabNodeID": "0817d286-7cb2-4039-94f5-0e25d807e09b",
+        "name": "MoveFloor",
+        "objectID": "1eba81a9-8fea-426d-9f3a-3f65cc1db561",
+        "prefabNodeID": "125672e6-c105-4726-8d87-a39a27b3c7ff",
         "tag": ""
     },
-    "siblingIndex": 28000
+    "siblingIndex": 29000
 }

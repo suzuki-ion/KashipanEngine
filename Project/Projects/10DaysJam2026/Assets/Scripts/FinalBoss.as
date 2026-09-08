@@ -37,6 +37,35 @@ class FinalBoss : ScriptComponentBehavior {
     [SerializeField, Tooltip("攻撃と攻撃の間の待機時間(秒)")]
     float idleDuration = 1.0f;
 
+    [Header("HP・ダメージ演出・死亡演出")]
+
+    [SerializeField, Tooltip("最大HP")]
+    float maxHp = 100.0f;
+
+    [SerializeField, Tooltip("HP")]
+    float hp = maxHp;
+
+    [SerializeField, Tooltip("ダメージを受けた際の色変化時間(秒)")]
+    float damageFlashDuration = 0.1f;
+
+    [SerializeField, Tooltip("ダメージ時の色")]
+    Vector4 damageColor = Vector4(10.0f, 10.0f, 10.0f, 1.0f);
+
+    [SerializeField, Tooltip("通常時の色")]
+    Vector4 normalColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+
+    [SerializeField, Tooltip("死亡エフェクトのプレハブ")]
+    Object@ deathEffect;
+
+    [SerializeField, Tooltip("死亡エフェクトの発生数")]
+    int deathEffectCount = 5;
+
+    [SerializeField, Tooltip("死亡エフェクトの散らばる範囲(半径)")]
+    float deathEffectSpread = 50.0f;
+
+    [SerializeField, Tooltip("死亡エフェクトの生成間隔(秒)")]
+    float deathEffectSpawnInterval = 0.15f;
+
     [Header("1: 後退ジャンプ+針")]
 
     [SerializeField, Tooltip("針のオブジェクト")]
@@ -74,6 +103,9 @@ class FinalBoss : ScriptComponentBehavior {
     [SerializeField, Tooltip("下段攻撃の最大長さ")]
     float lowAttackMaxLength = 200.0f;
 
+    [SerializeField, Tooltip("下段攻撃の位置(Xオフセット。向きに応じて前後します)")]
+    float lowAttackOffsetX = 0.0f;
+
     [SerializeField, Tooltip("下段攻撃の高さ(足元付近。ボス基準のYオフセット)")]
     float lowAttackHeightOffset = -10.0f;
 
@@ -93,6 +125,9 @@ class FinalBoss : ScriptComponentBehavior {
 
     [SerializeField, Tooltip("上段攻撃の最大長さ")]
     float highAttackMaxLength = 200.0f;
+
+    [SerializeField, Tooltip("上段攻撃の位置(Xオフセット。向きに応じて前後します)")]
+    float highAttackOffsetX = 0.0f;
 
     [SerializeField, Tooltip("上段攻撃の高さ(ジャンプ中のプレイヤーに当たる高さ。ボス基準のYオフセット)")]
     float highAttackHeightOffset = 40.0f;
@@ -125,7 +160,10 @@ class FinalBoss : ScriptComponentBehavior {
     [SerializeField, Tooltip("突進にかかる時間(秒)")]
     float dashDuration = 0.4f;
 
-    [SerializeField, Tooltip("プレイヤーの位置からどれだけ通り過ぎるか")]
+    [SerializeField, Tooltip("固定突進距離 (0より大きい場合、プレイヤー位置に関係なくこの距離を突進)")]
+    float dashDistance = 0.0f;
+
+    [SerializeField, Tooltip("プレイヤーの位置からどれだけ通り過ぎるか (dashDistanceが0の時のみ使用)")]
     float dashOvershoot = 30.0f;
 
     [Header("着地")]
@@ -180,12 +218,28 @@ class FinalBoss : ScriptComponentBehavior {
     [SerializeField]
     int animFramesFloat = 1;
 
+    [SerializeField, Tooltip("「死亡」の行番号/コマ数")]
+    int animRowDead = 9;
+    [SerializeField]
+    int animFramesDead = 1;
+
     [Header("押し戻し設定")]
     [SerializeField, Tooltip("押し戻しを行わない相手のタグ一覧")]
     array<string>@ pushBackExcludeTags;
 
     Box2DCollider@ col;
     CharacterController2D@ controller;
+    SpriteRenderer@ sprite;
+
+    // ダメージ演出管理用
+    float damageFlashTimer = 0.0f;
+    bool isFlashing = false;
+
+    // 死亡演出管理用
+    bool isAnimation = false;
+    int spawnedEffectCount = 0;
+    float deathEffectTimer = 0.0f;
+    array<Object@> cloneEffects;
 
     FinalBossState state = FinalBossState::Idle;
     float stateTimer = 0.0f;
@@ -229,6 +283,10 @@ class FinalBoss : ScriptComponentBehavior {
         }
 
         GetComponent(@col);
+        GetComponent(@sprite);
+        if (sprite !is null) {
+            sprite.SetInstanceColor(normalColor);
+        }
         if (GetComponent(@controller)) {
             if (col !is null) {
                 controller.SetSelectedCollider(col);
@@ -253,7 +311,26 @@ class FinalBoss : ScriptComponentBehavior {
         GetScene().GetVariable("isDialogueActive", isDialogueActive);
         if (isDialogueActive) return;
 
-        if (state == FinalBossState::Dead) return;
+        // ダメージ時の色点滅処理
+        if (isFlashing) {
+            damageFlashTimer -= GetDeltaTime();
+            if (damageFlashTimer <= 0.0f) {
+                isFlashing = false;
+                if (sprite !is null) {
+                    sprite.SetInstanceColor(normalColor);
+                }
+            }
+        }
+
+        // HPが尽きたら死亡状態へ移行
+        if (state != FinalBossState::Dead && hp <= 0.0f) {
+            ChangeState(FinalBossState::Dead);
+        }
+
+        if (state == FinalBossState::Dead) {
+            UpdateDeathAnimation();
+            return;
+        }
 
         FacePlayer();
         stateTimer += GetDeltaTime();
@@ -416,11 +493,11 @@ class FinalBoss : ScriptComponentBehavior {
                 break;
 
             case FinalBossState::LowAttackExtend:
-                StartExtendAttack(lowAttack, lowAttackHeightOffset, lowAttackMaxLength);
+                StartExtendAttack(lowAttack, lowAttackOffsetX, lowAttackHeightOffset, lowAttackMaxLength);
                 break;
 
             case FinalBossState::HighAttackExtend:
-                StartExtendAttack(highAttack, highAttackHeightOffset, highAttackMaxLength);
+                StartExtendAttack(highAttack, highAttackOffsetX, highAttackHeightOffset, highAttackMaxLength);
                 break;
 
             case FinalBossState::HoverCharge:
@@ -453,16 +530,26 @@ class FinalBoss : ScriptComponentBehavior {
 
             case FinalBossState::DashRush: {
                 dashStartPos = curPos;
-                float targetX = curPos.x;
                 int dir = 1;
                 if (player !is null) {
                     Transform@ pTf = player.GetTransform();
-                    if (pTf !is null) {
-                        targetX = pTf.GetTranslate().x;
-                        dir = (targetX >= curPos.x) ? 1 : -1;
-                    }
+                    if (pTf !is null && pTf.GetTranslate().x < curPos.x) dir = -1;
                 }
-                dashTargetPos = Vector3(targetX + float(dir) * dashOvershoot, curPos.y, curPos.z);
+
+                float targetX = curPos.x;
+                // 固定突進距離が設定されている場合
+                if (dashDistance > 0.0f) {
+                    targetX = curPos.x + float(dir) * dashDistance;
+                } else {
+                    // プレイヤー位置を基準にする場合
+                    if (player !is null) {
+                        Transform@ pTf = player.GetTransform();
+                        if (pTf !is null) targetX = pTf.GetTranslate().x;
+                    }
+                    targetX += float(dir) * dashOvershoot;
+                }
+                
+                dashTargetPos = Vector3(targetX, curPos.y, curPos.z);
                 
                 // 突進速度を設定
                 velocity.x = (dashTargetPos.x - dashStartPos.x) / dashDuration;
@@ -519,7 +606,7 @@ class FinalBoss : ScriptComponentBehavior {
     }
 
     // 伸びる攻撃
-    void StartExtendAttack(Object@ prefab, float heightOffset, float maxLength) {
+    void StartExtendAttack(Object@ prefab, float offsetX, float heightOffset, float maxLength) {
         if (prefab is null) return;
 
         Transform@ tf = GetTransform();
@@ -537,7 +624,8 @@ class FinalBoss : ScriptComponentBehavior {
         currentExtendAttackObj.SetActive(true);
 
         extendAttackMaxLength = maxLength;
-        extendAttackBasePos = Vector3(basePos.x, basePos.y + heightOffset, basePos.z);
+        // XオフセットとYオフセットを考慮したベース位置を算出
+        extendAttackBasePos = Vector3(basePos.x + float(extendAttackDirection) * offsetX, basePos.y + heightOffset, basePos.z);
 
         UpdateExtendAttackScale(0.0f);
     }
@@ -647,6 +735,10 @@ class FinalBoss : ScriptComponentBehavior {
                 PlayAnim(animRowDash, animFramesDash);
                 break;
 
+            case FinalBossState::Dead:
+                PlayAnim(animRowDead, animFramesDead);
+                break;
+
             default:
                 break;
         }
@@ -662,6 +754,98 @@ class FinalBoss : ScriptComponentBehavior {
                     scripts[i].CallMethod("SetFrameCount", frameCount);
                 }
             }
+        }
+    }
+
+    // ダメージを受けた際の処理(弾などのOnCollisionEnter側から CallMethod("Damage", amount) で呼ばれる想定)
+    void Damage(float amount) {
+        if (state == FinalBossState::Dead) return;
+        hp -= amount;
+
+        // ダメージ演出の開始(色フラッシュ)
+        isFlashing = true;
+        damageFlashTimer = damageFlashDuration;
+        if (sprite !is null) {
+            sprite.SetInstanceColor(damageColor);
+        }
+    }
+
+    // 死亡演出(死亡エフェクトを円状に順番に生成し、全て終わったらボスの姿を消す)
+    void UpdateDeathAnimation() {
+        if (!isAnimation) {
+            isAnimation = true;
+            deathEffectTimer = 0.0f;
+            spawnedEffectCount = 0; // 生成数の初期化
+        }
+
+        deathEffectTimer += GetDeltaTime();
+
+        // エフェクトを順番に生成
+        if (spawnedEffectCount < deathEffectCount) {
+            // 経過時間が生成タイミングに達したら生成
+            if (deathEffectTimer >= float(spawnedEffectCount) * deathEffectSpawnInterval) {
+                Transform@ tf = GetTransform();
+                Vector3 centerPos = (tf !is null) ? tf.GetTranslate() : initialBossPos;
+
+                Object@ clone = GetScene().CloneObject(deathEffect, "CloneDeathEffect_" + spawnedEffectCount);
+                if (clone !is null) {
+                    Transform@ cloneTf = clone.GetTransform();
+                    if (cloneTf !is null) {
+                        cloneTf.SetScale(Vector3(32.0f, 32.0f, 1.0f));
+                    }
+
+                    ScriptComponent@ sc;
+                    if (clone.GetComponent(@sc)) {
+                        sc.CallMethod("StartAnimation");
+
+                        float angle = 6.28318f * (float(spawnedEffectCount) / float(deathEffectCount));
+                        float r = deathEffectSpread * (spawnedEffectCount % 2 == 0 ? 1.0f : 0.6f);
+
+                        Vector3 spawnPos = Vector3(
+                            centerPos.x + Cos(angle) * r,
+                            centerPos.y + Sin(angle) * r,
+                            centerPos.z - 0.1f
+                        );
+
+                        sc.SetVariable("pos", spawnPos);
+                    }
+                    cloneEffects.insertLast(clone);
+                }
+                spawnedEffectCount++;
+            }
+        }
+
+        // アニメーション更新処理
+        bool allEffectsFinished = true;
+        if (cloneEffects.length() > 0) {
+            float deathEffectDuration = 0.6f;
+
+            for (uint i = 0; i < cloneEffects.length(); i++) {
+                Object@ clone = cloneEffects[i];
+                if (clone !is null && clone.IsActive()) {
+                    ScriptComponent@ sc;
+                    if (clone.GetComponent(@sc)) {
+                        sc.CallMethod("UpdateAnimation");
+                    }
+
+                    // 各エフェクトが生成されてからの経過時間
+                    float effectAge = deathEffectTimer - (float(i) * deathEffectSpawnInterval);
+
+                    // アニメーションが終了したら非アクティブ化
+                    if (effectAge >= deathEffectDuration) {
+                        clone.SetActive(false);
+                    } else {
+                        allEffectsFinished = false; // まだ終わっていないエフェクトがある
+                    }
+                }
+            }
+        } else {
+            allEffectsFinished = false; // まだ1つも生成されていない
+        }
+
+        // 全てのエフェクトが生成され、かつ全て終了した場合にボスの姿を消す
+        if (spawnedEffectCount >= deathEffectCount && allEffectsFinished) {
+            GetOwnerObject().SetComponentsActiveExceptTransformAndScript(false);
         }
     }
 

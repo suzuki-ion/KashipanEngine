@@ -1,5 +1,5 @@
 {
-    "name": "WallEnemyBullet",
+    "name": "Ovary",
     "objects": [
         {
             "object": {
@@ -14,18 +14,18 @@
                                     "z": 0.0
                                 },
                                 "scale": {
-                                    "x": 4.0,
-                                    "y": 4.0,
+                                    "x": 32.0,
+                                    "y": 32.0,
                                     "z": 1.0
                                 },
                                 "translate": {
-                                    "x": 0.0,
-                                    "y": 0.0,
+                                    "x": 899.0,
+                                    "y": 167.0,
                                     "z": 0.0
                                 }
                             },
                             "isActive": true,
-                            "priority": 1,
+                            "priority": 0,
                             "tag": ""
                         },
                         "type": "Transform"
@@ -33,13 +33,24 @@
                     {
                         "data": {
                             "customData": {
-                                "meshAssetPath": ""
+                                "meshAssetPath": "PrimitiveMesh-Rect2D"
                             },
                             "isActive": true,
                             "priority": 1,
                             "tag": ""
                         },
                         "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "textureAssetPath": "App/Sprite/Boss/ovary.png"
+                            },
+                            "isActive": true,
+                            "priority": 2,
+                            "tag": ""
+                        },
+                        "type": "TextureSource"
                     },
                     {
                         "data": {
@@ -62,14 +73,14 @@
                                 ],
                                 "syncRotation": true,
                                 "syncScale": [
-                                    false,
-                                    false,
+                                    true,
+                                    true,
                                     false
                                 ]
                             },
                             "isActive": true,
-                            "priority": 1,
-                            "tag": "Bullet"
+                            "priority": 3,
+                            "tag": "Enemy"
                         },
                         "type": "Box2DCollider"
                     },
@@ -77,19 +88,53 @@
                         "data": {
                             "customData": {
                                 "fields": {
-                                    "damageAmount": 1.0,
-                                    "pos": {
-                                        "x": 0.0,
-                                        "y": 0.0,
-                                        "z": 0.0
+                                    "boss": "95dcc865-6e8c-434a-a994-a5fb66424538",
+                                    "damageColor": {
+                                        "w": 1.0,
+                                        "x": 10.0,
+                                        "y": 10.0,
+                                        "z": 10.0
                                     },
-                                    "speed": 50.0
+                                    "damageFlashDuration": 0.10000000149011612,
+                                    "deathDelay": 0.30000001192092896,
+                                    "isLeftOvary": true,
+                                    "maxHP": 20.0,
+                                    "moveAmplitude": 15.0,
+                                    "moveSpeed": 2.0,
+                                    "normalColor": {
+                                        "w": 1.0,
+                                        "x": 1.0,
+                                        "y": 1.0,
+                                        "z": 1.0
+                                    }
                                 },
-                                "scriptPath": "Assets\\Scripts\\EnemyBullet.as"
+                                "scriptPath": "Assets\\Scripts\\Ovary.as"
                             },
                             "isActive": true,
-                            "priority": 1,
+                            "priority": 4,
                             "tag": ""
+                        },
+                        "type": "ScriptComponent"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "fields": {
+                                    "frameCount": 6,
+                                    "frameInterval": 0.15000000596046448,
+                                    "isLoop": true,
+                                    "playOnStart": true,
+                                    "startRow": 0,
+                                    "uvStep": {
+                                        "x": 0.16660000383853912,
+                                        "y": 1.0
+                                    }
+                                },
+                                "scriptPath": "Assets\\Scripts\\SpriteAnimator.as"
+                            },
+                            "isActive": true,
+                            "priority": 5,
+                            "tag": "AnimatorSC"
                         },
                         "type": "ScriptComponent"
                     },
@@ -115,7 +160,7 @@
                                 },
                                 "instanceUvRotation": 0.0,
                                 "instanceUvScale": {
-                                    "x": 1.0,
+                                    "x": 0.16660000383853912,
                                     "y": 1.0
                                 },
                                 "instanceUvTranslate": {
@@ -129,12 +174,12 @@
                                     "y": 0.5
                                 },
                                 "pixelSnapOutsetPixels": 0.0,
-                                "pixelSnapping": true,
+                                "pixelSnapping": false,
                                 "renderPriority": 0,
                                 "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                             },
                             "isActive": true,
-                            "priority": 900,
+                            "priority": 6,
                             "tag": ""
                         },
                         "type": "SpriteRenderer"
@@ -143,14 +188,14 @@
                 "editorOnly": false,
                 "hiddenFromEditorTarget": false,
                 "isActive": true,
-                "name": "WallEnemyBullet",
-                "objectID": "38f8faa3-2696-461f-9ae5-89952932636e",
-                "prefabNodeID": "e19e40d6-6765-48b1-af34-6dad5370bf3c",
+                "name": "Ovary",
+                "objectID": "b03fef43-e9fd-4c32-b247-732f786306d6",
+                "prefabNodeID": "2d17f565-8fc5-4ef2-9326-f7f865ec7e77",
                 "tag": ""
             },
             "parentIndex": -1
         }
     ],
     "prefab": true,
-    "prefabID": "9a5fdddd-94c7-40bf-baf6-d62c0727a66c"
+    "prefabID": "d885dd82-26d4-451f-ab85-85d44ff4b7d9"
 }

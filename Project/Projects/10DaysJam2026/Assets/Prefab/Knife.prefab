@@ -1,5 +1,5 @@
 {
-    "name": "WallEnemyBullet",
+    "name": "Knife",
     "objects": [
         {
             "object": {
@@ -14,18 +14,18 @@
                                     "z": 0.0
                                 },
                                 "scale": {
-                                    "x": 4.0,
-                                    "y": 4.0,
+                                    "x": 8.0,
+                                    "y": 8.0,
                                     "z": 1.0
                                 },
                                 "translate": {
-                                    "x": 0.0,
-                                    "y": 0.0,
+                                    "x": -1000.0,
+                                    "y": 39.961402893066406,
                                     "z": 0.0
                                 }
                             },
                             "isActive": true,
-                            "priority": 1,
+                            "priority": 0,
                             "tag": ""
                         },
                         "type": "Transform"
@@ -33,7 +33,7 @@
                     {
                         "data": {
                             "customData": {
-                                "meshAssetPath": ""
+                                "meshAssetPath": "PrimitiveMesh-Rect2D"
                             },
                             "isActive": true,
                             "priority": 1,
@@ -62,13 +62,13 @@
                                 ],
                                 "syncRotation": true,
                                 "syncScale": [
-                                    false,
-                                    false,
+                                    true,
+                                    true,
                                     false
                                 ]
                             },
                             "isActive": true,
-                            "priority": 1,
+                            "priority": 2,
                             "tag": "Bullet"
                         },
                         "type": "Box2DCollider"
@@ -76,19 +76,54 @@
                     {
                         "data": {
                             "customData": {
-                                "fields": {
-                                    "damageAmount": 1.0,
-                                    "pos": {
-                                        "x": 0.0,
-                                        "y": 0.0,
-                                        "z": 0.0
-                                    },
-                                    "speed": 50.0
-                                },
-                                "scriptPath": "Assets\\Scripts\\EnemyBullet.as"
+                                "textureAssetPath": "App/Sprite/Enemy/knife.png"
                             },
                             "isActive": true,
-                            "priority": 1,
+                            "priority": 3,
+                            "tag": ""
+                        },
+                        "type": "TextureSource"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "fields": {
+                                    "damageAmount": 1.0,
+                                    "gravity": 300.0,
+                                    "initialSpeedX": 60.0,
+                                    "initialSpeedY": 150.0,
+                                    "pos": {
+                                        "x": -1000.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    }
+                                },
+                                "scriptPath": "Assets\\Scripts\\Knife.as"
+                            },
+                            "isActive": true,
+                            "priority": 4,
+                            "tag": ""
+                        },
+                        "type": "ScriptComponent"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "fields": {
+                                    "frameCount": 4,
+                                    "frameInterval": 0.15000000596046448,
+                                    "isLoop": true,
+                                    "playOnStart": true,
+                                    "startRow": 0,
+                                    "uvStep": {
+                                        "x": 0.25,
+                                        "y": 1.0
+                                    }
+                                },
+                                "scriptPath": "Assets\\Scripts\\SpriteAnimator.as"
+                            },
+                            "isActive": true,
+                            "priority": 5,
                             "tag": ""
                         },
                         "type": "ScriptComponent"
@@ -115,7 +150,7 @@
                                 },
                                 "instanceUvRotation": 0.0,
                                 "instanceUvScale": {
-                                    "x": 1.0,
+                                    "x": 0.25,
                                     "y": 1.0
                                 },
                                 "instanceUvTranslate": {
@@ -129,12 +164,12 @@
                                     "y": 0.5
                                 },
                                 "pixelSnapOutsetPixels": 0.0,
-                                "pixelSnapping": true,
+                                "pixelSnapping": false,
                                 "renderPriority": 0,
                                 "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                             },
                             "isActive": true,
-                            "priority": 900,
+                            "priority": 6,
                             "tag": ""
                         },
                         "type": "SpriteRenderer"
@@ -143,14 +178,14 @@
                 "editorOnly": false,
                 "hiddenFromEditorTarget": false,
                 "isActive": true,
-                "name": "WallEnemyBullet",
-                "objectID": "38f8faa3-2696-461f-9ae5-89952932636e",
-                "prefabNodeID": "e19e40d6-6765-48b1-af34-6dad5370bf3c",
+                "name": "Knife",
+                "objectID": "55f62f6f-9193-4ba0-9075-2750394075bd",
+                "prefabNodeID": "d6bb9683-5aa2-4119-a1f3-6b5deb97e91f",
                 "tag": ""
             },
             "parentIndex": -1
         }
     ],
     "prefab": true,
-    "prefabID": "9a5fdddd-94c7-40bf-baf6-d62c0727a66c"
+    "prefabID": "1b207f21-277a-4125-af9e-b8933325f720"
 }

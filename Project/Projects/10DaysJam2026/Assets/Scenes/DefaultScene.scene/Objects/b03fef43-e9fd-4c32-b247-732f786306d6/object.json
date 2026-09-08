@@ -18,7 +18,7 @@
                         },
                         "translate": {
                             "x": 899.0,
-                            "y": 167.0,
+                            "y": 255.0,
                             "z": 0.0
                         }
                     },
@@ -38,6 +38,17 @@
                     "tag": ""
                 },
                 "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "d885dd82-26d4-451f-ab85-85d44ff4b7d9"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
             },
             {
                 "data": {
@@ -188,6 +199,7 @@
         "isActive": false,
         "name": "Ovary",
         "objectID": "b03fef43-e9fd-4c32-b247-732f786306d6",
+        "prefabNodeID": "2d17f565-8fc5-4ef2-9326-f7f865ec7e77",
         "tag": ""
     },
     "siblingIndex": 17462

@@ -1,5 +1,5 @@
 {
-    "name": "WallEnemyBullet",
+    "name": "RubbleS",
     "objects": [
         {
             "object": {
@@ -14,12 +14,12 @@
                                     "z": 0.0
                                 },
                                 "scale": {
-                                    "x": 4.0,
-                                    "y": 4.0,
+                                    "x": 8.0,
+                                    "y": 8.0,
                                     "z": 1.0
                                 },
                                 "translate": {
-                                    "x": 0.0,
+                                    "x": -1000.0,
                                     "y": 0.0,
                                     "z": 0.0
                                 }
@@ -33,7 +33,7 @@
                     {
                         "data": {
                             "customData": {
-                                "meshAssetPath": ""
+                                "meshAssetPath": "PrimitiveMesh-Rect2D"
                             },
                             "isActive": true,
                             "priority": 1,
@@ -62,30 +62,39 @@
                                 ],
                                 "syncRotation": true,
                                 "syncScale": [
-                                    false,
-                                    false,
+                                    true,
+                                    true,
                                     false
                                 ]
                             },
                             "isActive": true,
                             "priority": 1,
-                            "tag": "Bullet"
+                            "tag": "Enemy"
                         },
                         "type": "Box2DCollider"
                     },
                     {
                         "data": {
                             "customData": {
+                                "textureAssetPath": "App/Sprite/Boss/rubbleS.png"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "TextureSource"
+                    },
+                    {
+                        "data": {
+                            "customData": {
                                 "fields": {
                                     "damageAmount": 1.0,
-                                    "pos": {
-                                        "x": 0.0,
-                                        "y": 0.0,
-                                        "z": 0.0
-                                    },
-                                    "speed": 50.0
+                                    "destroyDelay": 0.5,
+                                    "dropDelay": 1.0,
+                                    "gravity": 200.0,
+                                    "lifeTime": 5.0
                                 },
-                                "scriptPath": "Assets\\Scripts\\EnemyBullet.as"
+                                "scriptPath": "Assets\\Scripts\\Rubble.as"
                             },
                             "isActive": true,
                             "priority": 1,
@@ -129,7 +138,7 @@
                                     "y": 0.5
                                 },
                                 "pixelSnapOutsetPixels": 0.0,
-                                "pixelSnapping": true,
+                                "pixelSnapping": false,
                                 "renderPriority": 0,
                                 "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                             },
@@ -143,14 +152,14 @@
                 "editorOnly": false,
                 "hiddenFromEditorTarget": false,
                 "isActive": true,
-                "name": "WallEnemyBullet",
-                "objectID": "38f8faa3-2696-461f-9ae5-89952932636e",
-                "prefabNodeID": "e19e40d6-6765-48b1-af34-6dad5370bf3c",
+                "name": "RubbleS",
+                "objectID": "d5a1df87-7e02-4164-bd53-c6a58e756183",
+                "prefabNodeID": "9eca364b-9c6c-4b5c-8462-8bd9439b5c7a",
                 "tag": ""
             },
             "parentIndex": -1
         }
     ],
     "prefab": true,
-    "prefabID": "9a5fdddd-94c7-40bf-baf6-d62c0727a66c"
+    "prefabID": "76303dfc-531a-4afe-8171-af4c00178c66"
 }

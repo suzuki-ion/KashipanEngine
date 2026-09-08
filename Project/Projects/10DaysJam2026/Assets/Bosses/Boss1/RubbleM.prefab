@@ -1,5 +1,5 @@
 {
-    "name": "WallEnemyBullet",
+    "name": "RubbleM",
     "objects": [
         {
             "object": {
@@ -14,12 +14,12 @@
                                     "z": 0.0
                                 },
                                 "scale": {
-                                    "x": 4.0,
-                                    "y": 4.0,
+                                    "x": 16.0,
+                                    "y": 16.0,
                                     "z": 1.0
                                 },
                                 "translate": {
-                                    "x": 0.0,
+                                    "x": -1000.0,
                                     "y": 0.0,
                                     "z": 0.0
                                 }
@@ -33,7 +33,7 @@
                     {
                         "data": {
                             "customData": {
-                                "meshAssetPath": ""
+                                "meshAssetPath": "PrimitiveMesh-Rect2D"
                             },
                             "isActive": true,
                             "priority": 1,
@@ -62,30 +62,39 @@
                                 ],
                                 "syncRotation": true,
                                 "syncScale": [
-                                    false,
-                                    false,
+                                    true,
+                                    true,
                                     false
                                 ]
                             },
                             "isActive": true,
                             "priority": 1,
-                            "tag": "Bullet"
+                            "tag": "Enemy"
                         },
                         "type": "Box2DCollider"
                     },
                     {
                         "data": {
                             "customData": {
+                                "textureAssetPath": "App/Sprite/Boss/rubbleM.png"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "TextureSource"
+                    },
+                    {
+                        "data": {
+                            "customData": {
                                 "fields": {
-                                    "damageAmount": 1.0,
-                                    "pos": {
-                                        "x": 0.0,
-                                        "y": 0.0,
-                                        "z": 0.0
-                                    },
-                                    "speed": 50.0
+                                    "damageAmount": 2.0,
+                                    "destroyDelay": 0.5,
+                                    "dropDelay": 1.0,
+                                    "gravity": 200.0,
+                                    "lifeTime": 5.0
                                 },
-                                "scriptPath": "Assets\\Scripts\\EnemyBullet.as"
+                                "scriptPath": "Assets\\Scripts\\Rubble.as"
                             },
                             "isActive": true,
                             "priority": 1,
@@ -129,7 +138,7 @@
                                     "y": 0.5
                                 },
                                 "pixelSnapOutsetPixels": 0.0,
-                                "pixelSnapping": true,
+                                "pixelSnapping": false,
                                 "renderPriority": 0,
                                 "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                             },
@@ -143,14 +152,14 @@
                 "editorOnly": false,
                 "hiddenFromEditorTarget": false,
                 "isActive": true,
-                "name": "WallEnemyBullet",
-                "objectID": "38f8faa3-2696-461f-9ae5-89952932636e",
-                "prefabNodeID": "e19e40d6-6765-48b1-af34-6dad5370bf3c",
+                "name": "RubbleM",
+                "objectID": "7e90c5d6-e37b-4420-942f-bc4530d20094",
+                "prefabNodeID": "d33edddd-b93e-49c3-922f-a57706e6fd09",
                 "tag": ""
             },
             "parentIndex": -1
         }
     ],
     "prefab": true,
-    "prefabID": "9a5fdddd-94c7-40bf-baf6-d62c0727a66c"
+    "prefabID": "46aa7300-65f0-477f-8c75-d400c060d320"
 }

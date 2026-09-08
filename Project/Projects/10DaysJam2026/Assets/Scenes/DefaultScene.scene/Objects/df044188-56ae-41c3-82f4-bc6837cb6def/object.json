@@ -125,6 +125,17 @@
             {
                 "data": {
                     "customData": {
+                        "prefabID": "346c7d38-40da-4021-b2fd-6f87a7ae1255"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,
@@ -174,6 +185,7 @@
         "isActive": false,
         "name": "Sickle",
         "objectID": "df044188-56ae-41c3-82f4-bc6837cb6def",
+        "prefabNodeID": "c186a765-3896-42a9-ae96-768fbe770af7",
         "tag": ""
     },
     "siblingIndex": 17444

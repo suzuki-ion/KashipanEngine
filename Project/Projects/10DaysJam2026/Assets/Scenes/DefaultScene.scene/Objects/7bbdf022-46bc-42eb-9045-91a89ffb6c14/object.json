@@ -107,6 +107,17 @@
             {
                 "data": {
                     "customData": {
+                        "prefabID": "e5132bf4-1a15-4386-9854-72bc9bd149ed"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,

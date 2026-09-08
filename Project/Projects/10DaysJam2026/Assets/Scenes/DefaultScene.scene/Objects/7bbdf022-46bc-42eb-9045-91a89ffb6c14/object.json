@@ -55,7 +55,7 @@
                     "customData": {
                         "fields": {
                             "frameCount": 3,
-                            "frameInterval": 0.15000000596046448,
+                            "frameInterval": 0.30000001192092896,
                             "isLoop": false,
                             "playOnStart": true,
                             "startRow": 0,

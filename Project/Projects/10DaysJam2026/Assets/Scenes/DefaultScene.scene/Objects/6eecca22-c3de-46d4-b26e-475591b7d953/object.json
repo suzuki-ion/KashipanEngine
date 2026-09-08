@@ -78,7 +78,7 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": ""
+                    "tag": "Enemy"
                 },
                 "type": "Box2DCollider"
             },
@@ -86,35 +86,57 @@
                 "data": {
                     "customData": {
                         "fields": {
-                            "dashChargeDuration": 0.6000000238418579,
+                            "animFramesAttackHigh": 9,
+                            "animFramesAttackLow": 9,
+                            "animFramesCharge": 2,
+                            "animFramesDash": 3,
+                            "animFramesFloat": 1,
+                            "animFramesIdle": 4,
+                            "animFramesJumpDown": 1,
+                            "animFramesJumpUp": 1,
+                            "animFramesLanding": 2,
+                            "animRowAttackHigh": 1,
+                            "animRowAttackLow": 2,
+                            "animRowCharge": 3,
+                            "animRowDash": 7,
+                            "animRowFloat": 8,
+                            "animRowIdle": 0,
+                            "animRowJumpDown": 5,
+                            "animRowJumpUp": 4,
+                            "animRowLanding": 6,
+                            "dashChargeDuration": 1.0,
                             "dashDuration": 0.4000000059604645,
                             "dashOvershoot": 30.0,
+                            "highAttack": "58558c58-0311-4f2f-bd6d-83af27df9ff8",
                             "highAttackExtendDuration": 0.30000001192092896,
                             "highAttackHeightOffset": 40.0,
                             "highAttackHoldDuration": 0.30000001192092896,
                             "highAttackMaxLength": 200.0,
-                            "highAttackPrefab": "7bbdf022-46bc-42eb-9045-91a89ffb6c14",
                             "highAttackTelegraphDuration": 0.5,
-                            "hoverChargeDuration": 0.6000000238418579,
-                            "hoverDiveDuration": 0.30000001192092896,
+                            "hoverChargeDuration": 1.0,
+                            "hoverDiveDuration": 0.5,
                             "hoverHeight": 80.0,
                             "hoverJumpDuration": 0.3499999940395355,
+                            "hoverLandDuration": 0.15000000596046448,
                             "hoverPauseDuration": 0.4000000059604645,
                             "hoverRepeatCount": 4,
                             "idleDuration": 1.0,
+                            "lowAttack": "58558c58-0311-4f2f-bd6d-83af27df9ff8",
                             "lowAttackExtendDuration": 0.30000001192092896,
                             "lowAttackHeightOffset": -10.0,
                             "lowAttackHoldDuration": 0.30000001192092896,
                             "lowAttackMaxLength": 200.0,
-                            "lowAttackPrefab": "7bbdf022-46bc-42eb-9045-91a89ffb6c14",
                             "lowAttackTelegraphDuration": 0.5,
-                            "needleActiveDuration": 0.5,
-                            "needlePrefab": "7bbdf022-46bc-42eb-9045-91a89ffb6c14",
-                            "needleTelegraphDuration": 0.6000000238418579,
+                            "needle": "7bbdf022-46bc-42eb-9045-91a89ffb6c14",
+                            "needleActiveDuration": 1.0,
+                            "needleTelegraphDuration": 0.800000011920929,
                             "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
+                            "pushBackExcludeTags": [
+                                "Player"
+                            ],
                             "retreatDistance": 80.0,
-                            "retreatJumpDuration": 0.4000000059604645,
-                            "retreatJumpHeight": 30.0
+                            "retreatJumpDuration": 0.6000000238418579,
+                            "retreatJumpHeight": 40.0
                         },
                         "scriptPath": "Assets\\Scripts\\FinalBoss.as"
                     },
@@ -129,13 +151,13 @@
                     "customData": {
                         "fields": {
                             "frameCount": 1,
-                            "frameInterval": 0.15000000596046448,
+                            "frameInterval": 0.10000000149011612,
                             "isLoop": true,
                             "playOnStart": true,
                             "startRow": 0,
                             "uvStep": {
-                                "x": 0.25,
-                                "y": 1.0
+                                "x": 0.11100000143051147,
+                                "y": 0.11100000143051147
                             }
                         },
                         "scriptPath": "Assets\\Scripts\\SpriteAnimator.as"

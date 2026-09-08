@@ -14,11 +14,12 @@ enum FinalBossState {
     HighAttackTelegraph,
     HighAttackExtend,
 
-    // タメ→(ジャンプ→空中静止→落下)を指定回数繰り返す
+    // タメ→(ジャンプ→空中静止→落下→着地)を指定回数繰り返す
     HoverCharge,
     HoverJump,
     HoverPause,
     HoverDive,
+    HoverLanding,
 
     // タメ→プレイヤー方向へ突進
     DashCharge,
@@ -38,8 +39,8 @@ class FinalBoss : ScriptComponentBehavior {
 
     [Header("1: 後退ジャンプ+針")]
 
-    [SerializeField, Tooltip("針のプレハブ")]
-    Object@ needlePrefab;
+    [SerializeField, Tooltip("針のオブジェクト")]
+    Object@ needle;
 
     [SerializeField, Tooltip("プレイヤーと逆方向へ後退する距離")]
     float retreatDistance = 80.0f;
@@ -58,8 +59,8 @@ class FinalBoss : ScriptComponentBehavior {
 
     [Header("2: 下段攻撃(要ジャンプ回避)")]
 
-    [SerializeField, Tooltip("下段攻撃のプレハブ")]
-    Object@ lowAttackPrefab;
+    [SerializeField, Tooltip("下段攻撃のオブジェクト")]
+    Object@ lowAttack;
 
     [SerializeField, Tooltip("下段攻撃の予備動作時間(秒)")]
     float lowAttackTelegraphDuration = 0.5f;
@@ -78,8 +79,8 @@ class FinalBoss : ScriptComponentBehavior {
 
     [Header("3: 上段攻撃(ジャンプで被弾)")]
 
-    [SerializeField, Tooltip("上段攻撃のプレハブ")]
-    Object@ highAttackPrefab;
+    [SerializeField, Tooltip("上段攻撃のオブジェクト")]
+    Object@ highAttack;
 
     [SerializeField, Tooltip("上段攻撃の予備動作時間(秒)")]
     float highAttackTelegraphDuration = 0.5f;
@@ -127,8 +128,70 @@ class FinalBoss : ScriptComponentBehavior {
     [SerializeField, Tooltip("プレイヤーの位置からどれだけ通り過ぎるか")]
     float dashOvershoot = 30.0f;
 
+    [Header("着地")]
+
+    [SerializeField, Tooltip("ホバー急降下で着地してから次の行動に移るまでの時間(秒)")]
+    float hoverLandDuration = 0.15f;
+
+    [Header("アニメーション(行番号・コマ数)")]
+
+    [SerializeField, Tooltip("「何もしない」の行番号/コマ数")]
+    int animRowIdle = 0;
+    [SerializeField]
+    int animFramesIdle = 4;
+
+    [SerializeField, Tooltip("「攻撃(上段)」の行番号/コマ数")]
+    int animRowAttackHigh = 1;
+    [SerializeField]
+    int animFramesAttackHigh = 9;
+
+    [SerializeField, Tooltip("「攻撃(下段)」の行番号/コマ数")]
+    int animRowAttackLow = 2;
+    [SerializeField]
+    int animFramesAttackLow = 9;
+
+    [SerializeField, Tooltip("「タメ」の行番号/コマ数")]
+    int animRowCharge = 3;
+    [SerializeField]
+    int animFramesCharge = 2;
+
+    [SerializeField, Tooltip("「ジャンプ(上昇)」の行番号/コマ数")]
+    int animRowJumpUp = 4;
+    [SerializeField]
+    int animFramesJumpUp = 1;
+
+    [SerializeField, Tooltip("「ジャンプ(下降)」の行番号/コマ数")]
+    int animRowJumpDown = 5;
+    [SerializeField]
+    int animFramesJumpDown = 1;
+
+    [SerializeField, Tooltip("「着地」の行番号/コマ数")]
+    int animRowLanding = 6;
+    [SerializeField]
+    int animFramesLanding = 2;
+
+    [SerializeField, Tooltip("「突進」の行番号/コマ数")]
+    int animRowDash = 7;
+    [SerializeField]
+    int animFramesDash = 3;
+
+    [SerializeField, Tooltip("「浮く」の行番号/コマ数")]
+    int animRowFloat = 8;
+    [SerializeField]
+    int animFramesFloat = 1;
+
+    [Header("押し戻し設定")]
+    [SerializeField, Tooltip("押し戻しを行わない相手のタグ一覧")]
+    array<string>@ pushBackExcludeTags;
+
+    Box2DCollider@ col;
+    CharacterController2D@ controller;
+
     FinalBossState state = FinalBossState::Idle;
     float stateTimer = 0.0f;
+
+    // 現在の移動速度
+    Vector3 velocity;
 
     // 攻撃の巡回順
     int attackIndex = 0;
@@ -140,6 +203,7 @@ class FinalBoss : ScriptComponentBehavior {
     Vector3 retreatTargetPos;
     Vector3 needleTargetPos;
     Object@ needleObj;
+    bool retreatIsDescending = false; // 後退ジャンプ中、下降に転じたらジャンプ(下降)アニメへ切り替える
 
     // 伸びる攻撃
     Object@ currentExtendAttackObj;
@@ -163,6 +227,24 @@ class FinalBoss : ScriptComponentBehavior {
         if (tf !is null) {
             initialBossPos = tf.GetTranslate();
         }
+
+        GetComponent(@col);
+        if (GetComponent(@controller)) {
+            if (col !is null) {
+                controller.SetSelectedCollider(col);
+            }
+            
+            // 押し戻しの除外タグを設定
+            controller.ClearIgnoredTags();
+            if (pushBackExcludeTags !is null) {
+                for (uint i = 0; i < pushBackExcludeTags.length(); ++i) {
+                    controller.AddIgnoredTag(pushBackExcludeTags[i]);
+                }
+            }
+        }
+
+        // 起動直後は浮くアニメーションにしておく。
+        PlayAnim(animRowFloat, animFramesFloat);
     }
 
     void Update() {
@@ -247,6 +329,16 @@ class FinalBoss : ScriptComponentBehavior {
                 UpdateHoverDive();
                 break;
 
+            case FinalBossState::HoverLanding:
+                if (stateTimer >= hoverLandDuration) {
+                    if (hoverRepeatIndex < hoverRepeatCount) {
+                        ChangeState(FinalBossState::HoverJump); // 2回目以降はタメなしで再ジャンプ
+                    } else {
+                        ChangeState(FinalBossState::Idle);
+                    }
+                }
+                break;
+
             // タメ→突進
             case FinalBossState::DashCharge:
                 if (stateTimer >= dashChargeDuration) {
@@ -257,6 +349,17 @@ class FinalBoss : ScriptComponentBehavior {
             case FinalBossState::DashRush:
                 UpdateDashRush();
                 break;
+        }
+
+        // 毎フレームの速度による移動処理
+        if (controller !is null) {
+            controller.Move(Vector2(velocity.x * GetDeltaTime(), velocity.y * GetDeltaTime()));
+        } else {
+            // controllerがない場合の簡易フォールバック
+            Transform@ tf = GetTransform();
+            if (tf !is null) {
+                tf.SetTranslate(tf.GetTranslate() + velocity * GetDeltaTime());
+            }
         }
     }
 
@@ -275,6 +378,9 @@ class FinalBoss : ScriptComponentBehavior {
     void ChangeState(FinalBossState newState) {
         state = newState;
         stateTimer = 0.0f;
+        velocity = Vector3(0.0f, 0.0f, 0.0f); // 状態遷移時に一旦速度をリセット
+
+        PlayAnimForState(state);
 
         Transform@ tf = GetTransform();
         Vector3 curPos = (tf !is null) ? tf.GetTranslate() : Vector3(0.0f, 0.0f, 0.0f);
@@ -282,12 +388,16 @@ class FinalBoss : ScriptComponentBehavior {
         switch (state) {
             case FinalBossState::RetreatJump: {
                 retreatStartPos = curPos;
+                retreatIsDescending = false;
                 int dir = 1;
                 if (player !is null) {
                     Transform@ pTf = player.GetTransform();
                     if (pTf !is null && pTf.GetTranslate().x > curPos.x) dir = -1; // プレイヤーと逆方向へ
                 }
                 retreatTargetPos = Vector3(curPos.x + float(dir) * retreatDistance, curPos.y, curPos.z);
+                
+                // X軸の等速移動速度を設定
+                velocity.x = (retreatTargetPos.x - retreatStartPos.x) / retreatJumpDuration;
                 break;
             }
 
@@ -306,11 +416,11 @@ class FinalBoss : ScriptComponentBehavior {
                 break;
 
             case FinalBossState::LowAttackExtend:
-                StartExtendAttack(lowAttackPrefab, lowAttackHeightOffset, lowAttackMaxLength);
+                StartExtendAttack(lowAttack, lowAttackHeightOffset, lowAttackMaxLength);
                 break;
 
             case FinalBossState::HighAttackExtend:
-                StartExtendAttack(highAttackPrefab, highAttackHeightOffset, highAttackMaxLength);
+                StartExtendAttack(highAttack, highAttackHeightOffset, highAttackMaxLength);
                 break;
 
             case FinalBossState::HoverCharge:
@@ -320,6 +430,9 @@ class FinalBoss : ScriptComponentBehavior {
             case FinalBossState::HoverJump:
                 hoverStartPos = curPos;
                 hoverApexPos = Vector3(curPos.x, curPos.y + hoverHeight, curPos.z);
+                
+                // 上昇速度を設定
+                velocity.y = hoverHeight / hoverJumpDuration;
                 break;
 
             case FinalBossState::HoverDive: {
@@ -331,6 +444,10 @@ class FinalBoss : ScriptComponentBehavior {
                 }
                 // 着地の高さはボスの初期(地面)高さを基準にする
                 hoverDiveTargetPos = Vector3(targetPos.x, initialBossPos.y, targetPos.z);
+                
+                // 落下先へ向かう速度を設定
+                velocity.x = (hoverDiveTargetPos.x - hoverDiveStartPos.x) / hoverDiveDuration;
+                velocity.y = (hoverDiveTargetPos.y - hoverDiveStartPos.y) / hoverDiveDuration;
                 break;
             }
 
@@ -346,6 +463,9 @@ class FinalBoss : ScriptComponentBehavior {
                     }
                 }
                 dashTargetPos = Vector3(targetX + float(dir) * dashOvershoot, curPos.y, curPos.z);
+                
+                // 突進速度を設定
+                velocity.x = (dashTargetPos.x - dashStartPos.x) / dashDuration;
                 break;
             }
 
@@ -369,14 +489,16 @@ class FinalBoss : ScriptComponentBehavior {
 
     // 後退ジャンプ
     void UpdateRetreatJump() {
-        Transform@ tf = GetTransform();
-        if (tf is null) return;
-
         float progress = Clamp(stateTimer / retreatJumpDuration, 0.0f, 1.0f);
-        float x = LerpF(retreatStartPos.x, retreatTargetPos.x, progress);
-        float y = retreatStartPos.y + Sin(progress * 3.14159f) * retreatJumpHeight; // 山なりの軌道
+        
+        // Y軸の速度を放物線(サイン波の微分=コサイン波)で計算して適用
+        velocity.y = (3.14159f * retreatJumpHeight / retreatJumpDuration) * Cos(3.14159f * progress);
 
-        tf.SetTranslate(Vector3(x, y, retreatStartPos.z));
+        // 軌道の折り返し(上昇→下降)に合わせてアニメーションを切り替える
+        if (!retreatIsDescending && progress >= 0.5f) {
+            retreatIsDescending = true;
+            PlayAnim(animRowJumpDown, animFramesJumpDown);
+        }
 
         if (progress >= 1.0f) {
             ChangeState(FinalBossState::NeedleTelegraph);
@@ -384,9 +506,9 @@ class FinalBoss : ScriptComponentBehavior {
     }
 
     void SpawnNeedle() {
-        if (needlePrefab is null) return;
+        if (needle is null) return;
 
-        @needleObj = GetScene().CloneObject(needlePrefab, "CloneNeedle");
+        @needleObj = GetScene().CloneObject(needle, "CloneNeedle");
         if (needleObj is null) return;
 
         needleObj.SetActive(true);
@@ -452,53 +574,95 @@ class FinalBoss : ScriptComponentBehavior {
 
     // タメ→ホバー急降下の連続
     void UpdateHoverJump() {
-        Transform@ tf = GetTransform();
-        if (tf is null) return;
-
-        float progress = Clamp(stateTimer / hoverJumpDuration, 0.0f, 1.0f);
-        float y = LerpF(hoverStartPos.y, hoverApexPos.y, progress);
-        tf.SetTranslate(Vector3(hoverStartPos.x, y, hoverStartPos.z));
-
-        if (progress >= 1.0f) {
+        // 座標指定をやめ、時間経過のみを管理
+        if (stateTimer >= hoverJumpDuration) {
             ChangeState(FinalBossState::HoverPause);
         }
     }
 
     void UpdateHoverDive() {
-        Transform@ tf = GetTransform();
-        if (tf is null) return;
-
-        float progress = Clamp(stateTimer / hoverDiveDuration, 0.0f, 1.0f);
-        float x = LerpF(hoverDiveStartPos.x, hoverDiveTargetPos.x, progress);
-        float y = LerpF(hoverDiveStartPos.y, hoverDiveTargetPos.y, progress);
-        tf.SetTranslate(Vector3(x, y, hoverDiveStartPos.z));
-
-        if (progress >= 1.0f) {
+        if (stateTimer >= hoverDiveDuration) {
             hoverRepeatIndex++;
-            if (hoverRepeatIndex < hoverRepeatCount) {
-                ChangeState(FinalBossState::HoverJump); // 2回目以降はタメなしで再ジャンプ
-            } else {
-                ChangeState(FinalBossState::Idle);
-            }
+            ChangeState(FinalBossState::HoverLanding); // 着地後、次のジャンプへ進むかIdleへ戻るかはHoverLanding側で判定する
         }
     }
 
     // タメ→突進
     void UpdateDashRush() {
-        Transform@ tf = GetTransform();
-        if (tf is null) return;
-
-        float progress = Clamp(stateTimer / dashDuration, 0.0f, 1.0f);
-        float x = LerpF(dashStartPos.x, dashTargetPos.x, progress);
-        tf.SetTranslate(Vector3(x, dashStartPos.y, dashStartPos.z));
-
-        if (progress >= 1.0f) {
+        if (stateTimer >= dashDuration) {
             ChangeState(FinalBossState::Idle);
         }
     }
 
     float LerpF(float a, float b, float t) {
         return a + (b - a) * t;
+    }
+
+    // ステートに応じたアニメーションを再生する(ChangeStateの中で1回だけ呼ばれる)
+    void PlayAnimForState(FinalBossState s) {
+        switch (s) {
+            case FinalBossState::Idle:
+                PlayAnim(animRowIdle, animFramesIdle);
+                break;
+
+            case FinalBossState::RetreatJump:
+                PlayAnim(animRowJumpUp, animFramesJumpUp); // 下降への切り替えはUpdateRetreatJump内で行う
+                break;
+
+            case FinalBossState::NeedleAttack:
+                // 針そのものの演出は針オブジェクト側で行うため、ボス本体はニュートラルな状態のままにする
+                PlayAnim(animRowIdle, animFramesIdle);
+                break;
+
+            case FinalBossState::HoverCharge:
+            case FinalBossState::DashCharge:
+                PlayAnim(animRowCharge, animFramesCharge);
+                break;
+
+            case FinalBossState::LowAttackExtend:
+                PlayAnim(animRowAttackLow, animFramesAttackLow);
+                break;
+
+            case FinalBossState::HighAttackExtend:
+                PlayAnim(animRowAttackHigh, animFramesAttackHigh);
+                break;
+
+            case FinalBossState::HoverJump:
+                PlayAnim(animRowJumpUp, animFramesJumpUp);
+                break;
+
+            case FinalBossState::HoverPause:
+                PlayAnim(animRowFloat, animFramesFloat);
+                break;
+
+            case FinalBossState::HoverDive:
+                PlayAnim(animRowJumpDown, animFramesJumpDown);
+                break;
+
+            case FinalBossState::HoverLanding:
+                PlayAnim(animRowLanding, animFramesLanding);
+                break;
+
+            case FinalBossState::DashRush:
+                PlayAnim(animRowDash, animFramesDash);
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    // AnimatorSCタグの付いたSpriteAnimatorへ、指定した行・コマ数を反映する
+    void PlayAnim(int row, int frameCount) {
+        array<ScriptComponent@>@ scripts;
+        if (GetComponents(@scripts)) {
+            for (int i = 0; i < scripts.length(); ++i) {
+                if (scripts[i].GetTag() == "AnimatorSC") {
+                    scripts[i].CallMethod("PlayRow", row);
+                    scripts[i].CallMethod("SetFrameCount", frameCount);
+                }
+            }
+        }
     }
 
     void End() {

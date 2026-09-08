@@ -127,6 +127,7 @@ class Player : ScriptComponentBehavior {
 
     Vector2 velocity;
     bool isJump = false;
+    bool jumpButtonReleased = true;
 
     // 動く床への追従用（JobHuntingGameのPlayerMovementと同じ仕組み）。
     // 接地している床のTransformとPreTransform（前フレーム値）との差分をこのフレームの
@@ -394,9 +395,16 @@ class Player : ScriptComponentBehavior {
         float rotY = (lastDirection == Direction::Left) ? 3.14159f : 0.0f;
         tf.SetRotate(Vector3(0.0f, rotY, 0.0f));
 
-        if(IsCommandTriggered("Jump") && !isJump){
+        // ボタンを離した判定（入力が0以下になったら再入力を許可）
+        if (GetCommandValue("Jump") <= 0.0f) {
+            jumpButtonReleased = true;
+        }
+        
+        // 再入力が許可されている場合のみジャンプを実行
+        if (IsCommandTriggered("Jump") && !isJump && jumpButtonReleased) {
             velocity.y = jumpPower;
             isJump = true;
+            jumpButtonReleased = false; // ジャンプ発動時にロックをかける
             PlayTaggedAudio("Jump");
         }
 

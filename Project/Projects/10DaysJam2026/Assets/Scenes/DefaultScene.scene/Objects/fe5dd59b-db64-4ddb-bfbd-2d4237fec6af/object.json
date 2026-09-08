@@ -113,6 +113,7 @@
                         "gridWidth": 128,
                         "materialName": "Tilemap",
                         "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "renderPriority": 0,
                         "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d",
                         "tilePixelSize": {
                             "x": 8.0,

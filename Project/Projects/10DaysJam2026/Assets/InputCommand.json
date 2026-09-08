@@ -33,6 +33,20 @@
             "device": "ControllerButton",
             "invertValue": false,
             "state": "Trigger"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "S",
+            "state": "Trigger"
+        },
+        {
+            "analog": "LeftStickY",
+            "controllerIndex": 0,
+            "device": "ControllerAnalog",
+            "invertValue": false,
+            "state": "Trigger",
+            "threshold": -0.10000000149011612
         }
     ],
     "Jump": [

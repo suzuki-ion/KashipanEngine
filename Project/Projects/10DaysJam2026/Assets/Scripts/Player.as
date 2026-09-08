@@ -733,6 +733,10 @@ class Player : ScriptComponentBehavior {
         if(hit.otherCollider.GetTag() == "Heart"){
             Heal(1.0f);
         }
+
+        if(hit.otherCollider.GetTag() == "DeadArea"){
+            Damage(100.0f);
+        }
     }
 
     void AddWeaponByName(const string &in name) {

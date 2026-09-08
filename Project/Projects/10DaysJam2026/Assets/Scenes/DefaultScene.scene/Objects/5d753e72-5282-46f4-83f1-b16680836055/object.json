@@ -53,6 +53,10 @@
                 "data": {
                     "customData": {
                         "fields": {
+                            "currentVelocity": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
                             "loop": true,
                             "loopBackDuration": 1.0,
                             "loopBackEaseType": 0,
@@ -157,6 +161,17 @@
             {
                 "data": {
                     "customData": {
+                        "prefabID": "fa9b4734-d936-4ed2-a961-a1e37946de76"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,
@@ -206,6 +221,7 @@
         "isActive": true,
         "name": "MoveFloor",
         "objectID": "5d753e72-5282-46f4-83f1-b16680836055",
+        "prefabNodeID": "125672e6-c105-4726-8d87-a39a27b3c7ff",
         "tag": ""
     },
     "siblingIndex": 13583

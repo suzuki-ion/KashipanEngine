@@ -12,8 +12,10 @@
 // 書き込む（イージングは区間内で瞬間速度が変化するため、速度コンポーネント経由で近似するより
 // 直接指定した方が軌道を正確に再現できる）。回転の補間はオイラー角の単純な線形補間ではなく
 // Math::Slerpで行う（軸のねじれや角度をまたぐ際の大回りを避けるため）。
-// Player/Enemyをこの地面の動きに追従させたい場合は、MoveGroundと同様にこのオブジェクトへ
-// PreTransform コンポーネントを追加しておくこと。
+// Player/Enemyをこの地面の動きに追従させたい場合は、下記のcurrentVelocityを
+// （ScriptComponent::GetVariableで）参照すること。PreTransformの前フレーム値と比較する方式だと、
+// 計測してから追従側が使うまでに1フレームのタイムラグが生じ、急な速度変化や高速移動に
+// 追従しきれないことがあるため、このスクリプト自身がその場で計算した実測速度を直接公開する
 
 // 通過点1件分の設定（Inspectorの points 配列の要素として編集する）
 [System.Serializable]
@@ -53,6 +55,13 @@ class MoveGroundPath : ScriptComponentBehavior {
     // 区間移動完了後、waitDurationぶん待機中かどうか
     bool isWaiting = false;
     float waitTimer = 0.0f;
+
+    // このフレームの実測移動速度（Player等の追従用に公開する）。
+    // 待機中・全区間完了後は静止しているため0になる。
+    // GetVariable/SetVariableは[SerializeField]の付いたフィールドしか参照できないため、
+    // Inspectorへの表示目的ではないが必須で付与している（値は毎フレームUpdateで上書きされる）
+    [SerializeField]
+    Vector2 currentVelocity = Vector2(0.0f, 0.0f);
 
     void Start() {
         Transform@ tf = GetTransform();
@@ -119,16 +128,23 @@ class MoveGroundPath : ScriptComponentBehavior {
         Transform@ tf = GetTransform();
         if (tf is null) return;
         const int count = GetPointCount();
-        if (count == 0) return;
+        if (count == 0) {
+            currentVelocity = Vector2(0.0f, 0.0f);
+            return;
+        }
 
         // ループ時は「最後の点→開始位置」の戻り区間ぶん、区間数が count+1 になる
         const int segmentCount = loop ? count + 1 : count;
-        if (currentSegment >= segmentCount) return; // 非ループで全区間完了済み
+        if (currentSegment >= segmentCount) { // 非ループで全区間完了済み
+            currentVelocity = Vector2(0.0f, 0.0f);
+            return;
+        }
 
         float dt = GetDeltaTime() * GetGameSpeed();
 
         // 区間移動完了後の待機中は、位置を動かさずタイマーだけ進める
         if (isWaiting) {
+            currentVelocity = Vector2(0.0f, 0.0f);
             waitTimer -= dt;
             if (waitTimer <= 0.0f) {
                 isWaiting = false;
@@ -138,6 +154,8 @@ class MoveGroundPath : ScriptComponentBehavior {
             }
             return;
         }
+
+        const Vector3 previousPosition = tf.GetTranslate();
 
         segmentElapsed += dt;
         const float duration = GetSegmentDuration(currentSegment);
@@ -154,6 +172,15 @@ class MoveGroundPath : ScriptComponentBehavior {
         const float easedT = Easing::Apply(t, easeType);
         tf.SetTranslate(Math::Lerp(segStart, segEnd, easedT));
         tf.SetRotateQuaternion(Math::Slerp(segStartRot, segEndRot, easedT));
+
+        // このフレームで実際に動いた量から速度を逆算して公開する（イージングで瞬間速度が
+        // 変化するため、区間全体の平均速度ではなくフレームごとの実測値にする）
+        if (dt > 0.0f) {
+            const Vector3 frameDelta = tf.GetTranslate() - previousPosition;
+            currentVelocity = Vector2(frameDelta.x, frameDelta.y) / dt;
+        } else {
+            currentVelocity = Vector2(0.0f, 0.0f);
+        }
 
         if (t >= 1.0f) {
             const float waitDuration = GetSegmentWaitDuration(currentSegment);

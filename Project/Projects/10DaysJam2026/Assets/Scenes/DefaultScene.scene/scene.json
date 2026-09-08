@@ -59,12 +59,17 @@
     "sceneName": "DefaultScene",
     "sceneVariables": [
         {
+            "key": "isDialogueActive",
+            "type": "Bool",
+            "value": false
+        },
+        {
             "key": "testFloat",
             "type": "Float",
             "value": 0.0
         },
         {
-            "key": "isDialogueActive",
+            "key": "saveRequested",
             "type": "Bool",
             "value": false
         },

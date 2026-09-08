@@ -129,19 +129,33 @@ class Player : ScriptComponentBehavior {
     bool isJump = false;
     bool jumpButtonReleased = true;
 
-    // 動く床への追従用。床のTransformとPreTransform（前フレーム値）との差分＝
-    // 「直前の接触フレームで床が実際に動いた量」を保持する（OnCollisionStayで更新し、
-    // 1フレーム分Updateで消費したら0へ戻す。持ち越して慣性として使い続けたりはしない）。
-    // ・X（左右）はOnCollisionStayの中でその場ですぐに自機のTransformへ直接加算する
-    //   （controller.Move()を経由させると床自体が障害物としてスイープに引っかかり、
-    //   不要な押し戻し・振動が出るため）。
-    // ・Y（上下）は直接加算せず、Update側でこの値ぶんだけ自機の落下速度を底上げしてから
-    //   通常通りcontroller.Move()へ渡す。重力だけでは降下する床の速度に追いつけず
-    //   接地判定が外れて浮いてしまう（＝当たり判定自体が発生しなくなる）ため、
-    //   スイープが毎フレーム確実に床を捉えられるようにするための下駄である。
-    //   上昇する床は床の方が自機へめり込む形になるため、CharacterController2D自身の
-    //   押し戻し処理で特別な処理なしに追従できている
-    Vector2 lastGroundDelta = Vector2(0.0f, 0.0f);
+    // 動く床への追従用。プレイヤー本体のコライダーとは別に、足元にトリガー用の
+    // センサーコライダー（Tag: "GroundSensor"）を用意しておくこと。そのセンサーが
+    // 床と接触している間だけ、床のスクリプトが公開している実測速度(currentVelocity)を
+    // 直接自機のTransformへ加算する（詳細はOnCollisionStay参照）。
+    // センサーは本体コライダーより上下に余裕を持たせられるため、床が速く動いて本体だけでは
+    // 重力が追いつかず離れてしまう場合でも接触を保ちやすい。トリガーなので物理的な
+    // 押し戻しも起きない。接触しなくなった瞬間から何も加算されなくなるため、
+    // 慣性を持ち越すこともない
+
+    // GroundSensorが動く床（currentVelocityを公開しているオブジェクト）に接触し、
+    // 実際に追従できているかどうか。OnCollisionStayで立て、Updateの冒頭で
+    // 読んだ直後にfalseへ戻す（次フレームの衝突コールバックで再設定される）。
+    // 本体コライダーのcontroller.IsGrounded()は動く床の上では毎フレームのように
+    // 一瞬途切れてしまい、その度に「着地」を検出してしまうため、より接触を保ちやすい
+    // こちらの値もOR条件で接地判定に使う。静止した地面には一切関与させない
+    // （センサーの厚みで通常の落下判定まで狂わせないため、対象を動く床に限定している）
+    bool isSensorGrounded = false;
+
+    // 直前フレームで（物理的な接触かセンサーかを問わず）接地扱いだったかどうか。
+    // GroundSensorは本体コライダーより下に厚みを持たせているため、空中から動く床へ
+    // 落下していく最中、本体がまだ物理的に触れていない段階でセンサーだけが先に反応して
+    // しまうことがある。そこでisSensorGroundedは「元々接地していた状態を継続させる」
+    // 場合にだけ信用することにし、空中からの最初の着地は必ず本体コライダーの物理的な
+    // 接触（controller.IsGrounded()）でのみ判定させる（そうしないと、センサーの厚みぶん
+    // だけ本来より高い位置で着地したことになり、重力が再蓄積して少しずつ沈み込むまでの間
+    // プレイヤーが浮いて見えてしまう）
+    bool wasGroundedPreviousFrame = false;
 
     State state = State::Idle;
     Direction lastDirection = Direction::Right;
@@ -164,7 +178,22 @@ class Player : ScriptComponentBehavior {
     Transform@ tf;
 
     void Start() {
-        GetComponent(@col);
+        // 足元のGroundSensor（トリガー）用に2つ目のBox2DColliderを追加している場合、
+        // GetComponent(@col)は「最初に見つかった方」を返すため並び順次第で本体ではなく
+        // センサーの方を掴んでしまうことがある。トリガーではない方を明示的に本体として選ぶ
+        array<Box2DCollider@>@ box2DColliders;
+        if (GetComponents(@box2DColliders)) {
+            for (uint i = 0; i < box2DColliders.length(); ++i) {
+                if (box2DColliders[i] !is null && !box2DColliders[i].IsTrigger()) {
+                    @col = box2DColliders[i];
+                    break;
+                }
+            }
+        }
+        if (col is null) {
+            GetComponent(@col); // Box2DColliderが1つだけの場合のフォールバック
+        }
+
         if(GetComponent(@controller)) {
             controller.SetSelectedCollider(col);
             controller.SetGroundedThreshold(groundedThreshold);
@@ -347,8 +376,16 @@ class Player : ScriptComponentBehavior {
 
         if(controller !is null) {
             float currentY = tf.GetTranslate().y;
+            // 動く床の上ではcontroller.IsGrounded()単体だと一瞬接触が途切れやすいため、
+            // GroundSensorの接触状態もOR条件で加味する。ただし空中からの最初の着地まで
+            // センサーに任せると、本体コライダーが物理的に触れる前にセンサーの厚みぶんだけ
+            // 早く「接地」扱いになってしまう（着地が高い位置で止まって浮いて見える）ため、
+            // 前フレームで既に接地していた場合にだけセンサーの値を信用する
+            bool grounded = controller.IsGrounded() || (isSensorGrounded && wasGroundedPreviousFrame);
+            isSensorGrounded = false; // このフレーム分は使い終わったので、次の衝突コールバックまでは倒しておく
+            wasGroundedPreviousFrame = grounded;
 
-            if(controller.IsGrounded()) {
+            if(grounded) {
                 if(velocity.y <= 0.0f) {
                     // 着地時に落下距離を判定
                     float fallDistance = highestY - currentY;
@@ -437,15 +474,6 @@ class Player : ScriptComponentBehavior {
         }
 
         velocity.y -= gravity * GetDeltaTime();
-
-        // 降下する動く床に追従しきれず浮いてしまわないよう、直前に接触していた床の
-        // 下降量ぶんは最低限沈み込めるようにする（実際に接地するかはこの後のスイープ判定に委ねる）
-        if (!isJump && controller !is null && controller.IsGrounded() && GetDeltaTime() > 0.0f && lastGroundDelta.y < 0.0f) {
-            float platformVelocityY = lastGroundDelta.y / GetDeltaTime();
-            if (platformVelocityY < velocity.y) {
-                velocity.y = platformVelocityY;
-            }
-        }
 
         Vector2 movement = velocity * GetDeltaTime();
         if(controller !is null) {
@@ -739,9 +767,6 @@ class Player : ScriptComponentBehavior {
             }
             i++;
         }
-
-        // 床の移動量は1フレームだけ使ったら破棄する（次フレームの衝突コールバックで再設定される）
-        lastGroundDelta = Vector2(0.0f, 0.0f);
     }
 
     void OnCollisionEnter(const HitInfo &in hit) {
@@ -818,22 +843,30 @@ class Player : ScriptComponentBehavior {
         // 重複・長時間の接触中に無敵時間が切れた場合もダメージを受けるように処理
         ProcessDamageAndKnockback(hit);
 
-        // 動く床への追従。床のTransformとPreTransform（前フレームの値）との差分＝
-        // このフレームで床が実際に動いた量を計測する。
-        // X（左右）はその場で即座に自機のTransformへ直接加算する（controller.Move()は
-        // 経由させない。掃引判定に床自体が引っかかって不要な押し戻し・振動が起きるのを避けるため）。
-        // Y（上下）はここでは加算せず、次フレームのUpdateで落下速度の底上げに使う
-        // （直接加算すると、重力の底上げで既にスイープ判定が正しく床を捉えた分と
-        // 二重に加算されて床へ沈み込んでしまうため）
-        if (tf !is null && hit.otherObject !is null && hit.otherCollider !is null && !hit.otherCollider.IsTrigger()
-        && hit.normal.y > groundedThreshold) {
-            Transform@ groundTransform;
-            PreTransform@ groundPreTransform;
-            if (hit.otherObject.GetComponent(@groundTransform) && hit.otherObject.GetComponent(@groundPreTransform)) {
-                Vector3 delta = groundTransform.GetTranslate() - groundPreTransform.GetPreviousTranslate();
-                lastGroundDelta = Vector2(delta.x, delta.y);
-                if (delta.x != 0.0f) {
-                    tf.SetTranslate(tf.GetTranslate() + Vector3(delta.x, 0.0f, 0.0f));
+        // 動く床への追従。プレイヤーの足元に用意したセンサー用コライダー（Tag: "GroundSensor"、
+        // トリガー）が床と接触している間だけ、床のスクリプトが公開している実測速度
+        // (currentVelocity)をその場で即座に自機のTransformへ加算する。
+        // controller.Move()は経由させない（掃引判定に床自体が引っかかって不要な
+        // 押し戻し・振動が起きるのを避けるため）。センサーはトリガーなので物理的な干渉は
+        // 起きず、また本体コライダーより上下に余裕を持たせられるため、床が速く動いて
+        // 本体だけでは重力が追いつかず離れてしまう場合でも接触を保ちやすい。
+        //
+        // 接触方向はhit.normalでは判定できない（Box2Dのセンサー重なりイベントには
+        // 法線・めり込み量の情報が無く、hit.normalは常に既定値のゼロになる）ため、
+        // 方向チェックは行わず「currentVelocityを公開しているオブジェクトかどうか」だけで
+        // 対象を絞っている。通常の静的な壁・地面はcurrentVelocityを持たないため、
+        // 横から触れても以下のisSensorGroundedやTransformへの加算は発生しない
+        if (tf !is null && hit.selfCollider !is null && hit.selfCollider.GetTag() == "GroundSensor"
+        && hit.otherObject !is null && hit.otherObject !is hit.selfObject
+        && hit.otherCollider !is null && !hit.otherCollider.IsTrigger()) {
+            ScriptComponent@ groundSc;
+            Vector2 groundVelocity;
+            if (hit.otherObject.GetComponent(@groundSc) && groundSc.GetVariable("currentVelocity", groundVelocity)) {
+                isSensorGrounded = true;
+
+                Vector2 groundMovement = groundVelocity * GetDeltaTime();
+                if (groundMovement.x != 0.0f || groundMovement.y != 0.0f) {
+                    tf.SetTranslate(tf.GetTranslate() + Vector3(groundMovement.x, groundMovement.y, 0.0f));
                 }
             }
         }

@@ -82,6 +82,23 @@
             "key": "dialogueBoxUIBusy",
             "type": "Bool",
             "value": false
+        },
+        {
+            "key": "gameplayCameraPos",
+            "type": "Vector3",
+            "value": {
+                "x": 1028.212646484375,
+                "y": 900.07080078125,
+                "z": 0.0
+            }
+        },
+        {
+            "key": "gameplayCameraSize",
+            "type": "Vector2",
+            "value": {
+                "x": 256.0,
+                "y": 240.0
+            }
         }
     ]
 }

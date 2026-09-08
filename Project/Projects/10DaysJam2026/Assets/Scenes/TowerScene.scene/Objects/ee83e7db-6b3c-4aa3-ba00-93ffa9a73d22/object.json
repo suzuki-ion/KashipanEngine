@@ -17,9 +17,9 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 1151.9820556640625,
-                            "y": 819.5925903320313,
-                            "z": -2.1480070699908538e-06
+                            "x": 41.75316619873047,
+                            "y": 24.67495346069336,
+                            "z": -2.147906570826308e-06
                         }
                     },
                     "isActive": true,
@@ -334,6 +334,7 @@
                             "ballAttackInterval": 0.5,
                             "ballLifeTime": 3.0,
                             "blinkInterval": 0.07999999821186066,
+                            "coyoteTime": 0.10000000149011612,
                             "currentWeaponType": -1,
                             "fallDeathHeight": 150.0,
                             "fallDeathY": -50.0,

@@ -19,8 +19,8 @@ class WallEnemy : ScriptComponentBehavior {
     [SerializeField, Tooltip("弾の発生位置オフセット(右向き基準で設定してください)")]
     Vector3 bulletOffset = Vector3(0.0f, 0.0f, 0.0f);
 
-    [SerializeField, Tooltip("アニメーション再生開始から弾を発射するまでの遅延(秒)。2コマ目が表示されるタイミングに合わせる")]
-    float shotDelay = 0.15f;
+    [SerializeField, Tooltip("弾を発射するアニメーションのコマ番号(0始まり。2コマ目なら1)")]
+    int shotFrame = 1;
 
     [SerializeField, Tooltip("HP")]
     float hp = 1.0f;
@@ -50,11 +50,15 @@ class WallEnemy : ScriptComponentBehavior {
     float shotDirectionX = -1.0f;
 
     // 弾の発射タイマー
-    float shotTimer = 0.0f;
+    float shotTimer = 2.0f;
 
-    // 発射までの遅延タイマー（アニメーションとの同期用）
-    float shotDelayTimer = 0.0f;
     bool isShooting = false;
+
+    // 直前に確認したアニメーションのコマ番号（切り替わり検出用）
+    int lastAnimFrame = 0;
+
+    // 口パクアニメーションを制御しているSpriteAnimatorへの参照（Startでキャッシュ）
+    ScriptComponent@ animatorSc;
 
     // 発射した弾のクローン管理用
     array<Object@> bulletClones;
@@ -74,6 +78,17 @@ class WallEnemy : ScriptComponentBehavior {
 
     void Start() {
         GetComponent(@sprite);
+
+        // 口パクアニメーションを制御するAnimatorScをキャッシュしておく
+        array<ScriptComponent@>@ animScripts;
+        if (GetComponents(@animScripts)) {
+            for (int i = 0; i < animScripts.length(); ++i) {
+                if (animScripts[i].GetTag() == "AnimatorSC") {
+                    @animatorSc = animScripts[i];
+                    break;
+                }
+            }
+        }
 
         // 向きに応じた回転と発射方向の決定
         Transform@ tf = GetTransform();
@@ -137,51 +152,50 @@ class WallEnemy : ScriptComponentBehavior {
         if(isAlive && inCameraView){
             shotTimer += GetDeltaTime();
 
-            // 発射間隔ごとにアニメーションを頭から再生し、発射までの遅延タイマーを開始する
+            // 発射間隔ごとにアニメーションを頭から再生し、コマ切り替わりの監視を開始する
             if(!isShooting && shotTimer >= shotDuration){
                 shotTimer = 0.0f;
                 isShooting = true;
-                shotDelayTimer = 0.0f;
+                lastAnimFrame = 0;
 
                 // アニメーションを頭から再生
-                array<ScriptComponent@>@ animScripts;
-                if (GetComponents(@animScripts)) {
-                    for (int i = 0; i < animScripts.length(); ++i) {
-                        if (animScripts[i].GetTag() == "AnimatorSC") {
-                            animScripts[i].CallMethod("PlayRowForce", 0);
-                        }
-                    }
+                if (animatorSc !is null) {
+                    animatorSc.CallMethod("PlayRowForce", 0);
                 }
             }
 
-            // アニメーションが2コマ目に切り替わるタイミングで弾を発射する
-            if(isShooting){
-                shotDelayTimer += GetDeltaTime();
-                if(shotDelayTimer >= shotDelay){
-                    isShooting = false;
+            // アニメーターの現在コマを毎フレーム確認し、指定コマ(shotFrame)に切り替わった瞬間に発射する
+            if(isShooting && animatorSc !is null){
+                int currentFrame = 0;
+                if (animatorSc.GetVariable("currentFrame", currentFrame) && currentFrame != lastAnimFrame) {
+                    lastAnimFrame = currentFrame;
 
-                    if (bullet !is null) {
-                        // オフセットのX座標を向いている方向に応じて反転させる
-                        Vector3 spawnOffset = Vector3(bulletOffset.x * shotDirectionX, bulletOffset.y, bulletOffset.z);
-                        Vector3 spawnPos = tf.GetTranslate() + spawnOffset;
+                    if (currentFrame == shotFrame) {
+                        isShooting = false;
 
-                        Object@ cloneBullet = GetScene().CloneObject(bullet, "CloneEnemyBullet");
-                        if (cloneBullet !is null) {
-                            cloneBullet.SetActive(true);
+                        if (bullet !is null) {
+                            // オフセットのX座標を向いている方向に応じて反転させる
+                            Vector3 spawnOffset = Vector3(bulletOffset.x * shotDirectionX, bulletOffset.y, bulletOffset.z);
+                            Vector3 spawnPos = tf.GetTranslate() + spawnOffset;
 
-                            Transform@ cloneTf = cloneBullet.GetTransform();
-                            if (cloneTf !is null) {
-                                cloneTf.SetTranslate(spawnPos);
+                            Object@ cloneBullet = GetScene().CloneObject(bullet, "CloneEnemyBullet");
+                            if (cloneBullet !is null) {
+                                cloneBullet.SetActive(true);
+
+                                Transform@ cloneTf = cloneBullet.GetTransform();
+                                if (cloneTf !is null) {
+                                    cloneTf.SetTranslate(spawnPos);
+                                }
+
+                                ScriptComponent@ cloneSc;
+                                if (cloneBullet.GetComponent(@cloneSc)) {
+                                    cloneSc.SetVariable("pos", spawnPos);
+                                    cloneSc.CallMethod("Attack", shotDirectionX);
+                                }
+
+                                bulletClones.insertLast(cloneBullet);
+                                bulletTimers.insertLast(0.0f);
                             }
-
-                            ScriptComponent@ cloneSc;
-                            if (cloneBullet.GetComponent(@cloneSc)) {
-                                cloneSc.SetVariable("pos", spawnPos);
-                                cloneSc.CallMethod("Attack", shotDirectionX);
-                            }
-
-                            bulletClones.insertLast(cloneBullet);
-                            bulletTimers.insertLast(0.0f);
                         }
                     }
                 }

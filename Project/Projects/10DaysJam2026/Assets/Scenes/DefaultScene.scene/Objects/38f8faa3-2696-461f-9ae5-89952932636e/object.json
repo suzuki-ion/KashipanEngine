@@ -17,9 +17,9 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 0.0,
-                            "y": 0.0,
-                            "z": 0.0
+                            "x": 1075.9404296875,
+                            "y": 249.27490234375,
+                            "z": 3.0517578125e-05
                         }
                     },
                     "isActive": true,
@@ -31,7 +31,7 @@
             {
                 "data": {
                     "customData": {
-                        "meshAssetPath": ""
+                        "meshAssetPath": "PrimitiveMesh-Rect2D"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -101,6 +101,17 @@
                     "tag": ""
                 },
                 "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "textureAssetPath": "App/Sprite/Enemy/bulletS.png"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "TextureSource"
             },
             {
                 "data": {

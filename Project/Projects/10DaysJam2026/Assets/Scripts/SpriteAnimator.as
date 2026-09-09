@@ -17,6 +17,10 @@ class SpriteAnimator : ScriptComponentBehavior {
     [SerializeField, Tooltip("ループ再生")]
     bool isLoop = true;
 
+    // 現在表示中のコマ番号(0始まり)。他コンポーネントからGetVariableで参照するために保持
+    [SerializeField, Tooltip("現在のフレーム")]
+    int currentFrame = 0;
+
     SpriteRenderer@ sprite;
     float animTimer = 0.0f;
     bool isPlaying = true;
@@ -43,6 +47,8 @@ class SpriteAnimator : ScriptComponentBehavior {
             frame = frame % frameCount; // ループ
         }
 
+        currentFrame = frame; // 他コンポーネントが参照できるように保持
+
         // UVの適用（Xにコマ数、Yに行数を掛ける）
         Vector2 currentUv = Vector2(frame * uvStep.x, currentRow * uvStep.y);
         sprite.SetInstanceUvTranslate(currentUv);
@@ -54,6 +60,7 @@ class SpriteAnimator : ScriptComponentBehavior {
         currentRow = row;
         animTimer = 0.0f;
         isPlaying = true;
+        currentFrame = 0;
     }
 
     // 強制的に最初から再生
@@ -61,6 +68,7 @@ class SpriteAnimator : ScriptComponentBehavior {
         currentRow = row;
         animTimer = 0.0f;
         isPlaying = true;
+        currentFrame = 0;
     }
 
     // コマ数(X方向)の変更

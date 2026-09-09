@@ -119,6 +119,7 @@
                 "data": {
                     "customData": {
                         "fields": {
+                            "currentFrame": 0,
                             "frameCount": 2,
                             "frameInterval": 0.15000000596046448,
                             "isLoop": true,

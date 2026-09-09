@@ -116,6 +116,7 @@
                 "data": {
                     "customData": {
                         "fields": {
+                            "currentFrame": 0,
                             "frameCount": 2,
                             "frameInterval": 1.0,
                             "isLoop": true,
@@ -130,7 +131,7 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": ""
+                    "tag": "AnimatorSC"
                 },
                 "type": "ScriptComponent"
             },

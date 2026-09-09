@@ -19,9 +19,9 @@
                                     "z": 1.0
                                 },
                                 "translate": {
-                                    "x": 237.1643524169922,
-                                    "y": 52.65565872192383,
-                                    "z": 500.00006103515625
+                                    "x": 903.5004272460938,
+                                    "y": 167.18682861328125,
+                                    "z": 3.0517578125e-05
                                 }
                             },
                             "isActive": true,
@@ -47,7 +47,7 @@
                                 "fields": {
                                     "activationRange": 16.0,
                                     "blinkInterval": 0.07999999821186066,
-                                    "bullet": "38f8faa3-2696-461f-9ae5-89952932636e",
+                                    "bullet": "b9505d2d-838d-4576-85b3-6a81d6849223",
                                     "bulletLifeTime": 5.0,
                                     "bulletOffset": {
                                         "x": 0.0,
@@ -60,10 +60,9 @@
                                     "hp": 2.0,
                                     "invincibleDuration": 0.5,
                                     "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
-                                    "camera": "a1cc5cd8-4c52-4adb-be14-ef8ad4465a02",
-                                    "self": "b63802fe-21d4-4629-9fae-253623cf7f73",
-                                    "shotDelay": 1.0,
-                                    "shotDuration": 2.0
+                                    "self": "5adf23a5-144a-41a2-9e31-5a1e6aac051d",
+                                    "shotDuration": 2.0,
+                                    "shotFrame": 1
                                 },
                                 "scriptPath": "Assets\\Scripts\\WallEnemy.as"
                             },
@@ -120,6 +119,7 @@
                         "data": {
                             "customData": {
                                 "fields": {
+                                    "currentFrame": 0,
                                     "frameCount": 2,
                                     "frameInterval": 1.0,
                                     "isLoop": true,
@@ -134,7 +134,7 @@
                             },
                             "isActive": true,
                             "priority": 1,
-                            "tag": ""
+                            "tag": "AnimatorSC"
                         },
                         "type": "ScriptComponent"
                     },
@@ -189,7 +189,7 @@
                 "hiddenFromEditorTarget": false,
                 "isActive": true,
                 "name": "WallEnemy",
-                "objectID": "b63802fe-21d4-4629-9fae-253623cf7f73",
+                "objectID": "5adf23a5-144a-41a2-9e31-5a1e6aac051d",
                 "prefabNodeID": "088ea901-2c21-424c-a852-28cf1122a25d",
                 "tag": ""
             },

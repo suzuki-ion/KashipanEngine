@@ -99,6 +99,9 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("被ダメージ時に装備中の武器から減少させる経験値量")]
     float weaponExpLossOnDamage = 1.0f;
 
+    [SerializeField, Tooltip("死亡してからゲームオーバー要求(シーン変数gameOverRequested)を出すまでの秒数(死亡アニメーションを見せる時間)")]
+    float deathToGameOverDelay = 1.0f;
+
     [SerializeField, Tooltip("獲得可能なすべての武器オブジェクト一覧")]
     array<Object@>@ allWeapons;
 
@@ -182,6 +185,10 @@ class Player : ScriptComponentBehavior {
     float invincibleDuration = 1.0f;
     float invincibleTimer = 0.0f;
     bool isAlive = true;
+    // ゲームオーバー画面(GameOverMenu.as参照)へ要求を送出済みかどうか(二重送出防止用)
+    bool gameOverRequested = false;
+    // 死亡してからの経過時間(deathToGameOverDelayとの比較に使う)
+    float deathTimer = 0.0f;
 
     // 落下開始時の最高到達Y座標
     float highestY = 0.0f;
@@ -242,6 +249,19 @@ class Player : ScriptComponentBehavior {
     //  そちらは常に許可する)
     bool ShouldPersistProgress() {
         return GetScene().IsPlaying() || !IsEditorBuild();
+    }
+
+    // 死亡後、一定時間(deathToGameOverDelay)経過したらシーン変数gameOverRequestedをtrueにする。
+    // GameOverMenu.as側がこれを監視してゲームオーバー画面を表示し、入力待ち後にシーンリロードを行う
+    // (Playerはゲームオーバー画面のUIを直接知らない。SavePoint.as等と同じ疎結合の方針)
+    void UpdateGameOverSequence() {
+        if (gameOverRequested) return;
+
+        deathTimer += GetDeltaTime();
+        if (deathTimer >= deathToGameOverDelay) {
+            gameOverRequested = true;
+            GetScene().SetVariable("gameOverRequested", true);
+        }
     }
 
     // WeaponListの値からセーブキーに使う武器名を返す(対応が無ければ空文字)
@@ -321,6 +341,19 @@ class Player : ScriptComponentBehavior {
                 currentWeaponType = savedWeaponType;
             }
         }
+
+        // セーブ地点の位置復元。保存されたシーン名が現在のシーンと一致する場合のみ座標を反映する
+        // (シーンをまたいだ通常の遷移中に、無関係な別シーンの座標へ誤ってテレポートしないため)
+        string savedSceneName;
+        if (GetScene().GetGlobalVariable("save_sceneName", savedSceneName) && savedSceneName == GetScene().GetName()) {
+            Vector3 savedPosition;
+            if (GetScene().GetGlobalVariable("save_position", savedPosition)) {
+                Transform@ playerTf = GetTransform();
+                if (playerTf !is null) {
+                    playerTf.SetTranslate(savedPosition);
+                }
+            }
+        }
     }
 
     // 現在の進行状況をグローバルシーン変数(メモリ上)へ書き出す。ファイルへは保存しない
@@ -369,6 +402,18 @@ class Player : ScriptComponentBehavior {
         if (!ShouldPersistProgress()) return false;
 
         UpdateProgressVariables();
+
+        // セーブ地点(SavePoint)がセーブ要求と合わせて渡した自身の座標を、プレイヤー自身の座標の
+        // 代わりに記録する(ロード時の復帰位置に使う)。プレイヤーの座標だとセーブ地点から
+        // わずかにずれた位置になりうるため、必ずセーブ地点そのものの座標を使う。
+        // UpdateProgressVariables()側には含めない(あちらはシーン切り替えのたびにEnd()から
+        // 毎回呼ばれるため、そこに含めると単なる通過シーンの座標で上書きされてしまう)
+        Vector3 checkpointPosition;
+        if (GetScene().GetVariable("saveRequestedPosition", checkpointPosition)) {
+            GetScene().SetGlobalVariable("save_position", checkpointPosition);
+        }
+        GetScene().SetGlobalVariable("save_sceneName", GetScene().GetName());
+
         return GetScene().SaveGlobalVariables();
     }
 
@@ -410,6 +455,13 @@ class Player : ScriptComponentBehavior {
         bool isDialogueActive = false;
         GetScene().GetVariable("isDialogueActive", isDialogueActive);
         if (isDialogueActive) return;
+
+        // 死亡している間は通常の移動・攻撃処理を行わず、ゲームオーバー要求の送出だけを行う
+        // (実際の画面表示・入力待ち・シーンリロードはGameOverMenu.as側が担当する)
+        if (!isAlive) {
+            UpdateGameOverSequence();
+            return;
+        }
 
         @tf = GetTransform();
         if(tf is null) return;

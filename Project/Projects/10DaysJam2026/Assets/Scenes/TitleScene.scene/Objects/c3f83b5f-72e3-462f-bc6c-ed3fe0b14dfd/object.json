@@ -1,0 +1,63 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "continueUIObject": "f36bf228-8788-4b5e-922b-869b7c5e52bb",
+                            "ditherFadeObject": "73626dfb-bd82-456c-a3f0-099638c7b232",
+                            "exitUIObject": "57c6847e-9b1e-4a64-8172-953e18ef8cf8",
+                            "finalScreenObject": "7e9ed864-bd4f-4a56-b710-292c1f7bb9e0",
+                            "mainMenuObject": "086f4aff-99fe-4ffa-b0c7-a8719a77d134",
+                            "nextSceneName": "MountainScene",
+                            "optionMenuRootObject": "b17878a7-2c95-4c9a-bb4a-93b12a16837f",
+                            "optionUIObject": "cc24e4e8-bb49-4ecd-89c1-33391b429dc2",
+                            "selectableUIObject": "086f4aff-99fe-4ffa-b0c7-a8719a77d134",
+                            "startUIObject": "60b22db9-bd02-4d2b-afd8-95fce47d155b",
+                            "windowObject": "589f06a2-678a-4700-9401-2e3f2faa5357"
+                        },
+                        "scriptPath": "Assets\\Scripts\\TitleMenuController.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "TitleMenuController",
+        "objectID": "c3f83b5f-72e3-462f-bc6c-ed3fe0b14dfd",
+        "tag": ""
+    },
+    "siblingIndex": 7000
+}

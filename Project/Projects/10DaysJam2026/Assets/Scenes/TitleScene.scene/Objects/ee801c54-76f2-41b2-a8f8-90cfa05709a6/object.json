@@ -1,0 +1,86 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "b17878a7-2c95-4c9a-bb4a-93b12a16837f",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "clickedColor": {
+                                "w": 1.0,
+                                "x": 0.6000000238418579,
+                                "y": 1.0,
+                                "z": 0.6000000238418579
+                            },
+                            "decideCommandName": "Attack",
+                            "hoverColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 0.6000000238418579
+                            },
+                            "isDecided": false,
+                            "isLoop": true,
+                            "nextCommandName": "SelectDown",
+                            "pressedColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 0.6000000238418579,
+                                "z": 0.6000000238418579
+                            },
+                            "prevCommandName": "SelectUp",
+                            "selectableObjects": [
+                                "3478ca43-4459-4470-9609-254d69babe6a",
+                                "7e65c75f-a017-4f86-b401-517b0d873730",
+                                "39222b29-a5a3-4329-a581-d3f08f9ba8ed",
+                                "86703ad7-f7ec-405d-b705-fb3f2592d964",
+                                "ff7b327a-45e8-42b9-adfd-ebc8f6c33eb1",
+                                "c31ef8c2-53e2-45a6-b193-467980c85773",
+                                "e55cb176-8f2c-4a59-a366-8b3daf44fb58"
+                            ],
+                            "selectedIndex": -1
+                        },
+                        "scriptPath": "Assets\\Scripts\\SelectableUI.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "OptionMenuSelectable",
+        "objectID": "ee801c54-76f2-41b2-a8f8-90cfa05709a6",
+        "tag": ""
+    },
+    "siblingIndex": 100
+}

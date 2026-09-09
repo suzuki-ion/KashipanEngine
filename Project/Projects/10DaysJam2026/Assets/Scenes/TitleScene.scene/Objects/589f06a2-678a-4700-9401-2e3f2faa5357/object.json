@@ -31,9 +31,10 @@
                 "data": {
                     "customData": {
                         "height": 720,
+                        "iconPath": "",
                         "interceptedMessages": [],
                         "syncWithTransform": false,
-                        "title": "Normal Window",
+                        "title": "Game Window",
                         "width": 1280
                     },
                     "isActive": true,

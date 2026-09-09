@@ -33,6 +33,7 @@
                         "height": 240,
                         "isShowViewer": true,
                         "name": "UIScreen",
+                        "renderOrderPriority": 0,
                         "saveDirectory": "Screenshots",
                         "saveFileNamePrefix": "Screenshot",
                         "saveFormat": "png",

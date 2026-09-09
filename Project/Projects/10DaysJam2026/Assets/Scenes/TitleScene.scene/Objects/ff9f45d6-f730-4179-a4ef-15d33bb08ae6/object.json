@@ -1,0 +1,65 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "b17878a7-2c95-4c9a-bb4a-93b12a16837f",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "backUIObject": "e55cb176-8f2c-4a59-a366-8b3daf44fb58",
+                            "bgmVolumeUIObject": "7e65c75f-a017-4f86-b401-517b0d873730",
+                            "crtEffectUIObject": "c31ef8c2-53e2-45a6-b193-467980c85773",
+                            "finalScreenObject": "7e9ed864-bd4f-4a56-b710-292c1f7bb9e0",
+                            "fullscreenUIObject": "86703ad7-f7ec-405d-b705-fb3f2592d964",
+                            "mainMenuObject": "086f4aff-99fe-4ffa-b0c7-a8719a77d134",
+                            "masterVolumeUIObject": "3478ca43-4459-4470-9609-254d69babe6a",
+                            "optionMenuRootObject": "b17878a7-2c95-4c9a-bb4a-93b12a16837f",
+                            "resolutionUIObject": "ff7b327a-45e8-42b9-adfd-ebc8f6c33eb1",
+                            "seVolumeUIObject": "39222b29-a5a3-4329-a581-d3f08f9ba8ed",
+                            "selectableUIObject": "ee801c54-76f2-41b2-a8f8-90cfa05709a6",
+                            "windowObject": "589f06a2-678a-4700-9401-2e3f2faa5357"
+                        },
+                        "scriptPath": "Assets\\Scripts\\OptionMenuController.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "OptionMenuController",
+        "objectID": "ff9f45d6-f730-4179-a4ef-15d33bb08ae6",
+        "tag": ""
+    },
+    "siblingIndex": 200
+}

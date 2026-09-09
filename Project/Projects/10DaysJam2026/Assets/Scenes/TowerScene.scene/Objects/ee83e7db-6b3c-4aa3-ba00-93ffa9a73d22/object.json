@@ -17,9 +17,9 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 41.75316619873047,
-                            "y": 24.67495346069336,
-                            "z": -2.147906570826308e-06
+                            "x": 1151.9820556640625,
+                            "y": 819.5925903320313,
+                            "z": -2.1480070699908538e-06
                         }
                     },
                     "isActive": true,
@@ -42,6 +42,7 @@
             {
                 "data": {
                     "customData": {
+                        "category": "SE",
                         "effects": {
                             "echo": {
                                 "delayMs": 500.0,
@@ -104,6 +105,7 @@
             {
                 "data": {
                     "customData": {
+                        "category": "SE",
                         "effects": {
                             "echo": {
                                 "delayMs": 500.0,
@@ -166,6 +168,7 @@
             {
                 "data": {
                     "customData": {
+                        "category": "SE",
                         "effects": {
                             "echo": {
                                 "delayMs": 500.0,
@@ -224,17 +227,6 @@
                     "tag": "Damage"
                 },
                 "type": "AudioSource"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "prefabID": "02ba7894-e8a1-4767-a2e9-2a759ec11e07"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "PrefabInstanceComponent"
             },
             {
                 "data": {
@@ -347,10 +339,11 @@
                             "blinkInterval": 0.07999999821186066,
                             "coyoteTime": 0.10000000149011612,
                             "currentWeaponType": -1,
+                            "deathToGameOverDelay": 1.0,
+                            "fallDeathHeight": 150.0,
+                            "fallDeathY": -50.0,
                             "frameInterval": 0.15000000596046448,
                             "gravity": 360.0,
-                            "groundAcceleration": 450.0,
-                            "groundDeceleration": 600.0,
                             "groundedThreshold": 0.5,
                             "hp": 8.0,
                             "jumpCutFactor": 0.5,
@@ -358,7 +351,6 @@
                             "knockbackDuration": 0.20000000298023224,
                             "knockbackForceX": 100.0,
                             "knockbackForceY": 50.0,
-                            "maxFallSpeed": 200.0,
                             "maxHp": 10.0,
                             "moveSpeed": 80.0,
                             "pushBackCorrectionFactor": 0.30000001192092896,
@@ -371,7 +363,6 @@
                             "syurikenAttackInterval": 0.4000000059604645,
                             "syurikenLifeTime": 2.0,
                             "vignetteHp": 3.0,
-                            "weaponExpLossOnDamage": 1.0,
                             "weapons": [
                                 "8da25f3a-dfdc-4603-b56f-a2cc14688f69",
                                 "8bf086b0-18bf-4b32-83b6-5892013ee4e6",
@@ -391,7 +382,6 @@
                 "data": {
                     "customData": {
                         "fields": {
-                            "currentFrame": 0,
                             "frameCount": 1,
                             "frameInterval": 0.15000000596046448,
                             "isLoop": true,
@@ -462,7 +452,6 @@
         "isActive": true,
         "name": "Player",
         "objectID": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
-        "prefabNodeID": "d602269c-37e3-4a87-83b8-e640de0b2aff",
         "tag": ""
     },
     "siblingIndex": 3000

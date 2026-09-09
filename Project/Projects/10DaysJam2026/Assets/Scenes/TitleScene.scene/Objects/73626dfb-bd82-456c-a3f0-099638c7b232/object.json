@@ -31,8 +31,9 @@
                 "data": {
                     "customData": {
                         "height": 240,
-                        "isShowViewer": false,
+                        "isShowViewer": true,
                         "name": "UIScreen",
+                        "renderOrderPriority": 0,
                         "saveDirectory": "Screenshots",
                         "saveFileNamePrefix": "Screenshot",
                         "saveFormat": "png",
@@ -44,6 +45,37 @@
                     "tag": ""
                 },
                 "type": "ScreenBufferObject"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "color": true,
+                        "excludedScreenBuffers": [],
+                        "intensity": 0.0
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "DitherEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "ditherObject": "73626dfb-bd82-456c-a3f0-099638c7b232",
+                            "fadeInDuration": 0.5,
+                            "fadeInOnStart": false,
+                            "fadeOutDuration": 0.5,
+                            "isFadedOut": false
+                        },
+                        "scriptPath": "Assets\\Scripts\\DitherFade.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
             }
         ],
         "editorOnly": false,

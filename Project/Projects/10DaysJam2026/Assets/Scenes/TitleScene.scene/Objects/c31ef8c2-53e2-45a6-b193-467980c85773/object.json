@@ -1,0 +1,81 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "b17878a7-2c95-4c9a-bb4a-93b12a16837f",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 128.0,
+                            "y": 70.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "displayCameraObjectID": "5d2df8fa-7ead-45fa-93cd-d794083bfbb3"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "UIButton"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "fontName": "jfdot-Shinonome-12",
+                        "fontSize": 12.0,
+                        "horizontalAlign": 1,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "materialName": "Default",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "pixelSnapOutsetPixels": 0.0,
+                        "pixelSnapping": false,
+                        "pointSampling": true,
+                        "renderPriority": 0,
+                        "targetObjectID": "73626dfb-bd82-456c-a3f0-099638c7b232",
+                        "text": "ブラウン管風演出(準備中)  <  OFF  >",
+                        "verticalAlign": 1
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "BitmapTextRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "CrtEffectUI",
+        "objectID": "c31ef8c2-53e2-45a6-b193-467980c85773",
+        "tag": ""
+    },
+    "siblingIndex": 6000
+}

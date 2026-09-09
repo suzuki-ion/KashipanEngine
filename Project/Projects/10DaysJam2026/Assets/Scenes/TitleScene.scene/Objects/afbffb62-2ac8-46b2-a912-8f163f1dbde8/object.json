@@ -11,13 +11,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 768.0,
-                            "y": 720.0,
+                            "x": 2048.0,
+                            "y": 1920.0,
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 640.0,
-                            "y": 360.0,
+                            "x": 1024.0,
+                            "y": 960.0,
                             "z": 0.0
                         }
                     },
@@ -34,7 +34,7 @@
                             "x": 0.5,
                             "y": 0.5
                         },
-                        "cameraObjectID": "3fd12438-5911-422f-8df1-26977866aeca",
+                        "cameraObjectID": "86ffcb3b-66b7-4779-b2d6-1f73f6c78b88",
                         "offset": {
                             "x": 0.0,
                             "y": 0.0
@@ -49,7 +49,7 @@
             {
                 "data": {
                     "customData": {
-                        "displayCameraObjectID": "3fd12438-5911-422f-8df1-26977866aeca",
+                        "displayCameraObjectID": "86ffcb3b-66b7-4779-b2d6-1f73f6c78b88",
                         "fitMode": 2,
                         "sourceObjectID": "73626dfb-bd82-456c-a3f0-099638c7b232"
                     },
@@ -108,7 +108,7 @@
                         "pixelSnapOutsetPixels": 0.0,
                         "pixelSnapping": false,
                         "renderPriority": 0,
-                        "targetObjectID": "589f06a2-678a-4700-9401-2e3f2faa5357"
+                        "targetObjectID": "7e9ed864-bd4f-4a56-b710-292c1f7bb9e0"
                     },
                     "isActive": true,
                     "priority": 900,

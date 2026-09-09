@@ -217,6 +217,12 @@ class Boss2 : ScriptComponentBehavior {
                         currentAnchorPos.y + Sin(swingAngle) * pendulumRadius + bob,
                         currentAnchorPos.z
                     );
+
+                    // Boss2がプレイヤーより下に行かないように制限する
+                    if (pos.y < playerPos.y) {
+                        pos.y = playerPos.y;
+                    }
+
                     tf.SetTranslate(pos);
 
                     // プレイヤーの方向を向く

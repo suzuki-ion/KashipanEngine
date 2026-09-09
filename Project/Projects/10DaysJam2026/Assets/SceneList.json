@@ -23,6 +23,10 @@
         {
             "filePath": "Assets/Scenes/Boss1Scene.scene",
             "name": "Boss1Scene"
+        },
+        {
+            "filePath": "Assets/Scenes/Boss2Scene.scene",
+            "name": "Boss2Scene"
         }
     ],
     "startupScene": "DefaultScene"

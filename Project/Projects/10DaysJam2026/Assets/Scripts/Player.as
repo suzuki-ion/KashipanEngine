@@ -947,6 +947,27 @@ class Player : ScriptComponentBehavior {
                 }
             }
         }
+
+        if (hit.otherCollider.GetTag() == "MaxHPChest" && IsCommandTriggered("Decide")) {
+            Object@ chestObj = hit.otherObject;
+            if (chestObj !is null) {
+                array<ScriptComponent@>@ chestSc;
+                if (chestObj.GetComponents(@chestSc)) {
+                    for(int i = 0;i < chestSc.length(); ++i){
+                        bool isOpen = false;
+                        chestSc[i].GetVariable("isOpen", isOpen);
+    
+                        if (!isOpen) {
+                            chestSc[i].CallMethod("Open");
+                            maxHp += 2.0f;
+                            hp += 2.0f;
+                            Log("MaxHPChest Open");
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     void ProcessDamageAndKnockback(const HitInfo &in hit) {

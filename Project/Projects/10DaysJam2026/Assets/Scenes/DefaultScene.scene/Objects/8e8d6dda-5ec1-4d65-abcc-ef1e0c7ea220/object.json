@@ -42,6 +42,17 @@
             {
                 "data": {
                     "customData": {
+                        "prefabID": "07aabddd-0d96-4d6c-a6db-aea3248eb988"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "textureAssetPath": "App/Sprite/Object/chest.png"
                     },
                     "isActive": true,
@@ -116,7 +127,7 @@
                     },
                     "isActive": true,
                     "priority": 5,
-                    "tag": "Chest"
+                    "tag": "MaxHPChest"
                 },
                 "type": "Box2DCollider"
             },
@@ -172,6 +183,7 @@
         "isActive": true,
         "name": "CHest_MaxHP_Upper",
         "objectID": "8e8d6dda-5ec1-4d65-abcc-ef1e0c7ea220",
+        "prefabNodeID": "2e983adc-af2d-4453-bf6b-95b4b02e61b6",
         "tag": ""
     },
     "siblingIndex": 23490

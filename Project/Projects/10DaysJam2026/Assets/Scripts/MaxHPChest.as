@@ -6,8 +6,6 @@ class MaxHpChest : ScriptComponentBehavior {
     [SerializeField, Tooltip("すでに開いているか")]
     bool isOpen = false;
 
-    Object@ playerObj;
-
     void Start() {
         if (!ShouldPersistProgress()) return;
 
@@ -40,18 +38,6 @@ class MaxHpChest : ScriptComponentBehavior {
         return "max_hp_chest_" + GetScene().GetName() + "_" + GetOwnerObject().GetUUID() + "_opened";
     }
 
-    void OnCollisionEnter(const HitInfo &in hit) {
-        if (hit.otherCollider.GetTag() == "Player") {
-            @playerObj = hit.otherObject;
-        }
-    }
-
-    void OnCollisionStay(const HitInfo &in hit) {
-        if (hit.otherCollider.GetTag() == "Player") {
-            @playerObj = hit.otherObject;
-        }
-    }
-
     // 宝箱を開ける処理
     void Open() {
         if (isOpen) return;
@@ -64,19 +50,6 @@ class MaxHpChest : ScriptComponentBehavior {
         }
 
         PlayOpenAnimation();
-
-        // プレイヤーの最大HPを増加
-        if (playerObj !is null) {
-            array<ScriptComponent@>@ scripts;
-            if(playerObj.GetComponents(@scripts)){
-                for (int i = 0; i < scripts.length(); ++i) {
-                    if (scripts[i].GetTag() == "PlayerSC") {
-                        scripts[i].CallMethod("IncreaseMaxHp", hpIncreaseAmount);
-                        Log("HP Heal");
-                    }
-                }
-            }
-        }
     }
 
     // 開封用アニメーション再生

@@ -25,6 +25,10 @@ class HPUI : ScriptComponentBehavior {
     float previousHp = 0.0f;
     bool hasPreviousHp = false;
 
+    // 前フレームの最大HP(最大HPが増えた瞬間の検出用)
+    float previousMaxHp = 0.0f;
+    bool hasPreviousMaxHp = false;
+
     void Start() {
         if (player is null || gaugeSource is null) return;
 
@@ -41,20 +45,31 @@ class HPUI : ScriptComponentBehavior {
 
         if (playerSc is null) return;
 
+        float maxHp = 0.0f;
+        if (playerSc.GetVariable("maxHp", maxHp)) {
+            previousMaxHp = maxHp;
+            hasPreviousMaxHp = true;
+        }
+
         CreateGauges();
     }
 
     void CreateGauges() {
-        Transform@ tf = GetTransform();
-        if (tf is null) return;
-
         float maxHp = 0.0f;
         if (!playerSc.GetVariable("maxHp", maxHp)) return;
 
+        AddGauges(int(maxHp));
+    }
+
+    // gauges配列の現在の個数からtargetCountに達するまでゲージを追加生成する。
+    // (最大HP増加時に、既存のゲージはそのままに不足分だけ追加するために使う)
+    void AddGauges(int targetCount) {
+        Transform@ tf = GetTransform();
+        if (tf is null) return;
+
         Vector3 basePos = tf.GetTranslate() + startPosition;
 
-        int gaugeCount = int(maxHp);
-        for (int i = 0; i < gaugeCount; ++i) {
+        for (int i = int(gauges.length()); i < targetCount; ++i) {
             Object@ gauge = GetScene().CloneObject(gaugeSource, "HPGauge" + i);
             if (gauge is null) continue;
 
@@ -74,6 +89,20 @@ class HPUI : ScriptComponentBehavior {
 
         float hp = 0.0f;
         if (!playerSc.GetVariable("hp", hp)) return;
+
+        // 最大HPが増えていたら、増えた分だけゲージを追加生成する
+        float maxHp = 0.0f;
+        if (playerSc.GetVariable("maxHp", maxHp)) {
+            if (!hasPreviousMaxHp) {
+                previousMaxHp = maxHp;
+                hasPreviousMaxHp = true;
+            }
+
+            if (maxHp > previousMaxHp) {
+                AddGauges(int(maxHp));
+            }
+            previousMaxHp = maxHp;
+        }
 
         // 初回はShake判定の基準を作るだけで、揺れは発生させない
         if (!hasPreviousHp) {

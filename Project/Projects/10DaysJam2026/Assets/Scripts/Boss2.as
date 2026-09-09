@@ -8,14 +8,23 @@ class Boss2 : ScriptComponentBehavior {
     [SerializeField, Tooltip("振り子の揺れる速さ")]
     float pendulumSpeed = 1.5f;
 
-    [SerializeField, Tooltip("同じエリアで振り子運動を続ける時間(秒)。経過すると次のエリアへ移動する")]
-    float areaDuration = 4.0f;
-
     [SerializeField, Tooltip("上下方向のおまけの揺れ幅(ふわふわ感の演出用)")]
     float floatAmplitude = 10.0f;
 
     [SerializeField, Tooltip("上下方向のおまけの揺れの速さ")]
     float floatSpeed = 1.5f;
+
+    [SerializeField, Tooltip("プレイヤーから最低限離れる距離(エリア切替=ワープ時にプレイヤーと重ならないようにする)")]
+    float minDistanceFromPlayer = 100.0f;
+
+    [SerializeField, Tooltip("カメラの表示範囲からこの距離(px)以内であれば移動・攻撃を行う(画面端での見切れ猶予)")]
+    float cameraActivationMargin = 16.0f;
+
+    [SerializeField, Tooltip("カメラ表示範囲内に留めるための余白(px)。この余白の分だけ内側までしか移動しない")]
+    float cameraClampMargin = 16.0f;
+
+    [SerializeField, Tooltip("カメラ範囲内に収まってから移動・攻撃を開始するまでの猶予時間(秒)")]
+    float cameraActivationDelay = 2.0f;
 
     [SerializeField, Tooltip("攻撃間隔(秒)")]
     float attackInterval = 3.0f;
@@ -67,11 +76,13 @@ class Boss2 : ScriptComponentBehavior {
 
     // 振り子移動管理用
     float swingTimer = 0.0f;
-    float areaTimer = 0.0f;
     float currentCenterAngle = 0.0f;
     bool centerAngleInitialized = false;
     float areaAngleStep = 2.39996f;
     Vector3 currentAnchorPos;
+
+    // カメラ範囲内に留まっている時間の管理用(復帰後の行動猶予)
+    float cameraInViewTimer = 0.0f;
 
     // おまけの上下揺れ管理用
     float floatTimer = 0.0f;
@@ -195,48 +206,100 @@ class Boss2 : ScriptComponentBehavior {
                         InitPendulum(tf, playerTf);
                     }
 
-                    Vector3 playerPos = playerTf.GetTranslate();
-
-                    // 同じエリアに留まっている時間をチェックし、一定時間経過したら次のエリアへ
-                    areaTimer += GetDeltaTime();
-                    if (areaTimer >= areaDuration) {
-                        ChooseNextArea();
+                    // カメラの表示範囲を取得し、範囲外(+余白)にいる場合は移動・攻撃処理を行わない
+                    Vector3 currentPos = tf.GetTranslate();
+                    Vector3 camPos;
+                    Vector2 camSize;
+                    bool hasCameraInfo = GetScene().GetVariable("gameplayCameraPos", camPos) && GetScene().GetVariable("gameplayCameraSize", camSize);
+                    bool inCameraView = true;
+                    if (hasCameraInfo) {
+                        inCameraView = (currentPos.x >= camPos.x - cameraActivationMargin && currentPos.x <= camPos.x + camSize.x + cameraActivationMargin &&
+                                        currentPos.y >= camPos.y - cameraActivationMargin && currentPos.y <= camPos.y + camSize.y + cameraActivationMargin);
                     }
 
-                    // 振り子運動
-                    swingTimer += GetDeltaTime();
-                    float swingAngle = currentCenterAngle + Sin(swingTimer * pendulumSpeed) * pendulumSwingRange;
-
-                    // 上下方向の揺れ
-                    floatTimer += GetDeltaTime();
-                    float bob = Sin(floatTimer * floatSpeed) * floatAmplitude;
-
-                    // 常にplayerPosを追従するのではなく、固定されたcurrentAnchorPosを基準に計算する
-                    Vector3 pos = Vector3(
-                        currentAnchorPos.x + Cos(swingAngle) * pendulumRadius,
-                        currentAnchorPos.y + Sin(swingAngle) * pendulumRadius + bob,
-                        currentAnchorPos.z
-                    );
-
-                    // Boss2がプレイヤーより下に行かないように制限する
-                    if (pos.y < playerPos.y) {
-                        pos.y = playerPos.y;
-                    }
-
-                    tf.SetTranslate(pos);
-
-                    // プレイヤーの方向を向く
-                    if (playerPos.x > pos.x) {
-                        tf.SetRotate(Vector3(0.0f, 3.14159f, 0.0f));
+                    // カメラ範囲内に留まっている時間を計測し、猶予時間(cameraActivationDelay)を
+                    // 経過してから移動・攻撃を開始する(範囲外に出たら計測をリセット)
+                    if (inCameraView) {
+                        cameraInViewTimer += GetDeltaTime();
                     } else {
-                        tf.SetRotate(Vector3(0.0f, 0.0f, 0.0f));
+                        cameraInViewTimer = 0.0f;
                     }
+                    bool canAct = inCameraView && cameraInViewTimer >= cameraActivationDelay;
 
-                    // 攻撃処理
-                    attackTimer += GetDeltaTime();
-                    if (attackTimer >= attackWindup) {
-                        SpawnSickles();
-                        attackTimer = 0.0f;
+                    if (canAct) {
+                        Vector3 playerPos = playerTf.GetTranslate();
+
+                        // 振り子運動
+                        swingTimer += GetDeltaTime();
+                        float swingAngle = currentCenterAngle + Sin(swingTimer * pendulumSpeed) * pendulumSwingRange;
+
+                        // 上下方向の揺れ
+                        floatTimer += GetDeltaTime();
+                        float bob = Sin(floatTimer * floatSpeed) * floatAmplitude;
+
+                        // 常にplayerPosを追従するのではなく、固定されたcurrentAnchorPosを基準に計算する
+                        Vector3 pos = Vector3(
+                            currentAnchorPos.x + Cos(swingAngle) * pendulumRadius,
+                            currentAnchorPos.y + Sin(swingAngle) * pendulumRadius + bob,
+                            currentAnchorPos.z
+                        );
+
+                        // Boss2がプレイヤーより下に行かないように制限する
+                        if (pos.y < playerPos.y) {
+                            pos.y = playerPos.y;
+                        }
+
+                        // ワープ(エリア切替)時などにプレイヤーと重ならないよう、
+                        // 「プレイヤーより下に行かない」制約は保ったまま、横方向で最低距離(minDistanceFromPlayer)を確保する
+                        float dx = pos.x - playerPos.x;
+                        float dy = pos.y - playerPos.y; // 上のクランプにより 0 以上
+                        if (dy < minDistanceFromPlayer) {
+                            float requiredDxSq = minDistanceFromPlayer * minDistanceFromPlayer - dy * dy;
+                            if (requiredDxSq > 0.0f) {
+                                float requiredDx = Sqrt(requiredDxSq);
+                                float sign = 1.0f;
+                                if (dx < -0.0001f) {
+                                    sign = -1.0f;
+                                } else if (dx > -0.0001f && dx < 0.0001f) {
+                                    // 真上に重なっている場合は振り子の向いている方向を使う
+                                    sign = (Cos(swingAngle) >= 0.0f) ? 1.0f : -1.0f;
+                                }
+                                pos.x = playerPos.x + sign * requiredDx;
+                            }
+                        }
+
+                        // Boss2がカメラの外に出ないよう、表示範囲内(余白を残して)にクランプする
+                        if (hasCameraInfo) {
+                            float minX = camPos.x + cameraClampMargin;
+                            float maxX = camPos.x + camSize.x - cameraClampMargin;
+                            float minY = camPos.y + cameraClampMargin;
+                            float maxY = camPos.y + camSize.y - cameraClampMargin;
+
+                            if (minX <= maxX) {
+                                if (pos.x < minX) pos.x = minX;
+                                if (pos.x > maxX) pos.x = maxX;
+                            }
+                            if (minY <= maxY) {
+                                if (pos.y < minY) pos.y = minY;
+                                if (pos.y > maxY) pos.y = maxY;
+                            }
+                        }
+
+                        tf.SetTranslate(pos);
+
+                        // プレイヤーの方向を向く
+                        if (playerPos.x > pos.x) {
+                            tf.SetRotate(Vector3(0.0f, 3.14159f, 0.0f));
+                        } else {
+                            tf.SetRotate(Vector3(0.0f, 0.0f, 0.0f));
+                        }
+
+                        // 攻撃処理
+                        attackTimer += GetDeltaTime();
+                        if (attackTimer >= attackWindup) {
+                            SpawnSickles();
+                            attackTimer = 0.0f;
+                        }
                     }
                 }
             }
@@ -261,10 +324,9 @@ class Boss2 : ScriptComponentBehavior {
         centerAngleInitialized = true;
     }
 
-    // 次のエリアを決めて、そこで振り子運動を再開する
+    // 次のエリアを決めて、そこで振り子運動を再開する(ダメージを受けた時のみ呼ばれる)
     void ChooseNextArea() {
         currentCenterAngle += areaAngleStep;
-        areaTimer = 0.0f;
         swingTimer = 0.0f; // 中心角の位置から振り子をやり直す
 
         // エリア変更時に基準座標を現在のプレイヤー位置に更新する

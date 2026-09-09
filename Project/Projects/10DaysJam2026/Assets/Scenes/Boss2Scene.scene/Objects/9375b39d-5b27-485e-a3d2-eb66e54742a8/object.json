@@ -1,0 +1,66 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 780.999755859375,
+                            "y": 210.70510864257813,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "boss": "0360929a-36ca-4ba1-8483-0db921c98d76",
+                            "rightGroup": "3664e9db-138d-41b5-8ab0-52c02fe4e0af"
+                        },
+                        "scriptPath": "Assets\\Scripts\\BossDeadDetection.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "7e831a9c-0de9-4071-9aab-5281af423e91"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "BossDeadDetection",
+        "objectID": "9375b39d-5b27-485e-a3d2-eb66e54742a8",
+        "prefabNodeID": "26ec4851-184d-4e27-a2bf-96280c460a09",
+        "tag": ""
+    },
+    "siblingIndex": 30000
+}

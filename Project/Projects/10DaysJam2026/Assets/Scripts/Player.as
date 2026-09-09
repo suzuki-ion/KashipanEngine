@@ -252,6 +252,16 @@ class Player : ScriptComponentBehavior {
     // こうしておかないと、最初のセーブ地点へ到達する前に死亡した場合、コンティニュー時に
     // 戻る先のセーブデータが存在せず(save_sceneNameが空)、死亡したシーンがそのまま
     // リロードされるだけになってしまう(ゲーム開始地点まで正しく戻れない)
+    //
+    // 通常のSaveProgress()は呼ばない(呼んではいけない)。SaveProgress()はシーン変数
+    // saveRequestedPositionをそのままsave_positionとして保存するが、この変数は各シーンの
+    // scene.jsonに「エディターで最後にSavePointをテストした際の座標」がそのまま残っており、
+    // 実際にはSavePointに一度も触れていなくてもGetVariable()がtrueを返してしまう。
+    // そのままSaveProgress()を使うと、はじめから直後にこの無関係な残留座標がsave_positionに
+    // 書き込まれてしまい、セーブ地点に触れずに死亡してコンティニューした際、はじめからの
+    // スタート地点とは全く違う場所へ飛ばされるバグになる。
+    // そのため、ここではsave_positionには触れず(未設定のままにし)、LoadProgress()側の
+    // 座標復元処理をスキップさせることで、シーンに配置された初期座標がそのまま使われるようにする
     void SaveInitialProgressIfNewGame() {
         bool isNewGameStart = false;
         GetScene().GetGlobalVariable("isNewGameStart", isNewGameStart);
@@ -259,7 +269,12 @@ class Player : ScriptComponentBehavior {
 
         // 消費(次にこのフラグが残ったまま別シーンへ入っても再セーブしないように)
         GetScene().SetGlobalVariable("isNewGameStart", false);
-        SaveProgress();
+
+        if (!ShouldPersistProgress()) return;
+
+        UpdateProgressVariables();
+        GetScene().SetGlobalVariable("save_sceneName", GetScene().GetName());
+        GetScene().SaveGlobalVariables();
     }
 
     // 現在のシーン実行状態でセーブデータの読み書きを行ってよいかどうか

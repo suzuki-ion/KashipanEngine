@@ -1,0 +1,67 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "4aeae184-8b00-4af0-bc21-da2f9467b1d5",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "boss": "5db46d62-cefd-4eff-bebe-39d3d28b4e3e",
+                            "rightGroup": "4f1813d2-db57-4eb2-898d-22c8d0004b52"
+                        },
+                        "scriptPath": "Assets\\Scripts\\BossDeadDetection.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "7e831a9c-0de9-4071-9aab-5281af423e91"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "BossDeadDetection",
+        "objectID": "cfba3988-6a76-4117-873d-37c9dc0e6115",
+        "prefabNodeID": "26ec4851-184d-4e27-a2bf-96280c460a09",
+        "tag": ""
+    },
+    "siblingIndex": 29000
+}

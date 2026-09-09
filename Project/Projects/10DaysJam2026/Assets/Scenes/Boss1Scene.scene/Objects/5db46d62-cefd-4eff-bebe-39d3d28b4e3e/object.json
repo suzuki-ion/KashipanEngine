@@ -100,7 +100,7 @@
                             "deathEffectSpread": 20.0,
                             "gravity": 150.0,
                             "groundedThreshold": 0.5,
-                            "hp": 40.0,
+                            "hp": 1.0,
                             "idleDuration": 2.0,
                             "maxHp": 40.0,
                             "moveSpeed": 80.0,

@@ -119,6 +119,8 @@ class Boss1 : ScriptComponentBehavior {
         }
 
         SetAnimation(BossState::Idle);
+
+        float hp = maxHp;
     }
 
     void Update() {

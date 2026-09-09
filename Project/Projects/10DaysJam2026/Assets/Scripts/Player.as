@@ -1077,6 +1077,8 @@ class Player : ScriptComponentBehavior {
     }
 
     void Damage(float amount) {
+        if(isInvincible) return;
+
         hp = Clamp(hp - amount, 0.0f, maxHp);
         Log("Damage! HP:" + hp);
         PlayTaggedAudio("Damage");

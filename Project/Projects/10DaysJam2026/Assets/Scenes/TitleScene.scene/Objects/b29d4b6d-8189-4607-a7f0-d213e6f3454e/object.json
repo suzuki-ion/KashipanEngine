@@ -4,7 +4,6 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "b17878a7-2c95-4c9a-bb4a-93b12a16837f",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -12,14 +11,14 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 1.0,
-                            "y": 1.0,
+                            "x": 256.0,
+                            "y": 240.0,
                             "z": 1.0
                         },
                         "translate": {
                             "x": 128.0,
-                            "y": 100.0,
-                            "z": 0.0
+                            "y": 120.0,
+                            "z": 10.0
                         }
                     },
                     "isActive": true,
@@ -31,51 +30,67 @@
             {
                 "data": {
                     "customData": {
-                        "displayCameraObjectID": "5d2df8fa-7ead-45fa-93cd-d794083bfbb3"
+                        "meshAssetPath": "PrimitiveMesh-Rect2D"
                     },
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
                 },
-                "type": "UIButton"
+                "type": "MeshFilter"
             },
             {
                 "data": {
                     "customData": {
                         "allowInstancing": true,
-                        "fontName": "jfdot-Shinonome-12",
-                        "fontSize": 12.0,
-                        "horizontalAlign": 1,
+                        "anchor": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
                         "instanceColor": {
                             "w": 1.0,
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
                         },
                         "instanceColorBlendMode": 1,
-                        "materialName": "Default",
+                        "instanceUvCombineMode": 0,
+                        "instanceUvPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceUvRotation": 0.0,
+                        "instanceUvScale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "instanceUvTranslate": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "materialName": "Dot",
                         "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
                         "pixelSnapOutsetPixels": 0.0,
                         "pixelSnapping": false,
-                        "pointSampling": true,
-                        "renderPriority": 0,
-                        "targetObjectID": "73626dfb-bd82-456c-a3f0-099638c7b232",
-                        "text": "ウィンドウサイズ  <  1280x720  >",
-                        "verticalAlign": 1
+                        "renderPriority": -60,
+                        "targetObjectID": "73626dfb-bd82-456c-a3f0-099638c7b232"
                     },
                     "isActive": true,
                     "priority": 900,
                     "tag": ""
                 },
-                "type": "BitmapTextRenderer"
+                "type": "SpriteRenderer"
             }
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "ResolutionUI",
-        "objectID": "ff7b327a-45e8-42b9-adfd-ebc8f6c33eb1",
+        "name": "BackgroundColor",
+        "objectID": "b29d4b6d-8189-4607-a7f0-d213e6f3454e",
         "tag": ""
     },
-    "siblingIndex": 5000
+    "siblingIndex": 666
 }

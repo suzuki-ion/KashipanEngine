@@ -835,12 +835,10 @@ private:
 
         const int subCol = bitmask % 4;
         const int subRow = bitmask / 4;
-        const float insetX = std::min(0.5f, tilePixelSize_.x * 0.5f);
-        const float insetY = std::min(0.5f, tilePixelSize_.y * 0.5f);
-        const float u0 = (def.tilesetOriginPx.x + static_cast<float>(subCol) * tilePixelSize_.x + insetX) / texWidth;
-        const float v0 = (def.tilesetOriginPx.y + static_cast<float>(subRow) * tilePixelSize_.y + insetY) / texHeight;
-        const float u1 = (def.tilesetOriginPx.x + static_cast<float>(subCol + 1) * tilePixelSize_.x - insetX) / texWidth;
-        const float v1 = (def.tilesetOriginPx.y + static_cast<float>(subRow + 1) * tilePixelSize_.y - insetY) / texHeight;
+        const float u0 = (def.tilesetOriginPx.x + static_cast<float>(subCol) * tilePixelSize_.x) / texWidth;
+        const float v0 = (def.tilesetOriginPx.y + static_cast<float>(subRow) * tilePixelSize_.y) / texHeight;
+        const float u1 = u0 + tilePixelSize_.x / texWidth;
+        const float v1 = v0 + tilePixelSize_.y / texHeight;
 
         // UVはVの上が0・下が1
         AppendQuadUV(vertices, indices, px0, py0, px1, py1, Vector2(u0, v1), Vector2(u0, v0), Vector2(u1, v0), Vector2(u1, v1));
@@ -851,12 +849,10 @@ private:
     void AppendEightDirWholeCell(const Vector2 &originPx, const Vector2 &tilePos,
         float px0, float py0, float px1, float py1, float texWidth, float texHeight,
         std::vector<ModelData::Vertex> &vertices, std::vector<std::uint32_t> &indices) const {
-        const float insetX = std::min(0.5f, tilePixelSize_.x * 0.5f);
-        const float insetY = std::min(0.5f, tilePixelSize_.y * 0.5f);
-        const float u0 = (originPx.x + tilePos.x * tilePixelSize_.x + insetX) / texWidth;
-        const float v0 = (originPx.y + tilePos.y * tilePixelSize_.y + insetY) / texHeight;
-        const float u1 = (originPx.x + (tilePos.x + 1.0f) * tilePixelSize_.x - insetX) / texWidth;
-        const float v1 = (originPx.y + (tilePos.y + 1.0f) * tilePixelSize_.y - insetY) / texHeight;
+        const float u0 = (originPx.x + tilePos.x * tilePixelSize_.x) / texWidth;
+        const float v0 = (originPx.y + tilePos.y * tilePixelSize_.y) / texHeight;
+        const float u1 = u0 + tilePixelSize_.x / texWidth;
+        const float v1 = v0 + tilePixelSize_.y / texHeight;
         AppendQuadUV(vertices, indices, px0, py0, px1, py1, Vector2(u0, v1), Vector2(u0, v0), Vector2(u1, v0), Vector2(u1, v1));
     }
 
@@ -893,14 +889,10 @@ private:
 
         const float quarterWidth = tilePixelSize_.x * 0.5f;
         const float quarterHeight = tilePixelSize_.y * 0.5f;
-        // UVを各サブ矩形の外周テクセル中心へ収める。境界そのものを指定すると、縮小表示時に
-        // アトラスの隣接領域を混ぜて生成されたミップをカメラ位置次第で拾い、タイル周期の線になる
-        const float insetX = std::min(0.5f, quarterWidth * 0.5f);
-        const float insetY = std::min(0.5f, quarterHeight * 0.5f);
-        const float u0 = (originPx.x + tilePos.x * tilePixelSize_.x + static_cast<float>(cornerCol) * quarterWidth + insetX) / texWidth;
-        const float v0 = (originPx.y + tilePos.y * tilePixelSize_.y + static_cast<float>(cornerRow) * quarterHeight + insetY) / texHeight;
-        const float u1 = (originPx.x + tilePos.x * tilePixelSize_.x + static_cast<float>(cornerCol + 1) * quarterWidth - insetX) / texWidth;
-        const float v1 = (originPx.y + tilePos.y * tilePixelSize_.y + static_cast<float>(cornerRow + 1) * quarterHeight - insetY) / texHeight;
+        const float u0 = (originPx.x + tilePos.x * tilePixelSize_.x + static_cast<float>(cornerCol) * quarterWidth) / texWidth;
+        const float v0 = (originPx.y + tilePos.y * tilePixelSize_.y + static_cast<float>(cornerRow) * quarterHeight) / texHeight;
+        const float u1 = u0 + quarterWidth / texWidth;
+        const float v1 = v0 + quarterHeight / texHeight;
         AppendQuadUV(vertices, indices, wx0, wy0, wx1, wy1, Vector2(u0, v1), Vector2(u0, v0), Vector2(u1, v0), Vector2(u1, v1));
     }
 
@@ -1079,12 +1071,8 @@ private:
 
                 const float px0 = static_cast<float>(x) * tileSize_.x;
                 const float py0 = static_cast<float>(y) * tileSize_.y;
-                // 隣接セルと同じ整数グリッド座標から境界を計算する。
-                // px0 + tileSizeの累算形だと浮動小数点の丸めにより、隣のセルのpx0と
-                // ごく僅かに異なる場合があり、低解像度かつサブピクセル位置のカメラでは
-                // その隙間がタイル周期の1px線として現れることがある
-                const float px1 = static_cast<float>(x + 1) * tileSize_.x;
-                const float py1 = static_cast<float>(y + 1) * tileSize_.y;
+                const float px1 = px0 + tileSize_.x;
+                const float py1 = py0 + tileSize_.y;
 
                 if (autotileMode_ == AutotileMode::EightDirection) {
                     AppendEightDirectionTile(x, y, tileType, def, px0, py0, px1, py1, texWidth, texHeight, vertices, indices);

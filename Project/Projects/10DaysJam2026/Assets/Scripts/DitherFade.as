@@ -78,7 +78,7 @@ class DitherFade : ScriptComponentBehavior {
 
         fadeElapsed += GetDeltaTime();
         float t = (fadeDuration > 0.0f) ? Clamp(fadeElapsed / fadeDuration, 0.0f, 1.0f) : 1.0f;
-        ApplyIntensity(Lerp(fadeFromIntensity, fadeToIntensity, t));
+        ApplyIntensity(Easing::Lerp(fadeFromIntensity, fadeToIntensity, t));
 
         if (t >= 1.0f) {
             isFading = false;

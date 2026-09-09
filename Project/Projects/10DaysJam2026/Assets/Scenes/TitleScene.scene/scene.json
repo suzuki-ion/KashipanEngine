@@ -17,11 +17,25 @@
                 "tag": ""
             },
             "type": "SceneScriptEngine"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 500,
+                "tag": ""
+            },
+            "type": "SceneAudioPlayer"
         }
     ],
     "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",
     "sceneName": "TitleScene",
     "sceneVariables": [
+        {
+            "key": "isDialogueActive",
+            "type": "Bool",
+            "value": false
+        },
         {
             "key": "testFloat",
             "type": "Float",
@@ -36,6 +50,33 @@
             "key": "testInt",
             "type": "Int32",
             "value": 0
+        },
+        {
+            "key": "gameOverRequested",
+            "type": "Bool",
+            "value": true
+        },
+        {
+            "key": "dialogueBoxUIBusy",
+            "type": "Bool",
+            "value": false
+        },
+        {
+            "key": "gameplayCameraPos",
+            "type": "Vector3",
+            "value": {
+                "x": 2156.77978515625,
+                "y": 157.9871826171875,
+                "z": 0.0
+            }
+        },
+        {
+            "key": "gameplayCameraSize",
+            "type": "Vector2",
+            "value": {
+                "x": 256.0,
+                "y": 240.0
+            }
         }
     ]
 }

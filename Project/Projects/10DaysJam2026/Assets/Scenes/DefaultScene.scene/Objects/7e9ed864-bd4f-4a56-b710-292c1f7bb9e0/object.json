@@ -82,19 +82,6 @@
             {
                 "data": {
                     "customData": {
-                        "ditherAmount": 0.15000000596046448,
-                        "excludedScreenBuffers": [],
-                        "intensity": 1.0
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "PaletteQuantizeEffect"
-            },
-            {
-                "data": {
-                    "customData": {
                         "fields": {},
                         "scriptPath": "Assets\\Scripts\\ApplyVideoSettings.as"
                     },

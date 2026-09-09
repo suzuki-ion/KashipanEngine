@@ -34,25 +34,39 @@
                         "fields": {
                             "clickedColor": {
                                 "w": 1.0,
-                                "x": 0.6000000238418579,
+                                "x": 0.501960813999176,
                                 "y": 1.0,
-                                "z": 0.6000000238418579
+                                "z": 0.501960813999176
                             },
                             "decideCommandName": "Attack",
+                            "disabledColor": {
+                                "w": 1.0,
+                                "x": 0.5,
+                                "y": 0.5,
+                                "z": 0.5
+                            },
+                            "disabledFlags": [],
+                            "holdDecisionUntilConsumed": false,
                             "hoverColor": {
                                 "w": 1.0,
                                 "x": 1.0,
                                 "y": 1.0,
-                                "z": 0.6000000238418579
+                                "z": 0.0
                             },
                             "isDecided": false,
                             "isLoop": true,
                             "nextCommandName": "SelectDown",
+                            "normalColor": {
+                                "w": 1.0,
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
                             "pressedColor": {
                                 "w": 1.0,
                                 "x": 1.0,
-                                "y": 0.6000000238418579,
-                                "z": 0.6000000238418579
+                                "y": 0.501960813999176,
+                                "z": 0.501960813999176
                             },
                             "prevCommandName": "SelectUp",
                             "selectableObjects": [

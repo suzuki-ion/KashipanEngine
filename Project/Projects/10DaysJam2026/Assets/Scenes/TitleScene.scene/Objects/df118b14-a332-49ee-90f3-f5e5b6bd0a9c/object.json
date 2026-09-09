@@ -11,14 +11,14 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 636.7999877929688,
-                            "y": 597.0,
+                            "x": 256.0,
+                            "y": 240.0,
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 640.0,
-                            "y": 298.5,
-                            "z": 0.0
+                            "x": 128.0,
+                            "y": 120.0,
+                            "z": 10.0
                         }
                     },
                     "isActive": true,
@@ -41,34 +41,13 @@
             {
                 "data": {
                     "customData": {
-                        "displayCameraObjectID": "a5805fc8-0f8c-4264-92fa-419ddc8f876c",
-                        "fitMode": 2,
-                        "sourceObjectID": "7e9ed864-bd4f-4a56-b710-292c1f7bb9e0"
+                        "textureAssetPath": "App/Sprite/background/cloud.png"
                     },
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
                 },
-                "type": "ScreenBufferViewport"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "anchorPoint": {
-                            "x": 0.5,
-                            "y": 0.5
-                        },
-                        "cameraObjectID": "a5805fc8-0f8c-4264-92fa-419ddc8f876c",
-                        "offset": {
-                            "x": 0.0,
-                            "y": 0.0
-                        }
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "ScreenAnchor"
+                "type": "TextureSource"
             },
             {
                 "data": {
@@ -80,9 +59,9 @@
                         },
                         "instanceColor": {
                             "w": 1.0,
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
+                            "x": 0.5561959743499756,
+                            "y": 0.5561959743499756,
+                            "z": 0.5561959743499756
                         },
                         "instanceColorBlendMode": 1,
                         "instanceUvCombineMode": 0,
@@ -107,8 +86,8 @@
                         },
                         "pixelSnapOutsetPixels": 0.0,
                         "pixelSnapping": false,
-                        "renderPriority": 0,
-                        "targetObjectID": "02788331-11b3-451d-bad8-86c2e1f677aa"
+                        "renderPriority": -50,
+                        "targetObjectID": "73626dfb-bd82-456c-a3f0-099638c7b232"
                     },
                     "isActive": true,
                     "priority": 900,
@@ -118,11 +97,11 @@
             }
         ],
         "editorOnly": false,
-        "hiddenFromEditorTarget": true,
+        "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "FinalScreenViewport",
-        "objectID": "62089423-9af0-4347-b5a0-070b95e55fd3",
+        "name": "Background",
+        "objectID": "df118b14-a332-49ee-90f3-f5e5b6bd0a9c",
         "tag": ""
     },
-    "siblingIndex": 4700
+    "siblingIndex": 833
 }

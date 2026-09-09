@@ -69,9 +69,9 @@
             "value": false
         },
         {
-            "key": "gameOverRequested",
+            "key": "dialogueBoxUIBusy",
             "type": "Bool",
-            "value": true
+            "value": false
         },
         {
             "key": "saveRequestedPosition",
@@ -83,7 +83,7 @@
             }
         },
         {
-            "key": "dialogueBoxUIBusy",
+            "key": "gameOverRequested",
             "type": "Bool",
             "value": false
         },

@@ -4,7 +4,7 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "e19e4382-581a-4a49-b919-c3d35f15e56c",
+                        "parent": "1e1bdbdf-6228-439f-a6bc-e5fac92a39fb",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -54,7 +54,7 @@
                                     "shakeEaseType": 0,
                                     "shakeEnabled": false,
                                     "shakeSpeed": 20.0,
-                                    "text": "Aボタンでジャンプ\nXボタンで攻撃ができる"
+                                    "text": "セーブしました。"
                                 }
                             ],
                             "iconObject": "1fcaaf04-0627-4958-a051-12f47f3f42a4",
@@ -75,7 +75,7 @@
         "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "TalkScript",
-        "objectID": "b1274bd8-e376-4d98-bd45-03e18cf8a28f",
+        "objectID": "63731b7a-8aa4-4316-8e64-68ad3566ff39",
         "prefabNodeID": "d2b98713-1d27-4a1f-86bd-fd05827d490f",
         "tag": ""
     },

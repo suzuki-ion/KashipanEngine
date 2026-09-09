@@ -1,24 +1,9 @@
 {
     "globalSceneVariables": [
         {
-            "key": "save_weapon_Ball_damageAmount",
-            "type": "Float",
-            "value": 1.0
-        },
-        {
-            "key": "save_weapon_Axe_nextExp",
-            "type": "Float",
-            "value": 15.0
-        },
-        {
-            "key": "transitionEntrySceneName",
-            "type": "String",
-            "value": ""
-        },
-        {
             "key": "save_weapon_Shuriken_exp",
             "type": "Float",
-            "value": 0.0
+            "value": 5.0
         },
         {
             "key": "save_maxHp",
@@ -31,6 +16,46 @@
             "value": true
         },
         {
+            "key": "save_weapon_Ball_damageAmount",
+            "type": "Float",
+            "value": 2.0
+        },
+        {
+            "key": "save_weapon_Axe_nextExp",
+            "type": "Float",
+            "value": 10.0
+        },
+        {
+            "key": "transitionEntrySceneName",
+            "type": "String",
+            "value": ""
+        },
+        {
+            "key": "isNewGameStart",
+            "type": "Bool",
+            "value": false
+        },
+        {
+            "key": "save_weapon_Axe_level",
+            "type": "Int32",
+            "value": 1
+        },
+        {
+            "key": "save_weapon_Katana_nextExp",
+            "type": "Float",
+            "value": 15.0
+        },
+        {
+            "key": "save_weapon_Shuriken_level",
+            "type": "Int32",
+            "value": 2
+        },
+        {
+            "key": "save_weapon_Katana_damageAmount",
+            "type": "Float",
+            "value": 2.0
+        },
+        {
             "key": "dialogueTrigger_MountainScene_e19e4382-581a-4a49-b919-c3d35f15e56c_fired",
             "type": "Bool",
             "value": true
@@ -41,27 +66,12 @@
             "value": true
         },
         {
-            "key": "save_weapon_Axe_level",
-            "type": "Int32",
-            "value": 2
-        },
-        {
-            "key": "save_weapon_Katana_nextExp",
-            "type": "Float",
-            "value": 22.5
-        },
-        {
-            "key": "save_weapon_Shuriken_level",
-            "type": "Int32",
-            "value": 3
-        },
-        {
-            "key": "save_weapon_Katana_damageAmount",
-            "type": "Float",
-            "value": 3.0
-        },
-        {
             "key": "max_hp_chest_MountainScene_b64e6fa6-3b1f-478b-b017-00c279880b0f_opened",
+            "type": "Bool",
+            "value": true
+        },
+        {
+            "key": "chest_TowerScene_59124f65-2c8c-4aea-ae1a-a4c639b9a8e6_opened",
             "type": "Bool",
             "value": true
         },
@@ -73,12 +83,12 @@
         {
             "key": "save_hp",
             "type": "Float",
-            "value": 12.0
+            "value": 6.0
         },
         {
             "key": "save_currentWeaponType",
             "type": "Int32",
-            "value": 0
+            "value": 2
         },
         {
             "key": "save_weapon_Katana_owned",
@@ -88,12 +98,12 @@
         {
             "key": "save_weapon_Katana_level",
             "type": "Int32",
-            "value": 3
+            "value": 2
         },
         {
             "key": "save_weapon_Katana_exp",
             "type": "Float",
-            "value": 0.0
+            "value": 12.0
         },
         {
             "key": "save_weapon_Shuriken_owned",
@@ -103,12 +113,12 @@
         {
             "key": "save_weapon_Shuriken_nextExp",
             "type": "Float",
-            "value": 22.5
+            "value": 15.0
         },
         {
             "key": "save_weapon_Shuriken_damageAmount",
             "type": "Float",
-            "value": 3.0
+            "value": 2.0
         },
         {
             "key": "save_weapon_Axe_owned",
@@ -123,7 +133,7 @@
         {
             "key": "save_weapon_Axe_damageAmount",
             "type": "Float",
-            "value": 2.0
+            "value": 1.0
         },
         {
             "key": "save_weapon_Ball_owned",
@@ -133,31 +143,31 @@
         {
             "key": "save_weapon_Ball_level",
             "type": "Int32",
-            "value": 1
+            "value": 2
         },
         {
             "key": "save_weapon_Ball_exp",
             "type": "Float",
-            "value": 0.0
+            "value": 14.0
         },
         {
             "key": "save_weapon_Ball_nextExp",
             "type": "Float",
-            "value": 10.0
+            "value": 15.0
         },
         {
             "key": "save_position",
             "type": "Vector3",
             "value": {
-                "x": 1491.71630859375,
-                "y": 400.3275146484375,
-                "z": -0.040008544921875
+                "x": 288.24273681640625,
+                "y": 56.09320068359375,
+                "z": 0.03997802734375
             }
         },
         {
             "key": "save_sceneName",
             "type": "String",
-            "value": "MountainScene"
+            "value": "FleshDollScene"
         }
     ]
 }

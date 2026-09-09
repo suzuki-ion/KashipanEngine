@@ -58,7 +58,7 @@
                             "invincibleDuration": 0.5,
                             "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
                             "self": "7abc302a-1995-4198-adf7-b02ccf386b9a",
-                            "shotDuration": 2.0,
+                            "shotDuration": 4.0,
                             "shotFrame": 1
                         },
                         "scriptPath": "Assets\\Scripts\\WallEnemy.as"
@@ -118,7 +118,7 @@
                         "fields": {
                             "currentFrame": 0,
                             "frameCount": 2,
-                            "frameInterval": 1.0,
+                            "frameInterval": 2.0,
                             "isLoop": true,
                             "playOnStart": true,
                             "startRow": 0,

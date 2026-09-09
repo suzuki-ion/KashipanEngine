@@ -143,6 +143,17 @@
             {
                 "data": {
                     "customData": {
+                        "prefabID": "27055bed-eff6-4456-81f0-63d6203509b7"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,
@@ -192,6 +203,7 @@
         "isActive": true,
         "name": "Axe",
         "objectID": "9497b163-f450-4598-bab8-75df986567cb",
+        "prefabNodeID": "668b8905-8e15-43a2-b608-f10ebac4a873",
         "tag": ""
     },
     "siblingIndex": 12333

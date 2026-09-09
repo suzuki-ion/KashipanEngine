@@ -141,6 +141,17 @@
             {
                 "data": {
                     "customData": {
+                        "prefabID": "72e6e63e-cc54-4296-b6c7-f6a0c497fa1d"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,
@@ -190,6 +201,7 @@
         "isActive": true,
         "name": "Shuriken",
         "objectID": "8bf086b0-18bf-4b32-83b6-5892013ee4e6",
+        "prefabNodeID": "378c6f2f-0ab1-482b-a462-c59419d6acc5",
         "tag": ""
     },
     "siblingIndex": 12000

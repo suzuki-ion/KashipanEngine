@@ -42,6 +42,17 @@
             {
                 "data": {
                     "customData": {
+                        "prefabID": "f744455a-1381-4439-b25b-e57c40d5c887"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "fields": {
                             "activeDuration": 0.30000001192092896,
                             "cooldown": 0.4000000059604645,
@@ -199,6 +210,7 @@
         "isActive": true,
         "name": "Katana",
         "objectID": "8da25f3a-dfdc-4603-b56f-a2cc14688f69",
+        "prefabNodeID": "2a5554ec-008d-479c-b74d-a037201cb416",
         "tag": ""
     },
     "siblingIndex": 8000

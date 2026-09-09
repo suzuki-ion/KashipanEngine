@@ -1,0 +1,212 @@
+{
+    "name": "Katana",
+    "objects": [
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "rotate": {
+                                    "w": 1.2675908465098473e-06,
+                                    "x": 0.0,
+                                    "y": 1.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 15.0,
+                                    "y": 6.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": -1000.0,
+                                    "y": 56.209999084472656,
+                                    "z": -0.0005167897325009108
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 0,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Rect2D"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "fields": {
+                                    "activeDuration": 0.30000001192092896,
+                                    "cooldown": 0.4000000059604645,
+                                    "currentMargin": 16.0,
+                                    "damageAmount": 1.0,
+                                    "effectOffsetY": 3.5,
+                                    "exp": 0.0,
+                                    "level": 1,
+                                    "nextExp": 10.0,
+                                    "pos": {
+                                        "x": -1000.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "power": 10,
+                                    "scaleX": [
+                                        15.0,
+                                        20.0,
+                                        21.0
+                                    ],
+                                    "scaleY": [
+                                        6.0,
+                                        8.0,
+                                        26.0
+                                    ],
+                                    "textureNames": [
+                                        "Katana",
+                                        "Katana2",
+                                        "Katana3"
+                                    ]
+                                },
+                                "scriptPath": "Assets\\Scripts\\Katana.as"
+                            },
+                            "isActive": true,
+                            "priority": 2,
+                            "tag": ""
+                        },
+                        "type": "ScriptComponent"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "fields": {
+                                    "currentFrame": 0,
+                                    "frameCount": 3,
+                                    "frameInterval": 0.10000000149011612,
+                                    "isLoop": false,
+                                    "playOnStart": true,
+                                    "startRow": 0,
+                                    "uvStep": {
+                                        "x": 0.3330000042915344,
+                                        "y": 1.0
+                                    }
+                                },
+                                "scriptPath": "Assets\\Scripts\\SpriteAnimator.as"
+                            },
+                            "isActive": true,
+                            "priority": 3,
+                            "tag": "AnimatorSC"
+                        },
+                        "type": "ScriptComponent"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "textureAssetPath": "App/Sprite/Effect/Katana3.png"
+                            },
+                            "isActive": true,
+                            "priority": 4,
+                            "tag": ""
+                        },
+                        "type": "TextureSource"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "autoGenerated": false,
+                                "center": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "continuousDetection": false,
+                                "isTrigger": true,
+                                "size": {
+                                    "x": 0.800000011920929,
+                                    "y": 0.800000011920929
+                                },
+                                "syncPosition": [
+                                    true,
+                                    true,
+                                    true
+                                ],
+                                "syncRotation": true,
+                                "syncScale": [
+                                    true,
+                                    true,
+                                    false
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 5,
+                            "tag": "Weapon"
+                        },
+                        "type": "Box2DCollider"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "anchor": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 0.3330000042915344,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.6660000085830688,
+                                    "y": 0.0
+                                },
+                                "materialName": "Dot",
+                                "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                                "pivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "pixelSnapOutsetPixels": 0.0,
+                                "pixelSnapping": true,
+                                "renderPriority": 0,
+                                "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
+                            },
+                            "isActive": false,
+                            "priority": 6,
+                            "tag": ""
+                        },
+                        "type": "SpriteRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "Katana",
+                "objectID": "8da25f3a-dfdc-4603-b56f-a2cc14688f69",
+                "prefabNodeID": "2a5554ec-008d-479c-b74d-a037201cb416",
+                "tag": ""
+            },
+            "parentIndex": -1
+        }
+    ],
+    "prefab": true,
+    "prefabID": "f744455a-1381-4439-b25b-e57c40d5c887"
+}

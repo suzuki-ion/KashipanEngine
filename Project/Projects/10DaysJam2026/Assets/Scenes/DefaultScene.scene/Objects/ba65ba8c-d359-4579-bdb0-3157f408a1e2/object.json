@@ -74,6 +74,17 @@
             {
                 "data": {
                     "customData": {
+                        "prefabID": "5c645e7b-ec93-42b3-bcb7-b7c6ce56e8b8"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "fields": {
                             "bounceFactorX": 1.0,
                             "bounceFactorY": 0.800000011920929,
@@ -171,6 +182,7 @@
         "isActive": true,
         "name": "Ball",
         "objectID": "ba65ba8c-d359-4579-bdb0-3157f408a1e2",
+        "prefabNodeID": "5e3dc387-ba10-48f4-84d1-dad422338c4b",
         "tag": ""
     },
     "siblingIndex": 12499

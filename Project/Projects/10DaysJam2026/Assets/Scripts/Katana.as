@@ -77,7 +77,9 @@ class Katana : ScriptComponentBehavior {
         }
 
         if(level == 3){
-            effectOffsetY = 10.0f;
+            effectOffsetY = 12.5f;
+        }else {
+            effectOffsetY = 3.5f;
         }
 
         // 攻撃中はプレイヤーの向きに合わせて毎フレーム回転とオフセットを追従
@@ -131,6 +133,8 @@ class Katana : ScriptComponentBehavior {
                         // レベル3以外は1コマに設定
                         scripts[i].CallMethod("SetFrameCount", 1);
                         sprite.SetInstanceUvScale(Vector2(1.0f, 1.0f));
+                        // UVのずれ(Translate)も初期位置にリセットする
+                        sprite.SetInstanceUvTranslate(Vector2(0.0f, 0.0f));
                     }
                 }
             }

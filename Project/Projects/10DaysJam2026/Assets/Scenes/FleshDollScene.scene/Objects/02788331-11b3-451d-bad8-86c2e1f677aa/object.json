@@ -31,10 +31,10 @@
                 "data": {
                     "customData": {
                         "height": 720,
-                        "iconPath": "",
+                        "iconPath": "Assets/App/icon.ico",
                         "interceptedMessages": [],
                         "syncWithTransform": false,
-                        "title": "Game Window",
+                        "title": "3005_天上の魔王",
                         "width": 1280
                     },
                     "isActive": true,

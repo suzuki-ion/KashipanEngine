@@ -19,6 +19,10 @@
         {
             "filePath": "Assets/Scenes/FleshDollScene.scene",
             "name": "FleshDollScene"
+        },
+        {
+            "filePath": "Assets/Scenes/Boss1Scene.scene",
+            "name": "Boss1Scene"
         }
     ],
     "startupScene": "DefaultScene"

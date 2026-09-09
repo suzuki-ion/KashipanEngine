@@ -1,0 +1,82 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "height": 240,
+                        "isShowViewer": true,
+                        "name": "GameScreen",
+                        "renderOrderPriority": 0,
+                        "saveDirectory": "Screenshots",
+                        "saveFileNamePrefix": "Screenshot",
+                        "saveFormat": "png",
+                        "viewerId": 10841751372075025256,
+                        "width": 256
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScreenBufferObject"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "center": [
+                            0.5,
+                            0.5
+                        ],
+                        "color": {
+                            "w": 1.0,
+                            "x": 0.250980406999588,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "excludedScreenBuffers": [],
+                        "innerRadius": 0.1469999998807907,
+                        "intensity": 0.0,
+                        "smoothness": 0.30000001192092896
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "VignetteEffect"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "GameScreen",
+        "objectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d",
+        "tag": ""
+    },
+    "siblingIndex": 4000
+}

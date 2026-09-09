@@ -1,0 +1,123 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 51.51631164550781,
+                            "y": 47.209999084472656,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "autoSyncSize": true,
+                        "farClip": 1000.0,
+                        "height": 240.0,
+                        "nearClip": 0.0,
+                        "pixelSnapping": true,
+                        "width": 256.0
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Camera2D"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "boundsClampMode": 0,
+                        "boundsTransitionDuration": 0.0,
+                        "boundsTransitionEaseType": "Linear",
+                        "boundsZoneObjectID": "",
+                        "enableBoundsClamp": false,
+                        "followTargets": [
+                            {
+                                "followPositionX": true,
+                                "followPositionY": true,
+                                "followRotationZ": false,
+                                "objectID": "aa35c299-acf4-443d-a774-988f6670e8b5"
+                            }
+                        ],
+                        "moveLerpAll": 0.5,
+                        "moveLerpPerAxis": {
+                            "x": 0.10000000149011612,
+                            "y": 0.10000000149011612
+                        },
+                        "moveLerpUsePerAxis": false,
+                        "positionOffset": {
+                            "x": -128.0,
+                            "y": -120.0
+                        },
+                        "rotateLerpFactor": 0.10000000149011612,
+                        "rotationOffset": 0.0,
+                        "sizeLerpFactor": 0.10000000149011612,
+                        "targetSize": {
+                            "x": 256.0,
+                            "y": 240.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "CameraController2D"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {},
+                        "scriptPath": "Assets\\Scripts\\GameplayCameraPublisher.as"
+                    },
+                    "isActive": true,
+                    "priority": 2,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "bindVariableNames": [
+                            "Vertex:gCamera2D",
+                            "Pixel:gCamera2D"
+                        ],
+                        "pipelineName": "",
+                        "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
+                    },
+                    "isActive": true,
+                    "priority": 950,
+                    "tag": ""
+                },
+                "type": "CameraRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "GameScreenCamera",
+        "objectID": "a1cc5cd8-4c52-4adb-be14-ef8ad4465a02",
+        "tag": ""
+    },
+    "siblingIndex": 8000
+}

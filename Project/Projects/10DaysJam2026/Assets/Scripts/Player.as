@@ -197,6 +197,8 @@ class Player : ScriptComponentBehavior {
     Transform@ tf;
 
     void Start() {
+        hp = maxHp;
+
         // 足元のGroundSensor（トリガー）用に2つ目のBox2DColliderを追加している場合、
         // GetComponent(@col)は「最初に見つかった方」を返すため並び順次第で本体ではなく
         // センサーの方を掴んでしまうことがある。トリガーではない方を明示的に本体として選ぶ

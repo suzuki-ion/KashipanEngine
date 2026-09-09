@@ -4,7 +4,7 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "a143407f-1913-42de-9f98-9ea38e2ffdee",
+                        "parent": "4958114b-5cc5-459d-ad9f-1b75c70d6f53",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -54,7 +54,7 @@
                                     "shakeEaseType": 0,
                                     "shakeEnabled": false,
                                     "shakeSpeed": 20.0,
-                                    "text": "セーブしました。"
+                                    "text": "テストテキストああああ"
                                 }
                             ],
                             "iconObject": "1fcaaf04-0627-4958-a051-12f47f3f42a4",
@@ -75,7 +75,7 @@
         "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "TalkScript",
-        "objectID": "63de96ab-8f92-4da8-b00a-52483e783cfa",
+        "objectID": "cf2ab235-2e94-4750-99fe-d40545590506",
         "prefabNodeID": "d2b98713-1d27-4a1f-86bd-fd05827d490f",
         "tag": ""
     },

@@ -4,7 +4,7 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "a143407f-1913-42de-9f98-9ea38e2ffdee",
+                        "parent": "59124f65-2c8c-4aea-ae1a-a4c639b9a8e6",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -34,7 +34,9 @@
                         "fields": {
                             "advanceCommandName": "Attack",
                             "backgroundObject": "f05d91ea-f4d8-40c1-9201-fd12a34072ad",
-                            "choiceSlotObjects": [],
+                            "choiceSlotObjects": [
+                                "59124f65-2c8c-4aea-ae1a-a4c639b9a8e6"
+                            ],
                             "dialogues": [
                                 {
                                     "characterInterval": 0.10000000149011612,
@@ -44,7 +46,7 @@
                                         "y": 0.0
                                     },
                                     "iconUvScale": {
-                                        "x": 0.5,
+                                        "x": 0.25,
                                         "y": 1.0
                                     },
                                     "shakeAmplitude": {
@@ -54,7 +56,7 @@
                                     "shakeEaseType": 0,
                                     "shakeEnabled": false,
                                     "shakeSpeed": 20.0,
-                                    "text": "セーブしました。"
+                                    "text": "ボール獲得"
                                 }
                             ],
                             "iconObject": "1fcaaf04-0627-4958-a051-12f47f3f42a4",
@@ -75,7 +77,7 @@
         "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "TalkScript",
-        "objectID": "63de96ab-8f92-4da8-b00a-52483e783cfa",
+        "objectID": "d0efb719-94aa-45b1-a896-1021d19b6087",
         "prefabNodeID": "d2b98713-1d27-4a1f-86bd-fd05827d490f",
         "tag": ""
     },

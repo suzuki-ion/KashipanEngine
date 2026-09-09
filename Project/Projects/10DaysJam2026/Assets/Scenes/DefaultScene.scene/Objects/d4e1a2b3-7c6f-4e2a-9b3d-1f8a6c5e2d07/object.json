@@ -51,7 +51,7 @@
                     "customData": {
                         "color": true,
                         "excludedScreenBuffers": [],
-                        "intensity": 0.02,
+                        "intensity": 0.019999999552965164,
                         "patternHeight": 240,
                         "patternWidth": 256
                     },

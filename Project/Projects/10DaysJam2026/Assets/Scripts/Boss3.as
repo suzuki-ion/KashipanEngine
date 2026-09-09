@@ -123,6 +123,12 @@ class Boss3 : ScriptComponentBehavior {
     // 攻撃パターンのサイクル用
     int attackCycle = 0;
 
+    // BossHPUIから参照する合計HP
+    // hp = 左右のOvaryの現在HPの合計
+    float hp = 0.0f;
+    float maxHp = 40.0f;
+
+    // 内部計算用(既存コードとの互換性を維持)
     float leftOvaryHP = 0.0f;
     float rightOvaryHP = 0.0f;
     float maxHP = 40.0f;
@@ -180,6 +186,13 @@ class Boss3 : ScriptComponentBehavior {
         rightOvaryHP = initialRightOvaryHP;
         maxHP = initialLeftOvaryHP + initialRightOvaryHP;
         if (maxHP <= 0.0f) maxHP = 1.0f;
+        maxHp = maxHP;
+        hp = leftOvaryHP + rightOvaryHP;
+
+        // BossHPUIへBoss3の合計HPを公開
+        GetScene().SetVariable("BossHPUI_Source", 1);
+        GetScene().SetVariable("BossHPUI_HP", hp);
+        GetScene().SetVariable("BossHPUI_MaxHP", maxHp);
 
         Transform@ tf = GetTransform();
         if (tf !is null) {
@@ -236,6 +249,15 @@ class Boss3 : ScriptComponentBehavior {
         bool isDialogueActive = false;
         GetScene().GetVariable("isDialogueActive", isDialogueActive);
         if (isDialogueActive) return;
+
+        // FinalBoss出現後はBoss3側からHP参照先を上書きしない
+        if (finalBossSpawned) return;
+
+        // 左右の弱点HPの合計をBossHPUIへ公開
+        hp = leftOvaryHP + rightOvaryHP;
+        maxHp = maxHP;
+        GetScene().SetVariable("BossHPUI_HP", hp);
+        GetScene().SetVariable("BossHPUI_MaxHP", maxHp);
 
         // まだDead状態になっておらず、左右の弱点が両方ともHP0以下になった場合に死亡状態へ移行
         if (state != Boss3State::Dead && leftOvaryHP <= 0.0f && rightOvaryHP <= 0.0f) {
@@ -426,6 +448,10 @@ class Boss3 : ScriptComponentBehavior {
             );
             cloneTf.SetTranslate(spawnPos);
         }
+
+        // ObjectをSetVariableで渡さず、BossHPUIの参照モードだけを切り替える
+        // FinalBoss側のStartでBossHPUI_HP / BossHPUI_MaxHPが設定されるまでUIは待機する
+        GetScene().SetVariable("BossHPUI_Source", 2);
     }
 
     void ChangeState(Boss3State newState) {
@@ -706,8 +732,17 @@ class Boss3 : ScriptComponentBehavior {
         }
     }
 
-    void OnLeftOvaryHPChanged(float hp) { leftOvaryHP = hp; }
-    void OnRightOvaryHPChanged(float hp) { rightOvaryHP = hp; }
+    void OnLeftOvaryHPChanged(float hpValue) {
+        leftOvaryHP = hpValue;
+        hp = leftOvaryHP + rightOvaryHP;
+        GetScene().SetVariable("BossHPUI_HP", hp);
+    }
+
+    void OnRightOvaryHPChanged(float hpValue) {
+        rightOvaryHP = hpValue;
+        hp = leftOvaryHP + rightOvaryHP;
+        GetScene().SetVariable("BossHPUI_HP", hp);
+    }
     void Damage(float amount) { }
 
     float NextRandom01() {

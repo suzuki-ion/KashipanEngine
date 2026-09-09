@@ -4,7 +4,7 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "a143407f-1913-42de-9f98-9ea38e2ffdee",
+                        "parent": "6f930386-a494-4642-b84c-df5f6d0aa8e0",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -44,7 +44,7 @@
                                         "y": 0.0
                                     },
                                     "iconUvScale": {
-                                        "x": 0.5,
+                                        "x": 0.25,
                                         "y": 1.0
                                     },
                                     "shakeAmplitude": {
@@ -54,7 +54,7 @@
                                     "shakeEaseType": 0,
                                     "shakeEnabled": false,
                                     "shakeSpeed": 20.0,
-                                    "text": "セーブしました。"
+                                    "text": "手裏剣を獲得"
                                 }
                             ],
                             "iconObject": "1fcaaf04-0627-4958-a051-12f47f3f42a4",
@@ -75,7 +75,7 @@
         "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "TalkScript",
-        "objectID": "63de96ab-8f92-4da8-b00a-52483e783cfa",
+        "objectID": "714941c3-4a73-4808-ac85-d0f26e2b9ac8",
         "prefabNodeID": "d2b98713-1d27-4a1f-86bd-fd05827d490f",
         "tag": ""
     },

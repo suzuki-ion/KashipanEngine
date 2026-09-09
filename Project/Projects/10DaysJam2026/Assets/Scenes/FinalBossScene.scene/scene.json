@@ -59,14 +59,19 @@
     "sceneName": "FinalBossScene",
     "sceneVariables": [
         {
+            "key": "testFloat",
+            "type": "Float",
+            "value": 0.0
+        },
+        {
             "key": "isDialogueActive",
             "type": "Bool",
             "value": false
         },
         {
-            "key": "saveRequested",
-            "type": "Bool",
-            "value": false
+            "key": "testString",
+            "type": "String",
+            "value": "abcdefg"
         },
         {
             "key": "dialogueBoxUIBusy",
@@ -74,13 +79,14 @@
             "value": false
         },
         {
-            "key": "saveRequestedPosition",
-            "type": "Vector3",
-            "value": {
-                "x": 389.0,
-                "y": 144.0,
-                "z": 0.0
-            }
+            "key": "BossHPUI_MaxHP",
+            "type": "Float",
+            "value": 40.0
+        },
+        {
+            "key": "gameOverRequested",
+            "type": "Bool",
+            "value": false
         },
         {
             "key": "gameOverRequested",
@@ -103,6 +109,35 @@
                 "x": 256.0,
                 "y": 240.0
             }
+        },
+        {
+            "key": "BossHPUI_HP",
+            "type": "Float",
+            "value": 40.0
+        },
+        {
+            "key": "saveRequestedPosition",
+            "type": "Vector3",
+            "value": {
+                "x": 389.0,
+                "y": 144.0,
+                "z": 0.0
+            }
+        },
+        {
+            "key": "saveRequested",
+            "type": "Bool",
+            "value": false
+        },
+        {
+            "key": "BossHPUI_Source",
+            "type": "Int32",
+            "value": 1
+        },
+        {
+            "key": "PlayerGroundY",
+            "type": "Float",
+            "value": 72.11000061035156
         }
     ]
 }

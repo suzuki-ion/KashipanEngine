@@ -96,20 +96,7 @@ class Katana : ScriptComponentBehavior {
         }
 
         // 攻撃中はプレイヤーの向きに合わせて毎フレーム回転とオフセットを追従
-        if (isActive) {
-            attackOffsetX = currentMargin;
-            bool facingRight = (currentMargin >= 0.0f);
-            float rotY = facingRight ? 0.0f : 3.14159f;
-            tf.SetRotate(Vector3(0.0f, rotY, 0.0f));
-        }
-
-        Vector3 drawPos;
-        if (isActive) {
-            drawPos = pos + Vector3(attackOffsetX, effectOffsetY, 0.0f);
-        } else {
-            drawPos = Vector3(-1000.0f, 0.0f, 0.0f);
-        }
-        tf.SetTranslate(drawPos);
+        ApplyFollowTransform();
 
         // アクティブ時間の制御
         if(isActive){
@@ -152,6 +139,44 @@ class Katana : ScriptComponentBehavior {
                 }
             }
         }
+    }
+
+    // pos/attackOffsetX/effectOffsetY/currentMarginを元に、実際にTransformへ反映する処理。
+    // Update()と、Playerから直接呼ばれるSyncFollowPositionの両方から使う共通処理
+    void ApplyFollowTransform() {
+        Transform@ tf = GetTransform();
+        if (tf is null) return;
+
+        if (isActive) {
+            attackOffsetX = currentMargin;
+            bool facingRight = (currentMargin >= 0.0f);
+            float rotY = facingRight ? 0.0f : 3.14159f;
+            tf.SetRotate(Vector3(0.0f, rotY, 0.0f));
+        }
+
+        Vector3 drawPos;
+        if (isActive) {
+            drawPos = pos + Vector3(attackOffsetX, effectOffsetY, 0.0f);
+        } else {
+            drawPos = Vector3(-1000.0f, 0.0f, 0.0f);
+        }
+        tf.SetTranslate(drawPos);
+    }
+
+    // Playerが毎フレーム、自身の移動処理が終わった直後に直接呼び出す。
+    // これまではSetVariable("pos", ...)でpos/currentMarginを渡すだけで、実際に
+    // Transformへ反映するのはKatana自身のUpdate()任せだった。そのため
+    // 「Player.Update()」と「Katana.Update()」のどちらが先に呼ばれるかという
+    // スクリプト実行順序に結果が依存してしまい、Katana側が先に呼ばれるフレームでは
+    // 1フレーム前のプレイヤー座標のまま描画されてしまう。移動量が小さい時は誤差として
+    // 目立たないが、ジャンプ中など1フレームあたりの移動量が大きい場面でズレが顕著になる。
+    // この関数を呼び出し元(Player.Update)から直接実行することで、実行順序に関係なく
+    // 「プレイヤーが動いた直後」に必ずKatanaのTransformを同じフレーム内で即座に
+    // 更新できるようにしている
+    void SyncFollowPosition(Vector3 playerPos, float margin, bool equipped) {
+        pos = equipped ? playerPos : Vector3(-1000.0f, 0.0f, 0.0f);
+        currentMargin = margin;
+        ApplyFollowTransform();
     }
 
     void Attack(float margin) {

@@ -395,10 +395,9 @@ class FinalBoss : ScriptComponentBehavior {
             return;
         }
 
-        // 突進中はプレイヤーが後ろに回り込んでも向きを追従させない
-        // (突進の速度・向きは開始時点で決定済みのため、ここで向きだけ変えると
-        //  見た目と移動方向・当たり判定がズレて挙動がおかしくなる)
-        if (state != FinalBossState::DashRush) {
+        // プレイヤーが後ろに回り込んでも向きを追従させない
+        if (state == FinalBossState::Idle || state == FinalBossState::Intro || state == FinalBossState::IntroFloat || 
+            state == FinalBossState::HoverCharge || state == FinalBossState::HoverDive || state == FinalBossState::HoverJump || state == FinalBossState::HoverLanding || state == FinalBossState::HoverPause) {
             FacePlayer();
         }
         stateTimer += GetDeltaTime();
@@ -626,28 +625,32 @@ class FinalBoss : ScriptComponentBehavior {
             }
 
             case FinalBossState::NeedleTelegraph: {
-                // デフォルトは地面の高さ(initialBossPos.y)を基準にする
-                // (プレイヤー未設定時や、プレイヤーが空中にいる場合はこちらを使う)
+                // 棘のY座標は「現在のプレイヤーY」ではなく、
+                // Player.asが記録している「最後に実際に接地していたY」を使う。
                 //
-                // ここでボス自身のcurPos.yを使わないのがポイント:
-                // この直前のRetreatJumpは放物線の速度計算だけで着地位置を地面に
-                // スナップさせていないため、NeedleTelegraphへ切り替わった瞬間の
-                // ボスのYは地面からわずかにズレていることがある(重力補正が効くのは
-                // 次フレーム以降)。そのズレた高さを基準にしてしまうと、
-                // 「プレイヤーがジャンプ中」判定時に針が地面から浮いた位置に出てしまうため、
-                // 常に一定の地面基準高さ(initialBossPos.y)を使う
-                needleTargetPos = Vector3(curPos.x, initialBossPos.y, curPos.z);
+                // これにより、
+                //   ・プレイヤーがジャンプ中
+                //   ・落下中
+                //   ・高い足場の上からジャンプしている
+                // といった状況でも、棘が空中に生成されず、その足場の高さへ出せる。
+                //
+                // PlayerGroundYがまだ取得できない場合だけ、ボスの初期地面高へフォールバックする。
+                float groundY = initialBossPos.y;
+                bool hasGroundY = GetScene().GetVariable("PlayerGroundY", groundY);
+                if (!hasGroundY) {
+                    groundY = initialBossPos.y;
+                }
+
+                needleTargetPos = Vector3(curPos.x, groundY, curPos.z);
+
                 if (player !is null) {
                     Transform@ pTf = player.GetTransform();
                     if (pTf !is null) {
                         Vector3 playerPos = pTf.GetTranslate();
-                        if (IsPlayerGrounded()) {
-                            // プレイヤーが地面(または足場)に立っている場合は、その位置(X・Y)をそのまま使う
-                            needleTargetPos = playerPos;
-                        } else {
-                            // プレイヤーがジャンプ中はX軸だけ参照し、Yは地面基準高さを使う
-                            needleTargetPos = Vector3(playerPos.x, initialBossPos.y, playerPos.z);
-                        }
+
+                        // Xだけは予兆開始時点のプレイヤー位置を使う。
+                        // Yは常に最後の接地高さへ固定する。
+                        needleTargetPos = Vector3(playerPos.x, groundY, playerPos.z);
                     }
                 }
                 break;

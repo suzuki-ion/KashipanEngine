@@ -109,6 +109,11 @@
             "key": "saveRequested",
             "type": "Bool",
             "value": false
+        },
+        {
+            "key": "PlayerGroundY",
+            "type": "Float",
+            "value": 344.1100158691406
         }
     ]
 }

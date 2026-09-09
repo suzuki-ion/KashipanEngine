@@ -337,10 +337,10 @@
                     "customData": {
                         "fields": {
                             "allWeapons": [
-                                "e6e81d2e-155b-4be3-9da3-0af15bbc3b18",
-                                "7c5b59b9-1d1c-4035-bc13-80efa460e607",
-                                "98bc3199-cda3-4471-a0c1-a056e5754238",
-                                "9af0c467-e2a0-4c3c-8392-857492c9d817"
+                                "fd9d640e-6c3a-41be-b7d3-0df10f21a157",
+                                "74d9f407-d681-4dfe-b735-94ea3ed139ca",
+                                "3f37936c-60a5-4bf5-85ab-c2f432fc2394",
+                                "2777a2cf-be47-4f27-aacf-17c9b09b7129"
                             ],
                             "attackDuration": 0.44999998807907104,
                             "axeAttackInterval": 0.5,
@@ -379,10 +379,10 @@
                             "vignetteHp": 3.0,
                             "weaponExpLossOnDamage": 1.0,
                             "weapons": [
-                                "e6e81d2e-155b-4be3-9da3-0af15bbc3b18",
-                                "7c5b59b9-1d1c-4035-bc13-80efa460e607",
-                                "98bc3199-cda3-4471-a0c1-a056e5754238",
-                                "9af0c467-e2a0-4c3c-8392-857492c9d817"
+                                "fd9d640e-6c3a-41be-b7d3-0df10f21a157",
+                                "74d9f407-d681-4dfe-b735-94ea3ed139ca",
+                                "3f37936c-60a5-4bf5-85ab-c2f432fc2394",
+                                "2777a2cf-be47-4f27-aacf-17c9b09b7129"
                             ]
                         },
                         "scriptPath": "Assets/Scripts/Player.as"

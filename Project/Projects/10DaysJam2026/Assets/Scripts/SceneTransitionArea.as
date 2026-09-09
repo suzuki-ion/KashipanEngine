@@ -7,6 +7,10 @@
 //   - nextSceneNameに遷移先のシーン名を指定する
 //   - ditherFadeObjectにDitherFade.asがアタッチされたオブジェクトを指定する
 //   - プレイヤー側の接触コライダーにplayerTag（既定値: Player）を設定する
+//   - 遷移先シーンでプレイヤーを特定の位置に配置したい場合は、遷移先シーン側に目印用オブジェクト
+//     （Transformのみで可）を置いて分かりやすい名前を付け、targetEntryPointNameにその名前を
+//     指定する（Player.as側のApplyTransitionEntryPoint()が対応する）。空のままなら遷移先シーンの
+//     デフォルト座標のまま
 //
 // 遷移先でも画面を覆った状態からフェードインさせる場合は、遷移先シーンにも
 // fadeInOnStart=trueのDitherFadeを配置する。
@@ -17,6 +21,9 @@ class SceneTransitionArea : ScriptComponentBehavior {
 
     [SerializeField, Tooltip("DitherFadeスクリプトがアタッチされたオブジェクト。未設定または取得不能の場合は即時遷移する")]
     Object@ ditherFadeObject;
+
+    [SerializeField, Tooltip("遷移先シーンでプレイヤーを配置する入場ポイントオブジェクトの名前(遷移先シーン側にこの名前のオブジェクトを置いておくこと。空の場合は遷移先シーンのデフォルト座標のまま)")]
+    string targetEntryPointName = "";
 
     [Header("判定設定")]
     [SerializeField, Tooltip("接触相手(プレイヤー)のコライダーに付いているタグ")]
@@ -89,6 +96,15 @@ class SceneTransitionArea : ScriptComponentBehavior {
         if (scene is null || nextSceneName.length() == 0) return;
 
         isWaitingForFade = false;
+
+        // 遷移先シーンでの配置先を、メモリ上のグローバルシーン変数経由でPlayer側へ引き継ぐ
+        // (Player.asのsave_position等と同じ仕組み。ディスクへは保存しないため、
+        //  セーブファイルには一切影響しない)
+        if (targetEntryPointName.length() > 0) {
+            scene.SetGlobalVariable("transitionEntrySceneName", nextSceneName);
+            scene.SetGlobalVariable("transitionEntryPointName", targetEntryPointName);
+        }
+
         scene.SetNextSceneName(nextSceneName);
         scene.ChangeToNextScene();
     }

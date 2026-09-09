@@ -236,6 +236,7 @@ class Player : ScriptComponentBehavior {
         GetComponents(@audioSources);
 
         LoadProgress();
+        ApplyTransitionEntryPoint();
 
         // 未装備かつ武器が存在する場合、自動で最初の所持武器を装備
         if (currentWeaponType < 0 && weapons !is null && weapons.length() > 0) {
@@ -353,6 +354,37 @@ class Player : ScriptComponentBehavior {
                     playerTf.SetTranslate(savedPosition);
                 }
             }
+        }
+    }
+
+    // SceneTransitionArea経由でシーン遷移してきた場合、指定された入場ポイントオブジェクトの座標へ
+    // プレイヤーを配置する。transitionEntrySceneNameが現在シーンと一致する場合のみ適用する
+    // (LoadProgress()のsave_position復元より後に呼ぶことで、「今通ってきたドア」の座標を
+    //  セーブ地点の座標より優先させる)。
+    // 値は必ず読み取り直後にクリアする。消費せず残しておくと、死亡復帰や「つづきから」等の
+    // 別経路で同じシーンへ入ったときにも誤って同じ入場ポイントへ飛ばされてしまうため
+    void ApplyTransitionEntryPoint() {
+        if (!ShouldPersistProgress()) return;
+
+        string entrySceneName;
+        bool hasEntry = GetScene().GetGlobalVariable("transitionEntrySceneName", entrySceneName);
+        string entryPointName;
+        GetScene().GetGlobalVariable("transitionEntryPointName", entryPointName);
+
+        GetScene().SetGlobalVariable("transitionEntrySceneName", "");
+        GetScene().SetGlobalVariable("transitionEntryPointName", "");
+
+        if (!hasEntry || entrySceneName != GetScene().GetName() || entryPointName.length() == 0) return;
+
+        Object@ entryObject = FindObject(entryPointName);
+        if (entryObject is null) return;
+
+        Transform@ entryTransform;
+        if (!entryObject.GetComponent(@entryTransform)) return;
+
+        Transform@ playerTf = GetTransform();
+        if (playerTf !is null) {
+            playerTf.SetTranslate(entryTransform.GetTranslate());
         }
     }
 

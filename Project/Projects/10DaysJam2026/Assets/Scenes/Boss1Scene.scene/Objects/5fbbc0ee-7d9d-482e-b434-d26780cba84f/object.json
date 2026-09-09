@@ -18,7 +18,7 @@
                         "translate": {
                             "x": 0.0,
                             "y": 0.0,
-                            "z": 0.0
+                            "z": 3.0517578125e-05
                         }
                     },
                     "isActive": true,
@@ -30,42 +30,22 @@
             {
                 "data": {
                     "customData": {
-                        "autoSyncSize": true,
-                        "farClip": 1000.0,
-                        "height": 240.0,
-                        "nearClip": 0.0,
-                        "pixelSnapping": false,
-                        "width": 256.0
+                        "prefabID": "36936558-b195-496a-93ad-d296e8ff1b9a"
                     },
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
                 },
-                "type": "Camera2D"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "bindVariableNames": [
-                            "Vertex:gCamera2D",
-                            "Pixel:gCamera2D"
-                        ],
-                        "pipelineName": "",
-                        "targetObjectID": "d4e1a2b3-7c6f-4e2a-9b3d-1f8a6c5e2d07"
-                    },
-                    "isActive": true,
-                    "priority": 950,
-                    "tag": ""
-                },
-                "type": "CameraRenderer"
+                "type": "PrefabInstanceComponent"
             }
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "GameOverDitherCamera",
-        "objectID": "d4e1a2b3-7c6f-4e2a-9b3d-1f8a6c5e2d08",
+        "name": "TalkUI",
+        "objectID": "5fbbc0ee-7d9d-482e-b434-d26780cba84f",
+        "prefabNodeID": "e9784240-49d5-409c-b0ac-7a53ec724a53",
         "tag": ""
     },
-    "siblingIndex": 21600
+    "siblingIndex": 27000
 }

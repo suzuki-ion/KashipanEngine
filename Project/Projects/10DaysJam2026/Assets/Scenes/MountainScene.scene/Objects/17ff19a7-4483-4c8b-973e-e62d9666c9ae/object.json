@@ -378,10 +378,7 @@
                             "vignetteHp": 3.0,
                             "weaponExpLossOnDamage": 1.0,
                             "weapons": [
-                                "fd9d640e-6c3a-41be-b7d3-0df10f21a157",
-                                "74d9f407-d681-4dfe-b735-94ea3ed139ca",
-                                "3f37936c-60a5-4bf5-85ab-c2f432fc2394",
-                                "2777a2cf-be47-4f27-aacf-17c9b09b7129"
+                                "fd9d640e-6c3a-41be-b7d3-0df10f21a157"
                             ]
                         },
                         "scriptPath": "Assets/Scripts/Player.as"

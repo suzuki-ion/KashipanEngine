@@ -4,7 +4,7 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "d4e1a2b3-7c6f-4e2a-9b3d-1f8a6c5e2d06",
+                        "parent": "f5695c56-4a78-44d6-a887-b0521a26ca3f",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 128.0,
-                            "y": 90.0,
+                            "x": 64.0,
+                            "y": 50.0,
                             "z": 0.0
                         }
                     },
@@ -31,21 +31,10 @@
             {
                 "data": {
                     "customData": {
-                        "displayCameraObjectID": "39a0a227-e437-41ee-9ce6-08e60e6dbea2"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "UIButton"
-            },
-            {
-                "data": {
-                    "customData": {
                         "allowInstancing": true,
                         "fontName": "jfdot-Shinonome-12",
                         "fontSize": 12.0,
-                        "horizontalAlign": 1,
+                        "horizontalAlign": 0,
                         "instanceColor": {
                             "w": 1.0,
                             "x": 1.0,
@@ -53,15 +42,15 @@
                             "z": 1.0
                         },
                         "instanceColorBlendMode": 1,
-                        "materialName": "Default",
+                        "materialName": "Dot",
                         "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
                         "pixelSnapOutsetPixels": 0.0,
                         "pixelSnapping": false,
                         "pointSampling": true,
-                        "renderPriority": 101,
+                        "renderPriority": 50,
                         "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823",
-                        "text": "おわる",
-                        "verticalAlign": 1
+                        "text": "",
+                        "verticalAlign": 0
                     },
                     "isActive": true,
                     "priority": 900,
@@ -71,11 +60,12 @@
             }
         ],
         "editorOnly": false,
-        "hiddenFromEditorTarget": false,
+        "hiddenFromEditorTarget": true,
         "isActive": true,
-        "name": "ExitUI",
-        "objectID": "d4e1a2b3-7c6f-4e2a-9b3d-1f8a6c5e2d05",
+        "name": "TalkText",
+        "objectID": "815c6a3f-fe6c-4cb0-beaa-7cd3eae60f57",
+        "prefabNodeID": "8c6cda60-5609-4997-9955-0b0f78a75fdb",
         "tag": ""
     },
-    "siblingIndex": 21400
+    "siblingIndex": 2000
 }

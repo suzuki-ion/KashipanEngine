@@ -4,6 +4,7 @@
             {
                 "data": {
                     "customData": {
+                        "parent": "5fbbc0ee-7d9d-482e-b434-d26780cba84f",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -11,13 +12,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 256.0,
-                            "y": 240.0,
+                            "x": 208.0,
+                            "y": 48.0,
                             "z": 1.0
                         },
                         "translate": {
                             "x": 128.0,
-                            "y": 120.0,
+                            "y": 32.0,
                             "z": 0.0
                         }
                     },
@@ -41,7 +42,7 @@
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "KashipanEngine/white1x1.png"
+                        "textureAssetPath": "App/Sprite/Talk/TalkBackground.png"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -59,9 +60,9 @@
                         },
                         "instanceColor": {
                             "w": 1.0,
-                            "x": 0.0,
-                            "y": 0.0,
-                            "z": 0.0
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
                         },
                         "instanceColorBlendMode": 1,
                         "instanceUvCombineMode": 0,
@@ -87,7 +88,7 @@
                         "pixelSnapOutsetPixels": 0.0,
                         "pixelSnapping": false,
                         "renderPriority": 0,
-                        "targetObjectID": "d4e1a2b3-7c6f-4e2a-9b3d-1f8a6c5e2d07"
+                        "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
                     },
                     "isActive": true,
                     "priority": 900,
@@ -99,9 +100,10 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": true,
         "isActive": true,
-        "name": "GameOverDitherSource",
-        "objectID": "d4e1a2b3-7c6f-4e2a-9b3d-1f8a6c5e2d09",
+        "name": "TalkBackground",
+        "objectID": "654bf689-d4c6-4b85-a8ab-39eae3b5f723",
+        "prefabNodeID": "1ebcc732-dc40-4318-b641-7330603c8813",
         "tag": ""
     },
-    "siblingIndex": 21700
+    "siblingIndex": 0
 }

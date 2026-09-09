@@ -1,0 +1,336 @@
+{
+    "name": "TalkUI",
+    "objects": [
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "TalkUI",
+                "objectID": "b68049dc-7078-4e91-aa0c-2a450f6754fc",
+                "prefabNodeID": "e9784240-49d5-409c-b0ac-7a53ec724a53",
+                "tag": ""
+            },
+            "parentIndex": -1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b68049dc-7078-4e91-aa0c-2a450f6754fc",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 208.0,
+                                    "y": 48.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 128.0,
+                                    "y": 32.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Rect2D"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "textureAssetPath": "App/Sprite/Talk/TalkBackground.png"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "TextureSource"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "anchor": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 1.0,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "materialName": "Dot",
+                                "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                                "pivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "pixelSnapOutsetPixels": 0.0,
+                                "pixelSnapping": false,
+                                "renderPriority": 0,
+                                "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SpriteRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": true,
+                "isActive": true,
+                "name": "TalkBackground",
+                "objectID": "f05d91ea-f4d8-40c1-9201-fd12a34072ad",
+                "prefabNodeID": "1ebcc732-dc40-4318-b641-7330603c8813",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b68049dc-7078-4e91-aa0c-2a450f6754fc",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 32.0,
+                                    "y": 32.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 46.0,
+                                    "y": 32.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Rect2D"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "textureAssetPath": "App/Sprite/Talk/portrait.png"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "TextureSource"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "anchor": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 0.5,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.5,
+                                    "y": 0.0
+                                },
+                                "materialName": "Dot",
+                                "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                                "pivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "pixelSnapOutsetPixels": 0.0,
+                                "pixelSnapping": false,
+                                "renderPriority": 0,
+                                "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SpriteRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": true,
+                "isActive": true,
+                "name": "TalkPeopleIcon",
+                "objectID": "1fcaaf04-0627-4958-a051-12f47f3f42a4",
+                "prefabNodeID": "5327d0bc-1ad3-4c69-b567-75e547339324",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b68049dc-7078-4e91-aa0c-2a450f6754fc",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 64.0,
+                                    "y": 50.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "fontName": "jfdot-Shinonome-12",
+                                "fontSize": 12.0,
+                                "horizontalAlign": 0,
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "materialName": "Dot",
+                                "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                                "pixelSnapOutsetPixels": 0.0,
+                                "pixelSnapping": false,
+                                "pointSampling": true,
+                                "renderPriority": 50,
+                                "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823",
+                                "text": "",
+                                "verticalAlign": 0
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "BitmapTextRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": true,
+                "isActive": true,
+                "name": "TalkText",
+                "objectID": "90344e71-a4e7-4fb5-988e-2f39fa9ebb11",
+                "prefabNodeID": "8c6cda60-5609-4997-9955-0b0f78a75fdb",
+                "tag": ""
+            },
+            "parentIndex": 0
+        }
+    ],
+    "prefab": true,
+    "prefabID": "36936558-b195-496a-93ad-d296e8ff1b9a"
+}

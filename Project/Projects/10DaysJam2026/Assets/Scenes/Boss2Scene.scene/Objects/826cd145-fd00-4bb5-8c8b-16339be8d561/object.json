@@ -1,0 +1,183 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "ba03dbda-06db-43d9-9474-ffeae8670c69",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "advanceCommandName": "Attack",
+                            "backgroundObject": "fa87d096-e7d0-4c0d-b9c0-760e8539e635",
+                            "choiceSlotObjects": [],
+                            "dialogues": [
+                                {
+                                    "characterInterval": 0.10000000149011612,
+                                    "iconTextureName": "App/Sprite/Talk/portrait.png",
+                                    "iconUvPosition": {
+                                        "x": 0.25,
+                                        "y": 0.0
+                                    },
+                                    "iconUvScale": {
+                                        "x": 0.25,
+                                        "y": 1.0
+                                    },
+                                    "shakeAmplitude": {
+                                        "x": 2.0,
+                                        "y": 2.0
+                                    },
+                                    "shakeEaseType": 0,
+                                    "shakeEnabled": true,
+                                    "shakeSpeed": 20.0,
+                                    "text": "グレゴリー！！"
+                                },
+                                {
+                                    "characterInterval": 0.05000000074505806,
+                                    "iconTextureName": "App/Sprite/Talk/portrait.png",
+                                    "iconUvPosition": {
+                                        "x": 0.75,
+                                        "y": 0.0
+                                    },
+                                    "iconUvScale": {
+                                        "x": 0.25,
+                                        "y": 1.0
+                                    },
+                                    "shakeAmplitude": {
+                                        "x": 2.0,
+                                        "y": 2.0
+                                    },
+                                    "shakeEaseType": 0,
+                                    "shakeEnabled": false,
+                                    "shakeSpeed": 20.0,
+                                    "text": "生き残りか…"
+                                },
+                                {
+                                    "characterInterval": 0.05000000074505806,
+                                    "iconTextureName": "App/Sprite/Talk/portrait.png",
+                                    "iconUvPosition": {
+                                        "x": 0.25,
+                                        "y": 0.0
+                                    },
+                                    "iconUvScale": {
+                                        "x": 0.25,
+                                        "y": 1.0
+                                    },
+                                    "shakeAmplitude": {
+                                        "x": 2.0,
+                                        "y": 2.0
+                                    },
+                                    "shakeEaseType": 0,
+                                    "shakeEnabled": true,
+                                    "shakeSpeed": 20.0,
+                                    "text": "ツナグをどこにやった？！\n答えろ？！"
+                                },
+                                {
+                                    "characterInterval": 0.05000000074505806,
+                                    "iconTextureName": "App/Sprite/Talk/portrait.png",
+                                    "iconUvPosition": {
+                                        "x": 0.75,
+                                        "y": 0.0
+                                    },
+                                    "iconUvScale": {
+                                        "x": 0.25,
+                                        "y": 1.0
+                                    },
+                                    "shakeAmplitude": {
+                                        "x": 2.0,
+                                        "y": 2.0
+                                    },
+                                    "shakeEaseType": 0,
+                                    "shakeEnabled": false,
+                                    "shakeSpeed": 20.0,
+                                    "text": "彼女は幸せ者だ\n王となるべき存在の\n揺り籠となった"
+                                },
+                                {
+                                    "characterInterval": 0.05000000074505806,
+                                    "iconTextureName": "App/Sprite/Talk/portrait.png",
+                                    "iconUvPosition": {
+                                        "x": 0.75,
+                                        "y": 0.0
+                                    },
+                                    "iconUvScale": {
+                                        "x": 0.25,
+                                        "y": 1.0
+                                    },
+                                    "shakeAmplitude": {
+                                        "x": 2.0,
+                                        "y": 2.0
+                                    },
+                                    "shakeEaseType": 0,
+                                    "shakeEnabled": false,
+                                    "shakeSpeed": 20.0,
+                                    "text": "彼の誕生によってこの世界は\nより素晴らしい存在と\n繋がることとなる"
+                                },
+                                {
+                                    "characterInterval": 0.05000000074505806,
+                                    "iconTextureName": "App/Sprite/Talk/portrait.png",
+                                    "iconUvPosition": {
+                                        "x": 0.75,
+                                        "y": 0.0
+                                    },
+                                    "iconUvScale": {
+                                        "x": 0.25,
+                                        "y": 1.0
+                                    },
+                                    "shakeAmplitude": {
+                                        "x": 2.0,
+                                        "y": 2.0
+                                    },
+                                    "shakeEaseType": 0,
+                                    "shakeEnabled": false,
+                                    "shakeSpeed": 20.0,
+                                    "text": "引き返せ\n彼女の邪魔を\nさせるわけにはいかない"
+                                }
+                            ],
+                            "iconObject": "65f1f753-6c4b-4cc2-aa3e-cc0ba0405978",
+                            "isVisible": false,
+                            "pauseGameplayWhileVisible": true,
+                            "textObject": "815c6a3f-fe6c-4cb0-beaa-7cd3eae60f57"
+                        },
+                        "scriptPath": "Assets/Scripts/DialogueBox.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "TalkScript",
+        "objectID": "826cd145-fd00-4bb5-8c8b-16339be8d561",
+        "prefabNodeID": "d2b98713-1d27-4a1f-86bd-fd05827d490f",
+        "tag": ""
+    },
+    "siblingIndex": 0
+}

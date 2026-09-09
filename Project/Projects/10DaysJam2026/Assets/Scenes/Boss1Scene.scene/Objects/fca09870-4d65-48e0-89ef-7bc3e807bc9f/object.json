@@ -4,7 +4,7 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "3fcd463a-e03f-4f92-97a7-cfe8e442b9bd",
+                        "parent": "4e0984b0-e378-4300-8962-6220ec60c05b",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -33,14 +33,14 @@
                     "customData": {
                         "fields": {
                             "advanceCommandName": "Attack",
-                            "backgroundObject": "fa87d096-e7d0-4c0d-b9c0-760e8539e635",
+                            "backgroundObject": "654bf689-d4c6-4b85-a8ab-39eae3b5f723",
                             "choiceSlotObjects": [],
                             "dialogues": [
                                 {
                                     "characterInterval": 0.10000000149011612,
                                     "iconTextureName": "App/Sprite/Talk/portrait.png",
                                     "iconUvPosition": {
-                                        "x": 0.0,
+                                        "x": 0.5,
                                         "y": 0.0
                                     },
                                     "iconUvScale": {
@@ -48,19 +48,39 @@
                                         "y": 1.0
                                     },
                                     "shakeAmplitude": {
-                                        "x": 2.0,
-                                        "y": 2.0
+                                        "x": 1.0,
+                                        "y": 1.0
                                     },
                                     "shakeEaseType": 0,
-                                    "shakeEnabled": false,
-                                    "shakeSpeed": 20.0,
-                                    "text": "セーブしました。"
+                                    "shakeEnabled": true,
+                                    "shakeSpeed": 128.0,
+                                    "text": "があああ！！！！！！\n鎧が重すぎる！！！！！！"
+                                },
+                                {
+                                    "characterInterval": 0.05000000074505806,
+                                    "iconTextureName": "App/Sprite/Talk/portrait.png",
+                                    "iconUvPosition": {
+                                        "x": 0.5,
+                                        "y": 0.0
+                                    },
+                                    "iconUvScale": {
+                                        "x": 0.25,
+                                        "y": 1.0
+                                    },
+                                    "shakeAmplitude": {
+                                        "x": 1.0,
+                                        "y": 1.0
+                                    },
+                                    "shakeEaseType": 0,
+                                    "shakeEnabled": true,
+                                    "shakeSpeed": 128.0,
+                                    "text": "貴様は誰だ？侵入者か？\nぶっ殺してやる！！！！！！"
                                 }
                             ],
-                            "iconObject": "65f1f753-6c4b-4cc2-aa3e-cc0ba0405978",
+                            "iconObject": "afe9dd7f-42eb-4877-9e8c-76292470d957",
                             "isVisible": false,
                             "pauseGameplayWhileVisible": true,
-                            "textObject": "815c6a3f-fe6c-4cb0-beaa-7cd3eae60f57"
+                            "textObject": "fa98145c-15d4-4db9-956b-4ea5a207ada9"
                         },
                         "scriptPath": "Assets/Scripts/DialogueBox.as"
                     },
@@ -75,7 +95,7 @@
         "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "TalkScript",
-        "objectID": "e2b4b7e5-e572-4d85-8be4-748c5f40499a",
+        "objectID": "fca09870-4d65-48e0-89ef-7bc3e807bc9f",
         "prefabNodeID": "d2b98713-1d27-4a1f-86bd-fd05827d490f",
         "tag": ""
     },

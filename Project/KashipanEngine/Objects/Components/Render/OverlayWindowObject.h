@@ -31,6 +31,11 @@ public:
 protected:
     void Initialize() override {
         if (window_) return;
+        // シーン切り替え中は、直後のLoadFromJsonでtitle_が確定してから前のシーンの
+        // 同名ウィンドウを引き継げる可能性がある。ここで既定タイトルのウィンドウを
+        // 先に生成してしまうと、生成直後に破棄予約される一時ウィンドウがOS上で
+        // 一瞬表示されてしまうため、生成自体をLoadFromJson側に委ねる
+        if (RenderTargetCarryOverRegistry::IsSceneSwitchInProgress()) return;
         // iconPath_が未設定（既定）の場合はCreateOverlay自身の既定アイコンを使わせるため、
         // 空文字を明示的に渡さない（EngineSettings.jsonのinitialWindowIconPathは既定で空のため、
         // 渡してしまうとエンジンロゴアイコンではなくOS既定アイコンになってしまう）
@@ -103,16 +108,33 @@ protected:
         width_ = json.value("width", 1280u);
         height_ = json.value("height", 720u);
         syncWithTransform_ = json.value("syncWithTransform", true);
+        LoadInterceptedMessagesJson(json.value("interceptedMessages", JSON::array()));
+
+        // AddComponent() 内部の登録前状態転送では、既定タイトルの一時ウィンドウを生成しない。
+        // 実ウィンドウの引き継ぎ・生成・初回更新は、所有オブジェクトへの登録が完了した後の
+        // 本ロードだけで行う。
+        if (!IsRegisteredToOwner()) return true;
+
         // 前のシーンから引き継がれたウィンドウがあればそちらを使う。
-        // 無い場合はInitializeで生成済みの既定ウィンドウのタイトル・アイコンを実際の設定値へ合わせる
+        // 無い場合、Initializeで既に生成済み（シーン切り替え中でない通常ケース）ならそのタイトル・
+        // アイコンを実際の設定値へ合わせ、未生成（シーン切り替え中でIntializeが生成を保留していた
+        // ケース）ならここで確定したtitle_で新規生成する
         if (!TryClaimCarriedOverWindow(RenderTargetCarryOverRegistry::Kind::OverlayWindow)) {
             if (window_ && Window::IsExist(window_)) {
                 window_->SetWindowTitle(title_);
                 // iconPath_が空の場合はInitializeで設定済みの既定アイコンをそのまま残す
                 if (!iconPath_.empty()) window_->SetIcon(iconPath_);
+            } else if (IsActive()) {
+                // シーン切り替え中でIntializeでの生成を保留していた場合、引き継ぎ候補も無かったので
+                // ここで確定したtitle_で生成する（一時的な既定タイトルのウィンドウを経由しないため
+                // 生成→即破棄によるちらつきが起きない）。非アクティブな場合はここでも生成せず、
+                // 従来通りSetActive(true)によるInitialize()呼び出しまで生成を保留する
+                window_ = iconPath_.empty()
+                    ? Window::CreateOverlay(title_, static_cast<int32_t>(width_), static_cast<int32_t>(height_))
+                    : Window::CreateOverlay(title_, static_cast<int32_t>(width_), static_cast<int32_t>(height_), false, iconPath_);
+                ApplyInterceptedMessages();
             }
         }
-        LoadInterceptedMessagesJson(json.value("interceptedMessages", JSON::array()));
         // JSONから同期設定を読み込んだ後にのみ、初回の位置・サイズ同期を行う
         if (syncWithTransform_) Update();
         return true;

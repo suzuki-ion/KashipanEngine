@@ -486,6 +486,9 @@ class Player : ScriptComponentBehavior {
         if(audioSources is null) return;
         for(uint i = 0; i < audioSources.length(); ++i) {
             if(audioSources[i] !is null && audioSources[i].GetTag() == tagName) {
+                // 巻き添えで無効化されていた場合、Finalize()内のStop()で再生できないため
+                // 念のため再度有効化してから再生する
+                audioSources[i].SetActive(true);
                 audioSources[i].Play();
             }
         }
@@ -1155,6 +1158,7 @@ class Player : ScriptComponentBehavior {
     void Heal(float amount) {
         hp = Clamp(hp + amount, 0.0f, maxHp);
         Log("Heal! HP:" + hp);
+        PlayTaggedAudio("Heal");
     }
 
     void End() {

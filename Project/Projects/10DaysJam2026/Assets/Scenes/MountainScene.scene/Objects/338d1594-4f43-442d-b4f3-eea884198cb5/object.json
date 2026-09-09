@@ -16,7 +16,7 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 713.1729125976563,
+                            "x": 713.1729125976562,
                             "y": 163.4935760498047,
                             "z": 3.0517578125e-05
                         }
@@ -182,6 +182,132 @@
                     "tag": ""
                 },
                 "type": "SpriteRenderer"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "category": "SE",
+                        "effects": {
+                            "echo": {
+                                "delayMs": 500.0,
+                                "enabled": false,
+                                "feedback": 0.5,
+                                "wetDryMix": 0.5
+                            },
+                            "eq": {
+                                "bandwidth": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ],
+                                "enabled": false,
+                                "frequencyCenter": [
+                                    100.0,
+                                    800.0,
+                                    2000.0,
+                                    10000.0
+                                ],
+                                "gain": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ]
+                            },
+                            "filter": {
+                                "enabled": false,
+                                "frequency": 1.0,
+                                "kind": 0,
+                                "q": 1.0
+                            },
+                            "limiter": {
+                                "enabled": false,
+                                "loudness": 1000,
+                                "release": 6
+                            },
+                            "reverb": {
+                                "enabled": false,
+                                "mix": 0.3
+                            }
+                        },
+                        "enableSpatialAudio": false,
+                        "loop": false,
+                        "maxDistance": 25.0,
+                        "minDistance": 1.0,
+                        "pitch": 0.0,
+                        "playOnAwake": false,
+                        "soundName": "App/Sound/enemyDamage.mp3",
+                        "volume": 0.5
+                    },
+                    "isActive": true,
+                    "priority": 7,
+                    "tag": "Damage"
+                },
+                "type": "AudioSource"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "category": "SE",
+                        "effects": {
+                            "echo": {
+                                "delayMs": 500.0,
+                                "enabled": false,
+                                "feedback": 0.5,
+                                "wetDryMix": 0.5
+                            },
+                            "eq": {
+                                "bandwidth": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ],
+                                "enabled": false,
+                                "frequencyCenter": [
+                                    100.0,
+                                    800.0,
+                                    2000.0,
+                                    10000.0
+                                ],
+                                "gain": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ]
+                            },
+                            "filter": {
+                                "enabled": false,
+                                "frequency": 1.0,
+                                "kind": 0,
+                                "q": 1.0
+                            },
+                            "limiter": {
+                                "enabled": false,
+                                "loudness": 1000,
+                                "release": 6
+                            },
+                            "reverb": {
+                                "enabled": false,
+                                "mix": 0.3
+                            }
+                        },
+                        "enableSpatialAudio": false,
+                        "loop": false,
+                        "maxDistance": 25.0,
+                        "minDistance": 1.0,
+                        "pitch": 0.0,
+                        "playOnAwake": false,
+                        "soundName": "App/Sound/enemyDead.mp3",
+                        "volume": 0.6
+                    },
+                    "isActive": true,
+                    "priority": 8,
+                    "tag": "Dead"
+                },
+                "type": "AudioSource"
             }
         ],
         "editorOnly": false,

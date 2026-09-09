@@ -22,6 +22,19 @@ class SavePoint : ScriptComponentBehavior {
         GetComponent(@particle);
     }
 
+    void PlayTaggedAudio(const string &in tagName) {
+        // Start()時点のキャッシュだと、クローン直後同フレームで呼ばれた場合等に
+        // まだ取得できていないことがあるため、呼び出す都度取得し直す
+        array<AudioSource@>@ sources;
+        if (!GetComponents(@sources)) return;
+        for(uint i = 0; i < sources.length(); ++i) {
+            if(sources[i] !is null && sources[i].GetTag() == tagName) {
+                sources[i].SetActive(true);
+                sources[i].Play();
+            }
+        }
+    }
+
     void Update() {
     }
 
@@ -49,6 +62,8 @@ class SavePoint : ScriptComponentBehavior {
         if (particle !is null) {
             particle.Play();
         }
+
+        PlayTaggedAudio("Save");
 
         StartDialogue();
     }

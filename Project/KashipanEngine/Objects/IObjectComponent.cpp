@@ -8,6 +8,11 @@ const EmptyObject *IObjectComponent::GetOwnerObject() const {
     return objectContext_ ? objectContext_->GetOwner() : nullptr;
 }
 
+bool IObjectComponent::IsRegisteredToOwner() const {
+    const EmptyObject *owner = GetOwnerObject();
+    return owner && owner->HasComponent(this) > 0;
+}
+
 ComponentRef IObjectComponent::GetComponentRef() const {
     const EmptyObject *owner = GetOwnerObject();
     if (!owner) return ComponentRef{};

@@ -130,7 +130,7 @@ class Bat : ScriptComponentBehavior {
                 }
 
                 @cloneEffect = GetScene().CloneObject(deathEffect, "CloneDeathEffect");
-                
+
                 if(cloneEffect !is null){
                     Transform@ cloneTf = cloneEffect.GetTransform();
                     if(cloneTf !is null){
@@ -143,10 +143,15 @@ class Bat : ScriptComponentBehavior {
                         sc.SetVariable("pos", tf.GetTranslate());
                     }
                 }
-    
+
                 // 自身の描画と当たり判定を無効化
                 self.SetComponentsActiveExceptTransformAndScript(false);
-    
+
+                // 上記の無効化でAudioSourceも巻き添えで無効化され、Finalize()内のStop()で
+                // 再生開始直後の音が止まってしまうため、無効化した後に鳴らす
+                // (PlayTaggedAudio側でも再生対象を再度有効化しているため二重の対策になっている)
+                PlayTaggedAudio("Dead");
+
                 isAnimation = true;
             }
 
@@ -174,6 +179,23 @@ class Bat : ScriptComponentBehavior {
         hp -= amount;
         isInvincible = true;
         invincibleTimer = 0.0f;
+        PlayTaggedAudio("Damage");
+    }
+
+    void PlayTaggedAudio(const string &in tagName) {
+        // Start()時点のキャッシュだと、クローン直後同フレームで呼ばれた場合等に
+        // まだ取得できていないことがあるため、呼び出す都度取得し直す
+        array<AudioSource@>@ sources;
+        if (!GetComponents(@sources)) return;
+        for(uint i = 0; i < sources.length(); ++i) {
+            if(sources[i] !is null && sources[i].GetTag() == tagName) {
+                // 直前にSetComponentsActiveExceptTransformAndScript(false)等で
+                // 巻き添え無効化されていた場合、Finalize()内のStop()で再生できないため
+                // 念のため再度有効化してから再生する
+                sources[i].SetActive(true);
+                sources[i].Play();
+            }
+        }
     }
 
     void End() {

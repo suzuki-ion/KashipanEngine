@@ -38,6 +38,19 @@ class Shuriken : ScriptComponentBehavior {
         GetComponent(@currentTexture);
     }
 
+    void PlayTaggedAudio(const string &in tagName) {
+        // Start()時点のキャッシュだと、クローン直後同フレームで呼ばれた場合等に
+        // まだ取得できていないことがあるため、呼び出す都度取得し直す
+        array<AudioSource@>@ sources;
+        if (!GetComponents(@sources)) return;
+        for(uint i = 0; i < sources.length(); ++i) {
+            if(sources[i] !is null && sources[i].GetTag() == tagName) {
+                sources[i].SetActive(true);
+                sources[i].Play();
+            }
+        }
+    }
+
     void Update() {
         // 会話中(isDialogueActive)は移動などの処理を止める
         bool isDialogueActive = false;
@@ -62,6 +75,7 @@ class Shuriken : ScriptComponentBehavior {
 
     void Attack(float moveX){
         movingX = moveX;
+        PlayTaggedAudio("Attack");
     }
 
     void OnCollisionEnter(const HitInfo &in hit){

@@ -120,7 +120,47 @@ class Boss1 : ScriptComponentBehavior {
 
         SetAnimation(BossState::Idle);
 
+        // セーブ済みの撃破状態を復元する(Chest.as等と同じ方式)
+        if (ShouldPersistProgress()) {
+            bool hasLoadedSaveThisSession = false;
+            GetScene().GetGlobalVariable("hasLoadedSaveThisSession", hasLoadedSaveThisSession);
+            if (!hasLoadedSaveThisSession) {
+                GetScene().LoadGlobalVariables();
+                GetScene().SetGlobalVariable("hasLoadedSaveThisSession", true);
+            }
+
+            bool savedDefeated = false;
+            if (GetScene().GetGlobalVariable(GetSaveKey(), savedDefeated) && savedDefeated) {
+                hp = 0.0f;
+                state = BossState::Dead;
+                lastState = BossState::Dead;
+                GetOwnerObject().SetComponentsActiveExceptTransformAndScript(false);
+            }
+        }
+
         float hp = maxHp;
+    }
+
+    bool ShouldPersistProgress() const {
+        return GetScene().IsPlaying() || !IsEditorBuild();
+    }
+
+    // シーン名+オブジェクトのUUIDを使ったセーブデータキー(Chest.as等と同じ方式)
+    string GetSaveKey() const {
+        return "boss_" + GetScene().GetName() + "_" + GetOwnerObject().GetUUID() + "_defeated";
+    }
+
+    void PlayTaggedAudio(const string &in tagName) {
+        // Start()時点のキャッシュだと、クローン直後同フレームで呼ばれた場合等に
+        // まだ取得できていないことがあるため、呼び出す都度取得し直す
+        array<AudioSource@>@ sources;
+        if (!GetComponents(@sources)) return;
+        for(uint i = 0; i < sources.length(); ++i) {
+            if(sources[i] !is null && sources[i].GetTag() == tagName) {
+                sources[i].SetActive(true);
+                sources[i].Play();
+            }
+        }
     }
 
     void Update() {
@@ -146,6 +186,7 @@ class Boss1 : ScriptComponentBehavior {
                 isAnimation = true;
                 deathEffectTimer = 0.0f;
                 spawnedEffectCount = 0; // 生成数の初期化
+                PlayTaggedAudio("Dead");
             }
 
             deathEffectTimer += GetDeltaTime();
@@ -216,6 +257,11 @@ class Boss1 : ScriptComponentBehavior {
             // 全てのエフェクトが生成され、かつ全て終了した場合にボスの姿を消す
             if (spawnedEffectCount >= deathEffectCount && allEffectsFinished) {
                 GetOwnerObject().SetComponentsActiveExceptTransformAndScript(false);
+
+                // 撃破状態をセーブデータへ反映する(実際のファイル書き込みはSavePoint経由)
+                if (ShouldPersistProgress()) {
+                    GetScene().SetGlobalVariable(GetSaveKey(), true);
+                }
             }
             return;
         }
@@ -319,10 +365,12 @@ class Boss1 : ScriptComponentBehavior {
             case BossState::SmallJump:
                 velocity.y = smallJumpPower;
                 velocity.x = moveSpeed * directionX;
+                PlayTaggedAudio("JumpS");
                 break;
             case BossState::BigJump:
                 velocity.y = bigJumpPower;
                 velocity.x = moveSpeed * directionX;
+                PlayTaggedAudio("JumpM");
                 break;
             case BossState::Dead:
                 velocity.x = 0.0f;
@@ -419,6 +467,7 @@ class Boss1 : ScriptComponentBehavior {
     void Damage(float amount) {
         if (state == BossState::Dead) return;
         hp -= amount;
+        PlayTaggedAudio("Damage");
 
         // ダメージ演出の開始
         isFlashing = true;

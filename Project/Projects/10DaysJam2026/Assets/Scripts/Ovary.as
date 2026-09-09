@@ -96,11 +96,25 @@ class Ovary : ScriptComponentBehavior {
     }
 
     // プレイヤーの攻撃などから呼び出されるダメージ処理
+    void PlayTaggedAudio(const string &in tagName) {
+        // Start()時点のキャッシュだと、クローン直後同フレームで呼ばれた場合等に
+        // まだ取得できていないことがあるため、呼び出す都度取得し直す
+        array<AudioSource@>@ sources;
+        if (!GetComponents(@sources)) return;
+        for(uint i = 0; i < sources.length(); ++i) {
+            if(sources[i] !is null && sources[i].GetTag() == tagName) {
+                sources[i].SetActive(true);
+                sources[i].Play();
+            }
+        }
+    }
+
     void Damage(float amount) {
         if (isDead) return;
 
         hp -= amount;
         if (hp < 0.0f) hp = 0.0f;
+        PlayTaggedAudio("Damage");
 
         // ダメージ演出の開始
         isFlashing = true;

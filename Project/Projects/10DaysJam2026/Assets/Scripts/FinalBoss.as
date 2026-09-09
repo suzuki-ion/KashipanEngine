@@ -340,6 +340,32 @@ class FinalBoss : ScriptComponentBehavior {
 
         // 起動直後はBoss3の上空で点滅しながら浮遊し、その後重力で落下してくる
         ChangeState(FinalBossState::IntroFloat);
+
+        // セーブ済みの撃破状態を復元する(Chest.as等と同じ方式)
+        if (ShouldPersistProgress()) {
+            bool hasLoadedSaveThisSession = false;
+            GetScene().GetGlobalVariable("hasLoadedSaveThisSession", hasLoadedSaveThisSession);
+            if (!hasLoadedSaveThisSession) {
+                GetScene().LoadGlobalVariables();
+                GetScene().SetGlobalVariable("hasLoadedSaveThisSession", true);
+            }
+
+            bool savedDefeated = false;
+            if (GetScene().GetGlobalVariable(GetSaveKey(), savedDefeated) && savedDefeated) {
+                hp = 0.0f;
+                state = FinalBossState::Dead;
+                GetOwnerObject().SetComponentsActiveExceptTransformAndScript(false);
+            }
+        }
+    }
+
+    bool ShouldPersistProgress() const {
+        return GetScene().IsPlaying() || !IsEditorBuild();
+    }
+
+    // シーン名+オブジェクトのUUIDを使ったセーブデータキー(Chest.as等と同じ方式)
+    string GetSaveKey() const {
+        return "boss_" + GetScene().GetName() + "_" + GetOwnerObject().GetUUID() + "_defeated";
     }
 
     void Update() {
@@ -652,6 +678,7 @@ class FinalBoss : ScriptComponentBehavior {
                 break;
 
             case FinalBossState::HoverDive: {
+                PlayTaggedAudio("Fall");
                 hoverDiveStartPos = curPos;
                 Vector3 targetPos = curPos;
                 if (player !is null) {
@@ -668,6 +695,7 @@ class FinalBoss : ScriptComponentBehavior {
             }
 
             case FinalBossState::DashRush: {
+                PlayTaggedAudio("Dash");
                 dashStartPos = curPos;
                 int dir = 1;
                 if (player !is null) {
@@ -767,6 +795,8 @@ class FinalBoss : ScriptComponentBehavior {
     void SpawnNeedle() {
         if (needle is null) return;
 
+        PlayTaggedAudio("Needle");
+
         @needleObj = GetScene().CloneObject(needle, "CloneNeedle");
         if (needleObj is null) return;
 
@@ -786,6 +816,8 @@ class FinalBoss : ScriptComponentBehavior {
     // 伸びる攻撃
     void StartExtendAttack(Object@ prefab, float offsetX, float heightOffset, float maxLength) {
         if (prefab is null) return;
+
+        PlayTaggedAudio("Extend");
 
         Transform@ tf = GetTransform();
         if (tf is null) return;
@@ -985,10 +1017,24 @@ class FinalBoss : ScriptComponentBehavior {
         }
     }
 
+    void PlayTaggedAudio(const string &in tagName) {
+        // Start()時点のキャッシュだと、クローン直後同フレームで呼ばれた場合等に
+        // まだ取得できていないことがあるため、呼び出す都度取得し直す
+        array<AudioSource@>@ sources;
+        if (!GetComponents(@sources)) return;
+        for(uint i = 0; i < sources.length(); ++i) {
+            if(sources[i] !is null && sources[i].GetTag() == tagName) {
+                sources[i].SetActive(true);
+                sources[i].Play();
+            }
+        }
+    }
+
     // ダメージを受けた際の処理(弾などのOnCollisionEnter側から CallMethod("Damage", amount) で呼ばれる想定)
     void Damage(float amount) {
         if (state == FinalBossState::Dead) return;
         hp -= amount;
+        PlayTaggedAudio("Damage");
 
         // ダメージ演出の開始(色フラッシュ)
         isFlashing = true;
@@ -1004,6 +1050,7 @@ class FinalBoss : ScriptComponentBehavior {
             isAnimation = true;
             deathEffectTimer = 0.0f;
             spawnedEffectCount = 0; // 生成数の初期化
+            PlayTaggedAudio("Dead");
         }
 
         deathEffectTimer += GetDeltaTime();
@@ -1074,6 +1121,11 @@ class FinalBoss : ScriptComponentBehavior {
         // 全てのエフェクトが生成され、かつ全て終了した場合にボスの姿を消す
         if (spawnedEffectCount >= deathEffectCount && allEffectsFinished) {
             GetOwnerObject().SetComponentsActiveExceptTransformAndScript(false);
+
+            // 撃破状態をセーブデータへ反映する(実際のファイル書き込みはSavePoint経由)
+            if (ShouldPersistProgress()) {
+                GetScene().SetGlobalVariable(GetSaveKey(), true);
+            }
         }
     }
 

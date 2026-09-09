@@ -104,6 +104,11 @@ public:
     /// @brief 所属オブジェクトを取得する（未所属の場合は nullptr）
     /// @details ObjectContext の完全な型定義が必要なため、定義は IObjectComponent.cpp にある
     const EmptyObject *GetOwnerObject() const;
+    /// @brief このコンポーネントが所属オブジェクトのコンポーネント一覧へ登録済みかを取得する
+    /// @details AddComponent() 内部では、プール上のインスタンスへ状態を転送するために
+    ///          登録前の LoadFromJson() が一度呼ばれる。その段階でウィンドウ等の外部リソースを
+    ///          生成しないための判定に使用する。
+    bool IsRegisteredToOwner() const;
     /// @brief このコンポーネント自身を指す ComponentRef を取得する
     /// @details フレームをまたいで安全に保持するためのハンドル。プールのスロット再利用による
     ///          エイリアシングを避けるため、生ポインタの代わりにこちらを保持し、使う直前に

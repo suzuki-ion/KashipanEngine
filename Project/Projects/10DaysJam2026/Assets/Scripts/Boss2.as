@@ -100,6 +100,44 @@ class Boss2 : ScriptComponentBehavior {
         if (sprite !is null) {
             sprite.SetInstanceColor(normalColor);
         }
+
+        // セーブ済みの撃破状態を復元する(Chest.as等と同じ方式)
+        if (ShouldPersistProgress()) {
+            bool hasLoadedSaveThisSession = false;
+            GetScene().GetGlobalVariable("hasLoadedSaveThisSession", hasLoadedSaveThisSession);
+            if (!hasLoadedSaveThisSession) {
+                GetScene().LoadGlobalVariables();
+                GetScene().SetGlobalVariable("hasLoadedSaveThisSession", true);
+            }
+
+            bool savedDefeated = false;
+            if (GetScene().GetGlobalVariable(GetSaveKey(), savedDefeated) && savedDefeated) {
+                hp = 0.0f;
+                GetOwnerObject().SetComponentsActiveExceptTransformAndScript(false);
+            }
+        }
+    }
+
+    bool ShouldPersistProgress() const {
+        return GetScene().IsPlaying() || !IsEditorBuild();
+    }
+
+    // シーン名+オブジェクトのUUIDを使ったセーブデータキー(Chest.as等と同じ方式)
+    string GetSaveKey() const {
+        return "boss_" + GetScene().GetName() + "_" + GetOwnerObject().GetUUID() + "_defeated";
+    }
+
+    void PlayTaggedAudio(const string &in tagName) {
+        // Start()時点のキャッシュだと、クローン直後同フレームで呼ばれた場合等に
+        // まだ取得できていないことがあるため、呼び出す都度取得し直す
+        array<AudioSource@>@ sources;
+        if (!GetComponents(@sources)) return;
+        for(uint i = 0; i < sources.length(); ++i) {
+            if(sources[i] !is null && sources[i].GetTag() == tagName) {
+                sources[i].SetActive(true);
+                sources[i].Play();
+            }
+        }
     }
 
     void Update() {
@@ -126,6 +164,7 @@ class Boss2 : ScriptComponentBehavior {
                 isAnimation = true;
                 deathEffectTimer = 0.0f;
                 spawnedEffectCount = 0; // 生成数の初期化
+                PlayTaggedAudio("Dead");
             }
 
             deathEffectTimer += GetDeltaTime();
@@ -196,6 +235,11 @@ class Boss2 : ScriptComponentBehavior {
             // 全てのエフェクトが生成され、かつ全て終了した場合にボスの姿を消す
             if (spawnedEffectCount >= deathEffectCount && allEffectsFinished) {
                 GetOwnerObject().SetComponentsActiveExceptTransformAndScript(false);
+
+                // 撃破状態をセーブデータへ反映する(実際のファイル書き込みはSavePoint経由)
+                if (ShouldPersistProgress()) {
+                    GetScene().SetGlobalVariable(GetSaveKey(), true);
+                }
             }
         } else {
             Transform@ tf = GetTransform();
@@ -366,11 +410,14 @@ class Boss2 : ScriptComponentBehavior {
                 cloneTf.SetTranslate(spawnPos);
             }
         }
+
+        PlayTaggedAudio("Sickle");
     }
 
     void Damage(float amount) {
         if (hp <= 0.0f) return;
         hp -= amount;
+        PlayTaggedAudio("Damage");
 
         // ダメージを受けたら次のエリアへ切り替える
         ChooseNextArea();

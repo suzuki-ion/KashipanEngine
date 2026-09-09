@@ -192,6 +192,43 @@ class Boss3 : ScriptComponentBehavior {
         hpTier = CalcHpTier();
         lastHpTier = hpTier;
         SetAnimation(state, hpTier);
+
+        // セーブ済みの撃破状態を復元する(Chest.as等と同じ方式)
+        if (ShouldPersistProgress()) {
+            bool hasLoadedSaveThisSession = false;
+            GetScene().GetGlobalVariable("hasLoadedSaveThisSession", hasLoadedSaveThisSession);
+            if (!hasLoadedSaveThisSession) {
+                GetScene().LoadGlobalVariables();
+                GetScene().SetGlobalVariable("hasLoadedSaveThisSession", true);
+            }
+
+            bool savedDefeated = false;
+            if (GetScene().GetGlobalVariable(GetSaveKey(), savedDefeated) && savedDefeated) {
+                leftOvaryHP = 0.0f;
+                rightOvaryHP = 0.0f;
+                state = Boss3State::Dead;
+                lastState = Boss3State::Dead;
+                // 撃破済みの場合、FinalBossは既に別の手段(FinalBossScene等)で
+                // 遭遇済みという想定のため、ここでは再出現させない
+                finalBossSpawned = true;
+                GetOwnerObject().SetComponentsActiveExceptTransformAndScript(false);
+                if (ovaryLeft !is null) {
+                    ovaryLeft.SetComponentsActiveExceptTransformAndScript(false);
+                }
+                if (ovaryRight !is null) {
+                    ovaryRight.SetComponentsActiveExceptTransformAndScript(false);
+                }
+            }
+        }
+    }
+
+    bool ShouldPersistProgress() const {
+        return GetScene().IsPlaying() || !IsEditorBuild();
+    }
+
+    // シーン名+オブジェクトのUUIDを使ったセーブデータキー(Chest.as等と同じ方式)
+    string GetSaveKey() const {
+        return "boss_" + GetScene().GetName() + "_" + GetOwnerObject().GetUUID() + "_defeated";
     }
 
     void Update() {
@@ -285,6 +322,7 @@ class Boss3 : ScriptComponentBehavior {
             isAnimation = true;
             deathEffectTimer = 0.0f;
             spawnedEffectCount = 0; // 生成数の初期化
+            PlayTaggedAudio("Dead");
         }
 
         deathEffectTimer += GetDeltaTime();
@@ -363,6 +401,11 @@ class Boss3 : ScriptComponentBehavior {
             // Ovaryも非アクティブにする
             ovaryLeft.SetComponentsActiveExceptTransformAndScript(false);
             ovaryRight.SetComponentsActiveExceptTransformAndScript(false);
+
+            // 撃破状態をセーブデータへ反映する(実際のファイル書き込みはSavePoint経由)
+            if (ShouldPersistProgress()) {
+                GetScene().SetGlobalVariable(GetSaveKey(), true);
+            }
         }
     }
 
@@ -449,8 +492,22 @@ class Boss3 : ScriptComponentBehavior {
         return 3;
     }
 
+    void PlayTaggedAudio(const string &in tagName) {
+        // Start()時点のキャッシュだと、クローン直後同フレームで呼ばれた場合等に
+        // まだ取得できていないことがあるため、呼び出す都度取得し直す
+        array<AudioSource@>@ sources;
+        if (!GetComponents(@sources)) return;
+        for(uint i = 0; i < sources.length(); ++i) {
+            if(sources[i] !is null && sources[i].GetTag() == tagName) {
+                sources[i].SetActive(true);
+                sources[i].Play();
+            }
+        }
+    }
+
     // Blood攻撃
     void StartBloodAttack() {
+        PlayTaggedAudio("Blood");
         bloodBurstsFired = 0;
         spawnedBloodCount = 0;
         bloodSpawnTimer = 0.0f;

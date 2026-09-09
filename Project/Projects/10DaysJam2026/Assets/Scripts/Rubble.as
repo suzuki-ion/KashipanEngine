@@ -14,18 +14,37 @@ class Rubble : ScriptComponentBehavior {
     [SerializeField, Tooltip("ダメージ量")]
     float damageAmount = 1;
 
+    [SerializeField, Tooltip("着地音を鳴らす最低落下距離。クローン生成用に地面の高さで待機しているテンプレート自身が、初回のdropDelay経過時に「0距離の着地」として誤検知しないためのしきい値")]
+    float landSoundMinFallDistance = 5.0f;
+
     float timer = 0.0f;
     float dropTimer = 0.0f;
     float groundTimer = 0.0f;
     bool isDropping = false;
     bool isGrounded = false;
     Vector2 velocity;
+
+    // 落下開始位置のY座標(着地音を鳴らすべき実際の落下かどうかの判定に使う)
+    float dropStartY = 0.0f;
     
     CharacterController2D@ controller;
 
     void Start() {
         GetComponent(@controller);
         velocity.y = 0.0f;
+    }
+
+    void PlayTaggedAudio(const string &in tagName) {
+        // Start()時点のキャッシュだと、クローン直後同フレームで呼ばれた場合等に
+        // まだ取得できていないことがあるため、呼び出す都度取得し直す
+        array<AudioSource@>@ sources;
+        if (!GetComponents(@sources)) return;
+        for(uint i = 0; i < sources.length(); ++i) {
+            if(sources[i] !is null && sources[i].GetTag() == tagName) {
+                sources[i].SetActive(true);
+                sources[i].Play();
+            }
+        }
     }
 
     void Update() {
@@ -50,6 +69,7 @@ class Rubble : ScriptComponentBehavior {
             dropTimer += GetDeltaTime();
             if (dropTimer >= dropDelay) {
                 isDropping = true;
+                dropStartY = tf.GetTranslate().y;
             }
         } else if (!isGrounded) {
             // 重力を適用して落下
@@ -61,16 +81,25 @@ class Rubble : ScriptComponentBehavior {
                 if (controller.IsGrounded() && velocity.y <= 0.0f) {
                     isGrounded = true;
                     velocity.y = 0.0f;
+                    // クローン生成用に地面の高さで待機しているテンプレート自身が、
+                    // 実際には落下していないのに「着地」してしまうケースを除外する
+                    if (dropStartY - tf.GetTranslate().y >= landSoundMinFallDistance) {
+                        PlayTaggedAudio("Land");
+                    }
                 }
             } else {
                 // Controllerがない場合の簡易フォールバック
                 Vector3 pos = tf.GetTranslate();
                 pos.y += velocity.y * GetDeltaTime();
-                
+
                 if (pos.y <= 0.0f) {
+                    bool didFall = dropStartY - pos.y >= landSoundMinFallDistance;
                     pos.y = 0.0f;
                     isGrounded = true;
                     velocity.y = 0.0f;
+                    if (didFall) {
+                        PlayTaggedAudio("Land");
+                    }
                 }
                 tf.SetTranslate(pos);
             }

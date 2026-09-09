@@ -63,6 +63,19 @@ class Katana : ScriptComponentBehavior {
         }
     }
 
+    void PlayTaggedAudio(const string &in tagName) {
+        // Start()時点のキャッシュだと、クローン直後同フレームで呼ばれた場合等に
+        // まだ取得できていないことがあるため、呼び出す都度取得し直す
+        array<AudioSource@>@ sources;
+        if (!GetComponents(@sources)) return;
+        for(uint i = 0; i < sources.length(); ++i) {
+            if(sources[i] !is null && sources[i].GetTag() == tagName) {
+                sources[i].SetActive(true);
+                sources[i].Play();
+            }
+        }
+    }
+
     void Update() {
         // 会話中(isDialogueActive)は攻撃演出などの処理を止める
         bool isDialogueActive = false;
@@ -156,6 +169,9 @@ class Katana : ScriptComponentBehavior {
         attackOffsetX = margin;
         col.SetTrigger(false);
         isActive = true;
+
+        // 刀のレベルに応じた斬撃音を鳴らす(Lv1:Attack1, Lv2:Attack2, Lv3:Attack3)
+        PlayTaggedAudio("Attack" + level);
 
         // 攻撃演出を表示
         if (sprite !is null) {

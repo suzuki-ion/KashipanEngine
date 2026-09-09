@@ -1,0 +1,83 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "3fcd463a-e03f-4f92-97a7-cfe8e442b9bd",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "advanceCommandName": "Attack",
+                            "backgroundObject": "f05d91ea-f4d8-40c1-9201-fd12a34072ad",
+                            "choiceSlotObjects": [],
+                            "dialogues": [
+                                {
+                                    "characterInterval": 0.10000000149011612,
+                                    "iconTextureName": "App/Sprite/Talk/portrait.png",
+                                    "iconUvPosition": {
+                                        "x": 0.0,
+                                        "y": 0.0
+                                    },
+                                    "iconUvScale": {
+                                        "x": 0.25,
+                                        "y": 1.0
+                                    },
+                                    "shakeAmplitude": {
+                                        "x": 2.0,
+                                        "y": 2.0
+                                    },
+                                    "shakeEaseType": 0,
+                                    "shakeEnabled": false,
+                                    "shakeSpeed": 20.0,
+                                    "text": "セーブしました。"
+                                }
+                            ],
+                            "iconObject": "1fcaaf04-0627-4958-a051-12f47f3f42a4",
+                            "isVisible": false,
+                            "pauseGameplayWhileVisible": true,
+                            "textObject": "90344e71-a4e7-4fb5-988e-2f39fa9ebb11"
+                        },
+                        "scriptPath": "Assets/Scripts/DialogueBox.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "TalkScript",
+        "objectID": "e2b4b7e5-e572-4d85-8be4-748c5f40499a",
+        "prefabNodeID": "d2b98713-1d27-4a1f-86bd-fd05827d490f",
+        "tag": ""
+    },
+    "siblingIndex": 0
+}

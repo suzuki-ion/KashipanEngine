@@ -31,7 +31,7 @@
                 "data": {
                     "customData": {
                         "height": 1920,
-                        "isShowViewer": true,
+                        "isShowViewer": false,
                         "name": "FinalScreen",
                         "renderOrderPriority": 10,
                         "saveDirectory": "Screenshots",

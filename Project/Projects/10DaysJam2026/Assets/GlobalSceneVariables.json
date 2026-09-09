@@ -1,6 +1,16 @@
 {
     "globalSceneVariables": [
         {
+            "key": "save_weapon_Ball_damageAmount",
+            "type": "Float",
+            "value": 1.0
+        },
+        {
+            "key": "save_weapon_Axe_nextExp",
+            "type": "Float",
+            "value": 10.0
+        },
+        {
             "key": "save_weapon_Shuriken_exp",
             "type": "Float",
             "value": 0.0
@@ -34,16 +44,6 @@
             "key": "save_weapon_Katana_damageAmount",
             "type": "Float",
             "value": 1.0
-        },
-        {
-            "key": "save_weapon_Ball_damageAmount",
-            "type": "Float",
-            "value": 1.0
-        },
-        {
-            "key": "save_weapon_Axe_nextExp",
-            "type": "Float",
-            "value": 10.0
         },
         {
             "key": "save_hp",
@@ -124,15 +124,15 @@
             "key": "save_position",
             "type": "Vector3",
             "value": {
-                "x": 288.24273681640625,
-                "y": 56.09320068359375,
-                "z": 0.03997802734375
+                "x": 142.20989990234375,
+                "y": 304.2205810546875,
+                "z": 3.0517578125e-05
             }
         },
         {
             "key": "save_sceneName",
             "type": "String",
-            "value": "FleshDollScene"
+            "value": "Boss2Scene"
         }
     ]
 }

@@ -16,8 +16,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 51.51631164550781,
-                            "y": 47.209999084472656,
+                            "x": 7.280401229858398,
+                            "y": 4.335161209106445,
                             "z": 0.0
                         }
                     },
@@ -46,11 +46,11 @@
             {
                 "data": {
                     "customData": {
-                        "boundsClampMode": 0,
-                        "boundsTransitionDuration": 0.0,
-                        "boundsTransitionEaseType": "Linear",
-                        "boundsZoneObjectID": "",
-                        "enableBoundsClamp": false,
+                        "boundsClampMode": 1,
+                        "boundsTransitionDuration": 0.49000000953674316,
+                        "boundsTransitionEaseType": "EaseOutCirc",
+                        "boundsZoneObjectID": "25c3c4b7-ac42-4290-9de3-61d65d4e6aa2",
+                        "enableBoundsClamp": true,
                         "followTargets": [
                             {
                                 "followPositionX": true,

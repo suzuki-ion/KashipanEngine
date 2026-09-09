@@ -11,14 +11,14 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 32.0,
-                            "y": 32.0,
+                            "x": 8.0,
+                            "y": 8.0,
                             "z": 1.0
                         },
                         "translate": {
-                            "x": -637.241943359375,
-                            "y": 146.84381103515625,
-                            "z": 500.00018310546875
+                            "x": 72.30206298828125,
+                            "y": 302.56243896484375,
+                            "z": 3.0517578125e-05
                         }
                     },
                     "isActive": true,
@@ -41,7 +41,7 @@
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "App/Sprite/Boss/Sickle.png"
+                        "textureAssetPath": "App/Sprite/Item/Heart.png"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -58,7 +58,7 @@
                             "y": 0.0
                         },
                         "continuousDetection": false,
-                        "isTrigger": true,
+                        "isTrigger": false,
                         "size": {
                             "x": 1.0,
                             "y": 1.0
@@ -77,55 +77,14 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": "Bullet"
+                    "tag": "Heart"
                 },
                 "type": "Box2DCollider"
             },
             {
                 "data": {
                     "customData": {
-                        "fields": {
-                            "despawnTag": "Weapon",
-                            "flySpeed": 140.0,
-                            "lifeTime": 4.0,
-                            "player": "aa35c299-acf4-443d-a774-988f6670e8b5",
-                            "waitDuration": 1.0
-                        },
-                        "scriptPath": "Assets\\Scripts\\Sickle.as"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "ScriptComponent"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "fields": {
-                            "currentFrame": 0,
-                            "frameCount": 4,
-                            "frameInterval": 0.15000000596046448,
-                            "isLoop": true,
-                            "playOnStart": true,
-                            "startRow": 0,
-                            "uvStep": {
-                                "x": 0.25,
-                                "y": 1.0
-                            }
-                        },
-                        "scriptPath": "Assets\\Scripts\\SpriteAnimator.as"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": "AnimatorSC"
-                },
-                "type": "ScriptComponent"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "prefabID": "346c7d38-40da-4021-b2fd-6f87a7ae1255"
+                        "prefabID": "256e543e-2492-4ac1-a863-c46bc42b575f"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -155,7 +114,7 @@
                         },
                         "instanceUvRotation": 0.0,
                         "instanceUvScale": {
-                            "x": 0.25,
+                            "x": 1.0,
                             "y": 1.0
                         },
                         "instanceUvTranslate": {
@@ -169,7 +128,7 @@
                             "y": 0.5
                         },
                         "pixelSnapOutsetPixels": 0.0,
-                        "pixelSnapping": false,
+                        "pixelSnapping": true,
                         "renderPriority": 0,
                         "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                     },
@@ -183,10 +142,10 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Sickle",
-        "objectID": "2e4856b6-ec3e-49ce-a32b-0b5070e2895d",
-        "prefabNodeID": "c186a765-3896-42a9-ae96-768fbe770af7",
+        "name": "Heart",
+        "objectID": "e39a4073-a880-4c72-a2f2-5bd1ebc727be",
+        "prefabNodeID": "6ef35e6c-25d8-440b-aac0-7dbf7b061fb2",
         "tag": ""
     },
-    "siblingIndex": 17000
+    "siblingIndex": 22000
 }

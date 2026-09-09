@@ -1,0 +1,109 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "01af81f9-01d3-476a-8906-11b3916da392",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 50.0,
+                            "y": 8.0,
+                            "z": 0.999962568283081
+                        },
+                        "translate": {
+                            "x": 142.0,
+                            "y": 232.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Rect2D"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "textureAssetPath": "App/Sprite/UI/lvGauge.png"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "TextureSource"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "anchor": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "instanceUvCombineMode": 0,
+                        "instanceUvPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceUvRotation": 0.0,
+                        "instanceUvScale": {
+                            "x": 0.5,
+                            "y": 1.0
+                        },
+                        "instanceUvTranslate": {
+                            "x": 0.20000000298023224,
+                            "y": 0.0
+                        },
+                        "materialName": "Dot",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "pixelSnapOutsetPixels": 1.0,
+                        "pixelSnapping": false,
+                        "renderPriority": -2,
+                        "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "SpriteRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Level Text BG",
+        "objectID": "13455d10-1a93-4242-beec-7b6d37ef5442",
+        "prefabNodeID": "62ed1379-c383-42f0-88ab-40e28b413abb",
+        "tag": ""
+    },
+    "siblingIndex": 6000
+}

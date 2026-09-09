@@ -1,0 +1,135 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "3195e24b-575b-42da-b3a1-64df441e6b02",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 0.0,
+                            "y": 7.9998321533203125,
+                            "z": 0.9999409914016724
+                        },
+                        "translate": {
+                            "x": 147.0,
+                            "y": 232.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Rect2D"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "textureAssetPath": "KashipanEngine/white1x1.png"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "TextureSource"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "comment": "Xスケール26で最大"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Comment"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "maxScaleX": 26.0,
+                            "player": "6f580e51-2c47-474e-af45-919002328b2c"
+                        },
+                        "scriptPath": "Assets\\Scripts\\LevelGauge.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "anchor": {
+                            "x": 0.0,
+                            "y": 0.5
+                        },
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 0.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "instanceUvCombineMode": 0,
+                        "instanceUvPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceUvRotation": 0.0,
+                        "instanceUvScale": {
+                            "x": 0.5,
+                            "y": 1.0
+                        },
+                        "instanceUvTranslate": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "materialName": "Dot",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "pixelSnapOutsetPixels": 1.0,
+                        "pixelSnapping": false,
+                        "renderPriority": 2,
+                        "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "SpriteRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Level Gauge",
+        "objectID": "9570670d-9aae-4888-8447-a332141f029a",
+        "prefabNodeID": "9931bda3-ef60-4df0-8eb3-2946865c0e98",
+        "tag": ""
+    },
+    "siblingIndex": 7000
+}

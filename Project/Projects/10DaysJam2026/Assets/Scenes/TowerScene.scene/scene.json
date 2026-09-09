@@ -81,7 +81,7 @@
         {
             "key": "gameOverRequested",
             "type": "Bool",
-            "value": false
+            "value": true
         },
         {
             "key": "dialogueBoxUIBusy",

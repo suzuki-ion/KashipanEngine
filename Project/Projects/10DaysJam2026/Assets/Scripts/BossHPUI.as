@@ -21,6 +21,9 @@ class BossHPUI : ScriptComponentBehavior {
     // ボスのスクリプトコンポーネント
     ScriptComponent@ bossSc;
 
+    // SwitchBoss()呼び出し前に、切り替え先のボスオブジェクトをセットしておくための一時変数
+    Object@ pendingBoss;
+
     // 複製したHPゲージオブジェクト一覧
     array<Object@> gauges;
 
@@ -81,6 +84,45 @@ class BossHPUI : ScriptComponentBehavior {
 
             gauges.insertLast(gauge);
         }
+    }
+
+    // 参照するボスをpendingBossへ切り替え、ゲージを作り直す
+    // (例: Boss3撃破時にFinalBossへ切り替える際、Boss3側から
+    //  SetVariable("pendingBoss", finalBossObj) → CallMethod("SwitchBoss") の順で呼び出す想定)
+    void SwitchBoss() {
+        if (pendingBoss is null || gaugeSource is null) return;
+
+        @boss = pendingBoss;
+        @pendingBoss = null;
+
+        // 既存のゲージを非表示にして作り直す
+        for (uint i = 0; i < gauges.length(); ++i) {
+            Object@ gauge = gauges[i];
+            if (gauge !is null) {
+                gauge.SetActive(false);
+            }
+        }
+        gauges.resize(0);
+
+        // 新しいボスからスクリプトコンポーネントを探し直す
+        @bossSc = null;
+        array<ScriptComponent@>@ scripts;
+        if (boss.GetComponents(@scripts)) {
+            for (uint i = 0; i < scripts.length(); ++i) {
+                float dummyHp;
+                if (scripts[i].GetVariable("maxHp", dummyHp)) {
+                    @bossSc = scripts[i];
+                    break;
+                }
+            }
+        }
+
+        if (bossSc is null) return;
+
+        // 新しいボスのHPで前フレームHPを取り直す
+        hasPreviousHp = false;
+
+        CreateGauges();
     }
 
     void Update() {

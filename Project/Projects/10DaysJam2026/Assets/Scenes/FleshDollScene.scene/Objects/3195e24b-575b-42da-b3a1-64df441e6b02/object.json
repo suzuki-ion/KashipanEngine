@@ -1,0 +1,51 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "b897f4af-cda3-4b26-bbc2-8896f721c6f5"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "GameUI",
+        "objectID": "3195e24b-575b-42da-b3a1-64df441e6b02",
+        "prefabNodeID": "d055a767-1178-4f97-9825-723a5c4599f3",
+        "tag": ""
+    },
+    "siblingIndex": 141000
+}

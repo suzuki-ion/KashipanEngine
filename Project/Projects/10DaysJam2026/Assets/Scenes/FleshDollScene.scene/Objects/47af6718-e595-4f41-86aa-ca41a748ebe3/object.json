@@ -1,0 +1,109 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "3195e24b-575b-42da-b3a1-64df441e6b02",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 256.0,
+                            "y": 16.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 128.0,
+                            "y": 232.0,
+                            "z": 1.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Rect2D"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "textureAssetPath": "KashipanEngine/white1x1.png"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "TextureSource"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "anchor": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 0.1568627506494522,
+                            "y": 0.1411764770746231,
+                            "z": 0.250980406999588
+                        },
+                        "instanceColorBlendMode": 1,
+                        "instanceUvCombineMode": 0,
+                        "instanceUvPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceUvRotation": 0.0,
+                        "instanceUvScale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "instanceUvTranslate": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "materialName": "Dot",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "pixelSnapOutsetPixels": 1.0,
+                        "pixelSnapping": false,
+                        "renderPriority": -50,
+                        "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "SpriteRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "UI_Background",
+        "objectID": "47af6718-e595-4f41-86aa-ca41a748ebe3",
+        "prefabNodeID": "ca3984ab-bdc8-41bf-8b41-ea1723a08cf6",
+        "tag": ""
+    },
+    "siblingIndex": 0
+}

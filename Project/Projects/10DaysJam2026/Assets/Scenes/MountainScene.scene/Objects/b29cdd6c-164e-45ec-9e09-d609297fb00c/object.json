@@ -1,0 +1,161 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "2a27b6dd-cac0-49d6-ae86-6cca0a3b6175",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 2.0,
+                            "y": 9.0,
+                            "z": 0.999962568283081
+                        },
+                        "translate": {
+                            "x": -103.00926208496094,
+                            "y": 280.5359191894531,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Rect2D"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "textureAssetPath": "App/Sprite/UI/hpBar.png"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "TextureSource"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "applyTarget": 1,
+                        "autoPlay": false,
+                        "duration": 0.5,
+                        "positionAmplitude": {
+                            "x": 2.0,
+                            "y": 2.0,
+                            "z": 2.0
+                        },
+                        "positionAmplitudeEndMultiplier": 0.0,
+                        "positionAmplitudeStartMultiplier": 1.0,
+                        "positionEaseType": "Linear",
+                        "positionEnableX": true,
+                        "positionEnableY": true,
+                        "positionEnableZ": false,
+                        "positionEnvelopeEaseType": "Linear",
+                        "positionSpeed": {
+                            "x": 128.0,
+                            "y": 128.0,
+                            "z": 128.0
+                        },
+                        "positionSpeedEndMultiplier": 1.0,
+                        "positionSpeedStartMultiplier": 1.0,
+                        "processTiming": 1,
+                        "rotationAmplitudeDeg": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "rotationAmplitudeEndMultiplier": 1.0,
+                        "rotationAmplitudeStartMultiplier": 1.0,
+                        "rotationEaseType": "Linear",
+                        "rotationEnableX": false,
+                        "rotationEnableY": false,
+                        "rotationEnableZ": false,
+                        "rotationEnvelopeEaseType": "Linear",
+                        "rotationSpeed": {
+                            "x": 20.0,
+                            "y": 20.0,
+                            "z": 20.0
+                        },
+                        "rotationSpeedEndMultiplier": 1.0,
+                        "rotationSpeedStartMultiplier": 1.0
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Shake"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "anchor": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "instanceUvCombineMode": 0,
+                        "instanceUvPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceUvRotation": 0.0,
+                        "instanceUvScale": {
+                            "x": 0.5,
+                            "y": 1.0
+                        },
+                        "instanceUvTranslate": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "materialName": "Dot",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "pixelSnapOutsetPixels": 1.0,
+                        "pixelSnapping": false,
+                        "renderPriority": 0,
+                        "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "SpriteRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": false,
+        "name": "HP_bar",
+        "objectID": "b29cdd6c-164e-45ec-9e09-d609297fb00c",
+        "prefabNodeID": "4aa0f73d-c11d-4485-98ce-7f58d0ba55b1",
+        "tag": ""
+    },
+    "siblingIndex": 2000
+}

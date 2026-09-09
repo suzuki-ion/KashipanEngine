@@ -103,7 +103,7 @@
                             "hp": 2.0,
                             "invincibleDuration": 0.5,
                             "moveSpeed": 12.0,
-                            "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
+                            "player": "6f580e51-2c47-474e-af45-919002328b2c",
                             "self": "01794fcc-613a-42b3-8ddc-345e83d8ffe1"
                         },
                         "scriptPath": "Assets\\Scripts\\Bat.as"

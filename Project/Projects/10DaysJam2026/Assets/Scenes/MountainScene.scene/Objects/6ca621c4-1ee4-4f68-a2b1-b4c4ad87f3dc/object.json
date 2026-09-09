@@ -1,0 +1,109 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "2a27b6dd-cac0-49d6-ae86-6cca0a3b6175",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 16.0,
+                            "y": 16.0,
+                            "z": 0.999962568283081
+                        },
+                        "translate": {
+                            "x": 100.0,
+                            "y": 240.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Rect2D"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "textureAssetPath": "App/Sprite/UI/weponFrame.png"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "TextureSource"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "anchor": {
+                            "x": 0.5,
+                            "y": 1.0
+                        },
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "instanceUvCombineMode": 0,
+                        "instanceUvPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceUvRotation": 0.0,
+                        "instanceUvScale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "instanceUvTranslate": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "materialName": "Dot",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "pixelSnapOutsetPixels": 1.0,
+                        "pixelSnapping": false,
+                        "renderPriority": 0,
+                        "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "SpriteRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Weapon Frame",
+        "objectID": "6ca621c4-1ee4-4f68-a2b1-b4c4ad87f3dc",
+        "prefabNodeID": "cc6a1a33-bf15-4ad6-8331-1a4c15ca6bdd",
+        "tag": ""
+    },
+    "siblingIndex": 3000
+}

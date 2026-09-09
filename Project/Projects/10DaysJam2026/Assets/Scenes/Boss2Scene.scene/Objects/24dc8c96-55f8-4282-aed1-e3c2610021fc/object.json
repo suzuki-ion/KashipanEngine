@@ -63,6 +63,7 @@
                 "data": {
                     "customData": {
                         "fields": {
+                            "boss": "0360929a-36ca-4ba1-8483-0db921c98d76",
                             "leftGroup": "65430dfe-1e6a-4a6c-82e5-17b797a1bbb3"
                         },
                         "scriptPath": "Assets\\Scripts\\EntryArea.as"

@@ -369,7 +369,12 @@ class FinalBoss : ScriptComponentBehavior {
             return;
         }
 
-        FacePlayer();
+        // 突進中はプレイヤーが後ろに回り込んでも向きを追従させない
+        // (突進の速度・向きは開始時点で決定済みのため、ここで向きだけ変えると
+        //  見た目と移動方向・当たり判定がズレて挙動がおかしくなる)
+        if (state != FinalBossState::DashRush) {
+            FacePlayer();
+        }
         stateTimer += GetDeltaTime();
 
         switch (state) {
@@ -481,6 +486,14 @@ class FinalBoss : ScriptComponentBehavior {
                 break;
         }
 
+        // 明示的にY軸の軌道を制御しているステート(登場演出・後退ジャンプ・ホバー攻撃の上昇/静止/落下)
+        // 以外は常に重力を適用し、実際に立っている地面や足場の高さに追従させる。
+        // これにより、空中の足場に着地した後に突進などで移動し、足場から外れた場合でも
+        // ボスが空中に浮いたまま移動し続けることがなくなる。
+        if (!UsesManualVerticalMotion(state)) {
+            ApplyGravity();
+        }
+
         // 毎フレームの速度による移動処理
         if (controller !is null) {
             controller.Move(Vector2(velocity.x * GetDeltaTime(), velocity.y * GetDeltaTime()));
@@ -587,11 +600,29 @@ class FinalBoss : ScriptComponentBehavior {
             }
 
             case FinalBossState::NeedleTelegraph: {
+                // デフォルトは地面の高さ(initialBossPos.y)を基準にする
+                // (プレイヤー未設定時や、プレイヤーが空中にいる場合はこちらを使う)
+                //
+                // ここでボス自身のcurPos.yを使わないのがポイント:
+                // この直前のRetreatJumpは放物線の速度計算だけで着地位置を地面に
+                // スナップさせていないため、NeedleTelegraphへ切り替わった瞬間の
+                // ボスのYは地面からわずかにズレていることがある(重力補正が効くのは
+                // 次フレーム以降)。そのズレた高さを基準にしてしまうと、
+                // 「プレイヤーがジャンプ中」判定時に針が地面から浮いた位置に出てしまうため、
+                // 常に一定の地面基準高さ(initialBossPos.y)を使う
+                needleTargetPos = Vector3(curPos.x, initialBossPos.y, curPos.z);
                 if (player !is null) {
                     Transform@ pTf = player.GetTransform();
-                    if (pTf !is null) needleTargetPos = pTf.GetTranslate();
-                } else {
-                    needleTargetPos = curPos;
+                    if (pTf !is null) {
+                        Vector3 playerPos = pTf.GetTranslate();
+                        if (IsPlayerGrounded()) {
+                            // プレイヤーが地面(または足場)に立っている場合は、その位置(X・Y)をそのまま使う
+                            needleTargetPos = playerPos;
+                        } else {
+                            // プレイヤーがジャンプ中はX軸だけ参照し、Yは地面基準高さを使う
+                            needleTargetPos = Vector3(playerPos.x, initialBossPos.y, playerPos.z);
+                        }
+                    }
                 }
                 break;
             }
@@ -679,6 +710,39 @@ class FinalBoss : ScriptComponentBehavior {
             tf.SetRotate(Vector3(0.0f, 3.14159f, 0.0f));
         } else {
             tf.SetRotate(Vector3(0.0f, 0.0f, 0.0f));
+        }
+    }
+
+    // プレイヤーがジャンプ中(接地していない)かどうかを、プレイヤー側のCharacterController2Dから判定する
+    // コントローラが取得できない場合は判定できないため、地面にいるものとして扱う
+    bool IsPlayerGrounded() {
+        if (player is null) return true;
+        CharacterController2D@ playerController;
+        if (player.GetComponent(@playerController)) {
+            return playerController.IsGrounded();
+        }
+        return true;
+    }
+
+    // Y軸の動きをステート側で明示的に計算しているかどうか
+    // (登場演出の浮遊・落下、後退ジャンプの放物線、ホバー攻撃の上昇/静止/落下)。
+    // これらのステート中はvelocity.yを自前で設定しているため、重力を二重に適用しない
+    bool UsesManualVerticalMotion(FinalBossState s) {
+        return s == FinalBossState::IntroFloat
+            || s == FinalBossState::Intro
+            || s == FinalBossState::RetreatJump
+            || s == FinalBossState::HoverJump
+            || s == FinalBossState::HoverPause
+            || s == FinalBossState::HoverDive;
+    }
+
+    // 重力を適用し、接地していれば下向きの速度を0にクランプする
+    // (足場や地面から外れた際に、実際に立っている高さへ自然に落下させるための共通処理)
+    void ApplyGravity() {
+        if (controller is null) return;
+        velocity.y -= gravity * GetDeltaTime();
+        if (controller.IsGrounded() && velocity.y < 0.0f) {
+            velocity.y = 0.0f;
         }
     }
 
@@ -955,7 +1019,7 @@ class FinalBoss : ScriptComponentBehavior {
                 if (clone !is null) {
                     Transform@ cloneTf = clone.GetTransform();
                     if (cloneTf !is null) {
-                        cloneTf.SetScale(Vector3(32.0f, 32.0f, 1.0f));
+                        cloneTf.SetScale(Vector3(16.0f, 16.0f, 1.0f));
                     }
 
                     ScriptComponent@ sc;

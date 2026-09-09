@@ -93,14 +93,6 @@ class Ovary : ScriptComponentBehavior {
                 }
             }
         }
-
-        if (isDead) {
-            deathTimer += GetDeltaTime();
-            if (deathTimer >= deathDelay) {
-                Object@ obj = GetOwnerObject();
-                if (obj !is null) obj.SetActive(false);
-            }
-        }
     }
 
     // プレイヤーの攻撃などから呼び出されるダメージ処理
@@ -151,7 +143,7 @@ class Ovary : ScriptComponentBehavior {
                         scripts[i].CallMethod("SetFrameCount", 1);
                     } else {
                         scripts[i].CallMethod("PlayRow", 0);
-                        scripts[i].CallMethod("SetFrameCount", 2);
+                        scripts[i].CallMethod("SetFrameCount", 6);
                     }
                 }
             }

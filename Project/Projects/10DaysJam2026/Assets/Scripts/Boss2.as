@@ -141,7 +141,7 @@ class Boss2 : ScriptComponentBehavior {
                     if(clone !is null){
                         Transform@ cloneTf = clone.GetTransform();
                         if(cloneTf !is null){
-                            cloneTf.SetScale(Vector3(32.0f, 32.0f, 1.0f));
+                            cloneTf.SetScale(Vector3(16.0f, 16.0f, 1.0f));
                         }
 
                         ScriptComponent@ sc;

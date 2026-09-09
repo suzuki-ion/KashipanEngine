@@ -197,7 +197,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
+        "isActive": false,
         "name": "Ovary",
         "objectID": "b03fef43-e9fd-4c32-b247-732f786306d6",
         "prefabNodeID": "2d17f565-8fc5-4ef2-9326-f7f865ec7e77",

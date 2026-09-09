@@ -62,20 +62,29 @@ class Boss3 : ScriptComponentBehavior {
     [SerializeField, Tooltip("岩(中)のプレハブ")]
     Object@ rubbleMedium;
 
-    [SerializeField, Tooltip("岩(中)の生成数")]
-    int rubbleMediumCount = 4;
+    [SerializeField, Tooltip("岩を降らせるエリアを横方向に分割するレーン数(多いほど岩の密度が上がる)")]
+    int rubbleLaneCount = 8;
+
+    [SerializeField, Tooltip("プレイヤーが待機できるよう安全地帯として空けるレーン数(1〜2推奨)")]
+    int rubbleSafeLaneCount = 1;
+
+    [SerializeField, Tooltip("安全地帯以外の各レーンに落とす岩の数(多いほど大量に降ってくる)")]
+    int rubbleCountPerLane = 2;
 
     [SerializeField, Tooltip("岩を降らせる高さ(固定)")]
     float rubbleDropHeight = 150.0f;
 
-    [SerializeField, Tooltip("Ovary位置を基準にどれくらいランダムに横方向へばらけさせるか")]
+    [SerializeField, Tooltip("各レーン内で横方向に岩の位置をどれくらいランダムにばらけさせるか")]
     float rubbleRandomRangeX = 50.0f;
 
-    [SerializeField, Tooltip("左側Ovary基準の岩生成オフセットX")]
+    [SerializeField, Tooltip("左側の基準(OvaryLeft)から見た、岩を降らせるエリアの左端オフセット")]
     float rubbleOffsetLeftX = 0.0f;
 
-    [SerializeField, Tooltip("右側Ovary基準の岩生成オフセットX")]
+    [SerializeField, Tooltip("右側の基準(OvaryRight)から見た、岩を降らせるエリアの右端オフセット")]
     float rubbleOffsetRightX = 0.0f;
+
+    [SerializeField, Tooltip("OvaryLeft/OvaryRightが未設定の場合に使う、ボス中心を基準にした岩を降らせるエリアの幅")]
+    float rubbleAreaWidth = 300.0f;
 
     [SerializeField, Tooltip("岩を1つ落とすごとにずらす落下開始遅延(秒)")]
     float rubbleDropDelayStep = 0.2f;
@@ -291,7 +300,7 @@ class Boss3 : ScriptComponentBehavior {
                 if (clone !is null) {
                     Transform@ cloneTf = clone.GetTransform();
                     if (cloneTf !is null) {
-                        cloneTf.SetScale(Vector3(32.0f, 32.0f, 1.0f));
+                        cloneTf.SetScale(Vector3(16.0f, 16.0f, 1.0f));
                     }
 
                     ScriptComponent@ sc;
@@ -350,6 +359,10 @@ class Boss3 : ScriptComponentBehavior {
                 finalBossSpawned = true;
             }
             GetOwnerObject().SetComponentsActiveExceptTransformAndScript(false);
+
+            // Ovaryも非アクティブにする
+            ovaryLeft.SetComponentsActiveExceptTransformAndScript(false);
+            ovaryRight.SetComponentsActiveExceptTransformAndScript(false);
         }
     }
 
@@ -549,7 +562,7 @@ class Boss3 : ScriptComponentBehavior {
         }
     }
 
-    // Rubble攻撃
+    // Rubble攻撃(エリアをレーンに分割し、1〜2レーンだけプレイヤーが待機できる安全地帯として空ける)
     void DropRubbles() {
         if (rubbleMedium is null) return;
 
@@ -557,40 +570,82 @@ class Boss3 : ScriptComponentBehavior {
         if (tf is null) return;
         Vector3 basePos = tf.GetTranslate();
 
-        Vector3 leftPos = basePos;
-        Vector3 rightPos = basePos;
-
-        if (ovaryLeft !is null) {
+        // 岩を降らせるエリアの左右端を決定する(Ovaryが両方設定されていればその位置、なければボス中心からの固定幅)
+        float areaLeftX;
+        float areaRightX;
+        if (ovaryLeft !is null && ovaryRight !is null) {
             Transform@ leftTf = ovaryLeft.GetTransform();
-            if (leftTf !is null) leftPos = leftTf.GetTranslate();
-            leftPos.x += rubbleOffsetLeftX;
-        }
-        if (ovaryRight !is null) {
             Transform@ rightTf = ovaryRight.GetTransform();
-            if (rightTf !is null) rightPos = rightTf.GetTranslate();
-            rightPos.x += rubbleOffsetRightX;
+            float leftX = (leftTf !is null) ? leftTf.GetTranslate().x : basePos.x;
+            float rightX = (rightTf !is null) ? rightTf.GetTranslate().x : basePos.x;
+            areaLeftX = leftX + rubbleOffsetLeftX;
+            areaRightX = rightX + rubbleOffsetRightX;
+        } else {
+            areaLeftX = basePos.x - rubbleAreaWidth * 0.5f;
+            areaRightX = basePos.x + rubbleAreaWidth * 0.5f;
         }
+        if (areaRightX < areaLeftX) {
+            float tmp = areaLeftX;
+            areaLeftX = areaRightX;
+            areaRightX = tmp;
+        }
+
+        // 安全地帯を最低1つ確保できるよう、レーン数は2以上にする
+        int laneCount = rubbleLaneCount;
+        if (laneCount < 2) laneCount = 2;
+
+        // 安全地帯として空けるレーン数(全レーンが空にならないよう調整)
+        int safeLaneCount = rubbleSafeLaneCount;
+        if (safeLaneCount < 0) safeLaneCount = 0;
+        if (safeLaneCount > laneCount - 1) safeLaneCount = laneCount - 1;
+
+        // どのレーンを安全地帯にするかランダムに選ぶ
+        array<bool> isSafeLane;
+        isSafeLane.resize(laneCount);
+        for (int i = 0; i < laneCount; i++) isSafeLane[i] = false;
+
+        for (int s = 0; s < safeLaneCount; s++) {
+            int idx = int(NextRandom01() * float(laneCount));
+            if (idx >= laneCount) idx = laneCount - 1;
+
+            // 既に選ばれている場合は空いているレーンが見つかるまで探す
+            int guard = 0;
+            while (isSafeLane[idx] && guard < laneCount) {
+                idx = (idx + 1) % laneCount;
+                guard++;
+            }
+            isSafeLane[idx] = true;
+        }
+
+        float laneWidth = (areaRightX - areaLeftX) / float(laneCount);
+        float maxJitter = laneWidth * 0.4f;
+        float jitterRange = (rubbleRandomRangeX < maxJitter) ? rubbleRandomRangeX : maxJitter;
 
         float currentDelay = 0.0f;
 
-        for (int i = 0; i < rubbleMediumCount; i++) {
-            Object@ clone = GetScene().CloneObject(rubbleMedium, "CloneRubbleMedium");
-            if (clone is null) continue;
+        for (int lane = 0; lane < laneCount; lane++) {
+            if (isSafeLane[lane]) continue; // 安全地帯には岩を降らせない
 
-            clone.SetActive(true);
-            Transform@ cloneTf = clone.GetTransform();
-            if (cloneTf !is null) {
-                Vector3 targetPos = (i % 2 == 0) ? leftPos : rightPos;
-                float offsetX = RandomRange(-rubbleRandomRangeX, rubbleRandomRangeX);
-                Vector3 spawnPos = Vector3(targetPos.x + offsetX, targetPos.y + rubbleDropHeight, targetPos.z);
-                cloneTf.SetTranslate(spawnPos);
-            }
+            float laneCenterX = areaLeftX + laneWidth * (float(lane) + 0.5f);
 
-            ScriptComponent@ sc;
-            if (clone.GetComponent(@sc)) {
-                sc.CallMethod("SetDropDelay", currentDelay);
+            for (int n = 0; n < rubbleCountPerLane; n++) {
+                Object@ clone = GetScene().CloneObject(rubbleMedium, "CloneRubbleMedium");
+                if (clone is null) continue;
+
+                clone.SetActive(true);
+                Transform@ cloneTf = clone.GetTransform();
+                if (cloneTf !is null) {
+                    float offsetX = RandomRange(-jitterRange, jitterRange);
+                    Vector3 spawnPos = Vector3(laneCenterX + offsetX, basePos.y + rubbleDropHeight, basePos.z);
+                    cloneTf.SetTranslate(spawnPos);
+                }
+
+                ScriptComponent@ sc;
+                if (clone.GetComponent(@sc)) {
+                    sc.CallMethod("SetDropDelay", currentDelay);
+                }
+                currentDelay += rubbleDropDelayStep;
             }
-            currentDelay += rubbleDropDelayStep;
         }
     }
 

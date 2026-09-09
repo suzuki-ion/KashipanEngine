@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 1075.9404296875,
-                            "y": 249.27490234375,
+                            "x": -98.71296691894531,
+                            "y": 158.18072509765625,
                             "z": 3.0517578125e-05
                         }
                     },
@@ -105,6 +105,17 @@
             {
                 "data": {
                     "customData": {
+                        "textureAssetPath": "App/Sprite/Enemy/bulletS.png"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "TextureSource"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,
@@ -147,17 +158,6 @@
                     "tag": ""
                 },
                 "type": "SpriteRenderer"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "textureAssetPath": "App/Sprite/Enemy/bulletS.png"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "TextureSource"
             }
         ],
         "editorOnly": false,

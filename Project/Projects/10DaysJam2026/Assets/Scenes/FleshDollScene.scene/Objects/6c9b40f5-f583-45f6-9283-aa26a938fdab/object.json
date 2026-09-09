@@ -80,7 +80,7 @@
                         "minDistance": 1.0,
                         "pitch": 0.0,
                         "playOnAwake": true,
-                        "soundName": "App/Sound/bgmGameScene.mp3",
+                        "soundName": "App/Sound/fleshDollStage.mp3",
                         "volume": 0.25
                     },
                     "isActive": true,

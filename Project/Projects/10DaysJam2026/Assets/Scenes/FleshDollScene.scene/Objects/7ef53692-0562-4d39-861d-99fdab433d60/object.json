@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 790.0,
-                            "y": 469.0,
+                            "x": 478.7533874511719,
+                            "y": 32.39149475097656,
                             "z": 0.0
                         }
                     },
@@ -101,6 +101,7 @@
                 "data": {
                     "customData": {
                         "fields": {
+                            "currentFrame": 0,
                             "frameCount": 2,
                             "frameInterval": 0.15000000596046448,
                             "isLoop": false,

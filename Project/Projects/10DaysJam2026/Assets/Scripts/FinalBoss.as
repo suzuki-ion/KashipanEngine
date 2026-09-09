@@ -1,4 +1,10 @@
 enum FinalBossState {
+    // Boss3上空に出現した直後、点滅しながら浮遊する演出
+    IntroFloat,
+
+    // 浮遊演出のあと、重力で落下してくる演出
+    Intro,
+
     Idle,
 
     // 後ろに跳んでプレイヤーのいた場所に針を出す
@@ -36,6 +42,20 @@ class FinalBoss : ScriptComponentBehavior {
 
     [SerializeField, Tooltip("攻撃と攻撃の間の待機時間(秒)")]
     float idleDuration = 1.0f;
+
+    [Header("登場演出(重力落下)")]
+
+    [SerializeField, Tooltip("出現直後に「浮く」状態を維持する時間(秒)")]
+    float floatDuration = 2.0f;
+
+    [SerializeField, Tooltip("浮遊中の点滅切り替え間隔(秒)")]
+    float floatBlinkInterval = 0.08f;
+
+    [SerializeField, Tooltip("重力")]
+    float gravity = 150.0f;
+
+    [SerializeField, Tooltip("接地とみなす法線Y成分のしきい値")]
+    float groundedThreshold = 0.5f;
 
     [Header("HP・ダメージ演出・死亡演出")]
 
@@ -85,6 +105,9 @@ class FinalBoss : ScriptComponentBehavior {
 
     [SerializeField, Tooltip("針が出現してから消えるまでの時間(秒)")]
     float needleActiveDuration = 0.5f;
+
+    [SerializeField, Tooltip("針が出現してから伸びきるまでの時間(秒)")]
+    float needleExtendDuration = 0.2f;
 
     [Header("2: 下段攻撃(要ジャンプ回避)")]
 
@@ -247,8 +270,17 @@ class FinalBoss : ScriptComponentBehavior {
     // 現在の移動速度
     Vector3 velocity;
 
-    // 攻撃の巡回順
-    int attackIndex = 0;
+    // 攻撃の抽選(バッグ方式): 未使用の攻撃番号を入れておき、引くたびに取り除く
+    array<int> attackBag;
+
+    // 直前に選ばれた攻撃(バッグを補充した直後に同じ攻撃が連続しないようにするため)
+    int lastAttackIndex = -1;
+
+    // 疑似乱数(Boss3と同じ方式)
+    uint rngState = 54321;
+
+    // 下段攻撃セット枠が選ばれた際、下段の終了後に上段へ直接つなげるためのフラグ
+    bool isLowHighCombo = false;
 
     Vector3 initialBossPos;
 
@@ -280,6 +312,10 @@ class FinalBoss : ScriptComponentBehavior {
         Transform@ tf = GetTransform();
         if (tf !is null) {
             initialBossPos = tf.GetTranslate();
+
+            // ボスの座標を種として乱数にばらつきを持たせる
+            rngState = uint(Abs(initialBossPos.x) * 1000.0f) + uint(Abs(initialBossPos.y) * 37.0f) + 54321;
+            if (rngState == 0) rngState = 54321;
         }
 
         GetComponent(@col);
@@ -291,7 +327,8 @@ class FinalBoss : ScriptComponentBehavior {
             if (col !is null) {
                 controller.SetSelectedCollider(col);
             }
-            
+            controller.SetGroundedThreshold(groundedThreshold);
+
             // 押し戻しの除外タグを設定
             controller.ClearIgnoredTags();
             if (pushBackExcludeTags !is null) {
@@ -301,8 +338,8 @@ class FinalBoss : ScriptComponentBehavior {
             }
         }
 
-        // 起動直後は浮くアニメーションにしておく。
-        PlayAnim(animRowFloat, animFramesFloat);
+        // 起動直後はBoss3の上空で点滅しながら浮遊し、その後重力で落下してくる
+        ChangeState(FinalBossState::IntroFloat);
     }
 
     void Update() {
@@ -336,6 +373,14 @@ class FinalBoss : ScriptComponentBehavior {
         stateTimer += GetDeltaTime();
 
         switch (state) {
+            case FinalBossState::IntroFloat:
+                UpdateIntroFloat();
+                break;
+
+            case FinalBossState::Intro:
+                UpdateIntro();
+                break;
+
             case FinalBossState::Idle:
                 if (stateTimer >= idleDuration) {
                     StartNextAttack();
@@ -354,6 +399,14 @@ class FinalBoss : ScriptComponentBehavior {
                 break;
 
             case FinalBossState::NeedleAttack:
+                // 針が伸びきる時間に達した瞬間にコライダーを有効化する
+                if (needleObj !is null && stateTimer >= needleExtendDuration && (stateTimer - GetDeltaTime()) < needleExtendDuration) {
+                    Box2DCollider@ needleCol;
+                    if (needleObj.GetComponent(@needleCol)) {
+                        needleCol.SetActive(true);
+                    }
+                }
+
                 if (stateTimer >= needleActiveDuration) {
                     if (needleObj !is null) {
                         needleObj.SetActive(false);
@@ -440,16 +493,71 @@ class FinalBoss : ScriptComponentBehavior {
         }
     }
 
-    // 攻撃を巡回順で開始する
+    // 攻撃をバッグ方式でランダムに選ぶ(4種類を1周ぶんシャッフルして並べ、使い切ったら再抽選する)
+    // ※「下段攻撃→上段攻撃」は1つのセット枠として扱い、必ずこの順番でセットで実行される
     void StartNextAttack() {
-        switch (attackIndex) {
+        if (attackBag.length() == 0) {
+            RefillAttackBag();
+        }
+
+        // バッグの末尾から1つ取り出す
+        uint lastIdx = attackBag.length() - 1;
+        int nextAttack = attackBag[lastIdx];
+        attackBag.removeAt(lastIdx);
+        lastAttackIndex = nextAttack;
+
+        switch (nextAttack) {
             case 0: ChangeState(FinalBossState::RetreatJump); break;
-            case 1: ChangeState(FinalBossState::LowAttackTelegraph); break;
-            case 2: ChangeState(FinalBossState::HighAttackTelegraph); break;
-            case 3: ChangeState(FinalBossState::HoverCharge); break;
+            case 1:
+                // 下段→上段のセット枠。まず下段を開始し、下段終了後に上段へ直接つなげる
+                isLowHighCombo = true;
+                ChangeState(FinalBossState::LowAttackTelegraph);
+                break;
+            case 2: ChangeState(FinalBossState::HoverCharge); break;
             default: ChangeState(FinalBossState::DashCharge); break;
         }
-        attackIndex = (attackIndex + 1) % 5;
+    }
+
+    // 攻撃番号(0〜3)を1つずつ入れたバッグをシャッフルして補充する
+    // 0:後退ジャンプ+針 1:下段→上段セット 2:ホバー急降下 3:突進
+    void RefillAttackBag() {
+        attackBag.resize(0);
+        for (int i = 0; i < 4; i++) {
+            attackBag.insertLast(i);
+        }
+
+        // Fisher-Yatesシャッフル
+        for (int i = int(attackBag.length()) - 1; i > 0; i--) {
+            int j = NextRandomInt(i + 1);
+            int tmp = attackBag[i];
+            attackBag[i] = attackBag[j];
+            attackBag[j] = tmp;
+        }
+
+        // バッグ補充直後、先頭(=次に引かれる末尾ではなく次回以降に引かれる側)が
+        // 直前の攻撃と同じだと2連続してしまうため、末尾要素と入れ替えて回避する
+        uint lastIdx = attackBag.length() - 1;
+        if (lastAttackIndex >= 0 && attackBag.length() > 1 && attackBag[lastIdx] == lastAttackIndex) {
+            uint swapIndex = uint(NextRandomInt(int(lastIdx))); // 0〜lastIdx-1のいずれか
+            int tmp = attackBag[lastIdx];
+            attackBag[lastIdx] = attackBag[swapIndex];
+            attackBag[swapIndex] = tmp;
+        }
+    }
+
+    // 0.0〜1.0未満の疑似乱数を返す
+    float NextRandom01() {
+        rngState = rngState * 1664525 + 1013904223;
+        return float(rngState % 100000) / 100000.0f;
+    }
+
+    // 0〜maxExclusive-1の整数乱数を返す
+    int NextRandomInt(int maxExclusive) {
+        if (maxExclusive <= 1) return 0;
+        int v = int(NextRandom01() * float(maxExclusive));
+        if (v >= maxExclusive) v = maxExclusive - 1;
+        if (v < 0) v = 0;
+        return v;
     }
 
     void ChangeState(FinalBossState newState) {
@@ -603,6 +711,12 @@ class FinalBoss : ScriptComponentBehavior {
         if (cloneTf !is null) {
             cloneTf.SetTranslate(needleTargetPos);
         }
+
+        // 生成直後はコライダーを無効化しておく
+        Box2DCollider@ needleCol;
+        if (needleObj.GetComponent(@needleCol)) {
+            needleCol.SetActive(false);
+        }
     }
 
     // 伸びる攻撃
@@ -649,13 +763,55 @@ class FinalBoss : ScriptComponentBehavior {
         }
     }
 
-    // 伸びる攻撃の進行更新。伸長→維持が終わったらIdleへ戻る
+    // 伸びる攻撃の進行更新。伸長→維持が終わったら次のステートへ
+    // (下段→上段セットの下段側が終わった場合は、Idleを挟まず上段の予備動作へ直接つなげる)
     void UpdateExtendAttackState(float extendDuration, float holdDuration) {
         float progress = Clamp(stateTimer / extendDuration, 0.0f, 1.0f);
         UpdateExtendAttackScale(progress);
 
         if (stateTimer >= extendDuration + holdDuration) {
             EndExtendAttack();
+
+            if (state == FinalBossState::LowAttackExtend && isLowHighCombo) {
+                ChangeState(FinalBossState::HighAttackTelegraph);
+            } else {
+                isLowHighCombo = false;
+                ChangeState(FinalBossState::Idle);
+            }
+        }
+    }
+
+    // 登場演出:出現直後にfloatDuration秒だけ点滅しながら浮遊し、その後落下(Intro)へ移行する
+    void UpdateIntroFloat() {
+        // blinkInterval毎にスプライトの表示・非表示を交互に切替
+        bool isVisible = (int(stateTimer / floatBlinkInterval) % 2 == 0);
+        if (sprite !is null) {
+            sprite.SetActive(isVisible);
+        }
+
+        if (stateTimer >= floatDuration) {
+            // 点滅終了。必ず表示状態に戻してから落下ステートへ
+            if (sprite !is null) {
+                sprite.SetActive(true);
+            }
+            ChangeState(FinalBossState::Intro);
+        }
+    }
+
+    // 登場演出:Boss3の上空から重力で落下し、接地したらIdleへ移行する
+    void UpdateIntro() {
+        velocity.y -= gravity * GetDeltaTime();
+
+        if (controller !is null && controller.IsGrounded() && velocity.y <= 0.0f) {
+            velocity.y = 0.0f;
+            velocity.x = 0.0f;
+
+            // 以降のホバー攻撃などが参照する「地面の高さ」を、実際に着地した位置で更新する
+            Transform@ tf = GetTransform();
+            if (tf !is null) {
+                initialBossPos = tf.GetTranslate();
+            }
+
             ChangeState(FinalBossState::Idle);
         }
     }
@@ -689,6 +845,14 @@ class FinalBoss : ScriptComponentBehavior {
     // ステートに応じたアニメーションを再生する(ChangeStateの中で1回だけ呼ばれる)
     void PlayAnimForState(FinalBossState s) {
         switch (s) {
+            case FinalBossState::IntroFloat:
+                PlayAnim(animRowFloat, animFramesFloat);
+                break;
+
+            case FinalBossState::Intro:
+                PlayAnim(animRowJumpDown, animFramesJumpDown); // 落下中は降下ポーズを流用
+                break;
+
             case FinalBossState::Idle:
                 PlayAnim(animRowIdle, animFramesIdle);
                 break;

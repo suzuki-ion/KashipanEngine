@@ -67,7 +67,7 @@
                     },
                     "isActive": true,
                     "priority": 1,
-                    "tag": "Enemy"
+                    "tag": "Bullet"
                 },
                 "type": "Box2DCollider"
             },

@@ -54,6 +54,7 @@
                 "data": {
                     "customData": {
                         "fields": {
+                            "currentFrame": 0,
                             "frameCount": 3,
                             "frameInterval": 0.30000001192092896,
                             "isLoop": false,
@@ -98,7 +99,7 @@
                             false
                         ]
                     },
-                    "isActive": true,
+                    "isActive": false,
                     "priority": 1,
                     "tag": "Bullet"
                 },

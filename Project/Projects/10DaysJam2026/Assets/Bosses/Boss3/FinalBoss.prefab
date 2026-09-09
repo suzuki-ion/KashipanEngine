@@ -123,6 +123,10 @@
                                     "deathEffectCount": 20,
                                     "deathEffectSpawnInterval": 0.15000000596046448,
                                     "deathEffectSpread": 50.0,
+                                    "floatBlinkInterval": 0.07999999821186066,
+                                    "floatDuration": 2.0,
+                                    "gravity": 150.0,
+                                    "groundedThreshold": 0.5,
                                     "highAttack": "58558c58-0311-4f2f-bd6d-83af27df9ff8",
                                     "highAttackExtendDuration": 0.30000001192092896,
                                     "highAttackHeightOffset": 10.0,
@@ -141,7 +145,7 @@
                                     "idleDuration": 1.0,
                                     "lowAttack": "58558c58-0311-4f2f-bd6d-83af27df9ff8",
                                     "lowAttackExtendDuration": 0.30000001192092896,
-                                    "lowAttackHeightOffset": 0.0,
+                                    "lowAttackHeightOffset": -20.0,
                                     "lowAttackHoldDuration": 0.30000001192092896,
                                     "lowAttackMaxLength": 200.0,
                                     "lowAttackOffsetX": 0.0,
@@ -149,6 +153,7 @@
                                     "maxHp": 50.0,
                                     "needle": "7bbdf022-46bc-42eb-9045-91a89ffb6c14",
                                     "needleActiveDuration": 1.0,
+                                    "needleExtendDuration": 0.4000000059604645,
                                     "needleTelegraphDuration": 0.800000011920929,
                                     "normalColor": {
                                         "w": 1.0,
@@ -177,11 +182,12 @@
                         "data": {
                             "customData": {
                                 "fields": {
+                                    "currentFrame": 0,
                                     "frameCount": 1,
                                     "frameInterval": 0.10000000149011612,
                                     "isLoop": true,
                                     "playOnStart": true,
-                                    "startRow": 0,
+                                    "startRow": 8,
                                     "uvStep": {
                                         "x": 0.11100000143051147,
                                         "y": 0.11100000143051147

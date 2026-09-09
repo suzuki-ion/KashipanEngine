@@ -26,6 +26,17 @@
                     "tag": ""
                 },
                 "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "b897f4af-cda3-4b26-bbc2-8896f721c6f5"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
             }
         ],
         "editorOnly": false,
@@ -33,6 +44,7 @@
         "isActive": true,
         "name": "GameUI",
         "objectID": "fa541792-508c-47a7-9dc2-105d4336681f",
+        "prefabNodeID": "d055a767-1178-4f97-9825-723a5c4599f3",
         "tag": ""
     },
     "siblingIndex": 13000

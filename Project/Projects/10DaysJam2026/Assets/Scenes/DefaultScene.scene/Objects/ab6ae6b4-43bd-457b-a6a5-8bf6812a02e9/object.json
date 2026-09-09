@@ -102,6 +102,7 @@
         "isActive": true,
         "name": "UI_Background",
         "objectID": "ab6ae6b4-43bd-457b-a6a5-8bf6812a02e9",
+        "prefabNodeID": "ca3984ab-bdc8-41bf-8b41-ea1723a08cf6",
         "tag": ""
     },
     "siblingIndex": -1000

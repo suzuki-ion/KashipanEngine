@@ -78,6 +78,7 @@
         "isActive": true,
         "name": "Level Text",
         "objectID": "ac21e927-47b6-46c3-ad79-2ee2ad320683",
+        "prefabNodeID": "f89344d3-d5f4-4615-9556-54138951807b",
         "tag": ""
     },
     "siblingIndex": 24000

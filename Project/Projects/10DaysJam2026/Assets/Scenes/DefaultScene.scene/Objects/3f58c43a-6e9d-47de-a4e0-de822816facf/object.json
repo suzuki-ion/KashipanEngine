@@ -102,6 +102,7 @@
         "isActive": false,
         "name": "HP_boss_bar",
         "objectID": "3f58c43a-6e9d-47de-a4e0-de822816facf",
+        "prefabNodeID": "8f83ba36-deb4-4a48-b47c-f88acb8aed02",
         "tag": ""
     },
     "siblingIndex": 12000

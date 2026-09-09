@@ -58,8 +58,8 @@
                             "invincibleDuration": 0.5,
                             "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
                             "self": "d42a822e-71f6-4ed5-aadb-f98622f6105a",
-                            "shotDelay": 1.0,
-                            "shotDuration": 2.0
+                            "shotDuration": 2.0,
+                            "shotFrame": 1
                         },
                         "scriptPath": "Assets\\Scripts\\WallEnemy.as"
                     },

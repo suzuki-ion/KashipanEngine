@@ -102,6 +102,7 @@
         "isActive": true,
         "name": "Weapon Frame",
         "objectID": "869739bf-6896-4c11-a8ff-1b8b1a7aa1f8",
+        "prefabNodeID": "cc6a1a33-bf15-4ad6-8331-1a4c15ca6bdd",
         "tag": ""
     },
     "siblingIndex": 22000

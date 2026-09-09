@@ -102,6 +102,7 @@
         "isActive": true,
         "name": "Level Gauge BG",
         "objectID": "b91c2a8c-15a7-4842-aedd-ba421c8df42b",
+        "prefabNodeID": "806b170c-9e68-439e-bf09-219d96356550",
         "tag": ""
     },
     "siblingIndex": 25000

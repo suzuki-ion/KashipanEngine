@@ -102,6 +102,7 @@
         "isActive": true,
         "name": "Level Text BG",
         "objectID": "873140cb-f340-4ffb-b2ea-4157658cc6c9",
+        "prefabNodeID": "62ed1379-c383-42f0-88ab-40e28b413abb",
         "tag": ""
     },
     "siblingIndex": 24333

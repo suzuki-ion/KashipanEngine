@@ -1,0 +1,1423 @@
+{
+    "name": "GameUI",
+    "objects": [
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "GameUI",
+                "objectID": "fa541792-508c-47a7-9dc2-105d4336681f",
+                "prefabNodeID": "d055a767-1178-4f97-9825-723a5c4599f3",
+                "tag": ""
+            },
+            "parentIndex": -1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "fa541792-508c-47a7-9dc2-105d4336681f",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 256.0,
+                                    "y": 16.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 128.0,
+                                    "y": 232.0,
+                                    "z": 1.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Rect2D"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "textureAssetPath": "KashipanEngine/white1x1.png"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "TextureSource"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "anchor": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 0.1568627506494522,
+                                    "y": 0.1411764770746231,
+                                    "z": 0.250980406999588
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 1.0,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "materialName": "Dot",
+                                "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                                "pivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "pixelSnapOutsetPixels": 1.0,
+                                "pixelSnapping": false,
+                                "renderPriority": -50,
+                                "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SpriteRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "UI_Background",
+                "objectID": "ab6ae6b4-43bd-457b-a6a5-8bf6812a02e9",
+                "prefabNodeID": "ca3984ab-bdc8-41bf-8b41-ea1723a08cf6",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "fa541792-508c-47a7-9dc2-105d4336681f",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 11.0,
+                                    "y": 9.0,
+                                    "z": 0.999962568283081
+                                },
+                                "translate": {
+                                    "x": 10.5,
+                                    "y": 232.5,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Rect2D"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "textureAssetPath": "App/Sprite/UI/hpUI.png"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "TextureSource"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "fields": {
+                                    "gaugeInterval": {
+                                        "x": 3.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "gaugeSource": "ef2708cb-284c-4190-98c3-f3e129164360",
+                                    "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
+                                    "startPosition": {
+                                        "x": 8.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    }
+                                },
+                                "scriptPath": "Assets\\Scripts\\HPUI.as"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "ScriptComponent"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "applyTarget": 1,
+                                "autoPlay": false,
+                                "duration": 0.5,
+                                "positionAmplitude": {
+                                    "x": 2.0,
+                                    "y": 2.0,
+                                    "z": 2.0
+                                },
+                                "positionAmplitudeEndMultiplier": 0.0,
+                                "positionAmplitudeStartMultiplier": 1.0,
+                                "positionEaseType": "Linear",
+                                "positionEnableX": true,
+                                "positionEnableY": true,
+                                "positionEnableZ": false,
+                                "positionEnvelopeEaseType": "Linear",
+                                "positionSpeed": {
+                                    "x": 128.0,
+                                    "y": 128.0,
+                                    "z": 128.0
+                                },
+                                "positionSpeedEndMultiplier": 1.0,
+                                "positionSpeedStartMultiplier": 1.0,
+                                "processTiming": 1,
+                                "rotationAmplitudeDeg": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "rotationAmplitudeEndMultiplier": 1.0,
+                                "rotationAmplitudeStartMultiplier": 1.0,
+                                "rotationEaseType": "Linear",
+                                "rotationEnableX": false,
+                                "rotationEnableY": false,
+                                "rotationEnableZ": false,
+                                "rotationEnvelopeEaseType": "Linear",
+                                "rotationSpeed": {
+                                    "x": 20.0,
+                                    "y": 20.0,
+                                    "z": 20.0
+                                },
+                                "rotationSpeedEndMultiplier": 1.0,
+                                "rotationSpeedStartMultiplier": 1.0
+                            },
+                            "isActive": false,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Shake"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "anchor": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 1.0,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "materialName": "Dot",
+                                "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                                "pivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "pixelSnapOutsetPixels": 1.0,
+                                "pixelSnapping": false,
+                                "renderPriority": 0,
+                                "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SpriteRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "HP_player_icon",
+                "objectID": "79436867-a181-42d1-86d8-f582bac5c43f",
+                "prefabNodeID": "017446e8-e762-4613-8766-1f0a9ffa7fed",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "fa541792-508c-47a7-9dc2-105d4336681f",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 2.0,
+                                    "y": 9.0,
+                                    "z": 0.999962568283081
+                                },
+                                "translate": {
+                                    "x": -103.00926208496094,
+                                    "y": 280.5359191894531,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Rect2D"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "textureAssetPath": "App/Sprite/UI/hpBar.png"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "TextureSource"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "applyTarget": 1,
+                                "autoPlay": false,
+                                "duration": 0.5,
+                                "positionAmplitude": {
+                                    "x": 2.0,
+                                    "y": 2.0,
+                                    "z": 2.0
+                                },
+                                "positionAmplitudeEndMultiplier": 0.0,
+                                "positionAmplitudeStartMultiplier": 1.0,
+                                "positionEaseType": "Linear",
+                                "positionEnableX": true,
+                                "positionEnableY": true,
+                                "positionEnableZ": false,
+                                "positionEnvelopeEaseType": "Linear",
+                                "positionSpeed": {
+                                    "x": 128.0,
+                                    "y": 128.0,
+                                    "z": 128.0
+                                },
+                                "positionSpeedEndMultiplier": 1.0,
+                                "positionSpeedStartMultiplier": 1.0,
+                                "processTiming": 1,
+                                "rotationAmplitudeDeg": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "rotationAmplitudeEndMultiplier": 1.0,
+                                "rotationAmplitudeStartMultiplier": 1.0,
+                                "rotationEaseType": "Linear",
+                                "rotationEnableX": false,
+                                "rotationEnableY": false,
+                                "rotationEnableZ": false,
+                                "rotationEnvelopeEaseType": "Linear",
+                                "rotationSpeed": {
+                                    "x": 20.0,
+                                    "y": 20.0,
+                                    "z": 20.0
+                                },
+                                "rotationSpeedEndMultiplier": 1.0,
+                                "rotationSpeedStartMultiplier": 1.0
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Shake"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "anchor": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 0.5,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "materialName": "Dot",
+                                "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                                "pivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "pixelSnapOutsetPixels": 1.0,
+                                "pixelSnapping": false,
+                                "renderPriority": 0,
+                                "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SpriteRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": false,
+                "name": "HP_bar",
+                "objectID": "ef2708cb-284c-4190-98c3-f3e129164360",
+                "prefabNodeID": "4aa0f73d-c11d-4485-98ce-7f58d0ba55b1",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "fa541792-508c-47a7-9dc2-105d4336681f",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 10.999799728393555,
+                                    "y": 8.999799728393555,
+                                    "z": 0.9999375343322754
+                                },
+                                "translate": {
+                                    "x": 217.5,
+                                    "y": 232.5,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Rect2D"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "textureAssetPath": "App/Sprite/UI/bossHpUI.png"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "TextureSource"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "fields": {
+                                    "boss": "5db46d62-cefd-4eff-bebe-39d3d28b4e3e",
+                                    "gaugeInterval": {
+                                        "x": 3.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "gaugeSource": "3f58c43a-6e9d-47de-a4e0-de822816facf",
+                                    "hpPerGauge": 4.0,
+                                    "startPosition": {
+                                        "x": 8.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    }
+                                },
+                                "scriptPath": "Assets\\Scripts\\BossHPUI.as"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "ScriptComponent"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "anchor": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 1.0,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "materialName": "Dot",
+                                "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                                "pivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "pixelSnapOutsetPixels": 1.0,
+                                "pixelSnapping": false,
+                                "renderPriority": 0,
+                                "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SpriteRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "HP_boss_icon",
+                "objectID": "3e7e10d7-cfe1-4e73-ab6f-cc6b2dae73c4",
+                "prefabNodeID": "e0d94613-a2e7-46a8-9f89-0abd23118176",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "fa541792-508c-47a7-9dc2-105d4336681f",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 2.0,
+                                    "y": 9.0,
+                                    "z": 0.999962568283081
+                                },
+                                "translate": {
+                                    "x": 225.0,
+                                    "y": 232.5,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Rect2D"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "textureAssetPath": "App/Sprite/UI/hpBar.png"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "TextureSource"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "anchor": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 0.5,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "materialName": "Dot",
+                                "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                                "pivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "pixelSnapOutsetPixels": 1.0,
+                                "pixelSnapping": false,
+                                "renderPriority": 0,
+                                "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SpriteRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": false,
+                "name": "HP_boss_bar",
+                "objectID": "3f58c43a-6e9d-47de-a4e0-de822816facf",
+                "prefabNodeID": "8f83ba36-deb4-4a48-b47c-f88acb8aed02",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "fa541792-508c-47a7-9dc2-105d4336681f",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 16.0,
+                                    "y": 16.0,
+                                    "z": 0.999962568283081
+                                },
+                                "translate": {
+                                    "x": 100.0,
+                                    "y": 240.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Rect2D"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "textureAssetPath": "App/Sprite/UI/weponFrame.png"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "TextureSource"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "anchor": {
+                                    "x": 0.5,
+                                    "y": 1.0
+                                },
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 1.0,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "materialName": "Dot",
+                                "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                                "pivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "pixelSnapOutsetPixels": 1.0,
+                                "pixelSnapping": false,
+                                "renderPriority": 0,
+                                "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SpriteRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "Weapon Frame",
+                "objectID": "869739bf-6896-4c11-a8ff-1b8b1a7aa1f8",
+                "prefabNodeID": "cc6a1a33-bf15-4ad6-8331-1a4c15ca6bdd",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "fa541792-508c-47a7-9dc2-105d4336681f",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 16.0,
+                                    "y": 16.0,
+                                    "z": 0.999962568283081
+                                },
+                                "translate": {
+                                    "x": 100.0,
+                                    "y": 240.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Rect2D"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "textureAssetPath": "App/Sprite/UI/Katana.png"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "TextureSource"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "fields": {
+                                    "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
+                                    "textureNames": [
+                                        "Katana",
+                                        "Shuriken",
+                                        "Axe",
+                                        "Ball"
+                                    ]
+                                },
+                                "scriptPath": "Assets\\Scripts\\WeaponUI.as"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "ScriptComponent"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "anchor": {
+                                    "x": 0.5,
+                                    "y": 1.0
+                                },
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 1.0,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "materialName": "Dot",
+                                "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                                "pivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "pixelSnapOutsetPixels": 1.0,
+                                "pixelSnapping": false,
+                                "renderPriority": 1,
+                                "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SpriteRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "Weapon Icon",
+                "objectID": "f768f291-9752-41bf-a424-4f129f133bcc",
+                "prefabNodeID": "e3f53e79-7a8b-4b16-b686-3385be1c6ded",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "fa541792-508c-47a7-9dc2-105d4336681f",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 0.75,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 120.0,
+                                    "y": 232.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "fields": {
+                                    "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22"
+                                },
+                                "scriptPath": "Assets\\Scripts\\WeaponLevelText.as"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "ScriptComponent"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "fontName": "jfdot-Shinonome-12",
+                                "fontSize": 12.0,
+                                "horizontalAlign": 0,
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 0.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "materialName": "Default",
+                                "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                                "pixelSnapOutsetPixels": 0.0,
+                                "pixelSnapping": false,
+                                "pointSampling": true,
+                                "renderPriority": 0,
+                                "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823",
+                                "text": "Lv1",
+                                "verticalAlign": 1
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "BitmapTextRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "Level Text",
+                "objectID": "ac21e927-47b6-46c3-ad79-2ee2ad320683",
+                "prefabNodeID": "f89344d3-d5f4-4615-9556-54138951807b",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "fa541792-508c-47a7-9dc2-105d4336681f",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 50.0,
+                                    "y": 8.0,
+                                    "z": 0.999962568283081
+                                },
+                                "translate": {
+                                    "x": 142.0,
+                                    "y": 232.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Rect2D"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "textureAssetPath": "App/Sprite/UI/lvGauge.png"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "TextureSource"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "anchor": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 0.5,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.20000000298023224,
+                                    "y": 0.0
+                                },
+                                "materialName": "Dot",
+                                "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                                "pivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "pixelSnapOutsetPixels": 1.0,
+                                "pixelSnapping": false,
+                                "renderPriority": -2,
+                                "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SpriteRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "Level Text BG",
+                "objectID": "873140cb-f340-4ffb-b2ea-4157658cc6c9",
+                "prefabNodeID": "62ed1379-c383-42f0-88ab-40e28b413abb",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "fa541792-508c-47a7-9dc2-105d4336681f",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 0.0,
+                                    "y": 7.9998321533203125,
+                                    "z": 0.9999409914016724
+                                },
+                                "translate": {
+                                    "x": 147.0,
+                                    "y": 232.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Rect2D"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "textureAssetPath": "KashipanEngine/white1x1.png"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "TextureSource"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "comment": "Xスケール26で最大"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Comment"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "fields": {
+                                    "maxScaleX": 26.0,
+                                    "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22"
+                                },
+                                "scriptPath": "Assets\\Scripts\\LevelGauge.as"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "ScriptComponent"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "anchor": {
+                                    "x": 0.0,
+                                    "y": 0.5
+                                },
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 0.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 0.5,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "materialName": "Dot",
+                                "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                                "pivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "pixelSnapOutsetPixels": 1.0,
+                                "pixelSnapping": false,
+                                "renderPriority": 2,
+                                "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SpriteRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "Level Gauge",
+                "objectID": "ca3d9c91-6b7f-435e-95fb-2db67deb17aa",
+                "prefabNodeID": "9931bda3-ef60-4df0-8eb3-2946865c0e98",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "fa541792-508c-47a7-9dc2-105d4336681f",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 31.99957275390625,
+                                    "y": 8.0,
+                                    "z": 0.999962568283081
+                                },
+                                "translate": {
+                                    "x": 160.0,
+                                    "y": 232.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Rect2D"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "textureAssetPath": "App/Sprite/UI/lvGauge.png"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "TextureSource"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "anchor": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 1.0,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "materialName": "Dot",
+                                "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                                "pivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "pixelSnapOutsetPixels": 1.0,
+                                "pixelSnapping": false,
+                                "renderPriority": 1,
+                                "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SpriteRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "Level Gauge BG",
+                "objectID": "b91c2a8c-15a7-4842-aedd-ba421c8df42b",
+                "prefabNodeID": "806b170c-9e68-439e-bf09-219d96356550",
+                "tag": ""
+            },
+            "parentIndex": 0
+        }
+    ],
+    "prefab": true,
+    "prefabID": "b897f4af-cda3-4b26-bbc2-8896f721c6f5"
+}

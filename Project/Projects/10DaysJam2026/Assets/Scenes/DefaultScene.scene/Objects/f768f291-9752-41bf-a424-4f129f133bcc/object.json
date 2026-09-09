@@ -122,6 +122,7 @@
         "isActive": true,
         "name": "Weapon Icon",
         "objectID": "f768f291-9752-41bf-a424-4f129f133bcc",
+        "prefabNodeID": "e3f53e79-7a8b-4b16-b686-3385be1c6ded",
         "tag": ""
     },
     "siblingIndex": 23000

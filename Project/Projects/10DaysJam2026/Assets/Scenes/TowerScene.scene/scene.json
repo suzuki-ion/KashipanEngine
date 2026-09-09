@@ -59,14 +59,14 @@
     "sceneName": "TowerScene",
     "sceneVariables": [
         {
-            "key": "isDialogueActive",
-            "type": "Bool",
-            "value": false
-        },
-        {
             "key": "testFloat",
             "type": "Float",
             "value": 0.0
+        },
+        {
+            "key": "isDialogueActive",
+            "type": "Bool",
+            "value": false
         },
         {
             "key": "testString",

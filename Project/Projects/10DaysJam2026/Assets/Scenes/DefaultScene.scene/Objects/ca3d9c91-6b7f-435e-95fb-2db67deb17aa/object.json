@@ -128,6 +128,7 @@
         "isActive": true,
         "name": "Level Gauge",
         "objectID": "ca3d9c91-6b7f-435e-95fb-2db67deb17aa",
+        "prefabNodeID": "9931bda3-ef60-4df0-8eb3-2946865c0e98",
         "tag": ""
     },
     "siblingIndex": 24666

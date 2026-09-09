@@ -128,6 +128,7 @@
         "isActive": true,
         "name": "HP_boss_icon",
         "objectID": "3e7e10d7-cfe1-4e73-ab6f-cc6b2dae73c4",
+        "prefabNodeID": "e0d94613-a2e7-46a8-9f89-0abd23118176",
         "tag": ""
     },
     "siblingIndex": 11000

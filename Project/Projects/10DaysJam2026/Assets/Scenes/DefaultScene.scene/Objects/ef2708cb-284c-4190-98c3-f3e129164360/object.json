@@ -154,6 +154,7 @@
         "isActive": false,
         "name": "HP_bar",
         "objectID": "ef2708cb-284c-4190-98c3-f3e129164360",
+        "prefabNodeID": "4aa0f73d-c11d-4485-98ce-7f58d0ba55b1",
         "tag": ""
     },
     "siblingIndex": 1000

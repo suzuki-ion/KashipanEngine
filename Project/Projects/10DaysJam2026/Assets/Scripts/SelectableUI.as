@@ -160,6 +160,21 @@ class SelectableUI : ScriptComponentBehavior {
         }
     }
 
+    // 選択状態を未選択にリセットする(決定状態も含めて選択色が前回の内容のまま残らないよう、
+    // メニューを非アクティブ化する直前に呼ぶ想定)。selectedIndexを-1に戻して表示色を再計算するため、
+    // 再表示された直後はどの項目も強調表示されない(マウスホバー、または入力コマンドによる
+    // 最初の移動操作で選択が復帰する。MoveSelection()はselectedIndex<0の場合、1回目の入力で
+    // 先頭の有効項目へ移動するだけの特別扱いになっている)
+    void ResetSelection() {
+        isDecided = false;
+        @decidedObject = null;
+        selectedIndex = -1;
+        UpdateSelectedObject();
+        if (selectableObjects !is null && selectableObjects.length() > 0) {
+            ApplyColors();
+        }
+    }
+
     // 指定インデックスが無効化されているかを返す
     bool IsDisabled(uint index) const {
         return disabledFlags !is null && index < disabledFlags.length() && disabledFlags[index];

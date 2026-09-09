@@ -239,9 +239,14 @@ class TitleMenuController : ScriptComponentBehavior {
     }
 
     // 設定用UIを表示する(メインメニューは操作を受け付けないよう非表示にする。
-    // 閉じる処理はOptionMenuController側(「戻る」選択)が担当し、mainMenuObjectを再表示する)
+    // 閉じる処理はOptionMenuController側(「戻る」選択)が担当し、mainMenuObjectを再表示する)。
+    // 非表示にする前に選択状態をリセットしておかないと、「設定」がselectedIndexを保持したまま
+    // Updateが止まるため、次にタイトルへ戻ったとき決定時のハイライト色が残ったままになる
     void ShowOptionMenu() {
         if (optionMenuRootObject is null) return;
+        if (selectableUIScript !is null) {
+            selectableUIScript.CallMethod("ResetSelection");
+        }
         if (mainMenuObject !is null) {
             mainMenuObject.SetActive(false);
         }

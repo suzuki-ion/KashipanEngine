@@ -252,7 +252,12 @@ class OptionMenuController : ScriptComponentBehavior {
     //  パネル全体のルート(OptionMenu)ではないため使わないこと。誤って使うと、
     //  このスクリプト自身が非アクティブ化されてUpdate()が二度と呼ばれなくなり、
     //  パネルの見た目も残ったまま「戻る」が反応しなくなる)
+    // 非表示にする前に選択状態をリセットしておかないと、「戻る」がselectedIndexを保持したまま
+    // Updateが止まるため、次に設定画面を開いたとき決定時のハイライト色が残ったままになる
     void CloseOptionMenu() {
+        if (selectableUIScript !is null) {
+            selectableUIScript.CallMethod("ResetSelection");
+        }
         if (mainMenuObject !is null) {
             mainMenuObject.SetActive(true);
         }

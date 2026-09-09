@@ -67,13 +67,6 @@ class Knife : ScriptComponentBehavior {
             currentSpeedX = 0.0f;
             currentSpeedY = 0.0f;
         } 
-        // Tilemapに当たったら消滅させる
-        else if(hit.otherObject.GetTag() == "Tilemap"){
-            hit.selfCollider.SetActive(false);
-            pos = Vector3(-1000.0f, 0.0f, 0.0f);
-            currentSpeedX = 0.0f;
-            currentSpeedY = 0.0f;
-        }
     }
 
     void SetPos(Vector3 enemyPos){

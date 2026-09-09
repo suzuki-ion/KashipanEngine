@@ -32,8 +32,9 @@
                     "customData": {
                         "fields": {
                             "ditherFadeObject": "7e9ed864-bd4f-4a56-b710-292c1f7bb9e0",
-                            "nextSceneName": "TowerScene",
-                            "playerTag": "Player"
+                            "nextSceneName": "Boss1Scene",
+                            "playerTag": "Player",
+                            "targetEntryPointName": "A"
                         },
                         "scriptPath": "Assets/Scripts/SceneTransitionArea.as"
                     },

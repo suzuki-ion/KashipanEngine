@@ -59,12 +59,27 @@
     "sceneName": "Boss1Scene",
     "sceneVariables": [
         {
+            "key": "testFloat",
+            "type": "Float",
+            "value": 0.0
+        },
+        {
             "key": "isDialogueActive",
             "type": "Bool",
             "value": false
         },
         {
-            "key": "saveRequested",
+            "key": "testString",
+            "type": "String",
+            "value": "abcdefg"
+        },
+        {
+            "key": "testInt",
+            "type": "Int32",
+            "value": 0
+        },
+        {
+            "key": "dialogueBoxUIBusy",
             "type": "Bool",
             "value": false
         },
@@ -72,20 +87,6 @@
             "key": "gameOverRequested",
             "type": "Bool",
             "value": true
-        },
-        {
-            "key": "saveRequestedPosition",
-            "type": "Vector3",
-            "value": {
-                "x": 389.0,
-                "y": 144.0,
-                "z": 0.0
-            }
-        },
-        {
-            "key": "dialogueBoxUIBusy",
-            "type": "Bool",
-            "value": false
         },
         {
             "key": "gameplayCameraPos",
@@ -103,6 +104,20 @@
                 "x": 256.0,
                 "y": 240.0
             }
+        },
+        {
+            "key": "saveRequestedPosition",
+            "type": "Vector3",
+            "value": {
+                "x": 389.0,
+                "y": 144.0,
+                "z": 0.0
+            }
+        },
+        {
+            "key": "saveRequested",
+            "type": "Bool",
+            "value": false
         }
     ]
 }

@@ -1,0 +1,51 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 821.6934204101563,
+                            "y": 433.0495300292969,
+                            "z": 3.0517578125e-05
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "42ecd839-df90-4e9a-8eee-cddcecb2f659"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "B",
+        "objectID": "cba081dd-f508-4e9b-a2ef-b0990a50b100",
+        "prefabNodeID": "71cf51ee-a098-4028-94fe-c10b97f9dcf1",
+        "tag": ""
+    },
+    "siblingIndex": 34000
+}

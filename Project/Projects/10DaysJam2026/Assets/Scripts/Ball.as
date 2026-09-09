@@ -104,24 +104,22 @@ class Ball : ScriptComponentBehavior {
         }
         // Tilemapに当たった際の反射処理
         else if(hit.otherObject.GetTag() == "Tilemap"){
-            // ぶつかった自分自身のコライダーのタグを取得
-            Tag selfTag = hit.selfCollider.GetTag();
+            Vector3 normal = hit.normal;
 
-            if (selfTag == "Bottom" && currentSpeedY < 0.0f) {
-                // 下のコライダーが落下中に接触したら床としてYを反転
-                currentSpeedY = -currentSpeedY * bounceFactorY;
-            } 
-            else if (selfTag == "Top" && currentSpeedY > 0.0f) {
-                // 上のコライダーが上昇中に接触したら天井としてYを反転
-                currentSpeedY = -currentSpeedY * bounceFactorY;
-            } 
-            else if (selfTag == "Right" && currentSpeedX > 0.0f) {
-                // 右のコライダーが右移動中に接触したら右壁としてXを反転
-                currentSpeedX = -currentSpeedX * bounceFactorX;
-            } 
-            else if (selfTag == "Left" && currentSpeedX < 0.0f) {
-                // 左のコライダーが左移動中に接触したら左壁としてXを反転
-                currentSpeedX = -currentSpeedX * bounceFactorX;
+            // 法線のX/Y成分のうち絶対値が大きい方を採用し、
+            // 床・天井(Y方向の面)か壁(X方向の面)かを判定する
+            if (Abs(normal.y) >= Abs(normal.x)) {
+                // 法線が上向き(床)で落下中、または下向き(天井)で上昇中なら
+                // 進行方向と面がぶつかっているのでYを反転
+                if ((normal.y > 0.0f && currentSpeedY < 0.0f) || (normal.y < 0.0f && currentSpeedY > 0.0f)) {
+                    currentSpeedY = -currentSpeedY * bounceFactorY;
+                }
+            } else {
+                // 法線が左向き(右側の壁)で右移動中、または右向き(左側の壁)で左移動中なら
+                // 進行方向と面がぶつかっているのでXを反転
+                if ((normal.x < 0.0f && currentSpeedX > 0.0f) || (normal.x > 0.0f && currentSpeedX < 0.0f)) {
+                    currentSpeedX = -currentSpeedX * bounceFactorX;
+                }
             }
         }
     }

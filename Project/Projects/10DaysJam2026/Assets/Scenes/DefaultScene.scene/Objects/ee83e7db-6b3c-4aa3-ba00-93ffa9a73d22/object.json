@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 761.106689453125,
-                            "y": 124.2099609375,
+                            "x": 330.106689453125,
+                            "y": 142.2099609375,
                             "z": -2.1480484519997844e-06
                         }
                     },
@@ -352,7 +352,8 @@
                             "pushBackExcludeTags": [
                                 "Enemy",
                                 "Heart",
-                                "Direction"
+                                "Direction",
+                                "Weapon"
                             ],
                             "swordAttackInterval": 0.4000000059604645,
                             "syurikenAttackInterval": 0.4000000059604645,

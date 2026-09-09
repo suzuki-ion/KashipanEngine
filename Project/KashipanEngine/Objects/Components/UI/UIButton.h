@@ -106,8 +106,15 @@ protected:
     ///          Play中かどうかに関わらず毎フレーム呼ばれるため（ScreenAnchor::ShowPersistentImGui
     ///          と同じ理由・同じ対処）、ここでも同じ判定処理を行う。Input::Update()自体は
     ///          GameEngine::GameLoopUpdate()からPlay状態に関わらず毎フレーム呼ばれているため、
-    ///          マウス座標・ボタン状態は編集中も最新の値が取れる
+    ///          マウス座標・ボタン状態は編集中も最新の値が取れる。
+    ///          ただしPlay中はUpdate()側で既に同じ処理を行っているため、ここでも呼ぶと同一フレームに
+    ///          UpdateButtonState()が2回走ってしまう。isClicked_はUpdateButtonState()の呼び出しごとに
+    ///          一度falseへリセットされる one-shot フラグのため、2回目の呼び出し（今回はこちら）で
+    ///          スクリプト側が読み取る前に握りつぶされ、クリック判定が漏れる原因になっていた。
+    ///          Play中はUpdate()に処理を委ね、ここでは何もしないことで二重呼び出しを避ける
     void ShowPersistentImGui() override {
+        auto *sceneContext = GetOwnerSceneContext();
+        if (sceneContext && sceneContext->IsPlaying()) return;
         UpdateButtonState();
     }
 

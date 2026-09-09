@@ -82,6 +82,7 @@
 #include "Objects/Components/VideoSource.h"
 #include "Objects/Components/PostProcessing/SSAOEffect.h"
 #include "Objects/Components/PostProcessing/GTAOEffect.h"
+#include "Objects/Components/PostProcessing/BarrelDistortionEffect.h"
 #include "Objects/Components/PostProcessing/BloomEffect.h"
 #include "Objects/Components/PostProcessing/BoxFilterEffect.h"
 #include "Objects/Components/PostProcessing/ChromaticAberrationEffect.h"
@@ -95,7 +96,9 @@
 #include "Objects/Components/PostProcessing/GrayscaleEffect.h"
 #include "Objects/Components/PostProcessing/MotionBlurEffect.h"
 #include "Objects/Components/PostProcessing/OutlineEffect.h"
+#include "Objects/Components/PostProcessing/PaletteQuantizeEffect.h"
 #include "Objects/Components/PostProcessing/RadialBlurEffect.h"
+#include "Objects/Components/PostProcessing/ScanlineEffect.h"
 #include "Objects/Components/PostProcessing/ScreenWideDitherBlendEffect.h"
 #include "Objects/Components/PostProcessing/TemporalBlendEffect.h"
 #include "Objects/Components/PostProcessing/VignetteEffect.h"
@@ -660,6 +663,13 @@ void RegisterWindowObjectBaseType(asIScriptEngine *engine) {
             if (!obj) { ThrowDestroyedObjectException(); return kEmpty; }
             return obj->GetTitle();
         })
+        .method("void SetIcon(const string &in)", SafeCall<&IWindowObjectComponent::SetIcon>())
+        .method("const string &GetIcon() const", [](const ScriptComponentHandle<IWindowObjectComponent> &self) -> const std::string & {
+            static const std::string kEmpty;
+            IWindowObjectComponent *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return kEmpty; }
+            return obj->GetIcon();
+        })
         .method("void SetSize(uint, uint)", SafeCall<&IWindowObjectComponent::SetSize>())
         .method("void SetSyncWithTransform(bool)", SafeCall<&IWindowObjectComponent::SetSyncWithTransform>())
         .method("bool IsSyncWithTransformEnabled() const", SafeCall<&IWindowObjectComponent::IsSyncWithTransformEnabled>())
@@ -689,6 +699,14 @@ void RegisterWindowObjectBaseType(asIScriptEngine *engine) {
             if (!component) { ThrowDestroyedObjectException(); return false; }
             Window *window = component->GetWindow();
             return (window && Window::IsExist(window)) ? window->IsMinimized() : false;
+        })
+        .method("void SetFullscreen(bool)", SafeCall<&IWindowObjectComponent::SetFullscreen>())
+        .method("bool IsFullscreen() const", SafeCall<&IWindowObjectComponent::IsFullscreen>())
+        .method("void SetWindowResolution(int, int)", [](const ScriptComponentHandle<IWindowObjectComponent> &self, int width, int height) {
+            IWindowObjectComponent *component = self.Resolve();
+            if (!component) { ThrowDestroyedObjectException(); return; }
+            if (width <= 0 || height <= 0) return;
+            component->SetSize(static_cast<std::uint32_t>(width), static_cast<std::uint32_t>(height));
         })
         .method("Vector2 GetMousePosition() const", [](const ScriptComponentHandle<IWindowObjectComponent> &self) -> Vector2 {
             IWindowObjectComponent *component = self.Resolve();
@@ -1006,6 +1024,8 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("bool IsPaused() const", SafeCall<&AudioSource::IsPaused>())
         .method("void SetSoundName(const string &in)", SafeCall<&AudioSource::SetSoundName>())
         .method("const string &GetSoundName() const", SafeCall<&AudioSource::GetSoundName>())
+        .method("void SetCategory(const string &in)", SafeCall<&AudioSource::SetCategory>())
+        .method("const string &GetCategory() const", SafeCall<&AudioSource::GetCategory>())
         .method("void SetVolume(float)", SafeCall<&AudioSource::SetVolume>())
         .method("float GetVolume() const", SafeCall<&AudioSource::GetVolume>())
         .method("void SetPitch(float)", SafeCall<&AudioSource::SetPitch>())
@@ -2248,6 +2268,13 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             if (!obj) { ThrowDestroyedObjectException(); return kEmpty; }
             return obj->GetTitle();
         })
+        .method("void SetIcon(const string &in)", SafeCall<static_cast<void (NormalWindowObject::*)(const std::string &)>(&NormalWindowObject::SetIcon)>())
+        .method("const string &GetIcon() const", [](const ScriptComponentHandle<NormalWindowObject> &self) -> const std::string & {
+            static const std::string kEmpty;
+            NormalWindowObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return kEmpty; }
+            return obj->GetIcon();
+        })
         .method("void SetSize(uint, uint)", SafeCall<static_cast<void (NormalWindowObject::*)(std::uint32_t, std::uint32_t)>(&NormalWindowObject::SetSize)>())
         .method("void SetSyncWithTransform(bool)", SafeCall<static_cast<void (NormalWindowObject::*)(bool) noexcept>(&NormalWindowObject::SetSyncWithTransform)>())
         .method("bool IsSyncWithTransformEnabled() const", SafeCall<static_cast<bool (NormalWindowObject::*)() const noexcept>(&NormalWindowObject::IsSyncWithTransformEnabled)>())
@@ -2271,6 +2298,13 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             if (!obj) { ThrowDestroyedObjectException(); return kEmpty; }
             return obj->GetTitle();
         })
+        .method("void SetIcon(const string &in)", SafeCall<static_cast<void (OverlayWindowObject::*)(const std::string &)>(&OverlayWindowObject::SetIcon)>())
+        .method("const string &GetIcon() const", [](const ScriptComponentHandle<OverlayWindowObject> &self) -> const std::string & {
+            static const std::string kEmpty;
+            OverlayWindowObject *obj = self.Resolve();
+            if (!obj) { ThrowDestroyedObjectException(); return kEmpty; }
+            return obj->GetIcon();
+        })
         .method("void SetSize(uint, uint)", SafeCall<static_cast<void (OverlayWindowObject::*)(std::uint32_t, std::uint32_t)>(&OverlayWindowObject::SetSize)>())
         .method("void SetSyncWithTransform(bool)", SafeCall<static_cast<void (OverlayWindowObject::*)(bool) noexcept>(&OverlayWindowObject::SetSyncWithTransform)>())
         .method("bool IsSyncWithTransformEnabled() const", SafeCall<static_cast<bool (OverlayWindowObject::*)() const noexcept>(&OverlayWindowObject::IsSyncWithTransformEnabled)>())
@@ -2289,6 +2323,8 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetName(const string &in)", SafeCall<&ScreenBufferObject::SetName>())
         .method("const string &GetName() const", SafeCall<&ScreenBufferObject::GetName>())
         .method("void SetSize(uint, uint)", SafeCall<&ScreenBufferObject::SetSize>())
+        .method("void SetRenderOrderPriority(int)", SafeCall<&ScreenBufferObject::SetRenderOrderPriority>())
+        .method("int GetRenderOrderPriority() const", SafeCall<&ScreenBufferObject::GetRenderOrderPriority>())
         .method("void SetSaveDirectory(const string &in)", SafeCall<&ScreenBufferObject::SetSaveDirectory>())
         .method("const string &GetSaveDirectory() const", SafeCall<&ScreenBufferObject::GetSaveDirectory>())
         .method("void SetSaveFileNamePrefix(const string &in)", SafeCall<&ScreenBufferObject::SetSaveFileNamePrefix>())
@@ -2763,6 +2799,78 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             ColorAdjustEffect *ePtr = eHandle.Resolve();
             if (!ePtr) { ThrowDestroyedObjectException(); return; }
             ColorAdjustEffect &e = *ePtr; auto p = e.GetParams(); p.posterizeLevels = v; e.SetParams(p); });
+
+    RegisterComponentType<BarrelDistortionEffect>(engine, "BarrelDistortionEffect")
+        .method("float GetStrength() const", [](const ScriptComponentHandle<BarrelDistortionEffect> &eHandle) {
+            BarrelDistortionEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const BarrelDistortionEffect &e = *ePtr; return e.GetParams().strength; })
+        .method("void SetStrength(float)", [](ScriptComponentHandle<BarrelDistortionEffect> &eHandle, float v) {
+            BarrelDistortionEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            BarrelDistortionEffect &e = *ePtr; auto p = e.GetParams(); p.strength = v; e.SetParams(p); })
+        .method("float GetZoom() const", [](const ScriptComponentHandle<BarrelDistortionEffect> &eHandle) {
+            BarrelDistortionEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const BarrelDistortionEffect &e = *ePtr; return e.GetParams().zoom; })
+        .method("void SetZoom(float)", [](ScriptComponentHandle<BarrelDistortionEffect> &eHandle, float v) {
+            BarrelDistortionEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            BarrelDistortionEffect &e = *ePtr; auto p = e.GetParams(); p.zoom = v; e.SetParams(p); })
+        .method("Vector4 GetEdgeColor() const", [](const ScriptComponentHandle<BarrelDistortionEffect> &eHandle) -> Vector4 {
+            BarrelDistortionEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<Vector4>(); }
+            const BarrelDistortionEffect &e = *ePtr; return e.GetParams().edgeColor;
+        })
+        .method("void SetEdgeColor(const Vector4 &in)", [](ScriptComponentHandle<BarrelDistortionEffect> &eHandle, const Vector4 &v) {
+            BarrelDistortionEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            BarrelDistortionEffect &e = *ePtr; auto p = e.GetParams(); p.edgeColor = v; e.SetParams(p);
+        });
+
+    RegisterComponentType<PaletteQuantizeEffect>(engine, "PaletteQuantizeEffect")
+        .method("float GetIntensity() const", [](const ScriptComponentHandle<PaletteQuantizeEffect> &eHandle) {
+            PaletteQuantizeEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const PaletteQuantizeEffect &e = *ePtr; return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](ScriptComponentHandle<PaletteQuantizeEffect> &eHandle, float v) {
+            PaletteQuantizeEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            PaletteQuantizeEffect &e = *ePtr; auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("float GetDitherAmount() const", [](const ScriptComponentHandle<PaletteQuantizeEffect> &eHandle) {
+            PaletteQuantizeEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const PaletteQuantizeEffect &e = *ePtr; return e.GetParams().ditherAmount; })
+        .method("void SetDitherAmount(float)", [](ScriptComponentHandle<PaletteQuantizeEffect> &eHandle, float v) {
+            PaletteQuantizeEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            PaletteQuantizeEffect &e = *ePtr; auto p = e.GetParams(); p.ditherAmount = v; e.SetParams(p); });
+
+    RegisterComponentType<ScanlineEffect>(engine, "ScanlineEffect")
+        .method("float GetIntensity() const", [](const ScriptComponentHandle<ScanlineEffect> &eHandle) {
+            ScanlineEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const ScanlineEffect &e = *ePtr; return e.GetParams().intensity; })
+        .method("void SetIntensity(float)", [](ScriptComponentHandle<ScanlineEffect> &eHandle, float v) {
+            ScanlineEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            ScanlineEffect &e = *ePtr; auto p = e.GetParams(); p.intensity = v; e.SetParams(p); })
+        .method("float GetLineSpacing() const", [](const ScriptComponentHandle<ScanlineEffect> &eHandle) {
+            ScanlineEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const ScanlineEffect &e = *ePtr; return e.GetParams().lineSpacing; })
+        .method("void SetLineSpacing(float)", [](ScriptComponentHandle<ScanlineEffect> &eHandle, float v) {
+            ScanlineEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            ScanlineEffect &e = *ePtr; auto p = e.GetParams(); p.lineSpacing = v; e.SetParams(p); })
+        .method("float GetThickness() const", [](const ScriptComponentHandle<ScanlineEffect> &eHandle) {
+            ScanlineEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return SafeCallDefault<float>(); }
+            const ScanlineEffect &e = *ePtr; return e.GetParams().thickness; })
+        .method("void SetThickness(float)", [](ScriptComponentHandle<ScanlineEffect> &eHandle, float v) {
+            ScanlineEffect *ePtr = eHandle.Resolve();
+            if (!ePtr) { ThrowDestroyedObjectException(); return; }
+            ScanlineEffect &e = *ePtr; auto p = e.GetParams(); p.thickness = v; e.SetParams(p); });
 
     RegisterComponentType<DepthOfFieldEffect>(engine, "DepthOfFieldEffect")
         .method("float GetFocusDistance() const", [](const ScriptComponentHandle<DepthOfFieldEffect> &eHandle) {
@@ -3590,6 +3698,7 @@ void RegisterObjectTypes(asIScriptEngine *engine) {
             return scene.GetGlobalSceneVariable(key) != nullptr;
         })
         .method("bool RemoveGlobalVariable(const string &in)", &SceneContext::RemoveGlobalSceneVariable)
+        .method("void ClearGlobalVariables()", &SceneContext::ClearGlobalSceneVariables)
         // グローバルシーン変数の永続化（ゲームのセーブ/ロード用途。filePathを省略すると既定のパスを使用する）
         .method("bool SaveGlobalVariables(const string &in filePath = \"\") const", &SceneContext::SaveGlobalSceneVariables)
         .method("bool LoadGlobalVariables(const string &in filePath = \"\")", &SceneContext::LoadGlobalSceneVariables)
@@ -4537,6 +4646,36 @@ void RegisterGlobalFunctions(asIScriptEngine *engine) {
             return MakeStringArray(GetLoadedLanguages());
         })
         .function("const string &GetLanguageDisplayName(const string &in)", &GetLanguageDisplayName)
+        // ゲーム設定(音量等、プレイヤー環境ごとの設定パラメータ)の永続化用API。
+        // グローバルシーン変数(セーブデータ用)とは完全に独立しており、「はじめから」での
+        // ClearGlobalVariables()の対象にも、エディターのPlay/Stopスナップショットの対象にもならない。
+        // 値の設定時に即座にPlayerSettings.json(プロジェクトルート直下)へ保存される
+        .function("bool GetSettingBool(const string &in key, bool defaultValue = false)", &PlayerSettings::GetBool)
+        .function("void SetSettingBool(const string &in key, bool value)", &PlayerSettings::SetBool)
+        .function("int GetSettingInt(const string &in key, int defaultValue = 0)", &PlayerSettings::GetInt)
+        .function("void SetSettingInt(const string &in key, int value)", &PlayerSettings::SetInt)
+        .function("float GetSettingFloat(const string &in key, float defaultValue = 0)", &PlayerSettings::GetFloat)
+        .function("void SetSettingFloat(const string &in key, float value)", &PlayerSettings::SetFloat)
+        .function("string GetSettingString(const string &in key, const string &in defaultValue = \"\")", &PlayerSettings::GetString)
+        .function("void SetSettingString(const string &in key, const string &in value)", &PlayerSettings::SetString)
+        .function("Vector2 GetSettingVector2(const string &in key, const Vector2 &in defaultValue = Vector2())", &PlayerSettings::GetVector2)
+        .function("void SetSettingVector2(const string &in key, const Vector2 &in value)", &PlayerSettings::SetVector2)
+        .function("Vector3 GetSettingVector3(const string &in key, const Vector3 &in defaultValue = Vector3())", &PlayerSettings::GetVector3)
+        .function("void SetSettingVector3(const string &in key, const Vector3 &in value)", &PlayerSettings::SetVector3)
+        .function("Vector4 GetSettingVector4(const string &in key, const Vector4 &in defaultValue = Vector4())", &PlayerSettings::GetVector4)
+        .function("void SetSettingVector4(const string &in key, const Vector4 &in value)", &PlayerSettings::SetVector4)
+        .function("Quaternion GetSettingQuaternion(const string &in key, const Quaternion &in defaultValue = Quaternion())", &PlayerSettings::GetQuaternion)
+        .function("void SetSettingQuaternion(const string &in key, const Quaternion &in value)", &PlayerSettings::SetQuaternion)
+        // 上記の型で用意しきれていない任意の形状の値を保存したい場合のフォールバック。
+        // キーが存在しない場合はnullを返す(実際の値がJSON上のnullの場合と区別しない)
+        .function("Json@ GetSettingJson(const string &in key)", [](const std::string &key) -> ScriptJsonValue * {
+            JSON value = PlayerSettings::GetJSON(key, JSON());
+            if (value.is_null()) return nullptr;
+            return new ScriptJsonValue(std::move(value));
+        })
+        .function("void SetSettingJson(const string &in key, const Json &in value)", [](const std::string &key, const ScriptJsonValue &value) {
+            PlayerSettings::SetJSON(key, value.data);
+        })
         // ゲームループの終了要求（エディター実行時は再生停止として扱われる）
         .function("void RequestExitGameLoop()", []() { Scene::RequestExitGameLoop(); })
         // エディター機能を含むビルドかどうか（Debug/Development=true、Release=false）。
@@ -4605,6 +4744,11 @@ void RegisterGlobalFunctions(asIScriptEngine *engine) {
         })
         .function("bool StopAudio(uint)", [](uint32_t play) -> bool { return AudioManager::Stop(play); })
         .function("bool IsAudioPlaying(uint)", [](uint32_t play) -> bool { return AudioManager::IsPlaying(play); })
+        // 音量バス（マスター/カテゴリ。カテゴリ名は`AudioCategories.json`で定義したもの。設定画面から呼ぶ想定）
+        .function("void SetMasterVolume(float)", &AudioManager::SetMasterVolume)
+        .function("float GetMasterVolume()", &AudioManager::GetMasterVolume)
+        .function("void SetCategoryVolume(const string &in, float)", &AudioManager::SetCategoryVolume)
+        .function("float GetCategoryVolume(const string &in)", &AudioManager::GetCategoryVolume)
         // モデル
         .function("uint GetModelHandleFromAssetPath(const string &in)", &ModelManager::GetModelHandleFromAssetPath)
         // 実行コンテキスト

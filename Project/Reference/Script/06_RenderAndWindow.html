@@ -25,6 +25,7 @@
 <table>
 <tr><th>メソッド</th><th>説明</th></tr>
 <tr><td><code>void SetTitle(const string &amp;in)</code> / <code>const string &amp;GetTitle() const</code></td><td>ウィンドウタイトル</td></tr>
+<tr><td><code>void SetIcon(const string &amp;in)</code> / <code>const string &amp;GetIcon() const</code></td><td>ウィンドウアイコン（.ico）のプロジェクト相対パス。空文字を渡すとエンジン既定アイコンに戻る。設定すると生成済みウィンドウのアイコン（タスクバー・タイトルバー）へ即座に反映される</td></tr>
 <tr><td><code>void SetSize(uint width, uint height)</code></td><td>ウィンドウサイズを設定する</td></tr>
 <tr><td><code>int GetClientWidth() const</code> / <code>int GetClientHeight() const</code></td><td>クライアント領域のサイズを取得する（ウィンドウ未生成時は0）</td></tr>
 <tr><td><code>bool IsWindowFocused() const</code></td><td>ウィンドウにフォーカスがあるかどうか</td></tr>

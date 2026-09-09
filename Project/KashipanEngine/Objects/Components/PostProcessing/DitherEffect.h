@@ -5,11 +5,14 @@
 
 namespace KashipanEngine {
 
-/// @brief ディザリングポストエフェクト
+/// @brief ディザパターンを使ったディゾルブ（画面フェード）ポストエフェクト
+/// @details 4x4 Bayer行列の閾値をピクセルごとの「消える順番」として扱い、
+///          intensityが0で無適用、1で画面全体が消えるディゾルブ表現になる
 class DitherEffect final : public IPostProcessComponent {
 public:
     struct Params {
-        float intensity = 1.0f;
+        /// @brief ディゾルブ進行度（0: 無適用 〜 1: 画面全体が消える）
+        float intensity = 0.0f;
         bool color = true;
     };
 
@@ -46,7 +49,7 @@ protected:
 
     bool LoadFromJson(const JSON &json) override {
         IPostProcessComponent::LoadFromJson(json);
-        params_.intensity = json.value("intensity", 1.0f);
+        params_.intensity = json.value("intensity", 0.0f);
         params_.color = json.value("color", true);
         return true;
     }

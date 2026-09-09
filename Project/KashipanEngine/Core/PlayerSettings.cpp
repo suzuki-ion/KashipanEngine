@@ -24,6 +24,21 @@ void PlayerSettings::SetBool(const std::string &key, bool value) {
     Save();
 }
 
+int PlayerSettings::GetInt(const std::string &key, int defaultValue) {
+    EnsureLoaded();
+    auto it = sData_.find(key);
+    if (it == sData_.end() || !it->is_number()) return defaultValue;
+    return it->get<int>();
+}
+
+void PlayerSettings::SetInt(const std::string &key, int value) {
+    EnsureLoaded();
+    auto it = sData_.find(key);
+    if (it != sData_.end() && it->is_number() && it->get<int>() == value) return;
+    sData_[key] = value;
+    Save();
+}
+
 float PlayerSettings::GetFloat(const std::string &key, float defaultValue) {
     EnsureLoaded();
     auto it = sData_.find(key);
@@ -51,6 +66,70 @@ void PlayerSettings::SetString(const std::string &key, const std::string &value)
     auto it = sData_.find(key);
     if (it != sData_.end() && it->is_string() && it->get<std::string>() == value) return;
     sData_[key] = value;
+    Save();
+}
+
+Vector2 PlayerSettings::GetVector2(const std::string &key, const Vector2 &defaultValue) {
+    EnsureLoaded();
+    auto it = sData_.find(key);
+    if (it == sData_.end()) return defaultValue;
+    try { return FromJSON<Vector2>(*it); } catch (const std::exception &) { return defaultValue; }
+}
+
+void PlayerSettings::SetVector2(const std::string &key, const Vector2 &value) {
+    EnsureLoaded();
+    JSON json = ToJSON(value);
+    auto it = sData_.find(key);
+    if (it != sData_.end() && *it == json) return;
+    sData_[key] = json;
+    Save();
+}
+
+Vector3 PlayerSettings::GetVector3(const std::string &key, const Vector3 &defaultValue) {
+    EnsureLoaded();
+    auto it = sData_.find(key);
+    if (it == sData_.end()) return defaultValue;
+    try { return FromJSON<Vector3>(*it); } catch (const std::exception &) { return defaultValue; }
+}
+
+void PlayerSettings::SetVector3(const std::string &key, const Vector3 &value) {
+    EnsureLoaded();
+    JSON json = ToJSON(value);
+    auto it = sData_.find(key);
+    if (it != sData_.end() && *it == json) return;
+    sData_[key] = json;
+    Save();
+}
+
+Vector4 PlayerSettings::GetVector4(const std::string &key, const Vector4 &defaultValue) {
+    EnsureLoaded();
+    auto it = sData_.find(key);
+    if (it == sData_.end()) return defaultValue;
+    try { return FromJSON<Vector4>(*it); } catch (const std::exception &) { return defaultValue; }
+}
+
+void PlayerSettings::SetVector4(const std::string &key, const Vector4 &value) {
+    EnsureLoaded();
+    JSON json = ToJSON(value);
+    auto it = sData_.find(key);
+    if (it != sData_.end() && *it == json) return;
+    sData_[key] = json;
+    Save();
+}
+
+Quaternion PlayerSettings::GetQuaternion(const std::string &key, const Quaternion &defaultValue) {
+    EnsureLoaded();
+    auto it = sData_.find(key);
+    if (it == sData_.end()) return defaultValue;
+    try { return FromJSON<Quaternion>(*it); } catch (const std::exception &) { return defaultValue; }
+}
+
+void PlayerSettings::SetQuaternion(const std::string &key, const Quaternion &value) {
+    EnsureLoaded();
+    JSON json = ToJSON(value);
+    auto it = sData_.find(key);
+    if (it != sData_.end() && *it == json) return;
+    sData_[key] = json;
     Save();
 }
 

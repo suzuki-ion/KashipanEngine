@@ -8,11 +8,13 @@
 #include "Utilities/Translation.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/Directory.h"
+#include "Utilities/FileIO/JSON.h"
 #include "Utilities/Plugin/Plugins.h"
 
 #if defined(USE_IMGUI)
 #include <imgui.h>
 #include <imgui_internal.h>
+#include "Utilities/ImGuiCustom.h"
 #endif
 
 #include <mfapi.h>
@@ -75,6 +77,10 @@ struct PlayEntry final {
     bool eqEnabled = false;
     bool echoEnabled = false;
     bool limiterEnabled = false;
+    /// @brief 音量バスのカテゴリ名(空文字=未分類)
+    std::string category;
+    /// @brief バス倍率をかける前の元音量(SetVolume/Play時に指定された値。バス音量変更時の再適用に使う)
+    float logicalVolume = 1.0f;
 };
 
 // ソースボイスのエフェクトチェーン内のスロット番号（CreateSourceVoiceに渡す並び順と一致させること）
@@ -114,6 +120,13 @@ std::unordered_set<PlayHandle> sUsedPlayHandles;
 
 std::unordered_set<SoundBeat*> sRegisteredSoundBeats;
 std::unordered_set<AudioPlayer*> sRegisteredAudioPlayers;
+
+// 音量バス(マスター/カテゴリ)関連
+constexpr const char* kAudioCategoriesFileName = "AudioCategories.json";
+std::string sAudioCategoriesFilePath;
+float sMasterVolume = 1.0f;
+// カテゴリ名 -> 現在の音量(初期値はAudioCategories.jsonの既定値。設定画面等からの変更もここへ反映される)
+std::unordered_map<std::string, float> sCategoryVolumes;
 
 std::mt19937& Rng() {
     static thread_local std::mt19937 rng{ std::random_device{}() };
@@ -165,6 +178,55 @@ std::string NormalizePathSlashes(std::string s) {
 std::string ToLower(std::string s) {
     for (auto& c : s) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
     return s;
+}
+
+/// @brief カテゴリ名に対する最終的な音量倍率を求める(マスター音量 x カテゴリ音量)
+/// @details 未分類(空文字)はマスター音量のみが乗算される。未定義のカテゴリ名は1.0f扱い
+float GetEffectiveMultiplier(const std::string& category) {
+    const float master = std::clamp(sMasterVolume, 0.0f, 1.0f);
+    if (category.empty()) return master;
+    const auto it = sCategoryVolumes.find(category);
+    const float categoryVolume = (it != sCategoryVolumes.end()) ? std::clamp(it->second, 0.0f, 1.0f) : 1.0f;
+    return master * categoryVolume;
+}
+
+/// @brief 起動時にAudioCategories.jsonを読み込み、sCategoryVolumesの初期値とする
+/// @details ファイルが無い/不正な場合は何もしない(全音源が未分類扱いになるだけで動作は壊れない)
+void LoadAudioCategoriesFile(const std::string& assetsRootPath) {
+    sAudioCategoriesFilePath = NormalizePathSlashes(assetsRootPath) + "/" + kAudioCategoriesFileName;
+    if (!std::filesystem::exists(Utf8StringToPath(sAudioCategoriesFilePath))) return;
+
+    const JSON json = LoadJSON(sAudioCategoriesFilePath);
+    if (!json.is_object()) return;
+
+    for (auto it = json.begin(); it != json.end(); ++it) {
+        if (!it.value().is_number()) continue;
+        sCategoryVolumes[it.key()] = std::clamp(it.value().get<float>(), 0.0f, 1.0f);
+    }
+}
+
+/// @brief 現在のカテゴリ一覧・音量をAudioCategories.jsonへ書き戻す(エディターでの追加/削除/編集時に呼ぶ)
+void SaveAudioCategoriesFile() {
+    if (sAudioCategoriesFilePath.empty()) return;
+    JSON json = JSON::object();
+    for (const auto& kv : sCategoryVolumes) json[kv.first] = kv.second;
+    SaveJSON(json, sAudioCategoriesFilePath);
+}
+
+/// @brief カテゴリ音量変更を、現在再生中の該当カテゴリの音声全てへ再適用する
+/// @param category 対象カテゴリ名(空文字を渡した場合はマスター音量変更として全音声へ適用)
+void ReapplyVolumeForCategory(const std::string& category, bool isMasterChange) {
+    for (const auto& kv : sPlayHandleToIndex) {
+        const size_t idx = kv.second;
+        if (idx >= sPlays.size() || !sPlays[idx]) continue;
+        if (sUsedPlayIndices.find(idx) == sUsedPlayIndices.end()) continue;
+
+        PlayEntry& p = *sPlays[idx];
+        if (!p.voice) continue;
+        if (!isMasterChange && p.category != category) continue;
+
+        p.voice->SetVolume(p.logicalVolume * GetEffectiveMultiplier(p.category));
+    }
 }
 
 bool HasSupportedAudioExtension(const std::filesystem::path& p) {
@@ -478,6 +540,7 @@ AudioManager::AudioManager(Passkey<GameEngine>, const std::string& assetsRootPat
     sActiveInstance = this;
     InitializeAudioDevice();
     LoadAllFromAssetsFolder();
+    LoadAudioCategoriesFile(assetsRootPath_);
 }
 
 AudioManager::~AudioManager() {
@@ -720,6 +783,8 @@ AudioManager::PlayHandle AudioManager::Play(const PlayParams& params) {
     playEntry.eqEnabled = false;
     playEntry.echoEnabled = false;
     playEntry.limiterEnabled = false;
+    playEntry.category = params.category;
+    playEntry.logicalVolume = std::clamp(params.volume, 0.0f, 1.0f);
 
     // マスターボイスに加え、共有リバーブバスが使用可能ならそちらへも常時送る
     // (通常のウェットレベルは0で開始し、SetReverbSendで必要な時だけ送り量を上げる)
@@ -781,8 +846,7 @@ AudioManager::PlayHandle AudioManager::Play(const PlayParams& params) {
         return kInvalidPlayHandle;
     }
 
-    const float volume = std::clamp(params.volume, 0.0f, 1.0f);
-    playEntry.voice->SetVolume(volume);
+    playEntry.voice->SetVolume(playEntry.logicalVolume * GetEffectiveMultiplier(playEntry.category));
     playEntry.voice->SetFrequencyRatio(SemitonesToFrequencyRatio(params.pitch));
 
     if (sReverbSubmixVoice) {
@@ -915,9 +979,43 @@ bool AudioManager::SetVolume(PlayHandle play, float volume) {
 
     PlayEntry& p = *sPlays[idx];
     if (!p.voice) return false;
-    volume = std::clamp(volume, 0.0f, 1.0f);
-    p.voice->SetVolume(volume);
+    p.logicalVolume = std::clamp(volume, 0.0f, 1.0f);
+    p.voice->SetVolume(p.logicalVolume * GetEffectiveMultiplier(p.category));
     return true;
+}
+
+void AudioManager::SetMasterVolume(float volume) {
+    LogScope scope;
+    volume = std::clamp(volume, 0.0f, 1.0f);
+    if (sMasterVolume == volume) return;
+    sMasterVolume = volume;
+    ReapplyVolumeForCategory("", true);
+}
+
+float AudioManager::GetMasterVolume() {
+    return sMasterVolume;
+}
+
+void AudioManager::SetCategoryVolume(const std::string &category, float volume) {
+    LogScope scope;
+    if (category.empty()) return;
+    volume = std::clamp(volume, 0.0f, 1.0f);
+    sCategoryVolumes[category] = volume;
+    ReapplyVolumeForCategory(category, false);
+}
+
+float AudioManager::GetCategoryVolume(const std::string &category) {
+    if (category.empty()) return 1.0f;
+    const auto it = sCategoryVolumes.find(category);
+    return (it != sCategoryVolumes.end()) ? it->second : 1.0f;
+}
+
+std::vector<std::string> AudioManager::GetCategoryNames() {
+    std::vector<std::string> out;
+    out.reserve(sCategoryVolumes.size());
+    for (const auto &kv : sCategoryVolumes) out.push_back(kv.first);
+    std::sort(out.begin(), out.end());
+    return out;
 }
 
 bool AudioManager::SetPitch(PlayHandle play, float pitch) {
@@ -1331,6 +1429,73 @@ void AudioManager::ShowImGuiPlayingSoundsWindow() {
 
         ImGui::EndTable();
     }
+
+    ImGui::End();
+}
+
+void AudioManager::ShowImGuiAudioCategoriesWindow() {
+    ImGui::Begin(TranslationLabel("editor.audiomanager.categories.window"));
+    ImGuiCustom::TextDisabledWrapped("%s", TranslationC("editor.audiomanager.categories.desc"));
+
+    ImGui::DragFloat(TranslationLabel("editor.audiomanager.categories.master_volume"), &sMasterVolume, 0.01f, 0.0f, 1.0f);
+    sMasterVolume = std::clamp(sMasterVolume, 0.0f, 1.0f);
+
+    ImGui::Separator();
+
+    std::string removeTarget;
+    bool hasRemoveTarget = false;
+
+    if (ImGui::BeginTable("##AudioCategories", 3,
+            ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY,
+            ImVec2(0, 200))) {
+        ImGui::TableSetupColumn("Name");
+        ImGui::TableSetupColumn(TranslationC("editor.audiomanager.categories.default_volume"));
+        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 70);
+        ImGui::TableHeadersRow();
+
+        for (auto &kv : sCategoryVolumes) {
+            ImGui::PushID(kv.first.c_str());
+            ImGui::TableNextRow();
+
+            ImGui::TableSetColumnIndex(0);
+            ImGui::TextUnformatted(kv.first.c_str());
+
+            ImGui::TableSetColumnIndex(1);
+            if (ImGui::DragFloat("##Volume", &kv.second, 0.01f, 0.0f, 1.0f)) {
+                kv.second = std::clamp(kv.second, 0.0f, 1.0f);
+                SaveAudioCategoriesFile();
+            }
+
+            ImGui::TableSetColumnIndex(2);
+            if (ImGui::SmallButton(TranslationLabel("editor.audiomanager.categories.remove"))) {
+                removeTarget = kv.first;
+                hasRemoveTarget = true;
+            }
+
+            ImGui::PopID();
+        }
+
+        ImGui::EndTable();
+    }
+
+    if (hasRemoveTarget) {
+        sCategoryVolumes.erase(removeTarget);
+        SaveAudioCategoriesFile();
+    }
+
+    ImGui::Separator();
+    static char sNewCategoryName[64] = "";
+    ImGui::SetNextItemWidth(200.0f);
+    ImGui::InputText("##NewCategoryName", sNewCategoryName, sizeof(sNewCategoryName));
+    ImGui::SameLine();
+    const bool canAdd = sNewCategoryName[0] != '\0' && sCategoryVolumes.find(sNewCategoryName) == sCategoryVolumes.end();
+    ImGui::BeginDisabled(!canAdd);
+    if (ImGui::Button(TranslationLabel("editor.audiomanager.categories.add"))) {
+        sCategoryVolumes[sNewCategoryName] = 1.0f;
+        SaveAudioCategoriesFile();
+        sNewCategoryName[0] = '\0';
+    }
+    ImGui::EndDisabled();
 
     ImGui::End();
 }

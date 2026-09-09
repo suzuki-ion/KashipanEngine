@@ -20,6 +20,7 @@ public:
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<NormalWindowObject>();
         ptr->title_ = title_;
+        ptr->iconPath_ = iconPath_;
         ptr->width_ = width_;
         ptr->height_ = height_;
         ptr->syncWithTransform_ = syncWithTransform_;
@@ -30,7 +31,12 @@ public:
 protected:
     void Initialize() override {
         if (window_) return;
-        window_ = Window::CreateNormal(title_, static_cast<int32_t>(width_), static_cast<int32_t>(height_));
+        // iconPath_が未設定（既定）の場合はCreateNormal自身の既定アイコンを使わせるため、
+        // 空文字を明示的に渡さない（EngineSettings.jsonのinitialWindowIconPathは既定で空のため、
+        // 渡してしまうとエンジンロゴアイコンではなくOS既定アイコンになってしまう）
+        window_ = iconPath_.empty()
+            ? Window::CreateNormal(title_, static_cast<int32_t>(width_), static_cast<int32_t>(height_))
+            : Window::CreateNormal(title_, static_cast<int32_t>(width_), static_cast<int32_t>(height_), 0, iconPath_);
         // メッセージの横取り設定を生成したウィンドウへ適用する
         ApplyInterceptedMessages();
     }
@@ -72,6 +78,7 @@ protected:
 #if defined(USE_IMGUI)
     void ShowImGui() override {
         if (ImGuiCustom::EditValue(TranslationLabel("component.normalwindowobject.title"), title_)) SetTitle(title_);
+        if (ImGuiCustom::EditValue(TranslationLabel("component.normalwindowobject.icon"), iconPath_)) SetIcon(iconPath_);
         int w = static_cast<int>(width_);
         int h = static_cast<int>(height_);
         if (ImGuiCustom::EditValue(TranslationLabel("component.normalwindowobject.width"), w)) width_ = static_cast<std::uint32_t>(std::max(1, w));
@@ -90,6 +97,7 @@ protected:
     JSON SaveToJson() const override {
         JSON json = JSON::object();
         json["title"] = title_;
+        json["iconPath"] = iconPath_;
         json["width"] = width_;
         json["height"] = height_;
         json["syncWithTransform"] = syncWithTransform_;
@@ -99,14 +107,17 @@ protected:
 
     bool LoadFromJson(const JSON &json) override {
         title_ = json.value("title", std::string{ "Normal Window" });
+        iconPath_ = json.value("iconPath", std::string{});
         width_ = json.value("width", 1280u);
         height_ = json.value("height", 720u);
         syncWithTransform_ = json.value("syncWithTransform", true);
         // 前のシーンから引き継がれたウィンドウがあればそちらを使う。
-        // 無い場合はInitializeで生成済みの既定ウィンドウのタイトルを実際の設定値へ合わせる
+        // 無い場合はInitializeで生成済みの既定ウィンドウのタイトル・アイコンを実際の設定値へ合わせる
         if (!TryClaimCarriedOverWindow(RenderTargetCarryOverRegistry::Kind::NormalWindow)) {
             if (window_ && Window::IsExist(window_)) {
                 window_->SetWindowTitle(title_);
+                // iconPath_が空の場合はInitializeで設定済みの既定アイコンをそのまま残す
+                if (!iconPath_.empty()) window_->SetIcon(iconPath_);
             }
         }
         LoadInterceptedMessagesJson(json.value("interceptedMessages", JSON::array()));

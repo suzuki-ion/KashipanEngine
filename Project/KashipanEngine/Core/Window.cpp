@@ -414,6 +414,43 @@ void Window::SetWindowTitle(const std::string &title) {
     if (descriptor_.hwnd) SetWindowText(descriptor_.hwnd, titleW_.c_str());
 }
 
+HICON Window::LoadWindowIcon(HINSTANCE hInstance, const std::wstring &iconPath) {
+    if (iconPath.empty()) return nullptr;
+    return static_cast<HICON>(LoadImage(
+        hInstance,
+        iconPath.c_str(),
+        IMAGE_ICON,
+        32, 32,
+        LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_SHARED));
+}
+
+bool Window::SetIcon(const std::string &iconPath) {
+    LogScope scope;
+    const std::string &resolvedRelative = iconPath.empty() ? windowDefaultIconPath : iconPath;
+    if (resolvedRelative.empty()) {
+        descriptor_.wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
+        if (descriptor_.hwnd) {
+            SendMessage(descriptor_.hwnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(descriptor_.wc.hIcon));
+            SendMessage(descriptor_.hwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(descriptor_.wc.hIcon));
+        }
+        return true;
+    }
+
+    std::wstring windowIconPath = ConvertString(ProjectPaths::ToPhysical(resolvedRelative));
+    HICON hIcon = LoadWindowIcon(descriptor_.hInstance, windowIconPath);
+    if (!hIcon) {
+        Log(Translation("engine.window.seticon.failed") + resolvedRelative, LogSeverity::Warning);
+        return false;
+    }
+
+    descriptor_.wc.hIcon = hIcon;
+    if (descriptor_.hwnd) {
+        SendMessage(descriptor_.hwnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIcon));
+        SendMessage(descriptor_.hwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIcon));
+    }
+    return true;
+}
+
 void Window::SetWindowSize(int32_t width, int32_t height) {
     LogScope scope;
     if (width <= 0 || height <= 0) return;
@@ -542,17 +579,8 @@ bool Window::InitializeWindow(WNDPROC windowProc, WindowType windowType, const s
     descriptor_.wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION); // デフォルトアイコン
 
     // アイコンのカスタマイズが必要ならここで読み込む
-    if (!iconPath.empty()) {
-        // アイコンの読み込み（例としてLoadImageを使用）
-        HICON hIcon = static_cast<HICON>(LoadImage(
-            descriptor_.hInstance,
-            iconPath.c_str(),
-            IMAGE_ICON,
-            32, 32,
-            LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_SHARED));
-        if (hIcon) {
-            descriptor_.wc.hIcon = hIcon;
-        }
+    if (HICON hIcon = LoadWindowIcon(descriptor_.hInstance, iconPath)) {
+        descriptor_.wc.hIcon = hIcon;
     }
 
     // ウィンドウクラスの登録
@@ -635,6 +663,20 @@ void Window::AdjustWindowSize() {
     if (!descriptor_.hwnd) return;
     RECT rect = { 0, 0, size_.clientWidth, size_.clientHeight };
     AdjustWindowRect(&rect, descriptor_.windowStyle, FALSE);
+    // SetWindowSize()で指定されるのはクライアント領域のサイズなので、ウィンドウモード時は
+    // 現在のスタイルに必要な枠を含めた外形サイズをWin32ウィンドウへ反映する。
+    // フルスクリーン時の外形はSetWindowMode()がモニター領域に合わせて管理するため変更しない。
+    if (windowMode_ == WindowMode::Window) {
+        SetWindowPos(
+            descriptor_.hwnd,
+            nullptr,
+            0,
+            0,
+            rect.right - rect.left,
+            rect.bottom - rect.top,
+            SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE
+        );
+    }
     if (dx12SwapChain_) {
         if (size_.clientWidth <= 0) size_.clientWidth = 1;
         if (size_.clientHeight <= 0) size_.clientHeight = 1;

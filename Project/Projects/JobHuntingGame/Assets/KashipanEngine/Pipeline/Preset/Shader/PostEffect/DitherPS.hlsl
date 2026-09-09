@@ -6,7 +6,7 @@ SamplerState gSampler : register(s0);
 cbuffer DitherCB : register(b0)
 {
     float2 invResolution; // 1.0 / (width, height)
-    float intensity;      // スケール
+    float intensity;      // ディゾルブ進行度（0: 無適用 〜 1: 画面全体が消える）
     uint  color;          // 0: 単色, 1: 色あり
     uint  pad;
 };
@@ -46,19 +46,18 @@ float4 main(VS_OUT input) : SV_Target0 {
     // preserve fully transparent pixels
     if (colorSample.a <= 0.0f) return colorSample;
 
-    // compute luminance and apply intensity
-    float lum = saturate(luminance(colorSample.rgb) * intensity);
-
-    // dither compare -> 0 or 1
-    float mask = step(threshold, lum);
+    // Bayer行列の閾値を「消えていく順番」として使うディゾルブ表現。
+    // intensityが閾値以下のセルはそのまま残り、閾値を超えたセルから抜けていく。
+    // intensity=0で全セルの閾値(0/16〜15/16)を下回るため無適用、
+    // intensity=1で全セルの閾値を上回るため画面全体が消える
+    float mask = step(intensity, threshold);
 
     bool useColor = (color != 0);
-    float3 outRgb;
-    if (useColor) {
-        outRgb = colorSample.rgb * mask;
-    } else {
-        outRgb = float3(lum, lum, lum) * mask;
+    float3 baseRgb = colorSample.rgb;
+    if (!useColor) {
+        float lum = luminance(colorSample.rgb);
+        baseRgb = float3(lum, lum, lum);
     }
 
-    return float4(outRgb, colorSample.a * mask);
+    return float4(baseRgb * mask, colorSample.a * mask);
 }

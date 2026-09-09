@@ -24,6 +24,7 @@ public:
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(name_, [this] { SetName(name_); });
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(width_, [this] { SetSize(width_, height_); });
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(height_, [this] { SetSize(width_, height_); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(renderOrderPriority_, [this] { SetRenderOrderPriority(renderOrderPriority_); });
     )
     COMPONENT_CATEGORY("Render", "RenderTarget")
         ~ScreenBufferObject() override = default;
@@ -34,6 +35,7 @@ public:
         ptr->width_ = width_;
         ptr->height_ = height_;
         ptr->isShowViewer_ = isShowViewer_;
+        ptr->renderOrderPriority_ = renderOrderPriority_;
         ptr->saveDirectory_ = saveDirectory_;
         ptr->saveFileNamePrefix_ = saveFileNamePrefix_;
         ptr->saveFormat_ = saveFormat_;
@@ -57,6 +59,17 @@ public:
             buffer_->Resize(width_, height_);
         }
     }
+    /// @brief 同じ種別（ScreenBuffer）の描画先同士での描画順を設定する（小さいほど先に描画される）
+    /// @details 他のScreenBufferObjectの描画結果をポストエフェクトから参照する構成で、
+    ///          参照元が必ず先に描き終わっていることを保証したい場合に使う
+    ///          （詳細はIRenderTarget::GetRenderOrderPriority参照）
+    void SetRenderOrderPriority(std::int32_t priority) noexcept {
+        renderOrderPriority_ = priority;
+        if (buffer_ && ScreenBuffer::IsExist(buffer_)) {
+            buffer_->SetRenderOrderPriority(priority);
+        }
+    }
+    std::int32_t GetRenderOrderPriority() const noexcept { return renderOrderPriority_; }
 
     //==================================================
     // 画像ファイル保存
@@ -91,6 +104,9 @@ protected:
         if (buffer_ && name_.empty()) {
             name_ = buffer_->GetRenderTargetName();
         }
+        if (buffer_) {
+            buffer_->SetRenderOrderPriority(renderOrderPriority_);
+        }
     }
     void Finalize() override {
         // シーン切り替え中は即座に破棄せず、次のシーンの同名コンポーネントへの
@@ -113,6 +129,11 @@ protected:
         if (ImGuiCustom::EditValue(TranslationLabel("component.screenbufferobject.width"), w)) { w = std::max(1, w); sizeChanged = true; }
         if (ImGuiCustom::EditValue(TranslationLabel("component.screenbufferobject.height"), h)) { h = std::max(1, h); sizeChanged = true; }
         if (sizeChanged) SetSize(static_cast<std::uint32_t>(w), static_cast<std::uint32_t>(h));
+
+        int renderOrderPriority = renderOrderPriority_;
+        if (ImGui::DragInt(TranslationLabel("component.screenbufferobject.render_order_priority"), &renderOrderPriority)) {
+            SetRenderOrderPriority(renderOrderPriority);
+        }
 
         // 描画内容確認用ビューアウィンドウ
         if (ImGui::Button(isShowViewer_ ? "Close Viewer" : "Open Viewer")) {
@@ -187,6 +208,7 @@ protected:
         json["width"] = width_;
         json["height"] = height_;
         json["isShowViewer"] = isShowViewer_;
+        json["renderOrderPriority"] = renderOrderPriority_;
         json["saveDirectory"] = saveDirectory_;
         json["saveFileNamePrefix"] = saveFileNamePrefix_;
         json["saveFormat"] = saveFormat_;
@@ -199,6 +221,7 @@ protected:
         const std::uint32_t loadedWidth = json.value("width", 1280u);
         const std::uint32_t loadedHeight = json.value("height", 720u);
         isShowViewer_ = json.value("isShowViewer", false);
+        renderOrderPriority_ = json.value("renderOrderPriority", 0);
         saveDirectory_ = json.value("saveDirectory", std::string("Screenshots"));
         saveFileNamePrefix_ = json.value("saveFileNamePrefix", std::string("Screenshot"));
         saveFormat_ = json.value("saveFormat", std::string("png"));
@@ -229,6 +252,7 @@ protected:
                     Log(Translation("engine.screenbufferobject.loadfromjson.carried") +
                         name_ + " (" + buf + ") " + std::to_string(width_) + "x" + std::to_string(height_), LogSeverity::Debug);
                 }
+                buffer_->SetRenderOrderPriority(renderOrderPriority_);
                 return true;
             }
         }
@@ -271,6 +295,9 @@ protected:
         }
         width_ = loadedWidth;
         height_ = loadedHeight;
+        if (buffer_) {
+            buffer_->SetRenderOrderPriority(renderOrderPriority_);
+        }
         return true;
     }
 
@@ -327,6 +354,8 @@ private:
     std::string name_;
     std::uint32_t width_ = 1280;
     std::uint32_t height_ = 720;
+    /// @brief 同じ種別（ScreenBuffer）の描画先同士での描画順（IRenderTarget::GetRenderOrderPriority参照）
+    std::int32_t renderOrderPriority_ = 0;
     /// @brief ビューアウィンドウ表示フラグ（シリアライズされ、再起動後も維持される）
     bool isShowViewer_ = false;
     /// @brief ビューアウィンドウのImGui ID用フォールバック値（所属オブジェクトが

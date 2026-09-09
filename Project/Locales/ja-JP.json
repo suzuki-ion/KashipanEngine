@@ -24,6 +24,7 @@
 		"engine.window.create.overlay.start": "オーバーレイウィンドウ作成開始。ウィンドウタイトル：",
 		"engine.window.create.overlay.end": "オーバーレイウィンドウ作成完了。ウィンドウタイトル：",
 		"engine.window.create.overlay.failed": "オーバーレイウィンドウの作成に失敗しました。",
+		"engine.window.seticon.failed": "ウィンドウアイコンの読み込みに失敗しました：",
 		"engine.window.destroy.start": "ウィンドウ破棄開始。ウィンドウタイトル：",
 		"engine.window.destroy.end": "ウィンドウ破棄完了。ウィンドウタイトル：",
 		"engine.window.destroy.failed": "ウィンドウの破棄に失敗しました。",
@@ -722,6 +723,7 @@
 		"component.audiosource.auto_pan_muffle_spatial_audio": "自動パン／こもり（空間オーディオ）",
 		"component.audiosource.band_d": "バンド %d",
 		"component.audiosource.bandwidth": "帯域幅",
+		"component.audiosource.category": "音量バスのカテゴリ",
 		"component.audiosource.delay_ms": "ディレイ（ms）",
 		"component.audiosource.echo": "エコー",
 		"component.audiosource.effects": "エフェクト",
@@ -1148,6 +1150,7 @@
 
 		//--------- component.normalwindowobject ---------//
 		"component.normalwindowobject.height": "高さ",
+		"component.normalwindowobject.icon": "アイコン",
 		"component.normalwindowobject.respawn_window": "ウィンドウを再生成",
 		"component.normalwindowobject.sync_with_transform": "Transformと同期",
 		"component.normalwindowobject.title": "タイトル",
@@ -1160,6 +1163,7 @@
 
 		//--------- component.overlaywindowobject ---------//
 		"component.overlaywindowobject.height": "高さ",
+		"component.overlaywindowobject.icon": "アイコン",
 		"component.overlaywindowobject.sync_with_transform": "Transformと同期",
 		"component.overlaywindowobject.title": "タイトル",
 		"component.overlaywindowobject.width": "幅",
@@ -1329,6 +1333,7 @@
 		"component.screenbufferobject.format": "フォーマット",
 		"component.screenbufferobject.height": "高さ",
 		"component.screenbufferobject.name": "名前",
+		"component.screenbufferobject.render_order_priority": "描画順優先度",
 		"component.screenbufferobject.save_screenshot": "スクリーンショットを保存",
 		"component.screenbufferobject.save_to_file": "ファイルへ保存",
 		"component.screenbufferobject.size_ux_u": "サイズ：%u×%u",
@@ -1556,6 +1561,20 @@
 		"component.vignetteeffect.intensity": "強度",
 		"component.vignetteeffect.smoothness": "なめらかさ",
 
+		//--------- component.barreldistortioneffect ---------//
+		"component.barreldistortioneffect.strength": "強さ",
+		"component.barreldistortioneffect.zoom": "ズーム",
+		"component.barreldistortioneffect.edge_color": "端の色",
+
+		//--------- component.palettequantizeeffect ---------//
+		"component.palettequantizeeffect.intensity": "強度",
+		"component.palettequantizeeffect.dither_amount": "ディザ量",
+
+		//--------- component.scanlineeffect ---------//
+		"component.scanlineeffect.intensity": "強度",
+		"component.scanlineeffect.line_spacing": "走査線の間隔",
+		"component.scanlineeffect.thickness": "太さ",
+
 		//--------- editor.assets ---------//
 		"editor.assets.createfile.alreadyexists": "同じ名前のファイルが既に存在します。",
 		"editor.assets.createfile.extension": "拡張子：",
@@ -1626,6 +1645,12 @@
 
 		//--------- editor.audiomanager ---------//
 		"editor.audiomanager.active_plays_d": "再生中の音声数：%d",
+		"editor.audiomanager.categories.add": "追加",
+		"editor.audiomanager.categories.default_volume": "既定音量",
+		"editor.audiomanager.categories.desc": "音量バスのカテゴリ一覧。ここで定義した名前をAudioSourceのカテゴリに割り当てると、設定画面等からのマスター/カテゴリ音量変更がそのAudioSourceに反映されるようになる",
+		"editor.audiomanager.categories.master_volume": "マスター音量",
+		"editor.audiomanager.categories.remove": "削除",
+		"editor.audiomanager.categories.window": "音量バスのカテゴリ",
 		"editor.audiomanager.ended": "終了",
 		"editor.audiomanager.loaded.window": "読み込み済みサウンド",
 		"editor.audiomanager.loaded_sounds_d": "読み込み済みサウンド数：%d",

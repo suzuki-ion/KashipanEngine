@@ -24,6 +24,7 @@
 		"engine.window.create.overlay.start": "Overlay window creation started. Window title: ",
 		"engine.window.create.overlay.end": "Overlay window creation completed. Window title: ",
 		"engine.window.create.overlay.failed": "Failed to create the overlay window.",
+		"engine.window.seticon.failed": "Failed to load the window icon: ",
 		"engine.window.destroy.start": "Window destruction started. Window title: ",
 		"engine.window.destroy.end": "Window destruction completed. Window title: ",
 		"engine.window.destroy.failed": "Failed to destroy the window.",
@@ -722,6 +723,7 @@
 		"component.audiosource.auto_pan_muffle_spatial_audio": "Auto Pan / Muffle (Spatial Audio)",
 		"component.audiosource.band_d": "Band %d",
 		"component.audiosource.bandwidth": "Bandwidth",
+		"component.audiosource.category": "Volume Bus Category",
 		"component.audiosource.delay_ms": "Delay (ms)",
 		"component.audiosource.echo": "Echo",
 		"component.audiosource.effects": "Effects",
@@ -1146,6 +1148,7 @@
 
 		//--------- component.normalwindowobject ---------//
 		"component.normalwindowobject.height": "Height",
+		"component.normalwindowobject.icon": "Icon",
 		"component.normalwindowobject.respawn_window": "Respawn Window",
 		"component.normalwindowobject.sync_with_transform": "Sync With Transform",
 		"component.normalwindowobject.title": "Title",
@@ -1158,6 +1161,7 @@
 
 		//--------- component.overlaywindowobject ---------//
 		"component.overlaywindowobject.height": "Height",
+		"component.overlaywindowobject.icon": "Icon",
 		"component.overlaywindowobject.sync_with_transform": "Sync With Transform",
 		"component.overlaywindowobject.title": "Title",
 		"component.overlaywindowobject.width": "Width",
@@ -1327,6 +1331,7 @@
 		"component.screenbufferobject.format": "Format",
 		"component.screenbufferobject.height": "Height",
 		"component.screenbufferobject.name": "Name",
+		"component.screenbufferobject.render_order_priority": "Render Order Priority",
 		"component.screenbufferobject.save_screenshot": "Save Screenshot",
 		"component.screenbufferobject.save_to_file": "Save to File",
 		"component.screenbufferobject.size_ux_u": "Size: %ux%u",
@@ -1554,6 +1559,20 @@
 		"component.vignetteeffect.intensity": "Intensity",
 		"component.vignetteeffect.smoothness": "Smoothness",
 
+		//--------- component.barreldistortioneffect ---------//
+		"component.barreldistortioneffect.strength": "Strength",
+		"component.barreldistortioneffect.zoom": "Zoom",
+		"component.barreldistortioneffect.edge_color": "Edge Color",
+
+		//--------- component.palettequantizeeffect ---------//
+		"component.palettequantizeeffect.intensity": "Intensity",
+		"component.palettequantizeeffect.dither_amount": "Dither Amount",
+
+		//--------- component.scanlineeffect ---------//
+		"component.scanlineeffect.intensity": "Intensity",
+		"component.scanlineeffect.line_spacing": "Line Spacing",
+		"component.scanlineeffect.thickness": "Thickness",
+
 		//--------- editor.assets ---------//
 		"editor.assets.createfile.alreadyexists": "A file with this name already exists.",
 		"editor.assets.createfile.extension": "Extension: ",
@@ -1624,6 +1643,12 @@
 
 		//--------- editor.audiomanager ---------//
 		"editor.audiomanager.active_plays_d": "Active Plays: %d",
+		"editor.audiomanager.categories.add": "Add",
+		"editor.audiomanager.categories.default_volume": "Default Volume",
+		"editor.audiomanager.categories.desc": "List of audio bus categories. Assign the names defined here to an AudioSource's category so that master/category volume changes (e.g. from a settings menu) affect it",
+		"editor.audiomanager.categories.master_volume": "Master Volume",
+		"editor.audiomanager.categories.remove": "Remove",
+		"editor.audiomanager.categories.window": "Audio Bus Categories",
 		"editor.audiomanager.ended": "Ended",
 		"editor.audiomanager.loaded.window": "AudioManager - Loaded Sounds",
 		"editor.audiomanager.loaded_sounds_d": "Loaded Sounds: %d",

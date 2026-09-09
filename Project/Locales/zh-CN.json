@@ -24,6 +24,7 @@
 		"engine.window.create.overlay.start": "叠加窗口创建开始。窗口标题：",
 		"engine.window.create.overlay.end": "叠加窗口创建完成。窗口标题：",
 		"engine.window.create.overlay.failed": "叠加窗口创建失败。",
+		"engine.window.seticon.failed": "窗口图标加载失败：",
 		"engine.window.destroy.start": "窗口销毁开始。窗口标题：",
 		"engine.window.destroy.end": "窗口销毁完成。窗口标题：",
 		"engine.window.destroy.failed": "窗口销毁失败。",
@@ -1146,6 +1147,7 @@
 
 		//--------- component.normalwindowobject ---------//
 		"component.normalwindowobject.height": "高度",
+		"component.normalwindowobject.icon": "图标",
 		"component.normalwindowobject.respawn_window": "重新生成窗口",
 		"component.normalwindowobject.sync_with_transform": "与Transform同步",
 		"component.normalwindowobject.title": "标题",
@@ -1158,6 +1160,7 @@
 
 		//--------- component.overlaywindowobject ---------//
 		"component.overlaywindowobject.height": "高度",
+		"component.overlaywindowobject.icon": "图标",
 		"component.overlaywindowobject.sync_with_transform": "与Transform同步",
 		"component.overlaywindowobject.title": "标题",
 		"component.overlaywindowobject.width": "宽度",
@@ -1327,6 +1330,7 @@
 		"component.screenbufferobject.format": "格式",
 		"component.screenbufferobject.height": "高度",
 		"component.screenbufferobject.name": "名称",
+		"component.screenbufferobject.render_order_priority": "渲染顺序优先级",
 		"component.screenbufferobject.save_screenshot": "保存截图",
 		"component.screenbufferobject.save_to_file": "保存到文件",
 		"component.screenbufferobject.size_ux_u": "尺寸：%u×%u",
@@ -1523,6 +1527,20 @@
 		"component.vignetteeffect.inner_radius": "内半径",
 		"component.vignetteeffect.intensity": "强度",
 		"component.vignetteeffect.smoothness": "平滑度",
+
+		//--------- component.barreldistortioneffect ---------//
+		"component.barreldistortioneffect.strength": "强度",
+		"component.barreldistortioneffect.zoom": "缩放",
+		"component.barreldistortioneffect.edge_color": "边缘颜色",
+
+		//--------- component.palettequantizeeffect ---------//
+		"component.palettequantizeeffect.intensity": "强度",
+		"component.palettequantizeeffect.dither_amount": "抖动量",
+
+		//--------- component.scanlineeffect ---------//
+		"component.scanlineeffect.intensity": "强度",
+		"component.scanlineeffect.line_spacing": "扫描线间距",
+		"component.scanlineeffect.thickness": "厚度",
 
 		//--------- editor.assets ---------//
 		"editor.assets.createfile.alreadyexists": "已存在同名文件。",

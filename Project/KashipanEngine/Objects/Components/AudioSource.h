@@ -58,6 +58,7 @@ public:
     // 直接書き込み時もセッター/ImGui編集時と同じ副作用（クランプ・再生中音声への反映）がかかるようにする
     OBJECT_COMPONENT_CONSTRUCTOR(AudioSource, 0xFF,
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(soundName_, [this] { soundHandle_ = AudioManager::kInvalidSoundHandle; });
+        ADD_MEMBER_VARIABLE(category_);
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(volume_, [this] { volume_ = std::clamp(volume_, 0.0f, 1.0f); });
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(pitch_, [this] { SetPitch(pitch_); });
         ADD_MEMBER_VARIABLE(loop_);
@@ -88,6 +89,7 @@ public:
     std::unique_ptr<IObjectComponent> Clone() const override {
         auto ptr = std::make_unique<AudioSource>();
         ptr->soundName_ = soundName_;
+        ptr->category_ = category_;
         ptr->volume_ = volume_;
         ptr->pitch_ = pitch_;
         ptr->loop_ = loop_;
@@ -120,6 +122,7 @@ public:
         params.volume = volume_;
         params.pitch = pitch_;
         params.loop = loop_;
+        params.category = category_;
         currentPlayHandle_ = AudioManager::Play(params);
         if (currentPlayHandle_ != AudioManager::kInvalidPlayHandle) {
             AudioManager::SetPan(currentPlayHandle_, 0.0f);
@@ -178,6 +181,10 @@ public:
         soundHandle_ = AudioManager::kInvalidSoundHandle;
     }
     const std::string &GetSoundName() const noexcept { return soundName_; }
+
+    /// @brief 音量バスのカテゴリを設定する(空文字=未分類。`AudioCategories.json`で定義した名前を指定する)
+    void SetCategory(const std::string &category) { category_ = category; }
+    const std::string &GetCategory() const noexcept { return category_; }
 
     void SetVolume(float volume) { volume_ = std::clamp(volume, 0.0f, 1.0f); }
     float GetVolume() const noexcept { return volume_; }
@@ -309,6 +316,8 @@ protected:
         if (ImGuiCustom::SelectString(TranslationLabel("component.audiosource.sound"), soundName_, AudioManager::GetLoadedSoundAssetPaths(), true)) {
             soundHandle_ = AudioManager::kInvalidSoundHandle;
         }
+        ImGuiCustom::SelectString(TranslationLabel("component.audiosource.category"), category_, AudioManager::GetCategoryNames(), true);
+        tooltip("音量バスのカテゴリ(未分類=マスター音量のみ影響)。AudioManagerの「音量バスのカテゴリ」ウィンドウで追加したカテゴリから選べる");
         ImGui::DragFloat(TranslationLabel("component.audiosource.volume"), &volume_, 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat(TranslationLabel("component.audiosource.pitch_semitones"), &pitch_, 0.1f, -24.0f, 24.0f);
         ImGui::Checkbox(TranslationLabel("component.audiosource.loop"), &loop_);
@@ -448,7 +457,7 @@ protected:
         };
 
         return JSON{
-            {"soundName", soundName_}, {"volume", volume_}, {"pitch", pitch_}, {"loop", loop_},
+            {"soundName", soundName_}, {"category", category_}, {"volume", volume_}, {"pitch", pitch_}, {"loop", loop_},
             {"playOnAwake", playOnAwake_},
             {"minDistance", minDistance_}, {"maxDistance", maxDistance_},
             {"effects", effects}, {"enableSpatialAudio", enableSpatialAudio_}
@@ -458,6 +467,7 @@ protected:
     bool LoadFromJson(const JSON &json) override {
         soundName_ = json.value("soundName", std::string{});
         soundHandle_ = AudioManager::kInvalidSoundHandle;
+        category_ = json.value("category", std::string{});
         volume_ = json.value("volume", 1.0f);
         pitch_ = json.value("pitch", 0.0f);
         loop_ = json.value("loop", false);
@@ -621,6 +631,8 @@ private:
 
     std::string soundName_;
     mutable AudioManager::SoundHandle soundHandle_ = AudioManager::kInvalidSoundHandle;
+    /// @brief 音量バスのカテゴリ名(空文字=未分類。`AudioCategories.json`で定義した名前を指定する)
+    std::string category_;
     float volume_ = 1.0f;
     float pitch_ = 0.0f;
     bool loop_ = false;

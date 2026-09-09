@@ -466,7 +466,8 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
     }
 }
 
-/// @brief 描画先→パイプライン優先度→RenderPriority→パイプライン名→メッシュ→サブメッシュ→マテリアルの順で比較する
+/// @brief 描画先→描画先の描画順優先度→パイプライン優先度→RenderPriority→パイプライン名→メッシュ→
+///        サブメッシュ→マテリアルの順で比較する
 /// @details RenderPriorityは各Rendererコンポーネントが持つ値（既定0）で、小さいほど先（奥）、
 ///          大きいほど後（手前）に描画されるよう昇順で比較する。既定値0同士は常にタイとなるため、
 ///          明示的に値を変えない限り既存のパイプライン名/メッシュ/マテリアル単位の並び
@@ -474,9 +475,18 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
 ///          テクスチャ・サンプラー（textureOverrideHandle/samplerOverrideHandle）はバインドレス化
 ///          （gTextures[]/gSamplers[]、RendererDraw.cpp::DrawBatch参照）によりインスタンスごとに
 ///          異なっていてもよいため、このキーには含めない（同一マテリアルならバッチが分断されない）
+///          異なる描画先（target）同士は、IRenderTarget::GetRenderOrderPriority()（既定0、
+///          ScreenBufferObjectのInspectorから設定可能）を先に比較し、同値の場合のみポインタアドレスで
+///          タイブレークする（他の描画先の結果をポストエフェクトから参照するような構成で、
+///          その描画先が必ず先に描き終わっていることを保証したい場合に使う）
 bool CompareSortableEntry(const SortableEntry &a, const SortableEntry &b) {
     if (a.kindOrder != b.kindOrder) return a.kindOrder < b.kindOrder;
-    if (a.entry.target != b.entry.target) return a.entry.target < b.entry.target;
+    if (a.entry.target != b.entry.target) {
+        const std::int32_t aPriority = a.entry.target ? a.entry.target->GetRenderOrderPriority() : 0;
+        const std::int32_t bPriority = b.entry.target ? b.entry.target->GetRenderOrderPriority() : 0;
+        if (aPriority != bPriority) return aPriority < bPriority;
+        return a.entry.target < b.entry.target;
+    }
     if (a.pipelinePriority != b.pipelinePriority) return a.pipelinePriority < b.pipelinePriority;
     if (a.renderPriority != b.renderPriority) return a.renderPriority < b.renderPriority;
     if (a.entry.pipelineName != b.entry.pipelineName) return a.entry.pipelineName < b.entry.pipelineName;

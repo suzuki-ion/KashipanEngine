@@ -1,0 +1,68 @@
+#include "FullScreenTriangle.hlsli"
+#include "PaletteQuantizeCB.hlsli"
+
+Texture2D gTexture : register(t0);
+SamplerState gSampler : register(s0);
+
+// ファミコン(NES/2C02 PPU)実機パレットを0..1に正規化したもの(64要素、無効/重複色を含む)
+static const float3 kNesPalette[64] = {
+    float3(0x66, 0x66, 0x66) / 255.0, float3(0x00, 0x2A, 0x88) / 255.0, float3(0x14, 0x12, 0xA7) / 255.0, float3(0x3B, 0x00, 0xA4) / 255.0,
+    float3(0x5C, 0x00, 0x7E) / 255.0, float3(0x6E, 0x00, 0x40) / 255.0, float3(0x6C, 0x06, 0x00) / 255.0, float3(0x56, 0x1D, 0x00) / 255.0,
+    float3(0x33, 0x35, 0x00) / 255.0, float3(0x0B, 0x48, 0x00) / 255.0, float3(0x00, 0x52, 0x00) / 255.0, float3(0x00, 0x4F, 0x08) / 255.0,
+    float3(0x00, 0x40, 0x4D) / 255.0, float3(0x00, 0x00, 0x00) / 255.0, float3(0x00, 0x00, 0x00) / 255.0, float3(0x00, 0x00, 0x00) / 255.0,
+
+    float3(0xAD, 0xAD, 0xAD) / 255.0, float3(0x15, 0x5F, 0xD9) / 255.0, float3(0x42, 0x40, 0xFF) / 255.0, float3(0x75, 0x27, 0xFE) / 255.0,
+    float3(0xA0, 0x1A, 0xCC) / 255.0, float3(0xB7, 0x1E, 0x7B) / 255.0, float3(0xB5, 0x31, 0x20) / 255.0, float3(0x99, 0x4E, 0x00) / 255.0,
+    float3(0x6B, 0x6D, 0x00) / 255.0, float3(0x38, 0x87, 0x00) / 255.0, float3(0x0C, 0x93, 0x00) / 255.0, float3(0x00, 0x8F, 0x32) / 255.0,
+    float3(0x00, 0x7C, 0x8D) / 255.0, float3(0x00, 0x00, 0x00) / 255.0, float3(0x00, 0x00, 0x00) / 255.0, float3(0x00, 0x00, 0x00) / 255.0,
+
+    float3(0xFF, 0xFE, 0xFF) / 255.0, float3(0x64, 0xB0, 0xFF) / 255.0, float3(0x92, 0x90, 0xFF) / 255.0, float3(0xC6, 0x76, 0xFF) / 255.0,
+    float3(0xF3, 0x6A, 0xFF) / 255.0, float3(0xFE, 0x6E, 0xCC) / 255.0, float3(0xFE, 0x81, 0x70) / 255.0, float3(0xEA, 0x9E, 0x22) / 255.0,
+    float3(0xBC, 0xBE, 0x00) / 255.0, float3(0x88, 0xD8, 0x00) / 255.0, float3(0x5C, 0xE4, 0x30) / 255.0, float3(0x45, 0xE0, 0x82) / 255.0,
+    float3(0x48, 0xCD, 0xDE) / 255.0, float3(0x4F, 0x4F, 0x4F) / 255.0, float3(0x00, 0x00, 0x00) / 255.0, float3(0x00, 0x00, 0x00) / 255.0,
+
+    float3(0xFF, 0xFE, 0xFF) / 255.0, float3(0xC0, 0xDF, 0xFF) / 255.0, float3(0xD3, 0xD2, 0xFF) / 255.0, float3(0xE8, 0xC8, 0xFF) / 255.0,
+    float3(0xFB, 0xC2, 0xFF) / 255.0, float3(0xFE, 0xC4, 0xEA) / 255.0, float3(0xFE, 0xCC, 0xC5) / 255.0, float3(0xF7, 0xD8, 0xA5) / 255.0,
+    float3(0xE4, 0xE5, 0x94) / 255.0, float3(0xCF, 0xEF, 0x96) / 255.0, float3(0xBD, 0xF4, 0xAB) / 255.0, float3(0xB3, 0xF3, 0xCC) / 255.0,
+    float3(0xB5, 0xEB, 0xF2) / 255.0, float3(0xB8, 0xB8, 0xB8) / 255.0, float3(0x00, 0x00, 0x00) / 255.0, float3(0x00, 0x00, 0x00) / 255.0,
+};
+
+// 4x4 Bayer matrix (normalized 0..1)
+static const float kBayerMatrix4x4[16] = {
+    0.0 / 16.0,  8.0 / 16.0,  2.0 / 16.0, 10.0 / 16.0,
+    12.0 / 16.0, 4.0 / 16.0, 14.0 / 16.0, 6.0 / 16.0,
+    3.0 / 16.0, 11.0 / 16.0, 1.0 / 16.0, 9.0 / 16.0,
+    15.0 / 16.0, 7.0 / 16.0, 13.0 / 16.0, 5.0 / 16.0
+};
+
+float3 QuantizeToNesPalette(float3 color) {
+    float bestDist = 1e9;
+    float3 bestColor = color;
+    for (int i = 0; i < 64; ++i) {
+        float3 diff = (color - kNesPalette[i]) * float3(0.30, 0.59, 0.11);
+        float dist = dot(diff, diff);
+        if (dist < bestDist) {
+            bestDist = dist;
+            bestColor = kNesPalette[i];
+        }
+    }
+    return bestColor;
+}
+
+float4 main(VSOutput input) : SV_Target0 {
+    float2 uv = saturate(input.uv);
+    float4 baseColor = gTexture.Sample(gSampler, uv);
+
+    float3 color = baseColor.rgb;
+    if (gDitherAmount > 0.0f) {
+        float2 pixelPos = uv / gInvResolution;
+        int2 ipos = int2(floor(pixelPos));
+        int idx = (ipos.y & 3) * 4 + (ipos.x & 3);
+        float threshold = (kBayerMatrix4x4[idx] - 0.5f) * gDitherAmount;
+        color = saturate(color + threshold);
+    }
+
+    float3 quantized = QuantizeToNesPalette(color);
+    float3 outColor = lerp(baseColor.rgb, quantized, saturate(gIntensity));
+    return float4(outColor, baseColor.a);
+}

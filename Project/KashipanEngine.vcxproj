@@ -1214,7 +1214,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\MotionBlurEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\IPostProcessComponent.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\OutlineEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\PaletteQuantizeEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\RadialBlurEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\ScanlineEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\BarrelDistortionEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\VignetteEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Compute\ComputeShaderProcessing.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\Camera2D.h" />

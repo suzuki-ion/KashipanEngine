@@ -24,6 +24,7 @@
 		"engine.window.create.overlay.start": "오버레이 윈도우 생성 시작. 윈도우 제목: ",
 		"engine.window.create.overlay.end": "오버레이 윈도우 생성 완료. 윈도우 제목: ",
 		"engine.window.create.overlay.failed": "오버레이 윈도우 생성에 실패했습니다.",
+		"engine.window.seticon.failed": "윈도우 아이콘 로드에 실패했습니다: ",
 		"engine.window.destroy.start": "윈도우 파괴 시작. 윈도우 제목: ",
 		"engine.window.destroy.end": "윈도우 파괴 완료. 윈도우 제목: ",
 		"engine.window.destroy.failed": "윈도우 파괴에 실패했습니다.",
@@ -1146,6 +1147,7 @@
 
 		//--------- component.normalwindowobject ---------//
 		"component.normalwindowobject.height": "높이",
+		"component.normalwindowobject.icon": "아이콘",
 		"component.normalwindowobject.respawn_window": "윈도우 재생성",
 		"component.normalwindowobject.sync_with_transform": "Transform과 동기화",
 		"component.normalwindowobject.title": "제목",
@@ -1158,6 +1160,7 @@
 
 		//--------- component.overlaywindowobject ---------//
 		"component.overlaywindowobject.height": "높이",
+		"component.overlaywindowobject.icon": "아이콘",
 		"component.overlaywindowobject.sync_with_transform": "Transform과 동기화",
 		"component.overlaywindowobject.title": "제목",
 		"component.overlaywindowobject.width": "너비",
@@ -1327,6 +1330,7 @@
 		"component.screenbufferobject.format": "포맷",
 		"component.screenbufferobject.height": "높이",
 		"component.screenbufferobject.name": "이름",
+		"component.screenbufferobject.render_order_priority": "렌더링 순서 우선순위",
 		"component.screenbufferobject.save_screenshot": "스크린샷 저장",
 		"component.screenbufferobject.save_to_file": "파일로 저장",
 		"component.screenbufferobject.size_ux_u": "크기: %u×%u",
@@ -1523,6 +1527,20 @@
 		"component.vignetteeffect.inner_radius": "내부 반경",
 		"component.vignetteeffect.intensity": "강도",
 		"component.vignetteeffect.smoothness": "부드러움",
+
+		//--------- component.barreldistortioneffect ---------//
+		"component.barreldistortioneffect.strength": "강도",
+		"component.barreldistortioneffect.zoom": "확대/축소",
+		"component.barreldistortioneffect.edge_color": "가장자리 색상",
+
+		//--------- component.palettequantizeeffect ---------//
+		"component.palettequantizeeffect.intensity": "강도",
+		"component.palettequantizeeffect.dither_amount": "디더링 양",
+
+		//--------- component.scanlineeffect ---------//
+		"component.scanlineeffect.intensity": "강도",
+		"component.scanlineeffect.line_spacing": "주사선 간격",
+		"component.scanlineeffect.thickness": "두께",
 
 		//--------- editor.assets ---------//
 		"editor.assets.createfile.alreadyexists": "같은 이름의 파일이 이미 존재합니다.",

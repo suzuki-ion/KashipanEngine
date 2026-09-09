@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <cstdint>
 #include <functional>
 #include <string>
@@ -39,9 +40,42 @@ public:
         title_ = title;
     }
     const std::string &GetTitle() const noexcept { return title_; }
+    /// @brief ウィンドウアイコンを設定する（.ico のプロジェクト相対パス。空文字でエンジン既定アイコンに戻す）
+    void SetIcon(const std::string &iconPath) {
+        if (window_ && Window::IsExist(window_)) window_->SetIcon(iconPath);
+        iconPath_ = iconPath;
+    }
+    /// @brief 現在設定されているウィンドウアイコンのパスを取得する
+    const std::string &GetIcon() const noexcept { return iconPath_; }
+    /// @brief ウィンドウモード時のクライアントサイズを設定する
+    /// @details フルスクリーン中は実ウィンドウを変更せず、ウィンドウモードへ戻した際のサイズとして保持する
     void SetSize(std::uint32_t width, std::uint32_t height) {
+        if (width == 0 || height == 0) return;
         width_ = width;
         height_ = height;
+        if (window_ && Window::IsExist(window_) && window_->GetWindowMode() == WindowMode::Window) {
+            window_->SetWindowSize(static_cast<std::int32_t>(width_), static_cast<std::int32_t>(height_));
+        }
+    }
+    /// @brief フルスクリーン状態を設定する
+    /// @details ウィンドウモードへ戻す場合は、SetSize()で保持しているサイズを復元する
+    void SetFullscreen(bool fullscreen) {
+        if (!window_ || !Window::IsExist(window_)) return;
+        const bool wasFullscreen = window_->GetWindowMode() == WindowMode::FullScreen;
+        // ユーザーがウィンドウ枠を直接リサイズしていた場合も、フルスクリーン解除時に
+        // そのサイズへ戻せるよう、モード切替前の実クライアントサイズを保持する。
+        if (fullscreen && !wasFullscreen) {
+            width_ = static_cast<std::uint32_t>(std::max(1, window_->GetClientWidth()));
+            height_ = static_cast<std::uint32_t>(std::max(1, window_->GetClientHeight()));
+        }
+        window_->SetWindowMode(fullscreen ? WindowMode::FullScreen : WindowMode::Window);
+        if (!fullscreen && wasFullscreen) {
+            window_->SetWindowSize(static_cast<std::int32_t>(width_), static_cast<std::int32_t>(height_));
+        }
+    }
+    /// @brief 現在フルスクリーンかを取得する
+    bool IsFullscreen() const noexcept {
+        return window_ && Window::IsExist(window_) && window_->GetWindowMode() == WindowMode::FullScreen;
     }
     /// @brief ウィンドウの位置・サイズを同一オブジェクトのTransformと同期するかを設定する
     void SetSyncWithTransform(bool enabled) noexcept { syncWithTransform_ = enabled; }
@@ -90,6 +124,7 @@ protected:
         : IObjectComponent(typeName, maxCount, componentTypeID), title_(std::move(defaultTitle)) {
         // title_の直接書き込み時は、セッターと同様に生成済みウィンドウのタイトルへも反映する
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(title_, [this] { SetTitle(title_); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(iconPath_, [this] { SetIcon(iconPath_); });
         ADD_MEMBER_VARIABLE(width_);
         ADD_MEMBER_VARIABLE(height_);
         ADD_MEMBER_VARIABLE(syncWithTransform_);
@@ -221,6 +256,8 @@ protected:
 
     Window *window_ = nullptr;
     std::string title_;
+    /// @brief ウィンドウアイコンの.icoパス（空文字はエンジン既定アイコンを使う）
+    std::string iconPath_;
     std::uint32_t width_ = 1280;
     std::uint32_t height_ = 720;
     /// @brief 同一オブジェクトのTransformのワールド位置・スケールをウィンドウへ反映するか

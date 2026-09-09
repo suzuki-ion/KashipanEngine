@@ -76,6 +76,9 @@ public:
     void BeginDraw() override;
     void EndDraw() override;
     ID3D12GraphicsCommandList *GetCommandList() const override { return dx12Commands_->GetCommandList(); }
+    std::int32_t GetRenderOrderPriority() const noexcept override { return renderOrderPriority_; }
+    /// @brief 同じ種別の描画先同士での描画順を設定する（詳細はIRenderTarget::GetRenderOrderPriority参照）
+    void SetRenderOrderPriority(std::int32_t priority) noexcept { renderOrderPriority_ = priority; }
 
     /// @brief ポストエフェクト用のパス切り替え処理
     /// @details 現在の書き込み面をSRVとして参照可能な状態にしてバッファを進め、
@@ -220,6 +223,9 @@ private:
 
     size_t rtvWriteIndex_ = 0;
     size_t dsvWriteIndex_ = 0;
+
+    /// @brief 同じ種別の描画先同士での描画順（IRenderTarget::GetRenderOrderPriority参照）
+    std::int32_t renderOrderPriority_ = 0;
 
     bool isDepthWriteEnabled_ = true;
     bool isLastBeginDisableDepthWrite_ = false;

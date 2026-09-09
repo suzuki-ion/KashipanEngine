@@ -1379,6 +1379,15 @@
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\VignetteEffect.h">
       <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\PaletteQuantizeEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\ScanlineEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\BarrelDistortionEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Compute\ComputeShaderProcessing.h">
       <Filter>KashipanEngine\Objects\Components\Compute</Filter>
     </ClInclude>

@@ -24,6 +24,12 @@ public:
     /// @brief bool値の設定（変更があった場合のみ保存する）
     static void SetBool(const std::string &key, bool value);
 
+    /// @brief int値の取得
+    static int GetInt(const std::string &key, int defaultValue);
+
+    /// @brief int値の設定（変更があった場合のみ保存する）
+    static void SetInt(const std::string &key, int value);
+
     /// @brief float値の取得
     static float GetFloat(const std::string &key, float defaultValue);
 
@@ -36,7 +42,32 @@ public:
     /// @brief string値の設定（変更があった場合のみ保存する）
     static void SetString(const std::string &key, const std::string &value);
 
-    /// @brief JSON値の取得（配列・オブジェクトなど任意の形状の値を保存したい場合に使う）
+    /// @brief Vector2値の取得
+    static Vector2 GetVector2(const std::string &key, const Vector2 &defaultValue);
+
+    /// @brief Vector2値の設定（変更があった場合のみ保存する）
+    static void SetVector2(const std::string &key, const Vector2 &value);
+
+    /// @brief Vector3値の取得
+    static Vector3 GetVector3(const std::string &key, const Vector3 &defaultValue);
+
+    /// @brief Vector3値の設定（変更があった場合のみ保存する）
+    static void SetVector3(const std::string &key, const Vector3 &value);
+
+    /// @brief Vector4値の取得
+    static Vector4 GetVector4(const std::string &key, const Vector4 &defaultValue);
+
+    /// @brief Vector4値の設定（変更があった場合のみ保存する）
+    static void SetVector4(const std::string &key, const Vector4 &value);
+
+    /// @brief Quaternion値の取得
+    static Quaternion GetQuaternion(const std::string &key, const Quaternion &defaultValue);
+
+    /// @brief Quaternion値の設定（変更があった場合のみ保存する）
+    static void SetQuaternion(const std::string &key, const Quaternion &value);
+
+    /// @brief JSON値の取得（上記の型で用意しきれていない任意の形状の値を保存したい場合に使う。
+    ///        配列・オブジェクトなど、型を限定せず保存できる）
     static JSON GetJSON(const std::string &key, const JSON &defaultValue);
 
     /// @brief JSON値の設定（変更があった場合のみ保存する）

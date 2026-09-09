@@ -162,12 +162,8 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
         return false;
     }
 
-    // 切り替え前のシーンが再生中だったかどうかを記録しておく（デバッグ用）。
-    // 再生中にシーン切り替えが起きた場合、新しく生成されるSceneインスタンスの
-    // isPlaying_はデフォルト（false）にリセットされ、旧シーンで呼ばれたPlayStart()の
-    // 状態（editModeSnapshot_等）は引き継がれない。その後Stopボタンを押した際に
-    // PlayStop()が「再生中ではない」として早期returnし、画面が更新されなくなる
-    // （ScreenBufferが透明に見える）症状の原因になっていないかを切り分けるためのログ
+    // 再生中の遷移では、新しいSceneへPlay状態を引き継ぐ必要がある。
+    // Play開始前の復元元はSceneManagerが別途保持しているため、ここでは状態だけを引き継ぐ
     const bool wasPlaying = currentScene_ && currentScene_->IsPlaying();
     Log(Translation("engine.scenemanager.scene.switch.start") + pendingSceneName_ +
         "、wasPlaying=" + (wasPlaying ? "true" : "false"), LogSeverity::Info);
@@ -202,6 +198,9 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
 
     if (currentScene_) {
         currentScene_->SetSceneManager(Passkey<SceneManager>(), this);
+#if defined(USE_IMGUI)
+        if (wasPlaying) currentScene_->ContinuePlayAfterSceneChange(Passkey<SceneManager>());
+#endif
         currentScene_->InitializeInterface(Passkey<SceneManager>());
     }
 

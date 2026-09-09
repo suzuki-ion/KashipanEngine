@@ -65,7 +65,7 @@ public:
     /// @brief 再生開始前のシーン状態のスナップショットを取得する（再生中のみ非空）
     /// @details 再生中にシーンを保存する際、ランタイムの変更が混ざった現在の状態ではなく、
     ///          再生開始直前の内容を書き出すために使う
-    const JSON &GetEditModeSnapshot() const { return owner_->editModeSnapshot_; }
+    const JSON &GetEditModeSnapshot() const { return owner_->GetEditModeSnapshot(); }
 
     //==================================================
     // シーン変数

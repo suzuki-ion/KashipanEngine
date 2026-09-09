@@ -196,16 +196,30 @@ public:
     /// @return 保存に成功した場合は true
     bool SaveGlobalSceneVariables(const std::string &filePath = kDefaultGlobalSceneVariablesFilePath) const;
 
-    /// @brief Play開始時点のグローバルシーン変数をスナップショットする
-    /// @details Sceneのローカルシーン変数(sceneVariables_)と同様、Play/Stopでもグローバルシーン
-    ///          変数が編集時の状態へ戻るようにするための呼び出し（Scene::PlayStartから呼ばれる）
-    void SnapshotGlobalSceneVariablesForPlay(Passkey<Scene>) { playModeSnapshot_ = globalSceneVariables_; }
-    /// @brief Play終了時、グローバルシーン変数をPlay開始前の状態へ復元する
-    /// @details Scene::PlayStopから呼ばれる
-    void RestoreGlobalSceneVariablesForPlay(Passkey<Scene>) {
+    /// @brief Play開始時点のシーンとグローバルシーン変数をスナップショットする
+    /// @details 再生中にcurrentScene_が遷移先のSceneへ置き換わっても、停止時には再生開始前の
+    ///          シーンへ戻せるよう、SceneインスタンスではなくSceneManagerがセッション全体を保持する
+    void BeginPlaySession(Passkey<Scene>, const JSON &sceneSnapshot) {
+        playModeSceneSnapshot_ = sceneSnapshot;
+        playModeSnapshot_ = globalSceneVariables_;
+        isPlaySessionActive_ = true;
+    }
+    /// @brief Play終了時、グローバルシーン変数を復元し、再生開始前のシーンJSONを返す
+    JSON EndPlaySession(Passkey<Scene>) {
+        if (!isPlaySessionActive_) return JSON();
         globalSceneVariables_ = std::move(playModeSnapshot_);
         playModeSnapshot_.clear();
+        JSON sceneSnapshot = std::move(playModeSceneSnapshot_);
+        playModeSceneSnapshot_ = JSON();
+        isPlaySessionActive_ = false;
+        // Stopと同じフレームにランタイム側から遷移要求が出ていても、フレーム末尾で
+        // 復元済みの編集シーンを再び切り替えてしまわないよう、Play中の予約は破棄する
+        hasPendingSceneChange_ = false;
+        pendingSceneName_.clear();
+        return sceneSnapshot;
     }
+    /// @brief Play開始時点のシーンJSONを取得する（再生中の保存処理用）
+    const JSON &GetPlayModeSceneSnapshot(Passkey<Scene>) const { return playModeSceneSnapshot_; }
 
 private:
     /// @brief 名前から登録エントリを検索する（存在しない場合は nullptr）
@@ -217,8 +231,10 @@ private:
     std::vector<SceneEntry> registeredScenes_;
     std::string startupSceneName_;
     std::unordered_map<std::string, MyAny> globalSceneVariables_;
-    /// @brief Play中の変更を破棄してPlay開始前の状態へ戻すためのスナップショット（Play中のみ有効）
+    /// @brief Play中の変更を破棄してPlay開始前の状態へ戻すためのスナップショット群
     std::unordered_map<std::string, MyAny> playModeSnapshot_;
+    JSON playModeSceneSnapshot_;
+    bool isPlaySessionActive_ = false;
 
     std::unique_ptr<Scene> currentScene_;
     bool hasPendingSceneChange_ = false;

@@ -94,8 +94,9 @@ void Scene::PlayStart() {
     if (sDirectXCommon_) sDirectXCommon_->WaitForGPUIdle(Passkey<Scene>{});
     editModeSnapshot_ = SaveToJSON();
     // グローバルシーン変数はSceneではなくSceneManagerが保持するため、ローカルのsceneVariables_と
-    // 同様にPlay/Stopをまたいでも編集時の値へ戻せるよう、ここで別途スナップショットを取る
-    if (sceneManager_) sceneManager_->SnapshotGlobalSceneVariablesForPlay(Passkey<Scene>{});
+    // 同様にPlay/Stopをまたいでも編集時の値へ戻せるよう、シーンJSONとまとめてセッションとして保持する。
+    // SceneManager側に持たせることで、再生中のシーン遷移でこのSceneが破棄されても復元元を失わない
+    if (sceneManager_) sceneManager_->BeginPlaySession(Passkey<Scene>{}, editModeSnapshot_);
 
     // EditorOnlyオブジェクトは再生中のシーンには存在させない（子孫ごと削除される）。
     // スナップショットには保存済みのため、PlayStopでの復元時に元へ戻る
@@ -124,6 +125,24 @@ void Scene::PlayStart() {
     isStepFrameRequested_ = false;
 }
 
+void Scene::ContinuePlayAfterSceneChange(Passkey<SceneManager>) {
+    // 遷移先はファイルから生成された直後なので、PlayStartのような編集状態の再スナップショットや
+    // ScriptComponentの再読み込みは不要。Play開始時点の復元元はSceneManagerに保持したまま、
+    // Releaseビルドでのシーン遷移と同様にEditorOnlyを除外して更新可能な状態へ移す
+    DeleteEditorOnlyObjects();
+    isPlaying_ = true;
+    isPaused_ = false;
+    isStepFrameRequested_ = false;
+}
+
+const JSON &Scene::GetEditModeSnapshot() const {
+    if (sceneManager_) {
+        const JSON &sessionSnapshot = sceneManager_->GetPlayModeSceneSnapshot(Passkey<Scene>{});
+        if (!sessionSnapshot.empty()) return sessionSnapshot;
+    }
+    return editModeSnapshot_;
+}
+
 void Scene::PlayStop() {
     if (!isPlaying_) {
         // 「シーン切り替えでこのSceneインスタンスが再生開始前に置き換わっており、
@@ -140,9 +159,6 @@ void Scene::PlayStop() {
     isPaused_ = false;
     isStepFrameRequested_ = false;
 
-    // PlayStart側で取ったグローバルシーン変数のスナップショットへ戻す（snapshot.emptyでの早期returnより前に行う）
-    if (sceneManager_) sceneManager_->RestoreGlobalSceneVariablesForPlay(Passkey<Scene>{});
-
     // SkinnedMeshRendererのアニメーションは各コンポーネントが専用に複製したスケルトンインスタンスの
     // ジョイントTransformを直接書き換えて進行するため、シーンオブジェクトを再生開始前の状態へ
     // 戻すだけでは元のポーズに戻らない。ここで明示的にバインドポーズへ復元する。
@@ -153,7 +169,12 @@ void Scene::PlayStop() {
     // 消費者向け）のジョイント姿勢もバインドポーズへ復元しておく。
     SkeletonManager::ResetAllSkeletonsToBindPose();
 
-    JSON snapshot = std::move(editModeSnapshot_);
+    // 再生中にシーン遷移していても開始前のシーンへ戻れるよう、SceneManagerが保持する
+    // Playセッション全体のスナップショットを優先する。SceneManagerが無い場合だけ従来の
+    // Sceneローカルスナップショットへフォールバックする
+    JSON snapshot = sceneManager_
+        ? sceneManager_->EndPlaySession(Passkey<Scene>{})
+        : std::move(editModeSnapshot_);
     editModeSnapshot_ = JSON();
     if (snapshot.empty()) {
         // isPlaying_はtrueだったがスナップショットが空＝このSceneインスタンスで
@@ -662,6 +683,11 @@ MyAny *Scene::AddGlobalSceneVariableInternal(const std::string &key, const MyAny
 bool Scene::RemoveGlobalSceneVariableInternal(const std::string &key) {
     if (!sceneManager_) return false;
     return sceneManager_->RemoveGlobalSceneVariable(key);
+}
+
+void Scene::ClearGlobalSceneVariablesInternal() {
+    if (!sceneManager_) return;
+    sceneManager_->ClearGlobalSceneVariables();
 }
 
 MyAny *Scene::GetGlobalSceneVariableInternal(const std::string &key) {

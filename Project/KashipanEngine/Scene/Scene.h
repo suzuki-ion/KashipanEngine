@@ -117,6 +117,10 @@ public:
     bool IsPaused() const { return isPaused_; }
     /// @brief 再生を開始する（開始前のシーン状態を保存する）
     void PlayStart();
+    /// @brief 再生中のシーン遷移後、新しいSceneを同じPlayセッションへ参加させる（SceneManager専用）
+    void ContinuePlayAfterSceneChange(Passkey<SceneManager>);
+    /// @brief 再生開始前のシーン状態を取得する（再生中の保存処理用）
+    const JSON &GetEditModeSnapshot() const;
     /// @brief 再生を終了する（開始前のシーン状態へ復元する）
     void PlayStop();
     /// @brief 一時停止する
@@ -213,6 +217,9 @@ protected:
     /// @param key 変数のキー
     /// @return 削除に成功した場合は true、失敗した場合は false を返す
     bool RemoveGlobalSceneVariable(const std::string &key) { return RemoveGlobalSceneVariableInternal(key); }
+    /// @brief グローバルシーン変数を全て削除する（新規ゲーム開始時、既存セーブデータをメモリ上から
+    ///        破棄する用途を想定。ファイルへの反映は別途SaveGlobalSceneVariables()の呼び出しが必要）
+    void ClearGlobalSceneVariables() { ClearGlobalSceneVariablesInternal(); }
     /// @brief グローバルシーン変数の情報を取得する
     /// @param key 変数のキー
     /// @return シーン変数のポインタ（存在しない場合は nullptr）
@@ -614,6 +621,7 @@ private:
 
     MyAny *AddGlobalSceneVariableInternal(const std::string &key, const MyAny &value, const TypeInfo &typeInfo);
     bool RemoveGlobalSceneVariableInternal(const std::string &key);
+    void ClearGlobalSceneVariablesInternal();
     MyAny *GetGlobalSceneVariableInternal(const std::string &key);
     const std::unordered_map<std::string, MyAny> &GetGlobalSceneVariablesInternal() const;
 

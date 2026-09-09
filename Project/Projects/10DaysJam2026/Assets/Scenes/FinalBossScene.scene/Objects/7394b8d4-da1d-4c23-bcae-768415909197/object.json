@@ -1,0 +1,77 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 64.43944549560547,
+                            "y": 97.26144409179688,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "groups": [
+                            {
+                                "rects": [
+                                    {
+                                        "max": {
+                                            "x": 242.07220458984375,
+                                            "y": 187.66793823242188
+                                        },
+                                        "min": {
+                                            "x": -13.145820617675781,
+                                            "y": -49.531402587890625
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "CameraBoundsZone2D"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "75f93b5c-c171-4727-be8a-e62a4a7dd1a9"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "GameScreenCameraBoundsZone",
+        "objectID": "7394b8d4-da1d-4c23-bcae-768415909197",
+        "prefabNodeID": "4c0c235b-938e-44bc-9eca-e3271ebc5e09",
+        "tag": ""
+    },
+    "siblingIndex": 25000
+}

@@ -1,0 +1,228 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 32.0,
+                            "y": 6.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 1556.0863037109375,
+                            "y": 558.3582763671875,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Rect2D"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "textureAssetPath": "App/Sprite/Object/moveScaffold.png"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "TextureSource"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "currentVelocity": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "loop": true,
+                            "loopBackDuration": 1.0,
+                            "loopBackEaseType": 0,
+                            "loopBackWaitDuration": 0.0,
+                            "points": [
+                                {
+                                    "duration": 1.0,
+                                    "easeType": 0,
+                                    "offset": {
+                                        "x": 0.0,
+                                        "y": 32.0,
+                                        "z": 0.0
+                                    },
+                                    "rotateOffset": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "waitDuration": 0.0
+                                },
+                                {
+                                    "duration": 1.0,
+                                    "easeType": 0,
+                                    "offset": {
+                                        "x": 32.0,
+                                        "y": 32.0,
+                                        "z": 0.0
+                                    },
+                                    "rotateOffset": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "waitDuration": 0.0
+                                },
+                                {
+                                    "duration": 1.0,
+                                    "easeType": 0,
+                                    "offset": {
+                                        "x": 32.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "rotateOffset": {
+                                        "x": 0.0,
+                                        "y": 0.0,
+                                        "z": 0.0
+                                    },
+                                    "waitDuration": 0.0
+                                }
+                            ]
+                        },
+                        "scriptPath": "Assets/Scripts/MoveGroundPath.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {},
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PreTransform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "autoGenerated": false,
+                        "center": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "continuousDetection": false,
+                        "isTrigger": false,
+                        "size": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "syncPosition": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncRotation": true,
+                        "syncScale": [
+                            true,
+                            true,
+                            false
+                        ]
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Box2DCollider"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "5afc3685-a3e7-4855-8a61-f691911fe5d8"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "anchor": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "instanceUvCombineMode": 0,
+                        "instanceUvPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceUvRotation": 0.0,
+                        "instanceUvScale": {
+                            "x": 1.0,
+                            "y": 0.5
+                        },
+                        "instanceUvTranslate": {
+                            "x": 0.0,
+                            "y": 0.5
+                        },
+                        "materialName": "Dot",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "pixelSnapOutsetPixels": 0.0,
+                        "pixelSnapping": false,
+                        "renderPriority": 0,
+                        "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "SpriteRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "MoveFloor",
+        "objectID": "e3703de1-89bd-4d84-9b25-a17963218b4b",
+        "prefabNodeID": "125672e6-c105-4726-8d87-a39a27b3c7ff",
+        "tag": ""
+    },
+    "siblingIndex": 78000
+}

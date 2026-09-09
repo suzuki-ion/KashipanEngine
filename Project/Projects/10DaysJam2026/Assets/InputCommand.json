@@ -110,6 +110,20 @@
             "invertValue": false,
             "state": "Down",
             "threshold": -0.10000000149011612
+        },
+        {
+            "button": "DPadRight",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Down"
+        },
+        {
+            "button": "DPadLeft",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": true,
+            "state": "Down"
         }
     ],
     "SelectDown": [

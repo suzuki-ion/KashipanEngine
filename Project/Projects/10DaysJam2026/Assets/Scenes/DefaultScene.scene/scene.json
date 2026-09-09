@@ -69,11 +69,6 @@
             "value": false
         },
         {
-            "key": "dialogueBoxUIBusy",
-            "type": "Bool",
-            "value": false
-        },
-        {
             "key": "saveRequestedPosition",
             "type": "Vector3",
             "value": {
@@ -81,6 +76,11 @@
                 "y": 144.0,
                 "z": 0.0
             }
+        },
+        {
+            "key": "dialogueBoxUIBusy",
+            "type": "Bool",
+            "value": false
         },
         {
             "key": "gameplayCameraPos",

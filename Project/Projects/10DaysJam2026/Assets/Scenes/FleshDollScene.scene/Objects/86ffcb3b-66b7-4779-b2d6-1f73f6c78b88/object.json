@@ -30,29 +30,42 @@
             {
                 "data": {
                     "customData": {
-                        "height": 240,
-                        "isShowViewer": true,
-                        "name": "UIScreen",
-                        "renderOrderPriority": 0,
-                        "saveDirectory": "Screenshots",
-                        "saveFileNamePrefix": "Screenshot",
-                        "saveFormat": "png",
-                        "viewerId": 2393810960136108085,
-                        "width": 256
+                        "autoSyncSize": true,
+                        "farClip": 1000.0,
+                        "height": 1920.0,
+                        "nearClip": 0.0,
+                        "pixelSnapping": false,
+                        "width": 2048.0
                     },
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
                 },
-                "type": "ScreenBufferObject"
+                "type": "Camera2D"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "bindVariableNames": [
+                            "Vertex:gCamera2D",
+                            "Pixel:gCamera2D"
+                        ],
+                        "pipelineName": "",
+                        "targetObjectID": "7e9ed864-bd4f-4a56-b710-292c1f7bb9e0"
+                    },
+                    "isActive": true,
+                    "priority": 950,
+                    "tag": ""
+                },
+                "type": "CameraRenderer"
             }
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "UIScreen",
-        "objectID": "73626dfb-bd82-456c-a3f0-099638c7b232",
+        "name": "FinalScreen Camera",
+        "objectID": "86ffcb3b-66b7-4779-b2d6-1f73f6c78b88",
         "tag": ""
     },
-    "siblingIndex": 3000
+    "siblingIndex": 4600
 }

@@ -50,14 +50,14 @@
     "sceneName": "MountainScene",
     "sceneVariables": [
         {
-            "key": "isDialogueActive",
-            "type": "Bool",
-            "value": false
-        },
-        {
             "key": "testFloat",
             "type": "Float",
             "value": 0.0
+        },
+        {
+            "key": "isDialogueActive",
+            "type": "Bool",
+            "value": false
         },
         {
             "key": "testString",
@@ -75,6 +75,11 @@
             "value": false
         },
         {
+            "key": "gameOverRequested",
+            "type": "Bool",
+            "value": true
+        },
+        {
             "key": "gameplayCameraPos",
             "type": "Vector3",
             "value": {
@@ -90,6 +95,20 @@
                 "x": 256.0,
                 "y": 240.0
             }
+        },
+        {
+            "key": "saveRequestedPosition",
+            "type": "Vector3",
+            "value": {
+                "x": 1034.6741943359375,
+                "y": 583.928466796875,
+                "z": 0.079986572265625
+            }
+        },
+        {
+            "key": "saveRequested",
+            "type": "Bool",
+            "value": false
         }
     ]
 }

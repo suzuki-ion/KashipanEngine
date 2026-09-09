@@ -991,6 +991,8 @@
 		//--------- component.dithereffect ---------//
 		"component.dithereffect.color": "色",
 		"component.dithereffect.intensity": "強度",
+		"component.dithereffect.pattern_width": "パターン解像度の幅 (0: 自動)",
+		"component.dithereffect.pattern_height": "パターン解像度の高さ (0: 自動)",
 
 		//--------- component.dotmatrixeffect ---------//
 		"component.dotmatrixeffect.dot_radius": "ドット半径",

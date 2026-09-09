@@ -988,6 +988,8 @@
 		//--------- component.dithereffect ---------//
 		"component.dithereffect.color": "颜色",
 		"component.dithereffect.intensity": "强度",
+		"component.dithereffect.pattern_width": "图案分辨率宽度（0：自动）",
+		"component.dithereffect.pattern_height": "图案分辨率高度（0：自动）",
 
 		//--------- component.dotmatrixeffect ---------//
 		"component.dotmatrixeffect.dot_radius": "点半径",

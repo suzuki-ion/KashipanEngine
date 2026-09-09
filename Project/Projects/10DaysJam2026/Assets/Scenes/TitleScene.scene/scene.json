@@ -32,14 +32,14 @@
     "sceneName": "TitleScene",
     "sceneVariables": [
         {
-            "key": "isDialogueActive",
-            "type": "Bool",
-            "value": false
-        },
-        {
             "key": "testFloat",
             "type": "Float",
             "value": 0.0
+        },
+        {
+            "key": "isDialogueActive",
+            "type": "Bool",
+            "value": false
         },
         {
             "key": "testString",
@@ -52,14 +52,14 @@
             "value": 0
         },
         {
-            "key": "gameOverRequested",
-            "type": "Bool",
-            "value": true
-        },
-        {
             "key": "dialogueBoxUIBusy",
             "type": "Bool",
             "value": false
+        },
+        {
+            "key": "gameOverRequested",
+            "type": "Bool",
+            "value": true
         },
         {
             "key": "gameplayCameraPos",

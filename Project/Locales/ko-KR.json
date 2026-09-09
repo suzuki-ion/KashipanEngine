@@ -988,6 +988,8 @@
 		//--------- component.dithereffect ---------//
 		"component.dithereffect.color": "색상",
 		"component.dithereffect.intensity": "강도",
+		"component.dithereffect.pattern_width": "패턴 해상도 너비 (0: 자동)",
+		"component.dithereffect.pattern_height": "패턴 해상도 높이 (0: 자동)",
 
 		//--------- component.dotmatrixeffect ---------//
 		"component.dotmatrixeffect.dot_radius": "도트 반경",

@@ -989,6 +989,8 @@
 		//--------- component.dithereffect ---------//
 		"component.dithereffect.color": "Color",
 		"component.dithereffect.intensity": "Intensity",
+		"component.dithereffect.pattern_width": "Pattern Resolution Width (0: Auto)",
+		"component.dithereffect.pattern_height": "Pattern Resolution Height (0: Auto)",
 
 		//--------- component.dotmatrixeffect ---------//
 		"component.dotmatrixeffect.dot_radius": "Dot Radius",

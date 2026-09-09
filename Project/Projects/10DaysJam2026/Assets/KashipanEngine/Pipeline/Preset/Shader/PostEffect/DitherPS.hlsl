@@ -5,7 +5,7 @@ SamplerState gSampler : register(s0);
 
 cbuffer DitherCB : register(b0)
 {
-    float2 invResolution; // 1.0 / (width, height)
+    float2 invPatternResolution; // 1.0 / pattern resolution
     float intensity;      // ディゾルブ進行度（0: 無適用 〜 1: 画面全体が消える）
     uint  color;          // 0: 単色, 1: 色あり
     uint  pad;
@@ -32,7 +32,7 @@ float4 main(VS_OUT input) : SV_Target0 {
     float2 uv = input.uv;
 
     // pixel coordinates
-    float2 pixelPos = uv / invResolution; // uv * (width,height)
+    float2 pixelPos = uv / invPatternResolution; // uv * pattern resolution
     int2 ipos = int2(floor(pixelPos));
 
     // 4x4 matrix indices

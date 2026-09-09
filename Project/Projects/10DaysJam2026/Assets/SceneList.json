@@ -29,5 +29,5 @@
             "name": "Boss2Scene"
         }
     ],
-    "startupScene": "DefaultScene"
+    "startupScene": "TitleScene"
 }

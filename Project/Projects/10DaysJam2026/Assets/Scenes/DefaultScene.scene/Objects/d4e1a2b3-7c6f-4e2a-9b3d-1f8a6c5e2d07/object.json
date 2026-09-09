@@ -1,0 +1,73 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "height": 240,
+                        "isShowViewer": true,
+                        "name": "GameOverDither",
+                        "renderOrderPriority": -10,
+                        "saveDirectory": "Screenshots",
+                        "saveFileNamePrefix": "Screenshot",
+                        "saveFormat": "png",
+                        "viewerId": 8837462910573920184,
+                        "width": 256
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScreenBufferObject"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "color": true,
+                        "excludedScreenBuffers": [],
+                        "intensity": 0.02,
+                        "patternHeight": 240,
+                        "patternWidth": 256
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "DitherEffect"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "GameOverDitherBuffer",
+        "objectID": "d4e1a2b3-7c6f-4e2a-9b3d-1f8a6c5e2d07",
+        "tag": ""
+    },
+    "siblingIndex": 21500
+}

@@ -59,14 +59,14 @@
     "sceneName": "TowerScene",
     "sceneVariables": [
         {
-            "key": "testFloat",
-            "type": "Float",
-            "value": 0.0
-        },
-        {
             "key": "isDialogueActive",
             "type": "Bool",
             "value": false
+        },
+        {
+            "key": "testFloat",
+            "type": "Float",
+            "value": 0.0
         },
         {
             "key": "testString",
@@ -79,14 +79,14 @@
             "value": 0
         },
         {
-            "key": "dialogueBoxUIBusy",
+            "key": "gameOverRequested",
             "type": "Bool",
             "value": false
         },
         {
-            "key": "gameOverRequested",
+            "key": "dialogueBoxUIBusy",
             "type": "Bool",
-            "value": true
+            "value": false
         },
         {
             "key": "gameplayCameraPos",

@@ -242,6 +242,24 @@ class Player : ScriptComponentBehavior {
         if (currentWeaponType < 0 && weapons !is null && weapons.length() > 0) {
             currentWeaponType = FindOwnedWeapon(1);
         }
+
+        SaveInitialProgressIfNewGame();
+    }
+
+    // タイトル画面で「はじめから」を選択した直後(TitleMenuController.StartNewGame()が
+    // グローバル変数isNewGameStartを立てて遷移してきた場合)、この時点の状態(初期HP/
+    // このシーン/武器未所持等)を一度だけセーブファイルへ書き込む。
+    // こうしておかないと、最初のセーブ地点へ到達する前に死亡した場合、コンティニュー時に
+    // 戻る先のセーブデータが存在せず(save_sceneNameが空)、死亡したシーンがそのまま
+    // リロードされるだけになってしまう(ゲーム開始地点まで正しく戻れない)
+    void SaveInitialProgressIfNewGame() {
+        bool isNewGameStart = false;
+        GetScene().GetGlobalVariable("isNewGameStart", isNewGameStart);
+        if (!isNewGameStart) return;
+
+        // 消費(次にこのフラグが残ったまま別シーンへ入っても再セーブしないように)
+        GetScene().SetGlobalVariable("isNewGameStart", false);
+        SaveProgress();
     }
 
     // 現在のシーン実行状態でセーブデータの読み書きを行ってよいかどうか
@@ -1127,7 +1145,12 @@ class Player : ScriptComponentBehavior {
     void End() {
         Log("Player End");
         // シーン切り替え時の引き継ぎ(メモリ上の更新のみ)。ファイルへの保存はSavePointから行う
-        UpdateProgressVariables();
+        // (死亡中は呼ばない。呼ぶと0になったhpがsave_hpへ上書きされてしまい、コンティニューで
+        //  シーンをリロードした直後にLoadProgress()がその0を読み込んで即座に再度ゲームオーバーへ
+        //  戻ってしまう。生存中の通常のシーン遷移でのみ引き継ぎを更新する)
+        if (isAlive) {
+            UpdateProgressVariables();
+        }
     }
 
     void AddExp(float expAmount) {

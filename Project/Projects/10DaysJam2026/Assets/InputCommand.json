@@ -138,6 +138,21 @@
             "invertValue": false,
             "key": "S",
             "state": "Trigger"
+        },
+        {
+            "button": "DPadDown",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Trigger"
+        },
+        {
+            "analog": "LeftStickY",
+            "controllerIndex": 0,
+            "device": "ControllerAnalog",
+            "invertValue": false,
+            "state": "Trigger",
+            "threshold": -0.5
         }
     ],
     "SelectUp": [
@@ -152,6 +167,21 @@
             "invertValue": false,
             "key": "Up",
             "state": "Trigger"
+        },
+        {
+            "button": "DPadUp",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Trigger"
+        },
+        {
+            "analog": "LeftStickY",
+            "controllerIndex": 0,
+            "device": "ControllerAnalog",
+            "invertValue": false,
+            "state": "Trigger",
+            "threshold": 0.5
         }
     ],
     "WeaponChangeLeft": [

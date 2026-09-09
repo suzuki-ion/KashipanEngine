@@ -30,5 +30,53 @@
     ],
     "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",
     "sceneName": "TitleScene",
-    "sceneVariables": []
+    "sceneVariables": [
+        {
+            "key": "testFloat",
+            "type": "Float",
+            "value": 0.0
+        },
+        {
+            "key": "isDialogueActive",
+            "type": "Bool",
+            "value": false
+        },
+        {
+            "key": "testString",
+            "type": "String",
+            "value": "abcdefg"
+        },
+        {
+            "key": "testInt",
+            "type": "Int32",
+            "value": 0
+        },
+        {
+            "key": "dialogueBoxUIBusy",
+            "type": "Bool",
+            "value": false
+        },
+        {
+            "key": "gameOverRequested",
+            "type": "Bool",
+            "value": true
+        },
+        {
+            "key": "gameplayCameraPos",
+            "type": "Vector3",
+            "value": {
+                "x": 203.43792724609375,
+                "y": 7.26812744140625,
+                "z": 0.0
+            }
+        },
+        {
+            "key": "gameplayCameraSize",
+            "type": "Vector2",
+            "value": {
+                "x": 256.0,
+                "y": 240.0
+            }
+        }
+    ]
 }

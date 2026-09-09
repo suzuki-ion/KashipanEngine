@@ -168,8 +168,11 @@ class TitleMenuController : ScriptComponentBehavior {
 
     // 新規ゲームを開始する。CheckSaveData()で確認用に読み込んでいた既存セーブ内容(メモリ上)を
     // 破棄してからnextSceneNameへ遷移する(破棄しないと、ゲーム開始後のPlayer.LoadProgress()が
-    // 古いセーブ内容を引き継いでしまう)。ファイルへは反映しないため、ディスク上の既存セーブ
-    // データは実際に上書きセーブされるまでそのまま残る
+    // 古いセーブ内容を引き継いでしまう)。isNewGameStartを立てておくことで、遷移先シーンの
+    // Player.Start()側がこの開始時点の状態(初期HP等)を一度だけディスクへセーブしてくれる
+    // (Player.SaveInitialProgressIfNewGame()参照)。これにより、最初のセーブ地点へ到達する前に
+    // 死亡しても、コンティニューでこのゲーム開始地点まで戻れるようになる。
+    // このため、この時点で既存のセーブファイルがあった場合は上書きされる点に注意
     void StartNewGame() {
         if (nextSceneName.length() == 0) return;
 
@@ -179,6 +182,7 @@ class TitleMenuController : ScriptComponentBehavior {
         if (ShouldPersistProgress()) {
             scene.ClearGlobalVariables();
             scene.SetGlobalVariable("hasLoadedSaveThisSession", true);
+            scene.SetGlobalVariable("isNewGameStart", true);
         }
 
         ChangeSceneWithFade(scene, nextSceneName);

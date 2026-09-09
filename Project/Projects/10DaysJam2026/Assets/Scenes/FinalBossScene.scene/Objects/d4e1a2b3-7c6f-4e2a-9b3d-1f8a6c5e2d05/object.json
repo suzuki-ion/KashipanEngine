@@ -1,0 +1,81 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "d4e1a2b3-7c6f-4e2a-9b3d-1f8a6c5e2d06",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 128.0,
+                            "y": 90.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "displayCameraObjectID": "39a0a227-e437-41ee-9ce6-08e60e6dbea2"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "UIButton"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "fontName": "jfdot-Shinonome-12",
+                        "fontSize": 12.0,
+                        "horizontalAlign": 1,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "materialName": "Default",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "pixelSnapOutsetPixels": 0.0,
+                        "pixelSnapping": false,
+                        "pointSampling": true,
+                        "renderPriority": 101,
+                        "targetObjectID": "0ebc1a29-dcbd-4cf6-9396-7dca2470f823",
+                        "text": "おわる",
+                        "verticalAlign": 1
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "BitmapTextRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "ExitUI",
+        "objectID": "d4e1a2b3-7c6f-4e2a-9b3d-1f8a6c5e2d05",
+        "tag": ""
+    },
+    "siblingIndex": 21400
+}

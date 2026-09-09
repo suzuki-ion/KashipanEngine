@@ -1,0 +1,60 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "continueUIObject": "d4e1a2b3-7c6f-4e2a-9b3d-1f8a6c5e2d03",
+                            "ditherFadeObject": "7e9ed864-bd4f-4a56-b710-292c1f7bb9e0",
+                            "exitUIObject": "d4e1a2b3-7c6f-4e2a-9b3d-1f8a6c5e2d05",
+                            "gameOverUIObject": "d4e1a2b3-7c6f-4e2a-9b3d-1f8a6c5e2d06",
+                            "inputDelay": 0.30000001192092896,
+                            "selectableUIObject": "d4e1a2b3-7c6f-4e2a-9b3d-1f8a6c5e2d06",
+                            "titleSceneName": "TitleScene",
+                            "titleUIObject": "d4e1a2b3-7c6f-4e2a-9b3d-1f8a6c5e2d04"
+                        },
+                        "scriptPath": "Assets/Scripts/GameOverMenu.as"
+                    },
+                    "isActive": true,
+                    "priority": 5,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "GameOverMenu",
+        "objectID": "d4e1a2b3-7c6f-4e2a-9b3d-1f8a6c5e2d01",
+        "tag": ""
+    },
+    "siblingIndex": 21000
+}

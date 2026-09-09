@@ -21,6 +21,12 @@ class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("移動速度")]
     float moveSpeed = 66.6667f;
 
+    [SerializeField, Tooltip("地上での加速度(1秒あたりの速度増加量。大きいほど最高速に達するまでが速い)")]
+    float groundAcceleration = 450.0f;
+
+    [SerializeField, Tooltip("地上での減速度(1秒あたりの速度減少量。大きいほど止まるまでが速い)")]
+    float groundDeceleration = 600.0f;
+
     [SerializeField, Tooltip("ジャンプ力")]
     float jumpPower = 66.6667f;
 
@@ -32,6 +38,9 @@ class Player : ScriptComponentBehavior {
 
     [SerializeField, Tooltip("重力")]
     float gravity = 120.0f;
+
+    [SerializeField, Tooltip("落下速度の上限(ターミナルベロシティ)。際限なく加速し続けないようにする")]
+    float maxFallSpeed = 200.0f;
 
     [SerializeField, Tooltip("接地とみなす法線Y成分のしきい値")]
     float groundedThreshold = 0.5f;
@@ -370,6 +379,19 @@ class Player : ScriptComponentBehavior {
         }
     }
 
+    // currentをtargetへ向けてmaxDeltaぶんだけ近づけた値を返す(targetを飛び越えない)。
+    // 加速度/減速度を使った速度のじわっとした変化に使用する
+    float ApproachSpeed(float current, float target, float maxDelta) {
+        if (current < target) {
+            current += maxDelta;
+            if (current > target) current = target;
+        } else if (current > target) {
+            current -= maxDelta;
+            if (current < target) current = target;
+        }
+        return current;
+    }
+
     void Update() {
         // シーン変数経由のセーブ要求を監視する(SavePoint.as参照)。
         // 消費したら自分でfalseへ戻す(シーン変数は自動ではリセットされないため)
@@ -445,7 +467,12 @@ class Player : ScriptComponentBehavior {
                 moveX = 0.0f;
             }
 
-            velocity.x = moveX * moveSpeed;
+            // SFC時代のアクションゲームらしく、瞬時に最高速へ切り替わるのではなく
+            // 加速度/減速度を挟んで速度がじわっと変化するようにする
+            // (groundAcceleration/groundDecelerationを0に近づければ従来の瞬間切り替えにも戻せる)
+            float targetSpeedX = moveX * moveSpeed;
+            float rateX = (moveX != 0.0f) ? groundAcceleration : groundDeceleration;
+            velocity.x = ApproachSpeed(velocity.x, targetSpeedX, rateX * GetDeltaTime());
         }
 
         float rotY = (lastDirection == Direction::Left) ? 3.14159f : 0.0f;
@@ -490,6 +517,11 @@ class Player : ScriptComponentBehavior {
         }
 
         velocity.y -= gravity * GetDeltaTime();
+
+        // 落下速度に上限を設ける(SFC時代のアクションゲームでよくある、際限なく加速しない落下)
+        if (velocity.y < -maxFallSpeed) {
+            velocity.y = -maxFallSpeed;
+        }
 
         Vector2 movement = velocity * GetDeltaTime();
         if(controller !is null) {

@@ -4,7 +4,7 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "59124f65-2c8c-4aea-ae1a-a4c639b9a8e6",
+                        "parent": "7ef53692-0562-4d39-861d-99fdab433d60",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -34,9 +34,7 @@
                         "fields": {
                             "advanceCommandName": "Attack",
                             "backgroundObject": "f05d91ea-f4d8-40c1-9201-fd12a34072ad",
-                            "choiceSlotObjects": [
-                                "59124f65-2c8c-4aea-ae1a-a4c639b9a8e6"
-                            ],
+                            "choiceSlotObjects": [],
                             "dialogues": [
                                 {
                                     "characterInterval": 0.10000000149011612,
@@ -56,7 +54,7 @@
                                     "shakeEaseType": 0,
                                     "shakeEnabled": false,
                                     "shakeSpeed": 20.0,
-                                    "text": "ボールを獲得\nCキー Vキーで切り替え"
+                                    "text": "斧を獲得\nCキー Vキーで切り替え"
                                 }
                             ],
                             "iconObject": "1fcaaf04-0627-4958-a051-12f47f3f42a4",
@@ -77,7 +75,7 @@
         "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "TalkScript",
-        "objectID": "d0efb719-94aa-45b1-a896-1021d19b6087",
+        "objectID": "5be4720a-162e-4c50-b8b8-894d9366ee1f",
         "prefabNodeID": "d2b98713-1d27-4a1f-86bd-fd05827d490f",
         "tag": ""
     },

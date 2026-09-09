@@ -18,7 +18,7 @@
                         },
                         "translate": {
                             "x": 2282.496337890625,
-                            "y": 767.6841430664062,
+                            "y": 767.6841430664063,
                             "z": 0.0
                         }
                     },
@@ -339,6 +339,22 @@
             {
                 "data": {
                     "customData": {
+                        "fields": {
+                            "dialogueBoxObject": "5be4720a-162e-4c50-b8b8-894d9366ee1f",
+                            "playerTag": "Player",
+                            "talkCommandName": "Decide"
+                        },
+                        "scriptPath": "Assets/Scripts/NPCTalker.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "allowInstancing": true,
                         "anchor": {
                             "x": 0.5,
@@ -427,7 +443,7 @@
                             },
                             "reverb": {
                                 "enabled": false,
-                                "mix": 0.3
+                                "mix": 0.30000001192092896
                             }
                         },
                         "enableSpatialAudio": false,
@@ -437,7 +453,7 @@
                         "pitch": 0.0,
                         "playOnAwake": false,
                         "soundName": "App/Sound/weaponChest.mp3",
-                        "volume": 0.6
+                        "volume": 0.6000000238418579
                     },
                     "isActive": true,
                     "priority": 901,

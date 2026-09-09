@@ -90,6 +90,7 @@
                             "destroyDelay": 0.5,
                             "dropDelay": 1.0,
                             "gravity": 200.0,
+                            "landSoundMinFallDistance": 5.0,
                             "lifeTime": 5.0
                         },
                         "scriptPath": "Assets\\Scripts\\Rubble.as"
@@ -191,7 +192,7 @@
                             },
                             "reverb": {
                                 "enabled": false,
-                                "mix": 0.3
+                                "mix": 0.30000001192092896
                             }
                         },
                         "enableSpatialAudio": false,

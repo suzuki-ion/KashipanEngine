@@ -16,7 +16,7 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 624.6687622070312,
+                            "x": 624.6687622070313,
                             "y": 1247.645751953125,
                             "z": 0.0
                         }
@@ -377,7 +377,7 @@
                             },
                             "reverb": {
                                 "enabled": false,
-                                "mix": 0.3
+                                "mix": 0.30000001192092896
                             }
                         },
                         "enableSpatialAudio": false,
@@ -440,7 +440,7 @@
                             },
                             "reverb": {
                                 "enabled": false,
-                                "mix": 0.3
+                                "mix": 0.30000001192092896
                             }
                         },
                         "enableSpatialAudio": false,
@@ -450,7 +450,7 @@
                         "pitch": 0.0,
                         "playOnAwake": false,
                         "soundName": "App/Sound/enemyDead.mp3",
-                        "volume": 0.6
+                        "volume": 0.6000000238418579
                     },
                     "isActive": true,
                     "priority": 14,

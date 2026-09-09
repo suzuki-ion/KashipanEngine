@@ -1,0 +1,91 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "groups": [
+                            {
+                                "rects": [
+                                    {
+                                        "max": {
+                                            "x": 302.26544189453125,
+                                            "y": 269.50897216796875
+                                        },
+                                        "min": {
+                                            "x": 48.066932678222656,
+                                            "y": 47.823856353759766
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "rects": [
+                                    {
+                                        "max": {
+                                            "x": 2442.031494140625,
+                                            "y": 397.9871826171875
+                                        },
+                                        "min": {
+                                            "x": 2156.77978515625,
+                                            "y": 150.3463897705078
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "CameraBoundsZone2D"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "75f93b5c-c171-4727-be8a-e62a4a7dd1a9"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "GameScreenCameraBoundsZone",
+        "objectID": "21d12470-7b78-41f8-a161-b8ec675f9dd9",
+        "prefabNodeID": "4c0c235b-938e-44bc-9eca-e3271ebc5e09",
+        "tag": ""
+    },
+    "siblingIndex": 21000
+}

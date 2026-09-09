@@ -17,8 +17,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 480.0,
-                            "y": 146.0,
+                            "x": 252.21566772460938,
+                            "y": 80.06880950927734,
                             "z": 0.0
                         }
                     },
@@ -113,7 +113,8 @@
                             "player": "aa35c299-acf4-443d-a774-988f6670e8b5",
                             "pushBackExcludeTags": [
                                 "Player",
-                                "Enemy"
+                                "Enemy",
+                                "Weapon"
                             ],
                             "rubbleMedium": "7e90c5d6-e37b-4420-942f-bc4530d20094",
                             "rubbleMediumCount": 6,

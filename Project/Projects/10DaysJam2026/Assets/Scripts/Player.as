@@ -432,14 +432,20 @@ class Player : ScriptComponentBehavior {
         if (knockbackTimer > 0.0f) {
             knockbackTimer -= GetDeltaTime();
         } else {
-            moveX = GetCommandValue("MoveX");
-            velocity.x = moveX * moveSpeed;
-
-            if (moveX >= 0.01f) {
+            float rawMoveX = GetCommandValue("MoveX");
+            
+            // 入力値が一定(0.1)を超えたら、倒し具合にかかわらず 1.0 か -1.0 に固定する
+            if (rawMoveX >= 0.1f) {
+                moveX = 1.0f;
                 lastDirection = Direction::Right;
-            } else if (moveX <= -0.01f) {
+            } else if (rawMoveX <= -0.1f) {
+                moveX = -1.0f;
                 lastDirection = Direction::Left;
+            } else {
+                moveX = 0.0f;
             }
+
+            velocity.x = moveX * moveSpeed;
         }
 
         float rotY = (lastDirection == Direction::Left) ? 3.14159f : 0.0f;
@@ -751,7 +757,7 @@ class Player : ScriptComponentBehavior {
             if (camController !is null) {
                 Transform@ camTf = camera.GetTransform();
                 if (camTf !is null) {
-                    camPos = camTf.GetTranslate();
+                    camPos = tf.GetTranslate();
                     targetSize = camController.GetTargetSize();
                     hasCameraData = true;
                 }

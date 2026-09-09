@@ -11,18 +11,18 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 16.0,
-                            "y": 16.0,
+                            "x": 8.0,
+                            "y": 8.0,
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 2732.515380859375,
-                            "y": 389.58203125,
-                            "z": 0.019989013671875
+                            "x": 3923.27587890625,
+                            "y": 678.21533203125,
+                            "z": -0.040008544921875
                         }
                     },
                     "isActive": true,
-                    "priority": 0,
+                    "priority": 1,
                     "tag": ""
                 },
                 "type": "Transform"
@@ -41,13 +41,13 @@
             {
                 "data": {
                     "customData": {
-                        "prefabID": "50a06aa7-045b-4eaa-ac08-166c9ff07437"
+                        "textureAssetPath": "App/Sprite/Item/Heart.png"
                     },
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
                 },
-                "type": "PrefabInstanceComponent"
+                "type": "TextureSource"
             },
             {
                 "data": {
@@ -76,66 +76,21 @@
                         ]
                     },
                     "isActive": true,
-                    "priority": 2,
-                    "tag": "Enemy"
+                    "priority": 1,
+                    "tag": "Heart"
                 },
                 "type": "Box2DCollider"
             },
             {
                 "data": {
                     "customData": {
-                        "textureAssetPath": "App/Sprite/Enemy/bat.png"
+                        "prefabID": "256e543e-2492-4ac1-a863-c46bc42b575f"
                     },
                     "isActive": true,
-                    "priority": 3,
+                    "priority": 1,
                     "tag": ""
                 },
-                "type": "TextureSource"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "fields": {
-                            "activationRange": 16.0,
-                            "blinkInterval": 0.07999999821186066,
-                            "deathEffect": "a3f33280-f1ac-4cc0-9235-bdfd97ec21ff",
-                            "expValue": 5.0,
-                            "hp": 2.0,
-                            "invincibleDuration": 0.5,
-                            "moveSpeed": 70.0,
-                            "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
-                            "self": "7bd50d5b-aca3-4432-a7fa-786efe47d6ac"
-                        },
-                        "scriptPath": "Assets\\Scripts\\Bat.as"
-                    },
-                    "isActive": true,
-                    "priority": 4,
-                    "tag": ""
-                },
-                "type": "ScriptComponent"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "fields": {
-                            "currentFrame": 0,
-                            "frameCount": 2,
-                            "frameInterval": 0.15000000596046448,
-                            "isLoop": true,
-                            "playOnStart": true,
-                            "startRow": 0,
-                            "uvStep": {
-                                "x": 0.5,
-                                "y": 1.0
-                            }
-                        },
-                        "scriptPath": "Assets\\Scripts\\SpriteAnimator.as"
-                    },
-                    "isActive": true,
-                    "priority": 5,
-                    "tag": ""
-                },
-                "type": "ScriptComponent"
+                "type": "PrefabInstanceComponent"
             },
             {
                 "data": {
@@ -147,9 +102,9 @@
                         },
                         "instanceColor": {
                             "w": 1.0,
-                            "x": 0.7402135133743286,
-                            "y": 0.007902626879513264,
-                            "z": 0.5708178281784058
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
                         },
                         "instanceColorBlendMode": 1,
                         "instanceUvCombineMode": 0,
@@ -159,7 +114,7 @@
                         },
                         "instanceUvRotation": 0.0,
                         "instanceUvScale": {
-                            "x": 0.5,
+                            "x": 1.0,
                             "y": 1.0
                         },
                         "instanceUvTranslate": {
@@ -178,7 +133,7 @@
                         "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
                     },
                     "isActive": true,
-                    "priority": 6,
+                    "priority": 900,
                     "tag": ""
                 },
                 "type": "SpriteRenderer"
@@ -187,10 +142,10 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Bat",
-        "objectID": "7bd50d5b-aca3-4432-a7fa-786efe47d6ac",
-        "prefabNodeID": "6a34211e-cef8-4f9a-8d4d-4216ba93be80",
+        "name": "Heart",
+        "objectID": "3d6b1aae-5a92-49b7-883d-296723bd3e2a",
+        "prefabNodeID": "6ef35e6c-25d8-440b-aac0-7dbf7b061fb2",
         "tag": ""
     },
-    "siblingIndex": 75000
+    "siblingIndex": 80000
 }

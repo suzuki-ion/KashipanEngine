@@ -42,6 +42,7 @@
             {
                 "data": {
                     "customData": {
+                        "category": "",
                         "effects": {
                             "echo": {
                                 "delayMs": 500.0,
@@ -104,6 +105,7 @@
             {
                 "data": {
                     "customData": {
+                        "category": "",
                         "effects": {
                             "echo": {
                                 "delayMs": 500.0,
@@ -166,6 +168,7 @@
             {
                 "data": {
                     "customData": {
+                        "category": "",
                         "effects": {
                             "echo": {
                                 "delayMs": 500.0,
@@ -337,6 +340,7 @@
                             "camera": "a1cc5cd8-4c52-4adb-be14-ef8ad4465a02",
                             "coyoteTime": 0.10000000149011612,
                             "currentWeaponType": -1,
+                            "deathToGameOverDelay": 1.0,
                             "frameInterval": 0.15000000596046448,
                             "gravity": 360.0,
                             "groundAcceleration": 450.0,

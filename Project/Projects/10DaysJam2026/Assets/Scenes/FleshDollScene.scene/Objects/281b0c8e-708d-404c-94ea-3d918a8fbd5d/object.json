@@ -33,6 +33,7 @@
                         "height": 240,
                         "isShowViewer": true,
                         "name": "GameScreen",
+                        "renderOrderPriority": 0,
                         "saveDirectory": "Screenshots",
                         "saveFileNamePrefix": "Screenshot",
                         "saveFormat": "png",

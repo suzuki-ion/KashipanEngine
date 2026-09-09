@@ -30,6 +30,7 @@
             {
                 "data": {
                     "customData": {
+                        "category": "",
                         "effects": {
                             "echo": {
                                 "delayMs": 500.0,

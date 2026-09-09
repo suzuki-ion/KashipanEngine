@@ -85,7 +85,7 @@
         {
             "key": "gameOverRequested",
             "type": "Bool",
-            "value": true
+            "value": false
         },
         {
             "key": "gameplayCameraPos",

@@ -1,0 +1,136 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "height": 1920,
+                        "isShowViewer": false,
+                        "name": "FinalScreen",
+                        "renderOrderPriority": 10,
+                        "saveDirectory": "Screenshots",
+                        "saveFileNamePrefix": "Screenshot",
+                        "saveFormat": "png",
+                        "viewerId": 5204950150974007306,
+                        "width": 2048
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScreenBufferObject"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "edgeColor": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "excludedScreenBuffers": [],
+                        "strength": 0.15000000596046448,
+                        "zoom": 1.0
+                    },
+                    "isActive": false,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "BarrelDistortionEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "excludedScreenBuffers": [],
+                        "intensity": 0.5,
+                        "lineSpacing": 2.0,
+                        "thickness": 0.5
+                    },
+                    "isActive": false,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScanlineEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "color": true,
+                        "excludedScreenBuffers": [],
+                        "intensity": 0.0,
+                        "patternHeight": 240,
+                        "patternWidth": 256
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "DitherEffect"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "ditherObject": "48fbd76b-bfd4-4c1a-b12f-f3f31b7fc00a",
+                            "fadeInDuration": 0.5,
+                            "fadeInOnStart": true,
+                            "fadeOutDuration": 0.5,
+                            "isFadedOut": false
+                        },
+                        "scriptPath": "Assets\\Scripts\\DitherFade.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {},
+                        "scriptPath": "Assets\\Scripts\\ApplyVideoSettings.as"
+                    },
+                    "isActive": true,
+                    "priority": 2,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "FinalScreen",
+        "objectID": "48fbd76b-bfd4-4c1a-b12f-f3f31b7fc00a",
+        "tag": ""
+    },
+    "siblingIndex": 3000
+}

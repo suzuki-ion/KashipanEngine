@@ -1,0 +1,69 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 128.0,
+                            "y": -16.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "fontName": "jfdot-Shinonome-12",
+                        "fontSize": 12.0,
+                        "horizontalAlign": 1,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "materialName": "Default",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "pixelSnapOutsetPixels": 0.0,
+                        "pixelSnapping": true,
+                        "pointSampling": true,
+                        "renderPriority": 0,
+                        "targetObjectID": "b33e8ca5-2fef-4f22-84d4-0eb35569ac8f",
+                        "text": "3005_天上の魔王\n\n\nCREDITS\n\nGAME DESIGN\nMASATO KOBAYASHI\n\nPROGRAMMING\nION SUZUKI\nYUTA MIHARA\n\nART\nMASATO KOBAYASHI\n\nSPECIAL THANKS\n\n\nTHANK YOU FOR PLAYING",
+                        "verticalAlign": 0
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "BitmapTextRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "CreditsText",
+        "objectID": "8f511f5a-a649-4384-8641-cc89d864699d",
+        "tag": ""
+    },
+    "siblingIndex": 7000
+}

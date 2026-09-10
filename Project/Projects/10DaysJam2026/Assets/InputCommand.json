@@ -20,6 +20,27 @@
             "state": "Trigger"
         }
     ],
+    "CreditFastForward": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Z",
+            "state": "Down"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "J",
+            "state": "Down"
+        },
+        {
+            "button": "X",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Down"
+        }
+    ],
     "Decide": [
         {
             "device": "Keyboard",

@@ -121,6 +121,8 @@
                             "deathEffectCount": 20,
                             "deathEffectSpawnInterval": 0.15000000596046448,
                             "deathEffectSpread": 50.0,
+                            "ditherFadeObject": "7e9ed864-bd4f-4a56-b710-292c1f7bb9e0",
+                            "endCreditSceneName": "EndCredit",
                             "floatBlinkInterval": 0.07999999821186066,
                             "floatDuration": 2.0,
                             "gravity": 150.0,

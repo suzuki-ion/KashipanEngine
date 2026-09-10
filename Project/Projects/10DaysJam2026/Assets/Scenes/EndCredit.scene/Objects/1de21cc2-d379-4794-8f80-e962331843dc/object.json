@@ -1,0 +1,55 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "height": 720,
+                        "iconPath": "Assets/App/icon.ico",
+                        "interceptedMessages": [],
+                        "syncWithTransform": false,
+                        "title": "3005_天上の魔王",
+                        "width": 1280
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "NormalWindowObject"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Window Object",
+        "objectID": "1de21cc2-d379-4794-8f80-e962331843dc",
+        "tag": ""
+    },
+    "siblingIndex": 1000
+}

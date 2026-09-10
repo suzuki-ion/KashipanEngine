@@ -1,0 +1,60 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "creditsObject": "8f511f5a-a649-4384-8641-cc89d864699d",
+                            "ditherFadeObject": "48fbd76b-bfd4-4c1a-b12f-f3f31b7fc00a",
+                            "endY": 480.0,
+                            "fastForwardCommandName": "CreditFastForward",
+                            "fastScrollSpeed": 64.0,
+                            "normalScrollSpeed": 16.0,
+                            "startY": -16.0,
+                            "titleSceneName": "TitleScene"
+                        },
+                        "scriptPath": "Assets\\Scripts\\EndCreditController.as"
+                    },
+                    "isActive": true,
+                    "priority": 5,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "EndCreditController",
+        "objectID": "ac34c28d-afaf-4765-a083-dc427f1cd715",
+        "tag": ""
+    },
+    "siblingIndex": 8000
+}

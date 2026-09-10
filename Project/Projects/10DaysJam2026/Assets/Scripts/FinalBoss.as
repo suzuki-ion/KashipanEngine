@@ -86,6 +86,14 @@ class FinalBoss : ScriptComponentBehavior {
     [SerializeField, Tooltip("死亡エフェクトの生成間隔(秒)")]
     float deathEffectSpawnInterval = 0.15f;
 
+    [Header("撃破後のシーン遷移")]
+
+    [SerializeField, Tooltip("撃破演出後に画面を覆うDitherFadeを持つオブジェクト")]
+    Object@ ditherFadeObject;
+
+    [SerializeField, Tooltip("撃破演出とフェードアウトの完了後に遷移するシーン名")]
+    string endCreditSceneName = "EndCredit";
+
     [Header("1: 後退ジャンプ+針")]
 
     [SerializeField, Tooltip("針のオブジェクト")]
@@ -264,6 +272,11 @@ class FinalBoss : ScriptComponentBehavior {
     float deathEffectTimer = 0.0f;
     array<Object@> cloneEffects;
 
+    ScriptComponent@ ditherFadeScript;
+    bool isEndCreditTransitionPending = false;
+    bool hasStartedEndCreditTransition = false;
+    int endCreditTransitionWaitFrames = 0;
+
     FinalBossState state = FinalBossState::Idle;
     float stateTimer = 0.0f;
 
@@ -320,6 +333,9 @@ class FinalBoss : ScriptComponentBehavior {
 
         GetComponent(@col);
         GetComponent(@sprite);
+        if (ditherFadeObject !is null) {
+            ditherFadeObject.GetComponent(@ditherFadeScript);
+        }
         if (sprite !is null) {
             sprite.SetInstanceColor(normalColor);
         }
@@ -369,6 +385,11 @@ class FinalBoss : ScriptComponentBehavior {
     }
 
     void Update() {
+        if (isEndCreditTransitionPending) {
+            UpdateEndCreditTransition();
+            return;
+        }
+
         // 会話中(isDialogueActive)は移動・攻撃などの処理を止める
         bool isDialogueActive = false;
         GetScene().GetVariable("isDialogueActive", isDialogueActive);
@@ -1129,7 +1150,52 @@ class FinalBoss : ScriptComponentBehavior {
             if (ShouldPersistProgress()) {
                 GetScene().SetGlobalVariable(GetSaveKey(), true);
             }
+
+            BeginEndCreditTransition();
         }
+    }
+
+    void BeginEndCreditTransition() {
+        if (hasStartedEndCreditTransition) return;
+        hasStartedEndCreditTransition = true;
+
+        if (ditherFadeScript !is null && ditherFadeScript.CallMethod("FadeOut")) {
+            isEndCreditTransitionPending = true;
+            endCreditTransitionWaitFrames = 0;
+            return;
+        }
+
+        CompleteEndCreditTransition();
+    }
+
+    // FadeOut()を呼んだフレームの更新順に依存しないよう、最低1フレーム待って完了を確認する。
+    void UpdateEndCreditTransition() {
+        ++endCreditTransitionWaitFrames;
+
+        if (ditherFadeScript is null) {
+            CompleteEndCreditTransition();
+            return;
+        }
+
+        bool isFading = false;
+        if (!ditherFadeScript.CallMethod("IsFading") || !ditherFadeScript.GetLastReturnValue(isFading)) {
+            CompleteEndCreditTransition();
+            return;
+        }
+
+        if (!isFading && endCreditTransitionWaitFrames >= 2) {
+            CompleteEndCreditTransition();
+        }
+    }
+
+    void CompleteEndCreditTransition() {
+        isEndCreditTransitionPending = false;
+
+        Scene@ scene = GetScene();
+        if (scene is null || endCreditSceneName.length() == 0) return;
+
+        scene.SetNextSceneName(endCreditSceneName);
+        scene.ChangeToNextScene();
     }
 
     void End() {

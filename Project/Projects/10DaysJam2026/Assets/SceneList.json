@@ -31,6 +31,10 @@
         {
             "filePath": "Assets/Scenes/FinalBossScene.scene",
             "name": "FinalBossScene"
+        },
+        {
+            "filePath": "Assets/Scenes/EndCredit.scene",
+            "name": "EndCredit"
         }
     ],
     "startupScene": "TitleScene"

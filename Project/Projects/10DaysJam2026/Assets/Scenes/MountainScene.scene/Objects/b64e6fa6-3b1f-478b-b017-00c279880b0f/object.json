@@ -16,8 +16,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 1776.5126953125,
-                            "y": 559.5648193359375,
+                            "x": 1776.0,
+                            "y": 559.0,
                             "z": 0.0
                         }
                     },
@@ -48,6 +48,22 @@
                     "tag": ""
                 },
                 "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "dialogueBoxObject": "417b9e94-d2f1-492e-bbf3-e5158c538686",
+                            "playerTag": "Player",
+                            "talkCommandName": "Decide"
+                        },
+                        "scriptPath": "Assets/Scripts/NPCTalker.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
             },
             {
                 "data": {

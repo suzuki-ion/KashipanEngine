@@ -19,9 +19,9 @@
                                     "z": 1.0
                                 },
                                 "translate": {
-                                    "x": 957.0223388671875,
-                                    "y": 120.34619140625,
-                                    "z": 0.0
+                                    "x": 1379.5936279296875,
+                                    "y": 144.79788208007813,
+                                    "z": -0.0400390625
                                 }
                             },
                             "isActive": true,
@@ -176,12 +176,12 @@
                                     "hp": 2.0,
                                     "invincibleDuration": 1.0,
                                     "moveSpeed": 15.0,
-                                    "player": "ee83e7db-6b3c-4aa3-ba00-93ffa9a73d22",
+                                    "player": "17ff19a7-4483-4c8b-973e-e62d9666c9ae",
                                     "pushBackExcludeTags": [
                                         "Player",
                                         "Weapon"
                                     ],
-                                    "self": "61df65f9-c07a-4eae-83b8-85e2afa1910b"
+                                    "self": "a66872c5-5608-46db-b6a5-8ca0c8a81f9c"
                                 },
                                 "scriptPath": "Assets\\Scripts\\Green.as"
                             },
@@ -195,6 +195,7 @@
                         "data": {
                             "customData": {
                                 "fields": {
+                                    "currentFrame": 0,
                                     "frameCount": 2,
                                     "frameInterval": 0.15000000596046448,
                                     "isLoop": true,
@@ -304,7 +305,7 @@
                                     },
                                     "reverb": {
                                         "enabled": false,
-                                        "mix": 0.3
+                                        "mix": 0.30000001192092896
                                     }
                                 },
                                 "enableSpatialAudio": false,
@@ -367,7 +368,7 @@
                                     },
                                     "reverb": {
                                         "enabled": false,
-                                        "mix": 0.3
+                                        "mix": 0.30000001192092896
                                     }
                                 },
                                 "enableSpatialAudio": false,
@@ -377,7 +378,7 @@
                                 "pitch": 0.0,
                                 "playOnAwake": false,
                                 "soundName": "App/Sound/enemyDead.mp3",
-                                "volume": 0.6
+                                "volume": 0.6000000238418579
                             },
                             "isActive": true,
                             "priority": 11,
@@ -390,7 +391,7 @@
                 "hiddenFromEditorTarget": false,
                 "isActive": true,
                 "name": "Green",
-                "objectID": "61df65f9-c07a-4eae-83b8-85e2afa1910b",
+                "objectID": "a66872c5-5608-46db-b6a5-8ca0c8a81f9c",
                 "prefabNodeID": "8142ecaa-0000-4d0e-85a9-dfbc8b3b56ca",
                 "tag": ""
             },

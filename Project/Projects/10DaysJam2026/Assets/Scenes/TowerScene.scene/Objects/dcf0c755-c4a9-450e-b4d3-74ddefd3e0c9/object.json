@@ -376,7 +376,7 @@
                             "syurikenAttackInterval": 0.4000000059604645,
                             "syurikenLifeTime": 2.0,
                             "vignetteHp": 3.0,
-                            "weaponExpLossOnDamage": 1.0,
+                            "weaponExpLossOnDamage": 4.0,
                             "weapons": [
                                 "a78914a0-6607-474f-8211-c0c92c75f11b",
                                 "c2de4311-e883-42be-8a06-876d2f08a423",

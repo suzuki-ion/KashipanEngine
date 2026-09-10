@@ -42,6 +42,22 @@
             {
                 "data": {
                     "customData": {
+                        "fields": {
+                            "dialogueBoxObject": "e6400c76-9ec8-43da-9f25-3a3f900b0852",
+                            "playerTag": "Player",
+                            "talkCommandName": "Decide"
+                        },
+                        "scriptPath": "Assets/Scripts/NPCTalker.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
                         "textureAssetPath": "App/Sprite/Object/chest.png"
                     },
                     "isActive": true,

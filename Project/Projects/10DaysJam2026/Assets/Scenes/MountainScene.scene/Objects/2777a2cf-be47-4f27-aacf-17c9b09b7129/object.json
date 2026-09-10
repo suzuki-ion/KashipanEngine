@@ -89,6 +89,10 @@
                             "bounceFactorY": 0.800000011920929,
                             "damageAmount": 1.0,
                             "exp": 0.0,
+                            "expToNextLevelTable": [
+                                20.0,
+                                30.0
+                            ],
                             "gravity": 300.0,
                             "initialSpeedX": 100.0,
                             "initialSpeedY": 100.0,

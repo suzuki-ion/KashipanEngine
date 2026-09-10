@@ -90,6 +90,10 @@
                                 "fields": {
                                     "damageAmount": 1.0,
                                     "exp": 0.0,
+                                    "expToNextLevelTable": [
+                                        20.0,
+                                        30.0
+                                    ],
                                     "gravity": 300.0,
                                     "initialSpeedX": 60.0,
                                     "initialSpeedY": 150.0,
@@ -187,76 +191,13 @@
                             "tag": ""
                         },
                         "type": "SpriteRenderer"
-                    },
-                    {
-                        "data": {
-                            "customData": {
-                                "category": "SE",
-                                "effects": {
-                                    "echo": {
-                                        "delayMs": 500.0,
-                                        "enabled": false,
-                                        "feedback": 0.5,
-                                        "wetDryMix": 0.5
-                                    },
-                                    "eq": {
-                                        "bandwidth": [
-                                            1.0,
-                                            1.0,
-                                            1.0,
-                                            1.0
-                                        ],
-                                        "enabled": false,
-                                        "frequencyCenter": [
-                                            100.0,
-                                            800.0,
-                                            2000.0,
-                                            10000.0
-                                        ],
-                                        "gain": [
-                                            1.0,
-                                            1.0,
-                                            1.0,
-                                            1.0
-                                        ]
-                                    },
-                                    "filter": {
-                                        "enabled": false,
-                                        "frequency": 1.0,
-                                        "kind": 0,
-                                        "q": 1.0
-                                    },
-                                    "limiter": {
-                                        "enabled": false,
-                                        "loudness": 1000,
-                                        "release": 6
-                                    },
-                                    "reverb": {
-                                        "enabled": false,
-                                        "mix": 0.3
-                                    }
-                                },
-                                "enableSpatialAudio": false,
-                                "loop": false,
-                                "maxDistance": 25.0,
-                                "minDistance": 1.0,
-                                "pitch": 0.0,
-                                "playOnAwake": false,
-                                "soundName": "App/Sound/axe.mp3",
-                                "volume": 0.6
-                            },
-                            "isActive": true,
-                            "priority": 901,
-                            "tag": "Attack"
-                        },
-                        "type": "AudioSource"
                     }
                 ],
                 "editorOnly": false,
                 "hiddenFromEditorTarget": false,
                 "isActive": true,
                 "name": "Axe",
-                "objectID": "9497b163-f450-4598-bab8-75df986567cb",
+                "objectID": "3f37936c-60a5-4bf5-85ab-c2f432fc2394",
                 "prefabNodeID": "668b8905-8e15-43a2-b608-f10ebac4a873",
                 "tag": ""
             },

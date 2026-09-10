@@ -59,6 +59,10 @@
                             "damageAmount": 1.0,
                             "effectOffsetY": 3.5,
                             "exp": 0.0,
+                            "expToNextLevelTable": [
+                                20.0,
+                                30.0
+                            ],
                             "level": 1,
                             "nextExp": 10.0,
                             "pos": {

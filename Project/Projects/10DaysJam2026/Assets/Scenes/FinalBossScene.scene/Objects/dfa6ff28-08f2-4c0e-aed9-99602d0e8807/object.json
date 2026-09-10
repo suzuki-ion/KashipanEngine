@@ -18,7 +18,7 @@
                         },
                         "translate": {
                             "x": 91.86695098876953,
-                            "y": 71.83047485351562,
+                            "y": 71.83047485351563,
                             "z": -2.147921577488887e-06
                         }
                     },
@@ -377,7 +377,7 @@
                             "syurikenAttackInterval": 0.4000000059604645,
                             "syurikenLifeTime": 2.0,
                             "vignetteHp": 3.0,
-                            "weaponExpLossOnDamage": 1.0,
+                            "weaponExpLossOnDamage": 4.0,
                             "weapons": [
                                 "8da25f3a-dfdc-4603-b56f-a2cc14688f69",
                                 "8bf086b0-18bf-4b32-83b6-5892013ee4e6",
@@ -507,7 +507,7 @@
                             },
                             "reverb": {
                                 "enabled": false,
-                                "mix": 0.3
+                                "mix": 0.30000001192092896
                             }
                         },
                         "enableSpatialAudio": false,

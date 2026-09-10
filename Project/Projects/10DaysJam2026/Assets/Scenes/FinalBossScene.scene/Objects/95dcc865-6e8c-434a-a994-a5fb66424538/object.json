@@ -17,7 +17,7 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 175.67031860351562,
+                            "x": 175.67031860351563,
                             "y": 165.0366668701172,
                             "z": 0.0
                         }
@@ -238,7 +238,7 @@
                             },
                             "reverb": {
                                 "enabled": false,
-                                "mix": 0.3
+                                "mix": 0.30000001192092896
                             }
                         },
                         "enableSpatialAudio": false,
@@ -248,7 +248,7 @@
                         "pitch": 0.0,
                         "playOnAwake": false,
                         "soundName": "App/Sound/boss3Blood.mp3",
-                        "volume": 0.6
+                        "volume": 0.6000000238418579
                     },
                     "isActive": true,
                     "priority": 901,
@@ -301,7 +301,7 @@
                             },
                             "reverb": {
                                 "enabled": false,
-                                "mix": 0.3
+                                "mix": 0.30000001192092896
                             }
                         },
                         "enableSpatialAudio": false,
@@ -311,7 +311,7 @@
                         "pitch": 0.0,
                         "playOnAwake": false,
                         "soundName": "App/Sound/bossDead.mp3",
-                        "volume": 0.7
+                        "volume": 0.699999988079071
                     },
                     "isActive": true,
                     "priority": 902,

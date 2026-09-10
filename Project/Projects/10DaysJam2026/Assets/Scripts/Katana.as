@@ -14,8 +14,11 @@ class Katana : ScriptComponentBehavior {
     [SerializeField, Tooltip("現在の経験値")] 
     float exp = 0.0f;
     
-    [SerializeField, Tooltip("次のレベルまでの必要経験値")] 
+    [SerializeField, Tooltip("次のレベルまでの必要経験値(セーブ/UI表示用にexpToNextLevelTableから自動反映される)")] 
     float nextExp = 10.0f;
+
+    [SerializeField, Tooltip("レベルアップに必要な経験値テーブル(要素0:Lv1→2, 要素1:Lv2→3)")]
+    array<float>@ expToNextLevelTable = {10.0f, 15.0f};
 
     [SerializeField, Tooltip("座標")]
     Vector3 pos;
@@ -60,6 +63,18 @@ class Katana : ScriptComponentBehavior {
         // 非攻撃時は演出を非表示にしておく
         if (sprite !is null) {
             sprite.SetActive(false);
+        }
+
+        // インスペクターで設定した必要経験値テーブルを現在のレベルに合わせて反映
+        UpdateNextExpFromTable();
+    }
+
+    // expToNextLevelTableから現在のレベルに応じた必要経験値をnextExpへ反映する。
+    // nextExpはセーブデータやLevelGauge(UI)がGetVariable("nextExp", ...)で参照するため、
+    // フィールドとして保持しつつ、実際の値はインスペクターで設定するテーブル側で管理する
+    void UpdateNextExpFromTable() {
+        if (expToNextLevelTable !is null && level >= 1 && expToNextLevelTable.length() >= uint(level)) {
+            nextExp = expToNextLevelTable[level - 1];
         }
     }
 
@@ -250,7 +265,7 @@ class Katana : ScriptComponentBehavior {
             exp -= nextExp;
             level++;
             level = Clamp(level, 0, 3);
-            nextExp *= 1.5f; // 次の必要経験値を増加
+            UpdateNextExpFromTable(); // 次の必要経験値をテーブルから取得
             damageAmount += 1.0f; // レベルアップで攻撃力を強化
             Log("Katana Level Up Lv." + level + " (攻撃力: " + damageAmount + ")");
 
@@ -269,7 +284,7 @@ class Katana : ScriptComponentBehavior {
 
         while (exp < 0.0f && level > 1) {
             level--;
-            nextExp /= 1.5f; // AddExpと逆算し、1つ前のレベルの必要経験値に戻す
+            UpdateNextExpFromTable(); // 1つ前のレベルの必要経験値をテーブルから取得
             exp += nextExp;
             damageAmount -= 1.0f; // レベルアップ時に強化した分の攻撃力を戻す
             Log("Katana Level Down Lv." + level + " (攻撃力: " + damageAmount + ")");

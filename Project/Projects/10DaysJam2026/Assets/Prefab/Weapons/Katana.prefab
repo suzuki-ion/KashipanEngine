@@ -51,6 +51,10 @@
                                     "damageAmount": 1.0,
                                     "effectOffsetY": 3.5,
                                     "exp": 0.0,
+                                    "expToNextLevelTable": [
+                                        20.0,
+                                        30.0
+                                    ],
                                     "level": 1,
                                     "nextExp": 10.0,
                                     "pos": {
@@ -194,202 +198,13 @@
                             "tag": ""
                         },
                         "type": "SpriteRenderer"
-                    },
-                    {
-                        "data": {
-                            "customData": {
-                                "category": "SE",
-                                "effects": {
-                                    "echo": {
-                                        "delayMs": 500.0,
-                                        "enabled": false,
-                                        "feedback": 0.5,
-                                        "wetDryMix": 0.5
-                                    },
-                                    "eq": {
-                                        "bandwidth": [
-                                            1.0,
-                                            1.0,
-                                            1.0,
-                                            1.0
-                                        ],
-                                        "enabled": false,
-                                        "frequencyCenter": [
-                                            100.0,
-                                            800.0,
-                                            2000.0,
-                                            10000.0
-                                        ],
-                                        "gain": [
-                                            1.0,
-                                            1.0,
-                                            1.0,
-                                            1.0
-                                        ]
-                                    },
-                                    "filter": {
-                                        "enabled": false,
-                                        "frequency": 1.0,
-                                        "kind": 0,
-                                        "q": 1.0
-                                    },
-                                    "limiter": {
-                                        "enabled": false,
-                                        "loudness": 1000,
-                                        "release": 6
-                                    },
-                                    "reverb": {
-                                        "enabled": false,
-                                        "mix": 0.3
-                                    }
-                                },
-                                "enableSpatialAudio": false,
-                                "loop": false,
-                                "maxDistance": 25.0,
-                                "minDistance": 1.0,
-                                "pitch": 0.0,
-                                "playOnAwake": false,
-                                "soundName": "App/Sound/katana_1.mp3",
-                                "volume": 0.6
-                            },
-                            "isActive": true,
-                            "priority": 7,
-                            "tag": "Attack1"
-                        },
-                        "type": "AudioSource"
-                    },
-                    {
-                        "data": {
-                            "customData": {
-                                "category": "SE",
-                                "effects": {
-                                    "echo": {
-                                        "delayMs": 500.0,
-                                        "enabled": false,
-                                        "feedback": 0.5,
-                                        "wetDryMix": 0.5
-                                    },
-                                    "eq": {
-                                        "bandwidth": [
-                                            1.0,
-                                            1.0,
-                                            1.0,
-                                            1.0
-                                        ],
-                                        "enabled": false,
-                                        "frequencyCenter": [
-                                            100.0,
-                                            800.0,
-                                            2000.0,
-                                            10000.0
-                                        ],
-                                        "gain": [
-                                            1.0,
-                                            1.0,
-                                            1.0,
-                                            1.0
-                                        ]
-                                    },
-                                    "filter": {
-                                        "enabled": false,
-                                        "frequency": 1.0,
-                                        "kind": 0,
-                                        "q": 1.0
-                                    },
-                                    "limiter": {
-                                        "enabled": false,
-                                        "loudness": 1000,
-                                        "release": 6
-                                    },
-                                    "reverb": {
-                                        "enabled": false,
-                                        "mix": 0.3
-                                    }
-                                },
-                                "enableSpatialAudio": false,
-                                "loop": false,
-                                "maxDistance": 25.0,
-                                "minDistance": 1.0,
-                                "pitch": 0.0,
-                                "playOnAwake": false,
-                                "soundName": "App/Sound/katana_2.mp3",
-                                "volume": 0.6
-                            },
-                            "isActive": true,
-                            "priority": 8,
-                            "tag": "Attack2"
-                        },
-                        "type": "AudioSource"
-                    },
-                    {
-                        "data": {
-                            "customData": {
-                                "category": "SE",
-                                "effects": {
-                                    "echo": {
-                                        "delayMs": 500.0,
-                                        "enabled": false,
-                                        "feedback": 0.5,
-                                        "wetDryMix": 0.5
-                                    },
-                                    "eq": {
-                                        "bandwidth": [
-                                            1.0,
-                                            1.0,
-                                            1.0,
-                                            1.0
-                                        ],
-                                        "enabled": false,
-                                        "frequencyCenter": [
-                                            100.0,
-                                            800.0,
-                                            2000.0,
-                                            10000.0
-                                        ],
-                                        "gain": [
-                                            1.0,
-                                            1.0,
-                                            1.0,
-                                            1.0
-                                        ]
-                                    },
-                                    "filter": {
-                                        "enabled": false,
-                                        "frequency": 1.0,
-                                        "kind": 0,
-                                        "q": 1.0
-                                    },
-                                    "limiter": {
-                                        "enabled": false,
-                                        "loudness": 1000,
-                                        "release": 6
-                                    },
-                                    "reverb": {
-                                        "enabled": false,
-                                        "mix": 0.3
-                                    }
-                                },
-                                "enableSpatialAudio": false,
-                                "loop": false,
-                                "maxDistance": 25.0,
-                                "minDistance": 1.0,
-                                "pitch": 0.0,
-                                "playOnAwake": false,
-                                "soundName": "App/Sound/katana_3.mp3",
-                                "volume": 0.6
-                            },
-                            "isActive": true,
-                            "priority": 9,
-                            "tag": "Attack3"
-                        },
-                        "type": "AudioSource"
                     }
                 ],
                 "editorOnly": false,
                 "hiddenFromEditorTarget": false,
                 "isActive": true,
                 "name": "Katana",
-                "objectID": "8da25f3a-dfdc-4603-b56f-a2cc14688f69",
+                "objectID": "fd9d640e-6c3a-41be-b7d3-0df10f21a157",
                 "prefabNodeID": "2a5554ec-008d-479c-b74d-a037201cb416",
                 "tag": ""
             },

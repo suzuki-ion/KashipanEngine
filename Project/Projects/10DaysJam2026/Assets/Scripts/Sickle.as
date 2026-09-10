@@ -26,6 +26,14 @@ class Sickle : ScriptComponentBehavior {
     float lifeTimer = 0.0f;
     Vector2 velocity;
 
+    ParticleSystem2D@ particle;
+
+    float particleDeleteTimer = 0.0f;
+    float particleDeleteDuratiom = 1.0f;
+
+    float deleteTimer = 0.0f;
+    float deleteDuration = 2.0f;
+
     void Start() {
         state = SickleState::Waiting;
         stateTimer = 0.0f;
@@ -58,6 +66,24 @@ class Sickle : ScriptComponentBehavior {
                 pos.x += velocity.x * GetDeltaTime();
                 pos.y += velocity.y * GetDeltaTime();
                 tf.SetTranslate(pos);
+            }
+        }
+
+        if(particle !is null){
+            if(particle.IsPlaying()){
+                particleDeleteTimer += GetDeltaTime();
+                if(particleDeleteTimer >= particleDeleteDuratiom){
+                    particleDeleteTimer = 0.0f;
+                    particle.Stop();
+                }
+            }
+        }
+
+        if(particle !is null){
+            deleteTimer += GetDeltaTime();
+            if(deleteTimer >= deleteDuration){
+                deleteTimer = 0.0f;
+                GetOwnerObject().SetActive(false);
             }
         }
     }
@@ -95,9 +121,17 @@ class Sickle : ScriptComponentBehavior {
 
     // 非Active化
     void Despawn() {
-        Object@ self = GetOwnerObject();
-        if (self !is null) {
-            self.SetActive(false);
+        // パーティクル生成
+        GetComponent(@particle);
+        if(particle !is null){
+            particle.Play();
+        }
+
+        Box2DCollider@ col;
+        SpriteRenderer@ sprite;
+        if(GetComponent(@col) && GetComponent(@sprite)){
+            col.SetActive(false);
+            sprite.SetActive(false);
         }
     }
 

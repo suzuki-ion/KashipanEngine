@@ -1,0 +1,142 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 16.0,
+                            "y": 16.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 1775.957275390625,
+                            "y": 566.2546997070313,
+                            "z": 0.04998779296875
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Rect2D"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "currentFrame": 0,
+                            "frameCount": 4,
+                            "frameInterval": 0.30000001192092896,
+                            "isLoop": true,
+                            "playOnStart": true,
+                            "startRow": 0,
+                            "uvStep": {
+                                "x": 0.5,
+                                "y": 1.0
+                            }
+                        },
+                        "scriptPath": "Assets/Scripts/SpriteAnimator.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "AnimatorSC"
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "textureAssetPath": "App/Sprite/UI/up_1.png"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "TextureSource"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "a7f67d3c-80a4-4ddf-9147-cf279f83c287"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "anchor": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "instanceUvCombineMode": 0,
+                        "instanceUvPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceUvRotation": 0.0,
+                        "instanceUvScale": {
+                            "x": 0.5,
+                            "y": 1.0
+                        },
+                        "instanceUvTranslate": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "materialName": "Dot",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "pixelSnapOutsetPixels": 0.0,
+                        "pixelSnapping": false,
+                        "renderPriority": -1,
+                        "targetObjectID": "281b0c8e-708d-404c-94ea-3d918a8fbd5d"
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "SpriteRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Up",
+        "objectID": "49c38560-4a14-4d87-afe2-98cadba50557",
+        "prefabNodeID": "8cf89d43-a708-4802-aa16-2982d1c4fd85",
+        "tag": ""
+    },
+    "siblingIndex": 91000
+}

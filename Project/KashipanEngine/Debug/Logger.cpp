@@ -1,4 +1,6 @@
 #include "Logger.h"
+
+#include "Utilities/Conversion/ConvertString.h"
 #include "LogSettings.h"
 #include "Core/ProjectPaths.h"
 #include "Utilities/TimeUtils.h"
@@ -551,20 +553,21 @@ void InitializeLogger(PasskeyForGameEngineMain) {
     const auto &cfg = GetLogSettings();
 
     if (cfg.enableFileLogging) {
-        const std::string logDir = ProjectPaths::InEngineRoot(cfg.outputDirectory);
-        std::filesystem::create_directories(logDir);
+        const std::string logDir = ProjectPaths::WritableDirectory(cfg.outputDirectory);
         const std::string logFilePath = logDir + "/" + BuildLogFileName();
-        sLogFile.open(logFilePath, std::ios::out | std::ios::binary);
+        sLogFile.open(Utf8StringToPath(logFilePath), std::ios::out | std::ios::binary);
         if (!sLogFile) {
-            assert(false && "ログファイルのオープンに失敗しました。");
-        }
-        // UTF-8 BOM を明示出力
-        static const unsigned char kUtf8Bom[3] = {0xEF, 0xBB, 0xBF};
-        sLogFile.write(reinterpret_cast<const char*>(kUtf8Bom), 3);
-        if (ShouldLog(LogSeverity::Info)) {
-            WriteLog(
-                BuildLogLine(nullptr, LogSeverity::Info, std::string("Log File: ") + logFilePath),
-                LogSeverity::Info);
+            const std::wstring message = L"KashipanEngine: ログファイルを作成できませんでした: " + ConvertString(logFilePath) + L"\n";
+            OutputDebugStringW(message.c_str());
+        } else {
+            // UTF-8 BOM を明示出力
+            static const unsigned char kUtf8Bom[3] = {0xEF, 0xBB, 0xBF};
+            sLogFile.write(reinterpret_cast<const char*>(kUtf8Bom), 3);
+            if (ShouldLog(LogSeverity::Info)) {
+                WriteLog(
+                    BuildLogLine(nullptr, LogSeverity::Info, std::string("Log File: ") + logFilePath),
+                    LogSeverity::Info);
+            }
         }
     }
 

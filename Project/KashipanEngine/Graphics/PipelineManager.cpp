@@ -165,9 +165,9 @@ void PipelineManager::LoadPreset() {
 
         for (const auto &file : presetFiles) {
             // example スキップ
-            std::filesystem::path p(file);
-            std::string fnameLower = toLower(p.filename().string());
-            if (fnameLower == "example.json" || fnameLower == "example.jsonc" || toLower(p.stem().string()) == "example") continue;
+            std::filesystem::path p = Utf8StringToPath(file);
+            std::string fnameLower = toLower(PathToUtf8String(p.filename()));
+            if (fnameLower == "example.json" || fnameLower == "example.jsonc" || toLower(PathToUtf8String(p.stem())) == "example") continue;
 
             Json j = LoadJSON(file);
             if (j.contains("Name") && j["Name"].is_string()) {
@@ -268,9 +268,9 @@ void PipelineManager::LoadPipelines() {
     auto pipelineFiles = GetDirectoryDataByExtension(directoryData, { ".json", ".jsonc" }).files;
     for (const auto &file : pipelineFiles) {
         // ファイル名が example の場合はスキップ
-        std::filesystem::path p(file);
-        std::string fnameLower = toLower(p.filename().string());
-        if (fnameLower == "example.json" || fnameLower == "example.jsonc" || toLower(p.stem().string()) == "example") continue;
+        std::filesystem::path p = Utf8StringToPath(file);
+        std::string fnameLower = toLower(PathToUtf8String(p.filename()));
+        if (fnameLower == "example.json" || fnameLower == "example.jsonc" || toLower(PathToUtf8String(p.stem())) == "example") continue;
 
         Json pipelineJson = LoadJSON(file);
         // JSON の Name が "example" の場合もスキップ

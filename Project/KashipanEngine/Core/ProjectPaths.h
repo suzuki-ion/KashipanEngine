@@ -85,6 +85,12 @@ public:
     /// @brief エンジンルート基準の相対パスを物理パスへ変換する（EditorPreferences.json など）
     static std::string InEngineRoot(const std::string &relativePath);
 
+    /// @brief 書き込み可能なディレクトリを返す
+    /// @details まずexeと同じフォルダを試し、作成・書き込みできない場合は
+    ///          %LOCALAPPDATA%/KashipanEngine/<プロジェクト名>/ 以下へフォールバックする。
+    ///          戻り値のディレクトリは作成済み。
+    static std::string WritableDirectory(const std::string &relativeDirectory);
+
     /// @brief プロジェクトテンプレートが並ぶフォルダ（物理パス）
     /// @details 個々のテンプレートは、この下の <テンプレート名>/ フォルダ
     static std::string AssetsTemplateRoot();

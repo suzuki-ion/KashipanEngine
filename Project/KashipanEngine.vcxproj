@@ -119,6 +119,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
       <AdditionalOptions>/VERBOSE:UNUSEDLIBS /VERBOSE:LIB %(AdditionalOptions)</AdditionalOptions>
       <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/debug/lib;$(ProjectDir)Externals/Box2D/debug/lib;$(ProjectDir)Externals/Assimp/lib/Debug;$(ProjectDir)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>assimp-vc143-mtd.lib;reactphysics3d.lib;box2d.lib;WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>GameInput.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
@@ -161,6 +162,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/lib;$(ProjectDir)Externals/Box2D/lib;$(ProjectDir)Externals/Assimp/lib/Release;$(ProjectDir)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>assimp-vc143-mt.lib;reactphysics3d.lib;box2d.lib;WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>GameInput.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
@@ -208,6 +210,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/lib;$(ProjectDir)Externals/Box2D/lib;$(ProjectDir)Externals/Assimp/lib/Release;$(ProjectDir)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>assimp-vc143-mt.lib;reactphysics3d.lib;box2d.lib;WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>GameInput.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
       <LinkTimeCodeGeneration>
       </LinkTimeCodeGeneration>
     </Link>

@@ -11,6 +11,7 @@
 #include "Splash/SplashScreen.h"
 
 #include "Utilities/Plugin/Plugins.h"
+#include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
@@ -31,6 +32,7 @@ struct ScopedSplashScreen {
 
 int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsPath) {
     SetUnhandledExceptionFilter(CrashHandler);
+    try {
     D3DResourceLeakChecker resourceLeakChecker;
 
     //--------- エンジン共通の翻訳の読み込み ---------//
@@ -46,6 +48,9 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
     ProjectPaths::Initialize({});
     if (!ProjectManager::EnsureActiveProject({})) {
         assert(false && "Failed to open a project.");
+        MessageBoxW(nullptr,
+            L"起動するプロジェクトを見つけられませんでした。\nProject.jsonまたはAssetsフォルダーを確認してください。",
+            L"KashipanEngine 起動エラー", MB_OK | MB_ICONERROR);
         return -1;
     }
 
@@ -70,6 +75,9 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
     JSON engineSettingsJSON = LoadJSON(resolvedEngineSettingsPath);
     if (engineSettingsJSON.is_null()) {
         assert(false && "Failed to load engine settings JSON.");
+        const std::wstring message = L"エンジン設定を読み込めませんでした。\n\n" +
+            ConvertString(resolvedEngineSettingsPath);
+        MessageBoxW(nullptr, message.c_str(), L"KashipanEngine 起動エラー", MB_OK | MB_ICONERROR);
         return -1;
     }
     std::string logSettingsPath = engineSettingsJSON.value("logSettingsPath", "LogSettings.json");
@@ -118,6 +126,23 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
 
     ShutdownLogger({});
     return code;
+    } catch (const std::exception &exception) {
+        const std::string detail = exception.what();
+        Log("Fatal startup/runtime error: " + detail, LogSeverity::Critical);
+        ShutdownLogger({});
+        const std::wstring message =
+            L"KashipanEngineを起動できませんでした。\n\n詳細: " + ConvertString(detail) +
+            L"\n\nLogsフォルダーのログも確認してください。";
+        MessageBoxW(nullptr, message.c_str(), L"KashipanEngine 起動エラー", MB_OK | MB_ICONERROR);
+        return -1;
+    } catch (...) {
+        Log("Fatal startup/runtime error: unknown exception", LogSeverity::Critical);
+        ShutdownLogger({});
+        MessageBoxW(nullptr,
+            L"KashipanEngineを起動できませんでした。\n\n不明な例外が発生しました。",
+            L"KashipanEngine 起動エラー", MB_OK | MB_ICONERROR);
+        return -1;
+    }
 }
 
 } // namespace KashipanEngine

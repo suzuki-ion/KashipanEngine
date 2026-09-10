@@ -7,6 +7,7 @@
 #include <functional>
 
 #include <shellapi.h>
+#include <shlobj.h>
 #pragma comment(lib, "Shell32.lib")
 
 #include "Debug/Logger.h"
@@ -60,10 +61,51 @@ std::string ReadEngineRootMarker(const std::filesystem::path &markerFilePath) {
     line.erase(std::find_if(line.rbegin(), line.rend(), notSpace).base(), line.end());
     if (line.empty()) return {};
 
+    // MSBuildのPostBuildEventはcmd.exe経由で書き出すため、環境によっては
+    // UTF-8ではなく現在のANSIコードページになる。UTF-8として不正な場合だけ
+    // ANSIからUTF-8へ変換し、従来のマーカーファイルとも互換性を保つ。
+    if (MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, line.data(),
+        static_cast<int>(line.size()), nullptr, 0) == 0) {
+        const int wideLength = MultiByteToWideChar(CP_ACP, 0, line.data(),
+            static_cast<int>(line.size()), nullptr, 0);
+        if (wideLength <= 0) return {};
+        std::wstring wide(static_cast<size_t>(wideLength), L'\0');
+        MultiByteToWideChar(CP_ACP, 0, line.data(), static_cast<int>(line.size()),
+            wide.data(), wideLength);
+        line = ConvertString(wide);
+    }
+
     std::error_code ec;
     const std::filesystem::path root = Utf8StringToPath(line);
     if (!std::filesystem::is_directory(root, ec)) return {};
     return PathToUtf8String(std::filesystem::weakly_canonical(root, ec));
+}
+
+bool EnsureDirectoryIsWritable(const std::filesystem::path &directory) {
+    std::error_code ec;
+    std::filesystem::create_directories(directory, ec);
+    if (ec || !std::filesystem::is_directory(directory, ec)) return false;
+
+    const std::filesystem::path probe = directory /
+        (L".kashipan_write_test_" + std::to_wstring(GetCurrentProcessId()) + L"_" +
+         std::to_wstring(GetTickCount64()) + L".tmp");
+    HANDLE file = CreateFileW(probe.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW,
+        FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, nullptr);
+    if (file == INVALID_HANDLE_VALUE) return false;
+    CloseHandle(file);
+    return true;
+}
+
+std::filesystem::path GetLocalAppDataRoot(const std::string &projectName) {
+    PWSTR localAppData = nullptr;
+    const HRESULT hr = SHGetKnownFolderPath(FOLDERID_LocalAppData, KF_FLAG_CREATE, nullptr, &localAppData);
+    if (FAILED(hr) || !localAppData) return {};
+
+    std::filesystem::path root(localAppData);
+    CoTaskMemFree(localAppData);
+    root /= L"KashipanEngine";
+    root /= Utf8StringToPath(projectName.empty() ? std::string("Default") : projectName);
+    return root;
 }
 
 } // namespace
@@ -255,6 +297,23 @@ std::string ProjectPaths::InProjectRoot(const std::string &relativePath) {
 std::string ProjectPaths::InEngineRoot(const std::string &relativePath) {
     if (sEngineRoot.empty()) return NormalizeSeparators(relativePath);
     return sEngineRoot + "/" + NormalizeSeparators(relativePath);
+}
+
+std::string ProjectPaths::WritableDirectory(const std::string &relativeDirectory) {
+    const std::filesystem::path relative = Utf8StringToPath(NormalizeSeparators(relativeDirectory));
+    const std::filesystem::path preferred = Utf8StringToPath(sExecutableDirectory) / relative;
+    if (EnsureDirectoryIsWritable(preferred)) {
+        return NormalizeSeparators(PathToUtf8String(preferred));
+    }
+
+    const std::filesystem::path localRoot = GetLocalAppDataRoot(sProjectName);
+    const std::filesystem::path fallback = localRoot.empty() ? std::filesystem::path{} : localRoot / relative;
+    if (!fallback.empty() && EnsureDirectoryIsWritable(fallback)) {
+        return NormalizeSeparators(PathToUtf8String(fallback));
+    }
+
+    // 呼び出し側が失敗理由を記録できるよう、最後に試したパスを返す。
+    return NormalizeSeparators(PathToUtf8String(fallback.empty() ? preferred : fallback));
 }
 
 std::string ProjectPaths::AssetsTemplateRoot() { return InEngineRoot(kAssetsTemplateFolderName); }

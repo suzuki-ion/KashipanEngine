@@ -25,10 +25,9 @@ Mouse::~Mouse() {
 
 void Mouse::Initialize() {
     if (!sGameInput) {
-        const HRESULT hr = GameInputCreate(&sGameInput);
-        if (FAILED(hr)) {
-            assert(false);
-            return;
+        if (GetModuleHandleW(L"GameInput.dll") || LoadLibraryW(L"GameInput.dll")) {
+            const HRESULT hr = GameInputCreate(&sGameInput);
+            if (FAILED(hr)) sGameInput = nullptr;
         }
     }
 
@@ -85,7 +84,15 @@ void Mouse::Update() {
     currentDeltaX_ = currentPosScreen.x - previousPosScreen.x;
     currentDeltaY_ = currentPosScreen.y - previousPosScreen.y;
 
-    if (!initialized_ || !sGameInput) {
+    if (!initialized_) {
+        return;
+    }
+
+    if (!sGameInput) {
+        constexpr int virtualKeys[] = { VK_LBUTTON, VK_RBUTTON, VK_MBUTTON, VK_XBUTTON1, VK_XBUTTON2 };
+        for (size_t i = 0; i < std::size(virtualKeys); ++i) {
+            currentButtons_[i] = (GetAsyncKeyState(virtualKeys[i]) & 0x8000) ? 0x80 : 0;
+        }
         return;
     }
 

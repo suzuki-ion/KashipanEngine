@@ -167,7 +167,7 @@ ShaderCompiler::ShaderCompiledInfo *ShaderCompiler::ShaderCompile(const CompileI
 
     // 参照元ファイルのディレクトリをインクルードパスに追加（相対 #include 対応）
     {
-        std::filesystem::path incDir = std::filesystem::path(compileInfo.filePath).parent_path();
+        std::filesystem::path incDir = Utf8StringToPath(compileInfo.filePath).parent_path();
         if (!incDir.empty()) {
             wstrArgs.emplace_back(L"-I");
             wstrArgs.emplace_back(incDir.wstring());

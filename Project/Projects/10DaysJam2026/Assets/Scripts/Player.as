@@ -192,11 +192,6 @@ class Player : ScriptComponentBehavior {
 
     // 落下開始時の最高到達Y座標
     float highestY = 0.0f;
-
-    // 最後に実際に接地していたプレイヤーのY座標。
-    // ボスの地面系攻撃がプレイヤーの空中Yを参照して浮かないように、
-    // 接地している間だけ更新する。
-    float lastGroundedY = 0.0f;
     
     // 攻撃用タイマー
     float attackTimer = 0.0f;
@@ -239,14 +234,6 @@ class Player : ScriptComponentBehavior {
         }
         GetComponent(@sprite);
         GetComponents(@audioSources);
-
-        // ボスなど他のスクリプトが「最後に接地していた地面の高さ」を
-        // 参照できるよう、開始位置を初期値として登録しておく。
-        Transform@ startTf = GetTransform();
-        if (startTf !is null) {
-            lastGroundedY = startTf.GetTranslate().y;
-            GetScene().SetVariable("PlayerGroundY", lastGroundedY);
-        }
 
         LoadProgress();
         ApplyTransitionEntryPoint();
@@ -344,6 +331,18 @@ class Player : ScriptComponentBehavior {
         float savedMaxHp;
         if (GetScene().GetGlobalVariable("save_maxHp", savedMaxHp)) {
             maxHp = savedMaxHp;
+        }
+
+        // 各シーンのPlayerには、武器取得時に参照できるようweaponsへ武器オブジェクトが
+        // あらかじめ設定されている場合がある。そのままでは未所持武器まで所持扱いになり、
+        // 次のシーン切り替え時にUpdateProgressVariables()がowned=trueとして引き継いでしまう。
+        // 「はじめから」直後だけは開始シーンに設定された初期装備を採用し、それ以外では
+        // シーン側の初期値を破棄して、以下のセーブ済みownedフラグから所持配列を再構築する。
+        bool isNewGameStart = false;
+        GetScene().GetGlobalVariable("isNewGameStart", isNewGameStart);
+        if (!isNewGameStart) {
+            @weapons = array<Object@>();
+            currentWeaponType = -1;
         }
 
         if (allWeapons !is null) {
@@ -571,12 +570,6 @@ class Player : ScriptComponentBehavior {
                     isJump = false;
                 }
                 highestY = currentY; // 地上にいる間は常にY座標を更新
-
-                // 現在の接地高さを記録しておく。
-                // 空中へ移行した後もこの値が残るため、「最後に立っていた地面」
-                // を地面系攻撃から参照できる。
-                lastGroundedY = currentY;
-                GetScene().SetVariable("PlayerGroundY", lastGroundedY);
             } else {
                 isJump = true;
                 coyoteTimer -= GetDeltaTime();
@@ -807,22 +800,25 @@ class Player : ScriptComponentBehavior {
         }
 
         // 武器の座標制御
-        // SetVariable("pos", ...)で渡すだけだとKatana側のUpdate()が呼ばれるまで実際の
-        // Transformには反映されない。Player.Update()とKatana.Update()のどちらが先に
-        // 実行されるかはスクリプトの実行順序次第であり、Katanaが先に呼ばれるフレームでは
-        // 1フレーム前のプレイヤー座標のまま描画されてしまう(ジャンプなど移動量が大きい
-        // 場面でズレが目立つ原因)。CallMethodでKatana側の反映処理を直接呼び出すことで、
-        // 実行順序に関係なくプレイヤーが動いた直後の座標を同じフレーム内で確実に反映する
         uint swordIndex = uint(WeaponList::Katana);
         if (weapons !is null && swordIndex < weapons.length() && weapons[swordIndex] !is null) {
             ScriptComponent@ sc;
             if (weapons[swordIndex].GetComponent(@sc)) {
-                bool isEquippedKatana = (currentWeaponType == WeaponList::Katana);
+                Vector3 targetPos;
+                if (currentWeaponType == WeaponList::Katana) {
+                    targetPos = tf.GetTranslate();
+                } else {
+                    targetPos = Vector3(-1000.0f, 0.0f, 0.0f);
+                }
+
+                Vector3 pos;
+                if (sc.GetVariable("pos", pos)) {
+                    sc.SetVariable("pos", targetPos);
+                }
 
                 // プレイヤーの最新の向きに応じたmarginをKatanaに送信
                 float margin = (lastDirection == Direction::Right) ? 16.0f : -16.0f;
-
-                sc.CallMethod("SyncFollowPosition", tf.GetTranslate(), margin, isEquippedKatana);
+                sc.SetVariable("currentMargin", margin);
             }
         }
 
@@ -1004,8 +1000,9 @@ class Player : ScriptComponentBehavior {
         }
 
         if(hit.otherCollider.GetTag() == "DeadArea"){
-            // 無敵時間中でも穴や溶岩などに落ちたら確実に死亡させる
-            Damage(100.0f, true);
+            // 落下・場外判定は通常の被ダメージ無敵を無視し、最大HPに関係なく即死させる
+            Damage(maxHp, true);
+            isAlive = false;
         }
     }
 
@@ -1161,11 +1158,8 @@ class Player : ScriptComponentBehavior {
         }
     }
 
-    // ignoreInvincible: trueの場合、無敵時間中でも強制的にダメージを適用する。
-    // DeadArea(穴・溶岩などの即死エリア)は、被弾直後の無敵時間中であっても
-    // 確実に死亡させたいため使用する
-    void Damage(float amount, bool ignoreInvincible = false) {
-        if(isInvincible && !ignoreInvincible) return;
+    void Damage(float amount, bool ignoreInvincibility = false) {
+        if(isInvincible && !ignoreInvincibility) return;
 
         hp = Clamp(hp - amount, 0.0f, maxHp);
         Log("Damage! HP:" + hp);

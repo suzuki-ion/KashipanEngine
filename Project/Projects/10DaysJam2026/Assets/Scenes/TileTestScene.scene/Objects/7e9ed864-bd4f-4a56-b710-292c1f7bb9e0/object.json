@@ -100,7 +100,7 @@
                         "fields": {
                             "ditherObject": "7e9ed864-bd4f-4a56-b710-292c1f7bb9e0",
                             "fadeInDuration": 0.5,
-                            "fadeInOnStart": true,
+                            "fadeInOnStart": false,
                             "fadeOutDuration": 0.5,
                             "isFadedOut": false
                         },
@@ -132,5 +132,5 @@
         "objectID": "7e9ed864-bd4f-4a56-b710-292c1f7bb9e0",
         "tag": ""
     },
-    "siblingIndex": 5000
+    "siblingIndex": 4500
 }

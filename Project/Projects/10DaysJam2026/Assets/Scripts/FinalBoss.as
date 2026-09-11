@@ -1063,6 +1063,12 @@ class FinalBoss : ScriptComponentBehavior {
     void Damage(float amount) {
         if (state == FinalBossState::Dead) return;
         hp -= amount;
+
+        // Update()側のBossHPUI_HP更新は、この直後にDead状態へ遷移してreturnすると
+        // 実行されないまま抜けてしまう(=とどめの一撃のHPがUIに反映されずゲージが1つ残るバグの原因)。
+        // ここで即座に反映しておくことで、死亡フレームでも最新のHPが確実にUIへ伝わるようにする。
+        GetScene().SetVariable("BossHPUI_HP", hp);
+
         PlayTaggedAudio("Damage");
 
         // ダメージ演出の開始(色フラッシュ)

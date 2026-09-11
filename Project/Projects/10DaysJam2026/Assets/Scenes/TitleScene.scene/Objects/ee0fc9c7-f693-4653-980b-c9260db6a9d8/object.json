@@ -76,7 +76,7 @@
                             }
                         },
                         "enableSpatialAudio": false,
-                        "loop": false,
+                        "loop": true,
                         "maxDistance": 25.0,
                         "minDistance": 1.0,
                         "pitch": 0.0,

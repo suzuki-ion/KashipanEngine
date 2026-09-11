@@ -741,14 +741,21 @@ void AssetsWindow::CreatePrefabFromObject(EmptyObject *obj) {
 
     if (!PrefabAssetManager::CreatePrefabFile(prefabID, prefabJson, filePath)) return;
 
-    // 対象オブジェクトを、今作成したPrefabのインスタンスとしてリンクする
-    if (commands_) {
-        commands_->Execute(std::make_unique<AddComponentCommand>(obj, "PrefabInstanceComponent"));
+    // 既存リンクの付け替えは直接変更だけで終わらせず、Undo履歴へ記録する。
+    if (auto *comp = obj->GetComponent<PrefabInstanceComponent>()) {
+        const JSON before = obj->SaveComponentToJson(comp);
+        comp->SetPrefabID(prefabID);
+        if (commands_) {
+            commands_->PushExecuted(std::make_unique<ComponentEditCommand>(
+                obj, comp, before, obj->SaveComponentToJson(comp)));
+        }
+    } else if (commands_) {
+        if (commands_->Execute(std::make_unique<AddComponentCommand>(obj, "PrefabInstanceComponent"))) {
+            if (auto *prefabComp = obj->GetComponent<PrefabInstanceComponent>()) prefabComp->SetPrefabID(prefabID);
+        }
     } else {
         obj->AddComponent(CreateObjectComponentByType("PrefabInstanceComponent"));
-    }
-    if (auto *comp = obj->GetComponent<PrefabInstanceComponent>()) {
-        comp->SetPrefabID(prefabID);
+        if (auto *prefabComp = obj->GetComponent<PrefabInstanceComponent>()) prefabComp->SetPrefabID(prefabID);
     }
 
     RefreshFileList();
@@ -933,6 +940,9 @@ void AssetsWindow::ShowRenameModal() {
                     if (currentFolder_ == contextMenuTargetPath_) {
                         currentFolder_ = ProjectPaths::ToLogical(PathToUtf8String(newPath));
                     }
+                    PrefabAssetManager::RenamePrefabFolder(
+                        ProjectPaths::ToLogical(PathToUtf8String(oldPath)),
+                        ProjectPaths::ToLogical(PathToUtf8String(newPath)));
                     RefreshFolderTree();
                 } else {
                     // 実ファイルのリネームに成功したら、対応するマネージャーの登録名/パスも追従させる
@@ -988,10 +998,16 @@ void AssetsWindow::ShowDeleteConfirmModal() {
             std::error_code ec;
             if (contextMenuTargetIsFolder_) {
                 std::filesystem::remove_all(ToPhysicalPath(contextMenuTargetPath_), ec);
-                RefreshFolderTree();
+                if (!ec) {
+                    PrefabAssetManager::UnregisterPrefabPath(contextMenuTargetPath_, true);
+                    RefreshFolderTree();
+                }
             } else {
                 std::filesystem::remove(ToPhysicalPath(contextMenuTargetPath_), ec);
-                RefreshFileList();
+                if (!ec) {
+                    PrefabAssetManager::UnregisterPrefabPath(contextMenuTargetPath_, false);
+                    RefreshFileList();
+                }
             }
             ImGui::CloseCurrentPopup();
         }

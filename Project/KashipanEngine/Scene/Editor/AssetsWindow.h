@@ -35,6 +35,9 @@ public:
 
     void ShowImGui();
 
+    /// @brief 外部ツールによるAssets配下の変更を表示へ反映する
+    void RefreshAfterExternalChanges() { RefreshFolderTree(); RefreshFileList(); }
+
     /// @brief OSからウィンドウ全体へD&Dされたファイルを、現在アクティブなAssetsWindowが
     ///        開いているフォルダへ取り込む（コピー＋対応するAssetManagerでの動的読み込み）
     /// @details AssetsWindowが1つも生成されていない場合は何もしない

@@ -468,7 +468,7 @@ JSON SkinnedMeshRenderer::SaveToJson() const {
     json["targetObjectID"] = ToJSON(targetObjectID_);
     json["pipelineName"] = pipelineName_;
     // 後方互換のため単一の"materialName"（スロット0）も併記する
-    json["materialName"] = materialNames_.front();
+    json["materialName"] = GetMaterialName();
     json["materialNames"] = materialNames_;
     for (const auto &name : excludedRenderTargetNames_) {
         json["excludedRenderTargetNames"].push_back(name);

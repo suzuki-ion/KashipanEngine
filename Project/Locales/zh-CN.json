@@ -1949,6 +1949,10 @@
 		"editor.prefab.apply": "应用",
 		"editor.prefab.applyall": "全部应用",
 		"editor.prefab.overrides": "被覆盖的项目：",
+		"editor.prefab.override.objectproperties": "对象属性",
+		"editor.prefab.override.parent": "父级关系",
+		"editor.prefab.override.addedobject": "已添加对象",
+		"editor.prefab.override.removedobjects": "已删除对象",
 		"editor.prefab.revert": "还原",
 		"editor.prefab.revert.title": "是否还原预制体实例？",
 		"editor.prefab.revert.warning1": "本地的所有更改（包括添加到此实例的子对象）都将被丢弃。",
@@ -2079,6 +2083,7 @@
 
 		//--------- editor.sceneobjecthierarchy ---------//
 		"editor.sceneobjecthierarchy.window": "场景对象层级",
+		"editor.sceneobjecthierarchy.search": "搜索",
 
 		//--------- editor.sceneobjectinspector ---------//
 		"editor.sceneobjectinspector.window": "对象检查器",
@@ -2389,6 +2394,14 @@
 		"error.code.label": "错误代码：",
 
 		//--------- label.filepath ---------//
-		"label.filepath": "文件路径："
+		"label.filepath": "文件路径：",
+
+		//--------- editor.externalchanges ---------//
+		"editor.externalchanges.title": "外部场景更改",
+		"editor.externalchanges.message": "正在编辑的场景已被外部修改。是否从磁盘重新加载？",
+		"editor.externalchanges.scene": "场景",
+		"editor.externalchanges.playing": "播放模式下无法安全重新加载，请先停止播放。",
+		"editor.externalchanges.reload": "重新加载",
+		"editor.externalchanges.keeplocal": "保留当前编辑"
 	}
 }

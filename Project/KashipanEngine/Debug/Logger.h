@@ -28,6 +28,8 @@ void InitializeLogger(PasskeyForGameEngineMain);
 void ShutdownLogger(PasskeyForGameEngineMain);
 /// @brief ロガー強制終了（クラッシュハンドラ用）
 void ForceShutdownLogger(PasskeyForCrashHandler);
+/// @brief 現在のスレッドがログワーカー自身か（クラッシュハンドラーの自己join回避用）
+bool IsLoggerWorkerThread(PasskeyForCrashHandler);
 
 /// @brief 1行分のログ（スプラッシュ画面など、外部へログを転送する用途向け）
 struct LogLine {

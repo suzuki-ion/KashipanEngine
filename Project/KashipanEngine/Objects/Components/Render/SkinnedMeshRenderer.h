@@ -194,8 +194,15 @@ public:
     bool GetCastShadows() const noexcept { return castShadows_; }
 
     void SetMaterialName(const std::string &materialName) { SetMaterialNameAt(0, materialName); }
-    void SetMaterialHandle(MaterialManager::MaterialHandle materialHandle) { materialHandles_[0] = materialHandle; }
-    const std::string &GetMaterialName() const noexcept { return materialNames_.front(); }
+    void SetMaterialHandle(MaterialManager::MaterialHandle materialHandle) {
+        if (materialNames_.empty()) materialNames_.push_back("Default");
+        if (materialHandles_.empty()) materialHandles_.push_back(MaterialManager::kInvalidHandle);
+        materialHandles_[0] = materialHandle;
+    }
+    const std::string &GetMaterialName() const noexcept {
+        static const std::string kDefaultMaterialName = "Default";
+        return materialNames_.empty() ? kDefaultMaterialName : materialNames_.front();
+    }
     MaterialManager::MaterialHandle GetMaterialHandle() const noexcept { return GetMaterialHandleAt(0); }
 
     //==================================================
@@ -207,6 +214,10 @@ public:
     /// @brief マテリアルスロット数を変更する（追加分は最後のスロットと同じマテリアルで埋める）
     void SetMaterialSlotCount(size_t count) {
         if (count < 1) count = 1;
+        if (materialNames_.empty()) materialNames_.push_back("Default");
+        if (materialHandles_.size() < materialNames_.size()) {
+            materialHandles_.resize(materialNames_.size(), MaterialManager::kInvalidHandle);
+        }
         if (count == materialNames_.size()) return;
         materialNames_.resize(count, materialNames_.back());
         materialHandles_.resize(count, MaterialManager::kInvalidHandle);
@@ -219,12 +230,15 @@ public:
     }
     /// @brief 指定スロットのマテリアル名を取得する（範囲外は最後のスロットを返す）
     const std::string &GetMaterialNameAt(size_t slot) const noexcept {
+        if (materialNames_.empty()) return GetMaterialName();
         return materialNames_[std::min(slot, materialNames_.size() - 1)];
     }
     /// @brief 指定スロットのマテリアルハンドルを取得（未解決の場合はマテリアル名から解決を試みる）
     /// @details スロット数を超えるサブメッシュは最後のスロットのマテリアルで描画される（Unityと同様）
     MaterialManager::MaterialHandle GetMaterialHandleAt(size_t slot) const noexcept {
+        if (materialNames_.empty() || materialHandles_.empty()) return MaterialManager::kInvalidHandle;
         const size_t index = std::min(slot, materialNames_.size() - 1);
+        if (index >= materialHandles_.size()) return MaterialManager::kInvalidHandle;
         if (materialHandles_[index] == MaterialManager::kInvalidHandle && !materialNames_[index].empty()) {
             materialHandles_[index] = MaterialManager::GetMaterialHandleFromName(materialNames_[index]);
         }

@@ -531,17 +531,22 @@ class Player : ScriptComponentBehavior {
             }
         }
 
-        // 会話中(isDialogueActive)は移動・攻撃などの処理を止める
-        bool isDialogueActive = false;
-        GetScene().GetVariable("isDialogueActive", isDialogueActive);
-        if (isDialogueActive) return;
-
         // 死亡している間は通常の移動・攻撃処理を行わず、ゲームオーバー要求の送出だけを行う
         // (実際の画面表示・入力待ち・シーンリロードはGameOverMenu.as側が担当する)
+        // 被ダメージ元がUpdate後の衝突コールバックからhpを0にした場合も、次のUpdate冒頭で
+        // 必ず死亡を確定する。会話中でもゲームオーバー要求が止まらないよう会話判定より先に行う。
+        if (hp <= 0.0f) {
+            isAlive = false;
+        }
         if (!isAlive) {
             UpdateGameOverSequence();
             return;
         }
+
+        // 会話中(isDialogueActive)は移動・攻撃などの処理を止める
+        bool isDialogueActive = false;
+        GetScene().GetVariable("isDialogueActive", isDialogueActive);
+        if (isDialogueActive) return;
 
         @tf = GetTransform();
         if(tf is null) return;
@@ -826,10 +831,6 @@ class Player : ScriptComponentBehavior {
         if(attackTimer > 0.0f){
             attackTimer -= GetDeltaTime();
             isAttacking = true;
-        }
-
-        if(hp <= 0.0f){
-            isAlive = false;
         }
 
         State nextState = state;
@@ -1164,6 +1165,20 @@ class Player : ScriptComponentBehavior {
         hp = Clamp(hp - amount, 0.0f, maxHp);
         Log("Damage! HP:" + hp);
         PlayTaggedAudio("Damage");
+
+        // EnemyBullet等はProcessDamageAndKnockbackを経由せずDamageを直接呼ぶため、
+        // 無敵開始を呼び出し元任せにすると連続被弾する。通常ダメージはここで一元的に開始する。
+        if (!ignoreInvincibility) {
+            isInvincible = true;
+            invincibleTimer = 0.0f;
+        }
+
+        // 衝突コールバックはPlayer.Update後に呼ばれることがあるため、hp判定を次フレーム末尾まで
+        // 遅らせず、この場で死亡状態を確定してゲームオーバーシーケンスへ渡す。
+        if (hp <= 0.0f) {
+            isAlive = false;
+            deathTimer = 0.0f;
+        }
 
         // 被ダメージの瞬間、その時点で装備している武器の経験値を減少させる
         RemoveWeaponExp(weaponExpLossOnDamage);

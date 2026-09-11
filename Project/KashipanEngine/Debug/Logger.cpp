@@ -609,6 +609,15 @@ void ShutdownLogger(PasskeyForGameEngineMain) {
 void ForceShutdownLogger(PasskeyForCrashHandler) {
     if (!sLoggerInitialized) return;
 
+    // 未処理例外がログワーカースレッド自身で起きた場合、ここでログmutexを再取得したり
+    // 自分自身をjoinしたりするとクラッシュハンドラーまで停止する。終了要求だけを通知し、
+    // ダンプ出力を継続させる。
+    if (sLogThread.joinable() && sLogThread.get_id() == std::this_thread::get_id()) {
+        sStopRequested.store(true);
+        sThreadRunning.store(false);
+        return;
+    }
+
     // 可能ならワーカースレッドを止める
     {
         std::lock_guard<std::mutex> lock(sLogMutex);
@@ -626,6 +635,10 @@ void ForceShutdownLogger(PasskeyForCrashHandler) {
         sLogFile.close();
     }
     sLoggerInitialized = false;
+}
+
+bool IsLoggerWorkerThread(PasskeyForCrashHandler) {
+    return sLogThread.joinable() && sLogThread.get_id() == std::this_thread::get_id();
 }
 
 void Log(const std::string &logText, LogSeverity severity) {

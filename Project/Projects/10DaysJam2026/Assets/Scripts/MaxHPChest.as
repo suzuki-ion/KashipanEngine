@@ -49,7 +49,19 @@ class MaxHpChest : ScriptComponentBehavior {
             GetScene().SetGlobalVariable(GetSaveKey(), true);
         }
 
+        PlayTaggedAudio("Open");
         PlayOpenAnimation();
+    }
+
+    void PlayTaggedAudio(const string &in tagName) {
+        array<AudioSource@>@ sources;
+        if (!GetComponents(@sources)) return;
+        for (uint i = 0; i < sources.length(); ++i) {
+            if (sources[i] !is null && sources[i].GetTag() == tagName) {
+                sources[i].SetActive(true);
+                sources[i].Play();
+            }
+        }
     }
 
     // 開封用アニメーション再生

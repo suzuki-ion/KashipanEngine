@@ -1988,6 +1988,10 @@
 		"editor.prefab.apply": "適用",
 		"editor.prefab.applyall": "すべて適用",
 		"editor.prefab.overrides": "上書きされている項目：",
+		"editor.prefab.override.objectproperties": "オブジェクト設定",
+		"editor.prefab.override.parent": "親子関係",
+		"editor.prefab.override.addedobject": "追加されたオブジェクト",
+		"editor.prefab.override.removedobjects": "削除されたオブジェクト数",
 		"editor.prefab.revert": "元に戻す",
 		"editor.prefab.revert.title": "プレハブインスタンスを元に戻しますか？",
 		"editor.prefab.revert.warning1": "ローカルの変更（このインスタンスに追加した子オブジェクトを含む）はすべて破棄されます。",
@@ -2118,6 +2122,7 @@
 
 		//--------- editor.sceneobjecthierarchy ---------//
 		"editor.sceneobjecthierarchy.window": "シーンオブジェクト階層",
+		"editor.sceneobjecthierarchy.search": "検索",
 
 		//--------- editor.sceneobjectinspector ---------//
 		"editor.sceneobjectinspector.window": "オブジェクトインスペクタ",
@@ -2436,6 +2441,14 @@
 		"error.code.label": "エラーコード：",
 
 		//--------- label.filepath ---------//
-		"label.filepath": "ファイルパス："
+		"label.filepath": "ファイルパス：",
+
+		//--------- editor.externalchanges ---------//
+		"editor.externalchanges.title": "外部でのシーン変更",
+		"editor.externalchanges.message": "編集中のシーンが外部で変更されました。ディスク上の内容を再読み込みしますか？",
+		"editor.externalchanges.scene": "対象シーン",
+		"editor.externalchanges.playing": "再生中は安全のため再読み込みできません。停止してから再読み込みしてください。",
+		"editor.externalchanges.reload": "再読み込み",
+		"editor.externalchanges.keeplocal": "現在の編集内容を維持"
 	}
 }

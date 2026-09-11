@@ -1986,6 +1986,10 @@
 		"editor.prefab.apply": "Apply",
 		"editor.prefab.applyall": "Apply All",
 		"editor.prefab.overrides": "Overrides: ",
+		"editor.prefab.override.objectproperties": "Object Properties",
+		"editor.prefab.override.parent": "Parent",
+		"editor.prefab.override.addedobject": "Added Object",
+		"editor.prefab.override.removedobjects": "Removed Objects",
 		"editor.prefab.revert": "Revert",
 		"editor.prefab.revert.title": "Revert Prefab Instance?",
 		"editor.prefab.revert.warning1": "This will discard all local changes (including locally added child objects)",
@@ -2116,6 +2120,7 @@
 
 		//--------- editor.sceneobjecthierarchy ---------//
 		"editor.sceneobjecthierarchy.window": "Scene Object Hierarchy",
+		"editor.sceneobjecthierarchy.search": "Search",
 
 		//--------- editor.sceneobjectinspector ---------//
 		"editor.sceneobjectinspector.window": "Scene Object Inspector",
@@ -2434,6 +2439,14 @@
 		"error.code.label": "Error Code: ",
 
 		//--------- label.filepath ---------//
-		"label.filepath": "File Path: "
+		"label.filepath": "File Path: ",
+
+		//--------- editor.externalchanges ---------//
+		"editor.externalchanges.title": "External Scene Change",
+		"editor.externalchanges.message": "The scene being edited was changed externally. Reload it from disk?",
+		"editor.externalchanges.scene": "Scene",
+		"editor.externalchanges.playing": "Reload is disabled during Play mode. Stop playback before reloading.",
+		"editor.externalchanges.reload": "Reload",
+		"editor.externalchanges.keeplocal": "Keep Local Edits"
 	}
 }

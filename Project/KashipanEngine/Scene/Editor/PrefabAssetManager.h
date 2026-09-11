@@ -3,6 +3,7 @@
 #include <functional>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/UUID128.h"
@@ -13,7 +14,7 @@ namespace KashipanEngine {
 /// @details prefabID（UUID128）とファイルパスの対応を索引化し、JSONのキャッシュ・保存を一元管理する。
 ///          「元Prefabが書き変わればシーン上のインスタンスも書き変わる」機能の起点となるハブ：
 ///          SavePrefabJson系のAPIを経由して保存が行われるたびに、登録済みリスナーへ変更を通知する
-///          （エンジン内操作時にのみ反映され、常時ファイル監視は行わない）。
+///          SceneEditorのファイル監視から外部変更を受け取った場合も同じ変更通知経路を使用する。
 class PrefabAssetManager final {
 public:
     /// @brief Prefabファイルが（エンジン内操作により）変更された際に呼ばれるコールバック
@@ -46,6 +47,13 @@ public:
 
     /// @brief Assetsウィンドウのリネーム機構から呼ばれる、索引の追従（実ファイルは操作しない）
     static bool RenamePrefabFile(const std::string &oldFilePath, const std::string &newFilePath);
+    /// @brief フォルダ改名時に、配下の全Prefabパスを新しいフォルダへ追従させる
+    static void RenamePrefabFolder(const std::string &oldFolderPath, const std::string &newFolderPath);
+    /// @brief 削除されたPrefabファイル、またはフォルダ配下のPrefabを索引とキャッシュから解除する
+    static void UnregisterPrefabPath(const std::string &fileOrFolderPath, bool recursive);
+
+    /// @brief ファイル監視で検知したPrefabをディスクから再読込し、変更通知を発行する
+    static void ReloadExternallyChangedFiles(const std::vector<std::string> &filePaths);
 
     /// @brief 変更通知リスナーを設定する（既存の登録があれば置き換える）
     /// @details シーン切り替えのたびにSceneEditorが再構築されるため、リスナーは「常に現在の
@@ -56,8 +64,8 @@ public:
 
 private:
     /// @brief Assetsフォルダを走査し、既存.prefabファイルのprefabIDを索引化する
-    /// @details セッション中、未構築の場合にのみ実行される（常時ファイル監視はしない方針のため、
-    ///          以後はエンジン内操作（CreatePrefabFile/RenamePrefabFile）でのみ増分更新される）
+    /// @details セッション中、未構築の場合にのみ実行される。以後はエンジン内操作と
+    ///          SceneEditorのファイル監視通知により増分更新される
     static void EnsureIndexBuilt();
     /// @brief キャッシュへjsonを登録し、リスナーへ通知する（保存前後のJSONを渡す）
     static void NotifyChanged(const UUID128 &prefabID, const JSON &oldJson, const JSON &newJson);

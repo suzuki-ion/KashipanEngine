@@ -37,6 +37,36 @@ void ShaderCompiler::ClearAllCompiledShaders(Passkey<PipelineManager>) {
     sFreeShaderIDs.clear();
 }
 
+std::vector<uint32_t> ShaderCompiler::CaptureCompiledShaderIDs(Passkey<PipelineManager>) {
+    std::vector<uint32_t> shaderIDs;
+    shaderIDs.reserve(sCompiledShaders.size() - sFreeShaderIDs.size());
+    for (uint32_t shaderID = 0; shaderID < sCompiledShaders.size(); ++shaderID) {
+        if (sCompiledShaders[shaderID]) shaderIDs.push_back(shaderID);
+    }
+    return shaderIDs;
+}
+
+void ShaderCompiler::DestroyCompiledShadersExcept(
+    Passkey<PipelineManager>, const std::vector<uint32_t> &keptShaderIDs) {
+    const std::unordered_set<uint32_t> keptIDs(keptShaderIDs.begin(), keptShaderIDs.end());
+    for (uint32_t shaderID = 0; shaderID < sCompiledShaders.size(); ++shaderID) {
+        if (sCompiledShaders[shaderID] && !keptIDs.contains(shaderID)) {
+            sCompiledShaders[shaderID].reset();
+            sFreeShaderIDs.push_back(shaderID);
+        }
+    }
+}
+
+void ShaderCompiler::DestroyCompiledShaders(
+    Passkey<PipelineManager>, const std::vector<uint32_t> &shaderIDs) {
+    for (const uint32_t shaderID : shaderIDs) {
+        if (shaderID < sCompiledShaders.size() && sCompiledShaders[shaderID]) {
+            sCompiledShaders[shaderID].reset();
+            sFreeShaderIDs.push_back(shaderID);
+        }
+    }
+}
+
 ShaderCompiler::ShaderCompiler(Passkey<PipelineManager>, ID3D12Device *device) {
     LogScope scope;
     Log(Translation("engine.graphics.shadercompiler.initialize.start"), LogSeverity::Debug);

@@ -43,8 +43,20 @@ class HeartChest : ScriptComponentBehavior {
         isOpen = true;
         Log("回復宝箱を開けた！");
 
+        PlayTaggedAudio("Open");
         PlayOpenAnimation();
         SpawnItems();
+    }
+
+    void PlayTaggedAudio(const string &in tagName) {
+        array<AudioSource@>@ sources;
+        if (!GetComponents(@sources)) return;
+        for (uint i = 0; i < sources.length(); ++i) {
+            if (sources[i] !is null && sources[i].GetTag() == tagName) {
+                sources[i].SetActive(true);
+                sources[i].Play();
+            }
+        }
     }
 
     // 回復アイテムを大量生成して飛び散らせる

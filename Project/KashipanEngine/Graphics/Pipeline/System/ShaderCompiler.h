@@ -132,6 +132,15 @@ public:
     /// @brief コンパイル済みシェーダー情報のクリア
     static void ClearAllCompiledShaders(Passkey<PipelineManager>);
 
+    /// @brief 現在有効なコンパイル済みシェーダーIDを取得
+    static std::vector<uint32_t> CaptureCompiledShaderIDs(Passkey<PipelineManager>);
+
+    /// @brief 指定世代以外のコンパイル済みシェーダーを破棄
+    static void DestroyCompiledShadersExcept(Passkey<PipelineManager>, const std::vector<uint32_t> &keptShaderIDs);
+
+    /// @brief 指定世代のコンパイル済みシェーダーを破棄
+    static void DestroyCompiledShaders(Passkey<PipelineManager>, const std::vector<uint32_t> &shaderIDs);
+
     /// @brief シェーダーコンパイル結果情報構造体
     struct ShaderCompiledInfo {
         ShaderCompiledInfo(Passkey<ShaderCompiler>, uint32_t shaderID) : id(shaderID) {}

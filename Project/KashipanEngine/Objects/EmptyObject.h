@@ -34,6 +34,8 @@ public:
 
     void InitializeInterface(Passkey<Scene>) { Initialize(); }
     void FinalizeInterface(Passkey<Scene>) { Finalize(); }
+    /// @brief Sceneが全オブジェクトのFinalizeを済ませた後、再Finalizeせずコンポーネントを解放する
+    void ReleaseFinalizedComponents(Passkey<Scene>);
     void UpdateInterface(Passkey<Scene>) { Update(); }
 
     void SetName(const std::string &name) { name_ = name; }
@@ -190,7 +192,7 @@ public:
     // コンポーネント削除系メソッド
     //==================================================
 
-    /// @brief ポインタからコンポーネントを削除
+    /// @brief ポインタからコンポーネントを削除（Transformはオブジェクトの必須要素のため削除不可）
     /// @param component 削除したいコンポーネントのポインタ
     /// @return 削除に成功した場合は true
     bool RemoveComponent(const IObjectComponent *component);
@@ -346,6 +348,7 @@ private:
 
     void Initialize();
     void Finalize();
+    void ReleaseComponentsWithoutFinalize();
     void Update();
     void RegenerateUpdateComponentsList();
     /// @brief シーン内から自身の子孫オブジェクトを探し、変更前の実効アクティブ状態を記録する（SetActive用）

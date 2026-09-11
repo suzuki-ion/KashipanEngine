@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <unordered_set>
 
 namespace KashipanEngine {
 
@@ -225,7 +226,8 @@ JSON Scene::SaveToJSON() const {
 }
 
 bool Scene::LoadFromJSON(const JSON &json) {
-    if (json.empty()) return false;
+    if (!json.is_object()) return false;
+    try {
     name_ = json.value("sceneName", "");
     sceneID_ = UUID128(json.value("sceneID", ""));
     // シーンコンポーネントを追加
@@ -280,7 +282,11 @@ bool Scene::LoadFromJSON(const JSON &json) {
         // reinterpret し、値が破損して見える（未定義動作）。
         sceneVariables_[key] = LoadAnyFromJson(varData.value("value", JSON()), typeInfo);
     }
-    return true;
+        return true;
+    } catch (const std::exception &exception) {
+        Log(std::string("Failed to load scene JSON: ") + exception.what(), LogSeverity::Error);
+        return false;
+    }
 }
 
 bool Scene::RemoveSceneVariable(const std::string &key) {
@@ -383,12 +389,23 @@ EmptyObject *Scene::CloneObject(EmptyObject *source, const std::string &name, bo
 
 void Scene::CollectSubtreeObjects(EmptyObject *root, std::vector<EmptyObject *> &out) const {
     if (!root) return;
-    out.push_back(root);
-    for (auto *candidate : objects_) {
-        if (!candidate || candidate == root) continue;
-        auto *candidateTransform = candidate->GetComponent<Transform>();
-        if (candidateTransform && candidateTransform->GetParentObject() == root) {
-            CollectSubtreeObjects(candidate, out);
+
+    std::vector<EmptyObject *> pending{root};
+    std::unordered_set<EmptyObject *> visited;
+    while (!pending.empty()) {
+        EmptyObject *current = pending.back();
+        pending.pop_back();
+        if (!current || !visited.insert(current).second) continue;
+        out.push_back(current);
+
+        // 再帰版と同じシーン順の深さ優先順を保つため、子は逆順で積む。
+        for (auto it = objects_.rbegin(); it != objects_.rend(); ++it) {
+            EmptyObject *candidate = *it;
+            if (!candidate || candidate == current) continue;
+            auto *candidateTransform = candidate->GetComponent<Transform>();
+            if (candidateTransform && candidateTransform->GetParentObject() == current) {
+                pending.push_back(candidate);
+            }
         }
     }
 }
@@ -398,34 +415,24 @@ bool Scene::DeleteObject(EmptyObject *obj) {
     auto it = std::find(objects_.begin(), objects_.end(), obj);
     if (it == objects_.end()) return false;
 
-    // 子オブジェクトも道連れに削除する（削除前に対象を収集してから再帰的に削除する。
-    // 削除中に objects_ が変化しイテレータが無効化されるため、先に収集する必要がある）
-    std::vector<EmptyObject *> children;
-    for (auto *candidate : objects_) {
-        if (!candidate || candidate == obj) continue;
-        auto *candidateTransform = candidate->GetComponent<Transform>();
-        if (candidateTransform && candidateTransform->GetParentObject() == obj) {
-            children.push_back(candidate);
+    // 子孫を先に一括収集し、末尾から破棄することで再帰によるスタック消費と
+    // objects_走査中のイテレーター無効化を避ける。
+    std::vector<EmptyObject *> subtree;
+    CollectSubtreeObjects(obj, subtree);
+    for (auto subtreeIt = subtree.rbegin(); subtreeIt != subtree.rend(); ++subtreeIt) {
+        EmptyObject *target = *subtreeIt;
+        auto targetIt = std::find(objects_.begin(), objects_.end(), target);
+        if (targetIt == objects_.end()) continue;
+
+        RemoveObjectFromMaps(target);
+        objects_.erase(targetIt);
+        if (isProcessingObjectLifecycle_) {
+            // 更新処理中（スクリプトが自分自身の所有オブジェクトを削除する場合など）は、
+            // 実行中のコンポーネントを破棄しないよう安全なタイミングまで遅延する。
+            pendingDestroyObjects_.push_back(target);
+        } else {
+            objectPool_.Remove(target);
         }
-    }
-    for (auto *child : children) {
-        DeleteObject(child); // 再帰呼び出しでさらに孫オブジェクトも削除される
-    }
-
-    // 子オブジェクトの削除により objects_ が変化しているため、対象オブジェクトを再検索する
-    it = std::find(objects_.begin(), objects_.end(), obj);
-    if (it == objects_.end()) return false;
-    // シーンからは即座に見えなくする（名前/UUID検索・存在確認はここから無効になる）
-    RemoveObjectFromMaps(obj);
-    objects_.erase(it);
-
-    if (isProcessingObjectLifecycle_) {
-        // 更新処理中（スクリプトが自分自身の所有オブジェクトを削除する場合など）は、
-        // ここで実体を破棄すると実行中のコンポーネント自身を破棄してしまい危険なため、
-        // 更新が完全に終わった安全なタイミング（FlushPendingDestroys）まで実破棄を遅延する
-        pendingDestroyObjects_.push_back(obj);
-    } else {
-        objectPool_.Remove(obj);
     }
     return true;
 }
@@ -524,20 +531,29 @@ void Scene::RemoveObjectFromMaps(EmptyObject *obj) {
 }
 
 void Scene::ClearSceneObjects() {
-    // FinalizeInterface を呼んでからオブジェクトを破棄する
-    for (auto *obj : objects_) {
+    // FinalizeからDeleteObjectが呼ばれてobjects_が変化しても走査を壊さないよう、
+    // 生存ポインタのスナップショットを使い、実破棄は全Finalize後まで遅延する。
+    isProcessingObjectLifecycle_ = true;
+    const std::vector<EmptyObject *> snapshot = objects_;
+    for (auto *obj : snapshot) {
         if (obj) {
             obj->FinalizeInterface(Passkey<Scene>());
         }
     }
+    // EmptyObjectのデストラクターから同じコンポーネントを再Finalizeすると、先に破棄された
+    // 親をUUID索引から引いてuse-after-freeになるため、全Finalize後にコンポーネントを先に解放する。
+    for (auto *obj : snapshot) {
+        if (obj) obj->ReleaseFinalizedComponents(Passkey<Scene>());
+    }
+    objectsByUUID_.clear();
+    objectsExistingSet_.clear();
+    objectsByName_.clear();
     objectPool_.Clear();
+    isProcessingObjectLifecycle_ = false;
     // objectPool_.Clear() で一括破棄済みのため、破棄待ちキューに残ったポインタは
     // すべてダングリングになる。FlushPendingDestroysで二重に触れないようここで捨てる
     pendingDestroyObjects_.clear();
     objects_.clear();
-    objectsByUUID_.clear();
-    objectsExistingSet_.clear();
-    objectsByName_.clear();
 }
 
 ISceneComponent *Scene::GetComponent(const ISceneComponent *component) const {

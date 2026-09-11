@@ -69,7 +69,8 @@ public:
     ///        保存されている位置をそのまま使う。シーンビューへのドラッグ&ドロップ配置で使用）。
     ///        customData["translate"]をそのままワールド座標として書き換えるため、attachParentが
     ///        非nullptrの場合はワールド座標ではなくattachParentのローカル座標として適用される点に注意
-    void InstantiateNodes(const std::vector<PasteObjectCommand::Node> &nodes, const std::string &name,
+    /// @return 全ノードの配置に成功した場合はtrue
+    bool InstantiateNodes(const std::vector<PasteObjectCommand::Node> &nodes, const std::string &name,
         EmptyObject *attachParent = nullptr, const Vector3 *worldPosition = nullptr);
     /// @brief プレハブファイル（.prefab）を読み込んでシーンへ配置する
     /// @param filePath プレハブファイルのパス（実行ディレクトリからの相対パス）
@@ -115,6 +116,10 @@ private:
         std::vector<ObjectItem> children;
         size_t depth = 0;
         size_t originalIndex = SIZE_MAX;
+        // 検索フィルタの適用結果（ApplySearchFilterで設定。フィルタ非アクティブ時は常にtrueのまま）
+        bool visibleInSearch = true;
+        // 自身は検索条件にマッチしないが、子孫にマッチするものがあるため強制的に開く必要がある場合true
+        bool forceOpenForSearch = false;
     };
 
     enum class DropPosition {
@@ -167,6 +172,9 @@ private:
 
     void RebuildObjectItems();
     void RecursivelyBuildObjectItems(EmptyObject *obj, ObjectItem &item, size_t depth);
+    /// @brief hierarchySearchFilter_をitem以下へ再帰適用し、visibleInSearch/forceOpenForSearchを設定する
+    /// @return itemまたはその子孫のいずれかが検索条件にマッチした場合true
+    bool ApplySearchFilter(ObjectItem &item);
     void ShowObjectItem(const ObjectItem &item, size_t &index);
     /// @brief シーンビュー等の外部からの選択時に、ヒエラルキー上で対象までスクロールし、
     ///        その祖先ツリーを強制的に開くよう要求する（次にヒエラルキーが描画されるフレームで消費される）
@@ -222,13 +230,18 @@ private:
     /// @brief 指定オブジェクトを根とする部分木のJSONスナップショットを収集する（pre-order）
     void CollectSubtreeNodes(EmptyObject *obj, int parentIndex, std::vector<PasteObjectCommand::Node> &out) const;
     /// @brief 貼り付け/複製コマンドを実行し、成功したら生成された全ルートオブジェクトを選択状態にする
-    void ExecutePasteCommand(std::unique_ptr<PasteObjectCommand> command);
+    /// @return コマンドと全ノードの生成に成功した場合はtrue
+    bool ExecutePasteCommand(std::unique_ptr<PasteObjectCommand> command);
 
     SceneEditorContext *editorContext_ = nullptr;
     SceneEditorCommands *commands_ = nullptr;
 
     std::vector<ObjectItem> objectItems_;
     std::unordered_map<EmptyObject *, std::vector<std::pair<EmptyObject *, size_t>>> objectParentMap_;
+
+    // ヒエラルキー上部の名前検索ボックス（ImGuiTextFilter）。RebuildObjectItems()内でアクティブな
+    // 場合のみ各ObjectItemへ適用し、非アクティブ時は全項目を表示する
+    ImGuiTextFilter hierarchySearchFilter_;
 
     // 複数選択の状態。selectedObject_ は最後に操作したオブジェクト（インスペクター/ギズモ等、
     // 単一対象を要求する既存の呼び出し元との後方互換用）で、常に selectedObjects_ に含まれる

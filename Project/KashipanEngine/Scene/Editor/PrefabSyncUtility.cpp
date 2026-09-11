@@ -78,6 +78,80 @@ const JSON *FindComponentJsonByTypeOrdinal(const JSON &componentsArray, const st
     return nullptr;
 }
 
+std::unordered_map<std::string, std::string> IndexPrefabParentNodeIDs(const JSON &prefabJson) {
+    std::unordered_map<std::string, std::string> result;
+    if (!prefabJson.contains("objects") || !prefabJson["objects"].is_array()) return result;
+    const JSON &entries = prefabJson["objects"];
+    for (size_t i = 0; i < entries.size(); ++i) {
+        if (!entries[i].contains("object")) continue;
+        const std::string nodeID = entries[i]["object"].value("prefabNodeID", std::string{});
+        if (nodeID.empty()) continue;
+        const int parentIndex = entries[i].value("parentIndex", -1);
+        if (parentIndex >= 0 && static_cast<size_t>(parentIndex) < entries.size() &&
+            entries[static_cast<size_t>(parentIndex)].contains("object")) {
+            result[nodeID] = entries[static_cast<size_t>(parentIndex)]["object"].value(
+                "prefabNodeID", std::string{});
+        } else {
+            result[nodeID] = {};
+        }
+    }
+    return result;
+}
+
+bool HasObjectPropertyOverride(EmptyObject *object, const JSON &prefabObject) {
+    return object->GetName() != prefabObject.value("name", std::string{}) ||
+        object->GetTagName() != prefabObject.value("tag", std::string{}) ||
+        object->IsActive() != prefabObject.value("isActive", true) ||
+        object->IsEditorOnly() != prefabObject.value("editorOnly", false) ||
+        object->IsHiddenFromEditorTarget() != prefabObject.value("hiddenFromEditorTarget", false);
+}
+
+bool HasParentOverride(EmptyObject *object, const std::string &nodeID, const JSON &prefabJson) {
+    const auto prefabByNodeID = IndexPrefabObjectsByNodeID(prefabJson);
+    const auto prefabParentByNodeID = IndexPrefabParentNodeIDs(prefabJson);
+    std::string liveParentNodeID;
+    if (auto *transform = object->GetComponent<Transform>()) {
+        EmptyObject *parent = transform->GetParentObject();
+        if (parent && parent->GetPrefabNodeID().IsValid() &&
+            prefabByNodeID.contains(parent->GetPrefabNodeID().ToString())) {
+            liveParentNodeID = parent->GetPrefabNodeID().ToString();
+        }
+    }
+    auto expected = prefabParentByNodeID.find(nodeID);
+    const std::string expectedParentNodeID = expected != prefabParentByNodeID.end() ? expected->second : std::string{};
+    return liveParentNodeID != expectedParentNodeID;
+}
+
+/// @brief Transformの親参照は構造Overrideとして扱い、コンポーネント値の比較から除外する
+JSON NormalizeComponentForOverrideComparison(JSON componentJson) {
+    if (componentJson.value("type", std::string{}) != "Transform" || !componentJson.contains("data")) {
+        return componentJson;
+    }
+    JSON &data = componentJson["data"];
+    if (data.contains("customData") && data["customData"].is_object()) {
+        data["customData"].erase("parent");
+    }
+    return componentJson;
+}
+
+/// @brief sourceのTransform親参照だけをdestinationへコピーする（無ければdestinationから消去）
+void CopyTransformParent(const JSON &source, JSON &destination) {
+    if (destination.value("type", std::string{}) != "Transform" || !destination.contains("data")) return;
+    JSON &destinationData = destination["data"];
+    if (!destinationData.contains("customData") || !destinationData["customData"].is_object()) {
+        destinationData["customData"] = JSON::object();
+    }
+    const JSON *sourceCustomData = nullptr;
+    if (source.contains("data") && source["data"].contains("customData") && source["data"]["customData"].is_object()) {
+        sourceCustomData = &source["data"]["customData"];
+    }
+    if (sourceCustomData && sourceCustomData->contains("parent")) {
+        destinationData["customData"]["parent"] = (*sourceCustomData)["parent"];
+    } else {
+        destinationData["customData"].erase("parent");
+    }
+}
+
 /// @brief オブジェクトJSON内のTransformの親参照（customData["parent"]）を消去する
 ///        （PrefabUtility.cppのEraseTransformParentと同じ処理。役割分担のため独立して持つ）
 void EraseTransformParent(JSON &objectJson) {
@@ -105,13 +179,16 @@ void EraseRootPrefabInstanceComponent(JSON &objectJson) {
 }
 
 /// @brief 指定オブジェクトの現在のコンポーネント一覧を対応するPrefabノードと比較し、Overrideを収集する
-void CollectOverridesForObject(EmptyObject *obj, const JSON &prefabNodeJson, std::vector<ComponentOverride> &out) {
+void CollectOverridesForObject(EmptyObject *obj, const JSON &prefabNodeJson,
+    const std::unordered_map<std::string, std::string> &prefabToInstanceObjectID,
+    std::vector<ComponentOverride> &out) {
     const JSON &prefabComponents = GetComponentsArray(prefabNodeJson);
     std::vector<IObjectComponent *> liveComponents = GetOrderedComponents(obj);
 
     std::unordered_map<std::string, size_t> liveOrdinalCount;
     for (IObjectComponent *comp : liveComponents) {
         const std::string type = comp->GetComponentType();
+        if (type == "PrefabInstanceComponent") continue;
         const size_t ordinal = liveOrdinalCount[type]++;
 
         const JSON *matched = FindComponentJsonByTypeOrdinal(prefabComponents, type, ordinal);
@@ -119,14 +196,20 @@ void CollectOverridesForObject(EmptyObject *obj, const JSON &prefabNodeJson, std
             out.push_back({ obj, comp, type, ordinal, false, true });
             continue;
         }
-        if (obj->SaveComponentToJson(comp) != *matched) {
+        JSON prefabComponent = *matched;
+        PrefabUtility::RemapObjectIDReferences(prefabComponent, prefabToInstanceObjectID);
+        if (NormalizeComponentForOverrideComparison(obj->SaveComponentToJson(comp)) !=
+            NormalizeComponentForOverrideComparison(std::move(prefabComponent))) {
             out.push_back({ obj, comp, type, ordinal, true, true });
         }
     }
 
     // Prefab側にのみ存在する（ライブ側で削除された）コンポーネントを検出する
     std::unordered_map<std::string, size_t> prefabTypeCount;
-    for (const auto &pc : prefabComponents) prefabTypeCount[pc.value("type", "")]++;
+    for (const auto &pc : prefabComponents) {
+        const std::string type = pc.value("type", "");
+        if (type != "PrefabInstanceComponent") prefabTypeCount[type]++;
+    }
     for (const auto &[type, count] : prefabTypeCount) {
         const size_t liveCount = liveOrdinalCount.contains(type) ? liveOrdinalCount[type] : 0;
         for (size_t ordinal = liveCount; ordinal < count; ++ordinal) {
@@ -163,6 +246,32 @@ std::vector<EmptyObject *> CollectSubtreeObjects(SceneEditorContext *context, Em
     return result;
 }
 
+namespace {
+
+std::unordered_map<std::string, std::string> BuildPrefabToInstanceObjectIDRemap(
+    SceneEditorContext *context, EmptyObject *instanceRoot, const JSON &prefabJson) {
+    std::unordered_map<std::string, std::string> result;
+    const auto prefabByNodeID = IndexPrefabObjectsByNodeID(prefabJson);
+    for (EmptyObject *object : CollectSubtreeObjects(context, instanceRoot)) {
+        if (!object || !object->GetPrefabNodeID().IsValid()) continue;
+        auto prefabIt = prefabByNodeID.find(object->GetPrefabNodeID().ToString());
+        if (prefabIt == prefabByNodeID.end()) continue;
+        const std::string prefabObjectID = prefabIt->second->value("objectID", std::string{});
+        if (!prefabObjectID.empty()) result[prefabObjectID] = object->GetObjectID().ToString();
+    }
+    return result;
+}
+
+std::unordered_map<std::string, std::string> ReverseRemap(
+    const std::unordered_map<std::string, std::string> &source) {
+    std::unordered_map<std::string, std::string> result;
+    result.reserve(source.size());
+    for (const auto &[from, to] : source) result[to] = from;
+    return result;
+}
+
+} // namespace
+
 EmptyObject *FindEnclosingPrefabInstanceRoot(EmptyObject *obj) {
     EmptyObject *current = obj;
     while (current) {
@@ -180,6 +289,7 @@ bool HasComponentOverride(SceneEditorContext *context, EmptyObject *obj) {
     if (!prefabComp) return false;
 
     const JSON prefabJson = PrefabAssetManager::LoadPrefabJson(prefabComp->GetPrefabID());
+    const auto objectIDRemap = BuildPrefabToInstanceObjectIDRemap(context, root, prefabJson);
     const JSON *nodeJson = nullptr;
     const std::string nodeIDStr = obj->GetPrefabNodeID().ToString();
     ForEachPrefabObjectJson(prefabJson, [&](const JSON &objJson) {
@@ -187,8 +297,10 @@ bool HasComponentOverride(SceneEditorContext *context, EmptyObject *obj) {
     });
     if (!nodeJson) return false;
 
+    if (HasObjectPropertyOverride(obj, *nodeJson) || HasParentOverride(obj, nodeIDStr, prefabJson)) return true;
+
     std::vector<ComponentOverride> overrides;
-    CollectOverridesForObject(obj, *nodeJson, overrides);
+    CollectOverridesForObject(obj, *nodeJson, objectIDRemap, overrides);
     return !overrides.empty();
 }
 
@@ -210,8 +322,13 @@ bool HasComponentOverrideCached(SceneEditorContext *context, EmptyObject *obj, O
     const auto nodeIt = nodeIndex.find(obj->GetPrefabNodeID().ToString());
     if (nodeIt == nodeIndex.end()) return false;
 
+    const JSON &prefabJson = PrefabAssetManager::LoadPrefabJsonRef(prefabID);
+    if (HasObjectPropertyOverride(obj, *nodeIt->second) ||
+        HasParentOverride(obj, obj->GetPrefabNodeID().ToString(), prefabJson)) return true;
+    const auto objectIDRemap = BuildPrefabToInstanceObjectIDRemap(
+        context, root, prefabJson);
     std::vector<ComponentOverride> overrides;
-    CollectOverridesForObject(obj, *nodeIt->second, overrides);
+    CollectOverridesForObject(obj, *nodeIt->second, objectIDRemap, overrides);
     return !overrides.empty();
 }
 
@@ -228,6 +345,8 @@ SyncReport Diff(SceneEditorContext *context, EmptyObject *instanceRoot) {
 
     const JSON prefabJson = PrefabAssetManager::LoadPrefabJson(report.prefabID);
     const auto prefabByID = IndexPrefabObjectsByNodeID(prefabJson);
+    const auto prefabParentByNodeID = IndexPrefabParentNodeIDs(prefabJson);
+    const auto objectIDRemap = BuildPrefabToInstanceObjectIDRemap(context, instanceRoot, prefabJson);
 
     std::vector<EmptyObject *> subtree = CollectSubtreeObjects(context, instanceRoot);
     std::unordered_map<std::string, bool> matchedPrefabNodeIDs;
@@ -242,7 +361,19 @@ SyncReport Diff(SceneEditorContext *context, EmptyObject *instanceRoot) {
             continue;
         }
         matchedPrefabNodeIDs[nodeIDStr] = true;
-        CollectOverridesForObject(obj, *it->second, report.overrides);
+        CollectOverridesForObject(obj, *it->second, objectIDRemap, report.overrides);
+        if (HasObjectPropertyOverride(obj, *it->second)) report.objectPropertyOverrides.push_back(obj);
+
+        std::string liveParentNodeID;
+        if (auto *transform = obj->GetComponent<Transform>()) {
+            EmptyObject *parent = transform->GetParentObject();
+            if (parent && parent->GetPrefabNodeID().IsValid() && prefabByID.contains(parent->GetPrefabNodeID().ToString())) {
+                liveParentNodeID = parent->GetPrefabNodeID().ToString();
+            }
+        }
+        auto expectedParent = prefabParentByNodeID.find(nodeIDStr);
+        const std::string expectedParentNodeID = expectedParent != prefabParentByNodeID.end() ? expectedParent->second : std::string{};
+        if (liveParentNodeID != expectedParentNodeID) report.parentOverrides.push_back(obj);
     }
     for (const auto &[id, matched] : matchedPrefabNodeIDs) {
         if (!matched) report.prefabOnlyNodeIDs.push_back(UUID128(id));
@@ -304,7 +435,27 @@ bool RevertAll(SceneEditorContext *context, SceneEditorCommands *commands, Empty
     const JSON prefabJson = PrefabAssetManager::LoadPrefabJson(prefabID);
     auto prefabNodes = PrefabUtility::LoadPrefabNodes(prefabJson);
     if (prefabNodes.empty()) return false;
-    auto preparedNodes = PrefabUtility::PrepareNodesForInstantiation(prefabNodes, /*preserveRootParent=*/false);
+
+    // 対応するPrefabノードには既存インスタンスのobjectIDを再利用し、インスタンス外からの
+    // ComponentRef/objectID参照をRevert後も有効に保つ。Prefab側で追加されたノードだけ新規採番する。
+    std::unordered_map<std::string, UUID128> existingObjectIDsByNodeID;
+    for (EmptyObject *object : CollectSubtreeObjects(context, instanceRoot)) {
+        if (object && object->GetPrefabNodeID().IsValid()) {
+            existingObjectIDsByNodeID[object->GetPrefabNodeID().ToString()] = object->GetObjectID();
+        }
+    }
+
+    // Prefab資産にはリンク元を埋め込まない設計なので、置換後のルートへ現在のリンク情報を明示的に戻す。
+    JSON rootPrefabComponent = instanceRoot->SaveComponentToJson(prefabComp);
+    JSON &rootObjectJson = prefabNodes.front().json;
+    EraseRootPrefabInstanceComponent(rootObjectJson);
+    if (!rootObjectJson.contains("components") || !rootObjectJson["components"].is_array()) {
+        rootObjectJson["components"] = JSON::array();
+    }
+    rootObjectJson["components"].push_back(std::move(rootPrefabComponent));
+
+    auto preparedNodes = PrefabUtility::PrepareNodesForInstantiation(
+        prefabNodes, /*preserveRootParent=*/false, &existingObjectIDsByNodeID);
 
     auto *transform = instanceRoot->GetComponent<Transform>();
     EmptyObject *attachParent = transform ? transform->GetParentObject() : nullptr;
@@ -328,6 +479,8 @@ bool ApplyComponentOverride(SceneEditorContext *context, const ComponentOverride
 
     JSON prefabJson = PrefabAssetManager::LoadPrefabJson(prefabID);
     if (!prefabJson.contains("objects") || !prefabJson["objects"].is_array()) return false;
+    const auto instanceToPrefabObjectID = ReverseRemap(
+        BuildPrefabToInstanceObjectIDRemap(context, FindEnclosingPrefabInstanceRoot(target.object), prefabJson));
     const std::string nodeIDStr = target.object->GetPrefabNodeID().ToString();
 
     for (auto &entry : prefabJson["objects"]) {
@@ -348,7 +501,10 @@ bool ApplyComponentOverride(SceneEditorContext *context, const ComponentOverride
         }
 
         if (target.component) {
-            const JSON newEntry = target.object->SaveComponentToJson(target.component);
+            JSON newEntry = target.object->SaveComponentToJson(target.component);
+            PrefabUtility::RemapObjectIDReferences(newEntry, instanceToPrefabObjectID);
+            // 親変更はコンポーネント値の個別Apply対象外。Prefab側の構造を維持する。
+            if (foundIndex >= 0) CopyTransformParent(components[foundIndex], newEntry);
             if (foundIndex >= 0) components[foundIndex] = newEntry;
             else components.push_back(newEntry);
         } else if (foundIndex >= 0) {
@@ -366,6 +522,8 @@ bool RevertComponentOverride(SceneEditorContext *context, SceneEditorCommands *c
     if (!prefabComp) return false;
 
     const JSON prefabJson = PrefabAssetManager::LoadPrefabJson(prefabComp->GetPrefabID());
+    EmptyObject *instanceRoot = FindEnclosingPrefabInstanceRoot(target.object);
+    const auto prefabToInstanceObjectID = BuildPrefabToInstanceObjectIDRemap(context, instanceRoot, prefabJson);
     const std::string nodeIDStr = target.object->GetPrefabNodeID().ToString();
     const JSON *nodeJson = nullptr;
     ForEachPrefabObjectJson(prefabJson, [&](const JSON &objJson) {
@@ -380,21 +538,28 @@ bool RevertComponentOverride(SceneEditorContext *context, SceneEditorCommands *c
         return target.object->RemoveComponent(target.component);
     }
 
+    JSON adaptedPrefabComponent = *matched;
+    PrefabUtility::RemapObjectIDReferences(adaptedPrefabComponent, prefabToInstanceObjectID);
+
     if (!target.component) {
         // ローカルで削除済み。元に戻す＝Prefabの内容で追加し直す（追加と同時に値も復元する）
         if (commands) {
-            return commands->Execute(std::make_unique<AddComponentCommand>(target.object, target.componentType, *matched));
+            return commands->Execute(std::make_unique<AddComponentCommand>(
+                target.object, target.componentType, adaptedPrefabComponent));
         }
         IObjectComponent *newComp = target.object->AddComponent(CreateObjectComponentByType(target.componentType));
-        return newComp && target.object->LoadComponentFromJson(newComp, *matched);
+        return newComp && target.object->LoadComponentFromJson(newComp, adaptedPrefabComponent);
     }
 
     // 値の差し戻し
+    // 親変更は構造Overrideとして独立して扱い、個別コンポーネントRevertでは現在の親を維持する。
+    CopyTransformParent(target.object->SaveComponentToJson(target.component), adaptedPrefabComponent);
     if (commands) {
         const JSON before = target.object->SaveComponentToJson(target.component);
-        return commands->Execute(std::make_unique<ComponentEditCommand>(target.object, target.component, before, *matched));
+        return commands->Execute(std::make_unique<ComponentEditCommand>(
+            target.object, target.component, before, adaptedPrefabComponent));
     }
-    return target.object->LoadComponentFromJson(target.component, *matched);
+    return target.object->LoadComponentFromJson(target.component, adaptedPrefabComponent);
 }
 
 namespace {

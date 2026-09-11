@@ -1,4 +1,5 @@
 #pragma once
+#include <unordered_set>
 #include "Objects/ObjectComponentHeader.h"
 #include "Scene/Scene.h"
 #include "Utilities/Translation.h"
@@ -51,8 +52,15 @@ public:
         auto *objectCtx = GetOwnerObjectContext();
         const auto *ownerObject = objectCtx ? objectCtx->GetOwner() : nullptr;
         if (parent == ownerObject) return false;
-        for (auto *p = parent; p != nullptr; p = p->GetComponent<Transform>()->GetParentObject()) {
+        constexpr size_t kMaxHierarchyDepth = 256;
+        size_t depth = 0;
+        std::unordered_set<const EmptyObject *> visited;
+        for (auto *p = parent; p != nullptr;) {
             if (p == ownerObject) return false;
+            if (depth++ >= kMaxHierarchyDepth || !visited.insert(p).second) return false;
+            auto *parentTransform = p->GetComponent<Transform>();
+            if (!parentTransform) return false;
+            p = parentTransform->GetParentObject();
         }
         parentObjectID_ = parent->GetObjectID();
         // 親が変わったのでキャッシュは無効

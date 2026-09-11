@@ -17,9 +17,9 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 40.500850677490234,
-                            "y": 71.83047485351563,
-                            "z": -2.147921577488887e-06
+                            "x": 85.44482421875,
+                            "y": 71.66338348388672,
+                            "z": 0.0
                         }
                     },
                     "isActive": true,
@@ -337,10 +337,10 @@
                     "customData": {
                         "fields": {
                             "allWeapons": [
-                                "fd9d640e-6c3a-41be-b7d3-0df10f21a157",
-                                "74d9f407-d681-4dfe-b735-94ea3ed139ca",
-                                "3f37936c-60a5-4bf5-85ab-c2f432fc2394",
-                                "2777a2cf-be47-4f27-aacf-17c9b09b7129"
+                                "e6e81d2e-155b-4be3-9da3-0af15bbc3b18",
+                                "7c5b59b9-1d1c-4035-bc13-80efa460e607",
+                                "98bc3199-cda3-4471-a0c1-a056e5754238",
+                                "9af0c467-e2a0-4c3c-8392-857492c9d817"
                             ],
                             "attackDuration": 0.44999998807907104,
                             "axeAttackInterval": 0.5,
@@ -379,10 +379,10 @@
                             "vignetteHp": 3.0,
                             "weaponExpLossOnDamage": 4.0,
                             "weapons": [
-                                "fd9d640e-6c3a-41be-b7d3-0df10f21a157",
-                                "74d9f407-d681-4dfe-b735-94ea3ed139ca",
-                                "3f37936c-60a5-4bf5-85ab-c2f432fc2394",
-                                "2777a2cf-be47-4f27-aacf-17c9b09b7129"
+                                "e6e81d2e-155b-4be3-9da3-0af15bbc3b18",
+                                "7c5b59b9-1d1c-4035-bc13-80efa460e607",
+                                "98bc3199-cda3-4471-a0c1-a056e5754238",
+                                "9af0c467-e2a0-4c3c-8392-857492c9d817"
                             ]
                         },
                         "scriptPath": "Assets/Scripts/Player.as"
@@ -461,6 +461,54 @@
                     "tag": ""
                 },
                 "type": "SpriteRenderer"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "category": "SE",
+                        "effects": {
+                            "echo": {
+                                "delayMs": 500.0,
+                                "enabled": false,
+                                "feedback": 0.5,
+                                "wetDryMix": 0.5
+                            },
+                            "eq": {
+                                "bandwidth": [1.0, 1.0, 1.0, 1.0],
+                                "enabled": false,
+                                "frequencyCenter": [100.0, 800.0, 2000.0, 10000.0],
+                                "gain": [1.0, 1.0, 1.0, 1.0]
+                            },
+                            "filter": {
+                                "enabled": false,
+                                "frequency": 1.0,
+                                "kind": 0,
+                                "q": 1.0
+                            },
+                            "limiter": {
+                                "enabled": false,
+                                "loudness": 1000,
+                                "release": 6
+                            },
+                            "reverb": {
+                                "enabled": false,
+                                "mix": 0.3
+                            }
+                        },
+                        "enableSpatialAudio": false,
+                        "loop": false,
+                        "maxDistance": 25.0,
+                        "minDistance": 1.0,
+                        "pitch": 0.0,
+                        "playOnAwake": false,
+                        "soundName": "App/Sound/playerHeal.mp3",
+                        "volume": 0.5
+                    },
+                    "isActive": true,
+                    "priority": 8,
+                    "tag": "Heal"
+                },
+                "type": "AudioSource"
             }
         ],
         "editorOnly": false,

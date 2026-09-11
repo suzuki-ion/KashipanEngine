@@ -4,23 +4,10 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "4ec93cd0-f20a-444a-8ce4-96121b05247d",
-                        "rotate": {
-                            "w": 1.0,
-                            "x": 0.0,
-                            "y": 0.0,
-                            "z": 0.0
-                        },
-                        "scale": {
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
-                        },
-                        "translate": {
-                            "x": 0.0,
-                            "y": 0.0,
-                            "z": 0.0
-                        }
+                        "parent": "b64e6fa6-3b1f-478b-b017-00c279880b0f",
+                        "rotate": {"w": 1.0, "x": 0.0, "y": 0.0, "z": 0.0},
+                        "scale": {"x": 1.0, "y": 1.0, "z": 1.0},
+                        "translate": {"x": 0.0, "y": 0.0, "z": 0.0}
                     },
                     "isActive": true,
                     "priority": 1,
@@ -39,22 +26,13 @@
                                 {
                                     "characterInterval": 0.10000000149011612,
                                     "iconTextureName": "App/Sprite/Talk/portrait.png",
-                                    "iconUvPosition": {
-                                        "x": 0.0,
-                                        "y": 0.0
-                                    },
-                                    "iconUvScale": {
-                                        "x": 0.25,
-                                        "y": 1.0
-                                    },
-                                    "shakeAmplitude": {
-                                        "x": 2.0,
-                                        "y": 2.0
-                                    },
+                                    "iconUvPosition": {"x": 0.0, "y": 0.0},
+                                    "iconUvScale": {"x": 0.25, "y": 1.0},
+                                    "shakeAmplitude": {"x": 2.0, "y": 2.0},
                                     "shakeEaseType": 0,
                                     "shakeEnabled": false,
                                     "shakeSpeed": 20.0,
-                                    "text": "テストテキストああああ"
+                                    "text": "最大HPが増加した"
                                 }
                             ],
                             "iconObject": "1fcaaf04-0627-4958-a051-12f47f3f42a4",
@@ -75,8 +53,7 @@
         "hiddenFromEditorTarget": false,
         "isActive": true,
         "name": "TalkScript",
-        "objectID": "f29192e0-44bf-4fb0-a35a-2ca4a97fdb70",
-        "prefabNodeID": "d2b98713-1d27-4a1f-86bd-fd05827d490f",
+        "objectID": "0f5e1f2a-3b4c-4d5e-8f60-718293a4b5c6",
         "tag": ""
     },
     "siblingIndex": 0

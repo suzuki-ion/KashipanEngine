@@ -60,10 +60,19 @@ bool PasteObjectCommand::Execute(SceneEditorContext *context) {
     if (nodes_.empty()) return false;
     EmptyObject *attachParent = attachParentID_.IsValid() ? context->GetSceneObject(attachParentID_) : nullptr;
     EmptyObject *rootObj = nullptr;
+    std::vector<UUID128> createdObjectIDs;
+    createdObjectIDs.reserve(nodes_.size());
     for (size_t i = 0; i < nodes_.size(); ++i) {
         const size_t index = (i == 0) ? insertIndex_ : MAXSIZE_T;
         EmptyObject *obj = context->CreateObjectFromJson(nodes_[i].json, index);
-        if (!obj) return false;
+        if (!obj) {
+            // 途中失敗をUndo不能な半端な配置として残さない。
+            for (auto it = createdObjectIDs.rbegin(); it != createdObjectIDs.rend(); ++it) {
+                if (EmptyObject *created = context->GetSceneObject(*it)) context->DeleteObject(created);
+            }
+            return false;
+        }
+        createdObjectIDs.push_back(obj->GetObjectID());
         if (i == 0) rootObj = obj;
         // 部分木の根（＝コピー時にparentIndexInSubtreeが-1だったノード）は貼り付け先へ接続する。
         // preserveOriginalRootParent_の場合は各ノードのJSONに残された元の親参照をそのまま使うため何もしない

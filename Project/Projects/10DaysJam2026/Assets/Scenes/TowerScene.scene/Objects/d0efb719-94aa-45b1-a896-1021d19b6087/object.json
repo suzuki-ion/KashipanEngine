@@ -56,7 +56,7 @@
                                     "shakeEaseType": 0,
                                     "shakeEnabled": false,
                                     "shakeSpeed": 20.0,
-                                    "text": "ボールを獲得\nCキー Vキーで切り替え"
+                                    "text": "ボールを獲得\nLボタン Rボタンで切り替え"
                                 }
                             ],
                             "iconObject": "1fcaaf04-0627-4958-a051-12f47f3f42a4",

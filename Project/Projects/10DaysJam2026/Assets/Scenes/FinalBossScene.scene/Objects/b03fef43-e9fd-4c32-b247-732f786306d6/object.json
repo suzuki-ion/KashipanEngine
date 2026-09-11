@@ -89,7 +89,7 @@
                     },
                     "isActive": true,
                     "priority": 3,
-                    "tag": "Enemy"
+                    "tag": "Ovary"
                 },
                 "type": "Box2DCollider"
             },

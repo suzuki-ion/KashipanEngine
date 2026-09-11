@@ -1,12 +1,47 @@
 {
     "globalSceneVariables": [
         {
+            "key": "save_weapon_Shuriken_exp",
+            "type": "Float",
+            "value": 0.0
+        },
+        {
             "key": "save_maxHp",
             "type": "Float",
-            "value": 10.0
+            "value": 12.0
         },
         {
             "key": "hasLoadedSaveThisSession",
+            "type": "Bool",
+            "value": true
+        },
+        {
+            "key": "isNewGameStart",
+            "type": "Bool",
+            "value": false
+        },
+        {
+            "key": "dialogueTrigger_MountainScene_e19e4382-581a-4a49-b919-c3d35f15e56c_fired",
+            "type": "Bool",
+            "value": true
+        },
+        {
+            "key": "chest_MountainScene_6f930386-a494-4642-b84c-df5f6d0aa8e0_opened",
+            "type": "Bool",
+            "value": true
+        },
+        {
+            "key": "save_weapon_Shuriken_level",
+            "type": "Int32",
+            "value": 3
+        },
+        {
+            "key": "save_weapon_Katana_damageAmount",
+            "type": "Float",
+            "value": 3.0
+        },
+        {
+            "key": "max_hp_chest_MountainScene_b64e6fa6-3b1f-478b-b017-00c279880b0f_opened",
             "type": "Bool",
             "value": true
         },
@@ -21,19 +56,14 @@
             "value": ""
         },
         {
-            "key": "isNewGameStart",
-            "type": "Bool",
-            "value": false
-        },
-        {
             "key": "save_hp",
             "type": "Float",
-            "value": 10.0
+            "value": 12.0
         },
         {
             "key": "save_currentWeaponType",
             "type": "Int32",
-            "value": 0
+            "value": 1
         },
         {
             "key": "save_weapon_Katana_owned",
@@ -43,7 +73,7 @@
         {
             "key": "save_weapon_Katana_level",
             "type": "Int32",
-            "value": 1
+            "value": 3
         },
         {
             "key": "save_weapon_Katana_exp",
@@ -53,17 +83,22 @@
         {
             "key": "save_weapon_Katana_nextExp",
             "type": "Float",
-            "value": 10.0
-        },
-        {
-            "key": "save_weapon_Katana_damageAmount",
-            "type": "Float",
-            "value": 1.0
+            "value": 30.0
         },
         {
             "key": "save_weapon_Shuriken_owned",
             "type": "Bool",
-            "value": false
+            "value": true
+        },
+        {
+            "key": "save_weapon_Shuriken_nextExp",
+            "type": "Float",
+            "value": 30.0
+        },
+        {
+            "key": "save_weapon_Shuriken_damageAmount",
+            "type": "Float",
+            "value": 3.0
         },
         {
             "key": "save_weapon_Axe_owned",
@@ -74,6 +109,15 @@
             "key": "save_weapon_Ball_owned",
             "type": "Bool",
             "value": false
+        },
+        {
+            "key": "save_position",
+            "type": "Vector3",
+            "value": {
+                "x": 4268.73974609375,
+                "y": 736.42041015625,
+                "z": -0.0400390625
+            }
         },
         {
             "key": "save_sceneName",

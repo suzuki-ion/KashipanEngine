@@ -36,6 +36,12 @@ class Boss1 : ScriptComponentBehavior {
     [SerializeField, Tooltip("通常時の色")]
     Vector4 normalColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 
+    [SerializeField, Tooltip("被ダメージ後に無敵になる時間(秒)")]
+    float invincibleDuration = 0.5f;
+
+    [SerializeField, Tooltip("無敵時間中の点滅切り替え間隔(秒)")]
+    float blinkInterval = 0.08f;
+
     [SerializeField, Tooltip("岩(小)のプレハブ")]
     Object@ rubbleSmall;
 
@@ -88,6 +94,10 @@ class Boss1 : ScriptComponentBehavior {
     // ダメージ演出管理用
     float damageFlashTimer = 0.0f;
     bool isFlashing = false;
+
+    // 無敵時間管理用
+    bool isInvincible = false;
+    float invincibleTimer = 0.0f;
 
     // 各種コンポーネント
     SpriteRenderer@ sprite;
@@ -176,6 +186,24 @@ class Boss1 : ScriptComponentBehavior {
                 isFlashing = false;
                 if (sprite !is null) {
                     sprite.SetInstanceColor(normalColor);
+                }
+            }
+        }
+
+        // 無敵時間中の点滅処理(プレイヤーと同様、一定間隔でスプライトの表示/非表示を切り替える)
+        // 死亡時は死亡エフェクト側の見た目と競合するため対象外にする
+        if (isInvincible && state != BossState::Dead) {
+            invincibleTimer += GetDeltaTime();
+            bool isVisible = (int(invincibleTimer / blinkInterval) % 2 == 0);
+            if (sprite !is null) {
+                sprite.SetActive(isVisible);
+            }
+
+            if (invincibleTimer >= invincibleDuration) {
+                invincibleTimer = 0.0f;
+                isInvincible = false;
+                if (sprite !is null) {
+                    sprite.SetActive(true);
                 }
             }
         }
@@ -374,6 +402,11 @@ class Boss1 : ScriptComponentBehavior {
                 break;
             case BossState::Dead:
                 velocity.x = 0.0f;
+                isInvincible = false;
+                invincibleTimer = 0.0f;
+                if (sprite !is null) {
+                    sprite.SetActive(true);
+                }
                 break;
         }
     }
@@ -466,6 +499,8 @@ class Boss1 : ScriptComponentBehavior {
 
     void Damage(float amount) {
         if (state == BossState::Dead) return;
+        if (isInvincible) return;
+
         hp -= amount;
         PlayTaggedAudio("Damage");
 
@@ -475,6 +510,10 @@ class Boss1 : ScriptComponentBehavior {
         if (sprite !is null) {
             sprite.SetInstanceColor(damageColor);
         }
+
+        // 被ダメージ後、一定時間無敵状態にする
+        isInvincible = true;
+        invincibleTimer = 0.0f;
     }
 
     void End() {

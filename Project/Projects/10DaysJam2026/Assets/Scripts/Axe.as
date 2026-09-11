@@ -135,7 +135,7 @@ class Axe : ScriptComponentBehavior {
 
     void OnCollisionEnter(const HitInfo &in hit){
         // 敵のダメージ処理
-        if(hit.otherCollider.GetTag() == "Enemy"){
+        if(hit.otherCollider.GetTag() == "Enemy" || hit.otherCollider.GetTag() == "Ovary"){
             Object@ enemy = hit.otherObject;
 
             if (enemy !is null) {

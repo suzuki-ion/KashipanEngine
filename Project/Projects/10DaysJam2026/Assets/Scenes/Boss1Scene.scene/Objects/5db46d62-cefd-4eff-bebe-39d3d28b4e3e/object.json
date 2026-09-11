@@ -87,6 +87,7 @@
                     "customData": {
                         "fields": {
                             "bigJumpPower": 130.0,
+                            "blinkInterval": 0.07999999821186066,
                             "damageColor": {
                                 "w": 1.0,
                                 "x": 10.0,
@@ -102,6 +103,7 @@
                             "groundedThreshold": 0.5,
                             "hp": 40.0,
                             "idleDuration": 2.0,
+                            "invincibleDuration": 0.5,
                             "maxHp": 40.0,
                             "moveSpeed": 80.0,
                             "normalColor": {

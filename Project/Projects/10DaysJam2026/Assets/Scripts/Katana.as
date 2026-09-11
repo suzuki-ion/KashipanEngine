@@ -237,7 +237,7 @@ class Katana : ScriptComponentBehavior {
     }
 
     void OnCollisionEnter(const HitInfo &in hit){
-        if(hit.otherCollider.GetTag() == "Enemy"){
+        if(hit.otherCollider.GetTag() == "Enemy" || hit.otherCollider.GetTag() == "Ovary"){
             Object@ enemy = hit.otherObject;
 
             if (enemy !is null) {

@@ -148,7 +148,7 @@
                     },
                     "isActive": true,
                     "priority": 5,
-                    "tag": "Chest"
+                    "tag": "MaxHPChest"
                 },
                 "type": "Box2DCollider"
             },

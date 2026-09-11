@@ -53,7 +53,7 @@
                 "data": {
                     "customData": {
                         "fields": {
-                            "dialogueBoxObject": "417b9e94-d2f1-492e-bbf3-e5158c538686",
+                            "dialogueBoxObject": "0f5e1f2a-3b4c-4d5e-8f60-718293a4b5c6",
                             "playerTag": "Player",
                             "talkCommandName": "Decide"
                         },
@@ -195,34 +195,50 @@
             {
                 "data": {
                     "customData": {
-                        "fields": {
-                            "dialogueBoxObject": "0f5e1f2a-3b4c-4d5e-8f60-718293a4b5c6",
-                            "playerTag": "Player",
-                            "talkCommandName": "Decide"
-                        },
-                        "scriptPath": "Assets/Scripts/NPCTalker.as"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "ScriptComponent"
-            },
-            {
-                "data": {
-                    "customData": {
                         "category": "SE",
                         "effects": {
-                            "echo": {"delayMs": 500.0, "enabled": false, "feedback": 0.5, "wetDryMix": 0.5},
-                            "eq": {
-                                "bandwidth": [1.0, 1.0, 1.0, 1.0],
+                            "echo": {
+                                "delayMs": 500.0,
                                 "enabled": false,
-                                "frequencyCenter": [100.0, 800.0, 2000.0, 10000.0],
-                                "gain": [1.0, 1.0, 1.0, 1.0]
+                                "feedback": 0.5,
+                                "wetDryMix": 0.5
                             },
-                            "filter": {"enabled": false, "frequency": 1.0, "kind": 0, "q": 1.0},
-                            "limiter": {"enabled": false, "loudness": 1000, "release": 6},
-                            "reverb": {"enabled": false, "mix": 0.3}
+                            "eq": {
+                                "bandwidth": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ],
+                                "enabled": false,
+                                "frequencyCenter": [
+                                    100.0,
+                                    800.0,
+                                    2000.0,
+                                    10000.0
+                                ],
+                                "gain": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ]
+                            },
+                            "filter": {
+                                "enabled": false,
+                                "frequency": 1.0,
+                                "kind": 0,
+                                "q": 1.0
+                            },
+                            "limiter": {
+                                "enabled": false,
+                                "loudness": 1000,
+                                "release": 6
+                            },
+                            "reverb": {
+                                "enabled": false,
+                                "mix": 0.30000001192092896
+                            }
                         },
                         "enableSpatialAudio": false,
                         "loop": false,
@@ -231,7 +247,7 @@
                         "pitch": 0.0,
                         "playOnAwake": false,
                         "soundName": "App/Sound/weaponChest.mp3",
-                        "volume": 0.6
+                        "volume": 0.6000000238418579
                     },
                     "isActive": true,
                     "priority": 901,

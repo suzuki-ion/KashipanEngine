@@ -219,10 +219,25 @@
                                 "wetDryMix": 0.5
                             },
                             "eq": {
-                                "bandwidth": [1.0, 1.0, 1.0, 1.0],
+                                "bandwidth": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ],
                                 "enabled": false,
-                                "frequencyCenter": [100.0, 800.0, 2000.0, 10000.0],
-                                "gain": [1.0, 1.0, 1.0, 1.0]
+                                "frequencyCenter": [
+                                    100.0,
+                                    800.0,
+                                    2000.0,
+                                    10000.0
+                                ],
+                                "gain": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ]
                             },
                             "filter": {
                                 "enabled": false,
@@ -237,7 +252,7 @@
                             },
                             "reverb": {
                                 "enabled": false,
-                                "mix": 0.3
+                                "mix": 0.30000001192092896
                             }
                         },
                         "enableSpatialAudio": false,
@@ -247,7 +262,7 @@
                         "pitch": 0.0,
                         "playOnAwake": false,
                         "soundName": "App/Sound/katana_1.mp3",
-                        "volume": 0.6
+                        "volume": 0.6000000238418579
                     },
                     "isActive": true,
                     "priority": 7,
@@ -267,10 +282,25 @@
                                 "wetDryMix": 0.5
                             },
                             "eq": {
-                                "bandwidth": [1.0, 1.0, 1.0, 1.0],
+                                "bandwidth": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ],
                                 "enabled": false,
-                                "frequencyCenter": [100.0, 800.0, 2000.0, 10000.0],
-                                "gain": [1.0, 1.0, 1.0, 1.0]
+                                "frequencyCenter": [
+                                    100.0,
+                                    800.0,
+                                    2000.0,
+                                    10000.0
+                                ],
+                                "gain": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ]
                             },
                             "filter": {
                                 "enabled": false,
@@ -285,7 +315,7 @@
                             },
                             "reverb": {
                                 "enabled": false,
-                                "mix": 0.3
+                                "mix": 0.30000001192092896
                             }
                         },
                         "enableSpatialAudio": false,
@@ -295,7 +325,7 @@
                         "pitch": 0.0,
                         "playOnAwake": false,
                         "soundName": "App/Sound/katana_2.mp3",
-                        "volume": 0.6
+                        "volume": 0.6000000238418579
                     },
                     "isActive": true,
                     "priority": 8,
@@ -315,10 +345,25 @@
                                 "wetDryMix": 0.5
                             },
                             "eq": {
-                                "bandwidth": [1.0, 1.0, 1.0, 1.0],
+                                "bandwidth": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ],
                                 "enabled": false,
-                                "frequencyCenter": [100.0, 800.0, 2000.0, 10000.0],
-                                "gain": [1.0, 1.0, 1.0, 1.0]
+                                "frequencyCenter": [
+                                    100.0,
+                                    800.0,
+                                    2000.0,
+                                    10000.0
+                                ],
+                                "gain": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ]
                             },
                             "filter": {
                                 "enabled": false,
@@ -333,7 +378,7 @@
                             },
                             "reverb": {
                                 "enabled": false,
-                                "mix": 0.3
+                                "mix": 0.30000001192092896
                             }
                         },
                         "enableSpatialAudio": false,
@@ -343,7 +388,7 @@
                         "pitch": 0.0,
                         "playOnAwake": false,
                         "soundName": "App/Sound/katana_3.mp3",
-                        "volume": 0.6
+                        "volume": 0.6000000238418579
                     },
                     "isActive": true,
                     "priority": 9,

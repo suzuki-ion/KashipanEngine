@@ -59,19 +59,24 @@
     "sceneName": "FinalBossScene",
     "sceneVariables": [
         {
-            "key": "testFloat",
-            "type": "Float",
-            "value": 0.0
-        },
-        {
             "key": "isDialogueActive",
             "type": "Bool",
             "value": false
         },
         {
+            "key": "testFloat",
+            "type": "Float",
+            "value": 0.0
+        },
+        {
             "key": "testString",
             "type": "String",
             "value": "abcdefg"
+        },
+        {
+            "key": "gameOverRequested",
+            "type": "Bool",
+            "value": false
         },
         {
             "key": "dialogueBoxUIBusy",
@@ -82,11 +87,6 @@
             "key": "BossHPUI_MaxHP",
             "type": "Float",
             "value": 40.0
-        },
-        {
-            "key": "gameOverRequested",
-            "type": "Bool",
-            "value": false
         },
         {
             "key": "gameplayCameraPos",
@@ -106,11 +106,6 @@
             }
         },
         {
-            "key": "BossHPUI_HP",
-            "type": "Float",
-            "value": 40.0
-        },
-        {
             "key": "saveRequestedPosition",
             "type": "Vector3",
             "value": {
@@ -118,6 +113,11 @@
                 "y": 144.0,
                 "z": 0.0
             }
+        },
+        {
+            "key": "BossHPUI_HP",
+            "type": "Float",
+            "value": 40.0
         },
         {
             "key": "saveRequested",

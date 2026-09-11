@@ -373,6 +373,9 @@ class FinalBoss : ScriptComponentBehavior {
                 GetOwnerObject().SetComponentsActiveExceptTransformAndScript(false);
             }
         }
+
+        GetScene().SetVariable("BossHPUI_HP", hp);
+        GetScene().SetVariable("BossHPUI_MaxHP", maxHp);
     }
 
     bool ShouldPersistProgress() const {
@@ -550,6 +553,8 @@ class FinalBoss : ScriptComponentBehavior {
                 tf.SetTranslate(tf.GetTranslate() + velocity * GetDeltaTime());
             }
         }
+
+        GetScene().SetVariable("BossHPUI_HP", hp);
     }
 
     // 攻撃をバッグ方式でランダムに選ぶ(4種類を1周ぶんシャッフルして並べ、使い切ったら再抽選する)

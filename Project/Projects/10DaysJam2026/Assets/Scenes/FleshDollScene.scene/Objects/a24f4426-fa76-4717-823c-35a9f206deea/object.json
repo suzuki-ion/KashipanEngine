@@ -54,7 +54,7 @@
                                     "shakeEaseType": 0,
                                     "shakeEnabled": false,
                                     "shakeSpeed": 20.0,
-                                    "text": "HPの最大値増加"
+                                    "text": "最大HPが増加した"
                                 }
                             ],
                             "iconObject": "1fcaaf04-0627-4958-a051-12f47f3f42a4",

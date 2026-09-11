@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 #include <filesystem>
+#include <future>
 #include <imgui.h>
 #include <string>
 #include <Windows.h>
@@ -142,25 +143,77 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
 SceneEditor::~SceneEditor() = default;
 
 void SceneEditor::InitializeExternalAssetSnapshot() {
-    externalAssetSnapshot_.clear();
-    const std::string &assetsRoot = ProjectPaths::AssetsRoot();
-    if (assetsRoot.empty()) return;
-
-    std::error_code ec;
-    const std::filesystem::path root = Utf8StringToPath(assetsRoot);
-    if (!std::filesystem::is_directory(root, ec)) return;
-    for (std::filesystem::recursive_directory_iterator it(root, std::filesystem::directory_options::skip_permission_denied, ec), end;
-         it != end; it.increment(ec)) {
-        if (ec) { ec.clear(); continue; }
-        if (!it->is_regular_file(ec) || ec) { ec.clear(); continue; }
-        const std::string logicalPath = ProjectPaths::ToLogical(PathToUtf8String(it->path()));
-        externalAssetSnapshot_[logicalPath] = { it->last_write_time(ec), it->file_size(ec) };
-        ec.clear();
-    }
+    StartExternalAssetScan(false);
 
     // 外部更新前のPrefab JSONを保持し、更新後との差分伝播に使える状態にしておく。
     for (const std::string &path : ProjectPaths::ListAssetFiles({ PrefabUtility::kPrefabExtension })) {
         PrefabAssetManager::GetPrefabIDFromPath(path);
+    }
+}
+
+void SceneEditor::StartExternalAssetScan(bool detectChanges) {
+    if (externalAssetScanFuture_.valid()) return;
+
+    const std::string assetsRoot = ProjectPaths::AssetsRoot();
+    const std::string projectRoot = ProjectPaths::ProjectRoot();
+    if (assetsRoot.empty()) return;
+
+    auto previous = std::move(externalAssetSnapshot_);
+    externalAssetScanFuture_ = std::async(std::launch::async,
+        [assetsRoot, projectRoot, previous = std::move(previous), detectChanges]() mutable {
+            ExternalAssetScanResult result;
+            std::error_code ec;
+            const std::filesystem::path root = Utf8StringToPath(assetsRoot);
+            if (!std::filesystem::is_directory(root, ec)) {
+                result.snapshot = std::move(previous);
+                return result;
+            }
+
+            for (std::filesystem::recursive_directory_iterator it(
+                     root, std::filesystem::directory_options::skip_permission_denied, ec), end;
+                 it != end; it.increment(ec)) {
+                if (ec) { ec.clear(); continue; }
+                if (!it->is_regular_file(ec) || ec) { ec.clear(); continue; }
+
+                const std::string physicalPath = PathToUtf8String(it->path());
+                const auto relativePath = std::filesystem::relative(
+                    Utf8StringToPath(physicalPath), Utf8StringToPath(projectRoot), ec);
+                const std::string logicalPath = ec
+                    ? ProjectPaths::NormalizeSeparators(physicalPath)
+                    : ProjectPaths::NormalizeSeparators(PathToUtf8String(relativePath));
+                ec.clear();
+
+                ExternalFileStamp stamp{ it->last_write_time(ec), it->file_size(ec) };
+                ec.clear();
+                result.snapshot[logicalPath] = stamp;
+                if (!detectChanges) continue;
+
+                const auto old = previous.find(logicalPath);
+                if (old == previous.end() || !(old->second == stamp)) {
+                    result.changedPaths.push_back(logicalPath);
+                }
+            }
+
+            if (detectChanges) {
+                for (const auto &[path, stamp] : previous) {
+                    if (!result.snapshot.contains(path)) result.changedPaths.push_back(path);
+                }
+            }
+            return result;
+        });
+}
+
+void SceneEditor::ConsumeExternalAssetScanResult() {
+    if (!externalAssetScanFuture_.valid() ||
+        externalAssetScanFuture_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+        return;
+    }
+
+    ExternalAssetScanResult result = externalAssetScanFuture_.get();
+    externalAssetSnapshot_ = std::move(result.snapshot);
+    if (!result.changedPaths.empty()) {
+        pendingExternalAssetPaths_.insert(result.changedPaths.begin(), result.changedPaths.end());
+        externalAssetDebounceElapsed_ = 0.0f;
     }
 }
 
@@ -173,6 +226,8 @@ bool SceneEditor::IsEditorApplicationActive() const {
 }
 
 void SceneEditor::PollExternalAssetChanges() {
+    ConsumeExternalAssetScanResult();
+
     const bool isActive = IsEditorApplicationActive();
     const bool becameActive = isActive && !wasEditorApplicationActive_;
     wasEditorApplicationActive_ = isActive;
@@ -186,34 +241,7 @@ void SceneEditor::PollExternalAssetChanges() {
     // アクティブ中の低頻度監視も残し、ウィンドウを並べて編集する場合の変更も拾う。
     if (becameActive || externalAssetPollElapsed_ >= 1.0f) {
         externalAssetPollElapsed_ = 0.0f;
-        std::unordered_map<std::string, ExternalFileStamp> current;
-        std::error_code ec;
-        const std::string &assetsRoot = ProjectPaths::AssetsRoot();
-        if (assetsRoot.empty()) return;
-        const std::filesystem::path root = Utf8StringToPath(assetsRoot);
-        if (std::filesystem::is_directory(root, ec)) {
-            for (std::filesystem::recursive_directory_iterator it(root, std::filesystem::directory_options::skip_permission_denied, ec), end;
-                 it != end; it.increment(ec)) {
-                if (ec) { ec.clear(); continue; }
-                if (!it->is_regular_file(ec) || ec) { ec.clear(); continue; }
-                const std::string logicalPath = ProjectPaths::ToLogical(PathToUtf8String(it->path()));
-                ExternalFileStamp stamp{ it->last_write_time(ec), it->file_size(ec) };
-                ec.clear();
-                current[logicalPath] = stamp;
-                auto old = externalAssetSnapshot_.find(logicalPath);
-                if (old == externalAssetSnapshot_.end() || !(old->second == stamp)) {
-                    pendingExternalAssetPaths_.insert(logicalPath);
-                    externalAssetDebounceElapsed_ = 0.0f;
-                }
-            }
-            for (const auto &[path, stamp] : externalAssetSnapshot_) {
-                if (!current.contains(path)) {
-                    pendingExternalAssetPaths_.insert(path);
-                    externalAssetDebounceElapsed_ = 0.0f;
-                }
-            }
-            externalAssetSnapshot_ = std::move(current);
-        }
+        StartExternalAssetScan(true);
     }
 
     if (!externalSceneChangeRequested_ && !pendingExternalAssetPaths_.empty() && externalAssetDebounceElapsed_ >= 0.75f) {

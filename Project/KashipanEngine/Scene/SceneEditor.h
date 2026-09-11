@@ -2,6 +2,7 @@
 #ifdef USE_IMGUI
 #include <cstdint>
 #include <filesystem>
+#include <future>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -52,6 +53,8 @@ private:
     /// @param prefix 保存ファイル名の先頭に付与する文字列（呼び出し元の種別を見分けるため）
     void TakeSceneBackup(const std::string &prefix);
     void InitializeExternalAssetSnapshot();
+    void StartExternalAssetScan(bool detectChanges);
+    void ConsumeExternalAssetScanResult();
     bool IsEditorApplicationActive() const;
     void PollExternalAssetChanges();
     void ProcessExternalAssetChanges(std::vector<std::string> changedPaths);
@@ -63,6 +66,11 @@ private:
         std::filesystem::file_time_type writeTime{};
         std::uintmax_t size = 0;
         bool operator==(const ExternalFileStamp &) const = default;
+    };
+
+    struct ExternalAssetScanResult {
+        std::unordered_map<std::string, ExternalFileStamp> snapshot;
+        std::vector<std::string> changedPaths;
     };
 
     SceneEditorContext *context_ = nullptr;
@@ -126,6 +134,7 @@ private:
     bool isAutoSaveSettingsRequested_ = false;
 
     std::unordered_map<std::string, ExternalFileStamp> externalAssetSnapshot_;
+    std::future<ExternalAssetScanResult> externalAssetScanFuture_;
     std::unordered_set<std::string> pendingExternalAssetPaths_;
     /// @brief Play中に検知し、編集状態の復元後まで適用を保留している外部変更
     std::unordered_set<std::string> deferredPlayModeAssetPaths_;

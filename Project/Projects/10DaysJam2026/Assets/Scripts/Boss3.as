@@ -206,42 +206,8 @@ class Boss3 : ScriptComponentBehavior {
         lastHpTier = hpTier;
         SetAnimation(state, hpTier);
 
-        // セーブ済みの撃破状態を復元する(Chest.as等と同じ方式)
-        if (ShouldPersistProgress()) {
-            bool hasLoadedSaveThisSession = false;
-            GetScene().GetGlobalVariable("hasLoadedSaveThisSession", hasLoadedSaveThisSession);
-            if (!hasLoadedSaveThisSession) {
-                GetScene().LoadGlobalVariables();
-                GetScene().SetGlobalVariable("hasLoadedSaveThisSession", true);
-            }
-
-            bool savedDefeated = false;
-            if (GetScene().GetGlobalVariable(GetSaveKey(), savedDefeated) && savedDefeated) {
-                leftOvaryHP = 0.0f;
-                rightOvaryHP = 0.0f;
-                state = Boss3State::Dead;
-                lastState = Boss3State::Dead;
-                // 撃破済みの場合、FinalBossは既に別の手段(FinalBossScene等)で
-                // 遭遇済みという想定のため、ここでは再出現させない
-                finalBossSpawned = true;
-                GetOwnerObject().SetComponentsActiveExceptTransformAndScript(false);
-                if (ovaryLeft !is null) {
-                    ovaryLeft.SetComponentsActiveExceptTransformAndScript(false);
-                }
-                if (ovaryRight !is null) {
-                    ovaryRight.SetComponentsActiveExceptTransformAndScript(false);
-                }
-            }
-        }
-    }
-
-    bool ShouldPersistProgress() const {
-        return GetScene().IsPlaying() || !IsEditorBuild();
-    }
-
-    // シーン名+オブジェクトのUUIDを使ったセーブデータキー(Chest.as等と同じ方式)
-    string GetSaveKey() const {
-        return "boss_" + GetScene().GetName() + "_" + GetOwnerObject().GetUUID() + "_defeated";
+        // Boss3とFinalBossは同一戦闘の第一・第二形態として扱う。
+        // シーンへ入り直した場合は撃破状態を復元せず、常にBoss3から開始する。
     }
 
     void Update() {
@@ -425,10 +391,6 @@ class Boss3 : ScriptComponentBehavior {
             ovaryLeft.SetComponentsActiveExceptTransformAndScript(false);
             ovaryRight.SetComponentsActiveExceptTransformAndScript(false);
 
-            // 撃破状態をセーブデータへ反映する(実際のファイル書き込みはSavePoint経由)
-            if (ShouldPersistProgress()) {
-                GetScene().SetGlobalVariable(GetSaveKey(), true);
-            }
         }
     }
 
@@ -440,6 +402,8 @@ class Boss3 : ScriptComponentBehavior {
         if (clone is null) return;
 
         clone.SetActive(true);
+        SwitchToFinalBossBgm();
+
         Transform@ cloneTf = clone.GetTransform();
         if (cloneTf !is null) {
             Vector3 spawnPos = Vector3(
@@ -453,6 +417,21 @@ class Boss3 : ScriptComponentBehavior {
         // ObjectをSetVariableで渡さず、BossHPUIの参照モードだけを切り替える
         // FinalBoss側のStartでBossHPUI_HP / BossHPUI_MaxHPが設定されるまでUIは待機する
         GetScene().SetVariable("BossHPUI_Source", 2);
+    }
+
+    // 第二形態の出現と同時に、第一形態用BGMからFinalBoss用BGMへ切り替える
+    void SwitchToFinalBossBgm() {
+        Object@ bgmObject = FindObject("BGM");
+        if (bgmObject is null) return;
+
+        AudioSource@ bgm;
+        if (!bgmObject.GetComponent(@bgm) || bgm is null) return;
+
+        bgm.Stop();
+        bgm.SetSoundName("App/Sound/finalBoss.mp3");
+        bgm.SetLoop(true);
+        bgm.SetActive(true);
+        bgm.Play();
     }
 
     void ChangeState(Boss3State newState) {

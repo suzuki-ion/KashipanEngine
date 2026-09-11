@@ -449,6 +449,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <None Include="Reference\index.html" />
     <None Include="Tools\convert_reference_to_html.py" />
     <None Include="Tools\CopyReleaseAssets.ps1" />
+    <None Include="Tools\CopyBuildAssets.bat" />
     <None Include="Tools\CopyToWorkCopy.ps1" />
     <None Include="tools\sync_filters.py" />
   </ItemGroup>

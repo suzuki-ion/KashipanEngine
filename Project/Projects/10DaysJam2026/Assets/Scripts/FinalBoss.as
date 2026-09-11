@@ -1079,7 +1079,6 @@ class FinalBoss : ScriptComponentBehavior {
             isAnimation = true;
             deathEffectTimer = 0.0f;
             spawnedEffectCount = 0; // 生成数の初期化
-            PlayTaggedAudio("Dead");
         }
 
         deathEffectTimer += GetDeltaTime();
@@ -1093,6 +1092,8 @@ class FinalBoss : ScriptComponentBehavior {
 
                 Object@ clone = GetScene().CloneObject(deathEffect, "CloneDeathEffect_" + spawnedEffectCount);
                 if (clone !is null) {
+                    PlayTaggedAudio("Dead");
+
                     Transform@ cloneTf = clone.GetTransform();
                     if (cloneTf !is null) {
                         cloneTf.SetScale(Vector3(16.0f, 16.0f, 1.0f));

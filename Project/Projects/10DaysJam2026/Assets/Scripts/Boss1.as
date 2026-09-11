@@ -81,6 +81,7 @@ class Boss1 : ScriptComponentBehavior {
 
     Object@ cloneEffect;
     bool isAnimation = false;
+    bool restoredDefeated = false;
     float deathEffectTimer = 0.0f;
 
     BossState state = BossState::Idle;
@@ -144,6 +145,7 @@ class Boss1 : ScriptComponentBehavior {
                 hp = 0.0f;
                 state = BossState::Dead;
                 lastState = BossState::Dead;
+                restoredDefeated = true;
                 GetOwnerObject().SetComponentsActiveExceptTransformAndScript(false);
             }
         }
@@ -174,6 +176,9 @@ class Boss1 : ScriptComponentBehavior {
     }
 
     void Update() {
+        // 保存済み撃破状態では、死亡音・死亡エフェクトを再生し直さない
+        if (restoredDefeated) return;
+
         // 会話中(isDialogueActive)は移動・攻撃などの処理を止める
         bool isDialogueActive = false;
         GetScene().GetVariable("isDialogueActive", isDialogueActive);
@@ -211,10 +216,7 @@ class Boss1 : ScriptComponentBehavior {
         // 死亡時のエフェクト処理
         if (state == BossState::Dead) {
             if(!isAnimation){
-                isAnimation = true;
-                deathEffectTimer = 0.0f;
-                spawnedEffectCount = 0; // 生成数の初期化
-                PlayTaggedAudio("Dead");
+                StartDeathSequence();
             }
 
             deathEffectTimer += GetDeltaTime();
@@ -228,6 +230,8 @@ class Boss1 : ScriptComponentBehavior {
 
                     Object@ clone = GetScene().CloneObject(deathEffect, "CloneDeathEffect_" + spawnedEffectCount);
                     if(clone !is null){
+                        PlayTaggedAudio("Dead");
+
                         Transform@ cloneTf = clone.GetTransform();
                         if(cloneTf !is null){
                             cloneTf.SetScale(Vector3(16.0f, 16.0f, 1.0f));
@@ -407,8 +411,17 @@ class Boss1 : ScriptComponentBehavior {
                 if (sprite !is null) {
                     sprite.SetActive(true);
                 }
+                StartDeathSequence();
                 break;
         }
+    }
+
+    void StartDeathSequence() {
+        if (isAnimation) return;
+
+        isAnimation = true;
+        deathEffectTimer = 0.0f;
+        spawnedEffectCount = 0;
     }
 
     // SpriteAnimatorを使ったアニメーション切り替え
@@ -502,6 +515,14 @@ class Boss1 : ScriptComponentBehavior {
         if (isInvincible) return;
 
         hp -= amount;
+
+        // 撃破時は被ダメージ音ではなく、死亡状態への遷移と同時に死亡音を鳴らす
+        if (hp <= 0.0f) {
+            hp = 0.0f;
+            ChangeState(BossState::Dead);
+            return;
+        }
+
         PlayTaggedAudio("Damage");
 
         // ダメージ演出の開始

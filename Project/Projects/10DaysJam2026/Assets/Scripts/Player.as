@@ -1124,12 +1124,13 @@ class Player : ScriptComponentBehavior {
                 if (chestObj.GetComponents(@chestSc)) {
                     for(int i = 0;i < chestSc.length(); ++i){
                         bool isOpen = false;
-                        chestSc[i].GetVariable("isOpen", isOpen);
+                        if (!chestSc[i].GetVariable("isOpen", isOpen)) continue;
     
                         if (!isOpen) {
+                            float hpIncreaseAmount = 2.0f;
+                            chestSc[i].GetVariable("hpIncreaseAmount", hpIncreaseAmount);
                             chestSc[i].CallMethod("Open");
-                            maxHp += 2.0f;
-                            hp += 2.0f;
+                            IncreaseMaxHp(hpIncreaseAmount);
                             Log("MaxHPChest Open");
                             break;
                         }

@@ -22,9 +22,25 @@ class NPCTalker : ScriptComponentBehavior {
     // プレイヤーと接触している間、毎フレーム呼ばれる
     void OnCollisionStay(const HitInfo &in hit) {
         if (hit.otherCollider.GetTag() != playerTag) return;
+        // チェストの会話は、開封に成功した瞬間だけChest側から開始する。
+        // 接触入力から直接開始すると、開封済みでも繰り返し表示されてしまう。
+        if (IsAttachedToChest()) return;
         if (!IsCommandTriggered(talkCommandName)) return;
 
         StartDialogue();
+    }
+
+    bool IsAttachedToChest() {
+        array<ScriptComponent@>@ scripts;
+        if (!GetComponents(@scripts)) return false;
+
+        for (uint i = 0; i < scripts.length(); ++i) {
+            bool isOpen = false;
+            if (scripts[i] !is null && scripts[i].GetVariable("isOpen", isOpen)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // dialogueBoxObjectにアタッチされたDialogueBoxのisVisibleを有効化する

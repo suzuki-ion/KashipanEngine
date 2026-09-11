@@ -10,6 +10,7 @@ class Chest : ScriptComponentBehavior {
 
     float particleDeleteTimer = 0.0f;
     float particleDeleteDuratiom = 1.0f;
+    bool restoreOpenVisualPending = false;
 
     void Start() {
         if (!ShouldPersistProgress()) return;
@@ -26,11 +27,17 @@ class Chest : ScriptComponentBehavior {
         bool savedOpen = false;
         if (GetScene().GetGlobalVariable(GetSaveKey(), savedOpen) && savedOpen) {
             isOpen = true;
-            PlayOpenAnimation();
+            // SpriteAnimatorのStart()後に適用しないと、初期表示で上書きされる
+            restoreOpenVisualPending = true;
         }
     }
 
     void Update() {
+        if (restoreOpenVisualPending) {
+            restoreOpenVisualPending = false;
+            PlayOpenAnimation();
+        }
+
         if(particle is null)return;
         
         if(particle.IsPlaying()){
@@ -75,6 +82,21 @@ class Chest : ScriptComponentBehavior {
 
         PlayTaggedAudio("Open");
         PlayOpenAnimation();
+        StartAttachedDialogue();
+    }
+
+    // チェストに設定された会話は、開封に成功したこの瞬間だけ開始する
+    void StartAttachedDialogue() {
+        array<ScriptComponent@>@ scripts;
+        if (!GetComponents(@scripts)) return;
+
+        for (uint i = 0; i < scripts.length(); ++i) {
+            Object@ dialogueBoxObject;
+            if (scripts[i] !is null && scripts[i].GetVariable("dialogueBoxObject", @dialogueBoxObject)) {
+                scripts[i].CallMethod("StartDialogue");
+                return;
+            }
+        }
     }
 
     void PlayTaggedAudio(const string &in tagName) {

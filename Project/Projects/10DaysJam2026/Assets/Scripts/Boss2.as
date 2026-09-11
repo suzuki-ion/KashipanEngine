@@ -35,6 +35,9 @@ class Boss2 : ScriptComponentBehavior {
     [SerializeField, Tooltip("HP")]
     float hp = 30.0f;
 
+    [SerializeField, Tooltip("最大HP")]
+    float maxHp = hp;
+
     [SerializeField, Tooltip("ダメージを受けた際の色変化時間(秒)")]
     float damageFlashDuration = 0.1f;
 
@@ -43,6 +46,9 @@ class Boss2 : ScriptComponentBehavior {
 
     [SerializeField, Tooltip("通常時の色")]
     Vector4 normalColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+
+    [SerializeField, Tooltip("被ダメージ後の無敵時間(秒)")]
+    float invincibleDuration = 0.5f;
 
     [SerializeField, Tooltip("Sickleのプレハブ")]
     Object@ sickle;
@@ -91,11 +97,17 @@ class Boss2 : ScriptComponentBehavior {
     float damageFlashTimer = 0.0f;
     bool isFlashing = false;
 
+    // 無敵時間管理用
+    float invincibleTimer = 0.0f;
+    bool isInvincible = false;
+
     // 各種コンポーネント
     SpriteRenderer@ sprite;
 
     void Start() {
         GetComponent(@sprite);
+
+        maxHp = hp;
 
         if (sprite !is null) {
             sprite.SetInstanceColor(normalColor);
@@ -154,6 +166,14 @@ class Boss2 : ScriptComponentBehavior {
                 if (sprite !is null) {
                     sprite.SetInstanceColor(normalColor);
                 }
+            }
+        }
+
+        // 無敵時間の管理(時間経過で解除)
+        if (isInvincible) {
+            invincibleTimer -= GetDeltaTime();
+            if (invincibleTimer <= 0.0f) {
+                isInvincible = false;
             }
         }
 
@@ -417,6 +437,8 @@ class Boss2 : ScriptComponentBehavior {
 
     void Damage(float amount) {
         if (hp <= 0.0f) return;
+        if (isInvincible) return;
+
         hp -= amount;
         PlayTaggedAudio("Damage");
 
@@ -429,6 +451,10 @@ class Boss2 : ScriptComponentBehavior {
         if (sprite !is null) {
             sprite.SetInstanceColor(damageColor);
         }
+
+        // 無敵状態の開始(一定時間の間、再ダメージを受けない)
+        isInvincible = true;
+        invincibleTimer = invincibleDuration;
     }
 
     void End() {

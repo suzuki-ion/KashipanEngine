@@ -78,7 +78,7 @@
         {
             "key": "save_sceneName",
             "type": "String",
-            "value": "MountainScene"
+            "value": "Boss2Scene"
         }
     ]
 }

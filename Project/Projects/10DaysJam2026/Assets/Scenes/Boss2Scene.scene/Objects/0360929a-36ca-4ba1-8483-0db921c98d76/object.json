@@ -104,6 +104,8 @@
                             "floatAmplitude": 10.0,
                             "floatSpeed": 1.5,
                             "hp": 25.0,
+                            "invincibleDuration": 0.5,
+                            "maxHp": 25.0,
                             "minDistanceFromPlayer": 100.0,
                             "normalColor": {
                                 "w": 1.0,

@@ -507,7 +507,7 @@
                             },
                             "reverb": {
                                 "enabled": false,
-                                "mix": 0.3
+                                "mix": 0.30000001192092896
                             }
                         },
                         "enableSpatialAudio": false,

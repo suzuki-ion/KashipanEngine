@@ -106,6 +106,7 @@
                             },
                             "damageFlashDuration": 0.10000000149011612,
                             "deathDelay": 0.30000001192092896,
+                            "invincibleDuration": 0.5,
                             "isLeftOvary": true,
                             "maxHP": 20.0,
                             "moveAmplitude": 15.0,

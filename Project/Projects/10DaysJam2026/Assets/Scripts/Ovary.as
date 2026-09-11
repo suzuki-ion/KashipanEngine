@@ -26,6 +26,9 @@ class Ovary : ScriptComponentBehavior {
     [SerializeField, Tooltip("上下に動く速さ")]
     float moveSpeed = 2.0f;
 
+    [SerializeField, Tooltip("被ダメージ後の無敵時間(秒)")]
+    float invincibleDuration = 0.5f;
+
     float hp = 0.0f;
     bool isDead = false;
     float deathTimer = 0.0f;
@@ -33,6 +36,10 @@ class Ovary : ScriptComponentBehavior {
     // ダメージ演出管理用
     float damageFlashTimer = 0.0f;
     bool isFlashing = false;
+
+    // 無敵時間管理用
+    float invincibleTimer = 0.0f;
+    bool isInvincible = false;
 
     // 上下移動用
     float initialY = 0.0f;
@@ -93,6 +100,14 @@ class Ovary : ScriptComponentBehavior {
                 }
             }
         }
+
+        // 無敵時間の管理(時間経過で解除)
+        if (isInvincible) {
+            invincibleTimer -= GetDeltaTime();
+            if (invincibleTimer <= 0.0f) {
+                isInvincible = false;
+            }
+        }
     }
 
     // プレイヤーの攻撃などから呼び出されるダメージ処理
@@ -111,6 +126,7 @@ class Ovary : ScriptComponentBehavior {
 
     void Damage(float amount) {
         if (isDead) return;
+        if (isInvincible) return;
 
         hp -= amount;
         if (hp < 0.0f) hp = 0.0f;
@@ -122,6 +138,10 @@ class Ovary : ScriptComponentBehavior {
         if (sprite !is null) {
             sprite.SetInstanceColor(damageColor);
         }
+
+        // 無敵状態の開始(一定時間の間、再ダメージを受けない)
+        isInvincible = true;
+        invincibleTimer = invincibleDuration;
 
         NotifyBoss();
 

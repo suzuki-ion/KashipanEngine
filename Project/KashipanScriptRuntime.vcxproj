@@ -200,7 +200,10 @@
     <ClCompile Include="KashipanEngine\Assets\AnimationManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\AudioManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\AudioPlayer.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\BitmapFontManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\FontManager.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\GifManager.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\GifPlayer.cpp" />
     <ClCompile Include="KashipanEngine\Assets\MaterialManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\ModelManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\PrimitiveMeshGenerator.cpp" />
@@ -268,6 +271,7 @@
     <ClCompile Include="KashipanEngine\Graphics\ComputeCommandProcessor.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\ImageExporter.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\ScreenBuffer.cpp" />
+    <ClCompile Include="KashipanEngine\Graphics\GifTexture.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\ShadowMapBuffer.cpp" />
     <ClCompile Include="KashipanEngine\Graphics\VideoTexture.cpp" />
     <ClCompile Include="KashipanEngine\Input\Controller.cpp" />
@@ -306,6 +310,7 @@
     <ClCompile Include="KashipanEngine\Scene\Components\Script\ScriptBindings.cpp">
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\ScriptObjectHandle.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ISceneComponent.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\SceneObjectCollider.cpp" />

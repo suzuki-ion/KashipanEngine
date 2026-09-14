@@ -35,7 +35,7 @@ class Chest : ScriptComponentBehavior {
     void Update() {
         if (restoreOpenVisualPending) {
             restoreOpenVisualPending = false;
-            PlayOpenAnimation();
+            ShowOpenVisual();
         }
 
         if(particle is null)return;
@@ -56,9 +56,7 @@ class Chest : ScriptComponentBehavior {
         return GetScene().IsPlaying() || !IsEditorBuild();
     }
 
-    // シーン名+オブジェクトのUUIDを使ったセーブデータキー
-    // (UUIDだけだとシーンを複製した際に複製元と同じUUIDを持つオブジェクトが存在しうるため、
-    //  シーン名も含めて衝突を避ける)
+    // シーン名+UUIDで、各シーンに配置されたチェストを個別に管理する
     string GetSaveKey() const {
         return "chest_" + GetScene().GetName() + "_" + GetOwnerObject().GetUUID() + "_opened";
     }
@@ -119,6 +117,18 @@ class Chest : ScriptComponentBehavior {
             for (int i = 0; i < animScripts.length(); ++i) {
                 if (animScripts[i].GetTag() == "AnimatorSC") {
                     animScripts[i].CallMethod("PlayRow", 1);
+                }
+            }
+        }
+    }
+
+    // 保存状態の復元時はアニメーションを再生せず、開いた最終コマで固定する
+    void ShowOpenVisual() {
+        array<ScriptComponent@>@ animScripts;
+        if (GetComponents(@animScripts)) {
+            for (int i = 0; i < animScripts.length(); ++i) {
+                if (animScripts[i].GetTag() == "AnimatorSC") {
+                    animScripts[i].CallMethod("SetFrame", 1);
                 }
             }
         }

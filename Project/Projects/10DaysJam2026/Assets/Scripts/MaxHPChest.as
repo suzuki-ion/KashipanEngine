@@ -29,7 +29,7 @@ class MaxHpChest : ScriptComponentBehavior {
     void Update() {
         if (restoreOpenVisualPending) {
             restoreOpenVisualPending = false;
-            PlayOpenAnimation();
+            ShowOpenVisual();
         }
     }
 
@@ -40,7 +40,7 @@ class MaxHpChest : ScriptComponentBehavior {
         return GetScene().IsPlaying() || !IsEditorBuild();
     }
 
-    // シーン名+オブジェクトUUIDによるセーブキー
+    // シーン名+UUIDで、各シーンに配置されたチェストを個別に管理する
     string GetSaveKey() const {
         return "max_hp_chest_" + GetScene().GetName() + "_" + GetOwnerObject().GetUUID() + "_opened";
     }
@@ -93,6 +93,18 @@ class MaxHpChest : ScriptComponentBehavior {
             for (int i = 0; i < animScripts.length(); ++i) {
                 if (animScripts[i].GetTag() == "AnimatorSC") {
                     animScripts[i].CallMethod("PlayRow", 1);
+                }
+            }
+        }
+    }
+
+    // 保存状態の復元時はアニメーションを再生せず、開いた最終コマで固定する
+    void ShowOpenVisual() {
+        array<ScriptComponent@>@ animScripts;
+        if (GetComponents(@animScripts)) {
+            for (int i = 0; i < animScripts.length(); ++i) {
+                if (animScripts[i].GetTag() == "AnimatorSC") {
+                    animScripts[i].CallMethod("SetFrame", 1);
                 }
             }
         }

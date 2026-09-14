@@ -81,6 +81,26 @@ class SpriteAnimator : ScriptComponentBehavior {
         frameInterval = interval;
     }
 
+    // 指定したコマを即座に表示し、その位置で停止する
+    void SetFrame(int frame) {
+        if (frameCount <= 0) return;
+        if (frame < 0) frame = 0;
+        if (frame >= frameCount) frame = frameCount - 1;
+
+        if (sprite is null) {
+            GetComponent(@sprite);
+        }
+
+        currentFrame = frame;
+        animTimer = float(frame) * frameInterval;
+        isPlaying = false;
+
+        if (sprite !is null) {
+            Vector2 currentUv = Vector2(float(frame) * uvStep.x, float(currentRow) * uvStep.y);
+            sprite.SetInstanceUvTranslate(currentUv);
+        }
+    }
+
     // 停止
     void Stop() {
         isPlaying = false;

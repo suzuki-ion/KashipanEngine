@@ -21,6 +21,8 @@ class HeartChest : ScriptComponentBehavior {
     [SerializeField, Tooltip("チェストの足元からの着地高さオフセット")]
     float floorOffset = -8.0f;
 
+    bool restoreOpenVisualPending = false;
+
     void Start() {
         bool hasLoadedSaveThisSession = false;
         GetScene().GetGlobalVariable("hasLoadedSaveThisSession", hasLoadedSaveThisSession);
@@ -28,9 +30,19 @@ class HeartChest : ScriptComponentBehavior {
             GetScene().LoadGlobalVariables();
             GetScene().SetGlobalVariable("hasLoadedSaveThisSession", true);
         }
+
+        bool savedOpen = false;
+        if (GetScene().GetGlobalVariable(GetSaveKey(), savedOpen) && savedOpen) {
+            isOpen = true;
+            restoreOpenVisualPending = true;
+        }
     }
 
     void Update() {
+        if (restoreOpenVisualPending) {
+            restoreOpenVisualPending = false;
+            ShowOpenVisual();
+        }
     }
 
     void End() {
@@ -43,10 +55,17 @@ class HeartChest : ScriptComponentBehavior {
         isOpen = true;
         Log("回復宝箱を開けた！");
 
+        GetScene().SetGlobalVariable(GetSaveKey(), true);
+
         PlayTaggedAudio("Open");
         PlayOpenAnimation();
         StartAttachedDialogue();
         SpawnItems();
+    }
+
+    // シーン名+UUIDで、各シーンに配置された回復チェストを個別に管理する
+    string GetSaveKey() const {
+        return "heart_chest_" + GetScene().GetName() + "_" + GetOwnerObject().GetUUID() + "_opened";
     }
 
     // チェストに設定された会話は、開封に成功したこの瞬間だけ開始する
@@ -116,6 +135,18 @@ class HeartChest : ScriptComponentBehavior {
             for (int i = 0; i < animScripts.length(); ++i) {
                 if (animScripts[i].GetTag() == "AnimatorSC") {
                     animScripts[i].CallMethod("PlayRow", 1);
+                }
+            }
+        }
+    }
+
+    // 保存状態の復元時はアニメーションを再生せず、開いた最終コマで固定する
+    void ShowOpenVisual() {
+        array<ScriptComponent@>@ animScripts;
+        if (GetComponents(@animScripts)) {
+            for (int i = 0; i < animScripts.length(); ++i) {
+                if (animScripts[i].GetTag() == "AnimatorSC") {
+                    animScripts[i].CallMethod("SetFrame", 1);
                 }
             }
         }

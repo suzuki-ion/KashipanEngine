@@ -106,7 +106,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)Externals\ReactPhysics3D\include;$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories);$(ProjectDir)Externals\angelscript\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Externals\ReactPhysics3D\include;$(ProjectDir)Externals\Box2D\include;$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories);$(ProjectDir)Externals\angelscript\include</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
@@ -117,15 +117,17 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalOptions>/VERBOSE:UNUSEDLIBS /VERBOSE:LIB %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/debug/lib;$(ProjectDir)Externals/Assimp/lib/Debug;$(ProjectDir)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mtd.lib;reactphysics3d.lib;WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/debug/lib;$(ProjectDir)Externals/Box2D/debug/lib;$(ProjectDir)Externals/Assimp/lib/Debug;$(ProjectDir)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc143-mtd.lib;reactphysics3d.lib;box2d.lib;WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>GameInput.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
 copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
 copy /Y "$(ProjectDir)Externals\WebView2\lib\x64\WebView2Loader.dll" "$(TargetDir)WebView2Loader.dll"
 copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
-&gt;"$(OutDir)EngineRoot.txt" echo $(ProjectDir)</Command>
+&gt;"$(OutDir)EngineRoot.txt" echo $(ProjectDir)
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWorkCopy.ps1" -ProjectDir "$(ProjectDir)." -TargetDir "$(TargetDir)." -Platform "$(Platform)" -Configuration "$(Configuration)"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>$(ProjectDir)DpiAwarenessPerMonitor.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -148,7 +150,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)Externals\ReactPhysics3D\include;$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories);$(ProjectDir)Externals\angelscript\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Externals\ReactPhysics3D\include;$(ProjectDir)Externals\Box2D\include;$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories);$(ProjectDir)Externals\angelscript\include</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
@@ -158,8 +160,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/lib;$(ProjectDir)Externals/Assimp/lib/Release;$(ProjectDir)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mt.lib;reactphysics3d.lib;WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/lib;$(ProjectDir)Externals/Box2D/lib;$(ProjectDir)Externals/Assimp/lib/Release;$(ProjectDir)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc143-mt.lib;reactphysics3d.lib;box2d.lib;WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>GameInput.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
@@ -167,7 +170,8 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
 copy /Y "$(ProjectDir)Externals\WebView2\lib\x64\WebView2Loader.dll" "$(TargetDir)WebView2Loader.dll"
 copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
 if exist "$(TargetDir)EngineRoot.txt" del "$(TargetDir)EngineRoot.txt"
-powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyReleaseAssets.ps1" -ProjectDir "$(ProjectDir)." -TargetDir "$(TargetDir)."</Command>
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyReleaseAssets.ps1" -ProjectDir "$(ProjectDir)." -TargetDir "$(TargetDir)."
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWorkCopy.ps1" -ProjectDir "$(ProjectDir)." -TargetDir "$(TargetDir)." -Platform "$(Platform)" -Configuration "$(Configuration)"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>$(ProjectDir)DpiAwarenessPerMonitor.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -190,7 +194,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(ProjectDir)Externals\ReactPhysics3D\include;$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories);$(ProjectDir)Externals\angelscript\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Externals\ReactPhysics3D\include;$(ProjectDir)Externals\Box2D\include;$(ProjectDir)Externals\Assimp\include;$(ProjectDir)Externals\imgui;$(ProjectDir)MyStd;$(ProjectDir)Externals\DirectXTex;$(ProjectDir)Externals\Common;$(ProjectDir)Externals\utf8;$(ProjectDir)Externals\nlohmann;$(ProjectDir)KashipanEngine;$(ProjectDir)Application;%(AdditionalIncludeDirectories);$(ProjectDir)Externals\angelscript\include</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
@@ -204,8 +208,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/lib;$(ProjectDir)Externals/Assimp/lib/Release;$(ProjectDir)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mt.lib;reactphysics3d.lib;WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)Externals/ReactPhysics3D/lib;$(ProjectDir)Externals/Box2D/lib;$(ProjectDir)Externals/Assimp/lib/Release;$(ProjectDir)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc143-mt.lib;reactphysics3d.lib;box2d.lib;WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>GameInput.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
       <LinkTimeCodeGeneration>
       </LinkTimeCodeGeneration>
     </Link>
@@ -214,7 +219,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\Download
 copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
 copy /Y "$(ProjectDir)Externals\WebView2\lib\x64\WebView2Loader.dll" "$(TargetDir)WebView2Loader.dll"
 copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
-&gt;"$(OutDir)EngineRoot.txt" echo $(ProjectDir)</Command>
+&gt;"$(OutDir)EngineRoot.txt" echo $(ProjectDir)
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWorkCopy.ps1" -ProjectDir "$(ProjectDir)." -TargetDir "$(TargetDir)." -Platform "$(Platform)" -Configuration "$(Configuration)"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>$(ProjectDir)DpiAwarenessPerMonitor.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -380,6 +386,7 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <None Include="Reference\Editor\Components\Render\Camera2D.html" />
     <None Include="Reference\Editor\Components\Render\Camera3D.html" />
     <None Include="Reference\Editor\Components\Render\CameraController.html" />
+    <None Include="Reference\Editor\Components\Render\CameraController2D.html" />
     <None Include="Reference\Editor\Components\Render\CameraRenderer.html" />
     <None Include="Reference\Editor\Components\Render\Light.html" />
     <None Include="Reference\Editor\Components\Render\LightRenderer.html" />
@@ -390,6 +397,7 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <None Include="Reference\Editor\Components\Render\ShadowMapObject.html" />
     <None Include="Reference\Editor\Components\Render\SkinnedMeshRenderer.html" />
     <None Include="Reference\Editor\Components\Render\SpriteRenderer.html" />
+    <None Include="Reference\Editor\Components\Render\TilemapRenderer.html" />
     <None Include="Reference\Editor\Components\Render\TextRenderer.html" />
     <None Include="Reference\Editor\Components\Scene\KeyframeAnimator.html" />
     <None Include="Reference\Editor\Components\Scene\SceneAudioPlayer.html" />
@@ -441,6 +449,8 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <None Include="Reference\index.html" />
     <None Include="Tools\convert_reference_to_html.py" />
     <None Include="Tools\CopyReleaseAssets.ps1" />
+    <None Include="Tools\CopyBuildAssets.bat" />
+    <None Include="Tools\CopyToWorkCopy.ps1" />
     <None Include="tools\sync_filters.py" />
   </ItemGroup>
   <ItemGroup>
@@ -531,6 +541,7 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClCompile Include="KashipanEngine\Assets\AnimationManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\AudioManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\AudioPlayer.cpp" />
+    <ClCompile Include="KashipanEngine\Assets\BitmapFontManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\FontManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\MaterialManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\ModelManager.cpp" />
@@ -637,6 +648,7 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClCompile Include="KashipanEngine\Scene\Components\Script\EditorToolManager.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Script\ImGuiScriptBindings.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Script\SceneScriptEngine.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\ScriptObjectHandle.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Script\ScriptBindings.cpp">
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -903,6 +915,14 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     </ClInclude>
     <ClInclude Include="Externals\nlohmann\json.hpp" />
     <ClInclude Include="Externals\nlohmann\json_fwd.hpp" />
+    <ClInclude Include="Externals\Box2D\include\box2d\base.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\box2d.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\collision.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\config.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\constants.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\id.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\math_functions.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\types.h" />
     <ClInclude Include="Externals\ReactPhysics3D\include\reactphysics3d\body\Body.h" />
     <ClInclude Include="Externals\ReactPhysics3D\include\reactphysics3d\body\RigidBody.h" />
     <ClInclude Include="Externals\ReactPhysics3D\include\reactphysics3d\collision\broadphase\DynamicAABBTree.h" />
@@ -1026,6 +1046,7 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClInclude Include="KashipanEngine\Assets\AudioManager.h" />
     <ClInclude Include="KashipanEngine\Assets\AudioPlayer.h" />
     <ClInclude Include="KashipanEngine\Assets\CaseInsensitive.h" />
+    <ClInclude Include="KashipanEngine\Assets\BitmapFontManager.h" />
     <ClInclude Include="KashipanEngine\Assets\FontManager.h" />
     <ClInclude Include="KashipanEngine\Assets\MaterialManager.h" />
     <ClInclude Include="KashipanEngine\Assets\AssimpUtf8IOSystem.h" />
@@ -1158,16 +1179,17 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClInclude Include="KashipanEngine\Math\Color.h" />
     <ClInclude Include="KashipanEngine\ObjectsHeaders.h" />
     <ClInclude Include="KashipanEngine\Objects\Collision\Collider.h" />
-    <ClInclude Include="KashipanEngine\Objects\Collision\CollisionAlgorithms2D.h" />
     <ClInclude Include="KashipanEngine\Objects\Collision\CollisionAlgorithms3D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Animator.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\AudioListener.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Comment.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\AudioSource.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\GifSource.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\TextureSource.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\VideoSource.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\Box2DCollider.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\BoxCollider.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Collider\CharacterController2D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\MeshButton.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\MeshCollider.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\Capsule2DCollider.h" />
@@ -1196,17 +1218,23 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\MotionBlurEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\IPostProcessComponent.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\OutlineEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\PaletteQuantizeEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\RadialBlurEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\ScanlineEffect.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\BarrelDistortionEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\VignetteEffect.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Compute\ComputeShaderProcessing.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\Camera2D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\Camera3D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\CameraController.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\CameraController2D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\CameraRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\Light.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\LightRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\MeshRenderer.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\BitmapTextRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\SpriteRenderer.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\TilemapRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\TextRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\SkinnedMeshRenderer.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Render\IWindowObjectComponent.h" />
@@ -1264,6 +1292,8 @@ copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
     <ClInclude Include="KashipanEngine\Scene\Components\Script\EditorToolManager.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Script\ImGuiScriptBindings.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Script\SceneScriptEngine.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptObjectHandle.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptComponentHandle.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptBindings.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ISceneComponent.h" />

@@ -1,5 +1,6 @@
 #include "PrefabAssetManager.h"
 #ifdef USE_IMGUI
+#include <filesystem>
 #include "Core/ProjectPaths.h"
 #include "Scene/Editor/PrefabUtility.h"
 #include "Utilities/FileIO/Directory.h"
@@ -70,10 +71,17 @@ bool PrefabAssetManager::SavePrefabJson(const UUID128 &prefabID, const JSON &new
 bool PrefabAssetManager::SavePrefabJsonByPath(const std::string &filePath, const JSON &newJson) {
     EnsureIndexBuilt();
     const UUID128 prefabID(newJson.value("prefabID", std::string{}));
+    auto existingPathIt = sPathToID_.find(filePath);
+    if (existingPathIt != sPathToID_.end() && existingPathIt->second != prefabID) {
+        // 登録済みPrefabからIDを消す編集も、別IDへの変更と同様に既存インスタンスを孤立させる。
+        return false;
+    }
     if (!prefabID.IsValid()) {
         // prefabIDを持たない通常のJSONファイル（.prefabでも未登録・壊れている場合）はそのまま保存するだけ
         return SaveJSON(newJson, ProjectPaths::ToPhysical(filePath));
     }
+    // prefabIDは配置済みインスタンスとの恒久的な対応キー。登録済みファイルのID変更を許すと
+    // 旧IDと新IDが同じパスを指し、既存インスタンスが古いキャッシュへ取り残されるため拒否する。
     sIDToPath_[prefabID] = filePath;
     sPathToID_[filePath] = prefabID;
     return SavePrefabJson(prefabID, newJson);
@@ -88,6 +96,77 @@ bool PrefabAssetManager::RenamePrefabFile(const std::string &oldFilePath, const 
     sPathToID_[newFilePath] = prefabID;
     sIDToPath_[prefabID] = newFilePath;
     return true;
+}
+
+void PrefabAssetManager::RenamePrefabFolder(const std::string &oldFolderPath, const std::string &newFolderPath) {
+    EnsureIndexBuilt();
+    const std::string oldPrefix = oldFolderPath.ends_with('/') ? oldFolderPath : oldFolderPath + "/";
+    const std::string newPrefix = newFolderPath.ends_with('/') ? newFolderPath : newFolderPath + "/";
+    std::vector<std::pair<std::string, UUID128>> renamed;
+    for (const auto &[path, prefabID] : sPathToID_) {
+        if (path.starts_with(oldPrefix)) renamed.emplace_back(path, prefabID);
+    }
+    for (const auto &[oldPath, prefabID] : renamed) {
+        const std::string newPath = newPrefix + oldPath.substr(oldPrefix.size());
+        sPathToID_.erase(oldPath);
+        sPathToID_[newPath] = prefabID;
+        sIDToPath_[prefabID] = newPath;
+    }
+}
+
+void PrefabAssetManager::UnregisterPrefabPath(const std::string &fileOrFolderPath, bool recursive) {
+    EnsureIndexBuilt();
+    const std::string prefix = fileOrFolderPath.ends_with('/') ? fileOrFolderPath : fileOrFolderPath + "/";
+    std::vector<std::pair<std::string, UUID128>> removed;
+    for (const auto &[path, prefabID] : sPathToID_) {
+        if (path == fileOrFolderPath || (recursive && path.starts_with(prefix))) {
+            removed.emplace_back(path, prefabID);
+        }
+    }
+    for (const auto &[path, prefabID] : removed) {
+        sPathToID_.erase(path);
+        auto idIt = sIDToPath_.find(prefabID);
+        if (idIt != sIDToPath_.end() && idIt->second == path) sIDToPath_.erase(idIt);
+        sCache_.erase(prefabID);
+    }
+}
+
+void PrefabAssetManager::ReloadExternallyChangedFiles(const std::vector<std::string> &filePaths) {
+    EnsureIndexBuilt();
+    for (const std::string &filePath : filePaths) {
+        if (!filePath.ends_with(PrefabUtility::kPrefabExtension)) continue;
+
+        std::error_code ec;
+        const bool exists = std::filesystem::is_regular_file(ProjectPaths::ToPhysical(filePath), ec);
+        if (ec || !exists) {
+            UnregisterPrefabPath(filePath, false);
+            continue;
+        }
+
+        JSON newJson = LoadJSON(ProjectPaths::ToPhysical(filePath));
+        if (!newJson.is_object()) continue;
+        const UUID128 newID(newJson.value("prefabID", std::string{}));
+        if (!newID.IsValid()) continue;
+
+        auto pathIt = sPathToID_.find(filePath);
+        if (pathIt != sPathToID_.end() && pathIt->second != newID) {
+            const UUID128 oldID = pathIt->second;
+            sPathToID_.erase(pathIt);
+            auto idIt = sIDToPath_.find(oldID);
+            if (idIt != sIDToPath_.end() && idIt->second == filePath) sIDToPath_.erase(idIt);
+            sCache_.erase(oldID);
+        }
+
+        const auto cacheIt = sCache_.find(newID);
+        const JSON oldJson = cacheIt != sCache_.end() ? cacheIt->second : JSON();
+        sIDToPath_[newID] = filePath;
+        sPathToID_[filePath] = newID;
+        if (!oldJson.is_null() && oldJson != newJson) {
+            NotifyChanged(newID, oldJson, newJson);
+        } else {
+            sCache_[newID] = std::move(newJson);
+        }
+    }
 }
 
 void PrefabAssetManager::SetChangeListener(ChangeCallback callback) {

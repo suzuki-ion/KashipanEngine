@@ -71,6 +71,7 @@ static bool IsExist(const std::string &amp;title);</div>
 void SetWindowMode(WindowMode windowMode);
 void SetWindowTitle(const std::wstring &amp;title);
 void SetWindowTitle(const std::string &amp;title);
+bool SetIcon(const std::string &amp;iconPath);
 void SetWindowSize(int32_t width, int32_t height);
 void SetWindowPosition(int32_t x, int32_t y);
 void SetWindowVisible(bool visible);
@@ -80,6 +81,9 @@ void SetWindowChild(HWND childHwnd, bool applyNative = true);
 void SetWindowChild(Window *childWindow, bool applyNative = true);
 void ClearWindowParent(bool applyNative = true);
 void ClearWindowChild(bool applyNative = true);</div>
+<p>
+<code>SetIcon</code> は実行中にウィンドウアイコン（タスクバー・タイトルバー、<code>WM_SETICON</code>）を動的に変更します。空文字を渡すとエンジン既定アイコン（<code>EngineSettings.json</code>の<code>Window.initialWindowIconPath</code>、未設定時はOS既定アイコン）に戻ります。読み込みに失敗した場合は現在のアイコンを変更せず<code>false</code>を返します。
+</p>
 </div>
 
 <div class="api-card">
@@ -179,6 +183,8 @@ bool Resize(std::uint32_t width, std::uint32_t height);</div>
 <div class="api-sig">Window *GetWindow() const noexcept;
 void SetTitle(const std::string &amp;title);
 const std::string &amp;GetTitle() const noexcept;
+void SetIcon(const std::string &amp;iconPath);
+const std::string &amp;GetIcon() const noexcept;
 void SetSize(std::uint32_t width, std::uint32_t height);
 
 using WindowMessageCallback = std::function&lt;void(const WindowMessageEvent &amp;)&gt;;
@@ -186,7 +192,7 @@ void SetOnWindowMessage(WindowMessageCallback callback);
 bool SetMessageIntercepted(std::uint32_t msg, bool enabled);
 void CloseWindow();</div>
 <p>
-ウィンドウが受信したメッセージを <code>SetOnWindowMessage</code> のコールバックへ通知する仕組みを持ち、<code>ScriptComponent</code>（<a href="Script/00_Index.html">Script/00_Index.html</a>）はこれをフックしてスクリプトの <code>OnWindowMessage(const WindowMessageInfo &amp;in)</code> を呼び出します。
+ウィンドウが受信したメッセージを <code>SetOnWindowMessage</code> のコールバックへ通知する仕組みを持ち、<code>ScriptComponent</code>（<a href="../Script/00_Index.html">Script/00_Index.html</a>）はこれをフックしてスクリプトの <code>OnWindowMessage(const WindowMessageInfo &amp;in)</code> を呼び出します。
 </p>
 </div>
 
@@ -223,7 +229,7 @@ screenBufferObj-&gt;SetSize(1920, 1080);</code></pre>
 <ul>
 <li><a href="10_PostEffects.html">10_PostEffects.html</a> — <code>ScreenBufferObject</code> と組み合わせるポストエフェクト</li>
 <li><a href="05_Rendering.html">05_Rendering.html</a> — 描画コンポーネントからの描画先指定</li>
-<li><a href="Script/00_Index.html">Script/00_Index.html</a> — <code>OnWindowMessage</code> 等のスクリプト連携</li>
+<li><a href="../Script/00_Index.html">Script/00_Index.html</a> — <code>OnWindowMessage</code> 等のスクリプト連携</li>
 </ul>
 
 <div id="page-footer" class="page-footer"></div>

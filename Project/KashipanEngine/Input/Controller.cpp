@@ -84,9 +84,12 @@ void Controller::Initialize() {
     Finalize();
 
     if (!sGameInput) {
+        // GameInputは遅延ロードする。RuntimeがないPCではゲームパッドのみ無効化し、
+        // キーボード・マウスによるゲーム起動は継続させる。
+        if (!GetModuleHandleW(L"GameInput.dll") && !LoadLibraryW(L"GameInput.dll")) return;
         const HRESULT hr = GameInputCreate(&sGameInput);
         if (FAILED(hr)) {
-            assert(false);
+            sGameInput = nullptr;
             return;
         }
     }

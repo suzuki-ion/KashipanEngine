@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PreTransform | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_PreTransform">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>PreTransform</h1>
+<p class="page-lead">1フレーム前のTransform情報を保持するコンポーネントです。オブジェクトに追加すると、シーン側で毎フレーム最後（全オブジェクト・全シーンコンポーネントの更新後）に自動で値が更新されます。ローカル/ワールドそれぞれの位置・回転・スケールを取得できるため、補間や速度計算、モーションブラー等に使用できます。</p>
+</div>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>const Vector3 &amp;GetPreviousTranslate() const</code></td><td>前フレームのローカル座標を取得する</td></tr>
+<tr><td><code>const Vector3 &amp;GetPreviousRotate() const</code></td><td>前フレームのローカル回転を取得する（オイラー角・ラジアン）</td></tr>
+<tr><td><code>const Quaternion &amp;GetPreviousRotateQuaternion() const</code></td><td>前フレームのローカル回転を取得する（クォータニオン）</td></tr>
+<tr><td><code>const Vector3 &amp;GetPreviousScale() const</code></td><td>前フレームのローカルスケールを取得する</td></tr>
+<tr><td><code>const Matrix4x4 &amp;GetPreviousWorldMatrix() const</code></td><td>前フレームのワールド行列を取得する（モーションブラー等のGPU用途）</td></tr>
+<tr><td><code>const Vector3 &amp;GetPreviousWorldPosition() const</code></td><td>前フレームのワールド座標を取得する</td></tr>
+<tr><td><code>const Vector3 &amp;GetPreviousWorldRotate() const</code></td><td>前フレームのワールド回転を取得する（オイラー角・ラジアン）</td></tr>
+<tr><td><code>const Quaternion &amp;GetPreviousWorldRotateQuaternion() const</code></td><td>前フレームのワールド回転を取得する（クォータニオン）</td></tr>
+<tr><td><code>const Vector3 &amp;GetPreviousWorldScale() const</code></td><td>前フレームのワールドスケールを取得する</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="../../../Editor/Components/Basic/PreTransform.html">Editor/Components/Basic/PreTransform.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

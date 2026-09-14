@@ -84,6 +84,12 @@ public:
     /// @param newName 変更後のシーン名（既に同名のシーンが登録されている場合は失敗する）
     /// @return 変更に成功した場合は true、失敗した場合は false を返す
     bool RenameRegisteredScene(const std::string &oldName, const std::string &newName);
+    /// @brief 登録されているシーンを新しい名前・ファイルパスで複製する
+    /// @param sourceName 複製元のシーン名
+    /// @param newName 複製先のシーン名（既に同名のシーンが登録されている場合は失敗する）
+    /// @param newFilePath 複製先のシーンJSONファイルパス（複製元がファイルパスを持たない場合は無視される）
+    /// @return 複製に成功した場合は true、失敗した場合は false を返す
+    bool DuplicateRegisteredScene(const std::string &sourceName, const std::string &newName, const std::string &newFilePath);
     /// @brief 登録されているシーンの読み込みファイルパスを変更する
     /// @param sceneName 対象のシーン名
     /// @param filePath 新しいシーンJSONファイルのパス
@@ -166,6 +172,9 @@ public:
     /// @param key 変数のキー
     /// @return 削除に成功した場合は true、失敗した場合は false を返す
     bool RemoveGlobalSceneVariable(const std::string &key) { return globalSceneVariables_.erase(key) > 0; }
+    /// @brief グローバルシーン変数を全て削除する（セーブデータのリセット用途）
+    /// @details メモリ上の内容を消すだけで、ファイルへの反映は別途SaveGlobalSceneVariables()の呼び出しが必要
+    void ClearGlobalSceneVariables() { globalSceneVariables_.clear(); }
     /// @brief シーン変数の情報を取得する
     /// @param key 変数のキー
     /// @return シーン変数のポインタ（存在しない場合は nullptr）
@@ -187,6 +196,31 @@ public:
     /// @return 保存に成功した場合は true
     bool SaveGlobalSceneVariables(const std::string &filePath = kDefaultGlobalSceneVariablesFilePath) const;
 
+    /// @brief Play開始時点のシーンとグローバルシーン変数をスナップショットする
+    /// @details 再生中にcurrentScene_が遷移先のSceneへ置き換わっても、停止時には再生開始前の
+    ///          シーンへ戻せるよう、SceneインスタンスではなくSceneManagerがセッション全体を保持する
+    void BeginPlaySession(Passkey<Scene>, const JSON &sceneSnapshot) {
+        playModeSceneSnapshot_ = sceneSnapshot;
+        playModeSnapshot_ = globalSceneVariables_;
+        isPlaySessionActive_ = true;
+    }
+    /// @brief Play終了時、グローバルシーン変数を復元し、再生開始前のシーンJSONを返す
+    JSON EndPlaySession(Passkey<Scene>) {
+        if (!isPlaySessionActive_) return JSON();
+        globalSceneVariables_ = std::move(playModeSnapshot_);
+        playModeSnapshot_.clear();
+        JSON sceneSnapshot = std::move(playModeSceneSnapshot_);
+        playModeSceneSnapshot_ = JSON();
+        isPlaySessionActive_ = false;
+        // Stopと同じフレームにランタイム側から遷移要求が出ていても、フレーム末尾で
+        // 復元済みの編集シーンを再び切り替えてしまわないよう、Play中の予約は破棄する
+        hasPendingSceneChange_ = false;
+        pendingSceneName_.clear();
+        return sceneSnapshot;
+    }
+    /// @brief Play開始時点のシーンJSONを取得する（再生中の保存処理用）
+    const JSON &GetPlayModeSceneSnapshot(Passkey<Scene>) const { return playModeSceneSnapshot_; }
+
 private:
     /// @brief 名前から登録エントリを検索する（存在しない場合は nullptr）
     SceneEntry *FindEntry(const std::string &sceneName);
@@ -197,6 +231,10 @@ private:
     std::vector<SceneEntry> registeredScenes_;
     std::string startupSceneName_;
     std::unordered_map<std::string, MyAny> globalSceneVariables_;
+    /// @brief Play中の変更を破棄してPlay開始前の状態へ戻すためのスナップショット群
+    std::unordered_map<std::string, MyAny> playModeSnapshot_;
+    JSON playModeSceneSnapshot_;
+    bool isPlaySessionActive_ = false;
 
     std::unique_ptr<Scene> currentScene_;
     bool hasPendingSceneChange_ = false;

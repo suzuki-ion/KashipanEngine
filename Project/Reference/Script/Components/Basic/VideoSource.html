@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VideoSource | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_VideoSource">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>VideoSource</h1>
+<p class="page-lead">同オブジェクトの描画コンポーネント（<code>SpriteRenderer</code>/<code>MeshRenderer</code>等）が参照するテクスチャを、動画で差し替えるコンポーネントです。<code>AudioSource</code>と同様の再生制御メソッドを持ちます。</p>
+</div>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>bool Play()</code></td><td>再生する</td></tr>
+<tr><td><code>void Stop()</code> / <code>bool Pause()</code> / <code>bool Resume()</code></td><td>停止 / 一時停止 / 再開</td></tr>
+<tr><td><code>bool IsPlaying() const</code> / <code>bool IsPaused() const</code></td><td>再生中 / 一時停止中かどうか</td></tr>
+<tr><td><code>void SetVideoAssetPath(const string &amp;in)</code> / <code>const string &amp;GetVideoAssetPath() const</code></td><td>使用する動画アセットのパス</td></tr>
+<tr><td><code>void SetLoop(bool)</code> / <code>bool GetLoop() const</code></td><td>ループ再生</td></tr>
+<tr><td><code>void SetVolume(float)</code> / <code>float GetVolume() const</code></td><td>音声ボリューム（0.0〜1.0）</td></tr>
+<tr><td><code>void SetPlayOnAwake(bool)</code> / <code>bool GetPlayOnAwake() const</code></td><td>読み込み時に自動再生するかどうか</td></tr>
+<tr><td><code>void SetRouteAudioToAudioSource(bool)</code> / <code>bool GetRouteAudioToAudioSource() const</code></td><td>動画の音声を同オブジェクトの<code>AudioSource</code>経由で再生する（3D空間音響等に載せたい場合）かどうか</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="TextureSource.html">TextureSource</a> / <a href="GifSource.html">GifSource</a></li>
+<li><a href="AudioSource.html">AudioSource</a> — <code>SetRouteAudioToAudioSource</code>との連携先</li>
+<li><a href="../../../Editor/Components/Basic/VideoSource.html">Editor/Components/Basic/VideoSource.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

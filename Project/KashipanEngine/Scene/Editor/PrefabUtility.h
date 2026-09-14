@@ -57,8 +57,11 @@ void RemapObjectIDReferences(JSON &value, const std::unordered_map<std::string, 
 /// @param preserveRootParent trueの場合、ルートノード（parentIndexInSubtree<0）の"parent"参照は
 ///        元のまま変更しない（複製時に、複製元と同じ親へ自動的に接続されるようにするため）。
 ///        falseの場合はルートノードの"parent"を消去する（PasteObjectCommand側でattachParentへ接続する）
+/// @param preferredObjectIDsByNodeID 指定した場合、対応するprefabNodeIDのobjectIDを新規採番せず再利用する。
+///        Revert時にインスタンス外からの参照を維持する用途で使用する
 std::vector<PasteObjectCommand::Node> PrepareNodesForInstantiation(
-    const std::vector<PasteObjectCommand::Node> &source, bool preserveRootParent);
+    const std::vector<PasteObjectCommand::Node> &source, bool preserveRootParent,
+    const std::unordered_map<std::string, UUID128> *preferredObjectIDsByNodeID = nullptr);
 
 /// @brief ルートノード群（parentIndexInSubtree<0）を指定したワールド座標へ移動する
 /// @details 複数のルートノードがある場合は、先頭のルートの元の位置を基準にした差分を全ルートへ

@@ -36,6 +36,8 @@
 <tr><td>Undo &lt;直前の操作名&gt;</td><td><code>Ctrl+Z</code></td><td>直前の編集操作を取り消す。履歴が無い場合は無効化表示</td></tr>
 <tr><td>Redo &lt;直前に取り消した操作名&gt;</td><td><code>Ctrl+Y</code></td><td>取り消した操作をやり直す</td></tr>
 <tr><td>Preferences...</td><td>-</td><td>Preferencesウィンドウの表示を切り替える</td></tr>
+<tr><td>Translation Editor</td><td>-</td><td>プロジェクト固有の翻訳キーを追加・編集する（エンジン共通の翻訳は全プロジェクト共有のためここからは変更できない）</td></tr>
+<tr><td>Input Command Editor</td><td>-</td><td>入力コマンド（アクション名とキー/ボタンの紐付け、<code>InputCommand.json</code>）の編集画面</td></tr>
 </table>
 <div class="note"><strong>ポイント</strong><br>Undo/Redoのメニュー項目名には、実際に取り消される操作の名前（<code>IEditorCommand::GetName()</code>）が動的に表示されます。ショートカットはテキスト入力欄にフォーカスがある間は無効です。</div>
 <div class="tip"><strong>ショートカットは変更できます</strong><br>このページに載っているキー割り当ては既定値です。<code>Undo</code>・<code>Redo</code>・<code>Save Scene</code>の3つは、<code>Preferences</code>ウィンドウの<code>キーバインド</code>セクションで個人設定として変更できます（全プロジェクトで共有、Gitでは共有されません）。割り当て欄を押してキーを入力するか、<code>既定値に戻す</code>で解除します。それ以外のショートカット（ヒエラルキーのCopy/Paste/Delete等）は現時点では変更できません。</div>
@@ -58,13 +60,14 @@
 <p>製品には含まれない、開発中の状態確認用ウィンドウです。</p>
 <table>
 <tr><th>項目</th><th>内容</th></tr>
-<tr><td>Loaded Textures / Loaded Models / Materials</td><td>読み込み済みアセットの一覧（<code>TextureManager</code>/<code>ModelManager</code>/<code>MaterialManager</code>）</td></tr>
+<tr><td>Loaded Textures / Loaded Models</td><td>読み込み済みアセットの一覧（<code>TextureManager</code>/<code>ModelManager</code>）</td></tr>
+<tr><td>Materials</td><td>読み込み済みマテリアルの一覧・作成・削除・保存を行うウィンドウ（<code>MaterialManager</code>）。詳細は<a href="10_MaterialEditor.html">Material Editor</a>参照</td></tr>
 <tr><td>Loaded Sounds / Playing Sounds</td><td>読み込み済み・再生中のサウンド一覧（<code>AudioManager</code>）</td></tr>
 <tr><td>Logger</td><td>エンジンのログ出力ウィンドウ</td></tr>
 <tr><td>Input State</td><td>キーボード・マウス・コントローラーの現在の入力状態</td></tr>
-<tr><td>Input Command Editor</td><td>入力コマンド（アクション名とキー/ボタンの紐付け）の編集画面</td></tr>
 <tr><td>ImGui Demo Window</td><td>Dear ImGui標準のデモウィンドウ</td></tr>
 </table>
+<div class="note"><strong>Input Command Editorの位置</strong><br>以前はDebug Windowsメニューにあったが、デバッグ機能ではなく<code>InputCommand.json</code>を編集する通常のツールであるため、上記のTranslation Editorと同じEditメニューへ移動している。</div>
 
 <h2>Scene Editor ウィンドウ</h2>
 <p><code>Scene Editor</code> という名前のウィンドウには、シーン名の編集欄と再生コントロールがまとまっています。</p>

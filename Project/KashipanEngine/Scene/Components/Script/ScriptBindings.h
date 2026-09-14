@@ -13,21 +13,28 @@ class ObjectContext;
 class SceneContext;
 class ICollider;
 class IWindowObjectComponent;
+class ScriptObjectHandle;
+template <typename T> class ScriptComponentHandle;
 
 /// @brief スクリプトの衝突コールバックへ渡す衝突情報（スクリプト側の HitInfo 型）
+/// @details selfObject/otherObjectはAngelScript側の参照カウント式ハンドル(ScriptObjectHandle)、
+///          selfCollider/otherColliderも同様の参照カウント式ハンドル(ScriptComponentHandle<ICollider>)。
+///          設定側（ScriptComponent::CallCollisionMethod）がCreate()で生成しExecute()後にRelease()する
 struct ScriptHitInfo final {
     Vector3 normal{ 0.0f, 0.0f, 0.0f };
     float penetration = 0.0f;
-    EmptyObject *selfObject = nullptr;
-    EmptyObject *otherObject = nullptr;
-    ICollider *selfCollider = nullptr;
-    ICollider *otherCollider = nullptr;
+    ScriptObjectHandle *selfObject = nullptr;
+    ScriptObjectHandle *otherObject = nullptr;
+    ScriptComponentHandle<ICollider> *selfCollider = nullptr;
+    ScriptComponentHandle<ICollider> *otherCollider = nullptr;
 };
 
 /// @brief スクリプトのウィンドウメッセージコールバックへ渡す情報（スクリプト側の WindowMessageInfo 型）
+/// @details sourceComponentはAngelScript側の参照カウント式ハンドル(ScriptComponentHandle<IWindowObjectComponent>)。
+///          設定側（ScriptComponent::CallWindowMessageMethod）がCreate()で生成しExecute()後にRelease()する
 struct ScriptWindowMessageInfo final {
     /// @brief 通知元のウィンドウコンポーネント（どのコンポーネントのウィンドウかの識別用）
-    IWindowObjectComponent *sourceComponent = nullptr;
+    ScriptComponentHandle<IWindowObjectComponent> *sourceComponent = nullptr;
     std::uint32_t message = 0;
     std::uint64_t wparam = 0;
     std::int64_t lparam = 0;

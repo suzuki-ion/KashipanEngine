@@ -46,9 +46,14 @@ struct SyncReport {
     std::vector<EmptyObject *> instanceOnlyObjects;
     /// @brief Prefab側にのみ存在する（インスタンス側で削除済みの）ノードのID
     std::vector<UUID128> prefabOnlyNodeIDs;
+    /// @brief 名前・タグ・Active等、オブジェクト本体のプロパティが異なるノード
+    std::vector<EmptyObject *> objectPropertyOverrides;
+    /// @brief Prefab側と親子関係が異なるノード
+    std::vector<EmptyObject *> parentOverrides;
 
     bool IsEmpty() const {
-        return overrides.empty() && instanceOnlyObjects.empty() && prefabOnlyNodeIDs.empty();
+        return overrides.empty() && instanceOnlyObjects.empty() && prefabOnlyNodeIDs.empty() &&
+            objectPropertyOverrides.empty() && parentOverrides.empty();
     }
 };
 

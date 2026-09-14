@@ -67,7 +67,7 @@ protected:
         IPostProcessComponent::ShowImGui();
         ImGui::DragFloat(TranslationLabel("component.temporalblendeffect.history_weight"), &params_.historyWeight, 0.01f, 0.0f, 0.98f, "%.3f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.temporalblendeffect.desc_1"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.temporalblendeffect.desc_1"));
         }
     }
 #endif

@@ -17,26 +17,34 @@
 #include "Scene/Editor/PrefabUtility.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 #include "Scene/Editor/SceneObjectHierarchy.h"
+#include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Scene/Components/SceneObjectCollider.h"
 #include "Graphics/ScreenBuffer.h"
 #include "Graphics/Resources/ConstantBufferResource.h"
+#include "Scene/RenderTargetCarryOverRegistry.h"
 #include "Objects/EmptyObject.h"
 #include "Objects/Components/MeshFilter.h"
 #include "Objects/Components/Render/Camera2D.h"
 #include "Objects/Components/Render/Camera3D.h"
+#include "Objects/Components/Render/CameraBoundsZone2D.h"
+#include "Objects/Components/Render/CameraBoundsZone3D.h"
 #include "Objects/Components/Render/CameraRenderer.h"
 #include "Objects/Components/Render/SceneViewOrbitState.h"
+#include "Objects/Components/Render/SceneViewCameraSettings.h"
 #include "Objects/Components/Render/Light.h"
 #include "Objects/Components/Render/LightRenderer.h"
 #include "Objects/Components/Render/MeshRenderer.h"
 #include "Objects/Components/Render/ScreenBufferObject.h"
 #include "Objects/Components/Render/SkinnedMeshRenderer.h"
 #include "Objects/Components/Render/SpriteRenderer.h"
+#include "Objects/Components/Render/TextRenderer.h"
+#include "Objects/Components/Render/TilemapRenderer.h"
 #include "Objects/Components/Collider/ICollider.h"
 #include "Objects/Components/Collider/RayCollider.h"
 #include "Objects/Components/Transform.h"
+#include "Assets/MaterialManager.h"
 #include "Assets/ModelManager.h"
 #include "Assets/TextureManager.h"
 #include "Math/Quaternion.h"
@@ -54,6 +62,13 @@ SceneEditorView::SceneEditorView(Passkey<SceneEditor>, SceneEditorContext *conte
     showCameraMarkers_ = EditorSettings::GetBool("sceneView.showCameraMarkers", true);
     showColliderGizmos_ = EditorSettings::GetBool("sceneView.showColliderGizmos", true);
     showBoneGizmos_ = EditorSettings::GetBool("sceneView.showBoneGizmos", false);
+    showCameraBoundsGizmos_ = EditorSettings::GetBool("sceneView.showCameraBoundsGizmos", true);
+
+    // ギズモのグリッドスナップ設定を復元する（再起動後も維持される）
+    gizmoSnapEnabled_ = EditorSettings::GetBool("sceneView.gizmoSnapEnabled", false);
+    gizmoSnapTranslate_ = EditorSettings::GetFloat("sceneView.gizmoSnapTranslate", 1.0f);
+    gizmoSnapRotateDegrees_ = EditorSettings::GetFloat("sceneView.gizmoSnapRotateDegrees", 15.0f);
+    gizmoSnapScale_ = EditorSettings::GetFloat("sceneView.gizmoSnapScale", 0.1f);
 
     // シーンビューの表示モード（2D/3D併用・3Dのみ・2Dのみ）を復元する（再起動後も維持される）
     const std::string displayModeStr = EditorSettings::GetString("sceneView.displayMode", "Combined");
@@ -61,14 +76,10 @@ SceneEditorView::SceneEditorView(Passkey<SceneEditor>, SceneEditorContext *conte
     else if (displayModeStr == "TwoDOnly") displayMode_ = SceneRenderer::EditorDisplayMode::TwoDOnly;
     else displayMode_ = SceneRenderer::EditorDisplayMode::Combined;
 
-    // 「2D」表示モード専用のパン・ズームカメラの状態を復元する（再起動後も維持される）
-    pan2D_.x = EditorSettings::GetFloat("sceneView.pan2D.x", 0.0f);
-    pan2D_.y = EditorSettings::GetFloat("sceneView.pan2D.y", 0.0f);
-    zoom2D_ = EditorSettings::GetFloat("sceneView.zoom2D", 5.0f);
-
-    // カメラ操作モード・フライ速度を復元する（再起動後も維持される）
-    flyMode_ = EditorSettings::GetBool("sceneView.flyMode", false);
-    flySpeed_ = EditorSettings::GetFloat("sceneView.flySpeed", 5.0f);
+    // 3D/2Dカメラの位置・向き・パン・ズーム等はシーンごとにEditorSettingsへ保存される。
+    // ここではまだシーンIDが確定していない（Scene::Sceneのデリゲートコンストラクタ経由で
+    // このSceneEditorViewが構築される時点では、JSONからのsceneID_読み込みがまだ行われていない）
+    // ため、初回のEnsureCameraSettingsComponentで遅延読み込みする
 
     // 背景設定を復元する（再起動後も維持される）
     backgroundColor_.x = EditorSettings::GetFloat("sceneView.backgroundColor.r", 0.0f);
@@ -86,15 +97,23 @@ SceneEditorView::~SceneEditorView() {
             sceneRenderer->SetEditorGhostPreviewMeshes({});
         }
     }
-    // screenBuffer_ の実体は sceneViewObject_ の ScreenBufferObject コンポーネントが所有している。
-    // シーン破棄時はそちらの Finalize() が RenderTargetCarryOverRegistry 経由で後始末
-    // （同名コンポーネントへの引き継ぎ、または破棄）を行うため、ここでは何もしない
+    // screenBuffer_ はこのクラスが直接所有している（ScreenBufferObjectコンポーネントを介さない）。
+    // ScreenBufferObject::Finalizeと同様、実際には即座に破棄せず次のシーンの
+    // SceneEditorViewへの引き継ぎ候補としてRenderTargetCarryOverRegistryへ預ける
+    // （シーン切り替え中でなければ即座に破棄される）
+    if (screenBuffer_ && ScreenBuffer::IsExist(screenBuffer_)) {
+        RenderTargetCarryOverRegistry::Deposit(RenderTargetCarryOverRegistry::Kind::ScreenBuffer, kScreenBufferName, screenBuffer_,
+            [b = screenBuffer_] { if (ScreenBuffer::IsExist(b)) b->DestroyNotify(); });
+    }
     screenBuffer_ = nullptr;
     sceneViewObject_ = nullptr;
 }
 
 void SceneEditorView::ShowImGui(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands, SceneObjectHierarchy *hierarchy) {
     EnsureResources();
+    // SceneViewCameraSettingsコンポーネント（Inspectorでの編集結果）を読み取り、
+    // このクラスの内部状態（target_/eye_/yaw_/pitch_/...）へ反映する
+    PullCameraSettingsFromComponent();
     UpdateCameraBuffer();
     UpdateCamera2DBuffer();
     RegisterEditorTarget();
@@ -104,13 +123,26 @@ void SceneEditorView::ShowImGui(const std::unordered_set<EmptyObject *> &selecte
         sceneRenderer->SetEditorSelectedObjects(selectedObjects);
     }
     ShowSceneViewWindow(selectedObjects, commands, hierarchy);
+    // マウス操作（HandleCameraInput等）による今フレームの変更をコンポーネント・EditorSettingsへ反映する
+    PushCameraSettingsToComponent();
+
+    // スクリプトのDebug::DrawLineが蓄積した線分は、3Dモード用（UpdateEditorDebugDraw内）・
+    // 2Dモード用（ShowSceneViewWindow内のDrawScriptDebugLineOverlay2D）の両方の消費が
+    // 終わったこのタイミングでまとめてクリアする（表示するかどうかに関わらず、蓄積され続けないよう毎フレーム行う）
+    ScriptDebugDraw::Clear();
 }
 
 void SceneEditorView::EnsureResources() {
     EnsureSceneViewObject();
-    if (sceneViewObject_) {
-        if (auto *screenBufferObject = sceneViewObject_->GetComponent<ScreenBufferObject>()) {
-            screenBuffer_ = screenBufferObject->GetScreenBuffer();
+    EnsureCameraSettingsComponent();
+    if (!screenBuffer_ || !ScreenBuffer::IsExist(screenBuffer_)) {
+        // シーン切り替え中であれば、直前のSceneEditorViewが預けたバッファを引き継ぐ
+        // （引き継げればサイズ・内容がそのまま継続し、チラつきや無駄な再生成を避けられる）
+        if (auto *carried = static_cast<ScreenBuffer *>(
+                RenderTargetCarryOverRegistry::Claim(RenderTargetCarryOverRegistry::Kind::ScreenBuffer, kScreenBufferName))) {
+            screenBuffer_ = carried;
+        } else {
+            screenBuffer_ = ScreenBuffer::Create(1280, 720, kScreenBufferName);
         }
     }
     if (!cameraBuffer_) {
@@ -119,6 +151,13 @@ void SceneEditorView::EnsureResources() {
     if (!camera2DBuffer_) {
         camera2DBuffer_ = std::make_unique<ConstantBufferResource>(sizeof(Camera2DConstant));
     }
+}
+
+void SceneEditorView::StripLegacyScreenBufferComponent(EmptyObject *sceneViewObject) {
+    if (!sceneViewObject) return;
+    if (!sceneViewObject->GetComponent<ScreenBufferObject>()) return;
+    // RemoveComponent経由でFinalize()を呼び、旧バッファを正しく後始末（登録解除）させてから取り除く
+    sceneViewObject->RemoveComponents<ScreenBufferObject>();
 }
 
 void SceneEditorView::EnsureSceneViewObject() {
@@ -130,12 +169,17 @@ void SceneEditorView::EnsureSceneViewObject() {
     // と同じ方式でダングリングポインタ参照を避ける）
     if (sceneViewObjectID_.IsValid()) {
         sceneViewObject_ = context_->GetSceneObject(sceneViewObjectID_);
-        if (sceneViewObject_) return;
+        if (sceneViewObject_) {
+            StripLegacyScreenBufferComponent(sceneViewObject_);
+            return;
+        }
     }
 
     for (auto *obj : context_->GetSceneObjects()) {
         if (!obj || !obj->IsEditorOnly()) continue;
-        if (obj->GetComponent<Camera3D>() && obj->GetComponent<ScreenBufferObject>()) {
+        // 新方式のSceneViewCameraSettings、または旧バージョンで残っているCamera3D（移行対象）
+        // のどちらかを持っていれば「Scene View」オブジェクトとみなす
+        if (obj->GetComponent<SceneViewCameraSettings>() || obj->GetComponent<Camera3D>()) {
             sceneViewObject_ = obj;
             break;
         }
@@ -143,63 +187,169 @@ void SceneEditorView::EnsureSceneViewObject() {
 
     if (sceneViewObject_) {
         sceneViewObjectID_ = sceneViewObject_->GetObjectID();
-        // 既存オブジェクトが見つかった場合は、そのTransformから内部状態（yaw_/pitch_/target_/eye_）を
-        // 逆算する。distance_はTransformに保存されない値のためSceneViewOrbitStateコンポーネントに
-        // 保存しておいた値を使う（無ければ付与する）
-        if (auto *transform = sceneViewObject_->GetComponent<Transform>()) {
-            if (!sceneViewObject_->GetComponent<SceneViewOrbitState>()) {
-                sceneViewObject_->AddComponent<SceneViewOrbitState>();
-            }
-            SyncCameraStateFromTransform(transform);
-            // 以後UpdateCameraBufferが書き込む値との比較基準を、今読み取った現在値に合わせておく
-            // （そうしないと、今回の逆算結果を再計算した値がこの生Transformの値とわずかに異なる場合に、
-            // 外部変更と誤認して次のフレームにも無駄な再同期が走ってしまう）
-            lastAppliedPosition_ = transform->GetTranslate();
-            lastAppliedRotation_ = transform->GetRotateQuaternion();
-            hasLastAppliedCameraTransform_ = true;
-        }
+        // 旧バージョンで保存されたシーンJSONに残っているScreenBufferObjectを取り除く
+        // （残したままだと、このクラスが直接生成するscreenBuffer_と同名バッファが二重に
+        // 生成されてしまう）
+        StripLegacyScreenBufferComponent(sceneViewObject_);
         return;
     }
 
-    // シーン上に見つからない場合は新規作成する。ScreenBufferObjectの内部バッファ自動生成と
-    // 同様のブートストラップ処理のため、Undo/Redoコマンドは通さない
+    // シーン上に見つからない場合は新規作成する。ブートストラップ処理のため、Undo/Redoコマンドは通さない。
+    // カメラの実体はこのクラスが直接持つため、ここではTransform（自動付与、未使用）のみを持つ
+    // 空オブジェクトを作る。SceneViewCameraSettingsコンポーネントはEnsureCameraSettingsComponent
+    // が付与する
     EmptyObject *newObj = context_->CreateEmptyObject("Scene View");
     if (!newObj) return;
     newObj->SetEditorOnly(true);
-    newObj->AddComponent<Camera3D>();
-    newObj->AddComponent<SceneViewOrbitState>();
-    if (auto *screenBufferObject = newObj->AddComponent<ScreenBufferObject>()) {
-        screenBufferObject->SetName("EditorSceneView");
-    }
     sceneViewObject_ = newObj;
     sceneViewObjectID_ = newObj->GetObjectID();
-    // 新規作成時は既存の既定値（target(0,0,0)・distance 10・yaw 0・pitch 0.3）をそのまま使う。
-    // hasLastAppliedCameraTransform_ をtrueにしておくことで、この直後に走るUpdateCameraBufferが
-    // 生成直後のTransform（原点・無回転）を「外部変更」と誤認して既定値を上書きしてしまうのを防ぐ
-    hasLastAppliedCameraTransform_ = true;
+}
+
+void SceneEditorView::EnsureCameraSettingsComponent() {
+    if (!sceneViewObject_) return;
+
+    auto *settings = sceneViewObject_->GetComponent<SceneViewCameraSettings>();
+    if (!settings) settings = sceneViewObject_->AddComponent<SceneViewCameraSettings>();
+    if (!settings) return;
+
+    auto *legacyCamera3d = sceneViewObject_->GetComponent<Camera3D>();
+    if (!hasLoadedCameraSettings_) {
+        hasLoadedCameraSettings_ = true;
+        if (!LoadCameraSettingsFromEditorSettings() && legacyCamera3d) {
+            // このシーン用の保存値がまだ無く、旧バージョンのCamera3D/Transformが残っている場合、
+            // 直前まで使っていたカメラ位置をリセットせずに引き継ぐ
+            MigrateLegacyCameraState(legacyCamera3d);
+        }
+    }
+
+    // このコンポーネントインスタンスへまだ一度もSceneEditorViewの値を書き込んでいない場合
+    // （AddComponentで今フレーム新規生成された、またはPlay開始時のDeleteEditorOnlyObjects・
+    // Play終了時のスナップショット復元等でシーンJSONから読み込まれた直後で既定値のまま）、
+    // ここで現在の内部状態を書き込んでおかないと、直後のPullCameraSettingsFromComponentで
+    // 既定値により内部状態が上書きされてしまう（Play開始・終了時にカメラが原点へ
+    // リセットされる不具合の原因だった）
+    if (!settings->hasSyncedFromEditorView) {
+        WriteCameraStateToComponent(settings);
+    }
+
+    // 旧バージョンのコンポーネントは、移行の有無に関わらず必ず取り除く
+    // （残しておくとカメラの実体が二重に存在してしまうため）
+    if (legacyCamera3d) sceneViewObject_->RemoveComponents<Camera3D>();
+    if (sceneViewObject_->GetComponent<SceneViewOrbitState>()) sceneViewObject_->RemoveComponents<SceneViewOrbitState>();
+}
+
+void SceneEditorView::MigrateLegacyCameraState(Camera3D *legacyCamera3d) {
+    if (!sceneViewObject_ || !legacyCamera3d) return;
+    if (auto *transform = sceneViewObject_->GetComponent<Transform>()) {
+        const Vector3 forward = transform->GetRotateQuaternion().RotateVector(Vector3(0.0f, 0.0f, 1.0f));
+        yaw_ = std::atan2(forward.x, forward.z);
+        pitch_ = std::clamp(std::asin(std::clamp(-forward.y, -1.0f, 1.0f)), -1.55f, 1.55f);
+        if (auto *orbitState = sceneViewObject_->GetComponent<SceneViewOrbitState>()) {
+            distance_ = orbitState->GetDistance();
+        }
+        eye_ = transform->GetTranslate();
+        target_ = eye_ + forward * distance_;
+    }
+    fovY_ = legacyCamera3d->GetFovY();
+    nearClip_ = legacyCamera3d->GetNearClip();
+    farClip_ = legacyCamera3d->GetFarClip();
+    enableJitter_ = legacyCamera3d->IsJitterEnabled();
+}
+
+void SceneEditorView::PullCameraSettingsFromComponent() {
+    auto *settings = sceneViewObject_ ? sceneViewObject_->GetComponent<SceneViewCameraSettings>() : nullptr;
+    if (!settings) return;
+    constexpr float kDegToRad = std::numbers::pi_v<float> / 180.0f;
+    target_ = settings->target;
+    eye_ = settings->eye;
+    distance_ = settings->distance;
+    yaw_ = settings->yawDegrees * kDegToRad;
+    pitch_ = std::clamp(settings->pitchDegrees * kDegToRad, -1.55f, 1.55f);
+    flyMode_ = settings->flyMode;
+    flySpeed_ = settings->flySpeed;
+    fovY_ = settings->fovY;
+    nearClip_ = settings->nearClip;
+    farClip_ = settings->farClip;
+    enableJitter_ = settings->enableJitter;
+    pan2D_ = settings->pan2D;
+    zoom2D_ = settings->zoom2D;
+    cameraDistance2D_ = settings->cameraDistance2D;
+}
+
+void SceneEditorView::WriteCameraStateToComponent(SceneViewCameraSettings *settings) const {
+    if (!settings) return;
+    constexpr float kRadToDeg = 180.0f / std::numbers::pi_v<float>;
+    settings->target = target_;
+    settings->eye = eye_;
+    settings->distance = distance_;
+    settings->yawDegrees = yaw_ * kRadToDeg;
+    settings->pitchDegrees = pitch_ * kRadToDeg;
+    settings->flyMode = flyMode_;
+    settings->flySpeed = flySpeed_;
+    settings->fovY = fovY_;
+    settings->nearClip = nearClip_;
+    settings->farClip = farClip_;
+    settings->enableJitter = enableJitter_;
+    settings->pan2D = pan2D_;
+    settings->zoom2D = zoom2D_;
+    settings->cameraDistance2D = cameraDistance2D_;
+    settings->hasSyncedFromEditorView = true;
+}
+
+void SceneEditorView::PushCameraSettingsToComponent() {
+    WriteCameraStateToComponent(sceneViewObject_ ? sceneViewObject_->GetComponent<SceneViewCameraSettings>() : nullptr);
+
+    if (!context_) return;
+    constexpr float kRadToDeg = 180.0f / std::numbers::pi_v<float>;
+    JSON json;
+    json["target"] = ToJSON(target_);
+    json["eye"] = ToJSON(eye_);
+    json["distance"] = distance_;
+    json["yawDegrees"] = yaw_ * kRadToDeg;
+    json["pitchDegrees"] = pitch_ * kRadToDeg;
+    json["flyMode"] = flyMode_;
+    json["flySpeed"] = flySpeed_;
+    json["fovY"] = fovY_;
+    json["nearClip"] = nearClip_;
+    json["farClip"] = farClip_;
+    json["enableJitter"] = enableJitter_;
+    json["pan2D"] = ToJSON(pan2D_);
+    json["zoom2D"] = zoom2D_;
+    json["cameraDistance2D"] = cameraDistance2D_;
+    // 値が前回保存時から変わっていない場合、EditorSettings::SetJSON内部の比較により
+    // 実際のファイル書き込みは発生しない（毎フレーム呼んでも無駄なIOにはならない）
+    EditorSettings::SetJSON(BuildCameraSettingsKey(), json);
+}
+
+std::string SceneEditorView::BuildCameraSettingsKey() const {
+    return context_ ? ("sceneView.camera." + context_->GetSceneID().ToString()) : std::string{};
+}
+
+bool SceneEditorView::LoadCameraSettingsFromEditorSettings() {
+    if (!context_) return false;
+    const JSON stored = EditorSettings::GetJSON(BuildCameraSettingsKey(), JSON());
+    if (!stored.is_object() || stored.empty()) return false;
+
+    constexpr float kDegToRad = std::numbers::pi_v<float> / 180.0f;
+    if (stored.contains("target")) target_ = FromJSON<Vector3>(stored["target"]);
+    if (stored.contains("eye")) eye_ = FromJSON<Vector3>(stored["eye"]);
+    distance_ = stored.value("distance", distance_);
+    yaw_ = stored.value("yawDegrees", yaw_ / kDegToRad) * kDegToRad;
+    pitch_ = std::clamp(stored.value("pitchDegrees", pitch_ / kDegToRad) * kDegToRad, -1.55f, 1.55f);
+    flyMode_ = stored.value("flyMode", flyMode_);
+    flySpeed_ = stored.value("flySpeed", flySpeed_);
+    fovY_ = stored.value("fovY", fovY_);
+    nearClip_ = stored.value("nearClip", nearClip_);
+    farClip_ = stored.value("farClip", farClip_);
+    enableJitter_ = stored.value("enableJitter", enableJitter_);
+    if (stored.contains("pan2D")) pan2D_ = FromJSON<Vector2>(stored["pan2D"]);
+    zoom2D_ = stored.value("zoom2D", zoom2D_);
+    cameraDistance2D_ = stored.value("cameraDistance2D", cameraDistance2D_);
+    return true;
 }
 
 void SceneEditorView::UpdateCameraBuffer() {
     if (!cameraBuffer_ || !screenBuffer_ || !sceneViewObject_) return;
-    auto *transform = sceneViewObject_->GetComponent<Transform>();
-    auto *camera3d = sceneViewObject_->GetComponent<Camera3D>();
-    if (!transform || !camera3d) return;
-
-    // 前回自分がTransformへ書き込んだ値から変わっていたら（Inspector編集・Undo/Redo等の外部変更）、
-    // 現在のTransformから内部状態（yaw_/pitch_/target_/eye_）を再同期してから計算する
-    const Vector3 currentTranslate = transform->GetTranslate();
-    const Quaternion currentRotation = transform->GetRotateQuaternion();
-    constexpr float kPositionEpsilon = 1e-4f;
-    constexpr float kRotationEpsilon = 1e-5f;
-    const bool positionChangedExternally = (currentTranslate - lastAppliedPosition_).Length() > kPositionEpsilon;
-    const bool rotationChangedExternally =
-        std::abs(currentRotation.x - lastAppliedRotation_.x) > kRotationEpsilon ||
-        std::abs(currentRotation.y - lastAppliedRotation_.y) > kRotationEpsilon ||
-        std::abs(currentRotation.z - lastAppliedRotation_.z) > kRotationEpsilon ||
-        std::abs(currentRotation.w - lastAppliedRotation_.w) > kRotationEpsilon;
-    if (!hasLastAppliedCameraTransform_ || positionChangedExternally || rotationChangedExternally) {
-        SyncCameraStateFromTransform(transform);
-    }
 
     // ピッチ→ヨーの順で回転（行ベクトル規約）
     Matrix4x4 rotateX;
@@ -217,30 +367,25 @@ void SceneEditorView::UpdateCameraBuffer() {
         eye_ = target_ - forward * distance_;
     }
 
-    // 算出した位置・向きをTransformへ書き戻す（シーン保存時にそのまま永続化される）
-    transform->SetTranslate(eye_);
-    transform->SetRotateQuaternion(Quaternion::MakeFromRotationMatrix(rotation));
-    lastAppliedPosition_ = eye_;
-    lastAppliedRotation_ = Quaternion::MakeFromRotationMatrix(rotation);
-    hasLastAppliedCameraTransform_ = true;
-    // distance_はTransformに残らないため、SceneViewOrbitStateへ書き戻して永続化する
-    if (auto *orbitState = sceneViewObject_->GetComponent<SceneViewOrbitState>()) {
-        orbitState->SetDistance(distance_);
-    }
+    // ワールド行列を直接組み立てる（以前はTransformコンポーネント経由で計算していたが、
+    // カメラの実体はもうTransformを使わないため、Transform::GetWorldMatrixと同じ計算
+    // （回転→平行移動、スケールは常に単位行列扱い）をここで直接行う）
+    Matrix4x4 translateMat;
+    translateMat.MakeTranslate(eye_);
+    const Matrix4x4 world = rotation * translateMat;
+    view_ = world.Inverse();
 
-    view_ = transform->GetWorldMatrix().Inverse();
     const float width = static_cast<float>(screenBuffer_->GetWidth());
     const float height = static_cast<float>(screenBuffer_->GetHeight());
     const float aspect = (height > 0.0f) ? (width / height) : (16.0f / 9.0f);
-    camera3d->SetAspectRatio(aspect);
-    projection_.MakePerspectiveFovMatrix(camera3d->GetFovY(), aspect, camera3d->GetNearClip(), camera3d->GetFarClip());
+    projection_.MakePerspectiveFovMatrix(fovY_, aspect, nearClip_, farClip_);
 
     // GPUへアップロードする投影行列にのみジッターを適用する。projection_自体（メンバ変数）は
     // シャドウのカスケードフィッティングやギズモ操作のワールド→スクリーン変換（ScreenToWorld等）
     // で参照されるため、非ジッターのまま保つ
     Matrix4x4 gpuProjection = projection_;
-    if (camera3d->IsJitterEnabled()) {
-        camera3d->ApplyProjectionJitter(gpuProjection);
+    if (enableJitter_) {
+        ApplyCameraJitter(gpuProjection, aspect);
     }
 
     CameraConstant constant{};
@@ -248,7 +393,7 @@ void SceneEditorView::UpdateCameraBuffer() {
     constant.projection = gpuProjection;
     constant.viewProjection = view_ * gpuProjection;
     constant.eyePosition = Vector4(eye_.x, eye_.y, eye_.z, 1.0f);
-    constant.fov = camera3d->GetFovY();
+    constant.fov = fovY_;
     cameraEye_ = eye_;
 
     if (void *mapped = cameraBuffer_->Map()) {
@@ -261,16 +406,17 @@ void SceneEditorView::UpdateCamera2DBuffer() {
 
     // パン位置(pan2D_)を見る正射影カメラ。Z軸方向を向く固定姿勢（SpriteRendererの単位クアッドが
     // 乗るXY平面を正面から見る）で、3Dフリーカメラのyaw_/pitch_等とは完全に独立している。
-    // カメラ自身はZ=0ではなく、コンテンツより手前(-kCameraDistance)に置く。SpriteRendererの
+    // カメラ自身はZ=0ではなく、コンテンツより手前(-cameraDistance2D_)に置く。SpriteRendererの
     // Transformは既定でZ=0のことが多く、もしカメラもZ=0に置くと近クリップ面(near)より
     // 手前になってしまい、ピッキングのレイ（near→farの方向にしか伸びない）が理論上絶対に
     // そのオブジェクトへ到達しない（tが負になり棄却される）。実際、既存シーンのSpriteRendererは
-    // Z=0.0で登録されており、この状態でクリック選択が不安定になる根本原因だった
-    constexpr float kCameraDistance = 500.0f;
+    // Z=0.0で登録されており、この状態でクリック選択が不安定になる根本原因だった。
+    // Inspectorから編集可能なため、0以下（near/farが破綻する）にならないようクランプする
+    const float cameraDistance = std::max(cameraDistance2D_, 1.0f);
     view2D_ = Matrix4x4::Identity();
     view2D_.m[3][0] = -pan2D_.x;
     view2D_.m[3][1] = -pan2D_.y;
-    view2D_.m[3][2] = kCameraDistance;
+    view2D_.m[3][2] = cameraDistance;
 
     const float width = static_cast<float>(screenBuffer_->GetWidth());
     const float height = static_cast<float>(screenBuffer_->GetHeight());
@@ -281,9 +427,9 @@ void SceneEditorView::UpdateCamera2DBuffer() {
     // top=0, bottom=heightを渡しており、Y=0が画面下端・Y=heightが画面上端になる
     // （＝左下(0,0)原点、Y上向きのワールド座標系）。ここでも同じ規約に合わせ、
     // 画面下端に対応する値(-zoom2D_)をtopへ、画面上端に対応する値(+zoom2D_)をbottomへ渡す。
-    // near/farはカメラ位置(kCameraDistance手前)を基準にした相対値で、Z=0付近を中心に
-    // ±kCameraDistance程度の余裕を持たせ、多少Zがずれているコンテンツも問題なく拾えるようにする
-    projection2D_.MakeOrthographicMatrix(-zoom2D_ * aspect, -zoom2D_, zoom2D_ * aspect, zoom2D_, 0.1f, kCameraDistance * 2.0f);
+    // near/farはカメラ位置(cameraDistance手前)を基準にした相対値で、Z=0付近を中心に
+    // ±cameraDistance程度の余裕を持たせ、多少Zがずれているコンテンツも問題なく拾えるようにする
+    projection2D_.MakeOrthographicMatrix(-zoom2D_ * aspect, -zoom2D_, zoom2D_ * aspect, zoom2D_, 0.1f, cameraDistance * 2.0f);
 
     Camera2DConstant constant{};
     constant.view = view2D_;
@@ -294,29 +440,51 @@ void SceneEditorView::UpdateCamera2DBuffer() {
     }
 }
 
-void SceneEditorView::SyncCameraStateFromTransform(Transform *transform) {
-    if (!transform || !sceneViewObject_) return;
-    const Vector3 forward = transform->GetRotateQuaternion().RotateVector(Vector3(0.0f, 0.0f, 1.0f));
-    yaw_ = std::atan2(forward.x, forward.z);
-    pitch_ = std::clamp(std::asin(std::clamp(-forward.y, -1.0f, 1.0f)), -1.55f, 1.55f);
-    if (auto *orbitState = sceneViewObject_->GetComponent<SceneViewOrbitState>()) {
-        distance_ = orbitState->GetDistance();
+namespace {
+/// @brief Halton(base)列のindex番目の値を[0,1)で返す（カメラジッター用の低差異乱数。
+///        Camera3D::HaltonSequenceと同一実装）
+float HaltonSequence(std::uint32_t index, std::uint32_t base) noexcept {
+    float result = 0.0f;
+    float f = 1.0f / static_cast<float>(base);
+    std::uint32_t i = index;
+    while (i > 0) {
+        result += f * static_cast<float>(i % base);
+        i /= base;
+        f /= static_cast<float>(base);
     }
-    eye_ = transform->GetTranslate();
-    target_ = eye_ + forward * distance_;
+    return result;
+}
+} // namespace
+
+void SceneEditorView::ApplyCameraJitter(Matrix4x4 &projection, float aspect) {
+    // Halton(2,3)列を8点周期で回す。0番目は(0,0)で偏るため1から使う（Camera3D::ApplyProjectionJitter参照）
+    constexpr std::uint32_t kJitterPeriod = 8;
+    const std::uint32_t index = (jitterIndex_ % kJitterPeriod) + 1;
+    ++jitterIndex_;
+    const float hx = HaltonSequence(index, 2) - 0.5f;
+    const float hy = HaltonSequence(index, 3) - 0.5f;
+
+    constexpr float kJitterReferenceHeight = 1080.0f;
+    const float referenceWidth = kJitterReferenceHeight * aspect;
+    const float jitterX = hx * (2.0f / referenceWidth);
+    const float jitterY = hy * (2.0f / kJitterReferenceHeight);
+
+    // 透視投影ではview空間zがそのままwになる行（3行目）へ加算することで、
+    // 透視除算後に深度へ依らず一定のNDCオフセットになる（シーンビューは常に透視投影）
+    projection.m[2][0] += jitterX;
+    projection.m[2][1] += jitterY;
 }
 
 void SceneEditorView::RegisterEditorTarget() {
     if (!context_) return;
     auto *sceneRenderer = context_->GetComponent<SceneRenderer>();
     if (sceneRenderer && screenBuffer_) {
-        auto *camera3d = sceneViewObject_ ? sceneViewObject_->GetComponent<Camera3D>() : nullptr;
         // シャドウマップのカスケード計算用にエディターカメラの情報も渡す
         SceneRenderer::EditorCameraInfo cameraInfo;
         cameraInfo.viewProjection = view_ * projection_;
         cameraInfo.position = cameraEye_;
-        cameraInfo.nearClip = camera3d ? camera3d->GetNearClip() : 0.1f;
-        cameraInfo.farClip = camera3d ? camera3d->GetFarClip() : 1000.0f;
+        cameraInfo.nearClip = nearClip_;
+        cameraInfo.farClip = farClip_;
         cameraInfo.valid = true;
         // オーナーオブジェクトも渡しておくことで、GetTargetOwner経由でこのScreenBufferへの
         // ポストエフェクト適用対象を「Scene View」オブジェクトへ絞り込めるようにする
@@ -339,6 +507,50 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     // （Ctrl+C/Ctrl+V/Ctrl+Shift+V/Ctrl+D）で選択中オブジェクトを操作できるようにする
     if (hierarchy) hierarchy->HandleKeyboardShortcuts();
 
+    // TilemapRendererのタイルペイントツールは、選択中オブジェクトが単体でTilemapRendererを
+    // 持つ場合のみ有効化できる。対象外になったら自動でトグルを解除する
+    TilemapRenderer *paintableTilemap = nullptr;
+    EmptyObject *paintableOwner = nullptr;
+    if (selectedObjects.size() == 1) {
+        EmptyObject *only = *selectedObjects.begin();
+        if (auto *tilemap = only ? only->GetComponent<TilemapRenderer>() : nullptr) {
+            paintableTilemap = tilemap;
+            paintableOwner = only;
+        }
+    }
+    if (!paintableTilemap) tilemapPaintActive_ = false;
+
+    // 保険: 選択解除やツール無効化等でストロークが正常に終了しないままコライダー再生成の保留だけが
+    // 残ってしまうと、以後そのTilemapRendererのコライダーが更新されなくなる不具合になる。
+    // 今フレームの対象（paintableTilemap）と食い違っている、またはストロークが既に終わっているなら
+    // 保留を解除する（ComponentRefで安全に解決するため、対象が既に破棄されていても問題ない）
+    if (paintSuspendedTilemapRef_.IsValid()) {
+        auto *suspended = context_ ? dynamic_cast<TilemapRenderer *>(context_->ResolveComponent(paintSuspendedTilemapRef_)) : nullptr;
+        if (!suspended || suspended != paintableTilemap || !isPaintStrokeActive_) {
+            if (suspended) suspended->SetCollidersRegenerationSuspended(false);
+            paintSuspendedTilemapRef_ = ComponentRef();
+        }
+    }
+
+    // CameraBoundsZone2D/3Dの矩形編集も同様に、選択中オブジェクトが単体でどちらかを
+    // 持つ場合のみ有効化できる（両方持つ場合は2D側を優先する）
+    CameraBoundsZone2D *paintableBoundsZone2D = nullptr;
+    CameraBoundsZone3D *paintableBoundsZone3D = nullptr;
+    EmptyObject *paintableBoundsOwner = nullptr;
+    if (selectedObjects.size() == 1) {
+        EmptyObject *only = *selectedObjects.begin();
+        if (only) {
+            if (auto *zone2D = only->GetComponent<CameraBoundsZone2D>()) {
+                paintableBoundsZone2D = zone2D;
+                paintableBoundsOwner = only;
+            } else if (auto *zone3D = only->GetComponent<CameraBoundsZone3D>()) {
+                paintableBoundsZone3D = zone3D;
+                paintableBoundsOwner = only;
+            }
+        }
+    }
+    if (!paintableBoundsZone2D && !paintableBoundsZone3D) cameraBoundsEditActive_ = false;
+
     //--------- ツールバー（項目数が増えてきたため、メニューバーでまとめて表示する） ---------//
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu(TranslationLabel("editor.sceneview.tab.gizmo"))) {
@@ -352,6 +564,30 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
             if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.local"), gizmoMode_ == ImGuizmo::LOCAL)) gizmoMode_ = ImGuizmo::LOCAL;
             ImGui::SameLine();
             if (ImGui::RadioButton(TranslationLabel("editor.sceneview.gizmo.world"), gizmoMode_ == ImGuizmo::WORLD)) gizmoMode_ = ImGuizmo::WORLD;
+
+            // グリッドスナップ（オブジェクトのグリッド配置）設定
+            ImGui::Separator();
+            if (ImGui::Checkbox(TranslationLabel("editor.sceneview.gizmo.snap"), &gizmoSnapEnabled_)) {
+                EditorSettings::SetBool("sceneView.gizmoSnapEnabled", gizmoSnapEnabled_);
+            }
+            if (ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", TranslationC("editor.sceneview.gizmo.snap.tooltip"));
+            ImGui::SetNextItemWidth(80.0f);
+            if (ImGui::DragFloat(TranslationLabel("editor.sceneview.gizmo.snap.translate"), &gizmoSnapTranslate_, 0.01f, 0.001f, 1000.0f)) {
+                gizmoSnapTranslate_ = std::max(gizmoSnapTranslate_, 0.001f);
+                EditorSettings::SetFloat("sceneView.gizmoSnapTranslate", gizmoSnapTranslate_);
+            }
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(80.0f);
+            if (ImGui::DragFloat(TranslationLabel("editor.sceneview.gizmo.snap.rotate"), &gizmoSnapRotateDegrees_, 0.1f, 0.001f, 360.0f)) {
+                gizmoSnapRotateDegrees_ = std::max(gizmoSnapRotateDegrees_, 0.001f);
+                EditorSettings::SetFloat("sceneView.gizmoSnapRotateDegrees", gizmoSnapRotateDegrees_);
+            }
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(80.0f);
+            if (ImGui::DragFloat(TranslationLabel("editor.sceneview.gizmo.snap.scale"), &gizmoSnapScale_, 0.001f, 0.001f, 1000.0f)) {
+                gizmoSnapScale_ = std::max(gizmoSnapScale_, 0.001f);
+                EditorSettings::SetFloat("sceneView.gizmoSnapScale", gizmoSnapScale_);
+            }
             ImGui::EndMenu();
         }
 
@@ -359,15 +595,13 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
             // カメラ操作モード（オービット/フライ）の切り替え
             if (ImGui::RadioButton(TranslationLabel("editor.sceneview.camera.orbit"), !flyMode_)) {
                 flyMode_ = false;
-                EditorSettings::SetBool("sceneView.flyMode", flyMode_);
             }
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.camera.orbit.tooltip"));
+            if (ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", TranslationC("editor.sceneview.camera.orbit.tooltip"));
             ImGui::SameLine();
             if (ImGui::RadioButton(TranslationLabel("editor.sceneview.camera.fly"), flyMode_)) {
                 flyMode_ = true;
-                EditorSettings::SetBool("sceneView.flyMode", flyMode_);
             }
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.camera.fly.tooltip"));
+            if (ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", TranslationC("editor.sceneview.camera.fly.tooltip"));
 
             // シーンビューの表示モード切り替え（2D/3D併用・3Dのみ・2Dのみ）
             if (ImGui::RadioButton(TranslationLabel("editor.sceneview.display.combined"), displayMode_ == SceneRenderer::EditorDisplayMode::Combined)) {
@@ -384,7 +618,7 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
                 displayMode_ = SceneRenderer::EditorDisplayMode::TwoDOnly;
                 EditorSettings::SetString("sceneView.displayMode", "TwoDOnly");
             }
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", TranslationC("editor.sceneview.display.tooltip"));
+            if (ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", TranslationC("editor.sceneview.display.tooltip"));
             ImGui::EndMenu();
         }
 
@@ -399,6 +633,8 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
             if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.colliders"), &showColliderGizmos_)) EditorSettings::SetBool("sceneView.showColliderGizmos", showColliderGizmos_);
             ImGui::SameLine();
             if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.bones"), &showBoneGizmos_)) EditorSettings::SetBool("sceneView.showBoneGizmos", showBoneGizmos_);
+            ImGui::SameLine();
+            if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.boundszones"), &showCameraBoundsGizmos_)) EditorSettings::SetBool("sceneView.showCameraBoundsGizmos", showCameraBoundsGizmos_);
 
             // 背景設定（単色 or テクスチャ）
             if (ImGui::ColorEdit4(TranslationLabel("editor.sceneview.backgroundcolor"), &backgroundColor_.x)) {
@@ -420,6 +656,16 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
                 backgroundTexturePath_ = droppedPath;
                 EditorSettings::SetString("sceneView.backgroundTexturePath", backgroundTexturePath_);
             }
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu(TranslationLabel("editor.sceneview.tab.tilepaint"))) {
+            ShowTilemapPaintToolbar(paintableTilemap);
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu(TranslationLabel("editor.sceneview.tab.boundszone"))) {
+            ShowCameraBoundsZoneToolbar(paintableBoundsZone2D, paintableBoundsZone3D);
             ImGui::EndMenu();
         }
         ImGui::EndMenuBar();
@@ -444,14 +690,13 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
         const auto newWidth = static_cast<std::uint32_t>(avail.x);
         const auto newHeight = static_cast<std::uint32_t>(avail.y);
         if (newWidth != screenBuffer_->GetWidth() || newHeight != screenBuffer_->GetHeight()) {
-            if (auto *screenBufferObject = sceneViewObject_ ? sceneViewObject_->GetComponent<ScreenBufferObject>() : nullptr) {
-                screenBufferObject->SetSize(newWidth, newHeight);
-            }
+            screenBuffer_->Resize(newWidth, newHeight);
         }
     }
     const ImVec2 drawSize = avail;
     const ImVec2 imagePos = ImGui::GetCursorScreenPos();
     ImGui::Image(static_cast<ImTextureID>(screenBuffer_->GetPreviewSrvHandle().ptr), drawSize);
+    const bool isSceneViewHovered = ImGui::IsItemHovered();
 
     // Assetsウィンドウからのプレハブファイル（.prefab）のドラッグ&ドロップ。ドラッグ中は毎フレーム
     // カーソル直下の配置予定位置（シーン上のメッシュ表面、無ければ地面平面）へ半透明のプレビューを
@@ -461,8 +706,31 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     //--------- カメラ操作（画像上でのマウス操作） ---------//
     HandleCameraInput();
 
+    //--------- ギズモ操作切り替えのショートカットキー（W:移動 / E:回転 / R:拡縮） ---------//
+    HandleGizmoShortcuts(isSceneViewHovered);
+
+    //--------- タイルペイントツール（有効時はクリックが常にペイントになるため、通常の
+    //          オブジェクトピッキング・ギズモ操作は行わない） ---------//
+    const bool tilemapPaintConsumedInput = tilemapPaintActive_ && paintableTilemap
+        && HandleTilemapPaint(paintableOwner, paintableTilemap, commands, imagePos, drawSize);
+
+    //--------- Camera Bounds Zoneの矩形ドラッグ編集（有効時はクリックが常に矩形編集になるため、
+    //          通常のオブジェクトピッキング・ギズモ操作は行わない） ---------//
+    const bool cameraBoundsEditConsumedInput = !tilemapPaintConsumedInput && cameraBoundsEditActive_ && paintableBoundsOwner
+        && (paintableBoundsZone2D
+            ? HandleCameraBoundsZoneEdit2D(paintableBoundsOwner, paintableBoundsZone2D, commands, imagePos, drawSize)
+            : (paintableBoundsZone3D && HandleCameraBoundsZoneEdit3D(paintableBoundsOwner, paintableBoundsZone3D, commands, imagePos, drawSize)));
+
+    //--------- Camera Bounds Zoneの矩形の境界線クリック選択（選択状態に関わらず、表示中の全ゾーンの
+    //          矩形境界線を対象にヒットテストする。境界線のみが対象のため、矩形内部にある他オブジェクトの
+    //          クリックは妨げない。境界線をヒットした場合は通常のオブジェクトピッキングより優先する） ---------//
+    const bool cameraBoundsClickConsumedInput = !tilemapPaintConsumedInput && !cameraBoundsEditConsumedInput
+        && HandleCameraBoundsZoneClickSelect(hierarchy, imagePos, drawSize);
+
     //--------- クリックによるオブジェクト選択 ---------//
-    HandleObjectPicking(hierarchy, imagePos, drawSize);
+    if (!tilemapPaintConsumedInput && !cameraBoundsEditConsumedInput && !cameraBoundsClickConsumedInput) {
+        HandleObjectPicking(hierarchy, imagePos, drawSize);
+    }
 
     // グリッド線・当たり判定のワイヤーフレームは screenBuffer_ へGPUで直接描画される
     // （UpdateEditorDebugDraw で設定済み。DebugGrid/DebugLinesパイプライン参照）
@@ -473,8 +741,17 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     //--------- 2Dモード専用の2Dコライダー可視化（3DのGPUデバッグラインとは別実装のImGuiオーバーレイ） ---------//
     if (showColliderGizmos_ && displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly) DrawCollider2DOverlay(imagePos, drawSize);
 
+    //--------- 2Dモード専用のスクリプトデバッグライン（Debug::DrawLine）表示。3Dモードでは
+    //          UpdateEditorDebugDraw内でGPUデバッグラインとして表示されるため、ここでは
+    //          2Dモードの時だけ描画する（3D側と同様、専用の表示トグルは設けていない） ---------//
+    if (displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly) DrawScriptDebugLineOverlay2D(imagePos, drawSize);
+
     //--------- 2Dモード専用のCamera2D表示範囲（3D/2D3DモードのAppendCameraFrustumLinesと対になる表示） ---------//
     if (showCameraMarkers_ && displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly) DrawCamera2DBoundsOverlay(imagePos, drawSize);
+
+    //--------- 2Dモード専用のCameraBoundsZone2D矩形群の可視化（3D側はAppendCameraBoundsZoneDebugLines
+    //          によりGPUデバッグラインで表示するため対象外） ---------//
+    if (showCameraBoundsGizmos_ && displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly) DrawCameraBoundsZoneOverlay2D(imagePos, drawSize);
 
     //--------- ライトのデバッグ表示（2Dモードでは3D専用のアイコンのため表示しない） ---------//
     if (showLightMarkers_ && displayMode_ != SceneRenderer::EditorDisplayMode::TwoDOnly) DrawLightMarkers(imagePos, drawSize);
@@ -483,8 +760,8 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     // 2D/3Dどちらのカメラアイコンを出すかはDrawCameraMarkers内部で表示モードに応じて絞り込む
     if (showCameraMarkers_) DrawCameraMarkers(imagePos, drawSize);
 
-    //--------- ImGuizmo によるギズモ表示 ---------//
-    ShowGizmo(selectedObjects, commands, imagePos, drawSize);
+    //--------- ImGuizmo によるギズモ表示（タイルペイント中は表示・操作しない） ---------//
+    if (!(tilemapPaintActive_ && paintableTilemap)) ShowGizmo(selectedObjects, commands, imagePos, drawSize);
 
     ImGui::End();
 }
@@ -609,7 +886,6 @@ void SceneEditorView::HandleCameraInput() {
         if (io.MouseWheel != 0.0f) {
             flySpeed_ *= std::pow(1.1f, io.MouseWheel);
             flySpeed_ = std::clamp(flySpeed_, 0.1f, 1000.0f);
-            EditorSettings::SetFloat("sceneView.flySpeed", flySpeed_);
         }
     } else {
         // ホイールでズーム
@@ -638,6 +914,17 @@ void SceneEditorView::HandleCameraInput() {
     }
 }
 
+void SceneEditorView::HandleGizmoShortcuts(bool isSceneViewHovered) {
+    if (!isSceneViewHovered) return;
+    // フライモード中は右ボタン押下中にW/E/QをカメラのXZ/上下移動として使っているため、
+    // 右ボタンを押している間はギズモ切り替えショートカットを無効にする
+    if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) return;
+
+    if (ImGui::IsKeyPressed(ImGuiKey_W, false)) gizmoOperation_ = ImGuizmo::TRANSLATE;
+    if (ImGui::IsKeyPressed(ImGuiKey_E, false)) gizmoOperation_ = ImGuizmo::ROTATE;
+    if (ImGui::IsKeyPressed(ImGuiKey_R, false)) gizmoOperation_ = ImGuizmo::SCALE;
+}
+
 void SceneEditorView::HandleCamera2DInput() {
     ImGuiIO &io = ImGui::GetIO();
 
@@ -645,7 +932,6 @@ void SceneEditorView::HandleCamera2DInput() {
     if (io.MouseWheel != 0.0f) {
         zoom2D_ *= std::pow(0.9f, io.MouseWheel);
         zoom2D_ = std::clamp(zoom2D_, 0.05f, 10000.0f);
-        EditorSettings::SetFloat("sceneView.zoom2D", zoom2D_);
     }
     // 左ドラッグ・中ドラッグどちらでもパンする（3D空間の当たり判定を考える必要が無い2D専用モードのため、
     // 左ドラッグをオブジェクト選択と競合させないよう、選択はクリック＝ドラッグなしの場合のみ反応する
@@ -658,8 +944,6 @@ void SceneEditorView::HandleCamera2DInput() {
             const float worldPerPixel = (zoom2D_ * 2.0f) / heightPx;
             pan2D_.x -= io.MouseDelta.x * worldPerPixel;
             pan2D_.y += io.MouseDelta.y * worldPerPixel;
-            EditorSettings::SetFloat("sceneView.pan2D.x", pan2D_.x);
-            EditorSettings::SetFloat("sceneView.pan2D.y", pan2D_.y);
         }
     }
 }
@@ -692,6 +976,9 @@ void SceneEditorView::UpdateEditorDebugDraw() {
         if (showColliderGizmos_) {
             AppendColliderDebugLines(settings.lines);
         }
+        if (showCameraBoundsGizmos_) {
+            AppendCameraBoundsZoneDebugLines(settings.lines);
+        }
         if (showCameraMarkers_) {
             AppendCameraFrustumLines(settings.lines);
         }
@@ -712,8 +999,10 @@ void SceneEditorView::UpdateEditorDebugDraw() {
             settings.lines.push_back(DebugLineVertex{ line.end, line.color });
         }
     }
-    // 2Dモード中に蓄積され続けないよう、表示するかどうかに関わらず毎フレームクリアする
-    ScriptDebugDraw::Clear();
+    // ScriptDebugDraw::Clear()はここでは呼ばない。2Dモード用のオーバーレイ
+    // （DrawScriptDebugLineOverlay2D、ShowSceneViewWindow内でこの後呼ばれる）がまだ
+    // ScriptDebugDraw::GetLines()を読んでいないため、ここで消してしまうと2Dモードでは
+    // 何も表示されなくなる。ShowImGui()の末尾で両方の消費が終わった後にまとめてクリアする
 
     sceneRenderer->SetEditorDebugDraw(std::move(settings));
 }
@@ -805,6 +1094,73 @@ Vector3 TransformPoint(const Vector3 &p, const Matrix4x4 &m) {
     return Vector3(x / w, y / w, z / w);
 }
 
+/// @brief スクリーン座標上での点pと線分(a,b)との最短距離
+float DistancePointToSegment(const ImVec2 &p, const ImVec2 &a, const ImVec2 &b) {
+    const float abx = b.x - a.x;
+    const float aby = b.y - a.y;
+    const float lengthSq = abx * abx + aby * aby;
+    float t = 0.0f;
+    if (lengthSq > 1e-8f) {
+        t = std::clamp(((p.x - a.x) * abx + (p.y - a.y) * aby) / lengthSq, 0.0f, 1.0f);
+    }
+    const float closestX = a.x + abx * t;
+    const float closestY = a.y + aby * t;
+    const float dx = p.x - closestX;
+    const float dy = p.y - closestY;
+    return std::sqrt(dx * dx + dy * dy);
+}
+
+/// @brief (x0,y0)から(x1,y1)までの格子セルをBresenhamのアルゴリズムで列挙し、visitへ順に渡す
+/// @details タイルペイントのドラッグ中、1フレームでマウスが複数セル分動いた場合に塗り残しの
+///          隙間ができないよう、前フレームのセルから今フレームのセルまでを線で補間するために使う
+template <typename Visitor>
+void WalkGridLine(int x0, int y0, int x1, int y1, Visitor &&visit) {
+    const int dx = std::abs(x1 - x0);
+    const int dy = -std::abs(y1 - y0);
+    const int sx = (x0 < x1) ? 1 : -1;
+    const int sy = (y0 < y1) ? 1 : -1;
+    int err = dx + dy;
+    int x = x0;
+    int y = y0;
+    while (true) {
+        visit(x, y);
+        if (x == x1 && y == y1) break;
+        const int e2 = 2 * err;
+        if (e2 >= dy) { err += dy; x += sx; }
+        if (e2 <= dx) { err += dx; y += sy; }
+    }
+}
+
+/// @brief 中心セル(centerX,centerY)を基準に、ペンサイズ分のセルを列挙してvisitへ渡す
+/// @param brushSize 一辺のセル数（1以上。偶数の場合、中心から見て+側に1マス多く広がる）
+/// @param circular trueの場合は正方形の範囲からさらに中心距離で丸める（円形ブラシ）。
+///        falseの場合は正方形のまま全マスを対象にする
+/// @details 円形判定はセル座標のオフセット(dx,dy)をそのままユークリッド距離で判定する単純な近似。
+///          セル中心同士の0.5マス分のずれは無視しており、brushSizeの偶奇で見た目の丸まり方が
+///          わずかに変わるが、ペイントツールの用途では十分な精度
+template <typename Visitor>
+void ForEachBrushCell(int centerX, int centerY, int brushSize, bool circular, Visitor &&visit) {
+    brushSize = std::max(1, brushSize);
+    const int minOffset = -(brushSize / 2);
+    const int maxOffset = brushSize - 1 + minOffset;
+    if (!circular) {
+        for (int dy = minOffset; dy <= maxOffset; ++dy) {
+            for (int dx = minOffset; dx <= maxOffset; ++dx) {
+                visit(centerX + dx, centerY + dy);
+            }
+        }
+        return;
+    }
+    const float radius = static_cast<float>(brushSize) * 0.5f;
+    const float radiusSq = radius * radius;
+    for (int dy = minOffset; dy <= maxOffset; ++dy) {
+        for (int dx = minOffset; dx <= maxOffset; ++dx) {
+            const float distSq = static_cast<float>(dx * dx + dy * dy);
+            if (distSq <= radiusSq) visit(centerX + dx, centerY + dy);
+        }
+    }
+}
+
 /// @brief 線分（origin + dir*t, t∈[0,1]）と三角形の交差判定（Möller–Trumbore法、両面判定）
 /// @param outT 交差した場合、線分上のパラメータt（0=始点、1=終点）
 bool SegmentIntersectsTriangle(const Vector3 &origin, const Vector3 &dir,
@@ -829,6 +1185,38 @@ bool SegmentIntersectsTriangle(const Vector3 &origin, const Vector3 &dir,
     if (t < 0.0f || t > 1.0f) return false;
 
     outT = t;
+    return true;
+}
+
+/// @brief TextRendererの各文字インスタンス（ワールド行列）から、テキスト全体の外接矩形
+///        （ワールド空間AABB）を求める（UIButton::ComputeTextWorldBoundsと同じ考え方）
+/// @details TextRendererはMeshFilterを持たない（1文字＝1インスタンスの動的描画）ため、
+///          三角形ピッキング（RaycastSceneMeshes内のMeshFilter必須ループ）の対象にできず、
+///          このAABBをスクリーン空間へ投影したバウンディングボックス判定でクリック選択する
+bool ComputeTextRendererWorldBounds(const TextRenderer *textRenderer, Vector3 &outMin, Vector3 &outMax) {
+    const auto instances = textRenderer->GetRenderInstances();
+    if (instances.empty()) return false;
+
+    const Vector3 corners[4] = {
+        Vector3(-0.5f, -0.5f, 0.0f), Vector3(0.5f, -0.5f, 0.0f),
+        Vector3(-0.5f, 0.5f, 0.0f), Vector3(0.5f, 0.5f, 0.0f),
+    };
+
+    float minX = std::numeric_limits<float>::max();
+    float maxX = std::numeric_limits<float>::lowest();
+    float minY = std::numeric_limits<float>::max();
+    float maxY = std::numeric_limits<float>::lowest();
+    for (const auto &instance : instances) {
+        for (const auto &corner : corners) {
+            const Vector3 p = corner.Transform(instance.worldMatrix);
+            minX = std::min(minX, p.x);
+            maxX = std::max(maxX, p.x);
+            minY = std::min(minY, p.y);
+            maxY = std::max(maxY, p.y);
+        }
+    }
+    outMin = Vector3(minX, minY, 0.0f);
+    outMax = Vector3(maxX, maxY, 0.0f);
     return true;
 }
 } // namespace
@@ -907,7 +1295,9 @@ bool SceneEditorView::RaycastSceneMeshes(const ImVec2 &screenPos, const ImVec2 &
     Vector3 fallbackWorldPosition{};
 
     for (auto *obj : context_->GetSceneObjects()) {
-        if (!obj || !obj->IsActive()) continue;
+        // SceneRenderer側の描画除外（IsHiddenFromEditorTarget）と揃える。描画されていないのに
+        // クリックだけは通ってしまう不整合を防ぐ
+        if (!obj || !obj->IsActive() || obj->IsHiddenFromEditorTarget()) continue;
 
         // シーンビューに描画される対象（アクティブなMeshRenderer/SkinnedMeshRenderer/SpriteRendererを持つ）
         // だけを判定対象にする。SpriteRendererはエディターのシーンビュー上でのみ3D空間内に配置される
@@ -1000,7 +1390,54 @@ bool SceneEditorView::RaycastSceneMeshes(const ImVec2 &screenPos, const ImVec2 &
         }
     }
 
-    // 三角形との厳密な交差判定がどれもヒットしなかった場合のみ、2Dモードのフォールバック候補を採用する
+    // TextRendererはMeshFilterを持たない（1文字＝1インスタンスの動的描画）ため、上のMeshFilter必須
+    // ループでは判定できない。SpriteRendererと違い2D/3Dどちらの配置でも使われるコンポーネントのため、
+    // 表示モードに関わらずスクリーン空間バウンディングボックスのフォールバック判定のみで拾う
+    for (auto *obj : context_->GetSceneObjects()) {
+        // SceneRenderer側の描画除外（IsHiddenFromEditorTarget）と揃える。描画されていないのに
+        // クリックだけは通ってしまう不整合を防ぐ
+        if (!obj || !obj->IsActive() || obj->IsHiddenFromEditorTarget()) continue;
+        auto *textRenderer = obj->GetComponent<TextRenderer>();
+        if (!textRenderer || !textRenderer->IsActive()) continue;
+
+        Vector3 textBoundsMin{};
+        Vector3 textBoundsMax{};
+        if (!ComputeTextRendererWorldBounds(textRenderer, textBoundsMin, textBoundsMax)) continue;
+
+        float minX = std::numeric_limits<float>::max();
+        float minY = std::numeric_limits<float>::max();
+        float maxX = -std::numeric_limits<float>::max();
+        float maxY = -std::numeric_limits<float>::max();
+        bool anyProjected = false;
+        const Vector3 worldCorners[4] = {
+            Vector3(textBoundsMin.x, textBoundsMin.y, 0.0f), Vector3(textBoundsMax.x, textBoundsMin.y, 0.0f),
+            Vector3(textBoundsMin.x, textBoundsMax.y, 0.0f), Vector3(textBoundsMax.x, textBoundsMax.y, 0.0f),
+        };
+        for (const auto &corner : worldCorners) {
+            ImVec2 screenVertex;
+            if (!ProjectToImage(corner, imagePos, imageSize, screenVertex, false)) continue;
+            minX = std::min(minX, screenVertex.x);
+            minY = std::min(minY, screenVertex.y);
+            maxX = std::max(maxX, screenVertex.x);
+            maxY = std::max(maxY, screenVertex.y);
+            anyProjected = true;
+        }
+        if (!anyProjected) continue;
+
+        minX -= kSpriteClickTolerancePx; minY -= kSpriteClickTolerancePx;
+        maxX += kSpriteClickTolerancePx; maxY += kSpriteClickTolerancePx;
+        if (screenPos.x < minX || screenPos.x > maxX || screenPos.y < minY || screenPos.y > maxY) continue;
+
+        const float areaPx = (maxX - minX) * (maxY - minY);
+        if (areaPx < fallbackBestAreaPx) {
+            fallbackBestAreaPx = areaPx;
+            fallbackObject = obj;
+            fallbackWorldPosition = (textBoundsMin + textBoundsMax) * 0.5f;
+        }
+    }
+
+    // 三角形との厳密な交差判定がどれもヒットしなかった場合のみ、バウンディングボックスによる
+    // フォールバック候補（2DモードのSpriteRenderer、表示モードに関わらないTextRenderer）を採用する
     if (!outHitObject && fallbackObject) {
         outHitObject = fallbackObject;
         // レイ上でオブジェクトの位置に最も近い点のtを、外接する三角形が無くても求まる方法
@@ -1028,8 +1465,26 @@ Vector3 SceneEditorView::ComputeCursorWorldPosition(const ImVec2 &screenPos, con
         return rayStart + (rayEnd - rayStart) * hitT;
     }
 
-    // メッシュに当たらなかった場合はY=0の地面平面との交点へ配置する（Unityのシーンビューと同様の挙動）
     const Vector3 rayDir = rayEnd - rayStart;
+
+    // 「2D」表示モードはUpdateCamera2DBufferのコメントの通り、SpriteRendererの単位クアッドが乗る
+    // Z=0平面を正面から見る専用の正射影カメラ（3Dのyaw_/pitch_/distance_/cameraEye_とは無関係）。
+    // 以前はここでY=0地面平面判定に続けて3D側のcameraEye_/distance_へフォールバックしていたが、
+    // 2DモードではrayDir.yがほぼ0（カメラがZ軸方向しか向かない）ため常にY=0判定をすり抜け、
+    // 無関係な（多くの場合原点付近の既定値のままの）3Dカメラ状態を使ってしまい、既存メッシュが
+    // 無い場所へドロップした際にプレハブが原点付近へ配置される不具合の原因になっていた。
+    // 2DモードではZ=0平面との交点をそのまま使う
+    if (displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly) {
+        if (std::abs(rayDir.z) > 1e-6f) {
+            const float s = -rayStart.z / rayDir.z;
+            if (s > 0.0f) {
+                return rayStart + rayDir * s;
+            }
+        }
+        return Vector3(rayStart.x, rayStart.y, 0.0f);
+    }
+
+    // メッシュに当たらなかった場合はY=0の地面平面との交点へ配置する（Unityのシーンビューと同様の挙動）
     if (std::abs(rayDir.y) > 1e-6f) {
         const float s = -rayStart.y / rayDir.y;
         if (s > 0.0f) {
@@ -1040,6 +1495,711 @@ Vector3 SceneEditorView::ComputeCursorWorldPosition(const ImVec2 &screenPos, con
     // 地面平面とも交差しない場合（真上/真下を向いている等）は、カメラから現在の注視距離だけ進めた点にする
     const Vector3 rayDirNormalized = rayDir.Length() > 1e-6f ? rayDir.Normalize() : Vector3(0.0f, 0.0f, 1.0f);
     return cameraEye_ + rayDirNormalized * distance_;
+}
+
+bool SceneEditorView::ComputeTilemapCellUnderCursor(EmptyObject *owner, TilemapRenderer *tilemap, const ImVec2 &screenPos,
+    const ImVec2 &imagePos, const ImVec2 &imageSize, int &outX, int &outY) const {
+    if (!owner || !tilemap || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return false;
+    auto *transform = owner->GetComponent<Transform>();
+    if (!transform) return false;
+
+    // クリック位置からカメラの近平面→遠平面を貫くワールド空間のレイを作る（RaycastSceneMeshesと同じ式）
+    const float ndcX = ((screenPos.x - imagePos.x) / imageSize.x) * 2.0f - 1.0f;
+    const float ndcY = -(((screenPos.y - imagePos.y) / imageSize.y) * 2.0f - 1.0f);
+    const Matrix4x4 invViewProjection = (GetActiveView() * GetActiveProjection()).Inverse();
+    const Vector3 rayStart = UnprojectNdc(invViewProjection, ndcX, ndcY, 0.0f);
+    const Vector3 rayEnd = UnprojectNdc(invViewProjection, ndcX, ndcY, 1.0f);
+
+    // レイをTilemapRendererのローカル空間（メッシュが生成されるローカルZ=0平面）へ変換して交点を求める
+    const Matrix4x4 invWorld = transform->GetWorldMatrix().Inverse();
+    const Vector3 localStart = TransformPoint(rayStart, invWorld);
+    const Vector3 localEnd = TransformPoint(rayEnd, invWorld);
+    const Vector3 localDir = localEnd - localStart;
+    if (std::abs(localDir.z) < 1e-8f) return false; // レイがZ=0平面とほぼ平行
+    const float t = -localStart.z / localDir.z;
+    if (t < 0.0f || t > 1.0f) return false; // 近平面〜遠平面の間で交差しない
+
+    const float localX = localStart.x + localDir.x * t;
+    const float localY = localStart.y + localDir.y * t;
+
+    const Vector2 &tileSize = tilemap->GetTileSize();
+    if (tileSize.x <= 0.0f || tileSize.y <= 0.0f) return false;
+    const int cellX = static_cast<int>(std::floor(localX / tileSize.x));
+    const int cellY = static_cast<int>(std::floor(localY / tileSize.y));
+    if (cellX < 0 || cellY < 0 || cellX >= tilemap->GetGridWidth() || cellY >= tilemap->GetGridHeight()) return false;
+
+    outX = cellX;
+    outY = cellY;
+    return true;
+}
+
+void SceneEditorView::DrawTilemapCellHighlight(EmptyObject *owner, TilemapRenderer *tilemap, int cellX, int cellY,
+    const ImVec2 &imagePos, const ImVec2 &imageSize, ImU32 color) const {
+    auto *transform = owner ? owner->GetComponent<Transform>() : nullptr;
+    if (!transform) return;
+    const Matrix4x4 &world = transform->GetWorldMatrix();
+    const Vector2 &tileSize = tilemap->GetTileSize();
+
+    const float x0 = static_cast<float>(cellX) * tileSize.x;
+    const float y0 = static_cast<float>(cellY) * tileSize.y;
+    const float x1 = x0 + tileSize.x;
+    const float y1 = y0 + tileSize.y;
+    const Vector3 localCorners[4] = {
+        Vector3(x0, y0, 0.0f), Vector3(x0, y1, 0.0f), Vector3(x1, y1, 0.0f), Vector3(x1, y0, 0.0f),
+    };
+
+    ImVec2 screenCorners[4];
+    for (int i = 0; i < 4; ++i) {
+        if (!ProjectToImage(TransformPoint(localCorners[i], world), imagePos, imageSize, screenCorners[i], false)) return;
+    }
+
+    auto *drawList = ImGui::GetWindowDrawList();
+    drawList->PushClipRect(imagePos, ImVec2(imagePos.x + imageSize.x, imagePos.y + imageSize.y), true);
+    drawList->AddQuad(screenCorners[0], screenCorners[1], screenCorners[2], screenCorners[3], color, 2.0f);
+    drawList->PopClipRect();
+}
+
+bool SceneEditorView::HandleTilemapPaint(EmptyObject *owner, TilemapRenderer *tilemap, SceneEditorCommands *commands,
+    const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (!owner || !tilemap) return false;
+    const bool isHovered = ImGui::IsItemHovered();
+
+    int cellX = 0;
+    int cellY = 0;
+    const bool hasHoverCell = isHovered && ComputeTilemapCellUnderCursor(owner, tilemap, ImGui::GetMousePos(), imagePos, imageSize, cellX, cellY);
+
+    if (hasHoverCell) {
+        constexpr ImU32 kHighlightColor = IM_COL32(255, 220, 60, 255);
+        // ペンサイズ分のセル全てをハイライトし、実際に塗られる範囲がひと目で分かるようにする
+        ForEachBrushCell(cellX, cellY, paintBrushSize_, paintBrushCircular_, [&](int x, int y) {
+            DrawTilemapCellHighlight(owner, tilemap, x, y, imagePos, imageSize, kHighlightColor);
+        });
+    }
+
+    // 右クリック消しゴムは「2D」表示モード限定にする。Combined/ThreeDOnlyモードでは右ドラッグが
+    // 既に3Dフリーカメラの見回し操作（HandleCameraInput参照）に使われており、同時に奪うと
+    // カメラ操作ができなくなってしまうため（2Dモードは右ボタンをカメラ操作に使っていないため競合しない）
+    const bool rightEraseAvailable = displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly;
+    const bool leftClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+    const bool rightClicked = rightEraseAvailable && ImGui::IsMouseClicked(ImGuiMouseButton_Right);
+    const bool leftDown = ImGui::IsMouseDown(ImGuiMouseButton_Left);
+    const bool rightDown = rightEraseAvailable && ImGui::IsMouseDown(ImGuiMouseButton_Right);
+    const bool leftReleased = ImGui::IsMouseReleased(ImGuiMouseButton_Left);
+    const bool rightReleased = rightEraseAvailable && ImGui::IsMouseReleased(ImGuiMouseButton_Right);
+
+    if (hasHoverCell && (leftClicked || rightClicked)) {
+        // ストローク開始: 右クリックで始めた場合は選択中のブラシに関わらず常に消しゴム（-1）として塗る。
+        // Undo用に変更前のJSONを1回だけ取得する（ギズモ操作開始時と同じパターン）
+        isPaintStrokeActive_ = true;
+        paintStrokeIsErase_ = rightClicked;
+        paintStrokeBeforeJson_ = owner->SaveComponentToJson(tilemap);
+        // ストローク中は1マス変更するたびのコライダー全体再生成（RegenerateColliders、グリッド全体を
+        // 毎回スキャンする重い処理）を止めておき、離した時にまとめて1回だけ再生成する
+        tilemap->SetCollidersRegenerationSuspended(true);
+        paintSuspendedTilemapRef_ = tilemap->GetComponentRef();
+        {
+            const int brush = paintStrokeIsErase_ ? -1 : paintBrushTileType_;
+            ForEachBrushCell(cellX, cellY, paintBrushSize_, paintBrushCircular_, [&](int x, int y) {
+                tilemap->SetTile(x, y, brush);
+            });
+        }
+        lastPaintCellX_ = cellX;
+        lastPaintCellY_ = cellY;
+    } else if (isPaintStrokeActive_ && hasHoverCell && (leftDown || rightDown)) {
+        // ドラッグ中: 前フレームのセルから今フレームのセルまでを線で補間しつつ、補間した各点で
+        // ペンサイズ分のブラシをスタンプして塗る（マウスが速く動いてもペンサイズ未満の隙間ができない）
+        const int brush = paintStrokeIsErase_ ? -1 : paintBrushTileType_;
+        WalkGridLine(lastPaintCellX_, lastPaintCellY_, cellX, cellY, [&](int lineX, int lineY) {
+            ForEachBrushCell(lineX, lineY, paintBrushSize_, paintBrushCircular_, [&](int x, int y) {
+                tilemap->SetTile(x, y, brush);
+            });
+        });
+        lastPaintCellX_ = cellX;
+        lastPaintCellY_ = cellY;
+    }
+
+    if (isPaintStrokeActive_ && (leftReleased || rightReleased)) {
+        // ストローク終了: 保留していたコライダー再生成をここでまとめて行う
+        tilemap->SetCollidersRegenerationSuspended(false);
+        paintSuspendedTilemapRef_ = ComponentRef();
+        // 変更があった場合のみUndo履歴へ積む（ギズモ操作終了時と同じ「適用済みの
+        // 操作を積む」パターン。PushExecutedはSceneEditorCommands.h参照）
+        isPaintStrokeActive_ = false;
+        if (commands) {
+            JSON after = owner->SaveComponentToJson(tilemap);
+            if (after != paintStrokeBeforeJson_) {
+                commands->PushExecuted(std::make_unique<ComponentEditCommand>(owner, tilemap, paintStrokeBeforeJson_, after));
+            }
+        }
+    }
+
+    return hasHoverCell || isPaintStrokeActive_;
+}
+
+void SceneEditorView::ShowTilemapPaintToolbar(TilemapRenderer *paintableTilemap) {
+    ImGui::BeginDisabled(paintableTilemap == nullptr);
+    if (ImGui::Checkbox(TranslationLabel("editor.sceneview.tilepaint.enable"), &tilemapPaintActive_)) {
+        // トグル切り替えの瞬間にストローク状態が残らないようにする
+        isPaintStrokeActive_ = false;
+    }
+    ImGui::EndDisabled();
+
+    if (!paintableTilemap) {
+        ImGui::TextUnformatted(TranslationC("editor.sceneview.tilepaint.no_selection"));
+        return;
+    }
+
+    // タイル種類が削除される等でブラシのインデックスが範囲外になった場合は安全な値へ戻す
+    if (paintBrushTileType_ >= paintableTilemap->GetTileTypeCount()) {
+        paintBrushTileType_ = (paintableTilemap->GetTileTypeCount() > 0) ? 0 : -1;
+    }
+
+    ImGui::SameLine();
+    ImGui::TextUnformatted(TranslationC("editor.sceneview.tilepaint.brush"));
+    ImGui::SameLine();
+    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.tilepaint.erase"), paintBrushTileType_ == -1)) {
+        paintBrushTileType_ = -1;
+    }
+
+    // タイルセットのSRV・サイズが解決できればサムネイル画像で、できなければ番号ボタンでフォールバック表示する
+    D3D12_GPU_DESCRIPTOR_HANDLE thumbnailSrv{};
+    float texWidth = 0.0f;
+    float texHeight = 0.0f;
+    if (const auto *material = MaterialManager::GetMaterial(paintableTilemap->GetMaterialHandle())) {
+        const auto textureView = TextureManager::GetTextureView(material->textureHandle);
+        texWidth = static_cast<float>(textureView.GetWidth());
+        texHeight = static_cast<float>(textureView.GetHeight());
+        thumbnailSrv = textureView.GetSrvHandle();
+    }
+    const bool hasThumbnail = thumbnailSrv.ptr != 0 && texWidth > 0.0f && texHeight > 0.0f;
+    const ImVec2 kThumbnailSize(32.0f, 32.0f);
+    constexpr ImU32 kSelectedBorderColor = IM_COL32(255, 220, 60, 255);
+
+    const auto &tileTypes = paintableTilemap->GetTileTypes();
+    const Vector2 &tilePixelSize = paintableTilemap->GetTilePixelSize();
+    for (int i = 0; i < static_cast<int>(tileTypes.size()); ++i) {
+        ImGui::SameLine();
+        ImGui::PushID(i);
+        const bool isSelected = (paintBrushTileType_ == i);
+        if (isSelected) {
+            ImGui::PushStyleColor(ImGuiCol_Border, kSelectedBorderColor);
+            ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 2.0f);
+        }
+
+        bool clicked = false;
+        if (hasThumbnail) {
+            // ビットマスク0（＝tilesetOriginPxそのもの。どのタイル種類にも必ず存在する孤立パターン）を
+            // そのタイル種類の代表画像として表示する
+            const Vector2 &origin = tileTypes[i].tilesetOriginPx;
+            const ImVec2 uv0(origin.x / texWidth, origin.y / texHeight);
+            const ImVec2 uv1((origin.x + tilePixelSize.x) / texWidth, (origin.y + tilePixelSize.y) / texHeight);
+            clicked = ImGui::ImageButton("##tileThumb", static_cast<ImTextureID>(thumbnailSrv.ptr), kThumbnailSize, uv0, uv1);
+        } else {
+            clicked = ImGui::Button(std::to_string(i).c_str(), kThumbnailSize);
+        }
+        if (clicked) paintBrushTileType_ = i;
+
+        if (isSelected) {
+            ImGui::PopStyleVar();
+            ImGui::PopStyleColor();
+        }
+        ImGui::PopID();
+    }
+
+    // ペンサイズ・ブラシ形状（正方形/円形）。ForEachBrushCell参照
+    ImGui::SetNextItemWidth(120.0f);
+    ImGui::SliderInt(TranslationLabel("editor.sceneview.tilepaint.pen_size"), &paintBrushSize_, 1, 16);
+    paintBrushSize_ = std::clamp(paintBrushSize_, 1, 16);
+    ImGui::SameLine();
+    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.tilepaint.pen_shape_square"), !paintBrushCircular_)) {
+        paintBrushCircular_ = false;
+    }
+    ImGui::SameLine();
+    if (ImGui::RadioButton(TranslationLabel("editor.sceneview.tilepaint.pen_shape_circle"), paintBrushCircular_)) {
+        paintBrushCircular_ = true;
+    }
+}
+
+void SceneEditorView::ShowCameraBoundsZoneToolbar(CameraBoundsZone2D *paintableZone2D, CameraBoundsZone3D *paintableZone3D) {
+    const bool hasZone = (paintableZone2D != nullptr) || (paintableZone3D != nullptr);
+    ImGui::BeginDisabled(!hasZone);
+    if (ImGui::Checkbox(TranslationLabel("editor.sceneview.boundszone.enable"), &cameraBoundsEditActive_)) {
+        // トグル切り替えの瞬間にドラッグ状態が残らないようにする
+        isCameraBoundsDragActive_ = false;
+    }
+    ImGui::EndDisabled();
+
+    if (!hasZone) {
+        ImGui::TextUnformatted(TranslationC("editor.sceneview.boundszone.no_selection"));
+        return;
+    }
+    ImGuiCustom::TextDisabledWrapped("%s", TranslationC("editor.sceneview.boundszone.hint"));
+}
+
+SceneEditorView::CameraBoundsDragHandle SceneEditorView::PickCameraBoundsHandle(
+    const ImVec2 &mouseScreen, const ImVec2 cornerScreen[4], bool insideCursor, float handleRadiusPx) const {
+    const float r2 = handleRadiusPx * handleRadiusPx;
+    auto distSq = [&](const ImVec2 &p) {
+        const float dx = p.x - mouseScreen.x;
+        const float dy = p.y - mouseScreen.y;
+        return dx * dx + dy * dy;
+    };
+    // cornerScreen: [0]=(minA,minB) [1]=(minA,maxB) [2]=(maxA,minB) [3]=(maxA,maxB)
+    if (distSq(cornerScreen[0]) <= r2) return CameraBoundsDragHandle::CornerMinAMinB;
+    if (distSq(cornerScreen[1]) <= r2) return CameraBoundsDragHandle::CornerMinAMaxB;
+    if (distSq(cornerScreen[2]) <= r2) return CameraBoundsDragHandle::CornerMaxAMinB;
+    if (distSq(cornerScreen[3]) <= r2) return CameraBoundsDragHandle::CornerMaxAMaxB;
+
+    auto mid = [](const ImVec2 &a, const ImVec2 &b) { return ImVec2((a.x + b.x) * 0.5f, (a.y + b.y) * 0.5f); };
+    if (distSq(mid(cornerScreen[0], cornerScreen[1])) <= r2) return CameraBoundsDragHandle::EdgeMinA;
+    if (distSq(mid(cornerScreen[2], cornerScreen[3])) <= r2) return CameraBoundsDragHandle::EdgeMaxA;
+    if (distSq(mid(cornerScreen[0], cornerScreen[2])) <= r2) return CameraBoundsDragHandle::EdgeMinB;
+    if (distSq(mid(cornerScreen[1], cornerScreen[3])) <= r2) return CameraBoundsDragHandle::EdgeMaxB;
+
+    if (insideCursor) return CameraBoundsDragHandle::Move;
+    return CameraBoundsDragHandle::None;
+}
+
+void SceneEditorView::ApplyCameraBoundsDrag(CameraBoundsDragHandle handle, const Vector2 &startMin, const Vector2 &startMax,
+    const Vector2 &deltaLocal, Vector2 &outMin, Vector2 &outMax) const {
+    // シーンビューのギズモ操作と同じスナップ設定（Ctrlキーで一時反転）を移動量に適用する。
+    // 絶対座標ではなく移動量をスナップすることで、ドラッグ開始位置がグリッド上になくても
+    // 「ちょうど区切りの良い量だけ動かす」挙動になる（ImGuizmoのTranslateスナップと同じ考え方）
+    Vector2 snappedDelta = deltaLocal;
+    const bool useSnap = gizmoSnapEnabled_ != ImGui::IsKeyDown(ImGuiMod_Ctrl);
+    if (useSnap && gizmoSnapTranslate_ > 0.0f) {
+        snappedDelta.x = std::round(deltaLocal.x / gizmoSnapTranslate_) * gizmoSnapTranslate_;
+        snappedDelta.y = std::round(deltaLocal.y / gizmoSnapTranslate_) * gizmoSnapTranslate_;
+    }
+
+    outMin = startMin;
+    outMax = startMax;
+    switch (handle) {
+    case CameraBoundsDragHandle::Move:
+        outMin = startMin + snappedDelta;
+        outMax = startMax + snappedDelta;
+        break;
+    case CameraBoundsDragHandle::EdgeMinA: outMin.x = startMin.x + snappedDelta.x; break;
+    case CameraBoundsDragHandle::EdgeMaxA: outMax.x = startMax.x + snappedDelta.x; break;
+    case CameraBoundsDragHandle::EdgeMinB: outMin.y = startMin.y + snappedDelta.y; break;
+    case CameraBoundsDragHandle::EdgeMaxB: outMax.y = startMax.y + snappedDelta.y; break;
+    case CameraBoundsDragHandle::CornerMinAMinB:
+        outMin.x = startMin.x + snappedDelta.x;
+        outMin.y = startMin.y + snappedDelta.y;
+        break;
+    case CameraBoundsDragHandle::CornerMinAMaxB:
+        outMin.x = startMin.x + snappedDelta.x;
+        outMax.y = startMax.y + snappedDelta.y;
+        break;
+    case CameraBoundsDragHandle::CornerMaxAMinB:
+        outMax.x = startMax.x + snappedDelta.x;
+        outMin.y = startMin.y + snappedDelta.y;
+        break;
+    case CameraBoundsDragHandle::CornerMaxAMaxB:
+        outMax.x = startMax.x + snappedDelta.x;
+        outMax.y = startMax.y + snappedDelta.y;
+        break;
+    default:
+        break;
+    }
+    // 反転防止: ハンドルがもう一方の端を追い越した場合は、矩形が潰れる方向へクランプする
+    // （min>maxのまま保持して符号が反転するのを避けるため、軸ごとにソートし直す）
+    {
+        const float a = outMin.x, b = outMax.x;
+        outMin.x = std::min(a, b);
+        outMax.x = std::max(a, b);
+    }
+    {
+        const float a = outMin.y, b = outMax.y;
+        outMin.y = std::min(a, b);
+        outMax.y = std::max(a, b);
+    }
+}
+
+bool SceneEditorView::HandleCameraBoundsZoneEdit2D(EmptyObject *owner, CameraBoundsZone2D *zone, SceneEditorCommands *commands,
+    const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (!owner || !zone || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return false;
+    int selectedGroup = -1, selectedRect = -1;
+    zone->GetEditorSelection(selectedGroup, selectedRect);
+    if (selectedGroup < 0 || selectedRect < 0) return false;
+    auto &groups = zone->GetGroups();
+    if (static_cast<size_t>(selectedGroup) >= groups.size()) return false;
+    auto &rects = groups[static_cast<size_t>(selectedGroup)].rects;
+    if (static_cast<size_t>(selectedRect) >= rects.size()) return false;
+    auto &rect = rects[static_cast<size_t>(selectedRect)];
+
+    auto *transform = owner->GetComponent<Transform>();
+    if (!transform) return false;
+    const Matrix4x4 &world = transform->GetWorldMatrix();
+
+    const bool isHovered = ImGui::IsItemHovered();
+    const ImVec2 mouseScreen = ImGui::GetMousePos();
+
+    // ローカルZ=0平面とのカーソル交点（ComputeTilemapCellUnderCursorと同じ式。セル量子化はしない）
+    Vector2 localCursor{};
+    bool hasLocalCursor = false;
+    if (isHovered || isCameraBoundsDragActive_) {
+        const float ndcX = ((mouseScreen.x - imagePos.x) / imageSize.x) * 2.0f - 1.0f;
+        const float ndcY = -(((mouseScreen.y - imagePos.y) / imageSize.y) * 2.0f - 1.0f);
+        const Matrix4x4 invViewProjection = (GetActiveView() * GetActiveProjection()).Inverse();
+        const Vector3 rayStart = UnprojectNdc(invViewProjection, ndcX, ndcY, 0.0f);
+        const Vector3 rayEnd = UnprojectNdc(invViewProjection, ndcX, ndcY, 1.0f);
+        const Matrix4x4 invWorld = world.Inverse();
+        const Vector3 localStart = TransformPoint(rayStart, invWorld);
+        const Vector3 localEnd = TransformPoint(rayEnd, invWorld);
+        const Vector3 localDir = localEnd - localStart;
+        if (std::abs(localDir.z) >= 1e-8f) {
+            const float t = -localStart.z / localDir.z;
+            if (t >= 0.0f && t <= 1.0f) {
+                localCursor = Vector2(localStart.x + localDir.x * t, localStart.y + localDir.y * t);
+                hasLocalCursor = true;
+            }
+        }
+    }
+
+    ImVec2 cornerScreen[4];
+    bool cornersValid = true;
+    const Vector3 localCorners[4] = {
+        Vector3(rect.min.x, rect.min.y, 0.0f), Vector3(rect.min.x, rect.max.y, 0.0f),
+        Vector3(rect.max.x, rect.min.y, 0.0f), Vector3(rect.max.x, rect.max.y, 0.0f),
+    };
+    for (int i = 0; i < 4; ++i) {
+        if (!ProjectToImage(TransformPoint(localCorners[i], world), imagePos, imageSize, cornerScreen[i], false)) cornersValid = false;
+    }
+
+    constexpr float kHandleRadiusPx = 8.0f;
+    const bool insideRect = hasLocalCursor && localCursor.x >= rect.min.x && localCursor.x <= rect.max.x &&
+        localCursor.y >= rect.min.y && localCursor.y <= rect.max.y;
+
+    const bool leftClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+    const bool leftDown = ImGui::IsMouseDown(ImGuiMouseButton_Left);
+    const bool leftReleased = ImGui::IsMouseReleased(ImGuiMouseButton_Left);
+
+    if (!isCameraBoundsDragActive_ && isHovered && cornersValid && hasLocalCursor && leftClicked) {
+        const CameraBoundsDragHandle handle = PickCameraBoundsHandle(mouseScreen, cornerScreen, insideRect, kHandleRadiusPx);
+        if (handle != CameraBoundsDragHandle::None) {
+            isCameraBoundsDragActive_ = true;
+            cameraBoundsDragHandle_ = handle;
+            cameraBoundsDragBeforeJson_ = owner->SaveComponentToJson(zone);
+            cameraBoundsDragStartLocalCursor_ = localCursor;
+            cameraBoundsDragStartMin_ = rect.min;
+            cameraBoundsDragStartMax_ = rect.max;
+        }
+    } else if (isCameraBoundsDragActive_ && leftDown && hasLocalCursor) {
+        const Vector2 deltaLocal = localCursor - cameraBoundsDragStartLocalCursor_;
+        Vector2 newMin, newMax;
+        ApplyCameraBoundsDrag(cameraBoundsDragHandle_, cameraBoundsDragStartMin_, cameraBoundsDragStartMax_, deltaLocal, newMin, newMax);
+        rect.min = newMin;
+        rect.max = newMax;
+    }
+
+    if (isCameraBoundsDragActive_ && leftReleased) {
+        // ドラッグ終了: 変更があった場合のみUndo履歴へ積む（HandleTilemapPaintと同じパターン）
+        isCameraBoundsDragActive_ = false;
+        cameraBoundsDragHandle_ = CameraBoundsDragHandle::None;
+        if (commands) {
+            JSON after = owner->SaveComponentToJson(zone);
+            if (after != cameraBoundsDragBeforeJson_) {
+                commands->PushExecuted(std::make_unique<ComponentEditCommand>(owner, zone, cameraBoundsDragBeforeJson_, after));
+            }
+        }
+    }
+
+    if (cornersValid) {
+        constexpr ImU32 kSelectedColor = IM_COL32(255, 220, 60, 255);
+        auto *drawList = ImGui::GetWindowDrawList();
+        drawList->PushClipRect(imagePos, ImVec2(imagePos.x + imageSize.x, imagePos.y + imageSize.y), true);
+        drawList->AddQuad(cornerScreen[0], cornerScreen[1], cornerScreen[3], cornerScreen[2], kSelectedColor, 2.0f);
+        for (const auto &corner : cornerScreen) drawList->AddCircleFilled(corner, 4.0f, kSelectedColor);
+        drawList->PopClipRect();
+    }
+
+    return isCameraBoundsDragActive_ || (isHovered && insideRect);
+}
+
+bool SceneEditorView::HandleCameraBoundsZoneEdit3D(EmptyObject *owner, CameraBoundsZone3D *zone, SceneEditorCommands *commands,
+    const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (!owner || !zone || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return false;
+    int selectedGroup = -1, selectedRect = -1;
+    zone->GetEditorSelection(selectedGroup, selectedRect);
+    if (selectedGroup < 0 || selectedRect < 0) return false;
+    auto &groups = zone->GetGroups();
+    if (static_cast<size_t>(selectedGroup) >= groups.size()) return false;
+    auto &rects = groups[static_cast<size_t>(selectedGroup)].rects;
+    if (static_cast<size_t>(selectedRect) >= rects.size()) return false;
+    auto &rect = rects[static_cast<size_t>(selectedRect)];
+
+    auto *transform = owner->GetComponent<Transform>();
+    if (!transform) return false;
+    const Matrix4x4 &world = transform->GetWorldMatrix();
+    // フットプリント（XZ）編集用の高さ: 選択中矩形のY範囲の中央に固定する
+    const float editHeight = (rect.min.y + rect.max.y) * 0.5f;
+
+    const bool isHovered = ImGui::IsItemHovered();
+    const ImVec2 mouseScreen = ImGui::GetMousePos();
+
+    // ローカルY=editHeight平面とのカーソル交点（ComputeTilemapCellUnderCursorのZ=0平面版をY基準にしたもの）
+    Vector2 localCursor{}; // (x, z)
+    bool hasLocalCursor = false;
+    if (isHovered || isCameraBoundsDragActive_) {
+        const float ndcX = ((mouseScreen.x - imagePos.x) / imageSize.x) * 2.0f - 1.0f;
+        const float ndcY = -(((mouseScreen.y - imagePos.y) / imageSize.y) * 2.0f - 1.0f);
+        const Matrix4x4 invViewProjection = (GetActiveView() * GetActiveProjection()).Inverse();
+        const Vector3 rayStart = UnprojectNdc(invViewProjection, ndcX, ndcY, 0.0f);
+        const Vector3 rayEnd = UnprojectNdc(invViewProjection, ndcX, ndcY, 1.0f);
+        const Matrix4x4 invWorld = world.Inverse();
+        const Vector3 localStart = TransformPoint(rayStart, invWorld);
+        const Vector3 localEnd = TransformPoint(rayEnd, invWorld);
+        const Vector3 localDir = localEnd - localStart;
+        if (std::abs(localDir.y) >= 1e-8f) {
+            const float t = (editHeight - localStart.y) / localDir.y;
+            if (t >= 0.0f && t <= 1.0f) {
+                localCursor = Vector2(localStart.x + localDir.x * t, localStart.z + localDir.z * t);
+                hasLocalCursor = true;
+            }
+        }
+    }
+
+    ImVec2 cornerScreen[4];
+    bool cornersValid = true;
+    const Vector3 localCorners[4] = {
+        Vector3(rect.min.x, editHeight, rect.min.z), Vector3(rect.min.x, editHeight, rect.max.z),
+        Vector3(rect.max.x, editHeight, rect.min.z), Vector3(rect.max.x, editHeight, rect.max.z),
+    };
+    for (int i = 0; i < 4; ++i) {
+        if (!ProjectToImage(TransformPoint(localCorners[i], world), imagePos, imageSize, cornerScreen[i], false)) cornersValid = false;
+    }
+
+    constexpr float kHandleRadiusPx = 8.0f;
+    const bool insideRect = hasLocalCursor && localCursor.x >= rect.min.x && localCursor.x <= rect.max.x &&
+        localCursor.y >= rect.min.z && localCursor.y <= rect.max.z;
+
+    const bool leftClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+    const bool leftDown = ImGui::IsMouseDown(ImGuiMouseButton_Left);
+    const bool leftReleased = ImGui::IsMouseReleased(ImGuiMouseButton_Left);
+
+    if (!isCameraBoundsDragActive_ && isHovered && cornersValid && hasLocalCursor && leftClicked) {
+        const CameraBoundsDragHandle handle = PickCameraBoundsHandle(mouseScreen, cornerScreen, insideRect, kHandleRadiusPx);
+        if (handle != CameraBoundsDragHandle::None) {
+            isCameraBoundsDragActive_ = true;
+            cameraBoundsDragHandle_ = handle;
+            cameraBoundsDragBeforeJson_ = owner->SaveComponentToJson(zone);
+            cameraBoundsDragStartLocalCursor_ = localCursor;
+            cameraBoundsDragStartMin_ = Vector2(rect.min.x, rect.min.z);
+            cameraBoundsDragStartMax_ = Vector2(rect.max.x, rect.max.z);
+        }
+    } else if (isCameraBoundsDragActive_ && leftDown && hasLocalCursor) {
+        const Vector2 deltaLocal = localCursor - cameraBoundsDragStartLocalCursor_;
+        Vector2 newMin, newMax;
+        ApplyCameraBoundsDrag(cameraBoundsDragHandle_, cameraBoundsDragStartMin_, cameraBoundsDragStartMax_, deltaLocal, newMin, newMax);
+        rect.min.x = newMin.x;
+        rect.min.z = newMin.y;
+        rect.max.x = newMax.x;
+        rect.max.z = newMax.y;
+    }
+
+    if (isCameraBoundsDragActive_ && leftReleased) {
+        isCameraBoundsDragActive_ = false;
+        cameraBoundsDragHandle_ = CameraBoundsDragHandle::None;
+        if (commands) {
+            JSON after = owner->SaveComponentToJson(zone);
+            if (after != cameraBoundsDragBeforeJson_) {
+                commands->PushExecuted(std::make_unique<ComponentEditCommand>(owner, zone, cameraBoundsDragBeforeJson_, after));
+            }
+        }
+    }
+
+    if (cornersValid) {
+        constexpr ImU32 kSelectedColor = IM_COL32(255, 220, 60, 255);
+        auto *drawList = ImGui::GetWindowDrawList();
+        drawList->PushClipRect(imagePos, ImVec2(imagePos.x + imageSize.x, imagePos.y + imageSize.y), true);
+        drawList->AddQuad(cornerScreen[0], cornerScreen[1], cornerScreen[3], cornerScreen[2], kSelectedColor, 2.0f);
+        for (const auto &corner : cornerScreen) drawList->AddCircleFilled(corner, 4.0f, kSelectedColor);
+        drawList->PopClipRect();
+    }
+
+    return isCameraBoundsDragActive_ || (isHovered && insideRect);
+}
+
+void SceneEditorView::DrawCameraBoundsZoneOverlay2D(const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (!context_ || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return;
+    constexpr ImU32 kGroupColors[4] = {
+        IM_COL32(255, 140, 140, 220), IM_COL32(140, 200, 255, 220),
+        IM_COL32(160, 255, 160, 220), IM_COL32(255, 220, 120, 220),
+    };
+
+    auto *drawList = ImGui::GetWindowDrawList();
+    drawList->PushClipRect(imagePos, ImVec2(imagePos.x + imageSize.x, imagePos.y + imageSize.y), true);
+
+    for (auto *object : context_->GetSceneObjects()) {
+        if (!object) continue;
+        auto *zone = object->GetComponent<CameraBoundsZone2D>();
+        if (!zone || !zone->IsActive()) continue;
+        auto *transform = object->GetComponent<Transform>();
+        if (!transform) continue;
+        const Matrix4x4 &world = transform->GetWorldMatrix();
+
+        const auto &groups = zone->GetGroups();
+        for (size_t g = 0; g < groups.size(); ++g) {
+            const ImU32 color = kGroupColors[g % 4];
+            for (const auto &rect : groups[g].rects) {
+                const Vector3 localCorners[4] = {
+                    Vector3(rect.min.x, rect.min.y, 0.0f), Vector3(rect.min.x, rect.max.y, 0.0f),
+                    Vector3(rect.max.x, rect.max.y, 0.0f), Vector3(rect.max.x, rect.min.y, 0.0f),
+                };
+                ImVec2 screenCorners[4];
+                bool allValid = true;
+                for (int i = 0; i < 4 && allValid; ++i) {
+                    allValid = ProjectToImage(TransformPoint(localCorners[i], world), imagePos, imageSize, screenCorners[i], false);
+                }
+                if (!allValid) continue;
+                for (int i = 0; i < 4; ++i) {
+                    drawList->AddLine(screenCorners[i], screenCorners[(i + 1) % 4], color, 2.0f);
+                }
+            }
+        }
+    }
+
+    drawList->PopClipRect();
+}
+
+void SceneEditorView::AppendCameraBoundsZoneDebugLines(std::vector<DebugLineVertex> &out) {
+    if (!context_) return;
+    constexpr Vector4 kGroupColors[4] = {
+        Vector4(1.0f, 0.55f, 0.55f, 1.0f), Vector4(0.55f, 0.78f, 1.0f, 1.0f),
+        Vector4(0.63f, 1.0f, 0.63f, 1.0f), Vector4(1.0f, 0.86f, 0.47f, 1.0f),
+    };
+    static constexpr int kEdges[12][2] = {
+        {0, 1}, {0, 2}, {0, 4}, {1, 3}, {1, 5}, {2, 3},
+        {2, 6}, {3, 7}, {4, 5}, {4, 6}, {5, 7}, {6, 7},
+    };
+
+    for (auto *object : context_->GetSceneObjects()) {
+        if (!object) continue;
+        auto *zone = object->GetComponent<CameraBoundsZone3D>();
+        if (!zone || !zone->IsActive()) continue;
+        auto *transform = object->GetComponent<Transform>();
+        if (!transform) continue;
+        const Matrix4x4 &world = transform->GetWorldMatrix();
+
+        const auto &groups = zone->GetGroups();
+        for (size_t g = 0; g < groups.size(); ++g) {
+            const Vector4 &color = kGroupColors[g % 4];
+            for (const auto &rect : groups[g].rects) {
+                Vector3 corners[8];
+                for (int i = 0; i < 8; ++i) {
+                    const Vector3 local(
+                        (i & 1) ? rect.max.x : rect.min.x,
+                        (i & 2) ? rect.max.y : rect.min.y,
+                        (i & 4) ? rect.max.z : rect.min.z);
+                    corners[i] = local.Transform(world);
+                }
+                for (const auto &edge : kEdges) {
+                    out.push_back({ corners[edge[0]], color });
+                    out.push_back({ corners[edge[1]], color });
+                }
+            }
+        }
+    }
+}
+
+EmptyObject *SceneEditorView::PickCameraBoundsZoneOwnerAtScreenPosition(const ImVec2 &screenPos, const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (!context_ || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return nullptr;
+    if (!showCameraBoundsGizmos_) return nullptr;
+
+    // 未選択の矩形は「内部」ではなく「境界線（4辺）」への近さで判定する。これにより、矩形の内側にある
+    // 他オブジェクトのクリックを妨げない（選択中の矩形は別途HandleCameraBoundsZoneEdit2D/3Dが内部込みで
+    // 判定し、この関数より先に入力を消費するため、ここに来る時点で「選択中の矩形の内部」は除外済み）
+    constexpr float kLineHitDistancePx = 6.0f;
+
+    EmptyObject *bestOwner = nullptr;
+    int bestGroup = -1;
+    int bestRect = -1;
+    float bestDist = kLineHitDistancePx;
+
+    if (displayMode_ == SceneRenderer::EditorDisplayMode::TwoDOnly) {
+        for (auto *object : context_->GetSceneObjects()) {
+            if (!object) continue;
+            auto *zone = object->GetComponent<CameraBoundsZone2D>();
+            if (!zone || !zone->IsActive()) continue;
+            auto *transform = object->GetComponent<Transform>();
+            if (!transform) continue;
+            const Matrix4x4 &world = transform->GetWorldMatrix();
+            const auto &groups = zone->GetGroups();
+            for (size_t g = 0; g < groups.size(); ++g) {
+                const auto &rects = groups[g].rects;
+                for (size_t r = 0; r < rects.size(); ++r) {
+                    const auto &rect = rects[r];
+                    const Vector3 localCorners[4] = {
+                        Vector3(rect.min.x, rect.min.y, 0.0f), Vector3(rect.min.x, rect.max.y, 0.0f),
+                        Vector3(rect.max.x, rect.max.y, 0.0f), Vector3(rect.max.x, rect.min.y, 0.0f),
+                    };
+                    ImVec2 screenCorners[4];
+                    bool allValid = true;
+                    for (int i = 0; i < 4 && allValid; ++i) {
+                        allValid = ProjectToImage(TransformPoint(localCorners[i], world), imagePos, imageSize, screenCorners[i], false);
+                    }
+                    if (!allValid) continue;
+                    for (int i = 0; i < 4; ++i) {
+                        const float dist = DistancePointToSegment(screenPos, screenCorners[i], screenCorners[(i + 1) % 4]);
+                        if (dist < bestDist) {
+                            bestDist = dist;
+                            bestOwner = object;
+                            bestGroup = static_cast<int>(g);
+                            bestRect = static_cast<int>(r);
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        for (auto *object : context_->GetSceneObjects()) {
+            if (!object) continue;
+            auto *zone = object->GetComponent<CameraBoundsZone3D>();
+            if (!zone || !zone->IsActive()) continue;
+            auto *transform = object->GetComponent<Transform>();
+            if (!transform) continue;
+            const Matrix4x4 &world = transform->GetWorldMatrix();
+            const auto &groups = zone->GetGroups();
+            for (size_t g = 0; g < groups.size(); ++g) {
+                const auto &rects = groups[g].rects;
+                for (size_t r = 0; r < rects.size(); ++r) {
+                    const auto &rect = rects[r];
+                    // フットプリント（XZ）の境界線のみ判定対象にする（高さ方向の辺は対象外）。
+                    // 高さはHandleCameraBoundsZoneEdit3Dと同じく選択中矩形のY中央に合わせて描画される
+                    const float editHeight = (rect.min.y + rect.max.y) * 0.5f;
+                    const Vector3 localCorners[4] = {
+                        Vector3(rect.min.x, editHeight, rect.min.z), Vector3(rect.min.x, editHeight, rect.max.z),
+                        Vector3(rect.max.x, editHeight, rect.max.z), Vector3(rect.max.x, editHeight, rect.min.z),
+                    };
+                    ImVec2 screenCorners[4];
+                    bool allValid = true;
+                    for (int i = 0; i < 4 && allValid; ++i) {
+                        allValid = ProjectToImage(TransformPoint(localCorners[i], world), imagePos, imageSize, screenCorners[i], false);
+                    }
+                    if (!allValid) continue;
+                    for (int i = 0; i < 4; ++i) {
+                        const float dist = DistancePointToSegment(screenPos, screenCorners[i], screenCorners[(i + 1) % 4]);
+                        if (dist < bestDist) {
+                            bestDist = dist;
+                            bestOwner = object;
+                            bestGroup = static_cast<int>(g);
+                            bestRect = static_cast<int>(r);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (!bestOwner) return nullptr;
+
+    if (auto *zone2D = bestOwner->GetComponent<CameraBoundsZone2D>()) zone2D->SetEditorSelection(bestGroup, bestRect);
+    if (auto *zone3D = bestOwner->GetComponent<CameraBoundsZone3D>()) zone3D->SetEditorSelection(bestGroup, bestRect);
+    // クリックした矩形をすぐ掴んで編集できるよう、矩形編集トグルを自動で有効にする
+    cameraBoundsEditActive_ = true;
+    isCameraBoundsDragActive_ = false;
+    return bestOwner;
 }
 
 void SceneEditorView::HandleObjectPicking(SceneObjectHierarchy *hierarchy, const ImVec2 &imagePos, const ImVec2 &imageSize) {
@@ -1084,6 +2244,23 @@ void SceneEditorView::HandleObjectPicking(SceneObjectHierarchy *hierarchy, const
     } else if (!additive) {
         hierarchy->SelectObject(nullptr, false);
     }
+}
+
+bool SceneEditorView::HandleCameraBoundsZoneClickSelect(SceneObjectHierarchy *hierarchy, const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (!hierarchy || !context_ || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return false;
+    if (!ImGui::IsItemHovered()) return false;
+    if (!ImGui::IsMouseReleased(ImGuiMouseButton_Left)) return false;
+    // カメラ操作等のドラッグ後のリリースでは選択しない（HandleObjectPickingと同じ判定）
+    constexpr float kClickMoveThreshold = 3.0f;
+    if (ImGui::GetIO().MouseDragMaxDistanceSqr[ImGuiMouseButton_Left] > kClickMoveThreshold * kClickMoveThreshold) return false;
+    if (!gizmoTargetObjects_.empty() && (ImGuizmo::IsUsing() || ImGuizmo::IsOver())) return false;
+
+    EmptyObject *picked = PickCameraBoundsZoneOwnerAtScreenPosition(ImGui::GetMousePos(), imagePos, imageSize);
+    if (!picked) return false;
+
+    const bool additive = ImGui::IsKeyDown(ImGuiMod_Ctrl);
+    hierarchy->SelectObject(picked, additive);
+    return true;
 }
 
 void SceneEditorView::DrawCameraMarkers(const ImVec2 &imagePos, const ImVec2 &imageSize) {
@@ -1365,6 +2542,31 @@ void SceneEditorView::DrawCollider2DOverlay(const ImVec2 &imagePos, const ImVec2
         if (!ProjectToImage(lines[i].position, imagePos, imageSize, p0, false)) continue;
         if (!ProjectToImage(lines[i + 1].position, imagePos, imageSize, p1, false)) continue;
         const Vector4 &c = lines[i].color;
+        const ImU32 col = IM_COL32(
+            static_cast<int>(std::clamp(c.x, 0.0f, 1.0f) * 255.0f),
+            static_cast<int>(std::clamp(c.y, 0.0f, 1.0f) * 255.0f),
+            static_cast<int>(std::clamp(c.z, 0.0f, 1.0f) * 255.0f),
+            static_cast<int>(std::clamp(c.w, 0.0f, 1.0f) * 255.0f));
+        drawList->AddLine(p0, p1, col, 2.0f);
+    }
+    drawList->PopClipRect();
+}
+
+void SceneEditorView::DrawScriptDebugLineOverlay2D(const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (imageSize.x <= 0.0f || imageSize.y <= 0.0f) return;
+    const auto &lines = ScriptDebugDraw::GetLines();
+    if (lines.empty()) return;
+
+    // 3D側（UpdateEditorDebugDraw内でscreenBuffer_へGPU描画）と違い、2D専用カメラで
+    // 画面座標へ投影してImGuiで描く（DrawCollider2DOverlayと同じ方式）。各線が色を持っているため
+    // コライダーオーバーレイのようなトリガー/非トリガーでの色分岐は不要
+    auto *drawList = ImGui::GetWindowDrawList();
+    drawList->PushClipRect(imagePos, ImVec2(imagePos.x + imageSize.x, imagePos.y + imageSize.y), true);
+    for (const auto &line : lines) {
+        ImVec2 p0, p1;
+        if (!ProjectToImage(line.start, imagePos, imageSize, p0, false)) continue;
+        if (!ProjectToImage(line.end, imagePos, imageSize, p1, false)) continue;
+        const Vector4 &c = line.color;
         const ImU32 col = IM_COL32(
             static_cast<int>(std::clamp(c.x, 0.0f, 1.0f) * 255.0f),
             static_cast<int>(std::clamp(c.y, 0.0f, 1.0f) * 255.0f),
@@ -1708,11 +2910,24 @@ void SceneEditorView::ShowGizmo(const std::unordered_set<EmptyObject *> &selecte
     // このフレームの増分（デルタ）を算出するため、Manipulate直前の状態を控えておく
     const Matrix4x4 beforeManipulate = groupGizmoMatrix_;
 
+    // グリッドスナップ（オブジェクトのグリッド配置）。Ctrlキー押下中はトグル設定を一時的に反転する
+    // （Unity等のシーンビューと同じ操作感）。ImGuizmoは操作種別に応じてsnapの意味が変わる
+    // （TRANSLATE/SCALEはXYZ各軸の間隔、ROTATE/ROTATE_Zはsnap.xのみを角度[度]として使う）
+    const bool useSnap = gizmoSnapEnabled_ != ImGui::IsKeyDown(ImGuiMod_Ctrl);
+    float snap[3] = { gizmoSnapTranslate_, gizmoSnapTranslate_, gizmoSnapTranslate_ };
+    if (effectiveOperation == ImGuizmo::ROTATE || effectiveOperation == ImGuizmo::ROTATE_Z) {
+        snap[0] = gizmoSnapRotateDegrees_;
+    } else if (effectiveOperation == ImGuizmo::SCALE) {
+        snap[0] = snap[1] = snap[2] = gizmoSnapScale_;
+    }
+
     ImGuizmo::Manipulate(
         &view.m[0][0], &projection.m[0][0],
         effectiveOperation,
         isSingle ? static_cast<ImGuizmo::MODE>(gizmoMode_) : ImGuizmo::WORLD,
-        &groupGizmoMatrix_.m[0][0]);
+        &groupGizmoMatrix_.m[0][0],
+        nullptr,
+        useSnap ? snap : nullptr);
 
     if (ImGuizmo::IsUsing()) {
         // 操作開始時に変更前の状態を全対象分保存する（Undo用）

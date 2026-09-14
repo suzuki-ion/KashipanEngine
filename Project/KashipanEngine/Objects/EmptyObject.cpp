@@ -2,6 +2,8 @@
 #include "Objects/Components/Transform.h"
 #include "Scene/SceneContext.h"
 
+#include <unordered_set>
+
 namespace KashipanEngine {
 
 EmptyObject::EmptyObject(SceneContext *ownerSceneContext, const std::string &name) {
@@ -19,6 +21,22 @@ void EmptyObject::CopyStateFrom(Passkey<Scene>, const EmptyObject &source) {
     SetTag(source.tagName_);
     for (const auto &comp : source.components_) {
         if (!comp.first) continue;
+
+        // Transformはコンストラクタで既定のものが1つ追加済みのため、そのまま複製・追加すると
+        // 2つ目のTransformが増えてしまう。GetComponent<T>()は型が一致する最初の1つ（＝先に
+        // 追加済みの既定Transform）を返すため、複製した値が反映されずscale等が常に初期値(1,1,1)に
+        // なってしまう。既定のTransformへ値だけ反映することで対処する（親子関係はClone()と同様に
+        // 引き継がない）
+        if (auto *sourceTransform = dynamic_cast<Transform *>(comp.first)) {
+            if (auto *destTransform = GetComponent<Transform>()) {
+                destTransform->SetTranslate(sourceTransform->GetTranslate());
+                destTransform->SetRotateQuaternion(sourceTransform->GetRotateQuaternion());
+                destTransform->SetScale(sourceTransform->GetScale());
+                destTransform->SetTag(comp.first->GetTagName());
+                continue;
+            }
+        }
+
         auto clonedComp = comp.first->Clone();
         if (!clonedComp) continue;
         // 派生クラスのCloneは基底クラスのタグを複製しないため、ここで引き継ぐ
@@ -103,6 +121,10 @@ IObjectComponent *EmptyObject::AddComponent(std::unique_ptr<IObjectComponent> co
     if (!pool) return nullptr;
     IObjectComponent *placed = pool->EmplaceDefault();
     if (!placed) return nullptr;
+    // LoadFromJsonInterface（派生クラスのLoadFromJson）はUpdate()等でGetOwnerObjectContext()に
+    // 依存する場合があるため、正式な初期化（Initialize呼び出し）はRegisterPlacedComponentに
+    // 任せつつ、コンテキストだけは状態転送より前に設定しておく（未設定のままだとnull参照になる）
+    placed->InitializeInterface(Passkey<EmptyObject>(), objectContext_.get(), ownerSceneContext_, false);
     placed->LoadFromJsonInterface(Passkey<EmptyObject>(), comp->SaveToJsonInterface(Passkey<EmptyObject>()));
     return RegisterPlacedComponent(placed, typeIndex);
 }
@@ -126,6 +148,7 @@ IObjectComponent *EmptyObject::AddComponentByTypeID(size_t typeIndex) {
 
 bool EmptyObject::RemoveComponent(const IObjectComponent *component) {
     if (component == nullptr) return false;
+    if (dynamic_cast<const Transform *>(component)) return false;
     auto it = componentsIndexByPointer_.find(component);
     if (it == componentsIndexByPointer_.end()) return false;
     size_t index = it->second;
@@ -149,6 +172,14 @@ bool EmptyObject::RemoveComponent(const IObjectComponent *component) {
 
 void EmptyObject::ClearComponents() {
     Finalize();
+    ReleaseComponentsWithoutFinalize();
+}
+
+void EmptyObject::ReleaseFinalizedComponents(Passkey<Scene>) {
+    ReleaseComponentsWithoutFinalize();
+}
+
+void EmptyObject::ReleaseComponentsWithoutFinalize() {
     for (auto &compPair : components_) {
         if (!compPair.first) continue;
         if (ownerSceneContext_) {
@@ -166,12 +197,15 @@ void EmptyObject::ClearComponents() {
 }
 
 bool EmptyObject::IsActive() const {
-    auto *transform = GetComponent<Transform>();
-    // Transform::GetParentObject()（UUID経由）は既に対象オブジェクトの生存確認を済ませて
-    // 返すため、ここで改めて objectsExistingSet_ 経由の再確認をする必要はない
-    auto *parentObject = transform ? transform->GetParentObject() : nullptr;
-    bool parentActive = parentObject ? parentObject->IsActive() : true;
-    return isActive_ && parentActive;
+    const EmptyObject *current = this;
+    std::unordered_set<const EmptyObject *> visited;
+    while (current) {
+        if (!visited.insert(current).second || !current->isActive_) return false;
+        auto *transform = current->GetComponent<Transform>();
+        // Transform::GetParentObject()はシーン内での生存確認済みポインタを返す。
+        current = transform ? transform->GetParentObject() : nullptr;
+    }
+    return true;
 }
 
 void EmptyObject::SetActive(bool active) {
@@ -261,6 +295,8 @@ JSON EmptyObject::SaveToJson(Passkey<Scene>) {
 }
 
 bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
+    if (!json.is_object()) return false;
+    try {
     ClearComponents();
     name_ = json.value("name", "EmptyObject");
     SetTag(json.value("tag", std::string{}));
@@ -273,6 +309,7 @@ bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
     std::vector<std::pair<IObjectComponent *, JSON>> loadedComponents;
     // 先にコンポーネントを全て登録してからロードする
     for (const auto &compJson : componentsJson) {
+        if (!compJson.is_object() || !compJson.contains("data") || !compJson["data"].is_object()) continue;
         std::string typeName = compJson.value("type", "");
         if (typeName.empty()) continue;
         auto comp = CreateObjectComponentByType(typeName);
@@ -282,6 +319,9 @@ bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
         }
         loadedComponents.emplace_back(AddComponent(std::move(comp)), compJson["data"]);
     }
+    // Transformは階層・描画・物理処理が前提とする必須コンポーネント。
+    // 古いデータや壊れたJSONで欠落していても、必ず既定値で補う。
+    if (!GetComponent<Transform>()) AddComponent(std::make_unique<Transform>());
     // 各コンポーネントにJSONデータをロードさせる
     for (const auto &compPair : loadedComponents) {
         IObjectComponent *comp = compPair.first;
@@ -289,7 +329,11 @@ bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
         if (!comp) continue;
         comp->LoadFromJsonInterface(Passkey<EmptyObject>(), compJson);
     }
-    return true;
+        return true;
+    } catch (...) {
+        if (!GetComponent<Transform>()) AddComponent(std::make_unique<Transform>());
+        return false;
+    }
 }
 
 void EmptyObject::Initialize() {

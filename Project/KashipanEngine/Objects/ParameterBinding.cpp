@@ -338,7 +338,7 @@ void ShowParameterBindingListImGui(std::vector<ParameterBinding> &bindings, cons
         bindings.push_back(candidates.empty() ? ParameterBinding{} : candidates.front().binding);
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", "値の適用先を追加する。候補は同オブジェクトのコンポーネントのfloat系パラメータと\nScriptComponentの[SerializeField]付きfloat変数");
+        ImGuiCustom::SetTooltipWrapped("%s", "値の適用先を追加する。候補は同オブジェクトのコンポーネントのfloat系パラメータと\nScriptComponentの[SerializeField]付きfloat変数");
     }
 
     int removeBindingIndex = -1;

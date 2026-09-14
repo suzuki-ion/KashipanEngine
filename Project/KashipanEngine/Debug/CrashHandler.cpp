@@ -82,6 +82,13 @@ void LogCrashDiagnostics(EXCEPTION_POINTERS *exceptionInfo) {
 } // namespace
 
 LONG __stdcall CrashHandler(EXCEPTION_POINTERS *exceptionInfo) {
+    // ログワーカー自身の障害ではLog()が同じmutexを再取得し得るため、診断ログと
+    // シーン保存を通らず、強制終了通知とダンプ出力だけを行う。
+    if (IsLoggerWorkerThread(PasskeyForCrashHandler{})) {
+        ForceShutdownLogger(PasskeyForCrashHandler{});
+        ExportDumpFile(exceptionInfo);
+        return EXCEPTION_EXECUTE_HANDLER;
+    }
     LogScope scope;
     Log(Translation("engine.crashhandler.crash.detected"), LogSeverity::Critical);
     LogCrashDiagnostics(exceptionInfo);

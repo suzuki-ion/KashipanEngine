@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "Scene/Editor/EditorWindowChrome.h"
+#include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
@@ -44,7 +45,7 @@ void TranslationEditor::ShowImGui() {
     // 初回は現在エンジンが使っている言語を編集対象にする
     if (language_.empty()) language_ = GetCurrentLanguage();
 
-    ImGui::TextDisabled("%s", TranslationC("editor.translationeditor.description"));
+    ImGuiCustom::TextDisabledWrapped("%s", TranslationC("editor.translationeditor.description"));
 
     ShowLanguageSelector();
     ImGui::Separator();
@@ -79,9 +80,9 @@ void TranslationEditor::ShowLanguageSelector() {
     const std::string &filePath = GetProjectTranslationFilePath(language_);
     ImGui::SameLine();
     if (filePath.empty()) {
-        ImGui::TextDisabled("%s", TranslationC("editor.translationeditor.nofilepath"));
+        ImGuiCustom::TextDisabledWrapped("%s", TranslationC("editor.translationeditor.nofilepath"));
     } else {
-        ImGui::TextDisabled("%s", filePath.c_str());
+        ImGuiCustom::TextDisabledWrapped("%s", filePath.c_str());
     }
 }
 
@@ -96,7 +97,7 @@ void TranslationEditor::ShowProjectTranslations() {
 
     const auto entries = SortedEntries(GetProjectTranslations(language_));
     if (entries.empty()) {
-        ImGui::TextDisabled("%s", TranslationC("editor.translationeditor.project.empty"));
+        ImGuiCustom::TextDisabledWrapped("%s", TranslationC("editor.translationeditor.project.empty"));
     }
 
     // 反復中にマップを書き換えないよう、操作は一旦控えてから適用する
@@ -131,7 +132,7 @@ void TranslationEditor::ShowProjectTranslations() {
                 ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.3f, 1.0f), "%s",
                     TranslationC("editor.translationeditor.overriding"));
                 if (ImGui::IsItemHovered()) {
-                    ImGui::SetTooltip("%s", TranslationC("editor.translationeditor.overriding.tooltip"));
+                    ImGuiCustom::SetTooltipWrapped("%s", TranslationC("editor.translationeditor.overriding.tooltip"));
                 }
             }
 
@@ -150,7 +151,7 @@ void TranslationEditor::ShowProjectTranslations() {
                 pendingRemoveKey = key;
             }
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%s", IsGlobalTranslationKey(language_, key)
+                ImGuiCustom::SetTooltipWrapped("%s", IsGlobalTranslationKey(language_, key)
                     ? TranslationC("editor.translationeditor.remove.tooltip.override")
                     : TranslationC("editor.translationeditor.remove.tooltip"));
             }
@@ -233,7 +234,7 @@ void TranslationEditor::ShowGlobalTranslationReference() {
         return;
     }
 
-    ImGui::TextDisabled("%s", TranslationC("editor.translationeditor.global.description"));
+    ImGuiCustom::TextDisabledWrapped("%s", TranslationC("editor.translationeditor.global.description"));
 
     ImGui::SetNextItemWidth(240.0f);
     ImGui::InputTextWithHint("##GlobalTranslationFilter",
@@ -292,7 +293,7 @@ void TranslationEditor::ShowGlobalTranslationReference() {
             }
             ImGui::EndDisabled();
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%s", alreadyOverridden
+                ImGuiCustom::SetTooltipWrapped("%s", alreadyOverridden
                     ? TranslationC("editor.translationeditor.override.tooltip.already")
                     : TranslationC("editor.translationeditor.override.tooltip"));
             }

@@ -162,6 +162,16 @@ void InputCommand::RegisterCommand(const std::string& action, ControllerAnalog a
     bindings_[action].push_back(b);
 }
 
+std::vector<std::string> InputCommand::GetRegisteredCommandNames() const {
+    std::vector<std::string> names;
+    names.reserve(bindings_.size());
+    for (const auto& [action, binds] : bindings_) {
+        names.push_back(action);
+    }
+    std::sort(names.begin(), names.end());
+    return names;
+}
+
 InputCommand::ReturnInfo InputCommand::Evaluate(const std::string& action) const {
     if (!input_) return MakeReturnInfo(false, 0.0f);
 

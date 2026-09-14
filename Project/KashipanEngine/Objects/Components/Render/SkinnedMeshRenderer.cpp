@@ -308,12 +308,12 @@ void SkinnedMeshRenderer::ShowImGui() {
     PipelineVariantBuilder::Show(pipelineName_);
     ImGui::Checkbox(TranslationLabel("component.skinnedmeshrenderer.cast_shadows"), &castShadows_);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", TranslationC("component.skinnedmeshrenderer.desc_1"));
+        ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.skinnedmeshrenderer.desc_1"));
     }
 
     ImGui::ColorEdit4(TranslationLabel("component.skinnedmeshrenderer.instance_color"), &instanceColor_.x);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", TranslationC("component.skinnedmeshrenderer.desc_2"));
+        ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.skinnedmeshrenderer.desc_2"));
     }
     const char *kColorBlendModeLabels[] = { TranslationC("component.common.blendmode.override"), TranslationC("component.common.blendmode.multiply"), TranslationC("component.common.blendmode.add"), TranslationC("component.common.blendmode.subtract") };
     int blendModeIndex = static_cast<int>(instanceColorBlendMode_);
@@ -321,16 +321,67 @@ void SkinnedMeshRenderer::ShowImGui() {
         instanceColorBlendMode_ = static_cast<ColorBlendMode>(blendModeIndex);
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", TranslationC("component.skinnedmeshrenderer.desc_3"));
+        ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.skinnedmeshrenderer.desc_3"));
+    }
+
+    ImGui::TextUnformatted(TranslationC("component.common.instance_uv_transform"));
+    if (ImGui::IsItemHovered()) {
+        ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_instance_uv"));
+    }
+    ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_translate"), &instanceUvTranslate_.x, 0.001f);
+    float instanceUvRotationDeg = instanceUvRotation_ * 180.0f / 3.14159265f;
+    if (ImGui::DragFloat(TranslationLabel("component.common.instance_uv_rotation"), &instanceUvRotationDeg, 0.1f, -180.0f, 180.0f)) {
+        instanceUvRotation_ = instanceUvRotationDeg * 3.14159265f / 180.0f;
+    }
+    ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_scale"), &instanceUvScale_.x, 0.001f);
+    ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_pivot"), &instanceUvPivot_.x, 0.001f);
+    if (ImGui::IsItemHovered()) {
+        ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_instance_uv_pivot"));
+    }
+    const char *kUvCombineModeLabels[] = {
+        TranslationC("component.common.uvcombinemode.material_then_instance"),
+        TranslationC("component.common.uvcombinemode.instance_then_material"),
+        TranslationC("component.common.uvcombinemode.instance_only"),
+    };
+    int uvCombineModeIndex = static_cast<int>(instanceUvCombineMode_);
+    if (ImGui::Combo(TranslationLabel("component.common.instance_uv_combine_mode"), &uvCombineModeIndex, kUvCombineModeLabels, IM_ARRAYSIZE(kUvCombineModeLabels))) {
+        instanceUvCombineMode_ = static_cast<UVCombineMode>(uvCombineModeIndex);
+    }
+    // ピクセル基準（0～テクスチャの幅・高さ）でのインスタンスUV編集。内部値（0～1のUV基準）と相互に連動する
+    {
+        auto *materialForUv = MaterialManager::GetMaterial(GetMaterialHandle());
+        const auto textureView = TextureManager::GetTextureView(materialForUv ? materialForUv->textureHandle : TextureManager::kInvalidHandle);
+        const float texWidth = static_cast<float>(textureView.GetWidth());
+        const float texHeight = static_cast<float>(textureView.GetHeight());
+        const bool hasTextureSize = texWidth > 0.0f && texHeight > 0.0f;
+
+        ImGui::BeginDisabled(!hasTextureSize);
+        ImGui::TextUnformatted(TranslationC("component.common.instance_uv_transform_pixel"));
+        Vector2 pxTranslate = hasTextureSize
+            ? Vector2(instanceUvTranslate_.x * texWidth, instanceUvTranslate_.y * texHeight) : Vector2::Zero();
+        if (ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_translate_pixel"), &pxTranslate.x, 0.5f) && hasTextureSize) {
+            instanceUvTranslate_ = Vector2(pxTranslate.x / texWidth, pxTranslate.y / texHeight);
+        }
+        Vector2 pxScale = hasTextureSize
+            ? Vector2(instanceUvScale_.x * texWidth, instanceUvScale_.y * texHeight) : Vector2::Zero();
+        if (ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_scale_pixel"), &pxScale.x, 0.5f) && hasTextureSize) {
+            instanceUvScale_ = Vector2(pxScale.x / texWidth, pxScale.y / texHeight);
+        }
+        Vector2 pxPivot = hasTextureSize
+            ? Vector2(instanceUvPivot_.x * texWidth, instanceUvPivot_.y * texHeight) : Vector2::Zero();
+        if (ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_pivot_pixel"), &pxPivot.x, 0.5f) && hasTextureSize) {
+            instanceUvPivot_ = Vector2(pxPivot.x / texWidth, pxPivot.y / texHeight);
+        }
+        ImGui::EndDisabled();
     }
 
     ImGui::DragInt(TranslationLabel("component.common.render_priority"), &renderPriority_);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", TranslationC("component.common.desc_render_priority"));
+        ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_render_priority"));
     }
     ImGui::Checkbox(TranslationLabel("component.common.allow_instancing"), &allowInstancing_);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", TranslationC("component.common.desc_allow_instancing"));
+        ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_allow_instancing"));
     }
 
     const auto materialEntries = MaterialManager::GetLoadedMaterialListEntries();
@@ -376,14 +427,14 @@ void SkinnedMeshRenderer::ShowImGui() {
         quality_ = static_cast<SkinQuality>(qualityIndex);
     }
     if (!GetAnimator()) {
-        ImGui::TextDisabled("%s", TranslationC("component.skinnedmeshrenderer.no_animator_on_this_object_bind_pose_only"));
+        ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.skinnedmeshrenderer.no_animator_on_this_object_bind_pose_only"));
     }
     ImGui::Text(TranslationC("component.skinnedmeshrenderer.vertex_count_u"), vertexCount_);
     ImGui::Text(TranslationC("component.skinnedmeshrenderer.joint_count_d"), static_cast<int>(jointNames_.size()));
 
     if (ImGui::TreeNode(TranslationLabel("component.skinnedmeshrenderer.blend_shapes"))) {
         if (blendShapes_.empty()) {
-            ImGui::TextDisabled("%s", TranslationC("component.skinnedmeshrenderer.no_blend_shapes_on_this_mesh"));
+            ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.skinnedmeshrenderer.no_blend_shapes_on_this_mesh"));
         }
         // 一覧はメッシュ（インポートされたBlendShape）から自動的に同期されるため、追加・削除はできない
         // （Unityと同じ挙動）。ただしFBX（Blenderのシェイプキー順）とAssimpのインポート順が
@@ -417,7 +468,7 @@ JSON SkinnedMeshRenderer::SaveToJson() const {
     json["targetObjectID"] = ToJSON(targetObjectID_);
     json["pipelineName"] = pipelineName_;
     // 後方互換のため単一の"materialName"（スロット0）も併記する
-    json["materialName"] = materialNames_.front();
+    json["materialName"] = GetMaterialName();
     json["materialNames"] = materialNames_;
     for (const auto &name : excludedRenderTargetNames_) {
         json["excludedRenderTargetNames"].push_back(name);
@@ -425,6 +476,11 @@ JSON SkinnedMeshRenderer::SaveToJson() const {
     json["castShadows"] = castShadows_;
     json["instanceColor"] = ToJSON(instanceColor_);
     json["instanceColorBlendMode"] = static_cast<int>(instanceColorBlendMode_);
+    json["instanceUvTranslate"] = ToJSON(instanceUvTranslate_);
+    json["instanceUvRotation"] = instanceUvRotation_;
+    json["instanceUvScale"] = ToJSON(instanceUvScale_);
+    json["instanceUvPivot"] = ToJSON(instanceUvPivot_);
+    json["instanceUvCombineMode"] = static_cast<int>(instanceUvCombineMode_);
     json["renderPriority"] = renderPriority_;
     json["allowInstancing"] = allowInstancing_;
     json["quality"] = static_cast<int>(quality_);
@@ -460,6 +516,11 @@ bool SkinnedMeshRenderer::LoadFromJson(const JSON &json) {
     castShadows_ = json.value("castShadows", true);
     instanceColor_ = json.contains("instanceColor") ? FromJSON<Vector4>(json["instanceColor"]) : Vector4(1.0f, 1.0f, 1.0f, 1.0f);
     instanceColorBlendMode_ = static_cast<ColorBlendMode>(json.value("instanceColorBlendMode", static_cast<int>(ColorBlendMode::Multiply)));
+    instanceUvTranslate_ = json.contains("instanceUvTranslate") ? FromJSON<Vector2>(json["instanceUvTranslate"]) : Vector2(0.0f, 0.0f);
+    instanceUvRotation_ = json.value("instanceUvRotation", 0.0f);
+    instanceUvScale_ = json.contains("instanceUvScale") ? FromJSON<Vector2>(json["instanceUvScale"]) : Vector2(1.0f, 1.0f);
+    instanceUvPivot_ = json.contains("instanceUvPivot") ? FromJSON<Vector2>(json["instanceUvPivot"]) : Vector2(0.5f, 0.5f);
+    instanceUvCombineMode_ = static_cast<UVCombineMode>(json.value("instanceUvCombineMode", static_cast<int>(UVCombineMode::MaterialThenInstance)));
     renderPriority_ = json.value("renderPriority", 0);
     allowInstancing_ = json.value("allowInstancing", true);
     quality_ = static_cast<SkinQuality>(json.value("quality", static_cast<int>(SkinQuality::Auto)));

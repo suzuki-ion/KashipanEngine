@@ -31,6 +31,7 @@
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/FileIO/TextFile.h"
+#include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
@@ -71,7 +72,7 @@ AssetIcon GetAssetIcon(const std::string &extension) {
     if (extension == ".prefab") return AssetIcon::Prefab;
     if (extension == ".as") return AssetIcon::Script;
     if (in({ ".hlsl", ".hlsli" })) return AssetIcon::Shader;
-    if (in({ ".ttf", ".otf" })) return AssetIcon::Font;
+    if (in({ ".ttf", ".otf", ".fnt" })) return AssetIcon::Font;
     return AssetIcon::File;
 }
 
@@ -252,7 +253,7 @@ void AssetsWindow::ShowImGui() {
     }
     ImGui::EndDisabled();
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", TranslationC("editor.assets.up"));
+        ImGuiCustom::SetTooltipWrapped("%s", TranslationC("editor.assets.up"));
     }
     ImGui::SameLine();
     if (ImGui::Button(TranslationLabel("editor.common.refresh"))) {
@@ -301,7 +302,7 @@ void AssetsWindow::ShowImGui() {
 }
 
 bool AssetsWindow::IsSupportedExtension(const std::string &ext) {
-    static const std::array<const char *, 42> kSupported = {
+    static const std::array<const char *, 43> kSupported = {
         // テクスチャ（TextureManager対応形式）
         ".png", ".jpg", ".jpeg", ".bmp", ".tga", ".dds", ".hdr", ".tif", ".tiff", ".gif", ".webp",
         // モデル（ModelManager対応形式）
@@ -321,7 +322,7 @@ bool AssetsWindow::IsSupportedExtension(const std::string &ext) {
         // シェーダー
         ".hlsl", ".hlsli",
         // フォント・翻訳・テキスト
-        ".ttf", ".otf", ".csv", ".txt",
+        ".ttf", ".otf", ".fnt", ".csv", ".txt",
     };
     return std::find_if(kSupported.begin(), kSupported.end(),
         [&ext](const char *s) { return ext == s; }) != kSupported.end();
@@ -500,15 +501,18 @@ void AssetsWindow::ShowFileGrid() {
         }
         (void)activated;
 
-        // テクスチャ/動画/マテリアル/スクリプト/プレハブファイルはD&Dでコンポーネントのフィールド指定や
+        // テクスチャ/動画/音声/マテリアル/スクリプト/プレハブファイルはD&Dでコンポーネントのフィールド指定や
         // シーンへの配置ができるようにする
         if (!file.isFolder && (IsTextureExtension(file.extension) || IsVideoExtension(file.extension) ||
-            file.extension == ".mat" || file.extension == ".as" || file.extension == ".prefab")) {
+            IsAudioExtension(file.extension) || file.extension == ".mat" || file.extension == ".as" ||
+            file.extension == ".prefab")) {
             if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
                 if (IsTextureExtension(file.extension)) {
                     SetAssetDragDropPayload(kTextureAssetDragDropType, ToAssetsRelativePath(file.path));
                 } else if (IsVideoExtension(file.extension)) {
                     SetAssetDragDropPayload(kVideoAssetDragDropType, ToAssetsRelativePath(file.path));
+                } else if (IsAudioExtension(file.extension)) {
+                    SetAssetDragDropPayload(kAudioAssetDragDropType, ToAssetsRelativePath(file.path));
                 } else if (file.extension == ".mat") {
                     SetAssetDragDropPayload(kMaterialAssetDragDropType, ToAssetsRelativePath(file.path));
                 } else if (file.extension == ".prefab") {
@@ -536,7 +540,7 @@ void AssetsWindow::ShowFileGrid() {
         }
         ShowFileContextMenu(file);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", file.path.c_str());
+            ImGuiCustom::SetTooltipWrapped("%s", file.path.c_str());
         }
 
         // ファイル名（セル幅で折り返し）
@@ -737,14 +741,21 @@ void AssetsWindow::CreatePrefabFromObject(EmptyObject *obj) {
 
     if (!PrefabAssetManager::CreatePrefabFile(prefabID, prefabJson, filePath)) return;
 
-    // 対象オブジェクトを、今作成したPrefabのインスタンスとしてリンクする
-    if (commands_) {
-        commands_->Execute(std::make_unique<AddComponentCommand>(obj, "PrefabInstanceComponent"));
+    // 既存リンクの付け替えは直接変更だけで終わらせず、Undo履歴へ記録する。
+    if (auto *comp = obj->GetComponent<PrefabInstanceComponent>()) {
+        const JSON before = obj->SaveComponentToJson(comp);
+        comp->SetPrefabID(prefabID);
+        if (commands_) {
+            commands_->PushExecuted(std::make_unique<ComponentEditCommand>(
+                obj, comp, before, obj->SaveComponentToJson(comp)));
+        }
+    } else if (commands_) {
+        if (commands_->Execute(std::make_unique<AddComponentCommand>(obj, "PrefabInstanceComponent"))) {
+            if (auto *prefabComp = obj->GetComponent<PrefabInstanceComponent>()) prefabComp->SetPrefabID(prefabID);
+        }
     } else {
         obj->AddComponent(CreateObjectComponentByType("PrefabInstanceComponent"));
-    }
-    if (auto *comp = obj->GetComponent<PrefabInstanceComponent>()) {
-        comp->SetPrefabID(prefabID);
+        if (auto *prefabComp = obj->GetComponent<PrefabInstanceComponent>()) prefabComp->SetPrefabID(prefabID);
     }
 
     RefreshFileList();
@@ -929,6 +940,9 @@ void AssetsWindow::ShowRenameModal() {
                     if (currentFolder_ == contextMenuTargetPath_) {
                         currentFolder_ = ProjectPaths::ToLogical(PathToUtf8String(newPath));
                     }
+                    PrefabAssetManager::RenamePrefabFolder(
+                        ProjectPaths::ToLogical(PathToUtf8String(oldPath)),
+                        ProjectPaths::ToLogical(PathToUtf8String(newPath)));
                     RefreshFolderTree();
                 } else {
                     // 実ファイルのリネームに成功したら、対応するマネージャーの登録名/パスも追従させる
@@ -984,10 +998,16 @@ void AssetsWindow::ShowDeleteConfirmModal() {
             std::error_code ec;
             if (contextMenuTargetIsFolder_) {
                 std::filesystem::remove_all(ToPhysicalPath(contextMenuTargetPath_), ec);
-                RefreshFolderTree();
+                if (!ec) {
+                    PrefabAssetManager::UnregisterPrefabPath(contextMenuTargetPath_, true);
+                    RefreshFolderTree();
+                }
             } else {
                 std::filesystem::remove(ToPhysicalPath(contextMenuTargetPath_), ec);
-                RefreshFileList();
+                if (!ec) {
+                    PrefabAssetManager::UnregisterPrefabPath(contextMenuTargetPath_, false);
+                    RefreshFileList();
+                }
             }
             ImGui::CloseCurrentPopup();
         }

@@ -138,6 +138,7 @@ ScreenBuffer::~ScreenBuffer() {
 
 bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
     DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat) {
+    LogScope scope;
     Destroy();
 
     width_ = width;
@@ -145,12 +146,21 @@ bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
     colorFormat_ = colorFormat;
     depthFormat_ = depthFormat;
 
-    if (!sDirectXCommon_) return false;
+    if (!sDirectXCommon_) {
+        Log(Translation("engine.screenbuffer.initialize.failed.nodirectxcommon"), LogSeverity::Error);
+        return false;
+    }
 
     commandSlotIndex_ = sDirectXCommon_->AcquireCommandObjects(Passkey<ScreenBuffer>{});
     auto *cmd = sDirectXCommon_->GetCommandObjects(Passkey<ScreenBuffer>{}, commandSlotIndex_);
     if (!cmd || !cmd->GetCommandAllocator() || !cmd->GetCommandList()) {
         commandSlotIndex_ = -1;
+        // AcquireCommandObjects失敗（共有コマンドオブジェクトプール枯渇）の詳細は
+        // DirectXCommon::AcquireCommandObjectsInternal側のログを参照。ここでは
+        // 「このScreenBufferの生成自体が失敗しbuffer_がnullptrのままになる」ことを
+        // サイズ情報付きで残す（Play/Stopで内容が描画されなくなる問題の切り分け用）
+        Log(Translation("engine.screenbuffer.initialize.failed.noslot") +
+            std::to_string(width_) + "x" + std::to_string(height_), LogSeverity::Error);
         return false;
     }
     dx12Commands_ = cmd;
@@ -180,7 +190,11 @@ bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
     dsBufferHeight_ = height_;
 
     for (size_t i = 0; i < kBufferCount; ++i) {
-        if (!renderTargets_[i] || !depthStencils_[i] || !shaderResources_[i]) return false;
+        if (!renderTargets_[i] || !depthStencils_[i] || !shaderResources_[i]) {
+            Log(Translation("engine.screenbuffer.initialize.failed.doublebuffer") +
+                std::to_string(width_) + "x" + std::to_string(height_), LogSeverity::Error);
+            return false;
+        }
     }
 
     previewTarget_ = std::make_unique<RenderTargetResource>(width_, height_, colorFormat_);
@@ -189,7 +203,11 @@ bool ScreenBuffer::Initialize(std::uint32_t width, std::uint32_t height,
     previewTarget_->SetCommandList(cmd->GetCommandList());
     previewBufferWidth_ = width_;
     previewBufferHeight_ = height_;
-    if (!previewTarget_ || !previewShaderResource_) return false;
+    if (!previewTarget_ || !previewShaderResource_) {
+        Log(Translation("engine.screenbuffer.initialize.failed.previewbuffer") +
+            std::to_string(width_) + "x" + std::to_string(height_), LogSeverity::Error);
+        return false;
+    }
 
     return true;
 }

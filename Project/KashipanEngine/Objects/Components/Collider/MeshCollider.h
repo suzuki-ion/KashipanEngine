@@ -86,7 +86,7 @@ protected:
     void ShowImGui() override {
         ICollider::ShowImGui();
         ImGui::Checkbox(TranslationLabel("component.meshcollider.convex"), &convex_);
-        ImGui::TextDisabled("%s", TranslationC("component.meshcollider.convex_meshcollider"));
+        ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.meshcollider.convex_meshcollider"));
 
         // 読み込み済みモデルの中から選択する（未指定の場合はMeshFilterのメッシュを使用）
         std::vector<std::string> modelPaths;

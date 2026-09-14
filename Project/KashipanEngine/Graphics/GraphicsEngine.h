@@ -11,6 +11,7 @@ class DirectXCommon;
 class PipelineManager;
 class Renderer;
 class SceneContext;
+class Scene;
 
 /// @brief グラフィックスエンジンクラス
 class GraphicsEngine final {
@@ -25,6 +26,17 @@ public:
 
     /// @brief レンダラーのGPUリソース全開放
     void ReleaseRendererResources(Passkey<GameEngine>);
+    /// @brief レンダラーのGPUリソース全開放（Scene用）
+    /// @details Scene::PlayStop()がClearSceneObjects/ClearSceneComponents+LoadFromJSONで
+    ///          シーン内の全オブジェクト・コンポーネントを新しいインスタンスへ作り直す際に呼ぶ。
+    ///          Renderer::resourceContainer_（構造化バッファ等のキャッシュ）の一部キーは
+    ///          コンポーネントのインスタンスアドレス等、再生成のたびに変わる値を含むため、
+    ///          このタイミングでキャッシュごと破棄しないと、古いインスタンス由来のエントリが
+    ///          二度と参照されないまま溜まり続け、ディスクリプタヒープを再生・停止のたびに
+    ///          消費し尽くしてクラッシュする（Play/Stopは通常のシーン切り替え
+    ///          （SceneManager::CommitPendingSceneChange）を経由しないため、
+    ///          そちらで行っているキャッシュ破棄の対象から漏れていた）
+    void ReleaseRendererResources(Passkey<Scene>);
 
     /// @brief 直近のRenderFrameで実際に発行されたドローコール数（パフォーマンス調査用）
     std::uint32_t GetLastFrameDrawCallCount() const;

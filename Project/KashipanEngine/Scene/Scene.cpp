@@ -1,19 +1,24 @@
 #include "Scene/Scene.h"
 #include "Scene/SceneBackupPath.h"
 #include "Core/GameEngine.h"
+#include "Debug/Logger.h"
+#include "Graphics/GraphicsEngine.h"
 #include "Scene/SceneManager.h"
 #include "Scene/SceneContext.h"
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Assets/SkeletonManager.h"
 #include "Objects/Components/Transform.h"
+#include "Objects/Components/Collider/RigidBody2D.h"
 #include "Objects/Components/Collider/RigidBody3D.h"
 #ifdef USE_IMGUI
+#include "Objects/Components/ScriptComponent.h"
 #include "Scene/SceneEditor.h"
 #include "Scene/SceneEditorContext.h"
 #endif
 
 #include <algorithm>
 #include <cstring>
+#include <unordered_set>
 
 namespace KashipanEngine {
 
@@ -82,7 +87,17 @@ void Scene::ShowImGuiInterface(Passkey<SceneManager>) {
 
 void Scene::PlayStart() {
     if (isPlaying_) return;
+    // DeleteEditorOnlyObjects以降で大量のGPUリソース（ScreenBuffer等）を即座に破棄する。
+    // 通常のフレームループは毎フレーム終端でGPU同期しているため安全だが、Play/Stopは
+    // GameLoopUpdate()の途中（＝直前フレームの描画がGPU側で完了しているとは限らないタイミング）
+    // で割り込むため、ここで明示的に同期してから破棄する（未完了のまま破棄するとGPUハング/
+    // スワップチェーンPresent失敗を引き起こしうる。Play/Stopの高速連打で再現するクラッシュの対策）
+    if (sDirectXCommon_) sDirectXCommon_->WaitForGPUIdle(Passkey<Scene>{});
     editModeSnapshot_ = SaveToJSON();
+    // グローバルシーン変数はSceneではなくSceneManagerが保持するため、ローカルのsceneVariables_と
+    // 同様にPlay/Stopをまたいでも編集時の値へ戻せるよう、シーンJSONとまとめてセッションとして保持する。
+    // SceneManager側に持たせることで、再生中のシーン遷移でこのSceneが破棄されても復元元を失わない
+    if (sceneManager_) sceneManager_->BeginPlaySession(Passkey<Scene>{}, editModeSnapshot_);
 
     // EditorOnlyオブジェクトは再生中のシーンには存在させない（子孫ごと削除される）。
     // スナップショットには保存済みのため、PlayStopでの復元時に元へ戻る
@@ -95,6 +110,15 @@ void Scene::PlayStart() {
         for (auto *rigidBody : object->GetComponents<RigidBody3D>()) {
             rigidBody->SyncFromTransform();
         }
+        for (auto *rigidBody2D : object->GetComponents<RigidBody2D>()) {
+            rigidBody2D->SyncFromTransform();
+        }
+        // ScriptComponentが参照する.asファイルは、通常はコンポーネント追加時（Initialize）にしか
+        // 読み込まれない。エディター上で編集した内容を再生開始時点で反映できるよう、
+        // Initializeと同様の手順（Reload→フック張り直し→Awake）で読み直す
+        for (auto *script : object->GetComponents<ScriptComponent>()) {
+            script->ReloadFromDisk();
+        }
     }
 
     isPlaying_ = true;
@@ -102,8 +126,36 @@ void Scene::PlayStart() {
     isStepFrameRequested_ = false;
 }
 
+void Scene::ContinuePlayAfterSceneChange(Passkey<SceneManager>) {
+    // 遷移先はファイルから生成された直後なので、PlayStartのような編集状態の再スナップショットや
+    // ScriptComponentの再読み込みは不要。Play開始時点の復元元はSceneManagerに保持したまま、
+    // Releaseビルドでのシーン遷移と同様にEditorOnlyを除外して更新可能な状態へ移す
+    DeleteEditorOnlyObjects();
+    isPlaying_ = true;
+    isPaused_ = false;
+    isStepFrameRequested_ = false;
+}
+
+const JSON &Scene::GetEditModeSnapshot() const {
+    if (sceneManager_) {
+        const JSON &sessionSnapshot = sceneManager_->GetPlayModeSceneSnapshot(Passkey<Scene>{});
+        if (!sessionSnapshot.empty()) return sessionSnapshot;
+    }
+    return editModeSnapshot_;
+}
+
 void Scene::PlayStop() {
-    if (!isPlaying_) return;
+    if (!isPlaying_) {
+        // 「シーン切り替えでこのSceneインスタンスが再生開始前に置き換わっており、
+        // Stopボタン相当の操作が実質何もせず抜けている」ケースを切り分けるためのログ。
+        // 再生中にScene自体が切り替わると、新しいSceneインスタンスのisPlaying_は
+        // falseから始まるため、以後Stopを押してもここで早期returnし続ける
+        Log(Translation("engine.scene.playstop.notplaying"), LogSeverity::Warning);
+        return;
+    }
+    // PlayStart側と同じ理由。ClearSceneObjects/ClearSceneComponentsで大量のGPUリソースを
+    // 即座に破棄する前に、直前フレームのGPU処理が確実に完了していることを保証する
+    if (sDirectXCommon_) sDirectXCommon_->WaitForGPUIdle(Passkey<Scene>{});
     isPlaying_ = false;
     isPaused_ = false;
     isStepFrameRequested_ = false;
@@ -118,12 +170,32 @@ void Scene::PlayStop() {
     // 消費者向け）のジョイント姿勢もバインドポーズへ復元しておく。
     SkeletonManager::ResetAllSkeletonsToBindPose();
 
-    JSON snapshot = std::move(editModeSnapshot_);
+    // 再生中にシーン遷移していても開始前のシーンへ戻れるよう、SceneManagerが保持する
+    // Playセッション全体のスナップショットを優先する。SceneManagerが無い場合だけ従来の
+    // Sceneローカルスナップショットへフォールバックする
+    JSON snapshot = sceneManager_
+        ? sceneManager_->EndPlaySession(Passkey<Scene>{})
+        : std::move(editModeSnapshot_);
     editModeSnapshot_ = JSON();
-    if (snapshot.empty()) return;
+    if (snapshot.empty()) {
+        // isPlaying_はtrueだったがスナップショットが空＝このSceneインスタンスで
+        // PlayStart()が一度も呼ばれていない状態。通常はあり得ないが、シーン切り替え関連の
+        // 不整合を切り分けるためのログ（このケースではシーン内容の復元がスキップされる）
+        Log(Translation("engine.scene.playstop.emptysnapshot"), LogSeverity::Warning);
+        return;
+    }
 
     ClearSceneObjects();
     ClearSceneComponents();
+
+    // これから読み込む新しいコンポーネント群は、削除された旧インスタンスとは別のアドレス・
+    // addedIDを持つ。Renderer::resourceContainer_内のキャッシュ（構造化バッファ等）は
+    // インスタンス固有の値をキーへ含むものがあり、ここで破棄しないと旧インスタンス由来の
+    // エントリが二度と参照されないまま溜まり続け、再生・停止を繰り返すたびにディスクリプタ
+    // ヒープを消費し尽くしてクラッシュする（通常のシーン切り替え時はSceneManagerが
+    // 同様の破棄を行うが、Play/Stopはそこを経由しないため漏れていた）
+    if (sGraphicsEngine_) sGraphicsEngine_->ReleaseRendererResources(Passkey<Scene>{});
+
     LoadFromJSON(snapshot);
 }
 #endif
@@ -154,7 +226,8 @@ JSON Scene::SaveToJSON() const {
 }
 
 bool Scene::LoadFromJSON(const JSON &json) {
-    if (json.empty()) return false;
+    if (!json.is_object()) return false;
+    try {
     name_ = json.value("sceneName", "");
     sceneID_ = UUID128(json.value("sceneID", ""));
     // シーンコンポーネントを追加
@@ -209,7 +282,11 @@ bool Scene::LoadFromJSON(const JSON &json) {
         // reinterpret し、値が破損して見える（未定義動作）。
         sceneVariables_[key] = LoadAnyFromJson(varData.value("value", JSON()), typeInfo);
     }
-    return true;
+        return true;
+    } catch (const std::exception &exception) {
+        Log(std::string("Failed to load scene JSON: ") + exception.what(), LogSeverity::Error);
+        return false;
+    }
 }
 
 bool Scene::RemoveSceneVariable(const std::string &key) {
@@ -263,13 +340,74 @@ EmptyObject *Scene::CreateEmptyObject(const std::string &name, const UUID128 &ob
     return newObjPtr;
 }
 
-EmptyObject *Scene::CloneObject(EmptyObject *source, const std::string &name) {
+EmptyObject *Scene::CloneObject(EmptyObject *source, const std::string &name, bool includeChildren) {
     if (!source || !objectsExistingSet_.contains(source)) return nullptr;
 
-    EmptyObject *clonedPtr = CreateEmptyObject(name.empty() ? source->GetName() : name);
-    if (!clonedPtr) return nullptr;
-    clonedPtr->CopyStateFrom(Passkey<Scene>{}, *source);
-    return clonedPtr;
+    if (!includeChildren) {
+        EmptyObject *clonedPtr = CreateEmptyObject(name.empty() ? source->GetName() : name);
+        if (!clonedPtr) return nullptr;
+        clonedPtr->CopyStateFrom(Passkey<Scene>{}, *source);
+        return clonedPtr;
+    }
+
+    // source自身と子孫（孫以降も含む）を収集し、元オブジェクト→複製後オブジェクトの対応を取りながら
+    // 1つずつ複製する。この時点では親子関係は結び直さない（元の親は別の複製後オブジェクトに
+    // 対応しているため、全て複製し終えてからでないと正しい対応先が定まらない）
+    std::vector<EmptyObject *> subtree;
+    CollectSubtreeObjects(source, subtree);
+
+    std::unordered_map<EmptyObject *, EmptyObject *> originalToClone;
+    originalToClone.reserve(subtree.size());
+
+    EmptyObject *clonedRoot = nullptr;
+    for (auto *original : subtree) {
+        const std::string cloneName = (original == source && !name.empty()) ? name : original->GetName();
+        EmptyObject *clonedPtr = CreateEmptyObject(cloneName);
+        if (!clonedPtr) continue;
+        clonedPtr->CopyStateFrom(Passkey<Scene>{}, *original);
+        originalToClone[original] = clonedPtr;
+        if (original == source) clonedRoot = clonedPtr;
+    }
+
+    // 複製後オブジェクト同士で親子関係を結び直す（source自身の親は複製しない。CopyStateFrom内で
+    // Transformを既存のものへ値だけ反映しているため、親は未設定のまま＝1個目のCloneObjectと同じ挙動）
+    for (auto *original : subtree) {
+        if (original == source) continue;
+        EmptyObject *originalParent = original->GetComponent<Transform>() ? original->GetComponent<Transform>()->GetParentObject() : nullptr;
+        if (!originalParent) continue;
+
+        auto parentIt = originalToClone.find(originalParent);
+        auto childIt = originalToClone.find(original);
+        if (parentIt == originalToClone.end() || childIt == originalToClone.end()) continue;
+
+        auto *clonedTransform = childIt->second->GetComponent<Transform>();
+        if (clonedTransform) clonedTransform->SetParentObject(parentIt->second);
+    }
+
+    return clonedRoot;
+}
+
+void Scene::CollectSubtreeObjects(EmptyObject *root, std::vector<EmptyObject *> &out) const {
+    if (!root) return;
+
+    std::vector<EmptyObject *> pending{root};
+    std::unordered_set<EmptyObject *> visited;
+    while (!pending.empty()) {
+        EmptyObject *current = pending.back();
+        pending.pop_back();
+        if (!current || !visited.insert(current).second) continue;
+        out.push_back(current);
+
+        // 再帰版と同じシーン順の深さ優先順を保つため、子は逆順で積む。
+        for (auto it = objects_.rbegin(); it != objects_.rend(); ++it) {
+            EmptyObject *candidate = *it;
+            if (!candidate || candidate == current) continue;
+            auto *candidateTransform = candidate->GetComponent<Transform>();
+            if (candidateTransform && candidateTransform->GetParentObject() == current) {
+                pending.push_back(candidate);
+            }
+        }
+    }
 }
 
 bool Scene::DeleteObject(EmptyObject *obj) {
@@ -277,27 +415,41 @@ bool Scene::DeleteObject(EmptyObject *obj) {
     auto it = std::find(objects_.begin(), objects_.end(), obj);
     if (it == objects_.end()) return false;
 
-    // 子オブジェクトも道連れに削除する（削除前に対象を収集してから再帰的に削除する。
-    // 削除中に objects_ が変化しイテレータが無効化されるため、先に収集する必要がある）
-    std::vector<EmptyObject *> children;
-    for (auto *candidate : objects_) {
-        if (!candidate || candidate == obj) continue;
-        auto *candidateTransform = candidate->GetComponent<Transform>();
-        if (candidateTransform && candidateTransform->GetParentObject() == obj) {
-            children.push_back(candidate);
+    // 子孫を先に一括収集し、末尾から破棄することで再帰によるスタック消費と
+    // objects_走査中のイテレーター無効化を避ける。
+    std::vector<EmptyObject *> subtree;
+    CollectSubtreeObjects(obj, subtree);
+    for (auto subtreeIt = subtree.rbegin(); subtreeIt != subtree.rend(); ++subtreeIt) {
+        EmptyObject *target = *subtreeIt;
+        auto targetIt = std::find(objects_.begin(), objects_.end(), target);
+        if (targetIt == objects_.end()) continue;
+
+        RemoveObjectFromMaps(target);
+        objects_.erase(targetIt);
+        if (isProcessingObjectLifecycle_) {
+            // 更新処理中（スクリプトが自分自身の所有オブジェクトを削除する場合など）は、
+            // 実行中のコンポーネントを破棄しないよう安全なタイミングまで遅延する。
+            pendingDestroyObjects_.push_back(target);
+        } else {
+            objectPool_.Remove(target);
         }
     }
-    for (auto *child : children) {
-        DeleteObject(child); // 再帰呼び出しでさらに孫オブジェクトも削除される
-    }
-
-    // 子オブジェクトの削除により objects_ が変化しているため、対象オブジェクトを再検索する
-    it = std::find(objects_.begin(), objects_.end(), obj);
-    if (it == objects_.end()) return false;
-    RemoveObjectFromMaps(obj);
-    objects_.erase(it);
-    objectPool_.Remove(obj);
     return true;
+}
+
+void Scene::FlushPendingDestroys() {
+    if (pendingDestroyObjects_.empty()) return;
+    // 破棄処理（Finalize等）の連鎖でさらにDeleteObjectが呼ばれる場合に備え、
+    // その間も遅延させつつキューが尽きるまで繰り返す
+    isProcessingObjectLifecycle_ = true;
+    while (!pendingDestroyObjects_.empty()) {
+        std::vector<EmptyObject *> batch;
+        batch.swap(pendingDestroyObjects_);
+        for (EmptyObject *obj : batch) {
+            objectPool_.Remove(obj);
+        }
+    }
+    isProcessingObjectLifecycle_ = false;
 }
 
 void Scene::DeleteEditorOnlyObjects() {
@@ -379,17 +531,29 @@ void Scene::RemoveObjectFromMaps(EmptyObject *obj) {
 }
 
 void Scene::ClearSceneObjects() {
-    // FinalizeInterface を呼んでからオブジェクトを破棄する
-    for (auto *obj : objects_) {
+    // FinalizeからDeleteObjectが呼ばれてobjects_が変化しても走査を壊さないよう、
+    // 生存ポインタのスナップショットを使い、実破棄は全Finalize後まで遅延する。
+    isProcessingObjectLifecycle_ = true;
+    const std::vector<EmptyObject *> snapshot = objects_;
+    for (auto *obj : snapshot) {
         if (obj) {
             obj->FinalizeInterface(Passkey<Scene>());
         }
     }
-    objectPool_.Clear();
-    objects_.clear();
+    // EmptyObjectのデストラクターから同じコンポーネントを再Finalizeすると、先に破棄された
+    // 親をUUID索引から引いてuse-after-freeになるため、全Finalize後にコンポーネントを先に解放する。
+    for (auto *obj : snapshot) {
+        if (obj) obj->ReleaseFinalizedComponents(Passkey<Scene>());
+    }
     objectsByUUID_.clear();
     objectsExistingSet_.clear();
     objectsByName_.clear();
+    objectPool_.Clear();
+    isProcessingObjectLifecycle_ = false;
+    // objectPool_.Clear() で一括破棄済みのため、破棄待ちキューに残ったポインタは
+    // すべてダングリングになる。FlushPendingDestroysで二重に触れないようここで捨てる
+    pendingDestroyObjects_.clear();
+    objects_.clear();
 }
 
 ISceneComponent *Scene::GetComponent(const ISceneComponent *component) const {
@@ -537,6 +701,11 @@ bool Scene::RemoveGlobalSceneVariableInternal(const std::string &key) {
     return sceneManager_->RemoveGlobalSceneVariable(key);
 }
 
+void Scene::ClearGlobalSceneVariablesInternal() {
+    if (!sceneManager_) return;
+    sceneManager_->ClearGlobalSceneVariables();
+}
+
 MyAny *Scene::GetGlobalSceneVariableInternal(const std::string &key) {
     if (!sceneManager_) return nullptr;
     return sceneManager_->GetGlobalSceneVariable(key);
@@ -548,6 +717,16 @@ const std::unordered_map<std::string, MyAny> &Scene::GetGlobalSceneVariablesInte
         return emptyMap;
     }
     return sceneManager_->GetGlobalSceneVariables();
+}
+
+bool Scene::SaveGlobalSceneVariables(const std::string &filePath) const {
+    if (!sceneManager_) return false;
+    return filePath.empty() ? sceneManager_->SaveGlobalSceneVariables() : sceneManager_->SaveGlobalSceneVariables(filePath);
+}
+
+bool Scene::LoadGlobalSceneVariables(const std::string &filePath) {
+    if (!sceneManager_) return false;
+    return filePath.empty() ? sceneManager_->LoadGlobalSceneVariables() : sceneManager_->LoadGlobalSceneVariables(filePath);
 }
 
 } // namespace KashipanEngine

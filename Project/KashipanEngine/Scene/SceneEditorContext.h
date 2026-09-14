@@ -19,6 +19,8 @@ public:
 
     const std::string &GetName() const { return owner_->GetName(); }
     void SetName(const std::string &name) { owner_->name_ = name; }
+    /// @brief シーンの識別ID。シーンごとのエディター設定（EditorSettings）のキーに使う
+    const UUID128 &GetSceneID() const { return owner_->GetSceneID(); }
 
     /// @brief シーンマネージャーを取得する（シーン登録情報の編集・シーン切り替え用）
     SceneManager *GetSceneManager() const { return owner_->sceneManager_; }
@@ -60,6 +62,10 @@ public:
     void PlayResume() { owner_->PlayResume(); }
     /// @brief 1フレームだけ進める（一時停止中のみ有効）
     void RequestStepFrame() { owner_->RequestStepFrame(); }
+    /// @brief 再生開始前のシーン状態のスナップショットを取得する（再生中のみ非空）
+    /// @details 再生中にシーンを保存する際、ランタイムの変更が混ざった現在の状態ではなく、
+    ///          再生開始直前の内容を書き出すために使う
+    const JSON &GetEditModeSnapshot() const { return owner_->GetEditModeSnapshot(); }
 
     //==================================================
     // シーン変数

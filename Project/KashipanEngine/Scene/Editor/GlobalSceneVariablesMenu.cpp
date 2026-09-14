@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include "Scene/Editor/EditorWindowChrome.h"
 #include "Scene/SceneManager.h"
+#include "Utilities/Dialogs/MessageDialog.h"
 #include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
 
@@ -27,6 +28,19 @@ void GlobalSceneVariablesMenu::ShowImGui() {
         AddVariableOfSelectedType(newVariableName_);
         newVariableName_.clear();
         SaveToFile();
+    }
+
+    // セーブデータ用途で溜まったグローバルシーン変数を一括でリセットするためのボタン
+    // （個別のRemoveボタンだけだと、セーブデータのキーが多い場合に手間がかかるため）
+    if (ImGui::Button(TranslationLabel("editor.globalscenevariables.clear_all"))) {
+        if (Dialogs::ShowMessageDialog(
+                TranslationC("editor.globalscenevariables.clear_all_confirm_title"),
+                TranslationC("editor.globalscenevariables.clear_all_confirm_message"))) {
+            if (auto *sceneManager = context_->GetSceneManager()) {
+                sceneManager->ClearGlobalSceneVariables();
+                SaveToFile();
+            }
+        }
     }
 
     ImGui::Separator();

@@ -92,24 +92,42 @@ std::string PipelineManager::TryGetShaderBaseDir() {
 }
 #endif
 
-void PipelineManager::ReloadPipelines() {
+bool PipelineManager::ReloadPipelines() {
     LogScope scope;
     Log(Translation("engine.graphics.pipeline.reload"), LogSeverity::Info);
 
-    pipelineInfos_.clear();
-    components_.ClearAll();
-    ShaderCompiler::ClearAllCompiledShaders(Passkey<PipelineManager>{});
-    pipelineCreator_->ClearRootSignatureCache(Passkey<PipelineManager>{});
-
-    LoadPreset();
-    LoadPipelines();
+    // 現在利用中のPSOは、新しい一式の構築が完了するまで所有したままにする。
+    // ShaderCompilerの格納領域はプロセス共有なので先にClearするとロールバック不能になる。
+    const auto previousShaderIDs = ShaderCompiler::CaptureCompiledShaderIDs(Passkey<PipelineManager>{});
+    auto previousPipelines = std::move(pipelineInfos_);
+    auto previousComponents = std::move(components_);
+    try {
+        pipelineInfos_.clear();
+        components_ = ComponentsPresetContainer(Passkey<PipelineManager>{});
+        LoadPreset();
+        LoadPipelines();
+        pipelineCreator_->ClearRootSignatureCache(Passkey<PipelineManager>{});
+        ShaderCompiler::DestroyCompiledShaders(Passkey<PipelineManager>{}, previousShaderIDs);
+        return true;
+    } catch (const std::exception &exception) {
+        ShaderCompiler::DestroyCompiledShadersExcept(Passkey<PipelineManager>{}, previousShaderIDs);
+        pipelineInfos_ = std::move(previousPipelines);
+        components_ = std::move(previousComponents);
+        Log(std::string("Pipeline reload failed; keeping previous pipelines: ") + exception.what(), LogSeverity::Error);
+        return false;
+    } catch (...) {
+        ShaderCompiler::DestroyCompiledShadersExcept(Passkey<PipelineManager>{}, previousShaderIDs);
+        pipelineInfos_ = std::move(previousPipelines);
+        components_ = std::move(previousComponents);
+        Log("Pipeline reload failed; keeping previous pipelines.", LogSeverity::Error);
+        return false;
+    }
 }
 
 #if defined(USE_IMGUI)
 bool PipelineManager::TryReloadPipelines() {
     if (!sActiveInstance) return false;
-    sActiveInstance->ReloadPipelines();
-    return true;
+    return sActiveInstance->ReloadPipelines();
 }
 #endif
 
@@ -135,7 +153,7 @@ void PipelineManager::LoadPreset() {
 
     using namespace Pipeline::JsonParser;
 
-    static const std::unordered_map<std::string, std::function<void(const Json&, const std::string&, const std::filesystem::path &)>> handlers = {
+    const std::unordered_map<std::string, std::function<void(const Json&, const std::string&, const std::filesystem::path &)>> handlers = {
         {"BlendState",              [this](const Json &j, const std::string &n, const std::filesystem::path &){ components_.RegisterBlendState(n, ParseBlendState(j)); }},
         {"ComputePipelineState",    [this](const Json &j, const std::string &n, const std::filesystem::path &){ components_.RegisterComputePipelineState(n, ParseComputePipelineState(j)); }},
         {"DepthStencilState",       [this](const Json &j, const std::string &n, const std::filesystem::path &){ components_.RegisterDepthStencilState(n, ParseDepthStencilState(j)); }},
@@ -165,9 +183,9 @@ void PipelineManager::LoadPreset() {
 
         for (const auto &file : presetFiles) {
             // example スキップ
-            std::filesystem::path p(file);
-            std::string fnameLower = toLower(p.filename().string());
-            if (fnameLower == "example.json" || fnameLower == "example.jsonc" || toLower(p.stem().string()) == "example") continue;
+            std::filesystem::path p = Utf8StringToPath(file);
+            std::string fnameLower = toLower(PathToUtf8String(p.filename()));
+            if (fnameLower == "example.json" || fnameLower == "example.jsonc" || toLower(PathToUtf8String(p.stem())) == "example") continue;
 
             Json j = LoadJSON(file);
             if (j.contains("Name") && j["Name"].is_string()) {
@@ -268,9 +286,9 @@ void PipelineManager::LoadPipelines() {
     auto pipelineFiles = GetDirectoryDataByExtension(directoryData, { ".json", ".jsonc" }).files;
     for (const auto &file : pipelineFiles) {
         // ファイル名が example の場合はスキップ
-        std::filesystem::path p(file);
-        std::string fnameLower = toLower(p.filename().string());
-        if (fnameLower == "example.json" || fnameLower == "example.jsonc" || toLower(p.stem().string()) == "example") continue;
+        std::filesystem::path p = Utf8StringToPath(file);
+        std::string fnameLower = toLower(PathToUtf8String(p.filename()));
+        if (fnameLower == "example.json" || fnameLower == "example.jsonc" || toLower(PathToUtf8String(p.stem())) == "example") continue;
 
         Json pipelineJson = LoadJSON(file);
         // JSON の Name が "example" の場合もスキップ

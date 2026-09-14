@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ScriptComponent | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_ScriptComponent">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>ScriptComponent</h1>
+<p class="page-lead">AngelScriptのスクリプトファイルをコンパイルして実行するコンポーネントです。</p>
+</div>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetScriptPath(const string &amp;in)</code> / <code>const string &amp;GetScriptPath() const</code></td><td>スクリプトパスの設定/取得</td></tr>
+<tr><td><code>bool Reload()</code></td><td>スクリプトを再コンパイルする</td></tr>
+<tr><td><code>bool GetVariable(const string &amp;in, ?&amp;out) const</code></td><td>指定名の <code>[SerializeField]</code> 変数の現在値を取得する（<a href="../../04_ObjectSceneVariables.html">04_ObjectSceneVariables.html</a>）</td></tr>
+<tr><td><code>bool SetVariable(const string &amp;in, ?&amp;in)</code></td><td>指定名の <code>[SerializeField]</code> 変数へ値を設定する</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="../../14_Notes.html">14_Notes.html</a> — Reload()とエラー取得</li>
+<li><a href="../../../Editor/Components/Basic/ScriptComponent.html">Editor/Components/Basic/ScriptComponent.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

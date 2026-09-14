@@ -64,22 +64,22 @@ protected:
         IPostProcessComponent::ShowImGui();
         ImGui::DragFloat(TranslationLabel("component.motionblureffect.intensity"), &params_.intensity, 0.01f, 0.0f, 5.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.motionblureffect.desc_1"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.motionblureffect.desc_1"));
         }
         ImGui::DragFloat(TranslationLabel("component.motionblureffect.velocity_scale"), &params_.velocityScale, 0.01f, 0.0f, 10.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.motionblureffect.desc_2"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.motionblureffect.desc_2"));
         }
         ImGui::DragFloat(TranslationLabel("component.motionblureffect.max_blur_pixels"), &params_.maxBlurPixels, 0.5f, 0.0f, 256.0f, "%.1f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.motionblureffect.desc_3"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.motionblureffect.desc_3"));
         }
         int samples = static_cast<int>(params_.samples);
         if (ImGui::DragInt(TranslationLabel("component.motionblureffect.samples"), &samples, 1.0f, 2, 32)) {
             params_.samples = static_cast<std::uint32_t>(std::clamp(samples, 2, 32));
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.motionblureffect.desc_4"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.motionblureffect.desc_4"));
         }
         if (!GetCameraInfo().valid) {
             ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f),

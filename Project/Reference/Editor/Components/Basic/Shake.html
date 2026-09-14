@@ -35,6 +35,9 @@
 <tr><td>Position Amplitude</td><td>XYZのドラッグ入力欄（ステップ0.01、下限0）</td><td>各軸の振れ幅</td></tr>
 <tr><td>Position Speed</td><td>XYZのドラッグ入力欄（ステップ0.1、下限0）</td><td>目標値へ到達する速度。大きいほど揺れが速く切り替わる</td></tr>
 <tr><td>Position Ease</td><td>コンボ（Linear他、全40種）</td><td>目標値へ向かう際のイージング種類</td></tr>
+<tr><td>Amplitude Start/End Multiplier</td><td>ドラッグ入力欄（ステップ0.01、範囲0〜10）</td><td>再生進行度0%時／100%時に振れ幅へ掛かる倍率。既定は両方1.0（変化なし）</td></tr>
+<tr><td>Speed Start/End Multiplier</td><td>ドラッグ入力欄（ステップ0.01、範囲0〜10）</td><td>再生進行度0%時／100%時にスピードへ掛かる倍率。既定は両方1.0（変化なし）</td></tr>
+<tr><td>Position Envelope Ease</td><td>コンボ（Linear他、全40種）</td><td>上記Start→Endの倍率変化に使うイージング種類（軸ごとの目標値遷移とは別設定）</td></tr>
 </table>
 
 <h2>Rotation Shake（回転の揺れ）</h2>
@@ -44,9 +47,14 @@
 <tr><td>Rotation Amplitude (deg)</td><td>XYZのドラッグ入力欄（ステップ0.1、下限0）</td><td>各軸の振れ幅。<strong>度単位で保持され、適用時に内部でラジアンへ変換されます</strong></td></tr>
 <tr><td>Rotation Speed</td><td>XYZのドラッグ入力欄（ステップ0.1、下限0）</td><td>目標値へ到達する速度</td></tr>
 <tr><td>Rotation Ease</td><td>コンボ（Linear他、全40種）</td><td>目標値へ向かう際のイージング種類</td></tr>
+<tr><td>Amplitude Start/End Multiplier</td><td>ドラッグ入力欄（ステップ0.01、範囲0〜10）</td><td>再生進行度0%時／100%時に振れ幅へ掛かる倍率。既定は両方1.0（変化なし）</td></tr>
+<tr><td>Speed Start/End Multiplier</td><td>ドラッグ入力欄（ステップ0.01、範囲0〜10）</td><td>再生進行度0%時／100%時にスピードへ掛かる倍率。既定は両方1.0（変化なし）</td></tr>
+<tr><td>Rotation Envelope Ease</td><td>コンボ（Linear他、全40種）</td><td>上記Start→Endの倍率変化に使うイージング種類（軸ごとの目標値遷移とは別設定）</td></tr>
 </table>
 
 <div class="note">Position/Rotation ShakeともAmplitude/Speedの入力欄は<code>ImGuiCustom::EditValue</code>（Drag系）で表示されます。各軸は無効化されると、目標値追従をリセットしつつ現在値を滑らかに0へ戻します。</div>
+
+<div class="note">振れ幅・スピードの時間変化（エンベロープ）は再生進行度（<code>elapsedPlayTime / duration</code>、0.0〜1.0）に応じてStart値→End値へイージング補間されます。<code>Duration</code>が0以下（無期限再生）の場合、進行度は常に0%扱いとなりStart値のまま変化しません。</div>
 
 <div class="warn">Apply Targetが「To Transform」の場合、前回加算したオフセットを必ず先に差し引いてから今回分を加算する仕組みになっています。そのため、Shake以外のスクリプトが同じフレームでTransformを直接書き換えていると、揺れの差し引きと競合する可能性があります（この用途にはProcess TimingをDeferredのままにしておくことを推奨）。</div>
 

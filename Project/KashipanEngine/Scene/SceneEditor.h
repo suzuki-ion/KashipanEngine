@@ -1,7 +1,13 @@
 #pragma once
 #ifdef USE_IMGUI
+#include <cstdint>
+#include <filesystem>
+#include <future>
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include "Scene/SceneEditorContext.h"
 
@@ -46,6 +52,26 @@ private:
     /// @brief シーンのバックアップを1回取る
     /// @param prefix 保存ファイル名の先頭に付与する文字列（呼び出し元の種別を見分けるため）
     void TakeSceneBackup(const std::string &prefix);
+    void InitializeExternalAssetSnapshot();
+    void StartExternalAssetScan(bool detectChanges);
+    void ConsumeExternalAssetScanResult();
+    bool IsEditorApplicationActive() const;
+    void PollExternalAssetChanges();
+    void ProcessExternalAssetChanges(std::vector<std::string> changedPaths);
+    void ProcessNonSceneExternalChanges(const std::vector<std::string> &changedPaths);
+    void ShowExternalSceneChangeModal();
+    std::string GetCurrentSceneFilePath() const;
+
+    struct ExternalFileStamp {
+        std::filesystem::file_time_type writeTime{};
+        std::uintmax_t size = 0;
+        bool operator==(const ExternalFileStamp &) const = default;
+    };
+
+    struct ExternalAssetScanResult {
+        std::unordered_map<std::string, ExternalFileStamp> snapshot;
+        std::vector<std::string> changedPaths;
+    };
 
     SceneEditorContext *context_ = nullptr;
 
@@ -106,6 +132,20 @@ private:
     std::string autoSaveNameFormat_ = "${SceneName}";
     /// @brief 自動保存設定モーダルの表示要求
     bool isAutoSaveSettingsRequested_ = false;
+
+    std::unordered_map<std::string, ExternalFileStamp> externalAssetSnapshot_;
+    std::future<ExternalAssetScanResult> externalAssetScanFuture_;
+    std::unordered_set<std::string> pendingExternalAssetPaths_;
+    /// @brief Play中に検知し、編集状態の復元後まで適用を保留している外部変更
+    std::unordered_set<std::string> deferredPlayModeAssetPaths_;
+    std::vector<std::string> deferredExternalAssetPaths_;
+    float externalAssetPollElapsed_ = 0.0f;
+    float externalAssetDebounceElapsed_ = 0.0f;
+    bool wasEditorApplicationActive_ = true;
+    bool externalSceneChangeRequested_ = false;
+    bool externalSceneCanReload_ = false;
+    std::string externallyChangedScenePath_;
+    JSON externallyChangedSceneJson_;
 };
 
 } // namespace KashipanEngine

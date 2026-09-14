@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shake | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_Shake">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Shake</h1>
+<p class="page-lead">オブジェクトを揺らすコンポーネントです。位置・回転それぞれXYZ軸ごとに有効/無効・振れ幅・速度・イージングを設定でき、各軸が独立にランダムな目標値へ向かって遷移し続けることで揺れを表現します。</p>
+</div>
+
+<p>処理タイミング（<code>ProcessTiming</code>）と適用方法（<code>ApplyTarget</code>）はどちらも整数値の列挙で指定します。</p>
+
+<ul><li><code>ProcessTiming</code>: <code>0</code>=Immediate（自身のUpdate内でその場処理する） / <code>1</code>=DeferredEnd（既定。全オブジェクトのUpdate/衝突解決が終わった後にまとめて処理するため、他のスクリプトのTransform操作と競合しない）</li><li><code>ApplyTarget</code>: <code>0</code>=ToTransform（Transformへ直接オフセットを加算する。次フレーム以降は前回分を差し引いてから新しいオフセットを乗せるため、シェイクが終了すれば元のTransformの値に戻る） / <code>1</code>=RenderOnly（既定。Transform自体は変更せず、描画時にのみオフセットを乗算する）</li></ul>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void Play(float duration = 0.0f)</code></td><td>シェイクを開始する。<code>duration</code>を0以下にすると<code>Stop()</code>を呼ぶまで無期限に再生する</td></tr>
+<tr><td><code>void Stop()</code></td><td>シェイクを停止する（ToTransform適用中だった場合、そのフレームでオフセットが差し引かれ元に戻る）</td></tr>
+<tr><td><code>bool IsPlaying() const</code></td><td>再生中かどうか</td></tr>
+<tr><td><code>void SetProcessTiming(int)</code> / <code>int GetProcessTiming() const</code></td><td>処理タイミングの設定/取得（上記参照）</td></tr>
+<tr><td><code>void SetApplyTarget(int)</code> / <code>int GetApplyTarget() const</code></td><td>適用方法の設定/取得（上記参照）</td></tr>
+<tr><td><code>void SetPositionEnable(bool x, bool y, bool z)</code></td><td>位置シェイクを有効にする軸を設定する</td></tr>
+<tr><td><code>void SetPositionAmplitude(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetPositionAmplitude() const</code></td><td>位置の振れ幅</td></tr>
+<tr><td><code>void SetPositionSpeed(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetPositionSpeed() const</code></td><td>位置が目標値へ向かう速度</td></tr>
+<tr><td><code>void SetPositionEaseType(int)</code> / <code>int GetPositionEaseType() const</code></td><td>位置遷移のイージング種類</td></tr>
+<tr><td><code>void SetRotationEnable(bool x, bool y, bool z)</code></td><td>回転シェイクを有効にする軸を設定する</td></tr>
+<tr><td><code>void SetRotationAmplitude(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetRotationAmplitude() const</code></td><td>回転の振れ幅（度）</td></tr>
+<tr><td><code>void SetRotationSpeed(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetRotationSpeed() const</code></td><td>回転が目標値へ向かう速度</td></tr>
+<tr><td><code>void SetRotationEaseType(int)</code> / <code>int GetRotationEaseType() const</code></td><td>回転遷移のイージング種類</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="../../../Editor/Components/Basic/Shake.html">Editor/Components/Basic/Shake.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

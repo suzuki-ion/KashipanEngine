@@ -221,7 +221,7 @@ void KeyFrameAnimator::ShowImGui() {
 void KeyFrameAnimator::ShowAnimationImGui(AnimationEntry &entry, const std::vector<ParameterBindingCandidate> &candidates) {
     ImGui::InputText(TranslationLabel("component.keyframeanimator.name"), &entry.name);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", "Play/Stop等で指定する識別名");
+        ImGuiCustom::SetTooltipWrapped("%s", "Play/Stop等で指定する識別名");
     }
     ImGui::InputText(TranslationLabel("component.keyframeanimator.json_path"), &entry.jsonPath);
     ImGui::SameLine();
@@ -232,7 +232,7 @@ void KeyFrameAnimator::ShowAnimationImGui(AnimationEntry &entry, const std::vect
         EnsureLoaded(entry);
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", "キーフレームjsonのパス（Keyframe Animation Editorで作成できる）。Reloadで読み込む");
+        ImGuiCustom::SetTooltipWrapped("%s", "キーフレームjsonのパス（Keyframe Animation Editorで作成できる）。Reloadで読み込む");
     }
     if (!entry.loaded && !entry.loadFailed && !entry.jsonPath.empty()) {
         EnsureLoaded(entry);
@@ -242,24 +242,24 @@ void KeyFrameAnimator::ShowAnimationImGui(AnimationEntry &entry, const std::vect
     } else if (entry.loadFailed) {
         ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "%s", TranslationC("component.keyframeanimator.loadfailed"));
     } else {
-        ImGui::TextDisabled("%s", TranslationC("component.keyframeanimator.desc_1"));
+        ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.keyframeanimator.desc_1"));
     }
 
     ImGui::DragFloat(TranslationLabel("component.keyframeanimator.playback_speed"), &entry.playbackSpeed, 0.01f);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", "再生速度の倍率（負の値で逆再生）");
+        ImGuiCustom::SetTooltipWrapped("%s", "再生速度の倍率（負の値で逆再生）");
     }
     ImGui::DragFloat(TranslationLabel("component.keyframeanimator.time_offset"), &entry.timeOffset, 0.01f);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", "評価時刻へ加算する再生時オフセット（秒）。同じアニメを複数オブジェクトで位相をずらして再生する用途など");
+        ImGuiCustom::SetTooltipWrapped("%s", "評価時刻へ加算する再生時オフセット（秒）。同じアニメを複数オブジェクトで位相をずらして再生する用途など");
     }
     ImGui::DragFloat(TranslationLabel("component.keyframeanimator.value_scale"), &entry.valueScale, 0.01f);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", "評価値にかけるスケール。Value Offsetの加算より先に適用される（適用値 = 評価値 × Scale + Offset）");
+        ImGuiCustom::SetTooltipWrapped("%s", "評価値にかけるスケール。Value Offsetの加算より先に適用される（適用値 = 評価値 × Scale + Offset）");
     }
     ImGui::DragFloat(TranslationLabel("component.keyframeanimator.value_offset"), &entry.valueOffset, 0.01f);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", "評価値へ加算するデフォルト値オフセット。適用先ごとの基準値の違いを吸収する");
+        ImGuiCustom::SetTooltipWrapped("%s", "評価値へ加算するデフォルト値オフセット。適用先ごとの基準値の違いを吸収する");
     }
     ImGui::Checkbox(TranslationLabel("component.keyframeanimator.loop"), &entry.loop);
     ImGui::SameLine();
@@ -277,7 +277,7 @@ void KeyFrameAnimator::ShowAnimationImGui(AnimationEntry &entry, const std::vect
             entry.playing = true;
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", "再生を開始する（値の適用はゲームループ実行中のみ行われる）");
+            ImGuiCustom::SetTooltipWrapped("%s", "再生を開始する（値の適用はゲームループ実行中のみ行われる）");
         }
     }
 

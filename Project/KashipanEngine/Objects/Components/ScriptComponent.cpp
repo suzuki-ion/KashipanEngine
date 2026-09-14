@@ -6,6 +6,7 @@
 #include <string_view>
 
 #include <angelscript.h>
+#include <add_on/scriptany/scriptany.h>
 #include <add_on/scriptarray/scriptarray.h>
 #include <add_on/scriptbuilder/scriptbuilder.h>
 #include <add_on/scripthelper/scripthelper.h>
@@ -21,12 +22,17 @@
 #include "Objects/EmptyObject.h"
 #include "Scene/Components/Script/SceneScriptEngine.h"
 #include "Scene/Components/Script/ScriptBindings.h"
+#include "Scene/Components/Script/ScriptComponentHandle.h"
+#include "Scene/Components/Script/ScriptObjectHandle.h"
 #include "Scene/SceneContext.h"
 #include "Utilities/FileIO/Directory.h"
 #include "Utilities/UUID128.h"
 #if defined(USE_IMGUI)
+#include "Assets/AudioManager.h"
+#include "Assets/TextureManager.h"
 #include "Objects/Components/Render/TargetObjectSelector.h"
 #include "Utilities/AssetDragDropPayload.h"
+#include "Utilities/ImGuiCustom.h"
 #endif
 
 namespace KashipanEngine {
@@ -178,6 +184,10 @@ ScriptComponent::FieldAttributes ParseFieldAttributes(const std::vector<std::str
             attrs.space = ParseFloatArg(token.args, 0, 8.0f);  // Unityの[Space]の既定値と同じ8px
         } else if (token.name == "Tooltip") {
             if (!token.args.empty()) attrs.tooltip = token.args[0];
+        } else if (token.name == "TexturePath") {
+            attrs.texturePath = true;
+        } else if (token.name == "AudioPath") {
+            attrs.audioPath = true;
         }
     }
     return attrs;
@@ -288,9 +298,14 @@ void ScriptComponent::ReleaseScript() {
         behaviorObject_->Release();
         behaviorObject_ = nullptr;
     }
+    if (lastReturnValue_) {
+        lastReturnValue_->Release();
+        lastReturnValue_ = nullptr;
+    }
     behaviorType_ = nullptr;
     startMethod_ = nullptr;
     updateMethod_ = nullptr;
+    drawGizmosMethod_ = nullptr;
     endMethod_ = nullptr;
     onCollisionEnterMethod_ = nullptr;
     onCollisionStayMethod_ = nullptr;
@@ -365,6 +380,18 @@ bool ScriptComponent::Reload() {
         return false;
     }
 
+    // GC管理対象の型（array<T>・dictionary等）をハンドル（@）無しの危険な値的構文で宣言していないかを
+    // 検証する。実行時の値には一切触れず型IDだけで判定するため、この検証自体が壊れたハンドルを踏んで
+    // クラッシュすることはない（詳細はValidateGCValueDeclarationsのコメント参照）
+    if (std::vector<std::string> unsafeGCFields; !ValidateGCValueDeclarations(builder.GetModule(), engine, unsafeGCFields)) {
+        lastError_ = Translation("engine.script.field.gc_type.unsafe_declaration") + scriptPath_;
+        buildErrorMessages_ = std::move(unsafeGCFields);
+        Log(lastError_, LogSeverity::Error);
+        engine->DiscardModule(moduleName_.c_str());
+        moduleName_.clear();
+        return false;
+    }
+
     stringTypeId_ = engine->GetTypeIdByDecl("string");
     vector2TypeId_ = engine->GetTypeIdByDecl("Vector2");
     vector3TypeId_ = engine->GetTypeIdByDecl("Vector3");
@@ -383,6 +410,14 @@ bool ScriptComponent::Reload() {
     CollectSerializedFields(builder);
     ApplyFieldValuesFromJson(pendingFieldValues_);
     return true;
+}
+
+void ScriptComponent::ReloadFromDisk() {
+    if (Reload()) {
+        HookColliders();
+        HookWindowObjects();
+        CallMethod(awakeMethod_);
+    }
 }
 
 bool ScriptComponent::CreateBehaviorInstance(asIScriptEngine *engine, CScriptBuilder &builder) {
@@ -440,6 +475,7 @@ bool ScriptComponent::CreateBehaviorInstance(asIScriptEngine *engine, CScriptBui
     awakeMethod_ = behaviorType_->GetMethodByDecl("void Awake()");
     startMethod_ = behaviorType_->GetMethodByDecl("void Start()");
     updateMethod_ = behaviorType_->GetMethodByDecl("void Update()");
+    drawGizmosMethod_ = behaviorType_->GetMethodByDecl("void OnDrawGizmos()");
     endMethod_ = behaviorType_->GetMethodByDecl("void End()");
     onCollisionEnterMethod_ = behaviorType_->GetMethodByDecl("void OnCollisionEnter(const HitInfo &in)");
     onCollisionStayMethod_ = behaviorType_->GetMethodByDecl("void OnCollisionStay(const HitInfo &in)");
@@ -470,45 +506,56 @@ void ScriptComponent::CallCollisionMethod(asIScriptFunction *method, const Vecto
     EmptyObject *selfObject, EmptyObject *otherObject,
     ICollider *selfCollider, ICollider *otherCollider) {
     if (!method || !context_ || !behaviorObject_) return;
+    if (context_->Prepare(method) < 0) return;
 
+    // ScriptHitInfoの各ハンドルは参照カウント式のため、Execute()後に必ずReleaseする
     ScriptHitInfo hitInfo;
     hitInfo.normal = normal;
     hitInfo.penetration = penetration;
-    hitInfo.selfObject = selfObject;
-    hitInfo.otherObject = otherObject;
-    hitInfo.selfCollider = selfCollider;
-    hitInfo.otherCollider = otherCollider;
+    hitInfo.selfObject = ScriptObjectHandle::Create(selfObject);
+    hitInfo.otherObject = ScriptObjectHandle::Create(otherObject);
+    hitInfo.selfCollider = ScriptComponentHandle<ICollider>::Create(selfCollider);
+    hitInfo.otherCollider = ScriptComponentHandle<ICollider>::Create(otherCollider);
 
-    if (context_->Prepare(method) < 0) return;
     context_->SetObject(behaviorObject_);
     context_->SetArgObject(0, &hitInfo);
-    ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
-    const int r = context_->Execute();
-    if (r != asEXECUTION_FINISHED) {
-        lastError_ = GetExceptionInfo(context_);
-        Log(Translation("engine.script.error") + lastError_, LogSeverity::Error);
+    {
+        ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
+        const int r = context_->Execute();
+        if (r != asEXECUTION_FINISHED) {
+            lastError_ = GetExceptionInfo(context_);
+            Log(Translation("engine.script.error") + lastError_, LogSeverity::Error);
+        }
     }
+    if (hitInfo.selfObject) hitInfo.selfObject->Release();
+    if (hitInfo.otherObject) hitInfo.otherObject->Release();
+    if (hitInfo.selfCollider) hitInfo.selfCollider->Release();
+    if (hitInfo.otherCollider) hitInfo.otherCollider->Release();
 }
 
 void ScriptComponent::CallWindowMessageMethod(asIScriptFunction *method, IWindowObjectComponent *sourceComponent,
     std::uint32_t message, std::uint64_t wparam, std::int64_t lparam) {
     if (!method || !context_ || !behaviorObject_) return;
+    if (context_->Prepare(method) < 0) return;
 
+    // ScriptWindowMessageInfo::sourceComponentは参照カウント式ハンドルのため、Execute()後に必ずReleaseする
     ScriptWindowMessageInfo messageInfo;
-    messageInfo.sourceComponent = sourceComponent;
+    messageInfo.sourceComponent = ScriptComponentHandle<IWindowObjectComponent>::Create(sourceComponent);
     messageInfo.message = message;
     messageInfo.wparam = wparam;
     messageInfo.lparam = lparam;
 
-    if (context_->Prepare(method) < 0) return;
     context_->SetObject(behaviorObject_);
     context_->SetArgObject(0, &messageInfo);
-    ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
-    const int r = context_->Execute();
-    if (r != asEXECUTION_FINISHED) {
-        lastError_ = GetExceptionInfo(context_);
-        Log(Translation("engine.script.error") + lastError_, LogSeverity::Error);
+    {
+        ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
+        const int r = context_->Execute();
+        if (r != asEXECUTION_FINISHED) {
+            lastError_ = GetExceptionInfo(context_);
+            Log(Translation("engine.script.error") + lastError_, LogSeverity::Error);
+        }
     }
+    if (messageInfo.sourceComponent) messageInfo.sourceComponent->Release();
 }
 
 size_t ScriptComponent::CountColliders() const {
@@ -647,11 +694,7 @@ void ScriptComponent::UnhookWindowObjects() {
 }
 
 void ScriptComponent::Initialize() {
-    if (Reload()) {
-        HookColliders();
-        HookWindowObjects();
-        CallMethod(awakeMethod_);
-    }
+    ReloadFromDisk();
 }
 
 void ScriptComponent::Finalize() {
@@ -681,6 +724,16 @@ void ScriptComponent::Update() {
     CallMethod(updateMethod_);
 }
 
+#if defined(USE_IMGUI)
+void ScriptComponent::ShowPersistentImGui() {
+    // OnDrawGizmos()はUpdate()と異なりPlay中かどうかに関わらず毎フレーム呼ばれる
+    // （ShowPersistentImGuiInterface自体がそういう仕組みのため。TilemapRenderer等と同じ経路）。
+    // Start()の遅延呼び出しは行わない。エディターでシーンを開いただけでStart()の副作用
+    // （セーブデータ読み込みやオブジェクト生成等）が走ってしまうのを避けるため
+    CallMethod(drawGizmosMethod_);
+}
+#endif
+
 bool ScriptComponent::IsSupportedFieldType(int typeId) const {
     return typeId == asTYPEID_BOOL || typeId == asTYPEID_INT32 || typeId == asTYPEID_UINT32 ||
            typeId == asTYPEID_FLOAT || typeId == asTYPEID_DOUBLE ||
@@ -698,6 +751,33 @@ bool ScriptComponent::IsEnumFieldType(int typeId, asIScriptEngine *engine) const
     if (!engine) return false;
     asITypeInfo *type = engine->GetTypeInfoById(typeId);
     return type && (type->GetFlags() & asOBJ_ENUM) != 0;
+}
+
+bool ScriptComponent::IsExchangeableFieldType(int typeId, asIScriptEngine *engine) const {
+    if (typeId == asTYPEID_BOOL || typeId == asTYPEID_INT32 || typeId == asTYPEID_UINT32 ||
+        typeId == asTYPEID_FLOAT || typeId == asTYPEID_DOUBLE ||
+        typeId == stringTypeId_ || typeId == vector2TypeId_ || typeId == vector3TypeId_ ||
+        typeId == vector4TypeId_ || typeId == quaternionTypeId_) return true;
+    if (IsEnumFieldType(typeId, engine)) return true;
+    // Object@ / array<T>@ / dictionary@ / 独自クラス・独自enumのハンドル等、あらゆるハンドル型を許可する。
+    // 安全性は呼び出し元で行う型IDの完全一致チェックによって担保される（一致すれば同一のasITypeInfoである
+    // ことが保証されるため、独自クラス/enumはshared宣言、array/dictionaryはエンジン共有のためそのまま安全）
+    return (typeId & asTYPEID_OBJHANDLE) != 0;
+}
+
+void ScriptComponent::WarnIfLikelySharedMismatch(int expectedTypeId, int actualTypeId, asIScriptEngine *engine) const {
+    if (!engine || expectedTypeId == actualTypeId) return;
+    constexpr int kHandleMask = ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST);
+    asITypeInfo *expectedType = engine->GetTypeInfoById(expectedTypeId & kHandleMask);
+    asITypeInfo *actualType = engine->GetTypeInfoById(actualTypeId & kHandleMask);
+    if (!expectedType || !actualType || expectedType == actualType) return;
+    const char *expectedName = expectedType->GetName();
+    const char *actualName = actualType->GetName();
+    // 型名が同じなのに型IDが違う＝別モジュールでコンパイルされた別実体の可能性が高く、
+    // 独自クラス/enumをスクリプトをまたいでやり取りする際の shared 宣言忘れが典型例
+    if (expectedName && actualName && std::string_view(expectedName) == actualName) {
+        Log(Translation("engine.script.variable.type_mismatch_shared_hint") + expectedName, LogSeverity::Warning);
+    }
 }
 
 void ScriptComponent::CollectSerializedFields(CScriptBuilder &builder) {
@@ -853,6 +933,84 @@ bool ScriptComponent::IsArrayHandleValid(CScriptArray *array, int fieldTypeId) c
     return expectedType && actualType && expectedType == actualType;
 }
 
+void *ScriptComponent::CreateScriptObjectViaFactory(asITypeInfo *type) const {
+    // CreateBehaviorInstance()がBehaviorクラス本体の生成に使っているのと同じ「ファクトリ関数を
+    // VMで実際に実行する」方式。array<T@>@の新規要素を生成する際に使う
+    if (!type || !context_) return nullptr;
+
+    const std::string factoryDecl = std::string(type->GetName()) + " @" + type->GetName() + "()";
+    asIScriptFunction *factory = type->GetFactoryByDecl(factoryDecl.c_str());
+    if (!factory) return nullptr;
+
+    if (context_->Prepare(factory) < 0) return nullptr;
+    int r;
+    {
+        ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
+        r = context_->Execute();
+    }
+    if (r != asEXECUTION_FINISHED) return nullptr;
+
+    void *retAddr = context_->GetAddressOfReturnValue();
+    asIScriptObject *object = retAddr ? *static_cast<asIScriptObject **>(retAddr) : nullptr;
+    // GetAddressOfReturnValue()が指す先はコンテキスト内部の一時領域であり、次のPrepare()で
+    // 上書き・解放されうるため、呼び出し元へ渡す前に明示的に参照を1つ取得しておく
+    // （CreateBehaviorInstance()でbehaviorObject_->AddRef()しているのと同じ理由）
+    if (object) object->AddRef();
+    return object;
+}
+
+bool ScriptComponent::ValidateGCValueDeclarations(asIScriptModule *module, asIScriptEngine *engine, std::vector<std::string> &violations) const {
+    violations.clear();
+    if (!module || !engine) return true;
+
+    // typeIdの実行時の値には一切触れず、型ID（ハンドル修飾ビットの有無）とフラグだけで判定する。
+    // (1) GC管理対象の型（array<T>・dictionary等、asOBJ_GCフラグを持つ型）を値的構文で使うと
+    //     AngelScript側のGC追跡が壊れる実装依存の問題があるため、ハンドル（@）として宣言されていない
+    //     限り危険とみなす（array固有の問題ではなく asOBJ_GC を持つ型全般に共通するリスクとして扱う）
+    // (2) スクリプトクラス型（[System.Serializable]クラス等、asOBJ_SCRIPT_OBJECTフラグを持つ型）を
+    //     ハンドル無しの「複合メンバ」として持たせると、実機で検証した結果AngelScript側がそのメンバを
+    //     一切初期化せず未初期化のポインタが残ることが判明しているため、常に危険とみなす
+    //     （[System.Serializable]のドキュメントでは自動生成されると説明されているが、少なくとも
+    //     engine->CreateScriptObject()・VMでのファクトリ実行のどちらの生成経路でも機能しない）
+    const auto isUnsafeValueType = [engine](int typeId) {
+        if (typeId & asTYPEID_OBJHANDLE) return false;
+        asITypeInfo *type = engine->GetTypeInfoById(typeId);
+        if (!type) return false;
+        const asQWORD flags = type->GetFlags();
+        return (flags & asOBJ_GC) != 0 || (flags & asOBJ_SCRIPT_OBJECT) != 0;
+    };
+
+    const asUINT varCount = module->GetGlobalVarCount();
+    for (asUINT i = 0; i < varCount; ++i) {
+        const char *name = nullptr;
+        int typeId = 0;
+        if (module->GetGlobalVar(i, &name, nullptr, &typeId) < 0 || !name) continue;
+        if (isUnsafeValueType(typeId)) {
+            violations.push_back(std::string(name) + Translation("engine.script.field.gc_type.unsafe_declaration.global_suffix"));
+        }
+    }
+
+    // モジュール内で定義された全クラス型を対象にする（[SerializeField]の有無やBehaviorクラスかどうかは問わない。
+    // AngelScript側のGC破棄処理はシリアライズ対象かどうかに関係なく壊れたハンドルを踏みうるため）
+    const asUINT typeCount = module->GetObjectTypeCount();
+    for (asUINT t = 0; t < typeCount; ++t) {
+        asITypeInfo *classType = module->GetObjectTypeByIndex(t);
+        if (!classType || !(classType->GetFlags() & asOBJ_SCRIPT_OBJECT)) continue;
+
+        const asUINT propCount = classType->GetPropertyCount();
+        for (asUINT p = 0; p < propCount; ++p) {
+            const char *propName = nullptr;
+            int propTypeId = 0;
+            if (classType->GetProperty(p, &propName, &propTypeId) < 0 || !propName) continue;
+            if (isUnsafeValueType(propTypeId)) {
+                violations.push_back(std::string(classType->GetName()) + "::" + propName);
+            }
+        }
+    }
+
+    return violations.empty();
+}
+
 JSON ScriptComponent::CaptureField(const SerializedField &field, void *address) const {
     if (!address) return JSON();
 
@@ -913,8 +1071,9 @@ JSON ScriptComponent::CaptureField(const SerializedField &field, void *address) 
     } else if (field.typeId == quaternionTypeId_) {
         return ToJSON(*static_cast<Quaternion *>(address));
     } else if (IsObjectFieldType(field.typeId)) {
-        EmptyObject *object = *static_cast<EmptyObject **>(address);
-        return object ? ToJSON(object->GetObjectID()) : JSON();
+        // ハンドルが持つUUIDをそのまま保存する（参照先の生死に関わらず、中身に触れず安全に読める）
+        ScriptObjectHandle *handle = *static_cast<ScriptObjectHandle **>(address);
+        return handle ? ToJSON(handle->GetID()) : JSON();
     }
     return JSON();
 }
@@ -946,7 +1105,7 @@ void ScriptComponent::ApplyField(const SerializedField &field, void *address, co
                 void **slot = static_cast<void **>(array->At(i));
                 if (slot && !*slot && value[i].is_object()) {
                     asITypeInfo *elementType = engine->GetTypeInfoById(subTypeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST));
-                    if (elementType) *slot = engine->CreateScriptObject(elementType);
+                    if (elementType) *slot = CreateScriptObjectViaFactory(elementType);
                 }
             }
             void *at = array->At(i);
@@ -993,11 +1152,11 @@ void ScriptComponent::ApplyField(const SerializedField &field, void *address, co
         } else if (field.typeId == quaternionTypeId_) {
             *static_cast<Quaternion *>(address) = FromJSON<Quaternion>(value);
         } else if (IsObjectFieldType(field.typeId)) {
-            // UUIDから参照先オブジェクトを解決する（見つからない場合はnullのまま）
-            auto *sceneContext = GetOwnerSceneContext();
-            *static_cast<EmptyObject **>(address) = (sceneContext && value.is_string())
-                ? sceneContext->GetSceneObject(FromJSON<UUID128>(value))
-                : nullptr;
+            // JSONのUUIDから直接ハンドルを作る（参照先が現時点で存在するかはResolve()の都度判定でよいため
+            // ここではシーンへ問い合わせない。既存の参照は正しくReleaseしてから差し替える）
+            auto *slot = static_cast<ScriptObjectHandle **>(address);
+            if (*slot) { (*slot)->Release(); *slot = nullptr; }
+            if (value.is_string()) *slot = ScriptObjectHandle::CreateFromID(FromJSON<UUID128>(value));
         }
     } catch (const JSON::exception &) {
         // 型が合わない保存値（スクリプト側の型変更後など）は無視して既定値のままにする
@@ -1049,16 +1208,61 @@ void ScriptComponent::CopyLeafFieldValue(int typeId, void *dst, const void *src)
     } else if (typeId == quaternionTypeId_) {
         *static_cast<Quaternion *>(dst) = *static_cast<const Quaternion *>(src);
     } else if (IsObjectFieldType(typeId)) {
-        *static_cast<EmptyObject **>(dst) = *static_cast<EmptyObject *const *>(src);
+        // ハンドル型（参照カウント式）のため、コピー元をAddRef、コピー先の既存参照をReleaseしてから代入する
+        auto *dstSlot = static_cast<ScriptObjectHandle **>(dst);
+        ScriptObjectHandle *newValue = *static_cast<ScriptObjectHandle *const *>(src);
+        if (newValue) newValue->AddRef();
+        if (*dstSlot) (*dstSlot)->Release();
+        *dstSlot = newValue;
+    } else if ((typeId & asTYPEID_OBJHANDLE) && engine) {
+        // Object以外の汎用ハンドル型（array<T>@ / dictionary@ / 独自クラス・enumのハンドル等）。
+        // 具体的な型を問わずAddRef/Releaseできるエンジンの汎用APIでハンドルを差し替える
+        asITypeInfo *type = engine->GetTypeInfoById(typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST));
+        // 型情報が取得できない場合はAddRef/Releaseの整合性を保証できないため、
+        // 参照カウントを壊さないよう代入自体を行わない（呼び出し元は型ID一致を確認済みのため通常は発生しない）
+        if (!type) return;
+        auto *dstSlot = static_cast<void **>(dst);
+        void *newValue = *static_cast<void *const *>(src);
+        if (newValue) engine->AddRefScriptObject(newValue, type);
+        if (*dstSlot) engine->ReleaseScriptObject(*dstSlot, type);
+        *dstSlot = newValue;
+    }
+}
+
+void ScriptComponent::SetContextArg(int argIndex, const void *ref, int typeId, asIScriptEngine *engine) const {
+    const asUINT index = static_cast<asUINT>(argIndex);
+    if (IsEnumFieldType(typeId, engine)) {
+        context_->SetArgDWord(index, static_cast<asDWORD>(*static_cast<const int32_t *>(ref)));
+    } else if (typeId == asTYPEID_BOOL) {
+        context_->SetArgByte(index, *static_cast<const bool *>(ref) ? 1 : 0);
+    } else if (typeId == asTYPEID_INT32) {
+        context_->SetArgDWord(index, static_cast<asDWORD>(*static_cast<const int32_t *>(ref)));
+    } else if (typeId == asTYPEID_UINT32) {
+        context_->SetArgDWord(index, *static_cast<const uint32_t *>(ref));
+    } else if (typeId == asTYPEID_FLOAT) {
+        context_->SetArgFloat(index, *static_cast<const float *>(ref));
+    } else if (typeId == asTYPEID_DOUBLE) {
+        context_->SetArgDouble(index, *static_cast<const double *>(ref));
+    } else if (typeId & asTYPEID_OBJHANDLE) {
+        // Object@ / array<T>@ / dictionary@ / 独自クラス・enumのハンドル等（ハンドルスロットの中身を渡す）
+        void *handle = *static_cast<void *const *>(ref);
+        context_->SetArgObject(index, handle);
+    } else {
+        // string / Vector2 / Vector3 / Vector4 / Quaternion（登録済みの値型はアドレスをそのまま渡す）
+        context_->SetArgObject(index, const_cast<void *>(ref));
     }
 }
 
 bool ScriptComponent::GetVariable(const std::string &name, void *ref, int typeId) const {
     if (!ref) return false;
+    asIScriptEngine *engine = context_ ? context_->GetEngine() : nullptr;
     for (const auto &field : serializedFields_) {
-        if (field.name != name || field.typeId != typeId) continue;
-        // array<T>や[System.Serializable]クラスはモジュールをまたぐと型が一致しないため対象外
-        if (field.isArray || field.isScriptObject || !field.address) return false;
+        if (field.name != name) continue;
+        if (field.typeId != typeId) {
+            WarnIfLikelySharedMismatch(field.typeId, typeId, engine);
+            continue;
+        }
+        if (!field.address || !IsExchangeableFieldType(typeId, engine)) return false;
         CopyLeafFieldValue(typeId, ref, field.address);
         return true;
     }
@@ -1067,13 +1271,94 @@ bool ScriptComponent::GetVariable(const std::string &name, void *ref, int typeId
 
 bool ScriptComponent::SetVariable(const std::string &name, void *ref, int typeId) {
     if (!ref) return false;
+    asIScriptEngine *engine = context_ ? context_->GetEngine() : nullptr;
     for (auto &field : serializedFields_) {
-        if (field.name != name || field.typeId != typeId) continue;
-        if (field.isArray || field.isScriptObject || !field.address) return false;
+        if (field.name != name) continue;
+        if (field.typeId != typeId) {
+            WarnIfLikelySharedMismatch(field.typeId, typeId, engine);
+            continue;
+        }
+        if (!field.address || !IsExchangeableFieldType(typeId, engine)) return false;
         CopyLeafFieldValue(typeId, field.address, ref);
         return true;
     }
     return false;
+}
+
+asIScriptFunction *ScriptComponent::FindInvokableMethod(const std::string &name, int paramCount) const {
+    if (!behaviorType_) return nullptr;
+    const asUINT count = behaviorType_->GetMethodCount();
+    for (asUINT i = 0; i < count; ++i) {
+        asIScriptFunction *func = behaviorType_->GetMethodByIndex(i);
+        if (!func) continue;
+        if (name != func->GetName()) continue;
+        if (static_cast<int>(func->GetParamCount()) != paramCount) continue;
+        return func;
+    }
+    return nullptr;
+}
+
+bool ScriptComponent::InvokeMethod(const std::string &name) {
+    return InvokeMethod(name, {});
+}
+
+bool ScriptComponent::InvokeMethod(const std::string &name, std::initializer_list<std::pair<void *, int>> args) {
+    if (!context_ || !behaviorObject_) return false;
+    asIScriptEngine *engine = context_->GetEngine();
+
+    for (const auto &[ref, typeId] : args) {
+        if (!ref || !IsExchangeableFieldType(typeId, engine)) return false;
+    }
+
+    asIScriptFunction *method = FindInvokableMethod(name, static_cast<int>(args.size()));
+    if (!method) return false;
+
+    asUINT index = 0;
+    for (const auto &[ref, typeId] : args) {
+        int paramTypeId = 0;
+        if (method->GetParam(index, &paramTypeId) < 0) return false;
+        if (paramTypeId != typeId) {
+            WarnIfLikelySharedMismatch(paramTypeId, typeId, engine);
+            return false;
+        }
+        ++index;
+    }
+
+    if (context_->Prepare(method) < 0) {
+        lastError_ = "関数の準備に失敗しました";
+        return false;
+    }
+    context_->SetObject(behaviorObject_);
+
+    index = 0;
+    for (const auto &[ref, typeId] : args) {
+        SetContextArg(static_cast<int>(index), ref, typeId, engine);
+        ++index;
+    }
+
+    if (lastReturnValue_) {
+        lastReturnValue_->Release();
+        lastReturnValue_ = nullptr;
+    }
+
+    ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
+    const int r = context_->Execute();
+    if (r != asEXECUTION_FINISHED) {
+        lastError_ = GetExceptionInfo(context_);
+        Log(Translation("engine.script.error") + lastError_, LogSeverity::Error);
+        return true;
+    }
+
+    const int returnTypeId = method->GetReturnTypeId();
+    if (returnTypeId != asTYPEID_VOID) {
+        void *returnAddress = context_->GetAddressOfReturnValue();
+        if (returnAddress) lastReturnValue_ = new CScriptAny(returnAddress, returnTypeId, engine);
+    }
+    return true;
+}
+
+bool ScriptComponent::GetLastReturnValue(void *ref, int typeId) const {
+    return ref && lastReturnValue_ && lastReturnValue_->Retrieve(ref, typeId);
 }
 
 std::vector<std::string> ScriptComponent::GetFloatVariableNames() const {
@@ -1099,11 +1384,7 @@ void ScriptComponent::ShowImGui() {
         // スクリプトパス一覧・シーンJSONはバックスラッシュ区切りで統一されているため合わせる
         std::replace(droppedPath.begin(), droppedPath.end(), '/', '\\');
         scriptPath_ = droppedPath;
-        if (Reload()) {
-            HookColliders();
-            HookWindowObjects();
-            CallMethod(awakeMethod_);
-        }
+        ReloadFromDisk();
     }
     ImGui::SameLine();
     if (ImGui::Button(TranslationLabel("component.scriptcomponent.refresh_list"))) {
@@ -1111,11 +1392,7 @@ void ScriptComponent::ShowImGui() {
     }
     // コンボの右に並べると画面外へはみ出して押しづらいため、Reloadは下の行に配置する
     if (ImGui::Button(TranslationLabel("component.scriptcomponent.reload"))) {
-        if (Reload()) {
-            HookColliders();
-            HookWindowObjects();
-            CallMethod(awakeMethod_);
-        }
+        ReloadFromDisk();
     }
 
     ImGui::Text(TranslationC("component.scriptcomponent.behavior_s"), behaviorType_ ? behaviorType_->GetName() : "(None)");
@@ -1171,7 +1448,7 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
             return;
         }
         const bool isOpen = ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_DefaultOpen);
-        if (!attrs.tooltip.empty() && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", attrs.tooltip.c_str());
+        if (!attrs.tooltip.empty() && ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", attrs.tooltip.c_str());
         if (!isOpen) return;
 
         SerializedField &element = field.children[0];
@@ -1186,7 +1463,7 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
             if (!elementType) return;
             for (asUINT i = 0; i < array->GetSize(); ++i) {
                 void **slot = static_cast<void **>(array->At(i));
-                if (slot && !*slot) *slot = engine->CreateScriptObject(elementType);
+                if (slot && !*slot) *slot = CreateScriptObjectViaFactory(elementType);
             }
         };
 
@@ -1231,7 +1508,7 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
             return;
         }
         const bool isOpen = ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_DefaultOpen);
-        if (!attrs.tooltip.empty() && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", attrs.tooltip.c_str());
+        if (!attrs.tooltip.empty() && ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", attrs.tooltip.c_str());
         if (isOpen) {
             for (auto &child : field.children) {
                 ImGui::PushID(child.name.c_str());
@@ -1307,7 +1584,11 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
         }
     } else if (field.typeId == stringTypeId_) {
         auto *str = static_cast<std::string *>(address);
-        if (attrs.multiline) {
+        if (attrs.texturePath) {
+            ImGuiCustom::TextureThumbnailPicker(label, *str, TextureManager::GetLoadedTextureListEntries(), true);
+        } else if (attrs.audioPath) {
+            ImGuiCustom::AudioAssetPicker(label, *str, AudioManager::GetLoadedSoundAssetPaths(), true);
+        } else if (attrs.multiline) {
             // 内容の行数に応じて minLines〜maxLines の範囲で高さを調整する（UnityのTextArea相当）
             int lineCount = 1 + static_cast<int>(std::count(str->begin(), str->end(), '\n'));
             lineCount = std::clamp(lineCount, attrs.minLines, attrs.maxLines);
@@ -1330,12 +1611,13 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
     } else if (field.typeId == quaternionTypeId_) {
         ImGuiCustom::EditValue(label, *static_cast<Quaternion *>(address), { .vSpeed = 0.01f });
     } else if (IsObjectFieldType(field.typeId)) {
-        auto *objectSlot = static_cast<EmptyObject **>(address);
+        auto *slot = static_cast<ScriptObjectHandle **>(address);
         auto *sceneContext = GetOwnerSceneContext();
-        UUID128 targetId = *objectSlot ? (*objectSlot)->GetObjectID() : UUID128();
+        UUID128 targetId = *slot ? (*slot)->GetID() : UUID128();
         if (sceneContext) {
             if (TargetObjectSelector::ShowSelector(label, sceneContext, targetId, true, false)) {
-                *objectSlot = sceneContext->GetSceneObject(targetId);
+                if (*slot) { (*slot)->Release(); *slot = nullptr; }
+                *slot = ScriptObjectHandle::CreateFromID(targetId);
             }
         } else {
             ImGui::Text(TranslationC("component.scriptcomponent.s_scenecontext"), label);
@@ -1344,7 +1626,7 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
         ImGui::Text(TranslationC("component.scriptcomponent.s_unsupported_type"), label);
     }
 
-    if (!attrs.tooltip.empty() && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", attrs.tooltip.c_str());
+    if (!attrs.tooltip.empty() && ImGui::IsItemHovered()) ImGuiCustom::SetTooltipWrapped("%s", attrs.tooltip.c_str());
 }
 #endif
 
@@ -1363,11 +1645,7 @@ bool ScriptComponent::LoadFromJson(const JSON &json) {
     // 呼ばれてしまっているため、ここで読み込んだパスを使って改めてリロードする。
     // 非アクティブな場合はSetActive(true)時のInitialize()に任せる
     if (IsActive()) {
-        if (Reload()) {
-            HookColliders();
-            HookWindowObjects();
-            CallMethod(awakeMethod_);
-        }
+        ReloadFromDisk();
     } else if (!serializedFields_.empty()) {
         // 既にビルド済み（Initialize後に読み込まれた）の場合はその場で反映する
         ApplyFieldValuesFromJson(pendingFieldValues_);

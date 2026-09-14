@@ -2,6 +2,7 @@
 #include "EngineSettings.h"
 #include "Core/ProjectPaths.h"
 #include "Core/Window.h"
+#include "Scene/Scene.h"
 #include "Scene/SceneContext.h"
 #include "Utilities/FileIO/JSON.h"
 #include "Utilities/Translation.h"
@@ -9,6 +10,7 @@
 #include "Graphics/ScreenBuffer.h"
 #include "Graphics/ShadowMapBuffer.h"
 #include "Graphics/ComputeCommandProcessor.h"
+#include "Objects/Components/ParticleSystemBase.h"
 #include "AppInitialize.h"
 
 #include <cstdint>
@@ -114,14 +116,18 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     directXCommon_ = std::make_unique<DirectXCommon>(Passkey<GameEngine>{});
     ScreenBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     ShadowMapBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
+    Scene::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
+    ParticleSystemBase::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     ComputeCommandProcessor::Initialize(Passkey<GameEngine>{}, directXCommon_.get());
     graphicsEngine_ = std::make_unique<GraphicsEngine>(Passkey<GameEngine>{}, directXCommon_.get());
+    Scene::SetGraphicsEngine(Passkey<GameEngine>{}, graphicsEngine_.get());
 
     // 各Managerには物理パスのAssetsルートを渡す。Manager内部で扱うアセットパスは
     // このルートからの相対パスになるため、プロジェクトが変わっても値は変わらない
     const std::string &assetsRoot = ProjectPaths::AssetsRoot();
     textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetsRoot);
     fontManager_ = std::make_unique<FontManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetsRoot);
+    bitmapFontManager_ = std::make_unique<BitmapFontManager>(Passkey<GameEngine>{}, assetsRoot);
     samplerManager_ = std::make_unique<SamplerManager>(Passkey<GameEngine>{}, directXCommon_.get());
     modelManager_ = std::make_unique<ModelManager>(Passkey<GameEngine>{}, assetsRoot);
     skeletonManager_ = std::make_unique<SkeletonManager>(Passkey<GameEngine>{}, assetsRoot);
@@ -175,12 +181,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
 
     gameLoopEndConditionFunction_ = [this]() {
 #ifdef USE_IMGUI
-        if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-            return Window::GetWindowCount() == 0;
-        } else {
-            // ビューポートが無効な場合は、ImGuiのウィンドウが閉じられたかどうかで終了条件を判断する
-            return Window::GetWindow("ImGui Window") == nullptr;
-        }
+        return Window::GetWindow("ImGui Window") == nullptr;
 #else
         return isGameLoopRunning_ == false;
 #endif
@@ -246,8 +247,10 @@ GameEngine::~GameEngine() {
     modelManager_.reset();
     samplerManager_.reset();
     fontManager_.reset();
+    bitmapFontManager_.reset();
     textureManager_.reset();
 
+    Scene::SetGraphicsEngine(Passkey<GameEngine>{}, nullptr);
     graphicsEngine_.reset();
     directXCommon_.reset();
     windowsAPI_.reset();
@@ -352,17 +355,23 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
         GameLoopDraw();
 
         if (sceneManager_ && sceneManager_->CommitPendingSceneChange({})) {
-            graphicsEngine_->ReleaseRendererResources({});
+            graphicsEngine_->ReleaseRendererResources(Passkey<GameEngine>{});
             // シーン構築中のアセット読み込みで実時間が飛んでいるため、
             // 次フレームのデルタタイムへその時間が混入しないようにする
             ResetDeltaTime({});
         }
+        // スワップチェーンの破棄は、それが紐付くウィンドウ(HWND)を破棄するより必ず先に行うこと。
+        // Window::CommitDestroy()はDestroyWindow()を同期的に呼ぶため、先にHWNDを破棄してしまうと
+        // まだ生きているIDXGISwapChainが破棄済みウィンドウを参照した状態になる。この状態でPresent/
+        // 破棄が走ると、DWM側の合成状態が壊れてGPUハング（TDR）→次フレームのPresent失敗を
+        // 引き起こしうる（Play/StopでNormalWindowObject等がウィンドウごと即座に作り直される際に
+        // 顕在化しやすい）
+        directXCommon_->AllDestroyPendingSwapChains({});
         Window::CommitDestroy({});
         ScreenBuffer::CommitDestroy({});
         ShadowMapBuffer::CommitDestroy({});
         VideoManager::CommitPendingDestroy({});
         GifManager::CommitPendingDestroy({});
-        directXCommon_->AllDestroyPendingSwapChains({});
 
         if (windowCount > Window::GetWindowCount()) {
             isGameLoopRunning_ = Window::GetWindowCount() != 0;

@@ -1,6 +1,7 @@
 #include "ExportDump.h"
 #include "Utilities/TimeUtils.h"
 #include "Core/ProjectPaths.h"
+#include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/FileIO/Directory.h"
 
 #include <DbgHelp.h>
@@ -16,8 +17,7 @@ void ExportDumpFile(EXCEPTION_POINTERS *exceptionPointers) {
     Log(Translation("engine.crashhandler.crash.export.dump.start"), LogSeverity::Error);
     
     auto time = GetNowTime();
-    const std::string dumpDirectory = ProjectPaths::InEngineRoot("Dumps");
-    CreateDirectories(dumpDirectory);
+    const std::string dumpDirectory = ProjectPaths::WritableDirectory("Dumps");
     std::string dumpFilePath = dumpDirectory + "/";
     dumpFilePath += std::to_string(time.year) + "-";
     dumpFilePath += std::to_string(time.month) + "-";
@@ -26,8 +26,9 @@ void ExportDumpFile(EXCEPTION_POINTERS *exceptionPointers) {
     dumpFilePath += std::to_string(time.minute) + "-";
     dumpFilePath += std::to_string(time.second) + ".dmp";
 
-    HANDLE hFile = CreateFileA(
-        dumpFilePath.c_str(),
+    const std::wstring wideDumpFilePath = ConvertString(dumpFilePath);
+    HANDLE hFile = CreateFileW(
+        wideDumpFilePath.c_str(),
         GENERIC_READ | GENERIC_WRITE,
         FILE_SHARE_WRITE | FILE_SHARE_READ,
         0,
@@ -45,7 +46,7 @@ void ExportDumpFile(EXCEPTION_POINTERS *exceptionPointers) {
     dumpExceptionInfo.ExceptionPointers = exceptionPointers;
     dumpExceptionInfo.ClientPointers = TRUE;
     
-    MiniDumpWriteDump(
+    const BOOL written = MiniDumpWriteDump(
         GetCurrentProcess(),
         GetCurrentProcessId(),
         hFile,
@@ -55,6 +56,11 @@ void ExportDumpFile(EXCEPTION_POINTERS *exceptionPointers) {
         nullptr
     );
     CloseHandle(hFile);
+
+    if (!written) {
+        Log(Translation("engine.crashhandler.crash.export.dump.failed") + dumpFilePath, LogSeverity::Error);
+        return;
+    }
 
     Log(Translation("engine.crashhandler.crash.export.dump.end") + dumpFilePath, LogSeverity::Error);
 }

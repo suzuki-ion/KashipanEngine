@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpriteRenderer | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_SpriteRenderer">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>SpriteRenderer</h1>
+<p class="page-lead">2Dスプライトを描画するコンポーネントです。</p>
+</div>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetAnchor(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetAnchor() const</code></td><td>アンカー</td></tr>
+<tr><td><code>void SetPivot(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetPivot() const</code></td><td>ピボット</td></tr>
+<tr><td><code>void SetPipelineName(const string &amp;in)</code></td><td>使用パイプライン名の設定</td></tr>
+<tr><td><code>void SetMaterialName(const string &amp;in)</code></td><td>使用マテリアル名の設定</td></tr>
+<tr><td><code>void SetInstanceColor(const Vector4 &amp;in)</code> / <code>const Vector4 &amp;GetInstanceColor() const</code></td><td>インスタンスカラー（RGBA）</td></tr>
+<tr><td><code>void SetInstanceColorBlendMode(int)</code> / <code>int GetInstanceColorBlendMode() const</code></td><td>合成方法（0=Override, 1=Multiply, 2=Add, 3=Subtract）</td></tr>
+<tr><td><code>void SetInstanceUvTranslate(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetInstanceUvTranslate() const</code></td><td>インスタンス単位のUVオフセット</td></tr>
+<tr><td><code>void SetInstanceUvRotation(float)</code> / <code>float GetInstanceUvRotation() const</code></td><td>インスタンス単位のUV回転（ラジアン）</td></tr>
+<tr><td><code>void SetInstanceUvScale(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetInstanceUvScale() const</code></td><td>インスタンス単位のUVスケール</td></tr>
+<tr><td><code>void SetInstanceUvPivot(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetInstanceUvPivot() const</code></td><td>UV回転の中心座標（拡縮は常にUV原点(0,0)基準）</td></tr>
+<tr><td><code>void SetInstanceUvCombineMode(int)</code> / <code>int GetInstanceUvCombineMode() const</code></td><td>マテリアルのUV変換との合成方法（0=MaterialThenInstance, 1=InstanceThenMaterial, 2=InstanceOnly）</td></tr>
+</table>
+
+<div class="note"><strong>InstanceUv系はTextRendererには無い</strong><br><code>MeshRenderer</code>/<code>SpriteRenderer</code>/<code>SkinnedMeshRenderer</code>のInstanceUv系メソッドは、マテリアルの<code>uvTranslate</code>等と合成されるUV変換行列を経由する。<code>TextRenderer</code>はUV変換を使わず文字ごとのUV矩形（フォントアトラス参照）を直接使うため対象外。マテリアル側のUV変換とインスタンス側のUV変換の合成方法（UV Combine Mode）の詳細は<a href="../../../Editor/Components/Render/SpriteRenderer.html">Editor/Components/Render/SpriteRenderer.html</a>を参照。</div>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="TextRenderer.html">TextRenderer</a></li>
+<li><a href="../Basic/TextureSource.html">TextureSource</a> / <a href="../Basic/GifSource.html">GifSource</a> / <a href="../Basic/VideoSource.html">VideoSource</a> — 参照するテクスチャを差し替えるコンポーネント</li>
+<li><a href="../../../Editor/Components/Render/SpriteRenderer.html">Editor/Components/Render/SpriteRenderer.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

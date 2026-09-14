@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Material Editor | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script defer src="../../assets/nav-editor-data.js"></script>
+<script defer src="../../assets/nav.js"></script>
+</head>
+<body data-page="W10_MaterialEditor">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Material Editor</h1>
+<p class="page-lead"><code>MaterialManager</code>が管理するマテリアル（<code>.mat</code>）の色・テクスチャ・UV変換・シェーダー固有パラメータを編集する機能です。専用ウィンドウは無く、下記2つの入口のどちらから開いても同じ編集フィールド（<code>MaterialManager::ShowMaterialEditorFields</code>）が表示されます。</p>
+</div>
+
+<h2>開き方</h2>
+<table>
+<tr><th>入口</th><th>対象</th><th>備考</th></tr>
+<tr><td><a href="05_AssetsWindow.html">Assets Window</a>で<code>.mat</code>ファイルをOpen（ダブルクリックまたは右クリック→Open）</td><td>そのファイル1つだけ</td><td>「Material: ファイル名」という浮動ウィンドウが開く。対応するマテリアルが読み込み済みで無い場合は赤字で「Material is not loaded: (パス)」とだけ表示される</td></tr>
+<tr><td>メインメニュー <span class="ui-path"><span>Debug Windows</span><i>›</i><span>Materials</span></span></td><td>読み込み済み全マテリアル</td><td>「MaterialManager - Materials」ウィンドウ。一覧・新規作成・削除・全保存も行える（下記参照）。表示状態は次回起動時も復元される</td></tr>
+</table>
+
+<h2>Materialsウィンドウ（一覧・作成・削除）</h2>
+<p><span class="ui-path"><span>Debug Windows</span><i>›</i><span>Materials</span></span>からのみ表示される機能です。</p>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Materials: N</td><td>読み取り専用テキスト</td><td>読み込み済みマテリアルの総数</td></tr>
+<tr><td>（名前入力欄）＋ Add Material</td><td>テキスト入力＋ボタン</td><td>入力した名前で空のマテリアルを新規作成し、<code>Assets/Materials/&lt;名前&gt;.mat</code>として即座に保存する。名前が空、または既存の名前と重複する場合は何も起きない</td></tr>
+<tr><td>Save All</td><td>ボタン</td><td>読み込み済み全マテリアルをそれぞれの元のファイルパスへ上書き保存する</td></tr>
+<tr><td>一覧テーブル（Name / File / 操作列）</td><td>選択可能な行＋Removeボタン</td><td>行をクリックするとそのマテリアルが下の編集フィールドの対象になる。File列は<code>Assets/</code>からの相対パス。Removeボタンで即座に削除される（確認ダイアログ無し）</td></tr>
+<tr><td>Name</td><td>テキスト入力（Enterで確定）</td><td>選択中マテリアルの名前を変更する。空、または既存の名前と重複する場合は変更されない</td></tr>
+<tr><td>Save</td><td>ボタン</td><td>選択中マテリアルを元のファイルパスへ上書き保存する</td></tr>
+</table>
+<div class="note"><strong>一覧が空のとき</strong><br>マテリアルが1つも選択されていない状態では「No material selected.」とだけ表示され、下記の編集フィールドは表示されない。</div>
+
+<h2>マテリアル編集フィールド（共通）</h2>
+<p>Assets Windowからの単体編集・Materialsウィンドウからの一覧編集のどちらでも共通の内容です。上から順に、実装（<code>ShowMaterialEditorFields</code>）に現れる順で説明します。</p>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Color</td><td>ColorEdit4（RGBA）</td><td>マテリアルの基本色。既定値は白(1,1,1,1)</td></tr>
+<tr><td>Texture</td><td>コンボ（読み込み済みテクスチャのアセットパス一覧）＋アセットのドラッグ&amp;ドロップ受付</td><td>使用するテクスチャ。未解決（読み込み時に見つからなかった）場合は保留中のファイル名がそのまま表示される</td></tr>
+<tr><td>Sampler</td><td>コンボ（Default (LinearWrap) / Point Clamp / Point Wrap / Linear Clamp / Linear Wrap / Anisotropic Clamp / Anisotropic Wrap）</td><td>テクスチャサンプリング方式。選べるのはこの既定6種＋Defaultのみ（GPU側がバインドレス配列の固定長6要素で確保しているため）。Defaultを選ぶと明示的なハンドルを持たず、描画側でLinearWrapへフォールバックする</td></tr>
+<tr><td>Shininess</td><td>ドラッグ入力欄（ステップ0.1、範囲0〜1024）</td><td>鏡面反射の鋭さ。既定値32</td></tr>
+<tr><td>Specular Color</td><td>ColorEdit4（RGBA）</td><td>鏡面反射色。既定値は白(1,1,1,1)</td></tr>
+<tr><td>Rim Color</td><td>ColorEdit4（RGBA）</td><td>リムライト色（ライト方向を考慮した逆光縁取り）。既定値は白(1,1,1,1)</td></tr>
+<tr><td>Rim Power</td><td>ドラッグ入力欄（ステップ0.05、範囲0.1〜16）</td><td>リムの鋭さ。大きいほど縁が細くなる。既定値2</td></tr>
+<tr><td>Rim Intensity</td><td>ドラッグ入力欄（ステップ0.01、範囲0〜10）</td><td>リムライトの強さ。既定値0（無効）。既存マテリアルの見た目を変えないよう、既定では無効のまま</td></tr>
+<tr><td>Enable Lighting</td><td>チェックボックス</td><td>ライティング計算を行うか。既定true</td></tr>
+<tr><td>Enable ShadowMap Projection</td><td>チェックボックス</td><td>シャドウマップへ投影されるか。既定true</td></tr>
+</table>
+
+<h3>UV Transform</h3>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>UV Translate</td><td>XYのドラッグ入力欄（ステップ0.001）</td><td>UV座標のオフセット。既定値(0, 0)</td></tr>
+<tr><td>UV Rotation (deg)</td><td>ドラッグ入力欄（ステップ0.1、範囲-180〜180）</td><td>UV座標の回転（度指定、内部はラジアンで保持）。既定値0</td></tr>
+<tr><td>UV Scale</td><td>XYのドラッグ入力欄（ステップ0.001）</td><td>UV座標のスケール。既定値(1, 1)</td></tr>
+<tr><td>UV Rotation Pivot</td><td>XYのドラッグ入力欄（ステップ0.001）</td><td>UV回転の中心座標（UV基準）。拡縮は常にUV原点(0, 0)基準のまま、回転のみこの点を中心に行われる。既定値(0.5, 0.5)＝中心</td></tr>
+<tr><td>UV Translate / Scale / Rotation Pivot (px)</td><td>XYのドラッグ入力欄（ステップ0.5）</td><td>上記3項目を、設定中のテクスチャのピクセル単位で編集できる別表示。内部値（0〜1のUV基準）と相互に連動する。テクスチャが未設定の場合は無効化（グレーアウト）される</td></tr>
+</table>
+<div class="note"><strong>UV変換はSpriteRenderer/MeshRenderer/SkinnedMeshRendererのInstance UVと合成される</strong><br>ここで設定するUV変換はマテリアル（共有アセット）側の基準値。各レンダラーが持つオブジェクト単位のInstance UVと、レンダラー側のUV Combine Modeで指定した方法で合成される。詳細は<a href="../Components/Render/SpriteRenderer.html">Components/Render/SpriteRenderer.html</a>等の「Instance UV」節を参照。<strong>TextRenderer</strong>はUV変換を使わず文字ごとのUV矩形を直接参照するため、このUV Transformの対象外。</div>
+
+<h3>Custom Parameters（シェーダー固有パラメータ）</h3>
+<p>Pixelシェーダー側の<code>struct Material</code>に、色・テクスチャ等の標準フィールドに無い名前のメンバーがある場合（カスタムシェーダーモジュール等）に、それを<code>extraParameters</code>として個別に追加・編集する欄です。キー名はシェーダー側のフィールド名と完全に一致させる必要があり、対応するフィールドが無いキーは描画時に黙って無視されます。</p>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Reference Shader</td><td>コンボ（読み込み済みの2D/3Dレンダーパイプライン名）</td><td>下記「Add Missing Parameters」の参照先、および各パラメータのスライダー刻み幅/範囲注釈の参照先。この欄自体は<code>.mat</code>には保存されない一時的なUI状態</td></tr>
+<tr><td>Add Missing Parameters</td><td>ボタン（Reference Shader未選択時は無効）</td><td>選択中シェーダーが持つフィールド・テクスチャ宣言のうち、標準フィールド（Color/UV Transform/Shininess等）ではなく、かつまだ追加されていないものを、型ごとの既定値（Bool: false、Int32: 0、Float: 0.0、Vector2/3/4: ゼロ、Color: 白、Matrix4x4: 単位行列、Texture/TextureCube: 未設定）で一括追加する</td></tr>
+<tr><td>（名前入力欄）＋（型コンボ）＋ Add</td><td>テキスト入力＋コンボ（Bool / Int32 / Float / Vector2 / Vector3 / Vector4 / Color / Texture / TextureCube）＋ボタン</td><td>任意の名前・型でパラメータを1件だけ手動追加する。名前が空、または既存キーと重複する場合は追加されない</td></tr>
+<tr><td>（パラメータ一覧、モジュール名の折りたたみヘッダーごとにグループ化）</td><td>型に応じた編集ウィジェット＋Removeボタン</td><td>登録済みシェーダーモジュールのフィールド名と一致するキーはモジュール名の折りたたみヘッダーの下にグループ表示され（既定で展開済み）、どのモジュールにも属さない手動追加パラメータはその下にフラットに並ぶ。Reference Shaderにそのキーのレンジ注釈がある場合、スライダーの刻み幅・範囲がそれに従う</td></tr>
+</table>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../Engine/05_Rendering.html">Engine/05_Rendering.html</a> — <code>MaterialManager::Material</code>のC++ API、<code>extraParameters</code>の実行時書き換え例</li>
+<li><a href="05_AssetsWindow.html">Windows/05_AssetsWindow.html</a> — <code>.mat</code>ファイルのOpen操作、Create Material File</li>
+<li><a href="01_MainMenuAndPlayback.html">Windows/01_MainMenuAndPlayback.html</a> — Debug Windowsメニュー一覧</li>
+<li><a href="../Components/Render/SpriteRenderer.html">Components/Render/SpriteRenderer.html</a> / <a href="../Components/Render/MeshRenderer.html">MeshRenderer.html</a> / <a href="../Components/Render/SkinnedMeshRenderer.html">SkinnedMeshRenderer.html</a> — Instance UVとの合成</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

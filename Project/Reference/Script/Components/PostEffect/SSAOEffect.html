@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SSAOEffect | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_PostEffect_SSAOEffect">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>SSAOEffect</h1>
+<p class="page-lead"><code>ScreenBufferObject</code>が付与されたオブジェクトに追加すると、そのスクリーンバッファへエフェクトがかかるポストプロセスエフェクトです。</p>
+</div>
+
+<p>コンポーネント共通メソッドに加えて以下のGet/Setを持ちます。</p>
+
+<table><tr><th>メソッド</th></tr><tr><td><code>GetRadius</code>/<code>SetRadius</code>, <code>GetIntensity</code>/<code>SetIntensity</code>, <code>GetPower</code>/<code>SetPower</code>, <code>GetBias</code>/<code>SetBias</code>（すべて<code>float</code>）, <code>GetSampleCount</code>/<code>SetSampleCount</code>（<code>uint</code>）, <code>GetBlurRadius</code>/<code>SetBlurRadius</code>（<code>int</code>）, <code>GetDepthThreshold</code>/<code>SetDepthThreshold</code>（<code>float</code>）</td></tr></table>
+
+<div class="note"><strong>SSAOEffectの前提</strong><br>専用の法線バッファ（G-buffer）を持たないフォワードレンダリングのため、深度バッファのみからスクリーンスペースでワールド座標・法線を再構成する簡易SSAOとして実装されています。既にシェーディング済みの色へAOを乗算するため、間接光だけでなく鏡面成分にも多少影響します。また、このスクリーンバッファへ描画しているカメラ（<code>CameraRenderer</code>、またはエディター用描画先の場合はエディターカメラ）が解決できないフレームでは、AOは適用されず元の描画結果がそのまま残ります。</div>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="../../07_ColliderAndPostEffect.html">07_ColliderAndPostEffect.html</a>（ポストプロセスエフェクトの概要・共通の仕組み）</li>
+<li><a href="../../../Engine/10_PostEffects.html">Engine/10_PostEffects.html</a> — インスペクター表示・詳細な挙動</li>
+<li><a href="GTAOEffect.html">GTAOEffect</a> — より高品質なAO</li>
+<li><a href="../../../Editor/Components/PostEffect/SSAOEffect.html">Editor/Components/PostEffect/SSAOEffect.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

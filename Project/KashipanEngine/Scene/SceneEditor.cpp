@@ -1,7 +1,12 @@
 #include "SceneEditor.h"
 #ifdef USE_IMGUI
+#include <algorithm>
+#include <cctype>
+#include <filesystem>
+#include <future>
 #include <imgui.h>
 #include <string>
+#include <Windows.h>
 
 #include "Assets/AudioManager.h"
 #include "Assets/MaterialManager.h"
@@ -9,15 +14,19 @@
 #include "Assets/ModelManager.h"
 #include "Assets/TextureManager.h"
 #include "Debug/Logger.h"
+#include "Core/ProjectPaths.h"
 #include "Graphics/PipelineManager.h"
 #include "Input/Input.h"
 #include "Input/InputCommand.h"
+#include "Objects/Components/ScriptComponent.h"
+#include "Objects/EmptyObject.h"
 #include "Scene/Editor/AssetsWindow.h"
 #include "Scene/Editor/SceneCrashRecovery.h"
 #include "Scene/Editor/EditorKeyBindings.h"
 #include "Scene/Editor/EditorPreferences.h"
 #include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/PrefabAssetManager.h"
+#include "Scene/Editor/PrefabUtility.h"
 #include "Scene/Editor/ProjectWindow.h"
 #include "Scene/Editor/PrefabSyncUtility.h"
 #include "Scene/Editor/SceneComponentInspector.h"
@@ -30,6 +39,8 @@
 #include "Scene/Editor/SceneSaver.h"
 #include "Scene/Editor/GlobalSceneVariablesMenu.h"
 #include "Scene/Editor/SceneVariablesMenu.h"
+#include "Utilities/ImGuiCustom.h"
+#include "Utilities/Conversion/ConvertString.h"
 #include "Scene/Editor/TranslationEditor.h"
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Scene/Components/Script/EditorToolManager.h"
@@ -124,9 +135,224 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     // 自動保存の設定を復元する（再起動後も維持される）
     autoSaveIntervalMinutes_ = EditorSettings::GetFloat("sceneEditor.autoSaveIntervalMinutes", 1.0f);
     autoSaveNameFormat_ = EditorSettings::GetString("sceneEditor.autoSaveNameFormat", "${SceneName}");
+
+    InitializeExternalAssetSnapshot();
+    wasEditorApplicationActive_ = IsEditorApplicationActive();
 }
 
 SceneEditor::~SceneEditor() = default;
+
+void SceneEditor::InitializeExternalAssetSnapshot() {
+    StartExternalAssetScan(false);
+
+    // 外部更新前のPrefab JSONを保持し、更新後との差分伝播に使える状態にしておく。
+    for (const std::string &path : ProjectPaths::ListAssetFiles({ PrefabUtility::kPrefabExtension })) {
+        PrefabAssetManager::GetPrefabIDFromPath(path);
+    }
+}
+
+void SceneEditor::StartExternalAssetScan(bool detectChanges) {
+    if (externalAssetScanFuture_.valid()) return;
+
+    const std::string assetsRoot = ProjectPaths::AssetsRoot();
+    const std::string projectRoot = ProjectPaths::ProjectRoot();
+    if (assetsRoot.empty()) return;
+
+    auto previous = std::move(externalAssetSnapshot_);
+    externalAssetScanFuture_ = std::async(std::launch::async,
+        [assetsRoot, projectRoot, previous = std::move(previous), detectChanges]() mutable {
+            ExternalAssetScanResult result;
+            std::error_code ec;
+            const std::filesystem::path root = Utf8StringToPath(assetsRoot);
+            if (!std::filesystem::is_directory(root, ec)) {
+                result.snapshot = std::move(previous);
+                return result;
+            }
+
+            for (std::filesystem::recursive_directory_iterator it(
+                     root, std::filesystem::directory_options::skip_permission_denied, ec), end;
+                 it != end; it.increment(ec)) {
+                if (ec) { ec.clear(); continue; }
+                if (!it->is_regular_file(ec) || ec) { ec.clear(); continue; }
+
+                const std::string physicalPath = PathToUtf8String(it->path());
+                const auto relativePath = std::filesystem::relative(
+                    Utf8StringToPath(physicalPath), Utf8StringToPath(projectRoot), ec);
+                const std::string logicalPath = ec
+                    ? ProjectPaths::NormalizeSeparators(physicalPath)
+                    : ProjectPaths::NormalizeSeparators(PathToUtf8String(relativePath));
+                ec.clear();
+
+                ExternalFileStamp stamp{ it->last_write_time(ec), it->file_size(ec) };
+                ec.clear();
+                result.snapshot[logicalPath] = stamp;
+                if (!detectChanges) continue;
+
+                const auto old = previous.find(logicalPath);
+                if (old == previous.end() || !(old->second == stamp)) {
+                    result.changedPaths.push_back(logicalPath);
+                }
+            }
+
+            if (detectChanges) {
+                for (const auto &[path, stamp] : previous) {
+                    if (!result.snapshot.contains(path)) result.changedPaths.push_back(path);
+                }
+            }
+            return result;
+        });
+}
+
+void SceneEditor::ConsumeExternalAssetScanResult() {
+    if (!externalAssetScanFuture_.valid() ||
+        externalAssetScanFuture_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+        return;
+    }
+
+    ExternalAssetScanResult result = externalAssetScanFuture_.get();
+    externalAssetSnapshot_ = std::move(result.snapshot);
+    if (!result.changedPaths.empty()) {
+        pendingExternalAssetPaths_.insert(result.changedPaths.begin(), result.changedPaths.end());
+        externalAssetDebounceElapsed_ = 0.0f;
+    }
+}
+
+bool SceneEditor::IsEditorApplicationActive() const {
+    const HWND foregroundWindow = GetForegroundWindow();
+    if (!foregroundWindow) return false;
+    DWORD foregroundProcessID = 0;
+    GetWindowThreadProcessId(foregroundWindow, &foregroundProcessID);
+    return foregroundProcessID == GetCurrentProcessId();
+}
+
+void SceneEditor::PollExternalAssetChanges() {
+    ConsumeExternalAssetScanResult();
+
+    const bool isActive = IsEditorApplicationActive();
+    const bool becameActive = isActive && !wasEditorApplicationActive_;
+    wasEditorApplicationActive_ = isActive;
+    if (!isActive) return;
+
+    const float deltaTime = GetDeltaTime();
+    externalAssetPollElapsed_ += deltaTime;
+    if (!pendingExternalAssetPaths_.empty()) externalAssetDebounceElapsed_ += deltaTime;
+
+    // Unityと同様に、外部ツールからエディターへ戻った時点で即座に変更を確認する。
+    // アクティブ中の低頻度監視も残し、ウィンドウを並べて編集する場合の変更も拾う。
+    if (becameActive || externalAssetPollElapsed_ >= 1.0f) {
+        externalAssetPollElapsed_ = 0.0f;
+        StartExternalAssetScan(true);
+    }
+
+    if (!externalSceneChangeRequested_ && !pendingExternalAssetPaths_.empty() && externalAssetDebounceElapsed_ >= 0.75f) {
+        std::vector<std::string> changed(pendingExternalAssetPaths_.begin(), pendingExternalAssetPaths_.end());
+        pendingExternalAssetPaths_.clear();
+        externalAssetDebounceElapsed_ = 0.0f;
+        std::sort(changed.begin(), changed.end());
+        ProcessExternalAssetChanges(std::move(changed));
+    }
+}
+
+std::string SceneEditor::GetCurrentSceneFilePath() const {
+    const SceneManager *sceneManager = context_->GetSceneManager();
+    if (!sceneManager) return {};
+    for (const auto &entry : sceneManager->GetRegisteredScenes()) {
+        if (entry.name == context_->GetName()) return ProjectPaths::NormalizeSeparators(entry.filePath);
+    }
+    return {};
+}
+
+void SceneEditor::ProcessExternalAssetChanges(std::vector<std::string> changedPaths) {
+    assetsWindow_->RefreshAfterExternalChanges();
+    const std::string scenePath = GetCurrentSceneFilePath();
+    const std::string scenePrefix = scenePath.empty() || scenePath.ends_with('/') ? scenePath : scenePath + "/";
+    const bool currentSceneChanged = !scenePath.empty() && std::ranges::any_of(changedPaths, [&](const std::string &path) {
+        return path == scenePath || (!scenePrefix.empty() && path.starts_with(scenePrefix));
+    });
+
+    if (currentSceneChanged) {
+        JSON diskScene = LoadSceneFromPath(scenePath);
+        if (!diskScene.is_discarded() && diskScene == context_->SaveSceneToJSON()) {
+            ProcessNonSceneExternalChanges(changedPaths);
+            return;
+        }
+        deferredExternalAssetPaths_ = std::move(changedPaths);
+        externallyChangedScenePath_ = scenePath;
+        externallyChangedSceneJson_ = std::move(diskScene);
+        externalSceneCanReload_ = !externallyChangedSceneJson_.is_discarded() && externallyChangedSceneJson_.is_object();
+        externalSceneChangeRequested_ = true;
+        return;
+    }
+    ProcessNonSceneExternalChanges(changedPaths);
+}
+
+void SceneEditor::ProcessNonSceneExternalChanges(const std::vector<std::string> &changedPaths) {
+    if (context_->IsPlaying()) {
+        // 実行中のオブジェクト、スクリプトインスタンス、描画パイプラインを途中で
+        // 差し替えない。PlayStopによる編集状態の復元後にまとめて適用する。
+        deferredPlayModeAssetPaths_.insert(changedPaths.begin(), changedPaths.end());
+        return;
+    }
+
+    PrefabAssetManager::ReloadExternallyChangedFiles(changedPaths);
+
+    std::unordered_set<std::string> changedScripts;
+    bool pipelineChanged = false;
+    for (const std::string &path : changedPaths) {
+        std::string extension = PathToUtf8String(Utf8StringToPath(path).extension());
+        std::ranges::transform(extension, extension.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        if (extension == ".as") changedScripts.insert(path);
+        if (extension == ".hlsl" || extension == ".hlsli") pipelineChanged = true;
+    }
+
+    if (!changedScripts.empty()) {
+        for (EmptyObject *object : context_->GetSceneObjects()) {
+            if (!object) continue;
+            for (const auto &[component, index] : object->GetAllComponents()) {
+                auto *script = dynamic_cast<ScriptComponent *>(component);
+                if (script && changedScripts.contains(ProjectPaths::NormalizeSeparators(script->GetScriptPath()))) {
+                    script->ReloadFromDisk();
+                }
+            }
+        }
+    }
+    if (pipelineChanged) PipelineManager::TryReloadPipelines();
+}
+
+void SceneEditor::ShowExternalSceneChangeModal() {
+    const std::string popupTitle = Translation("editor.externalchanges.title") + "##SceneEditorExternalChange";
+    if (externalSceneChangeRequested_) ImGui::OpenPopup(popupTitle.c_str());
+    if (!ImGui::BeginPopupModal(popupTitle.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) return;
+
+    ImGui::TextWrapped("%s", TranslationC("editor.externalchanges.message"));
+    ImGui::Separator();
+    ImGui::TextWrapped("%s: %s", TranslationC("editor.externalchanges.scene"), externallyChangedScenePath_.c_str());
+    if (context_->IsPlaying()) ImGui::TextWrapped("%s", TranslationC("editor.externalchanges.playing"));
+
+    ImGui::BeginDisabled(!externalSceneCanReload_ || context_->IsPlaying());
+    if (ImGui::Button(TranslationLabel("editor.externalchanges.reload"))) {
+        const JSON localBackup = context_->SaveSceneToJSON();
+        if (context_->LoadSceneFromJSON(externallyChangedSceneJson_)) {
+            commands_->Clear();
+            objectHierarchy_->ClearSelection();
+            ProcessNonSceneExternalChanges(deferredExternalAssetPaths_);
+            deferredExternalAssetPaths_.clear();
+            externalSceneChangeRequested_ = false;
+            ImGui::CloseCurrentPopup();
+        } else {
+            context_->LoadSceneFromJSON(localBackup);
+        }
+    }
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    if (ImGui::Button(TranslationLabel("editor.externalchanges.keeplocal"))) {
+        ProcessNonSceneExternalChanges(deferredExternalAssetPaths_);
+        deferredExternalAssetPaths_.clear();
+        externalSceneChangeRequested_ = false;
+        ImGui::CloseCurrentPopup();
+    }
+    ImGui::EndPopup();
+}
 
 void SceneEditor::ShowImGui() {
     // スクリプトやシーンからのゲームループ終了要求は、エディター上では再生停止として消費する
@@ -150,6 +376,13 @@ void SceneEditor::ShowImGui() {
             commands_->BeginPlaySession();
         } else {
             commands_->EndPlaySession();
+            if (!deferredPlayModeAssetPaths_.empty()) {
+                std::vector<std::string> deferred(
+                    deferredPlayModeAssetPaths_.begin(), deferredPlayModeAssetPaths_.end());
+                deferredPlayModeAssetPaths_.clear();
+                std::sort(deferred.begin(), deferred.end());
+                ProcessNonSceneExternalChanges(deferred);
+            }
         }
         wasPlaying_ = isPlaying;
     }
@@ -157,7 +390,9 @@ void SceneEditor::ShowImGui() {
     // エディターツールスクリプトの読み込み（初回のみ）と、ツール内GetScene()用のシーンコンテキスト設定
     EditorToolManager::GetInstance().BeginFrame(context_->GetSceneContext());
 
+    PollExternalAssetChanges();
     ShowMainWindow();
+    ShowExternalSceneChangeModal();
     HandleShortcuts();
     HandleAutoSave();
 
@@ -241,6 +476,9 @@ void SceneEditor::ShowMainWindow() {
                 EditorSettings::SetBool("sceneEditor.showTranslationEditor", isShowTranslationEditor_);
             }
             ImGui::SetItemTooltip("%s", TranslationC("editor.menu.edit.translationeditor.tooltip"));
+            if (ImGui::MenuItem(TranslationLabel("editor.inputcommand.window"), nullptr, &isShowInputCommandEditorWindow_)) {
+                EditorSettings::SetBool("sceneEditor.showInputCommandEditor", isShowInputCommandEditorWindow_);
+            }
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu(TranslationLabel("editor.menu.window"))) {
@@ -299,9 +537,6 @@ void SceneEditor::ShowMainWindow() {
             ImGui::Separator();
             if (ImGui::MenuItem(TranslationLabel("editor.input.state.window"), nullptr, &isShowInputStateWindow_)) {
                 EditorSettings::SetBool("sceneEditor.showInputState", isShowInputStateWindow_);
-            }
-            if (ImGui::MenuItem(TranslationLabel("editor.inputcommand.window"), nullptr, &isShowInputCommandEditorWindow_)) {
-                EditorSettings::SetBool("sceneEditor.showInputCommandEditor", isShowInputCommandEditorWindow_);
             }
             ImGui::Separator();
             ImGui::MenuItem(TranslationLabel("editor.menu.debugwindows.imguidemo"), nullptr, &isShowImGuiDemoWindow_);
@@ -498,7 +733,7 @@ void SceneEditor::ShowAutoSaveSettingsModal() {
         if (ImGui::InputText(TranslationLabel("editor.autosave.nameformat"), &autoSaveNameFormat_)) {
             EditorSettings::SetString("sceneEditor.autoSaveNameFormat", autoSaveNameFormat_);
         }
-        ImGui::TextDisabled("%s${SceneName} ${Year} ${Month} ${Day} ${Hour} ${Minute} ${Second}", TranslationC("editor.autosave.placeholders"));
+        ImGuiCustom::TextDisabledWrapped("%s${SceneName} ${Year} ${Month} ${Day} ${Hour} ${Minute} ${Second}", TranslationC("editor.autosave.placeholders"));
 
         const std::string preview = RenderAutoSaveFileName(autoSaveNameFormat_, context_->GetName());
         ImGui::Text("%s%s%s", TranslationC("editor.autosave.preview"), kSceneBackupDirectory, preview.c_str());

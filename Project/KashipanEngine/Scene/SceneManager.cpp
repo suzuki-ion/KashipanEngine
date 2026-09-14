@@ -64,6 +64,23 @@ bool SceneManager::RenameRegisteredScene(const std::string &oldName, const std::
     return true;
 }
 
+bool SceneManager::DuplicateRegisteredScene(const std::string &sourceName, const std::string &newName, const std::string &newFilePath) {
+    if (newName.empty()) return false;
+    if (FindEntry(newName)) return false; // 複製先の名前が既に使われている場合は複製できない
+    const SceneEntry *source = FindEntry(sourceName);
+    if (!source) return false;
+
+    if (source->filePath.empty()) {
+        // ファイルパスを持たない（直接JSON登録 or 空シーン）場合はファイルI/O無しでそのまま複製する
+        return RegisterScene(newName, source->factoryData);
+    }
+
+    JSON sceneJson = LoadSceneFromPath(source->filePath);
+    if (sceneJson.empty()) return false;
+    if (!SaveSceneToPath(sceneJson, newFilePath)) return false;
+    return RegisterSceneFile(newName, newFilePath);
+}
+
 bool SceneManager::SetRegisteredSceneFilePath(const std::string &sceneName, const std::string &filePath) {
     auto *entry = FindEntry(sceneName);
     if (!entry) return false;
@@ -135,7 +152,7 @@ void SceneManager::ShowImGui(Passkey<GameEngine>) {
 }
 #endif // USE_IMGUI
 
-bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
+bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {  
     if (!hasPendingSceneChange_) return false;
     hasPendingSceneChange_ = false;
 
@@ -144,6 +161,12 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
         pendingSceneName_.clear();
         return false;
     }
+
+    // 再生中の遷移では、新しいSceneへPlay状態を引き継ぐ必要がある。
+    // Play開始前の復元元はSceneManagerが別途保持しているため、ここでは状態だけを引き継ぐ
+    const bool wasPlaying = currentScene_ && currentScene_->IsPlaying();
+    Log(Translation("engine.scenemanager.scene.switch.start") + pendingSceneName_ +
+        "、wasPlaying=" + (wasPlaying ? "true" : "false"), LogSeverity::Info);
 
     // 描画先コンポーネント（ScreenBufferObject/NormalWindowObject等）が、
     // 破棄されるバッファ/ウィンドウを次のシーンの同名コンポーネントへ引き継げるようにする
@@ -175,6 +198,9 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
 
     if (currentScene_) {
         currentScene_->SetSceneManager(Passkey<SceneManager>(), this);
+#if defined(USE_IMGUI)
+        if (wasPlaying) currentScene_->ContinuePlayAfterSceneChange(Passkey<SceneManager>());
+#endif
         currentScene_->InitializeInterface(Passkey<SceneManager>());
     }
 
@@ -185,6 +211,8 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
 
     // 新しいシーン側で引き取られなかった描画先リソースをここで実際に破棄する
     RenderTargetCarryOverRegistry::EndSceneSwitch(Passkey<SceneManager>{});
+
+    Log(Translation("engine.scenemanager.scene.switch.end") + pendingSceneName_, LogSeverity::Info);
 
     pendingSceneName_.clear();
     return true;

@@ -29,6 +29,8 @@
 
 <div class="warn"><strong>バインド先変数名はInspectorから編集できない</strong><br>一覧表示のみで追加・削除・変更を行うUIコントロールは存在しない。初期値はInitialize時に自動決定される（同一オブジェクトにCamera2Dがあれば<code>Vertex:gCamera2D</code>/<code>Pixel:gCamera2D</code>、無ければ<code>Vertex:gCamera3D</code>/<code>Pixel:gCamera3D</code>）。変更したい場合はスクリプトから<code>SetBindVariableNames()</code>を呼ぶか、シーンJSONを直接編集する必要がある。</div>
 
+<div class="note"><strong>Camera2D/Camera3DのAuto-Sync機能を裏で支えている</strong><br>CameraRendererは毎フレームの定数バッファ更新時に、Targetで指定された描画先オブジェクト（NormalWindowObject/OverlayWindowObject/ScreenBufferObjectのいずれか）から実解像度(px)を解決する内部処理を持つ。Camera2Dの<a href="Camera2D.html">Auto-Sync To Resolution</a>やCamera3Dの<a href="Camera3D.html">Auto-Sync Aspect Ratio</a>が有効な場合、この解決結果を使ってWidth/Height・Aspectを自動更新する。Targetが未指定（全描画先へ適用中）の場合は解像度を一意に決められないため解決できない。これは内部処理のみで、CameraRenderer自体のInspectorには何も追加表示されない。</div>
+
 <h2>Add Componentでの位置</h2>
 <p><span class="ui-path"><span>Add Component</span><i>›</i><span>Render</span><i>›</i><span>CameraRenderer</span></span> から追加する。同一オブジェクトに複数付与可能。</p>
 

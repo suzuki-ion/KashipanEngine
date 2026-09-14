@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BitmapTextRenderer | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_BitmapTextRenderer">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>BitmapTextRenderer</h1>
+<p class="page-lead">BMFont形式（<code>.fnt</code>、テキスト形式）の事前生成済みビットマップアトラスを使ってテキストを描画するコンポーネントです。TTF/OTFをSDFとしてランタイムベイクする<a href="TextRenderer.html">TextRenderer</a>とは完全に独立した、もう一つのテキスト描画手段です。<a href="../../Windows/03_ObjectInspector.html">Scene Object Inspector</a>上での見え方を説明します。</p>
+</div>
+
+<h2>TextRendererとの違い</h2>
+<table>
+<tr><th>項目</th><th>TextRenderer</th><th>BitmapTextRenderer</th></tr>
+<tr><td>フォント形式</td><td>TTF / OTF（<code>FontManager</code>がSDFとしてランタイムベイク）</td><td>BMFont <code>.fnt</code>（テキスト形式）＋ページ画像（<code>BitmapFontManager</code>が読み込み）</td></tr>
+<tr><td>描画パイプライン</td><td>専用SDFパイプライン（既定 <code>Text2D.BlendNormal</code>）</td><td>SpriteRenderer/MeshRendererと同じ<code>Object2D</code>系パイプライン（既定 <code>Object2D.DoubleSidedCulling.BlendNormal</code>）</td></tr>
+<tr><td>リッチテキストタグ</td><td>対応（<code>&lt;i&gt; &lt;b&gt; &lt;color&gt; &lt;size&gt; &lt;s&gt; &lt;u&gt; &lt;sub&gt; &lt;sup&gt;</code>）</td><td>非対応（改行のみ解釈するプレーンテキスト）</td></tr>
+<tr><td>太字/斜体/アウトライン</td><td>対応</td><td>非対応（ビットマップアトラスのため形状加工ができない）</td></tr>
+<tr><td>文字ごとのTransform上書き</td><td>対応（Character Overrides）</td><td>対応（Character Overrides。位置/回転/スケールのみ。アンカー/ピボットの個別上書きは無し）</td></tr>
+<tr><td>複数ページフォント</td><td>該当なし（単一アトラス）</td><td>非対応。<code>pages&gt;1</code>の<code>.fnt</code>は先頭ページのみ使用（警告ログ）</td></tr>
+</table>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Target</td><td>コンボボックス</td><td>描画先コンポーネントを持つオブジェクトのみが候補。ヒエラルキーからのドラッグ&amp;ドロップにも対応</td></tr>
+<tr><td>Render Target Filter（折りたたみツリー）</td><td>描画先ごとのチェックボックス</td><td>対象オブジェクトが複数の描画先コンポーネントを持つ場合のみ表示</td></tr>
+<tr><td>Text</td><td>複数行テキスト入力（InputTextMultiline）</td><td>表示する文字列。改行のみ解釈する（リッチテキストタグは無し）</td></tr>
+<tr><td>Font</td><td>コンボボックス（None選択可）</td><td>BitmapFontManagerに読み込み済みの<code>.fnt</code>から選択</td></tr>
+<tr><td>Font Size</td><td>ドラッグ入力欄（ステップ0.01、0.01～1000）</td><td>既定値32。<code>.fnt</code>の<code>info size</code>を基準にスケールされる</td></tr>
+<tr><td>Instance Color / Blend Mode</td><td>ColorEdit4（RGBA）/ コンボボックス</td><td>マテリアル色へテキスト全体に適用する色と合成方法</td></tr>
+<tr><td>Material</td><td>コンボボックス</td><td>文字へ適用するマテリアル。マテリアルのテクスチャとUVは無視され、フォントのページ画像が使用される</td></tr>
+<tr><td>Horizontal Align</td><td>コンボボックス（Left / Center / Right）</td><td>行の横方向アライメント</td></tr>
+<tr><td>Vertical Align</td><td>コンボボックス（Top / Middle / Bottom）</td><td>テキストブロック全体の縦方向アライメント</td></tr>
+<tr><td>Point Sampling</td><td>チェックボックス</td><td>有効時はページ画像をポイント（ニアレスト）サンプリングする（既定true）。ドット絵フォントを拡大縮小してもにじませたくない場合に有効にする</td></tr>
+<tr><td>Pipeline</td><td>コンボボックス</td><td>読み込み済みの2D向けレンダーパイプライン名から選択（既定値 <code>Object2D.DoubleSidedCulling.BlendNormal</code>）</td></tr>
+<tr><td>Render Priority</td><td>整数ドラッグ入力（DragInt）</td><td>描画順を制御する優先度（既定0）。値が小さいほど先（奥）、大きいほど後（手前）に描画される</td></tr>
+<tr><td>Allow Instancing</td><td>チェックボックス</td><td>他のオブジェクトとのインスタンシング対象にするか（既定true）</td></tr>
+<tr><td>Character Overrides（折りたたみツリー）</td><td>文字インデックスごとの Offset（XYドラッグ、ステップ0.1）/ Rotation（ドラッグ、ステップ0.01、ラジアン）/ Scale（XYドラッグ、ステップ0.01）</td><td>Text（改行含む実文字数）と同じ数だけ<code>[0]</code>,<code>[1]</code>,...の項目が並ぶ。Textが空の場合はツリー自体が表示されない。<a href="TextRenderer.html">TextRenderer</a>と同じ仕組み（アンカー/ピボットの個別上書きは無い点のみ異なる）</td></tr>
+</table>
+
+<div class="warn"><strong>Character Overridesはシーンへ保存されない</strong><br>文字ごとの位置・回転・スケール上書き（Character Overrides）はランタイム専用のデータで、SaveToJsonの対象外。Inspector上で調整した値はPlay終了やシーン再読み込みでリセットされる。</div>
+
+<div class="note"><strong>フォントの配置</strong><br><code>.fnt</code>ファイルはAssetsフォルダ内のどこかに配置すれば起動時に自動で読み込まれる（<code>FontManager</code>のTTF/OTF走査と同じ方式）。ページ画像（例: <code>xxx_0.png</code>）は通常のテクスチャアセットとしてTextureManagerが既に読み込み済みである必要があり、<code>.fnt</code>内の<code>page file=...</code>のファイル名で検索される（ディレクトリは問わないが、Assetsフォルダ内のどこかに1つだけ存在すること。同名の画像が複数の場所にあると意図しない方が見つかる場合がある）。</div>
+
+<div class="warn"><strong>AngelScriptからは未対応</strong><br>本コンポーネントは現時点でAngelScriptバインディング（ScriptBindings）を持たない。スクリプトから文字列を動的に更新する用途にはC++側から直接<code>BitmapTextRenderer::SetText</code>等を呼ぶ必要がある。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path"><span>Add Component</span><i>›</i><span>Render</span><i>›</i><span>BitmapTextRenderer</span></span> から追加する。同一オブジェクトに複数付与可能。</p>
+<p>ヒエラルキーの右クリックメニューからは<span class="ui-path"><span>Create Object</span><i>›</i><span>2D</span><i>›</i><span>Bitmap Text Object</span></span>（Text Objectの隣）で、本コンポーネントのみを付与したオブジェクトを既定値のまま生成できる。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="TextRenderer.html">TextRenderer</a> — TTF/OTF・SDFベースのもう一つのテキスト描画コンポーネント</li>
+<li><a href="SpriteRenderer.html">SpriteRenderer</a> — InstanceUv系（本コンポーネントの文字ごとのUV矩形も同じ仕組みを内部で使用）</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Object Inspectorの基本操作</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

@@ -11,6 +11,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "Core/DirectXCommon.h"
 #include "Debug/Logger.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/Components/Rotation.h"
@@ -42,6 +43,7 @@
 
 namespace KashipanEngine {
 
+class GameEngine;
 class Renderer;
 
 /// @brief GPUシミュレーション用の永続パーティクル状態（コンピュートシェーダーが読み書きする）
@@ -191,6 +193,9 @@ struct FromJSONImpl<SpawnShapeEntry> {
 class ParticleSystemBase : public IObjectComponent {
 public:
     COMPONENT_CATEGORY("Effect")
+
+    /// @brief GameEngine から DirectXCommon を設定
+    static void SetDirectXCommon(Passkey<GameEngine>, DirectXCommon *dx) { sDirectXCommon_ = dx; }
 
     /// @brief パーティクルオブジェクトの生成方法
     enum class SpawnOrigin {
@@ -425,7 +430,14 @@ protected:
 
     /// @brief 派生クラスのInitializeから呼ぶ
     void InitializeBase() {
-        if (playOnStart_) isPlaying_ = true;
+        // Initialize()はシーン読み込み時、実際のJSONデータ（LoadFromJson）が反映されるより前に
+        // デフォルト値のplayOnStart_（true）で呼ばれてしまう（EmptyObject::AddComponentが
+        // 新規デフォルト構築→Initialize→実データのLoadFromJsonという順で処理するため）。
+        // ここで即座にisPlaying_を確定させると、playOnStart=falseで保存されたシーンでも
+        // 一時的に（かつLoadFromJson側の反映漏れがあれば恒久的に）再生中扱いになってしまうため、
+        // 実際にゲームループが動き出す最初のUpdate()まで判定を遅延させる
+        // （AudioSource::pendingAutoPlay_と同じ対策。詳細はLoadBaseFieldsJson側のコメントも参照）
+        pendingAutoPlay_ = playOnStart_;
         if (gpuSimulation_) {
             InitializeGpuResources();
             auto *sceneRenderer = GetOrAddSceneRenderer();
@@ -454,10 +466,22 @@ protected:
 #endif
     }
 
+    /// @brief pendingAutoPlay_が立っていれば、最初のUpdate()（＝実際にゲームループが動いている
+    ///        時点）で改めてplayOnStart_を読み直してPlay()するかどうかを決定する。
+    ///        Initialize()時点の（読み込み前で古い可能性がある）値ではなく、ここで確定している
+    ///        最新のplayOnStart_を見るため、LoadBaseFieldsJson側での反映漏れがあっても
+    ///        再生中判定を誤らない
+    void ConsumePendingAutoPlay() {
+        if (!pendingAutoPlay_) return;
+        pendingAutoPlay_ = false;
+        if (playOnStart_) Play();
+    }
+
     /// @brief 派生クラスのUpdateから呼ぶ。新規生成した子オブジェクトへ描画コンポーネントを
     ///        追加してもらうため、プール生成時に一度だけ setupVisual(生成したEmptyObject*) を呼び出す
     ///        （GPU Simulation有効時はこちらは呼ばず、代わりにUpdateParticlesGPUを呼ぶこと）
     void UpdateParticles(const std::function<void(EmptyObject *)> &setupVisual) {
+        ConsumePendingAutoPlay();
         EnsurePoolSize(maxParticles_, setupVisual);
 
         const float dt = GetDeltaTime();
@@ -512,6 +536,7 @@ protected:
     /// @brief GPU Simulation有効時に派生クラスのUpdateから呼ぶ。発生タイミングの計算・スポーン
     ///        パラメータの抽選はCPU側で行い、実際の移動・寿命計算はコンピュートシェーダーへ委ねる
     void UpdateParticlesGPU() {
+        ConsumePendingAutoPlay();
         // このフレームはゲームループが動いている（ポーズ中でない）ことをRendererへ伝える
         gpuUpdatedThisFrame_ = true;
 
@@ -644,6 +669,14 @@ protected:
 
     void LoadBaseFieldsJson(const JSON &json) {
         playOnStart_ = json.value("playOnStart", true);
+        // シーン読み込み時はコンポーネント追加時点でInitialize()が読み込み前のplayOnStart_
+        // （デフォルト値true）で呼ばれてしまっているため、ここで読み込んだ実際の値を使って
+        // pendingAutoPlay_を改めて反映する（AudioSource::LoadFromJsonのpendingAutoPlay_と同じ理由）。
+        // 非アクティブな場合はSetActive(true)時のInitialize()に任せる。
+        // なお実際にisPlaying_を確定させるのは最初のUpdate()時点（ConsumePendingAutoPlay）で、
+        // その時点で改めてplayOnStart_を読み直すため、ここでの反映漏れがあっても再生中判定を
+        // 誤ることはない
+        if (IsActive()) pendingAutoPlay_ = playOnStart_;
         loop_ = json.value("loop", true);
         emissionRate_ = json.value("emissionRate", 10.0f);
         maxParticles_ = json.value("maxParticles", 100);
@@ -861,7 +894,7 @@ protected:
     void ShowSpawnShapeImGui() {
         ImGui::SeparatorText(TranslationLabel("component.particlesystembase.spawn_area"));
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip(TranslationC("component.particlesystembase.desc_1"));
+            ImGuiCustom::SetTooltipWrapped(TranslationC("component.particlesystembase.desc_1"));
         }
         ShowSpawnShapeListImGui(TranslationLabel("component.particlesystembase.include_shapes"), TranslationLabel("component.particlesystembase.add_include_shape"), includeShapes_);
         ShowSpawnShapeListImGui(TranslationLabel("component.particlesystembase.exclude_shapes"), TranslationLabel("component.particlesystembase.add_exclude_shape"), excludeShapes_);
@@ -878,13 +911,13 @@ protected:
             spawnOrigin_ = static_cast<SpawnOrigin>(originIndex);
         }
         if (gpuSimulation_ && (spawnOrigin_ == SpawnOrigin::ChildOfSelf || spawnOrigin_ == SpawnOrigin::ChildOfOther)) {
-            ImGui::TextDisabled(TranslationC("component.particlesystembase.gpu_n"));
+            ImGuiCustom::TextDisabledWrapped(TranslationC("component.particlesystembase.gpu_n"));
         }
         switch (spawnOrigin_) {
         case SpawnOrigin::ChildOfOther:
             TargetObjectSelector::ShowSelector(TranslationLabel("component.particlesystembase.parent_object"), GetOwnerSceneContext(), spawnParentObjectID_, true, false);
             if (!spawnParentObjectID_.IsValid()) {
-                ImGui::TextDisabled("%s", TranslationC("component.particlesystembase.desc_2"));
+                ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.particlesystembase.desc_2"));
             }
             break;
         case SpawnOrigin::AtFixedPosition:
@@ -945,7 +978,7 @@ protected:
             SetGPUSimulation(gpuSimulationLocal);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.particlesystembase.desc_3"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.particlesystembase.desc_3"));
         }
 
         ImGui::Checkbox(TranslationLabel("component.particlesystembase.play_on_start"), &playOnStart_);
@@ -960,13 +993,13 @@ protected:
             SetMaxParticles(maxParticlesLocal);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.particlesystembase.desc_4"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.particlesystembase.desc_4"));
         }
         ImGui::BeginDisabled(loop_);
         ImGui::DragInt(TranslationLabel("component.particlesystembase.total_spawn_count"), &totalSpawnCount_, 1.0f, 0, 1000000);
         ImGui::EndDisabled();
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.particlesystembase.loop_2"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.particlesystembase.loop_2"));
         }
         ShowRandomizableImGui(TranslationLabel("component.particlesystembase.spawn_count"), spawnCount_, 1, 100);
 
@@ -1002,19 +1035,19 @@ protected:
 
         ImGui::Checkbox(TranslationLabel("component.particlesystembase.cast_shadows"), &castShadows_);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip(TranslationC("component.particlesystembase.desc_5"));
+            ImGuiCustom::SetTooltipWrapped(TranslationC("component.particlesystembase.desc_5"));
         }
 
         ImGui::Checkbox(TranslationLabel("component.particlesystembase.billboard"), &billboard_);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.particlesystembase.targetlookat"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.particlesystembase.targetlookat"));
         }
         if (billboard_) {
             ImGui::Indent();
             // 向き先を明示的に指定しない場合は、シーン内のカメラを自動で使う
             TargetObjectSelector::ShowSelector(TranslationLabel("component.particlesystembase.billboard_target"), GetOwnerSceneContext(), billboardTargetObjectID_, true, false);
             if (!billboardTargetObjectID_.IsValid()) {
-                ImGui::TextDisabled("%s", TranslationC("component.particlesystembase.desc_6"));
+                ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.particlesystembase.desc_6"));
             }
 
             const char *kModeLabels[] = { TranslationC("component.common.mode.synctargetrotation"), TranslationC("component.common.mode.lookattarget") };
@@ -1023,7 +1056,7 @@ protected:
                 billboardRotationMode_ = static_cast<TargetLookAt::RotationMode>(mode);
             }
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%s", TranslationC("component.particlesystembase.desc_7"));
+                ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.particlesystembase.desc_7"));
             }
             ImGui::Unindent();
         }
@@ -1144,6 +1177,10 @@ protected:
     bool playOnStart_ = true;
     bool loop_ = true;
     bool isPlaying_ = false;
+    /// @brief 次のUpdate()（実際にゲームループが動いているときのみ呼ばれる）でplayOnStart_による
+    ///        再生を行うかどうか。AudioSource::pendingAutoPlay_と同じ理由で、Initialize()の時点
+    ///        では即座にisPlaying_を確定させず、ここに一旦predicateを退避しておく
+    bool pendingAutoPlay_ = false;
 
     // 発生設定
     float emissionRate_ = 10.0f;
@@ -1292,6 +1329,8 @@ private:
     // GPUシミュレーション用リソース
     //==================================================
 
+    static inline DirectXCommon *sDirectXCommon_ = nullptr;
+
     std::unique_ptr<RWStructuredBufferResource> gpuParticleBuffer_;
     std::unique_ptr<RWStructuredBufferResource> gpuInstanceMatrixBuffer_;
     std::unique_ptr<StructuredBufferResource> gpuSpawnRequestBuffer_;
@@ -1311,6 +1350,10 @@ private:
     bool gpuUpdatedThisFrame_ = false;
 
     void InitializeGpuResources() {
+        // 既存バッファを差し替える場合、直前フレームのDispatchがGPU側で完了していることを
+        // 保証してから破棄する（未完了のまま破棄すると使用中のUAVを破壊し、GPUクラッシュ/
+        // デバイスリムーブを引き起こしうる。Scene::PlayStart/PlayStopでの同種の対策と同じ理由）
+        if (sDirectXCommon_ && gpuParticleBuffer_) sDirectXCommon_->WaitForGPUIdle(Passkey<ParticleSystemBase>{});
         const size_t capacity = static_cast<size_t>(std::max(1, maxParticles_));
         gpuParticleBuffer_ = std::make_unique<RWStructuredBufferResource>(sizeof(GPUParticleData), capacity, false);
         gpuInstanceMatrixBuffer_ = std::make_unique<RWStructuredBufferResource>(sizeof(Matrix4x4), capacity, true);
@@ -1325,6 +1368,7 @@ private:
     }
 
     void DestroyGpuResources() {
+        if (sDirectXCommon_ && gpuParticleBuffer_) sDirectXCommon_->WaitForGPUIdle(Passkey<ParticleSystemBase>{});
         gpuParticleBuffer_.reset();
         gpuInstanceMatrixBuffer_.reset();
         gpuSpawnRequestBuffer_.reset();

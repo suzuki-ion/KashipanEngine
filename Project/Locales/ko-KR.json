@@ -24,6 +24,7 @@
 		"engine.window.create.overlay.start": "오버레이 윈도우 생성 시작. 윈도우 제목: ",
 		"engine.window.create.overlay.end": "오버레이 윈도우 생성 완료. 윈도우 제목: ",
 		"engine.window.create.overlay.failed": "오버레이 윈도우 생성에 실패했습니다.",
+		"engine.window.seticon.failed": "윈도우 아이콘 로드에 실패했습니다: ",
 		"engine.window.destroy.start": "윈도우 파괴 시작. 윈도우 제목: ",
 		"engine.window.destroy.end": "윈도우 파괴 완료. 윈도우 제목: ",
 		"engine.window.destroy.failed": "윈도우 파괴에 실패했습니다.",
@@ -77,6 +78,8 @@
 		"engine.directx.commands.commandqueue.initialize.start": "명령 큐 초기화 시작",
 		"engine.directx.commands.commandqueue.initialize.end": "명령 큐 초기화 완료",
 		"engine.directx.commands.commandqueue.initialize.failed": "명령 큐 초기화에 실패했습니다.",
+		// コマンドオブジェクトプール（ScreenBuffer/ShadowMapBuffer/スワップチェーン等が共有）
+		"engine.directx.commandobjects.no.free.slot": "명령 객체 확보에 실패했습니다. 사용 가능한 슬롯이 없습니다. 풀 크기: ",
 		// コマンドアロケータ
 		"engine.directx.swapchain.commandallocator.initialize.start": "명령 할당자 초기화 시작",
 		"engine.directx.swapchain.commandallocator.initialize.end": "명령 할당자 초기화 완료",
@@ -794,6 +797,8 @@
 		"component.camera2d.far": "파 클립",
 		"component.camera2d.height": "높이",
 		"component.camera2d.near": "니어 클립",
+		"component.camera2d.pixel_snapping": "픽셀 스냅",
+		"component.camera2d.pixel_snapping_desc": "이 카메라를 기준으로 Pixel Snapping이 활성화된 SpriteRenderer의 상대 위치를 렌더 대상의 픽셀 격자에 맞춥니다. 카메라 Transform 자체는 반올림하지 않으므로 부드러운 추적 중에도 카메라와 오브젝트의 상대 위치를 안정적으로 유지할 수 있습니다.",
 		"component.camera2d.width": "너비",
 
 		//--------- component.camera3d ---------//
@@ -809,7 +814,36 @@
 		"component.camera3d.orthosize": "평행 투영 크기",
 
 		//--------- component.cameracontroller ---------//
+		"component.cameraboundszone2d.add_group": "그룹 추가",
+		"component.cameraboundszone2d.add_rect": "사각형 추가",
+		"component.cameraboundszone2d.description": "CameraController2D의 이동 범위 제한(Camera Bounds Zone)에 사용하는 그룹・사각형 정의입니다.",
+		"component.cameraboundszone2d.group": "그룹",
+		"component.cameraboundszone2d.rect": "사각형",
+		"component.cameraboundszone2d.rect_max": "최대 좌표",
+		"component.cameraboundszone2d.rect_min": "최소 좌표",
+		"component.cameraboundszone2d.remove_group": "그룹 삭제",
+		"component.cameraboundszone2d.remove_rect": "사각형 삭제",
+
+		"component.cameraboundszone3d.add_group": "그룹 추가",
+		"component.cameraboundszone3d.add_rect": "사각형 추가",
+		"component.cameraboundszone3d.description": "CameraController의 이동 범위 제한(Camera Bounds Zone)에 사용하는 그룹・사각형 정의입니다.",
+		"component.cameraboundszone3d.group": "그룹",
+		"component.cameraboundszone3d.rect": "사각형",
+		"component.cameraboundszone3d.rect_max": "최대 좌표",
+		"component.cameraboundszone3d.rect_min": "최소 좌표",
+		"component.cameraboundszone3d.remove_group": "그룹 삭제",
+		"component.cameraboundszone3d.remove_rect": "사각형 삭제",
+
 		"component.cameracontroller.add_follow_target": "추적 타깃 추가",
+		"component.cameracontroller.bounds_clamp": "이동 범위 제한",
+		"component.cameracontroller.bounds_clamp_enable": "이동 범위 제한 사용",
+		"component.cameracontroller.bounds_clamp_mode_position": "좌표 기준",
+		"component.cameracontroller.bounds_clamp_mode_viewarea": "표시 범위 기준",
+		"component.cameracontroller.bounds_clamp_view_depth": "표시 범위 기준 깊이",
+		"component.cameracontroller.bounds_transition_duration": "전환 시간",
+		"component.cameracontroller.bounds_transition_duration.tooltip": "활성 그룹이 전환될 때 클램프 위치의 불연속적인 변화를 이 시간(초)에 걸쳐 부드럽게 전환합니다（0 이하이면 즉시 전환）",
+		"component.cameracontroller.bounds_transition_ease": "전환 이징",
+		"component.cameracontroller.bounds_zone_object": "경계 존",
 		"component.cameracontroller.follow_position": "위치 추적",
 		"component.cameracontroller.follow_rotation": "회전 추적",
 		"component.cameracontroller.follow_targets": "추적 타깃",
@@ -828,8 +862,34 @@
 		"component.cameracontroller.rotation_offset": "회전 오프셋",
 		"component.cameracontroller.target_fovy": "목표 수직 화각",
 
+		//--------- component.cameracontroller2d ---------//
+		"component.cameracontroller2d.add_follow_target": "추적 타깃 추가",
+		"component.cameracontroller2d.bounds_clamp": "이동 범위 제한",
+		"component.cameracontroller2d.bounds_clamp_enable": "이동 범위 제한 사용",
+		"component.cameracontroller2d.bounds_clamp_mode_position": "좌표 기준",
+		"component.cameracontroller2d.bounds_clamp_mode_viewarea": "표시 범위 기준",
+		"component.cameracontroller2d.bounds_transition_duration": "전환 시간",
+		"component.cameracontroller2d.bounds_transition_duration.tooltip": "활성 그룹이 전환될 때 클램프 위치의 불연속적인 변화를 이 시간(초)에 걸쳐 부드럽게 전환합니다（0 이하이면 즉시 전환）",
+		"component.cameracontroller2d.bounds_transition_ease": "전환 이징",
+		"component.cameracontroller2d.bounds_zone_object": "경계 존",
+		"component.cameracontroller2d.follow_position": "위치 추적",
+		"component.cameracontroller2d.follow_rotation": "회전 추적",
+		"component.cameracontroller2d.follow_targets": "추적 타깃",
+		"component.cameracontroller2d.move_all": "이동을 한꺼번에 설정",
+		"component.cameracontroller2d.move_follow_strength": "이동 추적 강도",
+		"component.cameracontroller2d.move_per_axis": "이동: 축별",
+		"component.cameracontroller2d.move_x_y": "이동 X/Y",
+		"component.cameracontroller2d.no_target_following_own_transform": "(타깃 미설정: 자신의 Transform을 따릅니다)",
+		"component.cameracontroller2d.position_offset": "위치 오프셋",
+		"component.cameracontroller2d.remove_target": "타깃 삭제",
+		"component.cameracontroller2d.rotate_follow_strength": "회전 추적 강도",
+		"component.cameracontroller2d.rotation_offset": "회전 오프셋",
+		"component.cameracontroller2d.size_transition_strength": "크기 추적 강도",
+		"component.cameracontroller2d.target_size": "목표 크기",
+
 		//--------- component.camerarenderer ---------//
 		"component.camerarenderer.pipeline": "파이프라인",
+		"component.camerarenderer.warning_no_camera_component": "경고: Camera2D/Camera3D가 없어 바인드 변수 이름이 gCamera3D로 처리됩니다",
 
 		//--------- component.capsule2dcollider ---------//
 		"component.capsule2dcollider.end": "끝점",
@@ -853,6 +913,7 @@
 		"component.coloradjusteffect.brightness": "밝기",
 		"component.coloradjusteffect.colorbalance": "컬러 밸런스",
 		"component.coloradjusteffect.contrast": "대비",
+		"component.coloradjusteffect.posterize_levels": "포스터화 레벨",
 		"component.coloradjusteffect.saturation": "채도",
 		"component.coloradjusteffect.temperature": "색온도",
 
@@ -866,11 +927,26 @@
 		"component.common.blendmode.override": "덮어쓰기",
 		"component.common.blendmode.subtract": "뺄셈",
 		"component.common.desc_allow_instancing": "비활성화하면 같은 메시/머티리얼/파이프라인을 공유하는 다른 오브젝트가\n있어도 항상 단독 드로우 콜로 그려진다(기본값은 활성화)",
+		"component.common.desc_instance_uv": "오브젝트 단위 UV 변환. 공유 머티리얼은 변경하지 않고 이 오브젝트에만 적용된다.\n머티리얼의 UV 변환과는 UV 합성 방식에 따라 합성된다(기본값 그대로면 비활성화와 동일)",
+		"component.common.desc_instance_uv_pivot": "인스턴스 UV 회전의 중심점. 스케일은 항상 UV 원점(0,0) 기준을 유지하며, 회전만 이 점을 중심으로 이루어진다",
 		"component.common.desc_render_priority": "그리기 순서를 제어하는 우선도. 값이 작을수록 먼저(안쪽), 클수록 나중(앞쪽)에 그려진다\n(기본값 0. 파이프라인 그리기 우선도보다 나중, 메시/머티리얼에 의한 정렬보다 먼저 평가된다)",
+		"component.common.instance_uv_combine_mode": "UV 합성 방식",
+		"component.common.instance_uv_pivot": "인스턴스 UV 회전 중심",
+		"component.common.instance_uv_pivot_pixel": "인스턴스 UV 회전 중심(px)",
+		"component.common.instance_uv_rotation": "인스턴스 UV 회전(도)",
+		"component.common.instance_uv_scale": "인스턴스 UV 스케일",
+		"component.common.instance_uv_scale_pixel": "인스턴스 UV 스케일(px)",
+		"component.common.instance_uv_transform": "인스턴스 UV 변환(오브젝트 단위)",
+		"component.common.instance_uv_transform_pixel": "인스턴스 UV 변환(텍스처 픽셀 기준. 텍스처 미설정 시 편집 불가)",
+		"component.common.instance_uv_translate": "인스턴스 UV 좌표",
+		"component.common.instance_uv_translate_pixel": "인스턴스 UV 좌표(px)",
 		"component.common.mode.lookattarget": "타깃 쪽을 바라봄",
 		"component.common.mode.synctargetrotation": "타깃 회전과 동기화",
 		"component.common.render_priority": "그리기 우선도",
 		"component.common.target": "타깃",
+		"component.common.uvcombinemode.instance_only": "인스턴스만(머티리얼의 UV 변환 무시)",
+		"component.common.uvcombinemode.instance_then_material": "인스턴스 기준(인스턴스→머티리얼 순)",
+		"component.common.uvcombinemode.material_then_instance": "머티리얼 기준(머티리얼→인스턴스 순, 기본값)",
 
 		//--------- component.computeshaderprocessing ---------//
 		"component.computeshaderprocessing.add_constant_buffer_bind": "상수 버퍼 바인딩 추가",
@@ -912,6 +988,8 @@
 		//--------- component.dithereffect ---------//
 		"component.dithereffect.color": "색상",
 		"component.dithereffect.intensity": "강도",
+		"component.dithereffect.pattern_width": "패턴 해상도 너비 (0: 자동)",
+		"component.dithereffect.pattern_height": "패턴 해상도 높이 (0: 자동)",
 
 		//--------- component.dotmatrixeffect ---------//
 		"component.dotmatrixeffect.dot_radius": "도트 반경",
@@ -953,6 +1031,7 @@
 		"component.inputcommandapplier.add_command": "커맨드 추가",
 		"component.inputcommandapplier.applied_3f": "적용값: %.3f",
 		"component.inputcommandapplier.command_name": "커맨드 이름",
+		"component.inputcommandapplier.command_notfound": "선택한 커맨드가 InputCommand에 등록되어 있지 않습니다.",
 		"component.inputcommandapplier.condition": "조건",
 		"component.inputcommandapplier.delete_command": "커맨드 삭제",
 		"component.inputcommandapplier.fixed_value": "고정값",
@@ -1070,6 +1149,7 @@
 
 		//--------- component.normalwindowobject ---------//
 		"component.normalwindowobject.height": "높이",
+		"component.normalwindowobject.icon": "아이콘",
 		"component.normalwindowobject.respawn_window": "윈도우 재생성",
 		"component.normalwindowobject.sync_with_transform": "Transform과 동기화",
 		"component.normalwindowobject.title": "제목",
@@ -1082,6 +1162,7 @@
 
 		//--------- component.overlaywindowobject ---------//
 		"component.overlaywindowobject.height": "높이",
+		"component.overlaywindowobject.icon": "아이콘",
 		"component.overlaywindowobject.sync_with_transform": "Transform과 동기화",
 		"component.overlaywindowobject.title": "제목",
 		"component.overlaywindowobject.width": "너비",
@@ -1191,7 +1272,9 @@
 		//--------- component.rigidbody2d ---------//
 		"component.rigidbody2d.any": "(전체)",
 		"component.rigidbody2d.collider_shape": "콜라이더 형상",
+		"component.rigidbody2d.friction": "마찰 계수",
 		"component.rigidbody2d.mass": "질량",
+		"component.rigidbody2d.restitution": "반발 계수",
 		"component.rigidbody2d.usegravity": "중력 사용",
 		"component.rigidbody2d.velocity": "속도",
 
@@ -1219,6 +1302,21 @@
 		"component.scenevariableapplier.variable_name": "변수 이름",
 		"component.scenevariableapplier.variable_notfound": "변수 \"%s\"를 찾을 수 없습니다",
 
+		//--------- component.sceneviewcamerasettings ---------//
+		"component.sceneviewcamerasettings.camera2d": "2D 카메라",
+		"component.sceneviewcamerasettings.camera3d": "3D 카메라",
+		"component.sceneviewcamerasettings.cameradistance2d": "카메라 거리(Z축)",
+		"component.sceneviewcamerasettings.desc": "씬 뷰 카메라의 현재 값을 표시·편집합니다(실제 값은 에디터 측 SceneEditorView가 보유합니다).",
+		"component.sceneviewcamerasettings.distance": "주시점까지의 거리",
+		"component.sceneviewcamerasettings.eye": "카메라 위치",
+		"component.sceneviewcamerasettings.flymode": "플라이 모드",
+		"component.sceneviewcamerasettings.flyspeed": "이동 속도",
+		"component.sceneviewcamerasettings.pan2d": "팬 위치",
+		"component.sceneviewcamerasettings.pitch": "피치 각(도)",
+		"component.sceneviewcamerasettings.target": "주시점",
+		"component.sceneviewcamerasettings.yaw": "요 각(도)",
+		"component.sceneviewcamerasettings.zoom2d": "줌",
+
 		//--------- component.scenevieworbitstate ---------//
 		"component.scenevieworbitstate.distance": "주시점까지의 거리",
 
@@ -1234,6 +1332,7 @@
 		"component.screenbufferobject.format": "포맷",
 		"component.screenbufferobject.height": "높이",
 		"component.screenbufferobject.name": "이름",
+		"component.screenbufferobject.render_order_priority": "렌더링 순서 우선순위",
 		"component.screenbufferobject.save_screenshot": "스크린샷 저장",
 		"component.screenbufferobject.save_to_file": "파일로 저장",
 		"component.screenbufferobject.size_ux_u": "크기: %u×%u",
@@ -1282,7 +1381,12 @@
 		"component.shake.applytarget.transform": "Transform에 적용",
 		"component.shake.auto_play": "자동 재생",
 		"component.shake.duration_0_infinite": "지속 시간(0=무한)",
+		"component.shake.envelope_section": "흔들림 폭·속도의 시간 변화",
 		"component.shake.play": "재생",
+		"component.shake.position_envelope_amplitude_end": "흔들림 폭 종료 배율",
+		"component.shake.position_envelope_amplitude_start": "흔들림 폭 시작 배율",
+		"component.shake.position_envelope_speed_end": "속도 종료 배율",
+		"component.shake.position_envelope_speed_start": "속도 시작 배율",
 		"component.shake.playing": "재생 중",
 		"component.shake.pos_x": "위치 X",
 		"component.shake.pos_y": "위치 Y",
@@ -1295,6 +1399,10 @@
 		"component.shake.rot_y": "회전 Y",
 		"component.shake.rot_z": "회전 Z",
 		"component.shake.rotation_amplitude_deg": "회전 흔들림 폭(도)",
+		"component.shake.rotation_envelope_amplitude_end": "흔들림 폭 종료 배율",
+		"component.shake.rotation_envelope_amplitude_start": "흔들림 폭 시작 배율",
+		"component.shake.rotation_envelope_speed_end": "속도 종료 배율",
+		"component.shake.rotation_envelope_speed_start": "속도 시작 배율",
 		"component.shake.rotation_shake": "회전 흔들림",
 		"component.shake.rotation_speed": "회전 속도",
 		"component.shake.stop": "정지",
@@ -1329,6 +1437,10 @@
 		"component.spriterenderer.material": "머티리얼",
 		"component.spriterenderer.pipeline": "파이프라인",
 		"component.spriterenderer.pivot": "피벗",
+		"component.spriterenderer.pixel_snapping": "픽셀 스냅",
+		"component.spriterenderer.pixel_snapping_desc": "적용되는 Camera2D에서도 Pixel Snapping이 활성화된 경우 이 오브젝트의 카메라 상대 위치를 렌더 대상의 픽셀 격자에 맞춥니다. 둘이 같은 서브픽셀 거리만큼 움직일 때의 상대적인 흔들림을 방지합니다. 일치하는 카메라가 없으면 이전처럼 월드 좌표를 정수 단위로 반올림합니다.",
+		"component.spriterenderer.pixel_snap_outset": "픽셀 스냅 외곽 여백",
+		"component.spriterenderer.pixel_snap_outset_desc": "0보다 큰 값을 설정하면 경계 픽셀의 행/열이 통째로 사라지는 것을 방지하기 위해 쿼드를 한쪽으로 이 값(px)만큼 바깥으로 확장합니다. 왕복 행렬 연산에서 발생하는 아주 미세한 부동소수점 오차로 인해, 스냅된 경계에 정확히 걸친 픽셀을 래스터라이저가 바깥쪽으로 잘못 판정할 수 있는데, 이 여백이 이를 방지합니다. 스프라이트가 텍스처 전체를 사용하는 경우에는 무해하지만, 아틀라스/타일맵의 일부(instanceUvTranslate/instanceUvScale)를 잘라 쓰는 경우에는 샘플러의 주소 지정 방식과 무관하게 인접 영역 사이에 여백이 없으면 UV가 인접 타일로 번질 수 있습니다. 아틀라스에 타일 간 여백이 있는지 확인하거나, 값을 작게 유지한 채 시각적으로 확인하세요. 기본값 0.0=비활성화.",
 
 		//--------- component.targetlookat ---------//
 		"component.targetlookat.desc_1": "Sync Target Rotation: 타깃의 월드 회전과 동기화(빌보드용)\nLook At Target: 자신의 +Z축이 항상 타깃 방향을 바라봄",
@@ -1375,6 +1487,34 @@
 		"component.textrenderer.valign.top": "위쪽 정렬",
 		"component.textrenderer.vertical_align": "세로 정렬",
 
+		//--------- component.bitmaptextrenderer ---------//
+		"component.bitmaptextrenderer.character_overrides": "문자별 재정의",
+		"component.bitmaptextrenderer.font": "폰트",
+		"component.bitmaptextrenderer.font_size": "폰트 크기",
+		"component.bitmaptextrenderer.instance_color": "인스턴스 컬러",
+		"component.bitmaptextrenderer.instance_color_blend_mode": "인스턴스 컬러 합성 방법",
+		"component.bitmaptextrenderer.material": "머티리얼",
+		"component.bitmaptextrenderer.pipeline": "파이프라인",
+		"component.bitmaptextrenderer.point_sampling": "포인트 샘플링",
+		"component.bitmaptextrenderer.pixel_snapping": "픽셀 스냅",
+		"component.bitmaptextrenderer.pixel_snapping_desc": "적용되는 Camera2D에서도 Pixel Snapping이 활성화된 경우 이 문자의 카메라 상대 위치를 렌더 대상의 픽셀 격자에 맞춥니다. 픽셀 아트 폰트(포인트 샘플링 활성화)를 원본 크기로 선명하게 표시할 때 사용합니다.",
+		"component.bitmaptextrenderer.pixel_snap_outset": "픽셀 스냅 외곽 여백",
+		"component.bitmaptextrenderer.pixel_snap_outset_desc": "0보다 큰 값을 설정하면 경계 픽셀의 행/열이 통째로 사라지는 것을 방지하기 위해 각 문자의 쿼드를 한쪽으로 이 값(px)만큼 바깥으로 확장합니다. 왕복 행렬 연산에서 발생하는 아주 미세한 부동소수점 오차로 인해, 스냅된 경계에 정확히 걸친 픽셀을 래스터라이저가 바깥쪽으로 잘못 판정할 수 있는데, 이 여백이 이를 방지합니다. 각 문자는 항상 폰트 아틀라스 내의 서브 사각형을 잘라 쓰므로, 샘플러의 주소 지정 방식과 무관하게 글리프 사이에 여백이 없으면 UV가 인접 문자로 번질 수 있습니다. 폰트 아틀라스 생성 시 글리프 간 여백이 있는지 확인하거나, 값을 작게 유지한 채 시각적으로 확인하세요. 기본값 0.0=비활성화.",
+		"component.bitmaptextrenderer.text": "텍스트",
+
+		//--------- component.texturesource ---------//
+		"component.texturesource.texture": "텍스처",
+
+		//--------- component.transformsync ---------//
+		"component.transformsync.desc_1": "매 프레임 타겟의 월드 위치/회전/스케일(각각 오프셋을 더한 값)을 이 오브젝트의 Transform에 반영합니다. 실제 씬 계층의 부모는 변경되지 않습니다.",
+		"component.transformsync.no_target": "(타겟 미설정: 동기화가 적용되지 않습니다)",
+		"component.transformsync.position_offset": "위치 오프셋",
+		"component.transformsync.rotation_offset": "회전 오프셋",
+		"component.transformsync.scale_offset": "스케일 오프셋",
+		"component.transformsync.sync_position": "위치 동기화",
+		"component.transformsync.sync_rotation": "회전 동기화",
+		"component.transformsync.sync_scale": "스케일 동기화",
+
 		//--------- component.uibutton ---------//
 		"component.uibutton.desc": "이 컴포넌트 자체는 아무것도 그리지 않습니다. 같은 오브젝트에 SpriteRenderer가 있으면 그 스프라이트의 사각형을, 없고 TextRenderer가 있으면 그 텍스트의 외접 사각형(표시 중인 문자열에 따라 동적으로 변함)을 그대로 히트 테스트 영역으로 사용합니다.",
 		"component.uibutton.display_camera": "표시 카메라",
@@ -1389,6 +1529,20 @@
 		"component.vignetteeffect.inner_radius": "내부 반경",
 		"component.vignetteeffect.intensity": "강도",
 		"component.vignetteeffect.smoothness": "부드러움",
+
+		//--------- component.barreldistortioneffect ---------//
+		"component.barreldistortioneffect.strength": "강도",
+		"component.barreldistortioneffect.zoom": "확대/축소",
+		"component.barreldistortioneffect.edge_color": "가장자리 색상",
+
+		//--------- component.palettequantizeeffect ---------//
+		"component.palettequantizeeffect.intensity": "강도",
+		"component.palettequantizeeffect.dither_amount": "디더링 양",
+
+		//--------- component.scanlineeffect ---------//
+		"component.scanlineeffect.intensity": "강도",
+		"component.scanlineeffect.line_spacing": "주사선 간격",
+		"component.scanlineeffect.thickness": "두께",
 
 		//--------- editor.assets ---------//
 		"editor.assets.createfile.alreadyexists": "같은 이름의 파일이 이미 존재합니다.",
@@ -1541,6 +1695,9 @@
 		"editor.fontmanager.u_x_u": "%u × %u",
 		"editor.fontmanager.window": "불러온 폰트",
 
+		//--------- editor.bitmapfontmanager ---------//
+		"editor.bitmapfontmanager.window": "불러온 비트맵 폰트",
+
 		//--------- editor.gameengine ---------//
 		"editor.gameengine.averages_zu_samples": "평균(%zu 샘플)",
 		"editor.gameengine.avg_draw_3f_ms": "평균 렌더링 시간: %.3f ms",
@@ -1555,6 +1712,9 @@
 
 		//--------- editor.globalscenevariables ---------//
 		"editor.globalscenevariables.window": "글로벌 씬 변수",
+		"editor.globalscenevariables.clear_all": "모두 삭제",
+		"editor.globalscenevariables.clear_all_confirm_title": "글로벌 씬 변수 모두 삭제",
+		"editor.globalscenevariables.clear_all_confirm_message": "모든 글로벌 씬 변수를 삭제합니다. 이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?",
 
 		//--------- editor.hierarchy ---------//
 		"editor.hierarchy.clone": "오브젝트 복제",
@@ -1578,6 +1738,7 @@
 		"editor.hierarchy.create.skinnedmeshobject": "스킨 메시 오브젝트",
 		"editor.hierarchy.create.spriteobject": "스프라이트 오브젝트",
 		"editor.hierarchy.create.textobject": "텍스트 오브젝트",
+		"editor.hierarchy.create.bitmaptextobject": "비트맵 텍스트 오브젝트",
 		"editor.hierarchy.create.uibuttonobject": "UI 버튼 오브젝트",
 		"editor.hierarchy.create.windowobject": "윈도우 오브젝트",
 		"editor.hierarchy.createchildobject": "자식 오브젝트 생성",
@@ -1671,6 +1832,7 @@
 		"editor.materialmanager.add_missing_parameters": "미추가 파라미터 일괄 추가",
 		"editor.materialmanager.color": "색상",
 		"editor.materialmanager.custom_parameters": "커스텀 파라미터(셰이더별)",
+		"editor.materialmanager.desc_uv_pivot": "UV 회전의 중심점. 스케일은 항상 UV 원점(0,0) 기준을 유지하며, 회전만 이 점을 중심으로 이루어진다",
 		"editor.materialmanager.enable_lighting": "라이팅 활성화",
 		"editor.materialmanager.enable_shadowmap_projection": "섀도 맵 투영 활성화",
 		"editor.materialmanager.environment": "환경 맵",
@@ -1685,12 +1847,21 @@
 		"editor.materialmanager.rim_color": "림 라이트 색상",
 		"editor.materialmanager.rim_intensity": "림 라이트 강도",
 		"editor.materialmanager.rim_power": "림 라이트 날카로움",
+		"editor.materialmanager.sampler": "샘플러",
 		"editor.materialmanager.save": "저장",
 		"editor.materialmanager.save_all": "모두 저장",
 		"editor.materialmanager.shininess": "광택",
 		"editor.materialmanager.specular_color": "스펙큘러 색상",
 		"editor.materialmanager.texture": "텍스처",
+		"editor.materialmanager.uv_pivot": "UV 회전 중심",
+		"editor.materialmanager.uv_pivot_pixel": "UV 회전 중심(px)",
+		"editor.materialmanager.uv_rotation": "UV 회전(도)",
+		"editor.materialmanager.uv_scale": "UV 스케일",
+		"editor.materialmanager.uv_scale_pixel": "UV 스케일(px)",
 		"editor.materialmanager.uv_transform": "UV 변환",
+		"editor.materialmanager.uv_transform_pixel": "UV 변환(텍스처 픽셀 기준. 텍스처 미설정 시 편집 불가)",
+		"editor.materialmanager.uv_translate": "UV 좌표",
+		"editor.materialmanager.uv_translate_pixel": "UV 좌표(px)",
 		"editor.materialmanager.window": "머티리얼",
 
 		//--------- editor.menu ---------//
@@ -1778,6 +1949,10 @@
 		"editor.prefab.apply": "적용",
 		"editor.prefab.applyall": "모두 적용",
 		"editor.prefab.overrides": "덮어쓴 항목: ",
+		"editor.prefab.override.objectproperties": "오브젝트 속성",
+		"editor.prefab.override.parent": "부모 관계",
+		"editor.prefab.override.addedobject": "추가된 오브젝트",
+		"editor.prefab.override.removedobjects": "삭제된 오브젝트",
 		"editor.prefab.revert": "되돌리기",
 		"editor.prefab.revert.title": "프리팹 인스턴스를 되돌리시겠습니까?",
 		"editor.prefab.revert.warning1": "로컬 변경 사항(이 인스턴스에 추가한 자식 오브젝트 포함)은 모두 파기됩니다.",
@@ -1852,6 +2027,7 @@
 		"editor.preferences.window": "에디터 환경 설정",
 
 		//--------- editor.savescene ---------//
+		"editor.savescene.playing.warning": "게임 루프가 재생 중입니다. 저장되는 내용은 재생 시작 전의 씬 상태입니다.",
 		"editor.savescene.title": "씬 저장",
 
 		//--------- editor.sceneaudioplayer ---------//
@@ -1875,11 +2051,20 @@
 		"editor.scenelist.column.filepath": "파일 경로",
 		"editor.scenelist.column.name": "이름",
 		"editor.scenelist.column.switch": "전환",
+		"editor.scenelist.column.duplicate": "복제",
 		"editor.scenelist.convert": "폴더 형식으로 변환",
 		"editor.scenelist.convert.succeeded": "폴더 형식으로의 변환이 완료되었습니다.",
 		"editor.scenelist.convert.tooltip": "이 씬의 저장 형식을 오브젝트 1개당 폴더 1개 형식으로 변환합니다.\n(여러 명이 개발할 때 Git 충돌을 줄일 수 있습니다)",
 		"editor.scenelist.convert.tooltip.disabled": "이미 폴더 형식이거나 파일 경로가 설정되지 않았습니다.",
 		"editor.scenelist.delete.tooltip": "이 씬을 목록에서 삭제합니다.\n(씬의 JSON 파일 자체는 삭제되지 않습니다)",
+		"editor.scenelist.duplicate": "복제",
+		"editor.scenelist.duplicate.button": "복제",
+		"editor.scenelist.duplicate.namealreadyexists": "같은 이름의 씬이 이미 등록되어 있습니다.",
+		"editor.scenelist.duplicate.newfilepath": "새 파일 경로##duplicate",
+		"editor.scenelist.duplicate.newname": "새 이름##duplicate",
+		"editor.scenelist.duplicate.source": "복제 원본",
+		"editor.scenelist.duplicate.title": "씬 복제",
+		"editor.scenelist.duplicate.tooltip": "이 씬을 새 이름으로 복제합니다.",
 		"editor.scenelist.deleteoriginal.keep": "남기기",
 		"editor.scenelist.deleteoriginal.message": "변환 전 파일을 삭제하시겠습니까?",
 		"editor.scenelist.deleteoriginal.title": "변환 전 파일을 삭제하시겠습니까?",
@@ -1898,6 +2083,7 @@
 
 		//--------- editor.sceneobjecthierarchy ---------//
 		"editor.sceneobjecthierarchy.window": "씬 오브젝트 계층",
+		"editor.sceneobjecthierarchy.search": "검색",
 
 		//--------- editor.sceneobjectinspector ---------//
 		"editor.sceneobjectinspector.window": "오브젝트 인스펙터",
@@ -1924,14 +2110,24 @@
 		"editor.sceneview.gizmo.local": "로컬",
 		"editor.sceneview.gizmo.rotate": "회전",
 		"editor.sceneview.gizmo.scale": "확대/축소",
+		"editor.sceneview.gizmo.snap": "그리드 스냅",
+		"editor.sceneview.gizmo.snap.rotate": "각도 스냅",
+		"editor.sceneview.gizmo.snap.scale": "확대/축소 스냅",
+		"editor.sceneview.gizmo.snap.tooltip": "Ctrl 키를 누르는 동안 활성화 상태가 일시적으로 반전됩니다",
+		"editor.sceneview.gizmo.snap.translate": "그리드 간격",
 		"editor.sceneview.gizmo.translate": "이동",
 		"editor.sceneview.gizmo.world": "월드",
 		"editor.sceneview.notready": "씬 뷰가 준비되지 않았습니다.",
+		"editor.sceneview.boundszone.enable": "사각형 편집 사용",
+		"editor.sceneview.boundszone.hint": "인스펙터에서 선택 중인 사각형을 씬 뷰 위에서 드래그하여 편집할 수 있습니다（네 모서리・네 변・내부 드래그 지원）.",
+		"editor.sceneview.boundszone.no_selection": "CameraBoundsZone2D/3D를 가진 오브젝트를 하나만 선택하세요.",
 		"editor.sceneview.show.bones": "본",
+		"editor.sceneview.show.boundszones": "경계 존",
 		"editor.sceneview.show.cameras": "카메라",
 		"editor.sceneview.show.colliders": "콜라이더",
 		"editor.sceneview.show.grid": "그리드",
 		"editor.sceneview.show.lights": "라이트",
+		"editor.sceneview.tab.boundszone": "경계 존",
 		"editor.sceneview.tab.camera": "카메라",
 		"editor.sceneview.tab.display": "표시",
 		"editor.sceneview.tab.gizmo": "기즈모",
@@ -2026,6 +2222,15 @@
 		"engine.font.loading.failed.unsupported": "폰트 불러오기 실패. 지원하지 않는 확장자입니다. 파일 경로: ",
 		"engine.font.loading.succeeded": "폰트 불러오기 성공. 파일 경로: ",
 
+		//--------- engine.bitmapfont ---------//
+		"engine.bitmapfont.loading.failed.notfound": "비트맵 폰트 불러오기 실패. 파일을 찾을 수 없습니다. 파일 경로: ",
+		"engine.bitmapfont.loading.failed.nopage": "비트맵 폰트 불러오기 실패. 페이지(텍스처)가 정의되어 있지 않습니다. 파일 경로: ",
+		"engine.bitmapfont.loading.failed.pagenotfound": "비트맵 폰트 불러오기 실패. 페이지 이미지와 같은 이름의 불러온 텍스처를 찾을 수 없습니다(페이지 이미지를 Assets 하위 어딘가에 배치하세요). 파일 이름: ",
+		"engine.bitmapfont.loading.failed.read": "비트맵 폰트 불러오기 실패. 파일을 열 수 없습니다. 파일 경로: ",
+		"engine.bitmapfont.loading.failed.unsupported": "비트맵 폰트 불러오기 실패. 지원하지 않는 확장자입니다. 파일 경로: ",
+		"engine.bitmapfont.loading.succeeded": "비트맵 폰트 불러오기 성공. 파일 경로: ",
+		"engine.bitmapfont.loading.warning.multipage": "이 비트맵 폰트는 여러 페이지로 구성되어 있습니다. 첫 페이지만 사용됩니다. 파일 경로: ",
+
 		//--------- engine.gpuparticle ---------//
 		"engine.gpuparticle.dispatching": "GPU 파티클 디스패치를 시작합니다. 이미터 수: ",
 		"engine.gpuparticle.emitters.empty": "GPU 파티클 이미터가 하나도 없습니다.",
@@ -2078,13 +2283,39 @@
 		"engine.prefab.sync.result.updated": ", 갱신한 씬 수 ",
 		"engine.prefab.sync.scene.failed": "프리팹 동기화: 씬 불러오기 또는 저장에 실패했습니다. 씬 이름: ",
 
+		//--------- engine.renderer ---------//
+		"engine.renderer.zerodrawentries.detected": "그리기 항목이 일정 시간 동안 0으로 유지되고 있습니다（카메라 등의 대상 해석이 풀렸을 수 있습니다）. ScreenBufferObject 이름: ",
+		"engine.renderer.zerodrawentries.recovered": "그리기 항목이 복구되었습니다. ScreenBufferObject 이름: ",
+
+		//--------- engine.rendertargetcarryover ---------//
+		"engine.rendertargetcarryover.beginsceneswitch": "씬 전환: 렌더 타겟 인계 접수를 시작했습니다.",
+		"engine.rendertargetcarryover.claim.success": "씬 전환: 인계 풀에서 렌더 타겟 리소스를 가져왔습니다. 종류/키: ",
+		"engine.rendertargetcarryover.deposit.carried": "씬 전환: 렌더 타겟 리소스를 인계 풀에 맡겼습니다. 종류/키: ",
+		"engine.rendertargetcarryover.deposit.destroyed": "씬 전환 중이 아니므로 렌더 타겟 리소스를 즉시 파괴했습니다. 종류/키: ",
+		"engine.rendertargetcarryover.endsceneswitch.unclaimed": "씬 전환: 인계받지 못한 렌더 타겟 리소스를 파괴했습니다（새 씬에 동일한 이름의 컴포넌트가 없을 수 있습니다）. 종류/키: ",
+
+		//--------- engine.scene ---------//
+		"engine.scene.playstop.emptysnapshot": "PlayStop(): editModeSnapshot_가 비어 있어 씬 내용 복원을 건너뛰었습니다. 이 Scene 인스턴스에서 PlayStart()가 호출되지 않았을 수 있습니다.",
+		"engine.scene.playstop.notplaying": "PlayStop()이 호출되었지만 이 Scene 인스턴스는 재생 중이 아닙니다（isPlaying_=false）. 재생 중에 씬이 전환되어 다른 Scene 인스턴스로 교체되었을 수 있습니다.",
+
 		//--------- engine.scenemanager ---------//
 		"engine.scenemanager.globalscenevariables.loaded": "글로벌 씬 변수를 불러왔습니다. 파일 경로: ",
 		"engine.scenemanager.scene.alreadyregistered": "씬이 이미 등록되어 있어 건너뛰었습니다. 씬 이름: ",
 		"engine.scenemanager.scene.load.failed": "씬 파일 불러오기에 실패하여 빈 씬을 생성합니다. 파일 경로: ",
+		"engine.scenemanager.scene.switch.end": "씬 전환 완료. 전환 대상: ",
+		"engine.scenemanager.scene.switch.start": "씬 전환 시작. 전환 대상: ",
 		"engine.scenemanager.scenelist.loaded": "씬 목록을 불러왔습니다. 파일 경로: ",
 
+		//--------- engine.screenbuffer ---------//
+		"engine.screenbuffer.initialize.failed.doublebuffer": "ScreenBuffer 초기화에 실패했습니다. 더블 버퍼 리소스 생성에 실패했습니다. 크기: ",
+		"engine.screenbuffer.initialize.failed.nodirectxcommon": "ScreenBuffer 초기화에 실패했습니다. DirectXCommon이 설정되지 않았습니다.",
+		"engine.screenbuffer.initialize.failed.noslot": "ScreenBuffer 초기화에 실패했습니다. 명령 객체 슬롯을 확보할 수 없었습니다. 크기: ",
+		"engine.screenbuffer.initialize.failed.previewbuffer": "ScreenBuffer 초기화에 실패했습니다. 미리보기 버퍼 생성에 실패했습니다. 크기: ",
+
 		//--------- engine.screenbufferobject ---------//
+		"engine.screenbufferobject.loadfromjson.carried": "인계 풀에서 기존 ScreenBuffer 인스턴스를 그대로 인계받았습니다. 이름(포인터) 크기: ",
+		"engine.screenbufferobject.loadfromjson.recreated": "크기 불일치로 인해 새 ScreenBuffer 인스턴스를 다시 생성했습니다. 이름(포인터) 크기: ",
+		"engine.screenbufferobject.loadfromjson.reused": "Initialize() 직후 생성된 임시 ScreenBuffer 인스턴스를 그대로 재사용했습니다. 이름(포인터) 크기: ",
 		"engine.screenbufferobject.screenshot.failed": "스크린샷 저장에 실패했습니다.",
 
 		//--------- engine.script ---------//
@@ -2102,8 +2333,11 @@
 		"engine.script.error": "AngelScript: ",
 		"engine.script.failed.createengine": "AngelScript: asCreateScriptEngine에 실패했습니다.",
 		"engine.script.field.array.recreated": "array<T> 필드의 핸들이 올바르지 않아 새로운 빈 배열로 다시 생성했습니다. 필드 이름: ",
+		"engine.script.field.gc_type.unsafe_declaration": "핸들(@) 대신 안전하지 않은 값 구문으로 선언된 필드가 발견되어 빌드를 중단했습니다. GC 관리 대상 타입(array<T>, dictionary 등)과 [System.Serializable] 클래스 등 스크립트 클래스 타입은 반드시 핸들 구문(예: array<T>@ 이름 = null; 또는 array<T@>@ 이름 = null;)으로 선언하세요. 스크립트: ",
+		"engine.script.field.gc_type.unsafe_declaration.global_suffix": " (전역 변수)",
 		"engine.script.predefined.generate.failed": "AngelScript: as.predefined 생성에 실패했습니다.",
 		"engine.script.predefined.generated": "AngelScript: as.predefined 를 생성했습니다.",
+		"engine.script.variable.type_mismatch_shared_hint": "스크립트 간 데이터 전달 시 타입 이름은 일치하지만 타입 ID가 일치하지 않습니다. 사용자 정의 클래스/enum이라면 shared 선언을 잊었을 수 있습니다. 타입 이름: ",
 		"engine.script.vscodelaunch.generate.failed": "AngelScript: VSCode용 launch.json 생성에 실패했습니다.",
 
 		//--------- engine.settings ---------//
@@ -2135,6 +2369,11 @@
 		"engine.settings.window.initialwidth": "초기 윈도우 너비: ",
 		"engine.settings.window.section": "윈도우 설정",
 
+		//--------- engine.shadowmapbuffer ---------//
+		"engine.shadowmapbuffer.initialize.failed.depth": "ShadowMapBuffer 초기화에 실패했습니다. 깊이 버퍼 생성에 실패했습니다. 크기: ",
+		"engine.shadowmapbuffer.initialize.failed.nodirectxcommon": "ShadowMapBuffer 초기화에 실패했습니다. DirectXCommon이 설정되지 않았습니다.",
+		"engine.shadowmapbuffer.initialize.failed.noslot": "ShadowMapBuffer 초기화에 실패했습니다. 명령 객체 슬롯을 확보할 수 없었습니다. 크기: ",
+
 		//--------- engine.texture ---------//
 		"engine.texture.loading.failed.loadfile": "텍스처 불러오기 실패. 파일 읽기에 실패했습니다. 파일 경로: ",
 
@@ -2155,6 +2394,14 @@
 		"error.code.label": "에러 코드: ",
 
 		//--------- label.filepath ---------//
-		"label.filepath": "파일 경로: "
+		"label.filepath": "파일 경로: ",
+
+		//--------- editor.externalchanges ---------//
+		"editor.externalchanges.title": "외부 씬 변경",
+		"editor.externalchanges.message": "편집 중인 씬이 외부에서 변경되었습니다. 디스크에서 다시 불러오시겠습니까?",
+		"editor.externalchanges.scene": "씬",
+		"editor.externalchanges.playing": "플레이 모드 중에는 안전을 위해 다시 불러올 수 없습니다.",
+		"editor.externalchanges.reload": "다시 불러오기",
+		"editor.externalchanges.keeplocal": "현재 편집 유지"
 	}
 }

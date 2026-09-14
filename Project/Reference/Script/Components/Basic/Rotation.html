@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rotation | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_Rotation">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Rotation</h1>
+<p class="page-lead"><code>Velocity</code>の回転版です。毎フレーム、角加速度を角速度へ、角速度を<code>Transform</code>の回転（オイラー角・ラジアン）へ自動的に適用します。</p>
+</div>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetAngularVelocity(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetAngularVelocity() const</code></td><td>角速度の設定/取得（ラジアン/秒）</td></tr>
+<tr><td><code>void SetAngularAcceleration(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetAngularAcceleration() const</code></td><td>角加速度の設定/取得（ラジアン/秒²）</td></tr>
+<tr><td><code>void AddAngularVelocity(const Vector3 &amp;in)</code></td><td>角速度に加算する</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="Velocity.html">Velocity</a> — 移動版のRotation</li>
+<li><a href="../../../Editor/Components/Basic/Rotation.html">Editor/Components/Basic/Rotation.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

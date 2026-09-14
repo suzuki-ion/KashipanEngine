@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <unordered_set>
 
 #include "Objects/ObjectComponentHeader.h"
@@ -35,6 +36,13 @@ public:
         Subtract
     };
 
+    /// @brief インスタンス単位のUV変換とマテリアルのUV変換（Material::uvTranslate等）の合成方法
+    enum class UVCombineMode : int {
+        MaterialThenInstance = 0, ///< 既定。マテリアルの基本マッピングの上にインスタンスのUV変換を乗せる
+        InstanceThenMaterial,     ///< インスタンスのUV変換を基準とし、マテリアルのUV変換を後から適用する
+        InstanceOnly,             ///< マテリアルのUV変換を無視し、インスタンスのUV変換のみを使う
+    };
+
     // pipelineName_/materialName_の直接書き込み時は、セッターと同様に描画リストの再構築
     // （materialName_はハンドルの再解決も）を促す
     OBJECT_COMPONENT_CONSTRUCTOR(SpriteRenderer, 0xFF,
@@ -48,8 +56,15 @@ public:
         ADD_MEMBER_VARIABLE(pivot_);
         ADD_MEMBER_VARIABLE(instanceColor_);
         ADD_MEMBER_VARIABLE(instanceColorBlendMode_);
+        ADD_MEMBER_VARIABLE(instanceUvTranslate_);
+        ADD_MEMBER_VARIABLE(instanceUvRotation_);
+        ADD_MEMBER_VARIABLE(instanceUvScale_);
+        ADD_MEMBER_VARIABLE(instanceUvPivot_);
+        ADD_MEMBER_VARIABLE(instanceUvCombineMode_);
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(renderPriority_, [this] { MarkDrawListDirty(); });
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(allowInstancing_, [this] { MarkDrawListDirty(); });
+        ADD_MEMBER_VARIABLE(pixelSnapping_);
+        ADD_MEMBER_VARIABLE(pixelSnapOutsetPixels_);
     )
     COMPONENT_CATEGORY("Render")
     ~SpriteRenderer() override = default;
@@ -65,8 +80,15 @@ public:
         ptr->pivot_ = pivot_;
         ptr->instanceColor_ = instanceColor_;
         ptr->instanceColorBlendMode_ = instanceColorBlendMode_;
+        ptr->instanceUvTranslate_ = instanceUvTranslate_;
+        ptr->instanceUvRotation_ = instanceUvRotation_;
+        ptr->instanceUvScale_ = instanceUvScale_;
+        ptr->instanceUvPivot_ = instanceUvPivot_;
+        ptr->instanceUvCombineMode_ = instanceUvCombineMode_;
         ptr->renderPriority_ = renderPriority_;
         ptr->allowInstancing_ = allowInstancing_;
+        ptr->pixelSnapping_ = pixelSnapping_;
+        ptr->pixelSnapOutsetPixels_ = pixelSnapOutsetPixels_;
         return ptr;
     }
 
@@ -98,6 +120,13 @@ public:
         if (!target) return false;
         return !excludedRenderTargetNames_.contains(target->GetRenderTargetName());
     }
+    /// @brief 除外する描画先の名前一覧をまとめて設定する（TilemapRenderer等、複数のSpriteRenderer
+    ///        インスタンスへ同じ描画先設定を一括反映したいコンポーネントから使う）
+    void SetExcludedRenderTargetNames(const std::unordered_set<std::string> &names) {
+        excludedRenderTargetNames_ = names;
+        MarkDrawListDirty();
+    }
+    const std::unordered_set<std::string> &GetExcludedRenderTargetNames() const noexcept { return excludedRenderTargetNames_; }
 
     //==================================================
     // パイプライン・マテリアル指定
@@ -156,6 +185,26 @@ public:
     ColorBlendMode GetInstanceColorBlendMode() const noexcept { return instanceColorBlendMode_; }
 
     //==================================================
+    // インスタンスUV（オブジェクト単位のUV変換）
+    //==================================================
+
+    /// @brief オブジェクト単位のUVオフセットを設定する（マテリアルのUV変換とinstanceUvCombineMode_で合成される）
+    void SetInstanceUvTranslate(const Vector2 &translate) noexcept { instanceUvTranslate_ = translate; }
+    const Vector2 &GetInstanceUvTranslate() const noexcept { return instanceUvTranslate_; }
+    /// @brief オブジェクト単位のUV回転を設定する（ラジアン）
+    void SetInstanceUvRotation(float radians) noexcept { instanceUvRotation_ = radians; }
+    float GetInstanceUvRotation() const noexcept { return instanceUvRotation_; }
+    /// @brief オブジェクト単位のUVスケールを設定する
+    void SetInstanceUvScale(const Vector2 &scale) noexcept { instanceUvScale_ = scale; }
+    const Vector2 &GetInstanceUvScale() const noexcept { return instanceUvScale_; }
+    /// @brief オブジェクト単位のUV回転の中心座標を設定する（拡縮は常にUV原点基準。回転のみこの座標が中心になる）
+    void SetInstanceUvPivot(const Vector2 &pivot) noexcept { instanceUvPivot_ = pivot; }
+    const Vector2 &GetInstanceUvPivot() const noexcept { return instanceUvPivot_; }
+    /// @brief インスタンスUVとマテリアルのUV変換の合成方法を設定する
+    void SetInstanceUvCombineMode(UVCombineMode mode) noexcept { instanceUvCombineMode_ = mode; }
+    UVCombineMode GetInstanceUvCombineMode() const noexcept { return instanceUvCombineMode_; }
+
+    //==================================================
     // 描画順・インスタンシング制御
     //==================================================
 
@@ -168,6 +217,28 @@ public:
     ///        共有する他のオブジェクトがあっても常に単独のドローコールで描画される
     void SetAllowInstancing(bool allow) noexcept { allowInstancing_ = allow; MarkDrawListDirty(); }
     bool GetAllowInstancing() const noexcept { return allowInstancing_; }
+
+    /// @brief 適用先Camera2Dから見た位置を画面ピクセル単位に丸めて描画するか設定する（既定false）
+    /// @details Camera2D側のPixel Snappingも有効な場合、カメラとこのオブジェクトの相対座標を
+    ///          描画先解像度のピクセル格子へ揃える。カメラがサブピクセル位置を取っていても、両者の
+    ///          相対位置が一定なら画面上で揺れない。対応カメラが無い場合は従来通りワールド単位で丸める
+    void SetPixelSnapping(bool enable) noexcept { pixelSnapping_ = enable; MarkDrawListDirty(); }
+    bool GetPixelSnapping() const noexcept { return pixelSnapping_; }
+
+    /// @brief ピクセルスナップ有効時、境界ピクセルの取りこぼしを防ぐためにクアッドを外側へ
+    ///        わずかに広げる安全マージン（片側、ピクセル単位）を設定する（既定0.0=無効）
+    /// @details 位置・サイズを整数ピクセル境界へ厳密に一致させると、往復する行列変換のごく僅かな
+    ///          浮動小数点誤差だけで、GPUラスタライズの「ピクセル中心が内側か」判定が境界ピクセルの
+    ///          中心を外側と誤判定し、その行/列が丸ごと欠落することがある。0より大きい値を設定すると
+    ///          この際どい判定に安全マージンを持たせられる。ただしUVがわずかに[0,1]の外へはみ出すため、
+    ///          テクスチャ全体を1枚のスプライトとして使う場合は無害だが、アトラス/タイルマップの一部
+    ///          （instanceUvTranslate/instanceUvScale等）を切り出している場合は隣接タイルの領域まで
+    ///          はみ出し縁に漏れる可能性がある（この漏れはサンプラーがClampかWrapかに関係なく、
+    ///          切り出したサブ矩形とアトラス内の隣接領域との間にパディングが無い限り発生し得る）。
+    ///          アトラス用途では、アトラス生成時にタイル間へ数px程度の余白を確保しておくか、
+    ///          このマージンを十分小さく保った上で実際の見た目を確認すること
+    void SetPixelSnapOutsetPixels(float pixels) noexcept { pixelSnapOutsetPixels_ = std::max(0.0f, pixels); MarkDrawListDirty(); }
+    float GetPixelSnapOutsetPixels() const noexcept { return pixelSnapOutsetPixels_; }
 
     //==================================================
     // 描画情報取得
@@ -274,17 +345,83 @@ protected:
             instanceColorBlendMode_ = static_cast<ColorBlendMode>(blendModeIndex);
         }
 
+        ImGui::TextUnformatted(TranslationC("component.common.instance_uv_transform"));
+        if (ImGui::IsItemHovered()) {
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_instance_uv"));
+        }
+        ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_translate"), &instanceUvTranslate_.x, 0.001f);
+        float instanceUvRotationDeg = instanceUvRotation_ * 180.0f / 3.14159265f;
+        if (ImGui::DragFloat(TranslationLabel("component.common.instance_uv_rotation"), &instanceUvRotationDeg, 0.1f, -180.0f, 180.0f)) {
+            instanceUvRotation_ = instanceUvRotationDeg * 3.14159265f / 180.0f;
+        }
+        ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_scale"), &instanceUvScale_.x, 0.001f);
+        ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_pivot"), &instanceUvPivot_.x, 0.001f);
+        if (ImGui::IsItemHovered()) {
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_instance_uv_pivot"));
+        }
+        const char *kUvCombineModeLabels[] = {
+            TranslationC("component.common.uvcombinemode.material_then_instance"),
+            TranslationC("component.common.uvcombinemode.instance_then_material"),
+            TranslationC("component.common.uvcombinemode.instance_only"),
+        };
+        int uvCombineModeIndex = static_cast<int>(instanceUvCombineMode_);
+        if (ImGui::Combo(TranslationLabel("component.common.instance_uv_combine_mode"), &uvCombineModeIndex, kUvCombineModeLabels, IM_ARRAYSIZE(kUvCombineModeLabels))) {
+            instanceUvCombineMode_ = static_cast<UVCombineMode>(uvCombineModeIndex);
+        }
+        // ピクセル基準（0～テクスチャの幅・高さ）でのインスタンスUV編集。内部値（0～1のUV基準）と相互に連動する
+        {
+            auto *materialForUv = MaterialManager::GetMaterial(GetMaterialHandle());
+            const auto textureView = TextureManager::GetTextureView(materialForUv ? materialForUv->textureHandle : TextureManager::kInvalidHandle);
+            const float texWidth = static_cast<float>(textureView.GetWidth());
+            const float texHeight = static_cast<float>(textureView.GetHeight());
+            const bool hasTextureSize = texWidth > 0.0f && texHeight > 0.0f;
+
+            ImGui::BeginDisabled(!hasTextureSize);
+            ImGui::TextUnformatted(TranslationC("component.common.instance_uv_transform_pixel"));
+            Vector2 pxTranslate = hasTextureSize
+                ? Vector2(instanceUvTranslate_.x * texWidth, instanceUvTranslate_.y * texHeight) : Vector2::Zero();
+            if (ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_translate_pixel"), &pxTranslate.x, 0.5f) && hasTextureSize) {
+                instanceUvTranslate_ = Vector2(pxTranslate.x / texWidth, pxTranslate.y / texHeight);
+            }
+            Vector2 pxScale = hasTextureSize
+                ? Vector2(instanceUvScale_.x * texWidth, instanceUvScale_.y * texHeight) : Vector2::Zero();
+            if (ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_scale_pixel"), &pxScale.x, 0.5f) && hasTextureSize) {
+                instanceUvScale_ = Vector2(pxScale.x / texWidth, pxScale.y / texHeight);
+            }
+            Vector2 pxPivot = hasTextureSize
+                ? Vector2(instanceUvPivot_.x * texWidth, instanceUvPivot_.y * texHeight) : Vector2::Zero();
+            if (ImGui::DragFloat2(TranslationLabel("component.common.instance_uv_pivot_pixel"), &pxPivot.x, 0.5f) && hasTextureSize) {
+                instanceUvPivot_ = Vector2(pxPivot.x / texWidth, pxPivot.y / texHeight);
+            }
+            ImGui::EndDisabled();
+        }
+
         if (ImGui::DragInt(TranslationLabel("component.common.render_priority"), &renderPriority_)) {
             MarkDrawListDirty();
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.common.desc_render_priority"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_render_priority"));
         }
         if (ImGui::Checkbox(TranslationLabel("component.common.allow_instancing"), &allowInstancing_)) {
             MarkDrawListDirty();
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.common.desc_allow_instancing"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.common.desc_allow_instancing"));
+        }
+        if (ImGui::Checkbox(TranslationLabel("component.spriterenderer.pixel_snapping"), &pixelSnapping_)) {
+            MarkDrawListDirty();
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.spriterenderer.pixel_snapping_desc"));
+        }
+        if (pixelSnapping_) {
+            if (ImGui::DragFloat(TranslationLabel("component.spriterenderer.pixel_snap_outset"), &pixelSnapOutsetPixels_, 0.01f, 0.0f, 1.0f)) {
+                pixelSnapOutsetPixels_ = std::max(0.0f, pixelSnapOutsetPixels_);
+                MarkDrawListDirty();
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.spriterenderer.pixel_snap_outset_desc"));
+            }
         }
     }
 #endif
@@ -301,8 +438,15 @@ protected:
         json["pivot"] = ToJSON(pivot_);
         json["instanceColor"] = ToJSON(instanceColor_);
         json["instanceColorBlendMode"] = static_cast<int>(instanceColorBlendMode_);
+        json["instanceUvTranslate"] = ToJSON(instanceUvTranslate_);
+        json["instanceUvRotation"] = instanceUvRotation_;
+        json["instanceUvScale"] = ToJSON(instanceUvScale_);
+        json["instanceUvPivot"] = ToJSON(instanceUvPivot_);
+        json["instanceUvCombineMode"] = static_cast<int>(instanceUvCombineMode_);
         json["renderPriority"] = renderPriority_;
         json["allowInstancing"] = allowInstancing_;
+        json["pixelSnapping"] = pixelSnapping_;
+        json["pixelSnapOutsetPixels"] = pixelSnapOutsetPixels_;
         return json;
     }
 
@@ -323,8 +467,15 @@ protected:
         pivot_ = json.contains("pivot") ? FromJSON<Vector2>(json["pivot"]) : Vector2(0.5f, 0.5f);
         instanceColor_ = json.contains("instanceColor") ? FromJSON<Vector4>(json["instanceColor"]) : Vector4(1.0f, 1.0f, 1.0f, 1.0f);
         instanceColorBlendMode_ = static_cast<ColorBlendMode>(json.value("instanceColorBlendMode", static_cast<int>(ColorBlendMode::Multiply)));
+        instanceUvTranslate_ = json.contains("instanceUvTranslate") ? FromJSON<Vector2>(json["instanceUvTranslate"]) : Vector2(0.0f, 0.0f);
+        instanceUvRotation_ = json.value("instanceUvRotation", 0.0f);
+        instanceUvScale_ = json.contains("instanceUvScale") ? FromJSON<Vector2>(json["instanceUvScale"]) : Vector2(1.0f, 1.0f);
+        instanceUvPivot_ = json.contains("instanceUvPivot") ? FromJSON<Vector2>(json["instanceUvPivot"]) : Vector2(0.5f, 0.5f);
+        instanceUvCombineMode_ = static_cast<UVCombineMode>(json.value("instanceUvCombineMode", static_cast<int>(UVCombineMode::MaterialThenInstance)));
         renderPriority_ = json.value("renderPriority", 0);
         allowInstancing_ = json.value("allowInstancing", true);
+        pixelSnapping_ = json.value("pixelSnapping", false);
+        pixelSnapOutsetPixels_ = std::max(0.0f, json.value("pixelSnapOutsetPixels", 0.0f));
         // Undo/Redo等、登録済みのコンポーネントに対してもLoadFromJsonが呼ばれ得るため念のため通知する
         MarkDrawListDirty();
         return true;
@@ -364,10 +515,24 @@ private:
     /// @brief オブジェクト単位の色（共有マテリアルは変更せず、このスプライトだけに適用する）
     Vector4 instanceColor_{ 1.0f, 1.0f, 1.0f, 1.0f };
     ColorBlendMode instanceColorBlendMode_ = ColorBlendMode::Multiply;
+    /// @brief オブジェクト単位のUVオフセット（マテリアルのUV変換とinstanceUvCombineMode_で合成される。既定(0,0)）
+    Vector2 instanceUvTranslate_{ 0.0f, 0.0f };
+    /// @brief オブジェクト単位のUV回転（ラジアン。既定0）
+    float instanceUvRotation_ = 0.0f;
+    /// @brief オブジェクト単位のUVスケール（既定(1,1)）
+    Vector2 instanceUvScale_{ 1.0f, 1.0f };
+    /// @brief オブジェクト単位のUV回転の中心座標（UV基準。既定は中心(0.5, 0.5)）
+    Vector2 instanceUvPivot_{ 0.5f, 0.5f };
+    UVCombineMode instanceUvCombineMode_ = UVCombineMode::MaterialThenInstance;
     /// @brief 描画順を制御する優先度（既定0。SceneRenderer::CompareSortableEntry参照）
     int renderPriority_ = 0;
     /// @brief 他のオブジェクトとのインスタンシング（バッチ結合）を許可するか（既定true）
     bool allowInstancing_ = true;
+    /// @brief 適用先Camera2Dから見た位置を画面ピクセルへスナップするか（既定false）
+    bool pixelSnapping_ = false;
+    /// @brief ピクセルスナップ時、境界ピクセルの取りこぼし防止用にクアッドを外側へ広げる
+    ///        安全マージン（片側、ピクセル単位。既定0.0=無効。SetPixelSnapOutsetPixels参照）
+    float pixelSnapOutsetPixels_ = 0.0f;
 };
 
 REGISTER_COMPONENT_OBJECT(SpriteRenderer)

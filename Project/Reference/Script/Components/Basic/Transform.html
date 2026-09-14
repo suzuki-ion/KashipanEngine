@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transform | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_Transform">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Transform</h1>
+<p class="page-lead">オブジェクトの位置・回転・スケールを保持する基本コンポーネントです。</p>
+</div>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetTranslate(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetTranslate() const</code></td><td>座標の設定/取得</td></tr>
+<tr><td><code>void SetRotate(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetRotate() const</code></td><td>回転の設定/取得（オイラー角・ラジアン）</td></tr>
+<tr><td><code>void SetRotateQuaternion(const Quaternion &amp;in)</code> / <code>const Quaternion &amp;GetRotateQuaternion() const</code></td><td>回転の設定/取得（クォータニオン）</td></tr>
+<tr><td><code>void SetScale(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetScale() const</code></td><td>スケールの設定/取得</td></tr>
+<tr><td><code>const Matrix4x4 &amp;GetWorldMatrix()</code></td><td>ワールド行列を取得する（必要なら再計算される）</td></tr>
+<tr><td><code>Vector3 GetWorldPosition()</code></td><td>親を合成したワールド座標を取得する</td></tr>
+<tr><td><code>Vector3 GetWorldRotate() const</code></td><td>親を合成したワールド回転を取得する（オイラー角・ラジアン）</td></tr>
+<tr><td><code>Quaternion GetWorldRotateQuaternion() const</code></td><td>親を合成したワールド回転を取得する（クォータニオン）</td></tr>
+<tr><td><code>Vector3 GetWorldScale()</code></td><td>親を合成したワールドスケールを取得する</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="../../../Editor/Components/Basic/Transform.html">Editor/Components/Basic/Transform.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

@@ -19,6 +19,7 @@
 #include "Objects/Components/Transform.h"
 #include "Utilities/AssetDragDropPayload.h"
 #include "Utilities/FileIO/JSON.h"
+#include "Utilities/ImGuiCustom.h"
 
 namespace KashipanEngine {
 
@@ -36,6 +37,18 @@ bool IsDescendantOfAny(EmptyObject *obj, const std::unordered_set<EmptyObject *>
         parent = parentTransform ? parentTransform->GetParentObject() : nullptr;
     }
     return false;
+}
+
+JSON BuildPrefabInstanceComponentJson(const UUID128 &prefabID) {
+    return {
+        { "type", "PrefabInstanceComponent" },
+        { "data", {
+            { "isActive", true },
+            { "priority", 1 },
+            { "tag", "" },
+            { "customData", { { "prefabID", prefabID.ToString() } } }
+        } }
+    };
 }
 } // namespace
 
@@ -125,11 +138,15 @@ void SceneObjectHierarchy::ShowImGui() {
     // Prefab Override判定用のPrefab単位索引キャッシュも毎フレーム作り直す（Apply/Revert等で
     // 内容が変わり得るため、フレームをまたいで持ち越さない）
     prefabOverrideCache_.nodeIndexByPrefab.clear();
-    RebuildObjectItems();
 
     if (ImGui::Begin(TranslationLabel("editor.sceneobjecthierarchy.window"))) {
         DrawFloatingWindowChromeButtons();
         HandleKeyboardShortcuts();
+
+        // 検索ボックスの入力をこのフレームのRebuildObjectItems()（フィルタ適用）へ即座に反映させるため、
+        // ツリー構築より先に描画する（逆順だと入力に対してフィルタ結果が1フレーム遅れて反映されてしまう）
+        hierarchySearchFilter_.Draw(TranslationLabel("editor.sceneobjecthierarchy.search"), -1.0f);
+        RebuildObjectItems();
 
         if (EditorSettings::PersistentCollapsingHeader("Objects", "hierarchy.objects")) {
             size_t index = 0;
@@ -207,6 +224,25 @@ void SceneObjectHierarchy::RebuildObjectItems() {
     for (auto &item : objectItems_) {
         RecursivelyBuildObjectItems(item.object, item, 0);
     }
+
+    // 検索ボックスがアクティブな場合のみフィルタを適用する（非アクティブ時はデフォルトのvisibleInSearch=trueのまま）
+    if (hierarchySearchFilter_.IsActive()) {
+        for (auto &item : objectItems_) {
+            ApplySearchFilter(item);
+        }
+    }
+}
+
+bool SceneObjectHierarchy::ApplySearchFilter(ObjectItem &item) {
+    const bool selfMatches = hierarchySearchFilter_.PassFilter(item.name.c_str());
+    bool hasVisibleChild = false;
+    for (auto &child : item.children) {
+        if (ApplySearchFilter(child)) hasVisibleChild = true;
+    }
+    // 自身は非マッチでも、マッチした子孫を見せるために開く必要がある場合はforceOpenForSearchを立てる
+    item.forceOpenForSearch = hasVisibleChild;
+    item.visibleInSearch = selfMatches || hasVisibleChild;
+    return item.visibleInSearch;
 }
 
 void SceneObjectHierarchy::RecursivelyBuildObjectItems(EmptyObject *obj, ObjectItem &item, size_t depth) {
@@ -222,6 +258,11 @@ void SceneObjectHierarchy::RecursivelyBuildObjectItems(EmptyObject *obj, ObjectI
 }
 
 void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index) {
+    // 検索フィルタがアクティブで、自身も子孫もマッチしない場合はこの行（と部分木全体）を描画しない
+    if (hierarchySearchFilter_.IsActive() && !item.visibleInSearch) {
+        return;
+    }
+
     // このフレームの表示順を記録する（Shift範囲選択の範囲計算に使う）
     visibleOrderThisFrame_.push_back(item.object);
 
@@ -245,7 +286,8 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
     // シーンビュー等からの選択でスクロール対象の祖先にあたる場合、開閉状態（保存値）を書き換えず
     // このフレームだけ強制的に開く（ImGuiが以後もそのID分の開閉状態を覚えているため、
     // 一度開けば以後も自然に開いたままになる）
-    const bool forceOpen = forceOpenAncestors_.contains(item.object);
+    const bool forceOpen = forceOpenAncestors_.contains(item.object) ||
+        (hierarchySearchFilter_.IsActive() && item.forceOpenForSearch);
     if (!item.children.empty()) {
         settingsKey = "hierarchy.object." + item.object->GetObjectID().ToString();
         storedOpen = EditorSettings::GetBool(settingsKey, true);
@@ -287,7 +329,7 @@ void SceneObjectHierarchy::ShowObjectItem(const ObjectItem &item, size_t &index)
     }
     // Commentコンポーネントが付いている場合、カーソルを合わせた際にその内容をツールチップ表示する
     if (auto *comment = item.object->GetComponent<Comment>(); comment && !comment->GetComment().empty() && ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", comment->GetComment().c_str());
+        ImGuiCustom::SetTooltipWrapped("%s", comment->GetComment().c_str());
     }
     // forceOpenは一時的な表示上の強制展開のため、ユーザーが手動で折り畳んでいた保存済み設定は書き換えない
     if (!item.children.empty() && !forceOpen && isOpen != storedOpen) {
@@ -408,7 +450,7 @@ void SceneObjectHierarchy::ShowObjectContextMenu(EmptyObject *obj) {
             DeleteObjectKeepChildren(obj);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("editor.hierarchy.deletekeepchildren.tooltip"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("editor.hierarchy.deletekeepchildren.tooltip"));
         }
         if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.unparentallchildren"), nullptr, false, hasChildren)) {
             UnparentAllChildren(obj);
@@ -431,10 +473,11 @@ void SceneObjectHierarchy::ShowObjectContextMenu(EmptyObject *obj) {
 
 void SceneObjectHierarchy::ShowRevertPrefabConfirmModal() {
     if (isRevertPrefabConfirmRequested_) {
-        ImGui::OpenPopup(TranslationLabel("editor.prefab.revert.title"));
+        ImGui::OpenPopup((std::string(TranslationLabel("editor.prefab.revert.title")) + "##Hierarchy").c_str());
         isRevertPrefabConfirmRequested_ = false;
     }
-    if (ImGui::BeginPopupModal(TranslationLabel("editor.prefab.revert.title"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+    if (ImGui::BeginPopupModal((std::string(TranslationLabel("editor.prefab.revert.title")) + "##Hierarchy").c_str(), nullptr,
+        ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.3f, 1.0f), "%s",
             TranslationC("editor.prefab.revert.warning1"));
         ImGui::TextUnformatted(TranslationC("editor.prefab.revert.warning2"));
@@ -499,6 +542,9 @@ void SceneObjectHierarchy::ShowCreateObjectMenu(EmptyObject *referenceObject, bo
         }
         if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.textobject"))) {
             CreateTemplateObject("Text Object", { "TextRenderer" }, referenceObject, asChild);
+        }
+        if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.bitmaptextobject"))) {
+            CreateTemplateObject("Bitmap Text Object", { "BitmapTextRenderer" }, referenceObject, asChild);
         }
         if (ImGui::MenuItem(TranslationLabel("editor.hierarchy.create.camera2dobject"))) {
             CreateTemplateObject("Camera 2D Object", { "Camera2D", "CameraRenderer" }, referenceObject, asChild);
@@ -907,14 +953,14 @@ void SceneObjectHierarchy::CollectSubtreeNodes(EmptyObject *obj, int parentIndex
     PrefabUtility::CollectSubtreeNodes(editorContext_, obj, parentIndex, out);
 }
 
-void SceneObjectHierarchy::InstantiateNodes(const std::vector<PasteObjectCommand::Node> &nodes, const std::string &name,
+bool SceneObjectHierarchy::InstantiateNodes(const std::vector<PasteObjectCommand::Node> &nodes, const std::string &name,
     EmptyObject *attachParent, const Vector3 *worldPosition) {
-    if (nodes.empty() || !editorContext_) return;
+    if (nodes.empty() || !editorContext_) return false;
     auto prepared = PrepareNodesForInstantiation(nodes, /*preserveRootParent=*/false);
     if (worldPosition) {
         PrefabUtility::OffsetRootsToWorldPosition(prepared, *worldPosition);
     }
-    ExecutePasteCommand(std::make_unique<PasteObjectCommand>(
+    return ExecutePasteCommand(std::make_unique<PasteObjectCommand>(
         std::move(prepared), attachParent, MAXSIZE_T, name, "Instantiate Prefab"));
 }
 
@@ -930,34 +976,35 @@ bool SceneObjectHierarchy::InstantiatePrefabFile(const std::string &filePath, Em
         Log(Translation("engine.prefab.instantiate.nodes.empty") + filePath, LogSeverity::Warning);
         return false;
     }
-    const std::string prefabName = prefabJson.value("name",
-        std::filesystem::path(filePath).stem().string());
-    InstantiateNodes(nodes, prefabName, attachParent, worldPosition);
-
-    // 配置直後のルート（ExecutePasteCommandが選択状態にする）へPrefabInstanceComponentを付与し、
-    // 元Prefabとのリンクを持たせる（Prefabファイル自体にはリンク情報を含めない設計のため、
-    // 配置時にここで明示的に付与しないと同期対象にならない）
     const UUID128 prefabID = PrefabAssetManager::GetPrefabIDFromPath(filePath);
-    if (prefabID.IsValid()) {
-        for (auto *root : selectedObjects_) {
-            if (commands_) {
-                commands_->Execute(std::make_unique<AddComponentCommand>(root, "PrefabInstanceComponent"));
+    if (!prefabID.IsValid()) return false;
+    // リンクコンポーネントを配置JSONへ含め、配置本体と同じPasteObjectCommandでUndo/Redoする。
+    for (auto &node : nodes) {
+        if (node.parentIndexInSubtree >= 0) continue;
+        if (!node.json.contains("components") || !node.json["components"].is_array()) {
+            node.json["components"] = JSON::array();
+        }
+        auto &components = node.json["components"];
+        for (auto it = components.begin(); it != components.end();) {
+            if (it->value("type", std::string{}) == "PrefabInstanceComponent") {
+                it = components.erase(it);
             } else {
-                root->AddComponent(CreateObjectComponentByType("PrefabInstanceComponent"));
-            }
-            if (auto *comp = root->GetComponent<PrefabInstanceComponent>()) {
-                comp->SetPrefabID(prefabID);
+                ++it;
             }
         }
+        components.push_back(BuildPrefabInstanceComponentJson(prefabID));
     }
+    const std::string prefabName = prefabJson.value("name",
+        std::filesystem::path(filePath).stem().string());
+    if (!InstantiateNodes(nodes, prefabName, attachParent, worldPosition)) return false;
     return true;
 }
 
-void SceneObjectHierarchy::ExecutePasteCommand(std::unique_ptr<PasteObjectCommand> command) {
-    if (!command || !editorContext_) return;
+bool SceneObjectHierarchy::ExecutePasteCommand(std::unique_ptr<PasteObjectCommand> command) {
+    if (!command || !editorContext_) return false;
     PasteObjectCommand *rawCommand = command.get();
     const bool succeeded = commands_ ? commands_->Execute(std::move(command)) : rawCommand->Execute(editorContext_);
-    if (!succeeded) return;
+    if (!succeeded) return false;
 
     auto newRoots = rawCommand->GetRootObjects(editorContext_);
     if (!newRoots.empty()) {
@@ -966,6 +1013,7 @@ void SceneObjectHierarchy::ExecutePasteCommand(std::unique_ptr<PasteObjectComman
         SetSelectedObject(newRoots.back());
         SetSelectionAnchor(newRoots.back());
     }
+    return true;
 }
 
 void SceneObjectHierarchy::ApplyPendingRangeSelect() {

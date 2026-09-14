@@ -140,7 +140,7 @@ protected:
     void ShowImGui() override {
         TargetObjectSelector::ShowSelector("Target", GetOwnerSceneContext(), targetObjectID_, true, false);
         if (!targetObjectID_.IsValid()) {
-            ImGui::TextDisabled("%s", TranslationC("component.targetlookat.no_target_rotation_is_not_controlled"));
+            ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.targetlookat.no_target_rotation_is_not_controlled"));
         }
 
         const char *kModeLabels[] = { TranslationC("component.common.mode.synctargetrotation"), TranslationC("component.common.mode.lookattarget") };
@@ -149,7 +149,7 @@ protected:
             rotationMode_ = static_cast<RotationMode>(mode);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.targetlookat.desc_1"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.targetlookat.desc_1"));
         }
 
         Vector3 rotationOffsetDeg(ToDegrees(rotationOffset_.x), ToDegrees(rotationOffset_.y), ToDegrees(rotationOffset_.z));
@@ -159,7 +159,7 @@ protected:
 
         ImGui::DragFloat(TranslationLabel("component.targetlookat.follow_strength"), &followStrength_, 0.01f, 0.0f, 1.0f);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", "目標の回転へ追従する速さ（1フレーム(60fps換算)あたりに近づく割合）\n1.0で即座に追従、小さくするほど遅れて滑らかに追従する");
+            ImGuiCustom::SetTooltipWrapped("%s", "目標の回転へ追従する速さ（1フレーム(60fps換算)あたりに近づく割合）\n1.0で即座に追従、小さくするほど遅れて滑らかに追従する");
         }
     }
 #endif

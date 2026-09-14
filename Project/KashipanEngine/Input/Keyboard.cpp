@@ -7,6 +7,7 @@
 #include <vector>
 
 #pragma comment(lib, "gameinput.lib")
+#pragma comment(lib, "delayimp.lib")
 
 namespace KashipanEngine {
 namespace {
@@ -73,10 +74,11 @@ Keyboard::~Keyboard() {
 
 void Keyboard::Initialize() {
     if (!sGameInput) {
-        const HRESULT hr = GameInputCreate(&sGameInput);
-        if (FAILED(hr)) {
-            assert(false);
-            return;
+        // GameInput Runtimeが未導入でもexe自体は起動できるよう、呼び出し前に確認する。
+        // 利用できない場合はUpdate()でWin32入力へフォールバックする。
+        if (GetModuleHandleW(L"GameInput.dll") || LoadLibraryW(L"GameInput.dll")) {
+            const HRESULT hr = GameInputCreate(&sGameInput);
+            if (FAILED(hr)) sGameInput = nullptr;
         }
     }
 
@@ -99,7 +101,23 @@ void Keyboard::Update() {
     previous = current;
     current.fill(0);
 
-    if (!initialized_ || !sGameInput) {
+    if (!initialized_) {
+        return;
+    }
+
+    if (!sGameInput) {
+        for (int virtualKey = 0; virtualKey < 256; ++virtualKey) {
+            if ((GetAsyncKeyState(virtualKey) & 0x8000) == 0) continue;
+            const Key key = FromVirtualKey(static_cast<std::uint8_t>(virtualKey));
+            if (key == Key::Unknown) continue;
+            current[ToIndex_(key)] = 0x80;
+        }
+        current[ToIndex_(Key::Shift)] =
+            (current[ToIndex_(Key::LeftShift)] || current[ToIndex_(Key::RightShift)]) ? 0x80 : current[ToIndex_(Key::Shift)];
+        current[ToIndex_(Key::Control)] =
+            (current[ToIndex_(Key::LeftControl)] || current[ToIndex_(Key::RightControl)]) ? 0x80 : current[ToIndex_(Key::Control)];
+        current[ToIndex_(Key::Alt)] =
+            (current[ToIndex_(Key::LeftAlt)] || current[ToIndex_(Key::RightAlt)]) ? 0x80 : current[ToIndex_(Key::Alt)];
         return;
     }
 

@@ -24,6 +24,7 @@
 		"engine.window.create.overlay.start": "オーバーレイウィンドウ作成開始。ウィンドウタイトル：",
 		"engine.window.create.overlay.end": "オーバーレイウィンドウ作成完了。ウィンドウタイトル：",
 		"engine.window.create.overlay.failed": "オーバーレイウィンドウの作成に失敗しました。",
+		"engine.window.seticon.failed": "ウィンドウアイコンの読み込みに失敗しました：",
 		"engine.window.destroy.start": "ウィンドウ破棄開始。ウィンドウタイトル：",
 		"engine.window.destroy.end": "ウィンドウ破棄完了。ウィンドウタイトル：",
 		"engine.window.destroy.failed": "ウィンドウの破棄に失敗しました。",
@@ -77,6 +78,8 @@
 		"engine.directx.commands.commandqueue.initialize.start": "コマンドキュー初期化開始",
 		"engine.directx.commands.commandqueue.initialize.end": "コマンドキュー初期化完了",
 		"engine.directx.commands.commandqueue.initialize.failed": "コマンドキューの初期化に失敗しました。",
+		// コマンドオブジェクトプール（ScreenBuffer/ShadowMapBuffer/スワップチェーン等が共有）
+		"engine.directx.commandobjects.no.free.slot": "コマンドオブジェクトの確保に失敗しました。利用可能なスロットがありません。プールサイズ：",
 		// コマンドアロケータ
 		"engine.directx.swapchain.commandallocator.initialize.start": "コマンドアロケータ初期化開始",
 		"engine.directx.swapchain.commandallocator.initialize.end": "コマンドアロケータ初期化完了",
@@ -720,6 +723,7 @@
 		"component.audiosource.auto_pan_muffle_spatial_audio": "自動パン／こもり（空間オーディオ）",
 		"component.audiosource.band_d": "バンド %d",
 		"component.audiosource.bandwidth": "帯域幅",
+		"component.audiosource.category": "音量バスのカテゴリ",
 		"component.audiosource.delay_ms": "ディレイ（ms）",
 		"component.audiosource.echo": "エコー",
 		"component.audiosource.effects": "エフェクト",
@@ -794,6 +798,8 @@
 		"component.camera2d.far": "ファークリップ",
 		"component.camera2d.height": "高さ",
 		"component.camera2d.near": "ニアクリップ",
+		"component.camera2d.pixel_snapping": "ピクセルスナップ",
+		"component.camera2d.pixel_snapping_desc": "このカメラを基準に、Pixel Snappingが有効なSpriteRendererの相対位置を描画先のピクセル格子へ揃える。カメラ自身のTransformは丸めないため、スムーズ追従中もカメラとオブジェクトの相対位置を安定させられる。",
 		"component.camera2d.width": "幅",
 
 		//--------- component.camera3d ---------//
@@ -808,8 +814,39 @@
 		"component.camera3d.orthographic": "平行投影",
 		"component.camera3d.orthosize": "平行投影サイズ",
 
+		//--------- component.cameraboundszone2d ---------//
+		"component.cameraboundszone2d.add_group": "グループを追加",
+		"component.cameraboundszone2d.add_rect": "矩形を追加",
+		"component.cameraboundszone2d.description": "CameraController2Dの移動範囲制限（Camera Bounds Zone）で使うグループ・矩形の定義です。",
+		"component.cameraboundszone2d.group": "グループ",
+		"component.cameraboundszone2d.rect": "矩形",
+		"component.cameraboundszone2d.rect_max": "最大座標",
+		"component.cameraboundszone2d.rect_min": "最小座標",
+		"component.cameraboundszone2d.remove_group": "グループを削除",
+		"component.cameraboundszone2d.remove_rect": "矩形を削除",
+
+		//--------- component.cameraboundszone3d ---------//
+		"component.cameraboundszone3d.add_group": "グループを追加",
+		"component.cameraboundszone3d.add_rect": "矩形を追加",
+		"component.cameraboundszone3d.description": "CameraControllerの移動範囲制限（Camera Bounds Zone）で使うグループ・矩形の定義です。",
+		"component.cameraboundszone3d.group": "グループ",
+		"component.cameraboundszone3d.rect": "矩形",
+		"component.cameraboundszone3d.rect_max": "最大座標",
+		"component.cameraboundszone3d.rect_min": "最小座標",
+		"component.cameraboundszone3d.remove_group": "グループを削除",
+		"component.cameraboundszone3d.remove_rect": "矩形を削除",
+
 		//--------- component.cameracontroller ---------//
 		"component.cameracontroller.add_follow_target": "追従ターゲットを追加",
+		"component.cameracontroller.bounds_clamp": "移動範囲制限",
+		"component.cameracontroller.bounds_clamp_enable": "移動範囲を制限する",
+		"component.cameracontroller.bounds_clamp_mode_position": "座標基準",
+		"component.cameracontroller.bounds_clamp_mode_viewarea": "表示範囲基準",
+		"component.cameracontroller.bounds_clamp_view_depth": "表示範囲基準の奥行",
+		"component.cameracontroller.bounds_transition_duration": "遷移時間",
+		"component.cameracontroller.bounds_transition_duration.tooltip": "アクティブなグループが切り替わった際、クランプ位置の不連続な変化をこの秒数かけて滑らかに遷移させる（0以下は即座に切り替え）",
+		"component.cameracontroller.bounds_transition_ease": "遷移のイージング",
+		"component.cameracontroller.bounds_zone_object": "境界ゾーン",
 		"component.cameracontroller.follow_position": "位置を追従",
 		"component.cameracontroller.follow_rotation": "回転を追従",
 		"component.cameracontroller.follow_targets": "追従ターゲット",
@@ -828,8 +865,34 @@
 		"component.cameracontroller.rotation_offset": "回転オフセット",
 		"component.cameracontroller.target_fovy": "目標の垂直画角",
 
+		//--------- component.cameracontroller2d ---------//
+		"component.cameracontroller2d.add_follow_target": "追従ターゲットを追加",
+		"component.cameracontroller2d.bounds_clamp": "移動範囲制限",
+		"component.cameracontroller2d.bounds_clamp_enable": "移動範囲を制限する",
+		"component.cameracontroller2d.bounds_clamp_mode_position": "座標基準",
+		"component.cameracontroller2d.bounds_clamp_mode_viewarea": "表示範囲基準",
+		"component.cameracontroller2d.bounds_transition_duration": "遷移時間",
+		"component.cameracontroller2d.bounds_transition_duration.tooltip": "アクティブなグループが切り替わった際、クランプ位置の不連続な変化をこの秒数かけて滑らかに遷移させる（0以下は即座に切り替え）",
+		"component.cameracontroller2d.bounds_transition_ease": "遷移のイージング",
+		"component.cameracontroller2d.bounds_zone_object": "境界ゾーン",
+		"component.cameracontroller2d.follow_position": "位置を追従",
+		"component.cameracontroller2d.follow_rotation": "回転を追従",
+		"component.cameracontroller2d.follow_targets": "追従ターゲット",
+		"component.cameracontroller2d.move_all": "移動をまとめて設定",
+		"component.cameracontroller2d.move_follow_strength": "移動の追従の強さ",
+		"component.cameracontroller2d.move_per_axis": "移動：軸ごと",
+		"component.cameracontroller2d.move_x_y": "移動 X/Y",
+		"component.cameracontroller2d.no_target_following_own_transform": "(ターゲット未設定：自身のTransformに追従します)",
+		"component.cameracontroller2d.position_offset": "位置オフセット",
+		"component.cameracontroller2d.remove_target": "ターゲットを削除",
+		"component.cameracontroller2d.rotate_follow_strength": "回転の追従の強さ",
+		"component.cameracontroller2d.rotation_offset": "回転オフセット",
+		"component.cameracontroller2d.size_transition_strength": "サイズの追従の強さ",
+		"component.cameracontroller2d.target_size": "目標のサイズ（幅/高さ）",
+
 		//--------- component.camerarenderer ---------//
 		"component.camerarenderer.pipeline": "パイプライン",
+		"component.camerarenderer.warning_no_camera_component": "警告：Camera2D/Camera3Dが付与されていないため、バインド変数名がgCamera3D扱いになっています",
 
 		//--------- component.capsule2dcollider ---------//
 		"component.capsule2dcollider.end": "終了",
@@ -853,6 +916,7 @@
 		"component.coloradjusteffect.brightness": "明るさ",
 		"component.coloradjusteffect.colorbalance": "カラーバランス",
 		"component.coloradjusteffect.contrast": "コントラスト",
+		"component.coloradjusteffect.posterize_levels": "減色レベル",
 		"component.coloradjusteffect.saturation": "彩度",
 		"component.coloradjusteffect.temperature": "色温度",
 
@@ -866,11 +930,26 @@
 		"component.common.blendmode.override": "置き換え",
 		"component.common.blendmode.subtract": "減算",
 		"component.common.desc_allow_instancing": "無効にすると、同じメッシュ/マテリアル/パイプラインを共有する他のオブジェクトが\nあっても常に単独のドローコールで描画される（既定は有効）",
+		"component.common.desc_instance_uv": "オブジェクト単位のUV変換。共有マテリアルは変更せず、このオブジェクトだけに適用する。\nマテリアルのUV変換とはUV合成方法に従って合成される（既定値のままなら無効化と同義）",
+		"component.common.desc_instance_uv_pivot": "インスタンスUV回転の中心座標。スケールは常にUV原点(0,0)基準のまま、回転のみこの座標を中心に行われる",
 		"component.common.desc_render_priority": "描画順を制御する優先度。値が小さいほど先（奥）、大きいほど後（手前）に描画される\n（既定0。パイプラインの描画優先度より後、メッシュ/マテリアルによる並びより前に評価される）",
+		"component.common.instance_uv_combine_mode": "UV合成方法",
+		"component.common.instance_uv_pivot": "インスタンスUV回転の中心",
+		"component.common.instance_uv_pivot_pixel": "インスタンスUV回転の中心（px）",
+		"component.common.instance_uv_rotation": "インスタンスUV回転（度）",
+		"component.common.instance_uv_scale": "インスタンスUVスケール",
+		"component.common.instance_uv_scale_pixel": "インスタンスUVスケール（px）",
+		"component.common.instance_uv_transform": "インスタンスUV変換（オブジェクト単位）",
+		"component.common.instance_uv_transform_pixel": "インスタンスUV変換（テクスチャのピクセル基準。テクスチャ未設定時は編集不可）",
+		"component.common.instance_uv_translate": "インスタンスUV座標",
+		"component.common.instance_uv_translate_pixel": "インスタンスUV座標（px）",
 		"component.common.mode.lookattarget": "ターゲットの方を向く",
 		"component.common.mode.synctargetrotation": "ターゲットの回転と同期",
 		"component.common.render_priority": "描画優先度",
 		"component.common.target": "ターゲット",
+		"component.common.uvcombinemode.instance_only": "インスタンスのみ（マテリアルのUV変換を無視）",
+		"component.common.uvcombinemode.instance_then_material": "インスタンス基準（インスタンス→マテリアルの順）",
+		"component.common.uvcombinemode.material_then_instance": "マテリアル基準（マテリアル→インスタンスの順、既定）",
 
 		//--------- component.computeshaderprocessing ---------//
 		"component.computeshaderprocessing.add_constant_buffer_bind": "定数バッファのバインドを追加",
@@ -912,6 +991,8 @@
 		//--------- component.dithereffect ---------//
 		"component.dithereffect.color": "色",
 		"component.dithereffect.intensity": "強度",
+		"component.dithereffect.pattern_width": "パターン解像度の幅 (0: 自動)",
+		"component.dithereffect.pattern_height": "パターン解像度の高さ (0: 自動)",
 
 		//--------- component.dotmatrixeffect ---------//
 		"component.dotmatrixeffect.dot_radius": "ドット半径",
@@ -953,6 +1034,7 @@
 		"component.inputcommandapplier.add_command": "コマンドを追加",
 		"component.inputcommandapplier.applied_3f": "適用値：%.3f",
 		"component.inputcommandapplier.command_name": "コマンド名",
+		"component.inputcommandapplier.command_notfound": "選択中のコマンドはInputCommandに登録されていません。",
 		"component.inputcommandapplier.condition": "条件",
 		"component.inputcommandapplier.delete_command": "コマンドを削除",
 		"component.inputcommandapplier.fixed_value": "固定値",
@@ -1070,6 +1152,7 @@
 
 		//--------- component.normalwindowobject ---------//
 		"component.normalwindowobject.height": "高さ",
+		"component.normalwindowobject.icon": "アイコン",
 		"component.normalwindowobject.respawn_window": "ウィンドウを再生成",
 		"component.normalwindowobject.sync_with_transform": "Transformと同期",
 		"component.normalwindowobject.title": "タイトル",
@@ -1082,6 +1165,7 @@
 
 		//--------- component.overlaywindowobject ---------//
 		"component.overlaywindowobject.height": "高さ",
+		"component.overlaywindowobject.icon": "アイコン",
 		"component.overlaywindowobject.sync_with_transform": "Transformと同期",
 		"component.overlaywindowobject.title": "タイトル",
 		"component.overlaywindowobject.width": "幅",
@@ -1191,7 +1275,9 @@
 		//--------- component.rigidbody2d ---------//
 		"component.rigidbody2d.any": "(すべて)",
 		"component.rigidbody2d.collider_shape": "コライダー形状",
+		"component.rigidbody2d.friction": "摩擦係数",
 		"component.rigidbody2d.mass": "質量",
+		"component.rigidbody2d.restitution": "反発係数",
 		"component.rigidbody2d.usegravity": "重力を使用",
 		"component.rigidbody2d.velocity": "速度",
 
@@ -1219,6 +1305,21 @@
 		"component.scenevariableapplier.variable_name": "変数名",
 		"component.scenevariableapplier.variable_notfound": "変数 \"%s\" が見つかりません",
 
+		//--------- component.sceneviewcamerasettings ---------//
+		"component.sceneviewcamerasettings.camera2d": "2Dカメラ",
+		"component.sceneviewcamerasettings.camera3d": "3Dカメラ",
+		"component.sceneviewcamerasettings.cameradistance2d": "カメラ距離（Z軸）",
+		"component.sceneviewcamerasettings.desc": "シーンビューカメラの現在値を表示・編集します（実体はエディター側のSceneEditorViewが保持しています）。",
+		"component.sceneviewcamerasettings.distance": "注視点までの距離",
+		"component.sceneviewcamerasettings.eye": "カメラ位置",
+		"component.sceneviewcamerasettings.flymode": "フライモード",
+		"component.sceneviewcamerasettings.flyspeed": "移動速度",
+		"component.sceneviewcamerasettings.pan2d": "パン位置",
+		"component.sceneviewcamerasettings.pitch": "ピッチ角（度）",
+		"component.sceneviewcamerasettings.target": "注視点",
+		"component.sceneviewcamerasettings.yaw": "ヨー角（度）",
+		"component.sceneviewcamerasettings.zoom2d": "ズーム",
+
 		//--------- component.scenevieworbitstate ---------//
 		"component.scenevieworbitstate.distance": "注視点までの距離",
 
@@ -1234,6 +1335,7 @@
 		"component.screenbufferobject.format": "フォーマット",
 		"component.screenbufferobject.height": "高さ",
 		"component.screenbufferobject.name": "名前",
+		"component.screenbufferobject.render_order_priority": "描画順優先度",
 		"component.screenbufferobject.save_screenshot": "スクリーンショットを保存",
 		"component.screenbufferobject.save_to_file": "ファイルへ保存",
 		"component.screenbufferobject.size_ux_u": "サイズ：%u×%u",
@@ -1282,7 +1384,12 @@
 		"component.shake.applytarget.transform": "Transformへ適用",
 		"component.shake.auto_play": "自動再生",
 		"component.shake.duration_0_infinite": "継続時間（0=無限）",
+		"component.shake.envelope_section": "振れ幅・速さの時間変化",
 		"component.shake.play": "再生",
+		"component.shake.position_envelope_amplitude_end": "振れ幅 終了倍率",
+		"component.shake.position_envelope_amplitude_start": "振れ幅 開始倍率",
+		"component.shake.position_envelope_speed_end": "速さ 終了倍率",
+		"component.shake.position_envelope_speed_start": "速さ 開始倍率",
 		"component.shake.playing": "再生中",
 		"component.shake.pos_x": "位置 X",
 		"component.shake.pos_y": "位置 Y",
@@ -1295,6 +1402,10 @@
 		"component.shake.rot_y": "回転 Y",
 		"component.shake.rot_z": "回転 Z",
 		"component.shake.rotation_amplitude_deg": "回転の振れ幅（度）",
+		"component.shake.rotation_envelope_amplitude_end": "振れ幅 終了倍率",
+		"component.shake.rotation_envelope_amplitude_start": "振れ幅 開始倍率",
+		"component.shake.rotation_envelope_speed_end": "速さ 終了倍率",
+		"component.shake.rotation_envelope_speed_start": "速さ 開始倍率",
 		"component.shake.rotation_shake": "回転のシェイク",
 		"component.shake.rotation_speed": "回転速度",
 		"component.shake.stop": "停止",
@@ -1329,6 +1440,10 @@
 		"component.spriterenderer.material": "マテリアル",
 		"component.spriterenderer.pipeline": "パイプライン",
 		"component.spriterenderer.pivot": "ピボット",
+		"component.spriterenderer.pixel_snapping": "ピクセルスナップ",
+		"component.spriterenderer.pixel_snapping_desc": "Camera2D側のPixel Snappingも有効な場合、このオブジェクトのカメラ相対位置を描画先のピクセル格子へ揃える。両者が同じ量だけサブピクセル移動したときの相対的な揺れを防げる。対応カメラが無い場合はワールド座標を整数単位へ丸める。",
+		"component.spriterenderer.pixel_snap_outset": "ピクセルスナップの外側マージン",
+		"component.spriterenderer.pixel_snap_outset_desc": "0より大きい値を設定すると、境界ピクセルの取りこぼしを防ぐためクアッドを片側にこの値(px)だけ外側へ広げる。往復する行列変換のごく僅かな誤差でラスタライズ境界のピクセルが丸ごと欠落する事故を防ぐ安全マージン。テクスチャ全体を1枚のスプライトとして使う場合は無害だが、アトラス/タイルマップの一部を切り出している場合はサンプラーの種類に関わらず隣接タイルが縁に漏れる可能性があるため、アトラスにタイル間の余白があるか確認するか、値を小さく保って見た目を確認すること。既定0.0=無効。",
 
 		//--------- component.targetlookat ---------//
 		"component.targetlookat.desc_1": "Sync Target Rotation: ターゲットのワールド回転と同期する（ビルボード向け）\nLook At Target: 自身の+Z軸が常にターゲットの方向を向く",
@@ -1375,6 +1490,64 @@
 		"component.textrenderer.valign.top": "上揃え",
 		"component.textrenderer.vertical_align": "垂直方向の揃え",
 
+		//--------- component.bitmaptextrenderer ---------//
+		"component.bitmaptextrenderer.character_overrides": "文字ごとの上書き",
+		"component.bitmaptextrenderer.font": "フォント",
+		"component.bitmaptextrenderer.font_size": "フォントサイズ",
+		"component.bitmaptextrenderer.instance_color": "インスタンスカラー",
+		"component.bitmaptextrenderer.instance_color_blend_mode": "インスタンスカラーの合成方法",
+		"component.bitmaptextrenderer.material": "マテリアル",
+		"component.bitmaptextrenderer.pipeline": "パイプライン",
+		"component.bitmaptextrenderer.point_sampling": "ポイントサンプリング",
+		"component.bitmaptextrenderer.pixel_snapping": "ピクセルスナップ",
+		"component.bitmaptextrenderer.pixel_snapping_desc": "Camera2D側のPixel Snappingも有効な場合、この文字のカメラ相対位置を描画先のピクセル格子へ揃える。ドット絵フォント（Point Sampling有効）を原寸大でクッキリ表示したい場合に使う。",
+		"component.bitmaptextrenderer.pixel_snap_outset": "ピクセルスナップの外側マージン",
+		"component.bitmaptextrenderer.pixel_snap_outset_desc": "0より大きい値を設定すると、境界ピクセルの取りこぼしを防ぐため文字のクアッドを片側にこの値(px)だけ外側へ広げる。往復する行列変換のごく僅かな誤差でラスタライズ境界のピクセルが丸ごと欠落する事故を防ぐ安全マージン。文字は必ずフォントアトラス内のサブ矩形を切り出して描画するため、サンプラーの種類に関わらず隣接文字の領域が縁に漏れる可能性がある。フォントアトラス生成時にグリフ間へ余白があるか確認するか、値を小さく保って見た目を確認すること。既定0.0=無効。",
+		"component.bitmaptextrenderer.text": "テキスト",
+
+		//--------- component.texturesource ---------//
+		"component.texturesource.texture": "テクスチャ",
+
+		//--------- component.tilemaprenderer ---------//
+		"component.tilemaprenderer.add_connection": "接続先を追加",
+		"component.tilemaprenderer.add_tile_type": "タイル種類を追加",
+		"component.tilemaprenderer.apply_cells_from_text": "テキストからセルへ反映",
+		"component.tilemaprenderer.cells_bulk_edit": "セル一括編集（行=Y、カンマ区切り=X、-1=空）",
+		"component.tilemaprenderer.connections": "接続先タイル種類（番号。片方向）",
+		"component.tilemaprenderer.desc_1": "隣接セルのタイル種類インデックスが自分の接続先リストに含まれていれば繋がっていると判定されます（片方向）。相互に繋げたい場合は双方の接続先リストへ互いの番号を追加してください。タイルセット画像のレイアウトは下記のオートタイルモードにより異なります。",
+		"component.tilemaprenderer.desc_eight_dir_layout": "孤立タイル・十字路タイルの位置（タイル単位）のみ調整できます。それ以外の角の合成パターンはタイルセット画像の2x2ブロック（孤立・十字路タイルの2行下、同じ2列）から自動的に選ばれます。",
+		"component.tilemaprenderer.desc_generate_colliders": "隣接するSolidなセルを貪欲法で矩形へまとめてBox2DColliderを自動生成します。オフにすると自動生成分は全て削除されます。",
+		"component.tilemaprenderer.desc_mode": "4方向: タイルセット画像は4x4=16パターンのブロック。8方向: 1タイルを4つの角に分割し、各角ごとに周囲の接続状況から2x2ブロックの対応するマスを自動選択して合成する（下の「8方向レイアウト」参照）。",
+		"component.tilemaprenderer.eight_dir_layout": "8方向レイアウト（詳細設定）",
+		"component.tilemaprenderer.generate_colliders": "2D当たり判定を自動生成",
+		"component.tilemaprenderer.grid_height": "グリッド高さ",
+		"component.tilemaprenderer.grid_width": "グリッド幅",
+		"component.tilemaprenderer.layout_cross": "十字路タイル（タイル単位）",
+		"component.tilemaprenderer.layout_isolated": "孤立タイル（タイル単位）",
+		"component.tilemaprenderer.load_cells_to_text": "セルをテキストへ読み込み",
+		"component.tilemaprenderer.material": "マテリアル",
+		"component.tilemaprenderer.mode_4dir": "4方向",
+		"component.tilemaprenderer.mode_8dir": "8方向（4分割合成）",
+		"component.tilemaprenderer.pipeline": "パイプライン",
+		"component.tilemaprenderer.remove_connection": "削除",
+		"component.tilemaprenderer.remove_tile_type": "このタイル種類を削除",
+		"component.tilemaprenderer.solid": "Solid（当たり判定あり）",
+		"component.tilemaprenderer.tile_pixel_size": "タイル1つのピクセルサイズ",
+		"component.tilemaprenderer.tile_size": "タイル1つのワールドサイズ",
+		"component.tilemaprenderer.tile_type_header": "タイル種類 ",
+		"component.tilemaprenderer.tile_types": "タイル種類",
+		"component.tilemaprenderer.tileset_origin_px": "タイルセット上の原点(px)",
+
+		//--------- component.transformsync ---------//
+		"component.transformsync.desc_1": "ターゲットのワールド座標・回転・スケールに、それぞれのオフセットを加えた値を自身のTransformへ毎フレーム反映します（親子付けはしません）。",
+		"component.transformsync.no_target": "(ターゲット未設定：同期は行われません)",
+		"component.transformsync.position_offset": "位置オフセット",
+		"component.transformsync.rotation_offset": "回転オフセット",
+		"component.transformsync.scale_offset": "スケールオフセット",
+		"component.transformsync.sync_position": "位置を同期",
+		"component.transformsync.sync_rotation": "回転を同期",
+		"component.transformsync.sync_scale": "スケールを同期",
+
 		//--------- component.uibutton ---------//
 		"component.uibutton.desc": "見た目の描画は行いません。同オブジェクトにSpriteRendererがあればそのスプライトの矩形を、無くTextRendererがあればそのテキストの外接矩形（表示中の文字列に応じて動的に変わる）をそのまま当たり判定に使います。",
 		"component.uibutton.display_camera": "表示カメラ",
@@ -1389,6 +1562,20 @@
 		"component.vignetteeffect.inner_radius": "内側の半径",
 		"component.vignetteeffect.intensity": "強度",
 		"component.vignetteeffect.smoothness": "なめらかさ",
+
+		//--------- component.barreldistortioneffect ---------//
+		"component.barreldistortioneffect.strength": "強さ",
+		"component.barreldistortioneffect.zoom": "ズーム",
+		"component.barreldistortioneffect.edge_color": "端の色",
+
+		//--------- component.palettequantizeeffect ---------//
+		"component.palettequantizeeffect.intensity": "強度",
+		"component.palettequantizeeffect.dither_amount": "ディザ量",
+
+		//--------- component.scanlineeffect ---------//
+		"component.scanlineeffect.intensity": "強度",
+		"component.scanlineeffect.line_spacing": "走査線の間隔",
+		"component.scanlineeffect.thickness": "太さ",
 
 		//--------- editor.assets ---------//
 		"editor.assets.createfile.alreadyexists": "同じ名前のファイルが既に存在します。",
@@ -1460,6 +1647,12 @@
 
 		//--------- editor.audiomanager ---------//
 		"editor.audiomanager.active_plays_d": "再生中の音声数：%d",
+		"editor.audiomanager.categories.add": "追加",
+		"editor.audiomanager.categories.default_volume": "既定音量",
+		"editor.audiomanager.categories.desc": "音量バスのカテゴリ一覧。ここで定義した名前をAudioSourceのカテゴリに割り当てると、設定画面等からのマスター/カテゴリ音量変更がそのAudioSourceに反映されるようになる",
+		"editor.audiomanager.categories.master_volume": "マスター音量",
+		"editor.audiomanager.categories.remove": "削除",
+		"editor.audiomanager.categories.window": "音量バスのカテゴリ",
 		"editor.audiomanager.ended": "終了",
 		"editor.audiomanager.loaded.window": "読み込み済みサウンド",
 		"editor.audiomanager.loaded_sounds_d": "読み込み済みサウンド数：%d",
@@ -1541,6 +1734,9 @@
 		"editor.fontmanager.u_x_u": "%u × %u",
 		"editor.fontmanager.window": "読み込み済みフォント",
 
+		//--------- editor.bitmapfontmanager ---------//
+		"editor.bitmapfontmanager.window": "読み込み済みビットマップフォント",
+
 		//--------- editor.gameengine ---------//
 		"editor.gameengine.averages_zu_samples": "平均（%zu サンプル）",
 		"editor.gameengine.avg_draw_3f_ms": "平均描画時間：%.3f ms",
@@ -1555,6 +1751,9 @@
 
 		//--------- editor.globalscenevariables ---------//
 		"editor.globalscenevariables.window": "グローバルシーン変数",
+		"editor.globalscenevariables.clear_all": "全て削除",
+		"editor.globalscenevariables.clear_all_confirm_title": "グローバルシーン変数の全削除",
+		"editor.globalscenevariables.clear_all_confirm_message": "グローバルシーン変数を全て削除します。この操作は元に戻せません。よろしいですか？",
 
 		//--------- editor.hierarchy ---------//
 		"editor.hierarchy.clone": "オブジェクトを複製",
@@ -1578,6 +1777,7 @@
 		"editor.hierarchy.create.skinnedmeshobject": "スキンメッシュオブジェクト",
 		"editor.hierarchy.create.spriteobject": "スプライトオブジェクト",
 		"editor.hierarchy.create.textobject": "テキストオブジェクト",
+		"editor.hierarchy.create.bitmaptextobject": "ビットマップテキストオブジェクト",
 		"editor.hierarchy.create.uibuttonobject": "UIボタンオブジェクト",
 		"editor.hierarchy.create.windowobject": "ウィンドウオブジェクト",
 		"editor.hierarchy.createchildobject": "子オブジェクトを作成",
@@ -1671,6 +1871,7 @@
 		"editor.materialmanager.add_missing_parameters": "未追加パラメータを一括追加",
 		"editor.materialmanager.color": "色",
 		"editor.materialmanager.custom_parameters": "カスタムパラメータ（シェーダー固有）",
+		"editor.materialmanager.desc_uv_pivot": "UV回転の中心座標。スケールは常にUV原点(0,0)基準のまま、回転のみこの座標を中心に行われる",
 		"editor.materialmanager.enable_lighting": "ライティングを有効化",
 		"editor.materialmanager.enable_shadowmap_projection": "シャドウマップ投影を有効化",
 		"editor.materialmanager.environment": "環境マップ",
@@ -1685,12 +1886,21 @@
 		"editor.materialmanager.rim_color": "リムライトの色",
 		"editor.materialmanager.rim_intensity": "リムライトの強さ",
 		"editor.materialmanager.rim_power": "リムライトの鋭さ",
+		"editor.materialmanager.sampler": "サンプラー",
 		"editor.materialmanager.save": "保存",
 		"editor.materialmanager.save_all": "すべて保存",
 		"editor.materialmanager.shininess": "光沢",
 		"editor.materialmanager.specular_color": "スペキュラの色",
 		"editor.materialmanager.texture": "テクスチャ",
+		"editor.materialmanager.uv_pivot": "UV回転の中心",
+		"editor.materialmanager.uv_pivot_pixel": "UV回転の中心（px）",
+		"editor.materialmanager.uv_rotation": "UV回転（度）",
+		"editor.materialmanager.uv_scale": "UVスケール",
+		"editor.materialmanager.uv_scale_pixel": "UVスケール（px）",
 		"editor.materialmanager.uv_transform": "UV変換",
+		"editor.materialmanager.uv_transform_pixel": "UV変換（テクスチャのピクセル基準。テクスチャ未設定時は編集不可）",
+		"editor.materialmanager.uv_translate": "UV座標",
+		"editor.materialmanager.uv_translate_pixel": "UV座標（px）",
 		"editor.materialmanager.window": "マテリアル",
 
 		//--------- editor.menu ---------//
@@ -1778,6 +1988,10 @@
 		"editor.prefab.apply": "適用",
 		"editor.prefab.applyall": "すべて適用",
 		"editor.prefab.overrides": "上書きされている項目：",
+		"editor.prefab.override.objectproperties": "オブジェクト設定",
+		"editor.prefab.override.parent": "親子関係",
+		"editor.prefab.override.addedobject": "追加されたオブジェクト",
+		"editor.prefab.override.removedobjects": "削除されたオブジェクト数",
 		"editor.prefab.revert": "元に戻す",
 		"editor.prefab.revert.title": "プレハブインスタンスを元に戻しますか？",
 		"editor.prefab.revert.warning1": "ローカルの変更（このインスタンスに追加した子オブジェクトを含む）はすべて破棄されます。",
@@ -1852,6 +2066,7 @@
 		"editor.preferences.window": "エディター環境設定",
 
 		//--------- editor.savescene ---------//
+		"editor.savescene.playing.warning": "ゲームループ再生中です。保存されるのは再生開始前のシーン内容です。",
 		"editor.savescene.title": "シーンを保存",
 
 		//--------- editor.sceneaudioplayer ---------//
@@ -1875,11 +2090,20 @@
 		"editor.scenelist.column.filepath": "ファイルパス",
 		"editor.scenelist.column.name": "名前",
 		"editor.scenelist.column.switch": "切り替え",
+		"editor.scenelist.column.duplicate": "複製",
 		"editor.scenelist.convert": "フォルダ形式へ変換",
 		"editor.scenelist.convert.succeeded": "フォルダ形式への変換が完了しました。",
 		"editor.scenelist.convert.tooltip": "このシーンの保存形式を、1オブジェクト1フォルダの形式へ変換します。\n（複数人開発でのGitの競合を減らせます）",
 		"editor.scenelist.convert.tooltip.disabled": "既にフォルダ形式であるか、ファイルパスが未設定です。",
 		"editor.scenelist.delete.tooltip": "このシーンを一覧から削除します。\n（シーンのJSONファイル自体は削除されません）",
+		"editor.scenelist.duplicate": "複製",
+		"editor.scenelist.duplicate.button": "複製",
+		"editor.scenelist.duplicate.namealreadyexists": "同じ名前のシーンが既に登録されています。",
+		"editor.scenelist.duplicate.newfilepath": "新しいファイルパス##duplicate",
+		"editor.scenelist.duplicate.newname": "新しい名前##duplicate",
+		"editor.scenelist.duplicate.source": "複製元",
+		"editor.scenelist.duplicate.title": "シーンの複製",
+		"editor.scenelist.duplicate.tooltip": "このシーンを新しい名前で複製します。",
 		"editor.scenelist.deleteoriginal.keep": "残す",
 		"editor.scenelist.deleteoriginal.message": "変換元のファイルを削除しますか？",
 		"editor.scenelist.deleteoriginal.title": "変換元のファイルを削除しますか？",
@@ -1898,6 +2122,7 @@
 
 		//--------- editor.sceneobjecthierarchy ---------//
 		"editor.sceneobjecthierarchy.window": "シーンオブジェクト階層",
+		"editor.sceneobjecthierarchy.search": "検索",
 
 		//--------- editor.sceneobjectinspector ---------//
 		"editor.sceneobjectinspector.window": "オブジェクトインスペクタ",
@@ -1924,17 +2149,35 @@
 		"editor.sceneview.gizmo.local": "ローカル",
 		"editor.sceneview.gizmo.rotate": "回転",
 		"editor.sceneview.gizmo.scale": "拡大縮小",
+		"editor.sceneview.gizmo.snap": "グリッドスナップ",
+		"editor.sceneview.gizmo.snap.rotate": "角度スナップ",
+		"editor.sceneview.gizmo.snap.scale": "拡縮スナップ",
+		"editor.sceneview.gizmo.snap.tooltip": "Ctrlキーを押している間は一時的に有効/無効が反転します",
+		"editor.sceneview.gizmo.snap.translate": "グリッド間隔",
 		"editor.sceneview.gizmo.translate": "移動",
 		"editor.sceneview.gizmo.world": "ワールド",
 		"editor.sceneview.notready": "シーンビューの準備ができていません。",
+		"editor.sceneview.boundszone.enable": "矩形編集を有効化",
+		"editor.sceneview.boundszone.hint": "インスペクターで選択中の矩形を、シーンビュー上でドラッグして編集できます（四隅・四辺・内部のドラッグに対応）。",
+		"editor.sceneview.boundszone.no_selection": "CameraBoundsZone2D/3Dを持つオブジェクトを1つだけ選択してください。",
 		"editor.sceneview.show.bones": "ボーン",
+		"editor.sceneview.show.boundszones": "境界ゾーン",
 		"editor.sceneview.show.cameras": "カメラ",
 		"editor.sceneview.show.colliders": "コライダー",
 		"editor.sceneview.show.grid": "グリッド",
 		"editor.sceneview.show.lights": "ライト",
+		"editor.sceneview.tab.boundszone": "境界ゾーン",
 		"editor.sceneview.tab.camera": "カメラ",
 		"editor.sceneview.tab.display": "表示",
 		"editor.sceneview.tab.gizmo": "ギズモ",
+		"editor.sceneview.tab.tilepaint": "タイルペイント",
+		"editor.sceneview.tilepaint.brush": "ブラシ：",
+		"editor.sceneview.tilepaint.enable": "タイルペイントを有効化",
+		"editor.sceneview.tilepaint.erase": "消しゴム",
+		"editor.sceneview.tilepaint.no_selection": "TilemapRendererを持つオブジェクトを1つだけ選択してください。",
+		"editor.sceneview.tilepaint.pen_shape_circle": "円形",
+		"editor.sceneview.tilepaint.pen_shape_square": "正方形",
+		"editor.sceneview.tilepaint.pen_size": "ペンサイズ",
 		"editor.sceneview.window": "シーンビュー",
 
 		//--------- editor.scriptengine ---------//
@@ -2026,6 +2269,15 @@
 		"engine.font.loading.failed.unsupported": "フォント読み込み失敗。未対応の拡張子です。ファイルパス：",
 		"engine.font.loading.succeeded": "フォント読み込み成功。ファイルパス：",
 
+		//--------- engine.bitmapfont ---------//
+		"engine.bitmapfont.loading.failed.notfound": "ビットマップフォント読み込み失敗。ファイルが見つかりません。ファイルパス：",
+		"engine.bitmapfont.loading.failed.nopage": "ビットマップフォント読み込み失敗。ページ（テクスチャ）が定義されていません。ファイルパス：",
+		"engine.bitmapfont.loading.failed.pagenotfound": "ビットマップフォント読み込み失敗。ページ画像と同名の読み込み済みテクスチャが見つかりません（ページ画像をAssets配下のどこかに配置してください）。ファイル名：",
+		"engine.bitmapfont.loading.failed.read": "ビットマップフォント読み込み失敗。ファイルを開けませんでした。ファイルパス：",
+		"engine.bitmapfont.loading.failed.unsupported": "ビットマップフォント読み込み失敗。未対応の拡張子です。ファイルパス：",
+		"engine.bitmapfont.loading.succeeded": "ビットマップフォント読み込み成功。ファイルパス：",
+		"engine.bitmapfont.loading.warning.multipage": "このビットマップフォントは複数ページ構成です。先頭ページのみ使用します。ファイルパス：",
+
 		//--------- engine.gpuparticle ---------//
 		"engine.gpuparticle.dispatching": "GPUパーティクルのディスパッチを開始します。エミッター数：",
 		"engine.gpuparticle.emitters.empty": "GPUパーティクルのエミッターが1つもありません。",
@@ -2078,13 +2330,39 @@
 		"engine.prefab.sync.result.updated": "、更新したシーン数 ",
 		"engine.prefab.sync.scene.failed": "プレハブ同期：シーンの読み込みまたは保存に失敗しました。シーン名：",
 
+		//--------- engine.renderer ---------//
+		"engine.renderer.zerodrawentries.detected": "描画エントリが一定時間ゼロのままです（カメラ等の対象解決が外れている可能性があります）。ScreenBufferObject名：",
+		"engine.renderer.zerodrawentries.recovered": "描画エントリが復帰しました。ScreenBufferObject名：",
+
+		//--------- engine.rendertargetcarryover ---------//
+		"engine.rendertargetcarryover.beginsceneswitch": "シーン切り替え：描画先リソースの引き継ぎ受付を開始しました。",
+		"engine.rendertargetcarryover.claim.success": "シーン切り替え：描画先リソースを引き継ぎプールから引き取りました。種別/キー：",
+		"engine.rendertargetcarryover.deposit.carried": "シーン切り替え：描画先リソースを引き継ぎプールへ預けました。種別/キー：",
+		"engine.rendertargetcarryover.deposit.destroyed": "シーン切り替え中ではないため、描画先リソースを即座に破棄しました。種別/キー：",
+		"engine.rendertargetcarryover.endsceneswitch.unclaimed": "シーン切り替え：引き取られなかった描画先リソースを破棄しました（新シーン側に同名のコンポーネントが存在しない可能性があります）。種別/キー：",
+
+		//--------- engine.scene ---------//
+		"engine.scene.playstop.emptysnapshot": "PlayStop()：editModeSnapshot_が空のため、シーン内容の復元をスキップしました。このSceneインスタンスでPlayStart()が呼ばれていない可能性があります。",
+		"engine.scene.playstop.notplaying": "PlayStop()が呼ばれましたが、このSceneインスタンスは再生中ではありません（isPlaying_=false）。再生中にシーンが切り替わり、別のSceneインスタンスに置き換わった可能性があります。",
+
 		//--------- engine.scenemanager ---------//
 		"engine.scenemanager.globalscenevariables.loaded": "グローバルシーン変数を読み込みました。ファイルパス：",
 		"engine.scenemanager.scene.alreadyregistered": "シーンは既に登録されているためスキップしました。シーン名：",
 		"engine.scenemanager.scene.load.failed": "シーンファイルの読み込みに失敗したため、空のシーンを作成します。ファイルパス：",
+		"engine.scenemanager.scene.switch.end": "シーン切り替え完了。切り替え先：",
+		"engine.scenemanager.scene.switch.start": "シーン切り替え開始。切り替え先：",
 		"engine.scenemanager.scenelist.loaded": "シーン一覧を読み込みました。ファイルパス：",
 
+		//--------- engine.screenbuffer ---------//
+		"engine.screenbuffer.initialize.failed.doublebuffer": "ScreenBufferの初期化に失敗しました。ダブルバッファ用リソースの作成に失敗しました。サイズ：",
+		"engine.screenbuffer.initialize.failed.nodirectxcommon": "ScreenBufferの初期化に失敗しました。DirectXCommonが未設定です。",
+		"engine.screenbuffer.initialize.failed.noslot": "ScreenBufferの初期化に失敗しました。コマンドオブジェクトのスロットを確保できませんでした。サイズ：",
+		"engine.screenbuffer.initialize.failed.previewbuffer": "ScreenBufferの初期化に失敗しました。プレビュー用バッファの作成に失敗しました。サイズ：",
+
 		//--------- engine.screenbufferobject ---------//
+		"engine.screenbufferobject.loadfromjson.carried": "引き継ぎプールから既存のScreenBufferインスタンスをそのまま引き継ぎました。名前(ポインタ) サイズ：",
+		"engine.screenbufferobject.loadfromjson.recreated": "サイズ不一致のため新しいScreenBufferインスタンスを作り直しました。名前(ポインタ) サイズ：",
+		"engine.screenbufferobject.loadfromjson.reused": "Initialize()直後の仮ScreenBufferインスタンスをそのまま使い回しました。名前(ポインタ) サイズ：",
 		"engine.screenbufferobject.screenshot.failed": "スクリーンショットの保存に失敗しました。",
 
 		//--------- engine.script ---------//
@@ -2102,8 +2380,11 @@
 		"engine.script.error": "AngelScript：",
 		"engine.script.failed.createengine": "AngelScript：asCreateScriptEngine に失敗しました。",
 		"engine.script.field.array.recreated": "array<T>フィールドのハンドルが不正だったため、新しい空の配列で再生成しました。フィールド名：",
+		"engine.script.field.gc_type.unsafe_declaration": "@（ハンドル）ではなく安全でない値的構文で宣言されたフィールドが見つかったため、ビルドを中止しました。GC管理対象の型（array<T>やdictionary等）や[System.Serializable]クラス等のスクリプトクラス型は、必ずハンドル構文（例：array<T>@ 変数名 = null; や array<T@>@ 変数名 = null;）で宣言してください。スクリプト：",
+		"engine.script.field.gc_type.unsafe_declaration.global_suffix": "（グローバル変数）",
 		"engine.script.predefined.generate.failed": "AngelScript：as.predefined の生成に失敗しました。",
 		"engine.script.predefined.generated": "AngelScript：as.predefined を生成しました。",
+		"engine.script.variable.type_mismatch_shared_hint": "スクリプト間のデータ受け渡しで型名は一致していますが型IDが一致しません。独自クラス/enumの場合は shared 宣言を忘れている可能性があります。型名：",
 		"engine.script.vscodelaunch.generate.failed": "AngelScript：VSCode用launch.jsonの生成に失敗しました。",
 
 		//--------- engine.settings ---------//
@@ -2135,6 +2416,11 @@
 		"engine.settings.window.initialwidth": "初期ウィンドウ幅：",
 		"engine.settings.window.section": "ウィンドウ設定",
 
+		//--------- engine.shadowmapbuffer ---------//
+		"engine.shadowmapbuffer.initialize.failed.depth": "ShadowMapBufferの初期化に失敗しました。深度バッファの作成に失敗しました。サイズ：",
+		"engine.shadowmapbuffer.initialize.failed.nodirectxcommon": "ShadowMapBufferの初期化に失敗しました。DirectXCommonが未設定です。",
+		"engine.shadowmapbuffer.initialize.failed.noslot": "ShadowMapBufferの初期化に失敗しました。コマンドオブジェクトのスロットを確保できませんでした。サイズ：",
+
 		//--------- engine.texture ---------//
 		"engine.texture.loading.failed.loadfile": "テクスチャ読み込み失敗。ファイルの読み込みに失敗しました。ファイルパス：",
 
@@ -2155,6 +2441,14 @@
 		"error.code.label": "エラーコード：",
 
 		//--------- label.filepath ---------//
-		"label.filepath": "ファイルパス："
+		"label.filepath": "ファイルパス：",
+
+		//--------- editor.externalchanges ---------//
+		"editor.externalchanges.title": "外部でのシーン変更",
+		"editor.externalchanges.message": "編集中のシーンが外部で変更されました。ディスク上の内容を再読み込みしますか？",
+		"editor.externalchanges.scene": "対象シーン",
+		"editor.externalchanges.playing": "再生中は安全のため再読み込みできません。停止してから再読み込みしてください。",
+		"editor.externalchanges.reload": "再読み込み",
+		"editor.externalchanges.keeplocal": "現在の編集内容を維持"
 	}
 }

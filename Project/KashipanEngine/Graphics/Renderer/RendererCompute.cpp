@@ -292,17 +292,21 @@ void Renderer::ProcessGpuParticles(SceneContext *sceneContext) {
             initShaderBinder.Bind("Compute:ParticleFreeListInitConstants", freeListInitConstantBuffer);
             initShaderBinder.Bind("Compute:gFreeList", freeListBuffer);
             initShaderBinder.Bind("Compute:gFreeListCounter", freeListCounterBuffer);
+            initShaderBinder.Bind("Compute:gParticles", particleBuffer);
 
             const std::uint32_t initGroupCount = std::max<std::uint32_t>(1, (particleCount + 63) / 64);
             commandList->Dispatch(initGroupCount, 1, 1);
 
-            // ParticleSpawnが直後にgFreeList/gFreeListCounterを読み書きするため、書き込み完了を待つ
-            D3D12_RESOURCE_BARRIER initBarriers[2]{};
+            // ParticleSpawn/ParticleUpdateが直後にgFreeList/gFreeListCounter/gParticlesを
+            // 読み書きするため、書き込み完了を待つ
+            D3D12_RESOURCE_BARRIER initBarriers[3]{};
             initBarriers[0].Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
             initBarriers[0].UAV.pResource = freeListBuffer->GetResource();
             initBarriers[1].Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
             initBarriers[1].UAV.pResource = freeListCounterBuffer->GetResource();
-            commandList->ResourceBarrier(2, initBarriers);
+            initBarriers[2].Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+            initBarriers[2].UAV.pResource = particleBuffer->GetResource();
+            commandList->ResourceBarrier(3, initBarriers);
         }
 
         const std::uint32_t spawnCount = emitter->GetGpuSpawnCount(Passkey<Renderer>{});

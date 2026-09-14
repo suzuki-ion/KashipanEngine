@@ -15,7 +15,7 @@
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
 <h1>DitherEffect</h1>
-<p class="page-lead">バンディングの低減やレトロ表現に使えるディザリングポストエフェクトです。単一パスの宣言的エフェクトとして実装されています。C++側のAPIは<a href="../../../Engine/10_PostEffects.html">Engine/10_PostEffects.html</a>を参照してください。</p>
+<p class="page-lead">4x4 Bayer行列のディザパターンを使って画面をフェードさせる、ディゾルブ風のポストエフェクトです。単一パスの宣言的エフェクトとして実装されています。C++側のAPIは<a href="../../../Engine/10_PostEffects.html">Engine/10_PostEffects.html</a>を参照してください。</p>
 </div>
 
 <div class="note">
@@ -26,9 +26,13 @@
 <h2>Inspectorに表示される項目</h2>
 <table>
 <tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
-<tr><td>Intensity</td><td>ドラッグ入力欄（ステップ0.01、範囲0.0〜1.0）</td><td>ディザリングの合成強度。既定値 1.0</td></tr>
-<tr><td>Color</td><td>チェックボックス</td><td>RGB各チャンネルへ個別にディザをかける（カラーディザ）かどうか。既定値 有効</td></tr>
+<tr><td>Intensity</td><td>ドラッグ入力欄（ステップ0.01、範囲0.0〜1.0）</td><td>ディゾルブの進行度。0で無適用（元の画面のまま）、1で画面全体が消える。既定値 0.0</td></tr>
+<tr><td>Color</td><td>チェックボックス</td><td>消え残るピクセルを元の色のまま表示する（有効）か、輝度のみのグレースケールで表示する（無効）か。既定値 有効</td></tr>
 </table>
+
+<div class="note">
+<strong>仕組み</strong><br>
+4x4 Bayer行列が持つ16段階の閾値を、ピクセルごとの「消える順番」として使います。Intensityがそのピクセルの閾値を超えると、そのピクセルは透明（アルファ0）になります。Intensityを0→1へ滑らかに変化させることで、市松模様が徐々に広がりながら画面全体が消えていくディゾルブ表現になります。</div>
 
 <div class="note">
 <strong>"Color" はブール値</strong><br>

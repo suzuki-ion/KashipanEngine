@@ -790,7 +790,7 @@ void EditorPreferences::EnsureDefaultPresets() {
 
 void EditorPreferences::ShowStyleSection() {
     if (!ImGui::TreeNode(TranslationLabel("editor.preferences.style"))) return;
-    ImGui::TextDisabled("%s", TranslationC("editor.preferences.style.description"));
+    ImGuiCustom::TextDisabledWrapped("%s", TranslationC("editor.preferences.style.description"));
 
     // ScaleAllSizes適用前（uiScale=1.0相当）の素の既定値。UserSettingsに未保存の項目のフォールバックに使う
     const ImGuiStyle defaultStyle{};
@@ -886,7 +886,7 @@ void EditorPreferences::ShowKeyBindingRow(const char *labelKey, const std::strin
 
 void EditorPreferences::ShowKeyBindingsSection() {
     if (!ImGui::TreeNode(TranslationLabel("editor.preferences.keybindings"))) return;
-    ImGui::TextDisabled("%s", TranslationC("editor.preferences.keybindings.description"));
+    ImGuiCustom::TextDisabledWrapped("%s", TranslationC("editor.preferences.keybindings.description"));
 
     ShowKeyBindingRow("editor.menu.edit.undo", "Undo", ImGuiMod_Ctrl | ImGuiKey_Z);
     ShowKeyBindingRow("editor.menu.edit.redo", "Redo", ImGuiMod_Ctrl | ImGuiKey_Y);
@@ -903,7 +903,7 @@ void EditorPreferences::ShowKeyBindingsSection() {
 
 void EditorPreferences::ShowLayoutSection() {
     if (!ImGui::TreeNode(TranslationLabel("editor.preferences.layout"))) return;
-    ImGui::TextDisabled("%s", TranslationC("editor.preferences.layout.description"));
+    ImGuiCustom::TextDisabledWrapped("%s", TranslationC("editor.preferences.layout.description"));
 
     const std::vector<std::string> layoutPresetNames = UserSettings::GetLayoutPresetNames();
     if (ImGui::BeginTable("##LayoutPresets", 2, ImGuiTableFlags_SizingFixedFit)) {
@@ -1001,7 +1001,7 @@ void EditorPreferences::ShowImGui() {
     }
     DrawFloatingWindowChromeButtons();
 
-    ImGui::TextDisabled("%s", TranslationC("editor.preferences.description"));
+    ImGuiCustom::TextDisabledWrapped("%s", TranslationC("editor.preferences.description"));
 
     //--------- 表示言語 ---------//
     ShowLanguageSection();
@@ -1044,7 +1044,7 @@ void EditorPreferences::ShowImGui() {
     }
     const std::vector<std::string> presetNames = UserSettings::GetColorPresetNames();
 
-    ImGui::TextDisabled("%s", TranslationC("editor.preferences.presets.description"));
+    ImGuiCustom::TextDisabledWrapped("%s", TranslationC("editor.preferences.presets.description"));
     if (ImGui::BeginTable("##ColorPresets", 2, ImGuiTableFlags_SizingFixedFit)) {
         for (const std::string &name : presetNames) {
             const JSON colors = UserSettings::GetColorPreset(name, JSON());

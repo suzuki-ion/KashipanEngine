@@ -40,6 +40,8 @@ class AnimationManager;
 class MaterialManager;
 class Input;
 class InputCommand;
+class DirectXCommon;
+class GraphicsEngine;
 
 /// @brief シーンクラス
 class Scene final {
@@ -48,6 +50,14 @@ class Scene final {
     friend class SceneEditorContext;
 #endif
 public:
+    /// @brief GameEngine から DirectXCommon を設定（Play開始/終了時のGPU同期に使う）
+    static void SetDirectXCommon(Passkey<GameEngine>, DirectXCommon *dx) { sDirectXCommon_ = dx; }
+    /// @brief GameEngine から GraphicsEngine を設定
+    /// @details PlayStop()がシーン内の全オブジェクト・コンポーネントを作り直す際、
+    ///          Rendererの構造化バッファ等のキャッシュ（古いインスタンス由来のキーが
+    ///          溜まり続けディスクリプタヒープを枯渇させる）を破棄するために使う
+    static void SetGraphicsEngine(Passkey<GameEngine>, GraphicsEngine *graphicsEngine) { sGraphicsEngine_ = graphicsEngine; }
+
     explicit Scene(const std::string &sceneName);
     explicit Scene(const JSON &sceneData);
 
@@ -62,6 +72,10 @@ public:
     const std::string &GetName() const { return name_; }
     const std::string &GetNextSceneName() const { return nextSceneName_; }
     SceneContext *GetSceneContext() const { return sceneContext_.get(); }
+    /// @brief シーンの識別ID（シーンJSONの"sceneID"）を取得する
+    /// @details シーン名は変更されうるため、シーンごとのエディター設定（EditorSettings）の
+    ///          キーにはこちらを使う（SceneEditorView::EnsureSceneViewObject参照）
+    const UUID128 &GetSceneID() const noexcept { return sceneID_; }
 
     void InitializeInterface(Passkey<SceneManager>) { OnInitialize(); }
     void FinalizeInterface(Passkey<SceneManager>) { OnFinalize(); }
@@ -71,9 +85,14 @@ public:
         if (!isPlaying_ || (isPaused_ && !isStepFrameRequested_)) return;
         isStepFrameRequested_ = false;
 #endif
+        // このスコープ中のDeleteObjectは実体の破棄を遅延させる（後述のisProcessingObjectLifecycle_を参照）
+        isProcessingObjectLifecycle_ = true;
         UpdateSceneObjects();
         UpdateComponents();
         OnUpdate();
+        isProcessingObjectLifecycle_ = false;
+        // Update中に溜まった削除待ちオブジェクトを、更新が完全に終わった安全なタイミングで実際に破棄する
+        FlushPendingDestroys();
     }
 
 #if defined(USE_IMGUI)
@@ -98,6 +117,10 @@ public:
     bool IsPaused() const { return isPaused_; }
     /// @brief 再生を開始する（開始前のシーン状態を保存する）
     void PlayStart();
+    /// @brief 再生中のシーン遷移後、新しいSceneを同じPlayセッションへ参加させる（SceneManager専用）
+    void ContinuePlayAfterSceneChange(Passkey<SceneManager>);
+    /// @brief 再生開始前のシーン状態を取得する（再生中の保存処理用）
+    const JSON &GetEditModeSnapshot() const;
     /// @brief 再生を終了する（開始前のシーン状態へ復元する）
     void PlayStop();
     /// @brief 一時停止する
@@ -194,6 +217,9 @@ protected:
     /// @param key 変数のキー
     /// @return 削除に成功した場合は true、失敗した場合は false を返す
     bool RemoveGlobalSceneVariable(const std::string &key) { return RemoveGlobalSceneVariableInternal(key); }
+    /// @brief グローバルシーン変数を全て削除する（新規ゲーム開始時、既存セーブデータをメモリ上から
+    ///        破棄する用途を想定。ファイルへの反映は別途SaveGlobalSceneVariables()の呼び出しが必要）
+    void ClearGlobalSceneVariables() { ClearGlobalSceneVariablesInternal(); }
     /// @brief グローバルシーン変数の情報を取得する
     /// @param key 変数のキー
     /// @return シーン変数のポインタ（存在しない場合は nullptr）
@@ -206,6 +232,15 @@ protected:
     /// @return シーン変数のマップ
     const std::unordered_map<std::string, MyAny> &GetGlobalSceneVariables() const { return GetGlobalSceneVariablesInternal(); }
 
+    /// @brief グローバルシーン変数をファイルへ保存する（ゲームのセーブデータ用途を想定）
+    /// @param filePath 保存先のファイルパス（空の場合は既定のパスを使用する）
+    /// @return 保存に成功した場合は true
+    bool SaveGlobalSceneVariables(const std::string &filePath = "") const;
+    /// @brief グローバルシーン変数をファイルから読み込む（ゲームのセーブデータ用途を想定）
+    /// @param filePath 読み込むファイルのパス（空の場合は既定のパスを使用する）
+    /// @return 読み込みに成功した場合は true
+    bool LoadGlobalSceneVariables(const std::string &filePath = "");
+
     //==================================================
     // シーン内オブジェクト管理
     //==================================================
@@ -216,12 +251,17 @@ protected:
     /// @return 生成された空のオブジェクトのポインタ
     EmptyObject *CreateEmptyObject(const std::string &name = "", const UUID128 &objectID = UUID128(), size_t index = MAXSIZE_T);
     /// @brief 既存オブジェクトを複製してシーンへ追加する
-    /// @details 複製されるのは対象オブジェクト自身のコンポーネントのみで、親子関係や子オブジェクトは複製されない
-    ///          （EmptyObject::Clone() の仕様に準じる）
+    /// @details includeChildren=falseの場合、複製されるのは対象オブジェクト自身のコンポーネントのみで、
+    ///          親子関係や子オブジェクトは複製されない（EmptyObject::Clone() の仕様に準じる）。
+    ///          includeChildren=trueの場合、sourceを親として持つ子孫オブジェクト（シーン全体をTransformの
+    ///          親子関係で走査して収集する）もまとめて複製し、複製後の親子関係を元の階層と同じ形に
+    ///          結び直す（ルート自身の親は複製しない点はfalseの場合と同じ）
     /// @param source 複製元オブジェクトのポインタ（このシーンに属している必要がある）
-    /// @param name 複製後のオブジェクト名（空の場合は複製元と同じ名前になる）
-    /// @return 複製されたオブジェクトのポインタ（失敗した場合は nullptr）
-    EmptyObject *CloneObject(EmptyObject *source, const std::string &name = "");
+    /// @param name 複製後のオブジェクト名（空の場合は複製元と同じ名前になる。子孫オブジェクトの名前は
+    ///             常に複製元と同じ名前を引き継ぐ）
+    /// @param includeChildren 子孫オブジェクトもまとめて複製するか
+    /// @return 複製されたルートオブジェクトのポインタ（失敗した場合は nullptr）
+    EmptyObject *CloneObject(EmptyObject *source, const std::string &name = "", bool includeChildren = false);
     /// @brief オブジェクトを削除
     /// @param obj 削除するオブジェクトのポインタ
     /// @return 削除に成功した場合は true、失敗した場合は false を返す
@@ -489,11 +529,17 @@ private:
     static inline MaterialManager *sMaterialManager = nullptr;
     static inline Input *sInput = nullptr;
     static inline InputCommand *sInputCommand = nullptr;
+    static inline DirectXCommon *sDirectXCommon_ = nullptr;
+    static inline GraphicsEngine *sGraphicsEngine_ = nullptr;
 
     void UpdateSceneObjects();
     void UpdateComponents();
     void RegenerateUpdateComponentsList();
     void RemoveObjectFromMaps(EmptyObject *obj);
+    void FlushPendingDestroys();
+    /// @brief root自身とその子孫（Transformの親子関係をシーン全体から走査して収集）をoutへ追加する
+    /// @details DeleteObjectの子孫収集処理と同様の全走査方式（Transformは子一覧を持たないため）
+    void CollectSubtreeObjects(EmptyObject *root, std::vector<EmptyObject *> &out) const;
 
     std::string name_;
 
@@ -505,6 +551,13 @@ private:
     ChunkedPool<EmptyObject> objectPool_;
     /// @brief シーン内での表示・保存順を保持する非所有ポインタのリスト（実体は objectPool_ が所有）
     std::vector<EmptyObject *> objects_;
+    /// @brief オブジェクト/コンポーネントの更新処理中（UpdateInterface実行中）かどうか。
+    ///        trueの間にDeleteObjectが呼ばれた場合、実体の破棄をFlushPendingDestroysまで遅延する。
+    ///        （スクリプトが自分自身の所有オブジェクトを削除すると、実行中のScriptComponent自体を
+    ///          即座に破棄してしまい use-after-free になるため）
+    bool isProcessingObjectLifecycle_ = false;
+    /// @brief isProcessingObjectLifecycle_中にDeleteObjectされ、実体の破棄を待っているオブジェクト
+    std::vector<EmptyObject *> pendingDestroyObjects_;
     std::unordered_map<UUID128, EmptyObject *> objectsByUUID_;
     std::unordered_set<EmptyObject *> objectsExistingSet_;
     std::unordered_map<std::string, std::unordered_set<EmptyObject *>> objectsByName_;
@@ -568,6 +621,7 @@ private:
 
     MyAny *AddGlobalSceneVariableInternal(const std::string &key, const MyAny &value, const TypeInfo &typeInfo);
     bool RemoveGlobalSceneVariableInternal(const std::string &key);
+    void ClearGlobalSceneVariablesInternal();
     MyAny *GetGlobalSceneVariableInternal(const std::string &key);
     const std::unordered_map<std::string, MyAny> &GetGlobalSceneVariablesInternal() const;
 

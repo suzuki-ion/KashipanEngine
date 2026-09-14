@@ -108,7 +108,7 @@ MaterialManager::MaterialHandle GetMaterialHandleAt(size_t slot) const noexcept;
 <code>MaterialManager::Material</code>は色・テクスチャ・シャドウ等の標準フィールドに加え、<code>extraParameters</code>（<code>std::unordered_map&lt;std::string, MyAny&gt;</code>）でモジュール固有パラメータを保持します。マテリアルエディタ（<span class="badge imgui">USE_IMGUI</span>限定）でモジュールを選択すると、選択の組み合わせごとにHLSLソースとパイプラインバリアントが自動生成され（<code>Graphics/Pipeline/System/ShaderModuleComposer</code>）、生成されたパイプライン名を<code>MeshRenderer::SetPipelineName()</code>／<code>SpriteRenderer::SetPipelineName()</code>へ渡すことで適用されます。<code>extraParameters</code>のキー名はシェーダー側<code>struct Material</code>のフィールド名と一致させる必要があり、対応するフィールドが無いキーは黙って無視されます。<br><br>
 Object3D向けモジュール: <code>NormalMap</code> / <code>SpecularMap</code> / <code>EnvironmentMap</code> / <code>DetailMap</code> / <code>AO</code> / <code>Matcap</code> / <code>Gradation</code> / <code>Emission</code> / <code>ColorGrading</code> / <code>OpacityMap</code> / <code>DistanceFade</code> / <code>Dissolve</code> / <code>MultiTone</code> / <code>RimShade</code> / <code>Backlight</code><br>
 Object2D向けモジュール（<code>SpriteRenderer</code>/<code>TextRenderer</code>用）: <code>ColorGrading2D</code> / <code>Dissolve2D</code> / <code>Vignette2D</code> / <code>GradientOverlay2D</code> / <code>Pulse2D</code>（周期的な明滅） / <code>FlashColor2D</code>（被弾時などのヒットフラッシュ） / <code>MaskTexture2D</code><br><br>
-モジュール構成そのものをコードから動的に組み立てることは想定されておらず、モジュールの選択・シェーダー生成はエディタのマテリアルエディタで行います。ゲーム側は生成済みマテリアルの<code>extraParameters</code>を実行時に書き換えて演出を変化させる使い方が基本です（例: <code>MaterialManager::GetMaterial("Enemy")-&gt;extraParameters["flashIntensity"] = 1.0f;</code>で<code>FlashColor2D</code>モジュールのヒットフラッシュ強度を点灯させる）。なお<code>"Default"</code>という名前のマテリアルアセットが存在しないプロジェクトでは、<code>MaterialManager</code>が起動時に既定マテリアルを自動登録するため、<code>SetMaterialName("Default")</code>指定のオブジェクトが非表示になることはありません。
+モジュール構成そのものをコードから動的に組み立てることは想定されておらず、モジュールの選択・シェーダー生成はエディタの<a href="../Editor/Windows/10_MaterialEditor.html">Material Editor</a>で行います。ゲーム側は生成済みマテリアルの<code>extraParameters</code>を実行時に書き換えて演出を変化させる使い方が基本です（例: <code>MaterialManager::GetMaterial("Enemy")-&gt;extraParameters["flashIntensity"] = 1.0f;</code>で<code>FlashColor2D</code>モジュールのヒットフラッシュ強度を点灯させる）。なお<code>"Default"</code>という名前のマテリアルアセットが存在しないプロジェクトでは、<code>MaterialManager</code>が起動時に既定マテリアルを自動登録するため、<code>SetMaterialName("Default")</code>指定のオブジェクトが非表示になることはありません。
 </div>
 
 <h3>基本的な使い方</h3>
@@ -286,7 +286,7 @@ Vector3 GetWorldUp() const;         // Rectの高さ方向に使用</div>
 <p>描画先指定（<code>SetTargetObject</code> 等）は前述の共通APIと同じです。</p>
 </div>
 
-<h2>Camera3D / Camera2D / CameraRenderer / CameraController — カメラ</h2>
+<h2>Camera3D / Camera2D / CameraRenderer / CameraController / CameraController2D — カメラ</h2>
 <p>
 カメラも Light と同様に「パラメータ保持用コンポーネント（<code>Camera3D</code>/<code>Camera2D</code>）」と「Rendererへ情報を渡すコンポーネント（<code>CameraRenderer</code>）」に分かれています。位置・向きは同一オブジェクトの Transform から取得されます。
 </p>
@@ -333,13 +333,27 @@ void SetFovLerpFactor(float factor);</div>
 <p>同一オブジェクトの <code>Camera3D</code> を、複数の追従先オブジェクトへ軸ごとに（移動X/Y/Z・回転X/Y/Z個別に）滑らかに追従させます。追従先が1つも指定されていない場合は自分自身の Transform を追従先として扱います。複数の追従先が同じ軸を指定した場合は平均を取ります。</p>
 </div>
 
+<div class="api-card">
+<h4><code>CameraController2D</code> — 複数ターゲットへの滑らかな追従（2D版）</h4>
+<div class="api-sig">void AddFollowTarget(const UUID128 &amp;objectID);
+void RemoveFollowTarget(size_t index);
+std::vector&lt;FollowTarget&gt; &amp;GetFollowTargets() noexcept;
+void SetPositionOffset(const Vector2 &amp;offset);
+void SetRotationOffset(float offset); // 画面内回転（Z軸）、ラジアン
+void SetTargetSize(const Vector2 &amp;size); // 目標のwidth/height（ズーム相当）
+AxisStrength2 &amp;GetMoveStrength() noexcept;
+void SetRotateLerpFactor(float factor);
+void SetSizeLerpFactor(float factor);</div>
+<p><code>CameraController</code> の2D版で、同一オブジェクトの <code>Camera2D</code> を、複数の追従先オブジェクトへ位置X/Y・画面内回転（Z軸）で滑らかに追従させます。3Dの<code>SetTargetFovY</code>に相当するのが<code>SetTargetSize</code>（width/height）で、対象の<code>Camera2D</code>で<code>AutoSyncSize</code>が有効な場合は毎フレーム上書きされるため実質無効になります。追従先が1つも指定されていない場合は自分自身の Transform を追従先として扱う点、複数の追従先が同じ軸を指定した場合は平均を取る点は<code>CameraController</code>と同じです。</p>
+</div>
+
 <h2>ウィンドウへの描画先コンポーネント（概要）</h2>
 <p>
 <code>MeshRenderer</code> 等の <code>SetTargetObject()</code> で指定する先には、描画結果の出力先となるコンポーネントを付与しておく必要があります。そのうち画面上のウィンドウとして表示する2種類が <code>NormalWindowObject</code>（通常ウィンドウ）と <code>OverlayWindowObject</code>（オーバーレイウィンドウ）で、共通基底 <code>IWindowObjectComponent</code> がウィンドウの生成・タイトル/サイズ設定・受信メッセージの通知（<code>SetOnWindowMessage</code>）を担います。詳細な使い方は <a href="11_Window.html">11_Window.html</a> で扱います。
 </p>
 <div class="tip">
 <strong>スクリプトからの利用</strong><br>
-AngelScript側では <code>ScriptComponentBehavior::OnWindowMessage(const WindowMessageInfo &amp;in)</code> として、同一オブジェクトのウィンドウ系コンポーネントが受信したメッセージを受け取れます。詳しくは <a href="Script/00_Index.html">Script/00_Index.html</a> を参照してください。
+AngelScript側では <code>ScriptComponentBehavior::OnWindowMessage(const WindowMessageInfo &amp;in)</code> として、同一オブジェクトのウィンドウ系コンポーネントが受信したメッセージを受け取れます。詳しくは <a href="../Script/00_Index.html">Script/00_Index.html</a> を参照してください。
 </div>
 
 <h2>次に読むページ</h2>

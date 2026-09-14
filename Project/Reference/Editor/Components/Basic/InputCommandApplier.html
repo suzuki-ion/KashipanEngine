@@ -29,7 +29,8 @@
 <table>
 <tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
 <tr><td>Name</td><td>テキスト入力欄</td><td>識別名。<code>WasApplied</code>/<code>TryGetLastValue</code>等をコードから呼ぶ際に指定する名前</td></tr>
-<tr><td>Command Name</td><td>テキスト入力欄</td><td>評価する入力コマンド名（InputCommandに登録済みのコマンド）</td></tr>
+<tr><td>Command Name</td><td>コンボ（(None) + InputCommandに登録済みのコマンド名一覧）</td><td>評価する入力コマンド名</td></tr>
+<tr><td>（未登録警告）</td><td>警告テキスト（オレンジ色）</td><td>Command Nameが空でなく、かつ現在InputCommandに登録されているコマンド名の中に見つからない場合に "The selected command is not registered in InputCommand." と表示される</td></tr>
 <tr><td>Condition</td><td>コンボ（Command == true / Command == false / Value &gt;= Threshold / Value &lt;= Threshold / Value == Threshold）</td><td>値を適用する条件。条件を満たしたフレームだけ書き込みが行われる</td></tr>
 <tr><td>Threshold</td><td>ドラッグ入力欄（ステップ0.01）</td><td>Conditionが比較系（Value &gt;= / &lt;= / ==）の場合のみ表示。比較する閾値（==は誤差1e-6以内で判定）</td></tr>
 <tr><td>Value Source</td><td>コンボ（Command Value / Fixed Value）</td><td>書き込む値の種類。Command Value: 入力コマンドの評価値。Fixed Value: 固定値</td></tr>

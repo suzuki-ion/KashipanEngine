@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Light | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_Light">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Light</h1>
+<p class="page-lead">ライトの発光パラメータを保持するコンポーネントです。<code>LightType</code> 列挙型（<code>Directional</code> / <code>Point</code> / <code>Spot</code> / <code>Rect</code> / <code>Sphere</code> / <code>Disc</code> / <code>Tube</code> / <code>Box</code>）が使用できます。<code>Rect</code>/<code>Sphere</code>/<code>Disc</code>/<code>Tube</code>/<code>Box</code> は面光源・体積光源（形状を持つ光源）です。真のLTC（Linearly Transformed Cosines）等の専用ルックアップテーブルは使わず、<strong>形状上の代表点（representative point）法</strong>で拡散・鏡面を近似します。</p>
+</div>
+
+<ul><li><code>Sphere</code>/<code>Tube</code>: 全方向に発光（Pointと同様、<code>Radius</code>が減衰範囲）。影はPointと同じキューブ6面（Tubeは中心点からの近似）</li><li><code>Disc</code>/<code>Rect</code>: Transformの<strong>+Z方向を法線とした片面発光</strong>（Spotと同様、<code>Distance</code>が減衰範囲。コーン角の概念は無い）。影はSpotと同じ広角の単一透視投影で近似する</li><li><code>Rect</code>は+X方向が幅、+Y方向が高さ</li><li><code>Box</code>: <strong>全方位（体積）発光</strong>するボックス形状の光源。ボックス表面上の最近接点を代表点として使うため、ボックスの内部・表面付近は減衰せず、そこから<code>Radius</code>だけさらに離れた位置で減衰し切る。影はPoint/Sphere/Tubeと同じキューブ6面（中心点からの近似）。+X方向が幅、+Y方向が高さ、+Z方向が奥行き</li></ul>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetType(LightType)</code> / <code>LightType GetType() const</code></td><td>ライト種別</td></tr>
+<tr><td><code>void SetColor(const Vector4 &amp;in)</code> / <code>const Vector4 &amp;GetColor() const</code></td><td>色</td></tr>
+<tr><td><code>void SetIntensity(float)</code> / <code>float GetIntensity() const</code></td><td>強度</td></tr>
+<tr><td><code>void SetRadius(float)</code> / <code>float GetRadius() const</code></td><td>減衰範囲（Point/Sphere/Tube用）</td></tr>
+<tr><td><code>void SetDistance(float)</code> / <code>float GetDistance() const</code></td><td>減衰範囲（Spot/Disc/Rect用）</td></tr>
+<tr><td><code>void SetDecay(float)</code> / <code>float GetDecay() const</code></td><td>減衰指数（Point/Spot/Sphere/Disc/Rect/Tube共通）</td></tr>
+<tr><td><code>void SetInnerAngle(float)</code> / <code>float GetInnerAngle() const</code></td><td>内側角度（Spot用、ラジアン）</td></tr>
+<tr><td><code>void SetOuterAngle(float)</code> / <code>float GetOuterAngle() const</code></td><td>外側角度（Spot用、ラジアン）</td></tr>
+<tr><td><code>void SetSourceRadius(float)</code> / <code>float GetSourceRadius() const</code></td><td>面光源の物理的な半径（Sphere/Discの半径、Tubeの円柱半径）</td></tr>
+<tr><td><code>void SetSourceWidth(float)</code> / <code>float GetSourceWidth() const</code></td><td>幅（+X方向。Rect/Box用）</td></tr>
+<tr><td><code>void SetSourceHeight(float)</code> / <code>float GetSourceHeight() const</code></td><td>高さ（+Y方向。Rect/Box用）</td></tr>
+<tr><td><code>void SetSourceLength(float)</code> / <code>float GetSourceLength() const</code></td><td>Tubeの長さ（+X方向）</td></tr>
+<tr><td><code>void SetSourceDepth(float)</code> / <code>float GetSourceDepth() const</code></td><td>Boxの奥行き（+Z方向）</td></tr>
+<tr><td><code>void SetShadowSoftness(float)</code> / <code>float GetShadowSoftness() const</code></td><td>Directional/Point/Spotの半影ソフト化（PCSS）に使うワールド単位の光源サイズ（既定0=硬い影）</td></tr>
+<tr><td><code>float GetEffectiveShadowSoftness() const</code></td><td>実際にPCSSへ使われる光源サイズ。Sphere/Disc/Tubeは<code>SourceRadius</code>、Rectは<code>max(Width,Height)/2</code>、Boxは<code>max(Width,Height,Depth)/2</code>が自動的に返る</td></tr>
+</table>
+
+<div class="tip"><strong>半影のソフト化（PCSS）</strong><br><code>CastShadows</code>が有効なライトは、光源サイズに応じたソフトシャドウ（PCSS: Percentage-Closer Soft Shadows）が自動的にかかります。Sphere/Disc/Rect/Tubeは形状の物理サイズ（<code>SourceRadius</code>等）がそのまま光源サイズとして使われ、Directional/Point/Spotは既定で硬い影のままです（<code>SetShadowSoftness</code>で明示的にワールド単位の光源サイズを設定すると、そのライトにもソフトシャドウがかかります）。</div>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="LightRenderer.html">LightRenderer</a></li>
+<li><a href="../../../Editor/Components/Render/Light.html">Editor/Components/Render/Light.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

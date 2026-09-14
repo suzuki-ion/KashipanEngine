@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UIButton | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_UI_UIButton">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>UIButton</h1>
+<p class="page-lead">画面上の矩形に対するマウスのホバー・押下・クリック判定を行うUI用コンポーネントです。見た目の描画は一切行いません。同一オブジェクトに<code>SpriteRenderer</code>があればそのスプライトの矩形を、無く<code>TextRenderer</code>があればそのテキストの外接矩形（表示中の文字列・フォントサイズに応じて動的に変わる）を、そのまま当たり判定に使う「透明な当たり判定レイヤー」です（両方無い場合は常に判定false。SpriteRendererを優先）。</p>
+</div>
+
+<p>描画先ウィンドウは同オブジェクトのSpriteRenderer/TextRenderer側（<code>SetTargetObject</code>）で指定されたものをそのまま使うため、このコンポーネント自体はウィンドウの参照を持ちません。マウス座標変換の基準にする<code>Camera2D</code>のみ、<code>SetDisplayCameraObject</code>で別途指定します（<code>ScreenBufferViewport</code>のマウス座標変換と同じ考え方・同じ変換パイプライン）。</p>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetDisplayCameraObject(Object@)</code></td><td>マウス座標変換の基準にする<code>Camera2D</code>を持つオブジェクトを設定する</td></tr>
+<tr><td><code>bool IsHovered() const</code></td><td>マウスカーソルがボタンの矩形内にあるかどうか</td></tr>
+<tr><td><code>bool IsPressed() const</code></td><td>ボタン上で左クリックが押され、まだ離されていないかどうか（押下開始はボタン上である必要があるが、離すまでの間はカーソルが矩形外へ出ても保持される）</td></tr>
+<tr><td><code>bool IsClicked() const</code></td><td>このフレームでクリックが確定した瞬間かどうか（ボタン上で押して、ボタン上で離した時のみtrue）</td></tr>
+<tr><td><code>bool TryGetLocalHoverPosition(Vector2 &amp;out)</code></td><td>対象矩形基準のローカルUV座標を取得する。(0,0)=矩形の左下 〜 (1,1)=矩形の右上。矩形の外（負値や1超過）の値もそのまま返るため、<code>IsPressed()</code>中にカーソルが矩形の外へ出た場合でも位置を追い続けられる（スライダー等のドラッグ操作の実装に使える）</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="../Collider/MeshButton.html">MeshButton</a> — 3Dオブジェクト版</li>
+<li><a href="../Render/ScreenBufferViewport.html">ScreenBufferViewport</a> — 同じマウス座標変換パイプライン</li>
+<li><a href="../../../Editor/Components/UI/UIButton.html">Editor/Components/UI/UIButton.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

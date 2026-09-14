@@ -67,6 +67,9 @@ public:
         bool loop = false;
         double startTimeSec = 0.0;
         double endTimeSec = 0.0;
+        /// @brief 音量バスのカテゴリ名(空文字=未分類、マスター音量のみが乗算される)。
+        ///        `AudioCategories.json`で定義した名前を指定する
+        std::string category;
     };
 
     /// @brief コンストラクタ（GameEngine からのみ生成可能）
@@ -200,6 +203,10 @@ public:
     /// @brief デバッグ用: 再生中/保持中の音声一覧の ImGui ウィンドウを描画
     static void ShowImGuiPlayingSoundsWindow();
 
+    /// @brief 音量バスのカテゴリ一覧を編集するImGuiウィンドウを描画する
+    /// @details 追加・削除・既定音量の変更を行うと`AudioCategories.json`へ即座に保存される
+    static void ShowImGuiAudioCategoriesWindow();
+
     /// @brief エディタのD&Dインポート等で、Assets以下に新規追加された1つの音声ファイルを動的に読み込み登録する
     /// @param filePath Assets ルートからの相対パス（実ファイルが Assets 以下に存在している前提）
     /// @return 読み込んだ音声のハンドル（失敗時は `kInvalidSoundHandle`）
@@ -213,6 +220,24 @@ public:
     /// @param outSeconds 取得した秒数の出力先
     /// @return 成功した場合 true
     static bool GetPlayPositionSeconds(PlayHandle play, double& outSeconds);
+
+    //==================================================
+    // 音量バス(マスター/カテゴリ)
+    //==================================================
+
+    /// @brief マスター音量を設定する(全カテゴリ・未分類音声に共通で乗算される)
+    static void SetMasterVolume(float volume);
+    /// @brief マスター音量を取得する
+    static float GetMasterVolume();
+
+    /// @brief カテゴリの音量を設定する(未知の名前を渡した場合は新規カテゴリとして登録される)
+    /// @param category カテゴリ名(`AudioCategories.json`で定義した名前)
+    /// @param volume ボリューム (0.0f ~ 1.0f)
+    static void SetCategoryVolume(const std::string &category, float volume);
+    /// @brief カテゴリの音量を取得する(未知の名前/空文字は1.0fを返す)
+    static float GetCategoryVolume(const std::string &category);
+    /// @brief 現在定義されているカテゴリ名の一覧を取得する(AudioSourceのカテゴリ選択UI用)
+    static std::vector<std::string> GetCategoryNames();
 
     static void RegisterSoundBeat(Passkey<SoundBeat>, SoundBeat* soundBeat);
     static void UnregisterSoundBeat(Passkey<SoundBeat>, SoundBeat* soundBeat);

@@ -99,10 +99,15 @@ bool LoadMaterialFromJSON(const std::string& filePath, MaterialManager::Material
             outMaterial.color = FromJSON<Vector4>(json["color"]);
         }
 
-        // UV トランスフォーム
-        if (json.contains("uvTransform") && json["uvTransform"].is_object()) {
-            outMaterial.uvTransform = FromJSON<Matrix4x4>(json["uvTransform"]);
+        // UV トランスフォーム（位置・回転・スケール）
+        if (json.contains("uvTranslate") && json["uvTranslate"].is_object()) {
+            outMaterial.uvTranslate = FromJSON<Vector2>(json["uvTranslate"]);
         }
+        outMaterial.uvRotation = FromJSON<float>(json.value("uvRotation", 0.0f));
+        if (json.contains("uvScale") && json["uvScale"].is_object()) {
+            outMaterial.uvScale = FromJSON<Vector2>(json["uvScale"]);
+        }
+        outMaterial.uvPivot = json.contains("uvPivot") ? FromJSON<Vector2>(json["uvPivot"]) : Vector2(0.5f, 0.5f);
 
         // テクスチャハンドル
         // （この時点で対象テクスチャが存在しない場合はファイル名を保持しておき、
@@ -305,7 +310,10 @@ bool MaterialManager::SaveMaterial(MaterialHandle handle, const std::string &fil
     JSON json = JSON::object();
     json["name"] = material.name;
     json["color"] = ToJSON(material.color);
-    json["uvTransform"] = ToJSON(material.uvTransform);
+    json["uvTranslate"] = ToJSON(material.uvTranslate);
+    json["uvRotation"] = material.uvRotation;
+    json["uvScale"] = ToJSON(material.uvScale);
+    json["uvPivot"] = ToJSON(material.uvPivot);
     // ハンドルが未解決の場合でも読み込み時のファイル名を保持して保存する
     std::string textureFile = TextureManager::GetTextureFileName(material.textureHandle);
     if (textureFile.empty()) textureFile = material.textureFileName;
@@ -569,23 +577,31 @@ void MaterialManager::ShowImGuiMaterialManagerWindow() {
 void MaterialManager::ShowMaterialEditorFields(Material &material) {
     ImGui::ColorEdit4(TranslationLabel("editor.materialmanager.color"), &material.color.x);
 
-    // テクスチャは読み込み済みのものから選択する
-    // ファイル名単体だと同名ファイルが複数フォルダにある場合にImGuiのID重複警告が出るため、
-    // Assetsからの相対パスを表示・選択キーとして使う（選択候補は常に解決済みなのでハンドルは即座に得られる）
-    std::vector<std::string> texturePaths;
-    for (const auto &entry : TextureManager::GetLoadedTextureListEntries()) {
-        texturePaths.push_back(entry.assetPath);
-    }
+    // テクスチャは読み込み済みのものからサムネイルグリッドのポップアップで選択する
+    // （ImGuiCustom::TextureThumbnailPicker参照。ファイル名単体だと同名ファイルが複数フォルダにある場合に
+    // ImGuiのID重複警告が出るため、Assetsからの相対パスを表示・選択キーとして使う。選択候補は
+    // 常に解決済みなのでハンドルは即座に得られる。D&Dの受け付けもピッカー内部で行う）
     std::string texturePath = TextureManager::GetTextureAssetPath(material.textureHandle);
     if (texturePath.empty()) texturePath = material.textureFileName; // 未解決の場合は保留中のファイル名を表示
-    if (ImGuiCustom::SelectString(TranslationLabel("editor.materialmanager.texture"), texturePath, texturePaths, true)) {
+    if (ImGuiCustom::TextureThumbnailPicker(TranslationLabel("editor.materialmanager.texture"), texturePath,
+        TextureManager::GetLoadedTextureListEntries(), true)) {
         material.textureHandle = texturePath.empty() ? TextureManager::kInvalidHandle : TextureManager::GetTextureFromAssetPath(texturePath);
         material.textureFileName = TextureManager::GetTextureFileName(material.textureHandle);
     }
-    // Assetsウィンドウからのテクスチャファイルドラッグ&ドロップも受け付ける
-    if (std::string droppedPath; AcceptAssetDragDropTarget(kTextureAssetDragDropType, droppedPath)) {
-        material.textureHandle = TextureManager::GetTextureFromAssetPath(droppedPath);
-        material.textureFileName = TextureManager::GetTextureFileName(material.textureHandle);
+    // サンプラーは既定6種（DefaultSampler）から選択する。gSamplers[6]は固定長のバインドレス配列のため、
+    // 現状ここで選べるのはこの6種のみ（未指定の場合は描画側でLinearWrapへフォールバックする）
+    {
+        static const char *kSamplerNames[] = {
+            "Default (LinearWrap)", "Point Clamp", "Point Wrap",
+            "Linear Clamp", "Linear Wrap", "Anisotropic Clamp", "Anisotropic Wrap",
+        };
+        int samplerIndex = (material.samplerHandle >= 1 && material.samplerHandle <= 6)
+            ? static_cast<int>(material.samplerHandle) : 0;
+        if (ImGui::Combo(TranslationLabel("editor.materialmanager.sampler"), &samplerIndex, kSamplerNames, IM_ARRAYSIZE(kSamplerNames))) {
+            material.samplerHandle = samplerIndex == 0
+                ? SamplerManager::kInvalidHandle
+                : static_cast<SamplerManager::SamplerHandle>(samplerIndex);
+        }
     }
     ImGui::DragFloat(TranslationLabel("editor.materialmanager.shininess"), &material.shininess, 0.1f, 0.0f, 1024.0f);
     ImGui::ColorEdit4(TranslationLabel("editor.materialmanager.specular_color"), &material.specularColor.x);
@@ -594,7 +610,44 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
     ImGui::DragFloat(TranslationLabel("editor.materialmanager.rim_intensity"), &material.rimIntensity, 0.01f, 0.0f, 10.0f);
     ImGui::Checkbox(TranslationLabel("editor.materialmanager.enable_lighting"), &material.enableLighting);
     ImGui::Checkbox(TranslationLabel("editor.materialmanager.enable_shadowmap_projection"), &material.enableShadowMapProjection);
-    ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_transform"), material.uvTransform);
+    ImGui::TextUnformatted(TranslationC("editor.materialmanager.uv_transform"));
+    ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_translate"), material.uvTranslate, { .vSpeed = 0.001f });
+    float uvRotationDeg = material.uvRotation * 180.0f / 3.14159265f;
+    if (ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_rotation"), uvRotationDeg, { .vSpeed = 0.1f, .vMin = -180.0f, .vMax = 180.0f })) {
+        material.uvRotation = uvRotationDeg * 3.14159265f / 180.0f;
+    }
+    ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_scale"), material.uvScale, { .vSpeed = 0.001f });
+    ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_pivot"), material.uvPivot, { .vSpeed = 0.001f });
+    if (ImGui::IsItemHovered()) {
+        ImGuiCustom::SetTooltipWrapped("%s", TranslationC("editor.materialmanager.desc_uv_pivot"));
+    }
+
+    // ピクセル基準（0～テクスチャの幅・高さ）でのUV編集。内部値（0～1のUV基準）と相互に連動する
+    {
+        const auto textureView = TextureManager::GetTextureView(material.textureHandle);
+        const float texWidth = static_cast<float>(textureView.GetWidth());
+        const float texHeight = static_cast<float>(textureView.GetHeight());
+        const bool hasTextureSize = texWidth > 0.0f && texHeight > 0.0f;
+
+        ImGui::BeginDisabled(!hasTextureSize);
+        ImGui::TextUnformatted(TranslationC("editor.materialmanager.uv_transform_pixel"));
+        Vector2 pxTranslate = hasTextureSize
+            ? Vector2(material.uvTranslate.x * texWidth, material.uvTranslate.y * texHeight) : Vector2::Zero();
+        if (ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_translate_pixel"), pxTranslate, { .vSpeed = 0.5f }) && hasTextureSize) {
+            material.uvTranslate = Vector2(pxTranslate.x / texWidth, pxTranslate.y / texHeight);
+        }
+        Vector2 pxScale = hasTextureSize
+            ? Vector2(material.uvScale.x * texWidth, material.uvScale.y * texHeight) : Vector2::Zero();
+        if (ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_scale_pixel"), pxScale, { .vSpeed = 0.5f }) && hasTextureSize) {
+            material.uvScale = Vector2(pxScale.x / texWidth, pxScale.y / texHeight);
+        }
+        Vector2 pxPivot = hasTextureSize
+            ? Vector2(material.uvPivot.x * texWidth, material.uvPivot.y * texHeight) : Vector2::Zero();
+        if (ImGuiCustom::EditValue(TranslationLabel("editor.materialmanager.uv_pivot_pixel"), pxPivot, { .vSpeed = 0.5f }) && hasTextureSize) {
+            material.uvPivot = Vector2(pxPivot.x / texWidth, pxPivot.y / texHeight);
+        }
+        ImGui::EndDisabled();
+    }
 
     //--------- カスタムシェーダー用の追加パラメータ ---------//
     // キー名はPixelシェーダーの struct Material のメンバー名と一致させること
@@ -619,6 +672,18 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
             "rimColor", "rimPower", "rimIntensity", "instanceColor", "instanceColorBlendMode",
             "padding", // Object2DのMaterial構造体が持つ実体の無い予約フィールド（アラインメント用）
         };
+        // バインドレス化済みのモジュール専用テクスチャスロット（NormalMap/Matcap等）の命名規則。
+        // struct Material側にはgTextures[]内インデックスを保持するuintフィールドとして
+        // "<名前>TextureIndex"（メインテクスチャの固定フィールドである"textureIndex"自体は除く）の
+        // 形で現れる。この汎用ループでInt32既定値を入れてしまうとテクスチャピッカーUIにならないため、
+        // 下の専用ループでTextureRef型として追加する
+        // （RendererInternal::BuildMaterialElementBytesがこの命名規則を前提に解決する）
+        static const std::string kTextureIndexSuffix = "TextureIndex";
+        auto isBindlessTextureIndexField = [](const std::string &name) {
+            if (name == "textureIndex") return false;
+            if (name.size() <= kTextureIndexSuffix.size()) return false;
+            return name.compare(name.size() - kTextureIndexSuffix.size(), kTextureIndexSuffix.size(), kTextureIndexSuffix) == 0;
+        };
         auto defaultValueForType = [](ValueType type) -> MyAny {
             switch (type) {
             case ValueType::Bool: return MyAny(false);
@@ -634,6 +699,7 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
         };
         for (const auto &field : referenceLayout->fields) {
             if (kFixedFieldNames.contains(field.name)) continue;
+            if (isBindlessTextureIndexField(field.name)) continue;
             if (material.extraParameters.contains(field.name)) continue;
             MyAny defaultValue = defaultValueForType(field.valueType);
             if (!defaultValue.IsEmpty()) material.extraParameters[field.name] = defaultValue;
@@ -650,6 +716,15 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
         for (const auto &textureCubeName : referenceLayout->textureCubeFields) {
             if (material.extraParameters.contains(textureCubeName)) continue;
             material.extraParameters[textureCubeName] = MyAny(TextureCubeRef{});
+        }
+        // バインドレス化済みのモジュール専用テクスチャスロット。Texture2D宣言を持たなくなり
+        // （textureFieldsに載らない）struct Material側のuintフィールドとしてのみ現れるため、
+        // 上のisBindlessTextureIndexFieldの命名規則から検出し、対応するextraParametersキーへ
+        // TextureRef型の既定値を追加する
+        for (const auto &field : referenceLayout->fields) {
+            if (!isBindlessTextureIndexField(field.name)) continue;
+            if (material.extraParameters.contains(field.name)) continue;
+            material.extraParameters[field.name] = MyAny(TextureRef{});
         }
     }
     ImGui::EndDisabled();

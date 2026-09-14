@@ -217,7 +217,9 @@ bool SaveSceneFolder(const std::string &path, const JSON &sceneJson) {
 
 JSON LoadSceneFolder(const std::string &path) {
     JSON manifest = LoadJSON(path + kSceneManifestFileName);
-    if (manifest.empty()) return JSON();
+    if (!manifest.is_object()) return JSON();
+
+    try {
 
     JSON sceneJson;
     sceneJson["sceneName"] = manifest.value("sceneName", "");
@@ -238,7 +240,7 @@ JSON LoadSceneFolder(const std::string &path) {
         for (const auto &entry : std::filesystem::directory_iterator(objectsPath, ec)) {
             if (!entry.is_directory()) continue;
             JSON wrapped = LoadJSON(PathToUtf8String(entry.path()) + kObjectFileName);
-            if (wrapped.empty() || !wrapped.contains("object")) continue;
+            if (!wrapped.is_object() || !wrapped.contains("object") || !wrapped["object"].is_object()) continue;
             JSON objJson = wrapped["object"];
             const std::string objectID = objJson.value("objectID", "");
             if (objectID.empty()) continue;
@@ -265,25 +267,28 @@ JSON LoadSceneFolder(const std::string &path) {
         });
     }
 
-    // ルートから深さ優先でフラットな配列へ組み立てる（同じ親を持つオブジェクト同士の
-    // 相対順序さえ保たれていればヒエラルキー表示順は正しく復元される）
+    // ルートから深さ優先でフラットな配列へ組み立てる。再帰を使うと外部生成された
+    // 極端に深いシーンでスタックオーバーフローするため、明示スタックで走査する。
     JSON sceneObjects = JSON::array();
-    std::function<void(const std::string &)> appendSubtree = [&](const std::string &objectID) {
-        sceneObjects.push_back(objectsByID.at(objectID).objectJson);
-        auto it = childrenByParent.find(objectID);
-        if (it == childrenByParent.end()) return;
-        for (const auto &childID : it->second) {
-            appendSubtree(childID);
-        }
-    };
+    std::vector<std::string> pending;
     auto rootIt = childrenByParent.find(std::string());
     if (rootIt != childrenByParent.end()) {
-        for (const auto &rootID : rootIt->second) {
-            appendSubtree(rootID);
+        for (auto it = rootIt->second.rbegin(); it != rootIt->second.rend(); ++it) pending.push_back(*it);
+    }
+    while (!pending.empty()) {
+        std::string objectID = std::move(pending.back());
+        pending.pop_back();
+        sceneObjects.push_back(objectsByID.at(objectID).objectJson);
+        auto it = childrenByParent.find(objectID);
+        if (it != childrenByParent.end()) {
+            for (auto child = it->second.rbegin(); child != it->second.rend(); ++child) pending.push_back(*child);
         }
     }
     sceneJson["sceneObjects"] = std::move(sceneObjects);
-    return sceneJson;
+        return sceneJson;
+    } catch (...) {
+        return JSON();
+    }
 }
 
 } // namespace

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CameraController2D | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_CameraController2D">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>CameraController2D</h1>
+<p class="page-lead"><code>CameraController</code>の2D版で、同一オブジェクトの<code>Camera2D</code>を追従先へ滑らかに追従させます。追従に使うのは位置X/Yと画面内回転（Z軸）のみで、画角の代わりにwidth/height（表示範囲＝ズーム相当）の遷移を扱います。</p>
+</div>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>bool IsControllable() const</code></td><td>同オブジェクトに <code>Camera2D</code> があるかどうか</td></tr>
+<tr><td><code>void AddFollowTarget(Object@)</code></td><td>追従先オブジェクトを追加する</td></tr>
+<tr><td><code>void RemoveFollowTarget(uint index)</code></td><td>追従先オブジェクトをインデックス指定で削除する</td></tr>
+<tr><td><code>uint GetFollowTargetCount() const</code></td><td>追従先オブジェクトの数を取得する</td></tr>
+<tr><td><code>Object@ GetFollowTargetObject(uint index) const</code></td><td>追従先オブジェクトをインデックス指定で取得する</td></tr>
+<tr><td><code>void SetFollowPositionEnable(uint index, bool x, bool y)</code> / <code>void GetFollowPositionEnable(uint index, bool &amp;out, bool &amp;out) const</code></td><td>位置追従の軸（X/Y）を設定/取得する</td></tr>
+<tr><td><code>void SetFollowRotationEnable(uint index, bool)</code> / <code>bool GetFollowRotationEnable(uint index) const</code></td><td>回転追従（画面内回転＝Z軸）の有効/無効を設定/取得する</td></tr>
+<tr><td><code>void SetPositionOffset(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetPositionOffset() const</code></td><td>位置オフセット</td></tr>
+<tr><td><code>void SetRotationOffset(float)</code> / <code>float GetRotationOffset() const</code></td><td>回転オフセット（ラジアン、画面内回転＝Z軸のみ）</td></tr>
+<tr><td><code>void SetTargetSize(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetTargetSize() const</code></td><td>目標のwidth/height（ズーム相当）</td></tr>
+<tr><td><code>void SetMoveStrength(float)</code> / <code>float GetMoveStrength() const</code></td><td>移動追従の強さ（0.0〜1.0）</td></tr>
+<tr><td><code>void SetMoveStrengthPerAxis(const Vector2 &amp;in)</code> / <code>Vector2 GetMoveStrengthPerAxis() const</code></td><td>軸ごとの移動追従の強さ</td></tr>
+<tr><td><code>void SetMoveStrengthUsePerAxis(bool)</code> / <code>bool GetMoveStrengthUsePerAxis() const</code></td><td>移動追従の強さを軸ごとに使うかどうか</td></tr>
+<tr><td><code>void SetRotateLerpFactor(float)</code> / <code>float GetRotateLerpFactor() const</code></td><td>回転追従の強さ（0.0〜1.0）</td></tr>
+<tr><td><code>void SetSizeLerpFactor(float)</code> / <code>float GetSizeLerpFactor() const</code></td><td>サイズ遷移の強さ（0.0〜1.0）</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="Camera2D.html">Camera2D</a></li>
+<li><a href="CameraController.html">CameraController</a> — 3D版</li>
+<li><a href="../../../Editor/Components/Render/CameraController2D.html">Editor/Components/Render/CameraController2D.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

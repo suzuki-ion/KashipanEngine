@@ -52,7 +52,7 @@ protected:
         }
         ImGui::TextColored(ImVec4(1.0f, 0.65f, 0.2f, 1.0f), "%s", TranslationC("component.screenwideditherblendeffect.warning"));
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.screenwideditherblendeffect.warning_detail"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.screenwideditherblendeffect.warning_detail"));
         }
     }
 #endif

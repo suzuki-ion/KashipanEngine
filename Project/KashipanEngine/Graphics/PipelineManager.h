@@ -26,7 +26,8 @@ public:
     ~PipelineManager();
 
     /// @brief パイプラインの再読み込み
-    void ReloadPipelines();
+    /// @return 全パイプラインを再構築できた場合はtrue。失敗時は直前のPSOを維持する
+    bool ReloadPipelines();
 
     /// @brief パイプライン情報の取得
     const PipelineInfo &GetPipeline(const std::string &pipelineName) { return pipelineInfos_.at(pipelineName); }

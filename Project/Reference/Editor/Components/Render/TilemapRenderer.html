@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TilemapRenderer | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_TilemapRenderer">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>TilemapRenderer</h1>
+<p class="page-lead">RPGツクール風のオートタイル（隣接する同種タイルに応じてテクスチャを自動で切り替える）に対応したタイルマップ描画コンポーネントです。自身はSceneRendererへ描画登録せず、同一オブジェクトの<code>MeshFilter</code>/<code>SpriteRenderer</code>を自動追加して駆動します（<code>ScreenBufferViewport</code>と同じパターン）。タイル配置が変わるたびに1枚の結合メッシュを再構築するため、タイル数が多くても描画コストは1オブジェクト分のドローコールに収まります。</p>
+</div>
+
+<div class="note"><strong>シーンビューでの配置</strong><br>シーンビューの「Tile Paint」ツールタブ（<code>SceneEditorView</code>）から、選択中のTilemapRendererオブジェクトへクリック/ドラッグで直接タイルを配置できます（左クリック=選択中のブラシ、右クリック=常に消しゴム。右クリックは「2D」表示モード限定）。ブラシはタイルセット画像のサムネイルから選べます。Inspectorのセル一括編集欄やAngelScriptからの<code>SetTile</code>呼び出しでも配置可能です。</div>
+
+<div class="note"><strong>MeshRendererではなくSpriteRendererを使う理由</strong><br>パイプライン名<code>Object2D.*</code>は、シーンビュー（エディター）上でgCamera3D投影の「Worldバリアント」へ差し替えられて初めて3Dシーンビュー内に正しく表示されます。この差し替えは<code>SpriteRenderer</code>由来の描画エントリにしか適用されないため、同じパイプラインを<code>MeshRenderer</code>で使うとシーンビュー上でのみ真っ黒・位置ズレして表示されます（実際のゲーム画面では問題になりません）。TilemapRendererが自動追加するのが<code>SpriteRenderer</code>である理由はこのためです。</div>
+
+<h2>オートタイルの仕組み</h2>
+<p>各タイル種類（Tile Type）は「接続先タイル種類インデックス」のリストを持てます（Connects Toリスト）。あるセルについて、上下左右の隣接セルの<strong>タイル種類インデックス</strong>が自分のConnects Toリストに含まれていれば、その方向のビットを立て、4bit（0〜15）のビットマスクを求めます。この判定は<strong>片方向</strong>です。例えば「草」（インデックス0）のConnects Toが{0, 1}、「土」（インデックス1）のConnects Toが{1}のみの場合、草は土と接続して見えますが（草のリストに1が含まれる）、土は草と接続しません（土のリストに0が含まれない）。相互に接続させたい場合は、両方のタイル種類のConnects Toリストへ互いのインデックスを追加する必要があります。ビットの意味は次の通りです。</p>
+<table>
+<tr><th>ビット値</th><th>方向</th></tr>
+<tr><td>1</td><td>北（+Y方向）のセルへ接続している（自分のConnects Toに含まれる）</td></tr>
+<tr><td>2</td><td>東（+X方向）のセルへ接続している</td></tr>
+<tr><td>4</td><td>南（-Y方向）のセルへ接続している</td></tr>
+<tr><td>8</td><td>西（-X方向）のセルへ接続している</td></tr>
+</table>
+<p>タイルセット画像は、1つのタイル種類につき<strong>4x4=16パターン</strong>のブロックを敷き詰めたレイアウトを前提とします。ブロック内の位置は「列 = ビットマスク % 4」「行 = ビットマスク / 4」で、Tile TypeのTileset Origin (px)を左上原点として、その列・行にTile Pixel Size分だけオフセットした位置のタイルが使われます（RPGツクール互換の47パターンA2形式ではありません）。これはAutotile Modeが<strong>4-Direction</strong>（既定）の場合の仕様。
+
+<h2>8方向オートタイル（4分割合成）</h2>
+<p>Autotile Modeを<strong>8-Direction</strong>に切り替えると、斜め4方向も含めた8方向で接続を判定する。1タイルを4つの角（左上/右上/左下/右下）に分割し、角ごとにタイルセット上のどのクォーター（1/4マス）を貼り付けるかを、周囲の接続状況から<strong>自動的に</strong>選ぶ方式。パラメーターは一切不要（Isolated Tile・Cross Tileの位置を除く）。RPGツクールの実ファイルとの互換性は無く、独自に定義したレイアウト。</p>
+<p>タイルセット画像は、1つのタイル種類につき<strong>2列×3行</strong>のブロックを前提とする。</p>
+<table>
+<tr><th>位置（列,行）</th><th>内容</th></tr>
+<tr><td>(0,0)</td><td><strong>Isolated Tile</strong> — 周囲8方向すべて非接続の時、まるごと1枚使う</td></tr>
+<tr><td>(1,0)</td><td><strong>Cross Tile</strong> — 上下左右4方向のみ接続・斜め4つとも非接続の時、まるごと1枚使う</td></tr>
+<tr><td>(0,1) / (1,1)</td><td>2×2ブロックの上段（左上セル／右上セル）</td></tr>
+<tr><td>(0,2) / (1,2)</td><td>2×2ブロックの下段（左下セル／右下セル）</td></tr>
+</table>
+<p>上記のIsolated Tile・Cross Tile以外のケース（4つの角を個別合成する場合）は、各角ごとに「その角に隣接する縦方向1つ・横方向1つの接続有無」「その角の斜め方向1つの接続有無」を見て、2×2ブロックのどのセルの・どのクォーターを使うかを次のルールで自動的に決める。参照するクォーターの位置は常に<strong>出力する角自身と同じ位置</strong>（左上の角なら参照元セルの左上クォーター、右下の角なら参照元セルの右下クォーター、というように反転・入れ替え無しでそのまま対応する）。</p>
+<ul>
+<li>縦方向・横方向とも非接続 → 2×2ブロックの<strong>自分と同じ位置</strong>のセル</li>
+<li>縦方向のみ接続 → 2×2ブロックの<strong>上下反転</strong>した位置のセル</li>
+<li>横方向のみ接続 → 2×2ブロックの<strong>左右反転</strong>した位置のセル</li>
+<li>縦方向・横方向・斜めすべて接続（完全に囲まれている） → 2×2ブロックの<strong>対角</strong>のセル</li>
+<li>縦方向・横方向は接続しているが斜めだけ非接続（凹み） → <strong>Cross Tile</strong>（この場合もその角と同じ位置のクォーターだけを使う）</li>
+</ul>
+<p>Isolated Tile・Cross Tileの位置（タイル単位。Tileset Origin (px)からの整数タイル数オフセット）のみ、Inspectorの「Eight-Direction Layout (Advanced)」セクションから調整できる。2×2ブロックの位置は常にIsolated/Cross Tileの2行下・同じ2列に固定されており、調整項目は無い。</p>
+<div class="note">このアルゴリズムはRPGツクールのA2形式などとは異なる、KashipanEngine独自に導出したものです。実機でレンダリングしてみないと正確な見た目は確認できないため、水平/垂直のペア・L字・十字・2×2ブロック・3×3ブロックなど複数の配置パターンで実際にタイルを並べて見た目を確認すること。</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>Pipeline</td><td>コンボボックス</td><td>読み込み済みの2D用レンダーパイプライン名から選択（既定値 <code>Object2D.DoubleSidedCulling.BlendNormal</code>）。同一オブジェクトのSpriteRendererへそのまま反映される</td></tr>
+<tr><td>Material</td><td>コンボボックス＋アセットのドラッグ&amp;ドロップ受付</td><td>タイルセット画像を含むマテリアル（既定値 <code>Default</code>）</td></tr>
+<tr><td>Autotile Mode</td><td>ラジオボタン（4-Direction / 8-Direction）</td><td>オートタイルの判定方向。既定4-Direction（既存シーンとの互換性維持）。切り替えるとタイルセット画像のレイアウトが変わる（上記参照）</td></tr>
+<tr><td>Eight-Direction Layout (Advanced)</td><td>折りたたみ可能なセクション（Isolated Tile・Cross Tileの計2個のXYドラッグ入力欄）</td><td>Autotile Modeが8-Directionの時のみ表示。Isolated Tile・Cross Tileの位置（タイル単位）を調整する。それ以外の合成パターンは自動選択されるため調整項目は無い（上記「8方向オートタイル」参照）</td></tr>
+<tr><td>Tile World Size</td><td>XYのドラッグ入力欄</td><td>タイル1個のワールド空間でのサイズ。既定値(1, 1)</td></tr>
+<tr><td>Tile Pixel Size</td><td>XYのドラッグ入力欄</td><td>タイルセット画像内でのタイル1個のピクセルサイズ。既定値(32, 32)</td></tr>
+<tr><td>Grid Width / Grid Height</td><td>整数ドラッグ入力欄</td><td>グリッドの列数・行数。変更すると既存のタイル配置は(0,0)基準で可能な範囲まで維持される</td></tr>
+<tr><td>Tile Types</td><td>タイル種類ごとに折りたたみ可能なセクション（Tileset Origin (px)・Solid・Connects To・削除ボタン）</td><td>タイル種類の追加・編集・削除。タイル種類が増えても見やすいよう、1種類ごとに開閉できるセクションに分かれている。Add Tile Typeボタンで末尾に追加。SolidはGenerate 2D Collidersが有効な場合に当たり判定生成の対象にするかどうか（既定true）。Connects Toは接続先タイル種類インデックスの小さなリスト（Add Connection/削除ボタンで複数登録可能。片方向）</td></tr>
+<tr><td>Generate 2D Colliders</td><td>チェックボックス</td><td>隣接するSolidなセルを貪欲法で矩形へまとめ、同一オブジェクトへBox2DColliderを自動生成する（既定false）。詳細は下記「2D当たり判定の自動生成」参照</td></tr>
+<tr><td>Bulk Edit Cells</td><td>複数行テキスト入力</td><td>「セルをテキストへ読み込み」でグリッド全体を「1行=1列（Y座標、上の行が大きいY）、カンマ区切り=X座標、-1=空セル」のテキストとして読み込み、編集後に「テキストからセルへ反映」で書き戻す。行数・列数が現在のグリッドと異なる場合は自動でResizeされる</td></tr>
+</table>
+
+<h2>2D当たり判定の自動生成</h2>
+<p>Generate 2D Collidersを有効にすると、Solidなセルが隣接している範囲を貪欲法（左上から右方向に最大幅を求め、その幅の行が続く限り下方向へ高さを伸ばす）で矩形へまとめ、その矩形ごとに<code>Box2DCollider</code>を同一オブジェクトへ生成する。生成した<code>Box2DCollider</code>は内部的に追跡され、タイル配置や有効/無効の切り替えのたびに全て削除してから作り直される（ユーザーが手動で追加した無関係な<code>Box2DCollider</code>には触れない）。生成された<code>Box2DCollider</code>個々をInspector上で手動編集する導線は無く、手で調整したい場合はGenerate 2D Collidersをオフにして自分で追加すること。</p>
+
+<h2>AngelScriptからの操作</h2>
+<p>実行時にブロックの設置・破壊などでタイル配置を変更したい場合は、AngelScript側から次のメソッドを呼び出せます（コンポーネント取得の仕組みは他コンポーネントと同様）。</p>
+<table>
+<tr><th>メソッド</th><th>内容</th></tr>
+<tr><td><code>void SetTile(int x, int y, int tileTypeIndex)</code></td><td>セルにタイル種類を設定する（-1で空にする）。範囲外の座標は無視される</td></tr>
+<tr><td><code>int GetTile(int x, int y) const</code></td><td>セルのタイル種類を取得する（範囲外・空セルは-1）</td></tr>
+<tr><td><code>void Resize(int width, int height)</code></td><td>グリッドサイズを変更する</td></tr>
+<tr><td><code>void Clear()</code></td><td>全セルを空にする</td></tr>
+<tr><td><code>int AddTileType(const Vector2 &amp;in tilesetOriginPx)</code></td><td>タイル種類を追加し、新しいインデックスを返す（接続先は空で始まる。自分自身を含め、AddTileTypeConnectionで追加すること）</td></tr>
+<tr><td><code>void RemoveTileType(int index)</code></td><td>タイル種類を削除する（参照していたセルは空になり、他のタイル種類のConnects Toが参照していた場合もそちらも削除・繰り上げられる）</td></tr>
+<tr><td><code>void AddTileTypeConnection(int index, int targetTileTypeIndex)</code> / <code>void RemoveTileTypeConnection(int index, int targetTileTypeIndex)</code></td><td>タイル種類indexの接続先（片方向）へtargetTileTypeIndexを追加・削除する</td></tr>
+<tr><td><code>int GetTileTypeConnectionCount(int index) const</code> / <code>int GetTileTypeConnectionAt(int index, int connectionIndex) const</code></td><td>タイル種類が持つ接続先の数・各値（タイル種類インデックス）を取得する</td></tr>
+<tr><td><code>void SetTileTypeSolid(int index, bool solid)</code> / <code>bool GetTileTypeSolid(int index) const</code></td><td>タイル種類が2D当たり判定生成の対象かを設定・取得する</td></tr>
+<tr><td><code>void SetGenerateColliders(bool enabled)</code> / <code>bool GetGenerateColliders() const</code></td><td>2D当たり判定の自動生成を設定・取得する</td></tr>
+<tr><td><code>void SetAutotileMode(int mode)</code> / <code>int GetAutotileMode() const</code></td><td>オートタイルの判定方向を設定・取得する（0=4-Direction, 1=8-Direction）</td></tr>
+</table>
+<p>タイル配置の変更は即座にメッシュを作り直すのではなく、変更フラグを立てるだけで次のフレームの更新処理で1回だけ再構築されるため、1フレーム内で複数回<code>SetTile</code>を呼んでも再構築は1回で済みます。</p>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path"><span>Add Component</span><i>›</i><span>Render</span><i>›</i><span>TilemapRenderer</span></span> から追加する。追加時に同一オブジェクトへ<code>MeshFilter</code>/<code>SpriteRenderer</code>が無ければ自動的に追加される。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="SpriteRenderer.html">Render/SpriteRenderer.html</a> — 実際の描画を担うコンポーネント（TilemapRendererが自動追加・設定する）</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Object Inspectorの基本操作</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

@@ -1,6 +1,7 @@
 #include "SceneRenderer.h"
 
 #include <algorithm>
+#include <cmath>
 #include <type_traits>
 
 #include "Graphics/IRenderTarget.h"
@@ -13,6 +14,8 @@
 #include "Objects/Components/Render/SpriteRenderer.h"
 #include "Objects/Components/Render/SkinnedMeshRenderer.h"
 #include "Objects/Components/Render/TextRenderer.h"
+#include "Objects/Components/Render/BitmapTextRenderer.h"
+#include "Assets/BitmapFontManager.h"
 #include "Objects/Components/Render/CameraRenderer.h"
 #include "Objects/Components/Render/LightRenderer.h"
 #include "Objects/Components/Render/NormalWindowObject.h"
@@ -56,6 +59,27 @@ MaterialManager::MaterialHandle GetMaterialHandleForSubMesh(const RendererT *ren
 template <typename RendererT>
 Vector4 GetInstanceColorFor(const RendererT *renderer) {
     return renderer->GetInstanceColor();
+}
+/// @brief レンダラーが保持するインスタンスUV（オブジェクト単位のUV変換）を取得する
+template <typename RendererT>
+Vector2 GetInstanceUvTranslateFor(const RendererT *renderer) {
+    return renderer->GetInstanceUvTranslate();
+}
+template <typename RendererT>
+float GetInstanceUvRotationFor(const RendererT *renderer) {
+    return renderer->GetInstanceUvRotation();
+}
+template <typename RendererT>
+Vector2 GetInstanceUvScaleFor(const RendererT *renderer) {
+    return renderer->GetInstanceUvScale();
+}
+template <typename RendererT>
+Vector2 GetInstanceUvPivotFor(const RendererT *renderer) {
+    return renderer->GetInstanceUvPivot();
+}
+template <typename RendererT>
+int GetInstanceUvCombineModeFor(const RendererT *renderer) {
+    return static_cast<int>(renderer->GetInstanceUvCombineMode());
 }
 /// @brief 押し出しアウトライン（Inverted Hull）パイプライン名
 constexpr const char *kOutlinePipelineName = "Object3D.Outline";
@@ -103,6 +127,125 @@ bool MaterialWantsOutline(MaterialManager::MaterialHandle handle) {
     if (it == material->extraParameters.end()) return false;
     const auto *width = it->second.AnyCastPtr<float>();
     return width && *width > 0.0f;
+}
+
+/// @brief CameraRendererの描画先指定が、現在の描画先に一致するか判定する
+/// @details 実描画時のRendererInternal::IsTargetMatchと同じ規則にする。エディター描画先は
+///          専用カメラで上書きされるため、カメラ相対スナップの解決対象にはしない
+bool IsCameraTargetMatch(const CameraRenderer *cameraRenderer, IRenderTarget *target) {
+    if (!cameraRenderer || !target) return false;
+    if (!cameraRenderer->GetTargetObjectID().IsValid()) return true;
+    auto *targetObject = cameraRenderer->GetTargetObject();
+    if (!targetObject) return false;
+    std::vector<IRenderTarget *> targets;
+    SceneRenderer::CollectRenderTargets(targetObject, targets);
+    return std::find(targets.begin(), targets.end(), target) != targets.end();
+}
+
+/// @brief 実描画時に同じ描画先・パイプラインへ最後に適用されるPixel Snapping有効なCamera2Dを解決する
+/// @details カメラ定数バッファは複数一致時に後から登録されたものが上書きするため、ここでも最後の一致を使う
+CameraRenderer *ResolvePixelSnappingCamera(const std::vector<CameraRenderer *> &cameraRenderers,
+    IRenderTarget *target, const std::string &pipelineName) {
+    CameraRenderer *result = nullptr;
+    for (auto *cameraRenderer : cameraRenderers) {
+        if (!cameraRenderer || !cameraRenderer->IsActive()) continue;
+        const EmptyObject *owner = cameraRenderer->GetOwnerObject();
+        if (owner && owner->IsEditorOnlyInHierarchy()) continue;
+        if (!cameraRenderer->GetPipelineName().empty() && cameraRenderer->GetPipelineName() != pipelineName) continue;
+        if (!IsCameraTargetMatch(cameraRenderer, target)) continue;
+        if (!cameraRenderer->IsRenderTargetIncluded(target)) continue;
+        auto *camera2d = cameraRenderer->GetCamera2D();
+        if (!camera2d || !camera2d->GetPixelSnapping()) continue;
+        result = cameraRenderer;
+    }
+    return result;
+}
+
+/// @brief ワールド行列のローカルX/Y軸（拡縮を含む）をカメラローカル画面軸へ投影し、軸が画面X/Y軸と
+///        ほぼ平行（無回転または90度単位の回転）とみなせる場合のみ、その長さを描画先の1ピクセル単位の
+///        整数個数へ丸める
+/// @param outsetPixels 0より大きい場合、丸めた長さへさらにこの量（片側、ピクセル単位）を外側へ
+///        加算する安全マージン。位置・サイズを整数ピクセル境界へ厳密に一致させると、往復する行列変換の
+///        ごく僅かな浮動小数点誤差だけでGPUラスタライズの「ピクセル中心が内側か」判定が境界ピクセルを
+///        誤って外側と判定し、その行/列が丸ごと欠落することがある（SpriteRenderer::
+///        SetPixelSnapOutsetPixels参照）。0の場合は付与しない（既定・従来互換）
+/// @details Transformのscaleはエディタのドラッグ操作等の丸め誤差で意図した整数値からわずかにずれる
+///          ことが多く（例: 32.0のつもりが31.99957...）、原点の位置だけをピクセルへスナップしても
+///          スプライトの反対側の辺は境界からずれたままになる。原寸大のドット絵の全ピクセルを画面へ
+///          確実に対応させるには、位置だけでなくサイズも整数ピクセルへ強制する必要がある。
+///          軸が画面X/Y軸に対して斜めの場合（90度単位でない回転）はそもそも軸をピクセル格子へ
+///          一致させられないため補正せず素通りする（回転した見た目を歪めないため）
+void SnapAxisToPixelGrid(Matrix4x4 &world, int row, const Vector3 &origin, const Vector3 &originCameraLocal,
+    const Matrix4x4 &cameraWorld, const Matrix4x4 &cameraView, float pixelWidth, float pixelHeight, float outsetPixels) {
+    const Vector3 axisWorld(world.m[row][0], world.m[row][1], world.m[row][2]);
+    if (axisWorld.LengthSquared() < 1e-8f) return;
+
+    const Vector3 tipCameraLocal = (origin + axisWorld).Transform(cameraView);
+    const Vector3 axisCameraLocal = tipCameraLocal - originCameraLocal;
+
+    // 画面X/Y軸のどちらに支配的に沿っているかを判定し、もう一方の成分が無視できるほど小さい
+    // （＝回転が90度単位で画面軸と平行）場合のみ整数ピクセルへ丸める
+    const bool dominantIsX = std::abs(axisCameraLocal.x) >= std::abs(axisCameraLocal.y);
+    const float dominantLength = dominantIsX ? axisCameraLocal.x : axisCameraLocal.y;
+    const float minorLength = dominantIsX ? axisCameraLocal.y : axisCameraLocal.x;
+    constexpr float kAxisAlignedTolerance = 0.01f;
+    if (std::abs(minorLength) > std::abs(dominantLength) * kAxisAlignedTolerance) return;
+
+    const float pixelSize = dominantIsX ? pixelWidth : pixelHeight;
+    float snappedDominant = std::round(dominantLength / pixelSize) * pixelSize;
+    if (outsetPixels > 0.0f) {
+        // 符号（軸の向き）を保ったまま、両端がそれぞれoutsetPixels分だけ外側へ広がるよう
+        // 全体の長さへ2倍加算する（原点は動かしていないため、軸の伸長は自動的に両側対称になる）
+        snappedDominant += std::copysign(outsetPixels * 2.0f * pixelSize, dominantLength);
+    }
+    const Vector3 snappedCameraLocal = dominantIsX
+        ? Vector3(snappedDominant, 0.0f, axisCameraLocal.z)
+        : Vector3(0.0f, snappedDominant, axisCameraLocal.z);
+
+    const Vector3 snappedTip = (originCameraLocal + snappedCameraLocal).Transform(cameraWorld);
+    const Vector3 snappedAxisWorld = snappedTip - origin;
+    world.m[row][0] = snappedAxisWorld.x;
+    world.m[row][1] = snappedAxisWorld.y;
+    world.m[row][2] = snappedAxisWorld.z;
+}
+
+/// @brief スプライト原点をカメラローカル空間へ移し、描画先の1ピクセル単位へ丸めてワールド空間へ戻す
+/// @details カメラとスプライトを別々に丸めないため、両者が同じ量だけサブピクセル移動した場合に
+///          画面上の相対位置が1ピクセル往復することを防ぐ。カメラ回転にも追従して画面X/Y軸で丸める。
+///          位置に加えて、ローカルX/Y軸の長さ（SnapAxisToPixelGrid参照）も同じ基準で整数ピクセルへ
+///          スナップし、Transformのscaleにわずかな誤差があってもスプライトのサイズが常に画面ピクセルの
+///          整数個数になるようにする
+/// @param outsetPixels SnapAxisToPixelGrid参照。0の場合は付与しない（既定・従来互換）
+bool ApplyCameraRelativePixelSnapping(Matrix4x4 &world, const std::vector<CameraRenderer *> &cameraRenderers,
+    IRenderTarget *target, const std::string &pipelineName, float outsetPixels) {
+    if (!target || target->GetRenderTargetWidth() == 0 || target->GetRenderTargetHeight() == 0) return false;
+    auto *cameraRenderer = ResolvePixelSnappingCamera(cameraRenderers, target, pipelineName);
+    if (!cameraRenderer) return false;
+
+    auto *camera2d = cameraRenderer->GetCamera2D();
+    if (!camera2d) return false;
+    const float pixelWidth = camera2d->GetWidth() / static_cast<float>(target->GetRenderTargetWidth());
+    const float pixelHeight = camera2d->GetHeight() / static_cast<float>(target->GetRenderTargetHeight());
+    if (!std::isfinite(pixelWidth) || !std::isfinite(pixelHeight) || pixelWidth <= 0.0f || pixelHeight <= 0.0f) return false;
+
+    const Matrix4x4 cameraWorld = cameraRenderer->GetPixelSnappingReferenceWorldMatrix();
+    const Matrix4x4 cameraView = cameraWorld.Inverse();
+    const Vector3 position(world.m[3][0], world.m[3][1], world.m[3][2]);
+    const Vector3 originCameraLocal = position.Transform(cameraView);
+
+    // サイズ（ローカルX/Y軸の長さ）を先にスナップする。position（原点）はまだ動かしていないため、
+    // 軸ベクトルの計算にそのまま使える
+    SnapAxisToPixelGrid(world, 0, position, originCameraLocal, cameraWorld, cameraView, pixelWidth, pixelHeight, outsetPixels);
+    SnapAxisToPixelGrid(world, 1, position, originCameraLocal, cameraWorld, cameraView, pixelWidth, pixelHeight, outsetPixels);
+
+    Vector3 cameraLocal = originCameraLocal;
+    cameraLocal.x = std::round(cameraLocal.x / pixelWidth) * pixelWidth;
+    cameraLocal.y = std::round(cameraLocal.y / pixelHeight) * pixelHeight;
+    const Vector3 snappedWorld = cameraLocal.Transform(cameraWorld);
+    world.m[3][0] = snappedWorld.x;
+    world.m[3][1] = snappedWorld.y;
+    world.m[3][2] = snappedWorld.z;
+    return true;
 }
 
 /// @brief objがselectedObjectsに含まれるか、その祖先のいずれかが含まれるかを判定する
@@ -199,6 +342,7 @@ template <typename RendererT>
 void CollectSortableEntries(const std::vector<RendererT *> &renderers,
     PipelineManager *pipelineManager,
     IRenderTarget *editorTarget,
+    const std::vector<CameraRenderer *> &cameraRenderers,
     std::vector<SortableEntry> &sortableEntries,
     std::unordered_map<const IRenderTarget *, EmptyObject *> &targetOwners,
     bool onlyCustomTarget,
@@ -280,8 +424,26 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
                 }
                 sortable.entry.worldMatrix = Shake::ApplyRenderOnlyOffsets(
                     renderer->GetOwnerObject(), renderer->GetWorldMatrix());
+                // SpriteRendererと適用先Camera2Dの両方でPixel Snappingが有効なら、カメラ相対の
+                // 画面ピクセル格子へ揃える。エディター描画先や対応カメラが無い場合は、従来互換として
+                // ワールド座標を整数単位へ丸める
+                if constexpr (std::is_same_v<RendererT, SpriteRenderer>) {
+                    if (renderer->GetPixelSnapping()) {
+                        const bool snappedRelativeToCamera = target != editorTarget && ApplyCameraRelativePixelSnapping(
+                            sortable.entry.worldMatrix, cameraRenderers, target, entryPipelineName, renderer->GetPixelSnapOutsetPixels());
+                        if (!snappedRelativeToCamera) {
+                            sortable.entry.worldMatrix.m[3][0] = std::floor(sortable.entry.worldMatrix.m[3][0]);
+                            sortable.entry.worldMatrix.m[3][1] = std::floor(sortable.entry.worldMatrix.m[3][1]);
+                        }
+                    }
+                }
                 sortable.entry.instanceColor = GetInstanceColorFor(renderer);
                 sortable.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(renderer);
+                sortable.entry.instanceUvTranslate = GetInstanceUvTranslateFor(renderer);
+                sortable.entry.instanceUvRotation = GetInstanceUvRotationFor(renderer);
+                sortable.entry.instanceUvScale = GetInstanceUvScaleFor(renderer);
+                sortable.entry.instanceUvPivot = GetInstanceUvPivotFor(renderer);
+                sortable.entry.instanceUvCombineMode = GetInstanceUvCombineModeFor(renderer);
                 sortable.entry.objectIdSeed = SceneRenderer::ObjectIdSeedFor(ownerObject);
                 sortable.kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
                 sortable.pipelinePriority = entryPipelinePriority;
@@ -304,7 +466,8 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
     }
 }
 
-/// @brief 描画先→パイプライン優先度→RenderPriority→パイプライン名→メッシュ→サブメッシュ→マテリアルの順で比較する
+/// @brief 描画先→描画先の描画順優先度→パイプライン優先度→RenderPriority→パイプライン名→メッシュ→
+///        サブメッシュ→マテリアルの順で比較する
 /// @details RenderPriorityは各Rendererコンポーネントが持つ値（既定0）で、小さいほど先（奥）、
 ///          大きいほど後（手前）に描画されるよう昇順で比較する。既定値0同士は常にタイとなるため、
 ///          明示的に値を変えない限り既存のパイプライン名/メッシュ/マテリアル単位の並び
@@ -312,9 +475,18 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
 ///          テクスチャ・サンプラー（textureOverrideHandle/samplerOverrideHandle）はバインドレス化
 ///          （gTextures[]/gSamplers[]、RendererDraw.cpp::DrawBatch参照）によりインスタンスごとに
 ///          異なっていてもよいため、このキーには含めない（同一マテリアルならバッチが分断されない）
+///          異なる描画先（target）同士は、IRenderTarget::GetRenderOrderPriority()（既定0、
+///          ScreenBufferObjectのInspectorから設定可能）を先に比較し、同値の場合のみポインタアドレスで
+///          タイブレークする（他の描画先の結果をポストエフェクトから参照するような構成で、
+///          その描画先が必ず先に描き終わっていることを保証したい場合に使う）
 bool CompareSortableEntry(const SortableEntry &a, const SortableEntry &b) {
     if (a.kindOrder != b.kindOrder) return a.kindOrder < b.kindOrder;
-    if (a.entry.target != b.entry.target) return a.entry.target < b.entry.target;
+    if (a.entry.target != b.entry.target) {
+        const std::int32_t aPriority = a.entry.target ? a.entry.target->GetRenderOrderPriority() : 0;
+        const std::int32_t bPriority = b.entry.target ? b.entry.target->GetRenderOrderPriority() : 0;
+        if (aPriority != bPriority) return aPriority < bPriority;
+        return a.entry.target < b.entry.target;
+    }
     if (a.pipelinePriority != b.pipelinePriority) return a.pipelinePriority < b.pipelinePriority;
     if (a.renderPriority != b.renderPriority) return a.renderPriority < b.renderPriority;
     if (a.entry.pipelineName != b.entry.pipelineName) return a.entry.pipelineName < b.entry.pipelineName;
@@ -378,6 +550,11 @@ void CollectCacheableEntries(const std::vector<RendererT *> &renderers,
             }
             cached.ranked.entry.instanceColor = GetInstanceColorFor(renderer);
             cached.ranked.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(renderer);
+            cached.ranked.entry.instanceUvTranslate = GetInstanceUvTranslateFor(renderer);
+            cached.ranked.entry.instanceUvRotation = GetInstanceUvRotationFor(renderer);
+            cached.ranked.entry.instanceUvScale = GetInstanceUvScaleFor(renderer);
+            cached.ranked.entry.instanceUvPivot = GetInstanceUvPivotFor(renderer);
+            cached.ranked.entry.instanceUvCombineMode = GetInstanceUvCombineModeFor(renderer);
             cached.ranked.entry.objectIdSeed = SceneRenderer::ObjectIdSeedFor(renderer->GetOwnerObject());
             cached.ranked.entry.allowInstancing = renderer->GetAllowInstancing();
             cached.ranked.kindOrder = GetRenderTargetKindOrder(editorTarget->GetRenderTargetKind());
@@ -482,6 +659,17 @@ void SceneRenderer::RegisterTextRenderer(TextRenderer *renderer) {
 void SceneRenderer::UnregisterTextRenderer(const TextRenderer *renderer) {
     auto it = std::find(textRenderers_.begin(), textRenderers_.end(), renderer);
     if (it != textRenderers_.end()) textRenderers_.erase(it);
+}
+
+void SceneRenderer::RegisterBitmapTextRenderer(BitmapTextRenderer *renderer) {
+    if (!renderer) return;
+    if (std::find(bitmapTextRenderers_.begin(), bitmapTextRenderers_.end(), renderer) != bitmapTextRenderers_.end()) return;
+    bitmapTextRenderers_.push_back(renderer);
+}
+
+void SceneRenderer::UnregisterBitmapTextRenderer(const BitmapTextRenderer *renderer) {
+    auto it = std::find(bitmapTextRenderers_.begin(), bitmapTextRenderers_.end(), renderer);
+    if (it != bitmapTextRenderers_.end()) bitmapTextRenderers_.erase(it);
 }
 
 void SceneRenderer::RegisterGpuParticleEmitter(ParticleSystemBase *emitter) {
@@ -635,8 +823,8 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
     // キャッシュ対象にせず毎フレーム収集する（targetObjectID未指定＝エディター用描画先のみに描画する
     // 分はcachedEntries_側でまとめて扱うため、ここでは重複しない）
     std::vector<SortableEntry> freshEntries;
-    CollectSortableEntries(meshRenderers_, pipelineManager, editorTarget_, freshEntries, targetOwners_, /*onlyCustomTarget=*/true, editorDisplayMode_);
-    CollectSortableEntries(spriteRenderers_, pipelineManager, editorTarget_, freshEntries, targetOwners_, /*onlyCustomTarget=*/true, editorDisplayMode_);
+    CollectSortableEntries(meshRenderers_, pipelineManager, editorTarget_, cameraRenderers_, freshEntries, targetOwners_, /*onlyCustomTarget=*/true, editorDisplayMode_);
+    CollectSortableEntries(spriteRenderers_, pipelineManager, editorTarget_, cameraRenderers_, freshEntries, targetOwners_, /*onlyCustomTarget=*/true, editorDisplayMode_);
 
     // SkinnedMeshRendererはGPUスキニング結果バッファ(skinnedVertexBuffer)を追加で持つため、
     // MeshRenderer/SpriteRendererと形が異なりCollectSortableEntriesは使わず個別に収集する
@@ -693,6 +881,11 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
                     sortable.entry.skinnedVertexBuffer = renderer->GetSkinnedVertexBuffer();
                     sortable.entry.instanceColor = GetInstanceColorFor(renderer);
                     sortable.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(renderer);
+                    sortable.entry.instanceUvTranslate = GetInstanceUvTranslateFor(renderer);
+                    sortable.entry.instanceUvRotation = GetInstanceUvRotationFor(renderer);
+                    sortable.entry.instanceUvScale = GetInstanceUvScaleFor(renderer);
+                    sortable.entry.instanceUvPivot = GetInstanceUvPivotFor(renderer);
+                    sortable.entry.instanceUvCombineMode = GetInstanceUvCombineModeFor(renderer);
                     sortable.entry.objectIdSeed = SceneRenderer::ObjectIdSeedFor(ownerObject);
                     // skinnedVertexBufferがインスタンスごとに異なるため既に単独ドローコールになるが、
                     // API上の一貫性のためAllowInstancingも反映しておく（実際の描画結果への影響はない）
@@ -822,6 +1015,115 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
         }
     }
 
+    // BitmapTextRendererもTextRendererと同様「1文字＝1インスタンス」でDrawEntryを作る。
+    // ただしシェーダー/パイプラインはTextRendererの専用SDFパイプラインではなく、SpriteRenderer/
+    // MeshRendererと同じObject2D系パイプラインをそのまま使う。文字ごとのUV矩形は、SpriteRendererが
+    // 既に持つ汎用UVトランスフォーム機構（instanceUvTranslate/instanceUvScale、
+    // instanceUvCombineMode=InstanceOnly）へ載せることで、専用シェーダーを新設せずに済ませている。
+    // フォントアトラス（BitmapFontManagerがロードしたページテクスチャ）はTextRendererと同じく
+    // DrawEntry::textureOverrideHandleで、割り当てマテリアルのテクスチャを上書きする。
+    {
+        static const ModelManager::ModelHandle kBitmapTextRect2DMeshHandle =
+            ModelManager::GetModelHandleFromAssetPath("PrimitiveMesh-Rect2D");
+        std::vector<IRenderTarget *> targets;
+        for (auto *renderer : bitmapTextRenderers_) {
+            if (!renderer || !renderer->IsActive()) continue;
+            if (kBitmapTextRect2DMeshHandle == ModelManager::kInvalidHandle) continue;
+
+            const std::string &pipelineName = renderer->GetPipelineName();
+            if (pipelineName.empty() || !EnsurePipelineLoaded(pipelineManager, pipelineName)) continue;
+            const std::int32_t pipelinePriority = pipelineManager->GetPipeline(pipelineName).RenderPriority();
+
+            const EmptyObject *ownerObject = renderer->GetOwnerObject();
+            const bool editorOnly = ownerObject && ownerObject->IsEditorOnlyInHierarchy();
+            const bool hiddenFromEditorTarget = ownerObject && ownerObject->IsHiddenFromEditorTarget();
+
+            auto *targetObject = renderer->GetTargetObject();
+            SceneRenderer::CollectRenderTargets(targetObject, targets);
+            if (editorTarget_ && editorTarget_->IsRenderTargetAvailable() && !hiddenFromEditorTarget) {
+                targets.push_back(editorTarget_);
+            }
+
+            std::vector<BitmapTextRenderer::RenderCharacterInstance> instances;
+            bool instancesComputed = false;
+
+            for (auto *target : targets) {
+                if (!target || !target->IsRenderTargetAvailable()) continue;
+                if (target == editorTarget_ && editorDisplayMode_ == EditorDisplayMode::ThreeDOnly) continue;
+                if (editorOnly && target != editorTarget_) continue;
+                if (target != editorTarget_ && !renderer->IsRenderTargetIncluded(target)) continue;
+                if (target != editorTarget_) {
+                    targetOwners_[target] = targetObject;
+                }
+
+                std::string entryPipelineName = pipelineName;
+                std::int32_t entryPipelinePriority = pipelinePriority;
+                if (target == editorTarget_ && editorDisplayMode_ != EditorDisplayMode::TwoDOnly) {
+                    if (std::string worldPipelineName = ResolveEditorWorldPipelineName(pipelineManager, pipelineName);
+                        !worldPipelineName.empty()) {
+                        entryPipelinePriority = pipelineManager->GetPipeline(worldPipelineName).RenderPriority();
+                        entryPipelineName = std::move(worldPipelineName);
+                    }
+                }
+
+                if (!instancesComputed) {
+                    instances = renderer->GetRenderInstances();
+                    instancesComputed = true;
+                }
+                if (instances.empty()) continue;
+
+                const auto materialHandle = renderer->GetMaterialHandle();
+                if (materialHandle == MaterialManager::kInvalidHandle) continue;
+                const auto pageTextureHandle = BitmapFontManager::GetPageTextureHandle(renderer->GetFontHandle());
+                if (pageTextureHandle == TextureManager::kInvalidHandle) continue;
+
+                const auto samplerHandle = SamplerManager::GetSampler(
+                    renderer->GetPointSampling() ? DefaultSampler::PointClamp : DefaultSampler::LinearClamp);
+
+                const float objectIdSeed = SceneRenderer::ObjectIdSeedFor(ownerObject);
+                const int kindOrder = GetRenderTargetKindOrder(target->GetRenderTargetKind());
+                const bool allowInstancing = renderer->GetAllowInstancing();
+                const std::int32_t renderPriority = renderer->GetRenderPriority();
+                const bool pixelSnapping = renderer->GetPixelSnapping();
+                const float pixelSnapOutsetPixels = renderer->GetPixelSnapOutsetPixels();
+
+                for (const auto &ch : instances) {
+                    SortableEntry sortable;
+                    sortable.entry.target = target;
+                    sortable.entry.pipelineName = entryPipelineName;
+                    sortable.entry.meshHandle = kBitmapTextRect2DMeshHandle;
+                    sortable.entry.materialHandle = materialHandle;
+                    sortable.entry.textureOverrideHandle = pageTextureHandle;
+                    sortable.entry.samplerOverrideHandle = samplerHandle;
+                    sortable.entry.worldMatrix = ch.worldMatrix;
+                    // SpriteRendererと同様、適用先Camera2Dの両方でPixel Snappingが有効なら、カメラ相対の
+                    // 画面ピクセル格子へ文字ごとに揃える。エディター描画先や対応カメラが無い場合は、
+                    // 従来互換としてワールド座標を整数単位へ丸める
+                    if (pixelSnapping) {
+                        const bool snappedRelativeToCamera = target != editorTarget_ && ApplyCameraRelativePixelSnapping(
+                            sortable.entry.worldMatrix, cameraRenderers_, target, entryPipelineName, pixelSnapOutsetPixels);
+                        if (!snappedRelativeToCamera) {
+                            sortable.entry.worldMatrix.m[3][0] = std::floor(sortable.entry.worldMatrix.m[3][0]);
+                            sortable.entry.worldMatrix.m[3][1] = std::floor(sortable.entry.worldMatrix.m[3][1]);
+                        }
+                    }
+                    sortable.entry.instanceColor = ch.color;
+                    sortable.entry.instanceColorBlendMode = static_cast<int>(renderer->GetInstanceColorBlendMode());
+                    // マテリアル側のUV変換は無視し、文字のアトラス内UV矩形のみを使う
+                    sortable.entry.instanceUvTranslate = Vector2(ch.u0, ch.v0);
+                    sortable.entry.instanceUvScale = Vector2(ch.u1 - ch.u0, ch.v1 - ch.v0);
+                    sortable.entry.instanceUvCombineMode = 2; // SpriteRenderer::UVCombineMode::InstanceOnly
+                    sortable.entry.objectIdSeed = objectIdSeed;
+                    sortable.entry.allowInstancing = allowInstancing;
+                    sortable.kindOrder = kindOrder;
+                    sortable.pipelinePriority = entryPipelinePriority;
+                    sortable.renderPriority = renderPriority;
+                    freshEntries.push_back(sortable);
+                }
+            }
+        }
+    }
+
     // エディターのシーンビューで選択中オブジェクトへ付与する選択アウトライン（editorTarget_にのみ適用）
     if (!editorSelectedObjects_.empty()) {
         AppendEditorSelectionOutlineEntries(meshRenderers_, pipelineManager, editorTarget_,
@@ -853,6 +1155,11 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
             // Instance Colorは実行中にスクリプト等から変更され得るため、ワールド行列と同様に毎フレーム反映する
             ranked.entry.instanceColor = std::visit([](auto *r) { return GetInstanceColorFor(r); }, cached.source);
             ranked.entry.instanceColorBlendMode = std::visit([](auto *r) { return GetInstanceColorBlendModeFor(r); }, cached.source);
+            ranked.entry.instanceUvTranslate = std::visit([](auto *r) { return GetInstanceUvTranslateFor(r); }, cached.source);
+            ranked.entry.instanceUvRotation = std::visit([](auto *r) { return GetInstanceUvRotationFor(r); }, cached.source);
+            ranked.entry.instanceUvScale = std::visit([](auto *r) { return GetInstanceUvScaleFor(r); }, cached.source);
+            ranked.entry.instanceUvPivot = std::visit([](auto *r) { return GetInstanceUvPivotFor(r); }, cached.source);
+            ranked.entry.instanceUvCombineMode = std::visit([](auto *r) { return GetInstanceUvCombineModeFor(r); }, cached.source);
             cachedLive.push_back(std::move(ranked));
         }
     }
@@ -886,6 +1193,7 @@ void SceneRenderer::ShowImGui() {
     ImGui::Text("MeshRenderers: %d", static_cast<int>(meshRenderers_.size()));
     ImGui::Text("SpriteRenderers: %d", static_cast<int>(spriteRenderers_.size()));
     ImGui::Text("TextRenderers: %d", static_cast<int>(textRenderers_.size()));
+    ImGui::Text("BitmapTextRenderers: %d", static_cast<int>(bitmapTextRenderers_.size()));
     ImGui::Text("SkinnedMeshRenderers: %d", static_cast<int>(skinnedMeshRenderers_.size()));
     ImGui::Text("CameraRenderers: %d", static_cast<int>(cameraRenderers_.size()));
     ImGui::Text("LightRenderers: %d", static_cast<int>(lightRenderers_.size()));

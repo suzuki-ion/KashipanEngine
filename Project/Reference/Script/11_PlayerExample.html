@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>実例: Player.asを読み解く | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-script-data.js"></script>
+<script defer src="../assets/nav.js"></script>
+</head>
+<body data-page="11_PlayerExample">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>実例: Player.asを読み解く</h1>
+<p class="page-lead"><code>Assets/Application/Scripts/Player.as</code> は、移動・坂道判定・ジャンプ・被ダメージ・チェックポイント復帰までを1つのスクリプトで実装した、このエンジンにおけるスクリプティングの実践例です。全体は300行超あるため、ここでは要点を抜粋しながら解説します。</p>
+</div>
+
+<h2>SerializeFieldでパラメータを外出しする</h2>
+<pre><code class="language-angelscript">[Header("プレイヤーの基本設定")]
+
+[SerializeField, Tooltip("移動速度")]
+float moveSpeed = 0.1f;
+[SerializeField, Tooltip("ジャンプ力")]
+float jumpPower = 16.0f;
+[SerializeField, Tooltip("重力")]
+float gravity = 0.2f;
+...
+[Header("移動方向追従オブジェクト")]
+
+[SerializeField, Tooltip("プレイヤーの移動方向の先へ配置するオブジェクト")]
+Object@ movementTargetObject;</code></pre>
+<p>
+移動速度・ジャンプ力・重力・HP・ノックバック量など、調整が必要な値を全て <code>[SerializeField]</code> にすることで、C++の再ビルドはおろかスクリプトの再コンパイルすら不要に、インスペクター上の数値変更だけでゲームバランスを調整できます。<code>Tooltip</code> を添えておくと、他の開発者（あるいは未来の自分）がインスペクター上でパラメータの意味をすぐ把握できます。詳しくは <a href="02_SerializeField.html">02_SerializeField.html</a> を参照してください。
+</p>
+
+<h2>Update()で毎フレームの処理を段階分けする</h2>
+<pre><code class="language-angelscript">void Update() {
+    const float dt = GetDeltaTime() * GetGameSpeed();
+    const bool wasGroundedAtFrameStart = isGrounded;
+
+    InputEvent();
+    UpdateGroundedState(dt);
+    Landing();
+    LateralMovement();
+    Sliding(dt);
+    Jumping(dt);
+    UpdatePlatformInertia(dt, wasGroundedAtFrameStart);
+    UpdateDamageCooldown(dt);
+    CheckEnemyDamage();
+    ApplyVelocity(dt);
+    UpdateDamageFlash(dt);
+    CheckDeath();
+    UpdateMovementTarget();
+
+    hasGroundContact = false;
+    isCollidingWithEnemy = false;
+}</code></pre>
+<p>
+<code>dt</code> は <code>GetDeltaTime() * GetGameSpeed()</code> で求めます。<code>GetGameSpeed()</code> を掛けておくことで、スロー演出やポーズ相当の速度変更に自動で追従します。<code>Update()</code> 本体はこの1フレーム分の処理を意味のある単位（入力・接地判定・移動・重力・被ダメージ…）の private メソッドへ分割して呼び出しているだけで、それぞれのメソッド自体はさほど複雑ではありません。大きなロジックは1つの関数に詰め込まず、こうして分割していくと見通しがよくなります。
+</p>
+
+<h2>OnCollisionStay()で地面判定・押し戻し・動く床への追従を行う</h2>
+<pre><code class="language-angelscript">void OnCollisionStay(const HitInfo &amp;in hit) {
+    if (hit.otherObject is null) return;
+    if (hit.otherCollider !is null &amp;&amp; hit.otherCollider.IsTrigger()) return;
+    if (hit.otherCollider.GetTag() == groundColliderTag) {
+        bool grounded = hit.normal.y &gt; groundedThreshold;
+        if (!hasGroundContact &amp;&amp; grounded) {
+            hasGroundContact = true;
+            groundHitNormal = hit.normal;
+            isOnSteepSlope = hit.normal.y &lt; slideThreshold;
+        } else if (!grounded) {
+            // 壁・天井：法線方向の速度成分だけを打ち消す
+            Vector3 wallNormal = hit.normal;
+            wallNormal.z = 0.0f;
+            float intoSurface = velocity.Dot(wallNormal);
+            if (intoSurface &lt; 0.0f) {
+                velocity = velocity - wallNormal * intoSurface;
+            }
+        }
+
+        // 動く床への追従：地面のTransformとPreTransform（前フレーム値）の差分を使う
+        if (grounded) {
+            Transform@ groundTransform;
+            PreTransform@ groundPreTransform;
+            if (hit.otherObject.GetComponent(@groundTransform) &amp;&amp; hit.otherObject.GetComponent(@groundPreTransform)) {
+                groundDelta = groundTransform.GetTranslate() - groundPreTransform.GetPreviousTranslate();
+            }
+        }
+
+        // 押し戻し
+        Transform@ tf = GetTransform();
+        if (tf !is null) {
+            Vector3 pushBack = hit.normal * hit.penetration;
+            pushBack.z = 0.0f;
+            if (grounded) pushBack.x = 0.0f;
+            tf.SetTranslate(tf.GetTranslate() + pushBack);
+        }
+    }
+}</code></pre>
+<p>
+このメソッドから読み取れる実践的なパターンをいくつか挙げます。
+</p>
+<ul>
+<li><code>hit.otherCollider.GetTag()</code> による<strong>タグ比較でコライダーの種別を判定</strong>する（<code>Tag groundColliderTag = Tag("GroundBox");</code> のようにあらかじめ構築しておいたタグと比較する）</li>
+<li><code>hit.otherCollider.IsTrigger()</code> で<strong>トリガー判定のコライダーは押し戻し処理から除外</strong>する</li>
+<li><code>hit.normal * hit.penetration</code> で<strong>押し戻しベクトル</strong>を作り、<code>Transform</code> へ直接加算して位置補正する</li>
+<li>地面側の <code>Transform</code> と <code>PreTransform</code>（前フレームの値）の差分から<strong>動く床への追従量</strong>を求める（<code>Velocity</code> コンポーネントを直接見るのではなく差分ベースにすることで、地面がスクリプトから直接 <code>Transform</code> を書き換えるような動かし方をしていても正しく追従できる）</li>
+</ul>
+
+<h2>シーン変数によるチェックポイント連携</h2>
+<p>
+<code>Checkpoint.as</code> は接触時に自身の位置をシーン変数へ保存します。
+</p>
+<pre><code class="language-angelscript">// Checkpoint.as
+void TrySave(const HitInfo &amp;in hit) {
+    if (hit.otherObject is null) return;
+    if (hit.otherCollider is null || hit.otherCollider.GetTag() != playerColliderTag) return;
+
+    Transform@ tf = GetTransform();
+    Scene@ scene = GetScene();
+    if (tf is null || scene is null) return;
+
+    int savedPriority;
+    bool hasSaved = scene.GetVariable("CheckpointPriority", savedPriority);
+    if (hasSaved &amp;&amp; savedPriority &gt; priority) return; // より優先度の高いチェックポイントは上書きしない
+
+    scene.SetVariable("CheckpointPosition", tf.GetTranslate());
+    scene.SetVariable("CheckpointPriority", priority);
+}</code></pre>
+<p>
+<code>Player.as</code> 側は、HPが尽きたときにこの値を読み出してリスポーンします。
+</p>
+<pre><code class="language-angelscript">// Player.as
+void CheckDeath() {
+    if (currentHp &gt; 0) return;
+
+    Transform@ tf = GetTransform();
+    Scene@ scene = GetScene();
+    Vector3 respawnPosition;
+    bool hasCheckpoint = (scene !is null) &amp;&amp; scene.GetVariable("CheckpointPosition", respawnPosition);
+    if (tf !is null &amp;&amp; hasCheckpoint) {
+        tf.SetTranslate(respawnPosition);
+    }
+
+    velocity = Vector3(0.0f, 0.0f, 0.0f);
+    currentHp = maxHp;
+    damageCooldownTimer = damageCooldown; // リスポーン直後の無敵猶予として流用
+}</code></pre>
+<p>
+このように、<strong>直接の参照関係を持たない2つのオブジェクト（チェックポイントとプレイヤー）が、文字列キーのシーン変数だけを介して疎結合に連携</strong>できる点がシーン変数の利点です。<code>GetVariable</code> は値が存在しない・型が一致しない場合に <code>false</code> を返すため、<code>bool hasCheckpoint = ...</code> のように戻り値を必ずチェックしてから使います。詳しくは <a href="04_ObjectSceneVariables.html">04_ObjectSceneVariables.html</a> を参照してください。
+</p>
+
+<h2>被ダメージ演出とMeshRendererの色操作</h2>
+<pre><code class="language-angelscript">void UpdateDamageFlash(const float dt) {
+    if (damageFlashTimer &lt;= 0.0f) return;
+    damageFlashTimer -= dt;
+
+    MeshRenderer@ meshRenderer;
+    if (!GetComponent(@meshRenderer)) return;
+    bool blinkOn = (int(damageFlashTimer / damageFlashInterval) % 2) == 0;
+    if (blinkOn) {
+        meshRenderer.SetInstanceColor(damageFlashColor);
+        meshRenderer.SetInstanceColorBlendMode(0); // Override
+    } else {
+        meshRenderer.SetInstanceColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+        meshRenderer.SetInstanceColorBlendMode(1); // Multiply（見た目に影響しない）
+    }
+}</code></pre>
+<p>
+無敵時間中、経過時間をダメージ点滅間隔で割った商の偶奇で点滅させています。<code>MeshRenderer::SetInstanceColorBlendMode</code> は整数でブレンドモード（0=Override, 1=Multiply, 2=Add, 3=Subtract）を指定するため、コメントで意味を残しておくと読みやすくなります。<code>SkinnedMeshRenderer</code> にも同じインスタンスカラーAPIがあるため、スキンメッシュのキャラクターでも同じ手法が使えます（<a href="Components/Render/SkinnedMeshRenderer.html">Components/Render/SkinnedMeshRenderer.html</a>）。
+</p>
+
+<h2>サンプルスクリプト全体像</h2>
+<p>
+上記の抜粋を踏まえた、最小構成のサンプルです。
+</p>
+<pre><code class="language-angelscript">class Player : ScriptComponentBehavior {
+    [SerializeField]
+    float moveSpeed = 5.0f;
+
+    [SerializeField]
+    string jumpSound = "Sounds/jump.wav";
+
+    Velocity@ velocity;
+
+    void Start() {
+        Log("Player start: " + GetOwnerObject().GetName());
+        GetComponent(@velocity);
+    }
+
+    void Update() {
+        Transform@ tf = GetTransform();
+        if (tf is null) return;
+
+        // 入力コマンドで左右移動
+        float moveX = GetCommandValue("MoveX");
+        Vector3 pos = tf.GetTranslate();
+        pos.x += moveX * moveSpeed * GetDeltaTime();
+        tf.SetTranslate(pos);
+
+        // ジャンプ
+        if (IsCommandTriggered("Jump") &amp;&amp; velocity !is null) {
+            velocity.AddVelocity(Vector3(0.0f, 8.0f, 0.0f));
+            PlayAudio(jumpSound);
+        }
+    }
+
+    void OnCollisionEnter(const HitInfo &amp;in hit) {
+        if (hit.otherObject !is null &amp;&amp; hit.otherObject.GetName() == "Enemy") {
+            LogWarning("敵と衝突: penetration=" + hit.penetration);
+            GetScene().SetNextSceneName("GameOver");
+            GetScene().ChangeToNextScene();
+        }
+    }
+
+    void End() {
+        Log("Player end");
+    }
+}</code></pre>
+
+<h2>関連ページ</h2>
+<ul>
+<li>ライフサイクル・衝突コールバック → <a href="01_Lifecycle.html">01_Lifecycle.html</a></li>
+<li>SerializeField属性 → <a href="02_SerializeField.html">02_SerializeField.html</a></li>
+<li>シーン変数・ScriptComponent経由のデータ受け渡し → <a href="04_ObjectSceneVariables.html">04_ObjectSceneVariables.html</a></li>
+<li>実際に手を動かして書いてみる → <a href="../Editor/Guide/09_WriteScript.html">チュートリアル 9. スクリプトを書く</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

@@ -114,6 +114,17 @@ public:
 
     bool IsInterpolateEnabled() const { return interpolate_; }
 
+    /// @brief 速度（ワールド空間、単位/秒）を設定する
+    void SetVelocity(const Vector3 &velocity) {
+        if (rigidBody_) rigidBody_->setLinearVelocity(reactphysics3d::Vector3(velocity.x, velocity.y, velocity.z));
+    }
+    /// @brief 現在の速度（ワールド空間、単位/秒）を取得する（ボディ未生成の場合はゼロベクトル）
+    Vector3 GetVelocity() const {
+        if (!rigidBody_) return Vector3(0.0f, 0.0f, 0.0f);
+        const auto v = rigidBody_->getLinearVelocity();
+        return Vector3(v.x, v.y, v.z);
+    }
+
     /// @brief 現在のTransformの位置・回転を物理ボディへ反映する
     /// @details エディターでオブジェクトを移動させても、既に生成済みの物理ボディの位置は
     ///          自動的には追従しない（毎フレームUpdateで行っているのは物理→Transformへの反映のみ）。

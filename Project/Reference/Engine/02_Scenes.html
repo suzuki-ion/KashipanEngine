@@ -20,7 +20,7 @@
 
 <div class="warn">
 <strong>重要: シーンはC++で継承して作らない</strong><br>
-<code>Scene</code> クラスは <code>final</code> 指定されており、ゲーム側で <code>class TitleScene : public Scene</code> のような継承をすることはできません。シーンの内容（オブジェクト・シーンコンポーネント・シーン変数）は基本的に<strong>シーンエディタ上で編集し、シーンJSONファイルとして保存</strong>します。C++側で行うのは <code>SceneManager::RegisterScene</code> / <code>RegisterSceneFile</code> によるシーンの登録と、<code>ChangeScene</code> による切り替えだけです。振る舞いを追加したい場合は<a href="04_ObjectComponents.html">オブジェクトコンポーネント</a>を組み合わせるか、<a href="Script/00_Index.html">AngelScriptスクリプト</a>を書きます。
+<code>Scene</code> クラスは <code>final</code> 指定されており、ゲーム側で <code>class TitleScene : public Scene</code> のような継承をすることはできません。シーンの内容（オブジェクト・シーンコンポーネント・シーン変数）は基本的に<strong>シーンエディタ上で編集し、シーンJSONファイルとして保存</strong>します。C++側で行うのは <code>SceneManager::RegisterScene</code> / <code>RegisterSceneFile</code> によるシーンの登録と、<code>ChangeScene</code> による切り替えだけです。振る舞いを追加したい場合は<a href="04_ObjectComponents.html">オブジェクトコンポーネント</a>を組み合わせるか、<a href="../Script/00_Index.html">AngelScriptスクリプト</a>を書きます。
 </div>
 
 <h2>Scene クラス <span class="badge final">final</span></h2>
@@ -228,7 +228,7 @@ virtual void ShowImGui();
 <tr><td><code>SceneRenderer</code></td><td>シーン内の描画用コンポーネントを収集して描画リストを構築する（<a href="05_Rendering.html">05_Rendering.html</a>）</td></tr>
 <tr><td><code>SceneObjectCollider</code></td><td>シーン内の <code>ICollider</code> 派生コンポーネントを収集し、当たり判定処理へ橋渡しする（<a href="06_Collision.html">06_Collision.html</a>）</td></tr>
 <tr><td><code>SceneComputeProcessor</code></td><td>シーン内のコンピュートシェーダー処理コンポーネントを収集・実行する</td></tr>
-<tr><td><code>SceneScriptEngine</code></td><td>シーン内でAngelScriptを実行するための共有スクリプトエンジンを管理する（<a href="Script/00_Index.html">Script/00_Index.html</a>）</td></tr>
+<tr><td><code>SceneScriptEngine</code></td><td>シーン内でAngelScriptを実行するための共有スクリプトエンジンを管理する（<a href="../Script/00_Index.html">Script/00_Index.html</a>）</td></tr>
 <tr><td><code>SceneAudioPlayer</code></td><td>シーン内の <code>AudioListener</code>/<code>AudioSource</code> を収集して音声再生を管理する</td></tr>
 <tr><td><code>ScenePreTransform</code></td><td>シーン内の <code>PreTransform</code> コンポーネントを収集し、毎フレーム最後に前フレーム値を更新する</td></tr>
 <tr><td><code>SceneShakeApplier</code></td><td><code>Shake</code>コンポーネント（処理タイミング=DeferredEnd）のTransformへの適用を、全オブジェクト更新後にまとめて行う</td></tr>

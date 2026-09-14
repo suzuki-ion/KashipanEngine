@@ -23,7 +23,9 @@
 <tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
 <tr><td>Target</td><td>コンボボックス</td><td>描画先コンポーネントを持つオブジェクトのみが候補。ヒエラルキーからのドラッグ&amp;ドロップにも対応</td></tr>
 <tr><td>Render Target Filter（折りたたみツリー）</td><td>描画先ごとのチェックボックス</td><td>対象オブジェクトが複数の描画先コンポーネントを持つ場合のみ表示</td></tr>
-<tr><td>Text</td><td>複数行テキスト入力（InputTextMultiline）</td><td>表示する文字列。直下にグレーのヒント文で使用可能タグ一覧「<code>&lt;i&gt; &lt;b&gt; &lt;color=#RRGGBB(AA)&gt; &lt;size=N|N%&gt; &lt;s&gt; &lt;u&gt; &lt;sub&gt; &lt;sup&gt;</code>」が表示される（イタリック・太字・色・サイズ・取り消し線・下線・下付き・上付き）</td></tr>
+<tr><td>Use Localization Key</td><td>チェックボックス</td><td>有効にすると、Textを直接編集する代わりに翻訳キーからテキストを解決するモードになる（既定false）</td></tr>
+<tr><td>Localization Key</td><td>テキスト入力（InputText）</td><td>Use Localization Keyが有効な場合のみ表示。<code>Locales/</code>または<code>Assets/Locales/</code>のキーを指定する。入力するたび即座にそのキーの翻訳結果でTextが更新される</td></tr>
+<tr><td>Text</td><td>複数行テキスト入力（InputTextMultiline）</td><td>表示する文字列。直下にグレーのヒント文で使用可能タグ一覧「<code>&lt;i&gt; &lt;b&gt; &lt;color=#RRGGBB(AA)&gt; &lt;size=N|N%&gt; &lt;s&gt; &lt;u&gt; &lt;sub&gt; &lt;sup&gt;</code>」が表示される（イタリック・太字・色・サイズ・取り消し線・下線・下付き・上付き）。Use Localization Keyが有効な間は無効化（グレーアウト）され直接編集できず、その下に「翻訳キーから解決されます（表示言語の変更に自動追従）」の説明文が表示される</td></tr>
 <tr><td>Font</td><td>コンボボックス（None選択可）</td><td>FontManagerに読み込み済みのフォントから選択</td></tr>
 <tr><td>Font Size</td><td>ドラッグ入力欄（ステップ0.01、0.01～1000）</td><td>既定値32</td></tr>
 <tr><td>Instance Color / Blend Mode</td><td>ColorEdit4（RGBA）/ コンボボックス</td><td>マテリアル色へ文字単位で適用する色と合成方法。<code>&lt;color=...&gt;</code>タグで部分的に上書きできる</td></tr>
@@ -34,12 +36,16 @@
 <tr><td>Default Character Anchor</td><td>XYのドラッグ入力欄（ステップ0.01）</td><td>各文字のデフォルトアンカー（単位クアッド内の正規化座標、既定(0.5, 0.5)）</td></tr>
 <tr><td>Default Character Pivot</td><td>XYのドラッグ入力欄（ステップ0.01）</td><td>各文字のデフォルトピボット（回転・拡縮の中心、既定(0.5, 0.5)）。意味はSpriteRendererのAnchor/Pivotと同じ</td></tr>
 <tr><td>Pipeline</td><td>コンボボックス</td><td>読み込み済みのレンダーパイプライン名から選択（既定値 <code>Text2D.BlendNormal</code>）</td></tr>
+<tr><td>Render Priority</td><td>整数ドラッグ入力（DragInt）</td><td>描画順を制御する優先度（既定0）。値が小さいほど先（奥）、大きいほど後（手前）に描画される。MeshRenderer/SpriteRendererと同じ仕組みで比較されるため、他種のRendererとの前後関係も統一的に制御できる。ホバーすると説明ツールチップが表示される</td></tr>
+<tr><td>Allow Instancing</td><td>チェックボックス</td><td>他のオブジェクトとのインスタンシング（同一パイプライン・メッシュ・マテリアルを共有するインスタンスの1回のドローコールへの結合）対象にするか（既定true）。falseにするとこの文字インスタンス群は常に単独のドローコールで描画される。ホバーすると説明ツールチップが表示される</td></tr>
 <tr><td>Character Overrides（折りたたみツリー）</td><td>文字インデックスごとの Offset（XYドラッグ、ステップ0.1）/ Rotation（ドラッグ、ステップ0.01、ラジアン）/ Scale（XYドラッグ、ステップ0.01）</td><td>Text（タグを除いた実文字数）と同じ数だけ<code>[0]</code>,<code>[1]</code>,...の項目が並ぶ。Textが空の場合はツリー自体が表示されない</td></tr>
 </table>
 
 <div class="warn"><strong>Character Overridesはシーンへ保存されない</strong><br>文字ごとの位置・回転・スケール上書き（Character Overrides）はランタイム専用のデータで、SaveToJsonの対象外。Inspector上で調整した値はPlay終了やシーン再読み込みでリセットされる。演出目的でスクリプトから毎フレーム設定する使い方を想定している。</div>
 
 <div class="note"><strong>Rotationのみラジアン表示</strong><br>Character OverridesのRotationは度への変換をせず、内部値（ラジアン）がそのままドラッグ入力欄に表示・入力される。Transformの回転（度表示）とは扱いが異なる点に注意。</div>
+
+<div class="tip"><strong>Use Localization Key有効時は表示言語の変化に自動追従する</strong><br>Update()毎フレーム、直近に反映した表示言語と現在の表示言語（アプリケーション側の言語。エディター自身のUI言語とは独立した値）を比較し、変化していた場合のみ翻訳キーを再解決してTextへ反映する（未使用のTextRendererへの負荷はbool比較1回のみ）。そのため実行中に言語を切り替えても、対象のTextRendererへ改めて手を入れる必要はない。</div>
 
 <h2>Add Componentでの位置</h2>
 <p><span class="ui-path"><span>Add Component</span><i>›</i><span>Render</span><i>›</i><span>TextRenderer</span></span> から追加する。同一オブジェクトに複数付与可能。</p>

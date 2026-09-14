@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <string>
 #include <unordered_map>
 #include <variant>
 #include <vector>
@@ -16,6 +17,7 @@
 #include "Objects/MathObjects/2D/Rect.h"
 #include "Objects/MathObjects/2D/Segment.h"
 
+#include <box2d/box2d.h>
 #include <reactphysics3d/reactphysics3d.h>
 
 namespace KashipanEngine {
@@ -149,6 +151,28 @@ struct ColliderInfo3D final {
     bool continuousDetection = false;
 };
 
+/// @brief CharacterController2D の1回の移動で接触した方向
+/// @details ビットフラグとして組み合わせて使用する。
+enum class CharacterCollisionFlags2D : std::uint8_t {
+    None  = 0,
+    Below = 1 << 0,
+    Above = 1 << 1,
+    Left  = 1 << 2,
+    Right = 1 << 3,
+};
+
+/// @brief CharacterController2D の移動解決結果
+/// @details Collider は Transform を直接変更せず、許可された移動量と接触情報だけを返す。
+///          形状別のスイープ実装を Collider 側に閉じ込めることで、将来 Capsule2D/Circle へ
+///          拡張しても CharacterController2D の公開 API を維持できるようにする。
+struct CharacterMoveResult2D final {
+    Vector2 requestedDelta{0.0f, 0.0f};
+    Vector2 appliedDelta{0.0f, 0.0f};
+    Vector2 groundNormal{0.0f, 0.0f};
+    std::uint8_t collisionFlags = static_cast<std::uint8_t>(CharacterCollisionFlags2D::None);
+    bool shapeSupported = false;
+};
+
 class Collider final {
 public:
     using ColliderID = std::uint32_t;
@@ -156,11 +180,6 @@ public:
     using RigidBody = reactphysics3d::RigidBody;
     using ColliderHandle = reactphysics3d::Collider;
     using CollisionCallback = reactphysics3d::CollisionCallback;
-
-    struct HitPair2D {
-        ColliderID a = 0;
-        ColliderID b = 0;
-    };
 
     struct HitPair3D {
         ColliderID a = 0;
@@ -182,10 +201,8 @@ public:
     void Clear2D();
     void Clear3D();
 
-    std::vector<HitPair2D> CheckAll2D() const;
     std::vector<HitPair3D> CheckAll3D() const;
 
-    bool Check2D(ColliderID a, ColliderID b) const;
     bool Check3D(ColliderID a, ColliderID b) const;
 
     /// @brief ReactPhysics3DのCollider*から、それを登録した際の情報（ownerObject/sourceCollider）を取得する
@@ -197,10 +214,28 @@ public:
     void Update2D();
     void Update3D();
 
+    /// @brief 登録済み2Dコライダーを用いて、キャラクターの移動量を衝突しない範囲へ制限する
+    /// @details 現在は軸平行な Math::Rect（Box2DCollider）を X→Y の順にスイープする。
+    ///          接触後のめり込みを押し戻す方式ではなく、移動前に停止位置を決めるため、
+    ///          縦に並ぶ壁コライダーの継ぎ目を床として拾う問題を避けられる。
+    /// @param selfCollider CharacterController2D が移動形状として使用するコライダー
+    /// @param requestedDelta このフレームに要求されたワールドXY移動量
+    /// @param skinWidth 接触面との間に残す微小な隙間
+    /// @param groundedThreshold 接地とみなす法線Y成分の下限
+    /// @param ignoredTags ブロッキング対象から除外するコライダータグ
+    CharacterMoveResult2D MoveCharacter2D(
+        const ICollider *selfCollider,
+        const Vector2 &requestedDelta,
+        float skinWidth,
+        float groundedThreshold,
+        const std::vector<std::string> &ignoredTags) const;
+
     void StepPhysics(float timeStep);
 
     PhysicsWorld *GetPhysicsWorld() { return physicsWorld_; }
     const PhysicsWorld *GetPhysicsWorld() const { return physicsWorld_; }
+    /// @brief 2D用のBox2Dワールドを取得する（RigidBody2Dがベアボディを生成する際に使用）
+    b2WorldId GetPhysicsWorld2D() const { return world2D_; }
 
 
 private:
@@ -219,6 +254,21 @@ private:
         bool ownsBody = false;
     };
 
+    /// @brief 2D用のランタイム状態（Box2Dのボディ・シェイプへのハンドル）
+    /// @details ColliderRuntime3Dと対称。bodyはRigidBody2Dが選択されている場合はそちらが所有する
+    ///          ボディを共有（ownsBody=false）、無ければColliderが所有する静的ボディを生成する（ownsBody=true）。
+    ///          Box2Dの接触の継続性（反発・摩擦の計算に影響する）を保つため、形状が変化していない限り
+    ///          ボディ・シェイプは毎フレーム作り直さず使い回す（lastOrigin/lastAngleは、ownsBody=trueの
+    ///          静的ボディについて、シェイプを壊さずTransformだけ同期すべきかを判定するための前回値）
+    struct ColliderRuntime2D {
+        b2BodyId body = b2_nullBodyId;
+        b2ShapeId shape = b2_nullShapeId;
+        bool ownsBody = false;
+        Vector2 lastOrigin{ 0.0f, 0.0f };
+        float lastAngle = 0.0f;
+        bool hasLastOrigin = false;
+    };
+
     struct CollisionEvent3D {
         ColliderID a = 0;
         ColliderID b = 0;
@@ -226,11 +276,11 @@ private:
         HitInfo3D hitInfoB{};
     };
 
-    template<typename Info>
+    template<typename Info, typename Runtime>
     struct Entry {
         ColliderID id;
         Info info;
-        ColliderRuntime3D runtime{};
+        Runtime runtime{};
         /// @brief 連続衝突判定用の前フレーム位置（3Dはボディ位置、2Dは形状のバウンディング中心）
         /// @details CCDが有効かつ有効状態の間だけ毎フレーム記録される。ランタイムは毎フレーム
         ///          再構築されるため、フレームを跨ぐ情報はEntry側に保持する
@@ -249,34 +299,47 @@ private:
         return false;
     }
 
-    const Entry<ColliderInfo2D> *Find2D(ColliderID id) const;
-    const Entry<ColliderInfo3D> *Find3D(ColliderID id) const;
-    Entry<ColliderInfo3D> *Find3D(ColliderID id);
+    const Entry<ColliderInfo2D, ColliderRuntime2D> *Find2D(ColliderID id) const;
+    const Entry<ColliderInfo3D, ColliderRuntime3D> *Find3D(ColliderID id) const;
+    Entry<ColliderInfo3D, ColliderRuntime3D> *Find3D(ColliderID id);
 
     static std::uint64_t MakePairKey(ColliderID a, ColliderID b);
 
     void EnsureWorldCreated();
     void ReleaseWorld();
 
-    bool BuildRuntime3D(Entry<ColliderInfo3D> &entry);
-    void ReleaseRuntime3D(Entry<ColliderInfo3D> &entry);
-    bool UpdateRuntime3D(Entry<ColliderInfo3D> &entry, const ColliderInfo3D &info);
-    bool UpdateColliderShape3D(Entry<ColliderInfo3D> &entry, const ColliderInfo3D &info);
-    bool UpdateColliderTransform3D(Entry<ColliderInfo3D> &entry, const ColliderInfo3D &info);
+    bool BuildRuntime3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry);
+    void ReleaseRuntime3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry);
+    bool UpdateRuntime3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry, const ColliderInfo3D &info);
+    bool UpdateColliderShape3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry, const ColliderInfo3D &info);
+    bool UpdateColliderTransform3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry, const ColliderInfo3D &info);
     std::optional<ShapeHandle3D> CreateShape3D(const ColliderInfo3D &info);
     reactphysics3d::Transform MakeTransform3D(const ColliderInfo3D &info) const;
     reactphysics3d::Vector3 ToRp3d(const Vector3 &v) const;
     Vector3 FromRp3d(const reactphysics3d::Vector3 &v) const;
     HitInfo3D BuildHitInfo3D(const reactphysics3d::CollisionCallback::ContactPoint &contact) const;
 
+    /// @brief RigidBody2Dの選択状況に応じて、対象のColliderInfo2Dが使うべきBox2DボディID
+    ///        （RigidBody2Dが所有するベアボディ、または無ければColliderが所有する静的ボディ）を用意する
+    bool BuildRuntime2D(Entry<ColliderInfo2D, ColliderRuntime2D> &entry);
+    void ReleaseRuntime2D(Entry<ColliderInfo2D, ColliderRuntime2D> &entry);
+    /// @brief ColliderInfo2D::ShapeVariantからBox2Dシェイプを（既存シェイプを破棄してから）生成し直す
+    bool RecreateShape2D(Entry<ColliderInfo2D, ColliderRuntime2D> &entry);
+    b2BodyDef MakeBodyDef2D(const ColliderInfo2D &info) const;
+    /// @brief 形状（サイズ・トリガー設定等）は変化していない静的ボディ（ownsBody=true）について、
+    ///        Transformの現在位置・回転だけをボディへ同期する（シェイプは壊さない）。
+    ///        RigidBody2D所有の動的ボディには使わない（物理側が位置の実質的な所有者のため）
+    void SyncStaticBodyTransform2D(Entry<ColliderInfo2D, ColliderRuntime2D> &entry);
+
+    /// @brief 通常（非センサー）の接触ペアの現在の法線・めり込み量を、idA側の接触データから取得する
+    /// @return 見つからない（接触していない等）場合はfalse
+    bool QueryContactHitInfo2D(ColliderID idA, ColliderID idB, HitInfo2D &outHitInfo) const;
+    /// @brief センサーコライダー（isTrigger）がvisitorと現在も重なっているかを取得する
+    bool QuerySensorHitInfo2D(ColliderID sensorId, ColliderID visitorId) const;
+
     void Dispatch2D(ColliderID a, ColliderID b, const HitInfo2D &hitInfo, bool wasHit);
     void Dispatch3D(ColliderID a, ColliderID b, const HitInfo3D &hitInfoA, const HitInfo3D &hitInfoB, bool wasHit);
 
-    /// @brief 2Dの連続衝突判定（スイープ）。CCD有効コライダーの移動経路の中間位置で判定し、
-    ///        検出したヒットをペアキー（ID昇順。HitInfoは小さいID側を自分として計算）で収集する
-    void CollectContinuousHits2D(std::unordered_map<std::uint64_t, HitInfo2D> &outHits);
-    /// @brief 2Dコライダーの現在位置を次フレームのスイープ用に記録する
-    void RecordPrevPositions2D();
     /// @brief 3Dコライダーの現在位置を次フレームのスイープ用に記録する
     void RecordPrevPositions3D();
 
@@ -287,12 +350,14 @@ private:
 
     reactphysics3d::PhysicsCommon physicsCommon_{};
     reactphysics3d::PhysicsWorld *physicsWorld_ = nullptr;
+    b2WorldId world2D_ = b2_nullWorldId;
 
     ColliderID nextId_ = 1;
-    std::vector<Entry<ColliderInfo2D>> colliders2D_;
-    std::vector<Entry<ColliderInfo3D>> colliders3D_;
+    std::vector<Entry<ColliderInfo2D, ColliderRuntime2D>> colliders2D_;
+    std::vector<Entry<ColliderInfo3D, ColliderRuntime3D>> colliders3D_;
 
-    float accumulatedTime_ = 0.0f;
+    float accumulatedTime3D_ = 0.0f;
+    float accumulatedTime2D_ = 0.0f;
 };
 
 } // namespace KashipanEngine

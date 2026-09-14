@@ -218,22 +218,27 @@ struct Quaternion final {
         return mat;
     }
     Vector3 MakeEuler() {
+        // MakeRotateMatrix()は行ベクトル規約（v' = v * M）の回転行列を返すが、
+        // 以下の抽出式は列ベクトル規約（v' = M * v）の回転行列を前提としたものである。
+        // 両者は転置の関係にあるため、mat.m[i][j]の代わりにmat.m[j][i]（転置後の成分）を
+        // 参照することで、MakeRotateEuler()に渡した角度をそのまま復元できるようにしている
+        // （転置を取らずに実装すると、往復変換のたびに角度の符号が反転してしまうバグになる）。
         Matrix4x4 mat = MakeRotateMatrix();
         float rotX, rotY, rotZ;
 
-        float sy = mat.m[0][2];
+        float sy = mat.m[2][0];
         if (sy > 0.9999f) {
             rotY = 3.14159265f * 0.5f;
-            rotX = std::atan2(mat.m[1][0], mat.m[1][1]);
+            rotX = std::atan2(mat.m[0][1], mat.m[1][1]);
             rotZ = 0.0f;
         } else if (sy < -0.9999f) {
             rotY = -3.14159265f * 0.5f;
-            rotX = std::atan2(-mat.m[1][0], mat.m[1][1]);
+            rotX = std::atan2(-mat.m[0][1], mat.m[1][1]);
             rotZ = 0.0f;
         } else {
             rotY = std::asin(sy);
-            rotX = std::atan2(-mat.m[1][2], mat.m[2][2]);
-            rotZ = std::atan2(-mat.m[0][1], mat.m[0][0]);
+            rotX = std::atan2(-mat.m[2][1], mat.m[2][2]);
+            rotZ = std::atan2(-mat.m[1][0], mat.m[0][0]);
         }
         return Vector3(rotX, rotY, rotZ);
     }

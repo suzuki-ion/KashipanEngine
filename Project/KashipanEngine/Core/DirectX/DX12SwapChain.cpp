@@ -2,6 +2,7 @@
 #include "Core/DirectXCommon.h"
 #include <cmath>
 #include <algorithm>
+#include <sstream>
 #include <stdexcept>
 #include "Utilities/Translation.h"
 
@@ -57,7 +58,15 @@ void DX12SwapChain::DestroyInternal() {
     swapChain_.Reset();
     dcompHost_.reset();
     currentBufferIndex_ = 0;
-    sDirectXCommon->ReleaseCommandObjects(Passkey<DX12SwapChain>{}, slotIndex_);
+    // Destroy() 後もスワップチェーンの管理スロットにはこのインスタンスが残り、
+    // 再利用時にデストラクタから再度ここへ来る。返却済みのコマンドスロットは
+    // ScreenBuffer 等に再割り当てされ得るため、所有権を一度だけ返却する。
+    if (sDirectXCommon && slotIndex_ >= 0) {
+        sDirectXCommon->ReleaseCommandObjects(Passkey<DX12SwapChain>{}, slotIndex_);
+    }
+    slotIndex_ = -1;
+    commands_ = nullptr;
+    isDrawing_ = false;
 }
 
 void DX12SwapChain::BindCommandObjects(Passkey<DirectXCommon>,
@@ -190,7 +199,14 @@ void DX12SwapChain::Present(Passkey<DirectXCommon>) {
 
     HRESULT hr = swapChain_->Present(syncInterval, presentFlags);
     if (FAILED(hr)) {
-        Log(Translation("engine.directx.swapchain.present.failed"), LogSeverity::Critical);
+        std::stringstream ss;
+        ss << Translation("engine.directx.swapchain.present.failed")
+           << " HRESULT=0x" << std::hex << std::uppercase << static_cast<unsigned long>(hr);
+        if ((hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET) && sDevice) {
+            const HRESULT reason = sDevice->GetDeviceRemovedReason();
+            ss << " DeviceRemovedReason=0x" << std::hex << std::uppercase << static_cast<unsigned long>(reason);
+        }
+        Log(ss.str(), LogSeverity::Critical);
         throw std::runtime_error("Failed to present DX12 swap chain.");
     }
 }

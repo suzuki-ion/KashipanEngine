@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TilemapRenderer | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_TilemapRenderer">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>TilemapRenderer</h1>
+<p class="page-lead">RPGツクール風のオートタイル（隣接する同種タイルに応じてテクスチャを自動で切り替える）に対応したタイルマップ描画コンポーネントです。自身はSceneRendererへ描画登録せず、同一オブジェクトの<code>MeshFilter</code>/<code>SpriteRenderer</code>を自動追加して駆動します（<code>ScreenBufferViewport</code>と同じパターン）。タイル配置が変わるたびに1枚の結合メッシュを再構築するため、タイル数が多くても描画コストは1オブジェクト分のドローコールに収まります。</p>
+</div>
+
+<h2>グリッド編集</h2>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>int GetGridWidth() const</code> / <code>int GetGridHeight() const</code></td><td>グリッドサイズを取得する</td></tr>
+<tr><td><code>void Resize(int width, int height)</code></td><td>グリッドサイズを変更する（既存のタイル配置は(0,0)基準で可能な範囲まで維持される）</td></tr>
+<tr><td><code>void Clear()</code></td><td>全セルを空にする</td></tr>
+<tr><td><code>void SetTile(int x, int y, int tileTypeIndex)</code></td><td>セルにタイル種類を設定する（範囲外は無視。<code>tileTypeIndex</code>に-1を渡すと空セルにする）</td></tr>
+<tr><td><code>int GetTile(int x, int y) const</code></td><td>セルのタイル種類を取得する（範囲外・空セルは-1）</td></tr>
+</table>
+
+<h2>タイル種類</h2>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>int GetTileTypeCount() const</code></td><td>登録されているタイル種類数</td></tr>
+<tr><td><code>int AddTileType(const Vector2 &amp;in tilesetOriginPx)</code></td><td>タイル種類を追加し、その新しいインデックスを返す（接続先は空で始まる。<code>AddTileTypeConnection</code>で自分自身を含め接続先タイル種類を追加すること）</td></tr>
+<tr><td><code>void RemoveTileType(int index)</code></td><td>タイル種類を削除する。削除したインデックスを参照していたセルは空になり、それより大きいインデックスを参照していたセルは1つ繰り上がる</td></tr>
+<tr><td><code>void AddTileTypeConnection(int index, int targetTileTypeIndex)</code></td><td>タイル種類<code>index</code>の接続先へ<code>targetTileTypeIndex</code>を1つ追加する（片方向。相互に繋げたい場合は双方に追加する）</td></tr>
+<tr><td><code>void RemoveTileTypeConnection(int index, int targetTileTypeIndex)</code></td><td>接続先から1つ削除する</td></tr>
+<tr><td><code>int GetTileTypeConnectionCount(int index) const</code> / <code>int GetTileTypeConnectionAt(int index, int connectionIndex) const</code></td><td>接続先の数・要素の取得</td></tr>
+<tr><td><code>void SetTileTypeOriginPx(int index, const Vector2 &amp;in)</code></td><td>タイルセット画像上でのブロックの左上原点（ピクセル）を設定する</td></tr>
+<tr><td><code>void SetTileTypeSolid(int index, bool)</code> / <code>bool GetTileTypeSolid(int index) const</code></td><td>2D当たり判定自動生成の対象にするかどうか（<code>GetGenerateColliders()</code>が有効の時のみ意味を持つ）</td></tr>
+</table>
+
+<h2>タイルセット・オートタイル設定</h2>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetMaterialName(const string &amp;in)</code> / <code>const string &amp;GetMaterialName() const</code></td><td>使用マテリアル名</td></tr>
+<tr><td><code>void SetPipelineName(const string &amp;in)</code> / <code>const string &amp;GetPipelineName() const</code></td><td>使用パイプライン名</td></tr>
+<tr><td><code>void SetTileSize(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetTileSize() const</code></td><td>1タイルのワールド空間サイズ</td></tr>
+<tr><td><code>void SetTilePixelSize(const Vector2 &amp;in)</code> / <code>const Vector2 &amp;GetTilePixelSize() const</code></td><td>タイルセット画像上での1タイルのピクセルサイズ</td></tr>
+<tr><td><code>void SetGenerateColliders(bool)</code> / <code>bool GetGenerateColliders() const</code></td><td>Solidなタイル種類のセルへ2D当たり判定を自動生成するかどうか</td></tr>
+<tr><td><code>void SetAutotileMode(int)</code> / <code>int GetAutotileMode() const</code></td><td>オートタイルの判定方向。<code>0</code>=FourDirection（既定、上下左右4方向のみで判定） / <code>1</code>=EightDirection（斜め4方向も含めて判定し、4分割合成する）</td></tr>
+</table>
+
+<div class="note"><strong>タイルセット画像のレイアウトはAutotileModeで異なる</strong><br>FourDirectionは1タイル種類につき4x4=16パターンのブロックを、EightDirectionは2列×3行のブロック（Isolated/Cross/2×2の角4種）を前提とします。切り替えると見た目が変わります。</div>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="../Basic/MeshFilter.html">MeshFilter</a> / <a href="SpriteRenderer.html">SpriteRenderer</a> — 自動追加される描画コンポーネント</li>
+<li><a href="../Collider/Box2DCollider.html">Box2DCollider</a> — 自動生成される当たり判定</li>
+<li><a href="../../../Editor/Components/Render/TilemapRenderer.html">Editor/Components/Render/TilemapRenderer.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

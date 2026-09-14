@@ -15,7 +15,7 @@
 <div id="breadcrumb" class="breadcrumb"></div>
 <div class="page-header">
 <h1>ColorAdjustEffect</h1>
-<p class="page-lead">明度・コントラスト・彩度・色温度・カラーバランスを調整するポストエフェクトです。単一パスの宣言的エフェクトとして実装されています。C++側のAPIは<a href="../../../Engine/10_PostEffects.html">Engine/10_PostEffects.html</a>を参照してください。</p>
+<p class="page-lead">明度・コントラスト・彩度・色温度・カラーバランスを調整し、さらに色数を機械的に削減するポスタライズ処理を適用できるポストエフェクトです。単一パスの宣言的エフェクトとして実装されています。C++側のAPIは<a href="../../../Engine/10_PostEffects.html">Engine/10_PostEffects.html</a>を参照してください。</p>
 </div>
 
 <div class="note">
@@ -31,6 +31,7 @@
 <tr><td>Saturation</td><td>ドラッグ入力欄（ステップ0.01、範囲0.0〜4.0）</td><td>彩度の倍率。既定値 1.0</td></tr>
 <tr><td>Temperature</td><td>ドラッグ入力欄（ステップ0.01、範囲-2.0〜2.0）</td><td>色温度の調整量。既定値 0.0</td></tr>
 <tr><td>ColorBalance</td><td>XYZのドラッグ入力欄（ステップ0.01、範囲-1.0〜1.0）</td><td>RGB各チャンネルへのカラーバランス補正。既定値 (0.0, 0.0, 0.0)</td></tr>
+<tr><td>Posterize Levels</td><td>ドラッグ入力欄（整数、範囲0〜64）</td><td>RGB各チャンネルの色数をこの段数まで機械的に削減する（ポスタライズ）。0は無効（削減しない）。既定値 0</td></tr>
 </table>
 
 <h2>適用先の除外設定 <span class="badge imgui">USE_IMGUI</span></h2>

@@ -127,12 +127,21 @@ std::vector<PasteObjectCommand::Node> LoadPrefabNodes(const JSON &prefabJson) {
 }
 
 std::vector<PasteObjectCommand::Node> PrepareNodesForInstantiation(
-    const std::vector<PasteObjectCommand::Node> &source, bool preserveRootParent) {
+    const std::vector<PasteObjectCommand::Node> &source, bool preserveRootParent,
+    const std::unordered_map<std::string, UUID128> *preferredObjectIDsByNodeID) {
     std::vector<PasteObjectCommand::Node> result = source;
 
     std::vector<UUID128> freshIDs;
     freshIDs.reserve(result.size());
     for (size_t i = 0; i < result.size(); ++i) {
+        const std::string nodeID = result[i].json.value("prefabNodeID", std::string{});
+        if (preferredObjectIDsByNodeID && !nodeID.empty()) {
+            auto preferredIt = preferredObjectIDsByNodeID->find(nodeID);
+            if (preferredIt != preferredObjectIDsByNodeID->end() && preferredIt->second.IsValid()) {
+                freshIDs.push_back(preferredIt->second);
+                continue;
+            }
+        }
         freshIDs.emplace_back(true);
     }
 

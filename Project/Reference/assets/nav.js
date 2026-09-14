@@ -1,7 +1,7 @@
 // KashipanEngine Reference - shared navigation renderer
-// Loaded together with either nav-engine-data.js or nav-editor-data.js, which each
-// define KE_PAGES (relative to the Reference/ root) plus KE_SITE / KE_SITE_LABEL /
-// KE_OTHER_SITE_LABEL / KE_OTHER_SITE_HREF for the cross-site switcher.
+// Loaded together with one of nav-engine-data.js / nav-editor-data.js / nav-script-data.js,
+// which each define KE_PAGES (relative to the Reference/ root) plus KE_SITE / KE_SITE_LABEL /
+// KE_OTHER_SITES (array of { label, href }) for the cross-site switcher.
 (function () {
   // href の "/" の数から、現在ページを起点に Reference/ ルートへ戻るための "../" の数を求める
   function prefixForHref(href) {
@@ -24,6 +24,15 @@
     return order.map((g) => ({ group: g, items: map.get(g) }));
   }
 
+  // main内の見出し(h2/h3)へ出現順の連番IDを振る（検索結果からのジャンプ先として使用。
+  // search-index.js を生成するスクリプト側でも同じ順序でカウントしている）
+  function assignHeadingIds() {
+    const headings = document.querySelectorAll("main h2, main h3");
+    headings.forEach((h, i) => {
+      if (!h.id) h.id = "kehead-" + i;
+    });
+  }
+
   function renderSidebar(currentId) {
     const el = document.getElementById("sidebar");
     if (!el) return;
@@ -33,8 +42,11 @@
     let html = '';
     html += '<a class="sidebar-title" href="' + prefix + KE_PAGES[0].href + '">KashipanEngine</a>';
     html += '<span class="sidebar-sub">' + KE_SITE_LABEL + '</span>';
-    if (typeof KE_OTHER_SITE_HREF !== "undefined") {
-      html += '<a class="sidebar-switch" href="' + prefix + KE_OTHER_SITE_HREF + '">&#8646; ' + KE_OTHER_SITE_LABEL + '</a>';
+    html += '<a class="sidebar-search" href="' + prefix + 'search.html">&#128269; 全リファレンスを検索</a>';
+    if (typeof KE_OTHER_SITES !== "undefined") {
+      KE_OTHER_SITES.forEach((s) => {
+        html += '<a class="sidebar-switch" href="' + prefix + s.href + '">&#8646; ' + s.label + '</a>';
+      });
     }
 
     groups.forEach((g) => {
@@ -80,6 +92,7 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     const currentId = document.body.getAttribute("data-page");
+    assignHeadingIds();
     renderSidebar(currentId);
     renderFooter(currentId);
     renderBreadcrumb(currentId);

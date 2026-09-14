@@ -176,6 +176,10 @@ public:
     /// @brief ウィンドウタイトルを設定する
     /// @param title ウィンドウタイトル
     void SetWindowTitle(const std::string &title);
+    /// @brief ウィンドウアイコンを実行中に動的変更する
+    /// @param iconPath アイコン(.ico)のパス（プロジェクト相対 or 物理パス）。空文字を渡すとエンジン既定アイコンに戻す
+    /// @return 読み込みに成功したか（空文字指定時は常にtrue）
+    bool SetIcon(const std::string &iconPath);
     /// @brief ウィンドウサイズを設定する
     /// @param width クライアント幅
     /// @param height クライアント高さ
@@ -376,6 +380,11 @@ private:
         int32_t height,
         DWORD windowStyle,
         const std::wstring &iconPath);
+
+    /// @brief アイコンファイルを読み込む（32x32、失敗時はnullptr）
+    /// @param hInstance インスタンスハンドル
+    /// @param iconPath アイコンの物理パス
+    static HICON LoadWindowIcon(HINSTANCE hInstance, const std::wstring &iconPath);
 
     /// @brief ウィンドウのメッセージクリア
     void ClearMessages() { messages_.clear(); }

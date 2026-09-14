@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Camera2D | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_Camera2D">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>Camera2D</h1>
+<p class="page-lead">2D用の平行投影カメラのパラメータを保持するコンポーネントです。</p>
+</div>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetSize(float width, float height)</code></td><td>表示範囲サイズを設定する</td></tr>
+<tr><td><code>void SetNearClip(float)</code> / <code>float GetNearClip() const</code></td><td>近クリップ距離</td></tr>
+<tr><td><code>void SetFarClip(float)</code> / <code>float GetFarClip() const</code></td><td>遠クリップ距離</td></tr>
+<tr><td><code>float GetWidth() const</code> / <code>float GetHeight() const</code></td><td>表示範囲サイズを取得する</td></tr>
+<tr><td><code>void SetAutoSyncSize(bool)</code> / <code>bool GetAutoSyncSize() const</code></td><td>描画先バッファの解像度へ表示範囲サイズ（width/height）を毎フレーム自動追従させるかどうか（描画先が単一に定まらない場合は手動設定値のまま何もしない）</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="CameraRenderer.html">CameraRenderer</a> / <a href="CameraController2D.html">CameraController2D</a></li>
+<li><a href="ScreenAnchor.html">ScreenAnchor</a> — このカメラのwidth/heightを基準に追従する</li>
+<li><a href="../../../Editor/Components/Render/Camera2D.html">Editor/Components/Render/Camera2D.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

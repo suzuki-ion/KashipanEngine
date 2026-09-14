@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ScreenBufferObject | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_ScreenBufferObject">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>ScreenBufferObject</h1>
+<p class="page-lead">オフスクリーンの描画先バッファを1枚所有するコンポーネントです。そのスクリーンバッファへ直近で描画が確定した内容（ポストエフェクト適用後の最終フレーム）を画像ファイルへ保存する機能を持ちます。エディターのインスペクター（「Save to File」欄）・アプリケーション実行時・スクリプトのいずれからも同じ仕組みで呼び出せます。</p>
+</div>
+
+<h2>共通（バッファ系）</h2>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetName(const string &amp;in)</code> / <code>const string &amp;GetName() const</code></td><td>管理用名前（TextureManagerへの登録名）の設定/取得</td></tr>
+<tr><td><code>void SetSize(uint width, uint height)</code></td><td>バッファをリサイズする</td></tr>
+</table>
+
+<h2>画像ファイル保存</h2>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>bool RequestSave(const string &amp;in filePath = "")</code></td><td>画像として保存する。<code>filePath</code> を省略した場合は <code>SaveDirectory</code>/<code>SaveFileNamePrefix</code> とタイムスタンプ、<code>SaveFormat</code> から自動生成したパスへ保存する</td></tr>
+<tr><td><code>void SetSaveDirectory(const string &amp;in)</code> / <code>const string &amp;GetSaveDirectory() const</code></td><td>自動生成パスに使う保存先ディレクトリ（既定: <code>"Screenshots"</code>）</td></tr>
+<tr><td><code>void SetSaveFileNamePrefix(const string &amp;in)</code> / <code>const string &amp;GetSaveFileNamePrefix() const</code></td><td>自動生成パスに使うファイル名の接頭辞（既定: <code>"Screenshot"</code>）</td></tr>
+<tr><td><code>void SetSaveFormat(const string &amp;in)</code> / <code>const string &amp;GetSaveFormat() const</code></td><td>保存形式。<code>"png"</code> / <code>"jpg"</code> / <code>"bmp"</code>（既定: <code>"png"</code>）。<code>filePath</code> を明示的に指定した場合はその拡張子が優先される</td></tr>
+</table>
+
+<ul><li><code>RequestSave</code> はGPU側の完了を同期的に待つ（ストールする）ため、毎フレーム呼ぶような用途ではなくスクリーンショット等の単発利用を想定しています。</li><li>保存対象は常に「そのフレームの描画が完全に確定した後の内容」です。ポストエフェクト適用途中の中間結果が保存されることはありません。</li><li><code>SaveDirectory</code> / <code>SaveFileNamePrefix</code> / <code>SaveFormat</code> はシーンへ保存されますが、<code>RequestSave</code> の呼び出し自体は状態として保持されません（呼ぶたびに即座に保存が実行されます）。</li></ul>
+
+<pre><code class="language-angelscript">// "Screenshot" という名前の入力コマンドをあらかじめ設定しておく必要があります
+class ScreenshotTaker : ScriptComponentBehavior {
+    void Update() {
+        if (IsCommandTriggered("Screenshot")) {
+            ScreenBufferObject@ screenBuffer;
+            GetComponent(@screenBuffer);
+            if (screenBuffer !is null) {
+                screenBuffer.RequestSave(); // Screenshots/Screenshot_20260101_120000.png のように自動生成
+            }
+        }
+    }
+}</code></pre>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="ScreenBufferViewport.html">ScreenBufferViewport</a> — このバッファの内容を画面へ表示する</li>
+<li><a href="ShadowMapObject.html">ShadowMapObject</a> — 同系統のバッファ系コンポーネント（画像保存機能は無い）</li>
+<li><a href="../../../Editor/Components/Render/ScreenBufferObject.html">Editor/Components/Render/ScreenBufferObject.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

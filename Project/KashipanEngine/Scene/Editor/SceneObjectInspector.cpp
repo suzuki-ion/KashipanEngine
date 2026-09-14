@@ -156,7 +156,8 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
                 }
             }
             ImGui::Separator();
-            if (ImGui::MenuItem(TranslationLabel("editor.component.remove"))) {
+            const bool canRemove = comp->GetComponentType() != "Transform";
+            if (ImGui::MenuItem(TranslationLabel("editor.component.remove"), nullptr, false, canRemove)) {
                 componentToRemove = comp;
             }
             ImGui::EndPopup();
@@ -265,6 +266,18 @@ void SceneObjectInspector::ShowPrefabSection(EmptyObject *obj) {
                 ImGui::PopID();
             }
         }
+        for (EmptyObject *overrideObject : report.objectPropertyOverrides) {
+            ImGui::BulletText("%s: %s", TranslationC("editor.prefab.override.objectproperties"), overrideObject->GetName().c_str());
+        }
+        for (EmptyObject *overrideObject : report.parentOverrides) {
+            ImGui::BulletText("%s: %s", TranslationC("editor.prefab.override.parent"), overrideObject->GetName().c_str());
+        }
+        for (EmptyObject *instanceOnly : report.instanceOnlyObjects) {
+            ImGui::BulletText("%s: %s", TranslationC("editor.prefab.override.addedobject"), instanceOnly->GetName().c_str());
+        }
+        if (!report.prefabOnlyNodeIDs.empty()) {
+            ImGui::BulletText("%s: %zu", TranslationC("editor.prefab.override.removedobjects"), report.prefabOnlyNodeIDs.size());
+        }
     }
 }
 
@@ -273,12 +286,13 @@ void SceneObjectInspector::ShowRevertPrefabConfirmModal() {
     // （プールのスロット再利用によるエイリアシング対策）
     pendingRevertPrefabTarget_ = context_ ? context_->GetSceneObject(pendingRevertPrefabTargetID_) : nullptr;
     if (isRevertPrefabConfirmRequested_) {
-        ImGui::OpenPopup(TranslationLabel("editor.prefab.revert.title"));
+        ImGui::OpenPopup((std::string(TranslationLabel("editor.prefab.revert.title")) + "##Inspector").c_str());
         isRevertPrefabConfirmRequested_ = false;
     }
-    if (ImGui::BeginPopupModal(TranslationLabel("editor.prefab.revert.title"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+    if (ImGui::BeginPopupModal((std::string(TranslationLabel("editor.prefab.revert.title")) + "##Inspector").c_str(), nullptr,
+        ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.3f, 1.0f),
-            "This will discard all local changes (including locally added child objects)");
+            TranslationC("editor.prefab.revert.warning1"));
         ImGui::TextUnformatted(TranslationC("editor.prefab.revert.warning2"));
         ImGui::TextUnformatted(TranslationC("editor.prefab.revert.warning3"));
         if (ImGui::Button(TranslationLabel("editor.prefab.revert"), ImVec2(120, 0))) {
@@ -440,7 +454,8 @@ void SceneObjectInspector::ShowMultiObjectInspector(EmptyObject *primary, const 
                 }
             }
             ImGui::Separator();
-            if (ImGui::MenuItem(TranslationLabel("editor.component.remove"))) {
+            const bool canRemove = typeName != "Transform";
+            if (ImGui::MenuItem(TranslationLabel("editor.component.remove"), nullptr, false, canRemove)) {
                 removeTypeName = typeName;
                 pendingRemoves.push_back({ primary, comp });
                 for (auto &[obj, counterpart] : counterparts) {

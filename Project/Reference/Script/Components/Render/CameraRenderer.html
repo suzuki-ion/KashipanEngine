@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CameraRenderer | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Render_CameraRenderer">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>CameraRenderer</h1>
+<p class="page-lead">同一オブジェクトのカメラ（<code>Camera2D</code>/<code>Camera3D</code>）を使って実際に描画を行うコンポーネントです。</p>
+</div>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetPipelineName(const string &amp;in)</code> / <code>const string &amp;GetPipelineName() const</code></td><td>使用パイプライン名</td></tr>
+<tr><td><code>Vector3 GetWorldPosition() const</code></td><td>カメラのワールド座標を取得する</td></tr>
+<tr><td><code>const Matrix4x4 &amp;GetViewProjectionMatrix() const</code></td><td>直近アップロードしたビュー射影行列を取得する</td></tr>
+<tr><td><code>float GetNearClip() const</code> / <code>float GetFarClip() const</code></td><td>直近使用したニア/ファークリップ距離を取得する</td></tr>
+</table>
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="Camera2D.html">Camera2D</a> / <a href="Camera3D.html">Camera3D</a></li>
+<li><a href="../../../Editor/Components/Render/CameraRenderer.html">Editor/Components/Render/CameraRenderer.html</a></li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

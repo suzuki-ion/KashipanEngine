@@ -71,34 +71,34 @@ protected:
         IPostProcessComponent::ShowImGui();
         ImGui::DragFloat(TranslationLabel("component.ssaoeffect.radius"), &params_.radius, 0.01f, 0.01f, 20.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.ssaoeffect.desc_1"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.ssaoeffect.desc_1"));
         }
         ImGui::DragFloat(TranslationLabel("component.ssaoeffect.intensity"), &params_.intensity, 0.01f, 0.0f, 5.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.ssaoeffect.desc_2"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.ssaoeffect.desc_2"));
         }
         ImGui::DragFloat(TranslationLabel("component.ssaoeffect.power"), &params_.power, 0.01f, 0.1f, 8.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.ssaoeffect.desc_3"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.ssaoeffect.desc_3"));
         }
         ImGui::DragFloat(TranslationLabel("component.ssaoeffect.bias"), &params_.bias, 0.001f, 0.0f, 1.0f, "%.4f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.ssaoeffect.desc_4"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.ssaoeffect.desc_4"));
         }
         int sampleCount = static_cast<int>(params_.sampleCount);
         if (ImGui::DragInt(TranslationLabel("component.ssaoeffect.sample_count"), &sampleCount, 1.0f, 4, 64)) {
             params_.sampleCount = static_cast<std::uint32_t>(std::clamp(sampleCount, 4, 64));
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.ssaoeffect.desc_5"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.ssaoeffect.desc_5"));
         }
         ImGui::DragInt(TranslationLabel("component.ssaoeffect.blur_radius"), &params_.blurRadius, 1.0f, 0, 8);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.ssaoeffect.desc_6"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.ssaoeffect.desc_6"));
         }
         ImGui::DragFloat(TranslationLabel("component.ssaoeffect.depth_threshold"), &params_.depthThreshold, 0.01f, 0.001f, 100.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.ssaoeffect.desc_7"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.ssaoeffect.desc_7"));
         }
         if (!lastCameraValid_) {
             ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f),

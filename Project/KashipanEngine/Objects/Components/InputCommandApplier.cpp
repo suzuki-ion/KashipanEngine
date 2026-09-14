@@ -1,5 +1,6 @@
 #include "Objects/Components/InputCommandApplier.h"
 
+#include <algorithm>
 #include <cmath>
 
 #include "Input/InputCommand.h"
@@ -144,11 +145,35 @@ void InputCommandApplier::ShowImGui() {
 void InputCommandApplier::ShowCommandImGui(CommandEntry &entry, const std::vector<ParameterBindingCandidate> &candidates) {
     ImGui::InputText(TranslationLabel("component.inputcommandapplier.name"), &entry.name);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", "WasApplied/GetLastValue等をコードから呼ぶ際に指定する識別名");
+        ImGuiCustom::SetTooltipWrapped("%s", "WasApplied/GetLastValue等をコードから呼ぶ際に指定する識別名");
     }
-    ImGui::InputText(TranslationLabel("component.inputcommandapplier.command_name"), &entry.commandName);
-    if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", "評価する入力コマンド名（InputCommandに登録済みのコマンド）");
+    {
+        auto *sceneContext = GetOwnerSceneContext();
+        auto *inputCommand = sceneContext ? sceneContext->GetInputCommand() : nullptr;
+        const auto commandNames = inputCommand ? inputCommand->GetRegisteredCommandNames() : std::vector<std::string>{};
+        const bool isRegistered = std::find(commandNames.begin(), commandNames.end(), entry.commandName) != commandNames.end();
+        const std::string preview = entry.commandName.empty() ? TranslationC("editor.common.none") : entry.commandName;
+        if (ImGui::BeginCombo(TranslationLabel("component.inputcommandapplier.command_name"), preview.c_str())) {
+            if (ImGui::Selectable(TranslationC("editor.common.none"), entry.commandName.empty())) {
+                entry.commandName.clear();
+            }
+            for (const auto &name : commandNames) {
+                const bool selected = (entry.commandName == name);
+                ImGui::PushID(name.c_str());
+                if (ImGui::Selectable(name.c_str(), selected)) {
+                    entry.commandName = name;
+                }
+                if (selected) ImGui::SetItemDefaultFocus();
+                ImGui::PopID();
+            }
+            ImGui::EndCombo();
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGuiCustom::SetTooltipWrapped("%s", "評価する入力コマンド名（InputCommandに登録済みのコマンドから選択）");
+        }
+        if (!entry.commandName.empty() && !isRegistered) {
+            ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f), "%s", TranslationC("component.inputcommandapplier.command_notfound"));
+        }
     }
 
     static const char *kConditionLabels[] = {
@@ -163,14 +188,14 @@ void InputCommandApplier::ShowCommandImGui(CommandEntry &entry, const std::vecto
         entry.conditionType = static_cast<ConditionType>(conditionIndex);
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", "値を適用する条件。条件を満たしたフレームだけ書き込みが行われる");
+        ImGuiCustom::SetTooltipWrapped("%s", "値を適用する条件。条件を満たしたフレームだけ書き込みが行われる");
     }
     if (entry.conditionType == ConditionType::ValueGreaterEqual ||
         entry.conditionType == ConditionType::ValueLessEqual ||
         entry.conditionType == ConditionType::ValueEqual) {
         ImGui::DragFloat(TranslationLabel("component.inputcommandapplier.threshold"), &entry.threshold, 0.01f);
         if (ImGui::IsItemHovered() && entry.conditionType == ConditionType::ValueEqual) {
-            ImGui::SetTooltip("%s", "比較する閾値（==は誤差1e-6以内で判定する）");
+            ImGuiCustom::SetTooltipWrapped("%s", "比較する閾値（==は誤差1e-6以内で判定する）");
         }
     }
 
@@ -183,24 +208,24 @@ void InputCommandApplier::ShowCommandImGui(CommandEntry &entry, const std::vecto
         entry.valueSource = static_cast<ValueSource>(sourceIndex);
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", "書き込む値の種類（入力コマンドの評価値 / 固定値）");
+        ImGuiCustom::SetTooltipWrapped("%s", "書き込む値の種類（入力コマンドの評価値 / 固定値）");
     }
     if (entry.valueSource == ValueSource::FixedValue) {
         ImGui::DragFloat(TranslationLabel("component.inputcommandapplier.fixed_value"), &entry.fixedValue, 0.01f);
     }
     ImGui::DragFloat(TranslationLabel("component.inputcommandapplier.value_scale"), &entry.valueScale, 0.01f);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", "書き込む値にかけるスケール。Value Offsetの加算より先に適用される（適用値 = 値 × Scale + Offset）");
+        ImGuiCustom::SetTooltipWrapped("%s", "書き込む値にかけるスケール。Value Offsetの加算より先に適用される（適用値 = 値 × Scale + Offset）");
     }
     ImGui::DragFloat(TranslationLabel("component.inputcommandapplier.value_offset"), &entry.valueOffset, 0.01f);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", "書き込む値へ加算するデフォルト値オフセット");
+        ImGuiCustom::SetTooltipWrapped("%s", "書き込む値へ加算するデフォルト値オフセット");
     }
 
     if (entry.wasApplied) {
         ImGui::Text(TranslationC("component.inputcommandapplier.applied_3f"), entry.lastValue);
     } else {
-        ImGui::TextDisabled("%s", TranslationC("component.inputcommandapplier.not_applied"));
+        ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.inputcommandapplier.not_applied"));
     }
 
     ImGui::Separator();

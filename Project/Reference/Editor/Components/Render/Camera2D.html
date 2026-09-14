@@ -23,13 +23,16 @@
 <h2>Inspectorに表示される項目</h2>
 <table>
 <tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
-<tr><td>Width</td><td>ドラッグ入力欄（ステップ1.0）</td><td>投影の横幅（既定1280.0）</td></tr>
-<tr><td>Height</td><td>ドラッグ入力欄（ステップ1.0）</td><td>投影の縦幅（既定720.0）</td></tr>
+<tr><td>Width</td><td>ドラッグ入力欄（ステップ1.0）</td><td>投影の横幅（既定1280.0）。Auto-Sync To Resolutionが有効な間は無効化（グレーアウト）され編集できない</td></tr>
+<tr><td>Height</td><td>ドラッグ入力欄（ステップ1.0）</td><td>投影の縦幅（既定720.0）。Auto-Sync To Resolutionが有効な間は無効化（グレーアウト）され編集できない</td></tr>
 <tr><td>Near</td><td>ドラッグ入力欄（ステップ0.01）</td><td>ニアクリップ距離（既定0.0）</td></tr>
 <tr><td>Far</td><td>ドラッグ入力欄（ステップ1.0）</td><td>ファークリップ距離（既定1000.0）</td></tr>
+<tr><td>Auto-Sync To Resolution</td><td>チェックボックス</td><td>有効にすると、同一オブジェクトのCameraRendererに描画先が単一で明示指定されている場合に限り、その描画先の実解像度へWidth/Heightを毎フレーム自動追従させる（既定false）。ホバーすると説明ツールチップが表示される</td></tr>
 </table>
 
 <div class="note"><strong>Camera3Dとの違い</strong><br>Camera2DにはOrthographicの切り替えが無く常に平行投影。またFovYやAspectといった透視投影用のパラメータも存在しない。</div>
+
+<div class="tip"><strong>Auto-Sync To Resolutionが効くのは描画先を単一指定している場合のみ</strong><br>同一オブジェクトのCameraRendererが描画先を指定していない（全描画先へ適用中の）場合は解像度を一意に決められないため、Auto-Sync To Resolutionを有効にしていても何もせず、Width/Heightは手動設定値のまま変化しない。</div>
 
 <h2>Add Componentでの位置</h2>
 <p><span class="ui-path"><span>Add Component</span><i>›</i><span>Render</span><i>›</i><span>Camera2D</span></span> から追加する。1オブジェクトに付与できるのは最大1個。</p>

@@ -315,6 +315,9 @@
     <ClCompile Include="KashipanEngine\Assets\FontManager.cpp">
       <Filter>KashipanEngine\Assets</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Assets\BitmapFontManager.cpp">
+      <Filter>KashipanEngine\Assets</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Assets\MaterialManager.cpp">
       <Filter>KashipanEngine\Assets</Filter>
     </ClCompile>
@@ -600,6 +603,9 @@
     <ClCompile Include="KashipanEngine\Scene\Components\Script\SceneScriptEngine.cpp">
       <Filter>KashipanEngine\Scene\Components\Script</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Components\Script\ScriptObjectHandle.cpp">
+      <Filter>KashipanEngine\Scene\Components\Script</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Components\Script\ScriptBindings.cpp">
       <Filter>KashipanEngine\Scene\Components\Script</Filter>
     </ClCompile>
@@ -855,6 +861,9 @@
       <Filter>KashipanEngine\Assets</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Assets\FontManager.h">
+      <Filter>KashipanEngine\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\BitmapFontManager.h">
       <Filter>KashipanEngine\Assets</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Assets\MaterialManager.h">
@@ -1247,9 +1256,6 @@
     <ClInclude Include="KashipanEngine\Objects\Collision\Collider.h">
       <Filter>KashipanEngine\Objects\Collision</Filter>
     </ClInclude>
-    <ClInclude Include="KashipanEngine\Objects\Collision\CollisionAlgorithms2D.h">
-      <Filter>KashipanEngine\Objects\Collision</Filter>
-    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Collision\CollisionAlgorithms3D.h">
       <Filter>KashipanEngine\Objects\Collision</Filter>
     </ClInclude>
@@ -1268,6 +1274,9 @@
     <ClInclude Include="KashipanEngine\Objects\Components\GifSource.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\TextureSource.h">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\VideoSource.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
@@ -1275,6 +1284,9 @@
       <Filter>KashipanEngine\Objects\Components\Collider</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\BoxCollider.h">
+      <Filter>KashipanEngine\Objects\Components\Collider</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\Collider\CharacterController2D.h">
       <Filter>KashipanEngine\Objects\Components\Collider</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Collider\MeshButton.h">
@@ -1367,6 +1379,15 @@
     <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\VignetteEffect.h">
       <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\PaletteQuantizeEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\ScanlineEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\PostProcessing\BarrelDistortionEffect.h">
+      <Filter>KashipanEngine\Objects\Components\PostProcessing</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Compute\ComputeShaderProcessing.h">
       <Filter>KashipanEngine\Objects\Components\Compute</Filter>
     </ClInclude>
@@ -1377,6 +1398,9 @@
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Render\CameraController.h">
+      <Filter>KashipanEngine\Objects\Components\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\CameraController2D.h">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Render\CameraRenderer.h">
@@ -1394,7 +1418,13 @@
     <ClInclude Include="KashipanEngine\Objects\Components\Render\SpriteRenderer.h">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\TilemapRenderer.h">
+      <Filter>KashipanEngine\Objects\Components\Render</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Render\TextRenderer.h">
+      <Filter>KashipanEngine\Objects\Components\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\Render\BitmapTextRenderer.h">
       <Filter>KashipanEngine\Objects\Components\Render</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Render\SkinnedMeshRenderer.h">
@@ -1572,6 +1602,12 @@
       <Filter>KashipanEngine\Scene\Components\Script</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\Script\SceneScriptEngine.h">
+      <Filter>KashipanEngine\Scene\Components\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptObjectHandle.h">
+      <Filter>KashipanEngine\Scene\Components\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptComponentHandle.h">
       <Filter>KashipanEngine\Scene\Components\Script</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptBindings.h">
@@ -1888,6 +1924,14 @@
     <ClInclude Include="Externals\DirectXTex\DirectXTex.h" />
     <ClInclude Include="Externals\nlohmann\json.hpp" />
     <ClInclude Include="Externals\nlohmann\json_fwd.hpp" />
+    <ClInclude Include="Externals\Box2D\include\box2d\base.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\box2d.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\collision.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\config.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\constants.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\id.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\math_functions.h" />
+    <ClInclude Include="Externals\Box2D\include\box2d\types.h" />
     <ClInclude Include="Externals\ReactPhysics3D\include\reactphysics3d\body\Body.h" />
     <ClInclude Include="Externals\ReactPhysics3D\include\reactphysics3d\body\RigidBody.h" />
     <ClInclude Include="Externals\ReactPhysics3D\include\reactphysics3d\collision\broadphase\DynamicAABBTree.h" />
@@ -2407,6 +2451,9 @@
     <None Include="Reference\Editor\Components\Render\CameraController.html">
       <Filter>Reference\Editor\Components\Render</Filter>
     </None>
+    <None Include="Reference\Editor\Components\Render\CameraController2D.html">
+      <Filter>Reference\Editor\Components\Render</Filter>
+    </None>
     <None Include="Reference\Editor\Components\Render\CameraRenderer.html">
       <Filter>Reference\Editor\Components\Render</Filter>
     </None>
@@ -2435,6 +2482,9 @@
       <Filter>Reference\Editor\Components\Render</Filter>
     </None>
     <None Include="Reference\Editor\Components\Render\SpriteRenderer.html">
+      <Filter>Reference\Editor\Components\Render</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Render\TilemapRenderer.html">
       <Filter>Reference\Editor\Components\Render</Filter>
     </None>
     <None Include="Reference\Editor\Components\Render\TextRenderer.html">
@@ -2588,6 +2638,9 @@
       <Filter>Tools</Filter>
     </None>
     <None Include="Tools\CopyReleaseAssets.ps1">
+      <Filter>Tools</Filter>
+    </None>
+    <None Include="Tools\CopyToWorkCopy.ps1">
       <Filter>Tools</Filter>
     </None>
     <None Include="exclusion.dic" />

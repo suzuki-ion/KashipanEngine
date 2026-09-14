@@ -24,6 +24,7 @@
 		"engine.window.create.overlay.start": "Overlay window creation started. Window title: ",
 		"engine.window.create.overlay.end": "Overlay window creation completed. Window title: ",
 		"engine.window.create.overlay.failed": "Failed to create the overlay window.",
+		"engine.window.seticon.failed": "Failed to load the window icon: ",
 		"engine.window.destroy.start": "Window destruction started. Window title: ",
 		"engine.window.destroy.end": "Window destruction completed. Window title: ",
 		"engine.window.destroy.failed": "Failed to destroy the window.",
@@ -77,6 +78,8 @@
 		"engine.directx.commands.commandqueue.initialize.start": "Command queue initialization started",
 		"engine.directx.commands.commandqueue.initialize.end": "Command queue initialization completed",
 		"engine.directx.commands.commandqueue.initialize.failed": "Failed to initialize the command queue.",
+		// コマンドオブジェクトプール（ScreenBuffer/ShadowMapBuffer/スワップチェーン等が共有）
+		"engine.directx.commandobjects.no.free.slot": "Failed to acquire a command object. No free slots are available. Pool size: ",
 		// コマンドアロケータ
 		"engine.directx.swapchain.commandallocator.initialize.start": "Command allocator initialization started",
 		"engine.directx.swapchain.commandallocator.initialize.end": "Command allocator initialization completed",
@@ -720,6 +723,7 @@
 		"component.audiosource.auto_pan_muffle_spatial_audio": "Auto Pan / Muffle (Spatial Audio)",
 		"component.audiosource.band_d": "Band %d",
 		"component.audiosource.bandwidth": "Bandwidth",
+		"component.audiosource.category": "Volume Bus Category",
 		"component.audiosource.delay_ms": "Delay (ms)",
 		"component.audiosource.echo": "Echo",
 		"component.audiosource.effects": "Effects",
@@ -794,6 +798,8 @@
 		"component.camera2d.far": "Far",
 		"component.camera2d.height": "Height",
 		"component.camera2d.near": "Near",
+		"component.camera2d.pixel_snapping": "Pixel Snapping",
+		"component.camera2d.pixel_snapping_desc": "Uses this camera as the reference for snapping enabled SpriteRenderers to the render target's pixel grid. The camera Transform remains unrounded, keeping camera-object relative positions stable during smooth follow.",
 		"component.camera2d.width": "Width",
 
 		//--------- component.camera3d ---------//
@@ -809,7 +815,36 @@
 		"component.camera3d.orthosize": "OrthoSize",
 
 		//--------- component.cameracontroller ---------//
+		"component.cameraboundszone2d.add_group": "Add Group",
+		"component.cameraboundszone2d.add_rect": "Add Rect",
+		"component.cameraboundszone2d.description": "Groups and rects used by CameraController2D's movement bounds (Camera Bounds Zone).",
+		"component.cameraboundszone2d.group": "Group",
+		"component.cameraboundszone2d.rect": "Rect",
+		"component.cameraboundszone2d.rect_max": "Max",
+		"component.cameraboundszone2d.rect_min": "Min",
+		"component.cameraboundszone2d.remove_group": "Remove Group",
+		"component.cameraboundszone2d.remove_rect": "Remove Rect",
+
+		"component.cameraboundszone3d.add_group": "Add Group",
+		"component.cameraboundszone3d.add_rect": "Add Rect",
+		"component.cameraboundszone3d.description": "Groups and rects used by CameraController's movement bounds (Camera Bounds Zone).",
+		"component.cameraboundszone3d.group": "Group",
+		"component.cameraboundszone3d.rect": "Rect",
+		"component.cameraboundszone3d.rect_max": "Max",
+		"component.cameraboundszone3d.rect_min": "Min",
+		"component.cameraboundszone3d.remove_group": "Remove Group",
+		"component.cameraboundszone3d.remove_rect": "Remove Rect",
+
 		"component.cameracontroller.add_follow_target": "Add Follow Target",
+		"component.cameracontroller.bounds_clamp": "Movement Bounds",
+		"component.cameracontroller.bounds_clamp_enable": "Enable Bounds Clamp",
+		"component.cameracontroller.bounds_clamp_mode_position": "Position",
+		"component.cameracontroller.bounds_clamp_mode_viewarea": "View Area",
+		"component.cameracontroller.bounds_clamp_view_depth": "View Area Depth",
+		"component.cameracontroller.bounds_transition_duration": "Transition Duration",
+		"component.cameracontroller.bounds_transition_duration.tooltip": "When the active group changes, smooth the discontinuous jump in clamp position over this many seconds (0 or less switches instantly)",
+		"component.cameracontroller.bounds_transition_ease": "Transition Easing",
+		"component.cameracontroller.bounds_zone_object": "Bounds Zone",
 		"component.cameracontroller.follow_position": "Follow Position",
 		"component.cameracontroller.follow_rotation": "Follow Rotation",
 		"component.cameracontroller.follow_targets": "Follow Targets",
@@ -828,8 +863,34 @@
 		"component.cameracontroller.rotation_offset": "Rotation Offset",
 		"component.cameracontroller.target_fovy": "Target FovY",
 
+		//--------- component.cameracontroller2d ---------//
+		"component.cameracontroller2d.add_follow_target": "Add Follow Target",
+		"component.cameracontroller2d.bounds_clamp": "Movement Bounds",
+		"component.cameracontroller2d.bounds_clamp_enable": "Enable Bounds Clamp",
+		"component.cameracontroller2d.bounds_clamp_mode_position": "Position",
+		"component.cameracontroller2d.bounds_clamp_mode_viewarea": "View Area",
+		"component.cameracontroller2d.bounds_transition_duration": "Transition Duration",
+		"component.cameracontroller2d.bounds_transition_duration.tooltip": "When the active group changes, smooth the discontinuous jump in clamp position over this many seconds (0 or less switches instantly)",
+		"component.cameracontroller2d.bounds_transition_ease": "Transition Easing",
+		"component.cameracontroller2d.bounds_zone_object": "Bounds Zone",
+		"component.cameracontroller2d.follow_position": "Follow Position",
+		"component.cameracontroller2d.follow_rotation": "Follow Rotation",
+		"component.cameracontroller2d.follow_targets": "Follow Targets",
+		"component.cameracontroller2d.move_all": "Move All",
+		"component.cameracontroller2d.move_follow_strength": "Move Follow Strength",
+		"component.cameracontroller2d.move_per_axis": "Move: Per-Axis",
+		"component.cameracontroller2d.move_x_y": "Move X/Y",
+		"component.cameracontroller2d.no_target_following_own_transform": "(No target: following own Transform)",
+		"component.cameracontroller2d.position_offset": "Position Offset",
+		"component.cameracontroller2d.remove_target": "Remove Target",
+		"component.cameracontroller2d.rotate_follow_strength": "Rotate Follow Strength",
+		"component.cameracontroller2d.rotation_offset": "Rotation Offset",
+		"component.cameracontroller2d.size_transition_strength": "Size Transition Strength",
+		"component.cameracontroller2d.target_size": "Target Size",
+
 		//--------- component.camerarenderer ---------//
 		"component.camerarenderer.pipeline": "Pipeline",
+		"component.camerarenderer.warning_no_camera_component": "Warning: No Camera2D/Camera3D attached, so bind variable names default to gCamera3D",
 
 		//--------- component.capsule2dcollider ---------//
 		"component.capsule2dcollider.end": "End",
@@ -853,6 +914,7 @@
 		"component.coloradjusteffect.brightness": "Brightness",
 		"component.coloradjusteffect.colorbalance": "ColorBalance",
 		"component.coloradjusteffect.contrast": "Contrast",
+		"component.coloradjusteffect.posterize_levels": "Posterize Levels",
 		"component.coloradjusteffect.saturation": "Saturation",
 		"component.coloradjusteffect.temperature": "Temperature",
 
@@ -866,11 +928,26 @@
 		"component.common.blendmode.override": "Override",
 		"component.common.blendmode.subtract": "Subtract",
 		"component.common.desc_allow_instancing": "When disabled, this object is always drawn as its own draw call, even if other\nobjects share the same mesh/material/pipeline (enabled by default)",
+		"component.common.desc_instance_uv": "Per-object UV transform. Applies only to this object without changing the shared\nmaterial. Combined with the material's UV transform per the UV Combine Mode\n(no effect while left at the default values)",
+		"component.common.desc_instance_uv_pivot": "Center point for instance UV rotation. Scale always stays anchored at the UV\norigin (0,0); only rotation is centered on this point",
 		"component.common.desc_render_priority": "Priority that controls draw order. Smaller values draw earlier (behind), larger\nvalues draw later (in front). Default 0. Evaluated after the pipeline's render\npriority and before mesh/material grouping",
+		"component.common.instance_uv_combine_mode": "UV Combine Mode",
+		"component.common.instance_uv_pivot": "Instance UV Rotation Pivot",
+		"component.common.instance_uv_pivot_pixel": "Instance UV Rotation Pivot (px)",
+		"component.common.instance_uv_rotation": "Instance UV Rotation (deg)",
+		"component.common.instance_uv_scale": "Instance UV Scale",
+		"component.common.instance_uv_scale_pixel": "Instance UV Scale (px)",
+		"component.common.instance_uv_transform": "Instance UV Transform (per-object)",
+		"component.common.instance_uv_transform_pixel": "Instance UV Transform (texture pixel units; disabled when no texture is set)",
+		"component.common.instance_uv_translate": "Instance UV Translate",
+		"component.common.instance_uv_translate_pixel": "Instance UV Translate (px)",
 		"component.common.mode.lookattarget": "Look At Target",
 		"component.common.mode.synctargetrotation": "Sync Target Rotation",
 		"component.common.render_priority": "Render Priority",
 		"component.common.target": "Target",
+		"component.common.uvcombinemode.instance_only": "Instance Only (ignores material UV transform)",
+		"component.common.uvcombinemode.instance_then_material": "Instance-based (instance then material)",
+		"component.common.uvcombinemode.material_then_instance": "Material-based (material then instance, default)",
 
 		//--------- component.computeshaderprocessing ---------//
 		"component.computeshaderprocessing.add_constant_buffer_bind": "Add Constant Buffer Bind",
@@ -912,6 +989,8 @@
 		//--------- component.dithereffect ---------//
 		"component.dithereffect.color": "Color",
 		"component.dithereffect.intensity": "Intensity",
+		"component.dithereffect.pattern_width": "Pattern Resolution Width (0: Auto)",
+		"component.dithereffect.pattern_height": "Pattern Resolution Height (0: Auto)",
 
 		//--------- component.dotmatrixeffect ---------//
 		"component.dotmatrixeffect.dot_radius": "Dot Radius",
@@ -953,6 +1032,7 @@
 		"component.inputcommandapplier.add_command": "Add Command",
 		"component.inputcommandapplier.applied_3f": "Applied: %.3f",
 		"component.inputcommandapplier.command_name": "Command Name",
+		"component.inputcommandapplier.command_notfound": "The selected command is not registered in InputCommand.",
 		"component.inputcommandapplier.condition": "Condition",
 		"component.inputcommandapplier.delete_command": "Delete Command",
 		"component.inputcommandapplier.fixed_value": "Fixed Value",
@@ -1070,6 +1150,7 @@
 
 		//--------- component.normalwindowobject ---------//
 		"component.normalwindowobject.height": "Height",
+		"component.normalwindowobject.icon": "Icon",
 		"component.normalwindowobject.respawn_window": "Respawn Window",
 		"component.normalwindowobject.sync_with_transform": "Sync With Transform",
 		"component.normalwindowobject.title": "Title",
@@ -1082,6 +1163,7 @@
 
 		//--------- component.overlaywindowobject ---------//
 		"component.overlaywindowobject.height": "Height",
+		"component.overlaywindowobject.icon": "Icon",
 		"component.overlaywindowobject.sync_with_transform": "Sync With Transform",
 		"component.overlaywindowobject.title": "Title",
 		"component.overlaywindowobject.width": "Width",
@@ -1191,7 +1273,9 @@
 		//--------- component.rigidbody2d ---------//
 		"component.rigidbody2d.any": "(Any)",
 		"component.rigidbody2d.collider_shape": "Collider Shape",
+		"component.rigidbody2d.friction": "Friction",
 		"component.rigidbody2d.mass": "Mass",
+		"component.rigidbody2d.restitution": "Restitution",
 		"component.rigidbody2d.usegravity": "UseGravity",
 		"component.rigidbody2d.velocity": "Velocity",
 
@@ -1219,6 +1303,21 @@
 		"component.scenevariableapplier.variable_name": "Variable Name",
 		"component.scenevariableapplier.variable_notfound": "Variable \\\"%s\\\" not found",
 
+		//--------- component.sceneviewcamerasettings ---------//
+		"component.sceneviewcamerasettings.camera2d": "2D Camera",
+		"component.sceneviewcamerasettings.camera3d": "3D Camera",
+		"component.sceneviewcamerasettings.cameradistance2d": "Camera Distance (Z)",
+		"component.sceneviewcamerasettings.desc": "Displays and edits the current Scene View camera values (the actual state is held by SceneEditorView on the editor side).",
+		"component.sceneviewcamerasettings.distance": "Distance To Target",
+		"component.sceneviewcamerasettings.eye": "Camera Position",
+		"component.sceneviewcamerasettings.flymode": "Fly Mode",
+		"component.sceneviewcamerasettings.flyspeed": "Fly Speed",
+		"component.sceneviewcamerasettings.pan2d": "Pan",
+		"component.sceneviewcamerasettings.pitch": "Pitch (deg)",
+		"component.sceneviewcamerasettings.target": "Target",
+		"component.sceneviewcamerasettings.yaw": "Yaw (deg)",
+		"component.sceneviewcamerasettings.zoom2d": "Zoom",
+
 		//--------- component.scenevieworbitstate ---------//
 		"component.scenevieworbitstate.distance": "Distance To Target",
 
@@ -1234,6 +1333,7 @@
 		"component.screenbufferobject.format": "Format",
 		"component.screenbufferobject.height": "Height",
 		"component.screenbufferobject.name": "Name",
+		"component.screenbufferobject.render_order_priority": "Render Order Priority",
 		"component.screenbufferobject.save_screenshot": "Save Screenshot",
 		"component.screenbufferobject.save_to_file": "Save to File",
 		"component.screenbufferobject.size_ux_u": "Size: %ux%u",
@@ -1282,7 +1382,12 @@
 		"component.shake.applytarget.transform": "Apply to Transform",
 		"component.shake.auto_play": "Auto Play",
 		"component.shake.duration_0_infinite": "Duration (0=Infinite)",
+		"component.shake.envelope_section": "Amplitude / Speed Envelope (over time)",
 		"component.shake.play": "Play",
+		"component.shake.position_envelope_amplitude_end": "Amplitude End Multiplier",
+		"component.shake.position_envelope_amplitude_start": "Amplitude Start Multiplier",
+		"component.shake.position_envelope_speed_end": "Speed End Multiplier",
+		"component.shake.position_envelope_speed_start": "Speed Start Multiplier",
 		"component.shake.playing": "Playing",
 		"component.shake.pos_x": "Pos X",
 		"component.shake.pos_y": "Pos Y",
@@ -1295,6 +1400,10 @@
 		"component.shake.rot_y": "Rot Y",
 		"component.shake.rot_z": "Rot Z",
 		"component.shake.rotation_amplitude_deg": "Rotation Amplitude (deg)",
+		"component.shake.rotation_envelope_amplitude_end": "Amplitude End Multiplier",
+		"component.shake.rotation_envelope_amplitude_start": "Amplitude Start Multiplier",
+		"component.shake.rotation_envelope_speed_end": "Speed End Multiplier",
+		"component.shake.rotation_envelope_speed_start": "Speed Start Multiplier",
 		"component.shake.rotation_shake": "Rotation Shake",
 		"component.shake.rotation_speed": "Rotation Speed",
 		"component.shake.stop": "Stop",
@@ -1329,6 +1438,10 @@
 		"component.spriterenderer.material": "Material",
 		"component.spriterenderer.pipeline": "Pipeline",
 		"component.spriterenderer.pivot": "Pivot",
+		"component.spriterenderer.pixel_snapping": "Pixel Snapping",
+		"component.spriterenderer.pixel_snapping_desc": "When Pixel Snapping is also enabled on the applicable Camera2D, snaps this object's camera-relative position to the render target's pixel grid. This prevents relative jitter when both move by the same sub-pixel amount. Without a matching camera, world coordinates are rounded as before.",
+		"component.spriterenderer.pixel_snap_outset": "Pixel Snap Outset",
+		"component.spriterenderer.pixel_snap_outset_desc": "When set above 0, expands the quad outward by this amount (px, per side) to avoid losing a boundary pixel row/column. A tiny floating-point residue from the round-trip matrix math can make the rasterizer miscount a pixel exactly on the snapped boundary as outside; this margin guards against that. Harmless for a standalone sprite using its whole texture, but if part of an atlas/tilemap is cropped out (via instanceUvTranslate/instanceUvScale), the UV may spill into a neighboring tile regardless of the sampler's address mode, unless the atlas has padding between tiles — check for that, or keep this value small and verify visually. Default 0.0 = disabled.",
 
 		//--------- component.targetlookat ---------//
 		"component.targetlookat.desc_1": "Sync Target Rotation: synchronizes with the target's world rotation (for billboards)\nLook At Target: this object's +Z axis always faces the target",
@@ -1375,6 +1488,64 @@
 		"component.textrenderer.valign.top": "Top",
 		"component.textrenderer.vertical_align": "Vertical Align",
 
+		//--------- component.bitmaptextrenderer ---------//
+		"component.bitmaptextrenderer.character_overrides": "Character Overrides",
+		"component.bitmaptextrenderer.font": "Font",
+		"component.bitmaptextrenderer.font_size": "Font Size",
+		"component.bitmaptextrenderer.instance_color": "Instance Color",
+		"component.bitmaptextrenderer.instance_color_blend_mode": "Instance Color Blend Mode",
+		"component.bitmaptextrenderer.material": "Material",
+		"component.bitmaptextrenderer.pipeline": "Pipeline",
+		"component.bitmaptextrenderer.point_sampling": "Point Sampling",
+		"component.bitmaptextrenderer.pixel_snapping": "Pixel Snapping",
+		"component.bitmaptextrenderer.pixel_snapping_desc": "When Pixel Snapping is also enabled on the applicable Camera2D, snaps this character's camera-relative position to the render target's pixel grid. Use this to display a pixel-art font (with Point Sampling enabled) crisply at native size.",
+		"component.bitmaptextrenderer.pixel_snap_outset": "Pixel Snap Outset",
+		"component.bitmaptextrenderer.pixel_snap_outset_desc": "When set above 0, expands each character's quad outward by this amount (px, per side) to avoid losing a boundary pixel row/column. A tiny floating-point residue from the round-trip matrix math can make the rasterizer miscount a pixel exactly on the snapped boundary as outside; this margin guards against that. Since each character always crops a sub-rectangle out of the font atlas, the UV may spill into a neighboring character regardless of the sampler's address mode, unless the atlas has padding between glyphs — check for that, or keep this value small and verify visually. Default 0.0 = disabled.",
+		"component.bitmaptextrenderer.text": "Text",
+
+		//--------- component.texturesource ---------//
+		"component.texturesource.texture": "Texture",
+
+		//--------- component.tilemaprenderer ---------//
+		"component.tilemaprenderer.add_connection": "Add Connection",
+		"component.tilemaprenderer.add_tile_type": "Add Tile Type",
+		"component.tilemaprenderer.apply_cells_from_text": "Apply Text to Cells",
+		"component.tilemaprenderer.cells_bulk_edit": "Bulk Edit Cells (row=Y, comma-separated=X, -1=empty)",
+		"component.tilemaprenderer.connections": "Connects To (tile type index, one-way)",
+		"component.tilemaprenderer.desc_1": "A cell connects to a neighbor when the neighbor's tile type index is in this tile type's connection list (one-way). To connect two tile types both ways, add each other's index to both lists. The tileset image layout depends on the Autotile Mode below.",
+		"component.tilemaprenderer.desc_eight_dir_layout": "Only the Isolated and Cross tile positions (in tile units) are configurable. All other corner-compositing patterns are chosen automatically from the 2x2 block located two tile-rows below the Isolated/Cross tiles, in the same two columns.",
+		"component.tilemaprenderer.desc_generate_colliders": "Merges adjacent Solid cells into rectangles (greedy algorithm) and auto-generates Box2DColliders. Turning this off removes all auto-generated colliders.",
+		"component.tilemaprenderer.desc_mode": "4-Direction: the tileset image is a 4x4 (16-pattern) block. 8-Direction: each tile is split into 4 corners, and each corner automatically picks the matching cell of the 2x2 block based on its surrounding connections (see Eight-Direction Layout below).",
+		"component.tilemaprenderer.eight_dir_layout": "Eight-Direction Layout (Advanced)",
+		"component.tilemaprenderer.generate_colliders": "Generate 2D Colliders",
+		"component.tilemaprenderer.grid_height": "Grid Height",
+		"component.tilemaprenderer.grid_width": "Grid Width",
+		"component.tilemaprenderer.layout_cross": "Cross Tile (tile units)",
+		"component.tilemaprenderer.layout_isolated": "Isolated Tile (tile units)",
+		"component.tilemaprenderer.load_cells_to_text": "Load Cells to Text",
+		"component.tilemaprenderer.material": "Material",
+		"component.tilemaprenderer.mode_4dir": "4-Direction",
+		"component.tilemaprenderer.mode_8dir": "8-Direction (quarter-tile composite)",
+		"component.tilemaprenderer.pipeline": "Pipeline",
+		"component.tilemaprenderer.remove_connection": "Remove",
+		"component.tilemaprenderer.remove_tile_type": "Remove This Tile Type",
+		"component.tilemaprenderer.solid": "Solid (Has Collision)",
+		"component.tilemaprenderer.tile_pixel_size": "Tile Pixel Size",
+		"component.tilemaprenderer.tile_size": "Tile World Size",
+		"component.tilemaprenderer.tile_type_header": "Tile Type ",
+		"component.tilemaprenderer.tile_types": "Tile Types",
+		"component.tilemaprenderer.tileset_origin_px": "Tileset Origin (px)",
+
+		//--------- component.transformsync ---------//
+		"component.transformsync.desc_1": "Every frame, copies the target's world position/rotation/scale (each plus its own offset) onto this object's Transform. This does not change the actual scene-graph parent.",
+		"component.transformsync.no_target": "(No target: sync is not applied)",
+		"component.transformsync.position_offset": "Position Offset",
+		"component.transformsync.rotation_offset": "Rotation Offset",
+		"component.transformsync.scale_offset": "Scale Offset",
+		"component.transformsync.sync_position": "Sync Position",
+		"component.transformsync.sync_rotation": "Sync Rotation",
+		"component.transformsync.sync_scale": "Sync Scale",
+
 		//--------- component.uibutton ---------//
 		"component.uibutton.desc": "Draws nothing itself. Uses the rectangle of this object's SpriteRenderer sprite if present; otherwise, if a TextRenderer is present, uses its bounding rectangle (which changes dynamically with the displayed text).",
 		"component.uibutton.display_camera": "Display Camera",
@@ -1389,6 +1560,20 @@
 		"component.vignetteeffect.inner_radius": "Inner Radius",
 		"component.vignetteeffect.intensity": "Intensity",
 		"component.vignetteeffect.smoothness": "Smoothness",
+
+		//--------- component.barreldistortioneffect ---------//
+		"component.barreldistortioneffect.strength": "Strength",
+		"component.barreldistortioneffect.zoom": "Zoom",
+		"component.barreldistortioneffect.edge_color": "Edge Color",
+
+		//--------- component.palettequantizeeffect ---------//
+		"component.palettequantizeeffect.intensity": "Intensity",
+		"component.palettequantizeeffect.dither_amount": "Dither Amount",
+
+		//--------- component.scanlineeffect ---------//
+		"component.scanlineeffect.intensity": "Intensity",
+		"component.scanlineeffect.line_spacing": "Line Spacing",
+		"component.scanlineeffect.thickness": "Thickness",
 
 		//--------- editor.assets ---------//
 		"editor.assets.createfile.alreadyexists": "A file with this name already exists.",
@@ -1460,6 +1645,12 @@
 
 		//--------- editor.audiomanager ---------//
 		"editor.audiomanager.active_plays_d": "Active Plays: %d",
+		"editor.audiomanager.categories.add": "Add",
+		"editor.audiomanager.categories.default_volume": "Default Volume",
+		"editor.audiomanager.categories.desc": "List of audio bus categories. Assign the names defined here to an AudioSource's category so that master/category volume changes (e.g. from a settings menu) affect it",
+		"editor.audiomanager.categories.master_volume": "Master Volume",
+		"editor.audiomanager.categories.remove": "Remove",
+		"editor.audiomanager.categories.window": "Audio Bus Categories",
 		"editor.audiomanager.ended": "Ended",
 		"editor.audiomanager.loaded.window": "AudioManager - Loaded Sounds",
 		"editor.audiomanager.loaded_sounds_d": "Loaded Sounds: %d",
@@ -1541,6 +1732,9 @@
 		"editor.fontmanager.u_x_u": "%u x %u",
 		"editor.fontmanager.window": "Loaded Fonts",
 
+		//--------- editor.bitmapfontmanager ---------//
+		"editor.bitmapfontmanager.window": "Loaded Bitmap Fonts",
+
 		//--------- editor.gameengine ---------//
 		"editor.gameengine.averages_zu_samples": "Averages (%zu samples)",
 		"editor.gameengine.avg_draw_3f_ms": "Avg Draw: %.3f ms",
@@ -1555,6 +1749,9 @@
 
 		//--------- editor.globalscenevariables ---------//
 		"editor.globalscenevariables.window": "Global Scene Variables",
+		"editor.globalscenevariables.clear_all": "Clear All",
+		"editor.globalscenevariables.clear_all_confirm_title": "Clear All Global Scene Variables",
+		"editor.globalscenevariables.clear_all_confirm_message": "This will delete all global scene variables. This cannot be undone. Continue?",
 
 		//--------- editor.hierarchy ---------//
 		"editor.hierarchy.clone": "Clone Object",
@@ -1578,6 +1775,7 @@
 		"editor.hierarchy.create.skinnedmeshobject": "Skinned Mesh Object",
 		"editor.hierarchy.create.spriteobject": "Sprite Object",
 		"editor.hierarchy.create.textobject": "Text Object",
+		"editor.hierarchy.create.bitmaptextobject": "Bitmap Text Object",
 		"editor.hierarchy.create.uibuttonobject": "UI Button Object",
 		"editor.hierarchy.create.windowobject": "Window Object",
 		"editor.hierarchy.createchildobject": "Create Child Object",
@@ -1671,6 +1869,7 @@
 		"editor.materialmanager.add_missing_parameters": "Add Missing Parameters",
 		"editor.materialmanager.color": "Color",
 		"editor.materialmanager.custom_parameters": "Custom Parameters (shader-specific)",
+		"editor.materialmanager.desc_uv_pivot": "Center point for UV rotation. Scale always stays anchored at the UV origin (0,0);\nonly rotation is centered on this point",
 		"editor.materialmanager.enable_lighting": "Enable Lighting",
 		"editor.materialmanager.enable_shadowmap_projection": "Enable ShadowMap Projection",
 		"editor.materialmanager.environment": "Environment",
@@ -1685,12 +1884,21 @@
 		"editor.materialmanager.rim_color": "Rim Color",
 		"editor.materialmanager.rim_intensity": "Rim Intensity",
 		"editor.materialmanager.rim_power": "Rim Power",
+		"editor.materialmanager.sampler": "Sampler",
 		"editor.materialmanager.save": "Save",
 		"editor.materialmanager.save_all": "Save All",
 		"editor.materialmanager.shininess": "Shininess",
 		"editor.materialmanager.specular_color": "Specular Color",
 		"editor.materialmanager.texture": "Texture",
+		"editor.materialmanager.uv_pivot": "UV Rotation Pivot",
+		"editor.materialmanager.uv_pivot_pixel": "UV Rotation Pivot (px)",
+		"editor.materialmanager.uv_rotation": "UV Rotation (deg)",
+		"editor.materialmanager.uv_scale": "UV Scale",
+		"editor.materialmanager.uv_scale_pixel": "UV Scale (px)",
 		"editor.materialmanager.uv_transform": "UV Transform",
+		"editor.materialmanager.uv_transform_pixel": "UV Transform (texture pixel units; disabled when no texture is set)",
+		"editor.materialmanager.uv_translate": "UV Translate",
+		"editor.materialmanager.uv_translate_pixel": "UV Translate (px)",
 		"editor.materialmanager.window": "MaterialManager - Materials",
 
 		//--------- editor.menu ---------//
@@ -1778,6 +1986,10 @@
 		"editor.prefab.apply": "Apply",
 		"editor.prefab.applyall": "Apply All",
 		"editor.prefab.overrides": "Overrides: ",
+		"editor.prefab.override.objectproperties": "Object Properties",
+		"editor.prefab.override.parent": "Parent",
+		"editor.prefab.override.addedobject": "Added Object",
+		"editor.prefab.override.removedobjects": "Removed Objects",
 		"editor.prefab.revert": "Revert",
 		"editor.prefab.revert.title": "Revert Prefab Instance?",
 		"editor.prefab.revert.warning1": "This will discard all local changes (including locally added child objects)",
@@ -1852,6 +2064,7 @@
 		"editor.preferences.window": "Editor Preferences",
 
 		//--------- editor.savescene ---------//
+		"editor.savescene.playing.warning": "Game loop is currently playing. The saved content will be the scene state from before playback started.",
 		"editor.savescene.title": "Save Scene",
 
 		//--------- editor.sceneaudioplayer ---------//
@@ -1875,11 +2088,20 @@
 		"editor.scenelist.column.filepath": "File Path",
 		"editor.scenelist.column.name": "Name",
 		"editor.scenelist.column.switch": "Switch",
+		"editor.scenelist.column.duplicate": "Duplicate",
 		"editor.scenelist.convert": "Convert to Folder Format",
 		"editor.scenelist.convert.succeeded": "Converted to folder format successfully.",
 		"editor.scenelist.convert.tooltip": "Convert this scene's storage to 1-object-per-folder format\\n(reduces Git conflicts in multi-developer work).",
 		"editor.scenelist.convert.tooltip.disabled": "Already in folder format, or no file path is set.",
 		"editor.scenelist.delete.tooltip": "Remove this scene from the list.\\n(The scene JSON file itself is not deleted)",
+		"editor.scenelist.duplicate": "Duplicate",
+		"editor.scenelist.duplicate.button": "Duplicate",
+		"editor.scenelist.duplicate.namealreadyexists": "A scene with this name is already registered.",
+		"editor.scenelist.duplicate.newfilepath": "New File Path##duplicate",
+		"editor.scenelist.duplicate.newname": "New Name##duplicate",
+		"editor.scenelist.duplicate.source": "Source",
+		"editor.scenelist.duplicate.title": "Duplicate Scene",
+		"editor.scenelist.duplicate.tooltip": "Duplicate this scene under a new name.",
 		"editor.scenelist.deleteoriginal.keep": "Keep",
 		"editor.scenelist.deleteoriginal.message": "Delete the original file?",
 		"editor.scenelist.deleteoriginal.title": "Delete Original File?",
@@ -1898,6 +2120,7 @@
 
 		//--------- editor.sceneobjecthierarchy ---------//
 		"editor.sceneobjecthierarchy.window": "Scene Object Hierarchy",
+		"editor.sceneobjecthierarchy.search": "Search",
 
 		//--------- editor.sceneobjectinspector ---------//
 		"editor.sceneobjectinspector.window": "Scene Object Inspector",
@@ -1924,17 +2147,35 @@
 		"editor.sceneview.gizmo.local": "Local",
 		"editor.sceneview.gizmo.rotate": "Rotate",
 		"editor.sceneview.gizmo.scale": "Scale",
+		"editor.sceneview.gizmo.snap": "Grid Snap",
+		"editor.sceneview.gizmo.snap.rotate": "Angle Snap",
+		"editor.sceneview.gizmo.snap.scale": "Scale Snap",
+		"editor.sceneview.gizmo.snap.tooltip": "Holding Ctrl temporarily inverts the enabled state",
+		"editor.sceneview.gizmo.snap.translate": "Grid Size",
 		"editor.sceneview.gizmo.translate": "Translate",
 		"editor.sceneview.gizmo.world": "World",
 		"editor.sceneview.notready": "Scene view is not ready.",
+		"editor.sceneview.boundszone.enable": "Enable Rect Editing",
+		"editor.sceneview.boundszone.hint": "Drag the rect currently selected in the inspector directly in the scene view (corners, edges, and the interior can all be dragged).",
+		"editor.sceneview.boundszone.no_selection": "Select a single object with a CameraBoundsZone2D/3D.",
 		"editor.sceneview.show.bones": "Bones",
+		"editor.sceneview.show.boundszones": "Bounds Zones",
 		"editor.sceneview.show.cameras": "Cameras",
 		"editor.sceneview.show.colliders": "Colliders",
 		"editor.sceneview.show.grid": "Grid",
 		"editor.sceneview.show.lights": "Lights",
+		"editor.sceneview.tab.boundszone": "Bounds Zone",
 		"editor.sceneview.tab.camera": "Camera",
 		"editor.sceneview.tab.display": "Display",
 		"editor.sceneview.tab.gizmo": "Gizmo",
+		"editor.sceneview.tab.tilepaint": "Tile Paint",
+		"editor.sceneview.tilepaint.brush": "Brush:",
+		"editor.sceneview.tilepaint.enable": "Enable Tile Paint",
+		"editor.sceneview.tilepaint.erase": "Erase",
+		"editor.sceneview.tilepaint.no_selection": "Select a single object that has a TilemapRenderer.",
+		"editor.sceneview.tilepaint.pen_shape_circle": "Circle",
+		"editor.sceneview.tilepaint.pen_shape_square": "Square",
+		"editor.sceneview.tilepaint.pen_size": "Pen Size",
 		"editor.sceneview.window": "Scene View",
 
 		//--------- editor.scriptengine ---------//
@@ -2026,6 +2267,15 @@
 		"engine.font.loading.failed.unsupported": "Failed to load the font. Unsupported extension. File path: ",
 		"engine.font.loading.succeeded": "Font loaded successfully. File path: ",
 
+		//--------- engine.bitmapfont ---------//
+		"engine.bitmapfont.loading.failed.notfound": "Failed to load the bitmap font. File not found. File path: ",
+		"engine.bitmapfont.loading.failed.nopage": "Failed to load the bitmap font. No page (texture) is defined. File path: ",
+		"engine.bitmapfont.loading.failed.pagenotfound": "Failed to load the bitmap font. Could not find a texture already loaded under this page image's file name (make sure the page image is placed somewhere under Assets). File name: ",
+		"engine.bitmapfont.loading.failed.read": "Failed to load the bitmap font. Failed to open the file. File path: ",
+		"engine.bitmapfont.loading.failed.unsupported": "Failed to load the bitmap font. Unsupported extension. File path: ",
+		"engine.bitmapfont.loading.succeeded": "Bitmap font loaded successfully. File path: ",
+		"engine.bitmapfont.loading.warning.multipage": "This bitmap font has multiple pages. Only the first page will be used. File path: ",
+
 		//--------- engine.gpuparticle ---------//
 		"engine.gpuparticle.dispatching": "Dispatching GPU particles. Emitter count: ",
 		"engine.gpuparticle.emitters.empty": "There are no GPU particle emitters.",
@@ -2078,13 +2328,39 @@
 		"engine.prefab.sync.result.updated": ", updated scene count ",
 		"engine.prefab.sync.scene.failed": "Prefab sync: Failed to load or save the scene. Scene name: ",
 
+		//--------- engine.renderer ---------//
+		"engine.renderer.zerodrawentries.detected": "Draw entries have stayed at zero for a while (the target resolution, e.g. a camera, may have become unbound). ScreenBufferObject name: ",
+		"engine.renderer.zerodrawentries.recovered": "Draw entries have recovered. ScreenBufferObject name: ",
+
+		//--------- engine.rendertargetcarryover ---------//
+		"engine.rendertargetcarryover.beginsceneswitch": "Scene switch: started accepting render target carry-overs.",
+		"engine.rendertargetcarryover.claim.success": "Scene switch: claimed a render target resource from the carry-over pool. Kind/Key: ",
+		"engine.rendertargetcarryover.deposit.carried": "Scene switch: deposited a render target resource into the carry-over pool. Kind/Key: ",
+		"engine.rendertargetcarryover.deposit.destroyed": "Not during a scene switch, so the render target resource was destroyed immediately. Kind/Key: ",
+		"engine.rendertargetcarryover.endsceneswitch.unclaimed": "Scene switch: destroyed an unclaimed render target resource (the new scene may not have a component with the same name). Kind/Key: ",
+
+		//--------- engine.scene ---------//
+		"engine.scene.playstop.emptysnapshot": "PlayStop(): editModeSnapshot_ is empty, so restoring the scene content was skipped. PlayStart() may not have been called on this Scene instance.",
+		"engine.scene.playstop.notplaying": "PlayStop() was called, but this Scene instance is not playing (isPlaying_=false). The scene may have switched to a different Scene instance while playing.",
+
 		//--------- engine.scenemanager ---------//
 		"engine.scenemanager.globalscenevariables.loaded": "Loaded the global scene variables. File path: ",
 		"engine.scenemanager.scene.alreadyregistered": "The scene is already registered, so it was skipped. Scene name: ",
 		"engine.scenemanager.scene.load.failed": "Failed to load the scene file, so an empty scene was created. File path: ",
+		"engine.scenemanager.scene.switch.end": "Scene switch completed. Target: ",
+		"engine.scenemanager.scene.switch.start": "Scene switch started. Target: ",
 		"engine.scenemanager.scenelist.loaded": "Loaded the scene list. File path: ",
 
+		//--------- engine.screenbuffer ---------//
+		"engine.screenbuffer.initialize.failed.doublebuffer": "Failed to initialize the ScreenBuffer. Failed to create the double-buffer resources. Size: ",
+		"engine.screenbuffer.initialize.failed.nodirectxcommon": "Failed to initialize the ScreenBuffer. DirectXCommon is not set.",
+		"engine.screenbuffer.initialize.failed.noslot": "Failed to initialize the ScreenBuffer. Could not acquire a command object slot. Size: ",
+		"engine.screenbuffer.initialize.failed.previewbuffer": "Failed to initialize the ScreenBuffer. Failed to create the preview buffer. Size: ",
+
 		//--------- engine.screenbufferobject ---------//
+		"engine.screenbufferobject.loadfromjson.carried": "Carried over an existing ScreenBuffer instance from the carry-over pool as-is. Name(pointer) size: ",
+		"engine.screenbufferobject.loadfromjson.recreated": "Recreated a new ScreenBuffer instance due to a size mismatch. Name(pointer) size: ",
+		"engine.screenbufferobject.loadfromjson.reused": "Reused the temporary ScreenBuffer instance created right after Initialize() as-is. Name(pointer) size: ",
 		"engine.screenbufferobject.screenshot.failed": "Failed to save the screenshot.",
 
 		//--------- engine.script ---------//
@@ -2102,8 +2378,11 @@
 		"engine.script.error": "AngelScript: ",
 		"engine.script.failed.createengine": "AngelScript: asCreateScriptEngine failed.",
 		"engine.script.field.array.recreated": "The array<T> field's handle was invalid, so it was recreated with a new empty array. Field name: ",
+		"engine.script.field.gc_type.unsafe_declaration": "Build aborted: found a field declared with unsafe value syntax instead of a handle. GC-tracked types (e.g. array<T>, dictionary) and script class types (e.g. [System.Serializable] classes) must always be declared with handle syntax (e.g. array<T>@ name = null; or array<T@>@ name = null;). Script: ",
+		"engine.script.field.gc_type.unsafe_declaration.global_suffix": " (global variable)",
 		"engine.script.predefined.generate.failed": "AngelScript: Failed to generate as.predefined.",
 		"engine.script.predefined.generated": "AngelScript: Generated as.predefined.",
+		"engine.script.variable.type_mismatch_shared_hint": "Type name matches but type ID does not when exchanging data between scripts. If this is a custom class/enum, you may have forgotten to declare it as shared. Type name: ",
 		"engine.script.vscodelaunch.generate.failed": "AngelScript: Failed to generate launch.json for VSCode.",
 
 		//--------- engine.settings ---------//
@@ -2135,6 +2414,11 @@
 		"engine.settings.window.initialwidth": "Initial Window Width: ",
 		"engine.settings.window.section": "Window",
 
+		//--------- engine.shadowmapbuffer ---------//
+		"engine.shadowmapbuffer.initialize.failed.depth": "Failed to initialize the ShadowMapBuffer. Failed to create the depth buffer. Size: ",
+		"engine.shadowmapbuffer.initialize.failed.nodirectxcommon": "Failed to initialize the ShadowMapBuffer. DirectXCommon is not set.",
+		"engine.shadowmapbuffer.initialize.failed.noslot": "Failed to initialize the ShadowMapBuffer. Could not acquire a command object slot. Size: ",
+
 		//--------- engine.texture ---------//
 		"engine.texture.loading.failed.loadfile": "Failed to load the texture. Failed to read the file. File path: ",
 
@@ -2155,6 +2439,14 @@
 		"error.code.label": "Error Code: ",
 
 		//--------- label.filepath ---------//
-		"label.filepath": "File Path: "
+		"label.filepath": "File Path: ",
+
+		//--------- editor.externalchanges ---------//
+		"editor.externalchanges.title": "External Scene Change",
+		"editor.externalchanges.message": "The scene being edited was changed externally. Reload it from disk?",
+		"editor.externalchanges.scene": "Scene",
+		"editor.externalchanges.playing": "Reload is disabled during Play mode. Stop playback before reloading.",
+		"editor.externalchanges.reload": "Reload",
+		"editor.externalchanges.keeplocal": "Keep Local Edits"
 	}
 }

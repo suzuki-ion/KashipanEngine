@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GifSource | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_GifSource">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>GifSource</h1>
+<p class="page-lead">アニメーションGIFを再生するコンポーネントです。同じオブジェクトにSpriteRenderer/MeshRendererが付いている場合、再生開始時にそのレンダラーが使用しているマテリアルを複製し、複製したマテリアルのテクスチャを再生中のGIFへ差し替えて割り当てます（元のマテリアルアセット自体は書き換えません）。停止時はGIFの最初の1フレームを表示し続けます。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>GIF</td><td>コンボ（(None) + 読み込み済みGIFのアセットパス一覧）</td><td>再生するGIF。<a href="../../Windows/05_AssetsWindow.html">Assets Window</a>からGIFファイルをこの項目へドラッグ&amp;ドロップして割り当てることもできる</td></tr>
+<tr><td>Loop</td><td>チェックボックス</td><td>ループ再生するか</td></tr>
+<tr><td>Play On Awake</td><td>チェックボックス</td><td>シーン開始時に自動で再生を開始するか</td></tr>
+<tr><td>Play / Resume / Pause</td><td>ボタン</td><td>状態に応じて表示が切り替わる。未再生時は"Play"、一時停止中は"Resume"、再生中は"Pause"</td></tr>
+<tr><td>Stop</td><td>ボタン</td><td>再生・一時停止のどちらでもない場合は無効化（グレーアウト）される。停止するとGIFの最初の1フレームがレンダラーに表示され続ける</td></tr>
+</table>
+
+<div class="note">GIFを切り替えた（Value変更・ドラッグ&amp;ドロップ）直後は、再生・一時停止中でなければ自動的にStopが呼ばれ、新しいGIFの最初の1フレームがプレビュー表示されます。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path">Add Component → Animation → GifSource</span>。最大付与数の制限はありません。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Engine/09_Assets.html">Engine/09_Assets.html</a> — GIFアセットの読み込み・<code>GifManager</code>/<code>GifPlayer</code>のAPI</li>
+<li><a href="TextureSource.html">TextureSource.html</a> — 同じ方式で静止画テクスチャを差し替えるコンポーネント</li>
+<li><a href="../Render/SpriteRenderer.html">Components/Render/SpriteRenderer.html</a> — SpriteRendererのマテリアル設定</li>
+<li><a href="../Render/MeshRenderer.html">Components/Render/MeshRenderer.html</a> — MeshRendererのマテリアル設定</li>
+<li><a href="../../Windows/03_ObjectInspector.html">Windows/03_ObjectInspector.html</a> — Scene Object Inspectorの基本的な見方</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

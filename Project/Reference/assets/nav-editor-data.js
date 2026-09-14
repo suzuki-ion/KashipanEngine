@@ -2,8 +2,10 @@
 // href is always relative to the Reference/ root folder.
 const KE_SITE = "editor";
 const KE_SITE_LABEL = "エディタリファレンス";
-const KE_OTHER_SITE_LABEL = "エンジン本体リファレンス";
-const KE_OTHER_SITE_HREF = "Engine/00_Index.html";
+const KE_OTHER_SITES = [
+  { label: "エンジン本体リファレンス", href: "Engine/00_Index.html" },
+  { label: "スクリプトリファレンス", href: "Script/00_Index.html" },
+];
 
 const KE_PAGES = [
   { id: "00_Index", title: "トップページ", group: "はじめに", href: "Editor/00_Index.html" },
@@ -19,6 +21,7 @@ const KE_PAGES = [
   { id: "W07_SceneVariables", title: "Scene Variables", group: "ウィンドウ", href: "Editor/Windows/07_SceneVariablesMenu.html" },
   { id: "W08_SceneList", title: "Scene List / Save & Load", group: "ウィンドウ", href: "Editor/Windows/08_SceneListAndSaveLoad.html" },
   { id: "W09_ProjectWindow", title: "Project", group: "ウィンドウ", href: "Editor/Windows/09_ProjectWindow.html" },
+  { id: "W10_MaterialEditor", title: "Material Editor", group: "ウィンドウ", href: "Editor/Windows/10_MaterialEditor.html" },
 
   { id: "C_Basic_Transform", title: "Transform", group: "コンポーネント: Basic", href: "Editor/Components/Basic/Transform.html" },
   { id: "C_Basic_PreTransform", title: "PreTransform", group: "コンポーネント: Basic", href: "Editor/Components/Basic/PreTransform.html" },
@@ -26,6 +29,7 @@ const KE_PAGES = [
   { id: "C_Basic_Rotation", title: "Rotation", group: "コンポーネント: Basic", href: "Editor/Components/Basic/Rotation.html" },
   { id: "C_Basic_Shake", title: "Shake", group: "コンポーネント: Basic", href: "Editor/Components/Basic/Shake.html" },
   { id: "C_Basic_TargetLookAt", title: "TargetLookAt", group: "コンポーネント: Basic", href: "Editor/Components/Basic/TargetLookAt.html" },
+  { id: "C_Basic_TransformSync", title: "TransformSync", group: "コンポーネント: Basic", href: "Editor/Components/Basic/TransformSync.html" },
   { id: "C_Basic_Comment", title: "Comment", group: "コンポーネント: Basic", href: "Editor/Components/Basic/Comment.html" },
   { id: "C_Basic_Animator", title: "Animator", group: "コンポーネント: Basic", href: "Editor/Components/Basic/Animator.html" },
   { id: "C_Basic_KeyFrameAnimator", title: "KeyFrameAnimator", group: "コンポーネント: Basic", href: "Editor/Components/Basic/KeyFrameAnimator.html" },
@@ -36,23 +40,32 @@ const KE_PAGES = [
   { id: "C_Basic_AudioSource", title: "AudioSource", group: "コンポーネント: Basic", href: "Editor/Components/Basic/AudioSource.html" },
   { id: "C_Basic_ParticleSystem2D", title: "ParticleSystem2D", group: "コンポーネント: Basic", href: "Editor/Components/Basic/ParticleSystem2D.html" },
   { id: "C_Basic_ParticleSystem3D", title: "ParticleSystem3D", group: "コンポーネント: Basic", href: "Editor/Components/Basic/ParticleSystem3D.html" },
+  { id: "C_Basic_TextureSource", title: "TextureSource", group: "コンポーネント: Basic", href: "Editor/Components/Basic/TextureSource.html" },
+  { id: "C_Basic_GifSource", title: "GifSource", group: "コンポーネント: Basic", href: "Editor/Components/Basic/GifSource.html" },
+  { id: "C_Basic_VideoSource", title: "VideoSource", group: "コンポーネント: Basic", href: "Editor/Components/Basic/VideoSource.html" },
   { id: "C_Basic_ScriptComponent", title: "ScriptComponent", group: "コンポーネント: Basic", href: "Editor/Components/Basic/ScriptComponent.html" },
   { id: "C_Basic_PrefabInstanceComponent", title: "PrefabInstanceComponent", group: "コンポーネント: Basic", href: "Editor/Components/Basic/PrefabInstanceComponent.html" },
 
   { id: "C_Render_MeshRenderer", title: "MeshRenderer", group: "コンポーネント: Render", href: "Editor/Components/Render/MeshRenderer.html" },
   { id: "C_Render_SkinnedMeshRenderer", title: "SkinnedMeshRenderer", group: "コンポーネント: Render", href: "Editor/Components/Render/SkinnedMeshRenderer.html" },
   { id: "C_Render_SpriteRenderer", title: "SpriteRenderer", group: "コンポーネント: Render", href: "Editor/Components/Render/SpriteRenderer.html" },
+  { id: "C_Render_TilemapRenderer", title: "TilemapRenderer", group: "コンポーネント: Render", href: "Editor/Components/Render/TilemapRenderer.html" },
   { id: "C_Render_TextRenderer", title: "TextRenderer", group: "コンポーネント: Render", href: "Editor/Components/Render/TextRenderer.html" },
+  { id: "C_Render_BitmapTextRenderer", title: "BitmapTextRenderer", group: "コンポーネント: Render", href: "Editor/Components/Render/BitmapTextRenderer.html" },
   { id: "C_Render_Light", title: "Light", group: "コンポーネント: Render", href: "Editor/Components/Render/Light.html" },
   { id: "C_Render_LightRenderer", title: "LightRenderer", group: "コンポーネント: Render", href: "Editor/Components/Render/LightRenderer.html" },
   { id: "C_Render_Camera3D", title: "Camera3D", group: "コンポーネント: Render", href: "Editor/Components/Render/Camera3D.html" },
   { id: "C_Render_Camera2D", title: "Camera2D", group: "コンポーネント: Render", href: "Editor/Components/Render/Camera2D.html" },
   { id: "C_Render_CameraRenderer", title: "CameraRenderer", group: "コンポーネント: Render", href: "Editor/Components/Render/CameraRenderer.html" },
   { id: "C_Render_CameraController", title: "CameraController", group: "コンポーネント: Render", href: "Editor/Components/Render/CameraController.html" },
+  { id: "C_Render_CameraController2D", title: "CameraController2D", group: "コンポーネント: Render", href: "Editor/Components/Render/CameraController2D.html" },
+  { id: "C_Render_CameraBoundsZone2D", title: "CameraBoundsZone2D", group: "コンポーネント: Render", href: "Editor/Components/Render/CameraBoundsZone2D.html" },
+  { id: "C_Render_CameraBoundsZone3D", title: "CameraBoundsZone3D", group: "コンポーネント: Render", href: "Editor/Components/Render/CameraBoundsZone3D.html" },
   { id: "C_Render_NormalWindowObject", title: "NormalWindowObject", group: "コンポーネント: Render", href: "Editor/Components/Render/NormalWindowObject.html" },
   { id: "C_Render_OverlayWindowObject", title: "OverlayWindowObject", group: "コンポーネント: Render", href: "Editor/Components/Render/OverlayWindowObject.html" },
   { id: "C_Render_ScreenBufferObject", title: "ScreenBufferObject", group: "コンポーネント: Render", href: "Editor/Components/Render/ScreenBufferObject.html" },
   { id: "C_Render_ScreenBufferViewport", title: "ScreenBufferViewport", group: "コンポーネント: Render", href: "Editor/Components/Render/ScreenBufferViewport.html" },
+  { id: "C_Render_ScreenAnchor", title: "ScreenAnchor", group: "コンポーネント: Render", href: "Editor/Components/Render/ScreenAnchor.html" },
   { id: "C_Render_ShadowMapObject", title: "ShadowMapObject", group: "コンポーネント: Render", href: "Editor/Components/Render/ShadowMapObject.html" },
 
   { id: "C_UI_UIButton", title: "UIButton", group: "コンポーネント: UI", href: "Editor/Components/UI/UIButton.html" },
@@ -68,6 +81,7 @@ const KE_PAGES = [
   { id: "C_Collider_Ray2DCollider", title: "Ray2DCollider", group: "コンポーネント: Collider", href: "Editor/Components/Collider/Ray2DCollider.html" },
   { id: "C_Collider_RigidBody2D", title: "RigidBody2D", group: "コンポーネント: Collider", href: "Editor/Components/Collider/RigidBody2D.html" },
   { id: "C_Collider_RigidBody3D", title: "RigidBody3D", group: "コンポーネント: Collider", href: "Editor/Components/Collider/RigidBody3D.html" },
+  { id: "C_Collider_MeshButton", title: "MeshButton", group: "コンポーネント: Collider", href: "Editor/Components/Collider/MeshButton.html" },
 
   { id: "C_PostEffect_SSAOEffect", title: "SSAOEffect", group: "コンポーネント: PostEffect", href: "Editor/Components/PostEffect/SSAOEffect.html" },
   { id: "C_PostEffect_GTAOEffect", title: "GTAOEffect", group: "コンポーネント: PostEffect", href: "Editor/Components/PostEffect/GTAOEffect.html" },
@@ -86,6 +100,8 @@ const KE_PAGES = [
   { id: "C_PostEffect_OutlineEffect", title: "OutlineEffect", group: "コンポーネント: PostEffect", href: "Editor/Components/PostEffect/OutlineEffect.html" },
   { id: "C_PostEffect_RadialBlurEffect", title: "RadialBlurEffect", group: "コンポーネント: PostEffect", href: "Editor/Components/PostEffect/RadialBlurEffect.html" },
   { id: "C_PostEffect_VignetteEffect", title: "VignetteEffect", group: "コンポーネント: PostEffect", href: "Editor/Components/PostEffect/VignetteEffect.html" },
+  { id: "C_PostEffect_ScreenWideDitherBlendEffect", title: "ScreenWideDitherBlendEffect", group: "コンポーネント: PostEffect", href: "Editor/Components/PostEffect/ScreenWideDitherBlendEffect.html" },
+  { id: "C_PostEffect_TemporalBlendEffect", title: "TemporalBlendEffect", group: "コンポーネント: PostEffect", href: "Editor/Components/PostEffect/TemporalBlendEffect.html" },
 
   { id: "C_Compute_ComputeShaderProcessing", title: "ComputeShaderProcessing", group: "コンポーネント: Compute", href: "Editor/Components/Compute/ComputeShaderProcessing.html" },
 

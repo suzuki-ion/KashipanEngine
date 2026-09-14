@@ -68,6 +68,9 @@ public:
     /// @param key 変数のキー
     /// @return 削除に成功した場合は true、失敗した場合は false を返す
     bool RemoveGlobalSceneVariable(const std::string &key) { return owner_->RemoveGlobalSceneVariable(key); }
+    /// @brief グローバルシーン変数を全て削除する（新規ゲーム開始時、既存セーブデータをメモリ上から
+    ///        破棄する用途を想定。ファイルへの反映は別途SaveGlobalSceneVariables()の呼び出しが必要）
+    void ClearGlobalSceneVariables() { owner_->ClearGlobalSceneVariables(); }
     /// @brief グローバルシーン変数の情報を取得する
     /// @param key 変数のキー
     /// @return シーン変数のポインタ（存在しない場合は nullptr）
@@ -79,6 +82,15 @@ public:
     /// @brief グローバルシーン変数を取得する
     /// @return シーン変数のマップ
     const std::unordered_map<std::string, MyAny> &GetGlobalSceneVariables() const { return owner_->GetGlobalSceneVariables(); }
+
+    /// @brief グローバルシーン変数をファイルへ保存する（ゲームのセーブデータ用途を想定）
+    /// @param filePath 保存先のファイルパス（空の場合は既定のパスを使用する）
+    /// @return 保存に成功した場合は true
+    bool SaveGlobalSceneVariables(const std::string &filePath = "") const { return owner_->SaveGlobalSceneVariables(filePath); }
+    /// @brief グローバルシーン変数をファイルから読み込む（ゲームのセーブデータ用途を想定）
+    /// @param filePath 読み込むファイルのパス（空の場合は既定のパスを使用する）
+    /// @return 読み込みに成功した場合は true
+    bool LoadGlobalSceneVariables(const std::string &filePath = "") { return owner_->LoadGlobalSceneVariables(filePath); }
 
     //==================================================
     // シーン内オブジェクト管理
@@ -92,8 +104,9 @@ public:
     /// @brief 既存オブジェクトを複製してシーンへ追加する
     /// @param source 複製元オブジェクトのポインタ（このシーンに属している必要がある）
     /// @param name 複製後のオブジェクト名（空の場合は複製元と同じ名前になる）
+    /// @param includeChildren 子孫オブジェクトもまとめて複製するか
     /// @return 複製されたオブジェクトのポインタ（失敗した場合は nullptr）
-    EmptyObject *CloneObject(EmptyObject *source, const std::string &name = "") { return owner_->CloneObject(source, name); }
+    EmptyObject *CloneObject(EmptyObject *source, const std::string &name = "", bool includeChildren = false) { return owner_->CloneObject(source, name, includeChildren); }
     /// @brief オブジェクトを削除
     /// @param obj 削除するオブジェクトのポインタ
     /// @return 削除に成功した場合は true、失敗した場合は false を返す

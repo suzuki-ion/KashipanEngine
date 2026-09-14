@@ -112,11 +112,11 @@ protected:
         ImGui::DragFloat(TranslationLabel("component.camera3d.orthosize"), &orthoSize_, 0.1f);
         ImGui::Checkbox(TranslationLabel("component.camera3d.enable_jitter"), &enableJitter_);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.camera3d.enable_jitter_desc"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.camera3d.enable_jitter_desc"));
         }
         ImGui::Checkbox(TranslationLabel("component.camera3d.auto_sync_aspect"), &autoSyncAspectRatio_);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.camera3d.auto_sync_aspect_desc"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.camera3d.auto_sync_aspect_desc"));
         }
     }
 #endif

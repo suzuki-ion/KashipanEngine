@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "Objects/ComponentRef.h"
 #include "Scene/SceneEditorContext.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 #include "Scene/Components/Render/SceneRenderer.h"
@@ -26,19 +27,33 @@ class ScreenBuffer;
 class ConstantBufferResource;
 class CameraRenderer;
 class Camera3D;
+class SceneViewCameraSettings;
 class ScreenBufferObject;
 class Transform;
+class TilemapRenderer;
+class CameraBoundsZone2D;
+class CameraBoundsZone3D;
 struct ColliderInfo2D;
 
 /// @brief シーンエディター用のシーンビュー
-/// @details エディター専用の ScreenBuffer とデバッグカメラを持ち、
-///          シーン上の全 MeshRenderer をこの ScreenBuffer に描画して ImGui ウィンドウへ表示する。
+/// @details 3D/2Dシーンビューカメラ・ScreenBufferの実体はいずれもこのクラスが直接所有する。
+///          シーンに自動生成される editorOnly な「Scene View」オブジェクトは何の所有権も持たず、
+///          Transform（自動付与、未使用）と SceneViewCameraSettings コンポーネント（値を持たない
+///          プロキシ。ShowImGui表示専用）のみが付与される。SceneEditorViewは毎フレーム、
+///          自分が持つ現在のカメラ値をこのコンポーネントへ書き込み、Inspectorでの編集結果を
+///          このコンポーネントから読み戻すことで、通常のコンポーネントと同じ感覚でHierarchy上の
+///          オブジェクトからカメラを操作できるようにしている（詳細はSceneViewCameraSettings.h、
+///          PullCameraSettingsFromComponent/PushCameraSettingsToComponent参照）。
+///          カメラの実際の永続化（シーンごとの最後の位置・向き）はシーンJSONではなく、
+///          EditorSettingsへシーンIDをキーに保存される（BuildCameraSettingsKey参照）。
 ///          選択中オブジェクトには ImGuizmo によるギズモ操作が行える（複数選択時は選択群の
 ///          平均位置をピボットとしたグループ操作になる）。
-///          カメラ・ScreenBufferの実体は、シーンに自動生成される editorOnly な「Scene View」
-///          オブジェクト（Transform + Camera3D + ScreenBufferObject）が保持する。これにより
-///          通常のオブジェクトと同様にHierarchy/Inspectorから編集・コンポーネント追加ができ、
-///          シーンJSONへシーンごとに永続化される（詳細はEnsureSceneViewObject参照）。
+///          screenBuffer_ もシーンオブジェクト・コンポーネントとしては公開せず、このクラスが
+///          直接所有する（ヒエラルキー/インスペクターには一切現れない）。ポストエフェクトの
+///          適用先解決（SceneRenderer::GetTargetOwner）はSetEditorTarget()で明示的に渡す
+///          オーナーオブジェクト（sceneViewObject_）経由で行われるため、screenBuffer_・カメラの
+///          どちらもコンポーネントに実体を持たなくても、「Scene View」オブジェクトへ付与した
+///          ポストエフェクトは従来通り適用される。
 class SceneEditorView final {
 public:
     SceneEditorView(Passkey<SceneEditor>, SceneEditorContext *context);
@@ -68,17 +83,71 @@ private:
     };
 
     void EnsureResources();
-    /// @brief シーンビュー用の editorOnly オブジェクト（Transform + Camera3D + ScreenBufferObject）を
-    ///        毎フレーム sceneViewObjectID_ から解決し直し、見つからなければシーン上を検索、
-    ///        それでも無ければ新規作成して sceneViewObject_/sceneViewObjectID_ へ保持する
+    /// @brief シーンビュー用の editorOnly オブジェクト（Transformのみ自動付与。カメラの実体は
+    ///        持たない）を毎フレーム sceneViewObjectID_ から解決し直し、見つからなければシーン上を
+    ///        検索、それでも無ければ新規作成して sceneViewObject_/sceneViewObjectID_ へ保持する
     /// @details 生ポインタをまたがるフレームでキャッシュしない（CameraRenderer::GetTargetObject等と
     ///          同じ方式）。Play開始時のEditorOnlyオブジェクト削除（Scene::DeleteEditorOnlyObjects）で
     ///          対象オブジェクトがシーンから取り除かれることがあるため、UUIDから毎回引き直すことで
-    ///          ダングリングポインタ参照を避ける。新規作成時は現状と同じ既定値
-    ///          （target(0,0,0)・distance 10・yaw 0・pitch 0.3）を用いる。
-    ///          既存のオブジェクトが見つかった場合はそのTransformから軌道パラメータ
-    ///          （yaw_/pitch_/target_）を逆算し、保存済みのカメラ位置から操作を再開できるようにする
+    ///          ダングリングポインタ参照を避ける。カメラの値自体はこのクラスが直接持っているため、
+    ///          対象オブジェクトが削除・再生成されてもカメラの状態には一切影響しない
+    ///          （Play開始・終了をまたいでもカメラ位置が保持される）。
+    ///          見つかったオブジェクトが旧バージョンのScreenBufferObjectを持っていた場合は
+    ///          StripLegacyScreenBufferComponentで取り除く
     void EnsureSceneViewObject();
+    /// @brief 旧バージョンで保存されたシーンJSONに残っている、「Scene View」オブジェクト上の
+    ///        ScreenBufferObjectコンポーネントを取り除く
+    /// @details screenBuffer_はこのクラスが直接所有する方式へ変更したため、残したままだと
+    ///          同名（kScreenBufferName）バッファがこのクラスの分と二重に生成されてしまう
+    static void StripLegacyScreenBufferComponent(EmptyObject *sceneViewObject);
+    /// @brief sceneViewObject_へSceneViewCameraSettingsコンポーネントを確保する
+    /// @details 未初期化（このSceneEditorViewインスタンスで初回）の場合、EditorSettingsに
+    ///          このシーン用の保存値があればそれを読み込み、無ければ旧バージョンのCamera3D/
+    ///          SceneViewOrbitStateが残っていないか探して見つかればそこから移行する
+    ///          （MigrateLegacyCameraState参照）。いずれも無ければ既定値のまま。
+    ///          旧バージョンのCamera3D/SceneViewOrbitStateが見つかった場合は、
+    ///          移行の有無に関わらず必ず取り除く（残しておくとカメラ実体が二重に存在してしまうため）
+    void EnsureCameraSettingsComponent();
+    /// @brief 旧バージョンで保存されたシーンJSONに残っている「Scene View」オブジェクトの
+    ///        Transform（位置・回転）・Camera3D（レンズ設定）・SceneViewOrbitState（距離）から、
+    ///        カメラの最後の状態をこのクラスの内部状態（target_/eye_/yaw_/pitch_/distance_/
+    ///        fovY_/nearClip_/farClip_/enableJitter_）へ一度だけ移行する
+    /// @details 移行後の値はEnsureCameraSettingsComponentの呼び出し元がSceneViewCameraSettings
+    ///          コンポーネントへ書き戻し、EditorSettingsへ保存する（PushCameraSettingsToComponent参照）
+    void MigrateLegacyCameraState(Camera3D *legacyCamera3d);
+    /// @brief SceneViewCameraSettingsコンポーネントの現在値を、このクラスの内部状態
+    ///        （target_/eye_/yaw_/pitch_/...）へ読み戻す
+    /// @details Inspectorでの編集結果を取り込むために毎フレーム呼ぶ。コンポーネント自体は
+    ///          値を所有しないため、ここで読み取る値は前フレームの終わりにこのクラス自身が
+    ///          PushCameraSettingsToComponentで書き込んだもの（＝Inspectorで編集されていなければ
+    ///          前フレームと同じ値）である
+    void PullCameraSettingsFromComponent();
+    /// @brief このクラスの内部状態をSceneViewCameraSettingsコンポーネントへ書き込み、
+    ///        EditorSettingsへも保存する（BuildCameraSettingsKey参照。値が変化していない場合は
+    ///        EditorSettings::SetJSON内部の比較により実際のファイル書き込みは発生しない）
+    /// @details マウス操作（HandleCameraInput等）による変更をInspector表示・永続化へ反映するため、
+    ///          1フレームの処理の最後（ShowImGuiの末尾）で呼ぶ
+    void PushCameraSettingsToComponent();
+    /// @brief このクラスの内部状態（target_/eye_/yaw_/pitch_/...）を指定コンポーネントへ書き込む
+    ///        （EditorSettingsへの保存は行わない。PushCameraSettingsToComponentとの共通処理）
+    /// @details Play開始時のDeleteEditorOnlyObjects、Play終了時のスナップショット復元等で
+    ///          「Scene View」オブジェクトとSceneViewCameraSettingsコンポーネントが同一フレーム内で
+    ///          削除→再生成されると、コンポーネントは何も持たない既定値の新規インスタンスになる。
+    ///          そのままだと直後のPullCameraSettingsFromComponentでこの既定値により
+    ///          内部状態が上書きされ、カメラが原点にリセットされたように見えてしまう。
+    ///          EnsureCameraSettingsComponentが「今フレームで新規生成した」場合に必ずこれを呼び、
+    ///          再生成された空のコンポーネントへ現在の内部状態を書き戻すことでこれを防ぐ
+    void WriteCameraStateToComponent(SceneViewCameraSettings *settings) const;
+    /// @brief シーンごとのカメラ設定の保存キーを組み立てる（シーンIDを含むため、シーンをまたいで
+    ///        別々の値が保存される。シーン名ではなくIDを使うのは、シーン名は変更されうるため）
+    std::string BuildCameraSettingsKey() const;
+    /// @brief EditorSettingsに保存済みのカメラ設定をこのシーン用のキーで読み込み、内部状態へ適用する
+    /// @return 保存済みの値が見つかり適用した場合は true（見つからなかった場合はfalseを返し、
+    ///         内部状態は変更しない）
+    bool LoadCameraSettingsFromEditorSettings();
+    /// @brief 投影行列にサブピクセル単位のジッターを適用する（Camera3D::ApplyProjectionJitterの
+    ///        シーンビュー版。TemporalBlendEffect等のフレーム蓄積と組み合わせて使う）
+    void ApplyCameraJitter(Matrix4x4 &projection, float aspect);
     /// @brief デバッグカメラの行列を計算して定数バッファへアップロードする
     void UpdateCameraBuffer();
     /// @brief 「2D」表示モード専用の正射影カメラ（パン・ズームのみ、Z軸方向を見る）の行列を計算して
@@ -119,10 +188,86 @@ private:
     bool RaycastSceneMeshes(const ImVec2 &screenPos, const ImVec2 &imagePos, const ImVec2 &imageSize,
         Vector3 &outRayStart, Vector3 &outRayEnd, EmptyObject *&outHitObject, float &outHitT) const;
     /// @brief シーンビュー画像上のスクリーン座標を、Prefab配置等に使うワールド座標へ変換する
-    /// @details Unityのシーンビューと同様、既存のメッシュ表面があればそこへスナップし、
+    /// @details Unityのシーンビューと同様、既存のメッシュ表面があればそこへスナップする。
+    ///          2D表示モードはSpriteRendererが乗るZ=0平面との交点を使う。3D系の表示モードは
     ///          無ければY=0の地面平面との交点、それも無ければ（真上/真下を向いている等）
     ///          カメラから現在の注視距離だけ進めた点にフォールバックする
     Vector3 ComputeCursorWorldPosition(const ImVec2 &screenPos, const ImVec2 &imagePos, const ImVec2 &imageSize) const;
+
+    //==================================================
+    // TilemapRenderer タイルペイントツール
+    //==================================================
+
+    /// @brief シーンビューのメニューバーへ「Tile Paint」タブを表示する。選択中オブジェクトが
+    ///        単体でTilemapRendererを持つ場合のみ内容を有効化し、それ以外は無効化して表示する
+    /// @param paintableTilemap 選択中の単一オブジェクトが持つTilemapRenderer（無ければnullptr）
+    void ShowTilemapPaintToolbar(TilemapRenderer *paintableTilemap);
+    /// @brief タイルペイントの入力処理（ホバーセルのハイライト表示・クリック/ドラッグでの
+    ///        SetTile適用・ストローク単位でのUndo登録）を行う
+    /// @return このフレーム、シーンビューのマウス入力をペイント用に消費した（ホバー中含む）場合true。
+    ///         trueの場合、呼び出し側は通常のオブジェクトピッキング・ギズモ操作を行わないこと
+    bool HandleTilemapPaint(EmptyObject *owner, TilemapRenderer *tilemap, SceneEditorCommands *commands,
+        const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief スクリーン座標からのレイと、対象オブジェクトのローカルZ=0平面（TilemapRendererのメッシュが
+    ///        生成される平面）との交点を求め、タイルグリッドのセル座標へ変換する
+    /// @return グリッド範囲内のセルが求まった場合true（範囲外・平面と非交差の場合false）
+    bool ComputeTilemapCellUnderCursor(EmptyObject *owner, TilemapRenderer *tilemap, const ImVec2 &screenPos,
+        const ImVec2 &imagePos, const ImVec2 &imageSize, int &outX, int &outY) const;
+    /// @brief 指定セルの4隅をワールド→スクリーン座標へ投影し、枠線でハイライト表示する
+    void DrawTilemapCellHighlight(EmptyObject *owner, TilemapRenderer *tilemap, int cellX, int cellY,
+        const ImVec2 &imagePos, const ImVec2 &imageSize, ImU32 color) const;
+
+    //==================================================
+    // CameraBoundsZone2D/3D の可視化・矩形ドラッグ編集
+    //==================================================
+
+    /// @brief シーンビューのメニューバーへ「Bounds Zone」タブを表示する。選択中オブジェクトが
+    ///        単体でCameraBoundsZone2D/3Dを持つ場合のみ内容を有効化し、それ以外は無効化して表示する
+    void ShowCameraBoundsZoneToolbar(CameraBoundsZone2D *paintableZone2D, CameraBoundsZone3D *paintableZone3D);
+    /// @brief CameraBoundsZone2Dの、インスペクターで選択中の矩形をドラッグ編集する（所有オブジェクトの
+    ///        ローカルZ=0平面上での編集。ComputeTilemapCellUnderCursorと同じ平面レイキャスト方式）
+    /// @return このフレーム、シーンビューのマウス入力を矩形編集用に消費した（ホバー中含む）場合true
+    bool HandleCameraBoundsZoneEdit2D(EmptyObject *owner, CameraBoundsZone2D *zone, SceneEditorCommands *commands,
+        const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief CameraBoundsZone3Dの、インスペクターで選択中の矩形をドラッグ編集する（所有オブジェクトの
+    ///        ローカル空間で、選択中矩形のY中央高さのXZ平面上での編集。高さ(min.y/max.y)はインスペクターの
+    ///        数値入力のみで編集し、ここではフットプリント（XZ）のみを対象とする）
+    /// @return このフレーム、シーンビューのマウス入力を矩形編集用に消費した（ホバー中含む）場合true
+    bool HandleCameraBoundsZoneEdit3D(EmptyObject *owner, CameraBoundsZone3D *zone, SceneEditorCommands *commands,
+        const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief ドラッグ対象のハンドル種別（矩形の四隅・四辺・内部移動）
+    enum class CameraBoundsDragHandle {
+        None, Move,
+        EdgeMinA, EdgeMaxA, EdgeMinB, EdgeMaxB,
+        CornerMinAMinB, CornerMinAMaxB, CornerMaxAMinB, CornerMaxAMaxB,
+    };
+    /// @brief マウス位置と矩形4隅のスクリーン座標から、掴んでいるハンドルを判定する
+    /// @param cornerScreen 4隅のスクリーン座標。[0]=(minA,minB) [1]=(minA,maxB) [2]=(maxA,minB) [3]=(maxA,maxB)
+    /// @param insideCursor ローカルカーソルが矩形の内部にある場合true（どのハンドルにも当たらなければMoveを返す判定に使う）
+    CameraBoundsDragHandle PickCameraBoundsHandle(const ImVec2 &mouseScreen, const ImVec2 cornerScreen[4], bool insideCursor, float handleRadiusPx) const;
+    /// @brief 掴んだハンドルとローカル空間での移動量から、矩形の新しいmin/maxを計算する
+    void ApplyCameraBoundsDrag(CameraBoundsDragHandle handle, const Vector2 &startMin, const Vector2 &startMax,
+        const Vector2 &deltaLocal, Vector2 &outMin, Vector2 &outMax) const;
+    /// @brief 「2D」表示モード専用に、シーン内の全CameraBoundsZone2Dの矩形群をImGuiオーバーレイで描画する
+    ///        （常時表示。選択の有無に関わらず、グループごとに色分けして表示する）
+    void DrawCameraBoundsZoneOverlay2D(const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief シーン上の全CameraBoundsZone3Dの矩形群（直方体ワイヤーフレーム）をワールド空間の線分として追加する
+    void AppendCameraBoundsZoneDebugLines(std::vector<DebugLineVertex> &out);
+    /// @brief シーン内の全CameraBoundsZone2D/3Dの矩形をスクリーン座標でヒットテストする（現在の選択状態に
+    ///        関わらず、表示中の全ゾーンを対象にする）。矩形の「内部」ではなく「境界線（4辺）」への
+    ///        スクリーン座標上での近さで判定する（選択中の矩形はHandleCameraBoundsZoneEdit2D/3Dが内部込みで
+    ///        判定してこの関数より先に入力を消費するため、ここでは主に未選択の矩形をクリックで選び直す用途になる。
+    ///        境界線判定にすることで、矩形の内側にある他オブジェクトのクリックを妨げない）
+    /// @details ヒットした場合はその矩形をエディター選択（矩形編集の対象）にしたうえで矩形編集トグルも
+    ///          自動で有効化する。選択の適用（SelectObject）自体は呼び出し側（HandleCameraBoundsZoneClickSelect）
+    ///          で行う（表示モードに応じて2D表示モードならCameraBoundsZone2D、それ以外はCameraBoundsZone3Dを対象にする）
+    /// @return ヒットした矩形の所有オブジェクト（無ければnullptr）
+    EmptyObject *PickCameraBoundsZoneOwnerAtScreenPosition(const ImVec2 &screenPos, const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief シーン内の全CameraBoundsZone2D/3Dの矩形をクリックで選択する（PickCameraBoundsZoneOwnerAtScreenPosition
+    ///        参照）。メッシュ・アイコンの通常ピッキングより先に呼ぶことで、境界線クリックを優先させる
+    /// @return いずれかの矩形の境界線をヒットして選択した場合true（呼び出し側は通常のオブジェクトピッキングを行わないこと）
+    bool HandleCameraBoundsZoneClickSelect(SceneObjectHierarchy *hierarchy, const ImVec2 &imagePos, const ImVec2 &imageSize);
+
     /// @brief Assetsウィンドウからのプレハブファイル（.prefab）のドラッグ&ドロップを処理する
     /// @details ドラッグ中（未ドロップ）は毎フレームUpdateGhostPreviewでプレビューを更新し、
     ///          実際にドロップされた瞬間にInstantiatePrefabFileでシーンへ配置する。ドロップ/キャンセル/
@@ -173,6 +318,10 @@ private:
     ///        オーバーレイで描画する。3D側のAppendColliderDebugLines（GPUデバッグライン）と違い、
     ///        2D専用の正射影カメラ（view2D_/projection2D_）に投影して表示する
     void DrawCollider2DOverlay(const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief 「2D」表示モード専用に、スクリプトのDebug::DrawLineで蓄積された線分（ScriptDebugDraw）を
+    ///        ImGuiオーバーレイで描画する。3D側（UpdateEditorDebugDraw内、GPUデバッグライン）と違い
+    ///        2D専用の正射影カメラに投影して表示する。各線が自身の色を持つため固定色分岐は不要
+    void DrawScriptDebugLineOverlay2D(const ImVec2 &imagePos, const ImVec2 &imageSize);
     /// @brief 「2D」表示モード専用に、シーン内のCamera2Dが実際に映す範囲（矩形）をImGuiオーバーレイで
     ///        描画する。3D/2D3DモードのAppendCameraFrustumLines（GPUデバッグライン）と対になる表示
     void DrawCamera2DBoundsOverlay(const ImVec2 &imagePos, const ImVec2 &imageSize);
@@ -183,12 +332,6 @@ private:
     void ShowGizmo(const std::unordered_set<EmptyObject *> &selectedObjects, SceneEditorCommands *commands, const ImVec2 &imagePos, const ImVec2 &imageSize);
     /// @brief ワールド行列を（親があればローカル空間へ変換したうえで）Transformへ書き戻す
     void ApplyWorldMatrixToTransform(Transform *transform, const Matrix4x4 &worldMatrix);
-    /// @brief 現在のTransformの内容から、オービット/フライ双方の内部状態
-    ///        （yaw_/pitch_/target_/eye_、distance_はSceneViewOrbitStateから）を再同期する
-    /// @details EnsureSceneViewObjectで既存の「Scene View」オブジェクトを見つけた時、および
-    ///          UpdateCameraBufferで前回自分が書き込んだ値からTransformが変わっていた
-    ///          （Inspector編集・Undo/Redo等の外部変更）ときに呼ぶ
-    void SyncCameraStateFromTransform(Transform *transform);
 
     SceneEditorContext *context_ = nullptr;
 
@@ -196,12 +339,17 @@ private:
     UUID128 sceneViewObjectID_;
     /// @brief sceneViewObjectID_ から毎フレーム解決し直したオブジェクト（フレームをまたいでキャッシュしない）
     EmptyObject *sceneViewObject_ = nullptr;
-    /// @brief sceneViewObject_ が持つ ScreenBufferObject の ScreenBuffer（非所有、毎フレーム取得し直す）
+    /// @brief エディターのシーンビュー専用ScreenBuffer（このクラスが直接所有する。EnsureResourcesで
+    ///        生成し、デストラクタでRenderTargetCarryOverRegistryへ預ける。シーンオブジェクトの
+    ///        コンポーネントとしては一切公開しない）
     ScreenBuffer *screenBuffer_ = nullptr;
+    /// @brief screenBuffer_ のTextureManager登録名・引き継ぎキーとして使う固定名
+    static constexpr const char *kScreenBufferName = "EditorSceneView";
     std::unique_ptr<ConstantBufferResource> cameraBuffer_;
 
-    // デバッグカメラ（マウス操作用の一時的なパラメータであり、実際のカメラ位置・向きは
-    // sceneViewObject_ の Transform に都度書き戻して永続化される）。
+    // 3Dシーンビューカメラの状態。このクラスが直接所有する唯一の実体であり（sceneViewObject_の
+    // Transformは使わない）、SceneViewCameraSettingsコンポーネント経由でHierarchy/Inspectorから
+    // 読み書きできる（PullCameraSettingsFromComponent/PushCameraSettingsToComponent参照）。
     // オービットモードでは target_（注視点）が基準で、回転すると eye_ 側が軌道を描くように動く。
     // フライモードでは eye_（カメラ自身の位置）が基準で、回転すると target_ の方が向きの先へ
     // 追従して再計算される（distance_はその場合「target_が常にeye_の前方どれだけ先にあるか」の
@@ -212,26 +360,35 @@ private:
     float distance_ = 10.0f;
     float yaw_ = 0.0f;
     float pitch_ = 0.3f;
-    /// @brief オービットモード（既定）とフライモードの切り替え（再起動後も維持される）
+    /// @brief オービットモード（既定）とフライモードの切り替え（シーンごとに保存される）
     bool flyMode_ = false;
-    /// @brief フライモードの移動速度（単位/秒。マウスホイールで調整可能。再起動後も維持される）
+    /// @brief フライモードの移動速度（単位/秒。マウスホイールで調整可能。シーンごとに保存される）
     float flySpeed_ = 5.0f;
-
-    /// @brief 前回自分がTransformへ書き込んだ位置・回転（Inspector編集等での外部変更を検知する基準値）
-    bool hasLastAppliedCameraTransform_ = false;
-    Vector3 lastAppliedPosition_{ 0.0f, 0.0f, 0.0f };
-    Quaternion lastAppliedRotation_ = Quaternion::Identity();
+    /// @brief 縦画角（ラジアン。以前はCamera3Dコンポーネントが持っていた値）
+    float fovY_ = 0.45f;
+    float nearClip_ = 0.1f;
+    float farClip_ = 1000.0f;
+    /// @brief 投影行列にサブピクセルジッターを乗せるか（ApplyCameraJitter参照）
+    bool enableJitter_ = false;
+    /// @brief ジッター列（Halton(2,3)）の現在位置。実行時状態のみで永続化対象外
+    std::uint32_t jitterIndex_ = 0;
+    /// @brief このシーンでのカメラ設定（EditorSettings保存値 or 旧データからの移行）を
+    ///        読み込み済みかどうか（SceneEditorViewインスタンスの生存中に一度だけtrueになる）
+    bool hasLoadedCameraSettings_ = false;
 
     Matrix4x4 view_ = Matrix4x4::Identity();
     Matrix4x4 projection_ = Matrix4x4::Identity();
     /// @brief 直近に計算したカメラ位置（シャドウマップ計算用にSceneRendererへ渡す）
     Vector3 cameraEye_{ 0.0f, 0.0f, 0.0f };
 
-    // 「2D」表示モード専用のパン・ズームカメラ状態（再起動後も維持される）。3Dフリーカメラの
-    // yaw_/pitch_/target_等とは完全に独立しており、モード切り替えの度にリセットされない
+    // 「2D」表示モード専用のパン・ズームカメラ状態（3Dカメラと同様、シーンごとに保存される）。
+    // 3Dフリーカメラのyaw_/pitch_/target_等とは完全に独立しており、モード切り替えの度に
+    // リセットされない
     Vector2 pan2D_{ 0.0f, 0.0f };
     /// @brief 画面縦方向に見えるワールド半径（Camera3Dのorthographic sizeと同じ考え方。既定5）
     float zoom2D_ = 5.0f;
+    /// @brief 2DカメラのZ軸方向の位置（コンテンツより手前に置く距離。UpdateCamera2DBuffer参照）
+    float cameraDistance2D_ = 500.0f;
     Matrix4x4 view2D_ = Matrix4x4::Identity();
     Matrix4x4 projection2D_ = Matrix4x4::Identity();
     std::unique_ptr<ConstantBufferResource> camera2DBuffer_;
@@ -239,6 +396,18 @@ private:
     // ギズモ状態（ImGuizmo::OPERATION / ImGuizmo::MODE をヘッダーで公開しないため int で保持する）
     int gizmoOperation_;
     int gizmoMode_;
+    /// @brief グリッドスナップの有効/無効（再起動後も維持される）。Ctrlキー押下中は一時的に反転する
+    ///        （Unity等と同じ操作感）
+    bool gizmoSnapEnabled_ = false;
+    /// @brief 移動操作のグリッド間隔（ワールド単位、XYZ共通）
+    float gizmoSnapTranslate_ = 1.0f;
+    /// @brief 回転操作のスナップ角度（度）
+    float gizmoSnapRotateDegrees_ = 15.0f;
+    /// @brief 拡大縮小操作のスナップ間隔
+    float gizmoSnapScale_ = 0.1f;
+    /// @brief キーボードショートカット（W/E/R）によるギズモ操作切り替えを処理する
+    /// @details 右ボタン押下中（フリーカメラ移動でW/E/Qを使用中）はショートカットを無効にする
+    void HandleGizmoShortcuts(bool isSceneViewHovered);
     std::unordered_set<EmptyObject *> gizmoTargetObjects_;
     bool isGizmoEditing_ = false;
     // ギズモへ渡す現在の基準行列（単一選択時は対象オブジェクト自身のワールド行列、
@@ -266,6 +435,42 @@ private:
     Vector4 backgroundColor_{ 0.0f, 0.0f, 0.0f, 1.0f };
     /// @brief 背景に使うテクスチャのAssetsルートからの相対パス（空文字の場合はbackgroundColor_を使用）
     std::string backgroundTexturePath_;
+
+    // TilemapRendererのタイルペイントツール用状態
+    /// @brief Tile Paintトグルの有効/無効（選択がTilemapRenderer付きオブジェクト単体でなくなると自動でfalseへ戻る）
+    bool tilemapPaintActive_ = false;
+    /// @brief 現在選択中のブラシ（-1=消しゴム、0以降はTilemapRenderer::GetTileTypes()のインデックス）
+    int paintBrushTileType_ = -1;
+    /// @brief ペンサイズ（一辺のセル数。1=1マスのみ。ForEachBrushCell参照）
+    int paintBrushSize_ = 1;
+    /// @brief ペンの形状。trueで円形、falseで正方形（ForEachBrushCell参照）
+    bool paintBrushCircular_ = false;
+    /// @brief ストローク（マウス押下〜離すまで）を1つのUndo単位にするための状態
+    bool isPaintStrokeActive_ = false;
+    /// @brief 現在のストロークが右クリックで開始された（常に消しゴムとして塗る）ものかどうか
+    bool paintStrokeIsErase_ = false;
+    JSON paintStrokeBeforeJson_;
+    /// @brief ドラッグ中、前フレームで塗ったセル座標（セル間の線補間に使う。ストローク開始時は無効値）
+    int lastPaintCellX_ = 0;
+    int lastPaintCellY_ = 0;
+    /// @brief 現在コライダー再生成を保留中のTilemapRenderer（無ければ無効値）。生ポインタを
+    ///        フレームをまたいで保持すると、選択解除等でストロークが正常に終了しないまま対象が
+    ///        破棄・再利用された場合に危険なため、ComponentRefで安全に参照する（HandleTilemapPaint参照）
+    ComponentRef paintSuspendedTilemapRef_;
+
+    // CameraBoundsZone2D/3D の可視化・矩形ドラッグ編集用状態
+    /// @brief 全CameraBoundsZone2D/3Dの矩形群を常時表示するか（再起動後も維持される）
+    bool showCameraBoundsGizmos_ = true;
+    /// @brief Bounds Zone編集トグルの有効/無効（選択がCameraBoundsZone2D/3D付きオブジェクト単体でなくなると自動でfalseへ戻る）
+    bool cameraBoundsEditActive_ = false;
+    /// @brief 矩形のドラッグ操作中かどうか（マウス押下〜離すまでを1つのUndo単位にする）
+    bool isCameraBoundsDragActive_ = false;
+    CameraBoundsDragHandle cameraBoundsDragHandle_ = CameraBoundsDragHandle::None;
+    JSON cameraBoundsDragBeforeJson_;
+    /// @brief ドラッグ開始時のローカルカーソル位置（2Dは(x,y)、3Dはフットプリントの(x,z)）
+    Vector2 cameraBoundsDragStartLocalCursor_{};
+    Vector2 cameraBoundsDragStartMin_{};
+    Vector2 cameraBoundsDragStartMax_{};
 
     // ドラッグ中のPrefabプレビュー用状態（UpdateGhostPreview/ClearGhostPreview参照）
     bool ghostPreviewActive_ = false;

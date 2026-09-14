@@ -9,6 +9,7 @@
 #include "Graphics/GraphicsEngine.h"
 #include "Assets/TextureManager.h"
 #include "Assets/FontManager.h"
+#include "Assets/BitmapFontManager.h"
 #include "Assets/SamplerManager.h"
 #include "Assets/ModelManager.h"
 #include "Assets/SkeletonManager.h"
@@ -147,6 +148,8 @@ private:
     std::unique_ptr<TextureManager> textureManager_;
     /// @brief フォント管理クラス
     std::unique_ptr<FontManager> fontManager_;
+    /// @brief ビットマップフォント(BMFont/.fnt)管理クラス
+    std::unique_ptr<BitmapFontManager> bitmapFontManager_;
     /// @brief サンプラ管理クラス
     std::unique_ptr<SamplerManager> samplerManager_;
     /// @brief モデル管理クラス

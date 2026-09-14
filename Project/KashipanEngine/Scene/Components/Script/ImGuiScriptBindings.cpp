@@ -13,6 +13,7 @@
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
+#include "Utilities/ImGuiCustom.h"
 
 namespace KashipanEngine {
 
@@ -33,7 +34,7 @@ void RegisterImGuiScriptBindings(asIScriptEngine *engine) {
             ImGui::TextWrapped("%s", text.c_str());
         })
         .function("void TextDisabled(const string &in)", [](const std::string &text) {
-            ImGui::TextDisabled("%s", text.c_str());
+            ImGuiCustom::TextDisabledWrapped("%s", text.c_str());
         })
         .function("void BulletText(const string &in)", [](const std::string &text) {
             ImGui::BulletText("%s", text.c_str());
@@ -163,7 +164,7 @@ void RegisterImGuiScriptBindings(asIScriptEngine *engine) {
             return Vector2(p.x, p.y);
         })
         .function("void SetTooltip(const string &in)", [](const std::string &text) {
-            ImGui::SetTooltip("%s", text.c_str());
+            ImGuiCustom::SetTooltipWrapped("%s", text.c_str());
         })
         .function("Vector2 GetContentRegionAvail()", []() -> Vector2 {
             const ImVec2 avail = ImGui::GetContentRegionAvail();

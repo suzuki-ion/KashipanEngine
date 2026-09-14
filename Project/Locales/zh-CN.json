@@ -24,6 +24,7 @@
 		"engine.window.create.overlay.start": "叠加窗口创建开始。窗口标题：",
 		"engine.window.create.overlay.end": "叠加窗口创建完成。窗口标题：",
 		"engine.window.create.overlay.failed": "叠加窗口创建失败。",
+		"engine.window.seticon.failed": "窗口图标加载失败：",
 		"engine.window.destroy.start": "窗口销毁开始。窗口标题：",
 		"engine.window.destroy.end": "窗口销毁完成。窗口标题：",
 		"engine.window.destroy.failed": "窗口销毁失败。",
@@ -77,6 +78,8 @@
 		"engine.directx.commands.commandqueue.initialize.start": "命令队列初始化开始",
 		"engine.directx.commands.commandqueue.initialize.end": "命令队列初始化完成",
 		"engine.directx.commands.commandqueue.initialize.failed": "命令队列初始化失败。",
+		// コマンドオブジェクトプール（ScreenBuffer/ShadowMapBuffer/スワップチェーン等が共有）
+		"engine.directx.commandobjects.no.free.slot": "命令对象的获取失败。没有可用的插槽。池大小：",
 		// コマンドアロケータ
 		"engine.directx.swapchain.commandallocator.initialize.start": "命令分配器初始化开始",
 		"engine.directx.swapchain.commandallocator.initialize.end": "命令分配器初始化完成",
@@ -794,6 +797,8 @@
 		"component.camera2d.far": "远裁剪",
 		"component.camera2d.height": "高度",
 		"component.camera2d.near": "近裁剪",
+		"component.camera2d.pixel_snapping": "像素吸附",
+		"component.camera2d.pixel_snapping_desc": "以此摄像机为基准，将启用Pixel Snapping的SpriteRenderer相对位置对齐到渲染目标的像素网格。摄像机Transform本身不会被取整，因此在平滑跟随时也能保持摄像机与物体的相对位置稳定。",
 		"component.camera2d.width": "宽度",
 
 		//--------- component.camera3d ---------//
@@ -809,7 +814,36 @@
 		"component.camera3d.orthosize": "正交投影尺寸",
 
 		//--------- component.cameracontroller ---------//
+		"component.cameraboundszone2d.add_group": "添加组",
+		"component.cameraboundszone2d.add_rect": "添加矩形",
+		"component.cameraboundszone2d.description": "CameraController2D的移动范围限制（Camera Bounds Zone）所使用的组・矩形定义。",
+		"component.cameraboundszone2d.group": "组",
+		"component.cameraboundszone2d.rect": "矩形",
+		"component.cameraboundszone2d.rect_max": "最大坐标",
+		"component.cameraboundszone2d.rect_min": "最小坐标",
+		"component.cameraboundszone2d.remove_group": "删除组",
+		"component.cameraboundszone2d.remove_rect": "删除矩形",
+
+		"component.cameraboundszone3d.add_group": "添加组",
+		"component.cameraboundszone3d.add_rect": "添加矩形",
+		"component.cameraboundszone3d.description": "CameraController的移动范围限制（Camera Bounds Zone）所使用的组・矩形定义。",
+		"component.cameraboundszone3d.group": "组",
+		"component.cameraboundszone3d.rect": "矩形",
+		"component.cameraboundszone3d.rect_max": "最大坐标",
+		"component.cameraboundszone3d.rect_min": "最小坐标",
+		"component.cameraboundszone3d.remove_group": "删除组",
+		"component.cameraboundszone3d.remove_rect": "删除矩形",
+
 		"component.cameracontroller.add_follow_target": "添加跟随目标",
+		"component.cameracontroller.bounds_clamp": "移动范围限制",
+		"component.cameracontroller.bounds_clamp_enable": "启用移动范围限制",
+		"component.cameracontroller.bounds_clamp_mode_position": "按坐标",
+		"component.cameracontroller.bounds_clamp_mode_viewarea": "按显示范围",
+		"component.cameracontroller.bounds_clamp_view_depth": "显示范围基准深度",
+		"component.cameracontroller.bounds_transition_duration": "过渡时间",
+		"component.cameracontroller.bounds_transition_duration.tooltip": "当活动组切换时，将钳制位置的不连续变化用这段时间（秒）平滑过渡（0以下则立即切换）",
+		"component.cameracontroller.bounds_transition_ease": "过渡缓动",
+		"component.cameracontroller.bounds_zone_object": "边界区域",
 		"component.cameracontroller.follow_position": "跟随位置",
 		"component.cameracontroller.follow_rotation": "跟随旋转",
 		"component.cameracontroller.follow_targets": "跟随目标",
@@ -828,8 +862,34 @@
 		"component.cameracontroller.rotation_offset": "旋转偏移",
 		"component.cameracontroller.target_fovy": "目标垂直视场角",
 
+		//--------- component.cameracontroller2d ---------//
+		"component.cameracontroller2d.add_follow_target": "添加跟随目标",
+		"component.cameracontroller2d.bounds_clamp": "移动范围限制",
+		"component.cameracontroller2d.bounds_clamp_enable": "启用移动范围限制",
+		"component.cameracontroller2d.bounds_clamp_mode_position": "按坐标",
+		"component.cameracontroller2d.bounds_clamp_mode_viewarea": "按显示范围",
+		"component.cameracontroller2d.bounds_transition_duration": "过渡时间",
+		"component.cameracontroller2d.bounds_transition_duration.tooltip": "当活动组切换时，将钳制位置的不连续变化用这段时间（秒）平滑过渡（0以下则立即切换）",
+		"component.cameracontroller2d.bounds_transition_ease": "过渡缓动",
+		"component.cameracontroller2d.bounds_zone_object": "边界区域",
+		"component.cameracontroller2d.follow_position": "跟随位置",
+		"component.cameracontroller2d.follow_rotation": "跟随旋转",
+		"component.cameracontroller2d.follow_targets": "跟随目标",
+		"component.cameracontroller2d.move_all": "统一设置移动",
+		"component.cameracontroller2d.move_follow_strength": "移动跟随强度",
+		"component.cameracontroller2d.move_per_axis": "移动：按轴",
+		"component.cameracontroller2d.move_x_y": "移动 X/Y",
+		"component.cameracontroller2d.no_target_following_own_transform": "（未设置目标：将跟随自身的Transform）",
+		"component.cameracontroller2d.position_offset": "位置偏移",
+		"component.cameracontroller2d.remove_target": "删除目标",
+		"component.cameracontroller2d.rotate_follow_strength": "旋转跟随强度",
+		"component.cameracontroller2d.rotation_offset": "旋转偏移",
+		"component.cameracontroller2d.size_transition_strength": "尺寸跟随强度",
+		"component.cameracontroller2d.target_size": "目标尺寸",
+
 		//--------- component.camerarenderer ---------//
 		"component.camerarenderer.pipeline": "管线",
+		"component.camerarenderer.warning_no_camera_component": "警告：未附加Camera2D/Camera3D，绑定变量名将按gCamera3D处理",
 
 		//--------- component.capsule2dcollider ---------//
 		"component.capsule2dcollider.end": "终点",
@@ -853,6 +913,7 @@
 		"component.coloradjusteffect.brightness": "亮度",
 		"component.coloradjusteffect.colorbalance": "色彩平衡",
 		"component.coloradjusteffect.contrast": "对比度",
+		"component.coloradjusteffect.posterize_levels": "色阶减少",
 		"component.coloradjusteffect.saturation": "饱和度",
 		"component.coloradjusteffect.temperature": "色温",
 
@@ -866,11 +927,26 @@
 		"component.common.blendmode.override": "替换",
 		"component.common.blendmode.subtract": "减法",
 		"component.common.desc_allow_instancing": "禁用后，即使存在共享同一网格/材质/管线的其他对象，\n也始终以单独的绘制调用（Draw Call）进行渲染（默认启用）",
+		"component.common.desc_instance_uv": "对象单位的UV变换。不改变共享材质，仅应用于该对象。\n与材质的UV变换按UV合成方式进行合成（保持默认值时等同于禁用）",
+		"component.common.desc_instance_uv_pivot": "实例UV旋转的中心点。缩放始终以UV原点(0,0)为基准，仅旋转以该点为中心",
 		"component.common.desc_render_priority": "控制绘制顺序的优先级。数值越小越先绘制（越靠后/远），数值越大越后绘制（越靠前/近）\n（默认0。其评估顺序在管线绘制优先级之后、网格/材质排序之前）",
+		"component.common.instance_uv_combine_mode": "UV合成方式",
+		"component.common.instance_uv_pivot": "实例UV旋转中心",
+		"component.common.instance_uv_pivot_pixel": "实例UV旋转中心（像素）",
+		"component.common.instance_uv_rotation": "实例UV旋转（度）",
+		"component.common.instance_uv_scale": "实例UV缩放",
+		"component.common.instance_uv_scale_pixel": "实例UV缩放（像素）",
+		"component.common.instance_uv_transform": "实例UV变换（对象单位）",
+		"component.common.instance_uv_transform_pixel": "实例UV变换（以纹理像素为基准，未设置纹理时不可编辑）",
+		"component.common.instance_uv_translate": "实例UV坐标",
+		"component.common.instance_uv_translate_pixel": "实例UV坐标（像素）",
 		"component.common.mode.lookattarget": "朝向目标",
 		"component.common.mode.synctargetrotation": "与目标旋转同步",
 		"component.common.render_priority": "绘制优先度",
 		"component.common.target": "目标",
+		"component.common.uvcombinemode.instance_only": "仅实例（忽略材质的UV变换）",
+		"component.common.uvcombinemode.instance_then_material": "以实例为基准（实例→材质的顺序）",
+		"component.common.uvcombinemode.material_then_instance": "以材质为基准（材质→实例的顺序，默认）",
 
 		//--------- component.computeshaderprocessing ---------//
 		"component.computeshaderprocessing.add_constant_buffer_bind": "添加常量缓冲区绑定",
@@ -912,6 +988,8 @@
 		//--------- component.dithereffect ---------//
 		"component.dithereffect.color": "颜色",
 		"component.dithereffect.intensity": "强度",
+		"component.dithereffect.pattern_width": "图案分辨率宽度（0：自动）",
+		"component.dithereffect.pattern_height": "图案分辨率高度（0：自动）",
 
 		//--------- component.dotmatrixeffect ---------//
 		"component.dotmatrixeffect.dot_radius": "点半径",
@@ -953,6 +1031,7 @@
 		"component.inputcommandapplier.add_command": "添加命令",
 		"component.inputcommandapplier.applied_3f": "应用值：%.3f",
 		"component.inputcommandapplier.command_name": "命令名称",
+		"component.inputcommandapplier.command_notfound": "所选命令未在InputCommand中注册。",
 		"component.inputcommandapplier.condition": "条件",
 		"component.inputcommandapplier.delete_command": "删除命令",
 		"component.inputcommandapplier.fixed_value": "固定值",
@@ -1070,6 +1149,7 @@
 
 		//--------- component.normalwindowobject ---------//
 		"component.normalwindowobject.height": "高度",
+		"component.normalwindowobject.icon": "图标",
 		"component.normalwindowobject.respawn_window": "重新生成窗口",
 		"component.normalwindowobject.sync_with_transform": "与Transform同步",
 		"component.normalwindowobject.title": "标题",
@@ -1082,6 +1162,7 @@
 
 		//--------- component.overlaywindowobject ---------//
 		"component.overlaywindowobject.height": "高度",
+		"component.overlaywindowobject.icon": "图标",
 		"component.overlaywindowobject.sync_with_transform": "与Transform同步",
 		"component.overlaywindowobject.title": "标题",
 		"component.overlaywindowobject.width": "宽度",
@@ -1191,7 +1272,9 @@
 		//--------- component.rigidbody2d ---------//
 		"component.rigidbody2d.any": "（全部）",
 		"component.rigidbody2d.collider_shape": "碰撞体形状",
+		"component.rigidbody2d.friction": "摩擦系数",
 		"component.rigidbody2d.mass": "质量",
+		"component.rigidbody2d.restitution": "恢复系数",
 		"component.rigidbody2d.usegravity": "使用重力",
 		"component.rigidbody2d.velocity": "速度",
 
@@ -1219,6 +1302,21 @@
 		"component.scenevariableapplier.variable_name": "变量名",
 		"component.scenevariableapplier.variable_notfound": "未找到变量 \"%s\"",
 
+		//--------- component.sceneviewcamerasettings ---------//
+		"component.sceneviewcamerasettings.camera2d": "2D相机",
+		"component.sceneviewcamerasettings.camera3d": "3D相机",
+		"component.sceneviewcamerasettings.cameradistance2d": "相机距离（Z轴）",
+		"component.sceneviewcamerasettings.desc": "显示并编辑场景视图相机的当前值（实际数据由编辑器侧的SceneEditorView持有）。",
+		"component.sceneviewcamerasettings.distance": "到注视点的距离",
+		"component.sceneviewcamerasettings.eye": "相机位置",
+		"component.sceneviewcamerasettings.flymode": "飞行模式",
+		"component.sceneviewcamerasettings.flyspeed": "移动速度",
+		"component.sceneviewcamerasettings.pan2d": "平移位置",
+		"component.sceneviewcamerasettings.pitch": "俯仰角（度）",
+		"component.sceneviewcamerasettings.target": "注视点",
+		"component.sceneviewcamerasettings.yaw": "偏航角（度）",
+		"component.sceneviewcamerasettings.zoom2d": "缩放",
+
 		//--------- component.scenevieworbitstate ---------//
 		"component.scenevieworbitstate.distance": "到注视点的距离",
 
@@ -1234,6 +1332,7 @@
 		"component.screenbufferobject.format": "格式",
 		"component.screenbufferobject.height": "高度",
 		"component.screenbufferobject.name": "名称",
+		"component.screenbufferobject.render_order_priority": "渲染顺序优先级",
 		"component.screenbufferobject.save_screenshot": "保存截图",
 		"component.screenbufferobject.save_to_file": "保存到文件",
 		"component.screenbufferobject.size_ux_u": "尺寸：%u×%u",
@@ -1282,7 +1381,12 @@
 		"component.shake.applytarget.transform": "应用到Transform",
 		"component.shake.auto_play": "自动播放",
 		"component.shake.duration_0_infinite": "持续时间（0=无限）",
+		"component.shake.envelope_section": "振幅・速度随时间变化",
 		"component.shake.play": "播放",
+		"component.shake.position_envelope_amplitude_end": "振幅结束倍率",
+		"component.shake.position_envelope_amplitude_start": "振幅起始倍率",
+		"component.shake.position_envelope_speed_end": "速度结束倍率",
+		"component.shake.position_envelope_speed_start": "速度起始倍率",
 		"component.shake.playing": "播放中",
 		"component.shake.pos_x": "位置 X",
 		"component.shake.pos_y": "位置 Y",
@@ -1295,6 +1399,10 @@
 		"component.shake.rot_y": "旋转 Y",
 		"component.shake.rot_z": "旋转 Z",
 		"component.shake.rotation_amplitude_deg": "旋转振幅（度）",
+		"component.shake.rotation_envelope_amplitude_end": "振幅结束倍率",
+		"component.shake.rotation_envelope_amplitude_start": "振幅起始倍率",
+		"component.shake.rotation_envelope_speed_end": "速度结束倍率",
+		"component.shake.rotation_envelope_speed_start": "速度起始倍率",
 		"component.shake.rotation_shake": "旋转抖动",
 		"component.shake.rotation_speed": "旋转速度",
 		"component.shake.stop": "停止",
@@ -1329,6 +1437,10 @@
 		"component.spriterenderer.material": "材质",
 		"component.spriterenderer.pipeline": "管线",
 		"component.spriterenderer.pivot": "轴心点",
+		"component.spriterenderer.pixel_snapping": "像素吸附",
+		"component.spriterenderer.pixel_snapping_desc": "当适用的Camera2D也启用Pixel Snapping时，将此物体相对摄像机的位置对齐到渲染目标的像素网格，可防止两者以相同亚像素距离移动时产生相对抖动。没有匹配摄像机时，仍按原方式将世界坐标取整。",
+		"component.spriterenderer.pixel_snap_outset": "像素吸附外扩边距",
+		"component.spriterenderer.pixel_snap_outset_desc": "设置大于0的值时，会将四边形向外扩展该数值(px，单边)，以防止边界像素整行/整列丢失。往返矩阵运算产生的极微小浮点误差，可能导致光栅化时把恰好落在吸附边界上的像素误判为在外侧；此边距用于防止该问题。若精灵使用整张贴图则无影响，但若截取了图集/瓦片贴图的一部分（instanceUvTranslate/instanceUvScale），无论采样器的寻址模式如何，只要相邻区域之间没有留白，UV都可能溢出到相邻贴图——请确认图集是否留有边距，或将该值保持较小并目视确认效果。默认0.0=禁用。",
 
 		//--------- component.targetlookat ---------//
 		"component.targetlookat.desc_1": "Sync Target Rotation: 与目标的世界旋转同步（适用于公告板）\nLook At Target: 自身的+Z轴始终朝向目标方向",
@@ -1375,6 +1487,34 @@
 		"component.textrenderer.valign.top": "顶部对齐",
 		"component.textrenderer.vertical_align": "垂直对齐",
 
+		//--------- component.bitmaptextrenderer ---------//
+		"component.bitmaptextrenderer.character_overrides": "逐字符覆盖",
+		"component.bitmaptextrenderer.font": "字体",
+		"component.bitmaptextrenderer.font_size": "字体大小",
+		"component.bitmaptextrenderer.instance_color": "实例颜色",
+		"component.bitmaptextrenderer.instance_color_blend_mode": "实例颜色的合成方式",
+		"component.bitmaptextrenderer.material": "材质",
+		"component.bitmaptextrenderer.pipeline": "管线",
+		"component.bitmaptextrenderer.point_sampling": "点采样",
+		"component.bitmaptextrenderer.pixel_snapping": "像素吸附",
+		"component.bitmaptextrenderer.pixel_snapping_desc": "当适用的Camera2D也启用Pixel Snapping时，将此字符相对摄像机的位置对齐到渲染目标的像素网格。用于让点阵字体（启用点采样时）以原始大小清晰显示。",
+		"component.bitmaptextrenderer.pixel_snap_outset": "像素吸附外扩边距",
+		"component.bitmaptextrenderer.pixel_snap_outset_desc": "设置大于0的值时，会将字符四边形向外扩展该数值(px，单边)，以防止边界像素整行/整列丢失。往返矩阵运算产生的极微小浮点误差，可能导致光栅化时把恰好落在吸附边界上的像素误判为在外侧；此边距用于防止该问题。由于每个字符都是从字体图集中截取的子矩形，无论采样器的寻址模式如何，只要字形之间没有留白，UV都可能溢出到相邻字符——请确认图集是否留有边距，或将该值保持较小并目视确认效果。默认0.0=禁用。",
+		"component.bitmaptextrenderer.text": "文本",
+
+		//--------- component.texturesource ---------//
+		"component.texturesource.texture": "纹理",
+
+		//--------- component.transformsync ---------//
+		"component.transformsync.desc_1": "每帧将目标的世界位置/旋转/缩放（各自加上偏移量）应用到该对象的Transform上。不会更改实际的场景层级父子关系。",
+		"component.transformsync.no_target": "(未设置目标：不会进行同步)",
+		"component.transformsync.position_offset": "位置偏移",
+		"component.transformsync.rotation_offset": "旋转偏移",
+		"component.transformsync.scale_offset": "缩放偏移",
+		"component.transformsync.sync_position": "同步位置",
+		"component.transformsync.sync_rotation": "同步旋转",
+		"component.transformsync.sync_scale": "同步缩放",
+
 		//--------- component.uibutton ---------//
 		"component.uibutton.desc": "本身不进行任何绘制。若该对象上有SpriteRenderer，则使用其精灵的矩形；若没有但有TextRenderer，则使用其文本的外接矩形（会随当前显示的文本动态变化）作为点击判定区域。",
 		"component.uibutton.display_camera": "显示相机",
@@ -1389,6 +1529,20 @@
 		"component.vignetteeffect.inner_radius": "内半径",
 		"component.vignetteeffect.intensity": "强度",
 		"component.vignetteeffect.smoothness": "平滑度",
+
+		//--------- component.barreldistortioneffect ---------//
+		"component.barreldistortioneffect.strength": "强度",
+		"component.barreldistortioneffect.zoom": "缩放",
+		"component.barreldistortioneffect.edge_color": "边缘颜色",
+
+		//--------- component.palettequantizeeffect ---------//
+		"component.palettequantizeeffect.intensity": "强度",
+		"component.palettequantizeeffect.dither_amount": "抖动量",
+
+		//--------- component.scanlineeffect ---------//
+		"component.scanlineeffect.intensity": "强度",
+		"component.scanlineeffect.line_spacing": "扫描线间距",
+		"component.scanlineeffect.thickness": "厚度",
 
 		//--------- editor.assets ---------//
 		"editor.assets.createfile.alreadyexists": "已存在同名文件。",
@@ -1541,6 +1695,9 @@
 		"editor.fontmanager.u_x_u": "%u × %u",
 		"editor.fontmanager.window": "已加载的字体",
 
+		//--------- editor.bitmapfontmanager ---------//
+		"editor.bitmapfontmanager.window": "已加载的位图字体",
+
 		//--------- editor.gameengine ---------//
 		"editor.gameengine.averages_zu_samples": "平均值（%zu 个样本）",
 		"editor.gameengine.avg_draw_3f_ms": "平均绘制时间：%.3f ms",
@@ -1555,6 +1712,9 @@
 
 		//--------- editor.globalscenevariables ---------//
 		"editor.globalscenevariables.window": "全局场景变量",
+		"editor.globalscenevariables.clear_all": "全部删除",
+		"editor.globalscenevariables.clear_all_confirm_title": "删除全部全局场景变量",
+		"editor.globalscenevariables.clear_all_confirm_message": "将删除全部全局场景变量，此操作无法撤销。是否继续？",
 
 		//--------- editor.hierarchy ---------//
 		"editor.hierarchy.clone": "复制对象",
@@ -1578,6 +1738,7 @@
 		"editor.hierarchy.create.skinnedmeshobject": "蒙皮网格对象",
 		"editor.hierarchy.create.spriteobject": "精灵对象",
 		"editor.hierarchy.create.textobject": "文本对象",
+		"editor.hierarchy.create.bitmaptextobject": "位图文本对象",
 		"editor.hierarchy.create.uibuttonobject": "UI按钮对象",
 		"editor.hierarchy.create.windowobject": "窗口对象",
 		"editor.hierarchy.createchildobject": "创建子对象",
@@ -1671,6 +1832,7 @@
 		"editor.materialmanager.add_missing_parameters": "批量添加缺失参数",
 		"editor.materialmanager.color": "颜色",
 		"editor.materialmanager.custom_parameters": "自定义参数（着色器专属）",
+		"editor.materialmanager.desc_uv_pivot": "UV旋转的中心点。缩放始终以UV原点(0,0)为基准，仅旋转以该点为中心",
 		"editor.materialmanager.enable_lighting": "启用光照",
 		"editor.materialmanager.enable_shadowmap_projection": "启用阴影贴图投影",
 		"editor.materialmanager.environment": "环境贴图",
@@ -1685,12 +1847,21 @@
 		"editor.materialmanager.rim_color": "边缘光颜色",
 		"editor.materialmanager.rim_intensity": "边缘光强度",
 		"editor.materialmanager.rim_power": "边缘光锐度",
+		"editor.materialmanager.sampler": "采样器",
 		"editor.materialmanager.save": "保存",
 		"editor.materialmanager.save_all": "全部保存",
 		"editor.materialmanager.shininess": "光泽度",
 		"editor.materialmanager.specular_color": "高光颜色",
 		"editor.materialmanager.texture": "纹理",
+		"editor.materialmanager.uv_pivot": "UV旋转中心",
+		"editor.materialmanager.uv_pivot_pixel": "UV旋转中心（像素）",
+		"editor.materialmanager.uv_rotation": "UV旋转（度）",
+		"editor.materialmanager.uv_scale": "UV缩放",
+		"editor.materialmanager.uv_scale_pixel": "UV缩放（像素）",
 		"editor.materialmanager.uv_transform": "UV变换",
+		"editor.materialmanager.uv_transform_pixel": "UV变换（以纹理像素为基准，未设置纹理时不可编辑）",
+		"editor.materialmanager.uv_translate": "UV坐标",
+		"editor.materialmanager.uv_translate_pixel": "UV坐标（像素）",
 		"editor.materialmanager.window": "材质",
 
 		//--------- editor.menu ---------//
@@ -1778,6 +1949,10 @@
 		"editor.prefab.apply": "应用",
 		"editor.prefab.applyall": "全部应用",
 		"editor.prefab.overrides": "被覆盖的项目：",
+		"editor.prefab.override.objectproperties": "对象属性",
+		"editor.prefab.override.parent": "父级关系",
+		"editor.prefab.override.addedobject": "已添加对象",
+		"editor.prefab.override.removedobjects": "已删除对象",
 		"editor.prefab.revert": "还原",
 		"editor.prefab.revert.title": "是否还原预制体实例？",
 		"editor.prefab.revert.warning1": "本地的所有更改（包括添加到此实例的子对象）都将被丢弃。",
@@ -1852,6 +2027,7 @@
 		"editor.preferences.window": "编辑器首选项",
 
 		//--------- editor.savescene ---------//
+		"editor.savescene.playing.warning": "游戏循环正在播放中。保存的内容将是开始播放前的场景状态。",
 		"editor.savescene.title": "保存场景",
 
 		//--------- editor.sceneaudioplayer ---------//
@@ -1875,11 +2051,20 @@
 		"editor.scenelist.column.filepath": "文件路径",
 		"editor.scenelist.column.name": "名称",
 		"editor.scenelist.column.switch": "切换",
+		"editor.scenelist.column.duplicate": "复制",
 		"editor.scenelist.convert": "转换为文件夹格式",
 		"editor.scenelist.convert.succeeded": "已完成转换为文件夹格式。",
 		"editor.scenelist.convert.tooltip": "将此场景的保存格式转换为“一对象一文件夹”的形式。\n（可减少多人协作开发时Git的冲突）",
 		"editor.scenelist.convert.tooltip.disabled": "已是文件夹格式，或文件路径尚未设置。",
 		"editor.scenelist.delete.tooltip": "从列表中删除此场景。\n（场景本身的JSON文件不会被删除）",
+		"editor.scenelist.duplicate": "复制",
+		"editor.scenelist.duplicate.button": "复制",
+		"editor.scenelist.duplicate.namealreadyexists": "已存在同名的场景。",
+		"editor.scenelist.duplicate.newfilepath": "新文件路径##duplicate",
+		"editor.scenelist.duplicate.newname": "新名称##duplicate",
+		"editor.scenelist.duplicate.source": "复制源",
+		"editor.scenelist.duplicate.title": "复制场景",
+		"editor.scenelist.duplicate.tooltip": "以新名称复制此场景。",
 		"editor.scenelist.deleteoriginal.keep": "保留",
 		"editor.scenelist.deleteoriginal.message": "是否删除转换源文件？",
 		"editor.scenelist.deleteoriginal.title": "是否删除转换源文件？",
@@ -1898,6 +2083,7 @@
 
 		//--------- editor.sceneobjecthierarchy ---------//
 		"editor.sceneobjecthierarchy.window": "场景对象层级",
+		"editor.sceneobjecthierarchy.search": "搜索",
 
 		//--------- editor.sceneobjectinspector ---------//
 		"editor.sceneobjectinspector.window": "对象检查器",
@@ -1924,14 +2110,24 @@
 		"editor.sceneview.gizmo.local": "局部",
 		"editor.sceneview.gizmo.rotate": "旋转",
 		"editor.sceneview.gizmo.scale": "缩放",
+		"editor.sceneview.gizmo.snap": "网格吸附",
+		"editor.sceneview.gizmo.snap.rotate": "角度吸附",
+		"editor.sceneview.gizmo.snap.scale": "缩放吸附",
+		"editor.sceneview.gizmo.snap.tooltip": "按住Ctrl键会临时反转启用状态",
+		"editor.sceneview.gizmo.snap.translate": "网格间距",
 		"editor.sceneview.gizmo.translate": "移动",
 		"editor.sceneview.gizmo.world": "世界",
 		"editor.sceneview.notready": "场景视图尚未准备就绪。",
+		"editor.sceneview.boundszone.enable": "启用矩形编辑",
+		"editor.sceneview.boundszone.hint": "可以在场景视图中直接拖动检查器里当前选中的矩形（支持拖动四角、四边及内部）。",
+		"editor.sceneview.boundszone.no_selection": "请只选择一个带有CameraBoundsZone2D/3D的对象。",
 		"editor.sceneview.show.bones": "骨骼",
+		"editor.sceneview.show.boundszones": "边界区域",
 		"editor.sceneview.show.cameras": "相机",
 		"editor.sceneview.show.colliders": "碰撞体",
 		"editor.sceneview.show.grid": "网格线",
 		"editor.sceneview.show.lights": "光源",
+		"editor.sceneview.tab.boundszone": "边界区域",
 		"editor.sceneview.tab.camera": "相机",
 		"editor.sceneview.tab.display": "显示",
 		"editor.sceneview.tab.gizmo": "Gizmo",
@@ -2026,6 +2222,15 @@
 		"engine.font.loading.failed.unsupported": "字体加载失败。不支持的扩展名。文件路径：",
 		"engine.font.loading.succeeded": "字体加载成功。文件路径：",
 
+		//--------- engine.bitmapfont ---------//
+		"engine.bitmapfont.loading.failed.notfound": "位图字体加载失败。未找到文件。文件路径：",
+		"engine.bitmapfont.loading.failed.nopage": "位图字体加载失败。未定义页面（纹理）。文件路径：",
+		"engine.bitmapfont.loading.failed.pagenotfound": "位图字体加载失败。未找到与页面图像同名的已加载纹理（请将页面图像放置在Assets目录下的某处）。文件名：",
+		"engine.bitmapfont.loading.failed.read": "位图字体加载失败。无法打开文件。文件路径：",
+		"engine.bitmapfont.loading.failed.unsupported": "位图字体加载失败。不支持的扩展名。文件路径：",
+		"engine.bitmapfont.loading.succeeded": "位图字体加载成功。文件路径：",
+		"engine.bitmapfont.loading.warning.multipage": "此位图字体包含多个页面，仅使用第一页。文件路径：",
+
 		//--------- engine.gpuparticle ---------//
 		"engine.gpuparticle.dispatching": "开始派发GPU粒子。发射器数：",
 		"engine.gpuparticle.emitters.empty": "没有任何GPU粒子发射器。",
@@ -2078,13 +2283,39 @@
 		"engine.prefab.sync.result.updated": "，已更新的场景数",
 		"engine.prefab.sync.scene.failed": "预制体同步：场景加载或保存失败。场景名称：",
 
+		//--------- engine.renderer ---------//
+		"engine.renderer.zerodrawentries.detected": "绘制条目已连续一段时间为零（相机等目标解析可能已失效）。ScreenBufferObject名称：",
+		"engine.renderer.zerodrawentries.recovered": "绘制条目已恢复。ScreenBufferObject名称：",
+
+		//--------- engine.rendertargetcarryover ---------//
+		"engine.rendertargetcarryover.beginsceneswitch": "场景切换：已开始接受渲染目标的继承。",
+		"engine.rendertargetcarryover.claim.success": "场景切换：已从继承池中取回渲染目标资源。种类/键：",
+		"engine.rendertargetcarryover.deposit.carried": "场景切换：已将渲染目标资源存入继承池。种类/键：",
+		"engine.rendertargetcarryover.deposit.destroyed": "当前不在场景切换中，已立即销毁渲染目标资源。种类/键：",
+		"engine.rendertargetcarryover.endsceneswitch.unclaimed": "场景切换：销毁了未被取走的渲染目标资源（新场景中可能不存在同名组件）。种类/键：",
+
+		//--------- engine.scene ---------//
+		"engine.scene.playstop.emptysnapshot": "PlayStop()：由于editModeSnapshot_为空，已跳过场景内容的恢复。此Scene实例可能未调用过PlayStart()。",
+		"engine.scene.playstop.notplaying": "调用了PlayStop()，但此Scene实例并未处于播放状态（isPlaying_=false）。可能是在播放过程中场景发生了切换，替换为了另一个Scene实例。",
+
 		//--------- engine.scenemanager ---------//
 		"engine.scenemanager.globalscenevariables.loaded": "已加载全局场景变量。文件路径：",
 		"engine.scenemanager.scene.alreadyregistered": "场景已注册，已跳过。场景名称：",
 		"engine.scenemanager.scene.load.failed": "场景文件加载失败，将创建空场景。文件路径：",
+		"engine.scenemanager.scene.switch.end": "场景切换完成。切换目标：",
+		"engine.scenemanager.scene.switch.start": "场景切换开始。切换目标：",
 		"engine.scenemanager.scenelist.loaded": "已加载场景列表。文件路径：",
 
+		//--------- engine.screenbuffer ---------//
+		"engine.screenbuffer.initialize.failed.doublebuffer": "ScreenBuffer初始化失败。双缓冲资源的创建失败。尺寸：",
+		"engine.screenbuffer.initialize.failed.nodirectxcommon": "ScreenBuffer初始化失败。DirectXCommon未设置。",
+		"engine.screenbuffer.initialize.failed.noslot": "ScreenBuffer初始化失败。无法获取命令对象插槽。尺寸：",
+		"engine.screenbuffer.initialize.failed.previewbuffer": "ScreenBuffer初始化失败。预览缓冲区的创建失败。尺寸：",
+
 		//--------- engine.screenbufferobject ---------//
+		"engine.screenbufferobject.loadfromjson.carried": "已从继承池中直接继承了已有的ScreenBuffer实例。名称(指针) 尺寸：",
+		"engine.screenbufferobject.loadfromjson.recreated": "由于尺寸不一致，已重新创建了新的ScreenBuffer实例。名称(指针) 尺寸：",
+		"engine.screenbufferobject.loadfromjson.reused": "直接复用了Initialize()后创建的临时ScreenBuffer实例。名称(指针) 尺寸：",
 		"engine.screenbufferobject.screenshot.failed": "截图保存失败。",
 
 		//--------- engine.script ---------//
@@ -2102,8 +2333,11 @@
 		"engine.script.error": "AngelScript：",
 		"engine.script.failed.createengine": "AngelScript：asCreateScriptEngine失败。",
 		"engine.script.field.array.recreated": "array<T>字段的句柄无效，已用新的空数组重新生成。字段名：",
+		"engine.script.field.gc_type.unsafe_declaration": "发现使用不安全的值语法而非句柄（@）声明的字段，已中止构建。GC托管类型（如array<T>、dictionary等）以及[System.Serializable]类等脚本类类型，必须使用句柄语法声明（例如 array<T>@ 名称 = null; 或 array<T@>@ 名称 = null;）。脚本：",
+		"engine.script.field.gc_type.unsafe_declaration.global_suffix": "（全局变量）",
 		"engine.script.predefined.generate.failed": "AngelScript：as.predefined 生成失败。",
 		"engine.script.predefined.generated": "AngelScript：已生成 as.predefined。",
+		"engine.script.variable.type_mismatch_shared_hint": "脚本间数据传递时类型名相同但类型ID不一致。如果是自定义类或enum，可能是忘记声明为shared。类型名：",
 		"engine.script.vscodelaunch.generate.failed": "AngelScript：VSCode 用 launch.json 生成失败。",
 
 		//--------- engine.settings ---------//
@@ -2135,6 +2369,11 @@
 		"engine.settings.window.initialwidth": "初始窗口宽度：",
 		"engine.settings.window.section": "窗口设置",
 
+		//--------- engine.shadowmapbuffer ---------//
+		"engine.shadowmapbuffer.initialize.failed.depth": "ShadowMapBuffer初始化失败。深度缓冲区的创建失败。尺寸：",
+		"engine.shadowmapbuffer.initialize.failed.nodirectxcommon": "ShadowMapBuffer初始化失败。DirectXCommon未设置。",
+		"engine.shadowmapbuffer.initialize.failed.noslot": "ShadowMapBuffer初始化失败。无法获取命令对象插槽。尺寸：",
+
 		//--------- engine.texture ---------//
 		"engine.texture.loading.failed.loadfile": "纹理加载失败。文件读取失败。文件路径：",
 
@@ -2155,6 +2394,14 @@
 		"error.code.label": "错误代码：",
 
 		//--------- label.filepath ---------//
-		"label.filepath": "文件路径："
+		"label.filepath": "文件路径：",
+
+		//--------- editor.externalchanges ---------//
+		"editor.externalchanges.title": "外部场景更改",
+		"editor.externalchanges.message": "正在编辑的场景已被外部修改。是否从磁盘重新加载？",
+		"editor.externalchanges.scene": "场景",
+		"editor.externalchanges.playing": "播放模式下无法安全重新加载，请先停止播放。",
+		"editor.externalchanges.reload": "重新加载",
+		"editor.externalchanges.keeplocal": "保留当前编辑"
 	}
 }

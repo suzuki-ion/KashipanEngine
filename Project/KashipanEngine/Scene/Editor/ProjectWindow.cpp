@@ -6,6 +6,7 @@
 #include "Core/GameEngine.h"
 #include "Core/ProjectPaths.h"
 #include "Scene/Editor/EditorWindowChrome.h"
+#include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
@@ -31,12 +32,12 @@ void ProjectWindow::ShowImGui() {
     ImGui::SeparatorText(TranslationLabel("editor.project.current"));
     if (ProjectPaths::IsStandalone()) {
         ImGui::TextUnformatted(TranslationC("editor.project.standalone"));
-        ImGui::TextDisabled("%s", ProjectPaths::ProjectRoot().c_str());
+        ImGuiCustom::TextDisabledWrapped("%s", ProjectPaths::ProjectRoot().c_str());
         ImGui::End();
         return;
     }
     ImGui::Text("%s%s", TranslationC("editor.project.name"), ProjectPaths::ProjectName().c_str());
-    ImGui::TextDisabled("%s", ProjectPaths::ProjectRoot().c_str());
+    ImGuiCustom::TextDisabledWrapped("%s", ProjectPaths::ProjectRoot().c_str());
 
     if (!pendingProjectName_.empty()) {
         ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.3f, 1.0f),

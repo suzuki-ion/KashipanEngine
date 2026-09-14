@@ -78,19 +78,19 @@ protected:
         IPostProcessComponent::ShowImGui();
         ImGui::DragFloat(TranslationLabel("component.gtaoeffect.radius"), &params_.radius, 0.01f, 0.01f, 20.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.gtaoeffect.desc_radius"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.gtaoeffect.desc_radius"));
         }
         ImGui::DragFloat(TranslationLabel("component.gtaoeffect.intensity"), &params_.intensity, 0.01f, 0.0f, 5.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.gtaoeffect.desc_intensity"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.gtaoeffect.desc_intensity"));
         }
         ImGui::DragFloat(TranslationLabel("component.gtaoeffect.power"), &params_.power, 0.01f, 0.1f, 8.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.gtaoeffect.desc_power"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.gtaoeffect.desc_power"));
         }
         ImGui::DragFloat(TranslationLabel("component.gtaoeffect.bias"), &params_.bias, 0.001f, 0.0f, 1.0f, "%.4f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.gtaoeffect.desc_bias"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.gtaoeffect.desc_bias"));
         }
 
         int directionCount = static_cast<int>(params_.directionCount);
@@ -98,26 +98,26 @@ protected:
             params_.directionCount = static_cast<std::uint32_t>(std::clamp(directionCount, 2, 8));
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.gtaoeffect.desc_direction_count"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.gtaoeffect.desc_direction_count"));
         }
         int stepCount = static_cast<int>(params_.stepCount);
         if (ImGui::DragInt(TranslationLabel("component.gtaoeffect.step_count"), &stepCount, 1.0f, 2, 12)) {
             params_.stepCount = static_cast<std::uint32_t>(std::clamp(stepCount, 2, 12));
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.gtaoeffect.desc_step_count"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.gtaoeffect.desc_step_count"));
         }
         ImGui::DragInt(TranslationLabel("component.gtaoeffect.blur_radius"), &params_.blurRadius, 1.0f, 0, 8);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.gtaoeffect.desc_blur_radius"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.gtaoeffect.desc_blur_radius"));
         }
         ImGui::DragFloat(TranslationLabel("component.gtaoeffect.depth_threshold"), &params_.depthThreshold, 0.01f, 0.001f, 100.0f, "%.3f");
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.gtaoeffect.desc_depth_threshold"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.gtaoeffect.desc_depth_threshold"));
         }
         ImGui::Checkbox(TranslationLabel("component.gtaoeffect.show_ao_only"), &params_.showAOOnly);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", TranslationC("component.gtaoeffect.desc_show_ao_only"));
+            ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.gtaoeffect.desc_show_ao_only"));
         }
         SanitizeParams();
 

@@ -30,6 +30,12 @@ public:
     virtual void EndDraw() = 0;
     /// @brief 描画に使用するコマンドリストを取得する
     virtual ID3D12GraphicsCommandList *GetCommandList() const = 0;
+
+    /// @brief 同じ種別(RenderTargetKind)の描画先同士での描画順（小さいほど先に描画される）
+    /// @details 既定は0。ある描画先が別の描画先の結果をポストエフェクト経由で参照する場合など、
+    ///          描画順を明示したい時にのみ変更すること。値が同じ描画先同士の順序は未規定
+    ///          （SceneRenderer::CompareSortableEntry参照）
+    virtual std::int32_t GetRenderOrderPriority() const noexcept { return 0; }
 };
 
 } // namespace KashipanEngine

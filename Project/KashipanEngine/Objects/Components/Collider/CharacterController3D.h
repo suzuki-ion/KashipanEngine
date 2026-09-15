@@ -4,10 +4,10 @@
 #include <string>
 #include <vector>
 
-#include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Objects/Components/Collider/ICollider.h"
 #include "Objects/Components/Transform.h"
+#include "Objects/EmptyObject.h"
 #include "Objects/ObjectComponentHeader.h"
 #include "Scene/Components/SceneObjectCollider.h"
 #include "Scene/SceneContext.h"
@@ -15,28 +15,28 @@
 
 namespace KashipanEngine {
 
-/// @brief Transformベースの2Dキャラクターを、衝突しない範囲だけ移動させるコンポーネント
-/// @details Moveで受け取った移動要求は即座には適用せず、全Object更新後の
-///          SceneObjectCollider更新時にまとめて解決する。これにより、そのフレームの全コライダーを
-///          同期した後で X→Y 順のスイープを実行でき、衝突コールバック順に依存しない。
+/// @brief Transformベースの3Dキャラクターを、衝突しない範囲だけ移動させるコンポーネント
+/// @details CharacterController2Dの3D版。Moveで受け取った移動要求は即座には適用せず、
+///          全Object更新後のSceneObjectCollider更新時にまとめて解決する。これにより、
+///          そのフレームの全コライダーを同期した後で反復的なcollide-and-slide解決を実行でき、
+///          衝突コールバック順に依存しない。
 ///
-///          移動形状はBox2D/Circle2D/Capsule2Dに対応する（Capsule2Dは水平・垂直の軸平行姿勢のみ）。
-///          めり込みからの復帰（recovery）は実形状同士の厳密な最近接点判定で行われるが、
-///          移動量を制限するスイープは各形状の軸平行境界ボックスによる近似のため、
-///          Circle2D/Capsule2Dの丸みはスイープ判定には反映されない。公開APIと結果型は
-///          形状非依存にしてあり、斜め姿勢や斜面追従等は将来Collider::MoveCharacter2D側の
-///          拡張で対応できる。
-class CharacterController2D final : public IObjectComponent {
+///          移動形状はBox/Sphere/Capsuleに対応する（Mesh/ConvexMesh/HeightFieldは非対応）。
+///          Boxは回転（斜面ランプ等）も含めて実際の向きのOBBとして厳密に判定される
+///          （Collider::MoveCharacter3DがCollisionAlgorithms3DのSAT/最近接点ベース判定を使用）。
+///          Capsuleのみ、厳密形状での判定手段が無いため回転を反映したバウンディングOBBで近似する。
+///          公開APIと結果型は形状非依存にしてある。
+class CharacterController3D final : public IObjectComponent {
 public:
-    OBJECT_COMPONENT_CONSTRUCTOR(CharacterController2D, 1,
+    OBJECT_COMPONENT_CONSTRUCTOR(CharacterController3D, 1,
         ADD_MEMBER_VARIABLE(skinWidth_);
         ADD_MEMBER_VARIABLE(groundedThreshold_);
     )
     COMPONENT_CATEGORY("Collision")
-    ~CharacterController2D() override = default;
+    ~CharacterController3D() override = default;
 
     std::unique_ptr<IObjectComponent> Clone() const override {
-        auto ptr = std::make_unique<CharacterController2D>();
+        auto ptr = std::make_unique<CharacterController3D>();
         ptr->skinWidth_ = skinWidth_;
         ptr->groundedThreshold_ = groundedThreshold_;
         ptr->selectedColliderTypeName_ = selectedColliderTypeName_;
@@ -46,7 +46,7 @@ public:
     }
 
     /// @brief このフレームに行いたい移動を予約する（複数回呼んだ場合は加算）
-    void Move(const Vector2 &displacement) {
+    void Move(const Vector3 &displacement) {
         pendingDisplacement_ = pendingDisplacement_ + displacement;
         hasPendingMove_ = true;
     }
@@ -56,17 +56,27 @@ public:
     void SetGroundedThreshold(float threshold) noexcept { groundedThreshold_ = std::clamp(threshold, 0.0f, 1.0f); }
     float GetGroundedThreshold() const noexcept { return groundedThreshold_; }
 
-    bool IsGrounded() const noexcept { return HasFlag(CharacterCollisionFlags2D::Below); }
-    bool IsTouchingCeiling() const noexcept { return HasFlag(CharacterCollisionFlags2D::Above); }
-    bool IsTouchingLeft() const noexcept { return HasFlag(CharacterCollisionFlags2D::Left); }
-    bool IsTouchingRight() const noexcept { return HasFlag(CharacterCollisionFlags2D::Right); }
-    bool IsTouchingWall() const noexcept { return IsTouchingLeft() || IsTouchingRight(); }
+    bool IsGrounded() const noexcept { return HasFlag(CharacterCollisionFlags3D::Below); }
+    bool IsTouchingCeiling() const noexcept { return HasFlag(CharacterCollisionFlags3D::Above); }
+    bool IsTouchingPosX() const noexcept { return HasFlag(CharacterCollisionFlags3D::PosX); }
+    bool IsTouchingNegX() const noexcept { return HasFlag(CharacterCollisionFlags3D::NegX); }
+    bool IsTouchingPosZ() const noexcept { return HasFlag(CharacterCollisionFlags3D::PosZ); }
+    bool IsTouchingNegZ() const noexcept { return HasFlag(CharacterCollisionFlags3D::NegZ); }
+    bool IsTouchingWall() const noexcept {
+        return IsTouchingPosX() || IsTouchingNegX() || IsTouchingPosZ() || IsTouchingNegZ();
+    }
     bool WasLastMoveShapeSupported() const noexcept { return lastMoveResult_.shapeSupported; }
-    Vector2 GetGroundNormal() const noexcept { return lastMoveResult_.groundNormal; }
-    Vector2 GetRequestedDelta() const noexcept { return lastMoveResult_.requestedDelta; }
-    Vector2 GetAppliedDelta() const noexcept { return lastMoveResult_.appliedDelta; }
+    Vector3 GetGroundNormal() const noexcept { return lastMoveResult_.groundNormal; }
+    Vector3 GetRequestedDelta() const noexcept { return lastMoveResult_.requestedDelta; }
+    Vector3 GetAppliedDelta() const noexcept { return lastMoveResult_.appliedDelta; }
+    /// @brief 直近の移動解決で接地(Below)と判定された障害物の所有オブジェクトを取得する
+    /// @details 動く床への追従など、「今何に乗っているか」が必要なスクリプト側で使う。
+    ///          接地していない場合はnullptr
+    EmptyObject *GetGroundObject() const noexcept { return lastMoveResult_.groundObject; }
+    /// @brief 直近の移動解決で接地(Below)と判定された障害物のコライダーを取得する（無ければnullptr）
+    ICollider *GetGroundCollider() const noexcept { return lastMoveResult_.groundCollider; }
 
-    /// @brief 同一オブジェクト上の移動形状として使用する2Dコライダーを選択する
+    /// @brief 同一オブジェクト上の移動形状として使用する3Dコライダーを選択する
     void SetSelectedCollider(ICollider *collider) {
         if (!collider) {
             selectedColliderTypeName_.clear();
@@ -100,7 +110,7 @@ public:
         auto *context = GetOwnerObjectContext();
         if (!context) return result;
         for (const auto &pair : context->GetAllComponents()) {
-            if (auto *collider = dynamic_cast<ICollider *>(pair.first); collider && collider->Is2D()) {
+            if (auto *collider = dynamic_cast<ICollider *>(pair.first); collider && !collider->Is2D()) {
                 result.push_back(collider);
             }
         }
@@ -129,7 +139,7 @@ public:
             if (!colliders.empty()) shape = colliders.front();
         }
 
-        lastMoveResult_ = collider.MoveCharacter2D(
+        lastMoveResult_ = collider.MoveCharacter3D(
             shape,
             pendingDisplacement_,
             skinWidth_,
@@ -141,15 +151,11 @@ public:
             auto *transform = context ? context->GetComponent<Transform>() : nullptr;
             if (transform) {
                 const Vector3 current = transform->GetTranslate();
-                transform->SetTranslate(Vector3{
-                    current.x + lastMoveResult_.appliedDelta.x,
-                    current.y + lastMoveResult_.appliedDelta.y,
-                    current.z,
-                });
+                transform->SetTranslate(current + lastMoveResult_.appliedDelta);
             }
         }
 
-        pendingDisplacement_ = Vector2{0.0f, 0.0f};
+        pendingDisplacement_ = Vector3{0.0f, 0.0f, 0.0f};
         hasPendingMove_ = false;
     }
 
@@ -161,9 +167,9 @@ protected:
     void Finalize() override {
         auto *sceneContext = GetOwnerSceneContext();
         auto *sceneCollider = sceneContext ? sceneContext->GetComponent<SceneObjectCollider>() : nullptr;
-        if (sceneCollider) sceneCollider->UnregisterCharacterController2D(this);
+        if (sceneCollider) sceneCollider->UnregisterCharacterController3D(this);
         registered_ = false;
-        pendingDisplacement_ = Vector2{0.0f, 0.0f};
+        pendingDisplacement_ = Vector3{0.0f, 0.0f, 0.0f};
         hasPendingMove_ = false;
     }
 
@@ -178,9 +184,9 @@ protected:
 
         const auto colliders = GetOwnerColliders();
         auto *current = GetSelectedCollider();
-        const std::string preview = current ? current->GetComponentType() : "(First 2D Collider)";
+        const std::string preview = current ? current->GetComponentType() : "(First 3D Collider)";
         if (ImGui::BeginCombo("Collider Shape", preview.c_str())) {
-            if (ImGui::Selectable("(First 2D Collider)", !current)) SetSelectedCollider(nullptr);
+            if (ImGui::Selectable("(First 3D Collider)", !current)) SetSelectedCollider(nullptr);
             for (auto *collider : colliders) {
                 ImGui::PushID(collider);
                 const bool selected = collider == current;
@@ -190,8 +196,10 @@ protected:
             ImGui::EndCombo();
         }
 
-        if (current && current->GetShape() == ICollider::Shape::Capsule2D) {
-            ImGuiCustom::TextDisabledWrapped("Capsule2DCollider is only supported in a horizontal or vertical (axis-aligned) orientation.");
+        if (current && current->GetShape() != ICollider::Shape::Box &&
+            current->GetShape() != ICollider::Shape::Sphere &&
+            current->GetShape() != ICollider::Shape::Capsule) {
+            ImGuiCustom::TextDisabledWrapped("Current version supports Box/Sphere/Capsule colliders only.");
         }
     }
 #endif
@@ -216,7 +224,7 @@ protected:
     }
 
 private:
-    bool HasFlag(CharacterCollisionFlags2D flag) const noexcept {
+    bool HasFlag(CharacterCollisionFlags3D flag) const noexcept {
         return (lastMoveResult_.collisionFlags & static_cast<std::uint8_t>(flag)) != 0;
     }
 
@@ -227,7 +235,7 @@ private:
         auto *sceneCollider = sceneContext->GetComponent<SceneObjectCollider>();
         if (!sceneCollider) sceneCollider = sceneContext->AddComponent<SceneObjectCollider>();
         if (!sceneCollider) return;
-        sceneCollider->RegisterCharacterController2D(this);
+        sceneCollider->RegisterCharacterController3D(this);
         registered_ = true;
     }
 
@@ -237,12 +245,12 @@ private:
     int selectedColliderOccurrenceIndex_ = 0;
     std::vector<std::string> ignoredTags_;
 
-    Vector2 pendingDisplacement_{0.0f, 0.0f};
-    CharacterMoveResult2D lastMoveResult_{};
+    Vector3 pendingDisplacement_{0.0f, 0.0f, 0.0f};
+    CharacterMoveResult3D lastMoveResult_{};
     bool hasPendingMove_ = false;
     bool registered_ = false;
 };
 
-REGISTER_COMPONENT_OBJECT(CharacterController2D)
+REGISTER_COMPONENT_OBJECT(CharacterController3D)
 
 } // namespace KashipanEngine

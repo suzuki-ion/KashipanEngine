@@ -752,6 +752,21 @@
                     {
                         "data": {
                             "customData": {
+                                "groundedThreshold": 0.5,
+                                "ignoredTags": [],
+                                "selectedColliderOccurrenceIndex": 0,
+                                "selectedColliderTypeName": "SphereCollider",
+                                "skinWidth": 0.009999999776482582
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "CharacterController3D"
+                    },
+                    {
+                        "data": {
+                            "customData": {
                                 "effects": {
                                     "echo": {
                                         "delayMs": 500.0,

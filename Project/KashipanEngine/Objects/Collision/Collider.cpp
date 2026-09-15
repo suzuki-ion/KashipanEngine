@@ -1,7 +1,10 @@
 #include "Collider.h"
 
+#include "Objects/Collision/CollisionAlgorithms2D.h"
+#include "Objects/Collision/CollisionAlgorithms3D.h"
 #include "Objects/EmptyObject.h"
 #include "Objects/Components/Transform.h"
+#include "Objects/Components/Collider/ICollider.h"
 #include "Objects/Components/Collider/RigidBody2D.h"
 #include "Objects/Components/Collider/RigidBody3D.h"
 #include "Utilities/TimeUtils.h"
@@ -571,26 +574,92 @@ struct AxisAlignedBounds2D final {
     Vector2 halfSize{0.0f, 0.0f};
 };
 
-/// @brief 現段階で CharacterController2D が扱える軸平行矩形へ変換する
-/// @details 0/90/180/270度回転は軸平行のままなので対応し、それ以外の回転は将来の
-///          斜面対応用スイープへ委ねるため unsupported とする。
+/// @brief 現段階で CharacterController2D が扱える軸平行な図形（Rect/Circle/Capsule2D）を
+///        スイープ・ブロードフェーズ用の軸平行境界ボックスへ変換する
+/// @details Rectは0/90/180/270度回転のみ軸平行として対応し、それ以外の回転は将来の
+///          斜面対応用スイープへ委ねるため unsupported とする。Capsule2Dも同様に、
+///          水平・垂直のいずれかでない（斜めの）カプセルは unsupported とする。
+///          ここで得た境界ボックスはブロードフェーズのグリッドクエリとX→Yスイープの
+///          移動量制限に使う近似（Circle/Capsule2Dの丸みはスイープ時には考慮されない）。
+///          めり込みからの復帰（recovery）フェーズは ComputeExactHit2D により実形状で
+///          厳密に判定するため、この近似の影響を受けない。
 std::optional<AxisAlignedBounds2D> ToAxisAlignedBounds(const ColliderInfo2D::ShapeVariant &shape) {
-    const auto *rect = std::get_if<Math::Rect>(&shape);
-    if (!rect) return std::nullopt;
+    if (const auto *rect = std::get_if<Math::Rect>(&shape)) {
+        const float sine = std::sin(rect->rotation);
+        const float cosine = std::cos(rect->rotation);
+        if (std::abs(2.0f * sine * cosine) > 0.001f) return std::nullopt;
 
-    const float sine = std::sin(rect->rotation);
-    const float cosine = std::cos(rect->rotation);
-    if (std::abs(2.0f * sine * cosine) > 0.001f) return std::nullopt;
+        const float halfX = std::abs(rect->halfSize.x);
+        const float halfY = std::abs(rect->halfSize.y);
+        return AxisAlignedBounds2D{
+            rect->center,
+            Vector2{
+                std::abs(cosine) * halfX + std::abs(sine) * halfY,
+                std::abs(sine) * halfX + std::abs(cosine) * halfY,
+            },
+        };
+    }
 
-    const float halfX = std::abs(rect->halfSize.x);
-    const float halfY = std::abs(rect->halfSize.y);
-    return AxisAlignedBounds2D{
-        rect->center,
-        Vector2{
-            std::abs(cosine) * halfX + std::abs(sine) * halfY,
-            std::abs(sine) * halfX + std::abs(cosine) * halfY,
-        },
-    };
+    if (const auto *circle = std::get_if<Math::Circle>(&shape)) {
+        return AxisAlignedBounds2D{circle->center, Vector2{circle->radius, circle->radius}};
+    }
+
+    if (const auto *capsule = std::get_if<Math::Capsule2D>(&shape)) {
+        constexpr float kAxisAlignedEpsilon = 0.0005f;
+        const bool isVertical = std::abs(capsule->start.x - capsule->end.x) <= kAxisAlignedEpsilon;
+        const bool isHorizontal = std::abs(capsule->start.y - capsule->end.y) <= kAxisAlignedEpsilon;
+        if (!isVertical && !isHorizontal) return std::nullopt;
+
+        const Vector2 center = (capsule->start + capsule->end) * 0.5f;
+        const float halfLength = MathUtils::Length(capsule->end - capsule->start) * 0.5f;
+        return AxisAlignedBounds2D{
+            center,
+            isVertical
+                ? Vector2{capsule->radius, halfLength + capsule->radius}
+                : Vector2{halfLength + capsule->radius, capsule->radius},
+        };
+    }
+
+    return std::nullopt;
+}
+
+/// @brief 平行移動のみをshape variantへ適用する（recoveryフェーズで実形状を追従させるため）
+ColliderInfo2D::ShapeVariant TranslateShape2D(const ColliderInfo2D::ShapeVariant &shape, const Vector2 &delta) {
+    return std::visit([&delta](auto s) -> ColliderInfo2D::ShapeVariant {
+        using T = std::decay_t<decltype(s)>;
+        if constexpr (std::is_same_v<T, Math::Rect> || std::is_same_v<T, Math::Circle>) {
+            s.center = s.center + delta;
+        } else if constexpr (std::is_same_v<T, Math::Capsule2D>) {
+            s.start = s.start + delta;
+            s.end = s.end + delta;
+        }
+        return s;
+    }, shape);
+}
+
+/// @brief mover/obstacleの実形状（Rect/Circle/Capsule2Dのみ）から、CollisionAlgorithms2Dの
+///        厳密な最近接点ベース判定を用いて接触法線・めり込み量を得る
+/// @details ToAxisAlignedBoundsを通過する形状はRect/Circle/Capsule2Dの3種類のみなので、
+///          この9通りの組み合わせは全てCollisionAlgorithms2D::ComputeHitに実装済み
+std::optional<HitInfo> ComputeExactHit2D(const ColliderInfo2D::ShapeVariant &moverShape,
+    const ColliderInfo2D::ShapeVariant &obstacleShape) {
+    return std::visit([&](const auto &mover) -> std::optional<HitInfo> {
+        using MoverT = std::decay_t<decltype(mover)>;
+        if constexpr (std::is_same_v<MoverT, Math::Rect> || std::is_same_v<MoverT, Math::Circle> ||
+            std::is_same_v<MoverT, Math::Capsule2D>) {
+            return std::visit([&](const auto &obstacle) -> std::optional<HitInfo> {
+                using ObstacleT = std::decay_t<decltype(obstacle)>;
+                if constexpr (std::is_same_v<ObstacleT, Math::Rect> || std::is_same_v<ObstacleT, Math::Circle> ||
+                    std::is_same_v<ObstacleT, Math::Capsule2D>) {
+                    return CollisionAlgorithms2D::ComputeHit(mover, obstacle);
+                } else {
+                    return std::nullopt;
+                }
+            }, obstacleShape);
+        } else {
+            return std::nullopt;
+        }
+    }, moverShape);
 }
 
 inline void AddCharacterCollisionFlag(CharacterMoveResult2D &result, CharacterCollisionFlags2D flag) {
@@ -598,6 +667,87 @@ inline void AddCharacterCollisionFlag(CharacterMoveResult2D &result, CharacterCo
 }
 
 inline bool HasIgnoredTag(const ColliderInfo2D &info, const std::vector<std::string> &ignoredTags) {
+    if (!info.sourceCollider) return false;
+    const auto &tag = info.sourceCollider->GetTagName();
+    return std::find(ignoredTags.begin(), ignoredTags.end(), tag) != ignoredTags.end();
+}
+
+//==================================================
+// CharacterController3D 用ヘルパー
+//==================================================
+
+/// @brief CharacterController3D が扱う狭域形状（回転を保持するOBB、またはSphere）
+/// @details ColliderInfo3D::BoxShape3D/CapsuleShape3D自体は回転を持たないが、
+///          実際のオブジェクトの回転はsourceCollider経由で取得できる（Collider::MakeTransform3D
+///          が実体の物理ボディ生成に使っているのと同じ方法）。ここで回転を反映したMath::OBBへ
+///          変換しておくことで、回転したBoxコライダー（斜面ランプ等）も含めてCollisionAlgorithms3D
+///          の厳密なSAT判定（ComputeHit）をそのまま使い回せる。
+using NarrowShape3D = std::variant<Math::OBB, Math::Sphere>;
+
+/// @brief 現段階で CharacterController3D が扱える図形（Box/Sphere/Capsule）をNarrowShape3Dへ変換する
+/// @details Mesh/ConvexMesh/ConcaveMesh/HeightFieldは対象外。Capsuleは厳密形状での判定手段が
+///          CollisionAlgorithms3Dに無いため、回転を反映したバウンディングOBBとして近似する
+std::optional<NarrowShape3D> ToNarrowShape3D(const ColliderInfo3D &info) {
+    const Matrix4x4 orientation = info.sourceCollider
+        ? info.sourceCollider->GetSyncedOwnerRotation().MakeRotateMatrix()
+        : Matrix4x4::Identity();
+
+    if (const auto *box = std::get_if<ColliderInfo3D::BoxShape3D>(&info.shape)) {
+        return Math::OBB{
+            box->center,
+            Vector3{std::abs(box->halfExtents.x), std::abs(box->halfExtents.y), std::abs(box->halfExtents.z)},
+            orientation,
+        };
+    }
+    if (const auto *sphere = std::get_if<ColliderInfo3D::SphereShape3D>(&info.shape)) {
+        return Math::Sphere{sphere->center, sphere->radius};
+    }
+    if (const auto *capsule = std::get_if<ColliderInfo3D::CapsuleShape3D>(&info.shape)) {
+        // カプセルの軸は常にローカルY（垂直）として扱う。height はcreateCapsuleShape(radius,height)と
+        // 同じ意味＝円柱部分の長さのため、全長の半分は height/2 + radius になる
+        const float halfHeight = capsule->height * 0.5f + capsule->radius;
+        return Math::OBB{capsule->center, Vector3{capsule->radius, halfHeight, capsule->radius}, orientation};
+    }
+    return std::nullopt;
+}
+
+/// @brief 平行移動のみをNarrowShape3Dへ適用する
+NarrowShape3D TranslateNarrowShape3D(const NarrowShape3D &shape, const Vector3 &delta) {
+    return std::visit([&delta](auto s) -> NarrowShape3D {
+        s.center = s.center + delta;
+        return s;
+    }, shape);
+}
+
+/// @brief NarrowShape3Dを各方向へamountだけ膨らませる（skin幅を保ったスイープ判定に使う）
+NarrowShape3D InflateNarrowShape3D(const NarrowShape3D &shape, float amount) {
+    return std::visit([amount](auto s) -> NarrowShape3D {
+        using T = std::decay_t<decltype(s)>;
+        if constexpr (std::is_same_v<T, Math::OBB>) {
+            s.halfSize = s.halfSize + Vector3{amount, amount, amount};
+        } else {
+            s.radius += amount;
+        }
+        return s;
+    }, shape);
+}
+
+/// @brief mover/obstacleの実形状（OBB/Sphere）から、CollisionAlgorithms3Dの厳密な
+///        SAT/最近接点ベース判定（OBB-OBB・OBB-Sphere・Sphere-Sphereの4通り）で
+///        接触法線・めり込み量を得る
+std::optional<HitInfo> ComputeNarrowHit3D(const NarrowShape3D &a, const NarrowShape3D &b) {
+    return std::visit([&](const auto &sa) -> std::optional<HitInfo> {
+        return std::visit([&](const auto &sb) -> std::optional<HitInfo> {
+            return CollisionAlgorithms3D::ComputeHit(sa, sb);
+        }, b);
+    }, a);
+}
+
+inline void AddCharacterCollisionFlag(CharacterMoveResult3D &result, CharacterCollisionFlags3D flag) {
+    result.collisionFlags |= static_cast<std::uint8_t>(flag);
+}
+
+inline bool HasIgnoredTag(const ColliderInfo3D &info, const std::vector<std::string> &ignoredTags) {
     if (!info.sourceCollider) return false;
     const auto &tag = info.sourceCollider->GetTagName();
     return std::find(ignoredTags.begin(), ignoredTags.end(), tag) != ignoredTags.end();
@@ -691,7 +841,10 @@ CharacterMoveResult2D Collider::MoveCharacter2D(
 
     // エディター配置や外部Transform変更で既にめり込んでいた場合だけ、最小軸で復帰させる。
     // 通常の移動はこの後のスイープで接触前に止まるため、この処理が常用されることはない。
+    // AABB近似ではなく実形状同士の厳密な最近接点判定（ComputeExactHit2D）を使うため、
+    // Circle2D/Capsule2Dが絡む場合でもめり込みからの押し出しは正確に行われる。
     Vector2 recovery{0.0f, 0.0f};
+    ColliderInfo2D::ShapeVariant currentMoverShape = self->info.shape;
     constexpr int kMaxRecoveryIterations = 4;
     for (int iteration = 0; iteration < kMaxRecoveryIterations; ++iteration) {
         bool found = false;
@@ -705,23 +858,12 @@ CharacterMoveResult2D Collider::MoveCharacter2D(
         for (const auto idx : QueryGrid2D(obstacleGrid, moverRegion)) {
             const auto &candidate = colliders2D_[idx];
             if (!canBlock(candidate)) continue;
-            const auto &obstacle = obstacleBoundsByIndex.at(idx);
 
-            const float deltaX = mover->center.x - obstacle.center.x;
-            const float deltaY = mover->center.y - obstacle.center.y;
-            const float overlapX = mover->halfSize.x + obstacle.halfSize.x - std::abs(deltaX);
-            const float overlapY = mover->halfSize.y + obstacle.halfSize.y - std::abs(deltaY);
-            if (overlapX <= kOverlapEpsilon || overlapY <= kOverlapEpsilon) continue;
+            const auto hit = ComputeExactHit2D(currentMoverShape, candidate.info.shape);
+            if (!hit || !hit->isHit) continue;
 
-            Vector2 correction;
-            Vector2 normal;
-            if (overlapX < overlapY) {
-                normal = Vector2{deltaX < 0.0f ? -1.0f : 1.0f, 0.0f};
-                correction = normal * (overlapX + skin);
-            } else {
-                normal = Vector2{0.0f, deltaY < 0.0f ? -1.0f : 1.0f};
-                correction = normal * (overlapY + skin);
-            }
+            const Vector2 normal{hit->normal.x, hit->normal.y};
+            const Vector2 correction = normal * (hit->penetration + skin);
 
             const float distance = std::abs(correction.x) + std::abs(correction.y);
             if (distance < bestDistance) {
@@ -734,6 +876,7 @@ CharacterMoveResult2D Collider::MoveCharacter2D(
 
         if (!found) break;
         mover->center = mover->center + bestCorrection;
+        currentMoverShape = TranslateShape2D(currentMoverShape, bestCorrection);
         recovery = recovery + bestCorrection;
         recordNormal(bestNormal);
     }
@@ -818,6 +961,145 @@ CharacterMoveResult2D Collider::MoveCharacter2D(
     }
 
     result.appliedDelta = recovery + sweptDelta;
+    return result;
+}
+
+CharacterMoveResult3D Collider::MoveCharacter3D(
+    const ICollider *selfCollider,
+    const Vector3 &requestedDelta,
+    float skinWidth,
+    float groundedThreshold,
+    const std::vector<std::string> &ignoredTags) const {
+    CharacterMoveResult3D result;
+    result.requestedDelta = requestedDelta;
+
+    const Entry<ColliderInfo3D, ColliderRuntime3D> *self = nullptr;
+    for (const auto &entry : colliders3D_) {
+        if (entry.info.sourceCollider == selfCollider) {
+            self = &entry;
+            break;
+        }
+    }
+    // CharacterController3DはTransformを所有する非RigidBodyキャラクター向け。
+    // RigidBody3D共有ボディ（ownsBody=false）を同時に動かすと物理位置とTransformが競合する。
+    if (!self || !self->info.enabled || self->info.isTrigger || !self->runtime.ownsBody) return result;
+
+    auto moverShapeOpt = ToNarrowShape3D(self->info);
+    if (!moverShapeOpt.has_value()) return result;
+    result.shapeSupported = true;
+    NarrowShape3D moverShape = *moverShapeOpt;
+
+    const float skin = std::max(0.0f, skinWidth);
+    const float groundThreshold = std::clamp(groundedThreshold, 0.0f, 1.0f);
+    constexpr float kOverlapEpsilon = 0.0001f;
+
+    const auto canBlock = [&](const auto &candidate) {
+        if (&candidate == self || !candidate.info.enabled || candidate.info.isTrigger) return false;
+        // 同一オブジェクト上の補助コライダー同士では移動を妨げない。
+        if (candidate.info.ownerObject && candidate.info.ownerObject == self->info.ownerObject) return false;
+        if (!ShouldTest(self->info.attribute, self->info.ignoreAttribute, candidate.info.attribute) ||
+            !ShouldTest(candidate.info.attribute, candidate.info.ignoreAttribute, self->info.attribute)) {
+            return false;
+        }
+        return !HasIgnoredTag(candidate.info, ignoredTags);
+    };
+
+    // 接触法線から衝突フラグを立てる。接地(Below)の場合は「今何に乗っているか」も記録し、
+    // 動く床への追従等、スクリプト側が対象オブジェクトを参照できるようにする
+    const auto recordNormal = [&](const Vector3 &normal, const Entry<ColliderInfo3D, ColliderRuntime3D> *obstacleEntry) {
+        if (normal.y > groundThreshold) {
+            AddCharacterCollisionFlag(result, CharacterCollisionFlags3D::Below);
+            result.groundNormal = normal;
+            if (obstacleEntry) {
+                result.groundObject = obstacleEntry->info.ownerObject;
+                result.groundCollider = obstacleEntry->info.sourceCollider;
+            }
+        } else if (normal.y < -groundThreshold) {
+            AddCharacterCollisionFlag(result, CharacterCollisionFlags3D::Above);
+        }
+        if (normal.x > kOverlapEpsilon) {
+            AddCharacterCollisionFlag(result, CharacterCollisionFlags3D::PosX);
+        } else if (normal.x < -kOverlapEpsilon) {
+            AddCharacterCollisionFlag(result, CharacterCollisionFlags3D::NegX);
+        }
+        if (normal.z > kOverlapEpsilon) {
+            AddCharacterCollisionFlag(result, CharacterCollisionFlags3D::PosZ);
+        } else if (normal.z < -kOverlapEpsilon) {
+            AddCharacterCollisionFlag(result, CharacterCollisionFlags3D::NegZ);
+        }
+    };
+
+    // 障害物候補（自分以外のNarrowShape3Dへ変換できるコライダー）を事前に集めておく。
+    // 2D版のような空間グリッドは持たず、対象コライダー数が多くない前提で毎回線形走査する
+    struct Obstacle3D {
+        const Entry<ColliderInfo3D, ColliderRuntime3D> *entry;
+        NarrowShape3D shape;
+    };
+    std::vector<Obstacle3D> obstacles;
+    obstacles.reserve(colliders3D_.size());
+    for (const auto &candidate : colliders3D_) {
+        if (&candidate == self) continue;
+        auto shape = ToNarrowShape3D(candidate.info);
+        if (!shape.has_value()) continue;
+        obstacles.push_back(Obstacle3D{&candidate, *shape});
+    }
+
+    // 指定形状と最も深く重なっている障害物の接触情報を返す（無ければstd::nullopt）
+    using DeepestHit = std::pair<HitInfo, const Entry<ColliderInfo3D, ColliderRuntime3D> *>;
+    const auto findDeepestHit = [&](const NarrowShape3D &shape) -> std::optional<DeepestHit> {
+        std::optional<DeepestHit> best;
+        for (const auto &obstacle : obstacles) {
+            if (!canBlock(*obstacle.entry)) continue;
+            const auto hit = ComputeNarrowHit3D(shape, obstacle.shape);
+            if (!hit || !hit->isHit) continue;
+            if (!best || hit->penetration > best->first.penetration) {
+                best = DeepestHit{*hit, obstacle.entry};
+            }
+        }
+        return best;
+    };
+
+    // エディター配置や外部Transform変更で既にめり込んでいた場合だけ、最小軸で復帰させる。
+    // 通常の移動はこの後のスライドフェーズで接触前に止まるため、この処理が常用されることはない。
+    Vector3 recovery{0.0f, 0.0f, 0.0f};
+    constexpr int kMaxRecoveryIterations = 4;
+    for (int iteration = 0; iteration < kMaxRecoveryIterations; ++iteration) {
+        const auto best = findDeepestHit(moverShape);
+        if (!best) break;
+
+        const Vector3 correction = best->first.normal * (best->first.penetration + skin);
+        moverShape = TranslateNarrowShape3D(moverShape, correction);
+        recovery = recovery + correction;
+        recordNormal(best->first.normal, best->second);
+    }
+
+    // 移動量をskin幅の隙間を残しながら消費する（回転Boxを含む厳密な形状判定のため、軸別スイープではなく
+    // 反復的なcollide-and-slideで解決する。接触があれば侵入方向の成分だけを取り除いて接触面に沿わせ、
+    // 残りの移動量を次の反復で試す。これによりOBB化された斜面ランプでも正しく滑走・接地できる）
+    Vector3 remaining = requestedDelta;
+    Vector3 applied{0.0f, 0.0f, 0.0f};
+    constexpr int kMaxSlideIterations = 4;
+    for (int iteration = 0; iteration < kMaxSlideIterations; ++iteration) {
+        if (remaining.LengthSquared() <= kOverlapEpsilon * kOverlapEpsilon) break;
+
+        const NarrowShape3D candidate = TranslateNarrowShape3D(moverShape, remaining);
+        const auto best = findDeepestHit(InflateNarrowShape3D(candidate, skin));
+        if (!best) {
+            // skin幅を保ったまま障害物に触れないので、残りの移動量をそのまま採用して終了
+            moverShape = candidate;
+            applied = applied + remaining;
+            remaining = Vector3{0.0f, 0.0f, 0.0f};
+            break;
+        }
+
+        recordNormal(best->first.normal, best->second);
+        const float intoSurface = MathUtils::Dot(remaining, best->first.normal);
+        if (intoSurface < 0.0f) {
+            remaining = remaining - best->first.normal * intoSurface;
+        }
+    }
+
+    result.appliedDelta = recovery + applied;
     return result;
 }
 

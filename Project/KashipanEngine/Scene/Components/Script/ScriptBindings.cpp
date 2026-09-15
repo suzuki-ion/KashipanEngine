@@ -64,6 +64,7 @@
 #include "Objects/Components/Collider/Box2DCollider.h"
 #include "Objects/Components/Collider/BoxCollider.h"
 #include "Objects/Components/Collider/CharacterController2D.h"
+#include "Objects/Components/Collider/CharacterController3D.h"
 #include "Objects/Components/Collider/Capsule2DCollider.h"
 #include "Objects/Components/Collider/CapsuleCollider.h"
 #include "Objects/Components/Collider/Circle2DCollider.h"
@@ -1663,6 +1664,50 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             return ScriptComponentHandle<ICollider>::Create(controller->GetSelectedCollider()); })
         .method("array<Collider@>@ GetOwnerColliders() const", [](const ScriptComponentHandle<CharacterController2D> &controllerHandle) -> CScriptArray * {
             CharacterController2D *controller = controllerHandle.Resolve();
+            if (!controller) { ThrowDestroyedObjectException(); return SafeCallDefault<CScriptArray *>(); }
+            return MakeColliderArray(controller->GetOwnerColliders()); });
+
+    RegisterComponentType<CharacterController3D>(engine, "CharacterController3D")
+        .method("void Move(const Vector3 &in)", SafeCall<&CharacterController3D::Move>())
+        .method("void SetSkinWidth(float)", SafeCall<&CharacterController3D::SetSkinWidth>())
+        .method("float GetSkinWidth() const", SafeCall<&CharacterController3D::GetSkinWidth>())
+        .method("void SetGroundedThreshold(float)", SafeCall<&CharacterController3D::SetGroundedThreshold>())
+        .method("float GetGroundedThreshold() const", SafeCall<&CharacterController3D::GetGroundedThreshold>())
+        .method("bool IsGrounded() const", SafeCall<&CharacterController3D::IsGrounded>())
+        .method("bool IsTouchingCeiling() const", SafeCall<&CharacterController3D::IsTouchingCeiling>())
+        .method("bool IsTouchingPosX() const", SafeCall<&CharacterController3D::IsTouchingPosX>())
+        .method("bool IsTouchingNegX() const", SafeCall<&CharacterController3D::IsTouchingNegX>())
+        .method("bool IsTouchingPosZ() const", SafeCall<&CharacterController3D::IsTouchingPosZ>())
+        .method("bool IsTouchingNegZ() const", SafeCall<&CharacterController3D::IsTouchingNegZ>())
+        .method("bool IsTouchingWall() const", SafeCall<&CharacterController3D::IsTouchingWall>())
+        .method("bool WasLastMoveShapeSupported() const", SafeCall<&CharacterController3D::WasLastMoveShapeSupported>())
+        .method("Vector3 GetGroundNormal() const", SafeCall<&CharacterController3D::GetGroundNormal>())
+        .method("Vector3 GetRequestedDelta() const", SafeCall<&CharacterController3D::GetRequestedDelta>())
+        .method("Vector3 GetAppliedDelta() const", SafeCall<&CharacterController3D::GetAppliedDelta>())
+        .method("Object@ GetGroundObject() const", [](const ScriptComponentHandle<CharacterController3D> &controllerHandle) -> ScriptObjectHandle * {
+            CharacterController3D *controller = controllerHandle.Resolve();
+            if (!controller) { ThrowDestroyedObjectException(); return nullptr; }
+            return ScriptObjectHandle::Create(controller->GetGroundObject()); })
+        .method("Collider@ GetGroundCollider() const", [](const ScriptComponentHandle<CharacterController3D> &controllerHandle) -> ScriptComponentHandle<ICollider> * {
+            CharacterController3D *controller = controllerHandle.Resolve();
+            if (!controller) { ThrowDestroyedObjectException(); return nullptr; }
+            return ScriptComponentHandle<ICollider>::Create(controller->GetGroundCollider()); })
+        .method("void AddIgnoredTag(const string &in)", SafeCall<&CharacterController3D::AddIgnoredTag>())
+        .method("void RemoveIgnoredTag(const string &in)", SafeCall<&CharacterController3D::RemoveIgnoredTag>())
+        .method("void ClearIgnoredTags()", SafeCall<&CharacterController3D::ClearIgnoredTags>())
+        .method("bool IsTagIgnored(const string &in) const", SafeCall<&CharacterController3D::IsTagIgnored>())
+        .method("void SetSelectedCollider(Collider@)", [](ScriptComponentHandle<CharacterController3D> &controllerHandle, ScriptComponentHandle<ICollider> *colliderHandle) {
+            CharacterController3D *controller = controllerHandle.Resolve();
+            if (!controller) { ThrowDestroyedObjectException(); return; }
+            ICollider *collider = colliderHandle ? colliderHandle->Resolve() : nullptr;
+            if (colliderHandle && !collider) { ThrowDestroyedObjectException(); return; }
+            controller->SetSelectedCollider(collider); })
+        .method("Collider@ GetSelectedCollider() const", [](const ScriptComponentHandle<CharacterController3D> &controllerHandle) -> ScriptComponentHandle<ICollider> * {
+            CharacterController3D *controller = controllerHandle.Resolve();
+            if (!controller) { ThrowDestroyedObjectException(); return nullptr; }
+            return ScriptComponentHandle<ICollider>::Create(controller->GetSelectedCollider()); })
+        .method("array<Collider@>@ GetOwnerColliders() const", [](const ScriptComponentHandle<CharacterController3D> &controllerHandle) -> CScriptArray * {
+            CharacterController3D *controller = controllerHandle.Resolve();
             if (!controller) { ThrowDestroyedObjectException(); return SafeCallDefault<CScriptArray *>(); }
             return MakeColliderArray(controller->GetOwnerColliders()); });
 

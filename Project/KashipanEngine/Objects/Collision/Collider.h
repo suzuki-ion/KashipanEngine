@@ -173,6 +173,34 @@ struct CharacterMoveResult2D final {
     bool shapeSupported = false;
 };
 
+/// @brief CharacterController3D の1回の移動で接触した方向
+/// @details ビットフラグとして組み合わせて使用する。CharacterCollisionFlags2Dと同様、
+///          Y成分が接地/天井、X・Z成分が壁判定に使われる。
+enum class CharacterCollisionFlags3D : std::uint8_t {
+    None  = 0,
+    Below = 1 << 0,
+    Above = 1 << 1,
+    PosX  = 1 << 2,
+    NegX  = 1 << 3,
+    PosZ  = 1 << 4,
+    NegZ  = 1 << 5,
+};
+
+/// @brief CharacterController3D の移動解決結果
+/// @details CharacterMoveResult2Dの3D版。ColliderはTransformを直接変更せず、
+///          許可された移動量と接触情報だけを返す。
+struct CharacterMoveResult3D final {
+    Vector3 requestedDelta{0.0f, 0.0f, 0.0f};
+    Vector3 appliedDelta{0.0f, 0.0f, 0.0f};
+    Vector3 groundNormal{0.0f, 0.0f, 0.0f};
+    std::uint8_t collisionFlags = static_cast<std::uint8_t>(CharacterCollisionFlags3D::None);
+    bool shapeSupported = false;
+    /// @brief 接地(Below)と判定された障害物の所有オブジェクト/コライダー（無ければnullptr）
+    /// @details 動く床への追従など、「今何に乗っているか」をスクリプト側で参照するために公開する
+    EmptyObject *groundObject = nullptr;
+    ICollider *groundCollider = nullptr;
+};
+
 class Collider final {
 public:
     using ColliderID = std::uint32_t;
@@ -226,6 +254,21 @@ public:
     CharacterMoveResult2D MoveCharacter2D(
         const ICollider *selfCollider,
         const Vector2 &requestedDelta,
+        float skinWidth,
+        float groundedThreshold,
+        const std::vector<std::string> &ignoredTags) const;
+
+    /// @brief 登録済み3Dコライダーを用いて、キャラクターの移動量を衝突しない範囲へ制限する
+    /// @details MoveCharacter2Dの3D版。Box/Sphere/Capsuleの軸平行境界ボックスをX→Y→Zの順に
+    ///          スイープする（ConvexMesh/ConcaveMesh/HeightFieldは対象外）。
+    /// @param selfCollider CharacterController3D が移動形状として使用するコライダー
+    /// @param requestedDelta このフレームに要求されたワールドXYZ移動量
+    /// @param skinWidth 接触面との間に残す微小な隙間
+    /// @param groundedThreshold 接地とみなす法線Y成分の下限
+    /// @param ignoredTags ブロッキング対象から除外するコライダータグ
+    CharacterMoveResult3D MoveCharacter3D(
+        const ICollider *selfCollider,
+        const Vector3 &requestedDelta,
         float skinWidth,
         float groundedThreshold,
         const std::vector<std::string> &ignoredTags) const;

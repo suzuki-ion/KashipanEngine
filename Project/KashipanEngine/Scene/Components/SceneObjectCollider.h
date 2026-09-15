@@ -10,6 +10,7 @@ namespace KashipanEngine {
 
 class ICollider;
 class CharacterController2D;
+class CharacterController3D;
 
 /// @brief シーン内のICollider派生コンポーネントを収集し、実際の当たり判定処理(Collider)へ橋渡しするシーンコンポーネント
 /// @details ICollider::Initialize/FinalizeからRegister/Unregisterされる。
@@ -39,6 +40,11 @@ public:
     /// @brief CharacterController2D の登録を解除する
     void UnregisterCharacterController2D(const CharacterController2D *controller);
 
+    /// @brief 同フレーム後半に移動要求を解決する CharacterController3D を登録する
+    void RegisterCharacterController3D(CharacterController3D *controller);
+    /// @brief CharacterController3D の登録を解除する
+    void UnregisterCharacterController3D(const CharacterController3D *controller);
+
     /// @brief 登録済みICollider派生コンポーネント一覧を取得する（デバッグシーンビューでの可視化等に使用）
     const std::vector<ICollider *> &GetRegisteredColliders() const { return registeredColliders_; }
 
@@ -53,6 +59,7 @@ private:
     Collider collider_{};
     std::vector<ICollider *> registeredColliders_;
     std::vector<CharacterController2D *> characterControllers2D_;
+    std::vector<CharacterController3D *> characterControllers3D_;
     std::unordered_map<ICollider *, Collider::ColliderID> colliderIds2D_;
     std::unordered_map<ICollider *, Collider::ColliderID> colliderIds3D_;
 };

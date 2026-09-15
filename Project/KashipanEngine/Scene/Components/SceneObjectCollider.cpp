@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "Objects/Components/Collider/CharacterController2D.h"
+#include "Objects/Components/Collider/CharacterController3D.h"
 #include "Objects/Components/Collider/ICollider.h"
 
 namespace KashipanEngine {
@@ -38,6 +39,17 @@ void SceneObjectCollider::RegisterCharacterController2D(CharacterController2D *c
 void SceneObjectCollider::UnregisterCharacterController2D(const CharacterController2D *controller) {
     auto it = std::find(characterControllers2D_.begin(), characterControllers2D_.end(), controller);
     if (it != characterControllers2D_.end()) characterControllers2D_.erase(it);
+}
+
+void SceneObjectCollider::RegisterCharacterController3D(CharacterController3D *controller) {
+    if (!controller) return;
+    if (std::find(characterControllers3D_.begin(), characterControllers3D_.end(), controller) != characterControllers3D_.end()) return;
+    characterControllers3D_.push_back(controller);
+}
+
+void SceneObjectCollider::UnregisterCharacterController3D(const CharacterController3D *controller) {
+    auto it = std::find(characterControllers3D_.begin(), characterControllers3D_.end(), controller);
+    if (it != characterControllers3D_.end()) characterControllers3D_.erase(it);
 }
 
 void SceneObjectCollider::SyncRegisteredColliders() {
@@ -96,11 +108,14 @@ void SceneObjectCollider::SyncRegisteredColliders() {
 }
 
 void SceneObjectCollider::Update() {
-    // 全Object（スクリプトを含む）のUpdate後に現在形状を同期し、CharacterController2Dが
+    // 全Object（スクリプトを含む）のUpdate後に現在形状を同期し、CharacterController2D/3Dが
     // 予約した移動を解決する。Transformが変わるため、その後もう一度同期してから通常の
     // 接触イベントを更新する。
     SyncRegisteredColliders();
     for (auto *controller : characterControllers2D_) {
+        if (controller && controller->IsActive()) controller->ResolvePendingMove(collider_);
+    }
+    for (auto *controller : characterControllers3D_) {
         if (controller && controller->IsActive()) controller->ResolvePendingMove(collider_);
     }
     SyncRegisteredColliders();
@@ -115,6 +130,7 @@ void SceneObjectCollider::Finalize() {
     colliderIds2D_.clear();
     colliderIds3D_.clear();
     characterControllers2D_.clear();
+    characterControllers3D_.clear();
 }
 
 } // namespace KashipanEngine

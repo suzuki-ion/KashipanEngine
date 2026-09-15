@@ -217,6 +217,12 @@ GameEngine::~GameEngine() {
     Log(Translation("engine.finalize.start"));
     LogSeparator();
 
+#if defined(USE_IMGUI)
+    // ウィンドウ破棄前に、メインウィンドウの位置・サイズ・最大化状態を保存しておく
+    // （imguiManager_のデストラクタ内では、この直後のWindow::AllDestroy()で
+    //   既にウィンドウが破棄済みのため手遅れになる）
+    if (imguiManager_) imguiManager_->SaveMainWindowState();
+#endif
     Window::AllDestroy({});
     ScreenBuffer::AllDestroy({});
     ShadowMapBuffer::AllDestroy({});
@@ -343,6 +349,13 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
     static size_t windowCount = 0;
 
     while (!gameLoopEndConditionFunction_()) {
+#if defined(USE_IMGUI)
+        // この後のWindow::Update()で終了メッセージを処理すると、終了経路によっては
+        // 同じフレーム中にメインウィンドウが取得不能になる可能性がある。
+        // HWNDが確実に存在するループ先頭で現在の配置を同期しておく。
+        // 状態に変化が無ければUserSettings::SetJSON()側でファイル保存は省略される。
+        if (imguiManager_) imguiManager_->SaveMainWindowState();
+#endif
         // プロジェクトの切り替えなどによるアプリケーション自体の終了要求
         // （エディタービルドでも消費されずにここまで届く）
         if (sIsQuitRequested) break;

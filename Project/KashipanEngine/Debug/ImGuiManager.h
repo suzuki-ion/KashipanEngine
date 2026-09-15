@@ -51,6 +51,11 @@ public:
     ///          だけドッキングが解除されてしまう。次フレームの先頭で適用することでこれを避ける
     static void RequestLoadIniSettings(std::string iniText);
 
+    /// @brief メインウィンドウの現在の位置・サイズ・最大化状態をUserSettingsへ保存する
+    /// @details GameEngineのデストラクタが Window::AllDestroy() でウィンドウを破棄する前に
+    ///          明示的に呼ぶ必要がある（ImGuiManager自身のデストラクタ内では既に手遅れ）
+    void SaveMainWindowState();
+
 private:
     void InitializeInternal();
     void ShutdownInternal();

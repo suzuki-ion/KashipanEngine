@@ -201,6 +201,40 @@ void ImGuiManager::InitializeInternal() {
         1280, 720
     );
 
+    // 前回終了時のウィンドウ位置・サイズ・最大化状態を復元する（無ければ既定のまま）
+    if (Window *mainWindow = Window::GetWindow("ImGui Window")) {
+        const JSON savedState = UserSettings::GetJSON("editorUI.mainWindow", JSON());
+        if (savedState.is_object() && savedState.contains("width") && savedState.contains("height")) {
+            const int32_t width = std::max(1, savedState.value("width", 1280));
+            const int32_t height = std::max(1, savedState.value("height", 720));
+            int32_t x = savedState.value("x", 0);
+            int32_t y = savedState.value("y", 0);
+
+            // 前回接続していた外部モニターが無くなっている等、現在のモニター配置の
+            // どこにも収まらない位置だった場合だけプライマリモニター原点へ戻す
+            RECT targetRect{x, y, x + width, y + height};
+            if (!::MonitorFromRect(&targetRect, MONITOR_DEFAULTTONULL)) {
+                x = 0;
+                y = 0;
+            }
+
+            if (HWND hwnd = mainWindow->GetWindowHandle()) {
+                // 保存値はWINDOWPLACEMENT::rcNormalPosition由来の外形矩形なので、
+                // クライアントサイズを受け取るWindow::SetWindowSize()へ渡さず、
+                // 保存時と同じWINDOWPLACEMENTとして復元する
+                WINDOWPLACEMENT placement{};
+                placement.length = sizeof(WINDOWPLACEMENT);
+                if (::GetWindowPlacement(hwnd, &placement)) {
+                    placement.rcNormalPosition = {x, y, x + width, y + height};
+                    placement.showCmd = savedState.value("maximized", false)
+                        ? SW_SHOWMAXIMIZED
+                        : SW_SHOWNORMAL;
+                    ::SetWindowPlacement(hwnd, &placement);
+                }
+            }
+        }
+    }
+
     // エディターUI設定（UserSettings）を初期適用する（フォント・スケール・配色）
     // これらはプロジェクトごとではなく全プロジェクト共有の個人設定として扱う。
     // ImGuiManagerがUserSettingsを直接読みに行く（SceneEditor側からの受け渡しはしない）
@@ -341,6 +375,28 @@ void ImGuiManager::ResetDockLayoutToDefault() {
 void ImGuiManager::RequestLoadIniSettings(std::string iniText) {
     sPendingIniSettings_ = std::move(iniText);
     sHasPendingIniSettings_ = true;
+}
+
+void ImGuiManager::SaveMainWindowState() {
+    Window *mainWindow = Window::GetWindow("ImGui Window");
+    if (!mainWindow) return;
+    HWND hwnd = mainWindow->GetWindowHandle();
+    if (!hwnd) return;
+
+    WINDOWPLACEMENT placement{};
+    placement.length = sizeof(WINDOWPLACEMENT);
+    if (!::GetWindowPlacement(hwnd, &placement)) return;
+
+    // rcNormalPositionは最大化中でも「復元後に戻る通常状態の矩形」を返すため、
+    // 最大化状態で終了しても次回起動時に通常サイズへ復元できる
+    const RECT &rc = placement.rcNormalPosition;
+    JSON state;
+    state["x"] = rc.left;
+    state["y"] = rc.top;
+    state["width"] = rc.right - rc.left;
+    state["height"] = rc.bottom - rc.top;
+    state["maximized"] = (placement.showCmd == SW_SHOWMAXIMIZED) || (::IsZoomed(hwnd) != 0);
+    UserSettings::SetJSON("editorUI.mainWindow", state);
 }
 
 void ImGuiManager::ShutdownInternal() {

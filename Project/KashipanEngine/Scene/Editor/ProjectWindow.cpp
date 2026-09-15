@@ -3,7 +3,6 @@
 #include <imgui.h>
 #include <imgui_stdlib.h>
 
-#include "Core/GameEngine.h"
 #include "Core/ProjectPaths.h"
 #include "Scene/Editor/EditorWindowChrome.h"
 #include "Utilities/ImGuiCustom.h"
@@ -65,12 +64,7 @@ void ProjectWindow::ShowImGui() {
             ImGui::TableNextColumn();
             ImGui::BeginDisabled(isActive || !pendingProjectName_.empty());
             if (ImGui::SmallButton(isActive ? TranslationLabel("editor.project.open.current") : TranslationLabel("editor.project.open"))) {
-                if (ProjectManager::RequestRestartWithProject(project.name)) {
-                    pendingProjectName_ = project.name;
-                    // 後始末（シーンの自動保存など）を通常どおり済ませてから、
-                    // KashipanEngine.cpp 側が新しいプロセスを起動する
-                    GameEngine::RequestQuit();
-                }
+                if (projectChangeRequest_) projectChangeRequest_(project.name);
             }
             ImGui::EndDisabled();
             if (!isActive) {

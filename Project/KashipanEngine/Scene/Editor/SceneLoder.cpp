@@ -16,8 +16,7 @@ void SceneLoader::Open() {
     RefreshFileList();
 }
 
-bool SceneLoader::ShowImGui() {
-    bool loaded = false;
+void SceneLoader::ShowImGui() {
     if (isOpenRequested_) {
         ImGui::OpenPopup(TranslationLabel("editor.loadscene.title"));
         isOpenRequested_ = false;
@@ -41,10 +40,10 @@ bool SceneLoader::ShowImGui() {
             const std::string physicalPath = ProjectPaths::ToPhysical(filePath_);
             if (!filePath_.empty() && std::filesystem::exists(Utf8StringToPath(physicalPath), ec) && !ec) {
                 JSON sceneJson = LoadSceneFromPath(filePath_);
-                if (!sceneJson.empty() && context_->LoadSceneFromJSON(sceneJson)) {
-                    loaded = true;
+                if (!sceneJson.empty()) {
+                    if (loadRequest_) loadRequest_(std::move(sceneJson));
+                    ImGui::CloseCurrentPopup();
                 }
-                ImGui::CloseCurrentPopup();
             }
         }
         ImGui::SameLine();
@@ -53,7 +52,6 @@ bool SceneLoader::ShowImGui() {
         }
         ImGui::EndPopup();
     }
-    return loaded;
 }
 
 void SceneLoader::RefreshFileList() {

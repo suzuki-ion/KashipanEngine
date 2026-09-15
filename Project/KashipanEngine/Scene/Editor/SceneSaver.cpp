@@ -12,7 +12,8 @@ void SceneSaver::Open() {
     filePath_ = "Assets/Scenes/" + context_->GetName() + ".scene";
 }
 
-void SceneSaver::ShowImGui() {
+SceneSaver::Result SceneSaver::ShowImGui() {
+    Result result = Result::None;
     if (isOpenRequested_) {
         ImGui::OpenPopup(TranslationLabel("editor.savescene.title"));
         isOpenRequested_ = false;
@@ -27,16 +28,20 @@ void SceneSaver::ShowImGui() {
         ImGui::InputText(TranslationLabel("editor.common.path"), &filePath_);
         if (ImGui::Button(TranslationLabel("editor.common.save"), ImVec2(120, 0))) {
             if (!filePath_.empty()) {
-                SaveSceneToPath(isPlaying ? context_->GetEditModeSnapshot() : context_->SaveSceneToJSON(), filePath_);
-                ImGui::CloseCurrentPopup();
+                if (SaveSceneToPath(isPlaying ? context_->GetEditModeSnapshot() : context_->SaveSceneToJSON(), filePath_)) {
+                    result = Result::Saved;
+                    ImGui::CloseCurrentPopup();
+                }
             }
         }
         ImGui::SameLine();
         if (ImGui::Button(TranslationLabel("editor.common.cancel"), ImVec2(120, 0))) {
+            result = Result::Cancelled;
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();
     }
+    return result;
 }
 
 } // namespace KashipanEngine

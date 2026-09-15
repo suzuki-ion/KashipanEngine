@@ -1935,6 +1935,10 @@
 		"editor.newscene.registertolist.tooltip": "このシーンを Assets/Scenes/<名前>.scene へ保存し、シーン一覧へ登録します。\n（登録後は SceneManager で切り替えられるようになります）",
 		"editor.newscene.title": "新規シーン",
 		"editor.newscene.warning": "現在のシーンは破棄されます（保存していない変更は失われます）。",
+		"editor.unsavedchanges.title": "未保存のシーン変更",
+		"editor.unsavedchanges.message": "現在のシーンには保存していない変更があります。続行する前に保存しますか？",
+		"editor.unsavedchanges.save": "保存して続行",
+		"editor.unsavedchanges.discard": "保存せず続行",
 
 		//--------- editor.objectinspector ---------//
 		"editor.objectinspector.active": "有効",

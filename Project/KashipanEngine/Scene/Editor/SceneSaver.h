@@ -10,6 +10,12 @@ class SceneEditor;
 /// @brief シーンの保存メニュー（モーダルポップアップ）
 class SceneSaver final {
 public:
+    enum class Result {
+        None,
+        Saved,
+        Cancelled,
+    };
+
     SceneSaver(Passkey<SceneEditor>, SceneEditorContext *context) : context_(context) {}
     ~SceneSaver() = default;
 
@@ -17,7 +23,7 @@ public:
     void Open();
 
     /// @brief ポップアップの描画（毎フレーム呼ぶ）
-    void ShowImGui();
+    Result ShowImGui();
 
 private:
     SceneEditorContext *context_ = nullptr;

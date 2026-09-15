@@ -3,6 +3,8 @@
 
 #include <string>
 #include <vector>
+#include <functional>
+#include <utility>
 
 #include "Core/ProjectManager.h"
 #include "Utilities/Passkeys.h"
@@ -17,7 +19,8 @@ class SceneEditor;
 ///          反映にはexeの再起動が必要であることをUI上で明示する。
 class ProjectWindow final {
 public:
-    ProjectWindow(Passkey<SceneEditor>) {}
+    ProjectWindow(Passkey<SceneEditor>, std::function<void(std::string)> projectChangeRequest)
+        : projectChangeRequest_(std::move(projectChangeRequest)) {}
 
     void ShowImGui();
 
@@ -32,6 +35,7 @@ private:
     std::string lastErrorMessage_;
     /// @brief 再起動後に開かれるプロジェクト名（現在開いているものと異なる場合のみ案内を出す）
     std::string pendingProjectName_;
+    std::function<void(std::string)> projectChangeRequest_;
 };
 
 } // namespace KashipanEngine

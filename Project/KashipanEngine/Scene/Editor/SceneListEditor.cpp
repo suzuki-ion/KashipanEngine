@@ -96,7 +96,7 @@ void SceneListEditor::ShowImGui() {
             ImGui::TableNextColumn();
             ImGui::BeginDisabled(isPlaying);
             if (ImGui::Button(TranslationLabel("editor.scenelist.switch"))) {
-                sceneManager->ChangeScene(entry.name);
+                if (sceneChangeRequest_) sceneChangeRequest_(entry.name);
             }
             ImGui::EndDisabled();
             if (isPlaying) {

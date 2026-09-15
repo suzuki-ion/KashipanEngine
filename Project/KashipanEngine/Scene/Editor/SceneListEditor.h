@@ -1,6 +1,8 @@
 #pragma once
 #ifdef USE_IMGUI
 #include <string>
+#include <functional>
+#include <utility>
 
 #include "Utilities/Passkeys.h"
 
@@ -15,12 +17,14 @@ class SceneEditorContext;
 ///          変更内容は即座にシーンリスト定義ファイル（SceneManager::kDefaultSceneListFilePath）へ保存される
 class SceneListEditor final {
 public:
-    SceneListEditor(Passkey<SceneEditor>, SceneEditorContext *context) : context_(context) {}
+    SceneListEditor(Passkey<SceneEditor>, SceneEditorContext *context, std::function<void(std::string)> sceneChangeRequest)
+        : context_(context), sceneChangeRequest_(std::move(sceneChangeRequest)) {}
 
     void ShowImGui();
 
 private:
     SceneEditorContext *context_ = nullptr;
+    std::function<void(std::string)> sceneChangeRequest_;
 
     /// @brief 新規登録するシーン名の入力バッファ
     std::string newSceneName_;

@@ -61,6 +61,27 @@ private:
     void ProcessNonSceneExternalChanges(const std::vector<std::string> &changedPaths);
     void ShowExternalSceneChangeModal();
     std::string GetCurrentSceneFilePath() const;
+    JSON GetEditableSceneJSON() const;
+    bool HasUnsavedSceneChanges() const;
+    void RequestNewScene();
+    void RequestLoadScene(JSON sceneJson);
+    void RequestSceneChange(std::string sceneName);
+    void RequestQuit();
+    void RequestProjectChange(std::string projectName);
+    void RequestDestructiveAction();
+    void ExecutePendingDestructiveAction();
+    void ClearPendingDestructiveAction();
+    void ShowUnsavedChangesModal();
+    void DetectMainWindowCloseRequest();
+
+    enum class DestructiveAction {
+        None,
+        NewScene,
+        LoadScene,
+        ChangeScene,
+        Quit,
+        ChangeProject,
+    };
 
     struct ExternalFileStamp {
         std::filesystem::file_time_type writeTime{};
@@ -120,6 +141,15 @@ private:
     std::string newSceneName_;
     /// @brief 新規作成したシーンを、作成と同時にAssets/Scenes/へ保存してシーンリストへ登録するか
     bool newSceneRegisterToList_ = false;
+
+    /// @brief 最後に明示保存またはディスクから読込した編集状態。現在値との比較で未保存変更を判定する
+    JSON savedSceneSnapshot_;
+    bool hasSavedSceneSnapshot_ = false;
+    DestructiveAction pendingDestructiveAction_ = DestructiveAction::None;
+    JSON pendingLoadSceneJson_;
+    std::string pendingDestructiveActionTarget_;
+    bool isUnsavedChangesPopupRequested_ = false;
+    bool continueDestructiveActionAfterSave_ = false;
 
     /// @brief 前フレームの再生状態（コマンド履歴の再生セッション切り替えの検知用）
     bool wasPlaying_ = false;

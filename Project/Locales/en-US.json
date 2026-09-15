@@ -1933,6 +1933,10 @@
 		"editor.newscene.registertolist.tooltip": "Also save this scene to Assets/Scenes/<Name>.scene and register it\\nin the Scene List (switchable via SceneManager afterward).",
 		"editor.newscene.title": "New Scene",
 		"editor.newscene.warning": "Current scene will be discarded (unsaved changes will be lost).",
+		"editor.unsavedchanges.title": "Unsaved Scene Changes",
+		"editor.unsavedchanges.message": "The current scene has unsaved changes. Save them before continuing?",
+		"editor.unsavedchanges.save": "Save and Continue",
+		"editor.unsavedchanges.discard": "Continue Without Saving",
 
 		//--------- editor.objectinspector ---------//
 		"editor.objectinspector.active": "Active",

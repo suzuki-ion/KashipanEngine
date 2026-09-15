@@ -11,6 +11,8 @@
 #include "Assets/AudioManager.h"
 #include "Assets/MaterialManager.h"
 #include "Core/GameEngine.h"
+#include "Core/ProjectManager.h"
+#include "Core/Window.h"
 #include "Assets/ModelManager.h"
 #include "Assets/TextureManager.h"
 #include "Debug/Logger.h"
@@ -90,11 +92,14 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     sceneView_ = std::make_unique<SceneEditorView>(Passkey<SceneEditor>{}, context_);
     assetsWindow_ = std::make_unique<AssetsWindow>(Passkey<SceneEditor>{}, context_);
     saver_ = std::make_unique<SceneSaver>(Passkey<SceneEditor>{}, context_);
-    loader_ = std::make_unique<SceneLoader>(Passkey<SceneEditor>{}, context_);
+    loader_ = std::make_unique<SceneLoader>(Passkey<SceneEditor>{}, context_,
+        [this](JSON sceneJson) { RequestLoadScene(std::move(sceneJson)); });
     crashRecovery_ = std::make_unique<SceneCrashRecovery>(Passkey<SceneEditor>{}, context_);
-    sceneListEditor_ = std::make_unique<SceneListEditor>(Passkey<SceneEditor>{}, context_);
+    sceneListEditor_ = std::make_unique<SceneListEditor>(Passkey<SceneEditor>{}, context_,
+        [this](std::string sceneName) { RequestSceneChange(std::move(sceneName)); });
     preferences_ = std::make_unique<EditorPreferences>(Passkey<SceneEditor>{});
-    projectWindow_ = std::make_unique<ProjectWindow>(Passkey<SceneEditor>{});
+    projectWindow_ = std::make_unique<ProjectWindow>(Passkey<SceneEditor>{},
+        [this](std::string projectName) { RequestProjectChange(std::move(projectName)); });
     translationEditor_ = std::make_unique<TranslationEditor>(Passkey<SceneEditor>{});
 
     objectHierarchy_->SetCommands(commands_.get());
@@ -141,6 +146,126 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
 }
 
 SceneEditor::~SceneEditor() = default;
+
+JSON SceneEditor::GetEditableSceneJSON() const {
+    return context_->IsPlaying() ? context_->GetEditModeSnapshot() : context_->SaveSceneToJSON();
+}
+
+bool SceneEditor::HasUnsavedSceneChanges() const {
+    return hasSavedSceneSnapshot_ && GetEditableSceneJSON() != savedSceneSnapshot_;
+}
+
+void SceneEditor::RequestNewScene() {
+    pendingDestructiveAction_ = DestructiveAction::NewScene;
+    RequestDestructiveAction();
+}
+
+void SceneEditor::RequestLoadScene(JSON sceneJson) {
+    pendingDestructiveAction_ = DestructiveAction::LoadScene;
+    pendingLoadSceneJson_ = std::move(sceneJson);
+    RequestDestructiveAction();
+}
+
+void SceneEditor::RequestSceneChange(std::string sceneName) {
+    pendingDestructiveAction_ = DestructiveAction::ChangeScene;
+    pendingDestructiveActionTarget_ = std::move(sceneName);
+    RequestDestructiveAction();
+}
+
+void SceneEditor::RequestQuit() {
+    pendingDestructiveAction_ = DestructiveAction::Quit;
+    RequestDestructiveAction();
+}
+
+void SceneEditor::RequestProjectChange(std::string projectName) {
+    pendingDestructiveAction_ = DestructiveAction::ChangeProject;
+    pendingDestructiveActionTarget_ = std::move(projectName);
+    RequestDestructiveAction();
+}
+
+void SceneEditor::RequestDestructiveAction() {
+    if (pendingDestructiveAction_ == DestructiveAction::None) return;
+    if (HasUnsavedSceneChanges()) {
+        isUnsavedChangesPopupRequested_ = true;
+        return;
+    }
+    ExecutePendingDestructiveAction();
+}
+
+void SceneEditor::ExecutePendingDestructiveAction() {
+    const DestructiveAction action = pendingDestructiveAction_;
+    const std::string target = pendingDestructiveActionTarget_;
+    JSON loadJson = std::move(pendingLoadSceneJson_);
+    ClearPendingDestructiveAction();
+
+    switch (action) {
+    case DestructiveAction::NewScene:
+        isNewSceneRequested_ = true;
+        newSceneName_ = "New Scene";
+        break;
+    case DestructiveAction::LoadScene:
+        if (!loadJson.empty() && context_->LoadSceneFromJSON(loadJson)) {
+            commands_->Clear();
+            objectHierarchy_->ClearSelection();
+            savedSceneSnapshot_ = context_->SaveSceneToJSON();
+            hasSavedSceneSnapshot_ = true;
+        }
+        break;
+    case DestructiveAction::ChangeScene:
+        if (auto *sceneManager = context_->GetSceneManager()) sceneManager->ChangeScene(target);
+        break;
+    case DestructiveAction::Quit:
+        if (Window *window = Window::GetWindow("ImGui Window")) window->DestroyNotify();
+        break;
+    case DestructiveAction::ChangeProject:
+        if (ProjectManager::RequestRestartWithProject(target)) GameEngine::RequestQuit();
+        break;
+    case DestructiveAction::None:
+        break;
+    }
+}
+
+void SceneEditor::ClearPendingDestructiveAction() {
+    pendingDestructiveAction_ = DestructiveAction::None;
+    pendingLoadSceneJson_ = JSON();
+    pendingDestructiveActionTarget_.clear();
+    continueDestructiveActionAfterSave_ = false;
+}
+
+void SceneEditor::ShowUnsavedChangesModal() {
+    if (isUnsavedChangesPopupRequested_) {
+        ImGui::OpenPopup(TranslationLabel("editor.unsavedchanges.title"));
+        isUnsavedChangesPopupRequested_ = false;
+    }
+    if (!ImGui::BeginPopupModal(TranslationLabel("editor.unsavedchanges.title"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) return;
+
+    ImGui::TextWrapped("%s", TranslationC("editor.unsavedchanges.message"));
+    if (ImGui::Button(TranslationLabel("editor.unsavedchanges.save"), ImVec2(140, 0))) {
+        continueDestructiveActionAfterSave_ = true;
+        saver_->Open();
+        ImGui::CloseCurrentPopup();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button(TranslationLabel("editor.unsavedchanges.discard"), ImVec2(140, 0))) {
+        ImGui::CloseCurrentPopup();
+        ExecutePendingDestructiveAction();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button(TranslationLabel("editor.common.cancel"), ImVec2(120, 0))) {
+        ImGui::CloseCurrentPopup();
+        ClearPendingDestructiveAction();
+    }
+    ImGui::EndPopup();
+}
+
+void SceneEditor::DetectMainWindowCloseRequest() {
+    Window *window = Window::GetWindow("ImGui Window");
+    if (!window) return;
+    window->SetMessageIntercepted(WM_CLOSE, true);
+    if (window->HasMessage(WM_CLOSE) && pendingDestructiveAction_ == DestructiveAction::None) {
+        RequestQuit();
+    }
+}
 
 void SceneEditor::InitializeExternalAssetSnapshot() {
     StartExternalAssetScan(false);
@@ -335,6 +460,8 @@ void SceneEditor::ShowExternalSceneChangeModal() {
         if (context_->LoadSceneFromJSON(externallyChangedSceneJson_)) {
             commands_->Clear();
             objectHierarchy_->ClearSelection();
+            savedSceneSnapshot_ = context_->SaveSceneToJSON();
+            hasSavedSceneSnapshot_ = true;
             ProcessNonSceneExternalChanges(deferredExternalAssetPaths_);
             deferredExternalAssetPaths_.clear();
             externalSceneChangeRequested_ = false;
@@ -355,6 +482,11 @@ void SceneEditor::ShowExternalSceneChangeModal() {
 }
 
 void SceneEditor::ShowImGui() {
+    if (!hasSavedSceneSnapshot_) {
+        savedSceneSnapshot_ = context_->SaveSceneToJSON();
+        hasSavedSceneSnapshot_ = true;
+    }
+    DetectMainWindowCloseRequest();
     // スクリプトやシーンからのゲームループ終了要求は、エディター上では再生停止として消費する
     // （エディター自体は閉じない。Stopボタンと同様にUUIDで選択を退避してから復元する）
     if (GameEngine::IsExitGameLoopRequested()) {
@@ -392,6 +524,7 @@ void SceneEditor::ShowImGui() {
 
     PollExternalAssetChanges();
     ShowMainWindow();
+    ShowUnsavedChangesModal();
     ShowExternalSceneChangeModal();
     HandleShortcuts();
     HandleAutoSave();
@@ -441,8 +574,7 @@ void SceneEditor::ShowMainWindow() {
             ImGui::SetItemTooltip("%s", TranslationC("editor.menu.file.project.tooltip"));
             ImGui::Separator();
             if (ImGui::MenuItem(TranslationLabel("editor.menu.file.newscene"))) {
-                isNewSceneRequested_ = true;
-                newSceneName_ = "New Scene";
+                RequestNewScene();
             }
             const std::string saveSceneShortcut = EditorKeyBindings::ToDisplayString(EditorKeyBindings::Get("SaveScene", ImGuiMod_Ctrl | ImGuiKey_S));
             if (ImGui::MenuItem(TranslationLabel("editor.menu.file.savescene"), saveSceneShortcut.c_str())) {
@@ -567,12 +699,15 @@ void SceneEditor::ShowMainWindow() {
         commands_->Clear();
         objectHierarchy_->ClearSelection();
     }
-    saver_->ShowImGui();
-    if (loader_->ShowImGui()) {
-        // シーンが差し替わったので選択と履歴をクリアする
-        commands_->Clear();
-        objectHierarchy_->ClearSelection();
+    const SceneSaver::Result saveResult = saver_->ShowImGui();
+    if (saveResult == SceneSaver::Result::Saved) {
+        savedSceneSnapshot_ = GetEditableSceneJSON();
+        hasSavedSceneSnapshot_ = true;
+        if (continueDestructiveActionAfterSave_) ExecutePendingDestructiveAction();
+    } else if (saveResult == SceneSaver::Result::Cancelled && continueDestructiveActionAfterSave_) {
+        ClearPendingDestructiveAction();
     }
+    loader_->ShowImGui();
     if (crashRecovery_->ShowImGui()) {
         // シーンが差し替わったので選択と履歴をクリアする
         commands_->Clear();
@@ -642,7 +777,6 @@ bool SceneEditor::ShowNewSceneModal() {
         isNewSceneRequested_ = false;
     }
     if (ImGui::BeginPopupModal(TranslationLabel("editor.newscene.title"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.3f, 1.0f), "%s", TranslationC("editor.newscene.warning"));
         ImGui::InputText(TranslationLabel("editor.sceneeditor.scenename"), &newSceneName_);
         ImGui::Checkbox(TranslationLabel("editor.newscene.registertolist"), &newSceneRegisterToList_);
         ImGui::SetItemTooltip("%s", TranslationC("editor.newscene.registertolist.tooltip"));
@@ -664,6 +798,8 @@ bool SceneEditor::ShowNewSceneModal() {
                     }
                 }
             }
+            savedSceneSnapshot_ = context_->SaveSceneToJSON();
+            hasSavedSceneSnapshot_ = true;
             created = true;
             ImGui::CloseCurrentPopup();
         }

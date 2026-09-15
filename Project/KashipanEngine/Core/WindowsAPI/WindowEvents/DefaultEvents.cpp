@@ -4,6 +4,9 @@
 #include "Core/WindowsAPI/WindowDescriptor.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/Translation.h"
+#ifdef USE_IMGUI
+#include "Debug/ImGuiManager.h"
+#endif
 
 namespace KashipanEngine {
 namespace WindowDefaultEvent {
@@ -122,6 +125,14 @@ std::optional<LRESULT> SysCommandCloseEvent::OnEvent(UINT /*msg*/, WPARAM wparam
     if (wparam != SC_CLOSE) {
         return std::nullopt;
     }
+#ifdef USE_IMGUI
+    // エディターのメインウィンドウはSceneEditor側で未保存変更を確認する。
+    // WM_CLOSEへ統一することで、XボタンとAlt+F4を同じ保留可能な経路へ流す。
+    if (GetWindowDescriptor().hwnd == ImGuiManager::GetMainWindowHwnd()) {
+        ::PostMessageW(GetWindowDescriptor().hwnd, WM_CLOSE, 0, 0);
+        return 0;
+    }
+#endif
     int result = MessageBoxW(
         GetWindowDescriptor().hwnd,
         ConvertString(Translation("engine.window.dialog.close.message")).c_str(),

@@ -1896,6 +1896,10 @@
 		"editor.newscene.registertolist.tooltip": "将此场景保存至 Assets/Scenes/<名称>.scene，并注册到场景列表。\n（注册后可通过SceneManager进行切换）",
 		"editor.newscene.title": "新建场景",
 		"editor.newscene.warning": "当前场景将被丢弃（未保存的更改将会丢失）。",
+		"editor.unsavedchanges.title": "未保存的场景更改",
+		"editor.unsavedchanges.message": "当前场景有未保存的更改。继续前要保存吗？",
+		"editor.unsavedchanges.save": "保存并继续",
+		"editor.unsavedchanges.discard": "不保存并继续",
 
 		//--------- editor.objectinspector ---------//
 		"editor.objectinspector.active": "启用",

@@ -26,13 +26,13 @@ std::string DescribeEntry(RenderTargetCarryOverRegistry::Kind kind, const std::s
 }
 } // namespace
 
-void RenderTargetCarryOverRegistry::BeginSceneSwitch(Passkey<SceneManager>) {
+void RenderTargetCarryOverRegistry::BeginSceneSwitchInternal() {
     LogScope scope;
     sSceneSwitchInProgress_ = true;
     Log(Translation("engine.rendertargetcarryover.beginsceneswitch"), LogSeverity::Debug);
 }
 
-void RenderTargetCarryOverRegistry::EndSceneSwitch(Passkey<SceneManager>) {
+void RenderTargetCarryOverRegistry::EndSceneSwitchInternal() {
     LogScope scope;
     sSceneSwitchInProgress_ = false;
     // 引き取られなかったリソースはここで実際に破棄する。ここに残っているということは
@@ -47,6 +47,22 @@ void RenderTargetCarryOverRegistry::EndSceneSwitch(Passkey<SceneManager>) {
         }
         pool.clear();
     }
+}
+
+void RenderTargetCarryOverRegistry::BeginSceneSwitch(Passkey<SceneManager>) {
+    BeginSceneSwitchInternal();
+}
+
+void RenderTargetCarryOverRegistry::EndSceneSwitch(Passkey<SceneManager>) {
+    EndSceneSwitchInternal();
+}
+
+void RenderTargetCarryOverRegistry::BeginSceneSwitch(Passkey<Scene>) {
+    BeginSceneSwitchInternal();
+}
+
+void RenderTargetCarryOverRegistry::EndSceneSwitch(Passkey<Scene>) {
+    EndSceneSwitchInternal();
 }
 
 bool RenderTargetCarryOverRegistry::IsSceneSwitchInProgress() {

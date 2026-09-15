@@ -1,5 +1,6 @@
 #include "Scene/Scene.h"
 #include "Scene/SceneBackupPath.h"
+#include "Scene/RenderTargetCarryOverRegistry.h"
 #include "Core/GameEngine.h"
 #include "Debug/Logger.h"
 #include "Graphics/GraphicsEngine.h"
@@ -185,6 +186,12 @@ void Scene::PlayStop() {
         return;
     }
 
+    // 描画先コンポーネント（NormalWindowObject/ScreenBufferObject等）が、破棄される
+    // ウィンドウ/バッファをLoadFromJSONで再構築される同名コンポーネントへ引き継げるように、
+    // SceneManagerによるシーン切り替えと同じ引き継ぎプールを一時的に有効化する。
+    // これが無いと、Play/Stopのたびにゲームウィンドウ等が即座に破棄→新規作成されてしまう
+    RenderTargetCarryOverRegistry::BeginSceneSwitch(Passkey<Scene>{});
+
     ClearSceneObjects();
     ClearSceneComponents();
 
@@ -197,6 +204,9 @@ void Scene::PlayStop() {
     if (sGraphicsEngine_) sGraphicsEngine_->ReleaseRendererResources(Passkey<Scene>{});
 
     LoadFromJSON(snapshot);
+
+    // 新シーン側で引き取られなかった描画先リソースをここで実際に破棄する
+    RenderTargetCarryOverRegistry::EndSceneSwitch(Passkey<Scene>{});
 }
 #endif
 

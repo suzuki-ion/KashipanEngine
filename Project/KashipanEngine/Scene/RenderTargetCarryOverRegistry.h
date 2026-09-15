@@ -8,6 +8,7 @@
 namespace KashipanEngine {
 
 class SceneManager;
+class Scene;
 
 /// @brief シーン切り替え時、描画先リソース（ScreenBuffer/Window等）を
 ///        次のシーンの同名コンポーネントへ引き継ぐための一時預かり所
@@ -15,11 +16,12 @@ class SceneManager;
 ///          新シーンの同名コンポーネントはLoadFromJsonでClaimする。
 ///          種別（Kind）ごとに独立したプールを持つため、異なる種類の
 ///          リソース同士が誤って引き継がれることはない。
-///          SceneManagerが管理するシーン切り替え中のみ引き継ぎが成立するようにしており
+///          SceneManagerが管理するシーン切り替え、および Scene::PlayStop() による
+///          Play/Stopの全オブジェクト再構築の間だけ引き継ぎが成立するようにしており
 ///          （BeginSceneSwitch〜EndSceneSwitchの間だけDepositが有効）、
-///          エディターのPlay/Stopや手動でのシーンクリア等、切り替え以外の経路で
-///          Finalizeが呼ばれた場合は従来通り即座に破棄される（引き継ぎプールへの
-///          預けっぱなしによるリソースリークを防ぐため）。
+///          それ以外の経路（手動でのシーンクリア等）でFinalizeが呼ばれた場合は
+///          従来通り即座に破棄される（引き継ぎプールへの預けっぱなしによる
+///          リソースリークを防ぐため）。
 class RenderTargetCarryOverRegistry {
 public:
     /// @brief 引き継ぎプールの種別（異なる種別同士では引き継ぎが発生しない）
@@ -35,6 +37,13 @@ public:
     /// @brief シーン切り替えの終了を通知する（SceneManager専用）
     /// @details 引き取られずプールに残っている全リソースをこの時点で実際に破棄する
     static void EndSceneSwitch(Passkey<SceneManager>);
+    /// @brief Play/Stopによる全オブジェクト再構築の開始を通知する（Scene::PlayStop専用）
+    /// @details SceneManager経由のシーン切り替えと同じプールを共有するオーバーロード。
+    ///          呼び出し後、Depositが実際にプールへ預けるようになる
+    static void BeginSceneSwitch(Passkey<Scene>);
+    /// @brief Play/Stopによる全オブジェクト再構築の終了を通知する（Scene::PlayStop専用）
+    /// @details 引き取られずプールに残っている全リソースをこの時点で実際に破棄する
+    static void EndSceneSwitch(Passkey<Scene>);
     /// @brief シーン切り替え中かどうか
     static bool IsSceneSwitchInProgress();
 
@@ -54,6 +63,11 @@ private:
         void *resource = nullptr;
         std::function<void()> destroyFn;
     };
+
+    /// @brief BeginSceneSwitchの各Passkeyオーバーロードが共通で呼ぶ実処理
+    static void BeginSceneSwitchInternal();
+    /// @brief EndSceneSwitchの各Passkeyオーバーロードが共通で呼ぶ実処理
+    static void EndSceneSwitchInternal();
 
     static size_t PoolIndex(Kind kind) { return static_cast<size_t>(kind); }
 

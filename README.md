@@ -73,7 +73,7 @@ KashipanEngineの内部コード、及びエディター上の操作やオブジ
 
 <a id="development"></a>
 ## 開発について
-KashipanEngineの開発では、AIコーディングツールである[Claude Code](https://claude.com/claude-code)を補助的に使用しています。実装方針の検討や設計は開発者自身が行い、Claude Codeはその補助として利用しています。
+KashipanEngineの開発では、AIコーディングエージェントであるAnthropicの[Claude Code](https://claude.com/claude-code)及びOpenAIの[Codex](https://openai.com/ja-JP/codex/)を補助的に使用しています。実装方針の検討や設計は開発者自身が行い、Claude Code、Codexはその補助として利用しています。
 
 <a id="license"></a>
 ## ライセンス

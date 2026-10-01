@@ -2655,6 +2655,18 @@
     <None Include="Tools\CopyReleaseAssets.ps1">
       <Filter>Tools</Filter>
     </None>
+    <None Include="Tools\CreateDistribution.ps1">
+      <Filter>Tools</Filter>
+    </None>
+    <None Include="Tools\AnalyzeReleaseAssets.py">
+      <Filter>Tools</Filter>
+    </None>
+    <None Include="Tools\DistributionAssetExclusions.Release.txt">
+      <Filter>Tools</Filter>
+    </None>
+    <None Include="Tools\DistributionAssetExclusions.Development.txt">
+      <Filter>Tools</Filter>
+    </None>
     <None Include="Tools\CopyToWorkCopy.ps1">
       <Filter>Tools</Filter>
     </None>

@@ -171,6 +171,9 @@ copy /Y "$(ProjectDir)Externals\WebView2\lib\x64\WebView2Loader.dll" "$(TargetDi
 copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
 if exist "$(TargetDir)EngineRoot.txt" del "$(TargetDir)EngineRoot.txt"
 powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyReleaseAssets.ps1" -ProjectDir "$(ProjectDir)." -TargetDir "$(TargetDir)."
+if errorlevel 1 exit /b 1
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CreateDistribution.ps1" -ProjectDir "$(ProjectDir)." -TargetDir "$(TargetDir)." -Platform "$(Platform)" -Configuration "$(Configuration)"
+if errorlevel 1 exit /b 1
 powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWorkCopy.ps1" -ProjectDir "$(ProjectDir)." -TargetDir "$(TargetDir)." -Platform "$(Platform)" -Configuration "$(Configuration)"</Command>
     </PostBuildEvent>
     <Manifest>
@@ -220,6 +223,8 @@ copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxil.dll" "$(TargetDir)dxil.dll"
 copy /Y "$(ProjectDir)Externals\WebView2\lib\x64\WebView2Loader.dll" "$(TargetDir)WebView2Loader.dll"
 copy /Y "$(ProjectDir)LICENSE.txt" "$(TargetDir)LICENSE.txt"
 &gt;"$(OutDir)EngineRoot.txt" echo $(ProjectDir)
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CreateDistribution.ps1" -ProjectDir "$(ProjectDir)." -TargetDir "$(TargetDir)." -Platform "$(Platform)" -Configuration "$(Configuration)"
+if errorlevel 1 exit /b 1
 powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWorkCopy.ps1" -ProjectDir "$(ProjectDir)." -TargetDir "$(TargetDir)." -Platform "$(Platform)" -Configuration "$(Configuration)"</Command>
     </PostBuildEvent>
     <Manifest>
@@ -450,6 +455,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <None Include="Reference\index.html" />
     <None Include="Tools\convert_reference_to_html.py" />
     <None Include="Tools\CopyReleaseAssets.ps1" />
+    <None Include="Tools\CreateDistribution.ps1" />
+    <None Include="Tools\AnalyzeReleaseAssets.py" />
+    <None Include="Tools\DistributionAssetExclusions.Release.txt" />
+    <None Include="Tools\DistributionAssetExclusions.Development.txt" />
     <None Include="Tools\CopyBuildAssets.bat" />
     <None Include="Tools\CopyToWorkCopy.ps1" />
     <None Include="tools\sync_filters.py" />

@@ -1,0 +1,18 @@
+# Paths relative to the Release distribution Assets/ folder, one file or directory per line.
+# Editor-only asset atlas (AssetsWindow is compiled only with USE_IMGUI).
+KashipanEngine/EditorIcons
+
+# PipelineManager skips example.json files by name during preset loading.
+KashipanEngine/Pipeline/Preset/BlendState/example.json
+KashipanEngine/Pipeline/Preset/ComputePipelineState/example.json
+KashipanEngine/Pipeline/Preset/DepthStencilState/example.json
+KashipanEngine/Pipeline/Preset/DescriptorRange/example.json
+KashipanEngine/Pipeline/Preset/GraphicsPipelineState/example.json
+KashipanEngine/Pipeline/Preset/InputLayout/example.json
+KashipanEngine/Pipeline/Preset/RasterizerState/example.json
+KashipanEngine/Pipeline/Preset/RootConstants/example.json
+KashipanEngine/Pipeline/Preset/RootDescriptor/example.json
+KashipanEngine/Pipeline/Preset/RootParameter/example.json
+KashipanEngine/Pipeline/Preset/RootSignature/example.json
+KashipanEngine/Pipeline/Preset/Sampler/example.json
+KashipanEngine/Pipeline/Preset/Shader/example.json

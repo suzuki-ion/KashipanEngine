@@ -1,0 +1,4 @@
+# Paths relative to the Development distribution folder, one file or directory per line.
+# Use Projects/<project-name>/Assets/... or AssetsTemplate/... paths.
+# Keep assets needed by the editor and project switching.
+# Example: Projects/Test/Assets/Unused/Preview.png

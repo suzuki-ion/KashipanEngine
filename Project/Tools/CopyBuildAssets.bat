@@ -22,11 +22,18 @@ if not exist "%TARGET_DIR%" (
 
 if /I "%CONFIGURATION%"=="Release" (
     powershell -NoProfile -ExecutionPolicy Bypass -File "%PROJECT_DIR%\Tools\CopyReleaseAssets.ps1" -ProjectDir "%PROJECT_DIR%" -TargetDir "%TARGET_DIR%"
-    if errorlevel 1 exit /b %errorlevel%
+    if errorlevel 1 exit /b 1
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%PROJECT_DIR%\Tools\CreateDistribution.ps1" -ProjectDir "%PROJECT_DIR%" -TargetDir "%TARGET_DIR%" -Platform "%PLATFORM%" -Configuration "%CONFIGURATION%"
+    if errorlevel 1 exit /b 1
+)
+
+if /I "%CONFIGURATION%"=="Development" (
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%PROJECT_DIR%\Tools\CreateDistribution.ps1" -ProjectDir "%PROJECT_DIR%" -TargetDir "%TARGET_DIR%" -Platform "%PLATFORM%" -Configuration "%CONFIGURATION%"
+    if errorlevel 1 exit /b 1
 )
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%PROJECT_DIR%\Tools\CopyToWorkCopy.ps1" -ProjectDir "%PROJECT_DIR%" -TargetDir "%TARGET_DIR%" -Platform "%PLATFORM%" -Configuration "%CONFIGURATION%"
-if errorlevel 1 exit /b %errorlevel%
+if errorlevel 1 exit /b 1
 
 echo Asset copy completed: %PLATFORM%\%CONFIGURATION%
 exit /b 0

@@ -107,6 +107,47 @@ int GetRightStickX(int index) const;  int GetRightStickY(int index) const;
 void StopVibration(int index);</div>
 </div>
 
+<h3>入力デバイス判定</h3>
+<div class="api-card">
+<h4>最後に入力があったデバイス</h4>
+<div class="api-sig">enum class InputDeviceType { KeyboardMouse, Controller };
+
+InputDeviceType GetActiveDevice() const noexcept;
+bool IsUsingKeyboardMouse() const noexcept;
+bool IsUsingController() const noexcept;
+bool IsActiveDeviceChanged() const noexcept;   // このフレームで切り替わったか
+int GetActiveControllerIndex() const noexcept; // 最後に操作されたコントローラー番号（未操作なら -1）</div>
+<p><code>Input::Update()</code> の最後に各デバイスの入力を調べ、最後に入力があったデバイスを記録します。どのデバイスにも入力がないフレームでは直前の判定を維持し、起動直後は <code>KeyboardMouse</code> です。ボタンの操作説明表示（キーボード用／コントローラー用の切り替え）などに利用できます。</p>
+<ul>
+<li><strong>キーボード</strong>: いずれかのキーが押された瞬間（<code>Key</code> に未対応のキーも含む）</li>
+<li><strong>マウス</strong>: ボタンが押された瞬間、ホイール操作、または一連の移動の累積量がしきい値以上になったとき（150ms 以上静止すると累積をリセット）</li>
+<li><strong>コントローラー</strong>: ボタンが押された瞬間、またはトリガー／スティックの入力量がしきい値以上のとき</li>
+</ul>
+<p>同じフレームで両方に入力があった場合は現在のデバイスを維持します。コントローラーがすべて切断されると <code>KeyboardMouse</code> に戻ります。このプロセスのウィンドウ（ゲーム・エディターいずれも）が前面にないときは判定しません。エディター操作中も判定は継続されます。</p>
+</div>
+<div class="api-card">
+<h4>しきい値</h4>
+<div class="api-sig">void SetMouseMoveThreshold(float pixels) noexcept;          // 既定 16px
+void SetControllerStickThreshold(float threshold) noexcept;   // 0.0～1.0、既定 0.3
+void SetControllerTriggerThreshold(float threshold) noexcept; // 0.0～1.0、既定 0.3
+// 各値には Get版も存在する
+
+void ResetDeviceThresholds(); // EngineSettings.json の値へ戻す</div>
+<p>マウスの小さな揺れやトリガーの軽い押し込みでデバイスが切り替わらないようにするための値です。値は次の順に決まり、後のものほど優先されます。</p>
+<ol>
+<li><strong><code>EngineSettings.json</code> の <code>input</code> セクション</strong>（プロジェクト全体の初期値。省略時は上記の既定値）</li>
+<li><strong>シーンコンポーネント <a href="../Editor/Components/Scene/InputDeviceSettings.html"><code>InputDeviceSettings</code></a></strong>（上書きを有効にした項目だけ、そのシーンで置き換える）</li>
+<li><strong>C++／スクリプトからの <code>Set～Threshold</code> 呼び出し</strong>、およびエディターの「入力状態」ウィンドウでの調整</li>
+</ol>
+<pre><code>// EngineSettings.json
+"input": {
+    "mouseMoveThreshold": 16.0,
+    "controllerStickThreshold": 0.3,
+    "controllerTriggerThreshold": 0.3
+}</code></pre>
+<p>シーンコンポーネントの破棄時（シーン切り替え・Playの停止・エディターでのシーン再読み込み）に <code>Scene</code> が <code>ResetDeviceThresholds()</code> を呼び、しきい値を一度 <code>EngineSettings.json</code> の値へ戻します。その後に読み込まれたシーンに <code>InputDeviceSettings</code> があれば、その上書きが適用されます。そのため、3. で変更した値は次のシーンやPlay停止後には持ち越されません。</p>
+</div>
+
 <h2>アクションマッピング: <code>InputCommand</code></h2>
 <p>
 <code>InputCommand</code> は「アクション名（<code>std::string</code>）」に対して1つ以上の入力バインディングを登録し、<code>Evaluate()</code> でまとめて評価するクラスです。<code>GameEngine</code> が内部で1つ生成し、<code>GameEngine::Context::inputCommand</code>（<a href="01_Overview.html">01_Overview.html</a> 参照）や <code>SceneContext::GetInputCommand()</code> から取得できます。
@@ -221,6 +262,25 @@ float GetCommandValue(const string &amp;in action);</code></pre>
     }
 }</code></pre>
 <p>内部的には <code>SceneContext::GetInputCommand()</code> で取得した <code>InputCommand</code> の <code>Evaluate()</code> をラップしているだけなので、C++側と同じバインディングをそのまま参照できます。詳しいスクリプトバインディングの一覧は <a href="../Script/00_Index.html">Script/00_Index.html</a> を参照してください。</p>
+<p>入力デバイス判定とそのしきい値もグローバル関数から扱えます。スクリプトで変更したしきい値は、シーン切り替え・Playの停止時に <code>EngineSettings.json</code>／<code>InputDeviceSettings</code> の値へ戻ります。</p>
+<pre><code>InputDeviceType GetActiveInputDevice(); // InputDeviceType::KeyboardMouse / InputDeviceType::Controller
+bool IsUsingKeyboardMouse();
+bool IsUsingController();
+bool IsInputDeviceChanged();
+int GetActiveControllerIndex();
+
+void SetMouseMoveThreshold(float pixels);
+float GetMouseMoveThreshold();
+void SetControllerStickThreshold(float threshold);
+float GetControllerStickThreshold();
+void SetControllerTriggerThreshold(float threshold);
+float GetControllerTriggerThreshold();</code></pre>
+<pre><code>void Update() {
+    if (IsInputDeviceChanged()) {
+        // 操作説明の表示をデバイスに合わせて切り替える
+        SetGuideVisible(IsUsingController());
+    }
+}</code></pre>
 
 <h2>コンポーネントから入力値を適用する: <code>InputCommandApplier</code></h2>
 <p>

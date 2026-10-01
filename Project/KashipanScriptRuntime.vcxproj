@@ -314,6 +314,7 @@
     <ClCompile Include="KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ISceneComponent.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\SceneObjectCollider.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\InputDeviceSettings.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\KeyframeAnimator.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Render\SceneRenderer.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\Render\TargetObjectSelector.cpp" />

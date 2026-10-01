@@ -38,11 +38,20 @@ struct EngineSettings {
     struct Translations {
         std::unordered_map<std::string, std::string> languageFilePaths;
     };
+    //--------- 入力デバイス判定のしきい値設定 ---------//
+    // シーンごとの上書き（InputDeviceSettings）やスクリプトからの変更は、
+    // シーン切り替え・Play停止時にここで設定した値へ戻る
+    struct InputSettings {
+        float mouseMoveThreshold = 16.0f;         // マウスの累積移動量（ピクセル）
+        float controllerStickThreshold = 0.3f;    // スティックの傾き（0.0～1.0）
+        float controllerTriggerThreshold = 0.3f;  // トリガーの押し込み量（0.0～1.0）
+    };
 
     Window window;
     Limits limits;
     Rendering rendering;
     Translations translations;
+    InputSettings input;
 };
 
 const EngineSettings &LoadEngineSettings(PasskeyForGameEngineMain, const std::string &engineSettingsPath = "EngineSettings.json");

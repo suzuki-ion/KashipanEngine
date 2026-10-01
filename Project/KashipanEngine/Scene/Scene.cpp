@@ -7,6 +7,7 @@
 #include "Scene/SceneManager.h"
 #include "Scene/SceneContext.h"
 #include "Scene/Components/Render/SceneRenderer.h"
+#include "Input/Input.h"
 #include "Assets/SkeletonManager.h"
 #include "Objects/Components/Transform.h"
 #include "Objects/Components/Collider/RigidBody2D.h"
@@ -642,6 +643,11 @@ void Scene::ClearSceneComponents() {
     componentsIndexByPointer_.clear();
     componentsFreeIndices_.clear();
     nextAddedComponentID_ = 0;
+
+    // シーン切り替え・Play停止・エディターでの再読み込みはすべてここを通る。
+    // シーンごとの上書き（InputDeviceSettings）やスクリプトから変更された入力デバイス判定の
+    // しきい値をEngineSettingsの値へ戻し、次に読み込まれるシーンの設定だけが反映されるようにする
+    if (sInput) sInput->ResetDeviceThresholds();
 }
 
 bool Scene::ChangeToNextScene() {

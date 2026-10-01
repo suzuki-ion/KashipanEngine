@@ -1044,6 +1044,12 @@
 		"component.inputcommandapplier.value_scale": "值缩放",
 		"component.inputcommandapplier.value_source": "值的来源",
 
+		"component.inputdevicesettings.default_f": "默认值（EngineSettings）：%.2f",
+		"component.inputdevicesettings.desc": "仅勾选的项目会在此场景中覆盖EngineSettings.json的阈值。",
+		"component.inputdevicesettings.mouse_move_threshold": "鼠标移动阈值（px）",
+		"component.inputdevicesettings.override": "在此场景中覆盖",
+		"component.inputdevicesettings.stick_threshold": "摇杆阈值",
+		"component.inputdevicesettings.trigger_threshold": "扳机阈值",
 		//--------- component.iobjectcomponent ---------//
 		"component.iobjectcomponent.none": "无",
 
@@ -1770,21 +1776,29 @@
 		//--------- editor.input ---------//
 		"editor.input.10s_down_s_trg_s_rel_s": "%-10s  按住:%s  按下瞬间:%s  释放瞬间:%s",
 		"editor.input.10s_down_s_trg_s_rel_s_2": "%-10s 按住:%s 按下瞬间:%s 释放瞬间:%s",
+		"editor.input.active_controller_index_d": "手柄编号：%d",
+		"editor.input.active_device": "输入设备",
+		"editor.input.active_device_s": "当前输入设备：%s",
 		"editor.input.button_d_down_s_trg_s_rel_s": "按钮 %d  按住:%s  按下瞬间:%s  释放瞬间:%s",
 		"editor.input.buttons": "按钮",
 		"editor.input.controller_gamepad": "控制器（手柄）",
 		"editor.input.cursor": "光标",
 		"editor.input.delta_d_d": "移动量：(%d, %d)",
 		"editor.input.desc_1": "主要按键状态",
+		"editor.input.device_controller": "手柄",
+		"editor.input.device_keyboard_mouse": "键盘＋鼠标",
 		"editor.input.keyboard": "键盘",
 		"editor.input.leftstick_2f_2f": "左摇杆：(%.2f, %.2f)",
 		"editor.input.mouse": "鼠标",
+		"editor.input.mouse_move_threshold": "鼠标移动阈值（px）",
 		"editor.input.pad_d_s": "手柄 %d：%s",
 		"editor.input.pads_d": "手柄数：%d",
 		"editor.input.rightstick_2f_2f": "右摇杆：(%.2f, %.2f)",
 		"editor.input.screen_pos_ld_ld": "屏幕坐标：(%ld, %ld)",
+		"editor.input.stick_threshold": "摇杆阈值",
 		"editor.input.state.window": "输入状态",
 		"editor.input.trigger_l_d_2f_r_d_2f": "扳机 L:%d (%.2f)  R:%d (%.2f)",
+		"editor.input.trigger_threshold": "扳机阈值",
 		"editor.input.wheel_delta_d": "滚轮（移动量）：%d",
 
 		//--------- editor.inputcommand ---------//
@@ -2345,6 +2359,10 @@
 		"engine.script.vscodelaunch.generate.failed": "AngelScript：VSCode 用 launch.json 生成失败。",
 
 		//--------- engine.settings ---------//
+		"engine.settings.input.controllerstickthreshold": "摇杆阈值：",
+		"engine.settings.input.controllertriggerthreshold": "扳机阈值：",
+		"engine.settings.input.mousemovethreshold": "鼠标移动阈值：",
+		"engine.settings.input.section": "输入设备判定设置",
 		"engine.settings.limits.maxcomponentspergameobject": "每个游戏对象的组件数上限：",
 		"engine.settings.limits.maxgameobjects": "游戏对象数量上限：",
 		"engine.settings.limits.maxmodels": "模型数量上限：",

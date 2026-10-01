@@ -1044,6 +1044,12 @@
 		"component.inputcommandapplier.value_scale": "값 스케일",
 		"component.inputcommandapplier.value_source": "값 가져오기 대상",
 
+		"component.inputdevicesettings.default_f": "기본값(EngineSettings): %.2f",
+		"component.inputdevicesettings.desc": "체크한 항목만 이 씬에서 EngineSettings.json의 임계값을 덮어씁니다.",
+		"component.inputdevicesettings.mouse_move_threshold": "마우스 이동 임계값 (px)",
+		"component.inputdevicesettings.override": "이 씬에서 덮어쓰기",
+		"component.inputdevicesettings.stick_threshold": "스틱 임계값",
+		"component.inputdevicesettings.trigger_threshold": "트리거 임계값",
 		//--------- component.iobjectcomponent ---------//
 		"component.iobjectcomponent.none": "없음",
 
@@ -1770,21 +1776,29 @@
 		//--------- editor.input ---------//
 		"editor.input.10s_down_s_trg_s_rel_s": "%-10s  누름:%s  누른 순간:%s  뗀 순간:%s",
 		"editor.input.10s_down_s_trg_s_rel_s_2": "%-10s 누름:%s 누른 순간:%s 뗀 순간:%s",
+		"editor.input.active_controller_index_d": "컨트롤러 번호: %d",
+		"editor.input.active_device": "입력 장치",
+		"editor.input.active_device_s": "현재 입력 장치: %s",
 		"editor.input.button_d_down_s_trg_s_rel_s": "버튼 %d  누름:%s  누른 순간:%s  뗀 순간:%s",
 		"editor.input.buttons": "버튼",
 		"editor.input.controller_gamepad": "컨트롤러(게임패드)",
 		"editor.input.cursor": "커서",
 		"editor.input.delta_d_d": "이동량: (%d, %d)",
 		"editor.input.desc_1": "주요 키 상태",
+		"editor.input.device_controller": "컨트롤러",
+		"editor.input.device_keyboard_mouse": "키보드 + 마우스",
 		"editor.input.keyboard": "키보드",
 		"editor.input.leftstick_2f_2f": "왼쪽 스틱: (%.2f, %.2f)",
 		"editor.input.mouse": "마우스",
+		"editor.input.mouse_move_threshold": "마우스 이동 임계값 (px)",
 		"editor.input.pad_d_s": "패드 %d: %s",
 		"editor.input.pads_d": "패드 수: %d",
 		"editor.input.rightstick_2f_2f": "오른쪽 스틱: (%.2f, %.2f)",
 		"editor.input.screen_pos_ld_ld": "화면 좌표: (%ld, %ld)",
+		"editor.input.stick_threshold": "스틱 임계값",
 		"editor.input.state.window": "입력 상태",
 		"editor.input.trigger_l_d_2f_r_d_2f": "트리거 L:%d (%.2f)  R:%d (%.2f)",
+		"editor.input.trigger_threshold": "트리거 임계값",
 		"editor.input.wheel_delta_d": "휠(이동량): %d",
 
 		//--------- editor.inputcommand ---------//
@@ -2345,6 +2359,10 @@
 		"engine.script.vscodelaunch.generate.failed": "AngelScript: VSCode용 launch.json 생성에 실패했습니다.",
 
 		//--------- engine.settings ---------//
+		"engine.settings.input.controllerstickthreshold": "스틱 임계값: ",
+		"engine.settings.input.controllertriggerthreshold": "트리거 임계값: ",
+		"engine.settings.input.mousemovethreshold": "마우스 이동 임계값: ",
+		"engine.settings.input.section": "입력 장치 판정 설정",
 		"engine.settings.limits.maxcomponentspergameobject": "게임 오브젝트 1개당 컴포넌트 최대 수: ",
 		"engine.settings.limits.maxgameobjects": "게임 오브젝트 최대 수: ",
 		"engine.settings.limits.maxmodels": "모델 최대 수: ",

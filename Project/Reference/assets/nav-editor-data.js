@@ -113,6 +113,7 @@ const KE_PAGES = [
   { id: "C_Scene_ScenePreTransform", title: "ScenePreTransform", group: "コンポーネント: Scene", href: "Editor/Components/Scene/ScenePreTransform.html" },
   { id: "C_Scene_SceneShakeApplier", title: "SceneShakeApplier", group: "コンポーネント: Scene", href: "Editor/Components/Scene/SceneShakeApplier.html" },
   { id: "C_Scene_KeyframeAnimator", title: "KeyframeAnimator (シーン)", group: "コンポーネント: Scene", href: "Editor/Components/Scene/KeyframeAnimator.html" },
+  { id: "C_Scene_InputDeviceSettings", title: "InputDeviceSettings", group: "コンポーネント: Scene", href: "Editor/Components/Scene/InputDeviceSettings.html" },
 
   { id: "T00_Index", title: "使い方ガイド目次", group: "使い方ガイド", href: "Editor/Guide/00_Index.html" },
   { id: "T01_CreateScene", title: "1. シーンを作成する", group: "使い方ガイド", href: "Editor/Guide/01_CreateScene.html" },

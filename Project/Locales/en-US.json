@@ -1045,6 +1045,12 @@
 		"component.inputcommandapplier.value_scale": "Value Scale",
 		"component.inputcommandapplier.value_source": "Value Source",
 
+		"component.inputdevicesettings.default_f": "Default (EngineSettings): %.2f",
+		"component.inputdevicesettings.desc": "Only checked items override the thresholds from EngineSettings.json in this scene.",
+		"component.inputdevicesettings.mouse_move_threshold": "Mouse Move Threshold (px)",
+		"component.inputdevicesettings.override": "Override in this scene",
+		"component.inputdevicesettings.stick_threshold": "Stick Threshold",
+		"component.inputdevicesettings.trigger_threshold": "Trigger Threshold",
 		//--------- component.iobjectcomponent ---------//
 		"component.iobjectcomponent.none": "None",
 
@@ -1807,21 +1813,29 @@
 		//--------- editor.input ---------//
 		"editor.input.10s_down_s_trg_s_rel_s": "%-10s  Down:%s  Trg:%s  Rel:%s",
 		"editor.input.10s_down_s_trg_s_rel_s_2": "%-10s Down:%s Trg:%s Rel:%s",
+		"editor.input.active_controller_index_d": "Controller Index: %d",
+		"editor.input.active_device": "Active Device",
+		"editor.input.active_device_s": "Current Device: %s",
 		"editor.input.button_d_down_s_trg_s_rel_s": "Button %d  Down:%s  Trg:%s  Rel:%s",
 		"editor.input.buttons": "Buttons",
 		"editor.input.controller_gamepad": "Controller (Gamepad)",
 		"editor.input.cursor": "Cursor",
 		"editor.input.delta_d_d": "Delta: (%d, %d)",
 		"editor.input.desc_1": "Main Key States",
+		"editor.input.device_controller": "Controller",
+		"editor.input.device_keyboard_mouse": "Keyboard + Mouse",
 		"editor.input.keyboard": "Keyboard",
 		"editor.input.leftstick_2f_2f": "LeftStick : (%.2f, %.2f)",
 		"editor.input.mouse": "Mouse",
+		"editor.input.mouse_move_threshold": "Mouse Move Threshold (px)",
 		"editor.input.pad_d_s": "Pad %d: %s",
 		"editor.input.pads_d": "Pads: %d",
 		"editor.input.rightstick_2f_2f": "RightStick: (%.2f, %.2f)",
 		"editor.input.screen_pos_ld_ld": "Screen Pos: (%ld, %ld)",
+		"editor.input.stick_threshold": "Stick Threshold",
 		"editor.input.state.window": "Input - State",
 		"editor.input.trigger_l_d_2f_r_d_2f": "Trigger L:%d (%.2f)  R:%d (%.2f)",
+		"editor.input.trigger_threshold": "Trigger Threshold",
 		"editor.input.wheel_delta_d": "Wheel(Delta): %d",
 
 		//--------- editor.inputcommand ---------//
@@ -2390,6 +2404,10 @@
 		"engine.script.vscodelaunch.generate.failed": "AngelScript: Failed to generate launch.json for VSCode.",
 
 		//--------- engine.settings ---------//
+		"engine.settings.input.controllerstickthreshold": "Stick Threshold: ",
+		"engine.settings.input.controllertriggerthreshold": "Trigger Threshold: ",
+		"engine.settings.input.mousemovethreshold": "Mouse Move Threshold: ",
+		"engine.settings.input.section": "Input Device Detection",
 		"engine.settings.limits.maxcomponentspergameobject": "Max Components Per Game Object: ",
 		"engine.settings.limits.maxgameobjects": "Max Game Objects: ",
 		"engine.settings.limits.maxmodels": "Max Models: ",

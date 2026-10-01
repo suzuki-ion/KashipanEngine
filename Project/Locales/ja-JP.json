@@ -1047,6 +1047,12 @@
 		"component.inputcommandapplier.value_scale": "値のスケール",
 		"component.inputcommandapplier.value_source": "値の取得元",
 
+		"component.inputdevicesettings.default_f": "既定値（EngineSettings）：%.2f",
+		"component.inputdevicesettings.desc": "チェックした項目だけ、このシーンでEngineSettings.jsonのしきい値を上書きします。",
+		"component.inputdevicesettings.mouse_move_threshold": "マウス移動のしきい値（px）",
+		"component.inputdevicesettings.override": "このシーンで上書きする",
+		"component.inputdevicesettings.stick_threshold": "スティックのしきい値",
+		"component.inputdevicesettings.trigger_threshold": "トリガーのしきい値",
 		//--------- component.iobjectcomponent ---------//
 		"component.iobjectcomponent.none": "なし",
 
@@ -1809,21 +1815,29 @@
 		//--------- editor.input ---------//
 		"editor.input.10s_down_s_trg_s_rel_s": "%-10s  押下:%s  押した瞬間:%s  離した瞬間:%s",
 		"editor.input.10s_down_s_trg_s_rel_s_2": "%-10s 押下:%s 押した瞬間:%s 離した瞬間:%s",
+		"editor.input.active_controller_index_d": "コントローラー番号：%d",
+		"editor.input.active_device": "入力デバイス",
+		"editor.input.active_device_s": "現在の入力デバイス：%s",
 		"editor.input.button_d_down_s_trg_s_rel_s": "ボタン %d  押下:%s  押した瞬間:%s  離した瞬間:%s",
 		"editor.input.buttons": "ボタン",
 		"editor.input.controller_gamepad": "コントローラー（ゲームパッド）",
 		"editor.input.cursor": "カーソル",
 		"editor.input.delta_d_d": "移動量：(%d, %d)",
 		"editor.input.desc_1": "主要キー状態",
+		"editor.input.device_controller": "コントローラー",
+		"editor.input.device_keyboard_mouse": "キーボード＋マウス",
 		"editor.input.keyboard": "キーボード",
 		"editor.input.leftstick_2f_2f": "左スティック：(%.2f, %.2f)",
 		"editor.input.mouse": "マウス",
+		"editor.input.mouse_move_threshold": "マウス移動のしきい値（px）",
 		"editor.input.pad_d_s": "パッド %d：%s",
 		"editor.input.pads_d": "パッド数：%d",
 		"editor.input.rightstick_2f_2f": "右スティック：(%.2f, %.2f)",
 		"editor.input.screen_pos_ld_ld": "スクリーン座標：(%ld, %ld)",
+		"editor.input.stick_threshold": "スティックのしきい値",
 		"editor.input.state.window": "入力状態",
 		"editor.input.trigger_l_d_2f_r_d_2f": "トリガー L:%d (%.2f)  R:%d (%.2f)",
+		"editor.input.trigger_threshold": "トリガーのしきい値",
 		"editor.input.wheel_delta_d": "ホイール（移動量）：%d",
 
 		//--------- editor.inputcommand ---------//
@@ -2392,6 +2406,10 @@
 		"engine.script.vscodelaunch.generate.failed": "AngelScript：VSCode用launch.jsonの生成に失敗しました。",
 
 		//--------- engine.settings ---------//
+		"engine.settings.input.controllerstickthreshold": "スティックのしきい値：",
+		"engine.settings.input.controllertriggerthreshold": "トリガーのしきい値：",
+		"engine.settings.input.mousemovethreshold": "マウス移動のしきい値：",
+		"engine.settings.input.section": "入力デバイス判定設定",
 		"engine.settings.limits.maxcomponentspergameobject": "1ゲームオブジェクトあたりのコンポーネント最大数：",
 		"engine.settings.limits.maxgameobjects": "ゲームオブジェクト最大数：",
 		"engine.settings.limits.maxmodels": "モデル最大数：",

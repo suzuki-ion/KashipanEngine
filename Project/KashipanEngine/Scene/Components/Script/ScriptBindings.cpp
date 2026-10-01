@@ -4665,6 +4665,10 @@ void RegisterRandomBindings(asIScriptEngine *engine) {
 //==================================================
 
 void RegisterGlobalFunctions(asIScriptEngine *engine) {
+    engine->RegisterEnum("InputDeviceType");
+    engine->RegisterEnumValue("InputDeviceType", "KeyboardMouse", static_cast<int>(InputDeviceType::KeyboardMouse));
+    engine->RegisterEnumValue("InputDeviceType", "Controller", static_cast<int>(InputDeviceType::Controller));
+
     asbind20::global(engine)
         // ログ
         .function("void Log(const string &in)", [](const std::string &text) { Log(text, LogSeverity::Info); })
@@ -4766,6 +4770,49 @@ void RegisterGlobalFunctions(asIScriptEngine *engine) {
         .function("float GetCommandValue(const string &in)", [](const std::string &action) -> float {
             auto *command = gCurrentSceneContext ? gCurrentSceneContext->GetInputCommand() : nullptr;
             return command ? command->Evaluate(action).Value() : 0.0f;
+        })
+        // 入力デバイス判定（最後に入力があったデバイス）
+        .function("InputDeviceType GetActiveInputDevice()", []() -> int {
+            Input *input = gCurrentSceneContext ? gCurrentSceneContext->GetInput() : nullptr;
+            return static_cast<int>(input ? input->GetActiveDevice() : InputDeviceType::KeyboardMouse);
+        })
+        .function("bool IsUsingKeyboardMouse()", []() -> bool {
+            Input *input = gCurrentSceneContext ? gCurrentSceneContext->GetInput() : nullptr;
+            return input ? input->IsUsingKeyboardMouse() : true;
+        })
+        .function("bool IsUsingController()", []() -> bool {
+            Input *input = gCurrentSceneContext ? gCurrentSceneContext->GetInput() : nullptr;
+            return input ? input->IsUsingController() : false;
+        })
+        .function("bool IsInputDeviceChanged()", []() -> bool {
+            Input *input = gCurrentSceneContext ? gCurrentSceneContext->GetInput() : nullptr;
+            return input ? input->IsActiveDeviceChanged() : false;
+        })
+        .function("int GetActiveControllerIndex()", []() -> int {
+            Input *input = gCurrentSceneContext ? gCurrentSceneContext->GetInput() : nullptr;
+            return input ? input->GetActiveControllerIndex() : -1;
+        })
+        // 入力デバイス判定のしきい値（変更はシーン切り替え・Play停止時にEngineSettings/シーン設定の値へ戻る）
+        .function("void SetMouseMoveThreshold(float pixels)", [](float pixels) {
+            if (Input *input = gCurrentSceneContext ? gCurrentSceneContext->GetInput() : nullptr) input->SetMouseMoveThreshold(pixels);
+        })
+        .function("float GetMouseMoveThreshold()", []() -> float {
+            Input *input = gCurrentSceneContext ? gCurrentSceneContext->GetInput() : nullptr;
+            return input ? input->GetMouseMoveThreshold() : 0.0f;
+        })
+        .function("void SetControllerStickThreshold(float threshold)", [](float threshold) {
+            if (Input *input = gCurrentSceneContext ? gCurrentSceneContext->GetInput() : nullptr) input->SetControllerStickThreshold(threshold);
+        })
+        .function("float GetControllerStickThreshold()", []() -> float {
+            Input *input = gCurrentSceneContext ? gCurrentSceneContext->GetInput() : nullptr;
+            return input ? input->GetControllerStickThreshold() : 0.0f;
+        })
+        .function("void SetControllerTriggerThreshold(float threshold)", [](float threshold) {
+            if (Input *input = gCurrentSceneContext ? gCurrentSceneContext->GetInput() : nullptr) input->SetControllerTriggerThreshold(threshold);
+        })
+        .function("float GetControllerTriggerThreshold()", []() -> float {
+            Input *input = gCurrentSceneContext ? gCurrentSceneContext->GetInput() : nullptr;
+            return input ? input->GetControllerTriggerThreshold() : 0.0f;
         })
         // マウス（任意のウィンドウ視点でのマウス座標。自分のウィンドウならWindowObject側のメソッド版でも取得可）
         .function("Vector2 GetMousePosition(WindowObject@ window)", [](ScriptComponentHandle<IWindowObjectComponent> *window) -> Vector2 {

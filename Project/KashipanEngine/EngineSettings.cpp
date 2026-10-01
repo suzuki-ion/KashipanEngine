@@ -5,6 +5,7 @@
 #include "EngineSettings/LoadWindow.h"
 #include "EngineSettings/LoadLimits.h"
 #include "EngineSettings/LoadRendering.h"
+#include "EngineSettings/LoadInput.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
@@ -32,6 +33,9 @@ const EngineSettings &LoadEngineSettings(PasskeyForGameEngineMain, const std::st
 
     //--------- レンダリングのデフォルト設定 ---------//
     LoadRenderingSettings(json, sEngineSettings);
+
+    //--------- 入力デバイス判定のしきい値設定 ---------//
+    LoadInputSettings(json, sEngineSettings);
 
     Log(Translation("engine.settings.load.success") + engineSettingsPath, LogSeverity::Info);
     return sEngineSettings;

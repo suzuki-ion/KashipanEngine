@@ -84,6 +84,8 @@ void Keyboard::Initialize() {
 
     current.fill(0);
     previous.fill(0);
+    rawDownCount_ = 0;
+    prevRawDownCount_ = 0;
     initialized_ = true;
 }
 
@@ -91,6 +93,8 @@ void Keyboard::Finalize() {
     initialized_ = false;
     current.fill(0);
     previous.fill(0);
+    rawDownCount_ = 0;
+    prevRawDownCount_ = 0;
 }
 
 size_t Keyboard::ToIndex_(Key key) noexcept {
@@ -100,6 +104,8 @@ size_t Keyboard::ToIndex_(Key key) noexcept {
 void Keyboard::Update() {
     previous = current;
     current.fill(0);
+    prevRawDownCount_ = rawDownCount_;
+    rawDownCount_ = 0;
 
     if (!initialized_) {
         return;
@@ -108,6 +114,8 @@ void Keyboard::Update() {
     if (!sGameInput) {
         for (int virtualKey = 0; virtualKey < 256; ++virtualKey) {
             if ((GetAsyncKeyState(virtualKey) & 0x8000) == 0) continue;
+            // 0x01～0x06はマウスボタンの仮想キーのため、キーボード入力としては数えない
+            if (virtualKey >= 0x08) ++rawDownCount_;
             const Key key = FromVirtualKey(static_cast<std::uint8_t>(virtualKey));
             if (key == Key::Unknown) continue;
             current[ToIndex_(key)] = 0x80;
@@ -128,6 +136,7 @@ void Keyboard::Update() {
     }
 
     const std::uint32_t keyCount = reading->GetKeyCount();
+    rawDownCount_ = keyCount;
     if (keyCount > 0) {
         std::vector<GameInputKeyState> keys;
         keys.resize(keyCount);
@@ -178,6 +187,15 @@ bool Keyboard::IsTrigger(Key key) const {
 
 bool Keyboard::IsRelease(Key key) const {
     return !IsDown(key) && WasDown(key);
+}
+
+bool Keyboard::IsAnyTrigger() const {
+    // 押下数の増加で未対応キーも拾い、同フレームでの押し替え（押下数が変わらない）は個別キーの比較で拾う
+    if (rawDownCount_ > prevRawDownCount_) return true;
+    for (size_t i = 0; i < current.size(); ++i) {
+        if ((current[i] & 0x80) != 0 && (previous[i] & 0x80) == 0) return true;
+    }
+    return false;
 }
 
 } // namespace KashipanEngine

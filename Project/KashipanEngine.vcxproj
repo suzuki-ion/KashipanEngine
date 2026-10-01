@@ -399,6 +399,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <None Include="Reference\Editor\Components\Render\SpriteRenderer.html" />
     <None Include="Reference\Editor\Components\Render\TilemapRenderer.html" />
     <None Include="Reference\Editor\Components\Render\TextRenderer.html" />
+    <None Include="Reference\Editor\Components\Scene\InputDeviceSettings.html" />
     <None Include="Reference\Editor\Components\Scene\KeyframeAnimator.html" />
     <None Include="Reference\Editor\Components\Scene\SceneAudioPlayer.html" />
     <None Include="Reference\Editor\Components\Scene\SceneComputeProcessor.html" />
@@ -655,6 +656,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClCompile Include="KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\ISceneComponent.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\SceneObjectCollider.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Components\InputDeviceSettings.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\KeyframeAnimator.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\Render\SceneRenderer.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\Render\TargetObjectSelector.cpp" />
@@ -1102,6 +1104,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClInclude Include="KashipanEngine\Debug\ScriptDebugDraw.h" />
     <ClInclude Include="KashipanEngine\EngineSettings.h" />
     <ClInclude Include="KashipanEngine\Splash\SplashScreen.h" />
+    <ClInclude Include="KashipanEngine\EngineSettings\LoadInput.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadLimits.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadRendering.h" />
     <ClInclude Include="KashipanEngine\EngineSettings\LoadTranslations.h" />
@@ -1298,6 +1301,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptBindings.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\ISceneComponent.h" />
+    <ClInclude Include="KashipanEngine\Scene\Components\InputDeviceSettings.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\KeyframeAnimator.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Render\SceneRenderer.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\SceneComponentHeader.h" />

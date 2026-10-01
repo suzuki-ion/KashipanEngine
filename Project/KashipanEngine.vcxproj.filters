@@ -648,6 +648,9 @@
     <ClCompile Include="KashipanEngine\Scene\Components\ScenePreTransform.cpp">
       <Filter>KashipanEngine\Scene\Components</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Components\InputDeviceSettings.cpp">
+      <Filter>KashipanEngine\Scene\Components</Filter>
+    </ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Components\KeyframeAnimator.cpp">
       <Filter>KashipanEngine\Scene\Components</Filter>
     </ClCompile>
@@ -1027,6 +1030,9 @@
     </ClInclude>
     <ClInclude Include="KashipanEngine\Splash\SplashScreen.h">
       <Filter>KashipanEngine\Splash</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\EngineSettings\LoadInput.h">
+      <Filter>KashipanEngine\EngineSettings</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\EngineSettings\LoadLimits.h">
       <Filter>KashipanEngine\EngineSettings</Filter>
@@ -1620,6 +1626,9 @@
       <Filter>KashipanEngine\Scene\Components\Compute</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\ISceneComponent.h">
+      <Filter>KashipanEngine\Scene\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Components\InputDeviceSettings.h">
       <Filter>KashipanEngine\Scene\Components</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\KeyframeAnimator.h">
@@ -2492,6 +2501,9 @@
     </None>
     <None Include="Reference\Editor\Components\Render\TextRenderer.html">
       <Filter>Reference\Editor\Components\Render</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Scene\InputDeviceSettings.html">
+      <Filter>Reference\Editor\Components\Scene</Filter>
     </None>
     <None Include="Reference\Editor\Components\Scene\KeyframeAnimator.html">
       <Filter>Reference\Editor\Components\Scene</Filter>

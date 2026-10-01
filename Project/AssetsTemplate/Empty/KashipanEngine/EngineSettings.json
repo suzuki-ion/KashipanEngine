@@ -28,6 +28,13 @@
 		"dsvDescriptorHeapSize": 256,
 		"srvDescriptorHeapSize": 8196
 	},
+	// 入力デバイス判定（キーボード＋マウス / コントローラー）のしきい値。
+	// シーンごとの上書きは InputDeviceSettings シーンコンポーネントで行う。
+	"input": {
+		"mouseMoveThreshold": 16.0,
+		"controllerStickThreshold": 0.3,
+		"controllerTriggerThreshold": 0.3
+	},
 	// エンジン共通の翻訳はエンジンルート直下の Locales/ から自動で読み込まれる。
 	// ここで指定するのはプロジェクト固有（アプリケーション側）の翻訳ファイルだけ。
 	"translations": {

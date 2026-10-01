@@ -2186,6 +2186,7 @@
 		"editor.sceneview.show.colliders": "Colliders",
 		"editor.sceneview.show.grid": "Grid",
 		"editor.sceneview.show.lights": "Lights",
+		"editor.sceneview.material.drop.notarget": "No object to apply the material to",
 		"editor.sceneview.tab.boundszone": "Bounds Zone",
 		"editor.sceneview.tab.camera": "Camera",
 		"editor.sceneview.tab.display": "Display",

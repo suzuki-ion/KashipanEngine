@@ -702,6 +702,8 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
     // カーソル直下の配置予定位置（シーン上のメッシュ表面、無ければ地面平面）へ半透明のプレビューを
     // 表示し、Unity等と同様、実際にドロップされた瞬間にそのままシーンへ配置する
     HandlePrefabDragDrop(hierarchy, imagePos, drawSize);
+    // Assetsウィンドウからのマテリアルファイル（.mat）のドラッグ&ドロップ（カーソル直下のオブジェクトへ適用する）
+    HandleMaterialDragDrop(commands, imagePos, drawSize);
 
     //--------- カメラ操作（画像上でのマウス操作） ---------//
     HandleCameraInput();
@@ -795,6 +797,117 @@ void SceneEditorView::HandlePrefabDragDrop(SceneObjectHierarchy *hierarchy, cons
     if (!isHoveringThisView) {
         ClearGhostPreview();
     }
+}
+
+void SceneEditorView::HandleMaterialDragDrop(SceneEditorCommands *commands, const ImVec2 &imagePos, const ImVec2 &imageSize) {
+    if (!context_ || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return;
+    if (!ImGui::BeginDragDropTarget()) return;
+
+    // AcceptPeekOnly: ドロップ前からカーソル直下の適用先を表示するため、ペイロードを覗き見する
+    // （IsDelivery()で実際のドロップかを判別する。既定のハイライト矩形は適用先の表示で代替する）
+    const ImGuiPayload *payload = ImGui::AcceptDragDropPayload(kMaterialAssetDragDropType, ImGuiDragDropFlags_AcceptPeekOnly);
+    if (!payload) {
+        ImGui::EndDragDropTarget();
+        return;
+    }
+    IM_ASSERT(payload->DataSize == sizeof(AssetDragDropPayload));
+    const std::string materialAssetPath = static_cast<const AssetDragDropPayload *>(payload->Data)->assetPath;
+
+    //--------- カーソル直下の適用先（描画コンポーネント＋マテリアルスロット）を求める ---------//
+    const ImVec2 mouse = ImGui::GetMousePos();
+    Vector3 rayStart{};
+    Vector3 rayEnd{};
+    EmptyObject *hitObject = nullptr;
+    float hitT = 0.0f;
+    size_t hitIndexOffset = std::numeric_limits<size_t>::max();
+    RaycastSceneMeshes(mouse, imagePos, imageSize, rayStart, rayEnd, hitObject, hitT, &hitIndexOffset);
+
+    // ヒットした三角形がどのサブメッシュ（＝マテリアルスロット）に属するかを求める
+    const auto resolveSlot = [hitIndexOffset](ModelManager::ModelHandle meshHandle) -> size_t {
+        if (hitIndexOffset == std::numeric_limits<size_t>::max()) return 0;
+        const auto &subMeshes = ModelManager::GetModelData(meshHandle).GetSubMeshes();
+        for (size_t slot = 0; slot < subMeshes.size(); ++slot) {
+            const size_t start = subMeshes[slot].indexStart;
+            if (hitIndexOffset >= start && hitIndexOffset < start + subMeshes[slot].indexCount) return slot;
+        }
+        return 0;
+    };
+
+    IObjectComponent *targetComponent = nullptr;
+    size_t targetSlot = 0;
+    size_t targetSlotCount = 1;
+    if (hitObject) {
+        // RaycastSceneMeshesと同じ表示モードによる絞り込みで、実際に表示されている描画コンポーネントを選ぶ
+        const bool threeDVisible = displayMode_ != SceneRenderer::EditorDisplayMode::TwoDOnly;
+        const bool twoDVisible = displayMode_ != SceneRenderer::EditorDisplayMode::ThreeDOnly;
+        auto *meshRenderer = hitObject->GetComponent<MeshRenderer>();
+        auto *skinnedMeshRenderer = hitObject->GetComponent<SkinnedMeshRenderer>();
+        auto *spriteRenderer = hitObject->GetComponent<SpriteRenderer>();
+        auto *textRenderer = hitObject->GetComponent<TextRenderer>();
+        if (threeDVisible && meshRenderer && meshRenderer->IsActive()) {
+            targetComponent = meshRenderer;
+            targetSlot = resolveSlot(meshRenderer->GetMeshHandle());
+            targetSlotCount = meshRenderer->GetMaterialSlotCount();
+        } else if (threeDVisible && skinnedMeshRenderer && skinnedMeshRenderer->IsActive()) {
+            targetComponent = skinnedMeshRenderer;
+            targetSlot = resolveSlot(skinnedMeshRenderer->GetMeshHandle());
+            targetSlotCount = skinnedMeshRenderer->GetMaterialSlotCount();
+        } else if (twoDVisible && spriteRenderer && spriteRenderer->IsActive()) {
+            targetComponent = spriteRenderer;
+        } else if (textRenderer && textRenderer->IsActive()) {
+            targetComponent = textRenderer;
+        }
+    }
+
+    if (!payload->IsDelivery()) {
+        //--------- ドラッグ中：適用先のオブジェクト名（とスロット）をカーソル付近に表示する ---------//
+        std::string label;
+        if (targetComponent) {
+            label = hitObject->GetName();
+            if (targetSlotCount > 1) label += " [Material " + std::to_string(targetSlot) + "]";
+        } else {
+            label = Translation("editor.sceneview.material.drop.notarget");
+        }
+        auto *drawList = ImGui::GetWindowDrawList();
+        const ImVec2 textPos(mouse.x + 16.0f, mouse.y - ImGui::GetTextLineHeight() - 12.0f);
+        const ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
+        constexpr float kPadding = 4.0f;
+        drawList->AddRectFilled(ImVec2(textPos.x - kPadding, textPos.y - kPadding),
+            ImVec2(textPos.x + textSize.x + kPadding, textPos.y + textSize.y + kPadding), IM_COL32(20, 20, 20, 200), 3.0f);
+        drawList->AddText(textPos, targetComponent ? IM_COL32(255, 255, 255, 255) : IM_COL32(255, 140, 120, 255), label.c_str());
+    } else if (targetComponent) {
+        //--------- ドロップ：マテリアル名を解決して適用する（Undo対応） ---------//
+        // 描画コンポーネントはマテリアルを「名前」で参照するため、アセットパスから読み込み済みの名前を引く
+        // （Assetsウィンドウで新規作成した直後等で未読み込みの場合は動的に読み込んでから引き直す）
+        const auto findMaterialName = [&materialAssetPath]() -> std::string {
+            for (const auto &entry : MaterialManager::GetLoadedMaterialListEntries()) {
+                if (entry.assetPath == materialAssetPath) return entry.material.name;
+            }
+            return {};
+        };
+        std::string materialName = findMaterialName();
+        if (materialName.empty() && MaterialManager::LoadMaterialDynamic(materialAssetPath) != MaterialManager::kInvalidHandle) {
+            materialName = findMaterialName();
+        }
+
+        if (!materialName.empty()) {
+            const JSON before = hitObject->SaveComponentToJson(targetComponent);
+            if (auto *meshRenderer = dynamic_cast<MeshRenderer *>(targetComponent)) {
+                meshRenderer->SetMaterialNameAt(targetSlot, materialName);
+            } else if (auto *skinnedMeshRenderer = dynamic_cast<SkinnedMeshRenderer *>(targetComponent)) {
+                skinnedMeshRenderer->SetMaterialNameAt(targetSlot, materialName);
+            } else if (auto *spriteRenderer = dynamic_cast<SpriteRenderer *>(targetComponent)) {
+                spriteRenderer->SetMaterialName(materialName);
+            } else if (auto *textRenderer = dynamic_cast<TextRenderer *>(targetComponent)) {
+                textRenderer->SetMaterialName(materialName);
+            }
+            if (commands) {
+                commands->PushExecuted(std::make_unique<ComponentEditCommand>(
+                    hitObject, targetComponent, before, hitObject->SaveComponentToJson(targetComponent)));
+            }
+        }
+    }
+    ImGui::EndDragDropTarget();
 }
 
 void SceneEditorView::UpdateGhostPreview(const std::string &prefabPath, const ImVec2 &imagePos, const ImVec2 &imageSize) {
@@ -1271,9 +1384,10 @@ EmptyObject *SceneEditorView::PickIconAtScreenPosition(const ImVec2 &screenPos, 
 }
 
 bool SceneEditorView::RaycastSceneMeshes(const ImVec2 &screenPos, const ImVec2 &imagePos, const ImVec2 &imageSize,
-    Vector3 &outRayStart, Vector3 &outRayEnd, EmptyObject *&outHitObject, float &outHitT) const {
+    Vector3 &outRayStart, Vector3 &outRayEnd, EmptyObject *&outHitObject, float &outHitT, size_t *outHitIndexOffset) const {
     outHitObject = nullptr;
     outHitT = std::numeric_limits<float>::max();
+    if (outHitIndexOffset) *outHitIndexOffset = std::numeric_limits<size_t>::max();
     if (!context_ || imageSize.x <= 0.0f || imageSize.y <= 0.0f) return false;
 
     // クリック位置からカメラの近平面→遠平面を貫く線分を作る（tがそのまま奥行き順の比較に使える）
@@ -1385,6 +1499,7 @@ bool SceneEditorView::RaycastSceneMeshes(const ImVec2 &screenPos, const ImVec2 &
                 if (t < outHitT) {
                     outHitT = t;
                     outHitObject = obj;
+                    if (outHitIndexOffset) *outHitIndexOffset = i;
                 }
             }
         }

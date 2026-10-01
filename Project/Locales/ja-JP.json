@@ -2188,6 +2188,7 @@
 		"editor.sceneview.show.colliders": "コライダー",
 		"editor.sceneview.show.grid": "グリッド",
 		"editor.sceneview.show.lights": "ライト",
+		"editor.sceneview.material.drop.notarget": "マテリアルを適用できるオブジェクトがありません",
 		"editor.sceneview.tab.boundszone": "境界ゾーン",
 		"editor.sceneview.tab.camera": "カメラ",
 		"editor.sceneview.tab.display": "表示",

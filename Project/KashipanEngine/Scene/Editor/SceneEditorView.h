@@ -184,9 +184,12 @@ private:
     /// @param outRayEnd レイの終点（遠平面上のワールド座標）
     /// @param outHitObject 交差したオブジェクト（見つからなければnullptr）
     /// @param outHitT 交差したオブジェクトがある場合、レイ上のパラメータt（0=始点、1=終点）
+    /// @param outHitIndexOffset 指定時、メッシュの三角形と交差した場合はその三角形の先頭インデックス位置
+    ///        （サブメッシュ＝マテリアルスロットの特定に使う）。三角形以外の判定で拾った場合はSIZE_MAX
     /// @return いずれかのオブジェクトと交差した場合true
     bool RaycastSceneMeshes(const ImVec2 &screenPos, const ImVec2 &imagePos, const ImVec2 &imageSize,
-        Vector3 &outRayStart, Vector3 &outRayEnd, EmptyObject *&outHitObject, float &outHitT) const;
+        Vector3 &outRayStart, Vector3 &outRayEnd, EmptyObject *&outHitObject, float &outHitT,
+        size_t *outHitIndexOffset = nullptr) const;
     /// @brief シーンビュー画像上のスクリーン座標を、Prefab配置等に使うワールド座標へ変換する
     /// @details Unityのシーンビューと同様、既存のメッシュ表面があればそこへスナップする。
     ///          2D表示モードはSpriteRendererが乗るZ=0平面との交点を使う。3D系の表示モードは
@@ -273,6 +276,11 @@ private:
     ///          実際にドロップされた瞬間にInstantiatePrefabFileでシーンへ配置する。ドロップ/キャンセル/
     ///          シーンビュー範囲外への移動でこのウィンドウ上のドラッグが終わった場合はプレビューを消す
     void HandlePrefabDragDrop(SceneObjectHierarchy *hierarchy, const ImVec2 &imagePos, const ImVec2 &imageSize);
+    /// @brief Assetsウィンドウからのマテリアルファイル（.mat）のドラッグ&ドロップを処理する
+    /// @details カーソル直下のオブジェクトの描画コンポーネント（MeshRenderer/SkinnedMeshRenderer/
+    ///          SpriteRenderer/TextRenderer）へマテリアルを適用する。複数マテリアルスロットを持つメッシュは
+    ///          カーソル直下のサブメッシュのスロットだけを差し替える（Undo対応）
+    void HandleMaterialDragDrop(SceneEditorCommands *commands, const ImVec2 &imagePos, const ImVec2 &imageSize);
     /// @brief ドラッグ中のPrefabプレビューを更新する（カーソル直下の配置予定位置に半透明メッシュを表示）
     /// @details プレハブJSONのパースは対象パスが変わった時のみ行い（ドラッグ中の毎フレーム再パースを
     ///          避けるため）、位置計算とワールド行列の再計算のみ毎フレーム行う

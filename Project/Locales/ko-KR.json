@@ -2149,6 +2149,7 @@
 		"editor.sceneview.show.colliders": "콜라이더",
 		"editor.sceneview.show.grid": "그리드",
 		"editor.sceneview.show.lights": "라이트",
+		"editor.sceneview.material.drop.notarget": "머티리얼을 적용할 오브젝트가 없습니다",
 		"editor.sceneview.tab.boundszone": "경계 존",
 		"editor.sceneview.tab.camera": "카메라",
 		"editor.sceneview.tab.display": "표시",

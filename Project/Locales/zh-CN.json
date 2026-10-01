@@ -2149,6 +2149,7 @@
 		"editor.sceneview.show.colliders": "碰撞体",
 		"editor.sceneview.show.grid": "网格线",
 		"editor.sceneview.show.lights": "光源",
+		"editor.sceneview.material.drop.notarget": "没有可应用材质的对象",
 		"editor.sceneview.tab.boundszone": "边界区域",
 		"editor.sceneview.tab.camera": "相机",
 		"editor.sceneview.tab.display": "显示",

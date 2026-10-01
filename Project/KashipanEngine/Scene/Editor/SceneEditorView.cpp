@@ -59,6 +59,7 @@ SceneEditorView::SceneEditorView(Passkey<SceneEditor>, SceneEditorContext *conte
     // デバッグ表示の有効/無効を復元する（再起動後も維持される）
     showGrid_ = EditorSettings::GetBool("sceneView.showGrid", true);
     showLightMarkers_ = EditorSettings::GetBool("sceneView.showLightMarkers", true);
+    showLightRanges_ = EditorSettings::GetBool("sceneView.showLightRanges", true);
     showCameraMarkers_ = EditorSettings::GetBool("sceneView.showCameraMarkers", true);
     showColliderGizmos_ = EditorSettings::GetBool("sceneView.showColliderGizmos", true);
     showBoneGizmos_ = EditorSettings::GetBool("sceneView.showBoneGizmos", false);
@@ -628,6 +629,8 @@ void SceneEditorView::ShowSceneViewWindow(const std::unordered_set<EmptyObject *
             ImGui::SameLine();
             if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.lights"), &showLightMarkers_)) EditorSettings::SetBool("sceneView.showLightMarkers", showLightMarkers_);
             ImGui::SameLine();
+            if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.lightranges"), &showLightRanges_)) EditorSettings::SetBool("sceneView.showLightRanges", showLightRanges_);
+            ImGui::SameLine();
             if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.cameras"), &showCameraMarkers_)) EditorSettings::SetBool("sceneView.showCameraMarkers", showCameraMarkers_);
             ImGui::SameLine();
             if (ImGui::Checkbox(TranslationLabel("editor.sceneview.show.colliders"), &showColliderGizmos_)) EditorSettings::SetBool("sceneView.showColliderGizmos", showColliderGizmos_);
@@ -1095,8 +1098,8 @@ void SceneEditorView::UpdateEditorDebugDraw() {
         if (showCameraMarkers_) {
             AppendCameraFrustumLines(settings.lines);
         }
-        if (showLightMarkers_) {
-            // ライトの向きはImGuiのオーバーレイではなく、エンジン側のデバッグライン描画で行う
+        if (showLightRanges_) {
+            // ライトの範囲・形状・向きはアイコン表示と独立して、エンジン側のデバッグライン描画で行う
             // （オブジェクトとの前後関係が正しく表現される）
             AppendLightDirectionLines(settings.lines);
         }
@@ -2522,17 +2525,71 @@ void SceneEditorView::AppendCameraFrustumLines(std::vector<DebugLineVertex> &out
     }
 }
 
+namespace {
+/// @brief center + (axisA*cosθ + axisB*sinθ)*radius の円弧を線分列として追加する（θはstartAngle→endAngle）
+void AppendLightArc(std::vector<DebugLineVertex> &out, const Vector3 &center, const Vector3 &axisA, const Vector3 &axisB,
+    float radius, float startAngle, float endAngle, const Vector4 &color, int segments = 24) {
+    if (radius <= 0.0f || segments <= 0) return;
+    Vector3 prevPoint = center + (axisA * std::cos(startAngle) + axisB * std::sin(startAngle)) * radius;
+    for (int i = 1; i <= segments; ++i) {
+        const float angle = startAngle + (endAngle - startAngle) * static_cast<float>(i) / static_cast<float>(segments);
+        const Vector3 point = center + (axisA * std::cos(angle) + axisB * std::sin(angle)) * radius;
+        out.push_back({ prevPoint, color });
+        out.push_back({ point, color });
+        prevPoint = point;
+    }
+}
+
+/// @brief axisA/axisBが張る平面上の円を追加する
+void AppendLightCircle(std::vector<DebugLineVertex> &out, const Vector3 &center, const Vector3 &axisA, const Vector3 &axisB,
+    float radius, const Vector4 &color, int segments = 32) {
+    AppendLightArc(out, center, axisA, axisB, radius, 0.0f, 2.0f * std::numbers::pi_v<float>, color, segments);
+}
+
+/// @brief forward方向へ膨らむ半球（底面の円＋直交する2本の半円弧）を追加する（片面発光ライトの届く範囲）
+void AppendLightHemisphere(std::vector<DebugLineVertex> &out, const Vector3 &center, const Vector3 &right, const Vector3 &up,
+    const Vector3 &forward, float radius, const Vector4 &color) {
+    constexpr float kPi = std::numbers::pi_v<float>;
+    AppendLightCircle(out, center, right, up, radius, color);
+    AppendLightArc(out, center, right, forward, radius, 0.0f, kPi, color, 16);
+    AppendLightArc(out, center, up, forward, radius, 0.0f, kPi, color, 16);
+}
+
+/// @brief 長方形（中心・半幅・半高さ）を追加する
+void AppendLightRect(std::vector<DebugLineVertex> &out, const Vector3 &center, const Vector3 &right, const Vector3 &up,
+    float halfWidth, float halfHeight, const Vector4 &color) {
+    const Vector3 corners[4] = {
+        center - right * halfWidth - up * halfHeight,
+        center + right * halfWidth - up * halfHeight,
+        center + right * halfWidth + up * halfHeight,
+        center - right * halfWidth + up * halfHeight,
+    };
+    for (int i = 0; i < 4; ++i) {
+        out.push_back({ corners[i], color });
+        out.push_back({ corners[(i + 1) % 4], color });
+    }
+}
+
+/// @brief ワイヤー球（3軸の円）をライトの基底で追加する（Transformの回転に追従させるため）
+void AppendLightSphere(std::vector<DebugLineVertex> &out, const Vector3 &center, const Vector3 &right, const Vector3 &up,
+    const Vector3 &forward, float radius, const Vector4 &color) {
+    AppendLightCircle(out, center, right, up, radius, color);
+    AppendLightCircle(out, center, right, forward, radius, color);
+    AppendLightCircle(out, center, up, forward, radius, color);
+}
+} // namespace
+
 void SceneEditorView::AppendLightDirectionLines(std::vector<DebugLineVertex> &out) {
     if (!context_) return;
     auto *sceneRenderer = context_->GetComponent<SceneRenderer>();
     if (!sceneRenderer) return;
 
+    constexpr float kPi = std::numbers::pi_v<float>;
+
     for (auto *lightRenderer : sceneRenderer->GetLightRenderers()) {
         if (!lightRenderer || !lightRenderer->IsActive()) continue;
         auto *light = lightRenderer->GetLight();
         const auto lightType = light ? light->GetType() : Light::Type::Directional;
-        // 方向を持つライトのみ向きの線を描画する
-        if (lightType != Light::Type::Directional && lightType != Light::Type::Spot) continue;
 
         Vector4 color{ 1.0f, 0.86f, 0.38f, 1.0f };
         if (light) {
@@ -2543,15 +2600,154 @@ void SceneEditorView::AppendLightDirectionLines(std::vector<DebugLineVertex> &ou
                 std::clamp(lightColor.z, 0.0f, 1.0f),
                 1.0f);
         }
+        // 届く範囲を表す線は、光源本体（形状・向き）の線と区別できるよう暗めの色にする
+        const Vector4 rangeColor(color.x * 0.6f, color.y * 0.6f, color.z * 0.6f, 1.0f);
 
         const Vector3 position = lightRenderer->GetWorldPosition();
         const Vector3 direction = lightRenderer->GetWorldDirection();
-        const float length = (lightType == Light::Type::Spot && light) ? light->GetDistance() : 2.0f;
-        const Vector3 tip = position + direction * length;
-        out.push_back({ position, color });
-        out.push_back({ tip, color });
-        // 先端に小さな球を描いて向きの終端を示す
-        AppendWireSphere3D(out, tip, 0.06f, color);
+        const Vector3 right = lightRenderer->GetWorldRight();
+        const Vector3 up = lightRenderer->GetWorldUp();
+
+        // 方向を持つライトは向きの線を描画する
+        if (lightType == Light::Type::Directional || lightType == Light::Type::Spot) {
+            const float length = (lightType == Light::Type::Spot && light) ? light->GetDistance() : 2.0f;
+            const Vector3 tip = position + direction * length;
+            out.push_back({ position, color });
+            out.push_back({ tip, color });
+            // 先端に小さな球を描いて向きの終端を示す
+            AppendWireSphere3D(out, tip, 0.06f, color);
+        }
+        if (!light) continue;
+
+        // 照らしている範囲（減衰距離や形状）を示す線
+        switch (lightType) {
+        case Light::Type::Directional: {
+            // 平行光源は範囲を持たないため、向きの線の周囲に平行な光線を描いて「一様な向きで全体を照らす」ことを示す
+            constexpr float kRayRadius = 0.4f;
+            constexpr float kRayLength = 1.5f;
+            AppendLightCircle(out, position, right, up, kRayRadius, rangeColor);
+            for (int i = 0; i < 8; ++i) {
+                const float angle = static_cast<float>(i) * (kPi / 4.0f);
+                const Vector3 start = position + (right * std::cos(angle) + up * std::sin(angle)) * kRayRadius;
+                out.push_back({ start, rangeColor });
+                out.push_back({ start + direction * kRayLength, rangeColor });
+            }
+            break;
+        }
+        case Light::Type::Point:
+            AppendLightSphere(out, position, right, up, direction, light->GetRadius(), rangeColor);
+            break;
+        case Light::Type::Spot: {
+            // 届く範囲は「半角outerAngleの円錐」と「半径distanceの球」の共通部分（底が球面の円錐）
+            const float distance = light->GetDistance();
+            const auto appendCone = [&](float halfAngle, const Vector4 &coneColor, bool drawEdges) {
+                halfAngle = std::clamp(halfAngle, 0.0f, kPi * 0.5f);
+                const float capRadius = distance * std::sin(halfAngle);
+                const Vector3 capCenter = position + direction * (distance * std::cos(halfAngle));
+                AppendLightCircle(out, capCenter, right, up, capRadius, coneColor);
+                if (!drawEdges) return;
+                for (int i = 0; i < 4; ++i) {
+                    const float angle = static_cast<float>(i) * (kPi * 0.5f);
+                    const Vector3 edge = capCenter + (right * std::cos(angle) + up * std::sin(angle)) * capRadius;
+                    out.push_back({ position, coneColor });
+                    out.push_back({ edge, coneColor });
+                }
+                // 円錐の底（球面部分）を直交する2本の円弧で示す
+                AppendLightArc(out, position, direction, right, distance, -halfAngle, halfAngle, coneColor, 12);
+                AppendLightArc(out, position, direction, up, distance, -halfAngle, halfAngle, coneColor, 12);
+            };
+            appendCone(light->GetOuterAngle(), rangeColor, true);
+            // 内側（角度による減衰が始まる境界）は円のみ描画する
+            appendCone(light->GetInnerAngle(), Vector4(rangeColor.x * 0.7f, rangeColor.y * 0.7f, rangeColor.z * 0.7f, 1.0f), false);
+            break;
+        }
+        case Light::Type::Sphere:
+            AppendLightSphere(out, position, right, up, direction, light->GetSourceRadius(), color);
+            AppendLightSphere(out, position, right, up, direction, light->GetRadius() + light->GetSourceRadius(), rangeColor);
+            break;
+        case Light::Type::Disc:
+            // 発光面（+Z向きの片面発光）と、その前方の届く範囲
+            AppendLightCircle(out, position, right, up, light->GetSourceRadius(), color);
+            out.push_back({ position, color });
+            out.push_back({ position + direction * 0.3f, color });
+            AppendLightHemisphere(out, position, right, up, direction, light->GetDistance() + light->GetSourceRadius(), rangeColor);
+            break;
+        case Light::Type::Rect: {
+            const float halfWidth = light->GetSourceWidth() * 0.5f;
+            const float halfHeight = light->GetSourceHeight() * 0.5f;
+            AppendLightRect(out, position, right, up, halfWidth, halfHeight, color);
+            out.push_back({ position, color });
+            out.push_back({ position + direction * 0.3f, color });
+            AppendLightHemisphere(out, position, right, up, direction,
+                light->GetDistance() + std::max(halfWidth, halfHeight), rangeColor);
+            break;
+        }
+        case Light::Type::Tube: {
+            // 発光部（+X方向の線分＋半径）と、線分からの距離がRadius以内の範囲（カプセル形状）
+            const float halfLength = light->GetSourceLength() * 0.5f;
+            const Vector3 p0 = position - right * halfLength;
+            const Vector3 p1 = position + right * halfLength;
+            out.push_back({ p0, color });
+            out.push_back({ p1, color });
+            AppendLightCircle(out, p0, up, direction, light->GetSourceRadius(), color, 16);
+            AppendLightCircle(out, p1, up, direction, light->GetSourceRadius(), color, 16);
+
+            const float range = light->GetRadius() + light->GetSourceRadius();
+            AppendLightCircle(out, p0, up, direction, range, rangeColor);
+            AppendLightCircle(out, p1, up, direction, range, rangeColor);
+            for (int i = 0; i < 4; ++i) {
+                const float angle = static_cast<float>(i) * (kPi * 0.5f);
+                const Vector3 offset = (up * std::cos(angle) + direction * std::sin(angle)) * range;
+                out.push_back({ p0 + offset, rangeColor });
+                out.push_back({ p1 + offset, rangeColor });
+            }
+            // 両端の半球
+            AppendLightArc(out, p1, up, right, range, -kPi * 0.5f, kPi * 0.5f, rangeColor, 12);
+            AppendLightArc(out, p1, direction, right, range, -kPi * 0.5f, kPi * 0.5f, rangeColor, 12);
+            AppendLightArc(out, p0, up, right, range, kPi * 0.5f, kPi * 1.5f, rangeColor, 12);
+            AppendLightArc(out, p0, direction, right, range, kPi * 0.5f, kPi * 1.5f, rangeColor, 12);
+            break;
+        }
+        case Light::Type::Box: {
+            // 発光部の箱と、箱表面からの距離がRadius以内の範囲（角の丸い箱）
+            const Vector3 axes[3] = { right, up, direction };
+            const float halves[3] = { light->GetSourceWidth() * 0.5f, light->GetSourceHeight() * 0.5f, light->GetSourceDepth() * 0.5f };
+            const float range = light->GetRadius();
+
+            for (int axis = 0; axis < 3; ++axis) {
+                const int a = (axis + 1) % 3;
+                const int b = (axis + 2) % 3;
+                for (int sign = -1; sign <= 1; sign += 2) {
+                    const Vector3 faceCenter = position + axes[axis] * (halves[axis] * static_cast<float>(sign));
+                    AppendLightRect(out, faceCenter, axes[a], axes[b], halves[a], halves[b], color);
+                    // 面を法線方向へRadiusだけ押し出した長方形
+                    if (range > 0.0f) {
+                        AppendLightRect(out, faceCenter + axes[axis] * (range * static_cast<float>(sign)),
+                            axes[a], axes[b], halves[a], halves[b], rangeColor);
+                    }
+                }
+            }
+            // 12本の辺それぞれの両端で、隣接する2面の押し出し長方形を1/4円弧で繋ぐ
+            if (range > 0.0f) {
+                for (int axis = 0; axis < 3; ++axis) {
+                    const int a = (axis + 1) % 3;
+                    const int b = (axis + 2) % 3;
+                    for (int corner = 0; corner < 4; ++corner) {
+                        const float signA = (corner & 1) ? 1.0f : -1.0f;
+                        const float signB = (corner & 2) ? 1.0f : -1.0f;
+                        for (int end = -1; end <= 1; end += 2) {
+                            const Vector3 edgePoint = position
+                                + axes[a] * (halves[a] * signA)
+                                + axes[b] * (halves[b] * signB)
+                                + axes[axis] * (halves[axis] * static_cast<float>(end));
+                            AppendLightArc(out, edgePoint, axes[a] * signA, axes[b] * signB, range, 0.0f, kPi * 0.5f, rangeColor, 6);
+                        }
+                    }
+                }
+            }
+            break;
+        }
+        }
     }
 }
 

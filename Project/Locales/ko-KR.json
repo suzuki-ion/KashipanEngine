@@ -1044,12 +1044,14 @@
 		"component.inputcommandapplier.value_scale": "값 스케일",
 		"component.inputcommandapplier.value_source": "값 가져오기 대상",
 
+		//--------- component.inputdevicesettings ---------//
 		"component.inputdevicesettings.default_f": "기본값(EngineSettings): %.2f",
 		"component.inputdevicesettings.desc": "체크한 항목만 이 씬에서 EngineSettings.json의 임계값을 덮어씁니다.",
 		"component.inputdevicesettings.mouse_move_threshold": "마우스 이동 임계값 (px)",
 		"component.inputdevicesettings.override": "이 씬에서 덮어쓰기",
 		"component.inputdevicesettings.stick_threshold": "스틱 임계값",
 		"component.inputdevicesettings.trigger_threshold": "트리거 임계값",
+
 		//--------- component.iobjectcomponent ---------//
 		"component.iobjectcomponent.none": "없음",
 
@@ -2149,6 +2151,7 @@
 		"editor.sceneview.show.colliders": "콜라이더",
 		"editor.sceneview.show.grid": "그리드",
 		"editor.sceneview.show.lights": "라이트",
+		"editor.sceneview.show.lightranges": "라이트 범위",
 		"editor.sceneview.material.drop.notarget": "머티리얼을 적용할 오브젝트가 없습니다",
 		"editor.sceneview.tab.boundszone": "경계 존",
 		"editor.sceneview.tab.camera": "카메라",

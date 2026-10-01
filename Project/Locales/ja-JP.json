@@ -1047,12 +1047,14 @@
 		"component.inputcommandapplier.value_scale": "値のスケール",
 		"component.inputcommandapplier.value_source": "値の取得元",
 
+		//--------- component.inputdevicesettings ---------//
 		"component.inputdevicesettings.default_f": "既定値（EngineSettings）：%.2f",
 		"component.inputdevicesettings.desc": "チェックした項目だけ、このシーンでEngineSettings.jsonのしきい値を上書きします。",
 		"component.inputdevicesettings.mouse_move_threshold": "マウス移動のしきい値（px）",
 		"component.inputdevicesettings.override": "このシーンで上書きする",
 		"component.inputdevicesettings.stick_threshold": "スティックのしきい値",
 		"component.inputdevicesettings.trigger_threshold": "トリガーのしきい値",
+
 		//--------- component.iobjectcomponent ---------//
 		"component.iobjectcomponent.none": "なし",
 
@@ -2188,6 +2190,7 @@
 		"editor.sceneview.show.colliders": "コライダー",
 		"editor.sceneview.show.grid": "グリッド",
 		"editor.sceneview.show.lights": "ライト",
+		"editor.sceneview.show.lightranges": "ライト範囲",
 		"editor.sceneview.material.drop.notarget": "マテリアルを適用できるオブジェクトがありません",
 		"editor.sceneview.tab.boundszone": "境界ゾーン",
 		"editor.sceneview.tab.camera": "カメラ",

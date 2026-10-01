@@ -435,6 +435,7 @@ private:
     // デバッグ表示の有効/無効（再起動後も維持される）
     bool showGrid_ = true;
     bool showLightMarkers_ = true;
+    bool showLightRanges_ = true;
     bool showCameraMarkers_ = true;
     bool showColliderGizmos_ = true;
     bool showBoneGizmos_ = false;

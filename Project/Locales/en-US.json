@@ -1045,12 +1045,14 @@
 		"component.inputcommandapplier.value_scale": "Value Scale",
 		"component.inputcommandapplier.value_source": "Value Source",
 
+		//--------- component.inputdevicesettings ---------//
 		"component.inputdevicesettings.default_f": "Default (EngineSettings): %.2f",
 		"component.inputdevicesettings.desc": "Only checked items override the thresholds from EngineSettings.json in this scene.",
 		"component.inputdevicesettings.mouse_move_threshold": "Mouse Move Threshold (px)",
 		"component.inputdevicesettings.override": "Override in this scene",
 		"component.inputdevicesettings.stick_threshold": "Stick Threshold",
 		"component.inputdevicesettings.trigger_threshold": "Trigger Threshold",
+
 		//--------- component.iobjectcomponent ---------//
 		"component.iobjectcomponent.none": "None",
 
@@ -2186,6 +2188,7 @@
 		"editor.sceneview.show.colliders": "Colliders",
 		"editor.sceneview.show.grid": "Grid",
 		"editor.sceneview.show.lights": "Lights",
+		"editor.sceneview.show.lightranges": "Light Ranges",
 		"editor.sceneview.material.drop.notarget": "No object to apply the material to",
 		"editor.sceneview.tab.boundszone": "Bounds Zone",
 		"editor.sceneview.tab.camera": "Camera",

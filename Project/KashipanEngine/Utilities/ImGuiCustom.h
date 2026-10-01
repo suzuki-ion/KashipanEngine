@@ -86,6 +86,25 @@ inline void SetTooltipWrapped(const char *fmt, ...) {
 }
 
 // ==========================================
+// 1-1c. 検索ボックス
+// ==========================================
+
+/// @brief ImGuiTextFilter用の検索ボックス。ImGuiTextFilter::Drawは入力欄の右にラベルを描くため、
+///        幅を-1（残り全幅）にするとラベルがウィンドウ外へはみ出す。こちらはラベルをヒント（プレースホルダ）
+///        として入力欄内に表示し、利用可能幅ちょうどに収める
+/// @param id ImGui ID（"##"始まりを推奨）
+/// @param filter 対象フィルタ
+/// @param hint 未入力時に表示するヒント文字列
+/// @param width 入力欄の幅（-FLT_MINで残り全幅）
+/// @return 入力内容が変更された場合は true
+inline bool SearchFilterBox(const char *id, ImGuiTextFilter &filter, const char *hint, float width = -FLT_MIN) {
+    ImGui::SetNextItemWidth(width);
+    const bool changed = ImGui::InputTextWithHint(id, hint, filter.InputBuf, IM_ARRAYSIZE(filter.InputBuf));
+    if (changed) filter.Build();
+    return changed;
+}
+
+// ==========================================
 // 1-2. 文字列の選択コンボ
 // ==========================================
 

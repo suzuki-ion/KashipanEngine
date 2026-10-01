@@ -261,6 +261,21 @@ void AssetsWindow::ShowImGui() {
     }
     ImGui::SameLine();
     ImGui::TextUnformatted(currentFolder_.empty() ? TranslationC("editor.assets.folder.root") : currentFolder_.c_str());
+    // 検索ボックスは右寄せで表示する（パスが長く残り幅が足りない場合は改行して全幅で表示する）
+    {
+        constexpr float kSearchBoxWidth = 220.0f;
+        ImGui::SameLine();
+        const float availWidth = ImGui::GetContentRegionAvail().x;
+        if (availWidth >= kSearchBoxWidth) {
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + availWidth - kSearchBoxWidth);
+        } else {
+            ImGui::NewLine();
+        }
+        const float width = (availWidth >= kSearchBoxWidth) ? kSearchBoxWidth : -FLT_MIN;
+        if (ImGuiCustom::SearchFilterBox("##AssetsSearch", searchFilter_, TranslationC("editor.assets.search"), width)) {
+            searchResultsDirty_ = true;
+        }
+    }
     ImGui::Separator();
 
     //--------- 左：フォルダツリー ---------//
@@ -367,6 +382,8 @@ void AssetsWindow::BuildFolderNode(FolderNode &node) {
 
 void AssetsWindow::RefreshFileList() {
     files_.clear();
+    // ファイルの作成/リネーム/削除等はすべてここを経由するため、検索結果も合わせて作り直す
+    searchResultsDirty_ = true;
     std::error_code ec;
     const std::filesystem::path base = ToPhysicalPath(currentFolder_);
     for (const auto &entry : std::filesystem::directory_iterator(
@@ -392,6 +409,50 @@ void AssetsWindow::RefreshFileList() {
     std::sort(files_.begin(), files_.end(), [](const FileEntry &a, const FileEntry &b) {
         if (a.isFolder != b.isFolder) return a.isFolder;
         return a.name < b.name;
+    });
+}
+
+void AssetsWindow::RefreshSearchResults() {
+    searchResultsDirty_ = false;
+    searchResults_.clear();
+    if (!searchFilter_.IsActive()) return;
+
+    std::error_code ec;
+    const std::filesystem::path base = ToPhysicalPath("");
+    auto it = std::filesystem::recursive_directory_iterator(
+        base, std::filesystem::directory_options::skip_permission_denied, ec);
+    for (; !ec && it != std::filesystem::recursive_directory_iterator(); it.increment(ec)) {
+        const auto &entry = *it;
+        const std::string name = PathToUtf8String(entry.path().filename());
+        std::error_code statusError;
+        const auto status = entry.symlink_status(statusError);
+        if (statusError) continue;
+        const bool isFolder = std::filesystem::is_directory(status);
+        // 隠しファイル/フォルダ、シンボリックリンク（循環し得る）の中は辿らない（BuildFolderNodeと同じ基準）
+        if ((!name.empty() && name.front() == '.') || std::filesystem::is_symlink(status)) {
+            if (isFolder) it.disable_recursion_pending();
+            continue;
+        }
+        if (!searchFilter_.PassFilter(name.c_str())) continue;
+
+        FileEntry file;
+        file.name = name;
+        file.path = ProjectPaths::ToLogical(PathToUtf8String(entry.path()));
+        if (isFolder) {
+            file.isFolder = true;
+        } else if (std::filesystem::is_regular_file(status)) {
+            file.extension = ToLowerExtension(entry.path());
+            if (!IsSupportedExtension(file.extension)) continue;
+        } else {
+            continue;
+        }
+        searchResults_.push_back(std::move(file));
+    }
+    // 並びは通常表示と同じ（フォルダを先、その後は名前順）
+    std::sort(searchResults_.begin(), searchResults_.end(), [](const FileEntry &a, const FileEntry &b) {
+        if (a.isFolder != b.isFolder) return a.isFolder;
+        if (a.name != b.name) return a.name < b.name;
+        return a.path < b.path;
     });
 }
 
@@ -456,8 +517,13 @@ void AssetsWindow::ShowFileGrid() {
         iconAtlasSrvHandle = TextureManager::GetTextureView(iconAtlasTextureHandle).GetSrvHandle();
     }
 
+    // 検索中は現在のフォルダではなくAssets全体の検索結果を表示する
+    const bool isSearching = searchFilter_.IsActive();
+    if (isSearching && searchResultsDirty_) RefreshSearchResults();
+    const std::vector<FileEntry> &entries = isSearching ? searchResults_ : files_;
+
     int index = 0;
-    for (const auto &file : files_) {
+    for (const auto &file : entries) {
         ImGui::PushID(file.path.c_str());
         if (index % columns != 0) ImGui::SameLine();
         ImGui::BeginGroup();
@@ -529,6 +595,11 @@ void AssetsWindow::ShowFileGrid() {
 
         // フォルダはダブルクリックで移動する（Unityと同じ操作）
         if (file.isFolder && ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+            // 検索結果からフォルダへ移動した場合は、移動先の中身が見えるよう検索を解除する
+            if (isSearching) {
+                searchFilter_.Clear();
+                searchResultsDirty_ = true;
+            }
             NavigateToFolder(file.path);
             ImGui::EndGroup();
             ImGui::PopID();
@@ -553,8 +624,8 @@ void AssetsWindow::ShowFileGrid() {
         ++index;
     }
 
-    if (files_.empty()) {
-        ImGui::TextUnformatted(TranslationC("editor.assets.nofiles"));
+    if (entries.empty()) {
+        ImGui::TextUnformatted(TranslationC(isSearching ? "editor.assets.search.noresults" : "editor.assets.nofiles"));
     }
 
     ShowGridBackgroundContextMenu();

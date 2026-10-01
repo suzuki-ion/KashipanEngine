@@ -6,6 +6,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include <imgui.h>
+
 #include "Utilities/Passkeys.h"
 #include "Scene/Editor/AssetEditorWindows.h"
 
@@ -70,6 +72,8 @@ private:
     /// @brief 指定フォルダへ移動する（ファイル一覧の更新に加え、左のツリーの自動展開・
     ///        スクロール同期も行う）
     void NavigateToFolder(const std::string &path);
+    /// @brief 検索ボックスの条件でAssets全体（サブフォルダ含む）を再帰的に検索し、searchResults_を作り直す
+    void RefreshSearchResults();
     /// @brief 実行ディレクトリ相対パスの親フォルダのパスを返す（ルート直下なら空文字）
     static std::string GetParentFolder(const std::string &path);
     void ShowFolderNode(FolderNode &node);
@@ -108,6 +112,13 @@ private:
     FolderNode rootFolder_;
     std::string currentFolder_;
     std::vector<FileEntry> files_;
+
+    // ツールバーの名前検索ボックス。アクティブな間はfiles_（現在のフォルダ）ではなく、
+    // Assets全体から名前が一致したsearchResults_をグリッドに表示する
+    ImGuiTextFilter searchFilter_;
+    std::vector<FileEntry> searchResults_;
+    // ファイル一覧の更新（作成/リネーム/削除等）や検索文字列の変更で立て、次の描画時に検索し直す
+    bool searchResultsDirty_ = true;
 
     // フォルダツリーとの同期用（現在開いているフォルダまでの経路を1フレームだけ強制展開しスクロールする）
     std::unordered_set<std::string> forceOpenFolders_;

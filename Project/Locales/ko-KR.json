@@ -1573,6 +1573,8 @@
 		"editor.assets.delete.title": "삭제 확인",
 		"editor.assets.folder.root": "(루트)",
 		"editor.assets.nofiles": "이 폴더에는 지원하는 형식의 파일이 없습니다.",
+		"editor.assets.search": "에셋 검색",
+		"editor.assets.search.noresults": "일치하는 에셋이 없습니다.",
 		"editor.assets.rename.newname": "새 이름",
 		"editor.assets.rename.title": "이름 변경",
 		"editor.assets.up": "상위 계층으로",
@@ -1683,6 +1685,8 @@
 
 		//--------- editor.component ---------//
 		"editor.component.add": "컴포넌트 추가",
+		"editor.component.add.search": "컴포넌트 검색",
+		"editor.component.add.search.noresults": "일치하는 컴포넌트가 없습니다.",
 		"editor.component.copy": "컴포넌트 복사",
 		"editor.component.paste": "컴포넌트 붙여넣기",
 		"editor.component.pastenew": "새 컴포넌트로 붙여넣기",

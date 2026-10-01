@@ -1604,6 +1604,8 @@
 		"editor.assets.delete.title": "Confirm Delete",
 		"editor.assets.folder.root": "(root)",
 		"editor.assets.nofiles": "No supported files in this folder.",
+		"editor.assets.search": "Search assets",
+		"editor.assets.search.noresults": "No matching assets.",
 		"editor.assets.rename.newname": "New Name",
 		"editor.assets.rename.title": "Rename",
 		"editor.assets.up": "Up One Level",
@@ -1720,6 +1722,8 @@
 
 		//--------- editor.component ---------//
 		"editor.component.add": "Add Component",
+		"editor.component.add.search": "Search components",
+		"editor.component.add.search.noresults": "No matching components.",
 		"editor.component.copy": "Copy Component",
 		"editor.component.paste": "Paste Component",
 		"editor.component.pastenew": "Paste as New Component",

@@ -1573,6 +1573,8 @@
 		"editor.assets.delete.title": "删除确认",
 		"editor.assets.folder.root": "（根目录）",
 		"editor.assets.nofiles": "此文件夹中没有支持格式的文件。",
+		"editor.assets.search": "搜索资源",
+		"editor.assets.search.noresults": "没有匹配的资源。",
 		"editor.assets.rename.newname": "新名称",
 		"editor.assets.rename.title": "重命名",
 		"editor.assets.up": "返回上一级",
@@ -1683,6 +1685,8 @@
 
 		//--------- editor.component ---------//
 		"editor.component.add": "添加组件",
+		"editor.component.add.search": "搜索组件",
+		"editor.component.add.search.noresults": "没有匹配的组件。",
 		"editor.component.copy": "复制组件",
 		"editor.component.paste": "粘贴组件",
 		"editor.component.pastenew": "作为新组件粘贴",

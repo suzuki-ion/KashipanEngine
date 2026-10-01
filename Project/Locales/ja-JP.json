@@ -1606,6 +1606,8 @@
 		"editor.assets.delete.title": "削除の確認",
 		"editor.assets.folder.root": "(ルート)",
 		"editor.assets.nofiles": "このフォルダに対応形式のファイルはありません。",
+		"editor.assets.search": "アセットを検索",
+		"editor.assets.search.noresults": "一致するアセットはありません。",
 		"editor.assets.rename.newname": "新しい名前",
 		"editor.assets.rename.title": "名前の変更",
 		"editor.assets.up": "1つ上の階層へ",
@@ -1722,6 +1724,8 @@
 
 		//--------- editor.component ---------//
 		"editor.component.add": "コンポーネントを追加",
+		"editor.component.add.search": "コンポーネントを検索",
+		"editor.component.add.search.noresults": "一致するコンポーネントはありません。",
 		"editor.component.copy": "コンポーネントをコピー",
 		"editor.component.paste": "コンポーネントを貼り付け",
 		"editor.component.pastenew": "新規コンポーネントとして貼り付け",

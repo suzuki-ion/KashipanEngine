@@ -145,7 +145,8 @@ void SceneObjectHierarchy::ShowImGui() {
 
         // 検索ボックスの入力をこのフレームのRebuildObjectItems()（フィルタ適用）へ即座に反映させるため、
         // ツリー構築より先に描画する（逆順だと入力に対してフィルタ結果が1フレーム遅れて反映されてしまう）
-        hierarchySearchFilter_.Draw(TranslationLabel("editor.sceneobjecthierarchy.search"), -1.0f);
+        // ImGuiTextFilter::Drawは入力欄の右にラベルを描くためウィンドウ幅からはみ出す。ヒント表示の検索ボックスを使う
+        ImGuiCustom::SearchFilterBox("##HierarchySearch", hierarchySearchFilter_, TranslationC("editor.sceneobjecthierarchy.search"));
         RebuildObjectItems();
 
         if (EditorSettings::PersistentCollapsingHeader("Objects", "hierarchy.objects")) {

@@ -189,6 +189,7 @@
             {
                 "data": {
                     "customData": {
+                        "category": "",
                         "effects": {
                             "echo": {
                                 "delayMs": 500.0,
@@ -238,6 +239,7 @@
                         "maxDistance": 25.0,
                         "minDistance": 1.0,
                         "pitch": 0.0,
+                        "playOnAwake": true,
                         "soundName": "Application/Sound/seSoftLanding.mp3",
                         "volume": 1.0
                     },
@@ -506,6 +508,20 @@
                             "z": 1.0
                         },
                         "instanceColorBlendMode": 1,
+                        "instanceUvCombineMode": 0,
+                        "instanceUvPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceUvRotation": 0.0,
+                        "instanceUvScale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "instanceUvTranslate": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
                         "materialName": "EntityMaterial",
                         "materialNames": [
                             "EntityMaterial"

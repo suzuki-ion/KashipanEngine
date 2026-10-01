@@ -49,6 +49,11 @@
             {
                 "data": {
                     "customData": {
+                        "boundsClampMode": 0,
+                        "boundsTransitionDuration": 0.0,
+                        "boundsTransitionEaseType": "Linear",
+                        "boundsZoneObjectID": "",
+                        "enableBoundsClamp": false,
                         "followTargets": [
                             {
                                 "followPositionX": true,
@@ -85,7 +90,8 @@
                             "y": 0.0,
                             "z": 0.0
                         },
-                        "targetFovY": 1.0
+                        "targetFovY": 1.0,
+                        "viewAreaDepth": 10.0
                     },
                     "isActive": true,
                     "priority": 1,

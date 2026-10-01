@@ -12,13 +12,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 1.0,
-                            "y": 1.0,
+                            "x": 1920.0,
+                            "y": 1080.0,
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 0.0,
-                            "y": 0.0,
+                            "x": 960.0,
+                            "y": 540.0,
                             "z": 0.0
                         }
                     },
@@ -86,12 +86,28 @@
                             "z": 1.0
                         },
                         "instanceColorBlendMode": 1,
+                        "instanceUvCombineMode": 0,
+                        "instanceUvPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceUvRotation": 0.0,
+                        "instanceUvScale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "instanceUvTranslate": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
                         "materialName": "Default",
                         "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
                         "pivot": {
                             "x": 0.5,
                             "y": 0.5
                         },
+                        "pixelSnapOutsetPixels": 0.0,
+                        "pixelSnapping": false,
                         "renderPriority": 0,
                         "targetObjectID": "cd5b0e8d-54c2-4321-9aaf-e679269c2c1d"
                     },

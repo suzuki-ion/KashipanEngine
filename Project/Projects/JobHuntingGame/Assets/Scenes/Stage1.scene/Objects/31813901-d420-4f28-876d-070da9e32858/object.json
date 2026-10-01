@@ -34,6 +34,7 @@
                         "height": 1080,
                         "isShowViewer": true,
                         "name": "ScreenBuffer_0",
+                        "renderOrderPriority": 0,
                         "saveDirectory": "Screenshots",
                         "saveFileNamePrefix": "Screenshot",
                         "saveFormat": "png",
@@ -199,6 +200,7 @@
                         ],
                         "contrast": 1.0,
                         "excludedScreenBuffers": [],
+                        "posterizeLevels": 0,
                         "saturation": 1.0,
                         "temperature": 0.0
                     },

@@ -32,6 +32,7 @@
                 "data": {
                     "customData": {
                         "height": 1080,
+                        "iconPath": "",
                         "interceptedMessages": [],
                         "syncWithTransform": false,
                         "title": "Normal Window",

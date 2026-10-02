@@ -26,6 +26,13 @@ public:
     virtual bool Undo(SceneEditorContext *context) = 0;
     /// @brief 操作名（Undo/Redoメニュー表示用）
     virtual std::string GetName() const = 0;
+    /// @brief 実行失敗後に取り消し待ちの変更が残っているか（通常はfalse）
+    /// @details Execute失敗時は変更を取り消し、復元にも失敗した場合だけtrueを返す。
+    virtual bool HasAppliedChanges() const noexcept { return hasAppliedChanges_; }
+protected:
+    void SetAppliedChangesAfterFailure(bool applied) noexcept { hasAppliedChanges_ = applied; }
+private:
+    bool hasAppliedChanges_ = false;
 };
 
 //==================================================
@@ -310,17 +317,23 @@ public:
     explicit CompositeCommand(const std::string &name) : name_(name) {}
 
     void AddCommand(std::unique_ptr<IEditorCommand> command) {
-        if (command) commands_.push_back(std::move(command));
+        if (command) {
+            commands_.push_back(std::move(command));
+            // PushExecutedで登録される複合操作にも対応する。
+            applied_.push_back(true);
+        }
     }
     bool IsEmpty() const noexcept { return commands_.empty(); }
 
     bool Execute(SceneEditorContext *context) override;
     bool Undo(SceneEditorContext *context) override;
     std::string GetName() const override { return name_; }
+    bool HasAppliedChanges() const noexcept override;
 
 private:
     std::string name_;
     std::vector<std::unique_ptr<IEditorCommand>> commands_;
+    std::vector<bool> applied_;
 };
 
 //==================================================

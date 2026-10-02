@@ -190,6 +190,7 @@ bool ObjectStateCommand::Undo(SceneEditorContext *context) {
 //==================================================
 
 bool AddComponentCommand::Execute(SceneEditorContext *context) {
+    SetAppliedChangesAfterFailure(false);
     auto *obj = context->GetSceneObject(objectID_);
     if (!obj) return false;
     auto newComponent = CreateObjectComponentByType(componentType_);
@@ -199,7 +200,12 @@ bool AddComponentCommand::Execute(SceneEditorContext *context) {
     componentRef_ = component->GetComponentRef();
     // Redo時は以前の状態を復元する
     if (!state_.empty()) {
-        obj->LoadComponentFromJson(component, state_);
+        if (!obj->LoadComponentFromJson(component, state_)) {
+            const bool removed = obj->RemoveComponent(component);
+            if (removed) componentRef_ = ComponentRef{};
+            SetAppliedChangesAfterFailure(!removed);
+            return false;
+        }
     }
     return true;
 }
@@ -231,10 +237,14 @@ bool RemoveComponentCommand::Undo(SceneEditorContext *context) {
 }
 
 bool ComponentEditCommand::Execute(SceneEditorContext *context) {
+    SetAppliedChangesAfterFailure(false);
     auto *obj = context->GetSceneObject(objectID_);
     IObjectComponent *component = context->ResolveComponent(componentRef_);
     if (!obj || !component) return false;
-    return obj->LoadComponentFromJson(component, after_);
+    const JSON previous = obj->SaveComponentToJson(component);
+    if (obj->LoadComponentFromJson(component, after_)) return true;
+    SetAppliedChangesAfterFailure(!obj->LoadComponentFromJson(component, previous));
+    return false;
 }
 bool ComponentEditCommand::Undo(SceneEditorContext *context) {
     auto *obj = context->GetSceneObject(objectID_);
@@ -248,18 +258,31 @@ bool ComponentEditCommand::Undo(SceneEditorContext *context) {
 //==================================================
 
 bool CompositeCommand::Execute(SceneEditorContext *context) {
-    bool allSucceeded = true;
-    for (auto &command : commands_) {
-        if (!command->Execute(context)) allSucceeded = false;
+    if (!context) return false;
+    std::fill(applied_.begin(), applied_.end(), false);
+    for (size_t i = 0; i < commands_.size(); ++i) {
+        if (!commands_[i]->Execute(context)) {
+            applied_[i] = commands_[i]->HasAppliedChanges();
+            // 成功済みの操作を逆順で取り消す。取り消し失敗分は履歴から再試行できる。
+            Undo(context);
+            return false;
+        }
+        applied_[i] = true;
     }
-    return allSucceeded;
+    return true;
 }
 bool CompositeCommand::Undo(SceneEditorContext *context) {
-    bool allSucceeded = true;
-    for (auto it = commands_.rbegin(); it != commands_.rend(); ++it) {
-        if (!(*it)->Undo(context)) allSucceeded = false;
+    if (!context) return false;
+    for (size_t i = commands_.size(); i > 0; --i) {
+        if (!applied_[i - 1]) continue;
+        // 依存する先行操作を壊さないよう、失敗した時点で停止する。
+        if (!commands_[i - 1]->Undo(context)) return false;
+        applied_[i - 1] = false;
     }
-    return allSucceeded;
+    return true;
+}
+bool CompositeCommand::HasAppliedChanges() const noexcept {
+    return std::any_of(applied_.begin(), applied_.end(), [](bool applied) { return applied; });
 }
 
 //==================================================
@@ -268,7 +291,10 @@ bool CompositeCommand::Undo(SceneEditorContext *context) {
 
 bool SceneEditorCommands::Execute(std::unique_ptr<IEditorCommand> command) {
     if (!command || !context_) return false;
-    if (!command->Execute(context_)) return false;
+    if (!command->Execute(context_)) {
+        if (command->HasAppliedChanges()) PushToUndoStack(std::move(command));
+        return false;
+    }
     PushToUndoStack(std::move(command));
     return true;
 }
@@ -281,21 +307,27 @@ void SceneEditorCommands::PushExecuted(std::unique_ptr<IEditorCommand> command) 
 bool SceneEditorCommands::Undo() {
     auto &undoStack = GetActiveUndoStack();
     if (undoStack.empty() || !context_) return false;
+    if (!undoStack.back()->Undo(context_)) return false;
     auto command = std::move(undoStack.back());
     undoStack.pop_back();
-    const bool succeeded = command->Undo(context_);
     GetActiveRedoStack().push_back(std::move(command));
-    return succeeded;
+    return true;
 }
 
 bool SceneEditorCommands::Redo() {
     auto &redoStack = GetActiveRedoStack();
     if (redoStack.empty() || !context_) return false;
+    if (!redoStack.back()->Execute(context_)) {
+        if (redoStack.back()->HasAppliedChanges()) {
+            GetActiveUndoStack().push_back(std::move(redoStack.back()));
+            redoStack.pop_back();
+        }
+        return false;
+    }
     auto command = std::move(redoStack.back());
     redoStack.pop_back();
-    const bool succeeded = command->Execute(context_);
     GetActiveUndoStack().push_back(std::move(command));
-    return succeeded;
+    return true;
 }
 
 void SceneEditorCommands::ShowHistoryImGui() {

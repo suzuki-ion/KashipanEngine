@@ -4,6 +4,7 @@
             {
                 "data": {
                     "customData": {
+                        "parent": "ea136a02-c5e1-4ba5-b6ba-1e24be351f34",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -11,13 +12,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 8.0,
-                            "y": 0.9999654293060303,
-                            "z": 8.0
+                            "x": 1.25,
+                            "y": 0.25,
+                            "z": 1.25
                         },
                         "translate": {
-                            "x": 11.000258445739746,
-                            "y": 3.000190258026123,
+                            "x": 0.0,
+                            "y": 0.5,
                             "z": 0.0
                         }
                     },
@@ -37,50 +38,6 @@
                     "tag": ""
                 },
                 "type": "MeshFilter"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "center": {
-                            "x": 0.0,
-                            "y": 0.0,
-                            "z": 0.0
-                        },
-                        "continuousDetection": false,
-                        "isTrigger": false,
-                        "size": {
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
-                        },
-                        "syncPosition": [
-                            true,
-                            true,
-                            true
-                        ],
-                        "syncRotation": true,
-                        "syncScale": [
-                            true,
-                            true,
-                            true
-                        ]
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": "GroundBox"
-                },
-                "type": "BoxCollider"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "prefabID": "ed2a2055-97f1-460b-97c8-706f99030e5c"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "PrefabInstanceComponent"
             },
             {
                 "data": {
@@ -126,10 +83,10 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Ground",
-        "objectID": "61bf0d08-e6ff-41c6-81ec-848353004b89",
-        "prefabNodeID": "b5e3a7c9-5b53-428c-8d23-fbd52e19bc37",
-        "tag": "Ground"
+        "name": "Box",
+        "objectID": "a63f4317-7014-4778-bf53-ce6837fc4e6f",
+        "prefabNodeID": "9d6c80f2-9c53-452b-8323-3d16e84a76ca",
+        "tag": ""
     },
-    "siblingIndex": 2000
+    "siblingIndex": 1000
 }

@@ -16,9 +16,9 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 0.0,
-                            "y": 0.5,
-                            "z": 3.0
+                            "x": 3.0,
+                            "y": 2.0,
+                            "z": 7.0
                         }
                     },
                     "isActive": true,
@@ -26,26 +26,14 @@
                     "tag": ""
                 },
                 "type": "Transform"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "prefabID": "82dd1e6a-a100-45d0-ab31-158a6e6d3ea3"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "PrefabInstanceComponent"
             }
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Streetlight1",
-        "objectID": "ef6cff22-1513-48ba-be85-8123db8aeaa3",
-        "prefabNodeID": "abe5a4a0-0464-4481-b4e3-506234b75216",
+        "name": "Signboard",
+        "objectID": "f427e9e9-b968-4434-a607-49b3ff9b28b7",
         "tag": ""
     },
-    "siblingIndex": 4000
+    "siblingIndex": 7000
 }

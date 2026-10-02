@@ -11,14 +11,14 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 8.0,
-                            "y": 0.9999654293060303,
-                            "z": 8.0
+                            "x": 0.5,
+                            "y": 16.0,
+                            "z": 0.5
                         },
                         "translate": {
-                            "x": 11.000258445739746,
-                            "y": 3.000190258026123,
-                            "z": 0.0
+                            "x": 14.499794006347656,
+                            "y": 10.999984741210938,
+                            "z": -3.500102996826172
                         }
                     },
                     "isActive": true,
@@ -30,57 +30,13 @@
             {
                 "data": {
                     "customData": {
-                        "meshAssetPath": "PrimitiveMesh-Box"
+                        "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
                     },
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
                 },
                 "type": "MeshFilter"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "center": {
-                            "x": 0.0,
-                            "y": 0.0,
-                            "z": 0.0
-                        },
-                        "continuousDetection": false,
-                        "isTrigger": false,
-                        "size": {
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
-                        },
-                        "syncPosition": [
-                            true,
-                            true,
-                            true
-                        ],
-                        "syncRotation": true,
-                        "syncScale": [
-                            true,
-                            true,
-                            true
-                        ]
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": "GroundBox"
-                },
-                "type": "BoxCollider"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "prefabID": "ed2a2055-97f1-460b-97c8-706f99030e5c"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "PrefabInstanceComponent"
             },
             {
                 "data": {
@@ -126,10 +82,9 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Ground",
-        "objectID": "61bf0d08-e6ff-41c6-81ec-848353004b89",
-        "prefabNodeID": "b5e3a7c9-5b53-428c-8d23-fbd52e19bc37",
-        "tag": "Ground"
+        "name": "Cylinder",
+        "objectID": "7963551a-3709-4497-8f70-6decaf6b91d1",
+        "tag": ""
     },
-    "siblingIndex": 2000
+    "siblingIndex": 2600
 }

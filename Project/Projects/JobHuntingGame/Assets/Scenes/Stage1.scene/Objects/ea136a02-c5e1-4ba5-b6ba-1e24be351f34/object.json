@@ -16,8 +16,8 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 0.0,
-                            "y": 0.5,
+                            "x": 11.0,
+                            "y": 3.5,
                             "z": 3.0
                         }
                     },
@@ -30,7 +30,7 @@
             {
                 "data": {
                     "customData": {
-                        "prefabID": "82dd1e6a-a100-45d0-ab31-158a6e6d3ea3"
+                        "prefabID": "5841cc3c-596e-4f60-a3be-6077bb4e7d58"
                     },
                     "isActive": true,
                     "priority": 1,
@@ -42,10 +42,10 @@
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Streetlight1",
-        "objectID": "ef6cff22-1513-48ba-be85-8123db8aeaa3",
-        "prefabNodeID": "abe5a4a0-0464-4481-b4e3-506234b75216",
+        "name": "Streetlight2",
+        "objectID": "ea136a02-c5e1-4ba5-b6ba-1e24be351f34",
+        "prefabNodeID": "d323a35e-dd30-463a-befe-815cee3fc158",
         "tag": ""
     },
-    "siblingIndex": 4000
+    "siblingIndex": 6000
 }

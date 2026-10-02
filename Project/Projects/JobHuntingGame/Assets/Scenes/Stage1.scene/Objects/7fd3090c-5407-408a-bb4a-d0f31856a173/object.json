@@ -4,6 +4,7 @@
             {
                 "data": {
                     "customData": {
+                        "parent": "f427e9e9-b968-4434-a607-49b3ff9b28b7",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -17,8 +18,8 @@
                         },
                         "translate": {
                             "x": 0.0,
-                            "y": 0.5,
-                            "z": 3.0
+                            "y": 0.0,
+                            "z": 0.0
                         }
                     },
                     "isActive": true,
@@ -26,26 +27,14 @@
                     "tag": ""
                 },
                 "type": "Transform"
-            },
-            {
-                "data": {
-                    "customData": {
-                        "prefabID": "82dd1e6a-a100-45d0-ab31-158a6e6d3ea3"
-                    },
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": ""
-                },
-                "type": "PrefabInstanceComponent"
             }
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Streetlight1",
-        "objectID": "ef6cff22-1513-48ba-be85-8123db8aeaa3",
-        "prefabNodeID": "abe5a4a0-0464-4481-b4e3-506234b75216",
+        "name": "Light",
+        "objectID": "7fd3090c-5407-408a-bb4a-d0f31856a173",
         "tag": ""
     },
-    "siblingIndex": 4000
+    "siblingIndex": 1000
 }

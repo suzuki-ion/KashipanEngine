@@ -4,7 +4,7 @@
             {
                 "data": {
                     "customData": {
-                        "parent": "cd5b0e8d-54c2-4321-9aaf-e679269c2c1d",
+                        "parent": "f427e9e9-b968-4434-a607-49b3ff9b28b7",
                         "rotate": {
                             "w": 1.0,
                             "x": 0.0,
@@ -12,13 +12,13 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
+                            "x": 0.25,
+                            "y": 8.0,
+                            "z": 0.25
                         },
                         "translate": {
-                            "x": 128.0,
-                            "y": 1200.0,
+                            "x": -4.38690185546875e-05,
+                            "y": -0.5,
                             "z": 0.0
                         }
                     },
@@ -31,36 +31,19 @@
             {
                 "data": {
                     "customData": {
-                        "fields": {},
-                        "scriptPath": ""
+                        "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
                     },
                     "isActive": true,
                     "priority": 1,
                     "tag": ""
                 },
-                "type": "ScriptComponent"
+                "type": "MeshFilter"
             },
             {
                 "data": {
                     "customData": {
                         "allowInstancing": true,
-                        "color": {
-                            "w": 1.0,
-                            "x": 1.0,
-                            "y": 1.0,
-                            "z": 1.0
-                        },
-                        "defaultCharacterAnchor": {
-                            "x": 0.5,
-                            "y": 0.5
-                        },
-                        "defaultCharacterPivot": {
-                            "x": 0.5,
-                            "y": 0.5
-                        },
-                        "fontName": "NekoSpoon",
-                        "fontSize": 64.0,
-                        "horizontalAlign": 0,
+                        "castShadows": true,
                         "instanceColor": {
                             "w": 1.0,
                             "x": 1.0,
@@ -68,35 +51,40 @@
                             "z": 1.0
                         },
                         "instanceColorBlendMode": 1,
-                        "localizationKey": "",
-                        "materialName": "Default",
-                        "outlineColor": {
-                            "w": 1.0,
-                            "x": 0.0,
-                            "y": 0.0,
-                            "z": 0.0
+                        "instanceUvCombineMode": 0,
+                        "instanceUvPivot": {
+                            "x": 0.5,
+                            "y": 0.5
                         },
-                        "outlineWidth": 0.0,
-                        "pipelineName": "Text2D.BlendNormal",
+                        "instanceUvRotation": 0.0,
+                        "instanceUvScale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "instanceUvTranslate": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "materialName": "Default",
+                        "materialNames": [
+                            "Default"
+                        ],
+                        "pipelineName": "Object3D.Solid.BlendNormal",
                         "renderPriority": 0,
-                        "targetObjectID": "cd5b0e8d-54c2-4321-9aaf-e679269c2c1d",
-                        "text": "チェックポイント",
-                        "useLocalizationKey": false,
-                        "verticalAlign": 0
+                        "targetObjectID": "31813901-d420-4f28-876d-070da9e32858"
                     },
                     "isActive": true,
                     "priority": 900,
                     "tag": ""
                 },
-                "type": "TextRenderer"
+                "type": "MeshRenderer"
             }
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
         "isActive": true,
-        "name": "Text Object",
-        "objectID": "89d44bbc-702e-4e9a-a5e9-5cd27ab962eb",
-        "prefabNodeID": "d8ce0f3b-5c01-4a54-8180-e1d479d56620",
+        "name": "Cylinder",
+        "objectID": "54fba41b-032c-4fbf-ae42-499cfc419d47",
         "tag": ""
     },
     "siblingIndex": 2000

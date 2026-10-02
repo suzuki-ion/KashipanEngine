@@ -1926,6 +1926,15 @@
 
 		//--------- editor.menu ---------//
 		"editor.menu.debugwindows": "Debug Windows",
+		"editor.menu.help": "Help",
+		"editor.menu.help.reference": "Engine Reference",
+		"editor.menu.help.reference.tooltip": "Opens the engine reference in your default browser.",
+		"editor.menu.help.reference.editor": "Editor",
+		"editor.menu.help.reference.engine": "Engine (C++)",
+		"editor.menu.help.reference.script": "Script (AngelScript)",
+		"editor.menu.help.reference.search": "Search Reference",
+		"editor.menu.help.reference.notfound": "Reference page not found: ",
+		"editor.menu.help.reference.openfailed": "Failed to open the reference page: ",
 		"editor.menu.debugwindows.imguidemo": "ImGui Demo Window",
 		"editor.menu.debugwindows.reloadpipelines": "Reload Shaders/Pipelines",
 		"editor.menu.edit": "Edit",

@@ -7,6 +7,7 @@
 #include <imgui.h>
 #include <string>
 #include <Windows.h>
+#include <shellapi.h>
 
 #include "Assets/AudioManager.h"
 #include "Assets/MaterialManager.h"
@@ -58,6 +59,25 @@
 namespace KashipanEngine {
 
 namespace {
+/// @brief エンジンのリファレンス（エンジンルート直下Reference/の静的HTML）を既定のブラウザで開く
+/// @param pageRelativePath Reference/からの相対パス（例: "index.html"）
+void OpenReferencePage(const std::string &pageRelativePath) {
+    const std::string pagePath = ProjectPaths::InEngineRoot("Reference/" + pageRelativePath);
+    std::filesystem::path physicalPath = Utf8StringToPath(pagePath);
+    std::error_code ec;
+    if (!std::filesystem::exists(physicalPath, ec)) {
+        Log(Translation("editor.menu.help.reference.notfound") + pagePath, LogSeverity::Warning);
+        return;
+    }
+    // ShellExecuteWへはWindows形式の区切り文字で渡す
+    const std::wstring widePath = physicalPath.make_preferred().wstring();
+    const HINSTANCE result = ShellExecuteW(nullptr, L"open", widePath.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    // ShellExecuteWは成功時に32より大きい値を返す（ProjectManager.cppのフォルダを開く処理と同じ規約）
+    if (reinterpret_cast<INT_PTR>(result) <= 32) {
+        Log(Translation("editor.menu.help.reference.openfailed") + pagePath, LogSeverity::Error);
+    }
+}
+
 /// @brief 自動保存のファイル名をTemplateLiteralから構築する（拡張子が無ければ .json を付与する）
 std::string RenderAutoSaveFileName(const std::string &nameFormat, const std::string &sceneName) {
     auto pad2 = [](int v) { std::ostringstream os; os << std::setw(2) << std::setfill('0') << v; return os.str(); };
@@ -390,6 +410,19 @@ std::string SceneEditor::GetCurrentSceneFilePath() const {
     return {};
 }
 
+void SceneEditor::RecordInternalSceneSave(const std::string &path) {
+    const std::string logicalPath = ProjectPaths::ToLogical(ProjectPaths::ToPhysical(path));
+    // .scene形式は読込時に階層順へ並び替わるため、保存前のライブJSONではなく
+    // 実際に保存されたディスク表現を保持する。非同期走査が途中状態を拾っても、
+    // 通知の処理時に完成した保存内容と照合できる。
+    JSON diskScene = LoadSceneFromPath(logicalPath);
+    if (diskScene.is_object() && !diskScene.is_discarded()) {
+        internallySavedScenes_[logicalPath] = std::move(diskScene);
+    } else {
+        internallySavedScenes_.erase(logicalPath);
+    }
+}
+
 void SceneEditor::ProcessExternalAssetChanges(std::vector<std::string> changedPaths) {
     assetsWindow_->RefreshAfterExternalChanges();
     const std::string scenePath = GetCurrentSceneFilePath();
@@ -415,19 +448,6 @@ void SceneEditor::ProcessExternalAssetChanges(std::vector<std::string> changedPa
         externalSceneCanReload_ = !externallyChangedSceneJson_.is_discarded() && externallyChangedSceneJson_.is_object();
         externalSceneChangeRequested_ = true;
         return;
-void SceneEditor::RecordInternalSceneSave(const std::string &path) {
-    const std::string logicalPath = ProjectPaths::ToLogical(ProjectPaths::ToPhysical(path));
-    // .scene形式は読込時に階層順へ並び替わるため、保存前のライブJSONではなく
-    // 実際に保存されたディスク表現を保持する。非同期走査が途中状態を拾っても、
-    // 通知の処理時に完成した保存内容と照合できる。
-    JSON diskScene = LoadSceneFromPath(logicalPath);
-    if (diskScene.is_object() && !diskScene.is_discarded()) {
-        internallySavedScenes_[logicalPath] = std::move(diskScene);
-    } else {
-        internallySavedScenes_.erase(logicalPath);
-    }
-}
-
     }
     ProcessNonSceneExternalChanges(changedPaths);
 }
@@ -697,6 +717,28 @@ void SceneEditor::ShowMainWindow() {
         }
         // エディターツールスクリプトの[MenuItem("MenuBar/...")]で追加された項目
         EditorToolManager::GetInstance().ShowMenuBarItems();
+        // ヘルプ（エンジンのリファレンスを既定のブラウザで開く）。一般的なアプリに合わせて右端（最後）に置く
+        if (ImGui::BeginMenu(TranslationLabel("editor.menu.help"))) {
+            if (ImGui::MenuItem(TranslationLabel("editor.menu.help.reference"))) {
+                OpenReferencePage("index.html");
+            }
+            ImGui::SetItemTooltip("%s", TranslationC("editor.menu.help.reference.tooltip"));
+            ImGui::Separator();
+            if (ImGui::MenuItem(TranslationLabel("editor.menu.help.reference.editor"))) {
+                OpenReferencePage("Editor/00_Index.html");
+            }
+            if (ImGui::MenuItem(TranslationLabel("editor.menu.help.reference.engine"))) {
+                OpenReferencePage("Engine/00_Index.html");
+            }
+            if (ImGui::MenuItem(TranslationLabel("editor.menu.help.reference.script"))) {
+                OpenReferencePage("Script/00_Index.html");
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem(TranslationLabel("editor.menu.help.reference.search"))) {
+                OpenReferencePage("search.html");
+            }
+            ImGui::EndMenu();
+        }
         ImGui::EndMainMenuBar();
     }
 
@@ -722,6 +764,7 @@ void SceneEditor::ShowMainWindow() {
     }
     const SceneSaver::Result saveResult = saver_->ShowImGui();
     if (saveResult == SceneSaver::Result::Saved) {
+        RecordInternalSceneSave(saver_->GetFilePath());
         savedSceneSnapshot_ = GetEditableSceneJSON();
         hasSavedSceneSnapshot_ = true;
         if (continueDestructiveActionAfterSave_) ExecutePendingDestructiveAction();
@@ -764,7 +807,6 @@ void SceneEditor::ShowPlayControls() {
             TakeSceneBackup("PlayStart_");
             context_->PlayStart();
             objectHierarchy_->RestoreSelection(selectedIDs);
-        RecordInternalSceneSave(saver_->GetFilePath());
         }
     } else {
         if (ImGui::Button(TranslationLabel("editor.play.stop"))) {

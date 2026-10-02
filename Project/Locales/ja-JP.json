@@ -1928,6 +1928,15 @@
 
 		//--------- editor.menu ---------//
 		"editor.menu.debugwindows": "デバッグウィンドウ",
+		"editor.menu.help": "ヘルプ",
+		"editor.menu.help.reference": "エンジンリファレンス",
+		"editor.menu.help.reference.tooltip": "既定のブラウザでエンジンのリファレンスを開きます。",
+		"editor.menu.help.reference.editor": "エディター",
+		"editor.menu.help.reference.engine": "エンジン (C++)",
+		"editor.menu.help.reference.script": "スクリプト (AngelScript)",
+		"editor.menu.help.reference.search": "リファレンスを検索",
+		"editor.menu.help.reference.notfound": "リファレンスのページが見つかりません: ",
+		"editor.menu.help.reference.openfailed": "リファレンスのページを開けませんでした: ",
 		"editor.menu.debugwindows.imguidemo": "ImGuiデモウィンドウ",
 		"editor.menu.debugwindows.reloadpipelines": "シェーダー/パイプラインを再読み込み",
 		"editor.menu.edit": "編集",

@@ -1889,6 +1889,15 @@
 
 		//--------- editor.menu ---------//
 		"editor.menu.debugwindows": "调试窗口",
+		"editor.menu.help": "帮助",
+		"editor.menu.help.reference": "引擎参考文档",
+		"editor.menu.help.reference.tooltip": "在默认浏览器中打开引擎参考文档。",
+		"editor.menu.help.reference.editor": "编辑器",
+		"editor.menu.help.reference.engine": "引擎 (C++)",
+		"editor.menu.help.reference.script": "脚本 (AngelScript)",
+		"editor.menu.help.reference.search": "搜索参考文档",
+		"editor.menu.help.reference.notfound": "找不到参考文档页面: ",
+		"editor.menu.help.reference.openfailed": "无法打开参考文档页面: ",
 		"editor.menu.debugwindows.imguidemo": "ImGui演示窗口",
 		"editor.menu.debugwindows.reloadpipelines": "重新加载着色器/管线",
 		"editor.menu.edit": "编辑",

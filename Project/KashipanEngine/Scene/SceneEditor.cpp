@@ -382,7 +382,10 @@ std::string SceneEditor::GetCurrentSceneFilePath() const {
     const SceneManager *sceneManager = context_->GetSceneManager();
     if (!sceneManager) return {};
     for (const auto &entry : sceneManager->GetRegisteredScenes()) {
-        if (entry.name == context_->GetName()) return ProjectPaths::NormalizeSeparators(entry.filePath);
+        if (entry.name == context_->GetName()) {
+            if (entry.filePath.empty()) return {};
+            return ProjectPaths::ToLogical(ProjectPaths::ToPhysical(entry.filePath));
+        }
     }
     return {};
 }
@@ -397,7 +400,12 @@ void SceneEditor::ProcessExternalAssetChanges(std::vector<std::string> changedPa
 
     if (currentSceneChanged) {
         JSON diskScene = LoadSceneFromPath(scenePath);
-        if (!diskScene.is_discarded() && diskScene == context_->SaveSceneToJSON()) {
+        const auto internalSave = internallySavedScenes_.find(scenePath);
+        const bool isInternalSave = internalSave != internallySavedScenes_.end()
+            && diskScene.is_object() && diskScene == internalSave->second;
+        // 外部版を受け入れた後に以前の自己保存内容へ戻された場合も検出する。
+        if (!isInternalSave) internallySavedScenes_.erase(scenePath);
+        if (isInternalSave || (!diskScene.is_discarded() && diskScene == GetEditableSceneJSON())) {
             ProcessNonSceneExternalChanges(changedPaths);
             return;
         }
@@ -407,6 +415,19 @@ void SceneEditor::ProcessExternalAssetChanges(std::vector<std::string> changedPa
         externalSceneCanReload_ = !externallyChangedSceneJson_.is_discarded() && externallyChangedSceneJson_.is_object();
         externalSceneChangeRequested_ = true;
         return;
+void SceneEditor::RecordInternalSceneSave(const std::string &path) {
+    const std::string logicalPath = ProjectPaths::ToLogical(ProjectPaths::ToPhysical(path));
+    // .scene形式は読込時に階層順へ並び替わるため、保存前のライブJSONではなく
+    // 実際に保存されたディスク表現を保持する。非同期走査が途中状態を拾っても、
+    // 通知の処理時に完成した保存内容と照合できる。
+    JSON diskScene = LoadSceneFromPath(logicalPath);
+    if (diskScene.is_object() && !diskScene.is_discarded()) {
+        internallySavedScenes_[logicalPath] = std::move(diskScene);
+    } else {
+        internallySavedScenes_.erase(logicalPath);
+    }
+}
+
     }
     ProcessNonSceneExternalChanges(changedPaths);
 }
@@ -743,6 +764,7 @@ void SceneEditor::ShowPlayControls() {
             TakeSceneBackup("PlayStart_");
             context_->PlayStart();
             objectHierarchy_->RestoreSelection(selectedIDs);
+        RecordInternalSceneSave(saver_->GetFilePath());
         }
     } else {
         if (ImGui::Button(TranslationLabel("editor.play.stop"))) {
@@ -792,7 +814,9 @@ bool SceneEditor::ShowNewSceneModal() {
                 auto *sceneManager = context_->GetSceneManager();
                 if (sceneManager) {
                     const std::string filePath = "Assets/Scenes/" + sceneName + ".scene";
-                    SaveSceneToPath(context_->SaveSceneToJSON(), filePath);
+                    if (SaveSceneToPath(context_->SaveSceneToJSON(), filePath)) {
+                        RecordInternalSceneSave(filePath);
+                    }
                     if (sceneManager->RegisterSceneFile(sceneName, filePath)) {
                         sceneManager->SaveSceneList();
                     }

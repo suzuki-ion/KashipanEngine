@@ -25,6 +25,9 @@ public:
     /// @brief ポップアップの描画（毎フレーム呼ぶ）
     Result ShowImGui();
 
+    /// @brief 保存成功時に監視側へ通知するための保存先パス
+    const std::string &GetFilePath() const { return filePath_; }
+
 private:
     SceneEditorContext *context_ = nullptr;
     std::string filePath_;

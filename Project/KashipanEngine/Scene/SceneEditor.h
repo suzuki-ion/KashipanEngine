@@ -58,6 +58,7 @@ private:
     bool IsEditorApplicationActive() const;
     void PollExternalAssetChanges();
     void ProcessExternalAssetChanges(std::vector<std::string> changedPaths);
+    void RecordInternalSceneSave(const std::string &path);
     void ProcessNonSceneExternalChanges(const std::vector<std::string> &changedPaths);
     void ShowExternalSceneChangeModal();
     std::string GetCurrentSceneFilePath() const;
@@ -164,6 +165,8 @@ private:
     bool isAutoSaveSettingsRequested_ = false;
 
     std::unordered_map<std::string, ExternalFileStamp> externalAssetSnapshot_;
+    /// @brief 自己保存後のディスク表現。遅れて届く監視結果と保存後の編集を区別する。
+    std::unordered_map<std::string, JSON> internallySavedScenes_;
     std::future<ExternalAssetScanResult> externalAssetScanFuture_;
     std::unordered_set<std::string> pendingExternalAssetPaths_;
     /// @brief Play中に検知し、編集状態の復元後まで適用を保留している外部変更

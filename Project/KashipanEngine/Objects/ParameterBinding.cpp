@@ -1,6 +1,8 @@
 #include "Objects/ParameterBinding.h"
 
 #include <algorithm>
+#include <cmath>
+#include <limits>
 #include <unordered_map>
 
 #include "Objects/Components/ScriptComponent.h"
@@ -53,125 +55,79 @@ bool ApplyParameterBinding(ObjectContext *objectContext, const ParameterBinding 
         return script && script->SetFloatVariable(binding.parameterName, value);
     }
 
-    // メンバ変数（ADD_MEMBER_VARIABLE登録済み）への適用
-    auto *member = target->GetMemberVariable(binding.parameterName);
-    if (!member || !member->ptr) return false;
-    bool written = false;
-    switch (member->typeInfo.GetBaseType()) {
-    case ValueType::Float:
-        *static_cast<float *>(member->ptr) = value;
-        written = true;
-        break;
-    case ValueType::Double:
-        *static_cast<double *>(member->ptr) = static_cast<double>(value);
-        written = true;
-        break;
-    case ValueType::Vector2:
-    case ValueType::Vector3:
-    case ValueType::Vector4: {
-        const ValueType baseType = member->typeInfo.GetBaseType();
-        const int channelCount = (baseType == ValueType::Vector2) ? 2 : (baseType == ValueType::Vector3) ? 3 : 4;
-        const int channel = std::clamp(binding.channel, 0, channelCount - 1);
-        static_cast<float *>(member->ptr)[channel] = value;
-        written = true;
-        break;
-    }
-    default:
-        break;
-    }
-    // 書き込み後コールバック（Transformのワールド行列キャッシュ無効化など）
-    if (written && member->onModified) {
-        member->onModified();
-    }
-    return written;
+    const auto *member = target->GetMemberVariable(binding.parameterName);
+    if (!member || !member->IsWritable()) return false;
+    const ValueType type = member->GetTypeInfo().GetBaseType();
+    if (type != ValueType::Float && type != ValueType::Double && type != ValueType::Vector2 &&
+        type != ValueType::Vector3 && type != ValueType::Vector4) return false;
+    // float専用APIは従来どおり成分を書き込む（値全体の指定はValue版のみ）。
+    ParameterBinding channelBinding = binding;
+    channelBinding.channel = std::max(0, binding.channel);
+    return ApplyParameterBindingValue(objectContext, channelBinding, MyAny(value), self);
 }
+
+namespace {
+template <typename T>
+bool SetVectorChannel(IObjectComponent *target, const std::string &key, int channel, float value) {
+    T vector;
+    if (!target->GetMemberValue(key, vector)) return false;
+    if (channel == 0) vector.x = value;
+    else if (channel == 1) vector.y = value;
+    else if constexpr (!std::is_same_v<T, Vector2>) {
+        if (channel == 2) vector.z = value;
+        else if constexpr (std::is_same_v<T, Vector4>) vector.w = value;
+        else return false;
+    } else return false;
+    return target->SetMemberValue(key, vector);
+}
+template <typename T>
+bool SetExactMemberValue(IObjectComponent *target, const std::string &key, const MyAny &value) {
+    return value.IsType<T>() && target->SetMemberValue(key, value.AnyCast<T>());
+}
+} // namespace
 
 bool ApplyParameterBindingValue(ObjectContext *objectContext, const ParameterBinding &binding, const MyAny &value, const IObjectComponent *self) {
     IObjectComponent *target = FindParameterBindingTarget(objectContext, binding, self);
     if (!target) return false;
-
-    // ScriptComponentの[SerializeField]は現状float変数のみ対応のため、数値系のみ書き込める
     if (binding.isScriptVariable) {
-        float floatValue = 0.0f;
-        if (!TryAnyToFloat(value, floatValue)) return false;
+        float v;
+        if (!TryAnyToFloat(value, v)) return false;
         auto *script = dynamic_cast<ScriptComponent *>(target);
-        return script && script->SetFloatVariable(binding.parameterName, floatValue);
+        return script && script->SetFloatVariable(binding.parameterName, v);
     }
-
-    auto *member = target->GetMemberVariable(binding.parameterName);
-    if (!member || !member->ptr) return false;
-    bool written = false;
-    switch (member->typeInfo.GetBaseType()) {
-    case ValueType::Float: {
-        float v;
-        if (TryAnyToFloat(value, v)) { *static_cast<float *>(member->ptr) = v; written = true; }
-        break;
-    }
-    case ValueType::Double: {
-        float v;
-        if (TryAnyToFloat(value, v)) { *static_cast<double *>(member->ptr) = static_cast<double>(v); written = true; }
-        break;
-    }
+    const auto *member = target->GetMemberVariable(binding.parameterName);
+    if (!member || !member->IsWritable()) return false;
+    const auto &key = binding.parameterName;
+    float v = 0.0f;
+    switch (member->GetTypeInfo().GetBaseType()) {
+    case ValueType::Float:
+        return TryAnyToFloat(value, v) && target->SetMemberValue(key, v);
+    case ValueType::Double:
+        if (value.IsType<double>()) return target->SetMemberValue(key, value.AnyCast<double>());
+        return TryAnyToFloat(value, v) && target->SetMemberValue(key, static_cast<double>(v));
     case ValueType::Bool:
-        if (value.IsType<bool>()) {
-            *static_cast<bool *>(member->ptr) = value.AnyCast<bool>();
-            written = true;
-        } else if (float v; TryAnyToFloat(value, v)) {
-            *static_cast<bool *>(member->ptr) = (v != 0.0f);
-            written = true;
-        }
-        break;
+        return TryAnyToFloat(value, v) && target->SetMemberValue(key, v != 0.0f);
     case ValueType::Int32:
-        if (value.IsType<int>()) {
-            *static_cast<int *>(member->ptr) = value.AnyCast<int>();
-            written = true;
-        } else if (float v; TryAnyToFloat(value, v)) {
-            *static_cast<int *>(member->ptr) = static_cast<int>(v);
-            written = true;
-        }
-        break;
+        if (value.IsType<int>()) return target->SetMemberValue(key, value.AnyCast<int>());
+        // 浮動小数点から整数への範囲外変換を拒否する。
+        if (!TryAnyToFloat(value, v) || !std::isfinite(v) ||
+            static_cast<double>(v) < std::numeric_limits<int>::min() ||
+            static_cast<double>(v) > std::numeric_limits<int>::max()) return false;
+        return target->SetMemberValue(key, static_cast<int>(v));
     case ValueType::Vector2:
+        if (binding.channel < 0) return SetExactMemberValue<Vector2>(target, key, value);
+        return TryAnyToFloat(value, v) && SetVectorChannel<Vector2>(target, key, std::clamp(binding.channel, 0, 1), v);
     case ValueType::Vector3:
-    case ValueType::Vector4: {
-        const ValueType baseType = member->typeInfo.GetBaseType();
-        if (binding.channel < 0) {
-            // 値全体（Vector2/3/4）をそのまま書き込む。値の型が一致する場合のみ
-            if (baseType == ValueType::Vector2 && value.IsType<Vector2>()) { *static_cast<Vector2 *>(member->ptr) = value.AnyCast<Vector2>(); written = true; }
-            else if (baseType == ValueType::Vector3 && value.IsType<Vector3>()) { *static_cast<Vector3 *>(member->ptr) = value.AnyCast<Vector3>(); written = true; }
-            else if (baseType == ValueType::Vector4 && value.IsType<Vector4>()) { *static_cast<Vector4 *>(member->ptr) = value.AnyCast<Vector4>(); written = true; }
-        } else if (float v; TryAnyToFloat(value, v)) {
-            const int channelCount = (baseType == ValueType::Vector2) ? 2 : (baseType == ValueType::Vector3) ? 3 : 4;
-            const int channel = std::clamp(binding.channel, 0, channelCount - 1);
-            static_cast<float *>(member->ptr)[channel] = v;
-            written = true;
-        }
-        break;
+        if (binding.channel < 0) return SetExactMemberValue<Vector3>(target, key, value);
+        return TryAnyToFloat(value, v) && SetVectorChannel<Vector3>(target, key, std::clamp(binding.channel, 0, 2), v);
+    case ValueType::Vector4:
+        if (binding.channel < 0) return SetExactMemberValue<Vector4>(target, key, value);
+        return TryAnyToFloat(value, v) && SetVectorChannel<Vector4>(target, key, std::clamp(binding.channel, 0, 3), v);
+    case ValueType::String: return SetExactMemberValue<std::string>(target, key, value);
+    case ValueType::Quaternion: return SetExactMemberValue<Quaternion>(target, key, value);
+    case ValueType::Matrix4x4: return SetExactMemberValue<Matrix4x4>(target, key, value);
+    default: return false;
     }
-    case ValueType::String:
-        if (value.IsType<std::string>()) {
-            *static_cast<std::string *>(member->ptr) = value.AnyCast<std::string>();
-            written = true;
-        }
-        break;
-    case ValueType::Quaternion:
-        if (value.IsType<Quaternion>()) {
-            *static_cast<Quaternion *>(member->ptr) = value.AnyCast<Quaternion>();
-            written = true;
-        }
-        break;
-    case ValueType::Matrix4x4:
-        if (value.IsType<Matrix4x4>()) {
-            *static_cast<Matrix4x4 *>(member->ptr) = value.AnyCast<Matrix4x4>();
-            written = true;
-        }
-        break;
-    default:
-        break;
-    }
-    if (written && member->onModified) {
-        member->onModified();
-    }
-    return written;
 }
 
 JSON SaveParameterBindingToJson(const ParameterBinding &binding) {
@@ -227,7 +183,8 @@ std::vector<ParameterBindingCandidate> CollectParameterBindingCandidates(ObjectC
 
         // 他コンポーネントはADD_MEMBER_VARIABLE登録済みのfloat系メンバ変数を候補にする
         for (const auto &[variableName, member] : component->GetAllMemberVariables()) {
-            const ValueType baseType = member.typeInfo.GetBaseType();
+            if (!member.IsWritable()) continue;
+            const ValueType baseType = member.GetTypeInfo().GetBaseType();
             int channelCount = 0;
             if (baseType == ValueType::Float || baseType == ValueType::Double) channelCount = 1;
             else if (baseType == ValueType::Vector2) channelCount = 2;
@@ -289,7 +246,8 @@ std::vector<ParameterBindingCandidate> CollectParameterBindingCandidatesForType(
         }
 
         for (const auto &[variableName, member] : component->GetAllMemberVariables()) {
-            const ValueType baseType = member.typeInfo.GetBaseType();
+            if (!member.IsWritable()) continue;
+            const ValueType baseType = member.GetTypeInfo().GetBaseType();
 
             if (sourceIsNumeric) {
                 // 数値系の値は、float/double/Vector2/3/4（成分単位）・Bool・Int32へ書き込める

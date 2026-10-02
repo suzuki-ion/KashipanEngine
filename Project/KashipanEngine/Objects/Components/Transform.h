@@ -8,17 +8,12 @@ namespace KashipanEngine {
 
 class Transform : public IObjectComponent {
 public:
-    // translate_/rotate_/scale_は外部（KeyFrameAnimator等）からポインタ経由で直接書き込まれると
-    // セッターを迂回するため、書き込み後コールバックでワールド行列キャッシュの無効化
-    // （rotate_はクォータニオンとの同期も）を行う
+    // アニメーション等の汎用書き込みもセッターを経由し、キャッシュ・回転を同期する。
     OBJECT_COMPONENT_CONSTRUCTOR(Transform, 1,
-        ADD_MEMBER_VARIABLE_WITH_CALLBACK(translate_, [this] { isWorldMatrixCalculated_ = false; });
-        ADD_MEMBER_VARIABLE_WITH_CALLBACK(rotate_, [this] {
-            rotateQuat_ = Quaternion::MakeRotateEuler(rotate_);
-            isWorldMatrixCalculated_ = false;
-        });
-        ADD_MEMBER_VARIABLE_WITH_CALLBACK(scale_, [this] { isWorldMatrixCalculated_ = false; });
-        ADD_MEMBER_VARIABLE(worldMatrix_);
+        AddMemberProperty<Vector3>("translate_", &translate_, [this](const Vector3 &v) { SetTranslate(v); return true; });
+        AddMemberProperty<Vector3>("rotate_", &rotate_, [this](const Vector3 &v) { SetRotate(v); return true; });
+        AddMemberProperty<Vector3>("scale_", &scale_, [this](const Vector3 &v) { SetScale(v); return true; });
+        AddReadOnlyMemberVariable("worldMatrix_", &worldMatrix_);
     )
     ~Transform() override = default;
 

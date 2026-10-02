@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <functional>
 #include <type_traits>
+#include <typeindex>
 #include "Utilities/FileIO.h"
 #include "ComponentSerialize/ComponentRegistry.h"
 #include "Objects/ComponentRef.h"
@@ -45,15 +46,20 @@ class IObjectComponent {
     /// @brief コンポーネントの型ID設定用
     static inline size_t sComponentTypeID = 0;
 public:
-    /// @brief メンバー変数の情報（ImGuiやKeyFrameAnimator等の外部からのアクセス用）
-    struct MemberVariable {
-        void *ptr = nullptr;
-        TypeInfo typeInfo;
-        /// @brief 外部からptr経由で値を書き込んだ後に呼ぶコールバック（未設定の場合はnullptr）
-        /// @details セッターを迂回した直接書き込みで必要になる副作用（Transformのワールド行列
-        ///          キャッシュ無効化など）を、コンポーネント側がここに登録しておく。
-        ///          外部から値を書き込んだ側は、書き込み後に必ずこれを呼ぶこと
-        std::function<void()> onModified;
+    /// @brief 公開するのは型と書き込み可否だけ。値はコンポーネントの型付きAPIを経由する。
+    class MemberVariable {
+    public:
+        const TypeInfo &GetTypeInfo() const noexcept { return typeInfo_; }
+        bool IsWritable() const noexcept { return static_cast<bool>(write_); }
+    private:
+        friend class IObjectComponent;
+        MemberVariable(const void *value, TypeInfo typeInfo, std::type_index cppType,
+            std::function<bool(const void *)> write)
+            : value_(value), typeInfo_(std::move(typeInfo)), cppType_(cppType), write_(std::move(write)) {}
+        const void *value_;
+        TypeInfo typeInfo_;
+        std::type_index cppType_;
+        std::function<bool(const void *)> write_;
     };
     /// @brief コンポーネントの型IDを取得
     /// @tparam T コンポーネントの型
@@ -157,10 +163,10 @@ public:
         return true;
     }
 
-    /// @brief メンバ変数の取得（外部からの汎用アクセス用。ptr経由で書き込んだ後は必ずonModifiedを呼ぶこと）
+    /// @brief メンバ変数の読み取り専用メタデータを取得する
     /// @param key 変数のキー
     /// @return メンバー変数の情報（存在しない場合は nullptr）
-    MemberVariable *GetMemberVariable(const std::string &key) {
+    const MemberVariable *GetMemberVariable(const std::string &key) const {
         auto it = memberVariables_.find(key);
         if (it != memberVariables_.end()) {
             return &it->second;
@@ -171,6 +177,22 @@ public:
     /// @return メンバー変数のマップ
     const std::unordered_map<std::string, MemberVariable> &GetAllMemberVariables() const {
         return memberVariables_;
+    }
+
+    /// @brief 実際のC++型が一致する場合だけ、値のコピーを返す
+    template <typename T>
+    bool GetMemberValue(const std::string &key, T &value) const {
+        const auto *member = GetMemberVariable(key);
+        if (!member || !member->value_ || member->cppType_ != std::type_index(typeid(T))) return false;
+        value = *static_cast<const T *>(member->value_);
+        return true;
+    }
+    /// @brief 型と書き込み権限を確認し、登録済みのセッター／通知を必ず実行する
+    template <typename T>
+    bool SetMemberValue(const std::string &key, const T &value) {
+        const auto *member = GetMemberVariable(key);
+        if (!member || !member->write_ || member->cppType_ != std::type_index(typeid(T))) return false;
+        return member->write_(&value);
     }
 
 protected:
@@ -209,20 +231,28 @@ protected:
     SceneContext *GetOwnerSceneContext() const { return sceneContext_; }
 
     /// @brief メンバー変数を追加する
-    /// @param key 変数のキー
-    /// @param variable メンバー変数の情報
-    void AddMemberVariable(const std::string &key, const MemberVariable &variable) {
-        memberVariables_.insert_or_assign(key, variable);
-    }
-    /// @brief メンバー変数を追加する
     /// @tparam T 変数の型
     /// @param key 変数のキー
     /// @param variable 変数のポインタ
-    /// @param onModified 外部からptr経由で値を書き込まれた後に呼ばれるコールバック
-    ///                   （セッター迂回時に必要な副作用がある場合のみ指定する）
+    /// @param onModified SetMemberValueによる書き込み後に必ず呼ぶ通知
     template <typename T>
     void AddMemberVariable(const std::string &key, T *variable, std::function<void()> onModified = nullptr) {
-        memberVariables_.insert_or_assign(key, MemberVariable{ static_cast<void *>(variable), GetValueType<T>(), std::move(onModified) });
+        AddMemberProperty<T>(key, variable, [variable, onModified = std::move(onModified)](const T &value) {
+            if (!variable) return false;
+            *variable = value;
+            if (onModified) onModified();
+            return true;
+        });
+    }
+    /// @brief 検証・副作用を持つ変数は専用セッターへ委譲する（拒否時はfalse）
+    template <typename T>
+    void AddMemberProperty(const std::string &key, const T *variable, std::function<bool(const T &)> setter) {
+        memberVariables_.insert_or_assign(key, MemberVariable(variable, GetValueType<T>(), typeid(T),
+            [setter = std::move(setter)](const void *value) { return setter && setter(*static_cast<const T *>(value)); }));
+    }
+    template <typename T>
+    void AddReadOnlyMemberVariable(const std::string &key, const T *variable) {
+        memberVariables_.insert_or_assign(key, MemberVariable(variable, GetValueType<T>(), typeid(T), {}));
     }
 #define ADD_MEMBER_VARIABLE(var) AddMemberVariable(#var, &var)
 #define ADD_MEMBER_VARIABLE_WITH_CALLBACK(var, ...) AddMemberVariable(#var, &var, __VA_ARGS__)

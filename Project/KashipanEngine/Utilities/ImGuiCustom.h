@@ -104,35 +104,99 @@ inline bool SearchFilterBox(const char *id, ImGuiTextFilter &filter, const char 
     return changed;
 }
 
+/// @brief ポップアップ（コンボ含む）の先頭に置く検索ボックス。ポップアップを開いた直後は前回の入力を
+///        消して入力欄へフォーカスを入れる（開いてすぐ文字を打ち込めるようにする）
+/// @details 呼び出し側はImGuiTextFilter::PassFilterで候補を絞り込む（大文字小文字を区別しない部分一致。
+///          "a,b"でOR、"-a"で除外も使える）
+/// @param id ImGui ID（"##"始まりを推奨）
+/// @param filter 対象フィルタ（ポップアップは同時に1つしか開かないため、呼び出し側でstaticに持ってよい）
+/// @param width 入力欄の幅（-FLT_MINで残り全幅）
+/// @param hint 未入力時に表示するヒント文字列（nullptrで汎用の「検索」）
+/// @return 検索ボックス上でEnterが押された場合は true（呼び出し側で先頭の候補を決定するのに使う）
+inline bool PopupSearchBox(const char *id, ImGuiTextFilter &filter, float width = -FLT_MIN, const char *hint = nullptr) {
+    const bool appearing = ImGui::IsWindowAppearing();
+    if (appearing) {
+        filter.Clear();
+        ImGui::SetKeyboardFocusHere();
+    }
+    SearchFilterBox(id, filter, hint ? hint : KashipanEngine::TranslationC("editor.imguicustom.search"), width);
+    // 1行入力欄はEnterで確定と同時に非アクティブになる（Escでの非アクティブ化と区別するためキーも見る）
+    return !appearing && ImGui::IsItemDeactivated() &&
+        (ImGui::IsKeyPressed(ImGuiKey_Enter) || ImGui::IsKeyPressed(ImGuiKey_KeypadEnter));
+}
+
+/// @brief 検索付きポップアップの候補リスト（子ウィンドウ）の高さ。最大12行分で、超える分はリスト内でスクロールする
+/// @details 検索ボックスがリストと一緒にスクロールして見えなくならないよう、リストだけを子ウィンドウに入れて使う
+inline float PopupSearchListHeight(size_t rowCount) {
+    constexpr size_t kMaxRows = 12;
+    const size_t rows = std::clamp<size_t>(rowCount, 1, kMaxRows);
+    return static_cast<float>(rows) * ImGui::GetTextLineHeightWithSpacing();
+}
+
 // ==========================================
 // 1-2. 文字列の選択コンボ
 // ==========================================
 
-/// @brief 文字列を候補リストから選択するコンボボックス
+/// @brief 文字列を候補リストから選択するコンボボックス（ポップアップ先頭の検索ボックスで候補を絞り込める）
 /// @param label ラベル
 /// @param value 現在値（変更時に上書きされる）
 /// @param items 候補リスト
-/// @param allowNone 先頭に「(None)」を表示して空文字を選択可能にする
+/// @param allowNone 先頭に「(None)」を表示して空文字を選択可能にする（検索中は表示しない）
 /// @return 値が変更された場合は true
 inline bool SelectString(const char *label, std::string &value, const std::vector<std::string> &items, bool allowNone = false) {
     bool changed = false;
     const char *preview = value.empty() ? "(None)" : value.c_str();
-    if (ImGui::BeginCombo(label, preview)) {
-        if (allowNone) {
-            const bool selected = value.empty();
-            if (ImGui::Selectable(KashipanEngine::TranslationLabel("editor.imguicustom.none"), selected) && !selected) {
-                value.clear();
-                changed = true;
-            }
-        }
+    // 検索ボックス＋リスト（最大12行）が収まるよう、既定（8項目分）より高いポップアップを許可する
+    if (ImGui::BeginCombo(label, preview, ImGuiComboFlags_HeightLarge)) {
+        // コンボのポップアップは同時に1つしか開かないため、検索状態は全コンボで共有する
+        static ImGuiTextFilter sFilter;
+        const bool appearing = ImGui::IsWindowAppearing();
+        const bool enterPressed = PopupSearchBox("##SelectStringSearch", sFilter);
+
+        std::vector<const std::string *> matches;
+        matches.reserve(items.size());
         for (const auto &item : items) {
-            const bool selected = (item == value);
-            if (ImGui::Selectable(item.c_str(), selected) && !selected) {
-                value = item;
+            if (sFilter.PassFilter(item.c_str())) matches.push_back(&item);
+        }
+        const bool showNone = allowNone && !sFilter.IsActive();
+
+        // Enterで先頭の候補を決定する
+        if (enterPressed && !matches.empty()) {
+            if (*matches.front() != value) {
+                value = *matches.front();
                 changed = true;
             }
-            if (selected) ImGui::SetItemDefaultFocus();
+            ImGui::CloseCurrentPopup();
         }
+
+        // 子ウィンドウ内のSelectableはポップアップを自動で閉じないため、選択時は明示的に閉じる
+        ImGui::BeginChild("##SelectStringList", ImVec2(0.0f, PopupSearchListHeight(matches.size() + (showNone ? 1 : 0))));
+        if (showNone) {
+            const bool selected = value.empty();
+            if (ImGui::Selectable(KashipanEngine::TranslationLabel("editor.imguicustom.none"), selected)) {
+                if (!selected) {
+                    value.clear();
+                    changed = true;
+                }
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        for (const auto *item : matches) {
+            const bool selected = (*item == value);
+            if (ImGui::Selectable(item->c_str(), selected)) {
+                if (!selected) {
+                    value = *item;
+                    changed = true;
+                }
+                ImGui::CloseCurrentPopup();
+            }
+            // 開いた直後は選択中の項目が見える位置までスクロールする
+            if (selected && appearing) ImGui::SetScrollHereY(0.5f);
+        }
+        if (matches.empty() && !showNone) {
+            ImGui::TextDisabled("%s", KashipanEngine::TranslationC("editor.imguicustom.search.noresults"));
+        }
+        ImGui::EndChild();
         ImGui::EndCombo();
     }
     return changed;
@@ -199,14 +263,20 @@ inline bool TextureThumbnailPicker(const char *label, std::string &assetPath,
     ImGui::EndGroup();
 
     if (ImGui::BeginPopup("##texPickerPopup")) {
-        static char sFilterBuf[128] = "";
-        ImGui::SetNextItemWidth(kGridCellSize * 3.0f);
-        ImGui::InputTextWithHint("##texPickerFilter", "Search...", sFilterBuf, sizeof(sFilterBuf));
+        static ImGuiTextFilter sFilter;
+        if (PopupSearchBox("##texPickerFilter", sFilter, kGridCellSize * 3.0f)) {
+            // Enterで先頭の候補を決定する
+            for (const auto &entry : candidates) {
+                if (!sFilter.PassFilter(entry.assetPath.c_str())) continue;
+                if (entry.assetPath != assetPath) {
+                    assetPath = entry.assetPath;
+                    changed = true;
+                }
+                ImGui::CloseCurrentPopup();
+                break;
+            }
+        }
         ImGui::Separator();
-
-        std::string filterLower = sFilterBuf;
-        std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(),
-            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
         const float availWidth = ImGui::GetContentRegionAvail().x;
         const int columns = std::max(1, static_cast<int>(availWidth / kGridCellSize));
@@ -222,12 +292,7 @@ inline bool TextureThumbnailPicker(const char *label, std::string &assetPath,
             ++index;
         }
         for (const auto &entry : candidates) {
-            if (!filterLower.empty()) {
-                std::string pathLower = entry.assetPath;
-                std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(),
-                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-                if (pathLower.find(filterLower) == std::string::npos) continue;
-            }
+            if (!sFilter.PassFilter(entry.assetPath.c_str())) continue;
             if (index % columns != 0) ImGui::SameLine();
             ImGui::PushID(entry.assetPath.c_str());
             bool clicked = false;
@@ -286,14 +351,20 @@ inline bool AudioAssetPicker(const char *label, std::string &assetPath,
     ImGui::TextUnformatted(label);
 
     if (ImGui::BeginPopup("##audioPickerPopup")) {
-        static char sFilterBuf[128] = "";
-        ImGui::SetNextItemWidth(220.0f);
-        ImGui::InputTextWithHint("##audioPickerFilter", "Search...", sFilterBuf, sizeof(sFilterBuf));
+        static ImGuiTextFilter sFilter;
+        if (PopupSearchBox("##audioPickerFilter", sFilter, 220.0f)) {
+            // Enterで先頭の候補を決定する
+            for (const auto &candidatePath : candidates) {
+                if (!sFilter.PassFilter(candidatePath.c_str())) continue;
+                if (candidatePath != assetPath) {
+                    assetPath = candidatePath;
+                    changed = true;
+                }
+                ImGui::CloseCurrentPopup();
+                break;
+            }
+        }
         ImGui::Separator();
-
-        std::string filterLower = sFilterBuf;
-        std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(),
-            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
         ImGui::BeginChild("##audioPickerList", ImVec2(220.0f, 240.0f));
         if (allowNone) {
@@ -304,12 +375,7 @@ inline bool AudioAssetPicker(const char *label, std::string &assetPath,
             }
         }
         for (const auto &candidatePath : candidates) {
-            if (!filterLower.empty()) {
-                std::string pathLower = candidatePath;
-                std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(),
-                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-                if (pathLower.find(filterLower) == std::string::npos) continue;
-            }
+            if (!sFilter.PassFilter(candidatePath.c_str())) continue;
             const bool selected = (candidatePath == assetPath);
             if (ImGui::Selectable(candidatePath.c_str(), selected)) {
                 assetPath = candidatePath;

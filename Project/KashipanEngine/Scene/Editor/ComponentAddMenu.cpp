@@ -2,7 +2,6 @@
 #ifdef USE_IMGUI
 #include <imgui.h>
 #include <map>
-#include <unordered_map>
 #include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
 
@@ -49,19 +48,10 @@ std::string JoinCategory(const std::vector<std::string> &categories) {
 bool Show(const std::vector<std::string> &types,
     const std::function<const std::vector<std::string> &(const std::string &)> &getCategory,
     std::string &outSelectedType) {
-    // 検索ボックス。呼び出し元のポップアップ毎に状態を持ち、ポップアップを開き直す度に空へ戻す
-    static std::unordered_map<ImGuiID, ImGuiTextFilter> sFilters;
-    ImGuiTextFilter &filter = sFilters[ImGui::GetID("##ComponentSearch")];
-    const bool appearing = ImGui::IsWindowAppearing();
-    if (appearing) {
-        filter.Clear();
-        // 開いた直後にそのまま文字を打ち込めるようにする
-        ImGui::SetKeyboardFocusHere();
-    }
-    ImGuiCustom::SearchFilterBox("##ComponentSearch", filter, TranslationC("editor.component.add.search"),
-        ImGui::GetFontSize() * 16.0f);
-    const bool enterPressed = ImGui::IsItemFocused() && !appearing &&
-        (ImGui::IsKeyPressed(ImGuiKey_Enter) || ImGui::IsKeyPressed(ImGuiKey_KeypadEnter));
+    // 検索ボックス（ポップアップを開き直す度に空へ戻る。ポップアップは同時に1つしか開かないため状態は共有する）
+    static ImGuiTextFilter filter;
+    const bool enterPressed = ImGuiCustom::PopupSearchBox("##ComponentSearch", filter,
+        ImGui::GetFontSize() * 16.0f, TranslationC("editor.component.add.search"));
 
     if (filter.IsActive()) {
         // 検索中はカテゴリ階層を無視して、型名またはカテゴリ名が一致した型を平坦なリストで表示する

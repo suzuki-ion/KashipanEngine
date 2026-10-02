@@ -1,4 +1,4 @@
-﻿{
+{
 	"localeCode": "en-US",
 	"localeName": "English",
 	"fontPath": "Assets/KashipanEngine/Fonts/NotoSansJP-Regular.ttf",
@@ -1080,6 +1080,7 @@
 		"component.keyframeanimator.play_on_start": "Play On Start",
 		"component.keyframeanimator.playback_speed": "Playback Speed",
 		"component.keyframeanimator.reload": "Reload",
+		"component.keyframeanimator.json_path.search": "Search and select a keyframe JSON in Assets",
 		"component.keyframeanimator.stop": "Stop",
 		"component.keyframeanimator.time_2fs_value_3f": "Time: %.2fs  Value: %.3f",
 		"component.keyframeanimator.time_offset": "Time Offset",
@@ -1812,6 +1813,8 @@
 		"editor.imguicustom.desc_3": ":",
 		"editor.imguicustom.new_key": "(New Key)",
 		"editor.imguicustom.none": "(None)",
+		"editor.imguicustom.search": "Search",
+		"editor.imguicustom.search.noresults": "No matches.",
 		"editor.imguicustom.s_empty": "%s: [Empty]",
 		"editor.imguicustom.s_readonly": "%s (ReadOnly) :",
 		"editor.imguicustom.s_unsupported_any_type_s": "%s: [Unsupported Any Type: %s]",

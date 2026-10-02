@@ -1,4 +1,4 @@
-﻿{
+{
 	"localeCode": "ja-JP",
 	"localeName": "日本語",
 	"fontPath": "Assets/KashipanEngine/Fonts/NotoSansJP-Regular.ttf",
@@ -1082,6 +1082,7 @@
 		"component.keyframeanimator.play_on_start": "開始時に再生",
 		"component.keyframeanimator.playback_speed": "再生速度",
 		"component.keyframeanimator.reload": "再読み込み",
+		"component.keyframeanimator.json_path.search": "Assets内のキーフレームjsonを検索して選択",
 		"component.keyframeanimator.stop": "停止",
 		"component.keyframeanimator.time_2fs_value_3f": "時間：%.2fs  値：%.3f",
 		"component.keyframeanimator.time_offset": "時間オフセット",
@@ -1814,6 +1815,8 @@
 		"editor.imguicustom.desc_3": "：",
 		"editor.imguicustom.new_key": "(新しいキー)",
 		"editor.imguicustom.none": "(なし)",
+		"editor.imguicustom.search": "検索",
+		"editor.imguicustom.search.noresults": "一致する項目はありません。",
 		"editor.imguicustom.s_empty": "%s：[空]",
 		"editor.imguicustom.s_readonly": "%s（読み取り専用）：",
 		"editor.imguicustom.s_unsupported_any_type_s": "%s：[未対応のAny型：%s]",

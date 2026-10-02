@@ -1,4 +1,4 @@
-﻿{
+{
 	"localeCode": "zh-CN",
 	"localeName": "简体中文",
 	"fontPath": "Assets/KashipanEngine/Fonts/NotoSansSC-Regular.ttf",
@@ -1079,6 +1079,7 @@
 		"component.keyframeanimator.play_on_start": "开始时播放",
 		"component.keyframeanimator.playback_speed": "播放速度",
 		"component.keyframeanimator.reload": "重新加载",
+		"component.keyframeanimator.json_path.search": "在 Assets 中搜索并选择关键帧 JSON",
 		"component.keyframeanimator.stop": "停止",
 		"component.keyframeanimator.time_2fs_value_3f": "时间：%.2fs  值：%.3f",
 		"component.keyframeanimator.time_offset": "时间偏移",
@@ -1775,6 +1776,8 @@
 		"editor.imguicustom.desc_3": "：",
 		"editor.imguicustom.new_key": "（新键）",
 		"editor.imguicustom.none": "（无）",
+		"editor.imguicustom.search": "搜索",
+		"editor.imguicustom.search.noresults": "没有匹配项。",
 		"editor.imguicustom.s_empty": "%s：[空]",
 		"editor.imguicustom.s_readonly": "%s（只读）：",
 		"editor.imguicustom.s_unsupported_any_type_s": "%s：[不支持的Any类型：%s]",

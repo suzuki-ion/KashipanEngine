@@ -11,6 +11,7 @@
 #include "Objects/Components/Render/OverlayWindowObject.h"
 #include "Objects/Components/Render/ScreenBufferObject.h"
 #include "Objects/Components/Render/ShadowMapObject.h"
+#include "Utilities/ImGuiCustom.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
@@ -42,27 +43,62 @@ bool ShowSelector(const char *label, SceneContext *sceneContext, UUID128 &target
     EmptyObject *current = targetObjectID.IsValid() ? sceneContext->GetSceneObject(targetObjectID) : nullptr;
     const std::string preview = current ? current->GetName() : "(None)";
 
-    if (ImGui::BeginCombo(label, preview.c_str())) {
-        if (allowNone) {
-            const bool selected = !current;
-            if (ImGui::Selectable(TranslationLabel("component.targetobjectselector.none"), selected) && !selected) {
-                targetObjectID = UUID128();
-                changed = true;
-            }
-        }
+    // 検索ボックス＋リスト（最大12行）が収まるよう、既定（8項目分）より高いポップアップを許可する
+    if (ImGui::BeginCombo(label, preview.c_str(), ImGuiComboFlags_HeightLarge)) {
+        // コンボのポップアップは同時に1つしか開かないため、検索状態は全セレクターで共有する
+        static ImGuiTextFilter sFilter;
+        const bool appearing = ImGui::IsWindowAppearing();
+        const bool enterPressed = ImGuiCustom::PopupSearchBox("##TargetObjectSearch", sFilter);
+
+        std::vector<EmptyObject *> matches;
         for (auto *object : sceneContext->GetSceneObjects()) {
             if (!object) continue;
             // restrictToRenderTargets が true の場合は描画先コンポーネントを持つオブジェクトのみを候補にする
             if (restrictToRenderTargets && !HasRenderTargetComponent(object)) continue;
-            const bool selected = (object == current);
-            ImGui::PushID(object);
-            if (ImGui::Selectable(object->GetName().c_str(), selected) && !selected) {
-                targetObjectID = object->GetObjectID();
+            if (!sFilter.PassFilter(object->GetName().c_str())) continue;
+            matches.push_back(object);
+        }
+        const bool showNone = allowNone && !sFilter.IsActive();
+
+        // Enterで先頭の候補を決定する
+        if (enterPressed && !matches.empty()) {
+            if (matches.front() != current) {
+                targetObjectID = matches.front()->GetObjectID();
                 changed = true;
             }
-            if (selected) ImGui::SetItemDefaultFocus();
+            ImGui::CloseCurrentPopup();
+        }
+
+        // 子ウィンドウ内のSelectableはポップアップを自動で閉じないため、選択時は明示的に閉じる
+        ImGui::BeginChild("##TargetObjectList", ImVec2(0.0f, ImGuiCustom::PopupSearchListHeight(matches.size() + (showNone ? 1 : 0))));
+        if (showNone) {
+            const bool selected = !current;
+            if (ImGui::Selectable(TranslationLabel("component.targetobjectselector.none"), selected)) {
+                if (!selected) {
+                    targetObjectID = UUID128();
+                    changed = true;
+                }
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        for (auto *object : matches) {
+            const bool selected = (object == current);
+            ImGui::PushID(object);
+            if (ImGui::Selectable(object->GetName().c_str(), selected)) {
+                if (!selected) {
+                    targetObjectID = object->GetObjectID();
+                    changed = true;
+                }
+                ImGui::CloseCurrentPopup();
+            }
+            // 開いた直後は選択中の項目が見える位置までスクロールする
+            if (selected && appearing) ImGui::SetScrollHereY(0.5f);
             ImGui::PopID();
         }
+        if (matches.empty() && !showNone) {
+            ImGui::TextDisabled("%s", TranslationC("editor.imguicustom.search.noresults"));
+        }
+        ImGui::EndChild();
         ImGui::EndCombo();
     }
 

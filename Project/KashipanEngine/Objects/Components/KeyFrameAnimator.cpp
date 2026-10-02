@@ -8,6 +8,7 @@
 #include "Debug/Logger.h"
 #include "Objects/Components/ScriptComponent.h"
 #include "Objects/ObjectContext.h"
+#include "Utilities/FileIO/TextFile.h"
 #include "Utilities/TimeUtils.h"
 
 namespace KashipanEngine {
@@ -218,12 +219,90 @@ void KeyFrameAnimator::ShowImGui() {
     }
 }
 
+namespace {
+/// @brief キーフレームjsonを検索して選択するポップアップ（"..."ボタンで開く）
+/// @details 候補はポップアップを開いた時にだけAssets配下の.jsonを走査し、"keyframes"を含むものに絞る
+///          （KeyframeAnimation::LoadFromJsonが読める形式。毎フレーム走査すると重いため開いた時のみ）。
+///          シーンのオブジェクト単位のjson（*.scene/配下）は数が多くキーフレームでもないため対象外にする
+/// @return 選択によりjsonPathが変更された場合は true
+bool ShowKeyframeJsonPicker(std::string &jsonPath) {
+    static std::vector<std::string> sCandidates;
+    static ImGuiTextFilter sFilter;
+    bool changed = false;
+
+    if (ImGui::Button("...")) {
+        ImGui::OpenPopup("##KeyframeJsonPicker");
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGuiCustom::SetTooltipWrapped("%s", TranslationC("component.keyframeanimator.json_path.search"));
+    }
+
+    if (ImGui::BeginPopup("##KeyframeJsonPicker")) {
+        if (ImGui::IsWindowAppearing()) {
+            sCandidates.clear();
+            for (const auto &path : ProjectPaths::ListAssetFiles({ ".json" })) {
+                if (path.find(".scene/") != std::string::npos) continue;
+                const TextFileData text = LoadTextFile(ProjectPaths::ToPhysical(path));
+                const bool isKeyframeJson = std::any_of(text.lines.begin(), text.lines.end(),
+                    [](const std::string &line) { return line.find("\"keyframes\"") != std::string::npos; });
+                if (isKeyframeJson) sCandidates.push_back(path);
+            }
+        }
+
+        constexpr float kWidth = 320.0f;
+        if (ImGuiCustom::PopupSearchBox("##KeyframeJsonSearch", sFilter, kWidth)) {
+            // Enterで先頭の候補を決定する
+            for (const auto &path : sCandidates) {
+                if (!sFilter.PassFilter(path.c_str())) continue;
+                if (path != jsonPath) {
+                    jsonPath = path;
+                    changed = true;
+                }
+                ImGui::CloseCurrentPopup();
+                break;
+            }
+        }
+        ImGui::Separator();
+
+        std::vector<const std::string *> matches;
+        for (const auto &path : sCandidates) {
+            if (sFilter.PassFilter(path.c_str())) matches.push_back(&path);
+        }
+        ImGui::BeginChild("##KeyframeJsonList", ImVec2(kWidth, ImGuiCustom::PopupSearchListHeight(matches.size())));
+        for (const auto *path : matches) {
+            const bool selected = (*path == jsonPath);
+            if (ImGui::Selectable(path->c_str(), selected)) {
+                if (!selected) {
+                    jsonPath = *path;
+                    changed = true;
+                }
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        if (matches.empty()) {
+            ImGui::TextDisabled("%s", TranslationC("editor.imguicustom.search.noresults"));
+        }
+        ImGui::EndChild();
+        ImGui::EndPopup();
+    }
+    return changed;
+}
+} // namespace
+
 void KeyFrameAnimator::ShowAnimationImGui(AnimationEntry &entry, const std::vector<ParameterBindingCandidate> &candidates) {
     ImGui::InputText(TranslationLabel("component.keyframeanimator.name"), &entry.name);
     if (ImGui::IsItemHovered()) {
         ImGuiCustom::SetTooltipWrapped("%s", "Play/Stop等で指定する識別名");
     }
     ImGui::InputText(TranslationLabel("component.keyframeanimator.json_path"), &entry.jsonPath);
+    ImGui::SameLine();
+    // 一覧から検索して選んだ場合は、Reloadと同様にすぐ読み込み直す
+    if (ShowKeyframeJsonPicker(entry.jsonPath)) {
+        entry.loaded = false;
+        entry.loadFailed = false;
+        entry.animation.Clear();
+        EnsureLoaded(entry);
+    }
     ImGui::SameLine();
     if (ImGui::Button(TranslationLabel("component.keyframeanimator.reload"))) {
         entry.loaded = false;

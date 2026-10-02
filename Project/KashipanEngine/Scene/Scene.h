@@ -466,6 +466,7 @@ protected:
     /// @brief 型IDからオブジェクトコンポーネント用プールを取得する（未作成の場合はComponentRegistry経由で生成）
     /// @param typeID IObjectComponent::GetComponentTypeID() が返す型ID
     /// @return プールへのポインタ（型が未登録の場合は nullptr）
+private:
     IComponentPoolBase *GetOrCreateComponentPool(size_t typeID) {
         if (typeID >= objectComponentPoolsByType_.size()) {
             objectComponentPoolsByType_.resize(typeID + 1);
@@ -489,6 +490,7 @@ protected:
         return static_cast<ComponentPool<T> &>(*objectComponentPoolsByType_[typeID]);
     }
 
+protected:
     //==================================================
     // シーン切り替え系メソッド
     //==================================================

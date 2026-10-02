@@ -117,7 +117,7 @@ IObjectComponent *EmptyObject::AddComponent(std::unique_ptr<IObjectComponent> co
     // ADD_MEMBER_VARIABLE_WITH_CALLBACK等、コンストラクタで自分自身(this)への生ポインタを
     // 登録するリフレクション機構があるため、ムーブするとそれらが古いアドレスを指したまま
     // 破損する。代わりにプールの最終スロットへ直接デフォルト構築し、状態はJSON経由で転送する。
-    IComponentPoolBase *pool = ownerSceneContext_ ? ownerSceneContext_->GetOrCreateComponentPool(typeIndex) : nullptr;
+    IComponentPoolBase *pool = ownerSceneContext_ ? ownerSceneContext_->GetOrCreateComponentPool(Passkey<EmptyObject>{}, typeIndex) : nullptr;
     if (!pool) return nullptr;
     IObjectComponent *placed = pool->EmplaceDefault();
     if (!placed) return nullptr;
@@ -133,7 +133,7 @@ IObjectComponent *EmptyObject::AddComponentByTypeID(size_t typeIndex) {
     if (typeIndex >= componentsIndexByType_.size()) {
         componentsIndexByType_.resize(typeIndex + 1);
     }
-    IComponentPoolBase *pool = ownerSceneContext_ ? ownerSceneContext_->GetOrCreateComponentPool(typeIndex) : nullptr;
+    IComponentPoolBase *pool = ownerSceneContext_ ? ownerSceneContext_->GetOrCreateComponentPool(Passkey<EmptyObject>{}, typeIndex) : nullptr;
     if (!pool) return nullptr;
     // 引数無しの追加なので、一時インスタンスを経由せずプールの最終スロットへ直接デフォルト構築する
     // （JSON経由の状態転送が不要なため、AddComponent(unique_ptr)より高速）
@@ -163,7 +163,7 @@ bool EmptyObject::RemoveComponent(const IObjectComponent *component) {
     componentsFreeIndices_.push_back(index);
     components_[index].first = nullptr;
     if (ownerSceneContext_) {
-        if (IComponentPoolBase *pool = ownerSceneContext_->GetOrCreateComponentPool(typeIndex)) {
+        if (IComponentPoolBase *pool = ownerSceneContext_->GetOrCreateComponentPool(Passkey<EmptyObject>{}, typeIndex)) {
             pool->Remove(placed);
         }
     }
@@ -183,7 +183,7 @@ void EmptyObject::ReleaseComponentsWithoutFinalize() {
     for (auto &compPair : components_) {
         if (!compPair.first) continue;
         if (ownerSceneContext_) {
-            if (IComponentPoolBase *pool = ownerSceneContext_->GetOrCreateComponentPool(compPair.first->GetComponentTypeID())) {
+            if (IComponentPoolBase *pool = ownerSceneContext_->GetOrCreateComponentPool(Passkey<EmptyObject>{}, compPair.first->GetComponentTypeID())) {
                 pool->Remove(compPair.first);
             }
         }

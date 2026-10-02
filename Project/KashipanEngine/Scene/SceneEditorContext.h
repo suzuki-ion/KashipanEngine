@@ -205,14 +205,9 @@ public:
     const std::vector<std::pair<std::unique_ptr<ISceneComponent>, size_t>> &GetAllComponents() const { return owner_->GetAllComponents(); }
 
     //==================================================
-    // オブジェクトコンポーネント（IObjectComponent）用の型別プール
+    // オブジェクトコンポーネントの参照解決
     //==================================================
 
-    /// @brief 型IDからオブジェクトコンポーネント用プールを取得する（未作成の場合は生成）
-    IComponentPoolBase *GetOrCreateComponentPool(size_t typeID) { return owner_->GetOrCreateComponentPool(typeID); }
-    /// @brief 型Tのオブジェクトコンポーネント用プールを取得する（未作成の場合は生成）
-    template <typename T>
-    ComponentPool<T> &GetOrCreateComponentPool() { return owner_->GetOrCreateComponentPool<T>(); }
     /// @brief ComponentRef からコンポーネントの生ポインタへ解決する（使う直前に毎回呼ぶこと。結果をフレームをまたいで保持しない）
     /// @return 解決に成功した場合はコンポーネントへのポインタ、対象オブジェクト・コンポーネントが既に存在しない場合は nullptr
     IObjectComponent *ResolveComponent(const ComponentRef &ref) const {

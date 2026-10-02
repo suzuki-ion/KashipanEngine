@@ -23,12 +23,23 @@ std::string ReadFileText(const std::string &path) {
     return ss.str();
 }
 
-bool WriteFileText(const std::string &path, const std::string &content) {
-    EnsureParentDirectoryExists(path);
+bool WriteFileTextIfChanged(const std::string &path, const std::string &content) {
+    // 生成物も外部アセット監視の対象になるため、同一内容で更新日時を変えない。
+    // 動的パイプラインの再生成 → 外部変更検出 → 全再読み込みの循環を防ぐ。
+    {
+        std::ifstream existing(Utf8StringToPath(path), std::ios::binary);
+        if (existing) {
+            std::ostringstream existingContent;
+            existingContent << existing.rdbuf();
+            if (!existing.bad() && existingContent.str() == content) return true;
+        }
+    }
+    if (!EnsureParentDirectoryExists(path)) return false;
     std::ofstream file(Utf8StringToPath(path), std::ios::binary | std::ios::trunc);
     if (!file) return false;
     file << content;
-    return true;
+    file.close();
+    return !file.fail();
 }
 
 // マーカー文字列。Object/ObjectPS.hlsl内の対応するコメントと完全に一致させること
@@ -204,7 +215,7 @@ std::string ComposeAndWriteShader(const std::vector<std::string> &selectedTokens
     // 経路によって異なる文字列に展開され、同じファイル（例: Camera3D.hlsli）が二重定義されるエラーになる
     // （実際に発生させて確認済み）。同じディレクトリに置けば、コピー元と全く同じ文字列で解決されるため安全
     const std::string outputPath = shaderBaseDir + "/Object/Generated.Object.Compose." + combinedName + ".hlsl";
-    if (!WriteFileText(outputPath, source)) {
+    if (!WriteFileTextIfChanged(outputPath, source)) {
         Log("[ShaderModuleComposer] failed to write generated shader: " + outputPath, LogSeverity::Error);
         return {};
     }

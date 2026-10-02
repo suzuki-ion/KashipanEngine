@@ -41,11 +41,12 @@ struct ShaderModuleDefinition {
 const std::vector<ShaderModuleDefinition> &GetShaderModuleRegistry();
 
 /// @brief 選択されたモジュール（トークン集合）から、Object/ObjectPS.hlslをベースにした合成済みHLSLソースを
-///        生成し、<shaderBaseDir>/Generated/ 以下へ書き出す
+///        生成し、<shaderBaseDir>/Object/ 以下へ書き出す
 /// @details ObjectPS.hlsl内のコメントマーカー（/{{...}}/形式）を、選択モジュールのModules/<token>/Fields.hlsli・
 ///          Logic.hlsliの内容や呼び出し文で置換する。マーカーが見つからない場合は何もしない（安全側に倒す）。
 ///          生成ファイル名は選択トークンをソートして連結したものになるため、選択順によらず同じ組み合わせは
 ///          常に同じファイル名になる
+///          既存ファイルと同一内容の場合は書き込まず、更新日時を維持する
 /// @param selectedTokens 選択されたモジュールのトークン一覧（順不同、登録されていないトークンは無視される）
 /// @param shaderBaseDir シェーダー資産のベースディレクトリ（PipelineManagerの pipelineFolderPath_ + "/Preset/Shader"）
 /// @return 生成したファイルの絶対パス（selectedTokensが空、または書き込みに失敗した場合は空文字）

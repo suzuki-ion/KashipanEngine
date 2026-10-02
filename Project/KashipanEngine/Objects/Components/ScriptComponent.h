@@ -78,6 +78,19 @@ public:
     void SetScriptPath(const std::string &scriptPath) { scriptPath_ = scriptPath; }
     const std::string &GetScriptPath() const noexcept { return scriptPath_; }
 
+    /// @brief 自作コンポーネントとして生成するクラス（空なら従来通り最初のBehaviorを使用）
+    void SetComponentClass(const std::string &name) { componentClass_ = name; }
+    const std::string &GetComponentClass() const noexcept { return componentClass_; }
+
+#if defined(USE_IMGUI)
+    struct ComponentDefinition {
+        std::string scriptPath;
+        std::string className;
+    };
+    /// @brief [Component]付きのクラスを列挙する。スクリプトのコンパイル・実行は行わない。
+    static std::vector<ComponentDefinition> DiscoverComponents();
+#endif
+
     /// @brief スクリプトを（再）コンパイルする。既にビルド済みの場合は End() を呼んでから再構築する
     /// @details [SerializeField] 付き変数の現在値はリロード後も維持される
     /// @return コンパイルに成功した場合は true
@@ -294,6 +307,7 @@ private:
 #endif
 
     std::string scriptPath_;
+    std::string componentClass_;
     std::string moduleName_;
     asIScriptContext *context_ = nullptr;
 

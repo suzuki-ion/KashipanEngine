@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include "ComponentSerialize/ComponentRegistry.h"
 #include "Objects/Components/PrefabInstanceComponent.h"
+#include "Objects/Components/ScriptComponent.h"
 #include "Scene/Editor/ComponentAddMenu.h"
 #include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/EditorWindowChrome.h"
@@ -18,6 +19,61 @@ constexpr const char *kComponentDragDropType = "DND_COMPONENT";
 struct ComponentDragDropPayload {
     IObjectComponent *component = nullptr;
 };
+
+// 実体の型はScriptComponentのまま維持し、エディター上の名前と照合キーだけを分ける。
+std::string ComponentInspectorName(IObjectComponent *component) {
+    if (component->GetComponentType() == "ScriptComponent") {
+        auto *script = static_cast<ScriptComponent *>(component);
+        if (!script->GetComponentClass().empty()) return script->GetComponentClass();
+    }
+    return component->GetComponentType();
+}
+
+std::string ComponentInspectorKey(IObjectComponent *component) {
+    if (component->GetComponentType() == "ScriptComponent") {
+        auto *script = static_cast<ScriptComponent *>(component);
+        if (!script->GetComponentClass().empty()) {
+            return "ScriptComponent:" + script->GetScriptPath() + ":" + script->GetComponentClass();
+        }
+    }
+    return component->GetComponentType();
+}
+
+bool ShowObjectComponentAddMenu(std::string &outType, JSON &outState) {
+    static std::vector<ScriptComponent::ComponentDefinition> definitions;
+    // 新規作成・移動・削除を、次にメニューを開いた時点で反映する。
+    if (ImGui::IsWindowAppearing()) definitions = ScriptComponent::DiscoverComponents();
+    std::vector<std::string> types = GetRegisteredObjectComponentTypes();
+    std::unordered_map<std::string, size_t> customTypes;
+    std::unordered_map<std::string, size_t> nameCounts;
+    for (const auto &definition : definitions) ++nameCounts[definition.className];
+    for (size_t i = 0; i < definitions.size(); ++i) {
+        const auto &definition = definitions[i];
+        std::string label = definition.className;
+        if (nameCounts[label] > 1 || std::find(types.begin(), types.end(), label) != types.end()) {
+            label += " (" + definition.scriptPath + ")";
+        }
+        customTypes[label] = i;
+        types.push_back(label);
+    }
+    const std::vector<std::string> category{ "Script", "Custom" };
+    std::string selected;
+    if (!ComponentAddMenu::Show(types, [&](const std::string &type) -> const std::vector<std::string> & {
+            return customTypes.contains(type) ? category : GetObjectComponentCategory(type);
+        }, selected)) return false;
+    auto it = customTypes.find(selected);
+    if (it == customTypes.end()) {
+        outType = selected;
+        outState = JSON();
+    } else {
+        const auto &definition = definitions[it->second];
+        outType = "ScriptComponent";
+        outState = { { "customData", {
+            { "scriptPath", definition.scriptPath }, { "componentClass", definition.className }
+        } } };
+    }
+    return true;
+}
 
 /// @brief 現在のWindowBgより少し暗い色を返す（コンポーネントごとのカード背景用）
 /// @details 乗算ではなく減算で暗くする。Darkテーマ（WindowBgが黒に近い）で乗算すると
@@ -121,8 +177,8 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
         }
         ImGui::SameLine();
         // 開閉状態はコンポーネントの種類ごとに保存される（デフォルトは開いた状態）
-        bool headerOpen = EditorSettings::PersistentTreeNode(comp->GetComponentType().c_str(),
-                "inspector.component." + comp->GetComponentType());
+        bool headerOpen = EditorSettings::PersistentTreeNode(ComponentInspectorName(comp).c_str(),
+                "inspector.component." + ComponentInspectorKey(comp));
         // ヒエラルキーと同様に、D&Dでコンポーネント自体の処理優先順位を並び替えられるようにする
         DragAndDropComponent(comp);
 
@@ -216,15 +272,15 @@ void SceneObjectInspector::ShowObjectInspector(EmptyObject *obj) {
     if (ImGui::BeginPopup("AddComponentPopup")) {
         // カテゴリごとのツリーメニューから追加する型を選択する
         std::string selectedType;
-        if (ComponentAddMenu::Show(GetRegisteredObjectComponentTypes(),
-                [](const std::string &typeName) -> const std::vector<std::string> & { return GetObjectComponentCategory(typeName); },
-                selectedType)) {
+        JSON initialState;
+        if (ShowObjectComponentAddMenu(selectedType, initialState)) {
             if (commands_) {
-                commands_->Execute(std::make_unique<AddComponentCommand>(obj, selectedType));
+                commands_->Execute(std::make_unique<AddComponentCommand>(obj, selectedType, initialState));
             } else {
                 auto newComp = CreateObjectComponentByType(selectedType);
                 if (newComp) {
-                    obj->AddComponent(std::move(newComp));
+                    auto *added = obj->AddComponent(std::move(newComp));
+                    if (added && !initialState.empty()) obj->LoadComponentFromJson(added, initialState);
                 }
             }
         }
@@ -371,14 +427,15 @@ void SceneObjectInspector::ShowMultiObjectInspector(EmptyObject *primary, const 
     int id = 0;
     for (IObjectComponent *comp : GetOrderedComponents(primary)) {
         const std::string &typeName = comp->GetComponentType();
-        const size_t ordinal = typeOrdinals[typeName]++;
+        const std::string componentKey = ComponentInspectorKey(comp);
+        const size_t ordinal = typeOrdinals[componentKey]++;
 
         // 全選択オブジェクトから対応コンポーネントを収集する（1つでも欠けたら共通ではない）
         ComponentCounterparts counterparts;
         bool commonToAll = true;
         for (auto *obj : selectedObjects) {
             if (!obj || obj == primary) continue;
-            IObjectComponent *match = FindComponentByTypeOrdinal(obj, typeName, ordinal);
+            IObjectComponent *match = FindComponentByTypeOrdinal(obj, componentKey, ordinal);
             if (!match) {
                 commonToAll = false;
                 break;
@@ -400,7 +457,7 @@ void SceneObjectInspector::ShowMultiObjectInspector(EmptyObject *primary, const 
         }
         ImGui::SameLine();
         // 開閉状態はコンポーネントの種類ごとに保存される（単一選択時と共有）
-        bool headerOpen = EditorSettings::PersistentTreeNode(typeName.c_str(), "inspector.component." + typeName);
+        bool headerOpen = EditorSettings::PersistentTreeNode(ComponentInspectorName(comp).c_str(), "inspector.component." + componentKey);
 
         // 右クリックメニューはツリーの開閉状態に関わらず表示する（ヘッダー項目自体への右クリックで開く）
         if (ImGui::BeginPopupContextItem("ComponentContextMenu")) {
@@ -523,21 +580,23 @@ void SceneObjectInspector::ShowMultiObjectInspector(EmptyObject *primary, const 
 
     if (ImGui::BeginPopup("AddComponentPopup")) {
         std::string selectedType;
-        if (ComponentAddMenu::Show(GetRegisteredObjectComponentTypes(),
-                [](const std::string &typeName) -> const std::vector<std::string> & { return GetObjectComponentCategory(typeName); },
-                selectedType)) {
+        JSON initialState;
+        if (ShowObjectComponentAddMenu(selectedType, initialState)) {
             if (commands_) {
                 auto composite = std::make_unique<CompositeCommand>(
                     Translation("editor.command.addcomponent") + selectedType + " (" + std::to_string(selectedObjects.size()) + Translation("editor.command.objects.suffix") + ")");
                 for (auto *obj : selectedObjects) {
-                    if (obj) composite->AddCommand(std::make_unique<AddComponentCommand>(obj, selectedType));
+                    if (obj) composite->AddCommand(std::make_unique<AddComponentCommand>(obj, selectedType, initialState));
                 }
                 commands_->Execute(std::move(composite));
             } else {
                 for (auto *obj : selectedObjects) {
                     if (!obj) continue;
                     auto newComp = CreateObjectComponentByType(selectedType);
-                    if (newComp) obj->AddComponent(std::move(newComp));
+                    if (newComp) {
+                        auto *added = obj->AddComponent(std::move(newComp));
+                        if (added && !initialState.empty()) obj->LoadComponentFromJson(added, initialState);
+                    }
                 }
             }
         }
@@ -587,7 +646,7 @@ void SceneObjectInspector::ApplyEditToCounterparts(const JSON &before, const JSO
 IObjectComponent *SceneObjectInspector::FindComponentByTypeOrdinal(EmptyObject *obj, const std::string &typeName, size_t ordinal) {
     size_t count = 0;
     for (IObjectComponent *comp : GetOrderedComponents(obj)) {
-        if (comp->GetComponentType() != typeName) continue;
+        if (ComponentInspectorKey(comp) != typeName) continue;
         if (count == ordinal) return comp;
         ++count;
     }

@@ -19,6 +19,19 @@
 </div>
 
 <h2>スクリプトの割り当て</h2>
+<h3>自作コンポーネントを追加する</h3>
+<p>Assets内の<code>.as</code>ファイルで、<code>ScriptComponentBehavior</code>を直接実装するクラスに<code>[Component]</code>を付けると、Inspectorの<span class="ui-path">Add Component → Script → Custom</span>にクラス名が表示されます。追加メニューを開くたびに一覧を更新します。コメントや文字列中の属性は対象になりません。</p>
+<pre><code>[Component]
+class Health : ScriptComponentBehavior {
+    [SerializeField] int hp = 100;
+
+    void Update() {
+        // コンポーネントの処理
+    }
+}</code></pre>
+<p>選択したクラスが生成され、Inspectorの見出しもクラス名になります。1ファイルに複数の自作コンポーネントを定義できます。名前空間にも対応し、同名クラスが複数ファイルにある場合はメニューにファイルパスを併記します。クラスには引数なしのコンストラクタが必要です。</p>
+<p>ファイルパスとクラス名はシーン・Prefabに保存され、コピー、複数選択での一括追加、Undo／Redoでも維持されます。ソース変更後はReloadまたは再生開始時に再読み込みされます。自作コンポーネントでは、Inspectorから実行ファイルやクラスの割り当てを変更しません。</p>
+<p>現在は既存のScriptComponentを内部の実行基盤として使います。自作型での取得や型付き参照など、新しいスクリプト公開APIはまだ追加していません。探索はソースの宣言を読む処理で、コンパイル検証は追加・Reload時に行います。条件付きコンパイル内の宣言は探索時には条件を評価しません。</p>
 <table>
 <tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
 <tr><td>Script Path</td><td>コンボ（(None) + 検出済み<code>.as</code>ファイルのパス一覧）</td><td>実行するスクリプトファイルのパス。<a href="../../Windows/05_AssetsWindow.html">Assets</a>ウィンドウから<code>.as</code>ファイルをこの項目へドラッグ＆ドロップして割り当てることもできる（その場合はReloadまで自動で行われる）</td></tr>

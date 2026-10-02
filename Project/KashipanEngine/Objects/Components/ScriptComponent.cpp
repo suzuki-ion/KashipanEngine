@@ -26,6 +26,7 @@
 #include "Scene/Components/Script/ScriptObjectHandle.h"
 #include "Scene/SceneContext.h"
 #include "Utilities/FileIO/Directory.h"
+#include "Utilities/FileIO/TextFile.h"
 #include "Utilities/UUID128.h"
 #if defined(USE_IMGUI)
 #include "Assets/AudioManager.h"
@@ -274,6 +275,7 @@ ScriptComponent::~ScriptComponent() {
 std::unique_ptr<IObjectComponent> ScriptComponent::Clone() const {
     auto ptr = std::make_unique<ScriptComponent>();
     ptr->scriptPath_ = scriptPath_;
+    ptr->componentClass_ = componentClass_;
     ptr->pendingFieldValues_ = CaptureFieldValuesToJson();
     return ptr;
 }
@@ -428,10 +430,18 @@ bool ScriptComponent::CreateBehaviorInstance(asIScriptEngine *engine, CScriptBui
         return false;
     }
 
-    // ScriptComponentBehaviorを実装した最初のクラスを探す
+    // 自作コンポーネントは指定クラスを使用。従来のScriptComponentは最初のBehaviorを使用する。
     behaviorType_ = nullptr;
+    if (!componentClass_.empty()) {
+        behaviorType_ = module->GetTypeInfoByDecl(componentClass_.c_str());
+        if (!behaviorType_ || !behaviorType_->Implements(interfaceType)) {
+            behaviorType_ = nullptr;
+            lastError_ = "Component class must implement ScriptComponentBehavior: " + componentClass_;
+            return false;
+        }
+    }
     const asUINT typeCount = module->GetObjectTypeCount();
-    for (asUINT i = 0; i < typeCount; ++i) {
+    for (asUINT i = 0; !behaviorType_ && i < typeCount; ++i) {
         asITypeInfo *type = module->GetObjectTypeByIndex(i);
         if (type && type->Implements(interfaceType)) {
             behaviorType_ = type;
@@ -443,8 +453,12 @@ bool ScriptComponent::CreateBehaviorInstance(asIScriptEngine *engine, CScriptBui
         return false;
     }
 
-    const std::string factoryDecl = std::string(behaviorType_->GetName()) + " @" + behaviorType_->GetName() + "()";
-    asIScriptFunction *factory = behaviorType_->GetFactoryByDecl(factoryDecl.c_str());
+    // 宣言文字列に依存せず、名前空間付きクラスの引数なしファクトリも取得する。
+    asIScriptFunction *factory = nullptr;
+    for (asUINT i = 0; i < behaviorType_->GetFactoryCount(); ++i) {
+        auto *candidate = behaviorType_->GetFactoryByIndex(i);
+        if (candidate && candidate->GetParamCount() == 0) { factory = candidate; break; }
+    }
     if (!factory) {
         lastError_ = std::string("クラス ") + behaviorType_->GetName() + " のデフォルトコンストラクタが見つかりません";
         return false;
@@ -1376,19 +1390,110 @@ bool ScriptComponent::SetFloatVariable(const std::string &name, float value) {
 }
 
 #if defined(USE_IMGUI)
-void ScriptComponent::ShowImGui() {
-    ImGuiCustom::SelectString(TranslationLabel("component.scriptcomponent.script_path"), scriptPath_, GetAvailableScriptPaths(), true);
-    // Assetsウィンドウからのスクリプトファイル（.as）のドラッグ&ドロップも受け付ける
-    // （ドロップ時はそのまま適用＝リロードまで行う）
-    if (std::string droppedPath; AcceptAssetDragDropTarget(kScriptAssetDragDropType, droppedPath)) {
-        // スクリプトパス一覧・シーンJSONはバックスラッシュ区切りで統一されているため合わせる
-        std::replace(droppedPath.begin(), droppedPath.end(), '/', '\\');
-        scriptPath_ = droppedPath;
-        ReloadFromDisk();
+std::vector<ScriptComponent::ComponentDefinition> ScriptComponent::DiscoverComponents() {
+    std::vector<ComponentDefinition> definitions;
+    // 字句解析だけを使用する。メニューを開くためにコンストラクタやグローバル初期化を実行しない。
+    auto *lexer = asCreateScriptEngine();
+    if (!lexer) return definitions;
+    for (const auto &path : ProjectPaths::ListAssetFiles({ ".as" })) {
+        std::string source;
+        for (const auto &line : LoadTextFile(ProjectPaths::ToPhysical(path)).lines) source += line + '\n';
+        std::vector<std::string> tokens;
+        for (size_t offset = 0; offset < source.size();) {
+            // #includeなどのプリプロセッサ行は、探索先の各ファイルで個別に扱う。
+            if (source[offset] == '#') {
+                const auto end = source.find('\n', offset);
+                offset = end == std::string::npos ? source.size() : end + 1;
+                continue;
+            }
+            asUINT length = 0;
+            const auto kind = lexer->ParseToken(source.data() + offset, source.size() - offset, &length);
+            if (!length) break;
+            if (kind != asTC_WHITESPACE && kind != asTC_COMMENT) tokens.push_back(source.substr(offset, length));
+            offset += length;
+        }
+        // 名前空間は探索するが、関数・クラスの本体にある属性や文字列は候補にしない。
+        std::function<void(size_t &, const std::string &)> scan;
+        scan = [&](size_t &i, const std::string &nameSpace) {
+            bool component = false;
+            while (i < tokens.size() && tokens[i] != "}") {
+                if (tokens[i] == "[") {
+                    std::string metadata;
+                    int depth = 1;
+                    for (++i; i < tokens.size() && depth; ++i) {
+                        if (tokens[i] == "[") ++depth;
+                        if (tokens[i] == "]") --depth;
+                        if (depth) metadata += tokens[i] + " ";
+                    }
+                    for (const auto &attribute : ParseAttributeTokens({ metadata })) {
+                        if (attribute.name == "Component") component = true;
+                    }
+                    continue;
+                }
+                if (tokens[i] == "namespace") {
+                    std::string nested;
+                    for (++i; i < tokens.size() && tokens[i] != "{" && tokens[i] != ";"; ++i) nested += tokens[i];
+                    if (i < tokens.size() && tokens[i] == "{") {
+                        ++i;
+                        scan(i, nameSpace + nested + "::");
+                    }
+                    component = false;
+                    continue;
+                } else if (tokens[i] == "class" && i + 1 < tokens.size()) {
+                    const std::string className = nameSpace + tokens[++i];
+                    bool behavior = false;
+                    bool inBases = false;
+                    for (++i; i < tokens.size() && tokens[i] != "{" && tokens[i] != ";"; ++i) {
+                        if (tokens[i] == ":") inBases = true;
+                        if (inBases && tokens[i] == kBehaviorInterfaceName) behavior = true;
+                    }
+                    if (component && behavior && i < tokens.size() && tokens[i] == "{") {
+                        definitions.push_back({ path, className });
+                    }
+                    component = false;
+                } else if (tokens[i] != "shared" && tokens[i] != "abstract" && tokens[i] != "final") {
+                    component = false;
+                }
+                if (i < tokens.size() && tokens[i] == "{") {
+                    int depth = 1;
+                    while (++i < tokens.size() && depth) {
+                        if (tokens[i] == "{") ++depth;
+                        if (tokens[i] == "}") --depth;
+                    }
+                } else if (i < tokens.size()) {
+                    ++i;
+                }
+            }
+            if (i < tokens.size() && tokens[i] == "}") ++i;
+        };
+        size_t i = 0;
+        scan(i, "");
     }
-    ImGui::SameLine();
-    if (ImGui::Button(TranslationLabel("component.scriptcomponent.refresh_list"))) {
-        RefreshAvailableScriptPaths();
+    lexer->ShutDownAndRelease();
+    std::sort(definitions.begin(), definitions.end(), [](const auto &a, const auto &b) {
+        return a.className == b.className ? a.scriptPath < b.scriptPath : a.className < b.className;
+    });
+    return definitions;
+}
+
+void ScriptComponent::ShowImGui() {
+    if (componentClass_.empty()) {
+        ImGuiCustom::SelectString(TranslationLabel("component.scriptcomponent.script_path"), scriptPath_, GetAvailableScriptPaths(), true);
+        // Assetsウィンドウからのスクリプトファイル（.as）のドラッグ&ドロップも受け付ける
+        // （ドロップ時はそのまま適用＝リロードまで行う）
+        if (std::string droppedPath; AcceptAssetDragDropTarget(kScriptAssetDragDropType, droppedPath)) {
+            // スクリプトパス一覧・シーンJSONはバックスラッシュ区切りで統一されているため合わせる
+            std::replace(droppedPath.begin(), droppedPath.end(), '/', '\\');
+            scriptPath_ = droppedPath;
+            ReloadFromDisk();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button(TranslationLabel("component.scriptcomponent.refresh_list"))) {
+            RefreshAvailableScriptPaths();
+        }
+    } else {
+        ImGui::TextUnformatted(componentClass_.c_str());
+        ImGui::TextWrapped("%s", scriptPath_.c_str());
     }
     // コンボの右に並べると画面外へはみ出して押しづらいため、Reloadは下の行に配置する
     if (ImGui::Button(TranslationLabel("component.scriptcomponent.reload"))) {
@@ -1633,12 +1738,14 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
 JSON ScriptComponent::SaveToJson() const {
     JSON json = JSON::object();
     json["scriptPath"] = scriptPath_;
+    if (!componentClass_.empty()) json["componentClass"] = componentClass_;
     json["fields"] = CaptureFieldValuesToJson();
     return json;
 }
 
 bool ScriptComponent::LoadFromJson(const JSON &json) {
     scriptPath_ = json.value("scriptPath", std::string{});
+    componentClass_ = json.value("componentClass", std::string{});
     pendingFieldValues_ = json.value("fields", JSON::object());
 
     // シーン読み込み時はコンポーネント追加時点でInitialize()が空のscriptPath_で

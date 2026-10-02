@@ -1,4 +1,4 @@
-{
+﻿{
 	"localeCode": "ja-JP",
 	"localeName": "日本語",
 	"fontPath": "Assets/KashipanEngine/Fonts/NotoSansJP-Regular.ttf",
@@ -1548,6 +1548,23 @@
 		"component.tilemaprenderer.tileset_origin_px": "タイルセット上の原点(px)",
 
 		//--------- component.transformsync ---------//
+		"component.objectanchor.target": "参照先",
+		"component.objectanchor.no_target": "参照先が未設定です。追従させたいオブジェクトを選択してください（ヒエラルキーからのドラッグ&ドロップでも指定できます）。",
+		"component.objectanchor.invalid_target": "自分自身や自分の子孫は参照先にできません。",
+		"component.objectanchor.bounds_source": "範囲の基準",
+		"component.objectanchor.bounds_source.auto": "自動",
+		"component.objectanchor.bounds_source.mesh": "メッシュ・スプライト",
+		"component.objectanchor.bounds_source.text": "テキスト",
+		"component.objectanchor.bounds_source.transform": "Transform（1×1×1の箱）",
+		"component.objectanchor.resolved": "使用中: ",
+		"component.objectanchor.anchor_point": "基準点",
+		"component.objectanchor.anchor_point.tooltip": "参照先の範囲内の位置を割合で指定します。(0,0,0)=最小側の角、(1,1,1)=最大側の角。2DではX=左→右、Y=下→上です。0～1の範囲外も指定できます。",
+		"component.objectanchor.anchor_preset": "プリセット (X/Y)",
+		"component.objectanchor.offset": "オフセット",
+		"component.objectanchor.offset_in_target_space": "オフセットを参照先の回転に合わせる",
+		"component.objectanchor.apply_axes": "反映する軸",
+		"component.objectanchor.follow_rotation": "回転も追従",
+		"component.objectanchor.desc": "参照先の範囲（メッシュ・スプライト・テキスト）の中の基準点へ、このオブジェクトの位置を毎フレーム追従させます。2D・3Dのどちらでも使えます。2Dで奥行き（Z）を自分で管理したい場合は「反映する軸」のZを外してください。追従中はギズモでこのオブジェクトを動かしても上書きされます。",
 		"component.transformsync.desc_1": "ターゲットのワールド座標・回転・スケールに、それぞれのオフセットを加えた値を自身のTransformへ毎フレーム反映します（親子付けはしません）。",
 		"component.transformsync.no_target": "(ターゲット未設定：同期は行われません)",
 		"component.transformsync.position_offset": "位置オフセット",

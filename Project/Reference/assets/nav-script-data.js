@@ -39,6 +39,7 @@ const KE_PAGES = [
   { id: "C_Basic_ScriptComponent", title: "ScriptComponent", group: "コンポーネント: Basic", href: "Script/Components/Basic/ScriptComponent.html" },
   { id: "C_Basic_PrefabInstanceComponent", title: "PrefabInstanceComponent", group: "コンポーネント: Basic", href: "Script/Components/Basic/PrefabInstanceComponent.html" },
   { id: "C_Basic_TargetLookAt", title: "TargetLookAt", group: "コンポーネント: Basic", href: "Script/Components/Basic/TargetLookAt.html" },
+  { id: "C_Basic_ObjectAnchor", title: "ObjectAnchor", group: "コンポーネント: Basic", href: "Script/Components/Basic/ObjectAnchor.html" },
 
   { id: "C_Render_MeshRenderer", title: "MeshRenderer", group: "コンポーネント: Render", href: "Script/Components/Render/MeshRenderer.html" },
   { id: "C_Render_SkinnedMeshRenderer", title: "SkinnedMeshRenderer", group: "コンポーネント: Render", href: "Script/Components/Render/SkinnedMeshRenderer.html" },

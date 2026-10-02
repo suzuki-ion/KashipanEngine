@@ -357,6 +357,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <None Include="Reference\Editor\Components\Basic\ScriptComponent.html" />
     <None Include="Reference\Editor\Components\Basic\Shake.html" />
     <None Include="Reference\Editor\Components\Basic\TargetLookAt.html" />
+    <None Include="Reference\Editor\Components\Basic\ObjectAnchor.html" />
     <None Include="Reference\Editor\Components\Basic\Transform.html" />
     <None Include="Reference\Editor\Components\Basic\Velocity.html" />
     <None Include="Reference\Editor\Components\Collider\Box2DCollider.html" />
@@ -1269,6 +1270,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClInclude Include="KashipanEngine\Objects\Components\Shake.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\PrefabInstanceComponent.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\TargetLookAt.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\ObjectAnchor.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Transform.h" />
     <ClInclude Include="KashipanEngine\Objects\ParameterBinding.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\InputCommandApplier.h" />

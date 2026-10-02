@@ -1,4 +1,4 @@
-{
+﻿{
 	"localeCode": "zh-CN",
 	"localeName": "简体中文",
 	"fontPath": "Assets/KashipanEngine/Fonts/NotoSansSC-Regular.ttf",
@@ -1515,6 +1515,23 @@
 		"component.texturesource.texture": "纹理",
 
 		//--------- component.transformsync ---------//
+		"component.objectanchor.target": "参照对象",
+		"component.objectanchor.no_target": "未设置参照对象。请选择要跟随的对象（也可以从层级窗口拖放指定）。",
+		"component.objectanchor.invalid_target": "不能将自身或自身的子孙对象设为参照对象。",
+		"component.objectanchor.bounds_source": "范围依据",
+		"component.objectanchor.bounds_source.auto": "自动",
+		"component.objectanchor.bounds_source.mesh": "网格・精灵",
+		"component.objectanchor.bounds_source.text": "文本",
+		"component.objectanchor.bounds_source.transform": "Transform（1×1×1 的盒子）",
+		"component.objectanchor.resolved": "当前使用: ",
+		"component.objectanchor.anchor_point": "基准点",
+		"component.objectanchor.anchor_point.tooltip": "以比例指定参照对象范围内的位置。(0,0,0)=最小侧的角，(1,1,1)=最大侧的角。2D 中 X=左→右，Y=下→上。也可以指定 0～1 范围以外的值。",
+		"component.objectanchor.anchor_preset": "预设 (X/Y)",
+		"component.objectanchor.offset": "偏移",
+		"component.objectanchor.offset_in_target_space": "偏移随参照对象旋转",
+		"component.objectanchor.apply_axes": "应用的轴",
+		"component.objectanchor.follow_rotation": "同时跟随旋转",
+		"component.objectanchor.desc": "每帧将此对象的位置跟随到参照对象范围（网格・精灵・文本）内的基准点。2D 和 3D 均可使用。在 2D 中如需自行管理深度（Z），请取消“应用的轴”中的 Z。跟随期间即使用变换控件移动此对象也会被覆盖。",
 		"component.transformsync.desc_1": "每帧将目标的世界位置/旋转/缩放（各自加上偏移量）应用到该对象的Transform上。不会更改实际的场景层级父子关系。",
 		"component.transformsync.no_target": "(未设置目标：不会进行同步)",
 		"component.transformsync.position_offset": "位置偏移",

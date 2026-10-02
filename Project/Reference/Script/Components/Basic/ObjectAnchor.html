@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ObjectAnchor | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-script-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_ObjectAnchor">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>ObjectAnchor</h1>
+<p class="page-lead">参照先オブジェクトの範囲（メッシュ・スプライト・テキスト）の中の基準点へ、自身の<code>Transform</code>の位置を毎フレーム追従させるコンポーネントです。基準点は範囲に対する割合で指定し、2D・3Dのどちらにも使えます。</p>
+</div>
+
+<table>
+<tr><th>メソッド</th><th>説明</th></tr>
+<tr><td><code>void SetTargetObject(Object@)</code> / <code>Object@ GetTargetObject() const</code> / <code>string GetTargetObjectID() const</code></td><td>参照先オブジェクトの設定/取得。自分自身や自分の子孫を指定した場合は追従しない</td></tr>
+<tr><td><code>void SetBoundsSource(int)</code> / <code>int GetBoundsSource() const</code></td><td>範囲の求め方。<code>0</code>=Auto（メッシュ・スプライト→テキスト→Transformの順）、<code>1</code>=Mesh（スプライト含む）、<code>2</code>=Text、<code>3</code>=Transform（1×1×1の箱）</td></tr>
+<tr><td><code>int GetResolvedBoundsSource() const</code></td><td>直近の追従で実際に使われた範囲の種類（Auto指定時は解決後の値。値の意味は上と同じ）</td></tr>
+<tr><td><code>void SetAnchorPoint(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetAnchorPoint() const</code></td><td>範囲内の基準点。<code>(0,0,0)</code>=最小側の角 〜 <code>(1,1,1)</code>=最大側の角の割合（2DではX=左→右、Y=下→上）</td></tr>
+<tr><td><code>void SetOffset(const Vector3 &amp;in)</code> / <code>const Vector3 &amp;GetOffset() const</code></td><td>基準点からのオフセット（ワールド単位）</td></tr>
+<tr><td><code>void SetOffsetInTargetSpace(bool)</code> / <code>bool GetOffsetInTargetSpace() const</code></td><td><code>true</code>でオフセットを参照先のワールド回転で回してから加える</td></tr>
+<tr><td><code>void SetApplyAxes(bool, bool, bool)</code> / <code>void SetApplyX(bool)</code> / <code>void SetApplyY(bool)</code> / <code>void SetApplyZ(bool)</code> / <code>bool GetApplyX() const</code> 等</td><td>追従結果を反映する軸（自身の親から見たローカル座標の軸単位）。外した軸は現在の値を保つ</td></tr>
+<tr><td><code>void SetFollowRotation(bool)</code> / <code>bool GetFollowRotation() const</code></td><td><code>true</code>で回転も参照先のワールド回転に合わせる</td></tr>
+<tr><td><code>bool TryGetAnchorWorldPosition(Vector3 &amp;out) const</code></td><td>現在の設定での追従先（基準点＋オフセット）のワールド座標を求める。参照先が無い、または無効な場合は<code>false</code></td></tr>
+</table>
+
+<h2>使用例</h2>
+<pre><code class="language-angelscript">// 体力ゲージ（このオブジェクト）を、敵オブジェクトの頭上（範囲の上辺中央の少し上）に付ける
+class HealthBarAnchor : ScriptComponentBehavior {
+    void Start() {
+        ObjectAnchor@ anchor;
+        if (AddComponent(@anchor)) {
+            anchor.SetTargetObject(FindObject("Enemy"));
+            anchor.SetAnchorPoint(Vector3(0.5f, 1.0f, 0.5f));
+            anchor.SetOffset(Vector3(0.0f, 0.3f, 0.0f));
+        }
+    }
+}</code></pre>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../05_ComponentTypes.html">05_ComponentTypes.html</a>（IsActive/SetActive/GetComponentType/SetTag/GetTag/GetTagName）</li>
+<li><a href="../../../Editor/Components/Basic/ObjectAnchor.html">Editor/Components/Basic/ObjectAnchor.html</a> — インスペクターでの設定項目と挙動の詳細</li>
+<li><a href="../Render/ScreenAnchor.html">ScreenAnchor</a> — Camera2Dの画面を基準にする場合</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

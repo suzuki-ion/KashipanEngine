@@ -1,4 +1,4 @@
-{
+﻿{
 	"localeCode": "en-US",
 	"localeName": "English",
 	"fontPath": "Assets/KashipanEngine/Fonts/NotoSansJP-Regular.ttf",
@@ -1546,6 +1546,23 @@
 		"component.tilemaprenderer.tileset_origin_px": "Tileset Origin (px)",
 
 		//--------- component.transformsync ---------//
+		"component.objectanchor.target": "Target",
+		"component.objectanchor.no_target": "No target is set. Select the object to anchor to (you can also drag it from the Hierarchy).",
+		"component.objectanchor.invalid_target": "This object itself or its descendants cannot be used as the target.",
+		"component.objectanchor.bounds_source": "Bounds Source",
+		"component.objectanchor.bounds_source.auto": "Auto",
+		"component.objectanchor.bounds_source.mesh": "Mesh / Sprite",
+		"component.objectanchor.bounds_source.text": "Text",
+		"component.objectanchor.bounds_source.transform": "Transform (1x1x1 box)",
+		"component.objectanchor.resolved": "In use: ",
+		"component.objectanchor.anchor_point": "Anchor Point",
+		"component.objectanchor.anchor_point.tooltip": "Position within the target bounds as a ratio: (0,0,0) = minimum corner, (1,1,1) = maximum corner. In 2D, X goes left to right and Y goes bottom to top. Values outside 0-1 are allowed.",
+		"component.objectanchor.anchor_preset": "Preset (X/Y)",
+		"component.objectanchor.offset": "Offset",
+		"component.objectanchor.offset_in_target_space": "Rotate Offset With Target",
+		"component.objectanchor.apply_axes": "Apply Axes",
+		"component.objectanchor.follow_rotation": "Follow Rotation",
+		"component.objectanchor.desc": "Keeps this object at the anchor point within the target's bounds (mesh, sprite or text) every frame. Works for both 2D and 3D. In 2D, uncheck Z under Apply Axes to keep managing depth yourself. While anchored, moving this object with the gizmo is overridden.",
 		"component.transformsync.desc_1": "Every frame, copies the target's world position/rotation/scale (each plus its own offset) onto this object's Transform. This does not change the actual scene-graph parent.",
 		"component.transformsync.no_target": "(No target: sync is not applied)",
 		"component.transformsync.position_offset": "Position Offset",

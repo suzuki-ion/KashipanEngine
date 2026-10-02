@@ -1505,6 +1505,9 @@
     <ClInclude Include="KashipanEngine\Objects\Components\TargetLookAt.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\ObjectAnchor.h">
+      <Filter>KashipanEngine\Objects\Components</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\Transform.h">
       <Filter>KashipanEngine\Objects\Components</Filter>
     </ClInclude>
@@ -2359,6 +2362,9 @@
       <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
     <None Include="Reference\Editor\Components\Basic\TargetLookAt.html">
+      <Filter>Reference\Editor\Components\Basic</Filter>
+    </None>
+    <None Include="Reference\Editor\Components\Basic\ObjectAnchor.html">
       <Filter>Reference\Editor\Components\Basic</Filter>
     </None>
     <None Include="Reference\Editor\Components\Basic\Transform.html">

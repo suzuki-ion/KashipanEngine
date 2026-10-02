@@ -127,6 +127,7 @@
 #include "Objects/Components/ScriptComponent.h"
 #include "Objects/Components/TargetLookAt.h"
 #include "Objects/Components/TransformSync.h"
+#include "Objects/Components/ObjectAnchor.h"
 #include "Objects/Components/ParticleSystem2D.h"
 #include "Objects/Components/ParticleSystem3D.h"
 #include "Objects/Components/PreTransform.h"
@@ -1015,6 +1016,50 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("const Vector3 &GetRotationOffset() const", SafeCall<&TransformSync::GetRotationOffset>())
         .method("void SetScaleOffset(const Vector3 &in)", SafeCall<&TransformSync::SetScaleOffset>())
         .method("const Vector3 &GetScaleOffset() const", SafeCall<&TransformSync::GetScaleOffset>());
+
+    RegisterComponentType<ObjectAnchor>(engine, "ObjectAnchor")
+        .method("void SetTargetObject(Object@)", [](ScriptComponentHandle<ObjectAnchor> &cHandle, ScriptObjectHandle *obj) {
+            ObjectAnchor *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            ObjectAnchor &c = *cPtr; c.SetTargetObject(ResolveObjectArg(obj)); })
+        .method("Object@ GetTargetObject() const", [](const ScriptComponentHandle<ObjectAnchor> &cHandle) -> ScriptObjectHandle * {
+            ObjectAnchor *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<ScriptObjectHandle *>(); }
+            const ObjectAnchor &c = *cPtr; return ScriptObjectHandle::Create(c.GetTargetObject()); })
+        .method("string GetTargetObjectID() const", [](const ScriptComponentHandle<ObjectAnchor> &cHandle) -> std::string {
+            ObjectAnchor *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::string>(); }
+            const ObjectAnchor &c = *cPtr; return c.GetTargetObjectID().ToString(); })
+        // 範囲の求め方（0=Auto, 1=Mesh, 2=Text, 3=Transform）
+        .method("void SetBoundsSource(int)", [](ScriptComponentHandle<ObjectAnchor> &cHandle, int source) {
+            ObjectAnchor *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return; }
+            if (source < 0 || source > static_cast<int>(ObjectAnchor::BoundsSource::Transform)) return;
+            ObjectAnchor &c = *cPtr; c.SetBoundsSource(static_cast<ObjectAnchor::BoundsSource>(source)); })
+        .method("int GetBoundsSource() const", [](const ScriptComponentHandle<ObjectAnchor> &cHandle) {
+            ObjectAnchor *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const ObjectAnchor &c = *cPtr; return static_cast<int>(c.GetBoundsSource()); })
+        .method("int GetResolvedBoundsSource() const", [](const ScriptComponentHandle<ObjectAnchor> &cHandle) {
+            ObjectAnchor *cPtr = cHandle.Resolve();
+            if (!cPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<int>(); }
+            const ObjectAnchor &c = *cPtr; return static_cast<int>(c.GetResolvedBoundsSource()); })
+        .method("void SetAnchorPoint(const Vector3 &in)", SafeCall<&ObjectAnchor::SetAnchorPoint>())
+        .method("const Vector3 &GetAnchorPoint() const", SafeCall<&ObjectAnchor::GetAnchorPoint>())
+        .method("void SetOffset(const Vector3 &in)", SafeCall<&ObjectAnchor::SetOffset>())
+        .method("const Vector3 &GetOffset() const", SafeCall<&ObjectAnchor::GetOffset>())
+        .method("void SetOffsetInTargetSpace(bool)", SafeCall<&ObjectAnchor::SetOffsetInTargetSpace>())
+        .method("bool GetOffsetInTargetSpace() const", SafeCall<&ObjectAnchor::GetOffsetInTargetSpace>())
+        .method("void SetApplyAxes(bool, bool, bool)", SafeCall<&ObjectAnchor::SetApplyAxes>())
+        .method("void SetApplyX(bool)", SafeCall<&ObjectAnchor::SetApplyX>())
+        .method("void SetApplyY(bool)", SafeCall<&ObjectAnchor::SetApplyY>())
+        .method("void SetApplyZ(bool)", SafeCall<&ObjectAnchor::SetApplyZ>())
+        .method("bool GetApplyX() const", SafeCall<&ObjectAnchor::GetApplyX>())
+        .method("bool GetApplyY() const", SafeCall<&ObjectAnchor::GetApplyY>())
+        .method("bool GetApplyZ() const", SafeCall<&ObjectAnchor::GetApplyZ>())
+        .method("void SetFollowRotation(bool)", SafeCall<&ObjectAnchor::SetFollowRotation>())
+        .method("bool GetFollowRotation() const", SafeCall<&ObjectAnchor::GetFollowRotation>())
+        .method("bool TryGetAnchorWorldPosition(Vector3 &out) const", SafeCall<&ObjectAnchor::TryGetAnchorWorldPosition>());
 
     RegisterComponentType<AudioSource>(engine, "AudioSource")
         .method("uint Play()", SafeCall<&AudioSource::Play>())

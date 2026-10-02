@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ObjectAnchor | KashipanEngine エディタリファレンス</title>
+<link rel="stylesheet" href="../../../assets/style.css">
+<script defer src="../../../assets/nav-editor-data.js"></script>
+<script defer src="../../../assets/nav.js"></script>
+</head>
+<body data-page="C_Basic_ObjectAnchor">
+<div class="layout">
+<nav id="sidebar"></nav>
+<main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header">
+<h1>ObjectAnchor</h1>
+<p class="page-lead">参照先オブジェクトの「範囲」（メッシュ・スプライト・テキストの大きさ）の中の基準点へ、自身の位置を毎フレーム追従させるコンポーネントです。基準点は範囲に対する割合で指定するため、参照先の大きさや向きが変わっても「右上の角」「上辺の中央」といった同じ場所に付いていきます。2D（スプライト・テキスト）と3D（メッシュ）のどちらにも同じ設定で使えます。</p>
+</div>
+
+<h2>Inspectorに表示される項目</h2>
+<table>
+<tr><th>ラベル</th><th>ウィジェット</th><th>内容</th></tr>
+<tr><td>参照先 (Target)</td><td>オブジェクト選択欄（検索付きコンボ＋ヒエラルキーからのドラッグ&amp;ドロップ）</td><td>基準にするオブジェクト。未設定の場合は追従しない。<strong>自分自身や自分の子孫は指定できません</strong>（指定すると警告が表示され、追従しない）</td></tr>
+<tr><td>範囲の基準 (Bounds Source)</td><td>コンボ</td><td>参照先の範囲を何から求めるか（下表）。下に「使用中: 〜」として実際に使われている種類が表示される</td></tr>
+<tr><td>基準点 (Anchor Point)</td><td>XYZのドラッグ入力欄（ステップ0.01）</td><td>範囲内の位置を割合で指定する。<code>(0,0,0)</code>=範囲の最小側の角、<code>(1,1,1)</code>=最大側の角、既定値は<code>(0.5,0.5,0.5)</code>=中心。0〜1の範囲外も指定でき、範囲の外側に置くこともできる</td></tr>
+<tr><td>プリセット (X/Y)</td><td>3×3のボタン</td><td>基準点のX/Yを、左上・上・右上・左・中央・右・左下・下・右下から選ぶ（Zは変更しない）。現在の値と一致するボタンが強調表示される</td></tr>
+<tr><td>オフセット (Offset)</td><td>XYZのドラッグ入力欄（ステップ0.01）</td><td>基準点から更にずらす量（ワールド単位）</td></tr>
+<tr><td>オフセットを参照先の回転に合わせる</td><td>チェックボックス</td><td>有効にすると、オフセットを参照先のワールド回転で回してから加える（既定: 無効＝ワールド軸のまま加える）</td></tr>
+<tr><td>反映する軸 (Apply Axes)</td><td>X / Y / Z のチェックボックス</td><td>追従結果を反映する軸。外した軸は自身の現在の値を保つ（既定: すべて有効）</td></tr>
+<tr><td>回転も追従 (Follow Rotation)</td><td>チェックボックス</td><td>有効にすると、位置に加えて回転も参照先のワールド回転に合わせる（既定: 無効）</td></tr>
+</table>
+
+<h3>範囲の基準</h3>
+<table>
+<tr><th>選択肢</th><th>範囲</th></tr>
+<tr><td>自動 (Auto)</td><td>メッシュ・スプライト → テキスト → Transform の順に、参照先が持っているものを使う</td></tr>
+<tr><td>メッシュ・スプライト (Mesh / Sprite)</td><td><code>MeshFilter</code>のメッシュの外接箱。<code>SpriteRenderer</code>を持つ場合は、スプライトのAnchor/Pivot補正込みの矩形（見た目の矩形と一致する）</td></tr>
+<tr><td>テキスト (Text)</td><td><code>TextRenderer</code>の全文字を囲む矩形</td></tr>
+<tr><td>Transform（1×1×1の箱）</td><td>参照先の位置を中心とした1×1×1の箱を、参照先のスケールで拡大したもの。描画コンポーネントを持たないオブジェクト用</td></tr>
+</table>
+<p>指定した種類を参照先が持っていない場合（例: テキストを指定したがTextRendererが無い）は、Transformの箱が使われます。</p>
+
+<div class="tip"><strong>2Dで使う場合</strong><br>スプライトやテキストは奥行き（Z）の厚みを持たないため、基準点のZは結果に影響せず、追従先のZは参照先と同じになります。描画順のために自分でZを決めたい場合は「反映する軸」のZを外してください。</div>
+
+<div class="note">範囲は参照先のローカル空間で求めるため、参照先が回転・拡縮していても範囲上の同じ点に追従します。自身に親オブジェクトがある場合は、求めたワールド座標を親のローカル空間へ変換してから書き込みます。実際のシーン階層上の親子関係は変更しません。</div>
+
+<div class="note">エディターで再生していない間も追従するため、追従中はギズモや数値入力でこのオブジェクトの位置（反映する軸）を動かしても上書きされます。位置を調整したい場合は「オフセット」を使ってください。</div>
+
+<h2>Add Componentでの位置</h2>
+<p><span class="ui-path">Add Component → Utility → ObjectAnchor</span>。最大付与数は255です。</p>
+
+<h2>関連ページ</h2>
+<ul>
+<li><a href="../../../Script/Components/Basic/ObjectAnchor.html">Script/Components/Basic/ObjectAnchor.html</a> — スクリプトから使う場合のAPI</li>
+<li><a href="../Render/ScreenAnchor.html">ScreenAnchor.html</a> — 基準をオブジェクトではなくCamera2Dの画面にしたい場合</li>
+<li><a href="TransformSync.html">TransformSync.html</a> — 範囲を使わず、参照先の位置・回転・スケールにそのまま追従させたい場合</li>
+<li><a href="../Render/SpriteRenderer.html">SpriteRenderer.html</a> — スプライト自身のAnchor/Pivot（自分の矩形の中の基準点。ObjectAnchorとは別の概念）</li>
+</ul>
+
+<div id="page-footer" class="page-footer"></div>
+</main>
+</div>
+</body>
+</html>

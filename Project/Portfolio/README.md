@@ -1,0 +1,36 @@
+# ポートフォリオの公開と編集
+
+提供された8月月次のPDFをもとに作成した、鈴木色音の静的ポートフォリオサイトです。
+
+## 公開先
+
+- リポジトリ：suzuki-ion/KashipanEngine
+- 公開元ブランチ：JobHuntingProject
+- 公開後のURL：https://suzuki-ion.github.io/KashipanEngine/portfolio/
+- エンジンリファレンス：https://suzuki-ion.github.io/KashipanEngine/
+
+`.github/workflows/deploy-reference.yml` がリファレンスをルートへ、ポートフォリオを `portfolio/` へまとめて公開します。別のPagesワークフローを追加しないため、片方のサイトがもう片方を上書きすることを避けられます。公開元をJobHuntingProjectに統一し、masterからは公開しません。
+
+## 初回公開
+
+1. このフォルダーと上記ワークフローの変更をJobHuntingProjectへコミット・プッシュします。
+2. リポジトリの **Settings → Pages → Build and deployment → Source** が **GitHub Actions** になっていることを確認します。既存リファレンスがこの方式で公開済みなら変更不要です。
+3. **Actions → Deploy Reference and Portfolio to GitHub Pages** の実行完了を確認します。手動実行する場合もJobHuntingProjectを選択してください。
+4. 公開後のURLを開いて画像とPDFの表示を確認します。
+
+ポートフォリオ、リファレンス、公開ワークフローに変更をプッシュすると自動更新されます。ブランチがリモートより進んでいる場合、通常のプッシュには既存の未送信コミットも含まれます。
+
+GitHub公式：https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site
+
+## 編集
+
+- `index.html`：作品紹介、プロフィール、実績、技術説明、数値の表。
+- `style.css`：配色、レイアウト、スマートフォン対応。
+- `script.js`：Forward / Forward+比較グラフの数値。
+- `assets/`：PDFから抽出した作品画像と原本PDF。
+
+リンクは相対パスのため、公開先の `/portfolio/` 配下でも利用できます。画像と原本PDFも公開対象です。開発状況・期間・実績・計測結果は提供資料時点の内容で、現状への更新や再計測は行っていません。
+
+## 手元で確認
+
+このフォルダーの `index.html` をブラウザーで開けます。Webサーバーを使用する場合は `python -m http.server 8765` をこのフォルダーで実行してください。

@@ -1,10 +1,11 @@
-name: Deploy Reference to GitHub Pages
+name: Deploy Reference and Portfolio to GitHub Pages
 
 on:
   push:
-    branches: [master, JobHuntingProject]
+    branches: [JobHuntingProject]
     paths:
       - "Project/Reference/**"
+      - "Project/Portfolio/**"
       - ".github/workflows/deploy-reference.yml"
   workflow_dispatch:
 
@@ -19,6 +20,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: github.ref == 'refs/heads/JobHuntingProject'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -30,10 +32,18 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Prepare reference and portfolio
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/kashipan-pages/portfolio"
+          cp -a Project/Reference/. "$RUNNER_TEMP/kashipan-pages/"
+          cp -a Project/Portfolio/. "$RUNNER_TEMP/kashipan-pages/portfolio/"
+          touch "$RUNNER_TEMP/kashipan-pages/.nojekyll"
+
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
-          path: Project/Reference
+          path: ${{ runner.temp }}/kashipan-pages
 
       - name: Deploy to GitHub Pages
         id: deployment

@@ -24,9 +24,12 @@ GitHub公式：https://docs.github.com/en/pages/getting-started-with-github-page
 
 ## 編集
 
-- `index.html`：作品紹介、プロフィール、実績、技術説明、数値の表。
+- `index.html`：作品一覧、プロフィール、実績、詳細ページへの導線。
+- `works/*/index.html`：9作品それぞれの制作概要、担当内容、工夫。
+- `works/job-hunting/index.html`：制作中の就活作品と、プログラム説明資料に基づく技術説明・計測結果・実装状況。技術説明の原本PDFへのリンクもこのページに掲載。
+- `engine/index.html`：Kashipan Engine本体の紹介、制作環境、対象範囲、リファレンスへのリンク。
 - `style.css`：配色、レイアウト、スマートフォン対応。
-- `script.js`：Forward / Forward+比較グラフの数値。
+- `script.js`：就活作品ページ内のForward / Forward+比較グラフの数値。
 - `assets/`：PDFから抽出した作品画像と原本PDF。
 
 リンクは相対パスのため、公開先の `/portfolio/` 配下でも利用できます。画像と原本PDFも公開対象です。開発状況・期間・実績・計測結果は提供資料時点の内容で、現状への更新や再計測は行っていません。

@@ -48,3 +48,11 @@
 @media(max-width:1099px){html{scroll-padding-top:75px}.sidebar{position:sticky;top:0;border-right:0;border-bottom:1px solid var(--line)}.sidebar-content{max-height:65vh;overflow:auto;overscroll-behavior:contain;padding:18px 6vw;display:grid;grid-template-columns:1fr 1fr;gap:25px}.sidebar nav+nav{margin:0;padding:0 0 0 20px;border-top:0;border-left:1px solid var(--line)}.side-panel>summary:focus-visible{outline-offset:-4px}}
 @media(max-width:480px){.sidebar-content{grid-template-columns:minmax(0,1fr);gap:20px}.sidebar nav+nav{border-left:0;border-top:1px solid var(--line);padding:18px 0 0}}
 @media(min-width:1100px){.hero h1{font-size:clamp(2rem,3vw,4rem)}}
+
+/* Stack each work's achievements over the top-left of its thumbnail. */
+.work-thumbnail{position:relative;isolation:isolate}.work-thumbnail>img{aspect-ratio:16/9;object-fit:cover}
+.thumbnail-achievements{position:absolute;top:14px;left:14px;max-width:calc(100% - 28px);display:flex;flex-direction:column;align-items:flex-start;gap:7px;list-style:none;margin:0;padding:0;z-index:1}
+.achievement-badge{display:flex;align-items:center;gap:9px;padding:8px 11px;background:rgba(15,19,23,.96);border:1px solid #918052;border-left:3px solid #f3ce70;box-shadow:0 2px 10px #0005;color:#f9e6b5;font-size:.75rem;font-weight:600;line-height:1.5;max-width:100%;overflow-wrap:anywhere}
+.achievement-badge svg{width:23px;height:23px;flex:none;color:#f3ce70}.achievement-badge strong{font-weight:800;color:#ffe49b;font-size:1.05em}
+.achievement-badge.medal{border-color:#718392;border-left-color:#c5d7e7;color:#e5edf3}.achievement-badge.medal svg,.achievement-badge.medal strong{color:#d0e6f8}
+@media(max-width:720px){.thumbnail-achievements{top:10px;left:10px;max-width:calc(100% - 20px);gap:5px}.achievement-badge{padding:6px 8px;gap:7px;font-size:.72rem}.achievement-badge svg{width:21px;height:21px}}

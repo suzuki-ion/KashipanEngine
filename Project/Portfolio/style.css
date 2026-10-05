@@ -83,3 +83,5 @@
 .slideshow-toggle:hover{border-color:var(--accent);color:var(--accent)}.slideshow-toggle:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
 @media(max-width:720px){.hero-slideshow:before{background:rgba(9,13,16,.78)}.hero-slideshow .hero-backdrop img{object-position:60% center}}
 @media(prefers-reduced-motion:reduce){.hero-backdrop .hero-slide{transition:none}}
+
+.hero-slideshow.allow-motion .hero-slide{transition:opacity 1.5s ease-in-out!important}

@@ -7,11 +7,11 @@
   const button = hero.querySelector('.slideshow-toggle');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let index = 0;
-  let paused = false;
+  let paused = reducedMotion.matches;
   let visible = true;
   let timer = null;
   let loading = false;
-  const canPlay = () => !paused && !reducedMotion.matches && !document.hidden && visible;
+  const canPlay = () => !paused && !document.hidden && visible;
   const advance = async () => {
     if (!canPlay() || loading) return;
     loading = true;
@@ -33,7 +33,8 @@
   const syncPlayback = () => {
     window.clearInterval(timer);
     timer = null;
-    button.hidden = reducedMotion.matches;
+    button.hidden = false;
+    hero.classList.toggle('allow-motion', !paused);
     button.setAttribute('aria-pressed', String(paused));
     button.textContent = paused ? '背景の切り替えを再開' : '背景の切り替えを停止';
     if (canPlay()) timer = window.setInterval(advance, 6000);
@@ -42,7 +43,10 @@
     paused = !paused;
     syncPlayback();
   });
-  reducedMotion.addEventListener('change', syncPlayback);
+  reducedMotion.addEventListener('change', () => {
+    paused = reducedMotion.matches;
+    syncPlayback();
+  });
   document.addEventListener('visibilitychange', syncPlayback);
   const observer = new IntersectionObserver(entries => {
     visible = entries[0].isIntersecting;

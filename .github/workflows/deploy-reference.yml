@@ -6,6 +6,7 @@ on:
     paths:
       - "Project/Reference/**"
       - "Project/Portfolio/**"
+      - "Project/Tools/VersionPortfolioAssets.py"
       - ".github/workflows/deploy-reference.yml"
   workflow_dispatch:
 
@@ -38,6 +39,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/kashipan-pages/portfolio"
           cp -a Project/Reference/. "$RUNNER_TEMP/kashipan-pages/"
           cp -a Project/Portfolio/. "$RUNNER_TEMP/kashipan-pages/portfolio/"
+          python3 Project/Tools/VersionPortfolioAssets.py "$RUNNER_TEMP/kashipan-pages/portfolio/"
           touch "$RUNNER_TEMP/kashipan-pages/.nojekyll"
 
       - name: Upload artifact

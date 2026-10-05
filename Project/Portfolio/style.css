@@ -56,3 +56,13 @@
 .achievement-badge svg{width:23px;height:23px;flex:none;color:#f3ce70}.achievement-badge strong{font-weight:800;color:#ffe49b;font-size:1.05em}
 .achievement-badge.medal{border-color:#718392;border-left-color:#c5d7e7;color:#e5edf3}.achievement-badge.medal svg,.achievement-badge.medal strong{color:#d0e6f8}
 @media(max-width:720px){.thumbnail-achievements{top:10px;left:10px;max-width:calc(100% - 20px);gap:5px}.achievement-badge{padding:6px 8px;gap:7px;font-size:.72rem}.achievement-badge svg{width:21px;height:21px}}
+
+.hero-profile{align-items:center;gap:40px}.hero-profile h1{font-size:clamp(3rem,5.5vw,5.5rem);line-height:1.3;letter-spacing:.04em}
+.hero-name-reading{font-size:.9rem;margin-top:15px}.hero-role{color:var(--accent);font-size:1.15rem;font-weight:bold;margin-top:25px}
+.hero-achievements{background:var(--panel);border:1px solid var(--line);padding:30px;min-width:0}
+.hero-achievements .eyebrow{margin-bottom:10px}.hero-achievements h2{font-size:1.6rem}
+.hero-achievement-list{list-style:none;margin:20px 0 0;padding:0}.hero-achievement-list li{display:flex;gap:15px;align-items:center;padding:17px 0;border-bottom:1px solid var(--line)}
+.hero-achievement-list svg{width:28px;height:28px;flex:none;color:#f3ce70}.hero-achievement-list strong,.hero-achievement-list span{display:block}
+.hero-achievement-list strong{font-size:1rem}.hero-achievement-list span{font-size:.85rem;color:var(--accent);margin-top:5px}.hero-achievement-note{font-size:.72rem;margin-top:18px}
+.about-profile{grid-template-columns:minmax(0,1fr)}.about-profile>div{max-width:850px}
+@media(max-width:720px){.hero-profile{gap:30px}.hero-profile h1{font-size:clamp(2.5rem,12vw,4rem)}.hero-achievements{padding:23px}.hero-achievement-list li{gap:12px;padding:15px 0}.hero-achievement-list strong{font-size:.9rem}.hero-achievement-list span{font-size:.8rem}.hero-achievement-list svg{width:24px;height:24px}}

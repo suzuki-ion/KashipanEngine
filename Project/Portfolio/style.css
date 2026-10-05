@@ -35,3 +35,16 @@
 .editor-image-link{display:block;max-width:1190px;margin:auto;border:1px solid var(--line);cursor:zoom-in}
 .editor-image-link:hover{border-color:var(--accent)}.work-editor figcaption{color:var(--muted);font-size:.8rem;margin-top:12px}
 @media(max-width:720px){.play-controls .input-table{table-layout:fixed}.play-controls .input-table th:first-child{width:56%}.play-controls .input-label{overflow-wrap:anywhere}.work-editor{padding-top:40px;padding-bottom:45px}}
+
+/* Persistent page outline and links to the complete portfolio. */
+.sidebar{background:var(--bg);border-right:1px solid var(--line);z-index:20}
+.sidebar-content{padding:24px 18px}.sidebar nav+nav{margin-top:25px;padding-top:22px;border-top:1px solid var(--line)}
+.sidebar-label{font-size:.72rem;font-weight:bold;letter-spacing:.06em;color:var(--muted);margin-bottom:10px}
+.sidebar ul{padding:0;margin:0;list-style:none}.sidebar li+li{margin-top:3px}
+.sidebar a{display:block;border-left:2px solid transparent;padding:7px 10px;font-size:.8rem;line-height:1.6;overflow-wrap:anywhere}
+.sidebar a:hover{background:var(--panel);color:var(--accent)}.sidebar a[aria-current]{border-left-color:var(--accent);color:var(--accent);background:var(--panel)}
+.side-panel>summary{font-size:.85rem;padding:13px 6vw;background:var(--panel)}
+@media(min-width:1100px){body{padding-left:248px}.sidebar{position:fixed;inset:0 auto 0 0;width:248px;overflow-y:auto;overscroll-behavior:contain}.side-panel>summary{display:none}.sidebar-content{padding-top:32px}.hero,.section,.detail-heading{padding-left:4vw;padding-right:4vw}.skip{left:268px}}
+@media(max-width:1099px){html{scroll-padding-top:75px}.sidebar{position:sticky;top:0;border-right:0;border-bottom:1px solid var(--line)}.sidebar-content{max-height:65vh;overflow:auto;overscroll-behavior:contain;padding:18px 6vw;display:grid;grid-template-columns:1fr 1fr;gap:25px}.sidebar nav+nav{margin:0;padding:0 0 0 20px;border-top:0;border-left:1px solid var(--line)}.side-panel>summary:focus-visible{outline-offset:-4px}}
+@media(max-width:480px){.sidebar-content{grid-template-columns:minmax(0,1fr);gap:20px}.sidebar nav+nav{border-left:0;border-top:1px solid var(--line);padding:18px 0 0}}
+@media(min-width:1100px){.hero h1{font-size:clamp(2rem,3vw,4rem)}}

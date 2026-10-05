@@ -69,3 +69,17 @@
 
 .hero-achievement-list small{display:block;color:var(--muted);font-size:.74rem;line-height:1.7;margin-top:5px}
 .achievement-badge.exhibition{border-color:#638c83;border-left-color:#8edcc6;color:#d5f7ed}.achievement-badge.exhibition svg,.achievement-badge.exhibition strong{color:#9ee5cf}
+
+/* Cross-fading work images behind the name and achievements. */
+.hero-slideshow{position:relative;isolation:isolate;overflow:hidden;max-width:none}
+.hero-backdrop{position:absolute;inset:0;z-index:-2;pointer-events:none;background:var(--bg)}
+.hero-backdrop .hero-slide{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;transition:opacity 1.5s ease-in-out}
+.hero-backdrop .hero-slide.is-active{opacity:1}
+.hero-slideshow:before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg,rgba(9,13,16,.88),rgba(9,13,16,.58)),linear-gradient(0deg,var(--bg),transparent 25%)}
+.hero-slideshow .hero-achievements{background:rgba(25,30,35,.9)}
+.hero-slideshow .hero-description,.hero-slideshow .hero-name-reading,.hero-slideshow .hero-bottom{color:#d1d8dd}
+.hero-slideshow .hero-copy{text-shadow:0 2px 12px #0008}.hero-slideshow .hero-bottom{align-items:center;flex-wrap:wrap;gap:16px}
+.slideshow-toggle{font:inherit;letter-spacing:normal;line-height:1.6;cursor:pointer;padding:7px 12px;border:1px solid #77818a;color:var(--text);background:rgba(16,19,22,.85)}
+.slideshow-toggle:hover{border-color:var(--accent);color:var(--accent)}.slideshow-toggle:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+@media(max-width:720px){.hero-slideshow:before{background:rgba(9,13,16,.78)}.hero-slideshow .hero-backdrop img{object-position:60% center}}
+@media(prefers-reduced-motion:reduce){.hero-backdrop .hero-slide{transition:none}}

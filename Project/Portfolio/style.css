@@ -66,3 +66,6 @@
 .hero-achievement-list strong{font-size:1rem}.hero-achievement-list span{font-size:.85rem;color:var(--accent);margin-top:5px}.hero-achievement-note{font-size:.72rem;margin-top:18px}
 .about-profile{grid-template-columns:minmax(0,1fr)}.about-profile>div{max-width:850px}
 @media(max-width:720px){.hero-profile{gap:30px}.hero-profile h1{font-size:clamp(2.5rem,12vw,4rem)}.hero-achievements{padding:23px}.hero-achievement-list li{gap:12px;padding:15px 0}.hero-achievement-list strong{font-size:.9rem}.hero-achievement-list span{font-size:.8rem}.hero-achievement-list svg{width:24px;height:24px}}
+
+.hero-achievement-list small{display:block;color:var(--muted);font-size:.74rem;line-height:1.7;margin-top:5px}
+.achievement-badge.exhibition{border-color:#638c83;border-left-color:#8edcc6;color:#d5f7ed}.achievement-badge.exhibition svg,.achievement-badge.exhibition strong{color:#9ee5cf}

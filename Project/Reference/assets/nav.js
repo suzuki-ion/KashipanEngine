@@ -3,6 +3,68 @@
 // which each define KE_PAGES (relative to the Reference/ root) plus KE_SITE / KE_SITE_LABEL /
 // KE_OTHER_SITES (array of { label, href }) for the cross-site switcher.
 (function () {
+  // A small offline lexer for the C++ / AngelScript examples. Read textContent
+  // and create text nodes so sample strings can never become HTML markup.
+  const codeKeywords = new Set((
+    "alignas alignof and as auto break case cast catch class const constexpr consteval constinit " +
+    "continue co_await co_return co_yield default delete do dynamic_cast else enum explicit export " +
+    "external final for friend from function funcdef if import in inout interface is namespace new " +
+    "noexcept not operator or out override private protected public register reinterpret_cast " +
+    "requires return shared sizeof static static_assert static_cast struct switch template this " +
+    "thread_local throw try typedef typename union using virtual volatile while xor"
+  ).split(/\s+/));
+  const codeTypes = new Set((
+    "bool char char8_t char16_t char32_t double float int int8 int16 int32 int64 long short " +
+    "signed string uint uint8 uint16 uint32 uint64 unsigned void wchar_t size_t array dictionary"
+  ).split(/\s+/));
+  const codeLiterals = new Set(["true", "false", "null", "nullptr"]);
+
+  function highlightCodeBlocks() {
+    document.querySelectorAll("pre code").forEach((code) => {
+      if (code.dataset.highlighted) return;
+      const source = code.textContent;
+      const language = Array.from(code.classList).find((name) => name.startsWith("language-"));
+      if (language && !["language-angelscript", "language-cpp", "language-c", "language-json"].includes(language)) return;
+      const trimmed = source.replace(/^\s*(?:\/\/[^\n]*(?:\n|$)\s*)*/, "");
+      const isJson = language === "language-json" || /^[\[{]\s*(?:"|\{|\]|\})/.test(trimmed);
+      // Unlabelled directory trees, command lines and output stay plain text.
+      if (!language && !isJson && !/[;{}]|^\s*#(?:include|pragma|define)\b/m.test(source)) return;
+
+      const fragment = document.createDocumentFragment();
+      const tokens = /\/\/[^\r\n]*|\/\*[\s\S]*?(?:\*\/|$)|R"([^\s()\\]{0,16})\([\s\S]*?\)\1"|"(?:\\[\s\S]|[^"\\])*"|'(?:\\[\s\S]|[^'\\])*'|^\s*#[^\r\n]*|\b(?:0[xX][\da-fA-F]+|0[bB][01]+|\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)(?:[uUlLfF]*)\b|\.\d+(?:[eE][+-]?\d+)?[fF]?\b|[a-zA-Z_][\w]*/gm;
+      let offset = 0;
+      let match;
+      while ((match = tokens.exec(source)) !== null) {
+        fragment.appendChild(document.createTextNode(source.slice(offset, match.index)));
+        const token = match[0];
+        const following = source.slice(tokens.lastIndex);
+        let kind = "";
+        if (token.startsWith("//") || token.startsWith("/*")) kind = "comment";
+        else if (token.startsWith('"') || token.startsWith("'") || token.startsWith('R"')) {
+          kind = isJson && /^\s*:/.test(following) ? "property" : "string";
+        } else if (token.trimStart().startsWith("#")) kind = "preprocessor";
+        else if (/^(?:\d|\.\d)/.test(token)) kind = "number";
+        else if (codeLiterals.has(token)) kind = "literal";
+        else if (!isJson && codeKeywords.has(token)) kind = "keyword";
+        else if (!isJson && codeTypes.has(token)) kind = "type";
+        else if (!isJson && /^\s*\(/.test(following)) kind = "function";
+        else if (!isJson && /^[A-Z][a-zA-Z0-9]*$/.test(token)) kind = "type";
+        if (kind) {
+          const span = document.createElement("span");
+          span.className = "syntax-" + kind;
+          span.textContent = token;
+          fragment.appendChild(span);
+        } else {
+          fragment.appendChild(document.createTextNode(token));
+        }
+        offset = tokens.lastIndex;
+      }
+      fragment.appendChild(document.createTextNode(source.slice(offset)));
+      code.replaceChildren(fragment);
+      code.dataset.highlighted = "true";
+    });
+  }
+
   // href の "/" の数から、現在ページを起点に Reference/ ルートへ戻るための "../" の数を求める
   function prefixForHref(href) {
     const depth = href.split("/").length - 1;
@@ -93,6 +155,7 @@
   document.addEventListener("DOMContentLoaded", function () {
     const currentId = document.body.getAttribute("data-page");
     assignHeadingIds();
+    highlightCodeBlocks();
     renderSidebar(currentId);
     renderFooter(currentId);
     renderBreadcrumb(currentId);

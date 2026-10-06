@@ -16,6 +16,13 @@
   --tip-bg: #eafaf1;
   --tip-border: #6cc79a;
   --code-text: #b3261e;
+  --syntax-keyword: #8250df;
+  --syntax-type: #953800;
+  --syntax-string: #0a3069;
+  --syntax-number: #0550ae;
+  --syntax-comment: #57606a;
+  --syntax-function: #6639ba;
+  --syntax-property: #116329;
   --scrollbar: #c7ccd4;
   --shadow: 0 1px 3px rgba(20, 25, 35, 0.08);
 }
@@ -37,6 +44,13 @@
     --tip-bg: #10261c;
     --tip-border: #2f7d55;
     --code-text: #ff8383;
+    --syntax-keyword: #d2a8ff;
+    --syntax-type: #ffa657;
+    --syntax-string: #a5d6ff;
+    --syntax-number: #79c0ff;
+    --syntax-comment: #9aa4b2;
+    --syntax-function: #d2a8ff;
+    --syntax-property: #7ee787;
     --scrollbar: #3a4048;
     --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   }
@@ -208,6 +222,16 @@ pre code {
   font-size: 13px;
   line-height: 1.6;
 }
+
+pre code .syntax-keyword,
+pre code .syntax-preprocessor { color: var(--syntax-keyword); }
+pre code .syntax-type { color: var(--syntax-type); }
+pre code .syntax-string { color: var(--syntax-string); }
+pre code .syntax-number,
+pre code .syntax-literal { color: var(--syntax-number); }
+pre code .syntax-comment { color: var(--syntax-comment); }
+pre code .syntax-function { color: var(--syntax-function); }
+pre code .syntax-property { color: var(--syntax-property); }
 
 table {
   border-collapse: collapse;

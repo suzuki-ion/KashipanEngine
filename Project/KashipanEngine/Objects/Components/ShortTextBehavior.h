@@ -23,6 +23,7 @@ private:
     ShortText::Recipe recipe_;
     std::string sourceText_;
     double elapsed_ = 0;
+    ShortText::ProgramMemory programMemory_;
 };
 REGISTER_COMPONENT_OBJECT(ShortTextBehavior)
 

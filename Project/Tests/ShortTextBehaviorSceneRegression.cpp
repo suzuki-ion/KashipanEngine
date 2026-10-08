@@ -6,6 +6,7 @@
 #include "Scene/SceneContext.h"
 #include "Objects/Components/ShortTextBehavior.h"
 #include "Objects/Components/Transform.h"
+#include "Objects/Components/Velocity.h"
 #include "Scene/Editor/ShortTextBehaviorEditor.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 
@@ -60,6 +61,23 @@ int main() {
         auto invalidRecipe = bob.recipe; invalidRecipe.speed = 0;
         Require(!MakeShortTextBehaviorCommand(target, invalidRecipe, "invalid"), "invalid command refused");
         Require(!MakeShortTextBehaviorCommand(nullptr, bob.recipe, "missing"), "missing target refused");
+        ShortText::Recipe program;
+        program.kind = ShortText::Kind::Rules;
+        ShortText::Rule jump;
+        jump.event = ShortText::Event::KeyPressed;
+        jump.actions = {{ShortText::Operation::SetVelocity, 1, 16}};
+        program.rules.push_back(jump);
+        command = MakeShortTextBehaviorCommand(target, program, "スペースキーを押したらY方向の速度を16にする");
+        Require(dynamic_cast<CompositeCommand *>(command.get()) != nullptr, "required Velocity and recipe grouped into one undo command");
+        Require(!target->GetComponent<Velocity>(), "program command creation is side effect free");
+        Require(target->AddComponent<Velocity>() != nullptr, "required Velocity creation");
+        Require(target->LoadComponentFromJson(behavior, MakeShortTextBehaviorState(program, "スペースキーを押したらY方向の速度を16にする")), "program component load");
+        Require(behavior->GetUpdatePriority() == 0, "rules execute before default Velocity integration");
+        const auto programSnapshot = scene.SaveToJSON();
+        Scene programRestored(JSON::parse(programSnapshot.dump()));
+        const auto *programTarget = programRestored.GetSceneContext()->GetSceneObject(id);
+        Require(programTarget && programTarget->GetComponent<ShortTextBehavior>()->GetRecipe().kind == ShortText::Kind::Rules, "program survives scene reload");
+        Require(programTarget->GetComponent<Velocity>() != nullptr, "required component survives scene reload");
         std::puts("Short-text scene registration, clone, JSON round trip, invalid-state recovery and command routing passed.");
     } catch (const std::exception &error) { std::fprintf(stderr, "%s\n", error.what()); result = 1; }
     std::filesystem::current_path(original);

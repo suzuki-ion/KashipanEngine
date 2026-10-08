@@ -276,6 +276,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="KashipanEngine\Utilities\ShortTextLearning.cpp"><Filter>KashipanEngine\Utilities</Filter></ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Editor\ShortTextBehaviorEditor.cpp"><Filter>KashipanEngine\Scene\Editor</Filter></ClCompile>
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextBehavior.cpp"><Filter>KashipanEngine\Objects\Components</Filter></ClCompile>
     <ClCompile Include="Externals\imgui\ImGuizmo.cpp">
@@ -818,6 +819,9 @@
     <ClCompile Include="KashipanEngine\Scene\Editor\GlobalSceneVariablesMenu.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="KashipanEngine\Utilities\ShortTextRecipeJson.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Utilities\ShortTextProgram.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Utilities\ShortTextLearning.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Utilities\ShortTextBehavior.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Editor\ShortTextBehaviorEditor.h"><Filter>KashipanEngine\Scene\Editor</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\ShortTextBehavior.h"><Filter>KashipanEngine\Objects\Components</Filter></ClInclude>

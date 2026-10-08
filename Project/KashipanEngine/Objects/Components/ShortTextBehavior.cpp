@@ -2,16 +2,21 @@
 #include "Objects/Components/Transform.h"
 #include "Scene/SceneContext.h"
 #include "Utilities/TimeUtils.h"
+#include "Utilities/ShortTextRecipeJson.h"
+#include "Objects/Components/Velocity.h"
+#include "Input/Input.h"
+#include "Input/Keyboard.h"
 
 namespace KashipanEngine {
 namespace {
 JSON RecipeJson(const ShortText::Recipe &r, const std::string &source) {
-    return JSON{{"kind", static_cast<int>(r.kind)}, {"axis", r.axis}, {"direction", r.direction},
-        {"amplitude", r.amplitude}, {"period", r.period}, {"speed", r.speed}, {"sourceText", source}};
+    JSON result = ShortText::EncodeRecipe(r);
+    result["sourceText"] = source;
+    return result;
 }
 }
 JSON MakeShortTextBehaviorState(const ShortText::Recipe &r, const std::string &source) {
-    return JSON{{"priority", 1}, {"isActive", true}, {"tag", ""}, {"customData", RecipeJson(r, source)}};
+    return JSON{{"priority", r.kind == ShortText::Kind::Rules ? 0 : 1}, {"isActive", true}, {"tag", ""}, {"customData", RecipeJson(r, source)}};
 }
 std::unique_ptr<IObjectComponent> ShortTextBehavior::Clone() const {
     auto copy = std::make_unique<ShortTextBehavior>();
@@ -25,7 +30,34 @@ void ShortTextBehavior::Update() {
     auto *object = GetOwnerObjectContext();
     auto *transform = object ? object->GetComponent<Transform>() : nullptr;
     const double dt = GetDeltaTime();
-    if (!transform || !std::isfinite(dt) || dt <= 0) return;
+    if (!transform || !std::isfinite(dt) || dt < 0) return;
+    if (recipe_.kind == ShortText::Kind::Rules) {
+        auto *velocity = object->GetComponent<Velocity>();
+        if (ShortText::NeedsVelocity(recipe_.rules) && !velocity) return;
+        ShortText::ProgramState state;
+        auto read = [](const Vector3 &v) { return std::array<float, 3>{v.x, v.y, v.z}; };
+        auto write = [](const std::array<float, 3> &v) { return Vector3(v[0], v[1], v[2]); };
+        state.position = read(transform->GetTranslate());
+        state.rotation = read(transform->GetRotate());
+        state.scale = read(transform->GetScale());
+        if (velocity) { state.velocity = read(velocity->GetVelocity()); state.acceleration = read(velocity->GetAcceleration()); }
+        ShortText::InputSnapshot input;
+        if (auto *device = scene->GetInput()) {
+            const auto &keyboard = device->GetKeyboard();
+            for (const auto &rule : recipe_.rules) {
+                const auto key = static_cast<size_t>(rule.key);
+                input.pressed[key] = keyboard.IsTrigger(rule.key);
+                input.held[key] = keyboard.IsDown(rule.key);
+                input.released[key] = keyboard.IsRelease(rule.key);
+            }
+        }
+        ShortText::TickProgram(recipe_.rules, programMemory_, state, input, dt);
+        transform->SetTranslate(write(state.position));
+        transform->SetRotate(write(state.rotation));
+        transform->SetScale(write(state.scale));
+        if (velocity) { velocity->SetVelocity(write(state.velocity)); velocity->SetAcceleration(write(state.acceleration)); }
+        return;
+    }
     const auto delta = ShortText::EvaluateDelta(recipe_, elapsed_, dt);
     transform->SetTranslate(transform->GetTranslate() + Vector3(delta.translation[0], delta.translation[1], delta.translation[2]));
     transform->SetRotate(transform->GetRotate() + Vector3(delta.rotation[0], delta.rotation[1], delta.rotation[2]));
@@ -35,38 +67,30 @@ JSON ShortTextBehavior::SaveToJson() const { return RecipeJson(recipe_, sourceTe
 bool ShortTextBehavior::LoadFromJson(const JSON &json) {
     if (!json.is_object()) return false;
     try {
-        ShortText::Recipe next;
-        auto readInt = [&](const char *name, int defaultValue, int min, int max, int &out) {
-            const auto it = json.find(name);
-            if (it == json.end()) { out = defaultValue; return true; }
-            if (!it->is_number_integer()) return false;
-            if (it->is_number_unsigned()) {
-                if (it->get<std::uint64_t>() > static_cast<std::uint64_t>(max)) return false;
-            } else {
-                const auto value = it->get<std::int64_t>();
-                if (value < min || value > max) return false;
-            }
-            out = it->get<int>();
-            return true;
-        };
-        int kind = 0;
-        if (!readInt("kind", 0, 0, 2, kind) || !readInt("axis", 1, 0, 2, next.axis) ||
-            !readInt("direction", 1, -1, 1, next.direction)) return false;
-        next.kind = static_cast<ShortText::Kind>(kind);
-        next.amplitude = json.value("amplitude", 0.5f);
-        next.period = json.value("period", 2.0f);
-        next.speed = json.value("speed", 1.0f);
+        auto next = ShortText::DecodeRecipe(json);
         const auto source = json.value("sourceText", std::string{});
         if (!ShortText::IsValid(next) || source.size() > 512) return false;
         recipe_ = next;
         sourceText_ = source;
         elapsed_ = 0;
+        programMemory_ = {};
         return true;
-    } catch (const JSON::exception &) { return false; }
+    } catch (const std::exception &) { return false; }
 }
 #if defined(USE_IMGUI)
 void ShortTextBehavior::ShowImGui() {
     ImGui::TextWrapped("%s", sourceText_.c_str());
+    if (recipe_.kind == ShortText::Kind::Rules) {
+        ImGui::TextWrapped("%s", ShortText::Describe(recipe_).c_str());
+        if (ShortText::NeedsVelocity(recipe_.rules) && !GetOwnerObjectContext()->GetComponent<Velocity>())
+            ImGui::TextWrapped("Velocityが必要です。短文の挙動から再適用すると追加されます。");
+        for (const auto &rule : recipe_.rules) {
+            ImGui::Text("%s / %s", ShortText::EventLabels[static_cast<size_t>(rule.event)], ShortText::KeyName(rule.key).c_str());
+            for (const auto &action : rule.actions)
+                ImGui::BulletText("%s %c = %.3f", ShortText::OperationLabels[static_cast<size_t>(action.operation)], "XYZ"[action.axis], action.value);
+        }
+        return;
+    }
     const char *kinds[] = {"往復", "回転", "移動"};
     ImGui::Text("%s / %c軸", kinds[static_cast<int>(recipe_.kind)], "XYZ"[recipe_.axis]);
     ImGui::TextUnformatted("再生中に動作します。短文の挙動ウィンドウから置き換えられます。");

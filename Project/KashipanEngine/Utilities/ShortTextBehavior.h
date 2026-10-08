@@ -7,11 +7,12 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include "Utilities/ShortTextProgram.h"
 
 namespace KashipanEngine::ShortText {
 
 // A deliberately bounded grammar. Unknown text must never become a partial action.
-enum class Kind { Oscillate, Rotate, Move };
+enum class Kind { Oscillate, Rotate, Move, Rules };
 struct Recipe {
     Kind kind = Kind::Oscillate;
     int axis = 1; // local Transform coordinates: X/Y/Z
@@ -19,6 +20,7 @@ struct Recipe {
     float amplitude = 0.5f;
     float period = 2.0f;
     float speed = 1.0f; // units/sec for Move, degrees/sec for Rotate
+    std::vector<Rule> rules;
 };
 struct Result {
     bool success = false;
@@ -27,7 +29,12 @@ struct Result {
 };
 
 inline bool IsValid(const Recipe &r) {
-    return r.kind >= Kind::Oscillate && r.kind <= Kind::Move && r.axis >= 0 && r.axis <= 2 &&
+    if (r.kind == Kind::Rules) {
+        if (r.rules.empty() || r.rules.size() > 16) return false;
+        for (const auto &rule : r.rules) if (!IsValidRule(rule)) return false;
+        return true;
+    }
+    return r.rules.empty() && r.kind >= Kind::Oscillate && r.kind <= Kind::Move && r.axis >= 0 && r.axis <= 2 &&
         (r.direction == 1 || r.direction == -1) &&
         std::isfinite(r.amplitude) && r.amplitude > 0 && r.amplitude <= 10000 &&
         std::isfinite(r.period) && r.period >= 0.05f && r.period <= 3600 &&
@@ -64,6 +71,40 @@ inline bool Consume(std::string &s, const std::vector<std::string> &words) {
     return found;
 }
 
+inline bool HasUnsupportedGrammar(const std::string &normalizedText) {
+    for (const auto &word : { "ない", "なく", "禁止", "以外", "せず", "ずに", "たら", "なら", "とき", "時に", "時は", "場合", "けど", "ただし", "そして", "ながら", "止め", "停止" }) {
+        if (normalizedText.find(word) != std::string::npos) return true;
+    }
+    std::string remaining = normalizedText;
+    const bool rotate = Consume(remaining, {"回転", "回して", "回す", "回る", "回れ"});
+    const bool other = Consume(remaining, {"ふわふわ", "ゆらゆら", "往復", "浮いたり沈んだり", "行ったり来たり", "移動", "動か", "動く", "進む", "進め", "進ませ"});
+    if (rotate && other) return true;
+    return false;
+}
+
+inline std::string Describe(const Recipe &r) {
+    if (!IsValid(r)) return "不正な挙動設定です。";
+    if (r.kind == Kind::Rules) {
+        std::ostringstream message;
+        message << "イベント・条件・動作：" << r.rules.size() << " ルール";
+        for (const auto &rule : r.rules) {
+            message << "\n" << EventLabels[static_cast<size_t>(rule.event)];
+            if (rule.event >= Event::KeyPressed && rule.event <= Event::KeyReleased) message << " [" << KeyName(rule.key) << "]";
+            if (rule.event == Event::Timer) message << " (" << rule.interval << "秒)";
+            for (const auto &condition : rule.conditions) message << " / " << "XYZ"[condition.axis] << TestLabels[static_cast<size_t>(condition.test)] << " " << condition.value;
+            message << " → ";
+            for (const auto &action : rule.actions) message << OperationLabels[static_cast<size_t>(action.operation)] << " " << "XYZ"[action.axis] << "=" << action.value << "; ";
+        }
+        return message.str();
+    }
+    std::ostringstream message;
+    message << "ローカル" << "XYZ"[r.axis] << "軸：";
+    if (r.kind == Kind::Oscillate) message << "往復、振幅 " << r.amplitude << "、周期 " << r.period << " 秒";
+    else if (r.kind == Kind::Rotate) message << "回転、" << r.direction * r.speed << " 度/秒";
+    else message << "移動、" << r.direction * r.speed << " 単位/秒";
+    return message.str();
+}
+
 inline Result Parse(const std::string &input) {
     Result result;
     auto fail = [&](const std::string &message) { result.message = message; return result; };
@@ -71,9 +112,7 @@ inline Result Parse(const std::string &input) {
     std::string text = Normalize(input);
     if (text.empty()) return fail("挙動を入力してください。");
     // Refuse negation/conditions/compound requests before extracting any keywords.
-    for (const auto &word : { "ない", "なく", "禁止", "以外", "せず", "ずに", "たら", "なら", "とき", "時に", "時は", "場合", "けど", "ただし", "そして", "ながら", "止め", "停止" }) {
-        if (text.find(word) != std::string::npos) return fail("条件・否定・停止・複数の挙動は未対応です。ひとつの動きを指定してください。");
-    }
+    if (HasUnsupportedGrammar(text)) return fail("条件・否定・停止・複数の挙動は未対応です。ひとつの動きを指定してください。");
     const bool rotate = Consume(text, {"回転させ", "回転し", "回転", "回して", "回す", "回る", "回れ"});
     const bool oscillate = Consume(text, {"浮いたり沈んだり", "行ったり来たり", "ふわふわ", "ゆらゆら", "往復させ", "往復し", "往復", "揺らして", "揺れる"});
     const bool move = Consume(text, {"移動させ", "移動し", "移動", "進ませ", "進めて", "進む", "動かして", "動かす", "動かせ", "動く"});
@@ -141,13 +180,8 @@ inline Result Parse(const std::string &input) {
     Consume(text, {"選択中のオブジェクトを", "このオブジェクトを", "オブジェクトを", "これを", "ください", "させて", "して", "させる", "する", "て", "ずっと", "常に", "方向", "に", "へ", "で", "を"});
     if (!text.empty()) return fail("解釈できない部分があります：「" + text + "」。例文に近い短い文章で指定してください。");
     if (!IsValid(r)) return fail("振幅と速度は0より大きく10000以下、周期は0.05〜3600秒で指定してください。");
-    std::ostringstream message;
-    message << "ローカル" << "XYZ"[r.axis] << "軸：";
-    if (r.kind == Kind::Oscillate) message << "往復、振幅 " << r.amplitude << "、周期 " << r.period << " 秒";
-    else if (r.kind == Kind::Rotate) message << "回転、" << r.direction * r.speed << " 度/秒";
-    else message << "移動、" << r.direction * r.speed << " 単位/秒";
     result.success = true;
-    result.message = message.str();
+    result.message = Describe(r);
     return result;
 }
 
@@ -155,7 +189,7 @@ struct Delta { std::array<float, 3> translation{}; std::array<float, 3> rotation
 // Oscillation is additive: its full-cycle displacement is zero, with no scene edit-time drift.
 inline Delta EvaluateDelta(const Recipe &r, double elapsed, double dt) {
     Delta delta;
-    if (!IsValid(r) || !std::isfinite(elapsed) || !std::isfinite(dt) || dt < 0) return delta;
+    if (!IsValid(r) || r.kind == Kind::Rules || !std::isfinite(elapsed) || !std::isfinite(dt) || dt < 0) return delta;
     constexpr double pi = 3.14159265358979323846;
     if (r.kind == Kind::Oscillate) {
         const double phase = std::fmod(elapsed, r.period) * (2 * pi / r.period);

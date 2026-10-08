@@ -501,6 +501,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <Manifest Include="Externals\Common\settings.manifest" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="KashipanEngine\Scene\Editor\ShortTextBehaviorEditor.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\ShortTextBehavior.cpp" />
     <ClCompile Include="Externals\angelscript\include\add_on\contextmgr\contextmgr.cpp" />
     <ClCompile Include="Externals\angelscript\include\add_on\datetime\datetime.cpp" />
     <ClCompile Include="Externals\angelscript\include\add_on\debugger\debugger.cpp" />
@@ -786,6 +788,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="KashipanEngine\Utilities\ShortTextBehavior.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\ShortTextBehaviorEditor.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\ShortTextBehavior.h" />
     <ClInclude Include="Application\AppInitialize.h" />
     <ClInclude Include="Externals\angelscript\include\add_on\autowrapper\aswrappedcall.h" />
     <ClInclude Include="Externals\angelscript\include\add_on\contextmgr\contextmgr.h" />

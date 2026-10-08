@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "Scene/SceneEditorContext.h"
+#include "Scene/Editor/ShortTextBehaviorEditor.h"
 
 namespace KashipanEngine {
 
@@ -98,6 +99,7 @@ private:
     SceneEditorContext *context_ = nullptr;
 
     std::unique_ptr<SceneEditorCommands> commands_;
+    ShortTextBehaviorEditor shortTextBehaviorEditor_;
     std::unique_ptr<SceneObjectHierarchy> objectHierarchy_;
     std::unique_ptr<SceneObjectInspector> objectInspector_;
     std::unique_ptr<SceneComponentInspector> componentInspector_;

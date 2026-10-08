@@ -276,6 +276,8 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="KashipanEngine\Scene\Editor\ShortTextBehaviorEditor.cpp"><Filter>KashipanEngine\Scene\Editor</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\Components\ShortTextBehavior.cpp"><Filter>KashipanEngine\Objects\Components</Filter></ClCompile>
     <ClCompile Include="Externals\imgui\ImGuizmo.cpp">
       <Filter>Externals\imgui</Filter>
     </ClCompile>
@@ -816,6 +818,9 @@
     <ClCompile Include="KashipanEngine\Scene\Editor\GlobalSceneVariablesMenu.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="KashipanEngine\Utilities\ShortTextBehavior.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\ShortTextBehaviorEditor.h"><Filter>KashipanEngine\Scene\Editor</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\ShortTextBehavior.h"><Filter>KashipanEngine\Objects\Components</Filter></ClInclude>
     <ClInclude Include="Application\AppInitialize.h">
       <Filter>Application</Filter>
     </ClInclude>

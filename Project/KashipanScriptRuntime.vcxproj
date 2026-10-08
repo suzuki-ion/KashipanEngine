@@ -296,6 +296,7 @@
     <ClCompile Include="KashipanEngine\Objects\Components\Animator.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\InputCommandApplier.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\KeyFrameAnimator.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\ShortTextBehavior.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\SceneVariableApplier.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\Shake.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\PrefabInstanceComponent.cpp" />

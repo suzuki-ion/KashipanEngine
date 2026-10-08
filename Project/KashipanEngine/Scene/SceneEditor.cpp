@@ -577,6 +577,12 @@ void SceneEditor::ShowImGui() {
     // インスペクターやシーンビューへ選択ポインターを渡す前に、現在のシーンに存在するものだけへ絞る。
     objectHierarchy_->ValidateCachedObjects();
 
+    const auto &shortTextSelection = objectHierarchy_->GetSelectedObjects();
+    shortTextBehaviorEditor_.Show(context_, commands_.get(),
+        shortTextSelection.size() == 1 ? *shortTextSelection.begin() : nullptr);
+    // Starting the preview may remove EditorOnly objects, including the selection.
+    objectHierarchy_->ValidateCachedObjects();
+
     if (isShowHierarchy_) objectHierarchy_->ShowImGui();
     if (isShowObjectInspector_) objectInspector_->ShowImGui();
     if (isShowComponentInspector_) componentInspector_->ShowImGui();
@@ -719,6 +725,10 @@ void SceneEditor::ShowMainWindow() {
             ImGui::EndMenu();
         }
         // エディターツールスクリプトの[MenuItem("MenuBar/...")]で追加された項目
+        if (ImGui::BeginMenu("試験機能")) {
+            ImGui::MenuItem("短文の挙動", nullptr, &shortTextBehaviorEditor_.open);
+            ImGui::EndMenu();
+        }
         EditorToolManager::GetInstance().ShowMenuBarItems();
         // ヘルプ（エンジンのリファレンスを既定のブラウザで開く）。一般的なアプリに合わせて右端（最後）に置く
         if (ImGui::BeginMenu(TranslationLabel("editor.menu.help"))) {

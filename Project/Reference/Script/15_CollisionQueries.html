@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>任意のタイミングの当たり判定 | KashipanEngine リファレンス</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script defer src="../assets/nav-script-data.js"></script>
+<script defer src="../assets/nav.js"></script>
+</head>
+<body data-page="15_CollisionQueries">
+<div class="layout"><nav id="sidebar"></nav><main>
+<div id="breadcrumb" class="breadcrumb"></div>
+<div class="page-header"><h1>任意のタイミングの当たり判定</h1>
+<p class="page-lead">攻撃範囲・配置可否・索敵など、必要な瞬間に形状を指定してシーン内のColliderとの重なりを取得できます。</p></div>
+<h2>API</h2>
+<pre><code>array&lt;CollisionHit@&gt;@ QueryCollision2D(const CollisionShape2D &amp;in shape,
+    bool includeTriggers = true, Object@ ignoreObject = null);
+array&lt;CollisionHit@&gt;@ QueryCollision3D(const CollisionShape3D &amp;in shape,
+    bool includeTriggers = true, Object@ ignoreObject = null);
+array&lt;CollisionHit@&gt;@ QueryCollider(Collider@ collider,
+    bool includeTriggers = true, Object@ ignoreObject = null);</code></pre>
+<p>現在のスクリプトのシーンを検索します。SceneObjectColliderが必要です。対象は有効なColliderで、2Dと3Dは混在させません。呼び出し時点のTransform・サイズ・回転・同期設定を反映します。通常の物理更新を待つ必要はありません。</p>
+<p><code>includeTriggers = false</code>でトリガーを除外し、<code>ignoreObject</code>でそのオブジェクトの全Colliderを除外します。QueryColliderは指定されたCollider自身も除外します。同じオブジェクトの別Colliderは、ignoreObjectを指定しなければ対象です。QueryColliderには同じシーンのColliderを指定してください。</p>
+<h2>指定できる形状</h2>
+<table><tr><th>型</th><th>type</th><th>使用するフィールド</th></tr>
+<tr><td>CollisionShape2D</td><td>CollisionShapeType2D::Point</td><td>center</td></tr>
+<tr><td>CollisionShape2D</td><td>Circle</td><td>center, radius</td></tr>
+<tr><td>CollisionShape2D</td><td>Box</td><td>center, halfSize, rotation（ラジアン）</td></tr>
+<tr><td>CollisionShape2D</td><td>Segment</td><td>start, end</td></tr>
+<tr><td>CollisionShape2D</td><td>Capsule</td><td>start, end, radius</td></tr>
+<tr><td>CollisionShape3D</td><td>CollisionShapeType3D::Sphere</td><td>center, radius</td></tr>
+<tr><td>CollisionShape3D</td><td>Box</td><td>center, halfExtents, rotation（Quaternion）</td></tr>
+<tr><td>CollisionShape3D</td><td>Capsule</td><td>center, radius, height, rotation</td></tr>
+<tr><td>CollisionShape3D</td><td>ConvexMesh</td><td>center, rotation, SetVertices(array&lt;Vector3&gt;@)</td></tr></table>
+<p>位置と2Dの端点はワールド座標です。halfSize/halfExtentsは全体サイズの半分です。3DカプセルはローカルY軸方向で、heightは両端の半球を除いた中央線分の長さです。凸形状の頂点はcenterから見たローカル座標で、4点以上の立体的な頂点群から凸包を構築します。形状データは値としてコピーでき、SetVerticesも渡された配列の内容をコピーします。</p>
+<h2>例: 球状の攻撃範囲</h2>
+<pre><code class="language-angelscript">CollisionShape3D attack;
+attack.type = CollisionShapeType3D::Sphere;
+attack.center = Vector3(0, 1, 0);
+attack.radius = 2;
+array&lt;CollisionHit@&gt;@ hits = QueryCollision3D(attack, false, GetOwnerObject());
+for (uint i = 0; i &lt; hits.length(); ++i) {
+    Log(hits[i].otherObject.GetName());
+}</code></pre>
+<h2>結果と動作</h2>
+<p>ヒットなしは空配列です。CollisionHitにはnormal（相手から判定形状を押し出す方向）、penetration（めり込み量）、otherObject、otherColliderがあります。QueryColliderではselfObject/selfColliderも設定されます。形状を直接指定した場合、この2つはnullです。結果はColliderごとに1件で、登録順に返します。同じオブジェクトの複数Colliderに当たった場合は複数件になるため、ダメージ等では必要に応じてオブジェクト単位に重複を除いてください。</p>
+<p>判定だけを行い、オブジェクトの移動、物理の時間更新、OnCollisionEnter/Stay/Exitの発火は行いません。結果のハンドルは保持できますが、対象の削除後にそのメソッドを呼ぶと通常の削除済みオブジェクト例外になります。</p>
+<h2>制約</h2>
+<ul>
+<li>重なり判定です。移動経路のスイープやレイキャストではありません。3Dの線はRayCollider.CastRayを使用してください。</li>
+<li>3Dの半径・半サイズ・カプセルheightは正の有限値が必要です。2Dではゼロサイズも使用できます。負値・NaN等の不正な指定はスクリプト例外になります。</li>
+<li>凹メッシュや高さマップは既存ColliderをQueryColliderに渡すことで判定形状として使用できます。ただし物理ライブラリが対応しない凹形状同士は対象外です。凸包の構築に失敗した形状や、不正な対象形状はヒットしません。</li>
+<li>3Dは呼び出しごとに独立した判定ワールドで形状を構築します。大量のメッシュを相手に毎フレーム多数回問い合わせる用途では、実際の負荷を確認してください。</li>
+</ul>
+<div id="page-footer" class="page-footer"></div>
+</main></div></body></html>

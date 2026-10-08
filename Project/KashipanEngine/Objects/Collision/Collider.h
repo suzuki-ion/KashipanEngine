@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "Math/Vector3.h"
+#include "Math/Quaternion.h"
 
 #include "Objects/MathObjects/2D/Capsule2D.h"
 #include "Objects/MathObjects/2D/Circle.h"
@@ -232,6 +233,10 @@ public:
     std::vector<HitPair3D> CheckAll3D() const;
 
     bool Check3D(ColliderID a, ColliderID b) const;
+
+    /// @brief Snapshot overlap query. Uses a separate world without stepping physics or dispatching events.
+    std::vector<HitInfo3D> Query3D(const ColliderInfo3D &query, const Vector3 &position,
+        const Quaternion &rotation, const std::vector<ColliderInfo3D> &targets) const;
 
     /// @brief ReactPhysics3DのCollider*から、それを登録した際の情報（ownerObject/sourceCollider）を取得する
     /// @details RayCollider等、自身は常駐形状を持たないコライダーがレイキャストのヒット結果を

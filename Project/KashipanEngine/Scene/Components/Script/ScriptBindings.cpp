@@ -38,6 +38,8 @@
 #include "Scene/Components/Script/ScriptObjectHandle.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneContext.h"
+#include "Scene/Components/SceneObjectCollider.h"
+#include "Objects/Collision/CollisionQuery.h"
 #if defined(USE_IMGUI)
 #include "Scene/Components/Script/EditorToolManager.h"
 #endif
@@ -589,6 +591,122 @@ CScriptArray *MakeColliderArray(const std::vector<ICollider *> &colliders) {
         if (handle) handle->Release();
     }
     return array;
+}
+
+// Query results own their handles, so keeping a result after its target is deleted
+// remains safe and array destruction releases every reference.
+class ScriptCollisionHit final {
+public:
+    void AddRef() { refs_.fetch_add(1, std::memory_order_relaxed); }
+    void Release() { if (refs_.fetch_sub(1, std::memory_order_acq_rel) == 1) delete this; }
+    Vector3 normal{};
+    float penetration = 0.0f;
+    ScriptObjectHandle *selfObject = nullptr;
+    ScriptObjectHandle *otherObject = nullptr;
+    ScriptComponentHandle<ICollider> *selfCollider = nullptr;
+    ScriptComponentHandle<ICollider> *otherCollider = nullptr;
+private:
+    std::atomic<int> refs_{1};
+    ~ScriptCollisionHit() {
+        if (selfObject) selfObject->Release();
+        if (otherObject) otherObject->Release();
+        if (selfCollider) selfCollider->Release();
+        if (otherCollider) otherCollider->Release();
+    }
+};
+
+template <typename Hit>
+CScriptArray *MakeCollisionHitArray(const std::vector<Hit> &hits) {
+    auto *context = asGetActiveContext();
+    auto *type = context ? context->GetEngine()->GetTypeInfoByDecl("array<CollisionHit@>") : nullptr;
+    if (!type) return nullptr;
+    auto *array = CScriptArray::Create(type, static_cast<asUINT>(hits.size()));
+    for (asUINT i = 0; i < hits.size(); ++i) {
+        auto *result = new ScriptCollisionHit();
+        const auto &hit = hits[i];
+        result->normal = hit.normal;
+        result->penetration = hit.penetration;
+        result->selfObject = ScriptObjectHandle::Create(hit.selfObject);
+        result->otherObject = ScriptObjectHandle::Create(hit.otherObject);
+        result->selfCollider = ScriptComponentHandle<ICollider>::Create(hit.selfCollider);
+        result->otherCollider = ScriptComponentHandle<ICollider>::Create(hit.otherCollider);
+        array->SetValue(i, &result);
+        result->Release();
+    }
+    return array;
+}
+
+SceneObjectCollider *GetQueryScene() {
+    auto *scene = ScriptExecutionScope::GetCurrentSceneContext();
+    auto *colliders = scene ? scene->GetComponent<SceneObjectCollider>() : nullptr;
+    if (!colliders && asGetActiveContext()) asGetActiveContext()->SetException("Collision query requires a scene with SceneObjectCollider");
+    return colliders;
+}
+
+EmptyObject *ResolveQueryIgnore(ScriptObjectHandle *ignore) {
+    if (!ignore) return nullptr;
+    auto *object = ignore->Resolve();
+    if (!object) ThrowDestroyedObjectException();
+    return object;
+}
+
+CScriptArray *QueryCollision2D(const CollisionShape2D &shape, bool includeTriggers, ScriptObjectHandle *ignore) {
+    auto *scene = GetQueryScene();
+    auto *ignored = ResolveQueryIgnore(ignore);
+    if (!scene || (ignore && !ignored)) return nullptr;
+    ColliderInfo2D info;
+    info.shape = shape.Build();
+    if (shape.type < CollisionShapeType2D::Point || shape.type > CollisionShapeType2D::Capsule || !IsValidQueryShape(info.shape)) {
+        asGetActiveContext()->SetException("Invalid CollisionShape2D");
+        return nullptr;
+    }
+    return MakeCollisionHitArray(scene->Query2D(info, includeTriggers, ignored));
+}
+
+CScriptArray *QueryCollision3D(const CollisionShape3D &shape, bool includeTriggers, ScriptObjectHandle *ignore) {
+    auto *scene = GetQueryScene();
+    auto *ignored = ResolveQueryIgnore(ignore);
+    if (!scene || (ignore && !ignored)) return nullptr;
+    bool valid = IsFinite(shape.center) && std::isfinite(shape.rotation.NormSquared()) && shape.rotation.NormSquared() > 0;
+    switch (shape.type) {
+    case CollisionShapeType3D::Sphere: valid &= std::isfinite(shape.radius) && shape.radius > 0; break;
+    case CollisionShapeType3D::Box: valid &= IsFinite(shape.halfExtents) && shape.halfExtents.x > 0 && shape.halfExtents.y > 0 && shape.halfExtents.z > 0; break;
+    case CollisionShapeType3D::Capsule: valid &= std::isfinite(shape.radius) && shape.radius > 0 && std::isfinite(shape.height) && shape.height > 0; break;
+    case CollisionShapeType3D::ConvexMesh:
+        valid &= shape.vertices.size() >= 4;
+        for (const auto &v : shape.vertices) valid &= IsFinite(v);
+        break;
+    default: valid = false; break;
+    }
+    if (!valid) { asGetActiveContext()->SetException("Invalid CollisionShape3D"); return nullptr; }
+    return MakeCollisionHitArray(scene->Query3D(shape.Build(), shape.center, shape.rotation, includeTriggers, ignored));
+}
+
+CScriptArray *QueryCollider(const ScriptComponentHandle<ICollider> *handle, bool includeTriggers, ScriptObjectHandle *ignore) {
+    auto *scene = GetQueryScene();
+    auto *ignored = ResolveQueryIgnore(ignore);
+    auto *component = handle ? handle->Resolve() : nullptr;
+    if (!scene || (ignore && !ignored)) return nullptr;
+    if (!component) { asGetActiveContext()->SetException("QueryCollider requires a live Collider"); return nullptr; }
+    const auto *owner = component->GetOwnerObject();
+    if (!owner || ScriptExecutionScope::GetCurrentSceneContext()->GetSceneObject(owner->GetObjectID()) != owner) {
+        asGetActiveContext()->SetException("QueryCollider must belong to the current scene"); return nullptr;
+    }
+    if (component->Is2D()) {
+        auto info = component->BuildColliderInfo2D();
+        if (info) {
+            info->sourceCollider = component;
+            return MakeCollisionHitArray(scene->Query2D(*info, includeTriggers, ignored));
+        }
+    } else {
+        auto info = component->BuildColliderInfo3D();
+        if (info) {
+            info->sourceCollider = component;
+            return MakeCollisionHitArray(scene->Query3D(*info, {}, Quaternion::Identity(), includeTriggers, ignored));
+        }
+    }
+    asGetActiveContext()->SetException("Collider has no overlap shape; use RayCollider.CastRay for a 3D ray");
+    return nullptr;
 }
 
 /// @brief std::stringの配列から array<string>@ を構築する（MakeStringArrayの前方宣言。定義はJson登録セクションにある）
@@ -3733,6 +3851,50 @@ void RegisterObjectTypes(asIScriptEngine *engine) {
         .property("Collider@ selfCollider", &ScriptHitInfo::selfCollider)
         .property("Collider@ otherCollider", &ScriptHitInfo::otherCollider);
 
+    engine->RegisterEnum("CollisionShapeType2D");
+    engine->RegisterEnumValue("CollisionShapeType2D", "Point", 0);
+    engine->RegisterEnumValue("CollisionShapeType2D", "Circle", 1);
+    engine->RegisterEnumValue("CollisionShapeType2D", "Box", 2);
+    engine->RegisterEnumValue("CollisionShapeType2D", "Segment", 3);
+    engine->RegisterEnumValue("CollisionShapeType2D", "Capsule", 4);
+    engine->RegisterEnum("CollisionShapeType3D");
+    engine->RegisterEnumValue("CollisionShapeType3D", "Sphere", 0);
+    engine->RegisterEnumValue("CollisionShapeType3D", "Box", 1);
+    engine->RegisterEnumValue("CollisionShapeType3D", "Capsule", 2);
+    engine->RegisterEnumValue("CollisionShapeType3D", "ConvexMesh", 3);
+    asbind20::value_class<CollisionShape2D>(engine, "CollisionShape2D")
+        .behaviours_by_traits()
+        .property("CollisionShapeType2D type", &CollisionShape2D::type)
+        .property("Vector2 center", &CollisionShape2D::center)
+        .property("Vector2 halfSize", &CollisionShape2D::halfSize)
+        .property("Vector2 start", &CollisionShape2D::start)
+        .property("Vector2 end", &CollisionShape2D::end)
+        .property("float radius", &CollisionShape2D::radius)
+        .property("float rotation", &CollisionShape2D::rotation);
+    asbind20::value_class<CollisionShape3D>(engine, "CollisionShape3D")
+        .behaviours_by_traits()
+        .property("CollisionShapeType3D type", &CollisionShape3D::type)
+        .property("Vector3 center", &CollisionShape3D::center)
+        .property("Vector3 halfExtents", &CollisionShape3D::halfExtents)
+        .property("Quaternion rotation", &CollisionShape3D::rotation)
+        .property("float radius", &CollisionShape3D::radius)
+        .property("float height", &CollisionShape3D::height)
+        .method("void SetVertices(array<Vector3>@)", [](CollisionShape3D &shape, CScriptArray *vertices) {
+            shape.vertices.clear();
+            if (!vertices) return;
+            shape.vertices.reserve(vertices->GetSize());
+            for (asUINT i = 0; i < vertices->GetSize(); ++i) shape.vertices.push_back(*static_cast<Vector3 *>(vertices->At(i)));
+        });
+    asbind20::ref_class<ScriptCollisionHit>(engine, "CollisionHit")
+        .addref(&ScriptCollisionHit::AddRef)
+        .release(&ScriptCollisionHit::Release)
+        .property("Vector3 normal", &ScriptCollisionHit::normal)
+        .property("float penetration", &ScriptCollisionHit::penetration)
+        .property("Object@ selfObject", &ScriptCollisionHit::selfObject)
+        .property("Object@ otherObject", &ScriptCollisionHit::otherObject)
+        .property("Collider@ selfCollider", &ScriptCollisionHit::selfCollider)
+        .property("Collider@ otherCollider", &ScriptCollisionHit::otherCollider);
+
     // ウィンドウメッセージ通知（OnWindowMessage）へ渡す情報
     asbind20::value_class<ScriptWindowMessageInfo>(engine, "WindowMessageInfo")
         .behaviours_by_traits()
@@ -4710,6 +4872,10 @@ void RegisterRandomBindings(asIScriptEngine *engine) {
 //==================================================
 
 void RegisterGlobalFunctions(asIScriptEngine *engine) {
+    asbind20::global(engine)
+        .function("array<CollisionHit@>@ QueryCollision2D(const CollisionShape2D &in shape, bool includeTriggers = true, Object@ ignoreObject = null)", &QueryCollision2D)
+        .function("array<CollisionHit@>@ QueryCollision3D(const CollisionShape3D &in shape, bool includeTriggers = true, Object@ ignoreObject = null)", &QueryCollision3D)
+        .function("array<CollisionHit@>@ QueryCollider(Collider@ collider, bool includeTriggers = true, Object@ ignoreObject = null)", &QueryCollider);
     engine->RegisterEnum("InputDeviceType");
     engine->RegisterEnumValue("InputDeviceType", "KeyboardMouse", static_cast<int>(InputDeviceType::KeyboardMouse));
     engine->RegisterEnumValue("InputDeviceType", "Controller", static_cast<int>(InputDeviceType::Controller));

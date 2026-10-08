@@ -1192,6 +1192,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClInclude Include="KashipanEngine\Math\Color.h" />
     <ClInclude Include="KashipanEngine\ObjectsHeaders.h" />
     <ClInclude Include="KashipanEngine\Objects\Collision\Collider.h" />
+    <ClInclude Include="KashipanEngine\Objects\Collision\CollisionQuery.h" />
     <ClInclude Include="KashipanEngine\Objects\Collision\CollisionAlgorithms3D.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\Animator.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\AudioListener.h" />

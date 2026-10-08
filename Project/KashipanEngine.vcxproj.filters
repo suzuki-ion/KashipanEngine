@@ -1262,6 +1262,9 @@
     <ClInclude Include="KashipanEngine\Objects\Collision\Collider.h">
       <Filter>KashipanEngine\Objects\Collision</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Collision\CollisionQuery.h">
+      <Filter>KashipanEngine\Objects\Collision</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Collision\CollisionAlgorithms3D.h">
       <Filter>KashipanEngine\Objects\Collision</Filter>
     </ClInclude>

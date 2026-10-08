@@ -5,8 +5,40 @@
 #include "Objects/Components/Collider/CharacterController2D.h"
 #include "Objects/Components/Collider/CharacterController3D.h"
 #include "Objects/Components/Collider/ICollider.h"
+#include "Objects/Collision/CollisionQuery.h"
 
 namespace KashipanEngine {
+
+std::vector<HitInfo2D> SceneObjectCollider::Query2D(const ColliderInfo2D &query, bool includeTriggers,
+    const EmptyObject *ignoreObject) const {
+    std::vector<HitInfo2D> hits;
+    if (!IsValidQueryShape(query.shape)) return hits;
+    for (auto *component : registeredColliders_) {
+        if (!component || !component->IsActive() || !component->Is2D() || component == query.sourceCollider ||
+            (ignoreObject && component->GetOwnerObject() == ignoreObject) || (!includeTriggers && component->IsTrigger())) continue;
+        auto info = component->BuildColliderInfo2D();
+        if (!info || !IsValidQueryShape(info->shape) || (query.ignoreAttribute & info->attribute).any() ||
+            (info->ignoreAttribute & query.attribute).any()) continue;
+        const auto hit = ComputeQueryHit2D(query.shape, info->shape);
+        if (hit.isHit) hits.push_back({true, -hit.normal, hit.penetration, query.ownerObject,
+            info->ownerObject, query.sourceCollider, component});
+    }
+    return hits;
+}
+
+std::vector<HitInfo3D> SceneObjectCollider::Query3D(const ColliderInfo3D &query, const Vector3 &position,
+    const Quaternion &rotation, bool includeTriggers, const EmptyObject *ignoreObject) const {
+    std::vector<ColliderInfo3D> targets;
+    for (auto *component : registeredColliders_) {
+        if (!component || !component->IsActive() || component->Is2D() || component == query.sourceCollider ||
+            (ignoreObject && component->GetOwnerObject() == ignoreObject) || (!includeTriggers && component->IsTrigger())) continue;
+        auto info = component->BuildColliderInfo3D();
+        if (!info) continue;
+        info->sourceCollider = component;
+        targets.push_back(std::move(*info));
+    }
+    return collider_.Query3D(query, position, rotation, targets);
+}
 
 void SceneObjectCollider::RegisterCollider(ICollider *collider) {
     if (!collider) return;

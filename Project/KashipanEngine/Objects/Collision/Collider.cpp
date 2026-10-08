@@ -1301,6 +1301,101 @@ bool Collider::Check3D(ColliderID a, ColliderID b) const {
     return collector.hit;
 }
 
+std::vector<HitInfo3D> Collider::Query3D(const ColliderInfo3D &query, const Vector3 &position,
+    const Quaternion &rotation, const std::vector<ColliderInfo3D> &targets) const {
+    std::vector<HitInfo3D> hits;
+    // Never attach query shapes to an object's RigidBody or modify the live world.
+    Collider scratch;
+    struct Cleanup { Collider &owner; ~Cleanup() { owner.Clear3D(); } } cleanup{scratch};
+    const auto valid = [](const ColliderInfo3D &info) {
+        const auto finite = [](const Vector3 &v) { return std::isfinite(v.x) && std::isfinite(v.y) && std::isfinite(v.z); };
+        return std::visit([&](const auto &s) {
+            using T = std::decay_t<decltype(s)>;
+            if constexpr (std::is_same_v<T, ColliderInfo3D::SphereShape3D>)
+                return finite(s.center) && std::isfinite(s.radius) && s.radius > 0;
+            else if constexpr (std::is_same_v<T, ColliderInfo3D::BoxShape3D>)
+                return finite(s.center) && finite(s.halfExtents) && s.halfExtents.x > 0 && s.halfExtents.y > 0 && s.halfExtents.z > 0;
+            else if constexpr (std::is_same_v<T, ColliderInfo3D::CapsuleShape3D>)
+                return finite(s.center) && std::isfinite(s.radius) && s.radius > 0 && std::isfinite(s.height) && s.height > 0;
+            else if constexpr (std::is_same_v<T, ColliderInfo3D::ConvexMeshShape3D> || std::is_same_v<T, ColliderInfo3D::ConcaveMeshShape3D>) {
+                if (s.vertices.size() < 4 || !finite(s.scale) || s.scale.x <= 0 || s.scale.y <= 0 || s.scale.z <= 0) return false;
+                for (const auto &v : s.vertices) if (!finite(v)) return false;
+                for (auto index : s.indices) if (index >= s.vertices.size()) return false;
+                return true;
+            } else {
+                if (s.width < 2 || s.length < 2 || s.heights.size() != static_cast<std::size_t>(s.width) * s.length || !finite(s.scale)) return false;
+                for (float h : s.heights) if (!std::isfinite(h)) return false;
+                return s.scale.x > 0 && s.scale.y > 0 && s.scale.z > 0;
+            }
+        }, info.shape);
+    };
+    const auto add = [&](const ColliderInfo3D &info, const reactphysics3d::Transform &transform) -> ColliderHandle * {
+        if (!valid(info)) return nullptr;
+        auto shape = scratch.CreateShape3D(info);
+        if (!shape) return nullptr;
+        scratch.colliders3D_.push_back({scratch.nextId_++, info});
+        auto &runtime = scratch.colliders3D_.back().runtime;
+        runtime.shape = *shape;
+        runtime.body = scratch.physicsWorld_->createRigidBody(transform);
+        runtime.ownsBody = true;
+        runtime.body->setType(reactphysics3d::BodyType::STATIC);
+        runtime.collider = runtime.body->addCollider(runtime.shape.shape, reactphysics3d::Transform::identity());
+        return runtime.collider;
+    };
+    auto queryTransform = scratch.MakeTransform3D(query);
+    if (!query.sourceCollider) {
+        if (!std::isfinite(rotation.NormSquared()) || rotation.NormSquared() <= 0.0f) return hits;
+        const auto r = rotation.Normalize();
+        if (!std::isfinite(position.x) || !std::isfinite(position.y) || !std::isfinite(position.z) ||
+            !std::isfinite(r.x) || !std::isfinite(r.y) || !std::isfinite(r.z) || !std::isfinite(r.w)) return hits;
+        queryTransform = reactphysics3d::Transform(scratch.ToRp3d(position), reactphysics3d::Quaternion(r.x, r.y, r.z, r.w));
+    }
+    auto *queryHandle = add(query, queryTransform);
+    if (!queryHandle) return hits;
+    for (const auto &target : targets) {
+        // RP3D has no concave-concave narrow phase.
+        const auto concave = [](const ColliderInfo3D &i) {
+            return std::holds_alternative<ColliderInfo3D::ConcaveMeshShape3D>(i.shape) ||
+                std::holds_alternative<ColliderInfo3D::HeightFieldShape3D>(i.shape);
+        };
+        if (concave(query) && concave(target)) continue;
+        if (!target.enabled || !ShouldTest(query.attribute, query.ignoreAttribute, target.attribute) ||
+            !ShouldTest(target.attribute, target.ignoreAttribute, query.attribute)) continue;
+        auto *targetHandle = add(target, scratch.MakeTransform3D(target));
+        if (!targetHandle) continue;
+        struct Collector final : CollisionCallback {
+            const ColliderHandle *queryHandle = nullptr;
+            HitInfo3D hit;
+            void onContact(const CallbackData &data) override {
+                for (std::uint32_t i = 0; i < data.getNbContactPairs(); ++i) {
+                    const auto &pair = data.getContactPair(i);
+                    hit.isHit = true;
+                    for (std::uint32_t j = 0; j < pair.getNbContactPoints(); ++j) {
+                        const auto &contact = pair.getContactPoint(j);
+                        if (contact.getPenetrationDepth() < hit.penetration) continue;
+                        const auto n = contact.getWorldNormal();
+                        hit.normal = Vector3{n.x, n.y, n.z} * (pair.getCollider1() == queryHandle ? -1.0f : 1.0f);
+                        hit.penetration = contact.getPenetrationDepth();
+                    }
+                }
+            }
+        } collector;
+        collector.queryHandle = queryHandle;
+        scratch.physicsWorld_->testCollision(queryHandle->getBody(), targetHandle->getBody(), collector);
+        if (collector.hit.isHit) {
+            collector.hit.selfObject = query.ownerObject;
+            collector.hit.selfCollider = query.sourceCollider;
+            collector.hit.otherObject = target.ownerObject;
+            collector.hit.otherCollider = target.sourceCollider;
+            hits.push_back(collector.hit);
+        }
+        // Keep scratch memory bounded to the query and one target.
+        scratch.ReleaseRuntime3D(scratch.colliders3D_.back());
+        scratch.colliders3D_.pop_back();
+    }
+    return hits;
+}
+
 const ColliderInfo3D *Collider::FindInfoByHandle3D(const ColliderHandle *handle) const {
     if (!handle) return nullptr;
     for (const auto &entry : colliders3D_) {

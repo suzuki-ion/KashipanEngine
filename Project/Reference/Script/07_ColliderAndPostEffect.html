@@ -88,6 +88,7 @@
 レイキャスト専用のコライダーは常駐形状を持たないため、<code>OnCollisionEnter</code> 等の衝突イベントは発生しません。<code>RayCollider</code>（3D）は代わりに <code>CastRay(HitInfo &amp;out)</code> で任意のタイミングにレイキャストできます（<a href="Components/Collider/RayCollider.html">RayCollider</a>参照）。
 </div>
 
+<p>任意の位置・形状を指定した単発判定は <a href="15_CollisionQueries.html">任意のタイミングの当たり判定</a> を参照してください。2D・3Dの形状指定と、既存Colliderを使った問い合わせに対応します。</p>
 <h2>ポストプロセスエフェクトの概要</h2>
 <p>
 <code>ScreenBufferObject</code> が付与されたオブジェクトに追加すると、そのスクリーンバッファへエフェクトがかかります。いずれもコンポーネント共通メソッドに加えて、エフェクトごとのパラメータのGet/Setを持ちます（一覧はサイドバーの「コンポーネント: PostEffect」以下の各ページを参照してください）。

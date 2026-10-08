@@ -100,6 +100,7 @@ const KE_PAGES = [
   { id: "08_MathAndUtility", title: "数学型・Math・Easing・Random", group: "APIリファレンス", href: "Script/08_MathAndUtility.html" },
   { id: "09_JsonAndDictionary", title: "dictionaryとJson", group: "APIリファレンス", href: "Script/09_JsonAndDictionary.html" },
   { id: "10_ProceduralGeneration", title: "手続き生成（WFC・ステージグラフ）", group: "APIリファレンス", href: "Script/10_ProceduralGeneration.html" },
+  { id: "15_CollisionQueries", title: "任意のタイミングの当たり判定", group: "APIリファレンス", href: "Script/15_CollisionQueries.html" },
 
   { id: "11_PlayerExample", title: "実例: Player.asを読み解く", group: "実践・ツール", href: "Script/11_PlayerExample.html" },
   { id: "12_EditorToolScripting", title: "EditorTool（エディタ拡張スクリプト）", group: "実践・ツール", href: "Script/12_EditorToolScripting.html" },

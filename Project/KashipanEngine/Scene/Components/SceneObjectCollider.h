@@ -30,6 +30,13 @@ public:
     Collider *GetCollider() { return &collider_; }
     const Collider *GetCollider() const { return &collider_; }
 
+    // Snapshot queries return one hit per component, in registration order.
+    // They do not move objects, advance physics, or dispatch collision events.
+    std::vector<HitInfo2D> Query2D(const ColliderInfo2D &query, bool includeTriggers = true,
+        const EmptyObject *ignoreObject = nullptr) const;
+    std::vector<HitInfo3D> Query3D(const ColliderInfo3D &query, const Vector3 &position,
+        const Quaternion &rotation, bool includeTriggers = true, const EmptyObject *ignoreObject = nullptr) const;
+
     /// @brief ICollider派生コンポーネントを登録する（ポインタ登録。以後は毎フレーム自動で最新状態が反映される）
     void RegisterCollider(ICollider *collider);
     /// @brief ICollider派生コンポーネントの登録を解除する

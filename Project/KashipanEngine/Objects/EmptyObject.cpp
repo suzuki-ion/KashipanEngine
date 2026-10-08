@@ -1,4 +1,5 @@
 #include "EmptyObject.h"
+#include "Debug/Profiler.h"
 #include "Objects/Components/Transform.h"
 #include "Scene/SceneContext.h"
 
@@ -372,6 +373,7 @@ void EmptyObject::Update() {
         if (!ownedComponent || addedID != info.addedID) continue;
         IObjectComponent *component = ownedComponent;
         if (component && component->IsActive()) {
+            Profiler::Scope componentScope("ObjectComponent." + component->GetComponentType());
             component->UpdateInterface(Passkey<EmptyObject>());
         }
     }

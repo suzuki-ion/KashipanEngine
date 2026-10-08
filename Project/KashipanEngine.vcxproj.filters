@@ -423,6 +423,7 @@
     <ClCompile Include="KashipanEngine\Debug\CrashHandler\ExportDump.cpp">
       <Filter>KashipanEngine\Debug\CrashHandler</Filter>
     </ClCompile>
+    <ClCompile Include="KashipanEngine\Debug\RuntimeDebugOverlay.cpp"><Filter>KashipanEngine\Debug</Filter></ClCompile>
     <ClCompile Include="KashipanEngine\Debug\ImGuiManager.cpp">
       <Filter>KashipanEngine\Debug</Filter>
     </ClCompile>
@@ -1013,6 +1014,8 @@
     <ClInclude Include="KashipanEngine\Debug\CrashHandler\ExportDump.h">
       <Filter>KashipanEngine\Debug\CrashHandler</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Debug\Profiler.h"><Filter>KashipanEngine\Debug</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Debug\RuntimeDebugOverlay.h"><Filter>KashipanEngine\Debug</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Debug\ImGuiManager.h">
       <Filter>KashipanEngine\Debug</Filter>
     </ClInclude>

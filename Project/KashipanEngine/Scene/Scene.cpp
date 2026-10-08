@@ -1,4 +1,5 @@
 #include "Scene/Scene.h"
+#include "Debug/Profiler.h"
 #include "Scene/SceneBackupPath.h"
 #include "Scene/RenderTargetCarryOverRegistry.h"
 #include "Core/GameEngine.h"
@@ -658,6 +659,7 @@ bool Scene::ChangeToNextScene() {
 }
 
 void Scene::UpdateSceneObjects() {
+    Profiler::Scope scope("Scene.Objects");
     if (objects_.empty()) return;
 
     // Update中に他のオブジェクトが生成/削除されても objects_ 自体の
@@ -679,6 +681,7 @@ void Scene::UpdateSceneObjects() {
 }
 
 void Scene::UpdateComponents() {
+    Profiler::Scope scope("Scene.Components");
     updateComponents_.clear();
     updateComponents_.reserve(components_.size());
     for (const auto &comp : components_) {
@@ -700,6 +703,7 @@ void Scene::UpdateComponents() {
         if (!ownedComponent || addedID != info.addedID) continue;
         ISceneComponent *component = ownedComponent.get();
         if (component && component->IsActive()) {
+            Profiler::Scope componentScope("SceneComponent." + component->GetComponentType());
             component->UpdateInterface(Passkey<Scene>());
         }
     }

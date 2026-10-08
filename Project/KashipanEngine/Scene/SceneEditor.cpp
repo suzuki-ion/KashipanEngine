@@ -685,6 +685,9 @@ void SceneEditor::ShowMainWindow() {
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu(TranslationLabel("editor.menu.debugwindows"))) {
+            bool showProfiling = GameEngine::IsProfilingWindowVisible();
+            if (ImGui::MenuItem(TranslationLabel("editor.gameengine.profiling.window"), nullptr, &showProfiling))
+                GameEngine::SetProfilingWindowVisible(showProfiling);
             if (ImGui::MenuItem(TranslationLabel("editor.texturemanager.window"), nullptr, &isShowLoadedTexturesWindow_)) {
                 EditorSettings::SetBool("sceneEditor.showLoadedTextures", isShowLoadedTexturesWindow_);
             }

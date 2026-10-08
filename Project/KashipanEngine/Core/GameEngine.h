@@ -23,6 +23,10 @@
 #include "Input/InputCommand.h"
 #include "Graphics/ScreenBuffer.h"
 #include "Scene/SceneManager.h"
+#include "Debug/Profiler.h"
+#if defined(RELEASE_BUILD)
+#include "Debug/RuntimeDebugOverlay.h"
+#endif
 
 #if defined(USE_IMGUI)
 #include "Debug/ImGuiManager.h"
@@ -36,6 +40,14 @@ public:
     struct Context {
         SceneManager *sceneManager = nullptr;
         InputCommand *inputCommand = nullptr;
+
+        /// Release diagnostics key (default F12); Key::Unknown disables keyboard toggling.
+        void SetDebugTextToggleKey(Key key) const { if (engine) engine->debugTextToggleKey_ = key; }
+        void SetDebugTextVisible(bool visible) const { if (engine) engine->debugTextVisible_ = visible; }
+        void SetDebugTextContent(bool fps, bool profiling) const {
+            if (engine) { engine->debugTextShowFps_ = fps; engine->debugTextShowProfiling_ = profiling; }
+        }
+        void SetProfilingWindowVisible(bool visible) const { GameEngine::SetProfilingWindowVisible(visible); }
 
         void SetGameLoopEndCondition(const std::function<bool()> &func) const {
             if (!engine) return;
@@ -96,7 +108,19 @@ public:
     /// @brief アプリケーションの終了要求が出ているかを取得する
     static bool IsQuitRequested() noexcept { return sIsQuitRequested; }
 
+    static void SetProfilingWindowVisible(bool visible) noexcept { sProfilingWindowVisible = visible; }
+    static bool IsProfilingWindowVisible() noexcept { return sProfilingWindowVisible; }
+
 private:
+    static inline bool sProfilingWindowVisible = true;
+    Key debugTextToggleKey_ = Key::F12;
+    bool debugTextVisible_ = false;
+    bool debugTextShowFps_ = true;
+    bool debugTextShowProfiling_ = true;
+#if defined(RELEASE_BUILD)
+    std::unique_ptr<RuntimeDebugOverlay> runtimeDebugOverlay_;
+    HWND debugTextWindow_ = nullptr;
+#endif
     /// @brief ゲームループの終了要求フラグ
     static inline bool sIsExitGameLoopRequested = false;
     /// @brief アプリケーション自体の終了要求フラグ
@@ -108,30 +132,8 @@ private:
     void GameLoopDraw();
 
 #if defined(USE_IMGUI)
-    class RollingAverage {
-    public:
-        explicit RollingAverage(std::size_t capacity = 60);
-        void SetCapacity(std::size_t capacity);
-        void Add(double value);
-        double GetAverage() const;
-        std::size_t GetCount() const;
-
-    private:
-        std::vector<double> samples_{};
-        std::size_t capacity_ = 1;
-        std::size_t writeIndex_ = 0;
-        double sum_ = 0.0;
-    };
-
     void DrawProfilingImGui();
-
-    float updateMs_ = 0.0f;
-    float drawMs_ = 0.0f;
-    float fps_ = 0.0f;
     int profilingSampleCount_ = 60;
-    RollingAverage avgUpdateMs_{60};
-    RollingAverage avgDrawMs_{60};
-    RollingAverage avgFps_{60};
 #endif
 
     Context context_;

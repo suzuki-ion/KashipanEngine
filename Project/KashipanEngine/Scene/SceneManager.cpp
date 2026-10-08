@@ -1,4 +1,5 @@
 #include "Scene/SceneManager.h"
+#include "Debug/Profiler.h"
 #include "Core/ProjectPaths.h"
 #include "Debug/Logger.h"
 #include "Scene/RenderTargetCarryOverRegistry.h"
@@ -139,6 +140,7 @@ void SceneManager::Update(Passkey<GameEngine>) {
         preCrashSnapshotElapsedTime_ += GetDeltaTime();
         if (preCrashSnapshotElapsedTime_ >= kPreCrashSnapshotInterval) {
             preCrashSnapshotElapsedTime_ = 0.0f;
+            Profiler::Scope scope("Scene.CrashSnapshot");
             preCrashSnapshot_ = currentScene_->SaveToJSON();
         }
     }

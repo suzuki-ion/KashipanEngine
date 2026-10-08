@@ -526,16 +526,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Externals\imgui\imgui.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Externals\imgui\imgui_demo.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Externals\imgui\imgui_draw.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4100;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <ClCompile Include="Externals\imgui\imgui_impl_dx12.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4189;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <ClCompile Include="Externals\imgui\imgui_impl_win32.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -544,10 +543,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Externals\imgui\imgui_tables.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Externals\imgui\imgui_widgets.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="KashipanEngine\Assets\AnimationManager.cpp" />
     <ClCompile Include="KashipanEngine\Assets\AudioManager.cpp" />
@@ -589,6 +586,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClCompile Include="KashipanEngine\Debug\CrashHandler.cpp" />
     <ClCompile Include="KashipanEngine\Debug\CrashHandler\ExportCrashSceneBackup.cpp" />
     <ClCompile Include="KashipanEngine\Debug\CrashHandler\ExportDump.cpp" />
+    <ClCompile Include="KashipanEngine\Debug\RuntimeDebugOverlay.cpp" />
     <ClCompile Include="KashipanEngine\Debug\ImGuiManager.cpp" />
     <ClCompile Include="KashipanEngine\Debug\LogSettings.cpp" />
     <ClCompile Include="KashipanEngine\Debug\Logger.cpp" />
@@ -1108,6 +1106,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClInclude Include="KashipanEngine\Debug\CrashHandler.h" />
     <ClInclude Include="KashipanEngine\Debug\CrashHandler\ExportCrashSceneBackup.h" />
     <ClInclude Include="KashipanEngine\Debug\CrashHandler\ExportDump.h" />
+    <ClInclude Include="KashipanEngine\Debug\Profiler.h" />
+    <ClInclude Include="KashipanEngine\Debug\RuntimeDebugOverlay.h" />
     <ClInclude Include="KashipanEngine\Debug\ImGuiManager.h" />
     <ClInclude Include="KashipanEngine\Debug\LogSettings.h" />
     <ClInclude Include="KashipanEngine\Debug\Logger.h" />

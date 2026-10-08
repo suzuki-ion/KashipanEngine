@@ -12,6 +12,7 @@
 #include "Graphics/ComputeCommandProcessor.h"
 #include "Objects/Components/ParticleSystemBase.h"
 #include "AppInitialize.h"
+#include "Input/Keyboard.h"
 
 #include <cstdint>
 #include <algorithm>
@@ -28,67 +29,34 @@ bool sIsEngineInitialized = false;
 } // namespace
 
 #if defined(USE_IMGUI)
-GameEngine::RollingAverage::RollingAverage(std::size_t capacity) {
-    SetCapacity(capacity);
-}
-
-void GameEngine::RollingAverage::SetCapacity(std::size_t capacity) {
-    capacity = std::max<std::size_t>(1, capacity);
-    if (capacity_ == capacity) return;
-
-    capacity_ = capacity;
-    samples_.clear();
-    samples_.reserve(capacity_);
-    writeIndex_ = 0;
-    sum_ = 0.0;
-}
-
-void GameEngine::RollingAverage::Add(double value) {
-    if (samples_.size() < capacity_) {
-        samples_.push_back(value);
-        sum_ += value;
-        return;
-    }
-
-    sum_ -= samples_[writeIndex_];
-    samples_[writeIndex_] = value;
-    sum_ += value;
-
-    writeIndex_ = (writeIndex_ + 1) % capacity_;
-}
-
-double GameEngine::RollingAverage::GetAverage() const {
-    if (samples_.empty()) return 0.0;
-    return sum_ / static_cast<double>(samples_.size());
-}
-
-std::size_t GameEngine::RollingAverage::GetCount() const {
-    return samples_.size();
-}
-
 void GameEngine::DrawProfilingImGui() {
-    const std::size_t cap = static_cast<std::size_t>(std::max(1, profilingSampleCount_));
-    avgUpdateMs_.SetCapacity(cap);
-    avgDrawMs_.SetCapacity(cap);
-    avgFps_.SetCapacity(cap);
-
-    avgUpdateMs_.Add(static_cast<double>(updateMs_));
-    avgDrawMs_.Add(static_cast<double>(drawMs_));
-    avgFps_.Add(static_cast<double>(fps_));
-
-    if (ImGui::Begin(TranslationLabel("editor.gameengine.profiling.window"))) {
-        ImGui::Text(TranslationC("editor.gameengine.fps_2f"), fps_);
-        ImGui::Text(TranslationC("editor.gameengine.update_3f_ms"), updateMs_);
-        ImGui::Text(TranslationC("editor.gameengine.draw_3f_ms"), drawMs_);
-        if (graphicsEngine_) {
-            ImGui::Text(TranslationC("editor.gameengine.draw_calls_u"), graphicsEngine_->GetLastFrameDrawCallCount());
+    if (!sProfilingWindowVisible) return;
+    const auto snapshot = Profiler::GetInstance().GetSnapshot();
+    profilingSampleCount_ = static_cast<int>(snapshot.sampleCount);
+    if (ImGui::Begin(TranslationLabel("editor.gameengine.profiling.window"), &sProfilingWindowVisible)) {
+        ImGui::Text(TranslationC("editor.gameengine.fps_2f"), snapshot.fps);
+        ImGui::Text(TranslationC("editor.gameengine.profiling.frame_ms"), snapshot.frameMs);
+        if (graphicsEngine_) ImGui::Text(TranslationC("editor.gameengine.draw_calls_u"), graphicsEngine_->GetLastFrameDrawCallCount());
+        if (ImGui::SliderInt(TranslationLabel("editor.gameengine.profiling_sample_count"), &profilingSampleCount_, 1, 600))
+            Profiler::GetInstance().SetSampleCount(static_cast<std::size_t>(profilingSampleCount_));
+        ImGui::Text(TranslationC("editor.gameengine.profiling.cpu_note"), snapshot.frames);
+        if (ImGui::BeginTable("CpuProfile", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable)) {
+            ImGui::TableSetupColumn(TranslationC("editor.gameengine.profiling.process"));
+            ImGui::TableSetupColumn(TranslationC("editor.gameengine.profiling.current"));
+            ImGui::TableSetupColumn(TranslationC("editor.gameengine.profiling.average"));
+            ImGui::TableSetupColumn(TranslationC("editor.gameengine.profiling.peak"));
+            ImGui::TableSetupColumn(TranslationC("editor.gameengine.profiling.calls"));
+            ImGui::TableHeadersRow();
+            for (const auto &result : snapshot.results) {
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn(); ImGui::TextUnformatted(result.name.c_str());
+                ImGui::TableNextColumn(); ImGui::Text("%.3f", result.milliseconds);
+                ImGui::TableNextColumn(); ImGui::Text("%.3f", result.averageMs);
+                ImGui::TableNextColumn(); ImGui::Text("%.3f", result.peakMs);
+                ImGui::TableNextColumn(); ImGui::Text("%llu", static_cast<unsigned long long>(result.calls));
+            }
+            ImGui::EndTable();
         }
-        ImGui::Separator();
-        ImGui::SliderInt(TranslationLabel("editor.gameengine.profiling_sample_count"), &profilingSampleCount_, 1, 600);
-        ImGui::Text(TranslationC("editor.gameengine.averages_zu_samples"), avgUpdateMs_.GetCount());
-        ImGui::Text(TranslationC("editor.gameengine.avg_fps_2f"), static_cast<float>(avgFps_.GetAverage()));
-        ImGui::Text(TranslationC("editor.gameengine.avg_update_3f_ms"), static_cast<float>(avgUpdateMs_.GetAverage()));
-        ImGui::Text(TranslationC("editor.gameengine.avg_draw_3f_ms"), static_cast<float>(avgDrawMs_.GetAverage()));
     }
     ImGui::End();
 }
@@ -223,6 +191,9 @@ GameEngine::~GameEngine() {
     //   既にウィンドウが破棄済みのため手遅れになる）
     if (imguiManager_) imguiManager_->SaveMainWindowState();
 #endif
+#if defined(RELEASE_BUILD)
+    runtimeDebugOverlay_.reset();
+#endif
     Window::AllDestroy({});
     ScreenBuffer::AllDestroy({});
     ShadowMapBuffer::AllDestroy({});
@@ -270,79 +241,61 @@ GameEngine::~GameEngine() {
 }
 
 void GameEngine::GameLoopUpdate() {
-#if defined(USE_IMGUI)
-    const auto beginTp = std::chrono::high_resolution_clock::now();
-#endif
-
-    Window::Update({});
+    Profiler::Scope updateScope("Update.Total");
+    { Profiler::Scope scope("Update.WindowMessages"); Window::Update({}); }
     UpdateDeltaTime({});
-
     if (input_) {
+        Profiler::Scope scope("Update.Input");
         input_->Update();
-    }
-
-#if defined(USE_IMGUI)
-    {
-        const float dt = GetDeltaTime();
-        fps_ = (dt > 0.0f) ? (1.0f / dt) : 0.0f;
-    }
+#if defined(RELEASE_BUILD)
+        HWND foreground = ::GetForegroundWindow();
+        if (Window::IsExist(foreground)) {
+            debugTextWindow_ = foreground;
+            if (debugTextToggleKey_ != Key::Unknown && input_->GetKeyboard().IsTrigger(debugTextToggleKey_))
+                debugTextVisible_ = !debugTextVisible_;
+        }
 #endif
-
-    if (audioManager_) {
-        audioManager_->Update();
     }
-    if (videoManager_) {
-        videoManager_->Update();
-    }
+    if (audioManager_) { Profiler::Scope scope("Update.Audio"); audioManager_->Update(); }
+    if (videoManager_) { Profiler::Scope scope("Update.Video"); videoManager_->Update(); }
 #if defined(USE_IMGUI)
-    imguiManager_->BeginFrame({});
+    { Profiler::Scope scope("Editor.BeginFrame"); imguiManager_->BeginFrame({}); }
 #endif
-
     if (sceneManager_) {
-        sceneManager_->Update(Passkey<GameEngine>{});
+        { Profiler::Scope scope("Update.Scene"); sceneManager_->Update(Passkey<GameEngine>{}); }
 #if defined(USE_IMGUI)
-        sceneManager_->ShowImGui(Passkey<GameEngine>{});
+        { Profiler::Scope scope("Editor.UI"); sceneManager_->ShowImGui(Passkey<GameEngine>{}); }
 #endif
     }
-
-#if defined(USE_IMGUI)
-    const auto endTp = std::chrono::high_resolution_clock::now();
-    updateMs_ = std::chrono::duration<float, std::milli>(endTp - beginTp).count();
-#endif
 }
 
 void GameEngine::GameLoopDraw() {
-#if defined(USE_IMGUI)
-    const auto beginTp = std::chrono::high_resolution_clock::now();
-#endif
-
-    directXCommon_->BeginDraw({});
-    Window::Draw({});
-
+    Profiler::Scope drawScope("Draw.Total");
+    { Profiler::Scope scope("Draw.Begin"); directXCommon_->BeginDraw({}); Window::Draw({}); }
     {
+        Profiler::Scope scope("Draw.RenderFrame");
         SceneContext *sceneContext = nullptr;
         if (sceneManager_) {
-            if (const auto *currentScene = sceneManager_->GetCurrentScene()) {
+            if (const auto *currentScene = sceneManager_->GetCurrentScene())
                 sceneContext = currentScene->GetSceneContext();
-            }
         }
         graphicsEngine_->RenderFrame({}, sceneContext);
     }
-
 #if defined(USE_IMGUI)
     if (imguiManager_) {
+        Profiler::Scope scope("Editor.Render");
         DrawProfilingImGui();
         imguiManager_->Render({});
     }
 #endif
-
-    directXCommon_->EndDraw({});
-
-#if defined(USE_IMGUI)
-    // 描画時間の計測だけ最後に行う（ImGuiやDirectXCommonのEndDrawも含めるため）
-    const auto endTp = std::chrono::high_resolution_clock::now();
-    drawMs_ = std::chrono::duration<float, std::milli>(endTp - beginTp).count();
+#if defined(RELEASE_BUILD)
+    if (debugTextVisible_) {
+        Profiler::Scope scope("Draw.DebugText");
+        if (!runtimeDebugOverlay_) runtimeDebugOverlay_ = std::make_unique<RuntimeDebugOverlay>(Passkey<GameEngine>{}, directXCommon_.get());
+        runtimeDebugOverlay_->Draw(Window::GetWindow(debugTextWindow_), debugTextShowFps_, debugTextShowProfiling_);
+    }
 #endif
+    { Profiler::Scope scope("Draw.SubmitPresentWait"); directXCommon_->EndDraw({}); }
 }
 
 int GameEngine::Execute(PasskeyForGameEngineMain) {
@@ -364,27 +317,32 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
         // （エディタービルドでは再生停止要求としてScene側で消費されるため、ここでは見ない）
         if (sIsExitGameLoopRequested) break;
 #endif
+        Profiler::GetInstance().BeginFrame();
         GameLoopUpdate();
         GameLoopDraw();
 
-        if (sceneManager_ && sceneManager_->CommitPendingSceneChange({})) {
-            graphicsEngine_->ReleaseRendererResources(Passkey<GameEngine>{});
-            // シーン構築中のアセット読み込みで実時間が飛んでいるため、
-            // 次フレームのデルタタイムへその時間が混入しないようにする
-            ResetDeltaTime({});
+        {
+            Profiler::Scope scope("Frame.SceneChangeAndCleanup");
+            if (sceneManager_ && sceneManager_->CommitPendingSceneChange({})) {
+                graphicsEngine_->ReleaseRendererResources(Passkey<GameEngine>{});
+                // シーン構築中のアセット読み込みで実時間が飛んでいるため、
+                // 次フレームのデルタタイムへその時間が混入しないようにする
+                ResetDeltaTime({});
+            }
+            // スワップチェーンの破棄は、それが紐付くウィンドウ(HWND)を破棄するより必ず先に行うこと。
+            // Window::CommitDestroy()はDestroyWindow()を同期的に呼ぶため、先にHWNDを破棄してしまうと
+            // まだ生きているIDXGISwapChainが破棄済みウィンドウを参照した状態になる。この状態でPresent/
+            // 破棄が走ると、DWM側の合成状態が壊れてGPUハング（TDR）→次フレームのPresent失敗を
+            // 引き起こしうる（Play/StopでNormalWindowObject等がウィンドウごと即座に作り直される際に
+            // 顕在化しやすい）
+            directXCommon_->AllDestroyPendingSwapChains({});
+            Window::CommitDestroy({});
+            ScreenBuffer::CommitDestroy({});
+            ShadowMapBuffer::CommitDestroy({});
+            VideoManager::CommitPendingDestroy({});
+            GifManager::CommitPendingDestroy({});
         }
-        // スワップチェーンの破棄は、それが紐付くウィンドウ(HWND)を破棄するより必ず先に行うこと。
-        // Window::CommitDestroy()はDestroyWindow()を同期的に呼ぶため、先にHWNDを破棄してしまうと
-        // まだ生きているIDXGISwapChainが破棄済みウィンドウを参照した状態になる。この状態でPresent/
-        // 破棄が走ると、DWM側の合成状態が壊れてGPUハング（TDR）→次フレームのPresent失敗を
-        // 引き起こしうる（Play/StopでNormalWindowObject等がウィンドウごと即座に作り直される際に
-        // 顕在化しやすい）
-        directXCommon_->AllDestroyPendingSwapChains({});
-        Window::CommitDestroy({});
-        ScreenBuffer::CommitDestroy({});
-        ShadowMapBuffer::CommitDestroy({});
-        VideoManager::CommitPendingDestroy({});
-        GifManager::CommitPendingDestroy({});
+        Profiler::GetInstance().EndFrame();
 
         if (windowCount > Window::GetWindowCount()) {
             isGameLoopRunning_ = Window::GetWindowCount() != 0;

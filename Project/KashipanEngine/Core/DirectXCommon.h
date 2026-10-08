@@ -22,6 +22,7 @@
 namespace KashipanEngine {
 
 class GameEngine;
+class RuntimeDebugOverlay;
 class Window;
 class GraphicsEngine;
 class Renderer;
@@ -51,6 +52,12 @@ public:
     void BeginDraw(Passkey<GameEngine>);
     /// @brief 描画後処理
     void EndDraw(Passkey<GameEngine>);
+
+#if defined(RELEASE_BUILD)
+    ID3D12Device *GetDeviceForDebugOverlay(Passkey<RuntimeDebugOverlay>) const { return dx12Device_->GetDevice(); }
+    ID3D12CommandQueue *GetCommandQueueForDebugOverlay(Passkey<RuntimeDebugOverlay>) const { return dx12CommandQueue_->GetCommandQueue(); }
+    SRVHeap *GetSRVHeapForDebugOverlay(Passkey<RuntimeDebugOverlay>) const { return SRVHeap_.get(); }
+#endif
 
     /// @brief スワップチェーン作成
     /// @param hwnd ウィンドウハンドル

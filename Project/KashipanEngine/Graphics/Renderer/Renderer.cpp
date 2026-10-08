@@ -1,4 +1,5 @@
 #include "RendererInternal.h"
+#include "Debug/Profiler.h"
 #include "Debug/Logger.h"
 #include <optional>
 
@@ -40,13 +41,13 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
     ComputeCommandProcessor::BeginFrame(Passkey<Renderer>{});
 
     // Computeシェーダー処理は他の描画パスより先に実行し、結果を後続パスから参照できるようにする
-    ProcessComputeShaders(sceneContext);
+    { Profiler::Scope scope("Render.Compute"); ProcessComputeShaders(sceneContext); }
     // 動画のYUV→RGB変換も同様に描画リスト構築より先に実行する（シーンに依存しない）
-    ProcessVideoConversions();
+    { Profiler::Scope scope("Render.VideoConversion"); ProcessVideoConversions(); }
     // GPUスキニングも描画リスト構築より先に実行し、スキニング結果を描画パスから参照できるようにする
-    ProcessSkinning(sceneContext);
+    { Profiler::Scope scope("Render.Skinning"); ProcessSkinning(sceneContext); }
     // GPUパーティクルも同様に描画リスト構築より先に実行する
-    ProcessGpuParticles(sceneContext);
+    { Profiler::Scope scope("Render.Particles"); ProcessGpuParticles(sceneContext); }
 
     auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
     if (!sceneRenderer) {
@@ -62,10 +63,13 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
         }
     }
 
-    const auto &drawList = sceneRenderer->BuildSortedDrawList(Passkey<Renderer>{}, pipelineManager_);
+    const auto &drawList = [&]() -> const auto & {
+        Profiler::Scope scope("Render.BuildDrawList");
+        return sceneRenderer->BuildSortedDrawList(Passkey<Renderer>{}, pipelineManager_);
+    }();
 
     // Forward+のタイルライトカリング（3D描画で使われる (描画先,パイプライン) の組ごとに実行する）
-    ProcessLightCulling(sceneContext, sceneRenderer, drawList);
+    { Profiler::Scope scope("Render.LightCulling"); ProcessLightCulling(sceneContext, sceneRenderer, drawList); }
 
     // 全Computeフェーズを1本のコマンドリストとして閉じ、後続の描画より先に提出する
     ComputeCommandProcessor::EndFrame(Passkey<Renderer>{});
@@ -78,7 +82,7 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
             shadowTargets.push_back(entry.target);
         }
     }
-    RenderShadowMaps(sceneContext, sceneRenderer, shadowTargets);
+    { Profiler::Scope scope("Render.Shadows"); RenderShadowMaps(sceneContext, sceneRenderer, shadowTargets); }
 
     // 画面全体Nパスブレンド（ScreenWideDitherBlendEffect）が有効な描画先を収集する。これらは
     // 全描画先で共有するシャドウマップ配列を自分の位相で直接書き換えながら進むため、他の
@@ -105,7 +109,7 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
         if (findScreenWideDitherPassCount(target)) {
             deferredScreenWideRanges.emplace_back(static_cast<ScreenBuffer *>(target), range);
         } else {
-            RenderToTarget(target, range, sceneRenderer);
+            { Profiler::Scope scope("Render.Targets"); RenderToTarget(target, range, sceneRenderer); }
         }
         renderedTargets.insert(target);
         begin = end;
@@ -113,11 +117,11 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
 
     for (const auto &[screenBuffer, range] : deferredScreenWideRanges) {
         const auto passCount = findScreenWideDitherPassCount(screenBuffer);
-        RenderScreenWideDitherTarget(screenBuffer, range, sceneRenderer, passCount.value_or(4u));
+        { Profiler::Scope scope("Render.Dither"); RenderScreenWideDitherTarget(screenBuffer, range, sceneRenderer, passCount.value_or(4u)); }
     }
 
     // 描画対象オブジェクトが無い ScreenBuffer にもポストエフェクトのみ適用する
-    RenderPostProcessOnlyTargets(sceneContext, renderedTargets);
+    { Profiler::Scope scope("Render.PostProcessOnly"); RenderPostProcessOnlyTargets(sceneContext, renderedTargets); }
 
     // シーンに描画対象が一つも無い場合でも、エディター用描画先には背景だけは描画する
     auto *editorTarget = sceneRenderer->GetEditorTarget();

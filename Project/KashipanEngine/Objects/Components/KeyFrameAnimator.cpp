@@ -89,6 +89,130 @@ bool KeyFrameAnimator::TryGetValue(const std::string &name, float &outValue) con
 }
 
 //==================================================
+// 設定
+//==================================================
+
+bool KeyFrameAnimator::AddAnimation(const std::string &name, const std::string &jsonPath) {
+    if (name.empty() || FindAnimation(name)) return false;
+    AnimationEntry entry;
+    entry.name = name;
+    entry.jsonPath = jsonPath;
+    animations_.push_back(std::move(entry));
+    return true;
+}
+
+bool KeyFrameAnimator::RemoveAnimation(const std::string &name) {
+    auto it = std::find_if(animations_.begin(), animations_.end(),
+        [&name](const AnimationEntry &entry) { return entry.name == name; });
+    if (it == animations_.end()) return false;
+    animations_.erase(it);
+    return true;
+}
+
+bool KeyFrameAnimator::SetJsonPath(const std::string &name, const std::string &jsonPath) {
+    auto *entry = FindAnimation(name);
+    if (!entry) return false;
+    if (entry->jsonPath != jsonPath) {
+        entry->jsonPath = jsonPath;
+        entry->loaded = false;
+        entry->loadFailed = false;
+        entry->animation.Clear();
+    }
+    return true;
+}
+
+std::string KeyFrameAnimator::GetJsonPath(const std::string &name) const {
+    const auto *entry = FindAnimation(name);
+    return entry ? entry->jsonPath : std::string();
+}
+
+bool KeyFrameAnimator::SetLoop(const std::string &name, bool loop) {
+    auto *entry = FindAnimation(name);
+    if (!entry) return false;
+    entry->loop = loop;
+    return true;
+}
+
+bool KeyFrameAnimator::GetLoop(const std::string &name) const {
+    const auto *entry = FindAnimation(name);
+    return entry && entry->loop;
+}
+
+bool KeyFrameAnimator::SetPlayOnStart(const std::string &name, bool playOnStart) {
+    auto *entry = FindAnimation(name);
+    if (!entry) return false;
+    entry->playOnStart = playOnStart;
+    return true;
+}
+
+bool KeyFrameAnimator::GetPlayOnStart(const std::string &name) const {
+    const auto *entry = FindAnimation(name);
+    return entry && entry->playOnStart;
+}
+
+bool KeyFrameAnimator::SetTimeOffset(const std::string &name, float timeOffset) {
+    auto *entry = FindAnimation(name);
+    if (!entry) return false;
+    entry->timeOffset = timeOffset;
+    return true;
+}
+
+float KeyFrameAnimator::GetTimeOffset(const std::string &name) const {
+    const auto *entry = FindAnimation(name);
+    return entry ? entry->timeOffset : 0.0f;
+}
+
+bool KeyFrameAnimator::SetValueScale(const std::string &name, float valueScale) {
+    auto *entry = FindAnimation(name);
+    if (!entry) return false;
+    entry->valueScale = valueScale;
+    return true;
+}
+
+float KeyFrameAnimator::GetValueScale(const std::string &name) const {
+    const auto *entry = FindAnimation(name);
+    return entry ? entry->valueScale : 1.0f;
+}
+
+bool KeyFrameAnimator::SetValueOffset(const std::string &name, float valueOffset) {
+    auto *entry = FindAnimation(name);
+    if (!entry) return false;
+    entry->valueOffset = valueOffset;
+    return true;
+}
+
+float KeyFrameAnimator::GetValueOffset(const std::string &name) const {
+    const auto *entry = FindAnimation(name);
+    return entry ? entry->valueOffset : 0.0f;
+}
+
+bool KeyFrameAnimator::AddBinding(const std::string &name, const std::string &componentType, const std::string &parameterName,
+    int channel, int componentIndex, bool isScriptVariable) {
+    auto *entry = FindAnimation(name);
+    if (!entry || parameterName.empty()) return false;
+    TargetBinding binding;
+    binding.componentType = componentType;
+    binding.componentIndex = componentIndex;
+    binding.parameterName = parameterName;
+    binding.channel = channel;
+    binding.isScriptVariable = isScriptVariable;
+    entry->bindings.push_back(std::move(binding));
+    return true;
+}
+
+bool KeyFrameAnimator::ClearBindings(const std::string &name) {
+    auto *entry = FindAnimation(name);
+    if (!entry) return false;
+    entry->bindings.clear();
+    return true;
+}
+
+size_t KeyFrameAnimator::GetBindingCount(const std::string &name) const {
+    const auto *entry = FindAnimation(name);
+    return entry ? entry->bindings.size() : 0;
+}
+
+//==================================================
 // ライフサイクル
 //==================================================
 

@@ -29,6 +29,8 @@
 <tr><td><code>Vector3 GetWorldRotate() const</code></td><td>親を合成したワールド回転を取得する（オイラー角・ラジアン）</td></tr>
 <tr><td><code>Quaternion GetWorldRotateQuaternion() const</code></td><td>親を合成したワールド回転を取得する（クォータニオン）</td></tr>
 <tr><td><code>Vector3 GetWorldScale()</code></td><td>親を合成したワールドスケールを取得する</td></tr>
+<tr><td><code>bool SetParentObject(Object@ parent)</code></td><td>親オブジェクトを設定する（<code>null</code> で親を解除）。親がTransformを持たない・自分自身・循環参照になる場合は false</td></tr>
+<tr><td><code>Object@ GetParentObject() const</code></td><td>親オブジェクトを取得する（親が無い場合は <code>null</code>）</td></tr>
 </table>
 <h2>関連ページ</h2>
 <ul>

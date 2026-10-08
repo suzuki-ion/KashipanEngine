@@ -69,6 +69,47 @@ public:
     bool TryGetValue(const std::string &name, float &outValue) const;
     size_t GetAnimationCount() const noexcept { return animations_.size(); }
 
+    //==================================================
+    // 設定（スクリプト/エディターツールからの構築用）
+    //==================================================
+
+    /// @brief アニメーションを追加する（再生速度等はデフォルト値、適用先は空で追加される）
+    /// @return 名前が空、または同名のアニメーションが既にある場合は false
+    bool AddAnimation(const std::string &name, const std::string &jsonPath);
+    /// @brief 指定した名前のアニメーションを削除する
+    bool RemoveAnimation(const std::string &name);
+    /// @brief 全アニメーションを削除する
+    void ClearAnimations() { animations_.clear(); }
+    bool HasAnimation(const std::string &name) const { return FindAnimation(name) != nullptr; }
+
+    /// @brief キーフレームjsonのパスを変更する（次回の再生時に読み込み直される）
+    bool SetJsonPath(const std::string &name, const std::string &jsonPath);
+    std::string GetJsonPath(const std::string &name) const;
+    bool SetLoop(const std::string &name, bool loop);
+    bool GetLoop(const std::string &name) const;
+    bool SetPlayOnStart(const std::string &name, bool playOnStart);
+    bool GetPlayOnStart(const std::string &name) const;
+    bool SetTimeOffset(const std::string &name, float timeOffset);
+    float GetTimeOffset(const std::string &name) const;
+    bool SetValueScale(const std::string &name, float valueScale);
+    float GetValueScale(const std::string &name) const;
+    bool SetValueOffset(const std::string &name, float valueOffset);
+    float GetValueOffset(const std::string &name) const;
+
+    /// @brief 評価値の適用先を追加する
+    /// @param name アニメーション名
+    /// @param componentType 適用先コンポーネントの型名（例: "Transform"）。isScriptVariable の場合は無視される
+    /// @param parameterName メンバ変数名（例: "translate_"）またはスクリプト変数名
+    /// @param channel Vector2/3/4の成分 (0=x, 1=y, 2=z, 3=w)。float/doubleでは無視
+    /// @param componentIndex 同型コンポーネントが複数ある場合のインデックス（追加順）
+    /// @param isScriptVariable ScriptComponentの[SerializeField]変数への適用かどうか
+    bool AddBinding(const std::string &name, const std::string &componentType, const std::string &parameterName,
+        int channel = 0, int componentIndex = 0, bool isScriptVariable = false);
+    /// @brief 指定したアニメーションの適用先を全て削除する
+    bool ClearBindings(const std::string &name);
+    /// @brief 指定したアニメーションの適用先の数（アニメーションが無い場合は0）
+    size_t GetBindingCount(const std::string &name) const;
+
 protected:
     void Initialize() override;
     void Update() override;

@@ -1016,7 +1016,31 @@ void RegisterTransformType(asIScriptEngine *engine) {
         .method("Vector3 GetWorldScale()", SafeCall<&Transform::GetWorldScale>());
 }
 
+/// @brief Transform.SetParentObject(Object@)の実体（nullを渡すと親を解除する）
+bool TransformSetParentObject(ScriptComponentHandle<Transform> *self, ScriptObjectHandle *parent) {
+    Transform *transform = self ? self->Resolve() : nullptr;
+    if (!transform) { ThrowDestroyedObjectException(); return false; }
+    if (!parent) return transform->SetParentObject(static_cast<EmptyObject *>(nullptr));
+    EmptyObject *parentObject = ResolveObjectArg(parent);
+    if (!parentObject) return false;
+    return transform->SetParentObject(parentObject);
+}
+
+/// @brief Transform.GetParentObject()の実体（親が無い場合はnull）
+ScriptObjectHandle *TransformGetParentObject(ScriptComponentHandle<Transform> *self) {
+    Transform *transform = self ? self->Resolve() : nullptr;
+    if (!transform) { ThrowDestroyedObjectException(); return nullptr; }
+    return ScriptObjectHandle::Create(transform->GetParentObject());
+}
+
 void RegisterComponentTypes(asIScriptEngine *engine) {
+    // Transformの親子付けはObject@を参照するため、Object登録後のここでTransformへ追加する
+    // （Transform本体はObject::GetTransform()のためObjectより先に登録している）
+    engine->RegisterObjectMethod("Transform", "bool SetParentObject(Object@ parent)",
+        asFUNCTION(TransformSetParentObject), asCALL_CDECL_OBJFIRST);
+    engine->RegisterObjectMethod("Transform", "Object@ GetParentObject() const",
+        asFUNCTION(TransformGetParentObject), asCALL_CDECL_OBJFIRST);
+
     RegisterComponentType<Velocity>(engine, "Velocity")
         .method("void SetVelocity(const Vector3 &in)", SafeCall<&Velocity::SetVelocity>())
         .method("const Vector3 &GetVelocity() const", SafeCall<&Velocity::GetVelocity>())
@@ -1410,6 +1434,7 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
     RegisterComponentType<ScriptComponent>(engine, "ScriptComponent")
         .method("void SetScriptPath(const string &in)", SafeCall<&ScriptComponent::SetScriptPath>())
         .method("const string &GetScriptPath() const", SafeCall<&ScriptComponent::GetScriptPath>())
+        .method("string GetClassName() const", SafeCall<&ScriptComponent::GetClassName>())
         .method("bool Reload()", SafeCall<&ScriptComponent::Reload>())
         // 他オブジェクトのScriptComponentを取得した上で、その[SerializeField]変数を名前で直接読み書きする
         // （シーン変数を介さないスクリプト間のデータ受け渡し用。対応型はプリミティブ/数学型/enum、および
@@ -1508,6 +1533,31 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             if (!animatorPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::uint32_t>(); }
             const KeyFrameAnimator &animator = *animatorPtr;
             return static_cast<std::uint32_t>(animator.GetAnimationCount());
+        })
+        .method("bool AddAnimation(const string &in name, const string &in jsonPath)", SafeCall<&KeyFrameAnimator::AddAnimation>())
+        .method("bool RemoveAnimation(const string &in name)", SafeCall<&KeyFrameAnimator::RemoveAnimation>())
+        .method("void ClearAnimations()", SafeCall<&KeyFrameAnimator::ClearAnimations>())
+        .method("bool HasAnimation(const string &in name) const", SafeCall<&KeyFrameAnimator::HasAnimation>())
+        .method("bool SetJsonPath(const string &in name, const string &in jsonPath)", SafeCall<&KeyFrameAnimator::SetJsonPath>())
+        .method("string GetJsonPath(const string &in name) const", SafeCall<&KeyFrameAnimator::GetJsonPath>())
+        .method("bool SetLoop(const string &in name, bool loop)", SafeCall<&KeyFrameAnimator::SetLoop>())
+        .method("bool GetLoop(const string &in name) const", SafeCall<&KeyFrameAnimator::GetLoop>())
+        .method("bool SetPlayOnStart(const string &in name, bool playOnStart)", SafeCall<&KeyFrameAnimator::SetPlayOnStart>())
+        .method("bool GetPlayOnStart(const string &in name) const", SafeCall<&KeyFrameAnimator::GetPlayOnStart>())
+        .method("bool SetTimeOffset(const string &in name, float timeOffset)", SafeCall<&KeyFrameAnimator::SetTimeOffset>())
+        .method("float GetTimeOffset(const string &in name) const", SafeCall<&KeyFrameAnimator::GetTimeOffset>())
+        .method("bool SetValueScale(const string &in name, float valueScale)", SafeCall<&KeyFrameAnimator::SetValueScale>())
+        .method("float GetValueScale(const string &in name) const", SafeCall<&KeyFrameAnimator::GetValueScale>())
+        .method("bool SetValueOffset(const string &in name, float valueOffset)", SafeCall<&KeyFrameAnimator::SetValueOffset>())
+        .method("float GetValueOffset(const string &in name) const", SafeCall<&KeyFrameAnimator::GetValueOffset>())
+        .method("bool AddBinding(const string &in name, const string &in componentType, const string &in parameterName, int channel = 0, int componentIndex = 0, bool isScriptVariable = false)",
+            SafeCall<&KeyFrameAnimator::AddBinding>())
+        .method("bool ClearBindings(const string &in name)", SafeCall<&KeyFrameAnimator::ClearBindings>())
+        .method("uint GetBindingCount(const string &in name) const", [](const ScriptComponentHandle<KeyFrameAnimator> &animatorHandle, const std::string &name) -> std::uint32_t {
+            KeyFrameAnimator *animatorPtr = animatorHandle.Resolve();
+            if (!animatorPtr) { ThrowDestroyedObjectException(); return SafeCallDefault<std::uint32_t>(); }
+            const KeyFrameAnimator &animator = *animatorPtr;
+            return static_cast<std::uint32_t>(animator.GetBindingCount(name));
         });
 
     RegisterComponentType<InputCommandApplier>(engine, "InputCommandApplier")

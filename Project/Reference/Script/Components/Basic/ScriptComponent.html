@@ -22,6 +22,7 @@
 <tr><th>メソッド</th><th>説明</th></tr>
 <tr><td><code>void SetScriptPath(const string &amp;in)</code> / <code>const string &amp;GetScriptPath() const</code></td><td>スクリプトパスの設定/取得</td></tr>
 <tr><td><code>bool Reload()</code></td><td>スクリプトを再コンパイルする</td></tr>
+<tr><td><code>string GetClassName() const</code></td><td>実体のBehaviorクラス名を取得する。名前空間付きの場合は<code>Game::Health</code>の形式。従来のScriptComponentと自作コンポーネントの両方に対応し、未生成・コンパイル失敗時は空文字を返す。</td></tr>
 <tr><td><code>bool GetVariable(const string &amp;in, ?&amp;out) const</code></td><td>指定名の <code>[SerializeField]</code> 変数の現在値を取得する（<a href="../../04_ObjectSceneVariables.html">04_ObjectSceneVariables.html</a>）</td></tr>
 <tr><td><code>bool SetVariable(const string &amp;in, ?&amp;in)</code></td><td>指定名の <code>[SerializeField]</code> 変数へ値を設定する</td></tr>
 </table>

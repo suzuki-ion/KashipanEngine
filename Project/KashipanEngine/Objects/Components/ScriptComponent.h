@@ -81,6 +81,8 @@ public:
     /// @brief 自作コンポーネントとして生成するクラス（空なら従来通り最初のBehaviorを使用）
     void SetComponentClass(const std::string &name) { componentClass_ = name; }
     const std::string &GetComponentClass() const noexcept { return componentClass_; }
+    /// @brief 実体のクラス名（名前空間を含む）。未生成・コンパイル失敗時は空文字。
+    std::string GetClassName() const;
 
 #if defined(USE_IMGUI)
     struct ComponentDefinition {

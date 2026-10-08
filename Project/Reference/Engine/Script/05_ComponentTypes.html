@@ -42,6 +42,8 @@
 <tr><td><code>Vector3 GetWorldRotate() const</code></td><td>親を合成したワールド回転を取得する（オイラー角・ラジアン）</td></tr>
 <tr><td><code>Quaternion GetWorldRotateQuaternion() const</code></td><td>親を合成したワールド回転を取得する（クォータニオン）</td></tr>
 <tr><td><code>Vector3 GetWorldScale()</code></td><td>親を合成したワールドスケールを取得する</td></tr>
+<tr><td><code>bool SetParentObject(Object@ parent)</code></td><td>親オブジェクトを設定する（<code>null</code> で親を解除）。親がTransformを持たない・自分自身・循環参照になる場合は false</td></tr>
+<tr><td><code>Object@ GetParentObject() const</code></td><td>親オブジェクトを取得する（親が無い場合は <code>null</code>）</td></tr>
 </table>
 
 <h2>Velocity / Rotation</h2>
@@ -132,6 +134,17 @@
 <tr><td><code>bool SetPlaybackSpeed(const string &amp;in name, float speed)</code> / <code>float GetPlaybackSpeed(const string &amp;in name) const</code></td><td>再生速度倍率（負の値で逆再生）</td></tr>
 <tr><td><code>bool TryGetValue(const string &amp;in name, float &amp;out value) const</code></td><td>最後に評価された値（値オフセット適用後）を取得する</td></tr>
 <tr><td><code>uint GetAnimationCount() const</code></td><td>登録されているアニメーション数</td></tr>
+<tr><td><code>bool AddAnimation(const string &amp;in name, const string &amp;in jsonPath)</code></td><td>アニメーションを追加する（同名がある・名前が空の場合は false）。再生速度等はデフォルト値、適用先は空で追加される</td></tr>
+<tr><td><code>bool RemoveAnimation(const string &amp;in name)</code> / <code>void ClearAnimations()</code></td><td>指定アニメーション/全アニメーションを削除する</td></tr>
+<tr><td><code>bool HasAnimation(const string &amp;in name) const</code></td><td>指定した名前のアニメーションがあるかどうか</td></tr>
+<tr><td><code>bool SetJsonPath(const string &amp;in name, const string &amp;in jsonPath)</code> / <code>string GetJsonPath(const string &amp;in name) const</code></td><td>キーフレームjsonのパス（変更すると次回の再生時に読み込み直される）</td></tr>
+<tr><td><code>bool SetLoop(const string &amp;in name, bool)</code> / <code>bool GetLoop(const string &amp;in name) const</code></td><td>ループ再生するか</td></tr>
+<tr><td><code>bool SetPlayOnStart(const string &amp;in name, bool)</code> / <code>bool GetPlayOnStart(const string &amp;in name) const</code></td><td>ゲームループ開始時に自動再生するか</td></tr>
+<tr><td><code>bool SetTimeOffset(const string &amp;in name, float)</code> / <code>float GetTimeOffset(const string &amp;in name) const</code></td><td>評価時刻へ加算する再生時オフセット（秒）</td></tr>
+<tr><td><code>bool SetValueScale(const string &amp;in name, float)</code> / <code>float GetValueScale(const string &amp;in name) const</code></td><td>評価値にかける倍率</td></tr>
+<tr><td><code>bool SetValueOffset(const string &amp;in name, float)</code> / <code>float GetValueOffset(const string &amp;in name) const</code></td><td>評価値へ加算するデフォルト値オフセット</td></tr>
+<tr><td><code>bool AddBinding(const string &amp;in name, const string &amp;in componentType, const string &amp;in parameterName, int channel = 0, int componentIndex = 0, bool isScriptVariable = false)</code></td><td>評価値の適用先を追加する。<code>componentType</code> はコンポーネント型名（例: <code>"Transform"</code>）、<code>parameterName</code> はメンバ変数名（例: <code>"translate_"</code>）またはスクリプト変数名、<code>channel</code> はVector型の成分（0=x, 1=y, 2=z, 3=w）</td></tr>
+<tr><td><code>bool ClearBindings(const string &amp;in name)</code> / <code>uint GetBindingCount(const string &amp;in name) const</code></td><td>適用先の全削除/数の取得</td></tr>
 </table>
 <pre><code class="language-angelscript">KeyFrameAnimator@ animator;
 if (GetComponent(@animator)) {
@@ -140,6 +153,15 @@ if (GetComponent(@animator)) {
     if (animator.TryGetValue("DoorOpen", value)) {
         // 再生中の評価値を独自の処理にも利用できる
     }
+}</code></pre>
+<p>スクリプトからアニメーションを構築することもできます（エディターツールでの自動生成等）。設定はコンポーネントのjsonとしてシーンへ保存されます。</p>
+<pre><code class="language-angelscript">KeyFrameAnimator@ animator;
+if (obj.AddComponent(@animator)) {
+    animator.AddAnimation("Float", "Assets/Application/Float.json");
+    animator.AddBinding("Float", "Transform", "translate_", 1); // translate_.y へ適用
+    animator.SetValueOffset("Float", 3.0f);                     // 基準の高さ
+    animator.SetTimeOffset("Float", 0.5f);                      // 位相をずらす
+    animator.SetPlayOnStart("Float", true);
 }</code></pre>
 
 <h2>InputCommandApplier</h2>

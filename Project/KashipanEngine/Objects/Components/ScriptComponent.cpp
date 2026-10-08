@@ -280,6 +280,13 @@ std::unique_ptr<IObjectComponent> ScriptComponent::Clone() const {
     return ptr;
 }
 
+std::string ScriptComponent::GetClassName() const {
+    if (!behaviorObject_ || !behaviorType_) return {};
+    const std::string nameSpace = behaviorType_->GetNamespace();
+    return nameSpace.empty() ? std::string(behaviorType_->GetName())
+        : nameSpace + "::" + behaviorType_->GetName();
+}
+
 SceneScriptEngine *ScriptComponent::GetSceneScriptEngine() const {
     auto *sceneContext = GetOwnerSceneContext();
     return sceneContext ? sceneContext->GetComponent<SceneScriptEngine>() : nullptr;

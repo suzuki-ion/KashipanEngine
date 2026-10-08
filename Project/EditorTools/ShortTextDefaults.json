@@ -1,0 +1,1946 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "mode": "recipe",
+      "phrase": "スペースキーを押したらvelocityに16.0fを代入する",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_pressed",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 1,
+                "value": 16
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "スペースキーを押したらvelocityに16.0fを代入する（Y軸の速度だけで、重力や接地判定は付けない）",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_pressed",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 1,
+                "value": 16
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "上方向に飛ばしたいので、スペースキーを押したらvelocityに16.0fを代入する。対象はY速度",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_pressed",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 1,
+                "value": 16
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "開始したらY方向の加速度を-30にして落ちていく",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "start",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_acceleration",
+                "axis": 1,
+                "value": -30
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "再生が始まったら下向きの加速度30で落下させる",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "start",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_acceleration",
+                "axis": 1,
+                "value": -30
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "最初にY加速度へ-30を設定して重力のように落とす",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "start",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_acceleration",
+                "axis": 1,
+                "value": -30
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Y位置が0以下で下向きに動いているときは、Yの位置と速度と加速度を0に戻す簡易床にする",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "position_at_most",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "test": "velocity_at_most",
+                "axis": 1,
+                "value": 0
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_position",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "operation": "stop_velocity",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "operation": "set_acceleration",
+                "axis": 1,
+                "value": 0
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Y=0を位置と速度で判定する簡易床として、そこより下へ落ちたらY位置・Y速度・Y加速度をすべて0にする",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "position_at_most",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "test": "velocity_at_most",
+                "axis": 1,
+                "value": 0
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_position",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "operation": "stop_velocity",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "operation": "set_acceleration",
+                "axis": 1,
+                "value": 0
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "毎フレーム、Y位置0以下かつY速度0以下なら簡易床に着いたとみなしてY位置と速度と加速度をゼロにする",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "position_at_most",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "test": "velocity_at_most",
+                "axis": 1,
+                "value": 0
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_position",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "operation": "stop_velocity",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "operation": "set_acceleration",
+                "axis": 1,
+                "value": 0
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Y=0の簡易床の上でスペースを押すとジャンプする。開始時に加速度-30、床ではY位置と速度と加速度を0、床にいるときだけY速度16と加速度-30",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "start",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_acceleration",
+                "axis": 1,
+                "value": -30
+              }
+            ]
+          },
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "position_at_most",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "test": "velocity_at_most",
+                "axis": 1,
+                "value": 0
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_position",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "operation": "stop_velocity",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "operation": "set_acceleration",
+                "axis": 1,
+                "value": 0
+              }
+            ]
+          },
+          {
+            "event": "key_pressed",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "position_at_most",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "test": "velocity_at_most",
+                "axis": 1,
+                "value": 0
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 1,
+                "value": 16
+              },
+              {
+                "operation": "set_acceleration",
+                "axis": 1,
+                "value": -30
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "位置と速度で判定する簡易床Y=0から、スペースキーで速度16のジャンプをして重力-30で落ちてくる",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "start",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_acceleration",
+                "axis": 1,
+                "value": -30
+              }
+            ]
+          },
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "position_at_most",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "test": "velocity_at_most",
+                "axis": 1,
+                "value": 0
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_position",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "operation": "stop_velocity",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "operation": "set_acceleration",
+                "axis": 1,
+                "value": 0
+              }
+            ]
+          },
+          {
+            "event": "key_pressed",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "position_at_most",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "test": "velocity_at_most",
+                "axis": 1,
+                "value": 0
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 1,
+                "value": 16
+              },
+              {
+                "operation": "set_acceleration",
+                "axis": 1,
+                "value": -30
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "簡易床Y=0に立っているときだけスペースでジャンプでき、空中では加速度-30で落ちて床で止まる",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "start",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_acceleration",
+                "axis": 1,
+                "value": -30
+              }
+            ]
+          },
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "position_at_most",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "test": "velocity_at_most",
+                "axis": 1,
+                "value": 0
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_position",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "operation": "stop_velocity",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "operation": "set_acceleration",
+                "axis": 1,
+                "value": 0
+              }
+            ]
+          },
+          {
+            "event": "key_pressed",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "position_at_most",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "test": "velocity_at_most",
+                "axis": 1,
+                "value": 0
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 1,
+                "value": 16
+              },
+              {
+                "operation": "set_acceleration",
+                "axis": 1,
+                "value": -30
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Dキーを押している間、毎秒4ずつ右へ移動する",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_held",
+            "key": "D",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "translate",
+                "axis": 0,
+                "value": 4
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Dを長押しすると秒速4で右に動く",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_held",
+            "key": "D",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "translate",
+                "axis": 0,
+                "value": 4
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Dキーを押し続けたらX方向へ1秒あたり4進む",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_held",
+            "key": "D",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "translate",
+                "axis": 0,
+                "value": 4
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Aキーを押している間、毎秒4ずつ左へ移動する",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_held",
+            "key": "A",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "translate",
+                "axis": 0,
+                "value": -4
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Aを長押しすると秒速4で左に動く",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_held",
+            "key": "A",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "translate",
+                "axis": 0,
+                "value": -4
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Aキーを押し続けたらXのマイナス方向へ1秒あたり4進む",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_held",
+            "key": "A",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "translate",
+                "axis": 0,
+                "value": -4
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "右矢印キーを押している間はX速度4、離したらX速度を0にする",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_held",
+            "key": "Right",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 0,
+                "value": 4
+              }
+            ]
+          },
+          {
+            "event": "key_released",
+            "key": "Right",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "stop_velocity",
+                "axis": 0,
+                "value": 0
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "→キーを長押しで速度4で右へ進み、キーを離すと止まる",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_held",
+            "key": "Right",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 0,
+                "value": 4
+              }
+            ]
+          },
+          {
+            "event": "key_released",
+            "key": "Right",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "stop_velocity",
+                "axis": 0,
+                "value": 0
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "右矢印を押し続けるとX方向の速度が4になり、離した瞬間にX速度が0になる",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_held",
+            "key": "Right",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 0,
+                "value": 4
+              }
+            ]
+          },
+          {
+            "event": "key_released",
+            "key": "Right",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "stop_velocity",
+                "axis": 0,
+                "value": 0
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Shiftを押している間はX速度8でダッシュし、離したらX速度4に戻す",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_held",
+            "key": "Shift",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 0,
+                "value": 8
+              }
+            ]
+          },
+          {
+            "event": "key_released",
+            "key": "Shift",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 0,
+                "value": 4
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "シフトキー長押しで右向き速度を8にして、離すと速度4にする",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_held",
+            "key": "Shift",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 0,
+                "value": 8
+              }
+            ]
+          },
+          {
+            "event": "key_released",
+            "key": "Shift",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 0,
+                "value": 4
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Shiftを押し続けるとX方向が速度8、離した瞬間にX速度4へ落とす",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_held",
+            "key": "Shift",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 0,
+                "value": 8
+              }
+            ]
+          },
+          {
+            "event": "key_released",
+            "key": "Shift",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 0,
+                "value": 4
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Rキーを押したら位置XYZと速度XYZをすべて0にリセットする",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_pressed",
+            "key": "R",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_position",
+                "axis": 0,
+                "value": 0
+              },
+              {
+                "operation": "set_position",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "operation": "set_position",
+                "axis": 2,
+                "value": 0
+              },
+              {
+                "operation": "stop_velocity",
+                "axis": 0,
+                "value": 0
+              },
+              {
+                "operation": "stop_velocity",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "operation": "stop_velocity",
+                "axis": 2,
+                "value": 0
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Rを押すと原点に戻って全軸の速度も止まる",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_pressed",
+            "key": "R",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_position",
+                "axis": 0,
+                "value": 0
+              },
+              {
+                "operation": "set_position",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "operation": "set_position",
+                "axis": 2,
+                "value": 0
+              },
+              {
+                "operation": "stop_velocity",
+                "axis": 0,
+                "value": 0
+              },
+              {
+                "operation": "stop_velocity",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "operation": "stop_velocity",
+                "axis": 2,
+                "value": 0
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Rキーでリセットし、X・Y・Zの位置と速度をゼロにする",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_pressed",
+            "key": "R",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_position",
+                "axis": 0,
+                "value": 0
+              },
+              {
+                "operation": "set_position",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "operation": "set_position",
+                "axis": 2,
+                "value": 0
+              },
+              {
+                "operation": "stop_velocity",
+                "axis": 0,
+                "value": 0
+              },
+              {
+                "operation": "stop_velocity",
+                "axis": 1,
+                "value": 0
+              },
+              {
+                "operation": "stop_velocity",
+                "axis": 2,
+                "value": 0
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Eキーを押したらXYZすべてのスケールを2に設定する",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_pressed",
+            "key": "E",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_scale",
+                "axis": 0,
+                "value": 2
+              },
+              {
+                "operation": "set_scale",
+                "axis": 1,
+                "value": 2
+              },
+              {
+                "operation": "set_scale",
+                "axis": 2,
+                "value": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Eを押すとスケールを2に設定する",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_pressed",
+            "key": "E",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_scale",
+                "axis": 0,
+                "value": 2
+              },
+              {
+                "operation": "set_scale",
+                "axis": 1,
+                "value": 2
+              },
+              {
+                "operation": "set_scale",
+                "axis": 2,
+                "value": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Eキーで全軸のスケールを2にして大きくする",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_pressed",
+            "key": "E",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_scale",
+                "axis": 0,
+                "value": 2
+              },
+              {
+                "operation": "set_scale",
+                "axis": 1,
+                "value": 2
+              },
+              {
+                "operation": "set_scale",
+                "axis": 2,
+                "value": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Qキーを押したら大きさをXYZすべて1に戻す",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_pressed",
+            "key": "Q",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_scale",
+                "axis": 0,
+                "value": 1
+              },
+              {
+                "operation": "set_scale",
+                "axis": 1,
+                "value": 1
+              },
+              {
+                "operation": "set_scale",
+                "axis": 2,
+                "value": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Qを押すとスケールを1に設定する",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_pressed",
+            "key": "Q",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_scale",
+                "axis": 0,
+                "value": 1
+              },
+              {
+                "operation": "set_scale",
+                "axis": 1,
+                "value": 1
+              },
+              {
+                "operation": "set_scale",
+                "axis": 2,
+                "value": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Qキーで全軸のスケールを1に設定する",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_pressed",
+            "key": "Q",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_scale",
+                "axis": 0,
+                "value": 1
+              },
+              {
+                "operation": "set_scale",
+                "axis": 1,
+                "value": 1
+              },
+              {
+                "operation": "set_scale",
+                "axis": 2,
+                "value": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "開始時にY軸の回転を90度にする",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "start",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_rotation",
+                "axis": 1,
+                "value": 90
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "再生が始まったらY回転へ90度を代入して横を向かせる",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "start",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_rotation",
+                "axis": 1,
+                "value": 90
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "最初だけY軸回りの向きを90度に設定する",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "start",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_rotation",
+                "axis": 1,
+                "value": 90
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "1秒ごとにX方向の速度を1ずつ加算する",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "timer",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "add_velocity",
+                "axis": 0,
+                "value": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "毎秒、右向きの速度を1増やしてだんだん速くする",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "timer",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "add_velocity",
+                "axis": 0,
+                "value": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "1秒おきにX速度へ1を足していく",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "timer",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "add_velocity",
+                "axis": 0,
+                "value": 1
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "開始時にスケールを2にして、その後は毎フレームZ軸回りに毎秒45度回転する",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "start",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_scale",
+                "axis": 0,
+                "value": 2
+              },
+              {
+                "operation": "set_scale",
+                "axis": 1,
+                "value": 2
+              },
+              {
+                "operation": "set_scale",
+                "axis": 2,
+                "value": 2
+              }
+            ]
+          },
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "rotate",
+                "axis": 2,
+                "value": 45
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "最初にスケールを2に設定してから、Z軸で秒速45度でずっと回り続ける",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "start",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_scale",
+                "axis": 0,
+                "value": 2
+              },
+              {
+                "operation": "set_scale",
+                "axis": 1,
+                "value": 2
+              },
+              {
+                "operation": "set_scale",
+                "axis": 2,
+                "value": 2
+              }
+            ]
+          },
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "rotate",
+                "axis": 2,
+                "value": 45
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "大きさXYZを2に設定し、Z回転を1秒あたり45度ずつ加え続ける",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "start",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_scale",
+                "axis": 0,
+                "value": 2
+              },
+              {
+                "operation": "set_scale",
+                "axis": 1,
+                "value": 2
+              },
+              {
+                "operation": "set_scale",
+                "axis": 2,
+                "value": 2
+              }
+            ]
+          },
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "rotate",
+                "axis": 2,
+                "value": 45
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "開始時にX速度2で動き出し、X位置が5以上で速度-2、-5以下で速度2にして左右に往復する",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "start",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 0,
+                "value": 2
+              }
+            ]
+          },
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "position_at_least",
+                "axis": 0,
+                "value": 5
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 0,
+                "value": -2
+              }
+            ]
+          },
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "position_at_most",
+                "axis": 0,
+                "value": -5
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 0,
+                "value": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "X=-5とX=5付近で折り返しながら速度2で往復する",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "start",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 0,
+                "value": 2
+              }
+            ]
+          },
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "position_at_least",
+                "axis": 0,
+                "value": 5
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 0,
+                "value": -2
+              }
+            ]
+          },
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "position_at_most",
+                "axis": 0,
+                "value": -5
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 0,
+                "value": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "右へ速度2で進み、X位置5に達したら左へ、-5に達したら右へ折り返すパトロール",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "start",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 0,
+                "value": 2
+              }
+            ]
+          },
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "position_at_least",
+                "axis": 0,
+                "value": 5
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 0,
+                "value": -2
+              }
+            ]
+          },
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "position_at_most",
+                "axis": 0,
+                "value": -5
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_velocity",
+                "axis": 0,
+                "value": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Y速度が-0.001以下ならYスケール0.8、0.001以上ならYスケール1.2にする",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "velocity_at_most",
+                "axis": 1,
+                "value": -0.001
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_scale",
+                "axis": 1,
+                "value": 0.8
+              }
+            ]
+          },
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "velocity_at_least",
+                "axis": 1,
+                "value": 0.001
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_scale",
+                "axis": 1,
+                "value": 1.2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Y速度が-0.001以下の間はYスケール0.8、0.001以上の間はYスケール1.2に設定する",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "velocity_at_most",
+                "axis": 1,
+                "value": -0.001
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_scale",
+                "axis": 1,
+                "value": 0.8
+              }
+            ]
+          },
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "velocity_at_least",
+                "axis": 1,
+                "value": 0.001
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_scale",
+                "axis": 1,
+                "value": 1.2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "上昇中はYの大きさを1.2、落下中はYの大きさを0.8に毎フレーム設定する",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "velocity_at_most",
+                "axis": 1,
+                "value": -0.001
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_scale",
+                "axis": 1,
+                "value": 0.8
+              }
+            ]
+          },
+          {
+            "event": "every_frame",
+            "key": "Space",
+            "interval": 1,
+            "conditions": [
+              {
+                "test": "velocity_at_least",
+                "axis": 1,
+                "value": 0.001
+              }
+            ],
+            "actions": [
+              {
+                "operation": "set_scale",
+                "axis": 1,
+                "value": 1.2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Enterキーを離した瞬間にY位置を2にする",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_released",
+            "key": "Enter",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_position",
+                "axis": 1,
+                "value": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "エンターを放したら高さ2の位置へ移す",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_released",
+            "key": "Enter",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_position",
+                "axis": 1,
+                "value": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "Enterから指を離すとYの座標に2を代入する",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "key_released",
+            "key": "Enter",
+            "interval": 1,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_position",
+                "axis": 1,
+                "value": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "2秒ごとにスケールをXYZすべて1.5に設定する",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "timer",
+            "key": "Space",
+            "interval": 2,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_scale",
+                "axis": 0,
+                "value": 1.5
+              },
+              {
+                "operation": "set_scale",
+                "axis": 1,
+                "value": 1.5
+              },
+              {
+                "operation": "set_scale",
+                "axis": 2,
+                "value": 1.5
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "2秒おきに全軸のスケールを1.5に設定する",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "timer",
+            "key": "Space",
+            "interval": 2,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_scale",
+                "axis": 0,
+                "value": 1.5
+              },
+              {
+                "operation": "set_scale",
+                "axis": 1,
+                "value": 1.5
+              },
+              {
+                "operation": "set_scale",
+                "axis": 2,
+                "value": 1.5
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "mode": "recipe",
+      "phrase": "タイマーで2秒に1回、全軸のスケールへ1.5を代入する",
+      "recipe": {
+        "kind": 3,
+        "rules": [
+          {
+            "event": "timer",
+            "key": "Space",
+            "interval": 2,
+            "conditions": [],
+            "actions": [
+              {
+                "operation": "set_scale",
+                "axis": 0,
+                "value": 1.5
+              },
+              {
+                "operation": "set_scale",
+                "axis": 1,
+                "value": 1.5
+              },
+              {
+                "operation": "set_scale",
+                "axis": 2,
+                "value": 1.5
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

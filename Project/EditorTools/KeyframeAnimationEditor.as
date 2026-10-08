@@ -35,6 +35,8 @@ class KeyframeAnimationEditor : EditorTool {
     float previewTime = 0.0f;
     // Curve上でドラッグ中のキーのインデックス（ドラッグしていない場合は-1）
     int draggingKeyIndex = -1;
+    float dragMinValue = 0.0f;
+    float dragMaxValue = 0.0f;
 
     // EaseType 列挙型の名前一覧（C++側の EaseTypeToString/StringToEaseType と同じ表記・同じ順序）
     array<string> easeNames = {
@@ -62,7 +64,7 @@ class KeyframeAnimationEditor : EditorTool {
     }
 
     void OnWindowEnable(const string &in windowName) {}
-    void OnWindowDisable(const string &in windowName) {}
+    void OnWindowDisable(const string &in windowName) { draggingKeyIndex = -1; }
 
     void Update() {
         if (!IsEditorWindowOpen("Keyframe Animation Editor")) return;
@@ -297,6 +299,13 @@ class KeyframeAnimationEditor : EditorTool {
         float maxTime = GetDuration();
         if (maxTime <= 0.0f) maxTime = 1.0f;
 
+        // ドラッグ中は軸を固定する。キーの値に追従して毎フレーム再計算すると、
+        // マウスを止めても値が変化してしまう。
+        if (draggingKeyIndex >= 0) {
+            minValue = dragMinValue;
+            maxValue = dragMaxValue;
+        }
+
         // 値0の基準線（範囲内にある場合のみ）
         if (minValue < 0.0f && maxValue > 0.0f) {
             Vector2 zeroA = ToCanvas(canvasPos, canvasSize, 0.0f, maxTime, minValue, maxValue, 0.0f, 0.0f);
@@ -319,7 +328,9 @@ class KeyframeAnimationEditor : EditorTool {
         // ドラッグ操作用の透明ボタンをキャンバス全体に重ねる（レイアウト領域の確保も兼ねる）。
         // クリックした位置に最も近いキーをドラッグ対象にし、ボタンが押されている間は
         // マウスのY座標からその点の値を逆算して直接書き換える（時刻は変更しない）
-        bool clicked = ImGui::InvisibleButton("##curveCanvas", canvasSize);
+        ImGui::InvisibleButton("##curveCanvas", canvasSize);
+        // InvisibleButtonの戻り値はリリース時。ドラッグ対象は押した瞬間に選ぶ。
+        bool clicked = ImGui::IsItemClicked();
         Vector2 mousePos = ImGui::GetMousePos();
         if (clicked) {
             const float pickRadius = 10.0f;
@@ -336,6 +347,8 @@ class KeyframeAnimationEditor : EditorTool {
                 }
             }
             draggingKeyIndex = bestIndex;
+            dragMinValue = minValue;
+            dragMaxValue = maxValue;
         }
         if (!ImGui::IsItemActive()) {
             draggingKeyIndex = -1;

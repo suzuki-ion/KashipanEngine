@@ -1371,6 +1371,7 @@
 		"component.scriptcomponent.onwindowmessage_s": "OnWindowMessage: %s",
 		"component.scriptcomponent.refresh_list": "Refresh List",
 		"component.scriptcomponent.reload": "Reload",
+		"component.scriptcomponent.copy_error_log": "Copy error log",
 		"component.scriptcomponent.s_null": "%s: (null)",
 		"component.scriptcomponent.s_scenecontext": "%s: (SceneContext not set)",
 		"component.scriptcomponent.s_unsupported_type": "%s: (unsupported type)",
@@ -1903,6 +1904,8 @@
 
 		//--------- editor.logger ---------//
 		"editor.logger.window": "Logger",
+		"editor.logger.copy_all": "Copy all",
+		"editor.logger.copy_entry": "Copy this entry",
 
 		//--------- editor.materialmanager ---------//
 		"editor.materialmanager.add_material": "Add Material",

@@ -1562,6 +1562,16 @@ void ScriptComponent::ShowImGui() {
         ImGui::Text(TranslationC("component.scriptcomponent.onwindowmessage_s"), onWindowMessageMethod_ ? "o" : "-");
     }
     if (!lastError_.empty()) {
+        if (ImGui::Button(TranslationLabel("component.scriptcomponent.copy_error_log"))) {
+            std::string errorLog = lastError_;
+            for (const auto &message : buildErrorMessages_) {
+                if (!errorLog.empty() && errorLog.back() != '\n') {
+                    errorLog += '\n';
+                }
+                errorLog += message;
+            }
+            ImGui::SetClipboardText(errorLog.c_str());
+        }
         ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "%s", lastError_.c_str());
         // ビルド失敗時はコンパイラの出力したメッセージを失敗表示の下に出す
         if (!buildErrorMessages_.empty()) {

@@ -1370,6 +1370,7 @@
 		"component.scriptcomponent.onwindowmessage_s": "OnWindowMessage：%s",
 		"component.scriptcomponent.refresh_list": "刷新列表",
 		"component.scriptcomponent.reload": "重新加载",
+		"component.scriptcomponent.copy_error_log": "复制错误日志",
 		"component.scriptcomponent.s_null": "%s：（未设置）",
 		"component.scriptcomponent.s_scenecontext": "%s: （SceneContext未设置）",
 		"component.scriptcomponent.s_unsupported_type": "%s：（不支持的类型）",
@@ -1866,6 +1867,8 @@
 
 		//--------- editor.logger ---------//
 		"editor.logger.window": "日志",
+		"editor.logger.copy_all": "复制全部",
+		"editor.logger.copy_entry": "复制此条日志",
 
 		//--------- editor.materialmanager ---------//
 		"editor.materialmanager.add_material": "添加材质",

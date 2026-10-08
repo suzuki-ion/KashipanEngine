@@ -735,6 +735,17 @@ void ShowImGuiLoggerWindow(Passkey<SceneEditor>) {
         return;
     }
 
+    std::string clipboardText;
+    bool copyRequested = false;
+    const bool copyAllRequested = ImGui::Button(TranslationLabel("editor.logger.copy_all"));
+    ImGui::Separator();
+    if (!ImGui::BeginChild("LogLines", ImVec2(0.0f, 0.0f), ImGuiChildFlags_None,
+        ImGuiWindowFlags_HorizontalScrollbar)) {
+        ImGui::EndChild();
+        ImGui::End();
+        return;
+    }
+
     // 起動直後はimgui.iniに保存されたスクロール位置に関係なく末尾へ移動する。
     // 以降はユーザーが末尾から離れた時に追従を解除し、末尾へ戻った時に再開する。
     const bool isAtBottom =
@@ -746,6 +757,12 @@ void ShowImGuiLoggerWindow(Passkey<SceneEditor>) {
     {
         // ワーカースレッドが sLogLines へ追記するため、描画中はロックして参照する
         std::lock_guard<std::mutex> linesLock(sLogLinesMutex);
+        if (copyAllRequested && !sLogLines.empty()) {
+            for (const LogEntry &entry : sLogLines) {
+                clipboardText += entry.text;
+            }
+            copyRequested = true;
+        }
         ImGuiListClipper clipper;
         clipper.Begin(static_cast<int>(sLogLines.size()));
         while (clipper.Step()) {
@@ -756,12 +773,26 @@ void ShowImGuiLoggerWindow(Passkey<SceneEditor>) {
                 const char *begin = line.c_str();
                 const char *end = begin + line.size();
                 while (end > begin && (end[-1] == '\n' || end[-1] == '\r')) --end;
+                ImGui::PushID(i);
                 ImGui::PushStyleColor(ImGuiCol_Text, GetLogSeverityColor(entry.severity));
                 ImGui::TextUnformatted(begin, end);
                 ImGui::PopStyleColor();
+                if (ImGui::BeginPopupContextItem("LogContextMenu")) {
+                    if (ImGui::MenuItem(TranslationLabel("editor.logger.copy_entry"))) {
+                        clipboardText = line;
+                        copyRequested = true;
+                    }
+                    ImGui::EndPopup();
+                }
+                ImGui::PopID();
             }
         }
         clipper.End();
+    }
+
+    // OSのクリップボード操作中はログワーカーを待たせない。
+    if (copyRequested) {
+        ImGui::SetClipboardText(clipboardText.c_str());
     }
 
     // Clipper終了後のカーソルは全ログの末尾にある。末尾マーカーを常に置いて
@@ -773,6 +804,7 @@ void ShowImGuiLoggerWindow(Passkey<SceneEditor>) {
         followLatestLog = true;
     }
     isFirstVisibleFrame = false;
+    ImGui::EndChild();
     ImGui::End();
 }
 #endif

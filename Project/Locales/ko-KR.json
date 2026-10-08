@@ -1370,6 +1370,7 @@
 		"component.scriptcomponent.onwindowmessage_s": "OnWindowMessage: %s",
 		"component.scriptcomponent.refresh_list": "목록 새로고침",
 		"component.scriptcomponent.reload": "다시 불러오기",
+		"component.scriptcomponent.copy_error_log": "오류 로그 복사",
 		"component.scriptcomponent.s_null": "%s: (미설정)",
 		"component.scriptcomponent.s_scenecontext": "%s: (SceneContext 미설정)",
 		"component.scriptcomponent.s_unsupported_type": "%s: (지원하지 않는 타입)",
@@ -1866,6 +1867,8 @@
 
 		//--------- editor.logger ---------//
 		"editor.logger.window": "로그",
+		"editor.logger.copy_all": "모두 복사",
+		"editor.logger.copy_entry": "이 로그 복사",
 
 		//--------- editor.materialmanager ---------//
 		"editor.materialmanager.add_material": "머티리얼 추가",

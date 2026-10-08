@@ -1373,6 +1373,7 @@
 		"component.scriptcomponent.onwindowmessage_s": "OnWindowMessage：%s",
 		"component.scriptcomponent.refresh_list": "一覧を更新",
 		"component.scriptcomponent.reload": "再読み込み",
+		"component.scriptcomponent.copy_error_log": "エラーログをコピー",
 		"component.scriptcomponent.s_null": "%s：(未設定)",
 		"component.scriptcomponent.s_scenecontext": "%s: (SceneContext未設定)",
 		"component.scriptcomponent.s_unsupported_type": "%s：(未対応の型)",
@@ -1905,6 +1906,8 @@
 
 		//--------- editor.logger ---------//
 		"editor.logger.window": "ログ",
+		"editor.logger.copy_all": "すべてコピー",
+		"editor.logger.copy_entry": "このログをコピー",
 
 		//--------- editor.materialmanager ---------//
 		"editor.materialmanager.add_material": "マテリアルを追加",

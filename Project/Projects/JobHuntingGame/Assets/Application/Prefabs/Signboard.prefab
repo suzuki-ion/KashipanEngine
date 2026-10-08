@@ -1,0 +1,1195 @@
+{
+    "name": "Signboard",
+    "objects": [
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 3.0,
+                                    "y": 2.0,
+                                    "z": 2.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "Signboard",
+                "objectID": "f427e9e9-b968-4434-a607-49b3ff9b28b7",
+                "prefabNodeID": "50ad4401-2930-48cd-9537-62ca89d6bbef",
+                "tag": ""
+            },
+            "parentIndex": -1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "f427e9e9-b968-4434-a607-49b3ff9b28b7",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 1.5,
+                                    "z": -0.20000000298023224
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "color": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "defaultCharacterAnchor": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "defaultCharacterPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "fontName": "NotoSansJP-Regular",
+                                "fontSize": 1.0,
+                                "horizontalAlign": 1,
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "localizationKey": "",
+                                "materialName": "Default",
+                                "outlineColor": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "outlineWidth": 0.25,
+                                "pipelineName": "Text3D.BlendNormal",
+                                "renderPriority": 0,
+                                "targetObjectID": "31813901-d420-4f28-876d-070da9e32858",
+                                "text": "キーボード：Space\nコントローラー：A",
+                                "useLocalizationKey": false,
+                                "verticalAlign": 1
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "TextRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "Text Object",
+                "objectID": "eb13ca0f-bae6-46b2-a676-7ec58d2c550d",
+                "prefabNodeID": "78e5ec24-401f-4e7b-ad89-b5f2b9d63c41",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "f427e9e9-b968-4434-a607-49b3ff9b28b7",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "Light",
+                "objectID": "7fd3090c-5407-408a-bb4a-d0f31856a173",
+                "prefabNodeID": "d9791bb7-5f85-48a5-9599-08867d08f86b",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "7fd3090c-5407-408a-bb4a-d0f31856a173",
+                                "rotate": {
+                                    "w": 0.8660253882408142,
+                                    "x": 0.5,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0000019073486328,
+                                    "z": 1.0000019073486328
+                                },
+                                "translate": {
+                                    "x": 5.936622619628906e-05,
+                                    "y": 3.0000178813934326,
+                                    "z": -1.4999687671661377
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "castShadows": false,
+                                "color": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "decay": 2.0,
+                                "distance": 10.0,
+                                "innerAngle": 0.3490658700466156,
+                                "intensity": 1.0,
+                                "outerAngle": 1.3089970350265503,
+                                "radius": 10.0,
+                                "shadowBias": 1.0,
+                                "shadowDistance": 100.0,
+                                "shadowMapResolution": 2048,
+                                "shadowSoftness": 0.0,
+                                "sourceDepth": 1.0,
+                                "sourceHeight": 1.0,
+                                "sourceLength": 1.0,
+                                "sourceRadius": 0.5,
+                                "sourceWidth": 1.0,
+                                "type": 2
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Light"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "pipelineName": "",
+                                "targetObjectID": "31813901-d420-4f28-876d-070da9e32858"
+                            },
+                            "isActive": true,
+                            "priority": 950,
+                            "tag": ""
+                        },
+                        "type": "LightRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "Light Object",
+                "objectID": "237fdae1-a1be-4bac-859c-81267a8333fb",
+                "prefabNodeID": "fa713bf7-0f8f-4c4f-ad18-8e87db355b99",
+                "tag": ""
+            },
+            "parentIndex": 2
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "7fd3090c-5407-408a-bb4a-d0f31856a173",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 0.5,
+                                    "y": 0.25,
+                                    "z": 2.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 3.0,
+                                    "z": -0.75
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Box"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "castShadows": true,
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 1.0,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "materialName": "Default",
+                                "materialNames": [
+                                    "Default"
+                                ],
+                                "pipelineName": "Object3D.Solid.BlendNormal",
+                                "renderPriority": 0,
+                                "targetObjectID": "31813901-d420-4f28-876d-070da9e32858"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "Box",
+                "objectID": "75590bac-b667-4ed5-b55b-63069dbe9f75",
+                "prefabNodeID": "c363088b-f97d-4d9b-b6a1-0cc9affbf423",
+                "tag": ""
+            },
+            "parentIndex": 2
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "7fd3090c-5407-408a-bb4a-d0f31856a173",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 0.25,
+                                    "y": 0.25,
+                                    "z": 0.25
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 2.9000000953674316,
+                                    "z": -1.5
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-UVSphere"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "castShadows": true,
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 1.0,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "materialName": "Default",
+                                "materialNames": [
+                                    "Default"
+                                ],
+                                "pipelineName": "Object3D.Solid.BlendNormal",
+                                "renderPriority": 0,
+                                "targetObjectID": "31813901-d420-4f28-876d-070da9e32858"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "Sphere",
+                "objectID": "95d6d19f-39b4-4ed9-a6b6-95e67fa1f960",
+                "prefabNodeID": "231f0dc5-4c41-41a5-b077-57edb9736085",
+                "tag": ""
+            },
+            "parentIndex": 2
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "95d6d19f-39b4-4ed9-a6b6-95e67fa1f960",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "castShadows": false,
+                                "color": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "decay": 10.0,
+                                "distance": 10.0,
+                                "innerAngle": 0.3499999940395355,
+                                "intensity": 1.0,
+                                "outerAngle": 0.6000000238418579,
+                                "radius": 1.7000000476837158,
+                                "shadowBias": 1.0,
+                                "shadowDistance": 100.0,
+                                "shadowMapResolution": 2048,
+                                "shadowSoftness": 0.0,
+                                "sourceDepth": 1.0,
+                                "sourceHeight": 1.0,
+                                "sourceLength": 1.0,
+                                "sourceRadius": 0.20000000298023224,
+                                "sourceWidth": 1.0,
+                                "type": 4
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Light"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "pipelineName": "",
+                                "targetObjectID": "31813901-d420-4f28-876d-070da9e32858"
+                            },
+                            "isActive": true,
+                            "priority": 950,
+                            "tag": ""
+                        },
+                        "type": "LightRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "Light Object",
+                "objectID": "ea524926-4285-4dd0-9360-43633a21f918",
+                "prefabNodeID": "280a9065-a6f7-4f39-9196-67e82a4cd2ae",
+                "tag": ""
+            },
+            "parentIndex": 5
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "f427e9e9-b968-4434-a607-49b3ff9b28b7",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 0.25,
+                                    "y": 8.0,
+                                    "z": 0.25
+                                },
+                                "translate": {
+                                    "x": -4.38690185546875e-05,
+                                    "y": -0.5,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Cylinder-Closed"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "castShadows": true,
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 1.0,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "materialName": "Default",
+                                "materialNames": [
+                                    "Default"
+                                ],
+                                "pipelineName": "Object3D.Solid.BlendNormal",
+                                "renderPriority": 0,
+                                "targetObjectID": "31813901-d420-4f28-876d-070da9e32858"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "Cylinder",
+                "objectID": "54fba41b-032c-4fbf-ae42-499cfc419d47",
+                "prefabNodeID": "5f16b260-f108-4455-bfa1-76a107c7c308",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "f427e9e9-b968-4434-a607-49b3ff9b28b7",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 7.0,
+                                    "y": 2.5,
+                                    "z": 0.2499995082616806
+                                },
+                                "translate": {
+                                    "x": -8.726119995117188e-05,
+                                    "y": 1.5000898838043213,
+                                    "z": -7.486343383789063e-05
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Box"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "castShadows": true,
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 1.0,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "materialName": "Default",
+                                "materialNames": [
+                                    "Default"
+                                ],
+                                "pipelineName": "Object3D.Solid.BlendNormal",
+                                "renderPriority": 0,
+                                "targetObjectID": "31813901-d420-4f28-876d-070da9e32858"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "Background",
+                "objectID": "6f6700ba-c2b7-4647-a44c-d5f15f49fd7e",
+                "prefabNodeID": "8aa7f90a-e8c8-4c7d-aac3-c8d081e26a6d",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "f427e9e9-b968-4434-a607-49b3ff9b28b7",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 7.0,
+                                    "y": 0.25,
+                                    "z": 0.5
+                                },
+                                "translate": {
+                                    "x": -8.726119995117188e-05,
+                                    "y": 0.2500898838043213,
+                                    "z": -7.486343383789063e-05
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Box"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "anchorPoint": {
+                                    "x": 0.5,
+                                    "y": 0.0,
+                                    "z": 0.5
+                                },
+                                "applyX": true,
+                                "applyY": true,
+                                "applyZ": true,
+                                "boundsSource": 0,
+                                "followRotation": false,
+                                "offset": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "offsetInTargetSpace": false,
+                                "targetObjectID": "6f6700ba-c2b7-4647-a44c-d5f15f49fd7e"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "ObjectAnchor"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "castShadows": true,
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 1.0,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "materialName": "Default",
+                                "materialNames": [
+                                    "Default"
+                                ],
+                                "pipelineName": "Object3D.Solid.BlendNormal",
+                                "renderPriority": 0,
+                                "targetObjectID": "31813901-d420-4f28-876d-070da9e32858"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "FrameUnder",
+                "objectID": "3c008b8a-aed0-4a05-afbe-37ce4a648705",
+                "prefabNodeID": "86714f62-3a9d-4478-9d17-1890224cd995",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "f427e9e9-b968-4434-a607-49b3ff9b28b7",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 7.0,
+                                    "y": 0.25,
+                                    "z": 0.5
+                                },
+                                "translate": {
+                                    "x": -8.726119995117188e-05,
+                                    "y": 2.750089645385742,
+                                    "z": -7.486343383789063e-05
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Box"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "anchorPoint": {
+                                    "x": 0.5,
+                                    "y": 1.0,
+                                    "z": 0.5
+                                },
+                                "applyX": true,
+                                "applyY": true,
+                                "applyZ": true,
+                                "boundsSource": 0,
+                                "followRotation": false,
+                                "offset": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "offsetInTargetSpace": false,
+                                "targetObjectID": "6f6700ba-c2b7-4647-a44c-d5f15f49fd7e"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "ObjectAnchor"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "castShadows": true,
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 1.0,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "materialName": "Default",
+                                "materialNames": [
+                                    "Default"
+                                ],
+                                "pipelineName": "Object3D.Solid.BlendNormal",
+                                "renderPriority": 0,
+                                "targetObjectID": "31813901-d420-4f28-876d-070da9e32858"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "FrameTop",
+                "objectID": "0fb287e7-9fcb-423f-b4e3-b7ccd5d47b74",
+                "prefabNodeID": "9e83e739-979d-448e-97e5-98e7ed4c9e61",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "f427e9e9-b968-4434-a607-49b3ff9b28b7",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 0.25,
+                                    "y": 2.5,
+                                    "z": 0.5
+                                },
+                                "translate": {
+                                    "x": -3.500087261199951,
+                                    "y": 1.5000898838043213,
+                                    "z": -7.486343383789063e-05
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Box"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "anchorPoint": {
+                                    "x": 0.0,
+                                    "y": 0.5,
+                                    "z": 0.5
+                                },
+                                "applyX": true,
+                                "applyY": true,
+                                "applyZ": true,
+                                "boundsSource": 0,
+                                "followRotation": false,
+                                "offset": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "offsetInTargetSpace": false,
+                                "targetObjectID": "6f6700ba-c2b7-4647-a44c-d5f15f49fd7e"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "ObjectAnchor"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "castShadows": true,
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 1.0,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "materialName": "Default",
+                                "materialNames": [
+                                    "Default"
+                                ],
+                                "pipelineName": "Object3D.Solid.BlendNormal",
+                                "renderPriority": 0,
+                                "targetObjectID": "31813901-d420-4f28-876d-070da9e32858"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "FrameRight",
+                "objectID": "a886f810-278d-445b-8b87-99eb9ca5c977",
+                "prefabNodeID": "c04ecac1-6094-4165-8e24-74ffc2647c5a",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "f427e9e9-b968-4434-a607-49b3ff9b28b7",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 0.25,
+                                    "y": 2.5,
+                                    "z": 0.5
+                                },
+                                "translate": {
+                                    "x": 3.499912738800049,
+                                    "y": 1.5000898838043213,
+                                    "z": -7.486343383789063e-05
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "PrimitiveMesh-Box"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "anchorPoint": {
+                                    "x": 1.0,
+                                    "y": 0.5,
+                                    "z": 0.5
+                                },
+                                "applyX": true,
+                                "applyY": true,
+                                "applyZ": true,
+                                "boundsSource": 0,
+                                "followRotation": false,
+                                "offset": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "offsetInTargetSpace": false,
+                                "targetObjectID": "6f6700ba-c2b7-4647-a44c-d5f15f49fd7e"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "ObjectAnchor"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "allowInstancing": true,
+                                "castShadows": true,
+                                "instanceColor": {
+                                    "w": 1.0,
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 1.0,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "materialName": "Default",
+                                "materialNames": [
+                                    "Default"
+                                ],
+                                "pipelineName": "Object3D.Solid.BlendNormal",
+                                "renderPriority": 0,
+                                "targetObjectID": "31813901-d420-4f28-876d-070da9e32858"
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "FrameLeft",
+                "objectID": "d7f73ed6-5fec-469b-b2f4-12ed4fd67900",
+                "prefabNodeID": "60b77496-4840-4c04-9bff-f087e7c217d6",
+                "tag": ""
+            },
+            "parentIndex": 0
+        }
+    ],
+    "prefab": true,
+    "prefabID": "10d8312e-1d64-4c06-9869-321cef519ae2"
+}

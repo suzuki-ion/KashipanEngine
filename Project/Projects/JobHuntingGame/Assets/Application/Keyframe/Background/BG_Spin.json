@@ -1,0 +1,14 @@
+{
+    "keyframes": [
+        {
+            "ease": "Linear",
+            "time": 0.0,
+            "value": 0.0
+        },
+        {
+            "ease": "Linear",
+            "time": 1.0,
+            "value": 6.2831854820251465
+        }
+    ]
+}

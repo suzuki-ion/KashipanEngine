@@ -1,5 +1,5 @@
 // ゴール用スクリプト。
-// プレイヤーが触れた際、指定したシーンへ切り替える（現状は単純にシーン遷移するだけ）。
+// プレイヤーが触れた際、タイトルシーンへ戻る。
 //
 // 前提（エディター側で設定が必要）:
 //   - このスクリプトを持つオブジェクトにコライダー（Box/Sphere等）を追加しておくこと
@@ -8,13 +8,24 @@
 
 class Goal : ScriptComponentBehavior {
     [SerializeField, Tooltip("接触時に遷移するシーン名")]
-    string nextSceneName = "";
+    string nextSceneName = "TitleScene";
+
+    bool sceneChangeRequested = false;
 
     Tag playerColliderTag = Tag("PlayerSphere");
 
     void OnCollisionEnter(const HitInfo &in hit) {
+        if (sceneChangeRequested) return;
         if (hit.otherObject is null) return;
-        if (hit.otherCollider is null || hit.otherCollider.GetTag() != playerColliderTag) return;
+        if (hit.otherCollider is null) return;
+        if (hit.otherCollider.GetTag() != playerColliderTag) {
+            // Box形態ではGroundBoxタグになるため、Playerスクリプトでも判定する。
+            ScriptComponent@ playerScript;
+            if (!hit.otherObject.GetComponent(@playerScript)) return;
+            string scriptPath = playerScript.GetScriptPath();
+            if (scriptPath != "Assets\\Application\\Scripts\\Player\\Player.as"
+                && scriptPath != "Assets/Application/Scripts/Player/Player.as") return;
+        }
 
         GoToNextScene();
     }
@@ -26,6 +37,6 @@ class Goal : ScriptComponentBehavior {
         if (scene is null) return;
 
         scene.SetNextSceneName(nextSceneName);
-        scene.ChangeToNextScene();
+        sceneChangeRequested = scene.ChangeToNextScene();
     }
 }

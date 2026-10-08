@@ -1,0 +1,93 @@
+{
+    "color": {
+        "w": 1.0,
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "enableLighting": true,
+    "enableShadowMapProjection": true,
+    "name": "NormalMapMaterial",
+    "parameters": {
+        "disableShadowDither": {
+            "type": "Bool",
+            "value": false
+        },
+        "ditherDepthBucketSize": {
+            "type": "Float",
+            "value": 0.0
+        },
+        "enableMultiPassDither": {
+            "type": "Bool",
+            "value": false
+        },
+        "enableTemporalDither": {
+            "type": "Bool",
+            "value": false
+        },
+        "multiPassDitherCount": {
+            "type": "Int32",
+            "value": 0
+        },
+        "normalMapTextureIndex": {
+            "type": "TextureRef",
+            "value": {
+                "assetPath": "Application/Image/Normal Map/d476a54b-c5d9-4d58-89f6-be43eaa5afc6-______________________.jpeg"
+            }
+        },
+        "samplerIndex": {
+            "type": "Int32",
+            "value": 0
+        },
+        "textureIndex": {
+            "type": "Int32",
+            "value": 0
+        },
+        "useAlphaBlend": {
+            "type": "Bool",
+            "value": false
+        },
+        "useBayer64x64": {
+            "type": "Bool",
+            "value": false
+        },
+        "useBayerDither": {
+            "type": "Bool",
+            "value": false
+        },
+        "useNormalMap": {
+            "type": "Float",
+            "value": 0.0
+        }
+    },
+    "rimColor": {
+        "w": 1.0,
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "rimIntensity": 0.0,
+    "rimPower": 2.0,
+    "samplerHandle": 0,
+    "shininess": 32.0,
+    "specularColor": {
+        "w": 1.0,
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "textureFile": "",
+    "uvPivot": {
+        "x": 0.5,
+        "y": 0.5
+    },
+    "uvRotation": 0.0,
+    "uvScale": {
+        "x": 1.0,
+        "y": 1.0
+    },
+    "uvTranslate": {
+        "x": 0.0,
+        "y": 0.0
+    }
+}

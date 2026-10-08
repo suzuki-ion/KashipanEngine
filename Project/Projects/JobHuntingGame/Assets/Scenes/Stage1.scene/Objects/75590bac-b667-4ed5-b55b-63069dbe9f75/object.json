@@ -85,6 +85,7 @@
         "isActive": true,
         "name": "Box",
         "objectID": "75590bac-b667-4ed5-b55b-63069dbe9f75",
+        "prefabNodeID": "c363088b-f97d-4d9b-b6a1-0cc9affbf423",
         "tag": ""
     },
     "siblingIndex": 1000

@@ -12,14 +12,14 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 6.0,
+                            "x": 7.0,
                             "y": 0.25,
                             "z": 0.5
                         },
                         "translate": {
-                            "x": 0.0,
-                            "y": 2.5,
-                            "z": 0.0
+                            "x": -8.726119995117188e-05,
+                            "y": 2.750089645385742,
+                            "z": -7.486343383789063e-05
                         }
                     },
                     "isActive": true,
@@ -38,6 +38,33 @@
                     "tag": ""
                 },
                 "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "anchorPoint": {
+                            "x": 0.5,
+                            "y": 1.0,
+                            "z": 0.5
+                        },
+                        "applyX": true,
+                        "applyY": true,
+                        "applyZ": true,
+                        "boundsSource": 0,
+                        "followRotation": false,
+                        "offset": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "offsetInTargetSpace": false,
+                        "targetObjectID": "6f6700ba-c2b7-4647-a44c-d5f15f49fd7e"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ObjectAnchor"
             },
             {
                 "data": {
@@ -85,6 +112,7 @@
         "isActive": true,
         "name": "FrameTop",
         "objectID": "0fb287e7-9fcb-423f-b4e3-b7ccd5d47b74",
+        "prefabNodeID": "9e83e739-979d-448e-97e5-98e7ed4c9e61",
         "tag": ""
     },
     "siblingIndex": 5000

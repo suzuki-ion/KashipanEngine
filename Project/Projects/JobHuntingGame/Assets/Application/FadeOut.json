@@ -1,0 +1,14 @@
+{
+    "keyframes": [
+        {
+            "ease": "Linear",
+            "time": 0.0,
+            "value": 0.0
+        },
+        {
+            "ease": "EaseInOutCubic",
+            "time": 1.0,
+            "value": 1.0
+        }
+    ]
+}

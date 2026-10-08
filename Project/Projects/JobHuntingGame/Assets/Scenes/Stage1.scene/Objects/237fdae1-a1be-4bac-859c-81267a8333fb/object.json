@@ -42,7 +42,7 @@
                         "distance": 10.0,
                         "innerAngle": 0.3490658700466156,
                         "intensity": 1.0,
-                        "outerAngle": 1.1170107126235962,
+                        "outerAngle": 1.3089970350265503,
                         "radius": 10.0,
                         "shadowBias": 1.0,
                         "shadowDistance": 100.0,
@@ -79,6 +79,7 @@
         "isActive": true,
         "name": "Light Object",
         "objectID": "237fdae1-a1be-4bac-859c-81267a8333fb",
+        "prefabNodeID": "fa713bf7-0f8f-4c4f-ad18-8e87db355b99",
         "tag": ""
     },
     "siblingIndex": 0

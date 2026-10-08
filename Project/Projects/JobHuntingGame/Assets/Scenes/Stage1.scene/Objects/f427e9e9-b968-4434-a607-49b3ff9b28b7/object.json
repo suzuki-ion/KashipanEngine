@@ -16,9 +16,9 @@
                             "z": 1.0
                         },
                         "translate": {
-                            "x": 3.0,
+                            "x": 2.0,
                             "y": 2.0,
-                            "z": 7.0
+                            "z": 3.0
                         }
                     },
                     "isActive": true,
@@ -26,6 +26,17 @@
                     "tag": ""
                 },
                 "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "10d8312e-1d64-4c06-9869-321cef519ae2"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
             }
         ],
         "editorOnly": false,
@@ -33,6 +44,7 @@
         "isActive": true,
         "name": "Signboard",
         "objectID": "f427e9e9-b968-4434-a607-49b3ff9b28b7",
+        "prefabNodeID": "50ad4401-2930-48cd-9537-62ca89d6bbef",
         "tag": ""
     },
     "siblingIndex": 7000

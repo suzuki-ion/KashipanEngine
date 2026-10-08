@@ -472,6 +472,11 @@
                     {
                         "data": {
                             "customData": {
+                                "boundsClampMode": 0,
+                                "boundsTransitionDuration": 0.0,
+                                "boundsTransitionEaseType": "Linear",
+                                "boundsZoneObjectID": "",
+                                "enableBoundsClamp": false,
                                 "followTargets": [
                                     {
                                         "followPositionX": true,
@@ -508,7 +513,8 @@
                                     "y": 0.0,
                                     "z": 0.0
                                 },
-                                "targetFovY": 1.0
+                                "targetFovY": 1.0,
+                                "viewAreaDepth": 10.0
                             },
                             "isActive": true,
                             "priority": 1,
@@ -752,21 +758,7 @@
                     {
                         "data": {
                             "customData": {
-                                "groundedThreshold": 0.5,
-                                "ignoredTags": [],
-                                "selectedColliderOccurrenceIndex": 0,
-                                "selectedColliderTypeName": "SphereCollider",
-                                "skinWidth": 0.009999999776482582
-                            },
-                            "isActive": true,
-                            "priority": 1,
-                            "tag": ""
-                        },
-                        "type": "CharacterController3D"
-                    },
-                    {
-                        "data": {
-                            "customData": {
+                                "category": "",
                                 "effects": {
                                     "echo": {
                                         "delayMs": 500.0,
@@ -816,6 +808,7 @@
                                 "maxDistance": 25.0,
                                 "minDistance": 1.0,
                                 "pitch": 0.0,
+                                "playOnAwake": true,
                                 "soundName": "Application/Sound/seSoftLanding.mp3",
                                 "volume": 1.0
                             },
@@ -1084,6 +1077,20 @@
                                     "z": 1.0
                                 },
                                 "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 1.0,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
                                 "materialName": "EntityMaterial",
                                 "materialNames": [
                                     "EntityMaterial"
@@ -1313,6 +1320,7 @@
                                 "height": 1080,
                                 "isShowViewer": true,
                                 "name": "ScreenBuffer_0",
+                                "renderOrderPriority": 0,
                                 "saveDirectory": "Screenshots",
                                 "saveFileNamePrefix": "Screenshot",
                                 "saveFormat": "png",
@@ -1478,6 +1486,7 @@
                                 ],
                                 "contrast": 1.0,
                                 "excludedScreenBuffers": [],
+                                "posterizeLevels": 0,
                                 "saturation": 1.0,
                                 "temperature": 0.0
                             },
@@ -1531,7 +1540,68 @@
                     {
                         "data": {
                             "customData": {
+                                "height": 720,
+                                "isShowViewer": false,
+                                "name": "ScreenBuffer_6",
+                                "renderOrderPriority": 0,
+                                "saveDirectory": "Screenshots",
+                                "saveFileNamePrefix": "Screenshot",
+                                "saveFormat": "png",
+                                "viewerId": 3359154163919453447,
+                                "width": 1280
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "ScreenBufferObject"
+                    }
+                ],
+                "editorOnly": false,
+                "hiddenFromEditorTarget": false,
+                "isActive": true,
+                "name": "MainScreen2D",
+                "objectID": "ff7097c0-19a8-4822-8f31-d5a2b901cc83",
+                "prefabNodeID": "87654d40-0049-40cb-868a-bbd0543cd1da",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "856c3f57-73b5-4776-bf77-6239c02967f6",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
                                 "height": 1080,
+                                "iconPath": "",
                                 "interceptedMessages": [],
                                 "syncWithTransform": false,
                                 "title": "Normal Window",
@@ -1589,9 +1659,10 @@
                             "customData": {
                                 "autoSyncSize": true,
                                 "farClip": 1000.0,
-                                "height": 720.0,
+                                "height": 1080.0,
                                 "nearClip": 0.0,
-                                "width": 1280.0
+                                "pixelSnapping": false,
+                                "width": 1920.0
                             },
                             "isActive": true,
                             "priority": 1,
@@ -1624,7 +1695,7 @@
                 "prefabNodeID": "55794205-edd7-4908-a610-322471f8ed3e",
                 "tag": ""
             },
-            "parentIndex": 10
+            "parentIndex": 11
         },
         {
             "object": {
@@ -1640,13 +1711,13 @@
                                     "z": 0.0
                                 },
                                 "scale": {
-                                    "x": 1.0,
-                                    "y": 1.0,
+                                    "x": 1920.0,
+                                    "y": 1080.0,
                                     "z": 1.0
                                 },
                                 "translate": {
-                                    "x": 0.0,
-                                    "y": 0.0,
+                                    "x": 960.0,
+                                    "y": 540.0,
                                     "z": 0.0
                                 }
                             },
@@ -1714,12 +1785,28 @@
                                     "z": 1.0
                                 },
                                 "instanceColorBlendMode": 1,
+                                "instanceUvCombineMode": 0,
+                                "instanceUvPivot": {
+                                    "x": 0.5,
+                                    "y": 0.5
+                                },
+                                "instanceUvRotation": 0.0,
+                                "instanceUvScale": {
+                                    "x": 1.0,
+                                    "y": 1.0
+                                },
+                                "instanceUvTranslate": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
                                 "materialName": "Default",
                                 "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
                                 "pivot": {
                                     "x": 0.5,
                                     "y": 0.5
                                 },
+                                "pixelSnapOutsetPixels": 0.0,
+                                "pixelSnapping": false,
                                 "renderPriority": 0,
                                 "targetObjectID": "cd5b0e8d-54c2-4321-9aaf-e679269c2c1d"
                             },
@@ -1738,110 +1825,7 @@
                 "prefabNodeID": "7284c06a-c0f4-4a13-8961-cc06a17004a5",
                 "tag": ""
             },
-            "parentIndex": 10
-        },
-        {
-            "object": {
-                "components": [
-                    {
-                        "data": {
-                            "customData": {
-                                "parent": "cd5b0e8d-54c2-4321-9aaf-e679269c2c1d",
-                                "rotate": {
-                                    "w": 1.0,
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "scale": {
-                                    "x": 1.0,
-                                    "y": 1.0,
-                                    "z": 1.0
-                                },
-                                "translate": {
-                                    "x": 128.0,
-                                    "y": 1200.0,
-                                    "z": 0.0
-                                }
-                            },
-                            "isActive": true,
-                            "priority": 1,
-                            "tag": ""
-                        },
-                        "type": "Transform"
-                    },
-                    {
-                        "data": {
-                            "customData": {
-                                "fields": {},
-                                "scriptPath": ""
-                            },
-                            "isActive": true,
-                            "priority": 1,
-                            "tag": ""
-                        },
-                        "type": "ScriptComponent"
-                    },
-                    {
-                        "data": {
-                            "customData": {
-                                "allowInstancing": true,
-                                "color": {
-                                    "w": 1.0,
-                                    "x": 1.0,
-                                    "y": 1.0,
-                                    "z": 1.0
-                                },
-                                "defaultCharacterAnchor": {
-                                    "x": 0.5,
-                                    "y": 0.5
-                                },
-                                "defaultCharacterPivot": {
-                                    "x": 0.5,
-                                    "y": 0.5
-                                },
-                                "fontName": "NekoSpoon",
-                                "fontSize": 64.0,
-                                "horizontalAlign": 0,
-                                "instanceColor": {
-                                    "w": 1.0,
-                                    "x": 1.0,
-                                    "y": 1.0,
-                                    "z": 1.0
-                                },
-                                "instanceColorBlendMode": 1,
-                                "localizationKey": "",
-                                "materialName": "Default",
-                                "outlineColor": {
-                                    "w": 1.0,
-                                    "x": 0.0,
-                                    "y": 0.0,
-                                    "z": 0.0
-                                },
-                                "outlineWidth": 0.0,
-                                "pipelineName": "Text2D.BlendNormal",
-                                "renderPriority": 0,
-                                "targetObjectID": "cd5b0e8d-54c2-4321-9aaf-e679269c2c1d",
-                                "text": "チェックポイント",
-                                "useLocalizationKey": false,
-                                "verticalAlign": 0
-                            },
-                            "isActive": true,
-                            "priority": 900,
-                            "tag": ""
-                        },
-                        "type": "TextRenderer"
-                    }
-                ],
-                "editorOnly": false,
-                "hiddenFromEditorTarget": false,
-                "isActive": true,
-                "name": "Text Object",
-                "objectID": "89d44bbc-702e-4e9a-a5e9-5cd27ab962eb",
-                "prefabNodeID": "d8ce0f3b-5c01-4a54-8180-e1d479d56620",
-                "tag": ""
-            },
-            "parentIndex": 10
+            "parentIndex": 11
         },
         {
             "object": {

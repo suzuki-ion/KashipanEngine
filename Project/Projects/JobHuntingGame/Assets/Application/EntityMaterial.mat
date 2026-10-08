@@ -7,10 +7,59 @@
     },
     "enableLighting": true,
     "enableShadowMapProjection": true,
-    "environmentCoefficient": 1.0,
-    "environmentFile": "",
     "name": "EntityMaterial",
-    "normalMapFile": "",
+    "parameters": {
+        "disableShadowDither": {
+            "type": "Bool",
+            "value": false
+        },
+        "ditherDepthBucketSize": {
+            "type": "Float",
+            "value": 0.0
+        },
+        "enableMultiPassDither": {
+            "type": "Bool",
+            "value": false
+        },
+        "enableTemporalDither": {
+            "type": "Bool",
+            "value": false
+        },
+        "multiPassDitherCount": {
+            "type": "Int32",
+            "value": 0
+        },
+        "normalMapTextureIndex": {
+            "type": "TextureRef",
+            "value": {
+                "assetPath": "Application/Image/Normal Map/d476a54b-c5d9-4d58-89f6-be43eaa5afc6-______________________.jpeg"
+            }
+        },
+        "samplerIndex": {
+            "type": "Int32",
+            "value": 0
+        },
+        "textureIndex": {
+            "type": "Int32",
+            "value": 0
+        },
+        "useAlphaBlend": {
+            "type": "Bool",
+            "value": false
+        },
+        "useBayer64x64": {
+            "type": "Bool",
+            "value": false
+        },
+        "useBayerDither": {
+            "type": "Bool",
+            "value": false
+        },
+        "useNormalMap": {
+            "type": "Float",
+            "value": 0.0
+        }
+    },
     "rimColor": {
         "w": 1.0,
         "x": 1.0,
@@ -28,22 +77,17 @@
         "z": 1.0
     },
     "textureFile": "",
-    "uvTransform": {
-        "m00": 1.0,
-        "m01": 0.0,
-        "m02": 0.0,
-        "m03": 0.0,
-        "m10": 0.0,
-        "m11": 1.0,
-        "m12": 0.0,
-        "m13": 0.0,
-        "m20": 0.0,
-        "m21": 0.0,
-        "m22": 1.0,
-        "m23": 0.0,
-        "m30": 0.0,
-        "m31": 0.0,
-        "m32": 0.0,
-        "m33": 1.0
+    "uvPivot": {
+        "x": 0.5,
+        "y": 0.5
+    },
+    "uvRotation": 0.0,
+    "uvScale": {
+        "x": 1.0,
+        "y": 1.0
+    },
+    "uvTranslate": {
+        "x": 0.0,
+        "y": 0.0
     }
 }

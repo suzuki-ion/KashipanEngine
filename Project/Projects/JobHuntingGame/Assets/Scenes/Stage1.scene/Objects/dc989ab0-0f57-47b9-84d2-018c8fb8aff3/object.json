@@ -33,10 +33,10 @@
                     "customData": {
                         "autoSyncSize": true,
                         "farClip": 1000.0,
-                        "height": 1080.0,
+                        "height": 1494.0,
                         "nearClip": 0.0,
                         "pixelSnapping": false,
-                        "width": 1920.0
+                        "width": 2560.0
                     },
                     "isActive": true,
                     "priority": 1,

@@ -13,13 +13,13 @@
                         },
                         "scale": {
                             "x": 0.25,
-                            "y": 2.0,
+                            "y": 2.5,
                             "z": 0.5
                         },
                         "translate": {
-                            "x": 3.0,
-                            "y": 1.5,
-                            "z": 0.0
+                            "x": 3.499912738800049,
+                            "y": 1.5000898838043213,
+                            "z": -7.486343383789063e-05
                         }
                     },
                     "isActive": true,
@@ -38,6 +38,33 @@
                     "tag": ""
                 },
                 "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "anchorPoint": {
+                            "x": 1.0,
+                            "y": 0.5,
+                            "z": 0.5
+                        },
+                        "applyX": true,
+                        "applyY": true,
+                        "applyZ": true,
+                        "boundsSource": 0,
+                        "followRotation": false,
+                        "offset": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "offsetInTargetSpace": false,
+                        "targetObjectID": "6f6700ba-c2b7-4647-a44c-d5f15f49fd7e"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ObjectAnchor"
             },
             {
                 "data": {
@@ -85,6 +112,7 @@
         "isActive": true,
         "name": "FrameLeft",
         "objectID": "d7f73ed6-5fec-469b-b2f4-12ed4fd67900",
+        "prefabNodeID": "60b77496-4840-4c04-9bff-f087e7c217d6",
         "tag": ""
     },
     "siblingIndex": 7000

@@ -33,6 +33,41 @@
                     {
                         "data": {
                             "customData": {
+                                "fields": {
+                                    "nextSceneName": "TitleScene"
+                                },
+                                "scriptPath": "Assets\\Application\\Scripts\\Goal.as"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "ScriptComponent"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "center": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "continuousDetection": false,
+                                "isTrigger": true,
+                                "radius": 1.0,
+                                "syncPosition": [true, true, true],
+                                "syncRotation": true,
+                                "syncScale": [true, true, true]
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "Goal"
+                        },
+                        "type": "SphereCollider"
+                    },
+                    {
+                        "data": {
+                            "customData": {
                                 "acceleration": {
                                     "max": {
                                         "x": 0.0,

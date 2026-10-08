@@ -85,6 +85,7 @@
         "isActive": true,
         "name": "Sphere",
         "objectID": "95d6d19f-39b4-4ed9-a6b6-95e67fa1f960",
+        "prefabNodeID": "231f0dc5-4c41-41a5-b077-57edb9736085",
         "tag": ""
     },
     "siblingIndex": 2000

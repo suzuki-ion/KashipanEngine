@@ -1,0 +1,297 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 2.453249603462382e-09,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 27.0,
+                            "y": 11.000068664550781,
+                            "z": -2.453255554257794e-08
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-UVSphere"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "defeatParticleObject": "6c71c1e1-8e7d-470c-966f-4b448691e231",
+                            "edgeSensorMissTolerance": 0.20000000298023224,
+                            "gravity": 0.20000000298023224,
+                            "groundStickSpeed": 2.0,
+                            "groundedThreshold": 0.4000000059604645,
+                            "maxFallSpeed": 16.0,
+                            "moveDirection": 1.0,
+                            "moveSpeed": 2.0,
+                            "objectsToDisableOnDefeat": [
+                                "35b49fae-56b7-4df6-ade3-f60ffb9ba28d"
+                            ],
+                            "playerCollisionThreshold": 0.4000000059604645,
+                            "requestDefeat": false
+                        },
+                        "scriptPath": "Assets\\Application\\Scripts\\Enemy.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "center": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "continuousDetection": false,
+                        "isTrigger": false,
+                        "radius": 0.5,
+                        "syncPosition": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncRotation": true,
+                        "syncScale": [
+                            true,
+                            true,
+                            true
+                        ]
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "EnemySphere"
+                },
+                "type": "SphereCollider"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "center": {
+                            "x": 0.5,
+                            "y": -0.5,
+                            "z": 0.0
+                        },
+                        "continuousDetection": false,
+                        "isTrigger": true,
+                        "size": {
+                            "x": 0.4000000059604645,
+                            "y": 0.800000011920929,
+                            "z": 0.800000011920929
+                        },
+                        "syncPosition": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncRotation": true,
+                        "syncScale": [
+                            true,
+                            true,
+                            true
+                        ]
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "EnemyEdgeSensorRight"
+                },
+                "type": "BoxCollider"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "center": {
+                            "x": -0.5,
+                            "y": -0.5,
+                            "z": 0.0
+                        },
+                        "continuousDetection": false,
+                        "isTrigger": true,
+                        "size": {
+                            "x": 0.4000000059604645,
+                            "y": 0.800000011920929,
+                            "z": 0.800000011920929
+                        },
+                        "syncPosition": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncRotation": true,
+                        "syncScale": [
+                            true,
+                            true,
+                            true
+                        ]
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "EnemyEdgeSensorLeft"
+                },
+                "type": "BoxCollider"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "category": "",
+                        "effects": {
+                            "echo": {
+                                "delayMs": 500.0,
+                                "enabled": false,
+                                "feedback": 0.5,
+                                "wetDryMix": 0.5
+                            },
+                            "eq": {
+                                "bandwidth": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ],
+                                "enabled": false,
+                                "frequencyCenter": [
+                                    100.0,
+                                    800.0,
+                                    2000.0,
+                                    10000.0
+                                ],
+                                "gain": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ]
+                            },
+                            "filter": {
+                                "enabled": false,
+                                "frequency": 1.0,
+                                "kind": 0,
+                                "q": 1.0
+                            },
+                            "limiter": {
+                                "enabled": false,
+                                "loudness": 1000,
+                                "release": 6
+                            },
+                            "reverb": {
+                                "enabled": true,
+                                "mix": 1.0
+                            }
+                        },
+                        "enableSpatialAudio": false,
+                        "loop": false,
+                        "maxDistance": 25.0,
+                        "minDistance": 1.0,
+                        "pitch": 0.0,
+                        "playOnAwake": true,
+                        "soundName": "Application/Sound/seSoftLanding.mp3",
+                        "volume": 1.0
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "PlayerLanding"
+                },
+                "type": "AudioSource"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "used": true
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "AudioListener"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "8506a2e9-4b65-451a-a0ed-f3b02438b77b"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "castShadows": true,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "instanceUvCombineMode": 0,
+                        "instanceUvPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceUvRotation": 0.0,
+                        "instanceUvScale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "instanceUvTranslate": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "materialName": "EnemyMaterial",
+                        "materialNames": [
+                            "EnemyMaterial"
+                        ],
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "renderPriority": 0,
+                        "targetObjectID": "31813901-d420-4f28-876d-070da9e32858"
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "MeshRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Enemy",
+        "objectID": "6c71c1e1-8e7d-470c-966f-4b448691e231",
+        "prefabNodeID": "a08f9e4f-89f4-4fc6-b988-8abbb9006e56",
+        "tag": ""
+    },
+    "siblingIndex": 10000
+}

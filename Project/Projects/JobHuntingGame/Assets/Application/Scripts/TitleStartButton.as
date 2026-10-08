@@ -10,9 +10,12 @@ class TitleStartButton : ScriptComponentBehavior {
     Object@ buttonObject;
 
     [SerializeField, Tooltip("クリック時に遷移するシーン名")]
-    string nextSceneName = "";
+    string nextSceneName = "Stage1";
+
+    bool sceneChangeRequested = false;
 
     void Update() {
+        if (sceneChangeRequested) return;
         if (buttonObject is null) return;
 
         UIButton@ button;
@@ -29,6 +32,6 @@ class TitleStartButton : ScriptComponentBehavior {
         if (scene is null) return;
 
         scene.SetNextSceneName(nextSceneName);
-        scene.ChangeToNextScene();
+        sceneChangeRequested = scene.ChangeToNextScene();
     }
 }

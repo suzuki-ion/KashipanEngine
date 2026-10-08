@@ -32,7 +32,7 @@
                     "customData": {
                         "fields": {
                             "buttonObject": "7ee8e3b7-4907-4dda-9310-69ce7229b657",
-                            "nextSceneName": "GameScene"
+                            "nextSceneName": "Stage1"
                         },
                         "scriptPath": "Assets\\Application\\Scripts\\TitleStartButton.as"
                     },

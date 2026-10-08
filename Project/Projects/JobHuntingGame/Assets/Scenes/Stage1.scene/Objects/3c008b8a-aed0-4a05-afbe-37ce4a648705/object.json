@@ -12,14 +12,14 @@
                             "z": 0.0
                         },
                         "scale": {
-                            "x": 6.0,
+                            "x": 7.0,
                             "y": 0.25,
                             "z": 0.5
                         },
                         "translate": {
-                            "x": 0.0,
-                            "y": 0.5,
-                            "z": 0.0
+                            "x": -8.726119995117188e-05,
+                            "y": 0.2500898838043213,
+                            "z": -7.486343383789063e-05
                         }
                     },
                     "isActive": true,
@@ -38,6 +38,33 @@
                     "tag": ""
                 },
                 "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "anchorPoint": {
+                            "x": 0.5,
+                            "y": 0.0,
+                            "z": 0.5
+                        },
+                        "applyX": true,
+                        "applyY": true,
+                        "applyZ": true,
+                        "boundsSource": 0,
+                        "followRotation": false,
+                        "offset": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "offsetInTargetSpace": false,
+                        "targetObjectID": "6f6700ba-c2b7-4647-a44c-d5f15f49fd7e"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ObjectAnchor"
             },
             {
                 "data": {
@@ -85,6 +112,7 @@
         "isActive": true,
         "name": "FrameUnder",
         "objectID": "3c008b8a-aed0-4a05-afbe-37ce4a648705",
+        "prefabNodeID": "86714f62-3a9d-4478-9d17-1890224cd995",
         "tag": ""
     },
     "siblingIndex": 4000

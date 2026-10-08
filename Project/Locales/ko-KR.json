@@ -2261,6 +2261,8 @@
 		"engine.editortool.failed.createinstance": "EditorTool: 인스턴스 생성에 실패했습니다. 클래스 이름: ",
 		"engine.editortool.failed.createmodule": "EditorTool: 모듈 생성에 실패했습니다. 스크립트 경로: ",
 		"engine.editortool.interface.notregistered": "EditorTool: EditorTool 인터페이스가 등록되어 있지 않습니다.",
+		"editor.editortools.menu": "에디터 도구",
+		"editor.editortools.reload": "에디터 도구 다시 불러오기",
 		"engine.editortool.loaded": "EditorTool: 불러왔습니다. 클래스 이름: ",
 		"engine.editortool.menuitem.invalidpath": "EditorTool: [MenuItem]의 표시 계층은 \"MenuBar/항목명\" 또는 \"Hierarchy/항목명\" 형식으로 지정하세요. 지정값: ",
 		"engine.editortool.menuitem.invalidroot": "EditorTool: [MenuItem]의 표시 계층 맨 앞은 \"MenuBar/\" 또는 \"Hierarchy/\"만 지원합니다. 지정값: ",

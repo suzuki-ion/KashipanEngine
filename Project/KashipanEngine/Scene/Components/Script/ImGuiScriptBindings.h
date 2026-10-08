@@ -2,6 +2,7 @@
 #ifdef USE_IMGUI
 
 class asIScriptEngine;
+struct ImGuiErrorRecoveryState;
 
 namespace KashipanEngine {
 
@@ -13,6 +14,9 @@ namespace KashipanEngine {
 ///          Begin/End内で呼ばれるため、Update()内でこれらの関数を呼ぶとウィンドウへUIが描画される
 /// @param engine 登録先のスクリプトエンジン（Vector2/Vector3/Vector4、string、arrayの登録後に呼ぶこと）
 void RegisterImGuiScriptBindings(asIScriptEngine *engine);
+
+// Script calls may not pop UI scopes belonging to their caller.
+const ImGuiErrorRecoveryState *SetImGuiScriptBoundary(const ImGuiErrorRecoveryState *state);
 
 } // namespace KashipanEngine
 #endif // USE_IMGUI

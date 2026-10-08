@@ -1267,9 +1267,27 @@ void ScriptComponent::SetContextArg(int argIndex, const void *ref, int typeId, a
     }
 }
 
+namespace {
+// Type ids are local to each engine. Only vetted native representations may cross engines.
+int ExchangeTypeId(asIScriptEngine *target, int sourceId) {
+    auto *active = asGetActiveContext();
+    auto *source = active ? active->GetEngine() : target;
+    if (!target || !source) return -1;
+    if (source == target || sourceId <= asTYPEID_DOUBLE) return sourceId;
+    const char *decl = source->GetTypeDeclaration(sourceId, true);
+    if (!decl) return -1;
+    const std::string_view name(decl);
+    if (name != "string" && name != "Vector2" && name != "Vector3" &&
+        name != "Vector4" && name != "Quaternion" && name != "Object@") return -1;
+    return target->GetTypeIdByDecl(decl);
+}
+}
+
 bool ScriptComponent::GetVariable(const std::string &name, void *ref, int typeId) const {
     if (!ref) return false;
     asIScriptEngine *engine = context_ ? context_->GetEngine() : nullptr;
+    typeId = ExchangeTypeId(engine, typeId);
+    if (typeId < 0) return false;
     for (const auto &field : serializedFields_) {
         if (field.name != name) continue;
         if (field.typeId != typeId) {
@@ -1286,6 +1304,8 @@ bool ScriptComponent::GetVariable(const std::string &name, void *ref, int typeId
 bool ScriptComponent::SetVariable(const std::string &name, void *ref, int typeId) {
     if (!ref) return false;
     asIScriptEngine *engine = context_ ? context_->GetEngine() : nullptr;
+    typeId = ExchangeTypeId(engine, typeId);
+    if (typeId < 0) return false;
     for (auto &field : serializedFields_) {
         if (field.name != name) continue;
         if (field.typeId != typeId) {
@@ -1320,15 +1340,18 @@ bool ScriptComponent::InvokeMethod(const std::string &name, std::initializer_lis
     if (!context_ || !behaviorObject_) return false;
     asIScriptEngine *engine = context_->GetEngine();
 
-    for (const auto &[ref, typeId] : args) {
-        if (!ref || !IsExchangeableFieldType(typeId, engine)) return false;
+    std::vector<std::pair<void *, int>> mappedArgs;
+    for (const auto &[ref, sourceId] : args) {
+        const int mappedId = ExchangeTypeId(engine, sourceId);
+        if (!ref || mappedId < 0 || !IsExchangeableFieldType(mappedId, engine)) return false;
+        mappedArgs.emplace_back(ref, mappedId);
     }
 
     asIScriptFunction *method = FindInvokableMethod(name, static_cast<int>(args.size()));
     if (!method) return false;
 
     asUINT index = 0;
-    for (const auto &[ref, typeId] : args) {
+    for (const auto &[ref, typeId] : mappedArgs) {
         int paramTypeId = 0;
         if (method->GetParam(index, &paramTypeId) < 0) return false;
         if (paramTypeId != typeId) {
@@ -1345,7 +1368,7 @@ bool ScriptComponent::InvokeMethod(const std::string &name, std::initializer_lis
     context_->SetObject(behaviorObject_);
 
     index = 0;
-    for (const auto &[ref, typeId] : args) {
+    for (const auto &[ref, typeId] : mappedArgs) {
         SetContextArg(static_cast<int>(index), ref, typeId, engine);
         ++index;
     }
@@ -1372,7 +1395,8 @@ bool ScriptComponent::InvokeMethod(const std::string &name, std::initializer_lis
 }
 
 bool ScriptComponent::GetLastReturnValue(void *ref, int typeId) const {
-    return ref && lastReturnValue_ && lastReturnValue_->Retrieve(ref, typeId);
+    typeId = ExchangeTypeId(context_ ? context_->GetEngine() : nullptr, typeId);
+    return typeId >= 0 && ref && lastReturnValue_ && lastReturnValue_->Retrieve(ref, typeId);
 }
 
 std::vector<std::string> ScriptComponent::GetFloatVariableNames() const {

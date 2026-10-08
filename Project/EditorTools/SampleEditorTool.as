@@ -45,8 +45,8 @@ class SampleEditorTool : EditorTool {
     string objectName = "CreatedByEditorTool";
     int createCount = 1;
 
-    // 毎フレーム呼ばれる（ウィンドウが開いている間は、そのウィンドウのBegin/Endの中で呼ばれる。
-    // その間に ImGui:: の関数を呼ぶと、このツールのウィンドウへUIが描画される）
+    // ウィンドウが開いて描画可能な間、そのウィンドウのBegin/Endの中で呼ばれる。
+    // ImGui:: の関数を呼ぶと、このツールのウィンドウへUIが描画される。
     void Update() {
         updateCount++;
         if (!IsEditorWindowOpen("Sample Tool Window")) return;

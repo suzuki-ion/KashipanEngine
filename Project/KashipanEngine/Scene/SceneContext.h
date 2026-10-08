@@ -1,6 +1,7 @@
 #pragma once
 
 #include <any>
+#include <memory>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -16,6 +17,9 @@ public:
     SceneContext() = delete;
     SceneContext(Passkey<Scene>, Scene *owner) : owner_(owner) {}
     ~SceneContext() = default;
+
+    // Script handles keep a weak token, never ownership of the native scene.
+    std::weak_ptr<void> GetLifetimeToken() const { return lifetimeToken_; }
 
     SceneContext(const SceneContext &) = delete;
     SceneContext &operator=(const SceneContext &) = delete;
@@ -271,6 +275,7 @@ public:
     InputCommand *GetInputCommand() { return Scene::GetInputCommand(); }
 
 private:
+    std::shared_ptr<void> lifetimeToken_ = std::make_shared<int>(0);
     Scene *owner_ = nullptr;
 };
 

@@ -2,6 +2,11 @@
 #ifdef USE_IMGUI
 
 #include <functional>
+#include <cstring>
+#include <algorithm>
+#include <filesystem>
+#include <memory>
+#include <unordered_set>
 
 #include <angelscript.h>
 #include <add_on/scriptarray/scriptarray.h>
@@ -11,6 +16,8 @@
 #include <add_on/scriptstdstring/scriptstdstring.h>
 
 #include <imgui.h>
+#include <imgui_internal.h>
+#include "Utilities/Conversion/ConvertString.h"
 
 #include "Debug/Logger.h"
 #include "Scene/Components/Script/AngelScriptDebugServer.h"
@@ -29,8 +36,41 @@ namespace {
 constexpr const char *kEditorToolsDirectory = "EditorTools";
 constexpr const char *kEditorToolInterfaceName = "EditorTool";
 
+class ImGuiScriptRecovery final {
+public:
+    ImGuiScriptRecovery() {
+        context_ = ImGui::GetCurrentContext();
+        if (context_ && context_->WithinFrameScope && context_->CurrentWindow) {
+            ImGui::ErrorRecoveryStoreState(&state_);
+            previousBoundary_ = SetImGuiScriptBoundary(&state_);
+        }
+        else context_ = nullptr;
+    }
+    ~ImGuiScriptRecovery() { Recover(); }
+    bool Recover() {
+        if (!context_) return false;
+        ImGuiErrorRecoveryState current;
+        ImGui::ErrorRecoveryStoreState(&current);
+        const bool changed = std::memcmp(&state_, &current, sizeof(state_)) != 0;
+        const bool enableAssert = context_->IO.ConfigErrorRecoveryEnableAssert;
+        context_->IO.ConfigErrorRecoveryEnableAssert = false;
+        ImGui::ErrorRecoveryTryToRecoverState(&state_);
+        context_->IO.ConfigErrorRecoveryEnableAssert = enableAssert;
+        SetImGuiScriptBoundary(previousBoundary_);
+        context_ = nullptr;
+        return changed;
+    }
+private:
+    ImGuiContext *context_ = nullptr;
+    ImGuiErrorRecoveryState state_;
+    const ImGuiErrorRecoveryState *previousBoundary_ = nullptr;
+};
+
+
 void EditorToolMessageCallback(const asSMessageInfo *msg, void *param) {
-    (void)param;
+    if (msg->type == asMSGTYPE_ERROR && param) {
+        *static_cast<std::string *>(param) += std::string(msg->section) + "(" + std::to_string(msg->row) + "): " + msg->message + "\n";
+    }
     LogSeverity severity = LogSeverity::Info;
     if (msg->type == asMSGTYPE_ERROR) {
         severity = LogSeverity::Error;
@@ -164,12 +204,28 @@ std::vector<std::string> SplitMenuPath(const std::string &path) {
 
 } // namespace
 
+EditorToolManager *EditorToolManager::loadingInstance_ = nullptr;
+
 EditorToolManager &EditorToolManager::GetInstance() {
+    if (loadingInstance_) return *loadingInstance_;
     static EditorToolManager instance;
     return instance;
 }
 
-EditorToolManager::~EditorToolManager() {
+EditorToolManager::~EditorToolManager() { ReleaseTools(); }
+
+void EditorToolManager::ReleaseTools() {
+    struct RestoreInstance {
+        EditorToolManager *previous;
+        ~RestoreInstance() { loadingInstance_ = previous; }
+    } restore{loadingInstance_};
+    loadingInstance_ = this;
+    ImGuiScriptRecovery recovery;
+    ScriptExecutionScope scope(nullptr, nullptr);
+    if (context_) {
+        context_->ClearLineCallback();
+        context_->Unprepare();
+    }
     for (auto &tool : tools_) {
         if (tool.object) tool.object->Release();
     }
@@ -187,24 +243,51 @@ EditorToolManager::~EditorToolManager() {
 void EditorToolManager::BeginFrame(SceneContext *sceneContext) {
     currentSceneContext_ = sceneContext;
     EnsureLoaded();
+    if (reloadRequested_) { reloadRequested_ = false; ReloadTools(); }
 }
 
 void EditorToolManager::EnsureLoaded() {
     if (loaded_) return;
     loaded_ = true;
-    LoadTools();
+    ReloadTools();
 }
 
-void EditorToolManager::LoadTools() {
-    const std::string editorToolsDirectory = ProjectPaths::InEngineRoot(kEditorToolsDirectory);
-    if (!IsDirectoryExist(editorToolsDirectory)) {
-        return;
+bool EditorToolManager::ReloadTools() {
+    EditorToolManager candidate;
+    candidate.currentSceneContext_ = currentSceneContext_;
+    struct LoadingScope {
+        EditorToolManager *previous;
+        LoadingScope(EditorToolManager *manager) : previous(loadingInstance_) { loadingInstance_ = manager; }
+        ~LoadingScope() { loadingInstance_ = previous; }
+    };
+    bool success;
+    { LoadingScope scope(&candidate); success = candidate.LoadTools(); }
+    if (!success) {
+        lastError_ = candidate.lastError_.empty() ? "Editor tool reload failed. Existing tools were retained." : candidate.lastError_;
+        Log(lastError_, LogSeverity::Error);
+        return false;
     }
+    std::swap(engine_, candidate.engine_);
+    std::swap(context_, candidate.context_);
+    tools_.swap(candidate.tools_);
+    windows_.swap(candidate.windows_);
+    std::swap(menuBarRoot_, candidate.menuBarRoot_);
+    std::swap(hierarchyRoot_, candidate.hierarchyRoot_);
+    if (engine_) engine_->SetMessageCallback(asFUNCTION(EditorToolMessageCallback), &lastError_, asCALL_CDECL);
+    if (candidate.engine_) candidate.engine_->SetMessageCallback(asFUNCTION(EditorToolMessageCallback), &candidate.lastError_, asCALL_CDECL);
+    lastError_.clear();
+    Log("Editor tools reloaded; tool state was reset.");
+    return true;
+}
+
+bool EditorToolManager::LoadTools() {
+    const std::string editorToolsDirectory = ProjectPaths::InEngineRoot(kEditorToolsDirectory);
+    if (!IsDirectoryExist(editorToolsDirectory)) return true;
 
     engine_ = asCreateScriptEngine();
     if (!engine_) {
         Log(Translation("engine.editortool.failed.createengine"), LogSeverity::Error);
-        return;
+        return false;
     }
     // ImGuiバインディングのCheckbox/DragFloat/InputText等は「現在値を渡して書き換えてもらう」ために
     // 値型（bool/int/float/string/Vector3等）の&inout参照を使う。AngelScriptの既定ではオブジェクト
@@ -212,7 +295,8 @@ void EditorToolManager::LoadTools() {
     // エディターツール専用のこのエンジンに限り参照の安全性チェックを緩和する
     // （ゲームプレイ用のSceneScriptEngineには影響しない）
     engine_->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
-    engine_->SetMessageCallback(asFUNCTION(EditorToolMessageCallback), nullptr, asCALL_CDECL);
+    engine_->SetMessageCallback(asFUNCTION(EditorToolMessageCallback), &lastError_, asCALL_CDECL);
+    engine_->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, 0);
     RegisterScriptArray(engine_, true);
     RegisterStdString(engine_);
     RegisterScriptDictionary(engine_);
@@ -222,18 +306,10 @@ void EditorToolManager::LoadTools() {
     // （ゲームプレイ用のSceneScriptEngineには登録されないため、ScriptComponentからは使えない）
     RegisterImGuiScriptBindings(engine_);
 
-    // VSCodeのAngelScript Language Server用の型定義ファイルをEditorToolsフォルダ内に生成する
-    // （ゲームプレイ用の as.predefined とは登録内容が異なる＝ImGui::を含むため別ファイルにする）
-    if (GenerateScriptPredefinedFile(engine_, editorToolsDirectory + "/as.predefined")) {
-        Log(Translation("engine.editortool.predefined.generated"));
-    } else {
-        Log(Translation("engine.editortool.predefined.generate.failed"), LogSeverity::Warning);
-    }
-
     context_ = engine_->CreateContext();
     if (!context_) {
         Log(Translation("engine.editortool.failed.createcontext"), LogSeverity::Error);
-        return;
+        return false;
     }
 #if !defined(RELEASE_BUILD)
     auto &debugServer = GetProcessAngelScriptDebugServer();
@@ -250,13 +326,16 @@ void EditorToolManager::LoadTools() {
         for (const auto &subdir : d.subdirectories) flatten(subdir);
     };
     flatten(dir);
+    std::sort(scriptPaths.begin(), scriptPaths.end());
+    std::unordered_set<std::string> registeredTypes;
 
     asITypeInfo *interfaceType = engine_->GetTypeInfoByDecl(kEditorToolInterfaceName);
     if (!interfaceType) {
         Log(Translation("engine.editortool.interface.notregistered"), LogSeverity::Error);
-        return;
+        return false;
     }
 
+    std::vector<asIScriptFunction *> factories;
     size_t moduleIndex = 0;
     for (const auto &scriptPath : scriptPaths) {
         const std::string moduleName = "EditorTool_" + std::to_string(moduleIndex++);
@@ -264,17 +343,17 @@ void EditorToolManager::LoadTools() {
         CScriptBuilder builder;
         if (builder.StartNewModule(engine_, moduleName.c_str()) < 0) {
             Log(Translation("engine.editortool.failed.createmodule") + scriptPath, LogSeverity::Error);
-            continue;
+            return false;
         }
         builder.SetIncludeCallback(ResolveEditorToolIncludePath, nullptr);
         if (builder.AddSectionFromFile(scriptPath.c_str()) < 0 || builder.BuildModule() < 0) {
             Log(Translation("engine.editortool.failed.build") + scriptPath, LogSeverity::Error);
             engine_->DiscardModule(moduleName.c_str());
-            continue;
+            return false;
         }
 
         asIScriptModule *module = builder.GetModule();
-        if (!module) continue;
+        if (!module) return false;
 
         // EditorToolを実装した全クラスを探してインスタンス化する
         const asUINT typeCount = module->GetObjectTypeCount();
@@ -282,28 +361,31 @@ void EditorToolManager::LoadTools() {
             asITypeInfo *type = module->GetObjectTypeByIndex(typeIndex);
             if (!type || !type->Implements(interfaceType)) continue;
 
-            const std::string factoryDecl = std::string(type->GetName()) + " @" + type->GetName() + "()";
-            asIScriptFunction *factory = type->GetFactoryByDecl(factoryDecl.c_str());
+            asIScriptFunction *factory = nullptr;
+            for (asUINT i = 0; i < type->GetFactoryCount(); ++i) {
+                auto *entry = type->GetFactoryByIndex(i);
+                if (entry && entry->GetParamCount() == 0) { factory = entry; break; }
+            }
             if (!factory) {
                 Log(Translation("engine.editortool.defaultconstructor.notfound") + type->GetName(), LogSeverity::Error);
-                continue;
+                return false;
             }
-            if (context_->Prepare(factory) < 0) continue;
-            int r;
-            {
-                ScriptExecutionScope scope(nullptr, currentSceneContext_);
-                r = context_->Execute();
+            const char *declaredSection = nullptr;
+            factory->GetDeclaredAt(&declaredSection, nullptr, nullptr);
+            for (asUINT i = 0; !declaredSection && i < type->GetBehaviourCount(); ++i) {
+                asEBehaviours behaviour;
+                auto *method = type->GetBehaviourByIndex(i, &behaviour);
+                if (behaviour == asBEHAVE_CONSTRUCT && method) method->GetDeclaredAt(&declaredSection, nullptr, nullptr);
             }
-            if (r != asEXECUTION_FINISHED) {
-                Log(Translation("engine.editortool.failed.createinstance") + type->GetName() + " : " + GetExceptionInfo(context_), LogSeverity::Error);
-                continue;
-            }
-            asIScriptObject *object = *static_cast<asIScriptObject **>(context_->GetAddressOfReturnValue());
-            if (!object) continue;
-            object->AddRef();
-
+            const std::string section = declaredSection ? declaredSection : "";
+            if (section.empty()) { lastError_ = "Cannot identify editor tool source: " + std::string(type->GetName()); return false; }
+            std::error_code pathError;
+            const auto sourcePath = std::filesystem::absolute(Utf8StringToPath(section), pathError).lexically_normal();
+            if (pathError) { lastError_ = "Cannot resolve editor tool source: " + section; return false; }
+            const std::string identity = PathToUtf8String(sourcePath) + "::" + type->GetNamespace() + "::" + type->GetName();
+            if (!registeredTypes.insert(identity).second) continue;
             ToolInstance tool;
-            tool.object = object;
+            tool.object = nullptr;
             tool.type = type;
             tool.initializeOnLoadMethod = type->GetMethodByDecl("void InitializeOnLoad()");
             tool.onItemSelectedMethod = type->GetMethodByDecl("void OnItemSelected(const string &in)");
@@ -319,7 +401,10 @@ void EditorToolManager::LoadTools() {
                 if (attribute.name == "EditorWindow") {
                     if (attribute.args.empty() || attribute.args[0].empty()) {
                         Log(Translation("engine.editortool.editorwindow.noname") + type->GetName(), LogSeverity::Warning);
-                        continue;
+                        return false;
+                    }
+                    if (std::any_of(windows_.begin(), windows_.end(), [&](const auto &w) { return w.name == attribute.args[0]; })) {
+                        lastError_ = "Duplicate editor window name: " + attribute.args[0]; return false;
                     }
                     WindowEntry window;
                     window.name = attribute.args[0];
@@ -329,7 +414,7 @@ void EditorToolManager::LoadTools() {
                 } else if (attribute.name == "MenuItem") {
                     if (attribute.args.empty() || attribute.args[0].empty()) {
                         Log(Translation("engine.editortool.menuitem.nopath") + type->GetName(), LogSeverity::Warning);
-                        continue;
+                        return false;
                     }
                     // 第二引数（識別タグ）が省略された場合は項目名をタグとして使う
                     const std::string tag = attribute.args.size() >= 2 ? attribute.args[1] : std::string{};
@@ -337,15 +422,40 @@ void EditorToolManager::LoadTools() {
                 }
             }
 
+            factories.push_back(factory);
             tools_.push_back(std::move(tool));
             Log(Translation("engine.editortool.loaded") + type->GetName() + " (" + scriptPath + ")");
         }
     }
 
-    // 全ツールの読み込みが終わってから、各ツールのInitializeOnLoadを一度だけ呼ぶ
-    for (auto &tool : tools_) {
-        CallToolMethod(tool, tool.initializeOnLoadMethod, nullptr);
+    // Compilation succeeds for the entire candidate before executing any script.
+    ScriptExecutionScope executionScope(nullptr, currentSceneContext_);
+    for (asUINT i = 0; i < engine_->GetModuleCount(); ++i) {
+        ImGuiScriptRecovery recovery;
+        if (engine_->GetModuleByIndex(i)->ResetGlobalVars(context_) < 0) {
+            lastError_ = "Editor tool global initialization failed: " + GetExceptionInfo(context_);
+            return false;
+        }
+        if (recovery.Recover()) { lastError_ = "Unbalanced ImGui state in global initialization"; return false; }
     }
+    for (size_t i = 0; i < tools_.size(); ++i) {
+        ImGuiScriptRecovery recovery;
+        if (context_->Prepare(factories[i]) < 0 || context_->Execute() != asEXECUTION_FINISHED) {
+            lastError_ = "Editor tool constructor failed: " + GetExceptionInfo(context_);
+            return false;
+        }
+        auto *object = *static_cast<asIScriptObject **>(context_->GetAddressOfReturnValue());
+        if (!object) return false;
+        object->AddRef();
+        tools_[i].object = object;
+        if (recovery.Recover()) { lastError_ = "Unbalanced ImGui state in editor tool constructor"; return false; }
+    }
+    for (auto &tool : tools_) {
+        if (!CallToolMethod(tool, tool.initializeOnLoadMethod, nullptr)) return false;
+    }
+    context_->Unprepare();
+    GenerateScriptPredefinedFile(engine_, editorToolsDirectory + "/as.predefined");
+    return true;
 }
 
 void EditorToolManager::RegisterMenuItem(const std::string &path, const std::string &tag, size_t toolIndex) {
@@ -396,6 +506,11 @@ void EditorToolManager::ShowMenuNode(const MenuNode &node) {
 
 void EditorToolManager::ShowMenuBarItems() {
     EnsureLoaded();
+    if (ImGui::BeginMenu(TranslationLabel("editor.editortools.menu"))) {
+        if (ImGui::MenuItem(TranslationLabel("editor.editortools.reload"))) RequestReload();
+        if (!lastError_.empty()) ImGui::TextWrapped("%s", lastError_.c_str());
+        ImGui::EndMenu();
+    }
     ShowMenuNode(menuBarRoot_);
 }
 
@@ -414,26 +529,25 @@ void EditorToolManager::UpdateTools() {
                 auto &tool = tools_[window.toolIndex];
                 CallToolMethod(tool, window.isOpen ? tool.onWindowEnableMethod : tool.onWindowDisableMethod, &window.name);
             }
-            window.wasOpen = window.isOpen;
+            window.wasOpen = !window.wasOpen;
         }
     }
 
-    // 各ツールのUpdateを呼ぶ。開いているウィンドウを持つツールは、そのウィンドウのBegin/Endの中で呼ぶ
-    // （閉じるボタン(X)でisOpenがfalseへ変わった場合は、次フレームの上の遷移通知でOnWindowDisableが走る）
     for (auto &tool : tools_) {
-        WindowEntry *openWindow = nullptr;
-        for (const size_t windowIndex : tool.windowIndices) {
-            if (windowIndex < windows_.size() && windows_[windowIndex].isOpen) {
-                openWindow = &windows_[windowIndex];
-                break;
-            }
+        if (tool.failed) continue;
+        if (tool.windowIndices.empty()) {
+            CallToolMethod(tool, tool.updateMethod, nullptr);
+            continue;
         }
-        if (openWindow) {
-            ImGui::Begin(openWindow->name.c_str(), &openWindow->isOpen);
-            CallToolMethod(tool, tool.updateMethod, nullptr);
+        // Each open declared window is drawn; closed window tools do not update.
+        for (const size_t index : tool.windowIndices) {
+            auto &window = windows_[index];
+            if (!window.isOpen || tool.failed) continue;
+            currentWindowName_ = window.name;
+            const bool visible = ImGui::Begin(window.name.c_str(), &window.isOpen);
+            if (visible && window.isOpen) CallToolMethod(tool, tool.updateMethod, nullptr);
             ImGui::End();
-        } else {
-            CallToolMethod(tool, tool.updateMethod, nullptr);
+            currentWindowName_.clear();
         }
     }
 }
@@ -457,19 +571,24 @@ bool EditorToolManager::IsWindowOpen(const std::string &name) const {
     return false;
 }
 
-void EditorToolManager::CallToolMethod(ToolInstance &tool, asIScriptFunction *method, const std::string *stringArg) {
-    if (!method || !context_ || !tool.object) return;
-
-    if (context_->Prepare(method) < 0) return;
+bool EditorToolManager::CallToolMethod(ToolInstance &tool, asIScriptFunction *method, const std::string *stringArg) {
+    if (tool.failed) return false;
+    if (!method) return true;
+    if (!context_ || !tool.object) return false;
+    if (context_->Prepare(method) < 0) { tool.failed = true; lastError_ = "Cannot prepare editor tool method"; return false; }
     context_->SetObject(tool.object);
-    if (stringArg) {
-        context_->SetArgObject(0, const_cast<std::string *>(stringArg));
-    }
+    if (stringArg) context_->SetArgObject(0, const_cast<std::string *>(stringArg));
+    ImGuiScriptRecovery recovery;
     ScriptExecutionScope scope(nullptr, currentSceneContext_);
-    const int r = context_->Execute();
-    if (r != asEXECUTION_FINISHED) {
-        Log(Translation("engine.editortool.exception") + GetExceptionInfo(context_), LogSeverity::Error);
+    const int result = context_->Execute();
+    const bool unbalanced = recovery.Recover();
+    if (result != asEXECUTION_FINISHED || unbalanced) {
+        tool.failed = true;
+        lastError_ = std::string(tool.type->GetName()) + "::" + method->GetName() + ": " + (unbalanced ? "Unbalanced ImGui state" : GetExceptionInfo(context_));
+        Log(lastError_, LogSeverity::Error);
+        return false;
     }
+    return true;
 }
 
 } // namespace KashipanEngine

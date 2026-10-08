@@ -31,8 +31,8 @@
 <li>クラスに付けた <code>[MenuItem(...)]</code> からメニュー選択時の処理を、<code>[EditorWindow(...)]</code> から専用ウィンドウの中身を実装する</li>
 </ol>
 <div class="warn">
-<strong>ホットリロードは無い</strong><br>
-<code>ScriptComponent</code> の <code>Reload</code> ボタンのようなホットリロード機構は無いため、スクリプトを追加・編集した場合はエディターを再起動して反映してください。
+<strong>手動リロード</strong><br>
+メニューバーの「エディターツール → エディターツールを再読み込み」で追加・変更・削除を反映できます。次のフレームで全ツールを作り直し、内部状態とウィンドウ開閉は初期化します。読み込み失敗時は旧ツールを維持し、メニューとログにエラーを表示します。ファイル変更の自動検出はありません。
 </div>
 <p>
 <code>EditorTools/as.predefined</code> が自動生成され、VSCodeの <strong>AngelScript Language Server</strong> 拡張機能はこれを読み込んでコード補完・型チェックを行います。<code>EditorTools</code> フォルダをVSCodeで開く（またはワークスペースに含める）と補完が有効になります。ゲームプレイ用の <code>.as</code>（<code>ScriptComponent</code> 側）は実行ディレクトリ直下の <code>as.predefined</code> を参照するため別ファイルであり、内容も異なります（EditorTool専用エンジンには後述の <code>ImGui::</code> 名前空間が追加登録されている一方、後述の理由で <code>GetOwnerObject()</code> 等は実行時に無効です）。
@@ -54,7 +54,7 @@ class MyTool : EditorTool {
 <tr><td><code>void Update()</code></td><td>毎フレーム。クラスが <code>[EditorWindow(...)]</code> を持つ場合、対応するウィンドウが開いている間だけ、その <code>ImGui::Begin</code>/<code>End</code> の中で呼ばれる（閉じている間は呼ばれない）。<code>[EditorWindow]</code> を持たないクラスは常に毎フレーム呼ばれる</td></tr>
 <tr><td><code>void OnItemSelected(const string &amp;in tag)</code></td><td><code>[MenuItem(...)]</code> で追加した項目がクリックされたとき。タグは属性の第2引数（省略時は項目名）</td></tr>
 <tr><td><code>void OnWindowEnable(const string &amp;in windowName)</code></td><td><code>[EditorWindow(...)]</code> のウィンドウが閉→開へ変化したとき</td></tr>
-<tr><td><code>void OnWindowDisable(const string &amp;in windowName)</code></td><td><code>[EditorWindow(...)]</code> のウィンドウが開→閉へ変化したとき（右上の×で閉じた場合も含む）</td></tr>
+<tr><td><code>void OnWindowDisable(const string &amp;in windowName)</code></td><td><code>[EditorWindow(...)]</code> のウィンドウが開→閉へ変化したとき（右上の×で閉じた場合も含む。通知は次のUpdateToolsで行う）</td></tr>
 </table>
 <p>
 全メソッドは省略可能。1つの <code>.as</code> ファイルに複数の <code>EditorTool</code> 実装クラスを定義してもよく、それぞれ独立にインスタンス化されます。
@@ -87,15 +87,26 @@ class MyTool : EditorTool {
 <code>Update()</code> 内でウィンドウの中身を描く前に <code>IsEditorWindowOpen</code> で開いているか確認するのが基本パターンです（<code>[EditorWindow]</code>を持つクラスでは<code>Update()</code>自体がウィンドウが開いている間しか呼ばれないため必須ではありませんが、<code>[MenuItem]</code>から複数ウィンドウを開閉する構成にする場合など、明示的に確認したい場面で使います）。
 </p>
 
+<h2>実行・参照の安全性</h2>
+<ul>
+<li><code>Scene@</code>はシーンの寿命を延長しません。保持した参照をシーン破棄後や別シーンの実行中に使用すると、スクリプト例外になります。各操作時に<code>GetScene()</code>で取得し直してください。</li>
+<li>実行時例外、またはImGuiのBegin/End・Push/Popが不均衡な場合は、そのツールを停止し、呼び出し前のUI状態へ復旧を試みます。修正後に手動リロードすると再開できます。</li>
+<li>同名ウィンドウは読み込みエラーです。複数の<code>[EditorWindow]</code>を持つ場合、開いていて描画可能なウィンドウごとに<code>Update()</code>を呼びます。<code>string GetCurrentEditorWindowName()</code>で描画対象を判別してください。ウィンドウがないツールは毎フレームUpdateを呼びます。</li>
+<li>includeした同じソース・名前空間・クラスのEditorToolは一度だけ登録します。ソースが別の同名クラスは独立したツールです。</li>
+<li>全モジュールのコンパイルが成功した後にグローバル初期化・コンストラクタ・InitializeOnLoadを実行します。初期化失敗時も旧ツールを維持しますが、失敗した初期化が既に行ったシーン操作やファイル保存の副作用は巻き戻しません。</li>
+<li>ゲーム側ScriptComponentとのGetVariable/SetVariable/CallMethod/GetLastReturnValueによる型交換は、別エンジン間では基本型・string・Vector2/3/4・Quaternion・Object@に限定します。配列・dictionary・独自クラス・enumはfalseを返して拒否します。同じスクリプトエンジン内での交換規則は従来どおりです。</li>
+<li>シーンの直接編集はUndo履歴へ記録されません。Undo対応の専用エディター操作APIは今後の対応範囲です。</li>
+</ul>
+
 <h2>ScriptComponentとのAPIの違い</h2>
 <p>
 EditorToolのエンジンには他ページで解説した数学型・コンポーネント型・<code>Json</code>・<code>dictionary</code>・<code>Math</code>/<code>Easing</code>/<code>Random</code> 名前空間・<code>WaveFunctionCollapse</code> 等、ほぼ同じエンジンAPIが登録されています。ただし以下の点が異なります。
 </p>
 <ul>
-<li><strong><code>ObjectContext</code> が存在しない</strong>: EditorToolはどのオブジェクトにも属さないため、<code>GetOwnerObject()</code> / <code>GetTransform()</code> / <code>GetComponent(?&amp;out)</code> / <code>FindObject(...)</code> の<strong>オブジェクト起点</strong>の関数は正しく動作しません（対象が無い扱いになります）。使えるのは <code>GetScene()</code> が返す <code>Scene@</code> を経由した操作（<code>GetScene().CreateObject(...)</code>、<code>GetScene().GetObjects(name)</code> 等）のみです。</li>
+<li><strong><code>ObjectContext</code> が存在しない</strong>: EditorToolはどのオブジェクトにも属さないため、<code>GetOwnerObject()</code> / <code>GetTransform()</code> / <code>GetComponent(?&amp;out)</code> の<strong>オブジェクト起点</strong>の関数は正しく動作しません（対象が無い扱いになります）。<code>FindObject(...)</code> と <code>GetScene()</code> が返す <code>Scene@</code> を経由した操作は利用できます。例えば（<code>GetScene().CreateObject(...)</code>、<code>GetScene().GetObjects(name)</code> 等）です。</li>
 <li><strong><code>GetScene()</code> はエディターで開いている（編集中の）シーン</strong>を返します。ゲーム実行中かどうかに関わらず、エディターの現在のシーンコンテキストが対象になります。</li>
 <li><strong><code>ImGui::</code> 名前空間が追加登録されている</strong>（下記）。<code>ScriptComponent</code> 側では登録されていないため使用できません。</li>
-<li><strong>ホットリロード無し</strong>: <code>ScriptComponent</code> の <code>Reload</code> ボタンに相当する機能は無く、スクリプトの追加・変更はエディター再起動で反映します。</li>
+<li><strong>手動リロード</strong>: エディターツールメニューから全ツールを再読み込みします。内部状態の引き継ぎ・自動リロードはありません。</li>
 </ul>
 
 <h2>ImGui名前空間</h2>
@@ -156,8 +167,8 @@ class CounterTool : EditorTool {
     }
 }</code></pre>
 <p>ヒエラルキーの右クリックメニューに項目を追加する例:</p>
-<pre><code class="language-angelscript">class HierarchyTool : EditorTool {
-    [MenuItem("Hierarchy/Create Marker", "create_marker")]
+<pre><code class="language-angelscript">[MenuItem("Hierarchy/Create Marker", "create_marker")]
+class HierarchyTool : EditorTool {
     void OnItemSelected(const string &amp;in tag) {
         if (tag == "create_marker") {
             GetScene().CreateObject("Marker");
@@ -168,13 +179,14 @@ class CounterTool : EditorTool {
 <ul>
 <li><code>EditorTools/WfcTileEditor.as</code> — <a href="10_ProceduralGeneration.html">WaveFunctionCollapse</a>用タイル定義のグリッドエディター（<code>Json</code>の保存/読み込み・動的な接続編集を含む）</li>
 <li><code>EditorTools/KeyframeAnimationEditor.as</code> — <code>KeyFrameAnimator</code>コンポーネント用のキーフレームjson作成エディター（イージング選択コンボ・評価値プレビューを含む）</li>
+<li><code>EditorTools/BackgroundGenerator.as</code> — プリミティブメッシュだけで横スクロール用の背景（浮遊モノリス・工場）をシード付きで自動生成するツール（<code>Scene.CreateObject</code>・<code>Transform.SetParentObject</code>による階層構築、<code>KeyFrameAnimator</code>のスクリプトからの構築を含む）</li>
 </ul>
 
 <h2>注意事項</h2>
 <ul>
 <li><code>EditorTool</code> を実装するクラスにはデフォルトコンストラクタ（引数無しで呼べるコンストラクタ）が必要です（内部でファクトリ関数経由でインスタンス化するため）。</li>
 <li>1つの <code>.as</code> に複数の <code>EditorTool</code> 実装クラスを書けます。それぞれ独立に読み込まれ、<code>[EditorWindow]</code>/<code>[MenuItem]</code> もクラスごとに個別に登録されます。</li>
-<li>コンパイルエラーはログにのみ出力されます（<code>ScriptComponent</code> のようなインスペクター表示は無い）。エディター起動直後のログを確認してください。</li>
+<li>読み込み・実行エラーはログとエディターツールメニューに表示されます。実行エラーのツールは停止し、手動リロードで作り直せます。</li>
 <li><code>EditorTools</code> フォルダが存在しない場合、エディターツールは一切読み込まれません（エラーにはならず、単に無視されます）。</li>
 </ul>
 

@@ -19,7 +19,7 @@ class SceneContext;
 ///          初回フレームで自動読み込みし、EditorToolインターフェースを実装したクラスごとに
 ///          インスタンスを生成して以下のメソッドを自動で呼び出す:
 ///          - InitializeOnLoad(): 読み込み直後に一度だけ
-///          - Update(): 毎フレーム（[EditorWindow]のウィンドウが開いている間は、そのウィンドウのBegin/Endの中で呼ばれる）
+///          - Update(): ウィンドウ無しは毎フレーム。ウィンドウ有りは開いて描画可能な各ウィンドウのBegin/End内で呼ばれる
 ///          - OnItemSelected(tag): [MenuItem("MenuBar/..."または"Hierarchy/...", "tag")]で追加した項目の選択時
 ///          - OnWindowEnable(name) / OnWindowDisable(name): [EditorWindow("name")]のウィンドウが開閉した時
 ///          ウィンドウは用意されるだけで、開くのはスクリプト側（OpenEditorWindowグローバル関数）に委ねる
@@ -45,6 +45,11 @@ public:
     /// @brief ウィンドウの開閉遷移（OnWindowEnable/Disable）の通知と、各ツールのUpdate呼び出しを行う
     /// @details SceneEditor::ShowImGuiから毎フレーム呼ぶ
     void UpdateTools();
+
+    /// Queue a reload; executed at the next BeginFrame, never inside a script callback.
+    void RequestReload() { reloadRequested_ = true; }
+    const std::string &GetLastError() const { return lastError_; }
+    const std::string &GetCurrentWindowName() const { return currentWindowName_; }
 
     //==================================================
     // スクリプトのグローバル関数（OpenEditorWindow等）から呼ばれる操作
@@ -92,17 +97,24 @@ private:
         asIScriptFunction *onWindowEnableMethod = nullptr;
         asIScriptFunction *onWindowDisableMethod = nullptr;
         asIScriptFunction *updateMethod = nullptr;
+        bool failed = false;
         /// @brief このツールが[EditorWindow]で宣言したウィンドウのインデックス一覧
         std::vector<size_t> windowIndices;
     };
 
     void EnsureLoaded();
-    void LoadTools();
+    bool LoadTools();
+    bool ReloadTools();
+    void ReleaseTools();
     void RegisterMenuItem(const std::string &path, const std::string &tag, size_t toolIndex);
     void ShowMenuNode(const MenuNode &node);
-    void CallToolMethod(ToolInstance &tool, asIScriptFunction *method, const std::string *stringArg);
+    bool CallToolMethod(ToolInstance &tool, asIScriptFunction *method, const std::string *stringArg);
 
     bool loaded_ = false;
+    bool reloadRequested_ = false;
+    std::string lastError_;
+    std::string currentWindowName_;
+    static EditorToolManager *loadingInstance_;
     asIScriptEngine *engine_ = nullptr;
     asIScriptContext *context_ = nullptr;
     std::vector<ToolInstance> tools_;

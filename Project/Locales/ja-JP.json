@@ -2308,6 +2308,8 @@
 		"engine.editortool.failed.createinstance": "EditorTool：インスタンスの生成に失敗しました。クラス名：",
 		"engine.editortool.failed.createmodule": "EditorTool：モジュールの作成に失敗しました。スクリプトパス：",
 		"engine.editortool.interface.notregistered": "EditorTool：EditorToolインターフェースが登録されていません。",
+		"editor.editortools.menu": "エディターツール",
+		"editor.editortools.reload": "エディターツールを再読み込み",
 		"engine.editortool.loaded": "EditorTool：読み込みました。クラス名：",
 		"engine.editortool.menuitem.invalidpath": "EditorTool：[MenuItem] の表示階層は \"MenuBar/項目名\" または \"Hierarchy/項目名\" の形式で指定してください。指定値：",
 		"engine.editortool.menuitem.invalidroot": "EditorTool：[MenuItem] の表示階層の先頭は \"MenuBar/\" または \"Hierarchy/\" のみ対応しています。指定値：",

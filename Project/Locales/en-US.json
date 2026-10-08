@@ -2306,6 +2306,8 @@
 		"engine.editortool.failed.createinstance": "EditorTool: Failed to create the instance. Class name: ",
 		"engine.editortool.failed.createmodule": "EditorTool: Failed to create the module. Script path: ",
 		"engine.editortool.interface.notregistered": "EditorTool: The EditorTool interface is not registered.",
+		"editor.editortools.menu": "Editor Tools",
+		"editor.editortools.reload": "Reload Editor Tools",
 		"engine.editortool.loaded": "EditorTool: Loaded. Class name: ",
 		"engine.editortool.menuitem.invalidpath": "EditorTool: The [MenuItem] path must be in the form \\\"MenuBar/ItemName\\\" or \\\"Hierarchy/ItemName\\\". Value: ",
 		"engine.editortool.menuitem.invalidroot": "EditorTool: The [MenuItem] path must start with \\\"MenuBar/\\\" or \\\"Hierarchy/\\\". Value: ",

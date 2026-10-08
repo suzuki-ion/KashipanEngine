@@ -160,7 +160,73 @@ struct ComponentTypeBinding {
     /// @brief ハンドル(void*)を実体へ解決する（削除済み・null時はnullptr）。RemoveComponent用
     IObjectComponent *(*resolveHandle)(void *) = nullptr;
 };
-std::unordered_map<int, ComponentTypeBinding> gComponentTypeBindings;
+struct SceneVariableTypeIds {
+    int stringTypeId = 0;
+    int vector2TypeId = 0;
+    int vector3TypeId = 0;
+    int vector4TypeId = 0;
+    int quaternionTypeId = 0;
+};
+
+struct ScriptBindingData {
+    std::unordered_map<int, ComponentTypeBinding> components;
+    SceneVariableTypeIds variables;
+};
+constexpr asPWORD kScriptBindingDataKey = 0x4b534244;
+void CleanupScriptBindingData(asIScriptEngine *engine) {
+    delete static_cast<ScriptBindingData *>(engine->GetUserData(kScriptBindingDataKey));
+}
+ScriptBindingData &BindingData(asIScriptEngine *engine = nullptr) {
+    if (!engine) engine = asGetActiveContext()->GetEngine();
+    auto *data = static_cast<ScriptBindingData *>(engine->GetUserData(kScriptBindingDataKey));
+    if (!data) {
+        data = new ScriptBindingData;
+        engine->SetUserData(data, kScriptBindingDataKey);
+        engine->SetEngineUserDataCleanupCallback(CleanupScriptBindingData, kScriptBindingDataKey);
+    }
+    return *data;
+}
+
+// Weak lifetime prevents retained Scene@ handles from accessing a destroyed scene.
+class ScriptSceneHandle final {
+public:
+    explicit ScriptSceneHandle(SceneContext *scene) : scene_(scene), lifetime_(scene->GetLifetimeToken()) {}
+    void AddRef() { refs_.fetch_add(1, std::memory_order_relaxed); }
+    void Release() { if (refs_.fetch_sub(1, std::memory_order_acq_rel) == 1) delete this; }
+    SceneContext *Resolve() const {
+        if (!lifetime_.expired() && scene_ == gCurrentSceneContext) return scene_;
+        if (auto *ctx = asGetActiveContext()) ctx->SetException("Scene reference is expired or belongs to another scene");
+        return nullptr;
+    }
+    static ScriptSceneHandle *Create(SceneContext *scene) { return scene ? new ScriptSceneHandle(scene) : nullptr; }
+private:
+    SceneContext *scene_;
+    std::weak_ptr<void> lifetime_;
+    std::atomic<int> refs_{1};
+};
+template <typename Method> struct SceneMethodTraits;
+template <typename Ret, typename... Args>
+struct SceneMethodTraits<Ret (SceneContext::*)(Args...)> {
+    template <auto Method> static auto Make() {
+        return [](ScriptSceneHandle &self, Args... args) -> Ret {
+            auto *scene = self.Resolve();
+            if (!scene) { if constexpr (!std::is_void_v<Ret>) return SafeCallDefault<Ret>(); else return; }
+            return (scene->*Method)(args...);
+        };
+    }
+};
+template <typename Ret, typename... Args>
+struct SceneMethodTraits<Ret (SceneContext::*)(Args...) const> {
+    template <auto Method> static auto Make() {
+        return [](const ScriptSceneHandle &self, Args... args) -> Ret {
+            auto *scene = self.Resolve();
+            if (!scene) { if constexpr (!std::is_void_v<Ret>) return SafeCallDefault<Ret>(); else return; }
+            return (scene->*Method)(args...);
+        };
+    }
+};
+template <auto Method> auto SceneCall() { return SceneMethodTraits<decltype(Method)>::template Make<Method>(); }
+
 
 /// @brief Object@引数（ScriptObjectHandle）を実体へ解決する
 /// @details handleがnull（スクリプトが明示的にnullを渡した）ならそのままnullptrを返し、
@@ -445,7 +511,7 @@ auto RegisterComponentType(asIScriptEngine *engine, const char *name) {
         });
 
     const int typeId = engine->GetTypeIdByDecl(name);
-    gComponentTypeBindings[typeId] = ComponentTypeBinding{
+    BindingData(engine).components[typeId] = ComponentTypeBinding{
         name,
         +[](EmptyObject &obj) -> IObjectComponent * { return obj.GetComponent<T>(); },
         +[](EmptyObject &obj) -> std::vector<IObjectComponent *> {
@@ -927,9 +993,9 @@ void RegisterSkinQualityEnum(asIScriptEngine *engine) {
 
 /// @brief Transformコンポーネントを登録する
 /// @details Object::GetTransform() が Transform@ を返すため、Object/Scene（RegisterObjectTypes）より
-///          先に登録しておく必要がある。gComponentTypeBindings のクリアもここで行う（最初に呼ばれるため）
+///          先に登録しておく必要がある。BindingData().components のクリアもここで行う（最初に呼ばれるため）
 void RegisterTransformType(asIScriptEngine *engine) {
-    gComponentTypeBindings.clear();
+    BindingData(engine).components.clear();
     RegisterLightTypeEnum(engine);
     RegisterTextRendererEnums(engine);
     RegisterSkinQualityEnum(engine);
@@ -3573,8 +3639,8 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
 bool GetComponentIntoHandle(EmptyObject &obj, void *ref, int typeId) {
     if (!ref || !(typeId & asTYPEID_OBJHANDLE)) return false;
     const int baseTypeId = typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST);
-    auto it = gComponentTypeBindings.find(baseTypeId);
-    if (it == gComponentTypeBindings.end()) return false;
+    auto it = BindingData().components.find(baseTypeId);
+    if (it == BindingData().components.end()) return false;
 
     IObjectComponent *component = it->second.getOne(obj);
     // wrapAsHandleはrefcount=1で生成する。出力先ハンドルへそのまま所有権を移す（他にAddRef元は無い）
@@ -3600,8 +3666,8 @@ bool GetComponentsIntoArray(EmptyObject &obj, void *ref, int typeId) {
     const int subTypeId = arrayType->GetSubTypeId();
     if (!(subTypeId & asTYPEID_OBJHANDLE)) return false;
     const int baseTypeId = subTypeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST);
-    auto it = gComponentTypeBindings.find(baseTypeId);
-    if (it == gComponentTypeBindings.end()) return false;
+    auto it = BindingData().components.find(baseTypeId);
+    if (it == BindingData().components.end()) return false;
 
     auto components = it->second.getAll(obj);
     CScriptArray *array = CScriptArray::Create(arrayType, static_cast<asUINT>(components.size()));
@@ -3624,8 +3690,8 @@ bool GetComponentsIntoArray(EmptyObject &obj, void *ref, int typeId) {
 bool AddComponentIntoHandle(EmptyObject &obj, void *ref, int typeId) {
     if (!ref || !(typeId & asTYPEID_OBJHANDLE)) return false;
     const int baseTypeId = typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST);
-    auto it = gComponentTypeBindings.find(baseTypeId);
-    if (it == gComponentTypeBindings.end()) {
+    auto it = BindingData().components.find(baseTypeId);
+    if (it == BindingData().components.end()) {
         *static_cast<void **>(ref) = nullptr;
         return false;
     }
@@ -3644,8 +3710,8 @@ bool AddComponentIntoHandle(EmptyObject &obj, void *ref, int typeId) {
 bool RemoveComponentFromHandle(EmptyObject &obj, void *ref, int typeId) {
     if (!ref || !(typeId & asTYPEID_OBJHANDLE)) return false;
     const int baseTypeId = typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST);
-    auto it = gComponentTypeBindings.find(baseTypeId);
-    if (it == gComponentTypeBindings.end()) return false;
+    auto it = BindingData().components.find(baseTypeId);
+    if (it == BindingData().components.end()) return false;
 
     void *handlePtr = *static_cast<void **>(ref);
     if (!handlePtr) return false;
@@ -3680,17 +3746,8 @@ CScriptArray *MakeObjectArray(const std::vector<EmptyObject *> &objects) {
 // シーン変数（?&in/?&out と MyAny の相互変換）
 //==================================================
 
-/// @brief シーン変数の読み書きで対応する型のタイプID（RegisterObjectTypesで一度だけ設定される）
-/// @details ラムダをネイティブ呼び出し規約で登録するには非キャプチャである必要があるため、
-///          キャプチャ変数の代わりにこのグローバル変数を経由して型IDを参照する
-struct SceneVariableTypeIds {
-    int stringTypeId = 0;
-    int vector2TypeId = 0;
-    int vector3TypeId = 0;
-    int vector4TypeId = 0;
-    int quaternionTypeId = 0;
-};
-SceneVariableTypeIds gSceneVariableTypeIds;
+// シーン変数・JSONの型IDはBindingDataで実行中のエンジンから取得する。
+
 
 /// @brief ?&in で渡された値を型に応じてシーン変数へ書き込む（上書き）
 /// @return 対応している型であれば true、対応外の型の場合は false
@@ -3701,11 +3758,11 @@ bool SetSceneVariableFromGeneric(SceneContext &scene, const std::string &key, vo
     if (typeId == asTYPEID_UINT32) { scene.AddSceneVariable<uint32_t>(key, *static_cast<uint32_t *>(ref)); return true; }
     if (typeId == asTYPEID_FLOAT) { scene.AddSceneVariable<float>(key, *static_cast<float *>(ref)); return true; }
     if (typeId == asTYPEID_DOUBLE) { scene.AddSceneVariable<double>(key, *static_cast<double *>(ref)); return true; }
-    if (typeId == gSceneVariableTypeIds.stringTypeId) { scene.AddSceneVariable<std::string>(key, *static_cast<std::string *>(ref)); return true; }
-    if (typeId == gSceneVariableTypeIds.vector2TypeId) { scene.AddSceneVariable<Vector2>(key, *static_cast<Vector2 *>(ref)); return true; }
-    if (typeId == gSceneVariableTypeIds.vector3TypeId) { scene.AddSceneVariable<Vector3>(key, *static_cast<Vector3 *>(ref)); return true; }
-    if (typeId == gSceneVariableTypeIds.vector4TypeId) { scene.AddSceneVariable<Vector4>(key, *static_cast<Vector4 *>(ref)); return true; }
-    if (typeId == gSceneVariableTypeIds.quaternionTypeId) { scene.AddSceneVariable<Quaternion>(key, *static_cast<Quaternion *>(ref)); return true; }
+    if (typeId == BindingData().variables.stringTypeId) { scene.AddSceneVariable<std::string>(key, *static_cast<std::string *>(ref)); return true; }
+    if (typeId == BindingData().variables.vector2TypeId) { scene.AddSceneVariable<Vector2>(key, *static_cast<Vector2 *>(ref)); return true; }
+    if (typeId == BindingData().variables.vector3TypeId) { scene.AddSceneVariable<Vector3>(key, *static_cast<Vector3 *>(ref)); return true; }
+    if (typeId == BindingData().variables.vector4TypeId) { scene.AddSceneVariable<Vector4>(key, *static_cast<Vector4 *>(ref)); return true; }
+    if (typeId == BindingData().variables.quaternionTypeId) { scene.AddSceneVariable<Quaternion>(key, *static_cast<Quaternion *>(ref)); return true; }
     return false;
 }
 
@@ -3720,11 +3777,11 @@ bool SetGlobalSceneVariableFromGeneric(SceneContext &scene, const std::string &k
     if (typeId == asTYPEID_UINT32) { scene.AddGlobalSceneVariable<uint32_t>(key, *static_cast<uint32_t *>(ref)); return true; }
     if (typeId == asTYPEID_FLOAT) { scene.AddGlobalSceneVariable<float>(key, *static_cast<float *>(ref)); return true; }
     if (typeId == asTYPEID_DOUBLE) { scene.AddGlobalSceneVariable<double>(key, *static_cast<double *>(ref)); return true; }
-    if (typeId == gSceneVariableTypeIds.stringTypeId) { scene.AddGlobalSceneVariable<std::string>(key, *static_cast<std::string *>(ref)); return true; }
-    if (typeId == gSceneVariableTypeIds.vector2TypeId) { scene.AddGlobalSceneVariable<Vector2>(key, *static_cast<Vector2 *>(ref)); return true; }
-    if (typeId == gSceneVariableTypeIds.vector3TypeId) { scene.AddGlobalSceneVariable<Vector3>(key, *static_cast<Vector3 *>(ref)); return true; }
-    if (typeId == gSceneVariableTypeIds.vector4TypeId) { scene.AddGlobalSceneVariable<Vector4>(key, *static_cast<Vector4 *>(ref)); return true; }
-    if (typeId == gSceneVariableTypeIds.quaternionTypeId) { scene.AddGlobalSceneVariable<Quaternion>(key, *static_cast<Quaternion *>(ref)); return true; }
+    if (typeId == BindingData().variables.stringTypeId) { scene.AddGlobalSceneVariable<std::string>(key, *static_cast<std::string *>(ref)); return true; }
+    if (typeId == BindingData().variables.vector2TypeId) { scene.AddGlobalSceneVariable<Vector2>(key, *static_cast<Vector2 *>(ref)); return true; }
+    if (typeId == BindingData().variables.vector3TypeId) { scene.AddGlobalSceneVariable<Vector3>(key, *static_cast<Vector3 *>(ref)); return true; }
+    if (typeId == BindingData().variables.vector4TypeId) { scene.AddGlobalSceneVariable<Vector4>(key, *static_cast<Vector4 *>(ref)); return true; }
+    if (typeId == BindingData().variables.quaternionTypeId) { scene.AddGlobalSceneVariable<Quaternion>(key, *static_cast<Quaternion *>(ref)); return true; }
     return false;
 }
 
@@ -3737,11 +3794,11 @@ bool WriteSceneVariableToGeneric(MyAny *value, void *ref, int typeId) {
     if (typeId == asTYPEID_UINT32 && value->IsType<uint32_t>()) { *static_cast<uint32_t *>(ref) = value->AnyCast<uint32_t>(); return true; }
     if (typeId == asTYPEID_FLOAT && value->IsType<float>()) { *static_cast<float *>(ref) = value->AnyCast<float>(); return true; }
     if (typeId == asTYPEID_DOUBLE && value->IsType<double>()) { *static_cast<double *>(ref) = value->AnyCast<double>(); return true; }
-    if (typeId == gSceneVariableTypeIds.stringTypeId && value->IsType<std::string>()) { *static_cast<std::string *>(ref) = value->AnyCast<std::string>(); return true; }
-    if (typeId == gSceneVariableTypeIds.vector2TypeId && value->IsType<Vector2>()) { *static_cast<Vector2 *>(ref) = value->AnyCast<Vector2>(); return true; }
-    if (typeId == gSceneVariableTypeIds.vector3TypeId && value->IsType<Vector3>()) { *static_cast<Vector3 *>(ref) = value->AnyCast<Vector3>(); return true; }
-    if (typeId == gSceneVariableTypeIds.vector4TypeId && value->IsType<Vector4>()) { *static_cast<Vector4 *>(ref) = value->AnyCast<Vector4>(); return true; }
-    if (typeId == gSceneVariableTypeIds.quaternionTypeId && value->IsType<Quaternion>()) { *static_cast<Quaternion *>(ref) = value->AnyCast<Quaternion>(); return true; }
+    if (typeId == BindingData().variables.stringTypeId && value->IsType<std::string>()) { *static_cast<std::string *>(ref) = value->AnyCast<std::string>(); return true; }
+    if (typeId == BindingData().variables.vector2TypeId && value->IsType<Vector2>()) { *static_cast<Vector2 *>(ref) = value->AnyCast<Vector2>(); return true; }
+    if (typeId == BindingData().variables.vector3TypeId && value->IsType<Vector3>()) { *static_cast<Vector3 *>(ref) = value->AnyCast<Vector3>(); return true; }
+    if (typeId == BindingData().variables.vector4TypeId && value->IsType<Vector4>()) { *static_cast<Vector4 *>(ref) = value->AnyCast<Vector4>(); return true; }
+    if (typeId == BindingData().variables.quaternionTypeId && value->IsType<Quaternion>()) { *static_cast<Quaternion *>(ref) = value->AnyCast<Quaternion>(); return true; }
     return false;
 }
 
@@ -3755,11 +3812,11 @@ bool WriteSceneVariableToGeneric(MyAny *value, void *ref, int typeId) {
 ///          パラメータ/戻り値として自由に参照できる（型は既に登録済みのため）。
 void RegisterObjectTypes(asIScriptEngine *engine) {
     // シーン変数の ?&in/?&out 変換で使うタイプIDをキャッシュする（string/Vector2等はここまでに登録済み）
-    gSceneVariableTypeIds.stringTypeId = engine->GetTypeIdByDecl("string");
-    gSceneVariableTypeIds.vector2TypeId = engine->GetTypeIdByDecl("Vector2");
-    gSceneVariableTypeIds.vector3TypeId = engine->GetTypeIdByDecl("Vector3");
-    gSceneVariableTypeIds.vector4TypeId = engine->GetTypeIdByDecl("Vector4");
-    gSceneVariableTypeIds.quaternionTypeId = engine->GetTypeIdByDecl("Quaternion");
+    BindingData(engine).variables.stringTypeId = engine->GetTypeIdByDecl("string");
+    BindingData(engine).variables.vector2TypeId = engine->GetTypeIdByDecl("Vector2");
+    BindingData(engine).variables.vector3TypeId = engine->GetTypeIdByDecl("Vector3");
+    BindingData(engine).variables.vector4TypeId = engine->GetTypeIdByDecl("Vector4");
+    BindingData(engine).variables.quaternionTypeId = engine->GetTypeIdByDecl("Quaternion");
 
     // Objectはスクリプトから参照先の生死を安全に判定できるよう、生ポインタではなくUUID保持の
     // 参照カウント式ハンドル(ScriptObjectHandle)で登録する。各メソッドは呼び出しの都度Resolve()で
@@ -3903,63 +3960,98 @@ void RegisterObjectTypes(asIScriptEngine *engine) {
         .property("uint64 wParam", &ScriptWindowMessageInfo::wparam)
         .property("int64 lParam", &ScriptWindowMessageInfo::lparam);
 
-    asbind20::ref_class<SceneContext>(engine, "Scene", asOBJ_NOCOUNT)
-        .method("const string &GetName() const", &SceneContext::GetName)
+    asbind20::ref_class<ScriptSceneHandle>(engine, "Scene")
+        .addref(&ScriptSceneHandle::AddRef)
+        .release(&ScriptSceneHandle::Release)
+        .method("const string &GetName() const", SceneCall<&SceneContext::GetName>())
         .method("Object@ GetObject(const string &in) const",
-            [](const SceneContext &scene, const std::string &name) -> ScriptObjectHandle * { return ScriptObjectHandle::Create(scene.GetSceneObject(name)); })
-        .method("array<Object@>@ GetObjects(const string &in) const", [](const SceneContext &scene, const std::string &name) -> CScriptArray * {
+            [](const ScriptSceneHandle &self, const std::string &name) -> ScriptObjectHandle * {
+            auto *resolved = self.Resolve();
+            if (!resolved) return nullptr;
+            auto &scene = *resolved; return ScriptObjectHandle::Create(scene.GetSceneObject(name)); })
+        .method("array<Object@>@ GetObjects(const string &in) const", [](const ScriptSceneHandle &self, const std::string &name) -> CScriptArray * {
+            auto *resolved = self.Resolve();
+            if (!resolved) return nullptr;
+            auto &scene = *resolved;
             return MakeObjectArray(scene.GetSceneObjects(name));
         })
-        .method("void SetNextSceneName(const string &in)", &SceneContext::SetNextSceneName)
-        .method("bool ChangeToNextScene()", &SceneContext::ChangeToNextScene)
-        .method("bool HasNextSceneName() const", &SceneContext::HasNextSceneName)
-        .method("void ClearNextSceneName()", &SceneContext::ClearNextSceneName)
+        .method("void SetNextSceneName(const string &in)", SceneCall<&SceneContext::SetNextSceneName>())
+        .method("bool ChangeToNextScene()", SceneCall<&SceneContext::ChangeToNextScene>())
+        .method("bool HasNextSceneName() const", SceneCall<&SceneContext::HasNextSceneName>())
+        .method("void ClearNextSceneName()", SceneCall<&SceneContext::ClearNextSceneName>())
         // オブジェクトの生成・複製・削除
-        .method("Object@ CreateObject(const string &in name = \"\")", [](SceneContext &scene, const std::string &name) -> ScriptObjectHandle * {
+        .method("Object@ CreateObject(const string &in name = \"\")", [](ScriptSceneHandle &self, const std::string &name) -> ScriptObjectHandle * {
+            auto *resolved = self.Resolve();
+            if (!resolved) return nullptr;
+            auto &scene = *resolved;
             return ScriptObjectHandle::Create(scene.CreateEmptyObject(name));
         })
-        .method("Object@ CloneObject(Object@ source, const string &in name = \"\", bool includeChildren = false)", [](SceneContext &scene, ScriptObjectHandle *source, const std::string &name, bool includeChildren) -> ScriptObjectHandle * {
+        .method("Object@ CloneObject(Object@ source, const string &in name = \"\", bool includeChildren = false)", [](ScriptSceneHandle &self, ScriptObjectHandle *source, const std::string &name, bool includeChildren) -> ScriptObjectHandle * {
+            auto *resolved = self.Resolve();
+            if (!resolved) return nullptr;
+            auto &scene = *resolved;
             EmptyObject *sourceObj = source ? source->Resolve() : nullptr;
             if (source && !sourceObj) { ThrowDestroyedObjectException(); return nullptr; }
             return ScriptObjectHandle::Create(scene.CloneObject(sourceObj, name, includeChildren));
         })
-        .method("bool DeleteObject(Object@ obj)", [](SceneContext &scene, ScriptObjectHandle *handle) -> bool {
+        .method("bool DeleteObject(Object@ obj)", [](ScriptSceneHandle &self, ScriptObjectHandle *handle) -> bool {
+            auto *resolved = self.Resolve();
+            if (!resolved) return false;
+            auto &scene = *resolved;
             EmptyObject *obj = handle ? handle->Resolve() : nullptr;
             if (handle && !obj) { ThrowDestroyedObjectException(); return false; }
             return scene.DeleteObject(obj);
         })
         // シーン変数（このシーンが読み込まれている間だけ有効。スクリプト間で値を受け渡すのに使う）
-        .method("bool SetVariable(const string &in, ?&in)", [](SceneContext &scene, const std::string &key, void *ref, int typeId) -> bool {
+        .method("bool SetVariable(const string &in, ?&in)", [](ScriptSceneHandle &self, const std::string &key, void *ref, int typeId) -> bool {
+            auto *resolved = self.Resolve();
+            if (!resolved) return false;
+            auto &scene = *resolved;
             return SetSceneVariableFromGeneric(scene, key, ref, typeId);
         })
-        .method("bool GetVariable(const string &in, ?&out)", [](SceneContext &scene, const std::string &key, void *ref, int typeId) -> bool {
+        .method("bool GetVariable(const string &in, ?&out)", [](ScriptSceneHandle &self, const std::string &key, void *ref, int typeId) -> bool {
+            auto *resolved = self.Resolve();
+            if (!resolved) return false;
+            auto &scene = *resolved;
             return WriteSceneVariableToGeneric(scene.GetSceneVariable(key), ref, typeId);
         })
-        .method("bool HasVariable(const string &in)", [](SceneContext &scene, const std::string &key) -> bool {
+        .method("bool HasVariable(const string &in)", [](ScriptSceneHandle &self, const std::string &key) -> bool {
+            auto *resolved = self.Resolve();
+            if (!resolved) return false;
+            auto &scene = *resolved;
             return scene.GetSceneVariable(key) != nullptr;
         })
-        .method("bool RemoveVariable(const string &in)", &SceneContext::RemoveSceneVariable)
+        .method("bool RemoveVariable(const string &in)", SceneCall<&SceneContext::RemoveSceneVariable>())
         // グローバルシーン変数（シーンを跨いでも値が残る。SceneManagerが保持する）
-        .method("bool SetGlobalVariable(const string &in, ?&in)", [](SceneContext &scene, const std::string &key, void *ref, int typeId) -> bool {
+        .method("bool SetGlobalVariable(const string &in, ?&in)", [](ScriptSceneHandle &self, const std::string &key, void *ref, int typeId) -> bool {
+            auto *resolved = self.Resolve();
+            if (!resolved) return false;
+            auto &scene = *resolved;
             return SetGlobalSceneVariableFromGeneric(scene, key, ref, typeId);
         })
-        .method("bool GetGlobalVariable(const string &in, ?&out)", [](SceneContext &scene, const std::string &key, void *ref, int typeId) -> bool {
+        .method("bool GetGlobalVariable(const string &in, ?&out)", [](ScriptSceneHandle &self, const std::string &key, void *ref, int typeId) -> bool {
+            auto *resolved = self.Resolve();
+            if (!resolved) return false;
+            auto &scene = *resolved;
             return WriteSceneVariableToGeneric(scene.GetGlobalSceneVariable(key), ref, typeId);
         })
-        .method("bool HasGlobalVariable(const string &in)", [](SceneContext &scene, const std::string &key) -> bool {
+        .method("bool HasGlobalVariable(const string &in)", [](ScriptSceneHandle &self, const std::string &key) -> bool {
+            auto *resolved = self.Resolve();
+            if (!resolved) return false;
+            auto &scene = *resolved;
             return scene.GetGlobalSceneVariable(key) != nullptr;
         })
-        .method("bool RemoveGlobalVariable(const string &in)", &SceneContext::RemoveGlobalSceneVariable)
-        .method("void ClearGlobalVariables()", &SceneContext::ClearGlobalSceneVariables)
+        .method("bool RemoveGlobalVariable(const string &in)", SceneCall<&SceneContext::RemoveGlobalSceneVariable>())
+        .method("void ClearGlobalVariables()", SceneCall<&SceneContext::ClearGlobalSceneVariables>())
         // グローバルシーン変数の永続化（ゲームのセーブ/ロード用途。filePathを省略すると既定のパスを使用する）
-        .method("bool SaveGlobalVariables(const string &in filePath = \"\") const", &SceneContext::SaveGlobalSceneVariables)
-        .method("bool LoadGlobalVariables(const string &in filePath = \"\")", &SceneContext::LoadGlobalSceneVariables)
+        .method("bool SaveGlobalVariables(const string &in filePath = \"\") const", SceneCall<&SceneContext::SaveGlobalSceneVariables>())
+        .method("bool LoadGlobalVariables(const string &in filePath = \"\")", SceneCall<&SceneContext::LoadGlobalSceneVariables>())
         // ゲームループの終了要求（エディター実行時は再生停止として扱われる）
-        .method("void RequestExitGameLoop()", &SceneContext::RequestExitGameLoop)
+        .method("void RequestExitGameLoop()", SceneCall<&SceneContext::RequestExitGameLoop>())
         // シーンが再生中かどうか（エディターでPlayボタンを押している間のみtrue。
         // エディターを持たないビルドではこのフラグ自体が意味を持たないため、
         // セーブ処理などの分岐にはIsEditorBuild()と組み合わせて使うこと）
-        .method("bool IsPlaying() const", &SceneContext::IsPlaying);
+        .method("bool IsPlaying() const", SceneCall<&SceneContext::IsPlaying>());
 
     // スクリプト側でコンポーネントの動作を定義するためのインターフェース
     // （ScriptComponentはこのインターフェースを実装したクラスを探して実行する）
@@ -4050,11 +4142,11 @@ bool GenericToJson(asIScriptEngine *engine, const void *ref, int typeId, JSON &o
     default: break;
     }
 
-    if (typeId == gSceneVariableTypeIds.stringTypeId) { out = *static_cast<const std::string *>(ref); return true; }
-    if (typeId == gSceneVariableTypeIds.vector2TypeId) { out = ToJSON(*static_cast<const Vector2 *>(ref)); return true; }
-    if (typeId == gSceneVariableTypeIds.vector3TypeId) { out = ToJSON(*static_cast<const Vector3 *>(ref)); return true; }
-    if (typeId == gSceneVariableTypeIds.vector4TypeId) { out = ToJSON(*static_cast<const Vector4 *>(ref)); return true; }
-    if (typeId == gSceneVariableTypeIds.quaternionTypeId) { out = ToJSON(*static_cast<const Quaternion *>(ref)); return true; }
+    if (typeId == BindingData().variables.stringTypeId) { out = *static_cast<const std::string *>(ref); return true; }
+    if (typeId == BindingData().variables.vector2TypeId) { out = ToJSON(*static_cast<const Vector2 *>(ref)); return true; }
+    if (typeId == BindingData().variables.vector3TypeId) { out = ToJSON(*static_cast<const Vector3 *>(ref)); return true; }
+    if (typeId == BindingData().variables.vector4TypeId) { out = ToJSON(*static_cast<const Vector4 *>(ref)); return true; }
+    if (typeId == BindingData().variables.quaternionTypeId) { out = ToJSON(*static_cast<const Quaternion *>(ref)); return true; }
 
     asITypeInfo *typeInfo = engine->GetTypeInfoById(typeId);
     if (!typeInfo || !typeInfo->GetName()) return false;
@@ -4189,15 +4281,15 @@ bool JsonToGeneric(asIScriptEngine *engine, const JSON &value, void *ref, int ty
     }
 
     try {
-        if (typeId == gSceneVariableTypeIds.stringTypeId) {
+        if (typeId == BindingData().variables.stringTypeId) {
             if (!value.is_string()) return false;
             *static_cast<std::string *>(ref) = value.get<std::string>();
             return true;
         }
-        if (typeId == gSceneVariableTypeIds.vector2TypeId) { *static_cast<Vector2 *>(ref) = FromJSON<Vector2>(value); return true; }
-        if (typeId == gSceneVariableTypeIds.vector3TypeId) { *static_cast<Vector3 *>(ref) = FromJSON<Vector3>(value); return true; }
-        if (typeId == gSceneVariableTypeIds.vector4TypeId) { *static_cast<Vector4 *>(ref) = FromJSON<Vector4>(value); return true; }
-        if (typeId == gSceneVariableTypeIds.quaternionTypeId) { *static_cast<Quaternion *>(ref) = FromJSON<Quaternion>(value); return true; }
+        if (typeId == BindingData().variables.vector2TypeId) { *static_cast<Vector2 *>(ref) = FromJSON<Vector2>(value); return true; }
+        if (typeId == BindingData().variables.vector3TypeId) { *static_cast<Vector3 *>(ref) = FromJSON<Vector3>(value); return true; }
+        if (typeId == BindingData().variables.vector4TypeId) { *static_cast<Vector4 *>(ref) = FromJSON<Vector4>(value); return true; }
+        if (typeId == BindingData().variables.quaternionTypeId) { *static_cast<Quaternion *>(ref) = FromJSON<Quaternion>(value); return true; }
     } catch (const std::exception &) {
         return false;
     }
@@ -4240,7 +4332,7 @@ bool JsonToGeneric(asIScriptEngine *engine, const JSON &value, void *ref, int ty
                 dictionary->Set(it.key(), v);
             } else if (element.is_string()) {
                 std::string v = element.get<std::string>();
-                dictionary->Set(it.key(), &v, gSceneVariableTypeIds.stringTypeId);
+                dictionary->Set(it.key(), &v, BindingData().variables.stringTypeId);
             } else if (element.is_object()) {
                 // ネストしたオブジェクトは辞書として復元する
                 // （数学型として保存されたものも辞書になる点に注意。Setはハンドルをaddrefするため生成分を手放す）
@@ -4951,6 +5043,13 @@ void RegisterGlobalFunctions(asIScriptEngine *engine) {
         })
         // エディターツールのウィンドウ操作（[EditorWindow]で用意されたウィンドウが対象。
         // エディター無効ビルドでは何もしない）
+        .function("string GetCurrentEditorWindowName()", []() -> std::string {
+#if defined(USE_IMGUI)
+            return EditorToolManager::GetInstance().GetCurrentWindowName();
+#else
+            return {};
+#endif
+        })
         .function("void OpenEditorWindow(const string &in)", [](const std::string &name) {
 #if defined(USE_IMGUI)
             EditorToolManager::GetInstance().OpenWindow(name);
@@ -5062,7 +5161,7 @@ void RegisterGlobalFunctions(asIScriptEngine *engine) {
         .function("Transform@ GetTransform()", []() -> ScriptComponentHandle<Transform> * {
             return gCurrentObjectContext ? ScriptComponentHandle<Transform>::Create(gCurrentObjectContext->GetComponent<Transform>()) : nullptr;
         })
-        .function("Scene@ GetScene()", []() -> SceneContext * { return gCurrentSceneContext; })
+        .function("Scene@ GetScene()", []() -> ScriptSceneHandle * { return ScriptSceneHandle::Create(gCurrentSceneContext); })
         .function("Object@ FindObject(const string &in)", [](const std::string &name) -> ScriptObjectHandle * {
             return gCurrentSceneContext ? ScriptObjectHandle::Create(gCurrentSceneContext->GetSceneObject(name)) : nullptr;
         })

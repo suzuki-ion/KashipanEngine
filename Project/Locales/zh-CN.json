@@ -2261,6 +2261,8 @@
 		"engine.editortool.failed.createinstance": "EditorTool：实例创建失败。类名：",
 		"engine.editortool.failed.createmodule": "EditorTool：模块创建失败。脚本路径：",
 		"engine.editortool.interface.notregistered": "EditorTool：EditorTool接口尚未注册。",
+		"editor.editortools.menu": "编辑器工具",
+		"editor.editortools.reload": "重新加载编辑器工具",
 		"engine.editortool.loaded": "EditorTool：已加载。类名：",
 		"engine.editortool.menuitem.invalidpath": "EditorTool：[MenuItem] 的显示层级请以 \"MenuBar/项目名\" 或 \"Hierarchy/项目名\" 的格式指定。指定值：",
 		"engine.editortool.menuitem.invalidroot": "EditorTool：[MenuItem] 的显示层级开头仅支持 \"MenuBar/\" 或 \"Hierarchy/\"。指定值：",

@@ -13,10 +13,12 @@ namespace ComponentAddMenu {
 /// @param types 登録済みコンポーネント型名のリスト
 /// @param getCategory 型名からカテゴリ階層を取得する関数
 /// @param outSelectedType 選択された型名の出力先
+/// @param getTooltip 任意の説明文取得関数（未指定なら表示しない）
 /// @return 型が選択された場合は true
 bool Show(const std::vector<std::string> &types,
     const std::function<const std::vector<std::string> &(const std::string &)> &getCategory,
-    std::string &outSelectedType);
+    std::string &outSelectedType,
+    const std::function<std::string(const std::string &)> &getTooltip = {});
 
 } // namespace ComponentAddMenu
 

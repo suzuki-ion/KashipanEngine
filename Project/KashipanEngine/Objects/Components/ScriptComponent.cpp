@@ -1440,6 +1440,8 @@ std::vector<ScriptComponent::ComponentDefinition> ScriptComponent::DiscoverCompo
         std::function<void(size_t &, const std::string &)> scan;
         scan = [&](size_t &i, const std::string &nameSpace) {
             bool component = false;
+            std::vector<std::string> category{ "Script", "Custom" };
+            std::string tooltip;
             while (i < tokens.size() && tokens[i] != "}") {
                 if (tokens[i] == "[") {
                     std::string metadata;
@@ -1450,7 +1452,24 @@ std::vector<ScriptComponent::ComponentDefinition> ScriptComponent::DiscoverCompo
                         if (depth) metadata += tokens[i] + " ";
                     }
                     for (const auto &attribute : ParseAttributeTokens({ metadata })) {
-                        if (attribute.name == "Component") component = true;
+                        if (attribute.name == "Component") {
+                            component = true;
+                            category.clear();
+                            if (!attribute.args.empty()) {
+                                const std::string &categoryPath = attribute.args.front();
+                                size_t start = 0;
+                                while (start <= categoryPath.size()) {
+                                    const auto end = categoryPath.find('/', start);
+                                    auto part = TrimMetadata(categoryPath.substr(start, end == std::string::npos ? end : end - start));
+                                    if (!part.empty()) category.push_back(std::move(part));
+                                    if (end == std::string::npos) break;
+                                    start = end + 1;
+                                }
+                            }
+                            if (category.empty()) category = { "Script", "Custom" };
+                        } else if (attribute.name == "Tooltip" && !attribute.args.empty()) {
+                            tooltip = attribute.args.front();
+                        }
                     }
                     continue;
                 }
@@ -1462,6 +1481,7 @@ std::vector<ScriptComponent::ComponentDefinition> ScriptComponent::DiscoverCompo
                         scan(i, nameSpace + nested + "::");
                     }
                     component = false;
+                    tooltip.clear();
                     continue;
                 } else if (tokens[i] == "class" && i + 1 < tokens.size()) {
                     const std::string className = nameSpace + tokens[++i];
@@ -1472,11 +1492,13 @@ std::vector<ScriptComponent::ComponentDefinition> ScriptComponent::DiscoverCompo
                         if (inBases && tokens[i] == kBehaviorInterfaceName) behavior = true;
                     }
                     if (component && behavior && i < tokens.size() && tokens[i] == "{") {
-                        definitions.push_back({ path, className });
+                        definitions.push_back({ path, className, category, tooltip });
                     }
                     component = false;
+                    tooltip.clear();
                 } else if (tokens[i] != "shared" && tokens[i] != "abstract" && tokens[i] != "final") {
                     component = false;
+                    tooltip.clear();
                 }
                 if (i < tokens.size() && tokens[i] == "{") {
                     int depth = 1;

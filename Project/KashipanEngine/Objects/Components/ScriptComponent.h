@@ -86,6 +86,8 @@ public:
     struct ComponentDefinition {
         std::string scriptPath;
         std::string className;
+        std::vector<std::string> category{ "Script", "Custom" };
+        std::string tooltip;
     };
     /// @brief [Component]付きのクラスを列挙する。スクリプトのコンパイル・実行は行わない。
     static std::vector<ComponentDefinition> DiscoverComponents();

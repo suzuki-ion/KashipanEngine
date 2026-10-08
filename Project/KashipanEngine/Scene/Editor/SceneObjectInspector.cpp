@@ -56,11 +56,14 @@ bool ShowObjectComponentAddMenu(std::string &outType, JSON &outState) {
         customTypes[label] = i;
         types.push_back(label);
     }
-    const std::vector<std::string> category{ "Script", "Custom" };
     std::string selected;
     if (!ComponentAddMenu::Show(types, [&](const std::string &type) -> const std::vector<std::string> & {
-            return customTypes.contains(type) ? category : GetObjectComponentCategory(type);
-        }, selected)) return false;
+            const auto it = customTypes.find(type);
+            return it != customTypes.end() ? definitions[it->second].category : GetObjectComponentCategory(type);
+        }, selected, [&](const std::string &type) -> std::string {
+            const auto it = customTypes.find(type);
+            return it != customTypes.end() ? definitions[it->second].tooltip : std::string{};
+        })) return false;
     auto it = customTypes.find(selected);
     if (it == customTypes.end()) {
         outType = selected;

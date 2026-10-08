@@ -20,6 +20,13 @@
 
 <h2>スクリプトの割り当て</h2>
 <h3>自作コンポーネントを追加する</h3>
+<p>クラスに<code>[Tooltip("説明文")]</code>を付けると、追加メニューのクラス名にカーソルを合わせた際に説明が表示されます。カテゴリ表示と検索結果の両方に対応します。フィールドに付けるTooltipとは独立しています。</p>
+<pre><code>[Component("Script/Custom/ObjectCommon")]
+[Tooltip("HPを管理し、ダメージと回復を処理します。")]
+class Health : ScriptComponentBehavior {
+    [SerializeField] int hp = 100;
+}</code></pre>
+<p><code>[Component("Script/Custom/ObjectCommon")]</code>のようにカテゴリを指定すると、<span class="ui-path">Add Component → Script → Custom → ObjectCommon</span>に表示されます。<code>/</code>で階層を区切り、<code>[Component("Gameplay/Stats")]</code>のような任意のカテゴリも指定できます。各階層の前後の空白と空の階層は除去します。引数なし、空文字、または空の階層のみの場合は従来の<code>Script/Custom</code>になります。検索では指定カテゴリにも一致します。</p>
 <p>Assets内の<code>.as</code>ファイルで、<code>ScriptComponentBehavior</code>を直接実装するクラスに<code>[Component]</code>を付けると、Inspectorの<span class="ui-path">Add Component → Script → Custom</span>にクラス名が表示されます。追加メニューを開くたびに一覧を更新します。コメントや文字列中の属性は対象になりません。</p>
 <pre><code>[Component]
 class Health : ScriptComponentBehavior {

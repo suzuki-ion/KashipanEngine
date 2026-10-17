@@ -102,6 +102,8 @@ float Apply(float t, EaseType type);
 const char *EaseTypeToString(EaseType type);
 /// @brief 文字列を EaseType へ変換する（不明な文字列の場合は Linear）
 EaseType StringToEaseType(const std::string &str);
+/// @brief 文字列（列挙子名と完全一致）を EaseType へ変換する。不明な文字列の場合は false を返し out は変更しない
+bool TryStringToEaseType(const std::string &str, EaseType &out);
 
 /// @brief 任意型の補間 Start -> End
 /// @param start 開始ベクトル/値

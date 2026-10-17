@@ -9,8 +9,10 @@
 namespace KashipanEngine {
 
 /// @brief キーフレームアニメーション(json)のfloat値を、同オブジェクトの他コンポーネントのパラメータへ適用するコンポーネント
-/// @details アニメーションは KeyframeAnimation::LoadFromJson 形式のjsonファイルから読み込む
-///          （エディターツールの Keyframe Animation Editor で作成できる）。
+/// @details アニメーションは KeyframeAnimation::LoadFromJson 形式のjsonファイルから読み込むか
+///          （エディターツールの Keyframe Animation Editor で作成できる）、
+///          キーフレームをエントリ内に埋め込んで（embedded）シーンへ直接保存する。
+///          埋め込みエントリは AddAnimationData/SetAnimationData で登録し、短文の一回変化（Tween）もこの形式で生成される。
 ///          複数のアニメーションを登録でき、それぞれに再生速度・時間オフセット・値オフセットを設定できる。
 ///          再生中のアニメーションの評価値は、各アニメーションに設定した適用先（複数可）へ毎フレーム書き込まれる。
 ///          適用先は以下の2種類:
@@ -37,12 +39,19 @@ public:
         bool loop = true;             ///< ループ再生するか（無効の場合は末端に到達すると自動停止する）
         bool playOnStart = false;     ///< ゲームループ開始時に自動で再生を開始するか
         std::vector<TargetBinding> bindings; ///< 評価値の適用先（複数可）
+        /// @brief キーフレームをこのエントリ内に保持するか（true の場合 jsonPath は使わず、animation がそのまま保存される）
+        bool embedded = false;
+        /// @brief 短文から生成されたエントリか（同じ適用先への再適用時はこのエントリだけが更新・置換される）
+        bool shortTextManaged = false;
+        std::string sourceText;       ///< 生成元の文章（shortTextManaged の場合）
 
-        // --- 実行時状態（保存されない） ---
+        // --- 実行時状態（保存されない。embedded の場合 animation は保存対象） ---
         KeyframeAnimation animation;
         bool loaded = false;
         bool loadFailed = false;
         bool playing = false;
+        /// @brief 再生開始直後か（埋め込みエントリは開始フレームで時刻0の値を書き込んでから進める）
+        bool startPending = false;
         float currentTime = 0.0f;
         float lastValue = 0.0f;
     };
@@ -65,6 +74,9 @@ public:
     bool IsPlaying(const std::string &name) const;
     bool SetPlaybackSpeed(const std::string &name, float speed);
     float GetPlaybackSpeed(const std::string &name) const;
+    float GetAnimationTime(const std::string &name) const;
+    bool SetCurrentTime(const std::string &name, float time);
+    float GetDuration(const std::string &name) const;
     /// @brief 最後に評価された値（valueOffset適用後）を取得する
     bool TryGetValue(const std::string &name, float &outValue) const;
     size_t GetAnimationCount() const noexcept { return animations_.size(); }
@@ -76,13 +88,31 @@ public:
     /// @brief アニメーションを追加する（再生速度等はデフォルト値、適用先は空で追加される）
     /// @return 名前が空、または同名のアニメーションが既にある場合は false
     bool AddAnimation(const std::string &name, const std::string &jsonPath);
+    /// @brief キーフレームデータ（KeyframeAnimation::SaveToJson 形式）を埋め込んだアニメーションを追加する
+    /// @return 名前が空・重複している場合、またはデータが不正な場合は false（何も追加しない）
+    bool AddAnimationData(const std::string &name, const JSON &keyframesJson);
+    /// @brief 既存アニメーションのキーフレームを埋め込みデータで置き換える（ファイル参照から埋め込みへ切り替わる）
+    /// @return アニメーションが無い・データが不正な場合は false（以前の状態を保持する）
+    bool SetAnimationData(const std::string &name, const JSON &keyframesJson);
+    /// @brief キーフレームが埋め込みデータか（false の場合は jsonPath のファイルを参照する）
+    bool IsEmbedded(const std::string &name) const;
+    /// @brief 読み込み済みのキーフレーム（埋め込み、またはファイルから読み込み済みのもの）。無い場合は nullptr
+    const KeyframeAnimation *GetAnimationData(const std::string &name) const;
+    /// @brief 短文由来の印と生成元の文章を設定する（文章は512バイトまで）
+    bool SetShortTextSource(const std::string &name, bool managed, const std::string &sourceText);
+    bool IsShortTextManaged(const std::string &name) const;
+    std::vector<std::string> GetAnimationNames() const;
+    /// @brief 適用先一覧（アニメーションが無い場合は nullptr）
+    const std::vector<TargetBinding> *GetBindings(const std::string &name) const;
+    /// @brief エントリ1件をシーン保存と同じ形式で取得する（アニメーションが無い場合は null）
+    JSON SaveAnimationEntryToJson(const std::string &name) const;
     /// @brief 指定した名前のアニメーションを削除する
     bool RemoveAnimation(const std::string &name);
     /// @brief 全アニメーションを削除する
     void ClearAnimations() { animations_.clear(); }
     bool HasAnimation(const std::string &name) const { return FindAnimation(name) != nullptr; }
 
-    /// @brief キーフレームjsonのパスを変更する（次回の再生時に読み込み直される）
+    /// @brief キーフレームjsonのパスを変更する（次回の再生時に読み込み直される。埋め込みエントリはファイル参照へ戻る）
     bool SetJsonPath(const std::string &name, const std::string &jsonPath);
     std::string GetJsonPath(const std::string &name) const;
     bool SetLoop(const std::string &name, bool loop);
@@ -126,9 +156,16 @@ private:
     void EnsureLoaded(AnimationEntry &entry);
     /// @brief 評価値をエントリの全バインド先へ書き込む
     void ApplyValue(const AnimationEntry &entry, float value);
+    /// @brief 再生開始状態にする（Play/PlayAll/playOnStart 共通）
+    static void StartEntry(AnimationEntry &entry);
+    static JSON SaveEntryToJson(const AnimationEntry &entry);
+    /// @brief エントリ1件を厳密に検証して読み込む（不正な場合は false）
+    static bool LoadEntryFromJson(const JSON &json, AnimationEntry &entry);
 
 #if defined(USE_IMGUI)
     void ShowAnimationImGui(AnimationEntry &entry, const std::vector<ParameterBindingCandidate> &candidates);
+    /// @brief 埋め込みキーフレームの一覧・編集（時刻・値・次のキーへのイージング、追加・削除）
+    void ShowEmbeddedKeyframesImGui(AnimationEntry &entry);
 #endif
 
     std::vector<AnimationEntry> animations_;

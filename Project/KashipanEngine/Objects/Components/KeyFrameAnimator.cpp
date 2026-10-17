@@ -8,10 +8,31 @@
 #include "Debug/Logger.h"
 #include "Objects/Components/ScriptComponent.h"
 #include "Objects/ObjectContext.h"
+#include "Scene/SceneContext.h"
 #include "Utilities/FileIO/TextFile.h"
 #include "Utilities/TimeUtils.h"
 
 namespace KashipanEngine {
+namespace {
+using Keyframe = KeyframeAnimation::Keyframe;
+/// @brief 短文の回転（度で保持したキー）を内部単位のラジアンへ変換する valueScale
+constexpr float kDegreesToRadians = 3.14159265358979323846f / 180.0f;
+} // namespace
+
+float KeyFrameAnimator::GetAnimationTime(const std::string &name) const {
+    const auto *entry = FindAnimation(name); return entry ? entry->currentTime : 0.0f;
+}
+bool KeyFrameAnimator::SetCurrentTime(const std::string &name, float time) {
+    auto *entry = FindAnimation(name);
+    if (!entry || !std::isfinite(time) || time < 0) return false;
+    EnsureLoaded(*entry); if (!entry->loaded || entry->loadFailed) return false;
+    entry->currentTime = std::min(time, entry->animation.GetDuration());
+    ApplyValue(*entry, entry->animation.Evaluate(entry->currentTime + entry->timeOffset) * entry->valueScale + entry->valueOffset);
+    return true;
+}
+float KeyFrameAnimator::GetDuration(const std::string &name) const {
+    const auto *entry = FindAnimation(name); return entry && entry->loaded ? entry->animation.GetDuration() : 0.0f;
+}
 
 std::unique_ptr<IObjectComponent> KeyFrameAnimator::Clone() const {
     auto ptr = std::make_unique<KeyFrameAnimator>();
@@ -27,6 +48,14 @@ std::unique_ptr<IObjectComponent> KeyFrameAnimator::Clone() const {
         copy.loop = entry.loop;
         copy.playOnStart = entry.playOnStart;
         copy.bindings = entry.bindings;
+        copy.embedded = entry.embedded;
+        copy.shortTextManaged = entry.shortTextManaged;
+        copy.sourceText = entry.sourceText;
+        if (entry.embedded) {
+            // 埋め込みキーはエントリの設定そのものなので複製する（ファイル参照は複製先で読み込み直す）
+            copy.animation = entry.animation;
+            copy.loaded = true;
+        }
         ptr->animations_.push_back(std::move(copy));
     }
     return ptr;
@@ -39,8 +68,7 @@ std::unique_ptr<IObjectComponent> KeyFrameAnimator::Clone() const {
 bool KeyFrameAnimator::Play(const std::string &name) {
     auto *entry = FindAnimation(name);
     if (!entry) return false;
-    entry->currentTime = 0.0f;
-    entry->playing = true;
+    StartEntry(*entry);
     return true;
 }
 
@@ -53,8 +81,7 @@ bool KeyFrameAnimator::Stop(const std::string &name) {
 
 void KeyFrameAnimator::PlayAll() {
     for (auto &entry : animations_) {
-        entry.currentTime = 0.0f;
-        entry.playing = true;
+        StartEntry(entry);
     }
 }
 
@@ -109,9 +136,83 @@ bool KeyFrameAnimator::RemoveAnimation(const std::string &name) {
     return true;
 }
 
+bool KeyFrameAnimator::AddAnimationData(const std::string &name, const JSON &keyframesJson) {
+    if (name.empty() || FindAnimation(name)) return false;
+    AnimationEntry entry;
+    entry.name = name;
+    if (!entry.animation.LoadFromJson(keyframesJson)) return false;
+    entry.embedded = true;
+    entry.loaded = true;
+    animations_.push_back(std::move(entry));
+    return true;
+}
+
+bool KeyFrameAnimator::SetAnimationData(const std::string &name, const JSON &keyframesJson) {
+    auto *entry = FindAnimation(name);
+    if (!entry) return false;
+    KeyframeAnimation animation;
+    if (!animation.LoadFromJson(keyframesJson)) return false;
+    entry->animation = std::move(animation);
+    entry->embedded = true;
+    entry->jsonPath.clear();
+    entry->loaded = true;
+    entry->loadFailed = false;
+    entry->currentTime = std::min(entry->currentTime, entry->animation.GetDuration());
+    return true;
+}
+
+bool KeyFrameAnimator::IsEmbedded(const std::string &name) const {
+    const auto *entry = FindAnimation(name);
+    return entry && entry->embedded;
+}
+
+const KeyframeAnimation *KeyFrameAnimator::GetAnimationData(const std::string &name) const {
+    const auto *entry = FindAnimation(name);
+    return entry && entry->loaded ? &entry->animation : nullptr;
+}
+
+bool KeyFrameAnimator::SetShortTextSource(const std::string &name, bool managed, const std::string &sourceText) {
+    auto *entry = FindAnimation(name);
+    if (!entry || sourceText.size() > 512) return false;
+    entry->shortTextManaged = managed;
+    entry->sourceText = sourceText;
+    return true;
+}
+
+bool KeyFrameAnimator::IsShortTextManaged(const std::string &name) const {
+    const auto *entry = FindAnimation(name);
+    return entry && entry->shortTextManaged;
+}
+
+std::vector<std::string> KeyFrameAnimator::GetAnimationNames() const {
+    std::vector<std::string> names;
+    names.reserve(animations_.size());
+    for (const auto &entry : animations_) names.push_back(entry.name);
+    return names;
+}
+
+const std::vector<KeyFrameAnimator::TargetBinding> *KeyFrameAnimator::GetBindings(const std::string &name) const {
+    const auto *entry = FindAnimation(name);
+    return entry ? &entry->bindings : nullptr;
+}
+
+JSON KeyFrameAnimator::SaveAnimationEntryToJson(const std::string &name) const {
+    const auto *entry = FindAnimation(name);
+    return entry ? SaveEntryToJson(*entry) : JSON();
+}
+
 bool KeyFrameAnimator::SetJsonPath(const std::string &name, const std::string &jsonPath) {
     auto *entry = FindAnimation(name);
     if (!entry) return false;
+    if (entry->embedded) {
+        // 埋め込みキーを捨ててファイル参照へ戻す
+        entry->embedded = false;
+        entry->jsonPath = jsonPath;
+        entry->loaded = false;
+        entry->loadFailed = false;
+        entry->animation.Clear();
+        return true;
+    }
     if (entry->jsonPath != jsonPath) {
         entry->jsonPath = jsonPath;
         entry->loaded = false;
@@ -227,12 +328,13 @@ void KeyFrameAnimator::Initialize() {
 }
 
 void KeyFrameAnimator::Update() {
+    // エディターで再生していない間は値を書き込まない（playOnStartも再生開始後の最初のUpdateまで保留する）
+    if (auto *scene = GetOwnerSceneContext(); scene && !scene->IsPlaying()) return;
     if (applyPlayOnStart_) {
         applyPlayOnStart_ = false;
         for (auto &entry : animations_) {
             if (entry.playOnStart) {
-                entry.currentTime = 0.0f;
-                entry.playing = true;
+                StartEntry(entry);
             }
         }
     }
@@ -242,6 +344,17 @@ void KeyFrameAnimator::Update() {
         if (!entry.playing) continue;
         EnsureLoaded(entry);
         if (!entry.loaded) continue;
+
+        if (entry.startPending) {
+            entry.startPending = false;
+            if (entry.embedded) {
+                // 埋め込みエントリは再生開始フレームで必ず開始時刻の値を書き込む（編集時の値から始まらないように）
+                const float value = entry.animation.Evaluate(entry.currentTime + entry.timeOffset) * entry.valueScale + entry.valueOffset;
+                entry.lastValue = value;
+                ApplyValue(entry, value);
+                continue;
+            }
+        }
 
         entry.currentTime += deltaTime * entry.playbackSpeed;
         const float duration = entry.animation.GetDuration();
@@ -286,7 +399,18 @@ const KeyFrameAnimator::AnimationEntry *KeyFrameAnimator::FindAnimation(const st
     return nullptr;
 }
 
+void KeyFrameAnimator::StartEntry(AnimationEntry &entry) {
+    // 逆再生は末端から始める（埋め込みエントリのみ。ファイル参照は従来どおり先頭から）
+    entry.currentTime = (entry.embedded && entry.playbackSpeed < 0.0f) ? entry.animation.GetDuration() : 0.0f;
+    entry.playing = true;
+    entry.startPending = true;
+}
+
 void KeyFrameAnimator::EnsureLoaded(AnimationEntry &entry) {
+    if (entry.embedded) {
+        entry.loaded = true;
+        return;
+    }
     if (entry.loaded || entry.loadFailed || entry.jsonPath.empty()) return;
     const JSON json = LoadJSON(ProjectPaths::ToPhysical(entry.jsonPath));
     if (json.is_discarded() || !entry.animation.LoadFromJson(json)) {
@@ -413,11 +537,81 @@ bool ShowKeyframeJsonPicker(std::string &jsonPath) {
 }
 } // namespace
 
+void KeyFrameAnimator::ShowEmbeddedKeyframesImGui(AnimationEntry &entry) {
+    ImGui::Text("埋め込みキーフレーム（シーンに保存）: %d キー / %.2f 秒",
+        static_cast<int>(entry.animation.GetKeyframeCount()), entry.animation.GetDuration());
+    if (ImGui::IsItemHovered()) {
+        ImGuiCustom::SetTooltipWrapped("%s", "イージングは「そのキーから次のキーへ」の補間に使われる（最後のキーのイージングは未使用）");
+    }
+    auto keys = entry.animation.GetKeyframes();
+    bool changed = false;
+    int removeKey = -1;
+    if (ImGui::BeginTable("##embeddedKeys", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingStretchProp)) {
+        ImGui::TableSetupColumn("時刻(秒)");
+        ImGui::TableSetupColumn("値");
+        ImGui::TableSetupColumn("次のキーへのイージング");
+        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+        ImGui::TableHeadersRow();
+        for (int k = 0; k < static_cast<int>(keys.size()); ++k) {
+            auto &key = keys[k];
+            ImGui::PushID(k);
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            // 変更後はキー列を作り直して時刻昇順へ並べ替える
+            if (ImGui::DragFloat("##time", &key.time, 0.01f, 0.0f, 3600.0f, "%.3f", ImGuiSliderFlags_AlwaysClamp)) changed = true;
+            ImGui::TableNextColumn();
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            if (ImGui::DragFloat("##value", &key.value, 0.01f, -1.0e6f, 1.0e6f, "%.3f", ImGuiSliderFlags_AlwaysClamp)) changed = true;
+            ImGui::TableNextColumn();
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            const bool last = k + 1 == static_cast<int>(keys.size());
+            if (ImGui::BeginCombo("##ease", last ? "（最後のキー：未使用）" : EaseTypeToString(key.easeType))) {
+                for (int e = static_cast<int>(EaseType::Linear); e <= static_cast<int>(EaseType::EaseOutInBounce); ++e) {
+                    const auto type = static_cast<EaseType>(e);
+                    if (ImGui::Selectable(EaseTypeToString(type), type == key.easeType)) {
+                        key.easeType = type;
+                        changed = true;
+                    }
+                }
+                ImGui::EndCombo();
+            }
+            ImGui::TableNextColumn();
+            if (ImGui::SmallButton("×")) removeKey = k;
+            ImGui::PopID();
+        }
+        ImGui::EndTable();
+    }
+    if (ImGui::SmallButton("キーを追加")) {
+        Keyframe key;
+        key.time = entry.animation.GetDuration() + (keys.empty() ? 0.0f : 1.0f);
+        key.value = keys.empty() ? 0.0f : keys.back().value;
+        keys.push_back(key);
+        changed = true;
+    }
+    if (removeKey >= 0) {
+        keys.erase(keys.begin() + removeKey);
+        changed = true;
+    }
+    if (changed) {
+        KeyframeAnimation next;
+        for (const auto &key : keys) next.AddKeyframe(key.time, key.value, key.easeType);
+        entry.animation = std::move(next);
+        entry.currentTime = std::min(entry.currentTime, entry.animation.GetDuration());
+    }
+}
+
 void KeyFrameAnimator::ShowAnimationImGui(AnimationEntry &entry, const std::vector<ParameterBindingCandidate> &candidates) {
     ImGui::InputText(TranslationLabel("component.keyframeanimator.name"), &entry.name);
     if (ImGui::IsItemHovered()) {
         ImGuiCustom::SetTooltipWrapped("%s", "Play/Stop等で指定する識別名");
     }
+    if (entry.shortTextManaged) {
+        ImGuiCustom::TextDisabledWrapped("短文から生成: %s", entry.sourceText.c_str());
+    }
+    if (entry.embedded) {
+        ShowEmbeddedKeyframesImGui(entry);
+    } else {
     ImGui::InputText(TranslationLabel("component.keyframeanimator.json_path"), &entry.jsonPath);
     ImGui::SameLine();
     // 一覧から検索して選んだ場合は、Reloadと同様にすぐ読み込み直す
@@ -447,6 +641,20 @@ void KeyFrameAnimator::ShowAnimationImGui(AnimationEntry &entry, const std::vect
     } else {
         ImGuiCustom::TextDisabledWrapped("%s", TranslationC("component.keyframeanimator.desc_1"));
     }
+    if (ImGui::SmallButton("キーをシーンへ埋め込む")) {
+        // ファイルのキーをこのエントリへ複製し、以後はシーンに保存する（元ファイルは変更しない）
+        KeyframeAnimation keys;
+        if (entry.loaded) keys = entry.animation;
+        entry.animation = std::move(keys);
+        entry.embedded = true;
+        entry.jsonPath.clear();
+        entry.loaded = true;
+        entry.loadFailed = false;
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGuiCustom::SetTooltipWrapped("%s", "読み込み済みのキーをこのエントリ内に保持し、シーンへ直接保存する（ファイル参照をやめる）");
+    }
+    }
 
     ImGui::DragFloat(TranslationLabel("component.keyframeanimator.playback_speed"), &entry.playbackSpeed, 0.01f);
     if (ImGui::IsItemHovered()) {
@@ -457,6 +665,10 @@ void KeyFrameAnimator::ShowAnimationImGui(AnimationEntry &entry, const std::vect
         ImGuiCustom::SetTooltipWrapped("%s", "評価時刻へ加算する再生時オフセット（秒）。同じアニメを複数オブジェクトで位相をずらして再生する用途など");
     }
     ImGui::DragFloat(TranslationLabel("component.keyframeanimator.value_scale"), &entry.valueScale, 0.01f);
+    if (std::abs(entry.valueScale - kDegreesToRadians) < 1e-6f) {
+        ImGui::SameLine();
+        ImGui::TextDisabled("(度→ラジアン)");
+    }
     if (ImGui::IsItemHovered()) {
         ImGuiCustom::SetTooltipWrapped("%s", "評価値にかけるスケール。Value Offsetの加算より先に適用される（適用値 = 評価値 × Scale + Offset）");
     }
@@ -476,8 +688,7 @@ void KeyFrameAnimator::ShowAnimationImGui(AnimationEntry &entry, const std::vect
         ImGui::Text(TranslationC("component.keyframeanimator.time_2fs_value_3f"), entry.currentTime, entry.lastValue);
     } else {
         if (ImGui::Button(TranslationLabel("component.keyframeanimator.play"))) {
-            entry.currentTime = 0.0f;
-            entry.playing = true;
+            StartEntry(entry);
         }
         if (ImGui::IsItemHovered()) {
             ImGuiCustom::SetTooltipWrapped("%s", "再生を開始する（値の適用はゲームループ実行中のみ行われる）");
@@ -496,54 +707,114 @@ void KeyFrameAnimator::ShowAnimationImGui(AnimationEntry &entry, const std::vect
 // シリアライズ
 //==================================================
 
+JSON KeyFrameAnimator::SaveEntryToJson(const AnimationEntry &entry) {
+    JSON entryJson = JSON::object();
+    entryJson["name"] = entry.name;
+    entryJson["jsonPath"] = entry.embedded ? std::string() : entry.jsonPath;
+    entryJson["playbackSpeed"] = entry.playbackSpeed;
+    entryJson["timeOffset"] = entry.timeOffset;
+    entryJson["valueScale"] = entry.valueScale;
+    entryJson["valueOffset"] = entry.valueOffset;
+    entryJson["loop"] = entry.loop;
+    entryJson["playOnStart"] = entry.playOnStart;
+    JSON bindingsJson = JSON::array();
+    for (const auto &binding : entry.bindings) {
+        bindingsJson.push_back(SaveParameterBindingToJson(binding));
+    }
+    entryJson["bindings"] = std::move(bindingsJson);
+    // 追加項目は使用時だけ書き出す（ファイル参照の既存エントリの保存形式は変えない）
+    if (entry.embedded) entryJson["embeddedAnimation"] = entry.animation.SaveToJson();
+    if (entry.shortTextManaged || !entry.sourceText.empty()) {
+        entryJson["shortTextManaged"] = entry.shortTextManaged;
+        entryJson["sourceText"] = entry.sourceText;
+    }
+    return entryJson;
+}
+
+bool KeyFrameAnimator::LoadEntryFromJson(const JSON &json, AnimationEntry &out) {
+    if (!json.is_object()) return false;
+    AnimationEntry entry;
+    auto text = [&](const char *key, std::string &value, size_t maxSize) {
+        if (!json.contains(key)) return true;
+        if (!json[key].is_string()) return false;
+        value = json[key].get<std::string>();
+        return value.size() <= maxSize;
+    };
+    auto number = [&](const char *key, float &value) {
+        if (!json.contains(key)) return true;
+        if (!json[key].is_number()) return false;
+        const double n = json[key].get<double>();
+        if (!std::isfinite(n) || std::abs(n) > KeyframeAnimation::kMaxAbsValue) return false;
+        value = static_cast<float>(n);
+        return true;
+    };
+    auto boolean = [&](const char *key, bool &value) {
+        if (!json.contains(key)) return true;
+        if (!json[key].is_boolean()) return false;
+        value = json[key].get<bool>();
+        return true;
+    };
+    if (!text("name", entry.name, 256) || !text("jsonPath", entry.jsonPath, 4096) ||
+        !number("playbackSpeed", entry.playbackSpeed) || !number("timeOffset", entry.timeOffset) ||
+        !number("valueScale", entry.valueScale) || !number("valueOffset", entry.valueOffset) ||
+        !boolean("loop", entry.loop) || !boolean("playOnStart", entry.playOnStart) ||
+        !boolean("shortTextManaged", entry.shortTextManaged) || !text("sourceText", entry.sourceText, 512)) {
+        return false;
+    }
+    if (json.contains("bindings")) {
+        if (!json["bindings"].is_array()) return false;
+        for (const auto &bindingJson : json["bindings"]) {
+            if (!bindingJson.is_object()) return false;
+            const auto missing = [&](const char *key) { return !bindingJson.contains(key); };
+            if ((!missing("componentType") && !bindingJson["componentType"].is_string()) ||
+                (!missing("parameterName") && !bindingJson["parameterName"].is_string()) ||
+                (!missing("componentIndex") && !bindingJson["componentIndex"].is_number_integer()) ||
+                (!missing("channel") && !bindingJson["channel"].is_number_integer()) ||
+                (!missing("isScriptVariable") && !bindingJson["isScriptVariable"].is_boolean())) {
+                return false;
+            }
+            auto binding = LoadParameterBindingFromJson(bindingJson);
+            if (binding.componentIndex < 0 || binding.componentIndex > 255 || binding.channel < -1 || binding.channel > 3) return false;
+            entry.bindings.push_back(std::move(binding));
+        }
+    }
+    if (json.contains("embeddedAnimation")) {
+        if (!entry.animation.LoadFromJson(json["embeddedAnimation"])) return false;
+        entry.embedded = true;
+        entry.loaded = true;
+        entry.jsonPath.clear();
+    }
+    out = std::move(entry);
+    return true;
+}
+
 JSON KeyFrameAnimator::SaveToJson() const {
     JSON json = JSON::object();
     JSON animationsJson = JSON::array();
     for (const auto &entry : animations_) {
-        JSON entryJson = JSON::object();
-        entryJson["name"] = entry.name;
-        entryJson["jsonPath"] = entry.jsonPath;
-        entryJson["playbackSpeed"] = entry.playbackSpeed;
-        entryJson["timeOffset"] = entry.timeOffset;
-        entryJson["valueScale"] = entry.valueScale;
-        entryJson["valueOffset"] = entry.valueOffset;
-        entryJson["loop"] = entry.loop;
-        entryJson["playOnStart"] = entry.playOnStart;
-        JSON bindingsJson = JSON::array();
-        for (const auto &binding : entry.bindings) {
-            bindingsJson.push_back(SaveParameterBindingToJson(binding));
-        }
-        entryJson["bindings"] = std::move(bindingsJson);
-        animationsJson.push_back(std::move(entryJson));
+        animationsJson.push_back(SaveEntryToJson(entry));
     }
     json["animations"] = std::move(animationsJson);
     return json;
 }
 
 bool KeyFrameAnimator::LoadFromJson(const JSON &json) {
-    animations_.clear();
-    if (!json.contains("animations") || !json["animations"].is_array()) {
+    if (!json.is_object() || !json.contains("animations")) {
+        animations_.clear();
         return true;
     }
+    if (!json["animations"].is_array()) return false;
+    // 全エントリを検証してから差し替える（不正なデータの場合は以前の状態を保持する）
+    std::vector<AnimationEntry> loaded;
     for (const auto &entryJson : json["animations"]) {
-        if (!entryJson.is_object()) continue;
         AnimationEntry entry;
-        entry.name = entryJson.value("name", std::string{});
-        entry.jsonPath = entryJson.value("jsonPath", std::string{});
-        entry.playbackSpeed = entryJson.value("playbackSpeed", 1.0f);
-        entry.timeOffset = entryJson.value("timeOffset", 0.0f);
-        entry.valueScale = entryJson.value("valueScale", 1.0f);
-        entry.valueOffset = entryJson.value("valueOffset", 0.0f);
-        entry.loop = entryJson.value("loop", true);
-        entry.playOnStart = entryJson.value("playOnStart", false);
-        if (entryJson.contains("bindings") && entryJson["bindings"].is_array()) {
-            for (const auto &bindingJson : entryJson["bindings"]) {
-                if (!bindingJson.is_object()) continue;
-                entry.bindings.push_back(LoadParameterBindingFromJson(bindingJson));
-            }
+        if (!LoadEntryFromJson(entryJson, entry)) {
+            Log(Translation("engine.keyframeanimator.load.failed") + entryJson.dump().substr(0, 200), LogSeverity::Warning);
+            return false;
         }
-        animations_.push_back(std::move(entry));
+        loaded.push_back(std::move(entry));
     }
+    animations_ = std::move(loaded);
     return true;
 }
 

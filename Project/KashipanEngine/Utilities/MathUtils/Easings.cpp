@@ -628,3 +628,13 @@ EaseType StringToEaseType(const std::string &str) {
 	}
 	return EaseType::Linear;
 }
+
+bool TryStringToEaseType(const std::string &str, EaseType &out) {
+	for (const auto &[name, value] : kEaseTypeNames) {
+		if (str == name) {
+			out = value;
+			return true;
+		}
+	}
+	return false;
+}

@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -71,6 +72,8 @@ public:
     bool GetLoop() const noexcept { return loop_; }
     void SetPlaybackSpeed(float speed) { playbackSpeed_ = speed; }
     float GetPlaybackSpeed() const noexcept { return playbackSpeed_; }
+    float GetPlaybackTime() const noexcept { return elapsedTime_; }
+    bool SetPlaybackTime(float time) { if (!std::isfinite(time) || time < 0) return false; elapsedTime_ = time; return true; }
 
     void Play() { isPlaying_ = true; }
     void Stop() { isPlaying_ = false; }

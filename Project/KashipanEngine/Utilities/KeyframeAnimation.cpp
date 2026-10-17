@@ -1,6 +1,7 @@
 #include "Utilities/KeyframeAnimation.h"
 
 #include <algorithm>
+#include <cmath>
 
 namespace KashipanEngine {
 
@@ -46,20 +47,35 @@ JSON KeyframeAnimation::SaveToJson() const {
 }
 
 bool KeyframeAnimation::LoadFromJson(const JSON &json) {
-    keyframes_.clear();
+    // 全キーを検証してから差し替える（不正なデータの場合は以前のキー列を保持する）
     if (!json.is_object() || !json.contains("keyframes") || !json["keyframes"].is_array()) {
         return false;
     }
-    for (const auto &keyJson : json["keyframes"]) {
-        if (!keyJson.is_object()) continue;
+    const auto &keysJson = json["keyframes"];
+    if (keysJson.size() > kMaxKeyframes) return false;
+    auto finiteNumber = [](const JSON &keyJson, const char *name, float &out) {
+        if (!keyJson.contains(name) || !keyJson[name].is_number()) return false;
+        const double value = keyJson[name].get<double>();
+        if (!std::isfinite(value) || std::abs(value) > kMaxAbsValue) return false;
+        out = static_cast<float>(value);
+        return true;
+    };
+    std::vector<Keyframe> loaded;
+    loaded.reserve(keysJson.size());
+    for (const auto &keyJson : keysJson) {
+        if (!keyJson.is_object()) return false;
         Keyframe key;
-        key.time = keyJson.value("time", 0.0f);
-        key.value = keyJson.value("value", 0.0f);
-        key.easeType = StringToEaseType(keyJson.value("ease", std::string{ "Linear" }));
-        keyframes_.push_back(key);
+        if (!finiteNumber(keyJson, "time", key.time) || key.time < 0.0f) return false;
+        if (!finiteNumber(keyJson, "value", key.value)) return false;
+        // easeは省略時Linear（従来形式との互換）。指定された場合は既知の名前のみ受け付ける
+        if (keyJson.contains("ease")) {
+            if (!keyJson["ease"].is_string() || !TryStringToEaseType(keyJson["ease"].get<std::string>(), key.easeType)) return false;
+        }
+        loaded.push_back(key);
     }
-    std::stable_sort(keyframes_.begin(), keyframes_.end(),
+    std::stable_sort(loaded.begin(), loaded.end(),
         [](const Keyframe &a, const Keyframe &b) { return a.time < b.time; });
+    keyframes_ = std::move(loaded);
     return true;
 }
 

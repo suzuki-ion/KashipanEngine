@@ -39,9 +39,16 @@ public:
 
     /// @brief キーフレーム情報をjsonへ保存する
     JSON SaveToJson() const;
-    /// @brief jsonからキーフレーム情報を読み込む（既存のキーはクリアされ、時刻昇順へソートされる）
+    /// @brief jsonからキーフレーム情報を読み込む（既存のキーは置き換えられ、時刻昇順へソートされる）
+    /// @details 各キーは time（0以上の有限値）・value（有限値）が必須、ease は省略時 Linear。
+    ///          型違い・非有限値・未知のイージング名・キー数過多の場合は false を返し、以前のキー列を保持する
     /// @return 形式が正しい場合はtrue
     bool LoadFromJson(const JSON &json);
+
+    /// @brief 読み込めるキー数の上限
+    static constexpr size_t kMaxKeyframes = 100000;
+    /// @brief 読み込める時刻・値の絶対値の上限
+    static constexpr double kMaxAbsValue = 1.0e9;
 
 private:
     /// @brief 時刻昇順のキー列

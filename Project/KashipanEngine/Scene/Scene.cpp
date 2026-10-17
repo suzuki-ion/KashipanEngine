@@ -97,6 +97,15 @@ void Scene::PlayStart() {
     // スワップチェーンPresent失敗を引き起こしうる。Play/Stopの高速連打で再現するクラッシュの対策）
     if (sDirectXCommon_) sDirectXCommon_->WaitForGPUIdle(Passkey<Scene>{});
     editModeSnapshot_ = SaveToJSON();
+#ifdef USE_IMGUI
+    // Keep editor references valid when Stop reconstructs the pre-Play objects/components.
+    // SceneFileIO strips these transient identities from actual saved scene assets.
+    for (auto &objectJson : editModeSnapshot_["sceneObjects"]) {
+        if (auto *object = GetSceneObject(UUID128(objectJson.at("objectID").get<std::string>()))) objectJson = sceneEditorContext_->SaveObjectToUndoJson(object);
+    }
+    size_t sceneComponentIndex = 0;
+    for (const auto &[component, addedID] : components_) if (component) editModeSnapshot_["sceneComponents"][sceneComponentIndex++]["editorAddedID"] = addedID;
+#endif
     // グローバルシーン変数はSceneではなくSceneManagerが保持するため、ローカルのsceneVariables_と
     // 同様にPlay/Stopをまたいでも編集時の値へ戻せるよう、シーンJSONとまとめてセッションとして保持する。
     // SceneManager側に持たせることで、再生中のシーン遷移でこのSceneが破棄されても復元元を失わない
@@ -253,7 +262,16 @@ bool Scene::LoadFromJSON(const JSON &json) {
         auto compJson = compData.value("data", JSON());
         // 追加時の初期化前にアクティブ状態を反映し、無効なコンポーネントの初期化を防ぐ
         comp->SetActive(compJson.value("isActive", true));
-        loadedComponents.emplace_back(AddComponent(std::move(comp)), compJson);
+        auto *added = AddComponent(std::move(comp));
+#ifdef USE_IMGUI
+        if (added && compData.contains("editorAddedID")) {
+            const auto restoredID = compData.at("editorAddedID").get<size_t>();
+            if (restoredID >= MAXSIZE_T - 1) return false;
+            auto &entry = components_[componentsIndexByPointer_.at(added)]; entry.second = restoredID;
+            nextAddedComponentID_ = (std::max)(nextAddedComponentID_, restoredID + 1);
+        }
+#endif
+        loadedComponents.emplace_back(added, compJson);
     }
     for (const auto &[comp, compJson] : loadedComponents) {
         if (comp) {

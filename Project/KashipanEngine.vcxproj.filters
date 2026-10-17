@@ -278,6 +278,7 @@
   <ItemGroup>
     <ClCompile Include="KashipanEngine\Utilities\ShortTextLearning.cpp"><Filter>KashipanEngine\Utilities</Filter></ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Editor\ShortTextBehaviorEditor.cpp"><Filter>KashipanEngine\Scene\Editor</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\DevelopmentAssistantSceneSupport.cpp"><Filter>KashipanEngine\Scene\Editor</Filter></ClCompile>
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextBehavior.cpp"><Filter>KashipanEngine\Objects\Components</Filter></ClCompile>
     <ClCompile Include="Externals\imgui\ImGuizmo.cpp">
       <Filter>Externals\imgui</Filter>

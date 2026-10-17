@@ -307,6 +307,13 @@ bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
     objectID_ = UUID128(json.value("objectID", ""));
     prefabNodeID_ = UUID128(json.value("prefabNodeID", ""));
     const auto &componentsJson = json.value("components", JSON::array());
+    // Editor Undo snapshots carry IDs. Reserve them before allocating any component so
+    // restore order (which follows update priority) cannot collide with temporary IDs.
+    for (const auto &entry : componentsJson) if (entry.contains("editorAddedID")) {
+        const auto id = entry.at("editorAddedID").get<size_t>();
+        if (id == MAXSIZE_T) return false;
+        nextAddedID_ = (std::max)(nextAddedID_, id + 1);
+    }
     std::vector<std::pair<IObjectComponent *, JSON>> loadedComponents;
     // 先にコンポーネントを全て登録してからロードする
     for (const auto &compJson : componentsJson) {
@@ -318,7 +325,9 @@ bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
         if (comp && compJson.contains("data")) {
             comp->SetActive(compJson["data"].value("isActive", true));
         }
-        loadedComponents.emplace_back(AddComponent(std::move(comp)), compJson["data"]);
+        auto *added = AddComponent(std::move(comp));
+        if (added && compJson.contains("editorAddedID") && !RestoreEditorAddedID(added, compJson.at("editorAddedID").get<size_t>())) return false;
+        loadedComponents.emplace_back(added, compJson["data"]);
     }
     // Transformは階層・描画・物理処理が前提とする必須コンポーネント。
     // 古いデータや壊れたJSONで欠落していても、必ず既定値で補う。

@@ -36,10 +36,12 @@ public:
     JSON SaveSceneToJSON() const { return owner_->SaveToJSON(); }
     /// @brief シーンをJSONから読み込む（現在の内容は破棄される）
     bool LoadSceneFromJSON(const JSON &json) {
-        owner_->ClearSceneObjects();
-        owner_->ClearSceneComponents();
-        return owner_->LoadFromJSON(json);
+        return owner_->EditorReplaceScene(json);
     }
+    JSON SaveSceneComponent(size_t id) const { return owner_->EditorSaveSceneComponent(id); }
+    bool LoadSceneComponent(size_t id, const JSON &json) { return owner_->EditorLoadSceneComponent(id, json); }
+    bool RestoreSceneComponent(size_t id, const JSON &json) { return owner_->EditorRestoreSceneComponent(id, json); }
+    size_t GetNextSceneComponentID() const { return owner_->nextAddedComponentID_; }
 
     /// @brief シーンコンポーネントの ImGui 表示（ウィンドウの Begin/End は呼ばない）
     void ShowComponentImGui(ISceneComponent *component) { owner_->ShowComponentImGui(component); }
@@ -169,6 +171,20 @@ public:
 
     /// @brief オブジェクト単体をjsonへ保存する
     JSON SaveObjectToJson(EmptyObject *obj) { return owner_->SaveObjectToJson(obj); }
+    JSON SaveObjectToUndoJson(EmptyObject *obj) {
+        auto json = owner_->SaveObjectToJson(obj);
+        if (!obj || json.empty()) return json;
+        // Runtime identities belong to Undo snapshots, not the scene file format.
+        auto components = obj->GetAllComponents();
+        std::erase_if(components, [](const auto &entry) { return !entry.first; });
+        std::sort(components.begin(), components.end(), [](const auto &a, const auto &b) {
+            if (a.first->GetUpdatePriority() != b.first->GetUpdatePriority()) return a.first->GetUpdatePriority() < b.first->GetUpdatePriority();
+            return a.second < b.second;
+        });
+        json["components"] = JSON::array();
+        for (const auto &[component, id] : components) { (void)id; json["components"].push_back(obj->SaveComponentToJson(component, true)); }
+        return json;
+    }
     /// @brief jsonからオブジェクトを生成する
     EmptyObject *CreateObjectFromJson(const JSON &json, size_t index = MAXSIZE_T) { return owner_->CreateObjectFromJson(json, index); }
     /// @brief オブジェクトのシーン内インデックスを取得する

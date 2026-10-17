@@ -535,6 +535,12 @@ protected:
     static InputCommand *GetInputCommand() { return sInputCommand; }
 
 private:
+#ifdef USE_IMGUI
+    bool EditorReplaceScene(const JSON &json);
+    JSON EditorSaveSceneComponent(size_t id) const;
+    bool EditorLoadSceneComponent(size_t id, const JSON &json);
+    bool EditorRestoreSceneComponent(size_t id, const JSON &json);
+#endif
     static inline AudioManager *sAudioManager = nullptr;
     static inline ModelManager *sModelManager = nullptr;
     static inline SkeletonManager *sSkeletonManager = nullptr;

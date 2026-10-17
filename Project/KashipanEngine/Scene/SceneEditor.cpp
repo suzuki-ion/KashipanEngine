@@ -168,7 +168,12 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
 SceneEditor::~SceneEditor() = default;
 
 JSON SceneEditor::GetEditableSceneJSON() const {
-    return context_->IsPlaying() ? context_->GetEditModeSnapshot() : context_->SaveSceneToJSON();
+    auto state = context_->IsPlaying() ? context_->GetEditModeSnapshot() : context_->SaveSceneToJSON();
+    if (context_->IsPlaying()) {
+        for (auto &object : state["sceneObjects"]) for (auto &component : object["components"]) component.erase("editorAddedID");
+        for (auto &component : state["sceneComponents"]) component.erase("editorAddedID");
+    }
+    return state;
 }
 
 bool SceneEditor::HasUnsavedSceneChanges() const {

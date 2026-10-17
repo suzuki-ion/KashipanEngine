@@ -503,6 +503,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
   <ItemGroup>
     <ClCompile Include="KashipanEngine\Utilities\ShortTextLearning.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\ShortTextBehaviorEditor.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\DevelopmentAssistantSceneSupport.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextBehavior.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextRendering.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextPhysics.cpp" />

@@ -362,11 +362,13 @@ public:
 
     /// @brief 履歴を全消去する（シーンロード時など）
     void Clear() {
+        ++historyEpoch_;
         undoStack_.clear();
         redoStack_.clear();
         playUndoStack_.clear();
         playRedoStack_.clear();
     }
+    size_t GetHistoryEpoch() const noexcept { return historyEpoch_; }
 
     //==================================================
     // 再生セッション（ゲームループ再生中のコマンド分離）
@@ -397,6 +399,7 @@ public:
     void ShowHistoryImGui();
 
 private:
+    size_t historyEpoch_ = 0;
     static constexpr size_t kMaxHistory = 128;
 
     void PushToUndoStack(std::unique_ptr<IEditorCommand> command);

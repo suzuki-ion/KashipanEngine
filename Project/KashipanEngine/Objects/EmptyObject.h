@@ -285,11 +285,12 @@ public:
     //==================================================
 
     /// @brief 所有コンポーネント単体をjsonへ保存（type と data を含む）
-    JSON SaveComponentToJson(const IObjectComponent *component) const {
+    JSON SaveComponentToJson(const IObjectComponent *component, bool keepEditorIdentity = false) const {
         JSON json = JSON::object();
         auto *comp = GetComponent(component);
         if (!comp) return json;
         json["type"] = comp->GetComponentType();
+        if (keepEditorIdentity) json["editorAddedID"] = GetComponentAddedID(comp);
         json["data"] = comp->SaveToJsonInterface(Passkey<EmptyObject>{});
         return json;
     }
@@ -299,6 +300,10 @@ public:
         if (type.empty()) return nullptr;
         auto comp = CreateObjectComponentByType(type);
         auto *ptr = AddComponent(std::move(comp));
+        if (ptr && json.contains("editorAddedID") && !RestoreEditorAddedID(ptr, json.at("editorAddedID").get<size_t>())) {
+            RemoveComponent(ptr);
+            return nullptr;
+        }
         if (ptr && json.contains("data")) {
             ptr->LoadFromJsonInterface(Passkey<EmptyObject>{}, json["data"]);
         }
@@ -366,6 +371,18 @@ private:
     std::vector<std::vector<size_t>> componentsIndexByType_;
     std::unordered_map<const IObjectComponent *, size_t> componentsIndexByPointer_;
     std::vector<size_t> componentsFreeIndices_;
+    // Undo restores an existing identity, while ordinary additions still never recycle IDs.
+    bool RestoreEditorAddedID(IObjectComponent *component, size_t id) {
+        if (id == MAXSIZE_T || !component) return false;
+        auto *existing = GetComponentByAddedID(id);
+        if (existing && existing != component) return false;
+        auto it = componentsIndexByPointer_.find(component);
+        if (it == componentsIndexByPointer_.end()) return false;
+        components_[it->second].second = id;
+        nextAddedID_ = (std::max)(nextAddedID_, id + 1);
+        RegenerateUpdateComponentsList();
+        return true;
+    }
     size_t nextAddedID_ = 0;
 
     struct UpdateComponentInfo {

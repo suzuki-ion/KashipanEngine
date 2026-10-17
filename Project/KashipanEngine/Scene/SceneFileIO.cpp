@@ -294,6 +294,16 @@ JSON LoadSceneFolder(const std::string &path) {
 } // namespace
 
 bool SaveSceneToPath(const JSON &sceneJson, const std::string &path) {
+    bool editorIdentities = false;
+    for (const auto &object : sceneJson.value("sceneObjects", JSON::array()))
+        for (const auto &component : object.value("components", JSON::array())) editorIdentities |= component.contains("editorAddedID");
+    for (const auto &component : sceneJson.value("sceneComponents", JSON::array())) editorIdentities |= component.contains("editorAddedID");
+    if (editorIdentities) {
+        auto clean = sceneJson;
+        for (auto &object : clean["sceneObjects"]) for (auto &component : object["components"]) component.erase("editorAddedID");
+        for (auto &component : clean["sceneComponents"]) component.erase("editorAddedID");
+        return SaveSceneToPath(clean, path);
+    }
     // 呼び出し元は "Assets/Scenes/..." や "SceneBackups/..." といった論理パスを渡してくるため、
     // ここで開いているプロジェクト基準の物理パスへ変換する
     const std::string resolvedPath = ProjectPaths::ToPhysical(path);

@@ -103,7 +103,7 @@ namespace {
 void CollectSubtreeSnapshot(SceneEditorContext *context, EmptyObject *obj, int parentIndex, std::vector<PasteObjectCommand::Node> &out) {
     if (!obj || !context) return;
     const int myIndex = static_cast<int>(out.size());
-    out.push_back({ context->SaveObjectToJson(obj), parentIndex });
+    out.push_back({ context->SaveObjectToUndoJson(obj), parentIndex });
     for (auto *candidate : context->GetSceneObjects()) {
         if (!candidate || candidate == obj) continue;
         auto *candidateTransform = candidate->GetComponent<Transform>();
@@ -213,7 +213,7 @@ bool AddComponentCommand::Undo(SceneEditorContext *context) {
     auto *obj = context->GetSceneObject(objectID_);
     IObjectComponent *component = context->ResolveComponent(componentRef_);
     if (!obj || !component) return false;
-    state_ = obj->SaveComponentToJson(component);
+    state_ = obj->SaveComponentToJson(component, true);
     const bool removed = obj->RemoveComponent(component);
     if (removed) componentRef_ = ComponentRef{};
     return removed;
@@ -223,7 +223,7 @@ bool RemoveComponentCommand::Execute(SceneEditorContext *context) {
     auto *obj = context->GetSceneObject(objectID_);
     IObjectComponent *component = context->ResolveComponent(componentRef_);
     if (!obj || !component) return false;
-    snapshot_ = obj->SaveComponentToJson(component);
+    snapshot_ = obj->SaveComponentToJson(component, true);
     const bool removed = obj->RemoveComponent(component);
     if (removed) componentRef_ = ComponentRef{};
     return removed;
@@ -242,15 +242,17 @@ bool ComponentEditCommand::Execute(SceneEditorContext *context) {
     IObjectComponent *component = context->ResolveComponent(componentRef_);
     if (!obj || !component) return false;
     const JSON previous = obj->SaveComponentToJson(component);
-    if (obj->LoadComponentFromJson(component, after_)) return true;
-    SetAppliedChangesAfterFailure(!obj->LoadComponentFromJson(component, previous));
+    try { if (obj->LoadComponentFromJson(component, after_)) return true; } catch (...) { }
+    bool restored = false;
+    try { restored = obj->LoadComponentFromJson(component, previous); } catch (...) { }
+    SetAppliedChangesAfterFailure(!restored);
     return false;
 }
 bool ComponentEditCommand::Undo(SceneEditorContext *context) {
     auto *obj = context->GetSceneObject(objectID_);
     IObjectComponent *component = context->ResolveComponent(componentRef_);
     if (!obj || !component) return false;
-    return obj->LoadComponentFromJson(component, before_);
+    try { return obj->LoadComponentFromJson(component, before_); } catch (...) { return false; }
 }
 
 //==================================================

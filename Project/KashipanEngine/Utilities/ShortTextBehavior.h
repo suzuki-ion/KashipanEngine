@@ -89,11 +89,27 @@ inline std::string Describe(const Recipe &r) {
         message << "イベント・条件・動作：" << r.rules.size() << " ルール";
         for (const auto &rule : r.rules) {
             message << "\n" << EventLabels[static_cast<size_t>(rule.event)];
+            if (rule.once) message << " [一度だけ]";
             if (rule.event >= Event::KeyPressed && rule.event <= Event::KeyReleased) message << " [" << KeyName(rule.key) << "]";
             if (rule.event == Event::Timer) message << " (" << rule.interval << "秒)";
-            for (const auto &condition : rule.conditions) message << " / " << "XYZ"[condition.axis] << TestLabels[static_cast<size_t>(condition.test)] << " " << condition.value;
+            if (IsContact(rule.event)) message << " [相手タグ:" << (rule.tag.empty() ? "すべて" : rule.tag) << "]";
+            if (rule.event >= Event::MousePressed && rule.event <= Event::MouseReleased) message << " [" << std::array<const char *, 3>{"左", "右", "中"}[static_cast<size_t>(rule.button)] << "]";
+            if (rule.event == Event::VariableChanged) message << " [" << rule.variable << "]";
+            for (const auto &condition : rule.conditions) message << " / " << ((IsVariable(condition.test) || condition.test == Test::DistanceAtMost || condition.test == Test::DistanceAtLeast) ? condition.name : std::string(1, "XYZ"[condition.axis])) << TestLabels[static_cast<size_t>(condition.test)] << " " << condition.value;
             message << " → ";
-            for (const auto &action : rule.actions) message << OperationLabels[static_cast<size_t>(action.operation)] << " " << "XYZ"[action.axis] << "=" << action.value << "; ";
+            for (const auto &action : rule.actions) {
+                message << OperationLabels[static_cast<size_t>(action.operation)];
+                if (action.target != Target::Self) message << " [" << TargetLabels[static_cast<size_t>(action.target)] << ":" << action.targetName << "]";
+                if (IsVariable(action.operation)) message << " " << action.name << "=" << action.value;
+                else if (action.operation == Operation::SetVolume) message << "=" << action.value;
+                else if (action.operation <= Operation::StopVelocity) message << " " << "XYZ"[action.axis] << "=" << action.value;
+                else if (action.operation >= Operation::TweenPosition) message << " " << action.duration << "秒" << (action.operation == Operation::Wait ? "" : " 値=" + std::to_string(action.value));
+                else if (action.operation == Operation::Follow || action.operation == Operation::MoveToward) message << " " << action.reference << " 値=" << action.value;
+                else if (action.operation == Operation::SetText || action.operation == Operation::ShowVariableText) message << " 「" << action.text << "」 " << action.name;
+                else if (action.operation == Operation::ChangeScene || action.operation == Operation::CreateObject || action.operation == Operation::CloneObject) message << " " << action.name;
+                else if (action.operation == Operation::SetVisible || action.operation == Operation::SetActive) message << "=" << action.value;
+                message << "; ";
+            }
         }
         return message.str();
     }

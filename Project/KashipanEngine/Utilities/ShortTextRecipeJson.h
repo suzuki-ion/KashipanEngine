@@ -25,9 +25,9 @@ inline nlohmann::json EncodeRecipe(const Recipe &r) {
     auto rules = nlohmann::json::array();
     for (const auto &rule : r.rules) {
         auto conditions = nlohmann::json::array(), actions = nlohmann::json::array();
-        for (const auto &c : rule.conditions) conditions.push_back({{"test", TestNames[static_cast<size_t>(c.test)]}, {"axis", c.axis}, {"value", c.value}});
-        for (const auto &a : rule.actions) actions.push_back({{"operation", OperationNames[static_cast<size_t>(a.operation)]}, {"axis", a.axis}, {"value", a.value}});
-        rules.push_back({{"event", EventNames[static_cast<size_t>(rule.event)]}, {"key", KeyName(rule.key)}, {"interval", rule.interval}, {"conditions", conditions}, {"actions", actions}});
+        for (const auto &c : rule.conditions) conditions.push_back({{"test", TestNames[static_cast<size_t>(c.test)]}, {"axis", c.axis}, {"value", c.value}, {"name", c.name}, {"data", c.data}});
+        for (const auto &a : rule.actions) actions.push_back({{"operation", OperationNames[static_cast<size_t>(a.operation)]}, {"axis", a.axis}, {"value", a.value}, {"name", a.name}, {"target", TargetNames[static_cast<size_t>(a.target)]}, {"targetName", a.targetName}, {"reference", a.reference}, {"text", a.text}, {"duration", a.duration}, {"data", a.data}});
+        rules.push_back({{"event", EventNames[static_cast<size_t>(rule.event)]}, {"key", KeyName(rule.key)}, {"interval", rule.interval}, {"tag", rule.tag}, {"button", rule.button}, {"once", rule.once}, {"variable", rule.variable}, {"cooldown", rule.cooldown}, {"state", rule.state}, {"windowStart", rule.windowStart}, {"windowEnd", rule.windowEnd}, {"conditions", conditions}, {"actions", actions}});
     }
     return {{"kind", 3}, {"rules", rules}};
 }
@@ -43,10 +43,30 @@ inline Recipe DecodeRecipe(const nlohmann::json &json) {
             rule.event = static_cast<Event>(ReadName(item.at("event"), EventNames));
             rule.key = ParseKey(item.value("key", std::string("Space")));
             rule.interval = item.value("interval", 1.0f);
+            rule.tag = item.value("tag", std::string{});
+            rule.button = ReadInteger(item.value("button", nlohmann::json(0)), 0, 2);
+            rule.once = item.value("once", false); rule.variable = item.value("variable", std::string{});
+            rule.cooldown = item.value("cooldown", 0.0f); rule.state = item.value("state", std::string{});
+            rule.windowStart = item.value("windowStart", 0.0f); rule.windowEnd = item.value("windowEnd", -1.0f);
             const auto &conditions = item.at("conditions"), &actions = item.at("actions");
             if (!conditions.is_array() || conditions.size() > 4 || !actions.is_array() || actions.empty() || actions.size() > 8) throw std::runtime_error("condition/action count");
-            for (const auto &c : conditions) rule.conditions.push_back({static_cast<Test>(ReadName(c.at("test"), TestNames)), ReadInteger(c.at("axis"), 0, 2), c.at("value").get<float>()});
-            for (const auto &a : actions) rule.actions.push_back({static_cast<Operation>(ReadName(a.at("operation"), OperationNames)), ReadInteger(a.at("axis"), 0, 2), a.at("value").get<float>()});
+            for (const auto &c : conditions) {
+                Condition condition;
+                condition.test = static_cast<Test>(ReadName(c.at("test"), TestNames));
+                condition.axis = ReadInteger(c.value("axis", nlohmann::json(0)), 0, 2);
+                condition.value = c.value("value", 0.0f); condition.name = c.value("name", std::string{});
+                condition.data = c.value("data", Value::object());
+                rule.conditions.push_back(std::move(condition));
+            }
+            for (const auto &a : actions) {
+                Action action; action.operation = static_cast<Operation>(ReadName(a.at("operation"), OperationNames));
+                action.axis = ReadInteger(a.value("axis", nlohmann::json(0)), 0, 2); action.value = a.value("value", 0.0f); action.name = a.value("name", std::string{});
+                action.target = static_cast<Target>(ReadName(a.value("target", nlohmann::json("self")), TargetNames));
+                action.targetName = a.value("targetName", std::string{}); action.reference = a.value("reference", std::string{});
+                action.text = a.value("text", std::string{}); action.duration = a.value("duration", 1.0f);
+                action.data = a.value("data", Value::object());
+                rule.actions.push_back(std::move(action));
+            }
             r.rules.push_back(std::move(rule));
         }
     } else {

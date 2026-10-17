@@ -1,0 +1,347 @@
+{
+  "commands": [
+    {
+      "name": "audio.play",
+      "args": {
+        "index": 0
+      },
+      "description": "audio play",
+      "requirements": "audio source component with configured asset"
+    },
+    {
+      "name": "audio.stop",
+      "args": {
+        "index": 0
+      },
+      "description": "audio stop",
+      "requirements": "audio source component with configured asset"
+    },
+    {
+      "name": "audio.pause",
+      "args": {
+        "index": 0
+      },
+      "description": "audio pause",
+      "requirements": "audio source component with configured asset"
+    },
+    {
+      "name": "audio.resume",
+      "args": {
+        "index": 0
+      },
+      "description": "audio resume",
+      "requirements": "audio source component with configured asset"
+    },
+    {
+      "name": "video.play",
+      "args": {
+        "index": 0
+      },
+      "description": "video play",
+      "requirements": "video source component with configured asset"
+    },
+    {
+      "name": "video.stop",
+      "args": {
+        "index": 0
+      },
+      "description": "video stop",
+      "requirements": "video source component with configured asset"
+    },
+    {
+      "name": "video.pause",
+      "args": {
+        "index": 0
+      },
+      "description": "video pause",
+      "requirements": "video source component with configured asset"
+    },
+    {
+      "name": "video.resume",
+      "args": {
+        "index": 0
+      },
+      "description": "video resume",
+      "requirements": "video source component with configured asset"
+    },
+    {
+      "name": "gif.play",
+      "args": {
+        "index": 0
+      },
+      "description": "gif play",
+      "requirements": "gif source component with configured asset"
+    },
+    {
+      "name": "gif.stop",
+      "args": {
+        "index": 0
+      },
+      "description": "gif stop",
+      "requirements": "gif source component with configured asset"
+    },
+    {
+      "name": "gif.pause",
+      "args": {
+        "index": 0
+      },
+      "description": "gif pause",
+      "requirements": "gif source component with configured asset"
+    },
+    {
+      "name": "gif.resume",
+      "args": {
+        "index": 0
+      },
+      "description": "gif resume",
+      "requirements": "gif source component with configured asset"
+    },
+    {
+      "name": "audio.configure",
+      "args": {
+        "index": 0,
+        "volume": 0.5,
+        "pitch": 0,
+        "loop": false,
+        "spatial": false,
+        "minDistance": 0,
+        "maxDistance": 100
+      },
+      "description": "Set volume, pitch in semitones, loop and spatial distances",
+      "requirements": "AudioSource; optional sound selects unique source by asset name; asset changes sound"
+    },
+    {
+      "name": "video.configure",
+      "args": {
+        "index": 0,
+        "asset": "movie.mp4",
+        "loop": false,
+        "volume": 1
+      },
+      "description": "Video asset, looping and volume",
+      "requirements": "VideoSource and valid asset"
+    },
+    {
+      "name": "gif.configure",
+      "args": {
+        "index": 0,
+        "asset": "animation.gif",
+        "loop": true
+      },
+      "description": "GIF asset and looping",
+      "requirements": "GifSource and valid asset"
+    },
+    {
+      "name": "animator.play",
+      "args": {
+        "clip": "walk"
+      },
+      "description": "animator play",
+      "requirements": "animator component and existing clip"
+    },
+    {
+      "name": "animator.stop",
+      "args": {
+        "clip": "walk"
+      },
+      "description": "animator stop",
+      "requirements": "animator component and existing clip"
+    },
+    {
+      "name": "animator.configure",
+      "args": {
+        "speed": 1,
+        "time": 0,
+        "loop": false
+      },
+      "description": "Playback speed, position and looping",
+      "requirements": "animator component; keyframe name must exist"
+    },
+    {
+      "name": "keyframe.play",
+      "args": {
+        "name": "open"
+      },
+      "description": "keyframe play",
+      "requirements": "keyframe component and existing clip"
+    },
+    {
+      "name": "keyframe.stop",
+      "args": {
+        "name": "open"
+      },
+      "description": "keyframe stop",
+      "requirements": "keyframe component and existing clip"
+    },
+    {
+      "name": "keyframe.configure",
+      "args": {
+        "name": "open",
+        "speed": 1,
+        "time": 0,
+        "loop": false
+      },
+      "description": "Playback speed, position and looping",
+      "requirements": "keyframe component; keyframe name must exist"
+    },
+    {
+      "name": "shake.play",
+      "args": {
+        "duration": 0.5
+      },
+      "description": "Start configured shake",
+      "requirements": "Shake component"
+    },
+    {
+      "name": "shake.stop",
+      "args": {},
+      "description": "Stop shake",
+      "requirements": "Shake component"
+    },
+    {
+      "name": "shake.configure",
+      "args": {
+        "amplitude": [
+          0.1,
+          0.1,
+          0
+        ],
+        "speed": [
+          10,
+          10,
+          10
+        ],
+        "rotationAmplitude": [
+          0,
+          0,
+          2
+        ]
+      },
+      "description": "Position shake and rotation amplitude in degrees",
+      "requirements": "Shake component"
+    },
+    {
+      "name": "particles.play",
+      "args": {},
+      "description": "Particle playback play",
+      "requirements": "ParticleSystem2D or ParticleSystem3D"
+    },
+    {
+      "name": "particles.stop",
+      "args": {},
+      "description": "Particle playback stop",
+      "requirements": "ParticleSystem2D or ParticleSystem3D"
+    },
+    {
+      "name": "particles.clear",
+      "args": {},
+      "description": "Particle playback clear",
+      "requirements": "ParticleSystem2D or ParticleSystem3D"
+    },
+    {
+      "name": "particles.configure",
+      "args": {
+        "rate": 10,
+        "count": 30
+      },
+      "description": "Emission rate and total spawn count",
+      "requirements": "ParticleSystem2D or ParticleSystem3D"
+    },
+    {
+      "name": "prefab.spawn",
+      "args": {
+        "path": "Assets/Prefabs/Bullet.json",
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "parent": "Player",
+        "initial": {}
+      },
+      "description": "Runtime prefab load, hierarchy remap, pose and initial properties",
+      "requirements": "Valid JSON prefab with 1-256 nodes; position is local to chosen parent; lastSpawned result ID; rotation in radians; parent is unique name or UUID; scene maximum 4096 objects"
+    },
+    {
+      "name": "pool.acquire",
+      "args": {
+        "pool": "bullets",
+        "limit": 16,
+        "position": [
+          0,
+          0,
+          0
+        ]
+      },
+      "description": "Reuse inactive clone or create bounded shallow clone",
+      "requirements": "Target template; 1-256 capacity; lastSpawned result ID; scene maximum 4096 objects"
+    },
+    {
+      "name": "pool.release",
+      "args": {
+        "pool": "bullets"
+      },
+      "description": "Deactivate owned pooled object for reuse",
+      "requirements": "Target belongs to same recipe pool"
+    },
+    {
+      "name": "save.write",
+      "args": {
+        "slot": "settings"
+      },
+      "description": "Save/load typed global scene variables",
+      "requirements": "Local ShortTextSaves directory; slot alphanumeric, underscore or dash"
+    },
+    {
+      "name": "save.read",
+      "args": {
+        "slot": "settings"
+      },
+      "description": "Save/load typed global scene variables",
+      "requirements": "Local ShortTextSaves directory; slot alphanumeric, underscore or dash"
+    },
+    {
+      "name": "object.persist",
+      "args": {
+        "key": "hud"
+      },
+      "description": "Register object snapshot for automatic restoration in next scene",
+      "requirements": "Root object only, maximum 64 keys; snapshots are captured at registration and reference IDs remapped for self only"
+    },
+    {
+      "name": "object.restore",
+      "args": {
+        "key": "hud"
+      },
+      "description": "Restore stored object snapshot explicitly",
+      "requirements": "Stored global snapshot; new object ID; scene maximum 4096 objects"
+    },
+    {
+      "name": "script.call",
+      "args": {
+        "index": 0,
+        "method": "Open"
+      },
+      "description": "Invoke no-argument script method",
+      "requirements": "ScriptComponent with valid instance and method"
+    },
+    {
+      "name": "event.emit",
+      "args": {
+        "name": "doorOpen"
+      },
+      "description": "Increment scene event serial __shortTextEvent.doorOpen",
+      "requirements": "Scene event count can be observed by variable change conditions"
+    }
+  ]
+}

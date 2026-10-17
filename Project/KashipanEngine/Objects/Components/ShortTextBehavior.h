@@ -24,9 +24,14 @@ private:
     std::string sourceText_;
     double elapsed_ = 0;
     ShortText::ProgramMemory programMemory_;
+    std::string executionError_;
 };
 REGISTER_COMPONENT_OBJECT(ShortTextBehavior)
 
 // Produces the existing component snapshot envelope expected by Add/ComponentEditCommand.
 JSON MakeShortTextBehaviorState(const ShortText::Recipe &recipe, const std::string &sourceText);
+void ReadShortTextSceneInput(const EmptyObject *owner, SceneContext *scene, const ShortText::Recipe &recipe,
+    ShortText::ProgramState &state, ShortText::InputSnapshot &input, ShortText::ProgramMemory *memory = nullptr, double dt = 0);
+void ApplyShortTextSceneEffects(const EmptyObject *owner, SceneContext *scene, const ShortText::ProgramState &state,
+    ShortText::ProgramMemory *memory = nullptr, std::string *error = nullptr);
 } // namespace KashipanEngine

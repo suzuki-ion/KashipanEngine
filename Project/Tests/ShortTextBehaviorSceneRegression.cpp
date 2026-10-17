@@ -7,6 +7,10 @@
 #include "Objects/Components/ShortTextBehavior.h"
 #include "Objects/Components/Transform.h"
 #include "Objects/Components/Velocity.h"
+#include "Objects/Components/Collider/SphereCollider.h"
+#include "Objects/Components/Collider/Box2DCollider.h"
+#include "Objects/Components/AudioSource.h"
+#include "Objects/Components/Render/BitmapTextRenderer.h"
 #include "Scene/Editor/ShortTextBehaviorEditor.h"
 #include "Scene/Editor/SceneEditorCommands.h"
 
@@ -78,7 +82,82 @@ int main() {
         const auto *programTarget = programRestored.GetSceneContext()->GetSceneObject(id);
         Require(programTarget && programTarget->GetComponent<ShortTextBehavior>()->GetRecipe().kind == ShortText::Kind::Rules, "program survives scene reload");
         Require(programTarget->GetComponent<Velocity>() != nullptr, "required component survives scene reload");
-        std::puts("Short-text scene registration, clone, JSON round trip, invalid-state recovery and command routing passed.");
+        auto *receiver = scene.GetSceneContext()->CreateEmptyObject("receiver");
+        receiver->AddComponent<SphereCollider>();
+        auto *player = scene.GetSceneContext()->CreateEmptyObject("player");
+        player->SetTag("Player"); player->AddComponent<SphereCollider>();
+        ShortText::Recipe pickup; pickup.kind = ShortText::Kind::Rules;
+        ShortText::Rule contact; contact.event = ShortText::Event::ContactEnter; contact.tag = "Player";
+        contact.actions = {{ShortText::Operation::AddVariable, 0, 1, "score"}};
+        pickup.rules.push_back(contact);
+        scene.GetSceneContext()->AddSceneVariable<int>("score", 0);
+        ShortText::ProgramState effectState; ShortText::InputSnapshot contactInput; ShortText::ProgramMemory contactMemory;
+        auto stepContacts = [&]() {
+            ReadShortTextSceneInput(receiver, scene.GetSceneContext(), pickup, effectState, contactInput);
+            ShortText::TickProgram(pickup.rules, contactMemory, effectState, contactInput, 0.1);
+            ApplyShortTextSceneEffects(receiver, scene.GetSceneContext(), effectState);
+        };
+        stepContacts();
+        Require(contactInput.contactReady[0] && contactInput.contacts[0].size() == 1, "real 3D overlap filtered by object tag");
+        Require(scene.GetSceneContext()->GetSceneVariable("score")->IsType<int>() && scene.GetSceneContext()->GetSceneVariable("score")->AnyCast<int>() == 1, "score changes while preserving integer type");
+        stepContacts(); Require(scene.GetSceneContext()->GetSceneVariable("score")->AnyCast<int>() == 1, "continued contact does not duplicate score");
+        player->GetComponent<Transform>()->SetTranslate(Vector3(100, 0, 0)); stepContacts();
+        player->GetComponent<Transform>()->SetTranslate(Vector3(0, 0, 0)); stepContacts();
+        Require(scene.GetSceneContext()->GetSceneVariable("score")->AnyCast<int>() == 2, "re-entering a real collider scores again");
+        receiver->AddComponent<Box2DCollider>(); player->AddComponent<Box2DCollider>();
+        contactMemory = {}; stepContacts();
+        Require(contactInput.contacts[0].size() == 1, "2D and 3D colliders on one partner are deduplicated");
+        scene.GetSceneContext()->AddSceneVariable<std::string>("score", "keep");
+        contactMemory = {}; stepContacts();
+        Require(scene.GetSceneContext()->GetSceneVariable("score")->AnyCast<std::string>() == "keep", "non-numeric variable is preserved");
+        auto *audio = receiver->AddComponent<AudioSource>(); audio->SetPlayOnAwake(false);
+        effectState.effects = {{ShortText::Operation::SetVolume, 0, 0.25f}};
+        effectState.writtenVariables.clear();
+        ApplyShortTextSceneEffects(receiver, scene.GetSceneContext(), effectState);
+        Require(audio->GetVolume() == 0.25f, "audio volume effect reaches the real AudioSource");
+        auto *door = scene.GetSceneContext()->CreateEmptyObject("Door");
+        auto *label = door->AddComponent<BitmapTextRenderer>();
+        scene.GetSceneContext()->AddSceneVariable<int>("displayScore", 7);
+        auto applyRecipe = [&](const ShortText::Recipe &r, double dt = 0.1) {
+            ShortText::ProgramState state;
+            auto *tr = receiver->GetComponent<Transform>();
+            const auto p = tr->GetTranslate(), rot = tr->GetRotate(), scale = tr->GetScale();
+            state.position = {p.x, p.y, p.z}; state.rotation = {rot.x, rot.y, rot.z}; state.scale = {scale.x, scale.y, scale.z};
+            ShortText::InputSnapshot inputs; ShortText::ProgramMemory runtime;
+            ReadShortTextSceneInput(receiver, scene.GetSceneContext(), r, state, inputs);
+            ShortText::TickProgram(r.rules, runtime, state, inputs, dt);
+            ApplyShortTextSceneEffects(receiver, scene.GetSceneContext(), state);
+        };
+        ShortText::Recipe controls; controls.kind = ShortText::Kind::Rules;
+        ShortText::Rule control;
+        ShortText::Action hide{ShortText::Operation::SetVisible, 0, 0}; hide.target = ShortText::Target::Name; hide.targetName = "Door";
+        ShortText::Action text{ShortText::Operation::ShowVariableText, 0, 0, "displayScore"}; text.target = hide.target; text.targetName = "Door"; text.text = "Score: ";
+        control.actions = {hide, text}; controls.rules = {control}; applyRecipe(controls);
+        Require(!label->IsActive() && label->GetText() == "Score: 7", "named target visibility and numeric text display");
+        controls.rules[0].actions = {hide}; controls.rules[0].actions[0].operation = ShortText::Operation::SetActive;
+        applyRecipe(controls); Require(!door->IsActive(), "disable named object");
+        controls.rules[0].actions[0].value = 1; applyRecipe(controls); Require(door->IsActive(), "inactive named object can be enabled by another controller");
+        auto *parent = scene.GetSceneContext()->CreateEmptyObject("Parent");
+        parent->GetComponent<Transform>()->SetTranslate(Vector3(10, 0, 0)); parent->GetComponent<Transform>()->SetScale(Vector3(2, 2, 2));
+        receiver->GetComponent<Transform>()->SetParentObject(parent);
+        player->GetComponent<Transform>()->SetTranslate(Vector3(4, 2, 0));
+        ShortText::Action follow{ShortText::Operation::Follow, 1, 3}; follow.reference = "player";
+        controls.rules[0].actions = {follow}; applyRecipe(controls);
+        auto world = receiver->GetComponent<Transform>()->GetWorldPosition();
+        Require(std::abs(world.x - 4) < 0.001f && std::abs(world.y - 5) < 0.001f, "world follow converts through scaled parent");
+        follow.operation = ShortText::Operation::MoveToward; follow.value = 1;
+        controls.rules[0].actions = {follow}; applyRecipe(controls, 0.5);
+        Require(std::abs(receiver->GetComponent<Transform>()->GetWorldPosition().y - 4.5f) < 0.001f, "move toward is speed limited");
+        ShortText::Action create{ShortText::Operation::CreateObject, 0, 0, "Created"}; controls.rules[0].actions = {create}; applyRecipe(controls);
+        Require(scene.GetSceneContext()->GetSceneObject("Created") != nullptr, "empty object creation");
+        ShortText::Action cloneAction{ShortText::Operation::CloneObject, 0, 0, "Copy"}; cloneAction.target = ShortText::Target::Name; cloneAction.targetName = "Created";
+        controls.rules[0].actions = {cloneAction}; applyRecipe(controls);
+        Require(scene.GetSceneContext()->GetSceneObject("Copy") != nullptr, "named template cloning");
+        cloneAction.operation = ShortText::Operation::DeleteObject; cloneAction.targetName = "Copy";
+        controls.rules[0].actions = {cloneAction}; applyRecipe(controls); Require(scene.GetSceneContext()->GetSceneObject("Copy") == nullptr, "named object deletion");
+        ShortText::Action transition{ShortText::Operation::ChangeScene, 0, 0, "NextScene"}; controls.rules[0].actions = {transition};
+        applyRecipe(controls); Require(scene.GetSceneContext()->HasNextSceneName(), "scene transition request reaches scene context");
+        std::puts("Scene round trip, command routing, 2D/3D contact identity, numeric type preservation and audio-volume bridge passed.");
     } catch (const std::exception &error) { std::fprintf(stderr, "%s\n", error.what()); result = 1; }
     std::filesystem::current_path(original);
     if (sandbox.parent_path() == std::filesystem::temp_directory_path()) std::filesystem::remove_all(sandbox);

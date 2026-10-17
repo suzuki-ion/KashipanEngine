@@ -1,0 +1,7 @@
+{
+  "implementationModel": "claude-opus-5-5",
+  "commands": [
+    {"name":"spatial.direction","args":{"reference":"Player","dimension":2,"result":"heading"},"description":"対象からPlayerへのワールド方向と距離、+Xから反時計回りの角度(度)を取得。","requirements":"Transform、Playerは一意名またはUUID。results.heading.direction/distance/angle_degreesへ保存。dimension3はyaw_degrees(+Z基準)とpitch_degrees。position:[x,y,z]による直接指定も可能。対象の位置は変更しない。"},
+    {"name":"spatial.distance","args":{"reference":"Player","dimension":3,"result":"distance"},"description":"対象からPlayerまでの3Dワールド距離と方向を取得。","requirements":"Transform、Playerは一意名またはUUID。results.distance.distance/direction/delta/coincidentへ保存。重複名と不正な値は拒否する。"}
+  ]
+}

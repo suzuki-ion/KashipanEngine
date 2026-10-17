@@ -2748,6 +2748,16 @@
     <Manifest Include="Externals\Common\settings.manifest" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="KashipanEngine\Objects\Components\ShortTextRendering.cpp"><Filter>KashipanEngine\Objects\Components</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\Components\ShortTextPhysics.cpp"><Filter>KashipanEngine\Objects\Components</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\Components\ShortTextMedia.cpp"><Filter>KashipanEngine\Objects\Components</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\Components\ShortTextProperties.cpp"><Filter>KashipanEngine\Objects\Components</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\Components\ShortTextExtended.cpp"><Filter>KashipanEngine\Objects\Components</Filter></ClCompile>
+    <ClInclude Include="KashipanEngine\Objects\Components\ShortTextExtended.h"><Filter>KashipanEngine\Objects\Components</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Utilities\ShortTextValues.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="KashipanEngine\Objects\Components\ShortTextSpatial.cpp"><Filter>KashipanEngine\Objects\Components</Filter></ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Components\GameEventRouter.cpp"><Filter>KashipanEngine\Scene\Components</Filter></ClCompile>
     <ClCompile Include="KashipanEngine\Utilities\GameEvents.cpp"><Filter>KashipanEngine\Utilities</Filter></ClCompile>
     <ClInclude Include="KashipanEngine\Scene\Components\GameEventRouter.h"><Filter>KashipanEngine\Scene\Components</Filter></ClInclude>

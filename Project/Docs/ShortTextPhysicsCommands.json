@@ -1,0 +1,38 @@
+{
+  "commands": [
+    {"name":"controller_move","args":{"velocity":[3,0,0]},"description":"毎フレーム速度×dtの移動をCharacterController経由で予約する。2DはXYのみ。","requirements":"Transform、CharacterController2D/3D、対応Collider、SceneObjectCollider。every_frame又は入力条件ルールで実行。"},
+    {"name":"physics_state","args":{"result":"character"},"description":"接地・壁・天井・接地法線・形状対応状態、RigidBodyの速度/質量/重力をresults.characterへ保存。","requirements":"CharacterController又はRigidBody。結果は次フレームのenvironment.resultsにも反映。"},
+    {"name":"rigid_force","args":{"value":[10,0,0]},"description":"RigidBodyの重心に力を加える。","requirements":"初期化済RigidBody2D/3D、SceneObjectCollider。力はevery_frameで継続適用。"},
+    {"name":"rigid_impulse","args":{"value":[0,16,0]},"description":"重心に線形衝撃を加える。3Dは速度にimpulse/massを加算。","requirements":"初期化済RigidBody2D/3D。2DはXYのみ。"},
+    {"name":"rigid_velocity","args":{"value":[0,16,0]},"description":"物理ボディの線形速度を設定。","requirements":"初期化済RigidBody2D/3D。"},
+    {"name":"rigid_settings","args":{"mass":2,"gravity":true,"sleep":false},"description":"質量・重力・睡眠状態を設定。各項目は省略可能。","requirements":"RigidBody2D/3D。sleep操作には初期化済ボディ。massは正数。"},
+    {"name":"collision_query","args":{"dimension":2,"shape":"circle","center":[0,0,0],"radius":2,"result":"nearby"},"description":"任意形状の重なりを問い合わせ、安定ID・法線・侵入深さの配列をresults.nearbyへ保存。","requirements":"SceneObjectCollider。2D: point/circle/box/segment/capsule。3D: sphere/box/capsule。boxはhalf_size、capsule2Dはstart/end、capsule3Dはheight。include_triggers既定false。自分を除外。"},
+    {"name":"raycast","args":{"dimension":3,"start":[0,0,0],"end":[0,0,10],"result":"sight"},"description":"3DはRP3Dの正確な有限レイを問い合わせfraction順に結果を返す。2Dは有限線分の重なり問い合わせ。","requirements":"SceneObjectCollider。3Dは初期化済ワールド。自分と既定ではトリガーを除外。2Dは交点座標/fractionなし、登録順。"},
+    {"name":"look_at","args":{"reference":"Player","dimension":2,"offset_degrees":0},"description":"対象に向く。referenceは一意名又はUUID。position指定でも可。2Dは+X方向基準、3Dは+Z基準。","requirements":"Transform。親のワールド回転を逆変換してローカルEulerへ反映。"},
+    {"name":"accelerated_move","args":{"position":[10,0,0],"speed":5,"acceleration":20,"tolerance":0.01,"controller":false,"slot":"move","result":"arrival"},"description":"加速し到達前に減速して移動。results.arrivalへarrived/speed/direction/velocityを通知。arrived条件の立上りで到達イベントを作れる。位置はローカル座標。","requirements":"Transform、プログラムメモリ。every_frameで実行。controller trueはCharacterController経由。slotごとに速度を保存。"},
+    {"name":"waypoint_move","args":{"points":[[0,0,0],[5,0,0],[5,5,0]],"speed":3,"acceleration":20,"loop":true,"slot":"patrol","result":"patrol"},"description":"最大256地点を順番に巡回。results.patrol.arrivedとwaypointを返す。","requirements":"Transform、プログラムメモリ。every_frameで実行。loop falseは最後の地点に停止。controller設定可。"},
+    {"name":"grid_path","args":{"start":[0,0],"goal":[8,8],"width":16,"height":16,"origin":[0,0,0],"cell_size":1,"tilemap":"Map","avoid_colliders":true,"agent_radius":0.25,"result":"path"},"description":"4近傍BFSで最短格子経路を計算。Tilemap固体セルと2Dコライダーを回避。results.path.found/pointsへ保存しwaypoint_moveのpointsに渡せる。","requirements":"最大128×128。地形は静的スナップショット。tilemap指定時はマップのセル座標と格子を合わせる。avoid_colliders時はSceneObjectCollider。blocked:[[x,y],...]指定も可。動的障害物は明示再計算。"},
+    {"name":"mouse_world","args":{"camera":"Camera2D","uv":[0.5,0.5],"depth":0,"result":"cursor"},"description":"左下原点の表示領域UVをCamera2Dのワールド座標へ変換。results.cursorはXYZ配列。","requirements":"一意名/UUIDでCamera2DとTransformを指定。UI矩形内UVとは範囲が異なるため、画面全体を覆うUI以外のui_uvは直接渡さない。"},
+    {"name":"input_command","args":{"name":"Jump","result":"jump_input"},"description":"既存InputCommandを評価してtriggered/valueを返す。","requirements":"Assets/InputCommand.json等で事前登録済の名前。"},
+    {"name":"gamepad_vibration","args":{"index":0,"left":16000,"right":8000},"description":"コントローラー振動を設定。両方0で停止。","requirements":"Input、接続コントローラー。index0..3、強度0..65535。"}
+  ],
+  "environment": {
+    "physics.grounded":"CharacterControllerが接地している",
+    "physics.wall":"CharacterControllerが壁に接触している",
+    "physics.ceiling":"CharacterControllerが天井に接触している",
+    "physics.normal":"接地法線XYZ",
+    "physics.shape_supported":"前回移動で形状が対応していた",
+    "input.hover":"UIButtonの範囲内にカーソルがある",
+    "input.drag":"UIButtonが押下を保持中でマウスが動いた",
+    "input.hold_seconds.0":"左マウスボタンの継続押下秒数(1=右、2=中)",
+    "input.scroll":"マウスホイールのフレーム差分",
+    "input.delta":"マウス移動ピクセル差分XY",
+    "input.ui_uv":"UIButtonの矩形内カーソルUV。取得失敗時は存在しない",
+    "input.gamepad.0.left_stick":"左スティック正規化XY。index0..3",
+    "input.gamepad.0.buttons.A.pressed":"Aボタンを押した瞬間。held/releasedも使用可能",
+    "input.commands.Jump.triggered":"登録済InputCommand Jumpの入力成立",
+    "input.commands.Jump.value":"登録済InputCommand Jumpの入力値"
+  }
+}
+
+

@@ -1,0 +1,216 @@
+{
+  "commands": [
+    {
+      "name": "render.texture",
+      "args": {
+        "asset": "Textures/coin.png"
+      },
+      "description": "Use a loaded texture through per-object TextureSource.",
+      "requirements": "SpriteRenderer or MeshRenderer; loaded asset; GPU required to display."
+    },
+    {
+      "name": "render.material",
+      "args": {
+        "name": "Fade"
+      },
+      "description": "Switch renderer material.",
+      "requirements": "Loaded material name; changes the target renderer."
+    },
+    {
+      "name": "render.pipeline",
+      "args": {
+        "name": "Object2D.Solid.BlendNormal"
+      },
+      "description": "Switch renderer pipeline.",
+      "requirements": "Pipeline name must exist in active engine configuration."
+    },
+    {
+      "name": "render.uv",
+      "args": {
+        "offset": [
+          0,
+          0
+        ],
+        "size": [
+          0.25,
+          0.25
+        ],
+        "flipX": true,
+        "flipY": false,
+        "rotation": 0
+      },
+      "description": "Normalized image crop, flip and UV rotation in radians.",
+      "requirements": "SpriteRenderer; instance-only UV replaces prior rectangle."
+    },
+    {
+      "name": "render.layout",
+      "args": {
+        "sourceName": "ScreenBuffer_0",
+        "cameraName": "Camera",
+        "cover": true,
+        "edge": "center",
+        "anchor": [
+          0.5,
+          0.5
+        ],
+        "pivot": [
+          0.5,
+          0.5
+        ],
+        "offset": [
+          0,
+          0
+        ]
+      },
+      "description": "Cover target or align at center/left/right/top/bottom/top_left/top_right/bottom_left/bottom_right.",
+      "requirements": "Root sprite with XY unit quad; one root unrotated unscaled Camera2D auto-resolved by CameraRenderer target or explicit cameraName. Camera2D projection is 0..width,0..height. every_frame for ongoing sync; ensure foreground order."
+    },
+    {
+      "name": "render.target",
+      "args": {
+        "name": "ScreenBuffer_0"
+      },
+      "description": "Assign rendering destination.",
+      "requirements": "Destination object owns a Window or ScreenBuffer; source owns Sprite/Mesh/Text/CameraRenderer."
+    },
+    {
+      "name": "render.order",
+      "args": {
+        "priority": 20000
+      },
+      "description": "Set draw order priority.",
+      "requirements": "Integer int32; respects engine pipeline ordering."
+    },
+    {
+      "name": "render.layer",
+      "args": {
+        "layer": "Overlay"
+      },
+      "description": "Named draw order layer Background/World/UI/Overlay mapped to -10000/0/10000/20000, or direct int32.",
+      "requirements": "Draw sorting convention only; no collision or culling layers; respects pipeline ordering."
+    },
+    {
+      "name": "render.material_parameter",
+      "args": {
+        "material": "Fade",
+        "parameter": "color",
+        "value": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "shared": true
+      },
+      "description": "Change shared material standard field or extra shader parameter.",
+      "requirements": "Explicit shared:true; loaded material. Standard color/specularColor/rimColor, shininess/rimPower/rimIntensity/uvRotation, uvTranslate/uvScale/uvPivot, enableLighting/enableShadowMapProjection. extra:true supports float/bool/vec4 matching compiled shader field. No material file is saved."
+    },
+    {
+      "name": "post.configure",
+      "args": {
+        "type": "VignetteEffect",
+        "values": {
+          "params_.intensity": 0.5
+        }
+      },
+      "description": "Configure reflected effect properties.",
+      "requirements": "Existing effect component. Use generic property tween for animated values; reflection paths and type validated."
+    },
+    {
+      "name": "text.style",
+      "args": {
+        "size": 32,
+        "color": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "alpha": 0.5
+      },
+      "description": "Set text font size, color/opacity and optional font name.",
+      "requirements": "TextRenderer; font argument requires loaded font; alpha 0..1; size positive."
+    },
+    {
+      "name": "text.format",
+      "args": {
+        "value": 42,
+        "decimals": 0,
+        "width": 5,
+        "zeroPad": true,
+        "prefix": "Score: ",
+        "suffix": ""
+      },
+      "description": "Format numeric text with decimal places and padding.",
+      "requirements": "TextRenderer; decimals 0..9, width 0..128; value expression can be resolved by common command adapter."
+    },
+    {
+      "name": "camera.configure",
+      "args": {
+        "mode": "2d",
+        "create": true,
+        "values": {
+          "width_": 1280,
+          "height_": 720,
+          "pixelSnapping_": true
+        }
+      },
+      "description": "Create or configure Camera2D/Camera3D reflected projection properties.",
+      "requirements": "Mode 2d or 3d; camera renderer separately via component.add and render.target; generic property tween animates projection."
+    },
+    {
+      "name": "render_target.configure",
+      "args": {
+        "kind": "screen_buffer",
+        "create": true,
+        "name": "ScreenBuffer_0",
+        "width": 1280,
+        "height": 720
+      },
+      "description": "Create/configure screen_buffer, window or overlay on target object.",
+      "requirements": "GPU/window system required for actual render target creation; width/height integer 1..16384; window optional syncTransform."
+    },
+    {
+      "name": "component.add",
+      "args": {
+        "type": "VignetteEffect",
+        "values": {
+          "params_.intensity": 0.5
+        }
+      },
+      "description": "Add registered component, optionally configure reflected values.",
+      "requirements": "One existing component of same name causes error; recursive ShortTextBehavior prohibited; does not auto-create a new object."
+    },
+    {
+      "name": "component.remove",
+      "args": {
+        "type": "VignetteEffect"
+      },
+      "description": "Remove first named component.",
+      "requirements": "Transform and currently executing ShortTextBehavior are protected."
+    },
+    {
+      "name": "component.configure",
+      "args": {
+        "type": "SpriteRenderer",
+        "values": {
+          "instanceColor_": [
+            0,
+            0,
+            0,
+            1
+          ]
+        }
+      },
+      "description": "Set typed reflected member values with snapshot rollback on failure.",
+      "requirements": "Existing component and nonempty values; unknown/type mismatch rejected before mutation."
+    }
+  ],
+  "limitations": [
+    "Layout assumes an XY unit quad, root Transform, and root unrotated unscaled Camera2D; arbitrary hierarchy/perspective fitting is not supported.",
+    "Named layer is priority convention, not true render/collision/culling layer.",
+    "Material changes are shared and not persisted to asset files.",
+    "Shader extra parameters require matching compiled material layout; mismatched names do not create new shader features.",
+    "Runtime adapter only; GUI/GPU behavior requires manual verification."
+  ]
+}

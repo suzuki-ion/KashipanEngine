@@ -60,6 +60,37 @@ int main() {
         Require(failed, "unknown action rejected");
         memory = {}; state = {};
         TickProgram({start}, memory, state, input, 2); Require(!memory.started, "unsupported large delta rejected");
-        std::cout << "All six events, four conditions, nine actions, keyboard mapping and program serialization passed.\n";
+        Rule contact; contact.event = Event::ContactEnter;
+        contact.actions = {{Operation::AddVariable, 0, 1, "score"}, {Operation::PlaySound, 0, 0}};
+        memory = {}; state = {}; input = {}; input.contactReady[0] = true;
+        input.contacts[0] = {"A", "A", "B"};
+        TickProgram({contact}, memory, state, input, 0.1);
+        Near(state.variables.at("score"), 2); Require(state.effects.size() == 2, "one enter per distinct object, not per collider");
+        TickProgram({contact}, memory, state, input, 0.1);
+        Near(state.variables.at("score"), 2); Require(state.effects.empty(), "stay does not repeat enter");
+        input.contacts[0] = {"B", "C"};
+        TickProgram({contact}, memory, state, input, 0.1); Near(state.variables.at("score"), 3);
+        Rule exit = contact; exit.event = Event::ContactExit;
+        input.contacts[0].clear(); TickProgram({exit}, memory, state, input, 0.1); Near(state.variables.at("score"), 5);
+        memory = {}; state = {}; input.contacts[0] = {"A"};
+        contact.event = Event::ContactStay;
+        TickProgram({contact}, memory, state, input, 0.1); TickProgram({contact}, memory, state, input, 0.1); Near(state.variables.at("score"), 2);
+        Rule variable; variable.conditions = {{Test::VariableAtLeast, 0, 2, "score"}, {Test::VariableAtMost, 0, 3, "score"}};
+        variable.actions = {{Operation::SetVariable, 0, 7, "hp"}, {Operation::SetVolume, 0, 0.5f}, {Operation::StopSound, 0, 0}};
+        TickProgram({variable}, memory, state, input, 0.1); Near(state.variables.at("hp"), 7); Require(state.effects.size() == 2, "ordered audio commands emitted");
+        state.variables.erase("score"); state.variables.erase("hp");
+        TickProgram({variable}, memory, state, input, 0.1); Require(!state.variables.contains("hp"), "missing variable does not satisfy conditions");
+        state.variables["score"] = 2; state.blockedVariables.insert("hp");
+        TickProgram({variable}, memory, state, input, 0.1); Require(!state.variables.contains("hp"), "non-numeric variable is not replaced");
+        Recipe extended; extended.kind = Kind::Rules; extended.rules = {contact, variable};
+        Require(EncodeRecipe(DecodeRecipe(EncodeRecipe(extended))) == EncodeRecipe(extended), "extended recipe round trip");
+        extended.rules[1].actions[1].value = 1.1f; Require(!IsValid(extended), "volume bound");
+        memory = {}; state = {}; input = {}; input.contactReady[0] = true; input.contacts[0] = {"A", "B"};
+        contact.event = Event::ContactEnter; contact.conditions = {{Test::VariableAtMost, 0, 0, "score"}};
+        state.variables["score"] = 0;
+        TickProgram({contact}, memory, state, input, 0.1); Near(state.variables.at("score"), 1);
+        Require(state.effects.size() == 1, "conditions re-evaluated for each partner");
+        TickProgram({contact}, memory, state, input, -1); Require(state.effects.empty() && state.writtenVariables.empty(), "invalid frame cannot replay external effects");
+        std::cout << "Nine events, six conditions, fourteen actions, contact identity, numeric variables and audio effect regression passed.\n";
     } catch (const std::exception &e) { std::cerr << e.what() << '\n'; return 1; }
 }

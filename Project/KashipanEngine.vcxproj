@@ -504,6 +504,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClCompile Include="KashipanEngine\Utilities\ShortTextLearning.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\ShortTextBehaviorEditor.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextBehavior.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\ShortTextRendering.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\ShortTextPhysics.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\ShortTextMedia.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\ShortTextProperties.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\ShortTextExtended.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\ShortTextSpatial.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\GameEventRouter.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\GameEvents.cpp" />
     <ClCompile Include="Externals\angelscript\include\add_on\contextmgr\contextmgr.cpp" />
@@ -1487,6 +1493,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <ItemGroup>
+    <ClInclude Include="KashipanEngine\Objects\Components\ShortTextExtended.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="KashipanEngine\Utilities\ShortTextValues.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\GameEventRouter.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptGameEvent.h" />
     <ClInclude Include="KashipanEngine\Utilities\GameEvents.h" />

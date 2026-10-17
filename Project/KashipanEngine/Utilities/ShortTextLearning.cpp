@@ -7,7 +7,7 @@
 
 namespace KashipanEngine::ShortText {
 namespace {
-constexpr size_t kMaxEntries = 256;
+constexpr size_t kMaxEntries = 1024;
 constexpr std::uintmax_t kMaxFileBytes = 1024 * 1024;
 using Json = nlohmann::json;
 
@@ -147,7 +147,7 @@ bool LearningStore::Upsert(const LearnedEntry &entry, std::string &error) {
     auto found = std::find_if(next.begin(), next.end(), [&](const auto &other) { return Normalize(other.phrase) == key; });
     if (found != next.end()) *found = entry;
     else {
-        if (next.size() >= kMaxEntries) { error = "登録できる学習内容は256件までです。"; return false; }
+        if (next.size() >= kMaxEntries) { error = "登録できる学習内容は1024件までです。"; return false; }
         next.push_back(entry);
     }
     return Persist(next, error);

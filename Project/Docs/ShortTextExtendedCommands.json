@@ -1,0 +1,120 @@
+{
+  "commands": [
+    {
+      "name": "property.set",
+      "args": {
+        "path": "SpriteRenderer.instanceColor_.a",
+        "value": 0.5
+      },
+      "description": "Write typed public property; optionally source and sourcePath instead of value",
+      "requirements": "Existing writable member; vector channel preserves other channels; script leaf fields only"
+    },
+    {
+      "name": "property.sync",
+      "args": {
+        "path": "Transform.scale_.x",
+        "source": "ScreenBuffer_0",
+        "sourcePath": "ScreenBufferObject.width"
+      },
+      "description": "Continuously copy source property to target property",
+      "requirements": "Both properties compatible; stable object IDs; self or source by unique name/ID"
+    },
+    {
+      "name": "property.unsync",
+      "args": {
+        "path": "Transform.scale_.x"
+      },
+      "description": "Remove continuous property synchronization",
+      "requirements": "Matching target and property"
+    },
+    {
+      "name": "variable.set",
+      "args": {
+        "scope": "scene",
+        "name": "goal",
+        "type": "bool",
+        "value": true
+      },
+      "description": "Set typed scene/global variable",
+      "requirements": "type bool/int/uint/int64/uint64/float/double/string/vector2/vector3/vector4/color/object; preserves existing type if omitted; object is UUID string"
+    },
+    {
+      "name": "variable.get",
+      "args": {
+        "scope": "global",
+        "name": "playerName",
+        "result": "name"
+      },
+      "description": "Read typed variable into results",
+      "requirements": "Existing supported variable"
+    },
+    {
+      "name": "variable.copy",
+      "args": {
+        "scope": "scene",
+        "name": "hp",
+        "source": "maxHp",
+        "sourceScope": "global"
+      },
+      "description": "Copy variable to another",
+      "requirements": "Existing source; type optional, preserve destination type"
+    },
+    {
+      "name": "variable.calculate",
+      "args": {
+        "scope": "scene",
+        "name": "hp",
+        "source": "hp",
+        "operator": "subtract",
+        "other": "damage",
+        "otherScope": "scene"
+      },
+      "description": "Compute from two variables or variable and literal value",
+      "requirements": "operator add/subtract/multiply/divide; vectors elementwise or scalar; string add only; divide zero rejected"
+    },
+    {
+      "name": "tilemap.set",
+      "args": {
+        "x": 2,
+        "y": 3,
+        "tile": 0
+      },
+      "description": "Change tile cell",
+      "requirements": "TilemapRenderer valid grid coordinate and tile type; -1 clears cell"
+    },
+    {
+      "name": "tilemap.get",
+      "args": {
+        "x": 2,
+        "y": 3,
+        "result": "tile"
+      },
+      "description": "Get tile index into results",
+      "requirements": "Existing grid coordinate"
+    },
+    {
+      "name": "tilemap.clear",
+      "args": {},
+      "description": "Clear all tile cells",
+      "requirements": "TilemapRenderer"
+    },
+    {
+      "name": "tilemap.resize",
+      "args": {
+        "width": 32,
+        "height": 32
+      },
+      "description": "Resize tile grid preserving overlap",
+      "requirements": "Nonnegative size, maximum 1048576 cells"
+    },
+    {
+      "name": "tilemap.solid",
+      "args": {
+        "tile": 0,
+        "solid": true
+      },
+      "description": "Configure tile type as collision solid",
+      "requirements": "Existing tile type and collision generation configured"
+    }
+  ]
+}

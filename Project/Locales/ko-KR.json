@@ -1875,6 +1875,7 @@
 		//--------- editor.logger ---------//
 		"editor.logger.window": "로그",
 		"editor.logger.copy_all": "모두 복사",
+		"editor.logger.copy_selected": "선택한 행 복사",
 		"editor.logger.copy_entry": "이 로그 복사",
 
 		//--------- editor.materialmanager ---------//

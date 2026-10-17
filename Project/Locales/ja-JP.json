@@ -1914,6 +1914,7 @@
 		//--------- editor.logger ---------//
 		"editor.logger.window": "ログ",
 		"editor.logger.copy_all": "すべてコピー",
+		"editor.logger.copy_selected": "選択行をコピー",
 		"editor.logger.copy_entry": "このログをコピー",
 
 		//--------- editor.materialmanager ---------//

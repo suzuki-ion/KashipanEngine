@@ -1912,6 +1912,7 @@
 		//--------- editor.logger ---------//
 		"editor.logger.window": "Logger",
 		"editor.logger.copy_all": "Copy all",
+		"editor.logger.copy_selected": "Copy selected rows",
 		"editor.logger.copy_entry": "Copy this entry",
 
 		//--------- editor.materialmanager ---------//

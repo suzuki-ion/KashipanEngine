@@ -727,6 +727,8 @@ ImVec4 GetLogSeverityColor(LogSeverity severity) {
 void ShowImGuiLoggerWindow(Passkey<SceneEditor>) {
     static bool followLatestLog = true;
     static bool isFirstVisibleFrame = true;
+    // ログは末尾にのみ追加されるため、インデックスを安定した選択IDとして使う。
+    static ImGuiSelectionBasicStorage selection;
 
     constexpr float kBottomDetectionThreshold = 1.0f;
     const ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse;
@@ -738,6 +740,10 @@ void ShowImGuiLoggerWindow(Passkey<SceneEditor>) {
     std::string clipboardText;
     bool copyRequested = false;
     const bool copyAllRequested = ImGui::Button(TranslationLabel("editor.logger.copy_all"));
+    ImGui::SameLine();
+    ImGui::BeginDisabled(selection.Size == 0);
+    bool copySelectedRequested = ImGui::Button(TranslationLabel("editor.logger.copy_selected"));
+    ImGui::EndDisabled();
     ImGui::Separator();
     if (!ImGui::BeginChild("LogLines", ImVec2(0.0f, 0.0f), ImGuiChildFlags_None,
         ImGuiWindowFlags_HorizontalScrollbar)) {
@@ -751,7 +757,7 @@ void ShowImGuiLoggerWindow(Passkey<SceneEditor>) {
     const bool isAtBottom =
         ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - kBottomDetectionThreshold;
     if (!isFirstVisibleFrame) {
-        followLatestLog = isAtBottom;
+        followLatestLog = isAtBottom && selection.Size == 0;
     }
 
     {
@@ -763,8 +769,14 @@ void ShowImGuiLoggerWindow(Passkey<SceneEditor>) {
             }
             copyRequested = true;
         }
+        ImGuiMultiSelectIO *selectionIO = ImGui::BeginMultiSelect(
+            ImGuiMultiSelectFlags_ClearOnEscape, selection.Size, static_cast<int>(sLogLines.size()));
+        selection.ApplyRequests(selectionIO);
         ImGuiListClipper clipper;
         clipper.Begin(static_cast<int>(sLogLines.size()));
+        if (selectionIO->RangeSrcItem >= 0 && selectionIO->RangeSrcItem < static_cast<ImGuiSelectionUserData>(sLogLines.size())) {
+            clipper.IncludeItemByIndex(static_cast<int>(selectionIO->RangeSrcItem));
+        }
         while (clipper.Step()) {
             for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
                 const LogEntry &entry = sLogLines[i];
@@ -774,13 +786,23 @@ void ShowImGuiLoggerWindow(Passkey<SceneEditor>) {
                 const char *end = begin + line.size();
                 while (end > begin && (end[-1] == '\n' || end[-1] == '\r')) --end;
                 ImGui::PushID(i);
-                ImGui::PushStyleColor(ImGuiCol_Text, GetLogSeverityColor(entry.severity));
-                ImGui::TextUnformatted(begin, end);
-                ImGui::PopStyleColor();
+                const ImVec2 textSize = ImGui::CalcTextSize(begin, end, false);
+                const ImVec2 textPosition = ImGui::GetCursorScreenPos();
+                ImGui::SetNextItemSelectionUserData(i);
+                ImGui::Selectable("##LogLine", selection.Contains(static_cast<ImGuiID>(i)),
+                    ImGuiSelectableFlags_None,
+                    ImVec2((std::max)(textSize.x, ImGui::GetContentRegionAvail().x),
+                        (std::max)(textSize.y, ImGui::GetTextLineHeight())));
+                // 選択背景とログ本文を分け、重要度の文字色と本文中の ## を保持する。
+                ImGui::GetWindowDrawList()->AddText(textPosition,
+                    ImGui::GetColorU32(GetLogSeverityColor(entry.severity)), begin, end);
                 if (ImGui::BeginPopupContextItem("LogContextMenu")) {
                     if (ImGui::MenuItem(TranslationLabel("editor.logger.copy_entry"))) {
                         clipboardText = line;
                         copyRequested = true;
+                    }
+                    if (ImGui::MenuItem(TranslationLabel("editor.logger.copy_selected"), "Ctrl+C", false, selection.Size > 0)) {
+                        copySelectedRequested = true;
                     }
                     ImGui::EndPopup();
                 }
@@ -788,6 +810,18 @@ void ShowImGuiLoggerWindow(Passkey<SceneEditor>) {
             }
         }
         clipper.End();
+        selection.ApplyRequests(ImGui::EndMultiSelect());
+        copySelectedRequested |= ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_C);
+        if (copySelectedRequested && selection.Size > 0) {
+            clipboardText.clear();
+            // Ctrlで選択した順番に関係なく、ログの表示順で連結する。
+            for (size_t i = 0; i < sLogLines.size(); ++i) {
+                if (selection.Contains(static_cast<ImGuiID>(i))) {
+                    clipboardText += sLogLines[i].text;
+                }
+            }
+            copyRequested = true;
+        }
     }
 
     // OSのクリップボード操作中はログワーカーを待たせない。
@@ -798,7 +832,7 @@ void ShowImGuiLoggerWindow(Passkey<SceneEditor>) {
     // Clipper終了後のカーソルは全ログの末尾にある。末尾マーカーを常に置いて
     // 追従ON/OFFによるスクロール範囲の変動を防ぐ。
     ImGui::Dummy(ImVec2(0.0f, 0.0f));
-    if (followLatestLog || isFirstVisibleFrame) {
+    if ((followLatestLog || isFirstVisibleFrame) && selection.Size == 0) {
         // このフレームでログが増えてScrollMaxが更新された場合も末尾マーカーへ確実に追従する。
         ImGui::SetScrollHereY(1.0f);
         followLatestLog = true;

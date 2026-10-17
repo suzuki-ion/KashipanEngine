@@ -2758,8 +2758,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextSpatial.cpp"><Filter>KashipanEngine\Objects\Components</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Utilities\ShortTextEventRequest.cpp"><Filter>KashipanEngine\Utilities</Filter></ClCompile>
+    <ClInclude Include="KashipanEngine\Utilities\ShortTextEventRequest.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude>
+    <ClCompile Include="KashipanEngine\Objects\Components\GameEventListener.cpp"><Filter>KashipanEngine\Objects\Components</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\Components\GameplayCommon.cpp"><Filter>KashipanEngine\Objects\Components</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\Components\GameplayHealth.cpp"><Filter>KashipanEngine\Objects\Components</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\Components\GameplayInteraction.cpp"><Filter>KashipanEngine\Objects\Components</Filter></ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Components\GameEventRouter.cpp"><Filter>KashipanEngine\Scene\Components</Filter></ClCompile>
     <ClCompile Include="KashipanEngine\Utilities\GameEvents.cpp"><Filter>KashipanEngine\Utilities</Filter></ClCompile>
+    <ClInclude Include="KashipanEngine\Objects\Components\GameEventListener.h"><Filter>KashipanEngine\Objects\Components</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\GameplayComponents.h"><Filter>KashipanEngine\Objects\Components</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Objects\Components\GameplayDetail.h"><Filter>KashipanEngine\Objects\Components</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\GameEventRouter.h"><Filter>KashipanEngine\Scene\Components</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptGameEvent.h"><Filter>KashipanEngine\Scene\Components\Script</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Utilities\GameEvents.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude>

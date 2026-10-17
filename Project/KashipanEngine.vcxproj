@@ -510,6 +510,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextProperties.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextExtended.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextSpatial.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\ShortTextEventRequest.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\GameEventListener.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\GameplayCommon.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\GameplayHealth.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\GameplayInteraction.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\GameEventRouter.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\GameEvents.cpp" />
     <ClCompile Include="Externals\angelscript\include\add_on\contextmgr\contextmgr.cpp" />
@@ -1497,6 +1502,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KashipanEngine\Utilities\ShortTextValues.h" />
+    <ClInclude Include="KashipanEngine\Utilities\ShortTextEventRequest.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\GameEventListener.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\GameplayComponents.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\GameplayDetail.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\GameEventRouter.h" />
     <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptGameEvent.h" />
     <ClInclude Include="KashipanEngine\Utilities\GameEvents.h" />

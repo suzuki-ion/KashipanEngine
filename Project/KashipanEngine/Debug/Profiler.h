@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <deque>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_set>
@@ -27,6 +28,7 @@ public:
         std::size_t frames = 0;
         std::size_t sampleCount = 60;
         std::vector<Result> results;
+        std::uint64_t frameId = 0;
     };
     static Profiler &GetInstance() { static Profiler instance; return instance; }
     void BeginFrame() {
@@ -40,13 +42,14 @@ public:
         std::lock_guard lock(mutex_);
         if (!recording_) return;
         recording_ = false;
+        ++completedFrames_;
         const auto end = Clock::now();
         frameMs_ = std::chrono::duration<double, std::milli>(end - frameStart_).count();
         const auto intervalStart = lastFrameEnd_ == Clock::time_point{} ? frameStart_ : lastFrameEnd_;
         const double interval = std::chrono::duration<double>(end - intervalStart).count();
         fps_ = interval > 0 ? 1.0 / interval : 0;
         lastFrameEnd_ = end;
-        history_.push_back(std::move(pending_));
+        history_.push_back(std::make_shared<const std::map<std::string, Sample>>(std::move(pending_)));
         while (history_.size() > capacity_) history_.pop_front();
     }
     void SetSampleCount(std::size_t count) {
@@ -55,11 +58,18 @@ public:
         while (history_.size() > capacity_) history_.pop_front();
     }
     Snapshot GetSnapshot() const {
-        std::lock_guard lock(mutex_);
-        Snapshot snapshot{frameMs_, fps_, history_.size(), capacity_, {}};
+        // Copy immutable frame handles under the lock, not every sample map.
+        // Aggregate outside it so external viewers do not block recording.
+        Snapshot snapshot;
+        std::deque<std::shared_ptr<const std::map<std::string, Sample>>> history;
+        {
+            std::lock_guard lock(mutex_);
+            snapshot = Snapshot{frameMs_, fps_, history_.size(), capacity_, {}, completedFrames_};
+            history = history_;
+        }
         std::map<std::string, Result> totals;
-        for (const auto &frame : history_) {
-            for (const auto &[name, sample] : frame) {
+        for (const auto &frame : history) {
+            for (const auto &[name, sample] : *frame) {
                 auto &result = totals[name];
                 result.name = name;
                 result.averageMs += sample.milliseconds;
@@ -67,8 +77,8 @@ public:
             }
         }
         for (auto &[name, result] : totals) {
-            result.averageMs /= static_cast<double>(history_.size());
-            if (auto it = history_.back().find(name); it != history_.back().end()) {
+            result.averageMs /= static_cast<double>(history.size());
+            if (auto it = history.back()->find(name); it != history.back()->end()) {
                 result.milliseconds = it->second.milliseconds;
                 result.calls = it->second.calls;
             }
@@ -110,6 +120,7 @@ private:
     using Clock = std::chrono::steady_clock;
     mutable std::mutex mutex_;
     std::uint64_t generation_ = 0;
+    std::uint64_t completedFrames_ = 0;
     bool recording_ = false;
     std::size_t capacity_ = 60;
     double frameMs_ = 0, fps_ = 0;
@@ -117,7 +128,7 @@ private:
     Clock::time_point lastFrameEnd_;
     std::map<std::string, Sample> pending_;
     std::unordered_set<std::string> names_;
-    std::deque<std::map<std::string, Sample>> history_;
+    std::deque<std::shared_ptr<const std::map<std::string, Sample>>> history_;
 };
 
 } // namespace KashipanEngine

@@ -4,6 +4,7 @@
 #include <memory>
 #include <stdexcept>
 #include <thread>
+#include <atomic>
 
 using KashipanEngine::Profiler;
 void Require(bool value) { if (!value) throw std::runtime_error("Profiler regression failed"); }
@@ -50,5 +51,28 @@ int main() {
     { Profiler::Scope scope("Recent"); }
     profiler.EndFrame();
     Require(profiler.GetSnapshot().frames == 1 && Find(profiler.GetSnapshot(), "Recent").calls == 1);
+    const auto completed = profiler.GetSnapshot().frameId;
+    profiler.EndFrame();
+    Require(profiler.GetSnapshot().frameId == completed); // duplicate completion is ignored
+    std::atomic<bool> stop{false}, consistent{true};
+    std::thread reader([&] {
+        while (!stop.load()) {
+            const auto snapshot = profiler.GetSnapshot();
+            if (snapshot.frames > snapshot.sampleCount) consistent = false;
+            for (const auto &row : snapshot.results) {
+                if (!std::isfinite(row.averageMs) || row.averageMs > row.peakMs + 0.000001)
+                    consistent = false;
+            }
+        }
+    });
+    for (int i = 0; i < 100; ++i) {
+        profiler.SetSampleCount(static_cast<std::size_t>(i % 5 + 1));
+        profiler.BeginFrame();
+        { Profiler::Scope scope("Concurrent"); }
+        profiler.EndFrame();
+    }
+    stop = true;
+    reader.join();
+    Require(consistent && profiler.GetSnapshot().frameId == completed + 100);
     std::cout << "Profiler regression passed\n";
 }

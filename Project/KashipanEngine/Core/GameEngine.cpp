@@ -1,3 +1,4 @@
+#include "Debug/ProfilerServer.h"
 #include "GameEngine.h"
 #include "EngineSettings.h"
 #include "Core/ProjectPaths.h"
@@ -299,6 +300,8 @@ void GameEngine::GameLoopDraw() {
 }
 
 int GameEngine::Execute(PasskeyForGameEngineMain) {
+    ProfilerServer profilerServer;
+    Log(profilerServer.Status(), LogSeverity::Info);
     static size_t windowCount = 0;
 
     while (!gameLoopEndConditionFunction_()) {

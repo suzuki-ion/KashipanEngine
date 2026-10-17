@@ -1,5 +1,6 @@
 #pragma once
 #include <d3d12.h>
+#include "Debug/Logger.h"
 #include <dxcapi.h>
 #include <wrl.h>
 #include <string>
@@ -141,6 +142,10 @@ public:
     /// @brief 指定世代のコンパイル済みシェーダーを破棄
     static void DestroyCompiledShaders(Passkey<PipelineManager>, const std::vector<uint32_t> &shaderIDs);
 
+    void LogCacheStatistics() const {
+        Log("[StartupCache] Shaders: hits=" + std::to_string(cacheHits_) + ", misses=" + std::to_string(cacheMisses_), LogSeverity::Info);
+    }
+
     /// @brief シェーダーコンパイル結果情報構造体
     struct ShaderCompiledInfo {
         ShaderCompiledInfo(Passkey<ShaderCompiler>, uint32_t shaderID) : id(shaderID) {}
@@ -185,6 +190,8 @@ public:
     void DestroyShader(ShaderCompiledInfo *shaderCompiledInfo);
 
 private:
+    uint32_t cacheHits_ = 0;
+    uint32_t cacheMisses_ = 0;
     /// @brief シェーダーのコンパイル内部処理
     /// @param compileInfo コンパイル情報
     ShaderCompiledInfo *ShaderCompile(const CompileInfo &compileInfo);

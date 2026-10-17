@@ -65,6 +65,7 @@ PipelineManager::PipelineManager(Passkey<GraphicsEngine>, ID3D12Device *device, 
     startupSections.End("ShaderAndStatePresets");
     LoadPipelines();
     startupSections.End("PSOCreation");
+    shaderCompiler_->LogCacheStatistics();
 #if defined(USE_IMGUI)
     sActiveInstance = this;
 #endif

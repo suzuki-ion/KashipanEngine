@@ -1,4 +1,7 @@
 #include "ShaderCompiler.h"
+#include "Core/ProjectPaths.h"
+#include "Utilities/FileIO/ContentCache.h"
+#include <atomic>
 #include <stdexcept>
 #include <vector>
 #include <string>
@@ -26,6 +29,56 @@ std::vector<uint32_t> sFreeShaderIDs;
   (uint32_t)(uint8_t)(ch2) << 16  | (uint32_t)(uint8_t)(ch3) << 24   \
 )
 #endif
+
+
+// Delegate to DXC's original handler and record the exact bytes actually included.
+class RecordingIncludeHandler final : public IDxcIncludeHandler {
+public:
+    RecordingIncludeHandler(IDxcIncludeHandler *delegate, std::filesystem::path sourceDirectory)
+        : delegate_(delegate), sourceDirectory_(std::move(sourceDirectory)) {}
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void **object) override {
+        if (!object) return E_POINTER;
+        if (iid == __uuidof(IUnknown) || iid == __uuidof(IDxcIncludeHandler)) {
+            *object = static_cast<IDxcIncludeHandler *>(this); AddRef(); return S_OK;
+        }
+        *object = nullptr; return E_NOINTERFACE;
+    }
+    ULONG STDMETHODCALLTYPE AddRef() override { return ++references_; }
+    ULONG STDMETHODCALLTYPE Release() override {
+        const auto remaining = --references_;
+        if (!remaining) delete this;
+        return remaining;
+    }
+    HRESULT STDMETHODCALLTYPE LoadSource(LPCWSTR filename, IDxcBlob **source) override {
+        const HRESULT hr = delegate_->LoadSource(filename, source);
+        if (SUCCEEDED(hr) && source && *source) {
+            try {
+                auto path = std::filesystem::path(filename);
+                if (!std::filesystem::exists(path)) path = sourceDirectory_ / path;
+                auto dependency = ContentCache::Dependency(path);
+                if (dependency["hash"] != ContentCache::Digest((*source)->GetBufferPointer(), (*source)->GetBufferSize())) cacheable = false;
+                dependencies.push_back(std::move(dependency));
+            } catch (...) { cacheable = false; }
+        }
+        return hr;
+    }
+    ContentCache::Json dependencies = ContentCache::Json::array();
+    bool cacheable = true;
+private:
+    std::atomic_ulong references_{1};
+    Microsoft::WRL::ComPtr<IDxcIncludeHandler> delegate_;
+    std::filesystem::path sourceDirectory_;
+};
+
+std::string DxcIdentity() {
+    static const std::string identity = [] {
+        wchar_t path[32768]{};
+        const auto module = GetModuleHandleW(L"dxcompiler.dll");
+        const auto length = module ? GetModuleFileNameW(module, path, 32768) : 0;
+        return length && length < 32768 ? ContentCache::FileDigest(path) : std::string{};
+    }();
+    return identity;
+}
 
 } // namespace
 
@@ -217,42 +270,73 @@ ShaderCompiler::ShaderCompiledInfo *ShaderCompiler::ShaderCompile(const CompileI
     args.reserve(wstrArgs.size());
     for (auto &s : wstrArgs) args.emplace_back(s.c_str());
 
-    Microsoft::WRL::ComPtr<IDxcResult> result;
-    hr = dxcCompiler_->Compile(
-        &src,
-        args.data(),
-        static_cast<UINT>(args.size()),
-        includeHandler.Get(),
-        IID_PPV_ARGS(&result)
-    );
-    if (FAILED(hr) || result == nullptr) {
-        Log(Translation("engine.graphics.shadercompiler.compile.failed") + compileInfo.filePath, LogSeverity::Error);
-        return nullptr;
+    std::string cacheKey = "ShaderBytecode-v1|" + DxcIdentity();
+    for (const auto &argument : wstrArgs) {
+        const auto text = ConvertString(argument);
+        cacheKey += "|" + std::to_string(text.size()) + ":" + text;
     }
-
-    // ステータス取得（これで成功/失敗を判定）
-    HRESULT status = S_OK;
-    result->GetStatus(&status);
-
-    // 診断出力（警告は許容、失敗時はエラー）
-    Microsoft::WRL::ComPtr<IDxcBlobUtf8> errors;
-    result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), nullptr);
-    if (errors && errors->GetStringLength() > 0) {
-        std::string msg = std::string(errors->GetStringPointer());
-        Log(Translation("engine.graphics.shadercompiler.compile.error") + msg,
-            FAILED(status) ? LogSeverity::Error : LogSeverity::Warning);
-    }
-
-    if (FAILED(status)) {
-        return nullptr;
-    }
-
-    // バイナリ取得
+    cacheKey += "|cwd=" + ContentCache::PathText(std::filesystem::current_path());
+    static const auto cacheDirectory = ContentCache::Directory(ProjectPaths::ProjectRoot(), "Shaders");
+    const auto cachePath = cacheDirectory / (ContentCache::Digest(cacheKey) + ".cache");
     Microsoft::WRL::ComPtr<IDxcBlob> shaderBlob;
-    hr = result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&shaderBlob), nullptr);
-    if (FAILED(hr) || shaderBlob == nullptr) {
-        Log(Translation("engine.graphics.shadercompiler.compile.getobject.failed"), LogSeverity::Error);
-        return nullptr;
+    bool cacheHit = false;
+    if (!DxcIdentity().empty()) {
+        if (const auto cached = ContentCache::Load(cachePath, cacheKey)) {
+            Microsoft::WRL::ComPtr<IDxcBlobEncoding> blob;
+            hr = dxcLibrary_->CreateBlobWithEncodingOnHeapCopy(cached->data(), static_cast<UINT32>(cached->size()), 0, &blob);
+            if (SUCCEEDED(hr)) { shaderBlob = blob; cacheHit = true; }
+        }
+    }
+    if (cacheHit) {
+        ++cacheHits_;
+    } else {
+        ++cacheMisses_;
+        Microsoft::WRL::ComPtr<RecordingIncludeHandler> recordingHandler;
+        recordingHandler.Attach(new RecordingIncludeHandler(includeHandler.Get(), Utf8StringToPath(compileInfo.filePath).parent_path()));
+        const auto sourceDependency = ContentCache::Dependency(Utf8StringToPath(compileInfo.filePath));
+        if (sourceDependency["hash"] != ContentCache::Digest(sourceBlob->GetBufferPointer(), sourceBlob->GetBufferSize())) recordingHandler->cacheable = false;
+        Microsoft::WRL::ComPtr<IDxcResult> result;
+        hr = dxcCompiler_->Compile(
+            &src,
+            args.data(),
+            static_cast<UINT>(args.size()),
+            recordingHandler.Get(),
+            IID_PPV_ARGS(&result)
+        );
+        if (FAILED(hr) || result == nullptr) {
+            Log(Translation("engine.graphics.shadercompiler.compile.failed") + compileInfo.filePath, LogSeverity::Error);
+            return nullptr;
+        }
+
+        // ステータス取得（これで成功/失敗を判定）
+        HRESULT status = S_OK;
+        result->GetStatus(&status);
+
+        // 診断出力（警告は許容、失敗時はエラー）
+        Microsoft::WRL::ComPtr<IDxcBlobUtf8> errors;
+        result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), nullptr);
+        if (errors && errors->GetStringLength() > 0) {
+            std::string msg = std::string(errors->GetStringPointer());
+            Log(Translation("engine.graphics.shadercompiler.compile.error") + msg,
+                FAILED(status) ? LogSeverity::Error : LogSeverity::Warning);
+        }
+
+        if (FAILED(status)) {
+            return nullptr;
+        }
+
+        // バイナリ取得
+        hr = result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&shaderBlob), nullptr);
+        if (FAILED(hr) || shaderBlob == nullptr) {
+            Log(Translation("engine.graphics.shadercompiler.compile.getobject.failed"), LogSeverity::Error);
+            return nullptr;
+        }
+
+        recordingHandler->dependencies.push_back(sourceDependency);
+        if (recordingHandler->cacheable && !DxcIdentity().empty()) {
+            ContentCache::Store(cachePath, cacheKey, recordingHandler->dependencies,
+                shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize());
+        }
     }
 
     // IDの確保

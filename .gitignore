@@ -411,3 +411,6 @@ KashipanEngine/imgui.ini
 
 # DirectXTex Compiled Shaders
 **/DirectXTex/Shaders/Compiled/
+
+# Regenerable startup shader and texture caches
+**/Cache/Startup/

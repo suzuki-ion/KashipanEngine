@@ -1,4 +1,5 @@
 #include "Input/Input.h"
+#include "Debug/StartupTiming.h"
 
 #include "Input/Keyboard.h"
 #include "Input/Mouse.h"
@@ -21,15 +22,19 @@ Input::Input(Passkey<GameEngine>)
     : keyboard_(std::make_unique<Keyboard>(Passkey<Input>{}))
     , mouse_(std::make_unique<Mouse>(Passkey<Input>{}))
     , controller_(std::make_unique<Controller>(Passkey<Input>{})) {
+    StartupTiming::Sections timing("Input.Devices.");
     if (keyboard_) {
         keyboard_->Initialize();
     }
+    timing.End("Keyboard");
     if (mouse_) {
         mouse_->Initialize();
     }
+    timing.End("Mouse");
     if (controller_) {
         controller_->Initialize();
     }
+    timing.End("Controller");
     ResetDeviceThresholds();
 }
 

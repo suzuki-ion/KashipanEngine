@@ -278,7 +278,15 @@
   <ItemGroup>
     <ClCompile Include="KashipanEngine\Utilities\ShortTextLearning.cpp"><Filter>KashipanEngine\Utilities</Filter></ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Editor\ShortTextBehaviorEditor.cpp"><Filter>KashipanEngine\Scene\Editor</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\DevelopmentAssistantEditor.cpp"><Filter>KashipanEngine\Scene\Editor</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Utilities\DevelopmentAssistant.cpp"><Filter>KashipanEngine\Utilities</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Utilities\DevelopmentAssistantApiContext.cpp"><Filter>KashipanEngine\Utilities</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\DevelopmentAssistantApi.cpp"><Filter>KashipanEngine\Scene\Editor</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\DevelopmentAssistantViewSupport.cpp"><Filter>KashipanEngine\Scene\Editor</Filter></ClCompile>
     <ClCompile Include="KashipanEngine\Scene\Editor\DevelopmentAssistantSceneSupport.cpp"><Filter>KashipanEngine\Scene\Editor</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\DevelopmentAssistantHost.cpp"><Filter>KashipanEngine\Scene\Editor</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\DevelopmentAssistantApiExtended.cpp"><Filter>KashipanEngine\Scene\Editor</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Utilities\DevelopmentAssistantTools.cpp"><Filter>KashipanEngine\Utilities</Filter></ClCompile>
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextBehavior.cpp"><Filter>KashipanEngine\Objects\Components</Filter></ClCompile>
     <ClCompile Include="Externals\imgui\ImGuizmo.cpp">
       <Filter>Externals\imgui</Filter>
@@ -825,7 +833,12 @@
     <ClInclude Include="KashipanEngine\Utilities\ShortTextLearning.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Utilities\ShortTextBehavior.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Editor\ShortTextBehaviorEditor.h"><Filter>KashipanEngine\Scene\Editor</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\DevelopmentAssistantEditor.h"><Filter>KashipanEngine\Scene\Editor</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Editor\EditorHelp.h"><Filter>KashipanEngine\Scene\Editor</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Utilities\DevelopmentAssistant.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Utilities\DevelopmentAssistantApiContext.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\DevelopmentAssistantApi.h"><Filter>KashipanEngine\Scene\Editor</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Utilities\DevelopmentAssistantTools.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\ShortTextBehavior.h"><Filter>KashipanEngine\Objects\Components</Filter></ClInclude>
     <ClInclude Include="Application\AppInitialize.h">
       <Filter>Application</Filter>
@@ -1240,6 +1253,9 @@
       <Filter>KashipanEngine\Input</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Input\Keyboard.h">
+      <Filter>KashipanEngine\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="KashipanEngine\Input\EditorTestInput.h">
       <Filter>KashipanEngine\Input</Filter>
     </ClInclude>
     <ClInclude Include="KashipanEngine\Input\Mouse.h">

@@ -1,4 +1,5 @@
-#include "SceneEditor.h"
+﻿#include "SceneEditor.h"
+#include "Input/EditorTestInput.h"
 #ifdef USE_IMGUI
 #include <algorithm>
 #include <cctype>
@@ -584,6 +585,16 @@ void SceneEditor::ShowImGui() {
     objectHierarchy_->ValidateCachedObjects();
 
     const auto &shortTextSelection = objectHierarchy_->GetSelectedObjects();
+    ++aiFrame_;
+    if (!context_->IsPlaying()) { aiStepFrames_ = 0; EditorTestInput::Clear(); }
+    else if (aiStepFrames_ && context_->IsPaused()) { --aiStepFrames_; if (aiStepFrames_) context_->RequestStepFrame(); }
+    std::string aiSentence;
+    if (developmentAssistantEditor_.Show(context_, commands_.get(),
+        shortTextSelection.size() == 1 ? *shortTextSelection.begin() : nullptr, aiSentence,
+        [this](const auto &tool, const auto &args) { return ExecuteAIEditorTool(tool, args); }, apiEditorInstance_)) {
+        if (shortTextBehaviorEditor_.SetInput(aiSentence)) shortTextBehaviorEditor_.open = true;
+    }
+    objectHierarchy_->ValidateCachedObjects();
     shortTextBehaviorEditor_.Show(context_, commands_.get(),
         shortTextSelection.size() == 1 ? *shortTextSelection.begin() : nullptr);
     // Starting the preview may remove EditorOnly objects, including the selection.
@@ -733,6 +744,7 @@ void SceneEditor::ShowMainWindow() {
         // エディターツールスクリプトの[MenuItem("MenuBar/...")]で追加された項目
         if (ImGui::BeginMenu("試験機能")) {
             ImGui::MenuItem("短文からの挙動作成", nullptr, &shortTextBehaviorEditor_.open);
+            ImGui::MenuItem("AIによる開発支援", nullptr, &developmentAssistantEditor_.open);
             ImGui::EndMenu();
         }
         EditorToolManager::GetInstance().ShowMenuBarItems();

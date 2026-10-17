@@ -1,4 +1,6 @@
 #include "Input/Keyboard.h"
+#include "Input/EditorTestInput.h"
+#include "Debug/StartupTiming.h"
 
 #include <GameInput.h>
 
@@ -73,11 +75,15 @@ Keyboard::~Keyboard() {
 }
 
 void Keyboard::Initialize() {
+    StartupTiming::Sections timing("Input.Keyboard.");
     if (!sGameInput) {
         // GameInput Runtimeが未導入でもexe自体は起動できるよう、呼び出し前に確認する。
         // 利用できない場合はUpdate()でWin32入力へフォールバックする。
-        if (GetModuleHandleW(L"GameInput.dll") || LoadLibraryW(L"GameInput.dll")) {
+        const bool runtimeAvailable = GetModuleHandleW(L"GameInput.dll") || LoadLibraryW(L"GameInput.dll");
+        timing.End("RuntimeDLL");
+        if (runtimeAvailable) {
             const HRESULT hr = GameInputCreate(&sGameInput);
+            timing.End("GameInputCreate");
             if (FAILED(hr)) sGameInput = nullptr;
         }
     }
@@ -106,6 +112,7 @@ void Keyboard::Update() {
     current.fill(0);
     prevRawDownCount_ = rawDownCount_;
     rawDownCount_ = 0;
+    struct ApplySynthetic { std::array<std::uint8_t, 256> &keys; ~ApplySynthetic() { EditorTestInput::ApplyKeys(keys); } } synthetic{current};
 
     if (!initialized_) {
         return;

@@ -11,6 +11,7 @@
 
 #include "Scene/SceneEditorContext.h"
 #include "Scene/Editor/ShortTextBehaviorEditor.h"
+#include "Scene/Editor/DevelopmentAssistantEditor.h"
 
 namespace KashipanEngine {
 
@@ -36,8 +37,14 @@ public:
     ~SceneEditor();
 
     void ShowImGui();
+    // Main-thread API entry for native editor extensions and headless integration tests.
+    std::string CallAIEditorApi(const std::string &tool, const std::string &arguments);
 
 private:
+    std::string ExecuteAIEditorTool(const std::string &tool, const std::string &arguments);
+    unsigned aiStepFrames_ = 0;
+    unsigned long long aiFrame_ = 0;
+    UUID128 apiEditorInstance_{true};
     void ShowMainWindow();
     void ShowPlayControls();
     /// @brief シーン新規作成の確認モーダル（既存内容を破棄する前に確認する）
@@ -100,6 +107,8 @@ private:
 
     std::unique_ptr<SceneEditorCommands> commands_;
     ShortTextBehaviorEditor shortTextBehaviorEditor_;
+    // The AI connection outlives an individual scene so an API-requested switch can continue.
+    static inline DevelopmentAssistantEditor developmentAssistantEditor_;
     std::unique_ptr<SceneObjectHierarchy> objectHierarchy_;
     std::unique_ptr<SceneObjectInspector> objectInspector_;
     std::unique_ptr<SceneComponentInspector> componentInspector_;

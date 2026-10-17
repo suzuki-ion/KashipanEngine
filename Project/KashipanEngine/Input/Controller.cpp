@@ -1,4 +1,5 @@
 #include "Input/Controller.h"
+#include "Debug/StartupTiming.h"
 
 #include <GameInput.h>
 
@@ -81,13 +82,18 @@ Controller::~Controller() {
 }
 
 void Controller::Initialize() {
+    StartupTiming::Sections timing("Input.Controller.");
     Finalize();
+    timing.End("PreviousDeviceCleanup");
 
     if (!sGameInput) {
         // GameInputは遅延ロードする。RuntimeがないPCではゲームパッドのみ無効化し、
         // キーボード・マウスによるゲーム起動は継続させる。
-        if (!GetModuleHandleW(L"GameInput.dll") && !LoadLibraryW(L"GameInput.dll")) return;
+        const bool runtimeAvailable = GetModuleHandleW(L"GameInput.dll") || LoadLibraryW(L"GameInput.dll");
+        timing.End("RuntimeDLL");
+        if (!runtimeAvailable) return;
         const HRESULT hr = GameInputCreate(&sGameInput);
+        timing.End("GameInputCreate");
         if (FAILED(hr)) {
             sGameInput = nullptr;
             return;
@@ -104,6 +110,7 @@ void Controller::Initialize() {
     connected_.clear();
     prevConnected_.clear();
 
+    timing.End("DeviceStorage");
     if (sGameInput) {
         // デバイスコールバックは列挙も兼ねる
         // すべてのゲームパッドデバイスを対象に登録する
@@ -115,6 +122,7 @@ void Controller::Initialize() {
             this,
             &OnGamepadDeviceChanged,
             &deviceCallbackToken_);
+        timing.End("BlockingDeviceEnumeration");
         if (FAILED(hr)) {
             assert(false);
             return;

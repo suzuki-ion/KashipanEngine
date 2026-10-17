@@ -58,6 +58,9 @@ class SceneEditorView final {
 public:
     SceneEditorView(Passkey<SceneEditor>, SceneEditorContext *context);
     ~SceneEditorView();
+    JSON GetApiCamera() const;
+    bool SetApiCamera(const JSON &settings);
+    bool SaveApiImage(const std::string &path) const;
 
     /// @brief シーンビューの描画（毎フレーム呼ぶ）
     /// @param selectedObjects 選択中のシーンオブジェクト集合（ギズモ表示対象）

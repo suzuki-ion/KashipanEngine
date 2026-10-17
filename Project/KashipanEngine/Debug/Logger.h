@@ -36,6 +36,7 @@ struct LogLine {
     std::string text;
     LogSeverity severity = LogSeverity::Info;
 };
+std::vector<LogLine> GetRecentLogLines(size_t maximum = 100);
 
 class SplashScreen;
 

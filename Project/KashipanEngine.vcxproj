@@ -503,7 +503,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
   <ItemGroup>
     <ClCompile Include="KashipanEngine\Utilities\ShortTextLearning.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\ShortTextBehaviorEditor.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\DevelopmentAssistantEditor.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\DevelopmentAssistant.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\DevelopmentAssistantApiContext.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\DevelopmentAssistantApi.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\DevelopmentAssistantViewSupport.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Editor\DevelopmentAssistantSceneSupport.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\DevelopmentAssistantHost.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\DevelopmentAssistantApiExtended.cpp" />
+    <ClCompile Include="KashipanEngine\Utilities\DevelopmentAssistantTools.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextBehavior.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextRendering.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextPhysics.cpp" />
@@ -811,7 +819,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClInclude Include="KashipanEngine\Utilities\ShortTextLearning.h" />
     <ClInclude Include="KashipanEngine\Utilities\ShortTextBehavior.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\ShortTextBehaviorEditor.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\DevelopmentAssistantEditor.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\EditorHelp.h" />
+    <ClInclude Include="KashipanEngine\Utilities\DevelopmentAssistant.h" />
+    <ClInclude Include="KashipanEngine\Utilities\DevelopmentAssistantApiContext.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\DevelopmentAssistantApi.h" />
+    <ClInclude Include="KashipanEngine\Utilities\DevelopmentAssistantTools.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\ShortTextBehavior.h" />
     <ClInclude Include="Application\AppInitialize.h" />
     <ClInclude Include="Externals\angelscript\include\add_on\autowrapper\aswrappedcall.h" />
@@ -1214,6 +1227,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClInclude Include="KashipanEngine\Input\Key.h" />
     <ClInclude Include="KashipanEngine\Input\Keyboard.h" />
     <ClInclude Include="KashipanEngine\Input\Mouse.h" />
+    <ClInclude Include="KashipanEngine\Input\EditorTestInput.h" />
     <ClInclude Include="KashipanEngine\Input\MouseButton.h" />
     <ClInclude Include="KashipanEngine\KashipanEngine.h" />
     <ClInclude Include="KashipanEngine\MathHeaders.h" />

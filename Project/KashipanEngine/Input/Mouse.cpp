@@ -1,4 +1,6 @@
 #include "Input/Mouse.h"
+#include "Input/EditorTestInput.h"
+#include "Debug/StartupTiming.h"
 
 #include <GameInput.h>
 
@@ -24,9 +26,13 @@ Mouse::~Mouse() {
 }
 
 void Mouse::Initialize() {
+    StartupTiming::Sections timing("Input.Mouse.");
     if (!sGameInput) {
-        if (GetModuleHandleW(L"GameInput.dll") || LoadLibraryW(L"GameInput.dll")) {
+        const bool runtimeAvailable = GetModuleHandleW(L"GameInput.dll") || LoadLibraryW(L"GameInput.dll");
+        timing.End("RuntimeDLL");
+        if (runtimeAvailable) {
             const HRESULT hr = GameInputCreate(&sGameInput);
+            timing.End("GameInputCreate");
             if (FAILED(hr)) sGameInput = nullptr;
         }
     }
@@ -74,6 +80,13 @@ void Mouse::Update() {
     previousWheelValue_ = currentWheelValue_;
 
     currentButtons_.fill(0);
+    struct ApplySynthetic {
+        Mouse *mouse;
+        ~ApplySynthetic() {
+            EditorTestInput::ApplyButtons(mouse->currentButtons_);
+            EditorTestInput::ApplyMotion(mouse->currentPosScreen, mouse->previousPosScreen, mouse->currentDeltaX_, mouse->currentDeltaY_, mouse->currentWheel_, mouse->currentWheelValue_);
+        }
+    } synthetic{this};
     currentDeltaX_ = 0;
     currentDeltaY_ = 0;
     currentWheel_ = 0;

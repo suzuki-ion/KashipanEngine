@@ -846,4 +846,12 @@ void ShowImGuiLoggerWindow(Passkey<SceneEditor>) {
 }
 #endif
 
+std::vector<LogLine> GetRecentLogLines(size_t maximum) {
+    maximum = (std::min)(maximum, size_t(200));
+    std::lock_guard lock(sLogLinesMutex);
+    std::vector<LogLine> result;
+    const auto begin = sLogLines.size() > maximum ? sLogLines.size() - maximum : 0;
+    for (size_t i = begin; i < sLogLines.size(); ++i) result.push_back({sLogLines[i].text.substr(0, 2048), sLogLines[i].severity});
+    return result;
+}
 } // namespace KashipanEngine

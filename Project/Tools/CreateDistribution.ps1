@@ -62,7 +62,7 @@ try {
             throw 'Required distribution directory was not found: Assets'
         }
     } else {
-        foreach ($name in @('Projects', 'AssetsTemplate', 'EditorTools')) {
+        foreach ($name in @('Projects', 'AssetsTemplate', 'EditorTools', 'Reference')) {
             if (-not (Test-Path -LiteralPath (Join-Path $ProjectDir $name) -PathType Container)) {
                 throw "Required editor directory was not found: $name"
             }
@@ -80,7 +80,7 @@ try {
         Invoke-MirrorCopy -Source (Join-Path $TargetDir 'Assets') -Destination (Join-Path $stageDir 'Assets')
     } else {
         # Keep the normal multi-project editor layout. Assets beside the exe would select standalone mode.
-        foreach ($name in @('AssetsTemplate', 'EditorTools')) {
+        foreach ($name in @('AssetsTemplate', 'EditorTools', 'Reference')) {
             Invoke-MirrorCopy -Source (Join-Path $ProjectDir $name) -Destination (Join-Path $stageDir $name)
         }
         $projectsDestination = Join-Path $stageDir 'Projects'

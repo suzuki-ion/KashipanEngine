@@ -19,6 +19,10 @@
         {
             "filePath": "Assets/Scenes/TitleScene.scene",
             "name": "TitleScene"
+        },
+        {
+            "filePath": "Assets/Scenes/CityScene.scene",
+            "name": "CityScene"
         }
     ],
     "startupScene": "Stage1"

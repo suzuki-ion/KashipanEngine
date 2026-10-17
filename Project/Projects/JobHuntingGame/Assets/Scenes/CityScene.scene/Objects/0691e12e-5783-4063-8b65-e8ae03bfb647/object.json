@@ -1,0 +1,70 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {
+                            "cellsX": 32,
+                            "cellsZ": 32,
+                            "center": {
+                                "x": 0.0,
+                                "y": 0.009999999776482582,
+                                "z": 0.0
+                            },
+                            "color": {
+                                "w": 1.0,
+                                "x": 0.5,
+                                "y": 0.5,
+                                "z": 0.5
+                            },
+                            "materialName": "",
+                            "pipelineName": "Object3D.Solid.BlendNormal",
+                            "spacing": 1.0,
+                            "thickness": 0.019999999552965164,
+                            "xyPlane": false
+                        },
+                        "scriptPath": "Assets/Application/Scripts/GridGenerator.as"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "EmptyObject",
+        "objectID": "0691e12e-5783-4063-8b65-e8ae03bfb647",
+        "tag": ""
+    },
+    "siblingIndex": 3000
+}

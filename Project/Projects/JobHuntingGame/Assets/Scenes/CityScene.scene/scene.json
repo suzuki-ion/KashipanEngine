@@ -1,0 +1,25 @@
+{
+    "sceneComponents": [
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1000,
+                "tag": ""
+            },
+            "type": "SceneRenderer"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1,
+                "tag": ""
+            },
+            "type": "SceneScriptEngine"
+        }
+    ],
+    "sceneID": "55009e29-6977-4ab2-ac9b-b669fa0054d7",
+    "sceneName": "CityScene",
+    "sceneVariables": []
+}

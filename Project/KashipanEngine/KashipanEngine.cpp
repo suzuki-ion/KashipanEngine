@@ -2,6 +2,7 @@
 #include "EngineSettings.h"
 #include "Debug/CrashHandler.h"
 #include "Debug/LogSettings.h"
+#include "Debug/StartupTiming.h"
 #include "Core/DirectX/ResourceLeakChecker.h"
 #include "Core/GameEngine.h"
 #include "Core/ProjectManager.h"
@@ -31,6 +32,8 @@ struct ScopedSplashScreen {
 } // namespace
 
 int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsPath) {
+    StartupTiming::Begin();
+    StartupTiming::Sections startupSections("Entry.");
     SetUnhandledExceptionFilter(CrashHandler);
     try {
     D3DResourceLeakChecker resourceLeakChecker;
@@ -41,6 +44,7 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
     // エンジンルートはプロジェクトと無関係に決まるので、ここまでは先に済ませられる
     ProjectPaths::InitializeEngineRootOnly(winMainPasskey);
     LoadGlobalTranslationFiles();
+    startupSections.End("EngineRootAndTranslations");
 
     //--------- 開くプロジェクトの決定 ---------//
 
@@ -53,6 +57,8 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
             L"KashipanEngine 起動エラー", MB_OK | MB_ICONERROR);
         return -1;
     }
+
+    startupSections.End("ProjectSelection");
 
     //--------- 表示言語（個人設定）の適用 ---------//
 
@@ -69,6 +75,8 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
         SetCurrentApplicationLanguage(savedApplicationLanguage);
     }
 
+    startupSections.End("UserAndPlayerSettings");
+
     //--------- 設定ファイル読み込み ---------//
 
     const std::string resolvedEngineSettingsPath = ProjectPaths::ToPhysical(engineSettingsPath);
@@ -83,7 +91,10 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
     std::string logSettingsPath = engineSettingsJSON.value("logSettingsPath", "LogSettings.json");
     LoadLogSettings({}, ProjectPaths::ToPhysical(logSettingsPath));
     InitializeLogger({});
+    startupSections.End("SettingsJSONAndLogger");
+    StartupTiming::EnableLogging();
     LoadEngineSettings({}, resolvedEngineSettingsPath);
+    startupSections.End("EngineSettings");
 
 	// --------- プラグインの初期化 ---------//
 	Plugin::ThreadPool threadPool;
@@ -105,6 +116,8 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
 		return taskDispatcher.HasTasks();
 		};
 
+    startupSections.End("ThreadPoolAndDispatcher");
+
     //--------- エンジン実行 ---------//
 
     // GameEngineのコンストラクタ（Window/DirectX12/各種マネージャ生成）が終わるまでは
@@ -114,7 +127,10 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
         ScopedSplashScreen splashScreen{ PasskeyForGameEngineMain{} };
         engine = std::make_unique<GameEngine>(PasskeyForGameEngineMain{});
     }
+    startupSections.End("GameEngineAndSplash");
+    StartupTiming::Milestone("Startup.InitializationTotal");
     int code = engine->Execute({});
+    StartupTiming::Interrupt();
 
     //--------- エンジン終了 ---------//
 
@@ -128,6 +144,7 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
     return code;
     } catch (const std::exception &exception) {
         const std::string detail = exception.what();
+        StartupTiming::Interrupt();
         Log("Fatal startup/runtime error: " + detail, LogSeverity::Critical);
         ShutdownLogger({});
         const std::wstring message =
@@ -136,6 +153,7 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
         MessageBoxW(nullptr, message.c_str(), L"KashipanEngine 起動エラー", MB_OK | MB_ICONERROR);
         return -1;
     } catch (...) {
+        StartupTiming::Interrupt();
         Log("Fatal startup/runtime error: unknown exception", LogSeverity::Critical);
         ShutdownLogger({});
         MessageBoxW(nullptr,

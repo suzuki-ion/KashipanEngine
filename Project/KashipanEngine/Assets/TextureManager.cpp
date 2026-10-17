@@ -1,4 +1,5 @@
 #include "TextureManager.h"
+#include "Debug/StartupTiming.h"
 #include "Assets/CaseInsensitive.h"
 #include "Core/ProjectPaths.h"
 
@@ -304,6 +305,7 @@ TextureManager* TextureManager::GetActiveInstance(Passkey<ModelManager>) {
 }
 
 void TextureManager::LoadAllFromAssetsFolder() {
+    StartupTiming::Sections startupSections("Textures.");
     LogScope scope;
     const auto dir = GetDirectoryData(assetsRootPath_, true, true);
 
@@ -316,6 +318,7 @@ void TextureManager::LoadAllFromAssetsFolder() {
         for (const auto& sd : d.subdirectories) flatten(sd);
     };
     flatten(filtered);
+    startupSections.End("FileList");
 
     // white1x1.pngは、テクスチャ解決に失敗した場合のフォールバック先としてバインドレス配列の
     // 先頭（index 0）に来ることを前提にしている（GetTextureBindlessIndexのkInvalidHandle時の
@@ -330,16 +333,19 @@ void TextureManager::LoadAllFromAssetsFolder() {
         LoadTexture(whiteTexturePath);
     }
 
+    startupSections.End("FallbackTexture");
     // ファイルI/O・デコード・ミップマップ生成はCPU処理のみでGPUリソースに触れないため、
     // スレッドプールで並列実行する（mipMapContainer_はshared_mutexで保護済み）
     Plugin::RunParallelAndWait(files.size(), [this, &files](size_t i) {
         mipMapContainer_.AddMipMap(files[i], LoadTextureFromFile(files[i]));
         });
 
+    startupSections.End("DecodeAndMipmaps");
     // 全ファイルのデコードが完了したら、メインスレッドでGPUリソース作成・アップロード・登録を順に行う
     for (const auto& f : files) {
         LoadTexture(f);
     }
+    startupSections.End("GPUUploadAndRegistration");
 }
 
 TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& filePath) {

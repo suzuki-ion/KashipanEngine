@@ -1,4 +1,5 @@
 #include "ModelManager.h"
+#include "Debug/StartupTiming.h"
 #include "Assets/AssimpUtf8IOSystem.h"
 #include "Assets/CaseInsensitive.h"
 #include "Core/ProjectPaths.h"
@@ -238,6 +239,7 @@ ModelManager::~ModelManager() {
 }
 
 void ModelManager::LoadAllFromAssetsFolder() {
+    StartupTiming::Sections startupSections("Models.");
     LogScope scope;
     const auto dir = GetDirectoryData(assetsRootPath_, true, true);
 
@@ -250,6 +252,7 @@ void ModelManager::LoadAllFromAssetsFolder() {
         for (const auto& sd : d.subdirectories) flatten(sd);
     };
     flatten(filtered);
+    startupSections.End("FileList");
 
     // ファイルI/O・Assimp解析・メッシュ抽出はCPU処理のみでGPUリソース・グローバル状態に触れないため、
     // スレッドプールで並列実行する（各要素は担当するインデックス以外書き込まないためロック不要）
@@ -258,11 +261,13 @@ void ModelManager::LoadAllFromAssetsFolder() {
         parsedResults[i] = ParseModelFile(files[i]);
         });
 
+    startupSections.End("AssimpParsing");
     // 全ファイルの解析が完了したら、メインスレッドでGPUアップロード・グローバル状態への登録・
     // プレハブ生成を順に行う
     for (auto& parsed : parsedResults) {
         FinalizeParsedModel(std::move(parsed));
     }
+    startupSections.End("RegistrationAndPrefabGeneration");
 }
 
 std::unique_ptr<ParsedModelResult> ModelManager::ParseModelFile(const std::string& filePath) const {

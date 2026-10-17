@@ -106,6 +106,9 @@ void WriteToSinks(const LogEntry &entry) {
     }
     if (cfg.enableFileLogging && sLogFile.is_open()) {
         sLogFile << entry.text;
+        // Startup milestones must be visible while the running editor is idle;
+        // otherwise the final timing can stay in the stream buffer until exit.
+        if (entry.text.find("[StartupTiming] Startup.") != std::string::npos) sLogFile.flush();
     }
 #ifdef USE_IMGUI
     {

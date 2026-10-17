@@ -1,4 +1,5 @@
 #include "AudioManager.h"
+#include "Debug/StartupTiming.h"
 #include "Assets/CaseInsensitive.h"
 #include "Core/ProjectPaths.h"
 #include "Assets/AudioPlayer.h"
@@ -301,13 +302,16 @@ bool EnsureAudioInitialized() {
 
     LogScope scope;
 
+    StartupTiming::Sections timing("Audio.Device.");
     HRESULT hr = XAudio2Create(&sXaudio2, 0, XAUDIO2_DEFAULT_PROCESSOR);
+    timing.End("XAudio2Create");
     if (FAILED(hr) || !sXaudio2) {
         Log(Translation("engine.audio.init.failed.xaudio2"), LogSeverity::Error);
         return false;
     }
 
     hr = sXaudio2->CreateMasteringVoice(&sMasterVoice);
+    timing.End("MasteringVoice");
     if (FAILED(hr) || !sMasterVoice) {
         Log(Translation("engine.audio.init.failed.mastervoice"), LogSeverity::Error);
         sXaudio2.Reset();
@@ -344,7 +348,9 @@ bool EnsureAudioInitialized() {
         }
     }
 
+    timing.End("ReverbBus");
     hr = MFStartup(MF_VERSION);
+    timing.End("MediaFoundation");
     if (FAILED(hr)) {
         Log(Translation("engine.audio.init.failed.mediafoundation"), LogSeverity::Error);
         sMasterVoice->DestroyVoice();
@@ -538,9 +544,13 @@ AudioManager::AudioManager(Passkey<GameEngine>, const std::string& assetsRootPat
     : assetsRootPath_(NormalizePathSlashes(assetsRootPath)) {
     LogScope scope;
     sActiveInstance = this;
+    StartupTiming::Sections timing("Audio.Manager.");
     InitializeAudioDevice();
     LoadAllFromAssetsFolder();
+    timing.End("DeviceInitialization");
+    timing.End("AssetLoading");
     LoadAudioCategoriesFile(assetsRootPath_);
+    timing.End("CategorySettings");
 }
 
 AudioManager::~AudioManager() {
@@ -562,6 +572,7 @@ void AudioManager::FinalizeAudioDevice() {
 }
 
 void AudioManager::LoadAllFromAssetsFolder() {
+    StartupTiming::Sections startupSections("Audio.");
     LogScope scope;
     const auto dir = GetDirectoryData(assetsRootPath_, true, true);
 
@@ -574,6 +585,7 @@ void AudioManager::LoadAllFromAssetsFolder() {
         for (const auto& sd : d.subdirectories) flatten(sd);
     };
     flatten(filtered);
+    startupSections.End("FileList");
 
     // ファイルI/O・デコード(Media Foundation)はCPU処理のみでグローバル状態に触れないため、
     // スレッドプールで並列実行する。各要素は担当するインデックス以外書き込まないためロック不要
@@ -582,6 +594,7 @@ void AudioManager::LoadAllFromAssetsFolder() {
     Plugin::RunParallelAndWait(files.size(), [this, &files, &decodedEntries, &decodedOk](size_t i) {
         decodedOk[i] = DecodeAudioFile(files[i], assetsRootPath_, decodedEntries[i]);
         });
+    startupSections.End("Decoding");
 
     // 全ファイルのデコードが完了したら、メインスレッドでグローバルマップへの登録を順に行う
     for (size_t i = 0; i < files.size(); ++i) {
@@ -593,6 +606,7 @@ void AudioManager::LoadAllFromAssetsFolder() {
         }
         Log(Translation("engine.audio.loading.succeeded") + files[i], LogSeverity::Info);
     }
+    startupSections.End("Registration");
 }
 
 SoundHandle AudioManager::Load(const std::string& filePath) {

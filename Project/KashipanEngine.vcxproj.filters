@@ -1025,6 +1025,7 @@
     </ClInclude>
     <ClInclude Include="KashipanEngine\Debug\Profiler.h"><Filter>KashipanEngine\Debug</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Debug\ProfilerServer.h"><Filter>KashipanEngine\Debug</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Debug\StartupTiming.h"><Filter>KashipanEngine\Debug</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Debug\RuntimeDebugOverlay.h"><Filter>KashipanEngine\Debug</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Debug\ImGuiManager.h">
       <Filter>KashipanEngine\Debug</Filter>

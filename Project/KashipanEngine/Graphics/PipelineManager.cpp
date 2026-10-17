@@ -1,4 +1,5 @@
 #include <cassert>
+#include "Debug/StartupTiming.h"
 #include <wrl.h>
 #include <unordered_map>
 #include <string>
@@ -59,8 +60,11 @@ PipelineManager::PipelineManager(Passkey<GraphicsEngine>, ID3D12Device *device, 
         presetFolderPath = ProjectPaths::ToPhysical(presetFolderPath);
     }
 
+    StartupTiming::Sections startupSections("Pipelines.");
     LoadPreset();
+    startupSections.End("ShaderAndStatePresets");
     LoadPipelines();
+    startupSections.End("PSOCreation");
 #if defined(USE_IMGUI)
     sActiveInstance = this;
 #endif

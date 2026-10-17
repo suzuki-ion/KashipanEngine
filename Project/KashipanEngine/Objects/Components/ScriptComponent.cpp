@@ -1,8 +1,11 @@
-#include "Objects/Components/ScriptComponent.h"
+﻿#include "Objects/Components/ScriptComponent.h"
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <functional>
+#include <cmath>
+#include <limits>
 #include <string_view>
 
 #include <angelscript.h>
@@ -23,6 +26,7 @@
 #include "Scene/Components/Script/SceneScriptEngine.h"
 #include "Scene/Components/Script/ScriptBindings.h"
 #include "Scene/Components/Script/ScriptComponentHandle.h"
+#include "Scene/Components/Script/ScriptGameEvent.h"
 #include "Scene/Components/Script/ScriptObjectHandle.h"
 #include "Scene/SceneContext.h"
 #include "Utilities/FileIO/Directory.h"
@@ -39,6 +43,24 @@
 namespace KashipanEngine {
 
 namespace {
+/// @brief 実行中の ScriptComponent（スクリプトから呼ばれた SubscribeEvent 等が購読者を特定するため）
+thread_local ScriptComponent *tExecutingScript = nullptr;
+thread_local std::weak_ptr<void> tExecutingAlive;
+struct ExecutingScriptScope {
+    explicit ExecutingScriptScope(ScriptComponent *script) : previous(tExecutingScript), previousAlive(tExecutingAlive) {
+        tExecutingScript = script; tExecutingAlive = script ? script->GetAliveToken() : std::weak_ptr<void>{};
+    }
+    ~ExecutingScriptScope() { tExecutingScript = previous; tExecutingAlive = previousAlive; }
+    ExecutingScriptScope(const ExecutingScriptScope &) = delete;
+    ExecutingScriptScope &operator=(const ExecutingScriptScope &) = delete;
+    ScriptComponent *previous;
+    std::weak_ptr<void> previousAlive;
+};
+struct ScriptContextLease {
+    explicit ScriptContextLease(asIScriptContext *value) : context(value) { context->AddRef(); }
+    ~ScriptContextLease() { context->Release(); }
+    asIScriptContext *context;
+};
 
 constexpr const char *kSerializeFieldMetadata = "SerializeField";
 constexpr const char *kBehaviorInterfaceName = "ScriptComponentBehavior";
@@ -168,7 +190,7 @@ ScriptComponent::FieldAttributes ParseFieldAttributes(const std::vector<std::str
             attrs.rangeMax = ParseFloatArg(token.args, 1, 1.0f);
             if (attrs.rangeMax < attrs.rangeMin) std::swap(attrs.rangeMin, attrs.rangeMax);
         } else if (token.name == "TextArea") {
-            // Unityと同様、内容の行数に応じて minLines〜maxLines の範囲で高さが変わる
+            // Unityと同様、内容の行数に応じて minLines～maxLines の範囲で高さが変わる
             attrs.multiline = true;
             attrs.minLines = std::max(1, ParseIntArg(token.args, 0, 3));
             attrs.maxLines = std::max(attrs.minLines, ParseIntArg(token.args, 1, attrs.minLines));
@@ -268,6 +290,8 @@ struct ScriptComponent::WindowObjectHooks {
 };
 
 ScriptComponent::~ScriptComponent() {
+    eventAliveToken_.reset();
+    *aliveToken_ = nullptr;
     // コライダー側のコールバックはaliveToken_の失効により無効化されるため、ここでの解除は不要
     ReleaseScript();
 }
@@ -478,6 +502,7 @@ bool ScriptComponent::CreateBehaviorInstance(asIScriptEngine *engine, CScriptBui
     int r;
     {
         ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
+        ExecutingScriptScope executing(this);
         r = context_->Execute();
     }
     if (r != asEXECUTION_FINISHED) {
@@ -516,6 +541,7 @@ void ScriptComponent::CallMethod(asIScriptFunction *method) {
     }
     context_->SetObject(behaviorObject_);
     ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
+    ExecutingScriptScope executing(this);
     const int r = context_->Execute();
     if (r != asEXECUTION_FINISHED) {
         lastError_ = GetExceptionInfo(context_);
@@ -542,6 +568,7 @@ void ScriptComponent::CallCollisionMethod(asIScriptFunction *method, const Vecto
     context_->SetArgObject(0, &hitInfo);
     {
         ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
+        ExecutingScriptScope executing(this);
         const int r = context_->Execute();
         if (r != asEXECUTION_FINISHED) {
             lastError_ = GetExceptionInfo(context_);
@@ -570,6 +597,7 @@ void ScriptComponent::CallWindowMessageMethod(asIScriptFunction *method, IWindow
     context_->SetArgObject(0, &messageInfo);
     {
         ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
+        ExecutingScriptScope executing(this);
         const int r = context_->Execute();
         if (r != asEXECUTION_FINISHED) {
             lastError_ = GetExceptionInfo(context_);
@@ -603,6 +631,7 @@ void ScriptComponent::HookColliders() {
             if (prev) prev(hit);
             if (auto alive = weakSelf.lock()) {
                 ScriptComponent *self = *alive;
+                if (!self) return;
                 self->CallCollisionMethod(self->*methodMember, hit.normal, hit.penetration,
                     hit.selfObject, hit.otherObject, hit.selfCollider, hit.otherCollider);
             }
@@ -613,6 +642,7 @@ void ScriptComponent::HookColliders() {
             if (prev) prev(hit);
             if (auto alive = weakSelf.lock()) {
                 ScriptComponent *self = *alive;
+                if (!self) return;
                 self->CallCollisionMethod(self->*methodMember, hit.normal, hit.penetration,
                     hit.selfObject, hit.otherObject, hit.selfCollider, hit.otherCollider);
             }
@@ -692,6 +722,7 @@ void ScriptComponent::HookWindowObjects() {
                 if (prev) prev(event);
                 if (auto alive = weakSelf.lock()) {
                     ScriptComponent *self = *alive;
+                    if (!self) return;
                     self->CallWindowMessageMethod(self->onWindowMessageMethod_, event.sourceComponent,
                         static_cast<std::uint32_t>(event.message),
                         static_cast<std::uint64_t>(event.wparam),
@@ -967,6 +998,8 @@ void *ScriptComponent::CreateScriptObjectViaFactory(asITypeInfo *type) const {
     int r;
     {
         ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
+        // const method: the executing marker only identifies this component to native calls made by the script.
+        ExecutingScriptScope executing(const_cast<ScriptComponent *>(this));
         r = context_->Execute();
     }
     if (r != asEXECUTION_FINISHED) return nullptr;
@@ -1184,6 +1217,54 @@ void ScriptComponent::ApplyField(const SerializedField &field, void *address, co
     }
 }
 
+bool ScriptComponent::GetSerializedVariable(const std::string &name, JSON &value) const {
+    for (const auto &field : serializedFields_) if (field.name == name && field.address) {
+        value = CaptureField(field, field.address); return !value.is_null();
+    }
+    if (serializedFields_.empty() && pendingFieldValues_.is_object() && pendingFieldValues_.contains(name)) {
+        value = pendingFieldValues_[name]; return !value.is_null();
+    }
+    return false;
+}
+bool ScriptComponent::SetSerializedVariable(const std::string &name, const JSON &value) {
+    try {
+        for (const auto &field : serializedFields_) if (field.name == name && field.address) {
+            // Composite handle updates remain under the existing serializer; recipe writes are leaf-only.
+            if (field.isArray || field.isScriptObject) return false;
+            JSON normalized = value;
+            if (field.typeId == asTYPEID_BOOL) { if (!value.is_boolean()) return false; }
+            else if (field.typeId == stringTypeId_) { if (!value.is_string()) return false; }
+            else if (IsObjectFieldType(field.typeId)) {
+                if (!value.is_null() && (!value.is_string() || !UUID128(value.get<std::string>()).IsValid())) return false;
+            } else if (field.typeId == vector2TypeId_ || field.typeId == vector3TypeId_ || field.typeId == vector4TypeId_ || field.typeId == quaternionTypeId_) {
+                const int count = field.typeId == vector2TypeId_ ? 2 : field.typeId == vector3TypeId_ ? 3 : 4;
+                const char *keys[] = {"x", "y", "z", "w"}; normalized = JSON::object();
+                if (!value.is_array() && !value.is_object()) return false;
+                if (value.is_array() && value.size() != static_cast<size_t>(count)) return false;
+                for (int i=0; i<count; ++i) {
+                    const JSON *part=nullptr; if(value.is_array()) part=&value[i]; else if(value.contains(keys[i])) part=&value.at(keys[i]);
+                    if (!part || !part->is_number()) return false; const double number=part->get<double>();
+                    if(!std::isfinite(number)||std::abs(number)>std::numeric_limits<float>::max())return false;normalized[keys[i]]=number;
+                }
+            } else if(field.isEnum || field.typeId == asTYPEID_INT32 || field.typeId == asTYPEID_UINT32 || field.typeId == asTYPEID_FLOAT || field.typeId == asTYPEID_DOUBLE) {
+                if(!value.is_number())return false;const double number=value.get<double>();if(!std::isfinite(number))return false;
+                if(field.isEnum || field.typeId==asTYPEID_INT32){if(std::trunc(number)!=number || number<std::numeric_limits<int32_t>::min() || number>std::numeric_limits<int32_t>::max())return false;}
+                else if(field.typeId==asTYPEID_UINT32){if(std::trunc(number)!=number || number<0 || number>std::numeric_limits<uint32_t>::max())return false;}
+                else if(field.typeId==asTYPEID_FLOAT && std::abs(number)>std::numeric_limits<float>::max())return false;
+            } else return false;
+            ApplyField(field, field.address, normalized); return true;
+        }
+        // Without a live script instance, only update existing fields with an unambiguous saved shape.
+        if (serializedFields_.empty() && pendingFieldValues_.is_object() && pendingFieldValues_.contains(name)) {
+            const auto &old=pendingFieldValues_[name];bool compatible=false;
+            if(old.is_boolean())compatible=value.is_boolean();else if(old.is_string())compatible=value.is_string();
+            else if(old.is_number_integer())compatible=value.is_number_integer();else if(old.is_number())compatible=value.is_number()&&std::isfinite(value.get<double>());
+            if(!compatible)return false;pendingFieldValues_[name]=value;return true;
+        }
+    } catch (const std::exception &) { return false; }
+    return false;
+}
+
 JSON ScriptComponent::CaptureFieldValuesToJson() const {
     if (serializedFields_.empty()) return pendingFieldValues_;
 
@@ -1344,6 +1425,10 @@ bool ScriptComponent::InvokeMethod(const std::string &name) {
 }
 
 bool ScriptComponent::InvokeMethod(const std::string &name, std::initializer_list<std::pair<void *, int>> args) {
+    return InvokeMethodArgs(name, std::vector<std::pair<void *, int>>(args));
+}
+
+bool ScriptComponent::InvokeMethodArgs(const std::string &name, const std::vector<std::pair<void *, int>> &args) {
     if (!context_ || !behaviorObject_) return false;
     asIScriptEngine *engine = context_->GetEngine();
 
@@ -1385,20 +1470,95 @@ bool ScriptComponent::InvokeMethod(const std::string &name, std::initializer_lis
         lastReturnValue_ = nullptr;
     }
 
+    const std::weak_ptr<void> alive = eventAliveToken_;
+    ScriptContextLease lease(context_);
     ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
-    const int r = context_->Execute();
+    ExecutingScriptScope executing(this);
+    const int r = lease.context->Execute();
+    if (alive.expired()) return true;
     if (r != asEXECUTION_FINISHED) {
-        lastError_ = GetExceptionInfo(context_);
+        lastError_ = GetExceptionInfo(lease.context);
         Log(Translation("engine.script.error") + lastError_, LogSeverity::Error);
         return true;
     }
 
     const int returnTypeId = method->GetReturnTypeId();
     if (returnTypeId != asTYPEID_VOID) {
-        void *returnAddress = context_->GetAddressOfReturnValue();
+        void *returnAddress = lease.context->GetAddressOfReturnValue();
         if (returnAddress) lastReturnValue_ = new CScriptAny(returnAddress, returnTypeId, engine);
     }
     return true;
+}
+
+ScriptComponent *ScriptComponent::GetExecuting() {
+    if (tExecutingAlive.expired() || !tExecutingScript) return nullptr;
+    auto *scene = tExecutingScript->GetOwnerSceneContext();
+    if (scene && scene->ResolveComponent(tExecutingScript->GetComponentRef()) != tExecutingScript) return nullptr;
+    return tExecutingScript;
+}
+
+bool ScriptComponent::InvokeEventHandler(const std::string &name, const GameEvents::Message &message) {
+    if (!context_ || !behaviorObject_) return false;
+    if (context_->GetState() == asEXECUTION_ACTIVE) { lastError_ = "スクリプトの実行中は受信関数を呼べません"; return false; }
+    asIScriptEngine *engine = context_->GetEngine();
+    const int handleType = engine->GetTypeIdByDecl("GameEvent@");
+    asIScriptFunction *method = FindInvokableMethod(name, 1);
+    int paramType = 0;
+    if (!method || handleType < 0 || method->GetParam(0, &paramType) < 0 || paramType != handleType) return false;
+    lastError_.clear();
+    if (context_->Prepare(method) < 0) { lastError_ = "関数の準備に失敗しました"; return false; }
+    context_->SetObject(behaviorObject_);
+    // The script receives its own reference-counted copy; it stays valid even if the script keeps the handle.
+    auto *event = new ScriptGameEvent(message);
+    context_->SetArgObject(0, event);
+    int r = 0;
+    const std::weak_ptr<void> alive = eventAliveToken_;
+    ScriptContextLease lease(context_);
+    {
+        ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
+        ExecutingScriptScope executing(this);
+        r = lease.context->Execute();
+    }
+    event->Release();
+    if (alive.expired()) return true; // the handler removed this component; nothing of it may be touched
+    if (r != asEXECUTION_FINISHED) {
+        lastError_ = GetExceptionInfo(lease.context);
+        Log(Translation("engine.script.error") + lastError_, LogSeverity::Error);
+    }
+    return true;
+}
+
+bool ScriptComponent::InvokeMethodWithValues(const std::string &name, const std::vector<JSON> &values) {
+    if (!context_ || !behaviorObject_ || values.size() > 4) return false;
+    if (context_->GetState() == asEXECUTION_ACTIVE) { lastError_ = "スクリプトの実行中は関数を呼べません"; return false; }
+    asIScriptFunction *method = FindInvokableMethod(name, static_cast<int>(values.size()));
+    if (!method) return false;
+    struct Slot { bool b = false; int i = 0; float f = 0; double d = 0; std::string s; Vector2 v2; Vector3 v3; Vector4 v4; };
+    std::array<Slot, 4> slots;
+    std::vector<std::pair<void *, int>> args;
+    auto numbers = [](const JSON &v, size_t count, float *out) {
+        if (!v.is_array() || v.size() != count) return false;
+        for (size_t k = 0; k < count; ++k) { if (!v[k].is_number() || !std::isfinite(v[k].get<double>())) return false; out[k] = v[k].get<float>(); }
+        return true;
+    };
+    for (size_t i = 0; i < values.size(); ++i) {
+        int type = 0;
+        if (method->GetParam(static_cast<asUINT>(i), &type) < 0) return false;
+        const auto &v = values[i];
+        auto &slot = slots[i];
+        float c[4] = {};
+        if (type == asTYPEID_BOOL && v.is_boolean()) { slot.b = v.get<bool>(); args.emplace_back(&slot.b, type); }
+        else if (type == asTYPEID_INT32 && v.is_number() && std::floor(v.get<double>()) == v.get<double>() && std::abs(v.get<double>()) <= 2147483647.0) { slot.i = static_cast<int>(v.get<double>()); args.emplace_back(&slot.i, type); }
+        else if (type == asTYPEID_FLOAT && v.is_number() && std::isfinite(v.get<double>())) { slot.f = v.get<float>(); args.emplace_back(&slot.f, type); }
+        else if (type == asTYPEID_DOUBLE && v.is_number() && std::isfinite(v.get<double>())) { slot.d = v.get<double>(); args.emplace_back(&slot.d, type); }
+        else if (type == stringTypeId_ && v.is_string()) { slot.s = v.get<std::string>(); args.emplace_back(&slot.s, type); }
+        else if (type == vector2TypeId_ && numbers(v, 2, c)) { slot.v2 = Vector2(c[0], c[1]); args.emplace_back(&slot.v2, type); }
+        else if (type == vector3TypeId_ && numbers(v, 3, c)) { slot.v3 = Vector3(c[0], c[1], c[2]); args.emplace_back(&slot.v3, type); }
+        else if (type == vector4TypeId_ && numbers(v, 4, c)) { slot.v4 = Vector4(c[0], c[1], c[2], c[3]); args.emplace_back(&slot.v4, type); }
+        else return false; // the value cannot be converted to the declared parameter type
+    }
+    lastError_.clear();
+    return InvokeMethodArgs(name, args);
 }
 
 bool ScriptComponent::GetLastReturnValue(void *ref, int typeId) const {
@@ -1757,7 +1917,7 @@ void ScriptComponent::DrawFieldImGui(SerializedField &field, void *address) {
         } else if (attrs.audioPath) {
             ImGuiCustom::AudioAssetPicker(label, *str, AudioManager::GetLoadedSoundAssetPaths(), true);
         } else if (attrs.multiline) {
-            // 内容の行数に応じて minLines〜maxLines の範囲で高さを調整する（UnityのTextArea相当）
+            // 内容の行数に応じて minLines～maxLines の範囲で高さを調整する（UnityのTextArea相当）
             int lineCount = 1 + static_cast<int>(std::count(str->begin(), str->end(), '\n'));
             lineCount = std::clamp(lineCount, attrs.minLines, attrs.maxLines);
             const float height = ImGui::GetTextLineHeight() * static_cast<float>(lineCount)

@@ -2747,4 +2747,11 @@
     <Manifest Include="DpiAwarenessPerMonitor.manifest" />
     <Manifest Include="Externals\Common\settings.manifest" />
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="KashipanEngine\Scene\Components\GameEventRouter.cpp"><Filter>KashipanEngine\Scene\Components</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Utilities\GameEvents.cpp"><Filter>KashipanEngine\Utilities</Filter></ClCompile>
+    <ClInclude Include="KashipanEngine\Scene\Components\GameEventRouter.h"><Filter>KashipanEngine\Scene\Components</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptGameEvent.h"><Filter>KashipanEngine\Scene\Components\Script</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Utilities\GameEvents.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude>
+  </ItemGroup>
 </Project>

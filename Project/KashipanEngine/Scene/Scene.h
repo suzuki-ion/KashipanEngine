@@ -95,6 +95,19 @@ public:
         FlushPendingDestroys();
     }
 
+    /// @brief 以後の DeleteObject の実体破棄を遅延させる（入れ子可。戻り値を EndDeferredDestroy へ渡す）
+    /// @details 更新ループ外から呼ばれるイベント配送・スクリプト呼び出しの間、実行中のコンポーネントを破棄しないために使う
+    bool BeginDeferredDestroy() noexcept {
+        const bool previous = isProcessingObjectLifecycle_;
+        isProcessingObjectLifecycle_ = true;
+        return previous;
+    }
+    /// @brief BeginDeferredDestroy を終える。最も外側の終了時に、遅延していた破棄を行う
+    void EndDeferredDestroy(bool previous) {
+        isProcessingObjectLifecycle_ = previous;
+        if (!previous) FlushPendingDestroys();
+    }
+
 #if defined(USE_IMGUI)
     void ShowImGuiInterface(Passkey<SceneManager>);
 

@@ -20,6 +20,7 @@ class CScriptAny;
 struct Vector3;
 
 namespace KashipanEngine {
+namespace GameEvents { struct Message; }
 
 class SceneScriptEngine;
 class ICollider;
@@ -131,6 +132,9 @@ public:
     /// @param name 関数名
     /// @return 名前が一致する引数無し関数が見つかり、呼び出しを行えた場合は true
     ///         （見つからない場合は false。falseは「未実行」を意味し、例外とは区別される）
+    /// Read or update an existing serialized leaf field using validated JSON values.
+    bool GetSerializedVariable(const std::string &name, JSON &value) const;
+    bool SetSerializedVariable(const std::string &name, const JSON &value);
     bool InvokeMethod(const std::string &name);
     /// @brief 引数を渡して関数を名前で呼び出す版
     /// @details 対応する引数型は GetVariable/SetVariable と同じ。引数の個数は登録されている
@@ -139,6 +143,16 @@ public:
     /// @param args 引数値の (格納先アドレス, 型ID) のリスト
     /// @return 名前・引数の個数と型が一致する関数が見つかり、呼び出しを行えた場合は true
     bool InvokeMethod(const std::string &name, std::initializer_list<std::pair<void *, int>> args);
+    /// @brief イベント受信用に `void 関数(GameEvent@ e)` を呼ぶ（e は配送中メッセージのコピーを所有する）
+    /// @return 名前が一致し、引数が GameEvent@ ひとつの関数を呼べた場合は true（スクリプト例外は GetLastError）
+    bool InvokeEventHandler(const std::string &name, const GameEvents::Message &message);
+    /// @brief 型付きの値（真偽・整数・数値・文字列・2〜4要素の数値配列）を、関数の引数の型へ変換して呼ぶ（0〜4個）
+    /// @details 数値は float/double/int（整数値のみ）へ、配列は Vector2/3/4 へ変換する。変換できない場合は呼ばずに false
+    bool InvokeMethodWithValues(const std::string &name, const std::vector<JSON> &values);
+    /// @brief 実行中（Awake/Start/Update/衝突/関数呼び出し）の ScriptComponent。スクリプトから呼ばれるネイティブ関数用
+    static ScriptComponent *GetExecuting();
+    /// @brief このコンポーネントが破棄されると失効するトークン（スクリプト呼び出し後に自分が残っているかの確認用）
+    std::weak_ptr<void> GetAliveToken() const { return eventAliveToken_; }
 
     /// @brief 直近に InvokeMethod で呼び出した関数の戻り値を取得する
     /// @details 呼び出した関数の戻り値の型と typeId が完全一致しない場合や、戻り値の無い
@@ -219,6 +233,7 @@ private:
     /// @brief 名前・引数の数が一致する、戻り値無しのBehaviorメソッドを探す（見つからない場合はnullptr）
     /// @details InvokeMethodの実装用。オーバーロードされている場合は最初に見つかったものを返す
     asIScriptFunction *FindInvokableMethod(const std::string &name, int paramCount) const;
+    bool InvokeMethodArgs(const std::string &name, const std::vector<std::pair<void *, int>> &args);
 
     /// @brief モジュール内から ScriptComponentBehavior を実装したクラスを探してインスタンス化する
     /// @return 成功した場合は true（失敗時は lastError_ にエラー内容を格納する）
@@ -333,6 +348,7 @@ private:
     asIScriptFunction *onWindowMessageMethod_ = nullptr;
 
     std::string lastError_;
+    std::shared_ptr<int> eventAliveToken_ = std::make_shared<int>(0);
     /// @brief 直近のビルド失敗時のコンパイルメッセージ（成功時は空）
     std::vector<std::string> buildErrorMessages_;
     /// @brief 直近に InvokeMethod で呼び出した関数の戻り値（無い場合、または戻り値の無い関数の場合はnullptr）

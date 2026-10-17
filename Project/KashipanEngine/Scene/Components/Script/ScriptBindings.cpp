@@ -38,6 +38,9 @@
 #include "Scene/Components/Script/ScriptObjectHandle.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneContext.h"
+#include "Scene/Components/GameEventRouter.h"
+#include "Scene/Components/Script/ScriptGameEvent.h"
+#include "Objects/Components/ScriptComponent.h"
 #include "Scene/Components/SceneObjectCollider.h"
 #include "Objects/Collision/CollisionQuery.h"
 #if defined(USE_IMGUI)
@@ -4600,6 +4603,102 @@ void RegisterJsonBindings(asIScriptEngine *engine) {
 //==================================================
 
 /// @brief EaseType 列挙型と Easing:: 名前空間のユーティリティ関数を登録する
+/// @brief ユーザー定義イベントのスクリプトAPI（GameEvent 型と送信・購読・定義の関数）
+/// @details 受信は `void 関数(GameEvent@ e)` を SubscribeEvent で登録する（購読者は呼び出し中の ScriptComponent）。
+///          配送はシーンの GameEventRouter のキュー経由で、スクリプトの関数が同じフレーム内で再入することはない。
+thread_local std::string gLastEventError;
+GameEventRouter *CurrentEventRouter() {
+    if (!ScriptComponent::GetExecuting()) { gLastEventError = "実行元の ScriptComponent がありません。"; return nullptr; }
+    auto *scene = ScriptExecutionScope::GetCurrentSceneContext();
+    auto *router = GameEventRouter::Find(scene);
+    if (!router) gLastEventError = "シーンに GameEventRouter がありません。";
+    return router;
+}
+std::string CurrentSenderId() {
+    const auto *script = ScriptComponent::GetExecuting();
+    const auto *owner = script ? script->GetOwnerObject() : nullptr;
+    return owner ? owner->GetObjectID().ToString() : std::string{};
+}
+bool ScriptEmitEvent(const std::string &name, const JSON &payload, GameEvents::TargetMode mode, const std::string &target) {
+    gLastEventError.clear();
+    auto *router = CurrentEventRouter();
+    return router && router->Emit(name, payload.is_null() ? JSON::object() : payload, CurrentSenderId(), mode, target, &gLastEventError);
+}
+template <int N> bool EventVector(const ScriptGameEvent &e, const std::string &arg, float *out) { return e.message.GetVector(arg, out, N); }
+std::string EventKey(const std::string &eventName, const std::string &method) { return "script:" + GameEvents::FoldName(eventName) + ":" + method; }
+
+void RegisterGameEventBindings(asIScriptEngine *engine) {
+    asbind20::ref_class<ScriptGameEvent>(engine, "GameEvent")
+        .addref(&ScriptGameEvent::AddRef)
+        .release(&ScriptGameEvent::Release)
+        .method("string get_name() const property", [](const ScriptGameEvent &e) -> std::string { return e.message.name; })
+        .method("string get_sender() const property", [](const ScriptGameEvent &e) -> std::string { return e.message.sender; })
+        .method("int get_depth() const property", [](const ScriptGameEvent &e) -> int { return e.message.depth; })
+        .method("bool Has(const string &in arg) const", [](const ScriptGameEvent &e, const std::string &arg) -> bool { return e.message.Has(arg); })
+        .method("int GetInt(const string &in arg, int defaultValue = 0) const", [](const ScriptGameEvent &e, const std::string &arg, int d) -> int {
+            int v = d; double n = 0; if (e.message.GetInt(arg, v)) return v;
+            return e.message.GetNumber(arg, n) && std::isfinite(n) && std::trunc(n) == n && n >= INT_MIN && n <= INT_MAX ? static_cast<int>(n) : d; })
+        .method("float GetFloat(const string &in arg, float defaultValue = 0) const", [](const ScriptGameEvent &e, const std::string &arg, float d) -> float {
+            double n = 0; return e.message.GetNumber(arg, n) ? static_cast<float>(n) : d; })
+        .method("bool GetBool(const string &in arg, bool defaultValue = false) const", [](const ScriptGameEvent &e, const std::string &arg, bool d) -> bool {
+            bool v = d; return e.message.GetBool(arg, v) ? v : d; })
+        .method("string GetString(const string &in arg, const string &in defaultValue = \"\") const", [](const ScriptGameEvent &e, const std::string &arg, const std::string &d) -> std::string {
+            std::string v; return e.message.GetString(arg, v) ? v : d; })
+        .method("Vector2 GetVector2(const string &in arg) const", [](const ScriptGameEvent &e, const std::string &arg) -> Vector2 { float c[2] = {}; EventVector<2>(e, arg, c); return Vector2(c[0], c[1]); })
+        .method("Vector3 GetVector3(const string &in arg) const", [](const ScriptGameEvent &e, const std::string &arg) -> Vector3 { float c[3] = {}; EventVector<3>(e, arg, c); return Vector3(c[0], c[1], c[2]); })
+        .method("Vector4 GetVector4(const string &in arg) const", [](const ScriptGameEvent &e, const std::string &arg) -> Vector4 { float c[4] = {}; EventVector<4>(e, arg, c); return Vector4(c[0], c[1], c[2], c[3]); })
+        .method("Json@ GetPayload() const", [](const ScriptGameEvent &e) -> ScriptJsonValue * { return new ScriptJsonValue(e.message.payload); });
+
+    asbind20::global(engine)
+        .function("bool EmitEvent(const string &in name)", [](const std::string &name) -> bool { return ScriptEmitEvent(name, JSON::object(), GameEvents::TargetMode::Broadcast, ""); })
+        .function("bool EmitEvent(const string &in name, const Json &in payload)", [](const std::string &name, const ScriptJsonValue &payload) -> bool {
+            return ScriptEmitEvent(name, payload.data, GameEvents::TargetMode::Broadcast, ""); })
+        // targetMode: "object"（UUID）/ "name" / "tag" / "broadcast"
+        .function("bool EmitEventTo(const string &in name, const Json &in payload, const string &in targetMode, const string &in target)",
+            [](const std::string &name, const ScriptJsonValue &payload, const std::string &mode, const std::string &target) -> bool {
+                GameEvents::TargetMode parsed;
+                if (!GameEvents::ParseTargetMode(mode, parsed)) { gLastEventError = "未知の送信先: " + mode; return false; }
+                return ScriptEmitEvent(name, payload.data, parsed, target); })
+        .function("bool SubscribeEvent(const string &in eventName, const string &in method)", [](const std::string &eventName, const std::string &method) -> bool {
+            gLastEventError.clear();
+            auto *script = ScriptComponent::GetExecuting();
+            auto *router = CurrentEventRouter();
+            if (!script) { gLastEventError = "ScriptComponent の実行中にだけ購読できます。"; return false; }
+            if (!router) return false;
+            if (!router->FindDefinition(eventName)) { gLastEventError = "イベント「" + eventName + "」は定義されていません。"; return false; }
+            return router->Subscribe(eventName, script->GetComponentRef(), [method](IObjectComponent *receiver, const GameEvents::Message &message) {
+                auto *target = dynamic_cast<ScriptComponent *>(receiver);
+                if (!target) return;
+                const auto alive = target->GetAliveToken();
+                const bool invoked = target->InvokeEventHandler(method, message);
+                if (alive.expired()) return; // the receiver removed itself while handling the event
+                if (!invoked) throw std::runtime_error("void " + method + "(GameEvent@) を呼べません");
+                if (!target->GetLastError().empty()) throw std::runtime_error(target->GetLastError());
+            }, EventKey(eventName, method)) != 0; })
+        .function("bool UnsubscribeEvent(const string &in eventName, const string &in method)", [](const std::string &eventName, const std::string &method) -> bool {
+            auto *script = ScriptComponent::GetExecuting();
+            auto *router = CurrentEventRouter();
+            return script && router && router->UnsubscribeOwner(script->GetComponentRef(), EventKey(eventName, method)) > 0; })
+        // args: [{"name":"amount","type":"number","required":true}, ...]（型: bool/int/number/string/vector2/vector3/vector4/color/object）
+        .function("bool DefineEvent(const string &in name, const Json &in args, const string &in description = \"\")",
+            [](const std::string &name, const ScriptJsonValue &args, const std::string &description) -> bool {
+                gLastEventError.clear();
+                auto *router = CurrentEventRouter();
+                if (!router) return false;
+                GameEvents::Definition definition;
+                if (!GameEvents::DecodeDefinition(JSON{{"name", name}, {"description", description}, {"args", args.data.is_null() ? JSON::array() : args.data}}, definition, &gLastEventError)) return false;
+                if (const auto *existing = router->FindDefinition(name)) {
+                    if (GameEvents::EncodeDefinition(*existing)["args"] == GameEvents::EncodeDefinition(definition)["args"]) return true;
+                    gLastEventError = "同名で引数の異なる定義があります。";
+                    return false;
+                }
+                return router->AddDefinition(definition, &gLastEventError); })
+        .function("bool HasEventDefinition(const string &in name)", [](const std::string &name) -> bool {
+            auto *router = CurrentEventRouter();
+            return router && router->FindDefinition(name); })
+        .function("string GetLastEventError()", []() -> std::string { return gLastEventError; });
+}
+
 void RegisterEasingBindings(asIScriptEngine *engine) {
     engine->RegisterEnum("EaseType");
     static const std::pair<const char *, EaseType> kEaseTypeValues[] = {
@@ -5431,6 +5530,8 @@ void RegisterEngineScriptBindings(asIScriptEngine *engine) {
     RegisterObjectTypes(engine);
     RegisterComponentTypes(engine);
     RegisterJsonBindings(engine);
+    // GameEvent は Json（GetPayload / EmitEvent の引数）を参照するため、Json 登録より後に呼ぶ
+    RegisterGameEventBindings(engine);
     RegisterEasingBindings(engine);
     RegisterMathUtilBindings(engine);
     RegisterMathFunctionBindings(engine);

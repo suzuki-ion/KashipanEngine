@@ -20,6 +20,9 @@ public:
 
     // Script handles keep a weak token, never ownership of the native scene.
     std::weak_ptr<void> GetLifetimeToken() const { return lifetimeToken_; }
+    /// @brief DeleteObject の実体破棄を遅延させる範囲（入れ子可）。Scene::BeginDeferredDestroy を参照
+    bool BeginDeferredDestroy() noexcept { return owner_->BeginDeferredDestroy(); }
+    void EndDeferredDestroy(bool previous) { owner_->EndDeferredDestroy(previous); }
 
     SceneContext(const SceneContext &) = delete;
     SceneContext &operator=(const SceneContext &) = delete;
@@ -111,6 +114,9 @@ public:
     /// @param includeChildren 子孫オブジェクトもまとめて複製するか
     /// @return 複製されたオブジェクトのポインタ（失敗した場合は nullptr）
     EmptyObject *CloneObject(EmptyObject *source, const std::string &name = "", bool includeChildren = false) { return owner_->CloneObject(source, name, includeChildren); }
+    JSON SaveObjectToJson(EmptyObject *object) { return owner_->SaveObjectToJson(object); }
+    EmptyObject *CreateObjectFromJson(const JSON &json) { return owner_->CreateObjectFromJson(json); }
+    const UUID128 &GetSceneID() const { return owner_->GetSceneID(); }
     /// @brief オブジェクトを削除
     /// @param obj 削除するオブジェクトのポインタ
     /// @return 削除に成功した場合は true、失敗した場合は false を返す

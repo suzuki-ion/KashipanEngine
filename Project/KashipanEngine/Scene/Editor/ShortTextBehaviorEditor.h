@@ -4,6 +4,8 @@
 #include <optional>
 #include "Utilities/ShortTextBehavior.h"
 #include "Utilities/ShortTextLearning.h"
+#include "Scene/Editor/ShortTextComponentPlan.h"
+#include "Utilities/ShortTextEventRequest.h"
 #include "Utilities/UUID128.h"
 
 namespace KashipanEngine {
@@ -20,10 +22,16 @@ class ShortTextBehaviorEditor {
 public:
     bool open = false;
     void Show(SceneEditorContext *context, SceneEditorCommands *commands, EmptyObject *selected);
+    bool SetInput(const std::string &sentence);
 private:
     void ShowLearning(EmptyObject *selected);
     char input_[768] = "上下にふわふわ動かして";
     ShortText::Result parsed_;
+    // 「〇〇の〇〇」 requests become real components instead of a ShortTextBehavior recipe.
+    ShortText::PropertyParseResult property_;
+    // User-defined events and gameplay components (「GoalReachedイベントを作成」「体力を100にして…」).
+    ShortText::EventParseResult event_;
+    ShortTextComponentPlan plan_;
     UUID128 targetID_;
     UUID128 sceneID_;
     std::string status_;

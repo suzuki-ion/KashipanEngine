@@ -1,0 +1,4964 @@
+{
+  "version": 1,
+  "components": [
+    {
+      "scope": "object",
+      "component": "Transform",
+      "aliases": [
+        "トランスフォーム",
+        "変換"
+      ],
+      "evidence": "Objects/Components/Transform.h",
+      "members": [
+        {
+          "member": "translate_",
+          "aliases": [
+            "移動",
+            "位置"
+          ],
+          "evidence": "Objects/Components/Transform.h"
+        },
+        {
+          "member": "rotate_",
+          "aliases": [
+            "回転",
+            "角度"
+          ],
+          "evidence": "Objects/Components/Transform.h"
+        },
+        {
+          "member": "scale_",
+          "aliases": [
+            "拡大縮小",
+            "スケール"
+          ],
+          "evidence": "Objects/Components/Transform.h"
+        },
+        {
+          "member": "worldMatrix_",
+          "aliases": [
+            "ワールド行列",
+            "世界変換行列"
+          ],
+          "evidence": "Objects/Components/Transform.h"
+        }
+      ]
+    },
+    {
+      "scope": "object",
+      "component": "Velocity",
+      "aliases": [
+        "速度",
+        "移動速度"
+      ],
+      "evidence": "Objects/Components/Velocity.h",
+      "members": [
+        {
+          "member": "velocity_",
+          "aliases": [
+            "速度",
+            "移動速度"
+          ],
+          "evidence": "Objects/Components/Velocity.h"
+        },
+        {
+          "member": "acceleration_",
+          "aliases": [
+            "加速度",
+            "速度の変化"
+          ],
+          "evidence": "Objects/Components/Velocity.h"
+        }
+      ]
+    },
+    {
+      "scope": "object",
+      "component": "AudioSource",
+      "aliases": [
+        "オーディオソース",
+        "音源"
+      ],
+      "evidence": "Objects/Components/AudioSource.h",
+      "members": [
+        {
+          "member": "soundName_",
+          "aliases": [
+            "サウンド",
+            "音声ファイル"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "category_",
+          "aliases": [
+            "音量バスのカテゴリ",
+            "音声カテゴリ"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "volume_",
+          "aliases": [
+            "音量",
+            "ボリューム"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "pitch_",
+          "aliases": [
+            "ピッチ",
+            "音程"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "loop_",
+          "aliases": [
+            "ループ",
+            "繰り返し再生"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "playOnAwake_",
+          "aliases": [
+            "自動再生",
+            "起動時に再生"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "minDistance_",
+          "aliases": [
+            "最小距離",
+            "最小減衰距離"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "maxDistance_",
+          "aliases": [
+            "最大距離",
+            "最大減衰距離"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "enableSpatialAudio_",
+          "aliases": [
+            "空間オーディオ",
+            "立体音響"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "filter_.enabled",
+          "aliases": [
+            "フィルター",
+            "フィルター有効"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "filter_.frequency",
+          "aliases": [
+            "周波数",
+            "カットオフ周波数"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "filter_.q",
+          "aliases": [
+            "Q",
+            "レゾナンス"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "reverb_.enabled",
+          "aliases": [
+            "リバーブ",
+            "残響有効"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "reverb_.mix",
+          "aliases": [
+            "リバーブの混合比",
+            "残響量"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "echo_.enabled",
+          "aliases": [
+            "エコー",
+            "反響有効"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "echo_.params.wetDryMix",
+          "aliases": [
+            "エフェクト混合比",
+            "原音とエコーの比率"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "echo_.params.feedback",
+          "aliases": [
+            "フィードバック",
+            "エコーの繰り返し量"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "echo_.params.delayMs",
+          "aliases": [
+            "ディレイ",
+            "遅延時間"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "eq_.enabled",
+          "aliases": [
+            "イコライザー",
+            "EQ有効"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "eq_.frequencyCenter[0]",
+          "aliases": [
+            "第1バンド周波数",
+            "第1中心周波数",
+            "中心周波数"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "eq_.frequencyCenter[1]",
+          "aliases": [
+            "第2バンド周波数",
+            "第2中心周波数"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "eq_.frequencyCenter[2]",
+          "aliases": [
+            "第3バンド周波数",
+            "第3中心周波数"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "eq_.frequencyCenter[3]",
+          "aliases": [
+            "第4バンド周波数",
+            "第4中心周波数"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "eq_.gain[0]",
+          "aliases": [
+            "第1バンドゲイン",
+            "第1バンド増幅率",
+            "ゲイン",
+            "増幅率"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "eq_.gain[1]",
+          "aliases": [
+            "第2バンドゲイン",
+            "第2バンド増幅率"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "eq_.gain[2]",
+          "aliases": [
+            "第3バンドゲイン",
+            "第3バンド増幅率"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        },
+        {
+          "member": "eq_.gain[3]",
+          "aliases": [
+            "第4バンドゲイン",
+            "第4バンド増幅率"
+          ],
+          "evidence": "Objects/Components/AudioSource.h"
+        }
+      ]
+    },
+    {
+      "scope": "object",
+      "component": "AudioListener",
+      "aliases": [
+        "オーディオリスナー",
+        "音声リスナー"
+      ],
+      "evidence": "Objects/Components/AudioListener.h",
+      "members": []
+    },
+    {
+      "scope": "object",
+      "component": "Comment",
+      "aliases": [
+        "コメント",
+        "メモ"
+      ],
+      "evidence": "Objects/Components/Comment.h",
+      "members": [
+        {
+          "member": "comment_",
+          "aliases": [
+            "コメント",
+            "メモ"
+          ],
+          "evidence": "Objects/Components/Comment.h"
+        }
+      ]
+    },
+    {
+      "scope": "object",
+      "component": "GameEventListener",
+      "aliases": [
+        "ゲームイベントリスナー",
+        "イベント受信"
+      ],
+      "evidence": "Objects/Components/GameEventListener.h",
+      "members": []
+    },
+    {
+      "scope": "object",
+      "component": "Health",
+      "aliases": [
+        "体力",
+        "HP"
+      ],
+      "evidence": "Objects/Components/GameplayComponents.h",
+      "members": [
+        {
+          "member": "max_",
+          "aliases": [
+            "最大体力",
+            "最大HP"
+          ],
+          "evidence": "Objects/Components/GameplayComponents.h"
+        },
+        {
+          "member": "current_",
+          "aliases": [
+            "現在体力",
+            "現在HP"
+          ],
+          "evidence": "Objects/Components/GameplayComponents.h"
+        },
+        {
+          "member": "invulnerability_",
+          "aliases": [
+            "無敵時間",
+            "ダメージ無効時間"
+          ],
+          "evidence": "Objects/Components/GameplayComponents.h"
+        }
+      ]
+    },
+    {
+      "scope": "object",
+      "component": "ContactDamage",
+      "aliases": [
+        "接触ダメージ",
+        "接触攻撃"
+      ],
+      "evidence": "Objects/Components/GameplayComponents.h",
+      "members": [
+        {
+          "member": "amount_",
+          "aliases": [
+            "ダメージ量",
+            "攻撃力"
+          ],
+          "evidence": "Objects/Components/GameplayComponents.h"
+        },
+        {
+          "member": "cooldown_",
+          "aliases": [
+            "再攻撃間隔",
+            "ダメージ間隔"
+          ],
+          "evidence": "Objects/Components/GameplayComponents.h"
+        }
+      ]
+    },
+    {
+      "scope": "object",
+      "component": "Inventory",
+      "aliases": [
+        "インベントリ",
+        "所持品"
+      ],
+      "evidence": "Objects/Components/GameplayComponents.h",
+      "members": []
+    },
+    {
+      "scope": "object",
+      "component": "Pickup",
+      "aliases": [
+        "拾得アイテム",
+        "アイテム取得"
+      ],
+      "evidence": "Objects/Components/GameplayComponents.h",
+      "members": []
+    },
+    {
+      "scope": "object",
+      "component": "Lifetime",
+      "aliases": [
+        "生存時間",
+        "寿命"
+      ],
+      "evidence": "Objects/Components/GameplayComponents.h",
+      "members": [
+        {
+          "member": "duration_",
+          "aliases": [
+            "持続時間",
+            "消滅までの時間"
+          ],
+          "evidence": "Objects/Components/GameplayComponents.h"
+        }
+      ]
+    },
+    {
+      "scope": "object",
+      "component": "Spawner",
+      "aliases": [
+        "スポナー",
+        "生成器"
+      ],
+      "evidence": "Objects/Components/GameplayComponents.h",
+      "members": [
+        {
+          "member": "interval_",
+          "aliases": [
+            "生成間隔",
+            "出現間隔"
+          ],
+          "evidence": "Objects/Components/GameplayComponents.h"
+        },
+        {
+          "member": "maxAlive_",
+          "aliases": [
+            "同時存在数上限",
+            "最大生存数"
+          ],
+          "evidence": "Objects/Components/GameplayComponents.h"
+        }
+      ]
+    },
+    {
+      "scope": "object",
+      "component": "Interactable",
+      "aliases": [
+        "インタラクト対象",
+        "操作可能オブジェクト"
+      ],
+      "evidence": "Objects/Components/GameplayComponents.h",
+      "members": [
+        {
+          "member": "distance_",
+          "aliases": [
+            "操作距離",
+            "インタラクト距離"
+          ],
+          "evidence": "Objects/Components/GameplayComponents.h"
+        }
+      ]
+    },
+    {
+      "scope": "object",
+      "component": "Respawner",
+      "aliases": [
+        "リスポーナー",
+        "復帰設定"
+      ],
+      "evidence": "Objects/Components/GameplayComponents.h",
+      "members": [
+        {
+          "member": "fallY_",
+          "aliases": [
+            "落下判定高さ",
+            "復帰する高さ"
+          ],
+          "evidence": "Objects/Components/GameplayComponents.h"
+        }
+      ]
+    },
+    {
+      "scope": "object",
+      "component": "Checkpoint",
+      "aliases": [
+        "チェックポイント",
+        "復帰地点"
+      ],
+      "evidence": "Objects/Components/GameplayComponents.h",
+      "members": []
+    },
+    {
+      "scope": "object",
+      "component": "Dialogue",
+      "aliases": [
+        "会話",
+        "セリフ"
+      ],
+      "evidence": "Objects/Components/GameplayComponents.h",
+      "members": []
+    },
+    {
+      "scope": "object",
+      "component": "AnimationStateSwitcher",
+      "aliases": [
+        "アニメーション状態切替",
+        "アニメ状態変更"
+      ],
+      "evidence": "Objects/Components/GameplayComponents.h",
+      "members": []
+    },
+    {
+      "scope": "object",
+      "component": "GifSource",
+      "aliases": [
+        "GIFソース",
+        "GIF画像"
+      ],
+      "evidence": "Objects/Components/GifSource.h",
+      "members": [
+        {
+          "member": "gifAssetPath_",
+          "aliases": [
+            "GIFファイル",
+            "GIFパス"
+          ],
+          "evidence": "Objects/Components/GifSource.h"
+        },
+        {
+          "member": "loop_",
+          "aliases": [
+            "ループ",
+            "繰り返し再生"
+          ],
+          "evidence": "Objects/Components/GifSource.h"
+        },
+        {
+          "member": "playOnAwake_",
+          "aliases": [
+            "自動再生",
+            "起動時に再生"
+          ],
+          "evidence": "Objects/Components/GifSource.h"
+        }
+      ]
+    },
+    {
+      "scope": "object",
+      "component": "InputCommandApplier",
+      "aliases": [
+        "入力コマンド適用",
+        "入力操作"
+      ],
+      "evidence": "Objects/Components/InputCommandApplier.h",
+      "members": []
+    },
+    {
+      "scope": "object",
+      "component": "MeshFilter",
+      "aliases": [
+        "メッシュフィルター",
+        "メッシュ形状"
+      ],
+      "evidence": "Objects/Components/MeshFilter.h",
+      "members": [
+        {
+          "member": "meshHandle_",
+          "aliases": [
+            "メッシュ",
+            "形状データ"
+          ],
+          "evidence": "Objects/Components/MeshFilter.h"
+        }
+      ]
+    },
+    {
+      "scope": "object",
+      "component": "ObjectAnchor",
+      "aliases": [
+        "オブジェクトアンカー",
+        "位置追従"
+      ],
+      "evidence": "Objects/Components/ObjectAnchor.h",
+      "members": [
+        {
+          "member": "anchorPoint_",
+          "aliases": [
+            "アンカー位置",
+            "基準点"
+          ],
+          "evidence": "Objects/Components/ObjectAnchor.h"
+        },
+        {
+          "member": "offset_",
+          "aliases": [
+            "オフセット",
+            "位置ずらし"
+          ],
+          "evidence": "Objects/Components/ObjectAnchor.h"
+        },
+        {
+          "member": "offsetInTargetSpace_",
+          "aliases": [
+            "対象基準オフセット",
+            "対象ローカルずらし"
+          ],
+          "evidence": "Objects/Components/ObjectAnchor.h"
+        },
+        {
+          "member": "applyX_",
+          "aliases": [
+            "X軸を適用",
+            "X方向追従"
+          ],
+          "evidence": "Objects/Components/ObjectAnchor.h"
+        },
+        {
+          "member": "applyY_",
+          "aliases": [
+            "Y軸を適用",
+            "Y方向追従"
+          ],
+          "evidence": "Objects/Components/ObjectAnchor.h"
+        },
+        {
+          "member": "applyZ_",
+          "aliases": [
+            "Z軸を適用",
+            "Z方向追従"
+          ],
+          "evidence": "Objects/Components/ObjectAnchor.h"
+        },
+        {
+          "member": "followRotation_",
+          "aliases": [
+            "回転に追従",
+            "向きを合わせる"
+          ],
+          "evidence": "Objects/Components/ObjectAnchor.h"
+        }
+      ]
+    },
+    {
+      "scope": "object",
+      "component": "PrefabInstanceComponent",
+      "aliases": [
+        "プレハブインスタンス",
+        "Prefab参照"
+      ],
+      "evidence": "Objects/Components/PrefabInstanceComponent.h",
+      "members": []
+    },
+    {
+      "scope": "object",
+      "component": "PropertyMotion",
+      "aliases": [
+        "プロパティモーション",
+        "値のアニメーション"
+      ],
+      "evidence": "Objects/Components/PropertyMotion.h",
+      "members": [
+        {
+          "member": "from_",
+          "aliases": [
+            "開始値",
+            "初期値"
+          ],
+          "evidence": "Objects/Components/PropertyMotion.h"
+        },
+        {
+          "member": "to_",
+          "aliases": [
+            "終了値",
+            "目標値"
+          ],
+          "evidence": "Objects/Components/PropertyMotion.h"
+        },
+        {
+          "member": "period_",
+          "aliases": [
+            "周期",
+            "所要時間"
+          ],
+          "evidence": "Objects/Components/PropertyMotion.h"
+        }
+      ]
+    },
+    {
+      "scope": "object",
+      "component": "Rotation",
+      "aliases": [
+        "回転制御",
+        "回転アニメーション"
+      ],
+      "evidence": "Objects/Components/Rotation.h",
+      "members": [
+        {
+          "member": "angularVelocity_",
+          "aliases": [
+            "角速度",
+            "回転速度"
+          ],
+          "evidence": "Objects/Components/Rotation.h"
+        },
+        {
+          "member": "angularAcceleration_",
+          "aliases": [
+            "角加速度",
+            "回転加速度"
+          ],
+          "evidence": "Objects/Components/Rotation.h"
+        }
+      ]
+    },
+    {
+      "scope": "object",
+      "component": "PreTransform",
+      "aliases": [
+        "事前変換",
+        "前段Transform"
+      ],
+      "evidence": "Objects/Components/PreTransform.h",
+      "members": []
+    },
+    {
+      "scope": "object",
+      "component": "SceneVariableApplier",
+      "aliases": [
+        "シーン変数適用",
+        "シーン変数反映"
+      ],
+      "evidence": "Objects/Components/SceneVariableApplier.h",
+      "members": []
+    },
+    {
+      "scope": "object",
+      "component": "ScriptComponent",
+      "aliases": [
+        "スクリプトコンポーネント",
+        "スクリプト"
+      ],
+      "evidence": "Objects/Components/ScriptComponent.h",
+      "members": []
+    },
+    {
+      "scope": "object",
+      "component": "ShortTextBehavior",
+      "aliases": [
+        "短文動作",
+        "テキスト表示動作"
+      ],
+      "evidence": "Objects/Components/ShortTextBehavior.h",
+      "members": []
+    },
+    {
+      "scope": "object",
+      "component": "TargetLookAt",
+      "aliases": [
+        "ターゲット注視",
+        "対象を見る"
+      ],
+      "evidence": "Objects/Components/TargetLookAt.h",
+      "members": [
+        {
+          "member": "rotationOffset_",
+          "aliases": [
+            "回転オフセット",
+            "向きのずらし"
+          ],
+          "evidence": "Objects/Components/TargetLookAt.h"
+        },
+        {
+          "member": "followStrength_",
+          "aliases": [
+            "追従強度",
+            "追従の速さ"
+          ],
+          "evidence": "Objects/Components/TargetLookAt.h"
+        }
+      ]
+    },
+    {
+      "scope": "object",
+      "component": "TextureSource",
+      "aliases": [
+        "テクスチャソース",
+        "画像ソース"
+      ],
+      "evidence": "Objects/Components/TextureSource.h",
+      "members": [
+        {
+          "member": "textureAssetPath_",
+          "aliases": [
+            "テクスチャファイル",
+            "画像パス"
+          ],
+          "evidence": "Objects/Components/TextureSource.h"
+        }
+      ]
+    },
+    {
+      "scope": "object",
+      "component": "TransformSync",
+      "aliases": [
+        "Transform同期",
+        "変換同期"
+      ],
+      "evidence": "Objects/Components/TransformSync.h",
+      "members": [
+        {
+          "member": "syncPosition_",
+          "aliases": [
+            "位置を同期",
+            "移動同期"
+          ],
+          "evidence": "Objects/Components/TransformSync.h"
+        },
+        {
+          "member": "syncRotation_",
+          "aliases": [
+            "回転を同期",
+            "向き同期"
+          ],
+          "evidence": "Objects/Components/TransformSync.h"
+        },
+        {
+          "member": "syncScale_",
+          "aliases": [
+            "スケールを同期",
+            "拡大率同期"
+          ],
+          "evidence": "Objects/Components/TransformSync.h"
+        },
+        {
+          "member": "positionOffset_",
+          "aliases": [
+            "位置オフセット",
+            "移動量"
+          ],
+          "evidence": "Objects/Components/TransformSync.h"
+        },
+        {
+          "member": "rotationOffset_",
+          "aliases": [
+            "回転オフセット",
+            "角度差"
+          ],
+          "evidence": "Objects/Components/TransformSync.h"
+        },
+        {
+          "member": "scaleOffset_",
+          "aliases": [
+            "スケールオフセット",
+            "倍率差"
+          ],
+          "evidence": "Objects/Components/TransformSync.h"
+        }
+      ]
+    },
+    {
+      "scope": "object",
+      "component": "VideoSource",
+      "aliases": [
+        "ビデオソース",
+        "動画ソース"
+      ],
+      "evidence": "Objects/Components/VideoSource.h",
+      "members": [
+        {
+          "member": "videoAssetPath_",
+          "aliases": [
+            "動画ファイル",
+            "ビデオパス"
+          ],
+          "evidence": "Objects/Components/VideoSource.h"
+        },
+        {
+          "member": "loop_",
+          "aliases": [
+            "ループ",
+            "繰り返し再生"
+          ],
+          "evidence": "Objects/Components/VideoSource.h"
+        },
+        {
+          "member": "volume_",
+          "aliases": [
+            "音量",
+            "再生音量"
+          ],
+          "evidence": "Objects/Components/VideoSource.h"
+        },
+        {
+          "member": "playOnAwake_",
+          "aliases": [
+            "自動再生",
+            "起動時に再生"
+          ],
+          "evidence": "Objects/Components/VideoSource.h"
+        },
+        {
+          "member": "routeAudioToAudioSource_",
+          "aliases": [
+            "音声をAudioSourceへ送る",
+            "音声出力先"
+          ],
+          "evidence": "Objects/Components/VideoSource.h"
+        }
+      ]
+    },
+    {
+      "scope": "scene",
+      "component": "InputDeviceSettings",
+      "aliases": [
+        "入力デバイス設定",
+        "入力設定"
+      ],
+      "evidence": "Scene/Components/InputDeviceSettings.h",
+      "members": []
+    },
+    {
+      "scope": "scene",
+      "component": "GameEventRouter",
+      "aliases": [
+        "ゲームイベントルーター",
+        "イベント振り分け"
+      ],
+      "evidence": "Scene/Components/GameEventRouter.h",
+      "members": []
+    },
+    {
+      "scope": "scene",
+      "component": "KeyframeAnimator",
+      "aliases": [
+        "キーフレームアニメーター",
+        "シーンアニメーション"
+      ],
+      "evidence": "Scene/Components/KeyframeAnimator.h",
+      "members": []
+    },
+    {
+      "scope": "scene",
+      "component": "SceneObjectCollider",
+      "aliases": [
+        "シーンオブジェクトコライダー",
+        "シーン衝突管理"
+      ],
+      "evidence": "Scene/Components/SceneObjectCollider.h",
+      "members": []
+    },
+    {
+      "scope": "scene",
+      "component": "SceneRenderer",
+      "aliases": [
+        "シーンレンダラー",
+        "シーン描画"
+      ],
+      "evidence": "Scene/Components/Render/SceneRenderer.h",
+      "members": []
+    },
+    {
+      "scope": "scene",
+      "component": "SceneAudioPlayer",
+      "aliases": [
+        "シーンオーディオプレイヤー",
+        "シーン音声再生"
+      ],
+      "evidence": "Scene/Components/Audio/SceneAudioPlayer.h",
+      "members": []
+    },
+    {
+      "scope": "scene",
+      "component": "SceneComputeProcessor",
+      "aliases": [
+        "シーン計算処理",
+        "コンピュート処理"
+      ],
+      "evidence": "Scene/Components/Compute/SceneComputeProcessor.h",
+      "members": []
+    },
+    {
+      "scope": "scene",
+      "component": "ScenePreTransform",
+      "aliases": [
+        "シーン事前変換",
+        "前処理変換"
+      ],
+      "evidence": "Scene/Components/ScenePreTransform.h",
+      "members": []
+    },
+    {
+      "scope": "scene",
+      "component": "SceneShakeApplier",
+      "aliases": [
+        "シーン揺れ適用",
+        "画面揺れ処理"
+      ],
+      "evidence": "Scene/Components/SceneShakeApplier.h",
+      "members": []
+    },
+    {
+      "scope": "scene",
+      "component": "SceneScriptEngine",
+      "aliases": [
+        "シーンスクリプトエンジン",
+        "シーンスクリプト実行"
+      ],
+      "evidence": "Scene/Components/Script/SceneScriptEngine.h",
+      "members": []
+    },
+    {
+      "component": "BarrelDistortionEffect",
+      "scope": "object",
+      "aliases": [
+        "樽型歪み補正",
+        "バレルディストーション"
+      ],
+      "evidence": "Objects/Components/PostProcessing/BarrelDistortionEffect.h",
+      "members": [
+        {
+          "member": "params_.strength",
+          "aliases": [
+            "歪みの強さ",
+            "distortion strength"
+          ],
+          "evidence": "Objects/Components/PostProcessing/BarrelDistortionEffect.h"
+        },
+        {
+          "member": "params_.zoom",
+          "aliases": [
+            "ズーム",
+            "magnification"
+          ],
+          "evidence": "Objects/Components/PostProcessing/BarrelDistortionEffect.h"
+        },
+        {
+          "member": "params_.edgeColor",
+          "aliases": [
+            "端の色",
+            "edge color"
+          ],
+          "evidence": "Objects/Components/PostProcessing/BarrelDistortionEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "BitmapTextRenderer",
+      "scope": "object",
+      "aliases": [
+        "ビットマップテキスト描画",
+        "ビットマップ文字描画"
+      ],
+      "evidence": "Objects/Components/Render/BitmapTextRenderer.h",
+      "members": [
+        {
+          "member": "pipelineName_",
+          "aliases": [
+            "パイプライン",
+            "pipeline"
+          ],
+          "evidence": "Objects/Components/Render/BitmapTextRenderer.h"
+        },
+        {
+          "member": "materialName_",
+          "aliases": [
+            "マテリアル",
+            "material"
+          ],
+          "evidence": "Objects/Components/Render/BitmapTextRenderer.h"
+        },
+        {
+          "member": "text_",
+          "aliases": [
+            "テキスト",
+            "文字列"
+          ],
+          "evidence": "Objects/Components/Render/BitmapTextRenderer.h"
+        },
+        {
+          "member": "fontName_",
+          "aliases": [
+            "フォント",
+            "font"
+          ],
+          "evidence": "Objects/Components/Render/BitmapTextRenderer.h"
+        },
+        {
+          "member": "fontSize_",
+          "aliases": [
+            "フォントサイズ",
+            "文字サイズ"
+          ],
+          "evidence": "Objects/Components/Render/BitmapTextRenderer.h"
+        },
+        {
+          "member": "instanceColor_",
+          "aliases": [
+            "インスタンスカラー",
+            "描画色"
+          ],
+          "evidence": "Objects/Components/Render/BitmapTextRenderer.h"
+        },
+        {
+          "member": "instanceColorBlendMode_",
+          "aliases": [
+            "インスタンスカラーの合成方法",
+            "色の合成モード"
+          ],
+          "evidence": "Objects/Components/Render/BitmapTextRenderer.h"
+        },
+        {
+          "member": "horizontalAlign_",
+          "aliases": [
+            "水平方向の揃え",
+            "横揃え"
+          ],
+          "evidence": "Objects/Components/Render/BitmapTextRenderer.h"
+        },
+        {
+          "member": "verticalAlign_",
+          "aliases": [
+            "垂直方向の揃え",
+            "縦揃え"
+          ],
+          "evidence": "Objects/Components/Render/BitmapTextRenderer.h"
+        },
+        {
+          "member": "pointSampling_",
+          "aliases": [
+            "ポイントサンプリング",
+            "Nearestサンプリング"
+          ],
+          "evidence": "Objects/Components/Render/BitmapTextRenderer.h"
+        },
+        {
+          "member": "renderPriority_",
+          "aliases": [
+            "描画優先度",
+            "描画順優先度"
+          ],
+          "evidence": "Objects/Components/Render/BitmapTextRenderer.h"
+        },
+        {
+          "member": "allowInstancing_",
+          "aliases": [
+            "インスタンシングを許可",
+            "インスタンス描画"
+          ],
+          "evidence": "Objects/Components/Render/BitmapTextRenderer.h"
+        },
+        {
+          "member": "pixelSnapping_",
+          "aliases": [
+            "ピクセルスナップ",
+            "ピクセル格子に整列"
+          ],
+          "evidence": "Objects/Components/Render/BitmapTextRenderer.h"
+        },
+        {
+          "member": "pixelSnapOutsetPixels_",
+          "aliases": [
+            "ピクセルスナップの外側マージン",
+            "ピクセルスナップ余白"
+          ],
+          "evidence": "Objects/Components/Render/BitmapTextRenderer.h"
+        }
+      ]
+    },
+    {
+      "component": "BloomEffect",
+      "scope": "object",
+      "aliases": [
+        "ブルーム効果",
+        "光のにじみ"
+      ],
+      "evidence": "Objects/Components/PostProcessing/BloomEffect.h",
+      "members": [
+        {
+          "member": "params_.threshold",
+          "aliases": [
+            "しきい値",
+            "brightness threshold"
+          ],
+          "evidence": "Objects/Components/PostProcessing/BloomEffect.h"
+        },
+        {
+          "member": "params_.softKnee",
+          "aliases": [
+            "ソフトニー",
+            "soft threshold transition"
+          ],
+          "evidence": "Objects/Components/PostProcessing/BloomEffect.h"
+        },
+        {
+          "member": "params_.intensity",
+          "aliases": [
+            "強度",
+            "bloom intensity"
+          ],
+          "evidence": "Objects/Components/PostProcessing/BloomEffect.h"
+        },
+        {
+          "member": "params_.blurRadius",
+          "aliases": [
+            "ブラー半径",
+            "blur radius"
+          ],
+          "evidence": "Objects/Components/PostProcessing/BloomEffect.h"
+        },
+        {
+          "member": "params_.iterations",
+          "aliases": [
+            "反復回数",
+            "iteration count"
+          ],
+          "evidence": "Objects/Components/PostProcessing/BloomEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "BoxFilterEffect",
+      "scope": "object",
+      "aliases": [
+        "ボックスフィルター",
+        "平均化フィルター"
+      ],
+      "evidence": "Objects/Components/PostProcessing/BoxFilterEffect.h",
+      "members": [
+        {
+          "member": "params_.intensity",
+          "aliases": [
+            "強度",
+            "filter intensity"
+          ],
+          "evidence": "Objects/Components/PostProcessing/BoxFilterEffect.h"
+        },
+        {
+          "member": "params_.halfSize[0]",
+          "aliases": [
+            "ハーフサイズX",
+            "horizontal half size"
+          ],
+          "evidence": "Objects/Components/PostProcessing/BoxFilterEffect.h"
+        },
+        {
+          "member": "params_.halfSize[1]",
+          "aliases": [
+            "ハーフサイズY",
+            "vertical half size"
+          ],
+          "evidence": "Objects/Components/PostProcessing/BoxFilterEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "Camera2D",
+      "scope": "object",
+      "aliases": [
+        "2Dカメラ",
+        "2次元カメラ"
+      ],
+      "evidence": "Objects/Components/Render/Camera2D.h",
+      "members": [
+        {
+          "member": "width_",
+          "aliases": [
+            "幅",
+            "カメラ幅"
+          ],
+          "evidence": "Objects/Components/Render/Camera2D.h"
+        },
+        {
+          "member": "height_",
+          "aliases": [
+            "高さ",
+            "カメラ高さ"
+          ],
+          "evidence": "Objects/Components/Render/Camera2D.h"
+        },
+        {
+          "member": "nearClip_",
+          "aliases": [
+            "ニアクリップ",
+            "近クリップ距離"
+          ],
+          "evidence": "Objects/Components/Render/Camera2D.h"
+        },
+        {
+          "member": "farClip_",
+          "aliases": [
+            "ファークリップ",
+            "遠クリップ距離"
+          ],
+          "evidence": "Objects/Components/Render/Camera2D.h"
+        },
+        {
+          "member": "autoSyncSize_",
+          "aliases": [
+            "解像度へ自動追従",
+            "サイズ自動同期"
+          ],
+          "evidence": "Objects/Components/Render/Camera2D.h"
+        },
+        {
+          "member": "pixelSnapping_",
+          "aliases": [
+            "ピクセルスナップ",
+            "ピクセル格子に整列"
+          ],
+          "evidence": "Objects/Components/Render/Camera2D.h"
+        }
+      ]
+    },
+    {
+      "component": "Camera3D",
+      "scope": "object",
+      "aliases": [
+        "3Dカメラ",
+        "3次元カメラ"
+      ],
+      "evidence": "Objects/Components/Render/Camera3D.h",
+      "members": [
+        {
+          "member": "fovY_",
+          "aliases": [
+            "垂直画角（FovY）",
+            "垂直視野角"
+          ],
+          "evidence": "Objects/Components/Render/Camera3D.h"
+        },
+        {
+          "member": "nearClip_",
+          "aliases": [
+            "ニアクリップ",
+            "近クリップ距離"
+          ],
+          "evidence": "Objects/Components/Render/Camera3D.h"
+        },
+        {
+          "member": "farClip_",
+          "aliases": [
+            "ファークリップ",
+            "遠クリップ距離"
+          ],
+          "evidence": "Objects/Components/Render/Camera3D.h"
+        },
+        {
+          "member": "aspectRatio_",
+          "aliases": [
+            "アスペクト比",
+            "縦横比"
+          ],
+          "evidence": "Objects/Components/Render/Camera3D.h"
+        },
+        {
+          "member": "orthographic_",
+          "aliases": [
+            "平行投影",
+            "オルソグラフィック投影"
+          ],
+          "evidence": "Objects/Components/Render/Camera3D.h"
+        },
+        {
+          "member": "orthoSize_",
+          "aliases": [
+            "平行投影サイズ",
+            "オルソサイズ"
+          ],
+          "evidence": "Objects/Components/Render/Camera3D.h"
+        },
+        {
+          "member": "enableJitter_",
+          "aliases": [
+            "カメラジッター",
+            "投影ジッター"
+          ],
+          "evidence": "Objects/Components/Render/Camera3D.h"
+        },
+        {
+          "member": "autoSyncAspectRatio_",
+          "aliases": [
+            "アスペクト比へ自動追従",
+            "縦横比自動同期"
+          ],
+          "evidence": "Objects/Components/Render/Camera3D.h"
+        }
+      ]
+    },
+    {
+      "component": "CameraBoundsZone2D",
+      "scope": "object",
+      "aliases": [
+        "2Dカメラ境界ゾーン",
+        "2Dカメラ移動範囲"
+      ],
+      "evidence": "Objects/Components/Render/CameraBoundsZone2D.h",
+      "members": []
+    },
+    {
+      "component": "CameraBoundsZone3D",
+      "scope": "object",
+      "aliases": [
+        "3Dカメラ境界ゾーン",
+        "3Dカメラ移動範囲"
+      ],
+      "evidence": "Objects/Components/Render/CameraBoundsZone3D.h",
+      "members": []
+    },
+    {
+      "component": "CameraController",
+      "scope": "object",
+      "aliases": [
+        "3Dカメラ制御",
+        "3Dカメラ追従制御"
+      ],
+      "evidence": "Objects/Components/Render/CameraController.h",
+      "members": [
+        {
+          "member": "positionOffset_",
+          "aliases": [
+            "位置オフセット",
+            "移動オフセット"
+          ],
+          "evidence": "Objects/Components/Render/CameraController.h"
+        },
+        {
+          "member": "rotationOffset_",
+          "aliases": [
+            "回転オフセット",
+            "姿勢オフセット"
+          ],
+          "evidence": "Objects/Components/Render/CameraController.h"
+        },
+        {
+          "member": "targetFovY_",
+          "aliases": [
+            "目標の垂直画角",
+            "目標FovY"
+          ],
+          "evidence": "Objects/Components/Render/CameraController.h"
+        },
+        {
+          "member": "fovLerpFactor_",
+          "aliases": [
+            "画角の追従の強さ",
+            "画角補間係数"
+          ],
+          "evidence": "Objects/Components/Render/CameraController.h"
+        },
+        {
+          "member": "moveLerpFactor_.usePerAxis",
+          "aliases": [
+            "移動を軸ごとに設定",
+            "移動軸別設定"
+          ],
+          "evidence": "Objects/Components/Render/CameraController.h"
+        },
+        {
+          "member": "moveLerpFactor_.all",
+          "aliases": [
+            "移動 X/Y/Z",
+            "全軸の移動追従強度"
+          ],
+          "evidence": "Objects/Components/Render/CameraController.h"
+        },
+        {
+          "member": "moveLerpFactor_.perAxis",
+          "aliases": [
+            "移動：軸ごと",
+            "軸別移動追従強度"
+          ],
+          "evidence": "Objects/Components/Render/CameraController.h"
+        },
+        {
+          "member": "rotateLerpFactor_.usePerAxis",
+          "aliases": [
+            "回転を軸ごとに設定",
+            "回転軸別設定"
+          ],
+          "evidence": "Objects/Components/Render/CameraController.h"
+        },
+        {
+          "member": "rotateLerpFactor_.all",
+          "aliases": [
+            "回転 X/Y/Z",
+            "全軸の回転追従強度"
+          ],
+          "evidence": "Objects/Components/Render/CameraController.h"
+        },
+        {
+          "member": "rotateLerpFactor_.perAxis",
+          "aliases": [
+            "回転：軸ごと",
+            "軸別回転追従強度"
+          ],
+          "evidence": "Objects/Components/Render/CameraController.h"
+        }
+      ]
+    },
+    {
+      "component": "CameraController2D",
+      "scope": "object",
+      "aliases": [
+        "2Dカメラ制御",
+        "2Dカメラ追従制御"
+      ],
+      "evidence": "Objects/Components/Render/CameraController2D.h",
+      "members": [
+        {
+          "member": "positionOffset_",
+          "aliases": [
+            "位置オフセット",
+            "移動オフセット"
+          ],
+          "evidence": "Objects/Components/Render/CameraController2D.h"
+        },
+        {
+          "member": "rotationOffset_",
+          "aliases": [
+            "回転オフセット",
+            "姿勢オフセット"
+          ],
+          "evidence": "Objects/Components/Render/CameraController2D.h"
+        },
+        {
+          "member": "targetSize_",
+          "aliases": [
+            "目標のサイズ（幅/高さ）",
+            "目標サイズ"
+          ],
+          "evidence": "Objects/Components/Render/CameraController2D.h"
+        },
+        {
+          "member": "sizeLerpFactor_",
+          "aliases": [
+            "サイズの追従の強さ",
+            "サイズ補間係数"
+          ],
+          "evidence": "Objects/Components/Render/CameraController2D.h"
+        },
+        {
+          "member": "moveLerpFactor_.usePerAxis",
+          "aliases": [
+            "移動を軸ごとに設定",
+            "移動軸別設定"
+          ],
+          "evidence": "Objects/Components/Render/CameraController2D.h"
+        },
+        {
+          "member": "moveLerpFactor_.all",
+          "aliases": [
+            "移動 X/Y",
+            "全軸の移動追従強度"
+          ],
+          "evidence": "Objects/Components/Render/CameraController2D.h"
+        },
+        {
+          "member": "moveLerpFactor_.perAxis",
+          "aliases": [
+            "移動：軸ごと",
+            "軸別移動追従強度"
+          ],
+          "evidence": "Objects/Components/Render/CameraController2D.h"
+        },
+        {
+          "member": "rotateLerpFactor_",
+          "aliases": [
+            "回転の追従の強さ",
+            "回転補間係数"
+          ],
+          "evidence": "Objects/Components/Render/CameraController2D.h"
+        }
+      ]
+    },
+    {
+      "component": "CameraRenderer",
+      "scope": "object",
+      "aliases": [
+        "カメラ描画制御",
+        "カメラレンダラー"
+      ],
+      "evidence": "Objects/Components/Render/CameraRenderer.h",
+      "members": []
+    },
+    {
+      "component": "ChromaticAberrationEffect",
+      "scope": "object",
+      "aliases": [
+        "色収差効果",
+        "色ずれ効果"
+      ],
+      "evidence": "Objects/Components/PostProcessing/ChromaticAberrationEffect.h",
+      "members": [
+        {
+          "member": "params_.directionX",
+          "aliases": [
+            "方向X",
+            "horizontal direction"
+          ],
+          "evidence": "Objects/Components/PostProcessing/ChromaticAberrationEffect.h"
+        },
+        {
+          "member": "params_.directionY",
+          "aliases": [
+            "方向Y",
+            "vertical direction"
+          ],
+          "evidence": "Objects/Components/PostProcessing/ChromaticAberrationEffect.h"
+        },
+        {
+          "member": "params_.strength",
+          "aliases": [
+            "強さ",
+            "aberration strength"
+          ],
+          "evidence": "Objects/Components/PostProcessing/ChromaticAberrationEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "ColorAdjustEffect",
+      "scope": "object",
+      "aliases": [
+        "色調補正",
+        "カラー調整"
+      ],
+      "evidence": "Objects/Components/PostProcessing/ColorAdjustEffect.h",
+      "members": [
+        {
+          "member": "params_.brightness",
+          "aliases": [
+            "明るさ",
+            "brightness"
+          ],
+          "evidence": "Objects/Components/PostProcessing/ColorAdjustEffect.h"
+        },
+        {
+          "member": "params_.contrast",
+          "aliases": [
+            "コントラスト",
+            "contrast"
+          ],
+          "evidence": "Objects/Components/PostProcessing/ColorAdjustEffect.h"
+        },
+        {
+          "member": "params_.saturation",
+          "aliases": [
+            "彩度",
+            "color saturation"
+          ],
+          "evidence": "Objects/Components/PostProcessing/ColorAdjustEffect.h"
+        },
+        {
+          "member": "params_.temperature",
+          "aliases": [
+            "色温度",
+            "temperature"
+          ],
+          "evidence": "Objects/Components/PostProcessing/ColorAdjustEffect.h"
+        },
+        {
+          "member": "params_.colorBalance[0]",
+          "aliases": [
+            "カラーバランス赤",
+            "red balance"
+          ],
+          "evidence": "Objects/Components/PostProcessing/ColorAdjustEffect.h"
+        },
+        {
+          "member": "params_.colorBalance[1]",
+          "aliases": [
+            "カラーバランス緑",
+            "green balance"
+          ],
+          "evidence": "Objects/Components/PostProcessing/ColorAdjustEffect.h"
+        },
+        {
+          "member": "params_.colorBalance[2]",
+          "aliases": [
+            "カラーバランス青",
+            "blue balance"
+          ],
+          "evidence": "Objects/Components/PostProcessing/ColorAdjustEffect.h"
+        },
+        {
+          "member": "params_.posterizeLevels",
+          "aliases": [
+            "減色レベル",
+            "posterization levels"
+          ],
+          "evidence": "Objects/Components/PostProcessing/ColorAdjustEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "ComputeShaderProcessing",
+      "scope": "object",
+      "aliases": [
+        "コンピュートシェーダー処理",
+        "計算シェーダー処理"
+      ],
+      "evidence": "Objects/Components/Compute/ComputeShaderProcessing.h",
+      "members": [
+        {
+          "member": "pipelineName_",
+          "aliases": [
+            "パイプライン",
+            "compute pipeline"
+          ],
+          "evidence": "Objects/Components/Compute/ComputeShaderProcessing.h"
+        },
+        {
+          "member": "groupCountX_",
+          "aliases": [
+            "グループ数X",
+            "thread groups X"
+          ],
+          "evidence": "Objects/Components/Compute/ComputeShaderProcessing.h"
+        },
+        {
+          "member": "groupCountY_",
+          "aliases": [
+            "グループ数Y",
+            "thread groups Y"
+          ],
+          "evidence": "Objects/Components/Compute/ComputeShaderProcessing.h"
+        },
+        {
+          "member": "groupCountZ_",
+          "aliases": [
+            "グループ数Z",
+            "thread groups Z"
+          ],
+          "evidence": "Objects/Components/Compute/ComputeShaderProcessing.h"
+        }
+      ]
+    },
+    {
+      "component": "DepthOfFieldEffect",
+      "scope": "object",
+      "aliases": [
+        "被写界深度効果",
+        "ピントぼけ効果"
+      ],
+      "evidence": "Objects/Components/PostProcessing/DepthOfFieldEffect.h",
+      "members": [
+        {
+          "member": "params_.focusDistance",
+          "aliases": [
+            "ピント距離",
+            "focus distance"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DepthOfFieldEffect.h"
+        },
+        {
+          "member": "params_.focusRange",
+          "aliases": [
+            "被写界深度の幅",
+            "focus range"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DepthOfFieldEffect.h"
+        },
+        {
+          "member": "params_.nearBlurDistance",
+          "aliases": [
+            "近景のぼけ始め距離",
+            "near blur start distance"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DepthOfFieldEffect.h"
+        },
+        {
+          "member": "params_.farBlurDistance",
+          "aliases": [
+            "遠景のぼけ始め距離",
+            "far blur start distance"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DepthOfFieldEffect.h"
+        },
+        {
+          "member": "params_.maxBlurRadiusPixels",
+          "aliases": [
+            "最大ブラー半径px",
+            "maximum blur radius pixels"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DepthOfFieldEffect.h"
+        },
+        {
+          "member": "params_.sampleCount",
+          "aliases": [
+            "サンプル数",
+            "sample count"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DepthOfFieldEffect.h"
+        },
+        {
+          "member": "params_.dilateRadius",
+          "aliases": [
+            "ダイレート半径",
+            "dilation radius"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DepthOfFieldEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "DissolveEffect",
+      "scope": "object",
+      "aliases": [
+        "ディゾルブ効果",
+        "マスク消去効果"
+      ],
+      "evidence": "Objects/Components/PostProcessing/DissolveEffect.h",
+      "members": [
+        {
+          "member": "params_.maskThreshold",
+          "aliases": [
+            "マスクしきい値",
+            "mask threshold"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DissolveEffect.h"
+        },
+        {
+          "member": "params_.edgeThickness",
+          "aliases": [
+            "エッジの太さ",
+            "edge thickness"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DissolveEffect.h"
+        },
+        {
+          "member": "params_.baseTextureColor[0]",
+          "aliases": [
+            "ベーステクスチャ色R",
+            "base texture red"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DissolveEffect.h"
+        },
+        {
+          "member": "params_.baseTextureColor[1]",
+          "aliases": [
+            "ベーステクスチャ色G",
+            "base texture green"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DissolveEffect.h"
+        },
+        {
+          "member": "params_.baseTextureColor[2]",
+          "aliases": [
+            "ベーステクスチャ色B",
+            "base texture blue"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DissolveEffect.h"
+        },
+        {
+          "member": "params_.baseTextureColor[3]",
+          "aliases": [
+            "ベーステクスチャ色A",
+            "base texture alpha"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DissolveEffect.h"
+        },
+        {
+          "member": "params_.edgeColor[0]",
+          "aliases": [
+            "エッジ色R",
+            "edge red"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DissolveEffect.h"
+        },
+        {
+          "member": "params_.edgeColor[1]",
+          "aliases": [
+            "エッジ色G",
+            "edge green"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DissolveEffect.h"
+        },
+        {
+          "member": "params_.edgeColor[2]",
+          "aliases": [
+            "エッジ色B",
+            "edge blue"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DissolveEffect.h"
+        },
+        {
+          "member": "params_.edgeColor[3]",
+          "aliases": [
+            "エッジ色A",
+            "edge alpha"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DissolveEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "DitherEffect",
+      "scope": "object",
+      "aliases": [
+        "ディザ効果",
+        "ディザリング"
+      ],
+      "evidence": "Objects/Components/PostProcessing/DitherEffect.h",
+      "members": [
+        {
+          "member": "params_.intensity",
+          "aliases": [
+            "強度",
+            "dither intensity"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DitherEffect.h"
+        },
+        {
+          "member": "params_.color",
+          "aliases": [
+            "色",
+            "dither color"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DitherEffect.h"
+        },
+        {
+          "member": "params_.patternWidth",
+          "aliases": [
+            "パターン解像度の幅",
+            "pattern width"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DitherEffect.h"
+        },
+        {
+          "member": "params_.patternHeight",
+          "aliases": [
+            "パターン解像度の高さ",
+            "pattern height"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DitherEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "DotMatrixEffect",
+      "scope": "object",
+      "aliases": [
+        "ドットマトリクス効果",
+        "網点効果"
+      ],
+      "evidence": "Objects/Components/PostProcessing/DotMatrixEffect.h",
+      "members": [
+        {
+          "member": "params_.dotSpacing",
+          "aliases": [
+            "ドット間隔",
+            "dot spacing"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DotMatrixEffect.h"
+        },
+        {
+          "member": "params_.dotRadius",
+          "aliases": [
+            "ドット半径",
+            "dot radius"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DotMatrixEffect.h"
+        },
+        {
+          "member": "params_.threshold",
+          "aliases": [
+            "しきい値",
+            "brightness threshold"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DotMatrixEffect.h"
+        },
+        {
+          "member": "params_.intensity",
+          "aliases": [
+            "強度",
+            "effect intensity"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DotMatrixEffect.h"
+        },
+        {
+          "member": "params_.monochrome",
+          "aliases": [
+            "モノクロ",
+            "monochrome mode"
+          ],
+          "evidence": "Objects/Components/PostProcessing/DotMatrixEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "FXAAEffect",
+      "scope": "object",
+      "aliases": [
+        "FXAAアンチエイリアス",
+        "高速近似アンチエイリアス"
+      ],
+      "evidence": "Objects/Components/PostProcessing/FXAAEffect.h",
+      "members": [
+        {
+          "member": "params_.threshold",
+          "aliases": [
+            "しきい値",
+            "relative threshold"
+          ],
+          "evidence": "Objects/Components/PostProcessing/FXAAEffect.h"
+        },
+        {
+          "member": "params_.thresholdMin",
+          "aliases": [
+            "しきい値下限",
+            "minimum threshold"
+          ],
+          "evidence": "Objects/Components/PostProcessing/FXAAEffect.h"
+        },
+        {
+          "member": "params_.strength",
+          "aliases": [
+            "強さ",
+            "blend strength"
+          ],
+          "evidence": "Objects/Components/PostProcessing/FXAAEffect.h"
+        },
+        {
+          "member": "params_.subpixelBlend",
+          "aliases": [
+            "サブピクセルの合成比率",
+            "subpixel blend"
+          ],
+          "evidence": "Objects/Components/PostProcessing/FXAAEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "GTAOEffect",
+      "scope": "object",
+      "aliases": [
+        "GTAO効果",
+        "地平線ベースアンビエントオクルージョン"
+      ],
+      "evidence": "Objects/Components/PostProcessing/GTAOEffect.h",
+      "members": [
+        {
+          "member": "params_.radius",
+          "aliases": [
+            "半径",
+            "occlusion radius"
+          ],
+          "evidence": "Objects/Components/PostProcessing/GTAOEffect.h"
+        },
+        {
+          "member": "params_.intensity",
+          "aliases": [
+            "強度",
+            "occlusion intensity"
+          ],
+          "evidence": "Objects/Components/PostProcessing/GTAOEffect.h"
+        },
+        {
+          "member": "params_.power",
+          "aliases": [
+            "強調度",
+            "contrast power"
+          ],
+          "evidence": "Objects/Components/PostProcessing/GTAOEffect.h"
+        },
+        {
+          "member": "params_.bias",
+          "aliases": [
+            "バイアス",
+            "self-occlusion bias"
+          ],
+          "evidence": "Objects/Components/PostProcessing/GTAOEffect.h"
+        },
+        {
+          "member": "params_.directionCount",
+          "aliases": [
+            "探索方向数",
+            "direction count"
+          ],
+          "evidence": "Objects/Components/PostProcessing/GTAOEffect.h"
+        },
+        {
+          "member": "params_.stepCount",
+          "aliases": [
+            "方向ごとのステップ数",
+            "steps per direction"
+          ],
+          "evidence": "Objects/Components/PostProcessing/GTAOEffect.h"
+        },
+        {
+          "member": "params_.blurRadius",
+          "aliases": [
+            "ブラー半径",
+            "blur radius"
+          ],
+          "evidence": "Objects/Components/PostProcessing/GTAOEffect.h"
+        },
+        {
+          "member": "params_.depthThreshold",
+          "aliases": [
+            "深度しきい値",
+            "depth difference threshold"
+          ],
+          "evidence": "Objects/Components/PostProcessing/GTAOEffect.h"
+        },
+        {
+          "member": "params_.showAOOnly",
+          "aliases": [
+            "AOのみ表示",
+            "ambient occlusion only"
+          ],
+          "evidence": "Objects/Components/PostProcessing/GTAOEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "GaussianFilterEffect",
+      "scope": "object",
+      "aliases": [
+        "ガウスフィルター",
+        "ガウシアンぼかし"
+      ],
+      "evidence": "Objects/Components/PostProcessing/GaussianFilterEffect.h",
+      "members": [
+        {
+          "member": "params_.radius",
+          "aliases": [
+            "半径",
+            "blur radius"
+          ],
+          "evidence": "Objects/Components/PostProcessing/GaussianFilterEffect.h"
+        },
+        {
+          "member": "params_.sigma",
+          "aliases": [
+            "シグマ",
+            "standard deviation sigma"
+          ],
+          "evidence": "Objects/Components/PostProcessing/GaussianFilterEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "GrayscaleEffect",
+      "scope": "object",
+      "aliases": [
+        "グレースケール効果",
+        "白黒化"
+      ],
+      "evidence": "Objects/Components/PostProcessing/GrayscaleEffect.h",
+      "members": [
+        {
+          "member": "params_.intensity",
+          "aliases": [
+            "強度",
+            "grayscale intensity"
+          ],
+          "evidence": "Objects/Components/PostProcessing/GrayscaleEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "Light",
+      "scope": "object",
+      "aliases": [
+        "光源",
+        "ライト"
+      ],
+      "evidence": "Objects/Components/Render/Light.h",
+      "members": [
+        {
+          "member": "color_",
+          "aliases": [
+            "色",
+            "光の色",
+            "カラー"
+          ],
+          "evidence": "Objects/Components/Render/Light.h"
+        },
+        {
+          "member": "intensity_",
+          "aliases": [
+            "強度",
+            "明るさ",
+            "光の強さ"
+          ],
+          "evidence": "Objects/Components/Render/Light.h"
+        },
+        {
+          "member": "radius_",
+          "aliases": [
+            "半径",
+            "光源半径",
+            "光の半径"
+          ],
+          "evidence": "Objects/Components/Render/Light.h"
+        },
+        {
+          "member": "distance_",
+          "aliases": [
+            "距離（範囲）",
+            "照射距離",
+            "距離"
+          ],
+          "evidence": "Objects/Components/Render/Light.h"
+        },
+        {
+          "member": "decay_",
+          "aliases": [
+            "減衰",
+            "光の減衰",
+            "減衰率"
+          ],
+          "evidence": "Objects/Components/Render/Light.h"
+        },
+        {
+          "member": "innerAngle_",
+          "aliases": [
+            "内側の角度",
+            "内角"
+          ],
+          "evidence": "Objects/Components/Render/Light.h"
+        },
+        {
+          "member": "outerAngle_",
+          "aliases": [
+            "外側の角度",
+            "外角"
+          ],
+          "evidence": "Objects/Components/Render/Light.h"
+        },
+        {
+          "member": "sourceRadius_",
+          "aliases": [
+            "光源の半径",
+            "光源サイズ（半径）",
+            "光源サイズ"
+          ],
+          "evidence": "Objects/Components/Render/Light.h"
+        },
+        {
+          "member": "sourceWidth_",
+          "aliases": [
+            "光源の幅",
+            "発光幅"
+          ],
+          "evidence": "Objects/Components/Render/Light.h"
+        },
+        {
+          "member": "sourceHeight_",
+          "aliases": [
+            "光源の高さ",
+            "発光高さ"
+          ],
+          "evidence": "Objects/Components/Render/Light.h"
+        },
+        {
+          "member": "sourceLength_",
+          "aliases": [
+            "光源の長さ",
+            "発光長"
+          ],
+          "evidence": "Objects/Components/Render/Light.h"
+        },
+        {
+          "member": "sourceDepth_",
+          "aliases": [
+            "光源の奥行き",
+            "発光奥行",
+            "発光奥行き"
+          ],
+          "evidence": "Objects/Components/Render/Light.h"
+        },
+        {
+          "member": "castShadows_",
+          "aliases": [
+            "影を落とす",
+            "シャドウを有効化",
+            "影の有効化"
+          ],
+          "evidence": "Objects/Components/Render/Light.h"
+        },
+        {
+          "member": "shadowDistance_",
+          "aliases": [
+            "影の描画距離",
+            "シャドウ距離"
+          ],
+          "evidence": "Objects/Components/Render/Light.h"
+        },
+        {
+          "member": "shadowMapResolution_",
+          "aliases": [
+            "シャドウマップ解像度",
+            "影マップ解像度"
+          ],
+          "evidence": "Objects/Components/Render/Light.h"
+        },
+        {
+          "member": "shadowBias_",
+          "aliases": [
+            "シャドウバイアス",
+            "影の深度バイアス"
+          ],
+          "evidence": "Objects/Components/Render/Light.h"
+        },
+        {
+          "member": "shadowSoftness_",
+          "aliases": [
+            "影のやわらかさ",
+            "シャドウの柔らかさ",
+            "影のぼかし"
+          ],
+          "evidence": "Objects/Components/Render/Light.h"
+        }
+      ]
+    },
+    {
+      "component": "LightRenderer",
+      "scope": "object",
+      "aliases": [
+        "光源描画",
+        "ライト描画"
+      ],
+      "evidence": "Objects/Components/Render/LightRenderer.h",
+      "members": []
+    },
+    {
+      "component": "MeshRenderer",
+      "scope": "object",
+      "aliases": [
+        "メッシュ描画",
+        "メッシュレンダラー"
+      ],
+      "evidence": "Objects/Components/Render/MeshRenderer.h",
+      "members": [
+        {
+          "member": "pipelineName_",
+          "aliases": [
+            "パイプライン",
+            "描画パイプライン"
+          ],
+          "evidence": "Objects/Components/Render/MeshRenderer.h"
+        },
+        {
+          "member": "castShadows_",
+          "aliases": [
+            "影を落とす",
+            "シャドウを有効化"
+          ],
+          "evidence": "Objects/Components/Render/MeshRenderer.h"
+        },
+        {
+          "member": "instanceColor_",
+          "aliases": [
+            "インスタンスカラー",
+            "オブジェクト単体の色"
+          ],
+          "evidence": "Objects/Components/Render/MeshRenderer.h"
+        },
+        {
+          "member": "instanceUvTranslate_",
+          "aliases": [
+            "UV移動",
+            "テクスチャ座標オフセット"
+          ],
+          "evidence": "Objects/Components/Render/MeshRenderer.h"
+        },
+        {
+          "member": "instanceUvRotation_",
+          "aliases": [
+            "UV回転",
+            "テクスチャ座標回転"
+          ],
+          "evidence": "Objects/Components/Render/MeshRenderer.h"
+        },
+        {
+          "member": "instanceUvScale_",
+          "aliases": [
+            "UV拡大縮小",
+            "テクスチャ座標スケール"
+          ],
+          "evidence": "Objects/Components/Render/MeshRenderer.h"
+        },
+        {
+          "member": "instanceUvPivot_",
+          "aliases": [
+            "UVピボット",
+            "テクスチャ座標の基準点"
+          ],
+          "evidence": "Objects/Components/Render/MeshRenderer.h"
+        },
+        {
+          "member": "renderPriority_",
+          "aliases": [
+            "描画優先度",
+            "描画順優先度"
+          ],
+          "evidence": "Objects/Components/Render/MeshRenderer.h"
+        },
+        {
+          "member": "allowInstancing_",
+          "aliases": [
+            "インスタンシングを許可",
+            "インスタンス描画"
+          ],
+          "evidence": "Objects/Components/Render/MeshRenderer.h"
+        }
+      ]
+    },
+    {
+      "component": "MotionBlurEffect",
+      "scope": "object",
+      "aliases": [
+        "モーションブラー効果",
+        "動きぼかし"
+      ],
+      "evidence": "Objects/Components/PostProcessing/MotionBlurEffect.h",
+      "members": [
+        {
+          "member": "params_.intensity",
+          "aliases": [
+            "強度",
+            "blur intensity"
+          ],
+          "evidence": "Objects/Components/PostProcessing/MotionBlurEffect.h"
+        },
+        {
+          "member": "params_.velocityScale",
+          "aliases": [
+            "速度スケール",
+            "velocity multiplier"
+          ],
+          "evidence": "Objects/Components/PostProcessing/MotionBlurEffect.h"
+        },
+        {
+          "member": "params_.maxBlurPixels",
+          "aliases": [
+            "最大ブラー量px",
+            "maximum blur pixels"
+          ],
+          "evidence": "Objects/Components/PostProcessing/MotionBlurEffect.h"
+        },
+        {
+          "member": "params_.samples",
+          "aliases": [
+            "サンプル数",
+            "sample count"
+          ],
+          "evidence": "Objects/Components/PostProcessing/MotionBlurEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "NormalWindowObject",
+      "scope": "object",
+      "aliases": [
+        "通常ウィンドウ",
+        "標準ウィンドウ"
+      ],
+      "evidence": "Objects/Components/Render/NormalWindowObject.h",
+      "members": [
+        {
+          "member": "title_",
+          "aliases": [
+            "タイトル",
+            "ウィンドウタイトル"
+          ],
+          "evidence": "Objects/Components/Render/IWindowObjectComponent.h"
+        },
+        {
+          "member": "iconPath_",
+          "aliases": [
+            "アイコン",
+            "アイコンファイルパス"
+          ],
+          "evidence": "Objects/Components/Render/IWindowObjectComponent.h"
+        },
+        {
+          "member": "width_",
+          "aliases": [
+            "幅",
+            "ウィンドウ幅"
+          ],
+          "evidence": "Objects/Components/Render/IWindowObjectComponent.h"
+        },
+        {
+          "member": "height_",
+          "aliases": [
+            "高さ",
+            "ウィンドウ高さ"
+          ],
+          "evidence": "Objects/Components/Render/IWindowObjectComponent.h"
+        },
+        {
+          "member": "syncWithTransform_",
+          "aliases": [
+            "Transformと同期",
+            "座標・サイズを同期"
+          ],
+          "evidence": "Objects/Components/Render/IWindowObjectComponent.h"
+        }
+      ]
+    },
+    {
+      "component": "OutlineEffect",
+      "scope": "object",
+      "aliases": [
+        "アウトライン効果",
+        "輪郭線効果"
+      ],
+      "evidence": "Objects/Components/PostProcessing/OutlineEffect.h",
+      "members": [
+        {
+          "member": "params_.threshold",
+          "aliases": [
+            "しきい値",
+            "edge threshold"
+          ],
+          "evidence": "Objects/Components/PostProcessing/OutlineEffect.h"
+        },
+        {
+          "member": "params_.thickness",
+          "aliases": [
+            "太さ",
+            "outline thickness"
+          ],
+          "evidence": "Objects/Components/PostProcessing/OutlineEffect.h"
+        },
+        {
+          "member": "params_.color[0]",
+          "aliases": [
+            "色R",
+            "red channel"
+          ],
+          "evidence": "Objects/Components/PostProcessing/OutlineEffect.h"
+        },
+        {
+          "member": "params_.color[1]",
+          "aliases": [
+            "色G",
+            "green channel"
+          ],
+          "evidence": "Objects/Components/PostProcessing/OutlineEffect.h"
+        },
+        {
+          "member": "params_.color[2]",
+          "aliases": [
+            "色B",
+            "blue channel"
+          ],
+          "evidence": "Objects/Components/PostProcessing/OutlineEffect.h"
+        },
+        {
+          "member": "params_.color[3]",
+          "aliases": [
+            "色A",
+            "alpha channel"
+          ],
+          "evidence": "Objects/Components/PostProcessing/OutlineEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "OverlayWindowObject",
+      "scope": "object",
+      "aliases": [
+        "オーバーレイウィンドウ",
+        "重ね合わせウィンドウ"
+      ],
+      "evidence": "Objects/Components/Render/OverlayWindowObject.h",
+      "members": [
+        {
+          "member": "title_",
+          "aliases": [
+            "タイトル",
+            "ウィンドウタイトル"
+          ],
+          "evidence": "Objects/Components/Render/IWindowObjectComponent.h"
+        },
+        {
+          "member": "iconPath_",
+          "aliases": [
+            "アイコン",
+            "アイコンファイルパス"
+          ],
+          "evidence": "Objects/Components/Render/IWindowObjectComponent.h"
+        },
+        {
+          "member": "width_",
+          "aliases": [
+            "幅",
+            "ウィンドウ幅"
+          ],
+          "evidence": "Objects/Components/Render/IWindowObjectComponent.h"
+        },
+        {
+          "member": "height_",
+          "aliases": [
+            "高さ",
+            "ウィンドウ高さ"
+          ],
+          "evidence": "Objects/Components/Render/IWindowObjectComponent.h"
+        },
+        {
+          "member": "syncWithTransform_",
+          "aliases": [
+            "Transformと同期",
+            "座標・サイズを同期"
+          ],
+          "evidence": "Objects/Components/Render/IWindowObjectComponent.h"
+        }
+      ]
+    },
+    {
+      "component": "PaletteQuantizeEffect",
+      "scope": "object",
+      "aliases": [
+        "パレット量子化",
+        "色数削減効果"
+      ],
+      "evidence": "Objects/Components/PostProcessing/PaletteQuantizeEffect.h",
+      "members": [
+        {
+          "member": "params_.intensity",
+          "aliases": [
+            "強度",
+            "quantization intensity"
+          ],
+          "evidence": "Objects/Components/PostProcessing/PaletteQuantizeEffect.h"
+        },
+        {
+          "member": "params_.ditherAmount",
+          "aliases": [
+            "ディザ量",
+            "dithering amount"
+          ],
+          "evidence": "Objects/Components/PostProcessing/PaletteQuantizeEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "RadialBlurEffect",
+      "scope": "object",
+      "aliases": [
+        "放射状ブラー",
+        "中心から広がるぼかし"
+      ],
+      "evidence": "Objects/Components/PostProcessing/RadialBlurEffect.h",
+      "members": [
+        {
+          "member": "params_.intensity",
+          "aliases": [
+            "強度",
+            "blur intensity"
+          ],
+          "evidence": "Objects/Components/PostProcessing/RadialBlurEffect.h"
+        },
+        {
+          "member": "params_.sampleCount",
+          "aliases": [
+            "サンプル数",
+            "sample count"
+          ],
+          "evidence": "Objects/Components/PostProcessing/RadialBlurEffect.h"
+        },
+        {
+          "member": "params_.radialCenter[0]",
+          "aliases": [
+            "放射中心X",
+            "radial center horizontal"
+          ],
+          "evidence": "Objects/Components/PostProcessing/RadialBlurEffect.h"
+        },
+        {
+          "member": "params_.radialCenter[1]",
+          "aliases": [
+            "放射中心Y",
+            "radial center vertical"
+          ],
+          "evidence": "Objects/Components/PostProcessing/RadialBlurEffect.h"
+        },
+        {
+          "member": "params_.startRadius",
+          "aliases": [
+            "開始半径",
+            "starting radius"
+          ],
+          "evidence": "Objects/Components/PostProcessing/RadialBlurEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "SSAOEffect",
+      "scope": "object",
+      "aliases": [
+        "SSAO効果",
+        "スクリーンスペース環境遮蔽"
+      ],
+      "evidence": "Objects/Components/PostProcessing/SSAOEffect.h",
+      "members": [
+        {
+          "member": "params_.radius",
+          "aliases": [
+            "半径",
+            "occlusion radius"
+          ],
+          "evidence": "Objects/Components/PostProcessing/SSAOEffect.h"
+        },
+        {
+          "member": "params_.intensity",
+          "aliases": [
+            "強度",
+            "occlusion intensity"
+          ],
+          "evidence": "Objects/Components/PostProcessing/SSAOEffect.h"
+        },
+        {
+          "member": "params_.power",
+          "aliases": [
+            "強調度",
+            "contrast power"
+          ],
+          "evidence": "Objects/Components/PostProcessing/SSAOEffect.h"
+        },
+        {
+          "member": "params_.bias",
+          "aliases": [
+            "バイアス",
+            "self-occlusion bias"
+          ],
+          "evidence": "Objects/Components/PostProcessing/SSAOEffect.h"
+        },
+        {
+          "member": "params_.sampleCount",
+          "aliases": [
+            "サンプル数",
+            "sample count"
+          ],
+          "evidence": "Objects/Components/PostProcessing/SSAOEffect.h"
+        },
+        {
+          "member": "params_.blurRadius",
+          "aliases": [
+            "ブラー半径",
+            "blur radius"
+          ],
+          "evidence": "Objects/Components/PostProcessing/SSAOEffect.h"
+        },
+        {
+          "member": "params_.depthThreshold",
+          "aliases": [
+            "深度しきい値",
+            "depth difference threshold"
+          ],
+          "evidence": "Objects/Components/PostProcessing/SSAOEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "ScanlineEffect",
+      "scope": "object",
+      "aliases": [
+        "走査線効果",
+        "スキャンライン"
+      ],
+      "evidence": "Objects/Components/PostProcessing/ScanlineEffect.h",
+      "members": [
+        {
+          "member": "params_.intensity",
+          "aliases": [
+            "強度",
+            "scanline intensity"
+          ],
+          "evidence": "Objects/Components/PostProcessing/ScanlineEffect.h"
+        },
+        {
+          "member": "params_.lineSpacing",
+          "aliases": [
+            "走査線の間隔",
+            "line spacing"
+          ],
+          "evidence": "Objects/Components/PostProcessing/ScanlineEffect.h"
+        },
+        {
+          "member": "params_.thickness",
+          "aliases": [
+            "太さ",
+            "line thickness"
+          ],
+          "evidence": "Objects/Components/PostProcessing/ScanlineEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "SceneViewCameraSettings",
+      "scope": "object",
+      "aliases": [
+        "シーンビューカメラ設定",
+        "シーンビューのカメラ設定"
+      ],
+      "evidence": "Objects/Components/Render/SceneViewCameraSettings.h",
+      "members": []
+    },
+    {
+      "component": "SceneViewOrbitState",
+      "scope": "object",
+      "aliases": [
+        "シーンビュー軌道状態",
+        "シーンビューの周回状態"
+      ],
+      "evidence": "Objects/Components/Render/SceneViewOrbitState.h",
+      "members": [
+        {
+          "member": "distance_",
+          "aliases": [
+            "注視点までの距離",
+            "カメラ距離"
+          ],
+          "evidence": "Objects/Components/Render/SceneViewOrbitState.h"
+        }
+      ]
+    },
+    {
+      "component": "ScreenAnchor",
+      "scope": "object",
+      "aliases": [
+        "画面アンカー",
+        "画面基準アンカー"
+      ],
+      "evidence": "Objects/Components/Render/ScreenAnchor.h",
+      "members": []
+    },
+    {
+      "component": "ScreenBufferObject",
+      "scope": "object",
+      "aliases": [
+        "スクリーンバッファ",
+        "画面バッファ"
+      ],
+      "evidence": "Objects/Components/Render/ScreenBufferObject.h",
+      "members": [
+        {
+          "member": "name_",
+          "aliases": [
+            "名前",
+            "バッファ名"
+          ],
+          "evidence": "Objects/Components/Render/ScreenBufferObject.h"
+        },
+        {
+          "member": "width_",
+          "aliases": [
+            "幅",
+            "バッファ幅"
+          ],
+          "evidence": "Objects/Components/Render/ScreenBufferObject.h"
+        },
+        {
+          "member": "height_",
+          "aliases": [
+            "高さ",
+            "バッファ高さ"
+          ],
+          "evidence": "Objects/Components/Render/ScreenBufferObject.h"
+        },
+        {
+          "member": "renderOrderPriority_",
+          "aliases": [
+            "描画順優先度",
+            "描画優先度"
+          ],
+          "evidence": "Objects/Components/Render/ScreenBufferObject.h"
+        }
+      ]
+    },
+    {
+      "component": "ScreenBufferViewport",
+      "scope": "object",
+      "aliases": [
+        "スクリーンバッファ表示領域",
+        "画面バッファビューポート"
+      ],
+      "evidence": "Objects/Components/Render/ScreenBufferViewport.h",
+      "members": []
+    },
+    {
+      "component": "ScreenWideDitherBlendEffect",
+      "scope": "object",
+      "aliases": [
+        "画面全体ディザ合成",
+        "全画面ディザブレンド"
+      ],
+      "evidence": "Objects/Components/PostProcessing/ScreenWideDitherBlendEffect.h",
+      "members": [
+        {
+          "member": "params_.passCount",
+          "aliases": [
+            "パス数",
+            "render pass count"
+          ],
+          "evidence": "Objects/Components/PostProcessing/ScreenWideDitherBlendEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "ShadowMapObject",
+      "scope": "object",
+      "aliases": [
+        "シャドウマップ",
+        "影マップ"
+      ],
+      "evidence": "Objects/Components/Render/ShadowMapObject.h",
+      "members": [
+        {
+          "member": "name_",
+          "aliases": [
+            "名前",
+            "シャドウマップ名"
+          ],
+          "evidence": "Objects/Components/Render/ShadowMapObject.h"
+        },
+        {
+          "member": "width_",
+          "aliases": [
+            "幅",
+            "マップ幅"
+          ],
+          "evidence": "Objects/Components/Render/ShadowMapObject.h"
+        },
+        {
+          "member": "height_",
+          "aliases": [
+            "高さ",
+            "マップ高さ"
+          ],
+          "evidence": "Objects/Components/Render/ShadowMapObject.h"
+        }
+      ]
+    },
+    {
+      "component": "SkinnedMeshRenderer",
+      "scope": "object",
+      "aliases": [
+        "スキン付きメッシュ描画",
+        "スキンメッシュ描画"
+      ],
+      "evidence": "Objects/Components/Render/SkinnedMeshRenderer.h",
+      "members": [
+        {
+          "member": "pipelineName_",
+          "aliases": [
+            "パイプライン",
+            "描画パイプライン"
+          ],
+          "evidence": "Objects/Components/Render/SkinnedMeshRenderer.h"
+        },
+        {
+          "member": "castShadows_",
+          "aliases": [
+            "影を落とす",
+            "シャドウを有効化"
+          ],
+          "evidence": "Objects/Components/Render/SkinnedMeshRenderer.h"
+        },
+        {
+          "member": "instanceColor_",
+          "aliases": [
+            "インスタンスカラー",
+            "オブジェクト単体の色"
+          ],
+          "evidence": "Objects/Components/Render/SkinnedMeshRenderer.h"
+        },
+        {
+          "member": "instanceUvTranslate_",
+          "aliases": [
+            "UV移動",
+            "テクスチャ座標オフセット"
+          ],
+          "evidence": "Objects/Components/Render/SkinnedMeshRenderer.h"
+        },
+        {
+          "member": "instanceUvRotation_",
+          "aliases": [
+            "UV回転",
+            "テクスチャ座標回転"
+          ],
+          "evidence": "Objects/Components/Render/SkinnedMeshRenderer.h"
+        },
+        {
+          "member": "instanceUvScale_",
+          "aliases": [
+            "UV拡大縮小",
+            "テクスチャ座標スケール"
+          ],
+          "evidence": "Objects/Components/Render/SkinnedMeshRenderer.h"
+        },
+        {
+          "member": "instanceUvPivot_",
+          "aliases": [
+            "UVピボット",
+            "テクスチャ座標の基準点"
+          ],
+          "evidence": "Objects/Components/Render/SkinnedMeshRenderer.h"
+        },
+        {
+          "member": "renderPriority_",
+          "aliases": [
+            "描画優先度",
+            "描画順優先度"
+          ],
+          "evidence": "Objects/Components/Render/SkinnedMeshRenderer.h"
+        },
+        {
+          "member": "allowInstancing_",
+          "aliases": [
+            "インスタンシングを許可",
+            "インスタンス描画"
+          ],
+          "evidence": "Objects/Components/Render/SkinnedMeshRenderer.h"
+        }
+      ]
+    },
+    {
+      "component": "SpriteRenderer",
+      "scope": "object",
+      "aliases": [
+        "スプライト描画",
+        "スプライトレンダラー"
+      ],
+      "evidence": "Objects/Components/Render/SpriteRenderer.h",
+      "members": [
+        {
+          "member": "pipelineName_",
+          "aliases": [
+            "パイプライン",
+            "描画パイプライン"
+          ],
+          "evidence": "Objects/Components/Render/SpriteRenderer.h"
+        },
+        {
+          "member": "materialName_",
+          "aliases": [
+            "マテリアル",
+            "素材"
+          ],
+          "evidence": "Objects/Components/Render/SpriteRenderer.h"
+        },
+        {
+          "member": "anchor_",
+          "aliases": [
+            "アンカー",
+            "基準点"
+          ],
+          "evidence": "Objects/Components/Render/SpriteRenderer.h"
+        },
+        {
+          "member": "pivot_",
+          "aliases": [
+            "ピボット",
+            "回転・拡縮の基準点"
+          ],
+          "evidence": "Objects/Components/Render/SpriteRenderer.h"
+        },
+        {
+          "member": "instanceColor_",
+          "aliases": [
+            "インスタンスカラー",
+            "スプライトの色"
+          ],
+          "evidence": "Objects/Components/Render/SpriteRenderer.h"
+        },
+        {
+          "member": "instanceColorBlendMode_",
+          "aliases": [
+            "インスタンスカラーの合成方法",
+            "色の合成モード"
+          ],
+          "evidence": "Objects/Components/Render/SpriteRenderer.h"
+        },
+        {
+          "member": "instanceUvTranslate_",
+          "aliases": [
+            "UV移動",
+            "テクスチャ座標オフセット"
+          ],
+          "evidence": "Objects/Components/Render/SpriteRenderer.h"
+        },
+        {
+          "member": "instanceUvRotation_",
+          "aliases": [
+            "UV回転",
+            "テクスチャ座標回転"
+          ],
+          "evidence": "Objects/Components/Render/SpriteRenderer.h"
+        },
+        {
+          "member": "instanceUvScale_",
+          "aliases": [
+            "UV拡大縮小",
+            "テクスチャ座標スケール"
+          ],
+          "evidence": "Objects/Components/Render/SpriteRenderer.h"
+        },
+        {
+          "member": "instanceUvPivot_",
+          "aliases": [
+            "UVピボット",
+            "テクスチャ座標の基準点"
+          ],
+          "evidence": "Objects/Components/Render/SpriteRenderer.h"
+        },
+        {
+          "member": "instanceUvCombineMode_",
+          "aliases": [
+            "UV合成方法",
+            "テクスチャ座標合成モード"
+          ],
+          "evidence": "Objects/Components/Render/SpriteRenderer.h"
+        },
+        {
+          "member": "renderPriority_",
+          "aliases": [
+            "描画優先度",
+            "描画順優先度"
+          ],
+          "evidence": "Objects/Components/Render/SpriteRenderer.h"
+        },
+        {
+          "member": "allowInstancing_",
+          "aliases": [
+            "インスタンシングを許可",
+            "インスタンス描画"
+          ],
+          "evidence": "Objects/Components/Render/SpriteRenderer.h"
+        },
+        {
+          "member": "pixelSnapping_",
+          "aliases": [
+            "ピクセルスナップ",
+            "ピクセル格子に整列"
+          ],
+          "evidence": "Objects/Components/Render/SpriteRenderer.h"
+        },
+        {
+          "member": "pixelSnapOutsetPixels_",
+          "aliases": [
+            "ピクセルスナップの外側マージン",
+            "ピクセルスナップ余白"
+          ],
+          "evidence": "Objects/Components/Render/SpriteRenderer.h"
+        }
+      ]
+    },
+    {
+      "component": "TemporalBlendEffect",
+      "scope": "object",
+      "aliases": [
+        "時間方向ブレンド",
+        "フレーム履歴ブレンド"
+      ],
+      "evidence": "Objects/Components/PostProcessing/TemporalBlendEffect.h",
+      "members": [
+        {
+          "member": "params_.historyWeight",
+          "aliases": [
+            "ヒストリー強度",
+            "history weight"
+          ],
+          "evidence": "Objects/Components/PostProcessing/TemporalBlendEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "TextRenderer",
+      "scope": "object",
+      "aliases": [
+        "テキスト描画",
+        "文字描画"
+      ],
+      "evidence": "Objects/Components/Render/TextRenderer.h",
+      "members": [
+        {
+          "member": "pipelineName_",
+          "aliases": [
+            "パイプライン",
+            "描画パイプライン"
+          ],
+          "evidence": "Objects/Components/Render/TextRenderer.h"
+        },
+        {
+          "member": "materialName_",
+          "aliases": [
+            "マテリアル",
+            "素材"
+          ],
+          "evidence": "Objects/Components/Render/TextRenderer.h"
+        },
+        {
+          "member": "text_",
+          "aliases": [
+            "テキスト",
+            "文字列"
+          ],
+          "evidence": "Objects/Components/Render/TextRenderer.h"
+        },
+        {
+          "member": "fontName_",
+          "aliases": [
+            "フォント",
+            "書体"
+          ],
+          "evidence": "Objects/Components/Render/TextRenderer.h"
+        },
+        {
+          "member": "fontSize_",
+          "aliases": [
+            "フォントサイズ",
+            "文字サイズ"
+          ],
+          "evidence": "Objects/Components/Render/TextRenderer.h"
+        },
+        {
+          "member": "instanceColor_",
+          "aliases": [
+            "インスタンスカラー",
+            "文字色"
+          ],
+          "evidence": "Objects/Components/Render/TextRenderer.h"
+        },
+        {
+          "member": "outlineWidth_",
+          "aliases": [
+            "アウトラインの太さ",
+            "縁取り幅"
+          ],
+          "evidence": "Objects/Components/Render/TextRenderer.h"
+        },
+        {
+          "member": "outlineColor_",
+          "aliases": [
+            "アウトラインの色",
+            "縁取り色"
+          ],
+          "evidence": "Objects/Components/Render/TextRenderer.h"
+        },
+        {
+          "member": "defaultCharacterAnchor_",
+          "aliases": [
+            "既定の文字アンカー",
+            "文字の既定アンカー"
+          ],
+          "evidence": "Objects/Components/Render/TextRenderer.h"
+        },
+        {
+          "member": "defaultCharacterPivot_",
+          "aliases": [
+            "既定の文字ピボット",
+            "文字の既定基準点"
+          ],
+          "evidence": "Objects/Components/Render/TextRenderer.h"
+        },
+        {
+          "member": "renderPriority_",
+          "aliases": [
+            "描画優先度",
+            "描画順優先度"
+          ],
+          "evidence": "Objects/Components/Render/TextRenderer.h"
+        },
+        {
+          "member": "allowInstancing_",
+          "aliases": [
+            "インスタンシングを許可",
+            "インスタンス描画"
+          ],
+          "evidence": "Objects/Components/Render/TextRenderer.h"
+        }
+      ]
+    },
+    {
+      "component": "TilemapRenderer",
+      "scope": "object",
+      "aliases": [
+        "タイルマップ描画",
+        "タイル地図描画"
+      ],
+      "evidence": "Objects/Components/Render/TilemapRenderer.h",
+      "members": [
+        {
+          "member": "materialName_",
+          "aliases": [
+            "マテリアル",
+            "素材"
+          ],
+          "evidence": "Objects/Components/Render/TilemapRenderer.h"
+        },
+        {
+          "member": "pipelineName_",
+          "aliases": [
+            "パイプライン",
+            "描画パイプライン"
+          ],
+          "evidence": "Objects/Components/Render/TilemapRenderer.h"
+        },
+        {
+          "member": "tileSize_",
+          "aliases": [
+            "タイル1つのワールドサイズ",
+            "ワールド単位のタイルサイズ"
+          ],
+          "evidence": "Objects/Components/Render/TilemapRenderer.h"
+        },
+        {
+          "member": "tilePixelSize_",
+          "aliases": [
+            "タイル1つのピクセルサイズ",
+            "画像上のタイルサイズ"
+          ],
+          "evidence": "Objects/Components/Render/TilemapRenderer.h"
+        }
+      ]
+    },
+    {
+      "component": "VignetteEffect",
+      "scope": "object",
+      "aliases": [
+        "ビネット効果",
+        "画面周辺減光"
+      ],
+      "evidence": "Objects/Components/PostProcessing/VignetteEffect.h",
+      "members": [
+        {
+          "member": "params_.center[0]",
+          "aliases": [
+            "中心X",
+            "center horizontal"
+          ],
+          "evidence": "Objects/Components/PostProcessing/VignetteEffect.h"
+        },
+        {
+          "member": "params_.center[1]",
+          "aliases": [
+            "中心Y",
+            "center vertical"
+          ],
+          "evidence": "Objects/Components/PostProcessing/VignetteEffect.h"
+        },
+        {
+          "member": "params_.color",
+          "aliases": [
+            "色",
+            "vignette color"
+          ],
+          "evidence": "Objects/Components/PostProcessing/VignetteEffect.h"
+        },
+        {
+          "member": "params_.intensity",
+          "aliases": [
+            "強度",
+            "effect intensity"
+          ],
+          "evidence": "Objects/Components/PostProcessing/VignetteEffect.h"
+        },
+        {
+          "member": "params_.innerRadius",
+          "aliases": [
+            "内側の半径",
+            "inner radius"
+          ],
+          "evidence": "Objects/Components/PostProcessing/VignetteEffect.h"
+        },
+        {
+          "member": "params_.smoothness",
+          "aliases": [
+            "なめらかさ",
+            "edge smoothness"
+          ],
+          "evidence": "Objects/Components/PostProcessing/VignetteEffect.h"
+        }
+      ]
+    },
+    {
+      "component": "BoxCollider",
+      "scope": "object",
+      "aliases": [
+        "3Dボックスコライダー",
+        "立方体コライダー"
+      ],
+      "evidence": "Objects/Components/Collider/BoxCollider.h",
+      "members": [
+        {
+          "member": "isTrigger_",
+          "aliases": [
+            "トリガーにする",
+            "トリガー判定"
+          ],
+          "evidence": "Objects/Components/Collider/ICollider.h"
+        },
+        {
+          "member": "continuousDetection_",
+          "aliases": [
+            "連続衝突判定",
+            "すり抜け防止判定"
+          ],
+          "evidence": "Objects/Components/Collider/ICollider.h"
+        },
+        {
+          "member": "size_",
+          "aliases": [
+            "サイズ",
+            "大きさ"
+          ],
+          "evidence": "Objects/Components/Collider/BoxCollider.h"
+        },
+        {
+          "member": "center_",
+          "aliases": [
+            "中心",
+            "中心位置"
+          ],
+          "evidence": "Objects/Components/Collider/BoxCollider.h"
+        }
+      ]
+    },
+    {
+      "component": "Box2DCollider",
+      "scope": "object",
+      "aliases": [
+        "2Dボックスコライダー",
+        "2D矩形コライダー"
+      ],
+      "evidence": "Objects/Components/Collider/Box2DCollider.h",
+      "members": [
+        {
+          "member": "isTrigger_",
+          "aliases": [
+            "トリガーにする",
+            "トリガー判定"
+          ],
+          "evidence": "Objects/Components/Collider/ICollider.h"
+        },
+        {
+          "member": "continuousDetection_",
+          "aliases": [
+            "連続衝突判定",
+            "すり抜け防止判定"
+          ],
+          "evidence": "Objects/Components/Collider/ICollider.h"
+        },
+        {
+          "member": "size_",
+          "aliases": [
+            "サイズ",
+            "幅と高さ"
+          ],
+          "evidence": "Objects/Components/Collider/Box2DCollider.h"
+        },
+        {
+          "member": "center_",
+          "aliases": [
+            "中心",
+            "中心位置"
+          ],
+          "evidence": "Objects/Components/Collider/Box2DCollider.h"
+        }
+      ]
+    },
+    {
+      "component": "Capsule2DCollider",
+      "scope": "object",
+      "aliases": [
+        "2Dカプセルコライダー",
+        "2Dカプセル判定"
+      ],
+      "evidence": "Objects/Components/Collider/Capsule2DCollider.h",
+      "members": [
+        {
+          "member": "isTrigger_",
+          "aliases": [
+            "トリガーにする",
+            "トリガー判定"
+          ],
+          "evidence": "Objects/Components/Collider/ICollider.h"
+        },
+        {
+          "member": "continuousDetection_",
+          "aliases": [
+            "連続衝突判定",
+            "すり抜け防止判定"
+          ],
+          "evidence": "Objects/Components/Collider/ICollider.h"
+        },
+        {
+          "member": "start_",
+          "aliases": [
+            "開始点",
+            "始点"
+          ],
+          "evidence": "Objects/Components/Collider/Capsule2DCollider.h"
+        },
+        {
+          "member": "end_",
+          "aliases": [
+            "終了点",
+            "終点"
+          ],
+          "evidence": "Objects/Components/Collider/Capsule2DCollider.h"
+        },
+        {
+          "member": "radius_",
+          "aliases": [
+            "半径",
+            "カプセル半径"
+          ],
+          "evidence": "Objects/Components/Collider/Capsule2DCollider.h"
+        }
+      ]
+    },
+    {
+      "component": "CapsuleCollider",
+      "scope": "object",
+      "aliases": [
+        "3Dカプセルコライダー",
+        "立体カプセル判定"
+      ],
+      "evidence": "Objects/Components/Collider/CapsuleCollider.h",
+      "members": [
+        {
+          "member": "isTrigger_",
+          "aliases": [
+            "トリガーにする",
+            "トリガー判定"
+          ],
+          "evidence": "Objects/Components/Collider/ICollider.h"
+        },
+        {
+          "member": "continuousDetection_",
+          "aliases": [
+            "連続衝突判定",
+            "すり抜け防止判定"
+          ],
+          "evidence": "Objects/Components/Collider/ICollider.h"
+        },
+        {
+          "member": "radius_",
+          "aliases": [
+            "半径",
+            "カプセル半径"
+          ],
+          "evidence": "Objects/Components/Collider/CapsuleCollider.h"
+        },
+        {
+          "member": "height_",
+          "aliases": [
+            "高さ",
+            "カプセル高さ"
+          ],
+          "evidence": "Objects/Components/Collider/CapsuleCollider.h"
+        },
+        {
+          "member": "center_",
+          "aliases": [
+            "中心",
+            "中心位置"
+          ],
+          "evidence": "Objects/Components/Collider/CapsuleCollider.h"
+        }
+      ]
+    },
+    {
+      "component": "CharacterController2D",
+      "scope": "object",
+      "aliases": [
+        "2Dキャラクターコントローラー",
+        "2Dキャラ操作"
+      ],
+      "evidence": "Objects/Components/Collider/CharacterController2D.h",
+      "members": [
+        {
+          "member": "skinWidth_",
+          "aliases": [
+            "スキン幅",
+            "衝突の余白"
+          ],
+          "evidence": "Objects/Components/Collider/CharacterController2D.h"
+        },
+        {
+          "member": "groundedThreshold_",
+          "aliases": [
+            "接地判定しきい値",
+            "地面判定の閾値"
+          ],
+          "evidence": "Objects/Components/Collider/CharacterController2D.h"
+        }
+      ]
+    },
+    {
+      "component": "CharacterController3D",
+      "scope": "object",
+      "aliases": [
+        "3Dキャラクターコントローラー",
+        "3Dキャラ操作"
+      ],
+      "evidence": "Objects/Components/Collider/CharacterController3D.h",
+      "members": [
+        {
+          "member": "skinWidth_",
+          "aliases": [
+            "スキン幅",
+            "衝突の余白"
+          ],
+          "evidence": "Objects/Components/Collider/CharacterController3D.h"
+        },
+        {
+          "member": "groundedThreshold_",
+          "aliases": [
+            "接地判定しきい値",
+            "地面判定の閾値"
+          ],
+          "evidence": "Objects/Components/Collider/CharacterController3D.h"
+        }
+      ]
+    },
+    {
+      "component": "Circle2DCollider",
+      "scope": "object",
+      "aliases": [
+        "2D円コライダー",
+        "円形コライダー"
+      ],
+      "evidence": "Objects/Components/Collider/Circle2DCollider.h",
+      "members": [
+        {
+          "member": "isTrigger_",
+          "aliases": [
+            "トリガーにする",
+            "トリガー判定"
+          ],
+          "evidence": "Objects/Components/Collider/ICollider.h"
+        },
+        {
+          "member": "continuousDetection_",
+          "aliases": [
+            "連続衝突判定",
+            "すり抜け防止判定"
+          ],
+          "evidence": "Objects/Components/Collider/ICollider.h"
+        },
+        {
+          "member": "radius_",
+          "aliases": [
+            "半径",
+            "円の半径"
+          ],
+          "evidence": "Objects/Components/Collider/Circle2DCollider.h"
+        },
+        {
+          "member": "center_",
+          "aliases": [
+            "中心",
+            "中心位置"
+          ],
+          "evidence": "Objects/Components/Collider/Circle2DCollider.h"
+        }
+      ]
+    },
+    {
+      "component": "MeshButton",
+      "scope": "object",
+      "aliases": [
+        "メッシュボタン",
+        "3Dクリック判定"
+      ],
+      "evidence": "Objects/Components/Collider/MeshButton.h",
+      "members": []
+    },
+    {
+      "component": "MeshCollider",
+      "scope": "object",
+      "aliases": [
+        "メッシュコライダー",
+        "メッシュ衝突判定"
+      ],
+      "evidence": "Objects/Components/Collider/MeshCollider.h",
+      "members": [
+        {
+          "member": "isTrigger_",
+          "aliases": [
+            "トリガーにする",
+            "トリガー判定"
+          ],
+          "evidence": "Objects/Components/Collider/ICollider.h"
+        },
+        {
+          "member": "continuousDetection_",
+          "aliases": [
+            "連続衝突判定",
+            "すり抜け防止判定"
+          ],
+          "evidence": "Objects/Components/Collider/ICollider.h"
+        },
+        {
+          "member": "convex_",
+          "aliases": [
+            "凸包",
+            "凸メッシュ"
+          ],
+          "evidence": "Objects/Components/Collider/MeshCollider.h"
+        }
+      ]
+    },
+    {
+      "component": "Ray2DCollider",
+      "scope": "object",
+      "aliases": [
+        "2Dレイコライダー",
+        "2D光線判定"
+      ],
+      "evidence": "Objects/Components/Collider/Ray2DCollider.h",
+      "members": [
+        {
+          "member": "isTrigger_",
+          "aliases": [
+            "トリガーにする",
+            "トリガー判定"
+          ],
+          "evidence": "Objects/Components/Collider/ICollider.h"
+        },
+        {
+          "member": "continuousDetection_",
+          "aliases": [
+            "連続衝突判定",
+            "すり抜け防止判定"
+          ],
+          "evidence": "Objects/Components/Collider/ICollider.h"
+        },
+        {
+          "member": "direction_",
+          "aliases": [
+            "方向",
+            "光線方向"
+          ],
+          "evidence": "Objects/Components/Collider/Ray2DCollider.h"
+        },
+        {
+          "member": "length_",
+          "aliases": [
+            "長さ",
+            "レイの長さ"
+          ],
+          "evidence": "Objects/Components/Collider/Ray2DCollider.h"
+        }
+      ]
+    },
+    {
+      "component": "RayCollider",
+      "scope": "object",
+      "aliases": [
+        "3Dレイコライダー",
+        "3D光線判定"
+      ],
+      "evidence": "Objects/Components/Collider/RayCollider.h",
+      "members": [
+        {
+          "member": "isTrigger_",
+          "aliases": [
+            "トリガーにする",
+            "トリガー判定"
+          ],
+          "evidence": "Objects/Components/Collider/ICollider.h"
+        },
+        {
+          "member": "continuousDetection_",
+          "aliases": [
+            "連続衝突判定",
+            "すり抜け防止判定"
+          ],
+          "evidence": "Objects/Components/Collider/ICollider.h"
+        },
+        {
+          "member": "direction_",
+          "aliases": [
+            "方向",
+            "光線方向"
+          ],
+          "evidence": "Objects/Components/Collider/RayCollider.h"
+        },
+        {
+          "member": "maxDistance_",
+          "aliases": [
+            "最大距離",
+            "レイの最大距離"
+          ],
+          "evidence": "Objects/Components/Collider/RayCollider.h"
+        }
+      ]
+    },
+    {
+      "component": "RigidBody2D",
+      "scope": "object",
+      "aliases": [
+        "2D剛体",
+        "2D物理ボディ"
+      ],
+      "evidence": "Objects/Components/Collider/RigidBody2D.h",
+      "members": [
+        {
+          "member": "mass_",
+          "aliases": [
+            "質量",
+            "重さ"
+          ],
+          "evidence": "Objects/Components/Collider/RigidBody2D.h"
+        },
+        {
+          "member": "useGravity_",
+          "aliases": [
+            "重力を使用",
+            "重力有効"
+          ],
+          "evidence": "Objects/Components/Collider/RigidBody2D.h"
+        },
+        {
+          "member": "restitution_",
+          "aliases": [
+            "反発係数",
+            "跳ね返り係数"
+          ],
+          "evidence": "Objects/Components/Collider/RigidBody2D.h"
+        },
+        {
+          "member": "friction_",
+          "aliases": [
+            "摩擦係数",
+            "摩擦"
+          ],
+          "evidence": "Objects/Components/Collider/RigidBody2D.h"
+        }
+      ]
+    },
+    {
+      "component": "RigidBody3D",
+      "scope": "object",
+      "aliases": [
+        "3D剛体",
+        "3D物理ボディ"
+      ],
+      "evidence": "Objects/Components/Collider/RigidBody3D.h",
+      "members": [
+        {
+          "member": "mass_",
+          "aliases": [
+            "質量",
+            "重さ"
+          ],
+          "evidence": "Objects/Components/Collider/RigidBody3D.h"
+        },
+        {
+          "member": "useGravity_",
+          "aliases": [
+            "重力を使用",
+            "重力有効"
+          ],
+          "evidence": "Objects/Components/Collider/RigidBody3D.h"
+        },
+        {
+          "member": "interpolate_",
+          "aliases": [
+            "補間",
+            "物理補間"
+          ],
+          "evidence": "Objects/Components/Collider/RigidBody3D.h"
+        }
+      ]
+    },
+    {
+      "component": "SphereCollider",
+      "scope": "object",
+      "aliases": [
+        "3D球コライダー",
+        "球体コライダー"
+      ],
+      "evidence": "Objects/Components/Collider/SphereCollider.h",
+      "members": [
+        {
+          "member": "isTrigger_",
+          "aliases": [
+            "トリガーにする",
+            "トリガー判定"
+          ],
+          "evidence": "Objects/Components/Collider/ICollider.h"
+        },
+        {
+          "member": "continuousDetection_",
+          "aliases": [
+            "連続衝突判定",
+            "すり抜け防止判定"
+          ],
+          "evidence": "Objects/Components/Collider/ICollider.h"
+        },
+        {
+          "member": "radius_",
+          "aliases": [
+            "半径",
+            "球の半径"
+          ],
+          "evidence": "Objects/Components/Collider/SphereCollider.h"
+        },
+        {
+          "member": "center_",
+          "aliases": [
+            "中心",
+            "中心位置"
+          ],
+          "evidence": "Objects/Components/Collider/SphereCollider.h"
+        }
+      ]
+    },
+    {
+      "component": "UIButton",
+      "scope": "object",
+      "aliases": [
+        "UIボタン",
+        "2Dクリック判定"
+      ],
+      "evidence": "Objects/Components/UI/UIButton.h",
+      "members": []
+    },
+    {
+      "component": "Animator",
+      "scope": "object",
+      "aliases": [
+        "アニメーター",
+        "スケルトンアニメーション"
+      ],
+      "evidence": "Objects/Components/Animator.h",
+      "members": [
+        {
+          "member": "clipName_",
+          "aliases": [
+            "アニメーションクリップ",
+            "クリップ名"
+          ],
+          "evidence": "Objects/Components/Animator.h"
+        },
+        {
+          "member": "animationSourceAssetPath_",
+          "aliases": [
+            "アニメーション取得元",
+            "アニメーション元アセット"
+          ],
+          "evidence": "Objects/Components/Animator.h"
+        },
+        {
+          "member": "playOnStart_",
+          "aliases": [
+            "開始時に再生",
+            "自動再生"
+          ],
+          "evidence": "Objects/Components/Animator.h"
+        },
+        {
+          "member": "loop_",
+          "aliases": [
+            "ループ",
+            "繰り返し再生"
+          ],
+          "evidence": "Objects/Components/Animator.h"
+        },
+        {
+          "member": "playbackSpeed_",
+          "aliases": [
+            "再生速度",
+            "アニメーション速度"
+          ],
+          "evidence": "Objects/Components/Animator.h"
+        }
+      ]
+    },
+    {
+      "component": "KeyFrameAnimator",
+      "scope": "object",
+      "aliases": [
+        "キーフレームアニメーター",
+        "キーフレーム再生"
+      ],
+      "evidence": "Objects/Components/KeyFrameAnimator.h",
+      "members": []
+    },
+    {
+      "component": "Shake",
+      "scope": "object",
+      "aliases": [
+        "シェイク",
+        "揺れ"
+      ],
+      "evidence": "Objects/Components/Shake.h",
+      "members": [
+        {
+          "member": "positionEnableX_",
+          "aliases": [
+            "位置Xの揺れ",
+            "X位置シェイク"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        },
+        {
+          "member": "positionEnableY_",
+          "aliases": [
+            "位置Yの揺れ",
+            "Y位置シェイク"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        },
+        {
+          "member": "positionEnableZ_",
+          "aliases": [
+            "位置Zの揺れ",
+            "Z位置シェイク"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        },
+        {
+          "member": "positionAmplitude_",
+          "aliases": [
+            "位置の振れ幅",
+            "位置揺れの振幅"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        },
+        {
+          "member": "positionSpeed_",
+          "aliases": [
+            "位置の速さ",
+            "位置揺れの速度"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        },
+        {
+          "member": "positionAmplitudeStartMultiplier_",
+          "aliases": [
+            "位置振幅の開始倍率",
+            "位置の振れ幅開始倍率"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        },
+        {
+          "member": "positionAmplitudeEndMultiplier_",
+          "aliases": [
+            "位置振幅の終了倍率",
+            "位置の振れ幅終了倍率"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        },
+        {
+          "member": "positionSpeedStartMultiplier_",
+          "aliases": [
+            "位置速度の開始倍率",
+            "位置の速さ開始倍率"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        },
+        {
+          "member": "positionSpeedEndMultiplier_",
+          "aliases": [
+            "位置速度の終了倍率",
+            "位置の速さ終了倍率"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        },
+        {
+          "member": "rotationEnableX_",
+          "aliases": [
+            "回転Xの揺れ",
+            "X回転シェイク"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        },
+        {
+          "member": "rotationEnableY_",
+          "aliases": [
+            "回転Yの揺れ",
+            "Y回転シェイク"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        },
+        {
+          "member": "rotationEnableZ_",
+          "aliases": [
+            "回転Zの揺れ",
+            "Z回転シェイク"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        },
+        {
+          "member": "rotationAmplitudeDeg_",
+          "aliases": [
+            "回転の振れ幅",
+            "回転振幅（度）"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        },
+        {
+          "member": "rotationSpeed_",
+          "aliases": [
+            "回転速度",
+            "回転揺れの速さ"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        },
+        {
+          "member": "rotationAmplitudeStartMultiplier_",
+          "aliases": [
+            "回転振幅の開始倍率",
+            "回転の振れ幅開始倍率"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        },
+        {
+          "member": "rotationAmplitudeEndMultiplier_",
+          "aliases": [
+            "回転振幅の終了倍率",
+            "回転の振れ幅終了倍率"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        },
+        {
+          "member": "rotationSpeedStartMultiplier_",
+          "aliases": [
+            "回転速度の開始倍率",
+            "回転の速さ開始倍率"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        },
+        {
+          "member": "rotationSpeedEndMultiplier_",
+          "aliases": [
+            "回転速度の終了倍率",
+            "回転の速さ終了倍率"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        },
+        {
+          "member": "autoPlay_",
+          "aliases": [
+            "自動再生",
+            "開始時に再生"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        },
+        {
+          "member": "duration_",
+          "aliases": [
+            "継続時間",
+            "シェイク時間"
+          ],
+          "evidence": "Objects/Components/Shake.h"
+        }
+      ]
+    },
+    {
+      "component": "ParticleSystem2D",
+      "scope": "object",
+      "aliases": [
+        "2Dパーティクルシステム",
+        "2D粒子発生器"
+      ],
+      "evidence": "Objects/Components/ParticleSystem2D.h",
+      "members": [
+        {
+          "member": "emissionRate_",
+          "aliases": [
+            "生成レート",
+            "発生頻度"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "maxParticles_",
+          "aliases": [
+            "最大パーティクル数",
+            "最大粒子数"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "totalSpawnCount_",
+          "aliases": [
+            "累計生成回数",
+            "総生成数"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "billboard_",
+          "aliases": [
+            "ビルボード",
+            "カメラ向き"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "castShadows_",
+          "aliases": [
+            "影を落とす",
+            "影の有効化"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "playOnStart_",
+          "aliases": [
+            "開始時に再生",
+            "自動再生"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "loop_",
+          "aliases": [
+            "ループ",
+            "繰り返し再生"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "fixedSpawnPosition_",
+          "aliases": [
+            "位置を固定",
+            "固定生成位置"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "meshAssetPath_",
+          "aliases": [
+            "メッシュ",
+            "メッシュアセット"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "pipelineName_",
+          "aliases": [
+            "パイプライン",
+            "描画パイプライン"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "materialName_",
+          "aliases": [
+            "マテリアル",
+            "素材"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "spawnCount_.randomize",
+          "aliases": [
+            "生成数をランダム化",
+            "生成数ランダム設定"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "spawnCount_.value",
+          "aliases": [
+            "生成数の値",
+            "生成数固定値"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "spawnCount_.min",
+          "aliases": [
+            "生成数の最小値",
+            "生成数下限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "spawnCount_.max",
+          "aliases": [
+            "生成数の最大値",
+            "生成数上限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "lifetime_.randomize",
+          "aliases": [
+            "寿命をランダム化",
+            "寿命ランダム設定"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "lifetime_.value",
+          "aliases": [
+            "寿命の値",
+            "寿命固定値"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "lifetime_.min",
+          "aliases": [
+            "寿命の最小値",
+            "寿命下限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "lifetime_.max",
+          "aliases": [
+            "寿命の最大値",
+            "寿命上限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialVelocity_.randomize",
+          "aliases": [
+            "初速をランダム化",
+            "初速ランダム設定"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialVelocity_.value",
+          "aliases": [
+            "初速の値",
+            "初速固定値"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialVelocity_.min",
+          "aliases": [
+            "初速の最小値",
+            "初速下限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialVelocity_.max",
+          "aliases": [
+            "初速の最大値",
+            "初速上限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "acceleration_.randomize",
+          "aliases": [
+            "加速度をランダム化",
+            "加速度ランダム設定"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "acceleration_.value",
+          "aliases": [
+            "加速度の値",
+            "加速度固定値"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "acceleration_.min",
+          "aliases": [
+            "加速度の最小値",
+            "加速度下限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "acceleration_.max",
+          "aliases": [
+            "加速度の最大値",
+            "加速度上限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "startScale_.randomize",
+          "aliases": [
+            "開始スケールをランダム化",
+            "開始スケールランダム設定"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "startScale_.value",
+          "aliases": [
+            "開始スケールの値",
+            "開始スケール固定値"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "startScale_.min",
+          "aliases": [
+            "開始スケールの最小値",
+            "開始スケール下限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "startScale_.max",
+          "aliases": [
+            "開始スケールの最大値",
+            "開始スケール上限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "endScale_.randomize",
+          "aliases": [
+            "終了スケールをランダム化",
+            "終了スケールランダム設定"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "endScale_.value",
+          "aliases": [
+            "終了スケールの値",
+            "終了スケール固定値"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "endScale_.min",
+          "aliases": [
+            "終了スケールの最小値",
+            "終了スケール下限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "endScale_.max",
+          "aliases": [
+            "終了スケールの最大値",
+            "終了スケール上限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialRotation_.randomize",
+          "aliases": [
+            "初期回転をランダム化",
+            "初期回転ランダム設定"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialRotation_.value",
+          "aliases": [
+            "初期回転の値",
+            "初期回転固定値"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialRotation_.min",
+          "aliases": [
+            "初期回転の最小値",
+            "初期回転下限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialRotation_.max",
+          "aliases": [
+            "初期回転の最大値",
+            "初期回転上限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialRotationSpeed_.randomize",
+          "aliases": [
+            "初期回転速度をランダム化",
+            "初期回転速度ランダム設定"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialRotationSpeed_.value",
+          "aliases": [
+            "初期回転速度の値",
+            "初期回転速度固定値"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialRotationSpeed_.min",
+          "aliases": [
+            "初期回転速度の最小値",
+            "初期回転速度下限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialRotationSpeed_.max",
+          "aliases": [
+            "初期回転速度の最大値",
+            "初期回転速度上限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "rotationAcceleration_.randomize",
+          "aliases": [
+            "回転加速度をランダム化",
+            "回転加速度ランダム設定"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "rotationAcceleration_.value",
+          "aliases": [
+            "回転加速度の値",
+            "回転加速度固定値"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "rotationAcceleration_.min",
+          "aliases": [
+            "回転加速度の最小値",
+            "回転加速度下限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "rotationAcceleration_.max",
+          "aliases": [
+            "回転加速度の最大値",
+            "回転加速度上限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        }
+      ]
+    },
+    {
+      "component": "ParticleSystem3D",
+      "scope": "object",
+      "aliases": [
+        "3Dパーティクルシステム",
+        "3D粒子発生器"
+      ],
+      "evidence": "Objects/Components/ParticleSystem3D.h",
+      "members": [
+        {
+          "member": "emissionRate_",
+          "aliases": [
+            "生成レート",
+            "発生頻度"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "maxParticles_",
+          "aliases": [
+            "最大パーティクル数",
+            "最大粒子数"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "totalSpawnCount_",
+          "aliases": [
+            "累計生成回数",
+            "総生成数"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "billboard_",
+          "aliases": [
+            "ビルボード",
+            "カメラ向き"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "castShadows_",
+          "aliases": [
+            "影を落とす",
+            "影の有効化"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "playOnStart_",
+          "aliases": [
+            "開始時に再生",
+            "自動再生"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "loop_",
+          "aliases": [
+            "ループ",
+            "繰り返し再生"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "fixedSpawnPosition_",
+          "aliases": [
+            "位置を固定",
+            "固定生成位置"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "meshAssetPath_",
+          "aliases": [
+            "メッシュ",
+            "メッシュアセット"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "pipelineName_",
+          "aliases": [
+            "パイプライン",
+            "描画パイプライン"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "materialName_",
+          "aliases": [
+            "マテリアル",
+            "素材"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "spawnCount_.randomize",
+          "aliases": [
+            "生成数をランダム化",
+            "生成数ランダム設定"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "spawnCount_.value",
+          "aliases": [
+            "生成数の値",
+            "生成数固定値"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "spawnCount_.min",
+          "aliases": [
+            "生成数の最小値",
+            "生成数下限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "spawnCount_.max",
+          "aliases": [
+            "生成数の最大値",
+            "生成数上限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "lifetime_.randomize",
+          "aliases": [
+            "寿命をランダム化",
+            "寿命ランダム設定"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "lifetime_.value",
+          "aliases": [
+            "寿命の値",
+            "寿命固定値"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "lifetime_.min",
+          "aliases": [
+            "寿命の最小値",
+            "寿命下限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "lifetime_.max",
+          "aliases": [
+            "寿命の最大値",
+            "寿命上限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialVelocity_.randomize",
+          "aliases": [
+            "初速をランダム化",
+            "初速ランダム設定"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialVelocity_.value",
+          "aliases": [
+            "初速の値",
+            "初速固定値"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialVelocity_.min",
+          "aliases": [
+            "初速の最小値",
+            "初速下限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialVelocity_.max",
+          "aliases": [
+            "初速の最大値",
+            "初速上限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "acceleration_.randomize",
+          "aliases": [
+            "加速度をランダム化",
+            "加速度ランダム設定"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "acceleration_.value",
+          "aliases": [
+            "加速度の値",
+            "加速度固定値"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "acceleration_.min",
+          "aliases": [
+            "加速度の最小値",
+            "加速度下限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "acceleration_.max",
+          "aliases": [
+            "加速度の最大値",
+            "加速度上限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "startScale_.randomize",
+          "aliases": [
+            "開始スケールをランダム化",
+            "開始スケールランダム設定"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "startScale_.value",
+          "aliases": [
+            "開始スケールの値",
+            "開始スケール固定値"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "startScale_.min",
+          "aliases": [
+            "開始スケールの最小値",
+            "開始スケール下限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "startScale_.max",
+          "aliases": [
+            "開始スケールの最大値",
+            "開始スケール上限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "endScale_.randomize",
+          "aliases": [
+            "終了スケールをランダム化",
+            "終了スケールランダム設定"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "endScale_.value",
+          "aliases": [
+            "終了スケールの値",
+            "終了スケール固定値"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "endScale_.min",
+          "aliases": [
+            "終了スケールの最小値",
+            "終了スケール下限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "endScale_.max",
+          "aliases": [
+            "終了スケールの最大値",
+            "終了スケール上限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialRotation_.randomize",
+          "aliases": [
+            "初期回転をランダム化",
+            "初期回転ランダム設定"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialRotation_.value",
+          "aliases": [
+            "初期回転の値",
+            "初期回転固定値"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialRotation_.min",
+          "aliases": [
+            "初期回転の最小値",
+            "初期回転下限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialRotation_.max",
+          "aliases": [
+            "初期回転の最大値",
+            "初期回転上限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialRotationSpeed_.randomize",
+          "aliases": [
+            "初期回転速度をランダム化",
+            "初期回転速度ランダム設定"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialRotationSpeed_.value",
+          "aliases": [
+            "初期回転速度の値",
+            "初期回転速度固定値"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialRotationSpeed_.min",
+          "aliases": [
+            "初期回転速度の最小値",
+            "初期回転速度下限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "initialRotationSpeed_.max",
+          "aliases": [
+            "初期回転速度の最大値",
+            "初期回転速度上限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "rotationAcceleration_.randomize",
+          "aliases": [
+            "回転加速度をランダム化",
+            "回転加速度ランダム設定"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "rotationAcceleration_.value",
+          "aliases": [
+            "回転加速度の値",
+            "回転加速度固定値"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "rotationAcceleration_.min",
+          "aliases": [
+            "回転加速度の最小値",
+            "回転加速度下限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        },
+        {
+          "member": "rotationAcceleration_.max",
+          "aliases": [
+            "回転加速度の最大値",
+            "回転加速度上限"
+          ],
+          "evidence": "Objects/Components/ParticleSystemBase.h"
+        }
+      ]
+    }
+  ]
+}

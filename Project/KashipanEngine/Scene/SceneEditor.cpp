@@ -124,6 +124,7 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
 
     objectHierarchy_->SetCommands(commands_.get());
     objectInspector_->SetCommands(commands_.get());
+    componentInspector_->SetCommands(commands_.get());
     assetsWindow_->SetCommands(commands_.get());
 
     // 元Prefabがエンジン内操作で書き換わった際、シーン上の他インスタンスへ非破壊マージを伝播する
@@ -731,7 +732,7 @@ void SceneEditor::ShowMainWindow() {
         }
         // エディターツールスクリプトの[MenuItem("MenuBar/...")]で追加された項目
         if (ImGui::BeginMenu("試験機能")) {
-            ImGui::MenuItem("短文の挙動", nullptr, &shortTextBehaviorEditor_.open);
+            ImGui::MenuItem("短文からの挙動作成", nullptr, &shortTextBehaviorEditor_.open);
             ImGui::EndMenu();
         }
         EditorToolManager::GetInstance().ShowMenuBarItems();

@@ -303,6 +303,7 @@
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextProperties.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextExtended.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextSpatial.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\PropertyMotion.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\GameEventListener.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\GameplayCommon.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\GameplayHealth.cpp" />
@@ -379,6 +380,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KashipanEngine\Utilities\ShortTextValues.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PropertyMotion.h" />
+    <ClInclude Include="KashipanEngine\Utilities\ShortTextPropertyRequest.h" />
+    <ClInclude Include="KashipanEngine\Utilities\ShortTextPropertyAliasCatalog.generated.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\GameEventListener.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\GameplayComponents.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\GameplayDetail.h" />

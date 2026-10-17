@@ -511,6 +511,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextProperties.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextExtended.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextSpatial.cpp" />
+    <ClCompile Include="KashipanEngine\Objects\Components\PropertyMotion.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\ShortTextEventPlan.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\ShortTextEventRequest.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\GameEventListener.cpp" />
     <ClCompile Include="KashipanEngine\Objects\Components\GameplayCommon.cpp" />
@@ -518,6 +520,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClCompile Include="KashipanEngine\Objects\Components\GameplayInteraction.cpp" />
     <ClCompile Include="KashipanEngine\Scene\Components\GameEventRouter.cpp" />
     <ClCompile Include="KashipanEngine\Utilities\GameEvents.cpp" />
+    <ClCompile Include="KashipanEngine\Scene\Editor\ShortTextComponentPlan.cpp" />
     <ClCompile Include="Externals\angelscript\include\add_on\contextmgr\contextmgr.cpp" />
     <ClCompile Include="Externals\angelscript\include\add_on\datetime\datetime.cpp" />
     <ClCompile Include="Externals\angelscript\include\add_on\debugger\debugger.cpp" />
@@ -808,6 +811,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClInclude Include="KashipanEngine\Utilities\ShortTextLearning.h" />
     <ClInclude Include="KashipanEngine\Utilities\ShortTextBehavior.h" />
     <ClInclude Include="KashipanEngine\Scene\Editor\ShortTextBehaviorEditor.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\EditorHelp.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\ShortTextBehavior.h" />
     <ClInclude Include="Application\AppInitialize.h" />
     <ClInclude Include="Externals\angelscript\include\add_on\autowrapper\aswrappedcall.h" />
@@ -1503,6 +1507,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KashipanEngine\Utilities\ShortTextValues.h" />
+    <ClInclude Include="KashipanEngine\Objects\Components\PropertyMotion.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\ShortTextComponentPlan.h" />
+    <ClInclude Include="KashipanEngine\Utilities\ShortTextPropertyRequest.h" />
+    <ClInclude Include="KashipanEngine\Utilities\ShortTextPropertyAliasCatalog.generated.h" />
+    <ClInclude Include="KashipanEngine\Scene\Editor\ShortTextEventPlan.h" />
     <ClInclude Include="KashipanEngine\Utilities\ShortTextEventRequest.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\GameEventListener.h" />
     <ClInclude Include="KashipanEngine\Objects\Components\GameplayComponents.h" />

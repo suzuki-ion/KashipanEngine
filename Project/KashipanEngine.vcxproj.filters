@@ -825,6 +825,7 @@
     <ClInclude Include="KashipanEngine\Utilities\ShortTextLearning.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Utilities\ShortTextBehavior.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Scene\Editor\ShortTextBehaviorEditor.h"><Filter>KashipanEngine\Scene\Editor</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\EditorHelp.h"><Filter>KashipanEngine\Scene\Editor</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Objects\Components\ShortTextBehavior.h"><Filter>KashipanEngine\Objects\Components</Filter></ClInclude>
     <ClInclude Include="Application\AppInitialize.h">
       <Filter>Application</Filter>
@@ -2759,7 +2760,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="KashipanEngine\Objects\Components\ShortTextSpatial.cpp"><Filter>KashipanEngine\Objects\Components</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Objects\Components\PropertyMotion.cpp"><Filter>KashipanEngine\Objects\Components</Filter></ClCompile>
+    <ClCompile Include="KashipanEngine\Scene\Editor\ShortTextComponentPlan.cpp"><Filter>KashipanEngine\Scene\Editor</Filter></ClCompile>
+    <ClInclude Include="KashipanEngine\Objects\Components\PropertyMotion.h"><Filter>KashipanEngine\Objects\Components</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Scene\Editor\ShortTextComponentPlan.h"><Filter>KashipanEngine\Scene\Editor</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Utilities\ShortTextPropertyRequest.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude>
+    <ClCompile Include="KashipanEngine\Scene\Editor\ShortTextEventPlan.cpp"><Filter>KashipanEngine\Scene\Editor</Filter></ClCompile>
     <ClCompile Include="KashipanEngine\Utilities\ShortTextEventRequest.cpp"><Filter>KashipanEngine\Utilities</Filter></ClCompile>
+    <ClInclude Include="KashipanEngine\Scene\Editor\ShortTextEventPlan.h"><Filter>KashipanEngine\Scene\Editor</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Utilities\ShortTextEventRequest.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude>
     <ClCompile Include="KashipanEngine\Objects\Components\GameEventListener.cpp"><Filter>KashipanEngine\Objects\Components</Filter></ClCompile>
     <ClCompile Include="KashipanEngine\Objects\Components\GameplayCommon.cpp"><Filter>KashipanEngine\Objects\Components</Filter></ClCompile>
@@ -2774,4 +2782,5 @@
     <ClInclude Include="KashipanEngine\Scene\Components\Script\ScriptGameEvent.h"><Filter>KashipanEngine\Scene\Components\Script</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Utilities\GameEvents.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude>
   </ItemGroup>
+  <ItemGroup><ClInclude Include="KashipanEngine\Utilities\ShortTextPropertyAliasCatalog.generated.h"><Filter>KashipanEngine\Utilities</Filter></ClInclude></ItemGroup>
 </Project>

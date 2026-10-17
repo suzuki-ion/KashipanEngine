@@ -7,6 +7,8 @@
 #include "Scene/Editor/ComponentAddMenu.h"
 #include "Scene/Editor/EditorSettings.h"
 #include "Scene/Editor/EditorWindowChrome.h"
+#include "Scene/Editor/ShortTextEventPlan.h"
+#include "Scene/Components/GameEventRouter.h"
 #include "ComponentSerialize/ComponentRegistry.h"
 #include "Utilities/Translation.h"
 
@@ -75,7 +77,15 @@ void SceneComponentInspector::ShowImGui() {
             ImGui::PushStyleColor(ImGuiCol_ChildBg, ComponentCardBackgroundColor());
             ImGui::BeginChild("##ComponentCard", ImVec2(0.0f, 0.0f),
                 ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding);
+            // イベント定義の編集は Undo/Redo へ積む（定義だけを比較する。購読・キューなど実行時状態は対象外）
+            auto *router = dynamic_cast<GameEventRouter *>(component.get());
+            const JSON definitionsBefore = router ? GameEvents::EncodeDefinitions(router->GetDefinitions()) : JSON();
             context_->ShowComponentImGui(component.get());
+            if (router && commands_ && !context_->IsPlaying()) {
+                JSON definitionsAfter = GameEvents::EncodeDefinitions(router->GetDefinitions());
+                if (definitionsAfter != definitionsBefore)
+                    commands_->PushExecuted(std::make_unique<GameEventDefinitionsCommand>(definitionsBefore, std::move(definitionsAfter), false));
+            }
             ImGui::EndChild();
             ImGui::PopStyleColor();
 

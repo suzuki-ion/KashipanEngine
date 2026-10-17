@@ -1,6 +1,8 @@
 #include "Debug/ProfilerServer.h"
+#include "Assets/AssetFileIndex.h"
 #include "GameEngine.h"
 #include "Debug/StartupTiming.h"
+#include "Assets/SharedModelImport.h"
 #include "EngineSettings.h"
 #include "Core/ProjectPaths.h"
 #include "Core/Window.h"
@@ -82,6 +84,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     }
 
     startupSections.End("COMAndSetup");
+
     //--------- インスタンス生成 ---------//
 
     windowsAPI_ = std::make_unique<WindowsAPI>(Passkey<GameEngine>{});
@@ -100,27 +103,39 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     // 各Managerには物理パスのAssetsルートを渡す。Manager内部で扱うアセットパスは
     // このルートからの相対パスになるため、プロジェクトが変わっても値は変わらない
     const std::string &assetsRoot = ProjectPaths::AssetsRoot();
-    textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetsRoot);
+    AssetFileIndex assetFiles(assetsRoot);
+    Log("[StartupAssets] scans=1, files=" + std::to_string(assetFiles.FileCount()) +
+        ", directories=" + std::to_string(assetFiles.DirectoryCount()), LogSeverity::Info);
+    startupSections.End("AssetScan");
+    textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetFiles);
     startupSections.End("Textures");
-    fontManager_ = std::make_unique<FontManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetsRoot);
+    fontManager_ = std::make_unique<FontManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetFiles);
     startupSections.End("Fonts");
-    bitmapFontManager_ = std::make_unique<BitmapFontManager>(Passkey<GameEngine>{}, assetsRoot);
+    bitmapFontManager_ = std::make_unique<BitmapFontManager>(Passkey<GameEngine>{}, assetFiles);
     startupSections.End("BitmapFonts");
     samplerManager_ = std::make_unique<SamplerManager>(Passkey<GameEngine>{}, directXCommon_.get());
     startupSections.End("Samplers");
-    modelManager_ = std::make_unique<ModelManager>(Passkey<GameEngine>{}, assetsRoot);
+    SharedModelImport::StartupSession sharedModelSession(ContentCache::Directory(ProjectPaths::ProjectRoot(), "Models"));
+    modelManager_ = std::make_unique<ModelManager>(Passkey<GameEngine>{}, assetFiles);
     startupSections.End("Models");
-    skeletonManager_ = std::make_unique<SkeletonManager>(Passkey<GameEngine>{}, assetsRoot);
+    skeletonManager_ = std::make_unique<SkeletonManager>(Passkey<GameEngine>{}, assetFiles);
     startupSections.End("Skeletons");
-    audioManager_ = std::make_unique<AudioManager>(Passkey<GameEngine>{}, assetsRoot);
+    audioManager_ = std::make_unique<AudioManager>(Passkey<GameEngine>{}, assetFiles);
     startupSections.End("Audio");
-    animationManager_ = std::make_unique<AnimationManager>(Passkey<GameEngine>{}, assetsRoot);
+    animationManager_ = std::make_unique<AnimationManager>(Passkey<GameEngine>{}, assetFiles);
     startupSections.End("Animations");
-    materialManager_ = std::make_unique<MaterialManager>(Passkey<GameEngine>{}, assetsRoot);
+    const auto [modelImportHits, modelImportMisses] = SharedModelImport::Statistics();
+    Log("[StartupCache] Model imports: reused=" + std::to_string(modelImportHits) +
+        ", unique=" + std::to_string(modelImportMisses), LogSeverity::Info);
+    const auto modelCacheStats = SharedModelImport::CacheStatistics();
+    Log("[StartupCache] Models: hits=" + std::to_string(modelCacheStats.hits) +
+        ", parsed=" + std::to_string(modelCacheStats.parsed) + ", stored=" + std::to_string(modelCacheStats.stored), LogSeverity::Info);
+    sharedModelSession.Close();
+    materialManager_ = std::make_unique<MaterialManager>(Passkey<GameEngine>{}, assetFiles);
     startupSections.End("Materials");
-    videoManager_ = std::make_unique<VideoManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetsRoot);
+    videoManager_ = std::make_unique<VideoManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetFiles);
     startupSections.End("Video");
-    gifManager_ = std::make_unique<GifManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetsRoot);
+    gifManager_ = std::make_unique<GifManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetFiles);
     startupSections.End("GIF");
     input_ = std::make_unique<Input>(Passkey<GameEngine>{});
     startupSections.End("Input");
@@ -162,6 +177,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
 
     Window::SetWindowsAPI({}, windowsAPI_.get());
     Window::SetDirectXCommon({}, directXCommon_.get());
+
     startupSections.End("SceneAndWindowConfiguration");
 
 #if defined(USE_IMGUI)

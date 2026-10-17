@@ -1,4 +1,8 @@
+#include "Assets/AssetFileIndex.h"
 #include "TextureManager.h"
+#include "Graphics/TextureUploadBatch.h"
+#include "Assets/PreparedTextureCache.h"
+#include <atomic>
 #include "Debug/StartupTiming.h"
 #include "Assets/CaseInsensitive.h"
 #include "Core/ProjectPaths.h"
@@ -106,41 +110,8 @@ TextureManager* sActiveInstance = nullptr;
 /// @brief デコード直後の画像を目的フォーマットへ変換し、ミップチェインを生成する
 /// @details ディスク読み込み（LoadTextureFromFile）・メモリ読み込み（LoadTextureFromMemory）の
 ///          両方から共有される後処理
-DirectX::ScratchImage ConvertAndGenerateMips(DirectX::ScratchImage scratch, const DirectX::TexMetadata& meta, DXGI_FORMAT dstFormat) {
-    DirectX::ScratchImage converted;
-    if (meta.format != dstFormat) {
-        const HRESULT hr = DirectX::Convert(scratch.GetImages(), scratch.GetImageCount(), scratch.GetMetadata(), dstFormat, DirectX::TEX_FILTER_SRGB, DirectX::TEX_THRESHOLD_DEFAULT, converted);
-        if (FAILED(hr)) return DirectX::ScratchImage();
-    }
-    DirectX::ScratchImage finalImage = (meta.format == dstFormat) ? std::move(scratch) : std::move(converted);
-
-    // ミップマップ生成
-    DirectX::ScratchImage mipChain;
-    if (DirectX::IsCompressed(finalImage.GetMetadata().format)) {
-        // 圧縮形式の場合はミップマップ生成をスキップ
-        mipChain = std::move(finalImage);
-    } else {
-        HRESULT hr = DirectX::GenerateMipMaps(finalImage.GetImages(), finalImage.GetImageCount(), finalImage.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipChain);
-        if (FAILED(hr)) {
-            // ミップマップ生成に失敗した場合は元画像をそのまま使う
-            const DirectX::Image *baseImg = finalImage.GetImages();
-            if (!baseImg || !baseImg->pixels) {
-                return DirectX::ScratchImage();
-            }
-            hr = mipChain.InitializeFromImage(*baseImg);
-            if (FAILED(hr)) {
-                return DirectX::ScratchImage();
-            }
-        }
-    }
-
-    const DirectX::Image* img0 = mipChain.GetImages();
-    if (!img0 || !img0->pixels) {
-        return DirectX::ScratchImage();
-    }
-
-    return mipChain;
-}
+std::filesystem::path sPreparedTextureDirectory;
+std::atomic_size_t sPreparedTextureHits{0}, sPreparedTextureMisses{0};
 
 Handle RegisterEntry(TextureEntry&& entry) {
     // TextureHandle は 0 を無効値とするため、SRV index に +1 した値をハンドルとして返す
@@ -279,15 +250,18 @@ bool TextureManager::UnregisterExternalTexture(const IShaderTexture* texture) {
     return false;
 }
 
-TextureManager::TextureManager(Passkey<GameEngine>, DirectXCommon* directXCommon, const std::string& assetsRootPath)
-    : directXCommon_(directXCommon), assetsRootPath_(NormalizePathSlashes(assetsRootPath)) {
+TextureManager::TextureManager(Passkey<GameEngine>, DirectXCommon* directXCommon, AssetFileIndex &assetFiles)
+    : directXCommon_(directXCommon), assetsRootPath_(NormalizePathSlashes(assetFiles.Root())) {
     LogScope scope;
     if (directXCommon_) {
         sDevice = directXCommon_->GetDeviceForTextureManager(Passkey<TextureManager>{});
         sSrvHeap = directXCommon_->GetSRVHeapForTextureManager(Passkey<TextureManager>{});
     }
     sActiveInstance = this;
-    LoadAllFromAssetsFolder();
+    sPreparedTextureDirectory = ContentCache::Directory(ProjectPaths::ProjectRoot(), "Textures");
+    sPreparedTextureHits = 0;
+    sPreparedTextureMisses = 0;
+    LoadAllFromAssetsFolder(assetFiles.Files(AssetFileIndex::Kind::Texture));
 }
 
 TextureManager::~TextureManager() {
@@ -304,20 +278,9 @@ TextureManager* TextureManager::GetActiveInstance(Passkey<ModelManager>) {
     return sActiveInstance;
 }
 
-void TextureManager::LoadAllFromAssetsFolder() {
+void TextureManager::LoadAllFromAssetsFolder(std::vector<std::string> files) {
     StartupTiming::Sections startupSections("Textures.");
     LogScope scope;
-    const auto dir = GetDirectoryData(assetsRootPath_, true, true);
-
-    std::vector<std::string> files;
-    const auto filtered = GetDirectoryDataByExtension(dir,
-        { ".png", ".jpg", ".jpeg", ".bmp", ".tga", ".dds", ".hdr", ".tif", ".tiff", ".gif", ".webp" });
-
-    std::function<void(const DirectoryData&)> flatten = [&](const DirectoryData& d) {
-        for (const auto& f : d.files) files.push_back(f);
-        for (const auto& sd : d.subdirectories) flatten(sd);
-    };
-    flatten(filtered);
     startupSections.End("FileList");
 
     // white1x1.pngは、テクスチャ解決に失敗した場合のフォールバック先としてバインドレス配列の
@@ -334,6 +297,7 @@ void TextureManager::LoadAllFromAssetsFolder() {
     }
 
     startupSections.End("FallbackTexture");
+
     // ファイルI/O・デコード・ミップマップ生成はCPU処理のみでGPUリソースに触れないため、
     // スレッドプールで並列実行する（mipMapContainer_はshared_mutexで保護済み）
     Plugin::RunParallelAndWait(files.size(), [this, &files](size_t i) {
@@ -341,10 +305,20 @@ void TextureManager::LoadAllFromAssetsFolder() {
         });
 
     startupSections.End("DecodeAndMipmaps");
+    Log("[StartupCache] Prepared textures: hits=" + std::to_string(sPreparedTextureHits.load()) +
+        ", misses=" + std::to_string(sPreparedTextureMisses.load()), LogSeverity::Info);
+
     // 全ファイルのデコードが完了したら、メインスレッドでGPUリソース作成・アップロード・登録を順に行う
+    startupUploadBatch_ = std::make_unique<TextureUploadBatch>([this](const TextureUploadBatch::Task &record) {
+        directXCommon_->ExecuteOneShotCommandsForTextureManager(Passkey<TextureManager>{}, record);
+    });
     for (const auto& f : files) {
         LoadTexture(f);
     }
+    startupUploadBatch_->Flush();
+    Log("[StartupUpload] Textures=" + std::to_string(startupUploadBatch_->TextureCount()) +
+        ", submissions=" + std::to_string(startupUploadBatch_->SubmissionCount()) + ", limit=64 MiB", LogSeverity::Info);
+    startupUploadBatch_.reset();
     startupSections.End("GPUUploadAndRegistration");
 }
 
@@ -561,16 +535,16 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
     }
 
     // GPUへコピー（各サブリソース）
-    directXCommon_->ExecuteOneShotCommandsForTextureManager(Passkey<TextureManager>{},
-        [&](ID3D12GraphicsCommandList* cl) {
+    auto recordUpload = [texture = Microsoft::WRL::ComPtr<ID3D12Resource>(entry.texture->GetResource()),
+        upload = entry.upload, layouts = std::move(layouts), subresourceCount](ID3D12GraphicsCommandList* cl) {
             for (UINT i = 0; i < subresourceCount; ++i) {
                 D3D12_TEXTURE_COPY_LOCATION dstLoc{};
-                dstLoc.pResource = entry.texture->GetResource();
+                dstLoc.pResource = texture.Get();
                 dstLoc.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
                 dstLoc.SubresourceIndex = i;
 
                 D3D12_TEXTURE_COPY_LOCATION srcLoc{};
-                srcLoc.pResource = entry.upload.Get();
+                srcLoc.pResource = upload.Get();
                 srcLoc.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
                 srcLoc.PlacedFootprint = layouts[i];
 
@@ -580,14 +554,17 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
             D3D12_RESOURCE_BARRIER barrier{};
             barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
             barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-            barrier.Transition.pResource = entry.texture->GetResource();
+            barrier.Transition.pResource = texture.Get();
             barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
             barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
             barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
             cl->ResourceBarrier(1, &barrier);
-        });
+        };
+    if (startupUploadBatch_) startupUploadBatch_->Add(requiredSize, std::move(recordUpload));
+    else directXCommon_->ExecuteOneShotCommandsForTextureManager(Passkey<TextureManager>{}, recordUpload);
 
-    // アップロード用リソースはもう不要なので解放
+
+    // The callback retains the upload resource until its batch has completed.
     entry.upload.Reset();
 
     const auto handle = RegisterEntry(std::move(entry));
@@ -631,6 +608,18 @@ DirectX::ScratchImage TextureManager::LoadTextureFromFile(const std::string& fil
         return DirectX::ScratchImage();
     }
 
+    const bool cacheEligible = PreparedTextureCache::Eligible(p);
+    ContentCache::Json sourceDependency;
+    if (cacheEligible) {
+        DirectX::ScratchImage prepared;
+        if (PreparedTextureCache::Load(p, sPreparedTextureDirectory, prepared)) {
+            ++sPreparedTextureHits;
+            return prepared; // Already contains the complete, matching mip chain.
+        }
+        ++sPreparedTextureMisses;
+        sourceDependency = ContentCache::Dependency(p);
+    }
+
     DirectX::TexMetadata meta{};
     DirectX::ScratchImage scratch;
 
@@ -664,7 +653,9 @@ DirectX::ScratchImage TextureManager::LoadTextureFromFile(const std::string& fil
         dstFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
     }
 
-    return ConvertAndGenerateMips(std::move(scratch), meta, dstFormat);
+    auto mipChain = PreparedTextureCache::ConvertAndGenerateMips(std::move(scratch), meta, dstFormat);
+    if (cacheEligible) PreparedTextureCache::Store(p, sPreparedTextureDirectory, mipChain, sourceDependency);
+    return mipChain;
 }
 
 DirectX::ScratchImage TextureManager::LoadTextureFromMemory(const void* data, size_t dataSize) {
@@ -681,7 +672,7 @@ DirectX::ScratchImage TextureManager::LoadTextureFromMemory(const void* data, si
         return DirectX::ScratchImage();
     }
 
-    return ConvertAndGenerateMips(std::move(scratch), meta, DXGI_FORMAT_R8G8B8A8_UNORM);
+    return PreparedTextureCache::ConvertAndGenerateMips(std::move(scratch), meta, DXGI_FORMAT_R8G8B8A8_UNORM);
 }
 
 TextureManager::TextureHandle TextureManager::RegisterTextureFromMemory(const std::string& registerPath, const void* data, size_t dataSize) {

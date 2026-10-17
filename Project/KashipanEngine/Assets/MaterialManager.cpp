@@ -1,3 +1,4 @@
+#include "Assets/AssetFileIndex.h"
 #include "MaterialManager.h"
 #include "Assets/CaseInsensitive.h"
 
@@ -173,11 +174,11 @@ MaterialHandle RegisterEntry(MaterialEntry&& entry) {
 
 } // namespace
 
-MaterialManager::MaterialManager(Passkey<GameEngine>, const std::string& assetsRootPath) {
+MaterialManager::MaterialManager(Passkey<GameEngine>, AssetFileIndex &assetFiles) {
     LogScope scope;
-    sAssetsRootPath = NormalizePathSlashes(assetsRootPath);
+    sAssetsRootPath = NormalizePathSlashes(assetFiles.Root());
     InitializeMaterialManager();
-    LoadAllFromAssetsFolder();
+    LoadAllFromAssetsFolder(assetFiles.Files(AssetFileIndex::Kind::Material));
     EnsureDefaultMaterialExists();
 #if defined(USE_IMGUI)
     sActiveInstance = this;
@@ -206,18 +207,9 @@ void MaterialManager::FinalizeMaterialManager() {
     sNextHandle = 1;
 }
 
-void MaterialManager::LoadAllFromAssetsFolder() {
+void MaterialManager::LoadAllFromAssetsFolder(std::vector<std::string> files) {
     LogScope scope;
-    const auto dir = GetDirectoryData(sAssetsRootPath, true, true);
 
-    std::vector<std::string> files;
-    const auto filtered = GetDirectoryDataByExtension(dir, { ".mat" });
-
-    std::function<void(const DirectoryData&)> flatten = [&](const DirectoryData& d) {
-        for (const auto& f : d.files) files.push_back(f);
-        for (const auto& sd : d.subdirectories) flatten(sd);
-    };
-    flatten(filtered);
 
     for (const auto& f : files) {
         LoadMaterial(f);

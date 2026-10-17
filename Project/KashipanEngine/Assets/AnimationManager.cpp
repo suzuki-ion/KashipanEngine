@@ -1,4 +1,6 @@
+#include "Assets/AssetFileIndex.h"
 #include "AnimationManager.h"
+#include "Assets/SharedModelImport.h"
 #include "Assets/AssimpUtf8IOSystem.h"
 #include "Assets/CaseInsensitive.h"
 
@@ -94,10 +96,10 @@ KeyframeTimeline BuildTimeline(const std::string &name, KeyframeValueType valueT
 
 } // namespace
 
-AnimationManager::AnimationManager(Passkey<GameEngine>, const std::string &assetsRootPath)
-    : assetsRootPath_(NormalizePathSlashes(assetsRootPath)) {
+AnimationManager::AnimationManager(Passkey<GameEngine>, AssetFileIndex &assetFiles)
+    : assetsRootPath_(NormalizePathSlashes(assetFiles.Root())) {
     LogScope scope;
-    LoadAllFromAssetsFolder();
+    LoadAllFromAssetsFolder(assetFiles.Files(AssetFileIndex::Kind::Animation));
 }
 
 AnimationManager::~AnimationManager() {
@@ -107,19 +109,9 @@ AnimationManager::~AnimationManager() {
     sAssetPathToHandle.clear();
 }
 
-void AnimationManager::LoadAllFromAssetsFolder() {
+void AnimationManager::LoadAllFromAssetsFolder(std::vector<std::string> files) {
     LogScope scope;
-    const auto dir = GetDirectoryData(assetsRootPath_, true, true);
 
-    std::vector<std::string> files;
-    const auto filtered = GetDirectoryDataByExtension(dir,
-        { ".fbx", ".gltf", ".glb", ".dae", ".x", ".blend", ".obj" });
-
-    std::function<void(const DirectoryData &)> flatten = [&](const DirectoryData &d) {
-        for (const auto &f : d.files) files.push_back(f);
-        for (const auto &sd : d.subdirectories) flatten(sd);
-    };
-    flatten(filtered);
 
     for (const auto &f : files) {
         LoadAnimation(f);
@@ -152,26 +144,10 @@ AnimationManager::AnimationHandle AnimationManager::LoadAnimation(const std::str
         return kInvalidHandle;
     }
 
-    Assimp::Importer importer;
-    // Assimpの既定IOSystemはWindows上でfopen（現在のANSIコードページ）を使うため、
-    // コードページで表現できない文字を含むパス（多言語のファイル名等）を開けない。
-    // _wfopenベースの独自IOSystemに差し替えることで回避する（Importerが所有権を持つ）
-    importer.SetIOHandler(new AssimpUtf8IOSystem());
-    constexpr unsigned int flags =
-        aiProcess_MakeLeftHanded |
-        aiProcess_FlipWindingOrder |
-        aiProcess_Triangulate |
-        aiProcess_JoinIdenticalVertices |
-        aiProcess_ImproveCacheLocality |
-        aiProcess_RemoveRedundantMaterials |
-        aiProcess_FindInvalidData |
-        aiProcess_TransformUVCoords |
-        aiProcess_SortByPType |
-        aiProcess_FlipUVs;
-
-    const aiScene *scene = importer.ReadFile(PathToUtf8String(p), flags);
+    const auto imported = SharedModelImport::Load(p, SharedModelImport::CommonFlags);
+    const aiScene *scene = imported->scene;
     if (!scene || !scene->mRootNode) {
-        Log(Translation("engine.animation.loading.failed.assimp") + PathToUtf8String(p) + " msg=" + importer.GetErrorString(), LogSeverity::Warning);
+        Log(Translation("engine.animation.loading.failed.assimp") + PathToUtf8String(p) + " msg=" + imported->error, LogSeverity::Warning);
         return kInvalidHandle;
     }
 

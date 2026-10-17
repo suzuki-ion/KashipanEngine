@@ -1,4 +1,6 @@
+#include "Assets/AssetFileIndex.h"
 #include "ModelManager.h"
+#include "Assets/SharedModelImport.h"
 #include "Debug/StartupTiming.h"
 #include "Assets/AssimpUtf8IOSystem.h"
 #include "Assets/CaseInsensitive.h"
@@ -210,7 +212,7 @@ struct ParsedModelResult {
     ModelData data;
 
     // ノード分解・プレハブ生成（RegisterNodeDecompositionAndPrefab）に必要な情報
-    std::unique_ptr<Assimp::Importer> importer; // scene の所有者。破棄するとsceneも無効になる
+    SharedModelImport::ResultPtr imported; // Owns the scene together with the startup session.
     const aiScene *scene = nullptr;
     std::vector<ModelData::MaterialData> materialsCopy;
 
@@ -222,12 +224,14 @@ struct ParsedModelResult {
     std::vector<PendingEmbeddedTexture> pendingTextures;
 };
 
-ModelManager::ModelManager(Passkey<GameEngine>, const std::string& assetsRootPath)
-    : assetsRootPath_(NormalizePathSlashes(assetsRootPath)) {
+ModelManager::ModelManager(Passkey<GameEngine>, AssetFileIndex &assetFiles)
+    : assetsRootPath_(NormalizePathSlashes(assetFiles.Root())) {
     LogScope scope;
     sActiveInstance = this;
     PrimitiveMeshGenerator::RegisterBuiltinPrimitiveMeshes();
-    LoadAllFromAssetsFolder();
+    startupAssetFiles_ = &assetFiles;
+    LoadAllFromAssetsFolder(assetFiles.Files(AssetFileIndex::Kind::Model));
+    startupAssetFiles_ = nullptr;
 }
 
 ModelManager::~ModelManager() {
@@ -238,20 +242,9 @@ ModelManager::~ModelManager() {
     sAssetPathToHandle.clear();
 }
 
-void ModelManager::LoadAllFromAssetsFolder() {
+void ModelManager::LoadAllFromAssetsFolder(std::vector<std::string> files) {
     StartupTiming::Sections startupSections("Models.");
     LogScope scope;
-    const auto dir = GetDirectoryData(assetsRootPath_, true, true);
-
-    std::vector<std::string> files;
-    const auto filtered = GetDirectoryDataByExtension(dir,
-        { ".fbx", ".obj", ".gltf", ".glb", ".dae", ".3ds", ".blend", ".ply", ".stl", ".x" });
-
-    std::function<void(const DirectoryData&)> flatten = [&](const DirectoryData& d) {
-        for (const auto& f : d.files) files.push_back(f);
-        for (const auto& sd : d.subdirectories) flatten(sd);
-    };
-    flatten(filtered);
     startupSections.End("FileList");
 
     // ファイルI/O・Assimp解析・メッシュ抽出はCPU処理のみでGPUリソース・グローバル状態に触れないため、
@@ -262,6 +255,7 @@ void ModelManager::LoadAllFromAssetsFolder() {
         });
 
     startupSections.End("AssimpParsing");
+
     // 全ファイルの解析が完了したら、メインスレッドでGPUアップロード・グローバル状態への登録・
     // プレハブ生成を順に行う
     for (auto& parsed : parsedResults) {
@@ -288,33 +282,11 @@ std::unique_ptr<ParsedModelResult> ModelManager::ParseModelFile(const std::strin
         return result;
     }
 
-    result->importer = std::make_unique<Assimp::Importer>();
-    // Assimpの既定IOSystemはWindows上でfopen（現在のANSIコードページ）を使うため、
-    // コードページで表現できない文字を含むパス（多言語のファイル名等）を開けない。
-    // _wfopenベースの独自IOSystemに差し替えることで回避する（Importerが所有権を持つ）
-    result->importer->SetIOHandler(new AssimpUtf8IOSystem());
-    constexpr unsigned int flags =
-        aiProcess_MakeLeftHanded |
-        aiProcess_FlipWindingOrder |
-        aiProcess_Triangulate |
-        aiProcess_JoinIdenticalVertices |
-        aiProcess_ImproveCacheLocality |
-        aiProcess_RemoveRedundantMaterials |
-        aiProcess_FindInvalidData |
-        aiProcess_TransformUVCoords |
-        aiProcess_SortByPType |
-        // 法線を持たない（または元データが不正で aiProcess_FindInvalidData により
-        // 取り除かれた）メッシュが、法線ゼロベクトルのまま描画されてライティング結果が
-        // 常に真っ黒になる問題を防ぐ。法線を既に持つメッシュには影響しない
-        // （Assimpは既存の法線がある場合この処理をスキップする）
-        aiProcess_GenSmoothNormals |
-        aiProcess_CalcTangentSpace |
-        aiProcess_FlipUVs;
-
-    const aiScene* scene = result->importer->ReadFile(PathToUtf8String(p), flags);
+    result->imported = SharedModelImport::Load(p, SharedModelImport::ModelFlags);
+    const aiScene* scene = result->imported->scene;
     if (!scene || !scene->mRootNode) {
-        Log(Translation("engine.model.loading.failed.assimp") + PathToUtf8String(p) + " msg=" + result->importer->GetErrorString(), LogSeverity::Warning);
-        result->importer.reset();
+        Log(Translation("engine.model.loading.failed.assimp") + PathToUtf8String(p) + " msg=" + result->imported->error, LogSeverity::Warning);
+        result->imported.reset();
         return result;
     }
     result->scene = scene;
@@ -393,7 +365,7 @@ std::unique_ptr<ParsedModelResult> ModelManager::ParseModelFile(const std::strin
 
     if (result->data.GetVertexCount() == 0 || result->data.GetIndexCount() == 0) {
         Log(Translation("engine.model.loading.failed.nomesh") + PathToUtf8String(p), LogSeverity::Warning);
-        result->importer.reset();
+        result->imported.reset();
         result->scene = nullptr;
         return result;
     }
@@ -434,7 +406,7 @@ ModelManager::ModelHandle ModelManager::FinalizeParsedModel(std::unique_ptr<Pars
     }
 
     // ノード分解によるサブメッシュ登録と、モデル階層のプレハブ自動生成
-    // （parsed->importerがsceneを所有し続けているため、この時点でもsceneは有効）
+    // （parsed->importedがsceneを所有し続けているため、この時点でもsceneは有効）
     RegisterNodeDecompositionAndPrefab(scene, modelFullPath, baseAssetPath, baseFileName, materialsCopy);
 
     Log(Translation("engine.model.loading.succeeded") + modelFullPath, LogSeverity::Info);
@@ -761,6 +733,7 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
         const std::string matFilePath = modelDir + "/" + uniqueName + ".mat";
         std::error_code matEc;
         if (std::filesystem::exists(Utf8StringToPath(matFilePath), matEc)) {
+            if (startupAssetFiles_) startupAssetFiles_->AddGeneratedFile(matFilePath);
             MaterialManager::LoadMaterialDynamic(matFilePath);
             continue;
         }
@@ -793,6 +766,7 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
         matJson["enableShadowMapProjection"] = true;
         if (SaveJSON(matJson, matFilePath)) {
             Log(Translation("engine.model.material.generated") + matFilePath, LogSeverity::Info);
+            if (startupAssetFiles_) startupAssetFiles_->AddGeneratedFile(matFilePath);
             MaterialManager::LoadMaterialDynamic(matFilePath);
         }
     }

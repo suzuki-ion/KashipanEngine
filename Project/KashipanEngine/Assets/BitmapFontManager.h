@@ -9,6 +9,8 @@
 
 namespace KashipanEngine {
 
+class AssetFileIndex;
+
 class GameEngine;
 
 /// @brief BMFont形式（.fnt、テキスト形式）のビットマップフォント管理クラス
@@ -44,10 +46,10 @@ public:
     };
 
     /// @brief コンストラクタ（GameEngineからのみ生成可能）
-    /// @param assetsRootPath Assetsフォルダのルートパス
+    /// @param assetFiles 起動時に共通探索したAssetsの一覧
     /// @details ページ画像（アトラス）はTextureManagerが起動時のAssets走査で既に読み込み済みの
     ///          ものをファイル名で検索して使う（TextureManagerを直接保持する必要はない）
-    BitmapFontManager(Passkey<GameEngine>, const std::string &assetsRootPath = "Assets");
+    BitmapFontManager(Passkey<GameEngine>, AssetFileIndex &assetFiles);
     ~BitmapFontManager();
 
     BitmapFontManager(const BitmapFontManager &) = delete;
@@ -91,7 +93,7 @@ public:
     const std::string &GetAssetsRootPath() const noexcept { return assetsRootPath_; }
 
 private:
-    void LoadAllFromAssetsFolder();
+    void LoadAllFromAssetsFolder(std::vector<std::string> files);
 
     std::string assetsRootPath_;
 };

@@ -11,6 +11,8 @@
 
 namespace KashipanEngine {
 
+class AssetFileIndex;
+
 class GameEngine;
 class AudioPlayer;
 class SoundBeat;
@@ -73,8 +75,8 @@ public:
     };
 
     /// @brief コンストラクタ（GameEngine からのみ生成可能）
-    /// @param assetsRootPath Assets フォルダのルートパス
-    AudioManager(Passkey<GameEngine>, const std::string& assetsRootPath = "Assets");
+    /// @param assetFiles 起動時に共通探索したAssetsの一覧
+    AudioManager(Passkey<GameEngine>, AssetFileIndex &assetFiles);
     ~AudioManager();
 
     AudioManager(const AudioManager&) = delete;
@@ -272,7 +274,7 @@ private:
 
     void InitializeAudioDevice();
     void FinalizeAudioDevice();
-    void LoadAllFromAssetsFolder();
+    void LoadAllFromAssetsFolder(std::vector<std::string> files);
 
     std::string assetsRootPath_;
 };

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <memory>
 #include <vector>
 #include <cstdint>
 #include <DirectXTex.h>
@@ -11,10 +12,13 @@
 
 namespace KashipanEngine {
 
+class AssetFileIndex;
+
 class GameEngine;
 class DirectXCommon;
 class ShaderVariableBinder;
 class ModelManager;
+class TextureUploadBatch;
 
 /// @brief テクスチャ管理クラス
 class TextureManager final {
@@ -51,8 +55,8 @@ public:
 
     /// @brief コンストラクタ（GameEngine からのみ生成可能）
     /// @param directXCommon DirectX 共通（device / SRV heap 取得用）
-    /// @param assetsRootPath Assets フォルダのルートパス
-    TextureManager(Passkey<GameEngine>, DirectXCommon* directXCommon, const std::string& assetsRootPath = "Assets");
+    /// @param assetFiles 起動時に共通探索したAssetsの一覧
+    TextureManager(Passkey<GameEngine>, DirectXCommon* directXCommon, AssetFileIndex &assetFiles);
     ~TextureManager();
 
     TextureManager(const TextureManager&) = delete;
@@ -151,8 +155,9 @@ private:
     static std::vector<TextureHandle> GetAllImGuiTextures();
     static std::vector<TextureListEntry> GetImGuiTextureListEntries();
 #endif
-    void LoadAllFromAssetsFolder();
+    void LoadAllFromAssetsFolder(std::vector<std::string> files);
 
+    std::unique_ptr<TextureUploadBatch> startupUploadBatch_;
     DirectXCommon* directXCommon_ = nullptr;
     std::string assetsRootPath_;
 

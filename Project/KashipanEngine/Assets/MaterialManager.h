@@ -16,6 +16,8 @@
 
 namespace KashipanEngine {
 
+class AssetFileIndex;
+
 class GameEngine;
 
 /// @brief マテリアル管理クラス
@@ -93,8 +95,8 @@ public:
     };
 
     /// @brief コンストラクタ（GameEngine からのみ生成可能）
-    /// @param assetsRootPath Assets フォルダのルートパス
-    MaterialManager(Passkey<GameEngine>, const std::string &assetsRootPath = "Assets");
+    /// @param assetFiles 起動時に共通探索したAssetsの一覧
+    MaterialManager(Passkey<GameEngine>, AssetFileIndex &assetFiles);
     ~MaterialManager();
 
     MaterialManager(const MaterialManager&) = delete;
@@ -165,7 +167,7 @@ public:
 private:
     void InitializeMaterialManager();
     void FinalizeMaterialManager();
-    void LoadAllFromAssetsFolder();
+    void LoadAllFromAssetsFolder(std::vector<std::string> files);
     /// @brief "Default"という名前のマテリアルが読み込まれていない場合、既定値のマテリアルを登録する
     /// @details MeshRenderer/SpriteRenderer等はマテリアル未割当時に名前"Default"を参照するが、
     ///          対応する.matアセットが存在しないプロジェクトではハンドルが解決できず、

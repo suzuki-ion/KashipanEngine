@@ -9,6 +9,8 @@
 
 namespace KashipanEngine {
 
+class AssetFileIndex;
+
 class GameEngine;
 class DirectXCommon;
 
@@ -53,8 +55,8 @@ public:
 
     /// @brief コンストラクタ（GameEngineからのみ生成可能）
     /// @param directXCommon DirectX共通（アトラステクスチャのアップロード用）
-    /// @param assetsRootPath Assetsフォルダのルートパス
-    FontManager(Passkey<GameEngine>, DirectXCommon *directXCommon, const std::string &assetsRootPath = "Assets");
+    /// @param assetFiles 起動時に共通探索したAssetsの一覧
+    FontManager(Passkey<GameEngine>, DirectXCommon *directXCommon, AssetFileIndex &assetFiles);
     ~FontManager();
 
     FontManager(const FontManager &) = delete;
@@ -104,7 +106,7 @@ public:
     const std::string &GetAssetsRootPath() const noexcept { return assetsRootPath_; }
 
 private:
-    void LoadAllFromAssetsFolder();
+    void LoadAllFromAssetsFolder(std::vector<std::string> files);
     /// @brief 指定フォントのアトラスCPUバッファ全体をGPUテクスチャへ再アップロードする
     /// @details 新しいグリフをベイクしてアトラスの内容が変わるたびに呼ばれる
     static void UploadAtlasToGpu(FontHandle handle);

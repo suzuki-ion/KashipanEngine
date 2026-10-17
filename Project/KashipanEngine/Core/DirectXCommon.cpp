@@ -325,32 +325,32 @@ void DirectXCommon::ExecuteCommandLists() {
 }
 
 void DirectXCommon::ExecuteOneShotCommandsForTextureManager(Passkey<TextureManager>, const std::function<void(ID3D12GraphicsCommandList*)>& record) {
-    if (!dx12Device_ || !dx12CommandQueue_ || !dx12Fence_) return;
+    if (!dx12Device_ || !dx12CommandQueue_ || !dx12Fence_) throw std::runtime_error("Texture upload device is unavailable");
     auto* device = dx12Device_->GetDevice();
     auto* queue = dx12CommandQueue_->GetCommandQueue();
-    if (!device || !queue) return;
+    if (!device || !queue) throw std::runtime_error("Texture upload queue is unavailable");
 
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator> allocator;
     HRESULT hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(allocator.GetAddressOf()));
-    if (FAILED(hr)) return;
+    if (FAILED(hr)) throw std::runtime_error("Failed to create or close texture upload commands");
 
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> list;
     hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, allocator.Get(), nullptr, IID_PPV_ARGS(list.GetAddressOf()));
-    if (FAILED(hr)) return;
+    if (FAILED(hr)) throw std::runtime_error("Failed to create or close texture upload commands");
 
     if (record) {
         record(list.Get());
     }
 
     hr = list->Close();
-    if (FAILED(hr)) return;
+    if (FAILED(hr)) throw std::runtime_error("Failed to create or close texture upload commands");
 
     std::vector<ID3D12CommandList*> submit;
     submit.push_back(list.Get());
     dx12CommandQueue_->ExecuteCommandLists(Passkey<DirectXCommon>{}, submit);
 
     dx12Fence_->Signal(Passkey<DirectXCommon>{}, queue);
-    dx12Fence_->Wait(Passkey<DirectXCommon>{});
+    if (!dx12Fence_->Wait(Passkey<DirectXCommon>{})) throw std::runtime_error("Texture upload GPU wait failed");
 }
 
 void DirectXCommon::ExecuteOneShotCommandsForGifTexture(Passkey<GifTexture>, const std::function<void(ID3D12GraphicsCommandList*)>& record) {

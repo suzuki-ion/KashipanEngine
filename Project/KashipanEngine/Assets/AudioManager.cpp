@@ -1,3 +1,4 @@
+#include "Assets/AssetFileIndex.h"
 #include "AudioManager.h"
 #include "Debug/StartupTiming.h"
 #include "Assets/CaseInsensitive.h"
@@ -540,14 +541,14 @@ bool AudioManager::GetPlayPositionSeconds(PlayHandle play, double& outSeconds) {
     return true;
 }
 
-AudioManager::AudioManager(Passkey<GameEngine>, const std::string& assetsRootPath)
-    : assetsRootPath_(NormalizePathSlashes(assetsRootPath)) {
+AudioManager::AudioManager(Passkey<GameEngine>, AssetFileIndex &assetFiles)
+    : assetsRootPath_(NormalizePathSlashes(assetFiles.Root())) {
     LogScope scope;
     sActiveInstance = this;
     StartupTiming::Sections timing("Audio.Manager.");
     InitializeAudioDevice();
-    LoadAllFromAssetsFolder();
     timing.End("DeviceInitialization");
+    LoadAllFromAssetsFolder(assetFiles.Files(AssetFileIndex::Kind::Audio));
     timing.End("AssetLoading");
     LoadAudioCategoriesFile(assetsRootPath_);
     timing.End("CategorySettings");
@@ -571,20 +572,9 @@ void AudioManager::FinalizeAudioDevice() {
     FinalizeAudio();
 }
 
-void AudioManager::LoadAllFromAssetsFolder() {
+void AudioManager::LoadAllFromAssetsFolder(std::vector<std::string> files) {
     StartupTiming::Sections startupSections("Audio.");
     LogScope scope;
-    const auto dir = GetDirectoryData(assetsRootPath_, true, true);
-
-    std::vector<std::string> files;
-    const auto filtered = GetDirectoryDataByExtension(dir,
-        { ".wav", ".mp3", ".ogg", ".flac", ".aac", ".m4a", ".wma" });
-
-    std::function<void(const DirectoryData&)> flatten = [&](const DirectoryData& d) {
-        for (const auto& f : d.files) files.push_back(f);
-        for (const auto& sd : d.subdirectories) flatten(sd);
-    };
-    flatten(filtered);
     startupSections.End("FileList");
 
     // ファイルI/O・デコード(Media Foundation)はCPU処理のみでグローバル状態に触れないため、
@@ -594,6 +584,7 @@ void AudioManager::LoadAllFromAssetsFolder() {
     Plugin::RunParallelAndWait(files.size(), [this, &files, &decodedEntries, &decodedOk](size_t i) {
         decodedOk[i] = DecodeAudioFile(files[i], assetsRootPath_, decodedEntries[i]);
         });
+
     startupSections.End("Decoding");
 
     // 全ファイルのデコードが完了したら、メインスレッドでグローバルマップへの登録を順に行う

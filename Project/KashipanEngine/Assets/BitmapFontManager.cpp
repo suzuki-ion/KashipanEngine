@@ -1,3 +1,4 @@
+#include "Assets/AssetFileIndex.h"
 #include "BitmapFontManager.h"
 
 #include <algorithm>
@@ -97,8 +98,8 @@ void ForEachKeyValue(std::istringstream &iss, Callback &&callback) {
 
 } // namespace
 
-BitmapFontManager::BitmapFontManager(Passkey<GameEngine>, const std::string &assetsRootPath)
-    : assetsRootPath_(NormalizePathSlashes(assetsRootPath)) {
+BitmapFontManager::BitmapFontManager(Passkey<GameEngine>, AssetFileIndex &assetFiles)
+    : assetsRootPath_(NormalizePathSlashes(assetFiles.Root())) {
     LogScope scope;
     sAssetsRootPath = assetsRootPath_;
     sFonts.clear();
@@ -106,7 +107,7 @@ BitmapFontManager::BitmapFontManager(Passkey<GameEngine>, const std::string &ass
     sAssetPathToHandle.clear();
     sNameToHandle.clear();
     sNextHandle = 1;
-    LoadAllFromAssetsFolder();
+    LoadAllFromAssetsFolder(assetFiles.Files(AssetFileIndex::Kind::BitmapFont));
 }
 
 BitmapFontManager::~BitmapFontManager() {
@@ -117,17 +118,9 @@ BitmapFontManager::~BitmapFontManager() {
     sNameToHandle.clear();
 }
 
-void BitmapFontManager::LoadAllFromAssetsFolder() {
+void BitmapFontManager::LoadAllFromAssetsFolder(std::vector<std::string> files) {
     LogScope scope;
-    const auto dir = GetDirectoryData(sAssetsRootPath, true, true);
-    const auto filtered = GetDirectoryDataByExtension(dir, { ".fnt" });
 
-    std::vector<std::string> files;
-    std::function<void(const DirectoryData &)> flatten = [&](const DirectoryData &d) {
-        for (const auto &f : d.files) files.push_back(f);
-        for (const auto &sd : d.subdirectories) flatten(sd);
-    };
-    flatten(filtered);
 
     for (const auto &f : files) {
         LoadFont(f);

@@ -1,3 +1,4 @@
+#include "Assets/AssetFileIndex.h"
 #include "GifManager.h"
 
 #include <algorithm>
@@ -262,11 +263,11 @@ GifHandle RegisterEntry(GifAnimation &&entry) {
 
 } // namespace
 
-GifManager::GifManager(Passkey<GameEngine>, DirectXCommon *directXCommon, const std::string &assetsRootPath)
-    : assetsRootPath_(NormalizePathSlashes(assetsRootPath)), directXCommon_(directXCommon) {
+GifManager::GifManager(Passkey<GameEngine>, DirectXCommon *directXCommon, AssetFileIndex &assetFiles)
+    : assetsRootPath_(NormalizePathSlashes(assetFiles.Root())), directXCommon_(directXCommon) {
     LogScope scope;
     sActiveInstance = this;
-    LoadAllFromAssetsFolder();
+    LoadAllFromAssetsFolder(assetFiles.Files(AssetFileIndex::Kind::Gif));
 }
 
 GifManager::~GifManager() {
@@ -274,17 +275,9 @@ GifManager::~GifManager() {
     if (sActiveInstance == this) sActiveInstance = nullptr;
 }
 
-void GifManager::LoadAllFromAssetsFolder() {
+void GifManager::LoadAllFromAssetsFolder(std::vector<std::string> files) {
     LogScope scope;
-    const auto dir = GetDirectoryData(assetsRootPath_, true, true);
-    const auto filtered = GetDirectoryDataByExtension(dir, { ".gif" });
 
-    std::vector<std::string> files;
-    std::function<void(const DirectoryData &)> flatten = [&](const DirectoryData &d) {
-        for (const auto &f : d.files) files.push_back(f);
-        for (const auto &sd : d.subdirectories) flatten(sd);
-    };
-    flatten(filtered);
 
     // デコードはCPUのみでGPUリソースに触れないため、TextureManagerと同様にスレッドプールで並列実行する
     std::vector<GifAnimation> decoded(files.size());

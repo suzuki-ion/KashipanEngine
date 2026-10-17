@@ -1,3 +1,4 @@
+#include "Assets/AssetFileIndex.h"
 #include "FontManager.h"
 
 #include <algorithm>
@@ -349,8 +350,8 @@ void GrowAtlas(FontEntry &font) {
 
 } // namespace
 
-FontManager::FontManager(Passkey<GameEngine>, DirectXCommon *directXCommon, const std::string &assetsRootPath)
-    : directXCommon_(directXCommon), assetsRootPath_(NormalizePathSlashes(assetsRootPath)) {
+FontManager::FontManager(Passkey<GameEngine>, DirectXCommon *directXCommon, AssetFileIndex &assetFiles)
+    : directXCommon_(directXCommon), assetsRootPath_(NormalizePathSlashes(assetFiles.Root())) {
     LogScope scope;
     sAssetsRootPath = assetsRootPath_;
     sDirectXCommon = directXCommon_;
@@ -362,7 +363,7 @@ FontManager::FontManager(Passkey<GameEngine>, DirectXCommon *directXCommon, cons
     sAssetPathToHandle.clear();
     sNameToHandle.clear();
     sNextHandle = 1;
-    LoadAllFromAssetsFolder();
+    LoadAllFromAssetsFolder(assetFiles.Files(AssetFileIndex::Kind::Font));
 }
 
 FontManager::~FontManager() {
@@ -375,18 +376,9 @@ FontManager::~FontManager() {
     sDirectXCommon = nullptr;
 }
 
-void FontManager::LoadAllFromAssetsFolder() {
+void FontManager::LoadAllFromAssetsFolder(std::vector<std::string> files) {
     LogScope scope;
-    const auto dir = GetDirectoryData(sAssetsRootPath, true, true);
 
-    std::vector<std::string> files;
-    const auto filtered = GetDirectoryDataByExtension(dir, { ".ttf", ".otf" });
-
-    std::function<void(const DirectoryData &)> flatten = [&](const DirectoryData &d) {
-        for (const auto &f : d.files) files.push_back(f);
-        for (const auto &sd : d.subdirectories) flatten(sd);
-    };
-    flatten(filtered);
 
     for (const auto &f : files) {
         LoadFont(f);

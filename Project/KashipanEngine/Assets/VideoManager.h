@@ -7,6 +7,8 @@
 
 namespace KashipanEngine {
 
+class AssetFileIndex;
+
 class GameEngine;
 class DirectXCommon;
 class VideoPlayer;
@@ -33,8 +35,8 @@ public:
 
     /// @brief コンストラクタ（GameEngine からのみ生成可能）
     /// @param directXCommon 動画テクスチャ生成に使う DirectXCommon
-    /// @param assetsRootPath Assets フォルダのルートパス
-    VideoManager(Passkey<GameEngine>, DirectXCommon *directXCommon, const std::string &assetsRootPath = "Assets");
+    /// @param assetFiles 起動時に共通探索したAssetsの一覧
+    VideoManager(Passkey<GameEngine>, DirectXCommon *directXCommon, AssetFileIndex &assetFiles);
     ~VideoManager();
 
     VideoManager(const VideoManager &) = delete;
@@ -102,7 +104,7 @@ public:
 private:
     void InitializeMediaFoundation();
     void FinalizeMediaFoundation();
-    void LoadAllFromAssetsFolder();
+    void LoadAllFromAssetsFolder(std::vector<std::string> files);
 
     std::string assetsRootPath_;
     DirectXCommon *directXCommon_ = nullptr;

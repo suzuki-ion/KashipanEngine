@@ -1027,6 +1027,11 @@
     <ClInclude Include="KashipanEngine\Debug\ProfilerServer.h"><Filter>KashipanEngine\Debug</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Debug\StartupTiming.h"><Filter>KashipanEngine\Debug</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Utilities\FileIO\ContentCache.h"><Filter>KashipanEngine\Utilities\FileIO</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\TextureUploadBatch.h"><Filter>KashipanEngine\Graphics</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\PreparedTextureCache.h"><Filter>KashipanEngine\Assets</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\AssetFileIndex.h"><Filter>ヘッダー ファイル</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\ModelSceneCache.h"><Filter>ヘッダー ファイル</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Assets\SharedModelImport.h"><Filter>KashipanEngine\Assets</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Debug\RuntimeDebugOverlay.h"><Filter>KashipanEngine\Debug</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Debug\ImGuiManager.h">
       <Filter>KashipanEngine\Debug</Filter>

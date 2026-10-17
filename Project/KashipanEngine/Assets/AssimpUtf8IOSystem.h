@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdio>
 #include <string>
+#include <functional>
 
 #include <assimp/IOStream.hpp>
 #include <assimp/IOSystem.hpp>
@@ -62,8 +63,11 @@ private:
 ///          差し替えて使うこと（Importerが所有権を持ち、破棄時に自動的に削除される）
 class AssimpUtf8IOSystem final : public Assimp::IOSystem {
 public:
+    using Observer = std::function<void(const char *, bool)>;
+    explicit AssimpUtf8IOSystem(Observer observer = {}) : observer_(std::move(observer)) {}
     bool Exists(const char *file) const override {
         FILE *f = OpenRaw(file, "rb");
+        Observe(file, f != nullptr);
         if (!f) return false;
         fclose(f);
         return true;
@@ -71,11 +75,17 @@ public:
     char getOsSeparator() const override { return '\\'; }
     Assimp::IOStream *Open(const char *file, const char *mode = "rb") override {
         FILE *f = OpenRaw(file, mode);
+        Observe(file, f != nullptr);
         return f ? new AssimpUtf8IOStream(f) : nullptr;
     }
     void Close(Assimp::IOStream *file) override { delete file; }
 
 private:
+    Observer observer_;
+    void Observe(const char *file, bool exists) const noexcept {
+        if (!observer_) return;
+        try { observer_(file, exists); } catch (...) {} // Caching must never prevent import.
+    }
     static FILE *OpenRaw(const char *utf8Path, const char *mode) {
         const std::wstring widePath = ConvertString(std::string(utf8Path));
         const std::wstring wideMode = ConvertString(std::string(mode));

@@ -1,3 +1,4 @@
+#include "Assets/AssetFileIndex.h"
 #include "VideoManager.h"
 
 #include <algorithm>
@@ -176,12 +177,12 @@ VideoHandle RegisterEntry(VideoInfo &&entry) {
 
 } // namespace
 
-VideoManager::VideoManager(Passkey<GameEngine>, DirectXCommon *directXCommon, const std::string &assetsRootPath)
-    : assetsRootPath_(NormalizePathSlashes(assetsRootPath)), directXCommon_(directXCommon) {
+VideoManager::VideoManager(Passkey<GameEngine>, DirectXCommon *directXCommon, AssetFileIndex &assetFiles)
+    : assetsRootPath_(NormalizePathSlashes(assetFiles.Root())), directXCommon_(directXCommon) {
     LogScope scope;
     sActiveInstance = this;
     InitializeMediaFoundation();
-    LoadAllFromAssetsFolder();
+    LoadAllFromAssetsFolder(assetFiles.Files(AssetFileIndex::Kind::Video));
 }
 
 VideoManager::~VideoManager() {
@@ -209,17 +210,7 @@ void VideoManager::FinalizeMediaFoundation() {
     }
 }
 
-void VideoManager::LoadAllFromAssetsFolder() {
-    const auto dir = GetDirectoryData(assetsRootPath_, true, true);
-    const auto filtered = GetDirectoryDataByExtension(dir, { ".mp4", ".wmv", ".mov", ".avi" });
-
-    std::vector<std::string> files;
-    std::function<void(const DirectoryData &)> flatten = [&](const DirectoryData &d) {
-        for (const auto &f : d.files) files.push_back(f);
-        for (const auto &sd : d.subdirectories) flatten(sd);
-    };
-    flatten(filtered);
-
+void VideoManager::LoadAllFromAssetsFolder(std::vector<std::string> files) {
     for (const auto &file : files) {
         VideoInfo info{};
         if (!ProbeVideo(file, assetsRootPath_, info)) continue;

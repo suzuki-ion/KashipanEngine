@@ -10,6 +10,8 @@
 
 namespace KashipanEngine {
 
+class AssetFileIndex;
+
 class GameEngine;
 
 /// @brief アニメーションクリップデータ
@@ -59,8 +61,8 @@ public:
     };
 
     /// @brief コンストラクタ（GameEngine からのみ生成可能）
-    /// @param assetsRootPath Assets フォルダのルートパス
-    AnimationManager(Passkey<GameEngine>, const std::string &assetsRootPath = "Assets");
+    /// @param assetFiles 起動時に共通探索したAssetsの一覧
+    AnimationManager(Passkey<GameEngine>, AssetFileIndex &assetFiles);
     ~AnimationManager();
 
     AnimationManager(const AnimationManager &) = delete;
@@ -95,7 +97,7 @@ public:
     const std::string &GetAssetsRootPath() const noexcept { return assetsRootPath_; }
 
 private:
-    void LoadAllFromAssetsFolder();
+    void LoadAllFromAssetsFolder(std::vector<std::string> files);
 
     std::string assetsRootPath_;
     static inline const AnimationData sEmptyData;

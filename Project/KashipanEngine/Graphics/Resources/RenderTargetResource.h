@@ -12,6 +12,8 @@ class RenderTargetResource final : public IGraphicsResource {
     static inline FLOAT sDefaultClearColor_[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 public:
+    /// @brief 現在の既定クリアカラー（読み取り専用）
+    static const FLOAT *GetDefaultClearColor() noexcept { return sDefaultClearColor_; }
     /// @brief デフォルトのクリアカラー設定
     /// @param clearColor クリアカラー配列（RGBA）
     static void SetDefaultClearColor(Passkey<DirectXCommon>, const FLOAT clearColor[4]) {
@@ -40,7 +42,8 @@ public:
         ID3D12Resource *existingResource = nullptr, const FLOAT clearColor[4] = sDefaultClearColor_);
 
     /// @brief レンダーターゲットビューのクリア
-    void ClearRenderTargetView() const;
+    /// @param clearColor このクリアだけに使う色。nullptrの場合は生成時の色を使う
+    void ClearRenderTargetView(const FLOAT *clearColor = nullptr) const;
 
     UINT GetWidth() const { return width_; }
     UINT GetHeight() const { return height_; }

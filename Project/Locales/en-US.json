@@ -1343,6 +1343,7 @@
 		"component.screenbufferobject.height": "Height",
 		"component.screenbufferobject.name": "Name",
 		"component.screenbufferobject.render_order_priority": "Render Order Priority",
+		"component.screenbufferobject.clear_color": "Clear Color",
 		"component.screenbufferobject.save_screenshot": "Save Screenshot",
 		"component.screenbufferobject.save_to_file": "Save to File",
 		"component.screenbufferobject.size_ux_u": "Size: %ux%u",

@@ -1345,6 +1345,7 @@
 		"component.screenbufferobject.height": "高さ",
 		"component.screenbufferobject.name": "名前",
 		"component.screenbufferobject.render_order_priority": "描画順優先度",
+		"component.screenbufferobject.clear_color": "クリアカラー",
 		"component.screenbufferobject.save_screenshot": "スクリーンショットを保存",
 		"component.screenbufferobject.save_to_file": "ファイルへ保存",
 		"component.screenbufferobject.size_ux_u": "サイズ：%u×%u",

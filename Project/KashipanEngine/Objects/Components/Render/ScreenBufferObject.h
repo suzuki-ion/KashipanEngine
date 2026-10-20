@@ -25,6 +25,7 @@ public:
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(width_, [this] { SetSize(width_, height_); });
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(height_, [this] { SetSize(width_, height_); });
         ADD_MEMBER_VARIABLE_WITH_CALLBACK(renderOrderPriority_, [this] { SetRenderOrderPriority(renderOrderPriority_); });
+        ADD_MEMBER_VARIABLE_WITH_CALLBACK(clearColor_, [this] { SetClearColor(clearColor_); });
     )
     COMPONENT_CATEGORY("Render", "RenderTarget")
         ~ScreenBufferObject() override = default;
@@ -36,6 +37,7 @@ public:
         ptr->height_ = height_;
         ptr->isShowViewer_ = isShowViewer_;
         ptr->renderOrderPriority_ = renderOrderPriority_;
+        ptr->clearColor_ = clearColor_;
         ptr->saveDirectory_ = saveDirectory_;
         ptr->saveFileNamePrefix_ = saveFileNamePrefix_;
         ptr->saveFormat_ = saveFormat_;
@@ -70,6 +72,15 @@ public:
         }
     }
     std::int32_t GetRenderOrderPriority() const noexcept { return renderOrderPriority_; }
+
+    /// @brief シーン描画開始時のクリアカラーを設定（RGBA、アルファ0で透明背景）
+    void SetClearColor(const Vector4 &color) noexcept {
+        clearColor_ = color;
+        if (buffer_ && ScreenBuffer::IsExist(buffer_)) {
+            buffer_->SetClearColor(color);
+        }
+    }
+    const Vector4 &GetClearColor() const noexcept { return clearColor_; }
 
     //==================================================
     // 画像ファイル保存
@@ -106,6 +117,7 @@ protected:
         }
         if (buffer_) {
             buffer_->SetRenderOrderPriority(renderOrderPriority_);
+            buffer_->SetClearColor(clearColor_);
         }
     }
     void Finalize() override {
@@ -133,6 +145,9 @@ protected:
         int renderOrderPriority = renderOrderPriority_;
         if (ImGui::DragInt(TranslationLabel("component.screenbufferobject.render_order_priority"), &renderOrderPriority)) {
             SetRenderOrderPriority(renderOrderPriority);
+        }
+        if (ImGui::ColorEdit4(TranslationLabel("component.screenbufferobject.clear_color"), &clearColor_.x)) {
+            SetClearColor(clearColor_);
         }
 
         // 描画内容確認用ビューアウィンドウ
@@ -209,6 +224,7 @@ protected:
         json["height"] = height_;
         json["isShowViewer"] = isShowViewer_;
         json["renderOrderPriority"] = renderOrderPriority_;
+        json["clearColor"] = ToJSON(clearColor_);
         json["saveDirectory"] = saveDirectory_;
         json["saveFileNamePrefix"] = saveFileNamePrefix_;
         json["saveFormat"] = saveFormat_;
@@ -222,6 +238,7 @@ protected:
         const std::uint32_t loadedHeight = json.value("height", 720u);
         isShowViewer_ = json.value("isShowViewer", false);
         renderOrderPriority_ = json.value("renderOrderPriority", 0);
+        clearColor_ = json.contains("clearColor") ? FromJSON<Vector4>(json.at("clearColor")) : ScreenBuffer::GetDefaultClearColor();
         saveDirectory_ = json.value("saveDirectory", std::string("Screenshots"));
         saveFileNamePrefix_ = json.value("saveFileNamePrefix", std::string("Screenshot"));
         saveFormat_ = json.value("saveFormat", std::string("png"));
@@ -253,6 +270,7 @@ protected:
                         name_ + " (" + buf + ") " + std::to_string(width_) + "x" + std::to_string(height_), LogSeverity::Debug);
                 }
                 buffer_->SetRenderOrderPriority(renderOrderPriority_);
+                buffer_->SetClearColor(clearColor_);
                 return true;
             }
         }
@@ -297,6 +315,7 @@ protected:
         height_ = loadedHeight;
         if (buffer_) {
             buffer_->SetRenderOrderPriority(renderOrderPriority_);
+            buffer_->SetClearColor(clearColor_);
         }
         return true;
     }
@@ -356,6 +375,7 @@ private:
     std::uint32_t height_ = 720;
     /// @brief 同じ種別（ScreenBuffer）の描画先同士での描画順（IRenderTarget::GetRenderOrderPriority参照）
     std::int32_t renderOrderPriority_ = 0;
+    Vector4 clearColor_ = ScreenBuffer::GetDefaultClearColor();
     /// @brief ビューアウィンドウ表示フラグ（シリアライズされ、再起動後も維持される）
     bool isShowViewer_ = false;
     /// @brief ビューアウィンドウのImGui ID用フォールバック値（所属オブジェクトが

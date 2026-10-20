@@ -31,6 +31,12 @@
             {
                 "data": {
                     "customData": {
+                        "clearColor": {
+                            "w": 0.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
                         "height": 720,
                         "isShowViewer": false,
                         "name": "ScreenBuffer_6",

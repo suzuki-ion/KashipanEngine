@@ -13,14 +13,14 @@ bool RenderTargetResource::Recreate(UINT width, UINT height, DXGI_FORMAT format,
     return Initialize(width, height, format, existingResource, clearColor);
 }
 
-void RenderTargetResource::ClearRenderTargetView() const {
+void RenderTargetResource::ClearRenderTargetView(const FLOAT *clearColor) const {
     auto *cl = GetCommandList();
     if (!cl || !GetDescriptorHandleInfo()) {
         return;
     }
     cl->ClearRenderTargetView(
         GetDescriptorHandleInfo()->cpuHandle,
-        clearColor_,
+        clearColor ? clearColor : clearColor_,
         0,
         nullptr
     );

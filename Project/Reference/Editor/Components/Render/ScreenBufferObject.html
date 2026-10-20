@@ -24,6 +24,7 @@
 <tr><td>Name</td><td>テキスト入力欄（Enterキーで確定）</td><td>TextureManagerへの登録名。<strong>他のフィールドと違い、Enterキーを押すまでは値が確定しない</strong>（<code>ImGuiInputTextFlags_EnterReturnsTrue</code>）</td></tr>
 <tr><td>Width</td><td>整数のドラッグ入力欄</td><td>バッファの幅（既定1280、下限1にクランプ）。変更すると生成済みバッファが実際にリサイズされる</td></tr>
 <tr><td>Height</td><td>整数のドラッグ入力欄</td><td>バッファの高さ（既定720、下限1にクランプ）</td></tr>
+<tr><td>Clear Color</td><td>RGBAカラー入力</td><td>シーン描画開始時のクリアカラー。アルファ0で透明背景、1で不透明背景。シーン保存・複製・リサイズ・シーン間のバッファ引き継ぎでも維持される。未設定の既存シーンではエンジンの既定クリアカラーを使用する</td></tr>
 <tr><td>Open Viewer / Close Viewer</td><td>トグルボタン</td><td>押すたびに開閉する、バッファの描画内容を確認できる別のImGuiウィンドウ（"ScreenBuffer Viewer: 名前"）の表示状態を切り替える。SRVが未準備の間は「SRV not ready.」と表示される</td></tr>
 </table>
 

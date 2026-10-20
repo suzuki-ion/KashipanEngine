@@ -24,6 +24,7 @@
 <tr><th>メソッド</th><th>説明</th></tr>
 <tr><td><code>void SetName(const string &amp;in)</code> / <code>const string &amp;GetName() const</code></td><td>管理用名前（TextureManagerへの登録名）の設定/取得</td></tr>
 <tr><td><code>void SetSize(uint width, uint height)</code></td><td>バッファをリサイズする</td></tr>
+<tr><td><code>void SetClearColor(const Vector4 &amp;in)</code> / <code>const Vector4 &amp;GetClearColor() const</code></td><td>シーン描画開始時のクリアカラー（RGBA）を設定/取得。次の描画から反映され、シーンへ保存される。例：<code>screenBuffer.SetClearColor(Vector4(0, 0, 0, 0));</code> で透明背景。ポストエフェクトの中間面にはこの背景色を再適用しない</td></tr>
 </table>
 
 <h2>画像ファイル保存</h2>

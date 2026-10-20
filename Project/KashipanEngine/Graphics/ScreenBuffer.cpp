@@ -392,13 +392,18 @@ ID3D12GraphicsCommandList *ScreenBuffer::BeginRecord(bool disableDepthWrite, boo
 
     const auto rtv = rt->GetCPUDescriptorHandle();
 
+    // 背景色はシーン描画の開始時だけに適用する。ポストエフェクトの中間面は透明でクリアする。
+    const FLOAT clearColor[4] = {
+        isMainCall ? clearColor_.x : 0.0f, isMainCall ? clearColor_.y : 0.0f,
+        isMainCall ? clearColor_.z : 0.0f, isMainCall ? clearColor_.w : 0.0f
+    };
     if (disableDepthWrite) {
         cmd->OMSetRenderTargets(1, &rtv, FALSE, nullptr);
-        rt->ClearRenderTargetView();
+        rt->ClearRenderTargetView(clearColor);
     } else {
         const auto dsv = ds->GetCPUDescriptorHandle();
         cmd->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
-        rt->ClearRenderTargetView();
+        rt->ClearRenderTargetView(clearColor);
         ds->ClearDepthStencilView();
     }
 

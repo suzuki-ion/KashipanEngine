@@ -12,6 +12,7 @@
 #include "Graphics/Resources/ShaderResourceResource.h"
 #include "Graphics/IShaderTexture.h"
 #include "Graphics/IRenderTarget.h"
+#include "Math/Vector4.h"
 
 namespace KashipanEngine {
 
@@ -79,6 +80,14 @@ public:
     std::int32_t GetRenderOrderPriority() const noexcept override { return renderOrderPriority_; }
     /// @brief 同じ種別の描画先同士での描画順を設定する（詳細はIRenderTarget::GetRenderOrderPriority参照）
     void SetRenderOrderPriority(std::int32_t priority) noexcept { renderOrderPriority_ = priority; }
+
+    /// @brief シーン描画開始時のクリアカラー（RGBA）。次のBeginDrawから反映する
+    void SetClearColor(const Vector4 &color) noexcept { clearColor_ = color; }
+    const Vector4 &GetClearColor() const noexcept { return clearColor_; }
+    static Vector4 GetDefaultClearColor() noexcept {
+        const auto *color = RenderTargetResource::GetDefaultClearColor();
+        return Vector4(color[0], color[1], color[2], color[3]);
+    }
 
     /// @brief ポストエフェクト用のパス切り替え処理
     /// @details 現在の書き込み面をSRVとして参照可能な状態にしてバッファを進め、
@@ -226,6 +235,7 @@ private:
 
     /// @brief 同じ種別の描画先同士での描画順（IRenderTarget::GetRenderOrderPriority参照）
     std::int32_t renderOrderPriority_ = 0;
+    Vector4 clearColor_ = GetDefaultClearColor();
 
     bool isDepthWriteEnabled_ = true;
     bool isLastBeginDisableDepthWrite_ = false;

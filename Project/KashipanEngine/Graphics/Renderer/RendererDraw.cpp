@@ -627,6 +627,8 @@ void Renderer::RenderScreenWideDitherTarget(ScreenBuffer *screenBuffer,
         screenWideAccumColor_->TransitionTo(D3D12_RESOURCE_STATE_RENDER_TARGET);
         screenWideAccumColor_->ClearRenderTargetView();
 
+        const auto &background = screenBuffer->GetClearColor();
+        const FLOAT backgroundClear[4] = { background.x, background.y, background.z, background.w };
         for (std::uint32_t pass = 0; pass < passCount; ++pass) {
             const float phaseOffset = static_cast<float>(pass) * kMultiPassDitherGoldenRatioConjugate;
 
@@ -640,7 +642,8 @@ void Renderer::RenderScreenWideDitherTarget(ScreenBuffer *screenBuffer,
             screenWideScratchDepth_->ClearDepthStencilView();
             screenWideScratchColor_->SetCommandList(commandList);
             screenWideScratchColor_->TransitionTo(D3D12_RESOURCE_STATE_RENDER_TARGET);
-            screenWideScratchColor_->ClearRenderTargetView();
+            // 全画面ディザーでも、通常描画と同じScreenBufferの背景色で各位相を開始する。
+            screenWideScratchColor_->ClearRenderTargetView(backgroundClear);
 
             {
                 const auto rtv = screenWideScratchColor_->GetCPUDescriptorHandle();

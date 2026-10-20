@@ -2652,6 +2652,8 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void SetSize(uint, uint)", SafeCall<&ScreenBufferObject::SetSize>())
         .method("void SetRenderOrderPriority(int)", SafeCall<&ScreenBufferObject::SetRenderOrderPriority>())
         .method("int GetRenderOrderPriority() const", SafeCall<&ScreenBufferObject::GetRenderOrderPriority>())
+        .method("void SetClearColor(const Vector4 &in)", SafeCall<&ScreenBufferObject::SetClearColor>())
+        .method("const Vector4 &GetClearColor() const", SafeCall<&ScreenBufferObject::GetClearColor>())
         .method("void SetSaveDirectory(const string &in)", SafeCall<&ScreenBufferObject::SetSaveDirectory>())
         .method("const string &GetSaveDirectory() const", SafeCall<&ScreenBufferObject::GetSaveDirectory>())
         .method("void SetSaveFileNamePrefix(const string &in)", SafeCall<&ScreenBufferObject::SetSaveFileNamePrefix>())

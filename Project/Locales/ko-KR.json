@@ -1342,6 +1342,7 @@
 		"component.screenbufferobject.height": "높이",
 		"component.screenbufferobject.name": "이름",
 		"component.screenbufferobject.render_order_priority": "렌더링 순서 우선순위",
+		"component.screenbufferobject.clear_color": "클리어 색상",
 		"component.screenbufferobject.save_screenshot": "스크린샷 저장",
 		"component.screenbufferobject.save_to_file": "파일로 저장",
 		"component.screenbufferobject.size_ux_u": "크기: %u×%u",

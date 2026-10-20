@@ -16,6 +16,7 @@
 
 #include "Core/ProjectPaths.h"
 #include "Debug/Logger.h"
+#include "Debug/SceneChangeTiming.h"
 #include "Math/Quaternion.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
@@ -362,6 +363,7 @@ void ScriptComponent::ReleaseScript() {
 }
 
 bool ScriptComponent::Reload() {
+    SceneLoadTiming::Scope sceneLoadTiming1("Script.Reload.Total", scriptPath_);
     // リロード後も編集済みの値を維持するため、破棄前に現在値を退避する
     pendingFieldValues_ = CaptureFieldValuesToJson();
 
@@ -377,7 +379,9 @@ bool ScriptComponent::Reload() {
 
     if (scriptPath_.empty()) return false;
 
-    auto *scriptEngine = GetOrAddSceneScriptEngine();
+    SceneScriptEngine *scriptEngine = nullptr;
+    { SceneLoadTiming::Scope sceneLoadTiming2("Script.GetOrAddEngine", scriptPath_);
+      scriptEngine = GetOrAddSceneScriptEngine(); }
     asIScriptEngine *engine = scriptEngine ? scriptEngine->GetEngine() : nullptr;
     if (!engine) {
         lastError_ = "スクリプトエンジンが初期化されていません";
@@ -400,7 +404,9 @@ bool ScriptComponent::Reload() {
     // （以降のincludeはこの物理パスからの相対で解決される）
     const std::string resolvedScriptPath = ProjectPaths::ToPhysical(scriptPath_);
     const bool isSectionLoaded = builder.AddSectionFromFile(resolvedScriptPath.c_str()) >= 0;
-    const bool isBuilt = isSectionLoaded && builder.BuildModule() >= 0;
+    bool isBuilt = false;
+    { SceneLoadTiming::Scope sceneLoadTiming3("Script.BuildModule", scriptPath_);
+      isBuilt = isSectionLoaded && builder.BuildModule() >= 0; }
     auto buildMessages = scriptEngine->EndMessageCapture();
 
     if (!isBuilt) {
@@ -848,7 +854,7 @@ void ScriptComponent::CollectSerializedFields(CScriptBuilder &builder) {
         if (!engine) return;
         asITypeInfo *type = engine->GetTypeInfoById(field.typeId & ~(asTYPEID_OBJHANDLE | asTYPEID_HANDLETOCONST));
         if (!type) return;
-        Log(Translation("engine.script.field.array.recreated") + field.name, LogSeverity::Warning);
+        Log(Translation("engine.script.field.array.recreated") + field.name, LogSeverity::Info);
         *slot = CScriptArray::Create(type);
     };
 

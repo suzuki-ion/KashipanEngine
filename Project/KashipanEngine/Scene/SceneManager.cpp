@@ -1,5 +1,6 @@
 #include "Scene/SceneManager.h"
 #include "Debug/Profiler.h"
+#include "Debug/SceneChangeTiming.h"
 #include "Core/ProjectPaths.h"
 #include "Debug/Logger.h"
 #include "Scene/RenderTargetCarryOverRegistry.h"
@@ -170,20 +171,27 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
     Log(Translation("engine.scenemanager.scene.switch.start") + pendingSceneName_ +
         "、wasPlaying=" + (wasPlaying ? "true" : "false"), LogSeverity::Info);
 
+    SceneLoadTiming::Session sceneLoadSession(pendingSceneName_);
+    SceneChangeTiming sceneTiming("Manager.", pendingSceneName_);
+
     // 描画先コンポーネント（ScreenBufferObject/NormalWindowObject等）が、
     // 破棄されるバッファ/ウィンドウを次のシーンの同名コンポーネントへ引き継げるようにする
     RenderTargetCarryOverRegistry::BeginSceneSwitch(Passkey<SceneManager>{});
+    sceneTiming.End("BeginCarryOver");
 
     // 変更前のシーンを終了処理して破棄する
     if (currentScene_) {
         currentScene_->FinalizeInterface(Passkey<SceneManager>());
-        currentScene_.reset();
     }
+    sceneTiming.End("FinalizePreviousScene");
+    currentScene_.reset();
+    sceneTiming.End("DestroyPreviousScene");
 
     // 新しいシーンを作成する
     if (!entry->filePath.empty()) {
         // ファイルパス登録の場合は切り替えのたびに最新のファイル内容を読み込む
         JSON sceneData = LoadSceneFromPath(entry->filePath);
+        sceneTiming.End("ReadSceneJSON");
         if (!sceneData.empty()) {
             currentScene_ = std::make_unique<Scene>(sceneData);
         } else {
@@ -192,11 +200,15 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
             currentScene_ = std::make_unique<Scene>(pendingSceneName_);
         }
     } else if (!entry->factoryData.empty()) {
+        sceneTiming.End("ReadSceneJSON"); // No file I/O for an in-memory scene.
         currentScene_ = std::make_unique<Scene>(entry->factoryData);
     } else {
         // ファクトリデータが空の場合は、シーン名だけでシーンを作成する
+        sceneTiming.End("ReadSceneJSON"); // No file I/O for an empty scene.
         currentScene_ = std::make_unique<Scene>(pendingSceneName_);
     }
+    // Includes Scene's constructor, LoadFromJSON and component initialization during construction.
+    sceneTiming.End("ConstructScene");
 
     if (currentScene_) {
         currentScene_->SetSceneManager(Passkey<SceneManager>(), this);
@@ -205,6 +217,7 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
 #endif
         currentScene_->InitializeInterface(Passkey<SceneManager>());
     }
+    sceneTiming.End("InitializeScene");
 
     // 直近スナップショットは切替前のシーンのものなので、切替後まで持ち越さないようクリアする。
     // 切替直後〜次の1秒間はExportCrashSceneBackup側のライブシーンへのフォールバックで補う
@@ -213,10 +226,12 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
 
     // 新しいシーン側で引き取られなかった描画先リソースをここで実際に破棄する
     RenderTargetCarryOverRegistry::EndSceneSwitch(Passkey<SceneManager>{});
+    sceneTiming.End("FinishCarryOverAndSnapshot");
 
     Log(Translation("engine.scenemanager.scene.switch.end") + pendingSceneName_, LogSeverity::Info);
 
     pendingSceneName_.clear();
+    sceneTiming.Finish();
     return true;
 }
 

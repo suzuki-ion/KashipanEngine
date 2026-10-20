@@ -2,6 +2,7 @@
 #include "Assets/AssetFileIndex.h"
 #include "GameEngine.h"
 #include "Debug/StartupTiming.h"
+#include "Debug/SceneChangeTiming.h"
 #include "Assets/SharedModelImport.h"
 #include "EngineSettings.h"
 #include "Core/ProjectPaths.h"
@@ -21,6 +22,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <chrono>
+#include <optional>
 
 #if defined(USE_IMGUI)
 #include <imgui.h>
@@ -374,12 +376,17 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
 
         {
             Profiler::Scope scope("Frame.SceneChangeAndCleanup");
-            if (sceneManager_ && sceneManager_->CommitPendingSceneChange({})) {
+            std::optional<SceneChangeTiming> sceneTiming;
+            if (sceneManager_ && sceneManager_->HasPendingSceneChange()) sceneTiming.emplace("Frame.");
+            const bool sceneChanged = sceneManager_ && sceneManager_->CommitPendingSceneChange({});
+            if (sceneChanged) {
+                sceneTiming->End("CommitSceneChange");
                 graphicsEngine_->ReleaseRendererResources(Passkey<GameEngine>{});
                 // シーン構築中のアセット読み込みで実時間が飛んでいるため、
                 // 次フレームのデルタタイムへその時間が混入しないようにする
                 ResetDeltaTime({});
                 if (StartupTiming::IsActive()) startupSceneCommitted = true;
+                sceneTiming->End("RendererCleanup");
             }
             // スワップチェーンの破棄は、それが紐付くウィンドウ(HWND)を破棄するより必ず先に行うこと。
             // Window::CommitDestroy()はDestroyWindow()を同期的に呼ぶため、先にHWNDを破棄してしまうと
@@ -393,6 +400,10 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
             ShadowMapBuffer::CommitDestroy({});
             VideoManager::CommitPendingDestroy({});
             GifManager::CommitPendingDestroy({});
+            if (sceneChanged) {
+                sceneTiming->End("PendingResourceDestruction");
+                sceneTiming->Finish();
+            }
         }
         firstFrameSections.End("SceneChangeAndCleanup");
         Profiler::GetInstance().EndFrame();

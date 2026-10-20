@@ -1,4 +1,5 @@
 #include "AssetsWindow.h"
+#include "Debug/SceneChangeTiming.h"
 #ifdef USE_IMGUI
 #include <imgui.h>
 #include <imgui_stdlib.h>
@@ -351,14 +352,19 @@ std::string AssetsWindow::ToLowerExtension(const std::filesystem::path &path) {
 }
 
 void AssetsWindow::RefreshFolderTree() {
+    SceneLoadTiming::Scope sceneLoadTiming1("AssetsWindow.RefreshFolderTree");
     rootFolder_ = FolderNode{};
     rootFolder_.name = Translation("editor.assets.folder.root");
     rootFolder_.path = "";
-    BuildFolderNode(rootFolder_);
-    RefreshFileList();
+    {
+        SceneLoadTiming::Scope sceneLoadTiming2("AssetsWindow.BuildFolderTree");
+        BuildFolderNode(rootFolder_);
+    }
+    { SceneLoadTiming::Scope sceneLoadTiming3("AssetsWindow.RefreshRootFiles"); RefreshFileList(); }
 }
 
 void AssetsWindow::BuildFolderNode(FolderNode &node) {
+    SceneLoadTiming::Scope sceneLoadTiming4("AssetsWindow.BuildFolderNode.Inclusive", node.path.empty() ? "Assets" : node.path);
     std::error_code ec;
     const std::filesystem::path base = ToPhysicalPath(node.path);
     for (const auto &entry : std::filesystem::directory_iterator(
@@ -372,7 +378,10 @@ void AssetsWindow::BuildFolderNode(FolderNode &node) {
         if (!name.empty() && name.front() == '.') continue;
         auto child = std::make_unique<FolderNode>();
         child->name = name;
-        child->path = ProjectPaths::ToLogical(PathToUtf8String(entry.path()));
+        {
+            SceneLoadTiming::Scope sceneLoadTiming5("AssetsWindow.ResolveLogicalPath", child->name);
+            child->path = ProjectPaths::ToLogical(PathToUtf8String(entry.path()));
+        }
         BuildFolderNode(*child);
         node.children.push_back(std::move(child));
     }

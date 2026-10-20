@@ -1,5 +1,6 @@
 #include "EmptyObject.h"
 #include "Debug/Profiler.h"
+#include "Debug/SceneChangeTiming.h"
 #include "Objects/Components/Transform.h"
 #include "Scene/SceneContext.h"
 
@@ -297,8 +298,9 @@ JSON EmptyObject::SaveToJson(Passkey<Scene>) {
 
 bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
     if (!json.is_object()) return false;
+    SceneLoadTiming::Scope sceneLoadTiming1("ObjectJSON.Total", name_);
     try {
-    ClearComponents();
+    { SceneLoadTiming::Scope sceneLoadTiming2("ObjectJSON.ClearComponents", name_); ClearComponents(); }
     name_ = json.value("name", "EmptyObject");
     SetTag(json.value("tag", std::string{}));
     isActive_ = json.value("isActive", true);
@@ -320,12 +322,16 @@ bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
         if (!compJson.is_object() || !compJson.contains("data") || !compJson["data"].is_object()) continue;
         std::string typeName = compJson.value("type", "");
         if (typeName.empty()) continue;
-        auto comp = CreateObjectComponentByType(typeName);
+        std::unique_ptr<IObjectComponent> comp;
+        { SceneLoadTiming::Scope sceneLoadTiming3("ObjectComponent.Create." + typeName, name_);
+          comp = CreateObjectComponentByType(typeName); }
         // 追加時の初期化前にアクティブ状態を反映し、無効なコンポーネントの初期化を防ぐ
         if (comp && compJson.contains("data")) {
             comp->SetActive(compJson["data"].value("isActive", true));
         }
-        auto *added = AddComponent(std::move(comp));
+        IObjectComponent *added = nullptr;
+        { SceneLoadTiming::Scope sceneLoadTiming4("ObjectComponent.AddAndInitialize." + typeName, name_);
+          added = AddComponent(std::move(comp)); }
         if (added && compJson.contains("editorAddedID") && !RestoreEditorAddedID(added, compJson.at("editorAddedID").get<size_t>())) return false;
         loadedComponents.emplace_back(added, compJson["data"]);
     }
@@ -337,6 +343,7 @@ bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
         IObjectComponent *comp = compPair.first;
         const JSON &compJson = compPair.second;
         if (!comp) continue;
+        SceneLoadTiming::Scope sceneLoadTiming5("ObjectComponent.LoadJSON." + comp->GetComponentType(), name_);
         comp->LoadFromJsonInterface(Passkey<EmptyObject>(), compJson);
     }
         return true;

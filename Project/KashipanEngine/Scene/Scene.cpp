@@ -1,5 +1,6 @@
 #include "Scene/Scene.h"
 #include "Debug/Profiler.h"
+#include "Debug/SceneChangeTiming.h"
 #include "Scene/SceneBackupPath.h"
 #include "Scene/RenderTargetCarryOverRegistry.h"
 #include "Core/GameEngine.h"
@@ -53,10 +54,20 @@ void Scene::RequestExitGameLoop() {
 
 Scene::Scene(const std::string &sceneName)
     : name_(sceneName) {
-    sceneContext_ = std::make_unique<SceneContext>(Passkey<Scene>{}, this);
+    SceneLoadTiming::Scope sceneLoadTiming1("SceneConstructor.Total");
+    {
+        SceneLoadTiming::Scope sceneLoadTiming2("SceneConstructor.SceneContext");
+        sceneContext_ = std::make_unique<SceneContext>(Passkey<Scene>{}, this);
+    }
 #ifdef USE_IMGUI
-    sceneEditorContext_ = std::make_unique<SceneEditorContext>(Passkey<Scene>{}, this);
-    sceneEditor_ = std::make_unique<SceneEditor>(Passkey<Scene>{}, sceneEditorContext_.get());
+    {
+        SceneLoadTiming::Scope sceneLoadTiming3("SceneConstructor.EditorContext");
+        sceneEditorContext_ = std::make_unique<SceneEditorContext>(Passkey<Scene>{}, this);
+    }
+    {
+        SceneLoadTiming::Scope sceneLoadTiming4("SceneConstructor.Editor");
+        sceneEditor_ = std::make_unique<SceneEditor>(Passkey<Scene>{}, sceneEditorContext_.get());
+    }
 #endif
 }
 
@@ -247,6 +258,7 @@ JSON Scene::SaveToJSON() const {
 }
 
 bool Scene::LoadFromJSON(const JSON &json) {
+    SceneLoadTiming::Scope sceneLoadTiming5("SceneJSON.Total");
     if (!json.is_object()) return false;
     try {
     name_ = json.value("sceneName", "");
@@ -254,43 +266,60 @@ bool Scene::LoadFromJSON(const JSON &json) {
     // シーンコンポーネントを追加
     std::vector<std::pair<ISceneComponent *, JSON>> loadedComponents;
     // 先にコンポーネントを全て登録してからロードする
-    for (const auto &compData : json.value("sceneComponents", std::vector<JSON>())) {
-        std::string compType = compData.value("type", "");
-        if (compType.empty()) continue;
-        auto comp = CreateSceneComponentByType(compType);
-        if (!comp) continue;
-        auto compJson = compData.value("data", JSON());
-        // 追加時の初期化前にアクティブ状態を反映し、無効なコンポーネントの初期化を防ぐ
-        comp->SetActive(compJson.value("isActive", true));
-        auto *added = AddComponent(std::move(comp));
+    {
+        SceneLoadTiming::Scope sceneLoadTiming6("SceneJSON.CreateSceneComponents");
+        for (const auto &compData : json.value("sceneComponents", std::vector<JSON>())) {
+            std::string compType = compData.value("type", "");
+            if (compType.empty()) continue;
+            std::unique_ptr<ISceneComponent> comp;
+            { SceneLoadTiming::Scope sceneLoadTiming7("SceneComponent.Create." + compType);
+              comp = CreateSceneComponentByType(compType); }
+            if (!comp) continue;
+            auto compJson = compData.value("data", JSON());
+            // 追加時の初期化前にアクティブ状態を反映し、無効なコンポーネントの初期化を防ぐ
+            comp->SetActive(compJson.value("isActive", true));
+            ISceneComponent *added = nullptr;
+            { SceneLoadTiming::Scope sceneLoadTiming8("SceneComponent.AddAndInitialize." + compType);
+              added = AddComponent(std::move(comp)); }
 #ifdef USE_IMGUI
-        if (added && compData.contains("editorAddedID")) {
-            const auto restoredID = compData.at("editorAddedID").get<size_t>();
-            if (restoredID >= MAXSIZE_T - 1) return false;
-            auto &entry = components_[componentsIndexByPointer_.at(added)]; entry.second = restoredID;
-            nextAddedComponentID_ = (std::max)(nextAddedComponentID_, restoredID + 1);
-        }
+            if (added && compData.contains("editorAddedID")) {
+                const auto restoredID = compData.at("editorAddedID").get<size_t>();
+                if (restoredID >= MAXSIZE_T - 1) return false;
+                auto &entry = components_[componentsIndexByPointer_.at(added)]; entry.second = restoredID;
+                nextAddedComponentID_ = (std::max)(nextAddedComponentID_, restoredID + 1);
+            }
 #endif
-        loadedComponents.emplace_back(added, compJson);
+            loadedComponents.emplace_back(added, compJson);
+        }
     }
-    for (const auto &[comp, compJson] : loadedComponents) {
-        if (comp) {
-            comp->LoadFromJsonInterface(Passkey<Scene>{}, compJson);
+    {
+        SceneLoadTiming::Scope sceneLoadTiming9("SceneJSON.LoadSceneComponents");
+        for (const auto &[comp, compJson] : loadedComponents) {
+            if (comp) {
+                SceneLoadTiming::Scope sceneLoadTiming10("SceneComponent.LoadJSON." + comp->GetComponentType());
+                comp->LoadFromJsonInterface(Passkey<Scene>{}, compJson);
+            }
         }
     }
     // オブジェクトを全て追加してからオブジェクトにコンポーネントを追加する
     std::vector<EmptyObject *> createdObjects;
     const auto &objects = json.value("sceneObjects", std::vector<JSON>());
-    for (const auto &objData : objects) {
-        std::string objName = objData.value("name", "Empty Object");
-        UUID128 objID(objData.value("objectID", ""));
-        EmptyObject *obj = CreateEmptyObject(objName, objID);
-        createdObjects.push_back(obj);
+    {
+        SceneLoadTiming::Scope sceneLoadTiming11("SceneJSON.CreateObjects");
+        for (const auto &objData : objects) {
+            std::string objName = objData.value("name", "Empty Object");
+            UUID128 objID(objData.value("objectID", ""));
+            EmptyObject *obj = CreateEmptyObject(objName, objID);
+            createdObjects.push_back(obj);
+        }
     }
-    for (size_t i = 0; i < objects.size(); ++i) {
-        const auto &objData = objects[i];
-        EmptyObject *obj = createdObjects[i];
-        obj->LoadFromJson(Passkey<Scene>{}, objData);
+    {
+        SceneLoadTiming::Scope sceneLoadTiming12("SceneJSON.LoadObjects");
+        for (size_t i = 0; i < objects.size(); ++i) {
+            const auto &objData = objects[i];
+            EmptyObject *obj = createdObjects[i];
+            obj->LoadFromJson(Passkey<Scene>{}, objData);
+        }
     }
 #if !defined(USE_IMGUI)
     // エディター無しビルドではEditorOnlyオブジェクトをシーンに存在させない
@@ -298,19 +327,22 @@ bool Scene::LoadFromJSON(const JSON &json) {
     DeleteEditorOnlyObjects();
 #endif
     // シーン変数を追加
-    for (const auto &varData : json.value("sceneVariables", std::vector<JSON>())) {
-        std::string key = varData.value("key", "");
-        if (key.empty()) continue;
-        std::string type = varData.value("type", "");
-        TypeInfo typeInfo = GetValueType(type);
-        // LoadAnyFromJson は既に正しい型で保持された MyAny を返すため、
-        // それをさらに MyAny(value, typeInfo) で包んではいけない。
-        // その2引数コンストラクタは T を MyAny 自身と推論して Holder<MyAny> を
-        // 構築した上で typeInfo だけ（例えば Float に）上書きしてしまうため、
-        // 実データは MyAny 一個分のバイト列のまま「Float」を騙る不整合な Holder になり、
-        // AnyCast<float>() 等が Holder<MyAny>* を Holder<float>* として誤って
-        // reinterpret し、値が破損して見える（未定義動作）。
-        sceneVariables_[key] = LoadAnyFromJson(varData.value("value", JSON()), typeInfo);
+    {
+        SceneLoadTiming::Scope sceneLoadTiming13("SceneJSON.Variables");
+        for (const auto &varData : json.value("sceneVariables", std::vector<JSON>())) {
+            std::string key = varData.value("key", "");
+            if (key.empty()) continue;
+            std::string type = varData.value("type", "");
+            TypeInfo typeInfo = GetValueType(type);
+            // LoadAnyFromJson は既に正しい型で保持された MyAny を返すため、
+            // それをさらに MyAny(value, typeInfo) で包んではいけない。
+            // その2引数コンストラクタは T を MyAny 自身と推論して Holder<MyAny> を
+            // 構築した上で typeInfo だけ（例えば Float に）上書きしてしまうため、
+            // 実データは MyAny 一個分のバイト列のまま「Float」を騙る不整合な Holder になり、
+            // AnyCast<float>() 等が Holder<MyAny>* を Holder<float>* として誤って
+            // reinterpret し、値が破損して見える（未定義動作）。
+            sceneVariables_[key] = LoadAnyFromJson(varData.value("value", JSON()), typeInfo);
+        }
     }
         return true;
     } catch (const std::exception &exception) {

@@ -9,6 +9,7 @@
 #include <filesystem>
 
 #include "Debug/Logger.h"
+#include "Debug/SceneChangeTiming.h"
 #include "Scene/Components/Script/AngelScriptDebugServer.h"
 #include "Core/ProjectPaths.h"
 #include "Scene/Components/Script/ScriptBindings.h"
@@ -74,9 +75,13 @@ void MessageCallback(const asSMessageInfo *msg, void *param) {
 SceneScriptEngine::~SceneScriptEngine() = default;
 
 void SceneScriptEngine::Initialize() {
+    SceneLoadTiming::Scope sceneLoadTiming1("ScriptEngine.Initialize.Total");
     if (engine_) return;
 
-    engine_ = asCreateScriptEngine();
+    {
+        SceneLoadTiming::Scope sceneLoadTiming2("ScriptEngine.Create");
+        engine_ = asCreateScriptEngine();
+    }
     if (!engine_) {
         Log(Translation("engine.script.failed.createengine"), LogSeverity::Error);
         return;
@@ -87,7 +92,10 @@ void SceneScriptEngine::Initialize() {
     // 辞書型（dictionary）。string/arrayを使用するため両者の登録後に呼ぶ
     RegisterScriptDictionary(engine_);
     RegisterExceptionRoutines(engine_);
-    RegisterEngineScriptBindings(engine_);
+    {
+        SceneLoadTiming::Scope sceneLoadTiming3("ScriptEngine.RegisterBindings");
+        RegisterEngineScriptBindings(engine_);
+    }
 
 #if !defined(RELEASE_BUILD)
     auto &debugServer = GetProcessAngelScriptDebugServer();
@@ -98,7 +106,10 @@ void SceneScriptEngine::Initialize() {
 
 #if !defined(RELEASE_BUILD)
     // VSCodeのAngelScript Language Server用の型定義ファイルを生成する（Releaseビルドでは生成しない）
-    if (GenerateScriptPredefinedFile(engine_, ProjectPaths::InProjectRoot("as.predefined"))) {
+    bool predefinedGenerated = false;
+    { SceneLoadTiming::Scope sceneLoadTiming4("ScriptEngine.GeneratePredefined");
+      predefinedGenerated = GenerateScriptPredefinedFile(engine_, ProjectPaths::InProjectRoot("as.predefined")); }
+    if (predefinedGenerated) {
         Log(Translation("engine.script.predefined.generated"));
     } else {
         Log(Translation("engine.script.predefined.generate.failed"), LogSeverity::Warning);

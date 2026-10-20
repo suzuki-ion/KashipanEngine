@@ -1,4 +1,5 @@
 #include "PrefabAssetManager.h"
+#include "Debug/SceneChangeTiming.h"
 #ifdef USE_IMGUI
 #include <filesystem>
 #include "Core/ProjectPaths.h"
@@ -175,11 +176,17 @@ void PrefabAssetManager::SetChangeListener(ChangeCallback callback) {
 
 void PrefabAssetManager::EnsureIndexBuilt() {
     if (sIndexBuilt_) return;
+    SceneLoadTiming::Scope indexTiming("PrefabIndex.Build.Total");
     sIndexBuilt_ = true;
 
     // インデックスのキーには論理パスを使う（シーンJSONへ保存されるプレハブのパスと揃えるため）
-    const std::vector<std::string> files = ProjectPaths::ListAssetFiles({ PrefabUtility::kPrefabExtension });
+    std::vector<std::string> files;
+    {
+        SceneLoadTiming::Scope enumerationTiming("PrefabIndex.FileEnumeration");
+        files = ProjectPaths::ListAssetFiles({ PrefabUtility::kPrefabExtension });
+    }
     for (const auto &filePath : files) {
+        SceneLoadTiming::Scope prefabTiming("PrefabIndex.LoadAndRegisterJSON", filePath);
         JSON json = LoadJSON(ProjectPaths::ToPhysical(filePath));
         const UUID128 prefabID(json.value("prefabID", std::string{}));
         if (!prefabID.IsValid()) continue;

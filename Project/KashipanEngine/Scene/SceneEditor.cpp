@@ -1,4 +1,5 @@
 ﻿#include "SceneEditor.h"
+#include "Debug/SceneChangeTiming.h"
 #include "Input/EditorTestInput.h"
 #ifdef USE_IMGUI
 #include <algorithm>
@@ -104,6 +105,7 @@ std::string RenderAutoSaveFileName(const std::string &nameFormat, const std::str
 } // namespace
 
 SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
+    SceneLoadTiming::Scope sceneLoadTiming1("Editor.Constructor.Total");
     context_ = context;
     commands_ = std::make_unique<SceneEditorCommands>(Passkey<SceneEditor>{}, context_);
     objectHierarchy_ = std::make_unique<SceneObjectHierarchy>(Passkey<SceneEditor>{}, context_);
@@ -111,8 +113,14 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     componentInspector_ = std::make_unique<SceneComponentInspector>(Passkey<SceneEditor>{}, context_);
     variablesMenu_ = std::make_unique<SceneVariablesMenu>(Passkey<SceneEditor>{}, context_);
     globalVariablesMenu_ = std::make_unique<GlobalSceneVariablesMenu>(Passkey<SceneEditor>{}, context_);
-    sceneView_ = std::make_unique<SceneEditorView>(Passkey<SceneEditor>{}, context_);
-    assetsWindow_ = std::make_unique<AssetsWindow>(Passkey<SceneEditor>{}, context_);
+    {
+        SceneLoadTiming::Scope sceneLoadTiming2("Editor.SceneView");
+        sceneView_ = std::make_unique<SceneEditorView>(Passkey<SceneEditor>{}, context_);
+    }
+    {
+        SceneLoadTiming::Scope sceneLoadTiming3("Editor.AssetsWindow");
+        assetsWindow_ = std::make_unique<AssetsWindow>(Passkey<SceneEditor>{}, context_);
+    }
     saver_ = std::make_unique<SceneSaver>(Passkey<SceneEditor>{}, context_);
     loader_ = std::make_unique<SceneLoader>(Passkey<SceneEditor>{}, context_,
         [this](JSON sceneJson) { RequestLoadScene(std::move(sceneJson)); });
@@ -164,7 +172,10 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     autoSaveIntervalMinutes_ = EditorSettings::GetFloat("sceneEditor.autoSaveIntervalMinutes", 1.0f);
     autoSaveNameFormat_ = EditorSettings::GetString("sceneEditor.autoSaveNameFormat", "${SceneName}");
 
-    InitializeExternalAssetSnapshot();
+    {
+        SceneLoadTiming::Scope sceneLoadTiming4("Editor.ExternalAssetSnapshot");
+        InitializeExternalAssetSnapshot();
+    }
     wasEditorApplicationActive_ = IsEditorApplicationActive();
 }
 
@@ -296,10 +307,19 @@ void SceneEditor::DetectMainWindowCloseRequest() {
 }
 
 void SceneEditor::InitializeExternalAssetSnapshot() {
-    StartExternalAssetScan(false);
+    {
+        SceneLoadTiming::Scope sceneLoadTiming5("Editor.ExternalAssetScanDispatch");
+        StartExternalAssetScan(false);
+    }
 
     // 外部更新前のPrefab JSONを保持し、更新後との差分伝播に使える状態にしておく。
-    for (const std::string &path : ProjectPaths::ListAssetFiles({ PrefabUtility::kPrefabExtension })) {
+    std::vector<std::string> prefabPaths;
+    {
+        SceneLoadTiming::Scope sceneLoadTiming6("Editor.PrefabFileEnumeration");
+        prefabPaths = ProjectPaths::ListAssetFiles({ PrefabUtility::kPrefabExtension });
+    }
+    for (const std::string &path : prefabPaths) {
+        SceneLoadTiming::Scope sceneLoadTiming7("Editor.PrefabCacheLoad");
         PrefabAssetManager::GetPrefabIDFromPath(path);
     }
 }

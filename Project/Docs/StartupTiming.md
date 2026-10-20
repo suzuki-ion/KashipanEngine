@@ -20,3 +20,49 @@ Releaseはスプラッシュの生成・表示・終了処理を実行せず、�
 親区間は子区間の時間を含みます（例: Engine.TexturesにはTextures.*が含まれます）。階層をまたいで足し合わせないでください。起動完了後はこれらの計測ログを出力しません。
 
 追加の内訳計測とキャッシュ・転送のログ、事前変換ツールについては[StartupOptimization.md](StartupOptimization.md)を参照してください。
+
+
+## シーン切り替えの大区間
+
+実際にシーンを切り替えたとき、`[SceneChangeTiming]` をInfoレベルで出力します。起動時と起動完了後の切り替えの両方が対象です。切り替え要求がない通常フレームには出力しません。
+
+| ログ名 | 計測対象 |
+|---|---|
+| `Manager.BeginCarryOver` | 描画先リソースの引き継ぎ受付の開始 |
+| `Manager.FinalizePreviousScene` | 旧シーンの終了処理 |
+| `Manager.DestroyPreviousScene` | 旧シーンの破棄。デストラクター内のバックアップ保存・オブジェクト等の破棄も含む |
+| `Manager.ReadSceneJSON` | 分割／単一JSONの読み込み。メモリ上のJSON登録や空シーンではファイル読み込みなし |
+| `Manager.ConstructScene` | SceneのコンストラクターとLoadFromJSON。オブジェクト・コンポーネントの生成、および生成中に行う初期化も含む |
+| `Manager.InitializeScene` | SceneManagerの設定、再生状態の引き継ぎ、InitializeInterfaceの実行 |
+| `Manager.FinishCarryOverAndSnapshot` | 旧スナップショットの解放と、引き取られなかった描画先リソースの破棄 |
+| `Manager.Total` | SceneManager内のシーン切り替え全体。対象シーン名も併記 |
+| `Frame.CommitSceneChange` | SceneManagerによる切り替え処理全体。上記Manager各区間を含む |
+| `Frame.RendererCleanup` | 切り替え後のレンダラーリソース解放、デルタタイム等のリセット |
+| `Frame.PendingResourceDestruction` | 保留中のスワップチェーン・ウィンドウ・描画バッファ・動画/GIF等の破棄 |
+| `Frame.Total` | フレーム末尾で行うシーン切り替えと後処理の全体 |
+
+例: `[SceneChangeTiming] Manager.ConstructScene: 2345.678 ms (2.346 s) (scene=Stage1)`。
+
+`ConstructScene`内ですでにコンポーネントの初期化が呼ばれるため、初期化コストのすべてが`InitializeScene`へ入るわけではありません。最初は上記の大区間で確認し、重い区間だけを追加で分割します。
+
+計測にはsteady_clockを使います。親区間は子区間を含むため、`Manager.Total`や`Frame.CommitSceneChange`とManager各区間を重ねて加算しないでください。各区間のログ呼び出し時間は次の区間から除きますが、Totalにはログ出力のオーバーヘッドも含みます。最初の更新・描画やディスプレイへの表示完了はこの計測に含みません。`Frame.Total`のログを書き込んだ時点でログファイルをフラッシュします。
+
+
+## シーン構築の詳細計測
+
+SceneManagerによる切り替え中は、内側の処理を`[SceneLoadTiming]`で集計します。切り替え終了時に、ラベルごとの合計時間・回数・1回の最大時間・最大時間だった対象を出力します。通常フレームやバックグラウンドスレッドの処理はこの集計に含みません。
+
+- `SceneConstructor.*`: SceneContext、EditorContext、エディター生成とコンストラクター全体。
+- `Editor.*`: SceneView、AssetsWindow、外部変更監視の開始、同期的なPrefabファイル列挙とPrefabキャッシュ読み込み。
+- `AssetsWindow.*`: フォルダーツリー全体、各フォルダーの再帰処理、論理パス変換、ルートのファイル一覧。
+- `PrefabIndex.*`: 初回のPrefab索引作成に伴う全ファイル列挙とPrefab JSONの読み込み・登録。すでに索引がある場合はこの区間は出ません。
+- `SceneJSON.*`: シーンコンポーネント生成・初期化、JSON反映、オブジェクト生成、オブジェクトJSON反映、変数復元。
+- `ObjectJSON.*`: オブジェクトごとの復元と既存コンポーネント破棄の合計。
+- `SceneComponent.*.<型名>` / `ObjectComponent.*.<型名>`: コンポーネントの一時インスタンス生成、追加と初期化、JSON反映を型ごとに集計。
+- `ScriptEngine.*` / `Script.*`: AngelScriptエンジン生成、バインディング登録、補完用定義生成、スクリプトの再読み込み・モジュールビルド。実際に呼ばれた処理だけが出力されます。
+
+例: `[SceneLoadTiming] ObjectComponent.LoadJSON.Transform: total=1.234 ms, count=141, max=0.123 ms (scene=Stage1) (slowest=Player)`。
+
+すべて実経過時間で、合計値は包含時間です。たとえば`SceneConstructor.Total`は`Editor.Constructor.Total`を含み、`AssetsWindow.BuildFolderNode.Inclusive`の合計は再帰の親と子を重ねて数えるため、実際のツリー構築時間より大きくなります。ツリー全体の時間は`AssetsWindow.BuildFolderTree`で確認してください。異なる階層の値を足し合わせないでください。
+
+詳細計測自体の時計取得・集計コストが加わるため、計測なしの以前の値との厳密な速度比較には使用しません。最大時間の対象は、そのシーン切り替え中に最も長かったオブジェクト名・パス等です。バックグラウンド監視は開始処理のみ計測し、別スレッドの走査完了時間は含めません。

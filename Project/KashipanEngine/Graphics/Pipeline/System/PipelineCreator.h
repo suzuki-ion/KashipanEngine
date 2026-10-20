@@ -10,6 +10,7 @@
 #include "Graphics/Pipeline/ComponentsPresetContainer.h"
 #include "Graphics/Pipeline/System/ShaderCompiler.h"
 #include "Graphics/Pipeline/JsonParser/RootSignature.h"
+#include "Graphics/Pipeline/System/PipelineStateCache.h"
 
 namespace KashipanEngine {
 
@@ -22,7 +23,7 @@ public:
     PipelineCreator(Passkey<PipelineManager>, ID3D12Device *device,
                     ComponentsPresetContainer *components,
                     ShaderCompiler *shaderCompiler)
-        : device_(device), components_(components), shaderCompiler_(shaderCompiler) {}
+        : device_(device), components_(components), shaderCompiler_(shaderCompiler), pipelineStateCache_(device) {}
 
     /// @brief レンダーパイプラインを構築
     bool CreateRender(const Json &json, PipelineInfo &outInfo);
@@ -31,6 +32,7 @@ public:
 
     /// @brief RootSignatureの再利用キャッシュをクリアする（PipelineManager::ReloadPipelines用）
     void ClearRootSignatureCache(Passkey<PipelineManager>) { rootSignatureCache_.clear(); }
+    void LogCacheStatistics(Passkey<PipelineManager>) const { pipelineStateCache_.LogStatistics(); }
 
 private:
     /// @brief ShaderVariableBinder を構築
@@ -49,6 +51,7 @@ private:
     ComponentsPresetContainer *components_ = nullptr;
     ShaderCompiler *shaderCompiler_ = nullptr;
     std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12RootSignature>> rootSignatureCache_;
+    PipelineStateCache pipelineStateCache_;
 };
 
 } // namespace KashipanEngine

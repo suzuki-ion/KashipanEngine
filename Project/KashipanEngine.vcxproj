@@ -1193,6 +1193,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClInclude Include="KashipanEngine\Graphics\BlueNoiseGenerator.h" />
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineBinder.h" />
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineCreator.h" />
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineStateCache.h" />
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\MaterialLayout.h" />
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineVariantResolver.h" />
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\ShaderModuleComposer.h" />

@@ -1159,6 +1159,9 @@
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineCreator.h">
       <Filter>KashipanEngine\Graphics\Pipeline\System</Filter>
     </ClInclude>
+    <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\PipelineStateCache.h">
+      <Filter>KashipanEngine\Graphics\Pipeline\System</Filter>
+    </ClInclude>
     <ClInclude Include="KashipanEngine\Graphics\Pipeline\System\MaterialLayout.h">
       <Filter>KashipanEngine\Graphics\Pipeline\System</Filter>
     </ClInclude>

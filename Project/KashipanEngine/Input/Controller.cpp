@@ -112,17 +112,18 @@ void Controller::Initialize() {
 
     timing.End("DeviceStorage");
     if (sGameInput) {
+        // 初回列挙は非同期で行い、起動を待たせない。通知前は0台として扱い、Updateで反映する。
         // デバイスコールバックは列挙も兼ねる
         // すべてのゲームパッドデバイスを対象に登録する
         const HRESULT hr = sGameInput->RegisterDeviceCallback(
             nullptr,
             GameInputKindGamepad,
             GameInputDeviceAnyStatus,
-            GameInputBlockingEnumeration,
+            GameInputAsyncEnumeration,
             this,
             &OnGamepadDeviceChanged,
             &deviceCallbackToken_);
-        timing.End("BlockingDeviceEnumeration");
+        timing.End("AsyncDeviceCallbackRegistration");
         if (FAILED(hr)) {
             assert(false);
             return;

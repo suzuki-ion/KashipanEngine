@@ -9,13 +9,16 @@
 #include "Core/PlayerSettings.h"
 #include "Core/ProjectPaths.h"
 #include "Core/UserSettings.h"
+#if !defined(RELEASE_BUILD)
 #include "Splash/SplashScreen.h"
+#endif
 
 #include "Utilities/Plugin/Plugins.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
+#if !defined(RELEASE_BUILD)
 namespace {
 /// @brief スプラッシュ画面のRAIIガード
 /// @details GameEngineのコンストラクタが例外を投げた場合でも、スコープを抜ける際に
@@ -30,6 +33,7 @@ struct ScopedSplashScreen {
     PasskeyForGameEngineMain passkey_;
 };
 } // namespace
+#endif
 
 int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsPath) {
     StartupTiming::Begin();
@@ -120,14 +124,19 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
 
     //--------- エンジン実行 ---------//
 
-    // GameEngineのコンストラクタ（Window/DirectX12/各種マネージャ生成）が終わるまでは
-    // 同期的にブロックするため、その間だけスプラッシュ画面を表示してログを流す
     std::unique_ptr<GameEngine> engine;
+#if defined(RELEASE_BUILD)
+    // Releaseではスプラッシュの生成・WebView初期化・表示終了待ちを実行しない。
+    engine = std::make_unique<GameEngine>(PasskeyForGameEngineMain{});
+    startupSections.End("GameEngine");
+#else
+    // 初期化中はスプラッシュ画面を表示してログを流す。
     {
         ScopedSplashScreen splashScreen{ PasskeyForGameEngineMain{} };
         engine = std::make_unique<GameEngine>(PasskeyForGameEngineMain{});
     }
     startupSections.End("GameEngineAndSplash");
+#endif
     StartupTiming::Milestone("Startup.InitializationTotal");
     int code = engine->Execute({});
     StartupTiming::Interrupt();

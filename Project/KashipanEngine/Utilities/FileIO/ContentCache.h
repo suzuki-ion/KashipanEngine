@@ -67,11 +67,13 @@ inline bool DependenciesValid(const Json &dependencies) {
     return true;
 }
 /// One atomic container: manifest and payload can never belong to different writes.
+/// Empty dependencies are opt-in, only for keys that hash all input contents (e.g. PSOs).
 inline bool Store(const std::filesystem::path &path, const std::string &key,
-    const Json &dependencies, const void *data, size_t size) noexcept {
+    const Json &dependencies, const void *data, size_t size, bool allowEmptyDependencies = false) noexcept {
     std::filesystem::path temporary;
     try {
-        if (key.empty() || !size || !DependenciesValid(dependencies)) return false;
+        const bool validDependencies = (allowEmptyDependencies && dependencies.is_array() && dependencies.empty()) || DependenciesValid(dependencies);
+        if (key.empty() || !size || !validDependencies) return false;
         const auto hash = Digest(data, size);
         if (hash.empty()) return false;
         const auto metadata = Json{{"version", 1}, {"key", key}, {"dependencies", dependencies}, {"hash", hash}}.dump();
@@ -96,7 +98,7 @@ inline bool Store(const std::filesystem::path &path, const std::string &key,
         return false;
     }
 }
-inline std::optional<std::vector<char>> Load(const std::filesystem::path &path, const std::string &key) noexcept {
+inline std::optional<std::vector<char>> Load(const std::filesystem::path &path, const std::string &key, bool allowEmptyDependencies = false) noexcept {
     try {
         auto bytes = ReadFile(path);
         if (!bytes || bytes->size() <= sizeof(uint64_t)) return std::nullopt;
@@ -104,7 +106,9 @@ inline std::optional<std::vector<char>> Load(const std::filesystem::path &path, 
         std::memcpy(&length, bytes->data(), sizeof(length));
         if (length > 1024 * 1024 || length >= bytes->size() - sizeof(length)) return std::nullopt;
         const auto metadata = Json::parse(bytes->begin() + sizeof(length), bytes->begin() + sizeof(length) + length);
-        if (metadata.at("version") != 1 || metadata.at("key") != key || !DependenciesValid(metadata.at("dependencies"))) return std::nullopt;
+        const auto &dependencies = metadata.at("dependencies");
+        if (metadata.at("version") != 1 || metadata.at("key") != key ||
+            (!(allowEmptyDependencies && dependencies.is_array() && dependencies.empty()) && !DependenciesValid(dependencies))) return std::nullopt;
         std::vector<char> payload(bytes->begin() + sizeof(length) + length, bytes->end());
         if (Digest(payload.data(), payload.size()) != metadata.at("hash").get<std::string>()) return std::nullopt;
         return payload;

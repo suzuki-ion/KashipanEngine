@@ -356,7 +356,7 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
 
     Microsoft::WRL::ComPtr<ID3D12PipelineState> pso;
     {
-        HRESULT hr = device_->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso));
+        HRESULT hr = pipelineStateCache_.CreateGraphics(psoDesc, signatureBlob.Get(), pso);
         if (FAILED(hr)) {
             Log(Translation("engine.graphics.pipeline.load.render.pso.create.failed") + name + " " + Translation("error.code.label") + HrToHex(hr), LogSeverity::Error);
             return false;
@@ -463,7 +463,7 @@ bool PipelineCreator::CreateCompute(const Json &json, PipelineInfo &outInfo) {
     computeDesc.CS = { cs->GetBytecodePtr(), cs->GetBytecodeSize() };
     Microsoft::WRL::ComPtr<ID3D12PipelineState> pso;
     {
-        HRESULT hr = device_->CreateComputePipelineState(&computeDesc, IID_PPV_ARGS(&pso));
+        HRESULT hr = pipelineStateCache_.CreateCompute(computeDesc, signatureBlob.Get(), pso);
         if (FAILED(hr)) {
             Log(Translation("engine.graphics.pipeline.load.compute.pso.create.failed") + name + " " + Translation("error.code.label") + HrToHex(hr), LogSeverity::Error);
             return false;

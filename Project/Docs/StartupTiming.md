@@ -15,6 +15,8 @@
 
 計測には単調増加時計（steady_clock）を使い、I/O、並列ジョブの完了待ち、GPU待機も含む実経過時間を記録します。ロガー初期化前の区間は一時保存し、初期化後に出力します。計測開始はKashipanEngine::Executeの入口であり、OSのプロセス生成やその前のDLLロードは含みません。描画完了はGameLoopDrawの復帰時点であり、画面が実際にディスプレイに表示された時刻の計測ではありません。
 
+Releaseはスプラッシュの生成・表示・終了処理を実行せず、エンジン生成区間を`Entry.GameEngine`として記録します。Debug／Developmentはスプラッシュを表示し、従来どおり`Entry.GameEngineAndSplash`へその生成・終了待ちも含めます。どちらも`Startup.InitializationTotal`と`Startup.Total`の計測範囲は同じです。
+
 親区間は子区間の時間を含みます（例: Engine.TexturesにはTextures.*が含まれます）。階層をまたいで足し合わせないでください。起動完了後はこれらの計測ログを出力しません。
 
 追加の内訳計測とキャッシュ・転送のログ、事前変換ツールについては[StartupOptimization.md](StartupOptimization.md)を参照してください。

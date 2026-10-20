@@ -28,7 +28,8 @@ float4 main(VSOutput input) : SV_TARGET {
 	float2 uv = input.uv;
 	float2 px = gInvScreenSize;
 
-	float3 rgbM = gTexture.Sample(gSampler, uv).rgb;
+	float4 sourceColor = gTexture.Sample(gSampler, uv);
+	float3 rgbM = sourceColor.rgb;
 	float lumaM = Luma(rgbM);
 
 	// 上下左右4近傍（この時点では対角は見ない。エッジの有無を安く判定するため）
@@ -43,7 +44,7 @@ float4 main(VSOutput input) : SV_TARGET {
 
     // エッジが弱ければそのまま返す
 	if (lumaRange < max(gEdgeThreshold, lumaMax * gEdgeThresholdMin)) {
-		return float4(rgbM, 1.0);
+		return float4(rgbM, sourceColor.a);
 	}
 
 	// 対角4近傍（エッジ方向判定の頑健化と、サブピクセルエイリアシング検出に使う）
@@ -155,5 +156,5 @@ float4 main(VSOutput input) : SV_TARGET {
 
 	float3 resultRgb = gTexture.Sample(gSampler, finalUv).rgb;
 	float3 finalRgb = lerp(rgbM, resultRgb, gStrength);
-	return float4(finalRgb, 1.0);
+	return float4(finalRgb, sourceColor.a);
 }

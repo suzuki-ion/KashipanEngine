@@ -8,5 +8,5 @@ SamplerState gSampler : register(s0);
 float4 main(VSOutput input) : SV_Target0 {
     float4 current = gSceneTexture.Sample(gSampler, input.uv);
     float4 history = gHistoryTexture.Sample(gSampler, input.uv);
-    return lerp(current, history, gHistoryWeight);
+    return float4(lerp(current.rgb, history.rgb, gHistoryWeight), current.a);
 }

@@ -14,8 +14,9 @@ float4 main(VSOutput input) : SV_Target0 {
     float2 off = gDirection * gStrength;
 
     float r = gTexture.Sample(gSampler, uv + off).r;
-    float g = gTexture.Sample(gSampler, uv).g;
+    float4 centerColor = gTexture.Sample(gSampler, uv);
+    float g = centerColor.g;
     float b = gTexture.Sample(gSampler, uv - off).b;
 
-    return float4(r, g, b, 1.0);
+    return float4(r, g, b, centerColor.a);
 }

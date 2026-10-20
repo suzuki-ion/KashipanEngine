@@ -28,6 +28,9 @@
 </div>
 
 <h3>2つの実装方式</h3>
+<div class="note"><strong>アルファの維持</strong><br>
+色調補正、Bloom、FXAA、各種ぼかし、輪郭線、時間ブレンドは、入力シーンのアルファを最終出力へ引き継ぎます。ガウシアン・被写界深度・時間ブレンドでも、アルファを周辺画素や履歴と混ぜません。輪郭線とDissolveの指定色のアルファはRGBの合成率として使います。BarrelDistortionは変形先のサンプルのアルファを引き継ぎ、画面外には指定したEdge Colorを使います。ディザーの消去マスク、DotMatrixのドットマスク、複数パスディザーの被覆率による透明化は維持します。通常のフルスクリーン処理はBlendStateのNoneで結果を上書きし、二重のアルファ乗算を防ぎます。AO・CoC・速度などの中間データのアルファはシーンの透明度ではありません。
+</div>
 <p>派生クラスは次のいずれかの方式でエフェクトの中身を実装します。</p>
 <ul>
 <li><strong>宣言的パス定義（<code>BuildPasses()</code>）</strong> — 1回のフルスクリーンパスで完結する単純なエフェクト向け。使用するパイプライン名と、定数バッファ・テクスチャ・サンプラーのバインド要求（<code>PassInfo</code>）を返すだけで、実際の描画コマンド発行は <code>Renderer</code> 側が行います。<code>BoxFilterEffect</code>、<code>ChromaticAberrationEffect</code>、<code>ColorAdjustEffect</code>、<code>DissolveEffect</code>、<code>DitherEffect</code>、<code>DotMatrixEffect</code>、<code>FXAAEffect</code>、<code>GaussianFilterEffect</code>、<code>GrayscaleEffect</code>、<code>OutlineEffect</code>、<code>RadialBlurEffect</code>、<code>VignetteEffect</code> がこの方式です。</li>

@@ -28,5 +28,5 @@ float4 main(VSOutput input) : SV_Target {
 			wsum += weight;
 		}
 	}
-	return sum / wsum;
+	return float4(sum.rgb / wsum, gTexture.Sample(gSampler, uv).a);
 }

@@ -29,5 +29,6 @@ float4 main(VSOutput input) : SV_Target0 {
 			color += edge * edgeColor;
 		}
 	}
-	return color;
+	// 置き換え色のアルファは色の合成率として使い、シーンの透明度を維持する。
+	return float4(lerp(screenColor.rgb, color.rgb, saturate(color.a)), screenColor.a);
 }

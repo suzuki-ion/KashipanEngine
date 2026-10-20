@@ -19,25 +19,26 @@ float GetMaxCornerDistance(float2 center) {
 
 float4 main(VSOutput input) : SV_Target0 {
     float2 uv = input.uv;
-    float3 baseColor = gTexture.Sample(gSampler, uv).rgb;
+    float4 sourceColor = gTexture.Sample(gSampler, uv);
+    float3 baseColor = sourceColor.rgb;
 
     static const uint kMaxSamples = 64u;
     uint sampleCount = min(max(gSampleCount, 1u), kMaxSamples);
     if (gIntensity <= 0.0f || sampleCount <= 1u) {
-        return float4(baseColor, 1.0f);
+        return float4(baseColor, sourceColor.a);
     }
 
     float2 toCenter = gRadialCenter - uv;
     float dist = length(toCenter);
     if (dist <= 1e-6f) {
-        return float4(baseColor, 1.0f);
+        return float4(baseColor, sourceColor.a);
     }
 
     float maxDist = max(GetMaxCornerDistance(gRadialCenter), 1e-6f);
     float normDist = dist / maxDist;
 
     if (normDist <= gStartRadius) {
-        return float4(baseColor, 1.0f);
+        return float4(baseColor, sourceColor.a);
     }
 
     float edgeFactor = saturate((normDist - gStartRadius) / max(1e-6f, 1.0f - gStartRadius));
@@ -68,5 +69,5 @@ float4 main(VSOutput input) : SV_Target0 {
     }
 
     float3 outColor = (wsum > 0.0f) ? (accum / wsum) : baseColor;
-    return float4(outColor, 1.0f);
+    return float4(outColor, sourceColor.a);
 }

@@ -39,7 +39,7 @@ float4 main(VSOutput input) : SV_Target0 {
 	float4 color = gTexture.Sample(gSampler, input.uv);
 	
 	if (maxDiff > gDepthThreshold) {
-		return gOutlineColor;
+		return float4(lerp(color.rgb, gOutlineColor.rgb, saturate(gOutlineColor.a)), color.a);
 	}
 
 	return color;

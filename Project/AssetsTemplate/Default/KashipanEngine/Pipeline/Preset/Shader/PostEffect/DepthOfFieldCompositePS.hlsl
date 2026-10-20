@@ -16,5 +16,5 @@ float4 main(VSOutput input) : SV_Target0 {
 
 	float4 color = lerp(sharp, gFarBlurTexture.Sample(gSampler, input.uv), farCoC);
 	color = lerp(color, gNearBlurTexture.Sample(gSampler, input.uv), nearCoC);
-	return color;
+	return float4(color.rgb, sharp.a);
 }

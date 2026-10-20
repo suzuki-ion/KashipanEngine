@@ -37,5 +37,5 @@ float4 main(VSOutput input) : SV_Target0 {
 		float2 offset = VogelDiskSample(i, gSampleCount, rotation) * radiusUv;
 		sum += gTexture.Sample(gSampler, input.uv + offset);
 	}
-	return sum / max(gSampleCount, 1u);
+	return float4(sum.rgb / max(gSampleCount, 1u), centerColor.a);
 }

@@ -7,7 +7,8 @@ SamplerState gSampler : register(s0);
 
 float4 main(VSOutput input) : SV_Target0 {
 	float2 uv = input.uv;
-	float3 cur = gSceneTexture.Sample(gSampler, uv).rgb;
+	float4 sourceColor = gSceneTexture.Sample(gSampler, uv);
+	float3 cur = sourceColor.rgb;
 
 	// 速度バッファはfloatフォーマットでUV空間の符号付き速度をそのまま保持しているため、デコード不要
 	float2 velUv = gVelocityTexture.Sample(gSampler, uv).xy;
@@ -21,7 +22,7 @@ float4 main(VSOutput input) : SV_Target0 {
 
 	uint samples = max(gSamples, 1u);
 	if (blurPixels <= 0.1 || samples <= 1u) {
-		return float4(cur, 1.0);
+		return float4(cur, sourceColor.a);
 	}
 
 	float2 dir = (speedPixels > 1e-6) ? (velPixels / speedPixels) : float2(0.0, 0.0);
@@ -42,5 +43,5 @@ float4 main(VSOutput input) : SV_Target0 {
 	}
 
 	float3 outColor = (wsum > 0.0) ? (accum / wsum) : cur;
-	return float4(outColor, 1.0);
+	return float4(outColor, sourceColor.a);
 }

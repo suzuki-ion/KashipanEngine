@@ -22,8 +22,8 @@ float4 main(VSOutput input) : SV_Target0 {
 	}
 
 	float3 filtered = sum / (float)( (2 * halfSize.x + 1) * (2 * halfSize.y + 1) );
-	float3 baseColor = gTexture.Sample(gSampler, uv).rgb;
+	float4 baseColor = gTexture.Sample(gSampler, uv);
 	float intensity = saturate(gIntensity);
-	float3 outColor = lerp(baseColor, filtered, intensity);
-	return float4(outColor, 1.0f);
+	float3 outColor = lerp(baseColor.rgb, filtered, intensity);
+	return float4(outColor, baseColor.a);
 }

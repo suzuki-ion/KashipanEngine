@@ -45,6 +45,6 @@ float4 main(VSOutput input) : SV_Target0 {
 	}
 
 	float ao = (weightSum > 1e-5f) ? (aoSum / weightSum) : gAOTexture.Sample(gAOSampler, input.uv).r;
-	if (gShowAOOnly != 0u) return float4(ao, ao, ao, 1.0f);
+	if (gShowAOOnly != 0u) return float4(ao, ao, ao, sceneColor.a);
 	return float4(sceneColor.rgb * ao, sceneColor.a);
 }

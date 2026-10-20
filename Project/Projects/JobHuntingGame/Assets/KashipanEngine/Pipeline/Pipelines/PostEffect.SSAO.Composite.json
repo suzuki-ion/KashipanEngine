@@ -18,7 +18,7 @@
 		"UsePreset": "Solid"
 	},
 	"BlendState": {
-		"UsePreset": "Normal"
+		"UsePreset": "None"
 	},
 	"DepthStencilState": {
 		"UsePreset": "DepthDisable"

@@ -11,7 +11,7 @@
 		"Pixel": { "UsePreset": "GTAO.Composite.Pixel" }
 	},
 	"RasterizerState": { "UsePreset": "Solid" },
-	"BlendState": { "UsePreset": "Normal" },
+	"BlendState": { "UsePreset": "None" },
 	"DepthStencilState": { "UsePreset": "DepthDisable" },
 	"PipelineState": { "UsePreset": "Triangle" }
 }

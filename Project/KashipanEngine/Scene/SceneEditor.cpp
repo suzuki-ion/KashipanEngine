@@ -18,6 +18,7 @@
 #include "Assets/ModelManager.h"
 #include "Assets/TextureManager.h"
 #include "Debug/Logger.h"
+#include "Debug/ProfilerLauncher.h"
 #include "Core/ProjectPaths.h"
 #include "Graphics/PipelineManager.h"
 #include "Input/Input.h"
@@ -572,6 +573,20 @@ void SceneEditor::ShowImGui() {
 
     PollExternalAssetChanges();
     ShowMainWindow();
+    auto &profilerLauncher = ProfilerLauncher::GetInstance();
+    profilerLauncher.Poll();
+    if (profilerLauncher.TakeError()) {
+        Log(Translation(profilerLauncher.ErrorKey()) + " (code " + std::to_string(profilerLauncher.ErrorCode()) + ")", LogSeverity::Error);
+        ImGui::OpenPopup(TranslationLabel("editor.profiler.error_title"));
+    }
+    if (ImGui::BeginPopupModal(TranslationLabel("editor.profiler.error_title"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + 540.0f);
+        ImGui::TextUnformatted(TranslationC(profilerLauncher.ErrorKey()));
+        ImGui::PopTextWrapPos();
+        if (profilerLauncher.ErrorCode()) ImGui::Text("Error code: %lu", profilerLauncher.ErrorCode());
+        if (ImGui::Button("OK")) ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
     ShowUnsavedChangesModal();
     ShowExternalSceneChangeModal();
     HandleShortcuts();
@@ -711,6 +726,9 @@ void SceneEditor::ShowMainWindow() {
             bool showProfiling = GameEngine::IsProfilingWindowVisible();
             if (ImGui::MenuItem(TranslationLabel("editor.gameengine.profiling.window"), nullptr, &showProfiling))
                 GameEngine::SetProfilingWindowVisible(showProfiling);
+            auto &profilerLauncher = ProfilerLauncher::GetInstance();
+            if (ImGui::MenuItem(TranslationLabel("editor.profiler.launch"), nullptr, false, !profilerLauncher.IsRunning()))
+                profilerLauncher.Start(Utf8StringToPath(ProjectPaths::EngineRoot()), Utf8StringToPath(ProjectPaths::ExecutableDirectory()));
             if (ImGui::MenuItem(TranslationLabel("editor.texturemanager.window"), nullptr, &isShowLoadedTexturesWindow_)) {
                 EditorSettings::SetBool("sceneEditor.showLoadedTextures", isShowLoadedTexturesWindow_);
             }

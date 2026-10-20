@@ -83,6 +83,12 @@ try {
         foreach ($name in @('AssetsTemplate', 'EditorTools', 'Reference')) {
             Invoke-MirrorCopy -Source (Join-Path $ProjectDir $name) -Destination (Join-Path $stageDir $name)
         }
+        # Ship only the viewer runtime and instructions, not tests or Python caches.
+        $profilerDestination = Join-Path $stageDir 'Tools\Profiler'
+        New-Item -ItemType Directory -Path $profilerDestination -Force | Out-Null
+        foreach ($name in @('profiler.py', 'protocol.py', 'single_instance.py', 'StartProfiler.cmd', 'README.md')) {
+            Copy-Item -LiteralPath (Join-Path $ProjectDir "Tools\Profiler\$name") -Destination (Join-Path $profilerDestination $name)
+        }
         $projectsDestination = Join-Path $stageDir 'Projects'
         New-Item -ItemType Directory -Path $projectsDestination -Force | Out-Null
         foreach ($project in (Get-ChildItem -LiteralPath (Join-Path $ProjectDir 'Projects') -Directory)) {

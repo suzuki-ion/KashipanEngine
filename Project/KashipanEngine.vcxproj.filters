@@ -1040,6 +1040,7 @@
     </ClInclude>
     <ClInclude Include="KashipanEngine\Debug\Profiler.h"><Filter>KashipanEngine\Debug</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Debug\ProfilerServer.h"><Filter>KashipanEngine\Debug</Filter></ClInclude>
+    <ClInclude Include="KashipanEngine\Debug\ProfilerLauncher.h"><Filter>KashipanEngine\Debug</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Debug\StartupTiming.h"><Filter>KashipanEngine\Debug</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Utilities\FileIO\ContentCache.h"><Filter>KashipanEngine\Utilities\FileIO</Filter></ClInclude>
     <ClInclude Include="KashipanEngine\Graphics\TextureUploadBatch.h"><Filter>KashipanEngine\Graphics</Filter></ClInclude>

@@ -1746,6 +1746,13 @@
 		"editor.gameengine.profiling.peak": "最大 (ms)",
 		"editor.gameengine.profiling.calls": "调用次数",
 		"editor.gameengine.profiling.window": "引擎性能分析",
+		"editor.profiler.launch": "启动外部 CPU 分析器",
+		"editor.profiler.error_title": "无法启动 CPU 分析器",
+		"editor.profiler.missing_script": "找不到分析器文件。请检查引擎的 Tools/Profiler 文件夹。",
+		"editor.profiler.missing_python": "找不到 Python。请安装包含 Tkinter 的 Python 3.10 或更高版本，并将其加入 PATH。",
+		"editor.profiler.disabled": "CPU 分析器通信已禁用。请将 KASHIPAN_PROFILER_PORT 设置为 1–65535，然后重启引擎。",
+		"editor.profiler.launch_failed": "无法启动 Python 应用。请检查 Python 安装和文件访问权限。",
+		"editor.profiler.exited": "Python 应用因错误退出。需要 Python 3.10 或更高版本及 Tkinter。运行 Tools/Profiler/StartProfiler.cmd 可查看详细信息。",
 		"editor.gameengine.profiling_sample_count": "性能分析的样本数",
 		"editor.gameengine.update_3f_ms": "更新时间：%.3f ms",
 

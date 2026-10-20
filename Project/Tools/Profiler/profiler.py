@@ -8,6 +8,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 from protocol import DEFAULT_PORT, MAX_SAMPLES, Receiver, load_capture, save_capture
+from single_instance import InstanceGuard
 
 
 class ProfilerApp:
@@ -311,9 +312,15 @@ def main():
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
     parser.add_argument("--offline", action="store_true", help="接続せずに起動")
     args = parser.parse_args()
-    root = tk.Tk()
-    ProfilerApp(root, args.port, not args.offline)
-    root.mainloop()
+    with InstanceGuard(args.port) as instance:
+        root = tk.Tk()
+        if not instance.acquired:
+            root.withdraw()
+            messagebox.showinfo("CPU Profiler", "このポートのプロファイラーは起動済みです。タスクバーから開いてください。", parent=root)
+            root.destroy()
+            return
+        ProfilerApp(root, args.port, not args.offline)
+        root.mainloop()
 
 
 if __name__ == "__main__":

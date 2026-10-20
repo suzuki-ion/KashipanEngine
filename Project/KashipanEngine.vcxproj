@@ -1148,6 +1148,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)Tools\CopyToWo
     <ClInclude Include="KashipanEngine\Debug\CrashHandler\ExportDump.h" />
     <ClInclude Include="KashipanEngine\Debug\Profiler.h" />
     <ClInclude Include="KashipanEngine\Debug\ProfilerServer.h" />
+    <ClInclude Include="KashipanEngine\Debug\ProfilerLauncher.h" />
     <ClInclude Include="KashipanEngine\Debug\StartupTiming.h" />
     <ClInclude Include="KashipanEngine\Utilities\FileIO\ContentCache.h" />
     <ClInclude Include="KashipanEngine\Graphics\TextureUploadBatch.h" />

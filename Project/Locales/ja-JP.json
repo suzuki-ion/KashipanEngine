@@ -1785,6 +1785,13 @@
 		"editor.gameengine.profiling.peak": "最大 (ms)",
 		"editor.gameengine.profiling.calls": "呼び出し回数",
 		"editor.gameengine.profiling.window": "エンジンのプロファイリング",
+		"editor.profiler.launch": "外部CPUプロファイラーを起動",
+		"editor.profiler.error_title": "CPUプロファイラーを起動できません",
+		"editor.profiler.missing_script": "プロファイラーが見つかりません。エンジンのTools/Profilerフォルダーを確認してください。",
+		"editor.profiler.missing_python": "Pythonが見つかりません。Python 3.10以降（Tkinterを含む）をインストールし、PATHを設定してください。",
+		"editor.profiler.disabled": "CPUプロファイラーの通信が無効です。KASHIPAN_PROFILER_PORTを1〜65535に設定してエンジンを再起動してください。",
+		"editor.profiler.launch_failed": "Pythonアプリを起動できませんでした。Pythonのインストールとファイルへのアクセス権を確認してください。",
+		"editor.profiler.exited": "Pythonアプリがエラーで終了しました。Python 3.10以降とTkinterが必要です。Tools/Profiler/StartProfiler.cmdから起動すると詳細を確認できます。",
 		"editor.gameengine.profiling_sample_count": "プロファイリングのサンプル数",
 		"editor.gameengine.update_3f_ms": "更新時間：%.3f ms",
 

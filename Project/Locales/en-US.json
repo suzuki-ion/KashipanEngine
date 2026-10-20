@@ -1783,6 +1783,13 @@
 		"editor.gameengine.profiling.peak": "Peak (ms)",
 		"editor.gameengine.profiling.calls": "Calls",
 		"editor.gameengine.profiling.window": "GameEngine Profiling",
+		"editor.profiler.launch": "Launch external CPU profiler",
+		"editor.profiler.error_title": "Cannot launch CPU profiler",
+		"editor.profiler.missing_script": "Profiler files were not found. Check the engine Tools/Profiler folder.",
+		"editor.profiler.missing_python": "Python was not found. Install Python 3.10 or later with Tkinter and add it to PATH.",
+		"editor.profiler.disabled": "CPU profiler transport is disabled. Set KASHIPAN_PROFILER_PORT to 1–65535 and restart the engine.",
+		"editor.profiler.launch_failed": "The Python app could not be started. Check the Python installation and file permissions.",
+		"editor.profiler.exited": "The Python app exited with an error. Python 3.10 or later and Tkinter are required. Run Tools/Profiler/StartProfiler.cmd to see details.",
 		"editor.gameengine.profiling_sample_count": "Profiling Sample Count",
 		"editor.gameengine.update_3f_ms": "Update: %.3f ms",
 

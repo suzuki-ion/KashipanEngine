@@ -23,6 +23,20 @@ def sample(frame=1):
 
 
 class ProtocolTests(unittest.TestCase):
+    @unittest.skipUnless(__import__("os").name == "nt", "Windows named mutex")
+    def test_single_instance_per_port(self):
+        from single_instance import InstanceGuard
+        import os
+        port = 100000 + os.getpid()  # unique mutex name, no actual socket
+        with InstanceGuard(port) as first:
+            self.assertTrue(first.acquired)
+            with InstanceGuard(port) as second:
+                self.assertFalse(second.acquired)
+            with InstanceGuard(port + 1) as other:
+                self.assertTrue(other.acquired)
+        with InstanceGuard(port) as reopened:
+            self.assertTrue(reopened.acquired)
+
     def test_fragmented_and_coalesced_packets(self):
         value = sample()
         raw = (json.dumps(value, ensure_ascii=False) + "\n").encode()

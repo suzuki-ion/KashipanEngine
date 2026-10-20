@@ -6,6 +6,15 @@ Python 3.10以降とTkinterが必要です。通常のWindows版PythonにはTkin
 
 ## 起動
 
+ビルド済みエディターの **デバッグウィンドウ → 外部CPUプロファイラーを起動** から開けます。
+Python 3.10以降とTkinterが必要です。GUI起動用の`pyw.exe -3`／`pythonw.exe`を優先し、なければ`py.exe -3`／`python.exe`を探索して、コンソールを表示せずに起動します。
+エンジンと同じ`KASHIPAN_PROFILER_PORT`を渡します。通信が無効の場合はエラーを表示します。
+起動中はメニュー項目が無効になり、閉じると再起動できます。手動起動を含め、Windowsでは同じポートのアプリを重複起動しません。
+Pythonの不在や起動失敗はエディターのダイアログとログで通知します。
+開発時はエンジンルート、配布時は実行ファイル側の`Tools/Profiler`を使用します。
+Development配布にはアプリ本体を同梱しますが、Python自体の同梱は行いません。
+エディターを閉じてもプロファイラーは起動したままです。
+
 1. 今回の変更を含むKashipanEngineをビルドして起動します。
 2. このフォルダーの `StartProfiler.cmd` をダブルクリックします。
 3. 自動で `127.0.0.1:47180` に接続します。先にアプリを開いても、エンジン起動まで再接続します。
@@ -90,6 +99,7 @@ Visual Studio x64 Developer PowerShellでC++送信元との結合テスト:
 ```powershell
 ./Project/Tests/RunProfilerRegression.ps1
 ./Project/Tests/RunProfilerServerRegression.ps1
+./Project/Tests/RunProfilerLauncherRegression.ps1
 ```
 
 結合テストは短時間の模擬ゲームループで、実際のC++送信クラスとPython受信処理を接続します。

@@ -1856,6 +1856,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTool
     <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\AssetsWindow.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\AssetFolderTree.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\ComponentAddMenu.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>

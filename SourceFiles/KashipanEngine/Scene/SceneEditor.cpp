@@ -330,22 +330,34 @@ void SceneEditor::StartExternalAssetScan(bool detectChanges) {
     const std::string assetsRoot = ProjectPaths::AssetsRoot();
     const std::string projectRoot = ProjectPaths::ProjectRoot();
     if (assetsRoot.empty()) return;
+    const std::string logicalAssetsRoot = ProjectPaths::ToLogical(assetsRoot);
 
     auto previous = std::move(externalAssetSnapshot_);
     externalAssetScanFuture_ = std::async(std::launch::async,
-        [assetsRoot, projectRoot, previous = std::move(previous), detectChanges]() mutable {
+        [assetsRoot, projectRoot, logicalAssetsRoot, previous = std::move(previous), detectChanges]() mutable {
             ExternalAssetScanResult result;
             std::error_code ec;
             const std::filesystem::path root = Utf8StringToPath(assetsRoot);
             if (!std::filesystem::is_directory(root, ec)) {
+                result.folderScanComplete = !ec;
                 result.snapshot = std::move(previous);
                 return result;
             }
 
+            result.folderScanComplete = true;
             for (std::filesystem::recursive_directory_iterator it(
                      root, std::filesystem::directory_options::skip_permission_denied, ec), end;
                  it != end; it.increment(ec)) {
-                if (ec) { ec.clear(); continue; }
+                if (ec) { result.folderScanComplete = false; ec.clear(); continue; }
+                std::error_code statusError;
+                const auto status = it->symlink_status(statusError);
+                if (statusError) { result.folderScanComplete = false; continue; }
+                if (std::filesystem::is_directory(status)) {
+                    const auto relativeFolder = it->path().lexically_relative(root);
+                    if (AssetFolderTree::IsVisibleFolder(relativeFolder, status)) {
+                        result.visibleFolders.push_back(AssetFolderTree::ChildPath(logicalAssetsRoot, PathToUtf8String(relativeFolder)));
+                    }
+                }
                 if (!it->is_regular_file(ec) || ec) { ec.clear(); continue; }
 
                 const std::string physicalPath = PathToUtf8String(it->path());
@@ -366,6 +378,8 @@ void SceneEditor::StartExternalAssetScan(bool detectChanges) {
                     result.changedPaths.push_back(logicalPath);
                 }
             }
+            if (ec) result.folderScanComplete = false;
+            std::sort(result.visibleFolders.begin(), result.visibleFolders.end());
 
             if (detectChanges) {
                 for (const auto &[path, stamp] : previous) {
@@ -383,6 +397,7 @@ void SceneEditor::ConsumeExternalAssetScanResult() {
     }
 
     ExternalAssetScanResult result = externalAssetScanFuture_.get();
+    if (result.folderScanComplete) assetsWindow_->RefreshFolderTreeIfChanged(result.visibleFolders);
     externalAssetSnapshot_ = std::move(result.snapshot);
     if (!result.changedPaths.empty()) {
         pendingExternalAssetPaths_.insert(result.changedPaths.begin(), result.changedPaths.end());

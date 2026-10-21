@@ -10,6 +10,7 @@
 
 #include "Utilities/Passkeys.h"
 #include "Scene/Editor/AssetEditorWindows.h"
+#include "Scene/Editor/AssetFolderTree.h"
 
 namespace KashipanEngine {
 
@@ -37,8 +38,10 @@ public:
 
     void ShowImGui();
 
-    /// @brief 外部ツールによるAssets配下の変更を表示へ反映する
-    void RefreshAfterExternalChanges() { RefreshFolderTree(); RefreshFileList(); }
+    /// @brief 外部ツールによるAssets配下の変更をファイル一覧へ反映する。階層の照合は別途行う。
+    void RefreshAfterExternalChanges() { RefreshFileList(); }
+    /// @brief 完了したバックグラウンド走査と照合し、フォルダ構成が変わった場合だけ再構築する。
+    void RefreshFolderTreeIfChanged(const std::vector<std::string> &sortedFolders);
 
     /// @brief OSからウィンドウ全体へD&Dされたファイルを、現在アクティブなAssetsWindowが
     ///        開いているフォルダへ取り込む（コピー＋対応するAssetManagerでの動的読み込み）
@@ -47,11 +50,7 @@ public:
     static void HandleDroppedFiles(const std::vector<std::string> &physicalPaths);
 
 private:
-    struct FolderNode {
-        std::string name;
-        std::string path; // 実行ディレクトリからの相対パス（ルートは空文字）
-        std::vector<std::unique_ptr<FolderNode>> children;
-    };
+    using FolderNode = AssetFolderTree::Node;
 
     struct FileEntry {
         std::string name;
@@ -66,7 +65,6 @@ private:
 
     /// @brief フォルダツリーを再構築する
     void RefreshFolderTree();
-    void BuildFolderNode(FolderNode &node);
     /// @brief 選択中フォルダのファイル一覧を再取得する
     void RefreshFileList();
     /// @brief 指定フォルダへ移動する（ファイル一覧の更新に加え、左のツリーの自動展開・
@@ -109,7 +107,7 @@ private:
     SceneEditorContext *editorContext_ = nullptr;
     SceneEditorCommands *commands_ = nullptr;
 
-    FolderNode rootFolder_;
+    std::shared_ptr<AssetFolderTree> folderTree_;
     std::string currentFolder_;
     std::vector<FileEntry> files_;
 

@@ -101,6 +101,8 @@ private:
     struct ExternalAssetScanResult {
         std::unordered_map<std::string, ExternalFileStamp> snapshot;
         std::vector<std::string> changedPaths;
+        std::vector<std::string> visibleFolders;
+        bool folderScanComplete = false;
     };
 
     SceneEditorContext *context_ = nullptr;

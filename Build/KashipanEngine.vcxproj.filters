@@ -2115,6 +2115,7 @@
     <ClInclude Include="..\Externals\utf8\utf8.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\AssetEditorWindows.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\AssetsWindow.h" />
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\AssetFolderTree.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\ComponentAddMenu.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\EditorSettings.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\EditorWindowChrome.h" />

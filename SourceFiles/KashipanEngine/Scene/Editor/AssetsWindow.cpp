@@ -229,7 +229,12 @@ std::vector<std::string> BuildScriptTemplate(AssetsWindow::ScriptTemplate script
 AssetsWindow::AssetsWindow(Passkey<SceneEditor>, SceneEditorContext *editorContext)
     : editorContext_(editorContext) {
     sActiveInstance_ = this;
-    RefreshFolderTree();
+    {
+        SceneLoadTiming::Scope timing("AssetsWindow.AcquireFolderTree");
+        folderTree_ = AssetFolderTree::Acquire(ProjectPaths::ProjectRoot(), ProjectPaths::AssetsRoot(),
+            ProjectPaths::ToLogical(ProjectPaths::AssetsRoot()));
+    }
+    RefreshFileList();
 }
 
 AssetsWindow::~AssetsWindow() {
@@ -281,7 +286,7 @@ void AssetsWindow::ShowImGui() {
 
     //--------- 左：フォルダツリー ---------//
     ImGui::BeginChild("AssetsFolderTree", ImVec2(220.0f, 0.0f), true);
-    ShowFolderNode(rootFolder_);
+    ShowFolderNode(folderTree_->Root());
     ImGui::EndChild();
     // 移動先までの強制展開・スクロールは1フレームだけ適用すればよいので、描画後にクリアする
     forceOpenFolders_.clear();
@@ -353,40 +358,16 @@ std::string AssetsWindow::ToLowerExtension(const std::filesystem::path &path) {
 
 void AssetsWindow::RefreshFolderTree() {
     SceneLoadTiming::Scope sceneLoadTiming1("AssetsWindow.RefreshFolderTree");
-    rootFolder_ = FolderNode{};
-    rootFolder_.name = Translation("editor.assets.folder.root");
-    rootFolder_.path = "";
-    {
-        SceneLoadTiming::Scope sceneLoadTiming2("AssetsWindow.BuildFolderTree");
-        BuildFolderNode(rootFolder_);
-    }
+    folderTree_ = AssetFolderTree::Acquire(ProjectPaths::ProjectRoot(), ProjectPaths::AssetsRoot(),
+        ProjectPaths::ToLogical(ProjectPaths::AssetsRoot()), true);
     { SceneLoadTiming::Scope sceneLoadTiming3("AssetsWindow.RefreshRootFiles"); RefreshFileList(); }
 }
 
-void AssetsWindow::BuildFolderNode(FolderNode &node) {
-    SceneLoadTiming::Scope sceneLoadTiming4("AssetsWindow.BuildFolderNode.Inclusive", node.path.empty() ? "Assets" : node.path);
-    std::error_code ec;
-    const std::filesystem::path base = ToPhysicalPath(node.path);
-    for (const auto &entry : std::filesystem::directory_iterator(
-            base, std::filesystem::directory_options::skip_permission_denied, ec)) {
-        std::error_code statusError;
-        const auto status = entry.symlink_status(statusError);
-        // シンボリックリンク／ジャンクションを再帰すると循環ディレクトリで無限再帰し得るため除外する。
-        if (statusError || !std::filesystem::is_directory(status) || std::filesystem::is_symlink(status)) continue;
-        const std::string name = PathToUtf8String(entry.path().filename());
-        // 隠しフォルダは表示しない
-        if (!name.empty() && name.front() == '.') continue;
-        auto child = std::make_unique<FolderNode>();
-        child->name = name;
-        {
-            SceneLoadTiming::Scope sceneLoadTiming5("AssetsWindow.ResolveLogicalPath", child->name);
-            child->path = ProjectPaths::ToLogical(PathToUtf8String(entry.path()));
-        }
-        BuildFolderNode(*child);
-        node.children.push_back(std::move(child));
+void AssetsWindow::RefreshFolderTreeIfChanged(const std::vector<std::string> &sortedFolders) {
+    if (!folderTree_->Matches(sortedFolders)) {
+        // Build from the live filesystem: the scan may predate a manual edit or refresh.
+        RefreshFolderTree();
     }
-    std::sort(node.children.begin(), node.children.end(),
-        [](const auto &a, const auto &b) { return a->name < b->name; });
 }
 
 void AssetsWindow::RefreshFileList() {
@@ -499,7 +480,8 @@ void AssetsWindow::ShowFolderNode(FolderNode &node) {
         ImGui::SetNextItemOpen(true, ImGuiCond_Always);
     }
 
-    const bool isOpen = ImGui::TreeNodeEx(node.name.c_str(), flags);
+    const char *label = node.path.empty() ? TranslationC("editor.assets.folder.root") : node.name.c_str();
+    const bool isOpen = ImGui::TreeNodeEx(label, flags);
     if (!node.path.empty() && node.path == pendingScrollToFolder_) {
         ImGui::SetScrollHereY(0.5f);
     }

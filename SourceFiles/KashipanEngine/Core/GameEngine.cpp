@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <chrono>
+#include <future>
 #include <optional>
 
 #if defined(USE_IMGUI)
@@ -87,6 +88,18 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
 
     startupSections.End("COMAndSetup");
 
+    // ファイル一覧だけを先に作成し、Windows・描画初期化と重ねる。
+    // ワーカーはルートのコピーとローカルデータだけを扱い、ログやManagerには触れない。
+    const std::string assetsRoot = ProjectPaths::AssetsRoot();
+    auto assetScan = std::async(std::launch::async, [assetsRoot] {
+        const auto started = std::chrono::steady_clock::now();
+        AssetFileIndex files(assetsRoot);
+        const double elapsedMs = std::chrono::duration<double, std::milli>(
+            std::chrono::steady_clock::now() - started).count();
+        return std::make_pair(std::move(files), elapsedMs);
+    });
+    startupSections.End("AssetScanDispatch");
+
     //--------- インスタンス生成 ---------//
 
     windowsAPI_ = std::make_unique<WindowsAPI>(Passkey<GameEngine>{});
@@ -104,11 +117,16 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
 
     // 各Managerには物理パスのAssetsルートを渡す。Manager内部で扱うアセットパスは
     // このルートからの相対パスになるため、プロジェクトが変わっても値は変わらない
-    const std::string &assetsRoot = ProjectPaths::AssetsRoot();
-    AssetFileIndex assetFiles(assetsRoot);
+    // get()で完了待ちと所有権の受け渡しを行い、探索時の例外もここで伝播させる。
+    auto [assetFiles, assetScanMs] = assetScan.get();
+    startupSections.End("AssetScanWait");
+    if (StartupTiming::IsActive()) {
+        Log(std::format("[StartupTiming] Engine.AssetScan: {:.3f} ms ({:.3f} s)",
+            assetScanMs, assetScanMs / 1000.0), LogSeverity::Info);
+    }
     Log("[StartupAssets] scans=1, files=" + std::to_string(assetFiles.FileCount()) +
         ", directories=" + std::to_string(assetFiles.DirectoryCount()), LogSeverity::Info);
-    startupSections.End("AssetScan");
+    startupSections.End("AssetScanReporting");
     textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetFiles);
     startupSections.End("Textures");
     fontManager_ = std::make_unique<FontManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetFiles);

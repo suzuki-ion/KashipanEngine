@@ -4,9 +4,9 @@ on:
   push:
     branches: [JobHuntingProject]
     paths:
-      - "Project/Reference/**"
-      - "Project/Portfolio/**"
-      - "Project/Tools/VersionPortfolioAssets.py"
+      - "Docs/Reference/**"
+      - "Websites/Portfolio/**"
+      - "EngineTools/VersionPortfolioAssets.py"
       - ".github/workflows/deploy-reference.yml"
   workflow_dispatch:
 
@@ -37,9 +37,9 @@ jobs:
         shell: bash
         run: |
           mkdir -p "$RUNNER_TEMP/kashipan-pages/portfolio"
-          cp -a Project/Reference/. "$RUNNER_TEMP/kashipan-pages/"
-          cp -a Project/Portfolio/. "$RUNNER_TEMP/kashipan-pages/portfolio/"
-          python3 Project/Tools/VersionPortfolioAssets.py "$RUNNER_TEMP/kashipan-pages/"
+          cp -a Docs/Reference/. "$RUNNER_TEMP/kashipan-pages/"
+          cp -a Websites/Portfolio/. "$RUNNER_TEMP/kashipan-pages/portfolio/"
+          python3 EngineTools/VersionPortfolioAssets.py "$RUNNER_TEMP/kashipan-pages/"
           touch "$RUNNER_TEMP/kashipan-pages/.nojekyll"
 
       - name: Upload artifact

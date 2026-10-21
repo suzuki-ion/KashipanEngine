@@ -1,0 +1,4 @@
+# Paths relative to the Development distribution folder, one file or directory per line.
+# Use GameProjects/<project-name>/Assets/... or EngineData/AssetsTemplate/... paths.
+# Keep assets needed by the editor and project switching.
+# Example: GameProjects/Test/Assets/Unused/Preview.png

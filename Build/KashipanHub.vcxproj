@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Development|x64">
+      <Configuration>Development</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{7a3c9f42-6d18-4b5e-9c07-2e8b41d5a6f3}</ProjectGuid>
+    <RootNamespace>KashipanHub</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(MSBuildThisFileDirectory)RepositoryPaths.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <!-- エディター本体と同じフォルダへ出力する（ランチャーは隣のKashipanEngine.exeを起動するため） -->
+    <TargetName>KashipanHub</TargetName>
+    <OutDir>$(RepositoryRoot)Generated\Outputs\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(RepositoryRoot)Generated\Obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <!-- WebView2のヘッダーは自前のコードではないため、警告レベルの対象外にする -->
+    <ExternalIncludePath>$(RepositoryRoot)Externals\WebView2\include;$(ExternalIncludePath)</ExternalIncludePath>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnabled>false</VcpkgEnabled>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp23</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <!-- エンジンから流用するソースはLogger.hが強制インクルードされている前提で書かれている -->
+      <ForcedIncludeFiles>Debug/Logger.h</ForcedIncludeFiles>
+      <ObjectFileName>$(IntDir)%(Filename).obj</ObjectFileName>
+      <AdditionalIncludeDirectories>$(RepositoryRoot)Externals\nlohmann;$(RepositoryRoot)Externals\utf8;$(RepositoryRoot)SourceFiles\MyStd;$(RepositoryRoot)SourceFiles\KashipanEngine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(RepositoryRoot)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <!-- エンジンルート（AssetsTemplate/ と Projects/ の位置）をexeへ伝える。
+           エディター本体のビルド後イベントと同じ内容で、どちらを単体でビルドしても揃うようにしている -->
+      <Command>&gt;"$(OutDir)EngineRoot.txt" echo $(RepositoryRoot)
+copy /Y "$(RepositoryRoot)Externals\WebView2\lib\x64\WebView2Loader.dll" "$(OutDir)WebView2Loader.dll"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>DEBUG_BUILD;_DEBUG;_WINDOWS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>DEVELOPMENT_BUILD;_WINDOWS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;_ITERATOR_DEBUG_LEVEL=0</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>RELEASE_BUILD;NDEBUG;_WINDOWS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <!-- ランチャー本体 -->
+    <ClCompile Include="..\SourceFiles\Launcher\LauncherMain.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\Launcher\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\Launcher\LauncherWebViewUI.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\Launcher\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\Launcher\LauncherFallbackUI.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\Launcher\</ObjectFileName>
+    </ClCompile>
+    <!-- プロジェクト管理（エディター本体と同じ実装を共有する） -->
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Core\ProjectManager.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Core\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Core\ProjectPaths.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Core\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Core\UserSettings.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Core\</ObjectFileName>
+    </ClCompile>
+    <!-- 上記が依存する最小限のユーティリティ（DirectX・ImGuiには依存しない） -->
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Debug\Logger.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Debug\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Debug\LogSettings.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Debug\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Utilities\Conversion\ConvertString.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Utilities\Conversion\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Utilities\FileIO\Directory.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Utilities\FileIO\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Utilities\FileIO\JSON.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Utilities\FileIO\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Utilities\FileIO\RawFile.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Utilities\FileIO\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Utilities\FileIO\TextFile.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Utilities\FileIO\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Utilities\SourceLocation.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Utilities\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Utilities\TemplateLiteral.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Utilities\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Utilities\TimeUtils.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Utilities\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Utilities\Translation.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Utilities\</ObjectFileName>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\SourceFiles\Launcher\LauncherUI.h" />
+    <ClInclude Include="..\SourceFiles\Launcher\LauncherWebViewUI.h" />
+    <ClInclude Include="..\SourceFiles\Launcher\LauncherFallbackUI.h" />
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Core\ProjectManager.h" />
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Core\ProjectPaths.h" />
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Core\UserSettings.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

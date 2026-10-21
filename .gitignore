@@ -30,32 +30,32 @@ LastSceneBackup/
 # UserSettings.json: 全プロジェクト共有の設定（表示倍率・フォント・配色・前回開いたプロジェクト）
 # UserSettings/: 上記を分割保存する新形式（配色プリセット・レイアウトプリセット等）
 # EditorSettings.json: プロジェクトごとのエディターUIの状態（ツリーの開閉など）
-Project/UserSettings.json
-Project/UserSettings/
-Project/Projects/*/EditorSettings.json
+UserSettings.json
+UserSettings/
+GameProjects/*/EditorSettings.json
 
 # プレイヤー（配布したゲームの実行環境）ごとの個人設定。実行環境ごとに異なる値のため共有しない
 # PlayerSettings.json: プロジェクトごとのプレイヤー設定（表示言語など）
-Project/Projects/*/PlayerSettings.json
+GameProjects/*/PlayerSettings.json
 
 # AngelScript関連の生成物
 # AS_DEBUG/: Debug構成実行時に生成されるAngelScriptのデバッグ情報フォルダ
 # lib/*.lib, projects内の*.obj: AngelScript自体のビルドで生成される中間・成果物
 # as.predefined: エンジン起動時にVSCodeの補完用として自動生成されるファイル
 AS_DEBUG/
-Project/Externals/angelscript/lib/*.lib
-Project/Externals/angelscript/projects/**/*.obj
+Externals/angelscript/lib/*.lib
+Externals/angelscript/projects/**/*.obj
 as.predefined
 
 # Assimpの静的ライブラリ（サイズが大きくクローン/ブランチ切り替えを不安定にするためリポジトリに含めない。
-# ビルド前イベント(Tools/DownloadAssimpLibs.ps1)がGitHub Releaseから取得して配置する）
-Project/Externals/Assimp/lib/Debug/assimp-vc143-mtd.lib
-Project/Externals/Assimp/lib/Release/assimp-vc143-mt.lib
+# ビルド前イベント(EngineTools/DownloadAssimpLibs.ps1)がGitHub Releaseから取得して配置する）
+Externals/Assimp/lib/Debug/assimp-vc143-mtd.lib
+Externals/Assimp/lib/Release/assimp-vc143-mt.lib
 
 # ReactPhysics3Dの静的ライブラリ（Assimpと同様の理由でリポジトリに含めない。
-# ビルド前イベント(Tools/DownloadReactPhysics3DLibs.ps1)がGitHub Releaseから取得して配置する）
-Project/Externals/ReactPhysics3D/debug/lib/reactphysics3d.lib
-Project/Externals/ReactPhysics3D/lib/reactphysics3d.lib
+# ビルド前イベント(EngineTools/DownloadReactPhysics3DLibs.ps1)がGitHub Releaseから取得して配置する）
+Externals/ReactPhysics3D/debug/lib/reactphysics3d.lib
+Externals/ReactPhysics3D/lib/reactphysics3d.lib
 
 # ビルド後イベントが生成するエンジンルートの位置を示すマーカー
 EngineRoot.txt
@@ -82,10 +82,10 @@ x86/
 [Gg]enerated/
 
 # WebView2ローダー（NuGet由来の成果物。上のx64/ルールに巻き込まれて誤除外されるため個別に除外解除）
-!Project/Externals/WebView2/lib/
-!Project/Externals/WebView2/lib/x64/
-!Project/Externals/WebView2/lib/x64/WebView2Loader.dll
-!Project/Externals/WebView2/lib/x64/WebView2Loader.dll.lib
+!Externals/WebView2/lib/
+!Externals/WebView2/lib/x64/
+!Externals/WebView2/lib/x64/WebView2Loader.dll
+!Externals/WebView2/lib/x64/WebView2Loader.dll.lib
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
@@ -414,3 +414,7 @@ KashipanEngine/imgui.ini
 
 # Regenerable startup shader and texture caches
 **/Cache/Startup/
+
+# Local settings and temporary generated MSBuild projects
+UserSettings/
+Build/*.generated.vcxproj

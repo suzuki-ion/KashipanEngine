@@ -42,7 +42,7 @@ KashipanEngineはゲームエンジンではあるものの、個人で制作し
 <a id="requirements"></a>
 ## 動作要件・ビルド方法
 - **Visual Studio 2026以降が必要です。Visual Studio 2022はサポート対象外です。**
-- `KashipanEngine.sln`をVisual Studio 2026で開き、**スタートアッププロジェクトを`KashipanEngine`または`KashipanHub`に設定してから**ビルドしてください。
+- `Build/KashipanEngine.sln`をVisual Studio 2026で開き、**スタートアッププロジェクトを`KashipanEngine`または`KashipanHub`に設定してから**ビルドしてください。
 
 <a id="usage"></a>
 ## 使い方
@@ -51,7 +51,7 @@ KashipanEngineはゲームエンジンではあるものの、個人で制作し
 <a id="screenshots"></a>
 ## スクリーンショット
 <p align="center">
-  <img src="Project/Reference/assets/tutorial/00-editor-overview.png" alt="KashipanEngine エディター画面" width="100%">
+  <img src="Docs/Reference/assets/tutorial/00-editor-overview.png" alt="KashipanEngine エディター画面" width="100%">
 </p>
 <p align="center"><sub>シーンエディターの画面。階層/シーンビュー/インスペクター/アセットブラウザ等を1つのウィンドウにまとめています。</sub></p>
 
@@ -93,6 +93,9 @@ KashipanEngineは[MIT License](LICENSE)で公開しています。商用利用�
 | Angel Script | zlib License（※KashipanEngineにて一部改変） |
 | Microsoft Edge WebView2 | BSD 3-Clause License（SDK/ローダー部分。実行時のWebView2 Runtime本体は別扱い） |
 
-※ Angel Scriptについては、スクリプト読み込み時にフォルダパスへ日本語（非ASCII文字）が含まれていると読み込みに失敗する不具合を修正するため、KashipanEngine独自に`scriptbuilder.cpp`の一部を改変しています。改変内容の詳細は[`Project/LICENSE.txt`](Project/LICENSE.txt)に記載しています。
+※ Angel Scriptについては、スクリプト読み込み時にフォルダパスへ日本語（非ASCII文字）が含まれていると読み込みに失敗する不具合を修正するため、KashipanEngine独自に`scriptbuilder.cpp`の一部を改変しています。改変内容の詳細は[`LICENSE.txt`](LICENSE.txt)に記載しています。
 
-なお`Project/LICENSE.txt`には、KashipanEngine本体のライセンスと上記サードパーティライブラリすべてのライセンス全文をまとめています。このファイルはビルド時に自動でビルド後の実行ファイルと同じフォルダへコピーされ、配布物にも同梱されます。
+なお`LICENSE.txt`には、KashipanEngine本体のライセンスと上記サードパーティライブラリすべてのライセンス全文をまとめています。このファイルはビルド時に自動でビルド後の実行ファイルと同じフォルダへコピーされ、配布物にも同梱されます。
+
+
+フォルダの役割・ビルドと配布のパスは [リポジトリ構成](Docs/RepositoryLayout.md) を参照してください。

@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_Torso_Upper",
+        "objectID": "346a9ea4-3d3b-5f92-b448-82ebe3bce479",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "a1064c0e-e55b-558f-98be-0eec4caabdb3",
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.1100000000000001,
+                            "z": -0.0
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950011
+}

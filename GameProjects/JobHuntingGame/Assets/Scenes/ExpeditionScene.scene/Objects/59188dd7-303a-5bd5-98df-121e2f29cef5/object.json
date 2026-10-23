@@ -1,0 +1,40 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": false,
+        "name": "HistoricalStreetlight2Template",
+        "objectID": "59188dd7-303a-5bd5-98df-121e2f29cef5",
+        "prefabNodeID": "d323a35e-dd30-463a-befe-815cee3fc158",
+        "tag": ""
+    },
+    "siblingIndex": 980001
+}

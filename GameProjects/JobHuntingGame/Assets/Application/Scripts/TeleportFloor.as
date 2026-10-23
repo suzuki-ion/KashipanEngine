@@ -16,10 +16,40 @@ class TeleportFloor : ScriptComponentBehavior {
     [SerializeField, Tooltip("テレポート除外タグ（このタグを持つオブジェクトはテレポートしない）")]
     array<string>@ excludeTags = null;
 
-    array<Tag> excludeTagList;
+    array<Tag>@ excludeTagList = array<Tag>();
+    [SerializeField, Tooltip("空欄の場合は制限なし")]
+    string requiredObjectTag = "";
+    [SerializeField, Tooltip("衝突通知後に転送し、転送した1フレームだけCCDを停止する（壁で囲まれた遠征向け）")]
+    bool deferTeleport = false;
+    Object@ pendingObject;
+    Vector3 pendingPosition;
+    array<Collider@>@ suspendedColliders = array<Collider@>();
+    array<bool>@ previousCCD = array<bool>();
+
+    void SuspendCCD(Collider@ collider) {
+        if (collider is null) return;
+        suspendedColliders.insertLast(collider); previousCCD.insertLast(collider.IsContinuousDetection());
+        collider.SetContinuousDetection(false);
+    }
+    void Update() {
+        for (uint i = 0; i < suspendedColliders.length(); ++i)
+            suspendedColliders[i].SetContinuousDetection(previousCCD[i]);
+        suspendedColliders.resize(0); previousCCD.resize(0);
+        if (pendingObject is null) return;
+        // 衝突通知中の移動は残りの接触応答に押し戻され、CCDは経路中の壁にも当たる。
+        // 次の更新で移動し、到着後の位置を物理側へ一度同期してからCCDを戻す。
+        SphereCollider@ sphere; BoxCollider@ box; MeshCollider@ mesh;
+        if (pendingObject.GetComponent(@sphere)) SuspendCCD(sphere);
+        if (pendingObject.GetComponent(@box)) SuspendCCD(box);
+        if (pendingObject.GetComponent(@mesh)) SuspendCCD(mesh);
+        pendingObject.GetTransform().SetTranslate(pendingPosition);
+        @pendingObject = null;
+    }
 
     void Start() {
         Log("TeleportFloor start: " + GetOwnerObject().GetName());
+        excludeTagList.resize(0);
+        if (excludeTags is null) return;
         for (uint i = 0; i < excludeTags.length(); ++i) {
             excludeTagList.insertLast(Tag(excludeTags[i]));
         }
@@ -27,12 +57,17 @@ class TeleportFloor : ScriptComponentBehavior {
     
     void OnCollisionEnter(const HitInfo &in hit) {
         if (hit.otherObject is null) return;
-        if (targetObject is null) return;
+        if (requiredObjectTag != "" && hit.otherObject.GetTagName() != requiredObjectTag) return;
 
         for (uint i = 0; i < excludeTagList.length(); ++i) {
             if (hit.otherObject.GetTag() == excludeTagList[i]) {
                 return;
             }
+        }
+        if (deferTeleport) {
+            @pendingObject = hit.otherObject;
+            pendingPosition = targetObject is null ? targetPosition + offset : targetObject.GetTransform().GetWorldPosition() + offset;
+            return;
         }
         
         if (targetObject is null) {

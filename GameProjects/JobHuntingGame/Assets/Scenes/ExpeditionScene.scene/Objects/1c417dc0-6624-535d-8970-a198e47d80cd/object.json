@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_L_UpperArm",
+        "objectID": "1c417dc0-6624-535d-8970-a198e47d80cd",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "86ea7fba-53d5-5669-89ab-3b09a6f4b014",
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950013
+}

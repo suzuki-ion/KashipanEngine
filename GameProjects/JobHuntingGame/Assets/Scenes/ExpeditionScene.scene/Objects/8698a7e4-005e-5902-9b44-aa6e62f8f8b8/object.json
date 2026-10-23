@@ -1,0 +1,55 @@
+{
+    "object": {
+        "name": "TownBGM",
+        "objectID": "8698a7e4-005e-5902-9b44-aa6e62f8f8b8",
+        "isActive": true,
+        "tag": "",
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        }
+                    }
+                }
+            },
+            {
+                "type": "AudioSource",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "soundName": "Application/Sound/bgmGameScene.mp3",
+                        "category": "BGM",
+                        "volume": 1,
+                        "loop": true,
+                        "playOnAwake": true,
+                        "enableSpatialAudio": false
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 910000
+}

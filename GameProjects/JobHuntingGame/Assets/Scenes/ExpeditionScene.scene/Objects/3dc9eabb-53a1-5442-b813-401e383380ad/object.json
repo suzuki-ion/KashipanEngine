@@ -1,0 +1,92 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "59188dd7-303a-5bd5-98df-121e2f29cef5",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.25,
+                            "y": 0.25,
+                            "z": 1.25
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.5,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Box"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "castShadows": true,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "instanceUvCombineMode": 0,
+                        "instanceUvPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceUvRotation": 0.0,
+                        "instanceUvScale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "instanceUvTranslate": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "materialName": "Default",
+                        "materialNames": [
+                            "Default"
+                        ],
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "renderPriority": 0,
+                        "targetObjectID": "5f29d508-c15d-51a0-b052-6c34eca2032a"
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "MeshRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "HistoricalStreetlight2Part3",
+        "objectID": "3dc9eabb-53a1-5442-b813-401e383380ad",
+        "prefabNodeID": "9d6c80f2-9c53-452b-8323-3d16e84a76ca",
+        "tag": ""
+    },
+    "siblingIndex": 980003
+}

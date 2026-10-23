@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_R_Fingers_IndexToLittle",
+        "objectID": "9f9fdce2-eb37-5be0-a634-5c9608a1cda1",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "fa23f648-fdd8-5d69-8836-cc45bf5e0de0",
+                        "translate": {
+                            "x": -0.17919999999999991,
+                            "y": 0.0,
+                            "z": 0.01344
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950026
+}

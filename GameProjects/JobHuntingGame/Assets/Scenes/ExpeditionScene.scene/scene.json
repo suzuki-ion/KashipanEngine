@@ -1,0 +1,49 @@
+{
+    "sceneComponents": [
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1000,
+                "tag": ""
+            },
+            "type": "SceneRenderer"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1,
+                "tag": ""
+            },
+            "type": "SceneScriptEngine"
+        },
+        {
+            "type": "SceneObjectCollider",
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1,
+                "tag": ""
+            }
+        }
+    ],
+    "sceneID": "1b428be9-c09a-5af2-bc87-7e8cb9769bc2",
+    "sceneName": "ExpeditionScene",
+    "sceneVariables": [
+        {
+            "key": "CheckpointPosition",
+            "type": "Vector3",
+            "value": {
+                "x": 0,
+                "y": 4,
+                "z": 0
+            }
+        },
+        {
+            "key": "CheckpointPriority",
+            "type": "Int32",
+            "value": -1
+        }
+    ]
+}

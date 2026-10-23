@@ -1,0 +1,90 @@
+{
+    "object": {
+        "name": "PlayerHumanoid",
+        "objectID": "dcc3d95c-206f-5c06-aae4-367af531e8fc",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "c1bd2085-c758-59f1-9fd6-beccd90cbe37",
+                        "translate": {
+                            "x": 0,
+                            "y": -1,
+                            "z": 0
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": -0.7071067811865476,
+                            "z": 0,
+                            "w": 0.7071067811865476
+                        },
+                        "scale": {
+                            "x": 1.081081081081081,
+                            "y": 1.081081081081081,
+                            "z": 1.081081081081081
+                        }
+                    }
+                }
+            },
+            {
+                "type": "MeshFilter",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb"
+                    }
+                }
+            },
+            {
+                "type": "Animator",
+                "data": {
+                    "isActive": true,
+                    "priority": 500,
+                    "tag": "",
+                    "customData": {
+                        "rootBoneObjectID": "dcc3d95c-206f-5c06-aae4-367af531e8fc",
+                        "clipName": "UAL_Idle_Loop",
+                        "animationSourceAssetPath": "Application/Models/Player/box_humanoid_rigged.glb",
+                        "playOnStart": true,
+                        "loop": true,
+                        "playbackSpeed": 1
+                    }
+                }
+            },
+            {
+                "type": "SkinnedMeshRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": "",
+                    "customData": {
+                        "targetObjectID": "5f29d508-c15d-51a0-b052-6c34eca2032a",
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "materialName": "PlayerHumanoid",
+                        "materialNames": [
+                            "PlayerHumanoid"
+                        ],
+                        "castShadows": true,
+                        "renderPriority": 1,
+                        "instanceColor": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1,
+                            "w": 1
+                        },
+                        "allowInstancing": false
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950000
+}

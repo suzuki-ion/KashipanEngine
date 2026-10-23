@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_L_Fingers_IndexToLittle",
+        "objectID": "1532eb78-3213-5cdb-a545-063390293685",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "7e9ba4cb-58a9-533a-a8db-24292a3fd244",
+                        "translate": {
+                            "x": 0.17919999999999991,
+                            "y": 0.0,
+                            "z": 0.01344
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950018
+}

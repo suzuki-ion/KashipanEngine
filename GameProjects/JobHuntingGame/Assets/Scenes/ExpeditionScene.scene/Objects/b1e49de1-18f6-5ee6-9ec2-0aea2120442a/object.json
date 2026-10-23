@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_R_Thumb",
+        "objectID": "b1e49de1-18f6-5ee6-9ec2-0aea2120442a",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "fa23f648-fdd8-5d69-8836-cc45bf5e0de0",
+                        "translate": {
+                            "x": -0.09519999999999984,
+                            "y": -0.036960000000000104,
+                            "z": -0.0728
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950027
+}

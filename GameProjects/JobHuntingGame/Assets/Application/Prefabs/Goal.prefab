@@ -34,7 +34,7 @@
                         "data": {
                             "customData": {
                                 "fields": {
-                                    "nextSceneName": "TitleScene"
+                                    "nextSceneName": "CityScene"
                                 },
                                 "scriptPath": "Assets\\Application\\Scripts\\Goal.as"
                             },

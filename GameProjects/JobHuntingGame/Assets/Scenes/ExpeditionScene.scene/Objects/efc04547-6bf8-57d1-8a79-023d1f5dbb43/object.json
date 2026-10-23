@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_L_Foot",
+        "objectID": "efc04547-6bf8-57d1-8a79-023d1f5dbb43",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "86d163a7-ac34-576a-8212-a3c191dc7645",
+                        "translate": {
+                            "x": 0.0,
+                            "y": -0.42000000000000004,
+                            "z": -0.0
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950005
+}

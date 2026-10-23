@@ -1,0 +1,107 @@
+{
+    "object": {
+        "name": "ExpeditionGroundTemplate",
+        "objectID": "766da889-2d2b-5244-8587-d6b7f44bd248",
+        "tag": "",
+        "isActive": false,
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        }
+                    }
+                }
+            },
+            {
+                "type": "MeshFilter",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Box"
+                    }
+                }
+            },
+            {
+                "type": "BoxCollider",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "GroundBox",
+                    "customData": {
+                        "size": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "center": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "syncScale": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncPosition": [
+                            true,
+                            true,
+                            true
+                        ],
+                        "syncRotation": true,
+                        "isTrigger": false
+                    }
+                }
+            },
+            {
+                "type": "MeshRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": "",
+                    "customData": {
+                        "targetObjectID": "5f29d508-c15d-51a0-b052-6c34eca2032a",
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "materialName": "Default",
+                        "allowInstancing": true,
+                        "castShadows": true,
+                        "materialNames": [
+                            "Default"
+                        ],
+                        "instanceColor": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1,
+                            "w": 1
+                        },
+                        "instanceColorBlendMode": 1
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 930000
+}

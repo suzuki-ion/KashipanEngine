@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_R_Wrist",
+        "objectID": "5e7ff6db-2982-5742-a676-78ca56b17907",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "1ffe968f-1dd2-51c4-b4bb-7f657c62b686",
+                        "translate": {
+                            "x": -0.33000000000000007,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950024
+}

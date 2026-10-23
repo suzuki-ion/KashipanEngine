@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_R_Knee",
+        "objectID": "2a63309e-dccd-59d3-8212-5e7a5f48801e",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "61c1b308-142c-513b-887a-c40c74d5fde7",
+                        "translate": {
+                            "x": 0.0,
+                            "y": -0.45999999999999996,
+                            "z": -0.0
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950007
+}

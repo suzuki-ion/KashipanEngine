@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_R_Thigh",
+        "objectID": "61c1b308-142c-513b-887a-c40c74d5fde7",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "9336206e-5efc-5b51-b433-78f0b5bdd02e",
+                        "translate": {
+                            "x": -0.105,
+                            "y": -0.09000000000000008,
+                            "z": -0.0
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950006
+}

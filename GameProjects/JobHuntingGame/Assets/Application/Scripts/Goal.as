@@ -1,5 +1,5 @@
 // ゴール用スクリプト。
-// プレイヤーが触れた際、タイトルシーンへ戻る。
+// プレイヤーが触れた際、街シーンへ戻る。
 //
 // 前提（エディター側で設定が必要）:
 //   - このスクリプトを持つオブジェクトにコライダー（Box/Sphere等）を追加しておくこと
@@ -8,7 +8,7 @@
 
 class Goal : ScriptComponentBehavior {
     [SerializeField, Tooltip("接触時に遷移するシーン名")]
-    string nextSceneName = "TitleScene";
+    string nextSceneName = "CityScene";
 
     bool sceneChangeRequested = false;
 

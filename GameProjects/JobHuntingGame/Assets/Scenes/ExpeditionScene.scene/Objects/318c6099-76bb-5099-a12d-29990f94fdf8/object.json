@@ -1,0 +1,77 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "14abf8d7-3cca-51be-a6a7-8c37d0058716",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 0.5,
+                            "y": 1.0,
+                            "z": 4.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.5,
+                            "z": 2.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Box"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "castShadows": true,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "materialName": "Default",
+                        "materialNames": [
+                            "Default"
+                        ],
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "renderPriority": 0,
+                        "targetObjectID": "5f29d508-c15d-51a0-b052-6c34eca2032a"
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "MeshRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "HistoricalWallLampPart2",
+        "objectID": "318c6099-76bb-5099-a12d-29990f94fdf8",
+        "tag": ""
+    },
+    "siblingIndex": 985002
+}

@@ -1,0 +1,41 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "c1bd2085-c758-59f1-9fd6-beccd90cbe37",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": -0.5,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "LandingParticlePos",
+        "objectID": "cd3a9a84-e4da-5a13-8244-40f2a5f838f0",
+        "prefabNodeID": "321d0596-59ff-486d-adbb-672b0b32862f",
+        "tag": ""
+    },
+    "siblingIndex": 970000
+}

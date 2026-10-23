@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_L_Elbow",
+        "objectID": "73ad9576-14d6-59d9-9fb9-467b18b783ca",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "1c417dc0-6624-535d-8970-a198e47d80cd",
+                        "translate": {
+                            "x": 0.37,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950014
+}

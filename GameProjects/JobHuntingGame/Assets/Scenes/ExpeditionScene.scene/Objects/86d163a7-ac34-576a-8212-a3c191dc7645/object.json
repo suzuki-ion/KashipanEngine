@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_L_Shin",
+        "objectID": "86d163a7-ac34-576a-8212-a3c191dc7645",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "e8632b79-3c92-5daf-aa34-07199f05bbb2",
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950004
+}

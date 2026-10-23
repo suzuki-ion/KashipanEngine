@@ -1,0 +1,77 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "a87eacab-ebab-5ce9-a815-3b26206088c6",
+                        "rotate": {
+                            "w": 0.9238795042037964,
+                            "x": 0.38268354535102844,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 5.199999809265137,
+                            "y": 0.4000000059604645,
+                            "z": 0.20000000298023224
+                        },
+                        "translate": {
+                            "x": -6.079673767089844e-05,
+                            "y": 0.040859222412109375,
+                            "z": -0.6711512207984924
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Box"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "castShadows": true,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "materialName": "Default",
+                        "materialNames": [
+                            "Default"
+                        ],
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "renderPriority": 0,
+                        "targetObjectID": "5f29d508-c15d-51a0-b052-6c34eca2032a"
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "MeshRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "HistoricalFluorescentPart5",
+        "objectID": "bd35c317-cd9e-5578-a33a-4545f0ed4f4a",
+        "tag": ""
+    },
+    "siblingIndex": 985005
+}

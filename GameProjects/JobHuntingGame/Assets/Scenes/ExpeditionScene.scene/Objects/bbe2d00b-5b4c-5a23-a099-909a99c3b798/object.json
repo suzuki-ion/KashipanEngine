@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_R_Foot",
+        "objectID": "bbe2d00b-5b4c-5a23-a099-909a99c3b798",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "ea28bcc2-43d8-5360-9d02-8ec0cd51fa4b",
+                        "translate": {
+                            "x": 0.0,
+                            "y": -0.42000000000000004,
+                            "z": -0.0
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950009
+}

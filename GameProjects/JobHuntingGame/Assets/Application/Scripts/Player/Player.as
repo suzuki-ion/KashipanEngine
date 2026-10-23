@@ -5,8 +5,12 @@
 #include "PlayerCombat.as"
 #include "PlayerEmbedding.as"
 #include "PlayerMovementTarget.as"
+#include "PlayerAttack.as"
+#include "PlayerAnimation.as"
 
 class Player : ScriptComponentBehavior {
+    [SerializeField, Tooltip("通常形態のスキンメッシュとAnimatorを持つ表示用オブジェクト")]
+    Object@ humanoidVisual;
     [Header("プレイヤーの基本設定")]
 
     [SerializeField, Tooltip("移動速度")]
@@ -85,6 +89,12 @@ class Player : ScriptComponentBehavior {
     PlayerCombat@ combat;
     PlayerEmbedding@ embedding;
     PlayerMovementTarget@ movementTarget;
+    PlayerAttack@ attack = PlayerAttack();
+    PlayerAnimation@ animation;
+    int attackSequence=0;
+    float attackFacing=1;
+    float attackAge=1;
+    bool attackActive=false;
 
     void Awake() {
         @input = PlayerInput();
@@ -94,8 +104,10 @@ class Player : ScriptComponentBehavior {
         @combat = PlayerCombat(this, movement, damageFlash, transformation);
         @embedding = PlayerEmbedding(this, transformation);
         @movementTarget = PlayerMovementTarget(this);
+        @animation = PlayerAnimation(this);
 
         transformation.Awake();
+        animation.Initialize();
     }
 
     void Update() {
@@ -104,7 +116,10 @@ class Player : ScriptComponentBehavior {
         input.Update();
         embedding.Update(dt);
 
-        if (input.transformationTriggered) {
+        bool transformationUnlocked = false;
+        GetScene().GetGlobalVariable("LightTown.TransformationUnlocked", transformationUnlocked);
+        // 変身コードと解放済みセーブは保持するが、現行仕様では入力を受け付けない。
+        if (TownTransformationsEnabled() && input.transformationTriggered && transformationUnlocked) {
             transformation.CycleForm();
             // 刺さっている最中に別の形態へ変わった場合は、刺さり状態を強制的に解除する
             if (!transformation.CanEmbedOnImpact()) {
@@ -144,7 +159,18 @@ class Player : ScriptComponentBehavior {
         }
 
         damageFlash.Update(dt);
+        if(embedding.IsEmbedded()||currentHp<=0)attack.Reset();
+        attack.Update(dt,input.moveDirection,input.attackTriggered&&!embedding.IsEmbedded()&&currentHp>0);
+        attackSequence=attack.sequence;attackFacing=attack.swingFacing;
+        attackAge=attack.age;attackActive=attack.Active();
         CheckDeath();
+        animation.Update();
+        // GetVariableはSerializeFieldのみを公開するため、実行時の攻撃通知はシーン変数で共有する。
+        GetScene().SetVariable("Player.AttackSequence",attackSequence);
+        GetScene().SetVariable("Player.AttackFacing",attackFacing);
+        GetScene().SetVariable("Player.Facing",attack.facing);
+        GetScene().SetVariable("Player.AttackAge",attackAge);
+        GetScene().SetVariable("Player.AttackActive",attackActive);
         movementTarget.Update(movement);
 
         // 生の接触情報は毎フレームリセットする（次フレームの衝突コールバックで再設定される）
@@ -171,7 +197,9 @@ class Player : ScriptComponentBehavior {
     // HPが0以下になった場合、シーン変数に保存されたチェックポイント座標からリスポーンする
     void CheckDeath() {
         if (currentHp > 0) return;
-
+        Respawn();
+    }
+    void Respawn() {
         Transform@ tf = GetTransform();
         Scene@ scene = GetScene();
         Vector3 respawnPosition;
@@ -185,5 +213,7 @@ class Player : ScriptComponentBehavior {
         currentHp = maxHp;
         combat.ResetAfterRespawn();
         damageFlash.Stop();
+        attack.Reset();
+        attackActive=false;attackAge=1;
     }
 }

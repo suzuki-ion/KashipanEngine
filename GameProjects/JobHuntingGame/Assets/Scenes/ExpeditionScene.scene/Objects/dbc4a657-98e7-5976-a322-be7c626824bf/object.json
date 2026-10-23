@@ -1,0 +1,86 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "cc8b0708-1536-544c-9a63-96f96065aaf4",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 1.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "castShadows": true,
+                        "color": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "decay": 2.0,
+                        "distance": 10.0,
+                        "innerAngle": 0.3499999940395355,
+                        "intensity": 1.0,
+                        "outerAngle": 0.6000000238418579,
+                        "radius": 4.0,
+                        "shadowBias": 1.0,
+                        "shadowDistance": 100.0,
+                        "shadowMapResolution": 512,
+                        "shadowSoftness": 0.0,
+                        "sourceDepth": 1.0,
+                        "sourceHeight": 1.0,
+                        "sourceLength": 1.0,
+                        "sourceRadius": 0.5,
+                        "sourceWidth": 1.0,
+                        "type": 1
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Light"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "targetObjectID": "5f29d508-c15d-51a0-b052-6c34eca2032a"
+                    },
+                    "isActive": true,
+                    "priority": 950,
+                    "tag": ""
+                },
+                "type": "LightRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "PrefabTeleportPart2",
+        "objectID": "dbc4a657-98e7-5976-a322-be7c626824bf",
+        "prefabNodeID": "fde23c57-5896-4675-be16-3e5b1bedc9a0",
+        "tag": ""
+    },
+    "siblingIndex": 960002
+}

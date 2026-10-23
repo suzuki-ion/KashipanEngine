@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_L_Knee",
+        "objectID": "e8632b79-3c92-5daf-aa34-07199f05bbb2",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "00c6874a-f28c-58a3-8185-7061fd78d19c",
+                        "translate": {
+                            "x": 0.0,
+                            "y": -0.45999999999999996,
+                            "z": -0.0
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950003
+}

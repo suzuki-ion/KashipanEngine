@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_R_Elbow",
+        "objectID": "68ff6b9c-1ce7-5b1f-a98d-66e6c03e4639",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "64f13558-606e-5fe8-9a9f-a505c5dd695e",
+                        "translate": {
+                            "x": -0.37,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950022
+}

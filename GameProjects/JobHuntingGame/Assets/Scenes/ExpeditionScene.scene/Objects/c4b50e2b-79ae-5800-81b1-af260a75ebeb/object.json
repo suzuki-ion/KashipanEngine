@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_L_Forearm",
+        "objectID": "c4b50e2b-79ae-5800-81b1-af260a75ebeb",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "73ad9576-14d6-59d9-9fb9-467b18b783ca",
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950015
+}

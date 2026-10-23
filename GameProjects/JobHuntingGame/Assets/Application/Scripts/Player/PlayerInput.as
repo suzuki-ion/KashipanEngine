@@ -3,6 +3,7 @@ class PlayerInput {
     float moveDirection = 0.0f;
     bool jumpTriggered = false;
     bool transformationTriggered = false;
+    bool attackTriggered = false;
 
     void Update() {
         // 左右移動入力
@@ -17,5 +18,6 @@ class PlayerInput {
         jumpTriggered = IsCommandTriggered("PlayerJump");
         // 変身入力
         transformationTriggered = IsCommandTriggered("PlayerTransformation");
+        attackTriggered = IsCommandTriggered("PlayerAttack");
     }
 }

@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_L_Wrist",
+        "objectID": "3b953c07-cd86-5b69-a946-0c57e5363b57",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "c4b50e2b-79ae-5800-81b1-af260a75ebeb",
+                        "translate": {
+                            "x": 0.33000000000000007,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950016
+}

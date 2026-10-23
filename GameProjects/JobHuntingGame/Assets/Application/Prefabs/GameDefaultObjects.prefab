@@ -277,7 +277,6 @@
                     {
                         "data": {
                             "customData": {
-                                "parent": "856c3f57-73b5-4776-bf77-6239c02967f6",
                                 "rotate": {
                                     "w": -4.371138828673793e-08,
                                     "x": 1.0,
@@ -293,7 +292,8 @@
                                     "x": 0.0,
                                     "y": 2.841869592666626,
                                     "z": 1.0343568325042725
-                                }
+                                },
+                                "parent": "856c3f57-73b5-4776-bf77-6239c02967f6"
                             },
                             "isActive": true,
                             "priority": 1,
@@ -658,7 +658,8 @@
                                     },
                                     "slideAcceleration": 0.10000000149011612,
                                     "slideAngleAcceleration": 0.20000000298023224,
-                                    "slideThreshold": 1.0
+                                    "slideThreshold": 1.0,
+                                    "humanoidVisual": "d3a0e6ea-30ee-5859-90d0-6d1f705363b0"
                                 },
                                 "scriptPath": "Assets\\Application\\Scripts\\Player\\Player.as"
                             },
@@ -691,7 +692,7 @@
                                     true
                                 ]
                             },
-                            "isActive": true,
+                            "isActive": false,
                             "priority": 1,
                             "tag": "PlayerSphere"
                         },
@@ -705,12 +706,12 @@
                                     "y": 0.0,
                                     "z": 0.0
                                 },
-                                "continuousDetection": false,
+                                "continuousDetection": true,
                                 "isTrigger": false,
                                 "size": {
-                                    "x": 1.0,
-                                    "y": 1.0,
-                                    "z": 1.0
+                                    "x": 1,
+                                    "y": 2,
+                                    "z": 1
                                 },
                                 "syncPosition": [
                                     true,
@@ -724,9 +725,9 @@
                                     true
                                 ]
                             },
-                            "isActive": false,
+                            "isActive": true,
                             "priority": 1,
-                            "tag": "GroundBox"
+                            "tag": "PlayerSphere"
                         },
                         "type": "BoxCollider"
                     },
@@ -1037,7 +1038,7 @@
                                     "value": 1
                                 },
                                 "spawnOrigin": 2,
-                                "spawnParentObjectID": "450287e5-7742-4091-9abf-809076327207",
+                                "spawnParentObjectID": "c407e2ea-84d2-45d0-81ac-513c6bdef363",
                                 "startScale": {
                                     "max": {
                                         "x": 1.0,
@@ -1099,7 +1100,7 @@
                                 "renderPriority": 0,
                                 "targetObjectID": "31813901-d420-4f28-876d-070da9e32858"
                             },
-                            "isActive": true,
+                            "isActive": false,
                             "priority": 900,
                             "tag": ""
                         },
@@ -1325,7 +1326,13 @@
                                 "saveFileNamePrefix": "Screenshot",
                                 "saveFormat": "png",
                                 "viewerId": 12450712362724901714,
-                                "width": 1920
+                                "width": 1920,
+                                "clearColor": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                }
                             },
                             "isActive": true,
                             "priority": 1,
@@ -1540,7 +1547,7 @@
                     {
                         "data": {
                             "customData": {
-                                "height": 720,
+                                "height": 1080,
                                 "isShowViewer": false,
                                 "name": "ScreenBuffer_6",
                                 "renderOrderPriority": 0,
@@ -1548,7 +1555,13 @@
                                 "saveFileNamePrefix": "Screenshot",
                                 "saveFormat": "png",
                                 "viewerId": 3359154163919453447,
-                                "width": 1280
+                                "width": 1920,
+                                "clearColor": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                }
                             },
                             "isActive": true,
                             "priority": 1,
@@ -1900,6 +1913,1198 @@
                 "tag": "Ground"
             },
             "parentIndex": 0
+        },
+        {
+            "object": {
+                "name": "PlayerHumanoid",
+                "objectID": "d3a0e6ea-30ee-5859-90d0-6d1f705363b0",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "31f04ca5-4361-4601-a8ec-7f452d64d8c7",
+                                "translate": {
+                                    "x": 0,
+                                    "y": -1,
+                                    "z": 0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": -0.7071067811865476,
+                                    "z": 0,
+                                    "w": 0.7071067811865476
+                                },
+                                "scale": {
+                                    "x": 1.081081081081081,
+                                    "y": 1.081081081081081,
+                                    "z": 1.081081081081081
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "type": "MeshFilter",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb"
+                            }
+                        }
+                    },
+                    {
+                        "type": "Animator",
+                        "data": {
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": "",
+                            "customData": {
+                                "rootBoneObjectID": "d3a0e6ea-30ee-5859-90d0-6d1f705363b0",
+                                "clipName": "UAL_Idle_Loop",
+                                "animationSourceAssetPath": "Application/Models/Player/box_humanoid_rigged.glb",
+                                "playOnStart": true,
+                                "loop": true,
+                                "playbackSpeed": 1
+                            }
+                        }
+                    },
+                    {
+                        "type": "SkinnedMeshRenderer",
+                        "data": {
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": "",
+                            "customData": {
+                                "targetObjectID": "31813901-d420-4f28-876d-070da9e32858",
+                                "pipelineName": "Object3D.Solid.BlendNormal",
+                                "materialName": "PlayerHumanoid",
+                                "materialNames": [
+                                    "PlayerHumanoid"
+                                ],
+                                "castShadows": true,
+                                "renderPriority": 1,
+                                "instanceColor": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1,
+                                    "w": 1
+                                },
+                                "allowInstancing": false
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 5
+        },
+        {
+            "object": {
+                "name": "Bone_Torso_Lower_Pelvis",
+                "objectID": "6c0c2caa-503b-5478-8329-2c4140ca048a",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "d3a0e6ea-30ee-5859-90d0-6d1f705363b0",
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 1.08,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 15
+        },
+        {
+            "object": {
+                "name": "Bone_L_Thigh",
+                "objectID": "c3f39bd9-6efe-54f1-99b7-1683448a6b8e",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "6c0c2caa-503b-5478-8329-2c4140ca048a",
+                                "translate": {
+                                    "x": 0.105,
+                                    "y": -0.09000000000000008,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 16
+        },
+        {
+            "object": {
+                "name": "Bone_L_Knee",
+                "objectID": "d886c9f8-a931-5b4c-90ec-dea1e3ef54e6",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "c3f39bd9-6efe-54f1-99b7-1683448a6b8e",
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": -0.45999999999999996,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 17
+        },
+        {
+            "object": {
+                "name": "Bone_L_Shin",
+                "objectID": "e14fe2aa-1f48-5754-a63f-05e4de1ffbd7",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "d886c9f8-a931-5b4c-90ec-dea1e3ef54e6",
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 18
+        },
+        {
+            "object": {
+                "name": "Bone_L_Foot",
+                "objectID": "b47585ce-7c60-5fab-9e57-29d73d21c313",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "e14fe2aa-1f48-5754-a63f-05e4de1ffbd7",
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": -0.42000000000000004,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 19
+        },
+        {
+            "object": {
+                "name": "Bone_R_Thigh",
+                "objectID": "3485b63e-5a1e-5a49-b650-e8a5329d8278",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "6c0c2caa-503b-5478-8329-2c4140ca048a",
+                                "translate": {
+                                    "x": -0.105,
+                                    "y": -0.09000000000000008,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 16
+        },
+        {
+            "object": {
+                "name": "Bone_R_Knee",
+                "objectID": "3cdc03f0-cbc6-5435-8027-3239f8212116",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "3485b63e-5a1e-5a49-b650-e8a5329d8278",
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": -0.45999999999999996,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 21
+        },
+        {
+            "object": {
+                "name": "Bone_R_Shin",
+                "objectID": "9bbdb203-b33c-5cb3-9194-3cf592f06fc6",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "3cdc03f0-cbc6-5435-8027-3239f8212116",
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 22
+        },
+        {
+            "object": {
+                "name": "Bone_R_Foot",
+                "objectID": "a00100a7-c9ea-5281-8def-43b4af91d2e4",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "9bbdb203-b33c-5cb3-9194-3cf592f06fc6",
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": -0.42000000000000004,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 23
+        },
+        {
+            "object": {
+                "name": "Bone_Torso_Middle",
+                "objectID": "f9c0f18a-f608-5fb9-8712-6f3043449af7",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "6c0c2caa-503b-5478-8329-2c4140ca048a",
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.08999999999999986,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 16
+        },
+        {
+            "object": {
+                "name": "Bone_Torso_Upper",
+                "objectID": "748ebf5e-72ce-56a5-8359-6b8d26b16b77",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "f9c0f18a-f608-5fb9-8712-6f3043449af7",
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.1100000000000001,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 25
+        },
+        {
+            "object": {
+                "name": "Bone_L_Shoulder",
+                "objectID": "172f56b0-6419-582d-a703-fee523808b97",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "748ebf5e-72ce-56a5-8359-6b8d26b16b77",
+                                "translate": {
+                                    "x": 0.23,
+                                    "y": 0.20500000000000007,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 26
+        },
+        {
+            "object": {
+                "name": "Bone_L_UpperArm",
+                "objectID": "96abf989-7cb3-576a-bd7c-418e0a622f83",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "172f56b0-6419-582d-a703-fee523808b97",
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 27
+        },
+        {
+            "object": {
+                "name": "Bone_L_Elbow",
+                "objectID": "61225fa8-aecb-5d57-9f3b-f42b2d9ff956",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "96abf989-7cb3-576a-bd7c-418e0a622f83",
+                                "translate": {
+                                    "x": 0.37,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 28
+        },
+        {
+            "object": {
+                "name": "Bone_L_Forearm",
+                "objectID": "3965101f-0ccd-5fea-98ca-0d4b6507ad4a",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "61225fa8-aecb-5d57-9f3b-f42b2d9ff956",
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 29
+        },
+        {
+            "object": {
+                "name": "Bone_L_Wrist",
+                "objectID": "0a5020df-e7e8-51df-9827-c24d6fc52189",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "3965101f-0ccd-5fea-98ca-0d4b6507ad4a",
+                                "translate": {
+                                    "x": 0.33000000000000007,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 30
+        },
+        {
+            "object": {
+                "name": "Bone_L_Palm",
+                "objectID": "a95456d2-0f07-5266-8734-0cfeab04c3f4",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "0a5020df-e7e8-51df-9827-c24d6fc52189",
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 31
+        },
+        {
+            "object": {
+                "name": "Bone_L_Fingers_IndexToLittle",
+                "objectID": "b3d558a2-2b4c-5a7c-a73e-a326bed1da2f",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "a95456d2-0f07-5266-8734-0cfeab04c3f4",
+                                "translate": {
+                                    "x": 0.17919999999999991,
+                                    "y": 0.0,
+                                    "z": 0.01344
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 32
+        },
+        {
+            "object": {
+                "name": "Bone_L_Thumb",
+                "objectID": "07435828-c17d-591d-949e-402c445abcec",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "a95456d2-0f07-5266-8734-0cfeab04c3f4",
+                                "translate": {
+                                    "x": 0.09519999999999984,
+                                    "y": -0.036960000000000104,
+                                    "z": -0.0728
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 32
+        },
+        {
+            "object": {
+                "name": "Bone_R_Shoulder",
+                "objectID": "d20ebca8-ed0f-5d14-824b-29cb13d000b3",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "748ebf5e-72ce-56a5-8359-6b8d26b16b77",
+                                "translate": {
+                                    "x": -0.23,
+                                    "y": 0.20500000000000007,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 26
+        },
+        {
+            "object": {
+                "name": "Bone_R_UpperArm",
+                "objectID": "e4c2d8d3-17f3-5c34-8ecb-2e4d985cf682",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "d20ebca8-ed0f-5d14-824b-29cb13d000b3",
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 35
+        },
+        {
+            "object": {
+                "name": "Bone_R_Elbow",
+                "objectID": "e6cb4f01-310b-5c60-aa7d-e9266930cf76",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "e4c2d8d3-17f3-5c34-8ecb-2e4d985cf682",
+                                "translate": {
+                                    "x": -0.37,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 36
+        },
+        {
+            "object": {
+                "name": "Bone_R_Forearm",
+                "objectID": "ee1328a9-c1db-5f9e-b4f2-9739218b10ea",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "e6cb4f01-310b-5c60-aa7d-e9266930cf76",
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 37
+        },
+        {
+            "object": {
+                "name": "Bone_R_Wrist",
+                "objectID": "63b62f11-51b0-5bed-927e-ea4b3c9cf355",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "ee1328a9-c1db-5f9e-b4f2-9739218b10ea",
+                                "translate": {
+                                    "x": -0.33000000000000007,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 38
+        },
+        {
+            "object": {
+                "name": "Bone_R_Palm",
+                "objectID": "aa65c4a7-d893-5879-bbd8-d305f73967bb",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "63b62f11-51b0-5bed-927e-ea4b3c9cf355",
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 39
+        },
+        {
+            "object": {
+                "name": "Bone_R_Fingers_IndexToLittle",
+                "objectID": "330a6a8b-5c67-5e7d-a798-0913ed1f8263",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "aa65c4a7-d893-5879-bbd8-d305f73967bb",
+                                "translate": {
+                                    "x": -0.17919999999999991,
+                                    "y": 0.0,
+                                    "z": 0.01344
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 40
+        },
+        {
+            "object": {
+                "name": "Bone_R_Thumb",
+                "objectID": "c8089409-3e03-59bc-b9e7-9d4cd5b8b1df",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "aa65c4a7-d893-5879-bbd8-d305f73967bb",
+                                "translate": {
+                                    "x": -0.09519999999999984,
+                                    "y": -0.036960000000000104,
+                                    "z": -0.0728
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 40
+        },
+        {
+            "object": {
+                "name": "WeaponSocket_R",
+                "objectID": "b8869493-5b7b-5b99-9b1f-09bc18f9d256",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "aa65c4a7-d893-5879-bbd8-d305f73967bb",
+                                "translate": {
+                                    "x": -0.112,
+                                    "y": 0,
+                                    "z": 0
+                                },
+                                "rotate": {
+                                    "x": -0.0,
+                                    "y": -0.0,
+                                    "z": -0.7071067811865476,
+                                    "w": 0.7071067811865476
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 40
+        },
+        {
+            "object": {
+                "name": "Bone_Head",
+                "objectID": "eceeabc7-794b-55aa-89ab-8fb43cd10997",
+                "isActive": true,
+                "tag": "",
+                "components": [
+                    {
+                        "type": "Transform",
+                        "data": {
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": "",
+                            "customData": {
+                                "parent": "748ebf5e-72ce-56a5-8359-6b8d26b16b77",
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.2849999999999999,
+                                    "z": -0.0
+                                },
+                                "rotate": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "z": 0,
+                                    "w": 1
+                                },
+                                "scale": {
+                                    "x": 1,
+                                    "y": 1,
+                                    "z": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "parentIndex": 26
         }
     ],
     "prefab": true,

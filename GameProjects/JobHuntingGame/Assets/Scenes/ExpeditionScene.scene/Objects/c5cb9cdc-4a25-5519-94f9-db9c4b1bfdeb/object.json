@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "WeaponSocket_R",
+        "objectID": "c5cb9cdc-4a25-5519-94f9-db9c4b1bfdeb",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "fa23f648-fdd8-5d69-8836-cc45bf5e0de0",
+                        "translate": {
+                            "x": -0.112,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "rotate": {
+                            "x": -0.0,
+                            "y": -0.0,
+                            "z": -0.7071067811865476,
+                            "w": 0.7071067811865476
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950028
+}

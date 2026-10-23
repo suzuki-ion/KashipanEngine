@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_L_Shoulder",
+        "objectID": "86ea7fba-53d5-5669-89ab-3b09a6f4b014",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "346a9ea4-3d3b-5f92-b448-82ebe3bce479",
+                        "translate": {
+                            "x": 0.23,
+                            "y": 0.20500000000000007,
+                            "z": -0.0
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950012
+}

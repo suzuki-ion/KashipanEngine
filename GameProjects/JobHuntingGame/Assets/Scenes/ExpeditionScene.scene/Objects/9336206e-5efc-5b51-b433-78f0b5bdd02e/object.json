@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_Torso_Lower_Pelvis",
+        "objectID": "9336206e-5efc-5b51-b433-78f0b5bdd02e",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "dcc3d95c-206f-5c06-aae4-367af531e8fc",
+                        "translate": {
+                            "x": 0.0,
+                            "y": 1.08,
+                            "z": -0.0
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950001
+}

@@ -1,0 +1,51 @@
+{
+    "object": {
+        "name": "TownManager",
+        "objectID": "668725b5-24aa-578d-bda9-df7d23d5bc44",
+        "isActive": true,
+        "tag": "",
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": -0.0,
+                            "w": 1.0
+                        }
+                    }
+                }
+            },
+            {
+                "type": "ScriptComponent",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "scriptPath": "Assets/Application/Scripts/LightTown/ExpeditionController.as",
+                        "fields": {}
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 900019
+}

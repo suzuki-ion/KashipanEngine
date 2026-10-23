@@ -1,0 +1,69 @@
+{
+    "object": {
+        "name": "TownDisplayCamera",
+        "objectID": "95a74225-ace9-577a-b9f7-636f7306d073",
+        "isActive": true,
+        "tag": "",
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        }
+                    }
+                }
+            },
+            {
+                "type": "Camera2D",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "width": 1280,
+                        "height": 720,
+                        "nearClip": 0,
+                        "farClip": 1000,
+                        "autoSyncSize": true
+                    }
+                }
+            },
+            {
+                "type": "CameraRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 950,
+                    "tag": "",
+                    "customData": {
+                        "targetObjectID": "9777039b-3ed9-5bb7-9bef-ed487c6306a5",
+                        "bindVariableNames": [
+                            "Vertex:gCamera2D",
+                            "Pixel:gCamera2D"
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950000
+}

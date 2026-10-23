@@ -1,0 +1,86 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "480a552a-5569-5691-83fa-121b2ea106a2",
+                        "rotate": {
+                            "w": 0.6427876353263855,
+                            "x": 0.7660444378852844,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 7.699999809265137,
+                            "z": -0.9348495006561279
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "castShadows": false,
+                        "color": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "decay": 2.0,
+                        "distance": 10.0,
+                        "innerAngle": 0.3499999940395355,
+                        "intensity": 1.0,
+                        "outerAngle": 0.6000000238418579,
+                        "radius": 6.0,
+                        "shadowBias": 1.0,
+                        "shadowDistance": 100.0,
+                        "shadowMapResolution": 512,
+                        "shadowSoftness": 0.0,
+                        "sourceDepth": 1.0,
+                        "sourceHeight": 1.0,
+                        "sourceLength": 1.0,
+                        "sourceRadius": 0.30000001192092896,
+                        "sourceWidth": 1.0,
+                        "type": 4
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Light"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "pipelineName": "",
+                        "targetObjectID": "5f29d508-c15d-51a0-b052-6c34eca2032a"
+                    },
+                    "isActive": true,
+                    "priority": 950,
+                    "tag": ""
+                },
+                "type": "LightRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "HistoricalStreetFill",
+        "objectID": "4a8b04bb-420e-5b4f-9585-05678b033e50",
+        "prefabNodeID": "6c362ea8-4983-46f1-b037-a884efe30ccc",
+        "tag": ""
+    },
+    "siblingIndex": 980002
+}

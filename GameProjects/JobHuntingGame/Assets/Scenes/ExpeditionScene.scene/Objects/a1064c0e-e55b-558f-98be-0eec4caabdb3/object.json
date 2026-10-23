@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_Torso_Middle",
+        "objectID": "a1064c0e-e55b-558f-98be-0eec4caabdb3",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "9336206e-5efc-5b51-b433-78f0b5bdd02e",
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.08999999999999986,
+                            "z": -0.0
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950010
+}

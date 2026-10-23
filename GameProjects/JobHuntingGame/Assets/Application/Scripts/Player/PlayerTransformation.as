@@ -1,4 +1,5 @@
-// プレイヤーの変身形態（Sphere/Box/Cone）
+#include "../LightTown/TownFeatures.as"
+// 通常（人型＋Box判定）/Box/Cone。Sphereの列挙名は既存の保存・タグ互換のため残す。
 enum PlayerForm {
     Sphere,
     Box,
@@ -46,6 +47,10 @@ class PlayerTransformation {
     }
 
     void ApplyForm() {
+        bool humanoid=form==PlayerForm::Sphere;
+        if(owner.humanoidVisual !is null)owner.humanoidVisual.SetActive(humanoid);
+        MeshRenderer@ primitive;
+        if(GetComponent(@primitive))primitive.SetActive(!humanoid||owner.humanoidVisual is null);
         MeshFilter@ meshFilter;
         if (GetComponent(@meshFilter)) {
             meshFilter.SetMeshHandle(GetModelHandleFromAssetPath(GetMeshAssetPath()));
@@ -61,14 +66,15 @@ class PlayerTransformation {
 
         SphereCollider@ sphereCollider;
         if (GetComponent(@sphereCollider)) {
-            sphereCollider.SetActive(form == PlayerForm::Sphere);
+            sphereCollider.SetActive(false);
             sphereCollider.SetTag(defaultColliderTagName);
         }
 
         BoxCollider@ boxCollider;
         if (GetComponent(@boxCollider)) {
-            boxCollider.SetActive(form == PlayerForm::Box);
-            boxCollider.SetTag(boxFormColliderTagName);
+            boxCollider.SetActive(form != PlayerForm::Cone);
+            boxCollider.SetTag(humanoid?defaultColliderTagName:boxFormColliderTagName);
+            boxCollider.SetContinuousDetection(humanoid);
         }
 
         // MeshColliderはMeshFilterの現在のメッシュを凸形状として使う。Cone形態でのみ有効にすることで、

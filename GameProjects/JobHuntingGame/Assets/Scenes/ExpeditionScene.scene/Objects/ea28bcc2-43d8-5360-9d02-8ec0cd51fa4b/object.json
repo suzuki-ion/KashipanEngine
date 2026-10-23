@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_R_Shin",
+        "objectID": "ea28bcc2-43d8-5360-9d02-8ec0cd51fa4b",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "2a63309e-dccd-59d3-8212-5e7a5f48801e",
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": -0.0
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950008
+}

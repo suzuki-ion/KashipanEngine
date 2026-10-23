@@ -38,7 +38,13 @@ class Checkpoint : ScriptComponentBehavior {
 
     void OnCollisionEnter(const HitInfo &in hit) {
         if (hit.otherObject is null) return;
-        if (hit.otherCollider is null || hit.otherCollider.GetTag() != playerColliderTag) return;
+        if (hit.otherCollider is null) return;
+        if (hit.otherCollider.GetTag() != playerColliderTag) {
+            ScriptComponent@ playerScript;
+            if (!hit.otherObject.GetComponent(@playerScript)) return;
+            string path = playerScript.GetScriptPath();
+            if (path != "Assets/Application/Scripts/Player/Player.as" && path != "Assets\\Application\\Scripts\\Player\\Player.as") return;
+        }
 
         TrySave();
         StartRotateAnimation();

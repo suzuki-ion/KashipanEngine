@@ -1,0 +1,96 @@
+{
+    "object": {
+        "name": "TownDisplayViewport",
+        "objectID": "3434e4b0-3953-5e3e-bee5-51bf26774e57",
+        "isActive": true,
+        "tag": "",
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 640,
+                            "y": 360,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1280,
+                            "y": 720,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": -0.0,
+                            "w": 1.0
+                        }
+                    }
+                }
+            },
+            {
+                "type": "MeshFilter",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Rect2D"
+                    }
+                }
+            },
+            {
+                "type": "SpriteRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": "",
+                    "customData": {
+                        "targetObjectID": "9777039b-3ed9-5bb7-9bef-ed487c6306a5",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "materialName": "Default",
+                        "renderPriority": 0
+                    }
+                }
+            },
+            {
+                "type": "ScreenBufferViewport",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "sourceObjectID": "2622504d-a271-56fd-8cc7-6792247cd19e",
+                        "displayCameraObjectID": "95a74225-ace9-577a-b9f7-636f7306d073",
+                        "fitMode": 2
+                    }
+                }
+            },
+            {
+                "type": "ScreenAnchor",
+                "data": {
+                    "isActive": true,
+                    "priority": 2,
+                    "tag": "",
+                    "customData": {
+                        "cameraObjectID": "95a74225-ace9-577a-b9f7-636f7306d073",
+                        "anchorPoint": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "offset": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 900013
+}

@@ -1,0 +1,38 @@
+{
+    "object": {
+        "name": "Bone_L_Thumb",
+        "objectID": "ae95f817-07d7-5057-afd1-b626d2760e86",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "parent": "7e9ba4cb-58a9-533a-a8db-24292a3fd244",
+                        "translate": {
+                            "x": 0.09519999999999984,
+                            "y": -0.036960000000000104,
+                            "z": -0.0728
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950019
+}

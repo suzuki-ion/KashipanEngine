@@ -1,0 +1,71 @@
+{
+    "object": {
+        "name": "TitleTower0",
+        "objectID": "efed3dc6-ad00-5432-8804-40c0bf00da99",
+        "isActive": true,
+        "tag": "",
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 7,
+                            "y": 1,
+                            "z": 3
+                        },
+                        "scale": {
+                            "x": 2.0,
+                            "y": 1,
+                            "z": 2.0
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        }
+                    }
+                }
+            },
+            {
+                "type": "MeshFilter",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Box"
+                    }
+                }
+            },
+            {
+                "type": "MeshRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": "",
+                    "customData": {
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "targetObjectID": "007a5f43-18fb-59d6-a010-acebdfd1820e",
+                        "materialName": "Default",
+                        "instanceColor": {
+                            "x": 0.5,
+                            "y": 0.75,
+                            "z": 0.8,
+                            "w": 1
+                        },
+                        "allowInstancing": true,
+                        "castShadows": false
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 910000
+}

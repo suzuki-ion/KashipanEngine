@@ -1,0 +1,51 @@
+{
+    "object": {
+        "name": "TownManager",
+        "objectID": "0ae590c1-e576-5b99-b992-dc4b93fe595b",
+        "isActive": true,
+        "tag": "",
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": -0.0,
+                            "w": 1.0
+                        }
+                    }
+                }
+            },
+            {
+                "type": "ScriptComponent",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "scriptPath": "Assets/Application/Scripts/LightTown/TitleController.as",
+                        "fields": {}
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 900009
+}

@@ -1,0 +1,55 @@
+{
+    "object": {
+        "name": "TownBGM",
+        "objectID": "55c8c958-a91c-529e-9ee7-346ceed4ffd3",
+        "isActive": true,
+        "tag": "",
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        }
+                    }
+                }
+            },
+            {
+                "type": "AudioSource",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "soundName": "Application/Sound/bgmTitleScene.mp3",
+                        "category": "BGM",
+                        "volume": 1,
+                        "loop": true,
+                        "playOnAwake": true,
+                        "enableSpatialAudio": false
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 910000
+}

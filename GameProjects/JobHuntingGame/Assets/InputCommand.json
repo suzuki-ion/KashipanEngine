@@ -50,6 +50,27 @@
             "state": "Trigger"
         }
     ],
+    "PlayerAttack": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "J",
+            "state": "Trigger"
+        },
+        {
+            "button": "Left",
+            "device": "MouseButton",
+            "invertValue": false,
+            "state": "Trigger"
+        },
+        {
+            "button": "X",
+            "controllerIndex": 0,
+            "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Trigger"
+        }
+    ],
     "PlayerJump": [
         {
             "device": "Keyboard",
@@ -329,6 +350,166 @@
             "button": "A",
             "controllerIndex": 0,
             "device": "ControllerButton",
+            "invertValue": false,
+            "state": "Trigger"
+        }
+    ],
+    "TownBuild1": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "D1",
+            "state": "Trigger"
+        }
+    ],
+    "TownBuild2": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "D2",
+            "state": "Trigger"
+        }
+    ],
+    "TownBuild3": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "D3",
+            "state": "Trigger"
+        }
+    ],
+    "TownBuild4": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "D4",
+            "state": "Trigger"
+        }
+    ],
+    "TownBuild5": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "D5",
+            "state": "Trigger"
+        }
+    ],
+    "TownBuild6": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "D6",
+            "state": "Trigger"
+        }
+    ],
+    "TownBuild7": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "D7",
+            "state": "Trigger"
+        }
+    ],
+    "TownBuildMenu": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "B",
+            "state": "Trigger"
+        }
+    ],
+    "TownCameraBack": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "S",
+            "state": "Down"
+        }
+    ],
+    "TownCameraForward": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "W",
+            "state": "Down"
+        }
+    ],
+    "TownCameraLeft": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "A",
+            "state": "Down"
+        }
+    ],
+    "TownCameraRight": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "D",
+            "state": "Down"
+        }
+    ],
+    "TownCameraScroll": [
+        {
+            "axis": "DeltaWheel",
+            "device": "MouseAxis",
+            "invertValue": false,
+            "threshold": 0.0
+        }
+    ],
+    "TownExpedition": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "Tab",
+            "state": "Trigger"
+        }
+    ],
+    "TownPanHold": [
+        {
+            "button": "Middle",
+            "device": "MouseButton",
+            "invertValue": false,
+            "state": "Down"
+        }
+    ],
+    "TownPanPress": [
+        {
+            "button": "Middle",
+            "device": "MouseButton",
+            "invertValue": false,
+            "state": "Trigger"
+        }
+    ],
+    "TownPlace": [
+        {
+            "button": "Left",
+            "device": "MouseButton",
+            "invertValue": false,
+            "state": "Release"
+        }
+    ],
+    "TownPlacePress": [
+        {
+            "button": "Left",
+            "device": "MouseButton",
+            "invertValue": false,
+            "state": "Trigger"
+        }
+    ],
+    "TownRotateHold": [
+        {
+            "button": "Right",
+            "device": "MouseButton",
+            "invertValue": false,
+            "state": "Down"
+        }
+    ],
+    "TownRotatePress": [
+        {
+            "button": "Right",
+            "device": "MouseButton",
             "invertValue": false,
             "state": "Trigger"
         }

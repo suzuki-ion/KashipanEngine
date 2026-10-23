@@ -1,0 +1,70 @@
+{
+    "object": {
+        "name": "TownPanelFooter",
+        "objectID": "81000f97-f9d0-50dd-a128-d36d6b3f39ab",
+        "isActive": false,
+        "tag": "",
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 640,
+                            "y": 45,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1248,
+                            "y": 90,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": -0.0,
+                            "w": 1.0
+                        }
+                    }
+                }
+            },
+            {
+                "type": "MeshFilter",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Rect2D"
+                    }
+                }
+            },
+            {
+                "type": "SpriteRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": "",
+                    "customData": {
+                        "targetObjectID": "b2e4871f-4a63-51a0-b806-ed1068f0d99f",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "materialName": "TownUIOverlay",
+                        "instanceColor": {
+                            "x": 0.025,
+                            "y": 0.06,
+                            "z": 0.1,
+                            "w": 0.22
+                        },
+                        "renderPriority": 20
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 900006
+}

@@ -1,0 +1,71 @@
+{
+    "object": {
+        "name": "TitleIsland",
+        "objectID": "465c987c-6626-5e50-ad8a-2cc30618e092",
+        "isActive": true,
+        "tag": "",
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 0,
+                            "y": -0.5,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 16,
+                            "y": 1,
+                            "z": 16
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        }
+                    }
+                }
+            },
+            {
+                "type": "MeshFilter",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Box"
+                    }
+                }
+            },
+            {
+                "type": "MeshRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": "",
+                    "customData": {
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "targetObjectID": "007a5f43-18fb-59d6-a010-acebdfd1820e",
+                        "materialName": "Default",
+                        "instanceColor": {
+                            "x": 0.22,
+                            "y": 0.38,
+                            "z": 0.34,
+                            "w": 1
+                        },
+                        "allowInstancing": true,
+                        "castShadows": false
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 910000
+}

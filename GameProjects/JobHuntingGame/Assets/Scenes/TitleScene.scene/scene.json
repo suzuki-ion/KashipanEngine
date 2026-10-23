@@ -19,22 +19,7 @@
             "type": "SceneScriptEngine"
         }
     ],
-    "sceneID": "75d12f47-b107-4a8e-88fb-217a67e2a17f",
+    "sceneID": "9fd098cc-efee-5ef4-99c1-9569cd1081a0",
     "sceneName": "TitleScene",
-    "sceneVariables": [
-        {
-            "key": "CheckpointPriority",
-            "type": "Int32",
-            "value": -1
-        },
-        {
-            "key": "CheckpointPosition",
-            "type": "Vector3",
-            "value": {
-                "x": 0.0,
-                "y": 4.0,
-                "z": 0.0
-            }
-        }
-    ]
+    "sceneVariables": []
 }

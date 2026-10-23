@@ -1,0 +1,69 @@
+{
+    "object": {
+        "name": "TownBuildIcon2Camera",
+        "objectID": "e646b47d-ae24-5a8c-b4cd-3717d02158f6",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 1040,
+                            "y": 2.0,
+                            "z": -5.8
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0.059964006479444595,
+                            "y": 0,
+                            "z": 0,
+                            "w": 0.9982005399352042
+                        }
+                    }
+                }
+            },
+            {
+                "type": "Camera3D",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "aspectRatio": 1.0,
+                        "autoSyncAspectRatio": false,
+                        "orthographic": false,
+                        "fovY": 0.85,
+                        "nearClip": 0.1,
+                        "farClip": 30,
+                        "enableJitter": false
+                    }
+                }
+            },
+            {
+                "type": "CameraRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 950,
+                    "tag": "",
+                    "customData": {
+                        "targetObjectID": "21ab4f44-c285-5814-a15e-2f115e735525",
+                        "bindVariableNames": [
+                            "Vertex:gCamera3D",
+                            "Pixel:gCamera3D"
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 990000
+}

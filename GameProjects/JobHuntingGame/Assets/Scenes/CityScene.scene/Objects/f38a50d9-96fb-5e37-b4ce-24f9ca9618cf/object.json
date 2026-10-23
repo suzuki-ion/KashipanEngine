@@ -1,0 +1,53 @@
+{
+    "object": {
+        "name": "TownWindow",
+        "objectID": "f38a50d9-96fb-5e37-b4ce-24f9ca9618cf",
+        "isActive": true,
+        "tag": "",
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": -0.0,
+                            "w": 1.0
+                        }
+                    }
+                }
+            },
+            {
+                "type": "NormalWindowObject",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "title": "Light Town - 素材収集と街づくり",
+                        "width": 1280,
+                        "height": 720,
+                        "syncWithTransform": false
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 900001
+}

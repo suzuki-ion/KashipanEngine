@@ -1,0 +1,77 @@
+{
+    "object": {
+        "name": "TownShopBackground",
+        "objectID": "13be92e4-2276-54ad-b581-a92bbb8f0f13",
+        "isActive": false,
+        "tag": "",
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 640,
+                            "y": 360,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1280,
+                            "y": 720,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": -0.0,
+                            "w": 1.0
+                        }
+                    }
+                }
+            },
+            {
+                "type": "MeshFilter",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Rect2D"
+                    }
+                }
+            },
+            {
+                "type": "SpriteRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": "",
+                    "customData": {
+                        "targetObjectID": "c4477432-0b98-5b3f-919b-c48fdcbe13f3",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "materialName": "Default",
+                        "renderPriority": 0
+                    }
+                }
+            },
+            {
+                "type": "ScreenBufferViewport",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "sourceObjectID": "d1aabf47-5b7f-5536-8d01-1115d4c3d57f",
+                        "displayCameraObjectID": "b3433242-56fc-5429-8419-aeb123022a5a",
+                        "fitMode": 0
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 990002
+}

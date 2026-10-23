@@ -1,0 +1,57 @@
+{
+    "object": {
+        "name": "TownBuildIcon5Screen",
+        "objectID": "ba04a6bc-5715-59ae-9231-8293f53a0c72",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        }
+                    }
+                }
+            },
+            {
+                "type": "ScreenBufferObject",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "name": "TownBuildIcon5Screen",
+                        "width": 256,
+                        "height": 256,
+                        "renderOrderPriority": -25,
+                        "clearColor": {
+                            "x": 0.12549019607843137,
+                            "y": 0.25098039215686274,
+                            "z": 0.25098039215686274,
+                            "w": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 990000
+}

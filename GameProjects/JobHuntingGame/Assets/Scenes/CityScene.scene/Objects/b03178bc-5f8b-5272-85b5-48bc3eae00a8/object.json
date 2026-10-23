@@ -1,0 +1,75 @@
+{
+    "object": {
+        "name": "TownBuildDisplay",
+        "objectID": "b03178bc-5f8b-5272-85b5-48bc3eae00a8",
+        "isActive": false,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 190,
+                            "y": 370,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 370,
+                            "y": 550,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": -0.0,
+                            "w": 1.0
+                        }
+                    }
+                }
+            },
+            {
+                "type": "MeshFilter",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Rect2D"
+                    }
+                }
+            },
+            {
+                "type": "SpriteRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": "",
+                    "customData": {
+                        "targetObjectID": "f38a50d9-96fb-5e37-b4ce-24f9ca9618cf",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "materialName": "Default",
+                        "renderPriority": 60
+                    }
+                }
+            },
+            {
+                "type": "ScreenBufferViewport",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "sourceObjectID": "6f0868ef-0c3a-591f-90dc-942c6c1f9859",
+                        "displayCameraObjectID": "9e2e1b5d-65ac-5497-944a-9ab9345b3590",
+                        "fitMode": 0
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 990010
+}

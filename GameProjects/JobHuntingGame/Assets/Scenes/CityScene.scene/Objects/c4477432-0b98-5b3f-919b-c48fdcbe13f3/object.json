@@ -1,0 +1,57 @@
+{
+    "object": {
+        "name": "TownShopScreen",
+        "objectID": "c4477432-0b98-5b3f-919b-c48fdcbe13f3",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        }
+                    }
+                }
+            },
+            {
+                "type": "ScreenBufferObject",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "name": "TownShopScreen",
+                        "width": 1920,
+                        "height": 1080,
+                        "renderOrderPriority": 5,
+                        "clearColor": {
+                            "x": 0.12549019607843137,
+                            "y": 0.25098039215686274,
+                            "z": 0.25098039215686274,
+                            "w": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 990000
+}

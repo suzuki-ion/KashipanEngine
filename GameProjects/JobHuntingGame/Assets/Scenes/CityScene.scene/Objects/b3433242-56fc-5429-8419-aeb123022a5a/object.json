@@ -1,0 +1,67 @@
+{
+    "object": {
+        "name": "TownShopCamera",
+        "objectID": "b3433242-56fc-5429-8419-aeb123022a5a",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        }
+                    }
+                }
+            },
+            {
+                "type": "Camera2D",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "width": 1280,
+                        "height": 720,
+                        "nearClip": 0,
+                        "farClip": 1000,
+                        "autoSyncSize": false
+                    }
+                }
+            },
+            {
+                "type": "CameraRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 950,
+                    "tag": "",
+                    "customData": {
+                        "targetObjectID": "c4477432-0b98-5b3f-919b-c48fdcbe13f3",
+                        "bindVariableNames": [
+                            "Vertex:gCamera2D",
+                            "Pixel:gCamera2D"
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 990000
+}

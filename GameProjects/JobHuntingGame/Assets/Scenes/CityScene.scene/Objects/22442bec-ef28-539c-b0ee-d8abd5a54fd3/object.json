@@ -1,0 +1,74 @@
+{
+    "object": {
+        "name": "TownGridCorner_7_1",
+        "objectID": "22442bec-ef28-539c-b0ee-d8abd5a54fd3",
+        "tag": "",
+        "isActive": true,
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": -1.5,
+                            "y": 0.035,
+                            "z": -10.5
+                        },
+                        "scale": {
+                            "x": 0.12,
+                            "y": 0.04,
+                            "z": 0.12
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        }
+                    }
+                }
+            },
+            {
+                "type": "MeshFilter",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Box"
+                    }
+                }
+            },
+            {
+                "type": "MeshRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": "",
+                    "customData": {
+                        "targetObjectID": "d1aabf47-5b7f-5536-8d01-1115d4c3d57f",
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "materialName": "TownGridUnlit",
+                        "allowInstancing": true,
+                        "castShadows": false,
+                        "instanceColor": {
+                            "x": 0.85,
+                            "y": 0.9,
+                            "z": 0.75,
+                            "w": 1
+                        },
+                        "materialNames": [
+                            "TownGridUnlit"
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 930000
+}

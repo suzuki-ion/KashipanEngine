@@ -1,0 +1,67 @@
+{
+    "object": {
+        "name": "TownBuildCamera",
+        "objectID": "c35fca49-71b4-5b92-9ec5-85f4ba25cf85",
+        "isActive": false,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        }
+                    }
+                }
+            },
+            {
+                "type": "Camera2D",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "width": 370,
+                        "height": 550,
+                        "nearClip": 0,
+                        "farClip": 1000,
+                        "autoSyncSize": false
+                    }
+                }
+            },
+            {
+                "type": "CameraRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 950,
+                    "tag": "",
+                    "customData": {
+                        "targetObjectID": "6f0868ef-0c3a-591f-90dc-942c6c1f9859",
+                        "bindVariableNames": [
+                            "Vertex:gCamera2D",
+                            "Pixel:gCamera2D"
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 990010
+}

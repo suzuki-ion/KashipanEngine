@@ -1,0 +1,75 @@
+{
+    "object": {
+        "name": "TownBuildIcon1Display",
+        "objectID": "eb6157bf-84cc-5920-b58d-7c941ebe3b9c",
+        "isActive": false,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 65,
+                            "y": 390,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 56,
+                            "y": 56,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        }
+                    }
+                }
+            },
+            {
+                "type": "MeshFilter",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Rect2D"
+                    }
+                }
+            },
+            {
+                "type": "SpriteRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": "",
+                    "customData": {
+                        "targetObjectID": "6f0868ef-0c3a-591f-90dc-942c6c1f9859",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "materialName": "Default",
+                        "renderPriority": 25
+                    }
+                }
+            },
+            {
+                "type": "ScreenBufferViewport",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "sourceObjectID": "5368f50c-fe5d-565a-a1d2-1f45a113dad2",
+                        "displayCameraObjectID": "c35fca49-71b4-5b92-9ec5-85f4ba25cf85",
+                        "fitMode": 0
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 990000
+}

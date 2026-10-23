@@ -152,10 +152,16 @@
                 {
                     "data": {
                         "customData": {
-                            "height": 720,
+                            "height": 1080,
                             "isShowViewer": true,
                             "name": "ScreenBuffer_0",
-                            "width": 1280
+                            "width": 1920,
+                            "clearColor": {
+                                "x": 0,
+                                "y": 0,
+                                "z": 0,
+                                "w": 1
+                            }
                         },
                         "isActive": true,
                         "priority": 1
@@ -415,10 +421,16 @@
                 {
                     "data": {
                         "customData": {
-                            "height": 720,
+                            "height": 1080,
                             "isShowViewer": true,
                             "name": "ScreenBuffer_1",
-                            "width": 1280
+                            "width": 1920,
+                            "clearColor": {
+                                "x": 0,
+                                "y": 0,
+                                "z": 0,
+                                "w": 1
+                            }
                         },
                         "isActive": true,
                         "priority": 1

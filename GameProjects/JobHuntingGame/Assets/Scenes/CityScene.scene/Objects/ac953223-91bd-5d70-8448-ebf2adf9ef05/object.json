@@ -1,0 +1,71 @@
+{
+    "object": {
+        "name": "TownGridZ12",
+        "objectID": "ac953223-91bd-5d70-8448-ebf2adf9ef05",
+        "isActive": false,
+        "tag": "",
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 0,
+                            "y": 0.015,
+                            "z": 6.0
+                        },
+                        "scale": {
+                            "x": 24,
+                            "y": 0.035,
+                            "z": 0.035
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        }
+                    }
+                }
+            },
+            {
+                "type": "MeshFilter",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Box"
+                    }
+                }
+            },
+            {
+                "type": "MeshRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": "",
+                    "customData": {
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "targetObjectID": "d1aabf47-5b7f-5536-8d01-1115d4c3d57f",
+                        "materialName": "Default",
+                        "instanceColor": {
+                            "x": 0.6,
+                            "y": 0.85,
+                            "z": 0.8,
+                            "w": 1
+                        },
+                        "allowInstancing": true,
+                        "castShadows": false
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 910000
+}

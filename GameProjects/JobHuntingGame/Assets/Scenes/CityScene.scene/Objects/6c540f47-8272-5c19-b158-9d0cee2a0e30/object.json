@@ -1,0 +1,72 @@
+{
+    "object": {
+        "name": "TownCamera",
+        "objectID": "6c540f47-8272-5c19-b158-9d0cee2a0e30",
+        "isActive": true,
+        "tag": "",
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 18,
+                            "y": 30,
+                            "z": -32
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0.33419668144162834,
+                            "y": -0.2959565617739278,
+                            "z": 0.11139889381387613,
+                            "w": 0.8878696853217833
+                        }
+                    }
+                }
+            },
+            {
+                "type": "Camera3D",
+                "data": {
+                    "customData": {
+                        "aspectRatio": 1.7777777910232544,
+                        "autoSyncAspectRatio": true,
+                        "enableJitter": false,
+                        "farClip": 1000.0,
+                        "fovY": 1.0,
+                        "nearClip": 0.10000000149011612,
+                        "orthoSize": 10.0,
+                        "orthographic": false
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                }
+            },
+            {
+                "type": "CameraRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 950,
+                    "tag": "",
+                    "customData": {
+                        "targetObjectID": "d1aabf47-5b7f-5536-8d01-1115d4c3d57f",
+                        "bindVariableNames": [
+                            "Vertex:gCamera3D",
+                            "Pixel:gCamera3D"
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 900007
+}

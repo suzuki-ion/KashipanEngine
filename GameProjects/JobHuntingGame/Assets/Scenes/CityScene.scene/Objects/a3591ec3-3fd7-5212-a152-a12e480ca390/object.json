@@ -1,0 +1,68 @@
+{
+    "object": {
+        "name": "TownBuildIcon5Light",
+        "objectID": "a3591ec3-3fd7-5212-a152-a12e480ca390",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0.29552020666133955,
+                            "y": 0,
+                            "z": 0,
+                            "w": 0.955336489125606
+                        }
+                    }
+                }
+            },
+            {
+                "type": "Light",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "type": 0,
+                        "color": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1,
+                            "w": 1
+                        },
+                        "intensity": 0.85,
+                        "castShadows": false
+                    }
+                }
+            },
+            {
+                "type": "LightRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 950,
+                    "tag": "",
+                    "customData": {
+                        "targetObjectID": "ba04a6bc-5715-59ae-9231-8293f53a0c72",
+                        "pipelineName": "Object3D.Solid.BlendNormal"
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 990000
+}

@@ -82,7 +82,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
+        "isActive": false,
         "name": "Line",
         "objectID": "076b7ac5-936c-49a2-aee0-05f6e819bcd4",
         "tag": ""

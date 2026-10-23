@@ -17,7 +17,7 @@
                             "z": 0.800000011920929
                         },
                         "translate": {
-                            "x": -2.9802322387695313e-08,
+                            "x": -2.9802322387695312e-08,
                             "y": 0.0,
                             "z": 3.5000057220458984
                         }
@@ -82,7 +82,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
+        "isActive": false,
         "name": "Line",
         "objectID": "d6c678e8-94a4-49fb-a687-0aa57e57f719",
         "tag": ""

@@ -1,0 +1,39 @@
+{
+    "object": {
+        "name": "TownCameraFocus",
+        "objectID": "937f5a1a-f664-56ba-8c50-4c8f1995878b",
+        "isActive": true,
+        "tag": "",
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": -6,
+                            "y": 0,
+                            "z": -4
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": -0.0,
+                            "w": 1.0
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 950010
+}

@@ -1,29 +1,17 @@
 {
+    "startupScene": "TitleScene",
     "scenes": [
         {
-            "filePath": "Assets/Scenes/GameScene.scene",
-            "name": "GameScene"
+            "name": "TitleScene",
+            "filePath": "Assets/Scenes/TitleScene.scene"
         },
         {
-            "filePath": "Assets/Scenes/GameScene2.scene",
-            "name": "GameScene2"
+            "name": "CityScene",
+            "filePath": "Assets/Scenes/CityScene.scene"
         },
         {
-            "filePath": "Assets/Scenes/GameScene3.scene",
-            "name": "GameScene3"
-        },
-        {
-            "filePath": "Assets/Scenes/Stage1.scene",
-            "name": "Stage1"
-        },
-        {
-            "filePath": "Assets/Scenes/TitleScene.scene",
-            "name": "TitleScene"
-        },
-        {
-            "filePath": "Assets/Scenes/CityScene.scene",
-            "name": "CityScene"
+            "name": "ExpeditionScene",
+            "filePath": "Assets/Scenes/ExpeditionScene.scene"
         }
-    ],
-    "startupScene": "Stage1"
+    ]
 }

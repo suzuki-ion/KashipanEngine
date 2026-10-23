@@ -1,0 +1,54 @@
+{
+    "object": {
+        "name": "TownUISound",
+        "objectID": "f007c192-7d94-5d62-8254-b072fc3318db",
+        "isActive": true,
+        "tag": "",
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        }
+                    }
+                }
+            },
+            {
+                "type": "AudioSource",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "soundName": "Application/Sound/seUISubmit.mp3",
+                        "category": "SE",
+                        "volume": 1,
+                        "loop": false,
+                        "playOnAwake": false
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 910000
+}

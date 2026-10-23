@@ -75,7 +75,7 @@
         ],
         "editorOnly": false,
         "hiddenFromEditorTarget": false,
-        "isActive": true,
+        "isActive": false,
         "name": "Light Object",
         "objectID": "aeb54462-93a2-44c8-b502-0e4787c2b0dc",
         "tag": ""

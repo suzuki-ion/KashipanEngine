@@ -1,0 +1,69 @@
+{
+    "object": {
+        "name": "TownBuildIcon3Model",
+        "objectID": "9c21d837-0088-597f-b224-b58fb910908f",
+        "isActive": true,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 1060,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1.5,
+                            "y": 1.5,
+                            "z": 1.5
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        }
+                    }
+                }
+            },
+            {
+                "type": "MeshFilter",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "meshAssetPath": "Application/Models/Town/Shop.obj"
+                    }
+                }
+            },
+            {
+                "type": "MeshRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": "",
+                    "customData": {
+                        "targetObjectID": "c7703a66-9da0-570a-93f1-bafbac82411f",
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "materialName": "TownFacility",
+                        "instanceColor": {
+                            "x": 0.75,
+                            "y": 0.85,
+                            "z": 0.8,
+                            "w": 1
+                        },
+                        "castShadows": false,
+                        "allowInstancing": false
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 990000
+}

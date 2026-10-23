@@ -52,7 +52,7 @@
                         },
                         "scriptPath": "Assets/Application/Scripts/GridGenerator.as"
                     },
-                    "isActive": true,
+                    "isActive": false,
                     "priority": 1,
                     "tag": ""
                 },

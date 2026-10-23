@@ -25,6 +25,14 @@ KashipanEngine/
 `Build/RepositoryPaths.props` がリポジトリのルートを `RepositoryRoot` として解決するため、
 Visual Studioのプロジェクト位置や作業ディレクトリは実行用データの基準にはなりません。
 
+KashipanEngineのソリューションエクスプローラーでは、「すべてのファイルを表示」をオフにして
+フィルター表示を使用します。フィルターはリポジトリ直下を基準とする実階層
+（`SourceFiles/`、`EngineData/`、`Externals/`、`EngineTools/`、`Build/` など）に合わせています。
+プロジェクトファイルは `Build/` 内にあり、ソース等はその外側にあるため、
+「すべてのファイルを表示」に切り替えた場合は、それらがプロジェクト直下に並ぶ表示になります。
+ファイルをプロジェクトに追加・移動した際は、`python EngineTools/SyncVisualStudioFilters.py` で
+フィルターを再同期できます。`--check` を付けると、書き換えずに同期状態を確認します。
+
 Debug/Developmentのビルド後処理は、exeの隣の `EngineRoot.txt` にリポジトリルートを記録します。
 `ProjectPaths::EngineRoot()` はその位置、`InEngineData()` はその下の `EngineData/` を基準にします。
 ゲームの一覧・作成・名前指定の起動は `GameProjects/` を使い、`--project <絶対パス>` も利用できます。

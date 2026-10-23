@@ -1,0 +1,3474 @@
+{
+    "name": "box_humanoid_rigged",
+    "objects": [
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "box_humanoid_rigged",
+                "objectID": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                "prefabNodeID": "5b816a1c-c40a-4ed7-951b-fc9f335a56db",
+                "tag": ""
+            },
+            "parentIndex": -1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 1.0800000429153442,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_Torso_Lower_Pelvis",
+                "objectID": "1af7c802-0a36-45a5-888c-1efc609034f1",
+                "prefabNodeID": "100833b7-4d22-47ad-9aae-ad63771c6795",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "1af7c802-0a36-45a5-888c-1efc609034f1",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.09000000357627869,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_Torso_Middle",
+                "objectID": "ef618064-3a6f-426c-92e3-0bd425a64c8c",
+                "prefabNodeID": "b5341184-b663-4328-8801-e7aaba727069",
+                "tag": ""
+            },
+            "parentIndex": 1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "ef618064-3a6f-426c-92e3-0bd425a64c8c",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.10999999940395355,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_Torso_Upper",
+                "objectID": "788120e2-ee50-4b20-b6f9-6868d52d822d",
+                "prefabNodeID": "405ea817-f027-4a52-875f-bcf2770f7613",
+                "tag": ""
+            },
+            "parentIndex": 2
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "788120e2-ee50-4b20-b6f9-6868d52d822d",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.2849999964237213,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_Head",
+                "objectID": "b99b8fcf-8467-4884-9a38-707fc1dcc38a",
+                "prefabNodeID": "adecd7f7-cede-4783-b043-562bb2e7b1de",
+                "tag": ""
+            },
+            "parentIndex": 3
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "788120e2-ee50-4b20-b6f9-6868d52d822d",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.23000000417232513,
+                                    "y": 0.20499999821186066,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_L_Shoulder",
+                "objectID": "c21cbf20-6db0-4e9a-b6dc-2a8d76ec1618",
+                "prefabNodeID": "1f2c57ed-0f96-45c6-a080-a711e641fdf5",
+                "tag": ""
+            },
+            "parentIndex": 3
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "c21cbf20-6db0-4e9a-b6dc-2a8d76ec1618",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_L_UpperArm",
+                "objectID": "173289fe-f19d-4f46-91df-e56c7866a688",
+                "prefabNodeID": "65266102-b5e2-4685-aaa5-fb12da8bf73a",
+                "tag": ""
+            },
+            "parentIndex": 5
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "173289fe-f19d-4f46-91df-e56c7866a688",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.3700000047683716,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_L_Elbow",
+                "objectID": "504f17d7-c2b2-4248-a2d2-7d35aa0c12c5",
+                "prefabNodeID": "8225ab64-9550-46d3-ab6d-222056fdfea8",
+                "tag": ""
+            },
+            "parentIndex": 6
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "504f17d7-c2b2-4248-a2d2-7d35aa0c12c5",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_L_Forearm",
+                "objectID": "e5d604fa-21fe-4c47-a1f5-4b3e91ae4311",
+                "prefabNodeID": "b759a047-c659-4c2b-b294-fc8a5ca3f6bc",
+                "tag": ""
+            },
+            "parentIndex": 7
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "e5d604fa-21fe-4c47-a1f5-4b3e91ae4311",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.33000001311302185,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_L_Wrist",
+                "objectID": "efecd06d-cb2a-4f14-87f3-0c948c82d0eb",
+                "prefabNodeID": "00727fb8-2c0f-4b31-92ff-e3f840a32248",
+                "tag": ""
+            },
+            "parentIndex": 8
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "efecd06d-cb2a-4f14-87f3-0c948c82d0eb",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_L_Palm",
+                "objectID": "752de4aa-7be4-426f-8e4b-88eb54c4a9b6",
+                "prefabNodeID": "c8c674d2-c5e7-4690-ad77-180e8ef1f9bd",
+                "tag": ""
+            },
+            "parentIndex": 9
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "752de4aa-7be4-426f-8e4b-88eb54c4a9b6",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.17919999361038208,
+                                    "y": 0.0,
+                                    "z": 0.013439999893307686
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_L_Fingers_IndexToLittle",
+                "objectID": "4b0dc427-ebef-4f1b-95b5-3abaa3252912",
+                "prefabNodeID": "4b531292-5e93-42f3-aa0c-7ac021321400",
+                "tag": ""
+            },
+            "parentIndex": 10
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "752de4aa-7be4-426f-8e4b-88eb54c4a9b6",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.09520000219345093,
+                                    "y": -0.036959998309612274,
+                                    "z": -0.07280000299215317
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_L_Thumb",
+                "objectID": "685fcd68-d0f7-4454-a599-b1bb72d8bc15",
+                "prefabNodeID": "6cf40547-f3d2-4698-9084-f73b3d9cd007",
+                "tag": ""
+            },
+            "parentIndex": 10
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "788120e2-ee50-4b20-b6f9-6868d52d822d",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": -0.23000000417232513,
+                                    "y": 0.20499999821186066,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_R_Shoulder",
+                "objectID": "2fd6f14a-2f58-4f56-849d-2017e7370d74",
+                "prefabNodeID": "5c5131b6-abf0-43a8-a300-893970cae098",
+                "tag": ""
+            },
+            "parentIndex": 3
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "2fd6f14a-2f58-4f56-849d-2017e7370d74",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_R_UpperArm",
+                "objectID": "a907f6db-5664-4009-8de1-5244dcd0d5f0",
+                "prefabNodeID": "37766fa2-fad7-4422-9ceb-0440979e12f2",
+                "tag": ""
+            },
+            "parentIndex": 13
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "a907f6db-5664-4009-8de1-5244dcd0d5f0",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": -0.3700000047683716,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_R_Elbow",
+                "objectID": "6f25b8b3-52e4-4fc8-acf3-236cb8df0ea3",
+                "prefabNodeID": "466a4d8f-cdd5-44b9-99cf-2ce4da1cb63b",
+                "tag": ""
+            },
+            "parentIndex": 14
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "6f25b8b3-52e4-4fc8-acf3-236cb8df0ea3",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_R_Forearm",
+                "objectID": "17b7d6ae-7149-48e7-9938-acf640fc2b33",
+                "prefabNodeID": "c9cc0548-c06e-4b8f-a568-4866d03309ec",
+                "tag": ""
+            },
+            "parentIndex": 15
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "17b7d6ae-7149-48e7-9938-acf640fc2b33",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": -0.33000001311302185,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_R_Wrist",
+                "objectID": "660b9271-ffd7-4015-8ac5-6535754aa99d",
+                "prefabNodeID": "a2938014-10bf-44e3-96d4-b11660cd0be0",
+                "tag": ""
+            },
+            "parentIndex": 16
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "660b9271-ffd7-4015-8ac5-6535754aa99d",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_R_Palm",
+                "objectID": "b577581d-b89f-410a-80f3-4dfb73f48a1e",
+                "prefabNodeID": "7f7f318f-2f3e-4b2e-8a88-99f5efef3026",
+                "tag": ""
+            },
+            "parentIndex": 17
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b577581d-b89f-410a-80f3-4dfb73f48a1e",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": -0.17919999361038208,
+                                    "y": 0.0,
+                                    "z": 0.013439999893307686
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_R_Fingers_IndexToLittle",
+                "objectID": "5d0a1fcd-8772-4310-97f3-6a8a53ce5b2c",
+                "prefabNodeID": "2729e7ed-cef0-4abe-a341-748440b231fe",
+                "tag": ""
+            },
+            "parentIndex": 18
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b577581d-b89f-410a-80f3-4dfb73f48a1e",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": -0.09520000219345093,
+                                    "y": -0.036959998309612274,
+                                    "z": -0.07280000299215317
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_R_Thumb",
+                "objectID": "84f29c0a-6d91-4c70-990d-fbf02cd43384",
+                "prefabNodeID": "98fddb7a-4374-46f6-8548-e5434ec9fc8e",
+                "tag": ""
+            },
+            "parentIndex": 18
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b577581d-b89f-410a-80f3-4dfb73f48a1e",
+                                "rotate": {
+                                    "w": 0.7071067690849304,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.7071067690849304
+                                },
+                                "scale": {
+                                    "x": 0.9999999403953552,
+                                    "y": 0.9999999403953552,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": -0.1120000034570694,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "WeaponSocket_R",
+                "objectID": "ef9ae0ea-b328-409c-a686-46e61d1358f6",
+                "prefabNodeID": "074ffe8f-d019-4064-9530-45217827763a",
+                "tag": ""
+            },
+            "parentIndex": 18
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "1af7c802-0a36-45a5-888c-1efc609034f1",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.10499999672174454,
+                                    "y": -0.09000000357627869,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_L_Thigh",
+                "objectID": "7875d258-21e7-4c35-b7b0-822f6cd431f6",
+                "prefabNodeID": "04c5f399-bea2-4230-baf0-a5ef3d0d2702",
+                "tag": ""
+            },
+            "parentIndex": 1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "7875d258-21e7-4c35-b7b0-822f6cd431f6",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": -0.46000000834465027,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_L_Knee",
+                "objectID": "a08bed6b-1c91-49c3-81a2-f2af4c8c192f",
+                "prefabNodeID": "4c83dea9-5742-4ced-ad46-0375eec5416d",
+                "tag": ""
+            },
+            "parentIndex": 22
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "a08bed6b-1c91-49c3-81a2-f2af4c8c192f",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_L_Shin",
+                "objectID": "5d8f4f4d-5025-4a8b-96f2-152486f6aedc",
+                "prefabNodeID": "a3717b82-ad94-46fa-b670-950fc50dace2",
+                "tag": ""
+            },
+            "parentIndex": 23
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "5d8f4f4d-5025-4a8b-96f2-152486f6aedc",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": -0.41999998688697815,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_L_Foot",
+                "objectID": "80af3c91-b715-48ff-b50b-fa7d1ada699f",
+                "prefabNodeID": "8a9dd7ff-119b-4cd4-b8b6-a5388d362e54",
+                "tag": ""
+            },
+            "parentIndex": 24
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "1af7c802-0a36-45a5-888c-1efc609034f1",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": -0.10499999672174454,
+                                    "y": -0.09000000357627869,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_R_Thigh",
+                "objectID": "09965c4d-49eb-438c-adeb-3c0c9a6ce7c6",
+                "prefabNodeID": "eee26efe-b014-4059-9435-b60b927be942",
+                "tag": ""
+            },
+            "parentIndex": 1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "09965c4d-49eb-438c-adeb-3c0c9a6ce7c6",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": -0.46000000834465027,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_R_Knee",
+                "objectID": "2d880408-707a-489c-b54a-fa0ac807c2e9",
+                "prefabNodeID": "c0274c6c-b42f-4a69-936a-e88229c69eb2",
+                "tag": ""
+            },
+            "parentIndex": 26
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "2d880408-707a-489c-b54a-fa0ac807c2e9",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_R_Shin",
+                "objectID": "a51903b6-bf8f-479e-bedd-d3ead1e281a9",
+                "prefabNodeID": "06a83cae-cee2-4ca5-8cec-e7fbce5c0ffa",
+                "tag": ""
+            },
+            "parentIndex": 27
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "a51903b6-bf8f-479e-bedd-d3ead1e281a9",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": -0.41999998688697815,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Bone_R_Foot",
+                "objectID": "0589b96d-5fc8-4ee7-931b-21fc9b61b486",
+                "prefabNodeID": "5edef727-b296-4b6d-ac05-8079a00355be",
+                "tag": ""
+            },
+            "parentIndex": 28
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:Head"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Head",
+                "objectID": "51907ff9-0218-4a40-882b-58ad1be1d3ab",
+                "prefabNodeID": "19551e17-80c2-4311-9b25-7b002b41f259",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:Torso_Upper"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Torso_Upper",
+                "objectID": "01589def-d453-472d-ae48-18c096d27aca",
+                "prefabNodeID": "8df4517f-19b2-487a-b9c2-cab8a9ba4b0d",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:Torso_Middle"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Torso_Middle",
+                "objectID": "311fdc3e-5489-43ab-89e5-1737ef4f6367",
+                "prefabNodeID": "b6719970-c7e9-457e-822b-c985db624248",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:Torso_Lower_Pelvis"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Torso_Lower_Pelvis",
+                "objectID": "5adbc113-5369-4e51-b374-1f7150ffd7b7",
+                "prefabNodeID": "d2b68f7a-4620-4547-854c-e7d0ec3b25ab",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:L_Shoulder"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "L_Shoulder",
+                "objectID": "808d395e-e9fc-4bdb-bfd0-b8aff365a08f",
+                "prefabNodeID": "6ce3e375-e940-48c6-8790-cc91ad3211de",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:L_UpperArm"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "L_UpperArm",
+                "objectID": "65c55dd9-d902-43d1-8a87-cc01d3243fd8",
+                "prefabNodeID": "3203dd44-4230-458d-be3a-c327b2343446",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:L_Elbow"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "L_Elbow",
+                "objectID": "b9958895-e864-433e-bad4-f2f2db965f0f",
+                "prefabNodeID": "86d78a36-c978-49d9-a33b-779aaf06ba05",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:L_Forearm"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "L_Forearm",
+                "objectID": "1e5f0fca-eb8a-4040-8e36-5ac9cbb3e492",
+                "prefabNodeID": "31e78090-dedb-4dc2-94ba-e61cb841ccd3",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:L_Wrist"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "L_Wrist",
+                "objectID": "588bf007-fa4d-4375-860f-a680bc0be6c7",
+                "prefabNodeID": "45409286-e066-402c-ace6-cedd5b4cb863",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:L_Palm"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "L_Palm",
+                "objectID": "54dee8a8-ef7a-47aa-99f4-56e2d52260e3",
+                "prefabNodeID": "47b66bc7-3694-43b7-8ebe-99ac865eda42",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:L_Fingers_IndexToLittle"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "L_Fingers_IndexToLittle",
+                "objectID": "8738bdd8-5974-46fa-a366-3a38db7fcbfc",
+                "prefabNodeID": "23c78f0b-ef77-48a7-a17e-9074bc26422d",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:L_Thumb"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "L_Thumb",
+                "objectID": "1e6af481-d297-4e5d-a6aa-00d6ba73cbb1",
+                "prefabNodeID": "1d0ecb2b-33fb-468f-a048-3a4287e394e7",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:L_Thigh"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "L_Thigh",
+                "objectID": "dba47077-e76f-4b52-8f85-e40f8d65d0eb",
+                "prefabNodeID": "2d5d2102-ddbd-4426-b108-7c759d3a8ba3",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:L_Knee"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "L_Knee",
+                "objectID": "24bad19c-48dd-4035-8ef0-deb9550abaa7",
+                "prefabNodeID": "6012977c-15c1-476a-8c2e-1b5280cf413c",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:L_Shin"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "L_Shin",
+                "objectID": "bc487f80-9546-4ded-b0a3-4851f33d0b7b",
+                "prefabNodeID": "fe54d4f5-0374-4f3b-a343-d726ac40865c",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:L_Foot"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "L_Foot",
+                "objectID": "f2318c89-f209-4e74-91bb-1c5cde180b04",
+                "prefabNodeID": "129eac3e-74cc-4ea8-85f7-4061316d39e8",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:R_Shoulder"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "R_Shoulder",
+                "objectID": "3339ff5a-b412-4ea7-95f5-220a099eace8",
+                "prefabNodeID": "0501ad37-85a9-4a8e-afa1-b35475d382bb",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:R_UpperArm"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "R_UpperArm",
+                "objectID": "b6279fdb-009a-4213-96e7-290c7e2c2870",
+                "prefabNodeID": "c08dedd4-9d11-49a2-8760-5a0645972b6c",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:R_Elbow"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "R_Elbow",
+                "objectID": "f19a1a39-dea1-48aa-b0fd-a57a07544bba",
+                "prefabNodeID": "d3bc0107-ce1f-4b50-895b-9485ebde20ac",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:R_Forearm"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "R_Forearm",
+                "objectID": "97615f87-b727-4d0d-b54a-eace785cf8cc",
+                "prefabNodeID": "4fd951d6-7896-4d8a-9f38-b4b4d699a7ab",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:R_Wrist"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "R_Wrist",
+                "objectID": "e61493e6-3984-4fa7-9651-7e38c91f8bd8",
+                "prefabNodeID": "8e047b1e-0878-442a-a5bc-12f175a68674",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:R_Palm"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "R_Palm",
+                "objectID": "a2f5248d-492b-430f-a9f6-373037cad920",
+                "prefabNodeID": "795ff3f2-ed2e-4485-a431-269019df13d1",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:R_Fingers_IndexToLittle"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "R_Fingers_IndexToLittle",
+                "objectID": "fc28476b-13a8-4349-8289-7b00852ee138",
+                "prefabNodeID": "73da24e4-b32a-4f93-9915-ea711f172ad5",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:R_Thumb"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "R_Thumb",
+                "objectID": "5059322c-ba28-4df1-a16e-96110edf7564",
+                "prefabNodeID": "94cfce76-6105-4958-8396-48b832b4ffaa",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:R_Thigh"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "R_Thigh",
+                "objectID": "8174bbcb-6916-4914-82fa-42ba7a4ccad1",
+                "prefabNodeID": "1cc76e2b-1aea-40c7-b79a-1af65271ee22",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:R_Knee"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "R_Knee",
+                "objectID": "61ee9906-9528-4011-b158-ebda4e4faaae",
+                "prefabNodeID": "328de02a-0ffb-4b4d-91e4-7069dc7c5045",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:R_Shin"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "R_Shin",
+                "objectID": "94100787-1d59-44c3-824b-3948e7e29616",
+                "prefabNodeID": "db7af2dd-fb62-4a77-9f18-94ba55cb4b54",
+                "tag": ""
+            },
+            "parentIndex": 0
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "b145f459-b1c5-4348-bdc6-f44f2bc8a059",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Player/box_humanoid_rigged.glb:R_Foot"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "box_humanoid_rigged_White",
+                                "materialNames": [
+                                    "box_humanoid_rigged_White"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "SkinnedMeshRenderer"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "animationSourceAssetPath": "",
+                                "clipName": "",
+                                "loop": true,
+                                "playOnStart": true,
+                                "playbackSpeed": 1.0,
+                                "rootBoneObjectID": ""
+                            },
+                            "isActive": true,
+                            "priority": 500,
+                            "tag": ""
+                        },
+                        "type": "Animator"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "R_Foot",
+                "objectID": "e2a592ac-b7de-416a-9ad6-d8b81caeb272",
+                "prefabNodeID": "ed655646-68a3-42ff-a035-7f245c0c4386",
+                "tag": ""
+            },
+            "parentIndex": 0
+        }
+    ],
+    "prefab": true,
+    "prefabID": "308e9e72-d571-4601-8942-8a5dd24cb66a"
+}

@@ -1,0 +1,111 @@
+{
+    "name": "Workshop",
+    "objects": [
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "Workshop",
+                "objectID": "a442add6-8f21-4117-95ae-626be84e121f",
+                "prefabNodeID": "f9052e6d-5b86-4801-9f94-3e0ae8d24f21",
+                "tag": ""
+            },
+            "parentIndex": -1
+        },
+        {
+            "object": {
+                "components": [
+                    {
+                        "data": {
+                            "customData": {
+                                "parent": "a442add6-8f21-4117-95ae-626be84e121f",
+                                "rotate": {
+                                    "w": 1.0,
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "scale": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "translate": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": -0.0
+                                }
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "Transform"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "meshAssetPath": "Application/Models/Town/Workshop.obj"
+                            },
+                            "isActive": true,
+                            "priority": 1,
+                            "tag": ""
+                        },
+                        "type": "MeshFilter"
+                    },
+                    {
+                        "data": {
+                            "customData": {
+                                "materialName": "Workshop_DefaultMaterial",
+                                "materialNames": [
+                                    "Workshop_DefaultMaterial"
+                                ]
+                            },
+                            "isActive": true,
+                            "priority": 900,
+                            "tag": ""
+                        },
+                        "type": "MeshRenderer"
+                    }
+                ],
+                "editorOnly": false,
+                "isActive": true,
+                "name": "defaultobject",
+                "objectID": "30537248-ac48-4d33-a917-dbae0bf219a5",
+                "prefabNodeID": "2aaf4807-0e33-4e01-ae8b-839c3f214687",
+                "tag": ""
+            },
+            "parentIndex": 0
+        }
+    ],
+    "prefab": true,
+    "prefabID": "30ea61e1-0cad-48ef-bc58-7756bb4cf910"
+}

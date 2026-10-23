@@ -1,0 +1,10 @@
+{
+    "name": "TownCursor",
+    "color": {"x": 1.0, "y": 1.0, "z": 1.0, "w": 1.0},
+    "enableLighting": false,
+    "enableShadowMapProjection": false,
+    "parameters": {
+        "useAlphaBlend": {"type": "Bool", "value": true}
+    },
+    "textureFile": ""
+}

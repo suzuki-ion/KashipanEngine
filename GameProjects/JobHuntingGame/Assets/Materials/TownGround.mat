@@ -1,0 +1,25 @@
+{
+    "name": "TownGround",
+    "color": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0,
+        "w": 1.0
+    },
+    "enableLighting": true,
+    "enableShadowMapProjection": true,
+    "rimIntensity": 0.0,
+    "parameters": {
+        "useAlphaBlend": {
+            "type": "Bool",
+            "value": false
+        }
+    },
+    "textureFile": "",
+    "specularColor": {
+        "x": 0.025,
+        "y": 0.025,
+        "z": 0.025,
+        "w": 1
+    }
+}

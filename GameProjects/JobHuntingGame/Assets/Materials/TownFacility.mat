@@ -1,0 +1,25 @@
+{
+    "name": "TownFacility",
+    "color": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0,
+        "w": 1.0
+    },
+    "enableLighting": true,
+    "enableShadowMapProjection": true,
+    "rimIntensity": 0.0,
+    "parameters": {
+        "useAlphaBlend": {
+            "type": "Bool",
+            "value": false
+        }
+    },
+    "textureFile": "",
+    "specularColor": {
+        "x": 0.12,
+        "y": 0.12,
+        "z": 0.12,
+        "w": 1
+    }
+}

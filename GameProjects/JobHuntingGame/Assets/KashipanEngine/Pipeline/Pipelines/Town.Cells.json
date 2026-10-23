@@ -1,0 +1,33 @@
+{
+    "PipelineType": "Render",
+    "Name": "Town.Cells",
+    "Category": "3D",
+    "Shader": {
+        "AutoTopologyFromShaders": true,
+        "AutoInputLayoutFromVS": true,
+        "AutoRTCountFromPS": true,
+        "AutoRootDescriptorFromShader": true,
+        "Vertex": {
+            "UsePreset": "Object3D.Vertex"
+        },
+        "Pixel": {
+            "UsePreset": "Object3D.Pixel"
+        }
+    },
+    "RasterizerState": {
+        "FillMode": "D3D12_FILL_MODE_SOLID",
+        "CullMode": "D3D12_CULL_MODE_NONE"
+    },
+    "BlendState": {
+        "UsePreset": "Normal"
+    },
+    "DepthStencilState": {
+        "DepthEnable": true,
+        "DepthWriteMask": "D3D12_DEPTH_WRITE_MASK_ZERO",
+        "DepthFunc": "D3D12_COMPARISON_FUNC_LESS_EQUAL"
+    },
+    "PipelineState": {
+        "UsePreset": "Triangle"
+    },
+    "RenderPriority": 2
+}

@@ -36,6 +36,7 @@ class StructuredBufferResource;
 class IRenderTarget;
 
 namespace RendererInternal {
+struct FrameLights;
 struct MultiPassDitherScratchSet;
 class MaterialTemplateCache;
 class BatchKeySequencer;
@@ -197,6 +198,8 @@ private:
     ///          BindLightBuffersAndShadowMapが同じキーでこの結果を読み出してバインドする
     void ProcessLightCulling(SceneContext *sceneContext, SceneRenderer *sceneRenderer,
         std::span<const SceneRenderer::DrawEntry> drawList);
+    RendererInternal::FrameLights &PrepareFrameLights(SceneRenderer *sceneRenderer, IRenderTarget *target, const std::string &pipelineName);
+    std::unordered_map<IRenderTarget *, std::unordered_map<std::string, std::shared_ptr<RendererInternal::FrameLights>>> frameLights_;
 
     /// @brief 直前にカメラ・ライトをバインドした(パイプライン名, PipelineBinder世代)を記録するキャッシュ
     /// @details 同一の描画先に対する一連の描画（DrawBatchのループ・RenderGpuParticles）の間で

@@ -341,6 +341,21 @@ private:
     bool drawListDirty_ = true;
     /// @brief キャッシュ済みエントリ（常にeditorTarget_のみに対して描画する。ソート済み）
     std::vector<CachedRankedEntry> cachedEntries_;
+    std::uint64_t cachedStructureRevision_ = 0;
+    struct TargetLayout {
+        UUID128 owner;
+        std::vector<IRenderTarget *> targets;
+        std::vector<std::pair<bool, std::int32_t>> states;
+        std::vector<std::string> names;
+    };
+    std::vector<TargetLayout> cachedTargetLayouts_;
+    std::unordered_map<const IRenderTarget *, EmptyObject *> cachedTargetOwners_;
+    std::unordered_map<std::string, std::int32_t> cachedPipelinePriorities_;
+    std::unordered_map<MaterialManager::MaterialHandle, bool> cachedOutlines_;
+    std::unordered_map<ModelManager::ModelHandle, std::uint64_t> cachedModelVersions_;
+    bool cachedOutlinePipelineAvailable_ = false;
+    std::pair<bool, std::int32_t> cachedEditorState_{};
+    bool CachedLayoutChanged(PipelineManager *pipelineManager) const;
 
     /// @brief drawListDirty_==trueの場合にcachedEntries_を作り直す
     void RebuildCachedEntries(PipelineManager *pipelineManager);

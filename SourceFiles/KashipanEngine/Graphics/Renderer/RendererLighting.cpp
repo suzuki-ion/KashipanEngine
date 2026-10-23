@@ -4,6 +4,46 @@ namespace KashipanEngine {
 
 using namespace RendererInternal;
 
+FrameLights &Renderer::PrepareFrameLights(SceneRenderer *sceneRenderer, IRenderTarget *target, const std::string &pipelineName) {
+    auto &slot = frameLights_[target][pipelineName];
+    if (slot) return *slot;
+    slot = std::make_shared<FrameLights>();
+    auto &lights = *slot;
+    const auto noShadow = [](const LightRenderer *) -> std::int32_t { return -1; };
+    CollectLightsForTarget(sceneRenderer, target, pipelineName, noShadow,
+        lights.pointLights, lights.spotLights, lights.directionalLights, lights.sphereLights,
+        lights.discLights, lights.rectLights, lights.tubeLights, lights.boxLights, &lights.sources);
+    auto upload = [&]<typename T>(const std::vector<T> &values, size_t index, const char *suffix) {
+        auto key = MakeBatchKey(target, pipelineName, 0, 0, suffix);
+        auto *buffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(T), std::max<size_t>(1, values.size()));
+        lights.buffers[index] = buffer;
+        if (buffer) if (auto *mapped = static_cast<T *>(buffer->Map())) {
+            if (values.empty()) mapped[0] = T{};
+            else std::memcpy(mapped, values.data(), sizeof(T) * values.size());
+        }
+    };
+    upload(lights.pointLights, 0, "pointLights");
+    upload(lights.spotLights, 1, "spotLights");
+    upload(lights.directionalLights, 2, "directionalLights");
+    upload(lights.sphereLights, 3, "sphereLights");
+    upload(lights.discLights, 4, "discLights");
+    upload(lights.rectLights, 5, "rectLights");
+    upload(lights.tubeLights, 6, "tubeLights");
+    upload(lights.boxLights, 7, "boxLights");
+    LightCountsData counts;
+    counts.pointLightCount = static_cast<std::uint32_t>(lights.pointLights.size());
+    counts.spotLightCount = static_cast<std::uint32_t>(lights.spotLights.size());
+    counts.directionalLightCount = static_cast<std::uint32_t>(lights.directionalLights.size());
+    counts.sphereLightCount = static_cast<std::uint32_t>(lights.sphereLights.size());
+    counts.discLightCount = static_cast<std::uint32_t>(lights.discLights.size());
+    counts.rectLightCount = static_cast<std::uint32_t>(lights.rectLights.size());
+    counts.tubeLightCount = static_cast<std::uint32_t>(lights.tubeLights.size());
+    counts.boxLightCount = static_cast<std::uint32_t>(lights.boxLights.size());
+    lights.countsBuffer = resourceContainer_->GetOrCreateConstantBuffer(MakeBatchKey(target, pipelineName, 0, 0, "lightCounts"), sizeof(LightCountsData));
+    if (lights.countsBuffer) if (auto *mapped = lights.countsBuffer->Map()) std::memcpy(mapped, &counts, sizeof(counts));
+    return lights;
+}
+
 void Renderer::ProcessLightCulling(SceneContext *sceneContext, SceneRenderer *sceneRenderer,
     std::span<const SceneRenderer::DrawEntry> drawList) {
     if (!sceneContext || !sceneRenderer) return;
@@ -37,73 +77,22 @@ void Renderer::ProcessLightCulling(SceneContext *sceneContext, SceneRenderer *sc
         auto *cameraConstantBuffer = ResolveCameraConstantBuffer(sceneRenderer, target, pipelineName);
         if (!cameraConstantBuffer) continue;
 
-        // この描画先・パイプラインで影を生成するライトの割り当て（RenderShadowMapsは後で実行されるため、
-        // シャドウスロット自体はここでは未確定。ライトカリングは影の有無に関係なく行えるため -1 固定でよい）
-        const auto noShadow = [](const LightRenderer *) -> std::int32_t { return -1; };
-
-        std::vector<PointLightElement> pointLights;
-        std::vector<SpotLightElement> spotLights;
-        std::vector<DirectionalLightElement> directionalLights;
-        std::vector<SphereLightElement> sphereLights;
-        std::vector<DiscLightElement> discLights;
-        std::vector<RectLightElement> rectLights;
-        std::vector<TubeLightElement> tubeLights;
-        std::vector<BoxLightElement> boxLights;
-        CollectLightsForTarget(sceneRenderer, target, pipelineName, noShadow, pointLights, spotLights, directionalLights,
-            sphereLights, discLights, rectLights, tubeLights, boxLights);
-        // ライトが0個でも必ずディスパッチする（gTileLightIndicesはDEFAULTヒープ上のUAVでCPUから初期化できないため、
-        // ここで確実に書き込んでおかないとBindLightBuffersAndShadowMap側で未初期化のバッファを読むことになる）
-
-        auto pointKey = MakeBatchKey(target, pipelineName, 0, 0, "pointLights");
-        auto *pointBuffer = resourceContainer_->GetOrCreateStructuredBuffer(
-            pointKey, sizeof(PointLightElement), std::max<size_t>(1, pointLights.size()));
-        auto spotKey = MakeBatchKey(target, pipelineName, 0, 0, "spotLights");
-        auto *spotBuffer = resourceContainer_->GetOrCreateStructuredBuffer(
-            spotKey, sizeof(SpotLightElement), std::max<size_t>(1, spotLights.size()));
-        auto sphereKey = MakeBatchKey(target, pipelineName, 0, 0, "sphereLights");
-        auto *sphereBuffer = resourceContainer_->GetOrCreateStructuredBuffer(
-            sphereKey, sizeof(SphereLightElement), std::max<size_t>(1, sphereLights.size()));
-        auto discKey = MakeBatchKey(target, pipelineName, 0, 0, "discLights");
-        auto *discBuffer = resourceContainer_->GetOrCreateStructuredBuffer(
-            discKey, sizeof(DiscLightElement), std::max<size_t>(1, discLights.size()));
-        auto rectKey = MakeBatchKey(target, pipelineName, 0, 0, "rectLights");
-        auto *rectBuffer = resourceContainer_->GetOrCreateStructuredBuffer(
-            rectKey, sizeof(RectLightElement), std::max<size_t>(1, rectLights.size()));
-        auto tubeKey = MakeBatchKey(target, pipelineName, 0, 0, "tubeLights");
-        auto *tubeBuffer = resourceContainer_->GetOrCreateStructuredBuffer(
-            tubeKey, sizeof(TubeLightElement), std::max<size_t>(1, tubeLights.size()));
-        auto boxKey = MakeBatchKey(target, pipelineName, 0, 0, "boxLights");
-        auto *boxBuffer = resourceContainer_->GetOrCreateStructuredBuffer(
-            boxKey, sizeof(BoxLightElement), std::max<size_t>(1, boxLights.size()));
+        auto &shared = PrepareFrameLights(sceneRenderer, target, pipelineName);
+        const auto &pointLights = shared.pointLights;
+        const auto &spotLights = shared.spotLights;
+        const auto &sphereLights = shared.sphereLights;
+        const auto &discLights = shared.discLights;
+        const auto &rectLights = shared.rectLights;
+        const auto &tubeLights = shared.tubeLights;
+        const auto &boxLights = shared.boxLights;
+        auto *pointBuffer = shared.buffers[0];
+        auto *spotBuffer = shared.buffers[1];
+        auto *sphereBuffer = shared.buffers[3];
+        auto *discBuffer = shared.buffers[4];
+        auto *rectBuffer = shared.buffers[5];
+        auto *tubeBuffer = shared.buffers[6];
+        auto *boxBuffer = shared.buffers[7];
         if (!pointBuffer || !spotBuffer || !sphereBuffer || !discBuffer || !rectBuffer || !tubeBuffer || !boxBuffer) continue;
-        if (auto *mapped = static_cast<PointLightElement *>(pointBuffer->Map())) {
-            if (pointLights.empty()) mapped[0] = PointLightElement{};
-            else std::memcpy(mapped, pointLights.data(), sizeof(PointLightElement) * pointLights.size());
-        }
-        if (auto *mapped = static_cast<SpotLightElement *>(spotBuffer->Map())) {
-            if (spotLights.empty()) mapped[0] = SpotLightElement{};
-            else std::memcpy(mapped, spotLights.data(), sizeof(SpotLightElement) * spotLights.size());
-        }
-        if (auto *mapped = static_cast<SphereLightElement *>(sphereBuffer->Map())) {
-            if (sphereLights.empty()) mapped[0] = SphereLightElement{};
-            else std::memcpy(mapped, sphereLights.data(), sizeof(SphereLightElement) * sphereLights.size());
-        }
-        if (auto *mapped = static_cast<DiscLightElement *>(discBuffer->Map())) {
-            if (discLights.empty()) mapped[0] = DiscLightElement{};
-            else std::memcpy(mapped, discLights.data(), sizeof(DiscLightElement) * discLights.size());
-        }
-        if (auto *mapped = static_cast<RectLightElement *>(rectBuffer->Map())) {
-            if (rectLights.empty()) mapped[0] = RectLightElement{};
-            else std::memcpy(mapped, rectLights.data(), sizeof(RectLightElement) * rectLights.size());
-        }
-        if (auto *mapped = static_cast<TubeLightElement *>(tubeBuffer->Map())) {
-            if (tubeLights.empty()) mapped[0] = TubeLightElement{};
-            else std::memcpy(mapped, tubeLights.data(), sizeof(TubeLightElement) * tubeLights.size());
-        }
-        if (auto *mapped = static_cast<BoxLightElement *>(boxBuffer->Map())) {
-            if (boxLights.empty()) mapped[0] = BoxLightElement{};
-            else std::memcpy(mapped, boxLights.data(), sizeof(BoxLightElement) * boxLights.size());
-        }
 
         TileCullingConstants constants;
         constants.screenSize = Vector2(static_cast<float>(width), static_cast<float>(height));
@@ -263,145 +252,39 @@ void Renderer::BindLightBuffersAndShadowMap(IRenderTarget *target,
         return -1;
     };
 
-    //--------- ライトの収集（種類ごとに構造化バッファへまとめる） ---------//
-    std::vector<PointLightElement> pointLights;
-    std::vector<SpotLightElement> spotLights;
-    std::vector<DirectionalLightElement> directionalLights;
-    std::vector<SphereLightElement> sphereLights;
-    std::vector<DiscLightElement> discLights;
-    std::vector<RectLightElement> rectLights;
-    std::vector<TubeLightElement> tubeLights;
-    std::vector<BoxLightElement> boxLights;
-    CollectLightsForTarget(sceneRenderer, target, pipelineName, findShadowIndex, pointLights, spotLights, directionalLights,
-        sphereLights, discLights, rectLights, tubeLights, boxLights);
-
-    //--------- ライト個数の定数バッファ ---------//
-    {
-        LightCountsData counts;
-        counts.pointLightCount = static_cast<std::uint32_t>(pointLights.size());
-        counts.spotLightCount = static_cast<std::uint32_t>(spotLights.size());
-        counts.directionalLightCount = static_cast<std::uint32_t>(directionalLights.size());
-        counts.sphereLightCount = static_cast<std::uint32_t>(sphereLights.size());
-        counts.discLightCount = static_cast<std::uint32_t>(discLights.size());
-        counts.rectLightCount = static_cast<std::uint32_t>(rectLights.size());
-        counts.tubeLightCount = static_cast<std::uint32_t>(tubeLights.size());
-        counts.boxLightCount = static_cast<std::uint32_t>(boxLights.size());
-        auto key = MakeBatchKey(target, pipelineName, 0, 0, "lightCounts");
-        auto *countsBuffer = resourceContainer_->GetOrCreateConstantBuffer(key, sizeof(LightCountsData));
-        if (countsBuffer) {
-            if (auto *mapped = countsBuffer->Map()) {
-                std::memcpy(mapped, &counts, sizeof(counts));
-                shaderBinder.Bind("Pixel:LightCounts", countsBuffer);
+    auto &shared = PrepareFrameLights(sceneRenderer, target, pipelineName);
+    if (!shared.shadowIndicesPatched) {
+        // Culling never reads shadow indices. Once shadow jobs are prepared, patch
+        // only those fields in the same upload buffers; do not recollect/reupload lights.
+        auto patch = [&]<typename T>(std::vector<T> &values, size_t index) {
+            T *mapped = nullptr;
+            for (size_t i = 0; i < values.size(); ++i) {
+                const auto slot = findShadowIndex(shared.sources[index][i]);
+                if (values[i].shadowMapIndex == slot) continue;
+                values[i].shadowMapIndex = slot;
+                if (!mapped && shared.buffers[index]) mapped = static_cast<T *>(shared.buffers[index]->Map());
+                if (mapped) mapped[i].shadowMapIndex = slot;
             }
-        }
+        };
+        patch(shared.pointLights, 0);
+        patch(shared.spotLights, 1);
+        patch(shared.directionalLights, 2);
+        patch(shared.sphereLights, 3);
+        patch(shared.discLights, 4);
+        patch(shared.rectLights, 5);
+        patch(shared.tubeLights, 6);
+        patch(shared.boxLights, 7);
+        shared.shadowIndicesPatched = true;
     }
-
-    //--------- ライトの構造化バッファ（0個でもダミー1要素をバインドする） ---------//
-    {
-        auto key = MakeBatchKey(target, pipelineName, 0, 0, "pointLights");
-        auto *buffer = resourceContainer_->GetOrCreateStructuredBuffer(
-            key, sizeof(PointLightElement), std::max<size_t>(1, pointLights.size()));
-        if (buffer) {
-            if (auto *mapped = static_cast<PointLightElement *>(buffer->Map())) {
-                if (pointLights.empty()) {
-                    mapped[0] = PointLightElement{};
-                } else {
-                    std::memcpy(mapped, pointLights.data(), sizeof(PointLightElement) * pointLights.size());
-                }
-                shaderBinder.Bind("Pixel:gPointLights", buffer);
-            }
-        }
-    }
-    {
-        auto key = MakeBatchKey(target, pipelineName, 0, 0, "spotLights");
-        auto *buffer = resourceContainer_->GetOrCreateStructuredBuffer(
-            key, sizeof(SpotLightElement), std::max<size_t>(1, spotLights.size()));
-        if (buffer) {
-            if (auto *mapped = static_cast<SpotLightElement *>(buffer->Map())) {
-                if (spotLights.empty()) {
-                    mapped[0] = SpotLightElement{};
-                } else {
-                    std::memcpy(mapped, spotLights.data(), sizeof(SpotLightElement) * spotLights.size());
-                }
-                shaderBinder.Bind("Pixel:gSpotLights", buffer);
-            }
-        }
-    }
-    {
-        auto key = MakeBatchKey(target, pipelineName, 0, 0, "directionalLights");
-        auto *buffer = resourceContainer_->GetOrCreateStructuredBuffer(
-            key, sizeof(DirectionalLightElement), std::max<size_t>(1, directionalLights.size()));
-        if (buffer) {
-            if (auto *mapped = static_cast<DirectionalLightElement *>(buffer->Map())) {
-                if (directionalLights.empty()) {
-                    mapped[0] = DirectionalLightElement{};
-                } else {
-                    std::memcpy(mapped, directionalLights.data(), sizeof(DirectionalLightElement) * directionalLights.size());
-                }
-                shaderBinder.Bind("Pixel:gDirectionalLights", buffer);
-            }
-        }
-    }
-    {
-        auto key = MakeBatchKey(target, pipelineName, 0, 0, "sphereLights");
-        auto *buffer = resourceContainer_->GetOrCreateStructuredBuffer(
-            key, sizeof(SphereLightElement), std::max<size_t>(1, sphereLights.size()));
-        if (buffer) {
-            if (auto *mapped = static_cast<SphereLightElement *>(buffer->Map())) {
-                if (sphereLights.empty()) mapped[0] = SphereLightElement{};
-                else std::memcpy(mapped, sphereLights.data(), sizeof(SphereLightElement) * sphereLights.size());
-                shaderBinder.Bind("Pixel:gSphereLights", buffer);
-            }
-        }
-    }
-    {
-        auto key = MakeBatchKey(target, pipelineName, 0, 0, "discLights");
-        auto *buffer = resourceContainer_->GetOrCreateStructuredBuffer(
-            key, sizeof(DiscLightElement), std::max<size_t>(1, discLights.size()));
-        if (buffer) {
-            if (auto *mapped = static_cast<DiscLightElement *>(buffer->Map())) {
-                if (discLights.empty()) mapped[0] = DiscLightElement{};
-                else std::memcpy(mapped, discLights.data(), sizeof(DiscLightElement) * discLights.size());
-                shaderBinder.Bind("Pixel:gDiscLights", buffer);
-            }
-        }
-    }
-    {
-        auto key = MakeBatchKey(target, pipelineName, 0, 0, "rectLights");
-        auto *buffer = resourceContainer_->GetOrCreateStructuredBuffer(
-            key, sizeof(RectLightElement), std::max<size_t>(1, rectLights.size()));
-        if (buffer) {
-            if (auto *mapped = static_cast<RectLightElement *>(buffer->Map())) {
-                if (rectLights.empty()) mapped[0] = RectLightElement{};
-                else std::memcpy(mapped, rectLights.data(), sizeof(RectLightElement) * rectLights.size());
-                shaderBinder.Bind("Pixel:gRectLights", buffer);
-            }
-        }
-    }
-    {
-        auto key = MakeBatchKey(target, pipelineName, 0, 0, "tubeLights");
-        auto *buffer = resourceContainer_->GetOrCreateStructuredBuffer(
-            key, sizeof(TubeLightElement), std::max<size_t>(1, tubeLights.size()));
-        if (buffer) {
-            if (auto *mapped = static_cast<TubeLightElement *>(buffer->Map())) {
-                if (tubeLights.empty()) mapped[0] = TubeLightElement{};
-                else std::memcpy(mapped, tubeLights.data(), sizeof(TubeLightElement) * tubeLights.size());
-                shaderBinder.Bind("Pixel:gTubeLights", buffer);
-            }
-        }
-    }
-    {
-        auto key = MakeBatchKey(target, pipelineName, 0, 0, "boxLights");
-        auto *buffer = resourceContainer_->GetOrCreateStructuredBuffer(
-            key, sizeof(BoxLightElement), std::max<size_t>(1, boxLights.size()));
-        if (buffer) {
-            if (auto *mapped = static_cast<BoxLightElement *>(buffer->Map())) {
-                if (boxLights.empty()) mapped[0] = BoxLightElement{};
-                else std::memcpy(mapped, boxLights.data(), sizeof(BoxLightElement) * boxLights.size());
-                shaderBinder.Bind("Pixel:gBoxLights", buffer);
-            }
-        }
-    }
+    if (shared.countsBuffer) shaderBinder.Bind("Pixel:LightCounts", shared.countsBuffer);
+    if (shared.buffers[0]) shaderBinder.Bind("Pixel:gPointLights", shared.buffers[0]);
+    if (shared.buffers[1]) shaderBinder.Bind("Pixel:gSpotLights", shared.buffers[1]);
+    if (shared.buffers[2]) shaderBinder.Bind("Pixel:gDirectionalLights", shared.buffers[2]);
+    if (shared.buffers[3]) shaderBinder.Bind("Pixel:gSphereLights", shared.buffers[3]);
+    if (shared.buffers[4]) shaderBinder.Bind("Pixel:gDiscLights", shared.buffers[4]);
+    if (shared.buffers[5]) shaderBinder.Bind("Pixel:gRectLights", shared.buffers[5]);
+    if (shared.buffers[6]) shaderBinder.Bind("Pixel:gTubeLights", shared.buffers[6]);
+    if (shared.buffers[7]) shaderBinder.Bind("Pixel:gBoxLights", shared.buffers[7]);
 
     //--------- シャドウマップ ---------//
     // RenderShadowMaps() で構築した「この描画先で影を生成するライト」の行列・スライス情報と

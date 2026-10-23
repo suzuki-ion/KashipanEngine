@@ -208,6 +208,21 @@ struct LightCountsData {
     std::uint32_t boxLightCount = 0;
 };
 
+struct FrameLights {
+    std::vector<PointLightElement> pointLights;
+    std::vector<SpotLightElement> spotLights;
+    std::vector<DirectionalLightElement> directionalLights;
+    std::vector<SphereLightElement> sphereLights;
+    std::vector<DiscLightElement> discLights;
+    std::vector<RectLightElement> rectLights;
+    std::vector<TubeLightElement> tubeLights;
+    std::vector<BoxLightElement> boxLights;
+    std::array<std::vector<const LightRenderer *>, 8> sources;
+    std::array<StructuredBufferResource *, 8> buffers{};
+    ConstantBufferResource *countsBuffer = nullptr;
+    bool shadowIndicesPatched = false;
+};
+
 /// @brief ShadowMapConstants 定数バッファ内の1ライト分のデータ（HLSL側の ShadowLightData と同レイアウト）
 struct ShadowLightConstants {
     /// @brief Directional: 0..3=カスケード / Spot: 0のみ / Point: 0..5=+X,-X,+Y,-Y,+Z,-Z
@@ -619,7 +634,8 @@ inline void CollectLightsForTarget(SceneRenderer *sceneRenderer, IRenderTarget *
     std::vector<DiscLightElement> &discLights,
     std::vector<RectLightElement> &rectLights,
     std::vector<TubeLightElement> &tubeLights,
-    std::vector<BoxLightElement> &boxLights) {
+    std::vector<BoxLightElement> &boxLights,
+    std::array<std::vector<const LightRenderer *>, 8> *sources = nullptr) {
     for (auto *lightRenderer : sceneRenderer->GetLightRenderers()) {
         if (!lightRenderer || !lightRenderer->IsActive()) continue;
         // EditorOnlyオブジェクトのライトはエディター用以外の描画先には適用しない
@@ -634,6 +650,7 @@ inline void CollectLightsForTarget(SceneRenderer *sceneRenderer, IRenderTarget *
             element.enabled = 1u;
             element.direction = lightRenderer->GetWorldDirection();
             directionalLights.push_back(element);
+            if (sources) (*sources)[2].push_back(lightRenderer);
             continue;
         }
 
@@ -645,6 +662,7 @@ inline void CollectLightsForTarget(SceneRenderer *sceneRenderer, IRenderTarget *
             element.intensity = light->GetIntensity();
             element.shadowMapIndex = findShadowIndex(lightRenderer);
             directionalLights.push_back(element);
+            if (sources) (*sources)[2].push_back(lightRenderer);
         } else if (light->GetType() == Light::Type::Point) {
             PointLightElement element;
             element.enabled = light->IsActive() ? 1u : 0u;
@@ -655,6 +673,7 @@ inline void CollectLightsForTarget(SceneRenderer *sceneRenderer, IRenderTarget *
             element.decay = light->GetDecay();
             element.shadowMapIndex = findShadowIndex(lightRenderer);
             pointLights.push_back(element);
+            if (sources) (*sources)[0].push_back(lightRenderer);
         } else if (light->GetType() == Light::Type::Spot) {
             SpotLightElement element;
             element.enabled = light->IsActive() ? 1u : 0u;
@@ -668,6 +687,7 @@ inline void CollectLightsForTarget(SceneRenderer *sceneRenderer, IRenderTarget *
             element.decay = light->GetDecay();
             element.shadowMapIndex = findShadowIndex(lightRenderer);
             spotLights.push_back(element);
+            if (sources) (*sources)[1].push_back(lightRenderer);
         } else if (light->GetType() == Light::Type::Sphere) {
             SphereLightElement element;
             element.enabled = light->IsActive() ? 1u : 0u;
@@ -679,6 +699,7 @@ inline void CollectLightsForTarget(SceneRenderer *sceneRenderer, IRenderTarget *
             element.decay = light->GetDecay();
             element.shadowMapIndex = findShadowIndex(lightRenderer);
             sphereLights.push_back(element);
+            if (sources) (*sources)[3].push_back(lightRenderer);
         } else if (light->GetType() == Light::Type::Disc) {
             DiscLightElement element;
             element.enabled = light->IsActive() ? 1u : 0u;
@@ -691,6 +712,7 @@ inline void CollectLightsForTarget(SceneRenderer *sceneRenderer, IRenderTarget *
             element.decay = light->GetDecay();
             element.shadowMapIndex = findShadowIndex(lightRenderer);
             discLights.push_back(element);
+            if (sources) (*sources)[4].push_back(lightRenderer);
         } else if (light->GetType() == Light::Type::Rect) {
             RectLightElement element;
             element.enabled = light->IsActive() ? 1u : 0u;
@@ -706,6 +728,7 @@ inline void CollectLightsForTarget(SceneRenderer *sceneRenderer, IRenderTarget *
             element.decay = light->GetDecay();
             element.shadowMapIndex = findShadowIndex(lightRenderer);
             rectLights.push_back(element);
+            if (sources) (*sources)[5].push_back(lightRenderer);
         } else if (light->GetType() == Light::Type::Tube) {
             TubeLightElement element;
             element.enabled = light->IsActive() ? 1u : 0u;
@@ -721,6 +744,7 @@ inline void CollectLightsForTarget(SceneRenderer *sceneRenderer, IRenderTarget *
             element.decay = light->GetDecay();
             element.shadowMapIndex = findShadowIndex(lightRenderer);
             tubeLights.push_back(element);
+            if (sources) (*sources)[6].push_back(lightRenderer);
         } else if (light->GetType() == Light::Type::Box) {
             BoxLightElement element;
             element.enabled = light->IsActive() ? 1u : 0u;
@@ -737,6 +761,7 @@ inline void CollectLightsForTarget(SceneRenderer *sceneRenderer, IRenderTarget *
             element.decay = light->GetDecay();
             element.shadowMapIndex = findShadowIndex(lightRenderer);
             boxLights.push_back(element);
+            if (sources) (*sources)[7].push_back(lightRenderer);
         }
     }
 }

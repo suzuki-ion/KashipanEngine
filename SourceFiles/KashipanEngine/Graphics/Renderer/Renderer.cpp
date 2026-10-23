@@ -49,6 +49,7 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
     // GPUパーティクルも同様に描画リスト構築より先に実行する
     { Profiler::Scope scope("Render.Particles"); ProcessGpuParticles(sceneContext); }
 
+    frameLights_.clear();
     auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
     if (!sceneRenderer) {
         ComputeCommandProcessor::EndFrame(Passkey<Renderer>{});

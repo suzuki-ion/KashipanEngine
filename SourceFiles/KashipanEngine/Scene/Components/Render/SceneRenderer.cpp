@@ -346,11 +346,12 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
     std::vector<SortableEntry> &sortableEntries,
     std::unordered_map<const IRenderTarget *, EmptyObject *> &targetOwners,
     bool onlyCustomTarget,
-    SceneRenderer::EditorDisplayMode editorDisplayMode) {
+    SceneRenderer::EditorDisplayMode editorDisplayMode,
+    std::vector<SceneRenderer::CachedRankedEntry> *cache = nullptr) {
     std::vector<IRenderTarget *> targets;
     for (auto *renderer : renderers) {
         if (!renderer) continue;
-        if (renderer->GetTargetObjectID().IsValid() != onlyCustomTarget) continue;
+        if (!cache && renderer->GetTargetObjectID().IsValid() != onlyCustomTarget) continue;
         if (!renderer->IsActive()) continue;
         if (renderer->GetMeshHandle() == ModelManager::kInvalidHandle) continue;
 
@@ -449,7 +450,8 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
                 sortable.pipelinePriority = entryPipelinePriority;
                 sortable.renderPriority = renderer->GetRenderPriority();
                 sortable.entry.allowInstancing = renderer->GetAllowInstancing();
-                sortableEntries.push_back(sortable);
+                if (cache) cache->push_back({sortable, renderer});
+                else sortableEntries.push_back(sortable);
 
                 // マテリアルにoutlineWidth（正の値）が設定されている場合、押し出しアウトライン用の
                 // 2つ目のDrawEntryを追加する（SpriteRendererは法線を持たないため対象外）
@@ -458,7 +460,8 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
                         auto outline = sortable;
                         outline.entry.pipelineName = kOutlinePipelineName;
                         outline.pipelinePriority = pipelineManager->GetPipeline(kOutlinePipelineName).RenderPriority();
-                        sortableEntries.push_back(outline);
+                        if (cache) cache->push_back({outline, renderer});
+                        else sortableEntries.push_back(outline);
                     }
                 }
             }
@@ -755,15 +758,64 @@ void SceneRenderer::UnregisterScreenBufferViewport(const ScreenBufferViewport *v
     if (it != screenBufferViewports_.end()) screenBufferViewports_.erase(it);
 }
 
+bool SceneRenderer::CachedLayoutChanged(PipelineManager *pipelineManager) const {
+    if (cachedStructureRevision_ != EmptyObject::GetStructureRevision()) return true;
+    if (cachedOutlinePipelineAvailable_ != pipelineManager->HasPipeline(kOutlinePipelineName)) return true;
+    const auto editorState = editorTarget_ ? std::pair{editorTarget_->IsRenderTargetAvailable(), editorTarget_->GetRenderOrderPriority()} : std::pair{false, std::int32_t(0)};
+    if (editorState != cachedEditorState_) return true;
+    auto *scene = GetOwnerSceneContext();
+    std::vector<IRenderTarget *> targets;
+    for (const auto &layout : cachedTargetLayouts_) {
+        CollectRenderTargets(scene ? scene->GetSceneObject(layout.owner) : nullptr, targets);
+        // Compare addresses before dereferencing: buffers/windows may have been recreated.
+        if (targets != layout.targets) return true;
+        for (size_t i = 0; i < targets.size(); ++i)
+            if (layout.states[i] != std::pair{targets[i]->IsRenderTargetAvailable(), targets[i]->GetRenderOrderPriority()} || layout.names[i] != targets[i]->GetRenderTargetName()) return true;
+    }
+    for (const auto &[name, priority] : cachedPipelinePriorities_)
+        if (!pipelineManager->HasPipeline(name) || pipelineManager->GetPipeline(name).RenderPriority() != priority) return true;
+    for (const auto &[material, outline] : cachedOutlines_)
+        if (MaterialWantsOutline(material) != outline) return true;
+    for (const auto &[mesh, version] : cachedModelVersions_)
+        if (ModelManager::GetModelDataVersion(mesh) != version) return true;
+    return false;
+}
+
 void SceneRenderer::RebuildCachedEntries(PipelineManager *pipelineManager) {
-    cachedEntries_.clear();
-    if (!pipelineManager || !editorTarget_) return;
-    CollectCacheableEntries(meshRenderers_, pipelineManager, editorTarget_, cachedEntries_, editorDisplayMode_);
-    CollectCacheableEntries(spriteRenderers_, pipelineManager, editorTarget_, cachedEntries_, editorDisplayMode_);
+    cachedEntries_.clear(); cachedTargetLayouts_.clear(); cachedTargetOwners_.clear();
+    cachedPipelinePriorities_.clear(); cachedOutlines_.clear();
+    cachedModelVersions_.clear();
+    if (!pipelineManager) return;
+    std::vector<SortableEntry> unused;
+    CollectSortableEntries(meshRenderers_, pipelineManager, editorTarget_, cameraRenderers_, unused, cachedTargetOwners_, true, editorDisplayMode_, &cachedEntries_);
+    CollectSortableEntries(spriteRenderers_, pipelineManager, editorTarget_, cameraRenderers_, unused, cachedTargetOwners_, true, editorDisplayMode_, &cachedEntries_);
     std::stable_sort(cachedEntries_.begin(), cachedEntries_.end(),
-        [](const CachedRankedEntry &a, const CachedRankedEntry &b) {
-            return CompareSortableEntry(a.ranked, b.ranked);
-        });
+        [](const CachedRankedEntry &a, const CachedRankedEntry &b) { return CompareSortableEntry(a.ranked, b.ranked); });
+    // Include targets of renderers with no currently available buffer/mesh as well.
+    std::unordered_set<EmptyObject *> owners;
+    auto remember = [&](auto *renderer) {
+        if (auto *owner = renderer->GetTargetObject(); owner && owners.insert(owner).second) {
+            TargetLayout layout; layout.owner = owner->GetObjectID(); CollectRenderTargets(owner, layout.targets);
+            for (auto *target : layout.targets) { layout.states.emplace_back(target->IsRenderTargetAvailable(), target->GetRenderOrderPriority()); layout.names.push_back(target->GetRenderTargetName()); }
+            cachedTargetLayouts_.push_back(std::move(layout));
+        }
+    };
+    for (auto *renderer : meshRenderers_) remember(renderer);
+    for (auto *renderer : spriteRenderers_) remember(renderer);
+    auto rememberPendingPipeline = [&](auto *renderer) {
+        const auto &name = renderer->GetPipelineName();
+        if (!name.empty() && !pipelineManager->HasPipeline(name)) cachedPipelinePriorities_[name] = 0;
+    };
+    for (auto *renderer : meshRenderers_) rememberPendingPipeline(renderer);
+    for (auto *renderer : spriteRenderers_) rememberPendingPipeline(renderer);
+    for (const auto &entry : cachedEntries_) {
+        cachedPipelinePriorities_[entry.ranked.entry.pipelineName] = entry.ranked.pipelinePriority;
+        cachedOutlines_[entry.ranked.entry.materialHandle] = MaterialWantsOutline(entry.ranked.entry.materialHandle);
+        cachedModelVersions_[entry.ranked.entry.meshHandle] = ModelManager::GetModelDataVersion(entry.ranked.entry.meshHandle);
+    }
+    cachedStructureRevision_ = EmptyObject::GetStructureRevision();
+    cachedOutlinePipelineAvailable_ = pipelineManager->HasPipeline(kOutlinePipelineName);
+    cachedEditorState_ = editorTarget_ ? std::pair{editorTarget_->IsRenderTargetAvailable(), editorTarget_->GetRenderOrderPriority()} : std::pair{false, std::int32_t(0)};
 }
 
 MaterialManager::MaterialHandle SceneRenderer::EnsureEditorSelectionOutlineMaterial() {
@@ -813,18 +865,15 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
     targetOwners_.clear();
     if (!pipelineManager) return sortedDrawList_;
 
-    if (drawListDirty_) {
+    if (drawListDirty_ || CachedLayoutChanged(pipelineManager)) {
         RebuildCachedEntries(pipelineManager);
         drawListDirty_ = false;
     }
 
-    // targetObjectID指定あり（カスタム描画先を持つ）Mesh/SpriteRenderer、およびSkinnedMeshRendererは、
-    // 描画先コンポーネントの変化・GPUスキニング有効性など動的な要素を都度確認する必要があるため、
-    // キャッシュ対象にせず毎フレーム収集する（targetObjectID未指定＝エディター用描画先のみに描画する
-    // 分はcachedEntries_側でまとめて扱うため、ここでは重複しない）
+    // Mesh/Sprite topology and sorting are cached, including explicit offscreen targets.
+    // Skinned meshes, text, selection outlines and previews remain frame-local.
+    targetOwners_ = cachedTargetOwners_;
     std::vector<SortableEntry> freshEntries;
-    CollectSortableEntries(meshRenderers_, pipelineManager, editorTarget_, cameraRenderers_, freshEntries, targetOwners_, /*onlyCustomTarget=*/true, editorDisplayMode_);
-    CollectSortableEntries(spriteRenderers_, pipelineManager, editorTarget_, cameraRenderers_, freshEntries, targetOwners_, /*onlyCustomTarget=*/true, editorDisplayMode_);
 
     // SkinnedMeshRendererはGPUスキニング結果バッファ(skinnedVertexBuffer)を追加で持つため、
     // MeshRenderer/SpriteRendererと形が異なりCollectSortableEntriesは使わず個別に収集する
@@ -1143,25 +1192,30 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
     // ワールド行列を更新する。並び順自体はRebuildCachedEntriesで確定済みのため、ハッシュマップ検索・
     // 文字列コピー・再ソートを毎フレーム行う必要がない
     std::vector<SortableEntry> cachedLive;
-    if (editorTarget_ && editorTarget_->IsRenderTargetAvailable()) {
-        cachedLive.reserve(cachedEntries_.size());
-        for (auto &cached : cachedEntries_) {
-            const bool active = std::visit([](auto *r) { return r && r->IsActive(); }, cached.source);
-            if (!active) continue;
-            SortableEntry ranked = cached.ranked;
-            ranked.entry.worldMatrix = std::visit([](auto *r) {
-                return Shake::ApplyRenderOnlyOffsets(r->GetOwnerObject(), r->GetWorldMatrix());
-            }, cached.source);
-            // Instance Colorは実行中にスクリプト等から変更され得るため、ワールド行列と同様に毎フレーム反映する
-            ranked.entry.instanceColor = std::visit([](auto *r) { return GetInstanceColorFor(r); }, cached.source);
-            ranked.entry.instanceColorBlendMode = std::visit([](auto *r) { return GetInstanceColorBlendModeFor(r); }, cached.source);
-            ranked.entry.instanceUvTranslate = std::visit([](auto *r) { return GetInstanceUvTranslateFor(r); }, cached.source);
-            ranked.entry.instanceUvRotation = std::visit([](auto *r) { return GetInstanceUvRotationFor(r); }, cached.source);
-            ranked.entry.instanceUvScale = std::visit([](auto *r) { return GetInstanceUvScaleFor(r); }, cached.source);
-            ranked.entry.instanceUvPivot = std::visit([](auto *r) { return GetInstanceUvPivotFor(r); }, cached.source);
-            ranked.entry.instanceUvCombineMode = std::visit([](auto *r) { return GetInstanceUvCombineModeFor(r); }, cached.source);
-            cachedLive.push_back(std::move(ranked));
-        }
+    cachedLive.reserve(cachedEntries_.size());
+    for (auto &cached : cachedEntries_) {
+        const bool active = std::visit([](auto *r) { return r && r->IsActive(); }, cached.source);
+        if (!active || !cached.ranked.entry.target->IsRenderTargetAvailable()) continue;
+        SortableEntry ranked = cached.ranked;
+        std::visit([&](auto *r) {
+            ranked.entry.worldMatrix = Shake::ApplyRenderOnlyOffsets(r->GetOwnerObject(), r->GetWorldMatrix());
+            using T = std::remove_pointer_t<decltype(r)>;
+            if constexpr (std::is_same_v<T, SpriteRenderer>) {
+                if (r->GetPixelSnapping()) {
+                    const bool snapped = ranked.entry.target != editorTarget_ && ApplyCameraRelativePixelSnapping(
+                        ranked.entry.worldMatrix, cameraRenderers_, ranked.entry.target, ranked.entry.pipelineName, r->GetPixelSnapOutsetPixels());
+                    if (!snapped) { ranked.entry.worldMatrix.m[3][0] = std::floor(ranked.entry.worldMatrix.m[3][0]); ranked.entry.worldMatrix.m[3][1] = std::floor(ranked.entry.worldMatrix.m[3][1]); }
+                }
+            }
+            ranked.entry.instanceColor = GetInstanceColorFor(r);
+            ranked.entry.instanceColorBlendMode = GetInstanceColorBlendModeFor(r);
+            ranked.entry.instanceUvTranslate = GetInstanceUvTranslateFor(r);
+            ranked.entry.instanceUvRotation = GetInstanceUvRotationFor(r);
+            ranked.entry.instanceUvScale = GetInstanceUvScaleFor(r);
+            ranked.entry.instanceUvPivot = GetInstanceUvPivotFor(r);
+            ranked.entry.instanceUvCombineMode = GetInstanceUvCombineModeFor(r);
+        }, cached.source);
+        cachedLive.push_back(std::move(ranked));
     }
 
     // キャッシュ済み（ソート済み）分と毎フレーム収集した分をマージする（両方ソート済みなのでO(n)）

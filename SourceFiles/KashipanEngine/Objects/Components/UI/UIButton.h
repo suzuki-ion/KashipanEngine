@@ -281,8 +281,29 @@ private:
 
         // 1. Windowクライアント座標(px) → NDC（Yは画面下が-1になるよう反転）
         const POINT mousePos = input->GetMouse().GetPos(window);
-        const float ndcX = (static_cast<float>(mousePos.x) / clientWidth) * 2.0f - 1.0f;
-        const float ndcY = 1.0f - (static_cast<float>(mousePos.y) / clientHeight) * 2.0f;
+        float normalizedX = static_cast<float>(mousePos.x) / clientWidth;
+        float normalizedY = static_cast<float>(mousePos.y) / clientHeight;
+        // オフスクリーン上のUIは、表示用Viewportの余白を除いた座標で判定する。
+        // 実ウィンドウの比率をそのまま使うとLetterbox時にボタン・スライダーがずれる。
+        if (auto *surface = targetObj ? targetObj->GetComponent<ScreenBufferObject>() : nullptr) {
+            auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
+            ScreenBuffer *buffer = surface->GetScreenBuffer();
+            bool mapped = false;
+            if (sceneRenderer && buffer && buffer->GetWidth() && buffer->GetHeight()) {
+                for (auto *viewport : sceneRenderer->GetScreenBufferViewports()) {
+                    if (!viewport || viewport->GetSourceObjectID() != targetObj->GetObjectID()) continue;
+                    Vector2 pixel;
+                    if (!viewport->TryGetOffscreenMousePosition(pixel)) continue;
+                    normalizedX = pixel.x / static_cast<float>(buffer->GetWidth());
+                    normalizedY = pixel.y / static_cast<float>(buffer->GetHeight());
+                    mapped = true;
+                    break;
+                }
+            }
+            if (!mapped) return false;
+        }
+        const float ndcX = normalizedX * 2.0f - 1.0f;
+        const float ndcY = 1.0f - normalizedY * 2.0f;
 
         // 2. NDC → ワールド座標（表示カメラのビュー射影行列の逆行列）
         Matrix4x4 projection;

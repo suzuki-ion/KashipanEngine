@@ -20,14 +20,26 @@ ComponentRef IObjectComponent::GetComponentRef() const {
 }
 
 bool IObjectComponent::IsActive() const {
-    bool ownerActive = objectContext_ ? objectContext_->GetOwner()->IsActive() : true;
-    return isActive_ && ownerActive;
+    return isActive_ && (!objectContext_ || objectContext_->GetOwner()->IsActive());
+}
+
+void IObjectComponent::SetUpdatePriority(int priority) {
+    if (updatePriority_ == priority) return;
+    updatePriority_ = priority;
+    if (objectContext_) objectContext_->GetOwner()->InvalidateUpdateList(Passkey<IObjectComponent>{});
+}
+
+void IObjectComponent::NotifyUpdateListChanged() {
+    if (objectContext_) objectContext_->GetOwner()->InvalidateUpdateList(Passkey<IObjectComponent>{});
+    EmptyObject::InvalidateActiveStateCache(Passkey<IObjectComponent>{});
 }
 
 void IObjectComponent::SetActive(bool active) {
     if (isActive_ == active) return;
     isActive_ = active;
+    EmptyObject::InvalidateActiveStateCache(Passkey<IObjectComponent>{});
     if (objectContext_) {
+        objectContext_->GetOwner()->InvalidateUpdateList(Passkey<IObjectComponent>{});
         if (IsActive()) {
             Initialize();
         } else {

@@ -5,6 +5,7 @@
 #include "Scene/SceneContext.h"
 
 #include <unordered_set>
+#include <array>
 
 namespace KashipanEngine {
 
@@ -16,6 +17,7 @@ EmptyObject::EmptyObject(SceneContext *ownerSceneContext, const std::string &nam
 }
 
 EmptyObject::~EmptyObject() {
+    InvalidateActiveStateCache();
     ClearComponents();
 }
 
@@ -85,6 +87,8 @@ size_t EmptyObject::HasComponent(const IObjectComponent *component) const {
 }
 
 IObjectComponent *EmptyObject::RegisterPlacedComponent(IObjectComponent *placed, size_t typeIndex) {
+    updateListDirty_ = true;
+    InvalidateActiveStateCache();
     if (componentsFreeIndices_.size() > 0) {
         size_t freeIndex = componentsFreeIndices_.back();
         componentsFreeIndices_.pop_back();
@@ -155,7 +159,9 @@ bool EmptyObject::RemoveComponent(const IObjectComponent *component) {
     if (it == componentsIndexByPointer_.end()) return false;
     size_t index = it->second;
     if (index >= components_.size()) return false;
+    updateListDirty_ = true;
     IObjectComponent *placed = components_[index].first;
+    InvalidateActiveStateCache();
     placed->FinalizeInterface(Passkey<EmptyObject>());
     size_t typeIndex = placed->GetComponentTypeID();
     auto &indices = componentsIndexByType_[typeIndex];
@@ -182,6 +188,8 @@ void EmptyObject::ReleaseFinalizedComponents(Passkey<Scene>) {
 }
 
 void EmptyObject::ReleaseComponentsWithoutFinalize() {
+    updateListDirty_ = true;
+    InvalidateActiveStateCache();
     for (auto &compPair : components_) {
         if (!compPair.first) continue;
         if (ownerSceneContext_) {
@@ -199,15 +207,29 @@ void EmptyObject::ReleaseComponentsWithoutFinalize() {
 }
 
 bool EmptyObject::IsActive() const {
+    const auto revision = activeStateRevision_.load(std::memory_order_relaxed);
+    if (cachedActiveRevision_ == revision) return cachedEffectiveActive_;
+    // Parent assignment rejects cycles/depths above 256. Keep a bounded, allocation-free
+    // fallback for malformed legacy data and cache the whole path, not only this object.
+    std::array<const EmptyObject *, 258> path;
+    size_t count = 0;
     const EmptyObject *current = this;
-    std::unordered_set<const EmptyObject *> visited;
+    bool active = true;
     while (current) {
-        if (!visited.insert(current).second || !current->isActive_) return false;
+        if (current->cachedActiveRevision_ == revision) { active = current->cachedEffectiveActive_; break; }
+        if (count == path.size()) { active = false; break; }
+        path[count++] = current;
+        if (!current->isActive_) { active = false; break; }
         auto *transform = current->GetComponent<Transform>();
         // Transform::GetParentObject()はシーン内での生存確認済みポインタを返す。
         current = transform ? transform->GetParentObject() : nullptr;
     }
-    return true;
+    while (count) {
+        auto *object = path[--count];
+        object->cachedEffectiveActive_ = active;
+        object->cachedActiveRevision_ = revision;
+    }
+    return active;
 }
 
 void EmptyObject::SetActive(bool active) {
@@ -218,6 +240,7 @@ void EmptyObject::SetActive(bool active) {
     CollectDescendantsActiveState(descendantsBefore);
 
     isActive_ = active;
+    InvalidateActiveStateCache();
     if (IsActive()) {
         Initialize();
     } else {
@@ -304,6 +327,7 @@ bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
     name_ = json.value("name", "EmptyObject");
     SetTag(json.value("tag", std::string{}));
     isActive_ = json.value("isActive", true);
+    InvalidateActiveStateCache();
     isEditorOnly_ = json.value("editorOnly", false);
     isHiddenFromEditorTarget_ = json.value("hiddenFromEditorTarget", false);
     objectID_ = UUID128(json.value("objectID", ""));
@@ -355,8 +379,14 @@ bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
 
 void EmptyObject::Initialize() {
     // アクティブなコンポーネントを優先度順に初期化する
-    RegenerateUpdateComponentsList();
-    for (auto &compPair : updateComponents_) {
+    std::vector<UpdateComponentInfo> initializing;
+    for (const auto &[component, id] : components_) if (component && component->IsLocallyActive(Passkey<EmptyObject>{}))
+        initializing.push_back({id, component->GetUpdatePriority(), component});
+    std::sort(initializing.begin(), initializing.end(), [](const auto &a, const auto &b) {
+        return a.priority != b.priority ? a.priority < b.priority : a.addedID < b.addedID;
+    });
+    for (const auto &compPair : initializing) {
+        if (GetComponentByAddedID(compPair.addedID) != compPair.component) continue;
         if (compPair.component) {
             compPair.component->InitializeInterface(Passkey<EmptyObject>(), objectContext_.get(), ownerSceneContext_);
         }
@@ -391,8 +421,9 @@ void EmptyObject::Finalize() {
 }
 
 void EmptyObject::Update() {
-    RegenerateUpdateComponentsList();
-    for (const auto &info : updateComponents_) {
+    if (updateListDirty_ || HasAnyBatchProcessedObjectComponentType()) RegenerateUpdateComponentsList();
+    const auto snapshot = updateComponents_;
+    for (const auto &info : *snapshot) {
         // 先に更新されたコンポーネントが後続コンポーネントを削除する場合があるため、
         // 呼び出し直前に所有状態・追加時ID・アクティブ状態を再確認する。
         const auto it = componentsIndexByPointer_.find(info.component);
@@ -400,7 +431,7 @@ void EmptyObject::Update() {
         auto &[ownedComponent, addedID] = components_[it->second];
         if (!ownedComponent || addedID != info.addedID) continue;
         IObjectComponent *component = ownedComponent;
-        if (component && component->IsActive()) {
+        if (component) {
             Profiler::Scope componentScope("ObjectComponent." + component->GetComponentType());
             component->UpdateInterface(Passkey<EmptyObject>());
         }
@@ -408,24 +439,26 @@ void EmptyObject::Update() {
 }
 
 void EmptyObject::RegenerateUpdateComponentsList() {
-    updateComponents_.clear();
-    updateComponents_.reserve(components_.size());
+    auto updated = std::make_shared<std::vector<UpdateComponentInfo>>();
+    updated->reserve(components_.size());
     // バッチ処理対象の型が1つも登録されていなければ、型ごとのハッシュ検索そのものを省略する
     // （現時点ではどの型もマークされていないため、毎フレーム・全コンポーネントに対する
     //   無駄なハッシュ検索を避けるための早期リターン）
     const bool hasBatchProcessedTypes = HasAnyBatchProcessedObjectComponentType();
     for (const auto &comp : components_) {
-        if (!comp.first || !comp.first->IsActive()) continue;
+        if (!comp.first || !comp.first->IsLocallyActive(Passkey<EmptyObject>{}) || !comp.first->HasFrameUpdate(Passkey<EmptyObject>{})) continue;
         // バッチ処理対象としてマークされた型は、個別Updateの対象から除外する
         if (hasBatchProcessedTypes && IsObjectComponentTypeIDBatchProcessed(comp.first->GetComponentTypeID())) continue;
-        updateComponents_.push_back({ comp.second, comp.first->GetUpdatePriority(), comp.first });
+        updated->push_back({ comp.second, comp.first->GetUpdatePriority(), comp.first });
     }
     // 優先度->追加順の昇順でソート
-    std::sort(updateComponents_.begin(), updateComponents_.end(),
+    std::sort(updated->begin(), updated->end(),
         [](const UpdateComponentInfo &a, const UpdateComponentInfo &b) {
             if (a.priority != b.priority) return a.priority < b.priority;
             return a.addedID < b.addedID;
         });
+    updateComponents_ = std::move(updated);
+    updateListDirty_ = false;
 }
 
 } // namespace KashipanEngine

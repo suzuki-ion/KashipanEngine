@@ -488,6 +488,7 @@ bool Scene::DeleteObject(EmptyObject *obj) {
 
         RemoveObjectFromMaps(target);
         objects_.erase(targetIt);
+        EmptyObject::InvalidateActiveStateCache(Passkey<Scene>{});
         if (isProcessingObjectLifecycle_) {
             // 更新処理中（スクリプトが自分自身の所有オブジェクトを削除する場合など）は、
             // 実行中のコンポーネントを破棄しないよう安全なタイミングまで遅延する。

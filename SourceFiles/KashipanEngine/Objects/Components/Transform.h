@@ -36,6 +36,7 @@ public:
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す
     bool SetParentObject(EmptyObject *parent) {
         if (!parent) {
+            EmptyObject::InvalidateActiveStateCache(Passkey<Transform>{});
             parentObjectID_ = UUID128();
             isWorldMatrixCalculated_ = false;
             cachedParentVersion_ = 0;
@@ -58,6 +59,7 @@ public:
             p = parentTransform->GetParentObject();
         }
         parentObjectID_ = parent->GetObjectID();
+        EmptyObject::InvalidateActiveStateCache(Passkey<Transform>{});
         // 親が変わったのでキャッシュは無効
         isWorldMatrixCalculated_ = false;
         cachedParentVersion_ = 0;
@@ -68,6 +70,7 @@ public:
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す
     bool SetParentObject(const UUID128 &parentUUID) {
         if (!parentUUID.IsValid()) {
+            EmptyObject::InvalidateActiveStateCache(Passkey<Transform>{});
             parentObjectID_ = UUID128();
             isWorldMatrixCalculated_ = false;
             cachedParentVersion_ = 0;

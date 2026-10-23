@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <atomic>
 #include "Objects/IObjectComponent.h"
 #include "Objects/ComponentPool.h"
 #include "Math/Matrix4x4.h"
@@ -12,6 +13,7 @@ namespace KashipanEngine {
 class ObjectContext;
 class SceneContext;
 class Scene;
+class Transform;
 
 /// @brief 空オブジェクトクラス
 class EmptyObject final {
@@ -38,7 +40,7 @@ public:
     void ReleaseFinalizedComponents(Passkey<Scene>);
     void UpdateInterface(Passkey<Scene>) { Update(); }
 
-    void SetName(const std::string &name) { name_ = name; }
+    void SetName(const std::string &name) { if (name_ != name) { name_ = name; InvalidateActiveStateCache(); } }
     const std::string &GetName() const { return name_; }
 
     /// @brief タグを設定する（文字列からハッシュ化される。空文字で未設定に戻る）
@@ -251,11 +253,17 @@ public:
     void SetActive(bool active);
     /// @brief オブジェクトのアクティブ状態取得
     bool IsActive() const;
+    // Invalidate only for hierarchy/lifecycle changes, never for movement or color changes.
+    static void InvalidateActiveStateCache(Passkey<Transform>) { InvalidateActiveStateCache(); }
+    static void InvalidateActiveStateCache(Passkey<Scene>) { InvalidateActiveStateCache(); }
+    static void InvalidateActiveStateCache(Passkey<IObjectComponent>) { InvalidateActiveStateCache(); }
+    static std::uint64_t GetStructureRevision() { return activeStateRevision_.load(std::memory_order_relaxed); }
+    void InvalidateUpdateList(Passkey<IObjectComponent>) const { updateListDirty_ = true; }
 
     /// @brief EditorOnly（エディター専用）フラグを設定する
     /// @details EditorOnlyのオブジェクトはエディターのシーンビューにのみ描画され、
     ///          再生開始時・エディター無しビルドでのシーン読み込み時に（子孫ごと）削除される
-    void SetEditorOnly(bool editorOnly) { isEditorOnly_ = editorOnly; }
+    void SetEditorOnly(bool editorOnly) { if (isEditorOnly_ != editorOnly) { isEditorOnly_ = editorOnly; InvalidateActiveStateCache(); } }
     /// @brief EditorOnlyフラグを取得する（自身のフラグのみ。祖先は考慮しない）
     bool IsEditorOnly() const noexcept { return isEditorOnly_; }
     /// @brief 自身または祖先のいずれかがEditorOnlyかどうか（描画の除外判定用）
@@ -267,7 +275,7 @@ public:
     ///          （SceneRenderer::CollectSortableEntries参照）。デバッグ用の孤立プレビュー等、
     ///          カスタム描画先にのみ描画したく、Scene Viewには一切映り込ませたくないオブジェクトに使う。
     ///          JSONへは保存しない（実行時のみ使う一時的なフラグ）。既定はfalse＝従来通りの挙動
-    void SetHiddenFromEditorTarget(bool hidden) noexcept { isHiddenFromEditorTarget_ = hidden; }
+    void SetHiddenFromEditorTarget(bool hidden) noexcept { if (isHiddenFromEditorTarget_ != hidden) { isHiddenFromEditorTarget_ = hidden; InvalidateActiveStateCache(); } }
     /// @brief 編集用描画先への無条件描画から除外されているかを取得する
     bool IsHiddenFromEditorTarget() const noexcept { return isHiddenFromEditorTarget_; }
 
@@ -356,6 +364,7 @@ private:
     void ReleaseComponentsWithoutFinalize();
     void Update();
     void RegenerateUpdateComponentsList();
+    static void InvalidateActiveStateCache() { activeStateRevision_.fetch_add(1, std::memory_order_relaxed); }
     /// @brief シーン内から自身の子孫オブジェクトを探し、変更前の実効アクティブ状態を記録する（SetActive用）
     void CollectDescendantsActiveState(std::vector<std::pair<EmptyObject *, bool>> &out) const;
     /// @brief プールへ配置済みのコンポーネントを、このオブジェクトのローカルな管理台帳（空きスロット再利用含む）へ登録する
@@ -390,7 +399,8 @@ private:
         int priority;
         IObjectComponent *component;
     };
-    std::vector<UpdateComponentInfo> updateComponents_;
+    std::shared_ptr<const std::vector<UpdateComponentInfo>> updateComponents_ = std::make_shared<const std::vector<UpdateComponentInfo>>();
+    mutable bool updateListDirty_ = true;
 
     SceneContext *ownerSceneContext_ = nullptr;
     std::unique_ptr<ObjectContext> objectContext_;
@@ -400,6 +410,9 @@ private:
     bool isSaveEnabled_ = true;
 
     bool isActive_ = true;
+    static inline std::atomic<std::uint64_t> activeStateRevision_{1};
+    mutable std::uint64_t cachedActiveRevision_ = 0;
+    mutable bool cachedEffectiveActive_ = true;
     /// @brief EditorOnly（エディター専用）フラグ
     bool isEditorOnly_ = false;
     /// @brief エディター用描画先（Scene View等）への無条件描画から除外するか（非シリアライズ）

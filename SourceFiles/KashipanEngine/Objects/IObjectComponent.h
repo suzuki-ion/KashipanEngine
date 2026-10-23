@@ -88,7 +88,8 @@ public:
     /// @brief 更新優先度を取得
     int GetUpdatePriority() const { return updatePriority_; }
     /// @brief 更新優先度を設定
-    void SetUpdatePriority(int priority) { updatePriority_ = priority; }
+    void SetUpdatePriority(int priority);
+    bool HasFrameUpdate(Passkey<EmptyObject>) const noexcept { return hasFrameUpdate_; }
     /// @brief アクティブ状態を取得
     /// @details EmptyObject/ObjectContext の完全な型定義が必要なため、定義は IObjectComponent.cpp にある
     bool IsActive() const;
@@ -160,6 +161,7 @@ public:
         updatePriority_ = json.value("priority", 1);
         isActive_ = json.value("isActive", true);
         SetTag(json.value("tag", std::string{}));
+        NotifyUpdateListChanged();
         if (json.contains("customData")) {
             return LoadFromJson(json["customData"]);
         }
@@ -202,7 +204,7 @@ protected:
     IObjectComponent(const std::string &typeName, size_t maxCount, size_t componentTypeID)
         : kComponentType_(typeName), kMaxComponentCountPerObject_(maxCount), kComponentTypeID_(componentTypeID), updatePriority_(1) {}
 #define OBJECT_COMPONENT_CONSTRUCTOR(typeName, maxCount, initializeCode) \
-    typeName() : IObjectComponent(#typeName, maxCount, GetComponentTypeID<typeName>()) { REGISTER_COMPONENT_OBJECT(typeName); initializeCode }
+    typeName() : IObjectComponent(#typeName, maxCount, GetComponentTypeID<typeName>()) { hasFrameUpdate_ = !std::is_same_v<decltype(&typeName::Update), void (IObjectComponent::*)()>; REGISTER_COMPONENT_OBJECT(typeName); initializeCode }
 
     /// @brief 初期化処理
     virtual void Initialize() {}
@@ -262,6 +264,7 @@ protected:
 
 private:
     /// @brief コンポーネントの種類名
+    void NotifyUpdateListChanged();
     const std::string kComponentType_ = "IObjectComponent";
     /// @brief 1つのオブジェクトに登録可能な同じコンポーネントの最大数
     const size_t kMaxComponentCountPerObject_ = 0xFF;
@@ -277,6 +280,10 @@ private:
     int updatePriority_ = 1;
     /// @brief アクティブ状態（falseの場合はUpdateが呼ばれない）
     bool isActive_ = true;
+protected:
+    // Manual constructors conservatively keep updates; the standard constructor detects overrides.
+    bool hasFrameUpdate_ = true;
+private:
     /// @brief タグ（比較用ハッシュ）と表示・保存用のタグ文字列
     Tag tag_;
     std::string tagName_;

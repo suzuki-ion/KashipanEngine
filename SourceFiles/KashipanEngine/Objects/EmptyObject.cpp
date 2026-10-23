@@ -370,10 +370,22 @@ void EmptyObject::Initialize() {
 }
 
 void EmptyObject::Finalize() {
-    RegenerateUpdateComponentsList();
-    for (auto &compPair : updateComponents_) {
-        if (compPair.component) {
-            compPair.component->FinalizeInterface(Passkey<EmptyObject>());
+    // SetActive(false)後はIsActive()が所有オブジェクトの状態によって全件falseになる。
+    // 更新用リストを流用せず、ローカルに有効なコンポーネントの終了処理を実行する。
+    // 終了処理中の兄弟コンポーネントの削除や再入にも備え、一覧をローカルに保持する。
+    std::vector<UpdateComponentInfo> finalizing;
+    finalizing.reserve(components_.size());
+    for (const auto &[component, addedID] : components_) {
+        if (component && component->IsLocallyActive(Passkey<EmptyObject>())) {
+            finalizing.push_back({ addedID, component->GetUpdatePriority(), component });
+        }
+    }
+    std::sort(finalizing.begin(), finalizing.end(), [](const auto &a, const auto &b) {
+        return a.priority != b.priority ? a.priority < b.priority : a.addedID < b.addedID;
+    });
+    for (const auto &info : finalizing) {
+        if (GetComponentByAddedID(info.addedID) == info.component) {
+            info.component->FinalizeInterface(Passkey<EmptyObject>());
         }
     }
 }

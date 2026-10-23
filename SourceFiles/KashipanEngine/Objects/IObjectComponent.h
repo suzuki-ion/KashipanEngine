@@ -92,6 +92,9 @@ public:
     /// @brief アクティブ状態を取得
     /// @details EmptyObject/ObjectContext の完全な型定義が必要なため、定義は IObjectComponent.cpp にある
     bool IsActive() const;
+    /// @brief 所有オブジェクトの状態に左右されない、このコンポーネント自身の有効フラグ。
+    /// @details オブジェクトを無効化した後の終了処理で使用する。
+    bool IsLocallyActive(Passkey<EmptyObject>) const noexcept { return isActive_; }
     /// @brief アクティブ状態を設定
     /// @details オブジェクトへ登録済みの場合、有効化時にInitialize、無効化時にFinalizeが走る。
     ///          定義は EmptyObject/ObjectContext の完全な型定義が必要なため IObjectComponent.cpp にある

@@ -355,8 +355,26 @@ private:
 
         // 1. Windowクライアント座標(px) → NDC（Yは画面下が-1になるよう反転）
         const POINT mousePos = input->GetMouse().GetPos(window);
-        const float ndcX = (static_cast<float>(mousePos.x) / clientWidth) * 2.0f - 1.0f;
-        const float ndcY = 1.0f - (static_cast<float>(mousePos.y) / clientHeight) * 2.0f;
+        float ndcX = (static_cast<float>(mousePos.x) / clientWidth) * 2.0f - 1.0f;
+        float ndcY = 1.0f - (static_cast<float>(mousePos.y) / clientHeight) * 2.0f;
+        // 画面外描画の画像は、レターボックスや埋め込みパネルなどでウィンドウの一部だけを
+        // 占める場合がある。クライアント領域全体ではなく、実際の表示矩形を使用する。
+        if (auto *screen = targetObj->GetComponent<ScreenBufferObject>()) {
+            auto *renderer = sceneContext->GetComponent<SceneRenderer>();
+            auto *buffer = screen->GetScreenBuffer();
+            if (!renderer || !buffer) return false;
+            bool mapped = false;
+            for (auto *viewport : renderer->GetScreenBufferViewports()) {
+                if (!viewport || viewport->GetSourceObjectID() != targetObj->GetObjectID()) continue;
+                Vector2 pixel;
+                if (!viewport->TryGetOffscreenMousePosition(pixel)) continue;
+                ndcX = pixel.x / static_cast<float>(buffer->GetWidth()) * 2.0f - 1.0f;
+                ndcY = 1.0f - pixel.y / static_cast<float>(buffer->GetHeight()) * 2.0f;
+                mapped = true;
+                break;
+            }
+            if (!mapped) return false;
+        }
 
         // 2. NDC（近平面z=0/遠平面z=1）→ ワールド空間のレイ（表示カメラの逆ビュー射影行列）
         Matrix4x4 projection;

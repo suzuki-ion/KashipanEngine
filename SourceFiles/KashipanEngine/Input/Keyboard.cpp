@@ -1,26 +1,14 @@
 #include "Input/Keyboard.h"
 #include "Input/EditorTestInput.h"
-#include "Debug/StartupTiming.h"
-
-#include <GameInput.h>
-
-#include <cassert>
-#include <cstdint>
-#include <vector>
-
-#pragma comment(lib, "gameinput.lib")
-#pragma comment(lib, "delayimp.lib")
 
 namespace KashipanEngine {
 namespace {
-IGameInput* sGameInput = nullptr;
-
 Key FromVirtualKey(std::uint8_t vk) noexcept {
-    // Letters
+    // 英字キー
     if (vk >= 'A' && vk <= 'Z') {
         return static_cast<Key>(static_cast<std::uint16_t>(Key::A) + static_cast<std::uint16_t>(vk - 'A'));
     }
-    // Digits
+    // 数字キー
     if (vk >= '0' && vk <= '9') {
         return static_cast<Key>(static_cast<std::uint16_t>(Key::D0) + static_cast<std::uint16_t>(vk - '0'));
     }
@@ -31,7 +19,7 @@ Key FromVirtualKey(std::uint8_t vk) noexcept {
         case VK_UP: return Key::Up;
         case VK_DOWN: return Key::Down;
 
-        // Left/Right specific modifiers
+        // 左右を区別する修飾キー
         case VK_LSHIFT: return Key::LeftShift;
         case VK_RSHIFT: return Key::RightShift;
         case VK_LCONTROL: return Key::LeftControl;
@@ -39,7 +27,7 @@ Key FromVirtualKey(std::uint8_t vk) noexcept {
         case VK_LMENU: return Key::LeftAlt;
         case VK_RMENU: return Key::RightAlt;
 
-        // Generic modifier fallbacks
+        // 左右を区別しない修飾キーの代替処理
         case VK_SHIFT: return Key::Shift;
         case VK_CONTROL: return Key::Control;
         case VK_MENU: return Key::Alt;
@@ -75,19 +63,6 @@ Keyboard::~Keyboard() {
 }
 
 void Keyboard::Initialize() {
-    StartupTiming::Sections timing("Input.Keyboard.");
-    if (!sGameInput) {
-        // GameInput Runtimeが未導入でもexe自体は起動できるよう、呼び出し前に確認する。
-        // 利用できない場合はUpdate()でWin32入力へフォールバックする。
-        const bool runtimeAvailable = GetModuleHandleW(L"GameInput.dll") || LoadLibraryW(L"GameInput.dll");
-        timing.End("RuntimeDLL");
-        if (runtimeAvailable) {
-            const HRESULT hr = GameInputCreate(&sGameInput);
-            timing.End("GameInputCreate");
-            if (FAILED(hr)) sGameInput = nullptr;
-        }
-    }
-
     current.fill(0);
     previous.fill(0);
     rawDownCount_ = 0;
@@ -118,64 +93,18 @@ void Keyboard::Update() {
         return;
     }
 
-    if (!sGameInput) {
-        for (int virtualKey = 0; virtualKey < 256; ++virtualKey) {
-            if ((GetAsyncKeyState(virtualKey) & 0x8000) == 0) continue;
-            // 0x01～0x06はマウスボタンの仮想キーのため、キーボード入力としては数えない
-            if (virtualKey >= 0x08) ++rawDownCount_;
-            const Key key = FromVirtualKey(static_cast<std::uint8_t>(virtualKey));
-            if (key == Key::Unknown) continue;
-            current[ToIndex_(key)] = 0x80;
-        }
-        current[ToIndex_(Key::Shift)] =
-            (current[ToIndex_(Key::LeftShift)] || current[ToIndex_(Key::RightShift)]) ? 0x80 : current[ToIndex_(Key::Shift)];
-        current[ToIndex_(Key::Control)] =
-            (current[ToIndex_(Key::LeftControl)] || current[ToIndex_(Key::RightControl)]) ? 0x80 : current[ToIndex_(Key::Control)];
-        current[ToIndex_(Key::Alt)] =
-            (current[ToIndex_(Key::LeftAlt)] || current[ToIndex_(Key::RightAlt)]) ? 0x80 : current[ToIndex_(Key::Alt)];
-        return;
+    // GameInputの最新レポートは個別デバイスの状態。複合デバイスなどの別レポートで
+    // 保持中のキーが消えないよう、Windows全体の現在の押下状態を使う。
+    for (int virtualKey = VK_BACK; virtualKey < 256; ++virtualKey) {
+        if ((GetAsyncKeyState(virtualKey) & 0x8000) == 0) continue;
+        ++rawDownCount_;
+        const Key key = FromVirtualKey(static_cast<std::uint8_t>(virtualKey));
+        if (key == Key::Unknown) continue;
+        current[ToIndex_(key)] = 0x80;
     }
-
-    IGameInputReading* reading = nullptr;
-    const HRESULT hr = sGameInput->GetCurrentReading(GameInputKindKeyboard, nullptr, &reading);
-    if (FAILED(hr) || !reading) {
-        return;
-    }
-
-    const std::uint32_t keyCount = reading->GetKeyCount();
-    rawDownCount_ = keyCount;
-    if (keyCount > 0) {
-        std::vector<GameInputKeyState> keys;
-        keys.resize(keyCount);
-
-        if (SUCCEEDED(reading->GetKeyState(keyCount, keys.data()))) {
-            for (const auto& s : keys) {
-                const Key key = FromVirtualKey(s.virtualKey);
-                if (key == Key::Unknown) continue;
-                current[ToIndex_(key)] = 0x80;
-
-                // Also set generic modifier flags when specific modifier detected
-                switch (key) {
-                    case Key::LeftShift:
-                    case Key::RightShift:
-                        current[ToIndex_(Key::Shift)] = 0x80;
-                        break;
-                    case Key::LeftControl:
-                    case Key::RightControl:
-                        current[ToIndex_(Key::Control)] = 0x80;
-                        break;
-                    case Key::LeftAlt:
-                    case Key::RightAlt:
-                        current[ToIndex_(Key::Alt)] = 0x80;
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-    }
-
-    reading->Release();
+    current[ToIndex_(Key::Shift)] |= current[ToIndex_(Key::LeftShift)] | current[ToIndex_(Key::RightShift)];
+    current[ToIndex_(Key::Control)] |= current[ToIndex_(Key::LeftControl)] | current[ToIndex_(Key::RightControl)];
+    current[ToIndex_(Key::Alt)] |= current[ToIndex_(Key::LeftAlt)] | current[ToIndex_(Key::RightAlt)];
 }
 
 bool Keyboard::IsDown(Key key) const {

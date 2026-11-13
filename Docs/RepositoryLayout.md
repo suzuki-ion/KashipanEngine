@@ -30,8 +30,28 @@ KashipanEngineのソリューションエクスプローラーでは、「すべ
 （`SourceFiles/`、`EngineData/`、`Externals/`、`EngineTools/`、`Build/` など）に合わせています。
 プロジェクトファイルは `Build/` 内にあり、ソース等はその外側にあるため、
 「すべてのファイルを表示」に切り替えた場合は、それらがプロジェクト直下に並ぶ表示になります。
-ファイルをプロジェクトに追加・移動した際は、`python EngineTools/SyncVisualStudioFilters.py` で
-フィルターを再同期できます。`--check` を付けると、書き換えずに同期状態を確認します。
+ファイルをプロジェクトに追加・移動した際は、
+`powershell -NoProfile -ExecutionPolicy Bypass -File EngineTools/SyncVisualStudioFilters.ps1` で
+フィルターを再同期できます。`-Check` を付けると、書き換えずに同期状態を確認します。
+
+KashipanEngineのDebug/Development/Releaseでは、ビルド前イベントの先頭でも同じ同期処理を実行します。
+Windows標準のWindows PowerShell 5.1で動作し、Pythonは不要です。同期失敗時はビルドを停止します。
+同期済みの場合は `.vcxproj.filters` を書き換えません。ビルド不要と判定されて
+ビルド前イベントが省略された場合は、外部ツールから手動で同期してください。
+
+Visual Studioの「ツール → 外部ツール」には、次の内容で登録できます（PCごとの設定）。
+
+| 項目 | 設定 |
+| --- | --- |
+| タイトル | `KashipanEngine フィルター同期` |
+| コマンド | `C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`（Windowsのインストール先に合わせる） |
+| 引数 | `-NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)..\EngineTools\SyncVisualStudioFilters.ps1"` |
+| 初期ディレクトリ | `$(SolutionDir)..` |
+| 出力ウィンドウを使用 | オン |
+
+`Build/KashipanEngine.sln` を開いた状態で、このメニューを実行します。
+対象はプロジェクトに登録済みのファイルです。ディスク上の未登録ファイルをビルド対象へ追加する処理は行いません。
+更新後の階層が表示に反映されない場合は、プロジェクトを再読み込みしてください。
 
 Debug/Developmentのビルド後処理は、exeの隣の `EngineRoot.txt` にリポジトリルートを記録します。
 `ProjectPaths::EngineRoot()` はその位置、`InEngineData()` はその下の `EngineData/` を基準にします。

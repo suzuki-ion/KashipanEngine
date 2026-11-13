@@ -94,7 +94,9 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PreBuildEvent>
-      <Command>powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTools\DownloadAssimpLibs.ps1" -ProjectDir "$(RepositoryRoot)." -Configuration "$(Configuration)"
+      <Command>powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTools\SyncVisualStudioFilters.ps1"
+if errorlevel 1 exit /b %errorlevel%
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTools\DownloadAssimpLibs.ps1" -ProjectDir "$(RepositoryRoot)." -Configuration "$(Configuration)"
 powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTools\DownloadReactPhysics3DLibs.ps1" -ProjectDir "$(RepositoryRoot)." -Configuration "$(Configuration)"</Command>
     </PreBuildEvent>
     <ClCompile>
@@ -136,7 +138,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTool
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <PreBuildEvent>
-      <Command>powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTools\DownloadAssimpLibs.ps1" -ProjectDir "$(RepositoryRoot)." -Configuration "$(Configuration)"
+      <Command>powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTools\SyncVisualStudioFilters.ps1"
+if errorlevel 1 exit /b %errorlevel%
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTools\DownloadAssimpLibs.ps1" -ProjectDir "$(RepositoryRoot)." -Configuration "$(Configuration)"
 powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTools\DownloadReactPhysics3DLibs.ps1" -ProjectDir "$(RepositoryRoot)." -Configuration "$(Configuration)"</Command>
     </PreBuildEvent>
     <ClCompile>
@@ -183,7 +187,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTool
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'">
     <PreBuildEvent>
-      <Command>powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTools\DownloadAssimpLibs.ps1" -ProjectDir "$(RepositoryRoot)." -Configuration "$(Configuration)"
+      <Command>powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTools\SyncVisualStudioFilters.ps1"
+if errorlevel 1 exit /b %errorlevel%
+powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTools\DownloadAssimpLibs.ps1" -ProjectDir "$(RepositoryRoot)." -Configuration "$(Configuration)"
 powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTools\DownloadReactPhysics3DLibs.ps1" -ProjectDir "$(RepositoryRoot)." -Configuration "$(Configuration)"</Command>
     </PreBuildEvent>
     <ClCompile>

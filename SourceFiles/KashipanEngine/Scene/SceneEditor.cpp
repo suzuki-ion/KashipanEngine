@@ -37,9 +37,10 @@
 #include "Scene/Editor/PrefabSyncUtility.h"
 #include "Scene/Editor/SceneComponentInspector.h"
 #include "Scene/Editor/SceneEditorCommands.h"
+#include "Scene/Editor/LoadingAnimationEditor.h"
 #include "Scene/Editor/SceneEditorView.h"
 #include "Scene/Editor/SceneListEditor.h"
-#include "Scene/Editor/SceneLoder.h"
+#include "Scene/Editor/SceneLoader.h"
 #include "Scene/Editor/SceneObjectHierarchy.h"
 #include "Scene/Editor/SceneObjectInspector.h"
 #include "Scene/Editor/SceneSaver.h"
@@ -179,7 +180,7 @@ SceneEditor::SceneEditor(Passkey<Scene>, SceneEditorContext *context) {
     wasEditorApplicationActive_ = IsEditorApplicationActive();
 }
 
-SceneEditor::~SceneEditor() = default;
+SceneEditor::~SceneEditor() { LoadingAnimationEditor::Close(); }
 
 JSON SceneEditor::GetEditableSceneJSON() const {
     auto state = context_->IsPlaying() ? context_->GetEditModeSnapshot() : context_->SaveSceneToJSON();
@@ -647,7 +648,7 @@ void SceneEditor::ShowImGui() {
     objectHierarchy_->ValidateCachedObjects();
     shortTextBehaviorEditor_.Show(context_, commands_.get(),
         shortTextSelection.size() == 1 ? *shortTextSelection.begin() : nullptr);
-    // Starting the preview may remove EditorOnly objects, including the selection.
+    // プレビュー開始によって、選択対象を含むEditorOnlyオブジェクトが削除される場合がある。
     objectHierarchy_->ValidateCachedObjects();
 
     if (isShowHierarchy_) objectHierarchy_->ShowImGui();
@@ -661,6 +662,7 @@ void SceneEditor::ShowImGui() {
     if (isShowPreferences_) preferences_->ShowImGui();
     if (isShowProjectWindow_) projectWindow_->ShowImGui();
     if (isShowTranslationEditor_) translationEditor_->ShowImGui();
+    LoadingAnimationEditor::Show(context_, commands_.get());
 
     //--------- デバッグ用ウィンドウ（旧ImGuiManagerから移設） ---------//
     if (isShowLoadedTexturesWindow_) TextureManager::ShowImGuiLoadedTexturesWindow();
@@ -797,6 +799,7 @@ void SceneEditor::ShowMainWindow() {
         // エディターツールスクリプトの[MenuItem("MenuBar/...")]で追加された項目
         if (ImGui::BeginMenu("試験機能")) {
             ImGui::MenuItem("短文からの挙動作成", nullptr, &shortTextBehaviorEditor_.open);
+            LoadingAnimationEditor::Menu();
             ImGui::MenuItem("AIによる開発支援", nullptr, &developmentAssistantEditor_.open);
             ImGui::EndMenu();
         }

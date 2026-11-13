@@ -4,6 +4,7 @@
 #include "Objects/Collision/CollisionAlgorithms3D.h"
 #include "Objects/Components/Animator.h"
 #include "Objects/Components/KeyFrameAnimator.h"
+#include "Objects/Components/LoadingAnimationSection.h"
 #include "Objects/Components/InputCommandApplier.h"
 #include "Objects/Components/Comment.h"
 #include "Objects/Components/PrefabInstanceComponent.h"

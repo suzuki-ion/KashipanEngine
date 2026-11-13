@@ -1,5 +1,6 @@
 #include <cassert>
 #include "Debug/StartupTiming.h"
+#include "Splash/SplashScreen.h"
 #include <wrl.h>
 #include <unordered_map>
 #include <string>
@@ -189,6 +190,7 @@ void PipelineManager::LoadPreset() {
         auto presetFiles = GetDirectoryDataByExtension(directoryData, { ".json", ".jsonc" }).files;
 
         for (const auto &file : presetFiles) {
+            SplashScreen::CheckCancellation();
             // example スキップ
             std::filesystem::path p = Utf8StringToPath(file);
             std::string fnameLower = toLower(PathToUtf8String(p.filename()));
@@ -292,6 +294,7 @@ void PipelineManager::LoadPipelines() {
     auto directoryData = GetDirectoryData(pipelineFolderPath_, true, true);
     auto pipelineFiles = GetDirectoryDataByExtension(directoryData, { ".json", ".jsonc" }).files;
     for (const auto &file : pipelineFiles) {
+        SplashScreen::CheckCancellation();
         // ファイル名が example の場合はスキップ
         std::filesystem::path p = Utf8StringToPath(file);
         std::string fnameLower = toLower(PathToUtf8String(p.filename()));

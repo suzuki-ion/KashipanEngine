@@ -697,7 +697,7 @@ void KeyFrameAnimator::ShowAnimationImGui(AnimationEntry &entry, const std::vect
 
     // 適用先バインディング
     ImGui::Separator();
-    ShowParameterBindingListImGui(entry.bindings, candidates);
+    ShowParameterBindingListImGui(entry.bindings, candidates, GetOwnerObjectContext(), this);
     ImGui::Separator();
 }
 
@@ -768,12 +768,14 @@ bool KeyFrameAnimator::LoadEntryFromJson(const JSON &json, AnimationEntry &out) 
             const auto missing = [&](const char *key) { return !bindingJson.contains(key); };
             if ((!missing("componentType") && !bindingJson["componentType"].is_string()) ||
                 (!missing("parameterName") && !bindingJson["parameterName"].is_string()) ||
+                (!missing("targetObjectID") && !bindingJson["targetObjectID"].is_string()) ||
                 (!missing("componentIndex") && !bindingJson["componentIndex"].is_number_integer()) ||
                 (!missing("channel") && !bindingJson["channel"].is_number_integer()) ||
                 (!missing("isScriptVariable") && !bindingJson["isScriptVariable"].is_boolean())) {
                 return false;
             }
             auto binding = LoadParameterBindingFromJson(bindingJson);
+            if (!binding.targetObjectID.empty() && !UUID128(binding.targetObjectID).IsValid()) return false;
             if (binding.componentIndex < 0 || binding.componentIndex > 255 || binding.channel < -1 || binding.channel > 3) return false;
             entry.bindings.push_back(std::move(binding));
         }

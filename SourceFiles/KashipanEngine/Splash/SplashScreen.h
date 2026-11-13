@@ -1,40 +1,48 @@
 #pragma once
 #include "Utilities/Passkeys.h"
+#include <exception>
+#include <string>
+#include <windows.h>
 
 namespace KashipanEngine {
+class GameEngine;
+class Window;
 
-/// @brief エンジン起動中に表示するスプラッシュ画面
-/// @details GameEngineの初期化（Window/DirectX12/各種マネージャ生成）はメインスレッドで
-///          同期的に行われるため、スプラッシュ画面自体は専用スレッドでWebView2を独立して
-///          動かすことで、初期化中も見た目が固まらないようにしている。
-///          表示中はLoggerの出力を購読し、流れるログとしてページへ転送する（Logger::BeginSplashLogCapture等）。
-///          DirectX12の初期化より前から表示できるよう、エンジン本体のWindow/WindowsAPIには
-///          依存しない生のWin32ウィンドウ + WebView2で実装している（KashipanHubのランチャー画面と同じ方式）。
+/// Release: Direct2D animation with an engine-thread HWND reused by the game.
+/// Development/Debug: independent WebView2 log window, closed after engine initialization.
 class SplashScreen {
 public:
-    /// @brief スプラッシュ画面の表示を開始する
-    /// @details ウィンドウの生成までは呼び出し元をブロックするが、
-    ///          WebView2の初期化・描画は専用スレッドで非同期に進む。
+    enum class RenderingBackend { None, Hardware, Software };
+    class Cancelled final : public std::exception {
+    public:
+        const char *what() const noexcept override { return "Startup cancelled by user"; }
+    };
     static void Show(PasskeyForGameEngineMain);
-
-    /// @brief スプラッシュ画面を閉じ、専用スレッドの終了を待つ（ブロッキング）
+    static void ConfigureProject(PasskeyForGameEngineMain, const std::string &root);
+    /// Startup scene prepared. Finish the current revolution, then fade before DX12 presentation.
+    static void NotifyReady(Passkey<GameEngine>);
+    static bool IsActive();
+    static RenderingBackend GetRenderingBackend();
+    /// Called only at safe initialization boundaries on the engine thread.
+    static void CheckCancellation();
+    /// Pump only startup messages, without throwing while parallel asset jobs still own buffers.
+    static void PumpMessages();
+    /// Cancel immediately and join (including failure/early-exit paths).
     static void Close(PasskeyForGameEngineMain);
-
+    /// Native window remains available even after animation/resource initialization fails.
+    static bool HasStartupWindow();
+    static HWND ClaimWindow(Passkey<Window>);
+    static void DetachWindow(Passkey<Window>, HWND hwnd);
+    static void AbandonWindow(Passkey<Window>, HWND hwnd);
+    static const wchar_t *WindowClassName();
+    static void Finish(Passkey<GameEngine>);
 private:
-    // 以下はすべて専用スレッド上でのみ呼ばれる内部処理。
-    // Logger::FetchNewSplashLogLines等がPasskey<SplashScreen>を要求し、
-    // それを構築できるのはこのクラスのメンバーだけのためメンバー関数にしている。
-
-    /// @brief 専用スレッドの本体（ウィンドウ生成〜メッセージループ）
+#if !defined(RELEASE_BUILD)
     static void ThreadMain();
-    /// @brief WebView2環境の生成を開始する（完了は非同期コールバックで通知される）
     static void CreateWebView(HWND hwnd);
-    /// @brief 新しく出力されたログ行をWebViewへ転送する
     static void FlushLogLinesToWebView();
-    /// @brief スプラッシュウィンドウのウィンドウプロシージャ
-    static LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wparam, LPARAM lparam);
-    /// @brief ページ側へフェードアウト演出の開始を通知する
     static void NotifyClosing();
+    static LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
+#endif
 };
-
 } // namespace KashipanEngine

@@ -987,6 +987,9 @@
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\GlobalSceneVariablesMenu.cpp">
       <Filter>SourceFiles\KashipanEngine\Scene\Editor</Filter>
     </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\LoadingAnimationEditor.cpp">
+      <Filter>SourceFiles\KashipanEngine\Scene\Editor</Filter>
+    </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\PrefabAssetManager.cpp">
       <Filter>SourceFiles\KashipanEngine\Scene\Editor</Filter>
     </ClCompile>
@@ -1020,7 +1023,7 @@
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneListEditor.cpp">
       <Filter>SourceFiles\KashipanEngine\Scene\Editor</Filter>
     </ClCompile>
-    <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneLoder.cpp">
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneLoader.cpp">
       <Filter>SourceFiles\KashipanEngine\Scene\Editor</Filter>
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneObjectHierarchy.cpp">
@@ -1067,6 +1070,15 @@
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\ScenePreparation.cpp">
       <Filter>SourceFiles\KashipanEngine\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Splash\DevelopmentSplashScreen.cpp">
+      <Filter>SourceFiles\KashipanEngine\Splash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Splash\LoadingAnimation.cpp">
+      <Filter>SourceFiles\KashipanEngine\Splash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Splash\LoadingAnimationRenderer.cpp">
+      <Filter>SourceFiles\KashipanEngine\Splash</Filter>
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Splash\SplashScreen.cpp">
       <Filter>SourceFiles\KashipanEngine\Splash</Filter>
@@ -2468,6 +2480,9 @@
     <ClInclude Include="..\SourceFiles\KashipanEngine\Objects\Components\KeyFrameAnimator.h">
       <Filter>SourceFiles\KashipanEngine\Objects\Components</Filter>
     </ClInclude>
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Objects\Components\LoadingAnimationSection.h">
+      <Filter>SourceFiles\KashipanEngine\Objects\Components</Filter>
+    </ClInclude>
     <ClInclude Include="..\SourceFiles\KashipanEngine\Objects\Components\MeshFilter.h">
       <Filter>SourceFiles\KashipanEngine\Objects\Components</Filter>
     </ClInclude>
@@ -2819,6 +2834,9 @@
     <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\GlobalSceneVariablesMenu.h">
       <Filter>SourceFiles\KashipanEngine\Scene\Editor</Filter>
     </ClInclude>
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\LoadingAnimationEditor.h">
+      <Filter>SourceFiles\KashipanEngine\Scene\Editor</Filter>
+    </ClInclude>
     <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\PrefabAssetManager.h">
       <Filter>SourceFiles\KashipanEngine\Scene\Editor</Filter>
     </ClInclude>
@@ -2855,7 +2873,7 @@
     <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneListEditor.h">
       <Filter>SourceFiles\KashipanEngine\Scene\Editor</Filter>
     </ClInclude>
-    <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneLoder.h">
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneLoader.h">
       <Filter>SourceFiles\KashipanEngine\Scene\Editor</Filter>
     </ClInclude>
     <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneObjectHierarchy.h">
@@ -2914,6 +2932,12 @@
     </ClInclude>
     <ClInclude Include="..\SourceFiles\KashipanEngine\SceneHeaders.h">
       <Filter>SourceFiles\KashipanEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Splash\LoadingAnimation.h">
+      <Filter>SourceFiles\KashipanEngine\Splash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Splash\SplashAnimation.h">
+      <Filter>SourceFiles\KashipanEngine\Splash</Filter>
     </ClInclude>
     <ClInclude Include="..\SourceFiles\KashipanEngine\Splash\SplashScreen.h">
       <Filter>SourceFiles\KashipanEngine\Splash</Filter>

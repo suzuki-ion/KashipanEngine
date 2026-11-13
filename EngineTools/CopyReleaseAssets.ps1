@@ -62,6 +62,17 @@ try {
     } else {
         $sourceAssets = Join-Path $projectsRoot "$projectName\Assets"
         $destAssets = Join-Path $TargetDir "Assets"
+        $sourceAnimation = Join-Path $projectsRoot "$projectName\StartupAnimation"
+        $destAnimation = Join-Path $TargetDir 'StartupAnimation'
+        if (Test-Path -LiteralPath $sourceAnimation -PathType Container) {
+            Invoke-MirrorCopy -Source $sourceAnimation -Destination $destAnimation -Label '起動アニメーション'
+        } elseif (Test-Path -LiteralPath $destAnimation -PathType Container) {
+            # Empty mirror clears stale optional data without a recursive, computed-path delete.
+            $emptyAnimation = Join-Path $TargetDir '.empty-startup-animation'
+            New-Item -ItemType Directory -Path $emptyAnimation -Force | Out-Null
+            Invoke-MirrorCopy -Source $emptyAnimation -Destination $destAnimation -Label '未指定の起動アニメーションをクリア'
+            Remove-Item -LiteralPath $emptyAnimation
+        }
 
         if (-not (Test-Path -LiteralPath $sourceAssets)) {
             Write-Warning "プロジェクトのAssetsフォルダが見つからないため、コピーをスキップします: $sourceAssets"
@@ -78,7 +89,7 @@ try {
         Invoke-MirrorCopy -Source $sourceLocales -Destination $destLocales -Label "エンジン共通の Locales"
     }
 
-    # 起動スプラッシュ画面（WebView2）のHTML/CSS/JSも、配布形態ではexeと同じフォルダへ同梱する必要がある
+    # 起動スプラッシュのロゴ画像も、配布形態ではexeと同じフォルダへ同梱する。
     $sourceSplashUI = Join-Path $ProjectDir "EngineData\UI\Splash"
     $destSplashUI = Join-Path $TargetDir "EngineData\UI\Splash"
 

@@ -1,7 +1,8 @@
-#include "Debug/ProfilerServer.h"
+﻿#include "Debug/ProfilerServer.h"
 #include "Assets/AssetFileIndex.h"
 #include "GameEngine.h"
 #include "Debug/StartupTiming.h"
+#include "Splash/SplashScreen.h"
 #include "Debug/SceneChangeTiming.h"
 #include "Assets/SharedModelImport.h"
 #include "EngineSettings.h"
@@ -71,6 +72,11 @@ void GameEngine::DrawProfilingImGui() {
 
 GameEngine::GameEngine(PasskeyForGameEngineMain) {
     StartupTiming::Sections startupSections("Engine.");
+    const auto finishStartupSection = [&startupSections](const char *name) {
+        startupSections.End(name);
+        SplashScreen::CheckCancellation();
+    };
+    SplashScreen::CheckCancellation();
     LogScope scope;
     LogSeparator();
     Log(Translation("engine.initialize.start"));
@@ -86,7 +92,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
         throw std::runtime_error("Failed to initialize COM library.");
     }
 
-    startupSections.End("COMAndSetup");
+    finishStartupSection("COMAndSetup");
 
     // ファイル一覧だけを先に作成し、Windows・描画初期化と重ねる。
     // ワーカーはルートのコピーとローカルデータだけを扱い、ログやManagerには触れない。
@@ -98,52 +104,52 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
             std::chrono::steady_clock::now() - started).count();
         return std::make_pair(std::move(files), elapsedMs);
     });
-    startupSections.End("AssetScanDispatch");
+    finishStartupSection("AssetScanDispatch");
 
     //--------- インスタンス生成 ---------//
 
     windowsAPI_ = std::make_unique<WindowsAPI>(Passkey<GameEngine>{});
-    startupSections.End("WindowsAPI");
+    finishStartupSection("WindowsAPI");
     directXCommon_ = std::make_unique<DirectXCommon>(Passkey<GameEngine>{});
-    startupSections.End("DirectX");
+    finishStartupSection("DirectX");
     ScreenBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     ShadowMapBuffer::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     Scene::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     ParticleSystemBase::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     ComputeCommandProcessor::Initialize(Passkey<GameEngine>{}, directXCommon_.get());
     graphicsEngine_ = std::make_unique<GraphicsEngine>(Passkey<GameEngine>{}, directXCommon_.get());
-    startupSections.End("GraphicsAndPipelines");
+    finishStartupSection("GraphicsAndPipelines");
     Scene::SetGraphicsEngine(Passkey<GameEngine>{}, graphicsEngine_.get());
 
     // 各Managerには物理パスのAssetsルートを渡す。Manager内部で扱うアセットパスは
     // このルートからの相対パスになるため、プロジェクトが変わっても値は変わらない
     // get()で完了待ちと所有権の受け渡しを行い、探索時の例外もここで伝播させる。
     auto [assetFiles, assetScanMs] = assetScan.get();
-    startupSections.End("AssetScanWait");
+    finishStartupSection("AssetScanWait");
     if (StartupTiming::IsActive()) {
         Log(std::format("[StartupTiming] Engine.AssetScan: {:.3f} ms ({:.3f} s)",
             assetScanMs, assetScanMs / 1000.0), LogSeverity::Info);
     }
     Log("[StartupAssets] scans=1, files=" + std::to_string(assetFiles.FileCount()) +
         ", directories=" + std::to_string(assetFiles.DirectoryCount()), LogSeverity::Info);
-    startupSections.End("AssetScanReporting");
+    finishStartupSection("AssetScanReporting");
     textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetFiles);
-    startupSections.End("Textures");
+    finishStartupSection("Textures");
     fontManager_ = std::make_unique<FontManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetFiles);
-    startupSections.End("Fonts");
+    finishStartupSection("Fonts");
     bitmapFontManager_ = std::make_unique<BitmapFontManager>(Passkey<GameEngine>{}, assetFiles);
-    startupSections.End("BitmapFonts");
+    finishStartupSection("BitmapFonts");
     samplerManager_ = std::make_unique<SamplerManager>(Passkey<GameEngine>{}, directXCommon_.get());
-    startupSections.End("Samplers");
+    finishStartupSection("Samplers");
     SharedModelImport::StartupSession sharedModelSession(ContentCache::Directory(ProjectPaths::ProjectRoot(), "Models"));
     modelManager_ = std::make_unique<ModelManager>(Passkey<GameEngine>{}, assetFiles);
-    startupSections.End("Models");
+    finishStartupSection("Models");
     skeletonManager_ = std::make_unique<SkeletonManager>(Passkey<GameEngine>{}, assetFiles);
-    startupSections.End("Skeletons");
+    finishStartupSection("Skeletons");
     audioManager_ = std::make_unique<AudioManager>(Passkey<GameEngine>{}, assetFiles);
-    startupSections.End("Audio");
+    finishStartupSection("Audio");
     animationManager_ = std::make_unique<AnimationManager>(Passkey<GameEngine>{}, assetFiles);
-    startupSections.End("Animations");
+    finishStartupSection("Animations");
     const auto [modelImportHits, modelImportMisses] = SharedModelImport::Statistics();
     Log("[StartupCache] Model imports: reused=" + std::to_string(modelImportHits) +
         ", unique=" + std::to_string(modelImportMisses), LogSeverity::Info);
@@ -152,24 +158,24 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
         ", parsed=" + std::to_string(modelCacheStats.parsed) + ", stored=" + std::to_string(modelCacheStats.stored), LogSeverity::Info);
     sharedModelSession.Close();
     materialManager_ = std::make_unique<MaterialManager>(Passkey<GameEngine>{}, assetFiles);
-    startupSections.End("Materials");
+    finishStartupSection("Materials");
     videoManager_ = std::make_unique<VideoManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetFiles);
-    startupSections.End("Video");
+    finishStartupSection("Video");
     gifManager_ = std::make_unique<GifManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetFiles);
-    startupSections.End("GIF");
+    finishStartupSection("GIF");
     input_ = std::make_unique<Input>(Passkey<GameEngine>{});
-    startupSections.End("Input");
+    finishStartupSection("Input");
     inputCommand_ = std::make_unique<InputCommand>(Passkey<GameEngine>{}, input_.get());
     inputCommand_->LoadFromJSON(InputCommand::kDefaultSaveFilePath);
-    startupSections.End("InputCommands");
+    finishStartupSection("InputCommands");
     sceneManager_ = std::make_unique<SceneManager>(Passkey<GameEngine>());
-    startupSections.End("SceneManager");
+    finishStartupSection("SceneManager");
     // シーンリスト定義ファイルが存在する場合は、記載されたシーンを自動登録する
     // （AppInitializeでのRegisterScene呼び出しが無くてもシーンを定義できるようにするため）
     sceneManager_->LoadSceneList();
     // グローバルシーン変数定義ファイルが存在する場合は、保存されている変数を読み込む
     sceneManager_->LoadGlobalSceneVariables();
-    startupSections.End("SceneListAndGlobalVariables");
+    finishStartupSection("SceneListAndGlobalVariables");
 
     context_.engine = this;
     context_.sceneManager = sceneManager_.get();
@@ -198,11 +204,11 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     Window::SetWindowsAPI({}, windowsAPI_.get());
     Window::SetDirectXCommon({}, directXCommon_.get());
 
-    startupSections.End("SceneAndWindowConfiguration");
+    finishStartupSection("SceneAndWindowConfiguration");
 
 #if defined(USE_IMGUI)
     imguiManager_ = std::make_unique<ImGuiManager>(Passkey<GameEngine>{}, windowsAPI_.get(), directXCommon_.get());
-    startupSections.End("EditorUI");
+    finishStartupSection("EditorUI");
 #endif
 
     //--------- ゲームループ終了条件 ---------//
@@ -216,7 +222,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     };
 
     AppInitialize(context_);
-    startupSections.End("AppInitialize");
+    finishStartupSection("AppInitialize");
 
     // AppInitializeでシーン切り替えが指定されなかった場合は、
     // シーンリスト定義ファイルのスタートアップシーンへ自動的に切り替える
@@ -236,7 +242,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     }
 
     LogSeparator();
-    startupSections.End("StartupSceneSelection");
+    finishStartupSection("StartupSceneSelection");
     Log(Translation("engine.initialize.end"));
     LogSeparator();
 }
@@ -321,12 +327,16 @@ void GameEngine::GameLoopUpdate() {
     if (audioManager_) { Profiler::Scope scope("Update.Audio"); audioManager_->Update(); }
     if (videoManager_) { Profiler::Scope scope("Update.Video"); videoManager_->Update(); }
 #if defined(USE_IMGUI)
-    { Profiler::Scope scope("Editor.BeginFrame"); imguiManager_->BeginFrame({}); }
+    if (!SplashScreen::HasStartupWindow()) {
+        Profiler::Scope scope("Editor.BeginFrame"); imguiManager_->BeginFrame({});
+    }
 #endif
     if (sceneManager_) {
         { Profiler::Scope scope("Update.Scene"); sceneManager_->Update(Passkey<GameEngine>{}); }
 #if defined(USE_IMGUI)
-        { Profiler::Scope scope("Editor.UI"); sceneManager_->ShowImGui(Passkey<GameEngine>{}); }
+        if (!SplashScreen::HasStartupWindow()) {
+            Profiler::Scope scope("Editor.UI"); sceneManager_->ShowImGui(Passkey<GameEngine>{});
+        }
 #endif
     }
 }
@@ -344,7 +354,7 @@ void GameEngine::GameLoopDraw() {
         graphicsEngine_->RenderFrame({}, sceneContext);
     }
 #if defined(USE_IMGUI)
-    if (imguiManager_) {
+    if (imguiManager_ && !SplashScreen::HasStartupWindow()) {
         Profiler::Scope scope("Editor.Render");
         DrawProfilingImGui();
         imguiManager_->Render({});
@@ -365,8 +375,12 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
     Log(profilerServer.Status(), LogSeverity::Info);
     static size_t windowCount = 0;
     bool startupSceneCommitted = false;
+#if defined(RELEASE_BUILD)
+    bool startupAnimationReady = false;
+#endif
 
     while (!gameLoopEndConditionFunction_()) {
+        SplashScreen::CheckCancellation();
 #if defined(USE_IMGUI)
         // この後のWindow::Update()で終了メッセージを処理すると、終了経路によっては
         // 同じフレーム中にメインウィンドウが取得不能になる可能性がある。
@@ -384,12 +398,43 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
 #endif
         Profiler::GetInstance().BeginFrame();
         StartupTiming::Sections firstFrameSections("FirstFrames.");
+#if defined(RELEASE_BUILD)
+        bool completedStartupHandoff = false;
+#endif
         GameLoopUpdate();
         firstFrameSections.End("Update");
+#if defined(RELEASE_BUILD)
+        // Keep every native startup window unpresented until the initial scene is constructed.
+        // No game swap chain is attached to the shared HWND while Direct2D owns its presentation.
+        if (!startupAnimationReady && (startupSceneCommitted ||
+            (sceneManager_ && sceneManager_->GetCurrentScene() && !sceneManager_->HasPendingSceneChange()))) {
+            StartupTiming::Milestone("Startup.ScenePrepared (engine entry -> scene ready for presentation)");
+            SplashScreen::NotifyReady({});
+            while (SplashScreen::IsActive() && !gameLoopEndConditionFunction_() && !sIsQuitRequested) {
+                Window::Update({});
+                SplashScreen::CheckCancellation();
+                Sleep(2);
+            }
+            SplashScreen::CheckCancellation();
+            if (gameLoopEndConditionFunction_() || sIsQuitRequested) break;
+            SplashScreen::Finish({});
+            Window::CompleteStartupHandoff({});
+            startupAnimationReady = true;
+            completedStartupHandoff = true;
+            ResetDeltaTime({});
+            firstFrameSections.End("SplashHandoffWait");
+
+        }
+#endif
         GameLoopDraw();
         firstFrameSections.End("DrawAndPresent");
-        // Scene changes are committed after drawing. Complete only on the
-        // following frame, which actually draws the initialized startup scene.
+#if defined(RELEASE_BUILD)
+        if (completedStartupHandoff) {
+            Window::RevealStartupWindows({});
+            ResetDeltaTime({}); // Also exclude initial GPU preparation/presentation from gameplay delta.
+        }
+#endif
+        // In Release, Startup.Total includes the animation handoff; ScenePrepared excludes it.
         if (startupSceneCommitted && StartupTiming::IsActive()) StartupTiming::Complete();
 
         {
@@ -403,7 +448,7 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
                 // シーン構築中のアセット読み込みで実時間が飛んでいるため、
                 // 次フレームのデルタタイムへその時間が混入しないようにする
                 ResetDeltaTime({});
-                if (StartupTiming::IsActive()) startupSceneCommitted = true;
+                startupSceneCommitted = true;
                 sceneTiming->End("RendererCleanup");
             }
             // スワップチェーンの破棄は、それが紐付くウィンドウ(HWND)を破棄するより必ず先に行うこと。

@@ -8,6 +8,8 @@
 #include "Objects/Components/ScriptComponent.h"
 #include "Objects/IObjectComponent.h"
 #include "Objects/ObjectContext.h"
+#include "Scene/SceneContext.h"
+#include "Objects/Components/Render/TargetObjectSelector.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
@@ -17,6 +19,12 @@ namespace {
 /// @brief バインド先の同型コンポーネントをcomponentIndex番目（追加順）から探す（自分自身は除外）
 IObjectComponent *FindParameterBindingTarget(ObjectContext *objectContext, const ParameterBinding &binding, const IObjectComponent *self) {
     if (!objectContext) return nullptr;
+    if (!binding.targetObjectID.empty()) {
+        auto *scene = objectContext->GetOwner()->GetSceneContext();
+        auto *object = scene ? scene->GetSceneObject(UUID128(binding.targetObjectID)) : nullptr;
+        objectContext = object ? object->GetObjectContext() : nullptr;
+        if (!objectContext) return nullptr;
+    }
     int typeIndex = 0;
     for (const auto &componentPair : objectContext->GetAllComponents()) {
         IObjectComponent *candidate = componentPair.first;
@@ -137,6 +145,7 @@ JSON SaveParameterBindingToJson(const ParameterBinding &binding) {
         { "parameterName", binding.parameterName },
         { "channel", binding.channel },
         { "isScriptVariable", binding.isScriptVariable },
+        { "targetObjectID", binding.targetObjectID },
     };
 }
 
@@ -148,6 +157,7 @@ ParameterBinding LoadParameterBindingFromJson(const JSON &json) {
     binding.parameterName = json.value("parameterName", std::string{});
     binding.channel = json.value("channel", 0);
     binding.isScriptVariable = json.value("isScriptVariable", false);
+    if (json.contains("targetObjectID") && json["targetObjectID"].is_string()) binding.targetObjectID = json["targetObjectID"].get<std::string>();
     return binding;
 }
 
@@ -289,11 +299,11 @@ std::vector<ParameterBindingCandidate> CollectParameterBindingCandidatesForType(
     return candidates;
 }
 
-void ShowParameterBindingListImGui(std::vector<ParameterBinding> &bindings, const std::vector<ParameterBindingCandidate> &candidates) {
+void ShowParameterBindingListImGui(std::vector<ParameterBinding> &bindings, const std::vector<ParameterBindingCandidate> &defaultCandidates, ObjectContext *source, const IObjectComponent *self) {
     ImGui::Text(TranslationC("component.parameterbinding.bindings_d"), static_cast<int>(bindings.size()));
     ImGui::SameLine();
     if (ImGui::SmallButton(TranslationLabel("component.parameterbinding.add_binding"))) {
-        bindings.push_back(candidates.empty() ? ParameterBinding{} : candidates.front().binding);
+        bindings.push_back(defaultCandidates.empty() ? ParameterBinding{} : defaultCandidates.front().binding);
     }
     if (ImGui::IsItemHovered()) {
         ImGuiCustom::SetTooltipWrapped("%s", "値の適用先を追加する。候補は同オブジェクトのコンポーネントのfloat系パラメータと\nScriptComponentの[SerializeField]付きfloat変数");
@@ -303,6 +313,17 @@ void ShowParameterBindingListImGui(std::vector<ParameterBinding> &bindings, cons
     for (int bindingIndex = 0; bindingIndex < static_cast<int>(bindings.size()); ++bindingIndex) {
         auto &binding = bindings[bindingIndex];
         ImGui::PushID(bindingIndex);
+        std::vector<ParameterBindingCandidate> targetCandidates;
+        if (source) {
+            auto *scene = source->GetOwner()->GetSceneContext();
+            UUID128 id(binding.targetObjectID);
+            if (TargetObjectSelector::ShowSelector("対象 (None = 自分)", scene, id, true, false)) {
+                binding.targetObjectID = id.IsValid() ? id.ToString() : std::string{};
+            }
+            auto *object = scene && id.IsValid() ? scene->GetSceneObject(id) : nullptr;
+            targetCandidates = CollectParameterBindingCandidates(object ? object->GetObjectContext() : (id.IsValid() ? nullptr : source), self);
+        }
+        const auto &candidates = source ? targetCandidates : defaultCandidates;
 
         // 現在のバインド内容に一致する候補を探す（コンボの選択表示用）
         int currentCandidate = -1;
@@ -332,7 +353,9 @@ void ShowParameterBindingListImGui(std::vector<ParameterBinding> &bindings, cons
             for (int c = 0; c < static_cast<int>(candidates.size()); ++c) {
                 const bool selected = (c == currentCandidate);
                 if (ImGui::Selectable(candidates[c].label.c_str(), selected)) {
+                    const auto target = binding.targetObjectID;
                     binding = candidates[c].binding;
+                    binding.targetObjectID = target;
                 }
                 if (selected) ImGui::SetItemDefaultFocus();
             }

@@ -123,6 +123,8 @@ public:
     static void Draw(Passkey<GameEngine>);
     /// @brief 破棄反映処理
     static void CommitDestroy(Passkey<GameEngine>);
+    static void CompleteStartupHandoff(Passkey<GameEngine>);
+    static void RevealStartupWindows(Passkey<GameEngine>);
 
     /// @brief 通常ウィンドウ生成
     /// @param title ウィンドウタイトル
@@ -190,6 +192,8 @@ public:
     void SetWindowPosition(int32_t x, int32_t y);
     /// @brief ウィンドウの表示/非表示を切り替える
     void SetWindowVisible(bool visible);
+    bool IsStartupDeferred() const noexcept { return startupDeferred_; }
+    void RestorePlacement(const WINDOWPLACEMENT &placement);
 	/// @brief 親ウィンドウを設定する
 	/// @param parentHwnd 親ウィンドウのHWND
 	void SetWindowParent(HWND parentHwnd, bool applyNative = true); // 物理(SetParent)反映可否を制御するフラグを追加（デフォルト true）
@@ -280,7 +284,7 @@ public:
     std::string GetRenderTargetName() const override { return GetWindowTitle(); }
     std::uint32_t GetRenderTargetWidth() const noexcept override { return static_cast<std::uint32_t>(GetClientWidth()); }
     std::uint32_t GetRenderTargetHeight() const noexcept override { return static_cast<std::uint32_t>(GetClientHeight()); }
-    bool IsRenderTargetAvailable() const noexcept override { return !isPendingDestroy_ && descriptor_.hwnd != nullptr; }
+    bool IsRenderTargetAvailable() const noexcept override { return !isPendingDestroy_ && descriptor_.hwnd != nullptr && dx12SwapChain_ != nullptr; }
     /// @brief アスペクト比を取得する
     float GetAspectRatio() const noexcept { return size_.aspectRatio; }
     /// @brief コマンドリストを取得する
@@ -439,6 +443,11 @@ private:
 
     // 破棄通知フラグ
     bool isPendingDestroy_ = false;
+    bool startupDeferred_ = false, startupShared_ = false, startupReveal_ = false;
+    bool startupVisible_ = true, startupMinimized_ = false;
+    std::optional<POINT> startupPosition_;
+    std::optional<HWND> startupParent_;
+    std::optional<WINDOWPLACEMENT> startupPlacement_;
 };
 
 } // namespace KashipanEngine

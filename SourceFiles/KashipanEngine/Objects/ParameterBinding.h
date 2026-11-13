@@ -25,6 +25,7 @@ struct ParameterBinding {
     ///        Quaternion・Matrix4x4をそのまま書き込む対象を指す（ApplyParameterBindingでは未使用）
     int channel = 0;
     bool isScriptVariable = false; ///< ScriptComponentの[SerializeField]変数への適用かどうか
+    std::string targetObjectID;   ///< 空なら所有オブジェクト。それ以外は同じシーンのUUID。
 };
 
 /// @brief float値をバインド先へ書き込む
@@ -75,7 +76,7 @@ std::vector<ParameterBindingCandidate> CollectParameterBindingCandidates(ObjectC
 std::vector<ParameterBindingCandidate> CollectParameterBindingCandidatesForType(ObjectContext *objectContext, const IObjectComponent *self, const TypeInfo &sourceType);
 
 /// @brief バインド一覧の編集UI（見出し・追加ボタン・対象選択コンボ・削除ボタン）を表示する
-void ShowParameterBindingListImGui(std::vector<ParameterBinding> &bindings, const std::vector<ParameterBindingCandidate> &candidates);
+void ShowParameterBindingListImGui(std::vector<ParameterBinding> &bindings, const std::vector<ParameterBindingCandidate> &candidates, ObjectContext *source = nullptr, const IObjectComponent *self = nullptr);
 
 #endif // USE_IMGUI
 

@@ -79,6 +79,10 @@ try {
     }
     if ($Configuration -eq 'Release') {
         Invoke-MirrorCopy -Source (Join-Path $TargetDir 'Assets') -Destination (Join-Path $stageDir 'Assets')
+        $startupAnimation = Join-Path $TargetDir 'StartupAnimation'
+        if (Test-Path -LiteralPath $startupAnimation -PathType Container) {
+            Invoke-MirrorCopy -Source $startupAnimation -Destination (Join-Path $stageDir 'StartupAnimation')
+        }
     } else {
         # Keep the normal multi-project editor layout. Assets beside the exe would select standalone mode.
         foreach ($name in @('EngineData\AssetsTemplate', 'EngineData\EditorTools', 'Docs\Reference')) {
@@ -103,6 +107,10 @@ try {
             New-Item -ItemType Directory -Path $projectDestination -Force | Out-Null
             Copy-Item -LiteralPath $projectFile -Destination (Join-Path $projectDestination 'Project.json')
             Invoke-MirrorCopy -Source $projectAssets -Destination (Join-Path $projectDestination 'Assets')
+            $startupAnimation = Join-Path $project.FullName 'StartupAnimation'
+            if (Test-Path -LiteralPath $startupAnimation -PathType Container) {
+                Invoke-MirrorCopy -Source $startupAnimation -Destination (Join-Path $projectDestination 'StartupAnimation')
+            }
         }
     }
 

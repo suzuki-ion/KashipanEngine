@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "Objects/ObjectComponentHeader.h"
 #include "Objects/ParameterBinding.h"
@@ -57,6 +58,12 @@ public:
     };
 
     std::unique_ptr<IObjectComponent> Clone() const override;
+    void RemapObjectTargets(const std::unordered_map<std::string, std::string> &ids) {
+        for (auto &entry : animations_) for (auto &binding : entry.bindings) {
+            auto it = ids.find(binding.targetObjectID);
+            if (it != ids.end()) binding.targetObjectID = it->second;
+        }
+    }
 
     //==================================================
     // 再生制御

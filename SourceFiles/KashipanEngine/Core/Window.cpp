@@ -2,9 +2,11 @@
 #include "Core/WindowsAPI.h"
 #include "Core/DirectXCommon.h"
 #include "Core/ProjectPaths.h"
+#include "Splash/SplashScreen.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include <cassert>
 #include <algorithm>
+#include <stdexcept>
 
 #if defined(USE_IMGUI)
 #include <shellapi.h>
@@ -190,6 +192,61 @@ void Window::Draw(Passkey<GameEngine>) {
     }
 }
 
+void Window::CompleteStartupHandoff(Passkey<GameEngine>) {
+    for (auto &[hwnd, owned] : sWindowMap) {
+        auto &window = *owned;
+        if (!window.startupDeferred_ || window.isPendingDestroy_) continue;
+        window.startupMinimized_ = IsIconic(hwnd) != FALSE;
+        if (window.startupShared_) {
+            SplashScreen::DetachWindow({}, hwnd); // Joins D2D before any DX12 swap-chain creation.
+            SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(&window));
+            SetLastError(0);
+            if (!SetWindowLongPtrW(hwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(WindowsAPI::WindowProc)) && GetLastError())
+                throw std::runtime_error("Could not attach startup HWND to the engine");
+#if defined(USE_IMGUI)
+            DragAcceptFiles(hwnd, TRUE);
+#endif
+        }
+        window.startupDeferred_ = false;
+        window.startupReveal_ = true;
+        const auto requestedMode = window.windowMode_;
+        window.windowMode_ = WindowMode::Window;
+        if (window.startupShared_) {
+            SetWindowLongPtrW(hwnd, GWL_STYLE, window.descriptor_.windowStyle | (window.startupMinimized_ ? WS_MINIMIZE : 0));
+            SetWindowLongPtrW(hwnd, GWL_EXSTYLE, 0);
+            SetWindowTextW(hwnd, window.titleW_.c_str());
+            SendMessageW(hwnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(window.descriptor_.wc.hIcon));
+            SendMessageW(hwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(window.descriptor_.wc.hIcon));
+        }
+        window.SetSizeChangeMode(window.sizeChangeMode_);
+        window.descriptor_.windowStyle = static_cast<DWORD>(GetWindowLongPtrW(hwnd, GWL_STYLE)) & ~(WS_VISIBLE | WS_MINIMIZE | WS_MAXIMIZE);
+        window.AdjustWindowSize();
+        if (window.startupPosition_) window.SetWindowPosition(window.startupPosition_->x, window.startupPosition_->y);
+        if (window.startupParent_) SetParent(hwnd, *window.startupParent_);
+        if (window.startupPlacement_) {
+            auto placement = *window.startupPlacement_;
+            if (window.startupMinimized_) placement.showCmd = SW_SHOWMINNOACTIVE;
+            window.RestorePlacement(placement);
+        }
+        window.SetWindowMode(requestedMode);
+        if (window.isPendingDestroy_) continue;
+        window.dx12SwapChain_ = sDirectXCommon->CreateSwapChain({},
+            window.windowType_ == WindowType::Normal ? SwapChainType::ForHwnd : SwapChainType::ForComposition,
+            hwnd, window.size_.clientWidth, window.size_.clientHeight);
+        window.startupPosition_.reset(); window.startupParent_.reset(); window.startupPlacement_.reset();
+        Log("[StartupWindow] handoff HWND=" + std::to_string(reinterpret_cast<uintptr_t>(hwnd)) +
+            " ownerThread=" + std::to_string(GetWindowThreadProcessId(hwnd, nullptr)), LogSeverity::Info);
+    }
+}
+
+void Window::RevealStartupWindows(Passkey<GameEngine>) {
+    for (auto &[hwnd, window] : sWindowMap) {
+        if (!window->startupReveal_ || window->isPendingDestroy_) continue;
+        window->startupReveal_ = false;
+        ShowWindow(hwnd, !window->startupVisible_ ? SW_HIDE : window->startupMinimized_ ? SW_SHOWMINNOACTIVE : SW_SHOW);
+    }
+}
+
 Window *Window::CreateNormal(const std::string &title, int32_t width, int32_t height, DWORD style, const std::string &iconPath) {
     LogScope scope;
     Log(Translation("engine.window.create.start") + (title.empty() ? windowDefaultTitle : title), LogSeverity::Debug);
@@ -209,7 +266,8 @@ Window *Window::CreateNormal(const std::string &title, int32_t width, int32_t he
 
     sWindowMap[hwnd] = std::move(window);
     sWindowsAPI->RegisterWindow({}, sWindowMap[hwnd].get());
-    sWindowMap[hwnd]->dx12SwapChain_ = sDirectXCommon->CreateSwapChain({}, SwapChainType::ForHwnd, hwnd, windowWidth, windowHeight);
+    if (!sWindowMap[hwnd]->startupDeferred_)
+        sWindowMap[hwnd]->dx12SwapChain_ = sDirectXCommon->CreateSwapChain({}, SwapChainType::ForHwnd, hwnd, windowWidth, windowHeight);
 
     Log(Translation("engine.window.create.end") + (title.empty() ? windowDefaultTitle : title), LogSeverity::Debug);
     return sWindowMap[hwnd].get();
@@ -257,7 +315,8 @@ Window *Window::CreateOverlay(const std::string &title, int32_t width, int32_t h
 
     sWindowMap[hwnd] = std::move(window);
     sWindowsAPI->RegisterWindow({}, sWindowMap[hwnd].get());
-    sWindowMap[hwnd]->dx12SwapChain_ = sDirectXCommon->CreateSwapChain({}, SwapChainType::ForComposition, hwnd, windowWidth, windowHeight);
+    if (!sWindowMap[hwnd]->startupDeferred_)
+        sWindowMap[hwnd]->dx12SwapChain_ = sDirectXCommon->CreateSwapChain({}, SwapChainType::ForComposition, hwnd, windowWidth, windowHeight);
     sWindowMap[hwnd]->RegisterWindowEvent<WindowDefaultEvent::ClickThroughEvent>(clickThrough);
 
     Log(Translation("engine.window.create.overlay.end") + (title.empty() ? windowDefaultTitle : title), LogSeverity::Debug);
@@ -281,7 +340,7 @@ void Window::DestroyNotify() {
             // Post WM_CLOSE で標準破棄フロー誘導 + 登録解除 + SwapChain 破棄シグナル
             ::PostMessage(descriptor_.hwnd, WM_CLOSE, 0, 0);
             sWindowsAPI->UnregisterWindow({}, descriptor_.hwnd);
-            sDirectXCommon->DestroySwapChainSignal({}, descriptor_.hwnd);
+            if (dx12SwapChain_) sDirectXCommon->DestroySwapChainSignal({}, descriptor_.hwnd);
         }
     }
 }
@@ -302,9 +361,9 @@ std::optional<LRESULT> Window::HandleEvent(Passkey<WindowsAPI>, UINT msg, WPARAM
         return std::nullopt;
     }
 
-    // Intercept Alt+Enter (WM_SYSKEYDOWN + VK_RETURN) to toggle fullscreen appearance
+    // Alt+Enter（WM_SYSKEYDOWN + VK_RETURN）を捕捉して全画面表示を切り替える。
     if (msg == WM_SYSKEYDOWN && wparam == VK_RETURN) {
-        // lParam bit29 indicates the ALT key is down; also accept GetKeyState as fallback
+        // lParamのビット29はALTキーの押下状態を示す。代替としてGetKeyStateでも確認する。
         bool altDown = (lparam & (1 << 29)) != 0 || (GetKeyState(VK_MENU) & 0x8000) != 0;
         if (altDown) {
             if (windowMode_ != WindowMode::FullScreen) {
@@ -312,7 +371,7 @@ std::optional<LRESULT> Window::HandleEvent(Passkey<WindowsAPI>, UINT msg, WPARAM
             } else {
                 SetWindowMode(WindowMode::Window);
             }
-            return std::optional<LRESULT>(0); // message handled
+            return std::optional<LRESULT>(0); // メッセージ処理済み
         }
     }
 
@@ -332,6 +391,7 @@ std::optional<LRESULT> Window::HandleEvent(Passkey<WindowsAPI>, UINT msg, WPARAM
 void Window::SetSizeChangeMode(SizeChangeMode sizeChangeMode) {
     LogScope scope;
     sizeChangeMode_ = sizeChangeMode;
+    if (startupDeferred_) return;
     if (descriptor_.hwnd) {
         LONG style = GetWindowLong(descriptor_.hwnd, GWL_STYLE);
         switch (sizeChangeMode) {
@@ -346,6 +406,7 @@ void Window::SetSizeChangeMode(SizeChangeMode sizeChangeMode) {
 
 void Window::SetWindowMode(WindowMode windowMode) {
     LogScope scope;
+    if (startupDeferred_) { windowMode_ = windowMode; return; }
 
     if (windowMode_ == windowMode || !descriptor_.hwnd) return;
     windowMode_ = windowMode;
@@ -404,14 +465,14 @@ void Window::SetWindowTitle(const std::wstring &title) {
     LogScope scope;
     titleW_ = title;
     descriptor_.title = ConvertString(title);
-    if (descriptor_.hwnd) SetWindowText(descriptor_.hwnd, titleW_.c_str());
+    if (descriptor_.hwnd && !startupDeferred_) SetWindowText(descriptor_.hwnd, titleW_.c_str());
 }
 
 void Window::SetWindowTitle(const std::string &title) {
     LogScope scope;
     titleW_ = ConvertString(title);
     descriptor_.title = title;
-    if (descriptor_.hwnd) SetWindowText(descriptor_.hwnd, titleW_.c_str());
+    if (descriptor_.hwnd && !startupDeferred_) SetWindowText(descriptor_.hwnd, titleW_.c_str());
 }
 
 HICON Window::LoadWindowIcon(HINSTANCE hInstance, const std::wstring &iconPath) {
@@ -429,7 +490,7 @@ bool Window::SetIcon(const std::string &iconPath) {
     const std::string &resolvedRelative = iconPath.empty() ? windowDefaultIconPath : iconPath;
     if (resolvedRelative.empty()) {
         descriptor_.wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
-        if (descriptor_.hwnd) {
+        if (descriptor_.hwnd && !startupDeferred_) {
             SendMessage(descriptor_.hwnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(descriptor_.wc.hIcon));
             SendMessage(descriptor_.hwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(descriptor_.wc.hIcon));
         }
@@ -444,7 +505,7 @@ bool Window::SetIcon(const std::string &iconPath) {
     }
 
     descriptor_.wc.hIcon = hIcon;
-    if (descriptor_.hwnd) {
+    if (descriptor_.hwnd && !startupDeferred_) {
         SendMessage(descriptor_.hwnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIcon));
         SendMessage(descriptor_.hwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIcon));
     }
@@ -463,18 +524,32 @@ void Window::SetWindowSize(int32_t width, int32_t height) {
 
 void Window::SetWindowPosition(int32_t x, int32_t y) {
     LogScope scope;
+    if (startupDeferred_) {
+        startupPosition_ = POINT{x, y};
+        OffsetRect(&size_.windowRect, x - size_.windowRect.left, y - size_.windowRect.top);
+        return;
+    }
     if (descriptor_.hwnd) SetWindowPos(descriptor_.hwnd, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
 void Window::SetWindowVisible(bool visible) {
     LogScope scope;
+    if (startupDeferred_ || startupReveal_) { startupVisible_ = visible; return; }
     if (descriptor_.hwnd) ShowWindow(descriptor_.hwnd, visible ? SW_SHOW : SW_HIDE);
+}
+
+void Window::RestorePlacement(const WINDOWPLACEMENT &placement) {
+    if (startupDeferred_) { startupPlacement_ = placement; return; }
+    if (descriptor_.hwnd) ::SetWindowPlacement(descriptor_.hwnd, &placement);
 }
 
 void Window::DetachFromParentUnsafe(bool applyNative) {
     if (!parentWindow_) return;
     parentWindow_->RemoveChildPointerUnsafe(this);
-    if (applyNative && descriptor_.hwnd) SetParent(descriptor_.hwnd, nullptr);
+    if (applyNative && descriptor_.hwnd) {
+        if (startupDeferred_) startupParent_ = nullptr;
+        else SetParent(descriptor_.hwnd, nullptr);
+    }
     parentWindow_ = nullptr;
 }
 
@@ -482,7 +557,10 @@ void Window::DetachAllChildrenUnsafe(bool applyNative) {
     for (auto *child : childWindows_) {
         if (!child) continue;
         child->parentWindow_ = nullptr;
-        if (applyNative && child->descriptor_.hwnd) SetParent(child->descriptor_.hwnd, nullptr);
+        if (applyNative && child->descriptor_.hwnd) {
+            if (child->startupDeferred_) child->startupParent_ = nullptr;
+            else SetParent(child->descriptor_.hwnd, nullptr);
+        }
     }
     childWindows_.clear();
 }
@@ -499,7 +577,10 @@ void Window::SetWindowParent(HWND parentHwnd, bool applyNative) {
     if (parentHwnd == nullptr) { ClearWindowParent(applyNative); return; }
     if (parentWindow_ && parentWindow_->GetWindowHandle() == parentHwnd) return;
     DetachFromParentUnsafe(applyNative);
-    if (applyNative) SetParent(descriptor_.hwnd, parentHwnd);
+    if (applyNative) {
+        if (startupDeferred_) startupParent_ = parentHwnd;
+        else SetParent(descriptor_.hwnd, parentHwnd);
+    }
     if (Window *pw = GetWindow(parentHwnd)) { parentWindow_ = pw; pw->childWindows_.push_back(this); }
     else { parentWindow_ = nullptr; }
 }
@@ -510,7 +591,10 @@ void Window::SetWindowParent(Window *parentWindow, bool applyNative) {
     if (!parentWindow) { ClearWindowParent(applyNative); return; }
     if (parentWindow_ == parentWindow) return;
     DetachFromParentUnsafe(applyNative);
-    if (applyNative) SetParent(descriptor_.hwnd, parentWindow->GetWindowHandle());
+    if (applyNative) {
+        if (startupDeferred_) startupParent_ = parentWindow->GetWindowHandle();
+        else SetParent(descriptor_.hwnd, parentWindow->GetWindowHandle());
+    }
     parentWindow_ = parentWindow;
     parentWindow_->childWindows_.push_back(this);
 }
@@ -583,6 +667,19 @@ bool Window::InitializeWindow(WNDPROC windowProc, WindowType windowType, const s
         descriptor_.wc.hIcon = hIcon;
     }
 
+    startupDeferred_ = SplashScreen::HasStartupWindow();
+    if (startupDeferred_ && windowType == WindowType::Normal) {
+        if (HWND shared = SplashScreen::ClaimWindow({})) {
+            descriptor_.hwnd = shared;
+            descriptor_.wc.lpszClassName = SplashScreen::WindowClassName();
+            startupShared_ = true;
+            GetWindowRect(shared, &size_.windowRect);
+            Log("[StartupWindow] claimed HWND=" + std::to_string(reinterpret_cast<uintptr_t>(shared)) +
+                " ownerThread=" + std::to_string(GetWindowThreadProcessId(shared, nullptr)), LogSeverity::Info);
+            return true; // Preserve splash style/size/procedure until its renderer has stopped.
+        }
+    }
+
     // ウィンドウクラスの登録
     if (!RegisterClass(&descriptor_.wc)) {
         // 既に登録済みの場合は無視
@@ -602,7 +699,7 @@ bool Window::InitializeWindow(WNDPROC windowProc, WindowType windowType, const s
         0,                                              // 拡張ウィンドウスタイル
         descriptor_.wc.lpszClassName,                   // ウィンドウクラス名
         titleW_.c_str(),                                // ウィンドウタイトル
-        descriptor_.windowStyle,                        // ウィンドウスタイル
+        startupDeferred_ ? descriptor_.windowStyle & ~WS_VISIBLE : descriptor_.windowStyle,
         CW_USEDEFAULT,                                  // X座標
         CW_USEDEFAULT,                                  // Y座標
         size_.windowRect.right - size_.windowRect.left, // ウィンドウ幅
@@ -629,8 +726,10 @@ bool Window::InitializeWindow(WNDPROC windowProc, WindowType windowType, const s
 #endif
 
     // ウィンドウを表示
-    ShowWindow(descriptor_.hwnd, SW_SHOW);
-    UpdateWindow(descriptor_.hwnd);
+    if (!startupDeferred_) {
+        ShowWindow(descriptor_.hwnd, SW_SHOW);
+        UpdateWindow(descriptor_.hwnd);
+    }
 
     return true;
 }
@@ -648,7 +747,10 @@ void Window::Cleanup() {
     LogScope scope;
     DetachAllChildrenUnsafe(false);
     DetachFromParentUnsafe(false);
-    if (descriptor_.hwnd) DestroyWindow(descriptor_.hwnd);
+    if (descriptor_.hwnd) {
+        SplashScreen::AbandonWindow({}, descriptor_.hwnd);
+        if (IsWindow(descriptor_.hwnd)) DestroyWindow(descriptor_.hwnd);
+    }
     if (descriptor_.hInstance) UnregisterClass(descriptor_.wc.lpszClassName, descriptor_.hInstance);
     descriptor_.hwnd = nullptr;
 }
@@ -660,7 +762,7 @@ void Window::CalculateAspectRatio() {
 
 void Window::AdjustWindowSize() {
     LogScope scope;
-    if (!descriptor_.hwnd) return;
+    if (!descriptor_.hwnd || startupDeferred_) return;
     RECT rect = { 0, 0, size_.clientWidth, size_.clientHeight };
     AdjustWindowRect(&rect, descriptor_.windowStyle, FALSE);
     // SetWindowSize()で指定されるのはクライアント領域のサイズなので、ウィンドウモード時は

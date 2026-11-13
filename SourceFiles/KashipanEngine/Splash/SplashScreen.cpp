@@ -1,276 +1,460 @@
+﻿#if defined(RELEASE_BUILD)
 #include "SplashScreen.h"
-
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <Windows.h>
-#include <ShlObj.h>
-
-#include <atomic>
-#include <thread>
-
-#include <wrl/client.h>
-#include <wrl/event.h>
-#include <WebView2.h>
-
+#include "SplashAnimation.h"
+#include "LoadingAnimation.h"
 #include "Core/ProjectPaths.h"
 #include "Utilities/Conversion/ConvertString.h"
-#include "Utilities/FileIO/JSON.h"
-
-using Microsoft::WRL::Callback;
-using Microsoft::WRL::ComPtr;
+#include <d2d1.h>
+#include <dwrite.h>
+#include <wincodec.h>
+#include <wrl/client.h>
+#include <atomic>
+#include <chrono>
+#include <filesystem>
+#include <thread>
+#include <mutex>
+#pragma comment(lib, "d2d1.lib")
+#pragma comment(lib, "dwrite.lib")
+#pragma comment(lib, "windowscodecs.lib")
+#pragma comment(lib, "ole32.lib")
 
 namespace KashipanEngine {
 namespace {
-
-/// @brief スプラッシュのクライアント領域サイズ
-constexpr int kClientWidth = 640;
-constexpr int kClientHeight = 360;
-
-/// @brief UIのHTMLを配置しているフォルダ（エンジンルート基準）
-constexpr const char *kUIFolderName = "EngineData/UI/Splash";
-
-/// @brief HTMLの読み込み元として割り当てる仮想ホスト名
-constexpr const wchar_t *kVirtualHostName = L"splash.kashipanengine";
-constexpr const wchar_t *kStartPageUrl = L"https://splash.kashipanengine/index.html";
-
-/// @brief ログをページへ転送する間隔とタイマーID
-constexpr UINT_PTR kLogTimerId = 1;
-constexpr UINT kLogPollIntervalMs = 100;
-
-/// @brief スプラッシュを最低でもこの時間は表示し続ける
-/// @details 初期化が一瞬で終わる環境（キャッシュ済みDevelopment/Release起動等）でも、
-///          ロゴが一瞬で消えてしまわないようにするための下限
-constexpr DWORD kMinimumDisplayMs = 800;
-/// @brief フェードアウト演出（splash.css側のtransitionと合わせる）の長さ
-constexpr DWORD kFadeOutMs = 200;
-
-const wchar_t *const kWindowClassName = L"KashipanEngineSplash";
-
+using Microsoft::WRL::ComPtr;
+constexpr wchar_t kWindowClass[] = L"KashipanEngineStartupLogo";
+constexpr DWORD kWindowStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+constexpr DWORD kWindowExStyle = WS_EX_APPWINDOW;
+constexpr LONGLONG kSecond = 1000000000LL, kFramePeriod = kSecond / 60;
 std::thread sThread;
-std::atomic<HWND> sHwnd{ nullptr };
-ComPtr<ICoreWebView2Controller> sController;
-ComPtr<ICoreWebView2> sWebView;
-HANDLE sWindowReadyEvent = nullptr;
-ULONGLONG sShowStartTick = 0;
+std::atomic<bool> sStop{false}, sCancelled{false}, sRunning{false};
+std::atomic<LONGLONG> sReadyTick{0};
+std::atomic<bool> sPainted{false};
+std::atomic<bool> sConfigured{false};
+std::mutex sProjectMutex;
+std::filesystem::path sProjectFolder;
+// Accessed only by the engine/window-owner thread. Never pass Window pointers to the renderer.
+HWND sWindow = nullptr;
+DWORD sOwnerThread = 0;
+bool sClaimed = false;
+std::atomic<SplashScreen::RenderingBackend> sBackend{SplashScreen::RenderingBackend::None};
 
-/// @brief WebView2がキャッシュ等を書き込む作業フォルダ
-/// @details ランチャー（KashipanHub）とはユーザーデータフォルダを分け、
-///          起動プロセスの入れ替わりが重なってもWebView2側のロックが競合しないようにする
-std::wstring GetUserDataFolder() {
-    PWSTR localAppData = nullptr;
-    if (FAILED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &localAppData))) {
-        return {};
+LONGLONG NowTicks() {
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
+}
+struct ComApartment {
+    bool initialized = false;
+    bool Initialize() {
+        if (!initialized) initialized = SUCCEEDED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED));
+        return initialized;
     }
-    std::wstring folder(localAppData);
-    CoTaskMemFree(localAppData);
-    folder += L"\\KashipanEngine\\SplashWebView";
-    return folder;
+    ~ComApartment() { if (initialized) CoUninitialize(); }
+};
+struct WindowState {
+    // Declared first, so COM objects are released before the apartment is uninitialized.
+    ComApartment apartment;
+    std::filesystem::path folder;
+    LONGLONG firstPaintTick = 0, startTick = 0;
+    bool closed = false;
+    ComPtr<ID2D1Factory> factory;
+    ComPtr<IWICImagingFactory> wic;
+    ComPtr<IDWriteFactory> write;
+    ComPtr<IDWriteTextFormat> loadingFormat;
+    ComPtr<IWICBitmap> gearSource, breadSource, textSource;
+    ComPtr<ID2D1HwndRenderTarget> target;
+    ComPtr<ID2D1Bitmap> gear, bread, text;
+    ComPtr<ID2D1SolidColorBrush> brown, fade;
+};
+
+// Physical monitor pixels are used even when the OS display scaling is not 100%.
+void SizeForMonitor(HWND hwnd, HMONITOR target, bool center, UINT dpi = 0) {
+    MONITORINFO monitor{sizeof(monitor)};
+    if (!GetMonitorInfoW(target, &monitor)) return;
+    if (!dpi) dpi = GetDpiForWindow(hwnd);
+    RECT frame{};
+    AdjustWindowRectExForDpi(&frame, kWindowStyle, FALSE, kWindowExStyle, dpi ? dpi : 96);
+    const int frameWidth = frame.right - frame.left, frameHeight = frame.bottom - frame.top;
+    const auto &area = monitor.rcWork;
+    const auto size = SplashAnimation::ChooseClientSize(
+        monitor.rcMonitor.right - monitor.rcMonitor.left, monitor.rcMonitor.bottom - monitor.rcMonitor.top,
+        area.right - area.left - frameWidth, area.bottom - area.top - frameHeight);
+    const int width = size.width + frameWidth, height = size.height + frameHeight;
+    RECT previous{};
+    GetWindowRect(hwnd, &previous);
+    const int x = center ? area.left + (area.right - area.left - width) / 2 :
+        std::clamp(static_cast<int>(previous.left), static_cast<int>(area.left), std::max(static_cast<int>(area.left), static_cast<int>(area.right) - width));
+    const int y = center ? area.top + (area.bottom - area.top - height) / 2 :
+        std::clamp(static_cast<int>(previous.top), static_cast<int>(area.top), std::max(static_cast<int>(area.top), static_cast<int>(area.bottom) - height));
+    SetWindowPos(hwnd, nullptr, x, y, width, height, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
-} // namespace
 
-void SplashScreen::NotifyClosing() {
-    if (!sWebView) return;
-    JSON message = JSON::object();
-    message["type"] = "closing";
-    sWebView->PostWebMessageAsJson(ConvertString(message.dump()).c_str());
+SplashAnimation::Frame SampleFrame(const WindowState &state) {
+    const auto readyTick = sReadyTick.load(std::memory_order_acquire);
+    const double seconds = std::max(0.0, (NowTicks() - state.startTick) / double(kSecond));
+    const double readyAt = readyTick ? std::max(0.0, (readyTick - state.startTick) / double(kSecond)) : -1.0;
+    return SplashAnimation::Sample(seconds, readyAt);
 }
 
-void SplashScreen::FlushLogLinesToWebView() {
-    if (!sWebView) return;
-
-    std::vector<LogLine> lines = FetchNewSplashLogLines(Passkey<SplashScreen>{});
-    if (lines.empty()) return;
-
-    JSON message = JSON::object();
-    message["type"] = "log";
-    JSON items = JSON::array();
-    for (const auto &line : lines) {
-        JSON item = JSON::object();
-        item["text"] = line.text;
-        item["severity"] = static_cast<int>(line.severity);
-        items.push_back(std::move(item));
+bool InitializeFactories(WindowState &state) {
+    if (!state.apartment.Initialize()) return false;
+    if (!state.factory && FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, state.factory.GetAddressOf()))) return false;
+    if (!state.wic && FAILED(CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(state.wic.GetAddressOf())))) return false;
+    if (!state.write && FAILED(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory),
+        reinterpret_cast<IUnknown **>(state.write.GetAddressOf())))) return false;
+    if (!state.loadingFormat) {
+        if (FAILED(state.write->CreateTextFormat(L"Yu Gothic UI", nullptr, DWRITE_FONT_WEIGHT_NORMAL,
+            DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 36, L"ja-JP", state.loadingFormat.GetAddressOf()))) return false;
+        state.loadingFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+        state.loadingFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
     }
-    message["items"] = std::move(items);
-
-    sWebView->PostWebMessageAsJson(ConvertString(message.dump()).c_str());
+    return true;
 }
 
-void SplashScreen::CreateWebView(HWND hwnd) {
-    const std::wstring userDataFolder = GetUserDataFolder();
-
-    CreateCoreWebView2EnvironmentWithOptions(
-        nullptr,
-        userDataFolder.empty() ? nullptr : userDataFolder.c_str(),
-        nullptr,
-        Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
-            [hwnd](HRESULT result, ICoreWebView2Environment *environment) -> HRESULT {
-                // 失敗してもスプラッシュに何も表示されないだけで、起動自体は継続させる
-                if (FAILED(result) || !environment) return S_OK;
-
-                environment->CreateCoreWebView2Controller(
-                    hwnd,
-                    Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
-                        [hwnd](HRESULT controllerResult, ICoreWebView2Controller *controller) -> HRESULT {
-                            if (FAILED(controllerResult) || !controller) return S_OK;
-                            // Close()後にコールバックが遅れて届いた場合は何もしない
-                            if (sHwnd.load(std::memory_order_acquire) != hwnd) return S_OK;
-
-                            sController = controller;
-                            if (FAILED(sController->get_CoreWebView2(&sWebView)) || !sWebView) return S_OK;
-
-                            ComPtr<ICoreWebView2Settings> settings;
-                            if (SUCCEEDED(sWebView->get_Settings(&settings)) && settings) {
-                                settings->put_AreDefaultContextMenusEnabled(FALSE);
-                                settings->put_AreDevToolsEnabled(FALSE);
-                                settings->put_IsStatusBarEnabled(FALSE);
-                                settings->put_IsZoomControlEnabled(FALSE);
-                            }
-
-                            ComPtr<ICoreWebView2_3> hostMapping;
-                            if (SUCCEEDED(sWebView.As(&hostMapping)) && hostMapping) {
-                                const std::wstring uiFolder = ConvertString(ProjectPaths::InEngineRoot(kUIFolderName));
-                                hostMapping->SetVirtualHostNameToFolderMapping(
-                                    kVirtualHostName, uiFolder.c_str(), COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_DENY_CORS);
-                            }
-
-                            RECT bounds{};
-                            GetClientRect(hwnd, &bounds);
-                            sController->put_Bounds(bounds);
-                            sController->put_IsVisible(TRUE);
-                            sWebView->Navigate(kStartPageUrl);
-
-                            // WebViewが使える状態になってから、ログ配信タイマーを開始する
-                            SetTimer(hwnd, kLogTimerId, kLogPollIntervalMs, nullptr);
-                            return S_OK;
-                        }).Get());
-                return S_OK;
-            }).Get());
+bool DecodeBitmap(WindowState &state, const wchar_t *name, ComPtr<IWICBitmap> &bitmap) {
+    if (bitmap) return true;
+    ComPtr<IWICBitmapDecoder> decoder;
+    ComPtr<IWICBitmapFrameDecode> frame;
+    ComPtr<IWICFormatConverter> converter;
+    return SUCCEEDED(state.wic->CreateDecoderFromFilename((state.folder / name).c_str(), nullptr, GENERIC_READ,
+            WICDecodeMetadataCacheOnLoad, decoder.GetAddressOf())) &&
+        SUCCEEDED(decoder->GetFrame(0, frame.GetAddressOf())) &&
+        SUCCEEDED(state.wic->CreateFormatConverter(converter.GetAddressOf())) &&
+        SUCCEEDED(converter->Initialize(frame.Get(), GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone,
+            nullptr, 0, WICBitmapPaletteTypeCustom)) &&
+        SUCCEEDED(state.wic->CreateBitmapFromSource(converter.Get(), WICBitmapCacheOnLoad, bitmap.ReleaseAndGetAddressOf()));
 }
 
-LRESULT CALLBACK SplashScreen::WindowProc(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
+void DiscardDeviceResources(WindowState &state) {
+    state.gear.Reset(); state.bread.Reset(); state.text.Reset();
+    state.brown.Reset(); state.fade.Reset(); state.target.Reset();
+    sBackend.store(SplashScreen::RenderingBackend::None, std::memory_order_release);
+}
+
+bool UploadBitmap(ID2D1RenderTarget *target, WindowState &state, IWICBitmap *source,
+    float logicalWidth, float logicalHeight, ID2D1Bitmap **destination) {
+    const auto pixels = target->GetPixelSize();
+    const auto viewport = SplashAnimation::FitViewport(pixels.width, pixels.height);
+    const UINT width = std::max(1U, static_cast<UINT>(std::ceil(logicalWidth * viewport.scale)));
+    const UINT height = std::max(1U, static_cast<UINT>(std::ceil(logicalHeight * viewport.scale)));
+    UINT sourceWidth = 0, sourceHeight = 0;
+    if (FAILED(source->GetSize(&sourceWidth, &sourceHeight))) return false;
+    ComPtr<IWICBitmapScaler> scaler;
+    IWICBitmapSource *upload = source;
+    // Downsample once for the physical display size. This avoids aliasing from repeatedly
+    // minifying the original large PNG with the GPU's two-tap linear filter.
+    if (width < sourceWidth && height < sourceHeight) {
+        if (FAILED(state.wic->CreateBitmapScaler(scaler.GetAddressOf())) ||
+            FAILED(scaler->Initialize(source, width, height, WICBitmapInterpolationModeFant))) return false;
+        upload = scaler.Get();
+    }
+    const auto properties = D2D1::BitmapProperties(D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM,
+        D2D1_ALPHA_MODE_PREMULTIPLIED), 96, 96);
+    return SUCCEEDED(target->CreateBitmapFromWicBitmap(upload, &properties, destination));
+}
+
+bool CreateTargetResources(ID2D1RenderTarget *target, WindowState &state) {
+    return UploadBitmap(target, state, state.gearSource.Get(), 512, 512, state.gear.ReleaseAndGetAddressOf()) &&
+        UploadBitmap(target, state, state.breadSource.Get(), 512, 512, state.bread.ReleaseAndGetAddressOf()) &&
+        UploadBitmap(target, state, state.textSource.Get(), SplashAnimation::kTextWidth, SplashAnimation::kTextHeight, state.text.ReleaseAndGetAddressOf()) &&
+        SUCCEEDED(target->CreateSolidColorBrush(D2D1::ColorF(0x654018), state.brown.ReleaseAndGetAddressOf())) &&
+        SUCCEEDED(target->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), state.fade.ReleaseAndGetAddressOf()));
+}
+
+bool InitializeGraphics(HWND hwnd, WindowState &state, bool softwareOnly = false) {
+    if (!InitializeFactories(state) || !DecodeBitmap(state, L"engineLogoGear.png", state.gearSource) ||
+        !DecodeBitmap(state, L"engineLogoBread.png", state.breadSource) || !DecodeBitmap(state, L"engineLogoText.png", state.textSource)) return false;
+    RECT client{}; GetClientRect(hwnd, &client);
+    const auto size = D2D1::SizeU(std::max(1L, client.right), std::max(1L, client.bottom));
+    auto properties = D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_HARDWARE,
+        D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE), 96, 96);
+    const auto hwndProperties = D2D1::HwndRenderTargetProperties(hwnd, size, D2D1_PRESENT_OPTIONS_IMMEDIATELY);
+    auto backend = SplashScreen::RenderingBackend::Hardware;
+    HRESULT hr = softwareOnly ? E_FAIL : state.factory->CreateHwndRenderTarget(properties, hwndProperties, state.target.ReleaseAndGetAddressOf());
+    if (FAILED(hr)) {
+        properties.type = D2D1_RENDER_TARGET_TYPE_SOFTWARE;
+        backend = SplashScreen::RenderingBackend::Software;
+        hr = state.factory->CreateHwndRenderTarget(properties, hwndProperties, state.target.ReleaseAndGetAddressOf());
+    }
+    if (FAILED(hr) || !CreateTargetResources(state.target.Get(), state)) { DiscardDeviceResources(state); return false; }
+    state.target->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
+    sBackend.store(backend, std::memory_order_release);
+    if (!state.startTick) {
+        // The original one-second background covers preparation where possible.
+        // Slow preparation must never skip the beginning of the logo reveal.
+        state.startTick = std::max(state.firstPaintTick, NowTicks() - kSecond);
+    }
+    return true;
+}
+
+void DrawSprite(ID2D1RenderTarget *target, ID2D1Bitmap *image,
+    float x, float y, float width, float height, float rotation = 0) {
+    if (!image || width <= 0 || height <= 0) return;
+    D2D1_MATRIX_3X2_F previous;
+    target->GetTransform(&previous);
+    const auto point = SplashAnimation::ToCanvas(x, y);
+    target->SetTransform(D2D1::Matrix3x2F::Rotation(SplashAnimation::ToCanvasRotation(rotation)) *
+        D2D1::Matrix3x2F::Translation(point.x, point.y) * previous);
+    target->DrawBitmap(image, D2D1::RectF(-width / 2, -height / 2, width / 2, height / 2), 1,
+        D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
+    target->SetTransform(previous);
+}
+
+void DrawLogoFrame(ID2D1RenderTarget *target, WindowState &state, const SplashAnimation::Frame &frame, int width, int height) {
+    using namespace SplashAnimation;
+    target->SetTransform(D2D1::Matrix3x2F::Identity());
+    target->Clear(D2D1::ColorF(0xF7C052));
+    const auto viewport = FitViewport(width, height);
+    target->SetTransform(D2D1::Matrix3x2F(viewport.scale, 0, 0, viewport.scale, viewport.x, viewport.y));
+    DrawSprite(target, state.gear.Get(), kLogoX, kLogoY, frame.gearScale, frame.gearScale, frame.gearRotation);
+    DrawSprite(target, state.bread.Get(), kLogoX, kLogoY, frame.breadScale, frame.breadScale);
+    if (frame.textAlpha > 0) DrawSprite(target, state.text.Get(), kLogoX, kTextY, kTextWidth, kTextHeight);
+    if (frame.wipeWidth > 0) {
+        const float top = ToCanvas(0, kTextY + kTextHeight * 0.5f).y;
+        target->FillRectangle(D2D1::RectF(frame.wipeCenter - frame.wipeWidth / 2, top,
+            frame.wipeCenter + frame.wipeWidth / 2, top + kTextHeight), state.brown.Get());
+    }
+    if (frame.loading) {
+        constexpr wchar_t text[] = L"読み込み中…";
+        target->DrawText(text, ARRAYSIZE(text) - 1, state.loadingFormat.Get(),
+            D2D1::RectF(0, kCanvasHeight - 78, kCanvasWidth, kCanvasHeight - 18), state.brown.Get());
+    }
+    if (frame.fade > 0) {
+        target->SetTransform(D2D1::Matrix3x2F::Identity());
+        state.fade->SetOpacity(frame.fade);
+        target->FillRectangle(D2D1::RectF(0, 0, static_cast<float>(width), static_cast<float>(height)), state.fade.Get());
+    }
+}
+
+// Called only by the rendering worker (or the standalone rendering regression).
+void Paint(HWND hwnd, WindowState &state) {
+    RECT client{}; GetClientRect(hwnd, &client);
+    const int width = std::max(1L, client.right), height = std::max(1L, client.bottom);
+    if (!state.target) return;
+    HRESULT hr = S_OK;
+    const auto size = state.target->GetPixelSize();
+    if (size.width != static_cast<UINT32>(width) || size.height != static_cast<UINT32>(height)) {
+        hr = state.target->Resize(D2D1::SizeU(width, height));
+        if (SUCCEEDED(hr) && !CreateTargetResources(state.target.Get(), state)) hr = E_FAIL;
+    }
+    if (SUCCEEDED(hr)) {
+        state.target->BeginDraw();
+        DrawLogoFrame(state.target.Get(), state, SampleFrame(state), width, height);
+        hr = state.target->EndDraw();
+    }
+    if (FAILED(hr)) DiscardDeviceResources(state);
+    else sPainted.store(true, std::memory_order_release);
+}
+
+// This procedure and the eventual game procedure always execute on the engine thread.
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
     switch (message) {
-    case WM_TIMER:
-        if (wparam == kLogTimerId) {
-            FlushLogLinesToWebView();
-        }
+    case WM_CLOSE:
+        if (hwnd == sWindow) {
+            sCancelled.store(true, std::memory_order_release);
+            sStop.store(true, std::memory_order_release);
+        } else DestroyWindow(hwnd);
+        // Destruction waits until the rendering worker has released its HWND target.
         return 0;
-
-    case WM_SIZE:
-        if (sController) {
-            const RECT bounds{ 0, 0, LOWORD(lparam), HIWORD(lparam) };
-            sController->put_Bounds(bounds);
-        }
+    case WM_DPICHANGED:
+        SizeForMonitor(hwnd, MonitorFromRect(reinterpret_cast<RECT *>(lparam), MONITOR_DEFAULTTONEAREST), false, LOWORD(wparam));
         return 0;
-
+    case WM_DISPLAYCHANGE:
+        SizeForMonitor(hwnd, MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST), false);
+        return 0;
+    case WM_ERASEBKGND: return 1;
+    case WM_PAINT: {
+        PAINTSTRUCT paint{};
+        HDC dc = BeginPaint(hwnd, &paint);
+        if (!sPainted.load(std::memory_order_acquire)) {
+            RECT client{}; GetClientRect(hwnd, &client);
+            HBRUSH background = CreateSolidBrush(RGB(247, 192, 82));
+            FillRect(dc, &client, background); DeleteObject(background);
+        }
+        EndPaint(hwnd, &paint);
+        return 0;
+    }
     case WM_DESTROY:
-        KillTimer(window, kLogTimerId);
-        PostQuitMessage(0);
+        if (hwnd == sWindow) {
+            sStop.store(true, std::memory_order_release);
+            sWindow = nullptr;
+            // Do not post WM_QUIT: this is still optional startup UI, not a game window.
+        }
         return 0;
-
-    default:
-        break;
     }
-    return DefWindowProcW(window, message, wparam, lparam);
+    return DefWindowProcW(hwnd, message, wparam, lparam);
 }
 
-void SplashScreen::ThreadMain() {
-    if (FAILED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED))) {
-        SetEvent(sWindowReadyEvent);
-        return;
-    }
-
-    WNDCLASSEXW windowClass{};
-    windowClass.cbSize = sizeof(windowClass);
-    windowClass.lpfnWndProc = WindowProc;
-    windowClass.hInstance = GetModuleHandleW(nullptr);
-    windowClass.hCursor = LoadCursorW(nullptr, IDC_ARROW);
-    windowClass.hbrBackground = reinterpret_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
-    windowClass.lpszClassName = kWindowClassName;
-    RegisterClassExW(&windowClass);
-
-    const int screenWidth = GetSystemMetrics(SM_CXSCREEN);
-    const int screenHeight = GetSystemMetrics(SM_CYSCREEN);
-    const int x = (screenWidth - kClientWidth) / 2;
-    const int y = (screenHeight - kClientHeight) / 2;
-
-    // 枠なし（WS_POPUP）にして、Unity等と同様のスプラッシュらしい見た目にする。
-    // タスクバーには出さない（WS_EX_TOOLWINDOW）
-    HWND hwnd = CreateWindowExW(
-        WS_EX_TOOLWINDOW,
-        kWindowClassName, L"KashipanEngine",
-        WS_POPUP,
-        x, y, kClientWidth, kClientHeight,
-        nullptr, nullptr, windowClass.hInstance, nullptr);
-
-    if (!hwnd) {
-        SetEvent(sWindowReadyEvent);
-        CoUninitialize();
-        return;
-    }
-
-    sHwnd.store(hwnd, std::memory_order_release);
-    SetEvent(sWindowReadyEvent);
-
-    ShowWindow(hwnd, SW_SHOW);
-    UpdateWindow(hwnd);
-
-    CreateWebView(hwnd);
-
-    MSG msg{};
-    while (GetMessageW(&msg, nullptr, 0, 0) > 0) {
-        TranslateMessage(&msg);
-        DispatchMessageW(&msg);
-    }
-
-    sController.Reset();
-    sWebView.Reset();
-    sHwnd.store(nullptr, std::memory_order_release);
-    CoUninitialize();
-}
-
-void SplashScreen::Show(PasskeyForGameEngineMain) {
-    if (sThread.joinable()) return;
-
-    BeginSplashLogCapture(Passkey<SplashScreen>{});
-    sShowStartTick = GetTickCount64();
-
-    sWindowReadyEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
-    sThread = std::thread(&SplashScreen::ThreadMain);
-
-    // ウィンドウの生成完了（に相当するタイミング）まではここで待つ。
-    // GameEngineの重い初期化が始まる前にスプラッシュを画面へ出しておきたいための同期であり、
-    // WebView2自体の初期化・描画は待たない（そちらは別スレッドで非同期に進む）
-    if (sWindowReadyEvent) {
-        WaitForSingleObject(sWindowReadyEvent, 3000);
-        CloseHandle(sWindowReadyEvent);
-        sWindowReadyEvent = nullptr;
+void PumpStartupMessages() {
+    if (GetCurrentThreadId() != sOwnerThread || !sWindow) return;
+    MSG message{};
+    for (int count = 0; count < 64 && PeekMessageW(&message, sWindow, 0, 0, PM_REMOVE); ++count) {
+        if (message.message == WM_QUIT) { PostQuitMessage(static_cast<int>(message.wParam)); break; }
+        TranslateMessage(&message); DispatchMessageW(&message);
+        if (!sWindow) break;
     }
 }
 
-void SplashScreen::Close(PasskeyForGameEngineMain) {
+void JoinRenderer() {
     if (!sThread.joinable()) return;
-
-    // 初期化が一瞬で終わった場合でも、ロゴが一瞬で消えないよう最低表示時間まで待つ
-    const ULONGLONG elapsedMs = GetTickCount64() - sShowStartTick;
-    if (elapsedMs < kMinimumDisplayMs) {
-        Sleep(static_cast<DWORD>(kMinimumDisplayMs - elapsedMs));
-    }
-
-    // フェードアウト演出を開始させてから、演出時間分だけ待って閉じる
-    NotifyClosing();
-    Sleep(kFadeOutMs);
-
-    if (HWND hwnd = sHwnd.load(std::memory_order_acquire)) {
-        PostMessageW(hwnd, WM_CLOSE, 0, 0);
+    // D2D/driver teardown may send native messages; keep the owner thread available.
+    while (sRunning.load(std::memory_order_acquire)) {
+        PumpStartupMessages();
+        MsgWaitForMultipleObjectsEx(0, nullptr, 2, QS_SENDMESSAGE, MWMO_INPUTAVAILABLE);
     }
     sThread.join();
-
-    EndSplashLogCapture(Passkey<SplashScreen>{});
 }
 
+void MessageLoop(HWND hwnd, WindowState &state) {
+    HANDLE timer = CreateWaitableTimerExW(nullptr, nullptr, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_ALL_ACCESS);
+    if (!timer) timer = CreateWaitableTimerW(nullptr, FALSE, nullptr);
+    struct TimerGuard { HANDLE value; ~TimerGuard() { if (value) CloseHandle(value); } } timerGuard{timer};
+    auto nextFrame = NowTicks();
+    while (!sStop.load(std::memory_order_acquire) && IsWindow(hwnd)) {
+        MSG message{};
+        while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&message); DispatchMessageW(&message);
+        }
+        const auto now = NowTicks();
+        if (now >= nextFrame) {
+            const bool finished = state.startTick && SampleFrame(state).finished;
+            if (!state.target && !InitializeGraphics(hwnd, state)) break;
+            if (!IsIconic(hwnd) && !(state.target->CheckWindowState() & D2D1_WINDOW_STATE_OCCLUDED)) Paint(hwnd, state);
+            // Leave the HWND alive and the final black frame in place for DX12 adoption.
+            if (finished) break;
+            nextFrame += kFramePeriod;
+            if (nextFrame <= NowTicks()) nextFrame = NowTicks() + kFramePeriod;
+        }
+        const auto remaining = std::max<LONGLONG>(1, nextFrame - NowTicks());
+        LARGE_INTEGER due{}; due.QuadPart = -std::max<LONGLONG>(1, remaining / 100);
+        if (timer && SetWaitableTimer(timer, &due, 0, nullptr, nullptr, FALSE)) {
+            MsgWaitForMultipleObjectsEx(1, &timer, INFINITE, QS_ALLINPUT, MWMO_INPUTAVAILABLE);
+        } else {
+            MsgWaitForMultipleObjectsEx(0, nullptr, static_cast<DWORD>((remaining + 999999) / 1000000), QS_ALLINPUT, MWMO_INPUTAVAILABLE);
+        }
+    }
+}
+
+void ThreadMain(const std::filesystem::path &folder, HWND hwnd, LONGLONG firstPaint) noexcept {
+    struct RunningGuard { ~RunningGuard() { sRunning.store(false, std::memory_order_release); } } runningGuard;
+    const auto previousDpiContext = SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    struct DpiGuard { DPI_AWARENESS_CONTEXT previous; ~DpiGuard() { if (previous) SetThreadDpiAwarenessContext(previous); } } dpiGuard{previousDpiContext};
+    try {
+        WindowState state; state.folder = folder; state.firstPaintTick = firstPaint;
+        while (!sConfigured.load(std::memory_order_acquire) && !sStop.load(std::memory_order_acquire)) Sleep(1);
+        if (sStop.load(std::memory_order_acquire)) return;
+        std::filesystem::path package;
+        { std::lock_guard lock(sProjectMutex); package = sProjectFolder / "StartupAnimation" / "animation.json"; }
+        if (std::filesystem::is_regular_file(package)) {
+            auto document = LoadingAnimation::Load(package);
+            if (document.errors.empty() && state.apartment.Initialize()) {
+                LoadingAnimation::Renderer renderer;
+                const auto start = NowTicks();
+                while (!sStop.load(std::memory_order_acquire) && IsWindow(hwnd)) {
+                    const auto ready = sReadyTick.load(std::memory_order_acquire);
+                    const auto frame = document.Sample((NowTicks()-start)/double(kSecond), ready ? std::max(0.0,(ready-start)/double(kSecond)) : -1);
+                    if (!IsIconic(hwnd)) {
+                        if (!renderer.Draw(hwnd,document,frame)) break;
+                        sPainted.store(true,std::memory_order_release);
+                        sBackend.store(renderer.IsHardware() ? SplashScreen::RenderingBackend::Hardware : SplashScreen::RenderingBackend::Software,std::memory_order_release);
+                    }
+                    if (frame.finished) return;
+                    Sleep(IsIconic(hwnd) ? 16 : 1);
+                }
+                if (sStop.load(std::memory_order_acquire)) return;
+            } else OutputDebugStringW(L"Invalid startup animation package; using engine animation.\n");
+        }
+        if (InitializeGraphics(hwnd, state)) MessageLoop(hwnd, state);
+        // All Direct2D/WIC/COM resources die here, before the engine creates its swap chain.
+    } catch (...) { /* Optional animation failure must not prevent window reuse or engine startup. */ }
+}
+} // namespace
+
+void SplashScreen::Show(PasskeyForGameEngineMain) {
+    if (sThread.joinable() || sWindow) return;
+    sOwnerThread = GetCurrentThreadId(); sClaimed = false;
+    sStop.store(false, std::memory_order_release); sCancelled.store(false, std::memory_order_release);
+    sReadyTick.store(0, std::memory_order_release); sPainted.store(false, std::memory_order_release);
+    sConfigured.store(false, std::memory_order_release);
+    sBackend.store(RenderingBackend::None, std::memory_order_release);
+    try {
+        WNDCLASSEXW wc{};
+        wc.cbSize = sizeof(wc); wc.lpfnWndProc = WindowProc;
+        wc.hInstance = GetModuleHandleW(nullptr); wc.lpszClassName = kWindowClass;
+        wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
+        if (!RegisterClassExW(&wc) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS) return;
+        POINT cursor{}; GetCursorPos(&cursor);
+        const auto monitor = MonitorFromPoint(cursor, MONITOR_DEFAULTTOPRIMARY);
+        sWindow = CreateWindowExW(kWindowExStyle, kWindowClass, L"KashipanEngine", kWindowStyle,
+            0, 0, 1, 1, nullptr, nullptr, wc.hInstance, nullptr);
+        if (!sWindow) { UnregisterClassW(kWindowClass, wc.hInstance); return; }
+        SizeForMonitor(sWindow, monitor, true);
+        ShowWindow(sWindow, SW_SHOWNORMAL);
+        UpdateWindow(sWindow); // First background paint precedes all COM/GPU initialization.
+        const auto firstPaint = NowTicks();
+        const auto folder = Utf8StringToPath(ProjectPaths::InEngineRoot("EngineData/UI/Splash"));
+        sRunning.store(true, std::memory_order_release);
+        sThread = std::thread(ThreadMain, folder, sWindow, firstPaint);
+    } catch (...) { sRunning.store(false, std::memory_order_release); }
+}
+void SplashScreen::ConfigureProject(PasskeyForGameEngineMain, const std::string &root) {
+    { std::lock_guard lock(sProjectMutex); sProjectFolder=Utf8StringToPath(root); }
+    sConfigured.store(true,std::memory_order_release);
+}
+bool SplashScreen::IsActive() { return sRunning.load(std::memory_order_acquire); }
+SplashScreen::RenderingBackend SplashScreen::GetRenderingBackend() { return sBackend.load(std::memory_order_acquire); }
+void SplashScreen::CheckCancellation() {
+    PumpStartupMessages();
+    if (sCancelled.load(std::memory_order_acquire)) throw Cancelled{};
+}
+void SplashScreen::PumpMessages() {
+    if (GetCurrentThreadId() != sOwnerThread || !sWindow) return;
+    static LONGLONG lastPump = 0;
+    const auto now = NowTicks();
+    if (now - lastPump < 4000000) return;
+    lastPump = now;
+    PumpStartupMessages();
+}
+void SplashScreen::NotifyReady(Passkey<GameEngine>) {
+    LONGLONG expected = 0;
+    sReadyTick.compare_exchange_strong(expected, NowTicks(), std::memory_order_release);
+}
+bool SplashScreen::HasStartupWindow() { return GetCurrentThreadId() == sOwnerThread && sWindow; }
+const wchar_t *SplashScreen::WindowClassName() { return kWindowClass; }
+HWND SplashScreen::ClaimWindow(Passkey<Window>) {
+    if (!HasStartupWindow() || sClaimed || !IsWindow(sWindow)) return nullptr;
+    sClaimed = true;
+    return sWindow;
+}
+void SplashScreen::DetachWindow(Passkey<Window>, HWND hwnd) {
+    if (!sClaimed || !HasStartupWindow() || hwnd != sWindow) return;
+    sStop.store(true, std::memory_order_release);
+    JoinRenderer();
+    CheckCancellation();
+    sWindow = nullptr; sClaimed = false;
+    // Window now owns this HWND and unregisters the class when it destroys the window.
+}
+void SplashScreen::AbandonWindow(Passkey<Window>, HWND hwnd) {
+    if (!HasStartupWindow() || hwnd != sWindow) return;
+    sStop.store(true, std::memory_order_release);
+    JoinRenderer();
+    sWindow = nullptr; sClaimed = false;
+}
+void SplashScreen::Finish(Passkey<GameEngine>) {
+    JoinRenderer();
+    CheckCancellation();
+    if (!sClaimed && sWindow) {
+        DestroyWindow(sWindow);
+        UnregisterClassW(kWindowClass, GetModuleHandleW(nullptr));
+    }
+}
+void SplashScreen::Close(PasskeyForGameEngineMain) {
+    sStop.store(true, std::memory_order_release);
+    JoinRenderer();
+    if (sWindow && !sClaimed) DestroyWindow(sWindow);
+    // A claimed window is owned by Window, including on exception/cancellation paths.
+    if (!sClaimed) UnregisterClassW(kWindowClass, GetModuleHandleW(nullptr));
+}
 } // namespace KashipanEngine
+
+#endif // RELEASE_BUILD

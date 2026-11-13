@@ -12,6 +12,7 @@
 #include "Input/Input.h"
 #include "Assets/SkeletonManager.h"
 #include "Objects/Components/Transform.h"
+#include "Objects/Components/KeyFrameAnimator.h"
 #include "Objects/Components/Collider/RigidBody2D.h"
 #include "Objects/Components/Collider/RigidBody3D.h"
 #ifdef USE_IMGUI
@@ -439,6 +440,9 @@ EmptyObject *Scene::CloneObject(EmptyObject *source, const std::string &name, bo
         EmptyObject *clonedPtr = CreateEmptyObject(name.empty() ? source->GetName() : name);
         if (!clonedPtr) return nullptr;
         clonedPtr->CopyStateFrom(Passkey<Scene>{}, *source);
+        for (const auto &[component, id] : clonedPtr->GetObjectContext()->GetAllComponents())
+            if (auto *animator = dynamic_cast<KeyFrameAnimator *>(component))
+                animator->RemapObjectTargets({{source->GetObjectID().ToString(), clonedPtr->GetObjectID().ToString()}});
         return clonedPtr;
     }
 
@@ -476,6 +480,12 @@ EmptyObject *Scene::CloneObject(EmptyObject *source, const std::string &name, bo
         if (clonedTransform) clonedTransform->SetParentObject(parentIt->second);
     }
 
+    std::unordered_map<std::string, std::string> animationTargets;
+    for (const auto &[original, clone] : originalToClone)
+        animationTargets[original->GetObjectID().ToString()] = clone->GetObjectID().ToString();
+    for (const auto &[original, clone] : originalToClone)
+        for (const auto &[component, id] : clone->GetObjectContext()->GetAllComponents())
+            if (auto *animator = dynamic_cast<KeyFrameAnimator *>(component)) animator->RemapObjectTargets(animationTargets);
     return clonedRoot;
 }
 

@@ -167,7 +167,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTool
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(RepositoryRoot)Externals\ReactPhysics3D\lib;$(RepositoryRoot)Externals\Box2D\lib;$(RepositoryRoot)Externals\Assimp\lib\Release;$(RepositoryRoot)Externals\WebView2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>assimp-vc143-mt.lib;reactphysics3d.lib;box2d.lib;WebView2Loader.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>GameInput.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <DelayLoadDLLs>d2d1.dll;dwrite.dll;GameInput.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(WindowsSdkDir)Redist\D3D\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
@@ -828,8 +828,23 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTool
     <ClCompile Include="..\SourceFiles\KashipanEngine\EngineSettings.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Splash\LoadingAnimation.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Splash\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Splash\LoadingAnimationRenderer.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Splash\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\LoadingAnimationEditor.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Splash\SplashScreen.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Splash\</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)'!='Release'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Splash\DevelopmentSplashScreen.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Splash\</ObjectFileName>
+      <AdditionalIncludeDirectories>$(RepositoryRoot)Externals\WebView2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExcludedFromBuild Condition="'$(Configuration)'=='Release'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Graphics\BlueNoiseGenerator.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Graphics\</ObjectFileName>
@@ -1153,7 +1168,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTool
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
 
     </ClCompile>
-    <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneLoder.cpp">
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneLoader.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
 
@@ -1659,6 +1674,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTool
     <ClInclude Include="..\SourceFiles\KashipanEngine\Debug\ScriptDebugDraw.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\EngineSettings.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Splash\SplashScreen.h" />
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Splash\SplashAnimation.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\EngineSettings\LoadInput.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\EngineSettings\LoadLimits.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\EngineSettings\LoadRendering.h" />
@@ -1823,6 +1839,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTool
     <ClInclude Include="..\SourceFiles\KashipanEngine\Objects\Components\Transform.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Objects\ParameterBinding.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Objects\Components\InputCommandApplier.h" />
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Splash\LoadingAnimation.h" />
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Objects\Components\LoadingAnimationSection.h" />
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\LoadingAnimationEditor.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Objects\Components\KeyFrameAnimator.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Objects\Components\ScriptComponent.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Objects\Components\Velocity.h" />
@@ -1928,7 +1947,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTool
     <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneCrashRecovery.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneLoder.h">
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneLoader.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneObjectHierarchy.h">

@@ -11,16 +11,13 @@
 #include "Core/PlayerSettings.h"
 #include "Core/ProjectPaths.h"
 #include "Core/UserSettings.h"
-#if !defined(RELEASE_BUILD)
 #include "Splash/SplashScreen.h"
-#endif
 
 #include "Utilities/Plugin/Plugins.h"
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/Translation.h"
 
 namespace KashipanEngine {
-#if !defined(RELEASE_BUILD)
 namespace {
 /// @brief スプラッシュ画面のRAIIガード
 /// @details GameEngineのコンストラクタが例外を投げた場合でも、スコープを抜ける際に
@@ -35,7 +32,6 @@ struct ScopedSplashScreen {
     PasskeyForGameEngineMain passkey_;
 };
 } // namespace
-#endif
 
 int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsPath) {
     StartupTiming::Begin();
@@ -56,7 +52,13 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
         if (std::wstring(arguments[i]) == L"--cook-assets") cookRoot = arguments[i + 1];
     if (arguments) LocalFree(arguments);
     if (!cookRoot.empty()) return CookedAssets::CookDistribution(cookRoot);
+    // Engine-owned native animation runs independently of the heavy initialization.
+    // Keep the guard alive through the first startup-scene draw, including Release.
+#if defined(RELEASE_BUILD)
+    ScopedSplashScreen splashScreen{ PasskeyForGameEngineMain{} };
+#endif
     LoadGlobalTranslationFiles();
+    SplashScreen::CheckCancellation();
     startupSections.End("EngineRootAndTranslations");
 
     //--------- 開くプロジェクトの決定 ---------//
@@ -64,6 +66,7 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
     // エンジン設定ファイル自体がプロジェクト内にあるため、設定の読み込みより先に行う
     ProjectPaths::Initialize({});
     if (!ProjectManager::EnsureActiveProject({})) {
+        SplashScreen::Close(PasskeyForGameEngineMain{});
         assert(false && "Failed to open a project.");
         MessageBoxW(nullptr,
             L"起動するプロジェクトを見つけられませんでした。\nProject.jsonまたはAssetsフォルダーを確認してください。",
@@ -71,8 +74,10 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
         return -1;
     }
 
+    SplashScreen::ConfigureProject({}, ProjectPaths::ProjectRoot());
     CookedAssets::Configure(Utf8StringToPath(ProjectPaths::ProjectRoot()));
     startupSections.End("ProjectSelection");
+    SplashScreen::CheckCancellation();
 
     //--------- 表示言語（個人設定）の適用 ---------//
 
@@ -90,12 +95,14 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
     }
 
     startupSections.End("UserAndPlayerSettings");
+    SplashScreen::CheckCancellation();
 
     //--------- 設定ファイル読み込み ---------//
 
     const std::string resolvedEngineSettingsPath = ProjectPaths::ToPhysical(engineSettingsPath);
     JSON engineSettingsJSON = LoadJSON(resolvedEngineSettingsPath);
     if (engineSettingsJSON.is_null()) {
+        SplashScreen::Close(PasskeyForGameEngineMain{});
         assert(false && "Failed to load engine settings JSON.");
         const std::wstring message = L"エンジン設定を読み込めませんでした。\n\n" +
             ConvertString(resolvedEngineSettingsPath);
@@ -109,6 +116,7 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
     StartupTiming::EnableLogging();
     LoadEngineSettings({}, resolvedEngineSettingsPath);
     startupSections.End("EngineSettings");
+    SplashScreen::CheckCancellation();
 
 	// --------- プラグインの初期化 ---------//
 	Plugin::ThreadPool threadPool;
@@ -125,22 +133,25 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
 		};
 	Plugin::executeAsyncTasks = [&taskDispatcher]() {
 		taskDispatcher.ExecuteTasks();
+
+        // Asset workers must finish before cancellation can unwind their captured buffers.
+        SplashScreen::PumpMessages();
 		};
 	Plugin::hasAsyncTasks = [&taskDispatcher]() {
 		return taskDispatcher.HasTasks();
 		};
 
     startupSections.End("ThreadPoolAndDispatcher");
+    SplashScreen::CheckCancellation();
 
     //--------- エンジン実行 ---------//
 
     std::unique_ptr<GameEngine> engine;
 #if defined(RELEASE_BUILD)
-    // Releaseではスプラッシュの生成・WebView初期化・表示終了待ちを実行しない。
     engine = std::make_unique<GameEngine>(PasskeyForGameEngineMain{});
     startupSections.End("GameEngine");
 #else
-    // 初期化中はスプラッシュ画面を表示してログを流す。
+    // Development/Debug retain the independent WebView2 log screen during initialization only.
     {
         ScopedSplashScreen splashScreen{ PasskeyForGameEngineMain{} };
         engine = std::make_unique<GameEngine>(PasskeyForGameEngineMain{});
@@ -161,6 +172,10 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
 
     ShutdownLogger({});
     return code;
+    } catch (const SplashScreen::Cancelled &) {
+        StartupTiming::Interrupt();
+        ShutdownLogger({});
+        return 0;
     } catch (const std::exception &exception) {
         const std::string detail = exception.what();
         StartupTiming::Interrupt();

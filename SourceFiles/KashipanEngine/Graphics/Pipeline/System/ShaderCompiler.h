@@ -70,7 +70,7 @@ private:
         UINT bindPoint = 0;
         UINT bindCount = 0;
         UINT numSamples = 0;
-        UINT space = 0; // register space
+        UINT space = 0; // レジスター空間
         UINT flags = 0; // D3D12_SHADER_INPUT_BIND_DESC::uFlags
     };
 
@@ -143,8 +143,12 @@ public:
     static void DestroyCompiledShaders(Passkey<PipelineManager>, const std::vector<uint32_t> &shaderIDs);
 
     void LogCacheStatistics() const {
+        Log("[ShaderCacheTiming] bytecode=" + std::to_string(bytecodeMs_) + " ms, layout=" + std::to_string(layoutMs_) + " ms, reflection=" + std::to_string(reflectionMs_) + " ms", LogSeverity::Info);
+        Log("[StartupCache] Shader reuse: blobs=" + std::to_string(sharedBlobHits_) + ", reflections=" + std::to_string(sharedReflectionHits_), LogSeverity::Info);
         Log("[StartupCache] Shaders: hits=" + std::to_string(cacheHits_) + ", misses=" + std::to_string(cacheMisses_), LogSeverity::Info);
     }
+    // Reuse is limited to one pipeline load generation; compiled results retain their own ownership.
+    void ClearReuseCache(Passkey<PipelineManager>) { reusedShaders_.clear(); }
 
     /// @brief シェーダーコンパイル結果情報構造体
     struct ShaderCompiledInfo {
@@ -181,6 +185,10 @@ public:
     /// @param device D3D12デバイス
     ShaderCompiler(Passkey<PipelineManager>, ID3D12Device *device);
     ~ShaderCompiler();
+    /// CPU-only compiler used by the distribution cooker (no GPU/PSO creation).
+    static std::unique_ptr<ShaderCompiler> CreateOfflineCompiler() {
+        return std::unique_ptr<ShaderCompiler>(new ShaderCompiler(nullptr));
+    }
 
     /// @brief シェーダーのコンパイル
     /// @param compileInfo コンパイル情報
@@ -190,15 +198,27 @@ public:
     void DestroyShader(ShaderCompiledInfo *shaderCompiledInfo);
 
 private:
+    explicit ShaderCompiler(ID3D12Device *device);
     uint32_t cacheHits_ = 0;
     uint32_t cacheMisses_ = 0;
+    uint32_t sharedBlobHits_ = 0;
+    uint32_t sharedReflectionHits_ = 0;
+    double bytecodeMs_ = 0, layoutMs_ = 0, reflectionMs_ = 0;
+    std::filesystem::path shaderCacheDirectory_, materialLayoutCacheDirectory_;
+    struct ReusedShader {
+        Microsoft::WRL::ComPtr<IDxcBlob> bytecode;
+        ShaderReflectionInfo reflection;
+        bool reflectionReady = false;
+    };
+    std::unordered_map<std::string, ReusedShader> reusedShaders_;
+    Microsoft::WRL::ComPtr<IDxcBlob> RestoreBytecode(const void *data, size_t size);
     /// @brief シェーダーのコンパイル内部処理
     /// @param compileInfo コンパイル情報
     ShaderCompiledInfo *ShaderCompile(const CompileInfo &compileInfo);
     /// @brief シェーダーリフレクション取得内部処理
     /// @param shaderBlob コンパイル済みシェーダーブロブ
     /// @param outReflectionInfo 出力先リフレクション情報
-    void ShaderReflection(IDxcBlob *shaderBlob, ShaderReflectionInfo &outReflectionInfo);
+    bool ShaderReflection(IDxcBlob *shaderBlob, ShaderReflectionInfo &outReflectionInfo);
 
     /// @brief 型情報からシェーダー変数情報を構築
     ShaderVariable BuildShaderVariableFromType(

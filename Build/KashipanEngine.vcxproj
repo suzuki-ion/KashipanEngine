@@ -689,6 +689,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTool
       <ObjectFileName>$(IntDir)Externals\imgui\</ObjectFileName>
 
     </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Assets\CookedAssets.cpp" />
     <ClCompile Include="..\SourceFiles\KashipanEngine\Assets\AnimationManager.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Assets\</ObjectFileName>
     </ClCompile>
@@ -1641,6 +1642,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTool
     <ClInclude Include="..\SourceFiles\KashipanEngine\Utilities\FileIO\ContentCache.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Graphics\TextureUploadBatch.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Assets\PreparedTextureCache.h" />
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Assets\CookedAssets.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Assets\AssetFileIndex.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Assets\ModelSceneCache.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Assets\SharedModelImport.h" />

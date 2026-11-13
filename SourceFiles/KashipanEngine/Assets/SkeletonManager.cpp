@@ -1,3 +1,4 @@
+#include "Assets/CookedAssets.h"
 #include "Assets/AssetFileIndex.h"
 #include "SkeletonManager.h"
 #include "Assets/SharedModelImport.h"
@@ -255,7 +256,7 @@ SkeletonManager::SkeletonHandle SkeletonManager::LoadSkeleton(const std::string 
 
     const std::filesystem::path p = Utf8StringToPath(filePath);
 
-    if (!std::filesystem::exists(p)) {
+    if (!CookedAssets::Contains("Models", p) && !std::filesystem::exists(p)) {
         Log(Translation("engine.skeleton.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }

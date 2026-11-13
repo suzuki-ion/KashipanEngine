@@ -8,8 +8,8 @@
 #include <type_traits>
 
 namespace KashipanEngine::ModelSceneCache {
-// Engine-facing postprocessed scene data only. Bump the schema whenever a consumer
-// starts using another Assimp field. No pointers or Assimp object layouts are stored.
+// エンジンが使用する後処理済みシーンデータのみを保存する。使用側で新たなAssimpフィールドを
+// 参照する場合はスキーマを更新する。ポインターやAssimpオブジェクトのメモリ配置は保存しない。
 inline constexpr const char *Schema = "EngineModelScene-v1";
 template<bool Reading> class Archive final {
 public:
@@ -106,7 +106,7 @@ public:
             Text(key); Value(semantic); Value(index); Value(type);
             char *data = nullptr;
             if constexpr (!Reading) data = material.mProperties[i]->mData;
-            // Temporary owns decoded property memory until aiMaterial copies it.
+            // aiMaterialがコピーするまで、復号したプロパティのメモリは一時オブジェクトが所有する。
             std::unique_ptr<char[]> owned;
             if constexpr (Reading) {
                 Value(size); RequireAllocation(size, 1); owned.reset(size ? new char[size] : nullptr);
@@ -124,7 +124,7 @@ public:
             Values(channel.mRotationKeys, channel.mNumRotationKeys);
             Values(channel.mScalingKeys, channel.mNumScalingKeys);
         });
-        // These channels are preserved even though the current AnimationManager uses node keys only.
+        // 現在のAnimationManagerはノードキーのみを使用するが、これらのチャンネルも保持する。
         Objects(animation.mMeshChannels, animation.mNumMeshChannels, [&](aiMeshAnim &channel) {
             Text(channel.mName); Values(channel.mKeys, channel.mNumKeys);
         });
@@ -143,7 +143,7 @@ public:
                     if (weights != key.mNumValuesAndWeights) throw std::runtime_error("model morph key");
                 } catch (...) {
                     if constexpr (Reading) {
-                        // Assimp's destructor frees these only when BOTH pointers are present.
+                        // Assimpのデストラクターは両方のポインターが存在する場合にのみ解放する。
                         delete[] key.mValues; delete[] key.mWeights;
                         key.mValues = nullptr; key.mWeights = nullptr; key.mNumValuesAndWeights = 0;
                     }
@@ -171,7 +171,7 @@ public:
             }
             if (bytes) Bytes(texture.pcData, static_cast<size_t>(bytes));
         });
-        // Cameras/lights/metadata are not consumed by the engine's three model managers.
+        // カメラ・ライト・メタデータは、エンジンの3つのモデル関連マネージャーでは使用しない。
     }
     bool Complete() const { return input_ && cursor_ == input_->size(); }
 private:
@@ -196,7 +196,7 @@ private:
 };
 inline std::vector<char> Encode(const aiScene &scene) {
     Archive<false> archive;
-    archive.Scene(const_cast<aiScene &>(scene)); // Writer does not mutate the scene.
+    archive.Scene(const_cast<aiScene &>(scene)); // 書き込み処理はシーンを変更しない。
     return std::move(archive.output);
 }
 inline std::unique_ptr<aiScene> Decode(const std::vector<char> &bytes) {
@@ -204,7 +204,7 @@ inline std::unique_ptr<aiScene> Decode(const std::vector<char> &bytes) {
         auto scene = std::make_unique<aiScene>();
         Archive<true> archive(&bytes); archive.Scene(*scene);
         if (!archive.Complete() || !scene->mRootNode) return {};
-        // Check cross references before handing the restored scene to consumers.
+        // 復元したシーンを使用側へ渡す前に相互参照を検証する。
         const auto checkNode = [&](const auto &self, const aiNode *node) -> bool {
             for (unsigned int i = 0; i < node->mNumMeshes; ++i) if (node->mMeshes[i] >= scene->mNumMeshes) return false;
             for (unsigned int i = 0; i < node->mNumChildren; ++i) if (!self(self, node->mChildren[i])) return false;
@@ -225,7 +225,7 @@ inline std::unique_ptr<aiScene> Decode(const std::vector<char> &bytes) {
     } catch (...) { return {}; }
 }
 inline std::string LibraryIdentity() {
-    // Hash the actual loaded DLL too: custom Assimp rebuilds invalidate old data.
+    // 読み込んだDLL自体もハッシュ化し、Assimpの独自ビルド時に古いデータを無効化する。
     static const std::string identity = [] {
         HMODULE module = nullptr;
         if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,

@@ -1,5 +1,6 @@
-#include "ShaderCompiler.h"
+﻿#include "ShaderCompiler.h"
 #include "Core/ProjectPaths.h"
+#include "Assets/CookedAssets.h"
 #include "Utilities/FileIO/ContentCache.h"
 #include <atomic>
 #include <stdexcept>
@@ -8,6 +9,7 @@
 #include <format>
 #include <filesystem>
 #include <unordered_set>
+#include <chrono>
 #include <d3d12shader.h>
 #include "Utilities/Conversion/ConvertString.h"
 #include "Utilities/Translation.h"
@@ -18,6 +20,8 @@ namespace KashipanEngine {
 namespace {
 // 要素数事前確保サイズ
 static constexpr size_t kPreallocateSize = 128;
+using ShaderClock = std::chrono::steady_clock;
+double ShaderElapsed(ShaderClock::time_point start) { return std::chrono::duration<double, std::milli>(ShaderClock::now() - start).count(); }
 // コンパイル済みシェーダー配列
 std::vector<std::unique_ptr<ShaderCompiler::ShaderCompiledInfo>> sCompiledShaders;
 // 空きのシェーダーID配列
@@ -31,7 +35,7 @@ std::vector<uint32_t> sFreeShaderIDs;
 #endif
 
 
-// Delegate to DXC's original handler and record the exact bytes actually included.
+// DXCの元のハンドラーへ委譲し、実際にインクルードされた正確なバイト列を記録する。
 class RecordingIncludeHandler final : public IDxcIncludeHandler {
 public:
     RecordingIncludeHandler(IDxcIncludeHandler *delegate, std::filesystem::path sourceDirectory)
@@ -120,7 +124,9 @@ void ShaderCompiler::DestroyCompiledShaders(
     }
 }
 
-ShaderCompiler::ShaderCompiler(Passkey<PipelineManager>, ID3D12Device *device) {
+ShaderCompiler::ShaderCompiler(Passkey<PipelineManager>, ID3D12Device *device) : ShaderCompiler(device) {}
+
+ShaderCompiler::ShaderCompiler(ID3D12Device *device) {
     LogScope scope;
     Log(Translation("engine.graphics.shadercompiler.initialize.start"), LogSeverity::Debug);
     device_ = device;
@@ -177,7 +183,20 @@ ShaderCompiler::ShaderCompiledInfo *ShaderCompiler::CompileShader(const CompileI
         throw std::runtime_error("Shader compilation failed: " + compileInfo.filePath);
     }
     // リフレクション
-    ShaderReflection(compiledShader->bytecode.Get(), compiledShader->reflectionInfo);
+    const auto reflectionStart = ShaderClock::now();
+    const auto bytecodeKey = ContentCache::Digest(compiledShader->GetBytecodePtr(), compiledShader->GetBytecodeSize());
+    if (!bytecodeKey.empty()) {
+        auto &reused = reusedShaders_[bytecodeKey];
+        if (reused.reflectionReady) {
+            compiledShader->reflectionInfo = reused.reflection;
+            ++sharedReflectionHits_;
+        } else if (ShaderReflection(compiledShader->bytecode.Get(), compiledShader->reflectionInfo)) {
+            reused.reflection = compiledShader->reflectionInfo;
+            reused.reflectionReady = true;
+        }
+        reused.bytecode = compiledShader->bytecode;
+    } else ShaderReflection(compiledShader->bytecode.Get(), compiledShader->reflectionInfo);
+    reflectionMs_ += ShaderElapsed(reflectionStart);
 
     Log(Translation("engine.graphics.shadercompiler.compile.end") + compiledShader->name, LogSeverity::Debug);
     return compiledShader;
@@ -201,144 +220,170 @@ void ShaderCompiler::DestroyShader(ShaderCompiledInfo *shaderCompiledInfo) {
     Log(Translation("engine.graphics.shadercompiler.destroy.success"), LogSeverity::Debug);
 }
 
+Microsoft::WRL::ComPtr<IDxcBlob> ShaderCompiler::RestoreBytecode(const void *data, size_t size) {
+    const auto key = ContentCache::Digest(data, size);
+    if (!key.empty()) {
+        const auto found = reusedShaders_.find(key);
+        if (found != reusedShaders_.end() && found->second.bytecode) {
+            ++sharedBlobHits_;
+            return found->second.bytecode;
+        }
+    }
+    Microsoft::WRL::ComPtr<IDxcBlobEncoding> blob;
+    const HRESULT result = dxcLibrary_->CreateBlobWithEncodingOnHeapCopy(data, static_cast<UINT32>(size), 0, &blob);
+    if (FAILED(result)) return {};
+    if (!key.empty()) reusedShaders_[key].bytecode = blob;
+    return blob;
+}
+
 ShaderCompiler::ShaderCompiledInfo *ShaderCompiler::ShaderCompile(const CompileInfo &compileInfo) {
     LogScope scope;
+    const auto bytecodeStart = ShaderClock::now();
+    ContentCache::DependencyValidation validation;
     if (compileInfo.filePath.empty() || compileInfo.entryPoint.empty() || compileInfo.targetProfile.empty()) {
         Log(Translation("engine.graphics.shadercompiler.compile.invalidargs"), LogSeverity::Error);
         return nullptr;
     }
 
-    // HLSL読み込み
-    Microsoft::WRL::ComPtr<IDxcBlobEncoding> sourceBlob;
-    UINT codePage = 0; // auto-detect
-    std::wstring wFilePath = ConvertString(compileInfo.filePath);
-    HRESULT hr = dxcLibrary_->CreateBlobFromFile(wFilePath.c_str(), &codePage, &sourceBlob);
-    if (FAILED(hr) || sourceBlob == nullptr) {
-        Log(Translation("engine.graphics.shadercompiler.compile.hlslnotfound") + compileInfo.filePath, LogSeverity::Error);
-        return nullptr;
-    }
-
-    DxcBuffer src{};
-    src.Ptr = sourceBlob->GetBufferPointer();
-    src.Size = sourceBlob->GetBufferSize();
-    src.Encoding = DXC_CP_UTF8; // assume UTF-8
-
-    // Include handler
-    Microsoft::WRL::ComPtr<IDxcIncludeHandler> includeHandler;
-    hr = dxcLibrary_->CreateIncludeHandler(&includeHandler);
-    if (FAILED(hr)) {
-        Log(Translation("engine.graphics.shadercompiler.compile.includehandler.failed"), LogSeverity::Error);
-        return nullptr;
-    }
-
-    // 引数組み立て
-    std::wstring wEntry = ConvertString(compileInfo.entryPoint);
-    std::wstring wTarget = ConvertString(compileInfo.targetProfile);
-
-    std::vector<std::wstring> wstrArgs;
-    wstrArgs.reserve(12 + compileInfo.macros.size());
-    wstrArgs.emplace_back(wFilePath);   // ソース名
-    wstrArgs.emplace_back(L"-E");
-    wstrArgs.emplace_back(wEntry);      // エントリーポイント
-    wstrArgs.emplace_back(L"-T");
-    wstrArgs.emplace_back(wTarget);     // ターゲットプロファイル
-    // デバッグ情報、行優先レイアウト。最適化は無効。
-    wstrArgs.emplace_back(L"-Zi");
-    wstrArgs.emplace_back(L"-Qembed_debug");
-    wstrArgs.emplace_back(L"-Zpr");
-    wstrArgs.emplace_back(L"-Od");
-
-    // 参照元ファイルのディレクトリをインクルードパスに追加（相対 #include 対応）
-    {
-        std::filesystem::path incDir = Utf8StringToPath(compileInfo.filePath).parent_path();
-        if (!incDir.empty()) {
-            wstrArgs.emplace_back(L"-I");
-            wstrArgs.emplace_back(incDir.wstring());
-        }
-    }
-
-    // マクロ定義
-    for (const auto &m : compileInfo.macros) {
-        std::wstring def = L"-D" + ConvertString(m.first);
-        if (!m.second.empty()) {
-            def += L"=" + ConvertString(m.second);
-        }
-        wstrArgs.emplace_back(std::move(def));
-    }
-
-    std::vector<LPCWSTR> args;
-    args.reserve(wstrArgs.size());
-    for (auto &s : wstrArgs) args.emplace_back(s.c_str());
-
-    std::string cacheKey = "ShaderBytecode-v1|" + DxcIdentity();
-    for (const auto &argument : wstrArgs) {
-        const auto text = ConvertString(argument);
-        cacheKey += "|" + std::to_string(text.size()) + ":" + text;
-    }
-    cacheKey += "|cwd=" + ContentCache::PathText(std::filesystem::current_path());
-    static const auto cacheDirectory = ContentCache::Directory(ProjectPaths::ProjectRoot(), "Shaders");
-    const auto cachePath = cacheDirectory / (ContentCache::Digest(cacheKey) + ".cache");
+    const auto variant = ContentCache::Json{{"entry", compileInfo.entryPoint}, {"target", compileInfo.targetProfile},
+        {"macros", compileInfo.macros}}.dump();
     Microsoft::WRL::ComPtr<IDxcBlob> shaderBlob;
-    bool cacheHit = false;
-    if (!DxcIdentity().empty()) {
-        if (const auto cached = ContentCache::Load(cachePath, cacheKey)) {
-            Microsoft::WRL::ComPtr<IDxcBlobEncoding> blob;
-            hr = dxcLibrary_->CreateBlobWithEncodingOnHeapCopy(cached->data(), static_cast<UINT32>(cached->size()), 0, &blob);
-            if (SUCCEEDED(hr)) { shaderBlob = blob; cacheHit = true; }
-        }
-    }
-    if (cacheHit) {
+    HRESULT hr = S_OK;
+    if (const auto bytes = CookedAssets::Load("Shaders", ContentCache::Path(compileInfo.filePath), variant)) {
+        shaderBlob = RestoreBytecode(bytes->data(), bytes->size());
+        if (!shaderBlob) throw std::runtime_error("Could not load cooked shader");
         ++cacheHits_;
     } else {
-        ++cacheMisses_;
-        Microsoft::WRL::ComPtr<RecordingIncludeHandler> recordingHandler;
-        recordingHandler.Attach(new RecordingIncludeHandler(includeHandler.Get(), Utf8StringToPath(compileInfo.filePath).parent_path()));
-        const auto sourceDependency = ContentCache::Dependency(Utf8StringToPath(compileInfo.filePath));
-        if (sourceDependency["hash"] != ContentCache::Digest(sourceBlob->GetBufferPointer(), sourceBlob->GetBufferSize())) recordingHandler->cacheable = false;
-        Microsoft::WRL::ComPtr<IDxcResult> result;
-        hr = dxcCompiler_->Compile(
-            &src,
-            args.data(),
-            static_cast<UINT>(args.size()),
-            recordingHandler.Get(),
-            IID_PPV_ARGS(&result)
-        );
-        if (FAILED(hr) || result == nullptr) {
-            Log(Translation("engine.graphics.shadercompiler.compile.failed") + compileInfo.filePath, LogSeverity::Error);
-            return nullptr;
+        std::wstring wFilePath = ConvertString(compileInfo.filePath);
+
+        // 引数組み立て
+        std::wstring wEntry = ConvertString(compileInfo.entryPoint);
+        std::wstring wTarget = ConvertString(compileInfo.targetProfile);
+
+        std::vector<std::wstring> wstrArgs;
+        wstrArgs.reserve(12 + compileInfo.macros.size());
+        wstrArgs.emplace_back(wFilePath);   // ソース名
+        wstrArgs.emplace_back(L"-E");
+        wstrArgs.emplace_back(wEntry);      // エントリーポイント
+        wstrArgs.emplace_back(L"-T");
+        wstrArgs.emplace_back(wTarget);     // ターゲットプロファイル
+        // デバッグ情報、行優先レイアウト。最適化は無効。
+        if (!CookedAssets::writing) {
+            wstrArgs.emplace_back(L"-Zi");
+            wstrArgs.emplace_back(L"-Qembed_debug");
+        }
+        wstrArgs.emplace_back(L"-Zpr");
+        wstrArgs.emplace_back(L"-Od");
+
+        // 参照元ファイルのディレクトリをインクルードパスに追加（相対 #include 対応）
+        {
+            std::filesystem::path incDir = Utf8StringToPath(compileInfo.filePath).parent_path();
+            if (!incDir.empty()) {
+                wstrArgs.emplace_back(L"-I");
+                wstrArgs.emplace_back(incDir.wstring());
+            }
         }
 
-        // ステータス取得（これで成功/失敗を判定）
-        HRESULT status = S_OK;
-        result->GetStatus(&status);
-
-        // 診断出力（警告は許容、失敗時はエラー）
-        Microsoft::WRL::ComPtr<IDxcBlobUtf8> errors;
-        result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), nullptr);
-        if (errors && errors->GetStringLength() > 0) {
-            std::string msg = std::string(errors->GetStringPointer());
-            Log(Translation("engine.graphics.shadercompiler.compile.error") + msg,
-                FAILED(status) ? LogSeverity::Error : LogSeverity::Warning);
+        // マクロ定義
+        for (const auto &m : compileInfo.macros) {
+            std::wstring def = L"-D" + ConvertString(m.first);
+            if (!m.second.empty()) {
+                def += L"=" + ConvertString(m.second);
+            }
+            wstrArgs.emplace_back(std::move(def));
         }
 
-        if (FAILED(status)) {
-            return nullptr;
+        std::vector<LPCWSTR> args;
+        args.reserve(wstrArgs.size());
+        for (auto &s : wstrArgs) args.emplace_back(s.c_str());
+
+        std::string cacheKey = "ShaderBytecode-v1|" + DxcIdentity();
+        for (const auto &argument : wstrArgs) {
+            const auto text = ConvertString(argument);
+            cacheKey += "|" + std::to_string(text.size()) + ":" + text;
+        }
+        cacheKey += "|cwd=" + ContentCache::PathText(std::filesystem::current_path());
+        if (!CookedAssets::writing && shaderCacheDirectory_.empty()) shaderCacheDirectory_ = ContentCache::Directory(ProjectPaths::ProjectRoot(), "Shaders");
+        const auto cacheDirectory = CookedAssets::writing ? CookedAssets::root / "Cache/Startup/Shaders" : shaderCacheDirectory_;
+        const auto cachePath = cacheDirectory / (ContentCache::Digest(cacheKey) + ".cache");
+        bool cacheHit = false;
+        if (!CookedAssets::writing && !DxcIdentity().empty()) {
+            if (const auto cached = ContentCache::Load(cachePath, cacheKey, false, &validation)) {
+                shaderBlob = RestoreBytecode(cached->data(), cached->size());
+                cacheHit = shaderBlob != nullptr;
+            }
+        }
+        if (cacheHit) {
+            ++cacheHits_;
+        } else {
+            ++cacheMisses_;
+            // Source blobs and DXC include handlers are only needed on a cache miss.
+            Microsoft::WRL::ComPtr<IDxcBlobEncoding> sourceBlob;
+            UINT codePage = 0;
+            hr = dxcLibrary_->CreateBlobFromFile(wFilePath.c_str(), &codePage, &sourceBlob);
+            if (FAILED(hr) || !sourceBlob) {
+                Log(Translation("engine.graphics.shadercompiler.compile.hlslnotfound") + compileInfo.filePath, LogSeverity::Error);
+                return nullptr;
+            }
+            DxcBuffer src{sourceBlob->GetBufferPointer(), sourceBlob->GetBufferSize(), DXC_CP_UTF8};
+            Microsoft::WRL::ComPtr<IDxcIncludeHandler> includeHandler;
+            hr = dxcLibrary_->CreateIncludeHandler(&includeHandler);
+            if (FAILED(hr)) {
+                Log(Translation("engine.graphics.shadercompiler.compile.includehandler.failed"), LogSeverity::Error);
+                return nullptr;
+            }
+            Microsoft::WRL::ComPtr<RecordingIncludeHandler> recordingHandler;
+            recordingHandler.Attach(new RecordingIncludeHandler(includeHandler.Get(), Utf8StringToPath(compileInfo.filePath).parent_path()));
+            const auto sourceDependency = ContentCache::Dependency(Utf8StringToPath(compileInfo.filePath));
+            if (sourceDependency["hash"] != ContentCache::Digest(sourceBlob->GetBufferPointer(), sourceBlob->GetBufferSize())) recordingHandler->cacheable = false;
+            Microsoft::WRL::ComPtr<IDxcResult> result;
+            hr = dxcCompiler_->Compile(
+                &src,
+                args.data(),
+                static_cast<UINT>(args.size()),
+                recordingHandler.Get(),
+                IID_PPV_ARGS(&result)
+            );
+            if (FAILED(hr) || result == nullptr) {
+                Log(Translation("engine.graphics.shadercompiler.compile.failed") + compileInfo.filePath, LogSeverity::Error);
+                return nullptr;
+            }
+
+            // ステータス取得（これで成功/失敗を判定）
+            HRESULT status = S_OK;
+            result->GetStatus(&status);
+
+            // 診断出力（警告は許容、失敗時はエラー）
+            Microsoft::WRL::ComPtr<IDxcBlobUtf8> errors;
+            result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), nullptr);
+            if (errors && errors->GetStringLength() > 0) {
+                std::string msg = std::string(errors->GetStringPointer());
+                Log(Translation("engine.graphics.shadercompiler.compile.error") + msg,
+                    FAILED(status) ? LogSeverity::Error : LogSeverity::Warning);
+            }
+
+            if (FAILED(status)) {
+                return nullptr;
+            }
+
+            // バイナリ取得
+            hr = result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&shaderBlob), nullptr);
+            if (FAILED(hr) || shaderBlob == nullptr) {
+                Log(Translation("engine.graphics.shadercompiler.compile.getobject.failed"), LogSeverity::Error);
+                return nullptr;
+            }
+
+            recordingHandler->dependencies.push_back(sourceDependency);
+            if (!CookedAssets::writing && recordingHandler->cacheable && !DxcIdentity().empty()) {
+                ContentCache::Store(cachePath, cacheKey, recordingHandler->dependencies,
+                    shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize());
+            }
         }
 
-        // バイナリ取得
-        hr = result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&shaderBlob), nullptr);
-        if (FAILED(hr) || shaderBlob == nullptr) {
-            Log(Translation("engine.graphics.shadercompiler.compile.getobject.failed"), LogSeverity::Error);
-            return nullptr;
-        }
-
-        recordingHandler->dependencies.push_back(sourceDependency);
-        if (recordingHandler->cacheable && !DxcIdentity().empty()) {
-            ContentCache::Store(cachePath, cacheKey, recordingHandler->dependencies,
-                shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize());
-        }
     }
 
+    bytecodeMs_ += ShaderElapsed(bytecodeStart);
+    const auto layoutStart = ShaderClock::now();
     // IDの確保
     uint32_t shaderID;
     if (!sFreeShaderIDs.empty()) {
@@ -356,28 +401,54 @@ ShaderCompiler::ShaderCompiledInfo *ShaderCompiler::ShaderCompile(const CompileI
     // struct Material のバイトレイアウトをHLSLソースから求める（Materialを持たないシェーダーでは空になるだけで無害）
     std::unordered_set<std::string> definedMacroNames;
     for (const auto &m : compileInfo.macros) definedMacroNames.insert(m.first);
-    info->materialLayout = MaterialLayout::BuildFromHlslSource(compileInfo.filePath, definedMacroNames);
+    if (CookedAssets::Active()) {
+        const auto &layout = CookedAssets::manifest.at("entries").at(CookedAssets::Key("Shaders", ContentCache::Path(compileInfo.filePath), variant));
+        info->materialLayout.totalByteSize = layout.at("size");
+        info->materialLayout.textureFields = layout.at("textures").get<std::vector<std::string>>();
+        info->materialLayout.textureCubeFields = layout.at("cubes").get<std::vector<std::string>>();
+        for (const auto &field : layout.at("fields")) {
+            MaterialFieldLayout value;
+            value.name = field.at("name"); value.byteOffset = field.at("offset"); value.byteSize = field.at("size");
+            value.valueType = static_cast<ValueType>(field.at("type").get<int>());
+            value.hasRange = field.at("range"); value.rangeMin = field.at("min");
+            value.rangeMax = field.at("max"); value.rangeStep = field.at("step");
+            info->materialLayout.fields.push_back(std::move(value));
+        }
+    } else if (CookedAssets::writing) info->materialLayout = MaterialLayout::BuildFromHlslSource(compileInfo.filePath, definedMacroNames);
+    else {
+        if (materialLayoutCacheDirectory_.empty()) materialLayoutCacheDirectory_ = ContentCache::Directory(ProjectPaths::ProjectRoot(), "MaterialLayouts");
+        info->materialLayout = MaterialLayout::BuildCachedFromHlslSource(compileInfo.filePath, definedMacroNames, materialLayoutCacheDirectory_, &validation);
+    }
+    if (CookedAssets::writing) {
+        const auto &layout = info->materialLayout;
+        ContentCache::Json fields = ContentCache::Json::array();
+        for (const auto &f : layout.fields) fields.push_back({{"name", f.name}, {"offset", f.byteOffset}, {"size", f.byteSize},
+            {"type", static_cast<int>(f.valueType)}, {"range", f.hasRange}, {"min", f.rangeMin}, {"max", f.rangeMax}, {"step", f.rangeStep}});
+        CookedAssets::Store("Shaders", ContentCache::Path(compileInfo.filePath), shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), variant,
+            {{"size", layout.totalByteSize}, {"fields", fields}, {"textures", layout.textureFields}, {"cubes", layout.textureCubeFields}});
+    }
 
     // 保存して返す
     ShaderCompiledInfo *ret = info.get();
     sCompiledShaders[shaderID] = std::move(info);
+    layoutMs_ += ShaderElapsed(layoutStart);
     return ret;
 }
 
-void ShaderCompiler::ShaderReflection(IDxcBlob *shaderBlob, ShaderReflectionInfo &outReflectionInfo) {
-    if (shaderBlob == nullptr) return;
+bool ShaderCompiler::ShaderReflection(IDxcBlob *shaderBlob, ShaderReflectionInfo &outReflectionInfo) {
+    if (shaderBlob == nullptr) return false;
 
     Microsoft::WRL::ComPtr<IDxcContainerReflection> container;
     HRESULT hr = DxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&container));
     if (FAILED(hr) || container == nullptr) {
         Log(Translation("engine.graphics.shadercompiler.reflection.container.failed"), LogSeverity::Warning);
-        return;
+        return false;
     }
 
     hr = container->Load(shaderBlob);
     if (FAILED(hr)) {
         Log(Translation("engine.graphics.shadercompiler.reflection.load.failed"), LogSeverity::Warning);
-        return;
+        return false;
     }
 
     UINT32 partCount = 0;
@@ -395,11 +466,11 @@ void ShaderCompiler::ShaderReflection(IDxcBlob *shaderBlob, ShaderReflectionInfo
 
     if (!shaderRefl) {
         Log(Translation("engine.graphics.shadercompiler.reflection.get.failed"), LogSeverity::Warning);
-        return;
+        return false;
     }
 
     D3D12_SHADER_DESC desc{};
-    if (FAILED(shaderRefl->GetDesc(&desc))) return;
+    if (FAILED(shaderRefl->GetDesc(&desc))) return false;
 
     outReflectionInfo.resourceBindings.clear();
     outReflectionInfo.shaderVariables.clear();
@@ -486,6 +557,7 @@ void ShaderCompiler::ShaderReflection(IDxcBlob *shaderBlob, ShaderReflectionInfo
         outReflectionInfo.threadGroupSize.y = tgy;
         outReflectionInfo.threadGroupSize.z = tgz;
     }
+    return true;
 }
 
 

@@ -13,6 +13,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #pragma comment(lib, "bcrypt.lib")
 
 namespace KashipanEngine::ContentCache {
@@ -53,7 +54,11 @@ inline std::string FileDigest(const std::filesystem::path &path) {
 inline Json Dependency(const std::filesystem::path &path) {
     return Json{{"path", PathText(std::filesystem::absolute(path).lexically_normal())}, {"hash", FileDigest(path)}};
 }
-inline bool DependenciesValid(const Json &dependencies) {
+// A short-lived validation snapshot. Never retain across independent shader requests/reloads.
+struct DependencyValidation {
+    std::unordered_map<std::string, std::string> hashes;
+};
+inline bool DependenciesValid(const Json &dependencies, DependencyValidation *validation = nullptr) {
     if (!dependencies.is_array() || dependencies.empty()) return false;
     for (const auto &dep : dependencies) {
         if (dep.value("missing", false)) {
@@ -62,12 +67,20 @@ inline bool DependenciesValid(const Json &dependencies) {
             continue;
         }
         const auto expected = dep.at("hash").get<std::string>();
-        if (expected.empty() || FileDigest(Path(dep.at("path").get<std::string>())) != expected) return false;
+        if (expected.empty()) return false;
+        const auto name = dep.at("path").get<std::string>();
+        std::string actual;
+        if (validation) {
+            const auto [entry, inserted] = validation->hashes.try_emplace(name);
+            if (inserted) entry->second = FileDigest(Path(name));
+            actual = entry->second;
+        } else actual = FileDigest(Path(name));
+        if (actual != expected) return false;
     }
     return true;
 }
-/// One atomic container: manifest and payload can never belong to different writes.
-/// Empty dependencies are opt-in, only for keys that hash all input contents (e.g. PSOs).
+/// 1つの不可分なコンテナー。マニフェストとペイロードが別々の書き込みに属することはない。
+/// 依存関係の省略は、全入力をキーに含むPSO、または配布時に確定するCookedAssetsが明示した場合のみ。
 inline bool Store(const std::filesystem::path &path, const std::string &key,
     const Json &dependencies, const void *data, size_t size, bool allowEmptyDependencies = false) noexcept {
     std::filesystem::path temporary;
@@ -98,7 +111,7 @@ inline bool Store(const std::filesystem::path &path, const std::string &key,
         return false;
     }
 }
-inline std::optional<std::vector<char>> Load(const std::filesystem::path &path, const std::string &key, bool allowEmptyDependencies = false) noexcept {
+inline std::optional<std::vector<char>> Load(const std::filesystem::path &path, const std::string &key, bool allowEmptyDependencies = false, DependencyValidation *validation = nullptr) noexcept {
     try {
         auto bytes = ReadFile(path);
         if (!bytes || bytes->size() <= sizeof(uint64_t)) return std::nullopt;
@@ -108,13 +121,13 @@ inline std::optional<std::vector<char>> Load(const std::filesystem::path &path, 
         const auto metadata = Json::parse(bytes->begin() + sizeof(length), bytes->begin() + sizeof(length) + length);
         const auto &dependencies = metadata.at("dependencies");
         if (metadata.at("version") != 1 || metadata.at("key") != key ||
-            (!(allowEmptyDependencies && dependencies.is_array() && dependencies.empty()) && !DependenciesValid(dependencies))) return std::nullopt;
+            (!(allowEmptyDependencies && dependencies.is_array() && dependencies.empty()) && !DependenciesValid(dependencies, validation))) return std::nullopt;
         std::vector<char> payload(bytes->begin() + sizeof(length) + length, bytes->end());
         if (Digest(payload.data(), payload.size()) != metadata.at("hash").get<std::string>()) return std::nullopt;
         return payload;
     } catch (...) { return std::nullopt; }
 }
-/// Keep generated data outside Assets, so asset watchers never import cache files.
+/// アセット監視がキャッシュファイルを取り込まないよう、生成データはAssetsの外へ保存する。
 inline std::filesystem::path Directory(const std::string &projectRoot, const std::string &category) {
     auto preferred = Path(projectRoot) / "Cache" / "Startup" / category;
     try {
@@ -131,6 +144,6 @@ inline std::filesystem::path Directory(const std::string &projectRoot, const std
     const DWORD count = GetEnvironmentVariableW(L"LOCALAPPDATA", local, 32768);
     if (count && count < 32768)
         return std::filesystem::path(local) / "KashipanEngine" / "StartupCache" / Digest(projectRoot) / category;
-    return preferred; // A write failure simply disables caching.
+    return preferred; // 書き込みに失敗した場合はキャッシュのみを無効化する。
 }
 } // namespace KashipanEngine::ContentCache

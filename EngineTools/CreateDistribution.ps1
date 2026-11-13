@@ -1,9 +1,10 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)] [string]$ProjectDir,
     [Parameter(Mandatory = $true)] [string]$TargetDir,
     [Parameter(Mandatory = $true)] [string]$Platform,
-    [Parameter(Mandatory = $true)] [ValidateSet('Release', 'Development')] [string]$Configuration
+    [Parameter(Mandatory = $true)] [ValidateSet('Release', 'Development')] [string]$Configuration,
+    [switch]$KeepSourceAssets
 )
 
 $ErrorActionPreference = 'Stop'
@@ -150,6 +151,21 @@ try {
         if ($LASTEXITCODE -ne 0) {
             throw "Release asset analysis failed (exit code $LASTEXITCODE)"
         }
+    }
+
+    if ($Configuration -eq 'Release' -and -not $KeepSourceAssets) {
+        [IO.File]::WriteAllText((Join-Path $stageDir '.cook-staging'), 'Distribution staging only')
+        $cookProcess = Start-Process -FilePath (Join-Path $stageDir 'KashipanEngine.exe') `
+            -ArgumentList @('--cook-assets', ('"' + $stageDir + '"')) -WorkingDirectory $stageDir -WindowStyle Hidden -Wait -PassThru
+        if ($cookProcess.ExitCode -ne 0) {
+            $cookError = Join-Path $stageDir 'Cook.error.txt'
+            $detail = if (Test-Path -LiteralPath $cookError) { Get-Content -LiteralPath $cookError -Raw -Encoding UTF8 } else { 'See engine logs or dependency errors.' }
+            throw "Asset cooking failed ($($cookProcess.ExitCode)): $detail"
+        }
+        if (-not (Test-Path -LiteralPath (Join-Path $stageDir 'Cooked/Manifest.json') -PathType Leaf)) {
+            throw 'Cooker did not produce a manifest.'
+        }
+        Remove-Item -LiteralPath (Join-Path $stageDir '.cook-staging')
     }
 
     Write-Host "CreateDistribution: '$stageDir' -> '$distributionDir'"

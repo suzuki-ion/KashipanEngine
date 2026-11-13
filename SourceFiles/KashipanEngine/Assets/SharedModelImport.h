@@ -1,6 +1,7 @@
 #pragma once
 #include "Assets/AssimpUtf8IOSystem.h"
 #include "Assets/ModelSceneCache.h"
+#include "Assets/CookedAssets.h"
 #include <atomic>
 #include <unordered_set>
 #include <assimp/Importer.hpp>
@@ -12,9 +13,9 @@
 #include <unordered_map>
 
 namespace KashipanEngine {
-/// Import once during the bounded startup session, retain the owning Importer
-/// until all three managers have copied their data. A persistent startup cache
-/// skips source parsing on subsequent launches. Dynamic imports preserve their original path.
+/// 起動セッション中に一度だけインポートし、所有元のImporterを
+/// 3つのマネージャーすべてがデータをコピーするまで保持する。永続化した起動キャッシュにより
+/// 次回以降の起動ではソース解析を省略する。動的インポートは従来の経路を維持する。
 class SharedModelImport final {
 public:
     struct Result {
@@ -80,18 +81,28 @@ public:
                 }
             }
         }
-        if (!active) return Import(path, originalFlags); // Preserve existing dynamic-load processing flags.
+        if (!active) return Import(path, originalFlags); // 既存の動的読み込み用処理フラグを維持する。
         if (promise) {
             try { promise->set_value(Import(path, ModelFlags, cacheDirectory)); }
             catch (...) { promise->set_exception(std::current_exception()); }
         }
-        // Import work happens outside the mutex: different files remain parallel.
+        // インポートはミューテックスの外で実行し、異なるファイルを並列に処理できるようにする。
         return future.get();
     }
 private:
     static ResultPtr Import(const std::filesystem::path &path, unsigned int flags,
         const std::filesystem::path &directory = {}) {
         auto result = std::make_shared<Result>();
+        if (const auto bytes = CookedAssets::Load("Models", path)) {
+            if (CookedAssets::manifest.at("modelSchema") != ModelSceneCache::Schema ||
+                CookedAssets::manifest.at("modelABI") != ContentCache::Json::array({sizeof(ai_real), sizeof(aiVectorKey), sizeof(aiQuatKey)}))
+                throw std::runtime_error("Incompatible cooked model schema");
+            result->cachedScene = ModelSceneCache::Decode(*bytes);
+            if (!result->cachedScene) throw std::runtime_error("Invalid cooked model: " + ContentCache::PathText(path));
+            result->scene = result->cachedScene.get();
+            result->diskCacheHit = true; ++diskHits_;
+            return result;
+        }
         std::string key;
         std::filesystem::path cachePath;
         if (!directory.empty()) {
@@ -128,7 +139,7 @@ private:
         };
         observe(PathToUtf8String(path).c_str(), std::filesystem::exists(path));
         result->importer = std::make_unique<Assimp::Importer>();
-        // The observer is needed only during ReadFile: never retain references to its stack frame.
+        // 監視コールバックはReadFile中のみ必要。スタック上のデータへの参照を残さない。
         result->importer->SetIOHandler(new AssimpUtf8IOSystem(observe));
         result->scene = result->importer->ReadFile(PathToUtf8String(path), flags);
         result->importer->SetIOHandler(new AssimpUtf8IOSystem());
@@ -138,7 +149,7 @@ private:
             try {
                 const auto payload = ModelSceneCache::Encode(*result->scene);
                 if (ContentCache::Store(cachePath, key, dependencies, payload.data(), payload.size())) ++stores_;
-            } catch (...) {} // Import succeeds even on a read-only disk or unsupported cache data.
+            } catch (...) {} // 読み取り専用ディスクや非対応のキャッシュデータでもインポートは成功させる。
         }
         return result;
     }

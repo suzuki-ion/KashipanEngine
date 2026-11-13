@@ -1,3 +1,4 @@
+#include "Assets/CookedAssets.h"
 #include "Assets/AssetFileIndex.h"
 #include "ModelManager.h"
 #include "Assets/SharedModelImport.h"
@@ -186,7 +187,7 @@ Matrix4x4 ConvertMatrix(const aiMatrix4x4& m) {
 }
 
 Handle RegisterEntry(ModelEntry&& entry) {
-    // Handle 0 is invalid. Use compact increasing handle.
+    // ハンドル0は無効。小さい値から連番で割り当てる。
     const Handle handle = static_cast<Handle>(sModels.size() + 1u);
     if (handle == ModelManager::kInvalidHandle) return ModelManager::kInvalidHandle;
     if (sModels.find(handle) != sModels.end()) return ModelManager::kInvalidHandle;
@@ -212,7 +213,7 @@ struct ParsedModelResult {
     ModelData data;
 
     // ノード分解・プレハブ生成（RegisterNodeDecompositionAndPrefab）に必要な情報
-    SharedModelImport::ResultPtr imported; // Owns the scene together with the startup session.
+    SharedModelImport::ResultPtr imported; // 起動セッションとともにシーンの所有権を保持する。
     const aiScene *scene = nullptr;
     std::vector<ModelData::MaterialData> materialsCopy;
 
@@ -273,7 +274,7 @@ std::unique_ptr<ParsedModelResult> ModelManager::ParseModelFile(const std::strin
 
     const std::filesystem::path p = Utf8StringToPath(filePath);
 
-    if (!std::filesystem::exists(p)) {
+    if (!CookedAssets::Contains("Models", p) && !std::filesystem::exists(p)) {
         Log(Translation("engine.model.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return result;
     }
@@ -295,15 +296,15 @@ std::unique_ptr<ParsedModelResult> ModelManager::ParseModelFile(const std::strin
     result->assetPath = MakeAssetRelativePath(assetsRootPath_, result->fullPath);
     result->fileName = PathToUtf8String(p.filename());
 
-    // Set asset relative path in ModelData
+    // ModelDataにアセットの相対パスを設定する。
     result->data.assetRelativePath_ = result->assetPath;
 
-    // Extract materials from the scene and store minimal material data
+    // シーンからマテリアルを抽出し、必要最小限のデータを保持する。
     for (unsigned int mi = 0; mi < scene->mNumMaterials; ++mi) {
         const aiMaterial* mat = scene->mMaterials[mi];
         if (!mat) continue;
         ModelData::MaterialData md;
-        // base/diffuse color
+        // 基本色・拡散反射色
         aiColor4D diffColor(1.0f, 1.0f, 1.0f, 1.0f);
         if (AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_DIFFUSE, diffColor)) {
             md.baseColor[0] = diffColor.r;
@@ -311,7 +312,7 @@ std::unique_ptr<ParsedModelResult> ModelManager::ParseModelFile(const std::strin
             md.baseColor[2] = diffColor.b;
             md.baseColor[3] = diffColor.a;
         }
-        // diffuse texture (first diffuse slot)
+        // 拡散反射テクスチャ（最初の拡散反射スロット）
         aiString texPath;
         if (AI_SUCCESS == mat->GetTexture(aiTextureType_DIFFUSE, 0, &texPath)) {
             std::string tp = texPath.C_Str();

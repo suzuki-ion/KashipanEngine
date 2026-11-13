@@ -1,4 +1,4 @@
-# Validate real copy/distribution scripts against small isolated assets, without launching binaries.
+﻿# Validate real copy/distribution scripts against small isolated assets, without launching binaries.
 $ErrorActionPreference = 'Stop'
 $layoutRepository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $layoutFixture = Join-Path $layoutRepository ('Generated\DistributionLayoutTests\' + [guid]::NewGuid().ToString('N'))
@@ -22,6 +22,11 @@ Write-LayoutFixture 'Docs\Reference\index.html'
 Write-LayoutFixture 'GameProjects\Sample\Project.json' '{}'
 Write-LayoutFixture 'GameProjects\Sample\Assets\payload.txt'
 Write-LayoutFixture 'GameProjects\Sample\Assets\unused.txt'
+Write-LayoutFixture 'GameProjects\Sample\Assets\Application\Only.prefab' '{"textureFile":"Application/only-prefab.png"}'
+Write-LayoutFixture 'GameProjects\Sample\Assets\Application\Directory.prefab\Objects\object.json' '{}'
+Write-LayoutFixture 'GameProjects\Sample\Assets\Application\only-prefab.png'
+Write-LayoutFixture 'GameProjects\Sample\Assets\KashipanEngine\Internal.prefab' '{}'
+
 Write-LayoutFixture 'EngineData\AssetsTemplate\Default\unused.txt'
 Write-LayoutFixture 'EngineTools\DistributionAssetExclusions.Release.txt' 'unused.txt'
 Write-LayoutFixture 'EngineTools\DistributionAssetExclusions.Development.txt' "GameProjects/Sample/Assets/unused.txt`nEngineData/AssetsTemplate/Default/unused.txt"
@@ -37,7 +42,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Release asset copy failed' }
 Assert-LayoutFile 'Generated\Outputs\x64\Release\Assets\payload.txt'
 Assert-LayoutFile 'Generated\Outputs\x64\Release\EngineData\Locales\en-US.json'
 foreach ($layoutConfiguration in @('Release', 'Development')) {
-    & powershell -NoProfile -ExecutionPolicy Bypass -File "$layoutRepository\EngineTools\CreateDistribution.ps1" -ProjectDir $layoutFixture -TargetDir $layoutOutput -Platform x64 -Configuration $layoutConfiguration
+    & powershell -NoProfile -ExecutionPolicy Bypass -File "$layoutRepository\EngineTools\CreateDistribution.ps1" -ProjectDir $layoutFixture -TargetDir $layoutOutput -Platform x64 -Configuration $layoutConfiguration -KeepSourceAssets
     if ($LASTEXITCODE -ne 0) { throw "$layoutConfiguration packaging failed" }
 }
 Assert-LayoutFile 'Generated\Distribution\x64\Release\Assets\payload.txt'
@@ -46,6 +51,14 @@ Assert-LayoutFile 'Generated\Distribution\x64\Development\GameProjects\Sample\As
 Assert-LayoutFile 'Generated\Distribution\x64\Development\Docs\Reference\index.html'
 Assert-LayoutFile 'Generated\Distribution\x64\Development\EngineTools\Profiler\profiler.py'
 Assert-LayoutFile 'GameProjects\Sample\Assets\unused.txt'
+Assert-LayoutFile 'GameProjects\Sample\Assets\Application\Only.prefab'
+Assert-LayoutFile 'GameProjects\Sample\Assets\Application\only-prefab.png'
+Assert-LayoutFile 'Generated\Distribution\x64\Development\GameProjects\Sample\Assets\Application\Only.prefab'
+Assert-LayoutFile 'Generated\Distribution\x64\Development\GameProjects\Sample\Assets\Application\Directory.prefab\Objects\object.json'
+foreach ($prefabPath in @('Application\Only.prefab', 'Application\Directory.prefab', 'Application\only-prefab.png', 'KashipanEngine\Internal.prefab')) {
+    if (Test-Path -LiteralPath (Join-Path $layoutFixture "Generated\Distribution\x64\Release\Assets\$prefabPath")) { throw "Release retained prefab or prefab-only asset: $prefabPath" }
+}
+
 foreach ($layoutExcluded in @('Release\Assets\unused.txt', 'Development\GameProjects\Sample\Assets\unused.txt', 'Development\EngineData\AssetsTemplate\Default\unused.txt')) {
     if (Test-Path -LiteralPath (Join-Path $layoutFixture "Generated\Distribution\x64\$layoutExcluded")) { throw "Distribution exclusion failed: $layoutExcluded" }
 }

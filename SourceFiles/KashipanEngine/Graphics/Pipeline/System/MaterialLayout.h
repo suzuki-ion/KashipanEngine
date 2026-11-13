@@ -3,10 +3,12 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include <filesystem>
 
 #include "Utilities/ValueType.h"
 
 namespace KashipanEngine {
+namespace ContentCache { struct DependencyValidation; }
 
 /// @brief StructuredBuffer<Material> の1フィールド分のバイトレイアウト
 /// @details hasRange/rangeMin/rangeMax/rangeStepは、HLSL側のフィールド宣言末尾の行コメント注釈
@@ -54,6 +56,9 @@ struct MaterialLayout {
     /// @param definedMacros コンパイル時に定義されたマクロ名の集合（#ifdef/#ifndefの評価に使う）
     /// @return struct Material が見つからない場合は空（totalByteSize=0, fields空）のレイアウトを返す
     static MaterialLayout BuildFromHlslSource(const std::string &shaderFilePath, const std::unordered_set<std::string> &definedMacros);
+    /// Content-validated persistent cache, including annotations and missing/unused textual includes.
+    static MaterialLayout BuildCachedFromHlslSource(const std::string &shaderFilePath, const std::unordered_set<std::string> &definedMacros,
+        const std::filesystem::path &cacheDirectory = {}, ContentCache::DependencyValidation *validation = nullptr);
 };
 
 } // namespace KashipanEngine

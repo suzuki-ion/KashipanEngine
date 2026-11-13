@@ -5,6 +5,9 @@
 #include <regex>
 #include <sstream>
 #include <unordered_map>
+#include <algorithm>
+#include "Core/ProjectPaths.h"
+#include "Utilities/FileIO/ContentCache.h"
 
 #include "Debug/Logger.h"
 #include "Utilities/Conversion/ConvertString.h"
@@ -14,16 +17,22 @@ namespace {
 
 // std::ifstream(const std::string&)はWindows上で現在のANSIコードページを使ってファイルを開くため、
 // 日本語等の非ASCII文字を含むパスが開けない。Utf8StringToPathでpath版コンストラクタへ渡して回避する
-std::string ReadFileText(const std::string &path) {
+std::string ReadFileText(const std::string &path, ContentCache::Json *dependencies) {
     std::ifstream file(Utf8StringToPath(path), std::ios::binary);
-    if (!file) return {};
+    if (!file) {
+        if (dependencies) dependencies->push_back({{"path", ContentCache::PathText(std::filesystem::absolute(Utf8StringToPath(path)).lexically_normal())}, {"missing", true}});
+        return {};
+    }
     std::ostringstream ss;
     ss << file.rdbuf();
-    return ss.str();
+    auto text = ss.str();
+    if (dependencies) dependencies->push_back({{"path", ContentCache::PathText(std::filesystem::absolute(Utf8StringToPath(path)).lexically_normal())},
+        {"hash", file.bad() ? std::string{} : ContentCache::Digest(text)}});
+    return text;
 }
 
 /// @brief #include "X" を再帰的にインライン展開する（構造体探索が目的の簡易展開。多重インクルードガードは考慮しない）
-std::string ExpandIncludes(const std::string &source, const std::filesystem::path &baseDir, std::unordered_set<std::string> &visited, int depth) {
+std::string ExpandIncludes(const std::string &source, const std::filesystem::path &baseDir, std::unordered_set<std::string> &visited, int depth, ContentCache::Json *dependencies) {
     if (depth > 8) return source; // 無限再帰対策
     static const std::regex kIncludeRe(R"(#include\s*\"([^\"]+)\")");
     std::string result;
@@ -37,8 +46,8 @@ std::string ExpandIncludes(const std::string &source, const std::filesystem::pat
         std::string canonical = PathToUtf8String(includePath.lexically_normal());
         if (visited.find(canonical) == visited.end()) {
             visited.insert(canonical);
-            std::string includedText = ReadFileText(canonical);
-            result += ExpandIncludes(includedText, includePath.parent_path(), visited, depth + 1);
+            std::string includedText = ReadFileText(canonical, dependencies);
+            result += ExpandIncludes(includedText, includePath.parent_path(), visited, depth + 1, dependencies);
         }
         lastPos = static_cast<size_t>(it->position()) + it->length();
     }
@@ -187,19 +196,20 @@ std::vector<std::string> ScanTextureCubeDeclarations(const std::string &source) 
 
 } // namespace
 
-MaterialLayout MaterialLayout::BuildFromHlslSource(const std::string &shaderFilePath, const std::unordered_set<std::string> &definedMacros) {
+namespace {
+MaterialLayout BuildLayout(const std::string &shaderFilePath, const std::unordered_set<std::string> &definedMacros, ContentCache::Json *dependencies) {
     MaterialLayout layout;
     if (shaderFilePath.empty()) return layout;
 
     std::filesystem::path filePath = Utf8StringToPath(shaderFilePath);
-    std::string source = ReadFileText(shaderFilePath);
+    std::string source = ReadFileText(shaderFilePath, dependencies);
     if (source.empty()) {
         Log("[MaterialLayout] failed to read shader file: " + shaderFilePath, LogSeverity::Debug);
         return layout;
     }
 
     std::unordered_set<std::string> visited{ PathToUtf8String(filePath.lexically_normal()) };
-    source = ExpandIncludes(source, filePath.parent_path(), visited, 0);
+    source = ExpandIncludes(source, filePath.parent_path(), visited, 0, dependencies);
     source = StripConditionals(source, definedMacros);
     // ブロックコメントのみ除去し、行コメント（// @Range等の注釈）はここでは残す
     source = StripBlockCommentsOnly(source);
@@ -256,4 +266,58 @@ MaterialLayout MaterialLayout::BuildFromHlslSource(const std::string &shaderFile
     return layout;
 }
 
+ContentCache::Json SerializeLayout(const MaterialLayout &layout) {
+    ContentCache::Json fields = ContentCache::Json::array();
+    for (const auto &field : layout.fields) fields.push_back({{"name", field.name}, {"offset", field.byteOffset}, {"size", field.byteSize},
+        {"type", static_cast<int>(field.valueType)}, {"range", field.hasRange}, {"min", field.rangeMin}, {"max", field.rangeMax}, {"step", field.rangeStep}});
+    return {{"size", layout.totalByteSize}, {"fields", fields}, {"textures", layout.textureFields}, {"cubes", layout.textureCubeFields}};
+}
+MaterialLayout DeserializeLayout(const ContentCache::Json &json) {
+    MaterialLayout layout;
+    layout.totalByteSize = json.at("size");
+    layout.textureFields = json.at("textures").get<std::vector<std::string>>();
+    layout.textureCubeFields = json.at("cubes").get<std::vector<std::string>>();
+    for (const auto &entry : json.at("fields")) {
+        MaterialFieldLayout field;
+        field.name = entry.at("name"); field.byteOffset = entry.at("offset"); field.byteSize = entry.at("size");
+        field.valueType = static_cast<ValueType>(entry.at("type").get<int>());
+        field.hasRange = entry.at("range"); field.rangeMin = entry.at("min"); field.rangeMax = entry.at("max"); field.rangeStep = entry.at("step");
+        layout.fields.push_back(std::move(field));
+    }
+    return layout;
+}
+} // namespace
+
+MaterialLayout MaterialLayout::BuildFromHlslSource(const std::string &path, const std::unordered_set<std::string> &macros) {
+    return BuildLayout(path, macros, nullptr);
+}
+MaterialLayout MaterialLayout::BuildCachedFromHlslSource(const std::string &path, const std::unordered_set<std::string> &macros,
+    const std::filesystem::path &cacheDirectory, ContentCache::DependencyValidation *validation) {
+    if (path.empty()) return {};
+    std::filesystem::path cachePath;
+    std::string key;
+    try {
+        std::vector<std::string> sortedMacros(macros.begin(), macros.end());
+        std::sort(sortedMacros.begin(), sortedMacros.end());
+        // Bump this version when layout parsing or serialization changes.
+        key = ContentCache::Json{{"parser", "MaterialLayout-v1"}, {"path", ContentCache::PathText(std::filesystem::absolute(Utf8StringToPath(path)).lexically_normal())}, {"macros", sortedMacros}}.dump();
+        const auto directory = cacheDirectory.empty() ? ContentCache::Directory(ProjectPaths::ProjectRoot(), "MaterialLayouts") : cacheDirectory;
+        cachePath = directory / (ContentCache::Digest(key) + ".cache");
+        if (const auto cached = ContentCache::Load(cachePath, key, false, validation)) {
+            auto layout = DeserializeLayout(ContentCache::Json::parse(cached->begin(), cached->end()));
+            Log("[MaterialLayoutCache] hit: " + path, LogSeverity::Debug);
+            return layout;
+        }
+    } catch (...) {} // A malformed cache is regenerated; cache failure must not change parsing behavior.
+    ContentCache::Json dependencies = ContentCache::Json::array();
+    auto layout = BuildLayout(path, macros, &dependencies);
+    if (!key.empty()) {
+        try {
+            const auto payload = SerializeLayout(layout).dump();
+            ContentCache::Store(cachePath, key, dependencies, payload.data(), payload.size());
+        } catch (...) {}
+    }
+    Log("[MaterialLayoutCache] parsed: " + path, LogSeverity::Debug);
+    return layout;
+}
 } // namespace KashipanEngine

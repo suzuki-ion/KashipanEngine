@@ -105,6 +105,7 @@ bool PipelineManager::ReloadPipelines() {
     // 現在利用中のPSOは、新しい一式の構築が完了するまで所有したままにする。
     // ShaderCompilerの格納領域はプロセス共有なので先にClearするとロールバック不能になる。
     const auto previousShaderIDs = ShaderCompiler::CaptureCompiledShaderIDs(Passkey<PipelineManager>{});
+    shaderCompiler_->ClearReuseCache(Passkey<PipelineManager>{});
     auto previousPipelines = std::move(pipelineInfos_);
     auto previousComponents = std::move(components_);
     try {

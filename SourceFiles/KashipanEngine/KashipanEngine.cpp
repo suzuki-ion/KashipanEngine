@@ -1,4 +1,6 @@
-#include "KashipanEngine.h"
+﻿#include "KashipanEngine.h"
+#include "Assets/CookedAssets.h"
+#include <shellapi.h>
 #include "EngineSettings.h"
 #include "Debug/CrashHandler.h"
 #include "Debug/LogSettings.h"
@@ -47,6 +49,13 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
     // プロジェクトを決める処理自体がログを出すため、それより先に翻訳を読み込む。
     // エンジンルートはプロジェクトと無関係に決まるので、ここまでは先に済ませられる
     ProjectPaths::InitializeEngineRootOnly(winMainPasskey);
+    int argumentCount = 0;
+    LPWSTR *arguments = CommandLineToArgvW(GetCommandLineW(), &argumentCount);
+    std::filesystem::path cookRoot;
+    for (int i = 1; arguments && i + 1 < argumentCount; ++i)
+        if (std::wstring(arguments[i]) == L"--cook-assets") cookRoot = arguments[i + 1];
+    if (arguments) LocalFree(arguments);
+    if (!cookRoot.empty()) return CookedAssets::CookDistribution(cookRoot);
     LoadGlobalTranslationFiles();
     startupSections.End("EngineRootAndTranslations");
 
@@ -62,6 +71,7 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
         return -1;
     }
 
+    CookedAssets::Configure(Utf8StringToPath(ProjectPaths::ProjectRoot()));
     startupSections.End("ProjectSelection");
 
     //--------- 表示言語（個人設定）の適用 ---------//

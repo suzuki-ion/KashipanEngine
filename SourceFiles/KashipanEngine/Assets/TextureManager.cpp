@@ -2,6 +2,7 @@
 #include "TextureManager.h"
 #include "Graphics/TextureUploadBatch.h"
 #include "Assets/PreparedTextureCache.h"
+#include "Assets/CookedAssets.h"
 #include <atomic>
 #include "Debug/StartupTiming.h"
 #include "Assets/CaseInsensitive.h"
@@ -291,7 +292,7 @@ void TextureManager::LoadAllFromAssetsFolder(std::vector<std::string> files) {
     files.erase(std::remove_if(files.begin(), files.end(), [&](const std::string &f) {
         return CaseInsensitiveEqual{}(NormalizePathSlashes(f), whiteTexturePath);
     }), files.end());
-    if (std::filesystem::exists(Utf8StringToPath(whiteTexturePath))) {
+    if (CookedAssets::Contains("Textures", Utf8StringToPath(whiteTexturePath)) || std::filesystem::exists(Utf8StringToPath(whiteTexturePath))) {
         mipMapContainer_.AddMipMap(whiteTexturePath, LoadTextureFromFile(whiteTexturePath));
         LoadTexture(whiteTexturePath);
     }
@@ -564,7 +565,7 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
     else directXCommon_->ExecuteOneShotCommandsForTextureManager(Passkey<TextureManager>{}, recordUpload);
 
 
-    // The callback retains the upload resource until its batch has completed.
+    // バッチが完了するまで、コールバックがアップロード用リソースを保持する。
     entry.upload.Reset();
 
     const auto handle = RegisterEntry(std::move(entry));
@@ -594,6 +595,14 @@ DirectX::ScratchImage TextureManager::LoadTextureFromFile(const std::string& fil
 
     const std::filesystem::path p = Utf8StringToPath(filePath);
 
+    if (CookedAssets::Contains("Textures", p)) {
+        const auto bytes = CookedAssets::Load("Textures", p);
+        DirectX::ScratchImage prepared;
+        if (FAILED(DirectX::LoadFromDDSMemory(reinterpret_cast<const uint8_t *>(bytes->data()), bytes->size(),
+            DirectX::DDS_FLAGS_NONE, nullptr, prepared))) throw std::runtime_error("Invalid cooked texture: " + filePath);
+        ++sPreparedTextureHits;
+        return prepared;
+    }
     if (!std::filesystem::exists(p)) {
         Log(Translation("engine.texture.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return DirectX::ScratchImage();
@@ -614,7 +623,7 @@ DirectX::ScratchImage TextureManager::LoadTextureFromFile(const std::string& fil
         DirectX::ScratchImage prepared;
         if (PreparedTextureCache::Load(p, sPreparedTextureDirectory, prepared)) {
             ++sPreparedTextureHits;
-            return prepared; // Already contains the complete, matching mip chain.
+            return prepared; // 対応する完全なミップチェーンがすでに格納されている。
         }
         ++sPreparedTextureMisses;
         sourceDependency = ContentCache::Dependency(p);

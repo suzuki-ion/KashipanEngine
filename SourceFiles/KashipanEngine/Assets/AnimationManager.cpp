@@ -1,3 +1,4 @@
+#include "Assets/CookedAssets.h"
 #include "Assets/AssetFileIndex.h"
 #include "AnimationManager.h"
 #include "Assets/SharedModelImport.h"
@@ -135,7 +136,7 @@ AnimationManager::AnimationHandle AnimationManager::LoadAnimation(const std::str
 
     const std::filesystem::path p = Utf8StringToPath(filePath);
 
-    if (!std::filesystem::exists(p)) {
+    if (!CookedAssets::Contains("Models", p) && !std::filesystem::exists(p)) {
         Log(Translation("engine.animation.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }

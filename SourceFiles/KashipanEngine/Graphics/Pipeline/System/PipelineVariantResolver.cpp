@@ -1,4 +1,5 @@
 #include "PipelineVariantResolver.h"
+#include "Assets/CookedAssets.h"
 
 #include <unordered_set>
 #include <vector>
@@ -34,6 +35,13 @@ std::vector<std::string> SplitByDot(const std::string &name) {
 
 PipelineVariantResolution TryResolvePipelineVariant(const std::string &pipelineName, const std::string &shaderBaseDir) {
     PipelineVariantResolution result;
+    if (CookedAssets::Active() && CookedAssets::manifest.at("pipelines").contains(pipelineName)) {
+        result.matched = true;
+        result.synthesizedPipelineJson = CookedAssets::manifest.at("pipelines").at(pipelineName);
+        auto &pixel = result.synthesizedPipelineJson["Shader"]["Pixel"];
+        if (pixel.contains("Path")) pixel["Path"] = ContentCache::PathText(CookedAssets::root / "Assets" / ContentCache::Path(pixel.at("Path").get<std::string>()));
+        return result;
+    }
 
     const std::vector<std::string> tokens = SplitByDot(pipelineName);
     if (tokens.size() < 3) return result; // Base + Raster + Blend が最低限必要
@@ -113,6 +121,7 @@ PipelineVariantResolution TryResolvePipelineVariant(const std::string &pipelineN
         pixelStage = { { "UsePreset", pixelPreset } };
     } else {
         // モジュール指定あり: ShaderModuleComposerで合成したHLSLファイルをインラインPathで指定する
+        if (CookedAssets::Active()) throw std::runtime_error("Pipeline variant was not cooked: " + pipelineName);
         const std::string generatedPath = ComposeAndWriteShader(moduleTokens, shaderBaseDir);
         if (generatedPath.empty()) return result;
         JSON macros = JSON::array({ { { "Name", base } } });

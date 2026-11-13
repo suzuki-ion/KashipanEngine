@@ -36,6 +36,7 @@ public:
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す
     bool SetParentObject(EmptyObject *parent) {
         if (!parent) {
+            if (!parentObjectID_.IsValid()) return true;
             EmptyObject::InvalidateActiveStateCache(Passkey<Transform>{});
             parentObjectID_ = UUID128();
             isWorldMatrixCalculated_ = false;
@@ -44,6 +45,7 @@ public:
         }
         // 親にTransformを持たないオブジェクトは親にできない
         if (!parent->GetComponent<Transform>()) return false;
+        if (parentObjectID_ == parent->GetObjectID()) return true;
 
         auto *objectCtx = GetOwnerObjectContext();
         const auto *ownerObject = objectCtx ? objectCtx->GetOwner() : nullptr;
@@ -69,13 +71,7 @@ public:
     /// @param parentUUID 親オブジェクトのUUID（無効な場合は親を解除）
     /// @return 成功した場合はtrue、失敗した場合はfalseを返す
     bool SetParentObject(const UUID128 &parentUUID) {
-        if (!parentUUID.IsValid()) {
-            EmptyObject::InvalidateActiveStateCache(Passkey<Transform>{});
-            parentObjectID_ = UUID128();
-            isWorldMatrixCalculated_ = false;
-            cachedParentVersion_ = 0;
-            return true;
-        }
+        if (!parentUUID.IsValid()) return SetParentObject(static_cast<EmptyObject *>(nullptr));
         auto *sceneCtx = GetOwnerSceneContext();
         if (!sceneCtx) return false;
         auto *parent = sceneCtx->GetSceneObject(parentUUID);

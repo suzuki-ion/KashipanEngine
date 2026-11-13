@@ -2027,6 +2027,35 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
             const RigidBody3D &rb = *rbPtr; return MakeColliderArray(rb.GetOwnerColliders()); });
 
     RegisterComponentType<MeshRenderer>(engine, "MeshRenderer")
+        .method("bool SetWorldBillboardPairs(const array<Vector3> &in, const array<float> &in, const Quaternion &in, float, float, const Vector4 &in, const Vector4 &in)",
+            [](ScriptComponentHandle<MeshRenderer> &h,CScriptArray *positions,CScriptArray *alpha,const Quaternion &q,float outerSize,float innerSize,const Vector4 &outer,const Vector4 &inner){
+                auto *r=h.Resolve();if(!r){ThrowDestroyedObjectException();return false;}if(!positions||!alpha)return false;
+                // scriptarrayは値オブジェクトを間接的に格納する。GetBuffer()は
+                // Vector3の連続配列ではない。At()で各所有オブジェクトを取得する。
+                std::vector<Vector3> values;values.reserve(positions->GetSize());
+                for(asUINT i=0;i<positions->GetSize();++i)values.push_back(*static_cast<const Vector3*>(positions->At(i)));
+                return r->SetWorldBillboardPairs(values,{static_cast<const float*>(alpha->GetBuffer()),alpha->GetSize()},q,outerSize,innerSize,outer,inner);
+            })
+        .method("bool SetWorldMeshInstances(const array<Vector3> &in, const array<Quaternion> &in, const array<Vector3> &in, const array<Vector4> &in)",
+            [](ScriptComponentHandle<MeshRenderer> &h,CScriptArray *positions,CScriptArray *rotations,CScriptArray *scales,CScriptArray *colors){
+                auto *r=h.Resolve();if(!r){ThrowDestroyedObjectException();return false;}
+                if(!positions||!rotations||!scales||!colors)return false;
+                const asUINT count=positions->GetSize();
+                if(rotations->GetSize()!=count||scales->GetSize()!=count||colors->GetSize()!=count)return false;
+                std::vector<Vector3> p,s;std::vector<Quaternion> q;std::vector<Vector4> c;
+                p.reserve(count);s.reserve(count);q.reserve(count);c.reserve(count);
+                for(asUINT i=0;i<count;++i){
+                    p.push_back(*static_cast<const Vector3*>(positions->At(i)));
+                    q.push_back(*static_cast<const Quaternion*>(rotations->At(i)));
+                    s.push_back(*static_cast<const Vector3*>(scales->At(i)));
+                    c.push_back(*static_cast<const Vector4*>(colors->At(i)));
+                }
+                return r->SetWorldMeshInstances(p,q,s,c);
+            })
+        .method("uint GetWorldInstanceCount() const",SafeCall<&MeshRenderer::GetWorldInstanceCount>())
+        .method("Vector3 GetWorldInstancePosition(uint) const",SafeCall<&MeshRenderer::GetWorldInstancePosition>())
+        .method("Vector4 GetWorldInstanceColor(uint) const",SafeCall<&MeshRenderer::GetWorldInstanceColor>())
+        .method("void ClearWorldInstances()",SafeCall<&MeshRenderer::ClearWorldInstances>())
         .method("void SetPipelineName(const string &in)", SafeCall<&MeshRenderer::SetPipelineName>())
         .method("const string &GetPipelineName() const", SafeCall<&MeshRenderer::GetPipelineName>())
         .method("void SetMaterialName(const string &in)", SafeCall<&MeshRenderer::SetMaterialName>())
@@ -2562,6 +2591,17 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("float GetEffectiveShadowSoftness() const", SafeCall<&Light::GetEffectiveShadowSoftness>());
 
     RegisterComponentType<LightRenderer>(engine, "LightRenderer")
+        .method("bool SetPointInstances(const array<Vector3> &in, const array<float> &in)",
+            [](ScriptComponentHandle<LightRenderer> &h,CScriptArray *positions,CScriptArray *intensities){
+                auto *r=h.Resolve();if(!r){ThrowDestroyedObjectException();return false;}if(!positions||!intensities)return false;
+                std::vector<Vector3> values;values.reserve(positions->GetSize());
+                for(asUINT i=0;i<positions->GetSize();++i)values.push_back(*static_cast<const Vector3*>(positions->At(i)));
+                return r->SetPointInstances(values,{static_cast<const float*>(intensities->GetBuffer()),intensities->GetSize()});
+            })
+        .method("uint GetPointInstanceCount() const",SafeCall<&LightRenderer::GetPointInstanceCount>())
+        .method("Vector3 GetPointInstancePosition(uint) const",SafeCall<&LightRenderer::GetPointInstancePosition>())
+        .method("float GetPointInstanceIntensity(uint) const",SafeCall<&LightRenderer::GetPointInstanceIntensity>())
+        .method("void ClearPointInstances()",SafeCall<&LightRenderer::ClearPointInstances>())
         .method("void SetPipelineName(const string &in)", SafeCall<&LightRenderer::SetPipelineName>())
         .method("const string &GetPipelineName() const", SafeCall<&LightRenderer::GetPipelineName>())
         .method("void SetTargetObject(Object@)", [](ScriptComponentHandle<LightRenderer> &cHandle, ScriptObjectHandle *obj) {

@@ -39,6 +39,7 @@ namespace RendererInternal {
 struct FrameLights;
 struct MultiPassDitherScratchSet;
 class MaterialTemplateCache;
+class MaterialDrawCache;
 class BatchKeySequencer;
 } // namespace RendererInternal
 
@@ -200,6 +201,12 @@ private:
         std::span<const SceneRenderer::DrawEntry> drawList);
     RendererInternal::FrameLights &PrepareFrameLights(SceneRenderer *sceneRenderer, IRenderTarget *target, const std::string &pipelineName);
     std::unordered_map<IRenderTarget *, std::unordered_map<std::string, std::shared_ptr<RendererInternal::FrameLights>>> frameLights_;
+    std::unique_ptr<RendererInternal::FrameLights> worldLights_;
+    std::unique_ptr<RendererInternal::MaterialDrawCache> materialDrawCache_;
+    std::vector<std::vector<std::byte>> shadowCacheSignatures_;
+    const SceneContext *shadowCacheScene_ = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12PipelineState> shadowCachePipeline_;
+    bool shadowCacheValid_ = false;
 
     /// @brief 直前にカメラ・ライトをバインドした(パイプライン名, PipelineBinder世代)を記録するキャッシュ
     /// @details 同一の描画先に対する一連の描画（DrawBatchのループ・RenderGpuParticles）の間で

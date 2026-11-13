@@ -1,5 +1,8 @@
 #pragma once
 #include <cstdint>
+#include <cmath>
+#include <span>
+#include <vector>
 #include <string>
 #include <unordered_set>
 
@@ -34,6 +37,7 @@ public:
         auto ptr = std::make_unique<LightRenderer>();
         ptr->targetObjectID_ = targetObjectID_;
         ptr->pipelineName_ = pipelineName_;
+        ptr->pointInstancesEnabled_=pointInstancesEnabled_;ptr->pointInstances_=pointInstances_;
         ptr->excludedRenderTargetNames_ = excludedRenderTargetNames_;
         return ptr;
     }
@@ -41,6 +45,22 @@ public:
     /// @brief 使用するパイプラインを設定（空文字の場合は全パイプラインに適用）
     void SetPipelineName(const std::string &pipelineName) { pipelineName_ = pipelineName; }
     const std::string &GetPipelineName() const noexcept { return pipelineName_; }
+
+    // 実行時専用のワールド空間のポイントライト。共通のLightから色・半径・
+    // 減衰・有効状態を取得する。インスタンスの光強度は絶対値とし、影は無効化する。
+    struct PointInstance {Vector3 position;float intensity;};
+    bool SetPointInstances(std::span<const Vector3> positions,std::span<const float> intensities){
+        if(positions.size()!=intensities.size()||positions.size()>UINT32_MAX)return false;
+        for(size_t i=0;i<positions.size();++i)if(!std::isfinite(positions[i].x)||!std::isfinite(positions[i].y)||!std::isfinite(positions[i].z)||!std::isfinite(intensities[i])||intensities[i]<0)return false;
+        pointInstancesEnabled_=true;pointInstances_.resize(positions.size());
+        for(size_t i=0;i<positions.size();++i)pointInstances_[i]={positions[i],intensities[i]};return true;
+    }
+    bool HasPointInstances() const noexcept{return pointInstancesEnabled_;}
+    const std::vector<PointInstance> &GetPointInstances() const noexcept{return pointInstances_;}
+    uint32_t GetPointInstanceCount() const noexcept{return static_cast<uint32_t>(pointInstances_.size());}
+    Vector3 GetPointInstancePosition(uint32_t i) const{return i<pointInstances_.size()?pointInstances_[i].position:Vector3{};}
+    float GetPointInstanceIntensity(uint32_t i) const{return i<pointInstances_.size()?pointInstances_[i].intensity:0;}
+    void ClearPointInstances(){pointInstancesEnabled_=false;pointInstances_.clear();}
 
     //==================================================
     // 描画先指定
@@ -150,6 +170,7 @@ protected:
         JSON json = JSON::object();
         json["targetObjectID"] = ToJSON(targetObjectID_);
         json["pipelineName"] = pipelineName_;
+        json["pointInstancesEnabled"] = pointInstancesEnabled_;
         for (const auto &name : excludedRenderTargetNames_) {
             json["excludedRenderTargetNames"].push_back(name);
         }
@@ -157,6 +178,9 @@ protected:
     }
 
     bool LoadFromJson(const JSON &json) override {
+        const bool batchEnabled=json.value("pointInstancesEnabled",false);
+        if(!batchEnabled||!pointInstancesEnabled_)pointInstances_.clear();
+        pointInstancesEnabled_=batchEnabled;
         if (json.contains("targetObjectID")) {
             targetObjectID_ = FromJSON<UUID128>(json["targetObjectID"]);
         } else {
@@ -171,6 +195,8 @@ protected:
     }
 
 private:
+    bool pointInstancesEnabled_=false;
+    std::vector<PointInstance> pointInstances_;
     /// @brief Transformを変更せず、RenderOnlyシェイクを反映した描画用ワールド行列を取得する
     Matrix4x4 GetRenderWorldMatrix() const {
         auto *objectContext = GetOwnerObjectContext();

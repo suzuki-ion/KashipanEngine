@@ -1,4 +1,5 @@
 #include "RendererInternal.h"
+#include "Debug/Profiler.h"
 
 namespace KashipanEngine {
 
@@ -8,11 +9,29 @@ FrameLights &Renderer::PrepareFrameLights(SceneRenderer *sceneRenderer, IRenderT
     auto &slot = frameLights_[target][pipelineName];
     if (slot) return *slot;
     slot = std::make_shared<FrameLights>();
-    auto &lights = *slot;
     const auto noShadow = [](const LightRenderer *) -> std::int32_t { return -1; };
-    CollectLightsForTarget(sceneRenderer, target, pipelineName, noShadow,
-        lights.pointLights, lights.spotLights, lights.directionalLights, lights.sphereLights,
-        lights.discLights, lights.rectLights, lights.tubeLights, lights.boxLights, &lights.sources);
+    if (!worldLights_) {
+        Profiler::Scope scope("Render.Lights.WorldData");
+        worldLights_ = std::make_unique<FrameLights>();
+        auto &world = *worldLights_;
+        CollectLightsForTarget(sceneRenderer, nullptr, "", noShadow,
+            world.pointLights, world.spotLights, world.directionalLights, world.sphereLights,
+            world.discLights, world.rectLights, world.tubeLights, world.boxLights, &world.sources, true);
+    }
+    {
+        Profiler::Scope scope("Render.Lights.Filter");
+        FilterFrameLights(*worldLights_, sceneRenderer, target, pipelineName, *slot);
+    }
+    // 異なるパイプラインでも同じライトを選ぶことが多い。バッファとシャドウ情報の
+    // 更新は同じターゲット内で共有できるが、異なるシャドウターゲット間では共有しない。
+    for (const auto &[name, other] : frameLights_[target]) {
+        (void)name;
+        if (other && other != slot && other->countsBuffer && other->sources == slot->sources) {
+            slot = other;
+            return *slot;
+        }
+    }
+    auto &lights = *slot;
     auto upload = [&]<typename T>(const std::vector<T> &values, size_t index, const char *suffix) {
         auto key = MakeBatchKey(target, pipelineName, 0, 0, suffix);
         auto *buffer = resourceContainer_->GetOrCreateStructuredBuffer(key, sizeof(T), std::max<size_t>(1, values.size()));
@@ -239,6 +258,14 @@ void Renderer::BindLightBuffersAndShadowMap(IRenderTarget *target,
     const std::string &pipelineName,
     SceneRenderer *sceneRenderer,
     ShaderVariableBinder &shaderBinder) {
+    bool usesLighting = false;
+    for (const char *name : {"Pixel:LightCounts", "Pixel:gPointLights", "Pixel:gSpotLights",
+        "Pixel:gDirectionalLights", "Pixel:gSphereLights", "Pixel:gDiscLights", "Pixel:gRectLights",
+        "Pixel:gTubeLights", "Pixel:gBoxLights", "Pixel:gShadowMaps", "Pixel:ShadowMapConstants",
+        "Pixel:gTileLightIndices", "Pixel:TileCullingConstants", "Pixel:gShadowSamplerCmp", "Pixel:gShadowSamplerPoint"}) {
+        if (shaderBinder.FindBinding(name)) { usesLighting = true; break; }
+    }
+    if (!usesLighting) return;
     //--------- この描画先の「影を生成するライト」割り当て（RenderShadowMapsで構築済み） ---------//
     const std::vector<TargetShadowEntry> *shadowEntries = nullptr;
     if (auto it = targetShadowEntries_.find(target); it != targetShadowEntries_.end()) {
@@ -254,8 +281,8 @@ void Renderer::BindLightBuffersAndShadowMap(IRenderTarget *target,
 
     auto &shared = PrepareFrameLights(sceneRenderer, target, pipelineName);
     if (!shared.shadowIndicesPatched) {
-        // Culling never reads shadow indices. Once shadow jobs are prepared, patch
-        // only those fields in the same upload buffers; do not recollect/reupload lights.
+        // カリングはシャドウインデックスを参照しない。シャドウジョブの準備後に
+        // 同じアップロードバッファの該当フィールドのみを更新し、ライトの再収集・再転送は行わない。
         auto patch = [&]<typename T>(std::vector<T> &values, size_t index) {
             T *mapped = nullptr;
             for (size_t i = 0; i < values.size(); ++i) {

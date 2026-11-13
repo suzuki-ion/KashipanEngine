@@ -40,12 +40,16 @@ struct PipelineInfo {
     bool IsAutoRootDescriptorGenerated() const { return autoRootDescriptorGenerated; }
     /// @brief gMaterials（Pixelシェーダーの struct Material）のバイトレイアウト。Materialを持たないパイプラインでは空
     const MaterialLayout &GetMaterialLayout() const { return materialLayout; }
+    // 明示的に有効化する契約。シャドウ出力が渡されたジオメトリ・マテリアル・
+    // ライトカメラ入力のみに依存する場合に使用する。時刻や手続き生成に依存する独自シェーダーではfalseを維持する。
+    bool StaticShadowCacheCompatible() const { return staticShadowCacheCompatible; }
 private:
     friend class PipelineCreator;
     std::string name;
     std::string category;
     PipelineType type = PipelineType::Render;
     std::int32_t renderPriority = 0;
+    bool staticShadowCacheCompatible = false;
     D3D_PRIMITIVE_TOPOLOGY topologyType = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
     PipelineSet pipelineSet;
     std::vector<ShaderCompiler::ShaderCompiledInfo *> shaders;

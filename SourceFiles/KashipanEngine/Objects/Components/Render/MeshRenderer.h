@@ -1,5 +1,7 @@
-﻿#pragma once
+#pragma once
 #include <algorithm>
+#include <cmath>
+#include <span>
 #include <cstdio>
 #include <string>
 #include <unordered_set>
@@ -14,6 +16,7 @@
 #include "Objects/Components/Transform.h"
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Utilities/UUID128.h"
+#include "Math/Quaternion.h"
 #if defined(USE_IMGUI)
 #include "Objects/Components/Render/PipelineVariantBuilder.h"
 #include "Objects/Components/Render/TargetObjectSelector.h"
@@ -69,6 +72,8 @@ public:
         ptr->materialHandles_ = materialHandles_;
         ptr->excludedRenderTargetNames_ = excludedRenderTargetNames_;
         ptr->castShadows_ = castShadows_;
+        ptr->worldInstancesEnabled_ = worldInstancesEnabled_;
+        ptr->worldInstances_ = worldInstances_;
         ptr->instanceColor_ = instanceColor_;
         ptr->instanceColorBlendMode_ = instanceColorBlendMode_;
         ptr->instanceUvTranslate_ = instanceUvTranslate_;
@@ -167,7 +172,66 @@ public:
 
     /// @brief シャドウマッピングのシャドウキャスターとして扱うかを設定する
     void SetCastShadows(bool enabled) noexcept { castShadows_ = enabled; }
-    bool GetCastShadows() const noexcept { return castShadows_; }
+    bool GetCastShadows() const noexcept { return castShadows_ && !worldInstancesEnabled_; }
+
+    // 実行時専用のワールド空間の影なしビルボード対。所有元の可視状態・
+    // 描画先・パイプライン・マテリアル・UV設定は引き続き適用する。入力はコピーし、
+    // 呼び出し後にスクリプト配列のアドレスを保持しない。入力が空なら何も描画しない。
+    struct WorldInstance { Matrix4x4 world; Vector4 color; };
+    // Runtime, world-space, unshadowed mesh instances. Own all submitted values;
+    // an empty submission keeps batch mode enabled without a fallback mesh.
+    bool SetWorldMeshInstances(std::span<const Vector3> positions, std::span<const Quaternion> rotations,
+        std::span<const Vector3> scales, std::span<const Vector4> colors) {
+        const size_t count=positions.size();
+        if(count>UINT32_MAX || rotations.size()!=count || scales.size()!=count || colors.size()!=count)return false;
+        for(size_t i=0;i<count;++i){
+            const auto &p=positions[i];const auto &q=rotations[i];const auto &s=scales[i];const auto &c=colors[i];
+            if(!std::isfinite(p.x)||!std::isfinite(p.y)||!std::isfinite(p.z)||
+               !std::isfinite(q.x)||!std::isfinite(q.y)||!std::isfinite(q.z)||!std::isfinite(q.w)||
+               !std::isfinite(s.x)||!std::isfinite(s.y)||!std::isfinite(s.z)||
+               !std::isfinite(c.x)||!std::isfinite(c.y)||!std::isfinite(c.z)||!std::isfinite(c.w))return false;
+            const double length=double(q.x)*q.x+double(q.y)*q.y+double(q.z)*q.z+double(q.w)*q.w;
+            if(length<1.e-12 || length>1.e30)return false;
+        }
+        if(!worldInstancesEnabled_){worldInstancesEnabled_=true;MarkDrawListDirty();}
+        worldInstances_.resize(count);
+        for(size_t i=0;i<count;++i){
+            auto &entry=worldInstances_[i];entry.world=rotations[i].Normalize().MakeRotateMatrix();
+            const float factors[3]={scales[i].x,scales[i].y,scales[i].z};
+            for(int row=0;row<3;++row)for(int col=0;col<3;++col)entry.world.m[row][col]*=factors[row];
+            entry.world.m[3][0]=positions[i].x;entry.world.m[3][1]=positions[i].y;entry.world.m[3][2]=positions[i].z;
+            entry.color=colors[i];
+        }
+        return true;
+    }
+    bool SetWorldBillboardPairs(std::span<const Vector3> positions, std::span<const float> alpha,
+        const Quaternion &facing, float outerSize, float innerSize, const Vector4 &outer, const Vector4 &inner) {
+        if (positions.size()!=alpha.size() || positions.size()>UINT32_MAX/2 ||
+            !std::isfinite(outerSize) || !std::isfinite(innerSize) || outerSize<0 || innerSize<0 ||
+            !std::isfinite(facing.x)||!std::isfinite(facing.y)||!std::isfinite(facing.z)||!std::isfinite(facing.w)) return false;
+        for (size_t i=0;i<positions.size();++i) if (!std::isfinite(positions[i].x)||!std::isfinite(positions[i].y)||!std::isfinite(positions[i].z)||!std::isfinite(alpha[i])) return false;
+        Matrix4x4 rotation=facing.Normalize().MakeRotateMatrix(), outerMatrix=rotation,innerMatrix=rotation;
+        for (int row=0;row<3;++row) for(int col=0;col<3;++col) {outerMatrix.m[row][col]*=outerSize;innerMatrix.m[row][col]*=innerSize;}
+        if(!worldInstancesEnabled_){worldInstancesEnabled_=true;MarkDrawListDirty();}
+        worldInstances_.resize(positions.size()*2);
+        for(size_t i=0;i<positions.size();++i){
+            auto &a=worldInstances_[i*2];auto &b=worldInstances_[i*2+1];a.world=outerMatrix;b.world=innerMatrix;
+            a.world.m[3][0]=b.world.m[3][0]=positions[i].x;a.world.m[3][1]=b.world.m[3][1]=positions[i].y;a.world.m[3][2]=b.world.m[3][2]=positions[i].z;
+            a.color=outer;a.color.w*=alpha[i];b.color=inner;
+        }
+        return true;
+    }
+    bool HasWorldInstances() const noexcept {return worldInstancesEnabled_;}
+    uint32_t GetWorldInstanceCount() const noexcept {return static_cast<uint32_t>(worldInstances_.size());}
+    Vector3 GetWorldInstancePosition(uint32_t i) const {if(i>=worldInstances_.size())return {};const auto &m=worldInstances_[i].world;return {m.m[3][0],m.m[3][1],m.m[3][2]};}
+    Vector4 GetWorldInstanceColor(uint32_t i) const {return i<worldInstances_.size()?worldInstances_[i].color:Vector4{};}
+    void ClearWorldInstances(){worldInstancesEnabled_=false;worldInstances_.clear();expandedInstances_.clear();MarkDrawListDirty();}
+    std::span<const SceneRenderer::DrawEntry> ExpandWorldInstances(const SceneRenderer::DrawEntry &base) const {
+        if(!(expandedTemplate_==base)){expandedInstances_.clear();expandedTemplate_=base;}
+        expandedInstances_.resize(worldInstances_.size(),base);
+        for(size_t i=0;i<worldInstances_.size();++i){auto &entry=expandedInstances_[i];entry.instanceSource=nullptr;entry.allowInstancing=true;entry.worldMatrix=worldInstances_[i].world;entry.instanceColor=worldInstances_[i].color;entry.objectIdSeed=base.objectIdSeed+static_cast<float>(i);}
+        return expandedInstances_;
+    }
 
     void SetMaterialName(const std::string &materialName) { SetMaterialNameAt(0, materialName); }
     void SetMaterialHandle(MaterialManager::MaterialHandle materialHandle) {
@@ -421,10 +485,16 @@ protected:
         json["instanceUvCombineMode"] = static_cast<int>(instanceUvCombineMode_);
         json["renderPriority"] = renderPriority_;
         json["allowInstancing"] = allowInstancing_;
+        // 毎フレームのデータを保存せずに、復元後も空バッチの意味を維持する。
+        // 生成側は読み込み後にインスタンスデータを再送する。
+        json["worldInstancesEnabled"] = worldInstancesEnabled_;
         return json;
     }
 
     bool LoadFromJson(const JSON &json) override {
+        const bool batchEnabled=json.value("worldInstancesEnabled",false);
+        if(!batchEnabled||!worldInstancesEnabled_){worldInstances_.clear();expandedInstances_.clear();}
+        worldInstancesEnabled_=batchEnabled;
         if (json.contains("targetObjectID")) {
             targetObjectID_ = FromJSON<UUID128>(json["targetObjectID"]);
         } else {
@@ -458,6 +528,10 @@ protected:
     }
 
 private:
+    bool worldInstancesEnabled_=false;
+    std::vector<WorldInstance> worldInstances_;
+    mutable SceneRenderer::DrawEntry expandedTemplate_;
+    mutable std::vector<SceneRenderer::DrawEntry> expandedInstances_;
     /// @brief パイプライン名・マテリアル・描画先指定など、描画リストのソート結果に影響するプロパティを
     ///        変更した際に呼ぶ（SceneRendererが未登録の場合は何もしない。登録済みなら次回のBuildSortedDrawList
     ///        でキャッシュが再構築される）

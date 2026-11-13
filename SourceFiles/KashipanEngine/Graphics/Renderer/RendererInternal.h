@@ -308,12 +308,12 @@ inline std::array<FrustumPlane, 6> ExtractFrustumPlanes(const Matrix4x4 &viewPro
         return FrustumPlane{ a, b, c, d };
     };
     std::array<FrustumPlane, 6> planes;
-    planes[0] = normalize(c3[0] + c0[0], c3[1] + c0[1], c3[2] + c0[2], c3[3] + c0[3]); // left   (x >= -w)
-    planes[1] = normalize(c3[0] - c0[0], c3[1] - c0[1], c3[2] - c0[2], c3[3] - c0[3]); // right  (x <=  w)
-    planes[2] = normalize(c3[0] + c1[0], c3[1] + c1[1], c3[2] + c1[2], c3[3] + c1[3]); // bottom (y >= -w)
-    planes[3] = normalize(c3[0] - c1[0], c3[1] - c1[1], c3[2] - c1[2], c3[3] - c1[3]); // top    (y <=  w)
-    planes[4] = normalize(c2[0], c2[1], c2[2], c2[3]);                                 // near   (D3D: z >= 0)
-    planes[5] = normalize(c3[0] - c2[0], c3[1] - c2[1], c3[2] - c2[2], c3[3] - c2[3]); // far    (D3D: z <= w)
+    planes[0] = normalize(c3[0] + c0[0], c3[1] + c0[1], c3[2] + c0[2], c3[3] + c0[3]); // 左面（x >= -w）
+    planes[1] = normalize(c3[0] - c0[0], c3[1] - c0[1], c3[2] - c0[2], c3[3] - c0[3]); // 右面（x <= w）
+    planes[2] = normalize(c3[0] + c1[0], c3[1] + c1[1], c3[2] + c1[2], c3[3] + c1[3]); // 下面（y >= -w）
+    planes[3] = normalize(c3[0] - c1[0], c3[1] - c1[1], c3[2] - c1[2], c3[3] - c1[3]); // 上面（y <= w）
+    planes[4] = normalize(c2[0], c2[1], c2[2], c2[3]);                                 // 近面（D3D: z >= 0）
+    planes[5] = normalize(c3[0] - c2[0], c3[1] - c2[1], c3[2] - c2[2], c3[3] - c2[3]); // 遠面（D3D: z <= w）
     return planes;
 }
 
@@ -540,11 +540,11 @@ inline Matrix4x4 ResolveInstanceUVTransform(const SceneRenderer::DrawEntry &entr
     const Matrix4x4 instanceMatrix = instanceScale * instanceToPivot * instanceRotate * instanceFromPivot * instanceTranslate;
 
     switch (entry.instanceUvCombineMode) {
-    case 1: // InstanceThenMaterial
+    case 1: // インスタンス適用後にマテリアルを適用
         return instanceMatrix * materialMatrix;
-    case 2: // InstanceOnly
+    case 2: // インスタンスのみ適用
         return instanceMatrix;
-    case 0: // MaterialThenInstance
+    case 0: // マテリアル適用後にインスタンスを適用
     default:
         return materialMatrix * instanceMatrix;
     }
@@ -635,14 +635,16 @@ inline void CollectLightsForTarget(SceneRenderer *sceneRenderer, IRenderTarget *
     std::vector<RectLightElement> &rectLights,
     std::vector<TubeLightElement> &tubeLights,
     std::vector<BoxLightElement> &boxLights,
-    std::array<std::vector<const LightRenderer *>, 8> *sources = nullptr) {
+    std::array<std::vector<const LightRenderer *>, 8> *sources = nullptr, bool collectAll = false) {
     for (auto *lightRenderer : sceneRenderer->GetLightRenderers()) {
         if (!lightRenderer || !lightRenderer->IsActive()) continue;
         // EditorOnlyオブジェクトのライトはエディター用以外の描画先には適用しない
-        if (IsExcludedAsEditorOnly(lightRenderer, target, sceneRenderer)) continue;
-        if (!lightRenderer->GetPipelineName().empty() && lightRenderer->GetPipelineName() != pipelineName) continue;
-        if (!IsTargetMatch(lightRenderer->GetTargetObject(), lightRenderer->GetTargetObjectID().IsValid(), target, sceneRenderer)) continue;
-        if (!lightRenderer->IsRenderTargetIncluded(target)) continue;
+        if (!collectAll) {
+            if (IsExcludedAsEditorOnly(lightRenderer, target, sceneRenderer)) continue;
+            if (!lightRenderer->GetPipelineName().empty() && lightRenderer->GetPipelineName() != pipelineName) continue;
+            if (!IsTargetMatch(lightRenderer->GetTargetObject(), lightRenderer->GetTargetObjectID().IsValid(), target, sceneRenderer)) continue;
+            if (!lightRenderer->IsRenderTargetIncluded(target)) continue;
+        }
         auto *light = lightRenderer->GetLight();
         if (!light) {
             // Light コンポーネントが無い場合は既定値のディレクショナルライトとして扱う
@@ -672,8 +674,16 @@ inline void CollectLightsForTarget(SceneRenderer *sceneRenderer, IRenderTarget *
             element.intensity = light->GetIntensity();
             element.decay = light->GetDecay();
             element.shadowMapIndex = findShadowIndex(lightRenderer);
-            pointLights.push_back(element);
-            if (sources) (*sources)[0].push_back(lightRenderer);
+            if(lightRenderer->HasPointInstances()){
+                element.shadowMapIndex=-1;
+                for(const auto &instance:lightRenderer->GetPointInstances()){
+                    element.position=instance.position;element.intensity=instance.intensity;
+                    pointLights.push_back(element);if(sources)(*sources)[0].push_back(lightRenderer);
+                }
+            }else{
+                pointLights.push_back(element);
+                if (sources) (*sources)[0].push_back(lightRenderer);
+            }
         } else if (light->GetType() == Light::Type::Spot) {
             SpotLightElement element;
             element.enabled = light->IsActive() ? 1u : 0u;
@@ -764,6 +774,32 @@ inline void CollectLightsForTarget(SceneRenderer *sceneRenderer, IRenderTarget *
             if (sources) (*sources)[7].push_back(lightRenderer);
         }
     }
+}
+
+// 座標変換やライト特性を再計算せず、共有するワールド空間のデータを絞り込む。
+inline void FilterFrameLights(const FrameLights &world, SceneRenderer *sceneRenderer,
+    IRenderTarget *target, const std::string &pipelineName, FrameLights &result) {
+    auto append = [&]<class T>(const std::vector<T> &values, std::vector<T> &dest, size_t type) {
+        const LightRenderer *previous=nullptr;bool included=false;
+        for (size_t i = 0; i < values.size(); ++i) {
+            const auto *renderer = world.sources[type][i];
+            if(renderer!=previous){previous=renderer;
+                included=!IsExcludedAsEditorOnly(renderer,target,sceneRenderer)&&
+                    (renderer->GetPipelineName().empty()||renderer->GetPipelineName()==pipelineName)&&
+                    IsTargetMatch(renderer->GetTargetObject(),renderer->GetTargetObjectID().IsValid(),target,sceneRenderer)&&renderer->IsRenderTargetIncluded(target);
+            }
+            if(!included)continue;
+            dest.push_back(values[i]); result.sources[type].push_back(renderer);
+        }
+    };
+    append(world.pointLights, result.pointLights, 0);
+    append(world.spotLights, result.spotLights, 1);
+    append(world.directionalLights, result.directionalLights, 2);
+    append(world.sphereLights, result.sphereLights, 3);
+    append(world.discLights, result.discLights, 4);
+    append(world.rectLights, result.rectLights, 5);
+    append(world.tubeLights, result.tubeLights, 6);
+    append(world.boxLights, result.boxLights, 7);
 }
 
 /// @brief 指定の描画先・パイプラインに適用されるカメラの定数バッファを解決する（複数該当する場合は最後に一致したもの）

@@ -6,9 +6,11 @@
 #include "Scene/Scene.h"
 #include "Scene/SceneContext.h"
 #include "Objects/Components/Transform.h"
+#include "Objects/Components/Collider/BoxCollider.h"
 #include "Objects/Components/Render/SpriteRenderer.h"
 #include "Scene/Components/Render/SceneRenderer.h"
 #include "Graphics/Renderer/RendererInternal.h"
+#include "Graphics/Renderer/MaterialDrawCache.h"
 using namespace KashipanEngine;
 namespace KashipanEngine {
 class OptimizationProbe final : public IObjectComponent {
@@ -51,6 +53,13 @@ int main() {
     const auto componentKey = std::bit_cast<Passkey<EmptyObject>>(std::uint8_t{});
     auto *parent=sc->CreateEmptyObject("Parent"), *child=sc->CreateEmptyObject("Child"), *other=sc->CreateEmptyObject("Other");
     child->GetComponent<Transform>()->SetParentObject(parent);
+    const auto stableRevision=EmptyObject::GetStructureRevision();
+    Check(child->GetComponent<Transform>()->SetParentObject(parent), "same parent succeeds");
+    Check(child->GetComponent<Transform>()->SetParentObject(parent->GetObjectID()), "same parent UUID succeeds");
+    Check(stableRevision==EmptyObject::GetStructureRevision(), "same parent preserves structure and render caches");
+    auto *detached=other->GetComponent<Transform>();
+    detached->SetParentObject(nullptr);detached->SetParentObject(UUID128());
+    Check(stableRevision==EmptyObject::GetStructureRevision(), "already detached preserves caches");
     for (int i=0;i<10000;++i) Check(child->IsActive(), "cached active child");
     parent->SetActive(false);Check(!child->IsActive(), "parent invalidates active cache");
     auto *grandchild=sc->CreateEmptyObject("Grandchild");grandchild->GetComponent<Transform>()->SetParentObject(child);
@@ -63,6 +72,33 @@ int main() {
     child->SetActive(false); child->GetComponent<Transform>()->SetParentObject(parent);parent->SetActive(true);
     Check(!child->IsActive()&&!grandchild->IsActive(), "local inactive state survives ancestor activation");
     child->SetActive(true); Check(grandchild->IsActive(), "local reactivation");
+
+    {
+        Collider physics;
+        auto *boxOwner=sc->CreateEmptyObject("StablePhysicsShape");
+        auto *box=boxOwner->AddComponent<BoxCollider>();
+        auto info=*box->BuildColliderInfo3D();info.sourceCollider=box;
+        const auto id=physics.Add(info);
+        auto *world=physics.GetPhysicsWorld();Check(world && world->getNbRigidBodies()==1,"physics body created");
+        auto *body=world->getRigidBody(0);const auto entity=body->getEntity();
+        const auto colliderEntity=body->getCollider(0)->getEntity();
+        for(int i=0;i<120;++i)physics.UpdateColliderInfo3D(id,info);
+        Check(world->getRigidBody(0)->getEntity()==entity && body->getCollider(0)->getEntity()==colliderEntity,"static body and shape entities reused");
+        boxOwner->GetComponent<Transform>()->SetRotate(Vector3(0,0,.7f));
+        std::get<ColliderInfo3D::BoxShape3D>(info.shape).center=Vector3(5,2,0);
+        physics.UpdateColliderInfo3D(id,info);
+        Check(body->getEntity()==entity && body->getCollider(0)->getEntity()==colliderEntity && body->getTransform().getPosition().x==5 && body->getTransform().getOrientation().z!=0,"translation and rotation update without shape rebuild");
+        info.enabled=false;info.isTrigger=true;physics.UpdateColliderInfo3D(id,info);
+        Check(!body->isActive() && !body->getCollider(0)->getIsSimulationCollider(),"enabled and trigger flags updated");
+        info.enabled=true;info.isTrigger=false;physics.UpdateColliderInfo3D(id,info);
+        Check(body->isActive() && body->getCollider(0)->getIsSimulationCollider(),"flags restored");
+        std::get<ColliderInfo3D::BoxShape3D>(info.shape).halfExtents=Vector3(2,3,4);
+        physics.UpdateColliderInfo3D(id,info);body=world->getRigidBody(0);
+        Check(body->getEntity()!=entity && static_cast<reactphysics3d::BoxShape *>(body->getCollider(0)->getCollisionShape())->getHalfExtents().y==3,"resize rebuilds correct dimensions");
+        info.shape=ColliderInfo3D::SphereShape3D{Vector3(0,0,0),2};physics.UpdateColliderInfo3D(id,info);
+        Check(world->getNbRigidBodies()==1 && world->getRigidBody(0)->getCollider(0)->getCollisionShape()->getType()==reactphysics3d::CollisionShapeType::SPHERE,"shape type change releases old variant safely");
+        physics.Remove3D(id);Check(world->getNbRigidBodies()==0,"reused body released on removal");
+    }
 
     auto *owner=sc->CreateEmptyObject("Updates");auto *a=owner->AddComponent<OptimizationProbe>();auto *b=owner->AddComponent<OptimizationProbe>();
     auto *lifecycle=owner->AddComponent<OptimizationLifecycleOnly>();
@@ -88,6 +124,61 @@ int main() {
     HeadlessLightTarget target;
     RendererInternal::CollectLightsForTarget(registry,&target,"Object3D.Test",[](const LightRenderer*){return -1;},lights.pointLights,lights.spotLights,lights.directionalLights,lights.sphereLights,lights.discLights,lights.rectLights,lights.tubeLights,lights.boxLights,&lights.sources);
     for (const auto &sources:lights.sources)Check(sources.size()==1,"eight light types preserve shadow-source indexing");
-    std::puts("PASS: active-state cache, reparent/detach, update priorities, pooled removal, immutable snapshots, lifecycle-only components, all light types");return 0;
+    RendererInternal::FrameLights world, filtered;
+    RendererInternal::CollectLightsForTarget(registry,nullptr,"",[](const LightRenderer*){return -1;},world.pointLights,world.spotLights,world.directionalLights,world.sphereLights,world.discLights,world.rectLights,world.tubeLights,world.boxLights,&world.sources,true);
+    RendererInternal::FilterFrameLights(world,registry,&target,"Object3D.Test",filtered);
+    Check(filtered.sources==lights.sources,"shared world-light filtering preserves all source arrays");
+    world.sources[0][0]->GetOwnerObject()->GetComponent<LightRenderer>()->SetPipelineName("OnlyThisPipeline");
+    RendererInternal::FrameLights excluded;
+    RendererInternal::FilterFrameLights(world,registry,&target,"OtherPipeline",excluded);
+    Check(excluded.pointLights.empty()&&excluded.directionalLights.size()==1,"per-pipeline light exclusions remain independent");
+
+    // Force one object per slice, then compare with the complete serializer.
+    Scene::RecoverySnapshot snapshot;
+    auto progress=scene.AdvanceRecoverySnapshot(snapshot,0);
+    Check(progress==Scene::RecoveryProgress::Pending&&snapshot.cursor==1,"snapshot work is sliced between objects");
+    while(progress==Scene::RecoveryProgress::Pending)progress=scene.AdvanceRecoverySnapshot(snapshot,0);
+    Check(progress==Scene::RecoveryProgress::Complete&&snapshot.json==scene.SaveToJSON(),"incremental recovery preserves every saved object, component and scene field");
+    Scene::RecoverySnapshot removed;
+    scene.AdvanceRecoverySnapshot(removed,0);sc->DeleteObject(other);
+    Check(scene.AdvanceRecoverySnapshot(removed,0)==Scene::RecoveryProgress::Invalidated,"deletion invalidates a sweep before publication");
+    Scene::RecoverySnapshot saveMask;
+    scene.AdvanceRecoverySnapshot(saveMask,0);parent->SetSaveEnabled(false);
+    Check(scene.AdvanceRecoverySnapshot(saveMask,0)==Scene::RecoveryProgress::Invalidated,"save mask changes invalidate a recovery sweep");
+
+    PipelineInfo pipeline;
+    auto &layout=const_cast<MaterialLayout&>(pipeline.GetMaterialLayout());
+    layout.totalByteSize=128;
+    layout.fields={{"instanceColor",0,16},{"instanceColorBlendMode",16,4},{"uvTransform",32,64},{"uvRect",96,16},{"boldWeight",112,4}};
+    RendererInternal::MaterialDrawCache materials;
+    std::vector<SceneRenderer::DrawEntry> entries(2);
+    entries[1].instanceColor={.2f,.3f,.4f,.5f};entries[1].boldWeight=.75f;
+    materials.BeginFrame();auto original=materials.Pack("batch",pipeline,"Test",entries);auto count=materials.GetPackCount();
+    materials.BeginFrame();Check(materials.Pack("batch",pipeline,"Test",entries)==original&&materials.GetPackCount()==count,"unchanged material batches reuse packed bytes across frames");
+    entries[1].instanceColor.x=.9f;auto edited=materials.Pack("batch",pipeline,"Test",entries);
+    Check(edited!=original&&materials.GetPackCount()==count+1,"instance color changes invalidate packed materials");
+    auto expected=RendererInternal::BuildMaterialElementBytes(pipeline,nullptr);
+    RendererInternal::WriteMaterialField(pipeline,expected.data(),128,"instanceColor",entries[1].instanceColor);
+    RendererInternal::WriteMaterialField(pipeline,expected.data(),128,"instanceColorBlendMode",float(entries[1].instanceColorBlendMode));
+    RendererInternal::WriteMaterialField(pipeline,expected.data(),128,"uvTransform",RendererInternal::ResolveInstanceUVTransform(entries[1],nullptr));
+    RendererInternal::WriteMaterialField(pipeline,expected.data(),128,"uvRect",entries[1].uvRect);
+    RendererInternal::WriteMaterialField(pipeline,expected.data(),128,"boldWeight",entries[1].boldWeight);
+    Check(std::memcmp(expected.data(),edited.data()+128,128)==0,"cached pack matches legacy shader layout packing");
+    layout.fields[0].byteOffset=20;materials.BeginFrame();auto moved=materials.Pack("batch",pipeline,"Test",entries);
+    Check(moved!=edited&&materials.GetPackCount()==count+2,"layout reload invalidates cached field offsets");
+    entries.pop_back();materials.Pack("batch",pipeline,"Test",entries);
+    Check(materials.GetPackCount()==count+3,"instance count changes invalidate cached batches");
+    SceneRenderer::DrawEntry drawOriginal;
+    const auto changed = [&](const auto &edit) { auto copy=drawOriginal; edit(copy); Check(!(copy==drawOriginal),"draw-list patch observes changed payload"); };
+    Check(drawOriginal==drawOriginal,"unchanged draw entry is retained");
+    changed([](auto &e){e.worldMatrix.m[3][0]=2;});changed([](auto &e){e.instanceColor.x=.4f;});
+    changed([](auto &e){e.pipelineName="Other";});changed([](auto &e){e.meshHandle=2;});changed([](auto &e){e.materialHandle=2;});
+    changed([](auto &e){e.indexStart=1;});changed([](auto &e){e.indexCount=12;});changed([](auto &e){e.textureOverrideHandle=2;});
+    changed([](auto &e){e.samplerOverrideHandle=2;});changed([](auto &e){e.instanceColorBlendMode=3;});
+    changed([](auto &e){e.instanceUvTranslate.x=.2f;});changed([](auto &e){e.instanceUvRotation=.3f;});changed([](auto &e){e.instanceUvScale.y=2;});
+    changed([](auto &e){e.instanceUvPivot.x=.1f;});changed([](auto &e){e.instanceUvCombineMode=2;});changed([](auto &e){e.objectIdSeed=.1f;});
+    changed([](auto &e){e.allowInstancing=false;});changed([](auto &e){e.uvRect.x=.1f;});changed([](auto &e){e.boldWeight=.1f;});
+    changed([](auto &e){e.textOutlineWidth=.1f;});changed([](auto &e){e.textOutlineColor.x=1;});
+    std::puts("PASS: active-state cache, reparent/detach, update priorities, pooled removal, immutable snapshots, lifecycle-only components, all light types, draw-entry patch inputs");return 0;
  } catch(const std::exception &e){std::fprintf(stderr,"FAILED: %s\n",e.what());return 1;}
 }

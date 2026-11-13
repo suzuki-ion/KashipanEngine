@@ -1,4 +1,5 @@
 #include "RendererInternal.h"
+#include "MaterialDrawCache.h"
 #include "Debug/Profiler.h"
 #include "Debug/Logger.h"
 #include <optional>
@@ -10,6 +11,7 @@ using namespace RendererInternal;
 Renderer::Renderer(Passkey<GraphicsEngine>, DirectXCommon *directXCommon, PipelineManager *pipelineManager)
     : directXCommon_(directXCommon), pipelineManager_(pipelineManager) {
     resourceContainer_ = std::make_unique<ResourceContainer>();
+    materialDrawCache_ = std::make_unique<MaterialDrawCache>();
     // ブルーノイズによるディザ閾値テーブルはエンジン起動時に1回だけ生成すればよい
     // （毎フレーム再生成する必要は無い）ため、ここで同期的に生成しておく
     blueNoiseGenerator_.Generate(directXCommon_, pipelineManager_, Passkey<Renderer>{});
@@ -50,6 +52,8 @@ void Renderer::RenderFrame(Passkey<GraphicsEngine>, SceneContext *sceneContext) 
     { Profiler::Scope scope("Render.Particles"); ProcessGpuParticles(sceneContext); }
 
     frameLights_.clear();
+    worldLights_.reset();
+    materialDrawCache_->BeginFrame();
     auto *sceneRenderer = sceneContext->GetComponent<SceneRenderer>();
     if (!sceneRenderer) {
         ComputeCommandProcessor::EndFrame(Passkey<Renderer>{});
@@ -190,6 +194,13 @@ void Renderer::TrackZeroDrawEntryTargets(SceneContext *sceneContext, std::span<c
 
 
 void Renderer::ReleaseAllResources(Passkey<GraphicsEngine>) {
+    frameLights_.clear();
+    worldLights_.reset();
+    materialDrawCache_->Clear();
+    shadowCacheSignatures_.clear();
+    shadowCacheScene_ = nullptr;
+    shadowCachePipeline_.Reset();
+    shadowCacheValid_ = false;
     if (resourceContainer_) {
         resourceContainer_->Clear();
     }

@@ -1,4 +1,5 @@
 #include "RendererInternal.h"
+#include "MaterialDrawCache.h"
 #include "Objects/Components/PostProcessing/ScreenWideDitherBlendEffect.h"
 
 namespace KashipanEngine {
@@ -153,6 +154,12 @@ void Renderer::DrawBatch(IRenderTarget *target,
     float extraSeedOffset,
     int seedPassIndex) {
     if (batch.empty()) return;
+    if(batch.front().instanceSource){
+        const auto expanded=batch.front().instanceSource->ExpandWorldInstances(batch.front());
+        DrawBatch(target,pipelineBinder,expanded,sceneRenderer,lightsCache,materialTemplateCache,batchKeySequencer,extraSeedOffset,seedPassIndex);
+        return;
+    }
+    (void)materialTemplateCache;
 
     const auto &first = batch.front();
     const std::string &pipelineName = first.pipelineName;
@@ -258,45 +265,7 @@ void Renderer::DrawBatch(IRenderTarget *target,
         const auto &pipelineInfo = pipelineManager_->GetPipeline(pipelineName);
         const std::uint32_t stride = pipelineInfo.GetMaterialLayout().totalByteSize;
         if (stride > 0) {
-            std::vector<std::byte> allBytes(static_cast<size_t>(stride) * instanceCount);
-            for (std::uint32_t i = 0; i < instanceCount; ++i) {
-                auto *material = MaterialManager::GetMaterial(batch[i].materialHandle);
-                const auto &elementTemplate = materialTemplateCache.Get(pipelineInfo, pipelineName, batch[i].materialHandle);
-                std::byte *elementBytes = allBytes.data() + static_cast<size_t>(i) * stride;
-                std::memcpy(elementBytes, elementTemplate.data(), stride);
-                // instanceColor/instanceColorBlendModeはインスタンス（MeshRenderer）ごとに異なり得るため、
-                // マテリアル本体の値のみ共有した上で、インスタンスごとに個別の値を書き込む
-                WriteMaterialField(pipelineInfo, elementBytes, stride, "instanceColor", batch[i].instanceColor);
-                float blendMode = static_cast<float>(batch[i].instanceColorBlendMode);
-                WriteMaterialField(pipelineInfo, elementBytes, stride, "instanceColorBlendMode", blendMode);
-                // instanceUvTranslate/Rotation/Scaleも同様にインスタンスごとに異なり得るため、
-                // マテリアルのUV変換と合成した結果でuvTransformを上書きする
-                WriteMaterialField(pipelineInfo, elementBytes, stride, "uvTransform", ResolveInstanceUVTransform(batch[i], material));
-                // 任意マテリアル対応以前のTextシェーダーは文字色をcharacterColorとして受け取る。
-                // 既存プロジェクトに古いKashipanEngineアセットのコピーが残っていても全文字が
-                // alpha=0にならないよう、レイアウトに存在する場合だけ同じ色を書き込む。
-                WriteMaterialField(pipelineInfo, elementBytes, stride, "characterColor", batch[i].instanceColor);
-                // uvRect/boldWeight/アウトライン値はTextRendererのみが使うフィールド（Text2D/Text3D
-                // パイプラインのMaterial構造体にのみ存在する）。それ以外のパイプラインではGetMaterialLayout
-                // にヒットせずWriteMaterialFieldが黙ってスキップするため、他のRendererには影響しない
-                WriteMaterialField(pipelineInfo, elementBytes, stride, "uvRect", batch[i].uvRect);
-                WriteMaterialField(pipelineInfo, elementBytes, stride, "boldWeight", batch[i].boldWeight);
-                WriteMaterialField(pipelineInfo, elementBytes, stride, "outlineWidth", batch[i].textOutlineWidth);
-                WriteMaterialField(pipelineInfo, elementBytes, stride, "outlineColor", batch[i].textOutlineColor);
-                // テクスチャ/サンプラーはバッチ結合条件から外れている（textureOverrideHandle/
-                // samplerOverrideHandleが異なる複数インスタンスが同一バッチに混在し得る）ため、
-                // インスタンスごとにバインドレス配列内のインデックスとして書き込む（DrawBatch冒頭コメント参照）
-                WriteMaterialField(pipelineInfo, elementBytes, stride, "textureIndex",
-                    ResolveInstanceTextureIndex(batch[i].textureOverrideHandle, material));
-                WriteMaterialField(pipelineInfo, elementBytes, stride, "samplerIndex",
-                    ResolveInstanceSamplerIndex(batch[i].samplerOverrideHandle, material));
-                // textureOverrideHandleが指定されている場合（TextRenderer/BitmapTextRendererのように
-                // マテリアルのテクスチャを完全に上書きする用途）は、割り当てマテリアル自身のuseTexture設定
-                // （単色マテリアルではfalseのことがある）に関わらず必ずサンプリングさせる
-                if (batch[i].textureOverrideHandle != TextureManager::kInvalidHandle) {
-                    WriteMaterialField(pipelineInfo, elementBytes, stride, "useTexture", 1.0f);
-                }
-            }
+            const auto &allBytes = materialDrawCache_->Pack(key, pipelineInfo, pipelineName, batch);
             auto *materialBuffer = resourceContainer_->GetOrUpdateStructuredBuffer(key, stride, instanceCount, allBytes.data());
             if (materialBuffer) {
                 shaderBinder.Bind("Pixel:gMaterials", materialBuffer);

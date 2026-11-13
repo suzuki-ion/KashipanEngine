@@ -1691,6 +1691,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTool
     <ClInclude Include="..\SourceFiles\KashipanEngine\Graphics\Renderer\EditorDebugDraw.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Graphics\Renderer\Renderer.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Graphics\Renderer\RendererInternal.h" />
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Graphics\Renderer\MaterialDrawCache.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Graphics\Renderer\ResourceContainer.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Graphics\Resources.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Graphics\Resources\ConstantBufferResource.h" />

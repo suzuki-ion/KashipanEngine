@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <cstdint>
+#include <cstring>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -86,6 +87,9 @@ public:
         ///        隣接エントリがあっても常に単独のドローコールとして描画される
         ///        （MeshRenderer/SpriteRenderer/TextRendererのAllowInstancing参照）
         bool allowInstancing = true;
+        // 実行時のワールド空間インスタンスは描画直前に展開し、
+        // インスタンスごとのシーンオブジェクトや並べ替え用描画項目は作成しない。
+        MeshRenderer *instanceSource = nullptr;
         /// @brief TextRendererのみ使用。アトラス内のUV矩形（x0,y0,x1,y1）。既定は全面（0,0,1,1）。
         ///        Text系パイプラインのMaterial構造体にのみ存在する"uvRect"フィールドへ
         ///        WriteMaterialFieldでインスタンスごとに書き込まれる（他の型・パイプラインでは無視される）
@@ -96,6 +100,14 @@ public:
         float textOutlineWidth = 0.0f;
         /// @brief TextRendererのみ使用。アウトライン色
         Vector4 textOutlineColor{ 0.0f, 0.0f, 0.0f, 1.0f };
+        bool operator==(const DrawEntry &b) const {
+            return instanceSource==b.instanceSource && target==b.target && pipelineName==b.pipelineName && meshHandle==b.meshHandle && materialHandle==b.materialHandle &&
+                textureOverrideHandle==b.textureOverrideHandle && samplerOverrideHandle==b.samplerOverrideHandle && indexStart==b.indexStart && indexCount==b.indexCount &&
+                std::memcmp(&worldMatrix,&b.worldMatrix,sizeof(worldMatrix))==0 && skinnedVertexBuffer==b.skinnedVertexBuffer && instanceColor==b.instanceColor &&
+                instanceColorBlendMode==b.instanceColorBlendMode && instanceUvTranslate==b.instanceUvTranslate && instanceUvRotation==b.instanceUvRotation &&
+                instanceUvScale==b.instanceUvScale && instanceUvPivot==b.instanceUvPivot && instanceUvCombineMode==b.instanceUvCombineMode && objectIdSeed==b.objectIdSeed &&
+                allowInstancing==b.allowInstancing && uvRect==b.uvRect && boldWeight==b.boldWeight && textOutlineWidth==b.textOutlineWidth && textOutlineColor==b.textOutlineColor;
+        }
     };
 
     /// @brief DrawEntryにソートキー（描画先種別順・パイプライン優先度・RenderPriority）を付随させた中間データ
@@ -187,6 +199,7 @@ public:
     ///          小さいほど先＝奥、大きいほど後＝手前）→メッシュ→マテリアルの順でソートされる
     /// @param pipelineManager パイプラインの描画優先度取得用
     const std::vector<DrawEntry> &BuildSortedDrawList(Passkey<Renderer>, PipelineManager *pipelineManager);
+    std::size_t GetLastPatchedDrawEntryCount() const { return lastPatchedDrawEntryCount_; }
 
     /// @brief 描画リストのキャッシュを次回のBuildSortedDrawList呼び出し時に再構築させる
     /// @details パイプライン名・メッシュ・マテリアル・描画先対象の指定など、ソート結果に影響する
@@ -341,6 +354,7 @@ private:
     bool drawListDirty_ = true;
     /// @brief キャッシュ済みエントリ（常にeditorTarget_のみに対して描画する。ソート済み）
     std::vector<CachedRankedEntry> cachedEntries_;
+    std::size_t lastPatchedDrawEntryCount_ = 0;
     std::uint64_t cachedStructureRevision_ = 0;
     struct TargetLayout {
         UUID128 owner;

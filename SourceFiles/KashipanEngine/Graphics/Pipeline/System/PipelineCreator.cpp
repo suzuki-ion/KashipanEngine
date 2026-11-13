@@ -1,4 +1,4 @@
-#include "PipelineCreator.h"
+﻿#include "PipelineCreator.h"
 #include "Graphics/Pipeline/JsonParser/RootSignature.h"
 #include "Graphics/Pipeline/JsonParser/BlendState.h"
 #include "Graphics/Pipeline/JsonParser/RasterizerState.h"
@@ -291,7 +291,7 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
         return false;
     }
 
-    // Input layout
+    // 入力レイアウト
     InputLayoutParsedInfo inputLayoutInfo{};
     if (json.contains("InputLayout")) {
         const auto &ilJson = json["InputLayout"];
@@ -324,7 +324,7 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
         }
     }
 
-    // Fixed states
+    // 固定状態
     if (!json.contains("RasterizerState")) { Log(Translation("engine.graphics.pipeline.load.render.rasterizer.missing") + name, LogSeverity::Error); return false; }
     if (!json.contains("BlendState")) { Log(Translation("engine.graphics.pipeline.load.render.blend.missing") + name, LogSeverity::Error); return false; }
     if (!json.contains("DepthStencilState")) { Log(Translation("engine.graphics.pipeline.load.render.depthstencil.missing") + name, LogSeverity::Error); return false; }
@@ -367,6 +367,7 @@ bool PipelineCreator::CreateRender(const Json &json, PipelineInfo &outInfo) {
     outInfo.category = json.value("Category", std::string{});
     outInfo.type = PipelineType::Render;
     outInfo.renderPriority = json.value("RenderPriority", json.value("Priority", 0));
+    outInfo.staticShadowCacheCompatible = json.value("StaticShadowCacheCompatible", false);
     outInfo.topologyType = ToD3DTopology(psoDesc.PrimitiveTopologyType);
     outInfo.pipelineSet.rootSignature = rootSignature;
     outInfo.pipelineSet.pipelineState = pso;
@@ -473,6 +474,7 @@ bool PipelineCreator::CreateCompute(const Json &json, PipelineInfo &outInfo) {
     outInfo.category = json.value("Category", std::string{});
     outInfo.type = PipelineType::Compute;
     outInfo.renderPriority = json.value("RenderPriority", json.value("Priority", 0));
+    outInfo.staticShadowCacheCompatible = json.value("StaticShadowCacheCompatible", false);
     outInfo.topologyType = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
     outInfo.pipelineSet.rootSignature = rootSignature;
     outInfo.pipelineSet.pipelineState = pso;
@@ -532,8 +534,8 @@ void PipelineCreator::BuildShaderVariableBinder(PipelineInfo &outInfo, const std
                     continue;
                 }
                 if (range.RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_SRV) {
-                    // SRV descriptor table can contain both Texture2D and StructuredBuffer.
-                    // Register both so binder can resolve reflection Type() correctly.
+                    // SRVディスクリプターテーブルにはTexture2DとStructuredBufferの両方を含められる。
+                    // バインダーがリフレクションのType()を正しく解決できるよう、両方を登録する。
                     outInfo.variableBinder.RegisterDescriptorTableRange({},
                         D3D_SIT_TEXTURE,
                         range.BaseShaderRegister,

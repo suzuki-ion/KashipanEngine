@@ -1,4 +1,5 @@
 #include "RendererInternal.h"
+#include "Debug/Profiler.h"
 
 namespace KashipanEngine {
 
@@ -30,8 +31,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
     (void)sceneContext;
     shadowJobs_.clear();
     targetShadowEntries_.clear();
-    shadowBatches_.clear();
-    shadowGpuParticleBatches_.clear();
+    // 深度配列全体を再利用できる場合は準備済みのバッチを保持する。
     if (!sceneRenderer || !directXCommon_ || !pipelineManager_) return;
 
     constexpr const char *kShadowPipelineName = "Object3D.ShadowMap.DepthOnly";
@@ -83,6 +83,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
     if (pipelineManager_->HasPipeline(kShadowPipelineName)) {
         for (auto *lightRenderer : sceneRenderer->GetLightRenderers()) {
             if (!lightRenderer || !lightRenderer->IsActive()) continue;
+            if (lightRenderer->HasPointInstances()) continue; // 実行時のポイントライトバッチは影を生成しない。
             auto *light = lightRenderer->GetLight();
             if (!light || !light->IsActive() || !light->IsCastShadows()) continue;
             resolution = std::max(resolution, light->GetShadowMapResolution());
@@ -97,6 +98,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
         }
     }
     if (resolution == 0 || estimatedSlices == 0) {
+        shadowCacheValid_ = false;
         ensureFallbackArray();
         return;
     }
@@ -352,6 +354,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
     }
 
     if (shadowJobs_.empty()) {
+        shadowCacheValid_ = false;
         targetShadowEntries_.clear();
         ensureFallbackArray();
         return;
@@ -382,6 +385,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
         shadowArrayResolution_ = resolution;
         shadowArraySliceCount_ = newSliceCount;
         shadowArrayReady_ = false;
+        shadowCacheValid_ = false;
     }
 
     //--------- 影を落とす3Dオブジェクトの収集（MeshRenderer / SkinnedMeshRenderer） ---------//
@@ -395,6 +399,9 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
         std::uint32_t indexCount = 0;
         /// @brief オブジェクト固有のディザ用シード値（本体描画と同じ値。ShadowMapPS.hlsl参照）
         float idSeed = 0.0f;
+        Vector3 boundsCenter{};
+        float boundsRadius = 0.0f;
+        bool hasBounds = false;
     };
     std::vector<ShadowDrawSource> sources;
     const auto isShadowCastingPipeline = [](const std::string &name) {
@@ -402,7 +409,7 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
         return name.rfind("Object3D", 0) == 0 && name.rfind("Object3D.ShadowMap", 0) != 0;
     };
     // サブメッシュ（マテリアルごとのインデックス範囲）ごとに1件収集する
-    const auto appendShadowSources = [&sources](auto *renderer, RWStructuredBufferResource *skinnedVertexBuffer) {
+    const auto appendShadowSources = [this, &sources](auto *renderer, RWStructuredBufferResource *skinnedVertexBuffer) {
         const auto &subMeshes = ModelManager::GetModelData(renderer->GetMeshHandle()).GetSubMeshes();
         const size_t subMeshCount = std::max<size_t>(1, subMeshes.size());
         const float idSeed = SceneRenderer::ObjectIdSeedFor(renderer->GetOwnerObject());
@@ -412,6 +419,15 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
             source.materialHandle = renderer->GetMaterialHandleAt(subMeshIndex);
             source.worldMatrix = renderer->GetWorldMatrix();
             source.skinnedVertexBuffer = skinnedVertexBuffer;
+            if (const auto *mesh = resourceContainer_->GetOrCreateMeshBuffers(source.meshHandle)) {
+                const auto &m = source.worldMatrix.m;
+                const auto &p = mesh->boundsCenter;
+                source.boundsCenter = Vector3(p.x*m[0][0]+p.y*m[1][0]+p.z*m[2][0]+m[3][0],
+                    p.x*m[0][1]+p.y*m[1][1]+p.z*m[2][1]+m[3][1], p.x*m[0][2]+p.y*m[1][2]+p.z*m[2][2]+m[3][2]);
+                const auto lengthSquared = [](const auto &axis) { return axis[0]*axis[0]+axis[1]*axis[1]+axis[2]*axis[2]; };
+                source.boundsRadius = mesh->boundsRadius * std::sqrt(std::max({lengthSquared(m[0]),lengthSquared(m[1]),lengthSquared(m[2])}));
+                source.hasBounds = true;
+            }
             if (!subMeshes.empty()) {
                 source.indexStart = subMeshes[subMeshIndex].indexStart;
                 source.indexCount = subMeshes[subMeshIndex].indexCount;
@@ -435,6 +451,81 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
         if (!isShadowCastingPipeline(renderer->GetPipelineName())) continue;
         appendShadowSources(renderer, renderer->GetSkinnedVertexBuffer());
     }
+
+    // ライトカメラのジョブごとに独立してキャッシュする。動的・アルファ付きの影生成物は
+    // 自身を視錐台に含むジョブのみ更新を強制する。境界にはシャドウ描画のカリングと同じ
+    // メッシュの境界球を使用し、境界が不明な場合は安全側に判定する。
+    const auto &shadowPipeline = pipelineManager_->GetPipeline(kShadowPipelineName);
+    std::unordered_map<MaterialManager::MaterialHandle, std::vector<std::byte>> materialStates;
+    std::unordered_map<MaterialManager::MaterialHandle, bool> materialCacheable;
+    for (const auto &source : sources) {
+        if (materialStates.contains(source.materialHandle)) continue;
+        auto *material = MaterialManager::GetMaterial(source.materialHandle);
+        bool safe = true;
+        if (material) {
+            material->ResolveTextureHandles();
+            safe = material->textureHandle == TextureManager::kInvalidHandle && material->textureFileName.empty() && material->color.w >= 1.0f;
+        }
+        auto bytes = BuildMaterialElementBytes(shadowPipeline, material);
+        const auto stride = static_cast<std::uint32_t>(bytes.size());
+        WriteMaterialField(shadowPipeline,bytes.data(),stride,"textureIndex",ResolveInstanceTextureIndex(TextureManager::kInvalidHandle,material));
+        WriteMaterialField(shadowPipeline,bytes.data(),stride,"samplerIndex",ResolveInstanceSamplerIndex(SamplerManager::kInvalidHandle,material));
+        if (const auto *color=shadowPipeline.GetMaterialLayout().Find("color"); color && color->byteSize>=sizeof(float)*4 && color->byteOffset+sizeof(float)*4<=bytes.size()) {
+            float alpha=0; std::memcpy(&alpha,bytes.data()+color->byteOffset+sizeof(float)*3,sizeof(alpha));
+            if (alpha<1.0f) safe=false;
+        }
+        materialCacheable.emplace(source.materialHandle,safe);
+        materialStates.emplace(source.materialHandle,std::move(bytes));
+    }
+    bool compatible = shadowPipeline.StaticShadowCacheCompatible();
+    // パーティクルの位置はGPU上にあるため、CPU側のエミッターの変換だけでは
+    // 影響範囲を安全に限定できない。
+    for (auto *emitter : sceneRenderer->GetGpuParticleEmitters())
+        if (emitter && emitter->IsActive() && emitter->IsGPUSimulation() && emitter->GetCastShadows()) compatible=false;
+    const bool previousValid = shadowCacheValid_ && shadowArrayReady_ && shadowCacheScene_==sceneContext &&
+        shadowCachePipeline_.Get()==shadowPipeline.GetPipelineSet().PipelineState();
+    std::vector<std::vector<std::byte>> signatures(shadowJobs_.size());
+    std::vector<bool> dirtyJobs(shadowJobs_.size(),true);
+    bool anyDirty=false;
+    for (size_t j=0;j<shadowJobs_.size();++j) {
+        const auto &job=shadowJobs_[j];
+        auto &signature=signatures[j];
+        const auto append = [&]<typename T>(const T &value) {
+            const auto *begin=reinterpret_cast<const std::byte *>(&value);
+            signature.insert(signature.end(),begin,begin+sizeof(T));
+        };
+        append(resolution); append(job.baseSlice); append(job.sliceCount); append(job.lightType);
+        bool cacheable=compatible;
+        std::array<decltype(ExtractFrustumPlanes(job.viewProjections[0])),kMaxShadowViewProjections> frusta;
+        for (unsigned i=0;i<job.sliceCount;++i) {
+            append(job.viewProjections[i]); append(job.eyePositions[i]);
+            frusta[i]=ExtractFrustumPlanes(job.viewProjections[i]);
+        }
+        for (const auto &source:sources) {
+            bool relevant=!source.hasBounds;
+            for (unsigned i=0;!relevant && i<job.sliceCount;++i)
+                relevant=SphereIntersectsFrustum(frusta[i],source.boundsCenter,source.boundsRadius);
+            if (!relevant) continue;
+            if (!source.hasBounds || source.skinnedVertexBuffer || !materialCacheable.at(source.materialHandle)) cacheable=false;
+            append(source.meshHandle); append(ModelManager::GetModelDataVersion(source.meshHandle));
+            append(source.indexStart); append(source.indexCount); append(source.worldMatrix); append(source.idSeed); append(source.materialHandle);
+            const auto &bytes=materialStates.at(source.materialHandle);
+            append(bytes.size()); signature.insert(signature.end(),bytes.begin(),bytes.end());
+        }
+        dirtyJobs[j]=!cacheable || !previousValid || j>=shadowCacheSignatures_.size() || signature!=shadowCacheSignatures_[j];
+        anyDirty=anyDirty || dirtyJobs[j];
+        { Profiler::Scope count(dirtyJobs[j] ? "Render.Shadows.JobRedraw" : "Render.Shadows.JobCacheHit"); }
+        // 安全に再利用できないジョブは、将来のキャッシュ再利用の元にも使用しない（変換が変わらず、
+        // スキニングやアルファアニメーションのみ無効化された場合など）。
+        if (!cacheable) signature.clear();
+    }
+    if (!anyDirty) {
+        Profiler::Scope hit("Render.Shadows.CacheHit");
+        return;
+    }
+    shadowCacheValid_=false;
+    shadowBatches_.clear();
+    shadowGpuParticleBatches_.clear();
 
     // 同一（メッシュ・サブメッシュ）をまとめてインスタンシング描画できるようにソート。
     // マテリアルは各インスタンスが自分自身のものを参照できる（後段のマテリアル構造化バッファ構築
@@ -700,14 +791,9 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
         }
     }
 
-    //--------- シャドウマップ配列を深度書き込み状態にして全スライスを一括クリア ---------//
+    // 未変更のスライスを維持し、変更されたジョブのみクリアして再描画する。
     shadowMapArray_->SetCommandList(commandList);
     shadowMapArray_->TransitionTo(D3D12_RESOURCE_STATE_DEPTH_WRITE);
-    {
-        const auto fullDsv = shadowMapArray_->GetCPUDescriptorHandle();
-        commandList->OMSetRenderTargets(0, nullptr, FALSE, &fullDsv);
-        shadowMapArray_->ClearDepthStencilView();
-    }
     {
         const float resolutionF = static_cast<float>(resolution);
         D3D12_VIEWPORT viewport{ 0.0f, 0.0f, resolutionF, resolutionF, 0.0f, 1.0f };
@@ -718,10 +804,12 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
 
     //--------- 影ジョブ × スライス数だけシャドウマップ描画パスを回す ---------//
     for (size_t jobIndex = 0; jobIndex < shadowJobs_.size(); ++jobIndex) {
+        if (!dirtyJobs[jobIndex]) continue;
         const auto &job = shadowJobs_[jobIndex];
         for (std::uint32_t s = 0; s < job.sliceCount; ++s) {
             const auto dsv = shadowMapArray_->GetSliceDsvHandle(job.baseSlice + s);
             commandList->OMSetRenderTargets(0, nullptr, FALSE, &dsv);
+            commandList->ClearDepthStencilView(dsv,D3D12_CLEAR_FLAG_DEPTH,1.0f,0,0,nullptr);
 
             // ライトカメラの定数バッファ（ShadowMapVS が gCamera3D.viewProjection を参照する）
             char cameraKey[64];
@@ -785,6 +873,10 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
     if (commands->EndRecord()) {
         directXCommon_->AddRecordCommandList(Passkey<Renderer>{}, commands->GetCommandList());
         shadowArrayReady_ = true;
+        shadowCacheSignatures_ = std::move(signatures);
+        shadowCacheScene_ = sceneContext;
+        shadowCachePipeline_ = shadowPipeline.GetPipelineSet().PipelineState();
+        shadowCacheValid_ = true;
     } else {
         shadowJobs_.clear();
         targetShadowEntries_.clear();
@@ -794,12 +886,16 @@ void Renderer::RenderShadowMaps(SceneContext *sceneContext, SceneRenderer *scene
 void Renderer::RenderShadowMapsPhaseInto(ScreenBuffer *screenBuffer, PipelineBinder &pipelineBinder,
     float phaseOffset, int passIndex) {
     if (!screenBuffer || !shadowMapArray_ || shadowJobs_.empty() || shadowResolutionForRedraw_ == 0) return;
+    // フェーズ再描画では異なるディザーシードでキャッシュ済みスライスの内容を上書きする。
+    shadowCacheValid_ = false;
     auto *commandList = screenBuffer->GetCommandList();
     if (!commandList || !pipelineManager_) return;
 
     constexpr const char *kShadowPipelineName = "Object3D.ShadowMap.DepthOnly";
     if (!pipelineManager_->HasPipeline(kShadowPipelineName)) return;
 
+    // フェーズ描画では異なるディザーフェーズで共有配列を上書きする。
+    shadowCacheValid_ = false;
     pipelineBinder.UsePipeline(kShadowPipelineName);
     auto &shaderBinder = pipelineManager_->GetShaderVariableBinder(Passkey<Renderer>{}, kShadowPipelineName);
     shaderBinder.SetCommandList(commandList);

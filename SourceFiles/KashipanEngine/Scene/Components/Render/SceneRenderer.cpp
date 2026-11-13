@@ -1,4 +1,4 @@
-#include "SceneRenderer.h"
+﻿#include "SceneRenderer.h"
 
 #include <algorithm>
 #include <cmath>
@@ -450,6 +450,9 @@ void CollectSortableEntries(const std::vector<RendererT *> &renderers,
                 sortable.pipelinePriority = entryPipelinePriority;
                 sortable.renderPriority = renderer->GetRenderPriority();
                 sortable.entry.allowInstancing = renderer->GetAllowInstancing();
+                if constexpr (std::is_same_v<RendererT, MeshRenderer>) {
+                    if(renderer->HasWorldInstances()){sortable.entry.instanceSource=renderer;sortable.entry.allowInstancing=false;}
+                }
                 if (cache) cache->push_back({sortable, renderer});
                 else sortableEntries.push_back(sortable);
 
@@ -560,6 +563,9 @@ void CollectCacheableEntries(const std::vector<RendererT *> &renderers,
             cached.ranked.entry.instanceUvCombineMode = GetInstanceUvCombineModeFor(renderer);
             cached.ranked.entry.objectIdSeed = SceneRenderer::ObjectIdSeedFor(renderer->GetOwnerObject());
             cached.ranked.entry.allowInstancing = renderer->GetAllowInstancing();
+            if constexpr (std::is_same_v<RendererT, MeshRenderer>) {
+                if(renderer->HasWorldInstances()){cached.ranked.entry.instanceSource=renderer;cached.ranked.entry.allowInstancing=false;}
+            }
             cached.ranked.kindOrder = GetRenderTargetKindOrder(editorTarget->GetRenderTargetKind());
             cached.ranked.pipelinePriority = pipelineManager->GetPipeline(entryPipelineName).RenderPriority();
             cached.ranked.renderPriority = renderer->GetRenderPriority();
@@ -767,7 +773,7 @@ bool SceneRenderer::CachedLayoutChanged(PipelineManager *pipelineManager) const 
     std::vector<IRenderTarget *> targets;
     for (const auto &layout : cachedTargetLayouts_) {
         CollectRenderTargets(scene ? scene->GetSceneObject(layout.owner) : nullptr, targets);
-        // Compare addresses before dereferencing: buffers/windows may have been recreated.
+        // バッファやウィンドウが再作成される場合があるため、参照先に触れる前にアドレスを比較する。
         if (targets != layout.targets) return true;
         for (size_t i = 0; i < targets.size(); ++i)
             if (layout.states[i] != std::pair{targets[i]->IsRenderTargetAvailable(), targets[i]->GetRenderOrderPriority()} || layout.names[i] != targets[i]->GetRenderTargetName()) return true;
@@ -791,7 +797,7 @@ void SceneRenderer::RebuildCachedEntries(PipelineManager *pipelineManager) {
     CollectSortableEntries(spriteRenderers_, pipelineManager, editorTarget_, cameraRenderers_, unused, cachedTargetOwners_, true, editorDisplayMode_, &cachedEntries_);
     std::stable_sort(cachedEntries_.begin(), cachedEntries_.end(),
         [](const CachedRankedEntry &a, const CachedRankedEntry &b) { return CompareSortableEntry(a.ranked, b.ranked); });
-    // Include targets of renderers with no currently available buffer/mesh as well.
+    // 現在バッファやメッシュが利用できないレンダラーの描画先も含める。
     std::unordered_set<EmptyObject *> owners;
     auto remember = [&](auto *renderer) {
         if (auto *owner = renderer->GetTargetObject(); owner && owners.insert(owner).second) {
@@ -861,17 +867,17 @@ MaterialManager::MaterialHandle SceneRenderer::EnsureEditorGhostPreviewMaterial(
 }
 
 const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(Passkey<Renderer>, PipelineManager *pipelineManager) {
-    sortedDrawList_.clear();
+    lastPatchedDrawEntryCount_ = 0;
     targetOwners_.clear();
-    if (!pipelineManager) return sortedDrawList_;
+    if (!pipelineManager) { sortedDrawList_.clear(); return sortedDrawList_; }
 
     if (drawListDirty_ || CachedLayoutChanged(pipelineManager)) {
         RebuildCachedEntries(pipelineManager);
         drawListDirty_ = false;
     }
 
-    // Mesh/Sprite topology and sorting are cached, including explicit offscreen targets.
-    // Skinned meshes, text, selection outlines and previews remain frame-local.
+    // 明示的な画面外描画先を含め、メッシュ・スプライトのトポロジーと並べ替え結果をキャッシュする。
+    // スキニングメッシュ・テキスト・選択輪郭・プレビューはフレームごとに処理する。
     targetOwners_ = cachedTargetOwners_;
     std::vector<SortableEntry> freshEntries;
 
@@ -1191,12 +1197,12 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
     // キャッシュ分（targetObjectID未指定のMesh/SpriteRenderer）はアクティブ状態を毎フレーム再確認しつつ
     // ワールド行列を更新する。並び順自体はRebuildCachedEntriesで確定済みのため、ハッシュマップ検索・
     // 文字列コピー・再ソートを毎フレーム行う必要がない
-    std::vector<SortableEntry> cachedLive;
+    std::vector<const SortableEntry *> cachedLive;
     cachedLive.reserve(cachedEntries_.size());
     for (auto &cached : cachedEntries_) {
         const bool active = std::visit([](auto *r) { return r && r->IsActive(); }, cached.source);
         if (!active || !cached.ranked.entry.target->IsRenderTargetAvailable()) continue;
-        SortableEntry ranked = cached.ranked;
+        SortableEntry &ranked = cached.ranked;
         std::visit([&](auto *r) {
             ranked.entry.worldMatrix = Shake::ApplyRenderOnlyOffsets(r->GetOwnerObject(), r->GetWorldMatrix());
             using T = std::remove_pointer_t<decltype(r)>;
@@ -1215,29 +1221,28 @@ const std::vector<SceneRenderer::DrawEntry> &SceneRenderer::BuildSortedDrawList(
             ranked.entry.instanceUvPivot = GetInstanceUvPivotFor(r);
             ranked.entry.instanceUvCombineMode = GetInstanceUvCombineModeFor(r);
         }, cached.source);
-        cachedLive.push_back(std::move(ranked));
+        cachedLive.push_back(&ranked);
     }
 
-    // キャッシュ済み（ソート済み）分と毎フレーム収集した分をマージする（両方ソート済みなのでO(n)）
+    // 出力用の格納領域と文字列をフレーム間で保持する。キャッシュ済みメタデータの二重コピーや
+    // 新しい文字列の空リストへの移動を避け、変更された
+    // 項目のみを更新する。入力の確認では引き続きInspectorでの編集・
+    // アニメーションによる変換やUV変更・描画専用の揺れ・カメラ基準のスナップを反映する。
     sortedDrawList_.reserve(cachedLive.size() + freshEntries.size());
+    size_t output = 0;
+    const auto emit = [&](const DrawEntry &entry) {
+        if (output == sortedDrawList_.size()) { sortedDrawList_.push_back(entry); ++lastPatchedDrawEntryCount_; }
+        else if (!(sortedDrawList_[output] == entry)) { sortedDrawList_[output] = entry; ++lastPatchedDrawEntryCount_; }
+        ++output;
+    };
     size_t cachedIndex = 0, freshIndex = 0;
     while (cachedIndex < cachedLive.size() && freshIndex < freshEntries.size()) {
-        if (CompareSortableEntry(freshEntries[freshIndex], cachedLive[cachedIndex])) {
-            sortedDrawList_.push_back(std::move(freshEntries[freshIndex].entry));
-            ++freshIndex;
-        } else {
-            sortedDrawList_.push_back(std::move(cachedLive[cachedIndex].entry));
-            ++cachedIndex;
-        }
+        if (CompareSortableEntry(freshEntries[freshIndex], *cachedLive[cachedIndex])) emit(freshEntries[freshIndex++].entry);
+        else emit(cachedLive[cachedIndex++]->entry);
     }
-    while (cachedIndex < cachedLive.size()) {
-        sortedDrawList_.push_back(std::move(cachedLive[cachedIndex].entry));
-        ++cachedIndex;
-    }
-    while (freshIndex < freshEntries.size()) {
-        sortedDrawList_.push_back(std::move(freshEntries[freshIndex].entry));
-        ++freshIndex;
-    }
+    while (cachedIndex < cachedLive.size()) emit(cachedLive[cachedIndex++]->entry);
+    while (freshIndex < freshEntries.size()) emit(freshEntries[freshIndex++].entry);
+    sortedDrawList_.resize(output);
 
     return sortedDrawList_;
 }

@@ -2249,6 +2249,9 @@
     <ClInclude Include="..\SourceFiles\KashipanEngine\Graphics\Renderer\EditorDebugDraw.h">
       <Filter>SourceFiles\KashipanEngine\Graphics\Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Graphics\Renderer\MaterialDrawCache.h">
+      <Filter>SourceFiles\KashipanEngine\Graphics\Renderer</Filter>
+    </ClInclude>
     <ClInclude Include="..\SourceFiles\KashipanEngine\Graphics\Renderer\Renderer.h">
       <Filter>SourceFiles\KashipanEngine\Graphics\Renderer</Filter>
     </ClInclude>

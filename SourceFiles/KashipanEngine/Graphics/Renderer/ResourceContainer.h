@@ -139,6 +139,7 @@ public:
         entry.buffer = std::make_unique<StructuredBufferResource>(elementStride, capacity);
         auto *raw = entry.buffer.get();
         structuredBuffers_[key] = std::move(entry);
+        uploadCache_.erase(key);
         return raw;
     }
 

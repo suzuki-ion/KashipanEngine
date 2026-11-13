@@ -1,0 +1,119 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "cf206b0a-978a-48bc-8fe4-9143fe8a333c",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 0.25,
+                            "y": 3.5,
+                            "z": 0.5
+                        },
+                        "translate": {
+                            "x": -3.5000877380371094,
+                            "y": 1.5000896453857422,
+                            "z": -7.486343383789063e-05
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Box"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "anchorPoint": {
+                            "x": 0.0,
+                            "y": 0.5,
+                            "z": 0.5
+                        },
+                        "applyX": true,
+                        "applyY": true,
+                        "applyZ": true,
+                        "boundsSource": 0,
+                        "followRotation": false,
+                        "offset": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "offsetInTargetSpace": false,
+                        "targetObjectID": "66ce8d9e-8ac3-48fa-9623-41ab879d18b1"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ObjectAnchor"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "castShadows": true,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "instanceUvCombineMode": 0,
+                        "instanceUvPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceUvRotation": 0.0,
+                        "instanceUvScale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "instanceUvTranslate": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "materialName": "Default",
+                        "materialNames": [
+                            "Default"
+                        ],
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "renderPriority": 0,
+                        "targetObjectID": "31813901-d420-4f28-876d-070da9e32858"
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "MeshRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "FrameRight",
+        "objectID": "2d83490c-1fc2-4719-a0db-85291c08d9fc",
+        "prefabNodeID": "c04ecac1-6094-4165-8e24-74ffc2647c5a",
+        "tag": ""
+    },
+    "siblingIndex": 6000
+}

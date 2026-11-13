@@ -1,0 +1,76 @@
+{
+    "sceneComponents": [
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1000,
+                "tag": ""
+            },
+            "type": "SceneRenderer"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1,
+                "tag": ""
+            },
+            "type": "SceneObjectCollider"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 50,
+                "tag": ""
+            },
+            "type": "SceneComputeProcessor"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1,
+                "tag": ""
+            },
+            "type": "SceneScriptEngine"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 500,
+                "tag": ""
+            },
+            "type": "SceneAudioPlayer"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1001,
+                "tag": ""
+            },
+            "type": "ScenePreTransform"
+        }
+    ],
+    "sceneID": "307d1945-0137-4e59-9df0-fb8879c57bdd",
+    "sceneName": "GameScene",
+    "sceneVariables": [
+        {
+            "key": "CheckpointPriority",
+            "type": "Int32",
+            "value": -1
+        },
+        {
+            "key": "CheckpointPosition",
+            "type": "Vector3",
+            "value": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            }
+        }
+    ]
+}

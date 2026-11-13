@@ -1,0 +1,86 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "e822aab5-39a0-4c93-8e6b-5c4566a0e30c",
+                        "rotate": {
+                            "w": 0.7071067094802856,
+                            "x": 0.7071068286895752,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 0.999597430229187,
+                            "z": 0.999597430229187
+                        },
+                        "translate": {
+                            "x": 0.0013599395751953125,
+                            "y": 0.0,
+                            "z": -1.4048044931769255e-06
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "castShadows": true,
+                        "color": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "decay": 1.0,
+                        "distance": 16.0,
+                        "innerAngle": 0.27925267815589905,
+                        "intensity": 0.6000000238418579,
+                        "outerAngle": 0.8377580642700195,
+                        "radius": 10.0,
+                        "shadowBias": 1.0,
+                        "shadowDistance": 100.0,
+                        "shadowMapResolution": 512,
+                        "shadowSoftness": 0.0,
+                        "sourceDepth": 1.0,
+                        "sourceHeight": 1.0,
+                        "sourceLength": 1.0,
+                        "sourceRadius": 0.5,
+                        "sourceWidth": 1.0,
+                        "type": 2
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Light"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "targetObjectID": "a027aee5-a3ac-4aa4-b2e8-b9c8d93f3c3f"
+                    },
+                    "isActive": true,
+                    "priority": 950,
+                    "tag": ""
+                },
+                "type": "LightRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "SpotLight",
+        "objectID": "756e3dd2-0d60-4ad5-8f50-668f8d7ce69a",
+        "prefabNodeID": "1794af15-ac97-468b-bed2-244987d051be",
+        "tag": ""
+    },
+    "siblingIndex": 2000
+}

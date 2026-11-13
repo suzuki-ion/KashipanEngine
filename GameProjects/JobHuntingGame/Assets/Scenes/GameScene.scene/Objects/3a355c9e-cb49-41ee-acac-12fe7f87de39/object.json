@@ -1,0 +1,90 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "0decf0a7-f5f9-4cd7-b23e-21bd652b6f2f",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 169.40464782714844,
+                            "y": 76.18895721435547,
+                            "z": 5.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "color": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "defaultCharacterAnchor": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "defaultCharacterPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "fontName": "NotoSansJP-Regular",
+                        "fontSize": 1.0,
+                        "horizontalAlign": 1,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "localizationKey": "",
+                        "materialName": "Default",
+                        "outlineColor": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "outlineWidth": 0.0,
+                        "pipelineName": "Text3D.BlendNormal",
+                        "renderPriority": 0,
+                        "targetObjectID": "85df0137-8c99-4ccc-af31-59951bbae199",
+                        "text": "※まだ未完成でゴールができません",
+                        "useLocalizationKey": false,
+                        "verticalAlign": 1
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "TextRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Text Object",
+        "objectID": "3a355c9e-cb49-41ee-acac-12fe7f87de39",
+        "tag": ""
+    },
+    "siblingIndex": 136000
+}

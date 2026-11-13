@@ -1,0 +1,74 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "f16dcede-9c08-4bca-a5d1-297b2f5542ee",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "height": 1080,
+                        "interceptedMessages": [],
+                        "syncWithTransform": false,
+                        "title": "Normal Window",
+                        "width": 1920
+                    },
+                    "isActive": false,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "NormalWindowObject"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "height": 1080,
+                        "isShowViewer": false,
+                        "name": "ScreenBuffer_1",
+                        "saveDirectory": "Screenshots",
+                        "saveFileNamePrefix": "Screenshot",
+                        "saveFormat": "png",
+                        "viewerId": 5194604469818077770,
+                        "width": 1920
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScreenBufferObject"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Window Object",
+        "objectID": "450c560e-a525-4fcd-86a6-56b26ab72e6b",
+        "prefabNodeID": "730ae6c9-151f-435b-878e-273041973839",
+        "tag": ""
+    },
+    "siblingIndex": 7000
+}

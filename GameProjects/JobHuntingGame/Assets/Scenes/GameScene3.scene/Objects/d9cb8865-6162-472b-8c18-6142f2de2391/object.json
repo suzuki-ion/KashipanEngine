@@ -1,0 +1,82 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "450c560e-a525-4fcd-86a6-56b26ab72e6b",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1920.0,
+                            "y": 1080.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 960.0,
+                            "y": 540.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Rect2D"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "anchor": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "materialName": "MainScreen",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "renderPriority": 0,
+                        "targetObjectID": "450c560e-a525-4fcd-86a6-56b26ab72e6b"
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "SpriteRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": true,
+        "isActive": true,
+        "name": "Sprite Object",
+        "objectID": "d9cb8865-6162-472b-8c18-6142f2de2391",
+        "prefabNodeID": "7284c06a-c0f4-4a13-8961-cc06a17004a5",
+        "tag": ""
+    },
+    "siblingIndex": 1000
+}

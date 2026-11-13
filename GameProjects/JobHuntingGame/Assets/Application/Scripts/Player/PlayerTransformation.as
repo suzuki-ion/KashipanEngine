@@ -66,13 +66,13 @@ class PlayerTransformation {
 
         SphereCollider@ sphereCollider;
         if (GetComponent(@sphereCollider)) {
-            sphereCollider.SetActive(false);
+            sphereCollider.SetActive(humanoid && owner.useClassicForms);
             sphereCollider.SetTag(defaultColliderTagName);
         }
 
         BoxCollider@ boxCollider;
         if (GetComponent(@boxCollider)) {
-            boxCollider.SetActive(form != PlayerForm::Cone);
+            boxCollider.SetActive(form == PlayerForm::Box || (humanoid && !owner.useClassicForms));
             boxCollider.SetTag(humanoid?defaultColliderTagName:boxFormColliderTagName);
             boxCollider.SetContinuousDetection(humanoid);
         }

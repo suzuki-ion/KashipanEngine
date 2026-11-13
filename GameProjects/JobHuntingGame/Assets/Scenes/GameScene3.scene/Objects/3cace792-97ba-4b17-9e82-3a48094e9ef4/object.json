@@ -1,0 +1,294 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "e648cbb2-86c5-4d28-93af-b4475ec68852",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": -22.19140625,
+                            "y": 19.395809173583984,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "acceleration": {
+                            "max": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "min": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "randomize": false,
+                            "value": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "billboard": false,
+                        "billboardRotationMode": 0,
+                        "billboardTargetObjectID": "",
+                        "castShadows": false,
+                        "emissionRate": 8.0,
+                        "endScale": {
+                            "max": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "min": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "randomize": false,
+                            "value": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "excludeShapes": [
+                            {
+                                "boxSize": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "capsuleHeight": 0.20000000298023224,
+                                "capsuleRadius": 0.4000000059604645,
+                                "center": {
+                                    "x": 0.0,
+                                    "y": 2.0,
+                                    "z": 0.0
+                                },
+                                "sphereRadius": 1.0,
+                                "type": 3
+                            }
+                        ],
+                        "extraComponents": [
+                            {
+                                "data": {
+                                    "customData": {
+                                        "rotate": {
+                                            "w": 1.0,
+                                            "x": 0.0,
+                                            "y": 0.0,
+                                            "z": 0.0
+                                        },
+                                        "scale": {
+                                            "x": 1.0,
+                                            "y": 1.0,
+                                            "z": 1.0
+                                        },
+                                        "translate": {
+                                            "x": 0.0,
+                                            "y": 0.0,
+                                            "z": 0.0
+                                        }
+                                    },
+                                    "isActive": true,
+                                    "priority": 1,
+                                    "tag": ""
+                                },
+                                "type": "Transform"
+                            }
+                        ],
+                        "fixedSpawnPosition": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "gpuSimulation": false,
+                        "includeShapes": [
+                            {
+                                "boxSize": {
+                                    "x": 1.0,
+                                    "y": 1.0,
+                                    "z": 1.0
+                                },
+                                "capsuleHeight": 0.10000000149011612,
+                                "capsuleRadius": 0.5,
+                                "center": {
+                                    "x": 0.0,
+                                    "y": 2.0,
+                                    "z": 0.0
+                                },
+                                "sphereRadius": 1.0,
+                                "type": 3
+                            }
+                        ],
+                        "initialRotation": {
+                            "max": {
+                                "x": 360.0,
+                                "y": 360.0,
+                                "z": 360.0
+                            },
+                            "min": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "randomize": true,
+                            "value": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "initialRotationSpeed": {
+                            "max": {
+                                "x": 2.0,
+                                "y": 2.0,
+                                "z": 2.0
+                            },
+                            "min": {
+                                "x": -2.0,
+                                "y": -2.0,
+                                "z": -2.0
+                            },
+                            "randomize": true,
+                            "value": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "initialVelocity": {
+                            "max": {
+                                "x": 0.0,
+                                "y": -2.0,
+                                "z": 0.0
+                            },
+                            "min": {
+                                "x": 0.0,
+                                "y": -3.0,
+                                "z": 0.0
+                            },
+                            "randomize": true,
+                            "value": {
+                                "x": 0.0,
+                                "y": 1.0,
+                                "z": 0.0
+                            }
+                        },
+                        "lifetime": {
+                            "max": 1.0,
+                            "min": 1.0,
+                            "randomize": false,
+                            "value": 1.0
+                        },
+                        "loop": true,
+                        "materialName": "White",
+                        "maxParticles": 16,
+                        "meshAssetPath": "PrimitiveMesh-Tetrahedron",
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "playOnStart": true,
+                        "rotationAcceleration": {
+                            "max": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "min": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            },
+                            "randomize": false,
+                            "value": {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "z": 0.0
+                            }
+                        },
+                        "spawnCount": {
+                            "max": 1,
+                            "min": 1,
+                            "randomize": false,
+                            "value": 1
+                        },
+                        "spawnOrigin": 0,
+                        "spawnParentObjectID": "",
+                        "startScale": {
+                            "max": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "min": {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "z": 1.0
+                            },
+                            "randomize": false,
+                            "value": {
+                                "x": 0.25,
+                                "y": 0.25,
+                                "z": 0.25
+                            }
+                        },
+                        "targetObjectID": "a027aee5-a3ac-4aa4-b2e8-b9c8d93f3c3f",
+                        "totalSpawnCount": 100
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ParticleSystem3D"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "angularAcceleration": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "angularVelocity": {
+                            "x": 0.0,
+                            "y": 4.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Rotation"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "TeloeportPos",
+        "objectID": "3cace792-97ba-4b17-9e82-3a48094e9ef4",
+        "prefabNodeID": "fb385907-4e5f-4674-a64c-371dbd212f60",
+        "tag": ""
+    },
+    "siblingIndex": 1000
+}

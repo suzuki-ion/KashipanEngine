@@ -1,0 +1,68 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "cf206b0a-978a-48bc-8fe4-9143fe8a333c",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": -8.7738037109375e-05,
+                            "y": 0.5000896453857422,
+                            "z": -7.486343383789063e-05
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "anchorPoint": {
+                            "x": 0.5,
+                            "y": 1.0,
+                            "z": 0.5
+                        },
+                        "applyX": true,
+                        "applyY": true,
+                        "applyZ": true,
+                        "boundsSource": 0,
+                        "followRotation": true,
+                        "offset": {
+                            "x": 0.0,
+                            "y": -2.75,
+                            "z": 0.0
+                        },
+                        "offsetInTargetSpace": false,
+                        "targetObjectID": "66ce8d9e-8ac3-48fa-9623-41ab879d18b1"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ObjectAnchor"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Light",
+        "objectID": "6a8f0485-9677-4bc8-bd73-6759fe9b7cee",
+        "prefabNodeID": "d9791bb7-5f85-48a5-9599-08867d08f86b",
+        "tag": ""
+    },
+    "siblingIndex": 1000
+}

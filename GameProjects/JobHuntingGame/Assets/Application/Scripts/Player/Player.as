@@ -11,6 +11,8 @@
 class Player : ScriptComponentBehavior {
     [SerializeField, Tooltip("通常形態のスキンメッシュとAnimatorを持つ表示用オブジェクト")]
     Object@ humanoidVisual;
+    [SerializeField, Tooltip("旧アクションステージの球形判定と変身入力を使う")]
+    bool useClassicForms = false;
     [Header("プレイヤーの基本設定")]
 
     [SerializeField, Tooltip("移動速度")]
@@ -118,8 +120,8 @@ class Player : ScriptComponentBehavior {
 
         bool transformationUnlocked = false;
         GetScene().GetGlobalVariable("LightTown.TransformationUnlocked", transformationUnlocked);
-        // 変身コードと解放済みセーブは保持するが、現行仕様では入力を受け付けない。
-        if (TownTransformationsEnabled() && input.transformationTriggered && transformationUnlocked) {
+        if (input.transformationTriggered &&
+            (useClassicForms || (TownTransformationsEnabled() && transformationUnlocked))) {
             transformation.CycleForm();
             // 刺さっている最中に別の形態へ変わった場合は、刺さり状態を強制的に解除する
             if (!transformation.CanEmbedOnImpact()) {

@@ -1,0 +1,51 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 29.0,
+                            "y": 9.5,
+                            "z": 3.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "5841cc3c-596e-4f60-a3be-6077bb4e7d58"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Streetlight2",
+        "objectID": "27cc394d-4713-4c31-b9bd-b76d00136bcc",
+        "prefabNodeID": "d323a35e-dd30-463a-befe-815cee3fc158",
+        "tag": ""
+    },
+    "siblingIndex": 6500
+}

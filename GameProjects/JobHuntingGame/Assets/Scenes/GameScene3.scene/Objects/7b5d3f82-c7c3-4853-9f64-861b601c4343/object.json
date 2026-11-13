@@ -1,0 +1,101 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "450c560e-a525-4fcd-86a6-56b26ab72e6b",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 128.0,
+                            "y": 1200.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "fields": {},
+                        "scriptPath": ""
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "color": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "defaultCharacterAnchor": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "defaultCharacterPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "fontName": "NekoSpoon",
+                        "fontSize": 64.0,
+                        "horizontalAlign": 0,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "materialName": "Default",
+                        "outlineColor": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "outlineWidth": 0.0,
+                        "pipelineName": "Text2D.BlendNormal",
+                        "renderPriority": 0,
+                        "targetObjectID": "450c560e-a525-4fcd-86a6-56b26ab72e6b",
+                        "text": "チェックポイント",
+                        "verticalAlign": 0
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "TextRenderer"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Text Object",
+        "objectID": "7b5d3f82-c7c3-4853-9f64-861b601c4343",
+        "prefabNodeID": "d8ce0f3b-5c01-4a54-8180-e1d479d56620",
+        "tag": ""
+    },
+    "siblingIndex": 2000
+}

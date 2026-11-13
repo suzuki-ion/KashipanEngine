@@ -62,14 +62,13 @@ GLBは `Assets/Application/Models/Player/` に元ファイルのまま保存し�
 
 ## シーンとスクリプト
 
-`Assets/SceneList.json` は次の3シーンを登録しています。
+`Assets/SceneList.json` に登録されている主なシーンです。
 
 - **TitleScene**：仮タイトル、セーブの有無の判定、新規開始・続行・設定・終了。
 - **CityScene**：既存オブジェクトを保持し、ゲーム用カメラ・描画先・UIパネル・CityControllerを追加。
 - **ExpeditionScene**：新規の素材収集ステージ。既存Playerを再利用し、ExpeditionControllerで生成・収集・帰還。
 
-旧シーンの `.scene` フォルダ8件と単一ファイル形式 `.json` 9件は削除しました。
-再利用できるモデル・音声・プレハブ・既存スクリプトは保持しています。
+旧アクションステージ **Stage1**、**GameScene**、**GameScene2**、**GameScene3** は、JobHuntingGame のエディターのシーン一覧から開いて Play できます。旧ステージでは E キーまたはゲームパッドの Y ボタンで球・箱・円錐を切り替えられます。
 
 `Assets/Application/Scripts/LightTown/` の役割：
 

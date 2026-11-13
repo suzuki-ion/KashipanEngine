@@ -1,0 +1,51 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 36.0,
+                            "y": 12.5,
+                            "z": 3.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "prefabID": "10d8312e-1d64-4c06-9869-321cef519ae2"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "PrefabInstanceComponent"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "Signboard",
+        "objectID": "cf206b0a-978a-48bc-8fe4-9143fe8a333c",
+        "prefabNodeID": "50ad4401-2930-48cd-9537-62ca89d6bbef",
+        "tag": ""
+    },
+    "siblingIndex": 8333
+}

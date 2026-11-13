@@ -1,0 +1,101 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "effects": {
+                            "echo": {
+                                "delayMs": 500.0,
+                                "enabled": false,
+                                "feedback": 0.5,
+                                "wetDryMix": 0.5
+                            },
+                            "eq": {
+                                "bandwidth": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ],
+                                "enabled": false,
+                                "frequencyCenter": [
+                                    100.0,
+                                    800.0,
+                                    2000.0,
+                                    10000.0
+                                ],
+                                "gain": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ]
+                            },
+                            "filter": {
+                                "enabled": false,
+                                "frequency": 1.0,
+                                "kind": 0,
+                                "q": 1.0
+                            },
+                            "limiter": {
+                                "enabled": false,
+                                "loudness": 1000,
+                                "release": 6
+                            },
+                            "reverb": {
+                                "enabled": false,
+                                "mix": 0.30000001192092896
+                            }
+                        },
+                        "enableSpatialAudio": false,
+                        "loop": true,
+                        "maxDistance": 25.0,
+                        "minDistance": 1.0,
+                        "pitch": 0.0,
+                        "playOnAwake": true,
+                        "soundName": "Application/Sound/bgmGameScene.mp3",
+                        "volume": 0.30000001192092896
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "AudioSource"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "BGMPlayer",
+        "objectID": "38fa658c-e1b9-46fd-b860-12c6894ab682",
+        "tag": ""
+    },
+    "siblingIndex": 11000
+}

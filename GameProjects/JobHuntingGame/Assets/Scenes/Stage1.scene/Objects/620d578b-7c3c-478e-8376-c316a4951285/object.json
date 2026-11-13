@@ -1,0 +1,41 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "parent": "856c3f57-73b5-4776-bf77-6239c02967f6",
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "CameraTarget",
+        "objectID": "620d578b-7c3c-478e-8376-c316a4951285",
+        "prefabNodeID": "941401ff-fca7-45ea-9ed3-7b34f17b5c8a",
+        "tag": ""
+    },
+    "siblingIndex": 5000
+}

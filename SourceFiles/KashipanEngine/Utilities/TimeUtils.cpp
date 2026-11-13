@@ -11,6 +11,7 @@ namespace KashipanEngine {
 namespace {
 /// @brief プログラム実行開始時間
 const auto kProgramStartTime = std::chrono::system_clock::now();
+const auto kMonotonicStartTime = std::chrono::steady_clock::now();
 /// @brief タイマーラベルの開始時間マップ
 std::unordered_map<std::string, std::chrono::high_resolution_clock::time_point> sTimerStartTimes;
 /// @brief デルタタイム計測用前回時間
@@ -224,6 +225,10 @@ TimeRecord EndTimeMeasurement(const std::string &label) {
 
 float GetDeltaTime() {
     return std::min(sDeltaTime, sDeltaTimeClamp);
+}
+
+double GetMonotonicSeconds() {
+    return std::chrono::duration<double>(std::chrono::steady_clock::now() - kMonotonicStartTime).count();
 }
 
 void SetDeltaTimeClamp(float clamp) {

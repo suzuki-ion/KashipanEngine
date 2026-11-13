@@ -94,6 +94,7 @@ GetComponent(@tf);</code></pre>
 <table>
 <tr><th>関数</th><th>説明</th></tr>
 <tr><td><code>float GetDeltaTime()</code></td><td>前フレームからの経過時間（秒）を取得する</td></tr>
+<tr><td><code>double GetMonotonicSeconds()</code></td><td>プロセス起動時からの単調増加する経過秒数。ロード時間を含み、ゲーム速度やシステム日時の変更に影響されない。値の比較は同じプロセス内で行う。</td></tr>
 <tr><td><code>float GetGameSpeed()</code></td><td>ゲームスピードを取得する</td></tr>
 <tr><td><code>void SetGameSpeed(float)</code></td><td>ゲームスピードを設定する</td></tr>
 <tr><td><code>void RequestExitGameLoop()</code></td><td>ゲームループの終了を要求する</td></tr>

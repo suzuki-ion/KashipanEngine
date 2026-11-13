@@ -74,6 +74,10 @@ TimeRecord EndTimeMeasurement(const std::string &label);
 /// @details 戻り値は SetDeltaTimeClamp() で設定した上限値でクランプされる
 float GetDeltaTime();
 
+/// @brief プロセス起動時を基準とした、単調増加する経過秒数を取得する
+/// @details フレーム更新やゲーム速度、システムの日時設定から独立する。再起動を跨いだ比較には使えない。
+double GetMonotonicSeconds();
+
 /// @brief デルタタイムのクランプ値（上限）を設定する
 /// @param clamp 上限値（秒）。デフォルトは0.1f
 void SetDeltaTimeClamp(float clamp);

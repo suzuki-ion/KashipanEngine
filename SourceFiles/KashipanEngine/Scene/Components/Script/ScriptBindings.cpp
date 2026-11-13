@@ -5170,6 +5170,7 @@ void RegisterGlobalFunctions(asIScriptEngine *engine) {
         .function("void LogError(const string &in)", [](const std::string &text) { Log(text, LogSeverity::Error); })
         // 時間
         .function("float GetDeltaTime()", &GetDeltaTime)
+        .function("double GetMonotonicSeconds()", &GetMonotonicSeconds)
         .function("float GetGameSpeed()", &GetGameSpeed)
         .function("void SetGameSpeed(float)", &SetGameSpeed)
         // ローカライズ（Locales/ および Assets/Locales/ に置かれた翻訳データを参照する）。

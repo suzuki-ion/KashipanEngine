@@ -1165,7 +1165,6 @@ bool Collider::UpdateColliderInfo3D(ColliderID id, const ColliderInfo3D &info) {
     for (auto &e : colliders3D_) {
         if (e.id == id) {
             UpdateRuntime3D(e, info);
-            e.info = info;
             return true;
         }
     }
@@ -1304,7 +1303,7 @@ bool Collider::Check3D(ColliderID a, ColliderID b) const {
 std::vector<HitInfo3D> Collider::Query3D(const ColliderInfo3D &query, const Vector3 &position,
     const Quaternion &rotation, const std::vector<ColliderInfo3D> &targets) const {
     std::vector<HitInfo3D> hits;
-    // Never attach query shapes to an object's RigidBody or modify the live world.
+    // 問い合わせ用の形状をオブジェクトのRigidBodyへ取り付けたり、稼働中のワールドを変更したりしない。
     Collider scratch;
     struct Cleanup { Collider &owner; ~Cleanup() { owner.Clear3D(); } } cleanup{scratch};
     const auto valid = [](const ColliderInfo3D &info) {
@@ -1353,7 +1352,7 @@ std::vector<HitInfo3D> Collider::Query3D(const ColliderInfo3D &query, const Vect
     auto *queryHandle = add(query, queryTransform);
     if (!queryHandle) return hits;
     for (const auto &target : targets) {
-        // RP3D has no concave-concave narrow phase.
+        // RP3Dは凹形状同士の詳細な衝突判定に対応していない。
         const auto concave = [](const ColliderInfo3D &i) {
             return std::holds_alternative<ColliderInfo3D::ConcaveMeshShape3D>(i.shape) ||
                 std::holds_alternative<ColliderInfo3D::HeightFieldShape3D>(i.shape);
@@ -1389,7 +1388,7 @@ std::vector<HitInfo3D> Collider::Query3D(const ColliderInfo3D &query, const Vect
             collector.hit.otherCollider = target.sourceCollider;
             hits.push_back(collector.hit);
         }
-        // Keep scratch memory bounded to the query and one target.
+        // 一時メモリの使用範囲を問い合わせと対象1つ分に限定する。
         scratch.ReleaseRuntime3D(scratch.colliders3D_.back());
         scratch.colliders3D_.pop_back();
     }
@@ -2213,9 +2212,36 @@ void Collider::ReleaseRuntime3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry)
 }
 
 bool Collider::UpdateRuntime3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry, const ColliderInfo3D &info) {
-    ReleaseRuntime3D(entry);
-    entry.info = info;
-    return BuildRuntime3D(entry);
+    // ジオメトリは姿勢に依存しない。寸法・トポロジー・所有元のボディが変わらない限り、
+    // RP3Dの広域判定用プロキシーと接触情報を維持する。
+    const bool sameGeometry = entry.info.shape.index() == info.shape.index() && std::visit(
+        [&](const auto &shape) {
+            using S = std::decay_t<decltype(shape)>;
+            const auto &old = std::get<S>(entry.info.shape);
+            if constexpr (std::is_same_v<S, ColliderInfo3D::SphereShape3D>) return old.radius == shape.radius;
+            else if constexpr (std::is_same_v<S, ColliderInfo3D::BoxShape3D>) return old.halfExtents == shape.halfExtents;
+            else if constexpr (std::is_same_v<S, ColliderInfo3D::CapsuleShape3D>) return old.radius == shape.radius && old.height == shape.height;
+            else if constexpr (std::is_same_v<S, ColliderInfo3D::HeightFieldShape3D>)
+                return old.width == shape.width && old.length == shape.length && old.minHeight == shape.minHeight &&
+                    old.maxHeight == shape.maxHeight && old.scale == shape.scale && old.heights == shape.heights;
+            else return old.scale == shape.scale && old.vertices == shape.vertices && old.indices == shape.indices;
+        }, info.shape);
+    auto *rb = info.ownerObject ? info.ownerObject->GetComponent<RigidBody3D>() : nullptr;
+    if (rb && rb->GetSelectedCollider() && rb->GetSelectedCollider() != info.sourceCollider) rb = nullptr;
+    const bool sameBody = rb ? !entry.runtime.ownsBody && entry.runtime.body == rb->GetRigidBody() : entry.runtime.ownsBody;
+    const bool unsupportedBody = rb && std::holds_alternative<ColliderInfo3D::ConcaveMeshShape3D>(info.shape) &&
+        rb->GetBodyType() != reactphysics3d::BodyType::STATIC;
+    if (!entry.runtime.collider || !sameGeometry || !sameBody || unsupportedBody) {
+        // 形状の破棄は型に依存するため、変更前のバリアントを使用して解放する。
+        ReleaseRuntime3D(entry);
+        entry.info = info;
+        return BuildRuntime3D(entry);
+    }
+    UpdateColliderTransform3D(entry, info);
+    if (entry.runtime.ownsBody && entry.info.enabled != info.enabled) entry.runtime.body->setIsActive(info.enabled);
+    if (entry.info.isTrigger != info.isTrigger) entry.runtime.collider->setIsSimulationCollider(!info.isTrigger);
+    entry.info = info; // ジオメトリが不変でもコールバック・フィルター・CCDは更新する。
+    return true;
 }
 
 bool Collider::UpdateColliderShape3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry, const ColliderInfo3D &info) {
@@ -2224,7 +2250,8 @@ bool Collider::UpdateColliderShape3D(Entry<ColliderInfo3D, ColliderRuntime3D> &e
 
 bool Collider::UpdateColliderTransform3D(Entry<ColliderInfo3D, ColliderRuntime3D> &entry, const ColliderInfo3D &info) {
     if (!entry.runtime.body) return false;
-    entry.runtime.body->setTransform(MakeTransform3D(info));
+    const auto pose = MakeTransform3D(info);
+    if (entry.runtime.body->getTransform() != pose) entry.runtime.body->setTransform(pose);
     return true;
 }
 

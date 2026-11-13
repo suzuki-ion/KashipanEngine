@@ -10,7 +10,7 @@ namespace KashipanEngine {
 enum class CollisionShapeType2D { Point, Circle, Box, Segment, Capsule };
 enum class CollisionShapeType3D { Sphere, Box, Capsule, ConvexMesh };
 
-// Query shapes use world coordinates; box dimensions are half extents.
+// 問い合わせ形状はワールド座標を使用し、ボックスの寸法は半分の長さを表す。
 struct CollisionShape2D {
     CollisionShapeType2D type = CollisionShapeType2D::Circle;
     Vector2 center{};
@@ -38,7 +38,7 @@ struct CollisionShape3D {
     Vector3 halfExtents{0.5f, 0.5f, 0.5f};
     Quaternion rotation = Quaternion::Identity();
     float radius = 0.5f;
-    // Length of the capsule's central segment, excluding its hemispheres.
+    // 半球部分を除いた、カプセルの中央線分の長さ。
     float height = 1.0f;
     std::vector<Vector3> vertices;
 
@@ -72,7 +72,7 @@ inline bool IsValidQueryShape(const ColliderInfo2D::ShapeVariant &shape) {
 }
 
 inline HitInfo ComputeQueryHit2D(const ColliderInfo2D::ShapeVariant &a, const ColliderInfo2D::ShapeVariant &b) {
-    // A zero-radius capsule also handles segment-box and segment-capsule pairs.
+    // 半径0のカプセルで線分とボックス、線分とカプセルの組み合わせも扱う。
     using Shape = std::variant<Math::Point2D, Math::Circle, Math::Rect, Math::Capsule2D>;
     const auto convert = [](const ColliderInfo2D::ShapeVariant &shape) -> Shape {
         return std::visit([](const auto &s) -> Shape {

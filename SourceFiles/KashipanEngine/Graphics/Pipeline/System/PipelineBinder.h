@@ -33,7 +33,7 @@ public:
             } else {
                 commandList_->SetComputeRootSignature(set.RootSignature());
             }
-            // PSO
+            // パイプライン状態オブジェクト（PSO）
             commandList_->SetPipelineState(set.PipelineState());
             currentName_ = name;
             invalidated_ = false;

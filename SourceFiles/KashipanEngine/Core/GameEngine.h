@@ -41,7 +41,7 @@ public:
         SceneManager *sceneManager = nullptr;
         InputCommand *inputCommand = nullptr;
 
-        /// Release diagnostics key (default F12); Key::Unknown disables keyboard toggling.
+        /// Release版の診断表示キー（既定はF12）。Key::Unknownでキーによる切り替えを無効化する。
         void SetDebugTextToggleKey(Key key) const { if (engine) engine->debugTextToggleKey_ = key; }
         void SetDebugTextVisible(bool visible) const { if (engine) engine->debugTextVisible_ = visible; }
         void SetDebugTextContent(bool fps, bool profiling) const {

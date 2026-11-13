@@ -365,7 +365,7 @@ void AssetsWindow::RefreshFolderTree() {
 
 void AssetsWindow::RefreshFolderTreeIfChanged(const std::vector<std::string> &sortedFolders) {
     if (!folderTree_->Matches(sortedFolders)) {
-        // Build from the live filesystem: the scan may predate a manual edit or refresh.
+        // 探索後に手動編集や更新が行われた可能性があるため、現在のファイルシステムから構築する。
         RefreshFolderTree();
     }
 }

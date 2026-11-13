@@ -23,7 +23,7 @@ struct Action {
     Target target = Target::Self; std::string targetName; std::string reference; std::string text;
     float duration = 1;
     Value data = Value::object();
-    std::string targetId; std::string referenceId; float frameSeconds = 0; // runtime only, never serialized
+    std::string targetId; std::string referenceId; float frameSeconds = 0; // 実行時専用。シリアライズしない。
 };
 struct Rule {
     Event event = Event::EveryFrame;
@@ -384,7 +384,7 @@ inline void TickProgram(const std::vector<Rule> &rules, ProgramMemory &memory, P
                 sequence.steps.push_back(std::move(step));
             }
             memory.done[i] = true;memory.cooldowns[i]=r.cooldown;AdvanceSequence(sequence, state, dt);
-            if (sequence.running) break; // one active sequence per rule, no unbounded event backlog
+            if (sequence.running) break; // 規則ごとの実行中シーケンスは1つとし、イベントが無制限にたまらないようにする。
         }
     }
     for(const auto &control:state.controls)try {
@@ -393,7 +393,7 @@ inline void TickProgram(const std::vector<Rule> &rules, ProgramMemory &memory, P
         else if(mode=="restart"||mode=="replace") {sequence={};sequence.running=true;memory.done[index]=false;
             if(mode=="replace")AppendSteps(sequence,control.data.at("actions"),state,{});else for(auto &action:rules[index].actions){BoundStep step;step.action=action;step.targets=BindTargets(action,state,{});step.action.referenceId=UniqueName(state,action.reference);if(action.operation==Operation::Wait)step.targets={state.selfId};sequence.steps.push_back(std::move(step));}
         }
-    }catch(...){/* invalid controls are refused by validation */}
+    }catch(...){/* 無効な制御文字は検証で拒否する。 */}
     memory.state=state.environment.value("state",std::string());
     memory.started = true;
 }

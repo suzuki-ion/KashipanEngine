@@ -10,7 +10,7 @@
 namespace KashipanEngine {
 
 namespace {
-// TEMP DIAGNOSTIC (2026-08-11): 起動時PostEffect.MotionBlur.Velocityパイプライン作成クラッシュの
+// 一時的な診断（2026-08-11）: 起動時PostEffect.MotionBlur.Velocityパイプライン作成クラッシュの
 // 原因調査のためだけに追加。原因特定後に削除すること
 void LogCrashDiagnostics(EXCEPTION_POINTERS *exceptionInfo) {
     if (!exceptionInfo || !exceptionInfo->ExceptionRecord) return;

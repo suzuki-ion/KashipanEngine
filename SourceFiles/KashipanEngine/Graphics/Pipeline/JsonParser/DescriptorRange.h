@@ -29,7 +29,7 @@ inline std::vector<D3D12_DESCRIPTOR_RANGE> ParseDescriptorRanges(const Json &jso
         if (range.contains("RangeType")) {
             r.RangeType = kDescriptorRangeTypeMap.at(range["RangeType"].get<std::string>());
         } else {
-            continue; // skip invalid
+            continue; // 無効な項目をスキップする。
         }
         if (range.contains("NumDescriptors")) {
             r.NumDescriptors = range["NumDescriptors"].get<UINT>();

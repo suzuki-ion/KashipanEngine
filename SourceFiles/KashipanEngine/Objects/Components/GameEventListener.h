@@ -24,8 +24,8 @@ public:
     enum class SourceKind { Fixed, Payload, Sender, EventName };
     struct ValueSource {
         SourceKind kind = SourceKind::Fixed;
-        GameEvents::Value value;  // Fixed
-        std::string arg;          // Payload
+        GameEvents::Value value;  // 固定値
+        std::string arg;          // ペイロード
     };
     struct Condition {
         std::string arg;
@@ -37,17 +37,17 @@ public:
         std::string target;       // "" = 自分 / 一意な名前 / UUID / "$sender"
         std::string name;         // プロパティパス / 命令 / イベント名 / 関数名 / "型.命令"
         std::vector<std::pair<std::string, ValueSource>> args;
-        GameEvents::TargetMode emitTarget = GameEvents::TargetMode::Broadcast; // Emit
+        GameEvents::TargetMode emitTarget = GameEvents::TargetMode::Broadcast; // 送信
         std::string emitTargetValue;                                            // Emit（"$sender" 可）
         bool passEvent = false;   // CallScript: void 関数(GameEvent@) として呼ぶ
     };
     struct Handler {
         std::string id;           // 一意な識別子（短文由来の更新に使う）
         Trigger trigger = Trigger::Event;
-        std::string event;        // Event
+        std::string event;        // イベント
         std::string contactTag;   // Contact（空欄は名前で判定）
-        std::string contactName;  // Contact
-        Key key = Key::E;         // Key
+        std::string contactName;  // 接触
+        Key key = Key::E;         // キー
         std::string senderTag;    // Event: 送信元のタグ条件（空欄は全て）
         std::vector<Condition> conditions;
         bool once = false;
@@ -107,12 +107,12 @@ private:
     // --- 実行時状態（保存されない） ---
     std::uint64_t revision_ = 1;
     std::uint64_t subscribedRevision_ = 0;
-    std::uint64_t subscribedGeneration_ = 0; // GameEventRouter::GetGeneration of the current subscriptions
+    std::uint64_t subscribedGeneration_ = 0; // 現在の購読に対応するGameEventRouter::GetGenerationの値
     bool started_ = false;
     std::vector<int> fired_;
     std::vector<float> cooldowns_;
     std::vector<std::vector<std::string>> contacts_;
-    // Per-handler command memory (results / pools of 実行部品). Never shared between handlers or listeners.
+    // ハンドラーごとのコマンド用メモリ（結果・実行部品のプール）。ハンドラー間やリスナー間では共有しない。
     std::vector<ShortText::ProgramMemory> memories_;
     double lastDt_ = 0;
     std::string lastError_;

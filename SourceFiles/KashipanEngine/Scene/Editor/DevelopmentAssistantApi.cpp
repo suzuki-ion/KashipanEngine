@@ -55,7 +55,7 @@ template<class T> T Decode(const J &j) {
         else return T(Decode<float>(j[0]), Decode<float>(j[1]), Decode<float>(j[2]), Decode<float>(j[3]));
     }
 }
-// Registered setters fire the same notifications as Inspector edits; references survive pool movement.
+// 登録済みセッターはInspectorでの編集と同じ通知を発生させ、プール内の移動後も参照を維持する。
 template<class T> class MemberCommand final : public IEditorCommand {
 public:
     MemberCommand(IObjectComponent *component, std::string member, T before, T after)

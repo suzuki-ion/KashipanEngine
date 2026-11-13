@@ -26,7 +26,7 @@ struct Snapshot {
     Account claude, codex;
     std::string status, output, sentence, diagnostics;
 };
-// These functions are also used by the offline regression tests.
+// これらの関数はオフラインの回帰テストでも使用する。
 bool IsSubscription(Provider provider, const std::string &status, int exitCode);
 std::wstring QuoteArgument(const std::wstring &argument);
 bool IsBillingEnvironment(const std::wstring &name);
@@ -35,7 +35,7 @@ void ConsumeEvent(Provider provider, const std::string &line, Snapshot &state, b
 std::vector<Model> ParseModels(Provider provider, const std::string &json);
 std::vector<std::wstring> WindowsSandboxArguments(const std::string &backend);
 
-// Only the worker owns process handles. No scene pointers or credentials are retained.
+// プロセスハンドルはワーカーのみが所有する。シーンのポインターや認証情報は保持しない。
 class Session final {
 public:
     ~Session();

@@ -190,7 +190,7 @@ ScriptBindingData &BindingData(asIScriptEngine *engine = nullptr) {
     return *data;
 }
 
-// Weak lifetime prevents retained Scene@ handles from accessing a destroyed scene.
+// 弱参照の生存確認により、保持されたScene@ハンドルから破棄済みシーンへのアクセスを防ぐ。
 class ScriptSceneHandle final {
 public:
     explicit ScriptSceneHandle(SceneContext *scene) : scene_(scene), lifetime_(scene->GetLifetimeToken()) {}
@@ -662,8 +662,8 @@ CScriptArray *MakeColliderArray(const std::vector<ICollider *> &colliders) {
     return array;
 }
 
-// Query results own their handles, so keeping a result after its target is deleted
-// remains safe and array destruction releases every reference.
+// 問い合わせ結果がハンドルを所有するため、対象の削除後も結果を安全に保持できる。
+// 配列の破棄時にはすべての参照を解放する。
 class ScriptCollisionHit final {
 public:
     void AddRef() { refs_.fetch_add(1, std::memory_order_relaxed); }
@@ -1583,10 +1583,10 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("void Play(float = -1.0f)", SafeCall<&Shake::Play>())
         .method("void Stop()", SafeCall<&Shake::Stop>())
         .method("bool IsPlaying() const", SafeCall<&Shake::IsPlaying>())
-        // ProcessTiming: 0=Immediate, 1=DeferredEnd
+        // ProcessTiming: 0=即時、1=終了時に遅延実行
         .method("void SetProcessTiming(int)", SafeCall<&Shake::SetProcessTimingInt>())
         .method("int GetProcessTiming() const", SafeCall<&Shake::GetProcessTimingInt>())
-        // ApplyTarget: 0=ToTransform, 1=RenderOnly
+        // ApplyTarget: 0=Transformに適用、1=描画のみに適用
         .method("void SetApplyTarget(int)", SafeCall<&Shake::SetApplyTargetInt>())
         .method("int GetApplyTarget() const", SafeCall<&Shake::GetApplyTargetInt>())
         .method("void SetPositionEnable(bool, bool, bool)", SafeCall<&Shake::SetPositionEnable>())
@@ -3708,7 +3708,7 @@ void RegisterComponentTypes(asIScriptEngine *engine) {
         .method("const string &GetTextureAssetPath() const", SafeCall<&TextureSource::GetTextureAssetPath>());
 
     //==================================================
-    // Prefab
+    // プレハブ
     //==================================================
 
     auto prefabInstanceBinder = RegisterComponentType<PrefabInstanceComponent>(engine, "PrefabInstanceComponent");
@@ -4723,7 +4723,7 @@ void RegisterGameEventBindings(asIScriptEngine *engine) {
                 if (!target) return;
                 const auto alive = target->GetAliveToken();
                 const bool invoked = target->InvokeEventHandler(method, message);
-                if (alive.expired()) return; // the receiver removed itself while handling the event
+                if (alive.expired()) return; // イベント処理中に受信側が自身を削除した。
                 if (!invoked) throw std::runtime_error("void " + method + "(GameEvent@) を呼べません");
                 if (!target->GetLastError().empty()) throw std::runtime_error(target->GetLastError());
             }, EventKey(eventName, method)) != 0; })
@@ -5455,7 +5455,7 @@ bool GenerateScriptPredefinedFile(asIScriptEngine *engine, const std::string &fi
         out += "}\n\n";
     }
 
-    // funcdef
+    // 関数型定義
     const asUINT funcdefCount = engine->GetFuncdefCount();
     for (asUINT i = 0; i < funcdefCount; ++i) {
         const asITypeInfo *funcdefType = engine->GetFuncdefByIndex(i);

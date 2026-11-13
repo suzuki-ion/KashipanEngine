@@ -18,7 +18,7 @@ namespace KashipanEngine {
 namespace {
 constexpr double kDegreesToRadians = 3.14159265358979323846 / 180.0;
 
-// Components that work with default values and need no asset, reference or shape decision.
+// 既定値で動作し、アセット・参照・形状の判断が不要なコンポーネント。
 bool IsSelfContained(const std::string &type) {
     for (const char *name : {"Transform", "Velocity", "BoxCollider", "Box2DCollider", "SphereCollider", "Circle2DCollider"})
         if (type == name) return true;
@@ -34,12 +34,12 @@ std::string Number(double value) {
 std::string RequestPath(const ShortText::PropertyRequest &r) {
     return r.component + "." + r.member + (r.axis >= 0 ? std::string(".") + "xyz"[r.axis] : "");
 }
-// Simple legacy recipes add to Transform each frame: Oscillate/Move → translate_, Rotate → rotate_.
+// 従来の単純なレシピは毎フレームTransformへ加算する。Oscillate/Moveはtranslate_、Rotateはrotate_。
 bool LegacyDrives(const ShortText::Recipe &recipe, const std::string &member, int axis) {
     if (!ShortText::IsValid(recipe) || recipe.kind == ShortText::Kind::Rules || recipe.axis != axis) return false;
     return member == (recipe.kind == ShortText::Kind::Rotate ? "rotate_" : "translate_");
 }
-// Whether a saved KeyFrameAnimator entry writes one channel of the first component of a type.
+// 保存済みのKeyFrameAnimatorエントリーが、該当型の最初のコンポーネントの1チャンネルへ書き込むかを判定する。
 bool EntryDrives(const JSON &entry, const std::string &component, const std::string &member, int axis) {
     if (!entry.is_object() || !entry.contains("bindings") || !entry["bindings"].is_array()) return false;
     const int channel = std::max(0, axis);
@@ -53,9 +53,9 @@ bool EntryDrives(const JSON &entry, const std::string &component, const std::str
 bool EntryManaged(const JSON &entry) {
     return entry.is_object() && entry.contains("shortTextManaged") && entry["shortTextManaged"].is_boolean() && entry["shortTextManaged"].get<bool>();
 }
-// Short-text keyframe entries driving one channel are removed; with `replacement` the first one is updated
-// in place (keeping its name) instead. Hand-made entries are kept and reported. `group` may be null (plan only).
-// Returns true when an entry was replaced.
+// 1チャンネルを駆動する短文由来のキーフレームエントリーを削除する。replacement指定時は最初の項目を
+// 名前を維持してその場で更新する。手作業の項目は保持して報告する。groupは計画のみの場合にnullを指定できる。
+// エントリーを置き換えた場合はtrueを返す。
 bool EditShortTextKeyframes(CompositeCommand *group, const EmptyObject *target, const std::string &component, const std::string &member,
     int axis, const JSON *replacement, const std::string &describe, ShortTextComponentPlan &result, std::string *replacedName = nullptr) {
     if (!target) return false;
@@ -94,14 +94,14 @@ bool EditShortTextKeyframes(CompositeCommand *group, const EmptyObject *target, 
             "）に書き込んでいます（" + std::to_string(manual) + " 件、削除しません）。");
     return replaced;
 }
-// One KeyFrameAnimator entry holding a real KeyframeAnimation: from at 0 s (with the ease), to at duration.
+// 実際のKeyframeAnimationを内包するKeyFrameAnimatorエントリー。0秒にfromとイージング、指定時間にtoを配置する。
 JSON MakeShortTextTweenEntry(const ShortText::PropertyRequest &r, const std::string &name, const std::string &sourceText, bool playOnStart) {
     EaseType ease = EaseType::Linear;
     if (!TryStringToEaseType(r.ease, ease)) return JSON();
     KeyframeAnimation keys;
     keys.AddKeyframe(0.0f, r.from, ease);
     keys.AddKeyframe(r.duration, r.to, EaseType::Linear);
-    KeyFrameAnimator builder; // detached: only used to produce the saved entry format
+    KeyFrameAnimator builder; // シーンには接続せず、保存エントリー形式の生成にのみ使用する。
     if (!builder.AddAnimationData(name, keys.SaveToJson()) ||
         !builder.AddBinding(name, r.component, r.member, std::max(0, r.axis), 0, false) ||
         !builder.SetLoop(name, false) || !builder.SetPlayOnStart(name, playOnStart) ||
@@ -118,7 +118,7 @@ std::vector<PropertyMotion *> Motions(const EmptyObject *target) {
     return motions;
 }
 
-// Writes one registered member through the same safe adapter used at runtime. Undo restores the snapshot.
+// 実行時と同じ安全なアダプターで登録済みメンバー1つへ書き込む。Undoではスナップショットを復元する。
 class ShortTextPropertyWriteCommand final : public IEditorCommand {
 public:
     ShortTextPropertyWriteCommand(const UUID128 &objectID, std::string type, std::string path, ShortText::Value value)
@@ -149,7 +149,7 @@ private:
 } // namespace
 
 ShortText::PropertySchema MakeShortTextPropertySchema(const EmptyObject *target) {
-    // Detached instances only expose registered member metadata; they are never attached to the scene.
+    // 未接続のインスタンスは登録済みメンバーのメタデータ取得にのみ使用し、シーンへは接続しない。
     auto detached = std::make_shared<std::map<std::string, std::unique_ptr<IObjectComponent>>>();
     auto inspect = [target, detached](const std::string &type) -> const IObjectComponent * {
         if (auto *existing = FindComponentOfType(target, type)) return existing;
@@ -217,10 +217,10 @@ std::unique_ptr<IEditorCommand> MakeShortTextPropertyCommand(EmptyObject *target
         const bool wholeMember = !request.values.empty() && settings.component == request.component && settings.componentIndex == 0 && settings.member == request.member;
         if (wholeMember || motion->HasSameTarget(key)) sameTarget.push_back(motion);
     }
-    // Managed (short-text) motions come first so a re-application updates them instead of adding another.
+    // 再適用で重複追加せず更新できるよう、管理対象の短文由来の動作を先に処理する。
     std::stable_partition(sameTarget.begin(), sameTarget.end(), [](PropertyMotion *m) { return m->GetSettings().shortTextManaged; });
 
-    // Legacy ShortTextBehavior that moves the same Transform channel is replaced (PingPong / Tween).
+    // 同じTransformのチャンネルを変更する従来のShortTextBehaviorを置き換える（PingPong / Tween）。
     auto replaceLegacy = [&]() {
         if (auto *behavior = target->GetComponent<ShortTextBehavior>()) {
             const int legacyAxis = request.values.empty() ? request.axis : behavior->GetRecipe().axis;
@@ -419,7 +419,7 @@ void AppendShortTextKeyframeConflicts(CompositeCommand *group, const EmptyObject
     const std::string member = recipe.kind == ShortText::Kind::Rotate ? "rotate_" : "translate_";
     ShortTextComponentPlan local;
     EditShortTextKeyframes(group, target, "Transform", member, recipe.axis, nullptr, {}, local);
-    // Only removals are reported: hand-made animations of the same member are left to the user.
+    // 削除のみ報告する。同じメンバーに対する手作業のアニメーションはユーザーの判断に任せる。
     for (const auto &step : local.steps) plan.steps.push_back(step);
 }
 

@@ -11,7 +11,7 @@ class DevelopmentAssistantEditor final {
 public:
     bool open = false;
     ~DevelopmentAssistantEditor();
-    // A returned sentence still needs the normal interpret/preview/apply workflow.
+    // 返された文章にも、通常の解釈・プレビュー・適用の手順が必要。
     bool Show(SceneEditorContext *context, SceneEditorCommands *commands, EmptyObject *selected, std::string &sentence,
         const std::function<std::string(const std::string &, const std::string &)> &host = {}, const UUID128 &hostInstance = UUID128{});
 private:

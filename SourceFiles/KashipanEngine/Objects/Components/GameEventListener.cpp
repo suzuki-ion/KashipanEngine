@@ -47,13 +47,13 @@ bool Compare(const GameEvents::Value &left, const std::string &op, const GameEve
     }
     if (op == "==") return left == right;
     if (op == "!=") return left != right;
-    return false; // ordering needs numbers
+    return false; // 順序付けには数値が必要。
 }
 std::string MessageText(const GameEvents::Message &m) { return m.name.empty() ? std::string("(trigger)") : m.name; }
 }
 
 //--------------------------------------------------
-// Serialization
+// シリアライズ
 //--------------------------------------------------
 JSON GameEventListener::EncodeHandler(const Handler &h) {
     JSON conditions = JSON::array();
@@ -197,7 +197,7 @@ bool GameEventListener::IsContinuousCommand(const std::string &name) {
 }
 
 //--------------------------------------------------
-// Component
+// コンポーネント
 //--------------------------------------------------
 std::unique_ptr<IObjectComponent> GameEventListener::Clone() const {
     auto copy = std::make_unique<GameEventListener>();
@@ -306,7 +306,7 @@ bool GameEventListener::RunAction(size_t handlerIndex, const Action &action, con
         if (!router) { error = "シーンに GameEventRouter がありません。"; return false; }
         std::string targetValue = action.emitTargetValue == "$sender" ? message.sender : action.emitTargetValue;
         if (action.emitTarget == GameEvents::TargetMode::Object && targetValue != message.sender) {
-            // Names written by hand resolve to a stable UUID at send time (duplicates are rejected).
+            // 手入力の名前は送信時に安定したUUIDへ解決する（重複する名前は拒否する）。
             if (!UUID128(targetValue).IsValid()) {
                 auto *object = Gameplay::ResolveObject(scene, targetValue, &error);
                 if (!object) return false;
@@ -318,7 +318,7 @@ bool GameEventListener::RunAction(size_t handlerIndex, const Action &action, con
     case ActionKind::CallScript: {
         auto *script = target ? target->GetComponent<ScriptComponent>() : nullptr;
         if (!script) { error = "ScriptComponent がありません。"; return false; }
-        // The script may delete itself, its object or this listener: re-resolve before reading its error.
+        // スクリプトが自身・自身のオブジェクト・このリスナーを削除する場合があるため、エラー参照前に再解決する。
         const auto scriptRef = script->GetComponentRef();
         const std::weak_ptr<void> sceneAlive = scene ? scene->GetLifetimeToken() : std::weak_ptr<void>();
         const bool ok = action.passEvent ? script->InvokeEventHandler(action.name, message) : script->InvokeMethodWithValues(action.name, ordered);
@@ -347,7 +347,7 @@ bool GameEventListener::RunAction(size_t handlerIndex, const Action &action, con
 bool GameEventListener::Fire(size_t index, const GameEvents::Message &message) {
     if (index >= settings_.handlers.size()) return false;
     if (fired_.size() != settings_.handlers.size()) ResetRuntime();
-    // Copy: an action may edit this listener's settings (via SetProperty / script) while it runs.
+    // コピーして使用する。実行中のアクションがSetPropertyやスクリプトを通じてこのリスナーの設定を変更する可能性がある。
     const Handler handler = settings_.handlers[index];
     const auto revision = revision_;
     if (handler.once && fired_[index] > 0) return false;
@@ -364,7 +364,7 @@ bool GameEventListener::Fire(size_t index, const GameEvents::Message &message) {
     cooldowns_[index] = handler.cooldown;
     const std::weak_ptr<void> sceneAlive = scene ? scene->GetLifetimeToken() : std::weak_ptr<void>();
     const auto self = GetComponentRef();
-    // Deletions made by actions (scripts deleting themselves, Pickup-like removals) are destroyed after the handler.
+    // アクションによる削除（スクリプトの自己削除やPickupなど）は、ハンドラー完了後に実体を破棄する。
     struct DeferScope {
         SceneContext *scene; std::weak_ptr<void> alive; bool previous;
         ~DeferScope() { if (scene && !alive.expired()) scene->EndDeferredDestroy(previous); }
@@ -374,14 +374,14 @@ bool GameEventListener::Fire(size_t index, const GameEvents::Message &message) {
         bool ok = false;
         try { ok = RunAction(index, action, message, error); }
         catch (const std::exception &e) { error = e.what(); }
-        // The action may have deleted this object: re-resolve before touching members again.
+        // アクションがこのオブジェクトを削除した可能性があるため、メンバーに再び触れる前に再解決する。
         if (!scene || sceneAlive.expired() || scene->ResolveComponent(self) != this) return true;
         if (!ok) {
             lastError_ = "「" + handler.id + "」(" + MessageText(message) + ") の動作 " + action.name + ": " + error;
             if (auto *router = GameEventRouter::Find(scene)) router->AddDiagnostic(lastError_);
             break;
         }
-        if (revision != revision_) break; // settings were replaced by the action
+        if (revision != revision_) break; // アクションによって設定が置き換えられた。
     }
     return true;
 }

@@ -5,10 +5,10 @@
 #include "Utilities/GameEvents.h"
 
 namespace KashipanEngine::ShortText {
-// Bounded grammar for user-defined events and gameplay components (pure: no scene access).
-// A sentence is either fully recognized (with a validated request or an explicit error) or not recognized at all,
-// so nothing is ever applied partially. Names / values that need the scene (objects, schemas, clips) are kept as
-// text here and resolved by the editor plan (Scene/Editor/ShortTextEventPlan), which rejects ambiguity.
+// ユーザー定義イベントとゲームプレイ用コンポーネント向けの範囲を限定した文法（シーンへのアクセスなし）。
+// 文は完全に認識する（検証済みリクエストまたは明示的なエラー）か、全く認識しないかのどちらかとし、
+// 部分的な適用は行わない。シーンが必要な名前・値（オブジェクト・スキーマ・クリップ）はここでは
+// 文字列のまま保持し、曖昧さを拒否するエディターの計画処理（Scene/Editor/ShortTextEventPlan）で解決する。
 enum class EventRequestKind {
     DefineEvent,    // 「GoalReachedイベントを作成」「Damageイベントを作成、amountは数値」
     Handler,        // [きっかけ]+[動作]（受け取ったら / 触れたら / キーを押したら / きっかけ無し=再生開始時）
@@ -27,34 +27,34 @@ enum class EventRequestKind {
 enum class EventTrigger { Start, Receive, Contact, Key };
 enum class EventActionKind { Tween, CallScript, Emit, ComponentCommand };
 
-// A value written in the sentence: a literal (number / text) or a received argument name (resolved against the schema).
+// 文中の値。リテラル（数値・テキスト）または受信引数名（スキーマと照合して解決）。
 struct EventValueText {
     std::string text;
     bool fromPayload = false; // 「amountだけ減らす」のように受信した引数を使う
 };
 struct EventActionRequest {
     EventActionKind kind = EventActionKind::Emit;
-    std::string tweenText;                                     // Tween: property grammar text (「1秒かけて…」)
-    std::string function;                                      // CallScript
-    std::vector<std::string> functionArgs;                     // CallScript: received argument names, in order
+    std::string tweenText;                                     // Tween: プロパティ文法の文章（「1秒かけて…」）
+    std::string function;                                      // スクリプト呼び出し
+    std::vector<std::string> functionArgs;                     // CallScript: 順序付きの受信引数名
     bool passEvent = false;                                    // CallScript: void 関数(GameEvent@)
-    std::string event;                                         // Emit
+    std::string event;                                         // 送信
     int targetMode = 0;                                        // Emit: 0 全体, 1 オブジェクト名, 2 タグ, 3 送信元
-    std::string target;                                        // Emit
+    std::string target;                                        // 送信
     std::vector<std::pair<std::string, EventValueText>> args;  // Emit: 引数名（"" = 唯一の引数）と値
     std::string command;                                       // ComponentCommand: 「型.命令」
     std::vector<std::pair<std::string, EventValueText>> commandArgs;
 };
 struct EventRequest {
     EventRequestKind kind = EventRequestKind::DefineEvent;
-    GameEvents::Definition definition;                         // DefineEvent
-    EventTrigger trigger = EventTrigger::Start;                // Handler
-    std::string triggerEvent;                                  // Receive
+    GameEvents::Definition definition;                         // イベント定義
+    EventTrigger trigger = EventTrigger::Start;                // ハンドラー
+    std::string triggerEvent;                                  // 受信
     std::string contactSource;                                 // Contact: 「AがBに触れたら」の A（空 = 選択中）
     std::string contactOther;                                  // Contact: B（名前またはタグ）/ 各部品の相手
-    std::string key;                                           // Key / Interact
-    EventActionRequest action;                                 // Handler
-    GameEvents::Value params = GameEvents::Value::object();    // gameplay components
+    std::string key;                                           // キー・インタラクション
+    EventActionRequest action;                                 // ハンドラー
+    GameEvents::Value params = GameEvents::Value::object();    // ゲームプレイ用コンポーネント
 };
 struct EventParseResult {
     bool recognized = false;
@@ -63,12 +63,12 @@ struct EventParseResult {
     std::string message;
 };
 
-// Normalizes width and spacing only (case is kept: event and object names are case-sensitive text).
+// 全角・半角と空白のみ正規化する。イベント名・オブジェクト名の大文字・小文字はそのまま保持する。
 std::string NormalizeEventText(const std::string &text);
 EventParseResult ParseEventRequest(const std::string &text);
 std::string DescribeEventRequest(const EventRequest &request);
-// Parses a literal for a typed argument. Object values are names here; the plan resolves them to UUIDs.
+// 型付き引数のリテラルを解析する。オブジェクト値はここでは名前とし、計画側でUUIDへ解決する。
 bool ParseEventLiteral(GameEvents::ArgType type, const std::string &text, GameEvents::Value &out, std::string *error = nullptr);
-// The fixed sample sentences shown in the editor and checked by the regressions.
+// エディターに表示し、回帰テストでも検証する固定の例文。
 const std::vector<std::string> &EventExampleSentences();
 } // namespace KashipanEngine::ShortText

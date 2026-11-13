@@ -180,8 +180,8 @@ private:
     struct Binding {
         DeviceKind kind{};
         InputState state = InputState::Down; // delta/axis では意味を持たない場合あり
-        int code = 0;              // mouse/controller only
-        Key key = Key::Unknown;    // keyboard only
+        int code = 0;              // マウス・コントローラー専用
+        Key key = Key::Unknown;    // キーボード専用
         int controllerIndex = 0;   // コントローラーインデックス（コントローラー用のみ）
         float threshold = 0.0f;    // アナログ入力の閾値（アナログ用のみ）
         bool invertValue = false;  // 評価値(value)を反転させるかどうか

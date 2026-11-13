@@ -22,7 +22,7 @@ std::string Read(const std::filesystem::path &path, size_t maximum = 2 * 1024 * 
     text.resize(static_cast<size_t>(file.gcount()));
     if (!file.eof()) {
         auto last = text.find_last_of('\n'); if (last != std::string::npos) text.resize(last);
-        else return {}; // Do not publish a partial UTF-8 line.
+        else return {}; // 不完全なUTF-8の行を公開しない。
     }
     return text;
 }
@@ -36,7 +36,7 @@ std::vector<std::filesystem::path> Files(const std::filesystem::path &root, bool
     if (ec || !std::filesystem::is_directory(canonicalRoot, ec)) return result;
     for (std::filesystem::recursive_directory_iterator it(canonicalRoot, std::filesystem::directory_options::skip_permission_denied, ec), end;
         !ec && it != end; it.increment(ec)) {
-        // References/sources are trusted roots, but never traverse a linked file outside them.
+        // リファレンスとソースを信頼するルートとし、リンク先がその範囲外のファイルならたどらない。
         auto status = it->symlink_status(ec);
         if (ec) break;
         if (std::filesystem::is_symlink(status)) { it.disable_recursion_pending(); continue; }
@@ -73,7 +73,7 @@ std::string HtmlText(const std::string &html) {
     return out;
 }
 std::string Snippet(const std::string &text, const std::string &term, size_t maximum, size_t maximumLines = 180) {
-    // Keep complete declaration/example lines around the first occurrence.
+    // 最初の出現箇所の周辺で、宣言・サンプルの行を途中で切らずに保持する。
     std::vector<std::string> lines;
     size_t begin = 0, match = 0; bool found = false;
     while (begin < text.size()) {
@@ -101,7 +101,7 @@ ApiContext BuildApiContext(const std::filesystem::path &engineRoot, const std::s
     maximumBytes -= introduction.size();
     const auto query = Fold(request);
     std::set<std::string> terms;
-    // English identifiers in requests, plus registered Japanese component aliases.
+    // リクエスト内の英語の識別子と、登録済みの日本語コンポーネント別名。
     std::string token;
     for (unsigned char c : request + " ") {
         if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_') token += static_cast<char>(c);
@@ -117,7 +117,7 @@ ApiContext BuildApiContext(const std::filesystem::path &engineRoot, const std::s
         if (stem.size() >= 4 && query.find(stem) != std::string::npos) terms.insert(stem);
     }
     for (const auto *word : {"script", "engine", "create", "please", "using", "function", "collapse", "wave"}) terms.erase(word);
-    if (terms.size() > 24) { // Bounded even for a pasted code file.
+    if (terms.size() > 24) { // コードファイルが貼り付けられた場合も上限を設ける。
         auto last = terms.begin(); std::advance(last, 24); terms.erase(last, terms.end());
     }
     const auto references = Files(engineRoot / L"Docs" / L"Reference" / L"Script", true);
@@ -135,10 +135,10 @@ ApiContext BuildApiContext(const std::filesystem::path &engineRoot, const std::s
     const auto bindings = Read(bindingsPath);
     for (const auto &term : terms) {
         bool found = false;
-        // For script generation, registered AngelScript declarations are stronger evidence than C++ internals.
+        // スクリプト生成では、C++内部実装より登録済みのAngelScript宣言を強い根拠として扱う。
         auto binding = Snippet(bindings, term, 19000);
         if (!binding.empty()) {
-            // Multiple queried types may need distinct sections from the same binding source.
+            // 複数の型を問い合わせる場合、同じバインディングソースから別々の区間が必要になることがある。
             if (result.text.size() + binding.size() + 256 < maximumBytes) {
                 result.text += "\n--- ENGINE SOURCE API: Scene/Components/Script/ScriptBindings.cpp; query=" + term + " ---\n" + binding;
                 ++result.sourceFiles; found = true;
@@ -150,7 +150,7 @@ ApiContext BuildApiContext(const std::filesystem::path &engineRoot, const std::s
             if (append(path, Snippet(Read(path), term, 12000), true) || included.contains(PathText(path.lexically_relative(engineRoot)))) found = true;
         }
         if (found) continue;
-        // Missing API/source (including binary-only distributions): consult the shipped reference.
+        // APIやソースがない場合（バイナリのみの配布も含む）は、同梱のリファレンスを参照する。
         struct ReferenceMatch { std::filesystem::path path; std::string text; size_t score; };
         std::vector<ReferenceMatch> matches;
         for (const auto &path : references) {
@@ -161,7 +161,7 @@ ApiContext BuildApiContext(const std::filesystem::path &engineRoot, const std::s
             if (!score) continue;
             const auto name = Fold(PathText(path.stem()));
             if (name.find(term) != std::string::npos) score += 1000;
-            if (name.find("index") != std::string::npos) score = 0; // directory indexes do not establish an API contract
+            if (name.find("index") != std::string::npos) score = 0; // ディレクトリーの索引はAPI仕様の根拠にしない。
             matches.push_back({path, std::move(text), score});
         }
         std::sort(matches.begin(), matches.end(), [](const auto &a, const auto &b) {

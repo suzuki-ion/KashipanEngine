@@ -15,7 +15,7 @@ namespace KashipanEngine {
 /// @param engine 登録先のスクリプトエンジン（Vector2/Vector3/Vector4、string、arrayの登録後に呼ぶこと）
 void RegisterImGuiScriptBindings(asIScriptEngine *engine);
 
-// Script calls may not pop UI scopes belonging to their caller.
+// スクリプト呼び出しから、呼び出し元に属するUIスコープを閉じることはできない。
 const ImGuiErrorRecoveryState *SetImGuiScriptBoundary(const ImGuiErrorRecoveryState *state);
 
 } // namespace KashipanEngine

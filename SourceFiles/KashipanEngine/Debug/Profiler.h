@@ -13,8 +13,8 @@
 
 namespace KashipanEngine {
 
-/// CPU elapsed time, inclusive of nested scopes and waits. Only completed frames are published.
-/// Use stable names: at most 256 distinct names are accepted during the process lifetime.
+/// 入れ子のスコープと待機を含むCPU経過時間。完了したフレームのみ公開する。
+/// 固定の名前を使用する。プロセスの存続中に登録できる異なる名前は最大256個。
 class Profiler final {
 public:
     struct Sample { double milliseconds = 0; std::uint64_t calls = 0; };
@@ -58,8 +58,8 @@ public:
         while (history_.size() > capacity_) history_.pop_front();
     }
     Snapshot GetSnapshot() const {
-        // Copy immutable frame handles under the lock, not every sample map.
-        // Aggregate outside it so external viewers do not block recording.
+        // ロック中は各サンプルのマップ全体ではなく、不変なフレームハンドルのみをコピーする。
+        // 集計はロック外で行い、外部ビューアーによって記録が妨げられないようにする。
         Snapshot snapshot;
         std::deque<std::shared_ptr<const std::map<std::string, Sample>>> history;
         {
@@ -86,7 +86,7 @@ public:
         }
         return snapshot;
     }
-    /// RAII scope. Concurrent records are synchronized; scopes crossing a frame boundary are discarded.
+    /// RAIIスコープ。同時記録は同期し、フレーム境界をまたぐスコープは破棄する。
     class Scope final {
     public:
         explicit Scope(std::string name) : name_(std::move(name)) {

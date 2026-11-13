@@ -41,7 +41,7 @@ Vec3d ReadPosition(const Value &v) {
 int ReadDimension(const Value &a) {
     if (!a.contains("dimension")) return 3;
     const Value &v = a.at("dimension");
-    // Floats (even 2.0) are rejected so fractional values are never truncated.
+    // 小数部を切り捨てないよう、浮動小数点数は2.0のような値も含めて拒否する。
     if (!v.is_number_integer() || v.is_boolean()) Fail("dimension must be the integer 2 or 3");
     const std::int64_t d = v.is_number_unsigned() ? (v.get<std::uint64_t>() > 3 ? 0 : static_cast<std::int64_t>(v.get<std::uint64_t>())) : v.get<std::int64_t>();
     if (d != 2 && d != 3) Fail("dimension must be the integer 2 or 3");
@@ -65,7 +65,7 @@ Vec3d WorldPosition(Transform &t, const char *what) {
     return r;
 }
 
-// Stable UUID wins; otherwise the exact name must identify exactly one object.
+// 安定したUUIDを優先し、それ以外は完全一致する名前でオブジェクトを一意に特定する。
 EmptyObject *ResolveReference(SceneContext &scene, const std::string &reference) {
     for (auto *o : scene.GetSceneObjects()) if (o && o->GetObjectID().ToString() == reference) return o;
     EmptyObject *found = nullptr;
@@ -149,7 +149,7 @@ bool ExecuteSpatialCommand(const std::string &command, const Value &a, CommandCo
         const Vec3d source = WorldPosition(*sourceTransform, "target world position");
         Value result = Compute(source, destination, dimension);
 
-        // Validate the existing store without creating entries, so failures leave memory untouched.
+        // 失敗時にメモリを変更しないよう、項目を新規作成せずに既存の格納内容を検証する。
         auto &values = c.memory->extensionValues;
         const bool hasResults = values.contains("results");
         if (hasResults && !values["results"].is_object()) Fail("existing results store is malformed (not an object)");

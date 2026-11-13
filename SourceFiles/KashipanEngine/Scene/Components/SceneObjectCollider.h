@@ -30,8 +30,8 @@ public:
     Collider *GetCollider() { return &collider_; }
     const Collider *GetCollider() const { return &collider_; }
 
-    // Snapshot queries return one hit per component, in registration order.
-    // They do not move objects, advance physics, or dispatch collision events.
+    // スナップショットによる問い合わせは、コンポーネントごとに1件の命中結果を登録順で返す。
+    // オブジェクトの移動・物理計算の進行・衝突イベントの配信は行わない。
     std::vector<HitInfo2D> Query2D(const ColliderInfo2D &query, bool includeTriggers = true,
         const EmptyObject *ignoreObject = nullptr) const;
     std::vector<HitInfo3D> Query3D(const ColliderInfo3D &query, const Vector3 &position,

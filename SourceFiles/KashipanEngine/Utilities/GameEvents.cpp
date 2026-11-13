@@ -13,7 +13,7 @@ bool FiniteNumber(const Value &v) {
     return std::isfinite(n) && std::abs(n) <= MaxMagnitude;
 }
 bool IsUuidText(const std::string &text) {
-    // 8-4-4-4-12 hexadecimal, the format written by UUID128::ToString.
+    // UUID128::ToStringが出力する、8-4-4-4-12桁の16進数形式。
     if (text.size() != 36) return false;
     for (size_t i = 0; i < text.size(); ++i) {
         const char c = text[i];
@@ -68,7 +68,7 @@ bool IsValidName(const std::string &name, std::string *error) {
         if (std::string_view(".:,\"'\\/[]{}#@").find(static_cast<char>(c)) != std::string_view::npos)
             return Fail(error, "イベント名に記号 . : , \" ' \\ / [ ] { } # @ は使えません。");
     }
-    // Reject the ideographic space and truncated UTF-8 so names stay printable and comparable.
+    // 名前の表示・比較を可能に保つため、全角空白と途中で切れたUTF-8を拒否する。
     if (name.find("\xE3\x80\x80") != std::string::npos) return Fail(error, "イベント名に全角空白は使えません。");
     for (size_t i = 0; i < name.size();) {
         const unsigned char c = static_cast<unsigned char>(name[i]);
@@ -164,7 +164,7 @@ bool BuildPayload(const Definition &d, const Value &input, Value &out, std::stri
             }
             std::string reason;
             if (!IsValidArgValue(arg->type, converted, &reason)) {
-                if (dropUndeclared) continue; // a component offered a field the schema types differently
+                if (dropUndeclared) continue; // コンポーネントが提示したフィールドとスキーマで型が異なる。
                 return Fail(error, "引数「" + key + "」(" + ArgTypeName(arg->type) + "): " + reason);
             }
             result[key] = std::move(converted);

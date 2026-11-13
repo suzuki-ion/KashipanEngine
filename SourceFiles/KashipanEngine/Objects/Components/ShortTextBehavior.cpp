@@ -273,7 +273,7 @@ void ApplyShortTextSceneEffects(const EmptyObject *owner, SceneContext *scene, c
             }
             SetWorldPosition(transform, destination); break;
         }
-        default: break; // rate/tween actions have already been converted to absolute setters by the runtime
+        default: break; // 変化率・補間アクションは実行側ですでに絶対値を設定する処理へ変換されている。
         }
     }
     std::sort(deletes.begin(), deletes.end()); deletes.erase(std::unique(deletes.begin(), deletes.end()), deletes.end());

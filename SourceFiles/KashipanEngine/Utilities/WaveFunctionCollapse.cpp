@@ -10,11 +10,11 @@ namespace {
 /// @brief Direction列挙の並び順（Up, Down, Left, Right, Front, Back）に対応する座標オフセット
 constexpr std::array<std::array<std::int32_t, 3>, WaveFunctionCollapse::kDirectionCount> kDirectionOffsets = { {
     { 0, 1, 0 },   // Up
-    { 0, -1, 0 },  // Down
-    { -1, 0, 0 },  // Left
-    { 1, 0, 0 },   // Right
-    { 0, 0, 1 },   // Front
-    { 0, 0, -1 },  // Back
+    { 0, -1, 0 },  // 下方向
+    { -1, 0, 0 },  // 左方向
+    { 1, 0, 0 },   // 右方向
+    { 0, 0, 1 },   // 前方向
+    { 0, 0, -1 },  // 行き過ぎて戻る動き
 } };
 
 /// @brief JSON保存/読込で使うDirection列挙の並び順に対応するキー名

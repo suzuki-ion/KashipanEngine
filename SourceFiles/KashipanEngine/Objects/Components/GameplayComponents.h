@@ -585,7 +585,7 @@ public:
         float maxSpeed = -1.0f; // -1: 上限なし
         int priority = 0;
         std::string clip;
-        int player = 0;         // 0: KeyFrameAnimator, 1: Animator
+        int player = 0;         // 0: KeyFrameAnimator、1: Animator
     };
     struct Settings {
         std::vector<State> states;

@@ -152,7 +152,7 @@ Vector3 Vector3::Rejection(const Vector3 &vector) const noexcept {
     return KashipanEngine::MathUtils::Rejection(*this, vector);
 }
 
-Vector3 Vector3::Refrection(const Vector3 &normal) const noexcept {
+Vector3 Vector3::Reflection(const Vector3 &normal) const noexcept {
     return KashipanEngine::MathUtils::Reflection(*this, normal);
 }
 

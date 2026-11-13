@@ -1,5 +1,5 @@
 #pragma once
-// Private helpers shared by the gameplay component implementations (not a public API).
+// ゲームプレイ用コンポーネントの実装で共有する内部ヘルパー（公開APIではない）。
 #include "Objects/Components/GameplayComponents.h"
 #include <cmath>
 #include "Objects/EmptyObject.h"

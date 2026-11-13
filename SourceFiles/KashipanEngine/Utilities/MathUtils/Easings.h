@@ -11,70 +11,70 @@
 enum class EaseType {
     Linear,
 
-    // Quadratic
+    // 2次関数
 
     EaseInQuad,
     EaseOutQuad,
     EaseInOutQuad,
     EaseOutInQuad,
 
-    // Cubic
+    // 3次関数
 
     EaseInCubic,
     EaseOutCubic,
     EaseInOutCubic,
     EaseOutInCubic,
 
-    // Quartic
+    // 4次関数
 
     EaseInQuart,
     EaseOutQuart,
     EaseInOutQuart,
     EaseOutInQuart,
 
-    // Quintic
+    // 5次関数
 
     EaseInQuint,
     EaseOutQuint,
     EaseInOutQuint,
     EaseOutInQuint,
 
-    // Sine
+    // 正弦関数
 
     EaseInSine,
     EaseOutSine,
     EaseInOutSine,
     EaseOutInSine,
 
-    // Exponential
+    // 指数関数
 
     EaseInExpo,
     EaseOutExpo,
     EaseInOutExpo,
     EaseOutInExpo,
 
-    // Circular
+    // 円弧
 
     EaseInCirc,
     EaseOutCirc,
     EaseInOutCirc,
     EaseOutInCirc,
 
-    // Back
+    // 行き過ぎて戻る動き
 
     EaseInBack,
     EaseOutBack,
     EaseInOutBack,
     EaseOutInBack,
 
-    // Elastic
+    // 弾性の動き
 
     EaseInElastic,
     EaseOutElastic,
     EaseInOutElastic,
     EaseOutInElastic,
 
-    // Bounce
+    // 跳ね返り
 
     EaseInBounce,
     EaseOutBounce,

@@ -132,7 +132,7 @@ private:
 
     // 新規ファイル作成（空白部の右クリックメニュー）
     bool isCreateFileRequested_ = false;
-    std::string createFileExtension_; // ".json" or ".mat"
+    std::string createFileExtension_; // 拡張子は「.json」または「.mat」
     std::string newFileName_;
 
     // 新規フォルダ作成（空白部の右クリックメニュー）

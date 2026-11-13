@@ -37,7 +37,7 @@ struct Handle {
     Handle &operator=(const Handle &) = delete;
 };
 std::vector<wchar_t> Environment() {
-    // Inherit normal OS variables, but never allow API billing or a different inference provider.
+    // 通常のOS環境変数は継承するが、API課金や別の推論プロバイダーは許可しない。
     auto block = GetEnvironmentStringsW();
     if (!block) throw std::runtime_error("Environment unavailable");
     std::vector<wchar_t> result;
@@ -83,7 +83,7 @@ std::filesystem::path Resolve(Provider provider, const std::string &configured) 
     }
     return {};
 }
-// Prompt is sent through stdin, never through a shell or command line. Capture is bounded.
+// プロンプトは標準入力で送信し、シェルやコマンドラインを経由しない。出力の取得量には上限を設ける。
 int Run(const std::filesystem::path &exe, const std::vector<std::wstring> &args,
     const std::filesystem::path &cwd, const std::string &input, std::atomic<bool> &cancel,
     unsigned timeoutSeconds, const std::function<void(const std::string &)> &line,
@@ -128,7 +128,7 @@ int Run(const std::filesystem::path &exe, const std::vector<std::wstring> &args,
     CloseHandle(write.value); write.value = nullptr;
     CloseHandle(stdinRead.value); stdinRead.value = nullptr;
     ResumeThread(thread.value);
-    // Concurrent writer avoids deadlocks if the child emits output while reading a large prompt.
+    // 長いプロンプトの読み込み中に子プロセスが出力してもデッドロックしないよう、並行して書き込む。
     std::thread writer([&] {
         size_t offset = 0;
         while (offset < input.size()) {
@@ -179,7 +179,7 @@ int Run(const std::filesystem::path &exe, const std::vector<std::wstring> &args,
     } catch (...) {
         TerminateJobObject(job.value, 1); writer.join(); throw;
     }
-    TerminateJobObject(job.value, 1); // also end any child work after the owning turn exits
+    TerminateJobObject(job.value, 1); // 所有元のターン終了時には子プロセスの処理も終了する。
     writer.join();
     DWORD exitCode = 1; GetExitCodeProcess(process.value, &exitCode);
     if (complete && complete() && !stopped && !cancel) return 0;
@@ -240,7 +240,7 @@ void Discover(Provider provider, Account &account, std::atomic<bool> &cancel) {
                 complete = true;
             }
         } catch (...) {
-            // Non-JSON stderr is harmless; malformed JSON protocol must not publish a partial catalog.
+            // JSON以外の標準エラー出力は無視できるが、不正なJSONプロトコルから不完全なカタログを公開しない。
             if (Json::accept(line)) { complete = failed = true; }
         }
         return {};
@@ -303,7 +303,7 @@ bool IsBillingEnvironment(const std::wstring &name) {
 std::vector<std::wstring> WindowsSandboxArguments(const std::string &backend) {
     std::string fallback = "elevated";
     if (backend == "auto") {
-        // Keep billing/provider configuration isolated, but preserve the user's native sandbox choice.
+        // 課金・プロバイダーの設定は分離し、ユーザーが選んだネイティブのサンドボックス設定は維持する。
         wchar_t directory[32768]{};
         std::filesystem::path root;
         if (GetEnvironmentVariableW(L"CODEX_HOME", directory, 32768)) root = directory;
@@ -376,7 +376,7 @@ void ConsumeEvent(Provider provider, const std::string &line, Snapshot &state, b
                 else append(j.value("message", std::string{"CLI error"}));
             }
         }
-    } catch (...) { /* stderr and incompatible protocol data never become executable instructions */ }
+    } catch (...) { /* 標準エラー出力や非互換のプロトコルデータは実行可能な指示として扱わない。 */ }
 }
 Session::~Session() { Cancel(); Join(); }
 Snapshot Session::Get() const { std::lock_guard lock(mutex_); return state_; }
@@ -426,7 +426,7 @@ bool Session::Start(Provider provider, Mode mode, const std::string &model,
                 *std::next(std::find(args.begin(), args.end(), L"--mcp-config")) = Wide(server.dump());
                 *std::next(std::find(args.begin(), args.end(), L"--allowedTools")) = L"mcp__kashipan_editor";
             } else {
-                // Request-local overrides; never persist the endpoint or capability token to disk.
+                // リクエスト内限定の上書き。エンドポイントや権限トークンはディスクへ保存しない。
                 args.insert(args.end() - 1, {L"-c", Wide("mcp_servers.kashipan_editor.url=" + Json(tools->Url()).dump()),
                     L"-c", Wide("mcp_servers.kashipan_editor.http_headers={Authorization=" + Json("Bearer " + tools->Token()).dump() + "}"),
                     L"-c", L"mcp_servers.kashipan_editor.required=true",
@@ -502,7 +502,7 @@ bool Session::Login(Provider provider, const std::string &configured, std::strin
         auto environment = Environment();
         STARTUPINFOW startup{}; startup.cb = sizeof(startup);
         PROCESS_INFORMATION info{};
-        // Visible console is intentional: the user completes the official interactive login.
+        // 公式の対話式ログインをユーザーが完了できるよう、意図的にコンソールを表示する。
         if (!CreateProcessW(path.c_str(), command.data(), nullptr, nullptr, FALSE,
             CREATE_NEW_CONSOLE | CREATE_UNICODE_ENVIRONMENT, environment.data(), nullptr, &startup, &info)) {
             error = "公式ログイン画面を起動できませんでした。"; return false;

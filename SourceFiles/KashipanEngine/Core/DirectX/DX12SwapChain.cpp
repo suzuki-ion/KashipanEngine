@@ -384,7 +384,7 @@ void DX12SwapChain::CreateBackBuffers() {
             backBuffers_[i] = std::make_unique<RenderTargetResource>(
                 static_cast<UINT>(width_), static_cast<UINT>(height_),
                 desc.Format, backBuffer.Get());
-        } else { // Composition
+        } else { // コンポジション
 #if defined(DEBUG_BUILD) || defined(DEVELOPMENT_BUILD)
             float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.5f };
 #else

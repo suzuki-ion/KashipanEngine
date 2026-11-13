@@ -1,4 +1,4 @@
-// Gameplay components 1-4 and 7: Health / ContactDamage / Inventory / Pickup / Lifetime / Spawner.
+// ゲームプレイ用コンポーネント1～4・7: Health / ContactDamage / Inventory / Pickup / Lifetime / Spawner。
 #include "Objects/Components/GameplayDetail.h"
 #include <cmath>
 #include <climits>
@@ -11,7 +11,7 @@ namespace KashipanEngine {
 using namespace GameplayDetail;
 
 //==================================================
-// Health
+// 体力
 //==================================================
 template <class F> bool Health::Bind(Settings &s, F &f) {
     return f.Float("max", s.max, 0.001f, 1.0e6f) && f.Float("current", s.current, 0.0f, 1.0e6f) &&
@@ -66,7 +66,7 @@ bool Health::Damage(float amount, const std::string &sender, std::string *error)
         std::string emitError;
         if (!Gameplay::EmitEvent(GetOwnerSceneContext(), Owner(this), settings_.deathEvent,
             GameEvents::Value{{"amount", amount}, {"current", 0.0f}, {"max", settings_.max}, {"previous", previous}, {"sender", sender}}, &emitError)) lastError_ = emitError;
-        // Removal happens on this component's next Update so callers never see their object destroyed mid-call.
+        // 呼び出し途中にオブジェクトが破棄されないよう、削除はこのコンポーネントの次のUpdateで行う。
         pendingRemoval_ = settings_.onDeath != 0;
     }
     return true;
@@ -156,7 +156,7 @@ void Health::ShowImGui() {
 #endif
 
 //==================================================
-// ContactDamage
+// 接触ダメージ
 //==================================================
 template <class F> bool ContactDamage::Bind(Settings &s, F &f) {
     return f.Text("otherTag", s.otherTag, 64) && f.Float("amount", s.amount, 0.0f, 1.0e6f) && f.Float("cooldown", s.cooldown, 0.0f, 60.0f) &&
@@ -179,7 +179,7 @@ bool ContactDamage::ApplyContact(EmptyObject *other) {
     if (!health) { lastError_ = settings_.mode == 0 ? "自分に Health がありません。" : other->GetName() + " に Health がありません。"; return false; }
     std::string error;
     const bool applied = health->Damage(settings_.amount, settings_.mode == 0 ? id : Gameplay::IdOf(owner), &error);
-    cooldowns_[id] = settings_.cooldown; // also while invulnerable: one hit per contact window
+    cooldowns_[id] = settings_.cooldown; // 無敵中も記録し、1回の接触期間につき1回だけ命中させる。
     if (!applied) { lastError_ = error; return false; }
     lastError_.clear();
     return true;
@@ -212,7 +212,7 @@ void ContactDamage::ShowImGui() {
 #endif
 
 //==================================================
-// Inventory
+// 所持品
 //==================================================
 bool Inventory::IsValidItemId(const std::string &item) {
     if (item.empty() || item.size() > 64) return false;
@@ -341,7 +341,7 @@ void Inventory::ShowImGui() {
 #endif
 
 //==================================================
-// Pickup
+// アイテム取得
 //==================================================
 template <class F> bool Pickup::Bind(Settings &s, F &f) {
     return f.Text("recipientTag", s.recipientTag, 64) && f.Text("itemId", s.itemId, 64) && f.Int("amount", s.amount, 1, 1000000) &&
@@ -395,7 +395,7 @@ bool Pickup::Advance() {
         std::string error;
         if (!TryPickup(other, &error)) { lastError_ = error; continue; }
         if (settings_.after != 0) {
-            Gameplay::RemoveOwner(scene, Owner(this), settings_.after); // last statement touching this component
+            Gameplay::RemoveOwner(scene, Owner(this), settings_.after); // このコンポーネントに触れる最後の文
             return true;
         }
         return true;
@@ -423,7 +423,7 @@ void Pickup::ShowImGui() {
 #endif
 
 //==================================================
-// Lifetime
+// 寿命
 //==================================================
 template <class F> bool Lifetime::Bind(Settings &s, F &f) {
     return f.Float("duration", s.duration, 0.01f, 3600.0f) && f.Int("action", s.action, 1, 2) && f.EventName("expiredEvent", s.expiredEvent) &&
@@ -439,7 +439,7 @@ std::unique_ptr<IObjectComponent> Lifetime::Clone() const { auto copy = std::mak
 bool Lifetime::Advance(double dt) {
     if (!ValidDt(dt)) return false;
     if (expired_) {
-        // Updated again after a pool release means the object was re-activated: count from zero.
+        // プール解放後に再び更新された場合は再有効化されたため、0から数え直す。
         auto *owner = Owner(this);
         if (settings_.action != 1 || !owner || !owner->IsActive()) return false;
         ResetTimer();
@@ -450,7 +450,7 @@ bool Lifetime::Advance(double dt) {
     auto *scene = GetOwnerSceneContext();
     std::string error;
     Gameplay::EmitEvent(scene, Owner(this), settings_.expiredEvent, GameEvents::Value{{"elapsed", elapsed_}}, &error);
-    Gameplay::RemoveOwner(scene, Owner(this), settings_.action); // last statement touching this component
+    Gameplay::RemoveOwner(scene, Owner(this), settings_.action); // このコンポーネントに触れる最後の文
     return true;
 }
 void Lifetime::Update() { if (Gameplay::IsPlaying(GetOwnerSceneContext())) Advance(GetDeltaTime()); }
@@ -470,7 +470,7 @@ void Lifetime::ShowImGui() {
 #endif
 
 //==================================================
-// Spawner
+// 生成処理
 //==================================================
 template <class F> bool Spawner::Bind(Settings &s, F &f) {
     return f.Text("templateObject", s.templateObject, 128) && f.Float("interval", s.interval, 0.05f, 3600.0f) && f.Int("maxAlive", s.maxAlive, 1, 256) &&
@@ -496,7 +496,7 @@ EmptyObject *Spawner::ResolveTemplate(std::string *error) {
     if (!source) return nullptr;
     for (auto *p = owner; p; p = p->GetComponent<Transform>() ? p->GetComponent<Transform>()->GetParentObject() : nullptr)
         if (p == source) { Fail(error, "自分自身や親はテンプレートにできません。"); return nullptr; }
-    // A template that contains a Spawner (itself or a child) would multiply without bound.
+    // 自身または子にSpawnerを含むテンプレートは、無制限に増殖する可能性がある。
     std::vector<EmptyObject *> stack{source};
     while (!stack.empty()) {
         auto *object = stack.back(); stack.pop_back();
@@ -541,7 +541,7 @@ EmptyObject *Spawner::SpawnOne(std::string *error) {
     if (!spawned) {
         auto *source = ResolveTemplate(error);
         if (!source) return nullptr;
-        // The template is cloned with its children: the whole subtree must fit under the scene limit.
+        // テンプレートは子を含めて複製するため、部分木全体がシーンの上限に収まる必要がある。
         size_t subtree = 0;
         for (std::vector<EmptyObject *> stack{source}; !stack.empty();) {
             auto *object = stack.back(); stack.pop_back();
@@ -562,7 +562,7 @@ EmptyObject *Spawner::SpawnOne(std::string *error) {
         else { transform->SetParentObject(nullptr); transform->SetTranslate(Gameplay::WorldPosition(owner) + settings_.offset); }
     }
     spawned->SetActive(true);
-    if (auto *lifetime = spawned->GetComponent<Lifetime>()) lifetime->ResetTimer(); // pool reuse starts a new life
+    if (auto *lifetime = spawned->GetComponent<Lifetime>()) lifetime->ResetTimer(); // プールからの再利用時は寿命を数え直す。
     std::string emitError;
     if (!Gameplay::EmitEvent(scene, owner, settings_.spawnedEvent, GameEvents::Value{{"spawned", Gameplay::IdOf(spawned)}, {"count", alive + 1}}, &emitError)) lastError_ = emitError;
     return spawned;
@@ -582,7 +582,7 @@ int Spawner::Advance(double dt) {
         timer_ -= settings_.interval;
         if (!spawn()) break;
     }
-    if (timer_ >= settings_.interval) timer_ = std::fmod(timer_, static_cast<double>(settings_.interval)); // drop backlog beyond the per-update cap
+    if (timer_ >= settings_.interval) timer_ = std::fmod(timer_, static_cast<double>(settings_.interval)); // 更新ごとの上限を超える未処理分は破棄する。
     return count;
 }
 void Spawner::Update() { if (Gameplay::IsPlaying(GetOwnerSceneContext())) Advance(GetDeltaTime()); }

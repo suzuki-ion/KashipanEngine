@@ -27,8 +27,8 @@ struct Entry {
     Entry &operator++() { ++value; return *this; }
     Entry &operator--() { --value; return *this; }
 
-    Key key;      // no longer const to allow reindexing swaps
-    size_t index; // updated when elements are moved
+    Key key;      // インデックス再割り当て時に交換できるよう、constを外す。
+    size_t index; // 要素の移動時に更新する。
     Value value;
 };
 

@@ -4,7 +4,7 @@
 #include <map>
 #include <stdexcept>
 namespace KashipanEngine {
-// Engine-local synthetic input. Never sends operating-system input to other applications.
+// エンジン内限定の模擬入力。他のアプリケーションへOSの入力を送信しない。
 class EditorTestInput final {
 public:
     static void Key(unsigned code, bool down, unsigned frames) { Set(keys_, code, down, frames, 256); }

@@ -8,12 +8,12 @@
 #include "Utilities/Conversion/ConvertString.h"
 
 namespace KashipanEngine {
-/// Main-thread-owned folder data, independent of any scene, ImGui state or editor context.
+/// メインスレッドが所有するフォルダーデータ。シーン・ImGui状態・エディターのコンテキストから独立する。
 class AssetFolderTree final {
 public:
     struct Node {
         std::string name;
-        std::string path; // Project logical path; only the UI root is empty.
+        std::string path; // プロジェクト内の論理パス。UIのルートだけは空文字列。
         std::vector<std::unique_ptr<Node>> children;
     };
     static std::shared_ptr<AssetFolderTree> Acquire(const std::string &projectRoot,
@@ -32,7 +32,7 @@ public:
         tree->root_.name = "Assets";
         tree->Build(tree->root_, Utf8StringToPath(assetsRoot));
         std::sort(tree->folders_.begin(), tree->folders_.end());
-        cached = tree; // Retain across the gap between old and new SceneEditor lifetimes.
+        cached = tree; // 旧SceneEditorの破棄から新SceneEditorの生成まで保持する。
         return tree;
     }
     Node &Root() { return root_; }
@@ -46,7 +46,7 @@ public:
         std::replace(result.begin(), result.end(), '\\', '/');
         return result;
     }
-    /// Same visibility rule as Build; used by the existing background asset scan as well.
+    /// Buildと同じ表示判定。既存のバックグラウンドでのアセット探索でも使用する。
     static bool IsVisibleFolder(const std::filesystem::path &relative, const std::filesystem::file_status &status) {
         if (!std::filesystem::is_directory(status) || std::filesystem::is_symlink(status)) return false;
         for (const auto &part : relative) {
@@ -57,7 +57,7 @@ public:
     }
 private:
     static std::shared_ptr<AssetFolderTree> &Cache() {
-        static std::shared_ptr<AssetFolderTree> cached; // One project, bounded lifetime/memory.
+        static std::shared_ptr<AssetFolderTree> cached; // 1つのプロジェクトに限定し、生存期間とメモリ使用量に上限を設ける。
         return cached;
     }
     void Build(Node &node, const std::filesystem::path &physical) {

@@ -428,7 +428,7 @@ bool EditorToolManager::LoadTools() {
         }
     }
 
-    // Compilation succeeds for the entire candidate before executing any script.
+    // 候補全体のコンパイルが成功してから、スクリプトを実行する。
     ScriptExecutionScope executionScope(nullptr, currentSceneContext_);
     for (asUINT i = 0; i < engine_->GetModuleCount(); ++i) {
         ImGuiScriptRecovery recovery;
@@ -539,7 +539,7 @@ void EditorToolManager::UpdateTools() {
             CallToolMethod(tool, tool.updateMethod, nullptr);
             continue;
         }
-        // Each open declared window is drawn; closed window tools do not update.
+        // 開いている宣言済みウィンドウをそれぞれ描画し、閉じたツールは更新しない。
         for (const size_t index : tool.windowIndices) {
             auto &window = windows_[index];
             if (!window.isOpen || tool.failed) continue;

@@ -1862,7 +1862,7 @@ SceneEditorView::CameraBoundsDragHandle SceneEditorView::PickCameraBoundsHandle(
         const float dy = p.y - mouseScreen.y;
         return dx * dx + dy * dy;
     };
-    // cornerScreen: [0]=(minA,minB) [1]=(minA,maxB) [2]=(maxA,minB) [3]=(maxA,maxB)
+    // cornerScreenの順序: [0]=(minA,minB) [1]=(minA,maxB) [2]=(maxA,minB) [3]=(maxA,maxB)
     if (distSq(cornerScreen[0]) <= r2) return CameraBoundsDragHandle::CornerMinAMinB;
     if (distSq(cornerScreen[1]) <= r2) return CameraBoundsDragHandle::CornerMinAMaxB;
     if (distSq(cornerScreen[2]) <= r2) return CameraBoundsDragHandle::CornerMaxAMinB;

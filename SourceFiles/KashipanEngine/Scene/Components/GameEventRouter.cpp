@@ -115,7 +115,7 @@ bool GameEventRouter::Emit(const std::string &name, const GameEvents::Value &pay
             const UUID128 id(targetValue);
             if (!id.IsValid() || (scene && !scene->GetSceneObject(id))) return reject("送信先のオブジェクトがありません。");
         } else if (target == GameEvents::TargetMode::Name) {
-            // A name selects exactly one object; it is fixed to that object's stable UUID when queued (tags select many).
+            // 名前は1つのオブジェクトを選び、キュー投入時にその安定したUUIDへ固定する（タグは複数を選択する）。
             const auto matches = scene ? scene->GetSceneObjects(targetValue) : std::vector<EmptyObject *>{};
             if (matches.size() != 1) return reject(matches.empty() ? "送信先「" + targetValue + "」という名前のオブジェクトがありません。" :
                 "送信先「" + targetValue + "」という名前のオブジェクトが複数あります（UUID かタグで指定してください）。");
@@ -154,7 +154,7 @@ bool GameEventRouter::Matches(const Subscription &s, const GameEvents::Message &
     receiver = nullptr;
     stale = false;
     if (s.event != GameEvents::FoldName(message.name)) return false;
-    if (!s.owner.IsValid()) return true; // ownerless observers (engine code / tests) see every delivery
+    if (!s.owner.IsValid()) return true; // 所有元のない監視側（エンジンのコード・テスト）はすべての配信を受け取る。
     auto *scene = GetOwnerSceneContext();
     receiver = scene ? scene->ResolveComponent(s.owner) : nullptr;
     if (!receiver) { stale = true; return false; }
@@ -171,7 +171,7 @@ bool GameEventRouter::Matches(const Subscription &s, const GameEvents::Message &
 }
 
 void GameEventRouter::Deliver(const GameEvents::Message &message) {
-    // Fix the receiver list first: handlers may subscribe, unsubscribe or delete components safely.
+    // ハンドラーが安全に購読・購読解除・コンポーネント削除を行えるよう、先に受信者一覧を確定する。
     std::vector<std::uint64_t> targets;
     std::vector<std::uint64_t> staleIds;
     for (const auto &[id, subscription] : subscriptions_) {
@@ -185,11 +185,11 @@ void GameEventRouter::Deliver(const GameEvents::Message &message) {
     current_ = &message;
     for (auto id : targets) {
         auto it = subscriptions_.find(id);
-        if (it == subscriptions_.end()) continue; // unsubscribed by an earlier handler
+        if (it == subscriptions_.end()) continue; // 先行するハンドラーによって購読解除済み
         IObjectComponent *receiver = nullptr;
         bool stale = false;
         if (!Matches(it->second, message, receiver, stale)) { if (stale) subscriptions_.erase(it); continue; }
-        Handler handler = it->second.handler; // copy: the handler may unsubscribe itself
+        Handler handler = it->second.handler; // ハンドラーが自身の購読を解除する可能性があるためコピーする。
         try {
             handler(receiver, message);
         } catch (const std::exception &e) {
@@ -207,16 +207,16 @@ void GameEventRouter::Deliver(const GameEvents::Message &message) {
 }
 
 size_t GameEventRouter::ProcessQueue() {
-    if (current_) return 0; // re-entrant call from inside a handler: the outer loop keeps draining
+    if (current_) return 0; // ハンドラー内からの再入呼び出し。外側のループで残りの配信を続行する。
     size_t processed = 0;
     const std::weak_ptr<int> alive = alive_;
-    // Objects deleted by handlers (including a script deleting itself) are destroyed only after delivery,
-    // also when this is called outside the scene's update loop. The router itself may be removed by a handler.
+    // ハンドラーによって削除されたオブジェクト（スクリプトの自己削除を含む）の実体は配信後に破棄する。
+    // シーン更新ループ外から呼び出された場合も同様。ルーター自体もハンドラーから削除される可能性がある。
     auto *scene = GetOwnerSceneContext();
     const std::weak_ptr<void> sceneAlive = scene ? scene->GetLifetimeToken() : std::weak_ptr<void>();
     const bool deferred = scene ? scene->BeginDeferredDestroy() : true;
     while (!queue_.empty() && static_cast<int>(processed) < limits_.maxPerUpdate) {
-        GameEvents::Message message = std::move(queue_.front()); // copy-owned while handlers run
+        GameEvents::Message message = std::move(queue_.front()); // ハンドラー実行中はコピーして所有する。
         queue_.pop_front();
         Deliver(message);
         if (alive.expired()) break;
@@ -238,7 +238,7 @@ void GameEventRouter::Update() {
 void GameEventRouter::Finalize() {
     queue_.clear();
     subscriptions_.clear();
-    generation_ = NextGeneration(); // listeners see the change and subscribe again if this router is used again
+    generation_ = NextGeneration(); // リスナーが変更を検出し、このルーターが再利用された際に再購読する。
 }
 
 JSON GameEventRouter::SaveToJson() const {

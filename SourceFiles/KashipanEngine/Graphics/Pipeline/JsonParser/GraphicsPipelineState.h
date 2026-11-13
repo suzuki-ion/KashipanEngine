@@ -50,7 +50,7 @@ inline GraphicsPipelineStateParsedInfo ParseGraphicsPipelineState(const Json &js
         desc.NumRenderTargets = json["NumRenderTargets"].get<UINT>();
         info.hasNumRenderTargetsSpecified = true;
     } else {
-        desc.NumRenderTargets = 1; // default prior to auto override
+        desc.NumRenderTargets = 1; // 自動設定で上書きする前の既定値
     }
     if (json.contains("RTVFormats")) {
         const auto &rtvFormats = json["RTVFormats"];

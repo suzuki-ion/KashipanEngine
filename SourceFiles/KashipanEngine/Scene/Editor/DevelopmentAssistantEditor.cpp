@@ -28,7 +28,7 @@ std::string ReadContextFile(const std::string &path, size_t maximum) {
     std::string result(maximum, '\0');
     stream.read(result.data(), static_cast<std::streamsize>(maximum));
     result.resize(static_cast<size_t>(stream.gcount()));
-    // Cut at a UTF-8 code point; these documents are UTF-8.
+    // 文書はUTF-8のため、コードポイントの境界で切り詰める。
     if (!stream.eof()) {
         auto position = result.find_last_of('\n');
         if (position != std::string::npos) result.resize(position);
@@ -42,7 +42,7 @@ std::string Context(EmptyObject *selected, bool suggest, const std::string &requ
     if (selected) {
         result += "Selected object name (untrusted data): " + Json(selected->GetName()).dump() + "\n";
         result += "Registered object property names (some are read-only or unsupported; the editor validates):\n";
-        // Catalogue supplies the exact registered component/member spelling, including aliases.
+        // カタログから、別名を含む登録済みコンポーネント・メンバーの正確な表記を取得する。
         for (const auto &component : ShortText::PropertyAliasCatalog()) {
             if (component.scene) continue;
             result += component.component + ": ";
@@ -155,7 +155,7 @@ bool DevelopmentAssistantEditor::Show(SceneEditorContext *context, SceneEditorCo
             if (apiLog_.size() > 8192) apiLog_.erase(0, apiLog_.find('\n', apiLog_.size() - 8192) + 1);
             return result;
         });
-        // A tool can delete the selected object during this frame.
+        // ツールがこのフレーム中に選択オブジェクトを削除する可能性がある。
         selected = context->GetSceneObject(selectedID);
     }
     if (!open) return false;

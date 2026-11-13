@@ -48,7 +48,7 @@ bool IsTarget(EmptyObject *object) {
 }
 bool Configure(EmptyObject *object, IObjectComponent *component, const Value &values, std::string &error) {
     if (!component || !values.is_object() || values.empty()) return Fail(error, "A component and nonempty member values are required");
-    // Validate all names, dimensions and types before changing any member. Restore on setter failure.
+    // メンバーを変更する前にすべての名前・次元数・型を検証し、セッター失敗時は復元する。
     for (auto it = values.begin(); it != values.end(); ++it) {
         Value old;
         if (!ReadExtendedProperty(object, component->GetComponentType() + "." + it.key(), old)) return Fail(error, "Unknown or unsupported property: " + it.key());
@@ -209,7 +209,7 @@ bool ExecuteRenderingCommand(const std::string &command, const Value &args, Comm
                 if (!camera || !cameraTransform || cameraTransform->GetParentObject() || cameraTransform->GetRotate() != Vector3{} || cameraTransform->GetScale() != Vector3{1,1,1}) return Fail(error, "Layout requires one root unrotated unscaled Camera2D; specify cameraName");
                 if (!camera->GetAutoSyncSize()) { width = camera->GetWidth(); height = camera->GetHeight(); }
                 center = cameraTransform->GetTranslate();
-                // CameraRenderer's orthographic range is [0,width] x [0,height], not centered on zero.
+                // CameraRendererの正射影範囲は原点中心ではなく、[0,width] x [0,height]。
                 center.x += static_cast<float>(width * 0.5); center.y += static_cast<float>(height * 0.5);
             }
             if (width <= 0 || height <= 0) return Fail(error, "Layout source has invalid dimensions");

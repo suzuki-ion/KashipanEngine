@@ -5,7 +5,7 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
-// Include before Windows.h (Winsock 1 and Winsock 2 cannot coexist).
+// Windows.hより先にインクルードする（Winsock 1とWinsock 2は共存できない）。
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <Windows.h>
@@ -19,8 +19,8 @@
 
 namespace KashipanEngine {
 
-/// One read-only loopback client. All serialization and socket I/O run on a
-/// worker. There is only one pending packet; slow clients disconnect after 2 s.
+/// 読み取り専用のループバッククライアントを1つ接続する。シリアライズとソケット入出力はすべて
+/// ワーカーで行う。送信待ちパケットは1つのみとし、遅いクライアントは2秒後に切断する。
 class ProfilerServer final {
 public:
     static constexpr unsigned short DefaultPort = 47180;
@@ -101,7 +101,7 @@ private:
                     }
                 }
                 if (client != INVALID_SOCKET) {
-                    // Also detect a disconnected client while no frames advance.
+                    // フレームが進まない間もクライアントの切断を検出する。
                     char probe;
                     const int received = recv(client, &probe, 1, MSG_PEEK);
                     if (received >= 0 || WSAGetLastError() != WSAEWOULDBLOCK)

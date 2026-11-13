@@ -21,7 +21,7 @@
 namespace KashipanEngine {
 
 //==================================================
-// GameEventDefinitionsCommand
+// ゲームイベント定義コマンド
 //==================================================
 bool GameEventDefinitionsCommand::Execute(SceneEditorContext *context) {
     SetAppliedChangesAfterFailure(false);
@@ -62,7 +62,7 @@ using ShortText::EventActionKind;
 using ShortText::EventTrigger;
 
 std::string Hash(const std::string &text) {
-    std::uint32_t h = 2166136261u; // FNV-1a: stable across runs, so a re-application finds its handler
+    std::uint32_t h = 2166136261u; // FNV-1a: 実行ごとに値が変わらないため、再適用時に対応するハンドラーを見つけられる。
     for (unsigned char c : text) { h ^= c; h *= 16777619u; }
     char buffer[16];
     std::snprintf(buffer, sizeof(buffer), "%08x", h);
@@ -124,7 +124,7 @@ struct Builder {
             "「" + name + "」という名前のオブジェクトが " + std::to_string(list.size()) + " 個あります。名前を一意にするか、タグで指定してください。";
         return nullptr;
     }
-    // Missing contact prerequisites are reported, never guessed (collider shapes are unknown).
+    // 接触の前提条件が不足する場合は推測せず報告する（コライダー形状は不明なため）。
     void NoteContact(EmptyObject *self, const std::vector<EmptyObject *> &others, const std::string &othersText) {
         if (!context->GetComponent<SceneObjectCollider>()) Require("接触の判定にはシーンに SceneObjectCollider が必要です（自動では追加しません）。");
         if (!HasCollider(self)) Require(self->GetName() + " に Collider が必要です（形状は推測しないため Inspector で追加してください）。");
@@ -136,8 +136,8 @@ struct Builder {
         const auto detached = CreateObjectComponentByType(type);
         return JSON{{"priority", detached ? detached->GetUpdatePriority() : 1}, {"isActive", true}, {"tag", ""}, {"customData", customData}};
     }
-    // Adds the component, or merges the settings into this object's short-text component of the type.
-    // A hand-made component of a single-instance type is never overwritten.
+    // コンポーネントを追加するか、このオブジェクトにある同型の短文管理コンポーネントへ設定を統合する。
+    // 単一インスタンス型の手作業で追加したコンポーネントは上書きしない。
     bool Upsert(EmptyObject *object, const std::string &type, JSON settings, const std::string &describe, bool singleInstance = true) {
         settings["shortTextManaged"] = true;
         settings["sourceText"] = source;
@@ -155,7 +155,7 @@ struct Builder {
         Step(object->GetName() + " に " + type + " を追加: " + describe);
         return true;
     }
-    // Ensures a component exists (any existing one is used as is; a new one is marked as short-text managed).
+    // コンポーネントの存在を保証する。既存ならそのまま使用し、新規作成時は短文による管理対象として印を付ける。
     void Ensure(EmptyObject *object, const std::string &type, JSON settings, const std::string &why) {
         if (FindOfType(object, type)) { Step(object->GetName() + " の既存の " + type + " を使用（" + why + "）"); return; }
         settings["shortTextManaged"] = true;
@@ -200,7 +200,7 @@ struct Builder {
     }
 };
 
-// Converts a sentence value to an action argument source, checked against the argument type it feeds.
+// 文中の値をアクション引数の取得元へ変換し、渡し先の引数型と照合する。
 bool ResolveValue(Builder &b, const ShortText::EventValueText &value, GameEvents::ArgType type, const GameEvents::Definition *received,
     GameEventListener::ValueSource &out, const std::string &what) {
     if (value.fromPayload) {
@@ -228,7 +228,7 @@ bool ResolveValue(Builder &b, const ShortText::EventValueText &value, GameEvents
 }
 
 //--------------------------------------------------
-// Handler sentences
+// ハンドラーの文
 //--------------------------------------------------
 bool PlanHandler(Builder &b, const ShortText::EventRequest &r) {
     EmptyObject *owner = b.target;
@@ -288,7 +288,7 @@ bool PlanHandler(Builder &b, const ShortText::EventRequest &r) {
             auto *object = b.UniqueByName(a.target, why);
             if (!object) return b.Fail("送信先: " + why);
             action.emitTarget = GameEvents::TargetMode::Object;
-            action.emitTargetValue = object->GetObjectID().ToString(); // stable UUID, resolved for liveness at send time
+            action.emitTargetValue = object->GetObjectID().ToString(); // 安定したUUID。送信時に解決して生存を確認する。
             if (!object->GetComponent<GameEventListener>()) b.Require(a.target + " が受け取るには GameEventListener（「" + definition->name + "を受け取ったら…」）が必要です。");
         } else if (a.targetMode == 2) {
             action.emitTarget = GameEvents::TargetMode::Tag;
@@ -312,7 +312,7 @@ bool PlanHandler(Builder &b, const ShortText::EventRequest &r) {
             given.insert(arg->name);
         }
         for (const auto &arg : definition->args) if (arg.required && !given.contains(arg.name)) return b.Fail("イベント「" + definition->name + "」の必須の引数「" + arg.name + "」がありません。");
-        // Validate the fixed part of the payload exactly as the router will (payload-sourced values are typed above).
+        // ルーターと同じ方法でペイロードの固定部分を検証する（ペイロード由来の値は上で型を検証済み）。
         GameEvents::Value fixed = GameEvents::Value::object();
         for (const auto &[name, source] : action.args) if (source.kind == GameEventListener::SourceKind::Fixed) fixed[name] = source.value;
         GameEvents::Definition relaxed = *definition;
@@ -391,7 +391,7 @@ bool PlanHandler(Builder &b, const ShortText::EventRequest &r) {
 }
 
 //--------------------------------------------------
-// Gameplay component sentences
+// ゲームプレイ用コンポーネントの文
 //--------------------------------------------------
 void NoteRecipientInventory(Builder &b, const std::string &tag) {
     const auto recipients = b.ByTag(tag);
@@ -545,7 +545,7 @@ bool PlanDefine(Builder &b, const ShortText::EventRequest &r) {
             return true;
         }
         if (!existing.shortTextManaged) return b.Fail("手作りのイベント「" + existing.name + "」が別の引数で定義されています（" + GameEvents::DescribeDefinition(existing) + "）。Inspector で編集してください。");
-        definition.name = existing.name; // keep the stored spelling
+        definition.name = existing.name; // 保存済みの表記を維持する。
         definition.description = existing.description;
         existing = definition;
         b.Step("短文由来のイベント「" + definition.name + "」の引数を更新: " + GameEvents::DescribeDefinition(definition));
@@ -586,7 +586,7 @@ std::unique_ptr<IEditorCommand> MakeShortTextEventCommand(SceneEditorContext *co
         definitions = std::make_unique<GameEventDefinitionsCommand>(beforeJson, afterJson, true);
         result.steps.insert(result.steps.begin(), "シーンに GameEventRouter を追加（イベントの定義・配送）");
     } else if (beforeJson != afterJson) definitions = std::make_unique<GameEventDefinitionsCommand>(beforeJson, afterJson, false);
-    // Definitions come first so listeners added in the same step subscribe to an existing event.
+    // 同じ手順で追加するリスナーが既存のイベントを購読できるよう、定義を先に処理する。
     auto group = std::make_unique<CompositeCommand>("短文からイベント・部品を設定");
     if (definitions) group->AddCommand(std::move(definitions));
     group->AddCommand(std::move(b.group));

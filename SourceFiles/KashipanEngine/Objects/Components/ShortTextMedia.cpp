@@ -119,9 +119,9 @@ bool ExecuteMediaCommand(const std::string &cmd,const Value &a,CommandContext &c
         }
         if(cmd=="event.emit"){
             if(!c.scene)return Fail(error,"Scene unavailable");const auto name=a.at("name").get<std::string>();if(name.empty())return Fail(error,"Event name is empty");
-            // Compatibility: legacy watchers read the __shortTextEvent counter; a scene event definition of the same name also
-            // receives exactly one routed delivery (the router never touches the counter, so nothing is delivered twice).
-            // The routed payload is validated first so a rejected send leaves the counter unchanged.
+            // 互換性維持のため、従来の監視処理は__shortTextEventカウンターを参照する。同名のシーンイベント定義にも
+            // ルーター経由で1回だけ配信する（ルーターはカウンターに触れないため、二重配信は発生しない）。
+            // 送信を拒否した場合にカウンターを変更しないよう、ルーター用ペイロードを先に検証する。
             if(auto *router=GameEventRouter::Find(c.scene);router&&router->FindDefinition(name)){std::string routeError;if(!router->Emit(name,a.value("payload",Value::object()),c.owner?c.owner->GetObjectID().ToString():std::string{},GameEvents::TargetMode::Broadcast,"",&routeError))return Fail(error,routeError);}
             auto *value=c.scene->GetSceneVariable("__shortTextEvent."+name);int serial=value&&value->IsType<int>()?value->AnyCast<int>():0;
             c.scene->AddSceneVariable<int>("__shortTextEvent."+name,serial>=INT_MAX||serial<0?1:serial+1);

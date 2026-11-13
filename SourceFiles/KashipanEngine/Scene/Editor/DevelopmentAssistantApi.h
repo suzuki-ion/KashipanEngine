@@ -14,14 +14,14 @@ struct EditorApiServices {
 };
 std::string EditorApiCatalog();
 std::string ExtendedEditorApiCatalog();
-// Synchronous, editor-thread only. Execute must route through the editor's Undo history.
+// エディタースレッド専用の同期処理。ExecuteはエディターのUndo履歴を経由する必要がある。
 std::string ExecuteEditorApi(SceneEditorContext *context, const UUID128 &selected,
     const std::function<bool(std::unique_ptr<IEditorCommand>)> &execute,
     const std::string &tool, const std::string &arguments, EditorApiServices *services = nullptr);
 std::string ExecuteExtendedEditorApi(SceneEditorContext *context, const UUID128 &selected,
     const std::function<bool(std::unique_ptr<IEditorCommand>)> &execute,
     const std::string &tool, const std::string &arguments, EditorApiServices *services);
-// Shared canonical path validation for project-scoped file APIs; never accepts absolute/escaping paths.
+// プロジェクト内ファイルAPIで共有する正規化パスの検証。絶対パスや範囲外に出るパスは受け付けない。
 std::string EditorApiProjectPath(const std::string &relative, bool assetsOnly = true);
 }
 #endif

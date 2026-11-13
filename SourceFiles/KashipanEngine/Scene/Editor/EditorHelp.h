@@ -5,7 +5,7 @@ namespace KashipanEngine {
 inline void EditorHelp(const char *text, bool sameLine = true) {
     if (sameLine) ImGui::SameLine();
     ImGui::TextDisabled("(?)");
-    // Allow help on disabled controls, e.g. while running or without a selected object.
+    // 実行中やオブジェクト未選択時など、無効化されたコントロールでもヘルプを表示できるようにする。
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
         ImGui::BeginTooltip();
         ImGui::PushTextWrapPos(ImGui::GetFontSize() * 32.0f);

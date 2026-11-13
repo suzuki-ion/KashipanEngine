@@ -234,7 +234,7 @@ public:
 
     bool Check3D(ColliderID a, ColliderID b) const;
 
-    /// @brief Snapshot overlap query. Uses a separate world without stepping physics or dispatching events.
+    /// @brief スナップショットによる重なり問い合わせ。物理計算やイベント配信を行わない独立したワールドを使用する。
     std::vector<HitInfo3D> Query3D(const ColliderInfo3D &query, const Vector3 &position,
         const Quaternion &rotation, const std::vector<ColliderInfo3D> &targets) const;
 
@@ -330,8 +330,8 @@ private:
         Info info;
         Runtime runtime{};
         /// @brief 連続衝突判定用の前フレーム位置（3Dはボディ位置、2Dは形状のバウンディング中心）
-        /// @details CCDが有効かつ有効状態の間だけ毎フレーム記録される。ランタイムは毎フレーム
-        ///          再構築されるため、フレームを跨ぐ情報はEntry側に保持する
+        /// @details CCDが有効かつ有効状態の間だけ毎フレーム記録される。形状変更による
+        ///          ランタイム再構築を跨いで保持する
         bool hasPrevPosition = false;
         Vector3 prevPosition{ 0.0f, 0.0f, 0.0f };
     };

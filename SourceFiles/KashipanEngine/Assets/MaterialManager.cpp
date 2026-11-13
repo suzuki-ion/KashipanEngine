@@ -722,7 +722,7 @@ void MaterialManager::ShowMaterialEditorFields(Material &material) {
     ImGui::EndDisabled();
 
     static std::string sNewParameterName;
-    static int sNewParameterType = 2; // Float
+    static int sNewParameterType = 2; // 浮動小数点数
     static const char *kTypeNames[] = { "Bool", "Int32", "Float", "Vector2", "Vector3", "Vector4", "Color", "Texture", "TextureCube" };
     ImGui::InputText("##NewParameterName", &sNewParameterName);
     ImGui::SameLine();

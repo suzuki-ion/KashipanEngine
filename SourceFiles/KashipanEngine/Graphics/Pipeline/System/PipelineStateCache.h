@@ -11,7 +11,7 @@
 #pragma comment(lib, "dxgi.lib")
 
 namespace KashipanEngine {
-/// Persistent driver PSO blobs. Keys describe values, never addresses or struct padding.
+/// ドライバーのPSOバイナリを永続化する。キーにはアドレスや構造体のパディングを含めず、値を記述する。
 class PipelineStateCache final {
     using Json = ContentCache::Json;
     using Clock = std::chrono::steady_clock;
@@ -25,13 +25,13 @@ public:
                 FAILED(factory->EnumAdapterByLuid(device_->GetAdapterLuid(), IID_PPV_ARGS(&adapter))) ||
                 FAILED(adapter->GetDesc1(&desc))) return;
             LARGE_INTEGER driver{};
-            // Some drivers do not expose this query. Cached-blob rejection still falls back safely.
+            // この問い合わせに非対応のドライバーもある。キャッシュのバイナリが拒否された場合も安全に通常処理へ戻る。
             const HRESULT versionResult = adapter->CheckInterfaceSupport(__uuidof(IDXGIDevice), &driver);
             identity_ = Json{{"version", 1}, {"vendor", desc.VendorId}, {"device", desc.DeviceId},
                 {"subsystem", desc.SubSysId}, {"revision", desc.Revision}, {"flags", desc.Flags},
                 {"driverQuery", static_cast<long>(versionResult)}, {"driverVersion", driver.QuadPart}}.dump();
             directory_ = ContentCache::Directory(ProjectPaths::ProjectRoot(), "PSOs");
-        } catch (...) { identity_.clear(); } // Cache availability must not determine rendering success.
+        } catch (...) { identity_.clear(); } // キャッシュが利用できるかどうかで描画の成否が変わらないようにする。
     }
 
     HRESULT CreateGraphics(const D3D12_GRAPHICS_PIPELINE_STATE_DESC &desc, ID3DBlob *rootSignature,
@@ -117,7 +117,7 @@ private:
         keyMs_ += Elapsed(keyStart);
         if (!key.empty()) {
             const auto readStart = Clock::now();
-            // All descriptor, root-signature and shader contents are already hashed into the key.
+            // すべてのディスクリプター・ルートシグネチャ・シェーダーの内容は、すでにキーにハッシュ化されている。
             cached = ContentCache::Load(path, key, true);
             readMs_ += Elapsed(readStart);
         }

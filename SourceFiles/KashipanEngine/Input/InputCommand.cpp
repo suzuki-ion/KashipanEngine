@@ -564,7 +564,7 @@ InputCommand::ReturnInfo InputCommand::EvaluateBinding(const Binding& b) const {
         const float t = b.threshold;
         bool fired = false;
 
-        // Get delta (previous frame difference) and compute previous value
+        // 差分（前フレームからの変化）を取得し、前回の値を計算する。
         float dv = 0.0f;
         switch (static_cast<ControllerAnalog>(b.code)) {
         case ControllerAnalog::LeftTrigger: dv = NormalizeTriggerDelta255(ct.GetDeltaLeftTrigger(idx)); break;
@@ -579,7 +579,7 @@ InputCommand::ReturnInfo InputCommand::EvaluateBinding(const Binding& b) const {
         const float prev = v - dv;
 
         if (t >= 0.0f) {
-            // Positive-direction threshold
+            // 正方向のしきい値
             switch (b.state) {
             case InputState::Down:
                 fired = (v > t);
@@ -595,7 +595,7 @@ InputCommand::ReturnInfo InputCommand::EvaluateBinding(const Binding& b) const {
                 break;
             }
         } else {
-            // Negative-direction threshold
+            // 負方向のしきい値
             switch (b.state) {
             case InputState::Down:
                 fired = (v < t);
@@ -638,7 +638,7 @@ InputCommand::ReturnInfo InputCommand::EvaluateBinding(const Binding& b) const {
     }
 }
 
-// ===== JSON import/export =====
+// ===== JSONのインポート・エクスポート =====
 
 bool InputCommand::SaveToJSON(const std::string& filepath) const {
     JSON root = JSON::object();
@@ -793,7 +793,7 @@ bool InputCommand::LoadFromJSON(const std::string& filepath) {
     return true;
 }
 
-// ===== String conversion utilities =====
+// ===== 文字列変換ユーティリティ =====
 
 std::string InputCommand::KeyToString(Key key) {
     static const std::unordered_map<Key, std::string> kMap = {

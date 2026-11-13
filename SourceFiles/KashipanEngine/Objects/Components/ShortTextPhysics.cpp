@@ -146,7 +146,7 @@ bool ExecutePhysicsCommand(const std::string &command,const Value &a,CommandCont
             }
             if(dim!=3)throw std::runtime_error("dimension must be 2 or 3");
             if(command=="raycast") {
-                // Exact RP3D raycast, registered 3D bodies only. Sort by fraction.
+                // 登録済み3Dボディのみを対象とするRP3Dの正確なレイキャスト。交差率で並べ替える。
                 struct Callback final:reactphysics3d::RaycastCallback {
                     std::vector<std::pair<float,Value>> hits;SceneObjectCollider *collider;const EmptyObject *ignore;bool triggers;
                     explicit Callback(SceneObjectCollider *v,const EmptyObject *o,bool t):collider(v),ignore(o),triggers(t){}
@@ -196,7 +196,7 @@ bool ExecutePhysicsCommand(const std::string &command,const Value &a,CommandCont
             StoreQueryResult(c,a,{{"arrived",arrived},{"waypoint",index},{"speed",arrived?0:current},{"direction",Vec(direction)},{"velocity",Vec(direction*(arrived?0:current))}});return true;
         }
         if(command=="grid_path") {
-            // Bounded four-neighbour BFS on explicit grid. Tilemap solid cells or world-space collider probes block cells.
+            // 明示的なグリッド上の上限付き4近傍BFS。タイルマップの固体セルやワールド空間のコライダー検査で通行を遮る。
             int width=a.value("width",32),height=a.value("height",32);if(width<1||height<1||width>128||height>128)throw std::runtime_error("grid dimensions must be 1..128");
             auto start=Vector(a.at("start")),goal=Vector(a.at("goal")),origin=Vector(a.value("origin",Value::array({0,0,0})));float cell=Number(a,"cell_size",1);if(cell<=0)throw std::runtime_error("cell_size must be positive");
             auto coordinate=[&](float position,float offset,int extent){double index=std::floor((static_cast<double>(position)-offset)/cell);if(!std::isfinite(index)||index<0||index>=extent)throw std::runtime_error("start/goal outside grid");return static_cast<int>(index);};

@@ -26,7 +26,7 @@ inline Value ArithmeticValue(const std::string &op,const Value &a,const Value &b
     if(op=="add")v=x+y;else if(op=="sub")v=x-y;else if(op=="mul")v=x*y;else if(op=="div"){if(y==0)throw std::runtime_error("division by zero");v=x/y;}else throw std::runtime_error("arithmetic operator");
     if(!std::isfinite(v)||std::abs(v)>1e9)throw std::runtime_error("numeric result out of range");return v;
 }
-// No code evaluation: a bounded expression tree with explicit operators.
+// コードは評価せず、明示的な演算子を持つ上限付きの式ツリーを使用する。
 inline Value Evaluate(const Value &expr, const Value &environment, int depth = 0) {
     if (!ValidValue(expr) || depth > 8) throw std::runtime_error("invalid expression");
     if (!expr.is_object()) return expr;

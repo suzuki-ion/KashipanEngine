@@ -106,8 +106,8 @@ void WriteToSinks(const LogEntry &entry) {
     }
     if (cfg.enableFileLogging && sLogFile.is_open()) {
         sLogFile << entry.text;
-        // Startup and scene-change results must be visible while the editor is idle;
-        // otherwise the final timing can stay in the stream buffer until exit.
+        // エディターの待機中でも起動・シーン切り替えの結果を確認できるようにする。
+        // 明示的に出力しないと、最後の計測結果が終了までストリームバッファに残る可能性がある。
         if (entry.text.find("[StartupTiming] Startup.") != std::string::npos ||
             entry.text.find("[SceneChangeTiming] Frame.Total:") != std::string::npos) sLogFile.flush();
     }

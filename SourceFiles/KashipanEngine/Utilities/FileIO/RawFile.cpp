@@ -29,28 +29,28 @@ inline bool equalsAt(const uint8_t* d, size_t n, size_t at, const char* s) {
 
 inline bool isWhitespace(uint8_t c) { return c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '\f' || c == '\v'; }
 
-// Rough UTF-8 validation without NUL bytes
+// NULバイトを含まないことを確認する簡易的なUTF-8検証。
 bool IsLikelyUtf8Text(const uint8_t* s, size_t len) {
     if (!s) return false;
     for (size_t i = 0; i < len; ) {
         uint8_t c = s[i];
-        if (c == 0x00) return false; // contains NUL -> not text
+        if (c == 0x00) return false; // NULを含むためテキストではない。
         if ((c & 0x80) == 0x00) { // ASCII
             ++i;
-        } else if ((c & 0xE0) == 0xC0) { // 2-byte
+        } else if ((c & 0xE0) == 0xC0) { // 2バイト
             if (i + 1 >= len) return false;
             if ((s[i+1] & 0xC0) != 0x80) return false;
             uint32_t cp = ((c & 0x1F) << 6) | (s[i+1] & 0x3F);
-            if (cp < 0x80) return false; // overlong
+            if (cp < 0x80) return false; // 冗長な符号化
             i += 2;
-        } else if ((c & 0xF0) == 0xE0) { // 3-byte
+        } else if ((c & 0xF0) == 0xE0) { // 3バイト
             if (i + 2 >= len) return false;
             if ((s[i+1] & 0xC0) != 0x80 || (s[i+2] & 0xC0) != 0x80) return false;
             uint32_t cp = ((c & 0x0F) << 12) | ((s[i+1] & 0x3F) << 6) | (s[i+2] & 0x3F);
-            if (cp < 0x800) return false; // overlong
-            if (cp >= 0xD800 && cp <= 0xDFFF) return false; // UTF-16 surrogate
+            if (cp < 0x800) return false; // 冗長な符号化
+            if (cp >= 0xD800 && cp <= 0xDFFF) return false; // UTF-16のサロゲート
             i += 3;
-        } else if ((c & 0xF8) == 0xF0) { // 4-byte
+        } else if ((c & 0xF8) == 0xF0) { // 4バイト
             if (i + 3 >= len) return false;
             if ((s[i+1] & 0xC0) != 0x80 || (s[i+2] & 0xC0) != 0x80 || (s[i+3] & 0xC0) != 0x80) return false;
             uint32_t cp = ((c & 0x07) << 18) | ((s[i+1] & 0x3F) << 12) | ((s[i+2] & 0x3F) << 6) | (s[i+3] & 0x3F);
@@ -79,46 +79,46 @@ FileType DetectFileTypeFromBytes(const uint8_t* data, size_t n) {
     // BMP
     if (n >= 2 && data[0] == 'B' && data[1] == 'M') return FileType::bmp;
 
-    // ICO (ICONDIR: reserved=0, type=1)
+    // ICO（ICONDIR: 予約値=0、種類=1）
     if (n >= 4 && data[0] == 0x00 && data[1] == 0x00 && data[2] == 0x01 && data[3] == 0x00) return FileType::ico;
 
-    // WEBP (RIFF....WEBP)
+    // WEBP（RIFF....WEBP）
     if (n >= 12 && equalsAt(data, n, 0, "RIFF") && equalsAt(data, n, 8, "WEBP")) return FileType::webp;
 
-    // TIFF (II*\0 or MM\0*)
+    // TIFF（II*\0またはMM\0*）
     if (n >= 4 && ((data[0] == 'I' && data[1] == 'I' && data[2] == 0x2A && data[3] == 0x00) ||
                    (data[0] == 'M' && data[1] == 'M' && data[2] == 0x00 && data[3] == 0x2A))) return FileType::tiff;
 
-    // WAV (RIFF....WAVE)
+    // WAV（RIFF....WAVE）
     if (n >= 12 && equalsAt(data, n, 0, "RIFF") && equalsAt(data, n, 8, "WAVE")) return FileType::wav;
 
-    // AVI (RIFF....AVI )
+    // AVI（RIFF....AVI ）
     if (n >= 12 && equalsAt(data, n, 0, "RIFF") && equalsAt(data, n, 8, "AVI ")) return FileType::avi;
 
-    // MP4/ISO-BMFF (ftyp box at offset 4)
+    // MP4/ISO-BMFF（オフセット4にftypボックス）
     if (n >= 12 && equalsAt(data, n, 4, "ftyp")) return FileType::mp4;
 
-    // MKV/WebM (EBML header)
+    // MKV/WebM（EBMLヘッダー）
     static const uint8_t mkvSig[] = {0x1A,0x45,0xDF,0xA3};
     if (startsWith(data, n, mkvSig, sizeof(mkvSig))) return FileType::mkv;
 
-    // MP3 (ID3) or frame sync 0xFFE
+    // MP3（ID3）またはフレーム同期0xFFE
     if ((n >= 3 && equalsAt(data, n, 0, "ID3")) || (n >= 2 && data[0] == 0xFF && (data[1] & 0xE0) == 0xE0)) return FileType::mp3;
 
-    // OGG (OggS)
+    // OGG（OggS）
     if (equalsAt(data, n, 0, "OggS")) return FileType::ogg;
 
-    // FLAC (fLaC)
+    // FLAC（fLaC）
     if (equalsAt(data, n, 0, "fLaC")) return FileType::flac;
 
     // PDF
     if (equalsAt(data, n, 0, "%PDF-")) return FileType::pdf;
 
-    // ZIP family
+    // ZIP形式群
     if (n >= 4 && data[0] == 'P' && data[1] == 'K' && (data[2] == 0x03 || data[2] == 0x05 || data[2] == 0x07) && (data[3] == 0x04 || data[3] == 0x06 || data[3] == 0x08))
         return FileType::zip;
 
-    // RAR (v4 and v5)
+    // RAR（バージョン4・5）
     static const uint8_t rar4[] = {'R','a','r','!',0x1A,0x07,0x00};
     static const uint8_t rar5[] = {'R','a','r','!',0x1A,0x07,0x01,0x00};
     if (startsWith(data, n, rar4, sizeof(rar4)) || startsWith(data, n, rar5, sizeof(rar5))) return FileType::rar;
@@ -130,7 +130,7 @@ FileType DetectFileTypeFromBytes(const uint8_t* data, size_t n) {
     // GZip
     if (n >= 2 && data[0] == 0x1F && data[1] == 0x8B) return FileType::gzip;
 
-    // WEB text-like: check BOM then skip whitespace to infer json/xml/html/txt
+    // Web系テキスト: BOM確認後に空白を読み飛ばし、json/xml/html/txtを推定する。
     size_t i = 0;
     // UTF-8 BOM
     if (n >= 3 && data[0] == 0xEF && data[1] == 0xBB && data[2] == 0xBF) i = 3;
@@ -142,7 +142,7 @@ FileType DetectFileTypeFromBytes(const uint8_t* data, size_t n) {
         }
         // XML/HTML
         if (data[i] == '<') {
-            // case-insensitive check for <!DOCTYPE html or <html
+            // <!DOCTYPE htmlまたは<htmlを、大文字・小文字を区別せずに確認する。
             auto ciCmp = [](uint8_t a, char b){ return std::tolower(a) == std::tolower(static_cast<unsigned char>(b)); };
             const char* d1 = "!DOCTYPE";
             bool looksDoctype = (i + 2 < n && data[i+1] == '!' && (i + 1 + 8 < n));
@@ -151,7 +151,7 @@ FileType DetectFileTypeFromBytes(const uint8_t* data, size_t n) {
                 bool ok = true;
                 for (size_t k = 0; k < 8; ++k) if (!ciCmp(data[i+2+k], d1[k])) { ok = false; break; }
                 if (ok) {
-                    // find "html" soon after
+                    // 直後の範囲で「html」を探す。
                     for (size_t k = i; k < std::min(n, i + 256ull); ++k) {
                         if (std::tolower(data[k]) == 'h' && k + 3 < n &&
                             std::tolower(data[k+1]) == 't' && std::tolower(data[k+2]) == 'm' && std::tolower(data[k+3]) == 'l') {
@@ -163,18 +163,18 @@ FileType DetectFileTypeFromBytes(const uint8_t* data, size_t n) {
             if (isHtml) {
                 if (IsLikelyUtf8Text(data, n)) return FileType::html;
             } else {
-                // treat as XML if starts with <?xml or general '<'
+                // <?xmlまたは一般的な「<」で始まる場合はXMLとして扱う。
                 if (i + 1 < n && data[i+1] == '?') {
-                    // Likely XML declaration
+                    // XML宣言の可能性が高い。
                     if (IsLikelyUtf8Text(data, n)) return FileType::xml;
                 }
-                // Generic XML heuristic
+                // 一般的なXMLの推定処理
                 if (IsLikelyUtf8Text(data, n)) return FileType::xml;
             }
         }
     }
 
-    // Generic text fallback
+    // 一般テキストとしての代替判定
     if (IsLikelyUtf8Text(data, n)) return FileType::txt;
 
     return FileType::bin;
@@ -206,7 +206,7 @@ RawFileData LoadFile(const std::string &filePath, size_t detectBytes) {
     }
     fileData.size = static_cast<size_t>(size);
 
-    // Detect file type using only the first detectBytes (or the full size if smaller)
+    // 先頭detectBytesバイトのみでファイル形式を検出する（ファイルが小さければ全体を使用する）。
     const size_t checkSize = clampDetectSize(fileData.size, detectBytes);
     fileData.fileType = DetectFileTypeFromBytes(fileData.data.data(), checkSize);
 

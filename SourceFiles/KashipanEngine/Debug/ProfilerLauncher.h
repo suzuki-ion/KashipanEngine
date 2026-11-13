@@ -6,8 +6,8 @@
 
 namespace KashipanEngine {
 
-/// Editor-owned process handle, independent of the current scene. Closing the
-/// editor releases the handle but leaves the standalone viewer running.
+/// 現在のシーンから独立し、エディターが所有するプロセスハンドル。
+/// エディター終了時にはハンドルを解放するが、単独のビューアーは動作を継続する。
 class ProfilerLauncher final {
 public:
     static ProfilerLauncher &GetInstance() { static ProfilerLauncher value; return value; }
@@ -65,7 +65,7 @@ public:
         }
         return Fail("editor.profiler.missing_python");
     }
-    /// Resolved entry point also used by the native process regression.
+    /// ネイティブプロセスの回帰テストでも使用する、解決済みのエントリーポイント。
     bool StartProcess(const std::filesystem::path &script, const std::filesystem::path &python,
         bool usePythonLauncher, unsigned short port) {
         if (IsRunning()) return true;
@@ -74,7 +74,7 @@ public:
         STARTUPINFOW startup{};
         startup.cb = sizeof(startup);
         PROCESS_INFORMATION info{};
-        // No shell interpolation, inherited engine handles, or console window.
+        // シェル展開・エンジンのハンドル継承・コンソールウィンドウを使用しない。
         if (!CreateProcessW(python.c_str(), command.data(), nullptr, nullptr, FALSE,
             CREATE_NO_WINDOW, nullptr, script.parent_path().c_str(), &startup, &info))
             return Fail("editor.profiler.launch_failed", GetLastError());

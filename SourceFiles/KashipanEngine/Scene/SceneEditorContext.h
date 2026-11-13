@@ -174,7 +174,7 @@ public:
     JSON SaveObjectToUndoJson(EmptyObject *obj) {
         auto json = owner_->SaveObjectToJson(obj);
         if (!obj || json.empty()) return json;
-        // Runtime identities belong to Undo snapshots, not the scene file format.
+        // 実行時の識別情報はUndoスナップショットに属し、シーンファイル形式には含めない。
         auto components = obj->GetAllComponents();
         std::erase_if(components, [](const auto &entry) { return !entry.first; });
         std::sort(components.begin(), components.end(), [](const auto &a, const auto &b) {

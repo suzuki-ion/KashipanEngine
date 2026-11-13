@@ -15,7 +15,7 @@ Value ToValue(const MyAny &v) {
 }
 std::string Type(const MyAny *v){if(!v)return {};if(v->IsType<bool>())return "bool";if(v->IsType<int>())return "int";if(v->IsType<unsigned>())return "uint";if(v->IsType<int64_t>())return "int64";if(v->IsType<uint64_t>())return "uint64";if(v->IsType<float>())return "float";if(v->IsType<double>())return "double";if(v->IsType<std::string>())return "string";if(v->IsType<Vector2>())return "vector2";if(v->IsType<Vector3>())return "vector3";if(v->IsType<Vector4>())return "vector4";if(v->IsType<Color>())return "color";if(v->IsType<UUID128>())return "object";return {};}
 MyAny *Var(SceneContext *scene,const std::string &scope,const std::string &name){return scope=="global"?scene->GetGlobalSceneVariable(name):scope=="scene"?scene->GetSceneVariable(name):nullptr;}
-// SceneManager::AddGlobalSceneVariable never overwrites an existing key, so replace explicitly.
+// SceneManager::AddGlobalSceneVariableは既存キーを上書きしないため、明示的に置き換える。
 template<class T> void Store(SceneContext *scene,const std::string &scope,const std::string &name,const T &value){if(scope=="global"){scene->RemoveGlobalSceneVariable(name);scene->AddGlobalSceneVariable<T>(name,value);}else scene->AddSceneVariable<T>(name,value);}
 bool Finite(const Value &v){if(v.is_number())return std::isfinite(v.get<double>());if(v.is_array()||v.is_object())for(const auto &item:v)if(!Finite(item))return false;return true;}
 bool SetVar(SceneContext *scene,const std::string &scope,const std::string &name,const std::string &type,const Value &v){

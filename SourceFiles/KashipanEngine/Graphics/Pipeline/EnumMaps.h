@@ -393,4 +393,4 @@ const std::unordered_map<std::string, D3D12_INPUT_CLASSIFICATION> kInputClassifi
     { "D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA",   D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA }
 };
 
-} // namespace KashipanEngine:Pipeline::EnumMaps
+} // namespace KashipanEngine::Pipeline::EnumMaps

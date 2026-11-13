@@ -100,7 +100,7 @@ protected:
 
 private:
     struct Subscription {
-        std::string event; // folded
+        std::string event; // 折りたたみ済み
         ComponentRef owner;
         std::string key;
         Handler handler;

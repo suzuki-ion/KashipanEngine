@@ -32,8 +32,8 @@ void ExportCrashSceneBackup(PasskeyForCrashHandler passkey) {
 
         // クラッシュハンドラ内では const_cast は行わず、const な SaveToJSON のみを使用する。
         // クラッシュ原因そのものを含んでいる可能性があるクラッシュ瞬間の生シーンではなく、
-        // SceneManagerが1秒間隔で保持している直近スナップショットを優先して使う。
-        // まだスナップショットが無い場合（シーン切替直後1秒未満など）のみ生シーンへフォールバックする
+        // SceneManagerが分割生成し、完成した直近のスナップショットを優先して使う。
+        // ファイルからの初期復旧点も無い空シーン等に限り、生シーンへフォールバックする。
         const JSON &bufferedSnapshot = sceneManager->GetPreCrashSnapshot(passkey);
         JSON sceneJson = bufferedSnapshot.empty() ? scene->SaveToJSON() : bufferedSnapshot;
         // 次回起動時の確認モーダルに表示するため、書き出し日時を付与しておく

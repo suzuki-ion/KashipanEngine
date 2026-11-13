@@ -244,4 +244,4 @@ std::vector<MonitorInfo> WindowsAPI::QueryAllMonitorInfos() {
     return infos;
 }
 
-} // namespace KashipanEngine} // namespace KashipanEngine
+} // namespace KashipanEngine

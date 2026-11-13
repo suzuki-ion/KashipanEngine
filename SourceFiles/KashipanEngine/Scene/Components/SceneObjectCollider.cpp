@@ -152,7 +152,7 @@ void SceneObjectCollider::Update() {
     }
     SyncRegisteredColliders();
     collider_.Update2D();
-    // ReactPhysics3D is updated in this existing call.
+    // ReactPhysics3Dの更新は、この既存の呼び出し内で行う。
     collider_.Update3D();
 }
 

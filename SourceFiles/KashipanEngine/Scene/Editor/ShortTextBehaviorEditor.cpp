@@ -19,7 +19,7 @@
 namespace KashipanEngine {
 namespace {
 void JsonInput(const char *label, ShortText::Value &value) {
-    // Keep incomplete edits until the user finishes a JSON value.
+    // JSON値の入力が完了するまで、編集中の不完全な内容を保持する。
     struct Draft { std::string text; std::string saved; };
     static std::map<ImGuiID, Draft> drafts;
     const auto serialized = value.dump(2);
@@ -143,7 +143,7 @@ std::unique_ptr<IEditorCommand> MakeShortTextBehaviorCommand(EmptyObject *target
     if (!target || !target->GetComponent<Transform>() || !ShortText::IsValid(recipe) || sourceText.size() > 512) return nullptr;
     const JSON state = MakeShortTextBehaviorState(recipe, sourceText);
     auto group = std::make_unique<CompositeCommand>("短文の挙動を適用");
-    // Required asset-free components are added at edit time; the rest is listed by PlanShortTextBehavior.
+    // 必要なコンポーネントのうちアセット不要のものは編集時に追加し、残りはPlanShortTextBehaviorで一覧化する。
     for (const auto &type : AnalyzeShortTextRecipeNeeds(target, recipe).add)
         group->AddCommand(std::make_unique<AddComponentCommand>(target, type));
     for (auto *motion : FindConflictingShortTextMotions(target, recipe))
@@ -228,8 +228,8 @@ void ShortTextBehaviorEditor::Show(SceneEditorContext *context, SceneEditorComma
     if (ImGui::Button("解釈する")) {
         parsed_ = learning_ ? learning_->Interpret(input_) : ShortText::Parse(input_);
         property_ = {}; plan_ = {}; event_ = {};
-        // Learned phrases keep priority. The event grammar claims only sentences it fully recognizes (none of the
-        // 486 standard phrases); a recognized sentence is either planned completely or rejected with its reason.
+        // 学習済みフレーズを優先する。イベント文法は完全に認識できる文だけを扱う（標準486フレーズは
+        // 対象外）。認識した文は完全な計画を生成するか、理由を添えて拒否する。
         if (!parsed_.success) {
             event_ = ShortText::ParseEventRequest(input_);
             if (event_.recognized) {
@@ -241,7 +241,7 @@ void ShortTextBehaviorEditor::Show(SceneEditorContext *context, SceneEditorComma
                 }
             } else if (defaults_) parsed_ = defaults_->Interpret(input_);
         }
-        // Standard phrases keep priority over the property grammar, which only claims 「〇〇の〇〇」 sentences.
+        // 標準フレーズを優先し、プロパティ文法は「〇〇の〇〇」形式の文だけを扱う。
         if (event_.recognized) {
         } else if (!parsed_.success) {
             property_ = ParseShortTextPropertyRequest(input_, selected);
@@ -285,7 +285,7 @@ void ShortTextBehaviorEditor::Show(SceneEditorContext *context, SceneEditorComma
     ImGui::BeginDisabled(context->IsPlaying() || !sameTarget || !(parsed_.success || propertyReady || eventReady));
     auto apply = [&]() {
         if (eventReady) {
-            // Rebuilt from the current scene so the command never uses a stale plan.
+            // 古い計画を使わないよう、コマンドの計画を現在のシーンから再構築する。
             ShortTextComponentPlan plan;
             auto command = MakeShortTextEventCommand(context, selected, event_.request, input_, &plan);
             const bool ok = command && commands->Execute(std::move(command));

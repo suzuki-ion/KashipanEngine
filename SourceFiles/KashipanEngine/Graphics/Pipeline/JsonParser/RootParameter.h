@@ -12,10 +12,10 @@
 namespace KashipanEngine {
 namespace Pipeline::JsonParser {
 
-// Holds parsed root parameters and owns descriptor range storage so pointers remain valid.
+// 解析済みのルートパラメーターを保持し、参照先が有効であり続けるようにディスクリプター範囲の格納領域を所有する。
 struct RootParametersParsed {
     std::vector<D3D12_ROOT_PARAMETER> parameters;
-    // Each entry corresponds to one parameter's descriptor ranges storage
+    // 各要素は1つのパラメーターのディスクリプター範囲格納領域に対応する。
     std::vector<std::vector<D3D12_DESCRIPTOR_RANGE>> rangesStorage;
 };
 
@@ -46,7 +46,7 @@ inline RootParametersParsed ParseRootParameters(const Json &json) {
             continue;
         }
         if (param.contains("DescriptorTable")) {
-            // Store ranges to keep memory alive
+            // メモリを維持するために範囲を保持する。
             result.rangesStorage.emplace_back(ParseDescriptorRanges(param["DescriptorTable"]));
             auto &rangesRef = result.rangesStorage.back();
             rootParam.DescriptorTable.NumDescriptorRanges = static_cast<UINT>(rangesRef.size());

@@ -263,7 +263,7 @@ private:
         const std::string &modelFullPath, const std::string &baseAssetPath,
         const std::string &baseFileName, const std::vector<ModelData::MaterialData> &materials);
 
-    AssetFileIndex *startupAssetFiles_ = nullptr; // Borrowed only during construction.
+    AssetFileIndex *startupAssetFiles_ = nullptr; // 構築中のみ借用する。
     void LoadAllFromAssetsFolder(std::vector<std::string> files);
 
     std::string assetsRootPath_;

@@ -82,7 +82,7 @@ private:
     std::vector<std::string> placeholders_;
 };
 
-// ===== Template implementations (must be in header) =====
+// ===== テンプレート実装（ヘッダー内で定義する必要がある） =====
 namespace detail {
     template <class T>
     concept Streamable = requires(std::ostream &os, const T &t) {

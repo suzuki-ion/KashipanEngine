@@ -6,6 +6,6 @@ struct ApiContext {
     std::string text;
     size_t sourceFiles = 0, referenceFiles = 0;
 };
-// Host-side, bounded retrieval. Never grants an agent write access to engine sources/references.
+// ホスト側で件数を制限して検索する。エージェントにエンジンソースやリファレンスの書き込み権限を与えない。
 ApiContext BuildApiContext(const std::filesystem::path &engineRoot, const std::string &request, size_t maximumBytes = 80000);
 }

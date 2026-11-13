@@ -4,7 +4,7 @@
 
 namespace KashipanEngine {
 
-// GameInput compatible mouse button index values
+// GameInput互換のマウスボタンインデックス値
 enum class MouseButton : std::uint8_t {
     Left   = 0,
     Right  = 1,

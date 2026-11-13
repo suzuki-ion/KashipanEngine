@@ -17,9 +17,9 @@ bool Show(std::string &pipelineName) {
     bool applied = false;
     if (!ImGui::TreeNode(TranslationLabel("editor.pipelinevariantbuilder.builder"))) return applied;
 
-    static int sVariantBase = 0; // 0=Object3D, 1=Object2D
+    static int sVariantBase = 0; // 0=3Dオブジェクト、1=2Dオブジェクト
     static bool sVariantToon = false;
-    static int sVariantRaster = 0; // 0=Solid, 1=DoubleSidedCulling
+    static int sVariantRaster = 0; // 0=通常の塗りつぶし、1=両面カリング
     static int sVariantBlend = 4; // 既定はNormal
     static std::unordered_set<std::string> sSelectedModules;
     static const char *kVariantBaseNames[] = { "Object3D", "Object2D" };

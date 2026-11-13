@@ -84,7 +84,7 @@ private:
     Observer observer_;
     void Observe(const char *file, bool exists) const noexcept {
         if (!observer_) return;
-        try { observer_(file, exists); } catch (...) {} // Caching must never prevent import.
+        try { observer_(file, exists); } catch (...) {} // キャッシュ処理によってインポートを妨げない。
     }
     static FILE *OpenRaw(const char *utf8Path, const char *mode) {
         const std::wstring widePath = ConvertString(std::string(utf8Path));

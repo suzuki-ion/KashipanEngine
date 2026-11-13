@@ -1,4 +1,4 @@
-// Gameplay components 5, 6, 8, 9: Interactable / Respawner / Checkpoint / Dialogue / AnimationStateSwitcher.
+// ゲームプレイ用コンポーネント5・6・8・9: Interactable / Respawner / Checkpoint / Dialogue / AnimationStateSwitcher。
 #include "Objects/Components/GameplayDetail.h"
 #include <cmath>
 #include <limits>
@@ -36,7 +36,7 @@ void KeyCombo(const char *label, Key &key) {
 }
 
 //==================================================
-// Interactable
+// インタラクション
 //==================================================
 template <class F> bool Interactable::Bind(Settings &s, F &f) {
     return f.Text("interactorTag", s.interactorTag, 64) && f.Float("distance", s.distance, 0.01f, 1000.0f) && f.KeyCode("key", s.key) &&
@@ -88,7 +88,7 @@ bool Interactable::Interact(EmptyObject *interactor, std::string *error) {
             return Fail(error, inventory ? "「" + settings_.requiredItem + "」を持っていません。" : interactor->GetName() + " に Inventory がありません。");
         }
     }
-    // Validate every target before changing anything so a missing clip never consumes the item.
+    // クリップが見つからないときにアイテムを消費しないよう、変更前にすべての対象を検証する。
     KeyFrameAnimator *keyframes = nullptr;
     Animator *animator = nullptr;
     Dialogue *dialogue = nullptr;
@@ -153,7 +153,7 @@ void Interactable::ShowImGui() {
 #endif
 
 //==================================================
-// Respawner
+// 再出現
 //==================================================
 template <class F> bool Respawner::Bind(Settings &s, F &f) {
     return f.Text("checkpointTag", s.checkpointTag, 64) && f.Bool("useFall", s.useFall) && f.Float("fallY", s.fallY, -1.0e6f, 1.0e6f) &&
@@ -197,7 +197,7 @@ bool Respawner::Respawn(const std::string &reason) {
 bool Respawner::Advance() {
     auto *owner = Owner(this);
     if (!owner) return false;
-    if (!hasPoint_) SetRespawnPoint(Gameplay::WorldPosition(owner)); // the play-start position is the first point
+    if (!hasPoint_) SetRespawnPoint(Gameplay::WorldPosition(owner)); // 再生開始時の位置を最初の地点とする。
     if (!settings_.checkpointTag.empty()) {
         for (auto *other : Gameplay::QueryContacts(owner, GetOwnerSceneContext())) {
             if (other->GetTagName() != settings_.checkpointTag) continue;
@@ -244,7 +244,7 @@ void Respawner::ShowImGui() {
 #endif
 
 //==================================================
-// Checkpoint
+// チェックポイント
 //==================================================
 template <class F> bool Checkpoint::Bind(Settings &s, F &f) {
     return f.Text("playerTag", s.playerTag, 64) && f.Vec3("offset", s.offset) && f.EventName("activatedEvent", s.activatedEvent) &&
@@ -286,7 +286,7 @@ void Checkpoint::ShowImGui() {
 #endif
 
 //==================================================
-// Dialogue
+// 会話
 //==================================================
 template <class F> bool Dialogue::Bind(Settings &s, F &f) {
     JSON lines = JSON::array();
@@ -465,7 +465,7 @@ void Dialogue::ShowImGui() {
 #endif
 
 //==================================================
-// AnimationStateSwitcher
+// アニメーション状態の切り替え
 //==================================================
 template <class F> bool AnimationStateSwitcher::Bind(Settings &s, F &f) {
     JSON states = JSON::array();
@@ -522,7 +522,7 @@ bool AnimationStateSwitcher::Evaluate(float speed) {
         if (speed < st.minSpeed || (st.maxSpeed >= 0 && speed > st.maxSpeed)) continue;
         if (!best || st.priority > best->priority) best = &st;
     }
-    if (!best || best->name == current_) return false; // the same state never restarts its clip
+    if (!best || best->name == current_) return false; // 同じ状態への切り替えではクリップを再開始しない。
     std::string error;
     if (!Play(*best, error)) { lastError_ = error; return false; }
     const std::string from = current_;

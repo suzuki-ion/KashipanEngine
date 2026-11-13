@@ -94,7 +94,7 @@ constexpr std::uint32_t kModelPreviewBufferSize = 512;
 } // namespace
 
 //==================================================
-// JSONFileEditorWindow
+// JSONファイル編集ウィンドウ
 //==================================================
 
 JSONFileEditorWindow::JSONFileEditorWindow(const std::string &filePath)
@@ -291,7 +291,7 @@ void JSONFileEditorWindow::ShowAddElementRow(JSON &arrayNode) {
 }
 
 //==================================================
-// MaterialFileEditorWindow
+// マテリアルファイル編集ウィンドウ
 //==================================================
 
 MaterialFileEditorWindow::MaterialFileEditorWindow(const std::string &assetPath)
@@ -336,7 +336,7 @@ bool MaterialFileEditorWindow::ShowImGui() {
 }
 
 //==================================================
-// ImagePreviewWindow
+// 画像プレビューウィンドウ
 //==================================================
 
 ImagePreviewWindow::ImagePreviewWindow(const std::string &assetPath)
@@ -380,7 +380,7 @@ bool ImagePreviewWindow::ShowImGui() {
 }
 
 //==================================================
-// GifPreviewWindow
+// GIFプレビューウィンドウ
 //==================================================
 
 GifPreviewWindow::GifPreviewWindow(const std::string &assetPath)
@@ -463,7 +463,7 @@ bool GifPreviewWindow::ShowImGui() {
 }
 
 //==================================================
-// AudioPreviewWindow
+// 音声プレビューウィンドウ
 //==================================================
 
 AudioPreviewWindow::AudioPreviewWindow(const std::string &assetPath)
@@ -534,7 +534,7 @@ bool AudioPreviewWindow::ShowImGui() {
 }
 
 //==================================================
-// VideoPreviewWindow
+// 動画プレビューウィンドウ
 //==================================================
 
 VideoPreviewWindow::VideoPreviewWindow(const std::string &assetPath)
@@ -619,7 +619,7 @@ bool VideoPreviewWindow::ShowImGui() {
 }
 
 //==================================================
-// ModelPreviewWindow
+// モデルプレビューウィンドウ
 //==================================================
 
 ModelPreviewWindow::ModelPreviewWindow(const std::string &assetPath)

@@ -11,15 +11,15 @@
 
 namespace KashipanEngine::ShortText {
 
-// A deliberately bounded grammar. Unknown text must never become a partial action.
+// 意図的に範囲を限定した文法。未知の文章を部分的なアクションへ変換しない。
 enum class Kind { Oscillate, Rotate, Move, Rules };
 struct Recipe {
     Kind kind = Kind::Oscillate;
-    int axis = 1; // local Transform coordinates: X/Y/Z
+    int axis = 1; // Transformのローカル座標: X/Y/Z
     int direction = 1;
     float amplitude = 0.5f;
     float period = 2.0f;
-    float speed = 1.0f; // units/sec for Move, degrees/sec for Rotate
+    float speed = 1.0f; // Moveは単位毎秒、Rotateは度毎秒
     std::vector<Rule> rules;
 };
 struct Result {
@@ -127,7 +127,7 @@ inline Result Parse(const std::string &input) {
     if (input.empty() || input.size() > 512) return fail("1〜512バイトの短い文章を入力してください。");
     std::string text = Normalize(input);
     if (text.empty()) return fail("挙動を入力してください。");
-    // Refuse negation/conditions/compound requests before extracting any keywords.
+    // キーワードを抽出する前に、否定・条件・複合リクエストを拒否する。
     if (HasUnsupportedGrammar(text)) return fail("条件・否定・停止・複数の挙動は未対応です。ひとつの動きを指定してください。");
     const bool rotate = Consume(text, {"回転させ", "回転し", "回転", "回して", "回す", "回る", "回れ"});
     const bool oscillate = Consume(text, {"浮いたり沈んだり", "行ったり来たり", "ふわふわ", "ゆらゆら", "往復させ", "往復し", "往復", "揺らして", "揺れる"});
@@ -202,7 +202,7 @@ inline Result Parse(const std::string &input) {
 }
 
 struct Delta { std::array<float, 3> translation{}; std::array<float, 3> rotation{}; };
-// Oscillation is additive: its full-cycle displacement is zero, with no scene edit-time drift.
+// 振動は加算式とし、1周期の変位を0にしてシーンの編集時に位置がずれないようにする。
 inline Delta EvaluateDelta(const Recipe &r, double elapsed, double dt) {
     Delta delta;
     if (!IsValid(r) || r.kind == Kind::Rules || !std::isfinite(elapsed) || !std::isfinite(dt) || dt < 0) return delta;

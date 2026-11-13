@@ -44,8 +44,8 @@ void Bounded(const J &value, unsigned depth = 0) {
     if (value.is_number()) Check(std::isfinite(value.get<double>()) && std::abs(value.get<double>()) <= 1e9, "Invalid numeric value");
     if (value.is_structured()) for (const auto &child : value) Bounded(child, depth + 1);
 }
-// Only existing fields can be patched. Array/map replacement is deliberate, bounded and
-// passed through the native component loader, whose failure restores the previous state.
+// 既存フィールドのみ変更可能。配列・マップの置き換えは明示的に上限を設け、
+// ネイティブのコンポーネント読み込み処理を通す。失敗した場合は以前の状態を復元する。
 J Patched(J state, const J &patches, const std::string &prefix) {
     Check(patches.is_array() && patches.size() <= 128, "patches must be an array of at most 128 path/value entries");
     for (const auto &patch : patches) {

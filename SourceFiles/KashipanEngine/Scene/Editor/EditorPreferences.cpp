@@ -410,18 +410,18 @@ ImGuiStyle BuildGitHubStyle() {
     ImGui::StyleColorsDark(&style);
     ImVec4 *c = style.Colors;
 
-    const ImVec4 bg(0.051f, 0.067f, 0.090f, 1.00f);          // canvas.default(dark): #0d1117
-    const ImVec4 panel(0.086f, 0.106f, 0.133f, 1.00f);       // canvas.subtle(dark): #161b22
+    const ImVec4 bg(0.051f, 0.067f, 0.090f, 1.00f);          // 背景色・通常（暗色）: #0d1117
+    const ImVec4 panel(0.086f, 0.106f, 0.133f, 1.00f);       // 背景色・控えめ（暗色）: #161b22
     const ImVec4 panelHighlight(0.118f, 0.145f, 0.180f, 1.00f); // panelを少し明るく
     const ImVec4 buttonBg(0.150f, 0.180f, 0.220f, 1.00f);
-    const ImVec4 buttonHoverBg(0.188f, 0.212f, 0.239f, 1.00f); // border.default(dark): #30363d
-    const ImVec4 accent(0.345f, 0.651f, 1.000f, 1.00f);      // accent.fg(dark): #58a6ff
+    const ImVec4 buttonHoverBg(0.188f, 0.212f, 0.239f, 1.00f); // 境界線色・通常（暗色）: #30363d
+    const ImVec4 accent(0.345f, 0.651f, 1.000f, 1.00f);      // アクセント文字色（暗色）: #58a6ff
     const ImVec4 accentHover(0.505f, 0.736f, 1.000f, 1.00f);
     const ImVec4 accentActive(0.185f, 0.566f, 1.000f, 1.00f);
     const ImVec4 accentedBg(0.345f, 0.651f, 1.000f, 0.15f);  // accentをalpha<0.15>
-    const ImVec4 fg(0.902f, 0.929f, 0.953f, 1.00f);          // fg.default(dark): #e6edf3
-    const ImVec4 divider(0.188f, 0.212f, 0.239f, 1.00f);     // border.default(dark): #30363d
-    const ImVec4 error(0.973f, 0.318f, 0.286f, 1.00f);       // danger.fg(dark): #f85149
+    const ImVec4 fg(0.902f, 0.929f, 0.953f, 1.00f);          // 文字色・通常（暗色）: #e6edf3
+    const ImVec4 divider(0.188f, 0.212f, 0.239f, 1.00f);     // 境界線色・通常（暗色）: #30363d
+    const ImVec4 error(0.973f, 0.318f, 0.286f, 1.00f);       // 警告文字色（暗色）: #f85149
 
     c[ImGuiCol_Text] = fg;
     c[ImGuiCol_TextDisabled] = ImVec4(fg.x, fg.y, fg.z, 0.55f);

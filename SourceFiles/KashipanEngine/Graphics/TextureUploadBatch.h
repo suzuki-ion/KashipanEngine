@@ -6,8 +6,8 @@
 #include <utility>
 
 namespace KashipanEngine {
-/// Owns transfer callbacks/resources until the synchronous executor has waited
-/// for GPU completion. Bound the retained upload memory, even for large projects.
+/// 同期実行側がGPUの完了を待ち終えるまで、転送用のコールバックとリソースを
+/// 所有する。大規模プロジェクトでも保持するアップロード用メモリに上限を設ける。
 class TextureUploadBatch final {
 public:
     using Task = std::function<void(ID3D12GraphicsCommandList *)>;
@@ -19,14 +19,14 @@ public:
         tasks_.push_back(std::move(task));
         bytes_ += bytes;
         ++textureCount_;
-        if (bytes_ >= limit_) Flush(); // A single large image is submitted alone.
+        if (bytes_ >= limit_) Flush(); // 単独で上限を超える大きな画像は、それだけで送信する。
     }
     void Flush() {
         if (tasks_.empty()) return;
         executor_([this](ID3D12GraphicsCommandList *list) {
             for (const auto &task : tasks_) task(list);
         });
-        // The executor contract is synchronous; only now can uploads be released.
+        // 実行側は同期処理を保証するため、この時点で初めてアップロード用リソースを解放できる。
         tasks_.clear();
         bytes_ = 0;
         ++submissionCount_;

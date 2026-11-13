@@ -10,8 +10,8 @@
 #include <utility>
 
 namespace KashipanEngine {
-/// Coarse wall-clock intervals for an actual scene change, including changes after startup.
-/// Main-thread only. Parent totals include child intervals and logging overhead.
+/// 起動後も含め、実際のシーン切り替えに要する大まかな実時間の区間計測。
+/// メインスレッド専用。親区間の合計には子区間とログ出力の負荷を含む。
 class SceneChangeTiming final {
     using Clock = std::chrono::steady_clock;
 public:
@@ -19,7 +19,7 @@ public:
         : prefix_(std::move(prefix)), sceneName_(std::move(sceneName)), start_(Clock::now()), last_(start_) {}
     void End(std::string_view section) {
         Record(section, last_);
-        last_ = Clock::now(); // Do not charge this log call to the next section.
+        last_ = Clock::now(); // このログ呼び出しの時間を次の区間に含めない。
     }
     void Finish() { Record("Total", start_); }
 private:
@@ -35,8 +35,8 @@ private:
     Clock::time_point last_;
 };
 
-/// Aggregated nested scopes, active only while SceneManager commits a scene change.
-/// Inclusive totals must not be summed across parent and child scopes.
+/// 入れ子のスコープの集計。SceneManagerがシーン切り替えを確定する間のみ有効。
+/// 親と子のスコープには重複する時間があるため、合算しない。
 class SceneLoadTiming final {
     using Clock = std::chrono::steady_clock;
     struct Sample {
@@ -65,7 +65,7 @@ public:
                     if (!sample.slowestContext.empty()) message += " (slowest=" + sample.slowestContext + ")";
                     Log(message, LogSeverity::Info);
                 }
-            } catch (...) {} // Diagnostics must not interrupt scene loading/unwinding.
+            } catch (...) {} // 診断処理によってシーンの読み込みや例外処理中の巻き戻しを中断しない。
         }
     private:
         friend class Scope;

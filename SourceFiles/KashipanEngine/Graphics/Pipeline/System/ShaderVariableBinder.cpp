@@ -31,7 +31,7 @@ static ShaderStage VisibilityToStage(D3D12_SHADER_VISIBILITY vis) {
 }
 
 ShaderStage ShaderVariableBinder::StageFromNameKey(const std::string& nameKey) {
-    // expects prefix like "Vertex:" or "Pixel:"; Unknown if not present
+    // 「Vertex:」「Pixel:」などの接頭辞を想定し、存在しない場合はUnknownとする。
     if (nameKey.rfind("Vertex:", 0) == 0) return ShaderStage::Vertex;
     if (nameKey.rfind("Pixel:", 0) == 0) return ShaderStage::Pixel;
     if (nameKey.rfind("Geometry:", 0) == 0) return ShaderStage::Geometry;

@@ -18,7 +18,7 @@ bool IsIdentifier(const std::string &text) {
 bool ParseNumber(const std::string &text, double &out) {
     std::smatch m;
     if (!Match(text, kNumber, m) || m[1].length() > 32) return false;
-    try { out = std::stod(m[1].str()); } catch (const std::exception &) { return false; } // out_of_range: rejected, never thrown to the UI
+    try { out = std::stod(m[1].str()); } catch (const std::exception &) { return false; } // out_of_rangeは拒否として扱い、UIへ例外を送出しない。
     return std::isfinite(out);
 }
 std::vector<std::string> Split(const std::string &text, const std::string &separator) {
@@ -49,7 +49,7 @@ std::string StripQuotes(const std::string &text) {
     }
     return text;
 }
-// Key names accepted in sentences, returned in the engine's KeyName spelling.
+// 文章内で受け付けるキー名。エンジンのKeyNameの表記で返す。
 std::string KeyText(const std::string &text) {
     if (text.size() == 1 && ((text[0] >= 'A' && text[0] <= 'Z') || (text[0] >= '0' && text[0] <= '9'))) return text;
     if (text.size() == 1 && text[0] >= 'a' && text[0] <= 'z') return std::string(1, static_cast<char>(text[0] - 'a' + 'A'));
@@ -69,10 +69,10 @@ struct Parsed {
     bool recognized = false;
     std::string error;
 };
-// Parses the action part of a handler sentence. Unrecognized wording leaves recognized=false (the caller falls through).
+// ハンドラー文のアクション部分を解析する。未認識の表現ではrecognized=falseのまま呼び出し元の後続処理へ進む。
 Parsed ParseAction(const std::string &text, bool receiving, EventActionRequest &action) {
     std::smatch m;
-    // Tween: delegated to the property grammar by the plan.
+    // Tweenは計画側からプロパティ文法へ委譲する。
     if (receiving && (Match(text, R"(\d+(?:\.\d+)?秒かけて.+)", m) || (text.find("かけて") != std::string::npos && text.find("まで") != std::string::npos && text.find("の") != std::string::npos))) {
         action.kind = EventActionKind::Tween;
         action.tweenText = text;
@@ -98,7 +98,7 @@ Parsed ParseAction(const std::string &text, bool receiving, EventActionRequest &
         }
         return {true, {}};
     }
-    // 「Damageイベントで対象Enemyに10を渡す」: the value goes to the event's only argument.
+    // 「Damageイベントで対象Enemyに10を渡す」では、イベントの唯一の引数へ値を渡す。
     if (Match(text, R"((.+?)(?:イベント)?で(?:(対象|タグ)(.+?)に)?(.+?)を渡す)", m)) {
         action.kind = EventActionKind::Emit;
         action.event = m[1];
@@ -122,7 +122,7 @@ Parsed ParseAction(const std::string &text, bool receiving, EventActionRequest &
                 if (!Match(part, R"((.+?)を(.+?)として)", a) && !Match(part, R"((.+?)=(.+))", a)) return {true, "引数は「名前を値として」の形で書いてください: " + part};
                 if (!GameEvents::IsValidName(a[1].str())) return {true, "引数名が不正です: " + a[1].str()};
                 auto value = ValueText(a[2]);
-                // A bare word is a literal here unless it is explicitly marked as a received value.
+                // 受信値として明示されていない単語は、ここではリテラルとして扱う。
                 if (!a[2].str().starts_with("受信した")) value.fromPayload = false;
                 if (value.fromPayload && !receiving) return {true, "受信した値を使えるのは「〜を受け取ったら」の場合だけです。"};
                 action.args.emplace_back(a[1], value);
@@ -130,7 +130,7 @@ Parsed ParseAction(const std::string &text, bool receiving, EventActionRequest &
         }
         return {true, {}};
     }
-    // Commands of the gameplay components (values: number literal or a received argument name).
+    // ゲームプレイ用コンポーネントのコマンド（値は数値リテラルまたは受信引数名）。
     struct CommandPattern { const char *pattern; const char *command; std::vector<const char *> args; };
     static const std::vector<CommandPattern> commands = {
         {R"(体力を(.+?)(?:だけ)?減らす)", "Health.damage", {"amount"}},
@@ -183,7 +183,7 @@ std::string NormalizeEventText(const std::string &text) {
         if (text.compare(i, 3, "『") == 0) { quote = "』"; out += "『"; i += 3; continue; }
         if (text[i] == '"' || text[i] == '\'') { quote.assign(1, text[i]); out += text[i++]; continue; }
         const auto c = static_cast<unsigned char>(text[i]);
-        // Full-width ASCII (U+FF01..U+FF5E) → ASCII; ideographic space (U+3000) removed.
+        // 全角ASCII（U+FF01～U+FF5E）をASCIIへ変換し、全角空白（U+3000）を除去する。
         if (c == 0xEF && i + 2 < text.size()) {
             const auto b1 = static_cast<unsigned char>(text[i + 1]), b2 = static_cast<unsigned char>(text[i + 2]);
             const int code = ((c & 0x0F) << 12) | ((b1 & 0x3F) << 6) | (b2 & 0x3F);
@@ -216,7 +216,7 @@ bool ParseEventLiteral(GameEvents::ArgType type, const std::string &raw, GameEve
         out = number;
         return true;
     case ArgType::String:
-    case ArgType::Object: // the plan resolves an object name to a UUID
+    case ArgType::Object: // 計画側でオブジェクト名をUUIDへ解決する。
         out = text;
         return GameEvents::IsValidArgValue(ArgType::String, out, error);
     default: {
@@ -382,7 +382,7 @@ EventParseResult ParseEventRequest(const std::string &input) {
         request.key = KeyText(m[1]);
         rest = m[2];
     }
-    // A condition this grammar does not know (「Spaceを押したら」 etc.) belongs to the other grammars.
+    // この文法で扱わない条件（「Spaceを押したら」など）は別の文法に任せる。
     if (request.trigger == EventTrigger::Start)
         for (const char *word : {"たら", "とき", "なら", "時に", "間"}) if (rest.find(word) != std::string::npos) return {};
     const auto parsed = ParseAction(rest, request.trigger == EventTrigger::Receive, request.action);

@@ -43,7 +43,7 @@ struct Vector3 final {
     [[nodiscard]] Vector3 Projection(const Vector3 &vector) const noexcept;
     [[nodiscard]] Vector3 Perpendicular() const noexcept;
     [[nodiscard]] Vector3 Rejection(const Vector3 &vector) const noexcept;
-    [[nodiscard]] Vector3 Refrection(const Vector3 &normal) const noexcept;
+    [[nodiscard]] Vector3 Reflection(const Vector3 &normal) const noexcept;
     [[nodiscard]] float Distance(const Vector3 &vector) const;
     [[nodiscard]] Vector3 Transform(const Matrix4x4 &mat) const noexcept;
 

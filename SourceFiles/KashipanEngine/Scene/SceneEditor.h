@@ -37,7 +37,7 @@ public:
     ~SceneEditor();
 
     void ShowImGui();
-    // Main-thread API entry for native editor extensions and headless integration tests.
+    // ネイティブのエディター拡張と画面表示を伴わない統合テスト向けのメインスレッドAPI入口。
     std::string CallAIEditorApi(const std::string &tool, const std::string &arguments);
 
 private:
@@ -109,7 +109,7 @@ private:
 
     std::unique_ptr<SceneEditorCommands> commands_;
     ShortTextBehaviorEditor shortTextBehaviorEditor_;
-    // The AI connection outlives an individual scene so an API-requested switch can continue.
+    // API経由で要求されたシーン切り替え後も継続できるよう、AI接続は個々のシーンより長く保持する。
     static inline DevelopmentAssistantEditor developmentAssistantEditor_;
     std::unique_ptr<SceneObjectHierarchy> objectHierarchy_;
     std::unique_ptr<SceneObjectInspector> objectInspector_;

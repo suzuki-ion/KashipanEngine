@@ -11,7 +11,7 @@ struct LearnedEntry {
     Recipe recipe;
 };
 
-// Project-local dictionary. Mutations become visible only after successful disk persistence.
+// プロジェクト内の辞書。ディスクへの保存が成功した場合にのみ変更を反映する。
 class LearningStore {
 public:
     explicit LearningStore(std::filesystem::path path) : path_(std::move(path)) {}

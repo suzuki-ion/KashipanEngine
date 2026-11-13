@@ -28,7 +28,7 @@ inline InputLayoutParsedInfo ParseInputLayout(const Json &json) {
 
     if (json.contains("AutoFromShader")) {
         info.isAutoFromShader = json["AutoFromShader"].get<bool>();
-    } else if (json.contains("AutoFromVS")) { // alias
+    } else if (json.contains("AutoFromVS")) { // 別名
         info.isAutoFromShader = json["AutoFromVS"].get<bool>();
     }
 

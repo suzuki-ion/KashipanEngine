@@ -17,7 +17,7 @@ class IEditorCommand;
 std::unique_ptr<IEditorCommand> MakeShortTextBehaviorCommand(EmptyObject *target,
     const ShortText::Recipe &recipe, const std::string &sourceText);
 
-// An isolated experiment. No global selection or scene pointers are retained across frames.
+// 独立した実験機能。フレームをまたいでグローバルな選択状態やシーンポインターを保持しない。
 class ShortTextBehaviorEditor {
 public:
     bool open = false;
@@ -27,9 +27,9 @@ private:
     void ShowLearning(EmptyObject *selected);
     char input_[768] = "上下にふわふわ動かして";
     ShortText::Result parsed_;
-    // 「〇〇の〇〇」 requests become real components instead of a ShortTextBehavior recipe.
+    // 「〇〇の〇〇」形式のリクエストは、ShortTextBehaviorのレシピではなく実際のコンポーネントへ変換する。
     ShortText::PropertyParseResult property_;
-    // User-defined events and gameplay components (「GoalReachedイベントを作成」「体力を100にして…」).
+    // ユーザー定義イベントとゲームプレイ用コンポーネント（「GoalReachedイベントを作成」「体力を100にして…」）。
     ShortText::EventParseResult event_;
     ShortTextComponentPlan plan_;
     UUID128 targetID_;

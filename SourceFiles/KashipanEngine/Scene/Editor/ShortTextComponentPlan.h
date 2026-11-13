@@ -11,7 +11,7 @@ class EmptyObject;
 class IEditorCommand;
 class CompositeCommand;
 
-// Edit-time composition plan shown before applying. Building a plan or command never mutates the scene.
+// 適用前に表示する編集時の構成計画。計画やコマンドの構築だけではシーンを変更しない。
 struct ShortTextComponentPlan {
     bool success = false;
     std::string message;
@@ -19,16 +19,16 @@ struct ShortTextComponentPlan {
     std::vector<std::string> requirements; // 自動では作らない、利用者が設定すべき内容
 };
 
-// Registered components and members of the engine, preferring the target's existing instances.
+// エンジンの登録済みコンポーネントとメンバー。対象の既存インスタンスを優先する。
 ShortText::PropertySchema MakeShortTextPropertySchema(const EmptyObject *target);
 ShortText::PropertyParseResult ParseShortTextPropertyRequest(const std::string &text, const EmptyObject *target);
 
-// Set: edits the real component at edit time. PingPong: adds or updates a PropertyMotion.
-// Tween: adds (or updates) a KeyFrameAnimator entry holding an embedded KeyframeAnimation bound to the member.
-// Short-text drivers of the same member/channel (PropertyMotion, keyframe entry, legacy behavior) are replaced.
-// Missing target components are added with defaults; everything is one undoable CompositeCommand.
-// Tween options for event-driven clips: no autoplay, a chosen entry name, and the final entry name
-// (an updated short-text entry keeps its existing name).
+// Setは編集時に実際のコンポーネントを編集し、PingPongはPropertyMotionを追加または更新する。
+// Tweenはメンバーに結び付けたKeyframeAnimationを内包するKeyFrameAnimatorエントリーを追加または更新する。
+// 同じメンバー・チャンネルを駆動する短文由来の処理（PropertyMotion・キーフレーム項目・従来の動作）を置き換える。
+// 不足する対象コンポーネントは既定値で追加し、全体をUndo可能な1つのCompositeCommandにまとめる。
+// イベント駆動クリップ用のTween設定。自動再生なし、指定エントリー名、確定後のエントリー名を扱う。
+// 更新対象の短文由来エントリーは既存の名前を維持する。
 struct ShortTextTweenOptions {
     bool playOnStart = true;
     std::string entryName;
@@ -37,19 +37,19 @@ struct ShortTextTweenOptions {
 std::unique_ptr<IEditorCommand> MakeShortTextPropertyCommand(EmptyObject *target, const ShortText::PropertyRequest &request,
     const std::string &sourceText, ShortTextComponentPlan *plan = nullptr, const ShortTextTweenOptions *tween = nullptr);
 
-// Components a legacy recipe needs on the selected object. Only asset-free components are added;
-// colliders of unknown shape, audio, text, physics bodies and other targets are reported instead.
+// 選択オブジェクト上で従来のレシピが必要とするコンポーネント。アセット不要のものだけを追加し、
+// 形状不明のコライダー・音声・テキスト・物理ボディ・別の対象は報告のみ行う。
 struct ShortTextRecipeNeeds {
     std::vector<std::string> add;
     std::vector<std::string> notes;
 };
 ShortTextRecipeNeeds AnalyzeShortTextRecipeNeeds(const EmptyObject *target, const ShortText::Recipe &recipe);
-// Short-text PropertyMotions driving the same Transform member/axis as a simple legacy recipe.
-// They are replaced (undoably) so one property is never driven twice by short text.
+// 従来の単純なレシピと同じTransformのメンバー・軸を駆動する、短文由来のPropertyMotion。
+// 短文によって1つのプロパティが二重に駆動されないよう、Undo可能な方法で置き換える。
 std::vector<class PropertyMotion *> FindConflictingShortTextMotions(const EmptyObject *target, const ShortText::Recipe &recipe);
 ShortTextComponentPlan PlanShortTextBehavior(const EmptyObject *target, const ShortText::Recipe &recipe);
-// Short-text KeyFrameAnimator entries driving the same Transform member/axis as a simple legacy recipe.
-// With a group, undoable removals are appended; the plan always receives the steps.
+// 従来の単純なレシピと同じTransformのメンバー・軸を駆動する、短文由来のKeyFrameAnimatorエントリー。
+// group指定時はUndo可能な削除を追加し、計画には常に手順を追加する。
 void AppendShortTextKeyframeConflicts(CompositeCommand *group, const EmptyObject *target, const ShortText::Recipe &recipe, ShortTextComponentPlan &plan);
 } // namespace KashipanEngine
 #endif

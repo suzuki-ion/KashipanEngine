@@ -11,7 +11,7 @@
 namespace KashipanEngine {
 namespace Pipeline::JsonParser {
 
-// Holds parsed root signature parts and keeps parameter memory valid.
+// 解析済みのルートシグネチャの構成要素を保持し、パラメーターのメモリを有効に保つ。
 struct RootSignatureParsed {
     D3D12_ROOT_SIGNATURE_DESC desc{};
     RootParametersParsed rootParams;

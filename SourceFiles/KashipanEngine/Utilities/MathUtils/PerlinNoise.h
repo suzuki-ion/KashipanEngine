@@ -28,7 +28,7 @@ public:
     float GetValue(float x, float y, float z) const;
 
 private:
-    std::vector<int> perm_; // permutation table
+    std::vector<int> perm_; // 順列表
 
     static int FastFloor(float x);
     static float Fade(float t);

@@ -42,7 +42,7 @@ struct Vector2 final {
     [[nodiscard]] Vector2 Projection(const Vector2 &vector) const noexcept;
     [[nodiscard]] Vector2 Perpendicular() const noexcept;
     [[nodiscard]] Vector2 Rejection(const Vector2 &vector) const noexcept;
-    [[nodiscard]] Vector2 Refrection(const Vector2 &normal) const noexcept;
+    [[nodiscard]] Vector2 Reflection(const Vector2 &normal) const noexcept;
     [[nodiscard]] float Distance(const Vector2 &vector) const noexcept;
 
     float x;

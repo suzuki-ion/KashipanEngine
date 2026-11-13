@@ -248,7 +248,7 @@ inline bool Intersects(const Math::Capsule2D &a, const Math::Capsule2D &b) {
 }
 
 //==================================================
-// HitInfo contact computation
+// HitInfoの接触情報の計算
 //==================================================
 
 inline HitInfo ComputeHit(const Math::Circle &a, const Math::Circle &b) {
@@ -326,7 +326,7 @@ inline HitInfo ComputeHit(const Math::Circle &c, const Math::Rect &r) {
 }
 
 inline HitInfo ComputeHit(const Math::Rect &r, const Math::Circle &c) {
-    // Invert normal for opposite ordering
+    // 逆順の場合は法線を反転する。
     HitInfo hi = ComputeHit(c, r);
     if (hi.isHit) {
         hi.normal = hi.normal * -1.0f;

@@ -11,11 +11,11 @@
 
 namespace KashipanEngine::ShortText {
 
-// 「〇〇の〇〇」grammar. A request names one registered component member and either sets it
-// once at edit time, drives it between two absolute local values while playing, or changes it
-// once from one value to another over an explicit duration (Tween → a real KeyframeAnimation).
+// 「〇〇の〇〇」形式の文法。登録済みコンポーネントのメンバー1つを指定し、値を
+// 編集時に一度だけ設定し、再生中に2つの絶対ローカル値の間で変化させるか、
+// 指定した時間で一方の値から他方へ一度だけ変化させる（Tweenは実際のKeyframeAnimationを使用）。
 enum class PropertyMode { Set, PingPong, Tween };
-// Degrees: the user writes degrees and the member stores radians (Transform.rotate_).
+// Degreesは、ユーザーの度数指定をラジアンで保存するメンバー（Transform.rotate_）向け。
 enum class PropertyUnit { Raw, Degrees };
 enum class PropertyWave { Linear, Smooth };
 
@@ -25,26 +25,26 @@ inline constexpr float PropertyTweenMinDuration = 0.01f;
 inline constexpr float PropertyTweenMaxDuration = 3600.0f;
 
 struct PropertyRequest {
-    std::string component;   // registered component type, e.g. "Transform"
-    std::string member;      // registered member, e.g. "translate_"
-    int axis = -1;           // -1: scalar member
+    std::string component;   // 登録済みコンポーネント型（例: Transform）
+    std::string member;      // 登録済みメンバー（例: translate_）
+    int axis = -1;           // -1はスカラーのメンバー
     PropertyMode mode = PropertyMode::PingPong;
-    float from = 0;          // user units (degrees when unit == Degrees); Set uses from only
+    float from = 0;          // ユーザー指定の単位（unit == Degreesの場合は度）。Setではfromのみ使用する。
     float to = 0;
-    float period = PropertyDefaultPeriod; // seconds for one full from→to→from cycle
+    float period = PropertyDefaultPeriod; // from→to→fromの1周期に要する秒数
     PropertyUnit unit = PropertyUnit::Raw;
     PropertyWave wave = PropertyWave::Linear;
-    bool positiveOnly = false; // sizes and scales must stay above zero
-    // Tween only: seconds from `from` to `to` (played once, the end value is kept) and the
-    // EaseType name used from the first key to the last key.
+    bool positiveOnly = false; // サイズとスケールは0より大きい値を維持する。
+    // Tween専用。fromからtoへ移る秒数（1回再生し、終了値を保持）と、
+    // 最初のキーから最後のキーまでに使用するEaseType名。
     float duration = 0;
     std::string ease;
-    bool easeDefaulted = false; // no easing was written; Linear is used and shown in the preview
-    std::vector<float> values; // Set only: an explicit whole Vector2/3/4 or Color value, never inferred/broadcast.
+    bool easeDefaulted = false; // イージング未指定時はLinearを使用し、プレビューにも表示する。
+    std::vector<float> values; // Set専用。明示的なVector2/3/4またはColorの全体値。推測や全成分への展開はしない。
 };
 
-// Formal EaseType names (Utilities/MathUtils/Easings.h, same order). Kept here so the grammar
-// stays engine independent; the native regression checks it against the engine table.
+// 正式なEaseType名（Utilities/MathUtils/Easings.hと同じ順序）。文法をエンジンから独立させるために
+// ここで保持し、ネイティブの回帰テストでエンジンのテーブルと照合する。
 inline const std::vector<std::string> &PropertyEaseNames() {
     static const std::vector<std::string> names = [] {
         std::vector<std::string> list = {"Linear"};
@@ -54,7 +54,7 @@ inline const std::vector<std::string> &PropertyEaseNames() {
     }();
     return names;
 }
-// Case-insensitive lookup of a formal ease name; empty when unknown.
+// 大文字・小文字を区別せずに正式なイージング名を検索し、不明なら空文字列を返す。
 inline std::string ResolvePropertyEase(const std::string &name) {
     std::string lower;
     for (char c : name) lower += (c >= 'A' && c <= 'Z') ? static_cast<char>(c + ('a' - 'A')) : c;
@@ -65,7 +65,7 @@ inline std::string ResolvePropertyEase(const std::string &name) {
     }
     return {};
 }
-// Back and Elastic leave the 0..1 range, so the written value passes beyond from/to.
+// BackとElasticは0～1の範囲を外れるため、指定値がfrom/toを超える。
 inline bool PropertyEaseOvershoots(const std::string &formal) {
     return formal.find("Back") != std::string::npos || formal.find("Elastic") != std::string::npos;
 }
@@ -73,10 +73,10 @@ inline bool PropertyEaseOvershoots(const std::string &formal) {
 struct PropertyMemberInfo {
     bool exists = false;
     bool writable = false;
-    int components = 0; // 1 scalar, 2 Vector2, 3 Vector3, 4 Vector4; 0 unsupported type
+    int components = 0; // 1=スカラー、2=Vector2、3=Vector3、4=Vector4。0は未対応の型。
 };
 
-// The engine supplies the real registry; tests can use BuiltinPropertySchema().
+// エンジンは実際のレジストリーを渡し、テストではBuiltinPropertySchema()を使用できる。
 struct PropertySchema {
     std::function<std::string(const std::string &lowerName)> resolveComponent;
     std::function<std::string(const std::string &component, const std::string &lowerMember)> resolveMember;
@@ -84,7 +84,7 @@ struct PropertySchema {
 };
 
 struct PropertyParseResult {
-    bool recognized = false; // the sentence uses the 「〇〇の〇〇」 form; its message is authoritative
+    bool recognized = false; // 「〇〇の〇〇」形式の文として認識済み。この解析結果のメッセージを採用する。
     bool success = false;
     PropertyRequest request;
     std::string message;
@@ -136,7 +136,7 @@ inline PropertySchema BuiltinPropertySchema() {
     return schema;
 }
 
-// Natural names for registered members. Formal member names are always accepted as well.
+// 登録済みメンバーの自然な呼び名。正式なメンバー名も常に受け付ける。
 inline std::vector<std::pair<std::string, std::string>> PropertyAliases(const std::string &component) {
     std::vector<std::pair<std::string, std::string>> result;
     for (const auto &entry : PropertyAliasCatalog()) if (!entry.scene && entry.component == component)
@@ -231,7 +231,7 @@ inline bool ValidatePropertyRequest(const PropertyRequest &r, const PropertyMemb
     return true;
 }
 
-// Absolute value at time t: from at t=0, to at half a period, back at a full period.
+// 時刻tの絶対値。t=0でfrom、半周期でto、1周期でfromに戻る。
 inline float EvaluatePropertyPingPong(float from, float to, double period, double elapsed, PropertyWave wave) {
     if (!std::isfinite(elapsed) || !std::isfinite(period) || period <= 0) return from;
     const double phase = std::fmod(std::max(0.0, elapsed), period) / period; // 0..1
@@ -251,7 +251,7 @@ inline PropertyParseResult ParsePropertyRequest(const std::string &input, const 
         {"\xE2\x88\x92", "-"}, {"ｆ", "f"}, {"Ｆ", "f"}, {"〜", "から"}, {"～", "から"},
         {"（", "("}, {"）", ")"}, {"，", ","} }) ReplaceAll(prepared, from, to);
     std::string text = Normalize(prepared);
-    // Duration of a one-shot change: 「N秒かけて」 before the component or after the range.
+    // 一度だけ変化させる所要時間。「N秒かけて」をコンポーネント名の前、または範囲指定の後に置く。
     std::vector<std::string> durations;
     {
         const std::regex durationWord("([+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+))f?秒(?:間)?かけて");
@@ -262,7 +262,7 @@ inline PropertyParseResult ParsePropertyRequest(const std::string &input, const 
         }
     }
     auto separator = text.find("の");
-    // An alias itself may contain の: prefer the longest registered component prefix.
+    // 別名自体に「の」を含む場合があるため、登録済みコンポーネント名の最長の接頭辞を優先する。
     for (const auto &entry : PropertyAliasCatalog()) if (!entry.scene) for (const auto &alias : entry.aliases) {
         const auto key = Normalize(alias);
         if (text.starts_with(key + "の") && key.size() > separator && !ResolvePropertyComponent(key, schema).empty()) separator = key.size();
@@ -282,7 +282,7 @@ inline PropertyParseResult ParsePropertyRequest(const std::string &input, const 
     auto &r = result.request;
     r.component = component;
 
-    // Axis words may appear anywhere after the component: 「移動X軸を」「X軸の移動を」.
+    // 軸の指定はコンポーネント名より後の任意の位置に置ける（「移動X軸を」「X軸の移動を」など）。
     int axes = 0;
     {
         const std::regex axisWord("([xyz])軸(?:方向|成分)?(?:の)?");
@@ -293,7 +293,7 @@ inline PropertyParseResult ParsePropertyRequest(const std::string &input, const 
             rest.erase(static_cast<size_t>(match.position()), static_cast<size_t>(match.length()));
         }
     }
-    // Property: the longest natural alias or a formal member name (translate_ / translate).
+    // プロパティは、最長一致の自然な別名または正式なメンバー名（translate_ / translate）。
     std::string member, propertyText;
     for (const auto &[alias, name] : PropertyAliases(component)) {
         if (rest.starts_with(alias) && alias.size() > propertyText.size()) {
@@ -321,7 +321,7 @@ inline PropertyParseResult ParsePropertyRequest(const std::string &input, const 
         if (std::regex_search(rest, match, std::regex("^\\.([xyz])"))) { r.axis = match[1].str()[0] - 'x'; ++axes; rest.erase(0, 2); }
     }
     if (axes > 1) return fail("軸はひとつだけ指定してください。");
-    // A trailing axis can follow the property: 「移動をX軸で」 has been removed above.
+    // プロパティ名の後にも軸を指定できる。「移動をX軸で」の軸指定は上で除去済み。
     for (bool stripped = true; stripped;) {
         stripped = false;
         for (const std::string particle : {"を", "は", "の", "で"}) if (rest.starts_with(particle)) { rest.erase(0, particle.size()); stripped = true; }
@@ -341,7 +341,7 @@ inline PropertyParseResult ParsePropertyRequest(const std::string &input, const 
             if (std::regex_search(rest, expression)) return fail("周期は一度だけ指定してください。");
         }
     }
-    // Easing word: 「EaseInOutCubicで」. Formal names only (case-insensitive); unknown names are rejected.
+    // イージング指定は「EaseInOutCubicで」の形式。正式名のみを大文字・小文字を区別せず受け付け、未知の名前は拒否する。
     std::string ease;
     {
         std::smatch match;
@@ -378,7 +378,7 @@ inline PropertyParseResult ParsePropertyRequest(const std::string &input, const 
             return true;
         } catch (const std::exception &) { return false; }
     };
-    // One-shot change: 「AからBまで(…で)移動/回転/変更」 together with 「N秒かけて」.
+    // 一度だけの変化。「AからBまで（…で）移動・回転・変更」と「N秒かけて」を組み合わせる。
     const std::regex tween("^" + number + "から" + number +
         "(?:まで|へ|に)?(?:で)?(?:移動|回転|変更|変化|拡縮|拡大|縮小|補間|アニメーション)(?:させてください|してください|させて|させる|させ|して|する|します|し)?$");
     if (durations.size() > 1) return fail("所要時間（N秒かけて）は一度だけ指定してください。");

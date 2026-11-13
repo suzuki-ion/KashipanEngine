@@ -10,8 +10,8 @@
 
 namespace KashipanEngine {
 
-/// Startup wall-clock measurements, independent of the frame profiler.
-/// Called only on the main thread. Nested sections include their child sections.
+/// フレームプロファイラーから独立した、起動時の実時間計測。
+/// メインスレッドからのみ呼び出す。入れ子の区間には子区間を含む。
 class StartupTiming final {
     using Clock = std::chrono::steady_clock;
 public:
@@ -39,14 +39,14 @@ public:
         active_ = false;
     }
 
-    /// Consecutive non-overlapping sections within one initialization routine.
+    /// 1つの初期化処理内で連続する、重複しない区間。
     class Sections final {
     public:
         explicit Sections(std::string prefix) : prefix_(std::move(prefix)), last_(active_ ? Clock::now() : Clock::time_point{}) {}
         void End(std::string_view name) {
             if (!active_) return;
             Record(prefix_ + std::string(name), last_);
-            // Exclude this timing log's enqueue overhead from the next section.
+            // この計測ログのキュー投入に要する時間を次の区間から除外する。
             last_ = Clock::now();
         }
     private:

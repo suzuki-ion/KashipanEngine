@@ -229,7 +229,7 @@ void ImGuiManager::InitializeInternal() {
                     placement.showCmd = savedState.value("maximized", false)
                         ? SW_SHOWMAXIMIZED
                         : SW_SHOWNORMAL;
-                    ::SetWindowPlacement(hwnd, &placement);
+                    mainWindow->RestorePlacement(placement);
                 }
             }
         }
@@ -379,7 +379,7 @@ void ImGuiManager::RequestLoadIniSettings(std::string iniText) {
 
 void ImGuiManager::SaveMainWindowState() {
     Window *mainWindow = Window::GetWindow("ImGui Window");
-    if (!mainWindow) return;
+    if (!mainWindow || mainWindow->IsStartupDeferred()) return;
     HWND hwnd = mainWindow->GetWindowHandle();
     if (!hwnd) return;
 

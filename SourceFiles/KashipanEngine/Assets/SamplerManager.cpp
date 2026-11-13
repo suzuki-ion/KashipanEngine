@@ -25,7 +25,7 @@ SamplerHeap* sSamplerHeap = nullptr;
 ID3D12Device* sDevice = nullptr;
 
 Handle RegisterEntry(SamplerEntry&& entry) {
-    // handle 0 is invalid; return index+1
+    // ハンドル0は無効なので、インデックスに1を加えて返す。
     const Handle h = static_cast<Handle>(entry.index + 1u);
     if (h == SamplerManager::kInvalidHandle) return SamplerManager::kInvalidHandle;
     if (sSamplers.find(h) != sSamplers.end()) return SamplerManager::kInvalidHandle;

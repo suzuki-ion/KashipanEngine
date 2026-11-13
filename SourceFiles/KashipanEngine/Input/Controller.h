@@ -15,7 +15,7 @@ class Input;
 class Controller {
 public:
     struct PadState {
-        std::uint16_t buttons = 0; // XINPUT_GAMEPAD_* compatible mask
+        std::uint16_t buttons = 0; // XINPUT_GAMEPAD_*互換のマスク
         std::uint8_t leftTrigger = 0;
         std::uint8_t rightTrigger = 0;
         std::int16_t leftX = 0;
@@ -116,9 +116,9 @@ private:
 
     std::int16_t stickDeadZone_ = 4096;
 
-public: // internal (used by GameInput callback trampoline in .cpp)
+public: // 内部用（.cpp内のGameInputコールバック中継処理から使用）
     struct DeviceEntry {
-        void* device = nullptr; // actually IGameInputDevice*
+        void* device = nullptr; // 実際の型はIGameInputDevice*
     };
 
     void OnDeviceChanged(void* device, std::uint32_t currentStatus);

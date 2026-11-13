@@ -4,7 +4,7 @@
 
 namespace KashipanEngine {
 
-// Experimental, model-free recipe. Saved in the scene; no generated files or API keys.
+// 言語モデルを使用しない実験的なレシピ。シーンに保存し、生成ファイルやAPIキーは使用しない。
 class ShortTextBehavior final : public IObjectComponent {
 public:
     OBJECT_COMPONENT_CONSTRUCTOR(ShortTextBehavior, 1, )
@@ -28,7 +28,7 @@ private:
 };
 REGISTER_COMPONENT_OBJECT(ShortTextBehavior)
 
-// Produces the existing component snapshot envelope expected by Add/ComponentEditCommand.
+// Add/ComponentEditCommandが受け取る既存形式のコンポーネントスナップショットを生成する。
 JSON MakeShortTextBehaviorState(const ShortText::Recipe &recipe, const std::string &sourceText);
 void ReadShortTextSceneInput(const EmptyObject *owner, SceneContext *scene, const ShortText::Recipe &recipe,
     ShortText::ProgramState &state, ShortText::InputSnapshot &input, ShortText::ProgramMemory *memory = nullptr, double dt = 0);

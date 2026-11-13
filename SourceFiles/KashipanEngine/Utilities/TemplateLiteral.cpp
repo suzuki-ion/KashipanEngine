@@ -10,7 +10,7 @@ namespace KashipanEngine {
 namespace {
 // `${...}` の範囲検出（簡易・最初の '}' まで）
 std::vector<std::pair<size_t, size_t>> FindTokenRanges(const std::string &s) {
-    std::vector<std::pair<size_t, size_t>> ranges; // [begin, end) of ${...}
+    std::vector<std::pair<size_t, size_t>> ranges; // ${...}の範囲[begin, end)
     for (size_t i = 0; i + 1 < s.size(); ++i) {
         if (s[i] == '$' && s[i + 1] == '{') {
             size_t j = i + 2;
@@ -37,7 +37,7 @@ struct TokenInfo {
     bool negate = false;    // 旧: IfOpen 用（互換維持・未使用）
     std::string condExpr;   // IfOpen: 条件式全文（例: "value1 || !value2 && value3"）
 
-    // Function
+    // 関数
     std::string funcName;                 // 例: "join"
     std::vector<std::string> funcArgs;    // 例: {"vec", ", "}
 };
@@ -79,7 +79,7 @@ static inline bool ParseQuoted(std::string_view sv, std::string &out) {
 // `${key?pre:suf}` / `${#if ...}` / `${/if}` / `${join(name, sep)}` を解析
 TokenInfo ParseToken(std::string_view token) {
     TokenInfo info;
-    // token: ${...}
+    // トークン: ${...}
     if (token.size() >= 3 && token[0] == '$' && token[1] == '{' && token.back() == '}') {
         token.remove_prefix(2);
         token.remove_suffix(1);
@@ -89,15 +89,15 @@ TokenInfo ParseToken(std::string_view token) {
         if (l == std::string_view::npos) return info;
         std::string_view core = token.substr(l, r - l + 1);
 
-        // if-close
+        // 条件分岐の終了
         if (core.size() >= 3 && core[0] == '/' && core.substr(1) == "if") {
             info.kind = TokenKind::IfClose;
             return info;
         }
-        // if-open: "#if <expr>"
+        // 条件分岐の開始: "#if <expr>"
         if (core.size() >= 3 && core[0] == '#' && core.substr(1, 2) == "if") {
             // 残りを式として取得
-            std::string_view rest = core.substr(3); // after "#if"
+            std::string_view rest = core.substr(3); // "#if"の後
             // トリム
             auto kl = rest.find_first_not_of(" \t\n\r");
             auto kr = rest.find_last_not_of(" \t\n\r");
@@ -115,7 +115,7 @@ TokenInfo ParseToken(std::string_view token) {
             auto fr = fname.find_last_not_of(" \t\n\r");
             if (fl != std::string_view::npos) fname = fname.substr(fl, fr - fl + 1);
             std::string fn(fname.begin(), fname.end());
-            // args
+            // 引数
             std::string_view argsView = core.substr(paren + 1, core.size() - paren - 2);
             // 単純なカンマ区切りを分割（カッコやクォートの簡易対応）
             std::vector<std::string> args;

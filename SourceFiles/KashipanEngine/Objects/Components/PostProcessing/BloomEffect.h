@@ -157,7 +157,7 @@ protected:
         drawTo(pyramid_[0], kPrefilter, [&](ShaderVariableBinder &binder) {
             binder.Bind("Pixel:gTexture", screenBuffer->GetSrvHandle());
         });
-        // Blur: pyramid[0] -> pyramidBlur[0]
+        // ぼかし: pyramid[0] -> pyramidBlur[0]
         drawTo(pyramidBlur_[0], kBlur, [&](ShaderVariableBinder &binder) {
             binder.Bind("Pixel:gTexture", pyramid_[0].srv->GetGPUDescriptorHandle());
         });

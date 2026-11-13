@@ -106,7 +106,7 @@ Vector2 Vector2::Perpendicular() const noexcept {
     return KashipanEngine::MathUtils::Perpendicular(*this);
 }
 
-Vector2 Vector2::Refrection(const Vector2 &normal) const noexcept {
+Vector2 Vector2::Reflection(const Vector2 &normal) const noexcept {
     return KashipanEngine::MathUtils::Reflection(*this, normal);
 }
 

@@ -4,7 +4,7 @@
 
 namespace KashipanEngine {
 
-// XInput compatible button mask values
+// XInput互換のボタンマスク値
 enum class ControllerButton : std::uint16_t {
     DPadUp = 0x0001,
     DPadDown = 0x0002,

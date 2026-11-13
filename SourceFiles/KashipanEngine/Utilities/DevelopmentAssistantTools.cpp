@@ -57,7 +57,7 @@ struct EditorTools::Impl {
     void Stop() {
         stopped = true;
         changed.notify_all();
-        if (worker.joinable()) worker.join(); // select/read/queue waits are all bounded.
+        if (worker.joinable()) worker.join(); // select・読み取り・キュー待機のすべてに上限を設ける。
         if (listener != INVALID_SOCKET) { closesocket(listener); listener = INVALID_SOCKET; }
         std::lock_guard lock(mutex);
         pending.clear();
@@ -88,7 +88,7 @@ struct EditorTools::Impl {
                     pending.push_back(call);
                     changed.wait_until(lock, call->deadline, [&] { return stopped || call->done; });
                     if (!call->done) {
-                        // Expired calls must never execute when the editor resumes.
+                        // 期限切れの呼び出しは、エディターが再開しても実行しない。
                         call->done = true;
                         call->result = Error("Editor request cancelled or timed out").dump();
                     }
@@ -132,7 +132,7 @@ struct EditorTools::Impl {
             if (!headers.emplace(key, value).second) { Send(socket, 400, "{}"); return; }
             pos = next + 2;
         }
-        // Reject browser origins/DNS rebinding and authenticate even read-only discovery.
+        // ブラウザーのオリジンやDNSリバインディングを拒否し、読み取り専用の機能探索でも認証する。
         if (headers["host"] != host || headers.contains("origin")) { Send(socket, 403, "{}"); return; }
         if (headers["authorization"] != "Bearer " + token) { Send(socket, 401, "{}"); return; }
         if (input.substr(0, first) != "POST /mcp HTTP/1.1") { Send(socket, 405, "{}"); return; }
@@ -196,7 +196,7 @@ const std::string &EditorTools::Token() const { return impl_->token; }
 void EditorTools::Stop() { impl_->Stop(); }
 void EditorTools::Revoke() { impl_->stopped = true; impl_->changed.notify_all(); }
 void EditorTools::Pump(const std::function<std::string(const std::string &, const std::string &)> &handler) {
-    // Hold the queue lock through execution: timeout/revocation cannot race a committed edit.
+    // 確定した編集とタイムアウト・権限失効が競合しないよう、実行中もキューのロックを保持する。
     std::lock_guard lock(impl_->mutex);
     for (unsigned i = 0; i < 4 && !impl_->pending.empty(); ++i) {
         auto call = impl_->pending.front(); impl_->pending.pop_front();

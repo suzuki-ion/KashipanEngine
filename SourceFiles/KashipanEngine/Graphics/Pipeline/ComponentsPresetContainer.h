@@ -44,7 +44,7 @@ public:
     using ComputePipelineStatePresets  = MyStd::VectorMap<std::string, D3D12_COMPUTE_PIPELINE_STATE_DESC>;
     using CompiledShaderPresets        = MyStd::VectorMap<std::string, ShaderCompiler::ShaderCompiledInfo*>;
 
-    //--------- RootSignature ---------//
+    // --------- ルートシグネチャ ---------
     void RegisterRootSignature(const std::string &name, const Pipeline::JsonParser::RootSignatureParsed &parsed) {
         // 一時オブジェクトにポインタを張ると push_back 時にコピーされ寿命が切れてしまうため
         // 先に値だけコピーし、コンテナ挿入後にポインタを再設定する。
@@ -83,84 +83,84 @@ public:
     [[nodiscard]] const D3D12_ROOT_SIGNATURE_DESC &GetRootSignature(const std::string &name) const { return rootSignatures_.at(name).value.desc; }
     [[nodiscard]] const RootSignaturePresets &RootSignatures() const { return rootSignatures_; }
 
-    //--------- RootParameter ---------//
+    // --------- ルートパラメーター ---------
     void RegisterRootParameter(const std::string &name, const std::vector<D3D12_ROOT_PARAMETER> &params) { rootParameters_.push_back(name, params); }
     bool RemoveRootParameter(const std::string &name) { return RemoveByKey(rootParameters_, name); }
     [[nodiscard]] bool HasRootParameter(const std::string &name) const { return HasKey(rootParameters_, name); }
     [[nodiscard]] const std::vector<D3D12_ROOT_PARAMETER> &GetRootParameter(const std::string &name) const { return rootParameters_.at(name).value; }
     [[nodiscard]] const RootParameterPresets &RootParameters() const { return rootParameters_; }
 
-    //--------- DescriptorRange ---------//
+    // --------- ディスクリプター範囲 ---------
     void RegisterDescriptorRange(const std::string &name, const std::vector<D3D12_DESCRIPTOR_RANGE> &ranges) { descriptorRanges_.push_back(name, ranges); }
     bool RemoveDescriptorRange(const std::string &name) { return RemoveByKey(descriptorRanges_, name); }
     [[nodiscard]] bool HasDescriptorRange(const std::string &name) const { return HasKey(descriptorRanges_, name); }
     [[nodiscard]] const std::vector<D3D12_DESCRIPTOR_RANGE> &GetDescriptorRange(const std::string &name) const { return descriptorRanges_.at(name).value; }
     [[nodiscard]] const DescriptorRangePresets &DescriptorRanges() const { return descriptorRanges_; }
 
-    //--------- RootConstants ---------//
+    // --------- ルート定数 ---------
     void RegisterRootConstants(const std::string &name, const D3D12_ROOT_CONSTANTS &c) { rootConstants_.push_back(name, c); }
     bool RemoveRootConstants(const std::string &name) { return RemoveByKey(rootConstants_, name); }
     [[nodiscard]] bool HasRootConstants(const std::string &name) const { return HasKey(rootConstants_, name); }
     [[nodiscard]] const D3D12_ROOT_CONSTANTS &GetRootConstants(const std::string &name) const { return rootConstants_.at(name).value; }
     [[nodiscard]] const RootConstantsPresets &RootConstantsMap() const { return rootConstants_; }
 
-    //--------- RootDescriptor ---------//
+    // --------- ルートディスクリプター ---------
     void RegisterRootDescriptor(const std::string &name, const D3D12_ROOT_DESCRIPTOR &d) { rootDescriptors_.push_back(name, d); }
     bool RemoveRootDescriptor(const std::string &name) { return RemoveByKey(rootDescriptors_, name); }
     [[nodiscard]] bool HasRootDescriptor(const std::string &name) const { return HasKey(rootDescriptors_, name); }
     [[nodiscard]] const D3D12_ROOT_DESCRIPTOR &GetRootDescriptor(const std::string &name) const { return rootDescriptors_.at(name).value; }
     [[nodiscard]] const RootDescriptorPresets &RootDescriptors() const { return rootDescriptors_; }
 
-    //--------- Sampler ---------//
+    // --------- サンプラー ---------
     void RegisterSampler(const std::string &name, const std::vector<D3D12_STATIC_SAMPLER_DESC> &s) { samplers_.push_back(name, s); }
     bool RemoveSampler(const std::string &name) { return RemoveByKey(samplers_, name); }
     [[nodiscard]] bool HasSampler(const std::string &name) const { return HasKey(samplers_, name); }
     [[nodiscard]] const std::vector<D3D12_STATIC_SAMPLER_DESC> &GetSampler(const std::string &name) const { return samplers_.at(name).value; }
     [[nodiscard]] const SamplerPresets &Samplers() const { return samplers_; }
 
-    //--------- InputLayout ---------//
+    // --------- 入力レイアウト ---------
     void RegisterInputLayout(const std::string &name, const Pipeline::JsonParser::InputLayoutParsedInfo &e) { inputLayouts_.push_back(name, e); }
     bool RemoveInputLayout(const std::string &name) { return RemoveByKey(inputLayouts_, name); }
     [[nodiscard]] bool HasInputLayout(const std::string &name) const { return HasKey(inputLayouts_, name); }
     [[nodiscard]] const Pipeline::JsonParser::InputLayoutParsedInfo &GetInputLayout(const std::string &name) const { return inputLayouts_.at(name).value; }
     [[nodiscard]] const InputLayoutPresets &InputLayouts() const { return inputLayouts_; }
 
-    //--------- RasterizerState ---------//
+    // --------- ラスタライザー状態 ---------
     void RegisterRasterizerState(const std::string &name, const D3D12_RASTERIZER_DESC &d) { rasterizerStates_.push_back(name, d); }
     bool RemoveRasterizerState(const std::string &name) { return RemoveByKey(rasterizerStates_, name); }
     [[nodiscard]] bool HasRasterizerState(const std::string &name) const { return HasKey(rasterizerStates_, name); }
     [[nodiscard]] const D3D12_RASTERIZER_DESC &GetRasterizerState(const std::string &name) const { return rasterizerStates_.at(name).value; }
     [[nodiscard]] const RasterizerStatePresets &RasterizerStates() const { return rasterizerStates_; }
 
-    //--------- BlendState ---------//
+    // --------- ブレンド状態 ---------
     void RegisterBlendState(const std::string &name, const D3D12_BLEND_DESC &d) { blendStates_.push_back(name, d); }
     bool RemoveBlendState(const std::string &name) { return RemoveByKey(blendStates_, name); }
     [[nodiscard]] bool HasBlendState(const std::string &name) const { return HasKey(blendStates_, name); }
     [[nodiscard]] const D3D12_BLEND_DESC &GetBlendState(const std::string &name) const { return blendStates_.at(name).value; }
     [[nodiscard]] const BlendStatePresets &BlendStates() const { return blendStates_; }
 
-    //--------- DepthStencilState ---------//
+    // --------- 深度ステンシル状態 ---------
     void RegisterDepthStencilState(const std::string &name, const D3D12_DEPTH_STENCIL_DESC &d) { depthStencilStates_.push_back(name, d); }
     bool RemoveDepthStencilState(const std::string &name) { return RemoveByKey(depthStencilStates_, name); }
     [[nodiscard]] bool HasDepthStencilState(const std::string &name) const { return HasKey(depthStencilStates_, name); }
     [[nodiscard]] const D3D12_DEPTH_STENCIL_DESC &GetDepthStencilState(const std::string &name) const { return depthStencilStates_.at(name).value; }
     [[nodiscard]] const DepthStencilStatePresets &DepthStencilStates() const { return depthStencilStates_; }
 
-    //--------- GraphicsPipelineState ---------//
+    // --------- グラフィックスパイプライン状態 ---------
     void RegisterGraphicsPipelineState(const std::string &name, const Pipeline::JsonParser::GraphicsPipelineStateParsedInfo &d) { graphicsPipelineStates_.push_back(name, d); }
     bool RemoveGraphicsPipelineState(const std::string &name) { return RemoveByKey(graphicsPipelineStates_, name); }
     [[nodiscard]] bool HasGraphicsPipelineState(const std::string &name) const { return HasKey(graphicsPipelineStates_, name); }
     [[nodiscard]] const Pipeline::JsonParser::GraphicsPipelineStateParsedInfo &GetGraphicsPipelineState(const std::string &name) const { return graphicsPipelineStates_.at(name).value; }
     [[nodiscard]] const GraphicsPipelineStatePresets &GraphicsPipelineStates() const { return graphicsPipelineStates_; }
 
-    //--------- ComputePipelineState ---------//
+    // --------- コンピュートパイプライン状態 ---------
     void RegisterComputePipelineState(const std::string &name, const D3D12_COMPUTE_PIPELINE_STATE_DESC &d) { computePipelineStates_.push_back(name, d); }
     bool RemoveComputePipelineState(const std::string &name) { return RemoveByKey(computePipelineStates_, name); }
     [[nodiscard]] bool HasComputePipelineState(const std::string &name) const { return HasKey(computePipelineStates_, name); }
     [[nodiscard]] const D3D12_COMPUTE_PIPELINE_STATE_DESC &GetComputePipelineState(const std::string &name) const { return computePipelineStates_.at(name).value; }
     [[nodiscard]] const ComputePipelineStatePresets &ComputePipelineStates() const { return computePipelineStates_; }
 
-    //--------- Compiled Shaders ---------//
+    // --------- コンパイル済みシェーダー ---------
     void RegisterCompiledShader(const std::string &name, ShaderCompiler::ShaderCompiledInfo *ptr) { compiledShaders_.push_back(name, ptr); }
     bool RemoveCompiledShader(const std::string &name) { return RemoveByKey(compiledShaders_, name); }
     [[nodiscard]] bool HasCompiledShader(const std::string &name) const { return HasKey(compiledShaders_, name); }

@@ -46,7 +46,7 @@ public:
     /// @details SceneEditor::ShowImGuiから毎フレーム呼ぶ
     void UpdateTools();
 
-    /// Queue a reload; executed at the next BeginFrame, never inside a script callback.
+    /// 再読み込みをキューへ追加する。次のBeginFrameで実行し、スクリプトのコールバック内では実行しない。
     void RequestReload() { reloadRequested_ = true; }
     const std::string &GetLastError() const { return lastError_; }
     const std::string &GetCurrentWindowName() const { return currentWindowName_; }

@@ -87,7 +87,7 @@ public:
     void EndDraw(Passkey<Window>);
     /// @brief 描画後処理
     void EndDraw(Passkey<DirectXCommon>);
-    /// @brief Present
+    /// @brief 描画結果の表示
     void Present(Passkey<DirectXCommon>);
 
     /// @brief サイズ変更指示

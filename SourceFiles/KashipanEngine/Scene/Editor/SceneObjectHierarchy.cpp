@@ -730,7 +730,7 @@ void SceneObjectHierarchy::CreateGameScreenSetup(EmptyObject *referenceObject, b
         { "customData", JSON{
             { "sourceObjectID", screenBuffer3DID.ToString() },
             { "displayCameraObjectID", windowCameraID.ToString() },
-            { "fitMode", 2 }, // FitMode::Letterbox
+            { "fitMode", 2 }, // レターボックス表示
         } },
     });
     addComponent(viewport3DID, "ScreenAnchor", JSON{
@@ -746,7 +746,7 @@ void SceneObjectHierarchy::CreateGameScreenSetup(EmptyObject *referenceObject, b
         { "customData", JSON{
             { "sourceObjectID", screenBuffer2DID.ToString() },
             { "displayCameraObjectID", windowCameraID.ToString() },
-            { "fitMode", 2 }, // FitMode::Letterbox
+            { "fitMode", 2 }, // レターボックス表示
         } },
     });
     addComponent(viewport2DID, "ScreenAnchor", JSON{

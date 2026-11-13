@@ -5,7 +5,7 @@ namespace KashipanEngine {
 class EmptyObject;
 class SceneContext;
 namespace ShortText {
-// Domain adapters share stable scene references and report unsupported commands explicitly.
+// 各分野のアダプターで安定したシーン参照を共有し、未対応コマンドは明示的に報告する。
 struct CommandContext {
     const EmptyObject *owner = nullptr;
     EmptyObject *target = nullptr;

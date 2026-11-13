@@ -232,6 +232,8 @@ public:
     void SetObjectID(const UUID128 &id) { objectID_ = id; }
     /// @brief オブジェクトIDの取得
     const UUID128 &GetObjectID() const { return objectID_; }
+    SceneContext *GetSceneContext() const { return ownerSceneContext_; }
+    ObjectContext *GetObjectContext() const { return objectContext_.get(); }
 
     /// @brief Prefab内の対応ノードを識別する安定IDの設定
     /// @details Prefabに関連しないオブジェクトでは無効なまま（Clone()でも複製されない）。
@@ -241,7 +243,7 @@ public:
     /// @brief Prefab内の対応ノードを識別する安定IDの取得
     const UUID128 &GetPrefabNodeID() const { return prefabNodeID_; }
     /// @brief オブジェクトの保存の可否設定
-    void SetSaveEnabled(bool enabled) { isSaveEnabled_ = enabled; }
+    void SetSaveEnabled(bool enabled) { if (isSaveEnabled_ != enabled) { isSaveEnabled_ = enabled; InvalidateActiveStateCache(); } }
     /// @brief オブジェクトの保存の可否取得
     bool IsSaveEnabled() const { return isSaveEnabled_; }
 
@@ -253,7 +255,7 @@ public:
     void SetActive(bool active);
     /// @brief オブジェクトのアクティブ状態取得
     bool IsActive() const;
-    // Invalidate only for hierarchy/lifecycle changes, never for movement or color changes.
+    // 階層や生存状態の変更時のみ無効化し、移動や色の変更では無効化しない。
     static void InvalidateActiveStateCache(Passkey<Transform>) { InvalidateActiveStateCache(); }
     static void InvalidateActiveStateCache(Passkey<Scene>) { InvalidateActiveStateCache(); }
     static void InvalidateActiveStateCache(Passkey<IObjectComponent>) { InvalidateActiveStateCache(); }
@@ -380,7 +382,7 @@ private:
     std::vector<std::vector<size_t>> componentsIndexByType_;
     std::unordered_map<const IObjectComponent *, size_t> componentsIndexByPointer_;
     std::vector<size_t> componentsFreeIndices_;
-    // Undo restores an existing identity, while ordinary additions still never recycle IDs.
+    // Undoでは既存の識別情報を復元し、通常の追加では引き続きIDを再利用しない。
     bool RestoreEditorAddedID(IObjectComponent *component, size_t id) {
         if (id == MAXSIZE_T || !component) return false;
         auto *existing = GetComponentByAddedID(id);

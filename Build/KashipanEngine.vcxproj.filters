@@ -1059,7 +1059,13 @@
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\SceneFileIO.cpp">
       <Filter>SourceFiles\KashipanEngine\Scene</Filter>
     </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\SceneLoading.cpp">
+      <Filter>SourceFiles\KashipanEngine\Scene</Filter>
+    </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\SceneManager.cpp">
+      <Filter>SourceFiles\KashipanEngine\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\ScenePreparation.cpp">
       <Filter>SourceFiles\KashipanEngine\Scene</Filter>
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Splash\SplashScreen.cpp">

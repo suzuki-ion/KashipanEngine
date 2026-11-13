@@ -18,7 +18,7 @@ public:
     SceneContext(Passkey<Scene>, Scene *owner) : owner_(owner) {}
     ~SceneContext() = default;
 
-    // Script handles keep a weak token, never ownership of the native scene.
+    // スクリプトハンドルは弱参照用トークンを保持し、ネイティブシーンの所有権は持たない。
     std::weak_ptr<void> GetLifetimeToken() const { return lifetimeToken_; }
     /// @brief DeleteObject の実体破棄を遅延させる範囲（入れ子可）。Scene::BeginDeferredDestroy を参照
     bool BeginDeferredDestroy() noexcept { return owner_->BeginDeferredDestroy(); }
@@ -31,7 +31,18 @@ public:
 
     const std::string &GetName() const { return owner_->GetName(); }
     /// @brief シーンが再生中かどうか（デバッグ用の一時オブジェクト管理等に使う）
-    bool IsPlaying() const { return owner_->IsPlaying(); }
+    bool IsPlaying() const { return !owner_->IsPreparing() && owner_->IsPlaying(); }
+    bool IsPreparing() const { return owner_->IsPreparing(); }
+    bool BeginSceneLoad(const std::string &name);
+    bool ChangeSceneWithLoading(const std::string &target, const std::string &loadingScene);
+    bool IsSceneLoading() const;
+    bool IsSceneLoadReady() const;
+    float GetSceneLoadProgress() const;
+    std::string GetSceneLoadError() const;
+    std::string GetSceneLoadTarget() const;
+    bool ActivateLoadedScene();
+    void CancelSceneLoad();
+    bool SetSceneLoadBudgetMilliseconds(float milliseconds);
 
     //==================================================
     // シーン変数

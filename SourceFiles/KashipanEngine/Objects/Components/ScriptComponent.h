@@ -72,6 +72,7 @@ public:
     OBJECT_COMPONENT_CONSTRUCTOR(ScriptComponent, 0xFF, )
     COMPONENT_CATEGORY("Script")
     ~ScriptComponent() override;
+    void ActivatePreparedScript(Passkey<Scene>);
 
     std::unique_ptr<IObjectComponent> Clone() const override;
 
@@ -132,7 +133,7 @@ public:
     /// @param name 関数名
     /// @return 名前が一致する引数無し関数が見つかり、呼び出しを行えた場合は true
     ///         （見つからない場合は false。falseは「未実行」を意味し、例外とは区別される）
-    /// Read or update an existing serialized leaf field using validated JSON values.
+    /// 検証済みのJSON値を用いて、既存のシリアライズ済み末端フィールドを読み書きする。
     bool GetSerializedVariable(const std::string &name, JSON &value) const;
     bool SetSerializedVariable(const std::string &name, const JSON &value);
     bool InvokeMethod(const std::string &name);
@@ -342,6 +343,7 @@ private:
     asIScriptFunction *endMethod_ = nullptr;
     /// @brief このインスタンスに対して既にStart()を呼び終えたか（次回Update()で一度だけ呼ぶための管理用）
     bool startCalled_ = false;
+    std::shared_ptr<CScriptBuilder> preparedBuilder_;
     asIScriptFunction *onCollisionEnterMethod_ = nullptr;
     asIScriptFunction *onCollisionStayMethod_ = nullptr;
     asIScriptFunction *onCollisionExitMethod_ = nullptr;

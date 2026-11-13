@@ -1,8 +1,12 @@
 #include "IObjectComponent.h"
 #include "Objects/EmptyObject.h"
 #include "Objects/ObjectContext.h"
+#include "Scene/SceneContext.h"
 
 namespace KashipanEngine {
+bool IObjectComponent::IsPreparingScene() const {
+    return sceneContext_ && sceneContext_->IsPreparing();
+}
 
 const EmptyObject *IObjectComponent::GetOwnerObject() const {
     return objectContext_ ? objectContext_->GetOwner() : nullptr;

@@ -157,11 +157,31 @@ public:
 
     /// @brief シーンの保存
     /// @return シーンのJSONデータ
-    JSON SaveToJSON() const;
+    JSON SaveToJSON(bool includeObjects = true) const;
+    struct RecoverySnapshot {
+        JSON json;
+        std::vector<UUID128> objects;
+        size_t cursor = 0;
+        std::uint64_t revision = 0;
+        bool initialized = false;
+    };
+    enum class RecoveryProgress { Pending, Complete, Invalidated };
+    // メインスレッド専用。処理時間の上限はオブジェクト間で確認し、個々のシリアライザーは
+    // 途中で中断しない。構造が変わった場合は、公開前にその巡回結果を破棄する。
+    RecoveryProgress AdvanceRecoverySnapshot(RecoverySnapshot &snapshot, double budgetMs = 2.0) const;
     /// @brief シーンの読み込み
     /// @param json シーンのJSONデータ
     /// @return 読み込みに成功した場合は true、失敗した場合は false を返す
     bool LoadFromJSON(const JSON &json);
+    // Prepared scenes are constructed on the engine thread without updating or running scripts.
+    bool IsPreparing() const { return isPreparing_; }
+    Scene(const std::string &sceneName, bool preparing);
+    void BeginPreparation(Passkey<SceneManager>, JSON data);
+    bool AdvancePreparation(Passkey<SceneManager>, double budgetMilliseconds);
+    float GetPreparationProgress() const;
+    const std::string &GetPreparationError() const;
+    JSON ActivatePreparation(Passkey<SceneManager>);
+    SceneManager *GetSceneManager() const { return sceneManager_; }
 
     void SetSceneManager(Passkey<SceneManager>, SceneManager *sceneManager) { sceneManager_ = sceneManager; }
 
@@ -629,6 +649,9 @@ private:
 
     std::string nextSceneName_;
     SceneManager *sceneManager_ = nullptr;
+    struct Preparation;
+    std::shared_ptr<Preparation> preparation_;
+    bool isPreparing_ = false;
 
     //==================================================
     // シーン変数

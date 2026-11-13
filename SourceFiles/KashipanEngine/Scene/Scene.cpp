@@ -21,6 +21,7 @@
 #endif
 
 #include <algorithm>
+#include <chrono>
 #include <cstring>
 #include <unordered_set>
 
@@ -52,14 +53,17 @@ void Scene::RequestExitGameLoop() {
     GameEngine::RequestExitGameLoop();
 }
 
-Scene::Scene(const std::string &sceneName)
-    : name_(sceneName) {
+Scene::Scene(const std::string &sceneName) : Scene(sceneName, false) {}
+
+Scene::Scene(const std::string &sceneName, bool preparing)
+    : name_(sceneName), isPreparing_(preparing) {
     SceneLoadTiming::Scope sceneLoadTiming1("SceneConstructor.Total");
     {
         SceneLoadTiming::Scope sceneLoadTiming2("SceneConstructor.SceneContext");
         sceneContext_ = std::make_unique<SceneContext>(Passkey<Scene>{}, this);
     }
 #ifdef USE_IMGUI
+    if (!preparing) {
     {
         SceneLoadTiming::Scope sceneLoadTiming3("SceneConstructor.EditorContext");
         sceneEditorContext_ = std::make_unique<SceneEditorContext>(Passkey<Scene>{}, this);
@@ -67,6 +71,7 @@ Scene::Scene(const std::string &sceneName)
     {
         SceneLoadTiming::Scope sceneLoadTiming4("SceneConstructor.Editor");
         sceneEditor_ = std::make_unique<SceneEditor>(Passkey<Scene>{}, sceneEditorContext_.get());
+    }
     }
 #endif
 }
@@ -78,9 +83,11 @@ Scene::Scene(const JSON &sceneData) : Scene(std::string("Unnamed Scene")) {
 Scene::~Scene() {
 #if !defined(RELEASE_BUILD)
     // Releaseビルドではデバッグ用のバックアップ書き出しを行わない
+    if (!isPreparing_) {
     json sceneData = SaveToJSON();
     std::string filePath = std::string(kSceneBackupDirectory) + name_ + ".json";
     SaveJSON(sceneData, filePath);
+    }
 #endif
     ClearSceneObjects();
     ClearSceneComponents();
@@ -109,8 +116,8 @@ void Scene::PlayStart() {
     if (sDirectXCommon_) sDirectXCommon_->WaitForGPUIdle(Passkey<Scene>{});
     editModeSnapshot_ = SaveToJSON();
 #ifdef USE_IMGUI
-    // Keep editor references valid when Stop reconstructs the pre-Play objects/components.
-    // SceneFileIO strips these transient identities from actual saved scene assets.
+    // 停止時に再生前のオブジェクト・コンポーネントを再構築しても、エディターの参照を有効に保つ。
+    // 実際に保存するシーンアセットからは、SceneFileIOがこれらの一時的な識別情報を除去する。
     for (auto &objectJson : editModeSnapshot_["sceneObjects"]) {
         if (auto *object = GetSceneObject(UUID128(objectJson.at("objectID").get<std::string>()))) objectJson = sceneEditorContext_->SaveObjectToUndoJson(object);
     }
@@ -232,7 +239,7 @@ void Scene::PlayStop() {
 }
 #endif
 
-JSON Scene::SaveToJSON() const {
+JSON Scene::SaveToJSON(bool includeObjects) const {
     JSON json;
     json["sceneName"] = name_;
     json["sceneID"] = sceneID_.ToString();
@@ -243,7 +250,7 @@ JSON Scene::SaveToJSON() const {
         compJson["data"] = compPair.first->SaveToJsonInterface(Passkey<Scene>{});
         json["sceneComponents"].push_back(compJson);
     }
-    for (const auto &obj : objects_) {
+    if (includeObjects) for (const auto &obj : objects_) {
         if (!obj || !obj->IsSaveEnabled()) continue;
         json["sceneObjects"].push_back(obj->SaveToJson(Passkey<Scene>{}));
     }
@@ -255,6 +262,29 @@ JSON Scene::SaveToJSON() const {
         json["sceneVariables"].push_back(varJson);
     }
     return json;
+}
+
+Scene::RecoveryProgress Scene::AdvanceRecoverySnapshot(RecoverySnapshot &snapshot, double budgetMs) const {
+    using Clock = std::chrono::steady_clock;
+    const auto started = Clock::now();
+    const auto revision = EmptyObject::GetStructureRevision();
+    if (snapshot.initialized && snapshot.revision != revision) return RecoveryProgress::Invalidated;
+    if (!snapshot.initialized) {
+        snapshot.json = SaveToJSON(false);
+        snapshot.json["sceneObjects"] = JSON::array();
+        snapshot.objects.reserve(objects_.size());
+        for (const auto *object : objects_) if (object && object->IsSaveEnabled()) snapshot.objects.push_back(object->GetObjectID());
+        snapshot.revision = revision;
+        snapshot.initialized = true;
+    }
+    while (snapshot.cursor < snapshot.objects.size()) {
+        const auto it = objectsByUUID_.find(snapshot.objects[snapshot.cursor++]);
+        if (it == objectsByUUID_.end() || !it->second || !it->second->IsSaveEnabled()) return RecoveryProgress::Invalidated;
+        snapshot.json["sceneObjects"].push_back(it->second->SaveToJson(Passkey<Scene>{}));
+        if (EmptyObject::GetStructureRevision() != snapshot.revision) return RecoveryProgress::Invalidated;
+        if (std::chrono::duration<double, std::milli>(Clock::now() - started).count() >= budgetMs) break;
+    }
+    return snapshot.cursor == snapshot.objects.size() ? RecoveryProgress::Complete : RecoveryProgress::Pending;
 }
 
 bool Scene::LoadFromJSON(const JSON &json) {
@@ -699,10 +729,11 @@ void Scene::ClearSceneComponents() {
     // シーン切り替え・Play停止・エディターでの再読み込みはすべてここを通る。
     // シーンごとの上書き（InputDeviceSettings）やスクリプトから変更された入力デバイス判定の
     // しきい値をEngineSettingsの値へ戻し、次に読み込まれるシーンの設定だけが反映されるようにする
-    if (sInput) sInput->ResetDeviceThresholds();
+    if (sInput && !isPreparing_) sInput->ResetDeviceThresholds();
 }
 
 bool Scene::ChangeToNextScene() {
+    if (isPreparing_) return false;
     if (sceneManager_ && !nextSceneName_.empty()) {
         return sceneManager_->ChangeScene(nextSceneName_);
     }

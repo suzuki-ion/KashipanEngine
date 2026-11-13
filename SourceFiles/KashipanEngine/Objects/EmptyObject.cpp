@@ -209,8 +209,8 @@ void EmptyObject::ReleaseComponentsWithoutFinalize() {
 bool EmptyObject::IsActive() const {
     const auto revision = activeStateRevision_.load(std::memory_order_relaxed);
     if (cachedActiveRevision_ == revision) return cachedEffectiveActive_;
-    // Parent assignment rejects cycles/depths above 256. Keep a bounded, allocation-free
-    // fallback for malformed legacy data and cache the whole path, not only this object.
+    // 親の設定では循環参照や256を超える深さを拒否する。不正な旧データには上限付きで動的確保しない
+    // 代替処理を使用し、このオブジェクトだけでなく経路全体をキャッシュする。
     std::array<const EmptyObject *, 258> path;
     size_t count = 0;
     const EmptyObject *current = this;
@@ -333,8 +333,8 @@ bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
     objectID_ = UUID128(json.value("objectID", ""));
     prefabNodeID_ = UUID128(json.value("prefabNodeID", ""));
     const auto &componentsJson = json.value("components", JSON::array());
-    // Editor Undo snapshots carry IDs. Reserve them before allocating any component so
-    // restore order (which follows update priority) cannot collide with temporary IDs.
+    // エディターのUndoスナップショットはIDを保持する。復元順序は更新優先度に従うため、一時IDとの
+    // 衝突を防ぐために、コンポーネントを割り当てる前にそのIDを予約する。
     for (const auto &entry : componentsJson) if (entry.contains("editorAddedID")) {
         const auto id = entry.at("editorAddedID").get<size_t>();
         if (id == MAXSIZE_T) return false;
@@ -368,7 +368,7 @@ bool EmptyObject::LoadFromJson(Passkey<Scene>, const JSON &json) {
         const JSON &compJson = compPair.second;
         if (!comp) continue;
         SceneLoadTiming::Scope sceneLoadTiming5("ObjectComponent.LoadJSON." + comp->GetComponentType(), name_);
-        comp->LoadFromJsonInterface(Passkey<EmptyObject>(), compJson);
+        if (!comp->LoadFromJsonInterface(Passkey<EmptyObject>(), compJson)) return false;
     }
         return true;
     } catch (...) {

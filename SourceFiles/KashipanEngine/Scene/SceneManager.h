@@ -3,6 +3,7 @@
 #include "Utilities/MyAny.h"
 
 #include <functional>
+#include <future>
 #include <memory>
 #include <string>
 #include <tuple>
@@ -37,9 +38,7 @@ public:
     };
 
     SceneManager(Passkey<GameEngine>) { sActiveInstance_ = this; }
-    ~SceneManager() {
-        if (sActiveInstance_ == this) sActiveInstance_ = nullptr;
-    }
+    ~SceneManager();
 
     SceneManager(const SceneManager &) = delete;
     SceneManager &operator=(const SceneManager &) = delete;
@@ -145,6 +144,17 @@ public:
     /// @param sceneName 変更したいシーンの名前
     /// @return 変更に成功した場合は true、失敗した場合は false を返す
     bool ChangeScene(const std::string &sceneName);
+    // Loading scene remains the current scene until ActivateLoadedScene is requested.
+    bool ChangeSceneWithLoading(const std::string &target, const std::string &loadingScene);
+    bool BeginSceneLoad(const std::string &sceneName);
+    bool IsSceneLoading() const;
+    bool IsSceneLoadReady() const;
+    float GetSceneLoadProgress() const;
+    const std::string &GetSceneLoadError() const { return sceneLoadError_; }
+    const std::string &GetSceneLoadTarget() const { return sceneLoadTarget_; }
+    bool ActivateLoadedScene();
+    void CancelSceneLoad();
+    bool SetSceneLoadBudgetMilliseconds(float milliseconds);
     /// @brief シーン変更の予約があるかを確認する
     bool HasPendingSceneChange() const { return hasPendingSceneChange_; }
     /// @brief 保留中のシーン変更をコミットする（GameEngine専用）
@@ -206,6 +216,7 @@ public:
     }
     /// @brief Play終了時、グローバルシーン変数を復元し、再生開始前のシーンJSONを返す
     JSON EndPlaySession(Passkey<Scene>) {
+        CancelSceneLoad();
         if (!isPlaySessionActive_) return JSON();
         globalSceneVariables_ = std::move(playModeSnapshot_);
         playModeSnapshot_.clear();
@@ -239,11 +250,28 @@ private:
     std::unique_ptr<Scene> currentScene_;
     bool hasPendingSceneChange_ = false;
     std::string pendingSceneName_;
+    enum class LoadState { Idle, Reading, Constructing, Ready, Failed };
+    LoadState sceneLoadState_ = LoadState::Idle;
+    std::string sceneLoadTarget_, sceneLoadError_, queuedSceneLoadTarget_;
+    float sceneLoadBudgetMilliseconds_ = 2.f;
+    std::future<JSON> sceneRead_;
+    std::vector<std::future<JSON>> retiredSceneReads_;
+    std::unique_ptr<Scene> preparedScene_;
+    bool activatePreparedScene_ = false;
+    bool shuttingDown_ = false;
+    void AdvanceSceneLoad();
+    void RetireCompletedSceneReads();
+    bool CommitPreparedScene();
 
-    /// @brief クラッシュハンドラ用に1秒間隔で保持する直近シーンのJSONスナップショット
+    /// @brief 完成した直近の復旧点。1秒の待機後、複数フレームへ分散して次を生成する。
     JSON preCrashSnapshot_;
     float preCrashSnapshotElapsedTime_ = 0.0f;
     static constexpr float kPreCrashSnapshotInterval = 1.0f;
+    Scene::RecoverySnapshot recoverySnapshot_;
+    JSON retiredRecoverySnapshot_;
+    std::future<void> snapshotRetirement_;
+    bool RetireRecoverySnapshot();
+    void UpdateRecoverySnapshot();
 };
 
 } // namespace KashipanEngine

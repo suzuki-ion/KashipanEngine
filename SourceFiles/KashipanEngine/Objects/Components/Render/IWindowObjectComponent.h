@@ -19,6 +19,7 @@ namespace KashipanEngine {
 ///          OnWindowMessage(const WindowMessageInfo &in) メソッドを呼び出す。
 class IWindowObjectComponent : public IObjectComponent {
 public:
+    void ActivatePreparedWindow(Passkey<Scene>) { LoadFromJson(SaveToJson()); }
     // 派生クラスは全て Render/RenderTarget カテゴリに分類される
     COMPONENT_CATEGORY("Render", "RenderTarget")
 

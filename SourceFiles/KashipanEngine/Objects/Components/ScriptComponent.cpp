@@ -328,6 +328,7 @@ SceneScriptEngine *ScriptComponent::GetOrAddSceneScriptEngine() const {
 }
 
 void ScriptComponent::ReleaseScript() {
+    preparedBuilder_.reset();
     if (behaviorObject_) {
         behaviorObject_->Release();
         behaviorObject_ = nullptr;
@@ -390,7 +391,8 @@ bool ScriptComponent::Reload() {
 
     const std::string moduleName = "ScriptComponent_" + std::to_string(reinterpret_cast<uintptr_t>(this));
 
-    CScriptBuilder builder;
+    auto builderStorage = std::make_unique<CScriptBuilder>();
+    auto &builder = *builderStorage;
     if (builder.StartNewModule(engine, moduleName.c_str()) < 0) {
         lastError_ = "モジュールの作成に失敗しました";
         return false;
@@ -406,7 +408,10 @@ bool ScriptComponent::Reload() {
     const bool isSectionLoaded = builder.AddSectionFromFile(resolvedScriptPath.c_str()) >= 0;
     bool isBuilt = false;
     { SceneLoadTiming::Scope sceneLoadTiming3("Script.BuildModule", scriptPath_);
-      isBuilt = isSectionLoaded && builder.BuildModule() >= 0; }
+      const auto initializeGlobals = engine->GetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD);
+      if (IsPreparingScene()) engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
+      isBuilt = isSectionLoaded && builder.BuildModule() >= 0;
+      engine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, initializeGlobals); }
     auto buildMessages = scriptEngine->EndMessageCapture();
 
     if (!isBuilt) {
@@ -440,6 +445,10 @@ bool ScriptComponent::Reload() {
 
     context_ = engine->CreateContext();
     scriptEngine->AttachDebugger(context_);
+    if (IsPreparingScene()) {
+        preparedBuilder_ = std::move(builderStorage);
+        return true;
+    }
 
     if (!CreateBehaviorInstance(engine, builder)) {
         ReleaseScript();
@@ -452,11 +461,35 @@ bool ScriptComponent::Reload() {
 }
 
 void ScriptComponent::ReloadFromDisk() {
-    if (Reload()) {
+    if (Reload() && !IsPreparingScene()) {
         HookColliders();
         HookWindowObjects();
         CallMethod(awakeMethod_);
     }
+}
+
+void ScriptComponent::ActivatePreparedScript(Passkey<Scene>) {
+    if (!preparedBuilder_ || !IsActive()) return;
+    auto builder = std::move(preparedBuilder_);
+    auto *scriptEngine = GetSceneScriptEngine();
+    auto *engine = scriptEngine ? scriptEngine->GetEngine() : nullptr;
+    if (!engine || !context_) return;
+    int initialized = asERROR;
+    {
+        ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
+        ExecutingScriptScope executing(this);
+        initialized = builder->GetModule()->ResetGlobalVars(context_);
+    }
+    if (initialized < 0 || !CreateBehaviorInstance(engine, *builder)) {
+        lastError_ = "Prepared script initialization failed: " + scriptPath_;
+        Log(lastError_, LogSeverity::Error);
+        ReleaseScript();
+        return;
+    }
+    CollectSerializedFields(*builder);
+    ApplyFieldValuesFromJson(pendingFieldValues_);
+    HookColliders(); HookWindowObjects();
+    CallMethod(awakeMethod_);
 }
 
 bool ScriptComponent::CreateBehaviorInstance(asIScriptEngine *engine, CScriptBuilder &builder) {
@@ -1004,7 +1037,7 @@ void *ScriptComponent::CreateScriptObjectViaFactory(asITypeInfo *type) const {
     int r;
     {
         ScriptExecutionScope scope(GetOwnerObjectContext(), GetOwnerSceneContext());
-        // const method: the executing marker only identifies this component to native calls made by the script.
+        // constメソッド。実行中マーカーはスクリプトからのネイティブ呼び出しに対し、このコンポーネントを識別するためだけに使用する。
         ExecutingScriptScope executing(const_cast<ScriptComponent *>(this));
         r = context_->Execute();
     }
@@ -1235,7 +1268,7 @@ bool ScriptComponent::GetSerializedVariable(const std::string &name, JSON &value
 bool ScriptComponent::SetSerializedVariable(const std::string &name, const JSON &value) {
     try {
         for (const auto &field : serializedFields_) if (field.name == name && field.address) {
-            // Composite handle updates remain under the existing serializer; recipe writes are leaf-only.
+            // 複合ハンドルの更新は既存のシリアライザーに任せ、レシピからの書き込みは末端のフィールドに限定する。
             if (field.isArray || field.isScriptObject) return false;
             JSON normalized = value;
             if (field.typeId == asTYPEID_BOOL) { if (!value.is_boolean()) return false; }
@@ -1260,7 +1293,7 @@ bool ScriptComponent::SetSerializedVariable(const std::string &name, const JSON 
             } else return false;
             ApplyField(field, field.address, normalized); return true;
         }
-        // Without a live script instance, only update existing fields with an unambiguous saved shape.
+        // 実行中のスクリプト実体がなければ、保存形式が一意に分かる既存フィールドのみ更新する。
         if (serializedFields_.empty() && pendingFieldValues_.is_object() && pendingFieldValues_.contains(name)) {
             const auto &old=pendingFieldValues_[name];bool compatible=false;
             if(old.is_boolean())compatible=value.is_boolean();else if(old.is_string())compatible=value.is_string();
@@ -1362,7 +1395,7 @@ void ScriptComponent::SetContextArg(int argIndex, const void *ref, int typeId, a
 }
 
 namespace {
-// Type ids are local to each engine. Only vetted native representations may cross engines.
+// 型IDはエンジンごとに異なる。エンジン間で受け渡せるのは検証済みのネイティブ表現のみ。
 int ExchangeTypeId(asIScriptEngine *target, int sourceId) {
     auto *active = asGetActiveContext();
     auto *source = active ? active->GetEngine() : target;
@@ -1514,7 +1547,7 @@ bool ScriptComponent::InvokeEventHandler(const std::string &name, const GameEven
     lastError_.clear();
     if (context_->Prepare(method) < 0) { lastError_ = "関数の準備に失敗しました"; return false; }
     context_->SetObject(behaviorObject_);
-    // The script receives its own reference-counted copy; it stays valid even if the script keeps the handle.
+    // スクリプトには参照カウント付きの専用コピーを渡し、ハンドルを保持されても有効性を維持する。
     auto *event = new ScriptGameEvent(message);
     context_->SetArgObject(0, event);
     int r = 0;
@@ -1526,7 +1559,7 @@ bool ScriptComponent::InvokeEventHandler(const std::string &name, const GameEven
         r = lease.context->Execute();
     }
     event->Release();
-    if (alive.expired()) return true; // the handler removed this component; nothing of it may be touched
+    if (alive.expired()) return true; // ハンドラーがこのコンポーネントを削除したため、以降は一切触れない。
     if (r != asEXECUTION_FINISHED) {
         lastError_ = GetExceptionInfo(lease.context);
         Log(Translation("engine.script.error") + lastError_, LogSeverity::Error);
@@ -1561,7 +1594,7 @@ bool ScriptComponent::InvokeMethodWithValues(const std::string &name, const std:
         else if (type == vector2TypeId_ && numbers(v, 2, c)) { slot.v2 = Vector2(c[0], c[1]); args.emplace_back(&slot.v2, type); }
         else if (type == vector3TypeId_ && numbers(v, 3, c)) { slot.v3 = Vector3(c[0], c[1], c[2]); args.emplace_back(&slot.v3, type); }
         else if (type == vector4TypeId_ && numbers(v, 4, c)) { slot.v4 = Vector4(c[0], c[1], c[2], c[3]); args.emplace_back(&slot.v4, type); }
-        else return false; // the value cannot be converted to the declared parameter type
+        else return false; // 宣言された引数の型へ値を変換できない。
     }
     lastError_.clear();
     return InvokeMethodArgs(name, args);

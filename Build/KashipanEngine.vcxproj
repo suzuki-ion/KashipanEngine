@@ -1189,6 +1189,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTool
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Scene.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\ScenePreparation.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\SceneLoading.cpp">
+      <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\SceneManager.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\</ObjectFileName>
     </ClCompile>

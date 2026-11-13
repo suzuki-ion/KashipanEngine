@@ -45,6 +45,10 @@ public:
     }
 
     ScreenBuffer *GetScreenBuffer() const noexcept { return buffer_; }
+    void ActivatePreparedBuffer(Passkey<Scene>) {
+        LoadFromJson(SaveToJson());
+        if (!buffer_ && IsActive()) Initialize();
+    }
     /// @brief 管理用の名前を設定（TextureManagerへの登録名になる）
     void SetName(const std::string &name) {
         name_ = name;
@@ -109,6 +113,7 @@ public:
 
 protected:
     void Initialize() override {
+        if (IsPreparingScene()) return;
         if (buffer_) return;
         buffer_ = ScreenBuffer::Create(width_, height_, name_);
         // 自動生成された名前を保持する（保存時に確定した名前が残るようにする）
@@ -245,6 +250,17 @@ protected:
         // Play停止時のスナップショット復元でも同じビューアウィンドウとして認識されるよう、
         // 保存済みIDがあればそれを引き継ぐ（無ければ構築時に生成された既定値のまま）
         viewerId_ = json.value("viewerId", viewerId_);
+        if (IsPreparingScene()) {
+            // Keep logical names private until activation. A same-name loading-scene
+            // buffer must remain registered and usable while we construct this scene.
+            name_ = loadedName; width_ = loadedWidth; height_ = loadedHeight;
+            if (IsRegisteredToOwner() && IsActive()) {
+                if (buffer_ && ScreenBuffer::IsExist(buffer_)) buffer_->DestroyNotify();
+                buffer_ = ScreenBuffer::Create(width_, height_);
+                if (buffer_) { buffer_->SetRenderOrderPriority(renderOrderPriority_); buffer_->SetClearColor(clearColor_); }
+            }
+            return true;
+        }
 
         // シーン切り替え中、前のシーンで同名のScreenBufferObjectが使用していたバッファが
         // 引き継ぎプールに残っていれば、新規作成せずそちらを再利用する

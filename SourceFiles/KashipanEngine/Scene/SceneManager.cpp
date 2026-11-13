@@ -1,4 +1,4 @@
-#include "Scene/SceneManager.h"
+﻿#include "Scene/SceneManager.h"
 #include "Debug/Profiler.h"
 #include "Debug/SceneChangeTiming.h"
 #include "Core/ProjectPaths.h"
@@ -9,6 +9,7 @@
 #include "Utilities/TimeUtils.h"
 
 #include <algorithm>
+#include <chrono>
 
 namespace KashipanEngine {
 
@@ -25,7 +26,9 @@ const SceneManager::SceneEntry *SceneManager::FindEntry(const std::string &scene
 }
 
 bool SceneManager::ChangeScene(const std::string &sceneName) {
+    if (shuttingDown_) return false;
     if (!FindEntry(sceneName)) return false;
+    CancelSceneLoad();
     pendingSceneName_ = sceneName;
     hasPendingSceneChange_ = true;
     return true;
@@ -49,6 +52,7 @@ bool SceneManager::UnregisterScene(const std::string &sceneName) {
     auto it = std::find_if(registeredScenes_.begin(), registeredScenes_.end(),
         [&sceneName](const SceneEntry &entry) { return entry.name == sceneName; });
     if (it == registeredScenes_.end()) return false;
+    if (sceneLoadTarget_ == sceneName || (!queuedSceneLoadTarget_.empty() && pendingSceneName_ == sceneName)) CancelSceneLoad();
     registeredScenes_.erase(it);
     if (startupSceneName_ == sceneName) startupSceneName_.clear();
     return true;
@@ -63,6 +67,8 @@ bool SceneManager::RenameRegisteredScene(const std::string &oldName, const std::
     entry->name = newName;
     if (startupSceneName_ == oldName) startupSceneName_ = newName;
     if (pendingSceneName_ == oldName) pendingSceneName_ = newName;
+    if (sceneLoadTarget_ == oldName) sceneLoadTarget_ = newName;
+    if (queuedSceneLoadTarget_ == oldName) queuedSceneLoadTarget_ = newName;
     return true;
 }
 
@@ -135,16 +141,46 @@ void SceneManager::Update(Passkey<GameEngine>) {
     if (currentScene_) {
         currentScene_->UpdateInterface(Passkey<SceneManager>());
 
-        // クラッシュハンドラ用の直近スナップショットを1秒間隔で更新する。
-        // クラッシュ直前の生シーンではなく、この少し前のスナップショットを書き出すことで、
-        // クラッシュ原因そのものを含んだ状態を復元して再クラッシュする事態を避けやすくする
-        preCrashSnapshotElapsedTime_ += GetDeltaTime();
-        if (preCrashSnapshotElapsedTime_ >= kPreCrashSnapshotInterval) {
-            preCrashSnapshotElapsedTime_ = 0.0f;
-            Profiler::Scope scope("Scene.CrashSnapshot");
-            preCrashSnapshot_ = currentScene_->SaveToJSON();
-        }
+        UpdateRecoverySnapshot();
     }
+    AdvanceSceneLoad();
+}
+
+bool SceneManager::RetireRecoverySnapshot() {
+    if (retiredRecoverySnapshot_.is_null()) return true;
+    if (snapshotRetirement_.valid()) {
+        if (snapshotRetirement_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) return false;
+        snapshotRetirement_.get();
+    }
+    auto retired = std::make_shared<JSON>(std::move(retiredRecoverySnapshot_));
+    try {
+        // 受け渡すのは不変なJSONのみ。このワーカーはScene・Object・コンポーネントを参照せず、
+        // 直前に完成した復元地点はメインスレッドに保持する。
+        snapshotRetirement_ = std::async(std::launch::async, [retired] { retired->clear(); });
+    } catch (...) {
+        retiredRecoverySnapshot_ = std::move(*retired);
+        return false;
+    }
+    return true;
+}
+
+void SceneManager::UpdateRecoverySnapshot() {
+    preCrashSnapshotElapsedTime_ += GetDeltaTime();
+    if (!RetireRecoverySnapshot()) return;
+    if (!recoverySnapshot_.initialized && preCrashSnapshotElapsedTime_ < kPreCrashSnapshotInterval) return;
+    Profiler::Scope scope("Scene.CrashSnapshot");
+    const auto progress = currentScene_->AdvanceRecoverySnapshot(recoverySnapshot_);
+    if (progress == Scene::RecoveryProgress::Pending) return;
+    if (progress == Scene::RecoveryProgress::Complete) {
+        Profiler::Scope publication("Scene.CrashSnapshot.Publish");
+        preCrashSnapshot_.swap(recoverySnapshot_.json);
+        preCrashSnapshotElapsedTime_ = 0.0f;
+    }
+    // 無効化時に破棄する途中の巡回結果と、公開時に置き換える完成済みの
+    // スナップショットを含む。破棄処理はシーンの生存期間から独立する。
+    retiredRecoverySnapshot_ = std::move(recoverySnapshot_.json);
+    recoverySnapshot_ = {};
+    RetireRecoverySnapshot();
 }
 
 #ifdef USE_IMGUI
@@ -157,22 +193,27 @@ void SceneManager::ShowImGui(Passkey<GameEngine>) {
 
 bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {  
     if (!hasPendingSceneChange_) return false;
+    if (activatePreparedScene_) return CommitPreparedScene();
     hasPendingSceneChange_ = false;
 
-    const SceneEntry *entry = FindEntry(pendingSceneName_);
-    if (!entry) {
+    const SceneEntry *registered = FindEntry(pendingSceneName_);
+    if (!registered) {
         pendingSceneName_.clear();
         return false;
     }
+    const SceneEntry entrySnapshot = *registered;
+    const SceneEntry *entry = &entrySnapshot;
+    const std::string sceneName = std::exchange(pendingSceneName_, {});
+    const std::string loadAfterSwitch = std::exchange(queuedSceneLoadTarget_, {});
 
     // 再生中の遷移では、新しいSceneへPlay状態を引き継ぐ必要がある。
     // Play開始前の復元元はSceneManagerが別途保持しているため、ここでは状態だけを引き継ぐ
     const bool wasPlaying = currentScene_ && currentScene_->IsPlaying();
-    Log(Translation("engine.scenemanager.scene.switch.start") + pendingSceneName_ +
+    Log(Translation("engine.scenemanager.scene.switch.start") + sceneName +
         "、wasPlaying=" + (wasPlaying ? "true" : "false"), LogSeverity::Info);
 
-    SceneLoadTiming::Session sceneLoadSession(pendingSceneName_);
-    SceneChangeTiming sceneTiming("Manager.", pendingSceneName_);
+    SceneLoadTiming::Session sceneLoadSession(sceneName);
+    SceneChangeTiming sceneTiming("Manager.", sceneName);
 
     // 描画先コンポーネント（ScreenBufferObject/NormalWindowObject等）が、
     // 破棄されるバッファ/ウィンドウを次のシーンの同名コンポーネントへ引き継げるようにする
@@ -187,6 +228,8 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
     currentScene_.reset();
     sceneTiming.End("DestroyPreviousScene");
 
+    // 最初の段階的な巡回が完了するまで、読み込み済みの完全な復元地点を保持する。
+    JSON initialRecoverySnapshot;
     // 新しいシーンを作成する
     if (!entry->filePath.empty()) {
         // ファイルパス登録の場合は切り替えのたびに最新のファイル内容を読み込む
@@ -194,20 +237,22 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
         sceneTiming.End("ReadSceneJSON");
         if (!sceneData.empty()) {
             currentScene_ = std::make_unique<Scene>(sceneData);
+            initialRecoverySnapshot = std::move(sceneData);
         } else {
             LogScope scope;
             Log(Translation("engine.scenemanager.scene.load.failed") + entry->filePath, LogSeverity::Warning);
-            currentScene_ = std::make_unique<Scene>(pendingSceneName_);
+            currentScene_ = std::make_unique<Scene>(sceneName);
         }
     } else if (!entry->factoryData.empty()) {
-        sceneTiming.End("ReadSceneJSON"); // No file I/O for an in-memory scene.
+        sceneTiming.End("ReadSceneJSON"); // メモリ上のシーンではファイル入出力を行わない。
         currentScene_ = std::make_unique<Scene>(entry->factoryData);
+        initialRecoverySnapshot = entry->factoryData;
     } else {
         // ファクトリデータが空の場合は、シーン名だけでシーンを作成する
-        sceneTiming.End("ReadSceneJSON"); // No file I/O for an empty scene.
-        currentScene_ = std::make_unique<Scene>(pendingSceneName_);
+        sceneTiming.End("ReadSceneJSON"); // 空のシーンではファイル入出力を行わない。
+        currentScene_ = std::make_unique<Scene>(sceneName);
     }
-    // Includes Scene's constructor, LoadFromJSON and component initialization during construction.
+    // Sceneのコンストラクター・LoadFromJSON・構築中のコンポーネント初期化を含む。
     sceneTiming.End("ConstructScene");
 
     if (currentScene_) {
@@ -219,18 +264,19 @@ bool SceneManager::CommitPendingSceneChange(Passkey<GameEngine>) {
     }
     sceneTiming.End("InitializeScene");
 
-    // 直近スナップショットは切替前のシーンのものなので、切替後まで持ち越さないようクリアする。
-    // 切替直後〜次の1秒間はExportCrashSceneBackup側のライブシーンへのフォールバックで補う
-    preCrashSnapshot_ = JSON();
+    // 前のシーンの復元データを新しいシーンへ引き継がない。
+    preCrashSnapshot_ = std::move(initialRecoverySnapshot);
     preCrashSnapshotElapsedTime_ = 0.0f;
+    recoverySnapshot_ = {};
+    retiredRecoverySnapshot_ = JSON();
 
     // 新しいシーン側で引き取られなかった描画先リソースをここで実際に破棄する
     RenderTargetCarryOverRegistry::EndSceneSwitch(Passkey<SceneManager>{});
     sceneTiming.End("FinishCarryOverAndSnapshot");
 
-    Log(Translation("engine.scenemanager.scene.switch.end") + pendingSceneName_, LogSeverity::Info);
+    Log(Translation("engine.scenemanager.scene.switch.end") + sceneName, LogSeverity::Info);
 
-    pendingSceneName_.clear();
+    if (!loadAfterSwitch.empty() && !hasPendingSceneChange_) BeginSceneLoad(loadAfterSwitch);
     sceneTiming.Finish();
     return true;
 }

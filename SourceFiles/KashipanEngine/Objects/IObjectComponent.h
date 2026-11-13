@@ -119,6 +119,8 @@ public:
     ///          登録前の LoadFromJson() が一度呼ばれる。その段階でウィンドウ等の外部リソースを
     ///          生成しないための判定に使用する。
     bool IsRegisteredToOwner() const;
+    /// True during incremental scene preparation, before activation/gameplay.
+    bool IsPreparingScene() const;
     /// @brief このコンポーネント自身を指す ComponentRef を取得する
     /// @details フレームをまたいで安全に保持するためのハンドル。プールのスロット再利用による
     ///          エイリアシングを避けるため、生ポインタの代わりにこちらを保持し、使う直前に
@@ -281,7 +283,7 @@ private:
     /// @brief アクティブ状態（falseの場合はUpdateが呼ばれない）
     bool isActive_ = true;
 protected:
-    // Manual constructors conservatively keep updates; the standard constructor detects overrides.
+    // 手書きのコンストラクターでは安全側に更新を維持し、標準のコンストラクターではオーバーライドを検出する。
     bool hasFrameUpdate_ = true;
 private:
     /// @brief タグ（比較用ハッシュ）と表示・保存用のタグ文字列

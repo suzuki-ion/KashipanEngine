@@ -24,6 +24,7 @@ void InputDeviceSettings::LoadDefaultValues() {
 
 void InputDeviceSettings::Apply() const {
     SceneContext *sceneContext = GetOwnerSceneContext();
+    if (sceneContext && sceneContext->IsPreparing()) return;
     Input *input = sceneContext ? sceneContext->GetInput() : nullptr;
     if (!input) return;
 
@@ -36,6 +37,7 @@ void InputDeviceSettings::Apply() const {
 void InputDeviceSettings::Finalize() {
     // エディターでの削除・無効化時に上書きを取り消す
     SceneContext *sceneContext = GetOwnerSceneContext();
+    if (sceneContext && sceneContext->IsPreparing()) return;
     Input *input = sceneContext ? sceneContext->GetInput() : nullptr;
     if (input) input->ResetDeviceThresholds();
 }

@@ -1,0 +1,102 @@
+{
+    "object": {
+        "name": "LoadingSpinner",
+        "objectID": "9fd6f445-0759-5220-95d2-76bdc8b53ea8",
+        "isActive": true,
+        "tag": "",
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 1232,
+                            "y": 48,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.0,
+                            "w": 1.0
+                        }
+                    }
+                }
+            },
+            {
+                "type": "ScreenAnchor",
+                "data": {
+                    "isActive": true,
+                    "priority": 2,
+                    "tag": "",
+                    "customData": {
+                        "cameraObjectID": "d4304e0e-8373-58c4-8d11-24b97d46bca9",
+                        "anchorPoint": {
+                            "x": 1,
+                            "y": 0
+                        },
+                        "offset": {
+                            "x": -48,
+                            "y": 48
+                        }
+                    }
+                }
+            },
+            {
+                "type": "KeyFrameAnimator",
+                "data": {
+                    "isActive": true,
+                    "priority": 10,
+                    "tag": "",
+                    "customData": {
+                        "animations": [
+                            {
+                                "name": "LoadingSpin",
+                                "playOnStart": true,
+                                "loop": true,
+                                "playbackSpeed": 1,
+                                "timeOffset": 0,
+                                "valueScale": 1,
+                                "valueOffset": 0,
+                                "embeddedAnimation": {
+                                    "keyframes": [
+                                        {
+                                            "time": 0,
+                                            "value": 0,
+                                            "ease": "Linear"
+                                        },
+                                        {
+                                            "time": 1,
+                                            "value": -6.283185307179586,
+                                            "ease": "Linear"
+                                        }
+                                    ]
+                                },
+                                "bindings": [
+                                    {
+                                        "componentType": "Transform",
+                                        "componentIndex": 0,
+                                        "parameterName": "rotate_",
+                                        "channel": 2,
+                                        "isScriptVariable": false
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 3000
+}

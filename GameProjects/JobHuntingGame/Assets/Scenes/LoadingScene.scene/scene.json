@@ -1,0 +1,25 @@
+{
+    "sceneComponents": [
+        {
+            "type": "SceneRenderer",
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1000,
+                "tag": ""
+            }
+        },
+        {
+            "type": "SceneScriptEngine",
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 1,
+                "tag": ""
+            }
+        }
+    ],
+    "sceneID": "abb178a9-2fb8-5a47-b05e-ba422438b95e",
+    "sceneName": "LoadingScene",
+    "sceneVariables": []
+}

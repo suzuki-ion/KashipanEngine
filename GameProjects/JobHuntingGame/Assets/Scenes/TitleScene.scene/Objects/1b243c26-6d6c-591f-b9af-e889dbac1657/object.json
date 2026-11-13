@@ -1,69 +1,71 @@
 {
     "object": {
-        "name": "TownUICamera",
-        "objectID": "1b243c26-6d6c-591f-b9af-e889dbac1657",
-        "isActive": true,
-        "tag": "",
-        "editorOnly": false,
-        "hiddenFromEditorTarget": false,
         "components": [
             {
-                "type": "Transform",
                 "data": {
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": "",
                     "customData": {
-                        "translate": {
-                            "x": 0,
-                            "y": 0,
-                            "z": 0
-                        },
-                        "scale": {
-                            "x": 1,
-                            "y": 1,
-                            "z": 1
-                        },
                         "rotate": {
+                            "w": 1.0,
                             "x": 0.0,
                             "y": 0.0,
-                            "z": -0.0,
-                            "w": 1.0
+                            "z": -0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
                         }
-                    }
-                }
-            },
-            {
-                "type": "Camera2D",
-                "data": {
+                    },
                     "isActive": true,
                     "priority": 1,
-                    "tag": "",
-                    "customData": {
-                        "width": 1280,
-                        "height": 720,
-                        "nearClip": 0,
-                        "farClip": 1000,
-                        "autoSyncSize": false
-                    }
-                }
+                    "tag": ""
+                },
+                "type": "Transform"
             },
             {
-                "type": "CameraRenderer",
                 "data": {
-                    "isActive": true,
-                    "priority": 950,
-                    "tag": "",
                     "customData": {
-                        "targetObjectID": "b2e4871f-4a63-51a0-b806-ed1068f0d99f",
+                        "autoSyncSize": false,
+                        "farClip": 1000.0,
+                        "height": 720.0,
+                        "nearClip": 0.0,
+                        "pixelSnapping": false,
+                        "width": 1280.0
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Camera2D"
+            },
+            {
+                "data": {
+                    "customData": {
                         "bindVariableNames": [
                             "Vertex:gCamera2D",
                             "Pixel:gCamera2D"
-                        ]
-                    }
-                }
+                        ],
+                        "pipelineName": "",
+                        "targetObjectID": "b2e4871f-4a63-51a0-b806-ed1068f0d99f"
+                    },
+                    "isActive": true,
+                    "priority": 950,
+                    "tag": ""
+                },
+                "type": "CameraRenderer"
             }
-        ]
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "TownUICamera",
+        "objectID": "1b243c26-6d6c-591f-b9af-e889dbac1657",
+        "tag": ""
     },
-    "siblingIndex": 900002
+    "siblingIndex": 2000
 }

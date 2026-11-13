@@ -1,0 +1,71 @@
+{
+    "object": {
+        "name": "LoadingSpoke6",
+        "objectID": "a8c8a7ae-2fae-5c91-8aab-a9c1de38147d",
+        "isActive": true,
+        "tag": "",
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": -16.0,
+                            "y": 1.959434878635765e-15,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 4,
+                            "y": 12,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.7071067811865476,
+                            "w": 0.7071067811865476
+                        },
+                        "parent": "9fd6f445-0759-5220-95d2-76bdc8b53ea8"
+                    }
+                }
+            },
+            {
+                "type": "MeshFilter",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Rect2D"
+                    }
+                }
+            },
+            {
+                "type": "SpriteRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": "",
+                    "customData": {
+                        "targetObjectID": "e94edc18-7403-5db3-abaa-38937e40e826",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "materialName": "Default",
+                        "instanceColor": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1,
+                            "w": 0.6363636363636365
+                        },
+                        "renderPriority": 100
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 10000
+}

@@ -17,6 +17,15 @@
                 "tag": ""
             },
             "type": "SceneScriptEngine"
+        },
+        {
+            "data": {
+                "data": {},
+                "isActive": true,
+                "priority": 500,
+                "tag": ""
+            },
+            "type": "SceneAudioPlayer"
         }
     ],
     "sceneID": "9fd098cc-efee-5ef4-99c1-9569cd1081a0",

@@ -64,6 +64,7 @@
                 "data": {
                     "customData": {
                         "pipelineName": "Object3D.Solid.BlendNormal",
+                        "pointInstancesEnabled": false,
                         "targetObjectID": "007a5f43-18fb-59d6-a010-acebdfd1820e"
                     },
                     "isActive": true,
@@ -81,5 +82,5 @@
         "prefabNodeID": "0d28e468-b1f4-4016-8521-24ebfbd7b69c",
         "tag": ""
     },
-    "siblingIndex": 900008
+    "siblingIndex": 10000
 }

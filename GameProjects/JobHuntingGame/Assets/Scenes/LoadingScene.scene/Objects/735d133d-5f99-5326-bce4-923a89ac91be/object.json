@@ -1,0 +1,54 @@
+{
+    "object": {
+        "name": "LoadingController",
+        "objectID": "735d133d-5f99-5326-bce4-923a89ac91be",
+        "isActive": true,
+        "tag": "",
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0.0,
+                            "w": 1.0
+                        }
+                    }
+                }
+            },
+            {
+                "type": "ScriptComponent",
+                "data": {
+                    "isActive": true,
+                    "priority": 1000,
+                    "tag": "",
+                    "customData": {
+                        "scriptPath": "Assets/Application/Scripts/LightTown/LoadingController.as",
+                        "fields": {
+                            "minimumDisplaySeconds": 0.5,
+                            "iconFadeSeconds": 0.12
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 16000
+}

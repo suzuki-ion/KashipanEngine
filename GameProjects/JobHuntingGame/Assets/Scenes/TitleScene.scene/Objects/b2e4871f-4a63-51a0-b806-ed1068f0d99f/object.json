@@ -1,59 +1,64 @@
 {
     "object": {
-        "name": "TownCanvas",
-        "objectID": "b2e4871f-4a63-51a0-b806-ed1068f0d99f",
-        "isActive": true,
-        "tag": "",
-        "editorOnly": false,
-        "hiddenFromEditorTarget": false,
         "components": [
             {
-                "type": "Transform",
                 "data": {
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": "",
                     "customData": {
-                        "translate": {
-                            "x": 0,
-                            "y": 0,
-                            "z": 0
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
                         },
                         "scale": {
-                            "x": 1,
-                            "y": 1,
-                            "z": 1
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
                         },
-                        "rotate": {
-                            "x": 0,
-                            "y": 0,
-                            "z": 0,
-                            "w": 1
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
                         }
-                    }
-                }
-            },
-            {
-                "type": "ScreenBufferObject",
-                "data": {
+                    },
                     "isActive": true,
                     "priority": 1,
-                    "tag": "",
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
                     "customData": {
-                        "name": "LightTownComposite",
-                        "width": 1920,
-                        "height": 1080,
-                        "renderOrderPriority": 10,
                         "clearColor": {
-                            "x": 0,
-                            "y": 0,
-                            "z": 0,
-                            "w": 1
-                        }
-                    }
-                }
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "height": 1080,
+                        "isShowViewer": false,
+                        "name": "LightTownComposite",
+                        "renderOrderPriority": 10,
+                        "saveDirectory": "Screenshots",
+                        "saveFileNamePrefix": "Screenshot",
+                        "saveFormat": "png",
+                        "viewerId": 17173617651243033273,
+                        "width": 1920
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScreenBufferObject"
             }
-        ]
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "TownCanvas",
+        "objectID": "b2e4871f-4a63-51a0-b806-ed1068f0d99f",
+        "tag": ""
     },
-    "siblingIndex": 950000
+    "siblingIndex": 16000
 }

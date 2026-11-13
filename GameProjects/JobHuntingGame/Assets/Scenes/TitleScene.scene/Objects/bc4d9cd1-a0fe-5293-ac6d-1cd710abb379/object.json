@@ -1,0 +1,64 @@
+{
+    "object": {
+        "components": [
+            {
+                "data": {
+                    "customData": {
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "clearColor": {
+                            "w": 1.0,
+                            "x": 0.125490203499794,
+                            "y": 0.250980406999588,
+                            "z": 0.250980406999588
+                        },
+                        "height": 1080,
+                        "isShowViewer": false,
+                        "name": "TownSettingsScreen",
+                        "renderOrderPriority": -5,
+                        "saveDirectory": "Screenshots",
+                        "saveFileNamePrefix": "Screenshot",
+                        "saveFormat": "png",
+                        "viewerId": 1853782084828804126,
+                        "width": 1920
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScreenBufferObject"
+            }
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": false,
+        "name": "TownSettingsScreen",
+        "objectID": "bc4d9cd1-a0fe-5293-ac6d-1cd710abb379",
+        "tag": ""
+    },
+    "siblingIndex": 21000
+}

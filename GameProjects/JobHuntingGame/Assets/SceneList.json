@@ -1,17 +1,25 @@
 {
-    "startupScene": "TitleScene",
     "scenes": [
         {
-            "name": "TitleScene",
-            "filePath": "Assets/Scenes/TitleScene.scene"
+            "filePath": "Assets/Scenes/TitleScene.scene",
+            "name": "TitleScene"
         },
         {
-            "name": "CityScene",
-            "filePath": "Assets/Scenes/CityScene.scene"
+            "filePath": "Assets/Scenes/CityScene.scene",
+            "name": "CityScene"
         },
         {
-            "name": "ExpeditionScene",
-            "filePath": "Assets/Scenes/ExpeditionScene.scene"
+            "filePath": "Assets/Scenes/ExpeditionScene.scene",
+            "name": "ExpeditionScene"
+        },
+        {
+            "filePath": "Assets/Scenes/StageSelectScene.scene",
+            "name": "StageSelectScene"
+        },
+        {
+            "filePath": "Assets/Scenes/LoadingScene.scene",
+            "name": "LoadingScene"
         }
-    ]
+    ],
+    "startupScene": "TitleScene"
 }

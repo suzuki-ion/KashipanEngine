@@ -1,0 +1,71 @@
+{
+    "object": {
+        "name": "LoadingSpoke2",
+        "objectID": "93317933-7514-53f6-b529-5e0d91de5b78",
+        "isActive": true,
+        "tag": "",
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 8.000000000000002,
+                            "y": 13.856406460551018,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 4,
+                            "y": 12,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": -0.2588190451025208,
+                            "w": 0.9659258262890683
+                        },
+                        "parent": "9fd6f445-0759-5220-95d2-76bdc8b53ea8"
+                    }
+                }
+            },
+            {
+                "type": "MeshFilter",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Rect2D"
+                    }
+                }
+            },
+            {
+                "type": "SpriteRenderer",
+                "data": {
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": "",
+                    "customData": {
+                        "targetObjectID": "e94edc18-7403-5db3-abaa-38937e40e826",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "materialName": "Default",
+                        "instanceColor": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1,
+                            "w": 0.34545454545454546
+                        },
+                        "renderPriority": 100
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 6000
+}

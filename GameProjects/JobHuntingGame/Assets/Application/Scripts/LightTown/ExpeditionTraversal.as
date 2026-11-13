@@ -3,6 +3,7 @@ class ExpeditionPlatform {
     Vector3 position, size;
     float angle = 0;
     bool ramp = false;
+    bool wallLamp = false;
 }
 class ExpeditionTraversal {
     array<bool>@ solid;
@@ -11,6 +12,8 @@ class ExpeditionTraversal {
     array<bool>@ reached = array<bool>();
     array<array<uint>@>@ platformRows=array<array<uint>@>();
     array<Vector3>@ halfBounds=array<Vector3>();
+    array<array<uint>@>@ nodeBuckets=array<array<uint>@>();
+    uint bucketColumns=0,bucketRows=0;
     uint width, height;
     float jump = 20, gravity = 48, speed = 6;
     float halfWidth = .51f, halfHeight = 1.01f;
@@ -69,7 +72,7 @@ class ExpeditionTraversal {
         return false;
     }
     void BuildNodes() {
-        platformRows.resize(height);for(uint y=0;y<height;++y)@platformRows[y]=array<uint>();
+        platformRows.resize(height);for(uint y=0;y<height;++y){if(platformRows[y] is null)@platformRows[y]=array<uint>();else platformRows[y].resize(0);}
         halfBounds.resize(platforms.length());
         for(uint i=0;i<platforms.length();++i){ExpeditionPlatform@ s=platforms[i];
             float w=(Abs(Cos(s.angle))*s.size.x+Abs(Sin(s.angle))*s.size.y)*.5f;
@@ -92,16 +95,23 @@ class ExpeditionTraversal {
             // 高さ2mの体でも上段の床を避けて跳べるよう、足場の端寄りも出発点に含める。
             for(int side=-1;side<=1;++side){Vector3 p=s.position+Vector3(float(side)*(s.size.x*.5f-.15f),s.size.y*.5f+1.06f,0);if(Clear(p))nodes.insertLast(p);}
         }
+        bucketColumns=(width+7)/8;bucketRows=(height+7)/8;nodeBuckets.resize(bucketColumns*bucketRows);
+        for(uint i=0;i<nodeBuckets.length();++i){if(nodeBuckets[i] is null)@nodeBuckets[i]=array<uint>();else nodeBuckets[i].resize(0);}
+        for(uint i=0;i<nodes.length();++i){uint x=uint(nodes[i].x)/8,y=uint(nodes[i].y)/8;if(x<bucketColumns&&y<bucketRows)nodeBuckets[y*bucketColumns+x].insertLast(i);}
     }
     bool Flood(const Vector3 &in start,bool reverse=false) {
         BuildNodes();reached.resize(nodes.length());for(uint i=0;i<reached.length();++i)reached[i]=false;
         array<uint> queue;testedEdges=0;
         for(uint i=0;i<nodes.length();++i)if(Abs(nodes[i].x-start.x)<7&&Abs(nodes[i].y-start.y)<.2f&&Travel(start,nodes[i])){reached[i]=true;queue.insertLast(i);}
         for(uint head=0;head<queue.length();++head){Vector3 a=nodes[queue[head]];
-            for(uint j=0;j<nodes.length();++j){if(reached[j])continue;Vector3 b=nodes[j];
+            int x0=int(Floor((a.x-7)/8)),x1=int(Floor((a.x+7)/8));
+            int y0=int(Floor((a.y-6)/8)),y1=int(Floor((a.y+3.5f)/8));
+            for(int y=y0;y<=y1;++y)for(int x=x0;x<=x1;++x){if(x<0||y<0||x>=int(bucketColumns)||y>=int(bucketRows))continue;
+            array<uint>@ bucket=nodeBuckets[uint(y)*bucketColumns+uint(x)];
+            for(uint at=0;at<bucket.length();++at){uint j=bucket[at];if(reached[j])continue;Vector3 b=nodes[j];
                 if(Abs(a.x-b.x)>7||b.y-a.y>3.5f||b.y-a.y< -6)continue;
                 ++testedEdges;if(reverse?Travel(b,a):Travel(a,b)){reached[j]=true;queue.insertLast(j);}
-            }
+            }}
         }
         return queue.length()>0;
     }

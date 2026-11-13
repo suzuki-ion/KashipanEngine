@@ -1,70 +1,96 @@
 {
     "object": {
-        "name": "TownPanelMenu",
-        "objectID": "1ffd3eb9-0a80-58d0-800e-b5b46a34efeb",
-        "isActive": false,
-        "tag": "",
-        "editorOnly": false,
-        "hiddenFromEditorTarget": false,
         "components": [
             {
-                "type": "Transform",
                 "data": {
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": "",
                     "customData": {
-                        "translate": {
-                            "x": 160,
-                            "y": 360,
-                            "z": 0
-                        },
-                        "scale": {
-                            "x": 304,
-                            "y": 520,
-                            "z": 1
-                        },
                         "rotate": {
+                            "w": 1.0,
                             "x": 0.0,
                             "y": 0.0,
-                            "z": -0.0,
-                            "w": 1.0
+                            "z": -0.0
+                        },
+                        "scale": {
+                            "x": 304.0,
+                            "y": 520.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 160.0,
+                            "y": 360.0,
+                            "z": 0.0
                         }
-                    }
-                }
-            },
-            {
-                "type": "MeshFilter",
-                "data": {
+                    },
                     "isActive": true,
                     "priority": 1,
-                    "tag": "",
-                    "customData": {
-                        "meshAssetPath": "PrimitiveMesh-Rect2D"
-                    }
-                }
+                    "tag": ""
+                },
+                "type": "Transform"
             },
             {
-                "type": "SpriteRenderer",
                 "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Rect2D"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "anchor": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceColor": {
+                            "w": 0.3199999928474426,
+                            "x": 0.02500000037252903,
+                            "y": 0.05999999865889549,
+                            "z": 0.10000000149011612
+                        },
+                        "instanceColorBlendMode": 1,
+                        "instanceUvCombineMode": 0,
+                        "instanceUvPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceUvRotation": 0.0,
+                        "instanceUvScale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "instanceUvTranslate": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "materialName": "TownUIOverlay",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "pixelSnapOutsetPixels": 0.0,
+                        "pixelSnapping": false,
+                        "renderPriority": 20,
+                        "targetObjectID": "b2e4871f-4a63-51a0-b806-ed1068f0d99f"
+                    },
                     "isActive": true,
                     "priority": 900,
-                    "tag": "",
-                    "customData": {
-                        "targetObjectID": "b2e4871f-4a63-51a0-b806-ed1068f0d99f",
-                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
-                        "materialName": "TownUIOverlay",
-                        "instanceColor": {
-                            "x": 0.025,
-                            "y": 0.06,
-                            "z": 0.1,
-                            "w": 0.32
-                        },
-                        "renderPriority": 20
-                    }
-                }
+                    "tag": ""
+                },
+                "type": "SpriteRenderer"
             }
-        ]
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": false,
+        "name": "TownPanelMenu",
+        "objectID": "1ffd3eb9-0a80-58d0-800e-b5b46a34efeb",
+        "tag": ""
     },
-    "siblingIndex": 900004
+    "siblingIndex": 5000
 }

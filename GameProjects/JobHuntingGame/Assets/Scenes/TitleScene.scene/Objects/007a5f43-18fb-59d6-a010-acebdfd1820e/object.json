@@ -1,41 +1,41 @@
 {
     "object": {
-        "name": "TownScreen",
-        "objectID": "007a5f43-18fb-59d6-a010-acebdfd1820e",
-        "isActive": true,
-        "tag": "",
-        "editorOnly": false,
-        "hiddenFromEditorTarget": false,
         "components": [
             {
-                "type": "Transform",
                 "data": {
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": "",
                     "customData": {
-                        "translate": {
-                            "x": 0,
-                            "y": 0,
-                            "z": 0
-                        },
-                        "scale": {
-                            "x": 1,
-                            "y": 1,
-                            "z": 1
-                        },
                         "rotate": {
+                            "w": 1.0,
                             "x": 0.0,
                             "y": 0.0,
-                            "z": -0.0,
-                            "w": 1.0
+                            "z": -0.0
+                        },
+                        "scale": {
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
                         }
-                    }
-                }
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "Transform"
             },
             {
                 "data": {
                     "customData": {
+                        "clearColor": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
+                        },
                         "height": 1080,
                         "isShowViewer": true,
                         "name": "LightTownWorld",
@@ -43,13 +43,8 @@
                         "saveDirectory": "Screenshots",
                         "saveFileNamePrefix": "Screenshot",
                         "saveFormat": "png",
-                        "width": 1920,
-                        "clearColor": {
-                            "x": 0,
-                            "y": 0,
-                            "z": 0,
-                            "w": 1
-                        }
+                        "viewerId": 16699690702353827593,
+                        "width": 1920
                     },
                     "isActive": true,
                     "priority": 1,
@@ -221,24 +216,30 @@
                 "type": "ColorAdjustEffect"
             },
             {
-                "type": "ScriptComponent",
                 "data": {
+                    "customData": {
+                        "fields": {
+                            "cameraObject": "18db2933-9b83-51bf-baa5-358111ba1688",
+                            "focusResponse": 0.0,
+                            "playerObject": "9ba5bbe0-1b3f-5b71-941c-886f642386f5",
+                            "screenObject": "007a5f43-18fb-59d6-a010-acebdfd1820e",
+                            "useViewDepth": false
+                        },
+                        "scriptPath": "Assets/Application/Scripts/PostEffectController.as"
+                    },
                     "isActive": true,
                     "priority": 11,
-                    "tag": "",
-                    "customData": {
-                        "scriptPath": "Assets/Application/Scripts/PostEffectController.as",
-                        "fields": {
-                            "playerObject": "9ba5bbe0-1b3f-5b71-941c-886f642386f5",
-                            "cameraObject": "18db2933-9b83-51bf-baa5-358111ba1688",
-                            "screenObject": "007a5f43-18fb-59d6-a010-acebdfd1820e",
-                            "useViewDepth": false,
-                            "focusResponse": 0.0
-                        }
-                    }
-                }
+                    "tag": ""
+                },
+                "type": "ScriptComponent"
             }
-        ]
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "TownScreen",
+        "objectID": "007a5f43-18fb-59d6-a010-acebdfd1820e",
+        "tag": ""
     },
-    "siblingIndex": 900000
+    "siblingIndex": 0
 }

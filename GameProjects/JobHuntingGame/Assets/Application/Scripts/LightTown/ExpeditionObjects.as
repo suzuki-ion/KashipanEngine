@@ -6,8 +6,8 @@ Object@ ExpeditionFloor(Scene@ scene, const string &in name, const Vector3 &in p
     if (obj is null) { LogError("ExpeditionGroundTemplateがありません。"); return null; }
     obj.GetTransform().SetTranslate(pos); obj.GetTransform().SetScale(scale);
     obj.GetTransform().SetRotate(Vector3(0, 0, angle)); obj.SetActive(true);
-    // 旧Stage1/GameSceneの地面と同じ白いDefault材質。素材の色分けは収集物側で行う。
-    MeshRenderer@ mesh; obj.GetComponent(@mesh); mesh.SetInstanceColor(Vector4(1, 1, 1, 1));
+    // Keep the historical material and synchronized collider; tint per stage.
+    MeshRenderer@ mesh; obj.GetComponent(@mesh); mesh.SetInstanceColor(color);
     return obj;
 }
 // 複製した階層内の部品だけを検索し、別インスタンスへの参照を防ぐ。

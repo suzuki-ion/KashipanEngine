@@ -10,7 +10,7 @@ bool ExpeditionAttackRange(const Vector3 &in player,const Vector3 &in target,flo
 }
 class ExpeditionResource {
     Object@ model;Object@ bar;Object@ back;
-    int kind=0,hp=0,maxHP=0;float flash=0,barAge=0;
+    int kind=0,hp=0,maxHP=0,specialRoom=-1;float flash=0,barAge=0;
     Vector3 base;
     Vector4 color;
     void Initialize(Scene@ scene,int resource,const Vector3 &in floor) {
@@ -25,7 +25,10 @@ class ExpeditionResource {
         if(hp<=0)return false;--hp;flash=.16f;barAge=2.5f;return hp==0;
     }
     void Update(float dt) {
-        if(hp<=0){model.SetActive(false);bar.SetActive(false);back.SetActive(false);return;}
+        if(hp<=0){if(model.IsActive()){model.SetActive(false);bar.SetActive(false);back.SetActive(false);}return;}
+        // Untouched nodes are already in their resting pose. Expanded maps must
+        // not rewrite every model and hidden HP bar on every frame.
+        if(flash<=0&&barAge<=0)return;
         flash-=dt;barAge-=dt;MeshRenderer@ r;model.GetComponent(@r);r.SetInstanceColor(flash>0?Vector4(1,.65f,.3f,1):color);
         model.GetTransform().SetTranslate(base+Vector3(flash>0?Sin(flash*95)*.07f:0,0,0));
         bar.SetActive(barAge>0);back.SetActive(barAge>0);

@@ -1,5 +1,8 @@
+#include "FireflyMotionRegression.as"
+#include "../GameProjects/JobHuntingGame/Assets/Application/Scripts/LightTown/ExpeditionHarvestVisibility.as"
 #include "../GameProjects/JobHuntingGame/Assets/Application/Scripts/LightTown/TownState.as"
 #include "../GameProjects/JobHuntingGame/Assets/Application/Scripts/LightTown/ExpeditionGenerator.as"
+#include "../GameProjects/JobHuntingGame/Assets/Application/Scripts/LightTown/ExpeditionSpecialLayout.as"
 #include "../GameProjects/JobHuntingGame/Assets/Application/Scripts/LightTown/TownSettings.as"
 #include "../GameProjects/JobHuntingGame/Assets/Application/Scripts/LightTown/TownCamera.as"
 #include "../GameProjects/JobHuntingGame/Assets/Application/Scripts/PostEffectController.as"
@@ -10,11 +13,44 @@
 #include "../GameProjects/JobHuntingGame/Assets/Application/Scripts/LightTown/ExpeditionHarvest.as"
 #include "../GameProjects/JobHuntingGame/Assets/Application/Scripts/Player/PlayerAttack.as"
 #include "../GameProjects/JobHuntingGame/Assets/Application/Scripts/LightTown/TownFacilityIndicators.as"
+#include "../GameProjects/JobHuntingGame/Assets/Application/Scripts/LightTown/TownStages.as"
+#include "../GameProjects/JobHuntingGame/Assets/Application/Scripts/LightTown/TownPedestrians.as"
 
 void Check(bool passed, const string &in message) {
     if (!passed) throw(message);
 }
 void Run() {
+    CheckFireflyGeometry();
+    array<ExpeditionPlatform@> platforms;
+    for(uint i=0;i<32;++i){ExpeditionPlatform@ p=ExpeditionPlatform();p.position=Vector3(float(i%8)*8, float(i/8)*8,0);p.size=Vector3(4,.5f,3);p.angle=float(i)*.19f;platforms.insertLast(p);}
+    ExpeditionHarvestVisibility visibility;visibility.Build(platforms,64,40);
+    for(uint i=0;i<4000;++i){Vector3 p(float(i*37%6400)/100,float(i*83%4000)/100,0);bool reference=false;
+        for(uint j=0;j<platforms.length();++j){ExpeditionPlatform@ s=platforms[j];Vector3 d=p-s.position;
+            if(Abs(d.x*Cos(s.angle)+d.y*Sin(s.angle))<s.size.x*.5f&&Abs(-d.x*Sin(s.angle)+d.y*Cos(s.angle))<s.size.y*.5f)reference=true;}
+        Check(visibility.Blocked(p)==reference,"harvest spatial query matches rotated platform geometry");
+    }
+    visibility.Build(array<ExpeditionPlatform@>(),64,40);Check(!visibility.Blocked(Vector3()),"visibility rebuild removes old obstacles");
+
+    array<string> expandedProfiles={"forest","quarry","grotto"};
+    for(uint p=0;p<expandedProfiles.length();++p)for(uint seed=1;seed<=2;++seed){
+        ExpeditionGenerator expanded;expanded.SetProfile(expandedProfiles[p]);
+        Check(expanded.Solve(96,seed,8)&&!expanded.usedFallback&&expanded.rooms.length()==64&&expanded.height==116,"expanded generation "+expandedProfiles[p]+" seed="+seed+" reason="+expanded.routeProblem);
+        ExpeditionSpecialLayout annex;
+        bool annexOK=annex.Build(expanded);Check(annexOK,"special chamber routes "+expandedProfiles[p]+" seed="+seed+" reason="+expanded.routeProblem+" annex="+annex.problem);
+        Check(expanded.width==152&&annex.zones.length()==4&&expanded.routeValidated,"large bounds and four optional caches");
+        Check(!annex.Open(0)&&!annex.CanHarvest(0)&&annex.CanHarvest(1)&&annex.CanHarvest(-1),"locked and open resource access");
+        Check(annex.TakeKey(2)&&!annex.Open(0)&&annex.Open(2)&&annex.CanHarvest(2),"keys only open the matching passage");
+        Check(annex.TakeKey(0)&&!annex.TakeKey(0)&&annex.Open(0)&&!annex.Open(0)&&annex.CanHarvest(0),"key pickup and unlocking are idempotent");
+        for(uint i=0;i<annex.zones.length();++i)Check(annex.zones[i].ResourceCount()>=5,"special rooms contain multiple resource nodes");
+    }
+    ExpeditionGenerator ceilingTest;ceilingTest.width=20;ceilingTest.height=20;ceilingTest.solid.resize(400);
+    ExpeditionRoom fixtureRoom;fixtureRoom.left=4;fixtureRoom.width=12;fixtureRoom.bottom=3;fixtureRoom.height=10;
+    for(int x=0;x<20;++x)ceilingTest.solid[uint(13*20+x)]=true;
+    Check(ceilingTest.CanPlaceFluorescent(fixtureRoom),"fluorescent beneath intact ceiling");
+    ceilingTest.solid[13*20+12]=false;
+    Check(!ceilingTest.CanPlaceFluorescent(fixtureRoom),"shaft at fixture edge suppresses whole fluorescent");
+    ceilingTest.solid[13*20+12]=true;ceilingTest.solid[13*20+10]=false;
+    Check(!ceilingTest.CanPlaceFluorescent(fixtureRoom),"open ceiling suppresses whole fluorescent");
     float facilityHit=0;
     Check(TownRayFacility(Vector3(0,3,-5),Vector3(0,-2,10),Vector3(0,1,0),Vector3(.7f,1,.7f),facilityHit)&&facilityHit>0&&facilityHit<1,"facility selection includes the building height");
     Check(!TownRayFacility(Vector3(2,3,-5),Vector3(0,-2,10),Vector3(0,1,0),Vector3(.7f,1,.7f),facilityHit),"parallel ray outside facility does not select it");
@@ -35,12 +71,21 @@ void Run() {
     TownState state;
     Check(state.Initialize(GetScene()), "state initialization");
     state.NewGame();
+    string emptyTown=state.data.ToString();state.Produce();state.Event();state.Tick(1000);
+    Check(state.data.ToString()==emptyTown,"empty town has no passive resources, parameters or random events");
+    array<float>@ emptyForecast=state.ProductionDeltas();for(uint i=0;i<7;++i)Check(emptyForecast[i]==0,"empty town forecasts zero");
     int wood = int(state.data.GetInt("wood"));
     Check(!state.Build(5, 0, 0) && state.data.GetInt("wood") == wood, "failed build must not consume materials");
     Check(state.Build(0, 0, 0), "first lamp");
+    Check(state.BuildingCount()==1&&state.BuildingAt(0,0).GetInt("kind")==0&&state.BuildingAt(-1,0) is null&&state.BuildingAt(16,0) is null,"cell index covers buildings and rejects outside coordinates");
+    Json@ isolatedBuilding=state.BuildingAt(0,0);isolatedBuilding.SetInt("kind",4);
+    Check(state.BuildingAt(0,0).GetInt("kind")==0,"cached lookup retains detached JSON edit semantics");
+    state.Tick(.01f);Check(state.BuildingAt(0,0).GetInt("kind")==0&&state.BuildingCount()==1,"idle guild update keeps indexed state valid");
     Check(state.WorkingCount(0)==0,"lamp without adjacent road is inactive");
-    Check(state.data.GetFloat("energy")==60&&state.data.GetFloat("safety")==50,"placement keeps existing periodic parameter rules");
+    Check(state.data.GetFloat("energy")==60&&state.data.GetFloat("safety")==52&&state.data.GetFloat("prosperity")==15,"construction grants safety and prosperity once but does not produce light");
+    state.Produce();Check(state.data.GetFloat("safety")==52&&state.data.GetFloat("prosperity")==15&&state.data.GetFloat("happiness")==50,"production does not reapply construction parameter buffs");
     Check(state.Build(6,0,1)&&state.WorkingCount(0)==1,"road-connected lamp bootstraps its own illumination");
+    Check(state.BuildingCount()==2&&state.BuildingAt(0,1).GetInt("kind")==6,"construction refreshes indexed lookup");
     wood = int(state.data.GetInt("wood"));
     Check(!state.Build(1, 0, 0) && state.data.GetInt("wood") == wood, "occupied cell atomicity");
     Check(!state.Build(0, -1, 0) && !state.Build(0, 16, 0), "grid bounds");
@@ -62,6 +107,7 @@ void Run() {
     Check(state.Build(4, 2, 0), "guild construction");
     Check(state.Build(6,2,1)&&state.WorkingCount(4)==1,"guild road and light requirements");
     state.Dispatch(); state.Tick(20); state.Save();
+    Check(state.BuildingAt(2,0).GetFloat("dispatchRemaining")==25,"guild timer updates invalidate cached building copies");
     TownState resumed;
     Check(resumed.Initialize(GetScene()), "load from disk");
     Check(resumed.data.GetBool("dispatchActive") && resumed.data.GetFloat("dispatchRemaining") == 25, "dispatch countdown persistence");
@@ -95,6 +141,7 @@ void Run() {
 
     // アクション報酬ゼロでも街側の生産のみで塔まで進める。
     state.NewGame();
+    Check(state.BuildingCount()==0&&state.BuildingAt(0,0) is null,"new game clears indexed buildings");
     for(int x=0;x<=8;++x)Check(state.Build(6,x,1),"initial roads without action income");
     array<int> plan = {0,0,1,1,2,2,3,4};array<int> positions={0,6,1,2,3,4,5,7};
     for(uint i=0;i<plan.length();++i){
@@ -102,6 +149,7 @@ void Run() {
         Check(state.Build(plan[i],positions[i],0),"city-only operational facility progression");
         Check(state.IsWorking(positions[i],0),"planned facilities have roads and lighting");
     }
+    for(int extra=0;extra<2;++extra){int x=extra==0?1:5;for(int step=0;step<300&&state.BuildProblem(1,x,2)!="";++step)state.Tick(10);Check(state.Build(1,x,2),"additional houses bring fixed prosperity to the tower requirement");}
     for(int step=0;step<300&&state.BuildProblem(5,8,0)!="";++step)state.Tick(10);
     Check(state.Build(5,8,0)&&state.data.GetBool("cleared"),"city-only victory with operational tower");
     Check(state.ClearPending(), "tower completion queues the clear decision");
@@ -142,13 +190,53 @@ void Run() {
     Check(restored.TakeEvents().Size()>0&&restored.TakeEvents().Size()==0,"event notifications persist and are consumed once");
     Check(TownDeltaColor(32,1).y>TownDeltaColor(32,1).x&&TownDeltaColor(-16,1).x>TownDeltaColor(-16,1).y,"resource gains green and losses red");
     Check(TownBurstAlpha(0)==1&&TownBurstAlpha(.6f)<1&&TownBurstAlpha(1.3f)==0,"resource delta fades over its animation");
-    Check(state.data.GetFloat("energy") >= 0 && state.data.GetFloat("energy") <= 2046, "energy bounds");
+    Check(state.data.GetFloat("energy") >= 0 && state.data.GetFloat("energy") <= 2048, "energy bounds");
     TownState energyState;Check(energyState.Initialize(GetScene()), "energy cap state");energyState.NewGame();
+    Check(energyState.Build(6,0,1),"road-only fixture");string roadOnly=energyState.data.ToString();energyState.Tick(1000);energyState.Produce();energyState.Event();Check(energyState.data.ToString()==roadOnly,"roads alone do not start production or events");
+    Check(energyState.Build(0,3,3),"inactive facility starts production");
     energyState.data.SetFloat("energy",100);energyState.Produce();Check(energyState.data.GetFloat("energy")==104, "energy grows beyond former cap");
-    energyState.data.SetFloat("energy",2045);energyState.Produce();Check(energyState.data.GetFloat("energy")==2046, "production clamps energy at 2046");
-    energyState.data.SetFloat("energy",3000);energyState.Save();TownState cappedLoad;Check(cappedLoad.Initialize(GetScene())&&cappedLoad.data.GetFloat("energy")==2046, "loaded energy is capped");
+    energyState.data.SetFloat("energy",2047);energyState.Produce();Check(energyState.data.GetFloat("energy")==2048, "production clamps energy at 2048");
+    energyState.data.SetFloat("energy",3000);energyState.Save();TownState cappedLoad;Check(cappedLoad.Initialize(GetScene())&&cappedLoad.data.GetFloat("energy")==2048, "loaded energy is capped");
     Check(state.data.GetFloat("happiness") <= 100 && state.data.GetFloat("safety") <= 100 && state.data.GetFloat("prosperity") <= 100, "parameter bounds");
 
+    energyState.data.SetFloat("energy",2047);energyState.data.SetFloat("happiness",100);energyState.data.SetFloat("prosperity",100);
+    array<string> forecastKeys={"wood","stone","crystal","energy","happiness","safety","prosperity"};array<float> forecastBefore(7);
+    for(uint i=0;i<7;++i)forecastBefore[i]=float(energyState.data.GetFloat(forecastKeys[i]));
+    array<float>@ forecast=energyState.ProductionDeltas();energyState.Produce();
+    for(uint i=0;i<7;++i)Check(Abs(float(energyState.data.GetFloat(forecastKeys[i]))-forecastBefore[i]-forecast[i])<.001f,"forecast matches actual payout including caps");
+    Check(forecast[3]==1&&forecast[4]==0&&forecast[6]==0,"production caps light and leaves construction parameters unchanged");
+    energyState.data.SetFloat("energy",0);@forecast=energyState.ProductionDeltas();Check(forecast[4]==-3&&forecast[5]==-3&&forecast[6]==0,"low light penalties remain periodic while prosperity stays fixed");
+    Check(TownForecastNumber(forecast[4]/energyState.ProductionInterval())=="-0.3"&&TownForecastNumber(.01f)=="+0.01","per-second rates preserve fractional values");
+    energyState.data.SetFloat("happiness",99.5f);energyState.data.SetFloat("safety",99);energyState.data.SetFloat("prosperity",99);
+    Check(energyState.Build(1,4,3)&&energyState.data.GetFloat("happiness")==100&&energyState.data.GetFloat("prosperity")==100,"construction buffs clamp to parameter limits");
+    Check(!energyState.Build(1,4,3)&&energyState.data.GetFloat("happiness")==100,"failed construction never reapplies buffs");
+    energyState.Save();TownState buffReload;Check(buffReload.Initialize(GetScene())&&buffReload.data.GetFloat("happiness")==100&&buffReload.data.GetFloat("prosperity")==100,"loading does not replay construction buffs");
+    Check(TownForecastNumber(-2.5f)=="-2.5"&&TownForecastNumber(10)=="+10"&&TownForecastNumber(0)=="0","forecast signed text");
+    Check(TownForecastColor(-1).x>TownForecastColor(-1).y&&TownForecastColor(1).y>TownForecastColor(1).x,"forecast loss red and gain green");
+    TownStages destinations;Check(destinations.Load()&&destinations.Count()==3&&destinations.Index("missing")==0,"stage catalog and legacy fallback");
+    for(uint stageIndex=0;stageIndex<destinations.Count();++stageIndex){array<int> counts(3,0);for(uint room=0;room<16;++room)++counts[uint(destinations.ResourceKind(destinations.At(int(stageIndex)),room))];Check(counts[stageIndex]>counts[(stageIndex+1)%3]&&counts[stageIndex]>counts[(stageIndex+2)%3]&&counts[0]>0&&counts[1]>0&&counts[2]>0,"stage-specific material bias retains all resources");}
+    energyState.data.SetString("selectedStage","grotto");energyState.Save();TownState stageReload;Check(stageReload.Initialize(GetScene())&&stageReload.data.GetString("selectedStage")=="grotto","selected destination persists");
+    Check(TownPopulationTarget(0,20,0)==0&&TownPopulationTarget(3,0,0)==0&&TownPopulationTarget(2,10,1)<TownPopulationTarget(8,10,3)&&TownPopulationTarget(200,256,80)==240,"population follows houses without a fixed 48-person cap");
+    TownPedestrians paths;@paths.state=network;array<int>@ neighbors=paths.Neighbors(10*16+10);Check(neighbors.length()==4,"walkers use four-way roads");for(uint id=0;id<12;++id)Check(paths.Next(10*16+10,10*16+9,id,0)!=10*16+9,"walkers avoid immediate backtracking at intersections");Check(paths.Neighbors(0).length()==0,"walkers cannot wrap around grid edges");
+
+    array<int> profileOpen(3,0);
+    for(uint pass=0;pass<destinations.Count();++pass){uint destination=(pass+2)%destinations.Count();
+        string profile=destinations.At(int(destination)).GetString("generation");
+        for(uint seed=1;seed<=16;++seed){ExpeditionGenerator themed;Check(themed.SetProfile(profile)&&!themed.SetProfile("invalid")&&themed.profile==profile,"explicit generation profile validation");
+            bool solvedTheme=themed.Solve(48,seed);
+            Check(solvedTheme&&themed.routeValidated&&!themed.usedFallback&&themed.repairCount<2,"themed normal-form route validation profile="+profile+" seed="+seed+" repair="+themed.repairCount+" fallback="+themed.usedFallback+" reason="+themed.routeProblem);
+            Check(themed.columns==4&&themed.rows==4&&themed.rooms.length()==16&&themed.startRoom!=themed.goalRoom,"themed two-dimensional stage with separate endpoints");
+            array<int>@ distances=themed.Distances(themed.startRoom);int vertical=0,horizontal=0;
+            for(uint room=0;room<themed.rooms.length();++room){Check(distances[room]>=0,"all themed rooms connected");Vector3 anchor=themed.RoomAnchor(room);Check(themed.IsSolid(int(anchor.x),int(anchor.y)-2)&&!themed.IsSolid(int(anchor.x),int(anchor.y)+1),"themed material anchors have support and headroom");}
+            for(uint edge=0;edge<themed.links.length();++edge){if(themed.links[edge].vertical)++vertical;else ++horizontal;}
+            if(profile=="forest"){int low=100,high=0;for(uint x=1;x+1<themed.width;++x){int floor=themed.ForestFloor(int(x));if(floor<low)low=floor;if(floor>high)high=floor;}Check(horizontal>vertical&&high>low&&themed.rooms[themed.columns].bottom>themed.rooms[0].bottom,"forest has rolling ground and elevated canopy routes");Check(!themed.IsSolid(int(themed.width)/2,int(themed.height)-2),"forest is open to the sky");}
+            if(profile=="quarry")Check(vertical>horizontal&&themed.rooms[0].height==10,"quarry emphasizes extraction shafts");
+            if(profile=="grotto"){int roughCeilings=0;for(uint r=0;r<themed.rooms.length();++r){ExpeditionRoom@ pocket=themed.rooms[r];int previous=-1;for(int x=pocket.left;x<pocket.left+pocket.width;++x){int y=pocket.bottom+3;while(y<int(themed.height)-1&&!themed.IsSolid(x,y))++y;if(previous>=0&&y!=previous)++roughCeilings;previous=y;}}Check(roughCeilings>0,"grotto has irregular pocket ceilings");for(uint cell=0;cell<themed.solid.length();++cell)if(themed.caveSupports[cell])Check(themed.solid[cell],"organic carving preserves supporting rock");}
+            for(uint cell=0;cell<themed.solid.length();++cell)if(!themed.solid[cell])++profileOpen[destination];
+            if(seed==1){ExpeditionGenerator repeated;repeated.SetProfile(profile);Check(repeated.Solve(48,seed)&&repeated.startRoom==themed.startRoom&&repeated.goalRoom==themed.goalRoom&&repeated.links.length()==themed.links.length(),"themed deterministic endpoints");for(uint cell=0;cell<themed.solid.length();++cell)Check(themed.solid[cell]==repeated.solid[cell],"themed deterministic geometry");}
+        }
+    }
+    Check(profileOpen[0]>profileOpen[1]&&profileOpen[2]!=profileOpen[1],"profiles differ in openness: forest="+profileOpen[0]+" quarry="+profileOpen[1]+" grotto="+profileOpen[2]);
     uint startRows = 0, goalRows = 0; bool leftward = false, rightward = false;
     for (uint seed = 1; seed <= 128; ++seed) {
         ExpeditionGenerator stage;
@@ -283,7 +371,7 @@ void Run() {
     Check(!gtao.IsActive() && !ssao.IsActive() && !fxaa.IsActive() && !motion.IsActive() && !dof.IsActive() && !chromatic.IsActive() && !vignette.IsActive(), "all optional prefab effects disabled");
     SetSettingBool("town.postEffects", true); TownApplySettings(GetScene());
     Check(gtao.IsActive() && !ssao.IsActive() && fxaa.IsActive() && motion.IsActive() && dof.IsActive() && chromatic.IsActive() && bloom.IsActive() && vignette.IsActive(), "city enables GTAO, DOF and motion blur after settings toggles");
-    Check(TownFireflyCount(0) == 0 && TownFireflyCount(25) == 25 && TownFireflyCount(100) == 100 && TownFireflyCount(2046) == 2046 && TownFireflyCount(3000) == 2046, "firefly population follows bounded energy");
+    Check(TownFireflyCount(0) == 0 && TownFireflyCount(25) == 25 && TownFireflyCount(100) == 100 && TownFireflyCount(2048) == 2048 && TownFireflyCount(3000) == 2048, "firefly population follows bounded energy");
     Check(TownStreetlightCovers(3,0,1.5f) && TownStreetlightCovers(-3,0,1.5f) && TownStreetlightCovers(0,3,1.5f) && !TownStreetlightCovers(3,1,1.5f), "streetlight footprint is a centered circle");
     TownFireflies swarm; Vector3 fireflyFirst = swarm.Position(0); swarm.clock = 1;
     Vector3 fireflyMove = swarm.Position(0) - fireflyFirst;

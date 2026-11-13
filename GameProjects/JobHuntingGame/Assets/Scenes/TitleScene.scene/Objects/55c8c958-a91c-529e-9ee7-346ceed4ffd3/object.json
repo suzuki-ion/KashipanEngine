@@ -1,55 +1,102 @@
 {
     "object": {
-        "name": "TownBGM",
-        "objectID": "55c8c958-a91c-529e-9ee7-346ceed4ffd3",
-        "isActive": true,
-        "tag": "",
-        "editorOnly": false,
-        "hiddenFromEditorTarget": false,
         "components": [
             {
-                "type": "Transform",
                 "data": {
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": "",
                     "customData": {
-                        "translate": {
-                            "x": 0,
-                            "y": 0,
-                            "z": 0
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
                         },
                         "scale": {
-                            "x": 1,
-                            "y": 1,
-                            "z": 1
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
                         },
-                        "rotate": {
-                            "x": 0,
-                            "y": 0,
-                            "z": 0,
-                            "w": 1
+                        "translate": {
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
                         }
-                    }
-                }
-            },
-            {
-                "type": "AudioSource",
-                "data": {
+                    },
                     "isActive": true,
                     "priority": 1,
-                    "tag": "",
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
                     "customData": {
-                        "soundName": "Application/Sound/bgmTitleScene.mp3",
                         "category": "BGM",
-                        "volume": 1,
+                        "effects": {
+                            "echo": {
+                                "delayMs": 500.0,
+                                "enabled": false,
+                                "feedback": 0.5,
+                                "wetDryMix": 0.5
+                            },
+                            "eq": {
+                                "bandwidth": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ],
+                                "enabled": false,
+                                "frequencyCenter": [
+                                    100.0,
+                                    800.0,
+                                    2000.0,
+                                    10000.0
+                                ],
+                                "gain": [
+                                    1.0,
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ]
+                            },
+                            "filter": {
+                                "enabled": false,
+                                "frequency": 1.0,
+                                "kind": 0,
+                                "q": 1.0
+                            },
+                            "limiter": {
+                                "enabled": false,
+                                "loudness": 1000,
+                                "release": 6
+                            },
+                            "reverb": {
+                                "enabled": false,
+                                "mix": 0.30000001192092896
+                            }
+                        },
+                        "enableSpatialAudio": false,
                         "loop": true,
+                        "maxDistance": 25.0,
+                        "minDistance": 1.0,
+                        "pitch": 0.0,
                         "playOnAwake": true,
-                        "enableSpatialAudio": false
-                    }
-                }
+                        "soundName": "Application/Sound/bgmTitleScene.mp3",
+                        "volume": 1.0
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "AudioSource"
             }
-        ]
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "TownBGM",
+        "objectID": "55c8c958-a91c-529e-9ee7-346ceed4ffd3",
+        "tag": ""
     },
-    "siblingIndex": 910000
+    "siblingIndex": 13000
 }

@@ -30,6 +30,8 @@ int main(int argc, char **argv) {
         std::filesystem::create_directories(scratch / "Assets/Application/Data");
         std::filesystem::copy_file(root / "GameProjects/JobHuntingGame/Assets/Application/Data/LightTownRules.json",
             scratch / "Assets/Application/Data/LightTownRules.json", std::filesystem::copy_options::overwrite_existing);
+        std::filesystem::copy_file(root / "GameProjects/JobHuntingGame/Assets/Application/Data/ExpeditionStages.json",
+            scratch / "Assets/Application/Data/ExpeditionStages.json", std::filesystem::copy_options::overwrite_existing);
         std::filesystem::current_path(scratch);
         Scene scene(std::string("CityScene"));
         // Hidden UI must unregister before its pooled storage can be destroyed/reused.
@@ -61,7 +63,7 @@ int main(int argc, char **argv) {
         }
         // The plain compiler does not enforce ScriptComponent's GC-field restrictions.
         // Exercise the actual production loader, including behavior construction.
-        for (const char *name : {"TitleController", "CityController", "ExpeditionController", "../MoveGround", "../AlwaysRotate", "../TeleportFloor", "../Checkpoint", "../Enemy"}) {
+        for (const char *name : {"TitleController", "CityController", "StageSelectController", "ExpeditionController", "../MoveGround", "../AlwaysRotate", "../TeleportFloor", "../Checkpoint", "../Enemy"}) {
             auto *object = scene.GetSceneContext()->CreateEmptyObject(name);
             auto *script = object->AddComponent<ScriptComponent>();
             script->SetScriptPath((root / "GameProjects/JobHuntingGame/Assets/Application/Scripts/LightTown" / (std::string(name) + ".as")).string());

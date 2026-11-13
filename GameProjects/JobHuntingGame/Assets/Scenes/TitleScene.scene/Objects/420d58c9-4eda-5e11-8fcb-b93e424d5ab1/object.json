@@ -1,96 +1,128 @@
 {
     "object": {
-        "name": "TownDisplayViewport",
-        "objectID": "420d58c9-4eda-5e11-8fcb-b93e424d5ab1",
-        "isActive": true,
-        "tag": "",
-        "editorOnly": false,
-        "hiddenFromEditorTarget": false,
         "components": [
             {
-                "type": "Transform",
                 "data": {
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": "",
                     "customData": {
-                        "translate": {
-                            "x": 640,
-                            "y": 360,
-                            "z": 0
-                        },
-                        "scale": {
-                            "x": 1280,
-                            "y": 720,
-                            "z": 1
-                        },
                         "rotate": {
+                            "w": 1.0,
                             "x": 0.0,
                             "y": 0.0,
-                            "z": -0.0,
-                            "w": 1.0
+                            "z": -0.0
+                        },
+                        "scale": {
+                            "x": 1280.0,
+                            "y": 720.0,
+                            "z": 1.0
+                        },
+                        "translate": {
+                            "x": 640.0,
+                            "y": 360.0,
+                            "z": 0.0
                         }
-                    }
-                }
-            },
-            {
-                "type": "MeshFilter",
-                "data": {
+                    },
                     "isActive": true,
                     "priority": 1,
-                    "tag": "",
+                    "tag": ""
+                },
+                "type": "Transform"
+            },
+            {
+                "data": {
                     "customData": {
                         "meshAssetPath": "PrimitiveMesh-Rect2D"
-                    }
-                }
-            },
-            {
-                "type": "SpriteRenderer",
-                "data": {
-                    "isActive": true,
-                    "priority": 900,
-                    "tag": "",
-                    "customData": {
-                        "targetObjectID": "c9beb5ec-2794-5b9a-89b4-fc974a542d20",
-                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
-                        "materialName": "Default",
-                        "renderPriority": 0
-                    }
-                }
-            },
-            {
-                "type": "ScreenBufferViewport",
-                "data": {
+                    },
                     "isActive": true,
                     "priority": 1,
-                    "tag": "",
-                    "customData": {
-                        "sourceObjectID": "b2e4871f-4a63-51a0-b806-ed1068f0d99f",
-                        "displayCameraObjectID": "31af7f63-b283-5306-86e1-0dc254300121",
-                        "fitMode": 2
-                    }
-                }
+                    "tag": ""
+                },
+                "type": "MeshFilter"
             },
             {
-                "type": "ScreenAnchor",
                 "data": {
-                    "isActive": true,
-                    "priority": 2,
-                    "tag": "",
                     "customData": {
-                        "cameraObjectID": "31af7f63-b283-5306-86e1-0dc254300121",
+                        "displayCameraObjectID": "31af7f63-b283-5306-86e1-0dc254300121",
+                        "fitMode": 2,
+                        "sourceObjectID": "b2e4871f-4a63-51a0-b806-ed1068f0d99f"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "ScreenBufferViewport"
+            },
+            {
+                "data": {
+                    "customData": {
                         "anchorPoint": {
                             "x": 0.5,
                             "y": 0.5
                         },
+                        "cameraObjectID": "31af7f63-b283-5306-86e1-0dc254300121",
                         "offset": {
-                            "x": 0,
-                            "y": 0
+                            "x": 0.0,
+                            "y": 0.0
                         }
-                    }
-                }
+                    },
+                    "isActive": true,
+                    "priority": 2,
+                    "tag": ""
+                },
+                "type": "ScreenAnchor"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "anchor": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 1.0,
+                            "y": 1.0,
+                            "z": 1.0
+                        },
+                        "instanceColorBlendMode": 1,
+                        "instanceUvCombineMode": 0,
+                        "instanceUvPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceUvRotation": 0.0,
+                        "instanceUvScale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "instanceUvTranslate": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "materialName": "Default",
+                        "pipelineName": "Object2D.DoubleSidedCulling.BlendNormal",
+                        "pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "pixelSnapOutsetPixels": 0.0,
+                        "pixelSnapping": false,
+                        "renderPriority": 0,
+                        "targetObjectID": "c9beb5ec-2794-5b9a-89b4-fc974a542d20"
+                    },
+                    "isActive": true,
+                    "priority": 900,
+                    "tag": ""
+                },
+                "type": "SpriteRenderer"
             }
-        ]
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "TownDisplayViewport",
+        "objectID": "420d58c9-4eda-5e11-8fcb-b93e424d5ab1",
+        "tag": ""
     },
-    "siblingIndex": 900003
+    "siblingIndex": 3000
 }

@@ -1,0 +1,57 @@
+{
+    "object": {
+        "name": "TownSettingsScreen",
+        "objectID": "5058409b-2e78-5f38-807d-efa90146694e",
+        "isActive": false,
+        "tag": "",
+        "components": [
+            {
+                "type": "Transform",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1,
+                            "z": 1
+                        },
+                        "rotate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0,
+                            "w": 1
+                        }
+                    }
+                }
+            },
+            {
+                "type": "ScreenBufferObject",
+                "data": {
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": "",
+                    "customData": {
+                        "name": "TownSettingsScreen",
+                        "width": 1920,
+                        "height": 1080,
+                        "renderOrderPriority": -5,
+                        "clearColor": {
+                            "x": 0.12549019607843137,
+                            "y": 0.25098039215686274,
+                            "z": 0.25098039215686274,
+                            "w": 1
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "siblingIndex": 990010
+}

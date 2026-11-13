@@ -1,71 +1,91 @@
 {
     "object": {
-        "name": "TitleIsland",
-        "objectID": "465c987c-6626-5e50-ad8a-2cc30618e092",
-        "isActive": true,
-        "tag": "",
-        "editorOnly": false,
-        "hiddenFromEditorTarget": false,
         "components": [
             {
-                "type": "Transform",
                 "data": {
-                    "isActive": true,
-                    "priority": 1,
-                    "tag": "",
                     "customData": {
-                        "translate": {
-                            "x": 0,
-                            "y": -0.5,
-                            "z": 0
+                        "rotate": {
+                            "w": 1.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "z": 0.0
                         },
                         "scale": {
-                            "x": 16,
-                            "y": 1,
-                            "z": 16
+                            "x": 16.0,
+                            "y": 1.0,
+                            "z": 16.0
                         },
-                        "rotate": {
-                            "x": 0,
-                            "y": 0,
-                            "z": 0,
-                            "w": 1
+                        "translate": {
+                            "x": 0.0,
+                            "y": -0.5,
+                            "z": 0.0
                         }
-                    }
-                }
-            },
-            {
-                "type": "MeshFilter",
-                "data": {
+                    },
                     "isActive": true,
                     "priority": 1,
-                    "tag": "",
-                    "customData": {
-                        "meshAssetPath": "PrimitiveMesh-Box"
-                    }
-                }
+                    "tag": ""
+                },
+                "type": "Transform"
             },
             {
-                "type": "MeshRenderer",
                 "data": {
+                    "customData": {
+                        "meshAssetPath": "PrimitiveMesh-Box"
+                    },
+                    "isActive": true,
+                    "priority": 1,
+                    "tag": ""
+                },
+                "type": "MeshFilter"
+            },
+            {
+                "data": {
+                    "customData": {
+                        "allowInstancing": true,
+                        "castShadows": false,
+                        "instanceColor": {
+                            "w": 1.0,
+                            "x": 0.2199999988079071,
+                            "y": 0.3799999952316284,
+                            "z": 0.3400000035762787
+                        },
+                        "instanceColorBlendMode": 1,
+                        "instanceUvCombineMode": 0,
+                        "instanceUvPivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "instanceUvRotation": 0.0,
+                        "instanceUvScale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        },
+                        "instanceUvTranslate": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "materialName": "Default",
+                        "materialNames": [
+                            "Default"
+                        ],
+                        "pipelineName": "Object3D.Solid.BlendNormal",
+                        "renderPriority": 0,
+                        "targetObjectID": "007a5f43-18fb-59d6-a010-acebdfd1820e",
+                        "worldInstancesEnabled": false
+                    },
                     "isActive": true,
                     "priority": 900,
-                    "tag": "",
-                    "customData": {
-                        "pipelineName": "Object3D.Solid.BlendNormal",
-                        "targetObjectID": "007a5f43-18fb-59d6-a010-acebdfd1820e",
-                        "materialName": "Default",
-                        "instanceColor": {
-                            "x": 0.22,
-                            "y": 0.38,
-                            "z": 0.34,
-                            "w": 1
-                        },
-                        "allowInstancing": true,
-                        "castShadows": false
-                    }
-                }
+                    "tag": ""
+                },
+                "type": "MeshRenderer"
             }
-        ]
+        ],
+        "editorOnly": false,
+        "hiddenFromEditorTarget": false,
+        "isActive": true,
+        "name": "TitleIsland",
+        "objectID": "465c987c-6626-5e50-ad8a-2cc30618e092",
+        "tag": ""
     },
-    "siblingIndex": 910000
+    "siblingIndex": 12000
 }

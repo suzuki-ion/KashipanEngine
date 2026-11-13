@@ -16,6 +16,7 @@ class TownWorld {
     float arrivalClock=0;bool arrivalDone=false;uint currentCell=0;
     bool Arriving(){return !arrivalDone;}
     Vector3 Cell(int x,int z) { float s=float(state.rules.GetFloat("cellSize",1.5f));float half=float(state.GridSize())*.5f;return Vector3((float(x)+.5f-half)*s,0,(float(z)+.5f-half)*s); }
+    Vector3 Center(Json@ b){float offset=float(state.Footprint(b)-1)*float(state.rules.GetFloat("cellSize",1.5f))*.5f;return Cell(int(b.GetInt("x")),int(b.GetInt("z")))+Vector3(offset,0,offset);}
     Object@ Part(const string &in mesh,const Vector3 &in p,const Vector3 &in scale,const Vector4 &in color) {
         Object@ o=TownMesh(scene,"TownInfrastructure",mesh,p,scale,color);
         if(mesh=="PrimitiveMesh-Box"){MeshRenderer@ renderer;o.GetComponent(@renderer);renderer.SetMaterialName("TownGridUnlit");}
@@ -49,13 +50,12 @@ class TownWorld {
         if(arrivalClock>=.8f+Sqrt(2.0f)*float(size)*.5f*.055f)arrivalDone=true;
     }
     void Road(int x,int z) {
-        Vector3 p=Cell(x,z)+Vector3(0,.055f,0);float s=float(state.rules.GetFloat("cellSize",1.5f));
-        Vector4 color(.3f,.34f,.36f,1);int mask=state.RoadMask(x,z);
-        Part("PrimitiveMesh-Box",p,Vector3(s*.46f,.09f,s*.46f),color);
-        if((mask&1)!=0)Part("PrimitiveMesh-Box",p+Vector3(-s*.36f,0,0),Vector3(s*.72f,.09f,s*.46f),color);
-        if((mask&2)!=0)Part("PrimitiveMesh-Box",p+Vector3(s*.36f,0,0),Vector3(s*.72f,.09f,s*.46f),color);
-        if((mask&4)!=0)Part("PrimitiveMesh-Box",p+Vector3(0,0,-s*.36f),Vector3(s*.46f,.09f,s*.72f),color);
-        if((mask&8)!=0)Part("PrimitiveMesh-Box",p+Vector3(0,0,s*.36f),Vector3(s*.46f,.09f,s*.72f),color);
+        Vector3 p=Cell(x,z)+Vector3(0,.012f,0);float spacing=float(state.rules.GetFloat("cellSize",1.5f));int mask=state.RoadMask(x,z);
+        // Each mask has its own shared mesh; neighboring road endpoints meet at cell boundaries.
+        Object@ surface=Part(TownRoadMesh(mask),p,Vector3(spacing,1,spacing),Vector4(.23f,.28f,.30f,1));
+        Object@ details=Part(TownRoadMesh(mask,true),p,Vector3(spacing,1,spacing),Vector4(.64f,.66f,.58f,1));
+        MeshRenderer@ renderer;surface.GetComponent(@renderer);renderer.SetMaterialName("TownGridUnlit");renderer.SetCastShadows(false);
+        details.GetComponent(@renderer);renderer.SetMaterialName("TownGridUnlit");renderer.SetCastShadows(false);
     }
     void Rebuild() {
         for(uint i=0;i<objects.length();++i)if(IsValidObject(objects[i]))scene.DeleteObject(objects[i]);
@@ -65,10 +65,11 @@ class TownWorld {
             Json@ b=list.At(i);int kind=int(b.GetInt("kind")),x=int(b.GetInt("x")),z=int(b.GetInt("z"));
             currentCell=uint(z*state.GridSize()+x);
             if(kind==6){Road(x,z);continue;}
-            Json@ definition=state.Definition(kind);if(definition is null)continue;
-            bool working=state.IsWorking(x,z);Vector3 p=Cell(x,z);
+            Json@ definition=state.BuildingDefinition(b);if(definition is null)continue;
+            bool working=state.IsWorking(x,z);Vector3 p=Cell(x,z)+Vector3(float(state.Footprint(b)-1)*float(state.rules.GetFloat("cellSize",1.5f))*.5f,0,float(state.Footprint(b)-1)*float(state.rules.GetFloat("cellSize",1.5f))*.5f);
             Vector4 color=working?definition.GetVector4("color",Vector4(1,1,1,1)):Vector4(.28f,.28f,.28f,1);
-            Object@ model=TownBuildingModel(scene,kind,p,color);objects.insertLast(model);models.insertLast(model);model.GetTransform().SetParentObject(roots[currentCell]);
+            Object@ model=TownBuildingModel(scene,kind,p,color);MeshFilter@ variant;model.GetComponent(@variant);variant.SetMeshHandle(GetModelHandleFromAssetPath(GetSettingBool("town.simpleModels",false)?"PrimitiveMesh-Box":TownVariantMesh(kind,int(b.GetInt("tier")),int(b.GetInt("recipe")))));
+            if(GetSettingBool("town.simpleModels",false)){float height=float(definition.GetFloat("height",2));model.GetTransform().SetScale(Vector3(float(state.Footprint(b))*1.2f,height,float(state.Footprint(b))*1.2f));model.GetTransform().SetTranslate(p+Vector3(0,height*.5f,0));}model.GetTransform().SetRotate(Vector3(0,TownModelYaw(kind,int(b.GetInt("rotation"))),0));objects.insertLast(model);models.insertLast(model);model.GetTransform().SetParentObject(roots[currentCell]);
             // 稼働中の施設だけ補助光を点灯する。稼働判定の照明範囲は街灯のみ。
             if(working){
             Object@ fill=scene.CreateObject("TownFacilityFill");fill.GetTransform().SetTranslate(p+Vector3(0,.85f,0));fill.GetTransform().SetParentObject(roots[currentCell]);
@@ -83,7 +84,7 @@ class TownWorld {
                 lamp.SetType(LightType::Point);lamp.SetColor(Vector4(1,.83f,.46f,1));lamp.SetIntensity(1.3f);lamp.SetRadius(Sqrt(TownStreetlightRadius()*TownStreetlightRadius()+1.72f*1.72f));lamp.SetDecay(2);
                 lightObject.GetTransform().SetParentObject(roots[currentCell]);
                 renderer.SetTargetObject(scene.GetObject("TownScreen"));objects.insertLast(lightObject);
-                Object@ glow=Part("PrimitiveMesh-UVSphere",p+Vector3(-.3f,1.72f,0),Vector3(.12f,.12f,.12f),Vector4(1,.85f,.4f,1));MeshRenderer@ r;glow.GetComponent(@r);r.SetMaterialName("TownGridUnlit");r.SetCastShadows(false);
+                Object@ glow=Part("PrimitiveMesh-UVSphere",p+Math::MakeRotateEuler(Vector3(0,-float(b.GetInt("rotation"))*1.57079633f-1.57079633f,0)).RotateVector(Vector3(-.3f,1.72f,0)),Vector3(.12f,.12f,.12f),Vector4(1,.85f,.4f,1));MeshRenderer@ r;glow.GetComponent(@r);r.SetMaterialName("TownGridUnlit");r.SetCastShadows(false);
                 Object@ disk=Part("PrimitiveMesh-Circle-XZ",p+Vector3(0,.018f,0),Vector3(9,1,9),Vector4(.9f,.7f,.2f,.065f));
                 MeshRenderer@ diskRenderer;disk.GetComponent(@diskRenderer);diskRenderer.SetMaterialName("TownLitCell");diskRenderer.SetPipelineName("Town.Cells");diskRenderer.SetCastShadows(false);
             }

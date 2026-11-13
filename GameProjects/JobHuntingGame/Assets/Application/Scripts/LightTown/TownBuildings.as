@@ -2,7 +2,7 @@
 #include "TownState.as"
 
 string TownBuildingMesh(int kind) {
-    array<string> models = {"Streetlight", "House", "Workshop", "Shop", "Guild", "Tower"};
+    array<string> models = {"Streetlight", "House", "Workshop", "Shop", "Guild", "Tower", "Road", "Police"};
     return "Application/Models/Town/" + models[uint(kind)] + ".obj";
 }
 Object@ TownBuildingModel(Scene@ scene, int kind, const Vector3 &in position, const Vector4 &in color) {
@@ -12,3 +12,7 @@ Object@ TownBuildingModel(Scene@ scene, int kind, const Vector3 &in position, co
     MeshRenderer@ renderer; model.GetComponent(@renderer); renderer.SetMaterialName("TownFacility");
     return model;
 }
+
+string TownRoadMesh(int mask,bool details=false){return "Application/Models/Town/Roads/Road"+(mask<10?"0":"")+mask+(details?"Details.obj":"Surface.obj");}
+
+string TownVariantMesh(int kind,int tier,int recipe=0){if(kind==1&&tier>0)return "Application/Models/Town/"+(tier==1?"Apartment":"Highrise")+".obj";if(kind==3&&tier>0)return "Application/Models/Town/"+(tier==1?"Supermarket":"Mall")+".obj";if(kind==4&&tier>0)return "Application/Models/Town/"+(tier==1?"GuildMedium":"GuildLarge")+".obj";if(kind==2)return "Application/Models/Town/Factory"+recipe+"Tier"+tier+".obj";return TownBuildingMesh(kind);}

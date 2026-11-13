@@ -410,11 +410,33 @@
             "state": "Trigger"
         }
     ],
+    "TownBuildContinuous": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "LeftShift",
+            "state": "Down"
+        },
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "RightShift",
+            "state": "Down"
+        }
+    ],
     "TownBuildMenu": [
         {
             "device": "Keyboard",
             "invertValue": false,
             "key": "B",
+            "state": "Trigger"
+        }
+    ],
+    "TownBuildRotate": [
+        {
+            "device": "Keyboard",
+            "invertValue": false,
+            "key": "R",
             "state": "Trigger"
         }
     ],
@@ -488,6 +510,14 @@
             "device": "MouseButton",
             "invertValue": false,
             "state": "Release"
+        }
+    ],
+    "TownPlaceHold": [
+        {
+            "button": "Left",
+            "device": "MouseButton",
+            "invertValue": false,
+            "state": "Down"
         }
     ],
     "TownPlacePress": [

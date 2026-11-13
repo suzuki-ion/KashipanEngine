@@ -1,13 +1,13 @@
 {
     "gridSize": 16,
     "cellSize": 1.5,
-    "initialWood": 70,
-    "initialStone": 55,
-    "initialCrystal": 15,
+    "initialWood": 140,
+    "initialStone": 110,
+    "initialCrystal": 35,
     "productionSeconds": 10,
-    "passiveWood": 4,
-    "passiveStone": 3,
-    "passiveCrystal": 1,
+    "passiveWood": 0,
+    "passiveStone": 0,
+    "passiveCrystal": 0,
     "eventSeconds": 40,
     "dispatchSeconds": 45,
     "dispatchWood": 20,
@@ -17,7 +17,8 @@
     "goalBuildingCount": 8,
     "goalEnergy": 80,
     "goalProsperity": 60,
-    "stageColumns": 48,
+    "stageColumns": 96,
+    "stageRows": 8,
     "buildings": [
         {
             "name": "街灯",
@@ -116,7 +117,60 @@
                 "z": 0.42,
                 "w": 1
             }
+        },
+        {
+            "name": "警察署",
+            "nameEn": "Police station",
+            "wood": 35,
+            "stone": 30,
+            "crystal": 8,
+            "height": 1.8,
+            "color": {
+                "x": 0.22,
+                "y": 0.4,
+                "z": 0.8,
+                "w": 1
+            }
         }
     ],
-    "shopItems": []
+    "shopItems": [],
+    "balance": {
+        "cost0": 1,
+        "cost1": 3,
+        "cost2": 9,
+        "capacity0": 1,
+        "capacity1": 3,
+        "capacity2": 8,
+        "residents0": 3,
+        "residents1": 9,
+        "residents2": 30,
+        "housingSafety0": -2,
+        "housingSafety1": -6,
+        "housingSafety2": -18,
+        "housingHappiness0": 1,
+        "housingHappiness1": 3,
+        "housingHappiness2": 5,
+        "prosperity0": 5,
+        "prosperity1": 12,
+        "prosperity2": 30,
+        "pollution0": 2,
+        "pollution1": 5,
+        "pollution2": 8,
+        "pollutionRadius0": 2,
+        "pollutionRadius1": 3,
+        "pollutionRadius2": 4,
+        "planksCost0": 0,
+        "planksCost1": 8,
+        "planksCost2": 30,
+        "masonryCost0": 0,
+        "masonryCost1": 6,
+        "masonryCost2": 25,
+        "refinedCrystalCost0": 0,
+        "refinedCrystalCost1": 0,
+        "refinedCrystalCost2": 12,
+        "policeSafety0": 18,
+        "streetlightSafety0": 2,
+        "processingInput0": 2,
+        "processingEnergy0": 4
+    }
 }

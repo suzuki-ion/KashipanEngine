@@ -25,6 +25,7 @@ class TownUI {
     Object@ target;
     string panelTemplate = "TownPanelHeader";
     array<UIButton@>@ buttons = array<UIButton@>();
+    array<Object@>@ buttonObjects=array<Object@>(),labelObjects=array<Object@>();
     array<TextRenderer@>@ buttonTexts = array<TextRenderer@>();
     array<TextRenderer@>@ labels = array<TextRenderer@>();
     array<Object@>@ objects = array<Object@>();
@@ -43,14 +44,14 @@ class TownUI {
         text.SetFontName("NotoSansJP-Regular"); text.SetFontSize(size);
         text.SetHorizontalAlign(TextHorizontalAlign::Left); text.SetVerticalAlign(TextVerticalAlign::Top);
         text.SetOutlineWidth(0.05f); text.SetRenderPriority(layer); text.SetText(content);
-        labels.insertLast(text);
+        labels.insertLast(text);labelObjects.insertLast(obj);
         return text;
     }
     void Button(const string &in content, float x, float y) {
         TextRenderer@ text = Text(content, x, y, 19);
         Object@ obj = objects[objects.length() - 1];
         UIButton@ button; obj.AddComponent(@button); button.SetDisplayCameraObject(camera);
-        buttons.insertLast(button); buttonTexts.insertLast(text);
+        buttons.insertLast(button);buttonObjects.insertLast(obj); buttonTexts.insertLast(text);
     }
     Object@ Rect(float x, float y, float width, float height, const Vector4 &in color) {
         // SpriteRendererに公開されていない描画先設定は、シーン内のパネルから引き継ぐ。
@@ -73,18 +74,20 @@ class TownUI {
     Object@ ButtonArea(const string &in content,float x,float y,float width,float height,float labelX,float labelY) {
         Object@ surface=Rect(x,y,width,height,Vector4(.04f,.1f,.12f,.8f));
         UIButton@ button;surface.AddComponent(@button);button.SetDisplayCameraObject(camera);
-        TextRenderer@ label=Text(content,labelX,labelY,19);buttons.insertLast(button);buttonTexts.insertLast(label);return surface;
+        TextRenderer@ label=Text(content,labelX,labelY,19);buttons.insertLast(button);buttonObjects.insertLast(surface);buttonTexts.insertLast(label);return surface;
     }
     void RefreshLabels() {
         // 追加文字でフォントアトラスが拡張されると既存グリフのUVも変わる。
         // 試作UIは小規模なので全ラベルを再評価し、静的な見出しも最新アトラスへ追従させる。
-        for (uint i = 0; i < labels.length(); ++i) labels[i].SetFontSize(labels[i].GetFontSize());
+        for (uint i = 0; i < labels.length(); ++i) if(labelObjects[i].IsActive())labels[i].SetFontSize(labels[i].GetFontSize());
     }
     int Clicked() {
         RefreshLabels();
         int result = -1;
         for (uint i = 0; i < buttons.length(); ++i) {
-            buttonTexts[i].SetColor(buttons[i].IsHovered() ? Vector4(1, 0.85f, 0.35f, 1) : Vector4(0.9f, 0.95f, 1, 1));
+            if(!buttonObjects[i].IsActive())continue;
+            Vector4 color=buttons[i].IsHovered()?Vector4(1,.85f,.35f,1):Vector4(.9f,.95f,1,1),old=buttonTexts[i].GetColor();
+            if(old.x!=color.x||old.y!=color.y||old.z!=color.z||old.w!=color.w)buttonTexts[i].SetColor(color);
             if (buttons[i].IsClicked()) result = int(i);
         }
         if (result >= 0) {

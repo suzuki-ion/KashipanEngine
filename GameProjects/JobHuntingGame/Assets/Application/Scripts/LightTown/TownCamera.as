@@ -52,21 +52,26 @@ class TownCameraRig {
         Vector2 mouse = window.GetMousePosition();
         Vector2 delta = mouse - previousMouse; previousMouse = mouse;
         manipulating = false;
-        if (!window.IsWindowFocused() || !window.IsMouseInside()) { Cancel(); return; }
-        if (IsCommandTriggered("TownRotatePress")) rotating = !overUI;
-        if (IsCommandTriggered("TownPanPress")) panning = !overUI;
-        if (!IsCommandTriggered("TownRotateHold")) rotating = false;
-        if (!IsCommandTriggered("TownPanHold")) panning = false;
-        delta.x = TownClamp(delta.x, -120, 120); delta.y = TownClamp(delta.y, -120, 120);
-        if (rotating) { Rotate(delta); manipulating = true; }
-        if (panning) { Pan(delta); manipulating = true; }
+        if (!window.IsWindowFocused()) { Cancel(); return; }
+        if (window.IsMouseInside()) {
+            if (IsCommandTriggered("TownRotatePress")) rotating = !overUI;
+            if (IsCommandTriggered("TownPanPress")) panning = !overUI;
+            if (!IsCommandTriggered("TownRotateHold")) rotating = false;
+            if (!IsCommandTriggered("TownPanHold")) panning = false;
+            delta.x = TownClamp(delta.x, -120, 120); delta.y = TownClamp(delta.y, -120, 120);
+            if (rotating) { Rotate(delta); manipulating = true; }
+            if (panning) { Pan(delta); manipulating = true; }
+            float wheel = GetCommandValue("TownCameraScroll");
+            if (!overUI && wheel != 0) { Scroll(wheel); manipulating = true; }
+        } else {
+            rotating = false;
+            panning = false;
+        }
         float horizontal = (IsCommandTriggered("TownCameraRight") ? 1.0f : 0.0f) - (IsCommandTriggered("TownCameraLeft") ? 1.0f : 0.0f);
         float vertical = (IsCommandTriggered("TownCameraForward") ? 1.0f : 0.0f) - (IsCommandTriggered("TownCameraBack") ? 1.0f : 0.0f);
         if (horizontal != 0 || vertical != 0) {
             Move(horizontal, vertical, dt); manipulating = true;
         }
-        float wheel = GetCommandValue("TownCameraScroll");
-        if (!overUI && wheel != 0) { Scroll(wheel); manipulating = true; }
         if (manipulating) Apply();
     }
 }

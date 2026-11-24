@@ -3762,6 +3762,9 @@
     <None Include="..\EngineTools\DistributionAssetExclusions.Release.txt">
       <Filter>EngineTools</Filter>
     </None>
+    <None Include="..\EngineTools\SyncVisualStudioFilters.ps1">
+      <Filter>EngineTools</Filter>
+    </None>
     <None Include="..\Externals\angelscript\source\as_callfunc_arm64_msvc.asm">
       <Filter>Externals\angelscript\source</Filter>
     </None>

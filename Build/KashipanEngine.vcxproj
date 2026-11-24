@@ -317,6 +317,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTool
     <None Include="..\EngineData\AssetsTemplate\Default\KashipanEngine\Pipeline\Preset\Shader\RadialBlur.json" />
     <None Include="..\EngineData\AssetsTemplate\Default\KashipanEngine\Pipeline\Preset\Shader\Skybox.json" />
     <None Include="..\EngineData\AssetsTemplate\Default\KashipanEngine\Pipeline\Preset\Shader\Vignette.json" />
+    <None Include="..\EngineTools\SyncVisualStudioFilters.ps1" />
     <None Include="exclusion.dic" />
     <None Include="..\Externals\angelscript\source\as_callfunc_arm64_msvc.asm" />
     <None Include="..\Externals\angelscript\source\as_callfunc_arm_msvc.asm" />
@@ -650,44 +651,35 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTool
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\Externals\imgui\imgui.cpp">
       <ObjectFileName>$(IntDir)Externals\imgui\</ObjectFileName>
-
     </ClCompile>
     <ClCompile Include="..\Externals\imgui\imgui_demo.cpp">
       <ObjectFileName>$(IntDir)Externals\imgui\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\Externals\imgui\imgui_draw.cpp">
       <ObjectFileName>$(IntDir)Externals\imgui\</ObjectFileName>
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4100;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-
     </ClCompile>
     <ClCompile Include="..\Externals\imgui\imgui_impl_dx12.cpp">
       <ObjectFileName>$(IntDir)Externals\imgui\</ObjectFileName>
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4189;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-
     </ClCompile>
     <ClCompile Include="..\Externals\imgui\imgui_impl_win32.cpp">
       <ObjectFileName>$(IntDir)Externals\imgui\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\Externals\imgui\imgui_stdlib.cpp">
       <ObjectFileName>$(IntDir)Externals\imgui\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\Externals\imgui\imgui_tables.cpp">
       <ObjectFileName>$(IntDir)Externals\imgui\</ObjectFileName>
-
     </ClCompile>
     <ClCompile Include="..\Externals\imgui\imgui_widgets.cpp">
       <ObjectFileName>$(IntDir)Externals\imgui\</ObjectFileName>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Assets\CookedAssets.cpp" />
     <ClCompile Include="..\SourceFiles\KashipanEngine\Assets\AnimationManager.cpp">
@@ -1044,7 +1036,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTool
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Components\Script\ScriptBindings.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Components\Script\</ObjectFileName>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Components\Compute\SceneComputeProcessor.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Components\Compute\</ObjectFileName>
@@ -1076,127 +1067,102 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTool
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\AssetEditorWindows.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\AssetsWindow.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\ComponentAddMenu.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\EditorSettings.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\EditorWindowChrome.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneComponentInspector.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneEditorCommands.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneEditorView.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\PrefabUtility.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\PrefabAssetManager.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\ProjectWindow.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\TranslationEditor.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\PrefabSyncUtility.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\PrefabSceneSync.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\PrefabRegisteredSceneSync.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneListEditor.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\EditorPreferences.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\EditorKeyBindings.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneCrashRecovery.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneLoader.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneObjectHierarchy.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneObjectInspector.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneSaver.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\SceneVariablesMenu.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\Editor\GlobalSceneVariablesMenu.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\Editor\</ObjectFileName>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-
     </ClCompile>
     <ClCompile Include="..\SourceFiles\KashipanEngine\Scene\SceneEditor.cpp">
       <ObjectFileName>$(IntDir)SourceFiles\KashipanEngine\Scene\</ObjectFileName>

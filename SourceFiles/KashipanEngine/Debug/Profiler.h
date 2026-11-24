@@ -13,6 +13,8 @@
 
 namespace KashipanEngine {
 
+class GameEngine;
+
 /// 入れ子のスコープと待機を含むCPU経過時間。完了したフレームのみ公開する。
 /// 固定の名前を使用する。プロセスの存続中に登録できる異なる名前は最大256個。
 class Profiler final {
@@ -31,14 +33,17 @@ public:
         std::uint64_t frameId = 0;
     };
     static Profiler &GetInstance() { static Profiler instance; return instance; }
-    void BeginFrame() {
+
+    // BeginFrame(), EndFrame(), SetSampleCount() はどこからでも呼び出されると困るため GameEngine だけに制限
+
+    void BeginFrame(Passkey<GameEngine>) {
         std::lock_guard lock(mutex_);
         ++generation_;
         pending_.clear();
         recording_ = true;
         frameStart_ = Clock::now();
     }
-    void EndFrame() {
+    void EndFrame(Passkey<GameEngine>) {
         std::lock_guard lock(mutex_);
         if (!recording_) return;
         recording_ = false;
@@ -52,11 +57,14 @@ public:
         history_.push_back(std::make_shared<const std::map<std::string, Sample>>(std::move(pending_)));
         while (history_.size() > capacity_) history_.pop_front();
     }
-    void SetSampleCount(std::size_t count) {
+    void SetSampleCount(Passkey<GameEngine>, std::size_t count) {
         std::lock_guard lock(mutex_);
         capacity_ = std::clamp<std::size_t>(count, 1, 600);
         while (history_.size() > capacity_) history_.pop_front();
     }
+
+    // 以下公開APIやスコープは、今後計測する箇所が増えても対応できるように常に公開
+
     Snapshot GetSnapshot() const {
         // ロック中は各サンプルのマップ全体ではなく、不変なフレームハンドルのみをコピーする。
         // 集計はロック外で行い、外部ビューアーによって記録が妨げられないようにする。

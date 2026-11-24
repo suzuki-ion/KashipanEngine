@@ -1,4 +1,4 @@
-﻿#include "Debug/ProfilerServer.h"
+#include "Debug/ProfilerServer.h"
 #include "Assets/AssetFileIndex.h"
 #include "GameEngine.h"
 #include "Debug/StartupTiming.h"
@@ -42,11 +42,19 @@ void GameEngine::DrawProfilingImGui() {
     const auto snapshot = Profiler::GetInstance().GetSnapshot();
     profilingSampleCount_ = static_cast<int>(snapshot.sampleCount);
     if (ImGui::Begin(TranslationLabel("editor.gameengine.profiling.window"), &sProfilingWindowVisible)) {
+        // エンジンのフレームレート
         ImGui::Text(TranslationC("editor.gameengine.fps_2f"), snapshot.fps);
+        // エンジンのフレーム時間(ms)
         ImGui::Text(TranslationC("editor.gameengine.profiling.frame_ms"), snapshot.frameMs);
+
+        // エンジンの描画コール数
         if (graphicsEngine_) ImGui::Text(TranslationC("editor.gameengine.draw_calls_u"), graphicsEngine_->GetLastFrameDrawCallCount());
-        if (ImGui::SliderInt(TranslationLabel("editor.gameengine.profiling_sample_count"), &profilingSampleCount_, 1, 600))
-            Profiler::GetInstance().SetSampleCount(static_cast<std::size_t>(profilingSampleCount_));
+        // プロファイリング対象のサンプル数（フレーム数）
+        if (ImGui::SliderInt(TranslationLabel("editor.gameengine.profiling_sample_count"), &profilingSampleCount_, 1, 600)) {
+            Profiler::GetInstance().SetSampleCount(Passkey<GameEngine>(), static_cast<std::size_t>(profilingSampleCount_));
+        }
+
+        // CPUプロファイリング結果
         ImGui::Text(TranslationC("editor.gameengine.profiling.cpu_note"), snapshot.frames);
         if (ImGui::BeginTable("CpuProfile", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable)) {
             ImGui::TableSetupColumn(TranslationC("editor.gameengine.profiling.process"));
@@ -396,7 +404,7 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
         // （エディタービルドでは再生停止要求としてScene側で消費されるため、ここでは見ない）
         if (sIsExitGameLoopRequested) break;
 #endif
-        Profiler::GetInstance().BeginFrame();
+        Profiler::GetInstance().BeginFrame(Passkey<GameEngine>());
         StartupTiming::Sections firstFrameSections("FirstFrames.");
 #if defined(RELEASE_BUILD)
         bool completedStartupHandoff = false;
@@ -469,7 +477,7 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
             }
         }
         firstFrameSections.End("SceneChangeAndCleanup");
-        Profiler::GetInstance().EndFrame();
+        Profiler::GetInstance().EndFrame(Passkey<GameEngine>());
 
         if (windowCount > Window::GetWindowCount()) {
             isGameLoopRunning_ = Window::GetWindowCount() != 0;

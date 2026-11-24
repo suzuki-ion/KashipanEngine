@@ -1,5 +1,7 @@
 #include "Assets/CookedAssets.h"
 #include "Assets/AssetFileIndex.h"
+#include "Assets/AssetPath.h"
+#include "Assets/AssetRegistry.h"
 #include "ModelManager.h"
 #include "Assets/SharedModelImport.h"
 #include "Debug/StartupTiming.h"
@@ -74,17 +76,6 @@ FileMap<Handle> sAssetPathToHandle;
 
 ModelManager* sActiveInstance = nullptr;
 
-std::string NormalizePathSlashes(std::string s) {
-    std::replace(s.begin(), s.end(), '\\', '/');
-    while (!s.empty() && s.back() == '/') s.pop_back();
-    return s;
-}
-
-std::string ToLower(std::string s) {
-    for (auto& c : s) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    return s;
-}
-
 /// @brief パス末尾のファイル名部分を文字列操作のみで取得する（std::filesystem::pathを介さない）
 /// @details 埋め込みテクスチャの仮想パス（"モデルパス:埋め込み名"）はコロンを含むため、
 ///          std::filesystem::pathで再パースすると意図しない解釈をされる可能性がある
@@ -156,23 +147,6 @@ bool EnsureModelPrefabSchema(JSON &prefab, UUID128 &prefabID) {
 }
 #endif
 
-bool HasSupportedModelExtension(const std::filesystem::path& p) {
-    const std::string ext = ToLower(p.extension().string());
-    return (ext == ".fbx" || ext == ".obj" || ext == ".gltf" || ext == ".glb" || ext == ".dae" || ext == ".3ds" || ext == ".blend" || ext == ".ply" || ext == ".stl" || ext == ".x");
-}
-
-std::string MakeAssetRelativePath(const std::string& assetsRoot, const std::string& fullPath) {
-    const std::filesystem::path root = Utf8StringToPath(assetsRoot);
-    const std::filesystem::path full = Utf8StringToPath(fullPath);
-
-    std::error_code ec;
-    auto rel = std::filesystem::relative(full, root, ec);
-    if (ec) {
-        return NormalizePathSlashes(PathToUtf8String(full.filename()));
-    }
-    return NormalizePathSlashes(PathToUtf8String(rel));
-}
-
 Matrix4x4 ConvertMatrix(const aiMatrix4x4& m) {
     // Assimpの行列は列ベクトル規約(v' = M * v)で定義されているが、本エンジンのMatrix4x4は
     // 行ベクトル規約(v' = v * M)で乗算するため、そのまま乗算に使えるよう転置して格納する
@@ -189,13 +163,7 @@ Matrix4x4 ConvertMatrix(const aiMatrix4x4& m) {
 Handle RegisterEntry(ModelEntry&& entry) {
     // ハンドル0は無効。小さい値から連番で割り当てる。
     const Handle handle = static_cast<Handle>(sModels.size() + 1u);
-    if (handle == ModelManager::kInvalidHandle) return ModelManager::kInvalidHandle;
-    if (sModels.find(handle) != sModels.end()) return ModelManager::kInvalidHandle;
-
-    sFileNameToHandle[entry.fileName] = handle;
-    sAssetPathToHandle[NormalizePathSlashes(entry.assetPath)] = handle;
-    sModels.emplace(handle, std::move(entry));
-    return handle;
+    return AssetRegistry::Register(handle, sModels, sFileNameToHandle, sAssetPathToHandle, std::move(entry));
 }
 
 } // namespace
@@ -226,7 +194,7 @@ struct ParsedModelResult {
 };
 
 ModelManager::ModelManager(Passkey<GameEngine>, AssetFileIndex &assetFiles)
-    : assetsRootPath_(NormalizePathSlashes(assetFiles.Root())) {
+    : assetsRootPath_(AssetPath::NormalizePathSlashes(assetFiles.Root())) {
     LogScope scope;
     sActiveInstance = this;
     PrimitiveMeshGenerator::RegisterBuiltinPrimitiveMeshes();
@@ -278,7 +246,7 @@ std::unique_ptr<ParsedModelResult> ModelManager::ParseModelFile(const std::strin
         Log(Translation("engine.model.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return result;
     }
-    if (!HasSupportedModelExtension(p)) {
+    if (!AssetFileIndex::SupportsFile(AssetFileIndex::Kind::Model, p)) {
         Log(Translation("engine.model.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
         return result;
     }
@@ -292,8 +260,8 @@ std::unique_ptr<ParsedModelResult> ModelManager::ParseModelFile(const std::strin
     }
     result->scene = scene;
 
-    result->fullPath = NormalizePathSlashes(PathToUtf8String(p));
-    result->assetPath = MakeAssetRelativePath(assetsRootPath_, result->fullPath);
+    result->fullPath = AssetPath::NormalizePathSlashes(PathToUtf8String(p));
+    result->assetPath = AssetPath::MakeAssetRelativePath(assetsRootPath_, result->fullPath);
     result->fileName = PathToUtf8String(p.filename());
 
     // ModelDataにアセットの相対パスを設定する。
@@ -319,7 +287,7 @@ std::unique_ptr<ParsedModelResult> ModelManager::ParseModelFile(const std::strin
             if (!tp.empty() && tp[0] != '*') {
                 // 外部ファイル参照（モデルファイルからの相対パス）
                 const std::filesystem::path texFull = p.parent_path() / Utf8StringToPath(tp);
-                md.diffuseTexturePath = MakeAssetRelativePath(assetsRootPath_, NormalizePathSlashes(PathToUtf8String(texFull)));
+                md.diffuseTexturePath = AssetPath::MakeAssetRelativePath(assetsRootPath_, AssetPath::NormalizePathSlashes(PathToUtf8String(texFull)));
             } else if (!tp.empty()) {
                 // 埋め込みテクスチャ（bufferView経由。PMX→glTF変換等で全テクスチャが
                 // 1つのバイナリにまとめられている場合によく使われる）。
@@ -333,7 +301,7 @@ std::unique_ptr<ParsedModelResult> ModelManager::ParseModelFile(const std::strin
                         const std::string embeddedName = embeddedTex->mFilename.length > 0
                             ? std::string(embeddedTex->mFilename.C_Str())
                             : ("EmbeddedTexture" + std::to_string(mi));
-                        const std::string registerPath = NormalizePathSlashes(PathToUtf8String(p)) + ":" + embeddedName;
+                        const std::string registerPath = AssetPath::NormalizePathSlashes(PathToUtf8String(p)) + ":" + embeddedName;
 
                         ParsedModelResult::PendingEmbeddedTexture pending;
                         pending.registerPath = registerPath;
@@ -419,7 +387,7 @@ ModelManager::ModelHandle ModelManager::LoadModel(const std::string& filePath) {
     if (filePath.empty()) return kInvalidHandle;
 
     {
-        const std::string normalized = NormalizePathSlashes(filePath);
+        const std::string normalized = AssetPath::NormalizePathSlashes(filePath);
         auto it = sAssetPathToHandle.find(normalized);
         if (it != sAssetPathToHandle.end()) {
             Log(Translation("engine.model.loading.alreadyloaded") + normalized, LogSeverity::Debug);
@@ -562,7 +530,7 @@ void ModelManager::AppendMeshToModelData(const aiMesh* mesh, ModelData& dst) {
 
 ModelManager::ModelHandle ModelManager::RegisterProceduralMesh(const std::string& name, std::vector<ModelData::Vertex> vertices, std::vector<std::uint32_t> indices) {
     LogScope scope;
-    const std::string normalizedName = NormalizePathSlashes(name);
+    const std::string normalizedName = AssetPath::NormalizePathSlashes(name);
 
     // 同名で登録済みの場合は再登録せず既存のハンドルを返す
     auto it = sAssetPathToHandle.find(normalizedName);
@@ -622,7 +590,7 @@ ModelManager::ModelHandle ModelManager::GetModelHandleFromFileName(const std::st
 
 ModelManager::ModelHandle ModelManager::GetModelHandleFromAssetPath(const std::string& assetPath) {
     LogScope scope;
-    auto it = sAssetPathToHandle.find(NormalizePathSlashes(assetPath));
+    auto it = sAssetPathToHandle.find(AssetPath::NormalizePathSlashes(assetPath));
     if (it == sAssetPathToHandle.end()) {
         Log(Translation("engine.model.gethandle.failed.notfound") + assetPath, LogSeverity::Warning);
         return kInvalidHandle;
@@ -714,7 +682,7 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
     // ダブルクリック等、生成直後のセッション内参照が「読み込まれていない」扱いになる）。
     // 既に.matファイルが存在する場合はユーザーの編集を保護するため上書きしないが、
     // 登録自体は（未登録なら）行う
-    const std::string modelDir = NormalizePathSlashes(PathToUtf8String(Utf8StringToPath(modelFullPath).parent_path()));
+    const std::string modelDir = AssetPath::NormalizePathSlashes(PathToUtf8String(Utf8StringToPath(modelFullPath).parent_path()));
     std::unordered_map<unsigned int, std::string> materialIndexToName;
     for (unsigned int mi = 0; mi < scene->mNumMaterials; ++mi) {
         aiString aiName;
@@ -924,7 +892,7 @@ void ModelManager::RegisterNodeDecompositionAndPrefab(const aiScene *scene,
 
 bool ModelManager::RenameModel(const std::string &oldAssetPath, const std::string &newAssetPath) {
     LogScope scope;
-    const std::string normalizedOld = NormalizePathSlashes(oldAssetPath);
+    const std::string normalizedOld = AssetPath::NormalizePathSlashes(oldAssetPath);
     auto pathIt = sAssetPathToHandle.find(normalizedOld);
     if (pathIt == sAssetPathToHandle.end()) return false;
     const Handle handle = pathIt->second;
@@ -935,7 +903,7 @@ bool ModelManager::RenameModel(const std::string &oldAssetPath, const std::strin
     sAssetPathToHandle.erase(pathIt);
     sFileNameToHandle.erase(entry.fileName);
 
-    const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
+    const std::string normalizedNew = AssetPath::NormalizePathSlashes(newAssetPath);
     entry.assetPath = normalizedNew;
     entry.fileName = std::filesystem::path(normalizedNew).filename().string();
     entry.fullPath = ProjectPaths::AssetsRoot() + "/" + normalizedNew;

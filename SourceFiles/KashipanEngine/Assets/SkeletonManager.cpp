@@ -1,5 +1,7 @@
 #include "Assets/CookedAssets.h"
 #include "Assets/AssetFileIndex.h"
+#include "Assets/AssetPath.h"
+#include "Assets/AssetRegistry.h"
 #include "SkeletonManager.h"
 #include "Assets/SharedModelImport.h"
 #include "Assets/AssimpUtf8IOSystem.h"
@@ -39,43 +41,9 @@ std::unordered_map<Handle, SkeletonEntry> sSkeletons;
 FileMap<Handle> sFileNameToHandle;
 FileMap<Handle> sAssetPathToHandle;
 
-std::string NormalizePathSlashes(std::string s) {
-    std::replace(s.begin(), s.end(), '\\', '/');
-    while (!s.empty() && s.back() == '/') s.pop_back();
-    return s;
-}
-
-std::string ToLower(std::string s) {
-    for (auto &c : s) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    return s;
-}
-
-bool HasSupportedSkeletonExtension(const std::filesystem::path &p) {
-    const std::string ext = ToLower(p.extension().string());
-    return (ext == ".fbx" || ext == ".gltf" || ext == ".glb" || ext == ".dae" || ext == ".x" || ext == ".blend" || ext == ".obj");
-}
-
-std::string MakeAssetRelativePath(const std::string &assetsRoot, const std::string &fullPath) {
-    const std::filesystem::path root = Utf8StringToPath(assetsRoot);
-    const std::filesystem::path full = Utf8StringToPath(fullPath);
-
-    std::error_code ec;
-    auto rel = std::filesystem::relative(full, root, ec);
-    if (ec) {
-        return NormalizePathSlashes(PathToUtf8String(full.filename()));
-    }
-    return NormalizePathSlashes(PathToUtf8String(rel));
-}
-
 Handle RegisterEntry(SkeletonEntry &&entry) {
     const Handle handle = static_cast<Handle>(sSkeletons.size() + 1u);
-    if (handle == SkeletonManager::kInvalidHandle) return SkeletonManager::kInvalidHandle;
-    if (sSkeletons.find(handle) != sSkeletons.end()) return SkeletonManager::kInvalidHandle;
-
-    sFileNameToHandle[entry.fileName] = handle;
-    sAssetPathToHandle[NormalizePathSlashes(entry.assetPath)] = handle;
-    sSkeletons.emplace(handle, std::move(entry));
-    return handle;
+    return AssetRegistry::Register(handle, sSkeletons, sFileNameToHandle, sAssetPathToHandle, std::move(entry));
 }
 
 Matrix4x4 ConvertMatrix(const aiMatrix4x4 &m) {
@@ -218,7 +186,7 @@ void BuildJointHierarchy(const aiNode *node, Skeleton &skeleton) {
 } // namespace
 
 SkeletonManager::SkeletonManager(Passkey<GameEngine>, AssetFileIndex &assetFiles)
-    : assetsRootPath_(NormalizePathSlashes(assetFiles.Root())) {
+    : assetsRootPath_(AssetPath::NormalizePathSlashes(assetFiles.Root())) {
     LogScope scope;
     LoadAllFromAssetsFolder(assetFiles.Files(AssetFileIndex::Kind::Skeleton));
 }
@@ -246,7 +214,7 @@ SkeletonManager::SkeletonHandle SkeletonManager::LoadSkeleton(const std::string 
     Log(Translation("engine.skeleton.loading.start") + filePath, LogSeverity::Info);
 
     {
-        const std::string normalized = NormalizePathSlashes(filePath);
+        const std::string normalized = AssetPath::NormalizePathSlashes(filePath);
         auto it = sAssetPathToHandle.find(normalized);
         if (it != sAssetPathToHandle.end()) {
             Log(Translation("engine.skeleton.loading.alreadyloaded") + normalized, LogSeverity::Debug);
@@ -260,7 +228,7 @@ SkeletonManager::SkeletonHandle SkeletonManager::LoadSkeleton(const std::string 
         Log(Translation("engine.skeleton.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
-    if (!HasSupportedSkeletonExtension(p)) {
+    if (!AssetFileIndex::SupportsFile(AssetFileIndex::Kind::Skeleton, p)) {
         Log(Translation("engine.skeleton.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
@@ -273,8 +241,8 @@ SkeletonManager::SkeletonHandle SkeletonManager::LoadSkeleton(const std::string 
     }
 
     SkeletonEntry entry{};
-    entry.fullPath = NormalizePathSlashes(PathToUtf8String(p));
-    entry.assetPath = MakeAssetRelativePath(assetsRootPath_, entry.fullPath);
+    entry.fullPath = AssetPath::NormalizePathSlashes(PathToUtf8String(p));
+    entry.assetPath = AssetPath::MakeAssetRelativePath(assetsRootPath_, entry.fullPath);
     entry.fileName = PathToUtf8String(p.filename());
     entry.data.assetRelativePath_ = entry.assetPath;
 
@@ -312,16 +280,12 @@ SkeletonManager::SkeletonHandle SkeletonManager::LoadSkeleton(const std::string 
 
 SkeletonManager::SkeletonHandle SkeletonManager::GetSkeletonHandleFromFileName(const std::string &fileName) {
     if (fileName.empty()) return kInvalidHandle;
-    auto it = sFileNameToHandle.find(fileName);
-    if (it == sFileNameToHandle.end()) return kInvalidHandle;
-    return it->second;
+    return AssetRegistry::FindHandle(sFileNameToHandle, fileName);
 }
 
 SkeletonManager::SkeletonHandle SkeletonManager::GetSkeletonHandleFromAssetPath(const std::string &assetPath) {
     if (assetPath.empty()) return kInvalidHandle;
-    auto it = sAssetPathToHandle.find(NormalizePathSlashes(assetPath));
-    if (it == sAssetPathToHandle.end()) return kInvalidHandle;
-    return it->second;
+    return AssetRegistry::FindHandle(sAssetPathToHandle, AssetPath::NormalizePathSlashes(assetPath));
 }
 
 const SkeletonData &SkeletonManager::GetSkeletonData(SkeletonHandle handle) {

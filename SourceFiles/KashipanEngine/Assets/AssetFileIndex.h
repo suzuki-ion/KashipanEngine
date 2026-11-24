@@ -1,8 +1,9 @@
 #pragma once
 #include "Utilities/FileIO/Directory.h"
-#include "Utilities/Conversion/ConvertString.h"
+#include "Assets/AssetPath.h"
 #include "Assets/CookedAssets.h"
 #include <array>
+#include <string_view>
 #include <unordered_set>
 #include <utility>
 
@@ -11,6 +12,46 @@ namespace KashipanEngine {
 class AssetFileIndex final {
 public:
     enum class Kind { Texture, Font, BitmapFont, Model, Skeleton, Audio, Animation, Material, Video, Gif, Count };
+
+    static bool SupportsFile(Kind kind, const std::filesystem::path &path) {
+        return SupportsExtension(kind, AssetPath::ToLower(path.extension().string()));
+    }
+
+private:
+    static bool SupportsExtension(Kind kind, std::string_view extension) noexcept {
+        switch (kind) {
+        case Kind::Texture:
+            return extension == ".png" || extension == ".jpg" || extension == ".jpeg" || extension == ".bmp" ||
+                extension == ".tga" || extension == ".dds" || extension == ".hdr" || extension == ".tif" ||
+                extension == ".tiff" || extension == ".gif" || extension == ".webp";
+        case Kind::Font:
+            return extension == ".ttf" || extension == ".otf";
+        case Kind::BitmapFont:
+            return extension == ".fnt";
+        case Kind::Model:
+            return extension == ".fbx" || extension == ".obj" || extension == ".gltf" || extension == ".glb" ||
+                extension == ".dae" || extension == ".3ds" || extension == ".blend" || extension == ".ply" ||
+                extension == ".stl" || extension == ".x";
+        case Kind::Animation:
+        case Kind::Skeleton:
+            return extension == ".fbx" || extension == ".gltf" || extension == ".glb" || extension == ".dae" ||
+                extension == ".x" || extension == ".blend" || extension == ".obj";
+        case Kind::Audio:
+            return extension == ".wav" || extension == ".mp3" || extension == ".ogg" || extension == ".flac" ||
+                extension == ".aac" || extension == ".m4a" || extension == ".wma";
+        case Kind::Material:
+            return extension == ".mat";
+        case Kind::Video:
+            return extension == ".mp4" || extension == ".wmv" || extension == ".mov" || extension == ".avi";
+        case Kind::Gif:
+            return extension == ".gif";
+        case Kind::Count:
+            break;
+        }
+        return false;
+    }
+
+public:
     explicit AssetFileIndex(std::string root) : root_(std::move(root)) {
         if (CookedAssets::Active()) {
             for (const auto &file : CookedAssets::manifest.at("assets"))
@@ -36,16 +77,9 @@ private:
         if (!seen_.insert(identity).second) return;
         allFiles_.push_back(file);
         const auto extension = PathToUtf8String(path.extension());
-        if (extension == ".png" || extension == ".jpg" || extension == ".jpeg" || extension == ".bmp" || extension == ".tga" || extension == ".dds" || extension == ".hdr" || extension == ".tif" || extension == ".tiff" || extension == ".gif" || extension == ".webp") files_[static_cast<size_t>(Kind::Texture)].push_back(file);
-        if (extension == ".ttf" || extension == ".otf") files_[static_cast<size_t>(Kind::Font)].push_back(file);
-        if (extension == ".fnt") files_[static_cast<size_t>(Kind::BitmapFont)].push_back(file);
-        if (extension == ".fbx" || extension == ".obj" || extension == ".gltf" || extension == ".glb" || extension == ".dae" || extension == ".3ds" || extension == ".blend" || extension == ".ply" || extension == ".stl" || extension == ".x") files_[static_cast<size_t>(Kind::Model)].push_back(file);
-        if (extension == ".fbx" || extension == ".gltf" || extension == ".glb" || extension == ".dae" || extension == ".x" || extension == ".blend" || extension == ".obj") files_[static_cast<size_t>(Kind::Skeleton)].push_back(file);
-        if (extension == ".wav" || extension == ".mp3" || extension == ".ogg" || extension == ".flac" || extension == ".aac" || extension == ".m4a" || extension == ".wma") files_[static_cast<size_t>(Kind::Audio)].push_back(file);
-        if (extension == ".fbx" || extension == ".gltf" || extension == ".glb" || extension == ".dae" || extension == ".x" || extension == ".blend" || extension == ".obj") files_[static_cast<size_t>(Kind::Animation)].push_back(file);
-        if (extension == ".mat") files_[static_cast<size_t>(Kind::Material)].push_back(file);
-        if (extension == ".mp4" || extension == ".wmv" || extension == ".mov" || extension == ".avi") files_[static_cast<size_t>(Kind::Video)].push_back(file);
-        if (extension == ".gif") files_[static_cast<size_t>(Kind::Gif)].push_back(file);
+        for (size_t i = 0; i < files_.size(); ++i) {
+            if (SupportsExtension(static_cast<Kind>(i), extension)) files_[i].push_back(file);
+        }
     }
     std::string root_;
     std::vector<std::string> allFiles_;

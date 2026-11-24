@@ -1,4 +1,6 @@
 #include "Assets/AssetFileIndex.h"
+#include "Assets/AssetPath.h"
+#include "Assets/AssetRegistry.h"
 #include "MaterialManager.h"
 #include "Assets/CaseInsensitive.h"
 
@@ -48,39 +50,11 @@ MaterialHandle sNextHandle = 1;
 MaterialManager* sActiveInstance = nullptr;
 #endif
 
-std::string NormalizePathSlashes(std::string s) {
-    std::replace(s.begin(), s.end(), '\\', '/');
-    while (!s.empty() && s.back() == '/') s.pop_back();
-    return s;
-}
-
-std::string ToLower(std::string s) {
-    for (auto& c : s) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    return s;
-}
-
 /// @brief "__"で始まる名前は、SceneRenderer::SetEditorSelectedObjects等が生成する
 ///        エディター内部専用マテリアル用に予約されている（プロジェクトのアセットではないため、
 ///        マテリアル一覧・SaveAllMaterialsからは除外する）
 bool IsInternalMaterialName(const std::string &name) {
     return name.starts_with("__");
-}
-
-bool HasSupportedMaterialExtension(const std::filesystem::path& p) {
-    const std::string ext = ToLower(p.extension().string());
-    return (ext == ".mat");
-}
-
-std::string MakeAssetRelativePath(const std::string& assetsRoot, const std::string& fullPath) {
-    const std::filesystem::path root = Utf8StringToPath(assetsRoot);
-    const std::filesystem::path full = Utf8StringToPath(fullPath);
-
-    std::error_code ec;
-    auto rel = std::filesystem::relative(full, root, ec);
-    if (ec) {
-        return NormalizePathSlashes(PathToUtf8String(full.filename()));
-    }
-    return NormalizePathSlashes(PathToUtf8String(rel));
 }
 
 bool LoadMaterialFromJSON(const std::string& filePath, MaterialManager::Material& outMaterial) {
@@ -176,7 +150,7 @@ MaterialHandle RegisterEntry(MaterialEntry&& entry) {
 
 MaterialManager::MaterialManager(Passkey<GameEngine>, AssetFileIndex &assetFiles) {
     LogScope scope;
-    sAssetsRootPath = NormalizePathSlashes(assetFiles.Root());
+    sAssetsRootPath = AssetPath::NormalizePathSlashes(assetFiles.Root());
     InitializeMaterialManager();
     LoadAllFromAssetsFolder(assetFiles.Files(AssetFileIndex::Kind::Material));
     EnsureDefaultMaterialExists();
@@ -241,13 +215,13 @@ MaterialManager::MaterialHandle MaterialManager::LoadMaterial(const std::string&
         return kInvalidHandle;
     }
 
-    if (!HasSupportedMaterialExtension(p)) {
+    if (!AssetFileIndex::SupportsFile(AssetFileIndex::Kind::Material, p)) {
         Log(Translation("engine.material.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
 
-    const std::string full = NormalizePathSlashes(PathToUtf8String(p));
-    const std::string asset = MakeAssetRelativePath(sAssetsRootPath, full);
+    const std::string full = AssetPath::NormalizePathSlashes(PathToUtf8String(p));
+    const std::string asset = AssetPath::MakeAssetRelativePath(sAssetsRootPath, full);
 
     // 既に読み込み済みかチェック（assetPath -> handle の直接マップは存在しないため走査して探す。
     // Material::name とは独立した概念のため sNameToHandle では照合できない）
@@ -292,7 +266,7 @@ bool MaterialManager::SaveMaterial(MaterialHandle handle, const std::string &fil
 
     std::string savePath;
     if (!filePath.empty()) {
-        savePath = NormalizePathSlashes(filePath);
+        savePath = AssetPath::NormalizePathSlashes(filePath);
     } else {
         savePath = it->second.fullPath;
     }
@@ -337,7 +311,7 @@ bool MaterialManager::SaveMaterial(MaterialHandle handle, const std::string &fil
     // 保存先が変わった場合はエントリ情報を更新する
     if (it->second.fullPath != savePath) {
         it->second.fullPath = savePath;
-        it->second.assetPath = MakeAssetRelativePath(sAssetsRootPath, savePath);
+        it->second.assetPath = AssetPath::MakeAssetRelativePath(sAssetsRootPath, savePath);
         it->second.fileName = PathToUtf8String(Utf8StringToPath(savePath).filename());
     }
     return true;
@@ -350,7 +324,7 @@ bool MaterialManager::SaveAllMaterials(const std::string &folderPath) {
         if (IsInternalMaterialName(entry.material.name)) continue;
         std::string savePath;
         if (!folderPath.empty()) {
-            savePath = NormalizePathSlashes(folderPath + "/" + entry.fileName);
+            savePath = AssetPath::NormalizePathSlashes(folderPath + "/" + entry.fileName);
         } else {
             savePath = entry.fullPath;
         }
@@ -364,21 +338,17 @@ bool MaterialManager::SaveAllMaterials(const std::string &folderPath) {
 
 MaterialManager::MaterialHandle MaterialManager::GetMaterialHandleFromFileName(const std::string& fileName) {
     LogScope scope;
-    auto it = sFileNameToHandle.find(fileName);
-    if (it == sFileNameToHandle.end()) return kInvalidHandle;
-    return it->second;
+    return AssetRegistry::FindHandle(sFileNameToHandle, fileName);
 }
 
 MaterialManager::MaterialHandle MaterialManager::GetMaterialHandleFromName(const std::string& name) {
     LogScope scope;
-    auto it = sNameToHandle.find(name);
-    if (it == sNameToHandle.end()) return kInvalidHandle;
-    return it->second;
+    return AssetRegistry::FindHandle(sNameToHandle, name);
 }
 
 bool MaterialManager::RenameMaterialFile(const std::string &oldAssetPath, const std::string &newAssetPath) {
     LogScope scope;
-    const std::string normalizedOld = NormalizePathSlashes(oldAssetPath);
+    const std::string normalizedOld = AssetPath::NormalizePathSlashes(oldAssetPath);
     // assetPath -> handle の直接マップは存在しないため走査して探す
     // （Material::name とは独立した概念のため sNameToHandle は使わない）
     auto entryIt = std::find_if(sMaterials.begin(), sMaterials.end(),
@@ -388,7 +358,7 @@ bool MaterialManager::RenameMaterialFile(const std::string &oldAssetPath, const 
     MaterialEntry &entry = entryIt->second;
     sFileNameToHandle.erase(entry.fileName);
 
-    const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
+    const std::string normalizedNew = AssetPath::NormalizePathSlashes(newAssetPath);
     entry.assetPath = normalizedNew;
     entry.fileName = PathToUtf8String(Utf8StringToPath(normalizedNew).filename());
     entry.fullPath = sAssetsRootPath + "/" + normalizedNew;
@@ -412,8 +382,8 @@ MaterialManager::Material* MaterialManager::GetMaterial(const std::string& name)
 MaterialHandle MaterialManager::RegisterMaterial(const std::string &name, const Material &material, const std::string &filePath) {
     (void)name;
     MaterialEntry entry{};
-    entry.fullPath = NormalizePathSlashes(filePath);
-    entry.assetPath = MakeAssetRelativePath(sAssetsRootPath, entry.fullPath);
+    entry.fullPath = AssetPath::NormalizePathSlashes(filePath);
+    entry.assetPath = AssetPath::MakeAssetRelativePath(sAssetsRootPath, entry.fullPath);
     entry.fileName = PathToUtf8String(Utf8StringToPath(filePath).filename());
     entry.material = material;
     return RegisterEntry(std::move(entry));

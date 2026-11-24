@@ -1,4 +1,6 @@
 #include "Assets/AssetFileIndex.h"
+#include "Assets/AssetPath.h"
+#include "Assets/AssetRegistry.h"
 #include "VideoManager.h"
 
 #include <algorithm>
@@ -51,34 +53,6 @@ std::vector<std::unique_ptr<VideoPlayer>> sPlayers;
 std::vector<std::unique_ptr<VideoPlayer>> sPendingDestroyPlayers;
 std::uint32_t sNextPlayerId = 1;
 
-std::string NormalizePathSlashes(std::string s) {
-    std::replace(s.begin(), s.end(), '\\', '/');
-    while (!s.empty() && s.back() == '/') s.pop_back();
-    return s;
-}
-
-std::string ToLower(std::string s) {
-    for (auto &c : s) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    return s;
-}
-
-bool HasSupportedVideoExtension(const std::filesystem::path &p) {
-    const std::string ext = ToLower(p.extension().string());
-    return (ext == ".mp4" || ext == ".wmv" || ext == ".mov" || ext == ".avi");
-}
-
-std::string MakeAssetRelativePath(const std::string &assetsRoot, const std::string &fullPath) {
-    const std::filesystem::path root = Utf8StringToPath(assetsRoot);
-    const std::filesystem::path full = Utf8StringToPath(fullPath);
-
-    std::error_code ec;
-    auto rel = std::filesystem::relative(full, root, ec);
-    if (ec) {
-        return NormalizePathSlashes(PathToUtf8String(full.filename()));
-    }
-    return NormalizePathSlashes(PathToUtf8String(rel));
-}
-
 /// @brief 動画ストリームの出力形式をNV12に設定する（VideoPlayer::Impl::SetVideoOutputToNV12と同じ手順）
 bool SetVideoOutputToNV12(IMFSourceReader *reader) {
     Microsoft::WRL::ComPtr<IMFMediaType> type;
@@ -119,13 +93,13 @@ bool ProbeVideo(const std::string &filePath, const std::string &assetsRootPath, 
         Log(Translation("engine.video.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return false;
     }
-    if (!HasSupportedVideoExtension(p)) {
+    if (!AssetFileIndex::SupportsFile(AssetFileIndex::Kind::Video, p)) {
         Log(Translation("engine.video.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
         return false;
     }
 
-    outInfo.fullPath = NormalizePathSlashes(PathToUtf8String(p));
-    outInfo.assetPath = MakeAssetRelativePath(assetsRootPath, outInfo.fullPath);
+    outInfo.fullPath = AssetPath::NormalizePathSlashes(PathToUtf8String(p));
+    outInfo.assetPath = AssetPath::MakeAssetRelativePath(assetsRootPath, outInfo.fullPath);
     outInfo.fileName = PathToUtf8String(p.filename());
 
     const std::wstring wpath(p.wstring());
@@ -166,19 +140,13 @@ bool ProbeVideo(const std::string &filePath, const std::string &assetsRootPath, 
 
 VideoHandle RegisterEntry(VideoInfo &&entry) {
     const VideoHandle handle = static_cast<VideoHandle>(sVideos.size() + 1u);
-    if (handle == VideoManager::kInvalidHandle) return VideoManager::kInvalidHandle;
-    if (sVideos.find(handle) != sVideos.end()) return VideoManager::kInvalidHandle;
-
-    sFileNameToHandle[entry.fileName] = handle;
-    sAssetPathToHandle[NormalizePathSlashes(entry.assetPath)] = handle;
-    sVideos.emplace(handle, std::move(entry));
-    return handle;
+    return AssetRegistry::Register(handle, sVideos, sFileNameToHandle, sAssetPathToHandle, std::move(entry));
 }
 
 } // namespace
 
 VideoManager::VideoManager(Passkey<GameEngine>, DirectXCommon *directXCommon, AssetFileIndex &assetFiles)
-    : assetsRootPath_(NormalizePathSlashes(assetFiles.Root())), directXCommon_(directXCommon) {
+    : assetsRootPath_(AssetPath::NormalizePathSlashes(assetFiles.Root())), directXCommon_(directXCommon) {
     LogScope scope;
     sActiveInstance = this;
     InitializeMediaFoundation();
@@ -225,7 +193,7 @@ VideoManager::VideoHandle VideoManager::Load(const std::string &filePath) {
     LogScope scope;
     if (filePath.empty()) return kInvalidHandle;
 
-    const std::string normalizedAsset = NormalizePathSlashes(MakeAssetRelativePath(assetsRootPath_, NormalizePathSlashes(PathToUtf8String(Utf8StringToPath(filePath)))));
+    const std::string normalizedAsset = AssetPath::NormalizePathSlashes(AssetPath::MakeAssetRelativePath(assetsRootPath_, AssetPath::NormalizePathSlashes(PathToUtf8String(Utf8StringToPath(filePath)))));
     {
         auto it = sAssetPathToHandle.find(normalizedAsset);
         if (it != sAssetPathToHandle.end()) return it->second;
@@ -242,15 +210,11 @@ VideoManager::VideoHandle VideoManager::Load(const std::string &filePath) {
 }
 
 VideoManager::VideoHandle VideoManager::GetVideoHandleFromFileName(const std::string &fileName) {
-    auto it = sFileNameToHandle.find(fileName);
-    if (it == sFileNameToHandle.end()) return kInvalidHandle;
-    return it->second;
+    return AssetRegistry::FindHandle(sFileNameToHandle, fileName);
 }
 
 VideoManager::VideoHandle VideoManager::GetVideoHandleFromAssetPath(const std::string &assetPath) {
-    auto it = sAssetPathToHandle.find(NormalizePathSlashes(assetPath));
-    if (it == sAssetPathToHandle.end()) return kInvalidHandle;
-    return it->second;
+    return AssetRegistry::FindHandle(sAssetPathToHandle, AssetPath::NormalizePathSlashes(assetPath));
 }
 
 const VideoManager::VideoInfo *VideoManager::GetVideoInfo(VideoHandle handle) {
@@ -260,34 +224,12 @@ const VideoManager::VideoInfo *VideoManager::GetVideoInfo(VideoHandle handle) {
 }
 
 std::vector<std::string> VideoManager::GetLoadedVideoAssetPaths() {
-    std::vector<std::string> out;
-    out.reserve(sVideos.size());
-    for (const auto &kv : sVideos) out.push_back(kv.second.assetPath);
-    std::sort(out.begin(), out.end());
-    return out;
+    return AssetRegistry::GetSortedAssetPaths(sVideos);
 }
 
 bool VideoManager::RenameVideo(const std::string &oldAssetPath, const std::string &newAssetPath) {
-    const std::string normalizedOld = NormalizePathSlashes(oldAssetPath);
-    auto it = sAssetPathToHandle.find(normalizedOld);
-    if (it == sAssetPathToHandle.end()) return false;
-
-    const VideoHandle handle = it->second;
-    sAssetPathToHandle.erase(it);
-
-    const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
-    sAssetPathToHandle[normalizedNew] = handle;
-
-    auto entryIt = sVideos.find(handle);
-    if (entryIt != sVideos.end()) {
-        entryIt->second.assetPath = normalizedNew;
-        const std::filesystem::path p = Utf8StringToPath(newAssetPath);
-        const std::string newFileName = PathToUtf8String(p.filename());
-        sFileNameToHandle.erase(entryIt->second.fileName);
-        entryIt->second.fileName = newFileName;
-        sFileNameToHandle[newFileName] = handle;
-    }
-    return true;
+    return AssetRegistry::RenameMediaAsset(sVideos, sFileNameToHandle, sAssetPathToHandle,
+        oldAssetPath, newAssetPath);
 }
 
 #if defined(USE_IMGUI)

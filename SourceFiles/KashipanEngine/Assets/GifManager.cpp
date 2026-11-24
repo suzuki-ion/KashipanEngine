@@ -1,4 +1,6 @@
 #include "Assets/AssetFileIndex.h"
+#include "Assets/AssetPath.h"
+#include "Assets/AssetRegistry.h"
 #include "GifManager.h"
 
 #include <algorithm>
@@ -41,33 +43,6 @@ FileMap<GifHandle> sAssetPathToHandle;
 // CommitPendingDestroyまで1フレーム遅延させる（ScreenBuffer::DestroyNotify/CommitDestroyと同じ考え方）
 std::vector<std::unique_ptr<GifPlayer>> sPendingDestroyPlayers;
 
-std::string NormalizePathSlashes(std::string s) {
-    std::replace(s.begin(), s.end(), '\\', '/');
-    while (!s.empty() && s.back() == '/') s.pop_back();
-    return s;
-}
-
-std::string ToLower(std::string s) {
-    for (auto &c : s) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    return s;
-}
-
-bool HasGifExtension(const std::filesystem::path &p) {
-    return ToLower(p.extension().string()) == ".gif";
-}
-
-std::string MakeAssetRelativePath(const std::string &assetsRoot, const std::string &fullPath) {
-    const std::filesystem::path root = Utf8StringToPath(assetsRoot);
-    const std::filesystem::path full = Utf8StringToPath(fullPath);
-
-    std::error_code ec;
-    auto rel = std::filesystem::relative(full, root, ec);
-    if (ec) {
-        return NormalizePathSlashes(PathToUtf8String(full.filename()));
-    }
-    return NormalizePathSlashes(PathToUtf8String(rel));
-}
-
 /// @brief PROPVARIANTからUI2/UI1値を読み取るヘルパー（型不一致・取得失敗時は既定値を返す）
 std::uint32_t ReadPropVariantUInt(IWICMetadataQueryReader *reader, LPCWSTR name, std::uint32_t defaultValue) {
     if (!reader) return defaultValue;
@@ -107,7 +82,7 @@ bool DecodeGifAnimation(const std::string &filePath, const std::string &assetsRo
         Log(Translation("engine.gif.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return false;
     }
-    if (!HasGifExtension(p)) {
+    if (!AssetFileIndex::SupportsFile(AssetFileIndex::Kind::Gif, p)) {
         Log(Translation("engine.gif.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
         return false;
     }
@@ -244,27 +219,21 @@ bool DecodeGifAnimation(const std::string &filePath, const std::string &assetsRo
         hasPrevious = true;
     }
 
-    out.fullPath = NormalizePathSlashes(PathToUtf8String(p));
-    out.assetPath = MakeAssetRelativePath(assetsRootPath, out.fullPath);
+    out.fullPath = AssetPath::NormalizePathSlashes(PathToUtf8String(p));
+    out.assetPath = AssetPath::MakeAssetRelativePath(assetsRootPath, out.fullPath);
     out.fileName = PathToUtf8String(p.filename());
     return true;
 }
 
 GifHandle RegisterEntry(GifAnimation &&entry) {
     const GifHandle handle = static_cast<GifHandle>(sGifs.size() + 1u);
-    if (handle == GifManager::kInvalidHandle) return GifManager::kInvalidHandle;
-    if (sGifs.find(handle) != sGifs.end()) return GifManager::kInvalidHandle;
-
-    sFileNameToHandle[entry.fileName] = handle;
-    sAssetPathToHandle[NormalizePathSlashes(entry.assetPath)] = handle;
-    sGifs.emplace(handle, std::move(entry));
-    return handle;
+    return AssetRegistry::Register(handle, sGifs, sFileNameToHandle, sAssetPathToHandle, std::move(entry));
 }
 
 } // namespace
 
 GifManager::GifManager(Passkey<GameEngine>, DirectXCommon *directXCommon, AssetFileIndex &assetFiles)
-    : assetsRootPath_(NormalizePathSlashes(assetFiles.Root())), directXCommon_(directXCommon) {
+    : assetsRootPath_(AssetPath::NormalizePathSlashes(assetFiles.Root())), directXCommon_(directXCommon) {
     LogScope scope;
     sActiveInstance = this;
     LoadAllFromAssetsFolder(assetFiles.Files(AssetFileIndex::Kind::Gif));
@@ -299,7 +268,7 @@ GifManager::GifHandle GifManager::Load(const std::string &filePath) {
     LogScope scope;
     if (filePath.empty()) return kInvalidHandle;
 
-    const std::string normalizedAsset = NormalizePathSlashes(MakeAssetRelativePath(assetsRootPath_, NormalizePathSlashes(PathToUtf8String(Utf8StringToPath(filePath)))));
+    const std::string normalizedAsset = AssetPath::NormalizePathSlashes(AssetPath::MakeAssetRelativePath(assetsRootPath_, AssetPath::NormalizePathSlashes(PathToUtf8String(Utf8StringToPath(filePath)))));
     {
         auto it = sAssetPathToHandle.find(normalizedAsset);
         if (it != sAssetPathToHandle.end()) {
@@ -319,15 +288,11 @@ GifManager::GifHandle GifManager::Load(const std::string &filePath) {
 }
 
 GifManager::GifHandle GifManager::GetGifHandleFromFileName(const std::string &fileName) {
-    auto it = sFileNameToHandle.find(fileName);
-    if (it == sFileNameToHandle.end()) return kInvalidHandle;
-    return it->second;
+    return AssetRegistry::FindHandle(sFileNameToHandle, fileName);
 }
 
 GifManager::GifHandle GifManager::GetGifHandleFromAssetPath(const std::string &assetPath) {
-    auto it = sAssetPathToHandle.find(NormalizePathSlashes(assetPath));
-    if (it == sAssetPathToHandle.end()) return kInvalidHandle;
-    return it->second;
+    return AssetRegistry::FindHandle(sAssetPathToHandle, AssetPath::NormalizePathSlashes(assetPath));
 }
 
 const GifManager::GifAnimation *GifManager::GetGifAnimation(GifHandle handle) {
@@ -337,34 +302,12 @@ const GifManager::GifAnimation *GifManager::GetGifAnimation(GifHandle handle) {
 }
 
 std::vector<std::string> GifManager::GetLoadedGifAssetPaths() {
-    std::vector<std::string> out;
-    out.reserve(sGifs.size());
-    for (const auto &kv : sGifs) out.push_back(kv.second.assetPath);
-    std::sort(out.begin(), out.end());
-    return out;
+    return AssetRegistry::GetSortedAssetPaths(sGifs);
 }
 
 bool GifManager::RenameGif(const std::string &oldAssetPath, const std::string &newAssetPath) {
-    const std::string normalizedOld = NormalizePathSlashes(oldAssetPath);
-    auto it = sAssetPathToHandle.find(normalizedOld);
-    if (it == sAssetPathToHandle.end()) return false;
-
-    const GifHandle handle = it->second;
-    sAssetPathToHandle.erase(it);
-
-    const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
-    sAssetPathToHandle[normalizedNew] = handle;
-
-    auto entryIt = sGifs.find(handle);
-    if (entryIt != sGifs.end()) {
-        entryIt->second.assetPath = normalizedNew;
-        const std::filesystem::path p = Utf8StringToPath(newAssetPath);
-        const std::string newFileName = PathToUtf8String(p.filename());
-        sFileNameToHandle.erase(entryIt->second.fileName);
-        entryIt->second.fileName = newFileName;
-        sFileNameToHandle[newFileName] = handle;
-    }
-    return true;
+    return AssetRegistry::RenameMediaAsset(sGifs, sFileNameToHandle, sAssetPathToHandle,
+        oldAssetPath, newAssetPath);
 }
 
 std::unique_ptr<GifPlayer> GifManager::CreatePlayer(GifHandle handle) {

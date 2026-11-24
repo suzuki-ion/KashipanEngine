@@ -1,4 +1,6 @@
 #include "Assets/AssetFileIndex.h"
+#include "Assets/AssetPath.h"
+#include "Assets/AssetRegistry.h"
 #include "TextureManager.h"
 #include "Graphics/TextureUploadBatch.h"
 #include "Assets/PreparedTextureCache.h"
@@ -77,33 +79,7 @@ Handle sNextExternalHandle = kExternalHandleBase;
 ID3D12Device* sDevice = nullptr;
 SRVHeap* sSrvHeap = nullptr;
 
-std::string NormalizePathSlashes(std::string s) {
-    std::replace(s.begin(), s.end(), '\\', '/');
-    while (!s.empty() && s.back() == '/') s.pop_back();
-    return s;
-}
 
-std::string ToLower(std::string s) {
-    for (auto& c : s) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    return s;
-}
-
-bool HasSupportedImageExtension(const std::filesystem::path& p) {
-    const std::string ext = ToLower(p.extension().string());
-    return (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".tga" || ext == ".dds" || ext == ".hdr" || ext == ".tif" || ext == ".tiff" || ext == ".gif" || ext == ".webp");
-}
-
-std::string MakeAssetRelativePath(const std::string& assetsRoot, const std::string& fullPath) {
-    const std::filesystem::path root = Utf8StringToPath(assetsRoot);
-    const std::filesystem::path full = Utf8StringToPath(fullPath);
-
-    std::error_code ec;
-    auto rel = std::filesystem::relative(full, root, ec);
-    if (ec) {
-        return NormalizePathSlashes(PathToUtf8String(full.filename()));
-    }
-    return NormalizePathSlashes(PathToUtf8String(rel));
-}
 
 /// @brief 現在アクティブなTextureManagerインスタンス（ModelManager等からのテクスチャ登録用）
 TextureManager* sActiveInstance = nullptr;
@@ -117,14 +93,7 @@ std::atomic_size_t sPreparedTextureHits{0}, sPreparedTextureMisses{0};
 Handle RegisterEntry(TextureEntry&& entry) {
     // TextureHandle は 0 を無効値とするため、SRV index に +1 した値をハンドルとして返す
     const Handle handle = static_cast<Handle>(entry.srvIndex + 1u);
-
-    if (handle == TextureManager::kInvalidHandle) return TextureManager::kInvalidHandle;
-    if (sTextures.find(handle) != sTextures.end()) return TextureManager::kInvalidHandle;
-
-    sFileNameToHandle[entry.fileName] = handle;
-    sAssetPathToHandle[NormalizePathSlashes(entry.assetPath)] = handle;
-    sTextures.emplace(handle, std::move(entry));
-    return handle;
+    return AssetRegistry::Register(handle, sTextures, sFileNameToHandle, sAssetPathToHandle, std::move(entry));
 }
 
 UINT Align256(UINT v) { return (v + 255u) & ~255u; }
@@ -252,7 +221,7 @@ bool TextureManager::UnregisterExternalTexture(const IShaderTexture* texture) {
 }
 
 TextureManager::TextureManager(Passkey<GameEngine>, DirectXCommon* directXCommon, AssetFileIndex &assetFiles)
-    : directXCommon_(directXCommon), assetsRootPath_(NormalizePathSlashes(assetFiles.Root())) {
+    : directXCommon_(directXCommon), assetsRootPath_(AssetPath::NormalizePathSlashes(assetFiles.Root())) {
     LogScope scope;
     if (directXCommon_) {
         sDevice = directXCommon_->GetDeviceForTextureManager(Passkey<TextureManager>{});
@@ -288,9 +257,9 @@ void TextureManager::LoadAllFromAssetsFolder(std::vector<std::string> files) {
     // 先頭（index 0）に来ることを前提にしている（GetTextureBindlessIndexのkInvalidHandle時の
     // 既定戻り値が0であるため）。ディレクトリ走査順（他アセットの追加順やフォルダ構成）に
     // よらずこれを保証するため、他のどのテクスチャよりも必ず先に単独で読み込む
-    const std::string whiteTexturePath = NormalizePathSlashes(assetsRootPath_ + "/KashipanEngine/white1x1.png");
+    const std::string whiteTexturePath = AssetPath::NormalizePathSlashes(assetsRootPath_ + "/KashipanEngine/white1x1.png");
     files.erase(std::remove_if(files.begin(), files.end(), [&](const std::string &f) {
-        return CaseInsensitiveEqual{}(NormalizePathSlashes(f), whiteTexturePath);
+        return CaseInsensitiveEqual{}(AssetPath::NormalizePathSlashes(f), whiteTexturePath);
     }), files.end());
     if (CookedAssets::Contains("Textures", Utf8StringToPath(whiteTexturePath)) || std::filesystem::exists(Utf8StringToPath(whiteTexturePath))) {
         mipMapContainer_.AddMipMap(whiteTexturePath, LoadTextureFromFile(whiteTexturePath));
@@ -344,8 +313,8 @@ TextureManager::TextureHandle TextureManager::LoadTexture(const std::string& fil
     const DirectX::Image* img0 = mipChain->GetImages();
 
     TextureEntry entry{};
-    entry.fullPath = NormalizePathSlashes(PathToUtf8String(p));
-    entry.assetPath = MakeAssetRelativePath(assetsRootPath_, entry.fullPath);
+    entry.fullPath = AssetPath::NormalizePathSlashes(PathToUtf8String(p));
+    entry.assetPath = AssetPath::MakeAssetRelativePath(assetsRootPath_, entry.fullPath);
     entry.fileName = PathToUtf8String(p.filename());
     entry.width = static_cast<UINT>(img0->width);
     entry.height = static_cast<UINT>(img0->height);
@@ -585,7 +554,7 @@ DirectX::ScratchImage TextureManager::LoadTextureFromFile(const std::string& fil
     Log(Translation("engine.texture.loading.start") + filePath, LogSeverity::Info);
 
     {
-        const std::string normalized = NormalizePathSlashes(filePath);
+        const std::string normalized = AssetPath::NormalizePathSlashes(filePath);
         auto it = sAssetPathToHandle.find(normalized);
         if (it != sAssetPathToHandle.end()) {
             Log(Translation("engine.texture.loading.alreadyloaded") + normalized, LogSeverity::Debug);
@@ -607,7 +576,7 @@ DirectX::ScratchImage TextureManager::LoadTextureFromFile(const std::string& fil
         Log(Translation("engine.texture.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return DirectX::ScratchImage();
     }
-    if (!HasSupportedImageExtension(p)) {
+    if (!AssetFileIndex::SupportsFile(AssetFileIndex::Kind::Texture, p)) {
         Log(Translation("engine.texture.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
         return DirectX::ScratchImage();
     }
@@ -635,7 +604,7 @@ DirectX::ScratchImage TextureManager::LoadTextureFromFile(const std::string& fil
     const std::wstring wpath = ConvertString(PathToUtf8String(p));
 
     HRESULT hr = E_FAIL;
-    const std::string ext = ToLower(p.extension().string());
+    const std::string ext = AssetPath::ToLower(p.extension().string());
     if (ext == ".dds") {
         hr = DirectX::LoadFromDDSFile(wpath.c_str(), DirectX::DDS_FLAGS_NONE, &meta, scratch);
     } else if (ext == ".tga") {
@@ -687,7 +656,7 @@ DirectX::ScratchImage TextureManager::LoadTextureFromMemory(const void* data, si
 TextureManager::TextureHandle TextureManager::RegisterTextureFromMemory(const std::string& registerPath, const void* data, size_t dataSize) {
     if (registerPath.empty()) return kInvalidHandle;
 
-    const auto existing = GetTextureFromAssetPath(MakeAssetRelativePath(assetsRootPath_, registerPath));
+    const auto existing = GetTextureFromAssetPath(AssetPath::MakeAssetRelativePath(assetsRootPath_, registerPath));
     if (existing != kInvalidHandle) return existing;
 
     DirectX::ScratchImage mipChain = LoadTextureFromMemory(data, dataSize);
@@ -701,7 +670,7 @@ TextureManager::TextureHandle TextureManager::RegisterTextureFromMemory(const st
 TextureManager::TextureHandle TextureManager::LoadTextureDynamic(const std::string &filePath) {
     if (!sActiveInstance) return kInvalidHandle;
 
-    const auto existing = GetTextureFromAssetPath(MakeAssetRelativePath(sActiveInstance->assetsRootPath_, filePath));
+    const auto existing = GetTextureFromAssetPath(AssetPath::MakeAssetRelativePath(sActiveInstance->assetsRootPath_, filePath));
     if (existing != kInvalidHandle) return existing;
 
     DirectX::ScratchImage mipChain = sActiveInstance->LoadTextureFromFile(filePath);
@@ -721,16 +690,12 @@ TextureManager::TextureHandle TextureManager::GetTexture(TextureHandle handle) {
 
 TextureManager::TextureHandle TextureManager::GetTextureFromFileName(const std::string& fileName) {
     LogScope scope;
-    auto it = sFileNameToHandle.find(fileName);
-    if (it == sFileNameToHandle.end()) return kInvalidHandle;
-    return it->second;
+    return AssetRegistry::FindHandle(sFileNameToHandle, fileName);
 }
 
 TextureManager::TextureHandle TextureManager::GetTextureFromAssetPath(const std::string& assetPath) {
     LogScope scope;
-    auto it = sAssetPathToHandle.find(NormalizePathSlashes(assetPath));
-    if (it == sAssetPathToHandle.end()) return kInvalidHandle;
-    return it->second;
+    return AssetRegistry::FindHandle(sAssetPathToHandle, AssetPath::NormalizePathSlashes(assetPath));
 }
 
 std::string TextureManager::GetTextureFileName(TextureHandle handle) {
@@ -751,25 +716,8 @@ std::string TextureManager::GetTextureAssetPath(TextureHandle handle) {
 
 bool TextureManager::RenameTexture(const std::string &oldAssetPath, const std::string &newAssetPath) {
     LogScope scope;
-    const std::string normalizedOld = NormalizePathSlashes(oldAssetPath);
-    auto pathIt = sAssetPathToHandle.find(normalizedOld);
-    if (pathIt == sAssetPathToHandle.end()) return false;
-    const Handle handle = pathIt->second;
-    auto entryIt = sTextures.find(handle);
-    if (entryIt == sTextures.end()) return false;
-
-    TextureEntry &entry = entryIt->second;
-    sAssetPathToHandle.erase(pathIt);
-    sFileNameToHandle.erase(entry.fileName);
-
-    const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
-    entry.assetPath = normalizedNew;
-    entry.fileName = PathToUtf8String(Utf8StringToPath(normalizedNew).filename());
-    entry.fullPath = ProjectPaths::AssetsRoot() + "/" + normalizedNew;
-
-    sAssetPathToHandle[normalizedNew] = handle;
-    sFileNameToHandle[entry.fileName] = handle;
-    return true;
+    return AssetRegistry::RenameFileAsset(sTextures, sFileNameToHandle, sAssetPathToHandle,
+        oldAssetPath, newAssetPath, ProjectPaths::AssetsRoot());
 }
 
 std::vector<TextureManager::TextureListEntry> TextureManager::GetLoadedTextureListEntries() {

@@ -1,4 +1,6 @@
 #include "Assets/AssetFileIndex.h"
+#include "Assets/AssetPath.h"
+#include "Assets/AssetRegistry.h"
 #include "FontManager.h"
 
 #include <algorithm>
@@ -287,34 +289,6 @@ FontHandle sNextHandle = 1;
 ID3D12Device *sDevice = nullptr;
 DirectXCommon *sDirectXCommon = nullptr;
 
-std::string NormalizePathSlashes(std::string s) {
-    std::replace(s.begin(), s.end(), '\\', '/');
-    while (!s.empty() && s.back() == '/') s.pop_back();
-    return s;
-}
-
-std::string ToLower(std::string s) {
-    for (auto &c : s) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    return s;
-}
-
-bool HasSupportedFontExtension(const std::filesystem::path &p) {
-    const std::string ext = ToLower(p.extension().string());
-    return (ext == ".ttf" || ext == ".otf");
-}
-
-std::string MakeAssetRelativePath(const std::string &assetsRoot, const std::string &fullPath) {
-    const std::filesystem::path root = Utf8StringToPath(assetsRoot);
-    const std::filesystem::path full = Utf8StringToPath(fullPath);
-
-    std::error_code ec;
-    auto rel = std::filesystem::relative(full, root, ec);
-    if (ec) {
-        return NormalizePathSlashes(PathToUtf8String(full.filename()));
-    }
-    return NormalizePathSlashes(PathToUtf8String(rel));
-}
-
 /// @brief アトラス内にwidth×heightの矩形を確保する（シェルフパッキング）
 /// @return 確保できた場合はtrue（outX/outYに左上座標を格納）、満杯の場合はfalse
 bool PackRect(FontEntry &font, int width, int height, std::uint32_t &outX, std::uint32_t &outY) {
@@ -351,7 +325,7 @@ void GrowAtlas(FontEntry &font) {
 } // namespace
 
 FontManager::FontManager(Passkey<GameEngine>, DirectXCommon *directXCommon, AssetFileIndex &assetFiles)
-    : directXCommon_(directXCommon), assetsRootPath_(NormalizePathSlashes(assetFiles.Root())) {
+    : directXCommon_(directXCommon), assetsRootPath_(AssetPath::NormalizePathSlashes(assetFiles.Root())) {
     LogScope scope;
     sAssetsRootPath = assetsRootPath_;
     sDirectXCommon = directXCommon_;
@@ -394,13 +368,13 @@ FontManager::FontHandle FontManager::LoadFont(const std::string &filePath) {
         Log(Translation("engine.font.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
-    if (!HasSupportedFontExtension(p)) {
+    if (!AssetFileIndex::SupportsFile(AssetFileIndex::Kind::Font, p)) {
         Log(Translation("engine.font.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
 
-    const std::string full = NormalizePathSlashes(PathToUtf8String(p));
-    const std::string asset = MakeAssetRelativePath(sAssetsRootPath, full);
+    const std::string full = AssetPath::NormalizePathSlashes(PathToUtf8String(p));
+    const std::string asset = AssetPath::MakeAssetRelativePath(sAssetsRootPath, full);
 
     // 既に読み込み済みかチェック
     {
@@ -443,18 +417,15 @@ FontManager::FontHandle FontManager::LoadFont(const std::string &filePath) {
 }
 
 FontManager::FontHandle FontManager::GetFontHandleFromFileName(const std::string &fileName) {
-    auto it = sFileNameToHandle.find(fileName);
-    return it != sFileNameToHandle.end() ? it->second : kInvalidHandle;
+    return AssetRegistry::FindHandle(sFileNameToHandle, fileName);
 }
 
 FontManager::FontHandle FontManager::GetFontHandleFromAssetPath(const std::string &assetPath) {
-    auto it = sAssetPathToHandle.find(NormalizePathSlashes(assetPath));
-    return it != sAssetPathToHandle.end() ? it->second : kInvalidHandle;
+    return AssetRegistry::FindHandle(sAssetPathToHandle, AssetPath::NormalizePathSlashes(assetPath));
 }
 
 FontManager::FontHandle FontManager::GetFontHandleFromName(const std::string &name) {
-    auto it = sNameToHandle.find(name);
-    return it != sNameToHandle.end() ? it->second : kInvalidHandle;
+    return AssetRegistry::FindHandle(sNameToHandle, name);
 }
 
 std::vector<FontManager::FontListEntry> FontManager::GetLoadedFontListEntries() {

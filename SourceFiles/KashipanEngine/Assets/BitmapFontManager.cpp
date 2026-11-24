@@ -1,4 +1,6 @@
 #include "Assets/AssetFileIndex.h"
+#include "Assets/AssetPath.h"
+#include "Assets/AssetRegistry.h"
 #include "BitmapFontManager.h"
 
 #include <algorithm>
@@ -50,33 +52,6 @@ FileMap<FontHandle> sAssetPathToHandle;
 FileMap<FontHandle> sNameToHandle;
 FontHandle sNextHandle = 1;
 
-std::string NormalizePathSlashes(std::string s) {
-    std::replace(s.begin(), s.end(), '\\', '/');
-    while (!s.empty() && s.back() == '/') s.pop_back();
-    return s;
-}
-
-std::string ToLower(std::string s) {
-    for (auto &c : s) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    return s;
-}
-
-bool HasSupportedFontExtension(const std::filesystem::path &p) {
-    return ToLower(p.extension().string()) == ".fnt";
-}
-
-std::string MakeAssetRelativePath(const std::string &assetsRoot, const std::string &fullPath) {
-    const std::filesystem::path root = Utf8StringToPath(assetsRoot);
-    const std::filesystem::path full = Utf8StringToPath(fullPath);
-
-    std::error_code ec;
-    auto rel = std::filesystem::relative(full, root, ec);
-    if (ec) {
-        return NormalizePathSlashes(PathToUtf8String(full.filename()));
-    }
-    return NormalizePathSlashes(PathToUtf8String(rel));
-}
-
 /// @brief 文字列の両端にあるダブルクォーテーションを取り除く
 std::string StripQuotes(const std::string &input) {
     if (input.size() >= 2 && input.front() == '"' && input.back() == '"') {
@@ -99,7 +74,7 @@ void ForEachKeyValue(std::istringstream &iss, Callback &&callback) {
 } // namespace
 
 BitmapFontManager::BitmapFontManager(Passkey<GameEngine>, AssetFileIndex &assetFiles)
-    : assetsRootPath_(NormalizePathSlashes(assetFiles.Root())) {
+    : assetsRootPath_(AssetPath::NormalizePathSlashes(assetFiles.Root())) {
     LogScope scope;
     sAssetsRootPath = assetsRootPath_;
     sFonts.clear();
@@ -136,13 +111,13 @@ BitmapFontManager::FontHandle BitmapFontManager::LoadFont(const std::string &fil
         Log(Translation("engine.bitmapfont.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
-    if (!HasSupportedFontExtension(p)) {
+    if (!AssetFileIndex::SupportsFile(AssetFileIndex::Kind::BitmapFont, p)) {
         Log(Translation("engine.bitmapfont.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
 
-    const std::string full = NormalizePathSlashes(PathToUtf8String(p));
-    const std::string asset = MakeAssetRelativePath(sAssetsRootPath, full);
+    const std::string full = AssetPath::NormalizePathSlashes(PathToUtf8String(p));
+    const std::string asset = AssetPath::MakeAssetRelativePath(sAssetsRootPath, full);
 
     // 既に読み込み済みかチェック
     {
@@ -265,18 +240,15 @@ BitmapFontManager::FontHandle BitmapFontManager::LoadFont(const std::string &fil
 }
 
 BitmapFontManager::FontHandle BitmapFontManager::GetFontHandleFromFileName(const std::string &fileName) {
-    auto it = sFileNameToHandle.find(fileName);
-    return it != sFileNameToHandle.end() ? it->second : kInvalidHandle;
+    return AssetRegistry::FindHandle(sFileNameToHandle, fileName);
 }
 
 BitmapFontManager::FontHandle BitmapFontManager::GetFontHandleFromAssetPath(const std::string &assetPath) {
-    auto it = sAssetPathToHandle.find(NormalizePathSlashes(assetPath));
-    return it != sAssetPathToHandle.end() ? it->second : kInvalidHandle;
+    return AssetRegistry::FindHandle(sAssetPathToHandle, AssetPath::NormalizePathSlashes(assetPath));
 }
 
 BitmapFontManager::FontHandle BitmapFontManager::GetFontHandleFromName(const std::string &name) {
-    auto it = sNameToHandle.find(name);
-    return it != sNameToHandle.end() ? it->second : kInvalidHandle;
+    return AssetRegistry::FindHandle(sNameToHandle, name);
 }
 
 std::vector<BitmapFontManager::FontListEntry> BitmapFontManager::GetLoadedFontListEntries() {

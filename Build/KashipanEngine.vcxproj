@@ -1631,6 +1631,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepositoryRoot)EngineTool
     <ClInclude Include="..\SourceFiles\KashipanEngine\Assets\PreparedTextureCache.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Assets\CookedAssets.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Assets\AssetFileIndex.h" />
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Assets\AssetPath.h" />
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Assets\AssetRegistry.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Assets\ModelSceneCache.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Assets\SharedModelImport.h" />
     <ClInclude Include="..\SourceFiles\KashipanEngine\Debug\RuntimeDebugOverlay.h" />

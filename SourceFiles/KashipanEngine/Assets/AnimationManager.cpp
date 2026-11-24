@@ -1,5 +1,7 @@
 #include "Assets/CookedAssets.h"
 #include "Assets/AssetFileIndex.h"
+#include "Assets/AssetPath.h"
+#include "Assets/AssetRegistry.h"
 #include "AnimationManager.h"
 #include "Assets/SharedModelImport.h"
 #include "Assets/AssimpUtf8IOSystem.h"
@@ -40,41 +42,13 @@ std::unordered_map<Handle, AnimationEntry> sAnimations;
 FileMap<std::vector<Handle>> sFileNameToHandle;
 FileMap<Handle> sAssetPathToHandle;
 
-std::string NormalizePathSlashes(std::string s) {
-    std::replace(s.begin(), s.end(), '\\', '/');
-    while (!s.empty() && s.back() == '/') s.pop_back();
-    return s;
-}
-
-std::string ToLower(std::string s) {
-    for (auto &c : s) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    return s;
-}
-
-bool HasSupportedAnimationExtension(const std::filesystem::path &p) {
-    const std::string ext = ToLower(p.extension().string());
-    return (ext == ".fbx" || ext == ".gltf" || ext == ".glb" || ext == ".dae" || ext == ".x" || ext == ".blend" || ext == ".obj");
-}
-
-std::string MakeAssetRelativePath(const std::string &assetsRoot, const std::string &fullPath) {
-    const std::filesystem::path root = Utf8StringToPath(assetsRoot);
-    const std::filesystem::path full = Utf8StringToPath(fullPath);
-
-    std::error_code ec;
-    auto rel = std::filesystem::relative(full, root, ec);
-    if (ec) {
-        return NormalizePathSlashes(PathToUtf8String(full.filename()));
-    }
-    return NormalizePathSlashes(PathToUtf8String(rel));
-}
-
 Handle RegisterEntry(AnimationEntry &&entry) {
     const Handle handle = static_cast<Handle>(sAnimations.size() + 1u);
     if (handle == AnimationManager::kInvalidHandle) return AnimationManager::kInvalidHandle;
     if (sAnimations.find(handle) != sAnimations.end()) return AnimationManager::kInvalidHandle;
 
     sFileNameToHandle[entry.fileName].push_back(handle);
-    sAssetPathToHandle[NormalizePathSlashes(entry.assetPath)] = handle;
+    sAssetPathToHandle[AssetPath::NormalizePathSlashes(entry.assetPath)] = handle;
     sAnimations.emplace(handle, std::move(entry));
     return handle;
 }
@@ -98,7 +72,7 @@ KeyframeTimeline BuildTimeline(const std::string &name, KeyframeValueType valueT
 } // namespace
 
 AnimationManager::AnimationManager(Passkey<GameEngine>, AssetFileIndex &assetFiles)
-    : assetsRootPath_(NormalizePathSlashes(assetFiles.Root())) {
+    : assetsRootPath_(AssetPath::NormalizePathSlashes(assetFiles.Root())) {
     LogScope scope;
     LoadAllFromAssetsFolder(assetFiles.Files(AssetFileIndex::Kind::Animation));
 }
@@ -126,7 +100,7 @@ AnimationManager::AnimationHandle AnimationManager::LoadAnimation(const std::str
     Log(Translation("engine.animation.loading.start") + filePath, LogSeverity::Info);
 
     {
-        const std::string normalized = NormalizePathSlashes(filePath);
+        const std::string normalized = AssetPath::NormalizePathSlashes(filePath);
         auto it = sAssetPathToHandle.find(normalized);
         if (it != sAssetPathToHandle.end()) {
             Log(Translation("engine.animation.loading.alreadyloaded") + normalized, LogSeverity::Debug);
@@ -140,7 +114,7 @@ AnimationManager::AnimationHandle AnimationManager::LoadAnimation(const std::str
         Log(Translation("engine.animation.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
-    if (!HasSupportedAnimationExtension(p)) {
+    if (!AssetFileIndex::SupportsFile(AssetFileIndex::Kind::Animation, p)) {
         Log(Translation("engine.animation.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
@@ -158,8 +132,8 @@ AnimationManager::AnimationHandle AnimationManager::LoadAnimation(const std::str
     }
 
     AnimationEntry entry{};
-    entry.fullPath = NormalizePathSlashes(PathToUtf8String(p));
-    entry.assetPath = MakeAssetRelativePath(assetsRootPath_, entry.fullPath);
+    entry.fullPath = AssetPath::NormalizePathSlashes(PathToUtf8String(p));
+    entry.assetPath = AssetPath::MakeAssetRelativePath(assetsRootPath_, entry.fullPath);
     entry.fileName = PathToUtf8String(p.filename());
     entry.data.assetRelativePath_ = entry.assetPath;
 
@@ -299,9 +273,7 @@ const std::vector<AnimationManager::AnimationHandle> &AnimationManager::GetAnima
 
 AnimationManager::AnimationHandle AnimationManager::GetAnimationHandleFromAssetPath(const std::string &assetPath) {
     if (assetPath.empty()) return kInvalidHandle;
-    auto it = sAssetPathToHandle.find(NormalizePathSlashes(assetPath));
-    if (it == sAssetPathToHandle.end()) return kInvalidHandle;
-    return it->second;
+    return AssetRegistry::FindHandle(sAssetPathToHandle, AssetPath::NormalizePathSlashes(assetPath));
 }
 
 const AnimationData &AnimationManager::GetAnimationData(AnimationHandle handle) {

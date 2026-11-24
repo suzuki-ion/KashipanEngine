@@ -1946,6 +1946,12 @@
     <ClInclude Include="..\SourceFiles\KashipanEngine\Assets\AssetFileIndex.h">
       <Filter>SourceFiles\KashipanEngine\Assets</Filter>
     </ClInclude>
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Assets\AssetPath.h">
+      <Filter>SourceFiles\KashipanEngine\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SourceFiles\KashipanEngine\Assets\AssetRegistry.h">
+      <Filter>SourceFiles\KashipanEngine\Assets</Filter>
+    </ClInclude>
     <ClInclude Include="..\SourceFiles\KashipanEngine\Assets\AssimpUtf8IOSystem.h">
       <Filter>SourceFiles\KashipanEngine\Assets</Filter>
     </ClInclude>

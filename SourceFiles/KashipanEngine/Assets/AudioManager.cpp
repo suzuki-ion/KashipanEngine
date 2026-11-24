@@ -1,4 +1,6 @@
 #include "Assets/AssetFileIndex.h"
+#include "Assets/AssetPath.h"
+#include "Assets/AssetRegistry.h"
 #include "AudioManager.h"
 #include "Debug/StartupTiming.h"
 #include "Assets/CaseInsensitive.h"
@@ -171,17 +173,6 @@ bool TryGetPlayIndex(PlayHandle h, size_t& outIdx) {
     return true;
 }
 
-std::string NormalizePathSlashes(std::string s) {
-    std::replace(s.begin(), s.end(), '\\', '/');
-    while (!s.empty() && s.back() == '/') s.pop_back();
-    return s;
-}
-
-std::string ToLower(std::string s) {
-    for (auto& c : s) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    return s;
-}
-
 /// @brief カテゴリ名に対する最終的な音量倍率を求める(マスター音量 x カテゴリ音量)
 /// @details 未分類(空文字)はマスター音量のみが乗算される。未定義のカテゴリ名は1.0f扱い
 float GetEffectiveMultiplier(const std::string& category) {
@@ -195,7 +186,7 @@ float GetEffectiveMultiplier(const std::string& category) {
 /// @brief 起動時にAudioCategories.jsonを読み込み、sCategoryVolumesの初期値とする
 /// @details ファイルが無い/不正な場合は何もしない(全音源が未分類扱いになるだけで動作は壊れない)
 void LoadAudioCategoriesFile(const std::string& assetsRootPath) {
-    sAudioCategoriesFilePath = NormalizePathSlashes(assetsRootPath) + "/" + kAudioCategoriesFileName;
+    sAudioCategoriesFilePath = AssetPath::NormalizePathSlashes(assetsRootPath) + "/" + kAudioCategoriesFileName;
     if (!std::filesystem::exists(Utf8StringToPath(sAudioCategoriesFilePath))) return;
 
     const JSON json = LoadJSON(sAudioCategoriesFilePath);
@@ -231,32 +222,9 @@ void ReapplyVolumeForCategory(const std::string& category, bool isMasterChange) 
     }
 }
 
-bool HasSupportedAudioExtension(const std::filesystem::path& p) {
-    const std::string ext = ToLower(p.extension().string());
-    return (ext == ".wav" || ext == ".mp3" || ext == ".ogg" || ext == ".flac" || ext == ".aac" || ext == ".m4a" || ext == ".wma");
-}
-
-std::string MakeAssetRelativePath(const std::string& assetsRoot, const std::string& fullPath) {
-    const std::filesystem::path root = Utf8StringToPath(assetsRoot);
-    const std::filesystem::path full = Utf8StringToPath(fullPath);
-
-    std::error_code ec;
-    auto rel = std::filesystem::relative(full, root, ec);
-    if (ec) {
-        return NormalizePathSlashes(PathToUtf8String(full.filename()));
-    }
-    return NormalizePathSlashes(PathToUtf8String(rel));
-}
-
 SoundHandle RegisterEntry(SoundEntry&& entry) {
     const SoundHandle handle = static_cast<SoundHandle>(sSounds.size() + 1u);
-    if (handle == AudioManager::kInvalidSoundHandle) return AudioManager::kInvalidSoundHandle;
-    if (sSounds.find(handle) != sSounds.end()) return AudioManager::kInvalidSoundHandle;
-
-    sFileNameToHandle[entry.fileName] = handle;
-    sAssetPathToHandle[NormalizePathSlashes(entry.assetPath)] = handle;
-    sSounds.emplace(handle, std::move(entry));
-    return handle;
+    return AssetRegistry::Register(handle, sSounds, sFileNameToHandle, sAssetPathToHandle, std::move(entry));
 }
 
 size_t AcquirePlayIndex() {
@@ -477,13 +445,13 @@ bool DecodeAudioFile(const std::string& filePath, const std::string& assetsRootP
         Log(Translation("engine.audio.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return false;
     }
-    if (!HasSupportedAudioExtension(p)) {
+    if (!AssetFileIndex::SupportsFile(AssetFileIndex::Kind::Audio, p)) {
         Log(Translation("engine.audio.loading.failed.unsupported") + PathToUtf8String(p), LogSeverity::Warning);
         return false;
     }
 
-    outEntry.fullPath = NormalizePathSlashes(PathToUtf8String(p));
-    outEntry.assetPath = MakeAssetRelativePath(assetsRootPath, outEntry.fullPath);
+    outEntry.fullPath = AssetPath::NormalizePathSlashes(PathToUtf8String(p));
+    outEntry.assetPath = AssetPath::MakeAssetRelativePath(assetsRootPath, outEntry.fullPath);
     outEntry.fileName = PathToUtf8String(p.filename());
 
     const std::wstring wpath(p.wstring());
@@ -542,7 +510,7 @@ bool AudioManager::GetPlayPositionSeconds(PlayHandle play, double& outSeconds) {
 }
 
 AudioManager::AudioManager(Passkey<GameEngine>, AssetFileIndex &assetFiles)
-    : assetsRootPath_(NormalizePathSlashes(assetFiles.Root())) {
+    : assetsRootPath_(AssetPath::NormalizePathSlashes(assetFiles.Root())) {
     LogScope scope;
     sActiveInstance = this;
     StartupTiming::Sections timing("Audio.Manager.");
@@ -606,7 +574,7 @@ SoundHandle AudioManager::Load(const std::string& filePath) {
 
     if (!EnsureAudioInitialized()) return kInvalidSoundHandle;
 
-    const std::string normalizedAsset = NormalizePathSlashes(MakeAssetRelativePath(assetsRootPath_, NormalizePathSlashes(PathToUtf8String(Utf8StringToPath(filePath)))));
+    const std::string normalizedAsset = AssetPath::NormalizePathSlashes(AssetPath::MakeAssetRelativePath(assetsRootPath_, AssetPath::NormalizePathSlashes(PathToUtf8String(Utf8StringToPath(filePath)))));
     {
         auto it = sAssetPathToHandle.find(normalizedAsset);
         if (it != sAssetPathToHandle.end()) return it->second;
@@ -636,7 +604,7 @@ SoundHandle AudioManager::RegisterSoundFromMemory(const std::string &registerNam
     }
     if (!EnsureAudioInitialized()) return kInvalidSoundHandle;
 
-    const std::string normalizedName = NormalizePathSlashes(registerName);
+    const std::string normalizedName = AssetPath::NormalizePathSlashes(registerName);
     {
         auto it = sAssetPathToHandle.find(normalizedName);
         if (it != sAssetPathToHandle.end()) return it->second;
@@ -676,48 +644,23 @@ SoundHandle AudioManager::LoadDynamic(const std::string &filePath) {
 
 SoundHandle AudioManager::GetSoundHandleFromFileName(const std::string &fileName) {
     LogScope scope;
-    auto it = sFileNameToHandle.find(fileName);
-    if (it == sFileNameToHandle.end()) return kInvalidSoundHandle;
-    return it->second;
+    return AssetRegistry::FindHandle(sFileNameToHandle, fileName);
 }
 
 SoundHandle AudioManager::GetSoundHandleFromAssetPath(const std::string &assetPath) {
     LogScope scope;
-    auto it = sAssetPathToHandle.find(NormalizePathSlashes(assetPath));
-    if (it == sAssetPathToHandle.end()) return kInvalidSoundHandle;
-    return it->second;
+    return AssetRegistry::FindHandle(sAssetPathToHandle, AssetPath::NormalizePathSlashes(assetPath));
 }
 
 std::vector<std::string> AudioManager::GetLoadedSoundAssetPaths() {
     LogScope scope;
-    std::vector<std::string> out;
-    out.reserve(sSounds.size());
-    for (const auto& kv : sSounds) out.push_back(kv.second.assetPath);
-    std::sort(out.begin(), out.end());
-    return out;
+    return AssetRegistry::GetSortedAssetPaths(sSounds);
 }
 
 bool AudioManager::RenameSound(const std::string &oldAssetPath, const std::string &newAssetPath) {
     LogScope scope;
-    const std::string normalizedOld = NormalizePathSlashes(oldAssetPath);
-    auto pathIt = sAssetPathToHandle.find(normalizedOld);
-    if (pathIt == sAssetPathToHandle.end()) return false;
-    const SoundHandle handle = pathIt->second;
-    auto entryIt = sSounds.find(handle);
-    if (entryIt == sSounds.end()) return false;
-
-    SoundEntry &entry = entryIt->second;
-    sAssetPathToHandle.erase(pathIt);
-    sFileNameToHandle.erase(entry.fileName);
-
-    const std::string normalizedNew = NormalizePathSlashes(newAssetPath);
-    entry.assetPath = normalizedNew;
-    entry.fileName = PathToUtf8String(Utf8StringToPath(normalizedNew).filename());
-    entry.fullPath = ProjectPaths::AssetsRoot() + "/" + normalizedNew;
-
-    sAssetPathToHandle[normalizedNew] = handle;
-    sFileNameToHandle[entry.fileName] = handle;
-    return true;
+    return AssetRegistry::RenameFileAsset(sSounds, sFileNameToHandle, sAssetPathToHandle,
+        oldAssetPath, newAssetPath, ProjectPaths::AssetsRoot());
 }
 
 AudioManager::PlayHandle AudioManager::Play(SoundHandle sound, float volume, float pitch, bool loop,

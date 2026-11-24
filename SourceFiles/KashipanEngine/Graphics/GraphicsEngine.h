@@ -7,6 +7,7 @@
 namespace KashipanEngine {
 
 class GameEngine;
+class CookedAssets;
 class DirectXCommon;
 class PipelineManager;
 class Renderer;
@@ -17,7 +18,7 @@ class Scene;
 class GraphicsEngine final {
 public:
     /// @brief コンストラクタ（GameEngine からのみ生成可能）
-    GraphicsEngine(Passkey<GameEngine>, DirectXCommon* directXCommon);
+    GraphicsEngine(Passkey<GameEngine>, DirectXCommon* directXCommon, const CookedAssets &cookedAssets);
     ~GraphicsEngine();
 
     /// @brief フレーム描画処理

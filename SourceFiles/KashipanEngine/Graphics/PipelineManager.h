@@ -14,6 +14,7 @@
 namespace KashipanEngine {
 
 class GraphicsEngine;
+class CookedAssets;
 class Renderer;
 
 /// @brief パイプライン管理用クラス
@@ -22,7 +23,7 @@ public:
     /// @brief コンストラクタ（GraphicsEngine からのみ生成可能）
     /// @param device D3D12 デバイス
     /// @param pipelineSettingsPath パイプライン設定ファイルパス
-    PipelineManager(Passkey<GraphicsEngine>, ID3D12Device *device, const std::string &pipelineSettingsPath = "Resources/PipelineSetting.json");
+    PipelineManager(Passkey<GraphicsEngine>, ID3D12Device *device, const CookedAssets &cookedAssets, const std::string &pipelineSettingsPath = "Resources/PipelineSetting.json");
     ~PipelineManager();
 
     /// @brief パイプラインの再読み込み
@@ -87,6 +88,7 @@ private:
     void LoadPreset();
     void LoadPipelines();
 
+    const CookedAssets &cookedAssets_;
     ID3D12Device *device_ = nullptr;
 
     std::unique_ptr<ShaderCompiler> shaderCompiler_;

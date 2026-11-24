@@ -220,8 +220,8 @@ bool TextureManager::UnregisterExternalTexture(const IShaderTexture* texture) {
     return false;
 }
 
-TextureManager::TextureManager(Passkey<GameEngine>, DirectXCommon* directXCommon, AssetFileIndex &assetFiles)
-    : directXCommon_(directXCommon), assetsRootPath_(AssetPath::NormalizePathSlashes(assetFiles.Root())) {
+TextureManager::TextureManager(Passkey<GameEngine>, DirectXCommon* directXCommon, AssetFileIndex &assetFiles, const CookedAssets &cookedAssets)
+    : directXCommon_(directXCommon), cookedAssets_(cookedAssets), assetsRootPath_(AssetPath::NormalizePathSlashes(assetFiles.Root())) {
     LogScope scope;
     if (directXCommon_) {
         sDevice = directXCommon_->GetDeviceForTextureManager(Passkey<TextureManager>{});
@@ -261,7 +261,7 @@ void TextureManager::LoadAllFromAssetsFolder(std::vector<std::string> files) {
     files.erase(std::remove_if(files.begin(), files.end(), [&](const std::string &f) {
         return CaseInsensitiveEqual{}(AssetPath::NormalizePathSlashes(f), whiteTexturePath);
     }), files.end());
-    if (CookedAssets::Contains("Textures", Utf8StringToPath(whiteTexturePath)) || std::filesystem::exists(Utf8StringToPath(whiteTexturePath))) {
+    if (cookedAssets_.Contains("Textures", Utf8StringToPath(whiteTexturePath)) || std::filesystem::exists(Utf8StringToPath(whiteTexturePath))) {
         mipMapContainer_.AddMipMap(whiteTexturePath, LoadTextureFromFile(whiteTexturePath));
         LoadTexture(whiteTexturePath);
     }
@@ -564,8 +564,8 @@ DirectX::ScratchImage TextureManager::LoadTextureFromFile(const std::string& fil
 
     const std::filesystem::path p = Utf8StringToPath(filePath);
 
-    if (CookedAssets::Contains("Textures", p)) {
-        const auto bytes = CookedAssets::Load("Textures", p);
+    if (cookedAssets_.Contains("Textures", p)) {
+        const auto bytes = cookedAssets_.Load("Textures", p);
         DirectX::ScratchImage prepared;
         if (FAILED(DirectX::LoadFromDDSMemory(reinterpret_cast<const uint8_t *>(bytes->data()), bytes->size(),
             DirectX::DDS_FLAGS_NONE, nullptr, prepared))) throw std::runtime_error("Invalid cooked texture: " + filePath);

@@ -52,10 +52,10 @@ private:
     }
 
 public:
-    explicit AssetFileIndex(std::string root) : root_(std::move(root)) {
-        if (CookedAssets::Active()) {
-            for (const auto &file : CookedAssets::manifest.at("assets"))
-                Add(ContentCache::PathText(ContentCache::Path(root_) / ContentCache::Path(file.get<std::string>())));
+    explicit AssetFileIndex(std::string root, const CookedAssets *cookedAssets = nullptr) : root_(std::move(root)) {
+        if (cookedAssets && cookedAssets->Active()) {
+            for (const auto &file : cookedAssets->AssetPaths())
+                Add(ContentCache::PathText(ContentCache::Path(root_) / ContentCache::Path(file)));
         } else Visit(GetDirectoryData(root_, true, true));
     }
     const std::string &Root() const { return root_; }

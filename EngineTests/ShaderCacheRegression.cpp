@@ -81,7 +81,8 @@ const std::string &ProjectPaths::ProjectRoot() { return projectRoot; }
 class PipelineManager {
 public:
     static void Run(const std::filesystem::path &root) {
-        ShaderCompiler compiler(Passkey<PipelineManager>{}, nullptr);
+        auto offlineCompiler = ShaderCompiler::CreateOfflineCompiler();
+        auto &compiler = *offlineCompiler;
         ShaderCompiler::CompileInfo info{"test", ContentCache::PathText(root / L"試験.hlsl"), "main", "ps_6_0", {{"COLOR", "1"}}};
         Write(root / "color.hlsli", "float GetColor() { return COLOR; }\n");
         Write(root / L"試験.hlsl", "#include \"color.hlsli\"\nfloat4 main() : SV_Target { return GetColor(); }\n");

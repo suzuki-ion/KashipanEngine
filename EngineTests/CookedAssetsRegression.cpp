@@ -1,9 +1,10 @@
 #include "Assets/CookedAssets.h"
 #include "Assets/AssetFileIndex.h"
 #include "Assets/SharedModelImport.h"
-#include "Assets/PreparedTextureCache.h"
+#include "Graphics/Pipeline/System/PipelineVariantResolver.h"
 #include "Graphics/Pipeline/System/ShaderCompiler.h"
 #include "Core/ProjectPaths.h"
+#include <DirectXTex.h>
 #include <cassert>
 #include <iostream>
 
@@ -19,68 +20,103 @@ void LogScope::PopPrefix() {}
 const std::string &GetTranslationText(const std::string &key) { return key; }
 const std::string &ProjectPaths::ProjectRoot() { return projectRoot; }
 }
-int main() {
-    using namespace KashipanEngine;
+
+namespace KashipanEngine {
+int Execute(PasskeyForWinMain, const std::string &) {
     const auto base = std::filesystem::absolute("Generated/CookedRegression-" + std::to_string(GetCurrentProcessId()));
     const auto original = base / L"生成元";
     const auto moved = base / L"移動先";
-    std::filesystem::create_directories(original / "Assets");
-    projectRoot = ContentCache::PathText(original);
-    CookedAssets::Begin(original);
-    Write(original / L"Assets/材質.hlsl", "struct Material { float4 tint; };\nfloat4 main() : SV_Target { return 1; }\n");
-    auto compiler = ShaderCompiler::CreateOfflineCompiler();
-    ShaderCompiler::CompileInfo info{"test", ContentCache::PathText(original / L"Assets/材質.hlsl"), "main", "ps_6_0", {}};
-    const auto *shader = compiler->CompileShader(info);
-    const auto shaderHash = ContentCache::Digest(shader->GetBytecodePtr(), shader->GetBytecodeSize());
-    const auto layoutSize = shader->GetMaterialLayout().totalByteSize;
-    assert(layoutSize == 16);
+    const auto shaderFolder = original / "Assets/Shaders";
+    const std::filesystem::path shaderName = L"材質.hlsl";
+    std::filesystem::create_directories(shaderFolder);
+    std::filesystem::create_directories(original / "Assets/Pipelines");
+    std::filesystem::create_directories(original / "Assets/KashipanEngine");
+    Write(original / ".cook-staging", "");
+    const std::string pipelineName = "Object3D.Solid.BlendNormal";
+    Write(original / "Assets/CookSettings.json",
+        ContentCache::Json{{"pipelineVariants", ContentCache::Json::array({pipelineName})}}.dump());
+    Write(original / "Assets/KashipanEngine/EngineSettings.json", "{}");
+    Write(original / "Assets/KashipanEngine/PipelineSettings.json",
+        R"({"PresetFolders":{"Shader":"Assets/Shaders"},"PipelineFolder":"Assets/Pipelines"})");
+    Write(shaderFolder / shaderName, "struct Material { float4 tint; };\nfloat4 main() : SV_Target { return 1; }\n");
+    Write(shaderFolder / "test.json", ContentCache::Json{
+        {"Name", "test"}, {"Path", ContentCache::PathText(shaderName)}, {"TargetProfile", "ps_6_0"}}.dump());
     Write(original / "Assets/triangle.obj", "v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n");
-    Assimp::Importer importer;
-    const auto *scene = importer.ReadFile(ContentCache::PathText(original / "Assets/triangle.obj"), SharedModelImport::ModelFlags);
-    assert(scene && scene->mNumMeshes == 1);
-    const auto model = ModelSceneCache::Encode(*scene);
-    CookedAssets::Store("Models", original / "Assets/triangle.obj", model.data(), model.size());
-    CookedAssets::manifest["modelSchema"] = ModelSceneCache::Schema;
-    CookedAssets::manifest["modelABI"] = {sizeof(ai_real), sizeof(aiVectorKey), sizeof(aiQuatKey)};
+
     DirectX::ScratchImage image;
     assert(SUCCEEDED(image.Initialize2D(DXGI_FORMAT_R8G8B8A8_UNORM, 2, 2, 1, 1)));
     std::memset(image.GetPixels(), 127, image.GetPixelsSize());
-    DirectX::Blob dds;
-    assert(SUCCEEDED(DirectX::SaveToDDSMemory(image.GetImages(), image.GetImageCount(), image.GetMetadata(), DirectX::DDS_FLAGS_NONE, dds)));
-    CookedAssets::Store("Textures", original / "Assets/image.png", dds.GetBufferPointer(), dds.GetBufferSize());
-    CookedAssets::manifest["assets"] = {"image.png", "triangle.obj"};
-    Write(original / "Cooked/Manifest.json", CookedAssets::manifest.dump());
-    // 入力アセットをすべて削除し、パッケージの移動と作業ディレクトリの変更を行う。
-    std::filesystem::remove(original / L"Assets/材質.hlsl");
-    std::filesystem::remove(original / "Assets/triangle.obj");
+    assert(SUCCEEDED(DirectX::SaveToDDSFile(image.GetImages(), image.GetImageCount(), image.GetMetadata(),
+        DirectX::DDS_FLAGS_NONE, (original / "Assets/image.dds").c_str())));
+
+    CookedAssets cook(PasskeyForGameEngineMain{});
+    const auto cookResult = cook.CookDistribution({}, original);
+    if (cookResult != 0) {
+        std::cerr << std::ifstream(original / "Cook.error.txt").rdbuf();
+        return cookResult;
+    }
+    assert(!cook.Active());
+    assert(!std::filesystem::exists(shaderFolder / shaderName));
+    assert(!std::filesystem::exists(original / "Assets/triangle.obj"));
+    assert(!std::filesystem::exists(original / "Assets/image.dds"));
+
+    ShaderCompiler::CompileInfo info{"test", ContentCache::PathText(shaderFolder / shaderName), "main", "ps_6_0", {}};
+    const auto variant = ContentCache::Json{{"entry", info.entryPoint}, {"target", info.targetProfile}, {"macros", info.macros}}.dump();
+    CookedAssets originalAssets(PasskeyForGameEngineMain{});
+    originalAssets.Configure({}, original);
+    const auto bytecode = originalAssets.Load("Shaders", shaderFolder / shaderName, variant);
+    assert(bytecode);
+    const auto shaderHash = ContentCache::Digest(bytecode->data(), bytecode->size());
+
     std::filesystem::rename(original, moved);
     projectRoot = ContentCache::PathText(moved);
-    CookedAssets::Configure(moved);
-    assert(CookedAssets::Active());
-    AssetFileIndex index(ContentCache::PathText(moved / "Assets"));
+    CookedAssets cookedAssets(PasskeyForGameEngineMain{});
+    cookedAssets.Configure({}, moved);
+    assert(cookedAssets.Active());
+    const auto pipeline = cookedAssets.FindPipeline(pipelineName);
+    assert(pipeline);
+    const auto resolved = TryResolvePipelineVariant(pipelineName, {}, &cookedAssets);
+    assert(resolved.matched && resolved.synthesizedPipelineJson == *pipeline);
+    CookedAssets uncooked(PasskeyForGameEngineMain{});
+    uncooked.Configure({}, base);
+    assert(!uncooked.Active() && cookedAssets.Active());
+    assert(!uncooked.Load("Textures", "Assets/image.dds"));
+    AssetFileIndex index(ContentCache::PathText(moved / "Assets"), &cookedAssets);
     assert(index.Files(AssetFileIndex::Kind::Texture).size() == 1 && index.Files(AssetFileIndex::Kind::Model).size() == 1);
-    const auto restoredModel = SharedModelImport::Load(moved / "Assets/triangle.obj", SharedModelImport::ModelFlags);
+    const auto restoredModel = SharedModelImport::Load(moved / "Assets/triangle.obj", SharedModelImport::ModelFlags, &cookedAssets);
     assert(restoredModel->diskCacheHit && restoredModel->scene->mMeshes[0]->mNumVertices == 3);
-    info.filePath = ContentCache::PathText(moved / L"Assets/材質.hlsl");
+    info.filePath = ContentCache::PathText(moved / "Assets/Shaders" / shaderName);
+    auto compiler = ShaderCompiler::CreateOfflineCompiler(&cookedAssets);
     const auto *restoredShader = compiler->CompileShader(info);
     assert(ContentCache::Digest(restoredShader->GetBytecodePtr(), restoredShader->GetBytecodeSize()) == shaderHash);
-    assert(restoredShader->GetMaterialLayout().totalByteSize == layoutSize);
+    assert(restoredShader->GetMaterialLayout().totalByteSize == 16);
     assert(restoredShader->GetMaterialLayout().fields.at(0).name == "tint");
-    const auto texture = CookedAssets::Load("Textures", moved / "Assets/image.png");
+    const auto texture = cookedAssets.Load("Textures", moved / "Assets/image.dds");
     DirectX::ScratchImage restoredImage;
     assert(SUCCEEDED(DirectX::LoadFromDDSMemory(reinterpret_cast<const uint8_t *>(texture->data()), texture->size(), DirectX::DDS_FLAGS_NONE, nullptr, restoredImage)));
     assert(std::memcmp(restoredImage.GetPixels(), image.GetPixels(), image.GetPixelsSize()) == 0);
     info.macros = {{"UNCOOKED", "1"}};
     Reject([&] { compiler->CompileShader(info); });
-    Reject([&] { CookedAssets::Load("Models", moved / "Assets/unknown.obj"); });
-    Reject([&] { CookedAssets::Relative(base / "outside.png"); });
-    const auto key = CookedAssets::Key("Textures", moved / "Assets/image.png");
+    Reject([&] { cookedAssets.Load("Models", moved / "Assets/unknown.obj"); });
+    Reject([&] { cookedAssets.Load("Models", base / "outside.png"); });
+    const std::string key = "Textures|image.dds|";
     Write(moved / "Cooked" / (ContentCache::Digest(key) + ".cache"), "broken");
-    Reject([&] { CookedAssets::Load("Textures", moved / "Assets/image.png"); });
+    Reject([&] { cookedAssets.Load("Textures", moved / "Assets/image.dds"); });
     std::filesystem::remove(moved / "Cooked" / (ContentCache::Digest(key) + ".cache"));
-    Reject([&] { CookedAssets::Configure(moved); });
-    CookedAssets::manifest = nullptr;
+    CookedAssets invalid(PasskeyForGameEngineMain{});
+    Reject([&] { invalid.Configure({}, moved); });
+    assert(!invalid.Active());
     // このプロセスが新たに作成したテスト用データだけを削除する。
     std::filesystem::remove_all(base);
     std::cout << "Cooked asset relocation, source-free restoration, material layout and failure regression passed\n";
+    return 0;
+}
+}
+
+int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
+    return KashipanEngine::Execute({}, {});
+}
+
+int main() {
+    return WinMain(nullptr, nullptr, nullptr, 0);
 }

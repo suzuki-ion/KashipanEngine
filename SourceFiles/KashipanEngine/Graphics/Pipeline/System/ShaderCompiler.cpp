@@ -124,9 +124,23 @@ void ShaderCompiler::DestroyCompiledShaders(
     }
 }
 
-ShaderCompiler::ShaderCompiler(Passkey<PipelineManager>, ID3D12Device *device) : ShaderCompiler(device) {}
+ShaderCompiler::ShaderCompiler(Passkey<PipelineManager>, ID3D12Device *device, const CookedAssets &cookedAssets)
+    : ShaderCompiler(device, &cookedAssets) {}
 
-ShaderCompiler::ShaderCompiler(ID3D12Device *device) {
+std::unique_ptr<ShaderCompiler> ShaderCompiler::CreateOfflineCompiler(const CookedAssets *cookedAssets) {
+    return std::unique_ptr<ShaderCompiler>(new ShaderCompiler(nullptr, cookedAssets));
+}
+
+std::unique_ptr<ShaderCompiler> ShaderCompiler::CreateCookCompiler(Passkey<CookedAssets>, CookedAssets &cookedAssets,
+    const std::filesystem::path &cacheDirectory) {
+    auto compiler = CreateOfflineCompiler();
+    compiler->cookOutput_ = &cookedAssets;
+    compiler->shaderCacheDirectory_ = cacheDirectory;
+    return compiler;
+}
+
+ShaderCompiler::ShaderCompiler(ID3D12Device *device, const CookedAssets *cookedAssets)
+    : cookedAssets_(cookedAssets) {
     LogScope scope;
     Log(Translation("engine.graphics.shadercompiler.initialize.start"), LogSeverity::Debug);
     device_ = device;
@@ -249,7 +263,8 @@ ShaderCompiler::ShaderCompiledInfo *ShaderCompiler::ShaderCompile(const CompileI
         {"macros", compileInfo.macros}}.dump();
     Microsoft::WRL::ComPtr<IDxcBlob> shaderBlob;
     HRESULT hr = S_OK;
-    if (const auto bytes = CookedAssets::Load("Shaders", ContentCache::Path(compileInfo.filePath), variant)) {
+    const auto shaderPath = ContentCache::Path(compileInfo.filePath);
+    if (const auto bytes = cookedAssets_ ? cookedAssets_->Load("Shaders", shaderPath, variant) : std::nullopt) {
         shaderBlob = RestoreBytecode(bytes->data(), bytes->size());
         if (!shaderBlob) throw std::runtime_error("Could not load cooked shader");
         ++cacheHits_;
@@ -268,7 +283,7 @@ ShaderCompiler::ShaderCompiledInfo *ShaderCompiler::ShaderCompile(const CompileI
         wstrArgs.emplace_back(L"-T");
         wstrArgs.emplace_back(wTarget);     // ターゲットプロファイル
         // デバッグ情報、行優先レイアウト。最適化は無効。
-        if (!CookedAssets::writing) {
+        if (!cookOutput_) {
             wstrArgs.emplace_back(L"-Zi");
             wstrArgs.emplace_back(L"-Qembed_debug");
         }
@@ -303,11 +318,10 @@ ShaderCompiler::ShaderCompiledInfo *ShaderCompiler::ShaderCompile(const CompileI
             cacheKey += "|" + std::to_string(text.size()) + ":" + text;
         }
         cacheKey += "|cwd=" + ContentCache::PathText(std::filesystem::current_path());
-        if (!CookedAssets::writing && shaderCacheDirectory_.empty()) shaderCacheDirectory_ = ContentCache::Directory(ProjectPaths::ProjectRoot(), "Shaders");
-        const auto cacheDirectory = CookedAssets::writing ? CookedAssets::root / "Cache/Startup/Shaders" : shaderCacheDirectory_;
-        const auto cachePath = cacheDirectory / (ContentCache::Digest(cacheKey) + ".cache");
+        if (!cookOutput_ && shaderCacheDirectory_.empty()) shaderCacheDirectory_ = ContentCache::Directory(ProjectPaths::ProjectRoot(), "Shaders");
+        const auto cachePath = shaderCacheDirectory_ / (ContentCache::Digest(cacheKey) + ".cache");
         bool cacheHit = false;
-        if (!CookedAssets::writing && !DxcIdentity().empty()) {
+        if (!cookOutput_ && !DxcIdentity().empty()) {
             if (const auto cached = ContentCache::Load(cachePath, cacheKey, false, &validation)) {
                 shaderBlob = RestoreBytecode(cached->data(), cached->size());
                 cacheHit = shaderBlob != nullptr;
@@ -374,7 +388,7 @@ ShaderCompiler::ShaderCompiledInfo *ShaderCompiler::ShaderCompile(const CompileI
             }
 
             recordingHandler->dependencies.push_back(sourceDependency);
-            if (!CookedAssets::writing && recordingHandler->cacheable && !DxcIdentity().empty()) {
+            if (!cookOutput_ && recordingHandler->cacheable && !DxcIdentity().empty()) {
                 ContentCache::Store(cachePath, cacheKey, recordingHandler->dependencies,
                     shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize());
             }
@@ -401,8 +415,8 @@ ShaderCompiler::ShaderCompiledInfo *ShaderCompiler::ShaderCompile(const CompileI
     // struct Material のバイトレイアウトをHLSLソースから求める（Materialを持たないシェーダーでは空になるだけで無害）
     std::unordered_set<std::string> definedMacroNames;
     for (const auto &m : compileInfo.macros) definedMacroNames.insert(m.first);
-    if (CookedAssets::Active()) {
-        const auto &layout = CookedAssets::manifest.at("entries").at(CookedAssets::Key("Shaders", ContentCache::Path(compileInfo.filePath), variant));
+    if (cookedAssets_ && cookedAssets_->Active()) {
+        const auto &layout = cookedAssets_->ShaderLayout(shaderPath, variant);
         info->materialLayout.totalByteSize = layout.at("size");
         info->materialLayout.textureFields = layout.at("textures").get<std::vector<std::string>>();
         info->materialLayout.textureCubeFields = layout.at("cubes").get<std::vector<std::string>>();
@@ -414,17 +428,17 @@ ShaderCompiler::ShaderCompiledInfo *ShaderCompiler::ShaderCompile(const CompileI
             value.rangeMax = field.at("max"); value.rangeStep = field.at("step");
             info->materialLayout.fields.push_back(std::move(value));
         }
-    } else if (CookedAssets::writing) info->materialLayout = MaterialLayout::BuildFromHlslSource(compileInfo.filePath, definedMacroNames);
+    } else if (cookOutput_) info->materialLayout = MaterialLayout::BuildFromHlslSource(compileInfo.filePath, definedMacroNames);
     else {
         if (materialLayoutCacheDirectory_.empty()) materialLayoutCacheDirectory_ = ContentCache::Directory(ProjectPaths::ProjectRoot(), "MaterialLayouts");
         info->materialLayout = MaterialLayout::BuildCachedFromHlslSource(compileInfo.filePath, definedMacroNames, materialLayoutCacheDirectory_, &validation);
     }
-    if (CookedAssets::writing) {
+    if (cookOutput_) {
         const auto &layout = info->materialLayout;
         ContentCache::Json fields = ContentCache::Json::array();
         for (const auto &f : layout.fields) fields.push_back({{"name", f.name}, {"offset", f.byteOffset}, {"size", f.byteSize},
             {"type", static_cast<int>(f.valueType)}, {"range", f.hasRange}, {"min", f.rangeMin}, {"max", f.rangeMax}, {"step", f.rangeStep}});
-        CookedAssets::Store("Shaders", ContentCache::Path(compileInfo.filePath), shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), variant,
+        cookOutput_->StoreShader(Passkey<ShaderCompiler>{}, shaderPath, shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), variant,
             {{"size", layout.totalByteSize}, {"fields", fields}, {"textures", layout.textureFields}, {"cubes", layout.textureCubeFields}});
     }
 

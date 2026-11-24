@@ -52,7 +52,8 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
         for (int i = 1; arguments && i + 1 < argumentCount; ++i)
             if (std::wstring(arguments[i]) == L"--cook-assets") cookRoot = arguments[i + 1];
         if (arguments) LocalFree(arguments);
-        if (!cookRoot.empty()) return CookedAssets::CookDistribution(cookRoot);
+        CookedAssets cookedAssets{PasskeyForGameEngineMain{}};
+        if (!cookRoot.empty()) return cookedAssets.CookDistribution({}, cookRoot);
         // エンジン自身が管理するネイティブアニメーションは、時間のかかる初期化処理とは独立して動く。
         // Release を含め、初期シーンの初回描画が終わるまでガードを保持する。
 #if defined(RELEASE_BUILD)
@@ -76,7 +77,7 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
         }
 
         SplashScreen::ConfigureProject({}, ProjectPaths::ProjectRoot());
-        CookedAssets::Configure(Utf8StringToPath(ProjectPaths::ProjectRoot()));
+        cookedAssets.Configure({}, Utf8StringToPath(ProjectPaths::ProjectRoot()));
         startupSections.End("ProjectSelection");
         SplashScreen::CheckCancellation();
 
@@ -149,13 +150,13 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
 
         std::unique_ptr<GameEngine> engine;
 #if defined(RELEASE_BUILD)
-        engine = std::make_unique<GameEngine>(PasskeyForGameEngineMain{});
+        engine = std::make_unique<GameEngine>(PasskeyForGameEngineMain{}, cookedAssets);
         startupSections.End("GameEngine");
 #else
         // Development と Debug では、初期化中に限り独立した WebView2 のログ画面を表示する。
         {
             ScopedSplashScreen splashScreen{ PasskeyForGameEngineMain{} };
-            engine = std::make_unique<GameEngine>(PasskeyForGameEngineMain{});
+            engine = std::make_unique<GameEngine>(PasskeyForGameEngineMain{}, cookedAssets);
         }
         startupSections.End("GameEngineAndSplash");
 #endif

@@ -33,13 +33,12 @@ std::vector<std::string> SplitByDot(const std::string &name) {
 
 } // namespace
 
-PipelineVariantResolution TryResolvePipelineVariant(const std::string &pipelineName, const std::string &shaderBaseDir) {
+PipelineVariantResolution TryResolvePipelineVariant(const std::string &pipelineName, const std::string &shaderBaseDir,
+    const CookedAssets *cookedAssets) {
     PipelineVariantResolution result;
-    if (CookedAssets::Active() && CookedAssets::manifest.at("pipelines").contains(pipelineName)) {
+    if (auto pipeline = cookedAssets ? cookedAssets->FindPipeline(pipelineName) : std::nullopt) {
         result.matched = true;
-        result.synthesizedPipelineJson = CookedAssets::manifest.at("pipelines").at(pipelineName);
-        auto &pixel = result.synthesizedPipelineJson["Shader"]["Pixel"];
-        if (pixel.contains("Path")) pixel["Path"] = ContentCache::PathText(CookedAssets::root / "Assets" / ContentCache::Path(pixel.at("Path").get<std::string>()));
+        result.synthesizedPipelineJson = std::move(*pipeline);
         return result;
     }
 
@@ -121,7 +120,7 @@ PipelineVariantResolution TryResolvePipelineVariant(const std::string &pipelineN
         pixelStage = { { "UsePreset", pixelPreset } };
     } else {
         // モジュール指定あり: ShaderModuleComposerで合成したHLSLファイルをインラインPathで指定する
-        if (CookedAssets::Active()) throw std::runtime_error("Pipeline variant was not cooked: " + pipelineName);
+        if (cookedAssets && cookedAssets->Active()) throw std::runtime_error("Pipeline variant was not cooked: " + pipelineName);
         const std::string generatedPath = ComposeAndWriteShader(moduleTokens, shaderBaseDir);
         if (generatedPath.empty()) return result;
         JSON macros = JSON::array({ { { "Name", base } } });

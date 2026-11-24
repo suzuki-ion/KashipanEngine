@@ -6,12 +6,12 @@
 
 namespace KashipanEngine {
 
-GraphicsEngine::GraphicsEngine(Passkey<GameEngine>, DirectXCommon *directXCommon)
+GraphicsEngine::GraphicsEngine(Passkey<GameEngine>, DirectXCommon *directXCommon, const CookedAssets &cookedAssets)
     : directXCommon_(directXCommon) {
     auto *device = directXCommon_->GetDevice(Passkey<GraphicsEngine>{});
     auto &settings = GetEngineSettings().rendering;
     pipelineManager_ = std::make_unique<PipelineManager>(Passkey<GraphicsEngine>{},
-        device, settings.pipelineSettingsPath);
+        device, cookedAssets, settings.pipelineSettingsPath);
     renderer_ = std::make_unique<Renderer>(Passkey<GraphicsEngine>{}, directXCommon_, pipelineManager_.get());
 }
 

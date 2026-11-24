@@ -34,6 +34,8 @@
 
 namespace KashipanEngine {
 
+class CookedAssets;
+
 /// @brief ゲームエンジンクラス
 class GameEngine final {
 public:
@@ -66,7 +68,7 @@ public:
 
     /// @brief コンストラクタ
     /// @param engineSettingsPath エンジン設定ファイルパス
-    GameEngine(PasskeyForGameEngineMain);
+    GameEngine(PasskeyForGameEngineMain, const CookedAssets &cookedAssets);
     ~GameEngine();
 
     GameEngine(const GameEngine &) = delete;

@@ -43,13 +43,14 @@ PipelineManager *sActiveInstance = nullptr;
 } // namespace
 #endif
 
-PipelineManager::PipelineManager(Passkey<GraphicsEngine>, ID3D12Device *device, const std::string &pipelineSettingsPath) {
+PipelineManager::PipelineManager(Passkey<GraphicsEngine>, ID3D12Device *device, const CookedAssets &cookedAssets, const std::string &pipelineSettingsPath)
+    : cookedAssets_(cookedAssets) {
     LogScope scope;
     Log(Translation("engine.graphics.pipeline.manager.construct.start"), LogSeverity::Debug);
     assert(device != nullptr);
     device_ = device;
 
-    shaderCompiler_ = std::make_unique<ShaderCompiler>(Passkey<PipelineManager>{}, device_);
+    shaderCompiler_ = std::make_unique<ShaderCompiler>(Passkey<PipelineManager>{}, device_, cookedAssets_);
     pipelineCreator_ = std::make_unique<PipelineCreator>(Passkey<PipelineManager>{}, device_, &components_, shaderCompiler_.get());
 
     pipelineSettingsPath_ = ProjectPaths::ToPhysical(pipelineSettingsPath);
@@ -358,7 +359,7 @@ bool PipelineManager::GetOrCreatePipeline(const std::string &pipelineName) {
 
     const auto shaderFolderIt = presetFolderNames_.find("Shader");
     const std::string shaderBaseDir = (shaderFolderIt != presetFolderNames_.end()) ? shaderFolderIt->second : std::string{};
-    auto resolution = TryResolvePipelineVariant(pipelineName, shaderBaseDir);
+    auto resolution = TryResolvePipelineVariant(pipelineName, shaderBaseDir, &cookedAssets_);
     if (!resolution.matched) return false;
 
     PipelineInfo info;

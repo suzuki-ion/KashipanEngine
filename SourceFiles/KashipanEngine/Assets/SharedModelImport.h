@@ -60,7 +60,7 @@ public:
     }
     struct DiskStatistics { size_t hits, parsed, stored; };
     static DiskStatistics CacheStatistics() { return {diskHits_.load(), parses_.load(), stores_.load()}; }
-    static ResultPtr Load(const std::filesystem::path &path, unsigned int originalFlags) {
+    static ResultPtr Load(const std::filesystem::path &path, unsigned int originalFlags, const CookedAssets *cookedAssets = nullptr) {
         std::shared_future<ResultPtr> future;
         std::shared_ptr<std::promise<ResultPtr>> promise;
         bool active;
@@ -81,9 +81,9 @@ public:
                 }
             }
         }
-        if (!active) return Import(path, originalFlags); // 既存の動的読み込み用処理フラグを維持する。
+        if (!active) return Import(path, originalFlags, cookedAssets); // 既存の動的読み込み用処理フラグを維持する。
         if (promise) {
-            try { promise->set_value(Import(path, ModelFlags, cacheDirectory)); }
+            try { promise->set_value(Import(path, ModelFlags, cookedAssets, cacheDirectory)); }
             catch (...) { promise->set_exception(std::current_exception()); }
         }
         // インポートはミューテックスの外で実行し、異なるファイルを並列に処理できるようにする。
@@ -91,11 +91,11 @@ public:
     }
 private:
     static ResultPtr Import(const std::filesystem::path &path, unsigned int flags,
-        const std::filesystem::path &directory = {}) {
+        const CookedAssets *cookedAssets, const std::filesystem::path &directory = {}) {
         auto result = std::make_shared<Result>();
-        if (const auto bytes = CookedAssets::Load("Models", path)) {
-            if (CookedAssets::manifest.at("modelSchema") != ModelSceneCache::Schema ||
-                CookedAssets::manifest.at("modelABI") != ContentCache::Json::array({sizeof(ai_real), sizeof(aiVectorKey), sizeof(aiQuatKey)}))
+        if (const auto bytes = cookedAssets ? cookedAssets->Load("Models", path) : std::nullopt) {
+            if (!cookedAssets->IsModelFormatCompatible(ModelSceneCache::Schema,
+                ContentCache::Json::array({sizeof(ai_real), sizeof(aiVectorKey), sizeof(aiQuatKey)})))
                 throw std::runtime_error("Incompatible cooked model schema");
             result->cachedScene = ModelSceneCache::Decode(*bytes);
             if (!result->cachedScene) throw std::runtime_error("Invalid cooked model: " + ContentCache::PathText(path));

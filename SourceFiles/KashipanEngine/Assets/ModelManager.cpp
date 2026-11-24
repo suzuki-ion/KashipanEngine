@@ -193,8 +193,8 @@ struct ParsedModelResult {
     std::vector<PendingEmbeddedTexture> pendingTextures;
 };
 
-ModelManager::ModelManager(Passkey<GameEngine>, AssetFileIndex &assetFiles)
-    : assetsRootPath_(AssetPath::NormalizePathSlashes(assetFiles.Root())) {
+ModelManager::ModelManager(Passkey<GameEngine>, AssetFileIndex &assetFiles, const CookedAssets &cookedAssets)
+    : cookedAssets_(cookedAssets), assetsRootPath_(AssetPath::NormalizePathSlashes(assetFiles.Root())) {
     LogScope scope;
     sActiveInstance = this;
     PrimitiveMeshGenerator::RegisterBuiltinPrimitiveMeshes();
@@ -242,7 +242,7 @@ std::unique_ptr<ParsedModelResult> ModelManager::ParseModelFile(const std::strin
 
     const std::filesystem::path p = Utf8StringToPath(filePath);
 
-    if (!CookedAssets::Contains("Models", p) && !std::filesystem::exists(p)) {
+    if (!cookedAssets_.Contains("Models", p) && !std::filesystem::exists(p)) {
         Log(Translation("engine.model.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return result;
     }
@@ -251,7 +251,7 @@ std::unique_ptr<ParsedModelResult> ModelManager::ParseModelFile(const std::strin
         return result;
     }
 
-    result->imported = SharedModelImport::Load(p, SharedModelImport::ModelFlags);
+    result->imported = SharedModelImport::Load(p, SharedModelImport::ModelFlags, &cookedAssets_);
     const aiScene* scene = result->imported->scene;
     if (!scene || !scene->mRootNode) {
         Log(Translation("engine.model.loading.failed.assimp") + PathToUtf8String(p) + " msg=" + result->imported->error, LogSeverity::Warning);

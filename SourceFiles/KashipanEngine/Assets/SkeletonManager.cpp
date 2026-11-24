@@ -185,8 +185,8 @@ void BuildJointHierarchy(const aiNode *node, Skeleton &skeleton) {
 
 } // namespace
 
-SkeletonManager::SkeletonManager(Passkey<GameEngine>, AssetFileIndex &assetFiles)
-    : assetsRootPath_(AssetPath::NormalizePathSlashes(assetFiles.Root())) {
+SkeletonManager::SkeletonManager(Passkey<GameEngine>, AssetFileIndex &assetFiles, const CookedAssets &cookedAssets)
+    : cookedAssets_(cookedAssets), assetsRootPath_(AssetPath::NormalizePathSlashes(assetFiles.Root())) {
     LogScope scope;
     LoadAllFromAssetsFolder(assetFiles.Files(AssetFileIndex::Kind::Skeleton));
 }
@@ -224,7 +224,7 @@ SkeletonManager::SkeletonHandle SkeletonManager::LoadSkeleton(const std::string 
 
     const std::filesystem::path p = Utf8StringToPath(filePath);
 
-    if (!CookedAssets::Contains("Models", p) && !std::filesystem::exists(p)) {
+    if (!cookedAssets_.Contains("Models", p) && !std::filesystem::exists(p)) {
         Log(Translation("engine.skeleton.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
@@ -233,7 +233,7 @@ SkeletonManager::SkeletonHandle SkeletonManager::LoadSkeleton(const std::string 
         return kInvalidHandle;
     }
 
-    const auto imported = SharedModelImport::Load(p, SharedModelImport::CommonFlags);
+    const auto imported = SharedModelImport::Load(p, SharedModelImport::CommonFlags, &cookedAssets_);
     const aiScene *scene = imported->scene;
     if (!scene || !scene->mRootNode) {
         Log(Translation("engine.skeleton.loading.failed.assimp") + PathToUtf8String(p) + " msg=" + imported->error, LogSeverity::Warning);

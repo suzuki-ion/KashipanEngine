@@ -17,6 +17,7 @@ struct aiMesh;
 namespace KashipanEngine {
 
 class AssetFileIndex;
+class CookedAssets;
 
 class GameEngine;
 class ModelManager;
@@ -150,7 +151,7 @@ public:
 
     /// @brief コンストラクタ（GameEngine からのみ生成可能）
     /// @param assetFiles 起動時に共通探索したAssetsの一覧
-    ModelManager(Passkey<GameEngine>, AssetFileIndex &assetFiles);
+    ModelManager(Passkey<GameEngine>, AssetFileIndex &assetFiles, const CookedAssets &cookedAssets);
     ~ModelManager();
 
     ModelManager(const ModelManager&) = delete;
@@ -266,6 +267,7 @@ private:
     AssetFileIndex *startupAssetFiles_ = nullptr; // 構築中のみ借用する。
     void LoadAllFromAssetsFolder(std::vector<std::string> files);
 
+    const CookedAssets &cookedAssets_;
     std::string assetsRootPath_;
     static inline const ModelData sEmptyData;
 };

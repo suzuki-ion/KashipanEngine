@@ -5,6 +5,8 @@
 
 namespace KashipanEngine {
 
+class CookedAssets;
+
 /// @brief パイプラインバリアント名の解決結果
 struct PipelineVariantResolution {
     bool matched = false;
@@ -22,6 +24,7 @@ struct PipelineVariantResolution {
 ///          matched=false を返す。呼び出し側は今まで通り「パイプラインが見つからない」扱いにできる
 /// @param shaderBaseDir シェーダー資産のベースディレクトリ（モジュール合成時のみ使用。
 ///        PipelineManagerの pipelineFolderPath_ + "/Preset/Shader"）
-PipelineVariantResolution TryResolvePipelineVariant(const std::string &pipelineName, const std::string &shaderBaseDir = {});
+PipelineVariantResolution TryResolvePipelineVariant(const std::string &pipelineName, const std::string &shaderBaseDir = {},
+    const CookedAssets *cookedAssets = nullptr);
 
 } // namespace KashipanEngine

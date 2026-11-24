@@ -78,7 +78,7 @@ void GameEngine::DrawProfilingImGui() {
 }
 #endif
 
-GameEngine::GameEngine(PasskeyForGameEngineMain) {
+GameEngine::GameEngine(PasskeyForGameEngineMain, const CookedAssets &cookedAssets) {
     StartupTiming::Sections startupSections("Engine.");
     const auto finishStartupSection = [&startupSections](const char *name) {
         startupSections.End(name);
@@ -105,9 +105,9 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     // ファイル一覧だけを先に作成し、Windows・描画初期化と重ねる。
     // ワーカーはルートのコピーとローカルデータだけを扱い、ログやManagerには触れない。
     const std::string assetsRoot = ProjectPaths::AssetsRoot();
-    auto assetScan = std::async(std::launch::async, [assetsRoot] {
+    auto assetScan = std::async(std::launch::async, [assetsRoot, &cookedAssets] {
         const auto started = std::chrono::steady_clock::now();
-        AssetFileIndex files(assetsRoot);
+        AssetFileIndex files(assetsRoot, &cookedAssets);
         const double elapsedMs = std::chrono::duration<double, std::milli>(
             std::chrono::steady_clock::now() - started).count();
         return std::make_pair(std::move(files), elapsedMs);
@@ -125,7 +125,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     Scene::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     ParticleSystemBase::SetDirectXCommon(Passkey<GameEngine>{}, directXCommon_.get());
     ComputeCommandProcessor::Initialize(Passkey<GameEngine>{}, directXCommon_.get());
-    graphicsEngine_ = std::make_unique<GraphicsEngine>(Passkey<GameEngine>{}, directXCommon_.get());
+    graphicsEngine_ = std::make_unique<GraphicsEngine>(Passkey<GameEngine>{}, directXCommon_.get(), cookedAssets);
     finishStartupSection("GraphicsAndPipelines");
     Scene::SetGraphicsEngine(Passkey<GameEngine>{}, graphicsEngine_.get());
 
@@ -141,7 +141,7 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     Log("[StartupAssets] scans=1, files=" + std::to_string(assetFiles.FileCount()) +
         ", directories=" + std::to_string(assetFiles.DirectoryCount()), LogSeverity::Info);
     finishStartupSection("AssetScanReporting");
-    textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetFiles);
+    textureManager_ = std::make_unique<TextureManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetFiles, cookedAssets);
     finishStartupSection("Textures");
     fontManager_ = std::make_unique<FontManager>(Passkey<GameEngine>{}, directXCommon_.get(), assetFiles);
     finishStartupSection("Fonts");
@@ -150,13 +150,13 @@ GameEngine::GameEngine(PasskeyForGameEngineMain) {
     samplerManager_ = std::make_unique<SamplerManager>(Passkey<GameEngine>{}, directXCommon_.get());
     finishStartupSection("Samplers");
     SharedModelImport::StartupSession sharedModelSession(ContentCache::Directory(ProjectPaths::ProjectRoot(), "Models"));
-    modelManager_ = std::make_unique<ModelManager>(Passkey<GameEngine>{}, assetFiles);
+    modelManager_ = std::make_unique<ModelManager>(Passkey<GameEngine>{}, assetFiles, cookedAssets);
     finishStartupSection("Models");
-    skeletonManager_ = std::make_unique<SkeletonManager>(Passkey<GameEngine>{}, assetFiles);
+    skeletonManager_ = std::make_unique<SkeletonManager>(Passkey<GameEngine>{}, assetFiles, cookedAssets);
     finishStartupSection("Skeletons");
     audioManager_ = std::make_unique<AudioManager>(Passkey<GameEngine>{}, assetFiles);
     finishStartupSection("Audio");
-    animationManager_ = std::make_unique<AnimationManager>(Passkey<GameEngine>{}, assetFiles);
+    animationManager_ = std::make_unique<AnimationManager>(Passkey<GameEngine>{}, assetFiles, cookedAssets);
     finishStartupSection("Animations");
     const auto [modelImportHits, modelImportMisses] = SharedModelImport::Statistics();
     Log("[StartupCache] Model imports: reused=" + std::to_string(modelImportHits) +

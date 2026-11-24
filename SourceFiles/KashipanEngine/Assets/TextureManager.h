@@ -13,6 +13,7 @@
 namespace KashipanEngine {
 
 class AssetFileIndex;
+class CookedAssets;
 
 class GameEngine;
 class DirectXCommon;
@@ -56,7 +57,7 @@ public:
     /// @brief コンストラクタ（GameEngine からのみ生成可能）
     /// @param directXCommon DirectX 共通（device / SRV heap 取得用）
     /// @param assetFiles 起動時に共通探索したAssetsの一覧
-    TextureManager(Passkey<GameEngine>, DirectXCommon* directXCommon, AssetFileIndex &assetFiles);
+    TextureManager(Passkey<GameEngine>, DirectXCommon* directXCommon, AssetFileIndex &assetFiles, const CookedAssets &cookedAssets);
     ~TextureManager();
 
     TextureManager(const TextureManager&) = delete;
@@ -159,6 +160,7 @@ private:
 
     std::unique_ptr<TextureUploadBatch> startupUploadBatch_;
     DirectXCommon* directXCommon_ = nullptr;
+    const CookedAssets &cookedAssets_;
     std::string assetsRootPath_;
 
 	Plugin::MipMapContainer mipMapContainer_;

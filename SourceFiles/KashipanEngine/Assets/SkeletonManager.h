@@ -15,6 +15,7 @@
 namespace KashipanEngine {
 
 class AssetFileIndex;
+class CookedAssets;
 
 /// @brief スケルトン用トランスフォーム構造体
 class SkeletonTransform {
@@ -170,7 +171,7 @@ public:
 
     /// @brief コンストラクタ（GameEngine からのみ生成可能）
     /// @param assetFiles 起動時に共通探索したAssetsの一覧
-    SkeletonManager(Passkey<GameEngine>, AssetFileIndex &assetFiles);
+    SkeletonManager(Passkey<GameEngine>, AssetFileIndex &assetFiles, const CookedAssets &cookedAssets);
     ~SkeletonManager();
 
     SkeletonManager(const SkeletonManager &) = delete;
@@ -222,6 +223,7 @@ public:
 private:
     void LoadAllFromAssetsFolder(std::vector<std::string> files);
 
+    const CookedAssets &cookedAssets_;
     std::string assetsRootPath_;
     static inline const SkeletonData sEmptyData;
 };

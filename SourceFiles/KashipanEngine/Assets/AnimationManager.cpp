@@ -71,8 +71,8 @@ KeyframeTimeline BuildTimeline(const std::string &name, KeyframeValueType valueT
 
 } // namespace
 
-AnimationManager::AnimationManager(Passkey<GameEngine>, AssetFileIndex &assetFiles)
-    : assetsRootPath_(AssetPath::NormalizePathSlashes(assetFiles.Root())) {
+AnimationManager::AnimationManager(Passkey<GameEngine>, AssetFileIndex &assetFiles, const CookedAssets &cookedAssets)
+    : cookedAssets_(cookedAssets), assetsRootPath_(AssetPath::NormalizePathSlashes(assetFiles.Root())) {
     LogScope scope;
     LoadAllFromAssetsFolder(assetFiles.Files(AssetFileIndex::Kind::Animation));
 }
@@ -110,7 +110,7 @@ AnimationManager::AnimationHandle AnimationManager::LoadAnimation(const std::str
 
     const std::filesystem::path p = Utf8StringToPath(filePath);
 
-    if (!CookedAssets::Contains("Models", p) && !std::filesystem::exists(p)) {
+    if (!cookedAssets_.Contains("Models", p) && !std::filesystem::exists(p)) {
         Log(Translation("engine.animation.loading.failed.notfound") + PathToUtf8String(p), LogSeverity::Warning);
         return kInvalidHandle;
     }
@@ -119,7 +119,7 @@ AnimationManager::AnimationHandle AnimationManager::LoadAnimation(const std::str
         return kInvalidHandle;
     }
 
-    const auto imported = SharedModelImport::Load(p, SharedModelImport::CommonFlags);
+    const auto imported = SharedModelImport::Load(p, SharedModelImport::CommonFlags, &cookedAssets_);
     const aiScene *scene = imported->scene;
     if (!scene || !scene->mRootNode) {
         Log(Translation("engine.animation.loading.failed.assimp") + PathToUtf8String(p) + " msg=" + imported->error, LogSeverity::Warning);

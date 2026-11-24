@@ -11,6 +11,7 @@
 namespace KashipanEngine {
 
 class AssetFileIndex;
+class CookedAssets;
 
 class GameEngine;
 
@@ -62,7 +63,7 @@ public:
 
     /// @brief コンストラクタ（GameEngine からのみ生成可能）
     /// @param assetFiles 起動時に共通探索したAssetsの一覧
-    AnimationManager(Passkey<GameEngine>, AssetFileIndex &assetFiles);
+    AnimationManager(Passkey<GameEngine>, AssetFileIndex &assetFiles, const CookedAssets &cookedAssets);
     ~AnimationManager();
 
     AnimationManager(const AnimationManager &) = delete;
@@ -99,6 +100,7 @@ public:
 private:
     void LoadAllFromAssetsFolder(std::vector<std::string> files);
 
+    const CookedAssets &cookedAssets_;
     std::string assetsRootPath_;
     static inline const AnimationData sEmptyData;
     static inline const std::vector<AnimationHandle> sEmptyHandleList;

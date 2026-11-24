@@ -125,6 +125,9 @@ public:
         std::chrono::steady_clock::time_point start_;
     };
 private:
+    // 「Profilerはね、複数存在しないし他からも生成されないし、常に孤独であり続けなきゃいけないの。」
+    Profiler() = default;
+
     using Clock = std::chrono::steady_clock;
     mutable std::mutex mutex_;
     std::uint64_t generation_ = 0;

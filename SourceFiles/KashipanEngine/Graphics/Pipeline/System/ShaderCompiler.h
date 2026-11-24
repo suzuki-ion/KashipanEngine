@@ -15,6 +15,7 @@ class ID3D12ShaderReflectionType;
 namespace KashipanEngine {
 
 class PipelineManager;
+class CookedAssets;
 
 /// @brief シェーダーコンパイラクラス
 class ShaderCompiler final {
@@ -183,12 +184,12 @@ public:
 
     /// @brief コンストラクタ
     /// @param device D3D12デバイス
-    ShaderCompiler(Passkey<PipelineManager>, ID3D12Device *device);
+    ShaderCompiler(Passkey<PipelineManager>, ID3D12Device *device, const CookedAssets &cookedAssets);
     ~ShaderCompiler();
     /// 配布用アセットのクックに使う CPU 専用のコンパイラー。GPU リソースや PSO の作成は行わない。
-    static std::unique_ptr<ShaderCompiler> CreateOfflineCompiler() {
-        return std::unique_ptr<ShaderCompiler>(new ShaderCompiler(nullptr));
-    }
+    static std::unique_ptr<ShaderCompiler> CreateOfflineCompiler(const CookedAssets *cookedAssets = nullptr);
+    static std::unique_ptr<ShaderCompiler> CreateCookCompiler(Passkey<CookedAssets>, CookedAssets &cookedAssets,
+        const std::filesystem::path &cacheDirectory);
 
     /// @brief シェーダーのコンパイル
     /// @param compileInfo コンパイル情報
@@ -198,7 +199,9 @@ public:
     void DestroyShader(ShaderCompiledInfo *shaderCompiledInfo);
 
 private:
-    explicit ShaderCompiler(ID3D12Device *device);
+    ShaderCompiler(ID3D12Device *device, const CookedAssets *cookedAssets);
+    const CookedAssets *cookedAssets_;
+    CookedAssets *cookOutput_ = nullptr;
     uint32_t cacheHits_ = 0;
     uint32_t cacheMisses_ = 0;
     uint32_t sharedBlobHits_ = 0;

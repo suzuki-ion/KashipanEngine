@@ -299,7 +299,7 @@ MaterialLayout MaterialLayout::BuildCachedFromHlslSource(const std::string &path
     try {
         std::vector<std::string> sortedMacros(macros.begin(), macros.end());
         std::sort(sortedMacros.begin(), sortedMacros.end());
-        // Bump this version when layout parsing or serialization changes.
+        // レイアウトの解析方法またはシリアライズ形式を変更したら、このバージョンを上げる。
         key = ContentCache::Json{{"parser", "MaterialLayout-v1"}, {"path", ContentCache::PathText(std::filesystem::absolute(Utf8StringToPath(path)).lexically_normal())}, {"macros", sortedMacros}}.dump();
         const auto directory = cacheDirectory.empty() ? ContentCache::Directory(ProjectPaths::ProjectRoot(), "MaterialLayouts") : cacheDirectory;
         cachePath = directory / (ContentCache::Digest(key) + ".cache");
@@ -308,7 +308,7 @@ MaterialLayout MaterialLayout::BuildCachedFromHlslSource(const std::string &path
             Log("[MaterialLayoutCache] hit: " + path, LogSeverity::Debug);
             return layout;
         }
-    } catch (...) {} // A malformed cache is regenerated; cache failure must not change parsing behavior.
+    } catch (...) {} // 不正なキャッシュは再生成する。キャッシュ処理の失敗が解析の動作に影響しないようにする。
     ContentCache::Json dependencies = ContentCache::Json::array();
     auto layout = BuildLayout(path, macros, &dependencies);
     if (!key.empty()) {

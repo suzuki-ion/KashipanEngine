@@ -102,14 +102,14 @@ int main() {
     pso.Reset();
     assert(SUCCEEDED(second.CreateGraphics(desc, signature.Get(), pso)));
     Expect(second,"hits=1, misses=4, stored=4, rejected=0");
-    // Intact container but unusable driver blob: API rejection must retry without the blob.
+    // コンテナが正常でもドライバーの BLOB が使えず API に拒否されたら、BLOB を使わずに再試行する。
     const std::string badBlob(64,'x');
     assert(KashipanEngine::ContentCache::Store(originalPath,originalPath.stem().string(),
         KashipanEngine::ContentCache::Json::array(),badBlob.data(),badBlob.size(),true));
     pso.Reset();
     assert(SUCCEEDED(second.CreateGraphics(desc, signature.Get(), pso)));
     Expect(second,"hits=1, misses=5, stored=5, rejected=1");
-    // Other cache users still require dependencies unless they explicitly opt in.
+    // 他のキャッシュ利用箇所では、明示的に検証を省くよう指定しない限り依存ファイルが必要。
     assert(!KashipanEngine::ContentCache::Load(originalPath,originalPath.stem().string()));
     auto cs = Compile("[numthreads(1,1,1)] void main(){}", "cs_5_0");
     D3D12_COMPUTE_PIPELINE_STATE_DESC compute{};

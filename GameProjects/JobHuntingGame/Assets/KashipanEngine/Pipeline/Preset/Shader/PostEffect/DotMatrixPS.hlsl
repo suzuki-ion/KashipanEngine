@@ -5,7 +5,7 @@ SamplerState gSampler : register(s0);
 
 cbuffer DotMatrixCB : register(b0)
 {
-    float2 invResolution;   // 1.0 / (width, height)
+    float2 invResolution;   // 1.0 / (画面の幅, 高さ)
     float dotSpacing;       // ピクセル単位
     float dotRadius;        // ピクセル単位
     float threshold;        // 0..1（輝度閾値）
@@ -27,7 +27,7 @@ float4 main(VS_OUT input) : SV_Target0 {
     float2 uv = input.uv;
 
     // ピクセル座標（float）
-    float2 pixelPos = uv / invResolution; // uv * (width,height)
+    float2 pixelPos = uv / invResolution; // uv × (画面の幅, 高さ)
 
     // グリッド内でのドット中心を求める
     float2 grid = floor(pixelPos / dotSpacing);
@@ -44,7 +44,7 @@ float4 main(VS_OUT input) : SV_Target0 {
     // 輝度閾値が設定されている場合は明るさでマスク
     if (threshold > 0.0) {
         float lum = luminance(color.rgb);
-        float tmask = step(threshold, lum); // 0 or 1
+        float tmask = step(threshold, lum); // 0 または 1
         mask *= tmask;
     }
 

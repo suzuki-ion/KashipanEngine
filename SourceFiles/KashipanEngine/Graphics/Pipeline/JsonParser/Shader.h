@@ -137,7 +137,7 @@ inline ShaderCompiler::ShaderCompiledInfo *ParseAndMaybeCompileSingleShader(cons
     if (stage.isUsePreset) {
         if (components->HasCompiledShader(stage.presetName)) {
             auto reused = components->GetCompiledShader(stage.presetName);
-            // 別名登録（compileInfo.name or Name 指定があれば）
+            // 別名登録（compileInfo.name または Name の指定があれば）
             std::string alias = stage.compileInfo.name;
             if (alias.empty() && json.contains("Name")) alias = json["Name"].get<std::string>();
             if (!alias.empty() && alias != stage.presetName) components->RegisterCompiledShader(alias, reused);

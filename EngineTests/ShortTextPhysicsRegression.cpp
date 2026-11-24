@@ -28,7 +28,7 @@ int main(){
         auto *rigid=object->AddComponent<RigidBody2D>();Require(rigid!=nullptr,"rigid registration");
         Require(run("rigid_settings",{{"mass",2},{"gravity",false}}),"rigid settings path");Require(rigid->GetMass()==2&&!rigid->IsGravityEnabled(),"settings update engine component");
         Require(!run("rigid_settings",{{"mass",-1}}),"negative mass rejected");Require(rigid->GetMass()==2,"failed mass retains value");
-        // CharacterController2D created the scene physics world, so this body is live.
+        // CharacterController2D がシーンの物理ワールドを生成したので、この物理ボディは有効。
         Require(run("rigid_force",{{"value",{2,0,0}}}),"initialized physical body accepts force");
         {
             Scene bare(std::string("PhysicsNoWorld"));auto *bareContext=bare.GetSceneContext();auto *bareObject=bareContext->CreateEmptyObject("Body");

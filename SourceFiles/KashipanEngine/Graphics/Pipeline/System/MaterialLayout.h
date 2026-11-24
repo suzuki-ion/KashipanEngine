@@ -56,7 +56,7 @@ struct MaterialLayout {
     /// @param definedMacros コンパイル時に定義されたマクロ名の集合（#ifdef/#ifndefの評価に使う）
     /// @return struct Material が見つからない場合は空（totalByteSize=0, fields空）のレイアウトを返す
     static MaterialLayout BuildFromHlslSource(const std::string &shaderFilePath, const std::unordered_set<std::string> &definedMacros);
-    /// Content-validated persistent cache, including annotations and missing/unused textual includes.
+    /// 内容を検証する永続キャッシュ。注釈や、存在しない、または使われないテキスト上のインクルードも検証対象に含める。
     static MaterialLayout BuildCachedFromHlslSource(const std::string &shaderFilePath, const std::unordered_set<std::string> &definedMacros,
         const std::filesystem::path &cacheDirectory = {}, ContentCache::DependencyValidation *validation = nullptr);
 };

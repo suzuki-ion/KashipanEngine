@@ -1,4 +1,4 @@
-// Uses the real Scene, component lifecycle and parameter binding without booting the engine.
+// エンジンを起動せず、実際の Scene、コンポーネントのライフサイクル、パラメーターのバインドを検証する。
 #include "Scene/Scene.h"
 #include "Scene/SceneContext.h"
 #include "Objects/Components/KeyFrameAnimator.h"

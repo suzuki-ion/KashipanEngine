@@ -9,7 +9,7 @@ int main() {
     std::weak_ptr<int> retained;
     TextureUploadBatch batch([&](const TextureUploadBatch::Task &record) {
         record(nullptr);
-        assert(!retained.expired()); // Upload memory must survive through the GPU wait.
+        assert(!retained.expired()); // アップロード用メモリは GPU の待機処理が完了するまで保持する。
         ++waits;
     }, 10);
     auto upload = std::make_shared<int>(42);
@@ -26,9 +26,9 @@ int main() {
     TextureUploadBatch bounded([&](const TextureUploadBatch::Task &record) { record(nullptr); ++boundedWaits; }, 10);
     const auto empty = [](ID3D12GraphicsCommandList *) {};
     bounded.Add(6, empty);
-    bounded.Add(6, empty); // Flush before exceeding the limit.
+    bounded.Add(6, empty); // 上限を超える前に保留中の処理を実行する。
     assert(boundedWaits == 1);
-    bounded.Add(20, empty); // Flush the remainder, then submit the large image alone.
+    bounded.Add(20, empty); // 保留分を実行してから、大きな画像を単独で送る。
     assert(boundedWaits == 3 && bounded.TextureCount() == 3);
     bounded.Flush();
     assert(boundedWaits == 3);

@@ -52,7 +52,7 @@ int main() {
     assert(asyncIndex.Files(AssetFileIndex::Kind::Material) == index.Files(AssetFileIndex::Kind::Material));
     assert(index.Files(AssetFileIndex::Kind::Material).size() == before + 1);
     assert(index.Files(AssetFileIndex::Kind::Material).back() == generated);
-    // Reading routed lists is a snapshot: a later file is invisible until explicitly registered.
+    // 取得したルーティング済み一覧はスナップショットであり、後から追加したファイルは明示的に登録するまで現れない。
     std::ofstream(root / "late.wav");
     assert(index.Files(AssetFileIndex::Kind::Audio).size() == 14);
     verify("GameProjects/Test/Assets");

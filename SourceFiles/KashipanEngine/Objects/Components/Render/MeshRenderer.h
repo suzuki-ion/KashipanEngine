@@ -178,8 +178,8 @@ public:
     // 描画先・パイプライン・マテリアル・UV設定は引き続き適用する。入力はコピーし、
     // 呼び出し後にスクリプト配列のアドレスを保持しない。入力が空なら何も描画しない。
     struct WorldInstance { Matrix4x4 world; Vector4 color; };
-    // Runtime, world-space, unshadowed mesh instances. Own all submitted values;
-    // an empty submission keeps batch mode enabled without a fallback mesh.
+    // 実行時に使うワールド座標系のメッシュインスタンス。影の描画対象外で、渡された値はすべてこのコンポーネントが保持する。
+    // 空のデータを渡した場合もバッチモードを維持し、代替メッシュは描画しない。
     bool SetWorldMeshInstances(std::span<const Vector3> positions, std::span<const Quaternion> rotations,
         std::span<const Vector3> scales, std::span<const Vector4> colors) {
         const size_t count=positions.size();

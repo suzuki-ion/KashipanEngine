@@ -1,6 +1,6 @@
-// Install as CurrentQA in an isolated CityScene. Two separated light volumes
-// make local invalidation testable even when the city's normal lights exceed
-// the shadow-slice budget. The external runner checks both reused/dirty jobs.
+// 分離した CityScene に CurrentQA として組み込む。離れた 2 つのライト領域を用意し、
+// 街の通常のライトがシャドウスライスの上限を超える場合でも、局所的な無効化を検証できるようにする。
+// 外部ランナーは再利用されたジョブと再計算が必要なジョブの両方を確認する。
 class PartialShadowCacheRuntimeRegression : ScriptComponentBehavior {
     float clock=0;Object@ model;Object@ lamp;
     void DisableShadow(const string &in name){array<Object@>@ objects=GetScene().GetObjects(name);for(uint i=0;i<objects.length();++i){Light@ light;if(objects[i].GetComponent(@light))light.SetCastShadows(false);}}

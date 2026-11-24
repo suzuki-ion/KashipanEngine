@@ -2,7 +2,7 @@
 #include "Objects/ObjectComponentHeader.h"
 #include <cmath>
 namespace KashipanEngine {
-/// Scene-authoring metadata only. Startup playback never constructs scene components.
+/// シーン編集用のメタデータのみを保持する。起動時の再生ではシーンコンポーネントを生成しない。
 class LoadingAnimationSection final : public IObjectComponent {
 public:
     OBJECT_COMPONENT_CONSTRUCTOR(LoadingAnimationSection, 0xFF,

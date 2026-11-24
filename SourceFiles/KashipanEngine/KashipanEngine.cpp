@@ -1,4 +1,4 @@
-﻿#include "KashipanEngine.h"
+#include "KashipanEngine.h"
 #include "Assets/CookedAssets.h"
 #include <shellapi.h>
 #include "EngineSettings.h"
@@ -37,146 +37,151 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
     StartupTiming::Begin();
     StartupTiming::Sections startupSections("Entry.");
     SetUnhandledExceptionFilter(CrashHandler);
+
     try {
-    D3DResourceLeakChecker resourceLeakChecker;
+        D3DResourceLeakChecker resourceLeakChecker;
 
-    //--------- エンジン共通の翻訳の読み込み ---------//
+        //--------- エンジン共通の翻訳の読み込み ---------//
 
-    // プロジェクトを決める処理自体がログを出すため、それより先に翻訳を読み込む。
-    // エンジンルートはプロジェクトと無関係に決まるので、ここまでは先に済ませられる
-    ProjectPaths::InitializeEngineRootOnly(winMainPasskey);
-    int argumentCount = 0;
-    LPWSTR *arguments = CommandLineToArgvW(GetCommandLineW(), &argumentCount);
-    std::filesystem::path cookRoot;
-    for (int i = 1; arguments && i + 1 < argumentCount; ++i)
-        if (std::wstring(arguments[i]) == L"--cook-assets") cookRoot = arguments[i + 1];
-    if (arguments) LocalFree(arguments);
-    if (!cookRoot.empty()) return CookedAssets::CookDistribution(cookRoot);
-    // Engine-owned native animation runs independently of the heavy initialization.
-    // Keep the guard alive through the first startup-scene draw, including Release.
+        // プロジェクトを決める処理自体がログを出すため、それより先に翻訳を読み込む。
+        // エンジンルートはプロジェクトと無関係に決まるので、ここまでは先に済ませられる
+        ProjectPaths::InitializeEngineRootOnly(winMainPasskey);
+        int argumentCount = 0;
+        LPWSTR *arguments = CommandLineToArgvW(GetCommandLineW(), &argumentCount);
+        std::filesystem::path cookRoot;
+        for (int i = 1; arguments && i + 1 < argumentCount; ++i)
+            if (std::wstring(arguments[i]) == L"--cook-assets") cookRoot = arguments[i + 1];
+        if (arguments) LocalFree(arguments);
+        if (!cookRoot.empty()) return CookedAssets::CookDistribution(cookRoot);
+        // エンジン自身が管理するネイティブアニメーションは、時間のかかる初期化処理とは独立して動く。
+        // Release を含め、初期シーンの初回描画が終わるまでガードを保持する。
 #if defined(RELEASE_BUILD)
-    ScopedSplashScreen splashScreen{ PasskeyForGameEngineMain{} };
-#endif
-    LoadGlobalTranslationFiles();
-    SplashScreen::CheckCancellation();
-    startupSections.End("EngineRootAndTranslations");
-
-    //--------- 開くプロジェクトの決定 ---------//
-
-    // エンジン設定ファイル自体がプロジェクト内にあるため、設定の読み込みより先に行う
-    ProjectPaths::Initialize({});
-    if (!ProjectManager::EnsureActiveProject({})) {
-        SplashScreen::Close(PasskeyForGameEngineMain{});
-        assert(false && "Failed to open a project.");
-        MessageBoxW(nullptr,
-            L"起動するプロジェクトを見つけられませんでした。\nProject.jsonまたはAssetsフォルダーを確認してください。",
-            L"KashipanEngine 起動エラー", MB_OK | MB_ICONERROR);
-        return -1;
-    }
-
-    SplashScreen::ConfigureProject({}, ProjectPaths::ProjectRoot());
-    CookedAssets::Configure(Utf8StringToPath(ProjectPaths::ProjectRoot()));
-    startupSections.End("ProjectSelection");
-    SplashScreen::CheckCancellation();
-
-    //--------- 表示言語（個人設定）の適用 ---------//
-
-    // UserSettings/PlayerSettingsはProjectPaths::Initialize以降でないと保存先が正しく解決できないため、
-    // ここが最も早いタイミングになる。未設定（初回起動）の場合はOS既定の言語のままにする。
-    // エディター側（UserSettings）とアプリケーション側（PlayerSettings）の表示言語は互いに
-    // 独立しているため、それぞれ別の設定値を別の状態へ適用する
-    const std::string savedEditorLanguage = UserSettings::GetString("editorUI.language", "");
-    if (!savedEditorLanguage.empty()) {
-        SetCurrentLanguage(savedEditorLanguage);
-    }
-    const std::string savedApplicationLanguage = PlayerSettings::GetString(PlayerSettings::kLanguageKey, "");
-    if (!savedApplicationLanguage.empty()) {
-        SetCurrentApplicationLanguage(savedApplicationLanguage);
-    }
-
-    startupSections.End("UserAndPlayerSettings");
-    SplashScreen::CheckCancellation();
-
-    //--------- 設定ファイル読み込み ---------//
-
-    const std::string resolvedEngineSettingsPath = ProjectPaths::ToPhysical(engineSettingsPath);
-    JSON engineSettingsJSON = LoadJSON(resolvedEngineSettingsPath);
-    if (engineSettingsJSON.is_null()) {
-        SplashScreen::Close(PasskeyForGameEngineMain{});
-        assert(false && "Failed to load engine settings JSON.");
-        const std::wstring message = L"エンジン設定を読み込めませんでした。\n\n" +
-            ConvertString(resolvedEngineSettingsPath);
-        MessageBoxW(nullptr, message.c_str(), L"KashipanEngine 起動エラー", MB_OK | MB_ICONERROR);
-        return -1;
-    }
-    std::string logSettingsPath = engineSettingsJSON.value("logSettingsPath", "LogSettings.json");
-    LoadLogSettings({}, ProjectPaths::ToPhysical(logSettingsPath));
-    InitializeLogger({});
-    startupSections.End("SettingsJSONAndLogger");
-    StartupTiming::EnableLogging();
-    LoadEngineSettings({}, resolvedEngineSettingsPath);
-    startupSections.End("EngineSettings");
-    SplashScreen::CheckCancellation();
-
-	// --------- プラグインの初期化 ---------//
-	Plugin::ThreadPool threadPool;
-	Plugin::PriorityTaskDispatcher taskDispatcher(
-		[&threadPool](const std::function<void()>& task) {
-			return threadPool.AddTask(task);
-		},
-		[&threadPool]() {
-			return threadPool.HasIdleThread();
-		}
-	);
-    Plugin::addAsyncTask = [&taskDispatcher](const std::function<void()>& task,int priority) {
-        taskDispatcher.AddTask(task, priority);
-		};
-	Plugin::executeAsyncTasks = [&taskDispatcher]() {
-		taskDispatcher.ExecuteTasks();
-
-        // Asset workers must finish before cancellation can unwind their captured buffers.
-        SplashScreen::PumpMessages();
-		};
-	Plugin::hasAsyncTasks = [&taskDispatcher]() {
-		return taskDispatcher.HasTasks();
-		};
-
-    startupSections.End("ThreadPoolAndDispatcher");
-    SplashScreen::CheckCancellation();
-
-    //--------- エンジン実行 ---------//
-
-    std::unique_ptr<GameEngine> engine;
-#if defined(RELEASE_BUILD)
-    engine = std::make_unique<GameEngine>(PasskeyForGameEngineMain{});
-    startupSections.End("GameEngine");
-#else
-    // Development/Debug retain the independent WebView2 log screen during initialization only.
-    {
         ScopedSplashScreen splashScreen{ PasskeyForGameEngineMain{} };
-        engine = std::make_unique<GameEngine>(PasskeyForGameEngineMain{});
-    }
-    startupSections.End("GameEngineAndSplash");
 #endif
-    StartupTiming::Milestone("Startup.InitializationTotal");
-    int code = engine->Execute({});
-    StartupTiming::Interrupt();
+        LoadGlobalTranslationFiles();
+        SplashScreen::CheckCancellation();
+        startupSections.End("EngineRootAndTranslations");
 
-    //--------- エンジン終了 ---------//
+        //--------- 開くプロジェクトの決定 ---------//
 
-    engine.reset();
+        // エンジン設定ファイル自体がプロジェクト内にあるため、設定の読み込みより先に行う
+        ProjectPaths::Initialize({});
+        if (!ProjectManager::EnsureActiveProject({})) {
+            SplashScreen::Close(PasskeyForGameEngineMain{});
+            assert(false && "Failed to open a project.");
+            MessageBoxW(nullptr,
+                L"起動するプロジェクトを見つけられませんでした。\nProject.jsonまたはAssetsフォルダーを確認してください。",
+                L"KashipanEngine 起動エラー", MB_OK | MB_ICONERROR);
+            return -1;
+        }
 
-    // プロジェクトの切り替えが要求されていた場合は、シーンの自動保存など後始末が
-    // すべて終わったこの時点で新しいプロセスを起動する
-    ProjectManager::LaunchPendingRestart({});
+        SplashScreen::ConfigureProject({}, ProjectPaths::ProjectRoot());
+        CookedAssets::Configure(Utf8StringToPath(ProjectPaths::ProjectRoot()));
+        startupSections.End("ProjectSelection");
+        SplashScreen::CheckCancellation();
 
-    ShutdownLogger({});
-    return code;
+        //--------- 表示言語（個人設定）の適用 ---------//
+
+        // UserSettings/PlayerSettingsはProjectPaths::Initialize以降でないと保存先が正しく解決できないため、
+        // ここが最も早いタイミングになる。未設定（初回起動）の場合はOS既定の言語のままにする。
+        // エディター側（UserSettings）とアプリケーション側（PlayerSettings）の表示言語は互いに
+        // 独立しているため、それぞれ別の設定値を別の状態へ適用する
+        const std::string savedEditorLanguage = UserSettings::GetString("editorUI.language", "");
+        if (!savedEditorLanguage.empty()) {
+            SetCurrentLanguage(savedEditorLanguage);
+        }
+        const std::string savedApplicationLanguage = PlayerSettings::GetString(PlayerSettings::kLanguageKey, "");
+        if (!savedApplicationLanguage.empty()) {
+            SetCurrentApplicationLanguage(savedApplicationLanguage);
+        }
+
+        startupSections.End("UserAndPlayerSettings");
+        SplashScreen::CheckCancellation();
+
+        //--------- 設定ファイル読み込み ---------//
+
+        const std::string resolvedEngineSettingsPath = ProjectPaths::ToPhysical(engineSettingsPath);
+        JSON engineSettingsJSON = LoadJSON(resolvedEngineSettingsPath);
+        if (engineSettingsJSON.is_null()) {
+            SplashScreen::Close(PasskeyForGameEngineMain{});
+            assert(false && "Failed to load engine settings JSON.");
+            const std::wstring message = L"エンジン設定を読み込めませんでした。\n\n" +
+                ConvertString(resolvedEngineSettingsPath);
+            MessageBoxW(nullptr, message.c_str(), L"KashipanEngine 起動エラー", MB_OK | MB_ICONERROR);
+            return -1;
+        }
+        std::string logSettingsPath = engineSettingsJSON.value("logSettingsPath", "LogSettings.json");
+        LoadLogSettings({}, ProjectPaths::ToPhysical(logSettingsPath));
+        InitializeLogger({});
+        startupSections.End("SettingsJSONAndLogger");
+        StartupTiming::EnableLogging();
+        LoadEngineSettings({}, resolvedEngineSettingsPath);
+        startupSections.End("EngineSettings");
+        SplashScreen::CheckCancellation();
+
+        // --------- プラグインの初期化 ---------//
+        Plugin::ThreadPool threadPool;
+        Plugin::PriorityTaskDispatcher taskDispatcher(
+            [&threadPool](const std::function<void()> &task) {
+                return threadPool.AddTask(task);
+            },
+            [&threadPool]() {
+                return threadPool.HasIdleThread();
+            }
+        );
+        Plugin::addAsyncTask = [&taskDispatcher](const std::function<void()> &task, int priority) {
+            taskDispatcher.AddTask(task, priority);
+            };
+        Plugin::executeAsyncTasks = [&taskDispatcher]() {
+            taskDispatcher.ExecuteTasks();
+
+            // キャンセルに伴う巻き戻しでアセットワーカーが捕捉したバッファが破棄される前に、ワーカーの終了を待つ。
+            SplashScreen::PumpMessages();
+            };
+        Plugin::hasAsyncTasks = [&taskDispatcher]() {
+            return taskDispatcher.HasTasks();
+            };
+
+        startupSections.End("ThreadPoolAndDispatcher");
+        SplashScreen::CheckCancellation();
+
+        //--------- エンジン実行 ---------//
+
+        std::unique_ptr<GameEngine> engine;
+#if defined(RELEASE_BUILD)
+        engine = std::make_unique<GameEngine>(PasskeyForGameEngineMain{});
+        startupSections.End("GameEngine");
+#else
+        // Development と Debug では、初期化中に限り独立した WebView2 のログ画面を表示する。
+        {
+            ScopedSplashScreen splashScreen{ PasskeyForGameEngineMain{} };
+            engine = std::make_unique<GameEngine>(PasskeyForGameEngineMain{});
+        }
+        startupSections.End("GameEngineAndSplash");
+#endif
+        StartupTiming::Milestone("Startup.InitializationTotal");
+        int code = engine->Execute({});
+        StartupTiming::Interrupt();
+
+        //--------- エンジン終了 ---------//
+
+        engine.reset();
+
+        // プロジェクトの切り替えが要求されていた場合は、シーンの自動保存など後始末が
+        // すべて終わったこの時点で新しいプロセスを起動する
+        ProjectManager::LaunchPendingRestart({});
+
+        ShutdownLogger({});
+        return code;
+
     } catch (const SplashScreen::Cancelled &) {
+        // スプラッシュ画面のキャンセル
         StartupTiming::Interrupt();
         ShutdownLogger({});
         return 0;
+
     } catch (const std::exception &exception) {
+        // エンジン初期化中の例外
         const std::string detail = exception.what();
         StartupTiming::Interrupt();
         Log("Fatal startup/runtime error: " + detail, LogSeverity::Critical);
@@ -186,7 +191,9 @@ int Execute(PasskeyForWinMain winMainPasskey, const std::string &engineSettingsP
             L"\n\nLogsフォルダーのログも確認してください。";
         MessageBoxW(nullptr, message.c_str(), L"KashipanEngine 起動エラー", MB_OK | MB_ICONERROR);
         return -1;
+
     } catch (...) {
+        // エンジン初期化中の不明な例外
         StartupTiming::Interrupt();
         Log("Fatal startup/runtime error: unknown exception", LogSeverity::Critical);
         ShutdownLogger({});

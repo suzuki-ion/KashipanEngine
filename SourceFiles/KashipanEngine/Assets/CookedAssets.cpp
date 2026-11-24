@@ -26,7 +26,7 @@ int CookDistribution(const std::filesystem::path &projectRoot) {
     const HRESULT com = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     int result = 1;
     try {
-        // CreateDistribution owns this marker. Prevent accidental source-project cooking/deletion.
+        // このマーカーは CreateDistribution が管理する。元プロジェクトを誤ってクックしたり削除したりするのを防ぐ。
         if (!std::filesystem::is_regular_file(target / ".cook-staging") ||
             !std::filesystem::is_directory(target / "Assets") || std::filesystem::exists(target / "Project.json"))
             throw std::runtime_error("Cooking requires a marked distribution staging directory");
@@ -52,7 +52,7 @@ int CookDistribution(const std::filesystem::path &projectRoot) {
         for (const auto &file : index.Files(AssetFileIndex::Kind::Texture)) {
             const auto path = ContentCache::Path(file);
             const auto ext = Lower(path.extension().string());
-            if (ext == ".gif") continue; // GifManager still needs its animation stream.
+            if (ext == ".gif") continue; // GifManager は引き続きアニメーションストリームを必要とする。
             DirectX::ScratchImage decoded;
             DirectX::TexMetadata metadata{};
             HRESULT hr;
@@ -70,7 +70,7 @@ int CookDistribution(const std::filesystem::path &projectRoot) {
             originals.push_back(path);
         }
         manifest["modelSchema"] = ModelSceneCache::Schema;
-        // Encoding uses native scalar layouts. The same engine executable cooks and reads the distribution.
+        // エンコードにはスカラー型のネイティブなデータ表現を使う。同じエンジンの実行ファイルで配布物をクックし、読み込む。
         manifest["modelABI"] = {sizeof(ai_real), sizeof(aiVectorKey), sizeof(aiQuatKey)};
         for (const auto &file : index.Files(AssetFileIndex::Kind::Model)) {
             const auto path = ContentCache::Path(file);
@@ -78,7 +78,7 @@ int CookDistribution(const std::filesystem::path &projectRoot) {
             bool externalDependency = false;
             importer.SetIOHandler(new AssimpUtf8IOSystem([&](const char *dependency, bool exists) {
                 const auto dep = ContentCache::Path(dependency);
-                // Validate all dependencies remain inside the staged Assets tree.
+                // すべての依存先がステージング領域の Assets ツリー内にあることを検証する。
                 if (exists) {
                     try { Relative(dep); } catch (...) { externalDependency = true; return; }
                     const auto ext = Lower(dep.extension().string());
@@ -137,13 +137,13 @@ int CookDistribution(const std::filesystem::path &projectRoot) {
         }
         for (const auto &name : variants) {
             auto resolved = TryResolvePipelineVariant(name, ContentCache::PathText(shaderBase));
-            if (!resolved.matched) continue; // Static names and non-pipeline strings are allowed.
+            if (!resolved.matched) continue; // 固定名やパイプラインを指さない文字列は許可する。
             compile(resolved.synthesizedPipelineJson.at("Shader"), {});
             auto &pixel = resolved.synthesizedPipelineJson["Shader"]["Pixel"];
             if (pixel.contains("Path")) pixel["Path"] = Relative(ContentCache::Path(pixel.at("Path").get<std::string>()));
             manifest["pipelines"][name] = std::move(resolved.synthesizedPipelineJson);
         }
-        // All transformations must succeed before deleting staged originals or publishing a manifest.
+        // すべての変換が成功してから、ステージング領域の変換前ファイルを削除し、マニフェストを公開する。
         for (const auto &file : std::filesystem::recursive_directory_iterator(target / "Assets")) {
             const auto ext = Lower(file.path().extension().string());
             if (file.is_regular_file() && (ext == ".hlsl" || ext == ".hlsli")) originals.push_back(file.path());

@@ -124,7 +124,7 @@ class ExpeditionController : ScriptComponentBehavior {
         ExpeditionRoom@ room = generator.rooms[index];
         theme.Room(room,index);
         Vector3 anchor = generator.RoomAnchor(index);
-        // Each destination retains at least one resource room of every material.
+        // 各行き先には、すべての素材について採取部屋を少なくとも 1 つずつ残す。
         int resource = stages.ResourceKind(stage,index);
         AddResource(resource,anchor+Vector3(1.7f,-1.06f,0));
         if(index!=generator.startRoom&&index!=generator.goalRoom&&index!=generator.ShortcutEntrance()&&index!=generator.ShortcutExit()&&index%3==0&&index%4!=0)

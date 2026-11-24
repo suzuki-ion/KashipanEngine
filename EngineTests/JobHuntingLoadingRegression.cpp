@@ -44,7 +44,7 @@ class RouteProbe : ScriptComponentBehavior {
         for(const auto *target:{"CityScene","ExpeditionScene","StageSelectScene"}){
             SceneManager manager(key);auto loading=actual;
             for(auto &object:loading["sceneObjects"])for(auto &component:object["components"]){
-                if(component["type"]=="NormalWindowObject")component["data"]["isActive"]=false; // Headless: no native windows/GPU.
+                if(component["type"]=="NormalWindowObject")component["data"]["isActive"]=false; // ネイティブウィンドウや GPU を使わないヘッドレステスト。
                 if(component["type"]=="ScriptComponent"){
                     auto &d=component["data"]["customData"];d["scriptPath"]=PathToUtf8String(scripts/"LoadingController.as");
                     d["fields"]["minimumDisplaySeconds"]=0;d["fields"]["iconFadeSeconds"]=0;

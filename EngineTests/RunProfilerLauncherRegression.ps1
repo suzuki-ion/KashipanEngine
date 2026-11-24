@@ -1,4 +1,4 @@
-# Run in a Visual Studio x64 Developer PowerShell from the repository root.
+# Visual Studio の x64 開発者用 PowerShell で、リポジトリのルートから実行する。
 $ErrorActionPreference = 'Stop'
 $profilerProject = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $profilerOutput = [IO.Path]::GetFullPath((Join-Path $profilerProject 'Generated'))

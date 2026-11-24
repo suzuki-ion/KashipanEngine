@@ -1,4 +1,4 @@
-// Inject into CityController in the isolated runtime QA application.
+// 分離した実行時 QA アプリケーションの CityController に組み込む。
  void QABuildMenu(){
   SetSettingBool("town.buildDetails",true);buildMenu.SetVisible(true);buildMenu.Select(5);buildMenu.Animate(.3f);
   QAAssert(buildMenu.DetailsDisplayed()&&buildMenu.detailShown,"build details initially visible");

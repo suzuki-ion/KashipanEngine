@@ -1,4 +1,4 @@
-# Run from a Visual Studio x64 developer PowerShell. No network, model or graphics device.
+# Visual Studio の x64 開発者用 PowerShell で実行する。ネットワーク、モデル、グラフィックスデバイスは不要。
 $ErrorActionPreference = 'Stop'
 $taskProjectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $taskOutputRoot = [IO.Path]::GetFullPath((Join-Path $taskProjectRoot 'Generated'))

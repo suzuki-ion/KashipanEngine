@@ -30,7 +30,7 @@ bool SceneManager::SetSceneLoadBudgetMilliseconds(float milliseconds) {
 void SceneManager::RetireCompletedSceneReads() {
     for(auto it=retiredSceneReads_.begin();it!=retiredSceneReads_.end();) {
         if(it->wait_for(std::chrono::seconds(0))!=std::future_status::ready) { ++it; continue; }
-        try { it->get(); }catch(...) { /* cancelled immutable I/O result */ }
+        try { it->get(); }catch(...) { /* キャンセル済みの変更不可な I/O 結果を破棄する */ }
         it=retiredSceneReads_.erase(it);
     }
 }
@@ -46,7 +46,7 @@ bool SceneManager::BeginSceneLoad(const std::string &sceneName) {
     if(shuttingDown_)return false;
     const auto *entry=FindEntry(sceneName);
     if(!entry || hasPendingSceneChange_)return false;
-    // Snapshot registry data and resolve paths on the main thread. No scene pointers enter the worker.
+    // メインスレッドでレジストリデータのスナップショットを取り、パスを解決する。シーンへのポインターはワーカーに渡さない。
     const auto path=entry->filePath.empty() ? std::string{} : ProjectPaths::ToPhysical(entry->filePath);
     JSON data=entry->factoryData;
     if(path.empty() && data.empty())data=JSON{{"sceneName",sceneName}};
@@ -83,14 +83,14 @@ void SceneManager::AdvanceSceneLoad() {
             preparedScene_->SetSceneManager(Passkey<SceneManager>{},this);
             preparedScene_->BeginPreparation(Passkey<SceneManager>{},std::move(data));
             sceneLoadState_=LoadState::Constructing;
-            return; // Present at least one loading frame before construction.
+            return; // 構築を始める前に、ロード画面を少なくとも 1 フレーム表示する。
         }
         if(sceneLoadState_!=LoadState::Constructing)return;
         if(preparedScene_->AdvancePreparation(Passkey<SceneManager>{},sceneLoadBudgetMilliseconds_))sceneLoadState_=LoadState::Ready;
         else if(!preparedScene_->GetPreparationError().empty())throw std::runtime_error(preparedScene_->GetPreparationError());
     }catch(const std::exception &e) {
         sceneLoadError_=e.what(); sceneLoadState_=LoadState::Failed;
-        preparedScene_.reset(); // Current loading scene is retained on failure.
+        preparedScene_.reset(); // 失敗した場合は、現在のロードシーンを維持する。
     }
 }
 bool SceneManager::ActivateLoadedScene() {
@@ -102,8 +102,8 @@ bool SceneManager::CommitPreparedScene() {
     hasPendingSceneChange_=false; activatePreparedScene_=false; pendingSceneName_.clear();
     const bool wasPlaying=currentScene_ && currentScene_->IsPlaying();
     auto incoming=std::move(preparedScene_);
-    // Finalize/End of the loading scene may itself request another transition.
-    // Keep the scene being committed outside the mutable load-job slot.
+    // ロードシーンの Finalize や End から、新たなシーン遷移が要求される場合がある。
+    // 切り替え処理中のシーンは、書き換え可能なロードジョブのスロットの外で保持する。
     sceneLoadState_=LoadState::Idle; sceneLoadTarget_.clear(); sceneLoadError_.clear();
     RenderTargetCarryOverRegistry::BeginSceneSwitch(Passkey<SceneManager>{});
     struct CarryGuard { ~CarryGuard() { RenderTargetCarryOverRegistry::EndSceneSwitch(Passkey<SceneManager>{}); } } guard;

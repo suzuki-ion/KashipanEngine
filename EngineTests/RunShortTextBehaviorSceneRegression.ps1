@@ -1,5 +1,5 @@
-# Run after building the Development/x64 engine, in a Visual Studio x64 developer PowerShell.
-# Reuses the exact production object files rather than compiling another copy of the engine.
+# Development/x64 構成のエンジンをビルドしてから、Visual Studio の x64 開発者用 PowerShell で実行する。
+# エンジンを再コンパイルせず、実際のビルドで生成されたオブジェクトファイルをそのまま再利用する。
 $ErrorActionPreference = 'Stop'
 $taskProjectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $taskObjectRoot = [IO.Path]::GetFullPath((Join-Path $taskProjectRoot 'Generated\Obj\KashipanEngine\x64\Development'))

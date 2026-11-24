@@ -84,11 +84,11 @@ try {
             Invoke-MirrorCopy -Source $startupAnimation -Destination (Join-Path $stageDir 'StartupAnimation')
         }
     } else {
-        # Keep the normal multi-project editor layout. Assets beside the exe would select standalone mode.
+        # 通常の複数プロジェクト用エディター構成を維持する。exe と同じ場所に Assets を置くとスタンドアロンモードが選ばれる。
         foreach ($name in @('EngineData\AssetsTemplate', 'EngineData\EditorTools', 'Docs\Reference')) {
             Invoke-MirrorCopy -Source (Join-Path $ProjectDir $name) -Destination (Join-Path $stageDir $name)
         }
-        # Ship only the viewer runtime and instructions, not tests or Python caches.
+        # 配布物にはビューアーの実行に必要なファイルと説明書だけを含める。テストと Python キャッシュは除く。
         $profilerDestination = Join-Path $stageDir 'EngineTools\Profiler'
         New-Item -ItemType Directory -Path $profilerDestination -Force | Out-Null
         foreach ($name in @('profiler.py', 'protocol.py', 'single_instance.py', 'StartProfiler.cmd', 'README.md')) {
@@ -114,7 +114,7 @@ try {
         }
     }
 
-    # One path per line, relative to Assets/. Lines beginning with # are comments.
+    # Assets/ からの相対パスを 1 行につき 1 件記述する。# で始まる行はコメント。
     $exclusionFile = Join-Path $ProjectDir ("EngineTools\DistributionAssetExclusions.$Configuration.txt")
     $exclusionRoot = [IO.Path]::GetFullPath((Join-Path $stageDir $(if ($Configuration -eq 'Release') { 'Assets' } else { '.' })))
     if (Test-Path -LiteralPath $exclusionFile -PathType Leaf) {

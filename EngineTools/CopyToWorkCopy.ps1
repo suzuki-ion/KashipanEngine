@@ -35,8 +35,8 @@ try {
     New-Item -ItemType Directory -Path $destDir -Force | Out-Null
 
     Write-Host "CopyToWorkCopy: '$TargetDir' を '$destDir' へコピーします"
-    # Runtime diagnostics/settings are not build products. Keep existing local state
-    # even for launcher failures before a game has been selected.
+    # 実行時の診断データと設定はローカルに保持する。
+    # ゲームを選ぶ前にランチャーが失敗した場合も、既存の状態は残す。
     $preservedDirectories = @('Logs', 'Dumps', 'SceneBackups', 'UserSettings', 'AS_DEBUG') |
         ForEach-Object { (Join-Path $TargetDir $_); (Join-Path $destDir $_) }
     $preservedFiles = @('PlayerSettings.json', 'EditorSettings.json', 'UserSettings.json', 'imgui.ini') |

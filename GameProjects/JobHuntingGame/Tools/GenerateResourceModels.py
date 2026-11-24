@@ -10,7 +10,7 @@ def log(mesh,x,y,z,radius,length):
     for i in range(10):
         j=(i+1)%10;mesh.face([rings[0][i],rings[0][j],rings[1][j],rings[1][i]])
     mesh.face(rings[0][::-1]);mesh.face(rings[1])
-    # Cut-end rings stand slightly proud of the bark.
+    # 切り口の年輪は樹皮からわずかに突き出す。
     for zz in [z-length/2-.012,z+length/2+.012]:
         log_end=[(x+cos(i*pi/5)*radius*.76,y+sin(i*pi/5)*radius*.76,zz) for i in range(10)]
         mesh.face(log_end[::-1] if zz<z else log_end)

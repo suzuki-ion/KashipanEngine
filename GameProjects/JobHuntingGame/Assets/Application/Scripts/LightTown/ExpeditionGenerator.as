@@ -33,16 +33,16 @@ class ExpeditionGenerator {
     void ForestTerrain(){
         forestSurface.resize(width);
         for(uint x=0;x<width;++x)forestSurface[x]=int(8+3*CaveNoise(float(x)*.055f,19)+2*Sin(float(x)*.13f+float(seed%17)));
-        // Stable gathering clearings on a rolling surface.
+        // 起伏のある地表に、平らで安定した採取場所を設ける。
         for(uint column=0;column<columns;++column){int left=rooms[column].left,level=ForestFloor(left+1);for(int x=left-1;x<=left+10;++x)if(x>0&&x<int(width)-1)forestSurface[uint(x)]=level;}
         for(uint x=1;x<width;++x)if(forestSurface[x]>forestSurface[x-1]+1)forestSurface[x]=forestSurface[x-1]+1;
         for(int x=int(width)-2;x>=0;--x)if(forestSurface[uint(x)]>forestSurface[uint(x+1)]+1)forestSurface[uint(x)]=forestSurface[uint(x+1)]+1;
-        // Two-cell terraces provide a real landing surface for the 1m-wide body.
+        // 幅 1 m の物理ボディが実際に着地できるよう、幅 2 セルの足場を設ける。
         for(uint x=0;x+1<width;x+=2)forestSurface[x+1]=forestSurface[x];
         for(uint y=0;y<height;++y)for(uint x=0;x<width;++x)solid[y*width+x]=x==0||x==width-1||y==height-1||int(y)<forestSurface[x];
         for(uint row=0;row<rows;++row)for(uint column=0;column<columns;++column){ExpeditionRoom@ room=rooms[row*columns+column];room.bottom=row==0?ForestFloor(room.left+1):12+int(row)*12;}
-        // Broken branches connect neighboring crowns. Openings at climbing trunks
-        // prevent a solid shelf from blocking the ascent from below.
+        // ところどころ切れた枝が隣り合う樹冠をつなぐ。登れる幹の周囲に開口部を設け、
+        // 連続した足場が下からの登り道を塞がないようにする。
         for(uint row=1;row<rows;++row)for(uint column=0;column+1<columns;++column){ExpeditionRoom@ a=rooms[row*columns+column];ExpeditionRoom@ b=rooms[row*columns+column+1];int from=a.left+1,to=b.left+1;
             for(int x=from;x<=to;++x){float t=float(x-from)/float(to-from);int floor=int(float(a.bottom)+float(b.bottom-a.bottom)*t);bool gap=false;
                 for(uint i=0;i<links.length();++i){ExpeditionLink@ link=links[i];if(link.vertical&&link.b/columns==row&&Abs(float(x)-link.shaftX-.5f)<3.5f)gap=true;}
@@ -62,8 +62,8 @@ class ExpeditionGenerator {
         return solid[uint(y) * width + uint(x)];
     }
     bool CanPlaceFluorescent(ExpeditionRoom@ room) {
-        // The original fixture is 5.2m wide. Require a continuous ceiling
-        // above its full footprint, including openings carved by shafts.
+        // 元の設置物は幅 5.2 m。縦穴によって開いた箇所も確認し、
+        // 設置物の幅全体にわたって天井が途切れない場所を選ぶ。
         int ceiling=room.bottom+room.height;
         for(int x=int(Floor(room.CenterX()-2.6f));x<int(Ceil(room.CenterX()+2.6f));++x)
             if(!IsSolid(x,ceiling))return false;
@@ -87,7 +87,7 @@ class ExpeditionGenerator {
     void CaveRoom(ExpeditionRoom@ room,uint index){
         float cx=room.CenterX()+(CaveHash(int(index),7)-.5f)*3,cy=float(room.bottom)+4+(CaveHash(int(index),9)-.5f)*2;
         CavePocket(cx,cy,5.5f+CaveHash(int(index),11)*1.3f,4.6f+CaveHash(int(index),23)*1.8f);
-        // Attached lobes produce irregular large chambers without isolated holes.
+        // つながった空間を付け足して、孤立した穴のない不規則で大きな空洞を作る。
         CavePocket(cx-2.5f,cy+2,3.5f,3+CaveHash(int(index),31)*2);
         if(index%3==0)CavePocket(cx+3,cy+1,4.2f,4.5f);
     }
@@ -101,8 +101,8 @@ class ExpeditionGenerator {
         }
     }
     void OrganicCave(){
-        // Preserve the original walkable rock shelves, with varying thickness.
-        // Expanding air around this backbone cannot destroy mandatory landings.
+        // 元の歩行可能な岩棚を残し、厚さに変化をつける。
+        // 主要経路のまわりの空間を広げても、必須の着地用足場は削らない。
         caveSupports.resize(solid.length());for(uint i=0;i<caveSupports.length();++i)caveSupports[i]=false;
         for(int y=1;y<int(height)-1;++y)for(int x=1;x<int(width)-1;++x)if(IsSolid(x,y)&&!IsSolid(x,y+1)){
             int depth=CaveHash(x,y)<.5f?2:3;for(int d=0;d<depth&&y-d>0;++d)if(IsSolid(x,y-d))caveSupports[uint(y-d)*width+uint(x)]=true;
@@ -122,19 +122,19 @@ class ExpeditionGenerator {
         links.insertLast(link);
     }
     void ForestGraph(){
-        // Broad horizontal groves joined by staggered climbing routes.
+        // 広い横方向の林を、位置をずらした登り道でつなぐ。
         for(uint y=0;y<rows;++y)for(uint x=0;x+1<columns;++x)Connect(y*columns+x,y*columns+x+1);
         for(uint y=0;y+1<rows;++y){uint x=Next(columns);Connect(y*columns+x,(y+1)*columns+x);if(y%2==0){uint other=(x+1+Next(columns-1))%columns;Connect(y*columns+other,(y+1)*columns+other);}}
     }
     void QuarryGraph(){
-        // Parallel extraction shafts, crosscuts and a broad upper work gallery.
+        // 並行する採掘用縦坑と横坑、および上部の広い作業坑道を設ける。
         for(uint x=0;x<columns;++x)for(uint y=0;y+2<rows;++y)Connect(y*columns+x,(y+1)*columns+x);
         for(uint x=0;x+1<columns;++x){Connect(x,x+1);Connect((rows-1)*columns+x,(rows-1)*columns+x+1);}
         uint shaft=Next(columns);Connect((rows-2)*columns+shaft,(rows-1)*columns+shaft);
         uint crosscut=Next(columns-1);Connect(columns+crosscut,columns+crosscut+1);
     }
     void TunnelGraph(){
-        // A randomized spanning tree retains dead ends; extra edges add detours.
+        // ランダムな全域木で行き止まりを残し、辺を追加して迂回路を作る。
         array<bool> visited(rooms.length(),false);array<uint> stack;
         uint first=Next(rooms.length());stack.insertLast(first);visited[first]=true;
         while(stack.length()>0){uint a=stack[stack.length()-1];array<uint> options;
@@ -218,8 +218,8 @@ class ExpeditionGenerator {
         for(uint i=0;i<links.length();++i){ExpeditionLink@ link=links[i];ExpeditionRoom@ a=rooms[link.a];ExpeditionRoom@ b=rooms[link.b];
             candidates.insertLast(link.vertical?Vector3(link.shaftX+.5f,float(a.bottom+b.bottom)*.5f+3,0):Vector3((a.CenterX()+b.CenterX())*.5f,float(a.bottom+b.bottom)*.5f+3,0));
         }
-        // Bound expensive placement validation on expanded maps. Fixtures are
-        // sampled across the whole map rather than all clustered at its bottom.
+        // 拡張マップでは、コストの高い配置検証の回数を制限する。
+        // 設置物の候補はマップの下部に偏らないよう、マップ全体から抽出する。
         if(rooms.length()>16){array<Vector3> distributed;uint count=12;
             for(uint i=0;i<count;++i){ExpeditionRoom@ room=rooms[i*(rooms.length()-1)/(count-1)];
                 distributed.insertLast(Vector3(float(room.left+room.width)-1,float(room.bottom)+5.5f,0));
@@ -229,7 +229,7 @@ class ExpeditionGenerator {
         uint base=traversal.platforms.length();
         for(uint i=0;i<candidates.length();++i)LampPlatform(candidates[i]);
         if(!ValidateRoutes()){
-            // Keep only fixtures that preserve both outbound and return routes.
+            // 行きと帰りの両方の経路を確保できる設置物だけを残す。
             traversal.platforms.resize(base);
             for(uint i=0;i<candidates.length();++i){LampPlatform(candidates[i]);if(!ValidateRoutes())traversal.platforms.removeLast();}
             routeValidated=ValidateRoutes();
@@ -262,7 +262,7 @@ class ExpeditionGenerator {
             // 出入口の幹線と左側の安全な採集場所を避けたテンプレート部品。
             if(r.templateKind==1)Platform(Vector3(float(r.left+r.width)-2,float(r.bottom)+2.8f,0),Vector3(2.6f,.3f,3));
             if(r.templateKind==2){
-                // Forest slopes are optional side terrain, outside through exits.
+                // 森の斜面は通り抜け用の出口から外れた脇道に追加できる地形。
                 if(profile=="forest"&&(r.ports&2)!=0)continue;
                 float x=float(r.left+r.width)-2.5f;bool support=true;
                 for(int k=int(x)-2;k<=int(x)+2;++k)support=support&&IsSolid(k,r.bottom-1);

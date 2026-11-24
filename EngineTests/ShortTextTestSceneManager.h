@@ -4,10 +4,10 @@
 #include <memory>
 #include "Scene/SceneManager.h"
 
-// Headless short-text regressions construct Scene directly, but global scene variables
-// live in SceneManager. Test-only wiring: Passkey is trivially copyable, so tests obtain
-// the access tokens with bit_cast instead of booting GameEngine.
-// Declare the manager before the Scene so it outlives scene destruction.
+// ウィンドウを使わない短文テストは Scene を直接構築する。一方、シーンのグローバル変数は
+// SceneManager が持つ。Passkey はトリビアルにコピー可能なので、テストでは GameEngine を起動せず、
+// bit_cast でアクセストークンを取得して両者を接続する。
+// マネージャーを Scene より先に宣言し、シーンの破棄後まで生存させる。
 namespace KashipanEngine::ShortTextTest {
 inline std::unique_ptr<SceneManager> MakeSceneManager() {
     return std::make_unique<SceneManager>(std::bit_cast<Passkey<GameEngine>>(std::uint8_t{}));

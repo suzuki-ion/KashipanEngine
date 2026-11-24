@@ -37,6 +37,8 @@ namespace KashipanEngine {
 /// @brief ゲームエンジンクラス
 class GameEngine final {
 public:
+    /// @brief エンジンのコンテキスト
+    /// @details ゲームエンジンの各種機能をアプリケーション側に公開するための構造体
     struct Context {
         SceneManager *sceneManager = nullptr;
         InputCommand *inputCommand = nullptr;
@@ -45,7 +47,10 @@ public:
         void SetDebugTextToggleKey(Key key) const { if (engine) engine->debugTextToggleKey_ = key; }
         void SetDebugTextVisible(bool visible) const { if (engine) engine->debugTextVisible_ = visible; }
         void SetDebugTextContent(bool fps, bool profiling) const {
-            if (engine) { engine->debugTextShowFps_ = fps; engine->debugTextShowProfiling_ = profiling; }
+            if (engine) { 
+                engine->debugTextShowFps_ = fps;
+                engine->debugTextShowProfiling_ = profiling;
+            }
         }
         void SetProfilingWindowVisible(bool visible) const { GameEngine::SetProfilingWindowVisible(visible); }
 
@@ -86,8 +91,8 @@ public:
     //==================================================
     // シーン・シーンコンテキスト・スクリプトなど、GameEngineへの参照を持たない場所から
     // ゲームループの終了を指示するための静的なフラグ。
-    // 非エディタービルドではゲームループ（アプリケーション）が終了する。
-    // エディタービルド（USE_IMGUI）ではエディター自体は閉じず、再生停止（PlayStop）の要求として扱われる。
+    // Release : ゲームループ（アプリケーション）が終了する。
+    // Debug/Development : エディター自体は閉じず、再生停止（PlayStop）の要求として扱われる。
 
     /// @brief ゲームループの終了を要求する（エディター実行時は再生停止の要求になる）
     static void RequestExitGameLoop() noexcept { sIsExitGameLoopRequested = true; }

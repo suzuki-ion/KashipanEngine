@@ -1,4 +1,4 @@
-# Run in a Visual Studio x64 developer PowerShell. Tests the production dictionary without starting the editor.
+# Visual Studio の x64 開発者用 PowerShell で実行する。エディターを起動せず、実際の辞書をテストする。
 $ErrorActionPreference = 'Stop'
 $taskProjectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $taskOutputRoot = [IO.Path]::GetFullPath((Join-Path $taskProjectRoot 'Generated'))

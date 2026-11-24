@@ -1,4 +1,4 @@
-// Exercise the production path resolver without creating windows or a D3D device.
+// ウィンドウや D3D デバイスを作らず、実際のパス解決処理を検証する。
 #include "Core/ProjectPaths.h"
 #include "Debug/Logger.h"
 #include "Utilities/Conversion/ConvertString.h"
@@ -11,7 +11,7 @@
 
 namespace fs = std::filesystem;
 namespace KashipanEngine {
-// Isolate logging/translations and JSON loading; path resolution itself is production code.
+// ログ・翻訳と JSON 読み込みを分離し、パスの解決には実際の実装を使う。
 void Log(const std::string &, LogSeverity) {}
 void LogScope::PushPrefix(const std::source_location &) {}
 void LogScope::PopPrefix() {}

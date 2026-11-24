@@ -191,7 +191,7 @@ Document Compile(const JSON &scene,const MaterialResolver &material) {
                 }),components.end());
             }
         }
-        // Export only render/animation metadata; do not retain script bodies or other scene state.
+        // 描画とアニメーションのメタデータだけを書き出す。スクリプト本体やその他のシーン状態は保持しない。
         for(auto &object:objects) {
             auto &components=object["components"];
             components.erase(std::remove_if(components.begin(),components.end(),[](const JSON &c) {
@@ -217,7 +217,7 @@ Frame Document::Sample(double elapsed,double readyAt) const {
 }
 std::vector<Node> Document::Evaluate(const Frame &f) const {
     auto result=nodes;
-    // Completed phases leave their last value on common objects. Current phase wins over common tracks.
+    // 終了したフェーズの最終値を共通オブジェクトに残す。現在のフェーズのトラックを共通トラックより優先する。
     for(int s=0;s<3;++s) if(s<static_cast<int>(f.section) && timing[s].seconds>0) for(const auto &t:tracks)
         if(t.section==s && nodes[t.target].section==3)Apply(result,t,s==1 ? std::max(0.0,f.waitingEnd-timing[0].seconds) : timing[s].seconds,true);
     for(const auto &t:tracks)if(t.section==3)Apply(result,t,f.elapsed);
@@ -244,7 +244,7 @@ bool Export(Document &d,const std::filesystem::path &folder,std::string &error) 
             image=images[source];
         }
         const auto temporary=folder/"animation.tmp"; std::ofstream f(temporary,std::ios::binary); f<<package.dump(2); f.close(); if(!f)throw std::runtime_error("書き込みに失敗しました。");
-        // Atomic replacement on Windows; a failed export keeps the previous active JSON.
+        // Windows ではファイルをアトミックに置き換える。書き出しに失敗した場合は、既存の有効な JSON を残す。
         if(!MoveFileExW(temporary.c_str(),(folder/"animation.json").c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))throw std::runtime_error("起動アニメーションの切り替えに失敗しました。");
         return true;
     }catch(const std::exception &e) { error=e.what(); return false; }

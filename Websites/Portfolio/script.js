@@ -1,5 +1,5 @@
 'use strict';
-// Values transcribed from the supplied technical report, page 12.
+// 提供された技術資料の 12 ページから数値を転記した。
 const measurements = [
   {lights:64, forward:3.356, plus:3.114},
   {lights:128, forward:5.854, plus:2.990},

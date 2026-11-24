@@ -32,7 +32,7 @@ std::atomic<bool> sPainted{false};
 std::atomic<bool> sConfigured{false};
 std::mutex sProjectMutex;
 std::filesystem::path sProjectFolder;
-// Accessed only by the engine/window-owner thread. Never pass Window pointers to the renderer.
+// ウィンドウを所有するエンジンスレッドからのみアクセスする。描画側に Window のポインターを渡さない。
 HWND sWindow = nullptr;
 DWORD sOwnerThread = 0;
 bool sClaimed = false;
@@ -51,7 +51,7 @@ struct ComApartment {
     ~ComApartment() { if (initialized) CoUninitialize(); }
 };
 struct WindowState {
-    // Declared first, so COM objects are released before the apartment is uninitialized.
+    // 最初に宣言することで、アパートメントが終了する前に COM オブジェクトを解放する。
     ComApartment apartment;
     std::filesystem::path folder;
     LONGLONG firstPaintTick = 0, startTick = 0;
@@ -66,7 +66,7 @@ struct WindowState {
     ComPtr<ID2D1SolidColorBrush> brown, fade;
 };
 
-// Physical monitor pixels are used even when the OS display scaling is not 100%.
+// OS の表示倍率が 100% 以外でも、モニターの物理ピクセルを使う。
 void SizeForMonitor(HWND hwnd, HMONITOR target, bool center, UINT dpi = 0) {
     MONITORINFO monitor{sizeof(monitor)};
     if (!GetMonitorInfoW(target, &monitor)) return;
@@ -141,8 +141,8 @@ bool UploadBitmap(ID2D1RenderTarget *target, WindowState &state, IWICBitmap *sou
     if (FAILED(source->GetSize(&sourceWidth, &sourceHeight))) return false;
     ComPtr<IWICBitmapScaler> scaler;
     IWICBitmapSource *upload = source;
-    // Downsample once for the physical display size. This avoids aliasing from repeatedly
-    // minifying the original large PNG with the GPU's two-tap linear filter.
+    // 物理ピクセルでの表示サイズに一度だけ縮小する。元の大きな PNG を GPU の
+    // 2 タップ線形フィルターで繰り返し縮小した場合に生じるエイリアシングを防ぐ。
     if (width < sourceWidth && height < sourceHeight) {
         if (FAILED(state.wic->CreateBitmapScaler(scaler.GetAddressOf())) ||
             FAILED(scaler->Initialize(source, width, height, WICBitmapInterpolationModeFant))) return false;
@@ -180,8 +180,8 @@ bool InitializeGraphics(HWND hwnd, WindowState &state, bool softwareOnly = false
     state.target->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
     sBackend.store(backend, std::memory_order_release);
     if (!state.startTick) {
-        // The original one-second background covers preparation where possible.
-        // Slow preparation must never skip the beginning of the logo reveal.
+        // 可能な限り、最初の 1 秒間の背景表示中に準備を進める。
+        // 準備に時間がかかっても、ロゴが現れ始める部分は飛ばさない。
         state.startTick = std::max(state.firstPaintTick, NowTicks() - kSecond);
     }
     return true;
@@ -226,7 +226,7 @@ void DrawLogoFrame(ID2D1RenderTarget *target, WindowState &state, const SplashAn
     }
 }
 
-// Called only by the rendering worker (or the standalone rendering regression).
+// 描画ワーカーまたは描画の単独回帰テストからのみ呼び出す。
 void Paint(HWND hwnd, WindowState &state) {
     RECT client{}; GetClientRect(hwnd, &client);
     const int width = std::max(1L, client.right), height = std::max(1L, client.bottom);
@@ -246,7 +246,7 @@ void Paint(HWND hwnd, WindowState &state) {
     else sPainted.store(true, std::memory_order_release);
 }
 
-// This procedure and the eventual game procedure always execute on the engine thread.
+// このウィンドウプロシージャも、後から設定するゲーム用プロシージャも、常にエンジンスレッドで実行する。
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
     switch (message) {
     case WM_CLOSE:
@@ -254,7 +254,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
             sCancelled.store(true, std::memory_order_release);
             sStop.store(true, std::memory_order_release);
         } else DestroyWindow(hwnd);
-        // Destruction waits until the rendering worker has released its HWND target.
+        // 描画ワーカーが HWND の描画ターゲットを解放してから破棄する。
         return 0;
     case WM_DPICHANGED:
         SizeForMonitor(hwnd, MonitorFromRect(reinterpret_cast<RECT *>(lparam), MONITOR_DEFAULTTONEAREST), false, LOWORD(wparam));
@@ -278,7 +278,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
         if (hwnd == sWindow) {
             sStop.store(true, std::memory_order_release);
             sWindow = nullptr;
-            // Do not post WM_QUIT: this is still optional startup UI, not a game window.
+            // この時点では任意の起動用 UI なので、WM_QUIT を送らない。
         }
         return 0;
     }
@@ -297,7 +297,7 @@ void PumpStartupMessages() {
 
 void JoinRenderer() {
     if (!sThread.joinable()) return;
-    // D2D/driver teardown may send native messages; keep the owner thread available.
+    // D2D やドライバーの終了処理がネイティブメッセージを送る場合があるため、所有スレッドが応答できる状態を保つ。
     while (sRunning.load(std::memory_order_acquire)) {
         PumpStartupMessages();
         MsgWaitForMultipleObjectsEx(0, nullptr, 2, QS_SENDMESSAGE, MWMO_INPUTAVAILABLE);
@@ -320,7 +320,7 @@ void MessageLoop(HWND hwnd, WindowState &state) {
             const bool finished = state.startTick && SampleFrame(state).finished;
             if (!state.target && !InitializeGraphics(hwnd, state)) break;
             if (!IsIconic(hwnd) && !(state.target->CheckWindowState() & D2D1_WINDOW_STATE_OCCLUDED)) Paint(hwnd, state);
-            // Leave the HWND alive and the final black frame in place for DX12 adoption.
+            // DX12 に引き継げるよう、HWND と最後に描画した黒いフレームを残す。
             if (finished) break;
             nextFrame += kFramePeriod;
             if (nextFrame <= NowTicks()) nextFrame = NowTicks() + kFramePeriod;
@@ -365,8 +365,8 @@ void ThreadMain(const std::filesystem::path &folder, HWND hwnd, LONGLONG firstPa
             } else OutputDebugStringW(L"Invalid startup animation package; using engine animation.\n");
         }
         if (InitializeGraphics(hwnd, state)) MessageLoop(hwnd, state);
-        // All Direct2D/WIC/COM resources die here, before the engine creates its swap chain.
-    } catch (...) { /* Optional animation failure must not prevent window reuse or engine startup. */ }
+        // Direct2D、WIC、COM のリソースは、エンジンがスワップチェーンを作成する前にここですべて解放する。
+    } catch (...) { /* スプラッシュアニメーションの処理に失敗しても、ウィンドウを再利用し、エンジンの起動を続ける。 */ }
 }
 } // namespace
 
@@ -390,7 +390,7 @@ void SplashScreen::Show(PasskeyForGameEngineMain) {
         if (!sWindow) { UnregisterClassW(kWindowClass, wc.hInstance); return; }
         SizeForMonitor(sWindow, monitor, true);
         ShowWindow(sWindow, SW_SHOWNORMAL);
-        UpdateWindow(sWindow); // First background paint precedes all COM/GPU initialization.
+        UpdateWindow(sWindow); // COM や GPU の初期化を始める前に、まず背景を描画する。
         const auto firstPaint = NowTicks();
         const auto folder = Utf8StringToPath(ProjectPaths::InEngineRoot("EngineData/UI/Splash"));
         sRunning.store(true, std::memory_order_release);
@@ -432,7 +432,7 @@ void SplashScreen::DetachWindow(Passkey<Window>, HWND hwnd) {
     JoinRenderer();
     CheckCancellation();
     sWindow = nullptr; sClaimed = false;
-    // Window now owns this HWND and unregisters the class when it destroys the window.
+    // 以降は Window がこの HWND を所有し、ウィンドウの破棄時にウィンドウクラスの登録を解除する。
 }
 void SplashScreen::AbandonWindow(Passkey<Window>, HWND hwnd) {
     if (!HasStartupWindow() || hwnd != sWindow) return;
@@ -452,7 +452,7 @@ void SplashScreen::Close(PasskeyForGameEngineMain) {
     sStop.store(true, std::memory_order_release);
     JoinRenderer();
     if (sWindow && !sClaimed) DestroyWindow(sWindow);
-    // A claimed window is owned by Window, including on exception/cancellation paths.
+    // 引き取ったウィンドウは、例外やキャンセル時も Window が所有する。
     if (!sClaimed) UnregisterClassW(kWindowClass, GetModuleHandleW(nullptr));
 }
 } // namespace KashipanEngine

@@ -26,8 +26,8 @@ void CheckFireflyGeometry(){
         swarm.clock=times[t]+.01f;
         for(uint i=0;i<2048;++i)CheckFireflyMotion((swarm.Position(i)-before[i]).Length()<.0025f,"motion stays continuous across time");
     }
-    // A 64-light population should already cover every quarter of the map,
-    // rather than requiring thousands of lights to fill the outer area.
+    // マップの外周を埋めるために何千個もライトを用意しなくても、
+    // 64 個のライトでマップの四分割領域すべてをカバーできるはず。
     array<bool> covered(16,false);swarm.clock=0;
     for(uint i=0;i<64;++i){Vector3 p=swarm.Home(i);int x=int(Floor((p.x/12+1)*2)),z=int(Floor((p.z/12+1)*2));if(x>=0&&x<4&&z>=0&&z<4)covered[uint(z*4+x)]=true;}
     for(uint i=0;i<16;++i)CheckFireflyMotion(covered[i],"small swarm covers the whole town");

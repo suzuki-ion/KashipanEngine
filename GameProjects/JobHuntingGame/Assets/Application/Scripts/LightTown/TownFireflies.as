@@ -3,8 +3,8 @@
 
 int TownFireflyCount(float energy){return int(Min(2048.0f,Max(0.0f,Ceil(energy/8))));}
 float TownFireflyIntensityScale(int count){return count<=0?0:1+5*Min(float(count)/2048.0f,1.0f);}
-// Shared animation coefficients: evaluate the slow morph/rotation once per
-// ribbon, rather than once per light (the pool can contain 2048 lights).
+// アニメーション係数を共有し、緩やかな変形と回転はリボンごとに一度だけ評価する。
+// ライトはプール内に最大 2048 個入るため、個々のライトでは評価しない。
 class TownFireflyTrack {
     float cosine=1,sine=0,petalCosine=1,petalSine=0;
     float morph=0,warp=0,centerX=0,centerZ=0,lift=0;
@@ -47,13 +47,13 @@ class TownFireflies {
         batchLights.SetPointInstances(positions,intensities);
         batchMarkers.SetWorldBillboardPairs(positions,opacities,facing,.4f,.1f,Vector4(1,.75f,.12f,1),Vector4(1,.95f,.5f,.9f));
     }
-    // Keep index-based identity stable when energy changes. A little variation
-    // in each light's speed/radius avoids rigid strings of equally spaced dots.
+    // エネルギーが変動しても、各ライトを識別するインデックスは固定する。
+    // ライトごとの速度と半径に少しばらつきを持たせ、等間隔の点が整列するのを防ぐ。
     uint Lane(uint i){return (i*7)%12;}
     float Variation(uint i,uint salt){uint v=(i+1)^(salt*2654435769);v=(v^(v>>16))*2146121005;v=(v^(v>>15))*2221713035;v=v^(v>>16);return float(v&16777215)/16777215.0f;}
     float PathSpeed(uint i){uint lane=Lane(i);float speed=(.022f+float(lane%5)*.003f)*(.96f+.08f*Variation(i,3));return lane%2==0?speed:-speed;}
-    // R2 low-discrepancy placement spreads even a small population across
-    // the square town, without concentrating paths around the center.
+    // R2 低食い違い点列を使うことで、少数のライトでも正方形の街全体に分散させる。
+    // 移動経路が中央に偏ることも防ぐ。
     Vector3 Home(uint i){
         float x=.5f+float(i+1)*.754877666f,z=.5f+float(i+1)*.569840296f;
         return Vector3((x-Floor(x)-.5f)*extent*1.68f+(Variation(i,17)-.5f)*extent*.05f,
@@ -70,25 +70,25 @@ class TownFireflies {
     }
     Vector3 Position(uint i) {
         UpdateTracks();
-        // Position also works without creating any scene/rendering objects.
+        // Position はシーンオブジェクトや描画オブジェクトを生成しなくても使える。
         float phase,speed,radius;
         if(i<phases.length()){phase=phases[i];speed=speeds[i];radius=radii[i];}
         else{phase=float(i)*2.399963f;speed=PathSpeed(i);radius=PathRadius(i);}
         uint lane=Lane(i);TownFireflyTrack@ t=tracks[lane];
         float angle=phase+clock*speed+t.warp,c=Cos(angle),s=Sin(angle);
-        // Harmonic identities provide complex curves using just one sin/cos
-        // pair per light. The slowly changing coefficients are shared above.
+        // 三角関数の恒等式を利用し、ライトごとに sin と cos を一度ずつ求めるだけで複雑な曲線を描く。
+        // 緩やかに変化する係数は前の処理で共有している。
         float c2=c*c-s*s,s2=2*c*s,c3=c2*c-s2*s,s3=s2*c+c2*s;
         float c5=c3*c2-s3*s2,s5=s3*c2+c3*s2;
         float petal=c5*t.petalCosine-s5*t.petalSine;
         float flowerRadius=.74f+.26f*petal;
         float knotRadius=.76f+.24f*c3;
         float u,v,w;
-        if(lane%3==0){ // A torus knot opens into a five-petal ribbon.
+        if(lane%3==0){ // トーラス結び目が開き、5 枚の花びらのようなリボンになる。
             u=knotRadius*c2*(1-t.morph)+flowerRadius*c*t.morph;
             v=knotRadius*s2*(1-t.morph)+flowerRadius*s*t.morph;
             w=s3*(1-t.morph)+s2*t.morph;
-        }else if(lane%3==1){ // Rotating rosettes fold through Lissajous loops.
+        }else if(lane%3==1){ // 回転する花形の軌道をリサージュ曲線に沿って折り重ねる。
             u=flowerRadius*c*(1-t.morph)+c3*t.morph;
             v=flowerRadius*s*(1-t.morph)+s2*t.morph;
             w=s2*(1-t.morph)+s5*t.morph;
@@ -97,8 +97,8 @@ class TownFireflies {
             v=s2*(1-t.morph)+knotRadius*s2*t.morph;
             w=s5*(1-t.morph)+s3*t.morph;
         }
-        // A firefly drifts around its own distributed home. Geometry gently
-        // bends the ellipse instead of pulling the whole swarm into big rings.
+        // ホタルは分散して配置されたそれぞれの拠点の周囲を漂う。
+        // 形状の計算は楕円軌道を緩やかに変形させ、群れ全体が大きな輪に集まるのを防ぐ。
         u=.82f*c+.18f*u;v=.82f*s+.18f*v;
         Vector3 home=i<homes.length()?homes[i]:Home(i);
         return home+Vector3(radius*(u*t.cosine-v*t.sine)+extent*t.centerX,
@@ -108,8 +108,8 @@ class TownFireflies {
     void UpdateIntensity(float dt,int count){
         if(count!=intensityCount){targetIntensityScale=TownFireflyIntensityScale(count);intensityCount=count;}
         if(count<=0){intensityScale=0;intensityInitialized=false;return;}
-        // Initial/reappearing lights start at the appropriate gain. Existing
-        // lights ease towards count changes with frame-rate-independent decay.
+        // 初期状態や再出現時のライトは適切な倍率で開始する。
+        // 既存のライトは、フレームレートに依存しない減衰で個数の変化に緩やかに追従する。
         if(!intensityInitialized){intensityScale=targetIntensityScale;intensityInitialized=true;return;}
         float blend=1-Exp(-Max(dt,0.0f)*2.5f);
         intensityScale+=(targetIntensityScale-intensityScale)*blend;

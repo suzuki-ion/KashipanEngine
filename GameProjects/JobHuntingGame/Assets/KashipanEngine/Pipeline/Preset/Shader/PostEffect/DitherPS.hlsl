@@ -5,7 +5,7 @@ SamplerState gSampler : register(s0);
 
 cbuffer DitherCB : register(b0)
 {
-    float2 invPatternResolution; // 1.0 / pattern resolution
+    float2 invPatternResolution; // 1.0 / パターンの解像度
     float intensity;      // ディゾルブ進行度（0: 無適用 〜 1: 画面全体が消える）
     uint  color;          // 0: 単色, 1: 色あり
     uint  pad;
@@ -15,7 +15,7 @@ float luminance(float3 c) {
     return dot(c, float3(0.299, 0.587, 0.114));
 }
 
-// 4x4 Bayer matrix (normalized 0..1)
+// 4×4 の Bayer 行列（0～1 に正規化済み）
 static const float ditherMatrix[16] = {
     0.0/16.0,  8.0/16.0,  2.0/16.0, 10.0/16.0,
     12.0/16.0, 4.0/16.0, 14.0/16.0, 6.0/16.0,
@@ -31,19 +31,19 @@ struct VS_OUT {
 float4 main(VS_OUT input) : SV_Target0 {
     float2 uv = input.uv;
 
-    // pixel coordinates
-    float2 pixelPos = uv / invPatternResolution; // uv * pattern resolution
+    // ピクセル座標
+    float2 pixelPos = uv / invPatternResolution; // uv × パターンの解像度
     int2 ipos = int2(floor(pixelPos));
 
-    // 4x4 matrix indices
-    int mx = ipos.x & 3; // mod 4
+    // 4×4 行列のインデックス
+    int mx = ipos.x & 3; // 4 で割った余り
     int my = ipos.y & 3;
     int idx = my * 4 + mx;
     float threshold = ditherMatrix[idx];
 
     float4 colorSample = gTexture.Sample(gSampler, uv);
 
-    // preserve fully transparent pixels
+    // 完全に透明なピクセルはそのままにする
     if (colorSample.a <= 0.0f) return colorSample;
 
     // Bayer行列の閾値を「消えていく順番」として使うディゾルブ表現。

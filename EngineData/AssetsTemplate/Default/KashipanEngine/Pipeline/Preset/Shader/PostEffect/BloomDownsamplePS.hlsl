@@ -9,7 +9,7 @@ float3 Downsample4Tap(float2 uv) {
     gTexture.GetDimensions(w, h);
     float2 texel = float2(1.0 / max((float)w, 1.0), 1.0 / max((float)h, 1.0));
 
-    // 4-tap box filter
+    // 4 タップのボックスフィルター
     float3 c = 0;
     c += gTexture.Sample(gSampler, uv + texel * float2(-0.5, -0.5)).rgb;
     c += gTexture.Sample(gSampler, uv + texel * float2( 0.5, -0.5)).rgb;

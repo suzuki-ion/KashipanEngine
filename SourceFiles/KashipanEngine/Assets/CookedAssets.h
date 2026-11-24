@@ -3,7 +3,7 @@
 #include <stdexcept>
 
 namespace KashipanEngine::CookedAssets {
-// Configure before starting workers. The manifest is immutable while the game runs.
+// ワーカーを起動する前に設定する。ゲームの実行中はマニフェストを変更しない。
 inline std::filesystem::path root;
 inline ContentCache::Json manifest;
 inline bool writing = false;
@@ -37,7 +37,7 @@ inline void Configure(const std::filesystem::path &projectRoot) {
         if ((texture || model) && !manifest.at("entries").contains(std::string(texture ? "Textures|" : "Models|") + relative + "|"))
             throw std::runtime_error("Missing cooked asset manifest entry: " + relative);
     }
-    // Reject corrupt/incomplete packages before any Manager can silently skip an asset.
+    // 各マネージャーがアセットを通知なしに読み飛ばすことを防ぐため、破損や欠落のあるパッケージは事前に拒否する。
     for (const auto &[key, entry] : manifest.at("entries").items()) {
         const auto file = ContentCache::Digest(key) + ".cache";
         if (!std::filesystem::is_regular_file(root / "Cooked" / file))
@@ -74,6 +74,6 @@ inline void Store(const std::string &category, const std::filesystem::path &path
         key, ContentCache::Json::array(), data, size, true)) throw std::runtime_error("Could not cook: " + key);
     manifest["entries"][key] = std::move(extra);
 }
-// The command only operates on a distribution staging directory; originals are never edited.
+// コマンドの処理対象は配布用のステージングディレクトリ内に限る。元のファイルには手を加えない。
 int CookDistribution(const std::filesystem::path &projectRoot);
 } // namespace KashipanEngine::CookedAssets

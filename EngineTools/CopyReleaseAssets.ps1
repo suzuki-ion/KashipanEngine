@@ -67,7 +67,7 @@ try {
         if (Test-Path -LiteralPath $sourceAnimation -PathType Container) {
             Invoke-MirrorCopy -Source $sourceAnimation -Destination $destAnimation -Label '起動アニメーション'
         } elseif (Test-Path -LiteralPath $destAnimation -PathType Container) {
-            # Empty mirror clears stale optional data without a recursive, computed-path delete.
+            # 空のディレクトリとのミラー同期で古い任意データを消し、算出したパスの再帰削除を避ける。
             $emptyAnimation = Join-Path $TargetDir '.empty-startup-animation'
             New-Item -ItemType Directory -Path $emptyAnimation -Force | Out-Null
             Invoke-MirrorCopy -Source $emptyAnimation -Destination $destAnimation -Label '未指定の起動アニメーションをクリア'

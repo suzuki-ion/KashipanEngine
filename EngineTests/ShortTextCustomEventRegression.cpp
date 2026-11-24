@@ -1,6 +1,6 @@
-// Native regression: user-defined events (GameEventRouter / GameEventListener / script API), the ten gameplay
-// components and their short-text configuration. Real Scene / SceneEditorContext / commands / components / AngelScript.
-// Headless: no window, GPU, audio device or input device (key input is passed to the components' Advance functions).
+// ユーザー定義イベント（GameEventRouter、GameEventListener、スクリプト API）と 10 種類の
+// ゲームプレイコンポーネントの短文設定を検証する。実際の Scene、SceneEditorContext、コマンド、コンポーネント、AngelScript を使用する。
+// ウィンドウ、GPU、音声・入力デバイスは不要。キー入力はコンポーネントの Advance 関数に直接渡す。
 #include <bit>
 #include <chrono>
 #include <cmath>
@@ -116,7 +116,7 @@ int main() {
         const auto heroID = hero->GetObjectID();
 
         //==================================================
-        // A. Event definitions by short text (router added, undo/redo, no duplicates, hand-made protected)
+        // A. 短文によるイベント定義。ルーターの追加、取り消し・やり直し、重複の防止、手動設定の保護。
         //==================================================
         {
             const auto before = scene.SaveToJSON().dump();
@@ -129,7 +129,7 @@ int main() {
         auto defineGoal = Apply(context, hero, "GoalReachedイベントを作成");
         auto *router = context.GetComponent<GameEventRouter>();
         Require(router && router->FindDefinition("GoalReached"), "router added with GoalReached");
-        // PlayStop rebuilds the scene from the edit-time snapshot: raw pointers are fetched again afterwards.
+        // PlayStop は編集時のスナップショットからシーンを再構築するため、その後で生ポインターを取得し直す。
         auto stop = [&]() {
             scene.PlayStop();
             router = context.GetComponent<GameEventRouter>();
@@ -166,7 +166,7 @@ int main() {
         Apply(context, hero, "Hurtイベントを作成、amountは数値、senderはオブジェクト");
 
         //==================================================
-        // B. Router: typed payloads, multiple deliveries, target selection, limits, safety
+        // B. ルーター。型付きペイロード、複数配信、対象の選択、上限、安全性。
         //==================================================
         {
             std::vector<GameEvents::Message> seen;
@@ -183,7 +183,7 @@ int main() {
             Check(seen.size() == 2 && !seen[1].Has("who") && seen[0].Has("who"), "absent optional argument stays absent");
             Check(router->Unsubscribe(observer), "unsubscribe observer");
         }
-        // Target selection with real components as owners (stable ComponentRef + object identity).
+        // 実際のコンポーネントを所有者として対象を選ぶ。安定した ComponentRef とオブジェクト識別子を使う。
         auto *a = Box(sc, "A", "Enemy", Vector3(50, 0, 0));
         auto *b = Box(sc, "B", "Enemy", Vector3(60, 0, 0));
         auto *c = Box(sc, "C", "NPC", Vector3(70, 0, 0));
@@ -215,7 +215,7 @@ int main() {
             deliver(GameEvents::TargetMode::Broadcast, "");
             Check(received.count("C") == 0 && router->GetSubscriptionCount() == subscriptions - 1, "subscription of a deleted object is dropped");
         }
-        // Names select exactly one object (fixed to its UUID when queued); tags select many.
+        // 名前では 1 オブジェクトを選び、キューに入れるときに UUID で固定する。タグでは複数を選べる。
         {
             Box(sc, "Dup", "X", Vector3(80, 0, 0)); Box(sc, "Dup", "X", Vector3(81, 0, 0));
             const auto queued = router->GetQueuedCount();
@@ -230,7 +230,7 @@ int main() {
             router->ProcessQueue();
             Check(received["A"] == 1 && received["B"] == 0, "name resolved to one object");
         }
-        // Handlers that delete, unsubscribe and resubscribe during delivery.
+        // 配信中に削除、購読解除、再購読を行うハンドラー。
         {
             int afterDelete = 0;
             auto *victim = sc->CreateEmptyObject("Victim");
@@ -254,7 +254,7 @@ int main() {
             router->UnsubscribeOwner(ComponentRef{}, "throws");
             router->UnsubscribeOwner(ComponentRef{}, "afterThrow");
         }
-        // A→B→A cycles end by the depth limit; the per-update cap keeps one frame bounded.
+        // A→B→A の循環は深さの上限で止まり、更新ごとの上限で 1 フレームの処理量を抑える。
         {
             for (auto *object : {a, b}) router->UnsubscribeOwner(object->GetComponent<Transform>()->GetComponentRef());
             int pings = 0, pongs = 0;
@@ -276,7 +276,7 @@ int main() {
             GameEventRouter::Limits tooBig; tooBig.maxDepth = 1000;
             Check(!router->SetLimits(tooBig), "limits validated");
         }
-        // Scene switching: another scene's router is independent; no delivery crosses scenes.
+        // シーンを切り替えるとルーターも独立するため、シーンをまたいでイベントは配信されない。
         {
             Scene other(std::string("Other"));
             auto *otherRouter = other.GetSceneContext()->AddComponent<GameEventRouter>();
@@ -291,7 +291,7 @@ int main() {
             router->UnsubscribeOwner(ComponentRef{}, "here");
         }
 
-        // Router removal and replacement (also at the same address): listeners subscribe again by generation.
+        // ルーターを削除して同じアドレスに再配置した場合も、リスナーは世代の変化を検知して再購読する。
         {
             auto *probe = sc->CreateEmptyObject("Probe");
             auto *listener = probe->AddComponent<GameEventListener>();
@@ -325,7 +325,7 @@ int main() {
         }
 
         //==================================================
-        // C. Short text: contact → emit, receive → keyframe / script, typed send → component command
+        // C. 短文による接触時の送信、受信時のキーフレーム・スクリプト実行、型付き送信によるコンポーネント操作。
         //==================================================
         auto *goal = Box(sc, "Goal", "Goal", Vector3(100, 0, 0));
         auto contactApplied = Apply(context, hero, "HeroがGoalに触れたらGoalReachedを発火");
@@ -344,7 +344,7 @@ int main() {
         Check(goal->GetComponent<GameEventListener>()->GetSettings().handlers.size() == 2, "second handler added to the same listener");
         Apply(context, goal, "GoalReachedを受け取ったらOnGoal関数を呼ぶ");
         Check(goal->GetComponent<GameEventListener>()->GetSettings().handlers.size() == 2 && Count<GameEventListener>(goal) == 1, "re-application does not duplicate handlers");
-        // A hand-made handler on the same listener is kept untouched by short-text updates.
+        // 短文設定を更新しても、同じリスナー上の手動設定ハンドラーは保持される。
         {
             auto settings = goal->GetComponent<GameEventListener>()->GetSettings();
             GameEventListener::Handler manual;
@@ -356,7 +356,7 @@ int main() {
             Apply(context, goal, "GoalReachedを受け取ったらOnGoal関数を呼ぶ");
             Check(goal->GetComponent<GameEventListener>()->FindHandler("manual") && goal->GetComponent<GameEventListener>()->GetSettings().handlers.size() == 3, "hand-made handler kept");
         }
-        // Script on Goal: OnGoal(), typed-argument call and GameEvent@ receiver with Script emit.
+        // Goal 上のスクリプト。OnGoal()、型付き引数での呼び出し、スクリプトでの送信を受ける GameEvent@ を検証する。
         {
             std::ofstream file("goal.as");
             file << R"(
@@ -406,7 +406,7 @@ class Goal : ScriptComponentBehavior {
         Check(Near(goal->GetComponent<Transform>()->GetTranslate().x, 7), "hand-made SetProperty handler ran with its fixed value");
         heroListener->Advance(0.016);
         Check(router->GetQueuedCount() == 0, "staying in contact does not re-emit");
-        // Script → router → script receiver (GameEvent@) with typed getters and sender.
+        // スクリプトからルーター経由でスクリプト受信側（GameEvent@）へ配信し、型付きゲッターと送信元を検証する。
         Require(script->InvokeMethod("Fire"), "Fire()");
         router->ProcessQueue();
         Check(Script(goal, "received") == 1 && Near(Script(goal, "total").get<double>(), 7) && Script(goal, "lastSender") == goal->GetObjectID().ToString(), "script emit and GameEvent@ receive");
@@ -414,7 +414,7 @@ class Goal : ScriptComponentBehavior {
         Check(router->GetQueuedCount() == 0, "script payload with a wrong type is not sent");
         stop();
 
-        // A script receiver deleting its own object while handling an event, outside the update loop.
+        // 更新ループ外でイベントを処理中のスクリプト受信側が、自身のオブジェクトを削除する場合。
         {
             std::ofstream("selfdelete.as") << R"(
 class SelfDelete : ScriptComponentBehavior {
@@ -465,7 +465,7 @@ class SelfDelete : ScriptComponentBehavior {
             router->Unsubscribe(subscription);
             sc->DeleteObject(literalSender);
         }
-        // Damage with a typed payload into Health (receiver) and from a sender's start handler.
+        // 型付きペイロードで受信側の Health にダメージを適用し、送信側の開始ハンドラーからの送信も検証する。
         auto *enemy = Box(sc, "Enemy", "Enemy", Vector3(200, 0, 0));
         const auto enemyID = enemy->GetObjectID();
         auto receiveDamage = Apply(context, enemy, "Damageを受け取ったら体力をamountだけ減らす");
@@ -510,9 +510,9 @@ class SelfDelete : ScriptComponentBehavior {
         Check(enemy && Near(enemy->GetComponent<Health>()->GetCurrent(), 100), "play stop restores edit-time values");
 
         //==================================================
-        // D. The ten gameplay categories
+        // D. 10 種類のゲームプレイ機能
         //==================================================
-        // 1. Health / damage / heal / death / cooldown
+        // 1. 体力、被ダメージ、回復、死亡、クールダウン
         auto *fighter = Box(sc, "Fighter", "Fighter", Vector3(400, 0, 0));
         auto healthApplied = Apply(context, fighter, "体力を100にして、Enemyに触れたら10ダメージ");
         auto *health = fighter->GetComponent<Health>();
@@ -550,7 +550,7 @@ class SelfDelete : ScriptComponentBehavior {
             Check(deaths == 1 && damaged == 3, "death notified once, damage events per hit (" + std::to_string(damaged) + ")");
             health->Revive();
             Check(!health->IsDead() && Near(health->GetCurrent(), 120), "revive");
-            // An object argument accepts "" as "no object": engine-originated damage has no sender.
+            // オブジェクト引数には空文字列 "" を指定できる。エンジン発のダメージに送信元オブジェクトはない。
             {
                 auto hurt = s; hurt.damagedEvent = "Hurt"; hurt.deathEvent.clear();
                 Require(health->SetSettings(hurt), "hurt event");
@@ -565,7 +565,7 @@ class SelfDelete : ScriptComponentBehavior {
                 health->Revive();
             }
             router->UnsubscribeOwner(ComponentRef{}, "t");
-            // Real contact with an Enemy-tagged box: one hit per contact window.
+            // Enemy タグ付きボックスとの実際の接触。接触が継続する間は一度だけヒットする。
             auto *spike = Box(sc, "Spike", "Enemy", Vector3(400.5f, 0, 0));
             health->Advance(1);
             Check(contact->Advance(0.016) == 1 && Near(health->GetCurrent(), 105), "real contact damage (15)");
@@ -577,7 +577,7 @@ class SelfDelete : ScriptComponentBehavior {
         stop();
         Check(healthApplied.command != nullptr, "health command kept");
 
-        // 2. Pickup + 7. Inventory (once, removal, recipient inventory)
+        // 2. 拾得と 7. インベントリ。一度限りの取得、削除、受け取り側のインベントリ。
         auto *coin = Box(sc, "Coin", "Item", Vector3(500, 0, 0));
         auto pickupApplied = Apply(context, coin, "Playerに触れたらコインを1増やして消える");
         Check(coin->GetComponent<Pickup>() && hero->GetComponent<Inventory>() && Mentions(pickupApplied.plan.steps, "Inventory"), "Pickup added, the only Player gets an Inventory");
@@ -624,7 +624,7 @@ class SelfDelete : ScriptComponentBehavior {
             Require(inventory->SetSettings(s), "reset inventory");
         }
 
-        // 3. Lifetime (edit time frozen, dt validation, delete / pool reset)
+        // 3. 寿命。編集時の時間停止、dt の検証、削除とプール再利用時のリセット。
         auto *shot = sc->CreateEmptyObject("Shot");
         const auto shotID = shot->GetObjectID();
         Apply(context, shot, "生成されてから3秒後に消える");
@@ -650,7 +650,7 @@ class SelfDelete : ScriptComponentBehavior {
         }
         stop();
 
-        // 4. Spawner (template by UUID, max alive, per-update cap, live UUIDs, pool reuse, self-replication guard)
+        // 4. スポナー。UUID によるテンプレート指定、生存数と更新ごとの上限、生存中の UUID、プール再利用、自己複製の防止。
         auto *enemyTemplate = Box(sc, "EnemyTemplate", "Enemy", Vector3(600, 0, 0));
         enemyTemplate->SetActive(false);
         auto *spawnerObject = sc->CreateEmptyObject("SpawnPoint");
@@ -696,7 +696,7 @@ class SelfDelete : ScriptComponentBehavior {
         stop();
         Check(sc->GetSceneObjects().size() == objectsBefore, "play stop removes spawned objects");
 
-        // 5. Interact (distance + E, open clip, missing clip requirement)
+        // 5. インタラクト。距離と E キー、開くクリップ、必要なクリップがない場合。
         auto *door = Box(sc, "Door", "Door", Vector3(2, 0, 0));
         AddClip(door, "Open");
         Apply(context, door, "近づいてEキーを押したら扉を開く");
@@ -721,7 +721,7 @@ class SelfDelete : ScriptComponentBehavior {
         }
         stop();
 
-        // 6. Checkpoint / respawn (fall, velocity reset)
+        // 6. チェックポイントとリスポーン。落下と速度のリセット。
         auto *runner = Box(sc, "Runner", "Runner", Vector3(700, 0, 0));
         runner->AddComponent<Velocity>();
         Apply(context, runner, "触れた場所を復活地点にして、落下したら戻る");
@@ -744,7 +744,7 @@ class SelfDelete : ScriptComponentBehavior {
         }
         stop();
 
-        // 7. Key door: pickup on the key object, item check, consume not required
+        // 7. 鍵付きの扉。鍵オブジェクトでの拾得、所持判定、鍵の消費は不要。
         auto *keyDoor = Box(sc, "Gate", "Door", Vector3(-3, 0, 0));
         AddClip(keyDoor, "Open");
         auto *keyObject = Box(sc, "鍵", "Item", Vector3(800, 0, 0));
@@ -769,7 +769,7 @@ class SelfDelete : ScriptComponentBehavior {
         }
         stop();
 
-        // 8. Dialogue (order, choices, branch, end notice; text is never generated)
+        // 8. 会話。順序、選択肢、分岐、終了通知を検証する。会話文は生成しない。
         auto *npc = Box(sc, "Elder", "NPC", Vector3(900, 0, 0));
         auto dialogueApplied = Apply(context, npc, "話しかけたら文章を順番に表示する");
         Check(npc->GetComponent<Dialogue>() && npc->GetComponent<Dialogue>()->GetSettings().lines.empty() && npc->GetComponent<Interactable>()->GetSettings().startDialogue, "dialogue + interactable, no generated text");
@@ -799,7 +799,7 @@ class SelfDelete : ScriptComponentBehavior {
             router->UnsubscribeOwner(ComponentRef{}, "dl");
         }
 
-        // 9. Animation state switching (no restart of the same state)
+        // 9. アニメーションの状態切り替え。同じ状態を再開しない。
         auto *walker = sc->CreateEmptyObject("Walker");
         AddClip(walker, "Walk"); AddClip(walker, "Idle");
         Apply(context, walker, "移動中はWalk、停止中はIdleを再生する");
@@ -820,7 +820,7 @@ class SelfDelete : ScriptComponentBehavior {
         }
 
         //==================================================
-        // E. Save / load / clone / object JSON (prefab path) / undo of the whole first application
+        // E. 保存、読み込み、複製、オブジェクト JSON（プレハブ経由）、初回適用全体の取り消し。
         //==================================================
         {
             const JSON saved = scene.SaveToJSON();
@@ -847,7 +847,7 @@ class SelfDelete : ScriptComponentBehavior {
             Scene prefabScene(std::string("PrefabTarget"));
             auto *instance = prefabScene.GetSceneContext()->CreateObjectFromJson(sc->SaveObjectToJson(sc->GetSceneObject("Elder")));
             Check(instance && instance->GetComponent<Dialogue>() && instance->GetComponent<Dialogue>()->GetSettings().lines.size() == 4 && instance->GetComponent<Interactable>(), "object JSON (prefab path) keeps components");
-            // A clone receives broadcast events through its own subscription.
+            // 複製したオブジェクトは独自の購読を通じてブロードキャストイベントを受け取る。
             scene.PlayStart();
             auto *cloneNow = sc->GetSceneObject("EnemyClone");
             cloneNow->GetComponent<GameEventListener>()->Advance(0.016);
@@ -857,7 +857,7 @@ class SelfDelete : ScriptComponentBehavior {
             Check(Near(cloneNow->GetComponent<Health>()->GetCurrent(), 95) && Near(sc->GetSceneObject("Enemy")->GetComponent<Health>()->GetCurrent(), 95), "clone and original both receive");
             stop();
         }
-        // Undo of an application made before several play sessions still works (IDs, not pointers).
+        // ID を使うため、複数回再生した後も、再生前の適用操作を取り消せる。
         {
             const auto handlers = hero->GetComponent<GameEventListener>()->GetSettings().handlers.size();
             Check(send.command->Undo(&context) && sc->GetSceneObject(heroID)->GetComponent<GameEventListener>()->GetSettings().handlers.size() == handlers - 1, "undo removes the send handler");
@@ -866,7 +866,7 @@ class SelfDelete : ScriptComponentBehavior {
         }
         Check(contactApplied.command != nullptr && tween.command != nullptr && defineDamage.command != nullptr && spawnApplied.command != nullptr && keyApplied.command != nullptr, "commands kept");
 
-        // Legacy event.emit: the counter still increments; a defined event of the same name is routed once.
+        // 旧 event.emit は引き続きカウンターを増やす。同名のイベントが定義されていれば、一度だけルーティングする。
         {
             ShortText::CommandContext legacy;
             legacy.owner = hero; legacy.target = hero; legacy.scene = sc;

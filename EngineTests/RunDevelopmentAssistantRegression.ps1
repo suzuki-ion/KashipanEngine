@@ -1,4 +1,4 @@
-﻿# Run in a Visual Studio x64 developer PowerShell. Uses fake CLIs; no network or model credits.
+﻿# Visual Studio の x64 開発者用 PowerShell で実行する。疑似 CLI を使うため、ネットワークやモデルの利用枠は不要。
 $ErrorActionPreference = 'Stop'
 $taskProjectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $taskOutputRoot = [IO.Path]::GetFullPath((Join-Path $taskProjectRoot 'Generated'))

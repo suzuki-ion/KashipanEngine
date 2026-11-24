@@ -1,6 +1,6 @@
-// Copy to your project's Assets/Application/Scripts/LoadingSceneController.as.
-// Attach as ScriptComponent in a normal scene registered as "LoadingScene".
-// Request from the source scene: GetScene().ChangeSceneWithLoading("Stage1", "LoadingScene");
+// プロジェクトの Assets/Application/Scripts/LoadingSceneController.as にコピーする。
+// 「LoadingScene」として登録した通常のシーンに ScriptComponent として取り付ける。
+// 遷移元のシーンで GetScene().ChangeSceneWithLoading("Stage1", "LoadingScene"); を呼び出す。
 class LoadingSceneController : ScriptComponentBehavior {
     [SerializeField] float minimumDisplaySeconds = 0.5f;
     [SerializeField] float finishAnimationSeconds = 0.25f;
@@ -16,17 +16,17 @@ class LoadingSceneController : ScriptComponentBehavior {
 
     void Start() {
         GetScene().SetSceneLoadBudgetMilliseconds(2.0f);
-        // Start your loading animation, audio and other scene-specific processing here.
+        // ここでロード中のアニメーション、音声、その他のシーン固有の処理を開始する。
     }
 
     void Update() {
         elapsed += GetDeltaTime();
-        // Obtain Scene@ for each operation rather than retaining a scene across transitions.
+        // シーンを遷移後まで保持せず、操作ごとに Scene@ を取得する。
         Scene@ scene = GetScene();
         progress = scene.GetSceneLoadProgress();
         error = scene.GetSceneLoadError();
         ready = scene.IsSceneLoadReady();
-        if (error.length() > 0) return; // Keep the loading scene visible; show error/retry/back UI.
+        if (error.length() > 0) return; // ロード画面の表示を続け、エラーと再試行・戻るための UI を表示する。
 
         if (ready && elapsed >= minimumDisplaySeconds && !waitForManualFinish && !finishing) FinishLoading();
         if (finishing && ready && !activationRequested) {
@@ -35,17 +35,17 @@ class LoadingSceneController : ScriptComponentBehavior {
         }
     }
 
-    // Call after a waiting animation reaches its cycle boundary, or after a user confirmation.
+    // 待機アニメーションの周期が終わったときや、ユーザーが確認した後に呼び出す。
     void FinishLoading() {
         if (!GetScene().IsSceneLoadReady() || finishing) return;
         finishing = true;
         finishElapsed = 0.0f;
-        // Start your outro/fade with KeyFrameAnimator or other custom processing here.
+        // ここで KeyFrameAnimator や独自処理を使い、終了演出やフェードを開始する。
     }
 
     void CancelLoading() {
         GetScene().CancelSceneLoad();
         finishing = false;
-        // Change to a registered menu scene using the existing scene transition API if needed.
+        // 必要に応じて、既存のシーン遷移 API で登録済みのメニューシーンへ移動する。
     }
 }

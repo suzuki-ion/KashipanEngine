@@ -1,5 +1,5 @@
-// Pure regression: event schemas / typed payloads (GameEvents) and the short-text event grammar.
-// No scene, window, GPU, audio, network or model. Built by RunShortTextEventRequestRegression.ps1.
+// イベントスキーマ、型付きペイロード（GameEvents）、短文イベント文法の回帰テスト。
+// シーン、ウィンドウ、GPU、音声、ネットワーク、モデルは不要。RunShortTextEventRequestRegression.ps1 でビルドする。
 #include <cstdio>
 #include <fstream>
 #include <stdexcept>
@@ -41,13 +41,13 @@ GameEvents::Definition Damage() {
 }
 
 int main() {
-    //--- names ---
+    //--- 名前 ---
     Check(GameEvents::IsValidName("GoalReached") && GameEvents::IsValidName("ゴール到達"), "valid names");
     for (const char *bad : {"", "a b", "a.b", "a:b", "x\x01", "a\xE3\x80\x80" "b", "\xE3\x81"}) Check(!GameEvents::IsValidName(bad), std::string("invalid name rejected: ") + bad);
     Check(!GameEvents::IsValidName(std::string(65, 'a')) && GameEvents::IsValidName(std::string(64, 'a')), "name length limit 64 bytes");
     Check(GameEvents::SameName("GoalReached", "goalreached") && !GameEvents::SameName("Goal", "Goal2"), "case-insensitive name equality");
 
-    //--- schemas ---
+    //--- スキーマ ---
     auto d = Damage();
     Check(GameEvents::ValidateDefinition(d), "damage definition valid");
     auto dup = d; dup.args.push_back({"AMOUNT", GameEvents::ArgType::Number, false, nullptr});
@@ -66,7 +66,7 @@ int main() {
         Check(!GameEvents::DecodeDefinitions(Value::parse(R"([{"name":"E","args":[{"name":"a","type":"pointer"}]}])"), single), "unknown argument type rejected");
     }
 
-    //--- typed payloads ---
+    //--- 型付きペイロード ---
     Value out;
     std::string error;
     Check(GameEvents::BuildPayload(d, Value{{"amount", 10}}, out) && out["amount"] == 10 && out["kind"] == "normal" && !out.contains("count"), "defaults filled, absent optional stays absent");
@@ -99,7 +99,7 @@ int main() {
             message.GetVector("v", v, 3) && v[2] == 3 && !message.GetInt("ratio", i) && !message.GetVector("v", v, 2), "typed getters");
     }
 
-    //--- literals ---
+    //--- リテラル ---
     Check(ShortText::ParseEventLiteral(GameEvents::ArgType::Number, "10", out) && out == 10.0, "number literal");
     Check(ShortText::ParseEventLiteral(GameEvents::ArgType::Number, "2.5f", out) && out == 2.5, "float literal with f");
     Check(!ShortText::ParseEventLiteral(GameEvents::ArgType::Int, "2.5", out), "int literal rejects fraction");
@@ -119,7 +119,7 @@ int main() {
         Check(!threw, "no exception escapes the grammar");
     }
 
-    //--- required sentences ---
+    //--- 必須の文例 ---
     {
         auto r = Ok("GoalReachedイベントを作成");
         Check(r.request.kind == ShortText::EventRequestKind::DefineEvent && r.request.definition.name == "GoalReached" && r.request.definition.args.empty() && r.request.definition.shortTextManaged, "define GoalReached");
@@ -159,13 +159,13 @@ int main() {
         r = Ok("Pingを受け取ったらPongを送信元に送る");
         Check(r.request.action.targetMode == 3, "reply to sender");
         Rejected("GoalReachedを受け取ったらOn-Goal関数を呼ぶ");
-        Ignored("GoalReachedを発火したらOnGoal関数を呼ぶ"); // unknown condition: left to the other grammars, never partially applied
+        Ignored("GoalReachedを発火したらOnGoal関数を呼ぶ"); // 未知の条件は別の文法に委ね、一部だけを適用することはない
         Rejected("Damageイベントを対象Enemyに、amountは10で送る");
         Rejected("体力をamountだけ減らす");
         Rejected("Pongを送信元に送る");
     }
 
-    //--- the 10 gameplay categories ---
+    //--- 10 種類のゲームプレイ機能 ---
     {
         auto r = Ok("体力を100にして、Enemyに触れたら10ダメージ");
         Check(r.request.kind == ShortText::EventRequestKind::Health && r.request.params["max"] == 100.0 && r.request.params["otherTag"] == "Enemy" && r.request.params["amount"] == 10.0, "1 health");
@@ -211,7 +211,7 @@ int main() {
             literal == "Hello world、Ｆｏｏ　bar", "quoted string preserves spaces and width");
     }
 
-    //--- unrelated / legacy sentences are not claimed ---
+    //--- 無関係な文や旧形式の文はこの文法では処理しない ---
     for (const char *text : {"上下にふわふわ動かして", "Playerに触れたらscoreを1増やす", "Eキーを押したらXYZすべてのスケールを2に設定する",
         "1秒かけてTransformの移動Y軸を0.0fから4.0fまでEaseInOutCubicで移動", "Transformの移動X軸を-1.0fから1.0fの間で往復移動", "こんにちは"}) Ignored(text);
     {

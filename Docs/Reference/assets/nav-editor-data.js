@@ -1,5 +1,5 @@
-// KashipanEngine Reference - Editor site navigation data
-// href is always relative to the Reference/ root folder.
+// KashipanEngine リファレンスのエディターページ用ナビゲーションデータ
+// href は常に Reference/ ルートからの相対パス。
 const KE_SITE = "editor";
 const KE_SITE_LABEL = "エディタリファレンス";
 const KE_OTHER_SITES = [

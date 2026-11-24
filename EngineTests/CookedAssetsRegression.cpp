@@ -50,7 +50,7 @@ int main() {
     CookedAssets::Store("Textures", original / "Assets/image.png", dds.GetBufferPointer(), dds.GetBufferSize());
     CookedAssets::manifest["assets"] = {"image.png", "triangle.obj"};
     Write(original / "Cooked/Manifest.json", CookedAssets::manifest.dump());
-    // Delete all input assets, move the package, and change the working directory.
+    // 入力アセットをすべて削除し、パッケージの移動と作業ディレクトリの変更を行う。
     std::filesystem::remove(original / L"Assets/材質.hlsl");
     std::filesystem::remove(original / "Assets/triangle.obj");
     std::filesystem::rename(original, moved);
@@ -80,7 +80,7 @@ int main() {
     std::filesystem::remove(moved / "Cooked" / (ContentCache::Digest(key) + ".cache"));
     Reject([&] { CookedAssets::Configure(moved); });
     CookedAssets::manifest = nullptr;
-    // Only the newly created process-specific fixture is removed.
+    // このプロセスが新たに作成したテスト用データだけを削除する。
     std::filesystem::remove_all(base);
     std::cout << "Cooked asset relocation, source-free restoration, material layout and failure regression passed\n";
 }

@@ -62,7 +62,7 @@ int Run(){try{
     Check(move&&move->Execute(&editor)&&transform->GetTranslate()==Vector3(1,2,3),"Vector3 setter");
     Check(transform->GetWorldPosition()==Vector3(1,2,3),"setter invalidates the cached world transform");
     Check(move->Undo(&editor)&&transform->GetTranslate()==Vector3(7,8,9),"whole-vector undo");
-    // A fixed tuple replaces all managed tracks of that member, not just channel zero.
+    // 固定の組を設定すると、そのメンバーで管理中の全トラックを置き換える。チャンネル 0 に限らない。
     for(const auto &sentence:std::vector<std::string>{"Transformの移動X軸を0から1の間で往復","Transformの移動Y軸を0から2の間で往復"}) {
         parsed=ParseShortTextPropertyRequest(sentence,target);Check(parsed.success,"motion parse");
         auto motion=MakeShortTextPropertyCommand(target,parsed.request,sentence);Check(motion&&motion->Execute(&editor),"motion add");

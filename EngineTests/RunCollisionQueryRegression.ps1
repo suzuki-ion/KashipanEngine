@@ -1,5 +1,5 @@
-# Run in a Visual Studio x64 developer PowerShell, after building the Development
-# KashipanScriptChecker target (which produces the required runtime libraries).
+# 必要なランタイムライブラリを生成するため、Development 構成で
+# KashipanScriptChecker ターゲットをビルドしてから、Visual Studio の x64 開発者用 PowerShell で実行する。
 $ErrorActionPreference = 'Stop'
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $testProject = Join-Path $projectRoot 'Build\CollisionQueryRegression.generated.vcxproj'
@@ -17,6 +17,6 @@ try {
     & (Join-Path $outputRoot 'CollisionQueryRegression.generated.exe') (Join-Path $outputRoot 'CollisionQuery.as.predefined') (Join-Path $PSScriptRoot 'CollisionQueryExample.as')
     if ($LASTEXITCODE -ne 0) { throw 'Regression cases failed' }
 } finally {
-    # This is a single generated project file, never the checkout or a directory.
+    # 対象は生成したプロジェクトファイル 1 個に限る。チェックアウトやディレクトリは対象外。
     if (Test-Path -LiteralPath $testProject) { Remove-Item -LiteralPath $testProject }
 }

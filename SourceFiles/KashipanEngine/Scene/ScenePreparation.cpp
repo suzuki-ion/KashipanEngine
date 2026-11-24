@@ -34,8 +34,8 @@ void Scene::BeginPreparation(Passkey<SceneManager>, JSON data) {
     if(!j.contains("sceneObjects"))j["sceneObjects"]=JSON::array();
     if(!j.contains("sceneComponents"))j["sceneComponents"]=JSON::array();
 #if !defined(USE_IMGUI)
-    // Editor-only component factories do not exist in Release. Remove the whole
-    // editor-only subtree before validating/constructing any of its components.
+    // Release ではエディター専用コンポーネントのファクトリーが存在しない。
+    // コンポーネントの検証や構築に入る前に、エディター専用のサブツリーを丸ごと除去する。
     std::unordered_map<std::string,std::vector<std::string>> children;
     std::vector<std::string> pending;
     std::unordered_set<std::string> excluded;
@@ -114,7 +114,7 @@ bool Scene::AdvancePreparation(Passkey<SceneManager>,double budgetMilliseconds) 
                     p.phase=Phase::Ready; return true;
                 }
                 const auto &data=p.data["sceneObjects"][p.cursor];
-                // Unknown types must fail rather than silently claiming the target is ready.
+                // 不明な型があれば、対象シーンの準備完了を通知せずに失敗として扱う。
                 for(const auto &c:data.value("components",JSON::array()))if(!CreateObjectComponentByType(c.value("type",std::string{})))
                     throw std::runtime_error("Unknown object component: "+c.value("type",std::string{}));
                 auto *object=p.objects[p.cursor++];
@@ -143,7 +143,7 @@ JSON Scene::ActivatePreparation(Passkey<SceneManager>) {
     sceneEditor_=std::make_unique<SceneEditor>(Passkey<Scene>{},sceneEditorContext_.get());
 #endif
     if(auto *input=GetComponent<InputDeviceSettings>(); input && input->IsActive())input->Apply();
-    // Snapshot IDs: user constructors/Awake may delete or append objects and components.
+    // ユーザー定義のコンストラクターや Awake がオブジェクトやコンポーネントを追加・削除する場合があるため、ID のスナップショットを取る。
     std::vector<ComponentRef> windows,scripts,buffers;
     for(auto *object:objects_)for(const auto &[component,id]:object->GetObjectContext()->GetAllComponents()) {
         (void)id;

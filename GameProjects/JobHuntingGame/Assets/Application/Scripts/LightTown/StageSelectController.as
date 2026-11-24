@@ -36,7 +36,7 @@ class StageSelectController : ScriptComponentBehavior {
         @ring=Mesh("StageSelectionRing","PrimitiveMesh-Cylinder-Closed",markerPosition+Vector3(0,.08f,0),Vector3(3.1f,.12f,3.1f),Vector4(1,.84f,.2f,1));MeshRenderer@ r;ring.GetComponent(@r);r.SetMaterialName("TownGridUnlit");
         TownLight(GetScene(),Vector3(0,9,-3),Vector4(1,.9f,.75f,1),1.0f,"StageMapLight");Light@ fill;GetScene().GetObject("StageMapLight").GetComponent(@fill);fill.SetRadius(28);fill.SetCastShadows(false);
         TownApplySettings(GetScene());
-        // Destination models and route must stay readable across the entire map.
+        // マップのどこでも、行き先のモデルと経路が見分けられるようにする。
         Object@ screen=GetScene().GetObject("TownScreen");DepthOfFieldEffect@ dof;MotionBlurEffect@ motion;
         if(screen.GetComponent(@dof))dof.SetActive(false);if(screen.GetComponent(@motion))motion.SetActive(false);
         Object@ sun=GetScene().GetObject("SceneLight");Light@ sunlight;
@@ -49,7 +49,7 @@ class StageSelectController : ScriptComponentBehavior {
         if(ready&&!leaving)state.AdvanceRealTime();
         if(transition.Update(GetDeltaTime()))return;if(transition.failed){leaving=false;transition.failed=false;}if(!ready||leaving)return;float dt=GetDeltaTime()*GetGameSpeed();clock+=dt;
         if(IsCommandTriggered("SelectLeft")||IsCommandTriggered("SelectUp"))Select((selected+int(stages.Count())-1)%int(stages.Count()));if(IsCommandTriggered("SelectRight")||IsCommandTriggered("SelectDown"))Select((selected+1)%int(stages.Count()));
-        // Resource models above the thin plinth are clickable as part of the node.
+        // 薄い台座上の素材モデルをクリックしても、ノードを選択できる。
         for(uint i=0;i<buttons.length();++i)if(buttons[i].IsClicked())Select(int(i/2));
         int clicked=ui.Clicked();if(clicked==0||IsCommandTriggered("Submit")){Go(true);return;}if(clicked==1||IsCommandTriggered("Cancel")){Go(false);return;}
         routePosition=Easing::Lerp(routePosition,float(selected),TownClamp(GetDeltaTime()*4,0,1));int segment=int(Floor(routePosition));if(segment>=int(stages.Count())-1)segment=int(stages.Count())-2;

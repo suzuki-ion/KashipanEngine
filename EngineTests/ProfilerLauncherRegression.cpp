@@ -14,7 +14,7 @@ void Wait(ProfilerLauncher &launcher) {
     Require(!launcher.IsRunning());
 }
 int wmain(int argc, wchar_t **argv) {
-    // Fake interpreter: real subprocess/argument parsing without opening a GUI.
+    // 疑似インタープリターを使い、GUI を開かずに実際の子プロセス起動と引数解析を検証する。
     if (argc > 1) {
         if (argc != 4 || std::wstring(argv[2]) != L"--port" || !std::filesystem::is_regular_file(argv[1])) return 8;
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
@@ -34,7 +34,7 @@ int wmain(int argc, wchar_t **argv) {
     ProfilerLauncher launcher;
     Require(launcher.StartProcess(script, executable, false, 47181));
     Require(launcher.IsRunning());
-    Require(launcher.StartProcess(script, executable, false, 47182)); // must keep first process
+    Require(launcher.StartProcess(script, executable, false, 47182)); // 最初のプロセスを維持する必要がある
     Wait(launcher);
     Require(!launcher.TakeError());
     Require(launcher.StartProcess(script, executable, false, 47182));
@@ -47,8 +47,8 @@ int wmain(int argc, wchar_t **argv) {
     const DWORD previousSize = GetEnvironmentVariableA("KASHIPAN_PROFILER_PORT", previous, sizeof(previous));
     SetEnvironmentVariableA("KASHIPAN_PROFILER_PORT", "47181");
     Require(ProfilerLauncher::Port() == 47181);
-    // Exercise the same interpreter discovery and port arguments as the menu,
-    // using installed Python and a short script that creates no window.
+    // メニューと同じインタープリターの検出処理とポート引数を検証する。
+    // インストール済みの Python と、ウィンドウを作らない短いスクリプトを使う。
     std::ofstream(script) << "import pathlib, sys\npathlib.Path(__file__).with_suffix('.result').write_text(' '.join(sys.argv[1:]))\n";
     Require(launcher.Start(root, root));
     Wait(launcher);

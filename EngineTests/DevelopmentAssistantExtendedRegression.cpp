@@ -1,4 +1,4 @@
-// Actual editor host, scene, script VM, assets and Undo. No window/GPU/real input.
+// 実際のエディターホスト、シーン、スクリプト VM、アセット、Undo を使う。ウィンドウ、GPU、実デバイスからの入力は不要。
 #include <bit>
 #include <chrono>
 #include <cstdint>
@@ -164,6 +164,6 @@ int main() {
         std::puts("DevelopmentAssistantExtendedRegression passed: all 12 categories, headless host; rendered image unavailable without GPU.");
     } catch (const std::exception &e) { std::fprintf(stderr, "%s\n", e.what()); code = 1; }
     ImGui::DestroyContext(); std::filesystem::current_path(original);
-    // Keep the isolated fixture under Generated for diagnosis; never modify user scene files.
+    // 診断用に分離したテストデータを Generated 以下に残す。ユーザーのシーンファイルには手を加えない。
     return code;
 }

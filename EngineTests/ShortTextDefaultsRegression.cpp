@@ -72,7 +72,7 @@ int wmain(int argc, wchar_t **argv) {
             "contact phrase adds score and plays configured sound");
         TickProgram(pickup.recipe.rules, pickupMemory, pickupState, pickupInput, 0.1);
         Require(pickupState.variables.at("score") == 1 && pickupState.effects.empty(), "continued contact does not repeat pickup");
-        // One-shot keyframe sentences belong to the property grammar; the dictionary must not claim them first.
+        // 単発キーフレームの文はプロパティ文法の対象なので、辞書が先に解釈してはならない。
         for (const char *tween : {"1秒かけてTransformの移動Y軸を0.0fから4.0fまでEaseInOutCubicで移動", "Transformの移動Y軸を0から4まで1秒かけてEaseInOutCubicで移動",
             "2秒かけてTransformの回転Z軸を0.0fから90.0fまでEaseOutQuadで回転", "1秒かけてTransformのスケールX軸を1.0fから2.0fまでLinearで変更",
             "1秒かけてBoxColliderのサイズX軸を1.0fから3.0fまでEaseInOutCubicで変更"})

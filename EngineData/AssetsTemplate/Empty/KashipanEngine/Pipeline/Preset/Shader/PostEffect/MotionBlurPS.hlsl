@@ -13,7 +13,7 @@ float4 main(VSOutput input) : SV_Target0 {
 	// 速度バッファはfloatフォーマットでUV空間の符号付き速度をそのまま保持しているため、デコード不要
 	float2 velUv = gVelocityTexture.Sample(gSampler, uv).xy;
 
-	// Convert UV delta to pixel delta.
+	// UV 座標の差分をピクセル単位の差分に変換する。
 	float2 velPixels = velUv / gInvResolution;
 	float speedPixels = length(velPixels);
 

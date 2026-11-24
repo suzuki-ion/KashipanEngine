@@ -29,13 +29,13 @@ int main() {
         assert(hits == 7 && misses == 1);
         lifetime = results[0];
         results.clear();
-        assert(!lifetime.expired()); // Session keeps the scene alive between managers.
+        assert(!lifetime.expired()); // セッションはマネージャーの切り替え中もシーンを保持する。
         session.Close();
         assert(lifetime.expired());
     }
     auto a = SharedModelImport::Load(source, SharedModelImport::CommonFlags);
     auto b = SharedModelImport::Load(source, SharedModelImport::CommonFlags);
-    assert(a != b); // Editor/dynamic imports are not cached after startup.
+    assert(a != b); // 起動後のエディターや実行時のインポート結果はキャッシュしない。
     std::ofstream(source) << "v 0 0 0\nv 2 0 0\nv 0 2 0\nf 1 2 3\n";
     auto changed = SharedModelImport::Load(source, SharedModelImport::CommonFlags);
     assert(changed->scene->mMeshes[0]->mVertices[1].x != a->scene->mMeshes[0]->mVertices[1].x);
@@ -45,7 +45,7 @@ int main() {
         assert(!missing->scene && !missing->error.empty());
         assert(SharedModelImport::Load(root / "missing.obj", SharedModelImport::CommonFlags) == missing);
     }
-    // Compare actual startup models' hierarchy/bones/animation metadata with the original skeleton/animation import flags.
+    // 実際の起動用モデルの階層、ボーン、アニメーションのメタデータを、元のスケルトン・アニメーション用インポートフラグで得た結果と比較する。
     for (const auto &file : {std::filesystem::path(L"GameProjects/Test/Assets/TestModels/Luchika/Luchika.gltf"),
         std::filesystem::path(L"GameProjects/Test/Assets/TestModels/Meepa/メェパ_FBX.fbx")}) {
         if (!std::filesystem::exists(file)) continue;
@@ -63,7 +63,7 @@ int main() {
         }
         std::cout << "Model hierarchy/bone comparison passed\n";
     }
-    // Exercise animation-bearing data too; the two startup fixtures contain no animation.
+    // 起動用テストデータ 2 件にはアニメーションがないため、アニメーション付きデータも検証する。
     const auto animatedSource = root / "animated.gltf";
     {
         std::vector<char> buffer(76, 0);
@@ -100,7 +100,7 @@ int main() {
             for (unsigned int k = 0; k < keys->mNumPositionKeys; ++k)
                 assert(keys->mPositionKeys[k].mTime == y->mChannels[0]->mPositionKeys[k].mTime && keys->mPositionKeys[k].mValue == y->mChannels[0]->mPositionKeys[k].mValue);
         }
-        // External glTF buffer changes must invalidate even with unchanged size and timestamp.
+        // サイズと更新日時が同じでも、glTF の外部バッファが変わればキャッシュを無効化する必要がある。
         const auto binaryPath = root / "animated.bin";
         const auto stamp = std::filesystem::last_write_time(binaryPath);
         { std::fstream changedBuffer(binaryPath, std::ios::binary | std::ios::in | std::ios::out);
@@ -114,6 +114,6 @@ int main() {
         std::cout << "Animated model key/cache/buffer invalidation comparison passed\n";
     }
     a.reset(); b.reset(); changed.reset();
-    std::filesystem::remove_all(root); // Newly created, process-specific directory under Generated.
+    std::filesystem::remove_all(root); // Generated の下にこのプロセス専用のディレクトリを新規作成する。
     std::cout << "Shared model import regression passed\n";
 }

@@ -173,7 +173,7 @@ public:
     /// @param json シーンのJSONデータ
     /// @return 読み込みに成功した場合は true、失敗した場合は false を返す
     bool LoadFromJSON(const JSON &json);
-    // Prepared scenes are constructed on the engine thread without updating or running scripts.
+    // 準備対象のシーンはエンジンスレッドで構築し、その間は更新処理やスクリプトを実行しない。
     bool IsPreparing() const { return isPreparing_; }
     Scene(const std::string &sceneName, bool preparing);
     void BeginPreparation(Passkey<SceneManager>, JSON data);

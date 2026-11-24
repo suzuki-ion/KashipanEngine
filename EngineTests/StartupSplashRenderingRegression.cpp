@@ -1,4 +1,4 @@
-﻿// The software WIC target verifies pixels; the HWND test verifies native GPU resources.
+﻿// WIC のソフトウェア描画ターゲットではピクセルを検証し、HWND のテストではネイティブ GPU リソースを検証する。
 #include "../SourceFiles/KashipanEngine/Splash/SplashScreen.cpp"
 #include <cstdlib>
 #include <iostream>

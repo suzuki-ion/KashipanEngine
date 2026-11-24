@@ -54,7 +54,7 @@ inline std::string FileDigest(const std::filesystem::path &path) {
 inline Json Dependency(const std::filesystem::path &path) {
     return Json{{"path", PathText(std::filesystem::absolute(path).lexically_normal())}, {"hash", FileDigest(path)}};
 }
-// A short-lived validation snapshot. Never retain across independent shader requests/reloads.
+// 依存関係の検証用スナップショット。個別のシェーダー要求や再読み込みをまたいで保持しない。
 struct DependencyValidation {
     std::unordered_map<std::string, std::string> hashes;
 };

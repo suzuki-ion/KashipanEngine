@@ -1,5 +1,5 @@
-// Included only by an isolated QA copy of Player.as. Uses the real player update
-// and native collision callbacks; the runner creates the matching floor course.
+// 検証用に分離した Player.as のコピーからのみ読み込む。実際のプレイヤー更新と
+// ネイティブの衝突コールバックを使い、テストランナーが対応する床のコースを作る。
 class PlayerSeamRuntimeRegression {
     float clock=0;
     int current=-1;

@@ -25,7 +25,7 @@ void CheckMaterialLayoutCache(const std::filesystem::path &root) {
     auto hits = Count("[MaterialLayoutCache] hit:");
     auto second = MaterialLayout::BuildCachedFromHlslSource(path, {});
     assert(second.fields[0].rangeStep == first.fields[0].rangeStep && Count("[MaterialLayoutCache] hit:") == hits + 1);
-    // Includes and comment-only annotation changes must invalidate even at identical size/time.
+    // サイズと更新日時が同じでも、インクルードやコメント内の注釈の変更でキャッシュを無効化する必要がある。
     const auto stamp = std::filesystem::last_write_time(include);
     auto edited = fields; edited.replace(edited.find("0, 1"), 4, "0, 2");
     Write(include, edited); std::filesystem::last_write_time(include, stamp);
@@ -33,7 +33,7 @@ void CheckMaterialLayoutCache(const std::filesystem::path &root) {
     assert(changed.fields[0].rangeMax == 2 && Count("[MaterialLayoutCache] hit:") == hits + 1);
     auto macro = MaterialLayout::BuildCachedFromHlslSource(path, {"EXTRA"});
     assert(macro.totalByteSize == 20 && macro.fields.size() == 2 && macro.fields[1].valueType == ValueType::Color);
-    // The layout parser scans textual includes before stripping conditionals: track these too.
+    // レイアウトパーサーは条件分岐を取り除く前にソース上のインクルードを走査するため、それらも追跡する。
     auto parses = Count("[MaterialLayoutCache] parsed:");
     Write(root / "later.hlsli", "// newly present\n");
     MaterialLayout::BuildCachedFromHlslSource(path, {});
@@ -47,7 +47,7 @@ void CheckMaterialLayoutCache(const std::filesystem::path &root) {
     hits = Count("[MaterialLayoutCache] hit:");
     MaterialLayout::BuildCachedFromHlslSource(path, {});
     assert(Count("[MaterialLayoutCache] hit:") == hits + 1);
-    // A checksummed container with an invalid layout schema must also be repaired.
+    // コンテナのチェックサムが正しくても、レイアウトのスキーマが不正なら修復する。
     for (const auto &file : std::filesystem::directory_iterator(root / "Cache/Startup/MaterialLayouts")) {
         auto bytes = ContentCache::ReadFile(file.path());
         if (!bytes || bytes->size() <= sizeof(uint64_t)) continue;
@@ -63,7 +63,7 @@ void CheckMaterialLayoutCache(const std::filesystem::path &root) {
         MaterialLayout::BuildCachedFromHlslSource(path, {});
         assert(Count("[MaterialLayoutCache] hit:") == hits + 1);
     }
-    // A new source has no prior cache; unavailable cache storage must still parse successfully.
+    // 新しいソースには以前のキャッシュがない。キャッシュの保存先を使えなくても解析は成功する必要がある。
     const auto blockedSource = root / "blocked.hlsl"; Write(blockedSource, fields);
     auto directory = root / "Cache/Startup/MaterialLayouts";
     auto savedDirectory = root / "SavedMaterialLayouts";
@@ -108,8 +108,8 @@ public:
         Write(root / "color.hlsli", "this is invalid HLSL");
         bool rejected = false;
         try { compiler.CompileShader(info); } catch (const std::exception &) { rejected = true; }
-        assert(rejected); // Changed invalid input cannot silently reuse stale bytecode.
-        // Independent compiled handles survive reuse reset and destruction of another handle.
+        assert(rejected); // 入力が不正な内容に変わった場合は、古いバイトコードをそのまま再利用してはならない。
+        // コンパイル結果の独立したハンドルは、再利用状態のリセットや別のハンドルの破棄後も有効。
         compiler.ClearReuseCache(Passkey<PipelineManager>{});
         compiler.DestroyShader(first);
         assert(ContentCache::Digest(second->GetBytecodePtr(), second->GetBytecodeSize()) == original);
@@ -127,7 +127,7 @@ public:
         Write(root / "reflection.hlsl", "cbuffer NewParams : register(b1) { float4 changedColor; };\nfloat4 main() : SV_Target { return changedColor; }\n");
         auto *newGeneration = compiler.CompileShader(info);
         assert(newGeneration->GetReflectionInfo().GetResourceBindingInfo("NewParams"));
-        // Pipeline reload rollback destroys only new handles, while retaining old results.
+        // パイプラインの再読み込みをロールバックするときは、新しいハンドルだけを破棄して従来の結果を保持する。
         ShaderCompiler::DestroyCompiledShadersExcept(Passkey<PipelineManager>{}, oldIDs);
         assert(shared->GetReflectionInfo().GetResourceBindingInfo("Params"));
         compiler.ClearReuseCache(Passkey<PipelineManager>{});
@@ -143,7 +143,7 @@ int main() {
     projectRoot = KashipanEngine::ContentCache::PathText(root);
     KashipanEngine::PipelineManager::Run(root);
     CheckMaterialLayoutCache(root);
-    // This test owns a newly created, process-specific directory under Generated.
+    // このテストは Generated の下に新規作成したプロセス専用のディレクトリを使用する。
     std::filesystem::remove_all(root);
     std::cout << "Shader cache regression passed\n";
 }

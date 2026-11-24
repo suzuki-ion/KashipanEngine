@@ -51,7 +51,7 @@ class TownWorld {
     }
     void Road(int x,int z) {
         Vector3 p=Cell(x,z)+Vector3(0,.012f,0);float spacing=float(state.rules.GetFloat("cellSize",1.5f));int mask=state.RoadMask(x,z);
-        // Each mask has its own shared mesh; neighboring road endpoints meet at cell boundaries.
+        // マスクごとに共有メッシュを持つ。隣り合う道路の端点はセル境界でつながる。
         Object@ surface=Part(TownRoadMesh(mask),p,Vector3(spacing,1,spacing),Vector4(.23f,.28f,.30f,1));
         Object@ details=Part(TownRoadMesh(mask,true),p,Vector3(spacing,1,spacing),Vector4(.64f,.66f,.58f,1));
         MeshRenderer@ renderer;surface.GetComponent(@renderer);renderer.SetMaterialName("TownGridUnlit");renderer.SetCastShadows(false);

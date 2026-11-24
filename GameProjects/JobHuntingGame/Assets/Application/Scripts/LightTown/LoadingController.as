@@ -1,4 +1,4 @@
-// A normal loading scene: black background with only a spinning icon at bottom right.
+// 通常のロードシーン。黒い背景の右下に回転するアイコンだけを表示する。
 class LoadingController : ScriptComponentBehavior {
     [SerializeField] float minimumDisplaySeconds = 0.5f;
     [SerializeField] float iconFadeSeconds = 0.12f;

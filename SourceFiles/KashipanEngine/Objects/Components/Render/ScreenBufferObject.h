@@ -251,8 +251,8 @@ protected:
         // 保存済みIDがあればそれを引き継ぐ（無ければ構築時に生成された既定値のまま）
         viewerId_ = json.value("viewerId", viewerId_);
         if (IsPreparingScene()) {
-            // Keep logical names private until activation. A same-name loading-scene
-            // buffer must remain registered and usable while we construct this scene.
+            // シーンを有効化するまで、論理名を公開しない。
+            // このシーンの構築中も、ロード画面にある同名のバッファは登録したまま使用可能にしておく。
             name_ = loadedName; width_ = loadedWidth; height_ = loadedHeight;
             if (IsRegisteredToOwner() && IsActive()) {
                 if (buffer_ && ScreenBuffer::IsExist(buffer_)) buffer_->DestroyNotify();

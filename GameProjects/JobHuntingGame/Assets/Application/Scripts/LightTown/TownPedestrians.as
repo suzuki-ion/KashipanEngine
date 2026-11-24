@@ -1,7 +1,7 @@
 #include "TownWorld.as"
 
 int TownPopulationTarget(int facilities,int roads,int homes,int workplaces=0){return facilities>0&&roads>0&&homes>0?homes*3+workplaces*2:0;}
-// The expedition map uses one movable marker; city pedestrians remain batched.
+// 遠征マップでは移動可能なマーカーを 1 つ使い、街の歩行者は引き続きバッチ描画する。
 Object@ TownCreateCitizen(Scene@ scene,const string &in name,const Vector4 &in color){
     Object@ root=scene.CreateObject(name);
     Object@ body=TownMesh(scene,"TownCitizenBody","PrimitiveMesh-Cone",Vector3(0,.30f,0),Vector3(.32f,.5f,.32f),color);
@@ -10,8 +10,8 @@ Object@ TownCreateCitizen(Scene@ scene,const string &in name,const Vector4 &in c
     MeshRenderer@ renderer;body.GetComponent(@renderer);renderer.SetCastShadows(false);head.GetComponent(@renderer);renderer.SetCastShadows(false);
     return root;
 }
-// Homes supply residents by tier; operating workshop/shop/guild facilities add visitors.
-// Everyone still leaves from and returns to a house; no fixed population cap.
+// 住宅の等級に応じて住民が増え、工房・店舗・ギルドが稼働すると訪問者が増える。
+// 誰もが住宅から出発し、住宅に戻る。人数に固定の上限は設けない。
 class TownWalker {
     Vector3 position;float scale=1;int home=-1,building=-1,from=-1,to=-1,previous=-1,steps=0,phase=0;
     float progress=0,speed=.5f,wait=0;bool visible=false,returning=false,retiring=false;
@@ -35,7 +35,7 @@ class TownPedestrians {
         uint item=0;for(uint i=0;i<walkers.length();++i){TownWalker@ w=walkers[i];if(!w.visible||w.scale<=0)continue;float k=w.scale;
             bodyPositions[item]=w.position+Vector3(0,.30f*k,0);headPositions[item]=w.position+Vector3(0,.61f*k,0);
             bodyScales[item]=Vector3(.32f*k,.5f*k,.32f*k);headScales[item]=Vector3(.25f*k,.25f*k,.25f*k);
-            // Both meshes are rotationally symmetric and have solid colors.
+            // どちらのメッシュも回転対称で、色は単色。
             rotations[item]=Quaternion(0,0,0,1);bodyColors[item]=i%3==0?Vector4(.3f,.72f,1,1):(i%3==1?Vector4(1,.45f,.3f,1):Vector4(.7f,.5f,1,1));headColors[item]=Vector4(1,.78f,.58f,1);++item;
         }
         bodies.SetWorldMeshInstances(bodyPositions,rotations,bodyScales,bodyColors);heads.SetWorldMeshInstances(headPositions,rotations,headScales,headColors);
@@ -68,8 +68,8 @@ class TownPedestrians {
             else {w.route.resize(0);w.routeIndex=0;w.returning=true;}
         }
     }
-    // Breadth-first search is only run when choosing an outing/return destination,
-    // never per pedestrian per frame. Unreachable facilities are not teleported to.
+    // 幅優先探索は外出先や帰宅先を選ぶときだけ実行する。
+    // 歩行者ごとに毎フレーム探索することや、到達できない施設への瞬間移動は行わない。
     bool RouteTo(TownWalker@ w,int building){
         int target=DoorRoad(building),size=state.GridSize();if(target<0||!Road(w.from))return false;
         array<int> parent(uint(size*size),-1);array<int> queue={w.from};parent[uint(w.from)]=w.from;
@@ -98,7 +98,7 @@ class TownPedestrians {
         for(uint i=0;i<walkers.length()&&i<list.Size();++i){TownWalker@ w=walkers[i];Json@ item=list.At(i);int home=int(item.GetInt("home")),from=int(item.GetInt("from")),to=int(item.GetInt("to")),building=int(item.GetInt("building"));
             if(home!=w.home||!Road(from)||!Road(to)||(building>=0&&!House(building)&&!Destination(building)))continue;
             w.building=building;w.from=from;w.to=to;w.previous=int(item.GetInt("previous"));w.steps=int(item.GetInt("steps"));w.phase=int(item.GetInt("phase"));w.progress=float(item.GetFloat("progress"));w.wait=float(item.GetFloat("wait"));w.returning=item.GetBool("returning");w.retiring=item.GetBool("retiring");
-            // A saved route is rebuilt at the next cell, preserving current travel.
+            // 保存した経路は次のセルで再構築し、現在の移動を継続する。
             if(w.phase==2&&w.building>=0){int destination=w.building;int origin=w.from;w.from=w.to;RouteTo(w,destination);w.from=origin;}
         }
     }
@@ -120,7 +120,7 @@ class TownPedestrians {
                 w.progress+=dt*w.speed/spacing;
                 if(w.progress>=1){w.progress=0;int old=w.from;w.from=w.to;w.previous=old;++w.steps;Decide(w,i);}
                 p=Math::Lerp(Cell(w.from),Cell(w.to),w.progress);
-                // Small per-resident offsets keep people taking the same route apart.
+                // 住民ごとに小さな位置オフセットを付け、同じ経路を通るときに重ならないようにする。
                 Vector3 direction=Cell(w.to)-Cell(w.from);if(direction.LengthSquared()>.001f)p+=Vector3(direction.z,0,-direction.x)*(float(int(i%5)-2)*.045f/spacing);
             }
             p.y=.05f+.012f*Sin(clock*6+float(i)*2.39996f);w.position=p;w.scale=scale;

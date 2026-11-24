@@ -1,6 +1,6 @@
-// Ground-Truth Ambient Occlusion: half-resolution, spatial-only implementation.
-// The depth buffer is treated as a height field. Visibility is integrated analytically
-// from the two horizon angles found for each screen-space slice.
+// GTAO（Ground-Truth Ambient Occlusion）を半分の解像度で実行し、空間方向の処理のみを行う。
+// 深度バッファを高さ場として扱う。スクリーン空間の各スライスで
+// 求めた 2 つの地平線角度から、可視率を解析的に積分する。
 #include "FullScreenTriangle.hlsli"
 #include "GTAOCB.hlsli"
 
@@ -47,8 +47,8 @@ void ReconstructNormalAndTangents(float2 uv, float rawDepth, float3 center,
 
 float IntegrateSliceVisibility(float horizonNegativeCos, float horizonPositiveCos,
 	float projectedLength, float n, float cosN) {
-	// Algorithm 1: integrate the two visible arcs around the projected surface normal.
-	// The negative screen direction maps to h0 and the positive direction to h1.
+	// アルゴリズム 1。投影した面法線の両側にある 2 つの可視弧を積分する。
+	// 画面上の負方向が h0、正方向が h1 に対応する。
 	float h0 = -acos(clamp(horizonNegativeCos, -1.0f, 1.0f));
 	float h1 = acos(clamp(horizonPositiveCos, -1.0f, 1.0f));
 	h0 = n + clamp(h0 - n, -kHalfPi, kHalfPi);
@@ -70,8 +70,8 @@ float4 main(VSOutput input) : SV_Target0 {
 	ReconstructNormalAndTangents(input.uv, rawDepth, worldPos, normal, tangentX, tangentY);
 
 	float3 viewDirection = normalize(gCameraWorldPosition - worldPos);
-	// A GTAO slice is a camera-screen direction, not a direction on the reconstructed
-	// surface. Keeping the surface tangents here incorrectly darkens the whole image on slopes.
+	// GTAO のスライス方向はカメラの画面上で定義する。
+	// 再構成した面の接線を使うと、斜面で画面全体が誤って暗くなる。
 	float3 screenX = ReconstructWorldPos(input.uv + float2(gDepthTexelSize.x, 0.0f), rawDepth) - worldPos;
 	float3 screenY = ReconstructWorldPos(input.uv + float2(0.0f, gDepthTexelSize.y), rawDepth) - worldPos;
 	if (dot(screenX, screenX) < 1e-8f || dot(screenY, screenY) < 1e-8f) return 1.0f.xxxx;
@@ -81,8 +81,8 @@ float4 main(VSOutput input) : SV_Target0 {
 	float noise = InterleavedGradientNoise(floor(input.pos.xy));
 	float rotation = noise * kPi;
 	float visibility = 0.0f;
-	// Move the center toward the camera. This is the GTAO depth-precision bias and does
-	// not tilt the horizon of a flat surface as a normal-direction offset can.
+	// 深度精度を補う GTAO のバイアスとして、中心点をカメラ側にずらす。
+	// これにより、法線方向にずらした場合に起こり得る平面の地平線の傾きを防ぐ。
 	float3 biasedCenter = worldPos + viewDirection * gBias;
 
 	[loop]
@@ -116,8 +116,8 @@ float4 main(VSOutput input) : SV_Target0 {
 			continue;
 		}
 
-		// A missing sample means the horizon is below the normal's visible hemisphere,
-		// not a fixed -1 cosine. This guarantees AO=1 on an unoccluded flat surface.
+		// サンプルがない場合は、地平線が法線を軸とする可視半球より下にあるとみなす。
+		// 余弦を一律に -1 とする場合と異なり、遮蔽のない平面では AO=1 が保証される。
 		float horizons[2] = { cos(n - kHalfPi), cos(n + kHalfPi) };
 		[unroll]
 		for (uint side = 0; side < 2; ++side) {
@@ -151,14 +151,14 @@ float4 main(VSOutput input) : SV_Target0 {
 
 	visibility = saturate(visibility / max(float(gDirectionCount), 1.0f));
 
-	// Work in occlusion space so intensity never darkens fully visible surfaces.
-	// A small residual threshold also removes the low-level haze caused by
-	// half-resolution sampling and reconstruction error.
+	// 遮蔽量に対して強度を適用し、完全に可視な面が暗くならないようにする。
+	// 小さなしきい値で微小な残留遮蔽を除去し、
+	// 半解像度でのサンプリングや再構成誤差による薄いかすみを抑える。
 	static const float kResidualOcclusion = 0.03f;
 	float occlusion = saturate((1.0f - visibility - kResidualOcclusion) / (1.0f - kResidualOcclusion));
 
-	// Power is an occlusion contrast control. Above 1 it suppresses weak AO and
-	// emphasizes strong AO around the pivot; below 1 it simply softens AO.
+	// Power は遮蔽のコントラストを調整する。1 より大きい場合は、
+	// 基準値より弱い AO を抑え、強い AO を強調する。1 未満では AO を弱める。
 	static const float kOcclusionPivot = 0.20f;
 	if (gPower >= 1.0f)
 	{

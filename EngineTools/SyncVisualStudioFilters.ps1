@@ -4,7 +4,7 @@ param([switch]$Check)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# Windows PowerShell 5.1 / .NET Framework only; no additional runtime is required.
+# Windows PowerShell 5.1 と .NET Framework だけで動作する。追加のランタイムは不要。
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $rootPrefix = $repositoryRoot.TrimEnd('\') + '\'
 $projectPath = Join-Path $repositoryRoot 'Build\KashipanEngine.vcxproj'
@@ -18,7 +18,7 @@ $pathComparer = [Collections.Generic.Comparer[string]]::Create([Comparison[strin
 })
 
 function Get-FilterIdentifier([string]$Directory) {
-    # UUID v5 with the URL namespace, matching the previous Python generator.
+    # 従来の Python 生成処理と同じく、URL 名前空間で UUID v5 を生成する。
     [byte[]]$namespaceBytes = @(0x6b, 0xa7, 0xb8, 0x11, 0x9d, 0xad, 0x11, 0xd1,
         0x80, 0xb4, 0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8)
     $nameBytes = [Text.Encoding]::UTF8.GetBytes('KashipanEngine/filters/' + $Directory)

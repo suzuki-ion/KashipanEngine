@@ -1,4 +1,4 @@
-// Compile-only usage example; invoke QueryExample from a scene script.
+// コンパイル確認用の使用例。シーンスクリプトから QueryExample を呼び出す。
 void QueryExample() {
     CollisionShape3D sphere;
     sphere.type = CollisionShapeType3D::Sphere;

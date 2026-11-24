@@ -98,7 +98,7 @@ void Window::Update(Passkey<GameEngine>) {
         Window *window = pair.second.get();
         window->ClearMessages();
         window->ProcessMessage();
-        // WM_DESTROY メッセージを受信 or Destroy() 呼び出しで pending フラグセット
+        // WM_DESTROY メッセージの受信、または Destroy() の呼び出しで pending フラグを設定する
         if (window->IsDestroyed() || window->IsPendingDestroy()) {
             if (!window->IsPendingDestroy()) {
                 // メッセージ経由で初めて検出した場合通知化
@@ -198,7 +198,7 @@ void Window::CompleteStartupHandoff(Passkey<GameEngine>) {
         if (!window.startupDeferred_ || window.isPendingDestroy_) continue;
         window.startupMinimized_ = IsIconic(hwnd) != FALSE;
         if (window.startupShared_) {
-            SplashScreen::DetachWindow({}, hwnd); // Joins D2D before any DX12 swap-chain creation.
+            SplashScreen::DetachWindow({}, hwnd); // DX12 のスワップチェーンを作成する前に、D2D の描画スレッドの終了を待つ。
             SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(&window));
             SetLastError(0);
             if (!SetWindowLongPtrW(hwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(WindowsAPI::WindowProc)) && GetLastError())
@@ -676,7 +676,7 @@ bool Window::InitializeWindow(WNDPROC windowProc, WindowType windowType, const s
             GetWindowRect(shared, &size_.windowRect);
             Log("[StartupWindow] claimed HWND=" + std::to_string(reinterpret_cast<uintptr_t>(shared)) +
                 " ownerThread=" + std::to_string(GetWindowThreadProcessId(shared, nullptr)), LogSeverity::Info);
-            return true; // Preserve splash style/size/procedure until its renderer has stopped.
+            return true; // スプラッシュ画面の描画処理が停止するまで、そのウィンドウのスタイル、サイズ、ウィンドウプロシージャを維持する。
         }
     }
 

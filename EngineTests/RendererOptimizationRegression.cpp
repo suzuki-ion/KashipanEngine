@@ -1,4 +1,4 @@
-// Headless lifecycle/update/cache regressions using the real scene and component pools.
+// 実際のシーンとコンポーネントプールを使い、ライフサイクル、更新、キャッシュをヘッドレスで検証する。
 #include <bit>
 #include <cstdio>
 #include <functional>
@@ -117,7 +117,7 @@ int main() {
     Check(lifecycle->finalized==1,"non-updating component is finalized");a->action={};owner->SetActive(true);order.clear();owner->UpdateInterface(update);
     Check(order==std::vector<int>({1,3})&&lifecycle->initialized==2,"reactivation retains full lifecycle and cached updates");
 
-    // The shared collection keeps the order of shadow sources identical to each GPU array.
+    // 共有コレクション内のシャドウ光源は、各 GPU 配列と同じ順序に保たれる。
     for (int kind=0;kind<8;++kind) {auto *o=sc->CreateEmptyObject("Light");auto *light=o->AddComponent<Light>();light->SetType(static_cast<Light::Type>(kind));o->AddComponent<LightRenderer>();}
     auto *registry=sc->GetComponent<SceneRenderer>();Check(registry!=nullptr,"light registry created");
     RendererInternal::FrameLights lights;
@@ -133,7 +133,7 @@ int main() {
     RendererInternal::FilterFrameLights(world,registry,&target,"OtherPipeline",excluded);
     Check(excluded.pointLights.empty()&&excluded.directionalLights.size()==1,"per-pipeline light exclusions remain independent");
 
-    // Force one object per slice, then compare with the complete serializer.
+    // スライスあたり 1 オブジェクトに固定してから、全体を一括処理したシリアライズ結果と比較する。
     Scene::RecoverySnapshot snapshot;
     auto progress=scene.AdvanceRecoverySnapshot(snapshot,0);
     Check(progress==Scene::RecoveryProgress::Pending&&snapshot.cursor==1,"snapshot work is sliced between objects");

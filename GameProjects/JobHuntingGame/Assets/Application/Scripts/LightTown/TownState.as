@@ -5,7 +5,7 @@ float TownClamp(float value, float low, float high) {
     return value < low ? low : (value > high ? high : value);
 }
 float TownEnergyLimit() { return 3.402823e38f; }
-// Facing 0=-Z, 1=+X, 2=+Z, 3=-X. Imported models face +Z before the base half-turn.
+// 向きは 0=-Z、1=+X、2=+Z、3=-X。インポートしたモデルは基準の半回転を適用する前は +Z を向く。
 int TownFacing(int rotation){return (rotation%4+4)%4;}
 int TownFrontX(int rotation){int r=TownFacing(rotation);return r==1?1:(r==3?-1:0);}
 int TownFrontZ(int rotation){int r=TownFacing(rotation);return r==0?-1:(r==2?1:0);}
@@ -27,8 +27,8 @@ class TownState {
     array<bool>@ litCells = array<bool>();
     array<bool>@ workingCells = array<bool>();
     array<int>@ workingCounts = array<int>();
-    // Cell indices point into an owned JSON copy. At() still returns a copy so
-    // callers must explicitly StoreBuilding() to persist their edits.
+    // セルのインデックスは保持中の JSON コピー内の位置を指す。At() もコピーを返すため、
+    // 編集を反映するには呼び出し側が明示的に StoreBuilding() を呼ぶ必要がある。
     Json@ buildingSnapshot;
     int facilityCount=0;uint infrastructureVersion=0;
     array<int>@ buildingIndices = array<int>();
@@ -92,7 +92,7 @@ class TownState {
     }
     void Publish() {
         scene.SetGlobalVariable("LightTown.State", data.ToString());
-        // This clock belongs to the running session, so only the remaining times go on disk.
+        // この時計は実行中のセッションに属するため、ディスクには残り時間だけを保存する。
         scene.SetGlobalVariable("LightTown.LastRealTime", lastRealTime);
         scene.SetGlobalVariable("LightTown.TransformationUnlocked", data.GetBool("transformationUnlocked"));
     }
@@ -157,8 +157,8 @@ class TownState {
     }
     int AutoFacingFor(int x,int z,int width,int preferred=0){EnsureInfrastructure();preferred=TownFacing(preferred);for(int n=0;n<4;++n){int r=TownFacing(preferred+n),cell=EntranceCell(x,z,r,width);if(cell>=0&&roadCells[uint(cell)])return r;}return AutoFacing(x,z,preferred);}
     void MigrateBuildingFacing(){
-        // Old saves had no entrance direction. Orient each legacy building toward
-        // an existing adjacent road once, then persist a fixed quarter-turn.
+        // 旧セーブには入口の向きがない。旧データの建物は初回に隣接する既存の道路へ向け、
+        // 以降は 90 度単位の向きを固定して保存する。
         Json@ list=Buildings();array<bool> legacyRoads(uint(GridSize()*GridSize()),false);
         for(uint i=0;i<list.Size();++i){Json@ b=list.At(i);int x=int(b.GetInt("x")),z=int(b.GetInt("z"));if(b.GetInt("kind")==6&&InBounds(x,z))legacyRoads[uint(z*GridSize()+x)]=true;}
         Json@ next=Json();next.Parse("[]");bool changed=false;
@@ -314,7 +314,7 @@ class TownState {
     void AdvanceRealTime() {
         double elapsed = GetMonotonicSeconds() - lastRealTime;
         if (elapsed <= 0) return;
-        // Bound catch-up work after a long suspension. The unapplied time stays pending.
+        // 長時間中断後の追いつき処理に上限を設ける。未処理の時間は保留する。
         if (elapsed > 30 && HasFacilities()) elapsed = 30;
         lastRealTime += elapsed;
         Tick(elapsed);
@@ -350,7 +350,7 @@ class TownState {
         double interval = ProductionInterval();
         double eventInterval = TownClamp(float(rules.GetFloat("eventSeconds", 40)), 1, 86400);
         bool persist = false;
-        // Apply returns before each due cycle, so a later return can't fund earlier production.
+        // 各生産サイクルの前に、その時点までの帰還分を反映する。後の帰還で得た資源を過去の生産に使うことはない。
         while (dt > 0) {
             double untilProduction = interval - clock;
             double untilEvent = eventInterval - eventClock;
@@ -368,8 +368,8 @@ class TownState {
         data.SetFloat("eventClock", eventClock);
         if (persist) Save();
     }
-    // The preview and payout share this calculation, including resource caps.
-    // Order: wood, stone, crystal, light, happiness, safety, prosperity.
+    // 資源上限を含め、プレビューと実際の報酬に同じ計算を使う。
+    // 並び順は木材、石材、水晶、光、幸福度、安全度、繁栄度。
     void ReconcilePollution(){
         float penalty=0;Json@ list=Buildings();float spacing=float(rules.GetFloat("cellSize",1.5f));
         for(uint i=0;i<list.Size();++i){Json@ house=list.At(i);if(house.GetInt("kind")!=1)continue;for(uint j=0;j<list.Size();++j){Json@ factory=list.At(j);if(factory.GetInt("kind")!=2)continue;int t=int(factory.GetInt("tier"));float hx=float(house.GetInt("x")),hz=float(house.GetInt("z")),fx=float(factory.GetInt("x")),fz=float(factory.GetInt("z"));float dx=Max(0.0f,Max(hx-fx-float(Footprint(factory)-1),fx-hx-float(Footprint(house)-1))),dz=Max(0.0f,Max(hz-fz-float(Footprint(factory)-1),fz-hz-float(Footprint(house)-1)));if(dx*dx+dz*dz<=float(Balance("pollutionRadius",t,2+t)*Balance("pollutionRadius",t,2+t)))penalty+=float(Balance("pollution",t,2+t*3));}}

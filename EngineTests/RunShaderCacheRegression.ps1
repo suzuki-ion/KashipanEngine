@@ -1,4 +1,4 @@
-# Run in a Visual Studio x64 developer PowerShell.
+# Visual Studio の x64 開発者用 PowerShell で実行する。
 $ErrorActionPreference = 'Stop'
 $taskRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $taskProject = $taskRoot

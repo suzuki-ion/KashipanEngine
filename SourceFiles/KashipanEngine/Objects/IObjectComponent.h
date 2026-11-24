@@ -119,7 +119,7 @@ public:
     ///          登録前の LoadFromJson() が一度呼ばれる。その段階でウィンドウ等の外部リソースを
     ///          生成しないための判定に使用する。
     bool IsRegisteredToOwner() const;
-    /// True during incremental scene preparation, before activation/gameplay.
+    /// シーンを段階的に準備している間は true。有効化とゲームプレイ開始の前に限る。
     bool IsPreparingScene() const;
     /// @brief このコンポーネント自身を指す ComponentRef を取得する
     /// @details フレームをまたいで安全に保持するためのハンドル。プールのスロット再利用による

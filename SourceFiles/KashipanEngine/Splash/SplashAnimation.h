@@ -3,7 +3,7 @@
 #include <cmath>
 
 namespace KashipanEngine::SplashAnimation {
-// World coordinates: bottom-left origin, +X right, +Y up, +rotation counterclockwise.
+// ワールド座標の原点は左下。+X は右、+Y は上、正の回転は反時計回り。
 inline constexpr float kCanvasWidth = 1920, kCanvasHeight = 1080;
 inline constexpr float kLogoX = kCanvasWidth * 0.5f, kLogoY = kCanvasHeight * 0.5f;
 inline constexpr float kTextY = kCanvasHeight * 0.2f, kTextWidth = 1024, kTextHeight = 256;
@@ -16,7 +16,7 @@ inline Viewport FitViewport(int width, int height) {
     return {scale, (width - kCanvasWidth * scale) * 0.5f, (height - kCanvasHeight * scale) * 0.5f};
 }
 struct ClientSize { int width, height; };
-// The window occupies at most 2/3 of each monitor dimension, with its frame outside the client.
+// クライアント領域の幅と高さは、それぞれモニターの幅と高さの 2/3 以下。ウィンドウ枠はクライアント領域の外側に付く。
 inline ClientSize ChooseClientSize(int monitorWidth, int monitorHeight, int availableWidth, int availableHeight) {
     const double scale = std::max(0.0, std::min({
         monitorWidth * (2.0 / 3.0) / kCanvasWidth,
@@ -26,7 +26,7 @@ inline ClientSize ChooseClientSize(int monitorWidth, int monitorHeight, int avai
     return {std::max(1, static_cast<int>(std::floor(kCanvasWidth * scale + 1e-6))),
         std::max(1, static_cast<int>(std::floor(kCanvasHeight * scale + 1e-6)))};
 }
-// TD2_3 EngineLogoScene: 1s lead-in, logo reveal/hold through 3s, 1s fade.
+// TD2_3 EngineLogoScene は冒頭の 1 秒を導入に使い、3 秒時点までロゴを出現・保持し、最後の 1 秒でフェードする。
 inline constexpr double kIntroEnd = 3.0;
 inline constexpr double kFadeDuration = 1.0;
 inline constexpr double kRotationDuration = 1.0;
@@ -46,7 +46,7 @@ struct Frame {
     float textAlpha = 0, wipeCenter = kLogoX, wipeWidth = 0, fade = 0;
     bool loading = false, finished = false;
 };
-// readyAt is measured from the first splash paint; -1 means still loading.
+// readyAt はスプラッシュ画面を最初に描画してからの経過時間。-1 は読み込み中を表す。
 inline Frame Sample(double seconds, double readyAt = -1.0) {
     Frame frame;
     const double t = seconds - 1.0;

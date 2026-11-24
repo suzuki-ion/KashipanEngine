@@ -1,4 +1,4 @@
-// Headless integration tests using the editor build and an isolated temporary EditorTools directory.
+// エディタービルドと分離した一時 EditorTools ディレクトリを使うヘッドレス統合テスト。
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
         scene = std::make_unique<Scene>(std::string("EditorToolRegression"));
         native = scene->GetSceneContext();
 
-        // Deliberately shift native type ids in another engine.
+        // 別のエンジンインスタンスで、ネイティブ型の ID を意図的にずらす。
         auto *editorEngine = Engine(true);
         Write("game.as", R"(
             class Game : ScriptComponentBehavior {
@@ -190,7 +190,7 @@ int main(int argc, char **argv) {
         ImGui::DestroyContext();
         std::puts("Reload, include deduplication, multiple/closed windows and exception recovery passed.");
 
-        // Compile and instantiate the shipped tools in the same loader.
+        // 配布対象のツールを同じローダーでコンパイルし、インスタンス化する。
         if (argc > 1) {
             fs::remove("EngineData/EditorTools/Shared.as"); fs::remove("EngineData/EditorTools/Including.as"); fs::remove("EngineData/EditorTools/Throwing.as"); fs::remove("EngineData/EditorTools/Underflow.as");
             for (const auto &entry : fs::directory_iterator(fs::path(argv[1]))) {
@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
         std::fprintf(stderr, "FAILED: %s\n", error.what()); exitCode = 1;
     }
     fs::current_path(original);
-    // sandbox is an explicitly created unique child of the system temp directory.
+    // sandbox はシステムの一時ディレクトリ直下に明示的に作った固有の子ディレクトリ。
     if (sandbox.parent_path() == fs::temp_directory_path()) fs::remove_all(sandbox);
     return exitCode;
 }

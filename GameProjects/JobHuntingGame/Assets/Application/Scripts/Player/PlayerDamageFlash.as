@@ -34,7 +34,7 @@ class PlayerDamageFlash {
         bool blinkOn = (int(flashTimer / owner.damageFlashInterval) % 2) == 0;
         if (blinkOn) {
             meshRenderer.SetInstanceColor(owner.damageFlashColor);
-            meshRenderer.SetInstanceColorBlendMode(0); // Override
+            meshRenderer.SetInstanceColorBlendMode(0); // オーバーライド
         } else {
             meshRenderer.SetInstanceColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
             meshRenderer.SetInstanceColorBlendMode(1); // Multiply（見た目に影響しない）

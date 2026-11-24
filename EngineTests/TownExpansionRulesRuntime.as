@@ -1,4 +1,4 @@
-// Injected into the real CityController only in an isolated QA application.
+// 分離した QA アプリケーション内でのみ、実際の CityController に組み込む。
     bool qaRulesPassed=false;
     void QAAssert(bool ok,const string &in what){if(ok)return;Json@ result=Json();result.SetBool("passed",false);result.SetString("error",what);SaveJsonFile("Results/TownExpansionRules.json",result);throw(what);}
     void QAFunds(){state.AddResources(100000,100000,100000);state.data.SetInt("planks",100000);state.data.SetInt("masonry",100000);state.data.SetInt("refinedCrystal",100000);state.data.SetFloat("energy",1000000);}
@@ -31,7 +31,7 @@
         wood=int(state.data.GetInt("wood"));state.Tick(45);QAAssert(state.data.GetInt("wood")==wood+20*9,"guild rewards scale by 1 and 8 without changing duration");
         QAAssert(TownFireflyCount(64)==8&&TownFireflyCount(16384)==2048&&TownFireflyCount(1000000000)==2048,"8 reserve light per visible firefly, fixed render cap");
         fireflies.Update(0,0);fireflies.Update(0,8);float radius=fireflies.commonLight.GetRadius(),intensity=fireflies.intensityScale;fireflies.Update(1,16384);QAAssert(fireflies.commonLight.GetRadius()>radius&&fireflies.intensityScale>intensity,"reserve increases light range and intensity");
-        // Populate a mixed city for render and interaction checks.
+        // 描画と操作を確認するため、さまざまな施設が混在する街を作る。
         state.NewGame();QAFunds();for(int x=2;x<14;++x)state.Build(6,x,8);for(int z=2;z<13;++z)state.Build(6,12,z);
         state.Build(0,3,7,2);state.Build(0,7,7,2);state.Build(0,11,7,2);state.Build(1,3,9,0);state.Build(1,5,9,0,true,1);state.Build(1,8,9,0,true,2);state.Build(2,4,7,2,true,0,0);state.Build(2,5,7,2,true,1,1);state.Build(2,8,6,2,true,2,2);state.Build(7,10,7,2);state.Build(3,11,9,0);state.Build(4,2,7,2);
         world.Rebuild();world.arrivalDone=true;for(uint i=0;i<world.roots.length();++i)world.roots[i].GetTransform().SetTranslate(Vector3());

@@ -39,7 +39,7 @@ def main():
     scene_file = package / "Assets/SceneList.json"
     scene_list = json.loads(scene_file.read_text(encoding="utf-8-sig"))
     scenes = [entry["name"] for entry in scene_list["scenes"]]
-    # Repeating the first scene also checks reuse of locally generated PSOs.
+    # 最初のシーンを再度読み込み、ローカルで生成した PSO の再利用も確認する。
     if scenes:
         scenes.append(scenes[0])
     results = []

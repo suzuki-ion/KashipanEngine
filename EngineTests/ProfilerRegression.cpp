@@ -24,7 +24,7 @@ int main() {
         std::thread worker([] { Profiler::Scope scope("Worker"); });
         worker.join();
     }
-    Require(profiler.GetSnapshot().results.empty()); // partial frames never appear
+    Require(profiler.GetSnapshot().results.empty()); // 未完了のフレームは表示されない
     profiler.EndFrame();
     auto first = profiler.GetSnapshot();
     Require(first.frames == 1 && first.fps > 0 && first.frameMs > 0);
@@ -45,15 +45,15 @@ int main() {
     profiler.BeginFrame();
     stale.reset();
     profiler.EndFrame();
-    Require(profiler.GetSnapshot().results.empty()); // history expired; crossing scope discarded
-    profiler.SetSampleCount(0); // clamped to one
+    Require(profiler.GetSnapshot().results.empty()); // 履歴の保持期間を過ぎたため、境界をまたいだ計測スコープを破棄する
+    profiler.SetSampleCount(0); // 下限の 1 に制限する
     profiler.BeginFrame();
     { Profiler::Scope scope("Recent"); }
     profiler.EndFrame();
     Require(profiler.GetSnapshot().frames == 1 && Find(profiler.GetSnapshot(), "Recent").calls == 1);
     const auto completed = profiler.GetSnapshot().frameId;
     profiler.EndFrame();
-    Require(profiler.GetSnapshot().frameId == completed); // duplicate completion is ignored
+    Require(profiler.GetSnapshot().frameId == completed); // 重複した完了通知は無視する
     std::atomic<bool> stop{false}, consistent{true};
     std::thread reader([&] {
         while (!stop.load()) {

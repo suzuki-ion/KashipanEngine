@@ -1,4 +1,4 @@
-// Headless integration tests: production physics, scene snapshots and AngelScript bindings.
+// 実際の物理処理、シーンのスナップショット、AngelScript バインディングを使うヘッドレス統合テスト。
 #include <stdexcept>
 #include <cstdio>
 #include <fstream>
@@ -28,7 +28,7 @@ void Message(const asSMessageInfo *message, void *) {
 int main(int argc, char **argv) {
     std::setvbuf(stdout, nullptr, _IONBF, 0);
     try {
-        // Every 2D shape pair, including segment-box/capsule and rotated boxes.
+        // 線分とボックス・カプセル、回転ボックスを含め、2D 形状のすべての組み合わせを検証する。
         for (int a = 0; a < 5; ++a) for (int b = 0; b < 5; ++b) {
             CollisionShape2D x, y;
             x.type = static_cast<CollisionShapeType2D>(a);

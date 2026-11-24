@@ -1,4 +1,4 @@
-// Real scene/Undo plus authenticated loopback MCP. No window, GPU, model or credentials.
+// 実際のシーンと Undo、および認証付きのループバック MCP を使う。ウィンドウ、GPU、モデル、認証情報は不要。
 #define NOMINMAX
 #include <winsock2.h>
 #include <ws2tcpip.h>

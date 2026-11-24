@@ -1,4 +1,4 @@
-# Run from a Visual Studio x64 developer PowerShell. Uses editor configuration without starting the graphics engine.
+# Visual Studio の x64 開発者用 PowerShell で実行する。エディター構成を使用し、描画エンジンは起動しない。
 $ErrorActionPreference = 'Stop'
 $taskProjectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $taskTestProject = Join-Path $taskProjectRoot 'Build\EditorToolRegression.generated.vcxproj'
@@ -6,7 +6,7 @@ $taskSource = Get-Content -LiteralPath (Join-Path $taskProjectRoot 'Build\Kaship
 $taskSource = $taskSource.Replace('..\SourceFiles\KashipanEngine\KashipanEngine.cpp', '..\EngineTests\EditorToolRegression.cpp')
 $taskSource = [regex]::Replace($taskSource, '<ClCompile Include="\.\.\\SourceFiles\\main\.cpp">[\s\S]*?</ClCompile>', '')
 $taskSource = $taskSource.Replace('<SubSystem>Windows</SubSystem>', '<SubSystem>Console</SubSystem>')
-# Embedded debug info avoids dependency on the PDB server during this standalone check.
+# デバッグ情報を埋め込むことで、この単体検証で PDB サーバーに依存せずに済む。
 $taskSource = $taskSource.Replace('<ClCompile>', '<ClCompile><DebugInformationFormat>OldStyle</DebugInformationFormat>')
 $taskSource = [regex]::Replace($taskSource, '<ProjectReference[\s\S]*?</ProjectReference>', '')
 $taskSource = [regex]::Replace($taskSource, '<PostBuildEvent>[\s\S]*?</PostBuildEvent>', '')

@@ -47,7 +47,7 @@ int main() {
         Require(!run("spatial.unknown", ShortText::Value::object()) && error.empty(), "unknown spatial command must allow next adapter");
         Require(!run("look_at", {{"position", {0, 0, 0}}}) && error.empty(), "other domain command is not claimed");
 
-        // 3-4-5 against a named reference, measured from a non-origin world source.
+        // ワールド座標の原点以外から、名前で指定した基準点への 3-4-5 の関係を測る。
         Require(run("spatial.distance", {{"reference", "Goal"}, {"result", "goal3"}}), "named reference distance");
         auto r = result("goal3");
         Require(Near(r["distance"].get<double>(), 5.0), "3-4-5 distance");
@@ -63,7 +63,7 @@ int main() {
         Require(Near(r["distance"].get<double>(), 5.0) && NearArray(r["direction"], 0.6, 0, 0.8), "XZ direction");
         Require(Near(r["yaw_degrees"].get<double>(), std::atan2(3.0, 4.0) * 180.0 / pi) && Near(r["pitch_degrees"].get<double>(), 0.0), "XZ yaw/pitch");
 
-        // 2D projects onto XY and measures CCW from +X.
+        // 2D では XY 平面に投影し、+X から反時計回りに角度を測る。
         Require(run("spatial.direction", {{"position", {4, 6, 100}}, {"dimension", 2}, {"result", "flat"}}), "2D ignores Z");
         r = result("flat");
         Require(Near(r["distance"].get<double>(), 5.0) && NearArray(r["delta"], 3, 4, 0) && NearArray(r["direction"], 0.6, 0.8, 0), "2D projected delta");
@@ -72,7 +72,7 @@ int main() {
         Require(run("spatial.direction", {{"position", {0, 2, 0}}, {"dimension", 2}, {"result", "west"}}) && Near(result("west")["angle_degrees"].get<double>(), 180.0), "2D -X is 180");
         Require(run("spatial.direction", {{"position", {1, 1, 0}}, {"dimension", 2}, {"result", "south"}}) && Near(result("south")["angle_degrees"].get<double>(), -90.0), "2D -Y is -90");
 
-        // Coincident positions yield zero direction and angles.
+        // 位置が一致すると方向と角度は 0 になる。
         Require(run("spatial.direction", {{"position", {1, 2, 3}}, {"result", "same"}}), "coincident 3D");
         r = result("same");
         Require(r["coincident"] == true && Near(r["distance"].get<double>(), 0.0) && NearArray(r["direction"], 0, 0, 0), "coincident zero direction");
@@ -80,7 +80,7 @@ int main() {
         Require(run("spatial.direction", {{"position", {1, 2, 50}}, {"dimension", 2}, {"result", "same2"}}), "coincident 2D despite Z");
         Require(result("same2")["coincident"] == true && result("same2")["angle_degrees"].get<double>() == 0.0, "coincident zero angle");
 
-        // UUID resolves even when the name is duplicated.
+        // 名前が重複していても UUID で解決できる。
         Require(run("spatial.distance", {{"reference", twinA->GetObjectID().ToString()}, {"result", "twin"}}), "UUID reference");
         Require(Near(result("twin")["distance"].get<double>(), 10.0) && NearArray(result("twin")["direction"], 0, 0, 1), "UUID picks exact object");
         Require(run("spatial.distance", {{"position", {1, 2, 3}}, {"result", std::string(64, 'a')}}), "64-byte result name accepted");

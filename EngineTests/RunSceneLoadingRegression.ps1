@@ -1,5 +1,5 @@
 ﻿param([ValidateSet("Development","Release")][string]$Configuration="Development")
-# Run in a VS x64 Developer PowerShell after building the selected configuration.
+# 対象の構成をビルドしてから、Visual Studio の x64 開発者用 PowerShell で実行する。
 $ErrorActionPreference = 'Stop'
 $bindingRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $bindingOutput = Join-Path $bindingRoot 'Generated/SceneLoading'

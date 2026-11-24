@@ -29,8 +29,8 @@ SITES = [
 TAG_RE = re.compile(r'<[^>]+>')
 WS_RE = re.compile(r'\s+')
 
-# (?=[\s>]) ensures the tag name isn't a prefix of a longer tag name
-# (e.g. bare "<li[^>]*>" would also match "<link ...>").
+# (?=[\s>]) で、より長いタグ名の先頭部分に一致するのを防ぐ。
+# （例として、単純な "<li[^>]*>" は "<link ...>" にも一致する。）
 BLOCK_RE = re.compile(
     r'<h2(?=[\s>])[^>]*>(?P<h2>.*?)</h2>'
     r'|<h3(?=[\s>])[^>]*>(?P<h3>.*?)</h3>'
@@ -101,8 +101,8 @@ def main():
     site_labels = {s: label for s, label in SITES}
 
     js = []
-    js.append("// KashipanEngine Reference - unified search index (auto-generated)")
-    js.append("// Regenerate with Reference/build-search-index.py when reference content changes.")
+    js.append("// KashipanEngine リファレンスの統合検索インデックス（自動生成）")
+    js.append("// リファレンスを変更したら Reference/build-search-index.py で再生成する。")
     js.append("const KE_SITE_LABELS = " + json.dumps(site_labels, ensure_ascii=False) + ";")
     js.append("const KE_SEARCH_INDEX = " + json.dumps(pages, ensure_ascii=False, separators=(",", ":")) + ";")
     out = "\n".join(js) + "\n"

@@ -125,7 +125,7 @@ bool FallbackUI::Create(HWND window) {
     return true;
 }
 
-void FallbackUI::Resize(int /*width*/, int /*height*/) {
+void FallbackUI::Resize(int /*幅*/, int /*高さ*/) {
     // 固定レイアウトのため、サイズ変更に追従する必要はない
 }
 

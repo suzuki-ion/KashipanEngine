@@ -9,7 +9,7 @@ namespace {
 
 /// @brief Direction列挙の並び順（Up, Down, Left, Right, Front, Back）に対応する座標オフセット
 constexpr std::array<std::array<std::int32_t, 3>, WaveFunctionCollapse::kDirectionCount> kDirectionOffsets = { {
-    { 0, 1, 0 },   // Up
+    { 0, 1, 0 },   // 上方向
     { 0, -1, 0 },  // 下方向
     { -1, 0, 0 },  // 左方向
     { 1, 0, 0 },   // 右方向

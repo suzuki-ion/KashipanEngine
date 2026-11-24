@@ -4,7 +4,7 @@ Texture2D gTexture : register(t0);
 SamplerState gSampler : register(s0);
 
 cbuffer FXAACB : register(b0) {
-	float2 gInvScreenSize; // (1.0 / width, 1.0 / height)
+	float2 gInvScreenSize; // (1.0 / 画面の幅, 1.0 / 画面の高さ)
 	float gEdgeThreshold;
 	float gEdgeThresholdMin;
 	float gStrength;

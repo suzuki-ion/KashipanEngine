@@ -1,4 +1,4 @@
-// Run in an isolated initialized CityScene, after the production controller starts.
+// 分離した CityScene を初期化し、実際のコントローラーが起動してから実行する。
 #include "../GameProjects/JobHuntingGame/Assets/Application/Scripts/LightTown/TownFireflies.as"
 #include "../GameProjects/JobHuntingGame/Assets/Application/Scripts/LightTown/TownFacilityIndicators.as"
 #include "../GameProjects/JobHuntingGame/Assets/Application/Scripts/LightTown/TownPedestrians.as"
@@ -45,7 +45,7 @@ class LightTownRuntimeRegression : ScriptComponentBehavior {
         Check(orientation.AutoFacing(5,5)==1,"nearby non-adjacent road attracts the entrance");orientation.Build(6,5,6);
         Check(orientation.AutoFacing(5,5)==2,"adjacent road wins over distant road");orientation.Build(6,6,5);
         Check(orientation.AutoFacing(5,5,1)==1&&orientation.AutoFacing(5,5,2)==2,"equally close roads keep preferred facing");
-        // A rotated-away lamp must not illuminate cells or keep other facilities running.
+        // 向きを変えて対象から外れたランプは、セルを照らしたり、他の施設を稼働させ続けたりしてはならない。
         orientation.NewGame();orientation.AddResources(1000,1000,1000);orientation.Build(6,5,4);orientation.Build(6,6,5);orientation.Build(0,5,5,2);
         Check(!orientation.IsWorking(5,5)&&!orientation.IsLit(6,5),"misoriented streetlight provides no energy or coverage");
         Json@ legacy=Json();legacy.Parse("[{\"kind\":6,\"x\":5,\"z\":4},{\"kind\":0,\"x\":5,\"z\":5}]");orientation.SetBuildings(legacy);orientation.Publish();TownState migrated;
@@ -113,8 +113,8 @@ class LightTownRuntimeRegression : ScriptComponentBehavior {
         verifiedPoolSize=int(swarm.phases.length());
         GetScene().DeleteObject(swarm.batchObject);Check(!IsValidObject(swarm.batchObject),"batch owner deleted");
         TownFireflies replacement;replacement.Initialize(GetScene(),10);replacement.Update(.01f,3);Verify(replacement,3);
-        // Native buffers must remain valid after this local producer and its
-        // script arrays go out of scope, including subsequent render frames.
+        // ローカルの生成側オブジェクトとスクリプト配列がスコープを抜けても、
+        // 後続の描画フレームでネイティブバッファが引き続き有効であることを確認する。
         completed=true;
     }
     void Update(){

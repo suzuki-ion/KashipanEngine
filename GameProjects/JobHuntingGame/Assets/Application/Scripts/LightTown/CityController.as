@@ -48,7 +48,7 @@ class CityController : ScriptComponentBehavior {
     void RefreshFacing(int x,int z){state.EnsureInfrastructure();if(x!=facingX||z!=facingZ||selected!=facingKind||state.infrastructureVersion!=facingRevision){manualFacing=false;rotation=state.AutoFacingFor(x,z,int(state.Definition(selected,tier,recipe).GetInt("size",1)),rotation);facingX=x;facingZ=z;facingKind=selected;facingRevision=state.infrastructureVersion;}}
     void PlaceAt(int x,int z){if(state.Build(selected,x,z,PlacementFacing(x,z),true,tier,recipe))ShowBuilding(selected,x,z);}
     void PaintTo(int x,int z){
-        // Apply the tool to cells skipped between mouse samples.
+        // マウス座標の取得間隔で飛び越えたセルにもツールを適用する。
         bool removing=selected==8;
         int px=strokeX<0?x:strokeX,pz=strokeZ<0?z:strokeZ;
         bool changed=false;int dx=int(Abs(float(x-px))),dz=-int(Abs(float(z-pz))),sx=px<x?1:-1,sz=pz<z?1:-1,error=dx+dz;
@@ -178,7 +178,7 @@ class CityController : ScriptComponentBehavior {
         bool continuous=selected==6||IsCommandTriggered("TownBuildContinuous");
         bool paintingAllowed=picked&&continuous&&!cameraControls.manipulating&&clicked<0&&choice<0;
         bool held=IsCommandTriggered("TownPlaceHold");
-        // Start fresh after a UI/map gap, camera operation or release of Shift.
+        // UI やマップの外に出た後、カメラ操作後、または Shift を離した後は、新しい操作として始める。
         if(!paintingAllowed){strokeX=-1;strokeZ=-1;}
         if(!removing&&paintingAllowed&&!strokeBlocked&&held)strokeStarted=true;
         if(!buildMenu.visible&&hasCell&&!cameraControls.manipulating&&clicked<0&&pressedX==cellX&&pressedZ==cellZ&&IsCommandTriggered("TownPlace"))SelectGuild(cellX,cellZ);
@@ -195,7 +195,7 @@ class CityController : ScriptComponentBehavior {
             float alpha=.3f+.14f*Sin(cursorTime*6.2831853f/1.2f);
             r.SetInstanceColor(!possible?Vector4(1,.2f,.2f,alpha):(removing?Vector4(1,.35f,.25f,alpha):(operational?Vector4(.2f,1,.5f,alpha):Vector4(1,.65f,.15f,alpha))));
             hud.selection.SetText(removing?TownTr("削除 / Shift＋左ドラッグで連続削除（返金なし）","Remove / Shift + left drag to erase (no refund)"):selected==6?TownTr("道路 / 左ドラッグで連続設置","Road / Left drag to place"):TownBuildingName(state.Definition(selected,tier,recipe))+TownTr(" / "," / ")+(operational?TownTr("稼働可能","Operational"):TownTr("未稼働：","Inactive: ")+operation));
-            // Removing a roof can expose another cell under a stationary cursor.
+            // 屋根を取り除くと、カーソルを動かさなくても直下の別のセルが露出することがある。
             bool movedSincePaint=(cameraControls.previousMouse-strokeMouse).Length()>0;
             if(strokeStarted&&paintingAllowed&&held&&(strokeX!=cellX||strokeZ!=cellZ)&&(!removing||strokeX<0||movedSincePaint))PaintTo(cellX,cellZ);
             if(!strokePainted&&clicked<0&&choice<0&&pressedX==cellX&&pressedZ==cellZ&&IsCommandTriggered("TownPlace")){if(removing)RemoveAt(cellX,cellZ);else PlaceAt(cellX,cellZ);}

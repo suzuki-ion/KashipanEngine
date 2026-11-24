@@ -1,4 +1,4 @@
-﻿# Run in a VS x64 Developer PowerShell after building Development.
+﻿# Development をビルドしてから、Visual Studio の x64 開発者用 PowerShell で実行する。
 $ErrorActionPreference = 'Stop'
 $bindingRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $bindingOutput = Join-Path $bindingRoot 'Generated/JobHuntingLoading'

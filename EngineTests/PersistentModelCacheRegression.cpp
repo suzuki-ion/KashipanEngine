@@ -35,7 +35,7 @@ void Compare(const aiScene &a, const aiScene &b) {
             for (unsigned int v = 0; v < xm.mNumVertices; ++v) { if (xm.mVertices) assert(xm.mVertices[v] == ym.mVertices[v]); if (xm.mNormals) assert(xm.mNormals[v] == ym.mNormals[v]); }
         }
     }
-    // Also checks all material properties, embedded pixels, animation keys and morph channels byte for byte.
+    // マテリアルの全プロパティ、埋め込みピクセル、アニメーションキー、モーフチャンネルもバイト単位で比較する。
     assert(ModelSceneCache::Encode(a) == ModelSceneCache::Encode(b));
 }
 int main() {
@@ -54,19 +54,19 @@ int main() {
     auto warm = load(source); assert(warm->diskCacheHit && SharedModelImport::CacheStatistics().parsed == 0); Compare(*cold->scene, *warm->scene);
     const auto time = std::filesystem::last_write_time(material);
     std::ofstream(material) << "newmtl Test\nKd 0 1 0\n";
-    std::filesystem::last_write_time(material, time); // Same size and timestamp must still invalidate.
+    std::filesystem::last_write_time(material, time); // サイズとタイムスタンプが同じでもキャッシュを無効化する必要がある。
     auto changed = load(source); assert(!changed->diskCacheHit);
     aiColor3D color; changed->scene->mMaterials[changed->scene->mMeshes[0]->mMaterialIndex]->Get(AI_MATKEY_COLOR_DIFFUSE, color); assert(color.g == 1 && color.r == 0);
     assert(load(source)->diskCacheHit);
     const auto cache = ModelSceneCache::CachePath(directory, source, SharedModelImport::ModelFlags);
     std::ofstream(cache, std::ios::binary | std::ios::trunc) << "broken";
     assert(!load(source)->diskCacheHit && load(source)->diskCacheHit);
-    // Source file content change.
+    // 入力ファイルの内容を変更する。
     std::ofstream(source, std::ios::app) << "#changed\n"; assert(!load(source)->diskCacheHit);
-    // Missing external file becoming available also invalidates the old scene.
+    // 欠落していた外部ファイルが利用可能になった場合も、古いシーンを無効化する。
     std::filesystem::remove(material); assert(!load(source)->diskCacheHit); assert(load(source)->diskCacheHit);
     std::ofstream(material) << "newmtl Test\nKd 0 0 1\n"; assert(!load(source)->diskCacheHit);
-    // Cache write failure must still return an imported model.
+    // キャッシュの書き込みに失敗しても、インポート済みモデルを返す必要がある。
     const auto blocked = root / "not-a-directory"; std::ofstream(blocked) << "block";
     { SharedModelImport::StartupSession session(blocked); auto result = SharedModelImport::Load(source, SharedModelImport::ModelFlags); assert(result->scene && !result->diskCacheHit); }
     for (const auto &file : {std::filesystem::path(L"GameProjects/Test/Assets/TestModels/Luchika/Luchika.gltf"), std::filesystem::path(L"GameProjects/Test/Assets/TestModels/Meepa/メェパ_FBX.fbx")}) {
@@ -77,7 +77,7 @@ int main() {
         for (unsigned int m = 0; m < first->scene->mNumMeshes; ++m) { morphs += first->scene->mMeshes[m]->mNumAnimMeshes; bones += first->scene->mMeshes[m]->mNumBones; }
         std::cout << "Real model roundtrip: bones=" << bones << ", morphs=" << morphs << "\n";
     }
-    // Both embedded formats used by ModelManager: compressed file bytes and raw aiTexel pixels.
+    // ModelManager が使う 2 種類の埋め込み形式を検証する。圧縮済みファイルのバイト列と生の aiTexel ピクセル。
     {
         aiScene embedded;
         embedded.mRootNode = new aiNode();
@@ -95,7 +95,7 @@ int main() {
         assert(std::memcmp(decoded->mTextures[0]->pcData, "abcdefg", 7) == 0);
         assert(std::memcmp(decoded->mTextures[1]->pcData, "abcdefgh", 8) == 0);
     }
-    // Truncated payload must be rejected safely even when the container hash is valid.
+    // コンテナのハッシュが正しくても、途中で切れたペイロードは安全に拒否する必要がある。
     auto bytes = ModelSceneCache::Encode(*warm->scene); bytes.resize(bytes.size() / 2); assert(!ModelSceneCache::Decode(bytes));
     std::filesystem::remove_all(root);
     std::cout << "Persistent model cache regression passed\n";

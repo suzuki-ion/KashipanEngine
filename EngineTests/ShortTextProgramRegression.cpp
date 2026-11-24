@@ -40,7 +40,7 @@ int main() {
         state = {}; memory = {}; input = {};
         TickProgram({timer}, memory, state, input, 0.2); Near(state.velocity[0], 0);
         TickProgram({timer}, memory, state, input, 0.3); Near(state.velocity[0], 2);
-        TickProgram({timer}, memory, state, input, 1); Near(state.velocity[0], 4); // bounded catch-up: one event per frame
+        TickProgram({timer}, memory, state, input, 1); Near(state.velocity[0], 4); // 追いつき処理の上限は 1 フレームあたり 1 イベント
         Rule set; set.actions = {{Operation::SetScale, 0, 2}, {Operation::SetPosition, 2, 3}, {Operation::SetRotation, 1, 180}};
         set.conditions = {{Test::PositionAtLeast, 0, -1}, {Test::VelocityAtLeast, 0, 0}};
         TickProgram({set}, memory, state, input, 0.1); Near(state.scale[0], 2); Near(state.position[2], 3); Near(state.rotation[1], 3.1415927f);

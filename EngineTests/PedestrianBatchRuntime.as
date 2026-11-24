@@ -1,4 +1,4 @@
-// Injected into the real CityController in an isolated Release runtime.
+// 分離した Release 実行環境の実際の CityController に組み込む。
 void QAPedestrianBatch(){
     bool old=GetSettingBool("town.people",true);SetSettingBool("town.people",true);
     TownState local;@local.scene=GetScene();@local.rules=state.rules;local.NewGame();

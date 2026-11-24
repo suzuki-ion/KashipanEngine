@@ -27,7 +27,7 @@ static const float3 kNesPalette[64] = {
     float3(0xB5, 0xEB, 0xF2) / 255.0, float3(0xB8, 0xB8, 0xB8) / 255.0, float3(0x00, 0x00, 0x00) / 255.0, float3(0x00, 0x00, 0x00) / 255.0,
 };
 
-// 4x4 Bayer matrix (normalized 0..1)
+// 4×4 の Bayer 行列（0～1 に正規化済み）
 static const float kBayerMatrix4x4[16] = {
     0.0 / 16.0,  8.0 / 16.0,  2.0 / 16.0, 10.0 / 16.0,
     12.0 / 16.0, 4.0 / 16.0, 14.0 / 16.0, 6.0 / 16.0,

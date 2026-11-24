@@ -147,7 +147,7 @@ public:
         Log("[StartupCache] Shader reuse: blobs=" + std::to_string(sharedBlobHits_) + ", reflections=" + std::to_string(sharedReflectionHits_), LogSeverity::Info);
         Log("[StartupCache] Shaders: hits=" + std::to_string(cacheHits_) + ", misses=" + std::to_string(cacheMisses_), LogSeverity::Info);
     }
-    // Reuse is limited to one pipeline load generation; compiled results retain their own ownership.
+    // 再利用は同じパイプライン読み込み処理内に限る。コンパイル結果は独自に所有権を保持する。
     void ClearReuseCache(Passkey<PipelineManager>) { reusedShaders_.clear(); }
 
     /// @brief シェーダーコンパイル結果情報構造体
@@ -185,7 +185,7 @@ public:
     /// @param device D3D12デバイス
     ShaderCompiler(Passkey<PipelineManager>, ID3D12Device *device);
     ~ShaderCompiler();
-    /// CPU-only compiler used by the distribution cooker (no GPU/PSO creation).
+    /// 配布用アセットのクックに使う CPU 専用のコンパイラー。GPU リソースや PSO の作成は行わない。
     static std::unique_ptr<ShaderCompiler> CreateOfflineCompiler() {
         return std::unique_ptr<ShaderCompiler>(new ShaderCompiler(nullptr));
     }

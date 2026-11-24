@@ -23,7 +23,7 @@ std::string Utf8(const std::wstring &s) {
 }
 }
 int main(int argc, char **argv) {
-    // This executable is also the fake official CLI. No model or network is used.
+    // この実行ファイルは公式 CLI の代役も兼ねる。モデルやネットワークは使わない。
     if (argc > 1) {
         char billing[128];
         if (GetEnvironmentVariableA("OPENAI_API_KEY", billing, sizeof(billing)) ||

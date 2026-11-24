@@ -308,7 +308,7 @@ def main():
         write_json(CANDIDATE, candidate)
         report["candidate"] = str(CANDIDATE)
         report["status"] = "succeeded"
-    except Exception as error:  # report every failure; candidate is never promoted on error
+    except Exception as error:  # すべての失敗を報告し、エラーがあれば候補を正式版として採用しない
         report["error"] = "%s: %s" % (type(error).__name__, error)
     finally:
         report["wallClockSeconds"] = round(time.monotonic() - started, 3)

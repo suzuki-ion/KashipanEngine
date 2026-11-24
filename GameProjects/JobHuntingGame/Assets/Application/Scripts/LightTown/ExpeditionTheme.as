@@ -1,7 +1,7 @@
 #include "ExpeditionGenerator.as"
 #include "ExpeditionObjects.as"
 
-// Decorative meshes have no colliders. Physical wall lamps are planned by the generator.
+// 装飾メッシュにはコライダーを付けない。衝突判定のある壁灯は生成処理で配置を決める。
 class ExpeditionTheme {
     Scene@ scene;Json@ definition;string name="grotto";ExpeditionGenerator@ terrain;
     Vector4 ground=Vector4(1,1,1,1),background=Vector4(.2f,.25f,.3f,1);

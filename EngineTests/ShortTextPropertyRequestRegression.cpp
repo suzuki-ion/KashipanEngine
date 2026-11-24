@@ -1,4 +1,4 @@
-// Pure regression for the 「〇〇の〇〇」 property grammar. No engine, network, model or GPU.
+// 「〇〇の〇〇」というプロパティ文法の回帰テスト。エンジン、ネットワーク、モデル、GPU は不要。
 #include <cstdio>
 #include <cmath>
 #include <stdexcept>
@@ -31,7 +31,7 @@ void Reject(const std::string &text) {
 int main() {
     const auto PP = PropertyMode::PingPong;
     const auto Set = PropertyMode::Set;
-    // Required sentences, verbatim.
+    // 必須の文例を原文どおりに指定する。
     Accept("Transformの移動X軸を-1.0fから1.0fの間で往復移動", "Transform", "translate_", 0, PP, -1, 1);
     Accept("Transformの回転Y軸を-90.0fから90.0fの間で往復", "Transform", "rotate_", 1, PP, -90, 90);
     Accept("BoxColliderのサイズX軸を1.0fから3.0fの間で往復", "BoxCollider", "size_", 0, PP, 1, 3);
@@ -52,7 +52,7 @@ int main() {
         Reject("Transformのスケールを(1,0,1)にする");
         Reject("TransformのworldMatrix_を(1,2,3,4)にする");
     }
-    // Without f, with spaces, with まで, full-width and other numbers (unlearned).
+    // f の省略、空白、「まで」、全角、未学習の別の数値を検証する。
     Accept("Transformの移動X軸を-1から1の間で往復移動", "Transform", "translate_", 0, PP, -1, 1);
     Accept("Transform の 移動 X 軸 を -1.0f から 1.0f の間 で 往復移動", "Transform", "translate_", 0, PP, -1, 1);
     Accept("Transformの移動X軸を-1から1まで往復移動", "Transform", "translate_", 0, PP, -1, 1);
@@ -63,7 +63,7 @@ int main() {
     Accept("BoxColliderのサイズX軸を2にする", "BoxCollider", "size_", 0, Set, 2, 2);
     Accept("BoxColliderのサイズ X軸 を 2.0f に設定", "BoxCollider", "size_", 0, Set, 2, 2);
     Accept("transformのposition z軸を+1から2までの間で往復", "Transform", "translate_", 2, PP, 1, 2);
-    // Aliases and formal registered names.
+    // 別名と正式な登録名。
     Accept("Transformの位置Y軸を0から2の間で往復", "Transform", "translate_", 1, PP, 0, 2);
     Accept("Transformの大きさX軸を1から2の間で往復", "Transform", "scale_", 0, PP, 1, 2);
     Accept("Transformの拡縮Z軸を1から2の間で往復", "Transform", "scale_", 2, PP, 1, 2);
@@ -76,7 +76,7 @@ int main() {
     Accept("Box2DColliderのサイズY軸を1から2の間で往復", "Box2DCollider", "size_", 1, PP, 1, 2);
     Accept("Box2DColliderのsize_ X軸を4にする", "Box2DCollider", "size_", 0, Set, 4, 4);
     Accept("Transformの X軸の移動を 1 にする","Transform", "translate_", 0, Set, 1, 1);
-    // Period, wave and units.
+    // 周期、波形、単位。
     {
         auto r = Interpret("Transformの移動X軸を-1.0fから1.0fの間で往復移動");
         Require(r.success && Near(r.request.period, PropertyDefaultPeriod) && r.request.wave == PropertyWave::Linear && r.request.unit == PropertyUnit::Raw, "defaults: period 2s linear raw");
@@ -96,7 +96,7 @@ int main() {
         r = Interpret("BoxColliderのサイズX軸を1.0fから3.0fの間で往復");
         Require(r.success && r.request.positiveOnly, "collider size is positive only");
     }
-    // Evaluation: absolute values, starts at from, reaches to at half period, never leaves range.
+    // 絶対値で評価し、from から始まり半周期で to に達する。範囲は超えない。
     Require(Near(EvaluatePropertyPingPong(-1, 1, 2, 0, PropertyWave::Linear), -1), "t=0 is from");
     Require(Near(EvaluatePropertyPingPong(-1, 1, 2, 0.5, PropertyWave::Linear), 0), "quarter period is middle");
     Require(Near(EvaluatePropertyPingPong(-1, 1, 2, 1, PropertyWave::Linear), 1), "half period is to");
@@ -110,30 +110,30 @@ int main() {
         }
     }
     Require(Near(EvaluatePropertyPingPong(-1, 1, 2, std::nan(""), PropertyWave::Linear), -1), "non-finite time is safe");
-    // Invalid requests are recognized and rejected without a partial plan.
-    Reject("Transformの移動X軸を1から-1の間で往復移動");            // reversed range
-    Reject("Transformの移動X軸を1から1の間で往復移動");             // empty range
-    Reject("Transformの移動X軸を-20000から1の間で往復移動");        // too large
-    Reject("Transformの移動X軸を-1から99999999999999999999999999999999999999999の間で往復"); // overflow
-    Reject("Transformの移動を-1から1の間で往復移動");                // missing axis on Vector3
-    Reject("BoxColliderのサイズを2にする");                          // missing axis
-    Reject("Transformの移動X軸Y軸を1にする");                        // two axes
-    Reject("Box2DColliderのサイズZ軸を2にする");                     // Z on Vector2
-    Reject("BoxColliderのサイズX軸を0にする");                       // zero size
-    Reject("BoxColliderのサイズX軸を-1から3の間で往復");             // negative size
-    Reject("Transformのスケールx軸を0から1の間で往復");             // zero scale
-    Reject("Transformの worldMatrix_ X軸を1にする");                 // read only
-    Reject("Transformの速さX軸を1にする");                          // unknown property
-    Reject("Transformのfoo_ X軸を1にする");                          // unknown formal name
-    Reject("FooColliderのサイズX軸を1にする");                       // unknown component
+    // 無効な要求は識別して拒否し、部分的な計画は作らない。
+    Reject("Transformの移動X軸を1から-1の間で往復移動");            // 範囲が逆
+    Reject("Transformの移動X軸を1から1の間で往復移動");             // 範囲が空
+    Reject("Transformの移動X軸を-20000から1の間で往復移動");        // 値が大きすぎる
+    Reject("Transformの移動X軸を-1から99999999999999999999999999999999999999999の間で往復"); // オーバーフロー
+    Reject("Transformの移動を-1から1の間で往復移動");                // Vector3 の軸が未指定
+    Reject("BoxColliderのサイズを2にする");                          // 軸が未指定
+    Reject("Transformの移動X軸Y軸を1にする");                        // 軸を 2 つ指定
+    Reject("Box2DColliderのサイズZ軸を2にする");                     // Vector2 への Z 軸指定
+    Reject("BoxColliderのサイズX軸を0にする");                       // サイズが 0
+    Reject("BoxColliderのサイズX軸を-1から3の間で往復");             // サイズが負
+    Reject("Transformのスケールx軸を0から1の間で往復");             // スケールが 0
+    Reject("Transformの worldMatrix_ X軸を1にする");                 // 読み取り専用
+    Reject("Transformの速さX軸を1にする");                          // 不明なプロパティ
+    Reject("Transformのfoo_ X軸を1にする");                          // 不明な正式名
+    Reject("FooColliderのサイズX軸を1にする");                       // 不明なコンポーネント
     Reject("Transformの移動X軸を-1から1の間で動かして");             // range needs 往復
-    Reject("Transformの移動X軸を周期3秒で2にする");                  // period only for ranges
-    Reject("Transformの移動X軸を-1度から1度の間で往復");             // degrees on non angle
-    Reject("Transformの移動X軸を-1から1の間で周期0.01秒で往復");     // period too short
-    Reject("Transformの移動X軸を-1から1の間で周期3秒で周期4秒で往復"); // duplicate period
-    Reject("Transformの移動X軸を-1から1の間でなめらかに等速で往復");   // conflicting wave
-    Reject("Transformの移動");                                       // no request
-    // One-shot change (Tween): 「N秒かけて」 + AからBまで + easing → a real KeyframeAnimation in the engine.
+    Reject("Transformの移動X軸を周期3秒で2にする");                  // 周期は範囲指定時のみ有効
+    Reject("Transformの移動X軸を-1度から1度の間で往復");             // 角度以外に度数を指定
+    Reject("Transformの移動X軸を-1から1の間で周期0.01秒で往復");     // 周期が短すぎる
+    Reject("Transformの移動X軸を-1から1の間で周期3秒で周期4秒で往復"); // 周期を重複指定
+    Reject("Transformの移動X軸を-1から1の間でなめらかに等速で往復");   // 波形の指定が競合
+    Reject("Transformの移動");                                       // 該当する要求がない
+    // 単発の補間。「N秒かけて」「AからBまで」とイージングの指定から、エンジン内に実際の KeyframeAnimation を作る。
     const auto TW = PropertyMode::Tween;
     auto tween = [&](const std::string &text, const char *component, const char *member, int axis, float from, float to,
         float duration, const char *ease) {
@@ -150,10 +150,10 @@ int main() {
     tween("1 秒かけて Transform の 移動 Y 軸 を 0 から 4 まで easeinoutcubic で 移動", "Transform", "translate_", 1, 0, 4, 1, "EaseInOutCubic");
     tween("１．５秒かけてTransformの移動Ｙ軸を０．０Ｆから４．０Ｆまで EASEINOUTCUBICで移動", "Transform", "translate_", 1, 0, 4, 1.5f, "EaseInOutCubic");
     tween("0.5f秒かけてTransformの移動X軸を+2から-3.5までEaseInQuadで移動させる", "Transform", "translate_", 0, 2, -3.5f, 0.5f, "EaseInQuad");
-    tween("1秒かけてTransformの移動Y軸を4から0までEaseInCubicで移動", "Transform", "translate_", 1, 4, 0, 1, "EaseInCubic"); // decreasing
-    tween("1秒かけてTransformの移動Y軸を2から2までEaseOutCubicで移動", "Transform", "translate_", 1, 2, 2, 1, "EaseOutCubic"); // hold
+    tween("1秒かけてTransformの移動Y軸を4から0までEaseInCubicで移動", "Transform", "translate_", 1, 4, 0, 1, "EaseInCubic"); // 値が減少する
+    tween("1秒かけてTransformの移動Y軸を2から2までEaseOutCubicで移動", "Transform", "translate_", 1, 2, 2, 1, "EaseOutCubic"); // 値を保持する
     tween("3秒かけてTransformのtranslate_ Z軸を-1から1までEaseInOutQuadで移動", "Transform", "translate_", 2, -1, 1, 3, "EaseInOutQuad");
-    tween("1秒かけてTransformの移動X軸を0から1までEaseOutBackで移動", "Transform", "translate_", 0, 0, 1, 1, "EaseOutBack"); // overshoot ok for position
+    tween("1秒かけてTransformの移動X軸を0から1までEaseOutBackで移動", "Transform", "translate_", 0, 0, 1, 1, "EaseOutBack"); // 位置ではオーバーシュートを許可する
     tween("1秒かけてBox2DColliderのサイズY軸を1から2までEaseOutBounceで変更", "Box2DCollider", "size_", 1, 1, 2, 1, "EaseOutBounce");
     {
         auto r = Interpret("1秒かけてTransformの移動Y軸を0から4まで移動");
@@ -163,31 +163,31 @@ int main() {
         r = Interpret("1秒かけてTransformの移動Y軸を0.0fから4.0fまでEaseInOutCubicで移動");
         Require(r.success && r.message.find("EaseInOutCubic") != std::string::npos && r.message.find("1 秒") != std::string::npos, "tween description");
         Require(PropertyEaseNames().size() == 41 && ResolvePropertyEase("easeoutinbounce") == "EaseOutInBounce" && ResolvePropertyEase("smoothstep").empty(), "ease table");
-        // The ping-pong grammar still defaults to its period and ignores tween fields.
+        // 往復の文法では引き続き既定の周期を使い、補間のフィールドは無視する。
         r = Interpret("Transformの移動X軸を-1から1の間で往復移動");
         Require(r.success && r.request.mode == PP && r.request.ease.empty() && Near(r.request.period, 2), "ping-pong unchanged");
     }
-    Reject("Transformの移動Y軸を0から4までEaseInOutCubicで移動");                 // duration required
-    Reject("0秒かけてTransformの移動Y軸を0から4までEaseInOutCubicで移動");        // zero duration
-    Reject("-1秒かけてTransformの移動Y軸を0から4までEaseInOutCubicで移動");       // negative duration
-    Reject("5000秒かけてTransformの移動Y軸を0から4までEaseInOutCubicで移動");     // too long
-    Reject("1秒かけてTransformの移動Y軸を0から4まで2秒かけてEaseInOutCubicで移動"); // duplicate duration
-    Reject("1秒かけてTransformの移動Y軸を0から4までSmoothStepで移動");            // unknown easing
-    Reject("1秒かけてTransformの移動Y軸を0から4までEaseInOutCubicでLinearで移動"); // two easings
-    Reject("1秒かけてTransformの移動Y軸を-1から1の間で往復");                     // duration on ping-pong
-    Reject("Transformの移動Y軸を-1から1の間でEaseInOutCubicで往復");              // easing on ping-pong
-    Reject("1秒かけてTransformの移動Y軸を4にする");                               // duration on set
-    Reject("1秒かけてTransformの移動Y軸を0から4まで周期2秒でEaseInOutCubicで移動"); // period on tween
-    Reject("1秒かけてTransformの移動Y軸を0から4までなめらかに移動");              // wave on tween
-    Reject("1秒かけてBoxColliderのサイズX軸を1から3までEaseOutBackで変更");       // overshoot on positive-only
-    Reject("1秒かけてTransformのスケールX軸を1から0までLinearで変更");            // zero scale
-    Reject("1秒かけてBox2DColliderのサイズZ軸を1から2までLinearで変更");          // Z on Vector2
-    Reject("1秒かけてTransformのworldMatrix_ X軸を0から1までLinearで変更");       // read only
-    Reject("1秒かけてTransformの移動Y軸を0から20000までLinearで移動");            // too large
-    Reject("1秒かけてTransformの移動を0から4までLinearで移動");                    // missing axis
-    Reject("1秒かけてTransformの移動Y軸を0から4までEaseInOutCubicで移動してジャンプ"); // partial interpretation
-    Reject("1秒かけてTransformの移動Y軸を0度から4度までLinearで移動");            // degrees on non angle
-    // Text outside the grammar is not claimed, so existing parsers and dictionaries still run.
+    Reject("Transformの移動Y軸を0から4までEaseInOutCubicで移動");                 // 継続時間が必要
+    Reject("0秒かけてTransformの移動Y軸を0から4までEaseInOutCubicで移動");        // 継続時間が 0
+    Reject("-1秒かけてTransformの移動Y軸を0から4までEaseInOutCubicで移動");       // 継続時間が負
+    Reject("5000秒かけてTransformの移動Y軸を0から4までEaseInOutCubicで移動");     // 継続時間が長すぎる
+    Reject("1秒かけてTransformの移動Y軸を0から4まで2秒かけてEaseInOutCubicで移動"); // 継続時間を重複指定
+    Reject("1秒かけてTransformの移動Y軸を0から4までSmoothStepで移動");            // 不明なイージング
+    Reject("1秒かけてTransformの移動Y軸を0から4までEaseInOutCubicでLinearで移動"); // イージングを 2 種類指定
+    Reject("1秒かけてTransformの移動Y軸を-1から1の間で往復");                     // 往復に継続時間を指定
+    Reject("Transformの移動Y軸を-1から1の間でEaseInOutCubicで往復");              // 往復にイージングを指定
+    Reject("1秒かけてTransformの移動Y軸を4にする");                               // 固定値の設定に継続時間を指定
+    Reject("1秒かけてTransformの移動Y軸を0から4まで周期2秒でEaseInOutCubicで移動"); // 補間に周期を指定
+    Reject("1秒かけてTransformの移動Y軸を0から4までなめらかに移動");              // 補間に波形を指定
+    Reject("1秒かけてBoxColliderのサイズX軸を1から3までEaseOutBackで変更");       // 正の値に限る項目でオーバーシュートを指定
+    Reject("1秒かけてTransformのスケールX軸を1から0までLinearで変更");            // スケールが 0
+    Reject("1秒かけてBox2DColliderのサイズZ軸を1から2までLinearで変更");          // Vector2 への Z 軸指定
+    Reject("1秒かけてTransformのworldMatrix_ X軸を0から1までLinearで変更");       // 読み取り専用
+    Reject("1秒かけてTransformの移動Y軸を0から20000までLinearで移動");            // 値が大きすぎる
+    Reject("1秒かけてTransformの移動を0から4までLinearで移動");                    // 軸が未指定
+    Reject("1秒かけてTransformの移動Y軸を0から4までEaseInOutCubicで移動してジャンプ"); // 一部だけを解釈
+    Reject("1秒かけてTransformの移動Y軸を0度から4度までLinearで移動");            // 角度以外に度数を指定
+    // 文法の対象外のテキストは処理を引き受けないため、既存のパーサーと辞書が引き続き動く。
     Require(!Interpret("上下にふわふわ動かして").recognized, "legacy sentence is not claimed");
     Require(!Interpret("Playerの3上に毎フレームついていく").recognized, "dictionary phrase with ident+の is not claimed");
     Require(!Interpret("scoreの変化時だけHUDのScore: 表示を更新").recognized, "dictionary phrase is not claimed");

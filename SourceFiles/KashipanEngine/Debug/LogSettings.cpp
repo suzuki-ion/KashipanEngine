@@ -4,7 +4,7 @@
 namespace KashipanEngine {
 namespace {
 LogSettings sLogSettings;
-} // anonymous
+} // 無名名前空間
 
 const LogSettings &LoadLogSettings(PasskeyForGameEngineMain, const std::string &logSettingsFilePath) {
     JSON json = LoadJSON(logSettingsFilePath);

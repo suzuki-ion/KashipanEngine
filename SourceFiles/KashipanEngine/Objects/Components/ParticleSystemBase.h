@@ -136,7 +136,7 @@ enum class SpawnShape {
 /// @brief スポーン範囲を構成する1つの形状のパラメータ
 /// @details 「含める形状」「除外する形状」のどちらとしても使う共通の1エントリ。
 ///          種類ごとに使うフィールドが異なる（Point: centerのみ、Box: center+boxSize、
-///          Sphere: center+sphereRadius、Capsule: center+capsuleRadius+capsuleHeight）
+///          球: center+sphereRadius、カプセル: center+capsuleRadius+capsuleHeight）
 struct SpawnShapeEntry final {
     SpawnShape type = SpawnShape::Point;
     Vector3 center{ 0.0f, 0.0f, 0.0f };
@@ -787,7 +787,7 @@ protected:
         return end;
     }
 
-    /// @brief 「ランダムにするか否か」のトグルと、固定値 or Min/Max範囲の入力を表示する（float版）
+    /// @brief ランダム化の切り替えと、固定値または Min/Max 範囲の入力を表示する（float 版）
     void ShowRandomizableImGui(const char *label, RandomizableValue<float> &v, float speed, float vMin = 0.0f, float vMax = 0.0f) {
         ImGui::PushID(label);
         ImGui::TextUnformatted(label, FindImGuiLabelDisplayEnd(label));
@@ -802,7 +802,7 @@ protected:
         ImGui::PopID();
     }
 
-    /// @brief 「ランダムにするか否か」のトグルと、固定値 or Min/Max範囲の入力を表示する（int版）
+    /// @brief ランダム化の切り替えと、固定値または Min/Max 範囲の入力を表示する（int 版）
     void ShowRandomizableImGui(const char *label, RandomizableValue<int> &v, int vMin = 0, int vMax = 0) {
         ImGui::PushID(label);
         ImGui::TextUnformatted(label, FindImGuiLabelDisplayEnd(label));
@@ -817,7 +817,7 @@ protected:
         ImGui::PopID();
     }
 
-    /// @brief 「ランダムにするか否か」のトグルと、固定値 or Min/Max範囲の入力を表示する（Vector3版）
+    /// @brief ランダム化の切り替えと、固定値または Min/Max 範囲の入力を表示する（Vector3 版）
     void ShowRandomizableImGui(const char *label, RandomizableValue<Vector3> &v, float speed) {
         ImGui::PushID(label);
         ImGui::TextUnformatted(label, FindImGuiLabelDisplayEnd(label));

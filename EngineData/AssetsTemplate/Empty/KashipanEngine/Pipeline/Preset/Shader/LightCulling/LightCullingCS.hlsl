@@ -79,8 +79,8 @@ void ProjectSphereToScreenRect(float3 worldCenter, float radius, out float2 scre
     }
 }
 
-// Each 8x8 group shares one projection per light, instead of recomputing
-// the eight projected corners separately in all 64 tile threads.
+// 8×8 の各グループは、ライトごとの投影結果を共有する。
+// これにより、64 個のタイルスレッドそれぞれで 8 頂点を再投影せずに済む。
 groupshared float4 sRects[64];
 groupshared uint sTags[64];
 
@@ -148,8 +148,8 @@ void main(uint3 id : SV_DispatchThreadID, uint lane : SV_GroupIndex)
         if (tag != 0xffffffffu) ProjectSphereToScreenRect(center, radius, lo, hi);
         sRects[lane] = float4(lo, hi); sTags[lane] = tag;
         GroupMemoryBarrierWithGroupSync();
-        // Out-of-screen and already-full tiles still participate in BOTH barriers.
-        // The light order and truncation at gMaxLightsPerTile match the old shader.
+        // 画面外のタイルや上限に達したタイルも、両方の同期バリアに参加する。
+        // ライトの順序と gMaxLightsPerTile による打ち切りは、従来のシェーダーと同じ。
         if (valid) {
             for (uint j = 0; j < min(64u, total - base) && count < gMaxLightsPerTile; ++j) {
                 float4 rect = sRects[j];

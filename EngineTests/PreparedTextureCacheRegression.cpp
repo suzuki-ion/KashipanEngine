@@ -26,7 +26,7 @@ int main() {
     const auto timestamp = std::filesystem::last_write_time(source);
     raw.GetPixels()[0] ^= 255;
     assert(SUCCEEDED(DirectX::SaveToTGAFile(*raw.GetImages(), source.c_str())));
-    std::filesystem::last_write_time(source, timestamp); // Content changes with identical mtime must invalidate.
+    std::filesystem::last_write_time(source, timestamp); // 更新日時が同じでも内容が変わったら無効化する必要がある。
     assert(!PreparedTextureCache::Load(source, directory, loaded));
     expected = PreparedTextureCache::PrepareFile(source);
     assert(PreparedTextureCache::Store(source, directory, expected, ContentCache::Dependency(source)));
@@ -34,8 +34,8 @@ int main() {
     assert(!PreparedTextureCache::Load(source, directory, loaded));
     std::ofstream(root / "blocked", std::ios::binary) << "file";
     assert(!PreparedTextureCache::Store(source, root / "blocked" / "child", expected, ContentCache::Dependency(source)));
-    assert(expected.GetImageCount()); // Cache-write failure does not destroy the usable image.
-    std::filesystem::remove_all(root); // Newly created, process-specific directory under Generated.
+    assert(expected.GetImageCount()); // キャッシュの書き込みに失敗しても、利用可能な画像は保持する。
+    std::filesystem::remove_all(root); // Generated の下にこのプロセス専用のディレクトリを新規作成する。
     CoUninitialize();
     std::cout << "Prepared texture cache regression passed\n";
 }

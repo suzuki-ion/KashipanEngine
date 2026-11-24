@@ -9,8 +9,8 @@ class ExpeditionAnnex {
     uint ResourceCount(){return locked?6:5;}
 }
 
-// Optional sealed chambers are outside the normal graph. Closing every gate
-// must leave all normal gathering rooms, keys and the return gate accessible.
+// 任意で入れる封鎖部屋は通常経路のグラフから外す。すべてのゲートを閉じても、
+// 通常の採取部屋、鍵、帰還ゲートにはすべて到達できるようにする。
 class ExpeditionSpecialLayout {
     array<ExpeditionAnnex@>@ zones=array<ExpeditionAnnex@>();
     uint baseWidth=0;

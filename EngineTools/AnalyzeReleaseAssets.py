@@ -25,7 +25,7 @@ MEDIA_TYPES = {
     **dict.fromkeys({'.ttf', '.otf', '.fnt'}, 'font'),
     '.mat': 'material', '.bin': 'modelDependency', '.mtl': 'modelDependency',
 }
-# Name -> (asset kind, zero-based path argument). No variable/constant evaluation.
+# 名前ごとにアセットの種類とパス引数の位置（0 始まり）を対応付ける。変数や定数は評価しない。
 SCRIPT_CALLS = {
     **dict.fromkeys(('PlayAudio', 'SetSoundName', 'GetSoundHandleFromAssetPath', 'GetSoundHandleFromFileName'), ('audio', 0)),
     **dict.fromkeys(('GetModelHandleFromAssetPath', 'GetModelHandleFromFileName', 'SetAnimationSourceAssetPath', 'GetSkeletonHandleFromAssetPath', 'GetAnimationHandleFromAssetPath'), ('model', 0)),
@@ -77,7 +77,7 @@ def tokens(content: str):
                         value.append(following); i += 2; continue
                     if following == '/':
                         value.append('/'); i += 2; continue
-                    # Preserve unknown escapes, including Windows separators.
+                    # Windows のパス区切り文字を含め、認識できないエスケープは保持する。
                     value.append('\\'); i += 1; continue
                 line += content[i] == '\n'
                 value.append(content[i]); i += 1
@@ -94,7 +94,7 @@ def tokens(content: str):
 
 
 def json_without_comments(content: str) -> str:
-    # Retain strings and line numbers, replacing only comments with whitespace.
+    # 文字列と行番号を維持し、コメントだけを空白に置き換える。
     return re.sub(r'"(?:\\.|[^"\\])*"|//[^\r\n]*|/\*[\s\S]*?\*/',
                   lambda match: match[0] if match[0].startswith('"') else re.sub(r'[^\r\n]', ' ', match[0]), content)
 
@@ -192,14 +192,14 @@ def scan(root: Path) -> dict:
             lower = lower[2:]
         if lower.startswith('assets/'):
             lower = lower[7:]
-        # Includes and model/material metadata may use source-relative paths.
+        # インクルードやモデル・マテリアルのメタデータでは、参照元ファイルからの相対パスを使う場合がある。
         options = [posixpath.normpath(lower), posixpath.normpath(posixpath.join(posixpath.dirname(source.lower()), lower))]
         matches = {relative_names[option] for option in options if option in relative_names}
-        # Match .scene directories as well as legacy single-file scenes.
+        # .scene ディレクトリと旧形式の単一ファイルのシーンの両方を対象とする。
         if lower.endswith('.scene'):
             for option in options:
                 matches.update(name for name in files if name.lower().startswith(option + '/'))
-        # Managers accept names as well as paths; preserve every ambiguous match.
+        # マネージャーは名前とパスの両方を受け付ける。複数の候補がある場合はすべて保持する。
         matches.update(aliases.get(lower, ()))
         matches.update(aliases.get(posixpath.basename(lower), ()))
         return matches - prefabs
@@ -214,8 +214,8 @@ def scan(root: Path) -> dict:
             retain(target, {'reason': 'fixed-reference', 'source': source, 'location': location})
         return matches
 
-    # All scenes/scripts/general data remain roots. Native registration and dead
-    # code are outside this phase. Only materials and supported media are pruned.
+    # シーン、スクリプト、一般データはすべて依存関係の起点として残す。
+    # この段階ではネイティブ登録や未使用コードは扱わず、マテリアルと対応メディアのみ削減する。
     for name, path in files.items():
         if name in prefabs:
             continue
@@ -229,8 +229,8 @@ def scan(root: Path) -> dict:
         source = queue.popleft()
         path = files[source]
         if path.suffix.lower() in MODEL_EXTENSIONS:
-            # Model-internal paths/material names are deliberately not parsed in
-            # this phase. Retain their possible external dependencies, recursively.
+            # この段階では、モデル内部のパスやマテリアル名を意図的に解析しない。
+            # 外部依存先の可能性があるファイルは、依存関係をたどって再帰的に保持する。
             for kind in ('image', 'material', 'modelDependency'):
                 uncertain(kind, source, 'model-internal-dependencies-not-analysed')
         if source not in contents:
@@ -256,8 +256,8 @@ def scan(root: Path) -> dict:
                     media_kind = MEDIA_TYPES.get(Path(value).suffix.lower())
                     if value and not matches and media_kind and not is_prefab(value.replace('\\', '/')):
                         uncertain(media_kind, source, 'unresolved-file-literal', line)
-                    # Concatenation remains unresolved, even when a fragment ends
-                    # in a supported extension (e.g. suffix "Surface.obj").
+                    # 断片の末尾が対応拡張子（例: "Surface.obj"）であっても、
+                    # 連結した文字列全体の値は解決しない。
                     adjacent = [stream[index - 1][1] if index else '', stream[index + 1][1] if index + 1 < len(stream) else '']
                     media_kind = MEDIA_TYPES.get(Path(value).suffix.lower())
                     if path.suffix.lower() == '.as' and '+' in adjacent and media_kind:
@@ -278,8 +278,8 @@ def scan(root: Path) -> dict:
                 else:
                     literal = argument[0][1]
                     matches = reference(literal, source, 'line:' + str(line))
-                    # Missing fixed aliases may be native/procedural registrations.
-                    # Built-in primitive meshes and the default material have no file.
+                    # 固定の別名が見つからない場合は、ネイティブ側で登録したものや手続き的に生成したものの可能性がある。
+                    # 組み込みのプリミティブメッシュと既定のマテリアルには対応するファイルがない。
                     builtin = literal.startswith('PrimitiveMesh-') or (asset_kind == 'material' and literal == 'Default')
                     external_data = asset_kind == 'data' and not literal.replace('\\', '/').lower().startswith('assets/')
                     if literal and not matches and not builtin and not external_data:
@@ -318,7 +318,7 @@ def main() -> int:
             if not target.resolve().is_relative_to(root) or target.is_symlink():
                 raise RuntimeError(f'Unsafe asset path: {relative}')
             target.unlink()
-        # A prefab may also be a directory asset. Remove its now-empty structure.
+        # プレハブがディレクトリ形式の場合もある。中身が空になったディレクトリ構造は削除する。
         for directory, _, _ in os.walk(root, topdown=False, followlinks=False):
             path = Path(directory)
             if is_prefab(path.relative_to(root).as_posix()) and not any(path.iterdir()):

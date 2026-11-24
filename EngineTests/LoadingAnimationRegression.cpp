@@ -87,7 +87,7 @@ int main() {
         Check(loaded.errors.empty(),"package load"); Check(loaded.timing[0].seconds==0 && loaded.timing[2].seconds==2,"roundtrip timing");
         auto cycle=Scene(); auto a=Object("a","b"),b=Object("b","a"); a["components"].push_back(Component("LoadingAnimationSection",{{"section",3}})); cycle["sceneObjects"]={a,b};
         Check(!Compile(cycle).errors.empty(),"parent cycle rejected");
-        // Exercise the actual D2D renderer with a native window, including resize and all stages.
+        // ネイティブウィンドウで実際の D2D レンダラーを使い、リサイズとすべての段階を検証する。
         const auto com=CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED);
         {
             WNDCLASSW wc{}; wc.lpfnWndProc=DefWindowProcW; wc.hInstance=GetModuleHandleW(nullptr); wc.lpszClassName=L"LoadingAnimationRegression"; RegisterClassW(&wc);

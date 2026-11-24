@@ -49,17 +49,17 @@ int main(int argc,char **argv) {
     assert(first->Root().path.empty() && first->Folders().size()==4);
     assert(first->Matches(Legacy(project)));
     const auto *identity = first.get();
-    first.reset(); // Shared data must survive destruction of the old window/scene.
+    first.reset(); // 古いウィンドウやシーンを破棄した後も、共有データは残る必要がある。
     auto second = AssetFolderTree::Acquire(Text(project),Text(assets),"Assets");
     assert(second.get()==identity);
     std::ofstream(assets/"Folder/readme.txt") << "changed contents";
-    assert(second->Matches(Legacy(project))); // A content edit does not invalidate the folder tree.
+    assert(second->Matches(Legacy(project))); // ファイルの内容を編集しても、フォルダーツリーは無効化されない。
     std::filesystem::create_directory(assets/"Later");
     const auto added = Legacy(project);
-    assert(!second->Matches(added)); // Empty directories are part of the snapshot too.
+    assert(!second->Matches(added)); // 空のディレクトリもスナップショットに含まれる。
     auto refreshed = AssetFolderTree::Acquire(Text(project),Text(assets),"Assets",true);
     assert(refreshed.get()!=second.get() && refreshed->Matches(added));
-    assert(second->Folders().size()==4); // A live old view is not mutated by a replacement tree.
+    assert(second->Folders().size()==4); // 新しいツリーに置き換えても、使用中の古いビューには変更が及ばない。
     std::filesystem::rename(assets/"Later",assets/"Renamed");
     assert(!refreshed->Matches(Legacy(project)));
     refreshed = AssetFolderTree::Acquire(Text(project),Text(assets),"Assets",true);

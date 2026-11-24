@@ -1,4 +1,4 @@
-// Include the real Development implementation to inspect DOM on its own STA thread.
+// 実際の Development 用実装を取り込み、その STA スレッド上で DOM を調べる。
 #include "../SourceFiles/KashipanEngine/Splash/DevelopmentSplashScreen.cpp"
 #include <filesystem>
 #include <fstream>
@@ -105,7 +105,7 @@ int Execute(PasskeyForWinMain, const std::string &mode) {
         }
         Require(!IsWindow(hwnd) && !SplashScreen::IsActive() && !capturing.load(),"Legacy window/capture not closed");
         SplashScreen::Close({});
-        SplashScreen::Show({});SplashScreen::Close({}); // Repeat startup/late callbacks/event lifetime.
+        SplashScreen::Show({});SplashScreen::Close({}); // 起動、遅延コールバック、イベントの寿命を繰り返し検証する。
         Require(!SplashScreen::IsActive() && !capturing.load(),"Repeated startup failed");
         std::cout<<"Development splash "<<mode<<" passed\n";return 0;
     } catch(const std::exception &error) { SplashScreen::Close({});std::cerr<<error.what()<<'\n';return 1; }

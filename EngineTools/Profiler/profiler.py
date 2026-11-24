@@ -150,7 +150,7 @@ class ProfilerApp:
                 else:
                     self.last_received = time.monotonic()
                     if self.paused:
-                        continue  # Freeze both the view and the bounded history.
+                        continue  # ビューの表示と、件数制限付きの履歴の両方を一時停止する。
                     if value["session"] != self.session:
                         self.clear()
                         self.session = value["session"]
@@ -177,7 +177,7 @@ class ProfilerApp:
     def render(self):
         count = len(self.samples)
         self.slider.configure(to=max(1, count - 1))
-        # ttk.Scale.set invokes its callback. Update the value without scrubbing.
+        # ttk.Scale.set はコールバックを呼ぶ。再生位置の操作を起こさずに値だけを更新する。
         self.slider.configure(command="")
         self.slider.set(self.selection)
         self.slider.configure(command=self.scrub)

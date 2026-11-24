@@ -1,5 +1,5 @@
-// KashipanEngine Reference - Script site navigation data
-// href is always relative to the Reference/ root folder.
+// KashipanEngine リファレンスのスクリプトページ用ナビゲーションデータ
+// href は常に Reference/ ルートからの相対パス。
 const KE_SITE = "script";
 const KE_SITE_LABEL = "スクリプトリファレンス";
 const KE_OTHER_SITES = [

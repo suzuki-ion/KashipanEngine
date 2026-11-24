@@ -1,6 +1,6 @@
-// Native regression: short text → a real KeyframeAnimation registered in a real KeyFrameAnimator.
-// Uses real Scene / SceneEditorContext / commands / components. Headless: no window, GPU or audio device.
-// GetDeltaTime() is 0 without the game loop, so time is driven with SetCurrentTime and real Update frames.
+// 短文入力により、実際の KeyFrameAnimator に KeyframeAnimation を登録するネイティブ回帰テスト。
+// 実際の Scene、SceneEditorContext、コマンド、コンポーネントを使う。ウィンドウ、GPU、音声デバイスは不要。
+// ゲームループがないと GetDeltaTime() は 0 なので、SetCurrentTime と実際の Update フレームで時間を進める。
 #include <bit>
 #include <chrono>
 #include <cmath>
@@ -75,7 +75,7 @@ int main() {
     std::filesystem::current_path(sandbox);
     int result = 0;
     try {
-        // --- The grammar's ease table matches the engine's EaseType names exactly ---
+        // --- 文法のイージング表とエンジンの EaseType 名が完全に一致する ---
         Require(ShortText::PropertyEaseNames().size() == static_cast<size_t>(EaseType::EaseOutInBounce) + 1, "ease table size");
         for (const auto &name : ShortText::PropertyEaseNames()) {
             EaseType type = EaseType::Linear;
@@ -87,11 +87,11 @@ int main() {
         }
 
         Scene scene(std::string("ShortTextKeyframeRegression"));
-        // Test-only access token (Passkey is trivially copyable); GameEngine is not booted.
+        // テスト専用のアクセストークン。Passkey はトリビアルにコピー可能で、GameEngine は起動しない。
         SceneEditorContext context(std::bit_cast<Passkey<Scene>>(std::uint8_t{}), &scene);
         auto *sceneContext = scene.GetSceneContext();
 
-        // --- Required sentence: plan is side-effect free, apply adds a KeyFrameAnimator with a real clip ---
+        // --- 必須の文例。計画に副作用がなく、適用で実際のクリップを持つ KeyFrameAnimator が追加される ---
         auto *subject = sceneContext->CreateEmptyObject("subject");
         const auto subjectID = subject->GetObjectID();
         subject->GetComponent<Transform>()->SetTranslate(Vector3(3, 9, -2));
@@ -119,7 +119,7 @@ int main() {
             const auto &b = bindings->front();
             Require(b.componentType == "Transform" && b.parameterName == "translate_" && b.channel == 1 && b.componentIndex == 0 && !b.isScriptVariable, "binding Transform.translate_.y");
         }
-        // The real KeyframeAnimation: first key carries the ease, Evaluate follows EaseInOutCubic.
+        // 実際の KeyframeAnimation では、先頭キーにイージングを設定し、Evaluate は EaseInOutCubic に従う。
         const auto *clip = animator->GetAnimationData(kMoveName);
         Require(clip && clip->GetKeyframeCount() == 2 && Near(clip->GetDuration(), 1), "two keys, 1 second");
         const auto &keys = clip->GetKeyframes();
@@ -137,7 +137,7 @@ int main() {
         Frame(subject);
         Require(Near(Translate(subject).y, 9) && !animator->IsPlaying(kMoveName), "Update does nothing while editing");
 
-        // --- Re-applying updates the generated entry instead of duplicating; other values replace keys ---
+        // --- 再適用は生成済みの項目を更新し、値を変えた場合はキーを置き換える ---
         auto again = Apply(context, subject, kRequired);
         Require(AnimatorCount(subject) == 1 && Animator(subject)->GetAnimationCount() == 1, "re-application does not duplicate");
         auto changed = Apply(context, subject, "Transformの移動Y軸を0から6まで2秒かけてEaseOutCubicで移動");
@@ -150,7 +150,7 @@ int main() {
         Require(changed.command->Execute(&context) && Near(Animator(subject)->GetAnimationData(kMoveName)->GetKeyframes()[1].value, 6), "redo");
         Require(changed.command->Undo(&context), "back to the required clip");
 
-        // --- Undo / Redo of the first application on a fresh object removes/re-adds the animator ---
+        // --- 新規オブジェクトへの初回適用を取り消すとアニメーターを削除し、やり直すと再追加する ---
         auto *fresh = sceneContext->CreateEmptyObject("fresh");
         auto freshApplied = Apply(context, fresh, kRequired);
         const JSON freshSaved = fresh->SaveComponentToJson(Animator(fresh));
@@ -158,7 +158,7 @@ int main() {
         Require(freshApplied.command->Execute(&context) && AnimatorCount(fresh) == 1 &&
             fresh->SaveComponentToJson(Animator(fresh)) == freshSaved, "redo restores the same clip");
 
-        // --- Rotation: keys in degrees, valueScale converts to radians ---
+        // --- 回転。キーは度数で、valueScale がラジアンに変換する ---
         auto *spinner = sceneContext->CreateEmptyObject("spinner");
         const auto spinnerID = spinner->GetObjectID();
         Apply(context, spinner, "2秒かけてTransformの回転Z軸を0.0fから90.0fまでEaseOutQuadで回転");
@@ -168,7 +168,7 @@ int main() {
             Animator(spinner)->GetAnimationData(spinName)->GetKeyframes()[0].easeType == EaseType::EaseOutQuad, "keys stored in degrees");
         Require(Animator(spinner)->GetBindings(spinName)->front().parameterName == "rotate_" && Animator(spinner)->GetBindings(spinName)->front().channel == 2, "rotate_.z binding");
 
-        // --- Missing target component is added at edit time (BoxCollider) ---
+        // --- 対象コンポーネント（BoxCollider）がなければ編集時に追加する ---
         auto *box = sceneContext->CreateEmptyObject("box");
         const auto boxID = box->GetObjectID();
         auto boxApplied = Apply(context, box, "1秒かけてBoxColliderのサイズX軸を1.0fから3.0fまでEaseInOutCubicで変更");
@@ -176,12 +176,12 @@ int main() {
         Require(boxApplied.command->Undo(&context) && !box->GetComponent<BoxCollider>() && AnimatorCount(box) == 0, "one undo removes both");
         Require(boxApplied.command->Execute(&context) && box->GetComponent<BoxCollider>() && AnimatorCount(box) == 1, "redo adds both");
 
-        // --- Scale with Linear ---
+        // --- Linear で拡大縮小 ---
         auto *scaler = sceneContext->CreateEmptyObject("scaler");
         const auto scalerID = scaler->GetObjectID();
         Apply(context, scaler, "1秒かけてTransformのスケールX軸を1.0fから2.0fまでLinearで変更");
 
-        // --- Existing hand-made clips are kept; the generated one is added next to them ---
+        // --- 手動作成した既存クリップを保持し、生成したクリップを追加する ---
         auto *clipOwner = sceneContext->CreateEmptyObject("clips");
         auto *handMade = clipOwner->AddComponent<KeyFrameAnimator>();
         Require(handMade && handMade->AddAnimation("Hand", "Assets/hand.json") && handMade->AddBinding("Hand", "Transform", "translate_", 0), "hand-made file clip");
@@ -202,7 +202,7 @@ int main() {
             clipOwner->SaveComponentToJson(Animator(clipOwner)) == clipsBefore, "undo restores the hand-made animator exactly");
         Require(clipsApplied.command->Execute(&context) && Animator(clipOwner)->GetAnimationCount() == 3, "redo");
 
-        // --- Play: starts at 0 on the first frame, follows the clip, stops at the end and holds ---
+        // --- 再生。初回フレームは 0 から始まり、クリップに沿って進み、終了位置で停止して値を保持する ---
         subject = sceneContext->GetSceneObject(subjectID);
         Require(subject && Near(Translate(subject).y, 9), "edit value before play");
         scene.PlayStart();
@@ -222,7 +222,7 @@ int main() {
         Require(!animator->IsPlaying(kMoveName) && Near(Translate(subject).y, 4) && Near(animator->GetAnimationTime(kMoveName), 1), "clip end stops once");
         for (int i = 0; i < 5; ++i) Frame(subject);
         Require(Near(Translate(subject).y, 4) && Near(Translate(subject).x, 3) && Near(Translate(subject).z, -2), "end value is held");
-        // Stop keeps the position; Play restarts from 0.
+        // 停止すると現在位置を保持し、再生すると 0 から再開する。
         Require(animator->Play(kMoveName), "play again");
         Frame(subject);
         Require(Near(Translate(subject).y, 0), "restart begins at 0");
@@ -232,7 +232,7 @@ int main() {
         Require(animator->Play(kMoveName), "resume as replay");
         Frame(subject);
         Require(Near(Translate(subject).y, 0), "replay starts at 0 again");
-        // Rotation, collider size and scale during play.
+        // 再生中の回転、コライダーのサイズ、スケール。
         auto *playSpinner = sceneContext->GetSceneObject(spinnerID);
         Frame(playSpinner);
         Require(Near(playSpinner->GetComponent<Transform>()->GetRotate().z, 0), "rotation starts at 0");
@@ -249,7 +249,7 @@ int main() {
         Require(subject && Near(Translate(subject).y, 9) && Near(Translate(subject).x, 3), "stop restores edit-time value");
         Require(AnimatorCount(subject) == 1 && Animator(subject)->IsEmbedded(kMoveName), "generated clip survives play/stop");
 
-        // --- Double driving: PropertyMotion, legacy behavior and keyframe tween replace each other undoably ---
+        // --- 二重駆動の防止。PropertyMotion、旧ビヘイビア、キーフレーム補間は互いを置き換え、取り消しも可能 ---
         auto *mixed = sceneContext->CreateEmptyObject("mixed");
         Apply(context, mixed, "Transformの移動Y軸を-1から1の間で往復移動");
         Apply(context, mixed, "Transformの移動X軸を-1から1の間で往復移動");
@@ -284,7 +284,7 @@ int main() {
         Require(Animator(legacy)->GetAnimationCount() == 1 && Animator(legacy)->HasAnimation("ShortText.Transform.translate_.x"), "only the same-axis clip removed");
         Require(back->Undo(&context) && Animator(legacy)->GetAnimationCount() == 2 && !legacy->GetComponent<ShortTextBehavior>(), "undo legacy replacement");
 
-        // --- Invalid requests do not mutate ---
+        // --- 無効な要求では状態を変更しない ---
         for (const char *text : {"Transformの移動Y軸を0から4までEaseInOutCubicで移動", "0秒かけてTransformの移動Y軸を0から4までLinearで移動",
             "5000秒かけてTransformの移動Y軸を0から4までLinearで移動", "1秒かけてTransformの移動Y軸を0から4まで2秒かけてLinearで移動",
             "1秒かけてTransformの移動Y軸を0から4までSmoothStepで移動", "1秒かけてBoxColliderのサイズX軸を1から3までEaseOutBackで変更",
@@ -310,7 +310,7 @@ int main() {
             Require(scene.SaveToJSON().dump() == before, "plan-level rejection does not mutate");
         }
 
-        // --- Strict loading keeps the previous state ---
+        // --- 厳密な読み込みでエラーが発生したら従来の状態を保持する ---
         animator = Animator(subject);
         const JSON saved = subject->SaveComponentToJson(animator);
         auto rejectLoad = [&](const std::string &what, auto mutate) {
@@ -348,7 +348,7 @@ int main() {
             Require(!api.SetShortTextSource("x", true, std::string(600, 'a')) && !api.IsShortTextManaged("x"), "source size limit");
         }
 
-        // --- File-based entries keep working with the strict loader (backward compatibility) ---
+        // --- 厳密なローダーでもファイル参照形式は機能する（後方互換性） ---
         {
             const auto file = (sandbox / "legacy_keys.json").string();
             { std::ofstream out(file); out << R"({"keyframes":[{"time":0,"value":10,"ease":"Linear"},{"time":2,"value":20,"ease":"Linear"}]})"; }
@@ -364,7 +364,7 @@ int main() {
             Require(fileOwner->SaveComponentToJson(fileAnimator)["data"]["customData"] == oldFormat, "old format round-trips unchanged");
         }
 
-        // --- Clone and scene round trip keep the clip, binding and play settings ---
+        // --- 複製とシーン保存・再読み込みでクリップ、バインド、再生設定を保持する ---
         subject = sceneContext->GetSceneObject(subjectID);
         const JSON animatorSaved = subject->SaveComponentToJson(Animator(subject));
         auto *copy = sceneContext->CloneObject(subject, "copy", false);

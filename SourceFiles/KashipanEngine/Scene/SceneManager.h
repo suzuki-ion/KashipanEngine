@@ -144,7 +144,7 @@ public:
     /// @param sceneName 変更したいシーンの名前
     /// @return 変更に成功した場合は true、失敗した場合は false を返す
     bool ChangeScene(const std::string &sceneName);
-    // Loading scene remains the current scene until ActivateLoadedScene is requested.
+    // ActivateLoadedScene が要求されるまで、ロードシーンを現在のシーンとして維持する。
     bool ChangeSceneWithLoading(const std::string &target, const std::string &loadingScene);
     bool BeginSceneLoad(const std::string &sceneName);
     bool IsSceneLoading() const;

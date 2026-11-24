@@ -35,7 +35,7 @@ int main() {
     std::filesystem::remove(root / L"Docs/Reference/Script/00_Index.html");
     auto missing = BuildApiContext(root, "WFC");
     assert(missing.sourceFiles == 0 && missing.referenceFiles == 0);
-    // Only this test's known files/directories are removed; no recursive cleanup of a computed root.
+    // このテストが把握しているファイルとディレクトリだけを削除し、算出したルートの再帰削除は行わない。
     std::filesystem::remove(root / L"SourceFiles/KashipanEngine/Scene/Components/Script");
     std::filesystem::remove(root / L"SourceFiles/KashipanEngine/Scene/Components");
     std::filesystem::remove(root / L"SourceFiles/KashipanEngine/Scene");

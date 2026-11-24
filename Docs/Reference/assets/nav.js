@@ -1,10 +1,10 @@
-// KashipanEngine Reference - shared navigation renderer
-// Loaded together with one of nav-engine-data.js / nav-editor-data.js / nav-script-data.js,
-// which each define KE_PAGES (relative to the Reference/ root) plus KE_SITE / KE_SITE_LABEL /
-// KE_OTHER_SITES (array of { label, href }) for the cross-site switcher.
+// KashipanEngine リファレンスで共通のナビゲーション描画処理
+// nav-engine-data.js、nav-editor-data.js、nav-script-data.js のいずれかと一緒に読み込む。
+// それぞれに KE_PAGES（Reference/ ルートからの相対パス）、KE_SITE、KE_SITE_LABEL と、
+// サイト切り替え用の KE_OTHER_SITES（{ label, href } の配列）を定義する。
 (function () {
-  // A small offline lexer for the C++ / AngelScript examples. Read textContent
-  // and create text nodes so sample strings can never become HTML markup.
+  // C++ と AngelScript の例を処理する簡易字句解析器。textContent を読み、
+  // 例の文字列が HTML として解釈されないようにテキストノードを作る。
   const codeKeywords = new Set((
     "alignas alignof and as auto break case cast catch class const constexpr consteval constinit " +
     "continue co_await co_return co_yield default delete do dynamic_cast else enum explicit export " +

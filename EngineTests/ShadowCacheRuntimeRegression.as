@@ -1,5 +1,5 @@
-// Install as CurrentQA in an isolated, fully populated CityScene. The external
-// runner checks profiler cache-hit calls against phase in this result file.
+// 全要素を配置した分離済みの CityScene に CurrentQA として組み込む。
+// 外部ランナーは、この結果ファイルのフェーズに応じたプロファイラー上のキャッシュヒット呼び出しを確認する。
 class ShadowCacheRuntimeRegression : ScriptComponentBehavior {
     float clock=0;Object@ model;Object@ lamp;Vector3 modelPosition,lampPosition;
     void Update(){

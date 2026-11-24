@@ -27,7 +27,7 @@ class ProtocolTests(unittest.TestCase):
     def test_single_instance_per_port(self):
         from single_instance import InstanceGuard
         import os
-        port = 100000 + os.getpid()  # unique mutex name, no actual socket
+        port = 100000 + os.getpid()  # 一意なミューテックス名を使い、実際のソケットは使用しない
         with InstanceGuard(port) as first:
             self.assertTrue(first.acquired)
             with InstanceGuard(port) as second:
@@ -69,7 +69,7 @@ class ProtocolTests(unittest.TestCase):
             invalid[1]["fps"] = float("nan")
             with self.assertRaises(ValueError):
                 save_capture(path, invalid)
-            self.assertEqual(path.read_bytes(), old)  # Failed save preserves existing capture.
+            self.assertEqual(path.read_bytes(), old)  # 保存に失敗しても、既存の記録データを保持する。
             path.write_text('{"format":"other"}\n', encoding="utf-8")
             with self.assertRaises(ValueError):
                 load_capture(path)
@@ -139,7 +139,7 @@ def integration(harness, with_gui=False):
                 print("Live Tk integration passed: native samples displayed, pause and resume")
             finally:
                 app.close()
-        # A connected viewer that stops reading must not stop the simulated game.
+        # 接続中のビューアーが読み取りを停止しても、ゲームのシミュレーションは止まらない。
         with socket.create_connection(("127.0.0.1", port), timeout=2):
             output, _ = process.communicate(timeout=10)
         frames = int(output.split("Completed ")[-1].strip())

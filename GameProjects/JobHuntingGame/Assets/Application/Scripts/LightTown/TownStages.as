@@ -15,7 +15,7 @@ class TownStages {
     string Name(Json@ stage){return TownTr(stage.GetString("name"),stage.GetString("nameEn"));}
     Vector3 Position(Json@ stage){return Vector3(float(stage.GetFloat("x")),0,float(stage.GetFloat("z")));}
     int ResourceKind(Json@ stage,uint room){
-        // Every stage retains one room of each material; remaining rooms are biased.
+        // すべてのステージに各素材の採取部屋を 1 つずつ確保し、残りの部屋には出現傾向を持たせる。
         if(room<3)return int(room);
         uint wood=uint(stage.GetInt("woodWeight")),stone=uint(stage.GetInt("stoneWeight")),total=wood+stone+uint(stage.GetInt("crystalWeight"));
         uint roll=(room*37+uint(stage.GetInt("seedSalt")))%total;

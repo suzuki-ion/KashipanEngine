@@ -61,13 +61,13 @@ HANDLE sWindowReadyEvent = nullptr;
 ULONGLONG sShowStartTick = 0;
 std::atomic<bool> sCloseRequested{false}, sRunning{false};
 std::atomic<unsigned long long> sGeneration{0};
-bool sClosing = false; // WebView/UI thread only.
+bool sClosing = false; // WebView の UI スレッド専用。
 
 /// @brief WebView2がキャッシュ等を書き込む作業フォルダ
 /// @details ランチャー（KashipanHub）とはユーザーデータフォルダを分け、
 ///          起動プロセスの入れ替わりが重なってもWebView2側のロックが競合しないようにする
 std::wstring GetUserDataFolder() {
-    // Optional isolated profile for diagnostics; the default remains the legacy location.
+    // 診断用に分離したプロファイルを指定できる。既定では従来の保存場所を使う。
     wchar_t overrideFolder[32768]{};
     const DWORD length = GetEnvironmentVariableW(L"KASHIPAN_SPLASH_USER_DATA_FOLDER", overrideFolder, 32768);
     if (length && length < 32768) return overrideFolder;
@@ -174,7 +174,7 @@ LRESULT CALLBACK SplashScreen::WindowProc(HWND window, UINT message, WPARAM wpar
             if (!SetTimer(window, kMinimumTimerId, static_cast<UINT>(kMinimumDisplayMs - elapsed), nullptr)) DestroyWindow(window);
         } else {
             FlushLogLinesToWebView();
-            NotifyClosing(); // COM interfaces are used only by their owning STA thread.
+            NotifyClosing(); // COM インターフェイスは、所有する STA スレッドからのみ使用する。
             if (!SetTimer(window, kCloseTimerId, kFadeOutMs, nullptr)) DestroyWindow(window);
         }
         return 0;
@@ -234,7 +234,7 @@ void SplashScreen::ThreadMain() {
                 }
             }
         }
-    } catch (...) { /* Optional splash failure must not prevent the engine from starting. */ }
+    } catch (...) { /* スプラッシュ画面の表示に失敗しても、エンジンは起動を続ける。 */ }
     signalReady();
     if (sController) sController->Close();
     sWebView.Reset(); sController.Reset();
@@ -260,7 +260,7 @@ void SplashScreen::Show(PasskeyForGameEngineMain) {
         EndSplashLogCapture(Passkey<SplashScreen>{});
     }
     if (sWindowReadyEvent && sThread.joinable()) WaitForSingleObject(sWindowReadyEvent, 3000);
-    // The worker may still signal after that timeout; the event stays alive until join.
+    // タイムアウト後もワーカーがイベントを通知する可能性があるため、スレッドの終了を待つまでイベントを保持する。
     if (!sThread.joinable() && sWindowReadyEvent) { CloseHandle(sWindowReadyEvent); sWindowReadyEvent = nullptr; }
 }
 
@@ -273,7 +273,7 @@ void SplashScreen::Close(PasskeyForGameEngineMain) {
     EndSplashLogCapture(Passkey<SplashScreen>{});
 }
 
-// Compatibility facade: Release-only presentation/handoff must never affect the editor.
+// 互換性のための窓口。Release 専用の表示や引き継ぎがエディターに影響しないようにする。
 bool SplashScreen::IsActive() { return sRunning.load(std::memory_order_acquire); }
 SplashScreen::RenderingBackend SplashScreen::GetRenderingBackend() { return RenderingBackend::None; }
 void SplashScreen::NotifyReady(Passkey<GameEngine>) {}

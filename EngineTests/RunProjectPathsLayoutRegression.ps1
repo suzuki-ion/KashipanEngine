@@ -1,4 +1,4 @@
-# Run from a Visual Studio x64 developer PowerShell. Uses isolated generated fixtures.
+# Visual Studio の x64 開発者用 PowerShell で実行する。分離した一時テストデータを使用する。
 $ErrorActionPreference = 'Stop'
 $layoutRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $layoutOutput = Join-Path $layoutRoot ('Generated\LayoutTests\' + [guid]::NewGuid().ToString('N'))

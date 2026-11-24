@@ -1,4 +1,4 @@
-﻿# Validate real copy/distribution scripts against small isolated assets, without launching binaries.
+﻿# 実行ファイルを起動せず、分離した少量のアセットで実際のコピー・配布スクリプトを検証する。
 $ErrorActionPreference = 'Stop'
 $layoutRepository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $layoutFixture = Join-Path $layoutRepository ('Generated\DistributionLayoutTests\' + [guid]::NewGuid().ToString('N'))

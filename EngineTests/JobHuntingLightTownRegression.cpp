@@ -1,4 +1,4 @@
-// Production AngelScript bindings and WFC, without GPU/window initialization.
+// 実際の AngelScript バインディングと WFC を使い、GPU やウィンドウは初期化しない。
 #include <angelscript.h>
 #include <add_on/scriptarray/scriptarray.h>
 #include <add_on/scriptbuilder/scriptbuilder.h>
@@ -34,8 +34,8 @@ int main(int argc, char **argv) {
             scratch / "Assets/Application/Data/ExpeditionStages.json", std::filesystem::copy_options::overwrite_existing);
         std::filesystem::current_path(scratch);
         Scene scene(std::string("CityScene"));
-        // Hidden UI must unregister before its pooled storage can be destroyed/reused.
-        // The former Finalize used IsActive() after its owner was already inactive.
+        // 非表示の UI は、プール内の領域が破棄または再利用される前に登録を解除する必要がある。
+        // 以前の Finalize は所有オブジェクトがすでに非アクティブになった後に IsActive() を使っていた。
         {
             auto *owner = scene.GetSceneContext()->CreateEmptyObject("HiddenUIRegression");
             auto *sprite = owner->AddComponent<SpriteRenderer>();
@@ -61,8 +61,8 @@ int main(int argc, char **argv) {
                 Require(renderer->GetSpriteRenderers().size() == baseline, "hidden subtree destruction and slot reuse stay clean");
             }
         }
-        // The plain compiler does not enforce ScriptComponent's GC-field restrictions.
-        // Exercise the actual production loader, including behavior construction.
+        // コンパイラー単体では ScriptComponent の GC フィールドに関する制約を検査しない。
+        // 実際のローダーで、ビヘイビアの構築も含めて検証する。
         for (const char *name : {"TitleController", "CityController", "StageSelectController", "ExpeditionController", "../MoveGround", "../AlwaysRotate", "../TeleportFloor", "../Checkpoint", "../Enemy"}) {
             auto *object = scene.GetSceneContext()->CreateEmptyObject(name);
             auto *script = object->AddComponent<ScriptComponent>();

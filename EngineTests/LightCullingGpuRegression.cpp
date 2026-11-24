@@ -1,5 +1,5 @@
-// Hardware D3D12 readback parity: old/new Forward+ light ordering and tile caps.
-// Included by the generated native regression runner, not the game executable.
+// D3D12 実機から結果を読み戻し、旧版と新版で Forward+ のライト順序とタイルごとの上限が一致することを確認する。
+// 自動生成されるネイティブ回帰テストのランナーからのみ取り込む。
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <wrl.h>

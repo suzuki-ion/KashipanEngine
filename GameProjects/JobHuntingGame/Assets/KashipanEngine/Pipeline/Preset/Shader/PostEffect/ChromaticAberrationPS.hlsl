@@ -5,8 +5,8 @@ SamplerState gSampler : register(s0);
 
 cbuffer ChromaticAberrationCB : register(b0)
 {
-    float2 gDirection; // normalized-ish screen direction (e.g. (1,0))
-    float  gStrength;  // UV offset magnitude
+    float2 gDirection; // おおむね正規化された画面上の方向（例: (1, 0)）
+    float  gStrength;  // UV オフセットの大きさ
 };
 
 float4 main(VSOutput input) : SV_Target0 {

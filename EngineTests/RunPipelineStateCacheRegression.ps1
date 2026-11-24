@@ -1,4 +1,4 @@
-# Run in a Visual Studio x64 developer PowerShell. Requires a D3D12-capable adapter.
+# Visual Studio の x64 開発者用 PowerShell で実行する。D3D12 対応アダプターが必要。
 $ErrorActionPreference = 'Stop'
 $taskRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $taskProject = $taskRoot

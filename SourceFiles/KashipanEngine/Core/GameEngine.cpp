@@ -404,8 +404,8 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
         GameLoopUpdate();
         firstFrameSections.End("Update");
 #if defined(RELEASE_BUILD)
-        // Keep every native startup window unpresented until the initial scene is constructed.
-        // No game swap chain is attached to the shared HWND while Direct2D owns its presentation.
+        // 初期シーンを構築するまで、起動用のネイティブウィンドウはすべて表示更新を保留する。
+        // Direct2D が表示を担当している間は、共有 HWND にゲーム用スワップチェーンを紐付けない。
         if (!startupAnimationReady && (startupSceneCommitted ||
             (sceneManager_ && sceneManager_->GetCurrentScene() && !sceneManager_->HasPendingSceneChange()))) {
             StartupTiming::Milestone("Startup.ScenePrepared (engine entry -> scene ready for presentation)");
@@ -431,10 +431,10 @@ int GameEngine::Execute(PasskeyForGameEngineMain) {
 #if defined(RELEASE_BUILD)
         if (completedStartupHandoff) {
             Window::RevealStartupWindows({});
-            ResetDeltaTime({}); // Also exclude initial GPU preparation/presentation from gameplay delta.
+            ResetDeltaTime({}); // 初回の GPU 準備時間と表示処理時間も、ゲームプレイのデルタタイムから除外する。
         }
 #endif
-        // In Release, Startup.Total includes the animation handoff; ScenePrepared excludes it.
+        // Release では、アニメーション引き継ぎの時間を Startup.Total に含め、ScenePrepared からは除外する。
         if (startupSceneCommitted && StartupTiming::IsActive()) StartupTiming::Complete();
 
         {

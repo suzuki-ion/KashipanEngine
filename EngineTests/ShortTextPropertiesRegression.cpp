@@ -26,7 +26,7 @@ public:
 }
 static void Check(bool b,const char *s){if(!b)throw std::runtime_error(s);}
 int Run(){try{
- // Component pools are registered by the first constructor call; production components are registered elsewhere.
+ // コンポーネントプールは最初のコンストラクター呼び出しで登録される。実際の構成で使うコンポーネントは別の箇所で登録される。
  {PropertyTest registration;(void)registration;}
  Scene scene(std::string("PropertyRegression"));auto *o=scene.GetSceneContext()->CreateEmptyObject("subject");auto *first=o->AddComponent<PropertyTest>();auto *second=o->AddComponent<PropertyTest>();JSON value;
  Check(ShortText::ReadExtendedProperty(o,"PropertyTest.vector_.y",value)&&value==2,"Vector component read");

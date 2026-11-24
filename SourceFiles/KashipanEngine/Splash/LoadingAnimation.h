@@ -34,12 +34,12 @@ struct Document {
     Frame Sample(double elapsed, double readyAt) const;
     std::vector<Node> Evaluate(const Frame &frame) const;
 };
-// The resolver replaces scene material references with image/color data before exporting.
+// 書き出し前に、リゾルバーがシーン内のマテリアル参照を画像と色のデータに置き換える。
 using MaterialResolver = std::function<bool(const std::string&, JSON&)>;
 Document Compile(const JSON &scene, const MaterialResolver &material = {});
 bool Export(Document &document, const std::filesystem::path &folder, std::string &error);
 Document Load(const std::filesystem::path &file);
-// Same D2D renderer for editor preview and pre-engine startup. COM must be initialized by caller.
+// エディターのプレビューとエンジン初期化前の表示に同じ D2D レンダラーを使う。呼び出し元で COM を初期化しておく。
 class Renderer {
 public:
     Renderer(); ~Renderer();

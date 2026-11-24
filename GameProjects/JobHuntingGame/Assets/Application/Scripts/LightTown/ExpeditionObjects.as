@@ -6,7 +6,7 @@ Object@ ExpeditionFloor(Scene@ scene, const string &in name, const Vector3 &in p
     if (obj is null) { LogError("ExpeditionGroundTemplateがありません。"); return null; }
     obj.GetTransform().SetTranslate(pos); obj.GetTransform().SetScale(scale);
     obj.GetTransform().SetRotate(Vector3(0, 0, angle)); obj.SetActive(true);
-    // Keep the historical material and synchronized collider; tint per stage.
+    // 従来のマテリアルと同期したコライダーを維持し、色合いはステージごとに変える。
     MeshRenderer@ mesh; obj.GetComponent(@mesh); mesh.SetInstanceColor(color);
     return obj;
 }

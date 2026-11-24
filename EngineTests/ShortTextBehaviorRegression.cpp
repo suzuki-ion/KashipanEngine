@@ -57,7 +57,7 @@ int main() {
             "右に速度1e3で動かして", "右に毎秒999999999999999999999999999999999999999999999999で動かして",
             "x軸とy軸に回して", "回転させながら右に移動して", "止めて", "回転寿司"
         };
-        // Paired directions imply oscillation, so speed is intentionally rejected.
+        // 対になる方向の指定は往復を意味するため、速度指定は意図的に拒否する。
         for (const auto *text : rejected) Require(!Parse(text).success, std::string("must reject: ") + text);
         Require(!Parse(std::string(513, 'a')).success, "input length limit");
         const auto bob = Parse("上下に振幅2で周期4秒で往復して").recipe;

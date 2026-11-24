@@ -1,5 +1,5 @@
-# Run from a Visual Studio x64 developer PowerShell after building the same engine configuration.
-# Examples: -SourceFile ShortTextRenderingRegression.cpp / ShortTextPhysicsRegression.cpp /
+# 同じ構成のエンジンをビルドしてから、Visual Studio の x64 開発者用 PowerShell で実行する。
+# 指定例は -SourceFile ShortTextRenderingRegression.cpp / ShortTextPhysicsRegression.cpp /
 # ShortTextMediaRegression.cpp / ShortTextPropertiesRegression.cpp
 [CmdletBinding()]
 param(
@@ -50,8 +50,8 @@ try {
     & $taskExePath
     if ($LASTEXITCODE -ne 0) { throw "$SourceFile regression failed (exit $LASTEXITCODE)" }
 } finally {
-    # Only unique files created by this run are removed; production files and object files are retained.
-    # The exe can stay briefly locked after exit (e.g. antivirus scan), so retry and only warn.
+    # この実行で固有に作成したファイルだけを削除し、実際のソースファイルとオブジェクトファイルは残す。
+    # 終了直後はウイルス対策ソフトのスキャンなどで exe が一時的にロックされることがある。再試行し、それでも削除できなければ警告する。
     foreach ($taskTransientPath in @($taskTestProject) + @('.exe', '.pdb', '.ilk', '.exp', '.lib' | ForEach-Object { Join-Path $taskOutputRoot ($taskTestName + $_) })) {
         for ($taskAttempt = 0; (Test-Path -LiteralPath $taskTransientPath) -and $taskAttempt -lt 20; ++$taskAttempt) {
             try { Remove-Item -LiteralPath $taskTransientPath -ErrorAction Stop } catch { Start-Sleep -Milliseconds 250 }

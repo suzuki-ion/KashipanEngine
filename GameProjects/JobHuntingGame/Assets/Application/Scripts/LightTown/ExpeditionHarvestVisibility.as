@@ -1,7 +1,7 @@
 #include "ExpeditionTraversal.as"
 
-// The terrain platforms are immutable during an expedition. Bake their rotation
-// and spatial bins once; moving gates are checked separately by the controller.
+// 遠征中の地形の足場は変化しないため、回転と空間分割を先に一度だけ計算する。
+// 動くゲートはコントローラーが別途判定する。
 class ExpeditionHarvestObstacle {
     Vector3 position, halfSize;
     float cosine=1, sine=0;

@@ -1,5 +1,5 @@
-// Native regression: short text → real components through undoable editor commands.
-// Uses real Scene / SceneEditorContext / components. Headless: no window, GPU or audio device.
+// 短文入力から、元に戻せるエディターコマンドを通じて実際のコンポーネントを操作するネイティブ回帰テスト。
+// 実際の Scene、SceneEditorContext、コンポーネントを使用する。ウィンドウ、GPU、音声デバイスは不要。
 #include <bit>
 #include <chrono>
 #include <cmath>
@@ -42,7 +42,7 @@ Applied Apply(SceneEditorContext &context, EmptyObject *target, const std::strin
     Require(applied.command->Execute(&context), "execute: " + text);
     return applied;
 }
-// The full rejection path: parse or plan fails, nothing in the scene changes.
+// 拒否時の経路全体を検証する。解析や計画に失敗してもシーンは変更されない。
 void RejectWithoutMutation(Scene &scene, EmptyObject *target, const std::string &text) {
     const auto before = scene.SaveToJSON().dump();
     const auto parsed = ParseShortTextPropertyRequest(text, target);
@@ -63,12 +63,12 @@ int main() {
     int result = 0;
     try {
         Scene scene(std::string("ShortTextComponentRegression"));
-        // Test-only access token (Passkey is trivially copyable); GameEngine is not booted.
+        // テスト専用のアクセストークン。Passkey はトリビアルにコピー可能で、GameEngine は起動しない。
         SceneEditorContext context(std::bit_cast<Passkey<Scene>>(std::uint8_t{}), &scene);
         auto *sceneContext = scene.GetSceneContext();
         const auto updateKey = std::bit_cast<Passkey<EmptyObject>>(std::uint8_t{});
 
-        // --- Transform move: PropertyMotion with absolute local range ---
+        // --- Transform の移動。絶対ローカル座標範囲を持つ PropertyMotion ---
         auto *subject = sceneContext->CreateEmptyObject("subject");
         const auto subjectID = subject->GetObjectID();
         subject->GetComponent<Transform>()->SetTranslate(Vector3(5, 7, 9));
@@ -91,11 +91,11 @@ int main() {
         Require(Near(translate.x, 5) && Near(translate.y, 7) && Near(translate.z, 9), "edit-time position is not moved by applying");
         motion->UpdateInterface(updateKey);
         Require(Near(subject->GetComponent<Transform>()->GetTranslate().x, 5), "Update does nothing while not playing");
-        // Re-applying the same text updates instead of duplicating.
+        // 同じテキストを再適用した場合は既存の項目を更新する。
         auto again = Apply(context, subject, move);
         Require(MotionCount(subject) == 1, "re-application does not add a duplicate");
         Require(dynamic_cast<CompositeCommand *>(again.command.get()) != nullptr, "one composite command");
-        // Absolute evaluation while advancing.
+        // 進行中の絶対値の評価。
         Require(motion->Advance(0) && Near(subject->GetComponent<Transform>()->GetTranslate().x, -1), "t=0 writes the start value");
         Require(motion->Advance(0.5) && Near(subject->GetComponent<Transform>()->GetTranslate().x, 0), "quarter period");
         Require(motion->Advance(0.5) && Near(subject->GetComponent<Transform>()->GetTranslate().x, 1), "half period");
@@ -107,7 +107,7 @@ int main() {
         }
         Require(!motion->Advance(std::numeric_limits<double>::quiet_NaN()) && !motion->Advance(-1), "invalid dt rejected");
 
-        // --- Play / Stop restore the edit-time position ---
+        // --- 再生と停止で編集時の位置を復元 ---
         subject->GetComponent<Transform>()->SetTranslate(Vector3(5, 7, 9));
         scene.PlayStart();
         Require(scene.IsPlaying(), "playing");
@@ -123,7 +123,7 @@ int main() {
         Require(subject && Near(subject->GetComponent<Transform>()->GetTranslate().x, 5), "stop restores the edit-time value");
         Require(MotionCount(subject) == 1 && Near(Motion(subject)->GetSettings().from, -1), "motion restored after stop");
 
-        // --- Rotation in degrees, separate axis coexists ---
+        // --- 度数で指定した回転と、別軸の回転の共存 ---
         auto rotateApplied = Apply(context, subject, "Transformの回転Y軸を-90.0fから90.0fの間で往復");
         Require(MotionCount(subject) == 2, "different target adds a second motion");
         auto *rotation = Motion(subject, 1);
@@ -133,14 +133,14 @@ int main() {
         Require(rotateApplied.command->Undo(&context) && MotionCount(subject) == 1, "undo rotation motion");
         Require(rotateApplied.command->Execute(&context) && MotionCount(subject) == 2, "redo rotation motion");
 
-        // --- Undo / Redo of the first application ---
+        // --- 初回適用の取り消しとやり直し ---
         auto *undoTarget = sceneContext->CreateEmptyObject("undo");
         auto undoApplied = Apply(context, undoTarget, "Transformの移動 X 軸を -1 から 1 まで往復移動");
         Require(MotionCount(undoTarget) == 1, "applied");
         Require(undoApplied.command->Undo(&context) && MotionCount(undoTarget) == 0, "undo removes the motion");
         Require(undoApplied.command->Execute(&context) && MotionCount(undoTarget) == 1 && Near(Motion(undoTarget)->GetSettings().to, 1), "redo restores the motion");
 
-        // --- BoxCollider size: added when missing, set at edit time, undoable ---
+        // --- BoxCollider のサイズ。未登録なら追加し、編集時に設定して取り消せる ---
         auto *box = sceneContext->CreateEmptyObject("box");
         const std::string setSize = "BoxColliderのサイズX軸を2.0fにする";
         auto setApplied = Apply(context, box, setSize);
@@ -151,17 +151,17 @@ int main() {
         Require(MotionCount(box) == 0, "a set does not create a runtime controller");
         Require(setApplied.command->Undo(&context) && !box->GetComponent<BoxCollider>(), "undo removes the added collider");
         Require(setApplied.command->Execute(&context) && box->GetComponent<BoxCollider>() && Near(box->GetComponent<BoxCollider>()->GetSize().x, 2), "redo adds and sets again");
-        // Ping-pong reuses the existing collider.
+        // 往復動作は既存のコライダーを再利用する。
         auto boxRange = Apply(context, box, "BoxColliderのサイズX軸を1.0fから3.0fの間で往復");
         Require(box->GetComponents<BoxCollider>().size() == 1 && MotionCount(box) == 1, "existing collider reused, one motion");
         Require(Motion(box)->Advance(1) && Near(box->GetComponent<BoxCollider>()->GetSize().x, 3), "collider size driven");
         box->GetComponent<BoxCollider>()->SetSize(Vector3(2, defaultSize.y, defaultSize.z));
-        // A later fixed value replaces the short-text motion of the same member (undoably).
+        // 後から固定値を設定すると、同じメンバーの短文由来の動作を置き換える。この操作は取り消せる。
         auto fixed = Apply(context, box, "BoxColliderのサイズX軸を2.5にする");
         Require(MotionCount(box) == 0 && Near(box->GetComponent<BoxCollider>()->GetSize().x, 2.5f), "set replaces managed motion");
         Require(fixed.command->Undo(&context) && MotionCount(box) == 1 && Near(box->GetComponent<BoxCollider>()->GetSize().x, 2), "undo restores motion and value");
         Require(fixed.command->Execute(&context) && MotionCount(box) == 0, "redo");
-        // A manually configured motion is never deleted.
+        // 手動で設定した動作は削除しない。
         auto *manual = box->AddComponent<PropertyMotion>();
         auto manualSettings = manual->GetSettings();
         manualSettings.component = "BoxCollider"; manualSettings.member = "size_"; manualSettings.axis = 0; manualSettings.from = 1; manualSettings.to = 4;
@@ -169,13 +169,13 @@ int main() {
         auto keepManual = Apply(context, box, "BoxColliderのサイズX軸を3にする");
         Require(MotionCount(box) == 1 && !keepManual.plan.requirements.empty(), "manual motion kept and reported");
 
-        // --- Box2DCollider and formal names ---
+        // --- Box2DCollider と正式名 ---
         auto *flat = sceneContext->CreateEmptyObject("flat");
         Apply(context, flat, "Box2DColliderのsize_ Y軸を0.5から1.5の間で往復");
         Require(flat->GetComponent<Box2DCollider>() && MotionCount(flat) == 1, "Box2DCollider added for Vector2 member");
         Require(Motion(flat)->Advance(0) && Near(flat->GetComponent<Box2DCollider>()->GetSize().y, 0.5f), "Vector2 member driven");
 
-        // --- Invalid requests do not mutate ---
+        // --- 無効な要求では状態を変更しない ---
         for (const char *text : {"Transformの移動X軸を1から-1の間で往復移動", "Transformの移動X軸を2から2の間で往復移動",
             "Transformの移動X軸を-20000から1の間で往復移動", "Transformの移動を-1から1の間で往復移動", "BoxColliderのサイズを2にする",
             "Box2DColliderのサイズZ軸を2にする", "BoxColliderのサイズX軸を0にする", "BoxColliderのサイズX軸を-1から3の間で往復",
@@ -196,7 +196,7 @@ int main() {
             Require(scene.SaveToJSON().dump() == before, "plan-level rejection does not mutate");
         }
 
-        // --- Legacy ShortTextBehavior and PropertyMotion never drive the same member twice ---
+        // --- 旧 ShortTextBehavior と PropertyMotion が同じメンバーを二重に駆動しない ---
         auto *legacy = sceneContext->CreateEmptyObject("legacy");
         const auto bob = ShortText::Parse("左右に振幅2で周期3秒で往復して");
         Require(bob.success, "legacy parse");
@@ -213,7 +213,7 @@ int main() {
         auto spinCommand = MakeShortTextBehaviorCommand(legacy, spin.recipe, "Y軸で毎秒90度回転して");
         Require(spinCommand && spinCommand->Execute(&context) && MotionCount(legacy) == 1, "non-conflicting legacy recipe keeps motion");
 
-        // --- Legacy recipes: required components are planned at edit time ---
+        // --- 旧レシピでは必要なコンポーネントを編集時に計画する ---
         auto *rules = sceneContext->CreateEmptyObject("rules");
         ShortText::Recipe program; program.kind = ShortText::Kind::Rules;
         ShortText::Rule jump; jump.event = ShortText::Event::KeyPressed;
@@ -241,7 +241,7 @@ int main() {
         needs = AnalyzeShortTextRecipeNeeds(rules, propertyProgram);
         Require(needs.add.empty() && needs.notes.size() == 1, "collider shape is not guessed for contact");
 
-        // --- Save / load / clone ---
+        // --- 保存、読み込み、複製 ---
         subject = sceneContext->GetSceneObject(subjectID);
         const auto savedMotion = subject->SaveComponentToJson(Motion(subject));
         auto invalid = savedMotion;

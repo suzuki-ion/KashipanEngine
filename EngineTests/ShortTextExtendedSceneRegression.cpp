@@ -41,17 +41,17 @@ int Run(){try{
  mixed.actions={score,copy};r.rules={mixed};memory={};tick(0.1);Check(context->GetSceneVariable("scoreCopy")->AnyCast<float>()==3,"Legacy variable setter updates same tick expression environment");
  Rule changed;changed.event=Event::VariableChanged;changed.variable="global:greeting";Action hide;hide.operation=Operation::SetVisible;hide.value=0;changed.actions={hide};r.rules={changed};memory={};tick(0.1);Check(sprite->IsActive(),"Global first read only records baseline");
  context->RemoveGlobalSceneVariable("greeting");context->AddGlobalSceneVariable<std::string>("greeting","Changed");tick(0.1);Check(!sprite->IsActive(),"Global string change triggers");
- // Reusing the snapshot cannot retain aliases/variables for removed objects or values.
+ // スナップショットを再利用しても、削除されたオブジェクトや値の別名・変数は残らない。
  context->AddSceneVariable<std::string>("temporary","old");ReadShortTextSceneInput(owner,context,r,state,input,&memory,0.1);Check(state.environment.contains("scene:temporary"),"Temporary variable was observed");
  auto childID=child->GetObjectID().ToString();context->RemoveSceneVariable("temporary");context->DeleteObject(child);ReadShortTextSceneInput(owner,context,r,state,input,&memory,0.1);
  Check(!state.environment.contains("scene:temporary")&&!state.environment.contains("object:Child")&&!state.environment.contains("object:"+childID),"Removed snapshot entries disappear");
- // Nested parallel property tween without an explicit from must capture native current value.
+ // 並列処理内のプロパティ補間で from が明示されていなければ、ネイティブ側の現在値を取得する必要がある。
  auto color=sprite->GetInstanceColor();color.w=0.4f;sprite->SetInstanceColor(color);
  Rule nested;nested.event=Event::Start;Action parallel;parallel.operation=Operation::Parallel;
  parallel.data={{"branches",Value::array({Value::array({Value{{"operation","tween_property"},{"name","SpriteRenderer.instanceColor_.a"},{"duration",1},{"data",{{"to",1}}}}}),Value::array({Value{{"operation","wait"},{"duration",1}}})})}};
  nested.actions={parallel};r.rules={nested};memory={};tick(0.5);Check(std::abs(sprite->GetInstanceColor().w-0.7f)<1e-5f,"Nested property tween captures current native alpha");
  tick(0.5);Check(sprite->GetInstanceColor().w==1,"Nested tween finishes");
- // Duplicate object names never expose an ambiguous name alias.
+ // 同名のオブジェクトが存在する場合、曖昧な名前の別名は公開しない。
  auto *duplicate=context->CreateEmptyObject("Owner");ReadShortTextSceneInput(owner,context,r,state,input,&memory,0);
  Check(!state.environment.contains("object:Owner")&&state.environment.contains("object:self"),"Duplicate names have only stable ID/self aliases");context->DeleteObject(duplicate);
  std::puts("ShortText extended scene regression passed");return 0;

@@ -229,7 +229,7 @@ PSOutput main(VSOutput input) {
 	// 選択されたモジュール（例: NormalMap→SpecularMap、優先度順）のライティング前処理をここで呼び出す
 	/*{{PRELIGHTING_HOOKS}}*/
 
-	// Directional lights
+	// 平行光源
 	if (mat.enableLighting) {
 		for (uint i = 0; i < gDirectionalLightCount; ++i) {
 			DirectionalLight light = gDirectionalLights[i];

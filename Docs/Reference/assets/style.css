@@ -1,4 +1,4 @@
-/* KashipanEngine Reference - shared stylesheet */
+/* KashipanEngine リファレンスの共通スタイル */
 
 :root {
   --bg: #ffffff;
@@ -79,7 +79,7 @@ a:hover { text-decoration: underline; }
   margin: 0 auto;
 }
 
-/* ---------- Sidebar ---------- */
+/* ---------- サイドバー ---------- */
 #sidebar {
   flex: 0 0 268px;
   border-right: 1px solid var(--border);
@@ -169,7 +169,7 @@ a:hover { text-decoration: underline; }
 
 #sidebar-toggle { display: none; }
 
-/* ---------- Main content ---------- */
+/* ---------- メインコンテンツ ---------- */
 main {
   flex: 1 1 auto;
   min-width: 0;
@@ -431,7 +431,7 @@ tr:nth-child(even) td { background: var(--bg-alt); }
 .badge.final { background: var(--warn-bg); color: #a06b12; }
 .badge.imgui { background: var(--tip-bg); color: #2c8a5c; }
 
-/* ---------- Search page ---------- */
+/* ---------- 検索ページ ---------- */
 .search-box {
   width: 100%;
   font-size: 17px;

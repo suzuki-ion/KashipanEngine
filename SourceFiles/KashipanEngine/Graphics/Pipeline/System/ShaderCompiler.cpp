@@ -317,7 +317,7 @@ ShaderCompiler::ShaderCompiledInfo *ShaderCompiler::ShaderCompile(const CompileI
             ++cacheHits_;
         } else {
             ++cacheMisses_;
-            // Source blobs and DXC include handlers are only needed on a cache miss.
+            // ソースの BLOB と DXC のインクルードハンドラーは、キャッシュミス時にのみ必要。
             Microsoft::WRL::ComPtr<IDxcBlobEncoding> sourceBlob;
             UINT codePage = 0;
             hr = dxcLibrary_->CreateBlobFromFile(wFilePath.c_str(), &codePage, &sourceBlob);

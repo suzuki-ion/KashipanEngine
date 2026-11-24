@@ -307,9 +307,9 @@ class PlayerMovement {
         return false;
     }
 
-    // A box pressed into a floor can hit the exposed side of the next floor
-    // before its top contact is delivered. Resolve only a shallow, clear step;
-    // a full-height wall or an obstructed ceiling must still block movement.
+    // 床に押し込まれたボックスは、次の床の上面との接触通知が届く前に、
+    // 露出した側面に当たることがある。乗り越えられるのは、上方に余裕がある小さな段差だけ。
+    // 通常の高さの壁や、上方に障害物がある場合は引き続き移動を止める。
     bool ResolveFloorSeam(const HitInfo &in hit) {
         if(transformation.form!=PlayerForm::Sphere||Abs(hit.normal.x)<.5f||Abs(hit.normal.y)>.2f)return false;
         if(!(hasGroundContact||IsGrounded())||velocity.y>0||isJumping)return false;
@@ -321,7 +321,7 @@ class PlayerMovement {
         CollisionShape3D shape;shape.type=CollisionShapeType3D::Box;
         shape.center=tf.GetWorldPosition()+box.GetCenter();
         shape.halfExtents=Vector3(Abs(size.x*scale.x),Abs(size.y*scale.y),Abs(size.z*scale.z))*.5f;
-        const float limit=.078f,skin=.002f; // Total correction is at most 8cm.
+        const float limit=.078f,skin=.002f; // 補正量は合計で最大 8 cm。
         Vector3 center=shape.center;shape.center.y=center.y+limit;
         if(GroundOverlap(shape))return false;
         float low=0,high=limit;
@@ -338,9 +338,9 @@ class PlayerMovement {
         if (hit.otherCollider !is null && hit.otherCollider.IsTrigger()) return;
         if (hit.otherCollider.GetTag() != groundColliderTag) return;
 
-        // The callback batch can describe a position before an earlier contact
-        // correction or a teleport. Humanoids resolve from current transforms,
-        // never add those stale penetration vectors together.
+        // 一括で届くコールバックには、先行する接触補正やテレポートより前の位置が含まれることがある。
+        // 人型キャラクターの衝突は現在のトランスフォームから解決し、
+        // 補正前の古いめり込みベクトルを合算しない。
         if(!owner.useClassicForms && transformation.form==PlayerForm::Sphere){ResolveMovementOverlap();return;}
 
         // 法線が上向きなら地面に接触しているとみなす

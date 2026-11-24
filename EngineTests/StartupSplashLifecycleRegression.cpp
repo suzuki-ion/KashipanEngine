@@ -47,7 +47,7 @@ bool ValidateWindow(HWND hwnd) {
         client.right == expected.width && client.bottom == expected.height;
 }
 }
-// Standalone stubs: native splash is linked unchanged; no engine/GPU is created.
+// 単体テスト用のスタブ。実際のスプラッシュ実装をそのままリンクし、エンジンや GPU は初期化しない。
 namespace KashipanEngine {
 static bool missingAssets = false;
 class GameEngine { public:
@@ -128,7 +128,7 @@ int Execute(PasskeyForWinMain, const std::string &mode) {
         if (!IsWindow(original)) return 9;
         Window::Detach(original);
         SetWindowLongPtrW(original, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(GameWindowProc));
-        SplashScreen::Close({}); // The splash must never destroy a detached game window.
+        SplashScreen::Close({}); // スプラッシュ画面は、切り離したゲームウィンドウを破棄してはならない。
         if (!IsWindow(original) || SendMessageW(original, WM_APP + 50, 0, 0) != 42) return 10;
         if (mode == "handoff-minimized" && !IsIconic(original)) return 11;
         DestroyWindow(original); UnregisterClassW(SplashScreen::WindowClassName(), GetModuleHandleW(nullptr));
@@ -137,13 +137,13 @@ int Execute(PasskeyForWinMain, const std::string &mode) {
     SplashScreen::Close({});
     log << "closed at " << GetTickCount64()-start << " timeout=" << timeout << std::endl;
     const auto elapsed = GetTickCount64()-start;
-    if (custom && elapsed > 2000) return 14; // Custom package selected; invalid intro skipped.
-    // Exact animation boundaries have a separate deterministic test.
+    if (custom && elapsed > 2000) return 14; // カスタムパッケージを使用し、無効な導入演出をスキップする。
+    // アニメーションの具体的な切り替わり時点は、結果が一定になる別のテストで検証する。
     if (mode == "early" && elapsed < 3900) return 2;
     if (mode == "late" && elapsed < 5900) return 3;
     if (mode == "missing" && elapsed > 2000) return 4;
-    SplashScreen::Close({}); // idempotent shutdown
-    SplashScreen::CheckCancellation(); // Natural animation completion is not user cancellation.
+    SplashScreen::Close({}); // 終了処理を繰り返しても結果が変わらない
+    SplashScreen::CheckCancellation(); // アニメーションが自然に終了した場合は、ユーザーによるキャンセルとして扱わない。
     return timeout ? 1 : 0;
 }
 }

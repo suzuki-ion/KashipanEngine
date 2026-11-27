@@ -10,6 +10,13 @@
 #include <utility>
 
 namespace KashipanEngine {
+
+namespace {
+constexpr float kMaxSceneLoadBudgetMilliseconds = 100.0f;
+constexpr float kScenePreparationStartProgress = 0.25f;
+constexpr float kScenePreparationProgressWeight = 0.7f;
+} // namespace
+
 SceneManager::~SceneManager() {
     shuttingDown_=true; CancelSceneLoad();
     currentScene_.reset();
@@ -20,11 +27,13 @@ bool SceneManager::IsSceneLoadReady() const { return sceneLoadState_==LoadState:
 float SceneManager::GetSceneLoadProgress() const {
     if(IsSceneLoadReady())return 1.f;
     if(sceneLoadState_==LoadState::Reading)return 0.f;
-    if(sceneLoadState_==LoadState::Constructing && preparedScene_)return .25f+.7f*preparedScene_->GetPreparationProgress();
+    if (sceneLoadState_ == LoadState::Constructing && preparedScene_) {
+        return kScenePreparationStartProgress + kScenePreparationProgressWeight * preparedScene_->GetPreparationProgress();
+    }
     return 0.f;
 }
 bool SceneManager::SetSceneLoadBudgetMilliseconds(float milliseconds) {
-    if(!std::isfinite(milliseconds) || milliseconds<=0 || milliseconds>100)return false;
+    if(!std::isfinite(milliseconds) || milliseconds<=0 || milliseconds > kMaxSceneLoadBudgetMilliseconds)return false;
     sceneLoadBudgetMilliseconds_=milliseconds; return true;
 }
 void SceneManager::RetireCompletedSceneReads() {

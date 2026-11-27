@@ -13,6 +13,10 @@
 
 namespace KashipanEngine {
 namespace {
+
+constexpr float kMaxTriggerValue = static_cast<float>(std::numeric_limits<std::uint8_t>::max());
+constexpr float kMaxStickValue = static_cast<float>(std::numeric_limits<std::int16_t>::max());
+constexpr float kMaxVibrationValue = static_cast<float>(std::numeric_limits<std::uint16_t>::max());
 IGameInput* sGameInput = nullptr;
 
 std::int16_t ApplyDeadZone(std::int16_t v, std::int16_t dz) {
@@ -248,13 +252,13 @@ void Controller::Update() {
 
             current_[i].buttons = ButtonsToXInputMask(state.buttons);
 
-            current_[i].leftTrigger = static_cast<std::uint8_t>(std::clamp(state.leftTrigger * 255.0f, 0.0f, 255.0f));
-            current_[i].rightTrigger = static_cast<std::uint8_t>(std::clamp(state.rightTrigger * 255.0f, 0.0f, 255.0f));
+            current_[i].leftTrigger = static_cast<std::uint8_t>(std::clamp(state.leftTrigger * kMaxTriggerValue, 0.0f, kMaxTriggerValue));
+            current_[i].rightTrigger = static_cast<std::uint8_t>(std::clamp(state.rightTrigger * kMaxTriggerValue, 0.0f, kMaxTriggerValue));
 
-            current_[i].leftX = static_cast<std::int16_t>(std::clamp(state.leftThumbstickX * 32767.0f, -32767.0f, 32767.0f));
-            current_[i].leftY = static_cast<std::int16_t>(std::clamp(state.leftThumbstickY * 32767.0f, -32767.0f, 32767.0f));
-            current_[i].rightX = static_cast<std::int16_t>(std::clamp(state.rightThumbstickX * 32767.0f, -32767.0f, 32767.0f));
-            current_[i].rightY = static_cast<std::int16_t>(std::clamp(state.rightThumbstickY * 32767.0f, -32767.0f, 32767.0f));
+            current_[i].leftX = static_cast<std::int16_t>(std::clamp(state.leftThumbstickX * kMaxStickValue, -kMaxStickValue, kMaxStickValue));
+            current_[i].leftY = static_cast<std::int16_t>(std::clamp(state.leftThumbstickY * kMaxStickValue, -kMaxStickValue, kMaxStickValue));
+            current_[i].rightX = static_cast<std::int16_t>(std::clamp(state.rightThumbstickX * kMaxStickValue, -kMaxStickValue, kMaxStickValue));
+            current_[i].rightY = static_cast<std::int16_t>(std::clamp(state.rightThumbstickY * kMaxStickValue, -kMaxStickValue, kMaxStickValue));
 
             current_[i].leftX = ApplyDeadZone(current_[i].leftX, stickDeadZone_);
             current_[i].leftY = ApplyDeadZone(current_[i].leftY, stickDeadZone_);
@@ -384,7 +388,7 @@ void Controller::SetVibration(int index, int leftMotor, int rightMotor) {
 
     const auto toFloat = [](int v) {
         if (v < 0) return -1.0f;
-        return std::clamp(static_cast<float>(v) / 65535.0f, 0.0f, 1.0f);
+        return std::clamp(static_cast<float>(v) / kMaxVibrationValue, 0.0f, 1.0f);
     };
 
     GameInputRumbleParams params{};

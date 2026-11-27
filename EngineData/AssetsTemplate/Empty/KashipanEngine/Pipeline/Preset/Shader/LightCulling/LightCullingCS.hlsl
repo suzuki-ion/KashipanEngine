@@ -17,6 +17,12 @@
 #define LIGHT_TAG_BOX    6u
 #define LIGHT_TAG_SHIFT  29u
 
+// RendererLighting.cpp のディスパッチ寸法と揃える。
+#define LIGHT_CULLING_GROUP_SIZE_X 8
+#define LIGHT_CULLING_GROUP_SIZE_Y 8
+static const uint kLightCullingGroupThreadCount = LIGHT_CULLING_GROUP_SIZE_X * LIGHT_CULLING_GROUP_SIZE_Y;
+static const float kMinProjectionClipW = 0.0001f;
+
 cbuffer TileCullingConstants : register(b1)
 {
     float2 gScreenSize;
@@ -59,7 +65,7 @@ void ProjectSphereToScreenRect(float3 worldCenter, float radius, out float2 scre
             (i & 2) ? radius : -radius,
             (i & 4) ? radius : -radius);
         float4 clip = mul(float4(corner, 1.0f), gCamera3D.projection);
-        if (clip.w <= 0.0001f)
+        if (clip.w <= kMinProjectionClipW)
         {
             coversScreen = true;
             continue;
@@ -81,8 +87,8 @@ void ProjectSphereToScreenRect(float3 worldCenter, float radius, out float2 scre
 
 // 8×8 の各グループは、ライトごとの投影結果を共有する。
 // これにより、64 個のタイルスレッドそれぞれで 8 頂点を再投影せずに済む。
-groupshared float4 sRects[64];
-groupshared uint sTags[64];
+groupshared float4 sRects[kLightCullingGroupThreadCount];
+groupshared uint sTags[kLightCullingGroupThreadCount];
 
 uint LoadBounds(uint index, out float3 center, out float radius)
 {
@@ -132,7 +138,7 @@ uint LoadBounds(uint index, out float3 center, out float radius)
     return 0xffffffffu;
 }
 
-[numthreads(8, 8, 1)]
+[numthreads(LIGHT_CULLING_GROUP_SIZE_X, LIGHT_CULLING_GROUP_SIZE_Y, 1)]
 void main(uint3 id : SV_DispatchThreadID, uint lane : SV_GroupIndex)
 {
     bool valid = id.x < gTileCountX && id.y < gTileCountY;
@@ -141,7 +147,7 @@ void main(uint3 id : SV_DispatchThreadID, uint lane : SV_GroupIndex)
     float2 tileMax = min(float2((id.xy + 1) * gTileSize), gScreenSize);
     uint total = gPointLightCount + gSpotLightCount + gSphereLightCount + gDiscLightCount + gRectLightCount + gTubeLightCount + gBoxLightCount;
     uint count = 0;
-    for (uint base = 0; base < total; base += 64) {
+    for (uint base = 0; base < total; base += kLightCullingGroupThreadCount) {
         float3 center; float radius;
         uint tag = base + lane < total ? LoadBounds(base + lane, center, radius) : 0xffffffffu;
         float2 lo = 0, hi = 0;
@@ -151,7 +157,7 @@ void main(uint3 id : SV_DispatchThreadID, uint lane : SV_GroupIndex)
         // 画面外のタイルや上限に達したタイルも、両方の同期バリアに参加する。
         // ライトの順序と gMaxLightsPerTile による打ち切りは、従来のシェーダーと同じ。
         if (valid) {
-            for (uint j = 0; j < min(64u, total - base) && count < gMaxLightsPerTile; ++j) {
+            for (uint j = 0; j < min(kLightCullingGroupThreadCount, total - base) && count < gMaxLightsPerTile; ++j) {
                 float4 rect = sRects[j];
                 if (sTags[j] == 0xffffffffu || rect.z < tileMin.x || rect.x > tileMax.x || rect.w < tileMin.y || rect.y > tileMax.y) continue;
                 gTileLightIndices[tileBase + 1 + count++] = sTags[j];

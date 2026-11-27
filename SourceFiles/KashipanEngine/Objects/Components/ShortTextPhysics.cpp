@@ -1,4 +1,5 @@
 #include "Objects/Components/ShortTextExtended.h"
+#include <limits>
 #include "Objects/EmptyObject.h"
 #include "Scene/SceneContext.h"
 #include "Objects/Components/Transform.h"
@@ -19,6 +20,19 @@
 
 namespace KashipanEngine::ShortText {
 namespace {
+
+constexpr float kMaxTriggerValue = static_cast<float>(std::numeric_limits<std::uint8_t>::max());
+constexpr float kMaxStickValue = static_cast<float>(std::numeric_limits<std::int16_t>::max());
+
+constexpr std::size_t kMaxOverlapResults = 128;
+constexpr std::size_t kMaxRaycastResults = 128;
+constexpr float kMinRayLengthSquared = 1e-12f;
+constexpr float kMinLookDirectionLengthSquared = 1e-12f;
+constexpr float kMinMovementDistance = 1e-6f;
+constexpr std::size_t kMaxWaypoints = 256;
+constexpr int kDefaultGridDimension = 32;
+constexpr int kMaxGridDimension = 128;
+
 Value Vec(const Vector3 &v) { return Value::array({v.x,v.y,v.z}); }
 Vector3 Vector(const Value &v) {
     if (!v.is_array() || v.size()<2 || v.size()>3) throw std::runtime_error("vector requires 2 or 3 numbers");
@@ -60,7 +74,7 @@ Value State(const EmptyObject *o) {
 }
 template<class Hits> Value HitsJson(const Hits &hits) {
     Value result=Value::array(); for (const auto &h:hits) if(h.isHit) {
-        if(result.size()>=128) break;
+        if(result.size() >= kMaxOverlapResults) break;
         result.push_back({{"id",h.otherObject?h.otherObject->GetObjectID().ToString():""},{"normal",Vec(h.normal)},{"depth",h.penetration}});
     } return result;
 }
@@ -85,9 +99,9 @@ void ReadPhysicsValues(const EmptyObject *owner,SceneContext *scene,ProgramState
     auto &pads=input->GetController();
     for(int i=0;i<4;++i) {
         auto &pad=out["gamepad"][std::to_string(i)];pad["connected"]=pads.IsConnected(i);
-        pad["left_stick"]=Value::array({pads.GetLeftStickX(i)/32767.0f,pads.GetLeftStickY(i)/32767.0f});
-        pad["right_stick"]=Value::array({pads.GetRightStickX(i)/32767.0f,pads.GetRightStickY(i)/32767.0f});
-        pad["left_trigger"]=pads.GetLeftTrigger(i)/255.0f;pad["right_trigger"]=pads.GetRightTrigger(i)/255.0f;
+        pad["left_stick"]=Value::array({pads.GetLeftStickX(i)/kMaxStickValue,pads.GetLeftStickY(i)/kMaxStickValue});
+        pad["right_stick"]=Value::array({pads.GetRightStickX(i)/kMaxStickValue,pads.GetRightStickY(i)/kMaxStickValue});
+        pad["left_trigger"]=pads.GetLeftTrigger(i)/kMaxTriggerValue;pad["right_trigger"]=pads.GetRightTrigger(i)/kMaxTriggerValue;
         for(const auto &name:{"A","B","X","Y","LeftShoulder","RightShoulder","Start","Back","DPadUp","DPadDown","DPadLeft","DPadRight"}) {
             auto button=InputCommand::StringToControllerButton(name);
             pad["buttons"][name]={{"held",pads.IsButtonDown(button,i)},{"pressed",pads.IsButtonTrigger(button,i)},{"released",pads.IsButtonRelease(button,i)}};
@@ -157,8 +171,8 @@ bool ExecutePhysicsCommand(const std::string &command,const Value &a,CommandCont
                     }
                 } cb(coll,c.target,a.value("include_triggers",false));
                 auto *world=coll->GetCollider()->GetPhysicsWorld();if(!world)throw std::runtime_error("3D world is not initialized");
-                auto start=Vector(a.at("start")),end=Vector(a.at("end"));auto delta=end-start;if(delta.x*delta.x+delta.y*delta.y+delta.z*delta.z<1e-12f)throw std::runtime_error("ray start/end must differ");world->raycast(reactphysics3d::Ray({start.x,start.y,start.z},{end.x,end.y,end.z}),&cb);
-                std::sort(cb.hits.begin(),cb.hits.end(),[](auto &x,auto &y){return x.first<y.first;});Value hits=Value::array();for(auto &h:cb.hits)if(hits.size()<128)hits.push_back(h.second);StoreQueryResult(c,a,hits);return true;
+                auto start=Vector(a.at("start")),end=Vector(a.at("end"));auto delta=end-start;if(delta.x*delta.x+delta.y*delta.y+delta.z*delta.z< kMinRayLengthSquared)throw std::runtime_error("ray start/end must differ");world->raycast(reactphysics3d::Ray({start.x,start.y,start.z},{end.x,end.y,end.z}),&cb);
+                std::sort(cb.hits.begin(),cb.hits.end(),[](auto &x,auto &y){return x.first<y.first;});Value hits=Value::array();for(auto &h:cb.hits)if(hits.size() < kMaxRaycastResults)hits.push_back(h.second);StoreQueryResult(c,a,hits);return true;
             }
             CollisionShape3D shape;shape.center=position;shape.radius=radius;std::string type=a.value("shape",std::string("sphere"));
             if(radius<=0)throw std::runtime_error("3D query radius must be positive");
@@ -172,7 +186,7 @@ bool ExecutePhysicsCommand(const std::string &command,const Value &a,CommandCont
             Vector3 goal;if(a.contains("position"))goal=Vector(a.at("position"));else {auto *ref=Resolve(c.scene,a.at("reference").get<std::string>());auto *rt=ref?ref->GetComponent<Transform>():nullptr;if(!rt)throw std::runtime_error("reference Transform required");goal=rt->GetWorldPosition();}
             auto delta=goal-t->GetWorldPosition();
             if(auto *parent=t->GetParentObject())if(auto *pt=parent->GetComponent<Transform>())delta=pt->GetWorldRotateQuaternion().Inverse().RotateVector(delta);
-            if(delta.x*delta.x+delta.y*delta.y+delta.z*delta.z<1e-12f)return true;
+            if(delta.x*delta.x+delta.y*delta.y+delta.z*delta.z< kMinLookDirectionLengthSquared)return true;
             auto r=t->GetRotate();
             if(a.value("dimension",2)==2)r.z=std::atan2(delta.y,delta.x)+Number(a,"offset_degrees",0)*std::numbers::pi_v<float>/180;
             else {r.y=std::atan2(delta.x,delta.z);r.x=-std::atan2(delta.y,std::sqrt(delta.x*delta.x+delta.z*delta.z));}
@@ -183,21 +197,21 @@ bool ExecutePhysicsCommand(const std::string &command,const Value &a,CommandCont
             auto &m=c.memory->extensionValues["motion"][c.target->GetObjectID().ToString()+":"+a.value("slot",std::string("default"))];
             if(!m.is_object())m=Value::object();
             Vector3 goal;size_t index=m.value("index",size_t(0));
-            if(command=="waypoint_move") {auto points=a.at("points");if(!points.is_array()||points.empty()||points.size()>256)throw std::runtime_error("1..256 waypoints required");if(index>=points.size())index=0;goal=Vector(points[index]);}
+            if(command=="waypoint_move") {auto points=a.at("points");if(!points.is_array()||points.empty()||points.size() > kMaxWaypoints)throw std::runtime_error("1.." + std::to_string(kMaxWaypoints) + " waypoints required");if(index>=points.size())index=0;goal=Vector(points[index]);}
             else goal=Vector(a.at("position"));
             auto delta=goal-t->GetTranslate();float distance=std::sqrt(delta.x*delta.x+delta.y*delta.y+delta.z*delta.z);
             float tolerance=Number(a,"tolerance",0.01f),speed=Number(a,"speed",5),accel=Number(a,"acceleration",20);if(tolerance<0||speed<=0||accel<=0)throw std::runtime_error("invalid motion bounds");
             bool arrived=distance<=tolerance;float current=m.value("speed",0.0f);
             float desired=std::min(speed,std::sqrt(2*accel*distance));current=std::clamp(desired,current-accel*static_cast<float>(c.dt),current+accel*static_cast<float>(c.dt));
-            if(!arrived&&distance>1e-6f) {float amount=std::min(distance,current*static_cast<float>(c.dt));Move(c.target,delta*(amount/distance),a.value("controller",false));arrived=distance-amount<=tolerance;}
+            if(!arrived&&distance > kMinMovementDistance) {float amount=std::min(distance,current*static_cast<float>(c.dt));Move(c.target,delta*(amount/distance),a.value("controller",false));arrived=distance-amount<=tolerance;}
             m["speed"]=arrived?0:current;
             if(arrived&&command=="waypoint_move") {size_t count=a.at("points").size();m["index"]=(index+1<count)?index+1:(a.value("loop",true)?0:index);}
-            auto direction=distance>1e-6f?delta/distance:Vector3{0,0,0};
+            auto direction=distance > kMinMovementDistance?delta/distance:Vector3{0,0,0};
             StoreQueryResult(c,a,{{"arrived",arrived},{"waypoint",index},{"speed",arrived?0:current},{"direction",Vec(direction)},{"velocity",Vec(direction*(arrived?0:current))}});return true;
         }
         if(command=="grid_path") {
             // 明示的なグリッド上の上限付き4近傍BFS。タイルマップの固体セルやワールド空間のコライダー検査で通行を遮る。
-            int width=a.value("width",32),height=a.value("height",32);if(width<1||height<1||width>128||height>128)throw std::runtime_error("grid dimensions must be 1..128");
+            int width=a.value("width", kDefaultGridDimension),height=a.value("height", kDefaultGridDimension);if(width<1||height<1||width > kMaxGridDimension||height > kMaxGridDimension)throw std::runtime_error("grid dimensions must be 1.." + std::to_string(kMaxGridDimension));
             auto start=Vector(a.at("start")),goal=Vector(a.at("goal")),origin=Vector(a.value("origin",Value::array({0,0,0})));float cell=Number(a,"cell_size",1);if(cell<=0)throw std::runtime_error("cell_size must be positive");
             auto coordinate=[&](float position,float offset,int extent){double index=std::floor((static_cast<double>(position)-offset)/cell);if(!std::isfinite(index)||index<0||index>=extent)throw std::runtime_error("start/goal outside grid");return static_cast<int>(index);};
             int sx=coordinate(start.x,origin.x,width),sy=coordinate(start.y,origin.y,height),gx=coordinate(goal.x,origin.x,width),gy=coordinate(goal.y,origin.y,height);

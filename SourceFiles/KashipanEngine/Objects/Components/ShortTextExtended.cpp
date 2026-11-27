@@ -9,6 +9,9 @@
 
 namespace KashipanEngine::ShortText {
 namespace {
+
+constexpr int64_t kMaxTilemapCells = 1048576;
+
 Value ToValue(const MyAny &v) {
  if(v.IsType<bool>())return v.AnyCast<bool>();if(v.IsType<int>())return v.AnyCast<int>();if(v.IsType<unsigned>())return v.AnyCast<unsigned>();if(v.IsType<int64_t>())return v.AnyCast<int64_t>();if(v.IsType<uint64_t>())return v.AnyCast<uint64_t>();if(v.IsType<float>())return v.AnyCast<float>();if(v.IsType<double>())return v.AnyCast<double>();if(v.IsType<std::string>())return v.AnyCast<std::string>();
  if(v.IsType<Vector2>()){auto x=v.AnyCast<Vector2>();return Value::array({x.x,x.y});}if(v.IsType<Vector3>()){auto x=v.AnyCast<Vector3>();return Value::array({x.x,x.y,x.z});}if(v.IsType<Vector4>()){auto x=v.AnyCast<Vector4>();return Value::array({x.x,x.y,x.z,x.w});}if(v.IsType<Color>()){auto x=v.AnyCast<Color>();return Value::array({x.r,x.g,x.b,x.a});}if(v.IsType<UUID128>())return v.AnyCast<UUID128>().ToString();return nullptr;
@@ -58,7 +61,7 @@ static bool ApplyCommandResolved(const Action &action,CommandContext &c,std::str
   }
   if(cmd.starts_with("tilemap.")){
    auto *tile=c.target?c.target->GetComponent<TilemapRenderer>():nullptr;if(!tile){error="TilemapRenderer unavailable";return false;}
-   if(cmd=="tilemap.clear"){tile->Clear();return true;}if(cmd=="tilemap.resize"){int w=a.at("width").get<int>(),h=a.at("height").get<int>();if(w<0||h<0||static_cast<int64_t>(w)*h>1048576){error="Grid bounds exceeded";return false;}tile->Resize(w,h);return true;}
+   if(cmd=="tilemap.clear"){tile->Clear();return true;}if(cmd=="tilemap.resize"){int w=a.at("width").get<int>(),h=a.at("height").get<int>();if(w<0||h<0||static_cast<int64_t>(w) * h > kMaxTilemapCells){error="Grid bounds exceeded";return false;}tile->Resize(w,h);return true;}
    if(cmd=="tilemap.set"||cmd=="tilemap.get"){int x=a.at("x").get<int>(),y=a.at("y").get<int>();if(x<0||y<0||x>=tile->GetGridWidth()||y>=tile->GetGridHeight()){error="Cell out of range";return false;}if(cmd=="tilemap.get"){if(c.memory)c.memory->extensionValues["results"][a.value("result",std::string("tile"))]=tile->GetTile(x,y);return true;}int type=a.at("tile").get<int>();if(type< -1||type>=tile->GetTileTypeCount()){error="Tile type out of range";return false;}tile->SetTile(x,y,type);return true;}
    if(cmd=="tilemap.solid"){int type=a.at("tile").get<int>();if(type<0||type>=tile->GetTileTypeCount()){error="Tile type out of range";return false;}tile->SetTileTypeSolid(type,a.at("solid").get<bool>());return true;}
   }

@@ -54,6 +54,10 @@ namespace KashipanEngine {
 
 namespace {
 
+constexpr float kMinFilterFrequency = 0.0005f;
+constexpr float kMinFilterOneOverQ = 0.0005f;
+
+
 using SoundHandle = AudioManager::SoundHandle;
 using PlayHandle = AudioManager::PlayHandle;
 
@@ -1031,8 +1035,8 @@ bool AudioManager::SetFilter(PlayHandle play, FilterType type, float frequency, 
 
     XAUDIO2_FILTER_PARAMETERS params{};
     params.Type = ToXAudio2FilterType(type);
-    params.Frequency = std::clamp(frequency, 0.0005f, XAUDIO2_MAX_FILTER_FREQUENCY);
-    params.OneOverQ = std::clamp(oneOverQ, 0.0005f, XAUDIO2_MAX_FILTER_ONEOVERQ);
+    params.Frequency = std::clamp(frequency, kMinFilterFrequency, XAUDIO2_MAX_FILTER_FREQUENCY);
+    params.OneOverQ = std::clamp(oneOverQ, kMinFilterOneOverQ, XAUDIO2_MAX_FILTER_ONEOVERQ);
     const HRESULT hr = p.voice->SetFilterParameters(&params);
     return SUCCEEDED(hr);
 }

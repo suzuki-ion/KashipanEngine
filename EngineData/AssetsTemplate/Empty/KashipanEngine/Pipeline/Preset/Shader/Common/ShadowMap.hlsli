@@ -49,7 +49,9 @@ inline bool ShadowIsOutside(float2 uv, float depth) {
 /// @return 2.5（正面）〜 9.5（すれすれ）テクセル相当の係数
 inline float ShadowSlopeFactor(float3 normal, float3 toLightDir) {
 	float slope = 1.0f - saturate(dot(normalize(normal), normalize(toLightDir)));
-	return 2.5f + 7.0f * slope;
+	const float kFacingBiasTexels = 2.5f;
+	const float kGrazingBiasIncreaseTexels = 7.0f;
+	return kFacingBiasTexels + kGrazingBiasIncreaseTexels * slope;
 }
 
 inline float ShadowPcf3x3(float slice, float2 uv, float depthRef, float2 texel) {
@@ -81,8 +83,13 @@ inline float ShadowPcss(float slice, float2 uv, float depthRef, float2 texel, fl
 	// 探索・フィルタ半径のUVスケール（経験的な係数。光源サイズが大きいほど広い範囲を探索・平滑化する）
 	const int kSearchTaps = 12;
 	const int kFilterTaps = 12;
-	float baseRadiusUv = lightSize * texel.x * 6.0f;
-	float searchRadiusUv = clamp(baseRadiusUv, texel.x, texel.x * 24.0f);
+	const float kRadiusScale = 6.0f;
+	const float kMaxRadiusTexels = 24.0f;
+	const float kMinBlockerDepth = 1e-4f;
+	const float kOrthographicPenumbraScale = 4.0f;
+	const float kFilterRotationRadians = 1.5707963f;
+	float baseRadiusUv = lightSize * texel.x * kRadiusScale;
+	float searchRadiusUv = clamp(baseRadiusUv, texel.x, texel.x * kMaxRadiusTexels);
 
 	float blockerSum = 0.0f;
 	int blockerCount = 0;
@@ -103,14 +110,14 @@ inline float ShadowPcss(float slice, float2 uv, float depthRef, float2 texel, fl
 
 	// 半影サイズ: 透視投影は (受光深度-ブロッカー深度)/ブロッカー深度 の相似則、正射影は簡易的な線形スケールを使う
 	float penumbraRatio = isPerspective
-		? saturate((depthRef - avgBlockerDepth) / max(avgBlockerDepth, 1e-4f))
-		: saturate((depthRef - avgBlockerDepth) * 4.0f);
-	float filterRadiusUv = clamp(baseRadiusUv * penumbraRatio, texel.x, texel.x * 24.0f);
+		? saturate((depthRef - avgBlockerDepth) / max(avgBlockerDepth, kMinBlockerDepth))
+		: saturate((depthRef - avgBlockerDepth) * kOrthographicPenumbraScale);
+	float filterRadiusUv = clamp(baseRadiusUv * penumbraRatio, texel.x, texel.x * kMaxRadiusTexels);
 
 	float sum = 0.0f;
 	[unroll]
 	for (int j = 0; j < kFilterTaps; ++j) {
-		float2 offset = VogelDiskSample(j, kFilterTaps, 1.5707963f) * filterRadiusUv;
+		float2 offset = VogelDiskSample(j, kFilterTaps, kFilterRotationRadians) * filterRadiusUv;
 		sum += gShadowMaps.SampleCmpLevelZero(gShadowSamplerCmp, float3(uv + offset, slice), depthRef);
 	}
 	return lerp(0.5f, 1.0f, saturate(sum / kFilterTaps));
@@ -139,7 +146,8 @@ inline float ShadowProjectAndSample(ShadowLightData data, uint vpIndex, uint sli
 	if (isPerspective) {
 		// 透視投影はNDC深度が非線形（遠方ほど1NDCあたりのワールド距離が大きい）ため、
 		// ビュー深度（lightClip.w）で割ることで距離によらずテクセル比例のバイアスになる
-		bias = data.params.w * slopeFactor / max(lightClip.w, 1e-3f);
+		const float kMinBiasClipW = 1e-3f;
+		bias = data.params.w * slopeFactor / max(lightClip.w, kMinBiasClipW);
 	} else {
 		// 正射影はカスケードごとに事前計算した係数（1テクセルのワールドサイズ/深度レンジ）を使う
 		bias = data.cascadeBiasScales[vpIndex] * slopeFactor;

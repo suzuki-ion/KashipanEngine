@@ -18,7 +18,13 @@ class GameEngine;
 /// 入れ子のスコープと待機を含むCPU経過時間。完了したフレームのみ公開する。
 /// 固定の名前を使用する。プロセスの存続中に登録できる異なる名前は最大256個。
 class Profiler final {
+    static constexpr std::size_t kMaxRegisteredNames = 256;
+
 public:
+    static constexpr std::size_t kMinSampleCount = 1;
+    static constexpr std::size_t kDefaultSampleCount = 60;
+    static constexpr std::size_t kMaxSampleCount = 600;
+
     struct Sample { double milliseconds = 0; std::uint64_t calls = 0; };
     struct Result {
         std::string name;
@@ -28,7 +34,7 @@ public:
     struct Snapshot {
         double frameMs = 0, fps = 0;
         std::size_t frames = 0;
-        std::size_t sampleCount = 60;
+        std::size_t sampleCount = kDefaultSampleCount;
         std::vector<Result> results;
         std::uint64_t frameId = 0;
     };
@@ -59,7 +65,7 @@ public:
     }
     void SetSampleCount(Passkey<GameEngine>, std::size_t count) {
         std::lock_guard lock(mutex_);
-        capacity_ = std::clamp<std::size_t>(count, 1, 600);
+        capacity_ = std::clamp<std::size_t>(count, kMinSampleCount, kMaxSampleCount);
         while (history_.size() > capacity_) history_.pop_front();
     }
 
@@ -110,7 +116,7 @@ public:
             std::lock_guard lock(profiler.mutex_);
             if (!profiler.recording_ || generation_ != profiler.generation_) return;
             if (!profiler.pending_.contains(name_)) {
-                if (profiler.names_.size() >= 256 && !profiler.names_.contains(name_)) return;
+                if (profiler.names_.size() >= kMaxRegisteredNames && !profiler.names_.contains(name_)) return;
                 profiler.names_.insert(name_);
             }
             auto &sample = profiler.pending_[name_];
@@ -133,7 +139,7 @@ private:
     std::uint64_t generation_ = 0;
     std::uint64_t completedFrames_ = 0;
     bool recording_ = false;
-    std::size_t capacity_ = 60;
+    std::size_t capacity_ = kDefaultSampleCount;
     double frameMs_ = 0, fps_ = 0;
     Clock::time_point frameStart_;
     Clock::time_point lastFrameEnd_;

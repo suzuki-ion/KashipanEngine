@@ -14,6 +14,11 @@ namespace KashipanEngine {
 
 namespace {
 
+constexpr float kMinProjectedTangentLength = 1e-4f;
+constexpr float kMinUvDeterminant = 1e-8f;
+constexpr float kMinOrthogonalTangentLength = 1e-6f;
+
+
 using Vertex = ModelData::Vertex;
 
 Vertex MakeVertex(const Vector3 &position, const Vector3 &normal, float u, float v) {
@@ -490,7 +495,7 @@ void GenerateDodecahedron(std::vector<Vertex> &verts, std::vector<uint32_t> &idx
         // vを中心とした接平面上での角度順に並べ替える（五角形の頂点順を確定させるため）
         const Vector3 vAxis = ico.positions[v];
         Vector3 tangent = vAxis.Cross(Vector3(0.0f, 1.0f, 0.0f));
-        if (tangent.Length() < 1e-4f) tangent = vAxis.Cross(Vector3(1.0f, 0.0f, 0.0f));
+        if (tangent.Length() < kMinProjectedTangentLength) tangent = vAxis.Cross(Vector3(1.0f, 0.0f, 0.0f));
         tangent = tangent.Normalize();
         const Vector3 bitangent = vAxis.Cross(tangent).Normalize();
 
@@ -532,7 +537,7 @@ void ComputeTangents(std::vector<Vertex> &verts, const std::vector<uint32_t> &in
         const float du1 = verts[i1].u - verts[i0].u, dv1 = verts[i1].v - verts[i0].v;
         const float du2 = verts[i2].u - verts[i0].u, dv2 = verts[i2].v - verts[i0].v;
         const float det = du1 * dv2 - du2 * dv1;
-        if (std::fabs(det) < 1e-8f) continue; // UVが縮退した三角形は寄与させない
+        if (std::fabs(det) < kMinUvDeterminant) continue; // UVが縮退した三角形は寄与させない
 
         const float r = 1.0f / det;
         const Vector3 tangent = ((p1 - p0) * dv2 - (p2 - p0) * dv1) * r;
@@ -544,7 +549,7 @@ void ComputeTangents(std::vector<Vertex> &verts, const std::vector<uint32_t> &in
     for (size_t i = 0; i < verts.size(); ++i) {
         const Vector3 normal(verts[i].nx, verts[i].ny, verts[i].nz);
         Vector3 t = accum[i] - normal * normal.Dot(accum[i]); // Gram-Schmidtで法線成分を除去
-        if (t.Length() < 1e-6f) {
+        if (t.Length() < kMinOrthogonalTangentLength) {
             // 隣接三角形の接線が打ち消し合う縮退頂点（扇の中心等）は、法線に垂直な適当な軸へフォールバックする
             const Vector3 fallback = (std::fabs(normal.y) > 0.99f) ? Vector3(1.0f, 0.0f, 0.0f) : Vector3(0.0f, 1.0f, 0.0f);
             t = fallback.Cross(normal);

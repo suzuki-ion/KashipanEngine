@@ -10,6 +10,9 @@
 namespace KashipanEngine {
 
 namespace {
+
+constexpr ULONG kMaxStackSymbolNameBytes = 255;
+
 // 一時的な診断（2026-08-11）: 起動時PostEffect.MotionBlur.Velocityパイプライン作成クラッシュの
 // 原因調査のためだけに追加。原因特定後に削除すること
 void LogCrashDiagnostics(EXCEPTION_POINTERS *exceptionInfo) {
@@ -28,10 +31,10 @@ void LogCrashDiagnostics(EXCEPTION_POINTERS *exceptionInfo) {
     HANDLE process = GetCurrentProcess();
     SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
     if (SymInitialize(process, nullptr, TRUE)) {
-        alignas(SYMBOL_INFO) char symBuffer[sizeof(SYMBOL_INFO) + 256]{};
+        alignas(SYMBOL_INFO) char symBuffer[sizeof(SYMBOL_INFO) + kMaxStackSymbolNameBytes + 1]{};
         SYMBOL_INFO *symbol = reinterpret_cast<SYMBOL_INFO *>(symBuffer);
         symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-        symbol->MaxNameLen = 255;
+        symbol->MaxNameLen = kMaxStackSymbolNameBytes;
         DWORD64 addr = reinterpret_cast<DWORD64>(record->ExceptionAddress);
         DWORD64 displacement = 0;
         IMAGEHLP_LINE64 line{};

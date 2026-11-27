@@ -1,4 +1,5 @@
 #include "Input/InputCommand.h"
+#include <limits>
 
 #include "Input/Input.h"
 #include "Input/Keyboard.h"
@@ -20,6 +21,10 @@
 namespace KashipanEngine {
 
 namespace {
+
+constexpr float kMaxTriggerValue = static_cast<float>(std::numeric_limits<std::uint8_t>::max());
+constexpr float kMaxStickValue = static_cast<float>(std::numeric_limits<std::int16_t>::max());
+constexpr float kNegativeStickRange = static_cast<float>(-std::numeric_limits<std::int16_t>::min());
 float Clamp01(float v) {
     return std::clamp(v, 0.0f, 1.0f);
 }
@@ -38,20 +43,20 @@ bool EvaluateDigital(bool down, bool trigger, bool release, InputCommand::InputS
 }
 
 float NormalizeTrigger255(int v) {
-    return Clamp01(static_cast<float>(v) / 255.0f);
+    return Clamp01(static_cast<float>(v) / kMaxTriggerValue);
 }
 
 float NormalizeStickInt16(int v) {
-    if (v >= 0) return Clamp11(static_cast<float>(v) / 32767.0f);
-    return Clamp11(static_cast<float>(v) / 32768.0f);
+    if (v >= 0) return Clamp11(static_cast<float>(v) / kMaxStickValue);
+    return Clamp11(static_cast<float>(v) / kNegativeStickRange);
 }
 
 float NormalizeTriggerDelta255(int dv) {
-    return Clamp11(static_cast<float>(dv) / 255.0f);
+    return Clamp11(static_cast<float>(dv) / kMaxTriggerValue);
 }
 
 float NormalizeStickDeltaInt16(int dv) {
-    return Clamp11(static_cast<float>(dv) / 32767.0f);
+    return Clamp11(static_cast<float>(dv) / kMaxStickValue);
 }
 
 static bool AxisTriggered(float v, float threshold) {

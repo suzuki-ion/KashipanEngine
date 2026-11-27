@@ -160,7 +160,7 @@ bool BuildPayload(const Definition &d, const Value &input, Value &out, std::stri
             Value converted = value;
             if (dropUndeclared && arg->type == ArgType::Int && value.is_number_float()) {
                 const double n = value.get<double>();
-                if (std::isfinite(n) && std::floor(n) == n && std::abs(n) <= 2147483647.0) converted = static_cast<int>(n);
+                if (std::isfinite(n) && std::floor(n) == n && std::abs(n) <= static_cast<double>(std::numeric_limits<int>::max())) converted = static_cast<int>(n);
             }
             std::string reason;
             if (!IsValidArgValue(arg->type, converted, &reason)) {

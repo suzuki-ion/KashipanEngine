@@ -1,30 +1,38 @@
 #pragma once
 #include <json.hpp>
 #include <cmath>
+#include <cstddef>
 #include <algorithm>
 #include <random>
 #include <stdexcept>
 
 namespace KashipanEngine::ShortText {
+
+inline constexpr float kMaxVariableMagnitude = 1e9f;
+inline constexpr std::size_t kMaxValueStringBytes = 512;
+inline constexpr std::size_t kMaxValueArrayElements = 64;
+inline constexpr std::size_t kMaxValueObjectFields = 32;
+inline constexpr std::size_t kMaxValueKeyBytes = 128;
+
 using Value = nlohmann::json;
 inline bool ValidValue(const Value &v, int depth = 0) {
     if (depth > 8) return false;
     if (v.is_null() || v.is_boolean()) return true;
-    if (v.is_number()) return std::isfinite(v.get<double>()) && std::abs(v.get<double>()) <= 1e9;
-    if (v.is_string()) return v.get_ref<const std::string &>().size() <= 512;
-    if (v.is_array()) { if (v.size() > 64) return false; for (const auto &item : v) if (!ValidValue(item, depth + 1)) return false; return true; }
-    if (v.is_object()) { if (v.size() > 32) return false; for (const auto &[key, item] : v.items()) if (key.size() > 128 || !ValidValue(item, depth + 1)) return false; return true; }
+    if (v.is_number()) return std::isfinite(v.get<double>()) && std::abs(v.get<double>()) <= kMaxVariableMagnitude;
+    if (v.is_string()) return v.get_ref<const std::string &>().size() <= kMaxValueStringBytes;
+    if (v.is_array()) { if (v.size() > kMaxValueArrayElements) return false; for (const auto &item : v) if (!ValidValue(item, depth + 1)) return false; return true; }
+    if (v.is_object()) { if (v.size() > kMaxValueObjectFields) return false; for (const auto &[key, item] : v.items()) if (key.size() > kMaxValueKeyBytes || !ValidValue(item, depth + 1)) return false; return true; }
     return false;
 }
 inline Value ArithmeticValue(const std::string &op,const Value &a,const Value &b,int depth=0) {
     if(depth>8)throw std::runtime_error("arithmetic depth");
     if(a.is_array()||b.is_array()) {
-        size_t count=a.is_array()?a.size():b.size();if(count>64||(a.is_array()&&b.is_array()&&a.size()!=b.size()))throw std::runtime_error("vector dimensions differ");
+        size_t count=a.is_array()?a.size():b.size();if(count > kMaxValueArrayElements||(a.is_array()&&b.is_array()&&a.size()!=b.size()))throw std::runtime_error("vector dimensions differ");
         Value result=Value::array();for(size_t i=0;i<count;++i)result.push_back(ArithmeticValue(op,a.is_array()?a[i]:a,b.is_array()?b[i]:b,depth+1));return result;
     }
     if(!a.is_number()||!b.is_number())throw std::runtime_error("numeric operand required");double x=a.get<double>(),y=b.get<double>(),v=0;
     if(op=="add")v=x+y;else if(op=="sub")v=x-y;else if(op=="mul")v=x*y;else if(op=="div"){if(y==0)throw std::runtime_error("division by zero");v=x/y;}else throw std::runtime_error("arithmetic operator");
-    if(!std::isfinite(v)||std::abs(v)>1e9)throw std::runtime_error("numeric result out of range");return v;
+    if(!std::isfinite(v)||std::abs(v) > kMaxVariableMagnitude)throw std::runtime_error("numeric result out of range");return v;
 }
 // コードは評価せず、明示的な演算子を持つ上限付きの式ツリーを使用する。
 inline Value Evaluate(const Value &expr, const Value &environment, int depth = 0) {
@@ -73,7 +81,7 @@ inline Value Evaluate(const Value &expr, const Value &environment, int depth = 0
         return Value();
     }
     if (op == "contains") {auto collection=at(0),value=at(1);if(collection.is_array())return std::find(collection.begin(),collection.end(),value)!=collection.end();if(collection.is_string()&&value.is_string())return collection.get<std::string>().find(value.get<std::string>())!=std::string::npos;throw std::runtime_error("contains needs array or string");}
-    if (op == "concat") { std::string text; for (const auto &arg : args) { auto value = Evaluate(arg, environment, depth + 1); text += value.is_string() ? value.get<std::string>() : value.dump(); } if (text.size() > 512) throw std::runtime_error("text too long"); return text; }
+    if (op == "concat") { std::string text; for (const auto &arg : args) { auto value = Evaluate(arg, environment, depth + 1); text += value.is_string() ? value.get<std::string>() : value.dump(); } if (text.size() > kMaxValueStringBytes) throw std::runtime_error("text too long"); return text; }
     if(op=="add"||op=="sub"||op=="mul"||op=="div")return ArithmeticValue(op,at(0),at(1));
     auto number = [&](size_t i) { const auto value = at(i); if (!value.is_number()) throw std::runtime_error("numeric operand required"); return value.get<double>(); };
     double value = 0;
@@ -89,7 +97,7 @@ inline Value Evaluate(const Value &expr, const Value &environment, int depth = 0
     else if (op == "vector" || op == "color") { Value v = Value::array(); for (const auto &arg : args) v.push_back(Evaluate(arg, environment, depth + 1)); return v; }
     else if (op == "component") {double index=number(1);auto collection=at(0);if(index<0||index!=std::floor(index)||index>1024||!collection.is_array()||index>=collection.size())throw std::runtime_error("component index");return collection.at(static_cast<size_t>(index));}
     else throw std::runtime_error("unknown expression operator");
-    if (!std::isfinite(value) || std::abs(value) > 1e9) throw std::runtime_error("numeric result out of range");
+    if (!std::isfinite(value) || std::abs(value) > kMaxVariableMagnitude) throw std::runtime_error("numeric result out of range");
     return value;
 }
 } // namespace KashipanEngine::ShortText

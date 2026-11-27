@@ -5,6 +5,12 @@ namespace KashipanEngine {
 
 using namespace RendererInternal;
 
+namespace {
+// LightCullingCS.hlsl のスレッドグループ寸法と揃える。
+constexpr std::uint32_t kLightCullingGroupSizeX = 8;
+constexpr std::uint32_t kLightCullingGroupSizeY = 8;
+} // namespace
+
 FrameLights &Renderer::PrepareFrameLights(SceneRenderer *sceneRenderer, IRenderTarget *target, const std::string &pipelineName) {
     auto &slot = frameLights_[target][pipelineName];
     if (slot) return *slot;
@@ -156,8 +162,8 @@ void Renderer::ProcessLightCulling(SceneContext *sceneContext, SceneRenderer *sc
         shaderBinder.Bind("Compute:gBoxLights", boxBuffer);
         shaderBinder.Bind("Compute:gTileLightIndices", tileBuffer);
 
-        const std::uint32_t groupX = (tileCountX + 7) / 8;
-        const std::uint32_t groupY = (tileCountY + 7) / 8;
+        const std::uint32_t groupX = (tileCountX + kLightCullingGroupSizeX - 1) / kLightCullingGroupSizeX;
+        const std::uint32_t groupY = (tileCountY + kLightCullingGroupSizeY - 1) / kLightCullingGroupSizeY;
         commandList->Dispatch(std::max(1u, groupX), std::max(1u, groupY), 1);
 
         // 後続の描画パスでピクセルシェーダーからStructuredBufferとして読めるように状態遷移しておく

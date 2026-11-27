@@ -125,7 +125,7 @@ bool ProbeVideo(const std::string &filePath, const std::string &assetsRootPath, 
     PROPVARIANT durationVar{};
     if (SUCCEEDED(reader->GetPresentationAttribute(static_cast<DWORD>(MF_SOURCE_READER_MEDIASOURCE), MF_PD_DURATION, &durationVar))) {
         if (durationVar.vt == VT_UI8) {
-            outInfo.durationSec = static_cast<double>(durationVar.uhVal.QuadPart) / 10000000.0;
+            outInfo.durationSec = static_cast<double>(durationVar.uhVal.QuadPart) / MFCLOCK_FREQUENCY_HNS;
         }
     }
 

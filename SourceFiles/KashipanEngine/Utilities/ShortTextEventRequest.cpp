@@ -1,5 +1,6 @@
 #include "Utilities/ShortTextEventRequest.h"
 #include <cmath>
+#include <limits>
 #include <regex>
 #include <sstream>
 
@@ -208,7 +209,7 @@ bool ParseEventLiteral(GameEvents::ArgType type, const std::string &raw, GameEve
         if (text == "false" || text == "いいえ" || text == "オフ") { out = false; return true; }
         return fail("真偽値（true/false）ではありません: " + text);
     case ArgType::Int:
-        if (!ParseNumber(text, number) || std::floor(number) != number || std::abs(number) > 2147483647.0) return fail("整数ではありません: " + text);
+        if (!ParseNumber(text, number) || std::floor(number) != number || std::abs(number) > static_cast<double>(std::numeric_limits<int>::max())) return fail("整数ではありません: " + text);
         out = static_cast<int>(number);
         return true;
     case ArgType::Number:

@@ -34,6 +34,9 @@ namespace KashipanEngine {
 
 namespace {
 
+constexpr std::chrono::milliseconds kStartupTraceDuration{ 6000 };
+
+
 struct DecodedFrame final {
     std::vector<std::uint8_t> nv12Data;
     double timestampSec = 0.0;
@@ -261,7 +264,7 @@ struct VideoPlayer::Impl final {
 
             DecodedFrame frame;
             frame.nv12Data.assign(data, data + dataLen);
-            frame.timestampSec = static_cast<double>(timestamp) / 10000000.0;
+            frame.timestampSec = static_cast<double>(timestamp) / MFCLOCK_FREQUENCY_HNS;
             buffer->Unlock();
 
             if (!loggedFirstFrame) {
@@ -487,7 +490,7 @@ void VideoPlayer::Update() {
     if (!impl_->loggedFirstUpload) {
         const auto elapsedMsForTrace = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now() - impl_->playStartTime).count();
-        if (elapsedMsForTrace < 6000) {
+        if (elapsedMsForTrace < kStartupTraceDuration.count()) {
             std::size_t queueSizeForTrace = 0;
             double queueFrontTimestampForTrace = -1.0;
             {

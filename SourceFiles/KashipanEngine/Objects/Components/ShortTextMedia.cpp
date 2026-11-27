@@ -21,6 +21,13 @@
 
 namespace KashipanEngine::ShortText {
 namespace {
+
+constexpr std::size_t kMaxSaveSlotNameBytes = 80;
+constexpr std::size_t kMaxPersistentSnapshots = 64;
+constexpr std::size_t kMaxPrefabObjects = 256;
+constexpr int kDefaultPoolCapacity = 16;
+constexpr int kMaxPoolCapacity = 256;
+
 struct PersistentSnapshot { std::string sceneId; Value object; };
 std::unordered_map<std::string,PersistentSnapshot> persistentSnapshots;
 void RememberCreated(ProgramMemory *memory,const EmptyObject *object){if(memory&&object){auto id=object->GetObjectID().ToString();memory->extensionValues["lastSpawned"]=id;memory->extensionValues["last_created"]=id;}}
@@ -38,7 +45,7 @@ Vector3 Vec(const Value &a,const char *k,Vector3 fallback={0,0,0}) {
 }
 std::filesystem::path SavePath(const Value &a) {
     auto name=a.value("slot",std::string("default"));
-    if(name.empty() || name.size()>80 || name.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")!=std::string::npos)
+    if(name.empty() || name.size() > kMaxSaveSlotNameBytes || name.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")!=std::string::npos)
         throw std::runtime_error("slot must be an alphanumeric filename");
     return std::filesystem::path("ShortTextSaves")/(name+".json");
 }
@@ -133,14 +140,14 @@ bool ExecuteMediaCommand(const std::string &cmd,const Value &a,CommandContext &c
         }
         if(cmd=="object.persist"||cmd=="object.restore"){
             if(!c.scene)return Fail(error,"Scene unavailable");const auto key="__shortTextObject."+a.value("key",std::string("default"));
-            if(cmd=="object.persist"){if(!c.target)return Fail(error,"Target unavailable");if(auto *transform=c.target->GetComponent<Transform>();transform&&transform->GetParentObject())return Fail(error,"Persistent snapshots require a root object");if(persistentSnapshots.size()>=64 && !persistentSnapshots.contains(key))return Fail(error,"Persistent object limit reached");auto snapshot=c.scene->SaveObjectToJson(c.target);c.scene->RemoveGlobalSceneVariable(key);c.scene->AddGlobalSceneVariable<std::string>(key,snapshot.dump());persistentSnapshots[key]={c.scene->GetSceneID().ToString(),snapshot};return true;}
-            if(c.scene->GetSceneObjects().size()>=4096)return Fail(error,"Scene object limit reached");auto *v=c.scene->GetGlobalSceneVariable(key);if(!v||!v->IsType<std::string>())return Fail(error,"No persistent snapshot");auto j=Value::parse(v->AnyCast<std::string>());const auto newId=UUID128(true).ToString();Remap(j,{{j.value("objectID",std::string{}),newId}});j["objectID"]=newId;auto *o=c.scene->CreateObjectFromJson(j);if(!o)return Fail(error,"Restore failed");if(auto *t=o->GetComponent<Transform>())t->SetParentObject(nullptr);RememberCreated(c.memory,o);return true;
+            if(cmd=="object.persist"){if(!c.target)return Fail(error,"Target unavailable");if(auto *transform=c.target->GetComponent<Transform>();transform&&transform->GetParentObject())return Fail(error,"Persistent snapshots require a root object");if(persistentSnapshots.size() >= kMaxPersistentSnapshots && !persistentSnapshots.contains(key))return Fail(error,"Persistent object limit reached");auto snapshot=c.scene->SaveObjectToJson(c.target);c.scene->RemoveGlobalSceneVariable(key);c.scene->AddGlobalSceneVariable<std::string>(key,snapshot.dump());persistentSnapshots[key]={c.scene->GetSceneID().ToString(),snapshot};return true;}
+            if(c.scene->GetSceneObjects().size() >= kMaxSceneObjectsForShortText)return Fail(error,"Scene object limit reached");auto *v=c.scene->GetGlobalSceneVariable(key);if(!v||!v->IsType<std::string>())return Fail(error,"No persistent snapshot");auto j=Value::parse(v->AnyCast<std::string>());const auto newId=UUID128(true).ToString();Remap(j,{{j.value("objectID",std::string{}),newId}});j["objectID"]=newId;auto *o=c.scene->CreateObjectFromJson(j);if(!o)return Fail(error,"Restore failed");if(auto *t=o->GetComponent<Transform>())t->SetParentObject(nullptr);RememberCreated(c.memory,o);return true;
         }
         if(cmd=="prefab.spawn"){
             if(!c.scene)return Fail(error,"Scene unavailable");std::ifstream input(a.at("path").get<std::string>());if(!input)return Fail(error,"Prefab file unavailable");Value j;input>>j;
             Value nodes=j.contains("objects")?j.at("objects"):Value::array({Value{{"parentIndex",-1},{"object",j}}});
-            if(!nodes.is_array()||nodes.empty()||nodes.size()>256)return Fail(error,"Prefab needs 1 to 256 objects");
-            if(c.scene->GetSceneObjects().size()+nodes.size()>4096)return Fail(error,"Scene object limit reached");
+            if(!nodes.is_array()||nodes.empty()||nodes.size() > kMaxPrefabObjects)return Fail(error,"Prefab needs 1 to " + std::to_string(kMaxPrefabObjects) + " objects");
+            if(c.scene->GetSceneObjects().size() + nodes.size() > kMaxSceneObjectsForShortText)return Fail(error,"Scene object limit reached");
             EmptyObject *parent=nullptr;if(a.contains("parent")){parent=UniqueObject(c.scene,a.at("parent").get<std::string>());if(!parent)return Fail(error,"Prefab parent missing or ambiguous");}
             std::unordered_map<std::string,std::string>ids;std::vector<std::string> fresh;
             for(size_t i=0;i<nodes.size();++i){const auto &n=nodes[i];if(!n.is_object()||!n.contains("object")||!n.at("object").is_object()||(n.value("parentIndex",-1)<-1 || n.value("parentIndex",-1)>=static_cast<int>(i)))return Fail(error,"Invalid prefab hierarchy");auto id=UUID128(true).ToString();ids[n["object"].value("objectID",std::string{})]=id;fresh.push_back(id);}
@@ -158,7 +165,7 @@ bool ExecuteMediaCommand(const std::string &cmd,const Value &a,CommandContext &c
             if(cmd=="pool.release"){auto id=c.target->GetObjectID().ToString();bool owned=false;for(const auto&x:list)if(x==id)owned=true;if(!owned)return Fail(error,"Target does not belong to this pool");c.target->SetActive(false);return true;}
             for(auto it=list.begin();it!=list.end();)if(!c.scene->GetSceneObject(UUID128(it->get<std::string>())))it=list.erase(it);else ++it;
             EmptyObject *result=nullptr;for(const auto&id:list){auto *o=c.scene->GetSceneObject(UUID128(id.get<std::string>()));if(o&&!o->IsActive()){result=o;break;}}
-            if(!result){if(c.scene->GetSceneObjects().size()>=4096)return Fail(error,"Scene object limit reached");int limit=a.value("limit",16);if(limit<1||limit>256||list.size()>=static_cast<size_t>(limit))return Fail(error,"Pool capacity reached");result=c.scene->CloneObject(c.target,a.value("name",std::string("PooledObject")),false);if(!result)return Fail(error,"Pool clone failed");list.push_back(result->GetObjectID().ToString());}
+            if(!result){if(c.scene->GetSceneObjects().size() >= kMaxSceneObjectsForShortText)return Fail(error,"Scene object limit reached");int limit=a.value("limit", kDefaultPoolCapacity);if(limit<1||limit > kMaxPoolCapacity||list.size()>=static_cast<size_t>(limit))return Fail(error,"Pool capacity reached");result=c.scene->CloneObject(c.target,a.value("name",std::string("PooledObject")),false);if(!result)return Fail(error,"Pool clone failed");list.push_back(result->GetObjectID().ToString());}
             if(auto *t=result->GetComponent<Transform>();t&&a.contains("position"))t->SetTranslate(Vec(a,"position"));result->SetActive(true);RememberCreated(c.memory,result);return true;
         }
         return Fail(error,"Unknown media command: "+cmd);
@@ -166,7 +173,7 @@ bool ExecuteMediaCommand(const std::string &cmd,const Value &a,CommandContext &c
 }
 void ReadMediaValues(const EmptyObject *owner,SceneContext *scene,ProgramState &state,ProgramMemory *memory,double dt){
     (void)dt;
-    if(scene){const auto sceneId=scene->GetSceneID().ToString();for(auto &[key,entry]:persistentSnapshots)if(entry.sceneId!=sceneId){if(scene->GetSceneObjects().size()>=4096)continue;auto snapshot=entry.object;const auto oldId=snapshot.value("objectID",std::string{});auto newId=UUID128(true).ToString();Remap(snapshot,{{oldId,newId}});snapshot["objectID"]=newId;if(auto *created=scene->CreateObjectFromJson(snapshot)){if(auto *t=created->GetComponent<Transform>())t->SetParentObject(nullptr);entry.sceneId=sceneId;entry.object=snapshot;scene->RemoveGlobalSceneVariable(key);scene->AddGlobalSceneVariable<std::string>(key,snapshot.dump());}}else{if(auto *live=scene->GetSceneObject(UUID128(entry.object.value("objectID",std::string{}))))entry.object=scene->SaveObjectToJson(live);}}
+    if(scene){const auto sceneId=scene->GetSceneID().ToString();for(auto &[key,entry]:persistentSnapshots)if(entry.sceneId!=sceneId){if(scene->GetSceneObjects().size() >= kMaxSceneObjectsForShortText)continue;auto snapshot=entry.object;const auto oldId=snapshot.value("objectID",std::string{});auto newId=UUID128(true).ToString();Remap(snapshot,{{oldId,newId}});snapshot["objectID"]=newId;if(auto *created=scene->CreateObjectFromJson(snapshot)){if(auto *t=created->GetComponent<Transform>())t->SetParentObject(nullptr);entry.sceneId=sceneId;entry.object=snapshot;scene->RemoveGlobalSceneVariable(key);scene->AddGlobalSceneVariable<std::string>(key,snapshot.dump());}}else{if(auto *live=scene->GetSceneObject(UUID128(entry.object.value("objectID",std::string{}))))entry.object=scene->SaveObjectToJson(live);}}
     if(!owner)return;auto &e=state.environment;
     auto edge=[&](const std::string &key,bool playing,bool paused=false){bool finished=false;if(memory){auto &old=memory->extensionValues["mediaStates"][owner->GetObjectID().ToString()][key];if(old.is_boolean())finished=old.get<bool>()&&!playing&&!paused;old=playing||paused;}e[key+".finished"]=finished;e[key]["finished"]=finished;};
     if(auto *s=owner->GetComponent<AudioSource>()){edge("audio",s->IsPlaying(),s->IsPaused());e["audio.playing"]=s->IsPlaying();e["audio.paused"]=s->IsPaused();e["audio.volume"]=s->GetVolume();e["audio"]["playing"]=s->IsPlaying();e["audio"]["paused"]=s->IsPaused();e["audio"]["volume"]=s->GetVolume();}

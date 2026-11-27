@@ -1587,7 +1587,7 @@ bool ScriptComponent::InvokeMethodWithValues(const std::string &name, const std:
         auto &slot = slots[i];
         float c[4] = {};
         if (type == asTYPEID_BOOL && v.is_boolean()) { slot.b = v.get<bool>(); args.emplace_back(&slot.b, type); }
-        else if (type == asTYPEID_INT32 && v.is_number() && std::floor(v.get<double>()) == v.get<double>() && std::abs(v.get<double>()) <= 2147483647.0) { slot.i = static_cast<int>(v.get<double>()); args.emplace_back(&slot.i, type); }
+        else if (type == asTYPEID_INT32 && v.is_number() && std::floor(v.get<double>()) == v.get<double>() && std::abs(v.get<double>()) <= static_cast<double>(std::numeric_limits<int32_t>::max())) { slot.i = static_cast<int>(v.get<double>()); args.emplace_back(&slot.i, type); }
         else if (type == asTYPEID_FLOAT && v.is_number() && std::isfinite(v.get<double>())) { slot.f = v.get<float>(); args.emplace_back(&slot.f, type); }
         else if (type == asTYPEID_DOUBLE && v.is_number() && std::isfinite(v.get<double>())) { slot.d = v.get<double>(); args.emplace_back(&slot.d, type); }
         else if (type == stringTypeId_ && v.is_string()) { slot.s = v.get<std::string>(); args.emplace_back(&slot.s, type); }

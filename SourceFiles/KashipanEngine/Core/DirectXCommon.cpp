@@ -15,6 +15,9 @@
 namespace KashipanEngine {
 
 namespace {
+
+constexpr UINT kSamplerDescriptorHeapSize = 512;
+
 // 遅延初期化スワップチェーンスロット管理
 std::vector<std::unique_ptr<DX12SwapChain>> sSwapChains;               // インデックスアクセス用
 std::unordered_map<HWND, size_t> sHwndToSwapChainIndex;                // HWND -> インデックス
@@ -66,7 +69,7 @@ DirectXCommon::DirectXCommon(Passkey<GameEngine>, bool enableDebugLayer) {
         settings.srvDescriptorHeapSize + maxTextures, maxTextures);
     // SamplerHeap_ の先頭 [0, kDefaultSamplerCount) は、gSamplers[]（既定6種のバインドレスサンプラー配列、
     // DefaultSamplerDescs.h参照）専用の予約レンジとする（SamplerManagerがここへ確保する）
-    SamplerHeap_ = std::make_unique<SamplerHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), 512, kDefaultSamplerCount);
+    SamplerHeap_ = std::make_unique<SamplerHeap>(Passkey<DirectXCommon>{}, dx12Device_->GetDevice(), kSamplerDescriptorHeapSize, kDefaultSamplerCount);
 
     // グローバルヒープポインタ設定
     IGraphicsResource::SetDescriptorHeaps({},

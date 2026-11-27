@@ -50,7 +50,8 @@ void GameEngine::DrawProfilingImGui() {
         // エンジンの描画コール数
         if (graphicsEngine_) ImGui::Text(TranslationC("editor.gameengine.draw_calls_u"), graphicsEngine_->GetLastFrameDrawCallCount());
         // プロファイリング対象のサンプル数（フレーム数）
-        if (ImGui::SliderInt(TranslationLabel("editor.gameengine.profiling_sample_count"), &profilingSampleCount_, 1, 600)) {
+        if (ImGui::SliderInt(TranslationLabel("editor.gameengine.profiling_sample_count"), &profilingSampleCount_,
+            static_cast<int>(Profiler::kMinSampleCount), static_cast<int>(Profiler::kMaxSampleCount))) {
             Profiler::GetInstance().SetSampleCount(Passkey<GameEngine>(), static_cast<std::size_t>(profilingSampleCount_));
         }
 

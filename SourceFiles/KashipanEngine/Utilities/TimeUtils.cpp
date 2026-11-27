@@ -9,6 +9,14 @@
 namespace KashipanEngine {
 
 namespace {
+
+constexpr auto kMillisecondsPerSecond = std::chrono::milliseconds(std::chrono::seconds{ 1 }).count();
+constexpr auto kMillisecondsPerMinute = std::chrono::milliseconds(std::chrono::minutes{ 1 }).count();
+constexpr auto kMillisecondsPerHour = std::chrono::milliseconds(std::chrono::hours{ 1 }).count();
+constexpr auto kMillisecondsPerDay = std::chrono::milliseconds(std::chrono::days{ 1 }).count();
+constexpr auto kMillisecondsPerApproximateMonth = std::chrono::milliseconds(std::chrono::days{ 30 }).count();
+constexpr auto kMillisecondsPerApproximateYear = std::chrono::milliseconds(std::chrono::days{ 365 }).count();
+
 /// @brief プログラム実行開始時間
 const auto kProgramStartTime = std::chrono::system_clock::now();
 const auto kMonotonicStartTime = std::chrono::steady_clock::now();
@@ -180,18 +188,18 @@ TimeRecord GetGameRuntime() {
     auto now = std::chrono::system_clock::now();
     auto elapsed = now - kProgramStartTime;
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-    record.year = static_cast<int>(ms / (static_cast<long long>(1000 * 60 * 60 * 24) * 365));
-    ms %= (static_cast<long long>(1000 * 60 * 60 * 24) * 365);
-    record.month = static_cast<int>(ms / (static_cast<long long>(1000 * 60 * 60 * 24) * 30));
-    ms %= (static_cast<long long>(1000 * 60 * 60 * 24) * 30);
-    record.day = static_cast<int>(ms / (1000 * 60 * 60 * 24));
-    ms %= (1000 * 60 * 60 * 24);
-    record.hour = static_cast<int>(ms / (1000 * 60 * 60));
-    ms %= (1000 * 60 * 60);
-    record.minute = static_cast<int>(ms / (1000 * 60));
-    ms %= (1000 * 60);
-    record.second = static_cast<long long>(ms / 1000);
-    record.millisecond = static_cast<long long>(ms % 1000);
+    record.year = static_cast<int>(ms / kMillisecondsPerApproximateYear);
+    ms %= kMillisecondsPerApproximateYear;
+    record.month = static_cast<int>(ms / kMillisecondsPerApproximateMonth);
+    ms %= kMillisecondsPerApproximateMonth;
+    record.day = static_cast<int>(ms / kMillisecondsPerDay);
+    ms %= kMillisecondsPerDay;
+    record.hour = static_cast<int>(ms / kMillisecondsPerHour);
+    ms %= kMillisecondsPerHour;
+    record.minute = static_cast<int>(ms / kMillisecondsPerMinute);
+    ms %= kMillisecondsPerMinute;
+    record.second = static_cast<long long>(ms / kMillisecondsPerSecond);
+    record.millisecond = static_cast<long long>(ms % kMillisecondsPerSecond);
     return record;
 }
 
@@ -206,18 +214,18 @@ TimeRecord EndTimeMeasurement(const std::string &label) {
         auto startTime = sTimerStartTimes[label];
         auto duration = endTime - startTime;
         auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-        record.year = static_cast<int>(ms / (static_cast<long long>(1000 * 60 * 60 * 24) * 365));
-        ms %= (static_cast<long long>(1000 * 60 * 60 * 24) * 365);
-        record.month = static_cast<int>(ms / (static_cast<long long>(1000 * 60 * 60 * 24) * 30));
-        ms %= (static_cast<long long>(1000 * 60 * 60 * 24) * 30);
-        record.day = static_cast<int>(ms / (1000 * 60 * 60 * 24));
-        ms %= (1000 * 60 * 60 * 24);
-        record.hour = static_cast<int>(ms / (1000 * 60 * 60));
-        ms %= (1000 * 60 * 60);
-        record.minute = static_cast<int>(ms / (1000 * 60));
-        ms %= (1000 * 60);
-        record.second = static_cast<int>(ms / 1000);
-        record.millisecond = static_cast<int>(ms % 1000);
+        record.year = static_cast<int>(ms / kMillisecondsPerApproximateYear);
+        ms %= kMillisecondsPerApproximateYear;
+        record.month = static_cast<int>(ms / kMillisecondsPerApproximateMonth);
+        ms %= kMillisecondsPerApproximateMonth;
+        record.day = static_cast<int>(ms / kMillisecondsPerDay);
+        ms %= kMillisecondsPerDay;
+        record.hour = static_cast<int>(ms / kMillisecondsPerHour);
+        ms %= kMillisecondsPerHour;
+        record.minute = static_cast<int>(ms / kMillisecondsPerMinute);
+        ms %= kMillisecondsPerMinute;
+        record.second = static_cast<int>(ms / kMillisecondsPerSecond);
+        record.millisecond = static_cast<int>(ms % kMillisecondsPerSecond);
         sTimerStartTimes.erase(label); // 計測終了後に削除
     }
     return record;

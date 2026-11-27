@@ -20,6 +20,9 @@
 
 namespace KashipanEngine {
 namespace {
+
+constexpr int kMaxGeneratedObjectsPerUpdate = 16;
+
 JSON RecipeJson(const ShortText::Recipe &r, const std::string &source) {
     JSON result = ShortText::EncodeRecipe(r);
     result["sourceText"] = source;
@@ -113,7 +116,7 @@ void ReadShortTextSceneInput(const EmptyObject *owner, SceneContext *scene, cons
         else if (value->IsType<double>()) number = value->AnyCast<double>();
         else if (value->IsType<int>()) number = value->AnyCast<int>();
         else { state.blockedVariables.insert(name); continue; }
-        if (!std::isfinite(number) || std::abs(number) > 1000000000) state.blockedVariables.insert(name);
+        if (!std::isfinite(number) || std::abs(number) > ShortText::kMaxVariableMagnitude) state.blockedVariables.insert(name);
         else state.variables[name] = static_cast<float>(number);
     }
     if (auto *device = scene->GetInput()) {
@@ -156,7 +159,7 @@ void ReadShortTextSceneInput(const EmptyObject *owner, SceneContext *scene, cons
 }
 namespace {
 void WriteSceneNumber(SceneContext *scene, const std::string &name, float number) {
-    if (!std::isfinite(number) || std::abs(number) > 1000000000) return;
+    if (!std::isfinite(number) || std::abs(number) > ShortText::kMaxVariableMagnitude) return;
     auto *old = scene->GetSceneVariable(name);
     if (!old || old->IsType<float>()) scene->AddSceneVariable<float>(name, number);
     else if (old->IsType<double>()) scene->AddSceneVariable<double>(name, number);
@@ -208,7 +211,7 @@ void ApplyShortTextSceneEffects(const EmptyObject *owner, SceneContext *scene, c
             break;
         }
         case Op::SetPosition: if (transform) transform->SetTranslate(setAxis(transform->GetTranslate())); break;
-        case Op::SetRotation: if (transform) { auto value = transform->GetRotate(); axisValue(value) = a.value * 0.017453292519943295f; transform->SetRotate(value); } break;
+        case Op::SetRotation: if (transform) { auto value = transform->GetRotate(); axisValue(value) = a.value * ShortText::kDegreesToRadians; transform->SetRotate(value); } break;
         case Op::SetScale: if (transform) transform->SetScale(setAxis(transform->GetScale())); break;
         case Op::SetVariable:
             WriteSceneNumber(scene, a.name, a.value);
@@ -229,7 +232,7 @@ void ApplyShortTextSceneEffects(const EmptyObject *owner, SceneContext *scene, c
             }
             break;
         case Op::CreateObject: case Op::CloneObject: {
-            if (generated >= 16 || scene->GetSceneObjects().size() >= 4096) break;
+            if (generated >= kMaxGeneratedObjectsPerUpdate || scene->GetSceneObjects().size() >= ShortText::kMaxSceneObjectsForShortText) break;
             ++generated;
             auto *made = a.operation == Op::CreateObject ? scene->CreateEmptyObject(a.name.empty() ? "Generated" : a.name) : scene->CloneObject(target, a.name, false);
             if (made && scene->GetSceneObject(made)) {

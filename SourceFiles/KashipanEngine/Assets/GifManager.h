@@ -26,12 +26,13 @@ class GifManager final {
 public:
     using GifHandle = std::uint32_t;
     static constexpr GifHandle kInvalidHandle = 0;
+    static constexpr float kDefaultFrameDelaySeconds = 0.1f;
 
     struct GifFrame final {
         /// @brief このフレーム時点のキャンバス全体のRGBA8ピクセル列（width*height*4バイト）
         std::vector<std::uint8_t> rgba;
         /// @brief このフレームを表示し続ける秒数
-        float delaySeconds = 0.1f;
+        float delaySeconds = kDefaultFrameDelaySeconds;
     };
 
     struct GifAnimation final {

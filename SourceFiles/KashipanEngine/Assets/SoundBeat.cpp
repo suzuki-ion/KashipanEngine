@@ -4,6 +4,11 @@
 
 namespace KashipanEngine {
 
+namespace {
+constexpr double kSecondsPerMinute = 60.0;
+} // namespace
+
+
 SoundBeat::SoundBeat() {
     playHandle_ = AudioManager::kInvalidPlayHandle;
     bpm_ = 0.0f;
@@ -71,7 +76,7 @@ void SoundBeat::Update(Passkey<AudioManager>) {
 
     if (posSec < startOffsetSec_) return;
 
-    const double interval = 60.0 / static_cast<double>(bpm_);
+    const double interval = kSecondsPerMinute / static_cast<double>(bpm_);
     if (interval <= 0.0) return;
 
     const uint64_t beatIndex = static_cast<uint64_t>(std::floor((posSec - startOffsetSec_) / interval));
@@ -102,7 +107,7 @@ float SoundBeat::GetBeatProgress() const {
     }
     if (posSec < startOffsetSec_) return 0.0f;
 
-    const double interval = 60.0 / static_cast<double>(bpm_);
+    const double interval = kSecondsPerMinute / static_cast<double>(bpm_);
     if (interval <= 0.0) return 0.0f;
 
     const double t = std::fmod((posSec - startOffsetSec_), interval);

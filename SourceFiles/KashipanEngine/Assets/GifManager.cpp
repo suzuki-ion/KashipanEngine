@@ -28,6 +28,9 @@ namespace KashipanEngine {
 
 namespace {
 
+constexpr float kCentisecondsPerSecond = 100.0f;
+
+
 using GifHandle = GifManager::GifHandle;
 using GifAnimation = GifManager::GifAnimation;
 using GifFrame = GifManager::GifFrame;
@@ -71,7 +74,7 @@ void ClearRect(std::vector<std::uint8_t> &canvas, std::uint32_t canvasWidth, std
 struct RawGifFrame final {
     std::vector<std::uint8_t> rgba;
     std::uint32_t left = 0, top = 0, width = 0, height = 0;
-    float delaySeconds = 0.1f;
+    float delaySeconds = GifManager::kDefaultFrameDelaySeconds;
     std::uint8_t disposal = 0;
 };
 
@@ -158,7 +161,7 @@ bool DecodeGifAnimation(const std::string &filePath, const std::string &assetsRo
             rf.left = ReadPropVariantUInt(frameReader.Get(), L"/imgdesc/Left", 0);
             rf.top = ReadPropVariantUInt(frameReader.Get(), L"/imgdesc/Top", 0);
             const std::uint32_t delayCentiseconds = ReadPropVariantUInt(frameReader.Get(), L"/grctlext/Delay", 0);
-            rf.delaySeconds = (delayCentiseconds > 0) ? (static_cast<float>(delayCentiseconds) / 100.0f) : 0.1f;
+            rf.delaySeconds = (delayCentiseconds > 0) ? (static_cast<float>(delayCentiseconds) / kCentisecondsPerSecond) : GifManager::kDefaultFrameDelaySeconds;
             rf.disposal = static_cast<std::uint8_t>(ReadPropVariantUInt(frameReader.Get(), L"/grctlext/Disposal", 0));
         }
 

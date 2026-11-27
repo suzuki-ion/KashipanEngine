@@ -63,6 +63,12 @@
 namespace KashipanEngine {
 
 namespace {
+
+constexpr float kMinAutoSaveIntervalMinutes = 0.1f;
+constexpr float kMaxAutoSaveIntervalMinutes = 120.0f;
+constexpr float kAutoSaveIntervalDragSpeed = 0.1f;
+constexpr float kSecondsPerMinute = 60.0f;
+
 /// @brief エンジンのリファレンス（エンジンルート直下Reference/の静的HTML）を既定のブラウザで開く
 /// @param pageRelativePath Reference/からの相対パス（例: "index.html"）
 void OpenReferencePage(const std::string &pageRelativePath) {
@@ -994,10 +1000,10 @@ void SceneEditor::PerformRedo() {
 
 void SceneEditor::HandleAutoSave() {
     float intervalMinutes = autoSaveIntervalMinutes_;
-    if (intervalMinutes < 0.1f) intervalMinutes = 0.1f;
+    if (intervalMinutes < kMinAutoSaveIntervalMinutes) intervalMinutes = kMinAutoSaveIntervalMinutes;
 
     autoSaveElapsedTime_ += GetDeltaTime();
-    if (autoSaveElapsedTime_ < intervalMinutes * 60.0f) return;
+    if (autoSaveElapsedTime_ < intervalMinutes * kSecondsPerMinute) return;
     autoSaveElapsedTime_ = 0.0f;
 
     // 再生中かどうかでファイル名の先頭を変え、一覧で見分けやすくする
@@ -1016,7 +1022,7 @@ void SceneEditor::ShowAutoSaveSettingsModal() {
         isAutoSaveSettingsRequested_ = false;
     }
     if (ImGui::BeginPopupModal(TranslationLabel("editor.autosave.title"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-        if (ImGui::DragFloat(TranslationLabel("editor.autosave.interval"), &autoSaveIntervalMinutes_, 0.1f, 0.1f, 120.0f, "%.1f")) {
+        if (ImGui::DragFloat(TranslationLabel("editor.autosave.interval"), &autoSaveIntervalMinutes_, kAutoSaveIntervalDragSpeed, kMinAutoSaveIntervalMinutes, kMaxAutoSaveIntervalMinutes, "%.1f")) {
             EditorSettings::SetFloat("sceneEditor.autoSaveIntervalMinutes", autoSaveIntervalMinutes_);
         }
         if (ImGui::InputText(TranslationLabel("editor.autosave.nameformat"), &autoSaveNameFormat_)) {

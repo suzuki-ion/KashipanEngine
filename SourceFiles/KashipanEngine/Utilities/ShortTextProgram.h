@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <string>
 #include <vector>
 #include <utility>
@@ -11,6 +12,12 @@
 #include "Utilities/ShortTextValues.h"
 
 namespace KashipanEngine::ShortText {
+
+inline constexpr std::size_t kMaxSceneObjectsForShortText = 4096;
+inline constexpr std::size_t kMaxQueuedCommands = 512;
+inline constexpr std::size_t kMaxSequenceStepsPerUpdate = 512;
+inline constexpr float kDegreesToRadians = 0.017453292519943295f;
+
 enum class Event { EveryFrame, Start, KeyPressed, KeyHeld, KeyReleased, Timer, ContactEnter, ContactStay, ContactExit, MousePressed, MouseHeld, MouseReleased, ButtonClicked, VariableChanged, ConditionsEntered };
 enum class Test { PositionAtMost, PositionAtLeast, VelocityAtMost, VelocityAtLeast, VariableAtMost, VariableAtLeast, DistanceAtMost, DistanceAtLeast, Expression };
 enum class Operation { SetVelocity, AddVelocity, SetAcceleration, Translate, Rotate, SetScale, SetPosition, SetRotation, StopVelocity, SetVariable, AddVariable, PlaySound, StopSound, SetVolume, SetVisible, SetActive, CreateObject, CloneObject, DeleteObject, ChangeScene, SetText, ShowVariableText, Follow, MoveToward, TweenPosition, TweenRotation, TweenScale, Wait, EngineCommand, TweenProperty, Parallel, Repeat, Branch, SequenceControl, SetState };
@@ -98,7 +105,7 @@ inline bool IsValidRule(const Rule &r,int depth=0) {
         if (!IsValidName(a.name, true)) return false;
         if (a.operation == Operation::SetVolume && (a.value < 0 || a.value > 1)) return false;
         if (a.target < Target::Self || a.target > Target::Index || !IsValidName(a.targetName, true) ||
-            !IsValidName(a.reference, true) || a.text.size() > 512 || !std::isfinite(a.duration) || a.duration < 0.01f || a.duration > 3600) return false;
+            !IsValidName(a.reference, true) || a.text.size() > kMaxValueStringBytes || !std::isfinite(a.duration) || a.duration < 0.01f || a.duration > 3600) return false;
         if ((a.target == Target::Name || a.target == Target::Tag ||a.target==Target::ID) && !IsValidName(a.targetName)) return false;
         if ((a.operation == Operation::CloneObject || a.operation == Operation::ChangeScene || a.operation == Operation::ShowVariableText) && !IsValidName(a.name)) return false;
         if ((a.operation == Operation::Follow || a.operation == Operation::MoveToward) && !IsValidName(a.reference)) return false;
@@ -222,7 +229,7 @@ inline std::vector<std::string> BindTargets(const Action &a, const ProgramState 
     return result;
 }
 inline void ExecuteAction(Action a, const std::string &id, ProgramState &s, double dt) {
-    if (s.commands.size() >= 512) return;
+    if (s.commands.size() >= kMaxQueuedCommands) return;
     const bool self = id == s.selfId;
     auto *object = self ? nullptr : FindObject(s, id);
     if(id=="@last_created"){a.targetId=id;a.frameSeconds=static_cast<float>(dt);s.commands.push_back(std::move(a));return;}
@@ -233,21 +240,20 @@ inline void ExecuteAction(Action a, const std::string &id, ProgramState &s, doub
     auto &velocity = self ? s.velocity : object->velocity;
     auto &acceleration = self ? s.acceleration : object->acceleration;
     const auto axis = static_cast<size_t>(a.axis);
-    constexpr float radians = 0.017453292519943295f;
     a.targetId = id; a.frameSeconds = static_cast<float>(dt);
     switch (a.operation) {
     case Operation::SetVelocity: velocity[axis] = a.value; break;
     case Operation::AddVelocity: velocity[axis] += a.value; a.operation = Operation::SetVelocity; a.value = velocity[axis]; break;
     case Operation::SetAcceleration: acceleration[axis] = a.value; break;
     case Operation::Translate: position[axis] += a.value * static_cast<float>(dt); a.operation = Operation::SetPosition; a.value = position[axis]; break;
-    case Operation::Rotate: rotation[axis] += a.value * radians * static_cast<float>(dt); a.operation = Operation::SetRotation; a.value = rotation[axis] / radians; break;
+    case Operation::Rotate: rotation[axis] += a.value * kDegreesToRadians * static_cast<float>(dt); a.operation = Operation::SetRotation; a.value = rotation[axis] / kDegreesToRadians; break;
     case Operation::SetScale: scale[axis] = a.value; break;
     case Operation::SetPosition: position[axis] = a.value; break;
-    case Operation::SetRotation: rotation[axis] = a.value * radians; break;
+    case Operation::SetRotation: rotation[axis] = a.value * kDegreesToRadians; break;
     case Operation::StopVelocity: velocity[axis] = 0; break;
     case Operation::SetVariable: case Operation::AddVariable:
         if (s.blockedVariables.contains(a.name)) return;
-        { auto &value = s.variables[a.name]; value = a.operation == Operation::SetVariable ? a.value : std::clamp(value + a.value, -1000000000.0f, 1000000000.0f);
+        { auto &value = s.variables[a.name]; value = a.operation == Operation::SetVariable ? a.value : std::clamp(value + a.value, -kMaxVariableMagnitude, kMaxVariableMagnitude);
           s.writtenVariables.insert(a.name); a.operation = Operation::SetVariable; a.value = value; }
         break;
     case Operation::PlaySound: case Operation::StopSound: case Operation::SetVolume: s.effects.push_back(a); break;
@@ -272,14 +278,14 @@ inline float Eased(float t,const Value &data) {
     if(name!="linear")throw std::runtime_error("unknown easing");return t;
 }
 inline Value InterpolateValue(const Value &from,const Value &to,float t) {
-    if(from.is_number()&&to.is_number()){double v=from.get<double>()+(to.get<double>()-from.get<double>())*t;if(!std::isfinite(v)||std::abs(v)>1e9)throw std::runtime_error("interpolation range");return v;}
+    if(from.is_number()&&to.is_number()){double v=from.get<double>()+(to.get<double>()-from.get<double>())*t;if(!std::isfinite(v)||std::abs(v) > kMaxVariableMagnitude)throw std::runtime_error("interpolation range");return v;}
     if(from.is_array()&&to.is_array()&&from.size()==to.size()&&from.size()<=64){Value result=Value::array();for(size_t i=0;i<from.size();++i)result.push_back(InterpolateValue(from[i],to[i],t));return result;}throw std::runtime_error("interpolation requires matching numeric values");
 }
 inline double AdvanceSequence(Sequence &q, ProgramState &s, double dt) {
     if(q.paused)return dt;
     double remaining = dt;
     size_t budget=0;
-    while (q.running && q.step < q.steps.size()&&++budget<=512) {
+    while (q.running && q.step < q.steps.size()&&++budget <= kMaxSequenceStepsPerUpdate) {
         auto &step = q.steps[q.step];
         const auto op = step.action.operation;
         if(op==Operation::Repeat||op==Operation::Branch) {
@@ -307,7 +313,7 @@ inline double AdvanceSequence(Sequence &q, ProgramState &s, double dt) {
                     if(property) {Value start;auto *object=FindObject(s,id);if(step.action.data.contains("from"))start=Evaluate(step.action.data.at("from"),s.environment);else if(object&&object->properties.contains(step.action.name))start=object->properties.at(step.action.name);step.propertyStarts.push_back(start);continue;}
                     float start = 0;
                     if (self || o) start = op == Operation::TweenPosition ? (self ? s.position[axis] : o->position[axis]) :
-                        op == Operation::TweenRotation ? (self ? s.rotation[axis] : o->rotation[axis]) / 0.017453292519943295f : (self ? s.scale[axis] : o->scale[axis]);
+                        op == Operation::TweenRotation ? (self ? s.rotation[axis] : o->rotation[axis]) / kDegreesToRadians : (self ? s.scale[axis] : o->scale[axis]);
                     if(step.action.data.contains("from"))start=step.action.data.at("from").get<float>();step.starts.push_back(start);
                 }
             }}catch(...){q.running=false;return remaining;}

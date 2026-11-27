@@ -140,7 +140,7 @@ private:
 
 #if defined(USE_IMGUI)
     void DrawProfilingImGui();
-    int profilingSampleCount_ = 60;
+    int profilingSampleCount_ = static_cast<int>(Profiler::kDefaultSampleCount);
 #endif
 
     Context context_;
